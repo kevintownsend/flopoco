@@ -1,0 +1,14 @@
+Installation Instructions
+*************************
+
+try "make"...
+
+If it fails, FloPoCo uses CMake, which is part of most Unix and Linux
+distributions and available freely for Windows. Build the Makefile using 
+"cmake ." in the FloPoCo directory.
+
+FloPoCo depends on 
+GMP and gmpxx (the C++ wrappers for GMP), 
+        which should be part of your Unix distribution
+MPFR, which should be part of your Unix distribution
+MPFR++, available from Nathalie Revol's web page.

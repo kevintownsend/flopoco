@@ -1,0 +1,10 @@
+FloPoCo is a generator of Floating-Point (but not only) Cores for FPGAs.
+
+FloPoCo is distributed under the GNU General Public License (see
+COPYING for details), and the operators it generates can be used under
+the terms of the GNU Lesser General Public License (see COPYING.LIB
+for details). You are free to use and distribute them without changing
+this license. You are also free to modify them, as long as you make
+the modifications available. In the latter case please consider
+modifying FloPoCo instead, or get in touch with the FloPoCo team for
+this purpose.

@@ -1,0 +1,21 @@
+TODO 
+
+remove duplicate nodes in the constant multiplier. 
+remove duplicate operators
+
+pipeline the constant multipliers. Set up a pipeline framework.
+Implement the continued fraction stuff for FPCRConstMult
+
+Tentative roadmap:
+
+Version 0.1: IntConstMult, FPConstMult, FPCRConstMult
+Version 0.2: LongAccumulator
+Version 0.3: FPLog
+Version 0.4: FPExp
+Version 1.0: Add all the FPLibrary operators, with asymetric IO sizes
+
+At some point:
+Add HOTBM
+
+Various TODO:
+Add global switch Glut=3,4,5 or 6
