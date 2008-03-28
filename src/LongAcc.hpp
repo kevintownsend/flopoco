@@ -35,7 +35,7 @@ private:
   int sizeShift;
   string summand2cname;
   int c2_chunk_size;
-  int c2_pipe_levels;
+  int c2_pipeline_depth;
 };
 
 

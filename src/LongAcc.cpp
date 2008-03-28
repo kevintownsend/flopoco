@@ -85,35 +85,29 @@ LongAcc::LongAcc(Target* target, int wEX, int wFX, int MaxMSBX, int LSBA, int MS
   // Unregistered signal
   add_signal("expX", wEX);
   add_signal("fracX", wFX+1);
-  add_signal("flushedToZero");
   add_signal("shifted_frac", sizeShiftedFrac);
-  //  add_signal("summand", sizeSummand);
-  add_signal("summand2c", sizeSummand);
   add_signal("shiftval", wEX+1); //, "includes a sign bit");
 
   // setup the pipeline 
 
-  // The input needs to be 2's complemented. There is a carry
-  // propagation there. Do we need to split it into several pipeline levels?
-  
-  c2_chunk_size = (int)floor( (1./target->frequency() - target->lut_delay()) / target->carry_propagate_delay()); // 1 if no need for pipeline
-  c2_pipe_levels = sizeSummand/c2_chunk_size; // =0 when no pipeline
-  //  if(c2_pipe_levels) c2_chunk_size=sizeSummand;
-  cout << tab << "chunk="<<c2_chunk_size << " freq=" << 1e-6/target->adder_delay(c2_chunk_size) << "  levels=" << c2_pipe_levels <<endl;
-  // on one side, add delays for the non-complemented signal
-  add_delay_signal("summand", sizeSummand, c2_pipe_levels); 
-
-#if 0
-  //on the other side, compute 2'complement of summand in pipe_levels levels .
-  for (int i=0; i<c2_pipe_levels; i++){ 
-    ostringstream s2cname; 
-    s2cname << "summand2c"<<i;
-    add_registered_signal_with_reset(s2cname.str(), sizeSummand);
+  if(target->is_pipelined()) {
+    // TODO here code to pipeline the 2's complement if the target frequency is high, see IntAdder 
+    // meanwhile we just do it in 1 level, assuming there is a register at the out of the shifter.
+    c2_pipeline_depth = 1;
+  } 
+  else {
+    c2_pipeline_depth = 0;
   }
-#endif
+
+  // on one side, add delays for the non-complemented signal
+  add_delay_signal("summand", sizeSummand, c2_pipeline_depth); 
+  add_delay_signal("flushedToZero", 1, shifter->pipeline_depth());
+
+  //on the other side, add a delay for 2'complement of summand
+  add_registered_signal("summand2c", sizeSummand);
 
   // final pipeline depth is the sum of shifter pipeline and 2's complement pipeline
-  set_pipeline_depth(shifter->pipeline_depth() + c2_pipe_levels);
+  set_pipeline_depth(shifter->pipeline_depth() + c2_pipeline_depth);
 
   add_delay_signal("exnX", 2, pipeline_depth());
   add_delay_signal("signX", 1, pipeline_depth());
@@ -163,17 +157,17 @@ void LongAcc::output_vhdl(ostream& o, string name) {
   o << endl;
  
   o << tab << "flushedToZero <=     '1' when (shiftval("<<wEX<<")='1' -- negative left shift " << endl;
-  o << tab << "                               or "<< get_delay_signal_name("exnX", shifter->pipeline_depth()) << "=\"00\")" << endl;
+  o << tab << "                               or exnX=\"00\")" << endl;
   o << tab << "                 else'0';" << endl;
-  o << tab << "summand <= ("<<sizeSummand-1<<" downto 0 => '0')  when flushedToZero='1'  else shifted_frac("<<sizeShiftedFrac-1<<" downto "<<wFX<<");" << endl;
+  o << tab << "summand <= ("<<sizeSummand-1<<" downto 0 => '0')  when "<< get_delay_signal_name("flushedToZero", shifter->pipeline_depth()) << "='1'  else shifted_frac("<<sizeShiftedFrac-1<<" downto "<<wFX<<");" << endl;
   o << endl;
   o << tab << "-- 2's complement of the summand" << endl;
   // This is the line that should be pipelined
   o << tab << "summand2c <= summand when "<< get_delay_signal_name("signX", shifter->pipeline_depth()) <<"='0' else ("<<sizeSummand-1<<" downto 0 => '0') - summand; "<< endl;
   o << endl;
   o << tab << "-- extension of the summand to accumulator size" << endl;
-  o << tab << "ext_summand2c <= ("<<sizeAcc-1<<" downto "<<sizeSummand<<"=>'0') & summand2c   when  " << get_delay_signal_name("signX", pipeline_depth()) <<"='0'" << endl;
-  o << tab << "            else ("<<sizeAcc-1<<" downto "<<sizeSummand<<"=> not flushedToZero) & summand2c;" << endl;
+  o << tab << "ext_summand2c <= ("<<sizeAcc-1<<" downto "<<sizeSummand<<"=>'0') & summand2c   when  " << get_delay_signal_name("signX", shifter->pipeline_depth()) <<"='0'" << endl;
+  o << tab << "            else ("<<sizeAcc-1<<" downto "<<sizeSummand<<"=> not "<< get_delay_signal_name("flushedToZero", shifter->pipeline_depth()) << ") & summand2c;" << endl;
   o << endl;
   o << tab << "-- accumulation itself" << endl;
   o << tab << "acc <= ext_summand2c_d   +   acc_d;" << endl;
