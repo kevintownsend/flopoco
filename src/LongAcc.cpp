@@ -91,29 +91,32 @@ LongAcc::LongAcc(Target* target, int wEX, int wFX, int MaxMSBX, int LSBA, int MS
   add_signal("summand2c", sizeSummand);
   add_signal("shiftval", wEX+1); //, "includes a sign bit");
 
-
-  add_delay_signal("exnX", 2, shifter->pipeline_depth());
-  add_delay_signal("signX", 1, shifter->pipeline_depth());
-
   // setup the pipeline 
-  set_pipeline_depth(shifter->pipeline_depth()+1);
+
   // The input needs to be 2's complemented. There is a carry
   // propagation there. Do we need to split it into several pipeline levels?
   
   c2_chunk_size = (int)floor( (1./target->frequency() - target->lut_delay()) / target->carry_propagate_delay()); // 1 if no need for pipeline
-  c2_pipe_levels = sizeSummand/c2_chunk_size + 1; // =1 when no pipeline
+  c2_pipe_levels = sizeSummand/c2_chunk_size; // =0 when no pipeline
   //  if(c2_pipe_levels) c2_chunk_size=sizeSummand;
-  cout << tab << "chunk="<<c2_chunk_size << " freq=" << 1e-6/target->adder_delay(c2_chunk_size) <<"  levels="<<c2_pipe_levels <<endl;
+  cout << tab << "chunk="<<c2_chunk_size << " freq=" << 1e-6/target->adder_delay(c2_chunk_size) << "  levels=" << c2_pipe_levels <<endl;
   // on one side, add delays for the non-complemented signal
   add_delay_signal("summand", sizeSummand, c2_pipe_levels); 
+
+#if 0
   //on the other side, compute 2'complement of summand in pipe_levels levels .
   for (int i=0; i<c2_pipe_levels; i++){ 
     ostringstream s2cname; 
     s2cname << "summand2c"<<i;
     add_registered_signal_with_reset(s2cname.str(), sizeSummand);
   }
+#endif
 
+  // final pipeline depth is the sum of shifter pipeline and 2's complement pipeline
+  set_pipeline_depth(shifter->pipeline_depth() + c2_pipe_levels);
 
+  add_delay_signal("exnX", 2, pipeline_depth());
+  add_delay_signal("signX", 1, pipeline_depth());
 
   add_registered_signal_with_reset("ext_summand2c", sizeAcc);
   add_registered_signal_with_reset("acc", sizeAcc); //,  "includes overflow bit");
@@ -134,37 +137,51 @@ void LongAcc::output_vhdl(ostream& o, string name) {
   shifter->output_vhdl_component(o);
   output_vhdl_signal_declarations(o);
   o << "begin" << endl;
-  o << "  fracX <= \"1\" & X("<<wFX-1<<" downto 0);" << endl;
-  o << "  expX <= X("<<wEX+wFX-1<<" downto "<<wFX<<");" << endl;
-  o << "  signX <= X("<<wEX+wFX<<");" << endl;
-  o << "  exnX <= X("<<wEX+wFX+2<<" downto "<<wEX+wFX+1<<");" << endl;
-  o << "  shiftval <=  (\"0\"&expX) - \"";  printBinNum(o, (uint64_t)(E0X+LSBA),  wEX+1); o << "\";" << endl;
-  o << "  input_shifter: " << shifter->unique_name << endl;
-  o << "      port map ( X => fracX, " << endl;
-  o << "                 S => shiftval("<< shifter->wShiftIn - 1 <<" downto 0), " << endl;
-  o << "                 R => shifted_frac";
+  o << tab << "fracX <= \"1\" & X("<<wFX-1<<" downto 0);" << endl;
+  o << tab << "expX <= X("<<wEX+wFX-1<<" downto "<<wFX<<");" << endl;
+  o << tab << "signX <= X("<<wEX+wFX<<");" << endl;
+  o << tab << "exnX <= X("<<wEX+wFX+2<<" downto "<<wEX+wFX+1<<");" << endl;
+  int64_t exp_offset = E0X+LSBA;
+  if(exp_offset >=0) {
+    o << tab << "shiftval <=  (\"0\"&expX) - \"";  printBinNum(o, exp_offset,  wEX+1); o << "\";" << endl;
+  }
+  else {
+    o << tab << "shiftval <=  (\"0\"&expX) + \"";  printBinNum(o, -exp_offset,  wEX+1); o  << "\";" << endl;
+  }
+  o << endl;
+  o << tab << "-- shift of the input into the proper place " << endl;
+  o << tab << "input_shifter: " << shifter->unique_name << endl;
+  o << tab << "    port map ( X => fracX, " << endl;
+  o << tab << "               S => shiftval("<< shifter->wShiftIn - 1 <<" downto 0), " << endl;
+  o << tab << "               R => shifted_frac";
   if (shifter->is_sequential()) {
     o<<"," << endl;
-    o << "               clk => clk," << endl;
-    o << "               rst => rst " << endl;
+    o << tab << "             clk => clk," << endl;
+    o << tab << "             rst => rst " << endl;
   }
-  o << "               );" << endl; 
+  o << tab << "             );" << endl; 
+  o << endl;
  
-  o << "  flushedToZero <=     '1' when (shiftval("<<wEX<<")='1' -- negative left shift " << endl;
-  o << "                                 or "<< get_delay_signal_name("exnX", shifter->pipeline_depth()) << "=\"00\")" << endl;
-  o << "                   else'0';" << endl;
-  o << "  summand <= ("<<sizeSummand-1<<" downto 0 => '0')  when flushedToZero='1'  else shifted_frac("<<sizeShiftedFrac-1<<" downto "<<wFX<<");" << endl;
-
+  o << tab << "flushedToZero <=     '1' when (shiftval("<<wEX<<")='1' -- negative left shift " << endl;
+  o << tab << "                               or "<< get_delay_signal_name("exnX", shifter->pipeline_depth()) << "=\"00\")" << endl;
+  o << tab << "                 else'0';" << endl;
+  o << tab << "summand <= ("<<sizeSummand-1<<" downto 0 => '0')  when flushedToZero='1'  else shifted_frac("<<sizeShiftedFrac-1<<" downto "<<wFX<<");" << endl;
+  o << endl;
+  o << tab << "-- 2's complement of the summand" << endl;
   // This is the line that should be pipelined
-  o << "  summand2c <= summand_d when "<< get_delay_signal_name("signX", shifter->pipeline_depth()) <<"='0' else ("<<sizeSummand-1<<" downto 0 => '0') - summand_d; "<< endl;
-
-  o << "  ext_summand2c <= ("<<sizeAcc-1<<" downto "<<sizeSummand<<"=>'0') & summand2c   when  "<< get_delay_signal_name("signX", shifter->pipeline_depth()) <<"='0'" << endl;
-  o << "              else ("<<sizeAcc-1<<" downto "<<sizeSummand<<"=> not flushedToZero) & summand2c;" << endl;
-  o << "  acc <= ext_summand2c_d   +   acc_d;" << endl;
+  o << tab << "summand2c <= summand when "<< get_delay_signal_name("signX", shifter->pipeline_depth()) <<"='0' else ("<<sizeSummand-1<<" downto 0 => '0') - summand; "<< endl;
+  o << endl;
+  o << tab << "-- extension of the summand to accumulator size" << endl;
+  o << tab << "ext_summand2c <= ("<<sizeAcc-1<<" downto "<<sizeSummand<<"=>'0') & summand2c   when  " << get_delay_signal_name("signX", pipeline_depth()) <<"='0'" << endl;
+  o << tab << "            else ("<<sizeAcc-1<<" downto "<<sizeSummand<<"=> not flushedToZero) & summand2c;" << endl;
+  o << endl;
+  o << tab << "-- accumulation itself" << endl;
+  o << tab << "acc <= ext_summand2c_d   +   acc_d;" << endl;
+  o << endl;
 
   output_vhdl_registers(o);
 
-  o << "  A <=   acc_d;" << endl;
+  o << tab << "  A <=   acc_d;" << endl;
   
   //TODO sticky overflow for the accumulator.
   //TODO sticky overflow for the input.
