@@ -1,21 +1,31 @@
-TODO 
+TODO file for FloPoCo
 
-remove duplicate nodes in the constant multiplier. 
-remove duplicate operators
+Pipeline framework, Operator and Targets:
+* add one Altera target
+* replace the _d_d_d_d names with shorter, index-based ones.
+* get the constants right to have a better evaluation of the frequency of the shifters
+* manage a notion of cycle at the Opertor level?
 
-pipeline the constant multipliers. Set up a pipeline framework.
-Implement the continued fraction stuff for FPCRConstMult
+ConstMult:
+* pipeline IntConstMult then FPConstMult.
+* Implement the continued fraction stuff for FPCRConstMult
+
+LongAcc:
+* pipeline accumulation itself
+* pipeline 2's complement
+
+FPMultiplier:
+* pipeline final addition
+* refine the DSP model in Targets
+
 
 Tentative roadmap:
 
 Version 0.1: IntConstMult, FPConstMult, FPCRConstMult
-Version 0.2: LongAccumulator
-Version 0.3: FPLog
-Version 0.4: FPExp
+Version 0.4: LongAccumulator, FPMultiplier
+Version ?? : HOTBM integration 
+Version ?? : FPLog
+Version ?? : FPExp
 Version 1.0: Add all the FPLibrary operators, with asymetric IO sizes
 
-At some point:
-Add HOTBM
 
-Various TODO:
-Add global switch Glut=3,4,5 or 6

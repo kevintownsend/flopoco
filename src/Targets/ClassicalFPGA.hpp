@@ -34,9 +34,9 @@ class ClassicalFPGA : public Target
   // generic constructor
   ClassicalFPGA() : Target()
   {
-    // all these values are set randomly, more or less match virtex 4
+    // all these values are set more or less randomly, to match  virtex 4 more or less
     _fastcarry_delay = 3.4e-11; // s    
-    _elem_wire_delay = 0.5e-11;
+    _elem_wire_delay = 0.3e-11;
     _lut2lut_delay = 1.5e-10;
     _lut_delay =  1.5e-9; 
     _mult_x_inputs=18;
