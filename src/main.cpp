@@ -71,14 +71,13 @@ static void usage(char *name){
   cerr << "    FPConstMult wE_in wF_in wE_out wF_out cst_sgn cst_exp cst_int_sig\n";
   cerr << "      floating-point constant multiplier.\n";
   cerr << "      The constant is provided as integral significand and integral exponent.\n";
-  cerr << "    FPMultiplier wEX wFX wEY wFY wER wFR normalized \n";
-  cerr << "	 FP Multiplier \n";
-  cerr << "      normalized can be 0 or 1 \n";
-  cerr << "	 Use with option -pipeline=yes for now \n";	
   cerr << "    IntMultiplier wInX wInY \n";
   cerr << "      integer multiplier of two integers X and Y of sizes wInX and wInY \n";	
+  cerr << "    FPMultiplier wEX wFX wEY wFY wER wFR\n";
+  cerr << "	 FP Multiplier \n";
   cerr << "    Wrapper entity_name\n";
   cerr << "       produce a wrapper named entity_name for the preceding operator\n";
+  cerr << "       (useful to get synthesis results without having the operator optimised out)\n";
   cerr << "  In addition several options affect the operators following them:\n";
   cerr << "   -outputfile=<output file name>\n";
   cerr << "       sets the filename (default flopoco.vhdl)\n";
@@ -87,7 +86,7 @@ static void usage(char *name){
   cerr << "   -verbose=<1|2|3>\n";
   cerr << "       sets the verbosity level (default 0)\n";
   cerr << "   -pipeline=<yes|no>\n";
-  cerr << "       pipeline the operators (default=no)\n";
+  cerr << "       pipeline the operators (default=yes)\n";
   cerr << "   -frequency=<frequency in MHz>\n";
   cerr << "       target frequency (default=400)\n";
   //  cerr << "    FPAdd wE wF\n";
@@ -265,7 +264,7 @@ bool parse_command_line(int argc, char* argv[]){
        }    
      }
      else if(opname=="FPMultiplier"){
-      int nargs = 7;
+       int nargs = 6; // was 7
       if (i+nargs > argc)
 	usage(argv[0]);
        else {
@@ -275,7 +274,7 @@ bool parse_command_line(int argc, char* argv[]){
 	 int wFY = check_strictly_positive(argv[i++], argv[0]);
 	 int wER = check_strictly_positive(argv[i++], argv[0]);
 	 int wFR = check_strictly_positive(argv[i++], argv[0]);
-	 int norm = atoi(argv[i++]);
+	 int norm = 1; // was  atoi(argv[i++]);
 
         cerr << "> FPMultiplier , wEX="<<wEX<<", wFX="<<wFX<<", wEY="<<wEY<<", wFY="<<wFY<<", wER="<<wER<<", wFR="<<wFR<< " Normalized="<< norm<<" \n";
         
