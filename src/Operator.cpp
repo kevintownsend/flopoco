@@ -65,12 +65,22 @@ void  Operator::add_registered_signal(const std::string name, const int width) {
 }
 
 void  Operator::add_registered_signal_with_reset(const std::string name, const int width) {
-  signalList.push_back(new Signal(name, Signal::registered_with_reset, width));
+  signalList.push_back(new Signal(name, Signal::registered_with_asynch_reset, width));
   ostringstream o;
   o << name <<"_d";
   signalList.push_back(new Signal(o.str(), Signal::wire, width));
-  has_registers_with_reset=true;
+  has_registers_with_asynch_reset=true;
 }
+
+void  Operator::add_registered_signal_with_synch_reset(const std::string name, const int width) {
+  signalList.push_back(new Signal(name, Signal::registered_with_synch_reset, width));
+  ostringstream o;
+  o << name <<"_d";
+  signalList.push_back(new Signal(o.str(), Signal::wire, width));
+  has_registers_with_synch_reset=true;
+}
+
+
 
 string  Operator::add_delay_signal(const string name, const int width, const int delay) {
   ostringstream o;
@@ -135,13 +145,13 @@ void  Operator::output_vhdl_registers(std::ostream& o) {
   }
   
   // then registers with a reset
-  if (has_registers_with_reset) {
+  if (has_registers_with_asynch_reset) {
     o << "  process(clk, rst)" << endl;
     o << "    begin" << endl;
     o << "      if rst = '1' then" << endl;
     for(int i=0; i<signalList.size(); i++) {
       Operator::Signal *s = signalList[i];
-      if(s->type()==Signal::registered_with_reset)
+      if(s->type()==Signal::registered_with_asynch_reset)
          if (s->width()>1) 
 	         o << tab <<tab << tab << s->id() <<"_d" << " <=  (" << s->width()-1 <<" downto 0 => '0');\n";
          else
@@ -150,12 +160,40 @@ void  Operator::output_vhdl_registers(std::ostream& o) {
     o << "      elsif clk'event and clk = '1' then" << endl;
     for(int i=0; i<signalList.size(); i++) {
       Operator::Signal *s = signalList[i];
-      if(s->type()==Signal::registered_with_reset) 
+      if(s->type()==Signal::registered_with_asynch_reset) 
 	o << tab <<tab << tab << s->id() <<"_d" << " <=  " << s->id() <<";\n";
     }
     o << "      end if;" << endl;
     o << "    end process;" << endl;
   }
+
+  // then registers with synchronous reset
+  if (has_registers_with_synch_reset) {
+    o << "  process(clk, rst)" << endl;
+    o << "    begin" << endl;
+    o<<  "    if clk'event and clk = '1' then" << endl;
+    o << "      if rst = '1' then" << endl;
+    for(int i=0; i<signalList.size(); i++) {
+      Operator::Signal *s = signalList[i];
+      if(s->type()==Signal::registered_with_synch_reset)
+         if (s->width()>1) 
+	         o << tab <<tab << tab << s->id() <<"_d" << " <=  (" << s->width()-1 <<" downto 0 => '0');\n";
+         else
+            o << tab <<tab << tab << s->id() <<"_d" << " <=  '0';\n";
+    }
+    o << "      else" << endl;
+    for(int i=0; i<signalList.size(); i++) {
+      Operator::Signal *s = signalList[i];
+      if(s->type()==Signal::registered_with_synch_reset) 
+	o << tab <<tab << tab << s->id() <<"_d" << " <=  " << s->id() <<";\n";
+    }
+    o << "      end if;" << endl;
+    o << "    end if;" << endl;
+    o << "    end process;" << endl;
+  }
+   
+
+
 }
 
 void Operator::output_vhdl_component(std::ostream& o, std::string name) {

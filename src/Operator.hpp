@@ -40,7 +40,7 @@ public:
   // A local class to be replaced by the cpphdl version some day
   class Signal{
   public:
-    typedef enum{in,out,wire,registered,registered_with_reset} type_t;
+    typedef enum{in,out,wire,registered,registered_with_asynch_reset,registered_with_synch_reset } type_t;
     
     Signal(const std::string name, const type_t type, const int width = 1): 
       _name(name), _type(type), _wE(0), _wF(0), _width(width){
@@ -64,7 +64,7 @@ public:
     
     std::string toVHDL() {
       std::ostringstream o; 
-      if(type()==Signal::wire || type()==Signal::registered || type()==Signal::registered_with_reset) 
+      if(type()==Signal::wire || type()==Signal::registered || type()==Signal::registered_with_asynch_reset || type()==Signal::registered_with_synch_reset) 
 	o << "signal ";
       o << id();
 //       if(type()==Signal::registered || type()==Signal::registered_with_reset|| type()==Signal::delay)
@@ -100,7 +100,8 @@ public:
     number_of_inputs=0;
     number_of_outputs=0;
     has_registers=false;
-    has_registers_with_reset=false;
+    has_registers_with_asynch_reset=false;
+    has_registers_with_synch_reset=false;
   }
 
   Operator(Target* target_)  {
@@ -108,7 +109,8 @@ public:
     number_of_inputs=0;
     number_of_outputs=0;
     has_registers=false;
-    has_registers_with_reset=false;
+    has_registers_with_asynch_reset=false;
+    has_registers_with_synch_reset=false;
   }
   
   virtual ~Operator() {}
@@ -133,6 +135,7 @@ public:
       build the registers between them. */
   void add_registered_signal(const std::string name, const int width=1);
   void add_registered_signal_with_reset(const std::string name, const int width=1);
+  void add_registered_signal_with_synch_reset(const std::string name, const int width=1);
 
   /** The following adds a signal, and also a shift register on it of depth delay.
       There will be depth levels of registers, named name_d, name_d_d and so on.
@@ -238,7 +241,8 @@ private:
   vector<TestCase> test_case_list;
 
   bool has_registers;
-  bool has_registers_with_reset;
+  bool has_registers_with_asynch_reset;
+  bool has_registers_with_synch_reset;
 
 };
 
