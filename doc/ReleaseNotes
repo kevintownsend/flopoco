@@ -1,0 +1,36 @@
+======================================================================
+
+Version 0.4beta provides the following operators:
+    LeftShifter, RightShifter, LZOC, IntAdder 
+       building blocks of FP computing, pipelined
+    LongAcc
+       An operator for efficient and accurate accumulation 
+       of floating-point numbers, partly pipelined 
+    IntConstMult, FPConstMult
+       optimized constant multipliers in integer and FP flavor 
+    IntMultiplier, FPMultiplier 
+       multipliers with automatic pipeline generation
+
+In addition, this distribution provides the useful conversion tools 
+fp2bin, bin2fp and longacc2fp.
+
+There has been no extensive testing on these operators yet, use at your own risk. 
+
+This is the first version with automatic pipeline generation, although
+not all the operators support it.
+
+The utopian objective is to have each operator built to
+work at a user-specified frequency (option -frequency) on a
+user-specified hardware target.
+
+The sad reality is that currently, the only target is a Virtex 4. On other
+chips (Altera or other Xilinx), you will get synthesisable VHDL, and
+the pipeline will be deeper for higher frequencies, but it will not
+necessarily be any close to the optimal. 
+In the near future there will be a Stratix III target.
+
+
+
+
+======================================================================
+Version 0.1.1 was a proof of concept.
