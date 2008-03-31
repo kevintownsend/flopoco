@@ -51,7 +51,7 @@ class Target
   void set_frequency(double f);
 
   Target()   {
-    _pipeline=false;
+    _pipeline=true;
     _lut_inputs=4;
     _frequency = 400000000.;
   }
