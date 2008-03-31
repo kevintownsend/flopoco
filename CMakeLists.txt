@@ -33,7 +33,7 @@ ADD_EXECUTABLE(flopoco
  src/Operator
  src/Table 
  src/Wrapper
- src/Multiplier
+ src/FPMultiplier
  src/IntMultiplier
  src/IntAdder
  src/LZOC

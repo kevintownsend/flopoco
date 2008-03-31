@@ -1,5 +1,5 @@
-#ifndef MULTIPLIERS_HPP
-#define MULTIPLIERS_HPP
+#ifndef FPMULTIPLIERS_HPP
+#define FPMULTIPLIERS_HPP
 #include <vector>
 #include <sstream>
 #include <gmp.h>
@@ -9,16 +9,16 @@
 #include "Operator.hpp"
 #include "IntMultiplier.hpp"
 
-/** The Multiplier class. Left and right multipliers are perfectly
-    symmetrical, so both are instances of the Multiplier class. Only the
+/** The FPMultiplier class. Left and right multipliers are perfectly
+    symmetrical, so both are instances of the FPMultiplier class. Only the
     name of the VHDL instance changes */
 
 
-class Multiplier : public Operator
+class FPMultiplier : public Operator
 {
 public:
-  Multiplier(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, int wFR, int norm);
-  ~Multiplier();
+  FPMultiplier(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, int wFR, int norm);
+  ~FPMultiplier();
 
 
 	int wEX; 

@@ -34,62 +34,62 @@
 #include "utils.hpp"
 #include "Operator.hpp"
 
-#include "Multiplier.hpp"
+#include "FPMultiplier.hpp"
 
 using namespace std;
 extern vector<Operator*> oplist;
 
-Multiplier::Multiplier(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, int wFR, int norm) :
-  Operator(target), wEX(wEX), wFX(wFX), wEY(wEY), wFY(wFY), wER(wER), wFR(wFR) {
+FPMultiplier::FPMultiplier(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, int wFR, int norm) :
+   Operator(target), wEX(wEX), wFX(wFX), wEY(wEY), wFY(wFY), wER(wER), wFR(wFR) {
   
-  int i;
-  ostringstream name, synch, synch2;
+   int i;
+   ostringstream name, synch, synch2;
 
-  //set the normalized attribute  
-  if (norm==0) 
-    normalized=false;	
-  else
-    normalized=true;	
+   //set the normalized attribute  
+   if (norm==0) 
+      normalized=false;	
+   else
+      normalized=true;	
 	
-  // Name Setup procedure
-  //============================================================================
-  //The name has the format: Multiplier_wEX_wFX_wEY_wFY_wER_WFR
-  // wEX = width of X exponenet
-  // wFX = width for the fractional part of X
-  name.str("");
-  name <<"Multiplier_"; 
-  name<<wEX<<"_"<<wFX<<"_"<<wEY<<"_"<<wFY<<"_"<<wER<<"_"<<wFR;
-  unique_name = name.str(); //set the attribute
-  //============================================================================  
+   // Name Setup procedure
+   //===========================================================================
+   //The name has the format: FPMultiplier_wEX_wFX_wEY_wFY_wER_WFR
+   // wEX = width of X exponenet
+   // wFX = width for the fractional part of X
+   name.str("");
+   name <<"FPMultiplier_"; 
+   name<<wEX<<"_"<<wFX<<"_"<<wEY<<"_"<<wFY<<"_"<<wER<<"_"<<wFR;
+   unique_name = name.str(); //set the attribute
+   //===========================================================================  
 
-  // Set up the IO signals
-  //============================================================================
-  add_input ("X", wEX + wFX + 3);	// format: 2b(Exception) + 1b(Sign)
-  add_input ("Y", wEY + wFY + 3);	// + wEX bits (Exponent) + wFX bits(Fraction)
+   // Set up the IO signals
+   //===========================================================================
+   add_input ("X", wEX + wFX + 3);	// format: 2b(Exception) + 1b(Sign)
+   add_input ("Y", wEY + wFY + 3);	//+ wEX bits (Exponent) + wFX bits(Fraction)
    
-  add_output ("ResultExponent", wER);  
-  add_output ("ResultSignificand", wFR + 1);
-  add_output ("ResultException", 2);
-  add_output ("ResultSign",1); 		
-  //============================================================================
+   add_output ("ResultExponent", wER);  
+   add_output ("ResultSignificand", wFR + 1);
+   add_output ("ResultException", 2);
+   add_output ("ResultSign",1); 		
+   //===========================================================================
 
-  //Set up if we are in the sequential or combinational case
-  if (target->is_pipelined()) 
-   set_sequential();
-  else
-   set_combinatorial(); 
+   //Set up if we are in the sequential or combinational case
+   if (target->is_pipelined()) 
+      set_sequential();
+   else
+      set_combinatorial(); 
     
-  //Make an IntMultiplier -> multiply the significands
-  intmult = new IntMultiplier(target, wFX+1, wFY+1);
+   //Instantiate an IntMultiplier -> multiply the significands
+   intmult = new IntMultiplier(target, wFX+1, wFY+1);
+   oplist.push_back(intmult);
   
-  //Setup the attibute cocerning the IntMultiplier pipeline 
-  IntMultPipelineDepth = intmult->pipeline_depth();
-  cout<<endl<<"INT multipler depth  = "<<IntMultPipelineDepth <<endl;
+   //Setup the attibute cocerning the IntMultiplier pipeline 
+   IntMultPipelineDepth = intmult->pipeline_depth();
+   cout<<endl<<"INT multipler depth  = "<<IntMultPipelineDepth <<endl;
   
-  // Unregistered signals
-  //============================================================================  
-
-  if (normalized)  {
+   // Unregistered signals
+   //===========================================================================  
+   if (normalized)  {
       add_signal("mult_selector",1);
       add_signal("exponent_p",1+wEX);
       add_signal("exception_upd",2);
@@ -99,33 +99,33 @@ Multiplier::Multiplier(Target* target, int wEX, int wFX, int wEY, int wFY, int w
       add_signal("reunion_signal_p",2+wEX+wFR);  
       add_signal("middle_signal",2+wEX+wFR);
       add_signal("reunion_signal_p_upd",2+wEX+wFR);
-  }	
+   }	
 
-  add_signal("significandX", wFX+1);   //The Significands for the input signals X and Y
-  add_signal("significandY", wFY+1);
-  add_signal("significand_multiplication", wFX +wFY +2);   
+   add_signal("significandX", wFX+1);   //The Significands for the input signals X and Y
+   add_signal("significandY", wFY+1);
+   add_signal("significand_multiplication", wFX +wFY +2);   
   
-  add_signal("exponentX", wEX);	//The signals for the exponents of X and Y
-  add_signal("exponentY", wEY);
-  add_signal("bias",wEX+1); //bias to be substracted from the sum of exponents  
-  add_signal("exponents_sum_minus_bias_ext",wEX+1); //extended with 1 bit
+   add_signal("exponentX", wEX);	//The signals for the exponents of X and Y
+   add_signal("exponentY", wEY);
+   add_signal("bias",wEX+1); //bias to be substracted from the sum of exponents  
+   add_signal("exponents_sum_minus_bias_ext",wEX+1); //extended with 1 bit
    
-  add_signal("exception_selector",4);//signal that selects the case for the exception
+   add_signal("exception_selector",4);//signal that selects the case for the exception
   
-  if (is_sequential())
-  {
+
+   if (is_sequential())  {
+  
+      // Unregistered signals
+      //========================================================================  
       add_signal("exponent_synch", wEX);
       add_signal("significand_synch", wFX + wFY + 2); 
       add_signal("sign_synch", 1); 
       add_signal("exception_synch",2);
       add_signal("temp_exp_concat_fract", 1 + wEX + wFX + wFY + 2);
-  }
   
- 
-
-  if (is_sequential())  {
-  // Registered Signals
-  // ===========================================================================
+  
+      // Registered Signals
+      //========================================================================
       
       if (normalized){ 
          add_registered_signal_with_reset("middle_output",1);
@@ -142,29 +142,28 @@ Multiplier::Multiplier(Target* target, int wEX, int wFX, int wEY, int wFY, int w
       //registers for the case when the integer multiplication requires 
       //more than two pipeline levels
       for (i=0;i<=IntMultPipelineDepth-3;i++)	{
-      synch.str(""); synch2.str("");
-      synch<<"Exponent_Synchronization_"<<i;
-      add_registered_signal_with_reset(synch.str(), wEX );
-      synch2<<"Exception_Synchronization_"<<i;
-      add_registered_signal_with_reset(synch2.str(), 2 );	
+         synch.str(""); synch2.str("");
+         synch<<"Exponent_Synchronization_"<<i;
+         add_registered_signal_with_reset(synch.str(), wEX );
+         synch2<<"Exception_Synchronization_"<<i;
+         add_registered_signal_with_reset(synch2.str(), 2 );	
       }
 
       //registers for the case when the int mult has less than two levels
       for (i=0;i<=1-IntMultPipelineDepth;i++)	{
-      synch.str("");
-      synch<<"Int_Synchronization_"<<i;
-      add_registered_signal_with_reset(synch.str(), wFX+wFY+2);		
+         synch.str("");
+         synch<<"Int_Synchronization_"<<i;
+         add_registered_signal_with_reset(synch.str(), wFX+wFY+2);		
       }	
 
       add_delay_signal("Sign_Synchronization", 1, max(2,IntMultPipelineDepth));
 
       add_registered_signal_with_reset("Result_Exception",2); 
       add_registered_signal_with_reset("Result_Exception_With_EA",2);
-
-  // ===========================================================================
-  }//end if sequential
-  else
-  {//if combinational
+      // =======================================================================
+   }//end if sequential
+   else
+   {//if combinational
       add_signal("middle_output",1);
       add_signal("exponent_p2",wEX);
       add_signal("Exponents_Sum", wEX+1 );
@@ -172,46 +171,34 @@ Multiplier::Multiplier(Target* target, int wEX, int wFX, int wEY, int wFY, int w
       add_signal("Result_Exception",2); 
       add_signal("Result_Exception_With_EA",2);
    }
-  
+}
 
-  oplist.push_back(intmult);
+
+FPMultiplier::~FPMultiplier() {
 }
 
 
 
 
-
-
-Multiplier::~Multiplier() {
-}
-
-
-
-
-
-
-
-void Multiplier::output_vhdl(std::ostream& o, std::string name) {
+void FPMultiplier::output_vhdl(std::ostream& o, std::string name) {
   
-  ostringstream signame, synch1, synch2, xname,zeros, zeros1, zeros2, str1, str2;
+   ostringstream signame, synch1, synch2, xname,zeros, zeros1, zeros2, str1, str2;
   
-  int bias_val=int(pow(double(2),double(wEX-1)))-1;
-  int i; 
+   int bias_val=int(pow(double(2),double(wEX-1)))-1;
+   int i; 
   
-  Licence(o,"Bogdan Pasca (2008)");
-  Operator::StdLibs(o);
-  o<<endl<<endl;	
-  output_vhdl_entity(o);
+   Licence(o,"Bogdan Pasca (2008)");
+   Operator::StdLibs(o);
+   o<<endl<<endl;	
+   output_vhdl_entity(o);
+   
+   o << "architecture arch of " << name  << " is" << endl;
   
-  
-  o << "architecture arch of " << name  << " is" << endl;
-  
-  intmult->output_vhdl_component(o);
-  output_vhdl_signal_declarations(o);	  
-  
-  o<<endl;
+   intmult->output_vhdl_component(o);
+   output_vhdl_signal_declarations(o);	  
+   o<<endl;
 
-  o << "begin" << endl;
+   o << "begin" << endl;
   
    if (is_sequential()){
    	//common code for both normalized and non-normalized version
@@ -440,9 +427,11 @@ void Multiplier::output_vhdl(std::ostream& o, std::string name) {
          o<<tab<< "ResultSign <= sign_synch;"<<endl;
    }//end else not normalized
        
- }//end if pipelined
- else
- {//the combinational version
+   }//end if pipelined
+   else
+   {  
+      //the combinational version
+      //========================================================================
  
       o<<tab<<"exponentX <= X("<<wEX + wFX -1<<" downto "<<wFX<<");"<<endl; 
 	   o<<tab<<"exponentY <= Y("<<wEY + wFY -1<<" downto "<<wFY<<");"<<endl<<endl;
@@ -467,7 +456,7 @@ void Multiplier::output_vhdl(std::ostream& o, std::string name) {
 		o<<tab<< "               );" << endl<<endl;
 	
 	   //Concatenate the exception bits of the two input numbers
-		   o<<tab<<"exception_selector <= X("<<wEX + wFX +2<<" downto "<<wEX + wFX + 1<<") & Y("<<wEY + wFY +2<<" downto "<<wEY + wFY +1<<");"<<endl<<endl;
+		o<<tab<<"exception_selector <= X("<<wEX + wFX +2<<" downto "<<wEX + wFX + 1<<") & Y("<<wEY + wFY +2<<" downto "<<wEY + wFY +1<<");"<<endl<<endl;
 		
       //select proper exception with selector			
       o<<tab<<"process (exception_selector)"<<endl;
@@ -509,23 +498,20 @@ void Multiplier::output_vhdl(std::ostream& o, std::string name) {
    
       //round result
       //check is rounding is needed
-      if (1+wFR >= wFX+wFY+2) 
-      {
-            //=>no rounding needed - eventual padding
-            //generate zeros of length 1+wFR - wFX+wFY+2 
-            zeros1.str("");
-            zeros1 << zero_generator(1+wFR - wFX+wFY+2 , 0);
-            
-            //make the outputs
-            o<<tab<<"ResultExponent <= exponent_p("<<wEX - 1<<" downto 0);"<<endl;  
-            o<<tab<<"ResultSignificand <= significand_multiplication & "<<zeros1.str()<<" when mult_selector='1' else"<<endl;
-            o<<tab<<"                     significand_multiplication("<<wFX+wFY<<" downto 0) & "<<zeros1.str()<<" & \"0\";"<<endl;
-            o<<tab<<"ResultException <= exception_upd;"<<endl;
-            o<<tab<<"ResultSign <= X("<<wEX + wFX<<") xor Y("<<wEY + wFY<<");"<<endl;
+      if (1+wFR >= wFX+wFY+2) {
+         //=>no rounding needed - eventual padding
+         //generate zeros of length 1+wFR - wFX+wFY+2 
+         zeros1.str("");
+         zeros1 << zero_generator(1+wFR - wFX+wFY+2 , 0);
          
+         //make the outputs
+         o<<tab<<"ResultExponent <= exponent_p("<<wEX - 1<<" downto 0);"<<endl;  
+         o<<tab<<"ResultSignificand <= significand_multiplication & "<<zeros1.str()<<" when mult_selector='1' else"<<endl;
+         o<<tab<<"                     significand_multiplication("<<wFX+wFY<<" downto 0) & "<<zeros1.str()<<" & \"0\";"<<endl;
+         o<<tab<<"ResultException <= exception_upd;"<<endl;
+         o<<tab<<"ResultSign <= X("<<wEX + wFX<<") xor Y("<<wEY + wFY<<");"<<endl;
       }
-      else
-      {
+      else{
 	      //check if in the middle of two FP numbers
 	      
 	      //generate two xor strings
@@ -552,15 +538,13 @@ void Multiplier::output_vhdl(std::ostream& o, std::string name) {
 		  	      
 	      o<<tab<<"reunion_signal <= (\"0\" & exponent_p2 & significand_multiplication("<< wFX+wFY<<" downto "<<wFX+wFY - (wFR) <<" )) when mult_selector='1' else"<<endl;
 	      o<<tab<<"                  (\"0\" & exponent_p2 & significand_multiplication("<< wFX+wFY-1<<" downto "<<wFX+wFY - (wFR) -1<<" ));"<<endl; 
-	     
-         //               
+	                    
          //significand_synch_tb2 = LSB of the wFR part of the significand_multiplication 
          o<<tab<<"significand_synch_tb2 <= significand_multiplication("<< wFX+wFY+1 - wFR<<" ) when  mult_selector='1' else"<<endl;
          o<<tab<<"                         significand_multiplication("<< wFX+wFY+1 - wFR -1<<" );"<<endl;              
             		     
          //add 1 to the reunited signal for rounding & normalize purposes
          o<<tab<<"reunion_signal_p <= reunion_signal + CONV_STD_LOGIC_VECTOR(1, "<< 2+ wEX + wFR<<");"<<endl;
-         
             		     
          o<<tab<<"middle_signal <= reunion_signal_p when significand_synch_tb2 = '1' else"<<endl;
          o<<tab<<"                 reunion_signal;"<<endl;    		     
@@ -575,13 +559,9 @@ void Multiplier::output_vhdl(std::ostream& o, std::string name) {
 	      o<<tab<<"ResultExponent <= reunion_signal_p_upd("<<wEX + wFR<<" downto "<<wFR+1<<");"<<endl;  
          o<<tab<<"ResultSignificand <= \"1\" & reunion_signal_p_upd("<<wFR<<" downto 1);"<<endl;
          o<<tab<<"ResultSign <= X("<<wEX + wFX<<") xor Y("<<wEY + wFY<<");"<<endl;
-         
       }
-
-   
-           
-       
- }   
+ 
+   }//end the combinational part   
   
   
   
@@ -601,7 +581,7 @@ void Multiplier::output_vhdl(std::ostream& o, std::string name) {
 
 
  
-string Multiplier::zero_generator(int n, int margins)
+string FPMultiplier::zero_generator(int n, int margins)
 {
   ostringstream left,full, right, zeros;
   int i;

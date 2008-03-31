@@ -31,9 +31,9 @@
 #include "Operator.hpp"
 #include "Shifters.hpp"
 #include "LZOC.hpp"
-#include "Multiplier.hpp"
 #include "IntAdder.hpp"
 #include "IntMultiplier.hpp"
+#include "FPMultiplier.hpp"
 #include "LongAcc.hpp"
 #include "Wrapper.hpp"
 #include "ConstMult/IntConstMult.hpp"
@@ -71,7 +71,7 @@ static void usage(char *name){
   cerr << "    FPConstMult wE_in wF_in wE_out wF_out cst_sgn cst_exp cst_int_sig\n";
   cerr << "      floating-point constant multiplier.\n";
   cerr << "      The constant is provided as integral significand and integral exponent.\n";
-  cerr << "    Multiplier wEX wFX wEY wFY wER wFR normalized \n";
+  cerr << "    FPMultiplier wEX wFX wEY wFY wER wFR normalized \n";
   cerr << "	 FP Multiplier \n";
   cerr << "      normalized can be 0 or 1 \n";
   cerr << "	 Use with option -pipeline=yes for now \n";	
@@ -264,7 +264,7 @@ bool parse_command_line(int argc, char* argv[]){
 	 oplist.push_back(op);	
        }    
      }
-     else if(opname=="Multiplier"){
+     else if(opname=="FPMultiplier"){
       int nargs = 7;
       if (i+nargs > argc)
 	usage(argv[0]);
@@ -277,13 +277,13 @@ bool parse_command_line(int argc, char* argv[]){
 	 int wFR = check_strictly_positive(argv[i++], argv[0]);
 	 int norm = atoi(argv[i++]);
 
-        cerr << "> Multiplier , wEX="<<wEX<<", wFX="<<wFX<<", wEY="<<wEY<<", wFY="<<wFY<<", wER="<<wER<<", wFR="<<wFR<< " Normalized="<< norm<<" \n";
+        cerr << "> FPMultiplier , wEX="<<wEX<<", wFX="<<wFX<<", wEY="<<wEY<<", wFY="<<wFY<<", wER="<<wER<<", wFR="<<wFR<< " Normalized="<< norm<<" \n";
         
 	if ((norm==0) or (norm==1))
 	{
 		if ((wEX==wEY) && (wEX==wER) && (wFX==wFY)) 
 		{
-			op = new Multiplier(target, wEX, wFX, wEY, wFY, wER, wFR, norm);
+			op = new FPMultiplier(target, wEX, wFX, wEY, wFY, wER, wFR, norm);
 			oplist.push_back(op);
 		}
 		else
