@@ -134,5 +134,5 @@ void Table::output(ostream& o, string name)
 
 
 int Table::size_in_LUTs() {
-  return wOut*intpow2(wIn-4);
+  return wOut*int(intpow2(wIn-4));
 }
