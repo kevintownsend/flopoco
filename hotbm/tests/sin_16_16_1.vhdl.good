@@ -1,0 +1,344 @@
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+-- HOTBM instance for function sin(x).
+-- wI = 16; wO = 16.
+-- Order-1 polynomial approximation.
+-- Decomposition:
+--   alpha = 6; beta = 10;
+--   T_0 (ROM):     alpha_0 = 6; beta_0 = 0;
+--   T_1 (PowMult): alpha_1 = 6; beta_1 = 10.
+-- Guard bits: g = 4.
+-- Command line: sin 16 16 1   6   rom 6 0   powmult 6 10  adhoc 10 10  1 0  6 10
+
+
+--------------------------------------------------------------------------------
+-- TermROM instance for order-0 term.
+-- Decomposition:
+--   alpha_0 = 6; beta_0 = 0; wO_0 = 20.
+
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.std_logic_arith.all;
+use ieee.std_logic_unsigned.all;
+
+entity sin_16_16_1_t0 is
+  port ( a : in  std_logic_vector(5 downto 0);
+         r : out std_logic_vector(20 downto 0) );
+end entity;
+
+architecture arch of sin_16_16_1_t0 is
+  signal x0   : std_logic_vector(5 downto 0);
+  signal r0   : std_logic_vector(19 downto 0);
+begin
+  x0 <= a;
+
+  with x0 select
+    r0 <= "00000001100100100100" when "000000", -- t[0] = 6436
+          "00000100101101100110" when "000001", -- t[1] = 19302
+          "00000111110110100110" when "000010", -- t[2] = 32166
+          "00001010111111100001" when "000011", -- t[3] = 45025
+          "00001110001000010110" when "000100", -- t[4] = 57878
+          "00010001010001000001" when "000101", -- t[5] = 70721
+          "00010100011001100010" when "000110", -- t[6] = 83554
+          "00010111100001110110" when "000111", -- t[7] = 96374
+          "00011010101001111100" when "001000", -- t[8] = 109180
+          "00011101110001110010" when "001001", -- t[9] = 121970
+          "00100000111001010101" when "001010", -- t[10] = 134741
+          "00100100000000100011" when "001011", -- t[11] = 147491
+          "00100111000111011100" when "001100", -- t[12] = 160220
+          "00101010001101111100" when "001101", -- t[13] = 172924
+          "00101101010100000010" when "001110", -- t[14] = 185602
+          "00110000011001101101" when "001111", -- t[15] = 198253
+          "00110011011110111001" when "010000", -- t[16] = 210873
+          "00110110100011100110" when "010001", -- t[17] = 223462
+          "00111001100111110001" when "010010", -- t[18] = 236017
+          "00111100101011011001" when "010011", -- t[19] = 248537
+          "00111111101110011011" when "010100", -- t[20] = 261019
+          "01000010110000110110" when "010101", -- t[21] = 273462
+          "01000101110010100111" when "010110", -- t[22] = 285863
+          "01001000110011101110" when "010111", -- t[23] = 298222
+          "01001011110100001000" when "011000", -- t[24] = 310536
+          "01001110110011110011" when "011001", -- t[25] = 322803
+          "01010001110010101101" when "011010", -- t[26] = 335021
+          "01010100110000110101" when "011011", -- t[27] = 347189
+          "01010111101110001001" when "011100", -- t[28] = 359305
+          "01011010101010100110" when "011101", -- t[29] = 371366
+          "01011101100110001100" when "011110", -- t[30] = 383372
+          "01100000100000110111" when "011111", -- t[31] = 395319
+          "01100011011010101000" when "100000", -- t[32] = 407208
+          "01100110010011011011" when "100001", -- t[33] = 419035
+          "01101001001011001111" when "100010", -- t[34] = 430799
+          "01101100000010000010" when "100011", -- t[35] = 442498
+          "01101110110111110010" when "100100", -- t[36] = 454130
+          "01110001101100011110" when "100101", -- t[37] = 465694
+          "01110100100000000100" when "100110", -- t[38] = 477188
+          "01110111010010100010" when "100111", -- t[39] = 488610
+          "01111010000011110110" when "101000", -- t[40] = 499958
+          "01111100110011111111" when "101001", -- t[41] = 511231
+          "01111111100010111011" when "101010", -- t[42] = 522427
+          "10000010010000101001" when "101011", -- t[43] = 533545
+          "10000100111101000110" when "101100", -- t[44] = 544582
+          "10000111101000010001" when "101101", -- t[45] = 555537
+          "10001010010010001000" when "101110", -- t[46] = 566408
+          "10001100111010101010" when "101111", -- t[47] = 577194
+          "10001111100001110110" when "110000", -- t[48] = 587894
+          "10010010000111101000" when "110001", -- t[49] = 598504
+          "10010100101100000001" when "110010", -- t[50] = 609025
+          "10010111001110111110" when "110011", -- t[51] = 619454
+          "10011001110000011101" when "110100", -- t[52] = 629789
+          "10011100010000011110" when "110101", -- t[53] = 640030
+          "10011110101110111110" when "110110", -- t[54] = 650174
+          "10100001001011111100" when "110111", -- t[55] = 660220
+          "10100011100111010111" when "111000", -- t[56] = 670167
+          "10100110000001001101" when "111001", -- t[57] = 680013
+          "10101000011001011101" when "111010", -- t[58] = 689757
+          "10101010110000000101" when "111011", -- t[59] = 699397
+          "10101101000101000011" when "111100", -- t[60] = 708931
+          "10101111011000010111" when "111101", -- t[61] = 718359
+          "10110001101001111110" when "111110", -- t[62] = 727678
+          "10110011111001111000" when "111111", -- t[63] = 736888
+          "--------------------" when others;
+
+  r(19 downto 0) <= r0;
+  r(20 downto 20) <= (20 downto 20 => ('0'));
+end architecture;
+
+
+--------------------------------------------------------------------------------
+-- PowerAdHoc instance for order-1 powering unit.
+-- Decomposition:
+--   beta_1 = 10; mu_1 = 10; lambda_1 = 10.
+
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.std_logic_arith.all;
+use ieee.std_logic_unsigned.all;
+
+entity sin_16_16_1_t1_pow is
+  port ( x : in  std_logic_vector(8 downto 0);
+         r : out std_logic_vector(9 downto 0) );
+end entity;
+
+architecture arch of sin_16_16_1_t1_pow is
+  signal pp0 : std_logic_vector(8 downto 0);
+  signal r0 : std_logic_vector(8 downto 0);
+begin
+  pp0(8) <= x(8);
+
+  pp0(7) <= x(7);
+
+  pp0(6) <= x(6);
+
+  pp0(5) <= x(5);
+
+  pp0(4) <= x(4);
+
+  pp0(3) <= x(3);
+
+  pp0(2) <= x(2);
+
+  pp0(1) <= x(1);
+
+  pp0(0) <= x(0);
+
+  r0 <= pp0;
+  r <= "1" & r0(8 downto 0);
+end architecture;
+
+
+--------------------------------------------------------------------------------
+-- TermPowMult::Table instance for order-1 term Q_1.
+-- Decomposition:
+--   alpha_1,1 = 6; wO_1,1 = 13.
+
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.std_logic_arith.all;
+use ieee.std_logic_unsigned.all;
+
+entity sin_16_16_1_t1_t1 is
+  port ( a : in  std_logic_vector(5 downto 0);
+         r : out std_logic_vector(12 downto 0) );
+end entity;
+
+architecture arch of sin_16_16_1_t1_t1 is
+  signal x : std_logic_vector(5 downto 0);
+begin
+  x <= a;
+
+  with x select
+    r <= "1100100100010" when "000000", -- t[0] = 6434
+         "1100100100001" when "000001", -- t[1] = 6433
+         "1100100011111" when "000010", -- t[2] = 6431
+         "1100100011100" when "000011", -- t[3] = 6428
+         "1100100011000" when "000100", -- t[4] = 6424
+         "1100100010011" when "000101", -- t[5] = 6419
+         "1100100001101" when "000110", -- t[6] = 6413
+         "1100100000111" when "000111", -- t[7] = 6407
+         "1100011111111" when "001000", -- t[8] = 6399
+         "1100011110110" when "001001", -- t[9] = 6390
+         "1100011101101" when "001010", -- t[10] = 6381
+         "1100011100010" when "001011", -- t[11] = 6370
+         "1100011010110" when "001100", -- t[12] = 6358
+         "1100011001010" when "001101", -- t[13] = 6346
+         "1100010111100" when "001110", -- t[14] = 6332
+         "1100010101110" when "001111", -- t[15] = 6318
+         "1100010011111" when "010000", -- t[16] = 6303
+         "1100010001110" when "010001", -- t[17] = 6286
+         "1100001111101" when "010010", -- t[18] = 6269
+         "1100001101011" when "010011", -- t[19] = 6251
+         "1100001010111" when "010100", -- t[20] = 6231
+         "1100001000011" when "010101", -- t[21] = 6211
+         "1100000101110" when "010110", -- t[22] = 6190
+         "1100000011000" when "010111", -- t[23] = 6168
+         "1100000000001" when "011000", -- t[24] = 6145
+         "1011111101001" when "011001", -- t[25] = 6121
+         "1011111010001" when "011010", -- t[26] = 6097
+         "1011110110111" when "011011", -- t[27] = 6071
+         "1011110011100" when "011100", -- t[28] = 6044
+         "1011110000001" when "011101", -- t[29] = 6017
+         "1011101100101" when "011110", -- t[30] = 5989
+         "1011101000111" when "011111", -- t[31] = 5959
+         "1011100101001" when "100000", -- t[32] = 5929
+         "1011100001010" when "100001", -- t[33] = 5898
+         "1011011101010" when "100010", -- t[34] = 5866
+         "1011011001001" when "100011", -- t[35] = 5833
+         "1011010100111" when "100100", -- t[36] = 5799
+         "1011010000101" when "100101", -- t[37] = 5765
+         "1011001100001" when "100110", -- t[38] = 5729
+         "1011000111101" when "100111", -- t[39] = 5693
+         "1011000011000" when "101000", -- t[40] = 5656
+         "1010111110001" when "101001", -- t[41] = 5617
+         "1010111001011" when "101010", -- t[42] = 5579
+         "1010110100011" when "101011", -- t[43] = 5539
+         "1010101111010" when "101100", -- t[44] = 5498
+         "1010101010001" when "101101", -- t[45] = 5457
+         "1010100100111" when "101110", -- t[46] = 5415
+         "1010011111011" when "101111", -- t[47] = 5371
+         "1010011010000" when "110000", -- t[48] = 5328
+         "1010010100011" when "110001", -- t[49] = 5283
+         "1010001110101" when "110010", -- t[50] = 5237
+         "1010001000111" when "110011", -- t[51] = 5191
+         "1010000011000" when "110100", -- t[52] = 5144
+         "1001111101000" when "110101", -- t[53] = 5096
+         "1001110111000" when "110110", -- t[54] = 5048
+         "1001110000110" when "110111", -- t[55] = 4998
+         "1001101010100" when "111000", -- t[56] = 4948
+         "1001100100010" when "111001", -- t[57] = 4898
+         "1001011101110" when "111010", -- t[58] = 4846
+         "1001010111010" when "111011", -- t[59] = 4794
+         "1001010000101" when "111100", -- t[60] = 4741
+         "1001001001111" when "111101", -- t[61] = 4687
+         "1001000011000" when "111110", -- t[62] = 4632
+         "1000111100001" when "111111", -- t[63] = 4577
+         "-------------" when others;
+end architecture;
+
+
+--------------------------------------------------------------------------------
+-- TermPowMult instance for order-1 term.
+-- Decomposition:
+--   alpha_1 = 6; beta_1 = 10; lambda_1 = 10;  m_1 = 1;
+--   Pow   (AdHoc);
+--   Q_1,1 (Mult): alpha_1,1 = 6; rho_1,1 = 0; sigma_1,1 = 10; wO_1,1 = 13.
+
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.std_logic_arith.all;
+use ieee.std_logic_unsigned.all;
+
+entity sin_16_16_1_t1 is
+  port ( a : in  std_logic_vector(5 downto 0);
+         b : in  std_logic_vector(9 downto 0);
+         r : out std_logic_vector(20 downto 0) );
+end entity;
+
+architecture arch of sin_16_16_1_t1 is
+  signal sign   : std_logic;
+  signal b0     : std_logic_vector(8 downto 0);
+  signal s      : std_logic_vector(9 downto 0);
+  component sin_16_16_1_t1_pow is
+    port ( x : in  std_logic_vector(8 downto 0);
+           r : out std_logic_vector(9 downto 0) );
+  end component;
+
+  signal a_1    : std_logic_vector(5 downto 0);
+  signal sign_1 : std_logic;
+  signal s_1    : std_logic_vector(8 downto 0);
+  signal k_1    : std_logic_vector(12 downto 0);
+  signal r0_1   : std_logic_vector(22 downto 0);
+  signal r_1    : std_logic_vector(20 downto 0);
+  component sin_16_16_1_t1_t1 is
+    port ( a : in  std_logic_vector(5 downto 0);
+           r : out std_logic_vector(12 downto 0) );
+  end component;
+begin
+  sign <= not b(9);
+  b0 <= b(8 downto 0) xor (8 downto 0 => sign);
+
+  pow : sin_16_16_1_t1_pow
+    port map ( x => b0,
+               r => s );
+
+  a_1 <= a(5 downto 0);
+  sign_1 <= not s(9);
+  s_1 <= s(8 downto 0) xor (8 downto 0 => sign_1);
+  t_1 : sin_16_16_1_t1_t1
+    port map ( a => a_1,
+               r => k_1 );
+  r0_1 <= k_1 * (s_1 & "1");
+  r_1(12 downto 0) <=
+    r0_1(22 downto 10) xor (22 downto 10 => ((sign xor sign_1)));
+  r_1(20 downto 13) <= (20 downto 13 => ((sign xor sign_1)));
+
+  r <= r_1;
+end architecture;
+
+
+--------------------------------------------------------------------------------
+-- HOTBM main component.
+
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.std_logic_arith.all;
+use ieee.std_logic_unsigned.all;
+
+entity sin_16_16_1 is
+  port ( x : in  std_logic_vector(15 downto 0);
+         r : out std_logic_vector(16 downto 0) );
+end entity;
+
+architecture arch of sin_16_16_1 is
+  signal a_0 : std_logic_vector(5 downto 0);
+  signal r_0 : std_logic_vector(20 downto 0);
+  component sin_16_16_1_t0 is
+    port ( a : in  std_logic_vector(5 downto 0);
+           r : out std_logic_vector(20 downto 0) );
+  end component;
+
+  signal a_1 : std_logic_vector(5 downto 0);
+  signal b_1 : std_logic_vector(9 downto 0);
+  signal r_1 : std_logic_vector(20 downto 0);
+  component sin_16_16_1_t1 is
+    port ( a : in  std_logic_vector(5 downto 0);
+           b : in  std_logic_vector(9 downto 0);
+           r : out std_logic_vector(20 downto 0) );
+  end component;
+
+  signal sum : std_logic_vector(20 downto 0);
+begin
+  a_0 <= x(15 downto 10);
+  t_0 : sin_16_16_1_t0
+    port map ( a => a_0,
+               r => r_0 );
+
+  a_1 <= x(15 downto 10);
+  b_1 <= x(9 downto 0);
+  t_1 : sin_16_16_1_t1
+    port map ( a => a_1,
+               b => b_1,
+               r => r_1 );
+
+  sum <= r_0 + r_1;
+  r <= sum(20 downto 4);
+end architecture;

@@ -7,6 +7,21 @@
 Minimax::Minimax(Function &f, double ia, double ib, int d)
   : mpP(NULL)
 {
+	{
+		fprintf(stderr, "\n>>> Call to sollya: %s",
+			f.getName().c_str());
+		mpfr_t x;
+		mpfr_init(x);
+		mpfr_set_d(x, ia, GMP_RNDN);
+		mpfr_out_str(stderr, 10, 0, x, GMP_RNDN);
+		printf(" ");
+		mpfr_set_d(x, ib, GMP_RNDN);
+		mpfr_out_str(stderr, 10, 0, x, GMP_RNDN);
+		mpfr_clear(x);
+		fprintf(stderr, "\n");
+	}
+
+
   mp_prec_t oldPrec = mpfr_get_default_prec();
   mpfr_set_default_prec(80);
 
@@ -104,6 +119,22 @@ Minimax::Minimax(Function &f, double ia, double ib, int d)
     cerr << " ";
 
   mpfr_set_default_prec(oldPrec);
+
+	mpfr_t x;
+	mpfr_init(x);
+	fprintf(stderr, "Coef:");
+	int i;
+	for (i = 0; i <= d; i++)
+	{
+		mpP->getMPK(x, i);
+		fprintf(stderr," ");
+		mpfr_out_str(stderr, 10, 0, x, GMP_RNDZ);
+	}
+	fprintf(stderr, "\nErr: ");
+
+	mpfr_out_str(stderr, 10, 0, mpErr, GMP_RNDZ);
+	fprintf(stderr, "\n");
+
 }
 
 Minimax::~Minimax()

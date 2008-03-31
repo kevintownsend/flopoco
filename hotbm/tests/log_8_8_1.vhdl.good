@@ -1,0 +1,187 @@
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+-- HOTBM instance for function log2(1+x).
+-- wI = 8; wO = 8.
+-- Order-1 polynomial approximation.
+-- Decomposition:
+--   alpha = 5; beta = 3;
+--   T_0 (ROM):     alpha_0 = 5; beta_0 = 0;
+--   T_1 (ROM):     alpha_1 = 3; beta_1 = 3.
+-- Guard bits: g = 1.
+-- Command line: log 8 8 1   5   rom 5 0   rom 3 3
+
+
+--------------------------------------------------------------------------------
+-- TermROM instance for order-0 term.
+-- Decomposition:
+--   alpha_0 = 5; beta_0 = 0; wO_0 = 9.
+
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.std_logic_arith.all;
+use ieee.std_logic_unsigned.all;
+
+entity log_8_8_1_t0 is
+  port ( a : in  std_logic_vector(4 downto 0);
+         r : out std_logic_vector(9 downto 0) );
+end entity;
+
+architecture arch of log_8_8_1_t0 is
+  signal x0   : std_logic_vector(4 downto 0);
+  signal r0   : std_logic_vector(8 downto 0);
+begin
+  x0 <= a;
+
+  with x0 select
+    r0 <= "000001011" when "00000", -- t[0] = 11
+          "000100001" when "00001", -- t[1] = 33
+          "000110111" when "00010", -- t[2] = 55
+          "001001100" when "00011", -- t[3] = 76
+          "001100001" when "00100", -- t[4] = 97
+          "001110101" when "00101", -- t[5] = 117
+          "010001000" when "00110", -- t[6] = 136
+          "010011011" when "00111", -- t[7] = 155
+          "010101110" when "01000", -- t[8] = 174
+          "011000000" when "01001", -- t[9] = 192
+          "011010010" when "01010", -- t[10] = 210
+          "011100011" when "01011", -- t[11] = 227
+          "011110100" when "01100", -- t[12] = 244
+          "100000100" when "01101", -- t[13] = 260
+          "100010100" when "01110", -- t[14] = 276
+          "100100100" when "01111", -- t[15] = 292
+          "100110011" when "10000", -- t[16] = 307
+          "101000010" when "10001", -- t[17] = 322
+          "101010001" when "10010", -- t[18] = 337
+          "101100000" when "10011", -- t[19] = 352
+          "101101110" when "10100", -- t[20] = 366
+          "101111100" when "10101", -- t[21] = 380
+          "110001001" when "10110", -- t[22] = 393
+          "110010111" when "10111", -- t[23] = 407
+          "110100100" when "11000", -- t[24] = 420
+          "110110001" when "11001", -- t[25] = 433
+          "110111110" when "11010", -- t[26] = 446
+          "111001010" when "11011", -- t[27] = 458
+          "111010111" when "11100", -- t[28] = 471
+          "111100011" when "11101", -- t[29] = 483
+          "111101111" when "11110", -- t[30] = 495
+          "111111010" when "11111", -- t[31] = 506
+          "---------" when others;
+
+  r(8 downto 0) <= r0;
+  r(9 downto 9) <= (9 downto 9 => ('0'));
+end architecture;
+
+
+--------------------------------------------------------------------------------
+-- TermROM instance for order-1 term.
+-- Decomposition:
+--   alpha_1 = 3; beta_1 = 3 (1+2); wO_1 = 4.
+
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.std_logic_arith.all;
+use ieee.std_logic_unsigned.all;
+
+entity log_8_8_1_t1 is
+  port ( a : in  std_logic_vector(2 downto 0);
+         b : in  std_logic_vector(2 downto 0);
+         r : out std_logic_vector(9 downto 0) );
+end entity;
+
+architecture arch of log_8_8_1_t1 is
+  signal sign : std_logic;
+  signal b0   : std_logic_vector(1 downto 0);
+  signal x0   : std_logic_vector(4 downto 0);
+  signal r0   : std_logic_vector(3 downto 0);
+begin
+  sign <= not b(2);
+  b0 <= b(1 downto 0) xor (1 downto 0 => sign);
+  x0 <= a & b0;
+
+  with x0 select
+    r0 <= "0001" when "00000", -- t[0] = 1
+          "0100" when "00001", -- t[1] = 4
+          "0110" when "00010", -- t[2] = 6
+          "1001" when "00011", -- t[3] = 9
+          "0001" when "00100", -- t[4] = 1
+          "0011" when "00101", -- t[5] = 3
+          "0110" when "00110", -- t[6] = 6
+          "1000" when "00111", -- t[7] = 8
+          "0001" when "01000", -- t[8] = 1
+          "0011" when "01001", -- t[9] = 3
+          "0101" when "01010", -- t[10] = 5
+          "0111" when "01011", -- t[11] = 7
+          "0001" when "01100", -- t[12] = 1
+          "0011" when "01101", -- t[13] = 3
+          "0101" when "01110", -- t[14] = 5
+          "0111" when "01111", -- t[15] = 7
+          "0000" when "10000", -- t[16] = 0
+          "0010" when "10001", -- t[17] = 2
+          "0100" when "10010", -- t[18] = 4
+          "0110" when "10011", -- t[19] = 6
+          "0000" when "10100", -- t[20] = 0
+          "0010" when "10101", -- t[21] = 2
+          "0100" when "10110", -- t[22] = 4
+          "0101" when "10111", -- t[23] = 5
+          "0000" when "11000", -- t[24] = 0
+          "0010" when "11001", -- t[25] = 2
+          "0011" when "11010", -- t[26] = 3
+          "0101" when "11011", -- t[27] = 5
+          "0000" when "11100", -- t[28] = 0
+          "0010" when "11101", -- t[29] = 2
+          "0011" when "11110", -- t[30] = 3
+          "0101" when "11111", -- t[31] = 5
+          "----" when others;
+
+  r(3 downto 0) <= r0 xor (3 downto 0 => (sign));
+  r(9 downto 4) <= (9 downto 4 => (sign));
+end architecture;
+
+
+--------------------------------------------------------------------------------
+-- HOTBM main component.
+
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.std_logic_arith.all;
+use ieee.std_logic_unsigned.all;
+
+entity log_8_8_1 is
+  port ( x : in  std_logic_vector(7 downto 0);
+         r : out std_logic_vector(8 downto 0) );
+end entity;
+
+architecture arch of log_8_8_1 is
+  signal a_0 : std_logic_vector(4 downto 0);
+  signal r_0 : std_logic_vector(9 downto 0);
+  component log_8_8_1_t0 is
+    port ( a : in  std_logic_vector(4 downto 0);
+           r : out std_logic_vector(9 downto 0) );
+  end component;
+
+  signal a_1 : std_logic_vector(2 downto 0);
+  signal b_1 : std_logic_vector(2 downto 0);
+  signal r_1 : std_logic_vector(9 downto 0);
+  component log_8_8_1_t1 is
+    port ( a : in  std_logic_vector(2 downto 0);
+           b : in  std_logic_vector(2 downto 0);
+           r : out std_logic_vector(9 downto 0) );
+  end component;
+
+  signal sum : std_logic_vector(9 downto 0);
+begin
+  a_0 <= x(7 downto 3);
+  t_0 : log_8_8_1_t0
+    port map ( a => a_0,
+               r => r_0 );
+
+  a_1 <= x(7 downto 5);
+  b_1 <= x(2 downto 0);
+  t_1 : log_8_8_1_t1
+    port map ( a => a_1,
+               b => b_1,
+               r => r_1 );
+
+  sum <= r_0 + r_1;
+  r <= sum(9 downto 1);
+end architecture;
