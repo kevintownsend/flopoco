@@ -8,9 +8,7 @@ Pipeline framework, Operator and Targets:
 * manage a notion of cycle at the Opertor level?
 
 Tools:
-* fix fp2bin
-* add bin2fp
-* add longacc2fp
+* add NaN and infty handling in fp2bin bin2fp longacc2fp
 
 ConstMult:
 * pipeline IntConstMult then FPConstMult.

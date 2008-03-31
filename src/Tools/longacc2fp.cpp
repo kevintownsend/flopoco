@@ -34,8 +34,9 @@ using namespace std;
 
 
 static void usage(char *name){
-  cerr << "\nUsage: "<<name<<" wE wF x\n" ;
-  cerr << "  x is only a double at the moment, sorry";
+  cerr << endl << "Usage: "<<name<<" wE_in wF_in MaxMSB_in LSB_acc MSB_acc  x" << endl ;
+  cerr << "  x is a binary string of (MSB_acc-LSB_acc+1) bits in fixed-point format," << endl ;
+  cerr << "    this format being defined by MSB_acc and LSB_acc." << endl ;
   exit (EXIT_FAILURE);
 }
 
@@ -51,87 +52,66 @@ int check_strictly_positive(char* s, char* cmd) {
   return n;
 }
 
-
-
 int main(int argc, char* argv[] )
 {
-
-  if(argc != 4) usage(argv[0]);
+  if(argc != 7) usage(argv[0]);
   int wE = check_strictly_positive(argv[1], argv[0]);
   int wF = check_strictly_positive(argv[2], argv[0]);
+  int MaxMSBX = atoi(argv[3]);
+  int LSBA = atoi(argv[4]);
+  int MSBA = atoi(argv[5]);
+  int sizeAcc = MSBA-LSBA+1;
 
-  int sign;
-  int64_t exponent = 0;
-  uint64_t biased_exponent;
+  char* x = argv[6];
 
-  mpfr_t mpx, one, two;
-  mpfr_set_default_prec (1000); // "1000 bits of precision should be enough for anybody"
-  mpfr_init_set_str (mpx, argv[3], 10, GMP_RNDN);
-
-  if(mpfr_nan_p (mpx)) {
-    cout << "11";
-    for(int i=0; i<wE+wF+1; i++)
-      cout<< "0";
-    cout << endl;
-    return 0;
+  char *p=x;
+  int l=0;
+  while (*p){
+    if(*p!='0' && *p!='1') {
+      cout <<endl << *p <<endl;
+      cerr<<"ERROR: expecting a binary string, got "<<argv[6]<<endl;
+      usage(argv[0]);
+    }
+    p++; l++;
+  }
+  if(l != sizeAcc) {
+    cerr<<"ERROR: binary string of size "<< l <<", should be of size "<<sizeAcc<<endl;
+    usage(argv[0]);
   }
 
-  // TODO infinities
 
-  double x = atof(argv[3]);
-
-
-  sign = (x<0?1:0);
-
-  if(sign)
-    mpfr_neg(mpx, mpx, GMP_RNDN);
-
+  // significand
+  mpfr_t sig, one, two;
   mpfr_init2(one, 2);
-  mpfr_set_d(one, 1.0, GMP_RNDN);
   mpfr_init2(two, 2);
+  mpfr_set_d(one, 1.0, GMP_RNDN);
   mpfr_set_d(two, 2.0, GMP_RNDN);
 
-  while(mpfr_less_p(mpx,one)) {
-    mpfr_mul(mpx, mpx, two, GMP_RNDN);
-    exponent --;
-  }
-  while(mpfr_greaterequal_p(mpx, two)) {
-    mpfr_div(mpx, mpx, two, GMP_RNDN);
-    exponent ++;
-  }
+  mpfr_init2(sig, sizeAcc);
 
-  // add exponent bias
-  biased_exponent = exponent + (1<<(wE-1))-1;
-
-  //TODO check exponent is within range
-
-  //exn bits
-  if(x==0)
-    cout << "00";
+  // First bit decides sign in two's complement representation
+  if(x[0]=='1')
+    mpfr_set_d(sig, -1.0, GMP_RNDN); 
   else
-    cout << "01";
+    mpfr_set_d(sig, 0.0, GMP_RNDN);
 
-  // sign bit
-  cout << sign;
-
-  // exponent
-  printBinNum(cout, biased_exponent, wE);
-    
-  // significand
-  
-  mpfr_sub(mpx, mpx, one, GMP_RNDN);
-  for (int i=0; i<wF; i++) {
-    mpfr_mul(mpx, mpx, two, GMP_RNDN);
-    if(mpfr_greaterequal_p(mpx, one)) {
-      cout << "1";
-      mpfr_sub(mpx, mpx, one, GMP_RNDN);
+  p=x+1;
+  for (int i=1; i< sizeAcc; i++) {
+    mpfr_mul(sig, sig, two, GMP_RNDN);
+    if (*p=='1') {
+      mpfr_add(sig, sig, one, GMP_RNDN);
     }
-    else
-      {
-      cout << "0";
-    }
+    p++;
   }
-  cout<<endl;
+  // Now we have an int in sig. Scale it according to LSBA
+  mpfr_mul_2si (sig, sig, LSBA, GMP_RNDN);
 
+  // output on enough bits
+  mpfr_out_str (0, // std out
+		10, // base
+		0, // enough digits so that number may be read back
+		sig, 
+		GMP_RNDN);
+  cout << endl;
   return 0;
 }

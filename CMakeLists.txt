@@ -47,3 +47,8 @@ TARGET_LINK_LIBRARIES(flopoco  mpfr gmp gmpxx)
 ADD_EXECUTABLE(fp2bin src/Tools/fp2bin  src/utils)
 TARGET_LINK_LIBRARIES(fp2bin  mpfr gmp gmpxx)
 
+ADD_EXECUTABLE(bin2fp src/Tools/bin2fp  src/utils)
+TARGET_LINK_LIBRARIES(bin2fp  mpfr gmp gmpxx)
+
+ADD_EXECUTABLE(longacc2fp src/Tools/longacc2fp  src/utils)
+TARGET_LINK_LIBRARIES(longacc2fp  mpfr gmp gmpxx)
