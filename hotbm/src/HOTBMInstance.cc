@@ -349,9 +349,8 @@ void HOTBMInstance::computeApprox()
     approxCache[paramKey] = tApprox(kList, tApproxError(errPoly, errBound[0]));
   }
 
-  //if (verbose)
+  if (verbose)
     cerr << "Minimax error (errPoly): " << errBound[0] << " " << errBound[1] << endl;
-  cerr << "errbound: " << errBound[0] << " " << E(-p.wO-1) << endl;
   if (errBound[0] >= E(-p.wO-1))
     throw "HOTBMInstance::computeApprox: Minimax error is too large for required precision.";
 }
