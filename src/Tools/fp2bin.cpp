@@ -65,8 +65,9 @@ int main(int argc, char* argv[] )
   uint64_t biased_exponent;
 
   mpfr_t mpx, one, two;
-  mpfr_set_default_prec (1000); // "1000 bits of precision should be enough for anybody"
-  mpfr_init_set_str (mpx, argv[3], 10, GMP_RNDN);
+
+  mpfr_init2 (mpx, wF+1);
+  mpfr_set_str (mpx, argv[3], 10, GMP_RNDN);
 
   if(mpfr_nan_p (mpx)) {
     cout << "11";
