@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML Basic 1.0//EN"
+      "http://www.w3.org/TR/xhtml-basic/xhtml-basic10.dtd">
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=iso-8859-1" />
+  <title>FloPoCo user manual</title>
+  <meta name="generator" content="Amaya 9.54, see http://www.w3.org/Amaya/" />
+</head>
+
+<body>
+<h1>FloPoCo user manual</h1>
+
+
+<h2>Installation</h2>
+
+<p>FloPoCo depends on the MPFR library, available from <a
+href="http://www.mpfr.org">http://www.mpfr.org</a> and probably available in
+your favourite Linux/Unix distribution. To compile it you also need CMake (<a
+href="http://www.cmake.org/">http://www.cmake.org/</a>) which also comes
+prepackaged for mainstream Linux/Unix distributions.</p>
+
+<p>Compilation is a two-step process:</p>
+
+<p><code>cmake .</code></p>
+
+<p><code>make</code></p>
+
+<p>The adventurous may get FloPoCo from its <a
+href="https://gforge.inria.fr/scm/?group_id=1030">subversion
+repository</a>.</p>
+
+<h2>Command-line interface</h2>
+
+<p>FloPoCo is a command-line tool. The general syntax is</p>
+
+<p><code>flopoco &lt;options&gt; &lt;operator specification
+list&gt;</code></p>
+
+<p>FloPoCo will generate a single VHDL file (named by default
+<code>flopoco.vhdl</code>) containing synthesisable descriptions of all the
+operators listed in <code>&lt;operator specification list&gt;</code>, plus
+possibly sub-operators instanciated by them. To use these operators in your
+design, just add this generated file to your project.</p>
+
+<h3>Examples</h3>
+
+<p><code>./flopoco IntConstMult 16 12345</code></p>
+
+<p>produces a file <code>flopoco.vhdl</code> containing a single operator for
+the integer multiplication of an input 16-bit number by the constant 12345.
+The VHDL entity is named after the operator specification, here
+<code>IntConstMult_16_12345</code>.</p>
+
+<p><code>./flopoco IntConstMult 16 12345 IntConstMult 16 54321</code></p>
+
+<p>produces a file <code>flopoco.vhdl</code> containing two VHDL entities and
+their architectures, for the two given constant multipliers. </p>
+
+<p><code>./flopoco FPConstMult 8 23 8 23 0 -50 1768559438007110</code></p>
+
+<p>produces a file flopoco.vhdl containing two VHDL entities, one for the
+specified constant floating-point multiplier by 1768559438007110.2-50, and
+the other one for a needed sub-component (an integer multiplier for the
+significand multiplication).</p>
+
+<h3>Options</h3>
+
+<p>Several options are available and will typically change the operators
+occuring after them in the list. For instance <code>-frequency=300</code>
+sets the target frequency.</p>
+
+<h3>Built-in help</h3>
+
+<p>To obtain a concise list of the available operators and options, simply
+type</p>
+
+<p><code>./flopoco </code></p>
+
+<p>In addition this help may be more in sync with the code than this file,
+especially if you are using a svn snpashot.</p>
+
+<h3>Helper programs</h3>
+
+<p>The FloPoCo distributions also includes useful programs for converting the
+binary string of a floating-point number to human-readable form
+(<code>bin2fp</code>) and back (<code>fp2bin</code>). The
+<code>longacc2fp</code> utility converts the fixed-point output of the
+LongAcc operator (see below) to human-readable form.</p>
+
+<p></p>
+
+<h2>Available operators</h2>
+
+<p>This list may not be fully up-to date... the code is the reference.</p>
+
+<h3>Useful building blocks for FP operators</h3>
+
+<p>The following operators are available.</p>
+<dl>
+  <dt><code>LeftShifter wIn MaxShift</code> </dt>
+    <dd>Left barrel shifter. It has two inputs, the data to shift and a shift
+      value. The width of the latter is deduced from MaxShift, which is the
+      maximum shift distance. This operator will be pipelined to match target
+      frequency.</dd>
+  <dt><code>RightShifter wIn MaxShift</code> </dt>
+    <dd>Same, but to the right.</dd>
+  <dt><code>LZOC wIn wOut</code></dt>
+    <dd>Leading Zero/One Counter (mostly untested).</dd>
+</dl>
+
+<h3>Pipelined integer standard operators</h3>
+<dl>
+  <dt><code>IntAdder wIn</code></dt>
+    <dd>Integer adder. In modern VHDL, integer addition is expressed by a +
+      and one usually needn't define an entity for it. However, this operator
+      will be pipelined if the addition is too large to be performed at the
+      target frequency. Works pretty well on Virtex4.</dd>
+  <dt><code>IntMultiplier wInX wInY</code></dt>
+    <dd>Same for multiplication, although the frequency attainable will be
+      limited by the DSP blocks available. wInX and wInY are the input widths
+      of both operands. This is an unsigned operation.</dd>
+    <dd></dd>
+</dl>
+
+<h3>Classical floating-point operators</h3>
+<dl>
+  <dt><code>FPMultiplier wEX wFX wEY wFY wER wFR</code></dt>
+    <dd>A floating-point multiplier, with pepper: it may multiply number of
+      different precisions, and provide you with the correct rounding to
+      arbitrary precision -- including an exact result if wFR is larger than
+      wFX+wFY+1.</dd>
+</dl>
+
+<h3>Long fixed-point accumulator</h3>
+<dl>
+  <dt><code>LongAcc wE_in wF_in MaxMSB_in LSB_acc MSB_acc</code></dt>
+    <dd>This operator is described in all the gory details in <a
+      href="http://prunel.ccsd.cnrs.fr/ensl-00268348/">this article</a>.</dd>
+</dl>
+
+<h3>Constant multipliers</h3>
+
+<p>This family of operators is described in all the gory details in <a
+href="TODO">this article</a>.</p>
+<dl>
+  <dt><code>IntConstMult w c</code></dt>
+    <dd>integer constant multiplier: w is input size, c is the constant.</dd>
+  <dt><code>FPConstMult wE_in wF_in wE_out wF_out cst_sgn cst_exp
+  cst_int_sig</code></dt>
+    <dd>floating-point constant multiplier. The constant is provided as sign,
+      integral significand and integral exponent.</dd>
+</dl>
+
+<h3>Miscellanous</h3>
+<dl>
+  <dt><code>Wrapper entity_name</code></dt>
+    <dd>Produce a wrapper named entity_name for the preceding operator
+      (useful to get synthesis results without having the operator optimised
+      out)</dd>
+</dl>
+</body>
+</html>
