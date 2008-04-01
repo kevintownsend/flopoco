@@ -89,9 +89,11 @@ Shifter::Shifter(Target* target, int wIn, int maxShift, ShiftDirection direction
 	level_registered[i+1] = false;
       }
     }
-    // register the last level
-    level_registered[wShiftIn] = true;
-    increment_pipeline_depth();
+    // register the last level anyway
+    if(!level_registered[wShiftIn]) {
+      level_registered[wShiftIn] = true;
+      increment_pipeline_depth();
+    }
   }
 
   // Set up the intermediate signals 

@@ -76,6 +76,10 @@ LongAcc::LongAcc(Target* target, int wEX, int wFX, int MaxMSBX, int LSBA, int MS
   shifter = new Shifter(target, wFX+1, maxShift, Left);
   oplist.push_back(shifter);
 
+  if(verbose)
+    cout << "   Shifter pipeline depth is "<<shifter->pipeline_depth()<<endl;
+
+
   add_FP_input ("X", wEX,wFX);
   add_output ("A", sizeAcc);  
   //  add_output ("XOverflow");  
@@ -112,8 +116,8 @@ LongAcc::LongAcc(Target* target, int wEX, int wFX, int MaxMSBX, int LSBA, int MS
   add_delay_signal("exnX", 2, pipeline_depth());
   add_delay_signal("signX", 1, pipeline_depth());
 
-  add_registered_signal_with_reset("ext_summand2c", sizeAcc);
-  add_registered_signal_with_reset("acc", sizeAcc); //,  "includes overflow bit");
+  add_registered_signal_with_sync_reset("ext_summand2c", sizeAcc);
+  add_registered_signal_with_sync_reset("acc", sizeAcc); //,  "includes overflow bit");
 
   if(verbose)
     cout << tab <<unique_name<< " pipeline depth is " << pipeline_depth() << " cycles" <<endl;

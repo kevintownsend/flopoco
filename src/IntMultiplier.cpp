@@ -114,7 +114,7 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
          for (j=1;j<=partsX;j++){
       		name.str("");;
       		name <<"Y_"<<i<<"_X_"<<j;
-      		add_registered_signal_with_synch_reset(name.str(), 2 * multiplier_width);	
+      		add_registered_signal_with_sync_reset(name.str(), 2 * multiplier_width);	
       	}	 
 
       //declare the high/low parts decomposition signals
@@ -141,7 +141,7 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
          for (i=1;i<=partsY;i++)	{
              name.str("");;
              name<<"Buffer_H_"<<i;
-             add_registered_signal_with_synch_reset(name.str(), partsX * multiplier_width);	
+             add_registered_signal_with_sync_reset(name.str(), partsX * multiplier_width);	
          }
          
          //for the low and high tree
@@ -150,12 +150,12 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
                nameH.str("");; nameL.str("");;
                nameL <<"L_Level_"<<j<<"_Reg_"<<i;	
                nameH <<"H_Level_"<<j<<"_Reg_"<<i;	
-               add_registered_signal_with_synch_reset(nameL.str(), partsX * multiplier_width);	
-               add_registered_signal_with_synch_reset(nameH.str(), partsX * multiplier_width);	
+               add_registered_signal_with_sync_reset(nameL.str(), partsX * multiplier_width);	
+               add_registered_signal_with_sync_reset(nameH.str(), partsX * multiplier_width);	
             }	
 
          //one more registers for the Low part for synchronization 
-         add_registered_signal_with_synch_reset("Low1", partsX * multiplier_width);	
+         add_registered_signal_with_sync_reset("Low1", partsX * multiplier_width);	
       		
          //one more signal for the high part
          add_signal("High1", partsX * multiplier_width);	
@@ -166,20 +166,20 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
       		for (i=1;i<=j;i++){	
       	      name.str("");;
       	      name<<"PartialBits_Level_"<<j<<"_Reg_"<<i;
-      	      add_registered_signal_with_synch_reset(name.str(), multiplier_width + 1 );	
+      	      add_registered_signal_with_sync_reset(name.str(), multiplier_width + 1 );	
           }
 
          for (j=1; j<=partsX;j++)	
             for (i=1;i<=partsX;i++){	
                name.str("");;
                name<<"Last_Addition_Level_"<<j<<"_Reg_"<<i;
-               add_registered_signal_with_synch_reset(name.str(), multiplier_width + 1 );	
+               add_registered_signal_with_sync_reset(name.str(), multiplier_width + 1 );	
          }       
 
          for (j=1; j<=partsX;j++){	    
             name.str("");;
             name<<"PartialBits_Reg_"<<j;
-            add_registered_signal_with_synch_reset(name.str(), partsY*multiplier_width);	
+            add_registered_signal_with_sync_reset(name.str(), partsY*multiplier_width);	
          }       
       	
          add_signal("temp_result",  partsX * multiplier_width );

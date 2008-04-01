@@ -132,39 +132,39 @@ FPMultiplier::FPMultiplier(Target* target, int wEX, int wFX, int wEY, int wFY, i
       
       if (normalized){
          if (!(1+wFR >= wFX+wFY+2)) {
-            add_registered_signal_with_synch_reset("middle_output",1);
-            add_registered_signal_with_synch_reset("exponent_synch2",wEX);
-			   add_registered_signal_with_synch_reset("exception_synch2",2);
-		      add_registered_signal_with_synch_reset("significand_synch2",wFX + wFY + 2);
-   		   add_registered_signal_with_synch_reset("sign_synch2",1);
-   		   add_registered_signal_with_synch_reset("mult_selector2",1);
+            add_registered_signal_with_sync_reset("middle_output",1);
+            add_registered_signal_with_sync_reset("exponent_synch2",wEX);
+			   add_registered_signal_with_sync_reset("exception_synch2",2);
+		      add_registered_signal_with_sync_reset("significand_synch2",wFX + wFY + 2);
+   		   add_registered_signal_with_sync_reset("sign_synch2",1);
+   		   add_registered_signal_with_sync_reset("mult_selector2",1);
          }  
       }
 
-      add_registered_signal_with_synch_reset("Exponents_Sum", wEX+1 );
-      add_registered_signal_with_synch_reset("Exponents_Sum_Minus_Bias", wEX );
+      add_registered_signal_with_sync_reset("Exponents_Sum", wEX+1 );
+      add_registered_signal_with_sync_reset("Exponents_Sum_Minus_Bias", wEX );
 
       //registers for the case when the integer multiplication requires 
       //more than two pipeline levels
       for (i=0;i<=IntMultPipelineDepth-3;i++)	{
          synch.str(""); synch2.str("");
          synch<<"Exponent_Synchronization_"<<i;
-         add_registered_signal_with_synch_reset(synch.str(), wEX );
+         add_registered_signal_with_sync_reset(synch.str(), wEX );
          synch2<<"Exception_Synchronization_"<<i;
-         add_registered_signal_with_synch_reset(synch2.str(), 2 );	
+         add_registered_signal_with_sync_reset(synch2.str(), 2 );	
       }
 
       //registers for the case when the int mult has less than two levels
       for (i=0;i<=1-IntMultPipelineDepth;i++)	{
          synch.str("");
          synch<<"Int_Synchronization_"<<i;
-         add_registered_signal_with_synch_reset(synch.str(), wFX+wFY+2);		
+         add_registered_signal_with_sync_reset(synch.str(), wFX+wFY+2);		
       }	
 
-      add_delay_signal("Sign_Synchronization", 1, max(2,IntMultPipelineDepth));
+      add_delay_signal("Sign_Syncronization", 1, max(2,IntMultPipelineDepth));
 
-      add_registered_signal_with_synch_reset("Result_Exception",2); 
-      add_registered_signal_with_synch_reset("Result_Exception_With_EA",2);
+      add_registered_signal_with_sync_reset("Result_Exception",2); 
+      add_registered_signal_with_sync_reset("Result_Exception_With_EA",2);
       // =======================================================================
    }//end if sequential
    else

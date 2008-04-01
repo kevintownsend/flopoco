@@ -26,6 +26,9 @@ FPMultiplier:
 SumOfProducts
 * to write completely
 
+Shifters
+* provide finer spec, see the TODOs inside Shifter.cpp
+
 
 Tentative roadmap:
 

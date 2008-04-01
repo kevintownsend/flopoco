@@ -410,5 +410,9 @@ int main(int argc, char* argv[] )
   }
   file.close();
   
+  cout << endl<<"Final report:"<<endl;
+  for(int i=0; i<oplist.size(); i++) {
+    oplist[i]->output_final_report();
+  }
   return 0;
 }
