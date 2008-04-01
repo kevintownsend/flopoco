@@ -89,18 +89,19 @@ FPMultiplier::FPMultiplier(Target* target, int wEX, int wFX, int wEY, int wFY, i
   
    // Unregistered signals
    //===========================================================================  
-   if (normalized)  {
+   if ((normalized)||!(is_sequential()) ) {
+      if (!(1+wFR >= wFX+wFY+2)) {
+         add_signal("check_string",wFX+wFY+2 - (1+wFR) );
+         add_signal("reunion_signal_p",2+wEX+wFR);   
+         add_signal("reunion_signal",2+wEX+wFR);
+         add_signal("significand_synch_tb2",1); 
+         add_signal("middle_signal",2+wEX+wFR);
+         add_signal("reunion_signal_p_upd",2+wEX+wFR); 
+      }
       add_signal("mult_selector",1);
       add_signal("exponent_p",1+wEX);
       add_signal("exception_upd",2);
-      add_signal("check_string",wFX+wFY+2 - (1+wFR) );
-      add_signal("reunion_signal",2+wEX+wFR);
-      add_signal("significand_synch_tb2",1); 
-      add_signal("reunion_signal_p",2+wEX+wFR);  
-      add_signal("middle_signal",2+wEX+wFR);
-      add_signal("reunion_signal_p_upd",2+wEX+wFR);
    }	
-
    add_signal("significandX", wFX+1);   //The Significands for the input signals X and Y
    add_signal("significandY", wFY+1);
    add_signal("significand_multiplication", wFX +wFY +2);   
@@ -112,7 +113,6 @@ FPMultiplier::FPMultiplier(Target* target, int wEX, int wFX, int wEY, int wFY, i
    
    add_signal("exception_selector",4);//signal that selects the case for the exception
   
-
    if (is_sequential())  {
   
       // Unregistered signals
@@ -121,45 +121,50 @@ FPMultiplier::FPMultiplier(Target* target, int wEX, int wFX, int wEY, int wFY, i
       add_signal("significand_synch", wFX + wFY + 2); 
       add_signal("sign_synch", 1); 
       add_signal("exception_synch",2);
-      add_signal("temp_exp_concat_fract", 1 + wEX + wFX + wFY + 2);
-  
+      
+       if (!normalized)
+         {
+            add_signal("temp_exp_concat_fract", 1 + wEX + wFX + wFY + 2);
+         }
   
       // Registered Signals
       //========================================================================
       
-      if (normalized){ 
-         add_registered_signal_with_reset("middle_output",1);
-         add_registered_signal_with_reset("exponent_synch2",wEX);
-			add_registered_signal_with_reset("exception_synch2",2);
-		   add_registered_signal_with_reset("significand_synch2",wFX + wFY + 2);
-   		add_registered_signal_with_reset("sign_synch2",1);
-   		add_registered_signal_with_reset("mult_selector2",1);
+      if (normalized){
+         if (!(1+wFR >= wFX+wFY+2)) {
+            add_registered_signal_with_synch_reset("middle_output",1);
+            add_registered_signal_with_synch_reset("exponent_synch2",wEX);
+			   add_registered_signal_with_synch_reset("exception_synch2",2);
+		      add_registered_signal_with_synch_reset("significand_synch2",wFX + wFY + 2);
+   		   add_registered_signal_with_synch_reset("sign_synch2",1);
+   		   add_registered_signal_with_synch_reset("mult_selector2",1);
+         }  
       }
 
-      add_registered_signal_with_reset("Exponents_Sum", wEX+1 );
-      add_registered_signal_with_reset("Exponents_Sum_Minus_Bias", wEX );
+      add_registered_signal_with_synch_reset("Exponents_Sum", wEX+1 );
+      add_registered_signal_with_synch_reset("Exponents_Sum_Minus_Bias", wEX );
 
       //registers for the case when the integer multiplication requires 
       //more than two pipeline levels
       for (i=0;i<=IntMultPipelineDepth-3;i++)	{
          synch.str(""); synch2.str("");
          synch<<"Exponent_Synchronization_"<<i;
-         add_registered_signal_with_reset(synch.str(), wEX );
+         add_registered_signal_with_synch_reset(synch.str(), wEX );
          synch2<<"Exception_Synchronization_"<<i;
-         add_registered_signal_with_reset(synch2.str(), 2 );	
+         add_registered_signal_with_synch_reset(synch2.str(), 2 );	
       }
 
       //registers for the case when the int mult has less than two levels
       for (i=0;i<=1-IntMultPipelineDepth;i++)	{
          synch.str("");
          synch<<"Int_Synchronization_"<<i;
-         add_registered_signal_with_reset(synch.str(), wFX+wFY+2);		
+         add_registered_signal_with_synch_reset(synch.str(), wFX+wFY+2);		
       }	
 
       add_delay_signal("Sign_Synchronization", 1, max(2,IntMultPipelineDepth));
 
-      add_registered_signal_with_reset("Result_Exception",2); 
-      add_registered_signal_with_reset("Result_Exception_With_EA",2);
+      add_registered_signal_with_synch_reset("Result_Exception",2); 
+      add_registered_signal_with_synch_reset("Result_Exception_With_EA",2);
       // =======================================================================
    }//end if sequential
    else
@@ -171,13 +176,23 @@ FPMultiplier::FPMultiplier(Target* target, int wEX, int wFX, int wEY, int wFY, i
       add_signal("Result_Exception",2); 
       add_signal("Result_Exception_With_EA",2);
    }
+
+   //set pipeline depth 
+   if (!is_sequential())
+      set_pipeline_depth(0);
+   else
+      if (normalized)
+         if (1+wFR >= wFX+wFY+2)   
+            set_pipeline_depth(max(2,IntMultPipelineDepth));
+         else
+            set_pipeline_depth(1 + max(2,IntMultPipelineDepth));
+      else
+         set_pipeline_depth(max(2,IntMultPipelineDepth));
 }
 
 
 FPMultiplier::~FPMultiplier() {
 }
-
-
 
 
 void FPMultiplier::output_vhdl(std::ostream& o, std::string name) {
@@ -305,97 +320,90 @@ void FPMultiplier::output_vhdl(std::ostream& o, std::string name) {
 	   for (i=0; i<max(2,IntMultPipelineDepth); i++)
          xname << "_d";
 	   o<<tab<<"sign_synch <= "<<xname.str()<<";"<<endl<<endl;
-
-      
-      
            
       if (normalized==true){	
-		   
 		   //normalize result
-		      //assign selector signal to MSB of signif. multiplic 
-		      o<<tab<<"mult_selector <= significand_synch ("<<wFX+wFY+1<<");"<<endl;
-   		   
-   		   o<<tab<<"exponent_p <= (\"0\" & exponent_synch ) + (CONV_STD_LOGIC_VECTOR(0 ,"<<wEX<<") & mult_selector);"<<endl;
-   		   
-   		   //signal the exception
-   		   o<<tab<<"exception_upd <= exception_synch when exponent_p("<<wEX<<")='0' else"<<endl;
-   		   o<<tab<<"                \"11\";"<<endl;
+	      //assign selector signal to MSB of signif. multiplic 
+	      o<<tab<<"mult_selector <= significand_synch ("<<wFX+wFY+1<<");"<<endl;
 		   
-		   //round result
-		      //check is rounding is needed
-		      if (1+wFR >= wFX+wFY+2) {
-		         //=>no rounding needed - eventual padding
-		         //generate zeros of length 1+wFR - wFX+wFY+2 
-		         zeros1.str("");
-		         zeros1 << zero_generator(1+wFR - wFX+wFY+2 , 0);
-		         
-		         //make the outputs
-		          o<<tab<<"ResultExponent <= exponent_p("<<wEX - 1<<" downto 0);"<<endl;  
-                o<<tab<<"ResultSignificand <= significand_synch & "<<zeros1.str()<<" when mult_selector='1' else"<<endl;
-                o<<tab<<"                     significand_synch("<<wFX+wFY<<" downto 0) & "<<zeros1.str()<<" & \"0\";"<<endl;
-                o<<tab<<"ResultException <= exception_upd;"<<endl;
-                o<<tab<<"ResultSign <= sign_synch;"<<endl;
-		         
-		      }
-		      else{
-   		      //check if in the middle of two FP numbers
-   		      //generate two xor strings
-   		      str1.str(""); str2.str(""); //init
-   		      str1<<"\"1"<< zero_generator( wFX+wFY+2 - (1+wFR) -1, 1);
-   		      str2<<"\"01"<< zero_generator( wFX+wFY+2 - (1+wFR) -1-1, 1);
-   		      
-   		      
-   		      zeros1.str("");
-   		      zeros1<< zero_generator( wFX+wFY+2 - (1+wFR) , 0);
-   		      
-   		      o<<tab<<"check_string <= (significand_synch ("<< wFX+wFY+2 - (1+wFR) -1<<" downto 0) xor "<<str1.str()<<") when mult_selector='1' else"<<endl;
-   		      o<<tab<<"               ( (\"0\" & significand_synch ("<< wFX+wFY+2 - (1+wFR) -1-1<<" downto 0)) xor "<<str2.str()<<");"<<endl;
-   		      
-   		      o<<tab<<"process(clk)"<<endl;
-               o<<tab<<"begin"<<endl;
-               o<<tab<<tab<<"   if (clk'event and clk='1') then "<<endl;  
-               o<<tab<<tab<<"      if ( "<<zeros1.str()<<" = check_string ) then"<<endl; 
-               o<<tab<<tab<<"         middle_output <= '1';"<<endl;
-               o<<tab<<tab<<"      else "<<endl;
-               o<<tab<<tab<<"         middle_output <= '0';"<<endl;
-               o<<tab<<tab<<"      end if;"<<endl;
-               o<<tab<<tab<<"   end if; "<<endl;
-               o<<tab<<tab<<"end process; "<<endl;
-   		      
-   		      //propagate rest of signals 1 level
-   		      o<<tab<<"exponent_synch2 <= exponent_p("<<wEX-1<<" downto 0);"<<endl;
-				   o<<tab<<"exception_synch2 <= exception_upd;"<<endl;
-				   o<<tab<<"significand_synch2 <= significand_synch;"<<endl;
-   		      o<<tab<<"sign_synch2 <= sign_synch;"<<endl;
-   		      o<<tab<<"mult_selector2 <= mult_selector;"<<endl;
-   		      
-   		      o<<tab<<"reunion_signal <= (\"0\" & exponent_synch2_d & significand_synch2_d("<< wFX+wFY<<" downto "<<wFX+wFY - (wFR) <<" )) when mult_selector2_d='1' else"<<endl;
-   		      o<<tab<<"                 (\"0\" & exponent_synch2_d & significand_synch2_d("<< wFX+wFY-1<<" downto "<<wFX+wFY - (wFR) -1<<" ));"<<endl; 
-   		     
-                              
-               o<<tab<<"significand_synch_tb2 <= significand_synch2_d("<< wFX+wFY+1 - wFR<<" ) when mult_selector2_d='1' else"<<endl;
-               o<<tab<<"                        significand_synch2_d("<< wFX+wFY+1 - wFR -1<<" );"<<endl;              
-                  		     
-               o<<tab<<"reunion_signal_p <= reunion_signal + CONV_STD_LOGIC_VECTOR(1, "<< 2+ wEX + wFR<<");"<<endl;
-                  		     
-               o<<tab<<"middle_signal <= reunion_signal_p when significand_synch_tb2 = '1' else"<<endl;
-               o<<tab<<"                reunion_signal;"<<endl;    		     
-                  		     
-               o<<tab<<"reunion_signal_p_upd <= reunion_signal_p when middle_output_d='0' else"<<endl;
-   		      o<<tab<<"                       middle_signal;"<<endl;
-   		                             
-   		      //update exception                       
-   		      o<<tab<<"ResultException <= exception_synch2 when reunion_signal_p_upd("<<wEX + wFR+1<<")='0' else"<<endl;
-   		      o<<tab<<"                   \"11\";"<<endl;                                                   
-   		      
-   		      o<<tab<<"ResultExponent <= reunion_signal_p_upd("<<wEX + wFR<<" downto "<<wFR+1<<");"<<endl;  
-               o<<tab<<"ResultSignificand <= \"1\" & reunion_signal_p_upd("<<wFR<<" downto 1);"<<endl;
-               o<<tab<<"ResultSign <= sign_synch2_d;"<<endl;
-		         
-		      }
+		   o<<tab<<"exponent_p <= (\"0\" & exponent_synch ) + (CONV_STD_LOGIC_VECTOR(0 ,"<<wEX<<") & mult_selector);"<<endl;
+		   
+		   //signal the exception
+		   o<<tab<<"exception_upd <= exception_synch when exponent_p("<<wEX<<")='0' else"<<endl;
+		   o<<tab<<"                \"11\";"<<endl;
+	   
+	      //round result
+	      //check is rounding is needed
+	      if (1+wFR >= wFX+wFY+2) {
+	         //=>no rounding needed - eventual padding
+	         //generate zeros of length 1+wFR - wFX+wFY+2 
+	         zeros1.str("");
+	         zeros1 << zero_generator(1+wFR - (wFX+wFY+2) , 0);
+	         cout<<endl<<"zeros="<<zeros1.str()<<"w"<<endl;
+	         //make the outputs
+	          o<<tab<<"ResultExponent <= exponent_p("<<wEX - 1<<" downto 0);"<<endl;  
+               o<<tab<<"ResultSignificand <= significand_synch & "<<zeros1.str()<<" when mult_selector='1' else"<<endl;
+               o<<tab<<"                     significand_synch("<<wFX+wFY<<" downto 0) & "<<zeros1.str()<<" & \"0\";"<<endl;
+               o<<tab<<"ResultException <= exception_upd;"<<endl;
+               o<<tab<<"ResultSign <= sign_synch;"<<endl;
+	         
+	      }
+	      else{
+		      //check if in the middle of two FP numbers
+		      //generate two xor strings
+		      str1.str(""); str2.str(""); //init
+		      str1<<"\"1"<< zero_generator( wFX+wFY+2 - (1+wFR) -1, 1);
+		      str2<<"\"01"<< zero_generator( wFX+wFY+2 - (1+wFR) -1-1, 1);
+		      
+		      zeros1.str("");
+		      zeros1<< zero_generator( wFX+wFY+2 - (1+wFR) , 0);
+		      
+		      o<<tab<<"check_string <= (significand_synch ("<< wFX+wFY+2 - (1+wFR) -1<<" downto 0) xor "<<str1.str()<<") when mult_selector='1' else"<<endl;
+		      o<<tab<<"               ( (\"0\" & significand_synch ("<< wFX+wFY+2 - (1+wFR) -1-1<<" downto 0)) xor "<<str2.str()<<");"<<endl;
+		      
+		      o<<tab<<"process(clk)"<<endl;
+            o<<tab<<"begin"<<endl;
+            o<<tab<<tab<<"   if (clk'event and clk='1') then "<<endl;  
+            o<<tab<<tab<<"      if ( "<<zeros1.str()<<" = check_string ) then"<<endl; 
+            o<<tab<<tab<<"         middle_output <= '1';"<<endl;
+            o<<tab<<tab<<"      else "<<endl;
+            o<<tab<<tab<<"         middle_output <= '0';"<<endl;
+            o<<tab<<tab<<"      end if;"<<endl;
+            o<<tab<<tab<<"   end if; "<<endl;
+            o<<tab<<tab<<"end process; "<<endl;
+		      
+		      //propagate rest of signals 1 level
+		      o<<tab<<"exponent_synch2 <= exponent_p("<<wEX-1<<" downto 0);"<<endl;
+			   o<<tab<<"exception_synch2 <= exception_upd;"<<endl;
+			   o<<tab<<"significand_synch2 <= significand_synch;"<<endl;
+		      o<<tab<<"sign_synch2 <= sign_synch;"<<endl;
+		      o<<tab<<"mult_selector2 <= mult_selector;"<<endl;
+		      
+		      o<<tab<<"reunion_signal <= (\"0\" & exponent_synch2_d & significand_synch2_d("<< wFX+wFY<<" downto "<<wFX+wFY - (wFR) <<" )) when mult_selector2_d='1' else"<<endl;
+		      o<<tab<<"                 (\"0\" & exponent_synch2_d & significand_synch2_d("<< wFX+wFY-1<<" downto "<<wFX+wFY - (wFR) -1<<" ));"<<endl; 
 		     
+                           
+            o<<tab<<"significand_synch_tb2 <= significand_synch2_d("<< wFX+wFY+1 - wFR<<" ) when mult_selector2_d='1' else"<<endl;
+            o<<tab<<"                        significand_synch2_d("<< wFX+wFY+1 - wFR -1<<" );"<<endl;              
+               		     
+            o<<tab<<"reunion_signal_p <= reunion_signal + CONV_STD_LOGIC_VECTOR(1, "<< 2+ wEX + wFR<<");"<<endl;
+               		     
+            o<<tab<<"middle_signal <= reunion_signal_p when significand_synch_tb2 = '1' else"<<endl;
+            o<<tab<<"                reunion_signal;"<<endl;    		     
+               		     
+            o<<tab<<"reunion_signal_p_upd <= reunion_signal_p when middle_output_d='0' else"<<endl;
+		      o<<tab<<"                       middle_signal;"<<endl;
+		                             
+		      //update exception                       
+		      o<<tab<<"ResultException <= exception_synch2_d when reunion_signal_p_upd("<<wEX + wFR+1<<")='0' else"<<endl;
+		      o<<tab<<"                   \"11\";"<<endl;                                                   
+		      
+		      o<<tab<<"ResultExponent <= reunion_signal_p_upd("<<wEX + wFR<<" downto "<<wFR+1<<");"<<endl;  
+            o<<tab<<"ResultSignificand <= \"1\" & reunion_signal_p_upd("<<wFR<<" downto 1);"<<endl;
+            o<<tab<<"ResultSign <= sign_synch2_d;"<<endl;
+	      }
 		}
-	   else { // 
+	   else { 
 		  
          if (1+wFR < wFX+wFY+2){
          //do rounding
@@ -425,7 +433,7 @@ void FPMultiplier::output_vhdl(std::ostream& o, std::string name) {
          }				
     
          o<<tab<< "ResultSign <= sign_synch;"<<endl;
-   }//end else not normalized
+      }//end else not normalized
        
    }//end if pipelined
    else
@@ -499,7 +507,7 @@ void FPMultiplier::output_vhdl(std::ostream& o, std::string name) {
       //round result
       //check is rounding is needed
       if (1+wFR >= wFX+wFY+2) {
-         //=>no rounding needed - eventual padding
+         //=>no rounding needed - possible padding
          //generate zeros of length 1+wFR - wFX+wFY+2 
          zeros1.str("");
          zeros1 << zero_generator(1+wFR - wFX+wFY+2 , 0);
@@ -523,7 +531,7 @@ void FPMultiplier::output_vhdl(std::ostream& o, std::string name) {
 	      zeros1<< zero_generator( wFX+wFY+2 - (1+wFR) , 0);
 	      
 	      o<<tab<<"check_string <= (significand_multiplication ("<< wFX+wFY+2 - (1+wFR) -1<<" downto 0) xor "<<str1.str()<<") when mult_selector='1' else"<<endl;
-	      o<<tab<<"               ( (\"0\" & significand_multiplication ("<< wFX+wFY+2 - (1+wFR) -1-1<<" downto 0)) xor "<<str2.str()<<");"<<endl;
+	      o<<tab<<"                ( (\"0\" & significand_multiplication ("<< wFX+wFY+2 - (1+wFR) -1-1<<" downto 0)) xor "<<str2.str()<<");"<<endl;
 	      
 	      o<<tab<<"process(check_string)"<<endl;
          o<<tab<<"begin"<<endl;
@@ -563,22 +571,8 @@ void FPMultiplier::output_vhdl(std::ostream& o, std::string name) {
  
    }//end the combinational part   
   
-  
-  
   o<< "end architecture;" << endl << endl;
 }
-
-
-
-
-
-
-
-
-
-
-
-
 
  
 string FPMultiplier::zero_generator(int n, int margins)
@@ -606,120 +600,4 @@ string FPMultiplier::zero_generator(int n, int margins)
   }
 }
 
-
-
-
-
-    /*
-		  //Add the hidden bit to the fractional parts of the inputs to obtain
-		  //the significands of the two numbers 
-		  o <<tab << "significandX <= \"1\" & X("<<(wFX-1)<<" downto 0);"<<endl;
-		  o <<tab << "significandY <= \"1\" & Y("<<(wFY-1)<<" downto 0);"<<endl<<endl;
- 	 	  		
-		  //multiply significands
-		  o <<tab<< "int_multiplier_component: " << intmult->unique_name << endl;
-  		o <<tab<< "      port map ( X => significandX, " << endl; //wFX+1 bits 
-  		o <<tab<< "                 Y => significandY, " << endl; //wFY+1 bits
-  		o <<tab<< "                 R => significand_multiplication, " << endl; //wFX+wFY+2 bits
-  		o <<tab<< "                 clk => clk, " << endl;
-  		o <<tab<< "                 rst => rst " << endl;
-  		o <<tab<< "               );" << endl << endl;
-	 
-		  o<<"exponentX<=X("<<wEX + wFX -1<<" downto "<<wFX<<");"<<endl; 
-		  o<<"exponentY<=Y("<<wEY + wFY -1<<" downto "<<wFY<<");"<<endl;
-		
-		  //place exponents sum into register
-		  o<<"Exponents_Sum <= (\"0\" & exponentX) + (\"0\" & exponentY);"<<endl; //wEX+1 bits
-		  o<<"bias<=CONV_STD_LOGIC_VECTOR("<<bias_val<<","<<wEX+1<<");"<<endl; //the bias value
-		  //substract the bias value from the previous addition result
-      o<<"exponents_sum_minus_bias_ext<= Exponents_Sum_d - bias;"<<endl;//wEX + 1 
-        	
-      //TODO signal overflow if this MSB of exponents_sum_minus_bias_ext is 1
-		
-      o<<"Exponents_Sum_Minus_Bias <= exponents_sum_minus_bias_ext("<<wEX-1<<" downto 0);"<<endl; //wEX
-      
-
-  		//at this level the 2 levels of registers of the IntMultiplier and the addition+substraction of the 
-  		//exponents are synchronized
-
-  		//the test bit is the most significand bit of the result
-  		//it will be used to check if: 
-  		// 1. it will be necessary to normalize the result 
-  		// 2. to what bit of this significand_multiplication we need to add a 1 for rounding
-  		o<<"significand_multiplication_test_bit <= significand_multiplication("<<wEX+wEY+1<<");"<<endl;
-  	
-  		//add 1 to the previous opperations over exponents
-  		o<<"Exponents_Sum_Minus_Bias_plus1<=Exponents_Sum_Minus_Bias_d + 1;"<<endl; //wEX bits
-  		
-  		//make mux 2:1 ->> outputs of wEX bits
-  		o<<"exponent_mux1 <= Exponents_Sum_Minus_Bias_d WHEN significand_multiplication_test_bit ='1' ELSE "<<endl;
-          	o<<"                 Exponents_Sum_Minus_Bias_plus1;"<<endl;
-  		
-  		//part of the integer multiplication results  (wFR + 2 bits)
-  		o<<"result_int_mult_part1 <= significand_multiplication("<<(wFX + wFY +1)<<" downto "<<(wFX + wFY +1)-(wFR + 2)+1<<" );"<<endl;
-  		o<<"result_int_mult_part2 <= significand_multiplication("<<(wFX + wFY   )<<" downto "<<(wFX + wFY   )-(wFR + 2)+1<<" );"<<endl;
-  	
-  		//add 1 to each of the previous two signals (wFR + 3 bits)
-  		o<<"result_int_mult_part1_plus1 <= (\"0\" & result_int_mult_part1) + 1;"<<endl;
-  		o<<"result_int_mult_part2_plus1 <= (\"0\" & result_int_mult_part2) + 1;"<<endl;
-  	
-  		//make mux 2:1 to select the correct addition result out of the two (wFR + 3 bits)
-  		o<<"integer_mux1  <= result_int_mult_part1_plus1 WHEN significand_multiplication_test_bit ='1' ELSE "<<endl;
-          	o<<"                 result_int_mult_part2_plus1;"<<endl;
-  	
-  		//insert register level
-  		o<<"exponent_register2 <= exponent_mux1;"<<endl;
-  		o<<"integer_register2 <= integer_mux1;"<<endl; //wFR + 3 bits
-  		
-  		//make an adder
-  		o<<"exponent_register2_plus1 <= exponent_register2_d + 1;"<<endl;
-  	
-          	//select test bit from MSB of integer_register2_d
-  		o<<"test_bit2 <= integer_register2_d("<<wFR + 2<<");"<<endl;
-  	
-  		//mux 2:1 wEX bits
-  		o<<"exponent_mux3 <= exponent_register2_d WHEN test_bit2 ='1' ELSE "<<endl;             
-          	o<<"                 exponent_register2_plus1;"<<endl;
-  	
-  		//mux 2:1 for proper significand output
-  		o<<"mux_significand_output <= integer_register2_d("<<wFR + 2<<" downto 2) when test_bit2 ='1' ELSE "<<endl;
-          	o<<"             	      integer_register2_d("<<wFR + 1<<" downto 1);"<<endl;		 
-   	
-  		o<< "ResultExponent<= exponent_mux3;"<<endl;  
-          	o<<"ResultSignificand<=mux_significand_output;"<<endl;  
-  	
-    		//compute sign
-    		o<< "result_sign<=X("<<wEX + wFX<<") xor Y("<<wEY + wFY<<");"<<endl;
-    		
-    		//compute exception bits Result_Exception
-    		o<<"exception_selector<=X("<<wEX + wFX +2<<" downto "<<wEX + wFX + 1<<") & Y("<<wEY + wFY +2<<" downto "<<wEY + wFY +1<<");"<<endl;
-
-   		o<<" process (exception_selector)"<<endl;
-    		o<<" begin"<<endl;
-    		o<<" case (exception_selector) is"<< endl;
-    			o<<"    when \"0000\" => Result_Exception <= \"00\";   "<<endl;
-    			o<<"    when \"0001\" => Result_Exception <= \"00\";   "<<endl;
-    			o<<"    when \"0010\" => Result_Exception <= \"11\";   "<<endl;
-    			o<<"    when \"0011\" => Result_Exception <= \"11\";   "<<endl;
-    			o<<"    when \"0100\" => Result_Exception <= \"00\";   "<<endl;
-    			o<<"    when \"0101\" => Result_Exception <= \"01\";   "<<endl;//to see
-    			o<<"    when \"0110\" => Result_Exception <= \"10\";   "<<endl;
-    			o<<"    when \"0111\" => Result_Exception <= \"11\";   "<<endl;
-    			o<<"    when \"1000\" => Result_Exception <= \"11\";   "<<endl;
-    			o<<"    when \"1001\" => Result_Exception <= \"10\";   "<<endl;
-    			o<<"    when \"1010\" => Result_Exception <= \"10\";   "<<endl;
-    			o<<"    when \"1011\" => Result_Exception <= \"11\";   "<<endl;
-    			o<<"    when \"1100\" => Result_Exception <= \"11\";   "<<endl;
-    			o<<"    when \"1101\" => Result_Exception <= \"11\";   "<<endl;
-    			o<<"    when \"1110\" => Result_Exception <= \"11\";   "<<endl;
-    			o<<"    when \"1111\" => Result_Exception <= \"11\";   "<<endl;
-    			o<<"    when others =>   Result_Exception <= \"11\";   "<<endl;    
-    		o<<" end case;"<<endl;
-    		o<<" end process;"<<endl;
-
-  	//TODO Rewrite code above
-  	//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO
-  	//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO
-  	//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO
-    */
 

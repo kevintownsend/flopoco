@@ -33,13 +33,11 @@ public:
   // Overloading the virtual functions of Operator
   void output_vhdl(std::ostream& o, std::string name);
 
-  //void setup_pipeline();
    
    string zero_generator(int n, int margins);
 private:
 IntMultiplier* intmult;
-  /* if boolean true, the corresponding level signal is registered*/ 
-  //bool level_registered [128];
+  
 };
 
 
