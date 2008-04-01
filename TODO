@@ -5,7 +5,7 @@ Pipeline framework, Operator and Targets:
 * complete test bench generation
 * replace the _d_d_d_d names with shorter, index-based ones.
 * get the constants right to have a better evaluation of the frequency of the shifters
-* manage a notion of cycle at the Opertor level?
+* manage a notion of cycle at the Operator level?
 
 Tools:
 * add NaN and infty handling in fp2bin bin2fp longacc2fp
