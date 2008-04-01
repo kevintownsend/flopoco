@@ -87,6 +87,7 @@ LongAcc::LongAcc(Target* target, int wEX, int wFX, int MaxMSBX, int LSBA, int MS
   //  add_output ("AccOverflow");  
 
   // Unregistered signal
+  add_signal("exnX", 2);
   add_signal("expX", wEX);
   add_signal("fracX", wFX+1);
   add_signal("shifted_frac", sizeShiftedFrac);
@@ -106,16 +107,19 @@ LongAcc::LongAcc(Target* target, int wEX, int wFX, int MaxMSBX, int LSBA, int MS
   // on one side, add delays for the non-complemented signal
   add_delay_signal("summand", sizeSummand, c2_pipeline_depth); 
   add_delay_signal("flushedToZero", 1, shifter->pipeline_depth());
+  add_delay_signal("signX", 1, shifter->pipeline_depth());
 
   //on the other side, add a delay for 2'complement of summand
   add_registered_signal("summand2c", sizeSummand);
 
-  // final pipeline depth is the sum of shifter pipeline and 2's complement pipeline
-  set_pipeline_depth(shifter->pipeline_depth() + c2_pipeline_depth);
+  // final pipeline depth is the sum of shifter pipeline and 2's
+  // complement pipeline, plus 1 for the accumulator itself.
+  //TODO when the accumulator is pipelined: replace this 1 with the acc's pipeline depth
+  set_pipeline_depth(shifter->pipeline_depth() + c2_pipeline_depth+1);
 
-  add_delay_signal("exnX", 2, pipeline_depth());
-  add_delay_signal("signX", 1, pipeline_depth());
 
+  // it is rather stupid to register all the extended bits as they are
+  // all equal, but the synthesiser optimises it out
   add_registered_signal_with_sync_reset("ext_summand2c", sizeAcc);
   add_registered_signal_with_sync_reset("acc", sizeAcc); //,  "includes overflow bit");
 
@@ -170,8 +174,12 @@ void LongAcc::output_vhdl(ostream& o, string name) {
   o << tab << "summand2c <= summand when "<< get_delay_signal_name("signX", shifter->pipeline_depth()) <<"='0' else ("<<sizeSummand-1<<" downto 0 => '0') - summand; "<< endl;
   o << endl;
   o << tab << "-- extension of the summand to accumulator size" << endl;
-  o << tab << "ext_summand2c <= ("<<sizeAcc-1<<" downto "<<sizeSummand<<"=>'0') & summand2c   when  " << get_delay_signal_name("signX", shifter->pipeline_depth()) <<"='0'" << endl;
-  o << tab << "            else ("<<sizeAcc-1<<" downto "<<sizeSummand<<"=> not "<< get_delay_signal_name("flushedToZero", shifter->pipeline_depth()) << ") & summand2c;" << endl;
+  o << tab << "ext_summand2c <= ("<<sizeAcc-1<<" downto "<<sizeSummand<<"=> ("
+    << get_delay_signal_name("signX", shifter->pipeline_depth()) 
+    << " and not " << get_delay_signal_name("flushedToZero", shifter->pipeline_depth())
+    <<")) & summand2c;" << endl;
+//    "when  " <<  <<"='0'" << endl;
+//   o << tab << "            else ("<<sizeAcc-1<<" downto "<<sizeSummand<<"=> not " << ") & summand2c;" << endl;
   o << endl;
   o << tab << "-- accumulation itself" << endl;
   o << tab << "acc <= ext_summand2c_d   +   acc_d;" << endl;
