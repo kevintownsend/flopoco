@@ -17,8 +17,8 @@
 class FPMultiplier : public Operator
 {
 public:
-  FPMultiplier(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, int wFR, int norm);
-  ~FPMultiplier();
+	FPMultiplier(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, int wFR, int norm);
+	~FPMultiplier();
 
 
 	int wEX; 
@@ -27,19 +27,17 @@ public:
 	int wFY; 
 	int wER; 
 	int wFR;
-	//bool pipelined;
 	bool normalized;
 	int IntMultPipelineDepth;
-  // Overloading the virtual functions of Operator
-  void output_vhdl(std::ostream& o, std::string name);
 
-   
-   string zero_generator(int n, int margins);
+	// Overloading the virtual functions of Operator
+	void output_vhdl(std::ostream& o, std::string name);
+
+	string zero_generator(int n, int margins);
+
 private:
 IntMultiplier* intmult;
   
 };
-
-
 
 #endif
