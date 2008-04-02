@@ -29,6 +29,8 @@ SumOfProducts
 Shifters
 * provide finer spec, see the TODOs inside Shifter.cpp
 
+General
+* Doxygenize while it's not too late
 
 Tentative roadmap:
 
