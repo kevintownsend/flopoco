@@ -11,6 +11,8 @@ Tools:
 * add NaN and infty handling in fp2bin bin2fp longacc2fp
 
 ConstMult:
+* implement KCM algorithm and select it if it means less hardware
+    (it should for small wX/large constants)
 * pipeline IntConstMult then FPConstMult.
 * Implement the continued fraction stuff for FPCRConstMult
 
