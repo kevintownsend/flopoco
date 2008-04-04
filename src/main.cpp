@@ -39,7 +39,7 @@
 #include "ConstMult/IntConstMult.hpp"
 #include "ConstMult/FPConstMult.hpp"
 #include "Target.hpp"
-#include "Targets/ClassicalFPGA.hpp"
+#include "Targets/VirtexIV.hpp"
 
 using namespace std;
 
@@ -392,7 +392,7 @@ bool parse_command_line(int argc, char* argv[]){
 
 int main(int argc, char* argv[] )
 {
-  target = new ClassicalFPGA();
+  target = new VirtexIV();
 
   bool command_line_OK =  parse_command_line(argc, argv);
 

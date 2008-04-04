@@ -37,8 +37,8 @@ class Target
   virtual double adder_delay(int n) =0;
   virtual double local_wire_delay() =0;
   virtual double distant_wire_delay(int n) =0;
-
-
+  virtual bool suggest_submult_size(int &x, int &y, int wInX, int wInY)=0;
+  virtual bool suggest_subadd_size(int &x, int wIn)=0; 	
 
   void set_pipelined();
   void set_not_pipelined();
@@ -49,11 +49,14 @@ class Target
   int mult_y_inputs(); // may be 24 
   double frequency();
   void set_frequency(double f);
+  void set_use_hard_multipliers(bool v);
+  bool get_use_hard_multipliers(); 
 
   Target()   {
     _pipeline=true;
     _lut_inputs=4;
     _frequency = 400000000.;
+    _use_hard_multipliers=true;
   }
 
   virtual ~Target() {}
@@ -65,6 +68,7 @@ protected:
   double _frequency; // Hz
   int _mult_x_inputs; 
   int _mult_y_inputs;
+  bool _use_hard_multipliers;
 };
 
 

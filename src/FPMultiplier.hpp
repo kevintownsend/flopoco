@@ -36,7 +36,11 @@ public:
 	string zero_generator(int n, int margins);
 
 private:
-IntMultiplier* intmult;
+	IntMultiplier* intmult;
+	int reunion_signal_width;
+	int addition_chunk_width;
+	int reunion_signal_parts;
+	int addition_last_chunk_width;
   
 };
 

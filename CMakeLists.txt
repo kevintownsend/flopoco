@@ -29,7 +29,7 @@ ENDIF (MPFR_FOUND)
 ADD_EXECUTABLE(flopoco
  src/main
  src/utils
- src/Target src/Targets/ClassicalFPGA
+ src/Target src/Targets/VirtexIV
  src/Operator
  src/Table 
  src/Wrapper

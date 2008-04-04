@@ -7,7 +7,7 @@
 #include <gmpxx.h>
 
 #include "Operator.hpp"
-
+#include "IntAdder.hpp"
 
 /** The Integer Multiplier class. Receives at input two numbers of 
 wInX and wInY widths and outputs a result having the width wInX+wInY */
@@ -16,27 +16,25 @@ wInX and wInY widths and outputs a result having the width wInX+wInY */
 class IntMultiplier : public Operator
 {
 public:
-  IntMultiplier(Target* target, int wInX, int wInY);
-  ~IntMultiplier();
+	IntMultiplier(Target* target, int wInX, int wInY);
+	~IntMultiplier();
 
-  int wInX;
-  int wInY;
-  int wOut;
+	int wInX;
+	int wInY;
+	int wOut;
 
-  // Overloading the virtual functions of Operator
-  void output_vhdl(std::ostream& o, std::string name);
-
+	// Overloading the virtual functions of Operator
+	void output_vhdl(std::ostream& o, std::string name);
+	string zero_generator(int n, int margins);
 
 private:
- int partsX;
- int partsY; 
- int number_of_zerosX;
- int number_of_zerosY;
- int multiplier_width;
- bool reverse; 
-
+	int IntAddPipelineDepth;
+	int partsX;
+	int partsY; 
+	int number_of_zerosX;
+	int number_of_zerosY;
+	int multiplier_width;
+	bool reverse; 
+	IntAdder *intadd;
 };
-
-
-
 #endif

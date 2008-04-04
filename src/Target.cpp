@@ -63,3 +63,11 @@ double Target::frequency(){
 void Target::set_frequency(double f){
   _frequency=f;
 };
+
+void Target::set_use_hard_multipliers(bool v){
+	_use_hard_multipliers = v;  
+};
+
+bool Target::get_use_hard_multipliers(){
+	return _use_hard_multipliers;
+}; 

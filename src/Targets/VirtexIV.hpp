@@ -21,18 +21,19 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
 */
 
-#ifndef CLASSICALFPGA_HPP
-#define CLASSICALFPGA_HPP
+#ifndef VIRTEXIV_HPP
+#define VIRTEXIV_HPP
 #include "../Target.hpp"
 
 
-class ClassicalFPGA : public Target
+
+class VirtexIV : public Target
 {
  public:
 
 
   // generic constructor
-  ClassicalFPGA() : Target()
+  VirtexIV() : Target()
   {
     // all these values are set more or less randomly, to match  virtex 4 more or less
     _fastcarry_delay = 3.4e-11; // s    
@@ -45,7 +46,7 @@ class ClassicalFPGA : public Target
 
   // constructor for real chips: TODO
 
-  virtual ~ClassicalFPGA() {}
+  virtual ~VirtexIV() {}
 
   // overloading the virtual functions of Target
 
@@ -58,6 +59,10 @@ class ClassicalFPGA : public Target
   double lut_delay();
 
   double distant_wire_delay(int n);
+  
+  bool suggest_submult_size(int &x, int &y, int wInX, int wInY);
+  
+  bool suggest_subadd_size(int &x, int wIn);
 
 
 private:

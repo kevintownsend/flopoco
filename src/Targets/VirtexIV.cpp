@@ -20,26 +20,40 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
 */
-#include "ClassicalFPGA.hpp"
+#include "VirtexIV.hpp"
 
-double ClassicalFPGA::adder_delay(int size) {
+double VirtexIV::adder_delay(int size) {
   return _lut_delay  +  size * _fastcarry_delay; 
 };
 
-double ClassicalFPGA::carry_propagate_delay() {
+double VirtexIV::carry_propagate_delay() {
   return  _fastcarry_delay; 
 };
 
-double ClassicalFPGA::local_wire_delay(){
+double VirtexIV::local_wire_delay(){
   return _lut2lut_delay;
 };
 
-double ClassicalFPGA::distant_wire_delay(int n){
+double VirtexIV::distant_wire_delay(int n){
   return n*_elem_wire_delay;
 };
 
-double ClassicalFPGA::lut_delay(){
+double VirtexIV::lut_delay(){
   return _lut_delay;
 };
 
-
+bool VirtexIV::suggest_submult_size(int &x, int &y, int wInX, int wInY){
+	if (get_use_hard_multipliers()){
+		x=17;
+		y=17;
+		return true;	//TODO
+	}else{
+		return true;    //TODO
+	}
+};	 
+	 
+	 
+bool VirtexIV::suggest_subadd_size(int &x, int wIn){
+	return true; //TODO
+};
+  

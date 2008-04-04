@@ -108,6 +108,27 @@ string  Operator::get_delay_signal_name(const string name, const int delay) {
 }
 
 
+/*
+string  Operator::add_level_delay_signal(const string name, const int start_level, const int width, const int delay) {
+  ostringstream o;
+  int l=start_level;
+  //o << name;
+  // if the delay is zero it is equivalent to add_signal
+  if(delay>0) {
+    for (int i=0; i<delay; i++){
+      o.str("");
+      o<<name<<"_level"<<l;
+      signalList.push_back(new Signal(o.str(), Signal::registered_with_synch_reset, width));    
+      l++;
+    }
+    has_registers_with_synch_reset=true;
+  }
+  signalList.push_back(new Signal(o.str(), Signal::wire, width));    
+  
+  return o.str();
+}
+*/
+
       
 void  Operator::output_vhdl_signal_declarations(std::ostream& o) {
   for (int i=0; i<this->signalList.size(); i++){
