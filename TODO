@@ -6,6 +6,7 @@ Pipeline framework, Operator and Targets:
 * replace the _d_d_d_d names with shorter, index-based ones.
 * get the constants right to have a better evaluation of the frequency of the shifters
 * manage a notion of cycle at the Operator level?
+* remove the lutsize option, and replace them with a target option.
 
 Tools:
 * add NaN and infty handling in fp2bin bin2fp longacc2fp
