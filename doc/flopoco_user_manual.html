@@ -92,6 +92,33 @@ LongAcc operator (see below) to human-readable form.</p>
 
 <p></p>
 
+<h2>Floating-point format</h2>
+
+<p>The floating-point format used in FloPoCo is identical to the one used in  <a
+href="http://www.ens-lyon.fr/LIP/Arenaire/Ware/FPLibrary/">FPLibrary</a>. It is  inspired from the IEEE-754 standard, from which it differs only for exceptional cases (zeroes, infinities and Not a Number or NaN). </p>
+
+<p>
+An FP  number is a bit vector consisting of 4 fields. From left to right: 
+<dl>
+  <dt>A 2-bit exception field</dt>
+    <dd>00 for zero, 01 for normal numbers, 10 for infinities, and 11 for NaN</dd>
+  <dt>A sign bit</dt>
+    <dd>0 for positive, 1 for negative</dd>
+  <dt>An exponent field on wE bits</dt>
+    <dd>It is biased as in IEEE-754. The smallest possible FP numbers have exponent field 00...00, the FP  number 1.0 has the exponent field 011...11 and the largest possible FP numbers have exponent 11...11 </dd>
+  <dt>A fraction field on wF bits</dt>
+    <dd>The actual significand has an implicit leading 1, so the fraction field ff...ff  represents the significand 1.ff...ff</dd>
+</dl>
+ </p>
+
+<p>The format is therefore parameterized by to positive integers wE
+and wF which define the sizes of the exponent and fraction fields
+respectively.</p>
+
+<p>The utilities <code>fp2bin</code> and <code>bin2fp</code> will allow
+you to get familiar with the format and set up test benches.</p>
+
+
 <h2>Available operators</h2>
 
 <p>This list may not be fully up-to date... the code is the reference.</p>
