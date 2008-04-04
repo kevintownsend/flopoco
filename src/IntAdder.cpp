@@ -68,9 +68,11 @@ IntAdder::IntAdder(Target* target, int wIn) :
   pipe_levels = wIn/chunk_size + 1; // =1 when no pipeline
   if(pipe_levels==1){
     add_registered_signal("iR", wIn);
+    set_pipeline_depth(0); //TODO added
   }
 
   else{
+  	set_pipeline_depth(pipe_levels); //TODO added
     //  if(c2_pipe_levels) c2_chunk_size=sizeSummand;
     cout << tab <<"Estimated delay will be " << target->adder_delay(wIn) <<endl; 
     cout << tab << "chunk="<<chunk_size << " freq=" << 1e-6/target->adder_delay(chunk_size) <<"  levels="<<pipe_levels <<endl;
@@ -163,7 +165,7 @@ void IntAdder::output_vhdl(std::ostream& o, std::string name) {
 	if(i>0) {
 	  ostringstream carry;
 	  carry <<"ir_"<<i-1;
-	  o  << " + (" << size  << " downto 1 => '0') & " << get_delay_signal_name(carry.str(), 1) << "(" << chunk_size << ")";
+	  o  << " + ((" << size  << " downto 1 => '0') & " << get_delay_signal_name(carry.str(), 1) << "(" << chunk_size << "))";
 	}
 	o << ";" << endl;
       }
