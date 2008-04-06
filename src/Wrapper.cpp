@@ -52,6 +52,9 @@ Wrapper::Wrapper(Target* target, Operator *op, std::string name):
     string idext = "i_" + op->ioList[i]->id() ;
     add_registered_signal(idext, op->ioList[i]->width());
   }
+
+  //set pipeline parameters
+  set_pipeline_depth(2);
 }
 
 
