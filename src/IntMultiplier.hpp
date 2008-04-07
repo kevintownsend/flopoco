@@ -33,7 +33,9 @@ private:
 	int partsY; 
 	int number_of_zerosX;
 	int number_of_zerosY;
-	int multiplier_width;
+	int multiplier_width_X;
+	int multiplier_width_Y;
+	int multiplier_width_avg;
 	bool reverse; 
 	IntAdder *intadd;
 };
