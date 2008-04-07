@@ -84,6 +84,8 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 		bool test = target->suggest_submult_size(multiplier_width_X, multiplier_width_Y, wInX, wInY);
 		cout<<endl<<tab<<" -- Frequency can be reached = "<<test<<" suggested sizes: X="<<multiplier_width_X<<" Y="<<multiplier_width_Y<<" --"<<endl;
 		
+		
+		
 
 		// decide in how many parts should the numbers be split depending on the recommended sizes
 		partsX = int(ceil( double(wInX) / double(multiplier_width_X)));
@@ -194,12 +196,23 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 					add_registered_signal_with_sync_reset(name.str(), multiplier_width_Y + 1 );
 			 }
 
+			bool add_test = target->suggest_subadd_size(addition_chunk_width,partsX * multiplier_width_X);
+			if (add_test==true)
+				cout<<endl<<tab<<"addition chunk size = "<<addition_chunk_width<<endl;
+			else
+				cerr<<endl<<"Cannot reach the desired frequency for the addition";
 			
-			for (j=1; j<=partsX;j++)
-				for (i=1;i<=partsX;i++){
+			pipe_levels = int(ceil(double(partsX * multiplier_width_X)/double(addition_chunk_width))); 
+			cout<<endl<<"added pipeline levels = "<<pipe_levels<<endl;
+			
+			for (j=1; j<=pipe_levels;j++)
+				for (i=1;i<=pipe_levels;i++){
 					name.str("");;
 					name<<"Last_Addition_Level_"<<j<<"_Reg_"<<i;
-					add_registered_signal_with_sync_reset(name.str(), multiplier_width_X + 1 );
+					if (i==pipe_levels)
+						add_registered_signal_with_sync_reset(name.str(), partsX * multiplier_width_X - (pipe_levels-1)*(addition_chunk_width));
+					else
+						add_registered_signal_with_sync_reset(name.str(), addition_chunk_width + 1 );
 			}
 
 			//TODO
@@ -249,7 +262,7 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 			else
 				depth=2 + IntAddPipelineDepth;
 		else
-			depth= 1 + 2 + partsY + partsX;
+			depth= 1 + 2 + partsY + pipe_levels;
  
 		set_pipeline_depth(depth);
   
@@ -490,13 +503,18 @@ void IntMultiplier::output_vhdl(std::ostream& o, std::string name) {
 
 			o<<endl<<endl;
 	  
-	  		
 			//connect first parts of addition registers
-			for (j=1; j<=partsX;j++){
-				if (j==1) 
-					o<<tab<<"Last_Addition_Level_1_Reg_"<<j<<" <= (\"0\" & Low1_d("<<j*multiplier_width_X -1<<" downto "<<(j-1)*multiplier_width_X<<")) + ( \"0\" & High1("<<j*multiplier_width_X -1<<" downto "<<(j-1)*multiplier_width_X<<")) + PartialBits_Level_"<< partsY <<"_Reg_"<< partsY<<"_d("<< multiplier_width_Y <<");"<<endl;  
+			for (j=1; j<=pipe_levels;j++){
+				if ((j==1)&&(pipe_levels!=1))
+					o<<tab<<"Last_Addition_Level_1_Reg_"<<j<<" <= (\"0\" & Low1_d("<<j*addition_chunk_width -1<<" downto "<<(j-1)*addition_chunk_width<<")) + ( \"0\" & High1("<<j*addition_chunk_width -1<<" downto "<<(j-1)*addition_chunk_width<<")) + PartialBits_Level_"<< partsY <<"_Reg_"<< partsY<<"_d("<< multiplier_width_Y <<");"<<endl;  
 				else
-					o<<tab<<"Last_Addition_Level_1_Reg_"<<j<<" <= (\"0\" & Low1_d("<<j*multiplier_width_X -1<<" downto "<<(j-1)*multiplier_width_X<<")) + (\"0\" & High1("<<j*multiplier_width_X -1<<" downto "<<(j-1)*multiplier_width_X<<"));"<<endl;  
+					if ((j==1)&&(pipe_levels==1))
+						o<<tab<<"Last_Addition_Level_1_Reg_"<<j<<" <= Low1_d("<<partsX*multiplier_width_X-1<<" downto "<<"0) + High1("<<partsX*multiplier_width_X-1<<" downto 0) + PartialBits_Level_"<< partsY <<"_Reg_"<< partsY<<"_d("<< multiplier_width_Y <<");"<<endl;  
+					else
+						if (j==pipe_levels)
+							o<<tab<<"Last_Addition_Level_1_Reg_"<<j<<" <= Low1_d("<<partsX*multiplier_width_X-1<<" downto "<<(j-1)*addition_chunk_width<<") + High1("<<partsX*multiplier_width_X-1<<" downto "<<(j-1)*addition_chunk_width<<");"<<endl;  
+						else
+							o<<tab<<"Last_Addition_Level_1_Reg_"<<j<<" <= (\"0\" & Low1_d("<<j*addition_chunk_width -1<<" downto "<<(j-1)*addition_chunk_width<<")) + (\"0\" & High1("<<j*addition_chunk_width -1<<" downto "<<(j-1)*addition_chunk_width<<"));"<<endl;  
 			}
 		
 			//put tohether the pipeline
@@ -505,20 +523,26 @@ void IntMultiplier::output_vhdl(std::ostream& o, std::string name) {
 					if ((i<=j)||(i>j+1))
 						o<<tab<<"Last_Addition_Level_"<<j+1<<"_Reg_"<<i<<" <= Last_Addition_Level_"<<j<<"_Reg_"<<i<<"_d;"<<endl;
 					else
-						o<<tab<<"Last_Addition_Level_"<<j+1<<"_Reg_"<<i<<" <= Last_Addition_Level_"<<j<<"_Reg_"<<i<<"_d + Last_Addition_Level_"<<j<<"_Reg_"<<i-1<<"_d("<<multiplier_width_X<<") ;"<<endl; 
+						o<<tab<<"Last_Addition_Level_"<<j+1<<"_Reg_"<<i<<" <= Last_Addition_Level_"<<j<<"_Reg_"<<i<<"_d + Last_Addition_Level_"<<j<<"_Reg_"<<i-1<<"_d("<<addition_chunk_width<<") ;"<<endl; 
 				 
 				 
 				 
 			
 			//put the result back together
-			zeros.str("");
-			for (i=partsX;i>0;i--) 
+			ostringstream addition_string;
+			for (i=pipe_levels;i>0;i--) 
 				if (i!=1)
-					zeros<<"Last_Addition_Level_"<<partsX<<"_Reg_"<<i<<"_d("<<multiplier_width_X -1<<" downto 0) &" ;
+					if (i!=pipe_levels)
+						addition_string<<"Last_Addition_Level_"<<pipe_levels<<"_Reg_"<<i<<"_d("<<addition_chunk_width -1<<" downto 0) &" ;
+					else
+						addition_string<<"Last_Addition_Level_"<<pipe_levels<<"_Reg_"<<i<<"_d &";
 				else
-					zeros<<"Last_Addition_Level_"<<partsX<<"_Reg_"<<i<<"_d("<<multiplier_width_X -1<<" downto 0);" ;
+					if (pipe_levels!=1)
+						addition_string<<"Last_Addition_Level_"<<pipe_levels<<"_Reg_"<<i<<"_d("<<addition_chunk_width -1<<" downto 0);" ;
+					else
+						addition_string<<"Last_Addition_Level_"<<pipe_levels<<"_Reg_"<<i<<"_d("<<partsX*multiplier_width_X -1<<" downto 0);" ;
 					
-			o<<tab<<"temp_result <= "<<zeros.str()<<endl;
+			o<<tab<<"temp_result <= "<<addition_string.str()<<endl;
 
 			//make the string that will gather all partial bits from the last level
 			the_bits.str("");;
@@ -528,14 +552,14 @@ void IntMultiplier::output_vhdl(std::ostream& o, std::string name) {
 				else
 					the_bits << "PartialBits_Level_"<< partsY <<"_Reg_"<<i<<"_d("<< multiplier_width_Y-1 << " downto 0" <<")";
 
-			//TODO	 
+		
 			//setup the pipeline part that will carry the low part of the final result
 			o<<tab<<"PartialBits_Reg_1 <= "<<the_bits.str()<<";"<<endl;
-			for (i=2;i<=partsX;i++)
+			for (i=2;i<=pipe_levels;i++)
 				o<<tab<<"PartialBits_Reg_"<<i<<" <= PartialBits_Reg_"<<i-1<<"_d;"<<endl;
 		
 		
-			o<<tab<<"partial_bits <= PartialBits_Reg_"<<partsX<<"_d;"<<endl;
+			o<<tab<<"partial_bits <= PartialBits_Reg_"<<pipe_levels<<"_d;"<<endl;
 			o<<tab<<"full_result <= temp_result & partial_bits;"<<endl; 
 			o<<tab<<"R <= full_result("<<  partsX*multiplier_width_X + partsY*multiplier_width_Y - 1 -number_of_zerosX - number_of_zerosY<<" downto 0);"<<endl;
 		  

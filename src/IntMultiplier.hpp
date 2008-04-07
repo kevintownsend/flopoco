@@ -37,6 +37,8 @@ private:
 	int multiplier_width_Y;
 	int multiplier_width_avg;
 	bool reverse; 
+	int addition_chunk_width;
+	int pipe_levels;
 	IntAdder *intadd;
 };
 #endif

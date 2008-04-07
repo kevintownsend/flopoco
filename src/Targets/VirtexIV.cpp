@@ -21,6 +21,9 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
 */
 #include "VirtexIV.hpp"
+#include <iostream>
+#include <sstream>
+
 
 double VirtexIV::adder_delay(int size) {
   return _lut_delay  +  size * _fastcarry_delay; 
@@ -42,6 +45,7 @@ double VirtexIV::lut_delay(){
   return _lut_delay;
 };
 
+
 bool VirtexIV::suggest_submult_size(int &x, int &y, int wInX, int wInY){
 	if (get_use_hard_multipliers()){
 		x=17;
@@ -54,6 +58,14 @@ bool VirtexIV::suggest_submult_size(int &x, int &y, int wInX, int wInY){
 	 
 	 
 bool VirtexIV::suggest_subadd_size(int &x, int wIn){
-	return true; //TODO
+
+	int chunk_size = (int)floor( (1./frequency() - lut_delay()) / carry_propagate_delay()); // 1 if no need for pipeline
+	x = chunk_size;		
+	
+	if (x>0) return true;
+	else {
+		x=1;		
+		return false;
+	} 
 };
   
