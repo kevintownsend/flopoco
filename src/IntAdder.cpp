@@ -68,11 +68,11 @@ IntAdder::IntAdder(Target* target, int wIn) :
   pipe_levels = wIn/chunk_size + 1; // =1 when no pipeline
   if(pipe_levels==1){
     add_registered_signal("iR", wIn);
-    set_pipeline_depth(0); //TODO added
+    set_pipeline_depth(1); 
   }
 
   else{
-  	set_pipeline_depth(pipe_levels); //TODO added
+  	set_pipeline_depth(pipe_levels); 
     //  if(c2_pipe_levels) c2_chunk_size=sizeSummand;
     cout << tab <<"Estimated delay will be " << target->adder_delay(wIn) <<endl; 
     cout << tab << "chunk="<<chunk_size << " freq=" << 1e-6/target->adder_delay(chunk_size) <<"  levels="<<pipe_levels <<endl;
