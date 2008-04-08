@@ -74,7 +74,7 @@ static void usage(char *name){
   cerr << "    IntMultiplier wInX wInY \n";
   cerr << "      integer multiplier of two integers X and Y of sizes wInX and wInY \n";	
   cerr << "    FPMultiplier wEX wFX wEY wFY wER wFR\n";
-  cerr << "	 FP Multiplier \n";
+  cerr << "	     floating-point multiplier \n";
   cerr << "    Wrapper entity_name\n";
   cerr << "       produce a wrapper named entity_name for the preceding operator\n";
   cerr << "       (useful to get synthesis results without having the operator optimised out)\n";

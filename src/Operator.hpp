@@ -177,8 +177,18 @@ public:
   // output all the signal declarations 
   void output_vhdl_signal_declarations(std::ostream& o);
 
-  // the main function outputs the VHDL for the operator
 
+  //a new line macro method
+  void new_line(std::ostream& o);
+  //a new architecture macro method
+  void new_architecture(std::ostream& o, std::string name);
+  //a begin architecture macro method
+  void begin_architecture(std::ostream& o);
+  //an end architecture macro method
+  void end_architecture(std::ostream& o);
+
+
+  // the main function outputs the VHDL for the operator
   virtual void output_vhdl(std::ostream& o, std::string name) =0 ;
   void output_vhdl(std::ostream& o);   // calls the previous with name = unique_name
 

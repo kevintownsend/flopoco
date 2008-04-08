@@ -287,293 +287,115 @@ IntMultiplier::~IntMultiplier() {
  * @param[in]     name  the name of the entity corresponding to the architecture generated in this method
  **/
 void IntMultiplier::output_vhdl(std::ostream& o, std::string name) {
+	
+	//variables
+	ostringstream zeros, names, nameH, nameL, concatH, concatL,
+					  first_summand, second_summand, the_bits;
+
+	int i, j, k;
+	//--------------------------------------------
+	
 	Licence(o,"Bogdan Pasca and Florent de Dinechin (2008)");
 	Operator::StdLibs(o);
 	output_vhdl_entity(o);
-
-	int i, j, k;
-	ostringstream zeros, zerosX, zerosY, names, nameH, nameL, concatH, concatL,
-					  first_summand, second_summand, the_bits;
-
-	o << "architecture arch of " << name  << " is" << endl;
+	new_architecture(o,name);
+	
 
 	if ((partsY==1)&&(partsX>1))
-		intadd->output_vhdl_component(o);
+		intadd->output_vhdl_component(o);//output the IntAdder component
 		
 	output_vhdl_signal_declarations(o);
-	o << "begin" << endl;
+	begin_architecture(o);
  
 	if (is_sequential()) { 
-	//==========================================================================
 	
 		output_vhdl_registers(o); 
-		  
-		// generate the strings of zeros needed to pad X and Y
-		zerosX.str(""); zerosY.str("");
-		for (i=0;i<number_of_zerosX;i++)
-			zerosX<<"0";  
-		for (i=0;i<number_of_zerosY;i++)
-			zerosY<<"0";  
-	
-		//pad X and Y
-		o <<endl;
-		if (reverse==false){
-			o<<tab<< "i_X <= \""<< zerosX.str()<<"\" & X;"<<endl;
-			o<<tab<< "i_Y <= \""<< zerosY.str()<<"\" & Y;"<<endl<<endl<<endl;
-		}
-		else{//reverse the inputs
-			o<<tab<< "i_Y <= \""<< zerosY.str()<<"\" & X;"<<endl;
-			o<<tab<< "i_X <= \""<< zerosX.str()<<"\" & Y;"<<endl<<endl<<endl;
-		}		
-			  
-		//split X 
-		for (i=1;i<=partsX;i++){
-			names.str("");;
-			names <<"X_"<<i;
-			o<<tab<< names.str() << " <= i_X("<< i * multiplier_width_X -1 <<" downto "<< (i-1) * multiplier_width_X<<");"<<endl;
-		}
-	  
-		o<<endl;
-		//split Y 
-		for (i=1;i<=partsY;i++) {
-			names.str("");;
-			names <<"Y_"<<i;
-			o<<tab<< names.str() << " <= i_Y("<< i * multiplier_width_Y -1 <<" downto "<< (i-1) * multiplier_width_Y<<");"<<endl;
-		}
-
-		o<<endl;
+		new_line(o);
+		
+		//pad inputs with zeros
+		pad_inputs(o);
+		
+		//split X into chunks and assign the chunks to X_1 ...X_partsX 
+		split(o,"X",partsX, multiplier_width_X);			  
+		split(o,"Y",partsY, multiplier_width_Y);
+		
+		new_line(o);
 		//make all multiplications concurrently
-		for (i=1;i<=partsY;i++)
-			for (j=1;j<=partsX;j++){  
-				names.str("");;
-				names <<"Y_"<<i<<"_X_"<<j;
-				o<<tab<< names.str() << " <= " << "Y_"<< i <<"_d * " << "X_"<<j << "_d;"<<endl;
-			} 
-
-		
-		o<<endl;
-		//decompose the results into high and low part
-		for (i=1;i<=partsY;i++)
-			for (j=1;j<=partsX;j++){
-				names.str("");; nameH.str("");; nameL.str("");;
-				names <<"Y_"<<i<<"_X_"<<j<<"_d";
-				nameH <<"Y_"<<i<<"_X_"<<j<<"_H";
-				nameL <<"Y_"<<i<<"_X_"<<j<<"_L";
-				o<<tab<< nameH.str() << " <= " << names.str() <<"("<< multiplier_width_X + multiplier_width_Y - 1 <<" downto " << multiplier_width_Y <<");"<<endl;
-				o<<tab<< nameL.str() << " <= " <<zero_generator(multiplier_width_X - multiplier_width_Y ,0)<<" & "<< names.str() <<"("<< multiplier_width_Y - 1 <<" downto " << 0 <<");"<<endl;
-			} 
-
-		
-		o<<endl<<endl;
-		//Regroup all the high parts together and all the low parts together
-		for (i=1;i<=partsY;i++){
-			nameH.str("");; nameL.str("");; concatH.str("");; concatL.str("");;
-			nameH <<"High_"<<i;
-			nameL <<"Low_"<<i;
-			//create the concatenation strings for low and high parts
-			for (j=partsX;j>=1;j--){
-				if (j>1){
-					concatL<<"Y_"<<i<<"_X_"<<j<<"_L & ";
-					concatH<<"Y_"<<i<<"_X_"<<j<<"_H & ";
-				}
-				else{
-				  concatL<<"Y_"<<i<<"_X_"<<j<<"_L";
-				  concatH<<"Y_"<<i<<"_X_"<<j<<"_H";
-				}
-			}
+		do_multiplications(o);
 			
-			o<<tab<< nameL.str() << "  <= " << concatL.str() << ";"<<endl;
-			o<<tab<< nameH.str() << " <= " << concatH.str() << ";"<<endl;
-		}
+		new_line(o);
+		//decompose the results into high and low part
+		decompose_low_high(o);
 
+		new_line(o);		
+		//Regroup all the high parts together and all the low parts together
+		regroup_low_high(o);
 		
-		o<<endl<<endl;
+		
+		new_line(o);
 		//pass to the adder tree
 		if (partsY==1) {
-			
-			//add zeros to the left of Low_  & add zeros right of the High_
-			zeros.str("");;
-			for (i=0;i<multiplier_width_avg;i++)
-				zeros<<"0";
-			
 			if (partsX>1){
 				
 				o<<"addition_term <= ("<< zero_generator(multiplier_width_Y,0)<<" & Low_1("<< partsX*multiplier_width_X-1<<" downto "<< multiplier_width_Y<<"));"<<endl;
-										
-				o<<tab<< "int_adder_component: " << intadd->unique_name << endl;
-				o<<tab<< "  port map ( X => addition_term, " << endl; 
-				o<<tab<< "             Y => High_1, " << endl; 
-				o<<tab<< "             R => addition_result, " << endl; 
-				o<<tab<< "             clk => clk, " << endl;
-				o<<tab<< "             rst => rst " << endl;
-				o<<tab<< "               );" << endl<<endl;
+				map_adder(o, "addition_term", "High_1", "addition_result");
 				
+				//some of the bits of Low_1 do no participate in the addtion. These bits together with the result of the addition need to be merged to form the final result.
+				//=> they need to be delayed with a number of clock cycles equal to the pipeline levels of the addition
 				o<<tab<<"delayed_bits <= Low_1("<<multiplier_width_Y-1<<" downto 0 )"<<";"<<endl;
 				
+				//the concatenation of the addtion result and the delayed bits form the result
 				o<<tab<<"temp_result <= addition_result & "<<get_delay_signal_name("delayed_bits", IntAddPipelineDepth) <<";"<<endl;
-			}
-			else
+			}else{
+				//when both X and Y have 1 part the result is simply the product of these two parts
 				o<<tab<<"temp_result <= Y_1_X_1_d;"<<endl;
+			}
 			
 			//output the result
 			o<<tab<<"R <= temp_result("<<partsX*multiplier_width_X + partsY*multiplier_width_Y-1 -number_of_zerosX - number_of_zerosY<<" downto 0);"<<endl;
 		}
-		else
-		{
+		else //(the number of parts of Y is >1)
+		{ 
 
-			o<<endl<<endl;
+			new_line(o);
 			//connect the low part of the multiplication results to the low tree
-			for(i=1;i<=partsY;i++)
-				o<<tab<<"L_Level_0_Reg_"<<i<<" <= Low_"<<i<<";"<<endl;
-
-			o<<endl<<endl;
-			//the high part of the multiplication needs to be delayed one clock cycle before
-			//it will be inserted into the adder tree
-			for(i=1;i<=partsY;i++)
-				o<<tab<<"Buffer_H_"<< i << " <= High_" <<i<<";"<<endl;
-
-			o<<endl<<endl;
+			connect_low(o);
+						
+			new_line(o);
+			//the high part of the multiplication needs to be delayed one clock cycle before it will be inserted into the adder tree
+			high_to_buffer(o);	
+			
+			new_line(o);
 			//the buffers need to be connected to the high tree
-			for(i=1;i<=partsY;i++)
-				o<<tab<<"H_Level_0_Reg_"<<i<<" <= Buffer_H_"<<i<<"_d;"<<endl;
-		
-		
-			//Connect the low part tohether 
-			for (i=0;i<partsY-1;i++) {
-				for (j=1;j<=partsY-i;j++) {
-					if (j==1) {
-						//concatenate zeros in front of the first register, add it with the
-						//second register and place the result in the next level's first register
-					
-						first_summand.str(""); second_summand.str("");
-						first_summand<<"("<< zero_generator(multiplier_width_Y,0)<<" & L_Level_"<<i<<"_Reg_"<<j<<"_d("<<partsX*multiplier_width_X-1<<" downto "<<multiplier_width_Y<<"))"; 
-						second_summand<<"L_Level_"<<i<<"_Reg_"<<j+1<<"_d";
-						o<<tab<<"L_Level_"<<i+1<<"_Reg_"<<j<<"<="<< first_summand.str() << " + " << second_summand.str()<<";"<< endl;
-					}
-					else
-						if (j==2) {} //do nothing (the second register on the level is always processed with the first
-							else //for the rest of the registers just propagate their contents to the next level
-								o<<tab<<"L_Level_"<<i+1<<"_Reg_"<<j-1<<"<="<<"L_Level_"<<i<<"_Reg_"<<j<<"_d"<<";"<<endl;
-				}
-			}
-
+			connect_buffers(o);
+				
+			//Connect the low part tohether
+			link_low_adder_structure(o);
+			 
 			//Connect the HIGH part tohether 
-			for (i=0;i<partsY-1;i++){
-				for (j=1;j<=partsY-i;j++){
-					if (j==1){
-						//concatenate zeros in front of the first register, add it with the
-						//second register and place the result in the next level's first register
-						first_summand.str("");; second_summand.str("");;
-						first_summand<<"("<< zero_generator(multiplier_width_Y,0)<<" & H_Level_"<<i<<"_Reg_"<<j<<"_d("<<partsX*multiplier_width_X-1<<" downto "<<multiplier_width_Y<<"))"; 
-						second_summand<<"H_Level_"<<i<<"_Reg_"<<j+1<<"_d";
-						o<<tab<<"H_Level_"<<i+1<<"_Reg_"<<j<<"<="<< first_summand.str() << " + " << second_summand.str()<<";"<< endl;
-					}
-					else
-						if (j==2) {} //do nothing (the second register on the level is always processed with the first
-							else //for the rest of the registers just propagate their contents to the next level
-								o<<tab<<"H_Level_"<<i+1<<"_Reg_"<<j-1<<"<="<<"H_Level_"<<i<<"_Reg_"<<j<<"_d;"<<endl;
-				}
-			}
-
-		
+			link_high_adder_structure(o);
 			
-			o<<endl<<endl;
-			o<<tab<<"High1 <= H_Level_"<<partsY-1<<"_Reg_1_d"<<";"<<endl;
-
-			o<<endl<<endl;
-			//the zeros + [the high bits of the last register of the low part] 
-			o<<tab<<"Low1 <= "<<zero_generator(multiplier_width_Y,0)<<" & L_Level_"<<partsY-1<<"_Reg_1_d("<<partsX * multiplier_width_X-1<<" downto "<<multiplier_width_Y<<")"<< ";"<<endl;
-
+			new_line(o);
+			//connect the partsY! registers which compute the low part of the result
+			connect_partial_bits(o);
 			
-			
-			o<<endl<<endl;
-			//connect the partsY! registers which compute the low part of the result 
-			for (j=1; j<=partsY;j++)
-				for (i=1;i<=j;i++){
-					if ((j==1) and (i==1) )
-						o<<tab<<"PartialBits_Level_1_Reg_1 <= \"0\" & L_Level_0_Reg_1_d("<< multiplier_width_Y -1 <<" downto 0);"<< endl;
-					else{
-						//just propagate the registers from 1 to j-1
-						if (i<j)
-							o<<tab<<"PartialBits_Level_"<<j<<"_Reg_"<<i <<"<= "<<"PartialBits_Level_"<<j-1<<"_Reg_"<< i <<"_d;"<<endl;
-						else //if i=j compute the jth register
-							o<<tab<<"PartialBits_Level_"<<j<<"_Reg_"<<i <<"<= "<<"(\"0\" & L_Level_"<<j-1<<"_Reg_1_d("<<multiplier_width_Y-1<<" downto 0)) + "<<"(\"0\" & H_Level_"<<j-2<<"_Reg_1_d("<<multiplier_width_Y-1<<" downto 0)) + "<< "PartialBits_Level_"<<j-1<<"_Reg_"<<i-1<<"_d("<< multiplier_width_Y  <<") ;"<<endl; 
-					}	
-				}
-
-			o<<endl<<endl;
+			new_line(o);
+			//pipeline the addition which gives the gigh part of the multiplication result;
+	  		pipeline_addition(o); //the result of the addition is called temp_result
 	  
-			//connect first parts of addition registers
-			for (j=1; j<=pipe_levels;j++){
-				if ((j==1)&&(pipe_levels!=1))
-					o<<tab<<"Last_Addition_Level_1_Reg_"<<j<<" <= (\"0\" & Low1_d("<<j*addition_chunk_width -1<<" downto "<<(j-1)*addition_chunk_width<<")) + ( \"0\" & High1("<<j*addition_chunk_width -1<<" downto "<<(j-1)*addition_chunk_width<<")) + PartialBits_Level_"<< partsY <<"_Reg_"<< partsY<<"_d("<< multiplier_width_Y <<");"<<endl;  
-				else
-					if ((j==1)&&(pipe_levels==1))
-						o<<tab<<"Last_Addition_Level_1_Reg_"<<j<<" <= Low1_d("<<partsX*multiplier_width_X-1<<" downto "<<"0) + High1("<<partsX*multiplier_width_X-1<<" downto 0) + PartialBits_Level_"<< partsY <<"_Reg_"<< partsY<<"_d("<< multiplier_width_Y <<");"<<endl;  
-					else
-						if (j==pipe_levels)
-							o<<tab<<"Last_Addition_Level_1_Reg_"<<j<<" <= Low1_d("<<partsX*multiplier_width_X-1<<" downto "<<(j-1)*addition_chunk_width<<") + High1("<<partsX*multiplier_width_X-1<<" downto "<<(j-1)*addition_chunk_width<<");"<<endl;  
-						else
-							o<<tab<<"Last_Addition_Level_1_Reg_"<<j<<" <= (\"0\" & Low1_d("<<j*addition_chunk_width -1<<" downto "<<(j-1)*addition_chunk_width<<")) + (\"0\" & High1("<<j*addition_chunk_width -1<<" downto "<<(j-1)*addition_chunk_width<<"));"<<endl;  
-			}
-		
-			//put tohether the pipeline
-			for (j=1; j<=partsX-1;j++)
-				for (i=1;i<=partsX;i++)
-					if ((i<=j)||(i>j+1))
-						o<<tab<<"Last_Addition_Level_"<<j+1<<"_Reg_"<<i<<" <= Last_Addition_Level_"<<j<<"_Reg_"<<i<<"_d;"<<endl;
-					else
-						o<<tab<<"Last_Addition_Level_"<<j+1<<"_Reg_"<<i<<" <= Last_Addition_Level_"<<j<<"_Reg_"<<i<<"_d + Last_Addition_Level_"<<j<<"_Reg_"<<i-1<<"_d("<<addition_chunk_width<<") ;"<<endl; 
-				 
-				 
-				 
+			delay_partial_bits(o);
 			
-			//put the result back together
-			ostringstream addition_string;
-			for (i=pipe_levels;i>0;i--) 
-				if (i!=1)
-					if (i!=pipe_levels)
-						addition_string<<"Last_Addition_Level_"<<pipe_levels<<"_Reg_"<<i<<"_d("<<addition_chunk_width -1<<" downto 0) &" ;
-					else
-						addition_string<<"Last_Addition_Level_"<<pipe_levels<<"_Reg_"<<i<<"_d &";
-				else
-					if (pipe_levels!=1)
-						addition_string<<"Last_Addition_Level_"<<pipe_levels<<"_Reg_"<<i<<"_d("<<addition_chunk_width -1<<" downto 0);" ;
-					else
-						addition_string<<"Last_Addition_Level_"<<pipe_levels<<"_Reg_"<<i<<"_d("<<partsX*multiplier_width_X -1<<" downto 0);" ;
-					
-			o<<tab<<"temp_result <= "<<addition_string.str()<<endl;
-
-			//make the string that will gather all partial bits from the last level
-			the_bits.str("");;
-			for (i=partsY;i>0;i--)
-				if (i!=1) 
-					the_bits << "PartialBits_Level_"<< partsY <<"_Reg_"<<i<<"_d("<< multiplier_width_Y-1 << " downto 0" <<")"<<" & ";
-				else
-					the_bits << "PartialBits_Level_"<< partsY <<"_Reg_"<<i<<"_d("<< multiplier_width_Y-1 << " downto 0" <<")";
-
-		
-			//setup the pipeline part that will carry the low part of the final result
-			o<<tab<<"PartialBits_Reg_1 <= "<<the_bits.str()<<";"<<endl;
-			for (i=2;i<=pipe_levels;i++)
-				o<<tab<<"PartialBits_Reg_"<<i<<" <= PartialBits_Reg_"<<i-1<<"_d;"<<endl;
-		
-		
-			o<<tab<<"partial_bits <= PartialBits_Reg_"<<pipe_levels<<"_d;"<<endl;
 			o<<tab<<"full_result <= temp_result & partial_bits;"<<endl; 
 			o<<tab<<"R <= full_result("<<  partsX*multiplier_width_X + partsY*multiplier_width_Y - 1 -number_of_zerosX - number_of_zerosY<<" downto 0);"<<endl;
 		  
 			o<<endl<<endl;
 		}
-	}//end if sequential
-	
-	else{ 
+	}else{ 
 		//the combinational version
 		o << tab<<"R <= X * Y ;" << endl;
 	}
 	
-	
-	o << "end architecture;" << endl << endl;
+	end_architecture(o);
 }
 
 
@@ -607,3 +429,311 @@ string IntMultiplier::zero_generator(int n, int margins)
 		default: return full.str();
 	}
 }
+
+
+/**
+ * A method which pads the inputs with 0. 
+ * @param[in,out] o - the stream to which the new line will be added
+ **/
+void IntMultiplier::pad_inputs(std::ostream& o)
+{
+	if (reverse == false){
+		o<<tab<< "i_Y <= "<< zero_generator(number_of_zerosY,0)<<" & X;"<<endl;
+		o<<tab<< "i_X <= "<< zero_generator(number_of_zerosX,0)<<" & Y;"<<endl;
+		new_line(o);
+	}else{
+		o<<tab<< "i_X <= "<< zero_generator(number_of_zerosX,0)<<" & X;"<<endl;
+		o<<tab<< "i_Y <= "<< zero_generator(number_of_zerosY,0)<<" & Y;"<<endl;
+		new_line(o);
+	}		
+}
+
+
+/**
+ * A method which splits the input given by name into [parts] parts, each part having the width part_width
+ * @param[in,out]	o 			- the stream to which the code will be inputed
+ * @param[in]		name		- the name of the input string
+ * @param[in]		parts		- the number of parts the input will be split in
+ * @param[in]		part_width	- the width of the part	
+ **/
+void IntMultiplier::split(std::ostream& o, std::string name, int parts, int part_width)
+{
+int i;
+ostringstream temp;
+	
+	for (i=1;i<=parts;i++){
+		temp.str("");
+		temp << name <<"_"<<i;
+		o<<tab<< temp.str() << " <= i_"<<name<<"("<< i * part_width -1 <<" downto "<< (i-1) * part_width<<");"<<endl;
+	}
+}
+
+
+/**
+ * A does the multiplications of the parts X and Y were splitted in
+ * @param[in,out] o - the stream to which the multiplications are added
+ **/
+void IntMultiplier::do_multiplications(std::ostream& o)
+{
+int i,j;
+ostringstream names;	
+		for (i=1;i<=partsY;i++)
+			for (j=1;j<=partsX;j++){  
+				names.str("");;
+				names <<"Y_"<<i<<"_X_"<<j;
+				o<<tab<< names.str() << " <= " << "Y_"<< i <<"_d * " << "X_"<<j << "_d;"<<endl;
+			} 
+}
+
+
+/**
+ * Decompose the multiplication of two chunks into high and low parts
+ * @param[in,out] o - the stream to which the decomposition is written
+ **/
+void IntMultiplier::decompose_low_high(std::ostream& o)
+{
+int i,j;
+ostringstream names, nameH, nameL;
+	for (i=1;i<=partsY;i++)
+		for (j=1;j<=partsX;j++){
+			names.str("");; nameH.str("");; nameL.str("");;
+			names <<"Y_"<<i<<"_X_"<<j<<"_d";
+			nameH <<"Y_"<<i<<"_X_"<<j<<"_H";
+			nameL <<"Y_"<<i<<"_X_"<<j<<"_L";
+			o<<tab<< nameH.str() << " <= " << names.str() <<"("<< multiplier_width_X + multiplier_width_Y - 1 <<" downto " << multiplier_width_Y <<");"<<endl;
+			o<<tab<< nameL.str() << " <= " <<zero_generator(multiplier_width_X - multiplier_width_Y ,0)<<" & "<< names.str() <<"("<< multiplier_width_Y - 1 <<" downto " << 0 <<");"<<endl;
+			} 
+}
+
+/**
+ * Regroup the decomposition result into vectors low and high vectors
+ * @param[in,out] o - the stream to which the regrouping is written
+ **/
+void IntMultiplier::regroup_low_high(std::ostream& o)
+{
+int i,j;
+ostringstream nameL,nameH, concatH, concatL;
+	for (i=1;i<=partsY;i++){
+		nameH.str(""); nameL.str(""); concatH.str(""); concatL.str("");
+		nameH <<"High_"<<i;
+		nameL <<"Low_"<<i;
+		//create the concatenation strings for low and high parts
+		for (j=partsX;j>=1;j--){
+			if (j>1){
+				concatL<<"Y_"<<i<<"_X_"<<j<<"_L & ";
+				concatH<<"Y_"<<i<<"_X_"<<j<<"_H & ";
+			}else{
+			  concatL<<"Y_"<<i<<"_X_"<<j<<"_L";
+			  concatH<<"Y_"<<i<<"_X_"<<j<<"_H";
+			}
+		}
+		o<<tab<< nameL.str() << "  <= " << concatL.str() << ";"<<endl;
+		o<<tab<< nameH.str() << " <= " << concatH.str() << ";"<<endl;
+	}
+}
+
+
+/**
+ * Adder mapping
+ * @param[in,out] 	o 			- the stream to which the mapping is written
+ * @param[in]		left_term	- the name of the left term of the addition as a string
+ * @param[in]		right_term	- the name of the right term of the addition as a string
+ * @param[in]		result		- the name of the result of the addition
+ **/
+void IntMultiplier::map_adder(std::ostream& o,std::string left_term, std::string right_term, std::string result )
+{
+	o<<tab<< "int_adder_component: " << intadd->unique_name << endl;
+	o<<tab<< "  port map ( X => "<< left_term << ", " << endl; 
+	o<<tab<< "             Y => "<< right_term<< ", " << endl; 
+	o<<tab<< "             R => "<< result<< ", " << endl; 
+	o<<tab<< "             clk => clk, " << endl;
+	o<<tab<< "             rst => rst " << endl;
+	o<<tab<< "               );" << endl<<endl;
+}
+
+/**
+ * Connect the low part of the multiplication to the low part of the adder structure
+ * @param[in,out] 	o 			- the stream
+ **/
+void IntMultiplier::connect_low(std::ostream& o)
+{
+int i;
+	for(i=1;i<=partsY;i++)
+		o<<tab<<"L_Level_0_Reg_"<<i<<" <= Low_"<<i<<";"<<endl;
+}
+
+
+/**
+ * Connect the high part of the multiplication to a buffer
+ * @param[in,out] 	o 			- the stream
+ **/
+void IntMultiplier::high_to_buffer(std::ostream& o)
+{
+int i;
+	for(i=1;i<=partsY;i++)
+		o<<tab<<"Buffer_H_"<< i << " <= High_" <<i<<";"<<endl;
+}
+
+/**
+ * Connect the buffer to the high part of the adder structure
+ * @param[in,out] 	o 			- the stream
+ **/
+void IntMultiplier::connect_buffers(std::ostream& o)
+{
+int i;
+	for(i=1;i<=partsY;i++)
+		o<<tab<<"H_Level_0_Reg_"<<i<<" <= Buffer_H_"<<i<<"_d;"<<endl;
+}
+
+/**
+ * Link together the components of the low part of the adder structure
+ * @param[in,out] 	o 			- the stream
+ **/
+void IntMultiplier::link_low_adder_structure(std::ostream& o)
+{
+int i,j;
+ostringstream first_summand, second_summand;
+	for (i=0;i<partsY-1;i++) {
+		for (j=1;j<=partsY-i;j++) {
+			if (j==1) {
+				//concatenate zeros in front of the first register, add it with the second register and place the result in the next level's first register
+				first_summand.str(""); second_summand.str("");
+				first_summand<<"("<< zero_generator(multiplier_width_Y,0)<<" & L_Level_"<<i<<"_Reg_"<<j<<"_d("<<partsX*multiplier_width_X-1<<" downto "<<multiplier_width_Y<<"))"; 
+				second_summand<<"L_Level_"<<i<<"_Reg_"<<j+1<<"_d";
+				o<<tab<<"L_Level_"<<i+1<<"_Reg_"<<j<<"<="<< first_summand.str() << " + " << second_summand.str()<<";"<< endl;
+			}
+			else
+				if (j==2) {} //do nothing (the second register on the level is always processed with the first
+					else //for the rest of the registers just propagate their contents to the next level
+						o<<tab<<"L_Level_"<<i+1<<"_Reg_"<<j-1<<"<="<<"L_Level_"<<i<<"_Reg_"<<j<<"_d"<<";"<<endl;
+		}
+	}
+
+	//the zeros + [the high bits of the last register of the low part] 
+	o<<tab<<"Low1 <= "<<zero_generator(multiplier_width_Y,0)<<" & L_Level_"<<partsY-1<<"_Reg_1_d("<<partsX * multiplier_width_X-1<<" downto "<<multiplier_width_Y<<")"<< ";"<<endl;
+}
+
+
+/**
+ * Link together the components of the high part of the adder structure
+ * @param[in,out] 	o 			- the stream
+ **/
+void IntMultiplier::link_high_adder_structure(std::ostream& o)
+{
+int i,j;
+ostringstream first_summand, second_summand;
+	for (i=0;i<partsY-1;i++){
+		for (j=1;j<=partsY-i;j++){
+			if (j==1){
+				//concatenate zeros in front of the first register, add it with thesecond register and place the result in the next level's first register
+				first_summand.str("");; second_summand.str("");;
+				first_summand<<"("<< zero_generator(multiplier_width_Y,0)<<" & H_Level_"<<i<<"_Reg_"<<j<<"_d("<<partsX*multiplier_width_X-1<<" downto "<<multiplier_width_Y<<"))"; 
+				second_summand<<"H_Level_"<<i<<"_Reg_"<<j+1<<"_d";
+				o<<tab<<"H_Level_"<<i+1<<"_Reg_"<<j<<"<="<< first_summand.str() << " + " << second_summand.str()<<";"<< endl;
+			}
+			else
+				if (j==2) {} //do nothing (the second register on the level is always processed with the first
+					else //for the rest of the registers just propagate their contents to the next level
+						o<<tab<<"H_Level_"<<i+1<<"_Reg_"<<j-1<<"<="<<"H_Level_"<<i<<"_Reg_"<<j<<"_d;"<<endl;
+		}
+	}
+
+	o<<tab<<"High1 <= H_Level_"<<partsY-1<<"_Reg_1_d"<<";"<<endl;
+}
+
+/**
+ * The partial bits structure outputs the low part of the result by using short additions
+ * @param[in,out] 	o 			- the stream
+ **/
+void IntMultiplier::connect_partial_bits(std::ostream& o)
+{
+int i,j;
+	for (j=1; j<=partsY;j++)
+		for (i=1;i<=j;i++){
+			if ((j==1) and (i==1) )
+				o<<tab<<"PartialBits_Level_1_Reg_1 <= \"0\" & L_Level_0_Reg_1_d("<< multiplier_width_Y -1 <<" downto 0);"<< endl;
+			else{
+				//just propagate the registers from 1 to j-1
+				if (i<j)
+					o<<tab<<"PartialBits_Level_"<<j<<"_Reg_"<<i <<"<= "<<"PartialBits_Level_"<<j-1<<"_Reg_"<< i <<"_d;"<<endl;
+				else //if i=j compute the jth register
+					o<<tab<<"PartialBits_Level_"<<j<<"_Reg_"<<i <<"<= "<<"(\"0\" & L_Level_"<<j-1<<"_Reg_1_d("<<multiplier_width_Y-1<<" downto 0)) + "<<"(\"0\" & H_Level_"<<j-2<<"_Reg_1_d("<<multiplier_width_Y-1<<" downto 0)) + "<< "PartialBits_Level_"<<j-1<<"_Reg_"<<i-1<<"_d("<< multiplier_width_Y  <<") ;"<<endl; 
+			}	
+		}
+}
+
+
+/**
+ * The addition which gives the high part of the product between X and Y is pipelined to obtain better performance
+ * @param[in,out] 	o 			- the stream
+ **/
+void IntMultiplier::pipeline_addition(std::ostream& o)
+{
+int i,j;
+	//connect first parts of addition registers
+	for (j=1; j<=pipe_levels;j++){
+		if ((j==1)&&(pipe_levels!=1))
+			o<<tab<<"Last_Addition_Level_1_Reg_"<<j<<" <= (\"0\" & Low1_d("<<j*addition_chunk_width -1<<" downto "<<(j-1)*addition_chunk_width<<")) + ( \"0\" & High1("<<j*addition_chunk_width -1<<" downto "<<(j-1)*addition_chunk_width<<")) + PartialBits_Level_"<< partsY <<"_Reg_"<< partsY<<"_d("<< multiplier_width_Y <<");"<<endl;  
+		else
+			if ((j==1)&&(pipe_levels==1))
+				o<<tab<<"Last_Addition_Level_1_Reg_"<<j<<" <= Low1_d("<<partsX*multiplier_width_X-1<<" downto "<<"0) + High1("<<partsX*multiplier_width_X-1<<" downto 0) + PartialBits_Level_"<< partsY <<"_Reg_"<< partsY<<"_d("<< multiplier_width_Y <<");"<<endl;  
+			else
+				if (j==pipe_levels)
+					o<<tab<<"Last_Addition_Level_1_Reg_"<<j<<" <= Low1_d("<<partsX*multiplier_width_X-1<<" downto "<<(j-1)*addition_chunk_width<<") + High1("<<partsX*multiplier_width_X-1<<" downto "<<(j-1)*addition_chunk_width<<");"<<endl;  
+				else
+					o<<tab<<"Last_Addition_Level_1_Reg_"<<j<<" <= (\"0\" & Low1_d("<<j*addition_chunk_width -1<<" downto "<<(j-1)*addition_chunk_width<<")) + (\"0\" & High1("<<j*addition_chunk_width -1<<" downto "<<(j-1)*addition_chunk_width<<"));"<<endl;  
+	}
+
+	//put tohether the pipeline
+	for (j=1; j<=partsX-1;j++)
+		for (i=1;i<=partsX;i++)
+			if ((i<=j)||(i>j+1))
+				o<<tab<<"Last_Addition_Level_"<<j+1<<"_Reg_"<<i<<" <= Last_Addition_Level_"<<j<<"_Reg_"<<i<<"_d;"<<endl;
+			else
+				o<<tab<<"Last_Addition_Level_"<<j+1<<"_Reg_"<<i<<" <= Last_Addition_Level_"<<j<<"_Reg_"<<i<<"_d + Last_Addition_Level_"<<j<<"_Reg_"<<i-1<<"_d("<<addition_chunk_width<<") ;"<<endl; 
+				 
+	//put the result back together
+	ostringstream addition_string;
+	for (i=pipe_levels;i>0;i--) 
+		if (i!=1)
+			if (i!=pipe_levels)
+				addition_string<<"Last_Addition_Level_"<<pipe_levels<<"_Reg_"<<i<<"_d("<<addition_chunk_width -1<<" downto 0) &" ;
+			else
+				addition_string<<"Last_Addition_Level_"<<pipe_levels<<"_Reg_"<<i<<"_d &";
+		else
+			if (pipe_levels!=1)
+				addition_string<<"Last_Addition_Level_"<<pipe_levels<<"_Reg_"<<i<<"_d("<<addition_chunk_width -1<<" downto 0);" ;
+			else
+				addition_string<<"Last_Addition_Level_"<<pipe_levels<<"_Reg_"<<i<<"_d("<<partsX*multiplier_width_X -1<<" downto 0);" ;
+
+	o<<tab<<"temp_result <= "<<addition_string.str()<<endl;
+}
+
+
+
+/**
+ * Delay the low bits of the result with as many clock counts as the high bits addition pipeline take
+ * @param[in,out] 	o 			- the stream
+ **/
+void IntMultiplier::delay_partial_bits(std::ostream& o)
+{
+int i;
+ostringstream the_bits;
+	//make the string that will gather all partial bits from the last level
+	the_bits.str("");;
+	for (i=partsY;i>0;i--)
+		if (i!=1) 
+			the_bits << "PartialBits_Level_"<< partsY <<"_Reg_"<<i<<"_d("<< multiplier_width_Y-1 << " downto 0" <<")"<<" & ";
+		else
+			the_bits << "PartialBits_Level_"<< partsY <<"_Reg_"<<i<<"_d("<< multiplier_width_Y-1 << " downto 0" <<")";
+
+	//setup the pipeline part that will carry the low part of the final result
+	o<<tab<<"PartialBits_Reg_1 <= "<<the_bits.str()<<";"<<endl;
+	for (i=2;i<=pipe_levels;i++)
+		o<<tab<<"PartialBits_Reg_"<<i<<" <= PartialBits_Reg_"<<i-1<<"_d;"<<endl;
+
+	o<<tab<<"partial_bits <= PartialBits_Reg_"<<pipe_levels<<"_d;"<<endl;
+}
+
+
+

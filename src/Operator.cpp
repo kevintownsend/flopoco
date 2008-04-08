@@ -274,6 +274,46 @@ void Operator::Licence(std::ostream& o, std::string authorsyears){
    <<"--------------------------------------------------------------------------------"<<endl;
 }
 
+
+/**
+ * A new line macro 
+ * @param[in,out] o - the stream to which the new line will be added
+ **/
+void Operator::new_line(std::ostream& o)
+{
+o<<endl;
+}
+
+/**
+ * A new architecture macro 
+ * @param[in,out] o 	- the stream to which the new architecture line will be added
+ * @param[in]     name	- the name of the entity corresponding to this architecture
+ **/
+void Operator::new_architecture(std::ostream& o, std::string name)
+{
+o << "architecture arch of " << name  << " is" << endl;
+}
+
+
+/**
+ * A begin architecture macro 
+ * @param[in,out] o 	- the stream to which the begin line will be added
+ **/
+void Operator::begin_architecture(std::ostream& o)
+{
+o << "begin" << endl;
+}
+
+/**
+ * A end architecture macro 
+ * @param[in,out] o 	- the stream to which the begin line will be added
+ **/
+void Operator::end_architecture(std::ostream& o)
+{
+o << "end architecture;" << endl << endl;
+}
+
+
 void Operator::output_vhdl(std::ostream& o) {
   this->output_vhdl(o,  this->unique_name); 
 }
