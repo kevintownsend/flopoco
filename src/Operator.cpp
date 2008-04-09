@@ -33,70 +33,170 @@
 
 
 void  Operator::add_input(const std::string name, const int width) {
-  ioList.push_back(new Signal(name, Signal::in, width));
+  if(_signal_map.find(name) != _signal_map.end()) {
+    cerr << "ERROR in add_input , signal " << name<< " seems to already exist" << endl;
+    exit(EXIT_FAILURE);
+  }
+  Signal *s = new Signal(name, Signal::in, width) ;
+  ioList.push_back(s);
+  _signal_map[name] = s ;
   number_of_inputs ++;
 }
 
 void  Operator::add_output(const std::string name, const int width) {
-  ioList.push_back(new Signal(name, Signal::out, width));
+  if(_signal_map.find(name) != _signal_map.end()) {
+    cerr << "ERROR in add_input , signal " << name<< " seems to already exist" << endl;
+    exit(EXIT_FAILURE);
+  }
+  Signal *s = new Signal(name, Signal::out, width) ;
+  ioList.push_back(s);
+  _signal_map[name] = s ;
   number_of_outputs ++;
 }
 
 void  Operator::add_FP_input(const std::string name, const int wE, const int wF) {
-  ioList.push_back(new Signal(name, Signal::in, wE, wF));
+  if(_signal_map.find(name) != _signal_map.end()) {
+    cerr << "ERROR in add_input , signal " << name<< " seems to already exist" << endl;
+    exit(EXIT_FAILURE);
+  }
+  Signal *s = new Signal(name, Signal::in, wE, wF) ;
+  ioList.push_back(s);
+  _signal_map[name] = s ;
   number_of_inputs ++;
 }
 
 void  Operator::add_FP_output(const std::string name, const int wE, const int wF) {
-  ioList.push_back(new Signal(name, Signal::out, wE, wF));
+  if(_signal_map.find(name) != _signal_map.end()) {
+    cerr << "ERROR in add_input , signal " << name<< " seems to already exist" << endl;
+    exit(EXIT_FAILURE);
+  }
+  Signal *s = new Signal(name, Signal::out, wE, wF) ;
+  ioList.push_back(s);
+  _signal_map[name] = s ;
   number_of_outputs ++;
 }
 
+
 void  Operator::add_signal(const std::string name, const int width) {
-  signalList.push_back(new Signal(name, Signal::wire, width));
+  if(_signal_map.find(name) != _signal_map.end()) {
+    cerr << "ERROR in add_input , signal " << name<< " seems to already exist" << endl;
+    exit(EXIT_FAILURE);
+  }
+  Signal *s = new Signal(name, Signal::wire, width);
+  _signal_map[name] = s ;
+  signalList.push_back(s);
 }
 
+
+
 void  Operator::add_registered_signal(const std::string name, const int width) {
-  signalList.push_back(new Signal(name, Signal::registered, width));
-  ostringstream o;
-  o << name <<"_d";
-  signalList.push_back(new Signal(o.str(), Signal::wire, width));
+  if(_signal_map.find(name) != _signal_map.end()) {
+    cerr << "ERROR in add_input , signal " << name<< " seems to already exist" << endl;
+    exit(EXIT_FAILURE);
+  }
+  Signal *s;
+  s = new Signal(name, Signal::registered, width);
+  signalList.push_back(s);
+  _signal_map[name] = s ;
+
+  string o =  name + "_d";
+  if(_signal_map.find(o) != _signal_map.end()) {
+    cerr << "ERROR in add_input , signal " << name<< " seems to already exist" << endl;
+    exit(EXIT_FAILURE);
+  }
+  s = new Signal(o, Signal::wire, width);
+  signalList.push_back(s);
+  _signal_map[name] = s ;
+
   has_registers=true;
 }
 
+
+
 void  Operator::add_registered_signal_with_async_reset(const std::string name, const int width) {
-  signalList.push_back(new Signal(name, Signal::registered_with_async_reset, width));
-  ostringstream o;
-  o << name <<"_d";
-  signalList.push_back(new Signal(o.str(), Signal::wire, width));
+  Signal *s;
+
+  if(_signal_map.find(name) != _signal_map.end()) {
+    cerr << "ERROR in add_input , signal " << name<< " seems to already exist" << endl;
+    exit(EXIT_FAILURE);
+  }
+  s = new Signal(name, Signal::registered_with_async_reset, width);
+  signalList.push_back(s);
+  _signal_map[name] = s ;
+
+  string o = name + "_d";
+  if(_signal_map.find(o) != _signal_map.end()) {
+    cerr << "ERROR in add_input , signal " << name<< " seems to already exist" << endl;
+    exit(EXIT_FAILURE);
+  }
+  s = new Signal(o, Signal::wire, width);
+  signalList.push_back(s);
+  _signal_map[name] = s ;
+
   has_registers_with_async_reset=true;
 }
 
+
+
+
 void  Operator::add_registered_signal_with_sync_reset(const std::string name, const int width) {
-  signalList.push_back(new Signal(name, Signal::registered_with_sync_reset, width));
-  ostringstream o;
-  o << name <<"_d";
-  signalList.push_back(new Signal(o.str(), Signal::wire, width));
+  Signal *s;
+
+  if(_signal_map.find(name) != _signal_map.end()) {
+    cerr << "ERROR in add_input , signal " << name<< " seems to already exist" << endl;
+    exit(EXIT_FAILURE);
+  }
+  s = new Signal(name, Signal::registered_with_sync_reset, width);
+  signalList.push_back(s);
+  _signal_map[name] = s ;
+
+  string o = name + "_d";
+  if(_signal_map.find(o) != _signal_map.end()) {
+    cerr << "ERROR in add_input , signal " << name<< " seems to already exist" << endl;
+    exit(EXIT_FAILURE);
+  }
+  s = new Signal(o, Signal::wire, width);
+  signalList.push_back(s);
+  _signal_map[name] = s ;
+
   has_registers_with_sync_reset=true;
 }
 
 
 
+
+
 string  Operator::add_delay_signal(const string name, const int width, const int delay) {
   ostringstream o;
+  Signal *s;
   o << name;
   // if the delay is zero it is equivalent to add_signal
   if(delay>0) {
     for (int i=0; i<delay; i++){
-      signalList.push_back(new Signal(o.str(), Signal::registered, width));    
+      if(_signal_map.find(o.str()) != _signal_map.end()) {
+	cerr << "ERROR in add_input , signal " << name<< " seems to already exist" << endl;
+	exit(EXIT_FAILURE);
+      }
+      s = new Signal(o.str(), Signal::registered, width);
+      signalList.push_back(s);    
+      _signal_map[name] = s ;
       o  <<"_d";
     }
     has_registers=true;
   }
-  signalList.push_back(new Signal(o.str(), Signal::wire, width));    
+
+  if(_signal_map.find(o.str()) != _signal_map.end()) {
+    cerr << "ERROR in add_input , signal " << name<< " seems to already exist" << endl;
+    exit(EXIT_FAILURE);
+  }
+  s = new Signal(o.str(), Signal::wire, width);
+  signalList.push_back(s);    
+  _signal_map[name] = s ;
   
   return o.str();
 }
+
+
 
 string  Operator::get_delay_signal_name(const string name, const int delay) {
   ostringstream o;
@@ -105,6 +205,11 @@ string  Operator::get_delay_signal_name(const string name, const int delay) {
     o  <<"_d";
   }
   return o.str();
+}
+
+
+Operator::Signal * Operator::get_signal_by_name(string name) {
+  return _signal_map[name];
 }
 
 
@@ -167,9 +272,9 @@ void  Operator::output_vhdl_registers(std::ostream& o) {
   
   // then registers with a reset
   if (has_registers_with_async_reset) {
-    o << "  process(clk, rst)" << endl;
-    o << "    begin" << endl;
-    o << "      if rst = '1' then" << endl;
+    o << tab << "process(clk, rst)" << endl;
+    o << tab << tab << "begin" << endl;
+    o << tab << tab << tab << "if rst = '1' then" << endl;
     for(int i=0; i<signalList.size(); i++) {
       Operator::Signal *s = signalList[i];
       if(s->type()==Signal::registered_with_async_reset)
@@ -178,22 +283,22 @@ void  Operator::output_vhdl_registers(std::ostream& o) {
          else
             o << tab <<tab << tab << s->id() <<"_d" << " <=  '0';\n";
     }
-    o << "      elsif clk'event and clk = '1' then" << endl;
+    o << tab << tab << tab << "elsif clk'event and clk = '1' then" << endl;
     for(int i=0; i<signalList.size(); i++) {
       Operator::Signal *s = signalList[i];
       if(s->type()==Signal::registered_with_async_reset) 
 	o << tab <<tab << tab << s->id() <<"_d" << " <=  " << s->id() <<";\n";
     }
-    o << "      end if;" << endl;
-    o << "    end process;" << endl;
+    o << tab << tab << tab << "end if;" << endl;
+    o << tab << tab << "end process;" << endl;
   }
 
   // then registers with synchronous reset
   if (has_registers_with_sync_reset) {
-    o << "  process(clk, rst)" << endl;
-    o << "    begin" << endl;
+    o << tab << "process(clk, rst)" << endl;
+    o << tab << tab << "begin" << endl;
     o<<  "    if clk'event and clk = '1' then" << endl;
-    o << "      if rst = '1' then" << endl;
+    o << tab << tab << tab << "if rst = '1' then" << endl;
     for(int i=0; i<signalList.size(); i++) {
       Operator::Signal *s = signalList[i];
       if(s->type()==Signal::registered_with_sync_reset)
@@ -202,24 +307,21 @@ void  Operator::output_vhdl_registers(std::ostream& o) {
          else
             o << tab <<tab << tab << s->id() <<"_d" << " <=  '0';\n";
     }
-    o << "      else" << endl;
+    o << tab << tab << tab << "else" << endl;
     for(int i=0; i<signalList.size(); i++) {
       Operator::Signal *s = signalList[i];
       if(s->type()==Signal::registered_with_sync_reset) 
 	o << tab <<tab << tab << s->id() <<"_d" << " <=  " << s->id() <<";\n";
     }
-    o << "      end if;" << endl;
-    o << "    end if;" << endl;
-    o << "    end process;" << endl;
+    o << tab << tab << tab << "end if;" << endl;
+    o << tab << tab << "end if;" << endl;
+    o << tab << tab << "end process;" << endl;
   }
-   
-
-
 }
 
 void Operator::output_vhdl_component(std::ostream& o, std::string name) {
   o << tab << "component " << name << " is" << endl
-    << tab << "   port ( ";
+    << tab << tab << "port ( ";
   for (int i=0; i<this->ioList.size(); i++){
     Signal* s = this->ioList[i];
     if (i>0) // align signal names 
@@ -231,7 +333,7 @@ void Operator::output_vhdl_component(std::ostream& o, std::string name) {
     o <<";"<<endl<<"          clk: in std_logic";
     o <<";"<<endl<<"          rst: in std_logic";
   }
-  o << "  );"<<endl;
+  o << tab << ");"<<endl;
   o << tab << "end component;" << endl;
 }
 
@@ -242,7 +344,7 @@ void Operator::output_vhdl_component(std::ostream& o) {
 
 void Operator::output_vhdl_entity(std::ostream& o) {
   o << "entity " << unique_name << " is" << endl
-    << "   port ( ";
+    << tab << "port ( ";
   for (int i=0; i<this->ioList.size(); i++){
     Signal* s = this->ioList[i];
     if (i>0) // align signal names 
@@ -255,7 +357,7 @@ void Operator::output_vhdl_entity(std::ostream& o) {
     o <<";"<<endl<<"          rst: in std_logic";
   }
   
-  o << "  );"<<endl;
+  o << tab << ");"<<endl;
   o << "end entity;" << endl << endl;
 }
 
@@ -321,26 +423,41 @@ void Operator::output_vhdl(std::ostream& o) {
 
 
 
-void Operator::add_test_case(Operator::TestCase t){
-  // Check that there are the right number of inputs
-  if (t.input.size() != number_of_inputs) {
-    cerr << "Error in add_test_case: expected "<<number_of_inputs << " inputs, got " << t.input.size() <<endl;
+
+void Operator::add_test_case(vector<TestCase> &list, map<string, mpz_class> input, multimap<string, mpz_class> expected_output ){
+#if 0  // Check that there are the right number of inputs
+  if (input.size() != number_of_inputs) {
+    cerr << "Error in add_test_case: expected "<<number_of_inputs << " inputs, got " << input.size() <<endl;
+    exit (EXIT_FAILURE);
   }
   // Check that there are the right number of outputs
-  if (t.expected_output.size() != number_of_outputs) {
-    cerr << "Error in add_test_case: expected "<<number_of_outputs << " outputs, got " << t.expected_output.size() <<endl;
+  if (expected_output.size() != number_of_outputs) {
+    cerr << "Error in add_test_case: expected "<<number_of_outputs << " outputs, got " << expected_output.size() <<endl;  
+    exit (EXIT_FAILURE);
   }
+#endif
   // Check that the sizes match
   // TODO
   // Insert into test case list
-  // TODO
+
+  TestCase t;
+  t.input = input;
+  t.expected_output = expected_output;
+  list.push_back(t);
 
 }
 
 
-void Operator::output_vhdl_test(std::ostream& o) {
-}
 
+// default implementation just output a warning, each (non-trivial) operator should overload it. 
+void Operator::add_standard_test_cases(vector<TestCase> &list){
+  cerr << "Warning: add_standard_test_cases not defined for " << this->unique_name << endl;
+}
+  
+// default implementation just output a warning, each (non-trivial) operator should overload it. 
+void  Operator::add_random_test_cases(vector<TestCase> &list, int n){
+  cerr << "Warning: add_random_test_cases ot defined for " << this->unique_name << endl;
+}
 
 
 bool Operator::is_sequential() {
@@ -369,3 +486,4 @@ void Operator::output_final_report() {
   else
     cout << tab << "Not pipelined"<< endl;
 }
+

@@ -82,6 +82,7 @@ void mpfr_shift_right(mpfr_t& x, int s) {
 }
 
 
+
 void printBinNumGMP(ostream& o, mpz_class x, int size)
 {
   mpz_class px;  
@@ -96,8 +97,38 @@ void printBinNumGMP(ostream& o, mpz_class x, int size)
   printBinPosNumGMP(o, px, size);
 }
 
+
+
+
+string unsigned_binary(mpz_class x, int size){
+  string s;
+  mpz_class po2, number;
+  char bit;
+
+  if(x<0) {
+    cerr<<"printBinPosNumGMP: Positive number expected, got x="<<x.get_d()<<endl;
+    exit(EXIT_FAILURE);
+  }
+  po2 = ((mpz_class) 1)<<size;
+  number=x;
+    
+  for (int i = 0; i < size ; i++) {
+    po2 = po2>>1;
+    if (number >= po2) {
+      bit = '1';
+      number -= po2;
+    }
+    else {
+      bit = '0';
+    }
+    s +=  bit;
+  }
+  return s;
+}
+
 void printBinPosNumGMP(ostream& o, mpz_class x, int size)
 {
+#if 0 // to be removed some day
   mpz_class po2, number;
   char bit;
 
@@ -119,6 +150,9 @@ void printBinPosNumGMP(ostream& o, mpz_class x, int size)
     }
     o << bit;
   }
+#else
+  o << unsigned_binary(x,size);
+#endif
 }
 
 

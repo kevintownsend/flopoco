@@ -7,6 +7,7 @@ Pipeline framework, Operator and Targets:
 * get the constants right to have a better evaluation of the frequency of the shifters
 * manage a notion of cycle at the Operator level?
 * remove the lutsize option, and replace them with a target option.
+* add an output_vhdl_instance method to Operator? Not sure.
 
 Tools:
 * add NaN and infty handling in fp2bin bin2fp longacc2fp

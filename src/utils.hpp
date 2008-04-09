@@ -13,6 +13,7 @@ using namespace std;
 void mpfr_shift_left(mpfr_t& x, int s);
 void mpfr_shift_right(mpfr_t& x, int s);
 void printBinNumGMP(ostream& o, mpz_class number, int size);
+string unsigned_binary(mpz_class x, int size);
 void printBinPosNumGMP(ostream& o, mpz_class number, int size);
 void printBinNum(ostream& o, uint64_t x, int size);
 double iround(double number, int bits);

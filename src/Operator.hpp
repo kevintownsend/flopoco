@@ -1,6 +1,7 @@
 #ifndef OPERATOR_HPP
 #define OPERATOR_HPP
 #include<vector>
+#include<map>
 #include <gmpxx.h>
 //#include "cpphdl/signal.hh"
 #include "Target.hpp"
@@ -22,7 +23,7 @@ public:
   /**
      A test case consists of one input and a vector of possible outputs.
      
-     The input is a vector of integers which will be converted to
+     The input is a vector of GMP integers which will be converted to
      std_logic_vectors, one for each input declared by add_input or
      add_fp_input.
      
@@ -31,9 +32,14 @@ public:
      several possible outputs. The test will succeed if each actual
      output corresponds to one of the elements of the corresponding list.
   */
+
+  
+  typedef map<string, mpz_class> TestCaseInput;
+  typedef multimap<string, mpz_class> TestCaseOutput;
+
   struct TestCase{
-    vector<mpz_class> input;
-    vector<vector<mpz_class> > expected_output; 
+    TestCaseInput input;
+    TestCaseOutput  expected_output; 
   };
 
 
@@ -44,12 +50,12 @@ public:
     
     Signal(const std::string name, const type_t type, const int width = 1): 
       _name(name), _type(type), _wE(0), _wF(0), _width(width){
-      isFP = false;
+      _isFP = false;
     }
 
     Signal(const std::string name, const type_t type, const int wE, const int wF): 
       _name(name), _type(type), _wE(wE), _wF(wF), _width(wE+wF+3){
-      isFP = true;
+      _isFP = true;
     }
     
     ~Signal(){}
@@ -59,6 +65,7 @@ public:
     int width(){return _width;}
     int wE(){return(_wE);}
     int wF(){return(_wF);}
+    bool isFP(){return _isFP;}
     
     type_t type() {return _type;}
     
@@ -78,7 +85,7 @@ public:
       if (1==width()) 
 	o << "std_logic" ;
       else 
-	if(isFP) 
+	if(_isFP) 
 	  o << " std_logic_vector(" << wE() <<"+"<<wF() << "+2 downto 0)";
 	else
 	  o << " std_logic_vector(" << width()-1 << " downto 0)";
@@ -89,7 +96,7 @@ public:
     const std::string _name;
     const type_t _type;
     const uint32_t _width;
-    bool isFP;
+    bool _isFP;
     const uint32_t _wE;  // used only for FP signals
     const uint32_t _wF;  // used only for FP signals
   };
@@ -136,6 +143,8 @@ public:
   void add_registered_signal(const std::string name, const int width=1);
   void add_registered_signal_with_async_reset(const std::string name, const int width=1);
   void add_registered_signal_with_sync_reset(const std::string name, const int width=1);
+
+  Signal* get_signal_by_name(string s);
 
   /** The following adds a signal, and also a shift register on it of depth delay.
       There will be depth levels of registers, named name_d, name_d_d and so on.
@@ -205,28 +214,29 @@ public:
 
 
 
-  // Functions related to test case generation (work in progress)
+  // Functions related to test case generation (work in progress).
+  // Each Operator should define test cases that fall in two categories:
+  // - standard test cases
+  // - random test cases.
+  // The class TestBench produces a VHDL behavioral testbench out of these test cases.
 
   /** Add a test case. 
   */
-  void add_test_case(TestCase t);
+  void add_test_case(vector<TestCase> &list, map<string, mpz_class> in, multimap<string, mpz_class> out );
   
+
   /** Add all the possible standard test cases to the test
       list. Standard test cases test behaviour on zero, infinities
       and other special values. The designer of an operator should
       define this method. */
-  void add_standard_test_cases();
+  virtual void add_standard_test_cases(vector<TestCase> &list);
   
   /** Add n random test cases to the test list. The designer of an
       operator should define this method. */
-  void add_random_test_cases(int n);
+  virtual void add_random_test_cases(vector<TestCase> &list, int n);
   
 
-  /** Applies a reset to the operator */
-  void reset_test();
   
-  /** Combine the test vectors into a VHDL test bench that takes into account the pipeline structure.  */
-  virtual void output_vhdl_test(std::ostream& o);
   
   /**Final report function, prints to the terminal.  By default
      reports the pipeline depth, but feel free to overload if you have
@@ -235,12 +245,9 @@ public:
   virtual void output_final_report();
 
 
+
+
   string unique_name;
-  
-
-    
-  
-
   
   vector<Signal*> ioList; 
   vector<Signal*> signalList; 
@@ -256,8 +263,7 @@ private:
   int number_of_outputs;
   bool _is_sequential;  // true if the operator needs a clock signal. It will also get a rst but doesn't need to use it
   int _pipeline_depth;
-
-  vector<TestCase> test_case_list;
+  map<string, Signal*> _signal_map; 
 
   bool has_registers;
   bool has_registers_with_async_reset;

@@ -36,6 +36,7 @@
 #include "FPMultiplier.hpp"
 #include "LongAcc.hpp"
 #include "Wrapper.hpp"
+#include "TestBench.hpp"
 #include "ConstMult/IntConstMult.hpp"
 #include "ConstMult/FPConstMult.hpp"
 #include "Target.hpp"
@@ -75,6 +76,9 @@ static void usage(char *name){
   cerr << "      integer multiplier of two integers X and Y of sizes wInX and wInY \n";	
   cerr << "    FPMultiplier wEX wFX wEY wFY wER wFR\n";
   cerr << "	     floating-point multiplier \n";
+  cerr << "    TestBench n\n";
+  cerr << "       produce a behavorial test bench for the preceding operator\n";
+  cerr << "       This test bench will include standard tests, plus n random tests.\n";
   cerr << "    Wrapper entity_name\n";
   cerr << "       produce a wrapper named entity_name for the preceding operator\n";
   cerr << "       (useful to get synthesis results without having the operator optimised out)\n";
@@ -325,11 +329,11 @@ bool parse_command_line(int argc, char* argv[]){
       if (i+nargs > argc)
 	usage(argv[0]);
        else {
- 	int wEX = atoi(argv[i++]);
- 	int wFX = atoi(argv[i++]);
- 	int MaxMSBX = atoi(argv[i++]);
- 	int LSBA = atoi(argv[i++]);
- 	int MSBA = atoi(argv[i++]);
+ 	int wEX = check_strictly_positive(argv[i++], argv[0]);
+ 	int wFX = check_strictly_positive(argv[i++], argv[0]);
+ 	int MaxMSBX = atoi(argv[i++]); // may be negative
+ 	int LSBA = atoi(argv[i++]); // may be negative
+ 	int MSBA = atoi(argv[i++]); // may be negative
  	cerr << "> Long accumulator , wEX="<<wEX<<", wFX="<<wFX<<", MaxMSBX="<<MaxMSBX<<", LSBA="<<LSBA<<", MSBA="<<MSBA<<"\n";
 	op = new LongAcc(target, wEX, wFX, MaxMSBX, LSBA, MSBA);
 	oplist.push_back(op);
@@ -366,6 +370,19 @@ bool parse_command_line(int argc, char* argv[]){
 	  cerr << "> Wrapper for " << toWrap->unique_name << " as entity "<< argv[i] <<endl;
 	  oplist.push_back(new Wrapper(target, toWrap, argv[i++]));
 	}
+    }
+    else if (opname == "TestBench") {
+      int nargs = 1;
+      if (i+nargs > argc)
+	usage(argv[0]); // and exit
+      if(oplist.empty()){
+	  cerr<<"ERROR: TestBench has no operator to wrap (it should come after the operator it wraps)"<<endl;
+	  usage(argv[0]); // and exit
+	}
+      int n = check_strictly_positive(argv[i++], argv[0]);
+      Operator* toWrap = oplist.back();
+      cerr << "> TestBench for " << toWrap->unique_name  <<endl;
+      oplist.push_back(new TestBench(target, toWrap, n));
     }
 //     else if(opname=="FPAdd"){
 //       // 2 arguments
