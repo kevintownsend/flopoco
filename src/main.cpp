@@ -193,17 +193,16 @@ bool parse_command_line(int argc, char* argv[]){
 	    if(verbose) 
 	      cerr << "Frequency set to "<<target->frequency()<< "MHz" <<endl; 
 	  }
+	  else {
+	    cerr<<"WARNING: frequency out of reasonible range, ignoring it."<<endl; 
+	  }
+	}
 	else if (o == "DSP_blocks") {
 	  if(v=="yes") target->set_use_hard_multipliers(true);
 	  else if(v=="no")  target->set_use_hard_multipliers(false);
 	  else {
 	    cerr<<"ERROR: DSP_blocks option should be yes or no,    got "<<v<<"."<<endl; 
 	    usage(argv[0]);
-	  }
-	}
-  
-	  else {
-	    cerr<<"WARNING: frequency out of reasonible range, ignoring it."<<endl; 
 	  }
 	}
 	else { 	
