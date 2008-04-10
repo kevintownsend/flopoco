@@ -56,8 +56,8 @@ FPConstMult::FPConstMult(Target* target, int wE_in, int wF_in, int wE_out, int w
   // all this is ugly because no mpfr equivalent of mpz_class
   mpfr_init2(mpfr_cst_sig, cst_width);
   mpfr_set_z(mpfr_cst_sig, cst_sig.get_mpz_t(), GMP_RNDN); // exact op
-  mpfr_shift_right(mpfr_cst_sig, cst_width-1);             // exact op
-
+  mpfr_mul_2si(mpfr_cst_sig, mpfr_cst_sig, -(cst_width-1), GMP_RNDN);  // exact op
+  
   // initialize mpfr_xcut_sig = 2/cst_sig, will be between 1 and 2
   mpfr_init2(mpfr_xcut_sig, 4*(cst_width+wE_in+wE_out));
   mpfr_set_d(mpfr_xcut_sig, 2.0, GMP_RNDN);               // exaxt op
@@ -67,7 +67,7 @@ FPConstMult::FPConstMult(Target* target, int wE_in, int wF_in, int wE_out, int w
   mpfr_t xcut_wF;
   mpfr_init2(xcut_wF, wF_in+1);
   mpfr_set(xcut_wF, mpfr_xcut_sig, GMP_RNDD);
-  mpfr_shift_left(xcut_wF, wF_in);
+  mpfr_mul_2si(xcut_wF, xcut_wF, wF_in, GMP_RNDN);
   // It should now be an int; cast it into a mpz, then a mpz_class 
   mpz_t zz;
   mpz_init2(zz, wF_in+1);

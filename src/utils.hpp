@@ -14,12 +14,6 @@ string unsigned_binary(mpz_class x, int size);
 
 string fp2bin(mpfr_t x, int wE, int wF);
 
-/** obsolete, use   mpfr_mul_2si*/
-void mpfr_shift_left(mpfr_t& x, int s);
-
-/** obsolete, use   mpfr_mul_2si*/
-void mpfr_shift_right(mpfr_t& x, int s);
-
 void printBinNumGMP(ostream& o, mpz_class number, int size);
 
 void printBinPosNumGMP(ostream& o, mpz_class number, int size);
