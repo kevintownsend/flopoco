@@ -149,14 +149,20 @@ string fp2bin(mpfr_t x, int wE, int wF){
       s << "0";
   }
 
+  mpfr_clear(mpx);
+  mpfr_clear(one);
+  mpfr_clear(two);
   return s.str();
 }
 
 
 
 
-// Print out binary writing of an integer on "size" bits
 
+
+
+// Print out binary writing of an integer on "size" bits
+// TODO remove this function
 void printBinNum(ostream& o, uint64_t x, int size)
 {
   uint64_t po2 = ((uint64_t) 1)<<size; 
