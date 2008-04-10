@@ -22,10 +22,138 @@
 */
 
 #include <iostream>
+#include <sstream>
 #include "utils.hpp"
 #include "math.h"
 
 using namespace std;
+
+
+
+
+/** return a string representation of an mpz_class on a given number of bits */
+
+string unsigned_binary(mpz_class x, int size){
+  string s;
+  mpz_class po2, number;
+  char bit;
+
+  if(x<0) {
+    cerr<<"printBinPosNumGMP: Positive number expected, got x="<<x.get_d()<<endl;
+    exit(EXIT_FAILURE);
+  }
+  po2 = ((mpz_class) 1)<<size;
+  number=x;
+    
+  for (int i = 0; i < size ; i++) {
+    po2 = po2>>1;
+    if (number >= po2) {
+      bit = '1';
+      number -= po2;
+    }
+    else {
+      bit = '0';
+    }
+    s +=  bit;
+  }
+  return s;
+}
+
+
+/** return the binary representation of a floating point number in the
+    FPLibrary/FloPoCo format */
+
+string fp2bin(mpfr_t x, int wE, int wF){
+  mpfr_t mpx, one, two;
+  ostringstream s;
+
+  // copy the input
+  mpfr_init2 (mpx, wF+1);
+  mpfr_set (mpx, x, GMP_RNDN);
+
+
+  // exception bits
+  if(mpfr_nan_p (mpx)) {
+    s << "11";
+    for(int i=0; i<wE+wF+1; i++)
+      s<< "0";
+    return s.str();
+  }
+
+  if(mpfr_zero_p (mpx)) {
+    s << "00";
+    for(int i=0; i<wE+wF+1; i++)
+      s<< "0";
+    return s.str();
+  }
+
+  if(mpfr_inf_p (mpx)) {
+    s << "10";
+    for(int i=0; i<wE+wF+1; i++)
+      s<< "0";
+    return s.str();
+  }
+
+  // otherwise normal number
+  s << "01";
+
+  // sign bit
+  int sign = mpfr_sgn(mpx);
+
+  if(sign<0) {
+    mpfr_neg(mpx, mpx, GMP_RNDN);
+    s << "1";
+  }
+  else
+    s << "0";
+
+  // compute exponent and mantissa
+  mpz_class exponent = 0;
+  mpz_class biased_exponent;
+
+  mpfr_init2(one, 2);
+  mpfr_set_d(one, 1.0, GMP_RNDN);
+  mpfr_init2(two, 2);
+  mpfr_set_d(two, 2.0, GMP_RNDN);
+
+  while(mpfr_less_p(mpx,one)) {
+    mpfr_mul(mpx, mpx, two, GMP_RNDN);
+    exponent --;
+  }
+  while(mpfr_greaterequal_p(mpx, two)) {
+    mpfr_div(mpx, mpx, two, GMP_RNDN);
+    exponent ++;
+  }
+
+  // add exponent bias
+  biased_exponent = exponent + (mpz_class(1)<<(wE-1)) - 1;
+
+  if ( biased_exponent<0 || biased_exponent>=(mpz_class(1)<<wE) )  {
+    cerr << "Exponent out of range in fp2bin, exiting"<<endl;
+    exit(EXIT_FAILURE);
+  }
+
+  // exponent
+  s << unsigned_binary(biased_exponent, wE);
+    
+  // significand
+  
+  mpfr_sub(mpx, mpx, one, GMP_RNDN);
+  for (int i=0; i<wF; i++) {
+    mpfr_mul(mpx, mpx, two, GMP_RNDN);
+    if(mpfr_greaterequal_p(mpx, one)) {
+      s << "1";
+      mpfr_sub(mpx, mpx, one, GMP_RNDN);
+    }
+    else
+      s << "0";
+  }
+
+  return s.str();
+}
+
+
+
 
 // Print out binary writing of an integer on "size" bits
 
@@ -99,32 +227,6 @@ void printBinNumGMP(ostream& o, mpz_class x, int size)
 
 
 
-
-string unsigned_binary(mpz_class x, int size){
-  string s;
-  mpz_class po2, number;
-  char bit;
-
-  if(x<0) {
-    cerr<<"printBinPosNumGMP: Positive number expected, got x="<<x.get_d()<<endl;
-    exit(EXIT_FAILURE);
-  }
-  po2 = ((mpz_class) 1)<<size;
-  number=x;
-    
-  for (int i = 0; i < size ; i++) {
-    po2 = po2>>1;
-    if (number >= po2) {
-      bit = '1';
-      number -= po2;
-    }
-    else {
-      bit = '0';
-    }
-    s +=  bit;
-  }
-  return s;
-}
 
 void printBinPosNumGMP(ostream& o, mpz_class x, int size)
 {
