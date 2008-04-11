@@ -67,10 +67,11 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 	/** Set up the IO signals
 	 * X and Y have wInX and wInY bits respectively 
 	 * R has wOut bits where wOut = (wInX + WInY) bits
-	 * add_input ("X", wInX);
-	 * add_input ("Y", wInY);
-	 * add_output("R", wOut);
 	 **/
+	  add_input ("X", wInX);
+	  add_input ("Y", wInY);
+	  add_output("R", wOut);
+	 
   
 	
 	
