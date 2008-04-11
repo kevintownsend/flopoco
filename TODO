@@ -46,3 +46,6 @@ Version ?? : FPExp
 Version 1.0: Add all the FPLibrary operators, with asymetric IO sizes
 
 
+
+BUG
+ flopoco IntConstMult 8 8

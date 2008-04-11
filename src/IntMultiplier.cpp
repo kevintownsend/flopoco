@@ -743,20 +743,26 @@ ostringstream the_bits;
 //////////////////////////TEST FUNCTIONS//////////////////////////
 
 
+
 void IntMultiplier::add_standard_test_cases(vector<TestCase> &list){
   map<string, mpz_class> in;
   multimap<string, mpz_class> out;
+  ostringstream comment;
 
   // 0*0 = 0
   in.clear();
   out.clear();
   in["X"]=0;    in["Y"]=0;    out.insert(pair<string,mpz_class>("R",in["X"] * in["Y"]));  
-  add_test_case(list, in, out);
+  add_test_case(list, in, out, "0*0=0");
+
 
   // 42*17 = ??
-  out.clear();
-  in["X"]=42;    in["Y"]=17;         out.insert(pair<string,mpz_class>("R",in["X"] * in["Y"]));
-  add_test_case(list, in, out);
+  out.clear(); comment.clear();
+  in["X"]=42;    
+  in["Y"]=17;
+  out.insert(pair<string,mpz_class>("R", in["X"] * in["Y"]));
+  comment << in["X"] << "*" << in["Y"] << " = " << in["X"] * in["Y"];
+  add_test_case(list, in, out, comment.str());
 }
 
 void IntMultiplier::add_random_test_cases(vector<TestCase> &list, int n){

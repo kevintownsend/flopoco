@@ -40,6 +40,7 @@ public:
   struct TestCase{
     TestCaseInput input;
     TestCaseOutput  expected_output; 
+    string comment; //  textual explanation that will be a comment in the VHDL 
   };
 
 
@@ -222,7 +223,7 @@ public:
 
   /** Add a test case. 
   */
-  void add_test_case(vector<TestCase> &list, map<string, mpz_class> in, multimap<string, mpz_class> out );
+  void add_test_case(vector<TestCase> &list,  TestCaseInput in, TestCaseOutput out, string comment);
   
 
   /** Add all the possible standard test cases to the test

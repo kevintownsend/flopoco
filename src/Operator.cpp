@@ -424,7 +424,7 @@ void Operator::output_vhdl(std::ostream& o) {
 
 
 
-void Operator::add_test_case(vector<TestCase> &list, map<string, mpz_class> input, multimap<string, mpz_class> expected_output ){
+void Operator::add_test_case(vector<TestCase> &list,  TestCaseInput input, TestCaseOutput expected_output, string comment){
 #if 0  // Check that there are the right number of inputs
   if (input.size() != number_of_inputs) {
     cerr << "Error in add_test_case: expected "<<number_of_inputs << " inputs, got " << input.size() <<endl;
@@ -443,6 +443,7 @@ void Operator::add_test_case(vector<TestCase> &list, map<string, mpz_class> inpu
   TestCase t;
   t.input = input;
   t.expected_output = expected_output;
+  t.comment = comment;
   list.push_back(t);
 
 }

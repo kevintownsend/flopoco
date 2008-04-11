@@ -150,9 +150,24 @@ void TestBench::output_vhdl(ostream& o, string name) {
 	o << val <<endl;
     }
     o  << tab << tab << "wait 10ns;" <<endl;
+    
+  }
+  o << tab << "end process;" <<endl;
+  o <<endl;
+
+
+  o << tab << "-- Checking the outputs" <<endl;
+  o << tab << "process" <<endl;
+  o << tab << "begin" <<endl;
+  o  << tab << tab << "wait "<< op->pipeline_depth()*10 <<"ns; -- wait for pipeline to flush" <<endl;
+
+  for (int i=0; i<test_case_list.size(); i++) {
+    TestCaseOutput out = test_case_list[i].expected_output;
     for (TestCaseOutput::iterator it=out.begin(); it!=out.end(); it++) {
-      //o << tab << tab << "Assert TODO "<< it->first << "=" << it->second << endl; 
+      o << tab << tab << "Assert "<< it->first << "=" << it->second << "; -- " << test_case_list[i].comment << endl; 
+      
     }
+    o  << tab << tab << "wait 10ns;" <<endl;
     
   }
   o << tab << "end process;" <<endl;
