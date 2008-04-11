@@ -24,9 +24,6 @@
 #ifndef VIRTEXIV_HPP
 #define VIRTEXIV_HPP
 #include "../Target.hpp"
-#include <math.h>
-#include <iostream>
-#include <sstream>
 #include <iostream>
 #include <sstream>
 #include <vector>
