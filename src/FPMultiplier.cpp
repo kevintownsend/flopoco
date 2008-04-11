@@ -39,6 +39,17 @@
 using namespace std;
 extern vector<Operator*> oplist;
 
+
+/**
+ * The FPMutliplier constructor
+ * @param[in]		target		the target device
+ * @param[in]		wEX			the the with of the exponent for the number f-p number X
+ * @param[in]		wFX			the the with of the fraction for the number f-p number X
+ * @param[in]		wEY			the the with of the exponent for the number f-p number Y
+ * @param[in]		wFY			the the with of the fraction for the number f-p number Y
+ * @param[in]		wER			the the with of the exponent for the number multiplication result
+ * @param[in]		wFR			the the with of the fraction for the number multiplication result
+ **/
 FPMultiplier::FPMultiplier(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, int wFR, int norm) :
 	Operator(target), wEX(wEX), wFX(wFX), wEY(wEY), wFY(wFY), wER(wER), wFR(wFR) {
 
@@ -59,19 +70,18 @@ FPMultiplier::FPMultiplier(Target* target, int wEX, int wFX, int wEY, int wFY, i
 
 
 
-	// Name Setup procedure
-	//==========================================================================
-	// The name has the format: FPMultiplier_wEX_wFX_wEY_wFY_wER_wFR
-	// wEX = width of X exponenet
-	// wFX = width for the fractional part of X
+	/** Name Setup procedure
+	 * The name has the format: FPMultiplier_wEX_wFX_wEY_wFY_wER_wFR
+	 * wEX = width of X exponenet
+	 * wFX = width for the fractional part of X
+	 **/
 	name.str("");
 	name <<"FPMultiplier_"; 
 	name<<wEX<<"_"<<wFX<<"_"<<wEY<<"_"<<wFY<<"_"<<wER<<"_"<<wFR;
 	unique_name = name.str(); //set the attribute
-	//===========================================================================  
+	
 
 	// Set up the IO signals
-	//===========================================================================
 	add_input ("X", wEX + wFX + 3);// format: 2b(Exception) + 1b(Sign)
 	add_input ("Y", wEY + wFY + 3);//+ wEX bits (Exponent) + wFX bits(Fraction)
 
@@ -79,7 +89,6 @@ FPMultiplier::FPMultiplier(Target* target, int wEX, int wFX, int wEY, int wFY, i
 	add_output ("ResultSignificand", wFR + 1);
 	add_output ("ResultException"  , 2      );
 	add_output ("ResultSign"       , 1      ); 
-	//===========================================================================
 
 	//Set up if we are in the sequential or combinational case
 	if (target->is_pipelined()) 
@@ -96,7 +105,6 @@ FPMultiplier::FPMultiplier(Target* target, int wEX, int wFX, int wEY, int wFY, i
 
 
 	// Unregistered signals
-	//===========================================================================  
 	if ((normalized)||!(is_sequential()) ) {
 		if (!(1 + wFR >= wFX + wFY + 2)) {
 			add_signal("check_string",wFX+wFY+2 - (1+wFR) );
@@ -122,83 +130,78 @@ FPMultiplier::FPMultiplier(Target* target, int wEX, int wFX, int wEY, int wFY, i
 	add_signal("exception_selector",4);//signal that selects the case for the exception
 
 	if (is_sequential())  {
-
-	// Unregistered signals
-	//========================================================================  
-	add_signal("exponent_synch", wEX);
-	add_signal("significand_synch", wFX + wFY + 2); 
-	add_signal("sign_synch", 1); 
-	add_signal("exception_synch",2);
-	add_signal("significand_synch_tb2_out",1);	
-	add_signal("middle_output_out",1);
-	add_signal("sign_synch2_out",1);
-	add_signal("exception_synch2_out",2);
-	if (!normalized)
-		add_signal("temp_exp_concat_fract", 1 + wEX + wFX + wFY + 2);
-	
-
-	// Registered Signals
-	//========================================================================
-
-	if (normalized){
-		if (!(1+wFR >= wFX+wFY+2)) {
-			add_signal("reunion_signal_p",2+wEX+wFR);   
-			add_registered_signal_with_sync_reset("middle_output",1);
-			add_registered_signal_with_sync_reset("exponent_synch2",wEX);
-			add_registered_signal_with_sync_reset("exception_synch2",2);
-			add_registered_signal_with_sync_reset("significand_synch2",wFX + wFY + 2);
-			add_registered_signal_with_sync_reset("sign_synch2",1);
-			add_registered_signal_with_sync_reset("mult_selector2",1);
+		// Unregistered signals
+		add_signal("exponent_synch", wEX);
+		add_signal("significand_synch", wFX + wFY + 2); 
+		add_signal("sign_synch", 1); 
+		add_signal("exception_synch",2);
+		add_signal("significand_synch_tb2_out",1);	
+		add_signal("middle_output_out",1);
+		add_signal("sign_synch2_out",1);
+		add_signal("exception_synch2_out",2);
 		
-			reunion_signal_width = 2+ wEX + wFR;
-			reunion_signal_parts = int ( ceil( double(reunion_signal_width)/double(addition_chunk_width)));
-			addition_last_chunk_width = reunion_signal_width - (reunion_signal_parts - 1)*addition_chunk_width;
-						
-			for (j=1; j<=reunion_signal_parts;j++)	
-				for (i=1;i<=reunion_signal_parts;i++){	
-					name.str("");
-					name<<"Last_Addition_Level_"<<j<<"_Reg_"<<i;
-					if (i!=reunion_signal_parts)
-						add_registered_signal_with_sync_reset(name.str(), addition_chunk_width + 1 );
-					else
-						add_registered_signal_with_sync_reset(name.str(), addition_last_chunk_width );	
-         }
+		if (!normalized)
+			add_signal("temp_exp_concat_fract", 1 + wEX + wFX + wFY + 2);
+		
+		// Registered Signals
+		if (normalized){
+			if (!(1+wFR >= wFX+wFY+2)) {
+				add_signal("reunion_signal_p",2+wEX+wFR);   
+				add_registered_signal_with_sync_reset("middle_output",1);
+				add_registered_signal_with_sync_reset("exponent_synch2",wEX);
+				add_registered_signal_with_sync_reset("exception_synch2",2);
+				add_registered_signal_with_sync_reset("significand_synch2",wFX + wFY + 2);
+				add_registered_signal_with_sync_reset("sign_synch2",1);
+				add_registered_signal_with_sync_reset("mult_selector2",1);
 			
-			if (reunion_signal_parts>1){
-				add_delay_signal("reunion_signal_level",2+wEX+wFR,reunion_signal_parts);
-				add_delay_signal("significand_synch_tb2_level",1,reunion_signal_parts);		
-				add_delay_signal("middle_output_level",1,reunion_signal_parts);			
-				add_delay_signal("sign_synch2_level",1,reunion_signal_parts);
-				add_delay_signal("exception_synch2_level",2,reunion_signal_parts);
-			}
-		}  
-	}
+				reunion_signal_width = 2+ wEX + wFR;
+				reunion_signal_parts = int ( ceil( double(reunion_signal_width)/double(addition_chunk_width)));
+				addition_last_chunk_width = reunion_signal_width - (reunion_signal_parts - 1)*addition_chunk_width;
+							
+				for (j=1; j<=reunion_signal_parts;j++)	
+					for (i=1;i<=reunion_signal_parts;i++){	
+						name.str("");
+						name<<"Last_Addition_Level_"<<j<<"_Reg_"<<i;
+						if (i!=reunion_signal_parts)
+							add_registered_signal_with_sync_reset(name.str(), addition_chunk_width + 1 );
+						else
+							add_registered_signal_with_sync_reset(name.str(), addition_last_chunk_width );	
+	         }
+				
+				if (reunion_signal_parts>1){
+					add_delay_signal("reunion_signal_level",2+wEX+wFR,reunion_signal_parts);
+					add_delay_signal("significand_synch_tb2_level",1,reunion_signal_parts);		
+					add_delay_signal("middle_output_level",1,reunion_signal_parts);			
+					add_delay_signal("sign_synch2_level",1,reunion_signal_parts);
+					add_delay_signal("exception_synch2_level",2,reunion_signal_parts);
+				}
+			}  
+		}
 
-	add_registered_signal_with_sync_reset("Exponents_Sum", wEX+1 );
-	add_registered_signal_with_sync_reset("Exponents_Sum_Minus_Bias", wEX );
+		add_registered_signal_with_sync_reset("Exponents_Sum", wEX+1 );
+		add_registered_signal_with_sync_reset("Exponents_Sum_Minus_Bias", wEX );
 
-	//registers for the case when the integer multiplication requires 
-	//more than two pipeline levels
-	for (i=0;i<=IntMultPipelineDepth-3;i++)	{
-		synch.str(""); synch2.str("");
-		synch<<"Exponent_Synchronization_"<<i;
-		add_registered_signal_with_sync_reset(synch.str(), wEX );
-		synch2<<"Exception_Synchronization_"<<i;
-		add_registered_signal_with_sync_reset(synch2.str(), 2 );	
-	}
+		//registers for the case when the integer multiplication requires 
+		//more than two pipeline levels
+		for (i=0;i<=IntMultPipelineDepth-3;i++)	{
+			synch.str(""); synch2.str("");
+			synch<<"Exponent_Synchronization_"<<i;
+			add_registered_signal_with_sync_reset(synch.str(), wEX );
+			synch2<<"Exception_Synchronization_"<<i;
+			add_registered_signal_with_sync_reset(synch2.str(), 2 );	
+		}
 
-	//registers for the case when the int mult has less than two levels
-	for (i=0;i<=1-IntMultPipelineDepth;i++)	{
-		synch.str("");
-		synch<<"Int_Synchronization_"<<i;
-		add_registered_signal_with_sync_reset(synch.str(), wFX+wFY+2);		
-	}	
+		//registers for the case when the int mult has less than two levels
+		for (i=0;i<=1-IntMultPipelineDepth;i++)	{
+			synch.str("");
+			synch<<"Int_Synchronization_"<<i;
+			add_registered_signal_with_sync_reset(synch.str(), wFX+wFY+2);		
+		}	
 
-	add_delay_signal("Sign_Synchronization", 1, max(2,IntMultPipelineDepth));
+		add_delay_signal("Sign_Synchronization", 1, max(2,IntMultPipelineDepth));
 
-	add_registered_signal_with_sync_reset("Result_Exception",2); 
-	add_registered_signal_with_sync_reset("Result_Exception_With_EA",2);
-	// =======================================================================
+		add_registered_signal_with_sync_reset("Result_Exception",2); 
+		add_registered_signal_with_sync_reset("Result_Exception_With_EA",2);
 	}//end if sequential
 	else
 	{//if combinational
@@ -245,14 +248,14 @@ void FPMultiplier::output_vhdl(std::ostream& o, std::string name) {
 	o<<endl<<endl;	
 	output_vhdl_entity(o);
 
-	o << "architecture arch of " << name  << " is" << endl;
-
+	new_architecture(o,name);
+	
 	intmult->output_vhdl_component(o);
 	output_vhdl_signal_declarations(o);	  
 	o<<endl;
 
-	o << "begin" << endl;
-  
+	begin_architecture(o);
+	
 	if (is_sequential()){
 		//common code for both normalized and non-normalized version
 		output_vhdl_registers(o); o<<endl;
@@ -422,15 +425,6 @@ void FPMultiplier::output_vhdl(std::ostream& o, std::string name) {
 				               
 				o<<tab<<"significand_synch_tb2 <= significand_synch2_d("<< wFX+wFY+1 - wFR<<" ) when mult_selector2_d='1' else"<<endl;
 				o<<tab<<"                         significand_synch2_d("<< wFX+wFY+1 - wFR -1<<" );"<<endl;              
-				
-				
-				//TODO //TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO
-				//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO
-				//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODOvv
-				//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODOv
-				//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO//TODO
-				
-				
 				
 				if (reunion_signal_parts != 1){
 					for (j = 1; j <= reunion_signal_parts; j++){
@@ -681,14 +675,16 @@ void FPMultiplier::output_vhdl(std::ostream& o, std::string name) {
 }
 
  
+/**
+ * A zero generator method which takes as input two arguments and returns a string of zeros with quotes as stated by the second argurment
+ * @param[in] n		    integer argument representing the number of zeros on the output string
+ * @param[in] margins	integer argument determining the position of the quotes in the output string. The options are: -2= no quotes; -1=left quote; 0=both quotes 1=right quote
+ * @return returns a string of zeros with the corresonding quotes given by margins
+ **/
 string FPMultiplier::zero_generator(int n, int margins)
 {
-	ostringstream left,full, right, zeros;
-	int i;
-	//margins=-2 - no quotes generated on string
-	//        -1 - left quote generated "XXXX
-	//         0 - both quotes generated "XXXX"
-	//         1 - right quote generated
+ostringstream left,full, right, zeros;
+int i;
 
 	for (i=1; i<=n;i++)
 		zeros<<"0";

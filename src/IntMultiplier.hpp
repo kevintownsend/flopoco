@@ -25,13 +25,13 @@ public:
 
 	// Overloading the virtual functions of Operator
 	void output_vhdl(std::ostream& o, std::string name);
-	//a zero generator methodgi
+	// a zero generator method
 	string zero_generator(int n, int margins);
-  void add_standard_test_cases(vector<TestCase> &list);
-  void add_random_test_cases(vector<TestCase> &list, int n);
+	void add_standard_test_cases(vector<TestCase> &list);
+	void add_random_test_cases(vector<TestCase> &list, int n);
 
 private:
-	//====================== Specific IntMultiplier methods
+    //Specific IntMultiplier methods
 	void pad_inputs(std::ostream& o);
 	void split(std::ostream& o, std::string name, int parts, int part_width);			  
 	void do_multiplications(std::ostream& o);
@@ -47,7 +47,7 @@ private:
 	void pipeline_addition(std::ostream& o);
 	void delay_partial_bits(std::ostream& o);
 
-	//====================== Specific attributes
+	// Specific attributes
 	int IntAddPipelineDepth;
 	int partsX;
 	int partsY; 

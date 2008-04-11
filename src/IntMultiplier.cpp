@@ -37,8 +37,6 @@ using namespace std;
 extern vector<Operator*> oplist;
 
 
-
-
 /** 
  * The constructor of the IntMultiplier class
  * @param target argument of type Target containing the data for which this operator will be optimized
@@ -57,21 +55,22 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 	else
 		set_combinatorial();  
 
-	//============================ Name Setup procedure=========================
-	//  The name has the format: IntMultiplier_wInX_wInY
-	//  wInX = width of the X input
-	//  wInY = width of the Y input
+	/** Name Setup procedure
+	 *  The name has the format: IntMultiplier_wInX_wInY
+	 *  wInX = width of the X input
+	 *  wInY = width of the Y input
+	 **/  
 	name.str("");;
 	name <<"IntMultiplier_"<<wInX<<"_"<<wInY;
-	unique_name = name.str(); //attribute assignment
+	unique_name = name.str(); 
 	
-	//============================ Set up the IO signals========================
-	//  X and Y have wInX and wInY bits respectively 
-	//  R has wOut bits where wOut = (wInX + WInY) bits
-	add_input ("X", wInX);
-	add_input ("Y", wInY);
-	add_output("R", wOut);
-	//==========================================================================
+	/** Set up the IO signals
+	 * X and Y have wInX and wInY bits respectively 
+	 * R has wOut bits where wOut = (wInX + WInY) bits
+	 * add_input ("X", wInX);
+	 * add_input ("Y", wInY);
+	 * add_output("R", wOut);
+	 **/
   
 	
 	
@@ -82,15 +81,16 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 		
 		//given the input widths and the specific target this method suggests the chunk widths for X and Y
 		bool test = target->suggest_submult_size(multiplier_width_X, multiplier_width_Y, wInX, wInY);
-		cout<<endl<<tab<<" -- Frequency can be reached = "<<test<<" suggested sizes: X="<<multiplier_width_X<<" Y="<<multiplier_width_Y<<" --"<<endl;
+		cout<<"Frequency report:"<<endl;
+		if (test)
+			cout<<tab<<"Frequency can be reached = "<<"YES"<<" suggested sizes: X="<<multiplier_width_X<<" Y="<<multiplier_width_Y<<endl;
+		else
+			cout<<tab<<"WARNING: Frequency can be reached = "<<"NO"<<" suggested sizes: X="<<multiplier_width_X<<" Y="<<multiplier_width_Y<<endl;
 		
-		
-		
-
 		// decide in how many parts should the numbers be split depending on the recommended sizes
-		partsX = int(ceil( double(wInX) / double(multiplier_width_X)));
-		partsY = int(ceil( double(wInY) / double(multiplier_width_Y)));
-
+		partsX = ((wInX % multiplier_width_X)==0) ? (wInX / multiplier_width_X) : (wInX / multiplier_width_X+1);
+		partsY = ((wInY % multiplier_width_Y)==0) ? (wInY / multiplier_width_Y) : (wInY / multiplier_width_Y+1);
+		
 		//reverse
 		if (multiplier_width_X < multiplier_width_Y){
 			i = wInY;
@@ -200,7 +200,7 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 			if (add_test==true)
 				cout<<endl<<tab<<"addition chunk size = "<<addition_chunk_width<<endl;
 			else
-				cerr<<endl<<"Cannot reach the desired frequency for the addition";
+				cerr<<endl<<"WARNING: Cannot reach the desired frequency for the addition";
 			
 			pipe_levels = int(ceil(double(partsX * multiplier_width_X)/double(addition_chunk_width))); 
 			cout<<endl<<"added pipeline levels = "<<pipe_levels<<endl;
@@ -216,7 +216,7 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 			}
 
 			//TODO
-			for (j=1; j<=partsX;j++){ 
+			for (j=1; j<=pipe_levels;j++){ 
 				name.str("");;
 				name<<"PartialBits_Reg_"<<j;
 				add_registered_signal_with_sync_reset(name.str(), partsY * multiplier_width_Y);
@@ -247,15 +247,12 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 				add_signal("addition_result", partsX  * multiplier_width_X);
 				add_delay_signal("delayed_bits",multiplier_width_Y, IntAddPipelineDepth);
 			}
-			
-						
-				add_signal("temp_result", partsX  * multiplier_width_X + partsY * multiplier_width_Y );
-
+	
+			add_signal("temp_result", partsX  * multiplier_width_X + partsY * multiplier_width_Y );
  		}
 
 	
 		// Set up the pipeline
-		//======================================================================
 		if (partsY==1)
 			if (partsX==1)
 				depth=2;
@@ -293,8 +290,7 @@ void IntMultiplier::output_vhdl(std::ostream& o, std::string name) {
 					  first_summand, second_summand, the_bits;
 
 	int i, j, k;
-	//--------------------------------------------
-	
+		
 	Licence(o,"Bogdan Pasca and Florent de Dinechin (2008)");
 	Operator::StdLibs(o);
 	output_vhdl_entity(o);
@@ -437,7 +433,7 @@ string IntMultiplier::zero_generator(int n, int margins)
  **/
 void IntMultiplier::pad_inputs(std::ostream& o)
 {
-	if (reverse == false){
+	if (reverse == true){
 		o<<tab<< "i_Y <= "<< zero_generator(number_of_zerosY,0)<<" & X;"<<endl;
 		o<<tab<< "i_X <= "<< zero_generator(number_of_zerosX,0)<<" & Y;"<<endl;
 		new_line(o);
@@ -685,8 +681,8 @@ int i,j;
 	}
 
 	//put tohether the pipeline
-	for (j=1; j<=partsX-1;j++)
-		for (i=1;i<=partsX;i++)
+	for (j=1; j<=pipe_levels-1;j++)
+		for (i=1;i<=pipe_levels;i++)
 			if ((i<=j)||(i>j+1))
 				o<<tab<<"Last_Addition_Level_"<<j+1<<"_Reg_"<<i<<" <= Last_Addition_Level_"<<j<<"_Reg_"<<i<<"_d;"<<endl;
 			else
