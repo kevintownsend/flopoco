@@ -89,7 +89,7 @@ void Wrapper::output_vhdl(ostream& o, string name) {
   o << tab << "test:" << op->unique_name << "\n"
     << tab << tab << "port map ( ";
   for(int i=0; i<op->ioList.size(); i++) {
-    Operator::Signal s = *op->ioList[i];
+    Signal s = *op->ioList[i];
     if(i>0) 
       o << tab << tab << "           ";
     string idext = "i_" + op->ioList[i]->id() ;

@@ -1,3 +1,4 @@
+/* vim: set tabstop=8 softtabstop=2 shiftwidth=2: */
 /*
  * The base Operator class, every operator should inherit it
  *
@@ -208,7 +209,7 @@ string  Operator::get_delay_signal_name(const string name, const int delay) {
 }
 
 
-Operator::Signal * Operator::get_signal_by_name(string name) {
+Signal * Operator::get_signal_by_name(string name) {
   return _signal_map[name];
 }
 
@@ -262,7 +263,7 @@ void  Operator::output_vhdl_registers(std::ostream& o) {
     o << tab << "process(clk)  begin\n"
       << tab << tab << "if clk'event and clk = '1' then\n";
     for(int i=0; i<signalList.size(); i++) {
-      Operator::Signal *s = signalList[i];
+      Signal *s = signalList[i];
       if(s->type()==Signal::registered) 
 	o << tab <<tab << tab << s->id() <<"_d" << " <=  " << s->id() <<";\n";
     }
@@ -276,7 +277,7 @@ void  Operator::output_vhdl_registers(std::ostream& o) {
     o << tab << tab << "begin" << endl;
     o << tab << tab << tab << "if rst = '1' then" << endl;
     for(int i=0; i<signalList.size(); i++) {
-      Operator::Signal *s = signalList[i];
+      Signal *s = signalList[i];
       if(s->type()==Signal::registered_with_async_reset)
          if (s->width()>1) 
 	         o << tab <<tab << tab << s->id() <<"_d" << " <=  (" << s->width()-1 <<" downto 0 => '0');\n";
@@ -285,7 +286,7 @@ void  Operator::output_vhdl_registers(std::ostream& o) {
     }
     o << tab << tab << tab << "elsif clk'event and clk = '1' then" << endl;
     for(int i=0; i<signalList.size(); i++) {
-      Operator::Signal *s = signalList[i];
+      Signal *s = signalList[i];
       if(s->type()==Signal::registered_with_async_reset) 
 	o << tab <<tab << tab << s->id() <<"_d" << " <=  " << s->id() <<";\n";
     }
@@ -300,7 +301,7 @@ void  Operator::output_vhdl_registers(std::ostream& o) {
     o<<  "    if clk'event and clk = '1' then" << endl;
     o << tab << tab << tab << "if rst = '1' then" << endl;
     for(int i=0; i<signalList.size(); i++) {
-      Operator::Signal *s = signalList[i];
+      Signal *s = signalList[i];
       if(s->type()==Signal::registered_with_sync_reset)
          if (s->width()>1) 
 	         o << tab <<tab << tab << s->id() <<"_d" << " <=  (" << s->width()-1 <<" downto 0 => '0');\n";
@@ -309,7 +310,7 @@ void  Operator::output_vhdl_registers(std::ostream& o) {
     }
     o << tab << tab << tab << "else" << endl;
     for(int i=0; i<signalList.size(); i++) {
-      Operator::Signal *s = signalList[i];
+      Signal *s = signalList[i];
       if(s->type()==Signal::registered_with_sync_reset) 
 	o << tab <<tab << tab << s->id() <<"_d" << " <=  " << s->id() <<";\n";
     }
@@ -320,20 +321,19 @@ void  Operator::output_vhdl_registers(std::ostream& o) {
 }
 
 void Operator::output_vhdl_component(std::ostream& o, std::string name) {
-  o << tab << "component " << name << " is" << endl
-    << tab << tab << "port ( ";
-  for (int i=0; i<this->ioList.size(); i++){
-    Signal* s = this->ioList[i];
-    if (i>0) // align signal names 
-      o<<tab<<"          ";
-    o<<  s->toVHDL();
-    if(i < this->ioList.size()-1)  o<<";" << endl;
+  o << tab << "component " << name << " is" << endl;
+  if (ioList.size() > 0)
+  {
+    o << tab << tab << "port ( ";
+    for (int i=0; i<this->ioList.size(); i++){
+      Signal* s = this->ioList[i];
+      if (i>0) // align signal names 
+	o<<tab<<"          ";
+      o<<  s->toVHDL();
+      if(i < this->ioList.size()-1)  o<<";" << endl;
+    }
+    o << tab << ");"<<endl;
   }
-  if (is_sequential()) {
-    o <<";"<<endl<<"          clk: in std_logic";
-    o <<";"<<endl<<"          rst: in std_logic";
-  }
-  o << tab << ");"<<endl;
   o << tab << "end component;" << endl;
 }
 
@@ -343,21 +343,21 @@ void Operator::output_vhdl_component(std::ostream& o) {
 
 
 void Operator::output_vhdl_entity(std::ostream& o) {
-  o << "entity " << unique_name << " is" << endl
-    << tab << "port ( ";
-  for (int i=0; i<this->ioList.size(); i++){
-    Signal* s = this->ioList[i];
-    if (i>0) // align signal names 
-      o<<"          ";
-    o<<  s->toVHDL();
-    if(i < this->ioList.size()-1)  o<<";" << endl;
-  }
-  if (is_sequential()) {
-    o <<";"<<endl<<"          clk: in std_logic";
-    o <<";"<<endl<<"          rst: in std_logic";
-  }
+  o << "entity " << unique_name << " is" << endl;
+  if (ioList.size() > 0)
+  {
+    o << tab << "port ( ";
+
+    for (int i=0; i<this->ioList.size(); i++){
+      Signal* s = this->ioList[i];
+      if (i>0) // align signal names 
+	o<<"          ";
+      o<<  s->toVHDL();
+      if(i < this->ioList.size()-1)  o<<";" << endl;
+    }
   
-  o << tab << ");"<<endl;
+    o << tab << ");"<<endl;
+  }
   o << "end entity;" << endl << endl;
 }
 
@@ -420,52 +420,13 @@ void Operator::output_vhdl(std::ostream& o) {
   this->output_vhdl(o,  this->unique_name); 
 }
 
-
-
-
-
-void Operator::add_test_case(vector<TestCase> &list,  TestCaseInput input, TestCaseOutput expected_output, string comment){
-#if 0  // Check that there are the right number of inputs
-  if (input.size() != number_of_inputs) {
-    cerr << "Error in add_test_case: expected "<<number_of_inputs << " inputs, got " << input.size() <<endl;
-    exit (EXIT_FAILURE);
-  }
-  // Check that there are the right number of outputs
-  if (expected_output.size() != number_of_outputs) {
-    cerr << "Error in add_test_case: expected "<<number_of_outputs << " outputs, got " << expected_output.size() <<endl;  
-    exit (EXIT_FAILURE);
-  }
-#endif
-  // Check that the sizes match
-  // TODO
-  // Insert into test case list
-
-  TestCase t;
-  t.input = input;
-  t.expected_output = expected_output;
-  t.comment = comment;
-  list.push_back(t);
-
-}
-
-
-
-// default implementation just output a warning, each (non-trivial) operator should overload it. 
-void Operator::add_standard_test_cases(vector<TestCase> &list){
-  cerr << "Warning: add_standard_test_cases not defined for " << this->unique_name << endl;
-}
-  
-// default implementation just output a warning, each (non-trivial) operator should overload it. 
-void  Operator::add_random_test_cases(vector<TestCase> &list, int n){
-  cerr << "Warning: add_random_test_cases ot defined for " << this->unique_name << endl;
-}
-
-
 bool Operator::is_sequential() {
   return _is_sequential; 
 }
 void Operator::set_sequential() {
   _is_sequential=true; 
+  add_input("clk");
+  add_input("rst");
 }
 void Operator::set_combinatorial() {
   _is_sequential=false; 

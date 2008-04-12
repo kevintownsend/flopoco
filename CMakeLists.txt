@@ -3,6 +3,7 @@ MESSAGE("Trying to build FloPoCo on " ${CMAKE_SYSTEM_NAME} ", compiler is "${CMA
 
 INCLUDE(CPack)
 
+SET(CMAKE_BUILD_TYPE debug)
 
 FIND_PATH(MPFR_H
 	  mpfr.h
@@ -42,6 +43,7 @@ ADD_EXECUTABLE(flopoco
  src/LongAcc
  src/ConstMult/IntConstMult src/ConstMult/ShiftAddOp src/ConstMult/ShiftAddDag 
  src/ConstMult/FPConstMult 
+ src/TestCase
 )
 TARGET_LINK_LIBRARIES(flopoco  mpfr gmp gmpxx)
 

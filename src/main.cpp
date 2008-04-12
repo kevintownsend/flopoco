@@ -1,3 +1,4 @@
+/* vim: set tabstop=8 softtabstop=2 shiftwidth=2: */
 /*
  * The FloPoCo command-line interface
  *
@@ -434,7 +435,11 @@ int main(int argc, char* argv[] )
   cerr<< "Output file: " << filename <<endl;
   
   for(int i=0; i<oplist.size(); i++) {
-    oplist[i]->output_vhdl(file);
+    try {
+      oplist[i]->output_vhdl(file);
+    } catch (std::string s) {
+      cerr << "Exception while generating '" << oplist[i]->unique_name << "': " << s <<endl;
+    }
   }
   file.close();
   

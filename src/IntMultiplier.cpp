@@ -36,6 +36,29 @@
 using namespace std;
 extern vector<Operator*> oplist;
 
+// XXX: Move it to some more general place. */
+/**
+ * Generate a very big random number.
+ * Due to rereusage of a PRNG, this function might be suboptimal.
+ * @param n bit-width of the target random number.
+ * @return an mpz_class representing the random number.
+ */
+mpz_class getLargeRandom(int n)
+{
+	mpz_class o;
+	while (n)
+	{
+		/* Get a random number */
+		long int r = random();
+		/* Compute how many bit we need from it */
+		int w = min(n, 16);
+		/* Add new random bits to our big random number */
+		o = (o<<w) + (r % (2<<(w-1)));
+		/* Update the number of bits we still need to generate */
+		n -= w;
+	}
+	return o;
+}
 
 /** 
  * The constructor of the IntMultiplier class
@@ -732,39 +755,36 @@ ostringstream the_bits;
 	o<<tab<<"partial_bits <= PartialBits_Reg_"<<pipe_levels<<"_d;"<<endl;
 }
 
+TestCaseList IntMultiplier::generateRandomTestCases(int n)
+{
+	// TODO
+	/* Signals */
+	Signal sx = *get_signal_by_name("X");
+	Signal sy = *get_signal_by_name("Y");
+	Signal sr = *get_signal_by_name("R");
 
+	TestCaseList tcl;	/* XXX: Just like Lyon's Transporation company. :D */
+	mpz_class x, y, r;
 
+	for (int i = 0; i < n; i++)	
+	{
+		x = getLargeRandom(sx.width());
+		y = getLargeRandom(sy.width());
+		r = x * y;
 
+		TestCase tc;
+		tc.addInput(sx, x);
+		tc.addInput(sy, y);
+		tc.addExpectedOutput(sr, r);
+		tc.addComment(x.get_str() + " * " + y.get_str() + " = " + r.get_str());
+		tcl.add(tc);
+	}
 
-
-
-
-
-//////////////////////////TEST FUNCTIONS//////////////////////////
-
-
-
-void IntMultiplier::add_standard_test_cases(vector<TestCase> &list){
-  map<string, mpz_class> in;
-  multimap<string, mpz_class> out;
-  ostringstream comment;
-
-  // 0*0 = 0
-  in.clear();
-  out.clear();
-  in["X"]=0;    in["Y"]=0;    out.insert(pair<string,mpz_class>("R",in["X"] * in["Y"]));  
-  add_test_case(list, in, out, "0*0=0");
-
-
-  // 42*17 = ??
-  out.clear(); comment.clear();
-  in["X"]=42;    
-  in["Y"]=17;
-  out.insert(pair<string,mpz_class>("R", in["X"] * in["Y"]));
-  comment << in["X"] << "*" << in["Y"] << " = " << in["X"] * in["Y"];
-  add_test_case(list, in, out, comment.str());
+	return tcl;
 }
 
-void IntMultiplier::add_random_test_cases(vector<TestCase> &list, int n){
-  //TODO
+TestCaseList IntMultiplier::generateStandardTestCases(int n)
+{
+	// TODO
+	return TestCaseList();
 }

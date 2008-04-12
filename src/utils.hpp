@@ -9,7 +9,6 @@
 
 using namespace std;
 
-
 string unsigned_binary(mpz_class x, int size);
 
 string fp2bin(mpfr_t x, int wE, int wF);

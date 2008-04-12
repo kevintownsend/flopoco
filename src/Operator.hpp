@@ -1,3 +1,4 @@
+/* vim: set tabstop=8 softtabstop=2 shiftwidth=2: */
 #ifndef OPERATOR_HPP
 #define OPERATOR_HPP
 #include<vector>
@@ -5,6 +6,8 @@
 #include <gmpxx.h>
 //#include "cpphdl/signal.hh"
 #include "Target.hpp"
+#include "Signal.hpp"
+#include "TestCase.hpp"
 
 using namespace std;
 
@@ -14,96 +17,19 @@ extern  int verbose;
 
 const std::string tab = "   ";
 
+/* XXX: Moved Signal out of here, because
+ * 1) It is to general and not strictly related only to Operator-s.
+ * 2) To avoid circular dependency between Operator, TestBench, TestCase etc.
+ */
 
-
-
+/**
+ * This is a top-level class representing an Operator.
+ * This class is inherited by all classes which will output a
+ * VHDL entity.
+ */
 class Operator
 {
 public:
-  /**
-     A test case consists of one input and a vector of possible outputs.
-     
-     The input is a vector of GMP integers which will be converted to
-     std_logic_vectors, one for each input declared by add_input or
-     add_fp_input.
-     
-     The expected_output is a vector with as many entries
-     as there are outputs of the entity. Each entry may consist of
-     several possible outputs. The test will succeed if each actual
-     output corresponds to one of the elements of the corresponding list.
-  */
-
-  
-  typedef map<string, mpz_class> TestCaseInput;
-  typedef multimap<string, mpz_class> TestCaseOutput;
-
-  struct TestCase{
-    TestCaseInput input;
-    TestCaseOutput  expected_output; 
-    string comment; //  textual explanation that will be a comment in the VHDL 
-  };
-
-
-  // A local class to be replaced by the cpphdl version some day
-  class Signal{
-  public:
-    typedef enum{in,out,wire,registered,registered_with_async_reset,registered_with_sync_reset } type_t;
-    
-    Signal(const std::string name, const type_t type, const int width = 1): 
-      _name(name), _type(type), _wE(0), _wF(0), _width(width){
-      _isFP = false;
-    }
-
-    Signal(const std::string name, const type_t type, const int wE, const int wF): 
-      _name(name), _type(type), _wE(wE), _wF(wF), _width(wE+wF+3){
-      _isFP = true;
-    }
-    
-    ~Signal(){}
-    
-    std::string id(){return _name;}
-    
-    int width(){return _width;}
-    int wE(){return(_wE);}
-    int wF(){return(_wF);}
-    bool isFP(){return _isFP;}
-    
-    type_t type() {return _type;}
-    
-    std::string toVHDL() {
-      std::ostringstream o; 
-      if(type()==Signal::wire || type()==Signal::registered || type()==Signal::registered_with_async_reset || type()==Signal::registered_with_sync_reset) 
-	o << "signal ";
-      o << id();
-//       if(type()==Signal::registered || type()==Signal::registered_with_reset|| type()==Signal::delay)
-// 	o << ", " << id() << "_d";	 
-      o << " : ";
-      if(type()==Signal::in)
-	 o << "in ";
-      if(type()==Signal::out)
-	 o << "out ";
-
-      if (1==width()) 
-	o << "std_logic" ;
-      else 
-	if(_isFP) 
-	  o << " std_logic_vector(" << wE() <<"+"<<wF() << "+2 downto 0)";
-	else
-	  o << " std_logic_vector(" << width()-1 << " downto 0)";
-      return o.str();
-    }
-
-  private:
-    const std::string _name;
-    const type_t _type;
-    const uint32_t _width;
-    bool _isFP;
-    const uint32_t _wE;  // used only for FP signals
-    const uint32_t _wF;  // used only for FP signals
-  };
-
-
-
   Operator()  {
     number_of_inputs=0;
     number_of_outputs=0;
@@ -214,29 +140,30 @@ public:
   void set_pipeline_depth(int d);
 
 
+  //
+  // Functions related to test case generation
+  //
 
-  // Functions related to test case generation (work in progress).
-  // Each Operator should define test cases that fall in two categories:
-  // - standard test cases
-  // - random test cases.
-  // The class TestBench produces a VHDL behavioral testbench out of these test cases.
+  /**
+   * Generates standard test cases. Standard test cases are the
+   * ones that covers special cases and uniformly distribuited values.
+   * @param n How many test cases to generate
+   * @return A TestCases instance with the above requested TestCase-es.
+   */
+  virtual TestCaseList generateStandardTestCases(int n = 100) {
+    throw std::string("Standard test cases not implemented for this operator.");
+  }
 
-  /** Add a test case. 
-  */
-  void add_test_case(vector<TestCase> &list,  TestCaseInput in, TestCaseOutput out, string comment);
-  
-
-  /** Add all the possible standard test cases to the test
-      list. Standard test cases test behaviour on zero, infinities
-      and other special values. The designer of an operator should
-      define this method. */
-  virtual void add_standard_test_cases(vector<TestCase> &list);
-  
-  /** Add n random test cases to the test list. The designer of an
-      operator should define this method. */
-  virtual void add_random_test_cases(vector<TestCase> &list, int n);
-  
-
+  /**
+   * Generates random test cases. A random test case is
+   * one that attempts to discover design faults by including
+   * many not-designer-related cases.
+   * @param n How many test cases to generate
+   * @return A TestCases instance with the above requested TestCase-es.
+   */
+  virtual TestCaseList generateRandomTestCases(int n = 100) {
+    throw std::string("Random test cases not implemented for this operator.");
+  }
   
   
   /**Final report function, prints to the terminal.  By default

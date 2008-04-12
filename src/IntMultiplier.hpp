@@ -27,8 +27,9 @@ public:
 	void output_vhdl(std::ostream& o, std::string name);
 	// a zero generator method
 	string zero_generator(int n, int margins);
-	void add_standard_test_cases(vector<TestCase> &list);
-	void add_random_test_cases(vector<TestCase> &list, int n);
+	
+	virtual TestCaseList generateStandardTestCases(int n);
+	virtual TestCaseList generateRandomTestCases(int n);
 
 private:
     //Specific IntMultiplier methods
