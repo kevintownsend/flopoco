@@ -35,8 +35,9 @@
 
 void  Operator::add_input(const std::string name, const int width) {
   if(_signal_map.find(name) != _signal_map.end()) {
-    cerr << "ERROR in add_input , signal " << name<< " seems to already exist" << endl;
-    exit(EXIT_FAILURE);
+    std::ostringstream o;
+    o << "ERROR in add_input, signal " << name<< " seems to already exist";
+    throw o.str();
   }
   Signal *s = new Signal(name, Signal::in, width) ;
   ioList.push_back(s);
@@ -46,8 +47,9 @@ void  Operator::add_input(const std::string name, const int width) {
 
 void  Operator::add_output(const std::string name, const int width) {
   if(_signal_map.find(name) != _signal_map.end()) {
-    cerr << "ERROR in add_input , signal " << name<< " seems to already exist" << endl;
-    exit(EXIT_FAILURE);
+    std::ostringstream o;
+    o << "ERROR in add_input, signal " << name << " seems to already exist";
+    throw o.str();
   }
   Signal *s = new Signal(name, Signal::out, width) ;
   ioList.push_back(s);
@@ -80,8 +82,9 @@ void  Operator::add_FP_output(const std::string name, const int wE, const int wF
 
 void  Operator::add_signal(const std::string name, const int width) {
   if(_signal_map.find(name) != _signal_map.end()) {
-    cerr << "ERROR in add_input , signal " << name<< " seems to already exist" << endl;
-    exit(EXIT_FAILURE);
+    std::ostringstream o;
+    o << "ERROR in add_signal, signal " << name << " seems to already exist";
+    throw o.str();
   }
   Signal *s = new Signal(name, Signal::wire, width);
   _signal_map[name] = s ;
