@@ -423,7 +423,12 @@ int main(int argc, char* argv[] )
 {
   target = new VirtexIV();
 
-  bool command_line_OK =  parse_command_line(argc, argv);
+  try {
+    bool command_line_OK =  parse_command_line(argc, argv);
+  } catch (std::string s) {
+    cerr << "Exception while parsing command line: " << s << endl;
+    return 1;
+  }
 
  if(oplist.empty()) {
    cerr << "Nothing to generate, exiting\n";
