@@ -296,7 +296,7 @@ bool parse_command_line(int argc, char* argv[]){
         
 	if ((norm==0) or (norm==1))
 	{
-		if ((wEX==wEY) && (wEX==wER) && (wFX==wFY)) 
+		if ((wEX==wEY) && (wEX==wER)) 
 		{
 			op = new FPMultiplier(target, wEX, wFX, wEY, wFY, wER, wFR, norm);
 			oplist.push_back(op);

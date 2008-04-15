@@ -54,8 +54,8 @@ void  Operator::add_output(const std::string name, const int width) {
   Signal *s = new Signal(name, Signal::out, width) ;
   ioList.push_back(s);
   _signal_map[name] = s ;
-  number_of_outputs ++;
-}
+    number_of_outputs ++;
+  }
 
 void  Operator::add_FP_input(const std::string name, const int wE, const int wF) {
   if(_signal_map.find(name) != _signal_map.end()) {
@@ -84,7 +84,7 @@ void  Operator::add_signal(const std::string name, const int width) {
   if(_signal_map.find(name) != _signal_map.end()) {
     std::ostringstream o;
     o << "ERROR in add_signal, signal " << name << " seems to already exist";
-    throw o.str();
+    throw o.str();  
   }
   Signal *s = new Signal(name, Signal::wire, width);
   _signal_map[name] = s ;

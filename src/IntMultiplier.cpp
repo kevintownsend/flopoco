@@ -54,19 +54,19 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 	else
 		set_combinatorial();  
 
-	/** Name Setup procedure
+	/* Name Setup procedure
 	 *  The name has the format: IntMultiplier_wInX_wInY
 	 *  wInX = width of the X input
 	 *  wInY = width of the Y input
-	 **/  
+	 */  
 	name.str("");;
 	name <<"IntMultiplier_"<<wInX<<"_"<<wInY;
 	unique_name = name.str(); 
 	
-	/** Set up the IO signals
+	/* Set up the IO signals
 	 * X and Y have wInX and wInY bits respectively 
 	 * R has wOut bits where wOut = (wInX + WInY) bits
-	 **/
+	 */
 	  add_input ("X", wInX);
 	  add_input ("Y", wInY);
 	  add_output("R", wOut);
@@ -306,7 +306,6 @@ void IntMultiplier::output_vhdl(std::ostream& o, std::string name) {
 	if (is_sequential()) { 
 	
 		output_vhdl_registers(o); 
-		new_line(o);
 		
 		//pad inputs with zeros
 		pad_inputs(o);
@@ -315,15 +314,12 @@ void IntMultiplier::output_vhdl(std::ostream& o, std::string name) {
 		split(o,"X",partsX, multiplier_width_X);			  
 		split(o,"Y",partsY, multiplier_width_Y);
 		
-		new_line(o);
 		//make all multiplications concurrently
 		do_multiplications(o);
 			
-		new_line(o);
 		//decompose the results into high and low part
 		decompose_low_high(o);
-
-		new_line(o);		
+		
 		//Regroup all the high parts together and all the low parts together
 		regroup_low_high(o);
 		
@@ -371,20 +367,17 @@ void IntMultiplier::output_vhdl(std::ostream& o, std::string name) {
 			//Connect the HIGH part tohether 
 			link_high_adder_structure(o);
 			
-			new_line(o);
 			//connect the partsY! registers which compute the low part of the result
 			connect_partial_bits(o);
 			
-			new_line(o);
 			//pipeline the addition which gives the gigh part of the multiplication result;
 	  		pipeline_addition(o); //the result of the addition is called temp_result
 	  
 			delay_partial_bits(o);
 			
 			o<<tab<<"full_result <= temp_result & partial_bits;"<<endl; 
-			o<<tab<<"R <= full_result("<<  partsX*multiplier_width_X + partsY*multiplier_width_Y - 1 -number_of_zerosX - number_of_zerosY<<" downto 0);"<<endl;
+			o<<tab<<"R <= full_result("<<  partsX*multiplier_width_X + partsY*multiplier_width_Y - 1 -number_of_zerosX - number_of_zerosY<<" downto 0);"<<endl<<endl;
 		  
-			o<<endl<<endl;
 		}
 	}else{ 
 		//the combinational version
@@ -473,12 +466,13 @@ void IntMultiplier::do_multiplications(std::ostream& o)
 {
 int i,j;
 ostringstream names;	
-		for (i=1;i<=partsY;i++)
-			for (j=1;j<=partsX;j++){  
-				names.str("");;
-				names <<"Y_"<<i<<"_X_"<<j;
-				o<<tab<< names.str() << " <= " << "Y_"<< i <<"_d * " << "X_"<<j << "_d;"<<endl;
-			} 
+	for (i=1;i<=partsY;i++)
+		for (j=1;j<=partsX;j++){  
+			names.str("");;
+			names <<"Y_"<<i<<"_X_"<<j;
+			o<<tab<< names.str() << " <= " << "Y_"<< i <<"_d * " << "X_"<<j << "_d;"<<endl;
+		} 
+	new_line(o);
 }
 
 
@@ -526,6 +520,7 @@ ostringstream nameL,nameH, concatH, concatL;
 		o<<tab<< nameL.str() << "  <= " << concatL.str() << ";"<<endl;
 		o<<tab<< nameH.str() << " <= " << concatH.str() << ";"<<endl;
 	}
+	new_line(o);
 }
 
 

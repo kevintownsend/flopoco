@@ -67,7 +67,6 @@ Wrapper::~Wrapper() {
 void Wrapper::output_vhdl(ostream& o, string name) {
   Licence(o,"Florent de Dinechin (2007)");
   Operator::StdLibs(o);
-  set_sequential(); // a wrapper does have a clock and rst
 
   output_vhdl_entity(o);
   o << "architecture arch of " << name  << " is" << endl;
@@ -100,12 +99,7 @@ void Wrapper::output_vhdl(ostream& o, string name) {
     if (i < op->ioList.size()-1) 
       o << "," << endl;
   }
-  if(op->is_sequential()) { // add the clock and reset
-    o << "," << endl << tab << tab << "           clk =>  clk,"<<endl
-      << tab << tab << "           rst =>  rst );"<<endl;
-  }
-  else 
-    o << ");" <<endl;
+  o << ");" <<endl;
 
   // the delays 
   output_vhdl_registers(o);

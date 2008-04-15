@@ -151,6 +151,7 @@ int i;
 bool VirtexIV::suggest_subadd_size(int &x, int wIn){
 
 	int chunk_size = (int)floor( (1./frequency() - lut_delay()) / carry_propagate_delay()); // 1 if no need for pipeline
+	
 	x = chunk_size;		
 	
 	if (x>0) return true;
