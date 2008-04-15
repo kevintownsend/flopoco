@@ -83,7 +83,7 @@ std::string TestCase::getExpectedOutputVHDL()
       o << " or " << s.id() << "=" << signalValueToVHDL(s,v);
     }
 
-    o << " report \"Incorrect output value\" severity ERROR; ";
+    o << " report \"Incorrect output value for " << s.id() << "\" severity ERROR; ";
   }
   o << "-- " << comment;
 

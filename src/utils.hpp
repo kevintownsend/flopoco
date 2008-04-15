@@ -39,4 +39,12 @@ inline double min(double x, double y) {return (x < y ? x : y);}
 inline int max(int x, int y) {return (x > y ? x : y);}
 inline int min(int x, int y) {return (x < y ? x : y);}
 
+/**
+ * Generate a very big random number.
+ * Due to rereusage of a PRNG, this function might be suboptimal.
+ * @param n bit-width of the target random number.
+ * @return an mpz_class representing the random number.
+ */
+mpz_class getLargeRandom(int n);
+
 #endif

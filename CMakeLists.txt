@@ -44,6 +44,7 @@ ADD_EXECUTABLE(flopoco
  src/ConstMult/IntConstMult src/ConstMult/ShiftAddOp src/ConstMult/ShiftAddDag 
  src/ConstMult/FPConstMult 
  src/TestCase
+ src/FloFP
 )
 TARGET_LINK_LIBRARIES(flopoco  mpfr gmp gmpxx)
 

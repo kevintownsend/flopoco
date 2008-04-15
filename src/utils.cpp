@@ -294,3 +294,20 @@ int intlog2(mpz_class number)
   return result;
 }
 
+mpz_class getLargeRandom(int n)
+{
+	mpz_class o;
+	while (n)
+	{
+		/* Get a random number */
+		long int r = random();
+		/* Compute how many bit we need from it */
+		int w = min(n, 16);
+		/* Add new random bits to our big random number */
+		o = (o<<w) + (r % (2<<(w-1)));
+		/* Update the number of bits we still need to generate */
+		n -= w;
+	}
+	return o;
+}
+

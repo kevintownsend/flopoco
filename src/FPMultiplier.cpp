@@ -35,6 +35,7 @@
 #include "Operator.hpp"
 
 #include "FPMultiplier.hpp"
+#include "FloFP.hpp"
 
 using namespace std;
 extern vector<Operator*> oplist;
@@ -702,4 +703,43 @@ int i;
 	}
 }
 
+TestCaseList FPMultiplier::generateStandardTestCases(int n)
+{
+	// TODO
+	return TestCaseList();
+}
+
+TestCaseList FPMultiplier::generateRandomTestCases(int n)
+{
+	if (!normalized)
+		throw std::string("Non-normalized TestCases are not yet implemented.");
+
+	Signal sx = *get_signal_by_name("X");
+	Signal sy = *get_signal_by_name("Y");
+	Signal srexp = *get_signal_by_name("ResultExponent");
+	Signal srman = *get_signal_by_name("ResultSignificand");
+	Signal srexc = *get_signal_by_name("ResultException");
+	Signal srsgn = *get_signal_by_name("ResultSign"); 
+
+	TestCaseList tcl;	/* XXX: Just like Lyon's Transportion Company. :D */
+	FloFP x(wEX, wFX), y(wEY, wFY), r(wER, wFR);
+
+	for (int i = 0; i < n; i++)
+	{
+		x = getLargeRandom(sx.width()-2) + (mpz_class(1) << (wEX + wFX + 1));
+		y = getLargeRandom(sy.width()-2) + (mpz_class(1) << (wEY + wFY + 1));
+		r = x * y;
+
+		TestCase tc;
+		tc.addInput(sx, x.getSignal());
+		tc.addInput(sy, y.getSignal());
+		tc.addExpectedOutput(srexp, r.getExponent());
+		tc.addExpectedOutput(srman, r.getMantissa());
+		tc.addExpectedOutput(srexc, r.getException());
+		tc.addExpectedOutput(srsgn, r.getSign());
+		tcl.add(tc);
+	}
+
+	return tcl;
+}
 

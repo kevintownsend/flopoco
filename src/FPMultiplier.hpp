@@ -35,6 +35,9 @@ public:
 
 	string zero_generator(int n, int margins);
 
+	TestCaseList generateStandardTestCases(int n);
+	TestCaseList generateRandomTestCases(int n);
+
 private:
 	IntMultiplier* intmult;
 	int reunion_signal_width;
