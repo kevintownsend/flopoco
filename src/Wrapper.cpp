@@ -43,7 +43,9 @@ Wrapper::Wrapper(Target* target, Operator *op, std::string name):
 {
   unique_name=name;
 
-  set_sequential();	
+  if (!target->is_pipelined()) 	
+  	set_sequential();	
+  
   // Copy the signals of the wrapped operator
   for(int i=0; i<op->ioList.size(); i++)
     ioList.push_back(new Signal(*op->ioList[i]));
