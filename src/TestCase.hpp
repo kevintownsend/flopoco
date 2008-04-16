@@ -47,16 +47,18 @@ public:
 
   /**
    * Generates the VHDL code necessary for assigning the input signals.
-   * @return A single-line VHDL code.
+   * @param prepend A string to prepend to each line.
+   * @return A multi-line VHDL code.
    */
-  std::string getInputVHDL();
+  std::string getInputVHDL(std::string prepend = "");
 
   /**
    * Generate the VHDL code necessary to assert the expected output
    * signals.
+   * @param prepend A string to prepend to each line.
    * @return A single-line VHDL code.
    */
-  std::string getExpectedOutputVHDL();
+  std::string getExpectedOutputVHDL(std::string prepend = "");
 
 private:
   /**

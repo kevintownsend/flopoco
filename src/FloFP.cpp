@@ -9,10 +9,11 @@ FloFP::FloFP(int wE, int wF, mpfr_t m) : wE(wE), wF(wF)
 	operator=(m);
 }
 
-mpz_class FloFP::getMantissa() { return mantissa; }
-mpz_class FloFP::getException() { return exception; }
-mpz_class FloFP::getSign() { return sign; }
-mpz_class FloFP::getExponent() { return exponent; }
+mpz_class FloFP::getMantissaSignalValue() { return mantissa; }
+mpz_class FloFP::getExceptionSignalValue() { return exception; }
+mpz_class FloFP::getSignSignalValue() { return sign; }
+mpz_class FloFP::getExponentSignalValue() { return exponent; }
+mpz_class FloFP::getFractionSignalValue() { return mantissa + (mpz_class(1)<<wF); }
 
 FloFP FloFP::operator*(FloFP fp)
 {
@@ -96,7 +97,7 @@ FloFP& FloFP::operator=(mpfr_t mp_)
 	if (mpfr_zero_p(mp))
 	{
 		exception = 0;
-		sign = 0;
+		sign = mpfr_sgn(mp) > 0 ? 0 : 1;
 		exponent = 0;
 		mantissa = 0;
 		return *this;
@@ -119,6 +120,17 @@ FloFP& FloFP::operator=(mpfr_t mp_)
 	mpfr_mul_2si(mp, mp, wF, GMP_RNDN);
 	mpfr_get_z(mantissa.get_mpz_t(), mp, GMP_RNDN);
 
+	// Due to rounding, the mantissa might overflow (i.e. become bigger
+	// then we expect).
+	if (mantissa >= mpz_class(1) << wF)
+	{
+		mantissa = mantissa >> 1;
+		exp--;
+	}
+
+	if (mantissa >= mpz_class(1) << wF)
+		throw std::string("Mantissa is to big after conversion to VHDL signal.");
+
 	/* Bias and store exponent */
 	exp += ((1<<(wE-1))-1);
 	exponent = exp;
@@ -127,7 +139,6 @@ FloFP& FloFP::operator=(mpfr_t mp_)
 	if (exponent < 0)
 	{
 		exception = 0;
-		sign = 0;
 		exponent = 0;
 		mantissa = 0;
 	}
@@ -136,7 +147,6 @@ FloFP& FloFP::operator=(mpfr_t mp_)
 	if (exponent >= (1<<(wE)))
 	{
 		exception = 2;
-		sign = 0;
 		exponent = 0;
 		mantissa = 0;
 	}
@@ -157,7 +167,7 @@ FloFP& FloFP::operator=(mpz_class s)
 		throw std::string("FloFP::operator= s is bigger than expected.");
 }
 
-mpz_class FloFP::getSignal()
+mpz_class FloFP::getSignalValue()
 {
 	/* Sanity checks */
 	if ((sign != 0) && (sign != 1))

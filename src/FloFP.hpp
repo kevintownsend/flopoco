@@ -33,25 +33,32 @@ public:
 	 * @return Returns an mpz_class, representing the
 	 * VHDL signal of the mantissa, without leading 1.
 	 */
-	mpz_class getMantissa();
+	mpz_class getMantissaSignalValue();
+
+	/**
+	 * Retrieves the fraction.
+	 * @return An mpz_class, representing the VHDL
+	 * signal of the mantissa, plus leading 1.
+	 */
+	mpz_class getFractionSignalValue();
 
 	/**
 	 * Retrieves the two exception bits.
 	 * @return the two exception bits as VHDL signals.
 	 */
-	mpz_class getException();
+	mpz_class getExceptionSignalValue();
 
 	/**
 	 * Retrives the sign.
 	 * @return the sign as a VHDL signal.
 	 */
-	mpz_class getSign();
+	mpz_class getSignSignalValue();
 
 	/**
 	 * Retrieves the exponent.
 	 * @return the exponent as a VHDL signal.
 	 */
-	mpz_class getExponent();
+	mpz_class getExponentSignalValue();
 
 	/**
 	 * Multiplies to FloFP using MPFR.
@@ -82,7 +89,7 @@ public:
 	 * Retrieved the VHDL signal representation of this floating point.
 	 * @return a VHDL signal stored as mpz_class.
 	 */
-	mpz_class getSignal();
+	mpz_class getSignalValue();
 
 	/**
 	 * Equality operator. Everything does through MPFR to make sure

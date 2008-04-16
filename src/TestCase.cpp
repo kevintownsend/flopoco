@@ -49,24 +49,34 @@ void TestCase::addExpectedOutput(Signal s, mpz_class v)
   outputs[s].insert(v);
 }
 
-std::string TestCase::getInputVHDL()
+std::string TestCase::getInputVHDL(std::string prepend)
 {
   std::ostringstream o;
 
+  /* Add comment if there is one */
+  if (comment != "")
+    o << prepend << "-- " << comment << std::endl;
+
+  /* Iterate through input signals */
   for (Inputs::iterator it = inputs.begin(); it != inputs.end(); it++)
   {
     Signal s = it->first;
     mpz_class v = it->second;
+    o << prepend;
     o << s.id() << " <= " << signalValueToVHDL(s, v) << "; ";
+    o << std::endl;
   }
-  o << "-- " << comment;
 
   return o.str();
 }
 
-std::string TestCase::getExpectedOutputVHDL()
+std::string TestCase::getExpectedOutputVHDL(std::string prepend)
 {
   std::ostringstream o;
+
+  /* Add comment, if there is one */
+  if (comment != "")
+    o << prepend << "-- " << comment << std::endl;
 
   /* Iterate through output signals */
   for (Outputs::iterator it = outputs.begin(); it != outputs.end(); it++)
@@ -74,6 +84,7 @@ std::string TestCase::getExpectedOutputVHDL()
     Signal s = it->first;
     std::set<mpz_class> vs = it->second;
 
+    o << prepend;
     o << "assert false";  // XXX: Too lazy to make an exception for the first value
 
     /* Iterate through possible output values */
@@ -84,8 +95,8 @@ std::string TestCase::getExpectedOutputVHDL()
     }
 
     o << " report \"Incorrect output value for " << s.id() << "\" severity ERROR; ";
+    o << std::endl;
   }
-  o << "-- " << comment;
 
   return o.str();
 }

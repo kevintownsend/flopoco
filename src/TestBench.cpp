@@ -115,24 +115,30 @@ void TestBench::output_vhdl(ostream& o, string name) {
   o << tab << tab << "rst <= '0';" << endl;
   for (int i = 0; i < tcl.getNumberOfTestCases(); i++)
   {
-    o << tab << tab << tcl.getTestCase(i).getInputVHDL() <<endl;
+    o << tcl.getTestCase(i).getInputVHDL(tab + tab);
     o << tab << tab << "wait for 10 ns;" <<endl;
   } 
   o << tab << tab << "wait for 100000 ns; -- allow simulation to finish" << endl;
   o << tab << "end process;" <<endl;
   o <<endl;
 
-
+  int currentOutputTime = 0;
   o << tab << "-- Checking the outputs" <<endl;
   o << tab << "process" <<endl;
   o << tab << "begin" <<endl;
   o << tab << tab << "wait for 10 ns; -- wait for reset to complete" <<endl;
+  currentOutputTime += 10;
   o << tab << tab << "wait for "<< op->pipeline_depth()*10 <<" ns; -- wait for pipeline to flush" <<endl;
+  currentOutputTime += op->pipeline_depth()*10;
   for (int i = 0; i < tcl.getNumberOfTestCases(); i++)
   {
     o << tab << tab << "wait for 5 ns;" <<endl;
-    o << tab << tab << tcl.getTestCase(i).getExpectedOutputVHDL() <<endl;
+    currentOutputTime += 5;
+    o << tab << tab << "-- " << "current time: " << currentOutputTime <<endl;
+    o << tcl.getTestCase(i).getInputVHDL(tab + tab + "-- input: ");
+    o << tcl.getTestCase(i).getExpectedOutputVHDL(tab + tab);
     o << tab << tab << "wait for 5 ns;" <<endl;
+    currentOutputTime += 5;
   } 
   o << tab << tab << "assert false report \"End of simulation\" severity failure;" <<endl;
   o << tab << "end process;" <<endl;
@@ -144,6 +150,6 @@ void TestBench::output_vhdl(ostream& o, string name) {
   cerr << tab << "vlib work" <<endl;
   cerr << tab << "vcom flopoco.vhdl" <<endl;
   cerr << tab << "vsim " << name <<endl;
-  // XXX: IMHO Ugly. Total time should be stored in some global variable.
-  cerr << tab << "run " << op->pipeline_depth()*10 + tcl.getNumberOfTestCases() * 10 + 20 << endl;
+  cerr << tab << "add wave -r *" <<endl;
+  cerr << tab << "run " << currentOutputTime << endl;
 }

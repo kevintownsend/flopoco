@@ -754,7 +754,7 @@ TestCaseList FPMultiplier::generateRandomTestCases(int n)
 	Signal sx = *get_signal_by_name("X");
 	Signal sy = *get_signal_by_name("Y");
 	Signal srexp = *get_signal_by_name("ResultExponent");
-	Signal srman = *get_signal_by_name("ResultSignificand");
+	Signal srfra = *get_signal_by_name("ResultSignificand");
 	Signal srexc = *get_signal_by_name("ResultException");
 	Signal srsgn = *get_signal_by_name("ResultSign"); 
 
@@ -768,12 +768,17 @@ TestCaseList FPMultiplier::generateRandomTestCases(int n)
 		r = x * y;
 
 		TestCase tc;
-		tc.addInput(sx, x.getSignal());
-		tc.addInput(sy, y.getSignal());
-		tc.addExpectedOutput(srexp, r.getExponent());
-		tc.addExpectedOutput(srman, r.getMantissa() + (mpz_class(1) << wFR));
-		tc.addExpectedOutput(srexc, r.getException());
-		tc.addExpectedOutput(srsgn, r.getSign());
+		tc.addInput(sx, x.getSignalValue());
+		tc.addInput(sy, y.getSignalValue());
+		
+		tc.addExpectedOutput(srexc, r.getExceptionSignalValue());
+		tc.addExpectedOutput(srsgn, r.getSignSignalValue());
+		// Exponent and fraction are not defined for zero, inf or NaN
+		if (r.getExceptionSignalValue() == 1)
+		{
+			tc.addExpectedOutput(srexp, r.getExponentSignalValue());
+			tc.addExpectedOutput(srfra, r.getFractionSignalValue());
+		}
 		tcl.add(tc);
 	}
 
