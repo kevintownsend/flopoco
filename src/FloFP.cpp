@@ -122,14 +122,16 @@ FloFP& FloFP::operator=(mpfr_t mp_)
 
 	// Due to rounding, the mantissa might overflow (i.e. become bigger
 	// then we expect).
-	if (mantissa >= mpz_class(1) << wF)
+	if (mantissa == mpz_class(1) << wF)
 	{
-		mantissa = mantissa >> 1;
-		exp--;
+		mantissa = 0;
+		exp++;
 	}
 
 	if (mantissa >= mpz_class(1) << wF)
 		throw std::string("Mantissa is to big after conversion to VHDL signal.");
+	if (mantissa < 0)
+		throw std::string("Mantissa is negative after conversion to VHDL signal.");
 
 	/* Bias and store exponent */
 	exp += ((1<<(wE-1))-1);
