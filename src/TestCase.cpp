@@ -8,9 +8,10 @@
  * including padding and putting quot or apostrophe.
  * @param s signal (used to determine the width)
  * @param v value
+ * @param quot also put quotes around the value
  * @return a VHDL value expression
  */
-std::string signalValueToVHDL(Signal s, mpz_class v)
+std::string signalValueToVHDL(Signal s, mpz_class v, bool quot = true)
 {
   std::string o;
 
@@ -30,6 +31,7 @@ std::string signalValueToVHDL(Signal s, mpz_class v)
     o = "0" + o;
 
   /* Put apostrophe / quot */
+  if (!quot) return o;
   if (s.width() > 1)
     return "\"" + o + "\"";
   else
@@ -83,6 +85,7 @@ std::string TestCase::getExpectedOutputVHDL(std::string prepend)
   {
     Signal s = it->first;
     std::set<mpz_class> vs = it->second;
+    std::string expected;
 
     o << prepend;
     o << "assert false";  // XXX: Too lazy to make an exception for the first value
@@ -92,9 +95,10 @@ std::string TestCase::getExpectedOutputVHDL(std::string prepend)
     {
       mpz_class v = *it;
       o << " or " << s.id() << "=" << signalValueToVHDL(s,v);
+      expected += " " + signalValueToVHDL(s,v,false);
     }
 
-    o << " report \"Incorrect output value for " << s.id() << "\" severity ERROR; ";
+    o << " report \"Incorrect output value for " << s.id() << ", expected" << expected << "\" severity ERROR; ";
     o << std::endl;
   }
 
