@@ -1,3 +1,4 @@
+/* vim: set tabstop=8 softtabstop=2 shiftwidth=2: */
 /*
  * A multiplier by a floating-point constant for FloPoCo
  *
@@ -31,6 +32,7 @@
 #include "../utils.hpp"
 #include "../Operator.hpp"
 #include "FPConstMult.hpp"
+#include "../FloFP.hpp"
 
 using namespace std;
 
@@ -219,3 +221,42 @@ void FPConstMult::output_vhdl(ostream& o, string name) {
   o << "end architecture;" << endl << endl;
     
 }
+
+TestCaseList FPConstMult::generateRandomTestCases(int n)
+{
+  /* Signals */
+  Signal sx = *get_signal_by_name("X");
+  Signal sr = *get_signal_by_name("R");
+
+  TestCaseList tcl;	/* XXX: Just like Lyon's Transporation company. :D */
+  FloFP x(wE_in, wF_in), r(wE_out, wF_out);
+  mpfr_t mpY;
+
+  /* Initialize second operand */
+  mpfr_init(mpY);
+  mpfr_set(mpY, mpfr_cst_sig, GMP_RNDN);
+  mpfr_mul_2si(mpY, mpY, cst_exp_when_mantissa_1_2, GMP_RNDN);
+
+  for (int i = 0; i < n; i++)	
+  {
+    x = getLargeRandom(sx.width()-2) + (mpz_class(1) << (wE_in + wF_in + 1));
+    r = x * mpY;
+
+    TestCase tc;
+    tc.addInput(sx, x.getSignalValue());
+    tc.addExpectedOutput(sr, r.getSignalValue());
+    tcl.add(tc);
+  }
+
+  /* Free second operand */
+  mpfr_clear(mpY);
+
+  return tcl;
+}
+
+TestCaseList FPConstMult::generateStandardTestCases(int n)
+{
+  // TODO
+  return TestCaseList();
+}
+

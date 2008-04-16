@@ -1,3 +1,4 @@
+/* vim: set tabstop=8 softtabstop=2 shiftwidth=2: */
 #ifndef FPCONSTMULT_HPP
 #define FPCONSTMULT_HPP
 #include <gmp.h>
@@ -32,6 +33,9 @@ public:
   // Overloading the virtual functions of Operator
   //  void output_vhdl_component(ostream& o, string name);
   void output_vhdl(ostream& o, string name);
+
+  virtual TestCaseList generateStandardTestCases(int n);
+  virtual TestCaseList generateRandomTestCases(int n);
 };
 
 

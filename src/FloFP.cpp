@@ -3,10 +3,14 @@
 
 FloFP::FloFP(int wE, int wF) : wE(wE), wF(wF)
 {
+	if (wE > 30)
+		throw "FloFP::FloFP: Using exponents larger than 30 bits is not supported.";
 }
 
 FloFP::FloFP(int wE, int wF, mpfr_t m) : wE(wE), wF(wF)
 {
+	if (wE > 30)
+		throw "FloFP::FloFP: Using exponents larger than 30 bits is not supported.";
 	operator=(m);
 }
 
@@ -26,6 +30,13 @@ FloFP FloFP::operator*(FloFP fp)
 	FloFP flofp(max(wE, fp.wE) + 1, wF + fp.wF + 2, r);
 	mpfr_clears(r, x, y, 0);
 	return flofp;
+}
+
+FloFP FloFP::operator*(mpfr_t mpX)
+{
+	FloFP fpX(24, mpfr_get_prec(mpX)+32, mpX);
+
+	return *this * fpX;
 }
 
 void FloFP::getMPFR(mpfr_t mp)
@@ -59,7 +70,7 @@ void FloFP::getMPFR(mpfr_t mp)
 	mpfr_div_2si(mp, mp, wF, GMP_RNDN);
 	mpfr_add_ui(mp, mp, 1, GMP_RNDN);
 	
-	long exp = exponent.get_si();
+	mp_exp_t exp = exponent.get_si();
 	exp -= ((1<<(wE-1))-1);
 	mpfr_mul_2si(mp, mp, exp, GMP_RNDN);
 
@@ -112,7 +123,7 @@ FloFP& FloFP::operator=(mpfr_t mp_)
 	 * mpfr_get_exp() return exponent for significant in [1/2,1)
 	 * but we require [1,2). Hence the -1.
 	 */
-	long exp = mpfr_get_exp(mp)-1;
+	mp_exp_t exp = mpfr_get_exp(mp)-1;
 
 	/* Extract mantissa */
 	mpfr_div_2si(mp, mp, exp, GMP_RNDN);
@@ -167,6 +178,8 @@ FloFP& FloFP::operator=(mpz_class s)
 
 	if (s != 0)
 		throw std::string("FloFP::operator= s is bigger than expected.");
+
+	return *this;
 }
 
 mpz_class FloFP::getSignalValue()
@@ -191,5 +204,7 @@ FloFP& FloFP::operator=(FloFP fp)
 	fp.getMPFR(mp);
 	operator=(mp);
 	mpfr_clear(mp);
+
+	return *this;
 }
 

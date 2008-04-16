@@ -61,10 +61,16 @@ public:
 	mpz_class getExponentSignalValue();
 
 	/**
-	 * Multiplies to FloFP using MPFR.
+	 * Multiplies two FloFPs using MPFR.
 	 * @return a FloFP representing the result of the multiplication.
 	 */
 	FloFP operator*(FloFP);
+
+	/**
+	 * Multiplies a FloFP with an MPFR.
+	 * @return a FloFP representing the result of the multiplication.
+	 */
+	FloFP operator*(mpfr_t);
 
 	/**
 	 * Converts the currently stored FloFP to an mpfr_t

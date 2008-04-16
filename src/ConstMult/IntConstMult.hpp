@@ -39,6 +39,9 @@ public:
 
   // Overloading the virtual functions of Operator
   void output_vhdl(std::ostream& o, std::string name);
+
+  virtual TestCaseList generateStandardTestCases(int n);
+  virtual TestCaseList generateRandomTestCases(int n);
 };
 
 #endif
