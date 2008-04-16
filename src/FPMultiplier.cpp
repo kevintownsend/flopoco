@@ -63,27 +63,23 @@ FPMultiplier::FPMultiplier(Target* target, int wEX, int wFX, int wEY, int wFY, i
 	else
 		normalized = true;
 
-	/* Name Setup procedure
-	   The name has the format: FPMultiplier_wEX_wFX_wEY_wFY_wER_wFR
-	   wEX = width of X exponenet
-	   wFX = width for the fractional part of X
-	 */
+	/* The name has the format: FPMultiplier_wEX_wFX_wEY_wFY_wER_wFR where: wEX = width of X exponenet and wFX = width for the fractional part of X */
 	name.str("");
 	name <<"FPMultiplier_"; 
 	name<<wEX<<"_"<<wFX<<"_"<<wEY<<"_"<<wFY<<"_"<<wER<<"_"<<wFR;
-	unique_name = name.str(); //set the attribute
+	unique_name = name.str(); 
 	
-
-	// Set up the IO signals
-	add_input ("X", wEX + wFX + 3);// format: 2b(Exception) + 1b(Sign)
-	add_input ("Y", wEY + wFY + 3);//+ wEX bits (Exponent) + wFX bits(Fraction)
+	/* Set up the IO signals */
+	/* Inputs: 2b(Exception) + 1b(Sign) + wEX bits (Exponent) + wFX bits(Fraction) */
+	add_input ("X", wEX + wFX + 3);
+	add_input ("Y", wEY + wFY + 3);
 	
 	add_output ("ResultExponent"   , wER    );  
 	add_output ("ResultSignificand", wFR + 1);
 	add_output ("ResultException"  , 2      );
 	add_output ("ResultSign"       , 1      ); 
 
-	//Set up if we are in the sequential or combinational case
+	//Set up the status of the operator. Options = sequential|combinatorial
 	if (target->is_pipelined()) 
 		set_sequential();
 	else
@@ -93,20 +89,19 @@ FPMultiplier::FPMultiplier(Target* target, int wEX, int wFX, int wEY, int wFY, i
 	intmult = new IntMultiplier(target, wFX+1, wFY+1);
 	oplist.push_back(intmult);
 
-	//Setup the attibute cocerning the IntMultiplier pipeline 
+	//Setup the attibute cocerning the IntMultiplier pipeline depth 
 	IntMultPipelineDepth = intmult->pipeline_depth();
-
 	
 	/* Common signals for all versions */
-	
+
 	add_signal("significandX", wFX+1);   //The Significands for the input signals X and Y
 	add_signal("significandY", wFY+1);
 	add_signal("significand_product", wFX +wFY +2);   
 
 	add_signal("exponentX", wEX);	//The signals for the exponents of X and Y
 	add_signal("exponentY", wEY);
-	add_signal("bias",wEX+1); //bias to be substracted from the sum of exponents  
-	add_signal("exponents_sum_minus_bias_ext",wEX+1); //extended with 1 bit
+	add_signal("bias",wEX+2); //bias to be substracted from the sum of exponents  
+	add_signal("exponents_sum_minus_bias_ext",wEX+2); //extended with 1 bit
 
 	add_signal("exception_selector",4);//signal that selects the case for the exception
 
@@ -122,7 +117,7 @@ FPMultiplier::FPMultiplier(Target* target, int wEX, int wFX, int wEY, int wFY, i
 		add_signal("sign_synch", 1); 
 		
 		/* Registered signals */
-		add_registered_signal_with_sync_reset("Exponents_Sum", wEX+1 );
+		add_registered_signal_with_sync_reset("Exponents_Sum", wEX+2 );
 		add_registered_signal_with_sync_reset("Exponents_Sum_Minus_Bias", wEX );
 		add_registered_signal_with_sync_reset("Result_Exception",2); 
 		add_registered_signal_with_sync_reset("Result_Exception_With_EA",2);
@@ -226,7 +221,7 @@ FPMultiplier::FPMultiplier(Target* target, int wEX, int wFX, int wEY, int wFY, i
 		add_signal("exception_upd",2);
 		add_signal("middle_output",1);
 		add_signal("exponent_p2",wEX);
-		add_signal("Exponents_Sum", wEX+1 );
+		add_signal("Exponents_Sum", wEX+2 );
 		add_signal("Exponents_Sum_Minus_Bias", wEX );   
 		add_signal("Result_Exception",2); 
 		add_signal("Result_Exception_With_EA",2);
@@ -269,7 +264,6 @@ void FPMultiplier::output_vhdl(std::ostream& o, std::string name) {
 	int bias_val=int(pow(double(2),double(wEX-1)))-1;
 	int i, j; 
 
-	cerr<<"ASDADASDASDASD";
 	Licence(o,"Bogdan Pasca (2008)");
 	Operator::StdLibs(o);
 	o<<endl<<endl;	
@@ -286,15 +280,16 @@ void FPMultiplier::output_vhdl(std::ostream& o, std::string name) {
 	if (is_sequential()){
 		/* common code for both normalized and non-normalized version */
 		output_vhdl_registers(o); o<<endl;
-				
+		
 		/* Exponent Handling */
 			o<<tab<<"exponentX <= X("<<wEX + wFX -1<<" downto "<<wFX<<");"<<endl; 
 			o<<tab<<"exponentY <= Y("<<wEY + wFY -1<<" downto "<<wFY<<");"<<endl<<endl;
 			//Add exponents -> put sum into register
-			o<<tab<<"Exponents_Sum <= (\"0\" & exponentX) + (\"0\" & exponentY);"<<endl; //wEX+1 bits
-			o<<tab<<"bias <= CONV_STD_LOGIC_VECTOR("<<bias_val<<","<<wEX+1<<");"<<endl; 
+			o<<tab<<"Exponents_Sum <= (\"00\" & exponentX) + (\"00\" & exponentY);"<<endl; //wEX+1 bits
+			o<<tab<<"bias <= CONV_STD_LOGIC_VECTOR("<<bias_val<<","<<wEX+2<<");"<<endl; 
+			
 			//substract the bias value from the exponent sum
-			o<<tab<<"exponents_sum_minus_bias_ext <= Exponents_Sum_d - bias;"<<endl;//wEX + 1   
+			o<<tab<<"exponents_sum_minus_bias_ext <= Exponents_Sum_d - bias;"<<endl;//wEX + 2   
 			o<<tab<<"Exponents_Sum_Minus_Bias <= exponents_sum_minus_bias_ext("<<wEX-1<<" downto 0);"<<endl; //wEX
 
 		/* Significand Handling */
@@ -337,9 +332,12 @@ void FPMultiplier::output_vhdl(std::ostream& o, std::string name) {
 			o<<tab<<"end case;"<<endl;
 			o<<tab<<"end process;"<<endl<<endl;
 
-			//use MSB of exponents_sum_minus_bias_ext to siagnal overflow		
-			o<<tab<<"Result_Exception_With_EA <= Result_Exception_d when exponents_sum_minus_bias_ext("<< wEX<<")='0' else"<<endl;
-			o<<tab<<"                            \"10\";"<<endl<<endl;
+			//use MSB of exponents_sum_minus_bias_ext to siagnal overflow or underflow
+			o<<tab<<"with exponents_sum_minus_bias_ext("<< wER+1 <<" downto "<< wER <<") select"<<endl;		
+			o<<tab<<"Result_Exception_With_EA <= Result_Exception_d when \"00\","<<endl;
+			o<<tab<<"                            \"10\"             when \"01\", "<<endl;
+			o<<tab<<"                            \"00\"             when \"11\"|\"10\","<<endl;
+			o<<tab<<"                            \"11\"             when others;"<<endl;						
 									
 		/* synchronization barrier (IntMultiplication | Exponent Addition | Exception Computation | Sign Computation */
 		/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
@@ -575,8 +573,8 @@ void FPMultiplier::output_vhdl(std::ostream& o, std::string name) {
 			o<<tab<<"exponentX <= X("<<wEX + wFX -1<<" downto "<<wFX<<");"<<endl; 
 			o<<tab<<"exponentY <= Y("<<wEY + wFY -1<<" downto "<<wFY<<");"<<endl<<endl;
 			//Add exponents and put sum into register
-			o<<tab<<"Exponents_Sum <= (\"0\" & exponentX) + (\"0\" & exponentY);"<<endl; //wEX+1 bits
-			o<<tab<<"bias <= CONV_STD_LOGIC_VECTOR("<<bias_val<<","<<wEX+1<<");"<<endl; 
+			o<<tab<<"Exponents_Sum <= (\"00\" & exponentX) + (\"00\" & exponentY);"<<endl; //wEX+1 bits
+			o<<tab<<"bias <= CONV_STD_LOGIC_VECTOR("<<bias_val<<","<<wEX+2<<");"<<endl; 
 			//substract the bias value from the exponent sum
 			o<<tab<<"exponents_sum_minus_bias_ext <= Exponents_Sum - bias;"<<endl;//wEX + 1   
 			o<<tab<<"Exponents_Sum_Minus_Bias <= exponents_sum_minus_bias_ext("<<wEX-1<<" downto 0);"<<endl; //wEX
@@ -619,9 +617,12 @@ void FPMultiplier::output_vhdl(std::ostream& o, std::string name) {
 			o<<tab<<"end case;"<<endl;
 			o<<tab<<"end process;"<<endl<<endl;
 
-			//use MSB of exponents_sum_minus_bias_ext to siagnal overflow		
-			o<<tab<<"Result_Exception_With_EA <= Result_Exception when exponents_sum_minus_bias_ext("<< wEX<<")='0' else"<<endl;
-			o<<tab<<"                           \"11\";"<<endl<<endl;
+			//use MSB of exponents_sum_minus_bias_ext to siagnal overflow or underflow
+			o<<tab<<"with exponents_sum_minus_bias_ext("<< wER+1 <<" downto "<< wER <<") select"<<endl;		
+			o<<tab<<"Result_Exception_With_EA <= Result_Exception when \"00\","<<endl;
+			o<<tab<<"                            \"10\"             when \"01\", "<<endl;
+			o<<tab<<"                            \"00\"             when \"11\"|\"10\","<<endl;
+			o<<tab<<"                            \"11\"             when others;"<<endl;						
 										
 		/* Normalization */
 			// assign selector signal to MSB of signif. multiplication 
