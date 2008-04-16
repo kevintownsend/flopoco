@@ -1,4 +1,5 @@
 #include "FloFP.hpp"
+#include "utils.hpp"
 
 FloFP::FloFP(int wE, int wF) : wE(wE), wF(wF)
 {
@@ -22,8 +23,7 @@ FloFP FloFP::operator*(FloFP fp)
 	getMPFR(x);
 	fp.getMPFR(y);
 	mpfr_mul(r, x, y, GMP_RNDN);
-	// XXX: Waaaay to much precision
-	FloFP flofp(wE + fp.wE, wF + fp.wF, r);
+	FloFP flofp(max(wE, fp.wE) + 1, wF + fp.wF + 2, r);
 	mpfr_clears(r, x, y, 0);
 	return flofp;
 }
