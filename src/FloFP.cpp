@@ -23,7 +23,9 @@ mpz_class FloFP::getFractionSignalValue() { return mantissa + (mpz_class(1)<<wF)
 FloFP FloFP::operator*(FloFP fp)
 {
 	mpfr_t x, y, r;
-	mpfr_inits(x, y, r, 0);
+	mpfr_init2(x, wF+1);
+	mpfr_init2(y, fp.wF+1);
+	mpfr_init2(r, wF+fp.wF+2);
 	getMPFR(x);
 	fp.getMPFR(y);
 	mpfr_mul(r, x, y, GMP_RNDN);
@@ -82,7 +84,8 @@ void FloFP::getMPFR(mpfr_t mp)
 FloFP& FloFP::operator=(mpfr_t mp_)
 {
 	mpfr_t mp;
-	mpfr_init_set(mp, mp_, GMP_RNDN);
+	mpfr_init2(mp, mpfr_get_prec(mp_));
+	mpfr_set(mp, mp_, GMP_RNDN);
 
 	/* NaN */
 	if (mpfr_nan_p(mp))
@@ -200,7 +203,7 @@ FloFP& FloFP::operator=(FloFP fp)
 {
 	/* Pass this through MPFR to lose precision */
 	mpfr_t mp;
-	mpfr_init(mp);
+	mpfr_init2(mp, wF+1);
 	fp.getMPFR(mp);
 	operator=(mp);
 	mpfr_clear(mp);
