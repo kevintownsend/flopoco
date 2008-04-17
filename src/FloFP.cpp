@@ -191,7 +191,7 @@ mpz_class FloFP::getSignalValue()
 		throw std::string("FloFP::getSignal: exception is invalid.");
 	if ((exponent < 0) || (exponent >= (1<<wE)))
 		throw std::string("FloFP::getSignal: exponent is invalid.");
-	if ((mantissa < 0) || (mantissa >= (1<<wF)))
+	if ((mantissa < 0) || (mantissa >= (mpz_class(1)<<wF)))
 		throw std::string("FloFP::getSignal: mantissa is invalid.");
 	return (((((exception << 1) + sign) << wE) + exponent) << wF) + mantissa;
 }
