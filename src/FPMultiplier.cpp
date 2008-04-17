@@ -199,12 +199,74 @@ FPMultiplier::FPMultiplier(Target* target, int wEX, int wFX, int wEY, int wFY, i
 			}
 		
 		}else{
-			/* The sequential non-normalized version */
-			add_signal("temp_exp_concat_fract", 1 + wEX + wFX + wFY + 2);
+		/* The sequential non-normalized version */
+			
+			
+			if ((wFX+wFY+2 > wFR+1))
+			{
+				add_registered_signal_with_sync_reset("exponent_synch2",wEX);
+				add_registered_signal_with_sync_reset("exception_synch2",2);
+				add_registered_signal_with_sync_reset("significand_synch2",wFX + wFY + 2);
+				add_registered_signal_with_sync_reset("sign_synch2",1);
+						
+				add_signal("between_fp_numbers",1);	
+				add_signal("LSB_of_result_significand_out",1);	
+				add_signal("between_fp_numbers_out",1);
+				add_signal("sign_synch2_out",1);
+				add_signal("exception_synch2_out",2);
+						
+				add_signal("check_string",wFX+wFY+2 - (1+wFR) );
+				
+			
+			
+				bool status = target->suggest_subadd_size(addition_chunk_width, 3+ wER + wFR);
+				if (!status)
+					cout<<"Frequency report:"<<endl;
+					cout<<tab<<"WARNING: Desired frequency cannot be reached !";
+			
+			
+				reunion_signal_width = 3 + wEX + wFR;
+				reunion_signal_parts = int ( ceil( double(reunion_signal_width)/double(addition_chunk_width)));
+				addition_last_chunk_width = reunion_signal_width - (reunion_signal_parts - 1)*addition_chunk_width;
+							
+				
+				
+				if (reunion_signal_parts>1){
+					for (j=1; j<=reunion_signal_parts;j++)	
+					for (i=1;i<=reunion_signal_parts;i++){	
+						name.str("");
+						name<<"Last_Addition_Level_"<<j<<"_Reg_"<<i;
+						if (i!=reunion_signal_parts)
+							add_registered_signal_with_sync_reset(name.str(), addition_chunk_width + 1 );
+						else
+							add_registered_signal_with_sync_reset(name.str(), addition_last_chunk_width );	
+	         		}
+				
+				
+					add_delay_signal("reunion_signal_level",3+wEX+wFR,reunion_signal_parts);
+					add_delay_signal("LSB_of_result_significand_level",1,reunion_signal_parts);		
+					add_delay_signal("between_fp_numbers_level",1,reunion_signal_parts);			
+					add_delay_signal("sign_synch2_level",1,reunion_signal_parts);
+					add_delay_signal("exception_synch2_level",2,reunion_signal_parts);
+				}
+
+				add_signal("reunion_signal",1+wER+(1+wFR)+1);
+				add_signal("reunion_signal_out",3+wEX+wFR);
+				add_signal("LSB_of_result_significand",1); 
+				add_signal("between_fp_numbers_result_significand",3+wEX+wFR);
+				add_signal("reunion_signal_post_addition",3+wEX+wFR); 
+				add_signal("reunion_signal_post_rounding",3+wEX+wFR);
+				
+				
+				
+				add_signal("temp_exp_concat_fract", 1 + wEX + wFX + wFY + 2);
+			}
 		}
 	}
 	else{ 
 		/* Signals for the combinational version */
+		
+		
 		
 		add_signal("normalization_selector",1);
 		add_signal("exponent_post_normalization",2+wEX);
@@ -534,23 +596,128 @@ void FPMultiplier::output_vhdl(std::ostream& o, std::string name) {
 				o<<tab<<"ResultSign        <= sign_synch2_out;"<<endl;
 			}
 		}
-		else { 
+		else { //TODO
 		/* Non-Normalized case ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 			if (1+wFR < wFX+wFY+2){
-				o<<tab<<"normalization_selector <= significand_synch ("<<wFX+wFY+1<<");"<<endl;
+				//check if in the middle of two FP numbers
+				//generate two xor strings
+				str1.str(""); 
+				str1<<"\"1"<< zero_generator( wFX+wFY+2 - (1+wFR) -1, 1);
 				
-				//do rounding
-				zeros1.str("");	zeros2.str("");		
-				zeros1 << zero_generator(wEX + wFR + 2, -1)<<"1"<<zero_generator(wFX+wFY+2-(wFR+1)-1, 1);
-				zeros2 << zero_generator(wEX + wFR + 3, -1)<<"1"<<zero_generator(wFX+wFY+2-(wFR+1)-2, 1);  
+				zeros1.str("");
+				zeros1<< zero_generator( wFX+wFY+2 - (1+wFR) , 0);
 
-				o<<tab<<"temp_exp_concat_fract <= (\"0\" & exponent_synch & significand_synch) + "<< zeros1.str()<<" when significand_synch("<<wEX+wEY+1<<")='1' else	"<<endl;
-				o<<tab<<"                           (\"0\" & exponent_synch & significand_synch) + "<<zeros2.str()<<";"<<endl;	
+				o<<tab<<"check_string <= (significand_synch ("<< wFX+wFY+2 - (1+wFR) -1<<" downto 0) xor "<<str1.str()<<"); "<<endl;
+				
+				o<<tab<<"process(clk)"<<endl;
+				o<<tab<<"begin"<<endl;
+				o<<tab<<tab<<"   if (clk'event and clk='1') then "<<endl;  
+				o<<tab<<tab<<"      if ( "<<zeros1.str()<<" = check_string ) then"<<endl; 
+				o<<tab<<tab<<"         between_fp_numbers <= '1';"<<endl;
+				o<<tab<<tab<<"      else "<<endl;
+				o<<tab<<tab<<"         between_fp_numbers <= '0';"<<endl;
+				o<<tab<<tab<<"      end if;"<<endl;
+				o<<tab<<tab<<"   end if; "<<endl;
+				o<<tab<<tab<<"end process; "<<endl;
 
-				o<<tab<<"ResultSignificand <= temp_exp_concat_fract ("<<wFX+wFY+1<<" downto "<< wFX+wFY+1 - (wFR+1)+1<<");"<<endl;
-				o<<tab<<"ResultExponent    <= temp_exp_concat_fract ("<< wEX+wFX+wFY + 1 <<" downto  "<< wFX+wFY+2 <<");"<<endl; 
-				o<<tab<<"ResultException   <= exception_synch when temp_exp_concat_fract("<<wEX+wFX+wFY + 2 <<")='0' else"<<endl;
-				o<<tab<<"		                 \"10\";"<<endl;			
+				//propagate rest of signals 1 level in order to compensate with the 1 bit delay caused by above comparisson
+				o<<tab<<"exponent_synch2         <= exponent_synch("<<wEX-1<<" downto 0);"<<endl;
+				o<<tab<<"exception_synch2        <= exception_synch;"<<endl;
+				o<<tab<<"significand_synch2      <= significand_synch;"<<endl;
+				o<<tab<<"sign_synch2             <= sign_synch;"<<endl;
+				//~~~~~~~~~~~~~~~~~~~~~
+				
+				o<<tab<<"reunion_signal <= (\"0\" & exponent_synch2_d & significand_synch2_d("<< wFX+wFY+1<<" downto "<<wFX+wFY+1 - (wFR+1) <<" ));"<<endl;; 
+              
+				o<<tab<<"LSB_of_result_significand <= significand_synch2_d("<< wFX+wFY+1 - wFR<<" );"<<endl;
+				
+				/* pipeline the possible carry_in propagation caused by rounding */
+				
+				//connect the first part of the pipeline structure to the signals
+				if (reunion_signal_parts != 1){
+					for (j = 1; j <= reunion_signal_parts; j++){
+						if (j == 1)
+							o<<"Last_Addition_Level_"<<1<<"_Reg_"<<j<<" <= (\"0\" & reunion_signal("<<j*addition_chunk_width-1<<" downto "<<(j-1)*addition_chunk_width<<")) + '1';"<<endl;
+						else
+							if (j!=reunion_signal_parts)
+								o<<"Last_Addition_Level_"<<1<<"_Reg_"<<j<<" <= (\"0\" & reunion_signal("<<j*addition_chunk_width-1<<" downto "<<(j-1)*addition_chunk_width<<"));"<<endl;	
+							else
+								o<<"Last_Addition_Level_"<<1<<"_Reg_"<<j<<" <=  reunion_signal("<<(j-1)*addition_chunk_width + addition_last_chunk_width -1<<" downto "<<(j-1)*addition_chunk_width<<");"<<endl;	
+					}
+					
+					//put together the pipeline
+					for (j=1; j<=reunion_signal_parts-1;j++)	
+						for (i=1;i<=reunion_signal_parts;i++)
+							if ((i<=j)||(i>j+1))
+								o<<tab<<"Last_Addition_Level_"<<j+1<<"_Reg_"<<i<<" <= Last_Addition_Level_"<<j<<"_Reg_"<<i<<"_d;"<<endl;
+							else
+								o<<tab<<"Last_Addition_Level_"<<j+1<<"_Reg_"<<i<<" <= Last_Addition_Level_"<<j<<"_Reg_"<<i<<"_d + Last_Addition_Level_"<<j<<"_Reg_"<<i-1<<"_d("<<addition_chunk_width<<") ;"<<endl; 
+
+					//put the result back together
+					ostringstream reunion_signal_post_1_addition;
+					for (i = reunion_signal_parts; i > 0; i--) 
+						if ( (i!=1) && (i!=reunion_signal_parts) )
+							reunion_signal_post_1_addition<<"Last_Addition_Level_"<<reunion_signal_parts<<"_Reg_"<<i<<"_d("<<addition_chunk_width -1<<" downto 0) &" ;
+						else
+							if (i==reunion_signal_parts)
+								reunion_signal_post_1_addition<<"Last_Addition_Level_"<<reunion_signal_parts<<"_Reg_"<<i<<"_d("<<addition_last_chunk_width -1<<" downto 0) & ";
+							else
+								reunion_signal_post_1_addition<<"Last_Addition_Level_"<<reunion_signal_parts<<"_Reg_"<<i<<"_d("<<addition_chunk_width -1<<" downto 0)" ;
+					
+				
+					//propagate the rest of the signals reunion_signal_parts steps
+					
+					o<<tab<<"reunion_signal_level <=reunion_signal;"<<endl;
+					o<<tab<<"reunion_signal_out <= "<<get_delay_signal_name("reunion_signal_level", reunion_signal_parts)<<";" <<endl;		
+					
+					o<<tab<<"LSB_of_result_significand_level <= LSB_of_result_significand;"<<endl;
+					o<<tab<<"LSB_of_result_significand_out <= "<<get_delay_signal_name("LSB_of_result_significand_level", reunion_signal_parts)<<";" <<endl;		
+					
+					o<<tab<<"between_fp_numbers_level <= between_fp_numbers;"<<endl;
+					o<<tab<<"between_fp_numbers_out <= "<<get_delay_signal_name("between_fp_numbers_level", reunion_signal_parts)<<";" <<endl;		
+					
+					o<<tab<<"sign_synch2_level <= sign_synch2_d;"<<endl;
+					o<<tab<<"sign_synch2_out <= "<<get_delay_signal_name("sign_synch2_level", reunion_signal_parts)<<";" <<endl;		
+					
+					o<<tab<<"exception_synch2_level <= exception_synch2_d;"<<endl;
+					o<<tab<<"exception_synch2_out <= "<<get_delay_signal_name("exception_synch2_level", reunion_signal_parts)<<";" <<endl;		
+														
+					o<<tab<<"reunion_signal_post_addition <= "<< reunion_signal_post_1_addition.str()<<";"<< endl;
+					
+				
+				}   
+				else{
+					/* when the carry propagation on the reunion signal is not pipelined */
+					//add 1 to the reunited signal for rounding & normalize purposes
+					o<<tab<<"reunion_signal_out            <= reunion_signal;"<<endl;
+					o<<tab<<"reunion_signal_post_addition  <= reunion_signal + CONV_STD_LOGIC_VECTOR(1, "<< 2+ wEX + wFR<<");"<<endl;
+					o<<tab<<"between_fp_numbers_out             <= between_fp_numbers;"<<endl;
+					o<<tab<<"LSB_of_result_significand_out <= LSB_of_result_significand;"<<endl;
+					o<<tab<<"sign_synch2_out               <= sign_synch2_d;"<<endl;
+					o<<tab<<"exception_synch2_out          <= exception_synch2_d;"<<endl;
+				}				
+				   		     
+				   		     
+				o<<tab<<"between_fp_numbers_result_significand <= reunion_signal_post_addition when LSB_of_result_significand_out = '1' else"<<endl;
+				o<<tab<<"                                         reunion_signal_out;"<<endl;    		     
+				   		     
+				o<<tab<<"reunion_signal_post_rounding <= reunion_signal_post_addition when between_fp_numbers_out='0' else"<<endl;
+				o<<tab<<"                       	     between_fp_numbers_result_significand;"<<endl;
+				                        
+				//update exception                       
+				o<<tab<<"ResultException   <= exception_synch2_out when reunion_signal_post_rounding("<<wEX + wFR+2<<")='0' else"<<endl;
+				o<<tab<<"                     \"10\";"<<endl;                                                   
+
+				o<<tab<<"ResultExponent    <= reunion_signal_post_rounding("<<wEX + wFR+1<<" downto "<<wFR+1+1<<");"<<endl;  
+				
+				o<<tab<<"ResultSignificand <= (\"11\" & reunion_signal_post_rounding("<<wFR-1<<" downto 1)) when reunion_signal_out("<<wFR+1<<" downto "<<wFR<<")=\"11\" else"<<endl;
+				o<<tab<<"					  reunion_signal_post_rounding("<<wFR+1<<" downto 1);"<<endl;	
+				o<<tab<<"ResultSign        <= sign_synch2_out;"<<endl;
+//XXX
+
+
+
+
 			}
 			else{
 			/* No rounding is needed. If wFR+1>wFX+wFY+2 then the ResultSignificand must be padded with 0s to the right */
@@ -559,11 +726,12 @@ void FPMultiplier::output_vhdl(std::ostream& o, std::string name) {
 				else 	
 					o<<tab<<"ResultSignificand <= significand_synch & "<<zero_generator((wFR+1) - (wFX+wFY+2), 0 )<<";"<<endl;
 					
-				o<<tab<<"ResultExponent  <= exponent_synch;"<<endl;
+				o<<tab<<"ResultExponent  <= exponent_synch("<<wER-1<<" downto 0 "<< ");"<<endl;
 				o<<tab<<"ResultException <= exception_synch;"<<endl;
+				o<<tab<< "ResultSign <= sign_synch;"<<endl;
 			}				
     
-			o<<tab<< "ResultSign <= sign_synch;"<<endl;
+			
 		}//end else not normalized
        
 	}//end if pipelined
