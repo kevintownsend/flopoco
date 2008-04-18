@@ -18,7 +18,7 @@ public:
 	 * @param wE the width of the exponent
 	 * @param wF the width of the significant
 	 */
-	FloFP(int wE, int wF);
+	FloFP(int wE, int wF, bool normalise = true);
 
 	/**
 	 * Constructs a new initialised FloFP.
@@ -26,7 +26,7 @@ public:
 	 * @param wF the width of the significant
 	 * @param m the initial value.
 	 */
-	FloFP(int wE, int wF, mpfr_t m);
+	FloFP(int wE, int wF, mpfr_t m, bool normalise = true);
 
 	/**
 	 * Retrieves the significant.
@@ -121,6 +121,14 @@ private:
 
 	/** The value of the mantissa (without leading one) */
 	mpz_class mantissa;
+
+	/** Should we operate like a normalising or unnormalising
+	 * FPMultiplier */
+	bool normalise;
+
+	/** Should we shift the fraction with one bit?
+	 * See the comment at the beginig of FloFP.cpp */
+	bool mustAddLeadingZero;
 };
 
 #endif

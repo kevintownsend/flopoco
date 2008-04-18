@@ -912,9 +912,6 @@ TestCaseList FPMultiplier::generateStandardTestCases(int n)
 
 TestCaseList FPMultiplier::generateRandomTestCases(int n)
 {
-	if (!normalized)
-		throw std::string("Non-normalized TestCases are not yet implemented.");
-
 	Signal sx = *get_signal_by_name("X");
 	Signal sy = *get_signal_by_name("Y");
 	Signal srexp = *get_signal_by_name("ResultExponent");
@@ -923,7 +920,7 @@ TestCaseList FPMultiplier::generateRandomTestCases(int n)
 	Signal srsgn = *get_signal_by_name("ResultSign"); 
 
 	TestCaseList tcl;	/* XXX: Just like Lyon's Transportion Company. :D */
-	FloFP x(wEX, wFX), y(wEY, wFY), r(wER, wFR);
+	FloFP x(wEX, wFX), y(wEY, wFY), r(wER, wFR, normalized);
 
 	for (int i = 0; i < n; i++)
 	{

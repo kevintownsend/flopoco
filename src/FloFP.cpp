@@ -1,13 +1,38 @@
 #include "FloFP.hpp"
 #include "utils.hpp"
 
-FloFP::FloFP(int wE, int wF) : wE(wE), wF(wF)
+/* SwW: Slipper when Wet
+ * When the FPMultiplier is set not to normalise results,
+ * it outputs significants and exponents which have little 
+ * logic when viewed from a software side. Unfortunately,
+ * in order to have a good test bench, we have to emulate
+ * those behaviours in software. Whenever you see this tag
+ * expect hard-to-understand or ilogic code.
+ *
+ * What happens is that the binary fraction comma is placed
+ * after the second bit. Exponents are
+ * simply added together. Sometimes the first bit
+ * is 1 (the result is „overnormalised”), other times
+ * it is 0 (the result is normalized). We will detect this
+ * „condition” by seeing if the exponent of the normalized result
+ * is higher than the sum of the exponents of the operands.
+ *
+ * We will do the following. We will always store numbers as
+ * normalized numbers (1.mantissa), exponents like FPMultiplier
+ * and when necessary (i.e. mustunnormalize==true)), we will do
+ * rounding with one bit „faster” and shift the significant in
+ * getFractionSignalValue().
+ */
+
+FloFP::FloFP(int wE, int wF, bool normalise)
+	: wE(wE), wF(wF), normalise(normalise), mustAddLeadingZero(0)
 {
 	if (wE > 30)
 		throw "FloFP::FloFP: Using exponents larger than 30 bits is not supported.";
 }
 
-FloFP::FloFP(int wE, int wF, mpfr_t m) : wE(wE), wF(wF)
+FloFP::FloFP(int wE, int wF, mpfr_t m, bool normalise)
+	: wE(wE), wF(wF), normalise(normalise), mustAddLeadingZero(0)
 {
 	if (wE > 30)
 		throw "FloFP::FloFP: Using exponents larger than 30 bits is not supported.";
@@ -17,8 +42,16 @@ FloFP::FloFP(int wE, int wF, mpfr_t m) : wE(wE), wF(wF)
 mpz_class FloFP::getMantissaSignalValue() { return mantissa; }
 mpz_class FloFP::getExceptionSignalValue() { return exception; }
 mpz_class FloFP::getSignSignalValue() { return sign; }
-mpz_class FloFP::getExponentSignalValue() { return exponent; }
-mpz_class FloFP::getFractionSignalValue() { return mantissa + (mpz_class(1)<<wF); }
+mpz_class FloFP::getExponentSignalValue() {	return exponent; }
+
+mpz_class FloFP::getFractionSignalValue()
+{
+	/* SwW: Add a leading zero */
+	if (!normalise && mustAddLeadingZero)
+		return (mantissa + (mpz_class(1)<<wF)) >> 1;
+
+	return mantissa + (mpz_class(1)<<wF);
+}
 
 FloFP FloFP::operator*(FloFP fp)
 {
@@ -30,6 +63,11 @@ FloFP FloFP::operator*(FloFP fp)
 	fp.getMPFR(y);
 	mpfr_mul(r, x, y, GMP_RNDN);
 	FloFP flofp(max(wE, fp.wE) + 1, wF + fp.wF + 2, r);
+
+	/* SwW: Detect the „condition” */
+	if (mpfr_get_exp(x) + mpfr_get_exp(y) != mpfr_get_exp(r))
+		flofp.mustAddLeadingZero = true;
+
 	mpfr_clears(r, x, y, 0);
 	return flofp;
 }
@@ -43,6 +81,9 @@ FloFP FloFP::operator*(mpfr_t mpX)
 
 void FloFP::getMPFR(mpfr_t mp)
 {
+	if (!normalise)
+		throw "FloFP::getMPFR: Non-normalised case not implemented.";
+
 	/* NaN */
 	if (exception == 3)
 	{
@@ -68,6 +109,7 @@ void FloFP::getMPFR(mpfr_t mp)
 	 * mp = (-1) * (1 + (mantissa / 2^wF)) * 2^unbiased_exp
 	 * unbiased_exp = exp - (1<<(wE-1)) + 1
 	 */
+	mpfr_set_prec(mp, wF+2);
 	mpfr_set_z(mp, mantissa.get_mpz_t(), GMP_RNDN);
 	mpfr_div_2si(mp, mp, wF, GMP_RNDN);
 	mpfr_add_ui(mp, mp, 1, GMP_RNDN);
@@ -131,15 +173,35 @@ FloFP& FloFP::operator=(mpfr_t mp_)
 	/* Extract mantissa */
 	mpfr_div_2si(mp, mp, exp, GMP_RNDN);
 	mpfr_sub_ui(mp, mp, 1, GMP_RNDN);
-	mpfr_mul_2si(mp, mp, wF, GMP_RNDN);
-	mpfr_get_z(mantissa.get_mpz_t(), mp, GMP_RNDN);
+	if (!normalise && mustAddLeadingZero)
+	{
+		/* SwW: we need to round with one bit earlier */ 
+		mpfr_mul_2si(mp, mp, wF-1, GMP_RNDN);
+		mpfr_get_z(mantissa.get_mpz_t(), mp, GMP_RNDN);
+		mantissa = mantissa << 1;
+	}
+	else
+	{
+		mpfr_mul_2si(mp, mp, wF, GMP_RNDN);
+		mpfr_get_z(mantissa.get_mpz_t(), mp, GMP_RNDN);
+	}
+
+	/* SwW: exponent is smaller in the „normalised” case */
+	if (!normalise && !mustAddLeadingZero)
+		exp--;
 
 	// Due to rounding, the mantissa might overflow (i.e. become bigger
 	// then we expect).
 	if (mantissa == mpz_class(1) << wF)
 	{
-		mantissa = 0;
+		/* SwW: don't add leading zero when mantissa has overflown */
+		if (!normalise && mustAddLeadingZero)
+		{
+			mustAddLeadingZero = false;
+			exp--;
+		}
 		exp++;
+		mantissa = 0;
 	}
 
 	if (mantissa >= mpz_class(1) << wF)
@@ -201,9 +263,11 @@ mpz_class FloFP::getSignalValue()
 
 FloFP& FloFP::operator=(FloFP fp)
 {
+	mustAddLeadingZero = fp.mustAddLeadingZero;
+
 	/* Pass this through MPFR to lose precision */
 	mpfr_t mp;
-	mpfr_init2(mp, wF+1);
+	mpfr_init(mp);	// XXX: Precision set in operator=
 	fp.getMPFR(mp);
 	operator=(mp);
 	mpfr_clear(mp);
