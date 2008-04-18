@@ -290,7 +290,7 @@ bool parse_command_line(int argc, char* argv[]){
 	 int wFY = check_strictly_positive(argv[i++], argv[0]);
 	 int wER = check_strictly_positive(argv[i++], argv[0]);
 	 int wFR = check_strictly_positive(argv[i++], argv[0]);
-	 int norm = 1; // was  atoi(argv[i++]);
+	 int norm = 0; // was  atoi(argv[i++]);
 
         cerr << "> FPMultiplier , wEX="<<wEX<<", wFX="<<wFX<<", wEY="<<wEY<<", wFY="<<wFY<<", wER="<<wER<<", wFR="<<wFR<< " Normalized="<< norm<<" \n";
         
