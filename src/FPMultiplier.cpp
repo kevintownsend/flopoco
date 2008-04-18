@@ -197,7 +197,7 @@ FPMultiplier::FPMultiplier(Target* target, int wEX, int wFX, int wEY, int wFY, i
 								add_registered_signal_with_sync_reset(name.str(), addition_last_chunk_width );	
 		         	}
 				
-					add_delay_signal("reunion_signal_level",2+wEX+wFR,reunion_signal_parts);
+					add_delay_signal("reunion_signal_level",2+wFR,reunion_signal_parts);
 					add_delay_signal("LSB_of_result_significand_level",1,reunion_signal_parts);		
 					add_delay_signal("between_fp_numbers_level",1,reunion_signal_parts);			
 					add_delay_signal("sign_synch2_level",1,reunion_signal_parts);
