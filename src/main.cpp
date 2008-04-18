@@ -280,7 +280,7 @@ bool parse_command_line(int argc, char* argv[]){
        }    
      }
      else if(opname=="FPMultiplier"){
-       int nargs = 6; // was 7
+       int nargs = 7; // was 7
       if (i+nargs > argc)
 	usage(argv[0]);
        else {
@@ -290,7 +290,7 @@ bool parse_command_line(int argc, char* argv[]){
 	 int wFY = check_strictly_positive(argv[i++], argv[0]);
 	 int wER = check_strictly_positive(argv[i++], argv[0]);
 	 int wFR = check_strictly_positive(argv[i++], argv[0]);
-	 int norm = 0; // was  atoi(argv[i++]);
+	 int norm = atoi(argv[i++]);
 
         cerr << "> FPMultiplier , wEX="<<wEX<<", wFX="<<wFX<<", wEY="<<wEY<<", wFY="<<wFY<<", wER="<<wER<<", wFR="<<wFR<< " Normalized="<< norm<<" \n";
         
