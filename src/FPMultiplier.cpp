@@ -695,7 +695,7 @@ void FPMultiplier::output_vhdl(std::ostream& o, std::string name) {
 					o<<tab<<"LSB_of_result_significand_out <= LSB_of_result_significand;"<<endl;
 					o<<tab<<"sign_synch2_out               <= sign_synch2_d;"<<endl;
 					o<<tab<<"exception_synch2_out          <= exception_synch2_d;"<<endl;
-					o<<tab<<"exponent_synch2_out               <= exponent_synch2_d;"<<endl;
+					o<<tab<<"exponent_synch2_out           <= exponent_synch2_d;"<<endl;
 				}				
 				
 		     
@@ -731,8 +731,14 @@ void FPMultiplier::output_vhdl(std::ostream& o, std::string name) {
 				else 	
 					o<<tab<<"ResultSignificand <= significand_synch & "<<zero_generator((wFR+1) - (wFX+wFY+2), 0 )<<";"<<endl;
 					
+				o<<tab<<"with exponent_synch("<<wER+1<<" downto "<< wER <<") select"<<endl;                       
+				o<<tab<<"ResultException   <= exception_synch  when \"00\","<<endl;
+				o<<tab<<"                            \"10\"    when \"01\", "<<endl;
+				o<<tab<<"                            \"00\"    when \"11\"|\"10\","<<endl;
+				o<<tab<<"                            \"11\"    when others;"<<endl;							
+					
 				o<<tab<<"ResultExponent  <= exponent_synch("<<wER-1<<" downto 0 "<< ");"<<endl;
-				o<<tab<<"ResultException <= exception_synch;"<<endl;
+				
 				o<<tab<<"ResultSign <= sign_synch;"<<endl;
 			}				
     
