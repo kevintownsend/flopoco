@@ -169,6 +169,8 @@ FPMultiplier::FPMultiplier(Target* target, int wEX, int wFX, int wEY, int wFY, i
 				add_signal("LSB_of_result_significand",1); 
 				add_signal("between_fp_numbers_result_significand",2+wFR);
 				add_signal("reunion_signal_post_addition",2+wFR); 
+				add_signal("reunion_signal_post_rounding",2+wFR); 
+				
 				
 				//parameters setup
 				
@@ -182,17 +184,19 @@ FPMultiplier::FPMultiplier(Target* target, int wEX, int wFX, int wEY, int wFY, i
 				reunion_signal_parts = int ( ceil( double(reunion_signal_width)/double(addition_chunk_width)));
 				addition_last_chunk_width = reunion_signal_width - (reunion_signal_parts - 1)*addition_chunk_width;
 							
-				for (j=1; j<=reunion_signal_parts;j++)	
-					for (i=1;i<=reunion_signal_parts;i++){	
-						name.str("");
-						name<<"Last_Addition_Level_"<<j<<"_Reg_"<<i;
-						if (i!=reunion_signal_parts)
-							add_registered_signal_with_sync_reset(name.str(), addition_chunk_width + 1 );
-						else
-							add_registered_signal_with_sync_reset(name.str(), addition_last_chunk_width );	
-	         	}
+				
 				
 				if (reunion_signal_parts>1){
+					for (j=1; j<=reunion_signal_parts;j++)	
+						for (i=1;i<=reunion_signal_parts;i++){	
+							name.str("");
+							name<<"Last_Addition_Level_"<<j<<"_Reg_"<<i;
+							if (i!=reunion_signal_parts)
+								add_registered_signal_with_sync_reset(name.str(), addition_chunk_width + 1 );
+							else
+								add_registered_signal_with_sync_reset(name.str(), addition_last_chunk_width );	
+		         	}
+				
 					add_delay_signal("reunion_signal_level",2+wEX+wFR,reunion_signal_parts);
 					add_delay_signal("LSB_of_result_significand_level",1,reunion_signal_parts);		
 					add_delay_signal("between_fp_numbers_level",1,reunion_signal_parts);			
@@ -584,7 +588,7 @@ void FPMultiplier::output_vhdl(std::ostream& o, std::string name) {
 					/* when the carry propagation on the reunion signal is not pipelined */
 					//add 1 to the reunited signal for rounding & normalize purposes
 					o<<tab<<"reunion_signal_out            <= reunion_signal;"<<endl;
-					o<<tab<<"reunion_signal_post_addition  <= reunion_signal + CONV_STD_LOGIC_VECTOR(1, "<< 2+ wEX + wFR<<");"<<endl;
+					o<<tab<<"reunion_signal_post_addition  <= reunion_signal + CONV_STD_LOGIC_VECTOR(1, "<< 2+ wFR<<");"<<endl;
 					o<<tab<<"between_fp_numbers_out             <= between_fp_numbers;"<<endl;
 					o<<tab<<"LSB_of_result_significand_out <= LSB_of_result_significand;"<<endl;
 					o<<tab<<"sign_synch2_out               <= sign_synch2_d;"<<endl;
