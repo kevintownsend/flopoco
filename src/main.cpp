@@ -75,8 +75,9 @@ static void usage(char *name){
   cerr << "      The constant is provided as integral significand and integral exponent.\n";
   cerr << "    IntMultiplier wInX wInY \n";
   cerr << "      integer multiplier of two integers X and Y of sizes wInX and wInY \n";	
-  cerr << "    FPMultiplier wEX wFX wEY wFY wER wFR\n";
-  cerr << "	     floating-point multiplier \n";
+  cerr << "    FPMultiplier wEX wFX wEY wFY wER wFR normalize\n";
+  cerr << "      floating-point multiplier \n";
+  cerr << "      normalize can be either 0 or 1. \n";     
   cerr << "    TestBench n\n";
   cerr << "       produce a behavorial test bench for the preceding operator\n";
   cerr << "       This test bench will include standard tests, plus n random tests.\n";
