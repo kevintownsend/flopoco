@@ -695,7 +695,7 @@ void FPMultiplier::output_vhdl(std::ostream& o, std::string name) {
 					o<<tab<<"LSB_of_result_significand_out <= LSB_of_result_significand;"<<endl;
 					o<<tab<<"sign_synch2_out               <= sign_synch2_d;"<<endl;
 					o<<tab<<"exception_synch2_out          <= exception_synch2_d;"<<endl;
-					o<<tab<<"exponent_synch2_out               <= exponent_synch2;"<<endl;
+					o<<tab<<"exponent_synch2_out               <= exponent_synch2_d;"<<endl;
 				}				
 				
 		     
