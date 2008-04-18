@@ -304,8 +304,14 @@ FPMultiplier::FPMultiplier(Target* target, int wEX, int wFX, int wEY, int wFY, i
 				else
 					set_pipeline_depth(1 + max(2,IntMultPipelineDepth));
 		else
-			set_pipeline_depth(max(2,IntMultPipelineDepth));
-
+			if (1+wFR>=2+wFX+wFY)
+				set_pipeline_depth(max(2,IntMultPipelineDepth));
+			else
+				if (reunion_signal_parts==1)
+					set_pipeline_depth(max(2,IntMultPipelineDepth) + 1);
+				else
+					set_pipeline_depth(max(2,IntMultPipelineDepth) + 1 + reunion_signal_parts);
+		
 }
 
 /**
