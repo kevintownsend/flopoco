@@ -11,10 +11,21 @@ FIND_PATH(MPFR_H
 	  DOC "Path of mpfr.h, the include file for GNU MPFR library"
 )
 
-FIND_LIBRARY(MPFR_LIB 
-             NAMES mpfr 
-             PATH /usr/lib/ /usr/local/lib/  
-             DOC "Directory of the MPFR library")
+FIND_LIBRARY(MPFR_LIB
+	NAMES mpfr 
+	PATH /usr/lib/ /usr/local/lib/
+	DOC "Directory of the MPFR library")
+
+# Detect Sollya's Presence
+FIND_LIBRARY(
+	SOLLYA_LIB
+	NAMES sollya
+	PATH /usr/lib/ /usr/local/lib)
+IF (SOLLYA_LIB)
+	MESSAGE(STATUS "Found Sollya: ${SOLLYA_LIB}")
+ELSE (SOLLYA_LIB)
+	MESSAGE(STATUS "Sollya not found, HOTBM won't be available")
+ENDIF (SOLLYA_LIB)
 
 IF (MPFR_H AND MPFR_LIB)
     SET(MPFR_FOUND TRUE)
@@ -26,6 +37,30 @@ ELSE (MPFR_FOUND)
     MESSAGE(FATAL_ERROR "Could not find MPFR.\nOn Debian-based systems type: 'sudo apt-get install libmpfr-dev'")
 ENDIF (MPFR_FOUND)
 
+# Build HOTBM
+IF (SOLLYA_LIB)
+	ADD_DEFINITIONS(-DHAVE_HOTBM)
+	ADD_LIBRARY(hotbm STATIC
+		src/HOTBM.cpp
+		src/HOTBM/Function.cc
+		src/HOTBM/HOTBMInstance.cc
+		src/HOTBM/Param.cc
+		src/HOTBM/Exhaustive.cc
+		src/HOTBM/Util.cc
+		src/HOTBM/PWPolynomial.cc
+		src/HOTBM/Polynomial.cc
+		src/HOTBM/MPPolynomial.cc
+		src/HOTBM/Power.cc
+		src/HOTBM/PowerAdHoc.cc
+		src/HOTBM/TermROM.cc
+		src/HOTBM/Term.cc
+		src/HOTBM/Minimax.cc
+		src/HOTBM/PowerROM.cc
+		src/HOTBM/TermPowMult.cc
+	)
+	TARGET_LINK_LIBRARIES(hotbm sollya pari xml2 mpfi)
+	SET(HOTBM_LIB hotbm)
+ENDIF (SOLLYA_LIB)
 
 ADD_EXECUTABLE(flopoco
  src/main
@@ -46,7 +81,7 @@ ADD_EXECUTABLE(flopoco
  src/TestCase
  src/FloFP
 )
-TARGET_LINK_LIBRARIES(flopoco  mpfr gmp gmpxx)
+TARGET_LINK_LIBRARIES(flopoco  mpfr gmp gmpxx ${HOTBM_LIB})
 
 ADD_EXECUTABLE(fp2bin src/Tools/fp2bin  src/utils)
 TARGET_LINK_LIBRARIES(fp2bin  mpfr gmp gmpxx)

@@ -43,6 +43,10 @@
 #include "Target.hpp"
 #include "Targets/VirtexIV.hpp"
 
+#ifdef HAVE_HOTBM
+#include "HOTBM.hpp"
+#endif
+
 using namespace std;
 
 
@@ -78,6 +82,12 @@ static void usage(char *name){
   cerr << "    FPMultiplier wEX wFX wEY wFY wER wFR normalize\n";
   cerr << "      floating-point multiplier \n";
   cerr << "      normalize can be either 0 or 1. \n";     
+#ifdef HAVE_HOTBM
+  cerr << "    HOTBM function wI wO n\n";
+  cerr << "      High-order table-based method for generating a given function\n";
+  cerr << "      wI - input width, wO - output width, n - degree of minimax\n";
+  cerr << "      function - sollya-syntaxed function to implement (must be escaped)\n";
+#endif // HAVE_HOTBM
   cerr << "    TestBench n\n";
   cerr << "       produce a behavorial test bench for the preceding operator\n";
   cerr << "       This test bench will include standard tests, plus n random tests.\n";
@@ -397,6 +407,20 @@ bool parse_command_line(int argc, char* argv[]){
       cerr << "> TestBench for " << toWrap->unique_name  <<endl;
       oplist.push_back(new TestBench(target, toWrap, n));
     }
+#ifdef HAVE_HOTBM
+    else if (opname == "HOTBM") {
+      int nargs = 3;
+      if (i+nargs > argc)
+	usage(argv[0]); // and exit
+      string func = argv[i++];
+      int wI = check_strictly_positive(argv[i++], argv[0]);
+      int wO = check_strictly_positive(argv[i++], argv[0]);
+      int n  = check_strictly_positive(argv[i++], argv[0]);
+      cerr << "> HOTBM func='" << func << "', wI=" << wI << ", wO=" << wO <<endl;
+      op = new HOTBM(target, func, wI, wO, n);
+      oplist.push_back(op);
+    }
+#endif // HAVE_HOTBM
 //     else if(opname=="FPAdd"){
 //       // 2 arguments
 //       if (argc < i+2)

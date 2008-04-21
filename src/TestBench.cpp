@@ -41,6 +41,7 @@ TestBench::TestBench(Target* target, Operator* op, int n):
   Operator(target), op(op), n(n)
 {
   unique_name = "TestBench_" + op->unique_name;
+  set_pipeline_depth(42);	// could be any number
 
   // declare internal registered signals
   for(int i=0; i<op->ioList.size(); i++){
