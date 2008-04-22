@@ -38,6 +38,7 @@
 #include "LongAcc.hpp"
 #include "Wrapper.hpp"
 #include "TestBench.hpp"
+#include "BigTestBench.hpp"
 #include "ConstMult/IntConstMult.hpp"
 #include "ConstMult/FPConstMult.hpp"
 #include "Target.hpp"
@@ -91,6 +92,8 @@ static void usage(char *name){
   cerr << "    TestBench n\n";
   cerr << "       produce a behavorial test bench for the preceding operator\n";
   cerr << "       This test bench will include standard tests, plus n random tests.\n";
+  cerr << "    BigTestBench n\n";
+  cerr << "       Same as above, but generates a more VHDL efficient test bench.\n";
   cerr << "    Wrapper entity_name\n";
   cerr << "       produce a wrapper named entity_name for the preceding operator\n";
   cerr << "       (useful to get synthesis results without having the operator optimised out)\n";
@@ -406,6 +409,19 @@ bool parse_command_line(int argc, char* argv[]){
       Operator* toWrap = oplist.back();
       cerr << "> TestBench for " << toWrap->unique_name  <<endl;
       oplist.push_back(new TestBench(target, toWrap, n));
+    }
+    else if (opname == "BigTestBench") {
+      int nargs = 1;
+      if (i+nargs > argc)
+	usage(argv[0]); // and exit
+      if(oplist.empty()){
+	  cerr<<"ERROR: BigTestBench has no operator to wrap (it should come after the operator it wraps)"<<endl;
+	  usage(argv[0]); // and exit
+	}
+      int n = check_strictly_positive(argv[i++], argv[0]);
+      Operator* toWrap = oplist.back();
+      cerr << "> BigTestBench for " << toWrap->unique_name  <<endl;
+      oplist.push_back(new BigTestBench(target, toWrap, n));
     }
 #ifdef HAVE_HOTBM
     else if (opname == "HOTBM") {
