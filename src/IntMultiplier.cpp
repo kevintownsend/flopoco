@@ -175,16 +175,16 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 					nameH.str("");; nameL.str("");;
 					nameL <<"L_Level_"<<j<<"_Reg_"<<i;
 					nameH <<"H_Level_"<<j<<"_Reg_"<<i;
-					add_registered_signal_with_sync_reset(nameL.str(), partsX * multiplier_width_X);
-					add_registered_signal_with_sync_reset(nameH.str(), partsX * multiplier_width_X);
+					add_registered_signal_with_sync_reset(nameL.str(), 1 + partsX * multiplier_width_X);
+					add_registered_signal_with_sync_reset(nameH.str(), 1 + partsX * multiplier_width_X);
 				}
 
 			
 			//one more registers for the Low part for synchronization 
-			add_registered_signal_with_sync_reset("Low1", partsX * multiplier_width_X);
+			add_registered_signal_with_sync_reset("Low1", 1 + partsX * multiplier_width_X);
 			
 			//one more signal for the high part
-			add_signal("High1", partsX * multiplier_width_X);
+			add_signal("High1", 1 + partsX * multiplier_width_X);
 
 			
 			//partsY! registers to hold and compute the low part of the result in the 
@@ -550,7 +550,7 @@ void IntMultiplier::connect_low(std::ostream& o)
 {
 int i;
 	for(i=1;i<=partsY;i++)
-		o<<tab<<"L_Level_0_Reg_"<<i<<" <= Low_"<<i<<";"<<endl;
+		o<<tab<<"L_Level_0_Reg_"<<i<<" <= \"0\" & Low_"<<i<<";"<<endl;
 }
 
 
@@ -573,7 +573,7 @@ void IntMultiplier::connect_buffers(std::ostream& o)
 {
 int i;
 	for(i=1;i<=partsY;i++)
-		o<<tab<<"H_Level_0_Reg_"<<i<<" <= Buffer_H_"<<i<<"_d;"<<endl;
+		o<<tab<<"H_Level_0_Reg_"<<i<<" <= \"0\" & Buffer_H_"<<i<<"_d;"<<endl;
 }
 
 /**
@@ -589,7 +589,7 @@ ostringstream first_summand, second_summand;
 			if (j==1) {
 				//concatenate zeros in front of the first register, add it with the second register and place the result in the next level's first register
 				first_summand.str(""); second_summand.str("");
-				first_summand<<"("<< zero_generator(multiplier_width_Y,0)<<" & L_Level_"<<i<<"_Reg_"<<j<<"_d("<<partsX*multiplier_width_X-1<<" downto "<<multiplier_width_Y<<"))"; 
+				first_summand<<"("<< zero_generator(multiplier_width_Y ,0)<<" & L_Level_"<<i<<"_Reg_"<<j<<"_d("<<partsX*multiplier_width_X<<" downto "<<multiplier_width_Y<<"))"; 
 				second_summand<<"L_Level_"<<i<<"_Reg_"<<j+1<<"_d";
 				o<<tab<<"L_Level_"<<i+1<<"_Reg_"<<j<<"<="<< first_summand.str() << " + " << second_summand.str()<<";"<< endl;
 			}
@@ -601,7 +601,7 @@ ostringstream first_summand, second_summand;
 	}
 
 	//the zeros + [the high bits of the last register of the low part] 
-	o<<tab<<"Low1 <= "<<zero_generator(multiplier_width_Y,0)<<" & L_Level_"<<partsY-1<<"_Reg_1_d("<<partsX * multiplier_width_X-1<<" downto "<<multiplier_width_Y<<")"<< ";"<<endl;
+	o<<tab<<"Low1 <= "<<zero_generator(multiplier_width_Y,0)<<" & L_Level_"<<partsY-1<<"_Reg_1_d("<<partsX * multiplier_width_X<<" downto "<<multiplier_width_Y<<")"<< ";"<<endl;
 }
 
 
@@ -618,7 +618,7 @@ ostringstream first_summand, second_summand;
 			if (j==1){
 				//concatenate zeros in front of the first register, add it with the second register and place the result in the next level's first register
 				first_summand.str("");; second_summand.str("");;
-				first_summand<<"("<< zero_generator(multiplier_width_Y,0)<<" & H_Level_"<<i<<"_Reg_"<<j<<"_d("<<partsX*multiplier_width_X-1<<" downto "<<multiplier_width_Y<<"))"; 
+				first_summand<<"("<< zero_generator(multiplier_width_Y,0)<<" & H_Level_"<<i<<"_Reg_"<<j<<"_d("<<partsX*multiplier_width_X<<" downto "<<multiplier_width_Y<<"))"; 
 				second_summand<<"H_Level_"<<i<<"_Reg_"<<j+1<<"_d";
 				o<<tab<<"H_Level_"<<i+1<<"_Reg_"<<j<<"<="<< first_summand.str() << " + " << second_summand.str()<<";"<< endl;
 			}
