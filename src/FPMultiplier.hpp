@@ -9,9 +9,7 @@
 #include "Operator.hpp"
 #include "IntMultiplier.hpp"
 
-/** The FPMultiplier class. Left and right multipliers are perfectly
-    symmetrical, so both are instances of the FPMultiplier class. Only the
-    name of the VHDL instance changes */
+/** The FPMultiplier class */
 
 
 class FPMultiplier : public Operator
