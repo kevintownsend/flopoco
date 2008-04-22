@@ -20,6 +20,12 @@ your favourite Linux/Unix distribution. To compile it you need CMake (<a
 href="http://www.cmake.org/">http://www.cmake.org/</a>) which also comes
 prepackaged for mainstream Linux/Unix distributions.</p>
 
+<p>Should you want FloPoCo with HOTBM support, you must also download
+and compile <a href="http://sollya.gforge.inria.fr/">libsollya</a>.
+Please note that libsollya is not yet officially supported and interface
+changes might break FloPoCo compilation. If this is the case, try
+to download r588 of libsollya from the SVN repository.</p>
+
 <p>Compilation is a two-step process:</p>
 
 <p><code>cmake .</code></p>
@@ -180,6 +186,57 @@ href="http://prunel.ccsd.cnrs.fr/ensl-00269219/">this article</a>.</p>
     <dd>floating-point constant multiplier. The constant is provided as sign,
       integral significand and integral exponent.</dd>
 </dl>
+
+<h3>HOTBM</h3>
+
+<p>This operator implements an arbitrary function using
+High-Order Table-Based Method, best described in 
+<a href="http://perso.ens-lyon.fr/florent.de.dinechin/recherche/publis/2005-ASAP.pdf">this article</a>.</p>
+
+<dl>
+	<dt><code>HOTBM func wI wO n</code></dt>
+	<dd>HOTBM implementation of a function. <code>func</code> is a
+	sollya-like expression of the function, <code>wI</code> is the
+	input width, <code>wO</code> is the output width and <code>n</code>
+	is the degree of the Remez polynomial.</dd>
+</dl>
+
+<p>The input of the HOTBM operand is interpreted as a fixed-point number,
+with the point before the leftmost bit. The function to be implemented
+is assumed to be well defined in [0;1[. The output is a fixed-point
+number, where the first bit is the sign and the point is placed right
+after it. Note that the output is in fact <code>wO+1</code> bits
+wide.</p>
+
+<p>Due to the fact that the expression of the function might contain
+characters which are treated specially by the shell, you should
+enclose it within quotes.</p>
+
+<p>Example:<br/>
+<code>flopoco HOTBM "sin(x*Pi/2)" 16 16 3</code>
+</p>
+
+<h3>Test Bench</h3>
+
+The <code>TestBench</code> operator will generate a test bench for
+the operator which precedes it in the command line (also called
+unit under test, UUT).
+
+Test cases are highly UUT specific. They include both standard tests
+and random tests. The single parameter of the <code>TestBench</code>
+specifies the number of random tests to generate. Random tests
+are generating using a pseudo-random number generator, being
+initialised with the same seed, so that the test bench will be
+deterministic.
+
+Currently, only the following operators are able to generate test cases
+required for test bench generation: <code>HOTBM</code>,
+<code>FPMultipier</code>, <code>IntMultiplier</code>, <code>ConstIntMult</code>,
+<code>ConstFPMult</code>.
+
+<p>Example:<br/>
+<code>flopoco HOTBM "sin(x*Pi/2)" 16 16 3 TestBench 1000</code>
+</p>
 
 <h3>Miscellanous</h3>
 <dl>

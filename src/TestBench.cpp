@@ -61,6 +61,12 @@ TestBench::TestBench(Target* target, Operator* op, int n):
 TestBench::~TestBench() { }
 
 void TestBench::output_vhdl(ostream& o, string name) {
+  /* Generate some TestCases
+   * We do this as early as possible, so that no VHDL is generated
+   * if test cases are not implemented for the given operator
+   */
+  TestCaseList tcl = op->generateStandardTestCases(n) + op->generateRandomTestCases(n);
+
   Licence(o,"Florent de Dinechin (2007)");
   Operator::StdLibs(o);
 
@@ -103,9 +109,6 @@ void TestBench::output_vhdl(ostream& o, string name) {
   o << tab << tab << "wait for 5 ns;" <<endl;
   o << tab << "end process;" <<endl;
   o <<endl;
-
-  /* Generate some TestCases */
-  TestCaseList tcl = op->generateStandardTestCases(n) + op->generateRandomTestCases(n);
 
   o << tab << "-- Setting the inputs" <<endl;
   o << tab << "process" <<endl;
