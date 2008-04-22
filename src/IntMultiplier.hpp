@@ -18,18 +18,24 @@ class IntMultiplier : public Operator
 public:
 	IntMultiplier(Target* target, int wInX, int wInY);
 	~IntMultiplier();
-
-	int wInX;
-	int wInY;
-	int wOut;
-
-	// Overloading the virtual functions of Operator
-	void output_vhdl(std::ostream& o, std::string name);
-	// a zero generator method
-	string zero_generator(int n, int margins);
 	
+	/** the width (in bits) of the input X  */
+	int wInX; 
+	/** the width (in bits) of the input Y  */
+	int wInY; 
+	/** the width (in bits) of the output R  */
+	int wOut; 
+
+
+	/** Overloading the virtual functions of Operator */
+	void output_vhdl(std::ostream& o, std::string name);
+	/** A method which generates strings of zeros */ 
+	string zero_generator(int n, int margins); 
+	
+	/** Overloaded method */
 	virtual TestCaseList generateStandardTestCases(int n);
-	virtual TestCaseList generateRandomTestCases(int n);
+	/** Overloaded method */ 
+	virtual TestCaseList generateRandomTestCases(int n); 
 
 private:
     //Specific IntMultiplier methods
@@ -49,17 +55,28 @@ private:
 	void delay_partial_bits(std::ostream& o);
 
 	// Specific attributes
-	int IntAddPipelineDepth;
-	int partsX;
+	/** The integer adder object */
+	IntAdder *intadd; 
+	/** The pipeline depth of the adder */
+	int IntAddPipelineDepth; 
+	/** The number of parts that the input X will be split in */
+	int partsX; 
+	/** The number of parts that the input Y will be split in */
 	int partsY; 
-	int number_of_zerosX;
-	int number_of_zerosY;
-	int multiplier_width_X;
-	int multiplier_width_Y;
-	int multiplier_width_avg;
+	/** The number of zeros that the input X will be padded with so that it's length reaches a multiple of the suggested multiplier width */
+	int number_of_zerosX; 
+	/** The number of zeros that the input Y will be padded with so that it's length reaches a multiple of the suggested multiplier width */
+	int number_of_zerosY; 
+	/** The X width of the multiplier */
+	int multiplier_width_X; 
+	/** The Y width of the multiplier */
+	int multiplier_width_Y; 
+	/** Signals if we are doing the multiplication X*Y of Y*X */
 	bool reverse; 
-	int addition_chunk_width;
-	int pipe_levels;
-	IntAdder *intadd;
+	/** The recommended addition chunk width so that the design reaches the desired frequency */
+	int addition_chunk_width; 
+	/** The number of pipeline levels that the last addition of the algorithm is split in so that we reach the desired frequency */
+	int pipe_levels; 
+	
 };
 #endif

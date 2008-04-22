@@ -460,15 +460,6 @@ void FPMultiplier::output_vhdl(std::ostream& o, std::string name) {
 
 			o<<tab<<"exponent_post_normalization <= (exponent_synch ) + (CONV_STD_LOGIC_VECTOR(0 ,"<<wEX+1<<") & normalization_selector);"<<endl;
 
-			//use MSB of exponents_sum_post_bias_substr to siagnal overflow or underflow
-			/*
-			o<<tab<<"with exponent_post_normalization("<< wER+1 <<" downto "<< wER <<") select"<<endl;		
-			o<<tab<<"exception_post_normalization <= exception_synch when \"00\","<<endl;
-			o<<tab<<"                            \"10\"             when \"01\", "<<endl;
-			o<<tab<<"                            \"00\"             when \"11\"|\"10\","<<endl;
-			o<<tab<<"                            \"11\"             when others;"<<endl;						
-			*/
-
 			/* result rounding */
 			//check is rounding is needed
 			if (1+wFR >= wFX+wFY+2) {
@@ -487,7 +478,7 @@ void FPMultiplier::output_vhdl(std::ostream& o, std::string name) {
 				o<<tab<<"ResultSign         <= sign_synch;"<<endl;
 
 			}
-			else{ //XXX
+			else{ 
 				o<<tab<<"exception_post_normalization <= exception_synch;"<<endl;
 				//check if in the middle of two FP numbers
 				//generate two xor strings

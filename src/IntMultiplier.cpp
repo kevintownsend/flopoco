@@ -81,7 +81,7 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 		
 		//given the input widths and the specific target this method suggests the chunk widths for X and Y
 		bool test = target->suggest_submult_size(multiplier_width_X, multiplier_width_Y, wInX, wInY);
-		cout<<"Frequency report:"<<endl;
+		cout<<"Frequency report (multiplications):"<<endl;
 		if (test)
 			cout<<tab<<"Frequency can be reached = "<<"YES"<<" suggested sizes: X="<<multiplier_width_X<<" Y="<<multiplier_width_Y<<endl;
 		else
@@ -197,10 +197,11 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 			 }
 
 			bool add_test = target->suggest_subadd_size(addition_chunk_width,partsX * multiplier_width_X);
+						
 			if (add_test==true)
 				cout<<endl<<tab<<"addition chunk size = "<<addition_chunk_width<<endl;
 			else
-				cerr<<endl<<"WARNING: Cannot reach the desired frequency for the addition";
+				cerr<<endl<<"WARNING: Cannot reach the desired frequency for the addition"<<endl;
 			
 			pipe_levels = int(ceil(double(partsX * multiplier_width_X)/double(addition_chunk_width))); 
 			cout<<endl<<"added pipeline levels = "<<pipe_levels<<endl;
@@ -215,7 +216,6 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 						add_registered_signal_with_sync_reset(name.str(), addition_chunk_width + 1 );
 			}
 
-			//TODO
 			for (j=1; j<=pipe_levels;j++){ 
 				name.str("");;
 				name<<"PartialBits_Reg_"<<j;
@@ -616,7 +616,7 @@ ostringstream first_summand, second_summand;
 	for (i=0;i<partsY-1;i++){
 		for (j=1;j<=partsY-i;j++){
 			if (j==1){
-				//concatenate zeros in front of the first register, add it with thesecond register and place the result in the next level's first register
+				//concatenate zeros in front of the first register, add it with the second register and place the result in the next level's first register
 				first_summand.str("");; second_summand.str("");;
 				first_summand<<"("<< zero_generator(multiplier_width_Y,0)<<" & H_Level_"<<i<<"_Reg_"<<j<<"_d("<<partsX*multiplier_width_X-1<<" downto "<<multiplier_width_Y<<"))"; 
 				second_summand<<"H_Level_"<<i<<"_Reg_"<<j+1<<"_d";
