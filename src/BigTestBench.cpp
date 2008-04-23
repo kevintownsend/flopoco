@@ -219,6 +219,5 @@ void BigTestBench::output_vhdl(ostream& o, string name) {
   cerr << tab << "vlib work" <<endl;
   cerr << tab << "vcom flopoco.vhdl" <<endl;
   cerr << tab << "vsim " << name <<endl;
-  cerr << tab << "add wave -r *" <<endl;
   cerr << tab << "run -all" << endl;
 }
