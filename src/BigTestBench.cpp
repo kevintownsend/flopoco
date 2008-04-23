@@ -55,14 +55,12 @@ BigTestBench::BigTestBench(Target* target, Operator* op, int n):
 BigTestBench::~BigTestBench() { }
 
 void BigTestBench::output_vhdl(ostream& o, string name) {
+  // XXX: Not actually used
   /* Generate some TestCases
    * We do this as early as possible, so that no VHDL is generated
    * if test cases are not implemented for the given operator
    */
-  TestCaseList tcl = op->generateStandardTestCases(n) + op->generateRandomTestCases(n);
-
-  ofstream fTest;
-  fTest.open((op->unique_name + ".test").c_str(), ios::out);
+  op->generateStandardTestCases(n);
 
   Licence(o,"Cristian KLEIN (2008)");
   o << "library ieee;" <<endl;
@@ -122,7 +120,7 @@ void BigTestBench::output_vhdl(ostream& o, string name) {
   for (int i = 0; i < op->ioList.size(); i++)
   {
     Signal *s = op->ioList[i];
-    o << tab << tab << "variable v_" << s->id() << ": std_logic"; 
+    o << tab << tab << "variable v_" << s->id() << ": std_ulogic"; 
     if (s->width() > 1)
       o << "_vector(" << s->width() - 1 << " downto 0)";
     o << ";" << endl;
@@ -134,27 +132,87 @@ void BigTestBench::output_vhdl(ostream& o, string name) {
   o << tab << tab << "rst <= '0';" <<endl;
   o <<endl;
   o << tab << tab << "while not (endfile(fTest)) loop" <<endl;
-  o << tab << tab << tab << "wait until falling_edge(clk);" <<endl;
-  o <<endl;
-  o << tab << tab << tab << "-- read inputs and verify outputs" << endl;
+  o << tab << tab << tab << "-- wait for clk" << endl;
+  o << tab << tab << tab << "wait until falling_edge(clk);" << endl;
+  o << tab << tab << tab << "-- read inputs" << endl;
   for (int i = 0; i < op->ioList.size(); i++)
   {
     Signal *s = op->ioList[i];
     if (s->type() != Signal::in) continue;
     if ((s->id() == "clk") || (s->id() == "rst")) continue;
-    o << tab << tab << tab << "readline(fTest,buf); read(buf,v_" << s->id() << "); " << s->id() << " <= v_" << s->id() << ";" <<endl; 
+    o << tab << tab << tab << "readline(fTest,buf); ";
+    if (s->width() == 1)
+      o << "read(buf,v_" << s->id() << "); " << s->id() << " <= v_" << s->id() << ";" <<endl; 
+    else
+      o << "hread(buf,v_" << s->id() << "); " << s->id() << " <= to_stdlogicvector(v_" << s->id() << ");" <<endl; 
   }
-  o << endl;
+  o << tab << tab << tab << "-- check results" << endl;
+  o << tab << tab << tab << "wait for 1 ns;" <<endl;
   for (int i = 0; i < op->ioList.size(); i++)
   {
     Signal *s = op->ioList[i];
     if (s->type() != Signal::out) continue;
-    o << tab << tab << tab << "readline(fTest,buf); read(buf,v_" << s->id() << ", good); assert not good or " << s->id() << " = v_" << s->id() << ";" <<endl; 
+    o << tab << tab << tab
+      << "readline(fTest,buf); ";
+    if (s->width() == 1)
+      o << "read";
+    else
+      o << "hread";
+
+    o << "(buf,v_" << s->id() << ", good); ";
+    o << "assert not good or " << s->id() << " = ";
+    if (s->width() == 1)
+      o << "v_" << s->id() << " ";
+    else 
+      o << "to_stdlogicvector(v_" << s->id() << ") ";
+    o << "report \"Incorrect value for " << s->id() << "\" severity error;"
+      <<endl; 
   }
  
   o << tab << tab << "end loop;" <<endl;
+  o << tab << tab << "assert false report \"End of simulation\" severity failure;" << endl;
   o << tab << "end process;" <<endl;
   o << "end architecture;" <<endl;
+
+  /* Generate the test file */
+  TestCaseList tclIn, tclOut;
+  ofstream f;
+  f.open((op->unique_name + ".test").c_str(), ios::out);
+  for (int i = 0; i < n; i++)
+  {
+    /* Generate a new test case list, if we depleted the one before */
+    if (i % 10000 == 0)
+      tclIn = op->generateRandomTestCases(10000);
+    if ((i - op->pipeline_depth()) % 10000 == 0)
+      tclOut = tclIn;
+    
+    /* Input vector */
+    TestCase tc = tclIn.getTestCase(i % 10000);
+    for (int j = 0; j < op->ioList.size(); j++)
+    {
+      Signal& s = *op->ioList[j];
+      if (s.type() != Signal::in) continue;
+      if ((s.id() == "clk") || (s.id() == "rst")) continue;
+      f << tc.signalValueToVHDLHex(s, tc.getInput(s), false) << endl;
+    }
+
+    /* Output vector */
+    if (i >= op->pipeline_depth())
+      tc = tclOut.getTestCase((i - op->pipeline_depth()) % 10000);
+    for (int j = 0; j < op->ioList.size(); j++)
+    {
+      Signal& s = *op->ioList[j];
+      if (s.type() != Signal::out) continue;
+      try {
+	if (i < op->pipeline_depth()) throw std::string();
+	// Happens when no value is expected from this output signal
+        f << tc.signalValueToVHDLHex(s, tc.getOneExpectedOutput(s), false) << endl;
+      } catch (std::string) {
+	f << "(none expected)" << endl;
+      }
+    }
+  }
+  f.close();
 
   cerr << "To run the simulation, type the following in 'rlwrap vsim -c':" <<endl;
   cerr << tab << "vdel -all -lib work" <<endl;
@@ -163,6 +221,4 @@ void BigTestBench::output_vhdl(ostream& o, string name) {
   cerr << tab << "vsim " << name <<endl;
   cerr << tab << "add wave -r *" <<endl;
   cerr << tab << "run -all" << endl;
-
-  fTest.close();
 }

@@ -60,6 +60,41 @@ public:
    */
   std::string getExpectedOutputVHDL(std::string prepend = "");
 
+  /**
+   * Gets the input value stored in the test case for the given
+   * Signal. Throws an exception if no signal is found.
+   * @param s the signal for which the value should be returned.
+   */
+  mpz_class getInput(Signal s);
+
+  /**
+   * Gets the one single value of for the given output Signal.
+   * Throws an exception if no signal value is found or there
+   * are two expected outputs.
+   */
+  mpz_class getOneExpectedOutput(Signal s);
+
+  // XXX: Not the best place.
+  /**
+   * Converts the value of the signal into a nicely formated VHDL expression,
+   * including padding and putting quot or apostrophe.
+   * @param s signal (used to determine the width)
+   * @param v value
+   * @param quot also put quotes around the value
+   * @return a VHDL value expression
+   */
+   static std::string signalValueToVHDL(Signal s, mpz_class v, bool quot = true);
+   
+  /**
+   * Converts the value of the signal into a nicely formated VHDL expression,
+   * including padding and putting quot or apostrophe. (Hex version.)
+   * @param s signal (used to determine the width)
+   * @param v value
+   * @param quot also put quotes around the value
+   * @return a VHDL value expression in hexa
+   */
+   static std::string signalValueToVHDLHex(Signal s, mpz_class v, bool quot = true);
+
 private:
   /**
    * Offers an ordering relationship on Signal-s based on their name.
