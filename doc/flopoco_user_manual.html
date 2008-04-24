@@ -193,6 +193,8 @@ href="http://prunel.ccsd.cnrs.fr/ensl-00269219/">this article</a>.</p>
 High-Order Table-Based Method, best described in 
 <a href="http://perso.ens-lyon.fr/florent.de.dinechin/recherche/publis/2005-ASAP.pdf">this article</a>.</p>
 
+
+
 <dl>
 	<dt><code>HOTBM func wI wO degree</code></dt>
 	<dd>HOTBM implementation of a function. <code>func</code> is a
@@ -217,6 +219,12 @@ enclose it within quotes.</p>
 </p>
 
 <p>Note that this launches an exploration process that typically takes a few minutes for 16 bits, and may take hours for 24 bits.</p>
+
+<p>HOTBM uses a polynomial approximation. It works well for functions
+which are regular enough (in mathematical terms, they should be
+defined and n-times continuously differentiable on the domain).<p>
+
+
 
 <h3>Test Bench</h3>
 

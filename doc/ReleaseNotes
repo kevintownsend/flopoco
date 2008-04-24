@@ -1,4 +1,19 @@
 ======================================================================
+Version 0.5beta adds the HOTBM operator 
+and fixes bugs in the other operators.
+
+It also introduces automatic testbench generation.
+
+HOTBM is the Higher Order Table-Based Method for function evaluation.
+With HOTBM support, FloPoCo is able to generate high-speed, low area
+fixed-point implementations for a large class of real functions on
+[0,1[.
+
+HOTBM uses a polynomial approximation. It works well for functions
+which are regular enough (in mathematical terms, they should be
+defined and n-times continuously differentiable on the domain).
+
+======================================================================
 
 Version 0.4beta provides the following operators:
     LeftShifter, RightShifter, LZOC, IntAdder 
