@@ -194,10 +194,10 @@ High-Order Table-Based Method, best described in
 <a href="http://perso.ens-lyon.fr/florent.de.dinechin/recherche/publis/2005-ASAP.pdf">this article</a>.</p>
 
 <dl>
-	<dt><code>HOTBM func wI wO n</code></dt>
+	<dt><code>HOTBM func wI wO degree</code></dt>
 	<dd>HOTBM implementation of a function. <code>func</code> is a
 	sollya-like expression of the function, <code>wI</code> is the
-	input width, <code>wO</code> is the output width and <code>n</code>
+	input width, <code>wO</code> is the output width and <code>degree</code>
 	is the degree of the Remez polynomial.</dd>
 </dl>
 
@@ -215,6 +215,8 @@ enclose it within quotes.</p>
 <p>Example:<br/>
 <code>flopoco HOTBM "sin(x*Pi/2)" 16 16 3</code>
 </p>
+
+<p>Note that this launches an exploration process that typically takes a few minutes for 16 bits, and may take hours for 24 bits.</p>
 
 <h3>Test Bench</h3>
 

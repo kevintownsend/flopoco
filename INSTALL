@@ -10,6 +10,13 @@ FloPoCo depends on MPFR, which is available for most Unices. On
 Debian and derivative, the package to install is libmpfr-dev.
 See www.mpfr.org for other systems.
 
+For HOTBM support, you need also to install libsollya from the Sollya tool
+http://sollya.gforge.inria.fr/ 
+Please note that libsollya is not stable, so interface changes might
+break FloPoCo compilation. If this is the case, try to download r588
+of libsollya from the SVN repository.
+
+
 Compilation:
 On Linux/unix, type in a terminal:
 

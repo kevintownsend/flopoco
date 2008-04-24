@@ -84,10 +84,11 @@ static void usage(char *name){
   cerr << "      floating-point multiplier \n";
   cerr << "      normalize can be either 0 or 1. \n";     
 #ifdef HAVE_HOTBM
-  cerr << "    HOTBM function wI wO n\n";
+  cerr << "    HOTBM function wI wO degree\n";
   cerr << "      High-order table-based method for generating a given function\n";
-  cerr << "      wI - input width, wO - output width, n - degree of minimax\n";
-  cerr << "      function - sollya-syntaxed function to implement (must be escaped)\n";
+  cerr << "      wI - input width, wO - output width, degree - degree of minimax\n";
+  cerr << "      function - sollya-syntaxed function to implement\n";
+  cerr << "         (must be escaped, e.g. enclosed in double quotes)\n";
 #endif // HAVE_HOTBM
   cerr << "    TestBench n\n";
   cerr << "       produce a behavorial test bench for the preceding operator\n";
@@ -98,7 +99,7 @@ static void usage(char *name){
 #endif
   cerr << "    Wrapper entity_name\n";
   cerr << "       produce a wrapper named entity_name for the preceding operator\n";
-  cerr << "       (useful to get synthesis results without having the operator optimised out)\n";
+  cerr << "       (e.g. to get synthesis results without having the operator optimised out)\n";
   cerr << "  In addition several options affect the operators following them:\n";
   cerr << "   -outputfile=<output file name>\n";
   cerr << "       sets the filename (default flopoco.vhdl)\n";
