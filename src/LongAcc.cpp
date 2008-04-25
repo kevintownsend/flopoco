@@ -44,6 +44,8 @@ LongAcc::LongAcc(Target* target, int wEX, int wFX, int MaxMSBX, int LSBA, int MS
   wEX(wEX), wFX(wFX), MaxMSBX(MaxMSBX), LSBA(LSBA), MSBA(MSBA)
 {
   ostringstream name; 
+  int i;
+  
   name <<"LongAcc_"<<wEX<<"_"<<wFX<<"_"
        <<(MaxMSBX>=0?"":"M")<<abs(MaxMSBX)<<"_"
        <<(LSBA>=0?"":"M")<<abs(LSBA)<<"_"
@@ -92,7 +94,7 @@ LongAcc::LongAcc(Target* target, int wEX, int wFX, int MaxMSBX, int LSBA, int MS
   add_signal("fracX", wFX+1);
   add_signal("shifted_frac", sizeShiftedFrac);
   add_signal("shiftval", wEX+1); //, "includes a sign bit");
-
+  
   // setup the pipeline 
 
   if(target->is_pipelined()) {
@@ -103,19 +105,72 @@ LongAcc::LongAcc(Target* target, int wEX, int wFX, int MaxMSBX, int LSBA, int MS
   else {
     c2_pipeline_depth = 0;
   }
+  
+  int suggestedAdditionChunkSize;
+  bool status = target->suggest_subadd_size(suggestedAdditionChunkSize ,sizeAcc);
+
+  if (!status)
+    cout << "Warning: the desired frequency is not possible; optimizing to maximum frequency"<<endl;
+  
+  
+  
+  additionNumberOfChunks = (sizeAcc/suggestedAdditionChunkSize) + (((sizeAcc%suggestedAdditionChunkSize)==0)?0:1); 
+  
+  //rebalance chunks;
+  rebalancedAdditionChunkSize = (sizeAcc / additionNumberOfChunks)  + (((sizeAcc%additionNumberOfChunks)==0)?0:1); 
+  
+  rebalancedAdditionLastChunkSize = sizeAcc - (additionNumberOfChunks-1)*rebalancedAdditionChunkSize;
+
+  if (verbose){
+    cout << "acumulator size ="<<sizeAcc<<endl;
+    cout << "suggested Addition Chunk Size =  "<<suggestedAdditionChunkSize<<endl; 
+    cout << "addition Number Of Chunks =  "<<additionNumberOfChunks<<endl; 
+    cout << "rebalanced Addition Chunk Size =  "<<rebalancedAdditionChunkSize<<endl; 
+    cout << "rebalanced Addition Last Chunk Size =  "<<rebalancedAdditionLastChunkSize<<endl;
+  }
+  
+
+  //define the accumulator registers
+   
+  for (i=0;i<additionNumberOfChunks;i++) {
+    ostringstream accReg;
+    accReg<<"acc_"<<i;
+      if (i==additionNumberOfChunks-1){
+        add_registered_signal_with_sync_reset(accReg.str(), rebalancedAdditionLastChunkSize); 
+        accReg << "_ext";
+        add_signal(accReg.str(), rebalancedAdditionLastChunkSize + 1);   
+      }
+      else{
+        add_registered_signal_with_sync_reset(accReg.str(), rebalancedAdditionChunkSize);  
+        accReg << "_ext";
+        add_signal(accReg.str(), rebalancedAdditionChunkSize + 1);   
+      }
+  }
+  
+  
+  add_registered_signal_with_sync_reset("carryIn",1);
+  //define the carry propagation registers
+  if (additionNumberOfChunks>1)
+    for (i=1;i<additionNumberOfChunks;i++){
+      ostringstream carryBit;
+      carryBit<< "carryBit_"<<i;
+      add_registered_signal_with_sync_reset(carryBit.str(), 1);  
+    }
+      
 
   // on one side, add delays for the non-complemented signal
   add_delay_signal("summand", sizeSummand, c2_pipeline_depth); 
   add_delay_signal("flushedToZero", 1, shifter->pipeline_depth());
   add_delay_signal("signX", 1, shifter->pipeline_depth());
 
-  //on the other side, add a delay for 2'complement of summand
-  add_registered_signal("summand2c", sizeSummand);
+  add_signal("summand2c", sizeSummand);
 
   // final pipeline depth is the sum of shifter pipeline and 2's
   // complement pipeline, plus 1 for the accumulator itself.
   //TODO when the accumulator is pipelined: replace this 1 with the acc's pipeline depth
-  set_pipeline_depth(shifter->pipeline_depth() + c2_pipeline_depth+1);
+  set_pipeline_depth(shifter->pipeline_depth() + c2_pipeline_depth+  additionNumberOfChunks + 1);
+
+  
 
 
   // it is rather stupid to register all the extended bits as they are
@@ -132,6 +187,8 @@ LongAcc::~LongAcc() {
 
 
 void LongAcc::output_vhdl(ostream& o, string name) {
+int i;
+
   Licence(o,"Florent de Dinechin (2007)");
   Operator::StdLibs(o);
   output_vhdl_entity(o);
@@ -171,18 +228,65 @@ void LongAcc::output_vhdl(ostream& o, string name) {
   o << endl;
   o << tab << "-- 2's complement of the summand" << endl;
   // This is the line that should be pipelined
-  o << tab << "summand2c <= summand when "<< get_delay_signal_name("signX", shifter->pipeline_depth()) <<"='0' else ("<<sizeSummand-1<<" downto 0 => '0') - summand; "<< endl;
+  
+  
+  //was o << tab << "summand2c <= summand when "<< get_delay_signal_name("signX", shifter->pipeline_depth()) <<"='0' else ("<<sizeSummand-1<<" downto 0 => '0') - summand; "<< endl;
+  //Don't compute 2's complement just yet, just invert the bits and leave the addition of the extra 1 addition in accumulation.
+  o << tab << "summand2c <= summand when "<< get_delay_signal_name("signX", shifter->pipeline_depth()) <<"='0' else not(summand); "<< endl;
+  
   o << endl;
   o << tab << "-- extension of the summand to accumulator size" << endl;
-  o << tab << "ext_summand2c <= ("<<sizeAcc-1<<" downto "<<sizeSummand<<"=> ("
+  o << tab << "ext_summand2c <= ("<<sizeAcc-1<<" downto "<<sizeSummand<<"=> (" 
     << get_delay_signal_name("signX", shifter->pipeline_depth()) 
     << " and not " << get_delay_signal_name("flushedToZero", shifter->pipeline_depth())
     <<")) & summand2c;" << endl;
-//    "when  " <<  <<"='0'" << endl;
-//   o << tab << "            else ("<<sizeAcc-1<<" downto "<<sizeSummand<<"=> not " << ") & summand2c;" << endl;
   o << endl;
   o << tab << "-- accumulation itself" << endl;
-  o << tab << "acc <= ext_summand2c_d   +   acc_d;" << endl;
+  
+  o << tab << "carryIn <= ("<<get_delay_signal_name("signX", shifter->pipeline_depth())
+    << " and not " << get_delay_signal_name("flushedToZero", shifter->pipeline_depth() ) << ");"<<endl;  
+  
+  
+  
+  for (i=0;i<additionNumberOfChunks;i++) {
+    ostringstream accReg;
+    accReg<<"acc_"<<i;
+      if ((i==0) & (additionNumberOfChunks==1) )
+        o << tab << "acc_0 <= acc_0_d + ext_summand2c_d + carryIn_d;"<<endl;
+      else 
+        if ((i==0) & (additionNumberOfChunks!=1) )
+          o << tab << "acc_0 <= acc_0_d + ext_summand2c_d("<<rebalancedAdditionLastChunkSize -1 << " downto  0" <<") + carryIn_d;"<<endl;
+        else 
+          if (i!=additionNumberOfChunks-1){
+            o<<tab<<"acc_"<<i<<"_ext <= ( \"0\" & acc_"<<i<<"_d ) + ( \"0\" & ext_summand2c_d("<<rebalancedAdditionChunkSize*(i+1)-1 << " downto "<<rebalancedAdditionChunkSize*i<<")) + carryBit_"<<i<<"_d;"<<endl;
+          
+            o<<tab<<"acc_"<<i<<" <= acc_"<<i<<"_ext("<<rebalancedAdditionChunkSize -1 <<" downto 0);"<<endl;
+            o<<tab<<"carryBit_"<<i<<" <= acc_"<<i<<"_ext("<<rebalancedAdditionChunkSize<<");"<<endl;
+          }  
+          else{
+            o<<tab<<"acc_"<<i<<"_ext <= ( \"0\" & acc_"<<i<<"_d) + (\"0\" & ext_summand2c_d("<<sizeAcc-1 << " downto "<<rebalancedAdditionChunkSize*i<<")) + carryBit_"<<i<<"_d;"<<endl;
+            
+            o<<tab<<"acc_"<<i<<" <= acc_"<<i<<"_ext("<<rebalancedAdditionLastChunkSize-1<<" downto 0);"<<endl;
+            o<<tab<<"carryBit_"<<i<<" <= acc_"<<i<<"_ext("<<rebalancedAdditionLastChunkSize<<");"<<endl;
+          }
+  }
+  
+
+//  o << tab << "acc <= ext_summand2c_d   +   acc_d  +  lateAdditionBit;" << endl;
+  
+    //compose the acc signal 
+    
+    o << tab << "acc <= ";
+    for (i=0;i<additionNumberOfChunks;i++) {
+      if (additionNumberOfChunks==1) 
+        o<< "acc_0_d;";
+      else
+        if (i!=additionNumberOfChunks-1)
+          o<< "acc_"<<i<<"_d & ";
+        else
+          o<< "acc_"<<i<<"_d;";
+    }
+  
   o << endl;
 
   output_vhdl_registers(o);

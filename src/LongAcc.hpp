@@ -36,6 +36,11 @@ private:
   string summand2cname;
   int c2_chunk_size;
   int c2_pipeline_depth;
+
+  int additionNumberOfChunks;
+  int rebalancedAdditionChunkSize;
+  int rebalancedAdditionLastChunkSize;
+
 };
 
 
