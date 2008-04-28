@@ -112,13 +112,9 @@ LongAcc::LongAcc(Target* target, int wEX, int wFX, int MaxMSBX, int LSBA, int MS
   if (!status)
     cout << "Warning: the desired frequency is not possible; optimizing to maximum frequency"<<endl;
   
-  
-  
   additionNumberOfChunks = (sizeAcc/suggestedAdditionChunkSize) + (((sizeAcc%suggestedAdditionChunkSize)==0)?0:1); 
-  
   //rebalance chunks;
   rebalancedAdditionChunkSize = (sizeAcc / additionNumberOfChunks)  + (((sizeAcc%additionNumberOfChunks)==0)?0:1); 
-  
   rebalancedAdditionLastChunkSize = sizeAcc - (additionNumberOfChunks-1)*rebalancedAdditionChunkSize;
 
   if (verbose){
@@ -129,9 +125,7 @@ LongAcc::LongAcc(Target* target, int wEX, int wFX, int MaxMSBX, int LSBA, int MS
     cout << "rebalanced Addition Last Chunk Size =  "<<rebalancedAdditionLastChunkSize<<endl;
   }
   
-
-  //define the accumulator registers
-   
+  //define the registers which now form the accumulator
   for (i=0;i<additionNumberOfChunks;i++) {
     ostringstream accReg;
     accReg<<"acc_"<<i;
@@ -146,8 +140,7 @@ LongAcc::LongAcc(Target* target, int wEX, int wFX, int MaxMSBX, int LSBA, int MS
         add_signal(accReg.str(), rebalancedAdditionChunkSize + 1);   
       }
   }
-  
-  
+   
   add_registered_signal_with_sync_reset("carryIn",1);
   //define the carry propagation registers
   if (additionNumberOfChunks>1)
@@ -169,9 +162,6 @@ LongAcc::LongAcc(Target* target, int wEX, int wFX, int MaxMSBX, int LSBA, int MS
   // complement pipeline, plus 1 for the accumulator itself.
   //TODO when the accumulator is pipelined: replace this 1 with the acc's pipeline depth
   set_pipeline_depth(shifter->pipeline_depth() + c2_pipeline_depth+  additionNumberOfChunks + 1);
-
-  
-
 
   // it is rather stupid to register all the extended bits as they are
   // all equal, but the synthesiser optimises it out

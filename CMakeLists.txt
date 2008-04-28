@@ -73,6 +73,7 @@ ADD_EXECUTABLE(flopoco
  src/BigTestBench
  src/FPMultiplier
  src/IntMultiplier
+ src/Karatsuba
  src/IntAdder
  src/LZOC
  src/Shifters

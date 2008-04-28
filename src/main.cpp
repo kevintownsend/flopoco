@@ -34,6 +34,7 @@
 #include "LZOC.hpp"
 #include "IntAdder.hpp"
 #include "IntMultiplier.hpp"
+#include "Karatsuba.hpp"
 #include "FPMultiplier.hpp"
 #include "LongAcc.hpp"
 #include "Wrapper.hpp"
@@ -80,6 +81,8 @@ static void usage(char *name){
   cerr << "      The constant is provided as integral significand and integral exponent.\n";
   cerr << "    IntMultiplier wInX wInY \n";
   cerr << "      integer multiplier of two integers X and Y of sizes wInX and wInY \n";	
+  cerr << "    Karatsuba wInX wInY \n";
+  cerr << "      integer multiplier of two integers X and Y of sizes wInX and wInY. For now the sizes must be equal \n";	
   cerr << "    FPMultiplier wEX wFX wEY wFY wER wFR normalize\n";
   cerr << "      floating-point multiplier \n";
   cerr << "      normalize can be either 0 or 1. \n";     
@@ -350,6 +353,18 @@ bool parse_command_line(int argc, char* argv[]){
 	 int wInY = check_strictly_positive(argv[i++], argv[0]);
 	cerr << "> IntMultiplier , wInX="<<wInX<<", wInY="<<wInY<<"\n";
 	op = new IntMultiplier(target, wInX, wInY);
+	oplist.push_back(op);
+       }    
+     }
+     else if(opname=="Karatsuba"){
+      int nargs = 2;
+      if (i+nargs > argc)
+	usage(argv[0]);
+       else {
+	 int wInX = check_strictly_positive(argv[i++], argv[0]);
+	 int wInY = check_strictly_positive(argv[i++], argv[0]);
+	cerr << "> Karatsuba , wInX="<<wInX<<", wInY="<<wInY<<"\n";
+	op = new Karatsuba(target, wInX, wInY);
 	oplist.push_back(op);
        }    
      }   
