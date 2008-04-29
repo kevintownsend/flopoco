@@ -30,44 +30,44 @@ using namespace std;
 extern int verbose;
 
 void Target::set_pipelined() {
-  _pipeline=true;
+	_pipeline=true;
 }
 
 void Target::set_not_pipelined() {
-  _pipeline=false;
+	_pipeline=false;
 }
 
 bool Target::is_pipelined() {
-  return _pipeline;
+	return _pipeline;
 }
 
 void Target::set_lut_inputs(int n) {
-  _lut_inputs=n;
+	_lut_inputs=n;
 }
 
 int Target::lut_inputs() {
-  return _lut_inputs;
+	return _lut_inputs;
 }
 int Target::mult_x_inputs(){
-  return _mult_x_inputs;
+	return _mult_x_inputs;
 };
 
 int Target::mult_y_inputs(){
-  return _mult_y_inputs;
+	return _mult_y_inputs;
 };
 
 double Target::frequency(){
-  return _frequency;
+	return _frequency;
 };
 
 void Target::set_frequency(double f){
-  _frequency=f;
+	_frequency=f;
 };
 
 void Target::set_use_hard_multipliers(bool v){
-	_use_hard_multipliers = v;  
+				_use_hard_multipliers = v;  
 };
 
 bool Target::get_use_hard_multipliers(){
-	return _use_hard_multipliers;
+				return _use_hard_multipliers;
 }; 

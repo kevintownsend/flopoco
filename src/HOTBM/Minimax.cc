@@ -68,18 +68,18 @@ Minimax::Minimax(Function &f_, double ia_, double ib_, int d)
 
 Minimax::~Minimax()
 {
-  if (mpP)
-    delete mpP;
-  mpfr_clear(mpErr);
-  mpfr_free_cache();
+	if (mpP)
+		delete mpP;
+	mpfr_clear(mpErr);
+	mpfr_free_cache();
 }
 
 MPPolynomial &Minimax::getMPP() const
 {
-  return *mpP;
+	return *mpP;
 }
 
 void Minimax::getMPErr(mpfr_t mpErr_) const
 {
-  mpfr_set(mpErr_, mpErr, GMP_RNDN);
+	mpfr_set(mpErr_, mpErr, GMP_RNDN);
 }

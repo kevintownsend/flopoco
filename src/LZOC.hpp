@@ -33,23 +33,23 @@
 
 
 /* 
-   Recursive structure with wOut stages. At most 2^wOut-1 leading zeros are counted.
+ * Recursive structure with wOut stages. At most 2^wOut-1 leading zeros are counted.
  */
 
 
 class LZOC : public Operator
 {
 public:
-  LZOC(Target* target, int wIn, int wOut);
-  ~LZOC();
+	LZOC(Target* target, int wIn, int wOut);
+	~LZOC();
 
-  int wIn;
-  int wOut;
-  int p2wOut;
+	int wIn;
+	int wOut;
+	int p2wOut;
 
 
-  // Overloading the virtual functions of Operator
-  void output_vhdl(std::ostream& o, std::string name);
+	// Overloading the virtual functions of Operator
+	void output_vhdl(std::ostream& o, std::string name);
 };
 
 

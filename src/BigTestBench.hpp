@@ -11,23 +11,23 @@
 class BigTestBench : public Operator
 {
 public:
-  /* XXX: To discuss what n represents. */
-  /**
-   * Creates a BigTestBench.
-   * @param target The target architecture
-   * @param op The operator which is the UUT
-   * @param n Number of tests
-   */
-  BigTestBench(Target *target, Operator *op, int n);
-  ~BigTestBench();
+	/* XXX: To discuss what n represents. */
+	/**
+	 * Creates a BigTestBench.
+	 * @param target The target architecture
+	 * @param op The operator which is the UUT
+	 * @param n Number of tests
+	 */
+	BigTestBench(Target *target, Operator *op, int n);
+	~BigTestBench();
 
-  void output_vhdl(ostream& o, string name);
+	void output_vhdl(ostream& o, string name);
 private:
-  /** The unit under test UUT */
-  Operator *op;
+	/** The unit under test UUT */
+	Operator *op;
 
-  /** The parameter from the constructor */
-  int n;
+	/** The parameter from the constructor */
+	int n;
 };
 
 

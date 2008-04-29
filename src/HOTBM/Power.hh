@@ -11,23 +11,23 @@ using namespace std;
 
 class Power {
 public:
-  Power(int d_, Param &p_);
-  virtual ~Power();
+	Power(int d_, Param &p_);
+	virtual ~Power();
 
-  PWPolynomial *getErrPow();
+	PWPolynomial *getErrPow();
 
-  virtual double estimArea() = 0;
-  virtual double estimDelay() = 0;
+	virtual double estimArea() = 0;
+	virtual double estimDelay() = 0;
 
-  virtual void mpEval(mpz_t mpR, long long int b) const = 0;
+	virtual void mpEval(mpz_t mpR, long long int b) const = 0;
 
-  virtual void genVHDL(ostream &os, string name) = 0;
+	virtual void genVHDL(ostream &os, string name) = 0;
 
 protected:
-  int d;
-  Param &p;
+	int d;
+	Param &p;
 
-  PWPolynomial *errPow;
+	PWPolynomial *errPow;
 };
 
 #endif // _POWER_HH_

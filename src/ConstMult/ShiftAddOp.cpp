@@ -38,24 +38,24 @@ using namespace std;
 
 
 ShiftAddOp::ShiftAddOp(ShiftAddDag* impl, OpType op, ShiftAddOp* i, int s, ShiftAddOp* j) :
-  impl(impl), op(op), i(i), s(s), j(j) {
-  n=impl->computeConstant(op, i, s, j);
-  // now compute the size according to this constant
-  if (n >= 0)
-    size = intlog2(n-1) + impl->icm->xsize; // -1 so that powers of two are handled properly
-  else
-    size = intlog2(-n-1) + impl->icm->xsize + 1; // we need a sign bit
+	impl(impl), op(op), i(i), s(s), j(j) {
+	n=impl->computeConstant(op, i, s, j);
+	// now compute the size according to this constant
+	if (n >= 0)
+		size = intlog2(n-1) + impl->icm->xsize; // -1 so that powers of two are handled properly
+	else
+		size = intlog2(-n-1) + impl->icm->xsize + 1; // we need a sign bit
 
-  // build the variable name
-  ostringstream o; 
-  if(n==1)         o <<"X"; 
-  else  if(n>=0)   o<<"P"<<n<<"X";  
-  else             o<<"M"<<-n<<"X";
-  name =  o.str();
+	// build the variable name
+	ostringstream o; 
+	if(n==1)         o <<"X"; 
+	else  if(n>=0)   o<<"P"<<n<<"X";  
+	else             o<<"M"<<-n<<"X";
+	name =  o.str();
 
-  // and add this object to the dictionary of the implementation
-  if (op!=X)
-    impl->saolist.push_back(this);
+	// and add this object to the dictionary of the implementation
+	if (op!=X)
+		impl->saolist.push_back(this);
 }
 
 

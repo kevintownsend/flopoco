@@ -10,30 +10,30 @@
 
 class TermPowMult : public Term {
 public:
-  TermPowMult(int d_, double *k, Param &p_);
-  ~TermPowMult();
+	TermPowMult(int d_, double *k, Param &p_);
+	~TermPowMult();
 
-  void roundTables(int g, bool full = true, double *kAdjust = NULL);
+	void roundTables(int g, bool full = true, double *kAdjust = NULL);
 
-  double estimArea();
-  double estimDelay();
+	double estimArea();
+	double estimDelay();
 
-  double eval(long long int a, long long int b) const;
-  long long int evalRound(long long int a, long long int b) const;
+	double eval(long long int a, long long int b) const;
+	long long int evalRound(long long int a, long long int b) const;
 
-  void genVHDL(ostream &os, string name);
+	void genVHDL(ostream &os, string name);
 
 private:
-  PWPolynomial calcErrTab(int k_ = 0);
-  PWPolynomial calcErrPow(int k_ = 0);
+	PWPolynomial calcErrTab(int k_ = 0);
+	PWPolynomial calcErrPow(int k_ = 0);
 
-  TermPowMultParam &tp;
-  double **kList;
-  Power *pow;
+	TermPowMultParam &tp;
+	double **kList;
+	Power *pow;
 
-  long long int **table;
-  int *wTable;
-  bool signTable;
+	long long int **table;
+	int *wTable;
+	bool signTable;
 };
 
 #endif // _TERMPOWMULT_HH_

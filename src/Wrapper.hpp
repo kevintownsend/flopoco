@@ -8,11 +8,11 @@
 class Wrapper : public Operator
 {
 public:
-  // The operator to wrap
-  Operator* op;
-  Wrapper(Target* target, Operator* op, std::string name);
-  ~Wrapper();
-  void output_vhdl(ostream& o, string name);
+	// The operator to wrap
+	Operator* op;
+	Wrapper(Target* target, Operator* op, std::string name);
+	~Wrapper();
+	void output_vhdl(ostream& o, string name);
 };
 
 

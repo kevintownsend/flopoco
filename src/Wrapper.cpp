@@ -39,25 +39,25 @@
 
 
 Wrapper::Wrapper(Target* target, Operator *op, std::string name):
-  Operator(target), op(op)
+	Operator(target), op(op)
 {
-  unique_name=name;
+	unique_name=name;
 
-  if (!target->is_pipelined()) 	
-  	set_sequential();	
-  
-  // Copy the signals of the wrapped operator
-  for(int i=0; i<op->ioList.size(); i++)
-    ioList.push_back(new Signal(*op->ioList[i]));
+	if (!target->is_pipelined()) 	
+		set_sequential();	
+	
+	// Copy the signals of the wrapped operator
+	for(int i=0; i<op->ioList.size(); i++)
+		ioList.push_back(new Signal(*op->ioList[i]));
 
-  // declare internal registered signals
-  for(int i=0; i<op->ioList.size(); i++){
-    string idext = "i_" + op->ioList[i]->id() ;
-    add_registered_signal(idext, op->ioList[i]->width());
-  }
+	// declare internal registered signals
+	for(int i=0; i<op->ioList.size(); i++){
+		string idext = "i_" + op->ioList[i]->id() ;
+		add_registered_signal(idext, op->ioList[i]->width());
+	}
 
-  //set pipeline parameters
-  set_pipeline_depth(2);
+	//set pipeline parameters
+	set_pipeline_depth(2);
 }
 
 
@@ -68,52 +68,52 @@ Wrapper::~Wrapper() {
 
 
 void Wrapper::output_vhdl(ostream& o, string name) {
-  Licence(o,"Florent de Dinechin (2007)");
-  Operator::StdLibs(o);
+	Licence(o,"Florent de Dinechin (2007)");
+	Operator::StdLibs(o);
 
-  output_vhdl_entity(o);
-  o << "architecture arch of " << name  << " is" << endl;
+	output_vhdl_entity(o);
+	o << "architecture arch of " << name  << " is" << endl;
 
-  // the operator to wrap
-  op->Operator::output_vhdl_component(o);
-  // The local signals
-  output_vhdl_signal_declarations(o);
+	// the operator to wrap
+	op->Operator::output_vhdl_component(o);
+	// The local signals
+	output_vhdl_signal_declarations(o);
 
-  o << "begin\n";
-  // connect inputs
-  for(int i=0; i<op->ioList.size(); i++){
-    string idext = "i_" + op->ioList[i]->id() ;
-    if(op->ioList[i]->type() == Signal::in)
-      o << tab << idext << " <=  " << op->ioList[i]->id() << ";" << endl;
-  }
+	o << "begin\n";
+	// connect inputs
+	for(int i=0; i<op->ioList.size(); i++){
+		string idext = "i_" + op->ioList[i]->id() ;
+		if(op->ioList[i]->type() == Signal::in)
+			o << tab << idext << " <=  " << op->ioList[i]->id() << ";" << endl;
+	}
 
-  // the instance
-  o << tab << "test:" << op->unique_name << "\n"
-    << tab << tab << "port map ( ";
-  for(int i=0; i<op->ioList.size(); i++) {
-    Signal s = *op->ioList[i];
-    if(i>0) 
-      o << tab << tab << "           ";
-    string idext = "i_" + op->ioList[i]->id() ;
-    if(op->ioList[i]->type() == Signal::in)
-      o << op->ioList[i]->id()  << " =>  " << idext << "_d";
-    else
-      o << op->ioList[i]->id()  << " =>  " << idext;
-    if (i < op->ioList.size()-1) 
-      o << "," << endl;
-  }
-  o << ");" <<endl;
+	// the instance
+	o << tab << "test:" << op->unique_name << "\n"
+		<< tab << tab << "port map ( ";
+	for(int i=0; i<op->ioList.size(); i++) {
+		Signal s = *op->ioList[i];
+		if(i>0) 
+			o << tab << tab << "           ";
+		string idext = "i_" + op->ioList[i]->id() ;
+		if(op->ioList[i]->type() == Signal::in)
+			o << op->ioList[i]->id()  << " =>  " << idext << "_d";
+		else
+			o << op->ioList[i]->id()  << " =>  " << idext;
+		if (i < op->ioList.size()-1) 
+			o << "," << endl;
+	}
+	o << ");" <<endl;
 
-  // the delays 
-  output_vhdl_registers(o);
+	// the delays 
+	output_vhdl_registers(o);
 
-  // connect outputs
-  for(int i=0; i<op->ioList.size(); i++){
-    string idext = "i_" + op->ioList[i]->id() ;
-    if(op->ioList[i]->type() == Signal::out)
-      o << tab << op->ioList[i]->id() << " <=  " << idext << "_d;" << endl;
-  }
-  
-  o << "end architecture;" << endl << endl;
-    
+	// connect outputs
+	for(int i=0; i<op->ioList.size(); i++){
+		string idext = "i_" + op->ioList[i]->id() ;
+		if(op->ioList[i]->type() == Signal::out)
+			o << tab << op->ioList[i]->id() << " <=  " << idext << "_d;" << endl;
+	}
+	
+	o << "end architecture;" << endl << endl;
+		
 }

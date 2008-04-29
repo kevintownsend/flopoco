@@ -11,39 +11,39 @@ using namespace std;
 
 class Polynomial {
 public:
-  Polynomial();
-  Polynomial(int d_, double *k_);
-  Polynomial(int d_, double k_);
-  Polynomial(const Polynomial &p);
-  ~Polynomial();
+	Polynomial();
+	Polynomial(int d_, double *k_);
+	Polynomial(int d_, double k_);
+	Polynomial(const Polynomial &p);
+	~Polynomial();
 
-  int getD() const;
-  double getK(int i) const;
+	int getD() const;
+	double getK(int i) const;
 
-  double eval(double x, int n = 0) const;
+	double eval(double x, int n = 0) const;
 
-  Polynomial operator=(const Polynomial &p);
-  bool operator==(const Polynomial &p) const;
-  Polynomial operator+(const Polynomial &p2) const;
-  Polynomial operator-(const Polynomial &p2) const;
-  Polynomial operator+(double x0) const;
-  Polynomial operator-(double x0) const;
-  Polynomial operator*(double k0) const;
-  Polynomial operator>>(double x0) const;
-  Polynomial operator<<(double x0) const;
-  Polynomial operator^(double k0) const;
+	Polynomial operator=(const Polynomial &p);
+	bool operator==(const Polynomial &p) const;
+	Polynomial operator+(const Polynomial &p2) const;
+	Polynomial operator-(const Polynomial &p2) const;
+	Polynomial operator+(double x0) const;
+	Polynomial operator-(double x0) const;
+	Polynomial operator*(double k0) const;
+	Polynomial operator>>(double x0) const;
+	Polynomial operator<<(double x0) const;
+	Polynomial operator^(double k0) const;
 
-  set<double> solve(double ia, double ib, int n = 0) const;
-  double max(double ia, double ib) const;
-  double min(double ia, double ib) const;
+	set<double> solve(double ia, double ib, int n = 0) const;
+	double max(double ia, double ib) const;
+	double min(double ia, double ib) const;
 
-  void print(ostream &os) const;
+	void print(ostream &os) const;
 
 private:
-  double max_(double ia, double ib, bool max = true) const;
+	double max_(double ia, double ib, bool max = true) const;
 
-  int d;
-  double *k;
+	int d;
+	double *k;
 };
 
 #endif // _POLYNOMIAL_HH_

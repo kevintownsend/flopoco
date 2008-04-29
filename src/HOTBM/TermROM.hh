@@ -11,28 +11,28 @@
 
 class TermROM : public Term {
 public:
-  TermROM(int d_, double *k, Param &p_);
-  ~TermROM();
+	TermROM(int d_, double *k, Param &p_);
+	~TermROM();
 
-  void roundTables(int g, bool full = true, double *kAdjust = NULL);
+	void roundTables(int g, bool full = true, double *kAdjust = NULL);
 
-  double estimArea();
-  double estimDelay();
+	double estimArea();
+	double estimDelay();
 
-  double eval(long long int a, long long int b) const;
-  long long int evalRound(long long int a, long long int b) const;
+	double eval(long long int a, long long int b) const;
+	long long int evalRound(long long int a, long long int b) const;
 
-  void genVHDL(ostream &os, string name);
+	void genVHDL(ostream &os, string name);
 
 private:
-  PWPolynomial calcErrTab(double shift = 0);
+	PWPolynomial calcErrTab(double shift = 0);
 
-  TermROMParam &tp;
-  Polynomial *pList;
+	TermROMParam &tp;
+	Polynomial *pList;
 
-  long long int *table;
-  int wTable;
-  bool signTable;
+	long long int *table;
+	int wTable;
+	bool signTable;
 };
 
 #endif // _TERMROM_HH_

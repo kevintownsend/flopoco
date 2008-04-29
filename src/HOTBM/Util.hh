@@ -30,28 +30,28 @@ double bin(int n, int k);
 
 class VHDLGen {
 public:
-  static void genInteger(ostream &os, long long int x, int w);
-  static void genInteger(ostream &os, mpz_t mpX, int w);
+	static void genInteger(ostream &os, long long int x, int w);
+	static void genInteger(ostream &os, mpz_t mpX, int w);
 
-  static void genROM(ostream &os, long long int *t, int wX, int wR, string x, string r);
-  static void genROM(ostream &os, mpz_t *mpT, int wX, int wR, string x, string r);
+	static void genROM(ostream &os, long long int *t, int wX, int wR, string x, string r);
+	static void genROM(ostream &os, mpz_t *mpT, int wX, int wR, string x, string r);
 };
 
 
 
 class Estim {
 public:
-  static double xorArea(int w);
-  static double xorDelay(int w);
+	static double xorArea(int w);
+	static double xorDelay(int w);
 
-  static double adderArea(int w, int n = 2);
-  static double adderDelay(int w, int n = 2);
+	static double adderArea(int w, int n = 2);
+	static double adderDelay(int w, int n = 2);
 
-  static double multiplierArea(int wX, int wY);
-  static double multiplierDelay(int wX, int wY);
+	static double multiplierArea(int wX, int wY);
+	static double multiplierDelay(int wX, int wY);
 
-  static double romArea(int wX, int wR);
-  static double romDelay(int wX, int wR);
+	static double romArea(int wX, int wR);
+	static double romDelay(int wX, int wR);
 };
 
 #endif // _UTIL_HH_

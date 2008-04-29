@@ -14,34 +14,34 @@
 class IntConstMult : public Operator
 {
 public:
-  IntConstMult(Target* target, int xsize, mpz_class n);
-  ~IntConstMult();
+	IntConstMult(Target* target, int xsize, mpz_class n);
+	~IntConstMult();
 
-  mpz_class n;
-  int nsize;
-  int xsize;
-  int rsize;
-  int* bits;
-  int* BoothCode;
-  int nonZeroInBoothCode;
+	mpz_class n;
+	int nsize;
+	int xsize;
+	int rsize;
+	int* bits;
+	int* BoothCode;
+	int nonZeroInBoothCode;
 
-  ShiftAddDag* implementation;
+	ShiftAddDag* implementation;
 
-  void recodeBooth();
-  void printBoothCode();
+	void recodeBooth();
+	void printBoothCode();
 
-  //  int computeLUTCost(ShiftAddDag);
-  void buildMultBooth();
-  void buildMultBoothTree();
-  void showShiftAddDag();
+	//  int computeLUTCost(ShiftAddDag);
+	void buildMultBooth();
+	void buildMultBoothTree();
+	void showShiftAddDag();
 
-  void optimizeLefevre(const vector<mpz_class>& constants);
+	void optimizeLefevre(const vector<mpz_class>& constants);
 
-  // Overloading the virtual functions of Operator
-  void output_vhdl(std::ostream& o, std::string name);
+	// Overloading the virtual functions of Operator
+	void output_vhdl(std::ostream& o, std::string name);
 
-  virtual TestCaseList generateStandardTestCases(int n);
-  virtual TestCaseList generateRandomTestCases(int n);
+	virtual TestCaseList generateStandardTestCases(int n);
+	virtual TestCaseList generateRandomTestCases(int n);
 };
 
 #endif

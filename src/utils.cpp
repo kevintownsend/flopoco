@@ -34,125 +34,125 @@ using namespace std;
 /** return a string representation of an mpz_class on a given number of bits */
 
 string unsigned_binary(mpz_class x, int size){
-  string s;
-  mpz_class po2, number;
-  char bit;
+	string s;
+	mpz_class po2, number;
+	char bit;
 
-  if(x<0) {
-    cerr<<"printBinPosNumGMP: Positive number expected, got x="<<x.get_d()<<endl;
-    exit(EXIT_FAILURE);
-  }
-  po2 = ((mpz_class) 1)<<size;
-  number=x;
-    
-  for (int i = 0; i < size ; i++) {
-    po2 = po2>>1;
-    if (number >= po2) {
-      bit = '1';
-      number -= po2;
-    }
-    else {
-      bit = '0';
-    }
-    s +=  bit;
-  }
-  return s;
+	if(x<0) {
+		cerr<<"printBinPosNumGMP: Positive number expected, got x="<<x.get_d()<<endl;
+		exit(EXIT_FAILURE);
+	}
+	po2 = ((mpz_class) 1)<<size;
+	number=x;
+		
+	for (int i = 0; i < size ; i++) {
+		po2 = po2>>1;
+		if (number >= po2) {
+			bit = '1';
+			number -= po2;
+		}
+		else {
+			bit = '0';
+		}
+		s +=  bit;
+	}
+	return s;
 }
 
 
 /** return the binary representation of a floating point number in the
-    FPLibrary/FloPoCo format */
+		FPLibrary/FloPoCo format */
 
 string fp2bin(mpfr_t x, int wE, int wF){
-  mpfr_t mpx, one, two;
-  ostringstream s;
+	mpfr_t mpx, one, two;
+	ostringstream s;
 
-  // copy the input
-  mpfr_init2 (mpx, wF+1);
-  mpfr_set (mpx, x, GMP_RNDN);
+	// copy the input
+	mpfr_init2 (mpx, wF+1);
+	mpfr_set (mpx, x, GMP_RNDN);
 
 
-  // exception bits
-  if(mpfr_nan_p (mpx)) {
-    s << "11";
-    for(int i=0; i<wE+wF+1; i++)
-      s<< "0";
-    return s.str();
-  }
+	// exception bits
+	if(mpfr_nan_p (mpx)) {
+		s << "11";
+		for(int i=0; i<wE+wF+1; i++)
+			s<< "0";
+		return s.str();
+	}
 
-  if(mpfr_zero_p (mpx)) {
-    s << "00";
-    for(int i=0; i<wE+wF+1; i++)
-      s<< "0";
-    return s.str();
-  }
+	if(mpfr_zero_p (mpx)) {
+		s << "00";
+		for(int i=0; i<wE+wF+1; i++)
+			s<< "0";
+		return s.str();
+	}
 
-  if(mpfr_inf_p (mpx)) {
-    s << "10";
-    for(int i=0; i<wE+wF+1; i++)
-      s<< "0";
-    return s.str();
-  }
+	if(mpfr_inf_p (mpx)) {
+		s << "10";
+		for(int i=0; i<wE+wF+1; i++)
+			s<< "0";
+		return s.str();
+	}
 
-  // otherwise normal number
-  s << "01";
+	// otherwise normal number
+	s << "01";
 
-  // sign bit
-  int sign = mpfr_sgn(mpx);
+	// sign bit
+	int sign = mpfr_sgn(mpx);
 
-  if(sign<0) {
-    mpfr_neg(mpx, mpx, GMP_RNDN);
-    s << "1";
-  }
-  else
-    s << "0";
+	if(sign<0) {
+		mpfr_neg(mpx, mpx, GMP_RNDN);
+		s << "1";
+	}
+	else
+		s << "0";
 
-  // compute exponent and mantissa
-  mpz_class exponent = 0;
-  mpz_class biased_exponent;
+	// compute exponent and mantissa
+	mpz_class exponent = 0;
+	mpz_class biased_exponent;
 
-  mpfr_init2(one, 2);
-  mpfr_set_d(one, 1.0, GMP_RNDN);
-  mpfr_init2(two, 2);
-  mpfr_set_d(two, 2.0, GMP_RNDN);
+	mpfr_init2(one, 2);
+	mpfr_set_d(one, 1.0, GMP_RNDN);
+	mpfr_init2(two, 2);
+	mpfr_set_d(two, 2.0, GMP_RNDN);
 
-  while(mpfr_less_p(mpx,one)) {
-    mpfr_mul(mpx, mpx, two, GMP_RNDN);
-    exponent --;
-  }
-  while(mpfr_greaterequal_p(mpx, two)) {
-    mpfr_div(mpx, mpx, two, GMP_RNDN);
-    exponent ++;
-  }
+	while(mpfr_less_p(mpx,one)) {
+		mpfr_mul(mpx, mpx, two, GMP_RNDN);
+		exponent --;
+	}
+	while(mpfr_greaterequal_p(mpx, two)) {
+		mpfr_div(mpx, mpx, two, GMP_RNDN);
+		exponent ++;
+	}
 
-  // add exponent bias
-  biased_exponent = exponent + (mpz_class(1)<<(wE-1)) - 1;
+	// add exponent bias
+	biased_exponent = exponent + (mpz_class(1)<<(wE-1)) - 1;
 
-  if ( biased_exponent<0 || biased_exponent>=(mpz_class(1)<<wE) )  {
-    cerr << "Exponent out of range in fp2bin, exiting"<<endl;
-    exit(EXIT_FAILURE);
-  }
+	if ( biased_exponent<0 || biased_exponent>=(mpz_class(1)<<wE) )  {
+		cerr << "Exponent out of range in fp2bin, exiting"<<endl;
+		exit(EXIT_FAILURE);
+	}
 
-  // exponent
-  s << unsigned_binary(biased_exponent, wE);
-    
-  // significand
-  
-  mpfr_sub(mpx, mpx, one, GMP_RNDN);
-  for (int i=0; i<wF; i++) {
-    mpfr_mul(mpx, mpx, two, GMP_RNDN);
-    if(mpfr_greaterequal_p(mpx, one)) {
-      s << "1";
-      mpfr_sub(mpx, mpx, one, GMP_RNDN);
-    }
-    else
-      s << "0";
-  }
+	// exponent
+	s << unsigned_binary(biased_exponent, wE);
+		
+	// significand
+	
+	mpfr_sub(mpx, mpx, one, GMP_RNDN);
+	for (int i=0; i<wF; i++) {
+		mpfr_mul(mpx, mpx, two, GMP_RNDN);
+		if(mpfr_greaterequal_p(mpx, one)) {
+			s << "1";
+			mpfr_sub(mpx, mpx, one, GMP_RNDN);
+		}
+		else
+			s << "0";
+	}
 
-  mpfr_clear(mpx);
-  mpfr_clear(one);
-  mpfr_clear(two);
-  return s.str();
+	mpfr_clear(mpx);
+	mpfr_clear(one);
+	mpfr_clear(two);
+	return s.str();
 }
 
 
@@ -165,29 +165,29 @@ string fp2bin(mpfr_t x, int wE, int wF){
 // TODO remove this function
 void printBinNum(ostream& o, uint64_t x, int size)
 {
-  uint64_t po2 = ((uint64_t) 1)<<size; 
-  char bit;
+	uint64_t po2 = ((uint64_t) 1)<<size; 
+	char bit;
 
-  if(size>=64){
-    cerr << "\n printBinNum: size larger than 64" << endl;
-    exit(1);    
-  }
+	if(size>=64){
+		cerr << "\n printBinNum: size larger than 64" << endl;
+		exit(1);    
+	}
 
-  if ((x<0) || (x >= po2) ) {
-    cerr << "\n printBinNum: input out of range" << endl;
-    exit(1);
-  }
-  for (int i = 0; i < size ; i++) {
-    po2 = po2>>1;
-    if (x >= po2) {
-      bit = '1';
-      x -= po2;
-    }
-    else {
-      bit = '0';
-    }
-    o << bit;
-  }
+	if ((x<0) || (x >= po2) ) {
+		cerr << "\n printBinNum: input out of range" << endl;
+		exit(1);
+	}
+	for (int i = 0; i < size ; i++) {
+		po2 = po2>>1;
+		if (x >= po2) {
+			bit = '1';
+			x -= po2;
+		}
+		else {
+			bit = '0';
+		}
+		o << bit;
+	}
 }
 
 
@@ -195,16 +195,16 @@ void printBinNum(ostream& o, uint64_t x, int size)
 
 void printBinNumGMP(ostream& o, mpz_class x, int size)
 {
-  mpz_class px;  
-  if(x<0) {
-    o<<"-";
-    px=-x;
-  }
-  else {
-    o<<" ";
-    px=x;
-  }
-  printBinPosNumGMP(o, px, size);
+	mpz_class px;  
+	if(x<0) {
+		o<<"-";
+		px=-x;
+	}
+	else {
+		o<<" ";
+		px=x;
+	}
+	printBinPosNumGMP(o, px, size);
 }
 
 
@@ -213,29 +213,29 @@ void printBinNumGMP(ostream& o, mpz_class x, int size)
 void printBinPosNumGMP(ostream& o, mpz_class x, int size)
 {
 #if 0 // to be removed some day
-  mpz_class po2, number;
-  char bit;
+	mpz_class po2, number;
+	char bit;
 
-  if(x<0) {
-    cerr<<"printBinPosNumGMP: Positive number expected, got x="<<x.get_d()<<endl;
-    exit(1);
-  }
-  po2 = ((mpz_class) 1)<<size;
-  number=x;
-    
-  for (int i = 0; i < size ; i++) {
-    po2 = po2>>1;
-    if (number >= po2) {
-      bit = '1';
-      number -= po2;
-    }
-    else {
-      bit = '0';
-    }
-    o << bit;
-  }
+	if(x<0) {
+		cerr<<"printBinPosNumGMP: Positive number expected, got x="<<x.get_d()<<endl;
+		exit(1);
+	}
+	po2 = ((mpz_class) 1)<<size;
+	number=x;
+		
+	for (int i = 0; i < size ; i++) {
+		po2 = po2>>1;
+		if (number >= po2) {
+			bit = '1';
+			number -= po2;
+		}
+		else {
+			bit = '0';
+		}
+		o << bit;
+	}
 #else
-  o << unsigned_binary(x,size);
+	o << unsigned_binary(x,size);
 #endif
 }
 
@@ -243,55 +243,55 @@ void printBinPosNumGMP(ostream& o, mpz_class x, int size)
 
 double iround(double number, int bits)
 {
-  double shift = intpow2(bits);
-  double x = number * shift;
-  return floor(x + 0.5) / shift;
+	double shift = intpow2(bits);
+	double x = number * shift;
+	return floor(x + 0.5) / shift;
 }
 
 double ifloor(double number, int bits)
 {
-  double shift = intpow2(bits);
-  return floor(number * shift) / shift;
+	double shift = intpow2(bits);
+	return floor(number * shift) / shift;
 }
 
 //  2 ^ power
 double intpow2(int power)
 {
-  double x = 1;
-  for (int i = 0; i < power; i++)
-    x *= 2;
-  return x;
+	double x = 1;
+	for (int i = 0; i < power; i++)
+		x *= 2;
+	return x;
 }
 
 //  2 ^ -minusPower. Exact, no round
 double invintpow2(int minusPower)
 {
-  double x = 1;
-  for (int i = 0; i < minusPower; i++)
-    x /= 2;
-  return x;
+	double x = 1;
+	for (int i = 0; i < minusPower; i++)
+		x /= 2;
+	return x;
 }
 
 // How many bits does it take to write number ?
 int intlog2(double number)
 {
-  double po2 = 1.0; int result = 0;
-  while (po2 <= number) {
-    po2 *= 2;
-    result++;
-  }
-  return result;
+	double po2 = 1.0; int result = 0;
+	while (po2 <= number) {
+		po2 *= 2;
+		result++;
+	}
+	return result;
 }
 
 int intlog2(mpz_class number)
 {
-  mpz_class po2 = 1; 
-  int result = 0;
-  while (po2 <= number) {
-    po2 *= 2;
-    result++;
-  }
-  return result;
+	mpz_class po2 = 1; 
+	int result = 0;
+	while (po2 <= number) {
+		po2 *= 2;
+		result++;
+	}
+	return result;
 }
 
 mpz_class getLargeRandom(int n)

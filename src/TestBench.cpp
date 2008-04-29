@@ -1,4 +1,3 @@
-/* vim: set tabstop=8 softtabstop=2 shiftwidth=2: */
 /*
  * A generic wrapper generator for FloPoCo. 
  *
@@ -38,122 +37,122 @@
 #include "TestBench.hpp"
 
 TestBench::TestBench(Target* target, Operator* op, int n):
-  Operator(target), op(op), n(n)
+	Operator(target), op(op), n(n)
 {
-  unique_name = "TestBench_" + op->unique_name;
-  set_pipeline_depth(42);	// could be any number
+	unique_name = "TestBench_" + op->unique_name;
+	set_pipeline_depth(42);	// could be any number
 
-  // declare internal registered signals
-  for(int i=0; i<op->ioList.size(); i++){
-    string idext = op->ioList[i]->id() ;
-    add_signal(idext, op->ioList[i]->width());
-  }
+	// declare internal registered signals
+	for(int i=0; i<op->ioList.size(); i++){
+		string idext = op->ioList[i]->id() ;
+		add_signal(idext, op->ioList[i]->width());
+	}
 
-  /* add bogus clk and rst signal if the UUT does not have them */
-  try {
-    add_signal("clk", 1);
-    add_signal("rst", 1);
-  } catch (std::string) {
-    /* silently ignore */
-  }
+	/* add bogus clk and rst signal if the UUT does not have them */
+	try {
+		add_signal("clk", 1);
+		add_signal("rst", 1);
+	} catch (std::string) {
+		/* silently ignore */
+	}
 }
 
 TestBench::~TestBench() { }
 
 void TestBench::output_vhdl(ostream& o, string name) {
-  /* Generate some TestCases
-   * We do this as early as possible, so that no VHDL is generated
-   * if test cases are not implemented for the given operator
-   */
-  TestCaseList tcl = op->generateStandardTestCases(n) + op->generateRandomTestCases(n);
+	/* Generate some TestCases
+	 * We do this as early as possible, so that no VHDL is generated
+	 * if test cases are not implemented for the given operator
+	 */
+	TestCaseList tcl = op->generateStandardTestCases(n) + op->generateRandomTestCases(n);
 
-  Licence(o,"Florent de Dinechin (2007)");
-  Operator::StdLibs(o);
+	Licence(o,"Florent de Dinechin (2007)");
+	Operator::StdLibs(o);
 
-  output_vhdl_entity(o);
-  o << "architecture behavorial of " << name  << " is" << endl;
+	output_vhdl_entity(o);
+	o << "architecture behavorial of " << name  << " is" << endl;
 
-  // the operator to wrap
-  op->output_vhdl_component(o);
-  // The local signals
-  output_vhdl_signal_declarations(o);
+	// the operator to wrap
+	op->output_vhdl_component(o);
+	// The local signals
+	output_vhdl_signal_declarations(o);
 
-  o << "begin\n";
+	o << "begin\n";
 
-  // the instance
-  // XXX: Ugly! Will write something to encapsulate this.
-  o << tab << "uut:" << op->unique_name << "\n"
-    << tab << tab << "port map ( ";
-  for(int i=0; i<op->ioList.size(); i++) {
-    Signal s = *op->ioList[i];
-    if(i>0) 
-      o << tab << tab << "           ";
-    string idext =  op->ioList[i]->id() ;
-    if(op->ioList[i]->type() == Signal::in)
-      o << op->ioList[i]->id()  << " =>  " << idext;
-    else
-      o << op->ioList[i]->id()  << " =>  " << idext;
-    if (i < op->ioList.size()-1) 
-      o << "," << endl;
-  }
-  o << ");" <<endl;
+	// the instance
+	// XXX: Ugly! Will write something to encapsulate this.
+	o << tab << "uut:" << op->unique_name << "\n"
+		<< tab << tab << "port map ( ";
+	for(int i=0; i<op->ioList.size(); i++) {
+		Signal s = *op->ioList[i];
+		if(i>0) 
+			o << tab << tab << "           ";
+		string idext =  op->ioList[i]->id() ;
+		if(op->ioList[i]->type() == Signal::in)
+			o << op->ioList[i]->id()  << " =>  " << idext;
+		else
+			o << op->ioList[i]->id()  << " =>  " << idext;
+		if (i < op->ioList.size()-1) 
+			o << "," << endl;
+	}
+	o << ");" <<endl;
 
-  o <<endl;
+	o <<endl;
 
-  o << tab << "-- Ticking clock signal" <<endl;
-  o << tab << "process" <<endl;
-  o << tab << "begin" <<endl;
-  o << tab << tab << "clk <= '1';" <<endl;
-  o << tab << tab << "wait for 5 ns;" <<endl;
-  o << tab << tab << "clk <= '0';" <<endl;
-  o << tab << tab << "wait for 5 ns;" <<endl;
-  o << tab << "end process;" <<endl;
-  o <<endl;
+	o << tab << "-- Ticking clock signal" <<endl;
+	o << tab << "process" <<endl;
+	o << tab << "begin" <<endl;
+	o << tab << tab << "clk <= '1';" <<endl;
+	o << tab << tab << "wait for 5 ns;" <<endl;
+	o << tab << tab << "clk <= '0';" <<endl;
+	o << tab << tab << "wait for 5 ns;" <<endl;
+	o << tab << "end process;" <<endl;
+	o <<endl;
 
-  o << tab << "-- Setting the inputs" <<endl;
-  o << tab << "process" <<endl;
-  o << tab << "begin" <<endl;
-  o << tab << tab << "-- Send reset" <<endl;
-  o << tab << tab << "rst <= '1';" << endl;
-  o << tab << tab << "wait for 10 ns;" << endl;
-  o << tab << tab << "rst <= '0';" << endl;
-  for (int i = 0; i < tcl.getNumberOfTestCases(); i++)
-  {
-    o << tcl.getTestCase(i).getInputVHDL(tab + tab);
-    o << tab << tab << "wait for 10 ns;" <<endl;
-  } 
-  o << tab << tab << "wait for 100000 ns; -- allow simulation to finish" << endl;
-  o << tab << "end process;" <<endl;
-  o <<endl;
+	o << tab << "-- Setting the inputs" <<endl;
+	o << tab << "process" <<endl;
+	o << tab << "begin" <<endl;
+	o << tab << tab << "-- Send reset" <<endl;
+	o << tab << tab << "rst <= '1';" << endl;
+	o << tab << tab << "wait for 10 ns;" << endl;
+	o << tab << tab << "rst <= '0';" << endl;
+	for (int i = 0; i < tcl.getNumberOfTestCases(); i++)
+	{
+		o << tcl.getTestCase(i).getInputVHDL(tab + tab);
+		o << tab << tab << "wait for 10 ns;" <<endl;
+	} 
+	o << tab << tab << "wait for 100000 ns; -- allow simulation to finish" << endl;
+	o << tab << "end process;" <<endl;
+	o <<endl;
 
-  int currentOutputTime = 0;
-  o << tab << "-- Checking the outputs" <<endl;
-  o << tab << "process" <<endl;
-  o << tab << "begin" <<endl;
-  o << tab << tab << "wait for 10 ns; -- wait for reset to complete" <<endl;
-  currentOutputTime += 10;
-  o << tab << tab << "wait for "<< op->pipeline_depth()*10 <<" ns; -- wait for pipeline to flush" <<endl;
-  currentOutputTime += op->pipeline_depth()*10;
-  for (int i = 0; i < tcl.getNumberOfTestCases(); i++)
-  {
-    o << tab << tab << "wait for 5 ns;" <<endl;
-    currentOutputTime += 5;
-    o << tab << tab << "-- " << "current time: " << currentOutputTime <<endl;
-    o << tcl.getTestCase(i).getInputVHDL(tab + tab + "-- input: ");
-    o << tcl.getTestCase(i).getExpectedOutputVHDL(tab + tab);
-    o << tab << tab << "wait for 5 ns;" <<endl;
-    currentOutputTime += 5;
-  } 
-  o << tab << tab << "assert false report \"End of simulation\" severity failure;" <<endl;
-  o << tab << "end process;" <<endl;
-  
-  o << "end architecture;" << endl << endl;
+	int currentOutputTime = 0;
+	o << tab << "-- Checking the outputs" <<endl;
+	o << tab << "process" <<endl;
+	o << tab << "begin" <<endl;
+	o << tab << tab << "wait for 10 ns; -- wait for reset to complete" <<endl;
+	currentOutputTime += 10;
+	o << tab << tab << "wait for "<< op->pipeline_depth()*10 <<" ns; -- wait for pipeline to flush" <<endl;
+	currentOutputTime += op->pipeline_depth()*10;
+	for (int i = 0; i < tcl.getNumberOfTestCases(); i++)
+	{
+		o << tab << tab << "wait for 5 ns;" <<endl;
+		currentOutputTime += 5;
+		o << tab << tab << "-- " << "current time: " << currentOutputTime <<endl;
+		o << tcl.getTestCase(i).getInputVHDL(tab + tab + "-- input: ");
+		o << tcl.getTestCase(i).getExpectedOutputVHDL(tab + tab);
+		o << tab << tab << "wait for 5 ns;" <<endl;
+		currentOutputTime += 5;
+	} 
+	o << tab << tab << "assert false report \"End of simulation\" severity failure;" <<endl;
+	o << tab << "end process;" <<endl;
+	
+	o << "end architecture;" << endl << endl;
 
-  cerr << "To run the simulation, type the following in 'rlwrap vsim -c':" <<endl;
-  cerr << tab << "vdel -all -lib work" <<endl;
-  cerr << tab << "vlib work" <<endl;
-  cerr << tab << "vcom flopoco.vhdl" <<endl;
-  cerr << tab << "vsim " << name <<endl;
-  cerr << tab << "add wave -r *" <<endl;
-  cerr << tab << "run " << currentOutputTime << endl;
+	cerr << "To run the simulation, type the following in 'rlwrap vsim -c':" <<endl;
+	cerr << tab << "vdel -all -lib work" <<endl;
+	cerr << tab << "vlib work" <<endl;
+	cerr << tab << "vcom flopoco.vhdl" <<endl;
+	cerr << tab << "vsim " << name <<endl;
+	cerr << tab << "add wave -r *" <<endl;
+	cerr << tab << "run " << currentOutputTime << endl;
 }

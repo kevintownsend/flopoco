@@ -1,60 +1,59 @@
-/* vim: set tabstop=8 softtabstop=2 shiftwidth=2: */
 #include "TestCase.hpp"
 
 std::string TestCase::signalValueToVHDL(Signal s, mpz_class v, bool quot)
 {
-  std::string o;
+	std::string o;
 
-  /* Get base 2 representation */
-  o = v.get_str(2);
+	/* Get base 2 representation */
+	o = v.get_str(2);
 
-  /* Some check */
-  if (o.size() > s.width())
-  {
-    std::ostringstream o;
-    o << "Error in " <<  __FILE__ << "@" << __LINE__ << ": value is larger than signal " << s.id();
-    throw o.str();
-  }
+	/* Some check */
+	if (o.size() > s.width())
+	{
+		std::ostringstream o;
+		o << "Error in " <<  __FILE__ << "@" << __LINE__ << ": value is larger than signal " << s.id();
+		throw o.str();
+	}
 
-  /* Do padding */
-  while (o.size() < s.width())
-    o = "0" + o;
+	/* Do padding */
+	while (o.size() < s.width())
+		o = "0" + o;
 
-  /* Put apostrophe / quot */
-  if (!quot) return o;
-  if (s.width() > 1)
-    return "\"" + o + "\"";
-  else
-    return "'" + o + "'";
+	/* Put apostrophe / quot */
+	if (!quot) return o;
+	if (s.width() > 1)
+		return "\"" + o + "\"";
+	else
+		return "'" + o + "'";
 }
 
 
 std::string TestCase::signalValueToVHDLHex(Signal s, mpz_class v, bool quot)
 {
-  std::string o;
+	std::string o;
 
-  /* Get base 16 representation */
-  o = v.get_str(16);
+	/* Get base 16 representation */
+	o = v.get_str(16);
 
-  /* Some check */
-  /* XXX: Too permissive */
-  if (o.size() * 4 > s.width() + 4)
-  {
-    std::ostringstream o;
-    o << "Error in " <<  __FILE__ << "@" << __LINE__ << ": value is larger than signal " << s.id();
-    throw o.str();
-  }
+	/* Some check */
+	/* XXX: Too permissive */
+	if (o.size() * 4 > s.width() + 4)
+	{
+		std::ostringstream o;
+		o << "Error in " <<  __FILE__ << "@" << __LINE__ << ": value is larger than signal " << s.id();
+		throw o.str();
+	}
 
-  /* Do padding */
-  while (o.size() * 4 < s.width())
-    o = "0" + o;
+	/* Do padding */
+	while (o.size() * 4 < s.width())
+		o = "0" + o;
 
-  /* Put apostrophe / quot */
-  if (!quot) return o;
-  if (s.width() > 1)
-    return "x\"" + o + "\"";
-  else
-    return "'" + o + "'";
+	/* Put apostrophe / quot */
+	if (!quot) return o;
+	if (s.width() > 1)
+		return "x\"" + o + "\"";
+	else
+		return "'" + o + "'";
 }
 
 TestCase::TestCase() { }
@@ -62,87 +61,87 @@ TestCase::~TestCase() { }
 
 void TestCase::addInput(Signal s, mpz_class v)
 {
-  inputs[s] = v;
+	inputs[s] = v;
 }
 
 void TestCase::addExpectedOutput(Signal s, mpz_class v)
 {
-  outputs[s].insert(v);
+	outputs[s].insert(v);
 }
 
 std::string TestCase::getInputVHDL(std::string prepend)
 {
-  std::ostringstream o;
+	std::ostringstream o;
 
-  /* Add comment if there is one */
-  if (comment != "")
-    o << prepend << "-- " << comment << std::endl;
+	/* Add comment if there is one */
+	if (comment != "")
+		o << prepend << "-- " << comment << std::endl;
 
-  /* Iterate through input signals */
-  for (Inputs::iterator it = inputs.begin(); it != inputs.end(); it++)
-  {
-    Signal s = it->first;
-    mpz_class v = it->second;
-    o << prepend;
-    o << s.id() << " <= " << signalValueToVHDL(s, v) << "; ";
-    o << std::endl;
-  }
+	/* Iterate through input signals */
+	for (Inputs::iterator it = inputs.begin(); it != inputs.end(); it++)
+	{
+		Signal s = it->first;
+		mpz_class v = it->second;
+		o << prepend;
+		o << s.id() << " <= " << signalValueToVHDL(s, v) << "; ";
+		o << std::endl;
+	}
 
-  return o.str();
+	return o.str();
 }
 
 std::string TestCase::getExpectedOutputVHDL(std::string prepend)
 {
-  std::ostringstream o;
+	std::ostringstream o;
 
-  /* Add comment, if there is one */
-  if (comment != "")
-    o << prepend << "-- " << comment << std::endl;
+	/* Add comment, if there is one */
+	if (comment != "")
+		o << prepend << "-- " << comment << std::endl;
 
-  /* Iterate through output signals */
-  for (Outputs::iterator it = outputs.begin(); it != outputs.end(); it++)
-  {
-    Signal s = it->first;
-    std::set<mpz_class> vs = it->second;
-    std::string expected;
+	/* Iterate through output signals */
+	for (Outputs::iterator it = outputs.begin(); it != outputs.end(); it++)
+	{
+		Signal s = it->first;
+		std::set<mpz_class> vs = it->second;
+		std::string expected;
 
-    o << prepend;
-    o << "assert false";  // XXX: Too lazy to make an exception for the first value
+		o << prepend;
+		o << "assert false";  // XXX: Too lazy to make an exception for the first value
 
-    /* Iterate through possible output values */
-    for (std::set<mpz_class>::iterator it = vs.begin(); it != vs.end(); it++)
-    {
-      mpz_class v = *it;
-      o << " or " << s.id() << "=" << signalValueToVHDL(s,v);
-      expected += " " + signalValueToVHDL(s,v,false);
-    }
+		/* Iterate through possible output values */
+		for (std::set<mpz_class>::iterator it = vs.begin(); it != vs.end(); it++)
+		{
+			mpz_class v = *it;
+			o << " or " << s.id() << "=" << signalValueToVHDL(s,v);
+			expected += " " + signalValueToVHDL(s,v,false);
+		}
 
-    o << " report \"Incorrect output value for " << s.id() << ", expected" << expected << "\" severity ERROR; ";
-    o << std::endl;
-  }
+		o << " report \"Incorrect output value for " << s.id() << ", expected" << expected << "\" severity ERROR; ";
+		o << std::endl;
+	}
 
-  return o.str();
+	return o.str();
 }
 
 void TestCase::addComment(std::string c)
 {
-  comment = c;
+	comment = c;
 }
 
 mpz_class TestCase::getInput(Signal s)
 {
-  Inputs::iterator it = inputs.find(s);
-  if (it == inputs.end())
-    throw std::string("TestCase::getInput: input not found ") + s.id();
-  return it->second;
+	Inputs::iterator it = inputs.find(s);
+	if (it == inputs.end())
+		throw std::string("TestCase::getInput: input not found ") + s.id();
+	return it->second;
 }
 
 mpz_class TestCase::getOneExpectedOutput(Signal s)
 {
-  std::set<mpz_class> vs = outputs[s];
-  if (vs.size() != 1)
-    throw std::string("TestCase::getOneExpectedOutput: not a single expected output for ") + s.id();
-  return *vs.begin();
+	std::set<mpz_class> vs = outputs[s];
+	if (vs.size() != 1)
+		throw std::string("TestCase::getOneExpectedOutput: not a single expected output for ") + s.id();
+	return *vs.begin();
 }
 
 TestCaseList::TestCaseList() { }
@@ -150,30 +149,30 @@ TestCaseList::~TestCaseList() { }
 
 void TestCaseList::add(TestCase t)
 {
-  v.push_back(t);
+	v.push_back(t);
 }
 
 int TestCaseList::getNumberOfTestCases()
 {
-  return v.size();
+	return v.size();
 }
 
 TestCase TestCaseList::getTestCase(int i)
 {
-  return v[i];
+	return v[i];
 }
 
 TestCaseList TestCaseList::operator+(TestCaseList second)
 {
-  TestCaseVector vt;
-  TestCaseVector::iterator it;
+	TestCaseVector vt;
+	TestCaseVector::iterator it;
 
-  vt.reserve(v.size() + second.v.size());
-  for (it = v.begin(); it != v.end(); it++)
-    vt.push_back(*it);
-  for (it = second.v.begin(); it != second.v.end(); it++)
-    vt.push_back(*it);
+	vt.reserve(v.size() + second.v.size());
+	for (it = v.begin(); it != v.end(); it++)
+		vt.push_back(*it);
+	for (it = second.v.begin(); it != second.v.end(); it++)
+		vt.push_back(*it);
 
-  return TestCaseList(vt);
+	return TestCaseList(vt);
 }
 

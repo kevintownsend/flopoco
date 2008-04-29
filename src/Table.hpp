@@ -12,68 +12,68 @@ class Table
 {
  public:
 
-  int wIn;
+	int wIn;
 
-  int wOut;
+	int wOut;
 
-  int minIn; // usually 0
+	int minIn; // usually 0
 
-  int maxIn; // usually 2^wIn-1
-  
-  Table(int wIn, int wOut) : 
-    wIn(wIn), wOut(wOut) 
-  {
-  }
+	int maxIn; // usually 2^wIn-1
+	
+	Table(int wIn, int wOut) : 
+		wIn(wIn), wOut(wOut) 
+	{
+	}
 
-  Table(int wIn, int wOut, int minIn=0, int maxIn=-1) : 
-    wIn(wIn), wOut(wOut), minIn(minIn), maxIn(maxIn)
-  {
-    if(maxIn==-1) maxIn==(1<<wIn)-1;
-    if(minIn<0) {
-      cerr<<"ERROR in Table::Table, minIn<0\n";
-      exit(EXIT_FAILURE);
-    }
-    if(maxIn>=(1<<wIn)) {
-      cerr<<"ERROR in Table::Table, maxIn too large\n";
-      exit(EXIT_FAILURE);
-    }
-    if((minIn==0) && (maxIn==(1<<wIn)-1)) 
-      full=true;
-    else
-      full=false;
-  }
+	Table(int wIn, int wOut, int minIn=0, int maxIn=-1) : 
+		wIn(wIn), wOut(wOut), minIn(minIn), maxIn(maxIn)
+	{
+		if(maxIn==-1) maxIn==(1<<wIn)-1;
+		if(minIn<0) {
+			cerr<<"ERROR in Table::Table, minIn<0\n";
+			exit(EXIT_FAILURE);
+		}
+		if(maxIn>=(1<<wIn)) {
+			cerr<<"ERROR in Table::Table, maxIn too large\n";
+			exit(EXIT_FAILURE);
+		}
+		if((minIn==0) && (maxIn==(1<<wIn)-1)) 
+			full=true;
+		else
+			full=false;
+	}
 
-  virtual ~Table() {};
+	virtual ~Table() {};
 
-  // An integer function of [0, 2^wIn-1]  in [0, 2^wOut-1] 
-  // It may be defined only on [minIn, int maxIn]
+	// An integer function of [0, 2^wIn-1]  in [0, 2^wOut-1] 
+	// It may be defined only on [minIn, int maxIn]
 
-  virtual mpz_class function(int x) =0;
-
-
-  void outputComponent(ostream& o, string name, int component_id);
-  void outputComponent(ostream& o, string name);
+	virtual mpz_class function(int x) =0;
 
 
-  void output(ostream& o, string name, int component_id);
-  void output(ostream& o, string name);
+	void outputComponent(ostream& o, string name, int component_id);
+	void outputComponent(ostream& o, string name);
 
-  // This function should be overridden by an implementation of Table
-  virtual int    double2input(double x);
 
-  // This function should be overridden by an implementation of Table
-  virtual double input2double(int x);
+	void output(ostream& o, string name, int component_id);
+	void output(ostream& o, string name);
 
-  // This function should be overridden by an implementation of Table
-  virtual  mpz_class double2output(double x);
+	// This function should be overridden by an implementation of Table
+	virtual int    double2input(double x);
 
-  // This function should be overridden by an implementation of Table
-  virtual double output2double(mpz_class x);
-  
-  int size_in_LUTs();
+	// This function should be overridden by an implementation of Table
+	virtual double input2double(int x);
+
+	// This function should be overridden by an implementation of Table
+	virtual  mpz_class double2output(double x);
+
+	// This function should be overridden by an implementation of Table
+	virtual double output2double(mpz_class x);
+	
+	int size_in_LUTs();
  private:
-  bool full; // true if there is no "don't care" inputs, i.e. minIn=0 and maxIn=2^wIn-1
-  void output_lines(ostream& o);
+	bool full; // true if there is no "don't care" inputs, i.e. minIn=0 and maxIn=2^wIn-1
+	void output_lines(ostream& o);
 };
 
 

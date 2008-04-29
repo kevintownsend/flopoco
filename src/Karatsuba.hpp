@@ -26,7 +26,7 @@ public:
 	/** the width (in bits) of the output R  */
 	int wOut; 
 
-  void BuildCombinationalKaratsuba(std::ostream& o, int L, int R, string lName, string rName, string resultName, int depth, string branch);
+	void BuildCombinationalKaratsuba(std::ostream& o, int L, int R, string lName, string rName, string resultName, int depth, string branch);
 
 
 	/** Overloading the virtual functions of Operator */
@@ -34,14 +34,13 @@ public:
 	/** A method which generates strings of zeros */ 
 	string zero_generator(int n, int margins); 
 	
-  /** Overloaded method */
+	/** Overloaded method */
 	virtual TestCaseList generateStandardTestCases(int n);
 	/** Overloaded method */ 
 	virtual TestCaseList generateRandomTestCases(int n); 
 
 private:
-  int multiplierWidth;
-
+	int multiplierWidth;
 	
 };
 #endif

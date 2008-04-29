@@ -13,9 +13,9 @@ class ShiftAddDag;
  ShiftAddOp defines a shift-and-add operation.
 
  ShiftAddDag deals with the implementation of an IntConstMult as a
-   vector of ShiftAddOp. It defines the intermediate variables with
-   their bit sizes and provide methods for evaluating the cost of an
-   implementation. Hopefully. Some day.
+	 vector of ShiftAddOp. It defines the intermediate variables with
+	 their bit sizes and provide methods for evaluating the cost of an
+	 implementation. Hopefully. Some day.
 
 */
 
@@ -34,30 +34,30 @@ typedef enum {X, Add, Shift, NegShift} OpType;
 
 class ShiftAddOp {
 public:
-  ShiftAddDag* impl;
-  OpType op;
-  ShiftAddOp* j;
-  ShiftAddOp* i;
-  int s; // The shift is on i
-  mpz_class n; //the constant by which this variable multiplies
-  string name; // its string representation  
-  int size; // the size of n
-  bool isRegister; // if true, buffer the output in a pipeline implementation 
-  ShiftAddOp(ShiftAddDag* impl, OpType op, ShiftAddOp* i=NULL, int s=0, ShiftAddOp* j=NULL);
-  
-  ~ShiftAddOp(){};
-  
-  friend std::ostream& operator<<(std::ostream& o, const ShiftAddOp& sao ) // output
-  {    
-    o << sao.name << " <-  ";
-    switch(sao.op) {
-    case X:        o << " X"; break;
-    case Add:      o << sao.i->name << "<<" << sao.s << "  + " << sao.j->name;   break;
-    case Shift:    o << " " << sao.i->name << "<<" << sao.s;                     break;
-    case NegShift: o << "-" << sao.i->name << "<<" << sao.s;   break;
-    }   
-    return o;
-  }
+	ShiftAddDag* impl;
+	OpType op;
+	ShiftAddOp* j;
+	ShiftAddOp* i;
+	int s; // The shift is on i
+	mpz_class n; //the constant by which this variable multiplies
+	string name; // its string representation  
+	int size; // the size of n
+	bool isRegister; // if true, buffer the output in a pipeline implementation 
+	ShiftAddOp(ShiftAddDag* impl, OpType op, ShiftAddOp* i=NULL, int s=0, ShiftAddOp* j=NULL);
+	
+	~ShiftAddOp(){};
+	
+	friend std::ostream& operator<<(std::ostream& o, const ShiftAddOp& sao ) // output
+	{    
+		o << sao.name << " <-  ";
+		switch(sao.op) {
+		case X:        o << " X"; break;
+		case Add:      o << sao.i->name << "<<" << sao.s << "  + " << sao.j->name;   break;
+		case Shift:    o << " " << sao.i->name << "<<" << sao.s;                     break;
+		case NegShift: o << "-" << sao.i->name << "<<" << sao.s;   break;
+		}   
+		return o;
+	}
 };
 
 #endif

@@ -12,30 +12,30 @@ using namespace std;
 
 class Term {
 public:
-  Term(int d_, double *k_, Param &p_);
-  virtual ~Term();
+	Term(int d_, double *k_, Param &p_);
+	virtual ~Term();
 
-  PWPolynomial *getErrMethod();
+	PWPolynomial *getErrMethod();
 
-  virtual void roundTables(int g, bool full = true, double *kAdjust = NULL) = 0;
+	virtual void roundTables(int g, bool full = true, double *kAdjust = NULL) = 0;
 
-  virtual double estimArea() = 0;
-  virtual double estimDelay() = 0;
+	virtual double estimArea() = 0;
+	virtual double estimDelay() = 0;
 
-  virtual double eval(long long int a, long long int b) const = 0;
-  virtual long long int evalRound(long long int a, long long int b) const = 0;
+	virtual double eval(long long int a, long long int b) const = 0;
+	virtual long long int evalRound(long long int a, long long int b) const = 0;
 
-  virtual void genVHDL(ostream &os, string name) = 0;
+	virtual void genVHDL(ostream &os, string name) = 0;
 
 protected:
-  int d;
-  double *k;
-  Param p;
+	int d;
+	double *k;
+	Param p;
 
-  PWPolynomial *errMethod;
+	PWPolynomial *errMethod;
 
 public:
-  int refCount;
+	int refCount;
 };
 
 #endif // _TERM_HH_

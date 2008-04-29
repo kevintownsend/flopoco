@@ -17,20 +17,20 @@ _fastcarry_delay for a new target  */
 class IntAdder : public Operator
 {
 public:
-  IntAdder(Target* target, int wIn);
-  ~IntAdder();
+	IntAdder(Target* target, int wIn);
+	~IntAdder();
 
-  int wIn;
+	int wIn;
 
 
-  // Overloading the virtual functions of Operator
-  void output_vhdl(std::ostream& o, std::string name);
+	// Overloading the virtual functions of Operator
+	void output_vhdl(std::ostream& o, std::string name);
 
 
 private:
-  int chunk_size;
-  int last_chunk_size; // the last one is slightly smaller
-  int pipe_levels;
+	int chunk_size;
+	int last_chunk_size; // the last one is slightly smaller
+	int pipe_levels;
 };
 
 

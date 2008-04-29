@@ -27,61 +27,61 @@ using namespace std;
 
 class HOTBMInstance {
 public:
-  HOTBMInstance(Function &f_, Param &p_);
-  ~HOTBMInstance();
+	HOTBMInstance(Function &f_, Param &p_);
+	~HOTBMInstance();
 
-  Param &getParam();
+	Param &getParam();
 
-  static void freeApproxCache();
-  static void freeTermCache(bool full = false);
+	static void freeApproxCache();
+	static void freeTermCache(bool full = false);
 
-  void roundTables(bool full = true);
-  void tune();
-  void dump(ostream &os, list<int> &dumpList);
+	void roundTables(bool full = true);
+	void tune();
+	void dump(ostream &os, list<int> &dumpList);
 
-  double estimArea(int t = -1) const;
-  double estimDelay(int t = -1) const;
+	double estimArea(int t = -1) const;
+	double estimDelay(int t = -1) const;
 
-  void genVHDL(ostream &os, string name);
+	void genVHDL(ostream &os, string name);
 
-  static bool verbose;
-  static bool force;
+	static bool verbose;
+	static bool force;
 
 private:
-  typedef pair<string, Param> tParam;
-  typedef pair<PWPolynomial, double> tApproxError;
-  typedef pair<double **, tApproxError> tApprox;
-  struct ltParam {
-    bool operator()(const tParam &p1, const tParam &p2) const;
-  };
-  typedef map<tParam, tApprox, ltParam> tApproxCache;
+	typedef pair<string, Param> tParam;
+	typedef pair<PWPolynomial, double> tApproxError;
+	typedef pair<double **, tApproxError> tApprox;
+	struct ltParam {
+		bool operator()(const tParam &p1, const tParam &p2) const;
+	};
+	typedef map<tParam, tApprox, ltParam> tApproxCache;
 
-  typedef pair<tParam, int> tTermParam;
-  typedef Term *tTerm;
-  struct ltTermParam {
-    bool operator()(const tTermParam &p1, const tTermParam &p2) const;
-  };
-  typedef map<tTermParam, tTerm, ltTermParam> tTermCache;
+	typedef pair<tParam, int> tTermParam;
+	typedef Term *tTerm;
+	struct ltTermParam {
+		bool operator()(const tTermParam &p1, const tTermParam &p2) const;
+	};
+	typedef map<tTermParam, tTerm, ltTermParam> tTermCache;
 
-  static tApproxCache approxCache;
-  static tTermCache termCache;
+	static tApproxCache approxCache;
+	static tTermCache termCache;
 
-  void computeApprox();
-  void buildTerms();
-  bool checkError();
+	void computeApprox();
+	void buildTerms();
+	bool checkError();
 
-  double eval(long long int x);
-  long long int evalRound(long long int x);
+	double eval(long long int x);
+	long long int evalRound(long long int x);
 
-  Function &f;
-  Param p;
+	Function &f;
+	Param p;
 
-  double **kList;
-  Term **tList;
-  PWPolynomial errPoly, errMethod[2];
-  double errBound[2];
-  double *kAdjust;
-  int nM, nT, gMax;
+	double **kList;
+	Term **tList;
+	PWPolynomial errPoly, errMethod[2];
+	double errBound[2];
+	double *kAdjust;
+	int nM, nT, gMax;
 };
 
 #endif // _HOTBMINSTANCE_HH_
