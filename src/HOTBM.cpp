@@ -8,11 +8,16 @@
 HOTBM::HOTBM(Target* target, string func, int wI, int wO, int n)
 	: inst(0), f(*new Function(func)), wI(wI), wO(wO)
 {
-	Param p(wI, wO, n);
-	Exhaustive ex(f, p);
+	try {
+		Param p(wI, wO, n);
+		Exhaustive ex(f, p);
 
-	inst = ex.getInstance();
-	inst->roundTables();
+		inst = 0;
+		inst = ex.getInstance();
+		inst->roundTables();
+	} catch (const char *s) {
+		throw std::string(s);
+	}
 	if (!inst)
 		throw std::string("HOTBM cound not be generated.");
 
