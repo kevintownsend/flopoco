@@ -40,7 +40,7 @@ public:
 	virtual TestCaseList generateRandomTestCases(int n); 
 
 private:
-	int multiplierWidth;
+	int multiplierXWidth;
 	
 };
 #endif
