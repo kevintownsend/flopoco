@@ -78,6 +78,7 @@ ADD_EXECUTABLE(flopoco
  src/LZOC
  src/Shifters
  src/LongAcc
+ src/DotProduct
  src/ConstMult/IntConstMult src/ConstMult/ShiftAddOp src/ConstMult/ShiftAddDag 
  src/ConstMult/FPConstMult 
  src/TestCase

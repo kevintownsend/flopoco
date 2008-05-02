@@ -36,6 +36,7 @@
 #include "Karatsuba.hpp"
 #include "FPMultiplier.hpp"
 #include "LongAcc.hpp"
+#include "DotProduct.hpp"
 #include "Wrapper.hpp"
 #include "TestBench.hpp"
 #include "BigTestBench.hpp"
@@ -84,7 +85,9 @@ static void usage(char *name){
 	cerr << "      integer multiplier of two integers X and Y of sizes wInX and wInY. For now the sizes must be equal \n";	
 	cerr << "    FPMultiplier wEX wFX wEY wFY wER wFR normalize\n";
 	cerr << "      floating-point multiplier \n";
-	cerr << "      normalize can be either 0 or 1. \n";     
+	cerr << "      normalize can be either 0 or 1. \n";     	
+	cerr << "    DotProduct wE wFX wFY MaxMSB_in LSB_acc MSB_acc\n";
+	cerr << "      floating-point dot product unit \n";
 #ifdef HAVE_HOTBM
 	cerr << "    HOTBM function wI wO degree\n";
 	cerr << "      High-order table-based method for generating a given function\n";
@@ -399,7 +402,24 @@ bool parse_command_line(int argc, char* argv[]){
 				// op->test_precision(n);
 				op->test_precision2();
 			}    
-		}    
+		}
+		else if(opname=="DotProduct"){
+			int nargs = 6;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int wE = check_strictly_positive(argv[i++], argv[0]);
+				int wFX = check_strictly_positive(argv[i++], argv[0]);
+				int wFY = check_strictly_positive(argv[i++], argv[0]);
+				int MaxMSBX = atoi(argv[i++]); // may be negative
+				int LSBA = atoi(argv[i++]); // may be negative
+				int MSBA = atoi(argv[i++]); // may be negative
+				cerr << "> DotProduct , wE="<<wE<<", wFX="<<wFX<<", wFY="<<wFY<<", MaxMSBX="<<MaxMSBX<<", LSBA="<<LSBA<<", MSBA="<<MSBA<<"\n";
+				op = new DotProduct(target, wE, wFX, wFY, MaxMSBX, LSBA, MSBA);
+				oplist.push_back(op);
+			}
+		}
+		    
 		else if (opname == "Wrapper") {
 			int nargs = 1;
 			if (i+nargs > argc)

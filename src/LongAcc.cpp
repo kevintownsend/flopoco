@@ -166,7 +166,7 @@ LongAcc::LongAcc(Target* target, int wEX, int wFX, int MaxMSBX, int LSBA, int MS
 	// it is rather stupid to register all the extended bits as they are
 	// all equal, but the synthesiser optimises it out
 	add_registered_signal_with_sync_reset("ext_summand2c", sizeAcc);
-	add_registered_signal_with_sync_reset("acc", sizeAcc); //,  "includes overflow bit");
+	add_signal("acc", sizeAcc); //,  "includes overflow bit");
 
 	if(verbose)
 		cout << tab <<unique_name<< " pipeline depth is " << pipeline_depth() << " cycles" <<endl;
@@ -221,7 +221,7 @@ int i;
 	
 	
 	//was o << tab << "summand2c <= summand when "<< get_delay_signal_name("signX", shifter->pipeline_depth()) <<"='0' else ("<<sizeSummand-1<<" downto 0 => '0') - summand; "<< endl;
-	//Don't compute 2's complement just yet, just invert the bits and leave the addition of the extra 1 addition in accumulation.
+	//Don't compute 2's complement just yet, just invert the bits and leave the addition of the extra 1 in accumulation.
 	o << tab << "summand2c <= summand when "<< get_delay_signal_name("signX", shifter->pipeline_depth()) <<"='0' else not(summand); "<< endl;
 	
 	o << endl;
@@ -245,7 +245,7 @@ int i;
 				o << tab << "acc_0 <= acc_0_d + ext_summand2c_d + carryIn_d;"<<endl;
 			else 
 				if ((i==0) & (additionNumberOfChunks!=1) )
-					o << tab << "acc_0 <= acc_0_d + ext_summand2c_d("<<rebalancedAdditionLastChunkSize -1 << " downto  0" <<") + carryIn_d;"<<endl;
+					o << tab << "acc_0 <= acc_0_d + ext_summand2c_d("<<rebalancedAdditionChunkSize -1 << " downto  0" <<") + carryIn_d;"<<endl;
 				else 
 					if (i!=additionNumberOfChunks-1){
 						o<<tab<<"acc_"<<i<<"_ext <= ( \"0\" & acc_"<<i<<"_d ) + ( \"0\" & ext_summand2c_d("<<rebalancedAdditionChunkSize*(i+1)-1 << " downto "<<rebalancedAdditionChunkSize*i<<")) + carryBit_"<<i<<"_d;"<<endl;
@@ -267,11 +267,12 @@ int i;
 		//compose the acc signal 
 		
 		o << tab << "acc <= ";
-		for (i=0;i<additionNumberOfChunks;i++) {
+		for (i=additionNumberOfChunks-1;i>=0;i--) {
+			
 			if (additionNumberOfChunks==1) 
 				o<< "acc_0_d;";
 			else
-				if (i!=additionNumberOfChunks-1)
+				if (i!=0)
 					o<< "acc_"<<i<<"_d & ";
 				else
 					o<< "acc_"<<i<<"_d;";
@@ -281,7 +282,7 @@ int i;
 
 	output_vhdl_registers(o);
 
-	o << tab << "  A <=   acc_d;" << endl;
+	o << tab << "  A <=   acc;" << endl;
 	
 	//TODO sticky overflow for the accumulator.
 	//TODO sticky overflow for the input.

@@ -181,7 +181,7 @@ string  Operator::add_delay_signal(const string name, const int width, const int
 				cerr << "ERROR in add_input , signal " << name<< " seems to already exist" << endl;
 				exit(EXIT_FAILURE);
 			}
-			s = new Signal(o.str(), Signal::registered, width);
+			s = new Signal(o.str(), Signal::registered_with_sync_reset, width);
 			signalList.push_back(s);    
 			_signal_map[name] = s ;
 			o  <<"_d";

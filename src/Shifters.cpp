@@ -103,7 +103,7 @@ Shifter::Shifter(Target* target, int wIn, int maxShift, ShiftDirection direction
 		ostringstream sname;
 		sname << "level"<<i;
 		if (level_registered[i])
-			add_registered_signal(sname.str(), wIn + (1<<i) -1 );
+			add_registered_signal_with_sync_reset(sname.str(), wIn + (1<<i) -1 );
 		else
 			add_signal(sname.str(), wIn + (1<<i) -1);
 		//o << "  signal level"<<i<<": std_logic_vector("<< wIn <<"+"<<intpow2(i)-1<<"-1 downto 0);" <<endl;
