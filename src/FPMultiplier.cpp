@@ -44,12 +44,12 @@ extern vector<Operator*> oplist;
 /**
  * The FPMutliplier constructor
  * @param[in]		target		the target device
- * @param[in]		wEX			the the with of the exponent for the number f-p number X
- * @param[in]		wFX			the the with of the fraction for the number f-p number X
- * @param[in]		wEY			the the with of the exponent for the number f-p number Y
- * @param[in]		wFY			the the with of the fraction for the number f-p number Y
- * @param[in]		wER			the the with of the exponent for the number multiplication result
- * @param[in]		wFR			the the with of the fraction for the number multiplication result
+ * @param[in]		wEX			the the with of the exponent for the f-p number X
+ * @param[in]		wFX			the the with of the fraction for the f-p number X
+ * @param[in]		wEY			the the with of the exponent for the f-p number Y
+ * @param[in]		wFY			the the with of the fraction for the f-p number Y
+ * @param[in]		wER			the the with of the exponent for the multiplication result
+ * @param[in]		wFR			the the with of the fraction for the multiplication result
  **/
 FPMultiplier::FPMultiplier(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, int wFR, int norm) :
 	Operator(target), wEX(wEX), wFX(wFX), wEY(wEY), wFY(wFY), wER(wER), wFR(wFR) {

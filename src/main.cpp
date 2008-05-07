@@ -36,6 +36,7 @@
 #include "Karatsuba.hpp"
 #include "FPMultiplier.hpp"
 #include "LongAcc.hpp"
+#include "FPAdder.hpp"
 #include "DotProduct.hpp"
 #include "Wrapper.hpp"
 #include "TestBench.hpp"
@@ -74,6 +75,8 @@ static void usage(char *name){
 	cerr << "      Integer adder, possibly pipelined to arbitrary frequency (almost)\n";
 	cerr << "    LongAcc wE_in wF_in MaxMSB_in LSB_acc MSB_acc\n";
 	cerr << "      Long fixed-point accumulator\n";
+	cerr << "    FPAdder wEX wFX wEY wFY wER wFR\n";
+	cerr << "      floating-point adder \n";
 	cerr << "    IntConstMult w c\n";
 	cerr << "      integer constant multiplier: w is input size, c is the constant.\n";
 	cerr << "    FPConstMult wE_in wF_in wE_out wF_out cst_sgn cst_exp cst_int_sig\n";
@@ -316,24 +319,15 @@ bool parse_command_line(int argc, char* argv[]){
 
 				cerr << "> FPMultiplier , wEX="<<wEX<<", wFX="<<wFX<<", wEY="<<wEY<<", wFY="<<wFY<<", wER="<<wER<<", wFR="<<wFR<< " Normalized="<< norm<<" \n";
 				
-				if ((norm==0) or (norm==1))
-				{
-					if ((wEX==wEY) && (wEX==wER)) 
-					{
+				if ((norm==0) or (norm==1))	{
+					if ((wEX==wEY) && (wEX==wER)){
 						op = new FPMultiplier(target, wEX, wFX, wEY, wFY, wER, wFR, norm);
 						oplist.push_back(op);
-					}
-					else
-					{
+					}else
 						cerr<<"(For now) the inputs must have the same size"<<endl;
-					}
-				}
-				else   
-				{
+				}else   
 					cerr<<"normalized must be 0 or 1"<<endl;
-				}  
-
-			}//end else    
+			}
 		} 
 		else if(opname=="IntAdder"){ // toy 
 			int nargs = 1;
@@ -403,6 +397,27 @@ bool parse_command_line(int argc, char* argv[]){
 				op->test_precision2();
 			}    
 		}
+		else if(opname=="FPAdder"){
+			int nargs = 6;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int wEX = check_strictly_positive(argv[i++], argv[0]);
+				int wFX = check_strictly_positive(argv[i++], argv[0]);
+				int wEY = check_strictly_positive(argv[i++], argv[0]);
+				int wFY = check_strictly_positive(argv[i++], argv[0]);
+				int wER = check_strictly_positive(argv[i++], argv[0]);
+				int wFR = check_strictly_positive(argv[i++], argv[0]);
+				
+				cerr << "> FPAdder , wEX="<<wEX<<", wFX="<<wFX<<", wEY="<<wEY<<", wFY="<<wFY<<", wER="<<wER<<", wFR="<<wFR<<" \n";
+						
+					if ((wEX==wEY) && (wEX==wER)){
+						op = new FPAdder(target, wEX, wFX, wEY, wFY, wER, wFR);
+						oplist.push_back(op);
+					}else
+						cerr<<"(For now) the inputs and outputs must have the same size"<<endl;
+			}
+		} 
 		else if(opname=="DotProduct"){
 			int nargs = 6;
 			if (i+nargs > argc)
