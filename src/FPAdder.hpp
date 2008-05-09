@@ -31,7 +31,9 @@ public:
 	/** Signal if the output of the operator is to be or not normalized*/
 
 
-	
+	/** Method which outputs a string of zeros*/
+	string zero_generator(int n, int margins);
+		
 	/** Overloading the virtual functions of Operator */
 	void output_vhdl(std::ostream& o, std::string name);
 

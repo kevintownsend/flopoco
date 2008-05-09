@@ -84,6 +84,7 @@ ADD_EXECUTABLE(flopoco
  src/ConstMult/FPConstMult 
  src/TestCase
  src/FloFP
+ src/Mux
 )
 TARGET_LINK_LIBRARIES(flopoco  mpfr gmp gmpxx ${HOTBM_LIB})
 

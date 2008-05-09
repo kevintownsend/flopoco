@@ -67,11 +67,12 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 	else{
 		wF = wFX;
 		wE = wEX;
-		nBlock = (wF+5)/4;
-		wN = log2(nBlock)+3;
+		nBlock = (wF+5)/4; cout<<"nBlock="<<nBlock<<endl;
+		wN = log2(nBlock)+3; cout<<"wN="<<wN<<endl;
 		wLastBlock = wF+2-4*(nBlock-1);
 		wRanges = pow(2,(wN-2))-1;
 		wTree = pow(2,(wN-2))-2*(wN-3);  
+		//wAddr = wN-3-i;
 	}	
 		
 		
@@ -105,8 +106,9 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 		add_signal("exceptionXEqualY",1);
 		add_signal("exponentDifference0",wER+1);
 		add_signal("swap",1);
-		add_signal("exponentDifference1",wER+1); 
+		add_signal("exponentDifference1",wER); 
 		add_signal("exponentDifference",wER);  
+		add_signal("zeroExtendedSwap",wER);
 		add_signal("newX",wEX+wFX+3);
 		add_signal("newY",wEX+wFX+3);
 		add_signal("signAB",1);
@@ -115,10 +117,14 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 		add_signal("fracYClose1",wFX+3);
 		add_signal("fracRClose0",wFX+3);
 		add_signal("fracRClose1",wFX+2);
-		add_signal("zeros",nBlock);
-		add_signal("ranges",wRanges);
-		add_signal("n0",wN -2);
-		add_signal("tree",pow(2,wAddr+1)-1);
+		
+		
+		for (i=0;i<wN-3;i++){
+			ostringstream treeName;
+			treeName<<"tree"<<i;
+			wAddr = wN-3-i;
+			add_signal(treeName.str(),pow(2,wAddr+1)-1);
+		}
 	}
 	
 	
@@ -184,8 +190,9 @@ void FPAdder::output_vhdl(std::ostream& o, std::string name) {
     o<<tab<<"        Y;"<<endl;
 
 		/* readjust for the exponents difference after the potential swap */
-		o<<tab<<"exponentDifference1 <= exponentDifference0 xor ("<<wER<<" downto "<<0<<" => swap)"<<endl;
-		o<<tab<<"exponentDifference  <= exponentDifference1  + (("<<wER-1<<" downto "<<1<<" => '0') & swap);"<<endl;
+		o<<tab<<"exponentDifference1 <= exponentDifference0("<<wER-1<<" downto "<<0<<") xor ("<<wER-1<<" downto "<<0<<" => swap);"<<endl;
+		o<<tab<<"zeroExtendedSwap <= "<< zero_generator(wE-1,0)<<" & swap;"<<endl;
+		o<<tab<<"exponentDifference  <= exponentDifference1  + zeroExtendedSwap;"<<endl;
 		//==========================================================================
 		
 		/* check if we are found on the CLOSE or the FAR path */
@@ -208,49 +215,88 @@ void FPAdder::output_vhdl(std::ostream& o, std::string name) {
 		o<<tab<<"               ("<<wF+1<<" downto 0 => '0') - fracRClose0("<<wF+1<<" downto 0) when others;"<<endl;
 		
 		/* =============================== LZC ===================================*/
-
-    
-
+/*
+		//the width of the input entering the leading zero counter
+		int wInput = wFX+2;
+			
+		int lgWInput = int(floor(log2(wFX+2)));
+		int powLgWInput = pow(2,lgWInput);
 		
-
-		int i,j;
-		for (i=0;i<=nBlock-1;i++)
-			if (i<nBlock-1){
-				o<<tab<<"zeros("<<nBlock-1-i<<") <= '1' when f("<<wF+1-4*i<<" downto "<<wF-2-4*i<<") = \"0000\" else"<<endl;
-        o<<tab<<"                      '0';"<<endl;
-      }else{
-      	o<<tab<<"zeros(0) <= '1' when f("<<wF+5-4*nBlock<<" downto 0) = ("<<wF+5-4*nBlock<<" downto 0 => '0') else"<<endl;
-        o<<tab<<"            '0';"<<endl;
-    	}
-
+		add_signal("f",powLgWInput);
 		
-		for (i=0;i<=wN-3;i++){
-			rangeLen = pow(2,(wN-3-i));
-			for (j=0;j<=pow(2,i-1);j++){
-				rangeIdx = nBlock - (2*j+1)*rangeLen;
-				if (rangeIdx >= 0){
-            o<<tab<<"ranges("<<pow(2,i)-1+j<<") <= '1' when zeros("<<rangeIdx+rangeLen-1<<" downto "<<rangeIdx<<") = ("<<rangeLen-1<<" downto 0 => '1') else"<<endl;
-            o<<tab<<"                '0';"<<endl;
-				}else 
-            o<<tab<<"ranges("<<pow(2,i)-1+j<<") <= '0';"<<endl;
+		if (powLgWInput==wInput){
+			//the width of the input is a power of 2
+			f<=fracRClose1;
+		}
+		else{
+			for (i=wInput-1;i>=0;i++)
+				if (i==wInput-1)
+					f(i+powLgWInput-wInput)<=fracRClose1(i);
+				else
+					f(i+powLgWInput-wInput)<=fracRClose1(i) or f(i+powLgWInput-wInput+1);
 					
+			//the rest of the string is assigned 1
+			f(powLgWInput-wInput-1 downto 0) <= (powLgWInput-wInput-1 downto 0 => '1');
+		}
+		
+	
+		//the number of bits for the signal representing the number of leading zeros of fracRClose1
+		int wN = int(ceil(log2(powLgWInput+1)));    
+		
+		ostringstream orBits;
+				for (j=wN-1;j<=0;j++)
+					if (j==(wN-1))
+						orBits<<"f("<<j<<")";
+					else
+						orBits<<"f("<<j<<") or ";
+				//negate or string and assign to output
+				
+		o<<tab<<"n("<<wN-1<<") <= not("<< orBits.str() <<");"<<endl;
+		
+		with n(wN-1) select
+		n(wN-2) <= not(or( f(wN-1 downto wN/2))) when '0' else 
+							 1;
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		int wRange;
+		int idxLow, idxHigh;
+		int availableBits;
+		
+		//indexes on the input signal between we are working on
+		idxLow  = 0;
+		idxHigh = wFX + 1;
+		
+		abvailableBits = wFX + 2;
+		
+		for (i=wN-1; i>=0;i++){
+			//the selected width in bits of the input for the current bit of the output
+			wRange = pow(2,i);
+			if (wRange <= availableBits){
+				//create the or string
+				ostringstream orBits;
+				for (j=idxHigh;j<=idxHigh-wRange+1;j++)
+					if (j==(idxHigh-wRange+1))
+						orBits<<"f("<<j<<")";
+					else
+						orBits<<"f("<<j<<") or ";
+				//negate or string and assign to output
+				o<<tab<<"n("<<i<<") <= not("<< orBits.str() <<");"<<endl;
 			}
+			
+			
+		
 		}
-
-		for (i=0;i<=wN-3;i++){
-			if (i == wN-3)
-				o<<tab<<"n0("<<i<<") <= ranges(0);"<<endl;
-			else{
-				wAddr = wN-3-i;
-				for (j=wAddr-1;j>=0;j--){
-					o<<tab<<"with n0("<<i+1+j<<") select"<<endl;
-      		o<<tab<<"tree("<<(pow(2,(i+1))-1)-1<<" downto "<<(pow(2,i)-1)<<") <= tree("<<(4*(pow(2,i))-1)-1<<" downto "<<3*(pow(2,i)-1)<<") when '1',"<<endl;
-          o<<tab<<"                              tree("<<(3*(pow(2,i))-1)-1<<" downto "<<2*(pow(2,i))-1<<") when others;"<<endl;
-					
-					o<<tab<<"n0("<<i<<" downto "<<i<<") <= tree(0 downto 0);"<<endl;				
-				}
-			}	
-		}
+		
 		
 		
 		//shift and round =========================================================
@@ -264,7 +310,7 @@ void FPAdder::output_vhdl(std::ostream& o, std::string name) {
 		o<<"ed<=exponentDifference;"<<endl;
 
 		
-						
+	*/					
 
 
 
@@ -274,4 +320,30 @@ void FPAdder::output_vhdl(std::ostream& o, std::string name) {
 
  
 
+/**
+ * A zero generator method which takes as input two arguments and returns a string of zeros with quotes as stated by the second argurment
+ * @param[in] n		    integer argument representing the number of zeros on the output string
+ * @param[in] margins	integer argument determining the position of the quotes in the output string. The options are: -2= no quotes; -1=left quote; 0=both quotes 1=right quote
+ * @return returns a string of zeros with the corresonding quotes given by margins
+ **/
+string FPAdder::zero_generator(int n, int margins)
+{
+ostringstream left,full, right, zeros;
+int i;
+
+	for (i=1; i<=n;i++)
+		zeros<<"0";
+
+	left<<"\""<<zeros.str();
+	full<<left.str()<<"\"";
+	right<<zeros.str()<<"\"";
+
+	switch(margins){
+		case -2: return zeros.str(); break;
+		case -1: return left.str(); break;
+		case  0: return full.str(); break;
+		case  1: return right.str(); break;
+		default: return full.str();
+	}
+}
 

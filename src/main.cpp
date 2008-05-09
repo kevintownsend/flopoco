@@ -45,6 +45,7 @@
 #include "ConstMult/FPConstMult.hpp"
 #include "Target.hpp"
 #include "Targets/VirtexIV.hpp"
+#include "Mux.hpp"
 
 #ifdef HAVE_HOTBM
 #include "HOTBM.hpp"
@@ -71,6 +72,7 @@ static void usage(char *name){
 	cerr << "    LeftShifter  wIn  MaxShift\n";
 	cerr << "    RightShifter wIn  MaxShift\n";
 	cerr << "    LZOC wIn wOut\n";
+	cerr << "    Mux wIn n \n";
 	cerr << "    IntAdder wIn\n";
 	cerr << "      Integer adder, possibly pipelined to arbitrary frequency (almost)\n";
 	cerr << "    LongAcc wE_in wF_in MaxMSB_in LSB_acc MSB_acc\n";
@@ -91,6 +93,7 @@ static void usage(char *name){
 	cerr << "      normalize can be either 0 or 1. \n";     	
 	cerr << "    DotProduct wE wFX wFY MaxMSB_in LSB_acc MSB_acc\n";
 	cerr << "      floating-point dot product unit \n";
+	
 #ifdef HAVE_HOTBM
 	cerr << "    HOTBM function wI wO degree\n";
 	cerr << "      High-order table-based method for generating a given function\n";
@@ -418,6 +421,21 @@ bool parse_command_line(int argc, char* argv[]){
 						cerr<<"(For now) the inputs and outputs must have the same size"<<endl;
 			}
 		} 
+		else if(opname=="Mux"){
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int wIn = check_strictly_positive(argv[i++], argv[0]);
+				int n = check_strictly_positive(argv[i++], argv[0]);
+				
+				
+				cerr << "> Mux , wIn="<<wIn<<", n="<<n<<"\n";
+										
+						op = new Mux(target, wIn, n);
+						oplist.push_back(op);
+			}		
+		}
 		else if(opname=="DotProduct"){
 			int nargs = 6;
 			if (i+nargs > argc)
