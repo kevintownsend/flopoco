@@ -5,7 +5,6 @@
 #include <gmp.h>
 #include <mpfr.h>
 #include <gmpxx.h>
-
 #include "Operator.hpp"
 
 /** Constructs a multiplexer  */
@@ -22,8 +21,6 @@ public:
 	/** the number of bits of the selector*/
 	int wAddr; 
 
-
-	
 	/** Overloading the virtual functions of Operator */
 	void output_vhdl(std::ostream& o, std::string name);
 

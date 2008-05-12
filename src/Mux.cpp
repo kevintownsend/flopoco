@@ -37,8 +37,6 @@
 #include "Mux.hpp"
 
 using namespace std;
-extern vector<Operator*> oplist;
-
 
 /**
  * The Mux constructor
@@ -60,9 +58,12 @@ Mux::Mux(Target* target, int wIn, int n):
 	add_input ("Sel",  wAddr); //the select line of the multiplexer
 	add_output("Output", wIn); 
 	
+	//handle the possible unavailable input parameters of the user
+	if (target->is_pipelined())
+		cerr<<"Warning: this operator is only combinational."<<endl;
+	
   /* This operator is combinatorial.*/
 	set_combinatorial();
-  
 }
 
 
@@ -88,11 +89,11 @@ void Mux::output_vhdl(std::ostream& o, std::string name) {
   ostringstream busOut;
   ostringstream wireOut;
   ostringstream interfaceOut;
-
-	//cout<<"ASDADASDASD="<<wAddr<<endl;
-
+  
+  //define the single quote type and the double quote type 
   doubleQuote<<"\"";
   singleQuote<<"\'";
+  //when the selector address widht is 1 bit, then single quotes are required for the case, otherwise double quotes must be used
   quote<<((wAddr==1)?singleQuote.str():doubleQuote.str());
   
   Licence(o,"Bogdan Pasca (2008)");
@@ -101,34 +102,40 @@ void Mux::output_vhdl(std::ostream& o, std::string name) {
   new_architecture(o, name);
 	output_vhdl_signal_declarations(o);
   begin_architecture(o);
-	
-	
+		
+	//define the process of the multiplexer
 	o<<tab<<"process (Sel,Input)"<<endl;
 	o<<tab<<"begin"<<endl;
   o<<tab<<"case Sel is"<<endl;
   
-   
-   
+  //iterating throughout selections of the multiplexer 
   for (i=0;i<n;i++){
   	ostringstream binVal;
+  	
+  	//convert the decimal number i to binary
   	binary(binVal,i);
+  	 	
+  	//determine the number of zeros needed for extending the result of the conversion the a binary number on wAddr
   	zeroPadding = wAddr - binVal.str().length();
   	
+  	//create the zero string
   	ostringstream zeros;
   	for(k=0;k<zeroPadding;k++)
   		zeros<<"0";
   	
+  	//initialization
   	busOut.str("");
   	wireOut.str("");
   	interfaceOut.str("");
 	
+		//due to the differentiation between bus and wire, function of the input width, the assignment of the output is different
 		busOut<<"Input("<<wIn*(i+1)-1<<" downto "<<wIn*i<<")";
 		wireOut<<"Input("<<wIn*i<<")";
 		interfaceOut<<((wIn==1)?wireOut.str():busOut.str());
    	
   	o<<tab<<"when "<<quote.str()<<zeros.str()<<binVal.str()<<quote.str()<<" => Output <="<<interfaceOut.str()<<";"<<endl;
   }
-  
+  //default case; this will be discarded by the synthetizer
   o<<tab<<"when others => Output <= "<<interfaceOut.str()<<";"<<endl;
   o<<"end case;"<<endl;
 	o<<"end process;"<<endl;
@@ -143,10 +150,9 @@ void Mux::output_vhdl(std::ostream& o, std::string name) {
 */
 void Mux::binary(std::ostream& o, int number) {
 	int remainder;
-
+	
 	if(number <= 1) {
 		o << number;
-		return;
 	}
 
 	remainder = number%2;

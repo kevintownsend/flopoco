@@ -296,7 +296,7 @@ bool parse_command_line(int argc, char* argv[]){
 			}
 		}
 		else if(opname=="LZOC"){
-			int nargs = 3;
+			int nargs = 2;
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
