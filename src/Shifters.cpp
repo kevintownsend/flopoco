@@ -1,7 +1,7 @@
 /*
  * A barrel shifter for FloPoCo
  *
- * Author : Florent de Dinechin
+ * Author : Florent de Dinechin, Bogdan Pasca
  *
  * This file is part of the FloPoCo project developed by the Arenaire
  * team at Ecole Normale Superieure de Lyon
@@ -97,24 +97,37 @@ Shifter::Shifter(Target* target, int wIn, int maxShift, ShiftDirection direction
 	}
 
 	// Set up the intermediate signals 
-	add_signal("level0", wIn);
-	//  o << "  signal level0: std_logic_vector("<< wIn <<"-1 downto 0);" <<endl;
-	for (int i=1; i<=wShiftIn; i++) {
-		ostringstream sname;
-		sname << "level"<<i;
-		if (level_registered[i])
-			add_registered_signal_with_sync_reset(sname.str(), wIn + (1<<i) -1 );
+	if (is_sequential()){
+		add_signal("level0", wIn);
+		//  o << "  signal level0: std_logic_vector("<< wIn <<"-1 downto 0);" <<endl;
+		for (int i=1; i<=wShiftIn; i++) {
+			ostringstream sname;
+			sname << "level"<<i;
+			if (level_registered[i])
+				add_registered_signal_with_sync_reset(sname.str(), wIn + (1<<i) -1 );
+			else
+				add_signal(sname.str(), wIn + (1<<i) -1);
+			//o << "  signal level"<<i<<": std_logic_vector("<< wIn <<"+"<<intpow2(i)-1<<"-1 downto 0);" <<endl;
+		}
+
+		// The shift input has to be delayed as well now
+		if(pipeline_depth()>=1) 
+			add_delay_signal("ps", wShiftIn, pipeline_depth()-1); 
 		else
-			add_signal(sname.str(), wIn + (1<<i) -1);
-		//o << "  signal level"<<i<<": std_logic_vector("<< wIn <<"+"<<intpow2(i)-1<<"-1 downto 0);" <<endl;
+			add_signal("ps", wShiftIn);
+
 	}
-
-	// The shift input has to be delayed as well now
-	if(pipeline_depth()>=1) 
-		add_delay_signal("ps", wShiftIn, pipeline_depth()-1); 
-	else
+	else{
+		for (int i=0; i<=wShiftIn; i++) {
+				ostringstream sname;
+				sname << "level"<<i;
+				add_signal(sname.str(), wIn + (1<<i) -1);
+		}	
+	
 		add_signal("ps", wShiftIn);
-
+	}
+	
+	
 }
 
 
@@ -129,7 +142,7 @@ Shifter::~Shifter() {
 
 void Shifter::output_vhdl(std::ostream& o, std::string name) {
 	ostringstream signame;
-	Licence(o,"Florent de Dinechin (2007)");
+	Licence(o,"Florent de Dinechin, Bogdan Pasca (2007)");
 	Operator::StdLibs(o);
 	output_vhdl_entity(o);
 
@@ -138,40 +151,68 @@ void Shifter::output_vhdl(std::ostream& o, std::string name) {
 	output_vhdl_signal_declarations(o);
 
 	o << "begin" << endl;
-	int stage=0;
-	o << "   level0 <=  X ;" << endl;
-	o << "   ps <=  s;" <<endl;
-	ostringstream psname;
-	psname << "ps";
-	for (int i=0; i<wShiftIn; i++) {
-		ostringstream lname;
-		lname << "level"<<i;
-		if (level_registered[i]) { // use the registered signal instead
-			lname << "_d";
-			// and use next stage of ps
-			psname << "_d",
-			// add a synchronisation barrier here
-			o <<"  ----- synchro barrier ------- " <<endl;
-			stage++;
-		}
-						
-		o << "   level"<<i+1<<" <=  ";
-		o << "("<<intpow2(i)-1<<" downto 0 => '0') & "<<lname.str()
-			<<"  when "<<psname.str()<<"("<<i<<") = '"<<(direction==Right?1:0)<<"'   else  ";
-		o << lname.str()<<" & ("<<intpow2(i)-1<<" downto 0 => '0');" << endl;
-		
-	}
-	if(level_registered[wShiftIn])
-		o <<"  ----- synchro barrier ------- " <<endl;
- 
-	o << "   R <=  level"<<wShiftIn;
-	if(level_registered[wShiftIn]) 
-		o << "_d";
-	o << "("<< wOut-1<<" downto 0);" << endl << endl;
-
-
-	if(is_sequential())
+	if (is_sequential())
+	{
 		output_vhdl_registers(o);
+		
+		int stage=0;
+		o << "   level0 <=  X ;" << endl;
+		o << "   ps <=  s;" <<endl;
+		ostringstream psname;
+		psname << "ps";
+		for (int i=0; i<wShiftIn; i++) {
+			ostringstream lname;
+			lname << "level"<<i;
+			if (level_registered[i]) { // use the registered signal instead
+				lname << "_d";
+				// and use next stage of ps
+				psname << "_d",
+				// add a synchronisation barrier here
+				o <<"  ----- synchro barrier ------- " <<endl;
+				stage++;
+			}
+							
+			o << "   level"<<i+1<<" <=  ";
+			o << "("<<intpow2(i)-1<<" downto 0 => '0') & "<<lname.str()
+				<<"  when "<<psname.str()<<"("<<i<<") = '"<<(direction==Right?1:0)<<"'   else  ";
+			o << lname.str()<<" & ("<<intpow2(i)-1<<" downto 0 => '0');" << endl;
+			
+		}
+		if(level_registered[wShiftIn])
+			o <<"  ----- synchro barrier ------- " <<endl;
+
+		o << "   R <=  level"<<wShiftIn;
+		if(level_registered[wShiftIn]) 
+			o << "_d";
+		if (direction==Left)
+			o << "("<< wOut-1<<" downto 0);" << endl << endl;
+		else
+			o << "("<< wIn + (1<<wShiftIn) -2<<" downto "<<wIn + (1<<wShiftIn) -1 - wOut <<");"<<endl << endl;
+			
+	}
+	else
+	{ //combinatorial version
+		o << "   level0 <=  X ;" << endl;
+		o << "   ps <=  s;" <<endl;
+		ostringstream psname;
+		psname << "ps";
+		
+		for (int i=0; i<wShiftIn; i++) {
+			ostringstream lname;
+			lname << "level"<<i;
+									
+			o << " level"<<i+1<<" <=  ";
+			o << "("<<intpow2(i)-1<<" downto 0 => '0') & "<<lname.str()
+				<<"  when "<<psname.str()<<"("<<i<<") = '"<<(direction==Right?1:0)<<"'   else  ";
+			o << lname.str()<<" & ("<<intpow2(i)-1<<" downto 0 => '0');" << endl;
+		}
+		if (direction==Left)
+			o << "   R <=  level"<<wShiftIn<<"("<< wOut-1<<" downto 0);" << endl << endl;		
+		else
+			o << "   R <=  level"<<wShiftIn<<"("<< wIn + (1<<wShiftIn) -2<<" downto "<<wIn + (1<<wShiftIn) -1 - wOut <<");" << endl << endl;
+	}
+
+		
 	o << "end architecture;" << endl << endl;
 }
 
