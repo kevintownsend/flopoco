@@ -186,7 +186,7 @@ string  Operator::add_delay_signal(const string name, const int width, const int
 			_signal_map[name] = s ;
 			o  <<"_d";
 		}
-		has_registers=true;
+		has_registers_with_sync_reset=true;
 	}
 
 	if(_signal_map.find(o.str()) != _signal_map.end()) {
