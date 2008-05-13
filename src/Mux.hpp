@@ -24,9 +24,6 @@ public:
 	/** Overloading the virtual functions of Operator */
 	void output_vhdl(std::ostream& o, std::string name);
 
-	/** output the binary representation of number */
-	void binary(std::ostream& o, int number);
-
 private:
 
 };

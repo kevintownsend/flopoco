@@ -113,16 +113,8 @@ void Mux::output_vhdl(std::ostream& o, std::string name) {
   	ostringstream binVal;
   	
   	//convert the decimal number i to binary
-  	binary(binVal,i);
-  	 	
-  	//determine the number of zeros needed for extending the result of the conversion the a binary number on wAddr
-  	zeroPadding = wAddr - binVal.str().length();
-  	
-  	//create the zero string
-  	ostringstream zeros;
-  	for(k=0;k<zeroPadding;k++)
-  		zeros<<"0";
-  	
+  	printBinNum(binVal, i, wAddr);
+  	  	
   	//initialization
   	busOut.str("");
   	wireOut.str("");
@@ -133,30 +125,15 @@ void Mux::output_vhdl(std::ostream& o, std::string name) {
 		wireOut<<"Input("<<wIn*i<<")";
 		interfaceOut<<((wIn==1)?wireOut.str():busOut.str());
    	
-  	o<<tab<<"when "<<quote.str()<<zeros.str()<<binVal.str()<<quote.str()<<" => Output <="<<interfaceOut.str()<<";"<<endl;
+  	o<<tab<<tab<<"when "<<quote.str()<<binVal.str()<<quote.str()<<" => Output <="<<interfaceOut.str()<<";"<<endl;
   }
   //default case; this will be discarded by the synthetizer
-  o<<tab<<"when others => Output <= "<<interfaceOut.str()<<";"<<endl;
-  o<<"end case;"<<endl;
-	o<<"end process;"<<endl;
+  o<<tab<<tab<<"when others => Output <= "<<interfaceOut.str()<<";"<<endl;
+  o<<tab<<"end case;"<<endl;
+	o<<tab<<"end process;"<<endl;
   
 	end_architecture(o);
 } 
 
 
-/** Converts a positive decimal number in binary format 
- *@param[in,out] o the stream where the string containing the binary representation of the decimal number is outputed
- *@param[in] number the decimal number to be converted to binary
-*/
-void Mux::binary(std::ostream& o, int number) {
-	int remainder;
-	
-	if(number <= 1) {
-		o << number;
-	}
-
-	remainder = number%2;
-	binary(o, number >> 1);    
-	o << remainder;
-}
 
