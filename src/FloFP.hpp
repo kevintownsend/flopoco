@@ -67,6 +67,13 @@ public:
 	FloFP operator*(FloFP);
 
 	/**
+	 * Adds two FloFPs using MPFR.
+	 * @return a FloFP representing the result of the addition.
+	 */
+	FloFP operator+(FloFP);
+	
+
+	/**
 	 * Multiplies a FloFP with an MPFR.
 	 * @return a FloFP representing the result of the multiplication.
 	 */

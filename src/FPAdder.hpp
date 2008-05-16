@@ -7,7 +7,9 @@
 #include <gmpxx.h>
 
 #include "Operator.hpp"
-
+#include "LZOC.hpp"
+#include "Shifters.hpp"
+#include "FloFP.hpp"
 
 /** The FPAdder class */
 class FPAdder : public Operator
@@ -37,19 +39,20 @@ public:
 	/** Overloading the virtual functions of Operator */
 	void output_vhdl(std::ostream& o, std::string name);
 
-
+	/** overloaded method */
+	TestCaseList generateStandardTestCases(int n);
+	/** overloaded method */
+	TestCaseList generateRandomTestCases(int n);
 	
 private:
+	LZOC* leadingZeroCounter;
+	Shifter* leftShifter;
+	Shifter* rightShifter;
+
 	int wF;
 	int wE;
-	int nBlock;
-	int wN;
-  int wLastBlock;
-  int wRanges;
-	int wTree;  
-  int rangeLen;
-	int rangeIdx;
-	int wAddr;
+	int wOutLZC;
+	int sizeRightShift;
 };
 
 #endif

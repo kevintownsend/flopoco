@@ -79,6 +79,22 @@ FloFP FloFP::operator*(mpfr_t mpX)
 	return *this * fpX;
 }
 
+FloFP FloFP::operator+(FloFP fp)
+{
+	mpfr_t x, y, r;
+	mpfr_init2(x, 2+1+wE+wF);
+	mpfr_init2(y, 2+1+fp.wE +fp.wF);
+	mpfr_init2(r, wF+fp.wF+2);
+	getMPFR(x);
+	fp.getMPFR(y);
+	mpfr_add(r, x, y, GMP_RNDN);
+	FloFP flofp(wE, wF, r);
+
+	return flofp;
+}
+
+
+
 void FloFP::getMPFR(mpfr_t mp)
 {
 	if (!normalise)
