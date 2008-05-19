@@ -130,8 +130,8 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 		add_signal("fracRClose0",wFX+3);
 		add_signal("fracRClose1",wFX+2);
 		add_signal("nZeros",wOutLZC);
-		add_signal("exponentResultClose1",wEX+1);
-		add_signal("exponentResultClose",wEX+1);
+		add_signal("exponentResultClose1",wEX+2);
+		add_signal("exponentResultClose",wEX+2);
 		add_signal("shiftedFrac",2*(wFX+2));
 		add_signal("exponentConcatFrac0",wE+wF+2);
 		add_signal("exponentConcatFrac1",wE+wF+2);
@@ -152,7 +152,7 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 		add_signal("rs",1);
 		add_signal("exponentResultfar",wE+1);
 		add_signal("fractionResultfar",wF+1);
-		add_signal("exponentResultn",wE+1);
+		add_signal("exponentResultn",wE+2);
 		add_signal("fractionResultn",wF+1);
 		add_signal("eMax",1);
 		add_signal("eMin",1);
@@ -161,9 +161,11 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 		add_signal("xAB",4);
 		add_signal("nnR",wE+wF+3);
 		add_signal("fractionResultCloseC",1+wF);
-		add_signal("exponentResultCloseC",wE+1);
+		add_signal("exponentResultCloseC",wE+2);
 		add_signal("shiftedOut",1);
-	
+		add_signal("stiky",1);
+		add_signal("borrow",1);
+		add_signal("roundClose",1);
 	}
 	
 	
@@ -221,7 +223,7 @@ void FPAdder::output_vhdl(std::ostream& o, std::string name) {
 		/* make the difference between the exponents of X and Y. Pad exponents with sign bit before pexponentResultfarorming the substraction */
 		o<<tab<<"exponentDifference0 <= (\"0\" & X("<<wEX+wFX-1<<" downto "<<wFX<<")) - (\"0\" & Y("<<wEY+wFY-1<<" downto "<<wFY<<"));"<<endl;
 
-		/* swapping is pexponentResultfarormed when:    the exception bits of X and Y are equal and the exponrnt of Y is greater than the exponent of X
+		/* swapping is performed when:    the exception bits of X and Y are equal and the exponent of Y is greater than the exponent of X (i.e. sign bit of exponent difference=1)
 		                              or  the exception bits of Y are superior to the exception bits of X (EX: exc. bits of X are 00 and of Y are 01) */
 		o<<tab<<"swap <= (exponentDifference0("<<wER<<") and exceptionXEqualY) or (not exceptionXSuperiorY);"<<endl;
 
@@ -233,8 +235,10 @@ void FPAdder::output_vhdl(std::ostream& o, std::string name) {
 
 		/* readjust for the exponents difference after the potential swap */
 		o<<tab<<"exponentDifference1 <= exponentDifference0("<<wER-1<<" downto "<<0<<") xor ("<<wER-1<<" downto "<<0<<" => swap);"<<endl;
-		o<<tab<<"zeroExtendedSwap <= "<< zero_generator(wE-1,0)<<" & swap;"<<endl;
+		o<<tab<<"zeroExtendedSwap    <= "<< zero_generator(wE-1,0)<<" & swap;"<<endl;
 		o<<tab<<"exponentDifference  <= exponentDifference1  + zeroExtendedSwap;"<<endl;
+		
+		
 		//==========================================================================
 		//==========================================================================
 		//CLOSE PATH
@@ -242,97 +246,106 @@ void FPAdder::output_vhdl(std::ostream& o, std::string name) {
 		/* check if we are found on the CLOSE or the FAR path */
 		/* compute signAB as signA xor signB. The close path is considered only when signA!=signB */
 		o<<tab<<"signAB <= X("<<wEX+wFX<<") xor Y("<<wEY+wFY<<");"<<endl;
-		o<<tab<<"close <= signAB when exponentDifference("<<wER-1<<" downto "<<1<<") = ("<<wER-1<<" downto "<<1<<" => '0') else"<<endl;
-		o<<tab<<"         '0';"<<endl;
+		o<<tab<<"close  <= signAB when exponentDifference("<<wER-1<<" downto "<<1<<") = ("<<wER-1<<" downto "<<1<<" => '0') else"<<endl;
+		o<<tab<<"          '0';"<<endl;
 
 		/* build the fraction signals */
+		/* the close pathe is considered when the |exponentDifference|<=1 */
 		o<<tab<<"fracXClose1 <= \"01\" & newX("<<wFX-1<<" downto "<<0<<") & '0';"<<endl;
 		o<<tab<<"with exponentDifference(0) select"<<endl;
 		o<<tab<<"fracYClose1 <=  \"01\" & newY("<<wF-1<<" downto "<<0<<") & '0' when '0',"<<endl;
 		o<<tab<<"               \"001\" & newY("<<wF-1<<" downto "<<0<<")       when others;"<<endl;
 
-		/* substract the fraction signals for the close path (for the close path the signs of the inputs must not be equal */
+		/* substract the fraction signals for the close path (for the close path the signs of the inputs are not be equal */
 		o<<tab<<"fracRClose0 <= fracXClose1 - fracYClose1;"<<endl;
 		
+		/* if substraction result is negative - do a two's compelement of the result */
 		o<<tab<<"with fracRClose0("<<wF+2<<") select"<<endl;
 		o<<tab<<"fracRClose1 <= fracRClose0("<<wF+1<<" downto "<<0<<")                 when '0',"<<endl;
 		o<<tab<<"               ("<<wF+1<<" downto 0 => '0') - fracRClose0("<<wF+1<<" downto 0) when others;"<<endl;
 		
-		/* =============================== LZC ===================================*/
+		/*  LZC */
 		o<<tab<< "LZC_component: " << leadingZeroCounter->unique_name << endl;
 		o<<tab<< "      port map ( I => fracRClose1, " << endl; 
 		o<<tab<< "                 OZB => '0', " << endl; 
 		o<<tab<< "                 O => nZeros " <<endl; 
 		o<<tab<< "               );" << endl<<endl;		
-		
-		
-		//shift and round =========================================================
+				
+		/* shift and round */
 		o<<tab<< "left_shifter_component: " << leftShifter->unique_name << endl;
 		o<<tab<< "      port map ( X => fracRClose1, " << endl; 
 		o<<tab<< "                 S => nZeros, " << endl; 
 		o<<tab<< "                 R => shiftedFrac " <<endl; 
 		o<<tab<< "               );" << endl<<endl;		
 		
-		o<<tab<< "exponentResultClose1 <= \"0\" & newX("<<wEX+wFX-1<<" downto "<<wFX<<");"<<endl;
-		o<<tab<< "exponentResultClose <= exponentResultClose1 - ("<<zero_generator(wE+1-wOutLZC, 0)<<" &  nZeros);"<<endl;
+		/* extend expoenet result before normalization and rounding with 2 bits, one for signaling underflow and for overflow */
+		o<<tab<< "exponentResultClose1 <= \"00\" & newX("<<wEX+wFX-1<<" downto "<<wFX<<");"<<endl; 
+		o<<tab<< "exponentResultClose <= exponentResultClose1 - ("<<zero_generator(wE+1-wOutLZC+1, 0)<<" &  nZeros);"<<endl;
 		
-		o<<tab<<" exponentConcatFrac0 <= \"0\" & exponentResultClose("<<wE-1<<" downto 0) & shiftedFrac("<<wF<<" downto 0);"<<endl;
-		//This part should be carefully analized - Rounding might not be correct for the close path
-		o<<tab<<" exponentConcatFrac1 <= exponentConcatFrac0 + CONV_STD_LOGIC_VECTOR(1,"<<2+wE+wF<<");"<<endl; 
+		/* during fraction alignment, the fraction of Y is shifted at most one position to the right, so 1 extra bit is enough to perform rounding */
+		o<<tab<< "roundClose <= shiftedFrac(0) and shiftedFrac(1);"<<endl;
 		
-		o<<tab<<" fractionResultCloseC <= \"1\" & exponentConcatFrac1("<<wF<<" downto 1);"<<endl;
-		o<<tab<<" exponentResultCloseC <= \"0\" & exponentConcatFrac1("<<wF+wE<<" downto "<<wF+1<<");"<<endl;
+		/* concatenate exponent with fractional part before rounding so the possible carry propagation automatically increments the exponent */
+		o<<tab<<" exponentConcatFrac0 <= exponentResultClose("<<wE+1<<" downto 0) & shiftedFrac("<<wF<<" downto 1);"<<endl; 
+		
+		/* perform the actual rounding */
+		o<<tab<<" exponentConcatFrac1 <= exponentConcatFrac0 + CONV_STD_LOGIC_VECTOR(roundClose,"<<1+1+wE+wF<<");"<<endl; 
+		
+		o<<tab<<" fractionResultCloseC <= \"1\" & exponentConcatFrac1("<<wF-1<<" downto 0);"<<endl;
+		o<<tab<<" exponentResultCloseC <= exponentConcatFrac1("<<wF+wE+1<<" downto "<<wF<<");"<<endl;
 		
 		//=========================================================================
 		//=========================================================================
 		//Far path
 		
-		//shift the significand of new Y with as many positions as the exponent difference suggests
-		//--> right shift the significand of newY in place
-		
 		o<<tab<< "fracNewY <= '1' & newY("<<wF-1<<" downto 0);"<<endl;
-				
+		
+		/* shift right the significand of new Y with as many positions as the exponent difference suggests (alignment) */		
 		o<<tab<< "right_shifter_component: " << rightShifter->unique_name << endl;
 		o<<tab<< "      port map ( X => fracNewY, " << endl; 
 		o<<tab<< "                 S => exponentDifference("<< sizeRightShift-1<<" downto 0"<<"), " << endl; 
 		o<<tab<< "                 R => shiftedFracY " <<endl; 
 		o<<tab<< "               );" << endl<<endl;		
 		
-		
+		/* determine if the fractional part of Y was shifted out of the opperation */
+		//TODO
 		o<<tab<<" shiftedOut <= "; 
 		for (int i=wE-1;i>=sizeRightShift;i--)
 			if (((wE-1)==sizeRightShift)||(i==sizeRightShift))
 				o<< "exponentDifference("<<i<<")";
 			else
 				o<< "exponentDifference("<<i<<") or ";
-		
 		o<<";"<<endl;
-			
-		o<<tab<< "fracXfar3 <= \"01\" & newX("<<wF-1<<" downto 0) & \"000\";"<<endl;
-  	o<<tab<< "fracYfar3 <= \"0\" & shiftedFracY("<<2*wF+3<<" downto "<<2*wF+4- (wF+4)<<");"<<endl;	
-			
+		
+		/* compute stiky bit as the or of the shifted out bits during the alignment */
+		o<<tab<< " stiky<= '0' when (shiftedFracY("<<wF<<" downto 0)=CONV_STD_LOGIC_VECTOR(0,"<<wF<<")) else '1';"<<endl;
+		o<<tab<< " borrow <= stiky and signAB;"<<endl;//in the case of substraction and when the shifted out bits contain a 1, borrow:=1
+				
+		o<<tab<< "fracXfar3 <= \"01\" & newX("<<wF-1<<" downto 0) & \"0\" & \"0\" & \"0\";"<<endl;
+  	o<<tab<< "fracYfar3 <= \"0\" & shiftedFracY("<<2*wF+3<<" downto "<<2*wF+4- (wF+4)+1<<") & stiky;"<<endl;	
+		
+		/* depending on the sign, perform addition or substraction */			
 		o<<tab<< "with signAB select"<<endl;
     o<<tab<< "fracResultfar0 <= fracXfar3 - fracYfar3 when '1',"<<endl;
     o<<tab<< "        					fracXfar3 + fracYfar3 when others;"<<endl;
 		
+		/* if the second operand was shifted out of the operation, then the result of the operation becomes = to the first operand */		
 		o<<tab<< "fracResultfar0wSh <= fracResultfar0 when shiftedOut='0' else fracXfar3;"<<endl;
+		/* the result exponent before normalization and rounding is = to the exponent of the first operand */
 		o<<tab<< "exponentResultfar0 <= \"0\" & newX("<<wE+wF-1<<" downto "<<wF<<");"<<endl;
 		
+		/*perform normalization and recalculation of the stiky bit */
 	  o<<tab<<"fracResultfar1<=fracResultfar0wSh("<<wF+3<<" downto 2) & "
 	  											<<"(fracResultfar0wSh(1) or fracResultfar0wSh(0)) when fracResultfar0wSh("<<wF+4<<" downto "<<wF+3<<") = \"01\" else"<<endl;
-    
     o<<tab<< "    					 fracResultfar0wSh("<<wF+2<<" downto 0) 	 when fracResultfar0wSh("<<wF+4<<" downto "<<wF+3<<") = \"00\" else"<<endl;
     o<<tab<< "    					 fracResultfar0wSh("<<wF+4<<" downto 3) & (fracResultfar0wSh(2) or fracResultfar0wSh(1) or fracResultfar0wSh(0));"<<endl;
-
+		/* readjust exponent after normalization */
 	  o<<tab<< "exponentResultfar1 <= exponentResultfar0                                when fracResultfar0wSh("<<wF+4<<" downto "<<wF+3<<") = \"01\" else"<<endl;
 	  o<<tab<< "        							exponentResultfar0 - (("<<wE<<" downto 1 => '0') & \"1\") when fracResultfar0wSh("<<wF+4<<" downto "<<wF+3<<") = \"00\" else"<<endl;
 	  o<<tab<< "        							exponentResultfar0 + (("<<wE<<" downto 1 => '0') & \"1\");"<<endl;
 
-	//rounding
-	//TODO ==> compute rounding corectly
-	
+		//rounding
 		o<<tab<< "round <= fracResultfar1(1) and (fracResultfar1(2) or fracResultfar1(0));"<<endl;
-
 		o<<tab<< "fractionResultfar0 <= (\"0\" & fracResultfar1("<<wF+2<<" downto 2)) + (("<<wF<<" downto 0 => '0') & round);"<<endl;
 
 		o<<tab<< "exponentResultfar <= exponentResultfar1 + (("<<wE-1<<" downto 0 => '0') & fractionResultfar0("<<wF+1<<"));"<<endl;
@@ -342,28 +355,22 @@ void FPAdder::output_vhdl(std::ostream& o, std::string name) {
 		o << tab << "rs <= '0' when close = '1' and fracRClose1 = ("<<wF+1<<" downto 0 => '0') else"<<endl;
     o << tab << "          newX("<<wE+wF<<") xor (close and fracRClose0("<<wF+2<<"));"<<endl;
 		
+		/*select between the results of the close or far path as the result of the operation*/
 		o<<tab<< "with close select"<<endl;
     o<<tab<< "exponentResultn <= exponentResultCloseC when '1',"<<endl;
-    o<<tab<< "                   exponentResultfar when others;"<<endl;
+    o<<tab<< "                   (\"0\" & exponentResultfar) when others;"<<endl;
 		o<<tab<< "with close select"<<endl;
 		o<<tab<< "fractionResultn <= fractionResultCloseC when '1',"<<endl;
 		o<<tab<< "                   fractionResultfar when others;"<<endl;
-
-		//format the FP number
-		o<<tab<< "eMax <= '1' when exponentResultn("<<wE-1<<" downto 0) = ("<<wE-1<<" downto 0 => '1') else"<<endl;
-    o<<tab<< "        '0';"<<endl;
-  	o<<tab<< "eMin <= '1' when exponentResultn("<<wE-1<<" downto 0) = ("<<wE-1<<" downto 0 => '0') else"<<endl;
-    o<<tab<< "        '0';"<<endl;
-  	o<<tab<< "eTest(1) <= (eMax and exponentResultn("<<wE<<")) or (exponentResultn("<<wE<<") and not exponentResultn("<<wE-1<<"));"<<endl;
-  	o<<tab<< "eTest(0) <= (eMin and not exponentResultn("<<wE<<")) or (exponentResultn("<<wE<<") and exponentResultn("<<wE-1<<")) or not fractionResultn("<<wF<<");"<<endl;
-
-  	o<<tab<< "with eTest select"<<endl;
-    o<<tab<< "nRn("<<wE+wF+2<<" downto "<<wE+wF+1<<") <= \"00\" when \"01\","<<endl;
-    o<<tab<< "                               \"10\" when \"10\","<<endl;
+		
+		/* compute the exception bits of the result considering the possible underflow and overflow */
+		o<<tab<< "eTest <= exponentResultn("<<wE+1<<" downto "<<wE<<");"<<endl;
+		o<<tab<< "with eTest select"<<endl;
+    o<<tab<< "nRn("<<wE+wF+2<<" downto "<<wE+wF+1<<") <= \"10\" when \"01\","<<endl;
+    o<<tab<< "                               \"00\" when \"10\" | \"11\","<<endl;
     o<<tab<< "                               \"01\" when others;"<<endl;
   	o<<tab<< "nRn("<<wE+wF<<" downto 0) <= rs & exponentResultn("<<wE-1<<" downto 0) & fractionResultn("<<wF-1<<" downto 0);"<<endl;
-		//=======
-				
+		
 		o<<tab<< "xAB <= newX("<<wE+wF+2<<" downto "<<wE+wF+1<<") & newY("<<wE+wF+2<<" downto "<<wE+wF+1<<");"<<endl;
   
 	  o<<tab<< "with xAB select"<<endl;
@@ -373,14 +380,14 @@ void FPAdder::output_vhdl(std::ostream& o, std::string name) {
 	  o<<tab<< "                                 xAB(3 downto 2)             when others;"<<endl;
 	  o<<tab<< "with xAB select"<<endl;
 	  o<<tab<< "  nnR("<<wE+wF<<") <= nRn("<<wE+wF<<")      when \"0101\","<<endl;
-	  o<<tab<< "                newX("<<wE+wF<<") and newY("<<wE+wF<<") when \"0000\","<<endl;
+	  o<<tab<< "                newX("<<wE+wF<<")  and newY("<<wE+wF<<") when \"0000\","<<endl;
 	  o<<tab<< "                newX("<<wE+wF<<")     when others;"<<endl;
 
 	  o<<tab<< "with xAB select"<<endl;
 	  o<<tab<< "  nnR("<<wE+wF-1<<" downto 0) <= nRn("<<wE+wF-1<<" downto 0) when \"0101\","<<endl;
 	  o<<tab<< "                                newX("<<wE+wF-1<<" downto 0) when others;"<<endl;
 			
-		
+		/* assign results */
 		o<<tab<< "rexp <= nnR("<<wE+wF-1<<" downto "<<wF<<");"<<endl;
 		o<<tab<< "rfrac <= \"1\" & nnR("<<wF-1<<" downto 0);"<<endl;
 		o<<tab<< "rsig <= nnR("<<wE+wF<<");"<<endl;
@@ -449,7 +456,10 @@ TestCaseList FPAdder::generateRandomTestCases(int n)
 		tc.addInput(sy, y.getSignalValue());
 		
 		tc.addExpectedOutput(srexc, r.getExceptionSignalValue());
-		tc.addExpectedOutput(srsgn, r.getSignSignalValue());
+		if (r.getExceptionSignalValue() != 0)
+		{
+			tc.addExpectedOutput(srsgn, r.getSignSignalValue());
+		}
 		// Exponent and fraction are not defined for zero, inf or NaN
 		if (r.getExceptionSignalValue() == 1)
 		{
