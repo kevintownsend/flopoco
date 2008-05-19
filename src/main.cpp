@@ -114,8 +114,6 @@ static void usage(char *name){
 	cerr << "  In addition several options affect the operators following them:\n";
 	cerr << "   -outputfile=<output file name>\n";
 	cerr << "       sets the filename (default flopoco.vhdl)\n";
-	cerr << "   -lut=<3|4|5|6|7|8>\n";
-	cerr << "       sets the input size of the LUTs of the target architecture (default 4)\n";
 	cerr << "   -verbose=<1|2|3>\n";
 	cerr << "       sets the verbosity level (default 0)\n";
 	cerr << "   -pipeline=<yes|no>\n";
@@ -186,19 +184,6 @@ bool parse_command_line(int argc, char* argv[]){
 					if(oplist.size()!=0)
 						cerr << "WARNING: global option "<<o<<" should come before any operator specification" << endl; 
 					filename=v;
-				}
-				else if (o == "lut") {
-					if(oplist.size()!=0)
-						cerr << "WARNING: global option "<<o<<" should come before any operator specification" << endl; 
-					int lutsize = atoi(v.c_str()); // there must be a more direct method of string
-					if (lutsize<3 || lutsize>8) {
-						cerr<<"ERROR: Are there really FPGAs whose LUTs have "<<lutsize<< " inputs ?"<<endl; 
-						usage(argv[0]);
-					}
-					target->set_lut_inputs(lutsize);
-					if (verbose) {
-						cerr<< "LUT size set to "<< lutsize <<endl;
-					}
 				}
 				else if (o == "verbose") {
 					verbose = atoi(v.c_str()); // there must be a more direct method of string

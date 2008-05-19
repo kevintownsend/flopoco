@@ -41,20 +41,9 @@ bool Target::is_pipelined() {
 	return _pipeline;
 }
 
-void Target::set_lut_inputs(int n) {
-	_lut_inputs=n;
-}
-
 int Target::lut_inputs() {
 	return _lut_inputs;
 }
-int Target::mult_x_inputs(){
-	return _mult_x_inputs;
-};
-
-int Target::mult_y_inputs(){
-	return _mult_y_inputs;
-};
 
 double Target::frequency(){
 	return _frequency;
