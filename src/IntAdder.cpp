@@ -39,14 +39,11 @@
 
 using namespace std;
 
-
-
-
-
-
-
-
-
+/**
+ * The IntAdder constructor
+ * @param[in]		target		the target device
+ * @param[in]		wIn			  the the with of the inputs and output
+ **/
 IntAdder::IntAdder(Target* target, int wIn) :
 	Operator(target), wIn(wIn) {
 
@@ -57,58 +54,64 @@ IntAdder::IntAdder(Target* target, int wIn) :
 	// Set up the IO signals
 	add_input ("X", wIn);
 	add_input ("Y", wIn);
+	add_input ("Cin", 1);
 	add_output ("R", wIn);
 
 	if (target->is_pipelined())
 		set_sequential();
 	else
 		set_combinatorial();
- 
-	chunk_size = (int)floor( (1./target->frequency() - target->lut_delay()) / target->carry_propagate_delay()); // 1 if no need for pipeline
-	pipe_levels = wIn/chunk_size + 1; // =1 when no pipeline
-	if(pipe_levels==1){
-		add_registered_signal("iR", wIn);
-		set_pipeline_depth(1); 
-	}
 
-	else{
-		set_pipeline_depth(pipe_levels); 
-		//  if(c2_pipe_levels) c2_chunk_size=sizeSummand;
-		cout << tab <<"Estimated delay will be " << target->adder_delay(wIn) <<endl; 
-		cout << tab << "chunk="<<chunk_size << " freq=" << 1e-6/target->adder_delay(chunk_size) <<"  levels="<<pipe_levels <<endl;
-		if(chunk_size > (wIn/pipe_levels)+2)
-			chunk_size = (wIn/pipe_levels)+2;
-		cout << tab << "after chunk balancing, chunk=="<<chunk_size << " freq=" << 1e-6/target->adder_delay(chunk_size) <<"  levels="<<pipe_levels <<endl;
-		last_chunk_size = wIn - (pipe_levels-1)*chunk_size;
-		cout << tab << "last chunk=="<<last_chunk_size <<endl;
-		for(int i=0; i<pipe_levels; i++){
-			ostringstream snamex, snamey, snamer;
-			snamex <<"ix_"<<i;
-			snamey <<"iy_"<<i;
-			snamer <<"ir_"<<i;
-			int size;
-			if(i<pipe_levels-1)
-				size = chunk_size+1;
-			else
-				size = last_chunk_size;
-			add_delay_signal(snamex.str(), size, i);
-			add_delay_signal(snamey.str(), size, i);
-			add_delay_signal(snamer.str(), size, pipe_levels-i);
+	if (is_sequential()){ 
+		chunk_size = (int)floor( (1./target->frequency() - target->lut_delay()) / target->carry_propagate_delay()); // 1 if no need for pipeline
+		pipe_levels = wIn/chunk_size + 1; // =1 when no pipeline
+		if(pipe_levels==1){
+			add_registered_signal_with_sync_reset("iR", wIn);
+			set_pipeline_depth(1); 
+		}
+
+		else{
+			set_pipeline_depth(pipe_levels); 
+			//  if(c2_pipe_levels) c2_chunk_size=sizeSummand;
+			cout << tab <<"Estimated delay will be " << target->adder_delay(wIn) <<endl; 
+			cout << tab << "chunk="<<chunk_size << " freq=" << 1e-6/target->adder_delay(chunk_size) <<"  levels="<<pipe_levels <<endl;
+			if(chunk_size > (wIn/pipe_levels)+2)
+				chunk_size = (wIn/pipe_levels)+2;
+			cout << tab << "after chunk balancing, chunk=="<<chunk_size << " freq=" << 1e-6/target->adder_delay(chunk_size) <<"  levels="<<pipe_levels <<endl;
+			last_chunk_size = wIn - (pipe_levels-1)*chunk_size;
+			cout << tab << "last chunk=="<<last_chunk_size <<endl;
+			for(int i=0; i<pipe_levels; i++){
+				ostringstream snamex, snamey, snamer;
+				snamex <<"ix_"<<i;
+				snamey <<"iy_"<<i;
+				snamer <<"ir_"<<i;
+				int size;
+				if(i<pipe_levels-1)
+					size = chunk_size+1;
+				else
+					size = last_chunk_size;
+				add_delay_signal(snamex.str(), size, i);
+				add_delay_signal(snamey.str(), size, i);
+				add_delay_signal(snamer.str(), size, pipe_levels-i);
+			}
 		}
 	}
-
 }
 
 
+
+/**
+ * FPMultiplier destructor
+ */
 IntAdder::~IntAdder() {
 }
 
 
-
-
-
-
-
+/**
+ * Method belonging to the Operator class overloaded by the IntAdder class
+ * @param[in,out] o     the stream where the current architecture will be outputed to
+ * @param[in]     name  the name of the entity corresponding to the architecture generated in this method
+ **/
 void IntAdder::output_vhdl(std::ostream& o, std::string name) {
 	ostringstream signame;
 	Licence(o,"Florent de Dinechin (2007)");
@@ -122,7 +125,7 @@ void IntAdder::output_vhdl(std::ostream& o, std::string name) {
 	o << "begin" << endl;
 	if(is_sequential()){
 		if(pipe_levels==1){
-			o << tab << "iR <= X+Y;" <<endl;
+			o << tab << "iR <= X + Y + Cin;" <<endl;
 			o << tab << "R <= iR_d;" <<endl;      
 		}
 		else{
@@ -166,7 +169,9 @@ void IntAdder::output_vhdl(std::ostream& o, std::string name) {
 					ostringstream carry;
 					carry <<"ir_"<<i-1;
 					o  << " + ((" << size  << " downto 1 => '0') & " << get_delay_signal_name(carry.str(), 1) << "(" << chunk_size << "))";
-				}
+				}else
+					o  << " + Cin";
+				
 				o << ";" << endl;
 			}
 			// Then the output to R 
@@ -189,10 +194,45 @@ void IntAdder::output_vhdl(std::ostream& o, std::string name) {
 		output_vhdl_registers(o);
 	}
 	else{
-		o << tab << "R <= X+Y;" <<endl;
+		o << tab << "R <= X + Y + Cin;" <<endl;
 	}
 	o << "end architecture;" << endl << endl;
 }
 
+TestCaseList IntAdder::generateStandardTestCases(int n)
+{
+	// TODO
+	return TestCaseList();
+}
+
+TestCaseList IntAdder::generateRandomTestCases(int n)
+{
+	Signal sx = *get_signal_by_name("X");
+	Signal sy = *get_signal_by_name("Y");
+	Signal sc = *get_signal_by_name("Cin");
+	Signal sr = *get_signal_by_name("R");
+
+	TestCaseList tcl;	/* XXX: Just like Lyon's Transportion Company. :D */
+	mpz_class x, y, temp, c, r;
+
+	for (int i = 0; i < n; i++)
+	{
+		x = getLargeRandom(sx.width()-1);
+		y = getLargeRandom(sy.width()-1);
+		c = getLargeRandom(sc.width());
+		temp = x + y;
+		r = temp + c;
+
+		TestCase tc;
+		tc.addInput(sx, x);
+		tc.addInput(sy, y);
+		tc.addInput(sc, c);
+		tc.addExpectedOutput(sr, r);
+		tc.addComment(x.get_str() + " + " + y.get_str() + c.get_str() + " = " + r.get_str());
+		tcl.add(tc);
+	}
+
+	return tcl;
+}
 
 

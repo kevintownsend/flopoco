@@ -7,7 +7,6 @@
 #include <gmpxx.h>
 
 #include "Operator.hpp"
-#include "IntAdder.hpp"
 
 /** 
  * The Integer Multiplier class. Receives at input two numbers of 

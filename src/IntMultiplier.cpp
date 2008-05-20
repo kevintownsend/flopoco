@@ -536,6 +536,7 @@ void IntMultiplier::map_adder(std::ostream& o,std::string left_term, std::string
 	o<<tab<< "int_adder_component: " << intadd->unique_name << endl;
 	o<<tab<< "  port map ( X => "<< left_term << ", " << endl; 
 	o<<tab<< "             Y => "<< right_term<< ", " << endl; 
+	o<<tab<< "             Cin => '0' ," << endl;
 	o<<tab<< "             R => "<< result<< ", " << endl; 
 	o<<tab<< "             clk => clk, " << endl;
 	o<<tab<< "             rst => rst " << endl;

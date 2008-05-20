@@ -3,7 +3,6 @@
 #include <vector>
 #include <sstream>
 #include <gmp.h>
-//#include <mpfr.h>
 #include <gmpxx.h>
 
 #include "Operator.hpp"
@@ -13,26 +12,30 @@
 
 Not useful to users, but useful to evaluate numerical values of
 _fastcarry_delay for a new target  */
-
 class IntAdder : public Operator
 {
 public:
 	IntAdder(Target* target, int wIn);
 	~IntAdder();
-
+	/** the width for X, Y and R*/
 	int wIn;
 
 
-	// Overloading the virtual functions of Operator
+	/** Overloading the virtual functions of Operator */
 	void output_vhdl(std::ostream& o, std::string name);
 
+	/** overloaded method */
+	TestCaseList generateStandardTestCases(int n);
+	/** overloaded method */
+	TestCaseList generateRandomTestCases(int n);
 
 private:
+	/** the maximum chunk size for an addition so that the requested frequency can theoretically be used*/
 	int chunk_size;
-	int last_chunk_size; // the last one is slightly smaller
+	/** the last chunk size - the last one is slightly smaller*/
+	int last_chunk_size; 
+	/** the number of pieline levels of the sequential operator*/ 
 	int pipe_levels;
 };
-
-
 
 #endif
