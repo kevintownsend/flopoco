@@ -1,6 +1,9 @@
 #include "FloFP.hpp"
 #include "utils.hpp"
 
+/* Exponent of 2, used to represent signed zero */
+#define ZERO_EXPONENT -1000000000
+
 /* SwW: Slipper when Wet
  * When the FPMultiplier is set not to normalise results,
  * it outputs significants and exponents which have little 
@@ -82,8 +85,8 @@ FloFP FloFP::operator*(mpfr_t mpX)
 FloFP FloFP::operator+(FloFP fp)
 {
 	mpfr_t x, y, r;
-	mpfr_init2(x, 2+1+wE+wF);
-	mpfr_init2(y, 2+1+fp.wE +fp.wF);
+	mpfr_init2(x, 1+wF);
+	mpfr_init2(y, 1+fp.wF);
 	mpfr_init2(r, wF+fp.wF+2);
 	getMPFR(x);
 	fp.getMPFR(y);
@@ -117,7 +120,13 @@ void FloFP::getMPFR(mpfr_t mp)
 	/* Zero */
 	if (exception == 0)
 	{
-		mpfr_set_d(mp, (sign == 1) ? -0.0 : +0.0, GMP_RNDN);
+		/* MPFR does NOT have the concept of +/- zero due to its wide range of
+		 * exponent values. As FloPoCo does have +/- zero (as a result of different
+		 * underflows), we must somehow simulate it in MPFR. We will do this
+		 * by storing zero as a really small number, what we won't ever encounder in
+		 * FloPoCo */
+		mpfr_set_d(mp, (sign == 1) ? -1 : +1, GMP_RNDN);
+		mpfr_mul_2si(mp, mp, ZERO_EXPONENT, GMP_RNDN);
 		return;
 	}
 	
@@ -169,7 +178,7 @@ FloFP& FloFP::operator=(mpfr_t mp_)
 	if (mpfr_zero_p(mp))
 	{
 		exception = 0;
-		sign = mpfr_sgn(mp) > 0 ? 0 : 1;
+		sign = 0;	/* MPFR does not have a sign for zero */
 		exponent = 0;
 		mantissa = 0;
 		return *this;
@@ -291,3 +300,20 @@ FloFP& FloFP::operator=(FloFP fp)
 	return *this;
 }
 
+FloFP FloFP::exp()
+{
+	/* Compute exponential using MPFR */
+	mpfr_t mpR, mpX;
+	mpfr_init2(mpR, wF+1);
+	mpfr_init(mpX);	// XXX: precision set in getMPFR()
+	getMPFR(mpX);
+	mpfr_exp(mpR, mpX, GMP_RNDN);
+	
+	/* Create FloFP */
+	FloFP ret(wE, wF, mpR);
+
+	/* Cleanup */
+	mpfr_clears(mpX, mpR, 0);
+
+	return ret;
+}
