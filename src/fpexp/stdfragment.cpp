@@ -6,7 +6,7 @@
 #include "stdfragment.h"
 
 using namespace std;
-using namespace FloPoCo::import::Exp;
+using namespace FloPoCo::import::FPExp;
 
 class StdFragmentTable : public IFunContainer
 {

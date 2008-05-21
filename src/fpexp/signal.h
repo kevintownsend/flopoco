@@ -7,7 +7,7 @@ using namespace std;
 
 namespace FloPoCo {
 namespace import {
-namespace Exp {
+namespace FPExp {
 
 string zeros(int number, bool quoted = true);
 

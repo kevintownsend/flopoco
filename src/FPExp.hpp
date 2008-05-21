@@ -1,5 +1,5 @@
-#ifndef __EXP_HPP
-#define __EXP_HPP
+#ifndef __FPEXP_HPP
+#define __FPEXP_HPP
 #include <vector>
 #include <sstream>
 
@@ -7,11 +7,11 @@
 
 class Fragment;
 
-class Exp : public Operator
+class FPExp : public Operator
 {
 public:
-	Exp(Target* target, int wE, int wF);
-	~Exp();
+	FPExp(Target* target, int wE, int wF);
+	~FPExp();
 
 	// Overloading the virtual functions of Operator
 	void output_vhdl(std::ostream& o, std::string name);

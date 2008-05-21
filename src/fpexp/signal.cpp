@@ -4,9 +4,9 @@
 #include "math_lib.h"
 #include "signal.h"
 
-using namespace FloPoCo::import::Exp;
+using namespace FloPoCo::import::FPExp;
 
-string FloPoCo::import::Exp::zeros(int number, bool quoted)
+string FloPoCo::import::FPExp::zeros(int number, bool quoted)
 {
   if (quoted)
     return '"' + string(number, '0') + '"';

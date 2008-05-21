@@ -45,7 +45,7 @@
 #include "ConstMult/FPConstMult.hpp"
 #include "Target.hpp"
 #include "Targets/VirtexIV.hpp"
-#include "Exp.hpp"
+#include "FPExp.hpp"
 #include "Mux.hpp"
 
 #ifdef HAVE_HOTBM
@@ -94,7 +94,7 @@ static void usage(char *name){
 	cerr << "      normalize can be either 0 or 1. \n";     	
 	cerr << "    DotProduct wE wFX wFY MaxMSB_in LSB_acc MSB_acc\n";
 	cerr << "      floating-point dot product unit \n";
-	cerr << "    Exp wE wF\n";
+	cerr << "    FPExp wE wF\n";
 	cerr << "      exponential function\n";
 #ifdef HAVE_HOTBM
 	cerr << "    HOTBM function wI wO degree\n";
@@ -494,15 +494,15 @@ bool parse_command_line(int argc, char* argv[]){
 			oplist.push_back(op);
 		}
 #endif // HAVE_HOTBM
-		else if (opname == "Exp")
+		else if (opname == "FPExp")
 		{
 			int nargs = 2;
 			if (i+nargs > argc)
 				usage(argv[0]); // and exit
 			int wE = check_strictly_positive(argv[i++], argv[0]);
 			int wF = check_strictly_positive(argv[i++], argv[0]);
-			cerr << "> Exp: wE=" << wE << " wF=" << wF << endl;
-			op = new Exp(target, wE, wF);
+			cerr << "> FPExp: wE=" << wE << " wF=" << wF << endl;
+			op = new FPExp(target, wE, wF);
 			oplist.push_back(op);
 		}
 //     else if(opname=="FPAdd"){

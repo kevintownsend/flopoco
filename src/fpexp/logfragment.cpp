@@ -6,7 +6,7 @@
 #include "logfragment.h"
 
 using namespace std;
-using namespace FloPoCo::import::Exp;
+using namespace FloPoCo::import::FPExp;
 
 /* Fonctions tabulées
    ================== */

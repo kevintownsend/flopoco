@@ -2,12 +2,12 @@
 #include <fstream>
 #include <sstream>
 
-#include "Exp.hpp"
+#include "FPExp.hpp"
 #include "FloFP.hpp"
 #include "utils.hpp"
 
-#include "exp/stdfragment.h"
-#include "exp/explore.h"
+#include "fpexp/stdfragment.h"
+#include "fpexp/explore.h"
 
 using namespace std;
 
@@ -15,13 +15,13 @@ extern char fp_exp_template[];
 
 void copy_file_section(ostream& o, istream& i);
 
-Exp::Exp(Target* target, int wE, int wF)
+FPExp::FPExp(Target* target, int wE, int wF)
 	: wE(wE), wF(wF)
 {
 	/* Generate unique name */
 	{
 		std::ostringstream o;
-		o << "Exp_" << wE << "_" << wF;
+		o << "FPExp_" << wE << "_" << wF;
 		unique_name = o.str();
 	}
 
@@ -32,15 +32,15 @@ Exp::Exp(Target* target, int wE, int wF)
 	int exponent_size = wE;
 
 	f = explore(explore_size);
-	if (!f) throw std::string("Exp::Exp(): No fragment");
+	if (!f) throw std::string("FPExp::FPExp(): No fragment");
 }
 
-Exp::~Exp()
+FPExp::~FPExp()
 {
 }
 
 // Overloading the virtual functions of Operator
-void Exp::output_vhdl(std::ostream& o, std::string name)
+void FPExp::output_vhdl(std::ostream& o, std::string name)
 {
 	Licence(o, "Cristian KLEIN (2008)");
 	stringstream fp_exp, fixp_exp, fixp_exp_tbl;
@@ -122,13 +122,13 @@ void Exp::output_vhdl(std::ostream& o, std::string name)
 	o << fixp_exp_tbl.str() << fixp_exp.str() << fp_exp.str();
 }
 
-TestCaseList Exp::generateStandardTestCases(int n)
+TestCaseList FPExp::generateStandardTestCases(int n)
 {
 	// TODO
 	return TestCaseList();
 }
 
-TestCaseList Exp::generateRandomTestCases(int n)
+TestCaseList FPExp::generateRandomTestCases(int n)
 {
 	Signal& sx = *get_signal_by_name("x");
 	Signal& sr = *get_signal_by_name("r");

@@ -84,16 +84,16 @@ ADD_EXECUTABLE(flopoco
  src/ConstMult/FPConstMult 
  src/TestCase
  src/FloFP
- src/exp/math_lib.cpp
- src/exp/signal.cpp
- src/exp/fragment.cpp
- src/exp/stdfragment.cpp
- src/exp/logfragment.cpp
- src/exp/gen_table.cpp
- src/exp/explore.cpp
- src/Exp
+ src/fpexp/math_lib.cpp
+ src/fpexp/signal.cpp
+ src/fpexp/fragment.cpp
+ src/fpexp/stdfragment.cpp
+ src/fpexp/logfragment.cpp
+ src/fpexp/gen_table.cpp
+ src/fpexp/explore.cpp
+ src/FPExp
  src/Mux
- src/exp/fp_exp_template.cpp
+ src/fpexp/fp_exp_template.cpp
 )
 TARGET_LINK_LIBRARIES(flopoco  mpfr gmp gmpxx ${HOTBM_LIB})
 
