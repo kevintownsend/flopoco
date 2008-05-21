@@ -1,4 +1,3 @@
-/* vim: set tabstop=8 softtabstop=2 shiftwidth=2: */
 /*
  * Author: Cristian KLEIN 
  *
@@ -30,6 +29,12 @@
 #include "utils.hpp"
 #include "Operator.hpp"
 #include "BigTestBench.hpp"
+
+/** Rounds a number to the next multiple of 4 */
+int inline round4(int x)
+{
+	return (x % 4) ? x + (4 - x % 4) : x;
+}
 
 BigTestBench::BigTestBench(Target* target, Operator* op, int n):
 	Operator(target), op(op), n(n)
@@ -122,7 +127,7 @@ void BigTestBench::output_vhdl(ostream& o, string name) {
 		Signal *s = op->ioList[i];
 		o << tab << tab << "variable v_" << s->id() << ": std_ulogic"; 
 		if (s->width() > 1)
-			o << "_vector(" << s->width() - 1 << " downto 0)";
+			o << "_vector(" << round4(s->width())-1 << " downto 0)";
 		o << ";" << endl;
 	}
 
@@ -144,7 +149,7 @@ void BigTestBench::output_vhdl(ostream& o, string name) {
 		if (s->width() == 1)
 			o << "read(buf,v_" << s->id() << "); " << s->id() << " <= v_" << s->id() << ";" <<endl; 
 		else
-			o << "hread(buf,v_" << s->id() << "); " << s->id() << " <= to_stdlogicvector(v_" << s->id() << ");" <<endl; 
+			o << "hread(buf,v_" << s->id() << "); " << s->id() << " <= to_stdlogicvector(v_" << s->id() << "(" << s->width()-1 << " downto 0));" <<endl; 
 	}
 	o << tab << tab << tab << "-- check results" << endl;
 	o << tab << tab << tab << "wait for 1 ns;" <<endl;
@@ -164,7 +169,7 @@ void BigTestBench::output_vhdl(ostream& o, string name) {
 		if (s->width() == 1)
 			o << "v_" << s->id() << " ";
 		else 
-			o << "to_stdlogicvector(v_" << s->id() << ") ";
+			o << "to_stdlogicvector(v_" << s->id() << "(" << s->width()-1 << " downto 0)) ";
 		o << "report \"Incorrect value for " << s->id() << "\" severity error;"
 			<<endl; 
 	}

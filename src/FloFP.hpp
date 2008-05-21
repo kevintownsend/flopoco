@@ -110,6 +110,22 @@ public:
 	 */
 	FloFP &operator=(FloFP fp);
 
+	/**
+	 * Returns the exponential of the current FloFP.
+	 * @return a FloFP storing the exponential.
+	 */
+	FloFP exp();
+
+	/**
+	 * Returns the whole signal rounded down.
+	 */
+	mpz_class getRoundedDownSignalValue();
+
+	/**
+	 * Returns the whole signal rounded up.
+	 */
+	mpz_class getRoundedUpSignalValue();
+
 private:
 	/** The width of the exponent */
 	int wE;
@@ -136,6 +152,9 @@ private:
 	/** Should we shift the fraction with one bit?
 	 * See the comment at the beginig of FloFP.cpp */
 	bool mustAddLeadingZero;
+
+	/** Is the stored value rounded down? */
+	bool roundeddown;
 };
 
 #endif

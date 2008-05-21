@@ -2,29 +2,29 @@
 
 std::string TestCase::signalValueToVHDL(Signal s, mpz_class v, bool quot)
 {
-	std::string o;
+	std::string r;
 
 	/* Get base 2 representation */
-	o = v.get_str(2);
+	r = v.get_str(2);
 
 	/* Some check */
-	if (o.size() > s.width())
+	if (r.size() > s.width())
 	{
 		std::ostringstream o;
-		o << "Error in " <<  __FILE__ << "@" << __LINE__ << ": value is larger than signal " << s.id();
+		o << "Error in " <<  __FILE__ << "@" << __LINE__ << ": value (" << r << ") is larger than signal " << s.id();
 		throw o.str();
 	}
 
 	/* Do padding */
-	while (o.size() < s.width())
-		o = "0" + o;
+	while (r.size() < s.width())
+		r = "0" + r;
 
 	/* Put apostrophe / quot */
-	if (!quot) return o;
+	if (!quot) return r;
 	if (s.width() > 1)
-		return "\"" + o + "\"";
+		return "\"" + r + "\"";
 	else
-		return "'" + o + "'";
+		return "'" + r + "'";
 }
 
 

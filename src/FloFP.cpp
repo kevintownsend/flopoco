@@ -87,7 +87,7 @@ FloFP FloFP::operator+(FloFP fp)
 	mpfr_t x, y, r;
 	mpfr_init2(x, 1+wF);
 	mpfr_init2(y, 1+fp.wF);
-	mpfr_init2(r, wF+fp.wF+2);
+	mpfr_init2(r, wF+fp.wF+3);
 	getMPFR(x);
 	fp.getMPFR(y);
 	mpfr_add(r, x, y, GMP_RNDN);
@@ -95,8 +95,6 @@ FloFP FloFP::operator+(FloFP fp)
 
 	return flofp;
 }
-
-
 
 void FloFP::getMPFR(mpfr_t mp)
 {
@@ -207,8 +205,17 @@ FloFP& FloFP::operator=(mpfr_t mp_)
 	}
 	else
 	{
+		mpz_class downMantissa;
+
 		mpfr_mul_2si(mp, mp, wF, GMP_RNDN);
 		mpfr_get_z(mantissa.get_mpz_t(), mp, GMP_RNDN);
+		mpfr_get_z(downMantissa.get_mpz_t(), mp, GMP_RNDD);
+
+		if (downMantissa == mantissa)
+			roundeddown = true;
+		else
+			roundeddown = false;
+		roundeddown = false;
 	}
 
 	/* SwW: exponent is smaller in the „normalised” case */
@@ -289,6 +296,7 @@ mpz_class FloFP::getSignalValue()
 FloFP& FloFP::operator=(FloFP fp)
 {
 	mustAddLeadingZero = fp.mustAddLeadingZero;
+	roundeddown = fp.roundeddown;
 
 	/* Pass this through MPFR to lose precision */
 	mpfr_t mp;
@@ -304,7 +312,7 @@ FloFP FloFP::exp()
 {
 	/* Compute exponential using MPFR */
 	mpfr_t mpR, mpX;
-	mpfr_init2(mpR, wF+1);
+	mpfr_init2(mpR, wF+100);
 	mpfr_init(mpX);	// XXX: precision set in getMPFR()
 	getMPFR(mpX);
 	mpfr_exp(mpR, mpX, GMP_RNDN);
@@ -317,3 +325,14 @@ FloFP FloFP::exp()
 
 	return ret;
 }
+
+mpz_class FloFP::getRoundedDownSignalValue()
+{
+	return (((((exception << 1) + sign) << wE) + exponent) << wF) + mantissa - (roundeddown ? 0 : 1);
+}
+
+mpz_class FloFP::getRoundedUpSignalValue()
+{
+	return (((((exception << 1) + sign) << wE) + exponent) << wF) + mantissa + (roundeddown ? 1 : 0);
+}
+
