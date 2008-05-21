@@ -138,9 +138,9 @@ void LogFragment::evalpos(int accuracy, int start, int& overlapping, bool& is_si
 
 // premier fichier : tout sauf les tables
 
-void LogFragment::write_arch(ostream& o)
+void LogFragment::write_arch(std::string prefix, ostream& o)
 {
-  Fragment::write_arch(o);
+  Fragment::write_arch(prefix, o);
 
   /* Déclarations de signaux
      ======================= */
@@ -194,14 +194,14 @@ void LogFragment::write_arch(ostream& o)
     if (is_signed)
       o << "  signed_input(" << signed_input.length - 1 << ") <= sign;" << endl
         << "  " << signed_input.getPart(1) << " <= part_1;" << endl
-	<< "  component1 : exp_tbl_" << accuracy - start << endl
+	<< "  component1 : " << prefix << "_exp_tbl_" << accuracy - start << endl
 	<< "    port map (x => signed_input," << endl
         << "              y => exp_tbl_out);" << endl
         << "  exp_part1 <= " << part_1.getPart(start - 1, end) << " + " << exp_tbl_out.getPart(start - 1, end)
 	<< " when sign = '0' else " << part_1.getPart(start - 1, end) << " + \"" << zeros(reallength, false)
 	<< "1\" - " << exp_tbl_out.getPart(start - 1, end) << ';' << endl;
     else
-      o << "  component1 : exp_tbl_" << accuracy - start << endl
+      o << "  component1 : " << prefix << "_exp_tbl_" << accuracy - start << endl
         << "    port map (x => part_1," << endl
         << "              y => exp_tbl_out);" << endl
         << "  exp_part1 <= " << part_1.getPart(start - 1, end) << " + " << exp_tbl_out.getPart(start - 1, end) << ';' << endl;
@@ -216,7 +216,7 @@ void LogFragment::write_arch(ostream& o)
 
   // calcul de remainder
   o << endl << "  -- partie restante" << endl
-    << "  component2 : log_tbl_" << accuracy - start << endl
+    << "  component2 : " << prefix << "_log_tbl_" << accuracy - start << endl
     << "    port map (x => " << (is_signed ? "signed_input" : "part_1") << ',' << endl
     << "              y => remainder_1);" << endl;
 
@@ -229,7 +229,7 @@ void LogFragment::write_arch(ostream& o)
   o << "  remainder <= " << remainder_1.getPart(remainder.start) << " + " << remainder_2.getPart(remainder.start) << ';' << endl;
 
   o << "  -- exponentielle de ce reste" << endl
-    << "  component3 : exp_" << accuracy - next_part->getStart() << endl
+    << "  component3 : " << prefix << "_exp_" << accuracy - next_part->getStart() << endl
     << "    port map (x => remainder," << endl
     << "              y => exp_rmd);" << endl << endl
 
@@ -248,9 +248,9 @@ void LogFragment::write_arch(ostream& o)
 
 // second fichier : tables utilisés dans le composant
 
-void LogFragment::write_tbl_declaration(ostream& o)
+void LogFragment::write_tbl_declaration(std::string prefix, ostream& o)
 {
-  Fragment::write_tbl_declaration(o); // fait l'appel récursif sur les morceaux suivants
+  Fragment::write_tbl_declaration(prefix, o); // fait l'appel récursif sur les morceaux suivants
   int input_size = accuracy - start;
 
   // table de x -> {e ^ x - 1 - x} arrondi à la précision de l'entrée
@@ -258,7 +258,7 @@ void LogFragment::write_tbl_declaration(ostream& o)
     o << "  -- tabule e ^ x - x - 1 avec " << reallength << " bits en entree, " << exp_bits << " en sortie" << endl
       << "  -- le dernier bit de l'entree est le " << end << "eme apres la virgule" << endl;
     if (is_signed) o << "  -- l'entree a en plus un bit de signe" << endl;
-    o << "  component exp_tbl_" << input_size << " is\n"
+    o << "  component " << prefix << "_exp_tbl_" << input_size << " is\n"
       << "    port (x : in  std_logic_vector(" << reallength - 1 + is_signed << " downto 0);" << endl
       << "          y : out std_logic_vector(" << exp_bits - 1 << " downto 0));" << endl
       << "  end component;" << endl;
@@ -266,23 +266,23 @@ void LogFragment::write_tbl_declaration(ostream& o)
 
   // table de x -> x - log({e ^ x} arrondi)
   o << "  -- tabule ln(e ^ x tronque a " << end << " bits) avec " << log_bits << " bits en sortie" << endl
-    << "  component log_tbl_" << input_size << " is\n"
+    << "  component " << prefix << "_log_tbl_" << input_size << " is\n"
     << "    port (x : in  std_logic_vector(" << reallength - 1 + is_signed << " downto 0);" << endl
     << "          y : out std_logic_vector(" << log_bits - 1 << " downto 0));" << endl
     << "  end component;" << endl;
 }
 
-void LogFragment::write_tbl_arch(ostream& o)
+void LogFragment::write_tbl_arch(std::string prefix, ostream& o)
 {
-  Fragment::write_tbl_arch(o);
+  Fragment::write_tbl_arch(prefix, o);
   if (exp_bits > 0) {
 		LogFragmentTable1 table1(end);
-    gen_table(o, "exp_tbl", accuracy - start, table1,
+    gen_table(o, (prefix + "_exp_tbl").c_str(), accuracy - start, table1,
     end, reallength, is_signed, end, exp_bits);
   }
 	
 	LogFragmentTable2 table2(accuracy, end);
-  gen_table(o, "log_tbl", accuracy - start, table2,
+  gen_table(o, (prefix + "_log_tbl").c_str(), accuracy - start, table2,
     end, reallength, is_signed, accuracy, log_bits);
 }
 

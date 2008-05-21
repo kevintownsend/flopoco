@@ -30,25 +30,25 @@ int Fragment::prepare(double& area, double& max_error, bool with_sign, int accur
   return accuracy;
 }
 
-void Fragment::generate(ostream& code_file, ostream& table_file)
+void Fragment::generate(std::string prefix, ostream& code_file, ostream& table_file)
 {
   table_file << "library ieee;\n"
              << "use ieee.std_logic_1164.all;\n"
 	     << "use ieee.std_logic_arith.all;\n"
 	     << "use ieee.std_logic_unsigned.all;\n\n"
-	     << "package pkg_exp_tbl is" << endl;
-  write_tbl_declaration(table_file);
+	     << "package pkg_" << prefix << "_exp_tbl is" << endl;
+  write_tbl_declaration(prefix, table_file);
   table_file << "end package;\n" << endl;
-  write_tbl_arch(table_file);
+  write_tbl_arch(prefix, table_file);
 
   code_file << "library ieee;\n"
             << "use ieee.std_logic_1164.all;\n"
 	    << "use ieee.std_logic_arith.all;\n"
 	    << "use ieee.std_logic_unsigned.all;\n\n"
-	    << "package pkg_exp is" << endl;
-  write_declaration(code_file);
+	    << "package pkg_" << prefix << "_exp is" << endl;
+  write_declaration(prefix, code_file);
   code_file << "end package;\n" << endl;
-  write_arch(code_file);
+  write_arch(prefix, code_file);
 }
 
 int Fragment::totallength()
@@ -84,11 +84,11 @@ void Fragment::showinfo(int number)
     cout << "non signee";
 }
 
-void Fragment::write_declaration(std::ostream& o)
+void Fragment::write_declaration(std::string prefix, std::ostream& o)
 {
-  if (next_part != 0) next_part->write_declaration(o);
+  if (next_part != 0) next_part->write_declaration(prefix, o);
   int input_size = accuracy - start;
-  o << "  component exp_" << input_size << " is\n"
+  o << "  component " << prefix << "_exp_" << input_size << " is\n"
     << "    port (x : in  std_logic_vector(" << input_size << " - 1 downto 0);" << endl
     << "          y : out std_logic_vector(" << input_size + 1 << " - 1 downto 0)";
   if (is_signed)
@@ -96,9 +96,9 @@ void Fragment::write_declaration(std::ostream& o)
   o << ");" << endl << "  end component;" << endl;
 }
 
-void Fragment::write_arch(std::ostream& o)
+void Fragment::write_arch(std::string prefix, std::ostream& o)
 {
-  if (next_part != 0) next_part->write_arch(o);
+  if (next_part != 0) next_part->write_arch(prefix, o);
   int input_size = accuracy - start;
 
   o << "-- exp d'un nombre avec une mantisse de " << accuracy << " bits dont " << accuracy - start << " non nuls" << endl
@@ -108,29 +108,29 @@ void Fragment::write_arch(std::ostream& o)
     << "use ieee.std_logic_arith.all;" << endl
     << "use ieee.std_logic_unsigned.all;" << endl
     << "library work;" << endl
-    << "use work.pkg_exp_tbl.all;" << endl;
+    << "use work.pkg_" << prefix << "_exp_tbl.all;" << endl;
 
   if (next_part != 0)
-    o << "use work.pkg_exp.exp_" << accuracy - next_part->start << ';' << endl;
+    o << "use work.pkg_" << prefix << "_exp." << prefix << "_exp_" << accuracy - next_part->start << ';' << endl;
 
   o << endl
-    << "entity exp_" << input_size << " is" << endl
+    << "entity " << prefix << "_exp_" << input_size << " is" << endl
     << "  port (x : in  std_logic_vector(" << input_size << " - 1 downto 0);" << endl
     << "        y : out std_logic_vector(" << input_size + 1 << " - 1 downto 0)";
   if (is_signed)
     o << ';' << endl << "        sign : in std_logic";
   o << ");" << endl << "end entity;" << endl << endl
-    << "architecture arch of exp_" << input_size << " is" << endl;
+    << "architecture arch of " << prefix << "_exp_" << input_size << " is" << endl;
 }
 
-void Fragment::write_tbl_declaration(std::ostream& o)
+void Fragment::write_tbl_declaration(std::string prefix, std::ostream& o)
 {
-  if (next_part != 0) next_part->write_tbl_declaration(o);
+  if (next_part != 0) next_part->write_tbl_declaration(prefix, o);
 }
 
-void Fragment::write_tbl_arch(std::ostream& o)
+void Fragment::write_tbl_arch(std::string prefix, std::ostream& o)
 {
-  if (next_part != 0) next_part->write_tbl_arch(o);
+  if (next_part != 0) next_part->write_tbl_arch(prefix, o);
 
   o << "-- tables pour le composant exp_" << accuracy - start << endl
     << "-- ===============================" << endl << endl;

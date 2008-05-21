@@ -81,9 +81,9 @@ void StdFragment::showinfo(int number)
   cout << ", methode normale" << endl;
 }
 
-void StdFragment::write_arch(ostream& o)
+void StdFragment::write_arch(std::string prefix, ostream& o)
 {
-  Fragment::write_arch(o);
+  Fragment::write_arch(prefix, o);
 
   if (is_signed) {
     cerr << "Le premier morceau doit utiliser des tables de log" << endl
@@ -129,7 +129,7 @@ void StdFragment::write_arch(ostream& o)
     o << "  exp_part1 <= " << part_1.getPart(exp_part1_start) << ';' << endl;
   else {
     o << "  -- exponentielle de cette partie" << endl
-      << "  component1 : exp_tbl_" << accuracy - start << endl
+      << "  component1 : " << prefix << "_exp_tbl_" << accuracy - start << endl
       << "    port map (x => " << part_1.getPart(start, start + input_bits) << ',' << endl
       << "              y => tbl_out);" << endl;
     if (accuracy - output_bits < end)
@@ -142,7 +142,7 @@ void StdFragment::write_arch(ostream& o)
     o << "  y <= " << exp_part1.getPart(start - 1) << ';' << endl;
   else {
     o << "  -- exponentielle de la partie restante" << endl
-      << "  component2 : exp_" << accuracy - end << endl
+      << "  component2 : " << prefix << "_exp_" << accuracy - end << endl
       << "    port map (x => " << x.getPart(end) << ',' << endl
       << "              y => exp_part2);" << endl << endl
       << "  -- calcul du resultat" << endl;
@@ -160,30 +160,30 @@ void StdFragment::write_arch(ostream& o)
   o << "end architecture;" << endl << endl;
 }
 
-void StdFragment::write_tbl_declaration(ostream& o)
+void StdFragment::write_tbl_declaration(std::string prefix, ostream& o)
 {
   /* fait l'appel récursif sur les morceaux suivants
      (oui, mais en c++, on ne peut pas accéder aux membres protégés des
       objets construits avec la classe mère qui ne sont pas aussi construits
       avec la classe dérivée. on doit donc passer par la classe mère - ou
       rendre tous les membres publics) */
-  Fragment::write_tbl_declaration(o);
+  Fragment::write_tbl_declaration(prefix, o);
   int input_size = accuracy - start;
 
   // table de x -> e ^ x - x - 1 avec la précision maximale
   if (output_bits > 0)
-    o << "  component exp_tbl_" << input_size << " is\n"
+    o << "  component " << prefix << "_exp_tbl_" << input_size << " is\n"
       << "    port (x : in  std_logic_vector(" << input_bits << " - 1 downto 0);" << endl
       << "          y : out std_logic_vector(" << output_bits << " - 1 downto 0));" << endl
       << "  end component;" << endl;
 }
 
-void StdFragment::write_tbl_arch(ostream& o)
+void StdFragment::write_tbl_arch(std::string prefix, ostream& o)
 {
-  Fragment::write_tbl_arch(o);
+  Fragment::write_tbl_arch(prefix, o);
   if (output_bits > 0) {
     StdFragmentTable table(accuracy);
-    gen_table(o, "exp_tbl", accuracy - start, table,
+    gen_table(o, (prefix + "_exp_tbl").c_str(), accuracy - start, table,
       start + input_bits, input_bits, is_signed, accuracy, output_bits);
   }
 }

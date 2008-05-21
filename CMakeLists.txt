@@ -93,7 +93,6 @@ ADD_EXECUTABLE(flopoco
  src/fpexp/explore.cpp
  src/FPExp
  src/Mux
- src/fpexp/fp_exp_template.cpp
 )
 TARGET_LINK_LIBRARIES(flopoco  mpfr gmp gmpxx ${HOTBM_LIB})
 

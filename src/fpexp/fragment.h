@@ -10,7 +10,7 @@ public:
   Fragment(int length, Fragment* next_part);
   virtual ~Fragment() {} // ne supprime pas next_part, car l'objet peut être partagé avec d'autres morceaux
   int prepare(double& area, double& max_error, bool with_sign = true, int accuracy = -1, bool showinfo = true);
-  void generate(ostream& code_file, ostream& table_file);
+  void generate(std::string prefix, ostream& code_file, ostream& table_file);
   int getStart() {return start;}
 
 protected:
@@ -20,10 +20,10 @@ protected:
   virtual void evalpos(int accuracy, int start, // calcule l'emplacement et la longueur du morceau dans la mantisse
     int& overlapping, bool& is_signed) = 0;
   virtual void showinfo(int number);            // affiche l'emplacement du morceau et son type
-  virtual void write_declaration(ostream& o);   // écrit la déclaration du composant (dans le package)
-  virtual void write_arch(ostream& o);          // écrit l'entité et l'architecture
-  virtual void write_tbl_declaration(ostream& o); // écrit la déclaration du ou des composant(s) servant de table
-  virtual void write_tbl_arch(ostream& o);      // écrit les tables
+  virtual void write_declaration(std::string prefix, ostream& o);   // écrit la déclaration du composant (dans le package)
+  virtual void write_arch(std::string prefix, ostream& o);          // écrit l'entité et l'architecture
+  virtual void write_tbl_declaration(std::string prefix, ostream& o); // écrit la déclaration du ou des composant(s) servant de table
+  virtual void write_tbl_arch(std::string prefix, ostream& o);      // écrit les tables
 
   // données sur le morceau
   int length;		// longueur demandée, CE N'EST PAS LA LONGUEUR REELLE (il faut ajouter le recouvrement)
