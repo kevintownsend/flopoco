@@ -10,6 +10,7 @@
 #include "LZOC.hpp"
 #include "Shifters.hpp"
 #include "FloFP.hpp"
+#include "IntAdder.hpp"
 
 /** The FPAdder class */
 class FPAdder : public Operator
@@ -45,14 +46,40 @@ public:
 	TestCaseList generateRandomTestCases(int n);
 	
 private:
+	/** The integer adder object */
+	IntAdder *intadd1; 
+	/** The integer adder object */
+	IntAdder *intadd2; 
+	/** The integer adder object */
+	IntAdder *intaddClose1; 
+	/** The integer adder object */
+	IntAdder *intaddClose2; 
+	/** The integer adder object */
+	IntAdder *intaddClose3; 
+
+	/** The integer adder object */
+	IntAdder *intaddFar1; 
+	/** The integer adder object */
+	IntAdder *intaddFar2; 
+	/** The integer adder object */
+	IntAdder *intaddFar3; 
+
 	LZOC* leadingZeroCounter;
 	Shifter* leftShifter;
 	Shifter* rightShifter;
+	
+	IntAdder* adderList[8];
 
 	int wF;
 	int wE;
 	int wOutLZC;
 	int sizeRightShift;
+	
+	int swapDifferencePipelineDepth;
+	int closePathDepth;
+	int farPathDepth;
+	int maxPathDepth;
+	
 };
 
 #endif
