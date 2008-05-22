@@ -92,6 +92,12 @@ ADD_EXECUTABLE(flopoco
  src/fpexp/gen_table.cpp
  src/fpexp/explore.cpp
  src/FPExp
+ src/fplog/FirstInvTable.cpp
+ src/fplog/FirstLogTable.cpp
+ src/fplog/OtherLogTable.cpp
+ src/fplog/SecondInvTable.cpp
+ src/fplog/Signal.cpp
+ src/FPLog
  src/Mux
 )
 TARGET_LINK_LIBRARIES(flopoco  mpfr gmp gmpxx ${HOTBM_LIB})

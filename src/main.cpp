@@ -46,6 +46,7 @@
 #include "Target.hpp"
 #include "Targets/VirtexIV.hpp"
 #include "FPExp.hpp"
+#include "FPLog.hpp"
 #include "Mux.hpp"
 
 #ifdef HAVE_HOTBM
@@ -96,6 +97,8 @@ static void usage(char *name){
 	cerr << "      floating-point dot product unit \n";
 	cerr << "    FPExp wE wF\n";
 	cerr << "      exponential function\n";
+	cerr << "    FPLog wE wF\n";
+	cerr << "      logarithm function\n";
 #ifdef HAVE_HOTBM
 	cerr << "    HOTBM function wI wO degree\n";
 	cerr << "      High-order table-based method for generating a given function\n";
@@ -503,6 +506,17 @@ bool parse_command_line(int argc, char* argv[]){
 			int wF = check_strictly_positive(argv[i++], argv[0]);
 			cerr << "> FPExp: wE=" << wE << " wF=" << wF << endl;
 			op = new FPExp(target, wE, wF);
+			oplist.push_back(op);
+		}
+		else if (opname == "FPLog")
+		{
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0]); // and exit
+			int wE = check_strictly_positive(argv[i++], argv[0]);
+			int wF = check_strictly_positive(argv[i++], argv[0]);
+			cerr << "> FPLog: wE=" << wE << " wF=" << wF << endl;
+			op = new FPLog(target, wE, wF);
 			oplist.push_back(op);
 		}
 //     else if(opname=="FPAdd"){

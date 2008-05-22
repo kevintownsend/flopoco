@@ -1,0 +1,20 @@
+#ifndef SIGNAL_H
+#define SIGNAL_H
+
+#include <iostream>
+#include <string>
+using namespace std;
+
+string zeros(int number, bool quoted = true);
+
+class Signal
+{
+public:
+  Signal(const char* name, int accuracy, int start, int end = -1);
+  string getPart(int part_start, int part_end = -1);
+  const char* name;
+  int accuracy, start, end, length, shift;
+  string declaration;
+};
+
+#endif
