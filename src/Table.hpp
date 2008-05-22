@@ -20,15 +20,10 @@ class Table
 
 	int maxIn; // usually 2^wIn-1
 	
-	Table(int wIn, int wOut) : 
-		wIn(wIn), wOut(wOut) 
+	Table(int _wIn, int _wOut, int _minIn=0, int _maxIn=-1) : 
+		wIn(_wIn), wOut(_wOut), minIn(_minIn), maxIn(_maxIn)
 	{
-	}
-
-	Table(int wIn, int wOut, int minIn=0, int maxIn=-1) : 
-		wIn(wIn), wOut(wOut), minIn(minIn), maxIn(maxIn)
-	{
-		if(maxIn==-1) maxIn==(1<<wIn)-1;
+		if(maxIn==-1) maxIn=(1<<wIn)-1;
 		if(minIn<0) {
 			cerr<<"ERROR in Table::Table, minIn<0\n";
 			exit(EXIT_FAILURE);
