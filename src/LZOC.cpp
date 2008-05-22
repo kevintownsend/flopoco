@@ -60,10 +60,15 @@ LZOC::LZOC(Target* target, int wIn, int wOut) :
 
 	//Set up the internal architecture signals
 	if (is_sequential()){
+			add_delay_signal("sozb",1,wOut-1);
+			
 			for (int i=wOut; i>0; i--){
 			ostringstream signalName;
 			signalName<<"level"<<i;
-			add_delay_signal(signalName.str(), (1<<i),2);
+			if (i!=1)
+				add_registered_signal_with_sync_reset(signalName.str(), (1<<i));
+			else
+				add_signal(signalName.str(), (1<<i));
 			}
 	}
 	else{
@@ -77,7 +82,7 @@ LZOC::LZOC(Target* target, int wIn, int wOut) :
 	}
 	 
 	if (is_sequential())
-	set_pipeline_depth(2*wOut); 
+	set_pipeline_depth(wOut-1); 
 	 
 	 
 }
@@ -127,6 +132,7 @@ void LZOC::output_vhdl(std::ostream& o, std::string name) {
 		o << tab << "  end if;"<<endl;
 		o << tab << "end process;"<<endl;
 		
+		o<<tab<<"sozb <= ozb;"<<endl;
 		
 		
 		// connect first stage to I
@@ -134,7 +140,7 @@ void LZOC::output_vhdl(std::ostream& o, std::string name) {
 		if (p2wOut==wIn)
 			o << "  level"<<wOut<<" <=  I ;" << endl;
 		else if (p2wOut>wIn) // pad input with zeroes/ones function of what we count. If LZC pad with 1, else pad with 
-			o << "  level"<<wOut<<" <=  I & ("<<p2wOut-wIn-1<<" downto 0 => not(ozb)) ;" << endl;
+			o << "  level"<<wOut<<" <=  I & ("<<p2wOut-wIn-1<<" downto 0 => not(sozb)) ;" << endl;
 		else if (p2wOut<wIn)
 			o << "  level"<<wOut<<" <=  I("<<wIn-1<<" downto "<<wIn - p2wOut <<") ;" << endl;
 		// recursive structure
@@ -142,14 +148,16 @@ void LZOC::output_vhdl(std::ostream& o, std::string name) {
 			if (i!=wOut)
 			o << "  tmpO"<<i<<"("<<wOut-1<<" downto "<<i<<") <= tmpO"<<i+1<<"_d("<<wOut-1<<" downto "<<i<<");"<<endl;
 			
-			o << "  tmpO"<<i<<"("<<i-1<<") <= '1' when level"<<i<<"_d("<<(1<<i)-1<<" downto "<<(1<<(i-1))<<") = ("<<(1<<i)-1<<" downto "<<(1<<(i-1))<<" => ozb) else '0';"<< endl;
-			o << "  level"<<i-1<<" <= level"<<i<<"_d_d("<<(1<<(i-1))-1<<" downto 0) when tmpO"<<i<<"_d("<<i-1<<") = '1'"<< endl
-				<< "               else level"<<i<<"_d_d("<<(1<<i)-1<<" downto "<<(1<<(i-1))<<");" << endl;
+			o << "  tmpO"<<i<<"("<<i-1<<") <= '1' when level"<<i<<"("<<(1<<i)-1<<" downto "<<(1<<(i-1))<<") = ("<<(1<<i)-1<<" downto "<<(1<<(i-1))<<" => "
+																				<<get_delay_signal_name("sozb",wOut-i)<<") else '0';"<< endl;
+			o << "  level"<<i-1<<" <= level"<<i<<"_d("<<(1<<(i-1))-1<<" downto 0) when tmpO"<<i<<"_d("<<i-1<<") = '1'"<< endl
+				<< "               else level"<<i<<"_d("<<(1<<i)-1<<" downto "<<(1<<(i-1))<<");" << endl;
 		}
-		o << "  tmpO1(0) <= '1' when level1_d(1) =  ozb else '0';"<< endl;
 		o << "  tmpO"<<1<<"("<<wOut-1<<" downto "<<1<<") <= tmpO"<<2<<"_d("<<wOut-1<<" downto "<<1<<");"<<endl;
+		o << "  tmpO1(0) <= '1' when level1(1) =  "<<get_delay_signal_name("sozb",wOut-1)<<" else '0';"<< endl;
 		
-		o << " O <= tmpO1_d;"<<endl;
+		
+		o << " O <= tmpO1;"<<endl;
 	}
 	else{
 		// connect first stage to I
@@ -173,4 +181,67 @@ void LZOC::output_vhdl(std::ostream& o, std::string name) {
 	end_architecture(o);
 }
 
+TestCaseList LZOC::generateStandardTestCases(int n)
+{
+	// TODO
+	return TestCaseList();
+}
+
+TestCaseList LZOC::generateRandomTestCases(int n)
+{
+	Signal si   = *get_signal_by_name("I");
+	Signal sozb = *get_signal_by_name("OZB");
+	Signal so   = *get_signal_by_name("O");
+	
+	TestCaseList tcl;	/* XXX: Just like Lyon's Transportion Company. :D */
+	mpz_class   mi, mozb, mo, k;
+
+	for (int i = 0; i < n; i++)
+	{
+		mi   = getLargeRandom(si.width());
+		mozb = getLargeRandom(1);
+		mo = 0;
+	
+		if (mozb==0)  
+		{
+			bool ready;
+			ready = false;
+			for(int j=si.width();(ready==false)&&(j>=1);j--)
+			{
+				k = (mpz_class(1) << (j-1));
+				if ((k-mi)>0)
+					mo = mo + 1;
+				else
+					ready = true;	
+			}
+		}else
+		{
+			bool ready;
+			ready=false;
+			int l=1;
+			int v;
+			for(int j=si.width();(ready==false)&&(j>=1);j--)
+			{
+				v=(1<<l)-1;
+				l++;
+				k = (mpz_class(v) << (j-1));
+				if ((mi-k)>=0)
+					mo = mo + 1;
+				else
+					ready = true;	
+			}
+		}
+		
+			
+		TestCase tc;
+		tc.addInput(si,   mi);
+		tc.addInput(sozb, mozb);
+		tc.addExpectedOutput(so, mo);
+
+		tcl.add(tc);
+
+	}
+
+	return tcl;
+}
 

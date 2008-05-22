@@ -11,7 +11,7 @@
 /*
  * A leading zero/one counter for FloPoCo
  *
- * Author : Florent de Dinechin
+ * Author : Florent de Dinechin, Bogdan Pasca
  *
  * This file is part of the FloPoCo project developed by the Arenaire
  * team at Ecole Normale Superieure de Lyon
@@ -50,6 +50,11 @@ public:
 
 	// Overloading the virtual functions of Operator
 	void output_vhdl(std::ostream& o, std::string name);
+	
+	/** overloaded method */
+	TestCaseList generateStandardTestCases(int n);
+	/** overloaded method */
+	TestCaseList generateRandomTestCases(int n);
 };
 
 
