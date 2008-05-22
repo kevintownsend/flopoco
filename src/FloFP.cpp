@@ -28,24 +28,36 @@
  */
 
 FloFP::FloFP(int wE, int wF, bool normalise)
-	: wE(wE), wF(wF), normalise(normalise), mustAddLeadingZero(0)
+	: wE(wE), wF(wF), normalise(normalise), mustAddLeadingZero(0), mustRoundDown(0)
 {
 	if (wE > 30)
 		throw "FloFP::FloFP: Using exponents larger than 30 bits is not supported.";
 }
 
 FloFP::FloFP(int wE, int wF, mpfr_t m, bool normalise)
-	: wE(wE), wF(wF), normalise(normalise), mustAddLeadingZero(0)
+	: wE(wE), wF(wF), normalise(normalise), mustAddLeadingZero(0), mustRoundDown(0)
 {
 	if (wE > 30)
 		throw "FloFP::FloFP: Using exponents larger than 30 bits is not supported.";
 	operator=(m);
 }
 
-mpz_class FloFP::getMantissaSignalValue() { return mantissa; }
+mpz_class FloFP::getMantissaSignalValue()
+{
+	if (mustRoundDown)
+		throw std::string("This FloFP does not have the correct mantissa value.");
+	return mantissa;
+}
+
 mpz_class FloFP::getExceptionSignalValue() { return exception; }
+
 mpz_class FloFP::getSignSignalValue() { return sign; }
-mpz_class FloFP::getExponentSignalValue() {	return exponent; }
+mpz_class FloFP::getExponentSignalValue()
+{
+	if (mustRoundDown)
+		throw std::string("This FloFP does not have the correct exponent value.");
+	return exponent;
+}
 
 mpz_class FloFP::getFractionSignalValue()
 {
@@ -208,14 +220,7 @@ FloFP& FloFP::operator=(mpfr_t mp_)
 		mpz_class downMantissa;
 
 		mpfr_mul_2si(mp, mp, wF, GMP_RNDN);
-		mpfr_get_z(mantissa.get_mpz_t(), mp, GMP_RNDN);
-		mpfr_get_z(downMantissa.get_mpz_t(), mp, GMP_RNDD);
-
-		if (downMantissa == mantissa)
-			roundeddown = true;
-		else
-			roundeddown = false;
-		roundeddown = false;
+		mpfr_get_z(mantissa.get_mpz_t(), mp, mustRoundDown ? GMP_RNDD : GMP_RNDN);
 	}
 
 	/* SwW: exponent is smaller in the „normalised” case */
@@ -281,6 +286,9 @@ FloFP& FloFP::operator=(mpz_class s)
 
 mpz_class FloFP::getSignalValue()
 {
+	if (mustRoundDown)
+		throw std::string("This FloFP does not have the correct value.");
+
 	/* Sanity checks */
 	if ((sign != 0) && (sign != 1))
 		throw std::string("FloFP::getSignal: sign is invalid.");
@@ -296,7 +304,7 @@ mpz_class FloFP::getSignalValue()
 FloFP& FloFP::operator=(FloFP fp)
 {
 	mustAddLeadingZero = fp.mustAddLeadingZero;
-	roundeddown = fp.roundeddown;
+	mustRoundDown = fp.mustRoundDown;
 
 	/* Pass this through MPFR to lose precision */
 	mpfr_t mp;
@@ -312,13 +320,35 @@ FloFP FloFP::exp()
 {
 	/* Compute exponential using MPFR */
 	mpfr_t mpR, mpX;
-	mpfr_init2(mpR, wF+100);
+	mpfr_init2(mpR, wF+3);	// XXX: is this enough?
 	mpfr_init(mpX);	// XXX: precision set in getMPFR()
 	getMPFR(mpX);
-	mpfr_exp(mpR, mpX, GMP_RNDN);
+	mpfr_exp(mpR, mpX, GMP_RNDD);
 	
 	/* Create FloFP */
-	FloFP ret(wE, wF, mpR);
+	FloFP ret(wE, wF);
+	ret.mustRoundDown = true;
+	ret = mpR;
+
+	/* Cleanup */
+	mpfr_clears(mpX, mpR, 0);
+
+	return ret;
+}
+
+FloFP FloFP::log()
+{
+	/* Compute logarithm using MPFR */
+	mpfr_t mpR, mpX;
+	mpfr_init2(mpR, wF+3);	// XXX: is this enough?
+	mpfr_init(mpX);	// XXX: precision set in getMPFR()
+	getMPFR(mpX);
+	mpfr_log(mpR, mpX, GMP_RNDD);
+	
+	/* Create FloFP */
+	FloFP ret(wE, wF);
+	ret.mustRoundDown = true;
+	ret = mpR;
 
 	/* Cleanup */
 	mpfr_clears(mpX, mpR, 0);
@@ -328,11 +358,15 @@ FloFP FloFP::exp()
 
 mpz_class FloFP::getRoundedDownSignalValue()
 {
-	return (((((exception << 1) + sign) << wE) + exponent) << wF) + mantissa - (roundeddown ? 0 : 1);
+	if (!mustRoundDown)
+		throw std::string("Only correct value is stored.");
+	return (((((exception << 1) + sign) << wE) + exponent) << wF) + mantissa;
 }
 
 mpz_class FloFP::getRoundedUpSignalValue()
 {
-	return (((((exception << 1) + sign) << wE) + exponent) << wF) + mantissa + (roundeddown ? 1 : 0);
+	if (!mustRoundDown)
+		throw std::string("Only correct value is stored.");
+	return (((((exception << 1) + sign) << wE) + exponent) << wF) + mantissa + 1;
 }
 

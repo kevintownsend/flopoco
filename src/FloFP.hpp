@@ -117,6 +117,12 @@ public:
 	FloFP exp();
 
 	/**
+	 * Returns the natural logarithm of the current FloFP.
+	 * @return a FloFP storing the natural logarithm.
+	 */
+	FloFP log();
+
+	/**
 	 * Returns the whole signal rounded down.
 	 */
 	mpz_class getRoundedDownSignalValue();
@@ -153,8 +159,8 @@ private:
 	 * See the comment at the beginig of FloFP.cpp */
 	bool mustAddLeadingZero;
 
-	/** Is the stored value rounded down? */
-	bool roundeddown;
+	/** Should we store all values rounded down? */
+	bool mustRoundDown;
 };
 
 #endif

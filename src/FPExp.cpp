@@ -360,8 +360,6 @@ TestCaseList FPExp::generateRandomTestCases(int n)
 	Signal& sr = *get_signal_by_name("r");
 	Signal  sr_exc = (*get_signal_by_name("r")).getException();
 	Signal  sr_sgn = (*get_signal_by_name("r")).getSign();
-	Signal  sr_exp = (*get_signal_by_name("r")).getExponent();
-	Signal  sr_man = (*get_signal_by_name("r")).getMantissa();
 
 	TestCaseList tcl;	/* XXX: Just like Lyon's Transportion Company. :D */
 	FloFP x(wE, wF), r(wE, wF);
