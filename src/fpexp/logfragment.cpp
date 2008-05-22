@@ -292,7 +292,7 @@ void LogFragment::write_tbl_arch(std::string prefix, ostream& o)
 void LogFragment::showinfo(int number)
 {
   Fragment::showinfo(number);
-  cout << ", methode exp arrondies et table de log" << endl;
+  cout << ", rounded exp method and log table" << endl;
 }
 
 double LogFragment::area()

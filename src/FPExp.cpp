@@ -29,7 +29,16 @@ FPExp::FPExp(Target* target, int wE, int wF)
 
 	f = explore(explore_size);
 	if (!f) throw std::string("FPExp::FPExp(): No fragment");
-}
+
+	result_length = f->prepare(area, max_error);
+
+	g = intlog2(max_error) + 2;
+	cout
+		<< "    Estimated area (for fixed-point part): " << area << endl
+		<< "    Maximum error: " << max_error << endl
+		<< "    Internal precision: " << result_length << endl
+		<< "    Precision: " << result_length - g << endl;
+}	
 
 FPExp::~FPExp()
 {
@@ -41,18 +50,7 @@ void FPExp::output_vhdl(std::ostream& o, std::string name)
 	Licence(o, "Cristian KLEIN (2008)");
 	stringstream fp_exp, fixp_exp, fixp_exp_tbl;
 
-	int result_length;
-	double area, max_error;
-	// génère le code pour l'exponentielle en virgule fixe
-	result_length = f->prepare(area, max_error);
 	f->generate(unique_name, fixp_exp, fixp_exp_tbl);
-
-	int g = intlog2(max_error) + 2;
-	cout
-		<< "Estimated area (for fixed-point part): " << area << endl
-		<< "Maximum error: " << max_error << endl
-		<< "Internal precision: " << result_length << endl
-		<< "Precision: " << result_length - g << endl;
 
 	std::string cstInvLog2, cstLog2;
 	{

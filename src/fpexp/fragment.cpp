@@ -77,11 +77,11 @@ double Fragment::max_error(double input_error)
 
 void Fragment::showinfo(int number)
 {
-  cout << "Partie " << number << " : bits " << start + 1 << " a " << end << ", ";
+  cout << "    Partition " << number << ": bits " << start + 1 << " to " << end << ", ";
   if (is_signed)
-    cout << "signee";
+    cout << "signed";
   else
-    cout << "non signee";
+    cout << "unsigned";
 }
 
 void Fragment::write_declaration(std::string prefix, std::ostream& o)

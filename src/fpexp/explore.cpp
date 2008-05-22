@@ -41,7 +41,7 @@ Fragment* explore(int explore_size)
 
   for (accuracy = explore_size + 3; accuracy < explore_size + 9; accuracy++) {
     min_length = accuracy / 2;
-    cout << "Exploration des decoupages, precision interne " << accuracy << endl;
+    cout << "    Exploring cuttings, internal precision " << accuracy << endl;
     for (i = 0; i < 100; i++) {
       opt_fragment[i] = new FragDesc[accuracy];
       for (length = min_length; length <= accuracy - 1; length++)
@@ -103,7 +103,7 @@ Fragment* explore(int explore_size)
       // bilan
       FragDesc& fd = opt_fragment[max_max_error_idx][accuracy - 1];
       if (fd.fragment != 0 && (optimum.fragment == 0 || fd.area < optimum.area)) {
-	cout << "Resultat optimal pour cette precision : aire = " << fd.area << endl;
+	cout << "    Optimal result for this precision, area = " << fd.area << endl;
 	optimum = fd;
       }
     }

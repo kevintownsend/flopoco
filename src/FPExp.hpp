@@ -22,6 +22,8 @@ public:
 private:
 	int wE, wF;
 	Fragment *f;
+	int result_length, g;
+	double area, max_error;
 };
 
 #endif

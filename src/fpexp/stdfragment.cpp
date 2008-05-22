@@ -78,7 +78,7 @@ void StdFragment::evalpos(int accuracy, int start, int& overlapping, bool& is_si
 void StdFragment::showinfo(int number)
 {
   Fragment::showinfo(number);
-  cout << ", methode normale" << endl;
+  cout << ", normal method" << endl;
 }
 
 void StdFragment::write_arch(std::string prefix, ostream& o)
