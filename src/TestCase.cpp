@@ -139,8 +139,10 @@ mpz_class TestCase::getInput(Signal s)
 mpz_class TestCase::getOneExpectedOutput(Signal s)
 {
 	std::set<mpz_class> vs = outputs[s];
-	if (vs.size() != 1)
-		throw std::string("TestCase::getOneExpectedOutput: not a single expected output for ") + s.id();
+	if (vs.size() > 1)
+		throw std::string("TestCase::getOneExpectedOutput: multiple expected values for output ") + s.id();
+	if (vs.size() < 1)
+		throw 0;	// XXX: Should be a clear exception class.
 	return *vs.begin();
 }
 
