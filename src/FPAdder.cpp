@@ -226,7 +226,7 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 		add_signal("fracXClose1",wF+3);
 		add_signal("fracYClose1",wF+3);
 		add_signal("InvFracYClose1",wFX+3);
-		add_signal("fracRClose0",wF+3);
+		add_registered_signal_with_sync_reset("fracRClose0",wF+3);
 		
 		
 		add_signal("fracSignClose",1);
@@ -466,7 +466,7 @@ void FPAdder::output_vhdl(std::ostream& o, std::string name) {
 		// the sequential version //
 		// =======================================================================//
 		// =======================================================================//
-		
+		output_vhdl_registers(o); o<<endl;
 		
 		
 		
@@ -555,7 +555,7 @@ void FPAdder::output_vhdl(std::ostream& o, std::string name) {
 		// substract the fraction signals for the close path (for the close path the signs of the inputs are not be equal //
 		o<<tab<<"InvFracYClose1 <= not(fracYClose1);"<<endl;
 		
-		// substract the exponents of X and Y. 
+		// substract the fractions of X and Y. 
 		o<<tab<< "int_adder_componentc1: " << intaddClose1->unique_name << endl;
 		o<<tab<< "  port map ( X => fracXClose1 , " << endl; 
 		o<<tab<< "             Y => InvFracYClose1, " << endl; 
@@ -572,7 +572,7 @@ void FPAdder::output_vhdl(std::ostream& o, std::string name) {
 		o<<tab<< "int_adder_componentc2: " << intaddClose2->unique_name << endl;
 		o<<tab<< "  port map ( X => fracRClose1xor , " << endl; 
 		o<<tab<< "             Y => ("<<wF+1<<" downto 0 => '0'), " << endl; 
-		o<<tab<< "             Cin => '1' ," << endl;
+		o<<tab<< "             Cin => fracSignClose ," << endl;
 		o<<tab<< "             R => fracRClose1, " << endl; 
 		o<<tab<< "             clk => clk, " << endl;
 		o<<tab<< "             rst => rst " << endl;
@@ -585,7 +585,7 @@ void FPAdder::output_vhdl(std::ostream& o, std::string name) {
 		cXSNPostPipeline << get_delay_signal_name("cX",intaddClose1->pipeline_depth()+intaddClose2->pipeline_depth());
 				
 		o << tab << "crs <= '0' when "<<cCloseSNPostPipeline.str()<<"='1' and fracRClose1 = ("<<wF+1<<" downto 0 => '0') else"<<endl;
-    o << tab << "          "<<cXSNPostPipeline.str()<<"("<<wE+wF<<") xor ("<<cCloseSNPostPipeline.str()<<" and fracRClose0("<<wF+2<<"));"<<endl;
+    o << tab << "          "<<cXSNPostPipeline.str()<<"("<<wE+wF<<") xor ("<<cCloseSNPostPipeline.str()<<" and fracRClose0_d("<<wF+2<<"));"<<endl;
 
 		// extend expoenet result before normalization and rounding with 2 bits, one for signaling underflow and for overflow //
 		o<<tab<< "exponentResultClose1 <= \"00\" & "<<cXSNPostPipeline.str()<<"("<<wEX+wFX-1<<" downto "<<wFX<<");"<<endl; 
@@ -688,7 +688,7 @@ void FPAdder::output_vhdl(std::ostream& o, std::string name) {
 	
 		o<<tab<<"fracYfar3XorOp <= fracYfar3 xor ("<<wF+4<<" downto 0 => opSelector);"<<endl;
 		
-		// substract the exponents of X and Y. 
+		// substract the fractions of X and Y. 
 		o<<tab<< "int_adder_componentf1: " << intaddFar1->unique_name << endl;
 		o<<tab<< "  port map ( X => fracXfar3, " << endl; 
 		o<<tab<< "             Y => fracYfar3XorOp, " << endl; 
@@ -723,13 +723,13 @@ void FPAdder::output_vhdl(std::ostream& o, std::string name) {
 		o<<tab<<"                   \"11\" when fracResultfar0wSh("<<wF+4<<" downto "<<wF+3<<") = \"00\" else"<<endl;
 		o<<tab<<"                   \"01\";"<<endl;
 		
-		o<<tab<<"expSecOperand <= (("<<wE<<" downto 1 => '0') & expOperationSel(0)) xor ("<<wE<<" downto 0 => expOperationSel(0));"<<endl;
+		o<<tab<<"expSecOperand <= (("<<wE<<" downto 1 => '0') & expOperationSel(0)) xor ("<<wE<<" downto 0 => expOperationSel(1));"<<endl;
 		
 		// readjust exponent after normalization //
 		o<<tab<< "int_adder_componentf2: " << intaddFar2->unique_name << endl;
 		o<<tab<< "  port map ( X => exponentResultfar0, " << endl; 
 		o<<tab<< "             Y => expSecOperand, " << endl; 
-		o<<tab<< "             Cin => '0' ," << endl;
+		o<<tab<< "             Cin => expOperationSel(1) ," << endl;
 		o<<tab<< "             R => exponentResultfar1, " << endl; 
 		o<<tab<< "             clk => clk, " << endl;
 		o<<tab<< "             rst => rst " << endl;
