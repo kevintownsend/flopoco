@@ -42,6 +42,7 @@ FPExp::FPExp(Target* target, int wE, int wF)
 
 FPExp::~FPExp()
 {
+	delete f;
 }
 
 // Overloading the virtual functions of Operator
