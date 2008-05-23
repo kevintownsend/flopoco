@@ -91,6 +91,16 @@ void  Operator::add_signal(const std::string name, const int width) {
 	signalList.push_back(s);
 }
 
+void  Operator::add_signal_bus(const std::string name, const int width) {
+	if(_signal_map.find(name) != _signal_map.end()) {
+		std::ostringstream o;
+		o << "ERROR in add_signal, signal " << name << " seems to already exist";
+		throw o.str();  
+	}
+	Signal *s = new Signal(name, Signal::wire, width, true);
+	_signal_map[name] = s ;
+	signalList.push_back(s);
+}
 
 
 void  Operator::add_registered_signal(const std::string name, const int width) {
@@ -200,6 +210,38 @@ string  Operator::add_delay_signal(const string name, const int width, const int
 	return o.str();
 }
 
+string  Operator::add_delay_signal_bus(const string name, const int width, const int delay) {
+	ostringstream o;
+	Signal *s;
+	o << name;
+	// if the delay is zero it is equivalent to add_signal
+	if(delay>0) {
+		for (int i=0; i<delay; i++){
+			if(_signal_map.find(o.str()) != _signal_map.end()) {
+				cerr << "ERROR in add_input , signal " << name<< " seems to already exist" << endl;
+				exit(EXIT_FAILURE);
+			}
+			s = new Signal(o.str(), Signal::registered_with_sync_reset, width, true);
+			signalList.push_back(s);    
+			_signal_map[name] = s ;
+			o  <<"_d";
+		}
+		has_registers_with_sync_reset=true;
+	}
+
+	if(_signal_map.find(o.str()) != _signal_map.end()) {
+		cerr << "ERROR in add_input , signal " << name<< " seems to already exist" << endl;
+		exit(EXIT_FAILURE);
+	}
+	s = new Signal(o.str(), Signal::wire, width, true);
+	signalList.push_back(s);    
+	_signal_map[name] = s ;
+	
+	return o.str();
+}
+
+
+
 
 
 string  Operator::get_delay_signal_name(const string name, const int delay) {
@@ -282,7 +324,7 @@ void  Operator::output_vhdl_registers(std::ostream& o) {
 		for(int i=0; i<signalList.size(); i++) {
 			Signal *s = signalList[i];
 			if(s->type()==Signal::registered_with_async_reset)
-				 if (s->width()>1) 
+				 if ((s->width()>1)||(s->isBus())) 
 								 o << tab <<tab << tab << s->id() <<"_d" << " <=  (" << s->width()-1 <<" downto 0 => '0');\n";
 				 else
 						o << tab <<tab << tab << s->id() <<"_d" << " <=  '0';\n";
@@ -306,7 +348,7 @@ void  Operator::output_vhdl_registers(std::ostream& o) {
 		for(int i=0; i<signalList.size(); i++) {
 			Signal *s = signalList[i];
 			if(s->type()==Signal::registered_with_sync_reset)
-				 if (s->width()>1) 
+				 if ((s->width()>1)||(s->isBus())) 
 								 o << tab <<tab << tab << s->id() <<"_d" << " <=  (" << s->width()-1 <<" downto 0 => '0');\n";
 				 else
 						o << tab <<tab << tab << s->id() <<"_d" << " <=  '0';\n";
