@@ -10,14 +10,19 @@
 	class Signal{
 	public:
 		typedef enum{in,out,wire,registered,registered_with_async_reset,registered_with_sync_reset } type_t;
-		
+	/*	
 		Signal(const std::string name, const type_t type, const int width = 1): 
-			_name(name), _type(type), _wE(0), _wF(0), _width(width), _low(0), _high(width-1), _isSubSignal(false) {
+			_name(name), _type(type), _wE(0), _wF(0), _width(width), _low(0), _high(width-1), _isSubSignal(false), _isBus(false) {
+			_isFP = false;
+		}
+	*/	
+		Signal(const std::string name, const type_t type, const int width = 1, const bool isBus = false): 
+			_name(name), _type(type), _wE(0), _wF(0), _width(width), _low(0), _high(width-1), _isSubSignal(false), _isBus(isBus) {
 			_isFP = false;
 		}
 
 		Signal(const std::string name, const type_t type, const int wE, const int wF): 
-			_name(name), _type(type), _wE(wE), _wF(wF), _width(wE+wF+3), _low(0), _high(_width-1), _isSubSignal(false) {
+			_name(name), _type(type), _wE(wE), _wF(wF), _width(wE+wF+3), _low(0), _high(_width-1), _isSubSignal(false),_isBus(false) {
 			_isFP = true;
 		}
 		
@@ -41,7 +46,7 @@
 		int wE(){return(_wE);}
 		int wF(){return(_wF);}
 		bool isFP(){return _isFP;}
-		
+		bool isBus(){return _isBus;}
 		type_t type() {return _type;}
 		
 		std::string toVHDL() {
@@ -57,7 +62,7 @@
 			if(type()==Signal::out)
 				 o << "out ";
 
-			if (1==width()) 
+			if ((1==width())&&(!_isBus)) 
 				o << "std_logic" ;
 			else 
 				if(_isFP) 
@@ -119,6 +124,7 @@
 		uint32_t _wF;  // used only for FP signals
 		bool _isSubSignal;
 		uint32_t _low, _high; // used only for „subsignals”, which are non FP
+		bool _isBus;
 	};
 
 #endif
