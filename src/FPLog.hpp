@@ -10,6 +10,7 @@ class FirstInvTable;
 class FirstLogTable;
 class SecondInvTable;
 class OtherLogTable;
+class FloFP;
 
 class FPLog : public Operator
 {
@@ -24,6 +25,13 @@ public:
 	TestCaseList generateRandomTestCases(int n);
 
 private:
+	/**
+	 * Adds a test case for the FPLog operator.
+	 * @param tcl The TestCaseList to which the TestCase should be added.
+	 * @param x The input value for which the TestCase should be generated.
+	 */
+	void addTestCase(TestCaseList& tcl, FloFP x);
+
 	int wE, wF;
 	// The input sizes to the successive tables
 	int a[42]; 

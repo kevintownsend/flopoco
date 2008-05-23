@@ -108,7 +108,7 @@ FloFP FloFP::operator+(FloFP fp)
 	return flofp;
 }
 
-void FloFP::getMPFR(mpfr_t mp)
+void FloFP::getMPFR(mpfr_t mp, bool withFakeZero)
 {
 	if (!normalise)
 		throw "FloFP::getMPFR: Non-normalised case not implemented.";
@@ -130,14 +130,22 @@ void FloFP::getMPFR(mpfr_t mp)
 	/* Zero */
 	if (exception == 0)
 	{
-		/* MPFR does NOT have the concept of +/- zero due to its wide range of
-		 * exponent values. As FloPoCo does have +/- zero (as a result of different
-		 * underflows), we must somehow simulate it in MPFR. We will do this
-		 * by storing zero as a really small number, what we won't ever encounder in
-		 * FloPoCo */
-		mpfr_set_d(mp, (sign == 1) ? -1 : +1, GMP_RNDN);
-		mpfr_mul_2si(mp, mp, ZERO_EXPONENT, GMP_RNDN);
-		return;
+		if (withFakeZero)
+		{
+			/* MPFR does NOT have the concept of +/- zero due to its wide range of
+			 * exponent values. As FloPoCo does have +/- zero (as a result of different
+			 * underflows), we must somehow simulate it in MPFR. We will do this
+			 * by storing zero as a really small number, what we won't ever encounder in
+			 * FloPoCo */
+			mpfr_set_d(mp, (sign == 1) ? -1 : +1, GMP_RNDN);
+			mpfr_mul_2si(mp, mp, ZERO_EXPONENT, GMP_RNDN);
+			return;
+		}
+		else
+		{
+			mpfr_set_d(mp, 0, GMP_RNDN);
+			return;
+		}
 	}
 	
 	/* „Normal” numbers
@@ -217,8 +225,6 @@ FloFP& FloFP::operator=(mpfr_t mp_)
 	}
 	else
 	{
-		mpz_class downMantissa;
-
 		mpfr_mul_2si(mp, mp, wF, GMP_RNDN);
 		mpfr_get_z(mantissa.get_mpz_t(), mp, mustRoundDown ? GMP_RNDD : GMP_RNDN);
 	}
@@ -342,7 +348,7 @@ FloFP FloFP::log()
 	mpfr_t mpR, mpX;
 	mpfr_init2(mpR, wF+3);	// XXX: is this enough?
 	mpfr_init(mpX);	// XXX: precision set in getMPFR()
-	getMPFR(mpX);
+	getMPFR(mpX, false);
 	mpfr_log(mpR, mpX, GMP_RNDD);
 	
 	/* Create FloFP */
@@ -368,5 +374,98 @@ mpz_class FloFP::getRoundedUpSignalValue()
 	if (!mustRoundDown)
 		throw std::string("Only correct value is stored.");
 	return (((((exception << 1) + sign) << wE) + exponent) << wF) + mantissa + 1;
+}
+
+void FloFP::getPrecision(int &wE, int &wF)
+{
+	wE = this->wE;
+	wF = this->wF;
+}
+
+FloFP& FloFP::operator=(double x)
+{
+	mpfr_t mp;
+	mpfr_init2(mp, 53);
+	mpfr_set_d(mp, x, GMP_RNDN);
+
+	operator=(mp);
+
+	mpfr_clear(mp);
+
+	return *this;
+}
+
+FloFP& FloFP::operator--(int)
+{
+	/* Decrementation from special values is hard-coded */
+	if (exception == 3)
+	{
+		if (sign == 0) /* before +NaN follows +inf */
+			exception = 2;
+		else /* before -NaN follows +NaN */
+			sign = 0;
+	}
+	else if (exception == 2) /* inf */
+	{
+		if (sign == 0)	/* before +inf comes max */
+		{
+			exception = 1;
+			exponent = (mpz_class(1) << wE) - 1;
+			mantissa = (mpz_class(1) << wF) - 1;
+		}
+		else /* before -inf comes -NaN */
+			exception = 3;
+	}
+	else if (exception == 0) /* zero */
+	{
+		if (sign == 0)	/* before +0 comes -0 */
+			sign = 1;
+		else /* before -0 comes -min */
+		{
+			exception = 1;
+			exponent = 0;
+			mantissa = 0;
+		}
+	}
+	else /* other numbers */
+	{
+		/* Combine exception, exponent & mantissa, for nice trick */
+		mpz_class tz = (((exception << wE) + exponent) << wF) + mantissa;
+		if (sign == 0)
+			tz--;
+		else
+			tz++;
+		mantissa = tz & ((mpz_class(1) << wF) - 1); tz = tz >> wF;
+		exponent = tz & ((mpz_class(1) << wE) - 1); tz = tz >> wE;
+		exception = tz & mpz_class(3);
+	}
+
+	return *this;
+}
+
+FloFP& FloFP::operator++(int)
+{
+	/* Negate number */
+	sign = 1 - sign;
+	/* Decrement it */
+	operator--(0);
+	/* Negate it again */
+	sign = 1 - sign;
+
+	return *this;
+}
+
+FloFP& FloFP::operator-=(int x)
+{
+	for ( ; x < 0; x++)
+		operator++(0);
+	for ( ; x > 0; x--)
+		operator--(0);
+	return *this;
+}
+
+FloFP& FloFP::operator+=(int x)
+{
+	return operator-=(-x);
 }
 

@@ -82,8 +82,9 @@ public:
 	/**
 	 * Converts the currently stored FloFP to an mpfr_t
 	 * @param[out] m a preinitialized mpfr_t where to store the floating point
+	 * @param[in] withFakeZero use a very small number to represent zero, so that the sign is preserved
 	 */
-	void getMPFR(mpfr_t m);
+	void getMPFR(mpfr_t m, bool withFakeZero = true);
 
 	/**
 	 * Stores an mpfr_t as an internal representation of Flopoco.
@@ -131,6 +132,44 @@ public:
 	 * Returns the whole signal rounded up.
 	 */
 	mpz_class getRoundedUpSignalValue();
+
+	/**
+	 * Returns wE and wF.
+	 * @param[out] wE exponent precision
+	 * @param[out] wF fraction precision
+	 */
+	void getPrecision(int &wE, int &wF);
+
+	/**
+	 * Assigns a double.
+	 */
+	FloFP &operator=(double x);
+
+	/**
+	 * Changes this FloFP, so that it is decremented with
+	 * one ULP. Postfix form.
+	 */
+	FloFP &operator--(int);
+
+	/**
+	 * Changes this FloFP, so that it is incremented with
+	 * one ULP. Postfix form.
+	 */
+	FloFP &operator++(int);
+
+	/**
+	 * Changes this FloFP, so that it is decremented with
+	 * the given number of ULPs.
+	 * @param x how many ULPs to decrement it with.
+	 */
+	FloFP &operator-=(int x);
+
+	/**
+	 * Changes this FloFP, so that it is incremented with
+	 * the given number of ULPs.
+	 * @param x how many ULPs to increment it with.
+	 */
+	FloFP &operator+=(int x);
 
 private:
 	/** The width of the exponent */

@@ -465,7 +465,7 @@ bool parse_command_line(int argc, char* argv[]){
 				cerr<<"ERROR: TestBench has no operator to wrap (it should come after the operator it wraps)"<<endl;
 				usage(argv[0]); // and exit
 			}
-			int n = check_strictly_positive(argv[i++], argv[0]);
+			int n = check_positive_or_null(argv[i++], argv[0]);
 			Operator* toWrap = oplist.back();
 			cerr << "> TestBench for " << toWrap->unique_name  <<endl;
 			oplist.push_back(new TestBench(target, toWrap, n));
@@ -478,7 +478,7 @@ bool parse_command_line(int argc, char* argv[]){
 				cerr<<"ERROR: BigTestBench has no operator to wrap (it should come after the operator it wraps)"<<endl;
 				usage(argv[0]); // and exit
 			}
-			int n = check_strictly_positive(argv[i++], argv[0]);
+			int n = check_positive_or_null(argv[i++], argv[0]);
 			Operator* toWrap = oplist.back();
 			cerr << "> BigTestBench for " << toWrap->unique_name  <<endl;
 			oplist.push_back(new BigTestBench(target, toWrap, n));
