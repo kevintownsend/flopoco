@@ -80,19 +80,22 @@ IntAdder::IntAdder(Target* target, int wIn) :
 			last_chunk_size = wIn - (pipe_levels)*chunk_size;
 			cout << tab << "last chunk=="<<last_chunk_size <<endl;
 			for(int i=0; i<=pipe_levels; i++){
-				ostringstream snamex, snamey, snamer;
-				snamex <<"ix_"<<i;
-				snamey <<"iy_"<<i;
-				snamer <<"ir_"<<i;
-				int size;
-				if(i<pipe_levels)
-					size = chunk_size+1;
-				else
-					size = last_chunk_size;
-				add_delay_signal(snamex.str(), size, i);
-				add_delay_signal(snamey.str(), size, i);
-				add_delay_signal(snamer.str(), size, pipe_levels-i);
-			}
+				if (!((i==pipe_levels)&&	(last_chunk_size==0)))
+				{
+					ostringstream snamex, snamey, snamer;
+					snamex <<"ix_"<<i;
+					snamey <<"iy_"<<i;
+					snamer <<"ir_"<<i;
+					int size;
+					if(i<pipe_levels)
+						size = chunk_size+1;
+					else
+						size = last_chunk_size;
+					add_delay_signal_bus(snamex.str(), size, i);
+					add_delay_signal_bus(snamey.str(), size, i);
+					add_delay_signal_bus(snamer.str(), size, pipe_levels-i);
+				}
+			}	
 		}
 	}
 }
@@ -129,70 +132,79 @@ void IntAdder::output_vhdl(std::ostream& o, std::string name) {
 		else{
 			// Initialize the chunks
 			for(int i=0; i<=pipe_levels; i++){
-				int maxIndex;
-				if(i==pipe_levels)
-					maxIndex = wIn-1;
-				else 
-					maxIndex = i*chunk_size+chunk_size-1;
-					
-				ostringstream snamex, snamey, snamer;
-				snamex <<"ix_"<<i;
-				snamey <<"iy_"<<i;
-				snamer <<"ir_"<<i;
-			
-				o << tab << snamex.str() << " <= ";
-				if(i < pipe_levels)
-					o << "\"0\" & ";
-					o << "X(" << maxIndex<< " downto " << i*chunk_size << ");" << endl;
-			
-				o << tab << snamey.str() << " <= ";
-				if(i < pipe_levels)
-					o << "\"0\" & ";
-					o << "Y(" << maxIndex<< " downto " << i*chunk_size << ");" << endl;
+				if (!((i==pipe_levels)&&	(last_chunk_size==0)))
+				{
+					int maxIndex;
+					if(i==pipe_levels)
+						maxIndex = wIn-1;
+					else 
+						maxIndex = i*chunk_size+chunk_size-1;
+						
+					ostringstream snamex, snamey, snamer;
+					snamex <<"ix_"<<i;
+					snamey <<"iy_"<<i;
+					snamer <<"ir_"<<i;
+				
+					o << tab << snamex.str() << " <= ";
+					if(i < pipe_levels)
+						o << "\"0\" & ";
+						o << "X(" << maxIndex<< " downto " << i*chunk_size << ");" << endl;
+				
+					o << tab << snamey.str() << " <= ";
+					if(i < pipe_levels)
+						o << "\"0\" & ";
+						o << "Y(" << maxIndex<< " downto " << i*chunk_size << ");" << endl;
+				}
 			}
 			// then the pipe_level adders of size chunk_size
 			for(int i=0; i<=pipe_levels; i++){
-				int size;
-				if(i==pipe_levels-1) 
-					size=last_chunk_size -1 ;
-				else  
-					size = chunk_size;
-				
-				ostringstream snamex, snamey, snamer;
-				snamex <<"ix_"<<i;
-				snamey <<"iy_"<<i;
-				snamer <<"ir_"<<i;
-				
-				o << tab << snamer.str() << " <= "
-					<< get_delay_signal_name(snamex.str(), i)  
-					<< " + "
-					<< get_delay_signal_name(snamey.str(), i);
-				
-				// add the carry in
-				if(i>0) {
-					ostringstream carry;
-					carry <<"ir_"<<i-1;
-					o  << " + " << get_delay_signal_name(carry.str(), 1) << "(" << chunk_size << ")";
-				}else
-					o  << " + Cin";
-				
-				o << ";" << endl;
+				if (!((i==pipe_levels)&&	(last_chunk_size==0)))
+				{
+					int size;
+					if(i==pipe_levels-1) 
+						size=last_chunk_size -1 ;
+					else  
+						size = chunk_size;
+					
+					ostringstream snamex, snamey, snamer;
+					snamex <<"ix_"<<i;
+					snamey <<"iy_"<<i;
+					snamer <<"ir_"<<i;
+					
+					o << tab << snamer.str() << " <= "
+						<< get_delay_signal_name(snamex.str(), i)  
+						<< " + "
+						<< get_delay_signal_name(snamey.str(), i);
+					
+					// add the carry in
+					if(i>0) {
+						ostringstream carry;
+						carry <<"ir_"<<i-1;
+						o  << " + " << get_delay_signal_name(carry.str(), 1) << "(" << chunk_size << ")";
+					}else
+						o  << " + Cin";
+					
+					o << ";" << endl;
+				}
 			}
 			// Then the output to R 
 			for(int i=0; i<=pipe_levels; i++){
-				int maxIndex, size;
-				if(i==pipe_levels) {
-					maxIndex = wIn-1;
-					size=last_chunk_size;
+				if (!((i==pipe_levels)&&	(last_chunk_size==0)))
+				{
+					int maxIndex, size;
+					if(i==pipe_levels) {
+						maxIndex = wIn-1;
+						size=last_chunk_size;
+					}
+					else  {
+						maxIndex = i*chunk_size+chunk_size-1;
+						size = chunk_size;
+					}
+					ostringstream snamer;
+					snamer <<"ir_"<<i;
+					o << tab << "R(" << maxIndex << " downto " << i*chunk_size << ")  <=  "
+						<<  get_delay_signal_name(snamer.str(), pipe_levels -i) << "(" << size-1 << " downto 0);" << endl;
 				}
-				else  {
-					maxIndex = i*chunk_size+chunk_size-1;
-					size = chunk_size;
-				}
-				ostringstream snamer;
-				snamer <<"ir_"<<i;
-				o << tab << "R(" << maxIndex << " downto " << i*chunk_size << ")  <=  "
-					<<  get_delay_signal_name(snamer.str(), pipe_levels -i) << "(" << size-1 << " downto 0);" << endl;
 			}
 		}
 		output_vhdl_registers(o);
