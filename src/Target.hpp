@@ -38,7 +38,6 @@ class Target
 	virtual bool suggest_subadd_size(int &x, int wIn)=0; 	
 
 	// Delay-related methods
-
 	virtual double lut_delay() =0;
 	virtual double carry_propagate_delay() =0;
 	virtual double adder_delay(int n) =0;

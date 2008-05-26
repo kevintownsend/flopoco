@@ -9,7 +9,8 @@
 class FPConstMult : public Operator
 {
 public:
-	FPConstMult(Target* target, int wE_in, int wF_in,int wE_out, int wF_out, int cst_sgn, int cst_exp, mpz_class cst_sig);
+	FPConstMult(Target* target, int wE_in, int wF_in, int wE_out, int wF_out, int cst_sgn, int cst_exp, mpz_class cst_sig);
+	FPConstMult(Target* target, int wE_in, int wF_in, int wE_out, int wF_out); // used by CRFPConstMult
 	~FPConstMult();
 
 	int wE_in; 

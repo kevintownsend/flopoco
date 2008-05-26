@@ -91,6 +91,12 @@ FPConstMult::FPConstMult(Target* target, int wE_in, int wF_in, int wE_out, int w
 }
 
 
+FPConstMult::FPConstMult(Target* target, int wE_in, int wF_in, int wE_out, int wF_out):
+	Operator(target),
+	wE_in(wE_in), wF_in(wF_in), wE_out(wE_out), wF_out(wF_out) 
+{
+}
+
 
 FPConstMult::~FPConstMult() {
 	// TODO but who cares really

@@ -43,6 +43,7 @@
 #include "BigTestBench.hpp"
 #include "ConstMult/IntConstMult.hpp"
 #include "ConstMult/FPConstMult.hpp"
+#include "ConstMult/CRFPConstMult.hpp"
 #include "Target.hpp"
 #include "Targets/VirtexIV.hpp"
 #include "FPExp.hpp"
@@ -86,6 +87,11 @@ static void usage(char *name){
 	cerr << "    FPConstMult wE_in wF_in wE_out wF_out cst_sgn cst_exp cst_int_sig\n";
 	cerr << "      floating-point constant multiplier.\n";
 	cerr << "      The constant is provided as integral significand and integral exponent.\n";
+#ifdef HAVE_SOLLYA
+	cerr << "    CRFPConstMult  wE_in wF_in  wE_out wF_out  constant_expr \n";
+	cerr << "      Correctly-rounded floating-point constant multiplier.\n";
+	cerr << "      The constant is provided as a Sollya expression, between quotes\n";
+#endif // HAVE_SOLLYA
 	cerr << "    IntMultiplier wInX wInY \n";
 	cerr << "      integer multiplier of two integers X and Y of sizes wInX and wInY \n";	
 	cerr << "    Karatsuba wInX wInY \n";
@@ -261,6 +267,25 @@ bool parse_command_line(int argc, char* argv[]){
 				oplist.push_back(op);
 			}        
 		} 	
+#ifdef HAVE_SOLLYA
+		else if(opname=="CRFPConstMult"){
+			int nargs = 5;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else { 
+				int wE_in = check_strictly_positive(argv[i++], argv[0]);
+				int wF_in = check_strictly_positive(argv[i++], argv[0]);
+				int wE_out = check_strictly_positive(argv[i++], argv[0]);
+				int wF_out = check_strictly_positive(argv[i++], argv[0]);
+				string constant = argv[i++];
+				cerr << "> CRFPConstMult, wE_in="<<wE_in<<", wF_in="<<wF_in 
+					  <<", wE_out="<<wE_out<<", wF_out="<<wF_out
+					  << ", constant="<<constant <<endl;
+				op = new CRFPConstMult(target, wE_in, wF_in, wE_out, wF_out, constant);
+				oplist.push_back(op);
+			}        
+		} 	
+#endif // HAVE_SOLLYA
 		else if(opname=="LeftShifter"){
 			int nargs = 2;
 			if (i+nargs > argc)

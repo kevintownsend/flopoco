@@ -22,9 +22,10 @@ FIND_LIBRARY(
 	NAMES sollya
 	PATH /usr/lib/ /usr/local/lib)
 IF (SOLLYA_LIB)
+	ADD_DEFINITIONS(-DHAVE_SOLLYA)
 	MESSAGE(STATUS "Found Sollya: ${SOLLYA_LIB}")
 ELSE (SOLLYA_LIB)
-	MESSAGE(STATUS "Sollya not found, HOTBM won't be available")
+	MESSAGE(STATUS "Sollya not found, HOTBM and CRFPConstMult won't be available")
 ENDIF (SOLLYA_LIB)
 
 IF (MPFR_H AND MPFR_LIB)
@@ -82,6 +83,7 @@ ADD_EXECUTABLE(flopoco
  src/DotProduct
  src/ConstMult/IntConstMult src/ConstMult/ShiftAddOp src/ConstMult/ShiftAddDag 
  src/ConstMult/FPConstMult 
+src/ConstMult/CRFPConstMult 
  src/TestCase
  src/FloFP
  src/fpexp/math_lib.cpp
