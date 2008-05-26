@@ -1,4 +1,5 @@
 #include "TestCase.hpp"
+#include "utils.hpp"
 
 std::string TestCase::signalValueToVHDL(Signal s, mpz_class v, bool quot)
 {
@@ -66,7 +67,7 @@ void TestCase::addInput(Signal s, mpz_class v)
 
 void TestCase::addExpectedOutput(Signal s, mpz_class v)
 {
-	outputs[s].insert(v);
+	outputs[s].push_back(v);
 }
 
 std::string TestCase::getInputVHDL(std::string prepend)
@@ -102,14 +103,14 @@ std::string TestCase::getExpectedOutputVHDL(std::string prepend)
 	for (Outputs::iterator it = outputs.begin(); it != outputs.end(); it++)
 	{
 		Signal s = it->first;
-		std::set<mpz_class> vs = it->second;
+		std::vector<mpz_class> vs = it->second;
 		std::string expected;
 
 		o << prepend;
 		o << "assert false";  // XXX: Too lazy to make an exception for the first value
 
 		/* Iterate through possible output values */
-		for (std::set<mpz_class>::iterator it = vs.begin(); it != vs.end(); it++)
+		for (std::vector<mpz_class>::iterator it = vs.begin(); it != vs.end(); it++)
 		{
 			mpz_class v = *it;
 			o << " or " << s.id() << "=" << signalValueToVHDL(s,v);
@@ -138,7 +139,7 @@ mpz_class TestCase::getInput(Signal s)
 
 mpz_class TestCase::getOneExpectedOutput(Signal s)
 {
-	std::set<mpz_class> vs = outputs[s];
+	std::vector<mpz_class> vs = outputs[s];
 	if (vs.size() > 1)
 		throw std::string("TestCase::getOneExpectedOutput: multiple expected values for output ") + s.id();
 	if (vs.size() < 1)
@@ -146,12 +147,35 @@ mpz_class TestCase::getOneExpectedOutput(Signal s)
 	return *vs.begin();
 }
 
+int TestCase::getExpectedOutputNumber(Signal s)
+{
+	return outputs[s].size();
+}
+
+mpz_class TestCase::getExpectedOutput(Signal s, int i)
+{
+	if (i < outputs[s].size())
+		return outputs[s][i];
+	else
+		throw std::string("Expected value index out of range.");
+}
+
 TestCaseList::TestCaseList() { }
 TestCaseList::~TestCaseList() { }
 
-void TestCaseList::add(TestCase t)
+void TestCaseList::add(TestCase tc)
 {
-	v.push_back(t);
+	v.push_back(tc);
+
+	/* Update statistics */
+	for (TestCase::Inputs::iterator it = tc.inputs.begin(); it != tc.inputs.end(); it++)
+		inputs[it->first] = 0;
+
+	for (TestCase::Outputs::iterator it = tc.outputs.begin(); it != tc.outputs.end(); it++)
+	{
+		int n = outputs[it->first];
+		outputs[it->first] = max(it->second.size(), n);
+	}
 }
 
 int TestCaseList::getNumberOfTestCases()
@@ -169,12 +193,23 @@ TestCaseList TestCaseList::operator+(TestCaseList second)
 	TestCaseVector vt;
 	TestCaseVector::iterator it;
 
-	vt.reserve(v.size() + second.v.size());
+	TestCaseList tcl;
+	tcl.v.reserve(v.size() + second.v.size());
 	for (it = v.begin(); it != v.end(); it++)
-		vt.push_back(*it);
+		tcl.add(*it);
 	for (it = second.v.begin(); it != second.v.end(); it++)
-		vt.push_back(*it);
+		tcl.add(*it);
 
-	return TestCaseList(vt);
+	return tcl;
+}
+
+TestCaseList::Inputs& TestCaseList::getInputMap()
+{
+	return inputs;
+}
+
+TestCaseList::Outputs& TestCaseList::getOutputMap()
+{
+	return outputs;
 }
 

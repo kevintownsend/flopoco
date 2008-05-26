@@ -118,10 +118,8 @@ static void usage(char *name){
 	cerr << "    TestBench n\n";
 	cerr << "       produce a behavorial test bench for the preceding operator\n";
 	cerr << "       This test bench will include standard tests, plus n random tests.\n";
-#if 0 // hidden in 0.5beta release
 	cerr << "    BigTestBench n\n";
 	cerr << "       Same as above, but generates a more VHDL efficient test bench.\n";
-#endif
 	cerr << "    Wrapper entity_name\n";
 	cerr << "       produce a wrapper named entity_name for the preceding operator\n";
 	cerr << "       (e.g. to get synthesis results without having the operator optimised out)\n";

@@ -4,10 +4,97 @@
 #include <string>
 #include <vector>
 #include <map>
-#include <set>
 #include <gmpxx.h>
 
 #include "Signal.hpp"
+
+class TestCase;
+
+/**
+ * Represents a list of test cases that an Operator has to pass.
+ */
+class TestCaseList {
+public:
+	/**
+	 * Creates an empty TestCaseList
+	 * @see TestCase
+	 */
+	TestCaseList();
+	~TestCaseList();
+
+	/**
+	 * Adds a TestCase to this TestCaseList.
+	 * @param t TestCase to add
+	 */
+	void add(TestCase t);
+
+	/* XXX Is this the best way to encapsulate TestCase-es? */
+	/**
+	 * Get the number of TestCase-es contained in this TestCaseList.
+	 * @return The number of TestCase-es
+	 */
+	int getNumberOfTestCases();
+
+	/* XXX Shouldn't we return by reference to improve speed? */
+	/**
+	 * Get a specific TestCase.
+	 * @param i Which TestCase to return
+	 * @return The i-th TestCase.
+	 */
+	TestCase getTestCase(int i);
+
+	/**
+	 * Creates a new TestCaseList, with TestCase-es from both lists.
+	 * @param second The second operand of the plus operator.
+	 */
+	TestCaseList operator+(TestCaseList second);
+
+	/**
+	 * Offers an ordering relationship on Signal-s based on their name.
+	 * Now we can use Signal-s as keys to map, set etc.
+	 */
+	struct ltsignal
+	{
+		bool operator()(Signal s1, Signal s2) const
+		{
+			return (s1.id() < s2.id());
+		}
+	};
+
+	/** Map used to store input & output signals */
+	typedef std::map<Signal, int, ltsignal> Inputs;
+	typedef std::map<Signal, int, ltsignal> Outputs;
+
+	/**
+	 * Gets a map with the input signals
+	 */
+	TestCaseList::Inputs& getInputMap();
+
+	/**
+	 * Gets a map with the output signals and they maximum number
+	 * of expected values.
+	 */
+	TestCaseList::Outputs& getOutputMap();
+
+private:
+	/** Type of vector used to store TestCase-es */
+	typedef std::vector<TestCase> TestCaseVector;
+
+	/**
+	 * Creates a TestCaseList from a vector of TestCase-es.
+	 * Internal constructor used by plus operator.
+	 * @param v The vector to use.
+	 */
+	inline TestCaseList(TestCaseVector v, Inputs inputs, Outputs outputs)
+		: v(v), inputs(inputs), outputs(outputs) { }
+
+	/** Stores the TestCase-es */
+	TestCaseVector v;
+
+	/** Stores statistics about the TestCase-es */
+	Inputs  inputs;  /*< All input signals */
+	Outputs outputs; /*< All output signals and their number of expected values */
+};
 
 /**
  * Encapsulates data relevant for a test case. The data consists
@@ -82,7 +169,7 @@ public:
 	 * @param quot also put quotes around the value
 	 * @return a VHDL value expression
 	 */
-	 static std::string signalValueToVHDL(Signal s, mpz_class v, bool quot = true);
+	static std::string signalValueToVHDL(Signal s, mpz_class v, bool quot = true);
 	 
 	/**
 	 * Converts the value of the signal into a nicely formated VHDL expression,
@@ -92,7 +179,22 @@ public:
 	 * @param quot also put quotes around the value
 	 * @return a VHDL value expression in hexa
 	 */
-	 static std::string signalValueToVHDLHex(Signal s, mpz_class v, bool quot = true);
+	static std::string signalValueToVHDLHex(Signal s, mpz_class v, bool quot = true);
+
+	/**
+	 * Returns the number of expected output values
+	 * @param s signal
+	 * @return an integer
+	 */
+	int getExpectedOutputNumber(Signal s);
+
+	/**
+	 * Returns one expected output value
+	 * @param s signal
+	 * @param i zero-indexed expected output to return
+	 * @return mpz_class representing a VHDL signal value
+	 */
+	mpz_class getExpectedOutput(Signal s, int i);
 
 private:
 	/**
@@ -110,64 +212,12 @@ private:
 	typedef std::map<Signal, mpz_class, ltsignal> Inputs;
 	Inputs inputs;
 
-	typedef std::map<Signal, std::set<mpz_class>, ltsignal> Outputs;
+	typedef std::map<Signal, std::vector<mpz_class>, ltsignal> Outputs;
 	Outputs outputs;
 
 	std::string comment;
-};
 
-/**
- * Represents a list of test cases that an Operator has to pass.
- */
-class TestCaseList {
-public:
-	/**
-	 * Creates an empty TestCaseList
-	 * @see TestCase
-	 */
-	TestCaseList();
-	~TestCaseList();
-
-	/**
-	 * Adds a TestCase to this TestCaseList.
-	 * @param t TestCase to add
-	 */
-	void add(TestCase t);
-
-	/* XXX Is this the best way to encapsulate TestCase-es? */
-	/**
-	 * Get the number of TestCase-es contained in this TestCaseList.
-	 * @return The number of TestCase-es
-	 */
-	int getNumberOfTestCases();
-
-	/* XXX Shouldn't we return by reference to improve speed? */
-	/**
-	 * Get a specific TestCase.
-	 * @param i Which TestCase to return
-	 * @return The i-th TestCase.
-	 */
-	TestCase getTestCase(int i);
-
-	/**
-	 * Creates a new TestCaseList, with TestCase-es from both lists.
-	 * @param second The second operand of the plus operator.
-	 */
-	TestCaseList operator+(TestCaseList second);
-
-private:
-	/** Type of vector used to store TestCase-es */
-	typedef std::vector<TestCase> TestCaseVector;
-
-	/**
-	 * Creates a TestCaseList from a vector of TestCase-es.
-	 * Internal constructor used by plus operator.
-	 * @param v The vector to use.
-	 */
-	inline TestCaseList(TestCaseVector v) : v(v) { }
-
-	/** Stores the TestCase-es */
-	TestCaseVector v;
+	friend void TestCaseList::add(TestCase);
 };
 
 #endif

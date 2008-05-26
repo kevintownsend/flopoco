@@ -38,6 +38,8 @@ inline double max(double x, double y) {return (x > y ? x : y);}
 inline double min(double x, double y) {return (x < y ? x : y);}
 inline int max(int x, int y) {return (x > y ? x : y);}
 inline int min(int x, int y) {return (x < y ? x : y);}
+inline mpz_class max(mpz_class x, mpz_class y) {return (x > y ? x : y);}
+inline mpz_class min(mpz_class x, mpz_class y) {return (x < y ? x : y);}
 
 /**
  * Generate a very big random number.

@@ -1,4 +1,3 @@
-/* vim: set tabstop=8 softtabstop=2 shiftwidth=2: */
 #ifndef __BIGTESTBENCH_HPP
 #define __BIGTESTBENCH_HPP
 
@@ -28,6 +27,18 @@ private:
 
 	/** The parameter from the constructor */
 	int n;
+	
+	/**
+	 * Offers an ordering relationship on Signal-s based on their name.
+	 * Now we can use Signal-s as keys to map, set etc.
+	 */
+	struct ltsignal
+	{
+		bool operator()(Signal s1, Signal s2) const
+		{
+			return (s1.id() < s2.id());
+		}
+	};
 };
 
 
