@@ -136,7 +136,8 @@ void FPConstMult::output_vhdl(ostream& o, string name) {
 
 	// bit width of constant exponent
 	int wE_cst=intlog2(abs(cst_exp_when_mantissa_1_2));
-	cout << "wE_cst="<<wE_cst<<endl;
+	if(verbose)
+		cout << "  wE_cst="<<wE_cst<<endl;
 
 	int wE_sum;
 	// bias_in is 2^(wE_in-1) -1  (011...11)
@@ -223,9 +224,10 @@ void FPConstMult::output_vhdl(ostream& o, string name) {
 		<< tab << tab << "         else \"01\";                                          -- normal number"<<endl;
 
 	o << tab << tab << "r <= r_exn & r_sgn & r_exp & r_sig;"<<endl;
-	o << "end architecture;" << endl << endl;
-		
+	o << "end architecture;" << endl << endl;		
 }
+
+
 
 TestCaseList FPConstMult::generateRandomTestCases(int n)
 {
