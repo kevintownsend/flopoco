@@ -48,7 +48,7 @@ FPLog::FPLog(Target* target, int wE, int wF)
 
 	int i;
 
-	gLog = 3; // TODO: almost randomly chosen
+	gLog = 5; // XXX: To pesimistic 
 	target_prec = wF+((wF+1)>>1) +gLog;
 
 	// First compute the precision of each iteration 
@@ -839,7 +839,7 @@ void FPLog::addTestCase(TestCaseList& tcl, FloFP x)
 TestCaseList FPLog::generateStandardTestCases(int n)
 {
 	TestCaseList tcl;	/* XXX: Just like Lyon's Transportion Company. :D */
-	FloFP x(wE, wF), r(wE, wF), zero(wE, wF), one(wE,wF);
+	FloFP x(wE, wF), r(wE, wF);
 	int i;
 
 	/* Generate testcases for 0 ± 10ulp */

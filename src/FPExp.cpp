@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <math.h>	// For NaN
 
 #include "FPExp.hpp"
 #include "FloFP.hpp"
@@ -348,40 +349,68 @@ void FPExp::output_vhdl(std::ostream& o, std::string name)
 	o << fixp_exp_tbl.str() << fixp_exp.str() << fp_exp.str();
 }
 
-TestCaseList FPExp::generateStandardTestCases(int n)
-{
-	// TODO
-	return TestCaseList();
-}
-
-TestCaseList FPExp::generateRandomTestCases(int n)
+void FPExp::addTestCase(TestCaseList& tcl, FloFP x)
 {
 	Signal& sx = *get_signal_by_name("x");
 	Signal& sr = *get_signal_by_name("r");
 	Signal  sr_exc = (*get_signal_by_name("r")).getException();
 	Signal  sr_sgn = (*get_signal_by_name("r")).getSign();
+	Signal  sr_exp = (*get_signal_by_name("r")).getExponent();
+	Signal  sr_man = (*get_signal_by_name("r")).getMantissa();
 
+	int wE, wF;
+	x.getPrecision(wE, wF);
+	FloFP r(wE, wF);
+	r = x.exp();
+
+	TestCase tc;
+	tc.addInput(sx, x.getSignalValue());
+	tc.addExpectedOutput(sr_exc, r.getExceptionSignalValue());
+	tc.addExpectedOutput(sr_sgn, r.getSignSignalValue());
+	if (r.getExceptionSignalValue() == 1)
+	{
+		/* FPExp only returns faithful rounding */
+		tc.addExpectedOutput(sr, r.getRoundedDownSignalValue());
+		tc.addExpectedOutput(sr, r.getRoundedUpSignalValue());
+	}
+	tcl.add(tc);
+}
+
+TestCaseList FPExp::generateStandardTestCases(int n)
+{
+	TestCaseList tcl;	/* XXX: Just like Lyon's Transportion Company. :D */
+	FloFP x(wE, wF), r(wE, wF);
+	int i;
+
+	/* Generate testcases for 0 ± 10ulp */
+	for (x = 0.0, i = -10, x += i; i <= 10; i++, x++)
+		addTestCase(tcl, x);
+
+	/* Generate testcases for -1 ± 10ulp */
+	for (x = -1.0, i = -10, x += i; i <= 10; i++, x++)
+		addTestCase(tcl, x);
+		
+	/* Generate testcases for 1 ± 10ulp */
+	for (x = 1.0, i = -10, x += i; i <= 10; i++, x++)
+		addTestCase(tcl, x);
+
+	/* Generate testcases for NaN ± 10ulp */
+	for (x = NAN, i = -10, x += i; i <= 10; i++, x++)
+		addTestCase(tcl, x);
+
+	return tcl;
+}
+
+TestCaseList FPExp::generateRandomTestCases(int n)
+{
 	TestCaseList tcl;	/* XXX: Just like Lyon's Transportion Company. :D */
 	FloFP x(wE, wF), r(wE, wF);
 
 	for (int i = 0; i < n; i++)
 	{
-		x = getLargeRandom(sx.width()-2) + (mpz_class(1) << (wE + wF + 1));
-		r = x.exp();
-
-		TestCase tc;
-		tc.addInput(sx, x.getSignalValue());
-		tc.addExpectedOutput(sr_exc, r.getExceptionSignalValue());
-		tc.addExpectedOutput(sr_sgn, r.getSignSignalValue());
-		if (r.getExceptionSignalValue() == 1)
-		{
-			/* Exp only returns faithful rounding */
-			tc.addExpectedOutput(sr, r.getRoundedDownSignalValue());
-			tc.addExpectedOutput(sr, r.getRoundedUpSignalValue());
-		}
-		tcl.add(tc);
+		x = getLargeRandom(wE+wF+1) + (mpz_class(1) << (wE + wF + 1));
+		addTestCase(tcl, x);
 	}
-
 
 	return tcl;
 }
