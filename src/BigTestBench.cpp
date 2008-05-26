@@ -209,7 +209,7 @@ void BigTestBench::output_vhdl(ostream& o, string name) {
 			Signal& s = *op->ioList[j];
 			if (s.type() != Signal::out) continue;
 			try {
-				if (i < op->pipeline_depth()) throw std::string();
+				if (i < op->pipeline_depth()) throw 0;
 				// Happens when no value is expected from this output signal
 				// Or this signal does not have a unique value
 				f << tc.signalValueToVHDLHex(s, tc.getOneExpectedOutput(s), false) << endl;
