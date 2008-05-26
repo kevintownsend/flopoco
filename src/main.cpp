@@ -36,6 +36,7 @@
 #include "Karatsuba.hpp"
 #include "FPMultiplier.hpp"
 #include "LongAcc.hpp"
+#include "LongAcc2FP.hpp"
 #include "FPAdder.hpp"
 #include "DotProduct.hpp"
 #include "Wrapper.hpp"
@@ -80,6 +81,8 @@ static void usage(char *name){
 	cerr << "      Integer adder, possibly pipelined to arbitrary frequency (almost)\n";
 	cerr << "    LongAcc wE_in wF_in MaxMSB_in LSB_acc MSB_acc\n";
 	cerr << "      Long fixed-point accumulator\n";
+	cerr << "    LongAcc2FP MaxMSB_in LSB_acc MSB_acc wE_out wF_out \n";
+	cerr << "      Post-normalisation unit for LongAcc \n";
 	cerr << "    FPAdder wEX wFX wEY wFY wER wFR\n";
 	cerr << "      floating-point adder \n";
 	cerr << "    IntConstMult w c\n";
@@ -414,6 +417,21 @@ bool parse_command_line(int argc, char* argv[]){
 				// op->test_precision(n);
 				op->test_precision2();
 			}    
+		}
+		else if(opname=="LongAcc2FP"){
+			int nargs = 5;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int MaxMSBX = atoi(argv[i++]); // may be negative
+				int LSBA = atoi(argv[i++]); // may be negative
+				int MSBA = atoi(argv[i++]); // may be negative
+				int wE_out = check_strictly_positive(argv[i++], argv[0]);
+				int wF_out = check_strictly_positive(argv[i++], argv[0]);
+				cerr << "> Post-Normalization unit for Long accumulator MaxMSBX="<<MaxMSBX<<", LSBA="<<LSBA<<", MSBA="<<MSBA<<" wE_out="<<wE_out<<", wF_out="<<wF_out<<"\n";
+				op = new LongAcc2FP(target, MaxMSBX, LSBA, MSBA, wE_out, wF_out);
+				oplist.push_back(op);
+			}
 		}
 		else if(opname=="FPAdder"){
 			int nargs = 6;
