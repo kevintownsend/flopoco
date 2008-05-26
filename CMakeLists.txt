@@ -83,7 +83,6 @@ ADD_EXECUTABLE(flopoco
  src/DotProduct
  src/ConstMult/IntConstMult src/ConstMult/ShiftAddOp src/ConstMult/ShiftAddDag 
  src/ConstMult/FPConstMult 
-src/ConstMult/CRFPConstMult 
  src/TestCase
  src/FloFP
  src/fpexp/math_lib.cpp

@@ -43,7 +43,7 @@
 #include "BigTestBench.hpp"
 #include "ConstMult/IntConstMult.hpp"
 #include "ConstMult/FPConstMult.hpp"
-#include "ConstMult/CRFPConstMult.hpp"
+//#include "ConstMult/CRFPConstMult.hpp"
 #include "Target.hpp"
 #include "Targets/VirtexIV.hpp"
 #include "FPExp.hpp"
@@ -268,7 +268,7 @@ bool parse_command_line(int argc, char* argv[]){
 			}        
 		} 	
 #ifdef HAVE_SOLLYA
-		else if(opname=="CRFPConstMult"){
+/*		else if(opname=="CRFPConstMult"){
 			int nargs = 5;
 			if (i+nargs > argc)
 				usage(argv[0]);
@@ -284,7 +284,7 @@ bool parse_command_line(int argc, char* argv[]){
 				op = new CRFPConstMult(target, wE_in, wF_in, wE_out, wF_out, constant);
 				oplist.push_back(op);
 			}        
-		} 	
+		} 	*/
 #endif // HAVE_SOLLYA
 		else if(opname=="LeftShifter"){
 			int nargs = 2;

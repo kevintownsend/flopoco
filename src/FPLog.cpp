@@ -69,7 +69,7 @@ FPLog::FPLog(Target* target, int wE, int wF)
 	// stage 1 needs a specific inverter table
 	i=1;
 	while(2*p[i] < wF+2){ // ensures 2*p[stages+1]>= wF+2, enough for faithful rounding
-		a[i] = 5; // HERE IS THE BUG
+		a[i] = 4;
 		p[i+1] = p[i] + a[i] - 1;
 
 		// size before truncation
