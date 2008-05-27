@@ -946,12 +946,12 @@ TestCaseList FPMultiplier::generateStandardTestCases(int n)
 
 TestCaseList FPMultiplier::generateRandomTestCases(int n)
 {
-	Signal sx = *get_signal_by_name("X");
-	Signal sy = *get_signal_by_name("Y");
-	Signal srexp = *get_signal_by_name("ResultExponent");
-	Signal srfra = *get_signal_by_name("ResultSignificand");
-	Signal srexc = *get_signal_by_name("ResultException");
-	Signal srsgn = *get_signal_by_name("ResultSign"); 
+	Signal& sx = *get_signal_by_name("X");
+	Signal& sy = *get_signal_by_name("Y");
+	Signal& srexp = *get_signal_by_name("ResultExponent");
+	Signal& srfra = *get_signal_by_name("ResultSignificand");
+	Signal& srexc = *get_signal_by_name("ResultException");
+	Signal& srsgn = *get_signal_by_name("ResultSign"); 
 
 	TestCaseList tcl;	/* XXX: Just like Lyon's Transportion Company. :D */
 	FloFP x(wEX, wFX), y(wEY, wFY), r(wER, wFR, normalized);

@@ -67,7 +67,7 @@ BigTestBench::~BigTestBench() { }
  * @param var the zero-based expected output variant number, or -1 for input signal
  * @return a string which can be used as a VHDL identifier
  */
-inline std::string s2vg(std::string type, Signal s, int var = -1)
+inline std::string s2vg(std::string type, const Signal& s, int var = -1)
 {
 	std::stringstream o;
 
@@ -97,7 +97,7 @@ inline std::string s2vg(std::string type, Signal s, int var = -1)
  * @param var the zero-based expected output variant number, or -1 for input signal
  * @return a string which can be used as a VHDL identifier
  */
-inline std::string s2v(Signal s, int var = -1)
+inline std::string s2v(const Signal& s, int var = -1)
 {
 	return s2vg("v", s, var);
 }
@@ -106,7 +106,7 @@ inline std::string s2v(Signal s, int var = -1)
  * Like s2v, but gets the „good” signal.
  * @see s2v.
  */
-inline std::string s2g(Signal s, int var = -1)
+inline std::string s2g(const Signal& s, int var = -1)
 {
 	return s2vg("g", s, var);
 }
@@ -151,7 +151,7 @@ void BigTestBench::output_vhdl(ostream& o, string name) {
 	o << tab << "uut:" << op->unique_name << "\n"
 		<< tab << tab << "port map ( ";
 	for(int i=0; i<op->ioList.size(); i++) {
-		Signal s = *op->ioList[i];
+		Signal& s = *op->ioList[i];
 		if(i>0) 
 			o << tab << tab << "           ";
 		string idext =  op->ioList[i]->id() ;
@@ -182,7 +182,7 @@ void BigTestBench::output_vhdl(ostream& o, string name) {
 
 	for (TestCaseList::Inputs::iterator it = inputs.begin(); it != inputs.end(); it++)
 	{
-		Signal s = it->first;
+		const Signal& s = it->first;
 		o << tab << tab << "variable v_" << s.id() << ": std_ulogic"; 
 		if (s.width() > 1)
 			o << "_vector(" << round4(s.width())-1 << " downto 0)";
@@ -191,7 +191,7 @@ void BigTestBench::output_vhdl(ostream& o, string name) {
 
 	for (TestCaseList::Outputs::iterator it = outputs.begin(); it != outputs.end(); it++)
 	{
-		Signal s = it->first;
+		const Signal& s = it->first;
 		int maxValNum = it->second;
 		for (int i = 0; i < maxValNum; i++)
 		{
@@ -214,7 +214,7 @@ void BigTestBench::output_vhdl(ostream& o, string name) {
 	o << tab << tab << tab << "-- read inputs" << endl;
 	for (TestCaseList::Inputs::iterator it = inputs.begin(); it != inputs.end(); it++)
 	{
-		Signal s = it->first;
+		const Signal& s = it->first;
 		o << tab << tab << tab << "readline(fTest,buf); ";
 		if (s.width() == 1)
 			o << "read(buf," << s2v(s) << "); " << s.id() << " <= " << s2v(s) << ";" <<endl; 
@@ -225,7 +225,7 @@ void BigTestBench::output_vhdl(ostream& o, string name) {
 	o << tab << tab << tab << "wait for 1 ns;" <<endl;
 	for (TestCaseList::Outputs::iterator it = outputs.begin(); it != outputs.end(); it++)
 	{
-		Signal s = it->first;
+		const Signal& s = it->first;
 		int maxValNum = it->second;
 
 		for (int i = 0; i < maxValNum; i++)
@@ -262,6 +262,7 @@ void BigTestBench::output_vhdl(ostream& o, string name) {
 	TestCaseList tclIn, tclOut;
 	ofstream f;
 	f.open((op->unique_name + ".test").c_str(), ios::out);
+	tclOut = op->generateRandomTestCases(10000);
 	for (int i = 0; i < n; i++)
 	{
 		/* Generate a new test case list, if we depleted the one before */
@@ -270,14 +271,14 @@ void BigTestBench::output_vhdl(ostream& o, string name) {
 			tclIn = op->generateRandomTestCases(10000);
 			cerr << ".";
 		}
-		if ((i - op->pipeline_depth()) % 10000 == 0)
-			tclOut = tclIn;
+		//if ((i - op->pipeline_depth()) % 10000 == 0)
+			//tclOut = tclIn;
 		
 		/* Input vector */
 		TestCase tc = tclIn.getTestCase(i % 10000);
 		for (TestCaseList::Inputs::iterator it = inputs.begin(); it != inputs.end(); it++)
 		{
-			Signal s = it->first;
+			const Signal& s = it->first;
 			f << tc.signalValueToVHDLHex(s, tc.getInput(s), false) << endl;
 		}
 
@@ -286,7 +287,7 @@ void BigTestBench::output_vhdl(ostream& o, string name) {
 			tc = tclOut.getTestCase((i - op->pipeline_depth()) % 10000);
 		for (TestCaseList::Outputs::iterator it = outputs.begin(); it != outputs.end(); it++)
 		{
-			Signal s = it->first;
+			const Signal& s = it->first;
 			int maxValNum = it->second;
 
 			for (int k = 0; k < maxValNum; k++)
@@ -312,3 +313,4 @@ void BigTestBench::output_vhdl(ostream& o, string name) {
 	cerr << tab << "vsim " << name <<endl;
 	cerr << tab << "run -all" << endl;
 }
+

@@ -3,6 +3,7 @@ MESSAGE("Trying to build FloPoCo on " ${CMAKE_SYSTEM_NAME} ", compiler is "${CMA
 
 INCLUDE(CPack)
 
+#SET(CMAKE_CXX_FLAGS_DEBUG "-g -pg")
 SET(CMAKE_BUILD_TYPE debug)
 
 FIND_PATH(MPFR_H

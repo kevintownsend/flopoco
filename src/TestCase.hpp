@@ -55,7 +55,7 @@ public:
 	 */
 	struct ltsignal
 	{
-		bool operator()(Signal s1, Signal s2) const
+		bool operator()(const Signal& s1, const Signal& s2) const
 		{
 			return (s1.id() < s2.id());
 		}
@@ -66,7 +66,7 @@ public:
 	typedef std::map<Signal, int, ltsignal> Outputs;
 
 	/**
-	 * Gets a map with the input signals
+	 /* Gets a map with the input signals
 	 */
 	TestCaseList::Inputs& getInputMap();
 
@@ -116,14 +116,14 @@ public:
 	 * @param s The signal which will value the given value
 	 * @param v The value which will be assigned to the signal
 	 */
-	void addInput(Signal s, mpz_class v);
+	void addInput(const Signal &s, mpz_class v);
 
 	/**
 	 * Adds an expected output for this signal
 	 * @param s The signal for which to assign an expected output
 	 * @param v One possible value which the signal might have
 	 */
-	void addExpectedOutput(Signal s, mpz_class v);
+	void addExpectedOutput(const Signal &s, mpz_class v);
 
 	/**
 	 * Adds a comment to the output VHDL. "--" are automatically prepended.
@@ -151,14 +151,14 @@ public:
 	 * Signal. Throws an exception if no signal is found.
 	 * @param s the signal for which the value should be returned.
 	 */
-	mpz_class getInput(Signal s);
+	mpz_class getInput(const Signal& s);
 
 	/**
 	 * Gets the one single value of for the given output Signal.
 	 * Throws an exception if no signal value is found or there
 	 * are two expected outputs.
 	 */
-	mpz_class getOneExpectedOutput(Signal s);
+	mpz_class getOneExpectedOutput(const Signal& s);
 
 	// XXX: Not the best place.
 	/**
@@ -169,7 +169,7 @@ public:
 	 * @param quot also put quotes around the value
 	 * @return a VHDL value expression
 	 */
-	static std::string signalValueToVHDL(Signal s, mpz_class v, bool quot = true);
+	static std::string signalValueToVHDL(const Signal& s, mpz_class v, bool quot = true);
 	 
 	/**
 	 * Converts the value of the signal into a nicely formated VHDL expression,
@@ -179,14 +179,14 @@ public:
 	 * @param quot also put quotes around the value
 	 * @return a VHDL value expression in hexa
 	 */
-	static std::string signalValueToVHDLHex(Signal s, mpz_class v, bool quot = true);
+	static std::string signalValueToVHDLHex(const Signal& s, mpz_class v, bool quot = true);
 
 	/**
 	 * Returns the number of expected output values
 	 * @param s signal
 	 * @return an integer
 	 */
-	int getExpectedOutputNumber(Signal s);
+	int getExpectedOutputNumber(const Signal& s);
 
 	/**
 	 * Returns one expected output value
@@ -194,7 +194,7 @@ public:
 	 * @param i zero-indexed expected output to return
 	 * @return mpz_class representing a VHDL signal value
 	 */
-	mpz_class getExpectedOutput(Signal s, int i);
+	mpz_class getExpectedOutput(const Signal& s, int i);
 
 private:
 	/**
@@ -203,7 +203,7 @@ private:
 	 */
 	struct ltsignal
 	{
-		bool operator()(Signal s1, Signal s2) const
+		bool operator()(const Signal& s1, const Signal& s2) const
 		{
 			return (s1.id() < s2.id());
 		}

@@ -1,7 +1,7 @@
 #include "TestCase.hpp"
 #include "utils.hpp"
 
-std::string TestCase::signalValueToVHDL(Signal s, mpz_class v, bool quot)
+std::string TestCase::signalValueToVHDL(const Signal& s, mpz_class v, bool quot)
 {
 	std::string r;
 
@@ -29,7 +29,7 @@ std::string TestCase::signalValueToVHDL(Signal s, mpz_class v, bool quot)
 }
 
 
-std::string TestCase::signalValueToVHDLHex(Signal s, mpz_class v, bool quot)
+std::string TestCase::signalValueToVHDLHex(const Signal& s, mpz_class v, bool quot)
 {
 	std::string o;
 
@@ -60,12 +60,12 @@ std::string TestCase::signalValueToVHDLHex(Signal s, mpz_class v, bool quot)
 TestCase::TestCase() { }
 TestCase::~TestCase() { }
 
-void TestCase::addInput(Signal s, mpz_class v)
+void TestCase::addInput(const Signal& s, mpz_class v)
 {
 	inputs[s] = v;
 }
 
-void TestCase::addExpectedOutput(Signal s, mpz_class v)
+void TestCase::addExpectedOutput(const Signal& s, mpz_class v)
 {
 	outputs[s].push_back(v);
 }
@@ -129,7 +129,7 @@ void TestCase::addComment(std::string c)
 	comment = c;
 }
 
-mpz_class TestCase::getInput(Signal s)
+mpz_class TestCase::getInput(const Signal& s)
 {
 	Inputs::iterator it = inputs.find(s);
 	if (it == inputs.end())
@@ -137,7 +137,7 @@ mpz_class TestCase::getInput(Signal s)
 	return it->second;
 }
 
-mpz_class TestCase::getOneExpectedOutput(Signal s)
+mpz_class TestCase::getOneExpectedOutput(const Signal& s)
 {
 	std::vector<mpz_class> vs = outputs[s];
 	if (vs.size() > 1)
@@ -147,12 +147,12 @@ mpz_class TestCase::getOneExpectedOutput(Signal s)
 	return *vs.begin();
 }
 
-int TestCase::getExpectedOutputNumber(Signal s)
+int TestCase::getExpectedOutputNumber(const Signal& s)
 {
 	return outputs[s].size();
 }
 
-mpz_class TestCase::getExpectedOutput(Signal s, int i)
+mpz_class TestCase::getExpectedOutput(const Signal& s, int i)
 {
 	if (i < outputs[s].size())
 		return outputs[s][i];
