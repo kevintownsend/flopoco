@@ -57,7 +57,15 @@ Wrapper::Wrapper(Target* target, Operator *op, std::string name):
 	}
 
 	//set pipeline parameters
-	set_pipeline_depth(2);
+	set_pipeline_depth(2 + op->pipeline_depth());
+
+	/* add bogus clk and rst signal if the UUT does not have them */
+	try {
+		add_signal("clk", 1);
+		add_signal("rst", 1);
+	} catch (std::string) {
+		/* silently ignore */
+	}
 }
 
 
