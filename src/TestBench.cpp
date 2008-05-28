@@ -60,13 +60,88 @@ TestBench::TestBench(Target* target, Operator* op, int n):
 TestBench::~TestBench() { }
 
 void TestBench::output_vhdl(ostream& o, string name) {
-	/* Generate some TestCases
+	/*
+	 * Generate some TestCases
 	 * We do this as early as possible, so that no VHDL is generated
 	 * if test cases are not implemented for the given operator
 	 */
-	TestCaseList tcl = op->generateStandardTestCases(n) + op->generateRandomTestCases(n);
+	TestIOMap::TestIOMapContainer tim = op->getTestIOMap().get();
+	typedef TestIOMap::TestIOMapContainer::iterator TIMit;
 
-	Licence(o,"Florent de Dinechin (2007)");
+	TestCaseList tcl;
+
+	/* Get the size of the I/O Map */
+	int size = 0;
+	for (TIMit it = tim.begin(); it != tim.end(); it++)
+	{
+		int maxNumValues = it->second;
+		size += maxNumValues;
+	}
+
+	/* Allocate buffer which store I/O values metadata */
+	bool *a_isIn = new bool[size];
+	bool *a_isFP = new bool[size];
+	int *a_w = new int[size];
+	const Signal **a_s = new const Signal*[size];
+	
+	/* Get the metadata */
+	size = 0;
+	int max_bits = 0;
+	for (TIMit it = tim.begin(); it != tim.end(); it++)
+	{
+		const Signal& s = it->first;
+		int maxNumValues = it->second;
+
+		for (int j = 0; j < maxNumValues; j++)
+		{
+			a_s   [size] = &s;
+			a_isIn[size] = (s.type() == Signal::in);
+			a_isFP[size] = s.isFP();
+			a_w   [size] = s.width();
+			max_bits = max(max_bits, a_w[size]);
+			size++;
+		}
+	}
+
+	/* Generate test cases */
+	mpz_class *a = new mpz_class[size];
+	for (int i = 0; i < n; i++)
+	{
+		/* Fill inputs, erase outputs */
+		for (int j = 0; j < size; j++)
+		{
+			if (a_isIn[j])
+			{
+				if (a_isFP[j])
+					a[j] = (mpz_class(1) << (a_w[j]-2)) + getLargeRandom(a_w[j]-2);
+				else
+					a[j] = getLargeRandom(a_w[j]);
+			}
+			else
+				a[j] = -1;
+		}
+
+		/* Get correct outputs */
+		op->fillTestCase(a);
+
+		/* Store test case */
+		TestCase tc;
+		for (int j = 0; j < size; j++)
+		{
+			if (a_isIn[j])
+				tc.addInput(*a_s[j], a[j]);
+			else
+				tc.addExpectedOutput(*a_s[j], a[j]);
+		}
+		tcl.add(tc);
+	}
+	delete[] a;
+	delete[] a_s;
+	delete[] a_isIn;
+	delete[] a_isFP;
+	delete[] a_w;
+
+	Licence(o,"Cristian KLEIN (2007)");
 	Operator::StdLibs(o);
 
 	output_vhdl_entity(o);
@@ -76,6 +151,17 @@ void TestBench::output_vhdl(ostream& o, string name) {
 	op->output_vhdl_component(o);
 	// The local signals
 	output_vhdl_signal_declarations(o);
+
+	o << endl <<
+		tab << "-- FP compare function (found vs. real)\n" <<
+		tab << "function fp_equal(a : std_logic_vector; b : std_logic_vector) return boolean is\n" <<
+		tab << "begin\n" <<
+		tab << tab << "if b(b'high downto b'high-1) = \"01\" then\n" <<
+		tab << tab << tab << "return a = b;\n" <<
+		tab << tab << "else\n" <<
+		tab << tab << tab << "return a(a'high downto a'high-2) = b(b'high downto b'high-2);\n" <<
+		tab << tab << "end if;\n" <<
+		tab << "end;\n";
 
 	o << "begin\n";
 

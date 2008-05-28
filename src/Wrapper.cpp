@@ -61,8 +61,8 @@ Wrapper::Wrapper(Target* target, Operator *op, std::string name):
 
 	/* add bogus clk and rst signal if the UUT does not have them */
 	try {
-		add_signal("clk", 1);
-		add_signal("rst", 1);
+		add_input("clk");
+		add_input("rst");
 	} catch (std::string) {
 		/* silently ignore */
 	}
