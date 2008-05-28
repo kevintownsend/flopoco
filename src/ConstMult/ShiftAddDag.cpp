@@ -59,12 +59,12 @@ mpz_class ShiftAddDag::computeConstant(OpType op, ShiftAddOp* i, int s, ShiftAdd
 		}
 		return i->n << s ;
 
-	case NegShift:
-		if(i==NULL || j!=NULL) {
-			cerr << "ERROR In ShiftAddOp, cannot construct such a NegShift, exiting. \n";
+	case Neg:
+		if(i==NULL) {
+			cerr << "ERROR In ShiftAddOp, cannot construct such a Neg, exiting. \n";
 			exit(EXIT_FAILURE);
 		}
-		return - i->n<<s;
+		return - i->n;
 	}
 
 }
@@ -84,103 +84,6 @@ ShiftAddOp* ShiftAddDag::provideShiftAddOp(OpType op, ShiftAddOp* i, int s, Shif
 }
 
 
-
-void ShiftAddDag::output_vhdl(std::ostream& o) {
-	int k,i,j;
-	// Signal declarations
-	for (i=0; i<saolist.size(); i++) 
-		o << tab << "signal " <<saolist[i]->name<<" : std_logic_vector("<<saolist[i]->size-1<<" downto 0);"<<endl;
-	
-	// Architecture
-	o << "begin" << endl;
-	for (i=0; i<saolist.size(); i++) {
-		ShiftAddOp *p = saolist[i];
-		o<<tab<<"-- " << *p <<endl;
-
-		switch(p->op) {
-		case X: 
-			cerr << "ERROR unexpected ShiftAddOp(X) in output_vhdl()"; exit(EXIT_FAILURE);
-			break;
-
-		case Add:
-			if(p->s==0) {
-				o << tab << p->name << " <= " ;
-				// The i part
-				if(p->size>p->i->size+1) // need to sign-extend x
-					o <<"( (" << p->size-1 << " downto " << p->i->size <<" => '" << (p->i->n >= 0 ? "0" : "1" ) << "') & " << p->i->name << ")";
-				else 
-					o << p->i->name;
-				o<<" + " ;
-				// the y part
-				if(p->size>p->j->size+1) // need to sign-extend y
-					o << "( (" << p->size-1 <<" downto " << p->j->size <<" => '" << (p->j->n >= 0 ? "0" : "1" ) << "') & " << p->j->name << ") ;";
-				else 
-					o << p->j->name << ";";
-			}
-
-			else { // Add with actual shift
-				if(p->s >= p->j->size) { // Simpler case when the two words to add are disjoint; size=p->i->size+s+1
-					//                   xxxxx
-					//                           yyyyy
-					// The lower bits of the sum are those of y, possibly sign-extended but otherwise untouched
-					o << tab << p->name << "("<< p->s - 1 <<" downto 0) <= "
-						<< "(" <<  p->s-1 <<" downto " << p->j->size <<" => " << p->j->name << "(" << p->j->size-1 << ")) & "    // sign extend y
-					<< p->j->name << ";   -- lower bits untouched"<<endl;
-					// The higher bits (size-1 downto s) of the result are those of x, possibly plus 11...1 if y was negative
-					o << tab << p->name << "("<<p->size-1<<" downto "<< p->s<<") <= " << p->i->name ;
-					if(p->j->n < 0) 
-						o<<" + (" << p->size-1 <<" downto " <<  p->s <<" => " << p->j->name << "(" << p->j->size-1 << ")) ";
-					o<< ";   -- sum of higher bits"<<endl;     
-				}
-				else{ // p->j->size>s.        Cases:      xxxxx              xxxxxx
-					//                                yyyyyyyyyy             yyyyyyyyyyyy
-					// so we may need to sign-extend Vx, or Vy, or even both.
-					// In both cases the lower bits of the result (s-1 downto 0) are untouched
-					o << tab << p->name << "("<<p->s-1<<" downto 0) <= " << p->j->name <<"("<< p->s-1<<" downto 0);   -- lower bits untouched"<<endl;
-					// The higher bits of the result are sum/diff
-					o << tab << p->name << "("<<p->size-1<<" downto " <<  p->s << ") <= "; // vz (size-1 downto s) <=
-					// The x part
-					o <<"(";
-					if(p->size >= p->i->size +  p->s +1) {// need to sign-extend vx. If the constant is positive padding with 0s is enough
-						o <<" (" << p->size-1 << " downto " << p->i->size +  p->s <<" => ";
-						if(p->i->n >= 0) // pad with 0s 
-							o<< "'0'";
-						else // sign extend
-							o<< p->i->name << "(" << p->i->size-1 << ")";
-						o << ") & ";
-					}
-					o << p->i->name << "("<< p->i->size -1 <<" downto 0)";
-					o << ")   +   (" ;
-					// the y part
-					if(p->size>=p->j->size+1) {// need to sign-extend vy. If the constant is positive padding with 0s is enough
-						o<<" (" << p->size-1 << " downto " << p->j->size <<" => ";
-						if(p->j->n >= 0) // pad with 0s 
-							o<< "'0'";
-						else // sign extend
-							o << p->j->name << "(" << p->j->size-1 << ")";
-						o << ") & ";
-					}
-					o << p->j->name << "("<< p->j->size -1 <<" downto " <<  p->s << ") ); " <<endl;
-				}
-			}
-		
-		break;
-
-		case Shift:
-		case NegShift:
-			o << tab << p->name << " <= " ;
-			if(p->op == NegShift)   
-				o << "("<< p->size -1 <<" downto 0 => '0') - " ; 
-			if (p->s == 0) 
-				o << p->i->name <<";"<<endl; 
-			else
-				o  << p->i->name <<" & ("<< p->s - 1 <<" downto 0 => '0');"<<endl; 
-			break;
-		}     
-	}
-	// Sometimes the size of the result variable is one bit more than r.
-	o << tab << "r <= " << result->name << "("<< icm->rsize-1 <<" downto 0);"<<endl;
-}
 
 
 

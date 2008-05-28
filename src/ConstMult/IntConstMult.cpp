@@ -39,10 +39,61 @@
 using namespace std;
 
 
-// TODO Pipeline. fuse NegShifts. Rewriting in general
+// TODO Pipeline. Rewriting in general
+
+
+// probably useless in the long term
+
+int compute_tree_depth(ShiftAddOp* sao) {
+	int ipd, jpd;
+	if (sao==NULL)
+		return 0;
+	else {
+		switch(sao->op) {
+		case X:
+			return 0;
+		case Add:
+			ipd = compute_tree_depth(sao->i);
+			jpd = compute_tree_depth(sao->j);
+			return 1+max(ipd, jpd);
+		case Shift:
+			ipd = compute_tree_depth(sao->i);
+			return ipd;
+		case Neg:
+			ipd = compute_tree_depth(sao->i);
+			return 1+ipd;
+		}   
+	}
+}
 
 
 
+
+int IntConstMult::compute_pipeline_depth(ShiftAddOp* sao) {
+	int ipd, jpd, cost;
+	double delay;
+	if (sao==NULL)
+		return 0;
+	else {
+		switch(sao->op) {
+		case X:
+			return 0;
+		case Add:
+			ipd = compute_pipeline_depth(sao->i);
+			jpd = compute_pipeline_depth(sao->j);
+			cost = sao->cost_in_full_adders;
+			delay = target->adder_delay(cost);
+			return 1+max(ipd, jpd);
+			// TODO continue here
+		case Shift:
+			ipd = compute_pipeline_depth(sao->i);
+			return ipd;
+		case Neg:
+			ipd = compute_pipeline_depth(sao->i);
+			return 1+ipd;
+		}   
+	}
+}
 
 
 
@@ -81,6 +132,33 @@ IntConstMult::IntConstMult(Target* _target, int _xsize, mpz_class _n) :
 	if(verbose) cout << "   Non-zero digits:" << nonZeroInBoothCode <<endl;
 
 
+
+	// Build in implementation a tree constant multiplier 
+	buildMultBoothTree();
+	if(verbose) showShiftAddDag();
+
+	// pipeline it
+	if (target->is_pipelined())
+		set_sequential();
+	else
+		set_combinatorial();
+
+	// declare its signals
+	if (is_sequential()){
+		int pipeline_depth = compute_pipeline_depth(implementation->result);
+		if(verbose)	cout<<"  Pipeline depth is "<< pipeline_depth << endl;
+		// TODO replace with signals + registers
+		for (int i=0; i<implementation->saolist.size(); i++) 
+			add_signal_bus(implementation->saolist[i]->name, implementation->saolist[i]->size);
+	}
+	else { 
+		for (int i=0; i<implementation->saolist.size(); i++) 
+			add_signal_bus(implementation->saolist[i]->name, implementation->saolist[i]->size);
+	}
+
+	// That's all folks. The remaining of this method is a handcoded
+	// Lefevre multiplier, for comparison purposes
+
 #if 0
 	if(false && n==mpz_class("254876276031724631276054471292942"))
 		{
@@ -96,7 +174,7 @@ IntConstMult::IntConstMult(Target* _target, int _xsize, mpz_class _n) :
 		{
 			const int PX=0;
 			cerr<<"Optimization by rigo.c"<< endl;//                   
-			implementation->addOp( new ShiftAddOp(implementation, NegShift,   PX, 0) );       // 1  mx = -u0
+			implementation->addOp( new ShiftAddOp(implementation, Neg,   PX) );       // 1  mx = -u0
 			implementation->addOp( new ShiftAddOp(implementation, Add,   0, 19,  0) );        // 2  u3 = u0 << 19 + u0
 			implementation->addOp( new ShiftAddOp(implementation, Shift,   2, 20) );          // 3  u103 = u3 << 20
 			implementation->addOp( new ShiftAddOp(implementation, Add,   3, 4,   3) );        // 4  u203 = u103 << 4  + u103
@@ -110,7 +188,7 @@ IntConstMult::IntConstMult(Target* _target, int _xsize, mpz_class _n) :
 			implementation->addOp( new ShiftAddOp(implementation, Add,   11, 4,   1) );       // 12 u105 = u106 << 4 + mx
 			implementation->addOp( new ShiftAddOp(implementation, Add,   12, 5,   0) );       // 13 u2 = u105 << 5 + u0
 			implementation->addOp( new ShiftAddOp(implementation, Shift, 13, 1) );            // 14 u102 = u2 << 1
-			implementation->addOp( new ShiftAddOp(implementation, NegShift,   14, 0) );       // 15 mu102 = - u102
+			implementation->addOp( new ShiftAddOp(implementation, Neg,   14) );       // 15 mu102 = - u102
 			implementation->addOp( new ShiftAddOp(implementation, Add,   14, 2,   15) );       // 16 u202 = u102 << 2  + mu102
 			implementation->addOp( new ShiftAddOp(implementation, Add,   9, 0,   16) );        // R = u101 + u202
 
@@ -137,14 +215,11 @@ R = u101 + u202
 			implementation->computeVarSizes(); 
 			implementation->result = implementation->saolist.size()-1;
 		}
-	else 
-
+	//	else
 #endif
-
-		buildMultBoothTree();
-	if(verbose) showShiftAddDag();
-
 }
+
+
 
 IntConstMult::~IntConstMult() {
 	delete [ ] bits;
@@ -214,7 +289,7 @@ void  IntConstMult::buildMultBooth(){
 	i=0;
 
 	// build the opposite of the input
-	ShiftAddOp* MX = new ShiftAddOp(implementation, NegShift, implementation->PX , 0);
+	ShiftAddOp* MX = new ShiftAddOp(implementation, Neg, implementation->PX);
 
 	while(0==BoothCode[i]) i++;
 	// first op is a shift, possibly of 0
@@ -272,7 +347,7 @@ void  IntConstMult::buildMultBoothTree(){
 	else { // at least two non-zero bits
 
 		// build the opposite of the input
-		ShiftAddOp* MX = new ShiftAddOp(implementation, NegShift, implementation->PX , 0);
+		ShiftAddOp* MX = new ShiftAddOp(implementation, Neg, implementation->PX);
 
 		// fill an initial array with Xs and MXs
 		level = new ShiftAddOp*[nonZeroInBoothCode];
@@ -321,16 +396,16 @@ void  IntConstMult::buildMultBoothTree(){
 
 	delete level;
 	delete shifts;
-	//exit(0);
-	cerr << "    Number of adders: "<<implementation->saolist.size() << endl;
+
+	if(verbose) cerr << "   Number of adders: "<<implementation->saolist.size() << endl;
 }
 
 
 
 void IntConstMult::showShiftAddDag(){
-	cout<<"ShiftAddDag"<<endl;
+	cout<<"    ShiftAddDag"<<endl;
 	for (int i=0; i<implementation->saolist.size(); i++) {
-		cout << *(implementation->saolist[i]) <<endl;
+		cout << "     "<<*(implementation->saolist[i]) <<endl;
 	}
 };
 
@@ -346,9 +421,103 @@ void IntConstMult::output_vhdl(std::ostream& o, std::string name) {
 	Licence(o,"Florent de Dinechin (2007)");
 	Operator::StdLibs(o);
 	output_vhdl_entity(o);
-
 	o << "architecture arch of " << name  << " is" << endl;
-	implementation->output_vhdl(o);
+	output_vhdl_signal_declarations(o);
+
+	int k,i,j;
+	// Signal declarations
+	//	for (i=0; i<saolist.size(); i++) 
+	//	o << tab << "signal " <<saolist[i]->name<<" : std_logic_vector("<<saolist[i]->size-1<<" downto 0);"<<endl;
+	
+	// Architecture
+	o << "begin" << endl;
+	for (i=0; i<implementation->saolist.size(); i++) {
+		ShiftAddOp *p = implementation->saolist[i];
+		o<<tab<<"-- " << *p <<endl;
+
+		switch(p->op) {
+		case X: 
+			cerr << "ERROR unexpected ShiftAddOp(X) in output_vhdl()"; exit(EXIT_FAILURE);
+			break;
+
+		case Add:
+			if(p->s==0) {
+				o << tab << p->name << " <= " ;
+				// The i part
+				if(p->size>p->i->size+1) // need to sign-extend x
+					o <<"( (" << p->size-1 << " downto " << p->i->size <<" => '" << (p->i->n >= 0 ? "0" : "1" ) << "') & " << p->i->name << ")";
+				else 
+					o << p->i->name;
+				o<<" + " ;
+				// the y part
+				if(p->size>p->j->size+1) // need to sign-extend y
+					o << "( (" << p->size-1 <<" downto " << p->j->size <<" => '" << (p->j->n >= 0 ? "0" : "1" ) << "') & " << p->j->name << ") ;";
+				else 
+					o << p->j->name << ";";
+			}
+
+			else { // Add with actual shift
+				if(p->s >= p->j->size) { // Simpler case when the two words to add are disjoint; size=p->i->size+s+1
+					//                   xxxxx
+					//                           yyyyy
+					// The lower bits of the sum are those of y, possibly sign-extended but otherwise untouched
+					o << tab << p->name << "("<< p->s - 1 <<" downto 0) <= "
+						<< "(" <<  p->s-1 <<" downto " << p->j->size <<" => " << p->j->name << "(" << p->j->size-1 << ")) & "    // sign extend y
+					<< p->j->name << ";   -- lower bits untouched"<<endl;
+					// The higher bits (size-1 downto s) of the result are those of x, possibly plus 11...1 if y was negative
+					o << tab << p->name << "("<<p->size-1<<" downto "<< p->s<<") <= " << p->i->name ;
+					if(p->j->n < 0) 
+						o<<" + (" << p->size-1 <<" downto " <<  p->s <<" => " << p->j->name << "(" << p->j->size-1 << ")) ";
+					o<< ";   -- sum of higher bits"<<endl;     
+				}
+				else{ // p->j->size>s.        Cases:      xxxxx              xxxxxx
+					//                                yyyyyyyyyy             yyyyyyyyyyyy
+					// so we may need to sign-extend Vx, or Vy, or even both.
+					// In both cases the lower bits of the result (s-1 downto 0) are untouched
+					o << tab << p->name << "("<<p->s-1<<" downto 0) <= " << p->j->name <<"("<< p->s-1<<" downto 0);   -- lower bits untouched"<<endl;
+					// The higher bits of the result are sum/diff
+					o << tab << p->name << "("<<p->size-1<<" downto " <<  p->s << ") <= "; // vz (size-1 downto s) <=
+					// The x part
+					o <<"(";
+					if(p->size >= p->i->size +  p->s +1) {// need to sign-extend vx. If the constant is positive padding with 0s is enough
+						o <<" (" << p->size-1 << " downto " << p->i->size +  p->s <<" => ";
+						if(p->i->n >= 0) // pad with 0s 
+							o<< "'0'";
+						else // sign extend
+							o<< p->i->name << "(" << p->i->size-1 << ")";
+						o << ") & ";
+					}
+					o << p->i->name << "("<< p->i->size -1 <<" downto 0)";
+					o << ")   +   (" ;
+					// the y part
+					if(p->size>=p->j->size+1) {// need to sign-extend vy. If the constant is positive padding with 0s is enough
+						o<<" (" << p->size-1 << " downto " << p->j->size <<" => ";
+						if(p->j->n >= 0) // pad with 0s 
+							o<< "'0'";
+						else // sign extend
+							o << p->j->name << "(" << p->j->size-1 << ")";
+						o << ") & ";
+					}
+					o << p->j->name << "("<< p->j->size -1 <<" downto " <<  p->s << ") ); " <<endl;
+				}
+			}
+		
+		break;
+
+		case Shift:
+		case Neg:
+			o << tab << p->name << " <= " ;
+			if(p->op == Neg)   
+				o << "("<< p->size -1 <<" downto 0 => '0') - " ; 
+			if (p->s == 0) 
+				o << p->i->name <<";"<<endl; 
+			else
+				o  << p->i->name <<" & ("<< p->s - 1 <<" downto 0 => '0');"<<endl; 
+			break;
+		}     
+	}
+	// Sometimes the size of the result variable is one bit more than r.
+	o << tab << "r <= " << implementation->result->name << "("<< rsize-1 <<" downto 0);"<<endl;
 	o << "end architecture;" << endl << endl;
 		
 }

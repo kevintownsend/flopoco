@@ -6,6 +6,7 @@
 #include <mpfr.h>
 #include <gmpxx.h>
 #include "ShiftAddOp.hpp"
+#include "../Operator.hpp"
 
 class IntConstMult;
 class ShiftAddOp;
@@ -25,15 +26,14 @@ public:
 		delete PX;
 		/* TODO with an iterator for (int i=0; i<sao.size; i++) delete sao[i];*/};
 	
-	// This method looks up in the current Dag if the requireed op
+	// This method looks up in the current Dag if the required op
 	// exists, and either returns a pointer to it, or creates the
 	// corresponding node.
 	ShiftAddOp* provideShiftAddOp(OpType op, ShiftAddOp* i, int s, ShiftAddOp* j=NULL);
 
 	mpz_class computeConstant(OpType op, ShiftAddOp* i, int s, ShiftAddOp* j);
- 
-	
-	void output_vhdl(std::ostream& o);
+
+
 	ShiftAddOp* result; 
 
 };

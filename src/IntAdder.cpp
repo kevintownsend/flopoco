@@ -72,13 +72,18 @@ IntAdder::IntAdder(Target* target, int wIn) :
 		else{
 			set_pipeline_depth(pipe_levels); 
 			//  if(c2_pipe_levels) c2_chunk_size=sizeSummand;
-			cout << tab <<"Estimated delay will be " << target->adder_delay(wIn) <<endl; 
-			cout << tab << "chunk="<<chunk_size << " freq=" << 1e-6/target->adder_delay(chunk_size) <<"  levels="<<pipe_levels <<endl;
+			if(verbose) {
+				cout << tab <<"Estimated delay will be " << target->adder_delay(wIn) <<endl; 
+				cout << tab << "chunk="<<chunk_size << " freq=" << 1e-6/target->adder_delay(chunk_size) <<"  levels="<<pipe_levels <<endl;
+			}
 			if(chunk_size > (wIn/pipe_levels)+2)
 				chunk_size = (wIn/pipe_levels)+2;
-			cout << tab << "after chunk balancing, chunk=="<<chunk_size << " freq=" << 1e-6/target->adder_delay(chunk_size) <<"  levels="<<pipe_levels <<endl;
+			if(verbose)
+				cout << tab << "after chunk balancing, chunk=="<<chunk_size << " freq=" << 1e-6/target->adder_delay(chunk_size) <<"  levels="<<pipe_levels <<endl;
 			last_chunk_size = wIn - (pipe_levels)*chunk_size;
-			cout << tab << "last chunk=="<<last_chunk_size <<endl;
+			if(verbose)
+				cout << tab << "last chunk=="<<last_chunk_size <<endl;
+
 			for(int i=0; i<=pipe_levels; i++){
 				if (!((i==pipe_levels)&&	(last_chunk_size==0)))
 				{

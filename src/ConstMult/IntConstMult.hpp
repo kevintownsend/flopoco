@@ -27,21 +27,22 @@ public:
 
 	ShiftAddDag* implementation;
 
-	void recodeBooth();
-	void printBoothCode();
-
-	//  int computeLUTCost(ShiftAddDag);
-	void buildMultBooth();
-	void buildMultBoothTree();
-	void showShiftAddDag();
-
-	void optimizeLefevre(const vector<mpz_class>& constants);
 
 	// Overloading the virtual functions of Operator
 	void output_vhdl(std::ostream& o, std::string name);
 
 	virtual TestCaseList generateStandardTestCases(int n);
 	virtual TestCaseList generateRandomTestCases(int n);
+
+private:
+	int compute_pipeline_depth(ShiftAddOp* sao);
+	void recodeBooth();
+	void printBoothCode();
+	void buildMultBooth();
+	void buildMultBoothTree();
+	void showShiftAddDag();
+	void optimizeLefevre(const vector<mpz_class>& constants);
+
 };
 
 #endif

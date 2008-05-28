@@ -95,7 +95,7 @@ CRFPConstMult::CRFPConstMult(Target* target, int wE_in, int wF_in, int wE_out, i
 		cout << "  mpfr_cst_sig  = " << mpfr_get_d(mpfr_cst_sig, GMP_RNDN) <<endl;
 	}
 
-	// Build the corresponding FPConstMult -- its name will be ugly.
+	// Build the corresponding FPConstMult.
 
 	
 	// initialize mpfr_xcut_sig = 2/cst_sig, will be between 1 and 2
@@ -136,6 +136,13 @@ CRFPConstMult::CRFPConstMult(Target* target, int wE_in, int wF_in, int wE_out, i
 	oplist.push_back(icm);
 
 
+
+	// build the name
+	ostringstream name; 
+	name <<"FPConstMult_"<<(cst_sgn==0?"":"M") <<cst_sig<<"b"
+		  <<(cst_exp_when_mantissa_int<0?"M":"")<<abs(cst_exp_when_mantissa_int)
+		  <<"_"<<wE_in<<"_"<<wF_in<<"_"<<wE_out<<"_"<<wF_out;
+	unique_name=name.str();
 
 	// Set up the IO signals
 	add_FP_input("X", wE_in, wF_in);
