@@ -77,8 +77,8 @@ FPMultiplier::FPMultiplier(Target* target, int wEX, int wFX, int wEY, int wFY, i
 	/* Set up the IO signals */
 	/* Inputs: 2b(Exception) + 1b(Sign) + wEX bits (Exponent) + wFX bits(Fraction) */
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	add_input ("X", wEX + wFX + 3);
-	add_input ("Y", wEY + wFY + 3);
+	add_FP_input ("X", wEX, wFX);
+	add_FP_input ("Y", wEY, wFY);
 	add_output ("ResultExponent"   , wER    );  
 	add_output ("ResultSignificand", wFR + 1);
 	add_output ("ResultException"  , 2      );
@@ -978,5 +978,42 @@ TestCaseList FPMultiplier::generateRandomTestCases(int n)
 	}
 
 	return tcl;
+}
+
+TestIOMap FPMultiplier::getTestIOMap()
+{
+	TestIOMap tim;
+	tim.add(*get_signal_by_name("X"));
+	tim.add(*get_signal_by_name("Y"));
+	tim.add(*get_signal_by_name("ResultException"));
+	tim.add(*get_signal_by_name("ResultSign"));
+	tim.add(*get_signal_by_name("ResultExponent"));
+	tim.add(*get_signal_by_name("ResultSignificand"));
+	return tim;
+}
+
+void FPMultiplier::fillTestCase(mpz_class a[])
+{
+	/* Get I/Os */
+	mpz_class &svx = a[0];
+	mpz_class &svy = a[1];
+	mpz_class &svexc = a[2];
+	mpz_class &svsgn = a[3];
+	mpz_class &svexp = a[4];
+	mpz_class &svfra = a[5];
+
+	/* Compute result */
+	FloFP x(wEX, wFX), y(wEY, wFY), r(wER, wFR, normalized);
+	x = svx; y = svy;
+	r = x * y;
+
+	svexc = r.getExceptionSignalValue();
+	svsgn = r.getSignSignalValue();
+	// Exponent and fraction are not defined for zero, inf or NaN
+	if (r.getExceptionSignalValue() == 1)
+	{
+		svexp = r.getExponentSignalValue();
+		svfra = r.getFractionSignalValue();
+	}
 }
 

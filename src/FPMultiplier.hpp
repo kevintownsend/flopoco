@@ -45,6 +45,8 @@ public:
 	TestCaseList generateStandardTestCases(int n);
 	/** overloaded method */
 	TestCaseList generateRandomTestCases(int n);
+	TestIOMap getTestIOMap();
+	void fillTestCase(mpz_class a[]);
 
 private:
 	/** The integer multiplier object */

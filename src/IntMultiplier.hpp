@@ -37,6 +37,9 @@ public:
 	/** Overloaded method */ 
 	virtual TestCaseList generateRandomTestCases(int n); 
 
+	TestIOMap getTestIOMap();
+	void fillTestCase(mpz_class a[]);
+
 private:
     //Specific IntMultiplier methods
 	void pad_inputs(std::ostream& o);

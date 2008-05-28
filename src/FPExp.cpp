@@ -425,3 +425,25 @@ TestCaseList FPExp::generateRandomTestCases(int n)
 	return tcl;
 }
 
+TestIOMap FPExp::getTestIOMap()
+{
+	TestIOMap tim;
+	tim.add(*get_signal_by_name("x"));
+	tim.add(*get_signal_by_name("r"), 2);
+	return tim;
+}
+
+void FPExp::fillTestCase(mpz_class a[])
+{
+	mpz_class& svX  = a[0];
+	mpz_class& svRD = a[1];
+	mpz_class& svRU = a[2];
+
+	FloFP fpX(wE, wF), fpR(wE, wF);
+	fpX = svX;
+	fpR = fpX.exp();
+
+	svRD = fpR.getRoundedDownSignalValue();
+	svRU = fpR.getRoundedUpSignalValue();
+}
+

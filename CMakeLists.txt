@@ -3,6 +3,7 @@ MESSAGE("Trying to build FloPoCo on " ${CMAKE_SYSTEM_NAME} ", compiler is "${CMA
 
 INCLUDE(CPack)
 
+# Uncomment for profiling
 #SET(CMAKE_CXX_FLAGS_DEBUG "-g -pg")
 SET(CMAKE_BUILD_TYPE debug)
 
@@ -87,6 +88,7 @@ ADD_EXECUTABLE(flopoco
  src/ConstMult/FPConstMult 
  src/ConstMult/CRFPConstMult 
  src/TestCase
+ src/TestIOMap
  src/FloFP
  src/fpexp/math_lib.cpp
  src/fpexp/signal.cpp

@@ -19,16 +19,17 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
 */
 
+#include <stdio.h>
 #include <iostream>
 #include <sstream>
 #include <fstream>
 #include <vector>
-#include <gmp.h>
-#include <mpfr.h>
 #include <gmpxx.h>
-#include "utils.hpp"
 #include "Operator.hpp"
+#include "TestIOMap.hpp"
 #include "BigTestBench.hpp"
+
+mpz_class getLargeRandom(int w);
 
 /** Rounds a number to the next multiple of 4 */
 int inline round4(int x)
@@ -112,18 +113,11 @@ inline std::string s2g(const Signal& s, int var = -1)
 }
 
 void BigTestBench::output_vhdl(ostream& o, string name) {
-	/* Generate some TestCases
-	 * We do this as early as possible, so that no VHDL is generated
-	 * if test cases are not implemented for the given operator
-	 */
 	cerr << "Generating BIG test bench ... ";
 
-	TestCaseList tclStd = op->generateStandardTestCases(1) +
-		op->generateRandomTestCases(1000);
-
-	/* Get the number of possible output values */
-	TestCaseList::Inputs&  inputs  = tclStd.getInputMap();
-	TestCaseList::Outputs& outputs = tclStd.getOutputMap();
+	/* Get IO Map */
+	TestIOMap::TestIOMapContainer tim = op->getTestIOMap().get();
+	typedef TestIOMap::TestIOMapContainer::iterator TIMit;
 
 	Licence(o,"Cristian KLEIN (2008)");
 	o << "library ieee;" <<endl;
@@ -143,6 +137,17 @@ void BigTestBench::output_vhdl(ostream& o, string name) {
 
 	o << tab << "file fTest : text open read_mode is \""
 		<< op->unique_name << ".test\";" <<endl;
+	
+	o << endl <<
+		tab << "-- FP compare function (found vs. real)\n" <<
+		tab << "function fp_equal(a : std_logic_vector; b : std_logic_vector) return boolean is\n" <<
+		tab << "begin\n" <<
+		tab << tab << "if b(b'high downto b'high-1) = \"01\" then\n" <<
+		tab << tab << tab << "return a = b;\n" <<
+		tab << tab << "else\n" <<
+		tab << tab << tab << "return a(a'high downto a'high-2) = b(b'high downto b'high-2);\n" <<
+		tab << tab << "end if;\n" <<
+		tab << "end;\n";
 
 	o << "begin\n";
 
@@ -180,19 +185,11 @@ void BigTestBench::output_vhdl(ostream& o, string name) {
 	o << tab << "process" <<endl;
 	o << tab << tab << "variable buf : line;" <<endl;
 
-	for (TestCaseList::Inputs::iterator it = inputs.begin(); it != inputs.end(); it++)
-	{
-		const Signal& s = it->first;
-		o << tab << tab << "variable v_" << s.id() << ": std_ulogic"; 
-		if (s.width() > 1)
-			o << "_vector(" << round4(s.width())-1 << " downto 0)";
-		o << ";" << endl;
-	}
-
-	for (TestCaseList::Outputs::iterator it = outputs.begin(); it != outputs.end(); it++)
+	for (TIMit it = tim.begin(); it != tim.end(); it++)
 	{
 		const Signal& s = it->first;
 		int maxValNum = it->second;
+
 		for (int i = 0; i < maxValNum; i++)
 		{
 			o << tab << tab << "variable " << s2v(s,i) << ": std_ulogic"; 
@@ -211,46 +208,68 @@ void BigTestBench::output_vhdl(ostream& o, string name) {
 	o << tab << tab << "while not (endfile(fTest)) loop" <<endl;
 	o << tab << tab << tab << "-- wait for clk" << endl;
 	o << tab << tab << tab << "wait until falling_edge(clk);" << endl;
-	o << tab << tab << tab << "-- read inputs" << endl;
-	for (TestCaseList::Inputs::iterator it = inputs.begin(); it != inputs.end(); it++)
+	o << tab << tab << tab << "-- read everything from file" << endl;
+	for (TIMit it = tim.begin(); it != tim.end(); it++)
 	{
 		const Signal& s = it->first;
-		o << tab << tab << tab << "readline(fTest,buf); ";
-		if (s.width() == 1)
-			o << "read(buf," << s2v(s) << "); " << s.id() << " <= " << s2v(s) << ";" <<endl; 
-		else
-			o << "hread(buf," << s2v(s) << "); " << s.id() << " <= to_stdlogicvector(" << s2v(s) << "(" << s.width()-1 << " downto 0));" <<endl; 
-	}
-	o << tab << tab << tab << "-- check results" << endl;
-	o << tab << tab << tab << "wait for 1 ns;" <<endl;
-	for (TestCaseList::Outputs::iterator it = outputs.begin(); it != outputs.end(); it++)
-	{
-		const Signal& s = it->first;
-		int maxValNum = it->second;
+		int numMaxValues = it->second;
 
-		for (int i = 0; i < maxValNum; i++)
+		for (int i = 0; i < numMaxValues; i++)
 		{
-			o << tab << tab << tab
-				<< "readline(fTest,buf); ";
+			o << tab << tab << tab << "readline(fTest,buf); ";
 			if (s.width() == 1)
-				o << "read";
+				o << "read(buf," << s2v(s,i) << "," << s2g(s,i) << ");\n";
 			else
-				o << "hread";
-			o << "(buf," << s2v(s,i) << "," << s2g(s,i) << ");\n";
+				o << "hread(buf," << s2v(s,i) << "," << s2g(s,i) << ");\n"; 
 		}
+	}
+	
+	o << tab << tab << tab << "-- assign inputs" << endl;
+	for (TIMit it = tim.begin(); it != tim.end(); it++)
+	{
+		const Signal& s = it->first;
+		int numMaxValues = it->second;
+		if (s.type() != Signal::in) continue;
 
-		o << tab << tab << tab << "assert not " << s2g(s,0) << "\n";
-		for (int i = 0; i < maxValNum; i++)
-		{	
-			o << tab << tab << tab << tab << "or "
-				<< "(" << s2g(s,i) << " and " << s.id() << "=";
+		/* XXX: useless, but uniform */
+		for (int i = 0; i < numMaxValues; i++)
+		{
+			o << tab << tab << tab;
 			if (s.width() == 1)
-				o << s2v(s,i);
-			else 
-				o << "to_stdlogicvector(" << s2v(s,i) << "(" << s.width()-1 << " downto 0))";
-			o << ")" << endl;
+				o << s.id() << " <= " << s2v(s,i) << "; ";
+			else
+				o << s.id() << " <= to_stdlogicvector(" << s2v(s,i) << "(" << s.width()-1 << " downto 0)); "; 
+			o << "assert " << s2g(s,i) << " report \"Invalid input for " << s.id() << "\" severity failure;\n";
 		}
-		o << tab << tab << tab << tab << "report \"Incorrect value for " << s.id() << "\" severity error;\n";
+	}
+
+	o << tab << tab << tab << "-- wait a bit\n";
+	o << tab << tab << tab << "wait for 1 ns;\n";
+ 	o << tab << tab << tab << "-- check outputs" << endl;
+	for (TIMit it = tim.begin(); it != tim.end(); it++)
+	{
+		const Signal& s = it->first;
+		int numMaxValues = it->second;
+		if (s.type() != Signal::out) continue;
+
+		o << tab << tab << tab << "assert (not " << s2g(s,0) << ") -- we don't care at all about this signal or\n";
+		for (int i = 0; i < numMaxValues; i++)
+		{
+			o << tab << tab << tab << tab << "or (" << s2g(s,i) << " and "; 
+			if (s.isFP())
+			{
+				o << "fp_equal(" << s.id() << ", to_stdlogicvector(" << s2v(s,i) << "(" << s.width()-1 << " downto 0)))";
+			}
+			else
+			{
+				if (s.width() == 1)
+					o << s.id() << " = " << s2v(s,i);
+				else
+					o << s.id() << " = to_stdlogicvector(" << s2v(s,i) << "(" << s.width()-1 << " downto 0))"; 
+			}
+			o << ")\n";
+		}
+		o << tab << tab << tab << tab << "report \"Incorrect value for " << s.id() << "\";\n";
 	}
  
 	o << tab << tab << "end loop;" <<endl;
@@ -259,51 +278,132 @@ void BigTestBench::output_vhdl(ostream& o, string name) {
 	o << "end architecture;" <<endl;
 
 	/* Generate the test file */
-	TestCaseList tclIn, tclOut;
-	ofstream f;
-	f.open((op->unique_name + ".test").c_str(), ios::out);
-	tclOut = op->generateRandomTestCases(10000);
-	for (int i = 0; i < n; i++)
+	FILE *f = fopen((op->unique_name + ".test").c_str(), "w");
+
+	/* Get number of TestCase I/O values */
+	int size = 0;
+	for (TIMit it = tim.begin(); it != tim.end(); it++)
+		size += it->second;
+
+	/* WARNING: Highly optimized (i.e. hard to read, hard to not make mistakes)
+	 * code ahead */
+
+	/* Allocate buffer which store I/O values metadata */
+	bool *a_isIn = new bool[size];
+	bool *a_isFP = new bool[size];
+	int *a_w = new int[size];
+	
+	/* Get the metadata */
+	size = 0;
+	int max_bits = 0;
+	for (TIMit it = tim.begin(); it != tim.end(); it++)
 	{
-		/* Generate a new test case list, if we depleted the one before */
-		if (i % 10000 == 0)
-		{
-			tclIn = op->generateRandomTestCases(10000);
-			cerr << ".";
-		}
-		//if ((i - op->pipeline_depth()) % 10000 == 0)
-			//tclOut = tclIn;
-		
-		/* Input vector */
-		TestCase tc = tclIn.getTestCase(i % 10000);
-		for (TestCaseList::Inputs::iterator it = inputs.begin(); it != inputs.end(); it++)
-		{
-			const Signal& s = it->first;
-			f << tc.signalValueToVHDLHex(s, tc.getInput(s), false) << endl;
-		}
+		const Signal& s = it->first;
+		int maxNumValues = it->second;
 
-		/* Output vector */
-		if (i >= op->pipeline_depth())
-			tc = tclOut.getTestCase((i - op->pipeline_depth()) % 10000);
-		for (TestCaseList::Outputs::iterator it = outputs.begin(); it != outputs.end(); it++)
+		for (int j = 0; j < maxNumValues; j++)
 		{
-			const Signal& s = it->first;
-			int maxValNum = it->second;
-
-			for (int k = 0; k < maxValNum; k++)
-			{
-				try {
-					if (i < op->pipeline_depth()) throw 0;
-					f << tc.signalValueToVHDLHex(s, tc.getExpectedOutput(s, k), false) << endl;
-				} catch (int) {
-					f << "(pipeline fill)" << endl;
-				} catch (std::string) {
-					f << "N/A" << endl;
-				}
-			}
+			a_isIn[size] = (s.type() == Signal::in);
+			a_isFP[size] = s.isFP();
+			a_w   [size] = s.width();
+			max_bits = max(max_bits, a_w[size]);
+			size++;
 		}
 	}
-	f.close();
+
+	/* Buffer for zero-copy padding output values
+	 * size is max_bits * 2 * 2 + 1 + 1
+	 *              |     |   |   |   +-- end-of string zero
+	 *              |     |   |   +------ newline
+	 *              |     |   +---------- number of characters per bytes
+	 *              |     |               (two because of hex representation)
+	 *              |     +-------------- once for number, once for possible padding
+	 *              +-------------------- maximum number of bits in inputs and outputs
+	 */
+	char *buf = new char[4*max_bits+2];
+	/* Pre-fill the left half, used only for padding */
+	memset(buf, '0', 2*max_bits);
+
+	/* TestVector list w/ pipeline
+	 * implemented as a circular buffer
+	 * new value go to head */
+	int head = 0;
+	int depth = op->pipeline_depth();
+
+	mpz_class** a;
+	a = new mpz_class*[depth+2];
+	for (int i = 0; i < depth + 1; i++) {
+		a[i] = new mpz_class[size];
+		for (int j = 0; j < size; j++)
+			a[i][j] = -1;
+	}
+	a[depth+1] = a[0];
+
+	/* Output test I/O values */
+	for (int i = 0; i < n; i++)
+	{
+		/* Fill inputs, erase outputs */
+		for (int j = 0; j < size; j++)
+		{
+			if (a_isIn[j])
+			{
+				if (a_isFP[j])
+					a[head][j] = (mpz_class(1) << (a_w[j]-2)) + getLargeRandom(a_w[j]-2);
+				else
+					a[head][j] = getLargeRandom(a_w[j]);
+			}
+			else
+				a[head][j] = -1;
+		}
+
+		/* Get correct outputs */
+		op->fillTestCase(a[head]);
+
+		/* Write it to the file */
+		for (int j = 0; j < size; j++)
+		{
+			/* Load the value as the current input
+			 * or the output delayed by the pipeline depth */
+			mpz_class& z = a_isIn[j] ? a[head][j] : a[head+1][j];
+
+			/* Should this value be outputed */
+			if (z < 0)
+			{
+				fwrite("N/A\n", 4, 1, f);
+				continue;
+			}
+
+			/* Output the hex number from the middle of the buffer */
+			char *p = &buf[2*max_bits];
+			/* Get hex number and size*/
+			mpz_get_str(p, 16, z.get_mpz_t());
+			int l = strlen(p);
+			/* Compute number of zeros to pad and
+			 * adjust pointer and length */
+			int toadd = (a_w[j]-1)/4+1-l;
+			p -= toadd; l += toadd;
+			/* Add newline */
+			p[l] = '\n'; p[l+1] = 0; l++;
+			/* Write to file */
+			fwrite(p, l, 1, f);
+		}
+
+		/* Advance pipeline circular buffer */
+		head++;
+		if (head == depth + 1)
+			head = 0;
+	}
+	
+	/* Cleanup */
+	delete buf;
+	delete a_isIn;
+	delete a_isFP;
+	delete a_w;
+	for (int i = 0; i < depth + 1; i++)
+		delete[] a[i];
+	delete a;
+	fclose(f);
+
 	cerr << endl << endl;
 
 	cerr << "To run the simulation, type the following in 'rlwrap vsim -c':" <<endl;

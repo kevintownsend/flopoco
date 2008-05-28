@@ -47,11 +47,11 @@ public:
 	}
 		
 	int width() const{return _width;}
-	int wE(){return(_wE);}
-	int wF(){return(_wF);}
-	bool isFP(){return _isFP;}
-	bool isBus(){return _isBus;}
-	type_t type() {return _type;}
+	int wE() const {return(_wE);}
+	int wF() const {return(_wF);}
+	bool isFP() const {return _isFP;}
+	bool isBus() const {return _isBus;}
+	type_t type() const {return _type;}
 		
 	std::string toVHDL() {
 		std::ostringstream o; 

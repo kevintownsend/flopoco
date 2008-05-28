@@ -26,6 +26,8 @@ public:
 
 	TestCaseList generateStandardTestCases(int n);
 	TestCaseList generateRandomTestCases(int n);
+	TestIOMap getTestIOMap();
+	void fillTestCase(mpz_class a[]);
 
 private:
 	HOTBMInstance *inst;

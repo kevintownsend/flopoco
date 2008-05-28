@@ -7,6 +7,7 @@
 #include "Target.hpp"
 #include "Signal.hpp"
 #include "TestCase.hpp"
+#include "TestIOMap.hpp"
 
 using namespace std;
 
@@ -165,7 +166,23 @@ public:
 	virtual TestCaseList generateRandomTestCases(int n = 100) {
 		throw std::string("Random test cases not implemented for this operator.");
 	}
-	
+
+	/**
+	 * Gets the signals which are interesting for TestCases.
+	 * @see TestIOMap
+	 */
+	virtual TestIOMap getTestIOMap() {
+		throw std::string("getTestIOMap: not implemented for ") + unique_name;
+	}
+
+	/**
+	 * Gets the correct value associated to one or more inputs.
+	 * @param a the array which contains both already filled inputs and
+	 *          to be filled outputs in the order specified in getTestIOMap.
+	 */
+	virtual void fillTestCase(mpz_class a[]) {
+		throw std::string("fillTestCorrectValues: not implemented for ") + unique_name;
+	}
 	
 	/**Final report function, prints to the terminal.  By default
 		 reports the pipeline depth, but feel free to overload if you have

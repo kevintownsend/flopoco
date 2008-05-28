@@ -113,7 +113,11 @@ std::string TestCase::getExpectedOutputVHDL(std::string prepend)
 		for (std::vector<mpz_class>::iterator it = vs.begin(); it != vs.end(); it++)
 		{
 			mpz_class v = *it;
-			o << " or " << s.id() << "=" << signalValueToVHDL(s,v);
+			o << " or ";
+			if (s.isFP())
+				o << "fp_equal(" << s.id() << "," << signalValueToVHDL(s,v) << ")";
+			else
+				o << s.id() << "=" << signalValueToVHDL(s,v);
 			expected += " " + signalValueToVHDL(s,v,false);
 		}
 

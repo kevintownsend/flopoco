@@ -760,3 +760,22 @@ TestCaseList IntMultiplier::generateStandardTestCases(int n)
 	// TODO
 	return TestCaseList();
 }
+
+TestIOMap IntMultiplier::getTestIOMap()
+{
+	TestIOMap tim;
+	tim.add(*get_signal_by_name("X"));
+	tim.add(*get_signal_by_name("Y"));
+	tim.add(*get_signal_by_name("R"));
+	return tim;
+}
+
+void IntMultiplier::fillTestCase(mpz_class a[])
+{
+	mpz_class &x = a[0];
+	mpz_class &y = a[1];
+	mpz_class &r = a[2];
+
+	r = x * y;
+}
+

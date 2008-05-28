@@ -296,18 +296,15 @@ int intlog2(mpz_class number)
 
 mpz_class getLargeRandom(int n)
 {
-	mpz_class o;
-	while (n)
+	static gmp_randstate_t state;
+	static bool init = false;
+	if (init == false)
 	{
-		/* Get a random number */
-		long int r = random();
-		/* Compute how many bit we need from it */
-		int w = min(n, 16);
-		/* Add new random bits to our big random number */
-		o = (o<<w) + (r % (2<<(w-1)));
-		/* Update the number of bits we still need to generate */
-		n -= w;
+		init = true;
+		gmp_randinit_default(state);
 	}
+	mpz_class o;
+	mpz_urandomb(o.get_mpz_t(), state, n);
 	return o;
 }
 
