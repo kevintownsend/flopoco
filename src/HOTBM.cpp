@@ -48,59 +48,6 @@ void HOTBM::output_vhdl(std::ostream& o, std::string name)
 	inst->genVHDL(o, name);
 }
 
-TestCaseList HOTBM::generateStandardTestCases(int n)
-{
-	// TODO
-	return TestCaseList();
-}
-
-TestCaseList HOTBM::generateRandomTestCases(int n)
-{
-	Signal& sx = *get_signal_by_name("x");
-	Signal& sr = *get_signal_by_name("r");
-
-	mpz_class x, r;
-
-	TestCaseList tcl;
-	for (int i = 0; i < n; i++)
-	{
-		int outSign = 0;
-		x = getLargeRandom(sx.width());
-
-		mpfr_t mpX, mpR;
-		mpfr_inits(mpX, mpR, 0);
-
-		/* Convert a random signal to an mpfr_t in [0,1[ */
-		mpfr_set_z(mpX, x.get_mpz_t(), GMP_RNDN);
-		mpfr_div_2si(mpX, mpX, wI, GMP_RNDN);
-
-		/* Compute the function */
-		f.eval(mpR, mpX);
-
-		/* Compute the signal value */
-		if (mpfr_signbit(mpR))
-		{
-			outSign = 1;
-			mpfr_abs(mpR, mpR, GMP_RNDN);
-		}
-		mpfr_mul_2si(mpR, mpR, wO, GMP_RNDN);
-
-		/* NOT A TYPO. HOTBM only guarantees faithful
-		 * rounding, so we will round down here,
-		 * add both the upper and lower neighbor.
-		 */
-		mpfr_get_z(r.get_mpz_t(), mpR, GMP_RNDD);
-
-		TestCase tc;
-		tc.addInput(sx, x);
-		tc.addExpectedOutput(sr, r);
-		tc.addExpectedOutput(sr, r+1);
-		tcl.add(tc);
-	}
-
-	return tcl;
-}
-
 TestIOMap HOTBM::getTestIOMap()
 {
 	TestIOMap tim;

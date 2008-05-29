@@ -88,6 +88,11 @@ FPConstMult::FPConstMult(Target* target, int wE_in, int wF_in, int wE_out, int w
 	// Set up the IO signals
 	add_FP_input("X", wE_in, wF_in);
 	add_FP_output("R", wE_out, wF_out);
+
+	/* Initialize second operand */
+	mpfr_init(mpY);
+	mpfr_set(mpY, mpfr_cst_sig, GMP_RNDN);
+	mpfr_mul_2si(mpY, mpY, cst_exp_when_mantissa_1_2, GMP_RNDN);
 }
 
 
@@ -101,8 +106,9 @@ FPConstMult::FPConstMult(Target* target, int wE_in, int wF_in, int wE_out, int w
 FPConstMult::~FPConstMult() {
 	// TODO but who cares really
 	// delete icm; Better not: it has been added to oplist
-	// mpfr_free(mpfr_xcut_sig);
-	// mpfr_free(mpfr_cst_sig);
+	// mpfr_clear(mpfr_xcut_sig);
+	// mpfr_clear(mpfr_cst_sig);
+	mpfr_clear(mpY);
 }
 
 
@@ -227,43 +233,21 @@ void FPConstMult::output_vhdl(ostream& o, string name) {
 	o << "end architecture;" << endl << endl;		
 }
 
-
-
-TestCaseList FPConstMult::generateRandomTestCases(int n)
+TestIOMap FPConstMult::getTestIOMap()
 {
-	/* Signals */
-	Signal sx = *get_signal_by_name("X");
-	Signal sr = *get_signal_by_name("R");
-
-	TestCaseList tcl;	/* XXX: Just like Lyon's Transporation company. :D */
-	FloFP x(wE_in, wF_in), r(wE_out, wF_out);
-	mpfr_t mpY;
-
-	/* Initialize second operand */
-	mpfr_init(mpY);
-	mpfr_set(mpY, mpfr_cst_sig, GMP_RNDN);
-	mpfr_mul_2si(mpY, mpY, cst_exp_when_mantissa_1_2, GMP_RNDN);
-
-	for (int i = 0; i < n; i++)	
-	{
-		x = getLargeRandom(sx.width()-2) + (mpz_class(1) << (wE_in + wF_in + 1));
-		r = x * mpY;
-
-		TestCase tc;
-		tc.addInput(sx, x.getSignalValue());
-		tc.addExpectedOutput(sr, r.getSignalValue());
-		tcl.add(tc);
-	}
-
-	/* Free second operand */
-	mpfr_clear(mpY);
-
-	return tcl;
+	TestIOMap tim;
+	tim.add(*get_signal_by_name("X"));
+	tim.add(*get_signal_by_name("R"));
+	return tim;
 }
 
-TestCaseList FPConstMult::generateStandardTestCases(int n)
+void FPConstMult::fillTestCase(mpz_class a[])
 {
-	// TODO
-	return TestCaseList();
+	mpz_class& svX = a[0];
+	mpz_class& svR = a[1];
+	FloFP x(wE_in, wF_in), r(wE_out, wF_out);
+	x = svX;
+	r = x * mpY;
+	svR = r.getSignalValue();
 }
 

@@ -938,48 +938,6 @@ int i;
 	}
 }
 
-TestCaseList FPMultiplier::generateStandardTestCases(int n)
-{
-	// TODO
-	return TestCaseList();
-}
-
-TestCaseList FPMultiplier::generateRandomTestCases(int n)
-{
-	Signal& sx = *get_signal_by_name("X");
-	Signal& sy = *get_signal_by_name("Y");
-	Signal& srexp = *get_signal_by_name("ResultExponent");
-	Signal& srfra = *get_signal_by_name("ResultSignificand");
-	Signal& srexc = *get_signal_by_name("ResultException");
-	Signal& srsgn = *get_signal_by_name("ResultSign"); 
-
-	TestCaseList tcl;	/* XXX: Just like Lyon's Transportion Company. :D */
-	FloFP x(wEX, wFX), y(wEY, wFY), r(wER, wFR, normalized);
-
-	for (int i = 0; i < n; i++)
-	{
-		x = getLargeRandom(sx.width()-2) + (mpz_class(1) << (wEX + wFX + 1));
-		y = getLargeRandom(sy.width()-2) + (mpz_class(1) << (wEY + wFY + 1));
-		r = x * y;
-
-		TestCase tc;
-		tc.addInput(sx, x.getSignalValue());
-		tc.addInput(sy, y.getSignalValue());
-		
-		tc.addExpectedOutput(srexc, r.getExceptionSignalValue());
-		tc.addExpectedOutput(srsgn, r.getSignSignalValue());
-		// Exponent and fraction are not defined for zero, inf or NaN
-		if (r.getExceptionSignalValue() == 1)
-		{
-			tc.addExpectedOutput(srexp, r.getExponentSignalValue());
-			tc.addExpectedOutput(srfra, r.getFractionSignalValue());
-		}
-		tcl.add(tc);
-	}
-
-	return tcl;
-}
-
 TestIOMap FPMultiplier::getTestIOMap()
 {
 	TestIOMap tim;

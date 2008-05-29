@@ -41,10 +41,6 @@ public:
 	/** Method which outputs a string of zeros*/
 	string zero_generator(int n, int margins);
 
-	/** overloaded method */
-	TestCaseList generateStandardTestCases(int n);
-	/** overloaded method */
-	TestCaseList generateRandomTestCases(int n);
 	TestIOMap getTestIOMap();
 	void fillTestCase(mpz_class a[]);
 

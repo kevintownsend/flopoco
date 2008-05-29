@@ -634,32 +634,19 @@ void optimizeLefevre(const vector<mpz_class>& constants) {
 
 };
 
-TestCaseList IntConstMult::generateRandomTestCases(int n_)
+TestIOMap IntConstMult::getTestIOMap()
 {
-				/* Signals */
-				Signal sx = *get_signal_by_name("X");
-				Signal sr = *get_signal_by_name("R");
-
-				TestCaseList tcl;	/* XXX: Just like Lyon's Transporation company. :D */
-				mpz_class x, r;
-
-				for (int i = 0; i < n_; i++)	
-				{
-					x = getLargeRandom(sx.width());
-					r = x * n;
-
-					TestCase tc;
-					tc.addInput(sx, x);
-					tc.addExpectedOutput(sr, r);
-					tc.addComment(x.get_str() + " * " + n.get_str() + " = " + r.get_str());
-					tcl.add(tc);
-				}
-
-				return tcl;
+	TestIOMap tim;
+	tim.add(*get_signal_by_name("X"));
+	tim.add(*get_signal_by_name("R"));
+	return tim;
 }
 
-TestCaseList IntConstMult::generateStandardTestCases(int n_)
+void IntConstMult::fillTestCase(mpz_class a[])
 {
-				// TODO
-				return TestCaseList();
+	mpz_class& svX = a[0];
+	mpz_class& svR = a[1];
+
+	svR = svX * n;
 }
+

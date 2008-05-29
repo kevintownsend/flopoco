@@ -32,11 +32,6 @@ public:
 	/** A method which generates strings of zeros */ 
 	string zero_generator(int n, int margins); 
 	
-	/** Overloaded method */
-	virtual TestCaseList generateStandardTestCases(int n);
-	/** Overloaded method */ 
-	virtual TestCaseList generateRandomTestCases(int n); 
-
 	TestIOMap getTestIOMap();
 	void fillTestCase(mpz_class a[]);
 

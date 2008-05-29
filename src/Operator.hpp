@@ -147,27 +147,6 @@ public:
 	//
 
 	/**
-	 * Generates standard test cases. Standard test cases are the
-	 * ones that covers special cases and uniformly distribuited values.
-	 * @param n How many test cases to generate
-	 * @return A TestCases instance with the above requested TestCase-es.
-	 */
-	virtual TestCaseList generateStandardTestCases(int n = 100) {
-		throw std::string("Standard test cases not implemented for this operator.");
-	}
-
-	/**
-	 * Generates random test cases. A random test case is
-	 * one that attempts to discover design faults by including
-	 * many not-designer-related cases.
-	 * @param n How many test cases to generate
-	 * @return A TestCases instance with the above requested TestCase-es.
-	 */
-	virtual TestCaseList generateRandomTestCases(int n = 100) {
-		throw std::string("Random test cases not implemented for this operator.");
-	}
-
-	/**
 	 * Gets the signals which are interesting for TestCases.
 	 * @see TestIOMap
 	 */

@@ -34,7 +34,6 @@
 #include <gmpxx.h>
 #include "utils.hpp"
 #include "Operator.hpp"
-
 #include "IntAdder.hpp"
 
 using namespace std;
@@ -221,40 +220,25 @@ void IntAdder::output_vhdl(std::ostream& o, std::string name) {
 	o << "end architecture;" << endl << endl;
 }
 
-TestCaseList IntAdder::generateStandardTestCases(int n)
+TestIOMap IntAdder::getTestIOMap()
 {
-	// TODO
-	return TestCaseList();
+	TestIOMap tim;
+	tim.add(*get_signal_by_name("X"));
+	tim.add(*get_signal_by_name("Y"));
+	tim.add(*get_signal_by_name("Cin"));
+	tim.add(*get_signal_by_name("R"));
+	return tim;
 }
 
-TestCaseList IntAdder::generateRandomTestCases(int n)
+void IntAdder::fillTestCase(mpz_class a[])
 {
-	Signal sx = *get_signal_by_name("X");
-	Signal sy = *get_signal_by_name("Y");
-	Signal sc = *get_signal_by_name("Cin");
-	Signal sr = *get_signal_by_name("R");
+	mpz_class& svX = a[0];
+	mpz_class& svY = a[1];
+	mpz_class& svC = a[2];
+	mpz_class& svR = a[3];
 
-	TestCaseList tcl;	/* XXX: Just like Lyon's Transportion Company. :D */
-	mpz_class x, y, temp, c, r;
-
-	for (int i = 0; i < n; i++)
-	{
-		x = getLargeRandom(sx.width()-1);
-		y = getLargeRandom(sy.width()-1);
-		c = getLargeRandom(sc.width());
-		temp = x + y;
-		r = temp + c;
-
-		TestCase tc;
-		tc.addInput(sx, x);
-		tc.addInput(sy, y);
-		tc.addInput(sc, c);
-		tc.addExpectedOutput(sr, r);
-		tc.addComment(x.get_str() + " + " + y.get_str() + c.get_str() + " = " + r.get_str());
-		tcl.add(tc);
-	}
-
-	return tcl;
+	svR = svX + svY + svC;
+	/* Don't allow overflow */
+	mpz_clrbit(svR.get_mpz_t(),wIn); 
 }
-
 

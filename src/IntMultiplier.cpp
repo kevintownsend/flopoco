@@ -727,40 +727,6 @@ ostringstream the_bits;
 	o<<tab<<"partial_bits <= PartialBits_Reg_"<<pipe_levels<<"_d;"<<endl;
 }
 
-TestCaseList IntMultiplier::generateRandomTestCases(int n)
-{
-	// TODO
-	/* Signals */
-	Signal sx = *get_signal_by_name("X");
-	Signal sy = *get_signal_by_name("Y");
-	Signal sr = *get_signal_by_name("R");
-
-	TestCaseList tcl;	/* XXX: Just like Lyon's Transporation company. :D */
-	mpz_class x, y, r;
-
-	for (int i = 0; i < n; i++)	
-	{
-		x = getLargeRandom(sx.width());
-		y = getLargeRandom(sy.width());
-		r = x * y;
-
-		TestCase tc;
-		tc.addInput(sx, x);
-		tc.addInput(sy, y);
-		tc.addExpectedOutput(sr, r);
-		tc.addComment(x.get_str() + " * " + y.get_str() + " = " + r.get_str());
-		tcl.add(tc);
-	}
-
-	return tcl;
-}
-
-TestCaseList IntMultiplier::generateStandardTestCases(int n)
-{
-	// TODO
-	return TestCaseList();
-}
-
 TestIOMap IntMultiplier::getTestIOMap()
 {
 	TestIOMap tim;

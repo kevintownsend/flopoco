@@ -181,67 +181,28 @@ void LZOC::output_vhdl(std::ostream& o, std::string name) {
 	end_architecture(o);
 }
 
-TestCaseList LZOC::generateStandardTestCases(int n)
+TestIOMap LZOC::getTestIOMap()
 {
-	// TODO
-	return TestCaseList();
+	TestIOMap tim;
+	tim.add(*get_signal_by_name("I"));
+	tim.add(*get_signal_by_name("OZB"));
+	tim.add(*get_signal_by_name("O"));
+	return tim;
 }
 
-TestCaseList LZOC::generateRandomTestCases(int n)
+void LZOC::fillTestCase(mpz_class a[])
 {
-	Signal si   = *get_signal_by_name("I");
-	Signal sozb = *get_signal_by_name("OZB");
-	Signal so   = *get_signal_by_name("O");
+	mpz_class& si   = a[0];
+	mpz_class& sozb = a[1];
+	mpz_class& so   = a[2];
 	
-	TestCaseList tcl;	/* XXX: Just like Lyon's Transportion Company. :D */
-	mpz_class   mi, mozb, mo, k;
-
-	for (int i = 0; i < n; i++)
+	int j;
+	int bit = (sozb == 0) ? 0 : 1;
+	for (j = 0; j < wIn; j++)
 	{
-		mi   = getLargeRandom(si.width());
-		mozb = getLargeRandom(1);
-		mo = 0;
-	
-		if (mozb==0)  
-		{
-			bool ready;
-			ready = false;
-			for(int j=si.width();(ready==false)&&(j>=1);j--)
-			{
-				k = (mpz_class(1) << (j-1));
-				if ((k-mi)>0)
-					mo = mo + 1;
-				else
-					ready = true;	
-			}
-		}else
-		{
-			bool ready;
-			ready=false;
-			int l=1;
-			int v;
-			for(int j=si.width();(ready==false)&&(j>=1);j--)
-			{
-				v=(1<<l)-1;
-				l++;
-				k = (mpz_class(v) << (j-1));
-				if ((mi-k)>=0)
-					mo = mo + 1;
-				else
-					ready = true;	
-			}
-		}
-		
-			
-		TestCase tc;
-		tc.addInput(si,   mi);
-		tc.addInput(sozb, mozb);
-		tc.addExpectedOutput(so, mo);
-
-		tcl.add(tc);
-
+		if (mpz_tstbit(si.get_mpz_t(), wIn - j - 1) != bit)
+			break;
 	}
-
-	return tcl;
+	so = j;
 }
 

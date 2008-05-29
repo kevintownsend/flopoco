@@ -1108,51 +1108,41 @@ int i;
 	}
 }
 
-
-TestCaseList FPAdder::generateStandardTestCases(int n)
+TestIOMap FPAdder::getTestIOMap()
 {
-	// TODO
-	return TestCaseList();
+	TestIOMap tim;
+	tim.add(*get_signal_by_name("X"));
+	tim.add(*get_signal_by_name("Y"));
+	tim.add(*get_signal_by_name("rexc"));
+	tim.add(*get_signal_by_name("rsig"));
+	tim.add(*get_signal_by_name("rexp"));
+	tim.add(*get_signal_by_name("rfrac"));
+	return tim;
 }
 
-TestCaseList FPAdder::generateRandomTestCases(int n)
+void FPAdder::fillTestCase(mpz_class a[])
 {
-	Signal sx = *get_signal_by_name("X");
-	Signal sy = *get_signal_by_name("Y");
-	Signal srexp = *get_signal_by_name("rexp");
-	Signal srfra = *get_signal_by_name("rfrac");
-	Signal srexc = *get_signal_by_name("rexc");
-	Signal srsgn = *get_signal_by_name("rsig"); 
+	/* Get I/O values */
+	mpz_class& svX = a[0];
+	mpz_class& svY = a[1];
+	mpz_class& svExc = a[2];
+	mpz_class& svSig = a[3];
+	mpz_class& svExp = a[4];
+	mpz_class& svFra = a[5];
 
-	TestCaseList tcl;	/* XXX: Just like Lyon's Transportion Company. :D */
+	/* Compute correct value */
 	FloFP x(wEX, wFX), y(wEY, wFY), r(wER, wFR);
-
-	for (int i = 0; i < n; i++)
+	r = x+y;
+	
+	/* Set outputs */
+	/* XXX: This is old-school; TestBenches are able
+	 * to compare whole FP signals */
+	svExc = r.getExceptionSignalValue();
+	svSig = r.getSignSignalValue();
+	if (svExc == 1)
 	{
-		x = getLargeRandom(sx.width()-2) + (mpz_class(1) << (wEX + wFX + 1));
-		y = getLargeRandom(sy.width()-2) + (mpz_class(1) << (wEY + wFY + 1));
-		r = x+y;
-
-		TestCase tc;
-		tc.addInput(sx, x.getSignalValue());
-		tc.addInput(sy, y.getSignalValue());
-		
-		tc.addExpectedOutput(srexc, r.getExceptionSignalValue());
-		if (r.getExceptionSignalValue() != 0)
-		{
-			tc.addExpectedOutput(srsgn, r.getSignSignalValue());
-		}
-		// Exponent and fraction are not defined for zero, inf or NaN
-		if (r.getExceptionSignalValue() == 1)
-		{
-			tc.addExpectedOutput(srexp, r.getExponentSignalValue());
-			tc.addExpectedOutput(srfra, r.getFractionSignalValue());
-		}
-		tcl.add(tc);
+		svExp = r.getExponentSignalValue();
+		svFra = r.getFractionSignalValue();
 	}
-
-	return tcl;
 }
-
-
 

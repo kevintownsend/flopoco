@@ -44,8 +44,8 @@ public:
 	// Overloading the virtual functions of Operator
 	void output_vhdl(std::ostream& o, std::string name);
 
-	virtual TestCaseList generateStandardTestCases(int n);
-	virtual TestCaseList generateRandomTestCases(int n);
+	TestIOMap getTestIOMap();
+	void fillTestCase(mpz_class a[]);
 
 private:
 	int build_pipeline(ShiftAddOp* sao, double& delay);

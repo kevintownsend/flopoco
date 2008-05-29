@@ -132,7 +132,10 @@ void TestBench::output_vhdl(ostream& o, string name) {
 			if (a_isIn[j])
 				tc.addInput(*a_s[j], a[j]);
 			else
-				tc.addExpectedOutput(*a_s[j], a[j]);
+			{
+				if (a[j] >= 0)
+					tc.addExpectedOutput(*a_s[j], a[j]);
+			}
 		}
 		tcl.add(tc);
 	}

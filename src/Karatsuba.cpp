@@ -282,35 +282,20 @@ string Karatsuba::zero_generator(int n, int margins)
 	}
 }
 
-TestCaseList Karatsuba::generateRandomTestCases(int n)
+TestIOMap Karatsuba::getTestIOMap()
 {
-	// TODO
-	/* Signals */
-	Signal sx = *get_signal_by_name("X");
-	Signal sy = *get_signal_by_name("Y");
-	Signal sr = *get_signal_by_name("R");
-
-	TestCaseList tcl;	/* XXX: Just like Lyon's Transporation company. :D */
-	mpz_class x, y, r;
-
-	for (int i = 0; i < n; i++)	
-	{
-		x = getLargeRandom(sx.width());
-		y = getLargeRandom(sy.width());
-		r = x * y;
-
-		TestCase tc;
-		tc.addInput(sx, x);
-		tc.addInput(sy, y);
-		tc.addExpectedOutput(sr, r);
-		tc.addComment(x.get_str() + " * " + y.get_str() + " = " + r.get_str());
-		tcl.add(tc);
-	}
-	return tcl;
+	TestIOMap tim;
+	tim.add(*get_signal_by_name("X"));
+	tim.add(*get_signal_by_name("Y"));
+	tim.add(*get_signal_by_name("R"));
+	return tim;
 }
 
-TestCaseList Karatsuba::generateStandardTestCases(int n)
+void Karatsuba::fillTestCase(mpz_class a[])
 {
-	// TODO
-	return TestCaseList();
+	mpz_class& x = a[0];
+	mpz_class& y = a[1];
+	mpz_class& r = a[2];
+	r = x * y;
 }
+

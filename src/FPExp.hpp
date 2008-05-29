@@ -17,19 +17,10 @@ public:
 	// Overloading the virtual functions of Operator
 	void output_vhdl(std::ostream& o, std::string name);
 
-	TestCaseList generateStandardTestCases(int n);
-	TestCaseList generateRandomTestCases(int n);
 	TestIOMap getTestIOMap();
 	void fillTestCase(mpz_class a[]);
 
 private:
-	/**
-	 * Adds a test case for the FPExp operator.
-	 * @param tcl The TestCaseList to which the TestCase should be added.
-	 * @param x The input value for which the TestCase should be generated.
-	 */
-	void addTestCase(TestCaseList& tcl, FloFP x);
-	
 	int wE, wF;
 	Fragment *f;
 	int result_length, g;

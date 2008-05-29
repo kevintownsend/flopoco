@@ -50,11 +50,9 @@ public:
 
 	// Overloading the virtual functions of Operator
 	void output_vhdl(std::ostream& o, std::string name);
-	
-	/** overloaded method */
-	TestCaseList generateStandardTestCases(int n);
-	/** overloaded method */
-	TestCaseList generateRandomTestCases(int n);
+
+	TestIOMap getTestIOMap();
+	void fillTestCase(mpz_class a[]);
 };
 
 

@@ -34,8 +34,11 @@ public:
 	//  void output_vhdl_component(ostream& o, string name);
 	void output_vhdl(ostream& o, string name);
 
-	virtual TestCaseList generateStandardTestCases(int n);
-	virtual TestCaseList generateRandomTestCases(int n);
+	/* The value of the constant multiplicand */
+	mpfr_t mpY;
+
+	TestIOMap getTestIOMap();
+	void fillTestCase(mpz_class a[]);
 };
 
 
