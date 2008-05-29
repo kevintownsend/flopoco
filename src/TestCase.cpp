@@ -115,7 +115,7 @@ std::string TestCase::getExpectedOutputVHDL(std::string prepend)
 			mpz_class v = *it;
 			o << " or ";
 			if (s.isFP())
-				o << "fp_equal(" << s.id() << "," << signalValueToVHDL(s,v) << ")";
+				o << "fp_equal(" << s.id() << ",fp" << s.width() << "'("<< signalValueToVHDL(s,v) << "))";
 			else
 				o << s.id() << "=" << signalValueToVHDL(s,v);
 			expected += " " + signalValueToVHDL(s,v,false);

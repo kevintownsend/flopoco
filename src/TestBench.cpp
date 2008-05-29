@@ -29,6 +29,7 @@
 #include <iostream>
 #include <sstream>
 #include <vector>
+#include <set>
 #include <gmp.h>
 #include <mpfr.h>
 #include <gmpxx.h>
@@ -162,6 +163,28 @@ void TestBench::output_vhdl(ostream& o, string name) {
 		tab << tab << tab << "return a(a'high downto a'high-2) = b(b'high downto b'high-2);\n" <<
 		tab << tab << "end if;\n" <<
 		tab << "end;\n";
+
+	/* In VHDL, literals may be incorrectly converted to „std_logic_vector(... to ...)” instead
+	 * of „downto”. So, for each FP output width, create a subtype used for casting.
+	 */
+	{
+		std::set<int> widths;
+		for (TIMit it = tim.begin(); it != tim.end(); it++)
+		{
+			const Signal& s = it->first;
+			if (s.type() != Signal::out) continue;
+			if (s.isFP() != true) continue;
+			widths.insert(s.width());
+		}
+
+		if (widths.size() > 0)
+			o << endl << tab << "-- FP subtypes for casting\n";
+		for (std::set<int>::iterator it = widths.begin(); it != widths.end(); it++)
+		{
+			int w = *it;
+			o << tab << "subtype fp" << w << " is std_logic_vector(" << w-1 << " downto 0);\n";
+		}
+	}
 
 	o << "begin\n";
 
