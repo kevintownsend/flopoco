@@ -8,16 +8,6 @@
 
 class ShiftAddDag;
 
-/** The class IntConstMult has two nested classes:
-
- ShiftAddOp defines a shift-and-add operation.
-
- ShiftAddDag deals with the implementation of an IntConstMult as a
-	 vector of ShiftAddOp. It defines the intermediate variables with
-	 their bit sizes and provide methods for evaluating the cost of an
-	 implementation. Hopefully. Some day.
-
-*/
 
 typedef enum {X, Add, Shift, Neg} OpType;
 
@@ -55,6 +45,27 @@ public:
 
 	/** cost in term of full-adders */
 	int cost_in_full_adders;
+
+	// The following attributes are useful to pipeline a ShiftAddDag
+	// Contrary to the previous, which are local, they only make sense
+	// in the context of a ShiftAddDag. They will be set by the IntConstMult
+	// constructor.
+
+	/** is this operation registered?*/
+	bool is_registered;
+
+	/** does it need to be delayed (in a DAG where one branch has a
+		 deeper pipeline than the other branch, the shallowest must be
+		 delayed by the difference. 
+
+		 delayed_by is the max of all the i_delayed_by or j_delayed_by for all the parents of this in the DAG
+
+	*/
+	int delayed_by;
+
+	int i_delayed_by;
+
+	int j_delayed_by;
 
 	/** Constructor */
 	ShiftAddOp(ShiftAddDag* impl, OpType op, ShiftAddOp* i=NULL, int s=0, ShiftAddOp* j=NULL);

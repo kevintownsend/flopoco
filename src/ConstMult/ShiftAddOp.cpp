@@ -47,18 +47,23 @@ ShiftAddOp::ShiftAddOp(ShiftAddDag* impl, OpType op, ShiftAddOp* i, int s, Shift
 		size = intlog2(-n-1) + impl->icm->xsize + 1; // we need a sign bit
 
 	// compute the cost in terms of full adders of this node
-		switch(op) {
-		case X:        cost_in_full_adders = 0;   break;
-		case Add:      
-			if (s >= j->size && j>=0) // no overlap of bits of Vi<<s and Vj
-				cost_in_full_adders = 0;
-			else
-				cost_in_full_adders = size - s;    
-			break;
-		case Shift:    cost_in_full_adders = 0;   break;
-		case Neg:      cost_in_full_adders = size; break;
-		}   
-
+	switch(op) {
+	case X:        cost_in_full_adders = 0;   break;
+	case Add:      
+		if (s >= j->size && j>=0) // no overlap of bits of Vi<<s and Vj
+			cost_in_full_adders = 0;
+		else
+			cost_in_full_adders = size - s;    
+		break;
+	case Shift:    cost_in_full_adders = 0;   break;
+	case Neg:      cost_in_full_adders = size; break;
+	}   
+	
+	//initialy unpipelined
+	is_registered=false;
+	delayed_by=0;
+	i_delayed_by=0;
+	j_delayed_by=0;
 
 	// build the variable name
 	ostringstream o; 
@@ -70,6 +75,7 @@ ShiftAddOp::ShiftAddOp(ShiftAddDag* impl, OpType op, ShiftAddOp* i, int s, Shift
 	// and add this object to the dictionary of the implementation
 	if (op!=X)
 		impl->saolist.push_back(this);
+
 }
 
 

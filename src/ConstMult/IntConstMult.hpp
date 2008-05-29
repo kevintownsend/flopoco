@@ -10,6 +10,19 @@
 #include "ShiftAddOp.hpp"
 #include "ShiftAddDag.hpp"
 
+/**
+	Integer constant multiplication.
+
+	See also ShiftAddOp, ShiftAddDag
+	ShiftAddOp defines a shift-and-add operation for IntConstMult.
+
+	ShiftAddDag deals with the implementation of an IntConstMult as a
+	vector of ShiftAddOp. It defines the intermediate variables with
+	their bit sizes and provide methods for evaluating the cost of an
+	implementation.
+
+*/
+
 
 class IntConstMult : public Operator
 {
@@ -35,7 +48,7 @@ public:
 	virtual TestCaseList generateRandomTestCases(int n);
 
 private:
-	int compute_pipeline_depth(ShiftAddOp* sao);
+	int build_pipeline(ShiftAddOp* sao, double& delay);
 	void recodeBooth();
 	void printBoothCode();
 	void buildMultBooth();

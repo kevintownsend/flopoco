@@ -246,11 +246,15 @@ string  Operator::add_delay_signal_bus(const string name, const int width, const
 
 string  Operator::get_delay_signal_name(const string name, const int delay) {
 	ostringstream o;
-	o << name;
-	for (int i=0; i<delay; i++){
-		o  <<"_d";
+	if(delay==0)
+		return name;
+	else {
+		o << name;
+		for (int i=0; i<delay; i++){
+			o  <<"_d";
+		}
+		return o.str();
 	}
-	return o.str();
 }
 
 

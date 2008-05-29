@@ -75,6 +75,7 @@ IntAdder::IntAdder(Target* target, int wIn) :
 			if(verbose) {
 				cout << tab <<"Estimated delay will be " << target->adder_delay(wIn) <<endl; 
 				cout << tab << "chunk="<<chunk_size << " freq=" << 1e-6/target->adder_delay(chunk_size) <<"  levels="<<pipe_levels <<endl;
+				cout << "****" << (wIn/pipe_levels)+2<< endl;
 			}
 			if(chunk_size > (wIn/pipe_levels)+2)
 				chunk_size = (wIn/pipe_levels)+2;
@@ -108,7 +109,7 @@ IntAdder::IntAdder(Target* target, int wIn) :
 
 
 /**
- * FPMultiplier destructor
+ *  destructor
  */
 IntAdder::~IntAdder() {
 }

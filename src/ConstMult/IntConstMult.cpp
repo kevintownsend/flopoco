@@ -39,7 +39,6 @@
 using namespace std;
 
 
-// TODO Pipeline. Rewriting in general
 
 
 // probably useless in the long term
@@ -67,30 +66,112 @@ int compute_tree_depth(ShiftAddOp* sao) {
 }
 
 
+/**
+ * Depth-first traversal of the DAG to evaluate the pipeline depth.
+ * @param partial_delay accumulates the delays of several stages
 
+ Starting from the leaves, we accumulate partial delays until target_period is reached.
+ Then pipeline level will be inserted.
 
-int IntConstMult::compute_pipeline_depth(ShiftAddOp* sao) {
-	int ipd, jpd, cost;
-	double delay;
+ Initially every node should be unregistered, with delayed_by equal to zero.
+ 
+ */
+
+int IntConstMult::build_pipeline(ShiftAddOp* sao, double &partial_delay) {
+	int ipd, jpd, maxchildrenpd, cost, levels;
+	double idelay,jdelay, max_children_delay, local_delay;
 	if (sao==NULL)
 		return 0;
 	else {
 		switch(sao->op) {
 		case X:
+			partial_delay=0;
 			return 0;
 		case Add:
-			ipd = compute_pipeline_depth(sao->i);
-			jpd = compute_pipeline_depth(sao->j);
+			ipd = build_pipeline(sao->i, idelay);
+			jpd = build_pipeline(sao->j, jdelay);
+			if (ipd>jpd) { // unbalanced pipeline depth between children
+				//register the shorter
+				sao->j->is_registered = true;
+				// set the info that will be needed in output_vhdl for this node
+				sao->j_delayed_by  = ipd-jpd; 
+				// set the info that will be needed for the signal declaration
+				// (the max of all the delays that this child will have)
+				if( (ipd-jpd) > sao->j->delayed_by)
+					sao->j->delayed_by = ipd-jpd; 
+				// Anyway this resets its delay
+				jdelay=0;
+			}
+			if (jpd>ipd) { // unbalanced pipeline depth between children
+				//register the shorter
+				sao->i->is_registered = true;
+				// set the info that will be needed in output_vhdl for this node
+				sao->i_delayed_by  = jpd-ipd; 
+				// set the info that will be needed for the signal declaration
+				// (the max of all the delays that this child will have)
+				if( (jpd-ipd) > sao->i->delayed_by)
+					sao->i->delayed_by = jpd-ipd; 
+				// Anyway this resets its delay
+				idelay=0;
+			}
+			maxchildrenpd = max(ipd,jpd);
+			max_children_delay = max(idelay,jdelay);
 			cost = sao->cost_in_full_adders;
-			delay = target->adder_delay(cost);
-			return 1+max(ipd, jpd);
-			// TODO continue here
+			local_delay = target->adder_delay(cost);
+ 			if(local_delay>1/target->frequency()) {
+ 				cerr << "*** Currently unable to reach target frequency "<< endl;
+ 				// TODO
+ 			}
+
+			if(max_children_delay + local_delay > 1./target->frequency()) {
+				// insert a register at the output of each child
+				sao->i->is_registered = true;
+				sao->i_delayed_by++;
+				if(sao->i_delayed_by > sao->i->delayed_by)
+					sao->i->delayed_by = sao->i_delayed_by; 
+				sao->j->is_registered = true;
+				sao->j_delayed_by++;
+				if(sao->j_delayed_by > sao->j->delayed_by)
+					sao->j->delayed_by = sao->j_delayed_by; 
+				// This resets the partial delay to that of this ShiftAddOp
+				partial_delay = target->adder_delay(cost);
+				// and increases pipeline depth by 1
+				return 1+maxchildrenpd;
+			}
+			else{ // this ShiftAddOp and its child will be in the same pipeline level
+				partial_delay = max_children_delay + local_delay;
+				return ipd;
+			}
 		case Shift:
-			ipd = compute_pipeline_depth(sao->i);
+			ipd = build_pipeline(sao->i, idelay);
+			partial_delay = idelay;
 			return ipd;
+
 		case Neg:
-			ipd = compute_pipeline_depth(sao->i);
-			return 1+ipd;
+			ipd = build_pipeline(sao->i, idelay);
+			cost = sao->cost_in_full_adders;
+			local_delay = target->adder_delay(cost);
+
+// 			if(target->suggest_subadd_size(levels, cost)) {
+// 				cerr << "*** Currently unable to reach target frequency "<< endl;
+// 				// TODO
+// 			}
+
+			if(idelay + local_delay > 1./target->frequency()) {
+				// insert a register at the output of the child
+				sao->i->is_registered = true;
+				sao->i_delayed_by = 1;
+				if(sao->i_delayed_by > sao->i->delayed_by)
+					sao->i->delayed_by = sao->i_delayed_by; 
+				// This resets the partial delay to that of this ShiftAddOp
+				partial_delay = target->adder_delay(cost);
+				// and increases pipeline depth by 1
+				return 1+ipd;
+			}
+			else{ // this ShiftAddOp and its child will be in the same pipeline level
+				partial_delay = idelay + local_delay;
+				return ipd;
+			}
 		}   
 	}
 }
@@ -145,11 +226,27 @@ IntConstMult::IntConstMult(Target* _target, int _xsize, mpz_class _n) :
 
 	// declare its signals
 	if (is_sequential()){
-		int pipeline_depth = compute_pipeline_depth(implementation->result);
+		double delay;
+		int pipeline_depth = build_pipeline(implementation->result, delay);
+		// register the output, too
+		implementation->result->is_registered = true;
+		implementation->result->delayed_by = 1;
+		pipeline_depth++;
+
+		set_pipeline_depth(pipeline_depth);
+
+
 		if(verbose)	cout<<"  Pipeline depth is "<< pipeline_depth << endl;
 		// TODO replace with signals + registers
-		for (int i=0; i<implementation->saolist.size(); i++) 
-			add_signal_bus(implementation->saolist[i]->name, implementation->saolist[i]->size);
+		for (int i=0; i<implementation->saolist.size(); i++) {
+			ShiftAddOp *sao = implementation->saolist[i];
+			if(sao->is_registered) {
+				add_delay_signal_bus(sao->name, sao->size, sao->delayed_by);
+			}
+			else { 
+				add_signal_bus(sao->name, sao->size);
+			}	
+		}
 	}
 	else { 
 		for (int i=0; i<implementation->saolist.size(); i++) 
@@ -418,16 +515,15 @@ void IntConstMult::showShiftAddDag(){
 
 
 void IntConstMult::output_vhdl(std::ostream& o, std::string name) {
+	string iname, jname;
+	int k,i,j;
+
 	Licence(o,"Florent de Dinechin (2007)");
 	Operator::StdLibs(o);
 	output_vhdl_entity(o);
 	o << "architecture arch of " << name  << " is" << endl;
 	output_vhdl_signal_declarations(o);
 
-	int k,i,j;
-	// Signal declarations
-	//	for (i=0; i<saolist.size(); i++) 
-	//	o << tab << "signal " <<saolist[i]->name<<" : std_logic_vector("<<saolist[i]->size-1<<" downto 0);"<<endl;
 	
 	// Architecture
 	o << "begin" << endl;
@@ -441,19 +537,21 @@ void IntConstMult::output_vhdl(std::ostream& o, std::string name) {
 			break;
 
 		case Add:
+			iname = get_delay_signal_name(p->i->name, p->i_delayed_by); // even works for unregistered signals
+			jname = get_delay_signal_name(p->j->name, p->j_delayed_by); // even works for unregistered signals
 			if(p->s==0) {
 				o << tab << p->name << " <= " ;
 				// The i part
 				if(p->size>p->i->size+1) // need to sign-extend x
-					o <<"( (" << p->size-1 << " downto " << p->i->size <<" => '" << (p->i->n >= 0 ? "0" : "1" ) << "') & " << p->i->name << ")";
+					o <<"( (" << p->size-1 << " downto " << p->i->size <<" => '" << (p->i->n >= 0 ? "0" : "1" ) << "') & " << iname << ")";
 				else 
-					o << p->i->name;
+					o << iname;
 				o<<" + " ;
 				// the y part
 				if(p->size>p->j->size+1) // need to sign-extend y
-					o << "( (" << p->size-1 <<" downto " << p->j->size <<" => '" << (p->j->n >= 0 ? "0" : "1" ) << "') & " << p->j->name << ") ;";
+					o << "( (" << p->size-1 <<" downto " << p->j->size <<" => '" << (p->j->n >= 0 ? "0" : "1" ) << "') & " << jname << ") ;";
 				else 
-					o << p->j->name << ";";
+					o << jname << ";";
 			}
 
 			else { // Add with actual shift
@@ -462,19 +560,19 @@ void IntConstMult::output_vhdl(std::ostream& o, std::string name) {
 					//                           yyyyy
 					// The lower bits of the sum are those of y, possibly sign-extended but otherwise untouched
 					o << tab << p->name << "("<< p->s - 1 <<" downto 0) <= "
-						<< "(" <<  p->s-1 <<" downto " << p->j->size <<" => " << p->j->name << "(" << p->j->size-1 << ")) & "    // sign extend y
-					<< p->j->name << ";   -- lower bits untouched"<<endl;
+						<< "(" <<  p->s-1 <<" downto " << p->j->size <<" => " << jname << "(" << p->j->size-1 << ")) & "    // sign extend y
+					<< jname << ";   -- lower bits untouched"<<endl;
 					// The higher bits (size-1 downto s) of the result are those of x, possibly plus 11...1 if y was negative
-					o << tab << p->name << "("<<p->size-1<<" downto "<< p->s<<") <= " << p->i->name ;
+					o << tab << p->name << "("<<p->size-1<<" downto "<< p->s<<") <= " << iname ;
 					if(p->j->n < 0) 
-						o<<" + (" << p->size-1 <<" downto " <<  p->s <<" => " << p->j->name << "(" << p->j->size-1 << ")) ";
+						o<<" + (" << p->size-1 <<" downto " <<  p->s <<" => " << jname << "(" << p->j->size-1 << ")) ";
 					o<< ";   -- sum of higher bits"<<endl;     
 				}
 				else{ // p->j->size>s.        Cases:      xxxxx              xxxxxx
 					//                                yyyyyyyyyy             yyyyyyyyyyyy
 					// so we may need to sign-extend Vx, or Vy, or even both.
 					// In both cases the lower bits of the result (s-1 downto 0) are untouched
-					o << tab << p->name << "("<<p->s-1<<" downto 0) <= " << p->j->name <<"("<< p->s-1<<" downto 0);   -- lower bits untouched"<<endl;
+					o << tab << p->name << "("<<p->s-1<<" downto 0) <= " << jname <<"("<< p->s-1<<" downto 0);   -- lower bits untouched"<<endl;
 					// The higher bits of the result are sum/diff
 					o << tab << p->name << "("<<p->size-1<<" downto " <<  p->s << ") <= "; // vz (size-1 downto s) <=
 					// The x part
@@ -484,10 +582,10 @@ void IntConstMult::output_vhdl(std::ostream& o, std::string name) {
 						if(p->i->n >= 0) // pad with 0s 
 							o<< "'0'";
 						else // sign extend
-							o<< p->i->name << "(" << p->i->size-1 << ")";
+							o<< iname << "(" << p->i->size-1 << ")";
 						o << ") & ";
 					}
-					o << p->i->name << "("<< p->i->size -1 <<" downto 0)";
+					o << iname << "("<< p->i->size -1 <<" downto 0)";
 					o << ")   +   (" ;
 					// the y part
 					if(p->size>=p->j->size+1) {// need to sign-extend vy. If the constant is positive padding with 0s is enough
@@ -495,10 +593,10 @@ void IntConstMult::output_vhdl(std::ostream& o, std::string name) {
 						if(p->j->n >= 0) // pad with 0s 
 							o<< "'0'";
 						else // sign extend
-							o << p->j->name << "(" << p->j->size-1 << ")";
+							o << jname << "(" << p->j->size-1 << ")";
 						o << ") & ";
 					}
-					o << p->j->name << "("<< p->j->size -1 <<" downto " <<  p->s << ") ); " <<endl;
+					o << jname << "("<< p->j->size -1 <<" downto " <<  p->s << ") ); " <<endl;
 				}
 			}
 		
@@ -506,18 +604,26 @@ void IntConstMult::output_vhdl(std::ostream& o, std::string name) {
 
 		case Shift:
 		case Neg:
+			iname = get_delay_signal_name(p->i->name, p->i_delayed_by); // even works for unregistered signals
 			o << tab << p->name << " <= " ;
 			if(p->op == Neg)   
 				o << "("<< p->size -1 <<" downto 0 => '0') - " ; 
 			if (p->s == 0) 
-				o << p->i->name <<";"<<endl; 
+				o << iname <<";"<<endl; 
 			else
-				o  << p->i->name <<" & ("<< p->s - 1 <<" downto 0 => '0');"<<endl; 
+				o  << iname <<" & ("<< p->s - 1 <<" downto 0 => '0');"<<endl; 
 			break;
 		}     
 	}
+
+	if(is_sequential()){
+		output_vhdl_registers(o);
 	// Sometimes the size of the result variable is one bit more than r.
-	o << tab << "r <= " << implementation->result->name << "("<< rsize-1 <<" downto 0);"<<endl;
+		o << tab << "r <= " << implementation->result->name << "_d("<< rsize-1 <<" downto 0);"<<endl;
+	}
+	else{
+		o << tab << "r <= " << implementation->result->name << "("<< rsize-1 <<" downto 0);"<<endl;
+	}
 	o << "end architecture;" << endl << endl;
 		
 }
