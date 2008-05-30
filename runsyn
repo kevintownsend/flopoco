@@ -12,7 +12,7 @@
 # PARAMETERS SET MANUALLY BY USER
 ########################################################
 xilinxPath=/home/bogdan/Xilinx92i
-resultsPath=$HOME/Results23
+resultsPath=$HOME/Results
 ########################################################
 ########################################################
 
@@ -384,7 +384,15 @@ fi
 cd ..	
 	
 #running xst script	
-xst -ise "$projectFilePath" -intstyle ise -ifn $topModule.xst -ofn $topModule.syr
+xst -ise "$projectFilePath" -intstyle ise -ifn $topModule.xst -ofn $topModule.syr | tee console.out
+
+echo -en "\033[0;33;40m"
+grep 'WARNING' console.out
+#echo -e "\033[0m"
+echo -en "\033[0;31;40m"
+grep 'ERROR' console.out
+echo -e "\033[0m"
+
 
 #if not requested -> the results are not outputed to a file
 #=============================================================
