@@ -11,7 +11,7 @@
 /*
  * A leading zero/one counter for FloPoCo
  *
- * Author : Florent de Dinechin, Bogdan Pasca
+ * Authors : Florent de Dinechin, Bogdan Pasca
  *
  * This file is part of the FloPoCo project developed by the Arenaire
  * team at Ecole Normale Superieure de Lyon
