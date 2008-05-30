@@ -38,18 +38,23 @@
 
 
 
-Wrapper::Wrapper(Target* target, Operator *op, std::string name):
+Wrapper::Wrapper(Target* target, Operator *op):
 	Operator(target), op(op)
 {
-	unique_name=name;
 
+	string::size_type loc = op->unique_name.find( "_", 0 );
+  string sub1 = op->unique_name.substr(0,loc);
+	string sub2 = op->unique_name.substr(loc);
+  unique_name=sub1+"Wrapped"+sub2;
+	
+	
 	if (!target->is_pipelined()) 	
 		set_sequential();	
 	
 	// Copy the signals of the wrapped operator
 	for(int i=0; i<op->ioList.size(); i++)
 		ioList.push_back(new Signal(*op->ioList[i]));
-
+		
 	// declare internal registered signals
 	for(int i=0; i<op->ioList.size(); i++){
 		string idext = "i_" + op->ioList[i]->id() ;
@@ -59,13 +64,14 @@ Wrapper::Wrapper(Target* target, Operator *op, std::string name):
 	//set pipeline parameters
 	set_pipeline_depth(2 + op->pipeline_depth());
 
-	/* add bogus clk and rst signal if the UUT does not have them */
-	try {
+	/* add bogus clk and rst signal if the the target is not pipelined */
+	/*
+	if (!target->is_pipelined())
+	{
 		add_input("clk");
 		add_input("rst");
-	} catch (std::string) {
-		/* silently ignore */
 	}
+	*/
 }
 
 
@@ -76,6 +82,7 @@ Wrapper::~Wrapper() {
 
 
 void Wrapper::output_vhdl(ostream& o, string name) {
+
 	Licence(o,"Florent de Dinechin (2007)");
 	Operator::StdLibs(o);
 
@@ -88,6 +95,7 @@ void Wrapper::output_vhdl(ostream& o, string name) {
 	output_vhdl_signal_declarations(o);
 
 	o << "begin\n";
+	o << "--wrapper operator"<<endl;
 	// connect inputs
 	for(int i=0; i<op->ioList.size(); i++){
 		string idext = "i_" + op->ioList[i]->id() ;

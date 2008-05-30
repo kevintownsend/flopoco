@@ -120,8 +120,8 @@ static void usage(char *name){
 	cerr << "       This test bench will include standard tests, plus n random tests.\n";
 	cerr << "    BigTestBench n\n";
 	cerr << "       Same as above, but generates a more VHDL efficient test bench.\n";
-	cerr << "    Wrapper entity_name\n";
-	cerr << "       produce a wrapper named entity_name for the preceding operator\n";
+	cerr << "    Wrapper\n";
+	cerr << "       produce a wrapper for the preceding operator named after it and with Wrapped mentioning \n";
 	cerr << "       (e.g. to get synthesis results without having the operator optimised out)\n";
 	cerr << "  In addition several options affect the operators following them:\n";
 	cerr << "   -outputfile=<output file name>\n";
@@ -485,7 +485,7 @@ bool parse_command_line(int argc, char* argv[]){
 		}
 		    
 		else if (opname == "Wrapper") {
-			int nargs = 1;
+			int nargs = 0;
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
@@ -494,8 +494,8 @@ bool parse_command_line(int argc, char* argv[]){
 					usage(argv[0]);
 				}
 				Operator* toWrap = oplist.back();
-				cerr << "> Wrapper for " << toWrap->unique_name << " as entity "<< argv[i] <<endl;
-				oplist.push_back(new Wrapper(target, toWrap, argv[i++]));
+				cerr << "> Wrapper for " << toWrap->unique_name<<endl;
+				oplist.push_back(new Wrapper(target, toWrap));
 			}
 		}
 		else if (opname == "TestBench") {

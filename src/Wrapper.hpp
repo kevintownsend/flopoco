@@ -10,7 +10,7 @@ class Wrapper : public Operator
 public:
 	// The operator to wrap
 	Operator* op;
-	Wrapper(Target* target, Operator* op, std::string name);
+	Wrapper(Target* target, Operator* op);
 	~Wrapper();
 	void output_vhdl(ostream& o, string name);
 };
