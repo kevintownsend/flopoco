@@ -276,7 +276,7 @@ startPath=$PWD
 
 #check if the file flopoco.vhdl exists. If it does it is copied at the project path
 if [ -a "flopoco.vhdl" ]; then
-	mv "flopoco.vhdl" $projectPath
+	cp "flopoco.vhdl" $projectPath
 fi 
 
 #move to project directory
