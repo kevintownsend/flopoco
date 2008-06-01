@@ -32,16 +32,16 @@ fi
 #set function variables
 opName=$1
 DSP=$2
-DSP=`echo "$DSP" | tr '[a-z]' '[A-Z]'`
+DSP=`echo "$DSP" | tr '[A-Z]' '[a-z]'`
 
 #convert DSP variable content to uppercase 
 #DSP=${DSP|^^}
 
 #check the DSP variable
-if [ "$DSP" == "AUTO" -o "$DSP" == "YES" -o "$DSP" == "NO" ]; then
+if [ "$DSP" == "auto" -o "$DSP" == "yes" -o "$DSP" == "no" ]; then
 	echo "> INFO: Xilinx XST -Use DSP48 option set to: $DSP"
 else
-	echo "> ERROR: Xilinx XST -Use DSP48 must be one of {AUTO, YES, NO}. Requested option was: $DSP"
+	echo "> ERROR: Xilinx XST -Use DSP48 must be one of {auto, yes, no}. Requested option was: $DSP"
 	echo "  Exiting ..."
 	exit
 fi

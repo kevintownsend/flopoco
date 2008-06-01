@@ -76,5 +76,6 @@ private:
 	/** The number of pipeline levels that the last addition of the algorithm is split in so that we reach the desired frequency */
 	int pipe_levels; 
 	
+	IntAdder *intadd1; 
 };
 #endif
