@@ -68,7 +68,7 @@ ENDIF (SOLLYA_LIB)
 ADD_EXECUTABLE(flopoco
  src/main
  src/utils
- src/Target src/Targets/VirtexIV
+ src/Target src/Targets/VirtexIV src/Targets/StratixII
  src/Operator
  src/Table 
  src/Wrapper

@@ -47,6 +47,7 @@
 #include "ConstMult/CRFPConstMult.hpp"
 #include "Target.hpp"
 #include "Targets/VirtexIV.hpp"
+#include "Targets/StratixII.hpp"
 #include "FPExp.hpp"
 #include "FPLog.hpp"
 #include "Mux.hpp"
@@ -128,6 +129,8 @@ static void usage(char *name){
 	cerr << "       sets the filename (default flopoco.vhdl)\n";
 	cerr << "   -verbose=<1|2|3>\n";
 	cerr << "       sets the verbosity level (default 0)\n";
+	cerr << "   -target=<StratixII|VirtexIV>\n";
+	cerr << "       sets the hardware target\n";
 	cerr << "   -pipeline=<yes|no>\n";
 	cerr << "       pipeline the operators (default=yes)\n";
 	cerr << "   -frequency=<frequency in MHz>\n";
@@ -203,6 +206,14 @@ bool parse_command_line(int argc, char* argv[]){
 						cerr<<"ERROR: verbose should be 1, 2 or 3,    got "<<v<<"."<<endl;
 						usage(argv[0]);
 					}
+				}
+				else if (o == "target") {
+				  if(v=="VirtexIV") target=new VirtexIV();
+				  else if (v=="StratixII") target=new StratixII();
+				  else {
+				    cerr<<"ERROR: unknown target: "<<v<<endl;
+				    usage(argv[0]);
+				  }
 				}
 				else if (o == "pipeline") {
 					if(v=="yes") target->set_pipelined();
