@@ -42,12 +42,8 @@ Wrapper::Wrapper(Target* target, Operator *op):
 	Operator(target), op(op)
 {
 
-	string::size_type loc = op->unique_name.find( "_", 0 );
-  string sub1 = op->unique_name.substr(0,loc);
-	string sub2 = op->unique_name.substr(loc);
-  unique_name=sub1+"Wrapped"+sub2;
-	
-	
+	unique_name = op->unique_name + "_Wrapper";
+		
 	if (!target->is_pipelined()) 	
 		set_sequential();	
 	

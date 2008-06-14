@@ -64,6 +64,7 @@ using namespace std;
 vector<Operator*> oplist;
 
 string filename="flopoco.vhdl";
+string cl_name=""; // used for the -name option
 
 int verbose=0;
 
@@ -137,6 +138,8 @@ static void usage(char *name){
 	cerr << "       target frequency (default=400)\n";
 	cerr << "   -DSP_blocks=<yes|no>\n";
 	cerr << "       optimize for the use of DSP blocks (default=yes)\n";
+	cerr << "   -name=<entity name>\n";
+	cerr << "       defines the name of the VHDL entity of the next operator\n";
 
 	//  cerr << "    FPAdd wE wF\n";
 	exit (EXIT_FAILURE);
@@ -173,6 +176,18 @@ int check_sign(char* s, char* cmd) {
 }
 
 
+void add_operator(Operator *op) {
+	if(cl_name!="")	{
+		op->commented_name=op->unique_name;
+		op->unique_name=cl_name;
+		cl_name="";
+	}
+	// TODO check name nor already in list...
+	// TODO this procedure should be a static method of operator, so that other operators can call it
+	oplist.push_back(op);
+}
+
+
 
 bool parse_command_line(int argc, char* argv[]){
 	if (argc<2) {
@@ -182,15 +197,12 @@ bool parse_command_line(int argc, char* argv[]){
 
 	Operator* op;
 	int i=1;
+	cl_name="";
 	do {
 		string opname(argv[i++]);
 		if(opname[0]=='-'){
 			string::size_type p = opname.find('=');
 			if (p == string::npos) {
-				// 	bool yes = s.size() <= 6 || s.substr(2, 3) != "no-";
-				// 	std::string o = s.substr(yes ? 2 : 5);
-				// 	if (o == "reverted-fma") parameter_rfma = yes;
-				// 	else
 				cerr << "ERROR: Option missing an = : "<<opname<<endl; 
 				return false;
 			} else {
@@ -208,12 +220,12 @@ bool parse_command_line(int argc, char* argv[]){
 					}
 				}
 				else if (o == "target") {
-				  if(v=="VirtexIV") target=new VirtexIV();
-				  else if (v=="StratixII") target=new StratixII();
-				  else {
-				    cerr<<"ERROR: unknown target: "<<v<<endl;
-				    usage(argv[0]);
-				  }
+					if(v=="VirtexIV") target=new VirtexIV();
+					else if (v=="StratixII") target=new StratixII();
+					else {
+						cerr<<"ERROR: unknown target: "<<v<<endl;
+						usage(argv[0]);
+					}
 				}
 				else if (o == "pipeline") {
 					if(v=="yes") target->set_pipelined();
@@ -242,6 +254,9 @@ bool parse_command_line(int argc, char* argv[]){
 						usage(argv[0]);
 					}
 				}
+				else if (o == "name") {
+					cl_name=v; // TODO?  check it is a valid VHDL entity name 
+				}
 				else { 	
 					cerr << "Unknown option "<<o<<endl; 
 					return false;
@@ -257,7 +272,7 @@ bool parse_command_line(int argc, char* argv[]){
 				mpz_class mpc(argv[i++]);
 				cerr << "> IntConstMult , w="<<w<<", c="<<mpc<<"\n";
 				op = new IntConstMult(target, w, mpc);
-				oplist.push_back(op);
+				add_operator(op);
 			}        
 		}
 		else if(opname=="FPConstMult"){
@@ -276,7 +291,7 @@ bool parse_command_line(int argc, char* argv[]){
 						 <<", wE_out="<<wE_out<<", wF_out="<<wF_out
 						 <<", cst_sgn="<<cst_sgn<<", cst_exp="<<cst_exp<< ", cst_sig="<<cst_sig<<endl;
 				op = new FPConstMult(target, wE_in, wF_in, wE_out, wF_out, cst_sgn, cst_exp, cst_sig);
-				oplist.push_back(op);
+				add_operator(op);
 			}        
 		} 	
 #ifdef HAVE_SOLLYA
@@ -294,7 +309,7 @@ bool parse_command_line(int argc, char* argv[]){
 					  <<", wE_out="<<wE_out<<", wF_out="<<wF_out
 					  << ", constant="<<constant <<endl;
 				op = new CRFPConstMult(target, wE_in, wF_in, wE_out, wF_out, constant);
-				oplist.push_back(op);
+				add_operator(op);
 			}        
 		} 	
 #endif // HAVE_SOLLYA
@@ -307,7 +322,7 @@ bool parse_command_line(int argc, char* argv[]){
 				int maxShift = check_strictly_positive(argv[i++], argv[0]);
 				cerr << "> LeftShifter, wIn="<<wIn<<", maxShift="<<maxShift<<"\n";
 				op = new Shifter(target, wIn, maxShift, Left);
-				oplist.push_back(op);
+				add_operator(op);
 			}    
 		}
 		else if(opname=="RightShifter"){
@@ -319,7 +334,7 @@ bool parse_command_line(int argc, char* argv[]){
 				int maxShift = check_strictly_positive(argv[i++], argv[0]);
 				cerr << "> RightShifter, wIn="<<wIn<<", maxShift="<<maxShift<<"\n";
 				op = new Shifter(target, wIn, maxShift, Right);
-				oplist.push_back(op);	
+				add_operator(op);
 			}
 		}
 		else if(opname=="LZOC"){
@@ -331,7 +346,7 @@ bool parse_command_line(int argc, char* argv[]){
 				int wOut = check_strictly_positive(argv[i++], argv[0]);
 				cerr << "> LZOC, wIn="<<wIn<<", wOut="<<wOut<<"\n";
 				op = new LZOC(target, wIn, wOut);
-				oplist.push_back(op);	
+				add_operator(op);
 			}
 		}
 		else if(opname=="FPMultiplier"){
@@ -352,7 +367,7 @@ bool parse_command_line(int argc, char* argv[]){
 				if ((norm==0) or (norm==1))	{
 					if ((wEX==wEY) && (wEX==wER)){
 						op = new FPMultiplier(target, wEX, wFX, wEY, wFY, wER, wFR, norm);
-						oplist.push_back(op);
+						add_operator(op);
 					}else
 						cerr<<"(For now) the inputs must have the same size"<<endl;
 				}else   
@@ -365,9 +380,9 @@ bool parse_command_line(int argc, char* argv[]){
 				usage(argv[0]);
 			else {
 				int wIn = check_strictly_positive(argv[i++], argv[0]);
-				cerr << "> IntAdder , wIn="<<wIn<<endl  ;
+				cerr << "> IntAdder, wIn="<<wIn<<endl  ;
 				op = new IntAdder(target, wIn);
-				oplist.push_back(op);
+				add_operator(op);
 			}    
 		}   
 		else if(opname=="IntMultiplier"){
@@ -379,7 +394,7 @@ bool parse_command_line(int argc, char* argv[]){
 				int wInY = check_strictly_positive(argv[i++], argv[0]);
 				cerr << "> IntMultiplier , wInX="<<wInX<<", wInY="<<wInY<<"\n";
 				op = new IntMultiplier(target, wInX, wInY);
-				oplist.push_back(op);
+				add_operator(op);
 			}
 		}
 		else if(opname=="Karatsuba"){
@@ -391,7 +406,7 @@ bool parse_command_line(int argc, char* argv[]){
 				int wInY = check_strictly_positive(argv[i++], argv[0]);
 				cerr << "> Karatsuba , wInX="<<wInX<<", wInY="<<wInY<<"\n";
 				op = new Karatsuba(target, wInX, wInY);
-				oplist.push_back(op);
+				add_operator(op);
 			}    
 		}   
 		else if(opname=="LongAcc"){
@@ -406,7 +421,7 @@ bool parse_command_line(int argc, char* argv[]){
 				int MSBA = atoi(argv[i++]); // may be negative
 				cerr << "> Long accumulator , wEX="<<wEX<<", wFX="<<wFX<<", MaxMSBX="<<MaxMSBX<<", LSBA="<<LSBA<<", MSBA="<<MSBA<<"\n";
 				op = new LongAcc(target, wEX, wFX, MaxMSBX, LSBA, MSBA);
-				oplist.push_back(op);
+				add_operator(op);
 			}
 		}
 		// hidden and undocumented
@@ -439,7 +454,7 @@ bool parse_command_line(int argc, char* argv[]){
 				int wF_out = check_strictly_positive(argv[i++], argv[0]);
 				cerr << "> Post-Normalization unit for Long accumulator MaxMSBX="<<MaxMSBX<<", LSBA="<<LSBA<<", MSBA="<<MSBA<<" wE_out="<<wE_out<<", wF_out="<<wF_out<<"\n";
 				op = new LongAcc2FP(target, MaxMSBX, LSBA, MSBA, wE_out, wF_out);
-				oplist.push_back(op);
+				add_operator(op);
 			}
 		}
 		else if(opname=="FPAdder"){
@@ -458,7 +473,7 @@ bool parse_command_line(int argc, char* argv[]){
 						
 					if ((wEX==wEY) && (wEX==wER)){
 						op = new FPAdder(target, wEX, wFX, wEY, wFY, wER, wFR);
-						oplist.push_back(op);
+						add_operator(op);
 					}else
 						cerr<<"(For now) the inputs and outputs must have the same size"<<endl;
 			}
@@ -470,12 +485,9 @@ bool parse_command_line(int argc, char* argv[]){
 			else {
 				int wIn = check_strictly_positive(argv[i++], argv[0]);
 				int n = check_strictly_positive(argv[i++], argv[0]);
-				
-				
 				cerr << "> Mux , wIn="<<wIn<<", n="<<n<<"\n";
-										
-						op = new Mux(target, wIn, n);
-						oplist.push_back(op);
+				op = new Mux(target, wIn, n);
+				add_operator(op);
 			}		
 		}
 		else if(opname=="DotProduct"){
@@ -491,10 +503,10 @@ bool parse_command_line(int argc, char* argv[]){
 				int MSBA = atoi(argv[i++]); // may be negative
 				cerr << "> DotProduct , wE="<<wE<<", wFX="<<wFX<<", wFY="<<wFY<<", MaxMSBX="<<MaxMSBX<<", LSBA="<<LSBA<<", MSBA="<<MSBA<<"\n";
 				op = new DotProduct(target, wE, wFX, wFY, MaxMSBX, LSBA, MSBA);
-				oplist.push_back(op);
+				add_operator(op);
 			}
 		}
-		    
+		
 		else if (opname == "Wrapper") {
 			int nargs = 0;
 			if (i+nargs > argc)
@@ -506,7 +518,8 @@ bool parse_command_line(int argc, char* argv[]){
 				}
 				Operator* toWrap = oplist.back();
 				cerr << "> Wrapper for " << toWrap->unique_name<<endl;
-				oplist.push_back(new Wrapper(target, toWrap));
+				op =new Wrapper(target, toWrap);
+				add_operator(op);
 			}
 		}
 		else if (opname == "TestBench") {
@@ -520,6 +533,7 @@ bool parse_command_line(int argc, char* argv[]){
 			int n = check_positive_or_null(argv[i++], argv[0]);
 			Operator* toWrap = oplist.back();
 			cerr << "> TestBench for " << toWrap->unique_name  <<endl;
+			if(cl_name!="")	op->unique_name=cl_name;
 			oplist.push_back(new TestBench(target, toWrap, n));
 		}
 		else if (opname == "BigTestBench") {
@@ -533,6 +547,7 @@ bool parse_command_line(int argc, char* argv[]){
 			int n = check_positive_or_null(argv[i++], argv[0]);
 			Operator* toWrap = oplist.back();
 			cerr << "> BigTestBench for " << toWrap->unique_name  <<endl;
+			if(cl_name!="")	op->unique_name=cl_name;
 			oplist.push_back(new BigTestBench(target, toWrap, n));
 		}
 #ifdef HAVE_HOTBM
@@ -546,6 +561,7 @@ bool parse_command_line(int argc, char* argv[]){
 			int n  = check_strictly_positive(argv[i++], argv[0]);
 			cerr << "> HOTBM func='" << func << "', wI=" << wI << ", wO=" << wO <<endl;
 			op = new HOTBM(target, func, wI, wO, n);
+			if(cl_name!="")	op->unique_name=cl_name;
 			oplist.push_back(op);
 		}
 #endif // HAVE_HOTBM
@@ -558,6 +574,7 @@ bool parse_command_line(int argc, char* argv[]){
 			int wF = check_strictly_positive(argv[i++], argv[0]);
 			cerr << "> FPExp: wE=" << wE << " wF=" << wF << endl;
 			op = new FPExp(target, wE, wF);
+			if(cl_name!="")	op->unique_name=cl_name;
 			oplist.push_back(op);
 		}
 		else if (opname == "FPLog")
@@ -569,6 +586,7 @@ bool parse_command_line(int argc, char* argv[]){
 			int wF = check_strictly_positive(argv[i++], argv[0]);
 			cerr << "> FPLog: wE=" << wE << " wF=" << wF << endl;
 			op = new FPLog(target, wE, wF);
+			if(cl_name!="")	op->unique_name=cl_name;
 			oplist.push_back(op);
 		}
 //     else if(opname=="FPAdd"){

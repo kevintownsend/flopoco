@@ -171,8 +171,10 @@ public:
 
 
 
-
+	/** By default, a name derived from the operator class and the parameters.
+	 Also possibly overrriden by the command line interface or by other means*/
 	string unique_name;
+	string commented_name;
 	
 	vector<Signal*> ioList; 
 	vector<Signal*> signalList; 

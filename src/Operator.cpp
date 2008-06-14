@@ -418,7 +418,14 @@ void Operator::Licence(std::ostream& o, std::string authorsyears){
 	// centering the unique name
 	int s;
 	if(unique_name.size()<76) s = (76-unique_name.size())/2; else s=0;
-	o<<"--"; for(int i=0; i<s; i++) o<<" "; o <<unique_name <<endl; 
+	o<<"--"; for(int i=0; i<s; i++) o<<" "; o  << unique_name << endl; 
+
+	// if this operator was renamed from the command line, show the original name
+	if(commented_name!="") {
+		if(commented_name.size()<74) s = (74-commented_name.size())/2; else s=0;
+		o<<"--"; for(int i=0; i<s; i++) o<<" "; o << "(" << commented_name << ")" << endl; 
+	}
+
 	o<<"-- This operator is part of the Infinite Virtual Library FloPoCoLib"<<endl
 	 <<"-- and is distributed under the terms of the GNU Lesser General Public Licence."<<endl
 	 <<"-- Authors: " << authorsyears <<endl
