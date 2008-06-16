@@ -116,10 +116,17 @@ FPMultiplier::FPMultiplier(Target* target, int wEX, int wFX, int wEY, int wFY, i
 		add_signal("sign_synch", 1); 
 		
 		/* Registered signals */
-		add_registered_signal_with_sync_reset("Exponents_Sum_Pre_Bias_Substraction",  wEX+2 );
-		add_registered_signal_with_sync_reset("Exponents_Sum_Post_Bias_Substraction", wEX+2 );
-		add_registered_signal_with_sync_reset("Exception_Reg_0",2); 
-		add_registered_signal_with_sync_reset("Exception_Reg_1",2);
+		//add_registered_signal_with_sync_reset("Exponents_Sum_Pre_Bias_Substraction",  wEX+2 );
+		//add_registered_signal_with_sync_reset("Exponents_Sum_Post_Bias_Substraction", wEX+2 );
+		//add_registered_signal_with_sync_reset("Exception_Reg_0",2); 
+		//add_registered_signal_with_sync_reset("Exception_Reg_1",2);
+		
+		add_registered_signal("Exponents_Sum_Pre_Bias_Substraction",  wEX+2 );
+		add_registered_signal("Exponents_Sum_Post_Bias_Substraction", wEX+2 );
+		add_registered_signal("Exception_Reg_0",2); 
+		add_registered_signal("Exception_Reg_1",2);
+		
+		
 		
 			/* Synchronization registers */
 			
@@ -127,15 +134,20 @@ FPMultiplier::FPMultiplier(Target* target, int wEX, int wFX, int wEY, int wFY, i
 			for (i=0;i<=IntMultPipelineDepth-3;i++)	{
 				synch.str(""); synch2.str("");
 				synch<<"Exponent_Synchronization_"<<i;
-				add_registered_signal_with_sync_reset(synch.str(), wEX+2 );
+				
+				//add_registered_signal_with_sync_reset(synch.str(), wEX+2 );
+				add_registered_signal(synch.str(), wEX+2 );
+				
 				synch2<<"Exception_Synchronization_"<<i;
-				add_registered_signal_with_sync_reset(synch2.str(), 2 );
+				//add_registered_signal_with_sync_reset(synch2.str(), 2 );
+				add_registered_signal(synch2.str(), 2 );
 			}
 			//when the integer multiplication has less than 2 levels
 			for (i=0;i<=1-IntMultPipelineDepth;i++)	{
 				synch.str("");
 				synch<<"Int_Synchronization_"<<i;
-				add_registered_signal_with_sync_reset(synch.str(), wFX+wFY+2);		
+				//add_registered_signal_with_sync_reset(synch.str(), wFX+wFY+2);
+				add_registered_signal(synch.str(), wFX+wFY+2);				
 			}	
 			add_delay_signal("Sign_Synchronization", 1, max(2,IntMultPipelineDepth));
 
@@ -148,9 +160,15 @@ FPMultiplier::FPMultiplier(Target* target, int wEX, int wFX, int wEY, int wFY, i
 			
 			if (1+wFR < wFX+wFY+2) {
 				
-				add_registered_signal_with_sync_reset("exponent_synch2",wEX+2);
+				//add_registered_signal_with_sync_reset("exponent_synch2",wEX+2);
+				add_registered_signal("exponent_synch2",wEX+2);
+				
 				add_registered_signal_with_sync_reset("exception_synch2",2);
-				add_registered_signal_with_sync_reset("significand_synch2",wFX + wFY + 2);
+				
+				//add_registered_signal_with_sync_reset("significand_synch2",wFX + wFY + 2);
+				add_registered_signal("significand_synch2",wFX + wFY + 2);
+				
+				
 				add_registered_signal_with_sync_reset("sign_synch2",1);
 				add_registered_signal_with_sync_reset("normalization_selector2",1);
 		
@@ -191,18 +209,35 @@ FPMultiplier::FPMultiplier(Target* target, int wEX, int wFX, int wEY, int wFY, i
 						for (i=1;i<=reunion_signal_parts;i++){	
 							name.str("");
 							name<<"Last_Addition_Level_"<<j<<"_Reg_"<<i;
-							if (i!=reunion_signal_parts)
-								add_registered_signal_with_sync_reset(name.str(), addition_chunk_width + 1 );
+							if (i!=reunion_signal_parts){
+								//add_delay_signal_bus_(name.str(), addition_chunk_width + 1 ,1);
+								add_delay_signal_bus_no_reset(name.str(), addition_chunk_width + 1 ,1);
+							}
 							else
-								add_registered_signal_with_sync_reset(name.str(), addition_last_chunk_width );	
-		         	}
+							{
+								//add_delay_signal_bus(name.str(), addition_last_chunk_width,1 );	
+								add_delay_signal_bus_no_reset(name.str(), addition_last_chunk_width,1 );	
+							
+							}
+		        }
 				
+					/*
 					add_delay_signal("reunion_signal_level",2+wFR,reunion_signal_parts);
 					add_delay_signal("LSB_of_result_significand_level",1,reunion_signal_parts);		
 					add_delay_signal("between_fp_numbers_level",1,reunion_signal_parts);			
 					add_delay_signal("sign_synch2_level",1,reunion_signal_parts);
 					add_delay_signal("exception_synch2_level",2,reunion_signal_parts);
 					add_delay_signal("exponent_synch2_level",2+wER,reunion_signal_parts);
+					*/
+					
+					add_delay_signal_no_reset("reunion_signal_level",2+wFR,reunion_signal_parts);
+					add_delay_signal_no_reset("LSB_of_result_significand_level",1,reunion_signal_parts);		
+					add_delay_signal_no_reset("between_fp_numbers_level",1,reunion_signal_parts);			
+					add_delay_signal_no_reset("sign_synch2_level",1,reunion_signal_parts);
+					add_delay_signal_no_reset("exception_synch2_level",2,reunion_signal_parts);
+					add_delay_signal_no_reset("exponent_synch2_level",2+wER,reunion_signal_parts);
+					
+					
 				}
 			}
 		
@@ -212,10 +247,17 @@ FPMultiplier::FPMultiplier(Target* target, int wEX, int wFX, int wEY, int wFY, i
 			
 			if ((wFX+wFY+2 > wFR+1))
 			{
+				/*
 				add_registered_signal_with_sync_reset("exponent_synch2",wEX+2);
 				add_registered_signal_with_sync_reset("exception_synch2",2);
 				add_registered_signal_with_sync_reset("significand_synch2",wFX + wFY + 2);
 				add_registered_signal_with_sync_reset("sign_synch2",1);
+				*/
+				
+				add_registered_signal("exponent_synch2",wEX+2);
+				add_registered_signal("exception_synch2",2);
+				add_registered_signal("significand_synch2",wFX + wFY + 2);
+				add_registered_signal("sign_synch2",1);
 						
 				add_signal("between_fp_numbers",1);	
 				add_signal("LSB_of_result_significand_out",1);	
@@ -244,18 +286,33 @@ FPMultiplier::FPMultiplier(Target* target, int wEX, int wFX, int wEY, int wFY, i
 						name.str("");
 						name<<"Last_Addition_Level_"<<j<<"_Reg_"<<i;
 						if (i!=reunion_signal_parts)
+						{
+							//add_registered_signal_with_sync_reset(name.str(), addition_chunk_width + 1 );
 							add_registered_signal_with_sync_reset(name.str(), addition_chunk_width + 1 );
-						else
-							add_registered_signal_with_sync_reset(name.str(), addition_last_chunk_width );	
-	         		}
+						}
+						else{
+							//add_registered_signal_with_sync_reset(name.str(), addition_last_chunk_width );
+							add_registered_signal(name.str(), addition_last_chunk_width );		
+						}
+	        }
 				
-				
+					/*
 					add_delay_signal("reunion_signal_level",3+wFR,reunion_signal_parts);
 					add_delay_signal("LSB_of_result_significand_level",1,reunion_signal_parts);		
 					add_delay_signal("between_fp_numbers_level",1,reunion_signal_parts);			
 					add_delay_signal("sign_synch2_level",1,reunion_signal_parts);
 					add_delay_signal("exception_synch2_level",2,reunion_signal_parts);
 					add_delay_signal("exponent_synch2_level",2+wER,reunion_signal_parts);
+					*/
+					
+					add_delay_signal_no_reset("reunion_signal_level",3+wFR,reunion_signal_parts);
+					add_delay_signal_no_reset("LSB_of_result_significand_level",1,reunion_signal_parts);		
+					add_delay_signal_no_reset("between_fp_numbers_level",1,reunion_signal_parts);			
+					add_delay_signal_no_reset("sign_synch2_level",1,reunion_signal_parts);
+					add_delay_signal_no_reset("exception_synch2_level",2,reunion_signal_parts);
+					add_delay_signal_no_reset("exponent_synch2_level",2+wER,reunion_signal_parts);					
+					
+					
 				}
 
 				add_signal("reunion_signal"                       ,1+(1+wFR)+1);
