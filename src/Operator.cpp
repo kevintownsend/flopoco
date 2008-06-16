@@ -210,6 +210,43 @@ string  Operator::add_delay_signal(const string name, const int width, const int
 	return o.str();
 }
 
+string  Operator::add_delay_signal_no_reset(const string name, const int width, const int delay) {
+	ostringstream o;
+	Signal *s;
+	o << name;
+	// if the delay is zero it is equivalent to add_signal
+	if(delay>0) {
+		for (int i=0; i<delay; i++){
+			if(_signal_map.find(o.str()) != _signal_map.end()) {
+				cerr << "ERROR in add_input , signal " << name<< " seems to already exist" << endl;
+				exit(EXIT_FAILURE);
+			}
+			s = new Signal(o.str(), Signal::registered, width);
+			signalList.push_back(s);    
+			_signal_map[name] = s ;
+			o  <<"_d";
+		}
+		has_registers=true;
+	}
+
+	if(_signal_map.find(o.str()) != _signal_map.end()) {
+		cerr << "ERROR in add_input , signal " << name<< " seems to already exist" << endl;
+		exit(EXIT_FAILURE);
+	}
+	s = new Signal(o.str(), Signal::wire, width);
+	signalList.push_back(s);    
+	_signal_map[name] = s ;
+	
+	return o.str();
+}
+
+
+
+
+
+
+
+
 string  Operator::add_delay_signal_bus(const string name, const int width, const int delay) {
 	ostringstream o;
 	Signal *s;
@@ -227,6 +264,37 @@ string  Operator::add_delay_signal_bus(const string name, const int width, const
 			o  <<"_d";
 		}
 		has_registers_with_sync_reset=true;
+	}
+
+	if(_signal_map.find(o.str()) != _signal_map.end()) {
+		cerr << "ERROR in add_input , signal " << name<< " seems to already exist" << endl;
+		exit(EXIT_FAILURE);
+	}
+	s = new Signal(o.str(), Signal::wire, width, true);
+	signalList.push_back(s);    
+	_signal_map[name] = s ;
+	
+	return o.str();
+}
+
+
+string  Operator::add_delay_signal_bus_no_reset(const string name, const int width, const int delay) {
+	ostringstream o;
+	Signal *s;
+	o << name;
+	// if the delay is zero it is equivalent to add_signal
+	if(delay>0) {
+		for (int i=0; i<delay; i++){
+			if(_signal_map.find(o.str()) != _signal_map.end()) {
+				cerr << "ERROR in add_input , signal " << name<< " seems to already exist" << endl;
+				exit(EXIT_FAILURE);
+			}
+			s = new Signal(o.str(), Signal::registered, width, true);
+			signalList.push_back(s);    
+			_signal_map[name] = s ;
+			o  <<"_d";
+		}
+		has_registers=true;
 	}
 
 	if(_signal_map.find(o.str()) != _signal_map.end()) {
