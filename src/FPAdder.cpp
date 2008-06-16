@@ -472,6 +472,8 @@ void FPAdder::output_vhdl(std::ostream& o, std::string name) {
 		
 	  // == Swap/Difference ==//
 	  // signal which indicates whether or not the exception bits of X are greater or equal than the exception bits of Y //		  
+	  
+    o<<"-- Swap Difference --"<<endl;
     o<<tab<<"X0 <= X;"<<endl;
 		o<<tab<<"Y0 <= Y;"<<endl;
     
@@ -538,8 +540,12 @@ void FPAdder::output_vhdl(std::ostream& o, std::string name) {
 		// swap/difference section pipeline depth swapDifferencePipelineDepth = intadd1->pipeline_depth() + intadd2->pipeline_depth();
 		
 		
+		
 		//==========================================================================
 		//CLOSE PATH
+		
+		o<<"-- Close Path --"<<endl;
+		
 		o<<tab<<"cX <= sdX;"<<endl;
 		o<<tab<<"cY <= sdY;"<<endl;
 		o<<tab<<"cExponentDifference <= sdExponentDifference;"<<endl;
@@ -650,6 +656,8 @@ void FPAdder::output_vhdl(std::ostream& o, std::string name) {
 		//=========================================================================
 		//=========================================================================
 		//Far path
+		o<<"-- Close Path --"<<endl;
+		
 		o<<tab<<"fX <= sdX;"<<endl;
 		o<<tab<<"fY <= sdY;"<<endl;
 		o<<tab<<"fExponentDifference <= sdExponentDifference;"<<endl;
@@ -771,7 +779,7 @@ void FPAdder::output_vhdl(std::ostream& o, std::string name) {
 		
 		
 		
-		
+		o<<"-- SYNCH --"<<endl;
 		//==========================================================================
 		// Synchronization Interface Output ========================================
 		
@@ -837,7 +845,7 @@ void FPAdder::output_vhdl(std::ostream& o, std::string name) {
 			
 			
 		
-		
+		o<<"-- Roundings --"<<endl;
 				 
 		//==========================================================================
 		
@@ -1132,6 +1140,8 @@ void FPAdder::fillTestCase(mpz_class a[])
 
 	/* Compute correct value */
 	FloFP x(wEX, wFX), y(wEY, wFY), r(wER, wFR);
+	x = svX;
+	y = svY;
 	r = x+y;
 	
 	/* Set outputs */
