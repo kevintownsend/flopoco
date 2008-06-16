@@ -49,7 +49,7 @@ FPExp::~FPExp()
 // Overloading the virtual functions of Operator
 void FPExp::output_vhdl(std::ostream& o, std::string name)
 {
-	Licence(o, "Cristian KLEIN (2008)");
+	Licence(o, "J. Detrey, F. de Dinechin, C. Klein, X. Pujol  (2008)");
 	stringstream fp_exp, fixp_exp, fixp_exp_tbl;
 
 	f->generate(unique_name, fixp_exp, fixp_exp_tbl);

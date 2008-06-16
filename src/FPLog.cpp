@@ -136,7 +136,7 @@ void FPLog::output_vhdl(std::ostream& o, std::string name)
 
 	if (t_pipelined) target->set_pipelined();
 
-	Licence(o, "Cristian KLEIN (2008)");
+	Licence(o, "J. Detrey, F. de Dinechin, C. Klein  (2008)");
 	
 	int i;
 	mpfr_t two;
