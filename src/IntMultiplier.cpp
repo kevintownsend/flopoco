@@ -59,7 +59,7 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 	 *  wInX = width of the X input
 	 *  wInY = width of the Y input
 	 */  
-	name.str("");;
+	name.str("");
 	name <<"IntMultiplier_"<<wInX<<"_"<<wInY;
 	unique_name = name.str(); 
 	
@@ -120,14 +120,16 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 		for (i=1;i<=partsX;i++){
 			name.str("");
 			name <<"X_"<<i;
-			add_registered_signal_with_sync_reset(name.str(), multiplier_width_X); 
+			//add_registered_signal_with_sync_reset(name.str(), multiplier_width_X);
+			add_registered_signal(name.str(), multiplier_width_X);  
 		}
 
 		//declare the signals needed to split Y 
 		for (i=1;i<=partsY;i++){
 			name.str("");
 			name <<"Y_"<<i;
-			add_registered_signal_with_sync_reset(name.str(), multiplier_width_Y); 
+			//add_registered_signal_with_sync_reset(name.str(), multiplier_width_Y); 
+			add_registered_signal(name.str(), multiplier_width_Y); 
 		}
 
 		//declare the registers needed to store the partial products
@@ -135,7 +137,8 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 			for (j=1;j<=partsX;j++){
 				name.str("");;
 				name <<"Y_"<<i<<"_X_"<<j;
-				add_registered_signal_with_sync_reset(name.str(), multiplier_width_X + multiplier_width_Y);
+				//add_registered_signal_with_sync_reset(name.str(), multiplier_width_X + multiplier_width_Y);
+				add_registered_signal(name.str(), multiplier_width_X + multiplier_width_Y);
 			} 
 
 		if (!((partsX==partsY) && (partsX==1)))
@@ -165,11 +168,20 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 		
 		if (partsY>1) {
 		//declare the signals which form the two trees (high and low)
+			
+			/* Use a state of the art adder to take care of pipelining the long additions */
+			intadd2 = new IntAdder(target, 1 + partsX * multiplier_width_X);
+			oplist.push_back(intadd2);
+			
+			
 			for (i=1;i<=partsY;i++){
 				 name.str("");
 				 name<<"Buffer_H_"<<i;
-				 add_registered_signal_with_sync_reset(name.str(), partsX * multiplier_width_X);
+				 //add_delay_signal(name.str(), partsX * multiplier_width_X,intadd2->pipeline_depth());
+				 add_delay_signal_bus_no_reset(name.str(), partsX * multiplier_width_X,intadd2->pipeline_depth());
 			}
+			
+			
 			
 			//for the low and high tree
 			for (j=0; j<partsY;j++)
@@ -177,13 +189,37 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 					nameH.str("");; nameL.str("");;
 					nameL <<"L_Level_"<<j<<"_Reg_"<<i;
 					nameH <<"H_Level_"<<j<<"_Reg_"<<i;
-					add_registered_signal_with_sync_reset(nameL.str(), 1 + partsX * multiplier_width_X);
-					add_registered_signal_with_sync_reset(nameH.str(), 1 + partsX * multiplier_width_X);
+					if ((i==1)||(i==2)){
+						
+						add_signal(nameL.str(), 1 + partsX * multiplier_width_X);
+						add_signal(nameH.str(), 1 + partsX * multiplier_width_X);
+						ostringstream temp;
+						if (i==1)
+						{
+							temp.str("");
+							temp<<"L_Level_"<<j<<"_summand";
+							add_signal(temp.str(),1 + partsX * multiplier_width_X);
+							temp.str("");
+							temp<<"H_Level_"<<j<<"_summand";
+							add_signal(temp.str(),1 + partsX * multiplier_width_X);
+						}
+						
+					}
+					else{
+						//add_delay_signal(nameL.str(), 1 + partsX * multiplier_width_X,intadd2->pipeline_depth());
+						add_delay_signal_bus_no_reset(nameL.str(), 1 + partsX * multiplier_width_X,intadd2->pipeline_depth());
+						
+						//add_delay_signal(nameH.str(), 1 + partsX * multiplier_width_X,intadd2->pipeline_depth());
+						add_delay_signal_bus_no_reset(nameH.str(), 1 + partsX * multiplier_width_X,intadd2->pipeline_depth());
+					}
+					
+					
 				}
 
 			
 			//one more registers for the Low part for synchronization 
-			add_registered_signal_with_sync_reset("Low1", 1 + partsX * multiplier_width_X);
+			//add_delay_signal("Low1", 1 + partsX * multiplier_width_X,intadd2->pipeline_depth());
+			add_delay_signal_bus_no_reset("Low1", 1 + partsX * multiplier_width_X,intadd2->pipeline_depth());
 			
 			//one more signal for the high part
 			add_signal("High1", 1 + partsX * multiplier_width_X);
@@ -195,7 +231,8 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 				for (i=1;i<=j;i++){
 					name.str("");;
 					name<<"PartialBits_Level_"<<j<<"_Reg_"<<i;
-					add_registered_signal_with_sync_reset(name.str(), multiplier_width_Y + 1 );
+					//add_delay_signal(name.str(), multiplier_width_Y + 1,intadd2->pipeline_depth() );
+					add_delay_signal_bus_no_reset(name.str(), multiplier_width_Y + 1,intadd2->pipeline_depth() );
 			 }
 
 			/* Use a state of the art adder to take care of pipelining the last addition */
@@ -203,38 +240,9 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 			oplist.push_back(intadd1);
 
 
-			/*
-			bool add_test = target->suggest_subadd_size(addition_chunk_width,partsX * multiplier_width_X);
-						
-			if (add_test==true)
-				cout<<endl<<tab<<"addition chunk size = "<<addition_chunk_width<<endl;
-			else
-				cerr<<endl<<"WARNING: Cannot reach the desired frequency for the addition"<<endl;
-			*/
-/*			
-			pipe_levels = int(ceil(double(partsX * multiplier_width_X)/double(addition_chunk_width))); 
-			cout<<endl<<"added pipeline levels = "<<pipe_levels<<endl;
-		
-			for (j=1; j<=pipe_levels;j++)
-				for (i=1;i<=pipe_levels;i++){
-					name.str("");;
-					name<<"Last_Addition_Level_"<<j<<"_Reg_"<<i;
-					if (i==pipe_levels)
-						add_registered_signal_with_sync_reset(name.str(), partsX * multiplier_width_X - (pipe_levels-1)*(addition_chunk_width));
-					else
-						add_registered_signal_with_sync_reset(name.str(), addition_chunk_width + 1 );
-			}
 			
-*/			
-/*
-			for (j=1; j<=pipe_levels;j++){ 
-				name.str("");;
-				name<<"PartialBits_Reg_"<<j;
-				add_registered_signal_with_sync_reset(name.str(), partsY * multiplier_width_Y);
-			}
-		*/	
-			
-			add_delay_signal("PartialBits_Reg",partsY * multiplier_width_Y,intadd1->pipeline_depth()); 
+			//add_delay_signal("PartialBits_Reg",partsY * multiplier_width_Y,intadd1->pipeline_depth());
+			add_delay_signal_bus_no_reset("PartialBits_Reg",partsY * multiplier_width_Y,intadd1->pipeline_depth());  
 			
 			add_signal("temp_result",  partsX * multiplier_width_X );
 			add_signal("partial_bits", partsY * multiplier_width_Y );
@@ -257,7 +265,9 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 				add_signal("addition_term", partsX  * multiplier_width_X);
 
 				add_signal("addition_result", partsX  * multiplier_width_X);
-				add_delay_signal("delayed_bits",multiplier_width_Y, IntAddPipelineDepth);
+				
+				//add_delay_signal("delayed_bits",multiplier_width_Y, IntAddPipelineDepth);
+				add_delay_signal_bus_no_reset("delayed_bits",multiplier_width_Y, IntAddPipelineDepth);
 			}
 	
 			add_signal("temp_result", partsX  * multiplier_width_X + partsY * multiplier_width_Y);
@@ -271,7 +281,7 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 			else
 				depth=2 + IntAddPipelineDepth;
 		else
-			depth= 1 + 2 + partsY + intadd1->pipeline_depth();
+			depth= 2 + partsY*intadd2->pipeline_depth() + intadd1->pipeline_depth();
  
 		set_pipeline_depth(depth);
   
@@ -313,9 +323,12 @@ void IntMultiplier::output_vhdl(std::ostream& o, std::string name) {
 	if ((partsY==1)&&(partsX>1))
 		intadd->output_vhdl_component(o);//output the IntAdder component
 	else
-		if (!((partsX==partsY) && (partsX==1)))
+		if (!((partsX==partsY) && (partsX==1))){
 			intadd1->output_vhdl_component(o);
-		
+			intadd2->output_vhdl_component(o);
+		}
+	
+	
 	output_vhdl_signal_declarations(o);
 	begin_architecture(o);
  
@@ -591,7 +604,11 @@ void IntMultiplier::connect_buffers(std::ostream& o)
 {
 int i;
 	for(i=1;i<=partsY;i++)
-		o<<tab<<"H_Level_0_Reg_"<<i<<" <= \"0\" & Buffer_H_"<<i<<"_d;"<<endl;
+	{
+	ostringstream temp;
+	temp<<"Buffer_H_"<<i;
+		o<<tab<<"H_Level_0_Reg_"<<i<<" <= \"0\" & "<<get_delay_signal_name(temp.str(),intadd2->pipeline_depth())<<";"<<endl;
+	}
 }
 
 /**
@@ -607,19 +624,34 @@ ostringstream first_summand, second_summand;
 			if (j==1) {
 				//concatenate zeros in front of the first register, add it with the second register and place the result in the next level's first register
 				first_summand.str(""); second_summand.str("");
-				first_summand<<"("<< zero_generator(multiplier_width_Y ,0)<<" & L_Level_"<<i<<"_Reg_"<<j<<"_d("<<partsX*multiplier_width_X<<" downto "<<multiplier_width_Y<<"))"; 
-				second_summand<<"L_Level_"<<i<<"_Reg_"<<j+1<<"_d";
-				o<<tab<<"L_Level_"<<i+1<<"_Reg_"<<j<<"<="<< first_summand.str() << " + " << second_summand.str()<<";"<< endl;
+				first_summand<<"("<< zero_generator(multiplier_width_Y ,0)<<" & L_Level_"<<i<<"_Reg_"<<j<<"("<<partsX*multiplier_width_X<<" downto "<<multiplier_width_Y<<"))"; 
+				second_summand<<"L_Level_"<<i<<"_Reg_"<<j+1;
+				
+				o<<tab<<"L_Level_"<<i+1<<"_summand <= "<<first_summand.str()<<";"<<endl;								
+				o<<tab<< "int_adder_component_low_"<<i<<": " << intadd2->unique_name << endl;
+				o<<tab<< "  port map ( X => L_Level_"<<i+1<<"_summand , " << endl; 
+				o<<tab<< "             Y => "<<second_summand.str()<< ", " << endl; 
+				o<<tab<< "             Cin => '0'," << endl;
+				o<<tab<< "             R => L_Level_"<<i+1<<"_Reg_"<<j<<", " << endl; 
+				o<<tab<< "             clk => clk, " << endl;
+				o<<tab<< "             rst => rst " << endl;
+				o<<tab<< "               );" << endl<<endl;
+
+				//o<<tab<<"L_Level_"<<i+1<<"_Reg_"<<j<<"<="<< first_summand.str() << " + " << second_summand.str()<<";"<< endl;
 			}
 			else
 				if (j==2) {} //do nothing (the second register on the level is always processed with the first
 					else //for the rest of the registers just propagate their contents to the next level
-						o<<tab<<"L_Level_"<<i+1<<"_Reg_"<<j-1<<"<="<<"L_Level_"<<i<<"_Reg_"<<j<<"_d"<<";"<<endl;
+					{
+						ostringstream tmpSig;
+						tmpSig<<"L_Level_"<<i<<"_Reg_"<<j;
+						o<<tab<<"L_Level_"<<i+1<<"_Reg_"<<j-1<<"<="<< get_delay_signal_name(tmpSig.str(),intadd2->pipeline_depth())<<";"<<endl;
+					}	
 		}
 	}
 
 	//the zeros + [the high bits of the last register of the low part] 
-	o<<tab<<"Low1 <= "<<zero_generator(multiplier_width_Y,0)<<" & L_Level_"<<partsY-1<<"_Reg_1_d("<<partsX * multiplier_width_X<<" downto "<<multiplier_width_Y<<")"<< ";"<<endl;
+	o<<tab<<"Low1 <= "<<zero_generator(multiplier_width_Y,0)<<" & L_Level_"<<partsY-1<<"_Reg_1("<<partsX * multiplier_width_X<<" downto "<<multiplier_width_Y<<")"<< ";"<<endl;
 }
 
 
@@ -636,18 +668,35 @@ ostringstream first_summand, second_summand;
 			if (j==1){
 				//concatenate zeros in front of the first register, add it with the second register and place the result in the next level's first register
 				first_summand.str("");; second_summand.str("");;
-				first_summand<<"("<< zero_generator(multiplier_width_Y,0)<<" & H_Level_"<<i<<"_Reg_"<<j<<"_d("<<partsX*multiplier_width_X<<" downto "<<multiplier_width_Y<<"))"; 
-				second_summand<<"H_Level_"<<i<<"_Reg_"<<j+1<<"_d";
-				o<<tab<<"H_Level_"<<i+1<<"_Reg_"<<j<<"<="<< first_summand.str() << " + " << second_summand.str()<<";"<< endl;
+				first_summand<<"("<< zero_generator(multiplier_width_Y,0)<<" & H_Level_"<<i<<"_Reg_"<<j<<"("<<partsX*multiplier_width_X<<" downto "<<multiplier_width_Y<<"))"; 
+				second_summand<<"H_Level_"<<i<<"_Reg_"<<j+1<<"";
+				
+				o<<tab<<"H_Level_"<<i+1<<"_summand <= "<<first_summand.str()<<";"<<endl;								
+				o<<tab<< "int_adder_component_high_"<<i<<": " << intadd2->unique_name << endl;
+				o<<tab<< "  port map ( X => H_Level_"<<i+1<<"_summand , " << endl; 
+				o<<tab<< "             Y => "<<second_summand.str()<< ", " << endl; 
+				o<<tab<< "             Cin => '0'," << endl;
+				o<<tab<< "             R => H_Level_"<<i+1<<"_Reg_"<<j<<", " << endl; 
+				o<<tab<< "             clk => clk, " << endl;
+				o<<tab<< "             rst => rst " << endl;
+				o<<tab<< "               );" << endl<<endl;
+					
+				//o<<tab<<"H_Level_"<<i+1<<"_Reg_"<<j<<"<="<< first_summand.str() << " + " << second_summand.str()<<";"<< endl;
 			}
 			else
 				if (j==2) {} //do nothing (the second register on the level is always processed with the first
 					else //for the rest of the registers just propagate their contents to the next level
-						o<<tab<<"H_Level_"<<i+1<<"_Reg_"<<j-1<<"<="<<"H_Level_"<<i<<"_Reg_"<<j<<"_d;"<<endl;
+					{
+					ostringstream tmpSig;
+						tmpSig<<"H_Level_"<<i<<"_Reg_"<<j;
+						o<<tab<<"H_Level_"<<i+1<<"_Reg_"<<j-1<<"<="<< get_delay_signal_name(tmpSig.str(),intadd2->pipeline_depth())<<";"<<endl;
+								
+					//	o<<tab<<"H_Level_"<<i+1<<"_Reg_"<<j-1<<"<="<<"H_Level_"<<i<<"_Reg_"<<j<<"_d;"<<endl;
+					}
 		}
 	}
 
-	o<<tab<<"High1 <= H_Level_"<<partsY-1<<"_Reg_1_d"<<";"<<endl;
+	o<<tab<<"High1 <= H_Level_"<<partsY-1<<"_Reg_1"<<";"<<endl;
 }
 
 /**
@@ -660,13 +709,23 @@ int i,j;
 	for (j=1; j<=partsY;j++)
 		for (i=1;i<=j;i++){
 			if ((j==1) and (i==1) )
-				o<<tab<<"PartialBits_Level_1_Reg_1 <= \"0\" & L_Level_0_Reg_1_d("<< multiplier_width_Y -1 <<" downto 0);"<< endl;
+				o<<tab<<"PartialBits_Level_1_Reg_1 <= \"0\" & L_Level_0_Reg_1("<< multiplier_width_Y -1 <<" downto 0);"<< endl;
 			else{
 				//just propagate the registers from 1 to j-1
 				if (i<j)
-					o<<tab<<"PartialBits_Level_"<<j<<"_Reg_"<<i <<"<= "<<"PartialBits_Level_"<<j-1<<"_Reg_"<< i <<"_d;"<<endl;
+				{
+					ostringstream temp;
+					temp<<"PartialBits_Level_"<<j-1<<"_Reg_"<<i;
+					o<<tab<<"PartialBits_Level_"<<j<<"_Reg_"<<i <<"<= "<<get_delay_signal_name(temp.str(),intadd2->pipeline_depth())<<";"<<endl;
+				}
 				else //if i=j compute the jth register
-					o<<tab<<"PartialBits_Level_"<<j<<"_Reg_"<<i <<"<= "<<"(\"0\" & L_Level_"<<j-1<<"_Reg_1_d("<<multiplier_width_Y-1<<" downto 0)) + "<<"(\"0\" & H_Level_"<<j-2<<"_Reg_1_d("<<multiplier_width_Y-1<<" downto 0)) + "<< "PartialBits_Level_"<<j-1<<"_Reg_"<<i-1<<"_d("<< multiplier_width_Y  <<") ;"<<endl; 
+				{
+					ostringstream temp;
+					temp<<"PartialBits_Level_"<<j-1<<"_Reg_"<<i-1;
+					o<<tab<<"PartialBits_Level_"<<j<<"_Reg_"<<i<<"<= "<<"(\"0\" & L_Level_"<<j-1<<"_Reg_1("<<multiplier_width_Y-1<<" downto 0)) + "
+																														<<"(\"0\" & H_Level_"<<j-2<<"_Reg_1("<<multiplier_width_Y-1<<" downto 0)) + "
+																														<< get_delay_signal_name(temp.str(),intadd2->pipeline_depth())<<"("<<multiplier_width_Y<<");"<<endl; 
+				}
 			}	
 		}
 }
@@ -678,11 +737,12 @@ int i,j;
  **/
 void IntMultiplier::pipeline_addition(std::ostream& o)
 {
-		// substract the exponents of X and Y. 
+ostringstream temp;
+temp<<"PartialBits_Level_"<< partsY <<"_Reg_"<< partsY;
 		o<<tab<< "int_adder_component: " << intadd1->unique_name << endl;
-		o<<tab<< "  port map ( X => Low1_d("<<partsX * multiplier_width_X -1<<" downto 0"<<") , " << endl; 
+		o<<tab<< "  port map ( X => "<< get_delay_signal_name("Low1",intadd2->pipeline_depth())<< "("<<partsX * multiplier_width_X -1<<" downto 0"<<") , " << endl; 
 		o<<tab<< "             Y => High1("<<partsX * multiplier_width_X -1<<" downto 0"<<"), " << endl; 
-		o<<tab<< "             Cin => PartialBits_Level_"<< partsY <<"_Reg_"<< partsY<<"_d("<< multiplier_width_Y <<")," << endl;
+		o<<tab<< "             Cin => "<<get_delay_signal_name(temp.str(),intadd2->pipeline_depth()) <<"("<< multiplier_width_Y <<")," << endl;
 		o<<tab<< "             R => temp_result, " << endl; 
 		o<<tab<< "             clk => clk, " << endl;
 		o<<tab<< "             rst => rst " << endl;
@@ -701,11 +761,15 @@ void IntMultiplier::delay_partial_bits(std::ostream& o)
 	//make the string that will gather all partial bits from the last level
 	the_bits.str("");;
 	for (i=partsY;i>0;i--)
+	{
+	ostringstream temp;
+	temp<<"PartialBits_Level_"<< partsY <<"_Reg_"<<i;
 		if (i!=1) 
-			the_bits << "PartialBits_Level_"<< partsY <<"_Reg_"<<i<<"_d("<< multiplier_width_Y-1 << " downto 0" <<")"<<" & ";
+			the_bits << get_delay_signal_name(temp.str(),intadd2->pipeline_depth())<<"("<< multiplier_width_Y-1 << " downto 0" <<")"<<" & ";
 		else
-			the_bits << "PartialBits_Level_"<< partsY <<"_Reg_"<<i<<"_d("<< multiplier_width_Y-1 << " downto 0" <<")";
-
+			the_bits << get_delay_signal_name(temp.str(),intadd2->pipeline_depth())<<"("<< multiplier_width_Y-1 << " downto 0" <<")";
+	
+	}
 	//setup the pipeline part that will carry the low part of the final result
 	o<<tab<<"PartialBits_Reg <= "<<the_bits.str()<<";"<<endl;
 	o<<tab<<"partial_bits <= "<<get_delay_signal_name("PartialBits_Reg",intadd1->pipeline_depth())<<";"<<endl;

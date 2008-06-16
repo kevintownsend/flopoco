@@ -77,5 +77,6 @@ private:
 	int pipe_levels; 
 	
 	IntAdder *intadd1; 
+	IntAdder *intadd2; 
 };
 #endif
