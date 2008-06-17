@@ -73,75 +73,66 @@ Target* target;
 
 static void usage(char *name){
 	cerr << "\nUsage: "<<name<<" <operator specification list>\n" ;
-	cerr << "  Each operator specification is one of\n";
+	cerr << "Each operator specification is one of: \n";
 	cerr << "    LeftShifter  wIn  MaxShift\n";
 	cerr << "    RightShifter wIn  MaxShift\n";
 	cerr << "    LZOC wIn wOut\n";
 	//	cerr << "    Mux wIn n \n"; killed by Florent
 	cerr << "    IntAdder wIn\n";
-	cerr << "      Integer adder, possibly pipelined to arbitrary frequency (almost)\n";
+	cerr << "      Integer adder, possibly pipelined\n";
+	cerr << "    FPAdder wEX wFX wEY wFY wER wFR\n";
+	cerr << "      Floating-point adder \n";
+	cerr << "    IntMultiplier wInX wInY \n";
+	cerr << "      Integer multiplier of two integers X and Y of sizes wInX and wInY \n";	
+	// not ready for release
+	//	cerr << "    Karatsuba wInX wInY \n";
+	//	cerr << "      integer multiplier of two integers X and Y of sizes wInX and wInY. For now the sizes must be equal \n";	
+	cerr << "    FPMultiplier wEX wFX wEY wFY wER wFR\n";
+	cerr << "      Floating-point multiplier \n";
+	cerr << "    IntConstMult w c\n";
+	cerr << "      Integer constant multiplier: w - input size, c - the constant\n";
+	cerr << "    FPConstMult wE_in wF_in wE_out wF_out cst_sgn cst_exp cst_int_sig\n";
+	cerr << "      Floating-point constant multiplier (NPY)\n";
+	cerr << "      The constant is provided as integral significand and integral exponent.\n";
+#ifdef HAVE_SOLLYA
+	cerr << "    CRFPConstMult  wE_in wF_in  wE_out wF_out  constant_expr \n";
+	cerr << "      Correctly-rounded floating-point constant multiplier (NPY)\n";
+	cerr << "      The constant is provided as a Sollya expression, between double quotes.\n";
+#endif // HAVE_SOLLYA
 	cerr << "    LongAcc wE_in wF_in MaxMSB_in LSB_acc MSB_acc\n";
 	cerr << "      Long fixed-point accumulator\n";
 	cerr << "    LongAcc2FP MaxMSB_in LSB_acc MSB_acc wE_out wF_out \n";
 	cerr << "      Post-normalisation unit for LongAcc \n";
-	cerr << "    FPAdder wEX wFX wEY wFY wER wFR\n";
-	cerr << "      floating-point adder \n";
-	cerr << "    IntConstMult w c\n";
-	cerr << "      integer constant multiplier: w is input size, c is the constant.\n";
-	cerr << "    FPConstMult wE_in wF_in wE_out wF_out cst_sgn cst_exp cst_int_sig\n";
-	cerr << "      floating-point constant multiplier.\n";
-	cerr << "      The constant is provided as integral significand and integral exponent.\n";
-#ifdef HAVE_SOLLYA
-	cerr << "    CRFPConstMult  wE_in wF_in  wE_out wF_out  constant_expr \n";
-	cerr << "      Correctly-rounded floating-point constant multiplier.\n";
-	cerr << "      The constant is provided as a Sollya expression, between quotes\n";
-#endif // HAVE_SOLLYA
-	cerr << "    IntMultiplier wInX wInY \n";
-	cerr << "      integer multiplier of two integers X and Y of sizes wInX and wInY \n";	
-	// not ready for release
-	//	cerr << "    Karatsuba wInX wInY \n";
-	//	cerr << "      integer multiplier of two integers X and Y of sizes wInX and wInY. For now the sizes must be equal \n";	
-	cerr << "    FPMultiplier wEX wFX wEY wFY wER wFR normalize\n";
-	cerr << "      floating-point multiplier \n";
-	cerr << "      normalize can be either 0 or 1. \n";     	
 	cerr << "    DotProduct wE wFX wFY MaxMSB_in LSB_acc MSB_acc\n";
-	cerr << "      floating-point dot product unit \n";
+	cerr << "      Floating-point dot product unit \n";
 	cerr << "    FPExp wE wF\n";
-	cerr << "      exponential function\n";
+	cerr << "      Floating-point exponential function (NPY)\n";
 	cerr << "    FPLog wE wF\n";
-	cerr << "      logarithm function\n";
+	cerr << "      Floating-point logarithm function (NPY)\n";
 #ifdef HAVE_HOTBM
 	cerr << "    HOTBM function wI wO degree\n";
-	cerr << "      High-order table-based method for generating a given function\n";
-	cerr << "      wI - input width, wO - output width, degree - degree of minimax\n";
-	cerr << "      function - sollya-syntaxed function to implement\n";
-	cerr << "         (must be escaped, e.g. enclosed in double quotes)\n";
+	cerr << "      High-Order Table-Based Method for fixed-point functions (NPY)\n";
+	cerr << "      wI - input width, wO - output width, degree - degree of polynomial approx\n";
+	cerr << "      function - sollya-syntaxed function to implement, between double quotes\n";
 #endif // HAVE_HOTBM
 	cerr << "    TestBench n\n";
-	cerr << "       produce a behavorial test bench for the preceding operator\n";
+	cerr << "       Behavorial test bench for the preceding operator\n";
 	cerr << "       This test bench will include standard tests, plus n random tests.\n";
 	cerr << "    BigTestBench n\n";
-	cerr << "       Same as above, but generates a more VHDL efficient test bench.\n";
+	cerr << "       Same as above, more VHDL efficient, less practical for debugging.\n";
 	cerr << "    Wrapper\n";
-	cerr << "       produce a wrapper for the preceding operator named after it and with Wrapped mentioning \n";
-	cerr << "       (e.g. to get synthesis results without having the operator optimised out)\n";
-	cerr << "  In addition several options affect the operators following them:\n";
-	cerr << "   -outputfile=<output file name>\n";
-	cerr << "       sets the filename (default flopoco.vhdl)\n";
-	cerr << "   -verbose=<1|2|3>\n";
-	cerr << "       sets the verbosity level (default 0)\n";
-	cerr << "   -target=<StratixII|VirtexIV>\n";
-	cerr << "       sets the hardware target\n";
-	cerr << "   -pipeline=<yes|no>\n";
-	cerr << "       pipeline the operators (default=yes)\n";
-	cerr << "   -frequency=<frequency in MHz>\n";
-	cerr << "       target frequency (default=400)\n";
+	cerr << "       Wraps the preceding operator between registers\n";
+	cerr << "(NPY) Not pipelined yet\n";
+	cerr << "General options, affecting the operators that follow them:\n";
+	cerr << "   -outputfile=<output file name>    (default=flopoco.vhdl)\n";
+	cerr << "   -verbose=<1|2|3>                  (default=0)\n";
+	cerr << "   -pipeline=<yes|no>                (default=yes)\n";
+	cerr << "   -frequency=<frequency in MHz>     (default=400)\n";
+	cerr << "   -target=<StratixII|VirtexIV>      (default=VirtexIV)\n";
 	cerr << "   -DSP_blocks=<yes|no>\n";
 	cerr << "       optimize for the use of DSP blocks (default=yes)\n";
 	cerr << "   -name=<entity name>\n";
 	cerr << "       defines the name of the VHDL entity of the next operator\n";
-
-	//  cerr << "    FPAdd wE wF\n";
 	exit (EXIT_FAILURE);
 }
 
@@ -182,7 +173,7 @@ void add_operator(Operator *op) {
 		op->unique_name=cl_name;
 		cl_name="";
 	}
-	// TODO check name nor already in list...
+	// TODO check name not already in list...
 	// TODO this procedure should be a static method of operator, so that other operators can call it
 	oplist.push_back(op);
 }
@@ -349,32 +340,7 @@ bool parse_command_line(int argc, char* argv[]){
 				add_operator(op);
 			}
 		}
-		else if(opname=="FPMultiplier"){
-			int nargs = 7; // was 7
-			if (i+nargs > argc)
-				usage(argv[0]);
-			else {
-				int wEX = check_strictly_positive(argv[i++], argv[0]);
-				int wFX = check_strictly_positive(argv[i++], argv[0]);
-				int wEY = check_strictly_positive(argv[i++], argv[0]);
-				int wFY = check_strictly_positive(argv[i++], argv[0]);
-				int wER = check_strictly_positive(argv[i++], argv[0]);
-				int wFR = check_strictly_positive(argv[i++], argv[0]);
-				int norm = atoi(argv[i++]);
-
-				cerr << "> FPMultiplier , wEX="<<wEX<<", wFX="<<wFX<<", wEY="<<wEY<<", wFY="<<wFY<<", wER="<<wER<<", wFR="<<wFR<< " Normalized="<< norm<<" \n";
-				
-				if ((norm==0) or (norm==1))	{
-					if ((wEX==wEY) && (wEX==wER)){
-						op = new FPMultiplier(target, wEX, wFX, wEY, wFY, wER, wFR, norm);
-						add_operator(op);
-					}else
-						cerr<<"(For now) the inputs must have the same size"<<endl;
-				}else   
-					cerr<<"normalized must be 0 or 1"<<endl;
-			}
-		} 
-		else if(opname=="IntAdder"){ // toy 
+		else if(opname=="IntAdder"){
 			int nargs = 1;
 			if (i+nargs > argc)
 				usage(argv[0]);
@@ -409,6 +375,48 @@ bool parse_command_line(int argc, char* argv[]){
 				add_operator(op);
 			}    
 		}   
+		else if(opname=="FPMultiplier"){
+			int nargs = 6; 
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int wEX = check_strictly_positive(argv[i++], argv[0]);
+				int wFX = check_strictly_positive(argv[i++], argv[0]);
+				int wEY = check_strictly_positive(argv[i++], argv[0]);
+				int wFY = check_strictly_positive(argv[i++], argv[0]);
+				int wER = check_strictly_positive(argv[i++], argv[0]);
+				int wFR = check_strictly_positive(argv[i++], argv[0]);
+
+				cerr << "> FPMultiplier , wEX="<<wEX<<", wFX="<<wFX<<", wEY="<<wEY<<", wFY="<<wFY<<", wER="<<wER<<", wFR="<<wFR<<" \n";
+				
+				if ((wEX==wEY) && (wEX==wER)){
+					op = new FPMultiplier(target, wEX, wFX, wEY, wFY, wER, wFR, 1);
+					add_operator(op);
+				}else
+					cerr<<"(For now) the inputs must have the same size"<<endl;
+			}
+		} 
+		else if(opname=="FPAdder"){
+			int nargs = 6;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int wEX = check_strictly_positive(argv[i++], argv[0]);
+				int wFX = check_strictly_positive(argv[i++], argv[0]);
+				int wEY = check_strictly_positive(argv[i++], argv[0]);
+				int wFY = check_strictly_positive(argv[i++], argv[0]);
+				int wER = check_strictly_positive(argv[i++], argv[0]);
+				int wFR = check_strictly_positive(argv[i++], argv[0]);
+				
+				cerr << "> FPAdder , wEX="<<wEX<<", wFX="<<wFX<<", wEY="<<wEY<<", wFY="<<wFY<<", wER="<<wER<<", wFR="<<wFR<<" \n";
+						
+					if ((wEX==wEY) && (wEX==wER)){
+						op = new FPAdder(target, wEX, wFX, wEY, wFY, wER, wFR);
+						add_operator(op);
+					}else
+						cerr<<"(For now) the inputs and outputs must have the same size"<<endl;
+			}
+		} 
 		else if(opname=="LongAcc"){
 			int nargs = 5;
 			if (i+nargs > argc)
@@ -457,39 +465,6 @@ bool parse_command_line(int argc, char* argv[]){
 				add_operator(op);
 			}
 		}
-		else if(opname=="FPAdder"){
-			int nargs = 6;
-			if (i+nargs > argc)
-				usage(argv[0]);
-			else {
-				int wEX = check_strictly_positive(argv[i++], argv[0]);
-				int wFX = check_strictly_positive(argv[i++], argv[0]);
-				int wEY = check_strictly_positive(argv[i++], argv[0]);
-				int wFY = check_strictly_positive(argv[i++], argv[0]);
-				int wER = check_strictly_positive(argv[i++], argv[0]);
-				int wFR = check_strictly_positive(argv[i++], argv[0]);
-				
-				cerr << "> FPAdder , wEX="<<wEX<<", wFX="<<wFX<<", wEY="<<wEY<<", wFY="<<wFY<<", wER="<<wER<<", wFR="<<wFR<<" \n";
-						
-					if ((wEX==wEY) && (wEX==wER)){
-						op = new FPAdder(target, wEX, wFX, wEY, wFY, wER, wFR);
-						add_operator(op);
-					}else
-						cerr<<"(For now) the inputs and outputs must have the same size"<<endl;
-			}
-		} 
-// 		else if(opname=="Mux"){
-// 			int nargs = 2;
-// 			if (i+nargs > argc)
-// 				usage(argv[0]);
-// 			else {
-// 				int wIn = check_strictly_positive(argv[i++], argv[0]);
-// 				int n = check_strictly_positive(argv[i++], argv[0]);
-// 				cerr << "> Mux , wIn="<<wIn<<", n="<<n<<"\n";
-// 				op = new Mux(target, wIn, n);
-// 				add_operator(op);
-// 			}		
-// 		}
 		else if(opname=="DotProduct"){
 			int nargs = 6;
 			if (i+nargs > argc)
@@ -506,7 +481,45 @@ bool parse_command_line(int argc, char* argv[]){
 				add_operator(op);
 			}
 		}
-		
+#ifdef HAVE_HOTBM
+		else if (opname == "HOTBM") {
+			int nargs = 4;
+			if (i+nargs > argc)
+				usage(argv[0]); // and exit
+			string func = argv[i++];
+			int wI = check_strictly_positive(argv[i++], argv[0]);
+			int wO = check_strictly_positive(argv[i++], argv[0]);
+			int n  = check_strictly_positive(argv[i++], argv[0]);
+			cerr << "> HOTBM func='" << func << "', wI=" << wI << ", wO=" << wO <<endl;
+			op = new HOTBM(target, func, wI, wO, n);
+			if(cl_name!="")	op->unique_name=cl_name;
+			oplist.push_back(op);
+		}
+#endif // HAVE_HOTBM
+		else if (opname == "FPExp")
+		{
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0]); // and exit
+			int wE = check_strictly_positive(argv[i++], argv[0]);
+			int wF = check_strictly_positive(argv[i++], argv[0]);
+			cerr << "> FPExp: wE=" << wE << " wF=" << wF << endl;
+			op = new FPExp(target, wE, wF);
+			if(cl_name!="")	op->unique_name=cl_name;
+			oplist.push_back(op);
+		}
+		else if (opname == "FPLog")
+		{
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0]); // and exit
+			int wE = check_strictly_positive(argv[i++], argv[0]);
+			int wF = check_strictly_positive(argv[i++], argv[0]);
+			cerr << "> FPLog: wE=" << wE << " wF=" << wF << endl;
+			op = new FPLog(target, wE, wF);
+			if(cl_name!="")	op->unique_name=cl_name;
+			oplist.push_back(op);
+		}
 		else if (opname == "Wrapper") {
 			int nargs = 0;
 			if (i+nargs > argc)
@@ -550,57 +563,6 @@ bool parse_command_line(int argc, char* argv[]){
 			if(cl_name!="")	op->unique_name=cl_name;
 			oplist.push_back(new BigTestBench(target, toWrap, n));
 		}
-#ifdef HAVE_HOTBM
-		else if (opname == "HOTBM") {
-			int nargs = 4;
-			if (i+nargs > argc)
-				usage(argv[0]); // and exit
-			string func = argv[i++];
-			int wI = check_strictly_positive(argv[i++], argv[0]);
-			int wO = check_strictly_positive(argv[i++], argv[0]);
-			int n  = check_strictly_positive(argv[i++], argv[0]);
-			cerr << "> HOTBM func='" << func << "', wI=" << wI << ", wO=" << wO <<endl;
-			op = new HOTBM(target, func, wI, wO, n);
-			if(cl_name!="")	op->unique_name=cl_name;
-			oplist.push_back(op);
-		}
-#endif // HAVE_HOTBM
-		else if (opname == "FPExp")
-		{
-			int nargs = 2;
-			if (i+nargs > argc)
-				usage(argv[0]); // and exit
-			int wE = check_strictly_positive(argv[i++], argv[0]);
-			int wF = check_strictly_positive(argv[i++], argv[0]);
-			cerr << "> FPExp: wE=" << wE << " wF=" << wF << endl;
-			op = new FPExp(target, wE, wF);
-			if(cl_name!="")	op->unique_name=cl_name;
-			oplist.push_back(op);
-		}
-		else if (opname == "FPLog")
-		{
-			int nargs = 2;
-			if (i+nargs > argc)
-				usage(argv[0]); // and exit
-			int wE = check_strictly_positive(argv[i++], argv[0]);
-			int wF = check_strictly_positive(argv[i++], argv[0]);
-			cerr << "> FPLog: wE=" << wE << " wF=" << wF << endl;
-			op = new FPLog(target, wE, wF);
-			if(cl_name!="")	op->unique_name=cl_name;
-			oplist.push_back(op);
-		}
-//     else if(opname=="FPAdd"){
-//       // 2 arguments
-//       if (argc < i+2)
-// 	usage(argv[0]);
-//       else {
-// 	int wE = atoi(argv[i+1]);
-// 	int wF = atoi(argv[i+2]);
-// 	cerr << "> FPAdd, wE="<<wE<<", wF="<<wF<<"\n";
-// 	cerr << "  NOT IMPLEMENTED"<<endl;
-// 	i+=3;
-//       }        
-//     }
 		else  {
 			cerr << "ERROR: Problem parsing input line, exiting";
 			usage(argv[0]);
