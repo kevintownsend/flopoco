@@ -53,8 +53,6 @@ LongAcc2FP::LongAcc2FP(Target* target, int MaxMSBX, int LSBA, int MSBA, int wE_o
 			 <<wE_out<<"_"<<wF_out;
 	unique_name=name.str();
 
-	// This operator is a sequential one
-	set_sequential();
 
 	// Set up various architectural parameters
 	sizeAcc = MSBA-LSBA+1;	
@@ -68,6 +66,11 @@ LongAcc2FP::LongAcc2FP(Target* target, int MaxMSBX, int LSBA, int MSBA, int wE_o
 	leftShifter = new Shifter(target,sizeAcc,sizeAcc,Left);
 	oplist.push_back(leftShifter);
 
+	// This operator is a sequential one
+	set_sequential();
+	set_pipeline_depth(leadZOCounter->pipeline_depth() + leftShifter->pipeline_depth());
+
+
 	//compute the bias value
 	expBias = (1<<(wE_out-1)) -1; 
 
@@ -76,10 +79,10 @@ LongAcc2FP::LongAcc2FP(Target* target, int MaxMSBX, int LSBA, int MSBA, int wE_o
 	add_output ("R", 3 + wE_out + wF_out);
 
 	
-	add_delay_signal("resultSign0",1,leadZOCounter->pipeline_depth() + leftShifter->pipeline_depth());	
-	add_delay_signal_bus("pipeA",sizeAcc,leadZOCounter->pipeline_depth());
-	add_delay_signal("expRAdjusted",wE_out,leftShifter->pipeline_depth());
-	add_delay_signal("excBits",2, leftShifter->pipeline_depth());
+	add_delay_signal_no_reset("resultSign0",1,leadZOCounter->pipeline_depth() + leftShifter->pipeline_depth());	
+	add_delay_signal_bus_no_reset("pipeA",sizeAcc,leadZOCounter->pipeline_depth());
+	add_delay_signal_no_reset("expRAdjusted",wE_out,leftShifter->pipeline_depth());
+	add_delay_signal_no_reset("excBits",2, leftShifter->pipeline_depth());
 	
 	
 	add_signal("nZO",wOutLZOC);
@@ -205,6 +208,7 @@ int i;
 	o<<tab<< "R <= excRes & "
 			 <<get_delay_signal_name("resultSign0",leadZOCounter->pipeline_depth())<<" & "
 			 <<get_delay_signal_name("expRAdjusted",leftShifter->pipeline_depth())<<"("<<wE_out-1<<" downto 0) & ";
+
 	if (sizeAcc-1-wF_out>=0)		 
 			o <<"resFrac("<<sizeAcc-2<<" downto "<<sizeAcc-1-wF_out<<");"<<endl;
 	else

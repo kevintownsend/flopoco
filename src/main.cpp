@@ -31,6 +31,7 @@
 #include "Operator.hpp"
 #include "Shifters.hpp"
 #include "LZOC.hpp"
+#include "LZOCShifterSticky.hpp"
 #include "IntAdder.hpp"
 #include "IntMultiplier.hpp"
 #include "Karatsuba.hpp"
@@ -337,6 +338,18 @@ bool parse_command_line(int argc, char* argv[]){
 				int wOut = check_strictly_positive(argv[i++], argv[0]);
 				cerr << "> LZOC, wIn="<<wIn<<", wOut="<<wOut<<"\n";
 				op = new LZOC(target, wIn, wOut);
+				add_operator(op);
+			}
+		}
+		else if(opname=="LZOCShifterSticky"){
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int wIn = check_strictly_positive(argv[i++], argv[0]);
+				int wOut = check_strictly_positive(argv[i++], argv[0]);
+				cerr << "> LZOCShifterSticky, wIn="<<wIn<<", wOut="<<wOut<<"\n";
+				op = new LZOCShifterSticky(target, wIn, wOut);
 				add_operator(op);
 			}
 		}

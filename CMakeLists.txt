@@ -78,7 +78,7 @@ ADD_EXECUTABLE(flopoco
  src/IntMultiplier
  src/Karatsuba
  src/IntAdder
- src/LZOC
+ src/LZOC src/LZOCShifterSticky
  src/Shifters
  src/LongAcc
  src/LongAcc2FP

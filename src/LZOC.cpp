@@ -37,7 +37,7 @@ using namespace std;
 /** The LZOC constructor
 *@param[in] target the target device for this operator
 *@param[in] wIn the width of the input
-*@param[in[ wOut the width of the output 
+*@param[in] wOut the width of the output 
 */
 LZOC::LZOC(Target* target, int wIn, int wOut) :
 	Operator(target), wIn(wIn), wOut(wOut)  {
