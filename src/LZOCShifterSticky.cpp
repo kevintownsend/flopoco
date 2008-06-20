@@ -44,11 +44,11 @@ The width of the lzo output will be floor(log2(wIn+1)). It should be accessed as
 
 // TODO to be optimal for FPAdder, we have to provide a way to disable the sticky computation.
 
-LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut) :
-	Operator(target), wIn(wIn), wOut(wOut)  {
+LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut, bool compute_sticky) :
+	Operator(target), wIn(wIn), wOut(wOut), compute_sticky(compute_sticky) {
 
 	ostringstream name; 
-	name <<"LZOCShifterSticky_"<<wIn<<"_"<<wOut;
+	name <<"LZOCShifterSticky_"<<wIn<<"_"<<wOut<<"_"<<compute_sticky;
 
 	unique_name=name.str();
 
@@ -86,7 +86,8 @@ LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut) :
 	add_input ("OZb");  
 	add_output("Count", wCount);
 	add_output("O", wOut);
-	add_output("Sticky");
+	if(compute_sticky)
+		add_output("Sticky");
 	
 	// the first stage doesn't need to register zeroes
 	size[wCount] = 1<<wCount;
@@ -106,12 +107,14 @@ LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut) :
 		if (is_sequential() && i!=wCount) {
 			add_registered_signal(level[i], size[i]);
 			leveld[i] = level[i] + "_d" ;
-			add_registered_signal(stickyName.str());
+			if(compute_sticky)
+				add_registered_signal(stickyName.str());
 		}
 		else {
 			add_signal(           level[i], size[i]);
 			leveld[i] = level[i];
-			add_signal(           stickyName.str());
+			if(compute_sticky)
+				add_signal(           stickyName.str());
 		}
 		// The signal that holds the leading zero count
 		if(i<wCount) {
@@ -160,7 +163,8 @@ void LZOCShifterSticky::output_vhdl(std::ostream& o, std::string name) {
 		o << "(" << size[wCount]-wIn-1 << " downto 0 => '0') & I;" << endl ;
 
 	o<<tab<<"sozb <= OZb;"<<endl;
-	o<<tab<<"sticky" << wCount << " <= '0';"<<endl;
+	if(compute_sticky)
+		o<<tab<<"sticky" << wCount << " <= '1';"<<endl;
 
 	for  (int i = wCount; i>=1; i--){
 		int p2i = 1 << i;
@@ -172,11 +176,17 @@ void LZOCShifterSticky::output_vhdl(std::ostream& o, std::string name) {
 		o << tab << level[i-1] << " <= " ;
 		o << " " << leveld[i] << "(" << size[i]-1 << " downto " << size[i]-size[i-1] << ")   when count" << i-1 << "='1'" << endl;
 		o << tab << tab << tab <<  "else " << leveld[i] << "(" << size[i-1]-1 << " downto 0);" << endl; 
-		o << tab << "sticky" << i-1 << " <= '0' when (count" << i-1 << "='1' or " << leveld[i] << "(" << size[i]-size[i-1]-1 << " downto 0) = (" << size[i]-size[i-1]-1 << " downto 0 => '0'))  else sticky" << i << ";" << endl; 
+		if(compute_sticky){
+			o << tab << "sticky" << i-1 << " <= '0' when (count" << i-1 << "='1' or " << leveld[i] << "(" << size[i]-size[i-1]-1 << " downto 0) = (" << size[i]-size[i-1]-1 << " downto 0 => '0'))  else sticky" << i;
+			if(is_sequential() && i<wCount) o << "_d";
+			o << ";" << endl;
+		}
+			
 		o << endl;
 	}
 
-	o << tab << "sticky <= sticky0_d;" << endl;
+	if(compute_sticky)
+		o << tab << "sticky <= sticky0_d;" << endl;
 	o << tab << "O      <= level0_d;" << endl;
 	o << tab << "Count  <= ";
 	for (int i=wCount-1; i >=0; i--){

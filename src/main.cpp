@@ -78,6 +78,7 @@ static void usage(char *name){
 	cerr << "    LeftShifter  wIn  MaxShift\n";
 	cerr << "    RightShifter wIn  MaxShift\n";
 	cerr << "    LZOC wIn wOut\n";
+	cerr << "    LZOCShifterSticky wIn wOut compute_sticky\n";
 	//	cerr << "    Mux wIn n \n"; killed by Florent
 	cerr << "    IntAdder wIn\n";
 	cerr << "      Integer adder, possibly pipelined\n";
@@ -157,6 +158,16 @@ int check_positive_or_null(char* s, char* cmd) {
 	}
 	return n;
 }
+
+bool check_boolean(char* s, char* cmd) {
+	int n=atoi(s);
+	if (n!=0 && n!=1) {
+		cerr<<"ERROR: got "<<s<<", expected a boolean (0 or 1)."<<endl;
+		usage(cmd);
+	}
+	return (n==1);
+}
+
 
 int check_sign(char* s, char* cmd) {
 	int n=atoi(s);
@@ -342,14 +353,15 @@ bool parse_command_line(int argc, char* argv[]){
 			}
 		}
 		else if(opname=="LZOCShifterSticky"){
-			int nargs = 2;
+			int nargs = 3;
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
 				int wIn = check_strictly_positive(argv[i++], argv[0]);
 				int wOut = check_strictly_positive(argv[i++], argv[0]);
-				cerr << "> LZOCShifterSticky, wIn="<<wIn<<", wOut="<<wOut<<"\n";
-				op = new LZOCShifterSticky(target, wIn, wOut);
+				bool computesticky  = check_boolean(argv[i++], argv[0]);
+				cerr << "> LZOCShifterSticky, wIn="<<wIn<<", wOut="<<wOut<<", compute_sticky=" << computesticky << endl;
+				op = new LZOCShifterSticky(target, wIn, wOut, computesticky);
 				add_operator(op);
 			}
 		}

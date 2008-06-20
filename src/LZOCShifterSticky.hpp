@@ -36,7 +36,7 @@
 class LZOCShifterSticky : public Operator
 {
 public:
-	LZOCShifterSticky(Target* target, int wIn, int wOut);
+	LZOCShifterSticky(Target* target, int wIn, int wOut, bool compute_sticky);
 	~LZOCShifterSticky();
 
 	int wIn;
@@ -50,6 +50,8 @@ public:
 	void output_vhdl(std::ostream& o, std::string name);
 
 private:
+	/** if true, compute the sticky bit. If false, save this hardware */
+	bool compute_sticky; 
 	string level[42]; // the names of the signals, just to make code more readable 
 	string leveld[42]; // same but possibly delayed 
 	int size[42]; // Their size. Do we need to count more than 2^42 bits in FloPoCo? 
