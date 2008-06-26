@@ -216,11 +216,8 @@ int i;
 	o << tab << "                 else'0';" << endl;
 	o << tab << "summand <= ("<<sizeSummand-1<<" downto 0 => '0')  when "<< get_delay_signal_name("flushedToZero", shifter->pipeline_depth()) << "='1'  else shifted_frac("<<sizeShiftedFrac-1<<" downto "<<wFX<<");" << endl;
 	o << endl;
+
 	o << tab << "-- 2's complement of the summand" << endl;
-	// This is the line that should be pipelined
-	
-	
-	//was o << tab << "summand2c <= summand when "<< get_delay_signal_name("signX", shifter->pipeline_depth()) <<"='0' else ("<<sizeSummand-1<<" downto 0 => '0') - summand; "<< endl;
 	//Don't compute 2's complement just yet, just invert the bits and leave the addition of the extra 1 in accumulation.
 	o << tab << "summand2c <= summand when "<< get_delay_signal_name("signX", shifter->pipeline_depth()) <<"='0' else not(summand); "<< endl;
 	
