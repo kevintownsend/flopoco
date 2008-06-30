@@ -41,10 +41,10 @@ class StratixII : public Target
   StratixII() : Target()
   {
     // all these values are set more or less randomly, to match  Stratix II more or less
-    _fastcarry_delay = 3.4e-11; // s    
+    _fastcarry_delay = 3.3e-11; // s    
     _elem_wire_delay = 0.3e-11;
     _lut2lut_delay = 1.5e-10;
-    _lut_delay =  1.5e-9; 
+    _lut_delay =  2.3e-9; 
     _mult_x_inputs=18;
     _mult_y_inputs=18;
   }
