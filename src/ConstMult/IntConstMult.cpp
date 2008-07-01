@@ -189,7 +189,7 @@ IntConstMult::IntConstMult(Target* _target, int _xsize, mpz_class _n) :
 	nsize = intlog2(n);
 	rsize = nsize+xsize;
 
-	add_input("X", xsize);
+	add_input("inX", xsize);
 	add_output("R", rsize);
 
 
@@ -219,8 +219,10 @@ IntConstMult::IntConstMult(Target* _target, int _xsize, mpz_class _n) :
 	if(verbose) showShiftAddDag();
 
 	// pipeline it
-	if (target->is_pipelined())
+	if (target->is_pipelined()) {
+		cerr << "Pipelined IntConstMult sometimes still buggy! Use TestBench on the ones you build!"<<endl;
 		set_sequential();
+	}
 	else
 		set_combinatorial();
 
@@ -237,7 +239,6 @@ IntConstMult::IntConstMult(Target* _target, int _xsize, mpz_class _n) :
 
 
 		if(verbose)	cout<<"  Pipeline depth is "<< pipeline_depth << endl;
-		// TODO replace with signals + registers
 		for (int i=0; i<implementation->saolist.size(); i++) {
 			ShiftAddOp *sao = implementation->saolist[i];
 			if(sao->is_registered) {
@@ -247,6 +248,15 @@ IntConstMult::IntConstMult(Target* _target, int _xsize, mpz_class _n) :
 				add_signal_bus(sao->name, sao->size);
 			}	
 		}
+		// Special case for X
+		ShiftAddOp *px = implementation->PX;
+			if(px->is_registered) {
+				add_delay_signal_bus(px->name, px->size, px->delayed_by);
+			}
+			else { 
+				add_signal_bus(px->name, px->size);
+			}	
+		
 	}
 	else { 
 		for (int i=0; i<implementation->saolist.size(); i++) 
@@ -527,6 +537,7 @@ void IntConstMult::output_vhdl(std::ostream& o, std::string name) {
 	
 	// Architecture
 	o << "begin" << endl;
+	o << tab << "X <= inX;" << endl;
 	for (i=0; i<implementation->saolist.size(); i++) {
 		ShiftAddOp *p = implementation->saolist[i];
 		o<<tab<<"-- " << *p <<endl;
@@ -637,7 +648,7 @@ void optimizeLefevre(const vector<mpz_class>& constants) {
 TestIOMap IntConstMult::getTestIOMap()
 {
 	TestIOMap tim;
-	tim.add(*get_signal_by_name("X"));
+	tim.add(*get_signal_by_name("inX"));
 	tim.add(*get_signal_by_name("R"));
 	return tim;
 }
