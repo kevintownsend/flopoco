@@ -220,7 +220,8 @@ IntConstMult::IntConstMult(Target* _target, int _xsize, mpz_class _n) :
 
 	// pipeline it
 	if (target->is_pipelined()) {
-		cerr << "Pipelined IntConstMult sometimes still buggy! Use TestBench on the ones you build!"<<endl;
+		// TODO get rid of this warning when the bug is fixed
+		cerr << "\n *************WARNING**************\n  Pipelined IntConstMult sometimes still buggy! Use TestBench on the ones you build!\n"<<endl;
 		set_sequential();
 	}
 	else
@@ -261,6 +262,7 @@ IntConstMult::IntConstMult(Target* _target, int _xsize, mpz_class _n) :
 	else { 
 		for (int i=0; i<implementation->saolist.size(); i++) 
 			add_signal_bus(implementation->saolist[i]->name, implementation->saolist[i]->size);
+		add_signal_bus("X", xsize);
 	}
 
 	// That's all folks. The remaining of this method is a handcoded
