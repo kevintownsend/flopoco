@@ -243,7 +243,7 @@ IntConstMult::IntConstMult(Target* _target, int _xsize, mpz_class _n) :
 		for (int i=0; i<implementation->saolist.size(); i++) {
 			ShiftAddOp *sao = implementation->saolist[i];
 			if(sao->is_registered) {
-				add_delay_signal_bus(sao->name, sao->size, sao->delayed_by);
+				add_delay_signal_bus_no_reset(sao->name, sao->size, sao->delayed_by);
 			}
 			else { 
 				add_signal_bus(sao->name, sao->size);
@@ -252,7 +252,7 @@ IntConstMult::IntConstMult(Target* _target, int _xsize, mpz_class _n) :
 		// Special case for X
 		ShiftAddOp *px = implementation->PX;
 			if(px->is_registered) {
-				add_delay_signal_bus(px->name, px->size, px->delayed_by);
+				add_delay_signal_bus_no_reset(px->name, px->size, px->delayed_by);
 			}
 			else { 
 				add_signal_bus(px->name, px->size);

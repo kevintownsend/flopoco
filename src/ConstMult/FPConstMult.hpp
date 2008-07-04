@@ -29,6 +29,11 @@ public:
 	mpz_class xcut_sig_rd; // an int on wF_in+1 bits, which is mpfr_xcut_sig rounded down 
 
 	IntConstMult *icm;
+	int icm_depth;
+
+	/** The method that declares all the signals and sets up the pipeline.
+	 It is called by the constructors of FPConstMult and CRFPConstMult to avoid code duplication */
+	void setup();
 
 	// Overloading the virtual functions of Operator
 	//  void output_vhdl_component(ostream& o, string name);

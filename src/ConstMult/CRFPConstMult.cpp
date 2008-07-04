@@ -132,9 +132,6 @@ CRFPConstMult::CRFPConstMult(Target* target, int wE_in, int wF_in, int wE_out, i
 		cout << "  mpzclass cst_sig  = " << cst_sig;
 	}
 
-	icm = new IntConstMult(target, wF_in+1, cst_sig);
-	oplist.push_back(icm);
-
 
 
 	// build the name
@@ -144,12 +141,19 @@ CRFPConstMult::CRFPConstMult(Target* target, int wE_in, int wF_in, int wE_out, i
 		  <<"_"<<wE_in<<"_"<<wF_in<<"_"<<wE_out<<"_"<<wF_out;
 	unique_name=name.str();
 
-	// Set up the IO signals
-	add_FP_input("X", wE_in, wF_in);
-	add_FP_output("R", wE_out, wF_out);
 
 	// cleaning up
 	mpfr_clears(mpR, mpfr_xcut_sig, xcut_wF, mpfr_cst_sig, NULL);
+
+	icm = new IntConstMult(target, wF_in+1, cst_sig);
+	oplist.push_back(icm);
+
+	if (target->is_pipelined())
+		set_sequential();
+	else 
+		set_combinatorial();
+
+	setup();
 
 }
 
