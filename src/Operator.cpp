@@ -314,7 +314,7 @@ string  Operator::add_delay_signal_bus_no_reset(const string name, const int wid
 
 string  Operator::get_delay_signal_name(const string name, const int delay) {
 	ostringstream o;
-	if(delay==0)
+	if(delay==0 || is_sequential()==false)
 		return name;
 	else {
 		o << name;
