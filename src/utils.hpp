@@ -24,6 +24,11 @@ double itrunc(double number, int bits);
 double ifloor(double number, int bits);
 double ifloor_strict(double number, int bits);
 
+mpz_class maxExp(int wE);
+mpz_class minExp(int wE);
+mpz_class bias(int wE);
+
+
 //  2 ^ power
 double intpow2(int power);
 

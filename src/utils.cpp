@@ -39,7 +39,7 @@ string unsigned_binary(mpz_class x, int size){
 	char bit;
 
 	if(x<0) {
-		cerr<<"printBinPosNumGMP: Positive number expected, got x="<<x.get_d()<<endl;
+		cerr<<"unsigned_binary: Positive number expected, got x="<<x.get_d()<<endl;
 		exit(EXIT_FAILURE);
 	}
 	po2 = ((mpz_class) 1)<<size;
@@ -201,7 +201,7 @@ void printBinNumGMP(ostream& o, mpz_class x, int size)
 		px=-x;
 	}
 	else {
-		o<<" ";
+		//		o<<" "; removed because VHDL " 110" (with a space) is bad
 		px=x;
 	}
 	printBinPosNumGMP(o, px, size);
@@ -293,6 +293,20 @@ int intlog2(mpz_class number)
 	}
 	return result;
 }
+
+
+mpz_class maxExp(int wE){
+	return mpz_class(1)<<(wE-1);
+}
+
+mpz_class minExp(int wE){
+	return 1 - (mpz_class(1)<<(wE-1));
+}
+
+mpz_class bias(int wE){
+	return (mpz_class(1)<<(wE-1)) - 1;
+}
+
 
 mpz_class getLargeRandom(int n)
 {
