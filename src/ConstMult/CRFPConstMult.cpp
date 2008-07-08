@@ -34,7 +34,7 @@
 #include "../Operator.hpp"
 #include "FPConstMult.hpp"
 #include "CRFPConstMult.hpp"
-#include "../FloFP.hpp"
+#include "../FPNumber.hpp"
 
 using namespace std;
 

@@ -9,7 +9,7 @@
 #include "Operator.hpp"
 #include "LZOC.hpp"
 #include "Shifters.hpp"
-#include "FloFP.hpp"
+#include "FPNumber.hpp"
 #include "IntAdder.hpp"
 
 /** The FPAdder class */

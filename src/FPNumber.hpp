@@ -1,5 +1,5 @@
-#ifndef __FLOFP_HPP
-#define __FLOFP_HPP
+#ifndef __FPNumber_HPP
+#define __FPNumber_HPP
 
 #include <gmpxx.h>
 #include <mpfr.h>
@@ -10,23 +10,23 @@
  * but at the same times can easily be converted to VHDL signals.
  * Used for TestBench generation.
  */
-class FloFP
+class FPNumber
 {
 public:
 	/**
-	 * Constructs a new FloFP.
+	 * Constructs a new FPNumber.
 	 * @param wE the width of the exponent
 	 * @param wF the width of the significant
 	 */
-	FloFP(int wE, int wF, bool normalise = true);
+	FPNumber(int wE, int wF, bool normalise = true);
 
 	/**
-	 * Constructs a new initialised FloFP.
+	 * Constructs a new initialised FPNumber.
 	 * @param wE the width of the exponent
 	 * @param wF the width of the significant
 	 * @param m the initial value.
 	 */
-	FloFP(int wE, int wF, mpfr_t m, bool normalise = true);
+	FPNumber(int wE, int wF, mpfr_t m, bool normalise = true);
 
 	/**
 	 * Retrieves the significant.
@@ -61,26 +61,26 @@ public:
 	mpz_class getExponentSignalValue();
 
 	/**
-	 * Multiplies two FloFPs using MPFR.
-	 * @return a FloFP representing the result of the multiplication.
+	 * Multiplies two FPNumbers using MPFR.
+	 * @return a FPNumber representing the result of the multiplication.
 	 */
-	FloFP operator*(FloFP);
+	FPNumber operator*(FPNumber);
 
 	/**
-	 * Adds two FloFPs using MPFR.
-	 * @return a FloFP representing the result of the addition.
+	 * Adds two FPNumbers using MPFR.
+	 * @return a FPNumber representing the result of the addition.
 	 */
-	FloFP operator+(FloFP);
+	FPNumber operator+(FPNumber);
 	
 
 	/**
-	 * Multiplies a FloFP with an MPFR.
-	 * @return a FloFP representing the result of the multiplication.
+	 * Multiplies a FPNumber with an MPFR.
+	 * @return a FPNumber representing the result of the multiplication.
 	 */
-	FloFP operator*(mpfr_t);
+	FPNumber operator*(mpfr_t);
 
 	/**
-	 * Converts the currently stored FloFP to an mpfr_t
+	 * Converts the currently stored FPNumber to an mpfr_t
 	 * @param[out] m a preinitialized mpfr_t where to store the floating point
 	 * @param[in] withFakeZero use a very small number to represent zero, so that the sign is preserved
 	 */
@@ -90,14 +90,14 @@ public:
 	 * Stores an mpfr_t as an internal representation of Flopoco.
 	 * @param m the mpfr_t to store.
 	 */
-	FloFP &operator=(mpfr_t m);
+	FPNumber &operator=(mpfr_t m);
 
 	/**
 	 * Assignes a signal value. Converts the signal value to the
-	 * relevant FloFP fields.
+	 * relevant FPNumber fields.
 	 * @param s the signal value to assign.
 	 */
-	FloFP &operator=(mpz_class s);
+	FPNumber &operator=(mpz_class s);
 
 	/**
 	 * Retrieved the VHDL signal representation of this floating point.
@@ -109,19 +109,19 @@ public:
 	 * Equality operator. Everything does through MPFR to make sure
 	 * correct rounding occurs.
 	 */
-	FloFP &operator=(FloFP fp);
+	FPNumber &operator=(FPNumber fp);
 
 	/**
-	 * Returns the exponential of the current FloFP.
-	 * @return a FloFP storing the exponential.
+	 * Returns the exponential of the current FPNumber.
+	 * @return a FPNumber storing the exponential.
 	 */
-	FloFP exp();
+	FPNumber exp();
 
 	/**
-	 * Returns the natural logarithm of the current FloFP.
-	 * @return a FloFP storing the natural logarithm.
+	 * Returns the natural logarithm of the current FPNumber.
+	 * @return a FPNumber storing the natural logarithm.
 	 */
-	FloFP log();
+	FPNumber log();
 
 	/**
 	 * Returns the whole signal rounded down.
@@ -143,33 +143,33 @@ public:
 	/**
 	 * Assigns a double.
 	 */
-	FloFP &operator=(double x);
+	FPNumber &operator=(double x);
 
 	/**
-	 * Changes this FloFP, so that it is decremented with
+	 * Changes this FPNumber, so that it is decremented with
 	 * one ULP. Postfix form.
 	 */
-	FloFP &operator--(int);
+	FPNumber &operator--(int);
 
 	/**
-	 * Changes this FloFP, so that it is incremented with
+	 * Changes this FPNumber, so that it is incremented with
 	 * one ULP. Postfix form.
 	 */
-	FloFP &operator++(int);
+	FPNumber &operator++(int);
 
 	/**
-	 * Changes this FloFP, so that it is decremented with
+	 * Changes this FPNumber, so that it is decremented with
 	 * the given number of ULPs.
 	 * @param x how many ULPs to decrement it with.
 	 */
-	FloFP &operator-=(int x);
+	FPNumber &operator-=(int x);
 
 	/**
-	 * Changes this FloFP, so that it is incremented with
+	 * Changes this FPNumber, so that it is incremented with
 	 * the given number of ULPs.
 	 * @param x how many ULPs to increment it with.
 	 */
-	FloFP &operator+=(int x);
+	FPNumber &operator+=(int x);
 
 private:
 	/** The width of the exponent */
@@ -195,7 +195,7 @@ private:
 	bool normalise;
 
 	/** Should we shift the fraction with one bit?
-	 * See the comment at the beginig of FloFP.cpp */
+	 * See the comment at the beginig of FPNumber.cpp */
 	bool mustAddLeadingZero;
 
 	/** Should we store all values rounded down? */

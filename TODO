@@ -48,6 +48,7 @@ Version 0.6 : FPLog
 Version 0.7 : FPExp
 Version 0.8 : DotProduct
 -- we're here (much faster than expected)
+Version ???   FPSquarer
 Version ???   FPAddSub (for FFT butterfly structure)
 Version ???   FixToFPUniformDist (2008 ASAP paper by Thomas with improvements)
 Version ???   FPSquarer

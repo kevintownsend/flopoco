@@ -4,7 +4,7 @@
 #include <math.h>	// For NaN
 
 #include "FPExp.hpp"
-#include "FloFP.hpp"
+#include "FPNumber.hpp"
 #include "utils.hpp"
 
 #include "fpexp/stdfragment.h"
@@ -373,7 +373,7 @@ void FPExp::fillTestCase(mpz_class a[])
 	mpz_class& svRD = a[1];
 	mpz_class& svRU = a[2];
 
-	FloFP fpX(wE, wF), fpR(wE, wF);
+	FPNumber fpX(wE, wF), fpR(wE, wF);
 	fpX = svX;
 	fpR = fpX.exp();
 

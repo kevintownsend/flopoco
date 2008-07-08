@@ -1,4 +1,4 @@
-#include "FloFP.hpp"
+#include "FPNumber.hpp"
 #include "utils.hpp"
 
 /* Exponent of 2, used to represent signed zero */
@@ -27,39 +27,39 @@
  * getFractionSignalValue().
  */
 
-FloFP::FloFP(int wE, int wF, bool normalise)
+FPNumber::FPNumber(int wE, int wF, bool normalise)
 	: wE(wE), wF(wF), normalise(normalise), mustAddLeadingZero(0), mustRoundDown(0)
 {
 	if (wE > 30)
-		throw "FloFP::FloFP: Using exponents larger than 30 bits is not supported.";
+		throw "FPNumber::FPNumber: Using exponents larger than 30 bits is not supported.";
 }
 
-FloFP::FloFP(int wE, int wF, mpfr_t m, bool normalise)
+FPNumber::FPNumber(int wE, int wF, mpfr_t m, bool normalise)
 	: wE(wE), wF(wF), normalise(normalise), mustAddLeadingZero(0), mustRoundDown(0)
 {
 	if (wE > 30)
-		throw "FloFP::FloFP: Using exponents larger than 30 bits is not supported.";
+		throw "FPNumber::FPNumber: Using exponents larger than 30 bits is not supported.";
 	operator=(m);
 }
 
-mpz_class FloFP::getMantissaSignalValue()
+mpz_class FPNumber::getMantissaSignalValue()
 {
 	if (mustRoundDown)
-		throw std::string("This FloFP does not have the correct mantissa value.");
+		throw std::string("This FPNumber does not have the correct mantissa value.");
 	return mantissa;
 }
 
-mpz_class FloFP::getExceptionSignalValue() { return exception; }
+mpz_class FPNumber::getExceptionSignalValue() { return exception; }
 
-mpz_class FloFP::getSignSignalValue() { return sign; }
-mpz_class FloFP::getExponentSignalValue()
+mpz_class FPNumber::getSignSignalValue() { return sign; }
+mpz_class FPNumber::getExponentSignalValue()
 {
 	if (mustRoundDown)
-		throw std::string("This FloFP does not have the correct exponent value.");
+		throw std::string("This FPNumber does not have the correct exponent value.");
 	return exponent;
 }
 
-mpz_class FloFP::getFractionSignalValue()
+mpz_class FPNumber::getFractionSignalValue()
 {
 	/* SwW: Add a leading zero */
 	if (!normalise && mustAddLeadingZero)
@@ -68,7 +68,7 @@ mpz_class FloFP::getFractionSignalValue()
 	return mantissa + (mpz_class(1)<<wF);
 }
 
-FloFP FloFP::operator*(FloFP fp)
+FPNumber FPNumber::operator*(FPNumber fp)
 {
 	mpfr_t x, y, r;
 	mpfr_init2(x, wF+1);
@@ -77,7 +77,7 @@ FloFP FloFP::operator*(FloFP fp)
 	getMPFR(x);
 	fp.getMPFR(y);
 	mpfr_mul(r, x, y, GMP_RNDN);
-	FloFP flofp(max(wE, fp.wE) + 1, wF + fp.wF + 2, r);
+	FPNumber flofp(max(wE, fp.wE) + 1, wF + fp.wF + 2, r);
 
 	/* SwW: Detect the „condition” */
 	if (mpfr_get_exp(x) + mpfr_get_exp(y) != mpfr_get_exp(r))
@@ -87,14 +87,14 @@ FloFP FloFP::operator*(FloFP fp)
 	return flofp;
 }
 
-FloFP FloFP::operator*(mpfr_t mpX)
+FPNumber FPNumber::operator*(mpfr_t mpX)
 {
-	FloFP fpX(24, mpfr_get_prec(mpX)+32, mpX);
+	FPNumber fpX(24, mpfr_get_prec(mpX)+32, mpX);
 
 	return *this * fpX;
 }
 
-FloFP FloFP::operator+(FloFP fp)
+FPNumber FPNumber::operator+(FPNumber fp)
 {
 	mpfr_t x, y, r;
 	mpfr_init2(x, 1+wF);
@@ -103,15 +103,15 @@ FloFP FloFP::operator+(FloFP fp)
 	getMPFR(x);
 	fp.getMPFR(y);
 	mpfr_add(r, x, y, GMP_RNDN);
-	FloFP flofp(wE, wF, r);
+	FPNumber flofp(wE, wF, r);
 
 	return flofp;
 }
 
-void FloFP::getMPFR(mpfr_t mp, bool withFakeZero)
+void FPNumber::getMPFR(mpfr_t mp, bool withFakeZero)
 {
 	if (!normalise)
-		throw "FloFP::getMPFR: Non-normalised case not implemented.";
+		throw "FPNumber::getMPFR: Non-normalised case not implemented.";
 
 	/* NaN */
 	if (exception == 3)
@@ -166,7 +166,7 @@ void FloFP::getMPFR(mpfr_t mp, bool withFakeZero)
 		mpfr_neg(mp, mp, GMP_RNDN);
 }
 
-FloFP& FloFP::operator=(mpfr_t mp_)
+FPNumber& FPNumber::operator=(mpfr_t mp_)
 {
 	mpfr_t mp;
 	mpfr_init2(mp, mpfr_get_prec(mp_));
@@ -277,7 +277,7 @@ FloFP& FloFP::operator=(mpfr_t mp_)
 	return *this;
 }
 
-FloFP& FloFP::operator=(mpz_class s)
+FPNumber& FPNumber::operator=(mpz_class s)
 {
 	mantissa = s & ((mpz_class(1) << wF) - 1); s = s >> wF;
 	exponent = s & ((mpz_class(1) << wE) - 1); s = s >> wE;
@@ -285,29 +285,29 @@ FloFP& FloFP::operator=(mpz_class s)
 	exception = s & mpz_class(3); s = s >> 2;
 
 	if (s != 0)
-		throw std::string("FloFP::operator= s is bigger than expected.");
+		throw std::string("FPNumber::operator= s is bigger than expected.");
 
 	return *this;
 }
 
-mpz_class FloFP::getSignalValue()
+mpz_class FPNumber::getSignalValue()
 {
 	if (mustRoundDown)
-		throw std::string("This FloFP does not have the correct value.");
+		throw std::string("This FPNumber does not have the correct value.");
 
 	/* Sanity checks */
 	if ((sign != 0) && (sign != 1))
-		throw std::string("FloFP::getSignal: sign is invalid.");
+		throw std::string("FPNumber::getSignal: sign is invalid.");
 	if ((exception < 0) || (exception > 3))
-		throw std::string("FloFP::getSignal: exception is invalid.");
+		throw std::string("FPNumber::getSignal: exception is invalid.");
 	if ((exponent < 0) || (exponent >= (1<<wE)))
-		throw std::string("FloFP::getSignal: exponent is invalid.");
+		throw std::string("FPNumber::getSignal: exponent is invalid.");
 	if ((mantissa < 0) || (mantissa >= (mpz_class(1)<<wF)))
-		throw std::string("FloFP::getSignal: mantissa is invalid.");
+		throw std::string("FPNumber::getSignal: mantissa is invalid.");
 	return (((((exception << 1) + sign) << wE) + exponent) << wF) + mantissa;
 }
 
-FloFP& FloFP::operator=(FloFP fp)
+FPNumber& FPNumber::operator=(FPNumber fp)
 {
 	mustAddLeadingZero = fp.mustAddLeadingZero;
 	mustRoundDown = fp.mustRoundDown;
@@ -322,7 +322,7 @@ FloFP& FloFP::operator=(FloFP fp)
 	return *this;
 }
 
-FloFP FloFP::exp()
+FPNumber FPNumber::exp()
 {
 	/* Compute exponential using MPFR */
 	mpfr_t mpR, mpX;
@@ -331,8 +331,8 @@ FloFP FloFP::exp()
 	getMPFR(mpX);
 	mpfr_exp(mpR, mpX, GMP_RNDD);
 	
-	/* Create FloFP */
-	FloFP ret(wE, wF);
+	/* Create FPNumber */
+	FPNumber ret(wE, wF);
 	ret.mustRoundDown = true;
 	ret = mpR;
 
@@ -342,7 +342,7 @@ FloFP FloFP::exp()
 	return ret;
 }
 
-FloFP FloFP::log()
+FPNumber FPNumber::log()
 {
 	/* Compute logarithm using MPFR */
 	mpfr_t mpR, mpX;
@@ -351,8 +351,8 @@ FloFP FloFP::log()
 	getMPFR(mpX, false);
 	mpfr_log(mpR, mpX, GMP_RNDD);
 	
-	/* Create FloFP */
-	FloFP ret(wE, wF);
+	/* Create FPNumber */
+	FPNumber ret(wE, wF);
 	ret.mustRoundDown = true;
 	ret = mpR;
 
@@ -362,27 +362,27 @@ FloFP FloFP::log()
 	return ret;
 }
 
-mpz_class FloFP::getRoundedDownSignalValue()
+mpz_class FPNumber::getRoundedDownSignalValue()
 {
 	if (!mustRoundDown)
 		throw std::string("Only correct value is stored.");
 	return (((((exception << 1) + sign) << wE) + exponent) << wF) + mantissa;
 }
 
-mpz_class FloFP::getRoundedUpSignalValue()
+mpz_class FPNumber::getRoundedUpSignalValue()
 {
 	if (!mustRoundDown)
 		throw std::string("Only correct value is stored.");
 	return (((((exception << 1) + sign) << wE) + exponent) << wF) + mantissa + 1;
 }
 
-void FloFP::getPrecision(int &wE, int &wF)
+void FPNumber::getPrecision(int &wE, int &wF)
 {
 	wE = this->wE;
 	wF = this->wF;
 }
 
-FloFP& FloFP::operator=(double x)
+FPNumber& FPNumber::operator=(double x)
 {
 	mpfr_t mp;
 	mpfr_init2(mp, 53);
@@ -395,7 +395,7 @@ FloFP& FloFP::operator=(double x)
 	return *this;
 }
 
-FloFP& FloFP::operator--(int)
+FPNumber& FPNumber::operator--(int)
 {
 	/* Decrementation from special values is hard-coded */
 	if (exception == 3)
@@ -443,7 +443,7 @@ FloFP& FloFP::operator--(int)
 	return *this;
 }
 
-FloFP& FloFP::operator++(int)
+FPNumber& FPNumber::operator++(int)
 {
 	/* Negate number */
 	sign = 1 - sign;
@@ -455,7 +455,7 @@ FloFP& FloFP::operator++(int)
 	return *this;
 }
 
-FloFP& FloFP::operator-=(int x)
+FPNumber& FPNumber::operator-=(int x)
 {
 	for ( ; x < 0; x++)
 		operator++(0);
@@ -464,7 +464,7 @@ FloFP& FloFP::operator-=(int x)
 	return *this;
 }
 
-FloFP& FloFP::operator+=(int x)
+FPNumber& FPNumber::operator+=(int x)
 {
 	return operator-=(-x);
 }

@@ -35,7 +35,7 @@
 #include "Operator.hpp"
 
 #include "FPMultiplier.hpp"
-#include "FloFP.hpp"
+#include "FPNumber.hpp"
 
 using namespace std;
 extern vector<Operator*> oplist;
@@ -1018,7 +1018,7 @@ void FPMultiplier::fillTestCase(mpz_class a[])
 	mpz_class &svfra = a[5];
 
 	/* Compute result */
-	FloFP x(wEX, wFX), y(wEY, wFY), r(wER, wFR, normalized);
+	FPNumber x(wEX, wFX), y(wEY, wFY), r(wER, wFR, normalized);
 	x = svx; y = svy;
 	r = x * y;
 

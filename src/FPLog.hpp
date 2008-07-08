@@ -10,7 +10,7 @@ class FirstInvTable;
 class FirstLogTable;
 class SecondInvTable;
 class OtherLogTable;
-class FloFP;
+class FPNumber;
 
 class FPLog : public Operator
 {

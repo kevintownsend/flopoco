@@ -3,7 +3,7 @@
 #include <math.h>	// for NaN
 
 #include "FPLog.hpp"
-#include "FloFP.hpp"
+#include "FPNumber.hpp"
 #include "utils.hpp"
 
 #include "fplog/FirstInvTable.hpp"
@@ -825,7 +825,7 @@ void FPLog::fillTestCase(mpz_class a[])
 	mpz_class& svRU = a[2];
 
 	/* Compute Log */
-	FloFP fpX(wE, wF), fpR(wE, wF);
+	FPNumber fpX(wE, wF), fpR(wE, wF);
 	fpX = svX;
 	fpR = fpX.log();
 

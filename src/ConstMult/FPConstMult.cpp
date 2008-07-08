@@ -33,7 +33,7 @@
 #include "../utils.hpp"
 #include "../Operator.hpp"
 #include "FPConstMult.hpp"
-#include "../FloFP.hpp"
+#include "../FPNumber.hpp"
 
 using namespace std;
 
@@ -280,7 +280,7 @@ void FPConstMult::fillTestCase(mpz_class a[])
 {
 	mpz_class& svX = a[0];
 	mpz_class& svR = a[1];
-	FloFP x(wE_in, wF_in), r(wE_out, wF_out);
+	FPNumber x(wE_in, wF_in), r(wE_out, wF_out);
 	x = svX;
 	r = x * mpY;
 	svR = r.getSignalValue();

@@ -89,7 +89,7 @@ ADD_EXECUTABLE(flopoco
  src/ConstMult/CRFPConstMult 
  src/TestCase
  src/TestIOMap
- src/FloFP
+ src/FPNumber
  src/fpexp/math_lib.cpp
  src/fpexp/signal.cpp
  src/fpexp/fragment.cpp

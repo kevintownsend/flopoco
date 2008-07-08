@@ -6,7 +6,7 @@
 #include "Operator.hpp"
 
 class Fragment;
-class FloFP;
+class FPNumber;
 
 class FPExp : public Operator
 {

@@ -1139,7 +1139,7 @@ void FPAdder::fillTestCase(mpz_class a[])
 	mpz_class& svFra = a[5];
 
 	/* Compute correct value */
-	FloFP x(wEX, wFX), y(wEY, wFY), r(wER, wFR);
+	FPNumber x(wEX, wFX), y(wEY, wFY), r(wER, wFR);
 	x = svX;
 	y = svY;
 	r = x+y;
