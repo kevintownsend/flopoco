@@ -34,21 +34,22 @@
 
 using namespace std;
 
-
-
-
-
 	// TODO there is a small inefficiency here, as most bits of s don't need to be copied all the way down
 
 
-
-
-
+/**
+ * The Shifter constructor
+ * @param[in]		target		the target device
+ * @param[in]		wIn			  the with of the input
+ * @param[in]		maxShift	the maximum shift ammount
+ * @param[in]		direction	can be either Left of Right. Determines the shift direction
+ **/
 Shifter::Shifter(Target* target, int wIn, int maxShift, ShiftDirection direction) :
 	Operator(target), wIn(wIn), maxShift(maxShift), direction(direction) {
 
 	wOut = wIn + maxShift;
 	wShiftIn = intlog2(maxShift);
+	cout <<"wShiftIn="<<wShiftIn<<endl;
 	ostringstream name;
 	if(direction==Left)
 		name <<"LeftShifter_";
@@ -78,7 +79,7 @@ Shifter::Shifter(Target* target, int wIn, int maxShift, ShiftDirection direction
 	if(is_sequential()) {
 		for (int i=0; i<wShiftIn; i++) {
 			/* approximate delay of this stage */
-			double stage_delay = target->lut_delay() + target->distant_wire_delay((1<<i));
+			double stage_delay = /*target->lut_delay() + */ 1.2 * target->local_wire_delay() * (1<<i) ;
 			if (critical_path + stage_delay > 1/target->frequency()) {
 				critical_path=stage_delay; 	// reset critical path
 				level_registered[i+1]= true;
@@ -130,16 +131,18 @@ Shifter::Shifter(Target* target, int wIn, int maxShift, ShiftDirection direction
 	
 }
 
-
+/**
+ *  destructor
+ */
 Shifter::~Shifter() {
 }
 
 
-
-
-
-
-
+/**
+ * Method belonging to the Operator class overloaded by the Shifter class
+ * @param[in,out] o     the stream where the current architecture will be outputed to
+ * @param[in]     name  the name of the entity corresponding to the architecture generated in this method
+ **/
 void Shifter::output_vhdl(std::ostream& o, std::string name) {
 	ostringstream signame;
 	Licence(o,"Florent de Dinechin, Bogdan Pasca (2007)");
@@ -216,5 +219,40 @@ void Shifter::output_vhdl(std::ostream& o, std::string name) {
 	o << "end architecture;" << endl << endl;
 }
 
+
+
+TestIOMap Shifter::getTestIOMap()
+{
+	TestIOMap tim;
+	tim.add(*get_signal_by_name("X"));
+	tim.add(*get_signal_by_name("S"));
+	tim.add(*get_signal_by_name("R"));
+	return tim;
+}
+
+void Shifter::fillTestCase(mpz_class a[])
+{
+	mpz_class& sx   = a[0];
+	mpz_class& ss   = a[1];
+	mpz_class& sr   = a[2];
+				
+	while (ss>maxShift)
+	ss=getLargeRandom(wShiftIn);
+
+	mpz_class shiftAmmount;
+	if (direction==Right)
+		shiftAmmount=maxShift-ss;
+	else
+		shiftAmmount=ss;
+		
+	mpz_class shiftedInput;
+	shiftedInput=sx;
+	
+	int i;
+	for (i=0;i<shiftAmmount;i++)
+			shiftedInput=shiftedInput*2;
+		
+	sr=shiftedInput;		
+}
 
 
