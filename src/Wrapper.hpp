@@ -5,6 +5,12 @@
 #include <gmpxx.h>
 #include "Wrapper.hpp"
 
+/** 
+ * A wrapper is a VHDL entity that places registers before and after
+ * an operator, so that you can synthesize it and get delay and area,
+ * without the synthesis tools optimizing out your design because it
+ * is connected to nothing.  
+ **/
 class Wrapper : public Operator
 {
 public:

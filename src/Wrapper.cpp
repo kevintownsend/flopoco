@@ -37,11 +37,16 @@
 #include "Wrapper.hpp"
 
 
-
+/** 
+ * The Wrapper constructor
+ * @param[in] target the target device
+ * @param[in] op the operator to be wrapped
+ **/
 Wrapper::Wrapper(Target* target, Operator *op):
 	Operator(target), op(op)
 {
-
+  /* the name of the Wrapped operator consists of the name of the operator to be 
+  wrapped followd by _Wrapper */
 	unique_name = op->unique_name + "_Wrapper";
 		
 	if (!target->is_pipelined()) 	
@@ -54,29 +59,28 @@ Wrapper::Wrapper(Target* target, Operator *op):
 	// declare internal registered signals
 	for(int i=0; i<op->ioList.size(); i++){
 		string idext = "i_" + op->ioList[i]->id() ;
-		add_registered_signal(idext, op->ioList[i]->width());
+		//the clock is not registred
+		if (op->ioList[i]->id()!="clk")
+			add_registered_signal(idext, op->ioList[i]->width());
 	}
 
 	//set pipeline parameters
 	set_pipeline_depth(2 + op->pipeline_depth());
-
-	/* add bogus clk and rst signal if the the target is not pipelined */
-	/*
-	if (!target->is_pipelined())
-	{
-		add_input("clk");
-		add_input("rst");
-	}
-	*/
 }
 
 
-
+/**
+ * The destructor
+ **/
 Wrapper::~Wrapper() {
 }
 
 
-
+/**
+ * Method belonging to the Operator class overloaded by the Wrapper class
+ * @param[in,out] o     the stream where the current architecture will be outputed to
+ * @param[in]     name  the name of the entity corresponding to the architecture generated in this method
+ **/
 void Wrapper::output_vhdl(ostream& o, string name) {
 
 	Licence(o,"Florent de Dinechin (2007)");
@@ -95,7 +99,7 @@ void Wrapper::output_vhdl(ostream& o, string name) {
 	// connect inputs
 	for(int i=0; i<op->ioList.size(); i++){
 		string idext = "i_" + op->ioList[i]->id() ;
-		if(op->ioList[i]->type() == Signal::in)
+		if ((op->ioList[i]->type() == Signal::in)&&(op->ioList[i]->id()!="clk"))
 			o << tab << idext << " <=  " << op->ioList[i]->id() << ";" << endl;
 	}
 
@@ -107,8 +111,11 @@ void Wrapper::output_vhdl(ostream& o, string name) {
 		if(i>0) 
 			o << tab << tab << "           ";
 		string idext = "i_" + op->ioList[i]->id() ;
-		if(op->ioList[i]->type() == Signal::in)
-			o << op->ioList[i]->id()  << " =>  " << idext << "_d";
+		if (op->ioList[i]->type() == Signal::in)
+			if (op->ioList[i]->id()!="clk")
+				o << op->ioList[i]->id()  << " =>  " << idext << "_d";
+			else
+				o << op->ioList[i]->id()  << " =>  clk";
 		else
 			o << op->ioList[i]->id()  << " =>  " << idext;
 		if (i < op->ioList.size()-1) 
