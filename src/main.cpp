@@ -78,7 +78,8 @@ static void usage(char *name){
 	cerr << "    LeftShifter  wIn  MaxShift\n";
 	cerr << "    RightShifter wIn  MaxShift\n";
 	cerr << "    LZOC wIn wOut\n";
-	cerr << "    LZOCShifterSticky wIn wOut compute_sticky\n";
+	cerr << "    LZOCShifterSticky wIn wOut zeroOrOne compute_sticky\n";
+	cerr << "      zeroOrOne what to count\n";
 	//	cerr << "    Mux wIn n \n"; killed by Florent
 	cerr << "    IntAdder wIn\n";
 	cerr << "      Integer adder, possibly pipelined\n";
@@ -353,15 +354,16 @@ bool parse_command_line(int argc, char* argv[]){
 			}
 		}
 		else if(opname=="LZOCShifterSticky"){
-			int nargs = 3;
+			int nargs = 4;
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
 				int wIn = check_strictly_positive(argv[i++], argv[0]);
 				int wOut = check_strictly_positive(argv[i++], argv[0]);
+				int countWhat = atoi(argv[i++]);
 				bool computesticky  = check_boolean(argv[i++], argv[0]);
-				cerr << "> LZOCShifterSticky, wIn="<<wIn<<", wOut="<<wOut<<", compute_sticky=" << computesticky << endl;
-				op = new LZOCShifterSticky(target, wIn, wOut, computesticky);
+				cerr << "> LZOCShifterSticky, wIn="<<wIn<<", wOut="<<wOut<<", zeroOrOne="<<countWhat<<" compute_sticky=" << computesticky << endl;
+				op = new LZOCShifterSticky(target, wIn, wOut,countWhat, computesticky);
 				add_operator(op);
 			}
 		}

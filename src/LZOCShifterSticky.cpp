@@ -44,8 +44,8 @@ The width of the lzo output will be floor(log2(wIn+1)). It should be accessed as
 
 // TODO to be optimal for FPAdder, we have to provide a way to disable the sticky computation.
 
-LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut, bool compute_sticky) :
-	Operator(target), wIn(wIn), wOut(wOut), compute_sticky(compute_sticky) {
+LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut,int countType, bool compute_sticky) :
+	Operator(target), wIn(wIn), wOut(wOut), compute_sticky(compute_sticky), zoc(countType) {
 
 	ostringstream name; 
 	name <<"LZOCShifterSticky_"<<wIn<<"_"<<wOut<<"_"<<compute_sticky;
@@ -75,6 +75,7 @@ LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut, bool com
 		i++;
 		p2i = 1<<(i-1);
 		size[i] = size[i-1] + p2i;
+		cout<<"size "<<i<<" is="<<size[i]<<endl;
 		// Invariant: size[i] = wOut + 2^i -1
 	}
 	
@@ -83,7 +84,7 @@ LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut, bool com
 	// should be identical to : wCount = intlog2(wIn+1); // +1 for the case all zeroes
 	//Set up the IO signals
 	add_input ("I", wIn);
-	add_input ("OZb");  
+//	add_input ("OZb");  
 	add_output("Count", wCount);
 	add_output("O", wOut);
 	if(compute_sticky)
@@ -129,7 +130,7 @@ LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut, bool com
 
 	if (is_sequential()){
 		set_pipeline_depth(wCount-1); 
-		add_delay_signal_no_reset("sozb",1, wCount-1);
+	//	add_delay_signal_no_reset("sozb",1, wCount-1);
 	}
 }
 
@@ -160,9 +161,9 @@ void LZOCShifterSticky::output_vhdl(std::ostream& o, std::string name) {
 	if(wIn + wOut == size[wCount]) // no padding needed
 		o << "I";
 	else 
-		o << "(" << size[wCount]-wIn-1 << " downto 0 => '0') & I;" << endl ;
+		o << "I & (" << size[wCount]-wIn-1 << " downto 0 => '0');" << endl ;
 
-	o<<tab<<"sozb <= OZb;"<<endl;
+//	o<<tab<<"sozb <= OZb;"<<endl;
 	if(compute_sticky)
 		o<<tab<<"sticky" << wCount << " <= '1';"<<endl;
 
@@ -170,12 +171,22 @@ void LZOCShifterSticky::output_vhdl(std::ostream& o, std::string name) {
 		int p2i = 1 << i;
 		int p2io2 = 1 << (i-1);
 
-		o << tab << "count" << i-1 << " <= '1' when " << leveld[i] << "(" << size[i]-1 << " downto " << size[i]-p2io2 << ") = (" << p2io2-1 << " downto 0 => " << get_delay_signal_name("sozb",wCount-i)<< ")   else '0';" << endl; 
+		o << tab << "count" << i-1 << " <= '1' when " << leveld[i] << "(" << size[i]-1 << " downto " << size[i]-p2io2 << ") = (" << p2io2-1 << " downto 0 => '" << 
+		zoc<< "')   else '0';" << endl; 
 
 		// REM in the following,  size[i]-size[i-1]-1 is almost always equal to p2io2, except in the first stage
-		o << tab << level[i-1] << " <= " ;
-		o << " " << leveld[i] << "(" << size[i]-1 << " downto " << size[i]-size[i-1] << ")   when count" << i-1 << "='1'" << endl;
-		o << tab << tab << tab <<  "else " << leveld[i] << "(" << size[i-1]-1 << " downto 0);" << endl; 
+		if (i==wCount){
+			o << tab << level[i-1] << " <= " ;
+			o << " " << "("<<leveld[i] << "(" << size[i]/2 -1 << " downto " << 0 << ") & "<<zero_generator(size[i-1]-size[i]/2, 0)<<" )  when count" << i-1 << "='1'" << endl;
+			o << tab << tab << tab <<  "else (" << leveld[i] << "(" << size[i]-1 << " downto 0) &  "<<zero_generator(size[i-1]-size[i],0)<<") ;" << endl; 
+		}
+		else
+		{
+			o << tab << level[i-1] << " <= " ;
+			o << " " << leveld[i] << "(" << size[i]-1 << " downto " << size[i]-size[i-1] << ")   when count" << i-1 << "='1'" << endl;
+			o << tab << tab << tab <<  "else " << leveld[i] << "(" << size[i-1]-1 << " downto 0);" << endl; 
+		}
+		
 		if(compute_sticky){
 			o << tab << "sticky" << i-1 << " <= '0' when (count" << i-1 << "='1' or " << leveld[i] << "(" << size[i]-size[i-1]-1 << " downto 0) = (" << size[i]-size[i-1]-1 << " downto 0 => '0'))  else sticky" << i;
 			if(is_sequential() && i<wCount) o << "_d";

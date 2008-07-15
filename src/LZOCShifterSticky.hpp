@@ -5,6 +5,7 @@
 #include <gmp.h>
 #include <mpfr.h>
 #include <gmpxx.h>
+#include "utils.hpp"
 
 #include "Operator.hpp"
 
@@ -36,7 +37,7 @@
 class LZOCShifterSticky : public Operator
 {
 public:
-	LZOCShifterSticky(Target* target, int wIn, int wOut, bool compute_sticky);
+	LZOCShifterSticky(Target* target, int wIn, int wOut, int countType,bool compute_sticky);
 	~LZOCShifterSticky();
 
 	int wIn;
@@ -55,6 +56,9 @@ private:
 	string level[42]; // the names of the signals, just to make code more readable 
 	string leveld[42]; // same but possibly delayed 
 	int size[42]; // Their size. Do we need to count more than 2^42 bits in FloPoCo? 
+	
+	int zoc; //what to count 1 or 0 ?
+	
 };
 
 
