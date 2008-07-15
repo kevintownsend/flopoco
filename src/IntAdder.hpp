@@ -15,7 +15,7 @@ _fastcarry_delay for a new target  */
 class IntAdder : public Operator
 {
 public:
-	IntAdder(Target* target, int wIn);
+	IntAdder(Target* target, int wIn, const int p=0);
 	~IntAdder();
 	/** the width for X, Y and R*/
 	int wIn;
@@ -34,6 +34,9 @@ private:
 	int last_chunk_size; 
 	/** the number of pieline levels of the sequential operator*/ 
 	int pipe_levels;
+	
+	//force pipeline
+	int forcePipeline;
 };
 
 #endif

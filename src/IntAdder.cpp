@@ -40,10 +40,10 @@ using namespace std;
 /**
  * The IntAdder constructor
  * @param[in]		target		the target device
- * @param[in]		wIn			  the the with of the inputs and output
+ * @param[in]		wIn			  the with of the inputs and output
  **/
-IntAdder::IntAdder(Target* target, int wIn) :
-	Operator(target), wIn(wIn) {
+IntAdder::IntAdder(Target* target, int wIn, const int p) :
+	Operator(target), wIn(wIn), forcePipeline(p) {
 
 	ostringstream name;
 	name <<"IntAdder_"<<wIn;
@@ -71,7 +71,7 @@ IntAdder::IntAdder(Target* target, int wIn) :
 		else
 			pipe_levels=wIn/chunk_size;
 			
-		set_pipeline_depth(pipe_levels); 
+		set_pipeline_depth(pipe_levels+p); 
 		if(verbose) {
 			cout << tab <<"Estimated delay will be " << target->adder_delay(wIn) <<endl; 
 			cout << tab << "chunk="<<chunk_size << " freq=" << 1e-6/target->adder_delay(chunk_size) <<" levels="<<pipe_levels <<endl;
@@ -116,6 +116,9 @@ IntAdder::IntAdder(Target* target, int wIn) :
 			}	
 		
 	}
+	if (p==1)
+	add_registered_signal_with_sync_reset("r1reg",wIn);
+	
 }
 
 
@@ -146,7 +149,14 @@ void IntAdder::output_vhdl(std::ostream& o, std::string name) {
 	if(is_sequential()){
 		if(pipe_levels==0){
 			//addition simplification
+			if (forcePipeline==0)
 			o << tab << "R <= X + Y + Cin;" <<endl;      
+			else
+			{
+			o<< tab <<" r1reg <= X + Y + Cin;"<<endl;
+			o<< tab <<" R<=r1reg_d;"<<endl;
+			}
+			
 		}
 		else{
 			// Initialize the chunks
@@ -240,10 +250,22 @@ void IntAdder::output_vhdl(std::ostream& o, std::string name) {
 						maxIndex = i*chunk_size+chunk_size-1;
 						size = chunk_size;
 					}
+					if (forcePipeline==0)
+					{
+						ostringstream snamer;
+						snamer <<"ir_"<<i;
+						o << tab << "R(" << maxIndex << " downto " << i*chunk_size << ")  <=  "
+							<<  get_delay_signal_name(snamer.str(), pipe_levels -i) << "(" << size-1 << " downto 0);" << endl; 
+					}
+					else
+					{
 					ostringstream snamer;
-					snamer <<"ir_"<<i;
-					o << tab << "R(" << maxIndex << " downto " << i*chunk_size << ")  <=  "
-						<<  get_delay_signal_name(snamer.str(), pipe_levels -i) << "(" << size-1 << " downto 0);" << endl;
+						snamer <<"ir_"<<i;
+						o << tab << "r1reg_d(" << maxIndex << " downto " << i*chunk_size << ")  <=  "
+							<<  get_delay_signal_name(snamer.str(), pipe_levels -i) << "(" << size-1 << " downto 0);" << endl; 
+					o<<tab<<"R<=r1reg_d;"<<endl;
+					}
+					
 				}
 			}
 		}
