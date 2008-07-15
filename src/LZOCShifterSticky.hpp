@@ -37,7 +37,7 @@
 class LZOCShifterSticky : public Operator
 {
 public:
-	LZOCShifterSticky(Target* target, int wIn, int wOut, int countType,bool compute_sticky);
+	LZOCShifterSticky(Target* target, int wIn, int wOut, bool compute_sticky, const int countType=-1);
 	~LZOCShifterSticky();
 
 	int wIn;
@@ -53,6 +53,8 @@ public:
 private:
 	/** if true, compute the sticky bit. If false, save this hardware */
 	bool compute_sticky; 
+	/** -1 0 1. If -1 is present then generic LZOC is instatiated */
+	int countType;
 	string level[42]; // the names of the signals, just to make code more readable 
 	string leveld[42]; // same but possibly delayed 
 	int size[42]; // Their size. Do we need to count more than 2^42 bits in FloPoCo? 

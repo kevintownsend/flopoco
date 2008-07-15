@@ -44,7 +44,7 @@ The width of the lzo output will be floor(log2(wIn+1)). It should be accessed as
 
 // TODO to be optimal for FPAdder, we have to provide a way to disable the sticky computation.
 
-LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut,int countType, bool compute_sticky) :
+LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut, bool compute_sticky, const int countType) :
 	Operator(target), wIn(wIn), wOut(wOut), compute_sticky(compute_sticky), zoc(countType) {
 
 	ostringstream name; 
@@ -84,7 +84,7 @@ LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut,int count
 	// should be identical to : wCount = intlog2(wIn+1); // +1 for the case all zeroes
 	//Set up the IO signals
 	add_input ("I", wIn);
-//	add_input ("OZb");  
+	if (zoc==-1) add_input ("OZb");  
 	add_output("Count", wCount);
 	add_output("O", wOut);
 	if(compute_sticky)
@@ -130,7 +130,8 @@ LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut,int count
 
 	if (is_sequential()){
 		set_pipeline_depth(wCount-1); 
-	//	add_delay_signal_no_reset("sozb",1, wCount-1);
+		if (zoc==-1)
+		add_delay_signal_no_reset("sozb",1, wCount-1);
 	}
 }
 
@@ -163,7 +164,9 @@ void LZOCShifterSticky::output_vhdl(std::ostream& o, std::string name) {
 	else 
 		o << "I & (" << size[wCount]-wIn-1 << " downto 0 => '0');" << endl ;
 
-//	o<<tab<<"sozb <= OZb;"<<endl;
+	if (zoc==-1)
+	o<<tab<<"sozb <= OZb;"<<endl;
+	
 	if(compute_sticky)
 		o<<tab<<"sticky" << wCount << " <= '1';"<<endl;
 
@@ -171,8 +174,12 @@ void LZOCShifterSticky::output_vhdl(std::ostream& o, std::string name) {
 		int p2i = 1 << i;
 		int p2io2 = 1 << (i-1);
 
-		o << tab << "count" << i-1 << " <= '1' when " << leveld[i] << "(" << size[i]-1 << " downto " << size[i]-p2io2 << ") = (" << p2io2-1 << " downto 0 => '" << 
-		zoc<< "')   else '0';" << endl; 
+		o << tab << "count" << i-1 << " <= '1' when " << leveld[i] << "(" << size[i]-1 << " downto " << size[i]-p2io2 << ") = (" << p2io2-1 << " downto 0 => "; 
+		if (zoc==-1)
+			o<<get_delay_signal_name("sozb",wCount-i);
+		else
+			o<<"'"<<zoc<<"'";
+		o<<" )   else '0';" << endl; 
 
 		// REM in the following,  size[i]-size[i-1]-1 is almost always equal to p2io2, except in the first stage
 		if (i==wCount){
