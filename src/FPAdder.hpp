@@ -11,6 +11,7 @@
 #include "Shifters.hpp"
 #include "FPNumber.hpp"
 #include "IntAdder.hpp"
+#include "LZOCShifterSticky.hpp"
 
 /** The FPAdder class */
 class FPAdder : public Operator
@@ -67,6 +68,8 @@ private:
 	Shifter* rightShifter;
 	
 	IntAdder* adderList[8];
+	
+	LZOCShifterSticky* lzocs; 
 
 	int wF;
 	int wE;

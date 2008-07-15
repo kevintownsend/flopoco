@@ -84,20 +84,24 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	add_input ("X", wEX + wFX + 3);
 	add_input ("Y", wEY + wFY + 3);
+
 	add_output("rexp", wE);
 	add_output("rfrac", wF+1);
 	add_output("rsig", 1 );
 	add_output("rexc",2);
-	
-	
-	// instantiate a Leading zero counter
-	wOutLZC = int(ceil(log2(wFX+2+1)));
-	leadingZeroCounter = new LZOC(target, wFX+2, wOutLZC);
-	oplist.push_back(leadingZeroCounter);
 
-	//instantiate a left shifter
-	leftShifter = new Shifter(target,wFX+2,wFX+2,Left);
-	oplist.push_back(leftShifter);
+	// instantiate a Leading zero counter
+	if (! is_sequential())
+	{
+		wOutLZC = int(ceil(log2(wFX+2+1)));
+		leadingZeroCounter = new LZOC(target, wFX+2, wOutLZC);
+		oplist.push_back(leadingZeroCounter);
+
+		//instantiate a left shifter
+		leftShifter = new Shifter(target,wFX+2,wFX+2,Left);
+		oplist.push_back(leftShifter);
+	}
+		
 
 	//instantiate a right shifter
 	rightShifter = new Shifter(target,wFX+1,wFX+3,Right);
@@ -106,83 +110,62 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 	if (is_sequential())
 	{
 
-		intadd1 = new IntAdder(target, wE + 1);
-		//oplist.push_back(intadd1);
-
-		intadd2 = new IntAdder(target, wE);
-		//oplist.push_back(intadd2);
-
 		intaddClose1 = new IntAdder(target, wF + 3);
-		//oplist.push_back(intaddClose1);
+		intaddClose1->unique_name="intaddClose1";
+		oplist.push_back(intaddClose1);
 
 		intaddClose2 = new IntAdder(target, wF + 2);
-		//oplist.push_back(intaddClose2);
+		intaddClose2->unique_name="intaddClose2";
+		oplist.push_back(intaddClose2);
 
 		intaddClose3 = new IntAdder(target, wE + wF + 2);
-		//oplist.push_back(intaddClose3);
+		intaddClose3->unique_name="intaddClose3";
+		oplist.push_back(intaddClose3);
 
 		intaddFar1 = new IntAdder(target,wF+5);
-	//	oplist.push_back(intaddFar1);
+		intaddFar1->unique_name="intaddFar1";
+		oplist.push_back(intaddFar1);
 
 		intaddFar2 = new IntAdder(target,wE+1);
-		//oplist.push_back(intaddFar2);		
+		intaddFar2->unique_name="intaddFar2";
+		oplist.push_back(intaddFar2);		
 
 		intaddFar3 = new IntAdder(target,wE+1 + wF+1);
+		intaddFar3->unique_name="intaddFar3";
+		oplist.push_back(intaddFar3);		
 				
-		
-		
-		
-		adderList[0]=intadd1;
-		adderList[1]=intadd2;
-		adderList[2]=intaddClose1;
-		adderList[3]=intaddClose2;
-		adderList[4]=intaddClose3;
-		adderList[5]=intaddFar1;
-		adderList[6]=intaddFar2;
-		adderList[7]=intaddFar3;
-
-	bool eq;
-	
-	cout<<endl;
-	for (int i=0; i<=7;i++)
-	{
-		//cout<<i<<"->"<<adderList[i]->wIn<<endl; 
-		eq =false;
-		for (int j=0;j<i;j++)
-			if ( adderList[j]->wIn == adderList[i]->wIn)
-				eq=true;
-		
-		if (eq==false){
-		//	cout<<" adder -> "<<i<<" win= "<<adderList[i]->wIn<<endl;
-			oplist.push_back(adderList[i]);	
-		}
-	}			
-				
+		lzocs = new LZOCShifterSticky(target, wFX+2, wFX+2,0, 0);
+		oplist.push_back(lzocs);
 	}
 	
 	if (is_sequential()){
 		
 		//swap/Difference pipeline depth
-		swapDifferencePipelineDepth = intadd1->pipeline_depth() + intadd2->pipeline_depth();
+		swapDifferencePipelineDepth = 1;
 		
 		closePathDepth = intaddClose1->pipeline_depth() + 
 										 intaddClose2->pipeline_depth() + 
-										 leadingZeroCounter->pipeline_depth() + 
-										 leftShifter->pipeline_depth() + 
-										 intaddClose3->pipeline_depth();
+										 lzocs->pipeline_depth() + 
+										 intaddClose3->pipeline_depth() + 4;
 	
 		farPathDepth = intaddFar1->pipeline_depth()+
 									 intaddFar2->pipeline_depth()+
 									 intaddFar3->pipeline_depth()+
-									 rightShifter->pipeline_depth();
-									 
+									 rightShifter->pipeline_depth()
+									 +5;
+		
+		cout<<"depths="<<intaddFar1->pipeline_depth()<<" "<<intaddFar2->pipeline_depth()<<" "<<intaddFar3->pipeline_depth()<<" "<<rightShifter->pipeline_depth()<<endl;
+		
+		
+		cout<<endl<<"Close path depth = "<< closePathDepth;
+		cout<<endl<<"Far path depth   = "<< farPathDepth;
+											 
 		maxPathDepth = max(closePathDepth, farPathDepth);							 
 		
-		set_pipeline_depth(swapDifferencePipelineDepth + maxPathDepth);
+		cout<<endl<<"Max path depth   = "<< maxPathDepth<<endl;
+		
+		set_pipeline_depth(swapDifferencePipelineDepth + maxPathDepth + 1);
 	}
-	
-	
-	
 	
 	
 	
@@ -191,24 +174,20 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 		add_signal("signedExponentX",wE+1);
 		add_signal("signedExponentY",wE+1);
 		add_signal("invSignedExponentY",wE+1);
+				
+		add_registered_signal("exceptionXSuperiorY",1);
+		add_registered_signal("exceptionXEqualY",1);
 		
-
-		add_delay_signal("X0",3+wE+wF,intadd1->pipeline_depth());
-		add_delay_signal("Y0",3+wE+wF,intadd1->pipeline_depth());
+		add_delay_signal("exponentDifference0",wE+1,1);
 		
-		add_delay_signal("exceptionXSuperiorY",1,intadd1->pipeline_depth());
-		add_delay_signal("exceptionXEqualY",1,intadd1->pipeline_depth());
-		
-		add_signal("exponentDifference0",wE+1);
-		
-		add_signal("swap",1);
-
+		add_delay_signal("swap",1,1);
+		add_delay_signal("extendSwap",wE,1);
 		
 		add_signal("exponentDifference1",wER); 
 		add_signal("exponentDifference",wER);  
 			
-		add_delay_signal("newX",wE+wF+3, intadd2->pipeline_depth());
-		add_delay_signal("newY",wE+wF+3, intadd2->pipeline_depth());
+		add_delay_signal("newX",wE+wF+3, 1);
+		add_delay_signal("newY",wE+wF+3, 1);
 							
 		add_signal("sdX",wE+wF+3);
 		add_signal("sdY",wE+wF+3);
@@ -223,27 +202,30 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 		add_signal("cY",wE+wF+3);
 		add_signal("cExponentDifference",wE);
 		
+		add_delay_signal("expXClose",wE, intaddClose1->pipeline_depth() + intaddClose2->pipeline_depth() + 3 + lzocs->pipeline_depth() ); 
+		
 		add_signal("fracXClose1",wF+3);
 		add_signal("fracYClose1",wF+3);
 		add_signal("InvFracYClose1",wFX+3);
 		add_registered_signal_with_sync_reset("fracRClose0",wF+3);
 		
 		
-		add_signal("fracSignClose",1);
-		add_signal("fracRClose1xor", wF+2);
-		add_delay_signal("fracRClose1",wFX+2,leadingZeroCounter->pipeline_depth());
+		add_delay_signal("fracSignClose",1,1);
+		add_delay_signal("fracRClose1xor", wF+2,1);
+		add_delay_signal("fracRClose1",wFX+2, lzocs->pipeline_depth());
 
 
-		add_delay_signal("crs",1,leadingZeroCounter->pipeline_depth() + leftShifter->pipeline_depth()+intaddClose3->pipeline_depth());
-		add_delay_signal("exponentResultClose1",wEX+2,leadingZeroCounter->pipeline_depth()+leftShifter->pipeline_depth());
+	//	add_delay_signal("crs",1,leadingZeroCounter->pipeline_depth() + leftShifter->pipeline_depth()+intaddClose3->pipeline_depth());
+	//	add_delay_signal("exponentResultClose1",wEX+2,leadingZeroCounter->pipeline_depth()+leftShifter->pipeline_depth());
 
-		add_delay_signal("nZeros",wOutLZC,leftShifter->pipeline_depth());
-		add_signal("shiftedFrac",2*(wFX+2));
+		add_delay_signal("nZerosNew",lzocs->wCount,lzocs->pipeline_depth());
+		add_delay_signal("shiftedFrac",wFX+2,2);
 				
 		add_signal("exponentResultClose",wEX+2);
+		add_signal("exponentResultClose1",wEX);
 		add_signal("roundClose",1);
 		add_signal("exponentConcatFrac0",wE+wF+2);
-		add_signal("exponentConcatFrac1",wE+wF+2);
+		add_delay_signal("exponentConcatFrac1",wE+wF+2,2);
 		
 		
 		add_signal("fractionResultCloseC",wF + 1);
@@ -253,38 +235,44 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 		
 		//Far path
 		add_delay_signal("fX",wE+wF+3,rightShifter->pipeline_depth() + intaddFar1->pipeline_depth() );//CHECK XXX
+		add_delay_signal("fracFX",wF,rightShifter->pipeline_depth() + intaddFar1->pipeline_depth()+1);
+		add_delay_signal("expFX",wE,rightShifter->pipeline_depth() + intaddFar1->pipeline_depth()+3);
+		
+		
 		add_signal("fY",wE+wF+3);
 		add_signal("fExponentDifference",wE);
 		add_delay_signal("fSignAB",1,rightShifter->pipeline_depth());
 		
 		add_delay_signal("shiftedOut",1, rightShifter->pipeline_depth() + intaddFar1->pipeline_depth() );
 		
+		add_signal("selectionSignal",sizeRightShift);
+		
 		add_signal("fracNewY",wF+1);
 		add_signal("shiftedFracY", 2*wF + 4);
 		
 		add_signal("stiky",1);
 		
-		add_registered_signal_with_sync_reset("fracXfar3",wF+5); //XXX
+		add_delay_signal("fracXfar3",wF+5,2); //XXX
 		add_signal("fracYfar3",wF+5);
 		
-		add_signal("opSelector",1);
-		add_signal("fracYfar3XorOp",wF+5);
-		add_signal("fracResultfar0",wF+5);
+		add_delay_signal("opSelector",1,2);
+		add_delay_signal("fracYfar3XorOp",wF+5,2);
+		add_delay_signal("fracResultfar0",wF+5,2);
 		
 		
 		add_signal("fracResultfar0wSh",wF+5);
 		add_signal("exponentResultfar0",wE+1);
 		
-		add_signal("exponentResultfar1",wE+1);	
-		add_signal("expOperationSel",2);
+		add_delay_signal("exponentResultfar1",wE+1,2);	
+		add_delay_signal("expOperationSel",2,2);
 		
 		
-		add_signal("expSecOperand",wE+1);
+		add_delay_signal("expSecOperand",wE+1,2);
 		
-		add_delay_signal("fracResultfar1",wF+3,intaddFar2->pipeline_depth());
+		add_delay_signal("fracResultfar1",wF+3,intaddFar2->pipeline_depth()+2);
 		add_signal("expConcatFrac",wE+1 + wF+1);
-		add_signal("expConcatFracResult",wE+1 + wF+1);
-		add_delay_signal("round",1,intaddFar2->pipeline_depth());
+		add_delay_signal("expConcatFracResult",wE+1 + wF+1,2);
+		add_delay_signal("round",1,intaddFar2->pipeline_depth()+2);
 		
 		
 		add_signal("exponentResultfar",wE+1);
@@ -294,22 +282,22 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 		add_signal("syncClose",1);
 		
 		add_signal("eTest",2);
-		add_signal("sdxAB",4);
+		add_signal("sdxXY",4);
 		
 		add_delay_signal("pipeXAB",4,maxPathDepth);
-		add_signal("syncXAB",4);
+		add_delay_signal("syncXAB",4,2);
 		
 		add_delay_signal("pipeSignAB",1,maxPathDepth);
-		add_signal("syncSignAB",1);
+		add_delay_signal("syncSignAB",1,2);
 
 		add_delay_signal("pipeX",3+wE+wF,maxPathDepth);
-		add_signal("syncX",3+wE+wF);
+		add_delay_signal("syncX",3+wE+wF,2);
 				
 		add_signal("sdSignY",1);
 		add_delay_signal("pipeSignY",1,maxPathDepth);
-		add_signal("syncSignY",1);
+		add_delay_signal("syncSignY",1,2);
 		
-		add_signal("nRn",wE+wF+3);
+		add_delay_signal("nRn",wE+wF+3,2);
 		add_signal("nnR",wE+wF+3);
 		add_signal("exponentResultn",wE+2);
 		add_signal("fractionResultn",wF+1);
@@ -344,6 +332,8 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 				add_signal("syncRS",1);	
 						
 			}
+			
+		cout<<"signals pass";	
 	}
 	else{
 		add_signal("exceptionXSuperiorY",1);
@@ -427,30 +417,17 @@ void FPAdder::output_vhdl(std::ostream& o, std::string name) {
 	Operator::StdLibs(o);
 	output_vhdl_entity(o);
 	new_architecture(o,name);	
-	leadingZeroCounter->output_vhdl_component(o);
-	leftShifter->output_vhdl_component(o);
-	rightShifter->output_vhdl_component(o);
 	
-	bool eq;
-	
-	cout<<endl;
-	for (int i=0; i<=7;i++)
+	if (! is_sequential())
 	{
-		//cout<<i<<"->"<<adderList[i]->wIn<<endl; 
-		eq =false;
-		for (int j=0;j<i;j++)
-			if ( adderList[j]->wIn == adderList[i]->wIn)
-				eq=true;
-		
-		if (eq==false){
-			cout<<" adder -> "<<i<<" win= "<<adderList[i]->wIn<<endl;
-			adderList[i]->output_vhdl_component(o);			
-		}
-	}	
-		
-		/*
-	intadd1->output_vhdl_component(o);
-	intadd2->output_vhdl_component(o);
+		leadingZeroCounter->output_vhdl_component(o);
+		leftShifter->output_vhdl_component(o);
+	}
+	
+	rightShifter->output_vhdl_component(o);
+	lzocs->output_vhdl_component(o);
+	cout<<endl;
+	
 	intaddClose1->output_vhdl_component(o);
 	intaddClose2->output_vhdl_component(o);
 	intaddClose3->output_vhdl_component(o);
@@ -458,344 +435,317 @@ void FPAdder::output_vhdl(std::ostream& o, std::string name) {
 	intaddFar2->output_vhdl_component(o);
 	intaddFar3->output_vhdl_component(o);
 	
-	*/
+	
 	output_vhdl_signal_declarations(o);	  
 	begin_architecture(o);
 	
+	
 	if (is_sequential()){
-		// the sequential version //
-		// =======================================================================//
-		// =======================================================================//
+	
+		//=========================================================================| 
+		//                                                                         |
+		//                             SEQUENTIAL                                  |
+		//                                                                         |
+		//=========================================================================|
+	
 		output_vhdl_registers(o); o<<endl;
-		
-		
-		
-	  // == Swap/Difference ==//
-	  // signal which indicates whether or not the exception bits of X are greater or equal than the exception bits of Y //		  
-	  
-    o<<"-- Swap Difference --"<<endl;
-    o<<tab<<"X0 <= X;"<<endl;
-		o<<tab<<"Y0 <= Y;"<<endl;
-    
+		//=========================================================================|	
+	  //                          Swap/Difference                                |
+	  // ========================================================================|
+	  o<<"-- Swap Difference --"<<endl;
+    // signal which indicates whether or not the exception bits of X are greater or equal than the exception bits of Y		  
     o<<tab<<"exceptionXSuperiorY <= '1' when X("<<wEX+wFX+2<<" downto "<<wEX+wFX+1<<") >= Y("<<wEY+wFY+2<<" downto "<<wEY+wF+1<<") else"<<endl;
 		o<<tab<<"                       '0';"<<endl;
 			
-		// signal which indicates whether or not the exception bits of X are equal to the exception bits of Y //		  
+		// signal which indicates whether or not the exception bits of X are equal to the exception bits of Y		  
 		o<<tab<<"exceptionXEqualY <= '1' when X("<<wEX+wFX+2<<" downto "<<wEX+wFX+1<<") = Y("<<wEY+wFY+2<<" downto "<<wEY+wFY+1<<") else"<<endl;
 		o<<tab<<"                    '0';"<<endl;
 
-		// make the difference between the exponents of X and Y. Pad exponents with sign bit before prforming the substraction //
-		o<<tab<<"signedExponentX <= \"0\" & X("<<wEX+wFX-1<<" downto "<<wFX<<");"<<endl;
-		o<<tab<<"signedExponentY <= \"0\" & Y("<<wEX+wFX-1<<" downto "<<wFX<<");"<<endl;
-		o<<tab<<"invSignedExponentY <= not(signedExponentY);"<<endl;
+		// make the difference between the exponents of X and Y. 
+		// expX - expY = expX + not(expY) + 1
+			// pad exponents with sign bit
+			o<<tab<<"signedExponentX <= \"0\" & X("<<wEX+wFX-1<<" downto "<<wFX<<");"<<endl;
+			o<<tab<<"signedExponentY <= \"0\" & Y("<<wEX+wFX-1<<" downto "<<wFX<<");"<<endl;
+			// make not(expY)	
+			o<<tab<<"invSignedExponentY <= not(signedExponentY);"<<endl;
+			// perform addition with carry in
+			o<<tab<<"exponentDifference0 <= signedExponentX + invSignedExponentY + '1';"<<endl;
 		
-		// substract the exponents of X and Y. 
-		o<<tab<< "int_adder_component1: " << intadd1->unique_name << endl;
-		o<<tab<< "  port map ( X => signedExponentX , " << endl; 
-		o<<tab<< "             Y => invSignedExponentY, " << endl; 
-		o<<tab<< "             Cin => '1' ," << endl;
-		o<<tab<< "             R => exponentDifference0, " << endl; 
-		o<<tab<< "             clk => clk, " << endl;
-		o<<tab<< "             rst => rst " << endl;
-		o<<tab<< "               );" << endl<<endl;
+  	// SWAP when: [excX=excY and expY>expX] or [excY>excX]
+		o<<tab<<"swap <= (exceptionXEqualY and exponentDifference0("<<wE<<")) or (not(exceptionXSuperiorY));"<<endl;
 
+		// depending on the value of swap, assign the corresponding values to the newX and newY signals 
+		o<<tab<<"newX <= Y when swap = '1' else"<<endl;
+		o<<tab<<"        X;"                    <<endl;   
+		o<<tab<<"newY <= X when swap = '1' else"<<endl;
+    o<<tab<<"        Y;"                    <<endl;
+
+		// readjust for the exponents difference after the potential swap
+			// sign extend swap to the size of the exponent
+			o<<tab<<"extendSwap <= ("<<wE-1<<" downto "<<0<<" => swap);"<<endl;
+			// compute NewExponentDifference = (OldExponentDifference xor extendedSWAP) + swap.
+			o<<tab<<"exponentDifference1 <= exponentDifference0_d("<<wE-1<<" downto "<<0<<") xor extendSwap_d;"<<endl;
+			o<<tab<<"exponentDifference <= exponentDifference1 + swap_d;"<<endl;
+	
+		// compute sdSignAB as (signA xor signB)
+		o<<tab<<"sdSignAB <= newX_d("<<wEX+wFX<<") xor newY_d("<<wEY+wFY<<");"<<endl;
 		
-		// swapping is performed when:    the exception bits of X and Y are equal and the exponent of Y is greater than the exponent of X (i.e. sign bit of exponent difference=1)
-		//                              or  the exception bits of Y are superior to the exception bits of X (EX: exc. bits of X are 00 and of Y are 01) //
-		o<<tab<<"swap <= (exponentDifference0("<<wER<<") and "<<get_delay_signal_name("exceptionXEqualY",intadd1->pipeline_depth()) 
-		                                            <<") or (not "<<get_delay_signal_name("exceptionXSuperiorY",intadd1->pipeline_depth())<<");"<<endl;
-
-		// depending on the value of swap, assign the corresponding values to the newX and newY signals //
-		o<<tab<<"newX <= "<<get_delay_signal_name("Y0",intadd1->pipeline_depth())<<" when swap = '1' else"<<endl;
-		o<<tab<<"        "<<get_delay_signal_name("X0",intadd1->pipeline_depth())<<";"<<endl;   
-		o<<tab<<"newY <= "<<get_delay_signal_name("X0",intadd1->pipeline_depth())<<" when swap = '1' else"<<endl;
-    o<<tab<<"        "<<get_delay_signal_name("Y0",intadd1->pipeline_depth())<<";"<<endl;
-
-		// readjust for the exponents difference after the potential swap //
-		o<<tab<<"exponentDifference1 <= exponentDifference0("<<wER-1<<" downto "<<0<<") xor ("<<wER-1<<" downto "<<0<<" => swap);"<<endl;
-			
-		o<<tab<< "int_adder_component2: " << intadd2->unique_name << endl;
-		o<<tab<< "  port map ( X => exponentDifference1 , " << endl; 
-		o<<tab<< "             Y => "<<zero_generator(wE,0)<<", " << endl; 
-		o<<tab<< "             Cin => swap ," << endl;
-		o<<tab<< "             R => exponentDifference, " << endl; 
-		o<<tab<< "             clk => clk, " << endl;
-		o<<tab<< "             rst => rst " << endl;
-		o<<tab<< "               );" << endl<<endl;
-		
-		// compute sdSignAB as signA xor signB. The close path is considered only when signA!=signB //
-		o<<tab<<"sdSignAB <= "<<get_delay_signal_name("newX",intadd2->pipeline_depth())<<"("<<wEX+wFX<<") xor "
-													<<get_delay_signal_name("newY",intadd2->pipeline_depth())<<"("<<wEY+wFY<<");"<<endl;
-								
-		// check if we are found on the CLOSE or the FAR path //
+		// check if we are found on the CLOSE or the FAR path 
+		// the close path is considered only when (signA!=signB) and |exponentDifference|<=1 
 		o<<tab<<"sdClose  <= sdSignAB when exponentDifference("<<wER-1<<" downto "<<1<<") = ("<<wER-1<<" downto "<<1<<" => '0') else"<<endl;
-		o<<tab<<"          '0';"<<endl;
+		o<<tab<<"           '0';"<<endl;
 		
-		o<<tab<<"sdX <= "<<get_delay_signal_name("newX",intadd2->pipeline_depth())<<";"<<endl;
-		o<<tab<<"sdY <= "<<get_delay_signal_name("newY",intadd2->pipeline_depth())<<";"<<endl;
-		o<<tab<<"sdExponentDifference <= exponentDifference;"<<endl;		
-		o<<tab<<"sdxAB <= newX("<<wE+wF+2<<" downto "<<wE+wF+1<<") & newY("<<wE+wF+2<<" downto "<<wE+wF+1<<");"<<endl;
-		o<<tab<<"sdSignY <= newY("<<wE+wF<<");"<<endl;
+		// assign interface signals
+		o<<tab<<"sdX <= newX_d;"<<endl;
+		o<<tab<<"sdY <= newY_d;"<<endl;
+		o<<tab<<"sdExponentDifference <= exponentDifference;"<<endl;
+		// sdxXY is a concatenation of the exception bits of X and Y		
+		o<<tab<<"sdxXY <= newX_d("<<wE+wF+2<<" downto "<<wE+wF+1<<") & newY_d("<<wE+wF+2<<" downto "<<wE+wF+1<<");"<<endl;
+		o<<tab<<"sdSignY <= newY_d("<<wE+wF<<");"<<endl;
+	
+		// swapDifferencePipelineDepth = 1;         
+	
 		
-		// swap/difference section pipeline depth swapDifferencePipelineDepth = intadd1->pipeline_depth() + intadd2->pipeline_depth();
-		
-		
-		
-		//==========================================================================
-		//CLOSE PATH
+		//=========================================================================|
+		//                            close path                                   |
+		//=========================================================================|
 		
 		o<<"-- Close Path --"<<endl;
-		
+		// input interface signal assignment
 		o<<tab<<"cX <= sdX;"<<endl;
 		o<<tab<<"cY <= sdY;"<<endl;
+		o<<tab<<"expXClose <= cX("<<wE+wF-1<<" downto "<<wF<<");"<<endl;
 		o<<tab<<"cExponentDifference <= sdExponentDifference;"<<endl;
 		o<<tab<<"cClose <= sdClose;"<<endl;	
 		
-		// build the fraction signals //
-		// the close pathe is considered when the |exponentDifference|<=1 //
-		o<<tab<<"fracXClose1 <= \"01\" & cX("<<wFX-1<<" downto "<<0<<") & '0';"<<endl;
-		o<<tab<<"with cExponentDifference(0) select"<<endl;
-		o<<tab<<"fracYClose1 <=  \"01\" & cY("<<wF-1<<" downto "<<0<<") & '0' when '0',"<<endl;
-		o<<tab<<"               \"001\" & cY("<<wF-1<<" downto "<<0<<")       when others;"<<endl;
+		// build the fraction signals
+			// padding: [sign bit][inplicit "1"][fracX][guard bit]
+			o<<tab<<"fracXClose1 <= \"01\" & cX("<<wFX-1<<" downto "<<0<<") & '0';"<<endl;
+			// the close path is considered when the |exponentDifference|<=1, so 
+			// the alignment of fracY is of at most 1 position
+			o<<tab<<"with cExponentDifference(0) select"<<endl;
+			o<<tab<<"fracYClose1 <=  \"01\" & cY("<<wF-1<<" downto "<<0<<") & '0' when '0',"<<endl;
+			o<<tab<<"               \"001\" & cY("<<wF-1<<" downto "<<0<<")       when others;"<<endl;
 
-		// substract the fraction signals for the close path (for the close path the signs of the inputs are not be equal //
-		o<<tab<<"InvFracYClose1 <= not(fracYClose1);"<<endl;
-		
-		// substract the fractions of X and Y. 
-		o<<tab<< "int_adder_componentc1: " << intaddClose1->unique_name << endl;
-		o<<tab<< "  port map ( X => fracXClose1 , " << endl; 
-		o<<tab<< "             Y => InvFracYClose1, " << endl; 
-		o<<tab<< "             Cin => '1' ," << endl;
-		o<<tab<< "             R => fracRClose0, " << endl; 
-		o<<tab<< "             clk => clk, " << endl;
-		o<<tab<< "             rst => rst " << endl;
-		o<<tab<< "               );" << endl<<endl;
+		// substract the fraction signals for the close path; 
+		// substraction fX - fY = fX + not(fY)+1
+			// perform inversion
+			o<<tab<<"InvFracYClose1 <= not(fracYClose1);"<<endl;
+			// perform addition with carry in = 1
+			o<<tab<< "int_adder_componentc1: " << intaddClose1->unique_name << endl;
+			o<<tab<< "  port map ( X => fracXClose1 , " << endl; 
+			o<<tab<< "             Y => InvFracYClose1, " << endl; 
+			o<<tab<< "             Cin => '1' ," << endl;
+			o<<tab<< "             R => fracRClose0, " << endl; 
+			o<<tab<< "             clk => clk, " << endl;
+			o<<tab<< "             rst => rst " << endl;
+			o<<tab<< "               );" << endl<<endl;
 				
-		// if substraction result is negative - do a two's compelement of the result //
-		o<<tab<<"fracSignClose <= fracRClose0("<<wF+2<<");"<<endl;
-		o<<tab<<"fracRClose1xor <= fracRClose0("<<wF+1<<" downto 0) xor ("<<wF+1<<" downto 0 => fracSignClose);"<<endl;
-
-		o<<tab<< "int_adder_componentc2: " << intaddClose2->unique_name << endl;
-		o<<tab<< "  port map ( X => fracRClose1xor , " << endl; 
-		o<<tab<< "             Y => ("<<wF+1<<" downto 0 => '0'), " << endl; 
-		o<<tab<< "             Cin => fracSignClose ," << endl;
-		o<<tab<< "             R => fracRClose1, " << endl; 
-		o<<tab<< "             clk => clk, " << endl;
-		o<<tab<< "             rst => rst " << endl;
-		o<<tab<< "               );" << endl<<endl;
-
-		ostringstream cCloseSNPostPipeline;
-		ostringstream cXSNPostPipeline;
-		
-		cCloseSNPostPipeline << get_delay_signal_name("cClose",intaddClose1->pipeline_depth()+intaddClose2->pipeline_depth());
-		cXSNPostPipeline << get_delay_signal_name("cX",intaddClose1->pipeline_depth()+intaddClose2->pipeline_depth());
-				
-		o << tab << "crs <= '0' when "<<cCloseSNPostPipeline.str()<<"='1' and fracRClose1 = ("<<wF+1<<" downto 0 => '0') else"<<endl;
-    o << tab << "          "<<cXSNPostPipeline.str()<<"("<<wE+wF<<") xor ("<<cCloseSNPostPipeline.str()<<" and fracRClose0_d("<<wF+2<<"));"<<endl;
-
-		// extend expoenet result before normalization and rounding with 2 bits, one for signaling underflow and for overflow //
-		o<<tab<< "exponentResultClose1 <= \"00\" & "<<cXSNPostPipeline.str()<<"("<<wEX+wFX-1<<" downto "<<wFX<<");"<<endl; 
-
-		// LZC //
-		o<<tab<< "LZC_component: " << leadingZeroCounter->unique_name << endl;
-		o<<tab<< "      port map ( I => fracRClose1, " << endl; 
-		o<<tab<< "                 OZB => '0', " << endl; 
-		o<<tab<< "                 O => nZeros, " <<endl; 
+		// if substraction result is negative - do a two's compelement of the result, otherwise leave unchanged
+		// this is performed as (r xor sign(r)) + r
+			// get the sign of the substraction result
+			o<<tab<<"fracSignClose <= fracRClose0_d("<<wF+2<<");"<<endl;
+			// perform xor
+			o<<tab<<"fracRClose1xor <= fracRClose0_d("<<wF+1<<" downto 0) xor ("<<wF+1<<" downto 0 => fracSignClose);"<<endl;
+			// perform carry in addition 
+			o<<tab<< "int_adder_componentc2: " << intaddClose2->unique_name << endl;
+			o<<tab<< "  port map ( X => fracRClose1xor_d , " << endl; 
+			o<<tab<< "             Y => ("<<wF+1<<" downto 0 => '0'), " << endl; 
+			o<<tab<< "             Cin => fracSignClose_d ," << endl;
+			o<<tab<< "             R => fracRClose1, " << endl; 
+			o<<tab<< "             clk => clk, " << endl;
+			o<<tab<< "             rst => rst " << endl;
+			o<<tab<< "               );" << endl<<endl;
+			
+		// LZC + Shifting. The number of leading zeros are returned together with the sifted input
+		o<<tab<< "LZCOCS_component: " << lzocs->unique_name << endl;
+		o<<tab<< "      port map ( I => fracRClose1_d, " << endl; 
+		o<<tab<< "                 Count => nZerosNew, "<<endl;
+		o<<tab<< "                 O => shiftedFrac, " <<endl; 
 		o<<tab<< "                 clk => clk, " << endl;
 		o<<tab<< "                 rst => rst " << endl;
 		o<<tab<< "               );" << endl<<endl;		
-				
-		//delay all signals with this value		
-				
-		// shift and round //
-		o<<tab<< "left_shifter_component: " << leftShifter->unique_name << endl;
-		o<<tab<< "      port map ( X => "<<get_delay_signal_name("fracRClose1",leadingZeroCounter->pipeline_depth())<<", "<< endl; 
-		o<<tab<< "                 S => nZeros, " << endl; 
-		o<<tab<< "                 R => shiftedFrac, " <<endl; 
-		o<<tab<< "                 clk => clk, " << endl;
-		o<<tab<< "                 rst => rst " << endl;
-		o<<tab<< "               );" << endl<<endl;		
+	
+		// NORMALIZATION
+		int delayExp;
+		delayExp=lzocs->pipeline_depth() + intaddClose2->pipeline_depth() + intaddClose1->pipeline_depth()+3;
+		o<<tab<< "exponentResultClose1<= "<<get_delay_signal_name("expXClose",delayExp)
+		                                  <<" - (CONV_STD_LOGIC_VECTOR(0,"<<wE-lzocs->wCount<<") & nZerosNew);"<<endl;
 		
+		// ROUNDING
+		// during fraction alignment, the fraction of Y is shifted at most one position to the right, so 1 extra bit is enough to perform rounding 
+			// the rounding bit is computed:
+			o<<tab<< "roundClose <= shiftedFrac(0) and shiftedFrac(1);"<<endl;
+			// add two bits in order to absorb exceptions 		 		
+			o<<tab<< "exponentResultClose <= \"00\" & exponentResultClose1;"<<endl;
+			// concatenate exponent with fractional part before rounding so the possible carry propagation automatically increments the exponent 
+			o<<tab<<" exponentConcatFrac0 <= exponentResultClose("<<wE+1<<" downto 0) & shiftedFrac("<<wF<<" downto 1);"<<endl; 
+			// perform the actual rounding //
+			o<<tab<< "int_adder_componentc3: " << intaddClose3->unique_name << endl;
+			o<<tab<< "  port map ( X => exponentConcatFrac0 , " << endl; 
+			o<<tab<< "             Y => ("<<1+wE+wF<<" downto 0 => '0'), " << endl; 
+			o<<tab<< "             Cin => roundClose ," << endl;
+			o<<tab<< "             R => exponentConcatFrac1, " << endl; 
+			o<<tab<< "             clk => clk, " << endl;
+			o<<tab<< "             rst => rst " << endl;
+			o<<tab<< "               );" << endl<<endl;
+	
+		// assign output interface signals			
+		o<<tab<<" fractionResultCloseC <= \"1\" & exponentConcatFrac1_d("<<wF-1<<" downto 0);"<<endl;
+		o<<tab<<" exponentResultCloseC <= exponentConcatFrac1_d("<<wF+wE+1<<" downto "<<wF<<");"<<endl;
+	
+	//	o<<tab<<" crsOut <= "<<get_delay_signal_name("crs",leadingZeroCounter->pipeline_depth() + leftShifter->pipeline_depth()+intaddClose3->pipeline_depth())<<";"<<endl;
+
 		
-		o<<tab<< "exponentResultClose <= "<<get_delay_signal_name("exponentResultClose1",leadingZeroCounter->pipeline_depth()+leftShifter->pipeline_depth())<<" - ("
-							<<zero_generator(wE+1-wOutLZC+1, 0)<<" & "<<get_delay_signal_name("nZeros",leftShifter->pipeline_depth())<<");"<<endl;
+		//=========================================================================|
+		//                              far path                                   |
+		//=========================================================================|
+		o<<"-- Far Path --"<<endl;
 		
-		// during fraction alignment, the fraction of Y is shifted at most one position to the right, so 1 extra bit is enough to perform rounding //
-		o<<tab<< "roundClose <= shiftedFrac(0) and shiftedFrac(1);"<<endl;
-		
-		// concatenate exponent with fractional part before rounding so the possible carry propagation automatically increments the exponent //
-		o<<tab<<" exponentConcatFrac0 <= exponentResultClose("<<wE+1<<" downto 0) & shiftedFrac("<<wF<<" downto 1);"<<endl; 
-		
-		// perform the actual rounding //
-		o<<tab<< "int_adder_componentc3: " << intaddClose3->unique_name << endl;
-		o<<tab<< "  port map ( X => exponentConcatFrac0 , " << endl; 
-		o<<tab<< "             Y => ("<<1+wE+wF<<" downto 0 => '0'), " << endl; 
-		o<<tab<< "             Cin => roundClose ," << endl;
-		o<<tab<< "             R => exponentConcatFrac1, " << endl; 
-		o<<tab<< "             clk => clk, " << endl;
-		o<<tab<< "             rst => rst " << endl;
-		o<<tab<< "               );" << endl<<endl;
-				
-		o<<tab<<" fractionResultCloseC <= \"1\" & exponentConcatFrac1("<<wF-1<<" downto 0);"<<endl;
-		o<<tab<<" exponentResultCloseC <= exponentConcatFrac1("<<wF+wE+1<<" downto "<<wF<<");"<<endl;
-		o<<tab<<" crsOut <= "<<get_delay_signal_name("crs",leadingZeroCounter->pipeline_depth() + leftShifter->pipeline_depth()+intaddClose3->pipeline_depth())<<";"<<endl;
-		
-		/* close path pipeline depth = intaddClose1->pipeline_depth()+
-																		intaddClose2->pipeline_depth()
-																		leadingZeroCounter->pipeline_depth()
-																		leftShifter->pipeline_depth()
-																		intaddClose3->pipeline_depth()
-		*/
-		
-		
-		
-		
-		
-		
-		
-		//=========================================================================
-		//=========================================================================
-		//Far path
-		o<<"-- Close Path --"<<endl;
-		
+		//input interface signals
 		o<<tab<<"fX <= sdX;"<<endl;
+		o<<tab<<"fracFX<=fX("<<wF-1<<" downto 0"<<");"<<endl;
+		o<<tab<<"expFX<=fX("<<wF+wE-1<<" downto "<<wF<<");"<<endl;
 		o<<tab<<"fY <= sdY;"<<endl;
 		o<<tab<<"fExponentDifference <= sdExponentDifference;"<<endl;
 		o<<tab<<"fSignAB <= sdSignAB;"<<endl;
 		
 		// determine if the fractional part of Y was shifted out of the opperation //
-		// THIS OR Might need optimization XXX
-		o<<tab<<" shiftedOut <= "; 
-		for (int i=wE-1;i>=sizeRightShift;i--)
-			if (((wE-1)==sizeRightShift)||(i==sizeRightShift))
-				o<< "fExponentDifference("<<i<<")";
-			else
-				o<< "fExponentDifference("<<i<<") or ";
-		o<<";"<<endl;
-			
-		o<<tab<< "fracNewY <= '1' & fY("<<wF-1<<" downto 0);"<<endl;
+		if (wE-1>sizeRightShift){
+			o<<tab<<" shiftedOut <= "; 
+			for (int i=wE-1;i>=sizeRightShift;i--)
+				if (((wE-1)==sizeRightShift)||(i==sizeRightShift))
+					o<< "fExponentDifference("<<i<<")";
+				else
+					o<< "fExponentDifference("<<i<<") or ";
+			o<<";"<<endl;
+		}
+		else
+			o<<tab<<" shiftedOut <= '0';"<<endl; 
 						
+		//add inplicit 1 for frac1. Fêter la fin de l'année Universitaire
+ 		o<<tab<< "fracNewY <= '1' & fY("<<wF-1<<" downto 0);"<<endl;
+		
+		//selectioSignal=the number of positions that fracY must be shifted to the right				
+		if (wE-1>sizeRightShift)
+			o<<tab<<"selectionSignal <= fexponentDifference("<< sizeRightShift-1<<" downto 0"<<"); " << endl; 
+		else
+			o<<tab<<"selectionSignal <= CONV_STD_LOGIC_VECTOR(0,"<<sizeRightShift-(wE-1)<<") & fexponentDifference("<< wE-1<<" downto 0"<<"); " << endl; 			
+								
 		// shift right the significand of new Y with as many positions as the exponent difference suggests (alignment) //		
 		o<<tab<< "right_shifter_component: " << rightShifter->unique_name << endl;
 		o<<tab<< "      port map ( X => fracNewY, " << endl; 
-		o<<tab<< "                 S => fexponentDifference("<< sizeRightShift-1<<" downto 0"<<"), " << endl; 
+		o<<tab<< "                 S => selectionSignal, " << endl; 
 		o<<tab<< "                 R => shiftedFracY, " <<endl; 
 		o<<tab<< "                 clk => clk, " << endl;
 		o<<tab<< "                 rst => rst " << endl;
 		o<<tab<< "               );" << endl<<endl;		
-				
+			
 		// compute stiky bit as the or of the shifted out bits during the alignment //
-		o<<tab<< " stiky<= '0' when (shiftedFracY("<<wF<<" downto 0)=CONV_STD_LOGIC_VECTOR(0,"<<wF<<")) else '1';"<<endl;
+		o<<tab<< "stiky<= '0' when (shiftedFracY("<<wF<<" downto 0)=CONV_STD_LOGIC_VECTOR(0,"<<wF<<")) else '1';"<<endl;
 						
-		o<<tab<< "fracXfar3 <= \"01\" & "<<get_delay_signal_name("fX",rightShifter->pipeline_depth())<<"("<<wF-1<<" downto 0) & \"0\" & \"0\" & \"0\";"<<endl;
+		//pad fraction of X [sign][inplicit 1][fracX][guard bits]				
+		o<<tab<< "fracXfar3 <= \"01\" & "<<get_delay_signal_name("fracFX",rightShifter->pipeline_depth())<<" & \"000\";"<<endl;
+  	//pad fraction of Y [sign][shifted frac having inplicit 1][guard bits]
   	o<<tab<< "fracYfar3 <= \"0\" & shiftedFracY("<<2*wF+3<<" downto "<<2*wF+4- (wF+4)+1<<") & stiky;"<<endl;	
+		
+		// depending on the signs of the operands, perform addition or substraction			
+		// the result will be: a + (b xor operation) + operation, where operation=0=addition and operation=1=substraction
+			// the operation selector is the xor between the signs of the operands
+			o<<tab<<"opSelector <= "<<get_delay_signal_name("fSignAB",rightShifter->pipeline_depth())<<";"<<endl;
+			// perform xor 
+			o<<tab<<"fracYfar3XorOp <= fracYfar3 xor ("<<wF+4<<" downto 0 => opSelector);"<<endl;
+			// perform carry in addition
+			o<<tab<< "int_adder_componentf1: " << intaddFar1->unique_name << endl;
+			o<<tab<< "  port map ( X => fracXfar3_d, " << endl; 
+			o<<tab<< "             Y => fracYfar3XorOp_d, " << endl; 
+			o<<tab<< "             Cin => opSelector_d ," << endl;
+			o<<tab<< "             R => fracResultfar0, " << endl; 
+			o<<tab<< "             clk => clk, " << endl;
+			o<<tab<< "             rst => rst " << endl;
+			o<<tab<< "            );" << endl<<endl;
 				
-		
-		// depending on the sign, perform addition or substraction //			
-		o<<tab<<"opSelector <= "<<get_delay_signal_name("fSignAB",rightShifter->pipeline_depth())<<";"<<endl;
-	
-		o<<tab<<"fracYfar3XorOp <= fracYfar3 xor ("<<wF+4<<" downto 0 => opSelector);"<<endl;
-		
-		// substract the fractions of X and Y. 
-		o<<tab<< "int_adder_componentf1: " << intaddFar1->unique_name << endl;
-		o<<tab<< "  port map ( X => fracXfar3, " << endl; 
-		o<<tab<< "             Y => fracYfar3XorOp, " << endl; 
-		o<<tab<< "             Cin => opSelector ," << endl;
-		o<<tab<< "             R => fracResultfar0, " << endl; 
-		o<<tab<< "             clk => clk, " << endl;
-		o<<tab<< "             rst => rst " << endl;
-		o<<tab<< "               );" << endl<<endl;
-		
-		
-		
 		// if the second operand was shifted out of the operation, then the result of the operation becomes = to the first operand //		
-		o<<tab<< "fracResultfar0wSh <= fracResultfar0 when "<< get_delay_signal_name("shiftedOut",rightShifter->pipeline_depth()+intaddFar1->pipeline_depth())<<"='0' else "
-		                            <<"(\"01\" & "<<get_delay_signal_name("fX",rightShifter->pipeline_depth()+intaddFar1->pipeline_depth())
-		                            <<"("<<wF-1<<" downto 0) & \"000\");"<<endl;
-	
+		o<<tab<< "fracResultfar0wSh <= fracResultfar0_d;"<<endl;
+					
+		// when "<< get_delay_signal_name("shiftedOut",rightShifter->pipeline_depth()+intaddFar1->pipeline_depth())<<"='0' else "
+		 //                           <<"(\"01\" & "<<get_delay_signal_name("fracFX",rightShifter->pipeline_depth()+intaddFar1->pipeline_depth())<<"&\"000\");"<<endl;
+		
+
 		// the result exponent before normalization and rounding is = to the exponent of the first operand //
-		o<<tab<<"exponentResultfar0<=\"0\" & "<<get_delay_signal_name("fX",rightShifter->pipeline_depth()+intaddFar1->pipeline_depth())<<"("<<wE+wF-1<<" downto "<<wF<<");"<<endl;
+		o<<tab<<"exponentResultfar0<=\"0\" & "<<get_delay_signal_name("expFX",rightShifter->pipeline_depth()+intaddFar1->pipeline_depth()+3)<<";"<<endl;
 		
 		
-		//perform normalization and recalculation of the stiky bit 
+		//perform NORMALIZATION and recalculation of the stiky bit 
+		//delay the possible exponent adjustment until the rounding phase
 	  o<<tab<<"fracResultfar1<=fracResultfar0wSh("<<wF+3<<" downto 2) & "
 	  											<<"(fracResultfar0wSh(1) or fracResultfar0wSh(0)) when fracResultfar0wSh("<<wF+4<<" downto "<<wF+3<<") = \"01\" else"<<endl;
     o<<tab<< "    					 fracResultfar0wSh("<<wF+2<<" downto 0) 	 when fracResultfar0wSh("<<wF+4<<" downto "<<wF+3<<") = \"00\" else"<<endl;
     o<<tab<< "    					 fracResultfar0wSh("<<wF+4<<" downto 3) & (fracResultfar0wSh(2) or fracResultfar0wSh(1) or fracResultfar0wSh(0));"<<endl;
+					
 		
-		//rounding
-		o<<tab<< "round <= fracResultfar1(1) and (fracResultfar1(2) or fracResultfar1(0));"<<endl;
-
-				
+		//select operation mode. This depends on wether or not the exponent must be adjusted after normalization		
 		o<<tab<<"expOperationSel <= \"00\" when fracResultfar0wSh("<<wF+4<<" downto "<<wF+3<<") = \"01\" else"<<endl;
 		o<<tab<<"                   \"11\" when fracResultfar0wSh("<<wF+4<<" downto "<<wF+3<<") = \"00\" else"<<endl;
 		o<<tab<<"                   \"01\";"<<endl;
 		
+		//the second operand depends on the operation selector
 		o<<tab<<"expSecOperand <= (("<<wE<<" downto 1 => '0') & expOperationSel(0)) xor ("<<wE<<" downto 0 => expOperationSel(1));"<<endl;
 		
 		// readjust exponent after normalization //
 		o<<tab<< "int_adder_componentf2: " << intaddFar2->unique_name << endl;
 		o<<tab<< "  port map ( X => exponentResultfar0, " << endl; 
-		o<<tab<< "             Y => expSecOperand, " << endl; 
-		o<<tab<< "             Cin => expOperationSel(1) ," << endl;
+		o<<tab<< "             Y => expSecOperand_d, " << endl; 
+		o<<tab<< "             Cin => expOperationSel_d(1) ," << endl;
 		o<<tab<< "             R => exponentResultfar1, " << endl; 
 		o<<tab<< "             clk => clk, " << endl;
 		o<<tab<< "             rst => rst " << endl;
 		o<<tab<< "               );" << endl<<endl;
 		
-			
-		o<<tab<<"expConcatFrac <= exponentResultfar1 & "<<get_delay_signal_name("fracResultfar1",intaddFar2->pipeline_depth())<<"("<<wF+2<<" downto 2);"<<endl;
+		
+		//ROUNDING
+		o<<tab<< "round <= fracResultfar1(1) and (fracResultfar1(2) or fracResultfar1(0));"<<endl;
+
+		//concatenation of the exponent and the fraction. 	
+		o<<tab<<"expConcatFrac <= exponentResultfar1_d & "<<get_delay_signal_name("fracResultfar1",intaddFar2->pipeline_depth()+2)<<"("<<wF+2<<" downto 2);"<<endl;
 		
 		// round //
 		o<<tab<< "int_adder_componentf3: " << intaddFar3->unique_name << endl;
 		o<<tab<< "  port map ( X => expConcatFrac, " << endl; 
 		o<<tab<< "             Y => (others => '0'), " << endl; 
-		o<<tab<< "             Cin => "<<get_delay_signal_name("round",intaddFar2->pipeline_depth()) <<" ," << endl;
+		o<<tab<< "             Cin => "<<get_delay_signal_name("round",intaddFar2->pipeline_depth()+2) <<" ," << endl;
 		o<<tab<< "             R => expConcatFracResult, " << endl; 
 		o<<tab<< "             clk => clk, " << endl;
 		o<<tab<< "             rst => rst " << endl;
 		o<<tab<< "               );" << endl<<endl;
 		
-		
-		
-		//o<<tab<< "fractionResultfar0 <= (\"0\" & fracResultfar1("<<wF+2<<" downto 2)) + (("<<wF<<" downto 0 => '0') & round);"<<endl;
-
-		o<<tab<< "exponentResultfar <= expConcatFracResult("<<wE+1+wF<<" downto "<<wF+1<<");"<<endl;
-		o<<tab<< "fractionResultfar <= expConcatFracResult("<<wF<<" downto "<<0<<");"<<endl;
-		
-		/*
-				farPathDepth = intaddFar1->pipeline_depth()+
-									 intaddFar2->pipeline_depth()+
-									 intaddFar3->pipeline_depth()+
-									 rightShifter->pipeline_depth();
-
-		*/
-		
-		
-		//==========================================================================
+		o<<tab<< "exponentResultfar <= expConcatFracResult_d("<<wE+1+wF<<" downto "<<wF+1<<");"<<endl;
+		o<<tab<< "fractionResultfar <= expConcatFracResult_d("<<wF<<" downto "<<0<<");"<<endl;
+				
+  	//==========================================================================
 		//==========================================================================
 		
 		
 		
-		
-		
+		//=========================================================================|
+		//                              Synchronization                            |
+		//=========================================================================|				
 		o<<"-- SYNCH --"<<endl;
-		//==========================================================================
-		// Synchronization Interface Output ========================================
-		
-		
+
+		// Synchronization Interface Output
+				
 		//synchronize the close signal
 		o<<tab<<"pipeClose <= sdClose;"<<endl;
 		o<<tab<<"syncClose <= "<<get_delay_signal_name("pipeClose", maxPathDepth)<<";"<<endl; 
-		
+				
 		//exception bits
-		o<<tab<<"pipeXAB <= sdxAB;"<<endl;
+		o<<tab<<"pipeXAB <= sdxXY;"<<endl;
 		o<<tab<<"syncXAB <= "<<get_delay_signal_name("pipeXAB",maxPathDepth)<<";"<<endl;
-		
+				
 		//sign bit
 		o<<tab<<"pipeSignAB <= sdSignAB;"<<endl;
 		o<<tab<<"syncSignAB <= "<<get_delay_signal_name("pipeSignAB",maxPathDepth)<<";"<<endl;
-		
+				
 		//X
 		o<<tab<<"pipeX <= sdX ;"<<endl;
 		o<<tab<<"syncX <= "<<get_delay_signal_name("pipeX",maxPathDepth)<<";"<<endl;
@@ -803,7 +753,8 @@ void FPAdder::output_vhdl(std::ostream& o, std::string name) {
 		//signY
 		o<<tab<<"pipeSignY <= sdSignY ;"<<endl;
 		o<<tab<<"syncSignY <= "<<get_delay_signal_name("pipeSignY",maxPathDepth)<<";"<<endl;
-			if (closePathDepth == farPathDepth){
+		
+		if (closePathDepth == farPathDepth){
 		
 			o<<tab<<"expResClose <= exponentResultCloseC;"<<endl;
 			o<<tab<<"expResFar <= exponentResultfar;"<<endl;
@@ -814,7 +765,7 @@ void FPAdder::output_vhdl(std::ostream& o, std::string name) {
 			o<<tab<<"syncRS <= crsOut;"<<endl;
 		}
 		else
-			if (closePathDepth > farPathDepth){
+			if (closePathDepth > farPathDepth){	
 				o<<tab<<"expResClose <= exponentResultCloseC;"<<endl;
 				
 				o<<tab<<"pipeExpResFar <= exponentResultfar;"<<endl;
@@ -858,43 +809,193 @@ void FPAdder::output_vhdl(std::ostream& o, std::string name) {
 		o<<tab<< "fractionResultn <= fracResClose when '1',"<<endl;
 		o<<tab<< "                   fracResFar when others;"<<endl;
 		
+		
+		
+		
+		
 		// compute the exception bits of the result considering the possible underflow and overflow 
 		o<<tab<< "eTest <= exponentResultn("<<wE+1<<" downto "<<wE<<");"<<endl;
+		
 		o<<tab<< "with eTest select"<<endl;
     o<<tab<< "nRn("<<wE+wF+2<<" downto "<<wE+wF+1<<") <= \"10\" when \"01\","<<endl;
     o<<tab<< "                               \"00\" when \"10\" | \"11\","<<endl;
     o<<tab<< "                               \"01\" when others;"<<endl;
+  	
   	o<<tab<< "nRn("<<wE+wF<<" downto 0) <= syncRS & exponentResultn("<<wE-1<<" downto 0) & fractionResultn("<<wF-1<<" downto 0);"<<endl;
+		
+//		o<<tab<<"outRes <= nRn;"<<endl;
+		
 		
 				
 	 
-	  o<<tab<< "with syncXAB select"<<endl;
-	  o<<tab<< "  nnR("<<wE+wF+2<<" downto "<<wE+wF+1<<") <= nRn("<<wE+wF+2<<" downto "<<wE+wF+1<<") when \"0101\","<<endl;
-	  o<<tab<< "                                 \"1\" & syncSignAB              when \"1010\","<<endl;
+	  o<<tab<< "with syncXAB_d select"<<endl;
+	  o<<tab<< "  nnR("<<wE+wF+2<<" downto "<<wE+wF+1<<") <= nRn_d("<<wE+wF+2<<" downto "<<wE+wF+1<<") when \"0101\","<<endl;
+	  o<<tab<< "                                 \"1\" & syncSignAB_d              when \"1010\","<<endl;
 	  o<<tab<< "                                 \"11\"            		           when \"1011\","<<endl;
-	  o<<tab<< "                                 syncXAB(3 downto 2)             when others;"<<endl;
-	  o<<tab<< "with syncXAB select"<<endl;
-	  o<<tab<< "  nnR("<<wE+wF<<") <= nRn("<<wE+wF<<")           when \"0101\","<<endl;
-	  o<<tab<< "                syncX("<<wE+wF<<") and syncSignY when \"0000\","<<endl;
-	  o<<tab<< "                syncX("<<wE+wF<<")               when others;"<<endl;
+	  o<<tab<< "                                 syncXAB_d(3 downto 2)             when others;"<<endl;
+	  o<<tab<< "with syncXAB_d select"<<endl;
+	  o<<tab<< "  nnR("<<wE+wF<<") <= nRn_d("<<wE+wF<<")             when \"0101\","<<endl;
+	  o<<tab<< "                syncX_d("<<wE+wF<<") and syncSignY_d when \"0000\","<<endl;
+	  o<<tab<< "                syncX_d("<<wE+wF<<")                 when others;"<<endl;
 
-	  o<<tab<< "with syncXAB select"<<endl;
-	  o<<tab<< "  nnR("<<wE+wF-1<<" downto 0) <= nRn("<<wE+wF-1<<" downto 0) when \"0101\","<<endl;
-	  o<<tab<< "                                syncX("<<wE+wF-1<<" downto 0) when others;"<<endl;
+	  o<<tab<< "with syncXAB_d select"<<endl;
+	  o<<tab<< "  nnR("<<wE+wF-1<<" downto 0) <= nRn_d("<<wE+wF-1<<" downto 0) when \"0101\","<<endl;
+	  o<<tab<< "                                 syncX_d("<<wE+wF-1<<" downto 0) when others;"<<endl;
 			
 		// assign results 
 		o<<tab<< "rexp <= nnR("<<wE+wF-1<<" downto "<<wF<<");"<<endl;
 		o<<tab<< "rfrac <= \"1\" & nnR("<<wF-1<<" downto 0);"<<endl;
 		o<<tab<< "rsig <= nnR("<<wE+wF<<");"<<endl;
 		o<<tab<< "rexc <= nnR("<<wE+wF+2<<" downto "<<wE+wF+1<<");"<<endl;
-		
-		
-			
-		
+					
 		
 
 
-		   
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+				   
 	} 
 	else
 	{  
@@ -999,13 +1100,19 @@ void FPAdder::output_vhdl(std::ostream& o, std::string name) {
 		
 		/* determine if the fractional part of Y was shifted out of the opperation */
 		//TODO
-		o<<tab<<" shiftedOut <= "; 
-		for (int i=wE-1;i>=sizeRightShift;i--)
-			if (((wE-1)==sizeRightShift)||(i==sizeRightShift))
-				o<< "exponentDifference("<<i<<")";
-			else
-				o<< "exponentDifference("<<i<<") or ";
-		o<<";"<<endl;
+		if (wE-1>=sizeRightShift)
+		{
+			o<<tab<<" shiftedOut <= "; 
+			for (int i=wE-1;i>=sizeRightShift;i--)
+				if (((wE-1)==sizeRightShift)||(i==sizeRightShift))
+					o<< "exponentDifference("<<i<<")";
+				else
+					o<< "exponentDifference("<<i<<") or ";
+			o<<";"<<endl;
+		}
+		else
+		o<<tab<<" shiftedOut <= '0'"; 
+		
 		
 		/* compute stiky bit as the or of the shifted out bits during the alignment */
 		o<<tab<< " stiky<= '0' when (shiftedFracY("<<wF<<" downto 0)=CONV_STD_LOGIC_VECTOR(0,"<<wF<<")) else '1';"<<endl;
