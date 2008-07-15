@@ -54,4 +54,6 @@ inline mpz_class min(mpz_class x, mpz_class y) {return (x < y ? x : y);}
  */
 mpz_class getLargeRandom(int n);
 
+string zero_generator(int n, int margins);
+
 #endif

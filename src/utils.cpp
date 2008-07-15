@@ -322,3 +322,30 @@ mpz_class getLargeRandom(int n)
 	return o;
 }
 
+
+/**
+ * A zero generator method which takes as input two arguments and returns a string of zeros with quotes as stated by the second argurment
+ * @param[in] n		    integer argument representing the number of zeros on the output string
+ * @param[in] margins	integer argument determining the position of the quotes in the output string. The options are: -2= no quotes; -1=left quote; 0=both quotes 1=right quote
+ * @return returns a string of zeros with the corresonding quotes given by margins
+ **/
+string zero_generator(int n, int margins)
+{
+ostringstream left,full, right, zeros;
+int i;
+
+	for (i=1; i<=n;i++)
+		zeros<<"0";
+
+	left<<"\""<<zeros.str();
+	full<<left.str()<<"\"";
+	right<<zeros.str()<<"\"";
+
+	switch(margins){
+		case -2: return zeros.str(); break;
+		case -1: return left.str(); break;
+		case  0: return full.str(); break;
+		case  1: return right.str(); break;
+		default: return full.str();
+	}
+}
