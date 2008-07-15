@@ -121,7 +121,7 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 			name.str("");
 			name <<"X_"<<i;
 			//add_registered_signal_with_sync_reset(name.str(), multiplier_width_X);
-			add_registered_signal(name.str(), multiplier_width_X);  
+			add_registered_signal_with_sync_reset(name.str(), multiplier_width_X);  
 		}
 
 		//declare the signals needed to split Y 
@@ -129,7 +129,7 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 			name.str("");
 			name <<"Y_"<<i;
 			//add_registered_signal_with_sync_reset(name.str(), multiplier_width_Y); 
-			add_registered_signal(name.str(), multiplier_width_Y); 
+			add_registered_signal_with_sync_reset(name.str(), multiplier_width_Y); 
 		}
 
 		//declare the registers needed to store the partial products
@@ -138,7 +138,7 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 				name.str("");;
 				name <<"Y_"<<i<<"_X_"<<j;
 				//add_registered_signal_with_sync_reset(name.str(), multiplier_width_X + multiplier_width_Y);
-				add_registered_signal(name.str(), multiplier_width_X + multiplier_width_Y);
+				add_registered_signal_with_sync_reset(name.str(), multiplier_width_X + multiplier_width_Y);
 			} 
 
 		if (!((partsX==partsY) && (partsX==1)))
