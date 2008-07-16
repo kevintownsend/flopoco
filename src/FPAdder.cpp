@@ -1255,11 +1255,14 @@ void FPAdder::fillTestCase(mpz_class a[])
 	/* XXX: This is old-school; TestBenches are able
 	 * to compare whole FP signals */
 	svExc = r.getExceptionSignalValue();
-	svSig = r.getSignSignalValue();
-	if (svExc == 1)
+	if (svExc < 3)
 	{
-		svExp = r.getExponentSignalValue();
-		svFra = r.getFractionSignalValue();
+		svSig = r.getSignSignalValue();
+		if (svExc == 1)
+		{
+			svExp = r.getExponentSignalValue();
+			svFra = r.getFractionSignalValue();
+		}
 	}
 }
 
