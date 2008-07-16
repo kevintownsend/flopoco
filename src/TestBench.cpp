@@ -1,12 +1,7 @@
 /*
- * A generic wrapper generator for FloPoCo. 
+ * A test bench generator for FloPoCo. 
  *
- * A wrapper is a VHDL entity that places registers before and after
- * an operator, so that you can synthesize it and get delay and area,
- * without the synthesis tools optimizing out your design because it
- * is connected to nothing.
- *
- * Author : Florent de Dinechin
+ * Author : KLEIN Cristian
  *
  * This file is part of the FloPoCo project developed by the Arenaire
  * team at Ecole Normale Superieure de Lyon
