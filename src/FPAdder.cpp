@@ -197,7 +197,7 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 		
 		
 		//close path
-		add_delay_signal("cClose",1,intaddClose1->pipeline_depth() + intaddClose2->pipeline_depth() );
+		add_delay_signal("cClose",1,intaddClose1->pipeline_depth() + intaddClose2->pipeline_depth()+2);
 		add_delay_signal("cX",wE+wF+3,intaddClose1->pipeline_depth() + intaddClose2->pipeline_depth());
 		add_signal("cY",wE+wF+3);
 		add_signal("cExponentDifference",wE);
@@ -207,7 +207,7 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 		add_signal("fracXClose1",wF+3);
 		add_signal("fracYClose1",wF+3);
 		add_signal("InvFracYClose1",wFX+3);
-		add_registered_signal_with_sync_reset("fracRClose0",wF+3);
+		add_delay_signal("fracRClose0",wF+3,intaddClose2->pipeline_depth()+2);
 		
 		
 		add_delay_signal("fracSignClose",1,1);
@@ -215,7 +215,7 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 		add_delay_signal("fracRClose1",wFX+2, lzocs->pipeline_depth());
 
 
-	//	add_delay_signal("crs",1,leadingZeroCounter->pipeline_depth() + leftShifter->pipeline_depth()+intaddClose3->pipeline_depth());
+		add_delay_signal("crs",1,lzocs->pipeline_depth() + intaddClose3->pipeline_depth()+2);
 	//	add_delay_signal("exponentResultClose1",wEX+2,leadingZeroCounter->pipeline_depth()+leftShifter->pipeline_depth());
 
 		add_delay_signal("nZerosNew",lzocs->wCount,lzocs->pipeline_depth());
@@ -235,7 +235,7 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 		
 		//Far path
 		add_delay_signal("fX",wE+wF+3,rightShifter->pipeline_depth() + intaddFar1->pipeline_depth() );//CHECK XXX
-		add_delay_signal("fracFX",wF,rightShifter->pipeline_depth() + intaddFar1->pipeline_depth()+1);
+		add_delay_signal("fracFX",wF,rightShifter->pipeline_depth() + intaddFar1->pipeline_depth()+2);
 		add_delay_signal("expFX",wE,rightShifter->pipeline_depth() + intaddFar1->pipeline_depth()+3);
 		
 		
@@ -243,7 +243,7 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 		add_signal("fExponentDifference",wE);
 		add_delay_signal("fSignAB",1,rightShifter->pipeline_depth());
 		
-		add_delay_signal("shiftedOut",1, rightShifter->pipeline_depth() + intaddFar1->pipeline_depth() );
+		add_delay_signal("shiftedOut",1, rightShifter->pipeline_depth() + intaddFar1->pipeline_depth() +2);
 		
 		add_signal("selectionSignal",sizeRightShift);
 		
@@ -556,6 +556,17 @@ void FPAdder::output_vhdl(std::ostream& o, std::string name) {
 			o<<tab<< "             clk => clk, " << endl;
 			o<<tab<< "             rst => rst " << endl;
 			o<<tab<< "               );" << endl<<endl;
+		
+		ostringstream cCloseSNPostPipeline;
+		ostringstream cXSNPostPipeline;
+		
+		cCloseSNPostPipeline << get_delay_signal_name("cClose",intaddClose1->pipeline_depth()+intaddClose2->pipeline_depth()+2);
+		cXSNPostPipeline << get_delay_signal_name("pipeX",intaddClose1->pipeline_depth()+intaddClose2->pipeline_depth()+2);
+				
+		o << tab << "crs <= '0' when "<<cCloseSNPostPipeline.str()<<"='1' and fracRClose1 = ("<<wF+1<<" downto 0 => '0') else"<<endl;
+    o << tab << "          "<<cXSNPostPipeline.str()<<"("<<wE+wF<<") xor ("<<cCloseSNPostPipeline.str()<<" and "
+		                        <<get_delay_signal_name("fracRClose0",intaddClose2->pipeline_depth()+2)<<"("<<wF+2<<"));"<<endl;
+		
 			
 		// LZC + Shifting. The number of leading zeros are returned together with the sifted input
 		o<<tab<< "LZCOCS_component: " << lzocs->unique_name << endl;
@@ -594,7 +605,7 @@ void FPAdder::output_vhdl(std::ostream& o, std::string name) {
 		o<<tab<<" fractionResultCloseC <= \"1\" & exponentConcatFrac1_d("<<wF-1<<" downto 0);"<<endl;
 		o<<tab<<" exponentResultCloseC <= exponentConcatFrac1_d("<<wF+wE+1<<" downto "<<wF<<");"<<endl;
 	
-	//	o<<tab<<" crsOut <= "<<get_delay_signal_name("crs",leadingZeroCounter->pipeline_depth() + leftShifter->pipeline_depth()+intaddClose3->pipeline_depth())<<";"<<endl;
+		o<<tab<<" crsOut <= "<<get_delay_signal_name("crs", lzocs->pipeline_depth() + intaddClose3->pipeline_depth()+2)<<";"<<endl;
 
 		
 		//=========================================================================|
@@ -666,10 +677,8 @@ void FPAdder::output_vhdl(std::ostream& o, std::string name) {
 			o<<tab<< "            );" << endl<<endl;
 				
 		// if the second operand was shifted out of the operation, then the result of the operation becomes = to the first operand //		
-		o<<tab<< "fracResultfar0wSh <= fracResultfar0_d;"<<endl;
-					
-		// when "<< get_delay_signal_name("shiftedOut",rightShifter->pipeline_depth()+intaddFar1->pipeline_depth())<<"='0' else "
-		 //                           <<"(\"01\" & "<<get_delay_signal_name("fracFX",rightShifter->pipeline_depth()+intaddFar1->pipeline_depth())<<"&\"000\");"<<endl;
+		o<<tab<< "fracResultfar0wSh <= fracResultfar0_d when "<< get_delay_signal_name("shiftedOut",rightShifter->pipeline_depth()+intaddFar1->pipeline_depth()+2)<<"='0' else "
+		                            <<"(\"01\" & "<<get_delay_signal_name("fracFX",rightShifter->pipeline_depth()+intaddFar1->pipeline_depth()+2)<<"&\"000\");"<<endl;
 		
 
 		// the result exponent before normalization and rounding is = to the exponent of the first operand //
