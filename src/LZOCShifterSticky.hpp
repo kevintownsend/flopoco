@@ -49,6 +49,9 @@ public:
 
 	// Overloading the virtual functions of Operator
 	void output_vhdl(std::ostream& o, std::string name);
+	
+	TestIOMap getTestIOMap();
+	void fillTestCase(mpz_class a[]);
 
 private:
 	/** if true, compute the sticky bit. If false, save this hardware */

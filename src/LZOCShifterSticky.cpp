@@ -160,7 +160,7 @@ void LZOCShifterSticky::output_vhdl(std::ostream& o, std::string name) {
 	begin_architecture(o);
 	o << tab << "level" << wCount<< " <= " ;
 	if(wIn + wOut == size[wCount]) // no padding needed
-		o << "I";
+		o << "I;"<<endl;
 	else 
 		o << "I & (" << size[wCount]-wIn-1 << " downto 0 => '0');" << endl ;
 
@@ -225,9 +225,54 @@ void LZOCShifterSticky::output_vhdl(std::ostream& o, std::string name) {
 	}
 
 	end_architecture(o);
-
-
-
 	
 }
+
+TestIOMap LZOCShifterSticky::getTestIOMap()
+{
+	TestIOMap tim;
+	tim.add(*get_signal_by_name("I"));
+	//tim.add(*get_signal_by_name("OZb"));
+	tim.add(*get_signal_by_name("Count"));
+	tim.add(*get_signal_by_name("O"));
+//	if (compute_sticky)
+//		tim.add(*get_signal_by_name("Sticky"));
+	
+	return tim;
+}
+
+void LZOCShifterSticky::fillTestCase(mpz_class a[])
+{
+	mpz_class& si     = a[0];
+	mpz_class& scount = a[1];
+	mpz_class& so     = a[2];
+	
+	int j=(wIn-1);
+	int bit = (countType == 0) ? 0 : 1;
+	for (j = (wIn-1); j >= 0; j--)
+	{
+	//cout<<"in for loop j="<<j<<endl;
+		if (mpz_tstbit(si.get_mpz_t(), j) != bit)
+			break;
+	}
+	//cout<<"|"<<wIn<<"|&|"<<j<<"|"<<endl;
+	
+	scount = (wIn-1)-j;
+	
+	mpz_class maxValue;
+	mpz_class inputValue;
+	
+	maxValue=(1<<wOut)-1;
+	inputValue=si;
+	
+	while (!((inputValue<=maxValue)&&(2*inputValue>maxValue)))
+	inputValue=inputValue*2;
+	
+	so=inputValue;
+	
+	
+	
+}
+
+
 
