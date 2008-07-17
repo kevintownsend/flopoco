@@ -52,8 +52,6 @@ LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut, bool com
 
 	unique_name=name.str();
 
-
-
 	if (target->is_pipelined())
 		set_sequential();
 	else
@@ -70,7 +68,7 @@ LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut, bool com
 
 	// from the end of the pipeline to the beginning
 	i=0;
-	size[0] = wOut; // the result
+	size[0] = wOut; // size of the result
 	while(size[i]-wOut < wIn){
 		i++;
 		p2i = 1<<(i-1);
@@ -174,18 +172,26 @@ void LZOCShifterSticky::output_vhdl(std::ostream& o, std::string name) {
 		int p2i = 1 << i;
 		int p2io2 = 1 << (i-1);
 
+		//=====================================
 		o << tab << "count" << i-1 << " <= '1' when " << leveld[i] << "(" << size[i]-1 << " downto " << size[i]-p2io2 << ") = (" << p2io2-1 << " downto 0 => "; 
 		if (zoc==-1)
 			o<<get_delay_signal_name("sozb",wCount-i);
 		else
 			o<<"'"<<zoc<<"'";
 		o<<" )   else '0';" << endl; 
-
+		//=====================================
 		// REM in the following,  size[i]-size[i-1]-1 is almost always equal to p2io2, except in the first stage
 		if (i==wCount){
+			cout << "====== aici ====== s[i-1]="<<size[i-1]<<"si s[i]="<<size[i]<<endl;
+			cout << "zero generator="<<zero_generator(size[i-1]-size[i],0);
+			
 			o << tab << level[i-1] << " <= " ;
 			o << " " << "("<<leveld[i] << "(" << size[i]/2 -1 << " downto " << 0 << ") & "<<zero_generator(size[i-1]-size[i]/2, 0)<<" )  when count" << i-1 << "='1'" << endl;
-			o << tab << tab << tab <<  "else (" << leveld[i] << "(" << size[i]-1 << " downto 1) &  "<<zero_generator(size[i-1]-size[i],0)<<") ;" << endl; 
+			
+			if (size[i-1]-size[i]>0)
+				o << tab << tab << tab <<  "else (" << leveld[i] << "(" << size[i]-1 << " downto 0) &  "<<zero_generator(size[i-1]-size[i],0)<<") ;" << endl; 
+			else
+				o << tab << tab << tab <<  "else " << leveld[i] << "(" << size[i]-1 << " downto "<<size[i]-size[i-1]<<");" << endl; 
 		}
 		else
 		{
