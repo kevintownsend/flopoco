@@ -129,7 +129,7 @@ LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut, bool com
 	}
 
 	if (is_sequential()){
-		set_pipeline_depth(wCount-1); 
+		set_pipeline_depth(wCount); //was wCount-1
 		if (zoc==-1)
 		add_delay_signal_no_reset("sozb",1, wCount-1);
 	}
@@ -159,8 +159,8 @@ void LZOCShifterSticky::output_vhdl(std::ostream& o, std::string name) {
 
 	begin_architecture(o);
 	o << tab << "level" << wCount<< " <= " ;
-	if(wIn + wOut == size[wCount]) // no padding needed
-		o << "I;"<<endl;
+	if(wIn == size[wCount]) // no padding needed
+		o << "I;" <<endl;
 	else 
 		o << "I & (" << size[wCount]-wIn-1 << " downto 0 => '0');" << endl ;
 
@@ -185,12 +185,12 @@ void LZOCShifterSticky::output_vhdl(std::ostream& o, std::string name) {
 		if (i==wCount){
 			o << tab << level[i-1] << " <= " ;
 			o << " " << "("<<leveld[i] << "(" << size[i]/2 -1 << " downto " << 0 << ") & "<<zero_generator(size[i-1]-size[i]/2, 0)<<" )  when count" << i-1 << "='1'" << endl;
-			o << tab << tab << tab <<  "else (" << leveld[i] << "(" << size[i]-1 << " downto 0) &  "<<zero_generator(size[i-1]-size[i],0)<<") ;" << endl; 
+			o << tab << tab << tab <<  "else (" << leveld[i] << "(" << size[i]-1 << " downto 1) &  "<<zero_generator(size[i-1]-size[i],0)<<") ;" << endl; 
 		}
 		else
 		{
 			o << tab << level[i-1] << " <= " ;
-			o << " " << leveld[i] << "(" << size[i]-1 << " downto " << size[i]-size[i-1] << ")   when count" << i-1 << "='1'" << endl;
+			o << " " << leveld[i] << "(" << size[i]-1 << " downto " << size[i]-size[i-1] << ")   when count" << i-1 << "='0'" << endl;
 			o << tab << tab << tab <<  "else " << leveld[i] << "(" << size[i-1]-1 << " downto 0);" << endl; 
 		}
 		
