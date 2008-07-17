@@ -64,6 +64,8 @@ private:
 	
 	int zoc; //what to count 1 or 0 ?
 	
+	mpz_class maxValue;
+	
 };
 
 

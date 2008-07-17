@@ -45,7 +45,7 @@ The width of the lzo output will be floor(log2(wIn+1)). It should be accessed as
 // TODO to be optimal for FPAdder, we have to provide a way to disable the sticky computation.
 
 LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut, bool compute_sticky, const int countType) :
-	Operator(target), wIn(wIn), wOut(wOut), compute_sticky(compute_sticky), zoc(countType) {
+	Operator(target), wIn(wIn), wOut(wOut), compute_sticky(compute_sticky), zoc(countType), countType(countType) {
 
 	ostringstream name; 
 	name <<"LZOCShifterSticky_"<<wIn<<"_"<<wOut<<"_"<<compute_sticky;
@@ -182,9 +182,6 @@ void LZOCShifterSticky::output_vhdl(std::ostream& o, std::string name) {
 		//=====================================
 		// REM in the following,  size[i]-size[i-1]-1 is almost always equal to p2io2, except in the first stage
 		if (i==wCount){
-			cout << "====== aici ====== s[i-1]="<<size[i-1]<<"si s[i]="<<size[i]<<endl;
-			cout << "zero generator="<<zero_generator(size[i-1]-size[i],0);
-			
 			o << tab << level[i-1] << " <= " ;
 			o << " " << "("<<leveld[i] << "(" << size[i]/2 -1 << " downto " << 0 << ") & "<<zero_generator(size[i-1]-size[i]/2, 0)<<" )  when count" << i-1 << "='1'" << endl;
 			
@@ -249,33 +246,73 @@ TestIOMap LZOCShifterSticky::getTestIOMap()
 
 void LZOCShifterSticky::fillTestCase(mpz_class a[])
 {
-	mpz_class& si     = a[0];
-	mpz_class& scount = a[1];
-	mpz_class& so     = a[2];
-	
-	int j=(wIn-1);
-	int bit = (countType == 0) ? 0 : 1;
-	for (j = (wIn-1); j >= 0; j--)
+
+	if (countType>=0)
 	{
-	//cout<<"in for loop j="<<j<<endl;
-		if (mpz_tstbit(si.get_mpz_t(), j) != bit)
-			break;
+		mpz_class& si     = a[0];
+		mpz_class& scount = a[1];
+		mpz_class& so     = a[2];
+	
+		/* Count the leading zero/one s */
+		int j=(wIn-1);//the index of the MSB of the input
+		int bit = (countType == 0) ? 0 : 1; //what are we counting
+		for (j = (wIn-1); j >= 0; j--)
+				if (mpz_tstbit(si.get_mpz_t(), j) != bit)
+				break;
+		
+		int icount =(wIn-1)-j;
+		scount = icount; //the count result
+	
+		//compute max value on wOut bits
+		maxValue=2;
+		for (int i=2;i<=wOut;i++)
+		maxValue=maxValue*2;
+		maxValue--;
+	
+		mpz_class inputValue;
+		inputValue=si;
+	
+		//if we are counting zeros
+		if (countType==0) 
+			while (!((inputValue<=maxValue)&&(2*inputValue>maxValue)))
+				if (inputValue>maxValue)
+					inputValue=inputValue/2;
+				else
+					inputValue=inputValue*2;
+		else
+		{
+			int restOfBits = wIn - icount;
+			if (icount>0)
+			{
+			//	cout<<"icount="<<icount<<endl;
+				mpz_class ones=1;
+				for (int i=1;i<=icount;i++)
+					ones = ones*2;
+			
+				ones=ones-1;
+			
+		//		cout<<"ones="<<ones<<endl;
+						
+				for (int i=1;i<=restOfBits;i++)
+					ones=ones*2;
+				inputValue=inputValue-ones; // the input without the leading ones
+			}
+
+			if ((wIn<=wOut) || ((wIn>wOut) && (restOfBits<wOut) ))	//shift result in place	
+				for (int i=1;i<=(wOut-restOfBits);i++)
+					inputValue=inputValue*2;
+			else
+				for (int i=1;i<=restOfBits-wOut;i++)
+					inputValue=inputValue/2;
+		}
+		
+		
+		
+		
+		
+		
+		so=inputValue;
 	}
-	//cout<<"|"<<wIn<<"|&|"<<j<<"|"<<endl;
-	
-	scount = (wIn-1)-j;
-	
-	mpz_class maxValue;
-	mpz_class inputValue;
-	
-	maxValue=(1<<wOut)-1;
-	inputValue=si;
-	
-	while (!((inputValue<=maxValue)&&(2*inputValue>maxValue)))
-	inputValue=inputValue*2;
-	
-	so=inputValue;
-	
 	
 	
 }
