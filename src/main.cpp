@@ -78,7 +78,7 @@ static void usage(char *name){
 	cerr << "    LeftShifter  wIn  MaxShift\n";
 	cerr << "    RightShifter wIn  MaxShift\n";
 	cerr << "    LZOC wIn wOut\n";
-	cerr << "    LZOCShifterSticky wIn wOut zeroOrOne compute_sticky\n";
+	cerr << "    LZOCShifterSticky wIn wOut compute_sticky zeroOrOne\n";
 	cerr << "      zeroOrOne what to count. -1 for generic operator\n";
 	//	cerr << "    Mux wIn n \n"; killed by Florent
 	cerr << "    IntAdder wIn\n";
@@ -360,9 +360,9 @@ bool parse_command_line(int argc, char* argv[]){
 			else {
 				int wIn = check_strictly_positive(argv[i++], argv[0]);
 				int wOut = check_strictly_positive(argv[i++], argv[0]);
-				int countWhat = atoi(argv[i++]);
 				bool computesticky  = check_boolean(argv[i++], argv[0]);
-				cerr << "> LZOCShifterSticky, wIn="<<wIn<<", wOut="<<wOut<<", zeroOrOne="<<countWhat<<" compute_sticky=" << computesticky << endl;
+				int countWhat = atoi(argv[i++]);
+				cerr << "> LZOCShifterSticky, wIn="<<wIn<<", wOut="<<wOut<<", compute_sticky=" << computesticky<<", zeroOrOne="<<countWhat<< endl;
 				op = new LZOCShifterSticky(target, wIn, wOut, computesticky, countWhat);
 				add_operator(op);
 			}
