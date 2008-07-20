@@ -1,7 +1,7 @@
 /*
  * A leading zero/one counter + shifter + sticky bit computer for FloPoCo
  *
- * Author : Florent de Dinechin, Bogdan Pasca
+ * Authors : Florent de Dinechin, Bogdan Pasca
  *
  * This file is part of the FloPoCo project developed by the Arenaire
  * team at Ecole Normale Superieure de Lyon
@@ -34,76 +34,163 @@
 
 using namespace std;
 
-/** The LZOCShifterSticky constructor
-*@param[in] target the target device for this operator
-*@param[in] wIn the width of the mantissa input
-*@param[in] wOut the width of the mantissa output
-
-The width of the lzo output will be floor(log2(wIn+1)). It should be accessed as operator->wCount.
-*/
-
+//The width of the lzo output will be floor(log2(wIn+1)). It should be accessed as operator->getCountWidth().
 // TODO to be optimal for FPAdder, we have to provide a way to disable the sticky computation.
 
+/** 
+ * The LZOCShifterSticky constructor
+ * @param[in] target the target device for this operator
+ * @param[in] wIn the width of the mantissa input
+ * @param[in] wOut the width of the mantissa output
+ */
 LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut, bool compute_sticky, const int countType) :
-	Operator(target), wIn(wIn), wOut(wOut), compute_sticky(compute_sticky), zoc(countType), countType(countType) {
+	Operator(target), wIn(wIn), wOut(wOut), computeSticky(compute_sticky), countType(countType) {
 
-	ostringstream name; 
-	name <<"LZOCShifterSticky_"<<wIn<<"_"<<wOut<<"_"<<compute_sticky;
-
-	unique_name=name.str();
-
-	if (target->is_pipelined())
-		set_sequential();
-	else
-		set_combinatorial();	
-
-	//Set up the internal architecture signals
-
-	// Terminology: level i is the signal on which we will test wether the 2^(i-1) leading bits are zeroes.
-	// i goes from wCount to 0
-
-	// Input will be copied to level wCount, possibly padded to the next power of two with zeroes
+	entityType=(countType<0?generic:specific);
+	
 	int i, p2i;
 
+	Operator::set_operator_name();
+	set_operator_type();
 
-	// from the end of the pipeline to the beginning
+
+	/* Set up the internal architecture signals */
+
+	/* Terminology: 
+	   - level i is the signal on which we will test wether the 2^(i-1) leading bits are zeroes.
+	   - i goes from wCount to 0 */
+	
+	/*  from the end of the pipeline to the beginning, 
+	    determine the sizes of all register levels */
 	i=0;
-	size[0] = wOut; // size of the result
+	size[0] = wOut; /* size of the result */
 	while(size[i]-wOut < wIn){
 		i++;
 		p2i = 1<<(i-1);
 		size[i] = size[i-1] + p2i;
-		cout<<"size "<<i<<" is="<<size[i]<<endl;
-		// Invariant: size[i] = wOut + 2^i -1
+		/* Invariant: size[i] = wOut + 2^i -1 */
 	}
-	
-	// the attribute that gives the number of bits of the LZO count
+	/* the attribute that gives the number of bits of the LZO count */
 	wCount = i;
-	// should be identical to : wCount = intlog2(wIn+1); // +1 for the case all zeroes
-	//Set up the IO signals
-	add_input ("I", wIn);
-	if (zoc==-1) add_input ("OZb");  
+	/* the first stage doesn't need to register zeroes */
+	size[wCount] = 1<<wCount;
+	
+	/* should be identical to : wCount = intlog2(wIn+1); 
+	   +1 for the case all zeroes */
+	
+	/* Set up the IO signals */
+		
+	si = add_input ("I", wIn);
+		
 	add_output("Count", wCount);
 	add_output("O", wOut);
-	if(compute_sticky)
-		add_output("Sticky");
+	/* if we generate a generic LZOC */
+	if (entityType==generic) 
+		add_input ("OZb"); 
+	/* if we require a sticky bit computation */
+	if(compute_sticky) 
+		add_output("Sticky"); 
 	
-	// the first stage doesn't need to register zeroes
-	size[wCount] = 1<<wCount;
-
-
+	
 	if(verbose){
-		cout << "  wCount=" << wCount << "    Level sizes: ";
-		for(i=0; i<=wCount; i++) cout << size[i]<<" ";
+		cout <<endl<<"  wCount=" << wCount << "    Level sizes: ";
+		for(i=0; i<=wCount; i++) 
+			cout << size[i]<<" ";
 		cout <<endl;
 	}
+
+	double critical_path = 0.0;
+	bool registered;
 
 	for (int i=wCount; i>=0; i--){
 		ostringstream levelName, leveldName, stickyName;
 		levelName << "level"  << i;
 		stickyName << "sticky" << i;
 		level[i] = levelName.str();
-		if (is_sequential() && i!=wCount) {
+		double stage_delay = 1.2 * target->local_wire_delay() * (1<<i);
+		
+		if (i==wCount)
+		{
+			critical_path=stage_delay;
+			level_registered[i] = false;
+		}	
+		else
+			if (critical_path + stage_delay > 1/target->frequency()) {
+				critical_path=stage_delay; 	// reset critical path
+				level_registered[i] = true;
+				increment_pipeline_depth();
+			}
+	}
+	
+	if (is_sequential())
+	{
+		for (int i=wCount; i>=0; i--){
+			for (int j=0; j<=i; j++)
+				if (level_registered[j])
+					countDepth[i]++;	
+			if (level_registered[i]){
+				leveld[i] = level[i] + "_d" ;
+				ostringstream levelName;
+				levelName << "level"<<i;		
+				add_registered_signal(levelName.str(), size[i]);	
+			}
+			else{
+				leveld[i] = level[i];
+				ostringstream levelName;
+				levelName << "level"<<i;		
+				add_signal(levelName.str(), size[i]);	
+			}
+		}
+	
+		for (int i=wCount-1; i>=0; i--){
+			ostringstream countName;
+			countName << "count"<<i;		
+			add_delay_signal(countName.str(), 1, countDepth[i]);
+		}
+			
+		if(compute_sticky){
+			for (int j=wCount; j>=0; j--){
+			ostringstream stickyName;
+			stickyName<<"sticky"<<j;
+				if (level_registered[j])			
+					add_registered_signal(stickyName.str());
+				else
+					add_signal(stickyName.str());
+			}
+		}						
+			
+		if (entityType==generic)
+			add_delay_signal_no_reset("sozb",1, pipeline_depth());
+
+	}else
+	{
+		set_pipeline_depth(0);
+		for (int i=wCount; i>=0; i--){
+				leveld[i] = level[i];
+				ostringstream levelName;
+				levelName << "level"<<i;		
+				add_signal(levelName.str(), size[i]);
+				if(compute_sticky){
+					ostringstream stickyName;
+					stickyName<<"sticky"<<i;
+					add_signal(stickyName.str());
+				}					
+		}
+		
+		for (int i=wCount-1; i>=0; i--){
+			ostringstream countName;
+			countName << "count"<<i;		
+			add_signal(countName.str(), 1);
+		}
+	
+		add_signal("sozb",1);
+		
+	}
+		
+	
+	
+		/*	
+		if (is_sequential() && i!=wCount) 
 			add_registered_signal(level[i], size[i]);
 			leveld[i] = level[i] + "_d" ;
 			if(compute_sticky)
@@ -124,19 +211,62 @@ LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut, bool com
 			else 
 				add_signal(name.str());
 		}
-	}
-
+		*/
+	
+	//}
+/*
 	if (is_sequential()){
-		set_pipeline_depth(wCount); //was wCount-1
-		if (zoc==-1)
+		//set_pipeline_depth(wCount); //was wCount-1
+		if (entityType==generic)
 		add_delay_signal_no_reset("sozb",1, wCount-1);
 	}
+*/
 }
 
 /** The LZOCShifterSticky destructor
 */
-LZOCShifterSticky::~LZOCShifterSticky() {}
+LZOCShifterSticky::~LZOCShifterSticky() {
+}
 
+
+/* Accesor methods */
+/* ===========================================================================*/
+
+/** Returns the number of bits of the count
+ * @return the number of bits of the count
+ */
+int LZOCShifterSticky::getCountWidth() const{
+	return wCount;
+}
+
+
+/* Overriden methods */
+/* ===========================================================================*/
+
+/** Method for setting the operator name
+	* @param[in] prefix the prefix that is going to be placed to the default name
+	*                   of the operator
+	* @param[out] postfix the postfix that is going to be placed to the default
+	*                     name of the operator
+	*/
+void LZOCShifterSticky::set_operator_name(std::string prefix, std::string postfix){
+	ostringstream name; 
+	ostringstream computationInterface;
+	/* The computationInterface refers to the VHDL entity ports. 
+	   If computation is generic, then an extra input port is 
+	   available on the entity for specifying the count type */ 
+	if (countType < 0) 
+		computationInterface<<"gen";
+	else 
+		computationInterface<<"spec";
+	
+	name<<prefix
+	    <<"LZOCShifterSticky_"<<wIn<<"_"<<wOut<<"_"<<computeSticky<<"_" //semantic name
+	    <<computationInterface.str()
+	    <<postfix;
+	
+	unique_name=name.str();
+}
 
 
 /**
@@ -150,22 +280,20 @@ void LZOCShifterSticky::output_vhdl(std::ostream& o, std::string name) {
 	Operator::StdLibs(o);
 	output_vhdl_entity(o);
 	new_architecture(o,name);
-
 	output_vhdl_signal_declarations(o);	
-
-	// connect input to level wCount, possibly with 0 padding
-
 	begin_architecture(o);
+	
+	/* connect input to level wCount, possibly with 0 padding */
 	o << tab << "level" << wCount<< " <= " ;
 	if(wIn == size[wCount]) // no padding needed
 		o << "I;" <<endl;
 	else 
 		o << "I & (" << size[wCount]-wIn-1 << " downto 0 => '0');" << endl ;
 
-	if (zoc==-1)
-	o<<tab<<"sozb <= OZb;"<<endl;
+	if (entityType==generic)
+		o<<tab<<"sozb <= OZb;"<<endl;
 	
-	if(compute_sticky)
+	if(computeSticky)
 		o<<tab<<"sticky" << wCount << " <= '1';"<<endl;
 
 	for  (int i = wCount; i>=1; i--){
@@ -174,10 +302,10 @@ void LZOCShifterSticky::output_vhdl(std::ostream& o, std::string name) {
 
 		//=====================================
 		o << tab << "count" << i-1 << " <= '1' when " << leveld[i] << "(" << size[i]-1 << " downto " << size[i]-p2io2 << ") = (" << p2io2-1 << " downto 0 => "; 
-		if (zoc==-1)
-			o<<get_delay_signal_name("sozb",wCount-i);
+		if (entityType==generic)
+			o<<get_delay_signal_name("sozb",pipeline_depth()-countDepth[i-1]);
 		else
-			o<<"'"<<zoc<<"'";
+			o<<"'"<<countType<<"'";
 		o<<" )   else '0';" << endl; 
 		//=====================================
 		// REM in the following,  size[i]-size[i-1]-1 is almost always equal to p2io2, except in the first stage
@@ -197,24 +325,35 @@ void LZOCShifterSticky::output_vhdl(std::ostream& o, std::string name) {
 			o << tab << tab << tab <<  "else " << leveld[i] << "(" << size[i-1]-1 << " downto 0);" << endl; 
 		}
 		
-		if(compute_sticky){
-			o << tab << "sticky" << i-1 << " <= '0' when (count" << i-1 << "='1' or " << leveld[i] << "(" << size[i]-size[i-1]-1 << " downto 0) = (" << size[i]-size[i-1]-1 << " downto 0 => '0'))  else sticky" << i;
-			if(is_sequential() && i<wCount) o << "_d";
+		if(computeSticky){
+			if (size[i]-size[i-1]-1>=0)
+				o << tab << "sticky" << i-1 << " <= '0' when (count" << i-1 << "='1' or " << leveld[i] << "(" << size[i]-size[i-1]-1 << " downto 0) = (" << size[i]-size[i-1]-1 << " downto 0 => '0'))  else sticky" << i;
+			else
+				o << tab << "sticky" << i-1 << " <= '0' when count" << i-1 << "='1'  else sticky" << i;	
+				
+			if(is_sequential() && i<wCount && level_registered[i]) o << "_d";
 			o << ";" << endl;
 		}
 			
 		o << endl;
 	}
 
-	if(compute_sticky)
-		o << tab << "sticky <= sticky0_d;" << endl;
-	o << tab << "O      <= level0_d;" << endl;
+	if(computeSticky)
+		if (level_registered[0])
+			o << tab << "sticky <= sticky0_d;" << endl;
+		else
+			o << tab << "sticky <= sticky0;" << endl;
+			
+			
+	//o << tab << "O      <= level0_d;" << endl;
+	//leveld[i]
+	o << tab << "O      <= "<<leveld[0]<<";" << endl;
 	o << tab << "Count  <= ";
 	for (int i=wCount-1; i >=0; i--){
 		ostringstream name;
 		name << "count" << i;
 		if (is_sequential())
-			o << get_delay_signal_name(name.str(), i+1);
+			o << get_delay_signal_name(name.str(), countDepth[i]);
 		else
 			o << name.str();
 		if (i>0) o << " & ";
@@ -230,6 +369,12 @@ void LZOCShifterSticky::output_vhdl(std::ostream& o, std::string name) {
 	end_architecture(o);
 	
 }
+
+
+
+
+
+
 
 TestIOMap LZOCShifterSticky::getTestIOMap()
 {

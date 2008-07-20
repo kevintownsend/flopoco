@@ -218,7 +218,7 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 		add_delay_signal("crs",1,lzocs->pipeline_depth() + intaddClose3->pipeline_depth()+2);
 	//	add_delay_signal("exponentResultClose1",wEX+2,leadingZeroCounter->pipeline_depth()+leftShifter->pipeline_depth());
 
-		add_delay_signal("nZerosNew",lzocs->wCount,lzocs->pipeline_depth());
+		add_delay_signal("nZerosNew",lzocs->getCountWidth(),lzocs->pipeline_depth());
 		add_delay_signal("shiftedFrac",wFX+2,2);
 				
 		add_signal("exponentResultClose",wEX+2);
@@ -418,15 +418,14 @@ void FPAdder::output_vhdl(std::ostream& o, std::string name) {
 	output_vhdl_entity(o);
 	new_architecture(o,name);	
 	
-	if (! is_sequential())
-	{
+	//output VHDL components
+	if (is_sequential())
+		lzocs->output_vhdl_component(o);
+	else{
 		leadingZeroCounter->output_vhdl_component(o);
 		leftShifter->output_vhdl_component(o);
-	}
-	
+	}	
 	rightShifter->output_vhdl_component(o);
-	lzocs->output_vhdl_component(o);
-	cout<<endl;
 	
 	intaddClose1->output_vhdl_component(o);
 	intaddClose2->output_vhdl_component(o);
@@ -434,12 +433,10 @@ void FPAdder::output_vhdl(std::ostream& o, std::string name) {
 	intaddFar1->output_vhdl_component(o);
 	intaddFar2->output_vhdl_component(o);
 	intaddFar3->output_vhdl_component(o);
-	
-	
+		
 	output_vhdl_signal_declarations(o);	  
 	begin_architecture(o);
-	
-	
+		
 	if (is_sequential()){
 	
 		//=========================================================================| 
@@ -461,15 +458,14 @@ void FPAdder::output_vhdl(std::ostream& o, std::string name) {
 		o<<tab<<"exceptionXEqualY <= '1' when X("<<wEX+wFX+2<<" downto "<<wEX+wFX+1<<") = Y("<<wEY+wFY+2<<" downto "<<wEY+wFY+1<<") else"<<endl;
 		o<<tab<<"                    '0';"<<endl;
 
-		// make the difference between the exponents of X and Y. 
-		// expX - expY = expX + not(expY) + 1
-			// pad exponents with sign bit
-			o<<tab<<"signedExponentX <= \"0\" & X("<<wEX+wFX-1<<" downto "<<wFX<<");"<<endl;
-			o<<tab<<"signedExponentY <= \"0\" & Y("<<wEX+wFX-1<<" downto "<<wFX<<");"<<endl;
-			// make not(expY)	
-			o<<tab<<"invSignedExponentY <= not(signedExponentY);"<<endl;
-			// perform addition with carry in
-			o<<tab<<"exponentDifference0 <= signedExponentX + invSignedExponentY + '1';"<<endl;
+		// make the difference between the exponents of X and Y; expX - expY = expX + not(expY) + 1
+		// pad exponents with sign bit
+		o<<tab<<"signedExponentX <= \"0\" & X("<<wEX+wFX-1<<" downto "<<wFX<<");"<<endl;
+		o<<tab<<"signedExponentY <= \"0\" & Y("<<wEX+wFX-1<<" downto "<<wFX<<");"<<endl;
+		// make not(expY)	
+		o<<tab<<"invSignedExponentY <= not(signedExponentY);"<<endl;
+		// perform addition with carry in
+		o<<tab<<"exponentDifference0 <= signedExponentX + invSignedExponentY + '1';"<<endl;
 		
   	// SWAP when: [excX=excY and expY>expX] or [excY>excX]
 		o<<tab<<"swap <= (exceptionXEqualY and exponentDifference0("<<wE<<")) or (not(exceptionXSuperiorY));"<<endl;
@@ -481,11 +477,11 @@ void FPAdder::output_vhdl(std::ostream& o, std::string name) {
     o<<tab<<"        Y;"                    <<endl;
 
 		// readjust for the exponents difference after the potential swap
-			// sign extend swap to the size of the exponent
-			o<<tab<<"extendSwap <= ("<<wE-1<<" downto "<<0<<" => swap);"<<endl;
-			// compute NewExponentDifference = (OldExponentDifference xor extendedSWAP) + swap.
-			o<<tab<<"exponentDifference1 <= exponentDifference0_d("<<wE-1<<" downto "<<0<<") xor extendSwap_d;"<<endl;
-			o<<tab<<"exponentDifference <= exponentDifference1 + swap_d;"<<endl;
+		// sign extend swap to the size of the exponent
+		o<<tab<<"extendSwap <= ("<<wE-1<<" downto "<<0<<" => swap);"<<endl;
+		// compute NewExponentDifference = (OldExponentDifference xor extendedSWAP) + swap.
+		o<<tab<<"exponentDifference1 <= exponentDifference0_d("<<wE-1<<" downto "<<0<<") xor extendSwap_d;"<<endl;
+		o<<tab<<"exponentDifference <= exponentDifference1 + swap_d;"<<endl;
 	
 		// compute sdSignAB as (signA xor signB)
 		o<<tab<<"sdSignAB <= newX_d("<<wEX+wFX<<") xor newY_d("<<wEY+wFY<<");"<<endl;
@@ -503,7 +499,7 @@ void FPAdder::output_vhdl(std::ostream& o, std::string name) {
 		o<<tab<<"sdxXY <= newX_d("<<wE+wF+2<<" downto "<<wE+wF+1<<") & newY_d("<<wE+wF+2<<" downto "<<wE+wF+1<<");"<<endl;
 		o<<tab<<"sdSignY <= newY_d("<<wE+wF<<");"<<endl;
 	
-		// swapDifferencePipelineDepth = 1;         
+		// swapDifferencePipelineDepth = 1; ==for now, this section has a constant depth of 1.         
 	
 		
 		//=========================================================================|
@@ -581,7 +577,7 @@ void FPAdder::output_vhdl(std::ostream& o, std::string name) {
 		int delayExp;
 		delayExp=lzocs->pipeline_depth() + intaddClose2->pipeline_depth() + intaddClose1->pipeline_depth()+3;
 		o<<tab<< "exponentResultClose1<= "<<get_delay_signal_name("expXClose",delayExp)
-		                                  <<" - (CONV_STD_LOGIC_VECTOR(0,"<<wE-lzocs->wCount<<") & nZerosNew);"<<endl;
+		                                  <<" - (CONV_STD_LOGIC_VECTOR(0,"<<wE-lzocs->getCountWidth()<<") & nZerosNew);"<<endl;
 		
 		// ROUNDING
 		// during fraction alignment, the fraction of Y is shifted at most one position to the right, so 1 extra bit is enough to perform rounding 
@@ -803,13 +799,14 @@ void FPAdder::output_vhdl(std::ostream& o, std::string name) {
 			
 			}
 			
-			
 		
+		
+		
+		//=========================================================================|
+		//                     final result composition                            |
+		//=========================================================================|				
 		o<<"-- Roundings --"<<endl;
-				 
-		//==========================================================================
-		
-		
+				
 		// select between the results of the close or far path as the result of the operation 
 		o<<tab<< "with syncClose select"<<endl;
     o<<tab<< "exponentResultn <= expResClose when '1',"<<endl;
@@ -817,11 +814,7 @@ void FPAdder::output_vhdl(std::ostream& o, std::string name) {
 		o<<tab<< "with syncClose select"<<endl;
 		o<<tab<< "fractionResultn <= fracResClose when '1',"<<endl;
 		o<<tab<< "                   fracResFar when others;"<<endl;
-		
-		
-		
-		
-		
+				
 		// compute the exception bits of the result considering the possible underflow and overflow 
 		o<<tab<< "eTest <= exponentResultn("<<wE+1<<" downto "<<wE<<");"<<endl;
 		
@@ -831,11 +824,6 @@ void FPAdder::output_vhdl(std::ostream& o, std::string name) {
     o<<tab<< "                               \"01\" when others;"<<endl;
   	
   	o<<tab<< "nRn("<<wE+wF<<" downto 0) <= syncRS & exponentResultn("<<wE-1<<" downto 0) & fractionResultn("<<wF-1<<" downto 0);"<<endl;
-		
-//		o<<tab<<"outRes <= nRn;"<<endl;
-		
-		
-				
 	 
 	  o<<tab<< "with syncXAB_d select"<<endl;
 	  o<<tab<< "  nnR("<<wE+wF+2<<" downto "<<wE+wF+1<<") <= nRn_d("<<wE+wF+2<<" downto "<<wE+wF+1<<") when \"0101\","<<endl;
@@ -869,148 +857,15 @@ void FPAdder::output_vhdl(std::ostream& o, std::string name) {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 				   
 	} 
 	else
 	{  
-		/* the combinational version */
-		/* =======================================================================*/
-		/* =======================================================================*/
+		//=========================================================================| 
+		//                                                                         |
+		//                             COMBINATORIAL                               |
+		//                                                                         |
+		//=========================================================================|
 		
 	  /* == Swap/Difference ==*/
 	  /* signal which indicates whether or not the exception bits of X are greater or equal than the exception bits of Y */		  

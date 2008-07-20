@@ -10,7 +10,7 @@
 #include "Operator.hpp"
 
 /*
- * A leading zero/one counter + shifter +sticky bit evaluator for FloPoCo
+ * A leading zero/one counter + shifter + sticky bit evaluator for FloPoCo
  *
  * Authors : Florent de Dinechin, Bogdan Pasca
  *
@@ -37,35 +37,55 @@
 class LZOCShifterSticky : public Operator
 {
 public:
+	typedef enum {generic, specific} entityType_t;
+
+	/* Constructor(s) and Destructors */
 	LZOCShifterSticky(Target* target, int wIn, int wOut, bool compute_sticky, const int countType=-1);
 	~LZOCShifterSticky();
 
-	int wIn;
-	int wOut;
-
-	/** The number of bits of the count */
-	int wCount;
-
-
-	// Overloading the virtual functions of Operator
-	void output_vhdl(std::ostream& o, std::string name);
+	/*  accessor methods */
+	int getCountWidth() const;
 	
+	/* Overloading the virtual functions of Operator */
+	void output_vhdl(std::ostream& o, std::string name);
+	void set_operator_name(std::string prefix, std::string postfix);
+	
+	/* Overloading the virtual functions of TestBench */
 	TestIOMap getTestIOMap();
-	void fillTestCase(mpz_class a[]);
+	void      fillTestCase(mpz_class a[]);
 
 private:
-	/** if true, compute the sticky bit. If false, save this hardware */
-	bool compute_sticky; 
-	/** -1 0 1. If -1 is present then generic LZOC is instatiated */
+	/** The number of bits of the input */
+	int wIn;
+	/** The number of bits of the count */
+	int wCount;
+	/** The number of bits of the shifted output */
+	int wOut;
+	/** If true, compute the sticky bit. If false, save this hardware */
+	bool computeSticky; 
+	/** -1|0|1. If -1 is present then generic LZOC is instatiated */
 	int countType;
-	string level[42]; // the names of the signals, just to make code more readable 
-	string leveld[42]; // same but possibly delayed 
-	int size[42]; // Their size. Do we need to count more than 2^42 bits in FloPoCo? 
+	/** The names of the signals, just to make code more readable */
+	string level[42];  
+	/** Same but possibly delayed  */
+	string leveld[42]; 
+	/** Their size. Do we need to count more than 2^42 bits in FloPoCo? */ 
+	int size[42];      
 	
-	int zoc; //what to count 1 or 0 ?
+	/** Entity type. Can be either generic or specific */
+	entityType_t entityType;
 	
+	/** if boolean true, the corresponding level signal is registered*/ 
+	bool level_registered [128];
+	
+	
+	int countDepth[42];
+	
+	/* IO signals */
+	Signal *si;
+	
+		
 	mpz_class maxValue;
-	
 };
 
 
