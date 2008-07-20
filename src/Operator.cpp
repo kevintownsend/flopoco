@@ -32,7 +32,7 @@
 
 
 
-
+/*
 void  Operator::add_input(const std::string name, const int width) {
 	if(_signal_map.find(name) != _signal_map.end()) {
 		std::ostringstream o;
@@ -43,6 +43,20 @@ void  Operator::add_input(const std::string name, const int width) {
 	ioList.push_back(s);
 	_signal_map[name] = s ;
 	number_of_inputs ++;
+}
+*/
+
+Signal* Operator::add_input(const std::string name, const int width) {
+	if(_signal_map.find(name) != _signal_map.end()) {
+		std::ostringstream o;
+		o << "ERROR in add_input, signal " << name<< " seems to already exist";
+		throw o.str();
+	}
+	Signal *s = new Signal(name, Signal::in, width) ;
+	ioList.push_back(s);
+	_signal_map[name] = s ;
+	number_of_inputs ++;
+	return s;
 }
 
 void  Operator::add_output(const std::string name, const int width) {
@@ -177,9 +191,6 @@ void  Operator::add_registered_signal_with_sync_reset(const std::string name, co
 }
 
 
-
-
-
 string  Operator::add_delay_signal(const string name, const int width, const int delay) {
 	ostringstream o;
 	Signal *s;
@@ -239,13 +250,6 @@ string  Operator::add_delay_signal_no_reset(const string name, const int width, 
 	
 	return o.str();
 }
-
-
-
-
-
-
-
 
 string  Operator::add_delay_signal_bus(const string name, const int width, const int delay) {
 	ostringstream o;
@@ -308,10 +312,6 @@ string  Operator::add_delay_signal_bus_no_reset(const string name, const int wid
 	return o.str();
 }
 
-
-
-
-
 string  Operator::get_delay_signal_name(const string name, const int delay) {
 	ostringstream o;
 	if(delay==0 || is_sequential()==false)
@@ -331,26 +331,26 @@ Signal * Operator::get_signal_by_name(string name) {
 }
 
 
-/*
-string  Operator::add_level_delay_signal(const string name, const int start_level, const int width, const int delay) {
-	ostringstream o;
-	int l=start_level;
-	//o << name;
-	// if the delay is zero it is equivalent to add_signal
-	if(delay>0) {
-		for (int i=0; i<delay; i++){
-			o.str("");
-			o<<name<<"_level"<<l;
-			signalList.push_back(new Signal(o.str(), Signal::registered_with_synch_reset, width));    
-			l++;
-		}
-		has_registers_with_synch_reset=true;
-	}
-	signalList.push_back(new Signal(o.str(), Signal::wire, width));    
-	
-	return o.str();
+/* Methods for setting the operator name */
+void Operator::set_operator_name(){
+	set_operator_name("","");
 }
-*/
+
+void Operator::set_operator_name(std::string operatorName){
+	unique_name = operatorName;
+}
+
+/* Method for setting the operator type */
+void Operator::set_operator_type(){
+	if (target->is_pipelined())
+		set_sequential();
+	else
+		set_combinatorial();	
+}
+
+
+
+
 
 			
 void  Operator::output_vhdl_signal_declarations(std::ostream& o) {

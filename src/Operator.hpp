@@ -49,12 +49,11 @@ public:
 	
 	virtual ~Operator() {}
 
-
-
 	/** The following functions should be used to declare input and output signals,
 	 excluding clk and rst */
 
-	void add_input(const std::string name, const int width=1);
+//	void add_input(const std::string name, const int width=1);
+	Signal* add_input(const std::string name, const int width=1);
 	void add_output(const std::string name, const int width=1);
 	
 	// equivalent to the previous for FP signals 
@@ -92,11 +91,25 @@ public:
 
 	void output_vhdl_registers(std::ostream& o);
 
+	/* Accessor methods */ 
+	/* =======================================================================*/
+	/** Sets Operator name to default name*/
+	void set_operator_name();
+	/** Sets Operator name to givenName*/
+	void set_operator_name(std::string operatorName);
+	/** Sets Operator name to prefix_defaultName_postfix*/
+	virtual void set_operator_name(std::string prefix, std::string postfix){};
+	/** Sets the type of the operator */
+	void set_operator_type();
+
+
+
 
 	// Helper functions for VHDL output
 	
 	/** Outputs component declaration */
 	virtual void output_vhdl_component(std::ostream& o, std::string name);
+
 
 	void output_vhdl_component(std::ostream& o);  // calls the previous with name = unique_name
 	
