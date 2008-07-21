@@ -150,12 +150,20 @@ LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut, bool com
 			
 		if(compute_sticky){
 			for (int j=wCount; j>=0; j--){
-			ostringstream stickyName;
-			stickyName<<"sticky"<<j;
+				ostringstream stickyName;
+				ostringstream eqVer;
+				ostringstream newSticky;
+				eqVer<<"eqVer"<<j;
+				newSticky<<"newSticky"<<j;
+				stickyName<<"sticky"<<j;
+				
 				if (level_registered[j])			
 					add_registered_signal(stickyName.str());
 				else
 					add_signal(stickyName.str());
+			
+				add_signal(eqVer.str());
+				add_signal(newSticky.str());	
 			}
 		}						
 			
@@ -172,8 +180,14 @@ LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut, bool com
 				add_signal(levelName.str(), size[i]);
 				if(compute_sticky){
 					ostringstream stickyName;
+					ostringstream eqVer;
+					ostringstream newSticky;
 					stickyName<<"sticky"<<i;
+					eqVer<<"eqVer"<<i;
+					newSticky<<"newSticky"<<i;
 					add_signal(stickyName.str());
+					add_signal(eqVer.str());
+					add_signal(newSticky.str());
 				}					
 		}
 		
@@ -186,7 +200,7 @@ LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut, bool com
 		add_signal("sozb",1);
 		
 	}
-		
+	add_signal("preCount", wCount);	
 	
 	
 		/*	
@@ -294,7 +308,7 @@ void LZOCShifterSticky::output_vhdl(std::ostream& o, std::string name) {
 		o<<tab<<"sozb <= OZb;"<<endl;
 	
 	if(computeSticky)
-		o<<tab<<"sticky" << wCount << " <= '1';"<<endl;
+		o<<tab<<"sticky" << wCount << " <= '0';"<<endl;
 
 	for  (int i = wCount; i>=1; i--){
 		int p2i = 1 << i;
@@ -326,12 +340,26 @@ void LZOCShifterSticky::output_vhdl(std::ostream& o, std::string name) {
 		}
 		
 		if(computeSticky){
-			if (size[i]-size[i-1]-1>=0)
-				o << tab << "sticky" << i-1 << " <= '0' when (count" << i-1 << "='1' or " << leveld[i] << "(" << size[i]-size[i-1]-1 << " downto 0) = (" << size[i]-size[i-1]-1 << " downto 0 => '0'))  else sticky" << i;
-			else
-				o << tab << "sticky" << i-1 << " <= '0' when count" << i-1 << "='1'  else sticky" << i;	
-				
-			if(is_sequential() && i<wCount && level_registered[i]) o << "_d";
+			ostringstream eqVer;
+			ostringstream newSticky;
+			eqVer << "eqVer"<<i;
+			newSticky <<"newSticky"<<i;
+			
+			o << tab << eqVer.str() <<" <= '1' when " << leveld[i] << "(" << size[i]-size[i-1]-1 << " downto 0) = (" << size[i]-size[i-1]-1 << " downto 0 => '0') else '0';"
+			  << endl;
+			o << tab << newSticky.str() <<" <= sticky" << i << " or not("<<eqVer.str()<<");"<<endl;  
+		
+			if (size[i]-size[i-1]-1>=0){
+				o << tab << "sticky" << i-1 << " <= sticky"<<i;
+				if(is_sequential() && i<wCount && level_registered[i]) 
+					o << "_d";
+				o <<" when (count" << i-1 << "='1') else "<<newSticky.str();
+			}
+			else{
+				o << tab << "sticky" << i-1 << " <= sticky"<<i<<" when count" << i-1 << "='1'  else sticky" << i;	
+				if(is_sequential() && i<wCount && level_registered[i]) 
+					o << "_d";
+			}
 			o << ";" << endl;
 		}
 			
@@ -348,7 +376,7 @@ void LZOCShifterSticky::output_vhdl(std::ostream& o, std::string name) {
 	//o << tab << "O      <= level0_d;" << endl;
 	//leveld[i]
 	o << tab << "O      <= "<<leveld[0]<<";" << endl;
-	o << tab << "Count  <= ";
+	o << tab << "preCount  <= ";
 	for (int i=wCount-1; i >=0; i--){
 		ostringstream name;
 		name << "count" << i;
@@ -361,7 +389,18 @@ void LZOCShifterSticky::output_vhdl(std::ostream& o, std::string name) {
 	
 	o << ";" << endl;
 
+	ostringstream binInputWidth;
+	
+	printBinNum(binInputWidth, wIn, wCount);	
 
+	o << tab << "Count <= \""<<binInputWidth.str()<<"\" when preCount = ("<<wCount-1<<" downto  0 =>";
+//	if (entityType==specific)
+		o <<"'1')";
+//	else
+//		o<<"not("<<get_delay_signal_name("sozb",pipeline_depth())<<"))";
+	
+	o<<" else preCount;"<<endl;
+	 
 	if (is_sequential()){		
 		output_vhdl_registers(o); o<<endl;
 	}
@@ -383,20 +422,30 @@ TestIOMap LZOCShifterSticky::getTestIOMap()
 	//tim.add(*get_signal_by_name("OZb"));
 	tim.add(*get_signal_by_name("Count"));
 	tim.add(*get_signal_by_name("O"));
-//	if (compute_sticky)
-//		tim.add(*get_signal_by_name("Sticky"));
+	if (computeSticky)
+		tim.add(*get_signal_by_name("Sticky"));
 	
 	return tim;
 }
 
+
+
+
+
 void LZOCShifterSticky::fillTestCase(mpz_class a[])
 {
 
-	if (countType>=0)
+	if (entityType==specific)
 	{
 		mpz_class& si     = a[0];
 		mpz_class& scount = a[1];
 		mpz_class& so     = a[2];
+		mpz_class& ssticky = a[3];
+		
+		//if (computeSticky)
+		//	ssticky = a[3];
+		
+		int sticky=0;
 	
 		/* Count the leading zero/one s */
 		int j=(wIn-1);//the index of the MSB of the input
@@ -416,27 +465,29 @@ void LZOCShifterSticky::fillTestCase(mpz_class a[])
 	
 		mpz_class inputValue;
 		inputValue=si;
-	
-		//if we are counting zeros
-		if (countType==0) 
-			while (!((inputValue<=maxValue)&&(2*inputValue>maxValue)))
-				if (inputValue>maxValue)
-					inputValue=inputValue/2;
-				else
-					inputValue=inputValue*2;
-		else
+		sticky=0;
+
+		if (countType==0) /* if we are counting zeros */
+			if (inputValue!=0) 
+				while (!((inputValue<=maxValue)&&(2*inputValue>maxValue)))
+					if (inputValue>maxValue){
+						if(mpz_tstbit(inputValue.get_mpz_t(), 0)==1)
+							sticky=1;
+						inputValue=inputValue/2;
+					}
+					else
+						inputValue=inputValue*2;
+			else {}
+		else /* if we are counting ones */
 		{
 			int restOfBits = wIn - icount;
 			if (icount>0)
 			{
-			//	cout<<"icount="<<icount<<endl;
 				mpz_class ones=1;
 				for (int i=1;i<=icount;i++)
 					ones = ones*2;
 			
 				ones=ones-1;
-			
-		//		cout<<"ones="<<ones<<endl;
 						
 				for (int i=1;i<=restOfBits;i++)
 					ones=ones*2;
@@ -447,16 +498,33 @@ void LZOCShifterSticky::fillTestCase(mpz_class a[])
 				for (int i=1;i<=(wOut-restOfBits);i++)
 					inputValue=inputValue*2;
 			else
-				for (int i=1;i<=restOfBits-wOut;i++)
+				for (int i=1;i<=restOfBits-wOut;i++){
+					if(mpz_tstbit(inputValue.get_mpz_t(), 0)==1)
+							sticky=1;
 					inputValue=inputValue/2;
+				}
 		}
-		
-		
-		
-		
-		
-		
+				
 		so=inputValue;
+		
+		
+		
+		if (computeSticky)
+		{
+		//cout << "compute sticky !!!";
+		ssticky = sticky;
+		}	
+		
+		
+		
+		if (verbose)
+		{
+			cout<<"TestCase report:"<<endl;
+			cout<<tab<<"Input value:"<<si<<endl;
+			cout<<tab<<"Count value:"<<icount<<endl;
+			cout << tab <<"Output value:"<<so<<endl;
+		}		
+			
 	}
 	
 	
