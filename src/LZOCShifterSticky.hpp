@@ -32,8 +32,9 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
 */
 
-
-
+/** 
+ * A leading zero/one counter + shifter + sticky bit computer for FloPoCo
+ */ 
 class LZOCShifterSticky : public Operator
 {
 public:
@@ -44,7 +45,9 @@ public:
 	~LZOCShifterSticky();
 
 	/*  accessor methods */
+	void setEntityType(entityType_t eType);
 	int getCountWidth() const;
+	
 	
 	/* Overloading the virtual functions of Operator */
 	void output_vhdl(std::ostream& o, std::string name);
@@ -71,23 +74,14 @@ private:
 	string leveld[42]; 
 	/** Their size. Do we need to count more than 2^42 bits in FloPoCo? */ 
 	int size[42];      
-	
 	/** Entity type. Can be either generic or specific */
 	entityType_t entityType;
-	
 	/** if boolean true, the corresponding level signal is registered*/ 
 	bool level_registered [128];
-	
-	
+	/** the depths for the levels of the architecture */	
 	int countDepth[42];
-	
-	/* IO signals */
-	Signal *si;
-	
-		
+	/** utilitary var */		
 	mpz_class maxValue;
 };
-
-
 
 #endif

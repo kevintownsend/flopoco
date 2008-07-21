@@ -34,9 +34,6 @@
 
 using namespace std;
 
-//The width of the lzo output will be floor(log2(wIn+1)). It should be accessed as operator->getCountWidth().
-// TODO to be optimal for FPAdder, we have to provide a way to disable the sticky computation.
-
 /** 
  * The LZOCShifterSticky constructor
  * @param[in] target the target device for this operator
@@ -45,14 +42,16 @@ using namespace std;
  */
 LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut, bool compute_sticky, const int countType) :
 	Operator(target), wIn(wIn), wOut(wOut), computeSticky(compute_sticky), countType(countType) {
-
-	entityType=(countType<0?generic:specific);
 	
 	int i, p2i;
 
+	if (countType < 0)
+		setEntityType(generic);
+	else
+		setEntityType(specific);
+
 	Operator::set_operator_name();
 	set_operator_type();
-
 
 	/* Set up the internal architecture signals */
 
@@ -79,9 +78,8 @@ LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut, bool com
 	   +1 for the case all zeroes */
 	
 	/* Set up the IO signals */
-		
-	si = add_input ("I", wIn);
-		
+	add_input ("I", wIn);
+	/* The width of the lzo count output will be floor(log2(wIn+1)). */		
 	add_output("Count", wCount);
 	add_output("O", wOut);
 	/* if we generate a generic LZOC */
@@ -90,8 +88,7 @@ LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut, bool com
 	/* if we require a sticky bit computation */
 	if(compute_sticky) 
 		add_output("Sticky"); 
-	
-	
+		
 	if(verbose){
 		cout <<endl<<"  wCount=" << wCount << "    Level sizes: ";
 		for(i=0; i<=wCount; i++) 
@@ -100,8 +97,6 @@ LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut, bool com
 	}
 
 	double critical_path = 0.0;
-	bool registered;
-
 	for (int i=wCount; i>=0; i--){
 		ostringstream levelName, leveldName, stickyName;
 		levelName << "level"  << i;
@@ -116,7 +111,7 @@ LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut, bool com
 		}	
 		else
 			if (critical_path + stage_delay > 1/target->frequency()) {
-				critical_path=stage_delay; 	// reset critical path
+				critical_path=stage_delay;
 				level_registered[i] = true;
 				increment_pipeline_depth();
 			}
@@ -170,7 +165,7 @@ LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut, bool com
 		if (entityType==generic)
 			add_delay_signal_no_reset("sozb",1, pipeline_depth());
 
-	}else
+	}else /* combinatorial verison */
 	{
 		set_pipeline_depth(0);
 		for (int i=wCount; i>=0; i--){
@@ -196,45 +191,9 @@ LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut, bool com
 			countName << "count"<<i;		
 			add_signal(countName.str(), 1);
 		}
-	
 		add_signal("sozb",1);
-		
 	}
 	add_signal("preCount", wCount);	
-	
-	
-		/*	
-		if (is_sequential() && i!=wCount) 
-			add_registered_signal(level[i], size[i]);
-			leveld[i] = level[i] + "_d" ;
-			if(compute_sticky)
-				add_registered_signal(stickyName.str());
-		}
-		else {
-			add_signal(           level[i], size[i]);
-			leveld[i] = level[i];
-			if(compute_sticky)
-				add_signal(           stickyName.str());
-		}
-		// The signal that holds the leading zero count
-		if(i<wCount) {
-			ostringstream name;
-			name << "count" << i;
-			if (is_sequential()) 
-				add_delay_signal_no_reset(name.str(),1, i+1);				
-			else 
-				add_signal(name.str());
-		}
-		*/
-	
-	//}
-/*
-	if (is_sequential()){
-		//set_pipeline_depth(wCount); //was wCount-1
-		if (entityType==generic)
-		add_delay_signal_no_reset("sozb",1, wCount-1);
-	}
-*/
 }
 
 /** The LZOCShifterSticky destructor
@@ -245,6 +204,14 @@ LZOCShifterSticky::~LZOCShifterSticky() {
 
 /* Accesor methods */
 /* ===========================================================================*/
+
+/** Sets the type of the entity for this operator
+ * @param eType the type of the entity for this operator. Can be
+ *              generic or specific
+ */
+void LZOCShifterSticky::setEntityType(entityType_t eType){
+	entityType = eType; 
+}
 
 /** Returns the number of bits of the count
  * @return the number of bits of the count
@@ -288,7 +255,6 @@ void LZOCShifterSticky::set_operator_name(std::string prefix, std::string postfi
  * @param[in,out] o     the stream where the current architecture will be outputed to
  * @param[in]     name  the name of the entity corresponding to the architecture generated in this method
  **/
-
 void LZOCShifterSticky::output_vhdl(std::ostream& o, std::string name) {
 	Licence(o,"Florent de Dinechin, Bogdan Pasca (2007)");
 	Operator::StdLibs(o);
@@ -314,14 +280,14 @@ void LZOCShifterSticky::output_vhdl(std::ostream& o, std::string name) {
 		int p2i = 1 << i;
 		int p2io2 = 1 << (i-1);
 
-		//=====================================
+		//======================================================================
 		o << tab << "count" << i-1 << " <= '1' when " << leveld[i] << "(" << size[i]-1 << " downto " << size[i]-p2io2 << ") = (" << p2io2-1 << " downto 0 => "; 
 		if (entityType==generic)
 			o<<get_delay_signal_name("sozb",pipeline_depth()-countDepth[i-1]);
 		else
 			o<<"'"<<countType<<"'";
 		o<<" )   else '0';" << endl; 
-		//=====================================
+		//======================================================================
 		// REM in the following,  size[i]-size[i-1]-1 is almost always equal to p2io2, except in the first stage
 		if (i==wCount){
 			o << tab << level[i-1] << " <= " ;
@@ -372,9 +338,6 @@ void LZOCShifterSticky::output_vhdl(std::ostream& o, std::string name) {
 		else
 			o << tab << "sticky <= sticky0;" << endl;
 			
-			
-	//o << tab << "O      <= level0_d;" << endl;
-	//leveld[i]
 	o << tab << "O      <= "<<leveld[0]<<";" << endl;
 	o << tab << "preCount  <= ";
 	for (int i=wCount-1; i >=0; i--){
@@ -393,25 +356,14 @@ void LZOCShifterSticky::output_vhdl(std::ostream& o, std::string name) {
 	
 	printBinNum(binInputWidth, wIn, wCount);	
 
-	o << tab << "Count <= \""<<binInputWidth.str()<<"\" when preCount = ("<<wCount-1<<" downto  0 =>";
-//	if (entityType==specific)
-		o <<"'1')";
-//	else
-//		o<<"not("<<get_delay_signal_name("sozb",pipeline_depth())<<"))";
-	
-	o<<" else preCount;"<<endl;
+	o << tab << "Count <= \""<<binInputWidth.str()<<"\" when preCount = ("<<wCount-1<<" downto  0 => '1')";
+	o << tab << "         else preCount;"<<endl;
 	 
 	if (is_sequential()){		
 		output_vhdl_registers(o); o<<endl;
 	}
-
 	end_architecture(o);
-	
 }
-
-
-
-
 
 
 
@@ -419,22 +371,19 @@ TestIOMap LZOCShifterSticky::getTestIOMap()
 {
 	TestIOMap tim;
 	tim.add(*get_signal_by_name("I"));
-	//tim.add(*get_signal_by_name("OZb"));
 	tim.add(*get_signal_by_name("Count"));
 	tim.add(*get_signal_by_name("O"));
 	if (computeSticky)
 		tim.add(*get_signal_by_name("Sticky"));
+	if (entityType == generic )
+		tim.add(*get_signal_by_name("OZb"));	
 	
 	return tim;
 }
 
 
-
-
-
 void LZOCShifterSticky::fillTestCase(mpz_class a[])
 {
-
 	if (entityType==specific)
 	{
 		mpz_class& si     = a[0];
@@ -442,25 +391,26 @@ void LZOCShifterSticky::fillTestCase(mpz_class a[])
 		mpz_class& so     = a[2];
 		mpz_class& ssticky = a[3];
 		
-		//if (computeSticky)
-		//	ssticky = a[3];
-		
 		int sticky=0;
-	
-		/* Count the leading zero/one s */
-		int j=(wIn-1);//the index of the MSB of the input
-		int bit = (countType == 0) ? 0 : 1; //what are we counting
-		for (j = (wIn-1); j >= 0; j--)
-				if (mpz_tstbit(si.get_mpz_t(), j) != bit)
-				break;
 		
-		int icount =(wIn-1)-j;
-		scount = icount; //the count result
+		/* Count the leading zero/one s */
+		int j = wIn-1;                      /* the index of the MSB of the input */
+		int bit = (countType == 0) ? 0 : 1; /* what are we counting in the specific case */
+		/* from the MSB towards the LSB, check if current bit of input = to the bit we test against */
+		for (j = wIn-1; j >= 0; j--)
+				if (mpz_tstbit(si.get_mpz_t(), j) != bit)
+					break;
+		
+		/* the number of bits is then equal to the index of the MSB - the index where we stoped previously */
+		int icount = wIn - 1 - j;
+		
+		/* assign this value to the scount output */
+		scount = icount; 
 	
-		//compute max value on wOut bits
+		/* compute the max value on wOut bits */
 		maxValue=2;
 		for (int i=2;i<=wOut;i++)
-		maxValue=maxValue*2;
+			maxValue=maxValue*2;
 		maxValue--;
 	
 		mpz_class inputValue;
@@ -483,7 +433,7 @@ void LZOCShifterSticky::fillTestCase(mpz_class a[])
 			int restOfBits = wIn - icount;
 			if (icount>0)
 			{
-				mpz_class ones=1;
+				mpz_class ones = 1;
 				for (int i=1;i<=icount;i++)
 					ones = ones*2;
 			
@@ -500,34 +450,160 @@ void LZOCShifterSticky::fillTestCase(mpz_class a[])
 			else
 				for (int i=1;i<=restOfBits-wOut;i++){
 					if(mpz_tstbit(inputValue.get_mpz_t(), 0)==1)
-							sticky=1;
+						sticky=1;
 					inputValue=inputValue/2;
 				}
 		}
 				
+		/* assign the shifted result to the testCase output */		
 		so=inputValue;
-		
-		
-		
+				
 		if (computeSticky)
-		{
-		//cout << "compute sticky !!!";
-		ssticky = sticky;
-		}	
-		
-		
-		
+			/* assign the sticky bit computation to the output if required*/	
+			ssticky = sticky;
+				
 		if (verbose)
 		{
 			cout<<"TestCase report:"<<endl;
 			cout<<tab<<"Input value:"<<si<<endl;
 			cout<<tab<<"Count value:"<<icount<<endl;
-			cout << tab <<"Output value:"<<so<<endl;
+			cout<<tab<<"Output value:"<<so<<endl;
+			if (computeSticky)
+			cout<<tab<<"Sitcky value:"<<ssticky<<endl;
 		}		
 			
 	}
+	else
+	{ /* if entity type is generic */
+		if (! computeSticky)
+		{
+			mpz_class& si     = a[0];
+			mpz_class& scount = a[1];
+			mpz_class& so     = a[2];
+			mpz_class& sozb   = a[3];
+		
+			int j=wIn-1;
+			/* Count the leading zero/one s */
+			for (j = (wIn-1); j >= 0; j--)
+				if (mpz_tstbit(si.get_mpz_t(), j) != sozb)
+					break;
+		
+			int icount =(wIn-1)-j;
+			scount = icount; 	
+			
+			/* compute max value on wOut bits */
+			maxValue=2;
+			for (int i=2;i<=wOut;i++)
+				maxValue=maxValue*2;
+			maxValue--;
 	
+			mpz_class inputValue;
+			inputValue=si;
+			
+			if (sozb==0) /* if we are counting zeros */
+				if (inputValue!=0) 
+					while (!((inputValue<=maxValue)&&(2*inputValue>maxValue)))
+						if (inputValue>maxValue)
+							inputValue=inputValue/2;
+						else
+							inputValue=inputValue*2;
+				else {}
+			else /* if we are counting ones */
+			{
+				int restOfBits = wIn - icount;
+				if (icount>0)
+				{
+					mpz_class ones=1;
+					for (int i=1;i<=icount;i++)
+						ones = ones*2;
+			
+					ones=ones-1;
+						
+					for (int i=1;i<=restOfBits;i++)
+						ones=ones*2;
+					inputValue=inputValue-ones; /* the input without the leading ones */
+				}
+
+				if ((wIn<=wOut) || ((wIn>wOut) && (restOfBits<wOut) ))	/* shift result in place */	
+					for (int i=1;i<=(wOut-restOfBits);i++)
+						inputValue=inputValue*2;
+				else
+					for (int i=1;i<=restOfBits-wOut;i++)
+						inputValue=inputValue/2;
+			}
+			
+			so=inputValue;	
+		}
+		else{
+		/* if we also require a sticky bit computation */
+			mpz_class& si     = a[0];
+			mpz_class& scount = a[1];
+			mpz_class& so     = a[2];
+			mpz_class& ssticky= a[3];
+			mpz_class& sozb   = a[4];
+			
+			
+			int sticky = 0;
+			int j=wIn-1;
+			/* Count the leading zero/one s */
+			for (j = (wIn-1); j >= 0; j--)
+				if (mpz_tstbit(si.get_mpz_t(), j) != sozb)
+					break;
+		
+			int icount =(wIn-1)-j;
+			scount = icount; //the count result
+			
+			//compute max value on wOut bits
+			maxValue=2;
+			for (int i=2;i<=wOut;i++)
+				maxValue=maxValue*2;
+			maxValue--;
 	
+			mpz_class inputValue;
+			inputValue=si;
+			sticky=0;
+
+			if (sozb==0) /* if we are counting zeros */
+				if (inputValue!=0) 
+					while (!((inputValue<=maxValue)&&(2*inputValue>maxValue)))
+						if (inputValue>maxValue){
+							if(mpz_tstbit(inputValue.get_mpz_t(), 0)==1)
+								sticky=1;
+							inputValue=inputValue/2;
+						}
+						else
+							inputValue=inputValue*2;
+				else {}
+			else /* if we are counting ones */
+			{
+				int restOfBits = wIn - icount;
+				if (icount>0)
+				{
+					mpz_class ones=1;
+					for (int i=1;i<=icount;i++)
+						ones = ones*2;
+			
+					ones=ones-1;
+						
+					for (int i=1;i<=restOfBits;i++)
+						ones=ones*2;
+					inputValue=inputValue-ones; // the input without the leading ones
+				}
+
+				if ((wIn<=wOut) || ((wIn>wOut) && (restOfBits<wOut) ))	//shift result in place	
+					for (int i=1;i<=(wOut-restOfBits);i++)
+						inputValue=inputValue*2;
+				else
+					for (int i=1;i<=restOfBits-wOut;i++){
+						if(mpz_tstbit(inputValue.get_mpz_t(), 0)==1)
+							sticky=1;
+						inputValue=inputValue/2;
+					}
+			}
+			so=inputValue;
+			ssticky = sticky;
+		}
+	}
 }
 
 
