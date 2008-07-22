@@ -232,8 +232,7 @@ private:
 	bool has_registers_with_async_reset;
 	/** true if the operator has registers having a synch reset */
 	bool has_registers_with_sync_reset;
-	/** Usually is the default name of the architecture.  */
-	string commented_name;
+	string commented_name;/**< Usually is the default name of the architecture.  */
 };
 
 #endif

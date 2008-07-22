@@ -1,0 +1,174 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html lang="en-US" xml:lang="en-US" xmlns="http://www.w3.org/1999/xhtml">
+  <!-- This file was converted to xhtml by Writer2xhtml ver. 0.5. See http://www.hj-gym.dk/~hj/writer2latex for more info. -->
+  <head profile="http://dublincore.org/documents/dcq-html/">
+    <title></title>
+    <meta content="text/html; charset=utf-8" http-equiv="Content-Type" />
+    <meta content="" name="description" />
+    <meta content="" name="keywords" />
+    <link href="http://purl.org/dc/elements/1.1/" rel="schema.DC" />
+    <meta content="" name="DC.title" />
+    <meta content="" name="DC.subject" />
+    <meta content="" name="DC.description" />
+    <meta content="" name="DC.creator" />
+    <meta content="2008-07-22T10:14:32" name="DC.date" />
+    <meta content="" name="DC.language" />
+    <style media="all" type="text/css">
+      body {font-family:'Times New Roman',serif;font-size:16.0px}
+      a:link {color:#000080;text-decoration:underline}
+      p.PreformattedText {margin-left:0;margin-right:0;margin-top:0;margin-bottom:0;border:none;padding:0;font-family:'DejaVu Sans Mono',monospace;font-size:13.333334px}
+      p.Textbody {margin-left:0;margin-right:0;margin-top:0;margin-bottom:8.016px;border:none;padding:0;font-size:16.0px}
+      p.Standard {margin-left:0;margin-right:0;margin-top:0;margin-bottom:0;border:none;padding:0;font-size:16.0px}
+      p.TableContents {margin-left:0;margin-right:0;margin-top:0;margin-bottom:0;border:none;padding:0;font-size:16.0px}
+      h2 {margin-left:0;margin-right:0;margin-top:15.984px;margin-bottom:8.016px;border:none;padding:0;font-family:'Times New Roman',serif;font-style:italic;font-weight:bold;font-size:24.0px;clear:left}
+    </style>
+  </head>
+  <body dir="ltr">
+    <p class="Standard" style="text-align:center;font-weight:bold;font-size:29.333334px"></p>
+    <p class="Standard" style="text-align:center;font-weight:bold;font-size:29.333334px">FloPoCo Coding Standards</p>
+    <p class="Standard" style="text-align:center;font-weight:bold;font-size:18.666668px">22.07.2008</p>
+    <p class="Standard" style="text-align:left;font-weight:bold;font-size:29.333334px"></p>
+    <p class="Standard" style="text-align:left;font-weight:normal;font-size:16.0px"> As the complexity and size of this project increase, it feels necessary to define a set of coding rules and guidelines in order to have a clean an consistent code. </p>
+    <p class="Standard" style="text-align:left;font-weight:normal;font-size:16.0px"></p>
+    <p class="Standard" style="text-align:left;font-style:italic;font-weight:normal;font-size:21.333334px">Stylistic Conventions</p>
+    <p class="Standard" style="text-align:left;font-weight:normal;font-size:21.333334px"></p>
+    <ul style="margin-top:0;margin-bottom:0;list-style-type:disc;clear:left">
+      <li>
+        <p class="Textbody" style="margin-top:0;margin-bottom:0">Source code should use <span style="font-weight:bold">UTF8</span> character set. </p>
+      </li>
+      <li>
+        <p class="Textbody" style="margin-top:0;margin-bottom:0">Variable <span style="font-weight:bold">names</span> and <span style="font-weight:bold">comments</span> should be in <span style="font-weight:bold">English</span>. </p>
+      </li>
+      <li>
+        <p class="Textbody" style="margin-top:0;margin-bottom:0">Class names are nouns, in mixed-case, with an initial upper-case letter and the ﬁrst letter of each subsequent word capitalized (e.g. TestBench). </p>
+      </li>
+      <li>
+        <p class="Textbody" style="margin-top:0;margin-bottom:0">Method names are <span style="font-weight:bold">verbs</span> or <span style="font-weight:normal">nouns</span> in mixed-case, <span style="font-weight:bold">starting with a lower-case letter</span>               (e.g. update() or addElement()). </p>
+      </li>
+      <li>
+        <p class="Textbody" style="margin-top:0;margin-bottom:0">Methods that <span style="font-weight:bold">return</span> a value should take the form getSize(). </p>
+      </li>
+      <li>
+        <p class="Textbody" style="margin-top:0;margin-bottom:0">The <span style="font-weight:bold">names of local variables</span> should be in mixed case, starting with a lower-case letter (e.g. countDepth). This also applies to the formal parameters of methods. <span style="color:#ff0000">Do not use names starting with underscore</span>. </p>
+      </li>
+      <li>
+        <p class="Textbody">The names of <span style="font-weight:bold">macro</span> or <span style="font-weight:bold">static const</span> should be all upper-case words, separated by underscore: </p>
+      </li>
+    </ul>
+    <table cellspacing="0" id="Table17Ctable" style="margin-top:0;margin-bottom:0;margin-left:48.1344px;margin-right:-1.0px;width:617.136px;border-collapse:separate;border-spacing:0;table-layout:fixed">
+      <tbody>
+        <tr>
+          <td style="border:1.0px solid #000000;padding:3.6671999px;vertical-align:top;width:607.8016px">
+            <p class="PreformattedText"></p>
+            <p class="PreformattedText">#define MIN_WIDTH 3</p>
+            <p class="PreformattedText" style="margin-top:0;margin-bottom:18.864px">static const string VERSION = "0.8";</p>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <ul style="margin-top:0;margin-bottom:0;list-style-type:disc;clear:left">
+      <li style="list-style-type:none">
+        <p class="Textbody"></p>
+      </li>
+    </ul>
+    <ul style="margin-top:0;margin-bottom:0;list-style-type:disc;clear:left">
+      <li>
+        <p class="Textbody" style="margin-top:0;margin-bottom:0">Indentation should be done with <span style="font-weight:bold">tabs</span>, <span style="color:#ff0000">not spaces</span>. This allows each developers to use his favorite indent size without changing the code. </p>
+      </li>
+      <li>
+        <p class="Textbody">Use the following layout for braces: </p>
+      </li>
+    </ul>
+    <table cellspacing="0" id="Table27Ctable" style="margin-top:0;margin-bottom:0;margin-left:48.1344px;margin-right:1.0px;width:616.3296px;border-collapse:separate;border-spacing:0;table-layout:fixed">
+      <tbody>
+        <tr>
+          <td style="border:1.0px solid #000000;padding:3.6671999px;vertical-align:top;width:606.9952px">
+            <p class="PreformattedText">void MyClass::myMethod(int x){</p>
+            <p class="PreformattedText">        if (x&gt;10){</p>
+            <p class="PreformattedText">                cout &lt;&lt; "Some text" &lt;&lt; endl;</p>
+            <p class="PreformattedText">        }</p>
+            <p class="PreformattedText" style="margin-top:0;margin-bottom:18.864px">}</p>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <ul style="margin-top:0;margin-bottom:0;list-style-type:disc;clear:left">
+      <li style="list-style-type:none">
+        <p class="Textbody"></p>
+      </li>
+    </ul>
+    <ul style="margin-top:0;margin-bottom:0;list-style-type:disc;clear:left">
+      <li>
+        <p class="Textbody" style="margin-top:0;margin-bottom:0">Use blank lines as follows: </p>
+        <ul style="margin-top:0;margin-bottom:0;list-style-type:bullet;clear:left">
+          <li>
+            <p class="Textbody" style="margin-top:0;margin-bottom:0">1 between methods, before (block or single line) comment </p>
+          </li>
+          <li>
+            <p class="Textbody" style="margin-top:0;margin-bottom:0">1 between logical sections of a method </p>
+          </li>
+          <li>
+            <p class="Textbody" style="margin-top:0;margin-bottom:0">2 between sections of a source ﬁle </p>
+          </li>
+        </ul>
+      </li>
+      <li>
+        <p class="Textbody"><span style="font-style:italic">enums</span> should follow the QT conventions. i.e. CamelCase with First letter capitalization for both enum type and enum values. Should be document with doxygen. The /**&lt; tag */ can be used to add descriptions on the same line as an enum value, e.g. </p>
+      </li>
+    </ul>
+    <p class="Textbody"></p>
+    <p class="Textbody"></p>
+    <table cellspacing="0" id="Table37Ctable" style="margin-top:0;margin-bottom:0;margin-left:48.1344px;margin-right:1.0px;width:616.3296px;border-collapse:separate;border-spacing:0;table-layout:fixed">
+      <tbody>
+        <tr>
+          <td style="border:1.0px solid #000000;padding:3.6671999px;vertical-align:top;width:606.9952px">
+            <p class="PreformattedText">/** @enum EnumName Here is a description of the enum */</p>
+            <p class="PreformattedText">enum EnumName</p>
+            <p class="PreformattedText">{</p>
+            <p class="PreformattedText">        EnumValueOne,  /**&lt; Some doxygen description of EnumValueOne */</p>
+            <p class="PreformattedText">        EnumValueTwo,  /**&lt; Some doxygen description of EnumValueTwo */</p>
+            <p class="PreformattedText">        EnumValueThree /**&lt; Some doxygen description of EnumValueThree */</p>
+            <p class="PreformattedText" style="margin-top:0;margin-bottom:18.864px">};</p>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="Textbody"></p>
+    <p class="PreformattedText" style="font-family:&#39;Times New Roman&#39;,serif;font-style:italic;font-weight:bold;font-size:18.666668px;text-decoration:none"><a id="FileNames"></a><a id="bkmFileNames"></a>File Names</p>
+    <p class="PreformattedText" style="font-weight:bold"> </p>
+    <ul style="margin-top:0;margin-bottom:0;list-style-type:disc;clear:left">
+      <li>
+        <p class="Textbody">The extensions are .hpp/.cpp for C++ headers/code. </p>
+      </li>
+      <li>
+        <p class="Textbody">C++ files should have the same name and case than the class they contain. For example class FPAdder should be declared in file FPAdder.hpp and implemented in FPAdder.cpp. </p>
+      </li>
+    </ul>
+    <p class="Textbody" style="margin-left:0;margin-right:0;text-indent:0"></p>
+    <h2 id="toc0"><span class="SectionNumber"></span><a id="DoxygenComments"></a><a id="bkmDoxygenComments"></a>Doxygen Comments </h2>
+    <p class="Textbody">FloPoCo source code should be documented with <a href="http://www.stack.nl/%7Edimitri/doxygen/index.html">Doxygen</a>. From Doxygen webpage: </p>
+    <p class="Textbody"><span style="font-style:italic">"Doxygen is a documentation system for C++, C, Java, [...] It can generate an on-line documentation browser (in HTML) and/or an off-line reference manual (in LaTeX) from a set of documented source files. [...] The documentation is extracted directly from the sources, which makes it much easier to keep the documentation consistent with the source code. [...] You can also visualize the relations between the various elements by means of include dependency graphs, inheritance diagrams, and collaboration diagrams, which are all generated automatically.</span> </p>
+    <p class="Textbody">(Quote extracted from the Sellarium Project webpage)</p>
+    <p class="Textbody" style="color:#ff0000">All public and protected classes and methods from FloPoCo should be fully documented in the headers (.hpp). </p>
+    <p class="Textbody">There are different ways to comment C++ code with Doxygen, in FloPoCo use the following for headers files: </p>
+    <table cellspacing="0" id="Table47Ctable" style="margin-top:0;margin-bottom:0;margin-left:53.2032px;margin-right:1.0px;width:611.2704px;border-collapse:separate;border-spacing:0;table-layout:fixed">
+      <tbody>
+        <tr>
+          <td style="border:1.0px solid #000000;padding:3.6671999px;vertical-align:top;width:601.936px">
+            <p class="TableContents" style="font-family:&#39;DejaVu Sans Mono&#39;,monospace;font-size:13.333334px">/** </p>
+            <p class="TableContents" style="font-family:&#39;DejaVu Sans Mono&#39;,monospace;font-size:13.333334px"> * Adds a TestCase to this TestCaseList. Detailled description</p>
+            <p class="TableContents" style="font-family:&#39;DejaVu Sans Mono&#39;,monospace;font-size:13.333334px"> * @param t TestCase to add </p>
+            <p class="TableContents" style="font-family:&#39;DejaVu Sans Mono&#39;,monospace;font-size:13.333334px"> */ </p>
+            <p class="TableContents" style="font-family:&#39;DejaVu Sans Mono&#39;,monospace;font-size:13.333334px">void add(TestCase t); </p>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="PreformattedText"></p>
+    <p class="Textbody">Brief descriptions are single line only, and stop at the first full stop (period). Any subsequent sentences which occur before @param or a similar tag are considered to be part of a detailed description. </p>
+    <p class="Textbody" style="font-style:italic;font-size:24.0px"><a id="TabandSpaceIndentationMethod"></a><a id="bkmTabandSpaceIndentationMethod"></a>Tab and Space Indentation Method</p>
+    <p class="Textbody">When wrapping lines from long function calls, where the wrapped line does not start at the same level of indentation as the start of the function call, tab up to the start of the function call, and then use spaces to the opening parenthesis. </p>
+    <p class="PreformattedText">[--tab-][--tab-][--tab-]someFunction(param, ...</p>
+    <p class="PreformattedText" style="margin-top:0;margin-bottom:18.864px">[--tab-][--tab-][--tab-][  spaces   ]moreparams, ...);</p>
+  </body>
+</html>
