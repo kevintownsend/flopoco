@@ -31,8 +31,6 @@
 #include "Operator.hpp"
 
 
-
-/*
 void  Operator::add_input(const std::string name, const int width) {
 	if(_signal_map.find(name) != _signal_map.end()) {
 		std::ostringstream o;
@@ -40,24 +38,13 @@ void  Operator::add_input(const std::string name, const int width) {
 		throw o.str();
 	}
 	Signal *s = new Signal(name, Signal::in, width) ;
+	
 	ioList.push_back(s);
 	_signal_map[name] = s ;
 	number_of_inputs ++;
 }
-*/
 
-Signal* Operator::add_input(const std::string name, const int width) {
-	if(_signal_map.find(name) != _signal_map.end()) {
-		std::ostringstream o;
-		o << "ERROR in add_input, signal " << name<< " seems to already exist";
-		throw o.str();
-	}
-	Signal *s = new Signal(name, Signal::in, width) ;
-	ioList.push_back(s);
-	_signal_map[name] = s ;
-	number_of_inputs ++;
-	return s;
-}
+
 
 void  Operator::add_output(const std::string name, const int width) {
 	if(_signal_map.find(name) != _signal_map.end()) {
@@ -348,7 +335,26 @@ void Operator::set_operator_type(){
 		set_combinatorial();	
 }
 
+void Operator::setCommentedName(std::string name){
+	commented_name = name;
+}
 
+
+string Operator::getOperatorName() const{
+  return unique_name;
+}
+
+int Operator::getIOListSize() const{
+  return ioList.size();
+}
+
+vector<Signal*> * Operator::getIOList(){
+  return &ioList; 
+}
+
+const Signal * Operator::getIOListSignal(int i){
+  return ioList[i];
+}
 
 
 
@@ -501,43 +507,6 @@ void Operator::Licence(std::ostream& o, std::string authorsyears){
 }
 
 
-/**
- * A new line macro 
- * @param[in,out] o - the stream to which the new line will be added
- **/
-void Operator::new_line(std::ostream& o)
-{
-o<<endl;
-}
-
-/**
- * A new architecture macro 
- * @param[in,out] o 	- the stream to which the new architecture line will be added
- * @param[in]     name	- the name of the entity corresponding to this architecture
- **/
-void Operator::new_architecture(std::ostream& o, std::string name)
-{
-o << "architecture arch of " << name  << " is" << endl;
-}
-
-
-/**
- * A begin architecture macro 
- * @param[in,out] o 	- the stream to which the begin line will be added
- **/
-void Operator::begin_architecture(std::ostream& o)
-{
-o << "begin" << endl;
-}
-
-/**
- * A end architecture macro 
- * @param[in,out] o 	- the stream to which the begin line will be added
- **/
-void Operator::end_architecture(std::ostream& o)
-{
-o << "end architecture;" << endl << endl;
-}
 
 
 void Operator::output_vhdl(std::ostream& o) {

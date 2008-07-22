@@ -20,6 +20,23 @@ public:
 	FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, int wFR);
 	~FPAdder();
 
+
+	//XXX Get this out of here
+	/** Method which outputs a string of zeros*/
+	string zero_generator(int n, int margins);
+	
+
+	
+	/** Overloading the virtual functions of Operator */
+	void output_vhdl(std::ostream& o, std::string name);
+	/** Sets the Operator name */
+	void set_operator_name(std::string prefix, std::string postfix);	
+
+	/** Overloading virtual functions from TestBench */
+	TestIOMap getTestIOMap();
+	void fillTestCase(mpz_class a[]);
+	
+private:
 	/** The width of the exponent for the input X */
 	int wEX; 
 	/** The width of the fraction for the input X */
@@ -34,17 +51,6 @@ public:
 	int wFR;
 	/** Signal if the output of the operator is to be or not normalized*/
 
-
-	/** Method which outputs a string of zeros*/
-	string zero_generator(int n, int margins);
-		
-	/** Overloading the virtual functions of Operator */
-	void output_vhdl(std::ostream& o, std::string name);
-
-	TestIOMap getTestIOMap();
-	void fillTestCase(mpz_class a[]);
-	
-private:
 	/** The integer adder object */
 	IntAdder *intadd1; 
 	/** The integer adder object */

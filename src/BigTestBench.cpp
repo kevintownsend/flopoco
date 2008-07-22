@@ -40,13 +40,13 @@ int inline round4(int x)
 BigTestBench::BigTestBench(Target* target, Operator* op, int n):
 	Operator(target), op(op), n(n)
 {
-	unique_name = "BigTestBench_" + op->unique_name;
+	unique_name = "BigTestBench_" + op->getOperatorName();
 	set_pipeline_depth(42);	// could be any number
 
 	// declare internal registered signals
-	for(int i=0; i<op->ioList.size(); i++){
-		string idext = op->ioList[i]->id() ;
-		add_signal(idext, op->ioList[i]->width());
+	for(int i=0; i<op->getIOListSize(); i++){
+		string idext = op->getIOListSignal(i)->id() ;
+		add_signal(idext, op->getIOListSignal(i)->width());
 	}
 
 	/* add bogus clk and rst signal if the UUT does not have them */
@@ -136,7 +136,7 @@ void BigTestBench::output_vhdl(ostream& o, string name) {
 	output_vhdl_signal_declarations(o);
 
 	o << tab << "file fTest : text open read_mode is \""
-		<< op->unique_name << ".test\";" <<endl;
+		<< op->getOperatorName() << ".test\";" <<endl;
 	
 	o << endl <<
 		tab << "-- FP compare function (found vs. real)\n" <<
@@ -153,18 +153,18 @@ void BigTestBench::output_vhdl(ostream& o, string name) {
 
 	// the instance
 	// XXX: Ugly! Will write something to encapsulate this.
-	o << tab << "uut:" << op->unique_name << "\n"
+	o << tab << "uut:" << op->getOperatorName() << "\n"
 		<< tab << tab << "port map ( ";
-	for(int i=0; i<op->ioList.size(); i++) {
-		Signal& s = *op->ioList[i];
+	for(int i=0; i<op->getIOListSize(); i++) {
+		//Signal& s = *op->getIOListSignal(i);
 		if(i>0) 
 			o << tab << tab << "           ";
-		string idext =  op->ioList[i]->id() ;
-		if(op->ioList[i]->type() == Signal::in)
-			o << op->ioList[i]->id()  << " =>  " << idext;
+		string idext =  op->getIOListSignal(i)->id() ;
+		if(op->getIOListSignal(i)->type() == Signal::in)
+			o << op->getIOListSignal(i)->id()  << " =>  " << idext;
 		else
-			o << op->ioList[i]->id()  << " =>  " << idext;
-		if (i < op->ioList.size()-1) 
+			o << op->getIOListSignal(i)->id()  << " =>  " << idext;
+		if (i < op->getIOListSize()-1) 
 			o << "," << endl;
 	}
 	o << ");" <<endl;
@@ -278,7 +278,7 @@ void BigTestBench::output_vhdl(ostream& o, string name) {
 	o << "end architecture;" <<endl;
 
 	/* Generate the test file */
-	FILE *f = fopen((op->unique_name + ".test").c_str(), "w");
+	FILE *f = fopen((op->getOperatorName() + ".test").c_str(), "w");
 
 	/* Get number of TestCase I/O values */
 	int size = 0;

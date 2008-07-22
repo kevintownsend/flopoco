@@ -47,27 +47,27 @@ Wrapper::Wrapper(Target* target, Operator *op):
 {
   /* the name of the Wrapped operator consists of the name of the operator to be 
   wrapped followd by _Wrapper */
-	unique_name = op->unique_name + "_Wrapper";
+  set_operator_name("","Wrapper");
 		
 	if (!target->is_pipelined()) 	
 		set_sequential();	
 	
 	// Copy the signals of the wrapped operator
-	for(int i=0; i<op->ioList.size(); i++)
-		ioList.push_back(new Signal(*op->ioList[i]));
+	for(int i=0; i < op->getIOListSize(); i++)	{
+		ioList.push_back( new Signal ( * op->getIOListSignal(i) ) );
+	}
 		
 	// declare internal registered signals
-	for(int i=0; i<op->ioList.size(); i++){
-		string idext = "i_" + op->ioList[i]->id() ;
+	for(int i=0; i < op->getIOListSize(); i++){
+		string idext = "i_" + (op->getIOListSignal(i))->id();
 		//the clock is not registred
-		if (op->ioList[i]->id()!="clk")
-			add_registered_signal(idext, op->ioList[i]->width());
+		if ( op->getIOListSignal(i)->id()!="clk")
+			add_registered_signal(idext, op->getIOListSignal(i)->width());
 	}
 
 	//set pipeline parameters
 	set_pipeline_depth(2 + op->pipeline_depth());
 }
-
 
 /**
  * The destructor
@@ -75,6 +75,13 @@ Wrapper::Wrapper(Target* target, Operator *op):
 Wrapper::~Wrapper() {
 }
 
+/** Overloaded method which sets the operator name 
+ *@param[in] prefix the prefix to be put in front of the default name
+ *@param[in] postfix the postfix to be put at the end of the default name
+ */
+void Wrapper::set_operator_name(std::string prefix, std::string postfix){
+	unique_name = prefix + "_" + op->getOperatorName() + "_" + postfix;
+}
 
 /**
  * Method belonging to the Operator class overloaded by the Wrapper class
@@ -97,28 +104,28 @@ void Wrapper::output_vhdl(ostream& o, string name) {
 	o << "begin\n";
 	o << "--wrapper operator"<<endl;
 	// connect inputs
-	for(int i=0; i<op->ioList.size(); i++){
-		string idext = "i_" + op->ioList[i]->id() ;
-		if ((op->ioList[i]->type() == Signal::in)&&(op->ioList[i]->id()!="clk"))
-			o << tab << idext << " <=  " << op->ioList[i]->id() << ";" << endl;
+	for(int i=0; i<op->getIOListSize(); i++){
+		string idext = "i_" + op->getIOListSignal(i)->id() ;
+		if ((op->getIOListSignal(i)->type() == Signal::in) && (op->getIOListSignal(i)->id()!="clk"))
+			o << tab << idext << " <=  " << op->getIOListSignal(i)->id() << ";" << endl;
 	}
 
 	// the instance
-	o << tab << "test:" << op->unique_name << "\n"
+	o << tab << "test:" << op->getOperatorName() << "\n"
 		<< tab << tab << "port map ( ";
-	for(int i=0; i<op->ioList.size(); i++) {
-		Signal s = *op->ioList[i];
+	for(int i=0; i < op->getIOListSize(); i++) {
+		Signal s = *op->getIOListSignal(i);
 		if(i>0) 
 			o << tab << tab << "           ";
-		string idext = "i_" + op->ioList[i]->id() ;
-		if (op->ioList[i]->type() == Signal::in)
-			if (op->ioList[i]->id()!="clk")
-				o << op->ioList[i]->id()  << " =>  " << idext << "_d";
+		string idext = "i_" + op->getIOListSignal(i)->id() ;
+		if (op->getIOListSignal(i)->type() == Signal::in)
+			if (op->getIOListSignal(i)->id()!="clk")
+				o << op->getIOListSignal(i)->id()  << " =>  " << idext << "_d";
 			else
-				o << op->ioList[i]->id()  << " =>  clk";
+				o << op->getIOListSignal(i)->id()  << " =>  clk";
 		else
-			o << op->ioList[i]->id()  << " =>  " << idext;
-		if (i < op->ioList.size()-1) 
+			o << op->getIOListSignal(i)->id()  << " =>  " << idext;
+		if (i < op->getIOListSize()-1) 
 			o << "," << endl;
 	}
 	o << ");" <<endl;
@@ -127,12 +134,13 @@ void Wrapper::output_vhdl(ostream& o, string name) {
 	output_vhdl_registers(o);
 
 	// connect outputs
-	for(int i=0; i<op->ioList.size(); i++){
-		string idext = "i_" + op->ioList[i]->id() ;
-		if(op->ioList[i]->type() == Signal::out)
-			o << tab << op->ioList[i]->id() << " <=  " << idext << "_d;" << endl;
+	for(int i=0; i<op->getIOListSize(); i++){
+		string idext = "i_" + op->getIOListSignal(i)->id() ;
+		if(op->getIOListSignal(i)->type() == Signal::out)
+			o << tab << op->getIOListSignal(i)->id() << " <=  " << idext << "_d;" << endl;
 	}
 	
 	o << "end architecture;" << endl << endl;
 		
 }
+

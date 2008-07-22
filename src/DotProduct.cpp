@@ -118,7 +118,7 @@ void DotProduct::output_vhdl(std::ostream& o, std::string name) {
   begin_architecture(o);
   
   /* Map the signals on the fp multiplier */
-	o << tab << "fp_multiplier: " << fpMultiplier->unique_name << endl;
+	o << tab << "fp_multiplier: " << fpMultiplier->getOperatorName() << endl;
 	o << tab << "    port map ( X => X, " << endl;
 	o << tab << "               Y => Y, " << endl;
 	o << tab << "               ResultExponent => fpMultiplierResultExponent, " << endl;
@@ -137,7 +137,7 @@ void DotProduct::output_vhdl(std::ostream& o, std::string name) {
                                   <<"fpMultiplierResultSignificand("<<wFX + wFY<<" downto "<< 0 <<");"<<endl;
   
   /* Map the signals on the long accumulator */
-  o << tab << "long_acc: " << longAcc->unique_name << endl;
+  o << tab << "long_acc: " << longAcc->getOperatorName() << endl;
 	o << tab << "    port map ( X => fpMultiplierResult, " << endl;
 	o << tab << "               A => A, " << endl;
 	o << tab << "               clk => clk," << endl;

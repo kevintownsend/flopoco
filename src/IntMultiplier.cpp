@@ -563,7 +563,7 @@ ostringstream nameL,nameH, concatH, concatL;
  **/
 void IntMultiplier::map_adder(std::ostream& o,std::string left_term, std::string right_term, std::string result )
 {
-	o<<tab<< "int_adder_component: " << intadd->unique_name << endl;
+	o<<tab<< "int_adder_component: " << intadd->getOperatorName() << endl;
 	o<<tab<< "  port map ( X => "<< left_term << ", " << endl; 
 	o<<tab<< "             Y => "<< right_term<< ", " << endl; 
 	o<<tab<< "             Cin => '0' ," << endl;
@@ -628,7 +628,7 @@ ostringstream first_summand, second_summand;
 				second_summand<<"L_Level_"<<i<<"_Reg_"<<j+1;
 				
 				o<<tab<<"L_Level_"<<i+1<<"_summand <= "<<first_summand.str()<<";"<<endl;								
-				o<<tab<< "int_adder_component_low_"<<i<<": " << intadd2->unique_name << endl;
+				o<<tab<< "int_adder_component_low_"<<i<<": " << intadd2->getOperatorName() << endl;
 				o<<tab<< "  port map ( X => L_Level_"<<i+1<<"_summand , " << endl; 
 				o<<tab<< "             Y => "<<second_summand.str()<< ", " << endl; 
 				o<<tab<< "             Cin => '0'," << endl;
@@ -672,7 +672,7 @@ ostringstream first_summand, second_summand;
 				second_summand<<"H_Level_"<<i<<"_Reg_"<<j+1<<"";
 				
 				o<<tab<<"H_Level_"<<i+1<<"_summand <= "<<first_summand.str()<<";"<<endl;								
-				o<<tab<< "int_adder_component_high_"<<i<<": " << intadd2->unique_name << endl;
+				o<<tab<< "int_adder_component_high_"<<i<<": " << intadd2->getOperatorName() << endl;
 				o<<tab<< "  port map ( X => H_Level_"<<i+1<<"_summand , " << endl; 
 				o<<tab<< "             Y => "<<second_summand.str()<< ", " << endl; 
 				o<<tab<< "             Cin => '0'," << endl;
@@ -739,7 +739,7 @@ void IntMultiplier::pipeline_addition(std::ostream& o)
 {
 ostringstream temp;
 temp<<"PartialBits_Level_"<< partsY <<"_Reg_"<< partsY;
-		o<<tab<< "int_adder_component: " << intadd1->unique_name << endl;
+		o<<tab<< "int_adder_component: " << intadd1->getOperatorName() << endl;
 		o<<tab<< "  port map ( X => "<< get_delay_signal_name("Low1",intadd2->pipeline_depth())<< "("<<partsX * multiplier_width_X -1<<" downto 0"<<") , " << endl; 
 		o<<tab<< "             Y => High1("<<partsX * multiplier_width_X -1<<" downto 0"<<"), " << endl; 
 		o<<tab<< "             Cin => "<<get_delay_signal_name(temp.str(),intadd2->pipeline_depth()) <<"("<< multiplier_width_Y <<")," << endl;

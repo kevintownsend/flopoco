@@ -17,7 +17,7 @@ public:
 	 */
 	TestBench(Target *target, Operator *op, int n);
 	~TestBench();
-
+	void set_operator_name(std::string prefix, std::string postfix);
 	void output_vhdl(ostream& o, string name);
 private:
 	/** The unit under test UUT */

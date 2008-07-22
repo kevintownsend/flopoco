@@ -481,7 +481,7 @@ void FPLog::output_vhdl(std::ostream& o, std::string name)
 		"\n"
 		"  absELog2 <= absE * log2;\n"
 		"  \n"
-		"  lzoc1 : " << lzoc->unique_name << "\n"
+		"  lzoc1 : " << lzoc->getOperatorName() << "\n"
 		"    port map (  i => Y0(wF downto 1), ozb => FirstBit,  o => lzo);\n"
 		"\n"
 		"  shiftval <= ('0' & lzo) - ('0' & pfinal_s); \n"

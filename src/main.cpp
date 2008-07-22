@@ -182,8 +182,7 @@ int check_sign(char* s, char* cmd) {
 
 void add_operator(Operator *op) {
 	if(cl_name!="")	{
-		op->commented_name=op->unique_name;
-		op->unique_name=cl_name;
+		op->setCommentedName(op->getOperatorName());
 		cl_name="";
 	}
 	// TODO check name not already in list...
@@ -519,7 +518,7 @@ bool parse_command_line(int argc, char* argv[]){
 			int n  = check_strictly_positive(argv[i++], argv[0]);
 			cerr << "> HOTBM func='" << func << "', wI=" << wI << ", wO=" << wO <<endl;
 			op = new HOTBM(target, func, wI, wO, n);
-			if(cl_name!="")	op->unique_name=cl_name;
+			if(cl_name!="")	op->set_operator_name(cl_name);
 			oplist.push_back(op);
 		}
 #endif // HAVE_HOTBM
@@ -532,7 +531,7 @@ bool parse_command_line(int argc, char* argv[]){
 			int wF = check_strictly_positive(argv[i++], argv[0]);
 			cerr << "> FPExp: wE=" << wE << " wF=" << wF << endl;
 			op = new FPExp(target, wE, wF);
-			if(cl_name!="")	op->unique_name=cl_name;
+			if(cl_name!="")	op->set_operator_name(cl_name);
 			oplist.push_back(op);
 		}
 		else if (opname == "FPLog")
@@ -544,7 +543,7 @@ bool parse_command_line(int argc, char* argv[]){
 			int wF = check_strictly_positive(argv[i++], argv[0]);
 			cerr << "> FPLog: wE=" << wE << " wF=" << wF << endl;
 			op = new FPLog(target, wE, wF);
-			if(cl_name!="")	op->unique_name=cl_name;
+			if(cl_name!="")	op->set_operator_name(cl_name);;
 			oplist.push_back(op);
 		}
 		else if (opname == "Wrapper") {
@@ -557,7 +556,7 @@ bool parse_command_line(int argc, char* argv[]){
 					usage(argv[0]);
 				}
 				Operator* toWrap = oplist.back();
-				cerr << "> Wrapper for " << toWrap->unique_name<<endl;
+				cerr << "> Wrapper for " << toWrap->getOperatorName()<<endl;
 				op =new Wrapper(target, toWrap);
 				add_operator(op);
 			}
@@ -572,8 +571,8 @@ bool parse_command_line(int argc, char* argv[]){
 			}
 			int n = check_positive_or_null(argv[i++], argv[0]);
 			Operator* toWrap = oplist.back();
-			cerr << "> TestBench for " << toWrap->unique_name  <<endl;
-			if(cl_name!="")	op->unique_name=cl_name;
+			cerr << "> TestBench for " << toWrap->getOperatorName()<<endl;
+			if(cl_name!="")	op->set_operator_name(cl_name);
 			oplist.push_back(new TestBench(target, toWrap, n));
 		}
 		else if (opname == "BigTestBench") {
@@ -586,8 +585,8 @@ bool parse_command_line(int argc, char* argv[]){
 			}
 			int n = check_positive_or_null(argv[i++], argv[0]);
 			Operator* toWrap = oplist.back();
-			cerr << "> BigTestBench for " << toWrap->unique_name  <<endl;
-			if(cl_name!="")	op->unique_name=cl_name;
+			cerr << "> BigTestBench for " << toWrap->getOperatorName()<<endl;
+			if(cl_name!="")	op->set_operator_name(cl_name);
 			oplist.push_back(new BigTestBench(target, toWrap, n));
 		}
 		else  {
@@ -625,7 +624,7 @@ int main(int argc, char* argv[] )
 		try {
 			oplist[i]->output_vhdl(file);
 		} catch (std::string s) {
-			cerr << "Exception while generating '" << oplist[i]->unique_name << "': " << s <<endl;
+			cerr << "Exception while generating '" << oplist[i]->getOperatorName() << "': " << s <<endl;
 		}
 	}
 	file.close();

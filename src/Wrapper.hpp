@@ -14,11 +14,15 @@
 class Wrapper : public Operator
 {
 public:
-	// The operator to wrap
-	Operator* op;
+	/* Constructor / Destructor */
 	Wrapper(Target* target, Operator* op);
 	~Wrapper();
+	/* Overloaded methods */
 	void output_vhdl(ostream& o, string name);
+	void set_operator_name(std::string prefix, std::string postfix);
+private:
+	/** The operator to wrap */
+	Operator* op;
 };
 
 

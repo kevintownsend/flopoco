@@ -135,7 +135,7 @@ int i;
 	
 	//count the number of zeros/ones in order to determine the size of the exponent
 	//Leading Zero/One counter 
-	o<<tab<< "LZOC_component: " << leadZOCounter->unique_name << endl;
+	o<<tab<< "LZOC_component: " << leadZOCounter->getOperatorName() << endl;
 	o<<tab<< "      port map ( I => A, "                      << endl; 
 	o<<tab<< "                 OZB => resultSign0, "          << endl; 
 	o<<tab<< "                 O => nZO, "                    << endl; 
@@ -196,7 +196,7 @@ int i;
 	
 		
 	// shift 
-	o<<tab<< "left_shifter_component: " << leftShifter->unique_name << endl;
+	o<<tab<< "left_shifter_component: " << leftShifter->getOperatorName() << endl;
 	o<<tab<< "      port map ( X => "<<get_delay_signal_name("pipeA",leadZOCounter->pipeline_depth())<<", "<< endl; 
 	o<<tab<< "                 S => nZO, " << endl; 
 	o<<tab<< "                 R => resFrac, " <<endl; 

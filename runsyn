@@ -11,7 +11,7 @@
 
 # PARAMETERS SET MANUALLY BY USER
 ########################################################
-xilinxPath=/home/bogdan/Xilinx92i
+xilinxPath=/home/bogdan/Xilinx10.1/ISE
 resultsPath=$HOME/Results
 ########################################################
 ########################################################
@@ -285,7 +285,7 @@ cd $projectPath
 #===============================================================================
 #THE XILINX PATH IS SET MANUALLY
 
-settingsFilename=settings.sh 
+settingsFilename=settings32.sh 
 pf=$xilinxPath/$settingsFilename
 #execute commands from filename in the current shell
 if [ -a $pf ]; then

@@ -423,7 +423,7 @@ void FPMultiplier::output_vhdl(std::ostream& o, std::string name) {
 			o<<tab<< "significandX <= \"1\" & X("<<(wFX-1)<<" downto 0);"<<endl;
 			o<<tab<< "significandY <= \"1\" & Y("<<(wFY-1)<<" downto 0);"<<endl<<endl;
 			//multiply significands 
-			o<<tab<< "int_multiplier_component: " << intmult->unique_name << endl;
+			o<<tab<< "int_multiplier_component: " << intmult->getOperatorName() << endl;
 			o<<tab<< "      port map ( X => significandX, " << endl; //wFX+1 bits (1 bit is the hidden 1)
 			o<<tab<< "                 Y => significandY, " << endl; //wFY+1 bits
 			o<<tab<< "                 R => significand_product, " << endl; //wFX+wFY+2 bits
@@ -845,7 +845,7 @@ void FPMultiplier::output_vhdl(std::ostream& o, std::string name) {
 			o<<tab<< "significandX <= \"1\" & X("<<(wFX-1)<<" downto 0);"<<endl;
 			o<<tab<< "significandY <= \"1\" & Y("<<(wFY-1)<<" downto 0);"<<endl<<endl;
 			//multiply significands 
-			o<<tab<< "int_multiplier_component: " << intmult->unique_name << endl;
+			o<<tab<< "int_multiplier_component: " << intmult->getOperatorName() << endl;
 			o<<tab<< "      port map ( X => significandX, " << endl; //wFX+1 bits (1 bit is the hidden 1)
 			o<<tab<< "                 Y => significandY, " << endl; //wFY+1 bits
 			o<<tab<< "                 R => significand_product " << endl; //wFX+wFY+2 bits

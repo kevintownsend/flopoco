@@ -74,10 +74,7 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 	sizeRightShift = int ( ceil( log2(wF+4)));	
 
 
-	/* The name has the format: FPAdder_wEX_wFX_wEY_wFY_wER_wFR where: wEX = width of X exponenet and wFX = width for the fractional part of X */
-	name.str("");
-	name<<"FPAdder_"<<wEX<<"_"<<wFX<<"_"<<wEY<<"_"<<wFY<<"_"<<wER<<"_"<<wFR; 
-	unique_name = name.str(); 
+
 	
 	/* Set up the IO signals */
 	/* Inputs: 2b(Exception) + 1b(Sign) + wEX bits (Exponent) + wFX bits(Fraction) */
@@ -111,27 +108,27 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 	{
 
 		intaddClose1 = new IntAdder(target, wF + 3);
-		intaddClose1->unique_name="intaddClose1";
+		intaddClose1->set_operator_name("intaddClose1");
 		oplist.push_back(intaddClose1);
 
 		intaddClose2 = new IntAdder(target, wF + 2);
-		intaddClose2->unique_name="intaddClose2";
+		intaddClose2->set_operator_name("intaddClose2");
 		oplist.push_back(intaddClose2);
 
 		intaddClose3 = new IntAdder(target, wE + wF + 2);
-		intaddClose3->unique_name="intaddClose3";
+		intaddClose3->set_operator_name("intaddClose3");
 		oplist.push_back(intaddClose3);
 
 		intaddFar1 = new IntAdder(target,wF+5);
-		intaddFar1->unique_name="intaddFar1";
+		intaddFar1->set_operator_name("intaddFar1");
 		oplist.push_back(intaddFar1);
 
 		intaddFar2 = new IntAdder(target,wE+1);
-		intaddFar2->unique_name="intaddFar2";
+		intaddFar2->set_operator_name("intaddFar2");
 		oplist.push_back(intaddFar2);		
 
 		intaddFar3 = new IntAdder(target,wE+1 + wF+1);
-		intaddFar3->unique_name="intaddFar3";
+		intaddFar3->set_operator_name("intaddFar3");
 		oplist.push_back(intaddFar3);		
 				
 		lzocs = new LZOCShifterSticky(target, wFX+2, wFX+2,0, 0);
@@ -386,17 +383,27 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 		add_signal("borrow",1);
 		add_signal("roundClose",1);
 	}
-	
-	
-	
-	
-		
 }
 
 /**
  * FPAdder destructor
  */
 FPAdder::~FPAdder() {
+}
+
+/** Method for setting the operator name
+	* @param[in] prefix the prefix that is going to be placed to the default name
+	*                   of the operator
+	* @param[out] postfix the postfix that is going to be placed to the default
+	*                     name of the operator
+	*/
+void FPAdder::set_operator_name(std::string prefix, std::string postfix){
+	ostringstream name;
+	/* The name has the format: FPAdder_wEX_wFX_wEY_wFY_wER_wFR where: 
+	   wEX = width of X exponenet and 
+	   wFX = width for the fractional part of X */
+	name<<"FPAdder_"<<wEX<<"_"<<wFX<<"_"<<wEY<<"_"<<wFY<<"_"<<wER<<"_"<<wFR; 
+	unique_name = name.str(); 
 }
 
 
@@ -528,7 +535,7 @@ void FPAdder::output_vhdl(std::ostream& o, std::string name) {
 			// perform inversion
 			o<<tab<<"InvFracYClose1 <= not(fracYClose1);"<<endl;
 			// perform addition with carry in = 1
-			o<<tab<< "int_adder_componentc1: " << intaddClose1->unique_name << endl;
+			o<<tab<< "int_adder_componentc1: " << intaddClose1->getOperatorName() << endl;
 			o<<tab<< "  port map ( X => fracXClose1 , " << endl; 
 			o<<tab<< "             Y => InvFracYClose1, " << endl; 
 			o<<tab<< "             Cin => '1' ," << endl;
@@ -544,7 +551,7 @@ void FPAdder::output_vhdl(std::ostream& o, std::string name) {
 			// perform xor
 			o<<tab<<"fracRClose1xor <= fracRClose0_d("<<wF+1<<" downto 0) xor ("<<wF+1<<" downto 0 => fracSignClose);"<<endl;
 			// perform carry in addition 
-			o<<tab<< "int_adder_componentc2: " << intaddClose2->unique_name << endl;
+			o<<tab<< "int_adder_componentc2: " << intaddClose2->getOperatorName() << endl;
 			o<<tab<< "  port map ( X => fracRClose1xor_d , " << endl; 
 			o<<tab<< "             Y => ("<<wF+1<<" downto 0 => '0'), " << endl; 
 			o<<tab<< "             Cin => fracSignClose_d ," << endl;
@@ -565,7 +572,7 @@ void FPAdder::output_vhdl(std::ostream& o, std::string name) {
 		
 			
 		// LZC + Shifting. The number of leading zeros are returned together with the sifted input
-		o<<tab<< "LZCOCS_component: " << lzocs->unique_name << endl;
+		o<<tab<< "LZCOCS_component: " << lzocs->getOperatorName() << endl;
 		o<<tab<< "      port map ( I => fracRClose1_d, " << endl; 
 		o<<tab<< "                 Count => nZerosNew, "<<endl;
 		o<<tab<< "                 O => shiftedFrac, " <<endl; 
@@ -588,7 +595,7 @@ void FPAdder::output_vhdl(std::ostream& o, std::string name) {
 			// concatenate exponent with fractional part before rounding so the possible carry propagation automatically increments the exponent 
 			o<<tab<<" exponentConcatFrac0 <= exponentResultClose("<<wE+1<<" downto 0) & shiftedFrac("<<wF<<" downto 1);"<<endl; 
 			// perform the actual rounding //
-			o<<tab<< "int_adder_componentc3: " << intaddClose3->unique_name << endl;
+			o<<tab<< "int_adder_componentc3: " << intaddClose3->getOperatorName() << endl;
 			o<<tab<< "  port map ( X => exponentConcatFrac0 , " << endl; 
 			o<<tab<< "             Y => ("<<1+wE+wF<<" downto 0 => '0'), " << endl; 
 			o<<tab<< "             Cin => roundClose ," << endl;
@@ -640,7 +647,7 @@ void FPAdder::output_vhdl(std::ostream& o, std::string name) {
 			o<<tab<<"selectionSignal <= CONV_STD_LOGIC_VECTOR(0,"<<sizeRightShift-(wE-1)<<") & fexponentDifference("<< wE-1<<" downto 0"<<"); " << endl; 			
 								
 		// shift right the significand of new Y with as many positions as the exponent difference suggests (alignment) //		
-		o<<tab<< "right_shifter_component: " << rightShifter->unique_name << endl;
+		o<<tab<< "right_shifter_component: " << rightShifter->getOperatorName() << endl;
 		o<<tab<< "      port map ( X => fracNewY, " << endl; 
 		o<<tab<< "                 S => selectionSignal, " << endl; 
 		o<<tab<< "                 R => shiftedFracY, " <<endl; 
@@ -663,7 +670,7 @@ void FPAdder::output_vhdl(std::ostream& o, std::string name) {
 			// perform xor 
 			o<<tab<<"fracYfar3XorOp <= fracYfar3 xor ("<<wF+4<<" downto 0 => opSelector);"<<endl;
 			// perform carry in addition
-			o<<tab<< "int_adder_componentf1: " << intaddFar1->unique_name << endl;
+			o<<tab<< "int_adder_componentf1: " << intaddFar1->getOperatorName()<< endl;
 			o<<tab<< "  port map ( X => fracXfar3_d, " << endl; 
 			o<<tab<< "             Y => fracYfar3XorOp_d, " << endl; 
 			o<<tab<< "             Cin => opSelector_d ," << endl;
@@ -698,7 +705,7 @@ void FPAdder::output_vhdl(std::ostream& o, std::string name) {
 		o<<tab<<"expSecOperand <= (("<<wE<<" downto 1 => '0') & expOperationSel(0)) xor ("<<wE<<" downto 0 => expOperationSel(1));"<<endl;
 		
 		// readjust exponent after normalization //
-		o<<tab<< "int_adder_componentf2: " << intaddFar2->unique_name << endl;
+		o<<tab<< "int_adder_componentf2: " << intaddFar2->getOperatorName() << endl;
 		o<<tab<< "  port map ( X => exponentResultfar0, " << endl; 
 		o<<tab<< "             Y => expSecOperand_d, " << endl; 
 		o<<tab<< "             Cin => expOperationSel_d(1) ," << endl;
@@ -715,7 +722,7 @@ void FPAdder::output_vhdl(std::ostream& o, std::string name) {
 		o<<tab<<"expConcatFrac <= exponentResultfar1_d & "<<get_delay_signal_name("fracResultfar1",intaddFar2->pipeline_depth()+2)<<"("<<wF+2<<" downto 2);"<<endl;
 		
 		// round //
-		o<<tab<< "int_adder_componentf3: " << intaddFar3->unique_name << endl;
+		o<<tab<< "int_adder_componentf3: " << intaddFar3->getOperatorName() << endl;
 		o<<tab<< "  port map ( X => expConcatFrac, " << endl; 
 		o<<tab<< "             Y => (others => '0'), " << endl; 
 		o<<tab<< "             Cin => "<<get_delay_signal_name("round",intaddFar2->pipeline_depth()+2) <<" ," << endl;
@@ -920,14 +927,14 @@ void FPAdder::output_vhdl(std::ostream& o, std::string name) {
 		o<<tab<<"               ("<<wF+1<<" downto 0 => '0') - fracRClose0("<<wF+1<<" downto 0) when others;"<<endl;
 		
 		/*  LZC */
-		o<<tab<< "LZC_component: " << leadingZeroCounter->unique_name << endl;
+		o<<tab<< "LZC_component: " << leadingZeroCounter->getOperatorName() << endl;
 		o<<tab<< "      port map ( I => fracRClose1, " << endl; 
 		o<<tab<< "                 OZB => '0', " << endl; 
 		o<<tab<< "                 O => nZeros " <<endl; 
 		o<<tab<< "               );" << endl<<endl;		
 				
 		/* shift and round */
-		o<<tab<< "left_shifter_component: " << leftShifter->unique_name << endl;
+		o<<tab<< "left_shifter_component: " << leftShifter->getOperatorName() << endl;
 		o<<tab<< "      port map ( X => fracRClose1, " << endl; 
 		o<<tab<< "                 S => nZeros, " << endl; 
 		o<<tab<< "                 R => shiftedFrac " <<endl; 
@@ -956,7 +963,7 @@ void FPAdder::output_vhdl(std::ostream& o, std::string name) {
 		o<<tab<< "fracNewY <= '1' & newY("<<wF-1<<" downto 0);"<<endl;
 		
 		/* shift right the significand of new Y with as many positions as the exponent difference suggests (alignment) */		
-		o<<tab<< "right_shifter_component: " << rightShifter->unique_name << endl;
+		o<<tab<< "right_shifter_component: " << rightShifter->getOperatorName() << endl;
 		o<<tab<< "      port map ( X => fracNewY, " << endl; 
 		o<<tab<< "                 S => exponentDifference("<< sizeRightShift-1<<" downto 0"<<"), " << endl; 
 		o<<tab<< "                 R => shiftedFracY " <<endl; 

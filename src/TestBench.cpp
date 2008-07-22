@@ -35,13 +35,13 @@
 TestBench::TestBench(Target* target, Operator* op, int n):
 	Operator(target), op(op), n(n)
 {
-	unique_name = "TestBench_" + op->unique_name;
+	set_operator_name("TestBench","");
 	set_pipeline_depth(42);	// could be any number
 
 	// declare internal registered signals
-	for(int i=0; i<op->ioList.size(); i++){
-		string idext = op->ioList[i]->id() ;
-		add_signal(idext, op->ioList[i]->width());
+	for(int i=0; i<op->getIOListSize(); i++){
+		string idext = op->getIOListSignal(i)->id() ;
+		add_signal(idext, op->getIOListSignal(i)->width());
 	}
 
 	/* add bogus clk and rst signal if the UUT does not have them */
@@ -54,6 +54,10 @@ TestBench::TestBench(Target* target, Operator* op, int n):
 }
 
 TestBench::~TestBench() { }
+
+void TestBench::set_operator_name(std::string prefix, std::string postfix){
+	unique_name = prefix + "_" + op->getOperatorName() + "_" + postfix;
+}
 
 void TestBench::output_vhdl(ostream& o, string name) {
 	/*
@@ -188,18 +192,18 @@ void TestBench::output_vhdl(ostream& o, string name) {
 
 	// the instance
 	// XXX: Ugly! Will write something to encapsulate this.
-	o << tab << "uut:" << op->unique_name << "\n"
+	o << tab << "uut:" << op->getOperatorName() << "\n"
 		<< tab << tab << "port map ( ";
-	for(int i=0; i<op->ioList.size(); i++) {
-		Signal s = *op->ioList[i];
+	for(int i=0; i<op->getIOListSize(); i++) {
+		Signal s = *op->getIOListSignal(i);
 		if(i>0) 
 			o << tab << tab << "           ";
-		string idext =  op->ioList[i]->id() ;
-		if(op->ioList[i]->type() == Signal::in)
-			o << op->ioList[i]->id()  << " =>  " << idext;
+		string idext =  op->getIOListSignal(i)->id() ;
+		if(op->getIOListSignal(i)->type() == Signal::in)
+			o << op->getIOListSignal(i)->id()  << " =>  " << idext;
 		else
-			o << op->ioList[i]->id()  << " =>  " << idext;
-		if (i < op->ioList.size()-1) 
+			o << op->getIOListSignal(i)->id()  << " =>  " << idext;
+		if (i < op->getIOListSize()-1) 
 			o << "," << endl;
 	}
 	o << ");" <<endl;
