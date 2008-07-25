@@ -51,7 +51,7 @@ FPConstMult::FPConstMult(Target* target, int wE_in, int wF_in, int wE_out, int w
 {
 	ostringstream name; 
 	name <<"FPConstMult_"<<(cst_sgn==0?"":"M") <<cst_sig<<"b"<<(cst_exp<0?"M":"")<<abs(cst_exp)<<"_"<<wE_in<<"_"<<wF_in<<"_"<<wE_out<<"_"<<wF_out;
-	unique_name=name.str();
+	uniqueName_=name.str();
 
 	int cst_width = intlog2(cst_sig);
 	cst_exp_when_mantissa_1_2 = cst_exp_when_mantissa_int + cst_width - 1; 
@@ -97,10 +97,10 @@ FPConstMult::FPConstMult(Target* target, int wE_in, int wF_in, int wE_out, int w
 	icm = new IntConstMult(target, wF_in+1, cst_sig);
 	oplist.push_back(icm);
 
-	if (target->is_pipelined())
-		set_sequential();
+	if (target->isPipelined())
+		setSequential();
 	else 
-		set_combinatorial();
+		setCombinatorial();
 	setup();
 }
 
@@ -110,51 +110,51 @@ void FPConstMult::setup() {
 
 
  	// Set up the IO signals
- 	add_FP_input("X", wE_in, wF_in);
- 	add_FP_output("R", wE_out, wF_out);
+ 	addFPInput("X", wE_in, wF_in);
+ 	addFPOutput("R", wE_out, wF_out);
 
 
 	// Set up non-registered signals 
-	add_signal_bus      ("x_sig",          wF_in+1);
-	add_signal_bus      ("sig_prod",      icm->rsize);   // register the output of the int const mult
-	add_signal_bus      ("rounded_frac",   wF_out+1);
-	add_signal          ("overflow");
-	add_signal          ("underflow");
-	add_signal_bus      ("r_frac", wF_out);
+	addSignalBus      ("x_sig",          wF_in+1);
+	addSignalBus      ("sig_prod",      icm->rsize);   // register the output of the int const mult
+	addSignalBus      ("rounded_frac",   wF_out+1);
+	addSignal          ("overflow");
+	addSignal          ("underflow");
+	addSignalBus      ("r_frac", wF_out);
  
 	// Set up other signals and pipeline-related stuff
- 	if (is_sequential()) {
- 		icm_depth = icm->pipeline_depth();
- 		set_pipeline_depth(icm_depth+1);
+ 	if (isSequential()) {
+ 		icm_depth = icm->getPipelineDepth();
+ 		setPipelineDepth(icm_depth+1);
 
-		add_delay_signal_bus_no_reset("x_exn",          2,         1);
-		add_delay_signal_no_reset    ("x_sgn",          1,         1);
-		add_delay_signal_bus_no_reset("x_exp",          wE_in,     1);
-		add_delay_signal_bus_no_reset("shifted_frac",    wF_out+1,  1);
+		addDelaySignalBusNoReset("x_exn",          2,         1);
+		addDelaySignalNoReset    ("x_sgn",          1,         1);
+		addDelaySignalBusNoReset("x_exp",          wE_in,     1);
+		addDelaySignalBusNoReset("shifted_frac",    wF_out+1,  1);
 
-		add_delay_signal_no_reset    ("gt_than_xcut",   1,         icm_depth);
+		addDelaySignalNoReset    ("gt_than_xcut",   1,         icm_depth);
 
-		add_delay_signal_bus_no_reset("r_exp_nopb",    wE_out+1,   1);
+		addDelaySignalBusNoReset("r_exp_nopb",    wE_out+1,   1);
 
-		add_delay_signal_bus_no_reset("r_exn",         2,          icm_depth);
-		add_delay_signal_no_reset    ("r_sgn",         1,          icm_depth);
-		add_delay_signal_bus_no_reset("r_exp",         wE_out,     icm_depth);
+		addDelaySignalBusNoReset("r_exn",         2,          icm_depth);
+		addDelaySignalNoReset    ("r_sgn",         1,          icm_depth);
+		addDelaySignalBusNoReset("r_exp",         wE_out,     icm_depth);
 
 
  	}
  	else {
-		add_signal_bus("x_exn",          2);
-		add_signal    ("x_sgn"           );
-		add_signal_bus("x_exp",          wE_in);
+		addSignalBus("x_exn",          2);
+		addSignal    ("x_sgn"           );
+		addSignalBus("x_exp",          wE_in);
 
-		add_signal_bus      ("shifted_frac",   wF_out+1);
-		add_signal    ("gt_than_xcut");
+		addSignalBus      ("shifted_frac",   wF_out+1);
+		addSignal    ("gt_than_xcut");
 
-		add_signal_bus("r_exp_nopb",    wE_out+1);
+		addSignalBus("r_exp_nopb",    wE_out+1);
 
-		add_signal_bus      ("r_exn", 2);
-		add_signal          ("r_sgn");
-		add_signal_bus      ("r_exp", wE_out);
+		addSignalBus      ("r_exn", 2);
+		addSignal          ("r_sgn");
+		addSignalBus      ("r_exp", wE_out);
  	}
 }
 
@@ -177,13 +177,13 @@ FPConstMult::~FPConstMult() {
 }
 
 
-void FPConstMult::output_vhdl(ostream& o, string name) {
-	Licence(o,"Florent de Dinechin (2007)");
-	Operator::StdLibs(o);
-	output_vhdl_entity(o);
+void FPConstMult::outputVHDL(ostream& o, string name) {
+	licence(o,"Florent de Dinechin (2007)");
+	Operator::stdLibs(o);
+	outputVHDLEntity(o);
 	o << "architecture arch of " << name  << " is" << endl;
 
-	icm->Operator::output_vhdl_component(o);
+	icm->Operator::outputVHDLComponent(o);
 
 	// bit width of constant exponent
 	int wE_cst=intlog2(abs(cst_exp_when_mantissa_1_2));
@@ -204,7 +204,7 @@ void FPConstMult::output_vhdl(ostream& o, string name) {
 		wE_sum = wE_in;
 	if(wE_out > wE_sum) 
 		wE_sum = wE_out;
-	output_vhdl_signal_declarations(o);
+	outputVHDLSignalDeclarations(o);
 
 
 	o << tab << "signal abs_unbiased_cst_exp  : std_logic_vector("<<wE_sum<<" downto 0) := \"";
@@ -220,27 +220,27 @@ void FPConstMult::output_vhdl(ostream& o, string name) {
 	o << tab << tab << "sig_mult : "
 	  << icm->getOperatorName()<<endl
 	  << tab<<tab<<tab << "port map(inx => x_sig, r => sig_prod";
-	if(is_sequential())
+	if(isSequential())
 		o << ", clk => clk, rst => rst";
 	o << ");"<<endl;
 	// Possibly shift the significand one bit left, and remove implicit 1 
 	o << tab << tab << "gt_than_xcut <= '1' when ( x_sig("<<wF_in-1<<" downto 0) > xcut_rd("<<wF_in-1<<" downto 0) ) else '0';"<<endl;
-	o << tab << tab << "shifted_frac <=  sig_prod("<<icm->rsize -2<<" downto "<<icm->rsize - wF_out - 2<<")  when " << get_delay_signal_name("gt_than_xcut", icm_depth) << " = '1'"<<endl
+	o << tab << tab << "shifted_frac <=  sig_prod("<<icm->rsize -2<<" downto "<<icm->rsize - wF_out - 2<<")  when " << getDelaySignalName("gt_than_xcut", icm_depth) << " = '1'"<<endl
 		<< tab << tab << "           else sig_prod("<<icm->rsize -3<<" downto "<<icm->rsize - wF_out - 3<<");"<<endl;  
 	// add the rounding bit
-	o << tab << tab << "rounded_frac <= (("<<wF_out <<" downto 1 => '0') & '1') + " << get_delay_signal_name("shifted_frac", 1) << ";"<<endl;
+	o << tab << tab << "rounded_frac <= (("<<wF_out <<" downto 1 => '0') & '1') + " << getDelaySignalName("shifted_frac", 1) << ";"<<endl;
 	o << tab << tab << "r_frac <= rounded_frac("<<wF_out <<" downto  1);"<<endl;
 	// Handling signs is trivial
 	if(cst_sgn==0)
-		o << tab << tab << "r_sgn <= " << get_delay_signal_name("x_sgn",1) << "; -- positive constant"<<endl;
+		o << tab << tab << "r_sgn <= " << getDelaySignalName("x_sgn",1) << "; -- positive constant"<<endl;
 	else
-		o << tab << tab << "r_sgn <= not " << get_delay_signal_name("x_sgn",1) << "; -- negative constant"<<endl;
+		o << tab << tab << "r_sgn <= not " << getDelaySignalName("x_sgn",1) << "; -- negative constant"<<endl;
 
 	// exponent handling
 	o << tab << tab << "r_exp_nopb <= ";
-	o << "((" << wE_sum << " downto " << wE_in << " => '0')  & " << get_delay_signal_name("x_exp", 1) << ")  ";
+	o << "((" << wE_sum << " downto " << wE_in << " => '0')  & " << getDelaySignalName("x_exp", 1) << ")  ";
 	o << (expAddendSign==0 ? "+" : "-" ) << "  abs_unbiased_cst_exp";
-	o << "  +  (("<<wE_sum<<" downto 1 => '0') & " <<  get_delay_signal_name("gt_than_xcut", 1) << ");"<<endl;
+	o << "  +  (("<<wE_sum<<" downto 1 => '0') & " <<  getDelaySignalName("gt_than_xcut", 1) << ");"<<endl;
 
 	// overflow handling
 	if (maxExp(wE_in) + cst_exp_when_mantissa_1_2 + 1 < maxExp(wE_out)) // no overflow can ever happen
@@ -262,17 +262,17 @@ void FPConstMult::output_vhdl(ostream& o, string name) {
 		<< tab << tab << "         else \"11\" when  (x_exn = \"11\")                      -- NaN"<<endl
 		<< tab << tab << "         else \"01\";                                          -- normal number"<<endl;
 
-	output_vhdl_registers(o);
+	outputVHDLRegisters(o);
 
-	o << tab << tab << "r <= " << get_delay_signal_name("r_exn", icm_depth) << " & " << get_delay_signal_name("r_sgn", icm_depth) << " & r_exp & r_frac;"<<endl;
+	o << tab << tab << "r <= " << getDelaySignalName("r_exn", icm_depth) << " & " << getDelaySignalName("r_sgn", icm_depth) << " & r_exp & r_frac;"<<endl;
 	o << "end architecture;" << endl << endl;		
 }
 
 TestIOMap FPConstMult::getTestIOMap()
 {
 	TestIOMap tim;
-	tim.add(*get_signal_by_name("X"));
-	tim.add(*get_signal_by_name("R"));
+	tim.add(*getSignalByName("X"));
+	tim.add(*getSignalByName("R"));
 	return tim;
 }
 

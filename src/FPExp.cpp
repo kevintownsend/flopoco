@@ -19,11 +19,11 @@ FPExp::FPExp(Target* target, int wE, int wF)
 	{
 		std::ostringstream o;
 		o << "FPExp_" << wE << "_" << wF;
-		unique_name = o.str();
+		uniqueName_ = o.str();
 	}
 
-	add_FP_input("x", wE, wF);
-	add_FP_output("r", wE, wF);
+	addFPInput("x", wE, wF);
+	addFPOutput("r", wE, wF);
 
 	int explore_size = wF;
 	int exponent_size = wE;
@@ -47,12 +47,12 @@ FPExp::~FPExp()
 }
 
 // Overloading the virtual functions of Operator
-void FPExp::output_vhdl(std::ostream& o, std::string name)
+void FPExp::outputVHDL(std::ostream& o, std::string name)
 {
-	Licence(o, "J. Detrey, F. de Dinechin, C. Klein, X. Pujol  (2008)");
+	licence(o, "J. Detrey, F. de Dinechin, C. Klein, X. Pujol  (2008)");
 	stringstream fp_exp, fixp_exp, fixp_exp_tbl;
 
-	f->generate(unique_name, fixp_exp, fixp_exp_tbl);
+	f->generate(uniqueName_, fixp_exp, fixp_exp_tbl);
 
 	std::string cstInvLog2, cstLog2;
 	{
@@ -96,13 +96,13 @@ void FPExp::output_vhdl(std::ostream& o, std::string name)
 		"use ieee.std_logic_arith.all;\n"
 		"use ieee.std_logic_unsigned.all;\n"
 		"\n"
-		"package pkg_" << unique_name << " is\n"
+		"package pkg_" << uniqueName_ << " is\n"
 		"  function min ( x, y : integer ) return integer;\n"
 		"  function max ( x, y : integer ) return integer;\n"
 		"  function fp_exp_shift_wx ( wE, wF, g : positive ) return positive;\n"
 		"  function log2 ( x : positive ) return integer;\n"
 		"  \n"
-		"  component " << unique_name << "_shift is\n"
+		"  component " << uniqueName_ << "_shift is\n"
 		"    generic ( wE : positive;\n"
 		"              wF : positive;\n"
 		"              g : positive );\n"
@@ -114,7 +114,7 @@ void FPExp::output_vhdl(std::ostream& o, std::string name)
 		"  \n";
 
 	fp_exp <<
-		"  component " << unique_name << " is" << endl <<
+		"  component " << uniqueName_ << " is" << endl <<
 		"    generic ( wE : positive := " << wE << ";" << endl <<
 		"              wF : positive := " << result_length - g << ";" << endl <<
 		"              g : positive := " << g << " );" << endl;
@@ -125,7 +125,7 @@ void FPExp::output_vhdl(std::ostream& o, std::string name)
 		"  end component;\n"
 		"end package;\n"
 		"\n"
-		"package body pkg_" << unique_name << " is\n"
+		"package body pkg_" << uniqueName_ << " is\n"
 		"  function min ( x, y : integer ) return integer is\n"
 		"  begin\n"
 		"    if x <= y then\n"
@@ -168,9 +168,9 @@ void FPExp::output_vhdl(std::ostream& o, std::string name)
 		"use ieee.std_logic_arith.all;\n"
 		"use ieee.std_logic_unsigned.all;\n"
 		"library work;\n"
-		"use work.pkg_" << unique_name << ".all;\n"
+		"use work.pkg_" << uniqueName_ << ".all;\n"
 		"\n"
-		"entity " << unique_name << "_shift is\n"
+		"entity " << uniqueName_ << "_shift is\n"
 		"  generic ( wE : positive;\n"
 		"            wF : positive;\n"
 		"            g : positive );\n"
@@ -180,7 +180,7 @@ void FPExp::output_vhdl(std::ostream& o, std::string name)
 		"         ufl : out std_logic );\n"
 		"end entity;\n"
 		"\n"
-		"architecture arch of " << unique_name << "_shift is\n"
+		"architecture arch of " << uniqueName_ << "_shift is\n"
 		"  -- length of the fraction part of X\n"
 		"  constant wX : integer  := fp_exp_shift_wx(wE, wF, g);\n"
 		"  -- nombre d'étapes du décalage \n"
@@ -244,19 +244,19 @@ void FPExp::output_vhdl(std::ostream& o, std::string name)
 		"use ieee.std_logic_arith.all;\n"
 		"use ieee.std_logic_unsigned.all;\n"
 		"library work;\n"
-		"use work.pkg_" << unique_name << "_exp.all;\n"
-		"use work.pkg_" << unique_name << ".all;\n"
+		"use work.pkg_" << uniqueName_ << "_exp.all;\n"
+		"use work.pkg_" << uniqueName_ << ".all;\n"
 		"\n";
 
 	fp_exp <<
-		"entity " << unique_name << " is" << endl <<
+		"entity " << uniqueName_ << " is" << endl <<
 		"    generic ( wE : positive := " << wE << ";" << endl <<
 		"              wF : positive := " << result_length - g << ";" << endl <<
 		"              g : positive := " << g << " );" << endl <<
 		"    port ( x : in  std_logic_vector(2+wE+wF downto 0);" << endl <<
 		"           r : out std_logic_vector(2+wE+wF downto 0));" << endl <<
 		"end entity;" << endl << endl <<
-		"architecture arch of " << unique_name << " is" << endl <<
+		"architecture arch of " << uniqueName_ << " is" << endl <<
 		"  constant cstInvLog2 : std_logic_vector(wE+1 downto 0) := \"" << cstInvLog2 << "\";" << endl <<
 		"  constant cstLog2 : std_logic_vector(wE-1+wF+g-1 downto 0) := \"" << cstLog2 << "\";" << endl;
 
@@ -299,7 +299,7 @@ void FPExp::output_vhdl(std::ostream& o, std::string name)
 		"  \n"
 		"begin\n"
 		"  -- conversion of X to fixed point\n"
-		"  shift : " << unique_name << "_shift\n"
+		"  shift : " << uniqueName_ << "_shift\n"
 		"    generic map ( wE => wE,\n"
 		"                  wF => wF,\n"
 		"                  g => g )\n"
@@ -326,7 +326,7 @@ void FPExp::output_vhdl(std::ostream& o, std::string name)
 		"  \n";
 
 	fp_exp << 
-		"  label2 : " << unique_name << "_exp_" << result_length - 1 << endl <<
+		"  label2 : " << uniqueName_ << "_exp_" << result_length - 1 << endl <<
 		"    port map (x    => unsigned_input,\n"
 		"              y    => nZ,\n"
 		"              sign => sign);\n"
@@ -362,8 +362,8 @@ void FPExp::output_vhdl(std::ostream& o, std::string name)
 TestIOMap FPExp::getTestIOMap()
 {
 	TestIOMap tim;
-	tim.add(*get_signal_by_name("x"));
-	tim.add(*get_signal_by_name("r"), 2);
+	tim.add(*getSignalByName("x"));
+	tim.add(*getSignalByName("r"), 2);
 	return tim;
 }
 

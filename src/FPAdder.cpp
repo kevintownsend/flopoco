@@ -39,56 +39,39 @@
 using namespace std;
 extern vector<Operator*> oplist;
 
-/**
- * The FPAdder constructor
- * @param[in]		target		the target device
- * @param[in]		wEX			the the with of the exponent for the f-p number X
- * @param[in]		wFX			the the with of the fraction for the f-p number X
- * @param[in]		wEY			the the with of the exponent for the f-p number Y
- * @param[in]		wFY			the the with of the fraction for the f-p number Y
- * @param[in]		wER			the the with of the exponent for the addition result
- * @param[in]		wFR			the the with of the fraction for the addition result
- */
 FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, int wFR) :
 	Operator(target), wEX(wEX), wFX(wFX), wEY(wEY), wFY(wFY), wER(wER), wFR(wFR) {
 
 	int i, j;
 	ostringstream name, synch, synch2;
 
-	/* Set up the status of the operator. Options = sequential|combinatorial */
-	if (target->is_pipelined()) 
-		set_sequential();
-	else
-		set_combinatorial(); 
+	setOperatorName();
+	setOperatorType();
 		
 	//parameter set up
-	if (is_sequential()){
+	if (isSequential()){
 		wF = wFX;
 		wE = wEX;
 	}else{
 		wF = wFX;
 		wE = wEX;
 	}	
-		
-		
+				
 	sizeRightShift = int ( ceil( log2(wF+4)));	
-
-
-
 	
 	/* Set up the IO signals */
 	/* Inputs: 2b(Exception) + 1b(Sign) + wEX bits (Exponent) + wFX bits(Fraction) */
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	add_input ("X", wEX + wFX + 3);
-	add_input ("Y", wEY + wFY + 3);
+	addInput ("X", wEX + wFX + 3);
+	addInput ("Y", wEY + wFY + 3);
 
-	add_output("rexp", wE);
-	add_output("rfrac", wF+1);
-	add_output("rsig", 1 );
-	add_output("rexc",2);
+	addOutput("rexp", wE);
+	addOutput("rfrac", wF+1);
+	addOutput("rsig", 1 );
+	addOutput("rexc",2);
 
 	// instantiate a Leading zero counter
-	if (! is_sequential())
+	if (! isSequential())
 	{
 		wOutLZC = int(ceil(log2(wFX+2+1)));
 		leadingZeroCounter = new LZOC(target, wFX+2, wOutLZC);
@@ -104,54 +87,54 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 	rightShifter = new Shifter(target,wFX+1,wFX+3,Right);
 	oplist.push_back(rightShifter);
 	
-	if (is_sequential())
+	if (isSequential())
 	{
 
 		intaddClose1 = new IntAdder(target, wF + 3);
-		intaddClose1->set_operator_name("intaddClose1");
+		intaddClose1->Operator::setOperatorName("intaddClose1");
 		oplist.push_back(intaddClose1);
 
 		intaddClose2 = new IntAdder(target, wF + 2);
-		intaddClose2->set_operator_name("intaddClose2");
+		intaddClose2->Operator::setOperatorName("intaddClose2");
 		oplist.push_back(intaddClose2);
 
 		intaddClose3 = new IntAdder(target, wE + wF + 2);
-		intaddClose3->set_operator_name("intaddClose3");
+		intaddClose3->Operator::setOperatorName("intaddClose3");
 		oplist.push_back(intaddClose3);
 
 		intaddFar1 = new IntAdder(target,wF+5);
-		intaddFar1->set_operator_name("intaddFar1");
+		intaddFar1->Operator::setOperatorName("intaddFar1");
 		oplist.push_back(intaddFar1);
 
 		intaddFar2 = new IntAdder(target,wE+1);
-		intaddFar2->set_operator_name("intaddFar2");
+		intaddFar2->Operator::setOperatorName("intaddFar2");
 		oplist.push_back(intaddFar2);		
 
 		intaddFar3 = new IntAdder(target,wE+1 + wF+1);
-		intaddFar3->set_operator_name("intaddFar3");
+		intaddFar3->Operator::setOperatorName("intaddFar3");
 		oplist.push_back(intaddFar3);		
 				
 		lzocs = new LZOCShifterSticky(target, wFX+2, wFX+2,0, 0);
 		oplist.push_back(lzocs);
 	}
 	
-	if (is_sequential()){
+	if (isSequential()){
 		
 		//swap/Difference pipeline depth
 		swapDifferencePipelineDepth = 1;
 		
-		closePathDepth = intaddClose1->pipeline_depth() + 
-										 intaddClose2->pipeline_depth() + 
-										 lzocs->pipeline_depth() + 
-										 intaddClose3->pipeline_depth() + 4;
+		closePathDepth = intaddClose1->getPipelineDepth() + 
+										 intaddClose2->getPipelineDepth() + 
+										 lzocs->getPipelineDepth() + 
+										 intaddClose3->getPipelineDepth() + 4;
 	
-		farPathDepth = intaddFar1->pipeline_depth()+
-									 intaddFar2->pipeline_depth()+
-									 intaddFar3->pipeline_depth()+
-									 rightShifter->pipeline_depth()
+		farPathDepth = intaddFar1->getPipelineDepth()+
+									 intaddFar2->getPipelineDepth()+
+									 intaddFar3->getPipelineDepth()+
+									 rightShifter->getPipelineDepth()
 									 +5;
 		
-		cout<<"depths="<<intaddFar1->pipeline_depth()<<" "<<intaddFar2->pipeline_depth()<<" "<<intaddFar3->pipeline_depth()<<" "<<rightShifter->pipeline_depth()<<endl;
+		cout<<"depths="<<intaddFar1->getPipelineDepth()<<" "<<intaddFar2->getPipelineDepth()<<" "<<intaddFar3->getPipelineDepth()<<" "<<rightShifter->getPipelineDepth()<<endl;
 		
 		
 		cout<<endl<<"Close path depth = "<< closePathDepth;
@@ -161,290 +144,274 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 		
 		cout<<endl<<"Max path depth   = "<< maxPathDepth<<endl;
 		
-		set_pipeline_depth(swapDifferencePipelineDepth + maxPathDepth + 1);
+		setPipelineDepth(swapDifferencePipelineDepth + maxPathDepth + 1);
 	}
 	
 	
 	
-	if (is_sequential()){
+	if (isSequential()){
 		
-		add_signal("signedExponentX",wE+1);
-		add_signal("signedExponentY",wE+1);
-		add_signal("invSignedExponentY",wE+1);
+		addSignal("signedExponentX",wE+1);
+		addSignal("signedExponentY",wE+1);
+		addSignal("invSignedExponentY",wE+1);
 				
-		add_registered_signal("exceptionXSuperiorY",1);
-		add_registered_signal("exceptionXEqualY",1);
+		addRegisteredSignalWithoutReset("exceptionXSuperiorY",1);
+		addRegisteredSignalWithoutReset("exceptionXEqualY",1);
 		
-		add_delay_signal("exponentDifference0",wE+1,1);
+		addDelaySignal("exponentDifference0",wE+1,1);
 		
-		add_delay_signal("swap",1,1);
-		add_delay_signal("extendSwap",wE,1);
+		addDelaySignal("swap",1,1);
+		addDelaySignal("extendSwap",wE,1);
 		
-		add_signal("exponentDifference1",wER); 
-		add_signal("exponentDifference",wER);  
+		addSignal("exponentDifference1",wER); 
+		addSignal("exponentDifference",wER);  
 			
-		add_delay_signal("newX",wE+wF+3, 1);
-		add_delay_signal("newY",wE+wF+3, 1);
+		addDelaySignal("newX",wE+wF+3, 1);
+		addDelaySignal("newY",wE+wF+3, 1);
 							
-		add_signal("sdX",wE+wF+3);
-		add_signal("sdY",wE+wF+3);
-		add_signal("sdSignAB",1);
-		add_signal("sdClose",1);
-		add_signal("sdExponentDifference",wE);
+		addSignal("sdX",wE+wF+3);
+		addSignal("sdY",wE+wF+3);
+		addSignal("sdSignAB",1);
+		addSignal("sdClose",1);
+		addSignal("sdExponentDifference",wE);
 		
 		
 		//close path
-		add_delay_signal("cClose",1,intaddClose1->pipeline_depth() + intaddClose2->pipeline_depth()+2);
-		add_delay_signal("cX",wE+wF+3,intaddClose1->pipeline_depth() + intaddClose2->pipeline_depth());
-		add_signal("cY",wE+wF+3);
-		add_signal("cExponentDifference",wE);
+		addDelaySignal("cClose",1,intaddClose1->getPipelineDepth() + intaddClose2->getPipelineDepth()+2);
+		addDelaySignal("cX",wE+wF+3,intaddClose1->getPipelineDepth() + intaddClose2->getPipelineDepth());
+		addSignal("cY",wE+wF+3);
+		addSignal("cExponentDifference",wE);
 		
-		add_delay_signal("expXClose",wE, intaddClose1->pipeline_depth() + intaddClose2->pipeline_depth() + 3 + lzocs->pipeline_depth() ); 
+		addDelaySignal("expXClose",wE, intaddClose1->getPipelineDepth() + intaddClose2->getPipelineDepth() + 3 + lzocs->getPipelineDepth() ); 
 		
-		add_signal("fracXClose1",wF+3);
-		add_signal("fracYClose1",wF+3);
-		add_signal("InvFracYClose1",wFX+3);
-		add_delay_signal("fracRClose0",wF+3,intaddClose2->pipeline_depth()+2);
+		addSignal("fracXClose1",wF+3);
+		addSignal("fracYClose1",wF+3);
+		addSignal("InvFracYClose1",wFX+3);
+		addDelaySignal("fracRClose0",wF+3,intaddClose2->getPipelineDepth()+2);
 		
 		
-		add_delay_signal("fracSignClose",1,1);
-		add_delay_signal("fracRClose1xor", wF+2,1);
-		add_delay_signal("fracRClose1",wFX+2, lzocs->pipeline_depth());
+		addDelaySignal("fracSignClose",1,1);
+		addDelaySignal("fracRClose1xor", wF+2,1);
+		addDelaySignal("fracRClose1",wFX+2, lzocs->getPipelineDepth());
 
 
-		add_delay_signal("crs",1,lzocs->pipeline_depth() + intaddClose3->pipeline_depth()+2);
-	//	add_delay_signal("exponentResultClose1",wEX+2,leadingZeroCounter->pipeline_depth()+leftShifter->pipeline_depth());
+		addDelaySignal("crs",1,lzocs->getPipelineDepth() + intaddClose3->getPipelineDepth()+2);
+	//	addDelaySignal("exponentResultClose1",wEX+2,leadingZeroCounter->getPipelineDepth()+leftShifter->getPipelineDepth());
 
-		add_delay_signal("nZerosNew",lzocs->getCountWidth(),lzocs->pipeline_depth());
-		add_delay_signal("shiftedFrac",wFX+2,2);
+		addDelaySignal("nZerosNew",lzocs->getCountWidth(),lzocs->getPipelineDepth());
+		addDelaySignal("shiftedFrac",wFX+2,2);
 				
-		add_signal("exponentResultClose",wEX+2);
-		add_signal("exponentResultClose1",wEX);
-		add_signal("roundClose",1);
-		add_signal("exponentConcatFrac0",wE+wF+2);
-		add_delay_signal("exponentConcatFrac1",wE+wF+2,2);
+		addSignal("exponentResultClose",wEX+2);
+		addSignal("exponentResultClose1",wEX);
+		addSignal("roundClose",1);
+		addSignal("exponentConcatFrac0",wE+wF+2);
+		addDelaySignal("exponentConcatFrac1",wE+wF+2,2);
 		
 		
-		add_signal("fractionResultCloseC",wF + 1);
-		add_signal("exponentResultCloseC",wE + 2);
-		add_signal("crsOut",1);
+		addSignal("fractionResultCloseC",wF + 1);
+		addSignal("exponentResultCloseC",wE + 2);
+		addSignal("crsOut",1);
 		
 		
 		//Far path
-		add_delay_signal("fX",wE+wF+3,rightShifter->pipeline_depth() + intaddFar1->pipeline_depth() );//CHECK XXX
-		add_delay_signal("fracFX",wF,rightShifter->pipeline_depth() + intaddFar1->pipeline_depth()+2);
-		add_delay_signal("expFX",wE,rightShifter->pipeline_depth() + intaddFar1->pipeline_depth()+3);
+		addDelaySignal("fX",wE+wF+3,rightShifter->getPipelineDepth() + intaddFar1->getPipelineDepth() );//CHECK XXX
+		addDelaySignal("fracFX",wF,rightShifter->getPipelineDepth() + intaddFar1->getPipelineDepth()+2);
+		addDelaySignal("expFX",wE,rightShifter->getPipelineDepth() + intaddFar1->getPipelineDepth()+3);
 		
 		
-		add_signal("fY",wE+wF+3);
-		add_signal("fExponentDifference",wE);
-		add_delay_signal("fSignAB",1,rightShifter->pipeline_depth());
+		addSignal("fY",wE+wF+3);
+		addSignal("fExponentDifference",wE);
+		addDelaySignal("fSignAB",1,rightShifter->getPipelineDepth());
 		
-		add_delay_signal("shiftedOut",1, rightShifter->pipeline_depth() + intaddFar1->pipeline_depth() +2);
+		addDelaySignal("shiftedOut",1, rightShifter->getPipelineDepth() + intaddFar1->getPipelineDepth() +2);
 		
-		add_signal("selectionSignal",sizeRightShift);
+		addSignal("selectionSignal",sizeRightShift);
 		
-		add_signal("fracNewY",wF+1);
-		add_signal("shiftedFracY", 2*wF + 4);
+		addSignal("fracNewY",wF+1);
+		addSignal("shiftedFracY", 2*wF + 4);
 		
-		add_signal("stiky",1);
+		addSignal("stiky",1);
 		
-		add_delay_signal("fracXfar3",wF+5,2); //XXX
-		add_signal("fracYfar3",wF+5);
+		addDelaySignal("fracXfar3",wF+5,2); //XXX
+		addSignal("fracYfar3",wF+5);
 		
-		add_delay_signal("opSelector",1,2);
-		add_delay_signal("fracYfar3XorOp",wF+5,2);
-		add_delay_signal("fracResultfar0",wF+5,2);
-		
-		
-		add_signal("fracResultfar0wSh",wF+5);
-		add_signal("exponentResultfar0",wE+1);
-		
-		add_delay_signal("exponentResultfar1",wE+1,2);	
-		add_delay_signal("expOperationSel",2,2);
+		addDelaySignal("opSelector",1,2);
+		addDelaySignal("fracYfar3XorOp",wF+5,2);
+		addDelaySignal("fracResultfar0",wF+5,2);
 		
 		
-		add_delay_signal("expSecOperand",wE+1,2);
+		addSignal("fracResultfar0wSh",wF+5);
+		addSignal("exponentResultfar0",wE+1);
 		
-		add_delay_signal("fracResultfar1",wF+3,intaddFar2->pipeline_depth()+2);
-		add_signal("expConcatFrac",wE+1 + wF+1);
-		add_delay_signal("expConcatFracResult",wE+1 + wF+1,2);
-		add_delay_signal("round",1,intaddFar2->pipeline_depth()+2);
+		addDelaySignal("exponentResultfar1",wE+1,2);	
+		addDelaySignal("expOperationSel",2,2);
 		
 		
-		add_signal("exponentResultfar",wE+1);
-		add_signal("fractionResultfar",wF+1);
+		addDelaySignal("expSecOperand",wE+1,2);
 		
-		add_delay_signal("pipeClose",1, maxPathDepth);
-		add_signal("syncClose",1);
+		addDelaySignal("fracResultfar1",wF+3,intaddFar2->getPipelineDepth()+2);
+		addSignal("expConcatFrac",wE+1 + wF+1);
+		addDelaySignal("expConcatFracResult",wE+1 + wF+1,2);
+		addDelaySignal("round",1,intaddFar2->getPipelineDepth()+2);
 		
-		add_signal("eTest",2);
-		add_signal("sdxXY",4);
 		
-		add_delay_signal("pipeXAB",4,maxPathDepth);
-		add_delay_signal("syncXAB",4,2);
+		addSignal("exponentResultfar",wE+1);
+		addSignal("fractionResultfar",wF+1);
 		
-		add_delay_signal("pipeSignAB",1,maxPathDepth);
-		add_delay_signal("syncSignAB",1,2);
+		addDelaySignal("pipeClose",1, maxPathDepth);
+		addSignal("syncClose",1);
+		
+		addSignal("eTest",2);
+		addSignal("sdxXY",4);
+		
+		addDelaySignal("pipeXAB",4,maxPathDepth);
+		addDelaySignal("syncXAB",4,2);
+		
+		addDelaySignal("pipeSignAB",1,maxPathDepth);
+		addDelaySignal("syncSignAB",1,2);
 
-		add_delay_signal("pipeX",3+wE+wF,maxPathDepth);
-		add_delay_signal("syncX",3+wE+wF,2);
+		addDelaySignal("pipeX",3+wE+wF,maxPathDepth);
+		addDelaySignal("syncX",3+wE+wF,2);
 				
-		add_signal("sdSignY",1);
-		add_delay_signal("pipeSignY",1,maxPathDepth);
-		add_delay_signal("syncSignY",1,2);
+		addSignal("sdSignY",1);
+		addDelaySignal("pipeSignY",1,maxPathDepth);
+		addDelaySignal("syncSignY",1,2);
 		
-		add_delay_signal("nRn",wE+wF+3,2);
-		add_signal("nnR",wE+wF+3);
-		add_signal("exponentResultn",wE+2);
-		add_signal("fractionResultn",wF+1);
+		addDelaySignal("nRn",wE+wF+3,2);
+		addSignal("nnR",wE+wF+3);
+		addSignal("exponentResultn",wE+2);
+		addSignal("fractionResultn",wF+1);
 		
 		if (closePathDepth == farPathDepth){
 		
-			add_signal("expResClose",wE+2);
-			add_signal("expResFar",wE+1);
-			add_signal("fracResClose",wF+1);
-			add_signal("fracResFar",wF+1);
-			add_signal("syncRS",1);	
+			addSignal("expResClose",wE+2);
+			addSignal("expResFar",wE+1);
+			addSignal("fracResClose",wF+1);
+			addSignal("fracResFar",wF+1);
+			addSignal("syncRS",1);	
 			
 		}else
 			if (closePathDepth > farPathDepth){
-				add_delay_signal("pipeExpResFar",wE+1,closePathDepth-farPathDepth);
-				add_delay_signal("pipeFracResFar",wF+1,closePathDepth-farPathDepth);
+				addDelaySignal("pipeExpResFar",wE+1,closePathDepth-farPathDepth);
+				addDelaySignal("pipeFracResFar",wF+1,closePathDepth-farPathDepth);
 						
-				add_signal("expResClose",wE+2);
-				add_signal("expResFar",wE+1);
-				add_signal("fracResClose",wF+1);
-				add_signal("fracResFar",wF+1);
-				add_signal("syncRS",1);	
+				addSignal("expResClose",wE+2);
+				addSignal("expResFar",wE+1);
+				addSignal("fracResClose",wF+1);
+				addSignal("fracResFar",wF+1);
+				addSignal("syncRS",1);	
 			}else	{
-				add_delay_signal("pipeExpResClose",wE+2,farPathDepth-closePathDepth);
-				add_delay_signal("pipeFracResClose",wF+1,farPathDepth-closePathDepth);
-				add_delay_signal("pipeSyncRS",1,farPathDepth-closePathDepth);		
+				addDelaySignal("pipeExpResClose",wE+2,farPathDepth-closePathDepth);
+				addDelaySignal("pipeFracResClose",wF+1,farPathDepth-closePathDepth);
+				addDelaySignal("pipeSyncRS",1,farPathDepth-closePathDepth);		
 			
-				add_signal("expResClose",wE+2);
-				add_signal("expResFar",wE+1);
-				add_signal("fracResClose",wF+1);
-				add_signal("fracResFar",wF+1);
-				add_signal("syncRS",1);	
+				addSignal("expResClose",wE+2);
+				addSignal("expResFar",wE+1);
+				addSignal("fracResClose",wF+1);
+				addSignal("fracResFar",wF+1);
+				addSignal("syncRS",1);	
 						
 			}
 			
 		cout<<"signals pass";	
 	}
 	else{
-		add_signal("exceptionXSuperiorY",1);
-		add_signal("exceptionXEqualY",1);
-		add_signal("exponentDifference0",wER+1);
-		add_signal("swap",1);
-		add_signal("exponentDifference1",wER); 
-		add_signal("exponentDifference",wER);  
-		add_signal("zeroExtendedSwap",wER);
-		add_signal("newX",wEX+wFX+3);
-		add_signal("newY",wEX+wFX+3);
-		add_signal("signAB",1);
-		add_signal("close",1);		
-		add_signal("fracXClose1",wFX+3);
-		add_signal("fracYClose1",wFX+3);
-		add_signal("fracRClose0",wFX+3);
-		add_signal("fracRClose1",wFX+2);
-		add_signal("nZeros",wOutLZC);
-		add_signal("exponentResultClose1",wEX+2);
-		add_signal("exponentResultClose",wEX+2);
-		add_signal("shiftedFrac",2*(wFX+2));
-		add_signal("exponentConcatFrac0",wE+wF+2);
-		add_signal("exponentConcatFrac1",wE+wF+2);
-		add_signal("shiftedFracY", 2*wF + 4);
-		add_signal("fracNewY",wF+1);
-		add_signal("fracXfar3",wF+5);
-		add_signal("fracYfar3",wF+5);
-		add_signal("fracResultfar0",wF+5);
-		add_signal("fracResultfar0wSh",wF+5);
-		add_signal("exponentResultfar0",wE+1);
-		add_signal("fracResultfar1",wF+3);
-		add_signal("exponentResultfar1",wE+1);
-		add_signal("round",1);
-		add_signal("fractionResultfar0",wF+2);
-		add_signal("rs",1);
-		add_signal("exponentResultfar",wE+1);
-		add_signal("fractionResultfar",wF+1);
-		add_signal("exponentResultn",wE+2);
-		add_signal("fractionResultn",wF+1);
-		add_signal("eMax",1);
-		add_signal("eMin",1);
-		add_signal("eTest",2);
-		add_signal("nRn",wE+wF+3);
-		add_signal("xAB",4);
-		add_signal("nnR",wE+wF+3);
-		add_signal("fractionResultCloseC",1+wF);
-		add_signal("exponentResultCloseC",wE+2);
-		add_signal("shiftedOut",1);
-		add_signal("stiky",1);
-		add_signal("borrow",1);
-		add_signal("roundClose",1);
+		addSignal("exceptionXSuperiorY",1);
+		addSignal("exceptionXEqualY",1);
+		addSignal("exponentDifference0",wER+1);
+		addSignal("swap",1);
+		addSignal("exponentDifference1",wER); 
+		addSignal("exponentDifference",wER);  
+		addSignal("zeroExtendedSwap",wER);
+		addSignal("newX",wEX+wFX+3);
+		addSignal("newY",wEX+wFX+3);
+		addSignal("signAB",1);
+		addSignal("close",1);		
+		addSignal("fracXClose1",wFX+3);
+		addSignal("fracYClose1",wFX+3);
+		addSignal("fracRClose0",wFX+3);
+		addSignal("fracRClose1",wFX+2);
+		addSignal("nZeros",wOutLZC);
+		addSignal("exponentResultClose1",wEX+2);
+		addSignal("exponentResultClose",wEX+2);
+		addSignal("shiftedFrac",2*(wFX+2));
+		addSignal("exponentConcatFrac0",wE+wF+2);
+		addSignal("exponentConcatFrac1",wE+wF+2);
+		addSignal("shiftedFracY", 2*wF + 4);
+		addSignal("fracNewY",wF+1);
+		addSignal("fracXfar3",wF+5);
+		addSignal("fracYfar3",wF+5);
+		addSignal("fracResultfar0",wF+5);
+		addSignal("fracResultfar0wSh",wF+5);
+		addSignal("exponentResultfar0",wE+1);
+		addSignal("fracResultfar1",wF+3);
+		addSignal("exponentResultfar1",wE+1);
+		addSignal("round",1);
+		addSignal("fractionResultfar0",wF+2);
+		addSignal("rs",1);
+		addSignal("exponentResultfar",wE+1);
+		addSignal("fractionResultfar",wF+1);
+		addSignal("exponentResultn",wE+2);
+		addSignal("fractionResultn",wF+1);
+		addSignal("eMax",1);
+		addSignal("eMin",1);
+		addSignal("eTest",2);
+		addSignal("nRn",wE+wF+3);
+		addSignal("xAB",4);
+		addSignal("nnR",wE+wF+3);
+		addSignal("fractionResultCloseC",1+wF);
+		addSignal("exponentResultCloseC",wE+2);
+		addSignal("shiftedOut",1);
+		addSignal("stiky",1);
+		addSignal("borrow",1);
+		addSignal("roundClose",1);
 	}
 }
 
-/**
- * FPAdder destructor
- */
 FPAdder::~FPAdder() {
 }
 
-/** Method for setting the operator name
-	* @param[in] prefix the prefix that is going to be placed to the default name
-	*                   of the operator
-	* @param[out] postfix the postfix that is going to be placed to the default
-	*                     name of the operator
-	*/
-void FPAdder::set_operator_name(std::string prefix, std::string postfix){
+void FPAdder::setOperatorName(){
 	ostringstream name;
 	/* The name has the format: FPAdder_wEX_wFX_wEY_wFY_wER_wFR where: 
 	   wEX = width of X exponenet and 
 	   wFX = width for the fractional part of X */
 	name<<"FPAdder_"<<wEX<<"_"<<wFX<<"_"<<wEY<<"_"<<wFY<<"_"<<wER<<"_"<<wFR; 
-	unique_name = name.str(); 
+	uniqueName_ = name.str(); 
 }
 
-
-
-/**
- * Method belonging to the Operator class overloaded by the FPAdder class
- * @param[in,out] o     the stream where the current architecture will be outputed to
- * @param[in]     name  the name of the entity corresponding to the architecture generated in this method
- **/
-void FPAdder::output_vhdl(std::ostream& o, std::string name) {
+void FPAdder::outputVHDL(std::ostream& o, std::string name) {
   
 	ostringstream signame, synch1, synch2, xname,zeros, zeros1, zeros2, str1, str2;
 
 	int bias_val=int(pow(double(2),double(wEX-1)))-1;
 	int i, j; 
 
-	Licence(o,"Bogdan Pasca (2008)");
-	Operator::StdLibs(o);
-	output_vhdl_entity(o);
-	new_architecture(o,name);	
+	licence(o,"Bogdan Pasca (2008)");
+	Operator::stdLibs(o);
+	outputVHDLEntity(o);
+	newArchitecture(o,name);	
 	
 	//output VHDL components
-	if (is_sequential())
-		lzocs->output_vhdl_component(o);
+	if (isSequential())
+		lzocs->outputVHDLComponent(o);
 	else{
-		leadingZeroCounter->output_vhdl_component(o);
-		leftShifter->output_vhdl_component(o);
+		leadingZeroCounter->outputVHDLComponent(o);
+		leftShifter->outputVHDLComponent(o);
 	}	
-	rightShifter->output_vhdl_component(o);
+	rightShifter->outputVHDLComponent(o);
 	
-	intaddClose1->output_vhdl_component(o);
-	intaddClose2->output_vhdl_component(o);
-	intaddClose3->output_vhdl_component(o);
-	intaddFar1->output_vhdl_component(o);
-	intaddFar2->output_vhdl_component(o);
-	intaddFar3->output_vhdl_component(o);
+	intaddClose1->outputVHDLComponent(o);
+	intaddClose2->outputVHDLComponent(o);
+	intaddClose3->outputVHDLComponent(o);
+	intaddFar1->outputVHDLComponent(o);
+	intaddFar2->outputVHDLComponent(o);
+	intaddFar3->outputVHDLComponent(o);
 		
-	output_vhdl_signal_declarations(o);	  
-	begin_architecture(o);
+	outputVHDLSignalDeclarations(o);	  
+	beginArchitecture(o);
 		
-	if (is_sequential()){
+	if (isSequential()){
 	
 		//=========================================================================| 
 		//                                                                         |
@@ -452,7 +419,7 @@ void FPAdder::output_vhdl(std::ostream& o, std::string name) {
 		//                                                                         |
 		//=========================================================================|
 	
-		output_vhdl_registers(o); o<<endl;
+		outputVHDLRegisters(o); o<<endl;
 		//=========================================================================|	
 	  //                          Swap/Difference                                |
 	  // ========================================================================|
@@ -563,12 +530,12 @@ void FPAdder::output_vhdl(std::ostream& o, std::string name) {
 		ostringstream cCloseSNPostPipeline;
 		ostringstream cXSNPostPipeline;
 		
-		cCloseSNPostPipeline << get_delay_signal_name("cClose",intaddClose1->pipeline_depth()+intaddClose2->pipeline_depth()+2);
-		cXSNPostPipeline << get_delay_signal_name("pipeX",intaddClose1->pipeline_depth()+intaddClose2->pipeline_depth()+2);
+		cCloseSNPostPipeline << getDelaySignalName("cClose",intaddClose1->getPipelineDepth()+intaddClose2->getPipelineDepth()+2);
+		cXSNPostPipeline << getDelaySignalName("pipeX",intaddClose1->getPipelineDepth()+intaddClose2->getPipelineDepth()+2);
 				
 		o << tab << "crs <= '0' when "<<cCloseSNPostPipeline.str()<<"='1' and fracRClose1 = ("<<wF+1<<" downto 0 => '0') else"<<endl;
     o << tab << "          "<<cXSNPostPipeline.str()<<"("<<wE+wF<<") xor ("<<cCloseSNPostPipeline.str()<<" and "
-		                        <<get_delay_signal_name("fracRClose0",intaddClose2->pipeline_depth()+2)<<"("<<wF+2<<"));"<<endl;
+		                        <<getDelaySignalName("fracRClose0",intaddClose2->getPipelineDepth()+2)<<"("<<wF+2<<"));"<<endl;
 		
 			
 		// LZC + Shifting. The number of leading zeros are returned together with the sifted input
@@ -582,8 +549,8 @@ void FPAdder::output_vhdl(std::ostream& o, std::string name) {
 	
 		// NORMALIZATION
 		int delayExp;
-		delayExp=lzocs->pipeline_depth() + intaddClose2->pipeline_depth() + intaddClose1->pipeline_depth()+3;
-		o<<tab<< "exponentResultClose1<= "<<get_delay_signal_name("expXClose",delayExp)
+		delayExp=lzocs->getPipelineDepth() + intaddClose2->getPipelineDepth() + intaddClose1->getPipelineDepth()+3;
+		o<<tab<< "exponentResultClose1<= "<<getDelaySignalName("expXClose",delayExp)
 		                                  <<" - (CONV_STD_LOGIC_VECTOR(0,"<<wE-lzocs->getCountWidth()<<") & nZerosNew);"<<endl;
 		
 		// ROUNDING
@@ -608,7 +575,7 @@ void FPAdder::output_vhdl(std::ostream& o, std::string name) {
 		o<<tab<<" fractionResultCloseC <= \"1\" & exponentConcatFrac1_d("<<wF-1<<" downto 0);"<<endl;
 		o<<tab<<" exponentResultCloseC <= exponentConcatFrac1_d("<<wF+wE+1<<" downto "<<wF<<");"<<endl;
 	
-		o<<tab<<" crsOut <= "<<get_delay_signal_name("crs", lzocs->pipeline_depth() + intaddClose3->pipeline_depth()+2)<<";"<<endl;
+		o<<tab<<" crsOut <= "<<getDelaySignalName("crs", lzocs->getPipelineDepth() + intaddClose3->getPipelineDepth()+2)<<";"<<endl;
 
 		
 		//=========================================================================|
@@ -659,14 +626,14 @@ void FPAdder::output_vhdl(std::ostream& o, std::string name) {
 		o<<tab<< "stiky<= '0' when (shiftedFracY("<<wF<<" downto 0)=CONV_STD_LOGIC_VECTOR(0,"<<wF<<")) else '1';"<<endl;
 						
 		//pad fraction of X [sign][inplicit 1][fracX][guard bits]				
-		o<<tab<< "fracXfar3 <= \"01\" & "<<get_delay_signal_name("fracFX",rightShifter->pipeline_depth())<<" & \"000\";"<<endl;
+		o<<tab<< "fracXfar3 <= \"01\" & "<<getDelaySignalName("fracFX",rightShifter->getPipelineDepth())<<" & \"000\";"<<endl;
   	//pad fraction of Y [sign][shifted frac having inplicit 1][guard bits]
   	o<<tab<< "fracYfar3 <= \"0\" & shiftedFracY("<<2*wF+3<<" downto "<<2*wF+4- (wF+4)+1<<") & stiky;"<<endl;	
 		
 		// depending on the signs of the operands, perform addition or substraction			
 		// the result will be: a + (b xor operation) + operation, where operation=0=addition and operation=1=substraction
 			// the operation selector is the xor between the signs of the operands
-			o<<tab<<"opSelector <= "<<get_delay_signal_name("fSignAB",rightShifter->pipeline_depth())<<";"<<endl;
+			o<<tab<<"opSelector <= "<<getDelaySignalName("fSignAB",rightShifter->getPipelineDepth())<<";"<<endl;
 			// perform xor 
 			o<<tab<<"fracYfar3XorOp <= fracYfar3 xor ("<<wF+4<<" downto 0 => opSelector);"<<endl;
 			// perform carry in addition
@@ -680,12 +647,12 @@ void FPAdder::output_vhdl(std::ostream& o, std::string name) {
 			o<<tab<< "            );" << endl<<endl;
 				
 		// if the second operand was shifted out of the operation, then the result of the operation becomes = to the first operand //		
-		o<<tab<< "fracResultfar0wSh <= fracResultfar0_d when "<< get_delay_signal_name("shiftedOut",rightShifter->pipeline_depth()+intaddFar1->pipeline_depth()+2)<<"='0' else "
-		                            <<"(\"01\" & "<<get_delay_signal_name("fracFX",rightShifter->pipeline_depth()+intaddFar1->pipeline_depth()+2)<<"&\"000\");"<<endl;
+		o<<tab<< "fracResultfar0wSh <= fracResultfar0_d when "<< getDelaySignalName("shiftedOut",rightShifter->getPipelineDepth()+intaddFar1->getPipelineDepth()+2)<<"='0' else "
+		                            <<"(\"01\" & "<<getDelaySignalName("fracFX",rightShifter->getPipelineDepth()+intaddFar1->getPipelineDepth()+2)<<"&\"000\");"<<endl;
 		
 
 		// the result exponent before normalization and rounding is = to the exponent of the first operand //
-		o<<tab<<"exponentResultfar0<=\"0\" & "<<get_delay_signal_name("expFX",rightShifter->pipeline_depth()+intaddFar1->pipeline_depth()+3)<<";"<<endl;
+		o<<tab<<"exponentResultfar0<=\"0\" & "<<getDelaySignalName("expFX",rightShifter->getPipelineDepth()+intaddFar1->getPipelineDepth()+3)<<";"<<endl;
 		
 		
 		//perform NORMALIZATION and recalculation of the stiky bit 
@@ -719,13 +686,13 @@ void FPAdder::output_vhdl(std::ostream& o, std::string name) {
 		o<<tab<< "round <= fracResultfar1(1) and (fracResultfar1(2) or fracResultfar1(0));"<<endl;
 
 		//concatenation of the exponent and the fraction. 	
-		o<<tab<<"expConcatFrac <= exponentResultfar1_d & "<<get_delay_signal_name("fracResultfar1",intaddFar2->pipeline_depth()+2)<<"("<<wF+2<<" downto 2);"<<endl;
+		o<<tab<<"expConcatFrac <= exponentResultfar1_d & "<<getDelaySignalName("fracResultfar1",intaddFar2->getPipelineDepth()+2)<<"("<<wF+2<<" downto 2);"<<endl;
 		
 		// round //
 		o<<tab<< "int_adder_componentf3: " << intaddFar3->getOperatorName() << endl;
 		o<<tab<< "  port map ( X => expConcatFrac, " << endl; 
 		o<<tab<< "             Y => (others => '0'), " << endl; 
-		o<<tab<< "             Cin => "<<get_delay_signal_name("round",intaddFar2->pipeline_depth()+2) <<" ," << endl;
+		o<<tab<< "             Cin => "<<getDelaySignalName("round",intaddFar2->getPipelineDepth()+2) <<" ," << endl;
 		o<<tab<< "             R => expConcatFracResult, " << endl; 
 		o<<tab<< "             clk => clk, " << endl;
 		o<<tab<< "             rst => rst " << endl;
@@ -748,23 +715,23 @@ void FPAdder::output_vhdl(std::ostream& o, std::string name) {
 				
 		//synchronize the close signal
 		o<<tab<<"pipeClose <= sdClose;"<<endl;
-		o<<tab<<"syncClose <= "<<get_delay_signal_name("pipeClose", maxPathDepth)<<";"<<endl; 
+		o<<tab<<"syncClose <= "<<getDelaySignalName("pipeClose", maxPathDepth)<<";"<<endl; 
 				
 		//exception bits
 		o<<tab<<"pipeXAB <= sdxXY;"<<endl;
-		o<<tab<<"syncXAB <= "<<get_delay_signal_name("pipeXAB",maxPathDepth)<<";"<<endl;
+		o<<tab<<"syncXAB <= "<<getDelaySignalName("pipeXAB",maxPathDepth)<<";"<<endl;
 				
 		//sign bit
 		o<<tab<<"pipeSignAB <= sdSignAB;"<<endl;
-		o<<tab<<"syncSignAB <= "<<get_delay_signal_name("pipeSignAB",maxPathDepth)<<";"<<endl;
+		o<<tab<<"syncSignAB <= "<<getDelaySignalName("pipeSignAB",maxPathDepth)<<";"<<endl;
 				
 		//X
 		o<<tab<<"pipeX <= sdX ;"<<endl;
-		o<<tab<<"syncX <= "<<get_delay_signal_name("pipeX",maxPathDepth)<<";"<<endl;
+		o<<tab<<"syncX <= "<<getDelaySignalName("pipeX",maxPathDepth)<<";"<<endl;
 		
 		//signY
 		o<<tab<<"pipeSignY <= sdSignY ;"<<endl;
-		o<<tab<<"syncSignY <= "<<get_delay_signal_name("pipeSignY",maxPathDepth)<<";"<<endl;
+		o<<tab<<"syncSignY <= "<<getDelaySignalName("pipeSignY",maxPathDepth)<<";"<<endl;
 		
 		if (closePathDepth == farPathDepth){
 		
@@ -781,27 +748,27 @@ void FPAdder::output_vhdl(std::ostream& o, std::string name) {
 				o<<tab<<"expResClose <= exponentResultCloseC;"<<endl;
 				
 				o<<tab<<"pipeExpResFar <= exponentResultfar;"<<endl;
-				o<<tab<<"expResFar <= "<<get_delay_signal_name("pipeExpResFar",closePathDepth-farPathDepth) <<";"<<endl;
+				o<<tab<<"expResFar <= "<<getDelaySignalName("pipeExpResFar",closePathDepth-farPathDepth) <<";"<<endl;
 				
 				o<<tab<<"fracResClose <= fractionResultCloseC;"<<endl;
 				
 				o<<tab<<"pipeFracResFar <= fractionResultfar;"<<endl;
-				o<<tab<<"fracResFar <= "<<get_delay_signal_name("pipeFracResFar",closePathDepth-farPathDepth) <<";"<<endl;
+				o<<tab<<"fracResFar <= "<<getDelaySignalName("pipeFracResFar",closePathDepth-farPathDepth) <<";"<<endl;
 				
 				o<<tab<<"syncRS <= crsOut;"<<endl;
 			}else{
 				o<<tab<<"pipeExpResClose <= exponentResultCloseC;"<<endl;
-				o<<tab<<"expResClose <= "<<get_delay_signal_name("pipeExpResClose",farPathDepth-closePathDepth) <<";"<<endl;
+				o<<tab<<"expResClose <= "<<getDelaySignalName("pipeExpResClose",farPathDepth-closePathDepth) <<";"<<endl;
 								
 				o<<tab<<"expResFar <= exponentResultfar;"<<endl;
 				
 				o<<tab<<"pipeFracResClose <= fractionResultCloseC;"<<endl;
-				o<<tab<<"fracResClose <= "<<get_delay_signal_name("pipeFracResClose",farPathDepth-closePathDepth) <<";"<<endl;
+				o<<tab<<"fracResClose <= "<<getDelaySignalName("pipeFracResClose",farPathDepth-closePathDepth) <<";"<<endl;
 				
 				o<<tab<<"fracResFar <= fractionResultfar;"<<endl;
 				
 				o<<tab<<"pipeSyncRS <= crsOut;"<<endl;
-				o<<tab<<"syncRS <= "<<get_delay_signal_name("pipeSyncRS",farPathDepth-closePathDepth) <<";"<<endl;
+				o<<tab<<"syncRS <= "<<getDelaySignalName("pipeSyncRS",farPathDepth-closePathDepth) <<";"<<endl;
 			
 			
 			}
@@ -898,7 +865,7 @@ void FPAdder::output_vhdl(std::ostream& o, std::string name) {
 
 		/* readjust for the exponents difference after the potential swap */
 		o<<tab<<"exponentDifference1 <= exponentDifference0("<<wER-1<<" downto "<<0<<") xor ("<<wER-1<<" downto "<<0<<" => swap);"<<endl;
-		o<<tab<<"zeroExtendedSwap    <= "<< zero_generator(wE-1,0)<<" & swap;"<<endl;
+		o<<tab<<"zeroExtendedSwap    <= "<< zeroGenerator(wE-1,0)<<" & swap;"<<endl;
 		o<<tab<<"exponentDifference  <= exponentDifference1  + zeroExtendedSwap;"<<endl;
 		
 			
@@ -942,7 +909,7 @@ void FPAdder::output_vhdl(std::ostream& o, std::string name) {
 		
 		/* extend expoenet result before normalization and rounding with 2 bits, one for signaling underflow and for overflow */
 		o<<tab<< "exponentResultClose1 <= \"00\" & newX("<<wEX+wFX-1<<" downto "<<wFX<<");"<<endl; 
-		o<<tab<< "exponentResultClose <= exponentResultClose1 - ("<<zero_generator(wE+1-wOutLZC+1, 0)<<" &  nZeros);"<<endl;
+		o<<tab<< "exponentResultClose <= exponentResultClose1 - ("<<zeroGenerator(wE+1-wOutLZC+1, 0)<<" &  nZeros);"<<endl;
 		
 		/* during fraction alignment, the fraction of Y is shifted at most one position to the right, so 1 extra bit is enough to perform rounding */
 		o<<tab<< "roundClose <= shiftedFrac(0) and shiftedFrac(1);"<<endl;
@@ -1065,44 +1032,15 @@ void FPAdder::output_vhdl(std::ostream& o, std::string name) {
 	o<< "end architecture;" << endl << endl;
 }
 
- 
-
-/**
- * A zero generator method which takes as input two arguments and returns a string of zeros with quotes as stated by the second argurment
- * @param[in] n		    integer argument representing the number of zeros on the output string
- * @param[in] margins	integer argument determining the position of the quotes in the output string. The options are: -2= no quotes; -1=left quote; 0=both quotes 1=right quote
- * @return returns a string of zeros with the corresonding quotes given by margins
- **/
-string FPAdder::zero_generator(int n, int margins)
-{
-ostringstream left,full, right, zeros;
-int i;
-
-	for (i=1; i<=n;i++)
-		zeros<<"0";
-
-	left<<"\""<<zeros.str();
-	full<<left.str()<<"\"";
-	right<<zeros.str()<<"\"";
-
-	switch(margins){
-		case -2: return zeros.str(); break;
-		case -1: return left.str(); break;
-		case  0: return full.str(); break;
-		case  1: return right.str(); break;
-		default: return full.str();
-	}
-}
-
 TestIOMap FPAdder::getTestIOMap()
 {
 	TestIOMap tim;
-	tim.add(*get_signal_by_name("X"));
-	tim.add(*get_signal_by_name("Y"));
-	tim.add(*get_signal_by_name("rexc"));
-	tim.add(*get_signal_by_name("rsig"));
-	tim.add(*get_signal_by_name("rexp"));
-	tim.add(*get_signal_by_name("rfrac"));
+	tim.add(*getSignalByName("X"));
+	tim.add(*getSignalByName("Y"));
+	tim.add(*getSignalByName("rexc"));
+	tim.add(*getSignalByName("rsig"));
+	tim.add(*getSignalByName("rexp"));
+	tim.add(*getSignalByName("rfrac"));
 	return tim;
 }
 

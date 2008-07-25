@@ -17,23 +17,45 @@
 class FPAdder : public Operator
 {
 public:
+	/**
+	 * The FPAdder constructor
+	 * @param[in]		target		the target device
+	 * @param[in]		wEX			the the with of the exponent for the f-p number X
+	 * @param[in]		wFX			the the with of the fraction for the f-p number X
+	 * @param[in]		wEY			the the with of the exponent for the f-p number Y
+	 * @param[in]		wFY			the the with of the fraction for the f-p number Y
+	 * @param[in]		wER			the the with of the exponent for the addition result
+	 * @param[in]		wFR			the the with of the fraction for the addition result
+	 */
 	FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, int wFR);
+
+	/**
+	 * FPAdder destructor
+	 */
 	~FPAdder();
 
+	/**
+	 * Method belonging to the Operator class overloaded by the FPAdder class
+	 * @param[in,out] o     the stream where the current architecture will be outputed to
+	 * @param[in]     name  the name of the entity corresponding to the architecture generated in this method
+	 **/
+	void outputVHDL(std::ostream& o, std::string name);
 
-	//XXX Get this out of here
-	/** Method which outputs a string of zeros*/
-	string zero_generator(int n, int margins);
-	
+	/** Method for setting the operator name
+	*/
+	void setOperatorName();	
 
-	
-	/** Overloading the virtual functions of Operator */
-	void output_vhdl(std::ostream& o, std::string name);
-	/** Sets the Operator name */
-	void set_operator_name(std::string prefix, std::string postfix);	
-
-	/** Overloading virtual functions from TestBench */
+	/**
+	 * Gets the signals which are interesting for TestCases.
+	 * @see TestIOMap
+	 */
 	TestIOMap getTestIOMap();
+
+	/**
+	 * Gets the correct value associated to one or more inputs.
+	 * @param a the array which contains both already filled inputs and
+	 *          to be filled outputs in the order specified in getTestIOMap.
+	 */
 	void fillTestCase(mpz_class a[]);
 	
 private:

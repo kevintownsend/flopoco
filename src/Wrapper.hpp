@@ -14,16 +14,26 @@
 class Wrapper : public Operator
 {
 public:
-	/* Constructor / Destructor */
+	/** 
+	* The Wrapper constructor
+	* @param[in] target the target device
+	* @param[in] op the operator to be wrapped
+	**/
 	Wrapper(Target* target, Operator* op);
+
+	/** The destructor */
 	~Wrapper();
-	/* Overloaded methods */
-	void output_vhdl(ostream& o, string name);
-	void set_operator_name(std::string prefix, std::string postfix);
+	
+	/** Method belonging to the Operator class overloaded by the Wrapper class
+	 * @param[in,out] o     the stream where the current architecture will be outputed to
+	 * @param[in]     name  the name of the entity corresponding to the architecture generated in this method
+	 **/
+	void outputVHDL(ostream& o, string name);
+	
+	/** Overloaded method which sets the operator name */	
+	void setOperatorName();
+
 private:
-	/** The operator to wrap */
-	Operator* op;
+	Operator* op_; /**< The operator to wrap */
 };
-
-
 #endif

@@ -1,5 +1,5 @@
 /*
- * A model of FPGA that works well enough for Altera and Virtex chips. 
+ * A model of FPGA that works well enough for Virtex IV chips. 
  *
  * Author : Florent de Dinechin
  *
@@ -32,54 +32,40 @@
 #include <mpfr.h>
 #include <gmpxx.h>
 
+/** Class for representing an VirtexIV target */
 class VirtexIV : public Target
 {
- public:
+public:
+	/** The default constructor. */  
+	VirtexIV() : Target()	{
+		// all these values are set more or less randomly, to match  virtex 4 more or less
+		fastcarryDelay_ = 3.4e-11; //s   
+		elemWireDelay_  = 0.3e-11;
+		lut2lutDelay_   = 1.5e-10;
+		lutDelay_       = 1.5e-9; 
+		multXInputs_    = 18;
+		multYInputs_    = 18;
+	}
 
+	/** The destructor */
+	virtual ~VirtexIV() {}
 
-  // generic constructor
-  VirtexIV() : Target()
-  {
-    // all these values are set more or less randomly, to match  virtex 4 more or less
-    _fastcarry_delay = 3.4e-11; // s    
-    _elem_wire_delay = 0.3e-11;
-    _lut2lut_delay = 1.5e-10;
-    _lut_delay =  1.5e-9; 
-    _mult_x_inputs=18;
-    _mult_y_inputs=18;
-  }
-
-  // constructor for real chips: TODO
-
-  virtual ~VirtexIV() {}
-
-  // overloading the virtual functions of Target
-
-  double carry_propagate_delay();
-
-  double adder_delay(int size);
-
-  double local_wire_delay();
-
-  double lut_delay();
-
-  double distant_wire_delay(int n);
-  
-  bool suggest_submult_size(int &x, int &y, int wInX, int wInY);
-  
-  bool suggest_subadd_size(int &x, int wIn);
-
+	/** overloading the virtual functions of Target
+	 * @see the target class for more details 
+	 */
+	double carryPropagateDelay();
+	double adderDelay(int size);
+	double localWireDelay();
+	double lutDelay();
+	double distantWireDelay(int n);
+	bool   suggestSubmultSize(int &x, int &y, int wInX, int wInY);
+	bool   suggestSubaddSize(int &x, int wIn);
 
 private:
-
-  double _fastcarry_delay; // in seconds
-
-  double _lut2lut_delay; // in seconds
-
-  double _elem_wire_delay; // in seconds
-
-  double _lut_delay; // in seconds
+	double fastcarryDelay_; /**< The delay of the fast carry chain */
+	double lut2lutDelay_;   /**< The delay between two LUTs */
+	double elemWireDelay_;  /**< The elementary wire dealy (for computing the distant wire delay) */
+	double lutDelay_;       /**< The LUT delay (in seconds)*/
 };
-
 
 #endif

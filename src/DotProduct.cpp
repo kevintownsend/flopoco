@@ -1,5 +1,5 @@
 /*
- * Floating Point Multiplier for FloPoCo
+ * Dot Product unit for FloPoCo
  *
  * Author : Bogdan Pasca
  *
@@ -39,36 +39,19 @@
 using namespace std;
 extern vector<Operator*> oplist;
 
-
-/**
- * The DotProduct constructor
- * @param[in]		target	the target device
- * @param[in]		wE			the width of the exponent for the inputs X and Y
- * @param[in]		wFX     the width of the fraction for the input X
- * @param[in]		wFY     the width of the fraction for the input Y
- * @param[in]		MaxMSBX	maximum expected weight of the MSB of the summand
- * @param[in]		LSBA    The weight of the LSB of the accumulator; determines the final accuracy of the result
- * @param[in]		MSBA    The weight of the MSB of the accumulator; has to greater than that of the maximal expected result
-**/ 
 DotProduct::DotProduct(Target* target, int wE, int wFX, int wFY, int MaxMSBX, int LSBA, int MSBA ):
 	Operator(target), wE(wE), wFX(wFX), wFY(wFY), MaxMSBX(MaxMSBX), LSBA(LSBA), MSBA(MSBA)  {
-	ostringstream name;
-
-	/* Set up the name of the entity */
-	name <<"DotProduct_"<<wE<<"_"<<wFX<<"_"<<wFY<<"_"
-			 <<(MaxMSBX>=0?"":"M")<<abs(MaxMSBX)<<"_"
-			 <<(LSBA>=0?"":"M")<<abs(LSBA)<<"_"
-			 <<(MSBA>=0?"":"M")<<abs(MSBA) ;
-	unique_name=name.str();
+	
+	setOperatorName();
 	
 	/* Set up the I/O signals of of the entity */
-	add_input("X", 2 + 1 + wE + wFX);
-	add_input("Y", 2 + 1 + wE + wFY);
-	add_output("A", MSBA-LSBA+1); //the width of the output represents the accumulator size
-	
+	addInput("X", 2 + 1 + wE + wFX);
+	addInput("Y", 2 + 1 + wE + wFY);
+	addOutput("A", MSBA-LSBA+1); //the width of the output represents the accumulator size
+
 
   /* This operator is sequential.*/
-	set_sequential();
+	setSequential();
 
   /* Instantiate one FPMultiplier used to multiply the two inputs fp numbers, X and Y */
   int fpMultiplierResultExponentWidth = wE;
@@ -82,42 +65,40 @@ DotProduct::DotProduct(Target* target, int wE, int wFX, int wFY, int MaxMSBX, in
 	oplist.push_back(longAcc);
   
   /* Signal declaration */
-  add_signal("fpMultiplierResultExponent",wE);
-  add_signal("fpMultiplierResultSignificand", fpMultiplierResultFractionWidth + 1);
-  add_signal("fpMultiplierResultException", 2);
-  add_signal("fpMultiplierResultSign",1);
-  add_signal("fpMultiplierResult",2 + 1 + wE + fpMultiplierResultFractionWidth);
+  addSignal("fpMultiplierResultExponent",wE);
+  addSignal("fpMultiplierResultSignificand", fpMultiplierResultFractionWidth + 1);
+  addSignal("fpMultiplierResultException", 2);
+  addSignal("fpMultiplierResultSign",1);
+  addSignal("fpMultiplierResult",2 + 1 + wE + fpMultiplierResultFractionWidth);
    
   /* Set the pipeline depth of this operator */
-  set_pipeline_depth(fpMultiplier->pipeline_depth() + longAcc->pipeline_depth() );
+  setPipelineDepth(fpMultiplier->getPipelineDepth() + longAcc->getPipelineDepth() );
 }
 
-
-
-/**
- * DotProduct destructor
- */
 DotProduct::~DotProduct() {
 }
 
+void DotProduct::setOperatorName(){
+	ostringstream name;
+	/* Set up the name of the entity */
+	name <<"DotProduct_"<<wE<<"_"<<wFX<<"_"<<wFY<<"_"
+			 <<(MaxMSBX>=0?"":"M")<<abs(MaxMSBX)<<"_"
+			 <<(LSBA>=0?"":"M")<<abs(LSBA)<<"_"
+			 <<(MSBA>=0?"":"M")<<abs(MSBA) ;
+	uniqueName_=name.str();
+}
 
+void DotProduct::outputVHDL(std::ostream& o, std::string name) {
+	licence(o,"Bogdan Pasca (2008)");
+	Operator::stdLibs(o);
+	outputVHDLEntity(o);
+	newArchitecture(o, name);
+	fpMultiplier->outputVHDLComponent(o); //output the code of the fpMultiplier component
+	longAcc->outputVHDLComponent(o);      //output the code of the longAcc component
+	outputVHDLSignalDeclarations(o);
+	beginArchitecture(o);
 
-/**
- * Method belonging to the Operator class overloaded by the DotProduct class
- * @param[in,out] o     the stream where the current architecture will be outputed to
- * @param[in]     name  the name of the entity corresponding to the architecture generated in this method
- **/
-void DotProduct::output_vhdl(std::ostream& o, std::string name) {
-  Licence(o,"Bogdan Pasca (2008)");
-	Operator::StdLibs(o);
-	output_vhdl_entity(o);
-  new_architecture(o, name);
-  fpMultiplier->output_vhdl_component(o); //output the code of the fpMultiplier component
-	longAcc->output_vhdl_component(o);      //output the code of the longAcc component
-	output_vhdl_signal_declarations(o);
-  begin_architecture(o);
-  
-  /* Map the signals on the fp multiplier */
+	/* Map the signals on the fp multiplier */
 	o << tab << "fp_multiplier: " << fpMultiplier->getOperatorName() << endl;
 	o << tab << "    port map ( X => X, " << endl;
 	o << tab << "               Y => Y, " << endl;
@@ -129,23 +110,23 @@ void DotProduct::output_vhdl(std::ostream& o, std::string name) {
 	o << tab << "               rst => rst " << endl;
 	o << tab << "                         );" << endl; 
 	o << endl;
-  
-  /*rebuild the output under the form of a fp number */
-  o << tab << "fpMultiplierResult <= fpMultiplierResultException & "
-                                  <<"fpMultiplierResultSign & "
-                                  <<"fpMultiplierResultExponent & "
-                                  <<"fpMultiplierResultSignificand("<<wFX + wFY<<" downto "<< 0 <<");"<<endl;
-  
-  /* Map the signals on the long accumulator */
-  o << tab << "long_acc: " << longAcc->getOperatorName() << endl;
+
+	/*rebuild the output under the form of a fp number */
+	o << tab << "fpMultiplierResult <= fpMultiplierResultException & "
+	                                <<"fpMultiplierResultSign & "
+	                                <<"fpMultiplierResultExponent & "
+	                                <<"fpMultiplierResultSignificand("<<wFX + wFY<<" downto "<< 0 <<");"<<endl;
+
+	/* Map the signals on the long accumulator */
+	o << tab << "long_acc: " << longAcc->getOperatorName() << endl;
 	o << tab << "    port map ( X => fpMultiplierResult, " << endl;
 	o << tab << "               A => A, " << endl;
 	o << tab << "               clk => clk," << endl;
 	o << tab << "               rst => rst " << endl;
 	o << tab << "                         );" << endl; 
 	o << endl;
-  
-	end_architecture(o);
+
+	endArchitecture(o);
 } 
 
 

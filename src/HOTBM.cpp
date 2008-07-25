@@ -25,12 +25,12 @@ HOTBM::HOTBM(Target* target, string func, int wI, int wO, int n)
 	{
 		std::ostringstream o;
 		o << "hotbm_" << wI << "_" << wO << "_" << n;
-		unique_name = o.str();
+		uniqueName_ = o.str();
 	}
-	set_combinatorial();
-	set_pipeline_depth(0);
-	add_input("x", wI);
-	add_output("r", wO+1);
+	setCombinatorial();
+	setPipelineDepth(0);
+	addInput("x", wI);
+	addOutput("r", wO+1);
 }
 
 HOTBM::~HOTBM()
@@ -40,7 +40,7 @@ HOTBM::~HOTBM()
 }
 
 // Overloading the virtual functions of Operator
-void HOTBM::output_vhdl(std::ostream& o, std::string name)
+void HOTBM::outputVHDL(std::ostream& o, std::string name)
 {
 	if (!inst)
 		return;
@@ -51,8 +51,8 @@ void HOTBM::output_vhdl(std::ostream& o, std::string name)
 TestIOMap HOTBM::getTestIOMap()
 {
 	TestIOMap tim;
-	tim.add(*get_signal_by_name("x"));
-	tim.add(*get_signal_by_name("r"), 2); // Faithful rounding
+	tim.add(*getSignalByName("x"));
+	tim.add(*getSignalByName("r"), 2); // Faithful rounding
 	return tim;
 }
 

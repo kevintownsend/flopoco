@@ -1,7 +1,7 @@
 #ifndef OPERATOR_HPP
 #define OPERATOR_HPP
-#include<vector>
-#include<map>
+#include <vector>
+#include <map>
 #include <gmpxx.h>
 #include "Target.hpp"
 #include "Signal.hpp"
@@ -17,171 +17,340 @@ const std::string tab = "   ";
 
 /**
  * This is a top-level class representing an Operator.
- * This class is inherited by all classes which will output a
- * VHDL entity.
+ * This class is inherited by all classes which will output a VHDL entity.
  */
 class Operator
 {
 public:
-	/* Constructors|Destructor */
-	/* ======================= */ 
-	Operator()  {
-		number_of_inputs=0;
-		number_of_outputs=0;
-		has_registers=false;
-		has_registers_with_async_reset=false;
-		has_registers_with_sync_reset=false;
+	/** Default constructor.
+	 * Creates a default operator instance. No parameters are passed to this constructor.
+	 */
+	Operator(){
+		numberOfInputs_             = 0;
+		numberOfOutputs_            = 0;
+		hasRegistersWithoutReset_   = false;
+		hasRegistersWithAsyncReset_ = false;
+		hasRegistersWithSyncReset_  = false;
 	}
-	Operator(Target* target_)  {
-		target=target_;
-		number_of_inputs=0;
-		number_of_outputs=0;
-		has_registers=false;
-		has_registers_with_async_reset=false;
-		has_registers_with_sync_reset=false;
+	
+	/** Operator Constructor.
+	 * Creates an operator instance with an instantiated target for deployment.
+	 * @param target_ The deployment target of the operator.
+	 */
+	Operator(Target* target)  {
+		target_                     = target;
+		numberOfInputs_             = 0;
+		numberOfOutputs_            = 0;
+		hasRegistersWithoutReset_   = false;
+		hasRegistersWithAsyncReset_ = false;
+		hasRegistersWithSyncReset_  = false;
 	}
-		
+
+	/** Operator Destructor.
+	 */	
 	virtual ~Operator() {}
 
-	/* Functions for declaring signals */
-	/* =============================== */
-	/** The following functions should be used to declare input and output signals, excluding clk and rst */
-	void add_input(const std::string name, const int width=1);
-	void add_output(const std::string name, const int width=1);
+	/** Adds an input signal to the operator.
+	 * Adds a signal of type Signal::in to the the I/O signal list.
+	 * @param name  the name of the signal
+	 * @param width the number of bits of the signal.
+	 */
+	void addInput  (const std::string name, const int width=1);
 	
-	/** equivalent to the previous, but for FP signals */
-	void add_FP_input(const std::string name, const int wE, const int wF);
-	void add_FP_output(const std::string name, const int wE, const int wF);
+	/** Adds an output signal to the operator.
+	 * Adds a signal of type Signal::out to the the I/O signal list.
+	 * @param name  the name of the signal
+	 * @param width the number of bits of the signal.
+	 */
+	void addOutput(const std::string name, const int width=1);
 	
-	/** The following should be used to declare standard signals */
-	void add_signal(const std::string name, const int width=1);
-	void add_signal_bus(const std::string name, const int width=1);
+	/** Adds a floating point input signal to the operator.
+	 * Adds a signal of type Signal::in to the the I/O signal list, 
+	 * having the FP flag set on true. The total width of this signal will
+	 * be wE + wF + 3. (2 bits for exception, 1 for sign)
+	 * @param name the name of the signal
+	 * @param wE   the width of the exponent
+	 * @param wF   the withh of the fraction
+	 */
+	void addFPInput(const std::string name, const int wE, const int wF);
+
+	/** Adds a floating point output signal to the operator.
+	 * Adds a signal of type Signal::out to the the I/O signal list, 
+	 * having the FP flag set on true. The total width of this signal will
+	 * be wE + wF + 3. (2 bits for exception, 1 for sign)
+	 * @param name the name of the signal
+	 * @param wE   the width of the exponent
+	 * @param wF   the withh of the fraction
+	 */	
+	void addFPOutput(const std::string name, const int wE, const int wF);
 	
-	/** The following should be used to declare registered signals: it
-			will declare name and name_d, and output_vhdl_registers will
-			build the registers between them. */
-	void add_registered_signal(const std::string name, const int width=1);
-	void add_registered_signal_with_async_reset(const std::string name, const int width=1);
-	void add_registered_signal_with_sync_reset(const std::string name, const int width=1);
+	/** Adds a signal to the signal list.
+	 * Adds a signal of type Signal::wire to the the signal list.
+	 * @param name  the name of the signal
+	 * @param width the width of the signal
+	 */	
+	void addSignal(const std::string name, const int width=1);
+
+	/** Adds a bus signal to the signal list.
+	 * Adds a signal of type Signal::wire to the the signal list havig a flag 
+	 * indicating that the signal in question is a bus. Even if the signal will
+	 * have width=1, it will be declared as a standard_logic_vector(0 downto 0)
+	 * @param name  the name of the signal
+	 * @param width the width of the signal
+	 */	
+	void addSignalBus(const std::string name, const int width=1);
+	
+	/** Adds a registered signal to the signal list.
+	 * Adds a signal of type Signal::registeredWithoutReset to the the signal list. This leads
+	 * to adding two signals to the list, the second having the name = name + "_d".
+	 * @param name  the name of the signal
+	 * @param width the width of the signal
+	 */	
+	void addRegisteredSignalWithoutReset(const std::string name, const int width=1);
+	
+	/** Adds a registered with asynchronous reset signal to the signal list.
+	 * Adds a signal of type Signal::registeredWithAsyncReset to the the signal list. This leads
+	 * to adding two signals to the list, the second having the name = name + "_d" and having the type
+	 * Signal::wire
+	 * @param name  the name of the signal
+	 * @param width the width of the signal
+	 */	
+	void addRegisteredSignalWithAsyncReset(const std::string name, const int width=1);
+	
+	/** Adds a registered with synchronous reset signal to the signal list.
+	 * Adds a signal of type Signal::registeredWithSyncReset to the the signal list. This leads
+	 * to adding two signals to the list, the second having the name = name + "_d".
+	 * @param name  the name of the signal
+	 * @param width the width of the signal
+	 */	
+	void addRegisteredSignalWithSyncReset(const std::string name, const int width=1);
 
 	/** The following adds a signal, and also a shift register on it of depth delay.
 			There will be depth levels of registers, named name_d, name_d_d and so on.
 			The string returned is the name of the last signal. */
-	string add_delay_signal(const std::string name, const int width, const int delay);
-	string add_delay_signal_no_reset(const std::string name, const int width, const int delay);
-	string add_delay_signal_bus(const std::string name, const int width, const int delay);
-	string add_delay_signal_bus_no_reset(const std::string name, const int width, const int delay);
-	
-	/** An helper function that return the name of an intermediate signal generated by add_delay_signal.
-	 If the operator is not sequential, it returns name, so it can be used for both the sequential and pipelined VHDL output */
-	string  get_delay_signal_name(const string name, const int delay);
 
-	/* Accessor methods */ 
-	/* ================ */
-	/** Sets Operator name to default name*/
-	void set_operator_name();
-	/** Sets Operator name to givenName*/
-	void set_operator_name(std::string operatorName);
-	/** Sets Operator name to prefix_defaultName_postfix*/
-	virtual void set_operator_name(std::string prefix, std::string postfix){};
-	/** Sets the type of the operator */
-	void set_operator_type();
-	/** Sets the commented name of an operator */
+	/** Adds a delayed signal synchronous reset to the signal list.
+	 * Adds a delay-1 signals of type Signal::registeredWithSyncReset to the the signal list, and one 
+	 * signal of type Signal::wire. The signal names are: name, name_d, name_d_d .. and so on. 
+	 * @param name  the name of the signal
+	 * @param width the width of the signal
+	 * @param delay the delay of the signal. The number of register levels that this signal needs to be delayed with.
+	 */	
+	string addDelaySignal(const std::string name, const int width, const int delay);
+
+	/** Adds a delayed signal without reset to the signal list.
+	 * Adds a delay-1 signals of type Signal::registeredWithoutReset to the the signal list, and one 
+	 * signal of type Signal::wire. The signal names are: name, name_d, name_d_d .. and so on. 
+	 * @param name  the name of the signal
+	 * @param width the width of the signal
+	 * @param delay the delay of the signal. The number of register levels that this signal needs to be delayed with.
+	 */
+	string addDelaySignalNoReset(const std::string name, const int width, const int delay);
+
+	/** Adds a delayed signal with synchronous reset to the signal list.
+	 * Adds a delay-1 signals of type Signal::registeredWithSyncReset to the the signal list, and one 
+	 * signal of type Signal::wire. The signal names are: name, name_d, name_d_d .. and so on. 
+	 * The delay-1 signals are flagged so that they act like std_logic_vectors even for width = 1 
+	 * @param name  the name of the signal
+	 * @param width the width of the signal
+	 * @param delay the delay of the signal. The number of register levels that this signal needs to be delayed with.
+	 */
+	string addDelaySignalBus(const std::string name, const int width, const int delay);
+	
+	/** Adds a delayed signal without reset to the signal list.
+	 * Adds a delay-1 signals of type Signal::registeredWithoutReset to the the signal list, and one 
+	 * signal of type Signal::wire. The signal names are: name, name_d, name_d_d .. and so on. 
+	 * The delay-1 signals are flagged so that they act like std_logic_vectors even for width = 1 
+	 * @param name  the name of the signal
+	 * @param width the width of the signal
+	 * @param delay the delay of the signal. The number of register levels that this signal needs to be delayed with.
+	 */
+	string addDelaySignalBusNoReset(const std::string name, const int width, const int delay);
+	
+	/** Returns the name of a signal at a certain delay.
+	 * Returns a string of the form name_d_d_d..._d where #(_d)=delay
+	 * @param name  the name of the signal
+	 * @param delay the delay of the signal. The number of register levels that this signal needs to be delayed with.
+	 */	 
+	string  getDelaySignalName(const string name, const int delay);
+
+	/** Sets Operator name to default name.
+	 * This method must be overridden by all classes which extend Operator
+	 *  
+	*/
+	virtual void setOperatorName(){ uniqueName_ = "UnknownOperator";};
+	
+	/** Sets Operator name to givenName.
+	 * Sets the name of the operator to operatorName.
+	 * @param operatorName new name of the operator
+	*/
+	void setOperatorName(std::string operatorName);
+	
+	/** Sets Operator name to prefix_(uniqueName_)_postfix
+	 * @param prefix the prefix string which will be palced in front of the operator name
+	 *               formed with the operator internal parameters
+	 * @param postfix the postfix string which will be palced at the end of the operator name
+	 *                formed with the operator internal parameters
+	*/
+	void setOperatorName(std::string prefix, std::string postfix);
+	
+	/** Sets the type of the operator. 
+	 * The information is retrived from the deployment target 
+	 */
+	void setOperatorType();
+	
+	/** Sets the commented name of an operator. 
+	 * This is the name which will be shown in the comment of the operator.
+	 * @param name the name which will apear in the comment of the operator.
+	 */
 	void setCommentedName(std::string name);
 	
-	/** return the operator name */
+	/** Return the operator name. 
+	 * Returns a string value representing the name of the operator. 
+	 * @return operator name
+	 */
 	string getOperatorName() const;
-	/** return the number of input+output signals */
+	
+	/** Return the number of input+output signals 
+	 * @return the size of the IO list. The total number of input and output signals
+	 *         of the architecture.
+	 */
 	int getIOListSize() const;
-	/** returns a pointer to the list containing the IO signals */
+	
+	/** Returns a pointer to the list containing the IO signals.
+	 * @return pointer to ioList 
+	 */
 	vector<Signal*> * getIOList();
 	
+	/** Returns a pointer a signal from the ioList.
+	 * @param the index of the signal in the list
+	 * @return pointer to the i'th signal of ioList 
+	 */
 	const Signal * getIOListSignal(int i);
-	
-	
-	/** Returns a pointer to the signal having the name s */
-	Signal* get_signal_by_name(string s);
+		
+	/** Returns a pointer to the signal having the name s.
+	  * @param s then name of the signal we want to return
+	  * @return the pointer to the signal having name s 
+	  */
+	Signal* getSignalByName(string s);
 
-	/* Helper functions for VHDL output */
-	/* ================================ */
-	/** Outputs component declaration */
-	virtual void output_vhdl_component(std::ostream& o, std::string name);
-	/** calls the previous with name = unique_name */
-	void output_vhdl_component(std::ostream& o);  
-	/** Function which outputs the processes which declare the registers ( assign name_d <= name ) */
-	void output_vhdl_registers(std::ostream& o);
-	/** Output the licence */
-	void Licence(std::ostream& o, std::string authorsyears);
-	/** output the standard library paperwork */
-	static void StdLibs(std::ostream& o){
+	/** Outputs component declaration 
+	 * @param o the stream where the component is outputed
+	 * @param name the name of the VHDL component we want to output to o
+	 */
+	virtual void outputVHDLComponent(std::ostream& o, std::string name);
+	
+	/** Outputs the VHDL component code of the current operator
+	 * @param o the stream where the component is outputed
+	 */
+	void outputVHDLComponent(std::ostream& o);  
+	
+	/** Function which outputs the processes which declare the registers ( assign name_d <= name )
+	 * @param o the stream where the component is outputed
+	 */
+	void outputVHDLRegisters(std::ostream& o);
+	
+	/** Output the licence
+	 * @param o the stream where the licence is going to be outputted
+	 * @param authorsYears the names of the authors and the years of their contributions
+	 */
+	void licence(std::ostream& o, std::string authorsYears);
+		
+	/** Output the standard library paperwork 
+	 * @param o the stream where the libraries will be written to
+	 */
+	static void stdLibs(std::ostream& o){
 		o<<"library ieee;\nuse ieee.std_logic_1164.all;"<<endl 
 		 <<"use ieee.std_logic_arith.all;"<<endl
 		 <<"use ieee.std_logic_unsigned.all;"<<endl 
 		 <<"library work;"<<endl<<endl;
 	};
-	/** output the identity */
-	void output_vhdl_entity(std::ostream& o);
-	/** output all the signal declarations */
-	void output_vhdl_signal_declarations(std::ostream& o);
+		
+	/** Output the VHDL entity of the current operator.
+	 * @param o the stream where the entity will be outputted
+	 */
+	void outputVHDLEntity(std::ostream& o);
+	
+	/** output all the signal declarations 
+	 * @param o the stream where the signal deca
+	 */
+	void outputVHDLSignalDeclarations(std::ostream& o);
 
 	/**
-	 * A new line function
-	 * @param[in,out] o - the stream to which the new line will be added
+	 * A new line inline function
+	 * @param[in,out] o the stream to which the new line will be added
 	 **/
-	inline void new_line(std::ostream& o) {	o<<endl; }
+	inline void newLine(std::ostream& o) {	o<<endl; }
 	
 	/**
-	 * A new architecture function
+	 * A new architecture inline function
 	 * @param[in,out] o 	- the stream to which the new architecture line will be added
 	 * @param[in]     name	- the name of the entity corresponding to this architecture
 	 **/
-	inline void new_architecture(std::ostream& o, std::string name){
+	inline void newArchitecture(std::ostream& o, std::string name){
 		o << "architecture arch of " << name  << " is" << endl;
 	}
 	
 	/**
-	 * A begin architecture function 
+	 * A begin architecture inline function 
 	 * @param[in,out] o 	- the stream to which the begin line will be added
 	 **/
-	inline void begin_architecture(std::ostream& o){
+	inline void beginArchitecture(std::ostream& o){
 		o << "begin" << endl;
 	}
 
 	/**
-	 * A end architecture function 
+	 * A end architecture inline function 
 	 * @param[in,out] o 	- the stream to which the begin line will be added
 	 **/
-	inline void end_architecture(std::ostream& o){
+	inline void endArchitecture(std::ostream& o){
 		o << "end architecture;" << endl << endl;
 	}
 
-	/** the main function outputs the VHDL for the operator */
-	virtual void output_vhdl(std::ostream& o, std::string name) =0 ;
-	void output_vhdl(std::ostream& o);   // calls the previous with name = unique_name
-
-	/* Functions related to pipelining (work in progress) */
-	/* ================================================== */
-	/** true if the operator needs a clock signal. It will also get a rst but doesn't need to use it */	
-	bool is_sequential();  
-	/** Set the operator to sequential*/	
-	void set_sequential(); 
-	/** Set the operator to combinatorial*/	
-	void set_combinatorial();
-	/** Set the depth of the pipeline*/	
-	void set_pipeline_depth(int d);
-	/** Gets the pipeline depth of this operator */
-	int pipeline_depth();
-	/** Increments the pipeline depth of the current operator */
-	void increment_pipeline_depth();
+	/** the main function outputs the VHDL for the operator 
+	 * @param o the stream where the entity will outputted
+	 * @param name the name of the architecture
+	 */
+	virtual void outputVHDL(std::ostream& o, std::string name) =0 ;
 	
-	/* Functions related to test case generation */
-	/* ========================================= */
+	/** the main function outputs the VHDL for the operator 
+	 * @param o the stream where the entity will outputted
+	 */	
+	void outputVHDL(std::ostream& o);   // calls the previous with name = uniqueName
+
+	/** True if the operator needs a clock signal; 
+	 * It will also get a rst but doesn't need to use it.
+	 */	
+	bool isSequential();  
+	
+	/** Set the operator to sequential
+	 */	
+	void setSequential(); 
+	
+	/** Set the operator to combinatorial
+	 */	
+	void setCombinatorial();
+	
+	/** Set the depth of the pipeline
+	 * @param d the depth of the pipeline for the operator
+	 */	
+	void setPipelineDepth(int d);
+	
+	/** Gets the pipeline depth of this operator 
+	 * @return the pipeline depth of the operator
+	*/
+	int getPipelineDepth();
+	
+	/** Increments the pipeline depth of the current operator 
+	*/
+	void incrementPipelineDepth();
+	
 	/**
 	 * Gets the signals which are interesting for TestCases.
 	 * @see TestIOMap
 	 */
 	virtual TestIOMap getTestIOMap() {
-		throw std::string("getTestIOMap: not implemented for ") + unique_name;
+		throw std::string("getTestIOMap: not implemented for ") + uniqueName_;
 	}
 
 	/**
@@ -190,49 +359,32 @@ public:
 	 *          to be filled outputs in the order specified in getTestIOMap.
 	 */
 	virtual void fillTestCase(mpz_class a[]) {
-		throw std::string("fillTestCorrectValues: not implemented for ") + unique_name;
+		throw std::string("fillTestCorrectValues: not implemented for ") + uniqueName_;
 	}
-	
-	
-	/* MISC */
-	/* ==== */
+		
 	/** Final report function, prints to the terminal.  By default
-		 reports the pipeline depth, but feel free to overload if you have
-		 anything useful to tell to the end user
+	 * reports the pipeline depth, but feel free to overload if you have any
+	 * thing useful to tell to the end user
 	*/
-	virtual void output_final_report();
+	virtual void outputFinalReport();
+
 
 protected:    
-	/** The target on which the operator will be deployed */
-	Target* target;
-	/** By default, a name derived from the operator class and the parameters.
-	 Also possibly overrriden by the command line interface or by other means */
-	string unique_name;
-	/** The list of I/O signals of the operator */
-	vector<Signal*> ioList; 
-	/** The list of internal signals of the operator */
-	vector<Signal*> signalList; 
-
+	Target*         target_;     /**< The target on which the operator will be deployed */
+	string          uniqueName_; /**< By default, a name derived from the operator class and the parameters */
+	vector<Signal*> ioList_;     /**< The list of I/O signals of the operator */
+	vector<Signal*> signalList_; /**< The list of internal signals of the operator */
 
 
 private:
-	/** The number of inputs of the operator */
-	int number_of_inputs;
-	/** The number of outputs of the operator */
-	int number_of_outputs;
-	/** true if the operator needs a clock signal. It will also get a rst but doesn't need to use it */
-	bool _is_sequential;  
-	/** the pipeline depth of the operator. 0 for combinatorial circuits */
-	int _pipeline_depth;
-	/** a container of tuples of the form (string, *Signal) for easily recovering the signal based on it's name */
-	map<string, Signal*> _signal_map; 
-	/** true if the operator has registers without a reset */
-	bool has_registers;
-	/** true if the operator has registers having an asynch reset */
-	bool has_registers_with_async_reset;
-	/** true if the operator has registers having a synch reset */
-	bool has_registers_with_sync_reset;
-	string commented_name;/**< Usually is the default name of the architecture.  */
+	int                    numberOfInputs_;             /**< The number of inputs of the operator */
+	int                    numberOfOutputs_;            /**< The number of outputs of the operator */
+	bool                   isSequential_;               /**< True if the operator needs a clock signal*/
+	int                    pipelineDepth_;              /**< The pipeline depth of the operator. 0 for combinatorial circuits */
+	map<string, Signal*>   signalMap_;                  /**< A container of tuples for recovering the signal based on it's name */ 
+	bool                   hasRegistersWithoutReset_;   /**< True if the operator has registers without a reset */
+	bool                   hasRegistersWithAsyncReset_; /**< True if the operator has registers having an asynch reset */
+	bool                   hasRegistersWithSyncReset_;  /**< True if the operator has registers having a synch reset */
+	string                 commentedName_;              /**< Usually is the default name of the architecture.  */
 };
-
 #endif

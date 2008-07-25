@@ -1,6 +1,5 @@
 /*
  * The abstract class that models different chips for delay and area. 
-
  * Classes for real chips inherit from this one. They should be in subdirectory Targets
  *
  * Author : Florent de Dinechin
@@ -26,50 +25,111 @@
 #ifndef TARGET_HPP
 #define TARGET_HPP
 
-
-
+/** Abstract target Class. All classes which model real chips inherit from this class */
 class Target
 {
  public:
-
-	// Architecture-related methods
-	int lut_inputs();
-	virtual bool suggest_submult_size(int &x, int &y, int wInX, int wInY)=0;
-	virtual bool suggest_subadd_size(int &x, int wIn)=0; 	
-
-	// Delay-related methods
-	virtual double lut_delay() =0;
-	virtual double carry_propagate_delay() =0;
-	virtual double adder_delay(int n) =0;
-	virtual double local_wire_delay() =0;
-	virtual double distant_wire_delay(int n) =0;
-
-	// Methods related to target behaviour and performance
-	void set_pipelined();
-	void set_not_pipelined();
-	bool is_pipelined();
-	double frequency();
-	void set_frequency(double f);
-	void set_use_hard_multipliers(bool v);
-	bool get_use_hard_multipliers(); 
-
+ 	/** The default constructor. Creates a pipelined target, with 4 inputs/LUT, 
+ 	 * with a desired frequency of 400MHz and which is allowed to use hardware multipliers
+ 	 */ 
 	Target()   {
-		_pipeline=true;
-		_lut_inputs=4;
-		_frequency = 400000000.;
-		_use_hard_multipliers=true;
+		pipeline_          = true;
+		lutInputs_         = 4;
+		frequency_         = 400000000.;
+		useHardMultipliers_= true;
 	}
-
+	
+	/** The destructor */
 	virtual ~Target() {}
 
+	// Architecture-related methods
+	/** Returns the number of inputs that the LUTs have on the specifi device
+	 * @return the number of inputs for the look-up tables (LUTs) of the devie
+	 */
+	int lutInputs();
+	
+	/** Function for determining the submultiplication sizes so that the design is able 
+	 * to function at a desired frequency ( multiplicatio is considerd X * Y )
+	 * @param[in,out] x the size of the submultiplication for x
+	 * @param[in,out] y the size of the submultiplication for y
+	 * @param[in] wInX the width of X
+	 * @param[in] wInY the width of Y
+	 */
+	virtual bool suggestSubmultSize(int &x, int &y, int wInX, int wInY)=0;
+
+	/** Function for determining the subadition sizes so that the design is able 
+	 * to function at a desired frequency ( addition is considerd X + Y )
+	 * @param[in,out] x the size of the subaddition for x and y
+	 * @param[in] wIn the widths of X and Y
+	 */
+	virtual bool suggestSubaddSize(int &x, int wIn)=0; 	
+
+	// Delay-related methods
+	/** Function which returns the lutDelay for this target
+	 * @return the LUT delay
+	 */
+	virtual double lutDelay() =0;
+	
+	/** Function which returns the carry propagate delay
+	 * @return the carry propagate dealy
+	 */
+	virtual double carryPropagateDelay() =0;
+
+	/** Function which returns addition delay for an n bit addition
+	 * @param n the number of bits of the addition (n-bit + n-bit )
+	 * @return the addition delay for an n bit addition
+	 */
+	virtual double adderDelay(int n) =0;
+
+	/** Function which returns the local wire delay (local routing)
+	 * @return local wire delay 
+	 */
+	virtual double localWireDelay() =0;
+
+	/** Function which returns the distant wire delay.
+	 * @return distant wire delay 
+	 */
+	virtual double distantWireDelay(int n) =0;
+
+	// Methods related to target behaviour and performance
+	/** Sets the target to pipelined */
+	void setPipelined();                
+	
+	/**< Sets the target to combinatorial */    
+	void setNotPipelined();                 
+	
+	/** Returns true if the target is pipelined, otherwise false
+	 * @return if the target is pipelined
+	 */
+	bool isPipelined();
+	
+	/** Returns the desired frequency for this target
+	 * @return the frequency
+	 */
+	double frequency();
+	
+	/** Sets the desired frequency for this target
+	 * @param f the desired frequency
+	 */	
+	void setFrequency(double f);
+
+	/** Sets the use of hardware multipliers 
+	 * @param v use or not harware multipliers
+	 */
+	void setUseHardMultipliers(bool v);
+
+	/** Returns true if the operator for this target is allowed to use hardware multipliers
+	 * @return the status of hardware multipliers usage
+	 */
+	bool getUseHardMultipliers(); 
+
 protected:
-	int _lut_inputs;
-	//std::string name;
-	bool _pipeline;
-	double _frequency; // Hz
-	int _mult_x_inputs; 
-	int _mult_y_inputs;
-	bool _use_hard_multipliers;
+	int    lutInputs_;          /**< The number of inputs for the LUTs */
+	bool   pipeline_;           /**< True if the target is pipelined/ false otherwise */
+	double frequency_;          /**< The desired frequency for the operator in Hz */
+	int    multXInputs_;        /**< The size for the X dimmension of the hardware multipliers */
+	int    multYInputs_;        /**< The size for the Y dimmension of the hardware multipliers */
+	bool   useHardMultipliers_; /**< If true the operator design can use the hardware multipliers */
 };
 
 

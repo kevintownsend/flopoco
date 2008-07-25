@@ -6,40 +6,63 @@
 #include "Operator.hpp"
 #include "Shifters.hpp"
 
+/** Implements a long, fixed point accumulator for accumulating floating point numbers
+ */
 class LongAcc : public Operator
 {
 public:
+	/** Constructor
+	 * @param target the target device
+	 * @param wEX the width of the exponent 
+	 * @param eFX the width of the fractional part
+	 * @param MaxMSBX the weight of the MSB of the expected exponent of X
+	 * @param LSBA the weight of the least significand bit of the accumulator
+	 * @param MSBA the weight of the most significand bit of the accumulator
+	 */ 
 	LongAcc(Target* target, int wEX, int wFX, int MaxMSBX, int LSBA, int MSBA);
+	
+	/** Destructor */
 	~LongAcc();
+	
+	void test_precision(int n); /**< Undocumented */
+	void test_precision2(); /**< Undocumented */
 
-	void test_precision(int n);
-	void test_precision2();
+	/**
+	 * Method belonging to the Operator class overloaded by the LongAcc class
+	 * @param[in,out] o     the stream where the current architecture will be outputed to
+	 * @param[in]     name  the name of the entity corresponding to the architecture generated in this method
+	 **/
+	void outputVHDL(ostream& o, string name);
 
-	int wEX; 
-	int wFX; 
-	int MaxMSBX;
-	int LSBA; 
-	int MSBA; 
+	/** 
+	 * Sets the default name of this operator
+	 */
+	void setOperatorName(); 
 
-	// Overloading the virtual functions of Operator
-	void output_vhdl(ostream& o, string name);
+
+protected:
+	int wEX_;     /**< the width of the exponent  */
+	int wFX_;     /**< the width of the fractional part */
+	int MaxMSBX_; /**< the weight of the MSB of the expected exponent of X */
+	int LSBA_;    /**< the weight of the least significand bit of the accumulator */
+	int MSBA_;    /**< the weight of the most significand bit of the accumulator */
 
 private:
-	Shifter* shifter;
-	int sizeAcc;         //  = MSBA-LSBA+1;
-	int sizeAccL; // used only for carry-select implementation
-	int sizeSummand;     //  = MaxMSBX-LSBA+1;
-	int sizeShiftedFrac; //  = sizeSummand + wFX;  to accomodate very small summands
-	int maxShift;
-	int E0X;
-	int sizeShift;
-	string summand2cname;
-	int c2_chunk_size;
-	int c2_pipeline_depth;
+	Shifter* shifter_;          /**<Shifter object for shifting X in place */
+	int      sizeAcc_;          /**<The size of the accumulator  = MSBA-LSBA+1; */
+	int      sizeAccL_;         /**< used only for carry-select implementation */
+	int      sizeSummand_;      /**< the maximum size of the summand  = MaxMSBX-LSBA+1; */
+	int      sizeShiftedFrac_;  /**< size of ths shifted frac  = sizeSummand + wFX;  to accomodate very small summands */
+	int      maxShift_;         /**< maximum shift ammount */
+	int      E0X_;              /**< the bias value */
+	int      sizeShift_;        /**< the shift size */
+	string   summand2cname_;    /**< ??? */
+	int      c2ChunkSize_;      /**< for c2 addition */
+	int      c2PipelineDepth_;  /**< for c2 addition */
 
-	int additionNumberOfChunks;
-	int rebalancedAdditionChunkSize;
-	int rebalancedAdditionLastChunkSize;
+	int additionNumberOfChunks_;         /**< Number of chunks of the accumulation addition */
+	int rebalancedAdditionChunkSize_;    /**< The chunk size after rebalancing */
+	int rebalancedAdditionLastChunkSize_;/**< The size of the last chunk after rebalancing */ 
 
 };
 

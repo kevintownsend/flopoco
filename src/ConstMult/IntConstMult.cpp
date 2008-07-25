@@ -117,13 +117,13 @@ int IntConstMult::build_pipeline(ShiftAddOp* sao, double &partial_delay) {
 			maxchildrenpd = max(ipd,jpd);
 			max_children_delay = max(idelay,jdelay);
 			cost = sao->cost_in_full_adders;
-			local_delay = target->adder_delay(cost);
- 			if(local_delay>1/target->frequency()) {
+			local_delay = target_->adderDelay(cost);
+ 			if(local_delay>1/target_->frequency()) {
  				cerr << "*** Currently unable to reach target frequency "<< endl;
  				// TODO
  			}
 
-			if(max_children_delay + local_delay > 1./target->frequency()) {
+			if(max_children_delay + local_delay > 1./target_->frequency()) {
 				// insert a register at the output of each child
 				sao->i->is_registered = true;
 				sao->i_delayed_by++;
@@ -134,7 +134,7 @@ int IntConstMult::build_pipeline(ShiftAddOp* sao, double &partial_delay) {
 				if(sao->j_delayed_by > sao->j->delayed_by)
 					sao->j->delayed_by = sao->j_delayed_by; 
 				// This resets the partial delay to that of this ShiftAddOp
-				partial_delay = target->adder_delay(cost);
+				partial_delay = target_->adderDelay(cost);
 				// and increases pipeline depth by 1
 				return 1+maxchildrenpd;
 			}
@@ -150,21 +150,21 @@ int IntConstMult::build_pipeline(ShiftAddOp* sao, double &partial_delay) {
 		case Neg:
 			ipd = build_pipeline(sao->i, idelay);
 			cost = sao->cost_in_full_adders;
-			local_delay = target->adder_delay(cost);
+			local_delay = target_->adderDelay(cost);
 
-// 			if(target->suggest_subadd_size(levels, cost)) {
+// 			if(target_->suggest_subadd_size(levels, cost)) {
 // 				cerr << "*** Currently unable to reach target frequency "<< endl;
 // 				// TODO
 // 			}
 
-			if(idelay + local_delay > 1./target->frequency()) {
+			if(idelay + local_delay > 1./target_->frequency()) {
 				// insert a register at the output of the child
 				sao->i->is_registered = true;
 				sao->i_delayed_by = 1;
 				if(sao->i_delayed_by > sao->i->delayed_by)
 					sao->i->delayed_by = sao->i_delayed_by; 
 				// This resets the partial delay to that of this ShiftAddOp
-				partial_delay = target->adder_delay(cost);
+				partial_delay = target_->adderDelay(cost);
 				// and increases pipeline depth by 1
 				return 1+ipd;
 			}
@@ -183,14 +183,14 @@ IntConstMult::IntConstMult(Target* _target, int _xsize, mpz_class _n) :
 	Operator(_target), xsize(_xsize), n(_n){
 	ostringstream name; 
 	name <<"IntConstMult_"<<xsize<<"_"<<n;
-	unique_name=name.str();
+	uniqueName_=name.str();
 
 	implementation = new ShiftAddDag(this);
 	nsize = intlog2(n);
 	rsize = nsize+xsize;
 
-	add_input("inX", xsize);
-	add_output("R", rsize);
+	addInput("inX", xsize);
+	addOutput("R", rsize);
 
 
 	bits = new int[nsize];
@@ -219,16 +219,16 @@ IntConstMult::IntConstMult(Target* _target, int _xsize, mpz_class _n) :
 	if(verbose) showShiftAddDag();
 
 	// pipeline it
-	if (target->is_pipelined()) {
+	if (target_->isPipelined()) {
 		// TODO get rid of this warning when the bug is fixed
 		cerr << "\n *************WARNING**************\n  Pipelined IntConstMult sometimes still buggy! Use TestBench on the ones you build!\n"<<endl;
-		set_sequential();
+		setSequential();
 	}
 	else
-		set_combinatorial();
+		setCombinatorial();
 
 	// declare its signals
-	if (is_sequential()){
+	if (isSequential()){
 		double delay;
 		int pipeline_depth = build_pipeline(implementation->result, delay);
 		// register the output, too
@@ -236,33 +236,33 @@ IntConstMult::IntConstMult(Target* _target, int _xsize, mpz_class _n) :
 		implementation->result->delayed_by = 1;
 		pipeline_depth++;
 
-		set_pipeline_depth(pipeline_depth);
+		setPipelineDepth(pipeline_depth);
 
 
 		if(verbose)	cout<<"  Pipeline depth is "<< pipeline_depth << endl;
 		for (int i=0; i<implementation->saolist.size(); i++) {
 			ShiftAddOp *sao = implementation->saolist[i];
 			if(sao->is_registered) {
-				add_delay_signal_bus_no_reset(sao->name, sao->size, sao->delayed_by);
+				addDelaySignalBusNoReset(sao->name, sao->size, sao->delayed_by);
 			}
 			else { 
-				add_signal_bus(sao->name, sao->size);
+				addSignalBus(sao->name, sao->size);
 			}	
 		}
 		// Special case for X
 		ShiftAddOp *px = implementation->PX;
 			if(px->is_registered) {
-				add_delay_signal_bus_no_reset(px->name, px->size, px->delayed_by);
+				addDelaySignalBusNoReset(px->name, px->size, px->delayed_by);
 			}
 			else { 
-				add_signal_bus(px->name, px->size);
+				addSignalBus(px->name, px->size);
 			}	
 		
 	}
 	else { 
 		for (int i=0; i<implementation->saolist.size(); i++) 
-			add_signal_bus(implementation->saolist[i]->name, implementation->saolist[i]->size);
-		add_signal_bus("X", xsize);
+			addSignalBus(implementation->saolist[i]->name, implementation->saolist[i]->size);
+		addSignalBus("X", xsize);
 	}
 
 	// That's all folks. The remaining of this method is a handcoded
@@ -526,19 +526,18 @@ void IntConstMult::showShiftAddDag(){
 
 
 
-void IntConstMult::output_vhdl(std::ostream& o, std::string name) {
+void IntConstMult::outputVHDL(std::ostream& o, std::string name) {
 	string iname, jname;
 	int k,i,j;
 
-	Licence(o,"Florent de Dinechin (2007)");
-	Operator::StdLibs(o);
-	output_vhdl_entity(o);
-	o << "architecture arch of " << name  << " is" << endl;
-	output_vhdl_signal_declarations(o);
-
+	licence(o,"Florent de Dinechin (2007)");
+	Operator::stdLibs(o);
+	outputVHDLEntity(o);
+	newArchitecture(o,name);
+	outputVHDLSignalDeclarations(o);
+	beginArchitecture(o);
 	
 	// Architecture
-	o << "begin" << endl;
 	o << tab << "X <= inX;" << endl;
 	for (i=0; i<implementation->saolist.size(); i++) {
 		ShiftAddOp *p = implementation->saolist[i];
@@ -550,8 +549,8 @@ void IntConstMult::output_vhdl(std::ostream& o, std::string name) {
 			break;
 
 		case Add:
-			iname = get_delay_signal_name(p->i->name, p->i_delayed_by); // even works for unregistered signals
-			jname = get_delay_signal_name(p->j->name, p->j_delayed_by); // even works for unregistered signals
+			iname = getDelaySignalName(p->i->name, p->i_delayed_by); // even works for unregistered signals
+			jname = getDelaySignalName(p->j->name, p->j_delayed_by); // even works for unregistered signals
 			if(p->s==0) {
 				o << tab << p->name << " <= " ;
 				// The i part
@@ -617,7 +616,7 @@ void IntConstMult::output_vhdl(std::ostream& o, std::string name) {
 
 		case Shift:
 		case Neg:
-			iname = get_delay_signal_name(p->i->name, p->i_delayed_by); // even works for unregistered signals
+			iname = getDelaySignalName(p->i->name, p->i_delayed_by); // even works for unregistered signals
 			o << tab << p->name << " <= " ;
 			if(p->op == Neg)   
 				o << "("<< p->size -1 <<" downto 0 => '0') - " ; 
@@ -629,8 +628,8 @@ void IntConstMult::output_vhdl(std::ostream& o, std::string name) {
 		}     
 	}
 
-	if(is_sequential()){
-		output_vhdl_registers(o);
+	if(isSequential()){
+		outputVHDLRegisters(o);
 	// Sometimes the size of the result variable is one bit more than r.
 		o << tab << "r <= " << implementation->result->name << "_d("<< rsize-1 <<" downto 0);"<<endl;
 	}
@@ -650,8 +649,8 @@ void optimizeLefevre(const vector<mpz_class>& constants) {
 TestIOMap IntConstMult::getTestIOMap()
 {
 	TestIOMap tim;
-	tim.add(*get_signal_by_name("inX"));
-	tim.add(*get_signal_by_name("R"));
+	tim.add(*getSignalByName("inX"));
+	tim.add(*getSignalByName("R"));
 	return tim;
 }
 

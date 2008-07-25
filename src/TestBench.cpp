@@ -33,39 +33,40 @@
 #include "TestBench.hpp"
 
 TestBench::TestBench(Target* target, Operator* op, int n):
-	Operator(target), op(op), n(n)
+	Operator(target), op_(op), n_(n)
 {
-	set_operator_name("TestBench","");
-	set_pipeline_depth(42);	// could be any number
+	setOperatorName();
+	setPipelineDepth(42);	// could be any number
 
 	// declare internal registered signals
-	for(int i=0; i<op->getIOListSize(); i++){
-		string idext = op->getIOListSignal(i)->id() ;
-		add_signal(idext, op->getIOListSignal(i)->width());
+	for(int i=0; i < op_->getIOListSize(); i++){
+		string idext = op_->getIOListSignal(i)->getSignalName() ;
+		addSignal(idext, op_->getIOListSignal(i)->width());
 	}
 
 	/* add bogus clk and rst signal if the UUT does not have them */
 	try {
-		add_signal("clk", 1);
-		add_signal("rst", 1);
+		addSignal("clk", 1);
+		addSignal("rst", 1);
 	} catch (std::string) {
 		/* silently ignore */
 	}
 }
 
-TestBench::~TestBench() { }
-
-void TestBench::set_operator_name(std::string prefix, std::string postfix){
-	unique_name = prefix + "_" + op->getOperatorName() + "_" + postfix;
+TestBench::~TestBench() { 
 }
 
-void TestBench::output_vhdl(ostream& o, string name) {
+void TestBench::setOperatorName(){
+	uniqueName_ = "TestBench_" + op_->getOperatorName();
+}
+
+void TestBench::outputVHDL(ostream& o, string name) {
 	/*
 	 * Generate some TestCases
 	 * We do this as early as possible, so that no VHDL is generated
 	 * if test cases are not implemented for the given operator
 	 */
-	TestIOMap::TestIOMapContainer tim = op->getTestIOMap().get();
+	TestIOMap::TestIOMapContainer tim = op_->getTestIOMap().get();
 	typedef TestIOMap::TestIOMapContainer::iterator TIMit;
 
 	TestCaseList tcl;
@@ -105,7 +106,7 @@ void TestBench::output_vhdl(ostream& o, string name) {
 
 	/* Generate test cases */
 	mpz_class *a = new mpz_class[size];
-	for (int i = 0; i < n; i++)
+	for (int i = 0; i < n_; i++)
 	{
 		/* Fill inputs, erase outputs */
 		for (int j = 0; j < size; j++)
@@ -122,7 +123,7 @@ void TestBench::output_vhdl(ostream& o, string name) {
 		}
 
 		/* Get correct outputs */
-		op->fillTestCase(a);
+		op_->fillTestCase(a);
 
 		/* Store test case */
 		TestCase tc;
@@ -144,16 +145,16 @@ void TestBench::output_vhdl(ostream& o, string name) {
 	delete[] a_isFP;
 	delete[] a_w;
 
-	Licence(o,"Cristian KLEIN (2007)");
-	Operator::StdLibs(o);
+	licence(o,"Cristian KLEIN (2007)");
+	Operator::stdLibs(o);
 
-	output_vhdl_entity(o);
+	outputVHDLEntity(o);
 	o << "architecture behavorial of " << name  << " is" << endl;
 
 	// the operator to wrap
-	op->output_vhdl_component(o);
+	op_->outputVHDLComponent(o);
 	// The local signals
-	output_vhdl_signal_declarations(o);
+	outputVHDLSignalDeclarations(o);
 
 	o << endl <<
 		tab << "-- FP compare function (found vs. real)\n" <<
@@ -192,18 +193,18 @@ void TestBench::output_vhdl(ostream& o, string name) {
 
 	// the instance
 	// XXX: Ugly! Will write something to encapsulate this.
-	o << tab << "uut:" << op->getOperatorName() << "\n"
+	o << tab << "uut:" << op_->getOperatorName() << "\n"
 		<< tab << tab << "port map ( ";
-	for(int i=0; i<op->getIOListSize(); i++) {
-		Signal s = *op->getIOListSignal(i);
+	for(int i=0; i<op_->getIOListSize(); i++) {
+		Signal s = *op_->getIOListSignal(i);
 		if(i>0) 
 			o << tab << tab << "           ";
-		string idext =  op->getIOListSignal(i)->id() ;
-		if(op->getIOListSignal(i)->type() == Signal::in)
-			o << op->getIOListSignal(i)->id()  << " =>  " << idext;
+		string idext =  op_->getIOListSignal(i)->getSignalName() ;
+		if(op_->getIOListSignal(i)->type() == Signal::in)
+			o << op_->getIOListSignal(i)->getSignalName()  << " =>  " << idext;
 		else
-			o << op->getIOListSignal(i)->id()  << " =>  " << idext;
-		if (i < op->getIOListSize()-1) 
+			o << op_->getIOListSignal(i)->getSignalName()  << " =>  " << idext;
+		if (i < op_->getIOListSize()-1) 
 			o << "," << endl;
 	}
 	o << ");" <<endl;
@@ -242,8 +243,8 @@ void TestBench::output_vhdl(ostream& o, string name) {
 	o << tab << "begin" <<endl;
 	o << tab << tab << "wait for 10 ns; -- wait for reset to complete" <<endl;
 	currentOutputTime += 10;
-	o << tab << tab << "wait for "<< op->pipeline_depth()*10 <<" ns; -- wait for pipeline to flush" <<endl;
-	currentOutputTime += op->pipeline_depth()*10;
+	o << tab << tab << "wait for "<< op_->getPipelineDepth()*10 <<" ns; -- wait for pipeline to flush" <<endl;
+	currentOutputTime += op_->getPipelineDepth()*10;
 	for (int i = 0; i < tcl.getNumberOfTestCases(); i++)
 	{
 		o << tab << tab << "wait for 5 ns;" <<endl;

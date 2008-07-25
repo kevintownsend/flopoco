@@ -40,11 +40,11 @@ FPLog::FPLog(Target* target, int wE, int wF)
 	{
 		std::ostringstream o;
 		o << "FPLog_" << wE << "_" << wF;
-		unique_name = o.str();
+		uniqueName_ = o.str();
 	}
 
-	add_FP_input("x", wE, wF);
-	add_FP_output("r", wE, wF);
+	addFPInput("x", wE, wF);
+	addFPOutput("r", wE, wF);
 
 	int i;
 
@@ -125,18 +125,18 @@ FPLog::~FPLog()
 }
 
 // Overloading the virtual functions of Operator
-void FPLog::output_vhdl(std::ostream& o, std::string name)
+void FPLog::outputVHDL(std::ostream& o, std::string name)
 {
 	/* Reuse other FloPoCo stuff */
-	int t_pipelined = target->is_pipelined();
-	target->set_not_pipelined();
+	int t_pipelined = target_->isPipelined();
+	target_->setNotPipelined();
 
-	LZOC *lzoc = new LZOC(target, wF, intlog2(wF));
+	LZOC *lzoc = new LZOC(target_, wF, intlog2(wF));
 	oplist.push_back(lzoc);
 
-	if (t_pipelined) target->set_pipelined();
+	if (t_pipelined) target_->setPipelined();
 
-	Licence(o, "J. Detrey, F. de Dinechin, C. Klein  (2008)");
+	licence(o, "J. Detrey, F. de Dinechin, C. Klein  (2008)");
 	
 	int i;
 	mpfr_t two;
@@ -162,7 +162,7 @@ void FPLog::output_vhdl(std::ostream& o, std::string name)
 		"library ieee;\n"
 		"use ieee.std_logic_1164.all;\n"
 		"\n"
-		"entity " << unique_name << "_lshift is\n"
+		"entity " << uniqueName_ << "_lshift is\n"
 		"  generic ( w : positive;\n"
 		"            n : positive );\n"
 		"  port ( i  : in  std_logic_vector(w-1 downto 0);\n"
@@ -170,8 +170,8 @@ void FPLog::output_vhdl(std::ostream& o, std::string name)
 		"         o  : out std_logic_vector(w-1 downto 0));\n"
 		"end entity;\n"
 		"\n"
-		"architecture arch of " << unique_name << "_lshift is\n"
-		"  component " << unique_name << "_lshift is\n"
+		"architecture arch of " << uniqueName_ << "_lshift is\n"
+		"  component " << uniqueName_ << "_lshift is\n"
 		"  generic ( w : positive;\n"
 		"            n : positive );\n"
 		"  port ( i  : in  std_logic_vector(w-1 downto 0);\n"
@@ -193,7 +193,7 @@ void FPLog::output_vhdl(std::ostream& o, std::string name)
 		"  ------------------------------------------------------------- Recursive stage\n"
 		"\n"
 		"  recursive : if n > 1 generate\n"
-		"    shift0 : " << unique_name << "_lshift\n"
+		"    shift0 : " << uniqueName_ << "_lshift\n"
 		"      generic map ( w => w,\n"
 		"                    n => n-1 )\n"
 		"      port map (  i => o0,\n"
@@ -233,7 +233,7 @@ void FPLog::output_vhdl(std::ostream& o, std::string name)
 		"library ieee;\n"
 		"use ieee.std_logic_1164.all;\n"
 		"\n"
-		"entity " << unique_name << "_rshift is\n"
+		"entity " << uniqueName_ << "_rshift is\n"
 		"  generic ( w : positive;\n"
 		"            n : positive );\n"
 		"  port ( i  : in  std_logic_vector(w-1 downto 0);\n"
@@ -241,8 +241,8 @@ void FPLog::output_vhdl(std::ostream& o, std::string name)
 		"         o  : out std_logic_vector(w-1 downto 0));\n"
 		"end entity;\n"
 		"\n"
-		"  architecture arch of " << unique_name << "_rshift is\n"
-		"  component " << unique_name << "_rshift is\n"
+		"  architecture arch of " << uniqueName_ << "_rshift is\n"
+		"  component " << uniqueName_ << "_rshift is\n"
 		"  generic ( w : positive;\n"
 		"            n : positive );\n"
 		"  port ( i  : in  std_logic_vector(w-1 downto 0);\n"
@@ -264,7 +264,7 @@ void FPLog::output_vhdl(std::ostream& o, std::string name)
 		"  ------------------------------------------------------------- Recursive stage\n"
 		"\n"
 		"  recursive : if n > 1 generate\n"
-		"    shift0 : " << unique_name << "_rshift\n"
+		"    shift0 : " << uniqueName_ << "_rshift\n"
 		"      generic map ( w => w,\n"
 		"                    n => n-1 )\n"
 		"      port map (  i => o0,\n"
@@ -302,7 +302,7 @@ void FPLog::output_vhdl(std::ostream& o, std::string name)
 		"library ieee;\n"
 		"use ieee.std_logic_1164.all;\n"
 		"\n"
-		"entity " << unique_name << "_lzc_norm is\n"
+		"entity " << uniqueName_ << "_lzc_norm is\n"
 		"    generic ( w : positive;\n"
 		"              n : positive );\n"
 		"    port ( i : in  std_logic_vector(w-1 downto 0);\n"
@@ -310,8 +310,8 @@ void FPLog::output_vhdl(std::ostream& o, std::string name)
 		"           o : out std_logic_vector(w-1 downto 0) );\n"
 		"end entity;\n"
 		"\n"
-		"architecture arch of " << unique_name << "_lzc_norm is\n"
-		"  component " << unique_name << "_lzc_norm is\n"
+		"architecture arch of " << uniqueName_ << "_lzc_norm is\n"
+		"  component " << uniqueName_ << "_lzc_norm is\n"
 		"    generic ( w : positive;\n"
 		"              n : positive );\n"
 		"    port ( i : in  std_logic_vector(w-1 downto 0);\n"
@@ -334,7 +334,7 @@ void FPLog::output_vhdl(std::ostream& o, std::string name)
 		"  end generate;\n"
 		"  ------------------------------------------------------------- Recursive stage\n"
 		"  recursive : if n > 1 generate\n"
-		"    lzc_norm0 : " << unique_name << "_lzc_norm\n"
+		"    lzc_norm0 : " << uniqueName_ << "_lzc_norm\n"
 		"      generic map ( w => w,\n"
 		"                    n => n-1 )\n"
 		"      port map ( i => o0,\n"
@@ -369,7 +369,7 @@ void FPLog::output_vhdl(std::ostream& o, std::string name)
 	o << "            wF : positive := "  << wF << ");" << endl;
 	o << "  port ( X : in  std_logic_vector(2+wE+wF downto 0);" << endl;
 	o << "         R : out std_logic_vector(2+wE+wF downto 0)";
-	if (is_sequential())
+	if (isSequential())
 		o  << ";" << endl << "         clk : in  std_logic  );" << endl;
 	else
 		o  << "  );" << endl;
@@ -377,10 +377,10 @@ void FPLog::output_vhdl(std::ostream& o, std::string name)
 	o << "end entity;" << endl;
 	o << "architecture arch of "  << name << " is " << endl;
 
-	lzoc->output_vhdl_component(o);
+	lzoc->outputVHDLComponent(o);
 	o <<
 		"\n"
-		"  component " << unique_name << "_lshift is\n"
+		"  component " << uniqueName_ << "_lshift is\n"
 		"    generic ( w : positive;\n"
 		"              n : positive );\n"
 		"    port ( i  : in  std_logic_vector(w-1 downto 0);\n"
@@ -388,7 +388,7 @@ void FPLog::output_vhdl(std::ostream& o, std::string name)
 		"           o  : out std_logic_vector(w-1 downto 0) );\n"
 		"  end component;\n"
 		"\n"	
-		"  component " << unique_name << "_rshift is\n"
+		"  component " << uniqueName_ << "_rshift is\n"
 		"    generic ( w : positive;\n"
 		"              n : positive );\n"
 		"    port ( i  : in  std_logic_vector(w-1 downto 0);\n"
@@ -396,7 +396,7 @@ void FPLog::output_vhdl(std::ostream& o, std::string name)
 		"           o  : out std_logic_vector(w-1 downto 0) );\n"
 		"  end component;\n"
 		"\n"
-		"  component " << unique_name << "_lzc_norm is\n"
+		"  component " << uniqueName_ << "_lzc_norm is\n"
 		"    generic ( w : positive;\n"
 		"              n : positive );\n"
 		"    port ( i : in  std_logic_vector(w-1 downto 0);\n"
@@ -406,10 +406,10 @@ void FPLog::output_vhdl(std::ostream& o, std::string name)
 		"\n"
 		"  -- def of component range_red, and many constants and signals,  here\n";
 
-	o <<   "  component " << unique_name << "_range_red is port ("<<endl;
+	o <<   "  component " << uniqueName_ << "_range_red is port ("<<endl;
 	o <<   "            Y0 : in  std_logic_vector("<<wF+1<<" downto 0);"<<endl;
 	o <<   "            A  : in std_logic_vector("<< a[0]-1 <<" downto 0);"<<endl;
-	if(is_sequential()) 
+	if(isSequential()) 
 		o << "          clk  : in std_logic;"<<endl;
 	o <<   "            Z  : out std_logic_vector("<< s[stages+1]-1 <<" downto 0);"<<endl;
 	o <<   "    almostLog  : out std_logic_vector("<< lt0->wOut-1 <<" downto 0)  );"<<endl;
@@ -492,10 +492,10 @@ void FPLog::output_vhdl(std::ostream& o, std::string name)
 		"          else '0';\n"
 		"\n"
 		"-- The range reduction instance\n"
-		"  rr: " << unique_name << "_range_red\n"
+		"  rr: " << uniqueName_ << "_range_red\n"
 		"     port map ( A => X(wF-1 downto wF-a0), Y0 => Y0,\n";
 
-	if(is_sequential())
+	if(isSequential())
 		o << "                clk=>clk,"<<endl;
 
 	o <<
@@ -505,7 +505,7 @@ void FPLog::output_vhdl(std::ostream& o, std::string name)
 			"\n"
 			"--  absZ0 <=   Y0(wF-pfinal downto 0)   xor (wF-pfinal downto 0 => sR);\n"
 			"\n"
-			"  lshiftsmall: " << unique_name << "_lshift\n"
+			"  lshiftsmall: " << uniqueName_ << "_lshift\n"
 			"    generic map (w => wF-pfinal+2, n => log2wF)\n"
 			"    port map (  i => absZ0, s => shiftval(log2wF-1 downto 0), o => absZ0s );\n"
 			"\n"
@@ -542,12 +542,12 @@ void FPLog::output_vhdl(std::ostream& o, std::string name)
 			"  Log_normal <=  absELog2_pad  + LogF_normal_pad when sR='0'  \n"
 			"                else absELog2_pad - LogF_normal_pad;\n"
 			"\n"
-			"  lzc_norm_0 : " << unique_name << "_lzc_norm\n"
+			"  lzc_norm_0 : " << uniqueName_ << "_lzc_norm\n"
 			"    generic map (w => wE+targetprec, n => lzc_size)\n"
 			"    port map (i => Log_normal, z => E_normal, o => Log_normal_normd);\n"
 			"\n"
 			"\n"
-			"  rshiftsmall: " << unique_name << "_rshift\n"
+			"  rshiftsmall: " << uniqueName_ << "_rshift\n"
 			"    generic map (w => sfinal-pfinal+1,  n => log2wF) \n"
 			"    port map (i => Z2o2,\n"
 			"              s => shiftval(log2wF-1 downto 0),\n"
@@ -634,29 +634,29 @@ void FPLog::output_vhdl(std::ostream& o, std::string name)
 
 	//---------------Range reduction entity----------------------------------------------
 
-	o <<   "entity " << unique_name << "_range_red is port ("<<endl;
+	o <<   "entity " << uniqueName_ << "_range_red is port ("<<endl;
 	o <<   "          Y0 : in  std_logic_vector("<<wF+1<<" downto 0);"<<endl;
 	o <<   "          A  : in std_logic_vector("<< a[0]-1 <<" downto 0);"<<endl;
-	if(is_sequential()) 
+	if(isSequential()) 
 		o << "          clk  : in std_logic;"<<endl;
 	o <<   "          Z  : out std_logic_vector("<< s[stages+1]-1 <<" downto 0);"<<endl;
 	o <<   "  almostLog  : out std_logic_vector("<< lt0->wOut-1 <<" downto 0)  );"<<endl;
 	o <<   "end entity;"<<endl<<endl;
 
 
-	o << "architecture arch of " << unique_name << "_range_red is " <<endl<<endl;
+	o << "architecture arch of " << uniqueName_ << "_range_red is " <<endl<<endl;
 	// All the components for the tables
 	ostringstream nameIT0;
-	nameIT0 << unique_name << "_invtable0_" << wE << "_" <<wF;
+	nameIT0 << uniqueName_ << "_invtable0_" << wE << "_" <<wF;
 	it0->outputComponent(o, nameIT0.str());
 
 	ostringstream nameLT0;
-	nameLT0 << unique_name << "_logtable0_" << wE << "_" <<wF;
+	nameLT0 << uniqueName_ << "_logtable0_" << wE << "_" <<wF;
 	lt0->outputComponent(o, nameLT0.str());
 
 	for(i=1; i<=stages; i++) {
 		ostringstream name3;
-		name3 << unique_name << "_logtable"<<i<<"_" << wE << "_" <<wF;
+		name3 << uniqueName_ << "_logtable"<<i<<"_" << wE << "_" <<wF;
 		lt[i]->outputComponent(o, name3.str()); 
 	}
 
@@ -708,7 +708,7 @@ void FPLog::output_vhdl(std::ostream& o, std::string name)
 	o << "   it0:"<<nameIT0.str()<<" port map (x=>A0, y=>InvA0);" <<endl; 
 	o << "   lt0:"<<nameLT0.str()<<" port map (x=>A0, y=>L0);"<<endl;
 	o << "   P0 <= InvA0 * Y0;" <<endl <<endl;
-	if(is_sequential()) 
+	if(isSequential()) 
 	{
 		o << "   -- Synchronization barrier 1 " <<endl;
 		o << "   process(clk)  begin\n     if clk'event and clk='1' then"<<endl;
@@ -728,7 +728,7 @@ void FPLog::output_vhdl(std::ostream& o, std::string name)
 			//computation
 		o << "   A"<<i<<" <= Z"<<i<<"_d(" << s[i] - 1  <<" downto "<< s[i] - a[i]  << ");"<<endl;
 		o << "   B"<<i<<" <= Z"<<i<<"_d(" << s[i] - a[i] - 1  <<" downto 0 );"<<endl;
-		o << "   lt"<<i<<":" << unique_name << "_logtable"<<i<<"_"<< wE <<"_"<<wF<<" port map (x=>A"<<i<<", y=>L"<<i<<");"<<endl;
+		o << "   lt"<<i<<":" << uniqueName_ << "_logtable"<<i<<"_"<< wE <<"_"<<wF<<" port map (x=>A"<<i<<", y=>L"<<i<<");"<<endl;
 		if(psize[i] == s[i])
 			o << "   ZM"<<i<<" <= Z"<<i<< "_d;"<<endl;   
 		else
@@ -772,7 +772,7 @@ void FPLog::output_vhdl(std::ostream& o, std::string name)
 		o << "   S"<<i+1<<" <=   S"<<i<<"_d + (("<<lt0->wOut-1<<" downto "<<lt[i]->wOut<<" =>'0') & L"<<i<<");"<<endl;
 
 		o << endl;
-		if (is_sequential()) 
+		if (isSequential()) 
 			{
 				o << "   -- Synchronization barrier "<<i+1 <<endl;
 				o << "   process(clk)  begin\n     if clk'event and clk='1' then"<<endl;
@@ -795,16 +795,16 @@ void FPLog::output_vhdl(std::ostream& o, std::string name)
 
 	// All the tables 
 	ostringstream  name4;
-	name4 << unique_name << "_invtable0_" << wE << "_" <<wF;
+	name4 << uniqueName_ << "_invtable0_" << wE << "_" <<wF;
 	it0->output(o, name4.str());
 
 	ostringstream name5;
-	name5 << unique_name << "_logtable0_" << wE << "_" <<wF;
+	name5 << uniqueName_ << "_logtable0_" << wE << "_" <<wF;
 	lt0->output(o, name5.str());
 
 	for(i=1; i<=stages; i++) {
 		ostringstream name6;
-		name6 << unique_name << "_logtable"<<i<<"_" << wE << "_" <<wF;
+		name6 << uniqueName_ << "_logtable"<<i<<"_" << wE << "_" <<wF;
 		lt[i]->output(o, name6.str()); 
 	}
 }
@@ -812,8 +812,8 @@ void FPLog::output_vhdl(std::ostream& o, std::string name)
 TestIOMap FPLog::getTestIOMap()
 {
 	TestIOMap tim;
-	tim.add(*get_signal_by_name("x"));
-	tim.add(*get_signal_by_name("r"), 2); /* faithful rounding */
+	tim.add(*getSignalByName("x"));
+	tim.add(*getSignalByName("r"), 2); /* faithful rounding */
 	return tim;
 }
 

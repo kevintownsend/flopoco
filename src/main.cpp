@@ -29,6 +29,9 @@
 #include <mpfr.h>
 
 #include "Operator.hpp"
+#include "Target.hpp"
+#include "Targets/VirtexIV.hpp"
+#include "Targets/StratixII.hpp"
 #include "Shifters.hpp"
 #include "LZOC.hpp"
 #include "LZOCShifterSticky.hpp"
@@ -46,15 +49,12 @@
 #include "ConstMult/IntConstMult.hpp"
 #include "ConstMult/FPConstMult.hpp"
 #include "ConstMult/CRFPConstMult.hpp"
-#include "Target.hpp"
-#include "Targets/VirtexIV.hpp"
-#include "Targets/StratixII.hpp"
 #include "FPExp.hpp"
 #include "FPLog.hpp"
-
 #ifdef HAVE_HOTBM
 #include "HOTBM.hpp"
 #endif
+
 
 using namespace std;
 
@@ -67,10 +67,7 @@ string filename="flopoco.vhdl";
 string cl_name=""; // used for the -name option
 
 int verbose=0;
-
 Target* target;
-
-
 
 static void usage(char *name){
 	cerr << "\nUsage: "<<name<<" <operator specification list>\n" ;
@@ -139,10 +136,7 @@ static void usage(char *name){
 	exit (EXIT_FAILURE);
 }
 
-
-
-
-int check_strictly_positive(char* s, char* cmd) {
+int checkStrictyPositive(char* s, char* cmd) {
 	int n=atoi(s);
 	if (n<=0){
 		cerr<<"ERROR: got "<<s<<", expected strictly positive number."<<endl;
@@ -151,7 +145,7 @@ int check_strictly_positive(char* s, char* cmd) {
 	return n;
 }
 
-int check_positive_or_null(char* s, char* cmd) {
+int checkPositiveOrNull(char* s, char* cmd) {
 	int n=atoi(s);
 	if (n<0){
 		cerr<<"ERROR: got "<<s<<", expected positive-or-null number."<<endl;
@@ -160,7 +154,7 @@ int check_positive_or_null(char* s, char* cmd) {
 	return n;
 }
 
-bool check_boolean(char* s, char* cmd) {
+bool checkBoolean(char* s, char* cmd) {
 	int n=atoi(s);
 	if (n!=0 && n!=1) {
 		cerr<<"ERROR: got "<<s<<", expected a boolean (0 or 1)."<<endl;
@@ -170,7 +164,7 @@ bool check_boolean(char* s, char* cmd) {
 }
 
 
-int check_sign(char* s, char* cmd) {
+int checkSign(char* s, char* cmd) {
 	int n=atoi(s);
 	if (n!=0 && n!=1) {
 		cerr<<"ERROR: got "<<s<<", expected a sign bit (0 or 1)."<<endl;
@@ -180,7 +174,7 @@ int check_sign(char* s, char* cmd) {
 }
 
 
-void add_operator(Operator *op) {
+void addOperator(Operator *op) {
 	if(cl_name!="")	{
 		op->setCommentedName(op->getOperatorName());
 		cl_name="";
@@ -192,7 +186,7 @@ void add_operator(Operator *op) {
 
 
 
-bool parse_command_line(int argc, char* argv[]){
+bool parseCommandLine(int argc, char* argv[]){
 	if (argc<2) {
 		usage(argv[0]); 
 		return false;
@@ -231,8 +225,8 @@ bool parse_command_line(int argc, char* argv[]){
 					}
 				}
 				else if (o == "pipeline") {
-					if(v=="yes") target->set_pipelined();
-					else if(v=="no")  target->set_not_pipelined();
+					if(v=="yes") target->setPipelined();
+					else if(v=="no")  target->setNotPipelined();
 					else {
 						cerr<<"ERROR: pipeline option should be yes or no,    got "<<v<<"."<<endl; 
 						usage(argv[0]);
@@ -241,7 +235,7 @@ bool parse_command_line(int argc, char* argv[]){
 				else if (o == "frequency") {
 					int freq = atoi(v.c_str());
 					if (freq>1 && freq<10000) {
-						target->set_frequency(1e6*(double)freq);
+						target->setFrequency(1e6*(double)freq);
 						if(verbose) 
 							cerr << "Frequency set to "<<target->frequency()<< "MHz" <<endl; 
 					}
@@ -250,8 +244,8 @@ bool parse_command_line(int argc, char* argv[]){
 					}
 				}
 				else if (o == "DSP_blocks") {
-					if(v=="yes") target->set_use_hard_multipliers(true);
-					else if(v=="no")  target->set_use_hard_multipliers(false);
+					if(v=="yes") target->setUseHardMultipliers(true);
+					else if(v=="no")  target->setUseHardMultipliers(false);
 					else {
 						cerr<<"ERROR: DSP_blocks option should be yes or no,    got "<<v<<"."<<endl; 
 						usage(argv[0]);
@@ -275,7 +269,7 @@ bool parse_command_line(int argc, char* argv[]){
 				mpz_class mpc(argv[i++]);
 				cerr << "> IntConstMult , w="<<w<<", c="<<mpc<<"\n";
 				op = new IntConstMult(target, w, mpc);
-				add_operator(op);
+				addOperator(op);
 			}        
 		}
 		else if(opname=="FPConstMult"){
@@ -283,18 +277,18 @@ bool parse_command_line(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
-				int wE_in = check_strictly_positive(argv[i++], argv[0]);
-				int wF_in = check_strictly_positive(argv[i++], argv[0]);
-				int wE_out = check_strictly_positive(argv[i++], argv[0]);
-				int wF_out = check_strictly_positive(argv[i++], argv[0]);
-				int cst_sgn  = check_sign(argv[i++], argv[0]); 
+				int wE_in = checkStrictyPositive(argv[i++], argv[0]);
+				int wF_in = checkStrictyPositive(argv[i++], argv[0]);
+				int wE_out = checkStrictyPositive(argv[i++], argv[0]);
+				int wF_out = checkStrictyPositive(argv[i++], argv[0]);
+				int cst_sgn  = checkSign(argv[i++], argv[0]); 
 				int cst_exp  = atoi(argv[i++]); // TODO no check on this arg
 				mpz_class cst_sig(argv[i++]);
 				cerr << "> FPConstMult, wE_in="<<wE_in<<", wF_in="<<wF_in
 						 <<", wE_out="<<wE_out<<", wF_out="<<wF_out
 						 <<", cst_sgn="<<cst_sgn<<", cst_exp="<<cst_exp<< ", cst_sig="<<cst_sig<<endl;
 				op = new FPConstMult(target, wE_in, wF_in, wE_out, wF_out, cst_sgn, cst_exp, cst_sig);
-				add_operator(op);
+				addOperator(op);
 			}        
 		} 	
 #ifdef HAVE_SOLLYA
@@ -303,16 +297,16 @@ bool parse_command_line(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else { 
-				int wE_in = check_strictly_positive(argv[i++], argv[0]);
-				int wF_in = check_strictly_positive(argv[i++], argv[0]);
-				int wE_out = check_strictly_positive(argv[i++], argv[0]);
-				int wF_out = check_strictly_positive(argv[i++], argv[0]);
+				int wE_in = checkStrictyPositive(argv[i++], argv[0]);
+				int wF_in = checkStrictyPositive(argv[i++], argv[0]);
+				int wE_out = checkStrictyPositive(argv[i++], argv[0]);
+				int wF_out = checkStrictyPositive(argv[i++], argv[0]);
 				string constant = argv[i++];
 				cerr << "> CRFPConstMult, wE_in="<<wE_in<<", wF_in="<<wF_in 
 					  <<", wE_out="<<wE_out<<", wF_out="<<wF_out
 					  << ", constant="<<constant <<endl;
 				op = new CRFPConstMult(target, wE_in, wF_in, wE_out, wF_out, constant);
-				add_operator(op);
+				addOperator(op);
 			}        
 		} 	
 #endif // HAVE_SOLLYA
@@ -321,11 +315,11 @@ bool parse_command_line(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
-				int wIn = check_strictly_positive(argv[i++], argv[0]);
-				int maxShift = check_strictly_positive(argv[i++], argv[0]);
+				int wIn = checkStrictyPositive(argv[i++], argv[0]);
+				int maxShift = checkStrictyPositive(argv[i++], argv[0]);
 				cerr << "> LeftShifter, wIn="<<wIn<<", maxShift="<<maxShift<<"\n";
 				op = new Shifter(target, wIn, maxShift, Left);
-				add_operator(op);
+				addOperator(op);
 			}    
 		}
 		else if(opname=="RightShifter"){
@@ -333,11 +327,11 @@ bool parse_command_line(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
-				int wIn = check_strictly_positive(argv[i++], argv[0]);
-				int maxShift = check_strictly_positive(argv[i++], argv[0]);
+				int wIn = checkStrictyPositive(argv[i++], argv[0]);
+				int maxShift = checkStrictyPositive(argv[i++], argv[0]);
 				cerr << "> RightShifter, wIn="<<wIn<<", maxShift="<<maxShift<<"\n";
 				op = new Shifter(target, wIn, maxShift, Right);
-				add_operator(op);
+				addOperator(op);
 			}
 		}
 		else if(opname=="LZOC"){
@@ -345,11 +339,11 @@ bool parse_command_line(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
-				int wIn = check_strictly_positive(argv[i++], argv[0]);
-				int wOut = check_strictly_positive(argv[i++], argv[0]);
+				int wIn = checkStrictyPositive(argv[i++], argv[0]);
+				int wOut = checkStrictyPositive(argv[i++], argv[0]);
 				cerr << "> LZOC, wIn="<<wIn<<", wOut="<<wOut<<"\n";
 				op = new LZOC(target, wIn, wOut);
-				add_operator(op);
+				addOperator(op);
 			}
 		}
 		else if(opname=="LZOCShifterSticky"){
@@ -357,13 +351,13 @@ bool parse_command_line(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
-				int wIn = check_strictly_positive(argv[i++], argv[0]);
-				int wOut = check_strictly_positive(argv[i++], argv[0]);
-				bool computesticky  = check_boolean(argv[i++], argv[0]);
+				int wIn = checkStrictyPositive(argv[i++], argv[0]);
+				int wOut = checkStrictyPositive(argv[i++], argv[0]);
+				bool computesticky  = checkBoolean(argv[i++], argv[0]);
 				int countWhat = atoi(argv[i++]);
 				cerr << "> LZOCShifterSticky, wIn="<<wIn<<", wOut="<<wOut<<", compute_sticky=" << computesticky<<", zeroOrOne="<<countWhat<< endl;
 				op = new LZOCShifterSticky(target, wIn, wOut, computesticky, countWhat);
-				add_operator(op);
+				addOperator(op);
 			}
 		}
 		else if(opname=="IntAdder"){
@@ -371,10 +365,10 @@ bool parse_command_line(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
-				int wIn = check_strictly_positive(argv[i++], argv[0]);
+				int wIn = checkStrictyPositive(argv[i++], argv[0]);
 				cerr << "> IntAdder, wIn="<<wIn<<endl  ;
 				op = new IntAdder(target, wIn);
-				add_operator(op);
+				addOperator(op);
 			}    
 		}   
 		else if(opname=="IntMultiplier"){
@@ -382,11 +376,11 @@ bool parse_command_line(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
-				int wInX = check_strictly_positive(argv[i++], argv[0]);
-				int wInY = check_strictly_positive(argv[i++], argv[0]);
+				int wInX = checkStrictyPositive(argv[i++], argv[0]);
+				int wInY = checkStrictyPositive(argv[i++], argv[0]);
 				cerr << "> IntMultiplier , wInX="<<wInX<<", wInY="<<wInY<<"\n";
 				op = new IntMultiplier(target, wInX, wInY);
-				add_operator(op);
+				addOperator(op);
 			}
 		}
 		else if(opname=="Karatsuba"){
@@ -394,11 +388,11 @@ bool parse_command_line(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
-				int wInX = check_strictly_positive(argv[i++], argv[0]);
-				int wInY = check_strictly_positive(argv[i++], argv[0]);
+				int wInX = checkStrictyPositive(argv[i++], argv[0]);
+				int wInY = checkStrictyPositive(argv[i++], argv[0]);
 				cerr << "> Karatsuba , wInX="<<wInX<<", wInY="<<wInY<<"\n";
 				op = new Karatsuba(target, wInX, wInY);
-				add_operator(op);
+				addOperator(op);
 			}    
 		}   
 		else if(opname=="FPMultiplier"){
@@ -406,18 +400,18 @@ bool parse_command_line(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
-				int wEX = check_strictly_positive(argv[i++], argv[0]);
-				int wFX = check_strictly_positive(argv[i++], argv[0]);
-				int wEY = check_strictly_positive(argv[i++], argv[0]);
-				int wFY = check_strictly_positive(argv[i++], argv[0]);
-				int wER = check_strictly_positive(argv[i++], argv[0]);
-				int wFR = check_strictly_positive(argv[i++], argv[0]);
+				int wEX = checkStrictyPositive(argv[i++], argv[0]);
+				int wFX = checkStrictyPositive(argv[i++], argv[0]);
+				int wEY = checkStrictyPositive(argv[i++], argv[0]);
+				int wFY = checkStrictyPositive(argv[i++], argv[0]);
+				int wER = checkStrictyPositive(argv[i++], argv[0]);
+				int wFR = checkStrictyPositive(argv[i++], argv[0]);
 
 				cerr << "> FPMultiplier , wEX="<<wEX<<", wFX="<<wFX<<", wEY="<<wEY<<", wFY="<<wFY<<", wER="<<wER<<", wFR="<<wFR<<" \n";
 				
 				if ((wEX==wEY) && (wEX==wER)){
 					op = new FPMultiplier(target, wEX, wFX, wEY, wFY, wER, wFR, 1);
-					add_operator(op);
+					addOperator(op);
 				}else
 					cerr<<"(For now) the inputs must have the same size"<<endl;
 			}
@@ -427,18 +421,18 @@ bool parse_command_line(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
-				int wEX = check_strictly_positive(argv[i++], argv[0]);
-				int wFX = check_strictly_positive(argv[i++], argv[0]);
-				int wEY = check_strictly_positive(argv[i++], argv[0]);
-				int wFY = check_strictly_positive(argv[i++], argv[0]);
-				int wER = check_strictly_positive(argv[i++], argv[0]);
-				int wFR = check_strictly_positive(argv[i++], argv[0]);
+				int wEX = checkStrictyPositive(argv[i++], argv[0]);
+				int wFX = checkStrictyPositive(argv[i++], argv[0]);
+				int wEY = checkStrictyPositive(argv[i++], argv[0]);
+				int wFY = checkStrictyPositive(argv[i++], argv[0]);
+				int wER = checkStrictyPositive(argv[i++], argv[0]);
+				int wFR = checkStrictyPositive(argv[i++], argv[0]);
 				
 				cerr << "> FPAdder , wEX="<<wEX<<", wFX="<<wFX<<", wEY="<<wEY<<", wFY="<<wFY<<", wER="<<wER<<", wFR="<<wFR<<" \n";
 						
 					if ((wEX==wEY) && (wEX==wER)){
 						op = new FPAdder(target, wEX, wFX, wEY, wFY, wER, wFR);
-						add_operator(op);
+						addOperator(op);
 					}else
 						cerr<<"(For now) the inputs and outputs must have the same size"<<endl;
 			}
@@ -448,14 +442,14 @@ bool parse_command_line(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
-				int wEX = check_strictly_positive(argv[i++], argv[0]);
-				int wFX = check_strictly_positive(argv[i++], argv[0]);
+				int wEX = checkStrictyPositive(argv[i++], argv[0]);
+				int wFX = checkStrictyPositive(argv[i++], argv[0]);
 				int MaxMSBX = atoi(argv[i++]); // may be negative
 				int LSBA = atoi(argv[i++]); // may be negative
 				int MSBA = atoi(argv[i++]); // may be negative
 				cerr << "> Long accumulator , wEX="<<wEX<<", wFX="<<wFX<<", MaxMSBX="<<MaxMSBX<<", LSBA="<<LSBA<<", MSBA="<<MSBA<<"\n";
 				op = new LongAcc(target, wEX, wFX, MaxMSBX, LSBA, MSBA);
-				add_operator(op);
+				addOperator(op);
 			}
 		}
 		// hidden and undocumented
@@ -484,11 +478,11 @@ bool parse_command_line(int argc, char* argv[]){
 				int MaxMSBX = atoi(argv[i++]); // may be negative
 				int LSBA = atoi(argv[i++]); // may be negative
 				int MSBA = atoi(argv[i++]); // may be negative
-				int wE_out = check_strictly_positive(argv[i++], argv[0]);
-				int wF_out = check_strictly_positive(argv[i++], argv[0]);
+				int wE_out = checkStrictyPositive(argv[i++], argv[0]);
+				int wF_out = checkStrictyPositive(argv[i++], argv[0]);
 				cerr << "> Post-Normalization unit for Long accumulator MaxMSBX="<<MaxMSBX<<", LSBA="<<LSBA<<", MSBA="<<MSBA<<" wE_out="<<wE_out<<", wF_out="<<wF_out<<"\n";
 				op = new LongAcc2FP(target, MaxMSBX, LSBA, MSBA, wE_out, wF_out);
-				add_operator(op);
+				addOperator(op);
 			}
 		}
 		else if(opname=="DotProduct"){
@@ -496,15 +490,15 @@ bool parse_command_line(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
-				int wE = check_strictly_positive(argv[i++], argv[0]);
-				int wFX = check_strictly_positive(argv[i++], argv[0]);
-				int wFY = check_strictly_positive(argv[i++], argv[0]);
+				int wE = checkStrictyPositive(argv[i++], argv[0]);
+				int wFX = checkStrictyPositive(argv[i++], argv[0]);
+				int wFY = checkStrictyPositive(argv[i++], argv[0]);
 				int MaxMSBX = atoi(argv[i++]); // may be negative
 				int LSBA = atoi(argv[i++]); // may be negative
 				int MSBA = atoi(argv[i++]); // may be negative
 				cerr << "> DotProduct , wE="<<wE<<", wFX="<<wFX<<", wFY="<<wFY<<", MaxMSBX="<<MaxMSBX<<", LSBA="<<LSBA<<", MSBA="<<MSBA<<"\n";
 				op = new DotProduct(target, wE, wFX, wFY, MaxMSBX, LSBA, MSBA);
-				add_operator(op);
+				addOperator(op);
 			}
 		}
 #ifdef HAVE_HOTBM
@@ -513,12 +507,12 @@ bool parse_command_line(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]); // and exit
 			string func = argv[i++];
-			int wI = check_strictly_positive(argv[i++], argv[0]);
-			int wO = check_strictly_positive(argv[i++], argv[0]);
-			int n  = check_strictly_positive(argv[i++], argv[0]);
+			int wI = checkStrictyPositive(argv[i++], argv[0]);
+			int wO = checkStrictyPositive(argv[i++], argv[0]);
+			int n  = checkStrictyPositive(argv[i++], argv[0]);
 			cerr << "> HOTBM func='" << func << "', wI=" << wI << ", wO=" << wO <<endl;
 			op = new HOTBM(target, func, wI, wO, n);
-			if(cl_name!="")	op->set_operator_name(cl_name);
+			if(cl_name!="")	op->setOperatorName(cl_name);
 			oplist.push_back(op);
 		}
 #endif // HAVE_HOTBM
@@ -527,11 +521,11 @@ bool parse_command_line(int argc, char* argv[]){
 			int nargs = 2;
 			if (i+nargs > argc)
 				usage(argv[0]); // and exit
-			int wE = check_strictly_positive(argv[i++], argv[0]);
-			int wF = check_strictly_positive(argv[i++], argv[0]);
+			int wE = checkStrictyPositive(argv[i++], argv[0]);
+			int wF = checkStrictyPositive(argv[i++], argv[0]);
 			cerr << "> FPExp: wE=" << wE << " wF=" << wF << endl;
 			op = new FPExp(target, wE, wF);
-			if(cl_name!="")	op->set_operator_name(cl_name);
+			if(cl_name!="")	op->setOperatorName(cl_name);
 			oplist.push_back(op);
 		}
 		else if (opname == "FPLog")
@@ -539,11 +533,11 @@ bool parse_command_line(int argc, char* argv[]){
 			int nargs = 2;
 			if (i+nargs > argc)
 				usage(argv[0]); // and exit
-			int wE = check_strictly_positive(argv[i++], argv[0]);
-			int wF = check_strictly_positive(argv[i++], argv[0]);
+			int wE = checkStrictyPositive(argv[i++], argv[0]);
+			int wF = checkStrictyPositive(argv[i++], argv[0]);
 			cerr << "> FPLog: wE=" << wE << " wF=" << wF << endl;
 			op = new FPLog(target, wE, wF);
-			if(cl_name!="")	op->set_operator_name(cl_name);;
+			if(cl_name!="")	op->setOperatorName(cl_name);;
 			oplist.push_back(op);
 		}
 		else if (opname == "Wrapper") {
@@ -558,7 +552,7 @@ bool parse_command_line(int argc, char* argv[]){
 				Operator* toWrap = oplist.back();
 				cerr << "> Wrapper for " << toWrap->getOperatorName()<<endl;
 				op =new Wrapper(target, toWrap);
-				add_operator(op);
+				addOperator(op);
 			}
 		}
 		else if (opname == "TestBench") {
@@ -569,10 +563,10 @@ bool parse_command_line(int argc, char* argv[]){
 				cerr<<"ERROR: TestBench has no operator to wrap (it should come after the operator it wraps)"<<endl;
 				usage(argv[0]); // and exit
 			}
-			int n = check_positive_or_null(argv[i++], argv[0]);
+			int n = checkPositiveOrNull(argv[i++], argv[0]);
 			Operator* toWrap = oplist.back();
 			cerr << "> TestBench for " << toWrap->getOperatorName()<<endl;
-			if(cl_name!="")	op->set_operator_name(cl_name);
+			if(cl_name!="")	op->setOperatorName(cl_name);
 			oplist.push_back(new TestBench(target, toWrap, n));
 		}
 		else if (opname == "BigTestBench") {
@@ -583,10 +577,10 @@ bool parse_command_line(int argc, char* argv[]){
 				cerr<<"ERROR: BigTestBench has no operator to wrap (it should come after the operator it wraps)"<<endl;
 				usage(argv[0]); // and exit
 			}
-			int n = check_positive_or_null(argv[i++], argv[0]);
+			int n = checkPositiveOrNull(argv[i++], argv[0]);
 			Operator* toWrap = oplist.back();
 			cerr << "> BigTestBench for " << toWrap->getOperatorName()<<endl;
-			if(cl_name!="")	op->set_operator_name(cl_name);
+			if(cl_name!="")	op->setOperatorName(cl_name);
 			oplist.push_back(new BigTestBench(target, toWrap, n));
 		}
 		else  {
@@ -597,15 +591,12 @@ bool parse_command_line(int argc, char* argv[]){
 	return true;
 }
 
-
-
-
 int main(int argc, char* argv[] )
 {
 	target = new VirtexIV();
 
 	try {
-		bool command_line_OK =  parse_command_line(argc, argv);
+		bool command_line_OK =  parseCommandLine(argc, argv);
 	} catch (std::string s) {
 		cerr << "Exception while parsing command line: " << s << endl;
 		return 1;
@@ -622,7 +613,7 @@ int main(int argc, char* argv[] )
 	
 	for(int i=0; i<oplist.size(); i++) {
 		try {
-			oplist[i]->output_vhdl(file);
+			oplist[i]->outputVHDL(file);
 		} catch (std::string s) {
 			cerr << "Exception while generating '" << oplist[i]->getOperatorName() << "': " << s <<endl;
 		}
@@ -631,7 +622,7 @@ int main(int argc, char* argv[] )
 	
 	cout << endl<<"Final report:"<<endl;
 	for(int i=0; i<oplist.size(); i++) {
-		oplist[i]->output_final_report();
+		oplist[i]->outputFinalReport();
 	}
 	return 0;
 }

@@ -26,414 +26,392 @@
 #include <vector>
 #include <math.h>
 #include <string.h>
-
 #include <gmp.h>
 #include <mpfr.h>
-
 #include <gmpxx.h>
 #include "utils.hpp"
 #include "Operator.hpp"
-
 #include "FPMultiplier.hpp"
 #include "FPNumber.hpp"
 
 using namespace std;
 extern vector<Operator*> oplist;
 
-
-/**
- * The FPMutliplier constructor
- * @param[in]		target		the target device
- * @param[in]		wEX			the the with of the exponent for the f-p number X
- * @param[in]		wFX			the the with of the fraction for the f-p number X
- * @param[in]		wEY			the the with of the exponent for the f-p number Y
- * @param[in]		wFY			the the with of the fraction for the f-p number Y
- * @param[in]		wER			the the with of the exponent for the multiplication result
- * @param[in]		wFR			the the with of the fraction for the multiplication result
- **/
 FPMultiplier::FPMultiplier(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, int wFR, int norm) :
-	Operator(target), wEX(wEX), wFX(wFX), wEY(wEY), wFY(wFY), wER(wER), wFR(wFR) {
+	Operator(target), wEX_(wEX), wFX_(wFX), wEY_(wEY), wFY_(wFY), wER_(wER), wFR_(wFR) {
 
 	int i, j;
 	ostringstream name, synch, synch2;
 
-	/* Set up the status of the operator. Options = sequential|combinatorial */
-	if (target->is_pipelined()) 
-		set_sequential();
-	else
-		set_combinatorial(); 
+	setOperatorName();
+	setOperatorType();
 
-	/* set if operator outputs a normalized result */
+	/* set if operator outputs a normalized_ result */
 	if (norm == 0) 
-		normalized = false;
+		normalized_ = false;
 	else
-		normalized = true;
+		normalized_ = true;
 
-	/* The name has the format: FPMultiplier_wEX_wFX_wEY_wFY_wER_wFR where: wEX = width of X exponenet and wFX = width for the fractional part of X */
-	name.str("");
-	name<<"FPMultiplier_"<<wEX<<"_"<<wFX<<"_"<<wEY<<"_"<<wFY<<"_"<<wER<<"_"<<wFR; 
-	unique_name = name.str(); 
 	
 	/* Set up the IO signals */
-	/* Inputs: 2b(Exception) + 1b(Sign) + wEX bits (Exponent) + wFX bits(Fraction) */
+	/* Inputs: 2b(Exception) + 1b(Sign) + wEX_ bits (Exponent) + wFX_ bits(Fraction) */
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	add_FP_input ("X", wEX, wFX);
-	add_FP_input ("Y", wEY, wFY);
-	add_output ("ResultExponent"   , wER    );  
-	add_output ("ResultSignificand", wFR + 1);
-	add_output ("ResultException"  , 2      );
-	add_output ("ResultSign"       , 1      ); 
+	addFPInput ("X", wEX_, wFX_);
+	addFPInput ("Y", wEY_, wFY_);
+	addOutput ("ResultExponent"   , wER_    );  
+	addOutput ("ResultSignificand", wFR_ + 1);
+	addOutput ("ResultException"  , 2      );
+	addOutput ("ResultSign"       , 1      ); 
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~	
 		   
-	/* Instantiate an IntMultiplier -> multiply the significands */
-	intmult = new IntMultiplier(target, wFX+1, wFY+1);
-	oplist.push_back(intmult);
+	/* Instantiate an intmult_iplier -> multiply the significands */
+	intmult_ = new IntMultiplier(target, wFX_+1, wFY_+1);
+	oplist.push_back(intmult_);
 
-	//Setup the attibute cocerning the IntMultiplier pipeline depth 
-	IntMultPipelineDepth = intmult->pipeline_depth();
+	//Setup the attibute cocerning the intmult_iplier pipeline depth 
+	intMultPipelineDepth_ = intmult_->getPipelineDepth();
 	
 	/* Common signals for all versions */
 
-	add_signal("significandX", wFX+1);   //The Significands for the input signals X and Y
-	add_signal("significandY", wFY+1);
-	add_signal("significand_product", wFX +wFY +2);   
+	addSignal("significandX", wFX_+1);   //The Significands for the input signals X and Y
+	addSignal("significandY", wFY_+1);
+	addSignal("significand_product", wFX_ +wFY_ +2);   
 
-	add_signal("exponentX", wEX);	//The signals for the exponents of X and Y
-	add_signal("exponentY", wEY);
-	add_signal("bias",wEX+2); //bias to be substracted from the sum of exponents  
+	addSignal("exponentX", wEX_);	//The signals for the exponents of X and Y
+	addSignal("exponentY", wEY_);
+	addSignal("bias",wEX_+2); //bias to be substracted from the sum of exponents  
 
-	add_signal("exception_selector",4);//signal that selects the case for the exception
+	addSignal("exception_selector",4);//signal that selects the case for the exception
 
 	
-	if (is_sequential())
+	if (isSequential())
 	{
 	/* Common signals for the sequential version */
 		
 		/* Unregistered signals */
-		add_signal("significand_synch", wFX + wFY + 2); 
-		add_signal("exponent_synch", wEX+2);
-		add_signal("exception_synch",2);
-		add_signal("sign_synch", 1); 
+		addSignal("significand_synch", wFX_ + wFY_ + 2); 
+		addSignal("exponent_synch", wEX_+2);
+		addSignal("exception_synch",2);
+		addSignal("sign_synch", 1); 
 		
 		/* Registered signals */
-		//add_registered_signal_with_sync_reset("Exponents_Sum_Pre_Bias_Substraction",  wEX+2 );
-		//add_registered_signal_with_sync_reset("Exponents_Sum_Post_Bias_Substraction", wEX+2 );
-		//add_registered_signal_with_sync_reset("Exception_Reg_0",2); 
-		//add_registered_signal_with_sync_reset("Exception_Reg_1",2);
+		//addRegisteredSignalWithSyncReset("Exponents_Sum_Pre_Bias_Substraction",  wEX_+2 );
+		//addRegisteredSignalWithSyncReset("Exponents_Sum_Post_Bias_Substraction", wEX_+2 );
+		//addRegisteredSignalWithSyncReset("Exception_Reg_0",2); 
+		//addRegisteredSignalWithSyncReset("Exception_Reg_1",2);
 		
-		add_registered_signal("Exponents_Sum_Pre_Bias_Substraction",  wEX+2 );
-		add_registered_signal("Exponents_Sum_Post_Bias_Substraction", wEX+2 );
-		add_registered_signal("Exception_Reg_0",2); 
-		add_registered_signal("Exception_Reg_1",2);
+		addRegisteredSignalWithoutReset("Exponents_Sum_Pre_Bias_Substraction",  wEX_+2 );
+		addRegisteredSignalWithoutReset("Exponents_Sum_Post_Bias_Substraction", wEX_+2 );
+		addRegisteredSignalWithoutReset("Exception_Reg_0",2); 
+		addRegisteredSignalWithoutReset("Exception_Reg_1",2);
 		
 		
 		
 			/* Synchronization registers */
 			
 			//when integer multiplication has more than 2 pipeline levels
-			for (i=0;i<=IntMultPipelineDepth-3;i++)	{
+			for (i=0;i<=intMultPipelineDepth_-3;i++)	{
 				synch.str(""); synch2.str("");
 				synch<<"Exponent_Synchronization_"<<i;
 				
-				//add_registered_signal_with_sync_reset(synch.str(), wEX+2 );
-				add_registered_signal(synch.str(), wEX+2 );
+				//addRegisteredSignalWithSyncReset(synch.str(), wEX_+2 );
+				addRegisteredSignalWithoutReset(synch.str(), wEX_+2 );
 				
 				synch2<<"Exception_Synchronization_"<<i;
-				//add_registered_signal_with_sync_reset(synch2.str(), 2 );
-				add_registered_signal(synch2.str(), 2 );
+				//addRegisteredSignalWithSyncReset(synch2.str(), 2 );
+				addRegisteredSignalWithoutReset(synch2.str(), 2 );
 			}
 			//when the integer multiplication has less than 2 levels
-			for (i=0;i<=1-IntMultPipelineDepth;i++)	{
+			for (i=0;i<=1-intMultPipelineDepth_;i++)	{
 				synch.str("");
 				synch<<"Int_Synchronization_"<<i;
-				//add_registered_signal_with_sync_reset(synch.str(), wFX+wFY+2);
-				add_registered_signal(synch.str(), wFX+wFY+2);				
+				//addRegisteredSignalWithSyncReset(synch.str(), wFX_+wFY_+2);
+				addRegisteredSignalWithoutReset(synch.str(), wFX_+wFY_+2);				
 			}	
-			add_delay_signal("Sign_Synchronization", 1, max(2,IntMultPipelineDepth));
+			addDelaySignal("Sign_Synchronization", 1, max(2,intMultPipelineDepth_));
 
-		if (normalized){
-			/* The sequential normalized version */
+		if (normalized_){
+			/* The sequential normalized_ version */
 		
-			add_signal("normalization_selector",1);
-			add_signal("exponent_post_normalization",2+wEX);
-			add_signal("exception_post_normalization",2);
+			addSignal("normalization_selector",1);
+			addSignal("exponent_post_normalization",2+wEX_);
+			addSignal("exception_post_normalization",2);
 			
-			if (1+wFR < wFX+wFY+2) {
+			if (1+wFR_ < wFX_+wFY_+2) {
 				
-				//add_registered_signal_with_sync_reset("exponent_synch2",wEX+2);
-				add_registered_signal("exponent_synch2",wEX+2);
+				//addRegisteredSignalWithSyncReset("exponent_synch2",wEX_+2);
+				addRegisteredSignalWithoutReset("exponent_synch2",wEX_+2);
 				
-				add_registered_signal_with_sync_reset("exception_synch2",2);
+				addRegisteredSignalWithSyncReset("exception_synch2",2);
 				
-				//add_registered_signal_with_sync_reset("significand_synch2",wFX + wFY + 2);
-				add_registered_signal("significand_synch2",wFX + wFY + 2);
+				//addRegisteredSignalWithSyncReset("significand_synch2",wFX_ + wFY_ + 2);
+				addRegisteredSignalWithoutReset("significand_synch2",wFX_ + wFY_ + 2);
 				
 				
-				add_registered_signal_with_sync_reset("sign_synch2",1);
-				add_registered_signal_with_sync_reset("normalization_selector2",1);
+				addRegisteredSignalWithSyncReset("sign_synch2",1);
+				addRegisteredSignalWithSyncReset("normalization_selector2",1);
 		
-				add_signal("between_fp_numbers",1);	
-				add_signal("LSB_of_result_significand_out",1);	
-				add_signal("between_fp_numbers_out",1);
-				add_signal("sign_synch2_out",1);
-				add_signal("exception_synch2_out",2);
-				add_signal("exponent_synch2_out",wER+2);
-				add_signal("exponent_synch2_out_post_rounding",wER+2);
+				addSignal("between_fp_numbers",1);	
+				addSignal("LSB_of_result_significand_out",1);	
+				addSignal("between_fp_numbers_out",1);
+				addSignal("sign_synch2_out",1);
+				addSignal("exception_synch2_out",2);
+				addSignal("exponent_synch2_out",wER_+2);
+				addSignal("exponent_synch2_out_post_rounding",wER_+2);
 				
 						
-				add_signal("check_string",wFX+wFY+2 - (1+wFR) );
-				add_signal("reunion_signal",2+wFR);
-				add_signal("reunion_signal_out",2+wFR);
-				add_signal("LSB_of_result_significand",1); 
-				add_signal("between_fp_numbers_result_significand",2+wFR);
-				add_signal("reunion_signal_post_addition",2+wFR); 
-				add_signal("reunion_signal_post_rounding",2+wFR); 
+				addSignal("check_string",wFX_+wFY_+2 - (1+wFR_) );
+				addSignal("reunion_signal",2+wFR_);
+				addSignal("reunion_signal_out",2+wFR_);
+				addSignal("LSB_of_result_significand",1); 
+				addSignal("between_fp_numbers_result_significand",2+wFR_);
+				addSignal("reunion_signal_post_addition",2+wFR_); 
+				addSignal("reunion_signal_post_rounding",2+wFR_); 
 				
 				
 				//parameters setup
 				
-				bool status = target->suggest_subadd_size(addition_chunk_width, 2+ wFR);
+				bool status = target->suggestSubaddSize(additionChunkWidth_, 2+ wFR_);
 				if (!status)
 					cout<<"Frequency report:"<<endl;
 					cout<<tab<<"WARNING: Desired frequency cannot be reached !";
 			
 			
-				reunion_signal_width = 2+ wFR;
-				reunion_signal_parts = int ( ceil( double(reunion_signal_width)/double(addition_chunk_width)));
-				addition_last_chunk_width = reunion_signal_width - (reunion_signal_parts - 1)*addition_chunk_width;
+				reunionSignalWidth_ = 2+ wFR_;
+				reunionSignalParts_ = int ( ceil( double(reunionSignalWidth_)/double(additionChunkWidth_)));
+				additionLastChunkWidth_ = reunionSignalWidth_ - (reunionSignalParts_ - 1)*additionChunkWidth_;
 							
 				
 				
-				if (reunion_signal_parts>1){
-					for (j=1; j<=reunion_signal_parts;j++)	
-						for (i=1;i<=reunion_signal_parts;i++){	
+				if (reunionSignalParts_>1){
+					for (j=1; j<=reunionSignalParts_;j++)	
+						for (i=1;i<=reunionSignalParts_;i++){	
 							name.str("");
 							name<<"Last_Addition_Level_"<<j<<"_Reg_"<<i;
-							if (i!=reunion_signal_parts){
-								//add_delay_signal_bus_(name.str(), addition_chunk_width + 1 ,1);
-								add_delay_signal_bus_no_reset(name.str(), addition_chunk_width + 1 ,1);
+							if (i!=reunionSignalParts_){
+								//addDelaySignalBus(name.str(), additionChunkWidth_ + 1 ,1);
+								addDelaySignalBusNoReset(name.str(), additionChunkWidth_ + 1 ,1);
 							}
 							else
 							{
-								//add_delay_signal_bus(name.str(), addition_last_chunk_width,1 );	
-								add_delay_signal_bus_no_reset(name.str(), addition_last_chunk_width,1 );	
+								//addDelaySignalBus(name.str(), additionLastChunkWidth_,1 );	
+								addDelaySignalBusNoReset(name.str(), additionLastChunkWidth_,1 );	
 							
 							}
 		        }
 				
 					/*
-					add_delay_signal("reunion_signal_level",2+wFR,reunion_signal_parts);
-					add_delay_signal("LSB_of_result_significand_level",1,reunion_signal_parts);		
-					add_delay_signal("between_fp_numbers_level",1,reunion_signal_parts);			
-					add_delay_signal("sign_synch2_level",1,reunion_signal_parts);
-					add_delay_signal("exception_synch2_level",2,reunion_signal_parts);
-					add_delay_signal("exponent_synch2_level",2+wER,reunion_signal_parts);
+					addDelaySignal("reunion_signal_level",2+wFR_,reunionSignalParts_);
+					addDelaySignal("LSB_of_result_significand_level",1,reunionSignalParts_);		
+					addDelaySignal("between_fp_numbers_level",1,reunionSignalParts_);			
+					addDelaySignal("sign_synch2_level",1,reunionSignalParts_);
+					addDelaySignal("exception_synch2_level",2,reunionSignalParts_);
+					addDelaySignal("exponent_synch2_level",2+wER_,reunionSignalParts_);
 					*/
 					
-					add_delay_signal_no_reset("reunion_signal_level",2+wFR,reunion_signal_parts);
-					add_delay_signal_no_reset("LSB_of_result_significand_level",1,reunion_signal_parts);		
-					add_delay_signal_no_reset("between_fp_numbers_level",1,reunion_signal_parts);			
-					add_delay_signal_no_reset("sign_synch2_level",1,reunion_signal_parts);
-					add_delay_signal_no_reset("exception_synch2_level",2,reunion_signal_parts);
-					add_delay_signal_no_reset("exponent_synch2_level",2+wER,reunion_signal_parts);
+					addDelaySignalNoReset("reunion_signal_level",2+wFR_,reunionSignalParts_);
+					addDelaySignalNoReset("LSB_of_result_significand_level",1,reunionSignalParts_);		
+					addDelaySignalNoReset("between_fp_numbers_level",1,reunionSignalParts_);			
+					addDelaySignalNoReset("sign_synch2_level",1,reunionSignalParts_);
+					addDelaySignalNoReset("exception_synch2_level",2,reunionSignalParts_);
+					addDelaySignalNoReset("exponent_synch2_level",2+wER_,reunionSignalParts_);
 					
 					
 				}
 			}
 		
 		}else{
-		/* The sequential non-normalized version */
+		/* The sequential non-normalized_ version */
 			
 			
-			if ((wFX+wFY+2 > wFR+1))
+			if ((wFX_+wFY_+2 > wFR_+1))
 			{
 				/*
-				add_registered_signal_with_sync_reset("exponent_synch2",wEX+2);
-				add_registered_signal_with_sync_reset("exception_synch2",2);
-				add_registered_signal_with_sync_reset("significand_synch2",wFX + wFY + 2);
-				add_registered_signal_with_sync_reset("sign_synch2",1);
+				addRegisteredSignalWithSyncReset("exponent_synch2",wEX_+2);
+				addRegisteredSignalWithSyncReset("exception_synch2",2);
+				addRegisteredSignalWithSyncReset("significand_synch2",wFX_ + wFY_ + 2);
+				addRegisteredSignalWithSyncReset("sign_synch2",1);
 				*/
 				
-				add_registered_signal("exponent_synch2",wEX+2);
-				add_registered_signal("exception_synch2",2);
-				add_registered_signal("significand_synch2",wFX + wFY + 2);
-				add_registered_signal("sign_synch2",1);
+				addRegisteredSignalWithoutReset("exponent_synch2",wEX_+2);
+				addRegisteredSignalWithoutReset("exception_synch2",2);
+				addRegisteredSignalWithoutReset("significand_synch2",wFX_ + wFY_ + 2);
+				addRegisteredSignalWithoutReset("sign_synch2",1);
 						
-				add_signal("between_fp_numbers",1);	
-				add_signal("LSB_of_result_significand_out",1);	
-				add_signal("between_fp_numbers_out",1);
-				add_signal("sign_synch2_out",1);
-				add_signal("exception_synch2_out",2);
-				add_signal("exponent_synch2_out",wER+2);
-				add_signal("exponent_synch2_out_post_rounding",wER+2);
+				addSignal("between_fp_numbers",1);	
+				addSignal("LSB_of_result_significand_out",1);	
+				addSignal("between_fp_numbers_out",1);
+				addSignal("sign_synch2_out",1);
+				addSignal("exception_synch2_out",2);
+				addSignal("exponent_synch2_out",wER_+2);
+				addSignal("exponent_synch2_out_post_rounding",wER_+2);
 										
-				add_signal("check_string",wFX+wFY+2 - (1+wFR) );
+				addSignal("check_string",wFX_+wFY_+2 - (1+wFR_) );
 				
 			
 			
-				bool status = target->suggest_subadd_size(addition_chunk_width, 3+ wFR);
+				bool status = target->suggestSubaddSize(additionChunkWidth_, 3+ wFR_);
 				if (!status)
 					cout<<"Frequency report:"<<endl;
 					cout<<tab<<"WARNING: Desired frequency cannot be reached !";
 						
-				reunion_signal_width = 3 + wFR;
-				reunion_signal_parts = int ( ceil( double(reunion_signal_width)/double(addition_chunk_width)));
-				addition_last_chunk_width = reunion_signal_width - (reunion_signal_parts - 1)*addition_chunk_width;
+				reunionSignalWidth_ = 3 + wFR_;
+				reunionSignalParts_ = int ( ceil( double(reunionSignalWidth_)/double(additionChunkWidth_)));
+				additionLastChunkWidth_ = reunionSignalWidth_ - (reunionSignalParts_ - 1)*additionChunkWidth_;
 				
-				if (reunion_signal_parts>1){
-					for (j=1; j<=reunion_signal_parts;j++)	
-					for (i=1;i<=reunion_signal_parts;i++){	
+				if (reunionSignalParts_>1){
+					for (j=1; j<=reunionSignalParts_;j++)	
+					for (i=1;i<=reunionSignalParts_;i++){	
 						name.str("");
 						name<<"Last_Addition_Level_"<<j<<"_Reg_"<<i;
-						if (i!=reunion_signal_parts)
+						if (i!=reunionSignalParts_)
 						{
-							//add_registered_signal_with_sync_reset(name.str(), addition_chunk_width + 1 );
-							add_registered_signal_with_sync_reset(name.str(), addition_chunk_width + 1 );
+							//addRegisteredSignalWithSyncReset(name.str(), additionChunkWidth_ + 1 );
+							addRegisteredSignalWithSyncReset(name.str(), additionChunkWidth_ + 1 );
 						}
 						else{
-							//add_registered_signal_with_sync_reset(name.str(), addition_last_chunk_width );
-							add_registered_signal(name.str(), addition_last_chunk_width );		
+							//addRegisteredSignalWithSyncReset(name.str(), additionLastChunkWidth_ );
+							addRegisteredSignalWithoutReset(name.str(), additionLastChunkWidth_ );		
 						}
 	        }
 				
 					/*
-					add_delay_signal("reunion_signal_level",3+wFR,reunion_signal_parts);
-					add_delay_signal("LSB_of_result_significand_level",1,reunion_signal_parts);		
-					add_delay_signal("between_fp_numbers_level",1,reunion_signal_parts);			
-					add_delay_signal("sign_synch2_level",1,reunion_signal_parts);
-					add_delay_signal("exception_synch2_level",2,reunion_signal_parts);
-					add_delay_signal("exponent_synch2_level",2+wER,reunion_signal_parts);
+					addDelaySignal("reunion_signal_level",3+wFR_,reunionSignalParts_);
+					addDelaySignal("LSB_of_result_significand_level",1,reunionSignalParts_);		
+					addDelaySignal("between_fp_numbers_level",1,reunionSignalParts_);			
+					addDelaySignal("sign_synch2_level",1,reunionSignalParts_);
+					addDelaySignal("exception_synch2_level",2,reunionSignalParts_);
+					addDelaySignal("exponent_synch2_level",2+wER_,reunionSignalParts_);
 					*/
 					
-					add_delay_signal_no_reset("reunion_signal_level",3+wFR,reunion_signal_parts);
-					add_delay_signal_no_reset("LSB_of_result_significand_level",1,reunion_signal_parts);		
-					add_delay_signal_no_reset("between_fp_numbers_level",1,reunion_signal_parts);			
-					add_delay_signal_no_reset("sign_synch2_level",1,reunion_signal_parts);
-					add_delay_signal_no_reset("exception_synch2_level",2,reunion_signal_parts);
-					add_delay_signal_no_reset("exponent_synch2_level",2+wER,reunion_signal_parts);					
+					addDelaySignalNoReset("reunion_signal_level",3+wFR_,reunionSignalParts_);
+					addDelaySignalNoReset("LSB_of_result_significand_level",1,reunionSignalParts_);		
+					addDelaySignalNoReset("between_fp_numbers_level",1,reunionSignalParts_);			
+					addDelaySignalNoReset("sign_synch2_level",1,reunionSignalParts_);
+					addDelaySignalNoReset("exception_synch2_level",2,reunionSignalParts_);
+					addDelaySignalNoReset("exponent_synch2_level",2+wER_,reunionSignalParts_);					
 					
 					
 				}
 
-				add_signal("reunion_signal"                       ,1+(1+wFR)+1);
-				add_signal("reunion_signal_out"                   ,3+wFR);
-				add_signal("LSB_of_result_significand"            ,1    ); 
-				add_signal("between_fp_numbers_result_significand",3+wFR);
-				add_signal("reunion_signal_post_addition"         ,3+wFR); 
-				add_signal("reunion_signal_post_rounding"         ,3+wFR);
+				addSignal("reunion_signal"                       ,1+(1+wFR_)+1);
+				addSignal("reunion_signal_out"                   ,3+wFR_);
+				addSignal("LSB_of_result_significand"            ,1    ); 
+				addSignal("between_fp_numbers_result_significand",3+wFR_);
+				addSignal("reunion_signal_post_addition"         ,3+wFR_); 
+				addSignal("reunion_signal_post_rounding"         ,3+wFR_);
 						
-				//add_signal("temp_exp_concat_fract", 1 + wEX + wFX + wFY + 2);
+				//addSignal("temp_exp_concat_fract", 1 + wEX_ + wFX_ + wFY_ + 2);
 			}
 		}
 	}
 	else{ 
 		/* Signals for the combinational version */
-		add_signal("normalization_selector",1);
-		add_signal("exponent_post_normalization",2+wER);
-		add_signal("exception_post_normalization",2);
+		addSignal("normalization_selector",1);
+		addSignal("exponent_post_normalization",2+wER_);
+		addSignal("exception_post_normalization",2);
 				
-		add_signal("Exponents_Sum_Pre_Bias_Substraction", wER+2 );
-		add_signal("Exponents_Sum_Post_Bias_Substraction", wER+2 );   
-		add_signal("Exception_Reg_0",2); 
-		add_signal("Exception_Reg_1",2);
-		if ((1 + wFR < wFX + wFY + 2)) {
-			add_signal("check_string",wFX+wFY+2 - (1+wFR) );
-			add_signal("reunion_signal",2+wFR);
-			add_signal("LSB_of_result_significand",1); 
-			add_signal("between_fp_numbers_result_significand",2+wFR);
-			add_signal("reunion_signal_post_addition",2+wFR); 
-			add_signal("reunion_signal_post_rounding",2+wFR); 
-			add_signal("exponent_post_rounding",wER+2);
-			add_signal("between_fp_numbers",1);
+		addSignal("Exponents_Sum_Pre_Bias_Substraction", wER_+2 );
+		addSignal("Exponents_Sum_Post_Bias_Substraction", wER_+2 );   
+		addSignal("Exception_Reg_0",2); 
+		addSignal("Exception_Reg_1",2);
+		if ((1 + wFR_ < wFX_ + wFY_ + 2)) {
+			addSignal("check_string",wFX_+wFY_+2 - (1+wFR_) );
+			addSignal("reunion_signal",2+wFR_);
+			addSignal("LSB_of_result_significand",1); 
+			addSignal("between_fp_numbers_result_significand",2+wFR_);
+			addSignal("reunion_signal_post_addition",2+wFR_); 
+			addSignal("reunion_signal_post_rounding",2+wFR_); 
+			addSignal("exponent_post_rounding",wER_+2);
+			addSignal("between_fp_numbers",1);
 		}
 		
 	}	
 
 	//set pipeline depth 
-	if (!is_sequential())
-		set_pipeline_depth(0);
+	if (!isSequential())
+		setPipelineDepth(0);
 	else
-		if (normalized)
-			if (1+wFR >= wFX+wFY+2)   
-				set_pipeline_depth(max(2,IntMultPipelineDepth));
+		if (normalized_)
+			if (1+wFR_ >= wFX_+wFY_+2)   
+				setPipelineDepth(max(2,intMultPipelineDepth_));
 			else
-				if (reunion_signal_parts>1)
-					set_pipeline_depth(1 + max(2,IntMultPipelineDepth) + reunion_signal_parts );
+				if (reunionSignalParts_>1)
+					setPipelineDepth(1 + max(2,intMultPipelineDepth_) + reunionSignalParts_ );
 				else
-					set_pipeline_depth(1 + max(2,IntMultPipelineDepth));
+					setPipelineDepth(1 + max(2,intMultPipelineDepth_));
 		else
-			if (1+wFR>=2+wFX+wFY)
-				set_pipeline_depth(max(2,IntMultPipelineDepth));
+			if (1+wFR_>=2+wFX_+wFY_)
+				setPipelineDepth(max(2,intMultPipelineDepth_));
 			else
-				if (reunion_signal_parts==1)
-					set_pipeline_depth(max(2,IntMultPipelineDepth) + 1);
+				if (reunionSignalParts_==1)
+					setPipelineDepth(max(2,intMultPipelineDepth_) + 1);
 				else
-					set_pipeline_depth(max(2,IntMultPipelineDepth) + 1 + reunion_signal_parts);
+					setPipelineDepth(max(2,intMultPipelineDepth_) + 1 + reunionSignalParts_);
 		
 }
 
-/**
- * FPMultiplier destructor
- */
 FPMultiplier::~FPMultiplier() {
 }
 
+void FPMultiplier::setOperatorName(){
+	/* The name has the format: FPMultiplier_wEX__wFX__wEY__wFY__wER__wFR_ where: wEX_ = width of X exponenet and wFX_ = width for the fractional part of X */
+	ostringstream name;
+	name.str("");
+	name<<"FPMultiplier_"<<wEX_<<"_"<<wFX_<<"_"<<wEY_<<"_"<<wFY_<<"_"<<wER_<<"_"<<wFR_; 
+	uniqueName_ = name.str(); 
+}
 
 
-/**
- * Method belonging to the Operator class overloaded by the FPMultiplier class
- * @param[in,out] o     the stream where the current architecture will be outputed to
- * @param[in]     name  the name of the entity corresponding to the architecture generated in this method
- **/
-void FPMultiplier::output_vhdl(std::ostream& o, std::string name) {
+void FPMultiplier::outputVHDL(std::ostream& o, std::string name) {
   
 	ostringstream signame, synch1, synch2, xname,zeros, zeros1, zeros2, str1, str2;
 
-	int bias_val=int(pow(double(2),double(wEX-1)))-1;
+	int bias_val=int(pow(double(2),double(wEX_-1)))-1;
 	int i, j; 
 
-	Licence(o,"Bogdan Pasca (2008)");
-	Operator::StdLibs(o);
+	licence(o,"Bogdan Pasca (2008)");
+	Operator::stdLibs(o);
 	o<<endl<<endl;	
-	output_vhdl_entity(o);
+	outputVHDLEntity(o);
 
-	new_architecture(o,name);
+	newArchitecture(o,name);
 	
-	intmult->output_vhdl_component(o);
-	output_vhdl_signal_declarations(o);	  
+	intmult_->outputVHDLComponent(o);
+	outputVHDLSignalDeclarations(o);	  
 	o<<endl;
 
-	begin_architecture(o);
+	beginArchitecture(o);
 	
-	if (is_sequential()){
-		/* common code for both normalized and non-normalized version */
-		output_vhdl_registers(o); o<<endl;
+	if (isSequential()){
+		/* common code for both normalized_ and non-normalized_ version */
+		outputVHDLRegisters(o); o<<endl;
 		
 		/* Exponent Handling */
-			o<<tab<<"exponentX <= X("<<wEX + wFX -1<<" downto "<<wFX<<");"<<endl; 
-			o<<tab<<"exponentY <= Y("<<wEY + wFY -1<<" downto "<<wFY<<");"<<endl<<endl;
+			o<<tab<<"exponentX <= X("<<wEX_ + wFX_ -1<<" downto "<<wFX_<<");"<<endl; 
+			o<<tab<<"exponentY <= Y("<<wEY_ + wFY_ -1<<" downto "<<wFY_<<");"<<endl<<endl;
 			//Add exponents -> put sum into register
-			o<<tab<<"Exponents_Sum_Pre_Bias_Substraction <= (\"00\" & exponentX) + (\"00\" & exponentY);"<<endl; //wEX+2 bits	[*Optimization point - pipelining*]
-			o<<tab<<"bias <= CONV_STD_LOGIC_VECTOR("<<bias_val<<","<<wEX+2<<");"<<endl; 
+			o<<tab<<"Exponents_Sum_Pre_Bias_Substraction <= (\"00\" & exponentX) + (\"00\" & exponentY);"<<endl; //wEX_+2 bits	[*Optimization point - pipelining*]
+			o<<tab<<"bias <= CONV_STD_LOGIC_VECTOR("<<bias_val<<","<<wEX_+2<<");"<<endl; 
 			//substract the bias value from the exponents' sum
-			o<<tab<<"Exponents_Sum_Post_Bias_Substraction <= Exponents_Sum_Pre_Bias_Substraction_d - bias;"<<endl;//wEX + 2   
+			o<<tab<<"Exponents_Sum_Post_Bias_Substraction <= Exponents_Sum_Pre_Bias_Substraction_d - bias;"<<endl;//wEX_ + 2   
 		
 		/* Significand Handling */
 			//build significands 	 	
-			o<<tab<< "significandX <= \"1\" & X("<<(wFX-1)<<" downto 0);"<<endl;
-			o<<tab<< "significandY <= \"1\" & Y("<<(wFY-1)<<" downto 0);"<<endl<<endl;
+			o<<tab<< "significandX <= \"1\" & X("<<(wFX_-1)<<" downto 0);"<<endl;
+			o<<tab<< "significandY <= \"1\" & Y("<<(wFY_-1)<<" downto 0);"<<endl<<endl;
 			//multiply significands 
-			o<<tab<< "int_multiplier_component: " << intmult->getOperatorName() << endl;
-			o<<tab<< "      port map ( X => significandX, " << endl; //wFX+1 bits (1 bit is the hidden 1)
-			o<<tab<< "                 Y => significandY, " << endl; //wFY+1 bits
-			o<<tab<< "                 R => significand_product, " << endl; //wFX+wFY+2 bits
+			o<<tab<< "int_multiplier_component: " << intmult_->getOperatorName() << endl;
+			o<<tab<< "      port map ( X => significandX, " << endl; //wFX_+1 bits (1 bit is the hidden 1)
+			o<<tab<< "                 Y => significandY, " << endl; //wFY_+1 bits
+			o<<tab<< "                 R => significand_product, " << endl; //wFX_+wFY_+2 bits
 			o<<tab<< "                 clk => clk, " << endl;
 			o<<tab<< "                 rst => rst " << endl;
 			o<<tab<< "               );" << endl<<endl;
 
 		/* Exception Handling */
 			//Concatenate the exception bits of the two input numbers
-			o<<tab<<"exception_selector <= X("<<wEX + wFX +2<<" downto "<<wEX + wFX + 1<<") & Y("<<wEY + wFY +2<<" downto "<<wEY + wFY +1<<");"<<endl<<endl;
+			o<<tab<<"exception_selector <= X("<<wEX_ + wFX_ +2<<" downto "<<wEX_ + wFX_ + 1<<") & Y("<<wEY_ + wFY_ +2<<" downto "<<wEY_ + wFY_ +1<<");"<<endl<<endl;
 			//select proper exception with selector			
 			o<<tab<<"process (exception_selector)"<<endl;
 			o<<tab<<"begin"<<endl;
@@ -461,39 +439,39 @@ void FPMultiplier::output_vhdl(std::ostream& o, std::string name) {
 			//propagate 1 level the computed exception in order to synchronize with the exponents sum						
 			o<<tab<<"Exception_Reg_1 <= Exception_Reg_0_d;"<<endl; 						
 									
-		/* synchronization barrier (IntMultiplication | Exponent Addition | Exception Computation | Sign Computation */
+		/* synchronization barrier (intmult_iplication | Exponent Addition | Exception Computation | Sign Computation */
 		/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 		/* Cases: 		
-			0. when IntMultiplication | Exponent Addition are allready synchronized	
+			0. when intmult_iplication | Exponent Addition are allready synchronized	
 			1. when registers are added to exponent addition
 			2. when registers are added to integer multiplication
 		*/	
 	  
-		if (IntMultPipelineDepth==2){
-			// when IntMultiplication | Exponent Addition are allready synchronized	 
+		if (intMultPipelineDepth_==2){
+			// when intmult_iplication | Exponent Addition are allready synchronized	 
 			o<<tab<<"exponent_synch    <= Exponents_Sum_Post_Bias_Substraction_d;"<<endl;
 			o<<tab<<"significand_synch <= significand_product;"<<endl;
 			o<<tab<<"exception_synch   <= Exception_Reg_1_d;"<<endl;
 		}
 	   else{	
-			if (IntMultPipelineDepth > 2){
+			if (intMultPipelineDepth_ > 2){
 			/* when registers are added to exponent addition */
 				//connect the first synchronization reg to the output of the last reg from exponent addition 
 				o<<tab<<"Exponent_Synchronization_0  <= Exponents_Sum_Post_Bias_Substraction_d;"<<endl;
 				o<<tab<<"Exception_Synchronization_0 <= Exception_Reg_1_d;"<<endl; 									
 
-				for (i=1;i<=IntMultPipelineDepth-3;i++){
+				for (i=1;i<=intMultPipelineDepth_-3;i++){
 					o<<tab<<"Exponent_Synchronization_"<<i<<"   <= "<<"Exponent_Synchronization_"<<i-1<<"_d;"<<endl;		
 					o<<tab<<"Exception_Synchronization_"<<i<<" <= "<<"Exception_Synchronization_"<<i-1<<"_d;"<<endl;
 				}
-					o<<tab<<"exponent_synch    <= Exponent_Synchronization_"<<	IntMultPipelineDepth-3 <<"_d;"<<endl;
-					o<<tab<<"exception_synch   <= Exception_Synchronization_"<<IntMultPipelineDepth-3 <<"_d;"<<endl;
+					o<<tab<<"exponent_synch    <= Exponent_Synchronization_"<<	intMultPipelineDepth_-3 <<"_d;"<<endl;
+					o<<tab<<"exception_synch   <= Exception_Synchronization_"<<intMultPipelineDepth_-3 <<"_d;"<<endl;
 					o<<tab<<"significand_synch <= significand_product;"<<endl;			
 			}
 			else{
-				//add registers to the output of IntMultiplier so that exponent addition and significand multiplication become synchronized
+				//add registers to the output of intmult_iplier so that exponent addition and significand multiplication become synchronized
 				o<<tab<<"Int_Synchronization_0 <= significand_product;"<<endl;
-				for (i=1;i<=1-IntMultPipelineDepth;i++){
+				for (i=1;i<=1-intMultPipelineDepth_;i++){
 					synch1.str(""); synch2.str("");
 					synch2<<"Int_Synchronization_"<<i;
 					synch1<<"Int_Synchronization_"<<i-1<<"_d";
@@ -501,36 +479,36 @@ void FPMultiplier::output_vhdl(std::ostream& o, std::string name) {
 				}
 				o<<tab<<"exponent_synch    <= Exponents_Sum_Post_Bias_Substraction_d;"<<endl;
 				o<<tab<<"exception_synch   <= Exception_Reg_1_d;"<<endl;
-				o<<tab<<"significand_synch <= Int_Synchronization_"<< 1-IntMultPipelineDepth<<"_d;"<<endl;
+				o<<tab<<"significand_synch <= Int_Synchronization_"<< 1-intMultPipelineDepth_<<"_d;"<<endl;
 			}
 		}
 		//sign synchronization
-		o<<tab<<"Sign_Synchronization <= X("<<wEX + wFX<<") xor Y("<<wEY + wFY<<");"<<endl;
-		o<<tab<<"sign_synch <= "<<get_delay_signal_name("Sign_Synchronization",max(2,IntMultPipelineDepth))<<";"<<endl<<endl;
+		o<<tab<<"Sign_Synchronization <= X("<<wEX_ + wFX_<<") xor Y("<<wEY_ + wFY_<<");"<<endl;
+		o<<tab<<"sign_synch <= "<<getDelaySignalName("Sign_Synchronization",max(2,intMultPipelineDepth_))<<";"<<endl<<endl;
 	
 	
-		if (normalized==true){	
+		if (normalized_==true){	
 			/* normalize result */
 			
 			//assign selector signal to MSB of signif. multiplic 
-			o<<tab<<"normalization_selector <= significand_synch ("<<wFX+wFY+1<<");"<<endl;
+			o<<tab<<"normalization_selector <= significand_synch ("<<wFX_+wFY_+1<<");"<<endl;
 
-			o<<tab<<"exponent_post_normalization <= (exponent_synch ) + (CONV_STD_LOGIC_VECTOR(0 ,"<<wEX+1<<") & normalization_selector);"<<endl;
+			o<<tab<<"exponent_post_normalization <= (exponent_synch ) + (CONV_STD_LOGIC_VECTOR(0 ,"<<wEX_+1<<") & normalization_selector);"<<endl;
 
 			/* result rounding */
 			//check is rounding is needed
-			if (1+wFR >= wFX+wFY+2) {
+			if (1+wFR_ >= wFX_+wFY_+2) {
 				/* =>no rounding needed - possible padding */
-				o<<tab<<"with exponent_post_normalization("<< wER+1 <<" downto "<< wER <<") select"<<endl;		
+				o<<tab<<"with exponent_post_normalization("<< wER_+1 <<" downto "<< wER_ <<") select"<<endl;		
 				o<<tab<<"exception_post_normalization <= exception_synch when \"00\","<<endl;
 				o<<tab<<"                            \"10\"             when \"01\", "<<endl;
 				o<<tab<<"                            \"00\"             when \"11\"|\"10\","<<endl;
 				o<<tab<<"                            \"11\"             when others;"<<endl;						
 				
 				//make the outputs
-				o<<tab<<"ResultExponent     <= exponent_post_normalization("<<wEX - 1<<" downto 0);"<<endl;  
-				o<<tab<<"ResultSignificand  <= significand_synch & "<<zero_generator(1+wFR - (wFX+wFY+2) , 0)<<" when normalization_selector='1' else"<<endl;
-				o<<tab<<"                      significand_synch("<<wFX+wFY<<" downto 0) & "<<zero_generator(1+wFR - (wFX+wFY+2) , 0)<<" & \"0\";"<<endl;
+				o<<tab<<"ResultExponent     <= exponent_post_normalization("<<wEX_ - 1<<" downto 0);"<<endl;  
+				o<<tab<<"ResultSignificand  <= significand_synch & "<<zeroGenerator(1+wFR_ - (wFX_+wFY_+2) , 0)<<" when normalization_selector='1' else"<<endl;
+				o<<tab<<"                      significand_synch("<<wFX_+wFY_<<" downto 0) & "<<zeroGenerator(1+wFR_ - (wFX_+wFY_+2) , 0)<<" & \"0\";"<<endl;
 				o<<tab<<"ResultException    <= exception_post_normalization;"<<endl;
 				o<<tab<<"ResultSign         <= sign_synch;"<<endl;
 
@@ -540,14 +518,14 @@ void FPMultiplier::output_vhdl(std::ostream& o, std::string name) {
 				//check if in the middle of two FP numbers
 				//generate two xor strings
 				str1.str(""); str2.str(""); //init
-				str1<<"\"1"<< zero_generator( wFX+wFY+2 - (1+wFR) -1, 1);
-				str2<<"\"01"<< zero_generator( wFX+wFY+2 - (1+wFR) -1-1, 1);
+				str1<<"\"1"<< zeroGenerator( wFX_+wFY_+2 - (1+wFR_) -1, 1);
+				str2<<"\"01"<< zeroGenerator( wFX_+wFY_+2 - (1+wFR_) -1-1, 1);
 
 				zeros1.str("");
-				zeros1<< zero_generator( wFX+wFY+2 - (1+wFR) , 0);
+				zeros1<< zeroGenerator( wFX_+wFY_+2 - (1+wFR_) , 0);
 
-				o<<tab<<"check_string <= (significand_synch ("<< wFX+wFY+2 - (1+wFR) -1<<" downto 0) xor "<<str1.str()<<") when normalization_selector='1' else"<<endl;
-				o<<tab<<"               ( (\"0\" & significand_synch ("<< wFX+wFY+2 - (1+wFR) -1-1<<" downto 0)) xor "<<str2.str()<<");"<<endl;
+				o<<tab<<"check_string <= (significand_synch ("<< wFX_+wFY_+2 - (1+wFR_) -1<<" downto 0) xor "<<str1.str()<<") when normalization_selector='1' else"<<endl;
+				o<<tab<<"               ( (\"0\" & significand_synch ("<< wFX_+wFY_+2 - (1+wFR_) -1-1<<" downto 0)) xor "<<str2.str()<<");"<<endl;
 
 				o<<tab<<"process(clk)"<<endl;
 				o<<tab<<"begin"<<endl;
@@ -569,74 +547,74 @@ void FPMultiplier::output_vhdl(std::ostream& o, std::string name) {
 				//~~~~~~~~~~~~~~~~~~~~~
 
 
-				o<<tab<<"reunion_signal <= (\"0\" & significand_synch2_d("<< wFX+wFY<<" downto "<<wFX+wFY - (wFR) <<" )) when normalization_selector2_d='1' else"<<endl;
-				o<<tab<<"                  (\"0\" & significand_synch2_d("<< wFX+wFY-1<<" downto "<<wFX+wFY - (wFR) -1<<" ));"<<endl; 
+				o<<tab<<"reunion_signal <= (\"0\" & significand_synch2_d("<< wFX_+wFY_<<" downto "<<wFX_+wFY_ - (wFR_) <<" )) when normalization_selector2_d='1' else"<<endl;
+				o<<tab<<"                  (\"0\" & significand_synch2_d("<< wFX_+wFY_-1<<" downto "<<wFX_+wFY_ - (wFR_) -1<<" ));"<<endl; 
               
-				o<<tab<<"LSB_of_result_significand <= significand_synch2_d("<< wFX+wFY+1 - wFR<<" ) when normalization_selector2_d='1' else"<<endl;
-				o<<tab<<"                             significand_synch2_d("<< wFX+wFY+1 - wFR -1<<" );"<<endl;              
+				o<<tab<<"LSB_of_result_significand <= significand_synch2_d("<< wFX_+wFY_+1 - wFR_<<" ) when normalization_selector2_d='1' else"<<endl;
+				o<<tab<<"                             significand_synch2_d("<< wFX_+wFY_+1 - wFR_ -1<<" );"<<endl;              
 				
 				/* pipeline the possible carry_in propagation caused by rounding */
 				
 				//connect the first part of the pipeline structure to the signals
-				if (reunion_signal_parts != 1){
-					for (j = 1; j <= reunion_signal_parts; j++){
+				if (reunionSignalParts_ != 1){
+					for (j = 1; j <= reunionSignalParts_; j++){
 						if (j == 1)
-							o<<"Last_Addition_Level_"<<1<<"_Reg_"<<j<<" <= (\"0\" & reunion_signal("<<j*addition_chunk_width-1<<" downto "<<(j-1)*addition_chunk_width<<")) + '1';"<<endl;
+							o<<"Last_Addition_Level_"<<1<<"_Reg_"<<j<<" <= (\"0\" & reunion_signal("<<j*additionChunkWidth_-1<<" downto "<<(j-1)*additionChunkWidth_<<")) + '1';"<<endl;
 						else
-							if (j!=reunion_signal_parts)
-								o<<"Last_Addition_Level_"<<1<<"_Reg_"<<j<<" <= (\"0\" & reunion_signal("<<j*addition_chunk_width-1<<" downto "<<(j-1)*addition_chunk_width<<"));"<<endl;	
+							if (j!=reunionSignalParts_)
+								o<<"Last_Addition_Level_"<<1<<"_Reg_"<<j<<" <= (\"0\" & reunion_signal("<<j*additionChunkWidth_-1<<" downto "<<(j-1)*additionChunkWidth_<<"));"<<endl;	
 							else
-								o<<"Last_Addition_Level_"<<1<<"_Reg_"<<j<<" <=  reunion_signal("<<(j-1)*addition_chunk_width + addition_last_chunk_width -1<<" downto "<<(j-1)*addition_chunk_width<<");"<<endl;	
+								o<<"Last_Addition_Level_"<<1<<"_Reg_"<<j<<" <=  reunion_signal("<<(j-1)*additionChunkWidth_ + additionLastChunkWidth_ -1<<" downto "<<(j-1)*additionChunkWidth_<<");"<<endl;	
 					}
 					
 					//put together the pipeline
-					for (j=1; j<=reunion_signal_parts-1;j++)	
-						for (i=1;i<=reunion_signal_parts;i++)
+					for (j=1; j<=reunionSignalParts_-1;j++)	
+						for (i=1;i<=reunionSignalParts_;i++)
 							if ((i<=j)||(i>j+1))
 								o<<tab<<"Last_Addition_Level_"<<j+1<<"_Reg_"<<i<<" <= Last_Addition_Level_"<<j<<"_Reg_"<<i<<"_d;"<<endl;
 							else
-								o<<tab<<"Last_Addition_Level_"<<j+1<<"_Reg_"<<i<<" <= Last_Addition_Level_"<<j<<"_Reg_"<<i<<"_d + Last_Addition_Level_"<<j<<"_Reg_"<<i-1<<"_d("<<addition_chunk_width<<") ;"<<endl; 
+								o<<tab<<"Last_Addition_Level_"<<j+1<<"_Reg_"<<i<<" <= Last_Addition_Level_"<<j<<"_Reg_"<<i<<"_d + Last_Addition_Level_"<<j<<"_Reg_"<<i-1<<"_d("<<additionChunkWidth_<<") ;"<<endl; 
 
 					//put the result back together
 					ostringstream reunion_signal_post_1_addition;
-					for (i = reunion_signal_parts; i > 0; i--) 
-						if ( (i!=1) && (i!=reunion_signal_parts) )
-							reunion_signal_post_1_addition<<"Last_Addition_Level_"<<reunion_signal_parts<<"_Reg_"<<i<<"_d("<<addition_chunk_width -1<<" downto 0) &" ;
+					for (i = reunionSignalParts_; i > 0; i--) 
+						if ( (i!=1) && (i!=reunionSignalParts_) )
+							reunion_signal_post_1_addition<<"Last_Addition_Level_"<<reunionSignalParts_<<"_Reg_"<<i<<"_d("<<additionChunkWidth_ -1<<" downto 0) &" ;
 						else
-							if (i==reunion_signal_parts)
-								reunion_signal_post_1_addition<<"Last_Addition_Level_"<<reunion_signal_parts<<"_Reg_"<<i<<"_d("<<addition_last_chunk_width -1<<" downto 0) & ";
+							if (i==reunionSignalParts_)
+								reunion_signal_post_1_addition<<"Last_Addition_Level_"<<reunionSignalParts_<<"_Reg_"<<i<<"_d("<<additionLastChunkWidth_ -1<<" downto 0) & ";
 							else
-								reunion_signal_post_1_addition<<"Last_Addition_Level_"<<reunion_signal_parts<<"_Reg_"<<i<<"_d("<<addition_chunk_width -1<<" downto 0)" ;
+								reunion_signal_post_1_addition<<"Last_Addition_Level_"<<reunionSignalParts_<<"_Reg_"<<i<<"_d("<<additionChunkWidth_ -1<<" downto 0)" ;
 					
 				
-					//propagate the rest of the signals reunion_signal_parts steps
+					//propagate the rest of the signals reunionSignalParts_ steps
 					
 					o<<tab<<"reunion_signal_level <=reunion_signal;"<<endl;
-					o<<tab<<"reunion_signal_out <= "<<get_delay_signal_name("reunion_signal_level", reunion_signal_parts)<<";" <<endl;		
+					o<<tab<<"reunion_signal_out <= "<<getDelaySignalName("reunion_signal_level", reunionSignalParts_)<<";" <<endl;		
 					
 					o<<tab<<"LSB_of_result_significand_level <= LSB_of_result_significand;"<<endl;
-					o<<tab<<"LSB_of_result_significand_out <= "<<get_delay_signal_name("LSB_of_result_significand_level", reunion_signal_parts)<<";" <<endl;		
+					o<<tab<<"LSB_of_result_significand_out <= "<<getDelaySignalName("LSB_of_result_significand_level", reunionSignalParts_)<<";" <<endl;		
 					
 					o<<tab<<"between_fp_numbers_level <= between_fp_numbers;"<<endl;
-					o<<tab<<"between_fp_numbers_out <= "<<get_delay_signal_name("between_fp_numbers_level", reunion_signal_parts)<<";" <<endl;		
+					o<<tab<<"between_fp_numbers_out <= "<<getDelaySignalName("between_fp_numbers_level", reunionSignalParts_)<<";" <<endl;		
 					
 					o<<tab<<"sign_synch2_level <= sign_synch2_d;"<<endl;
-					o<<tab<<"sign_synch2_out <= "<<get_delay_signal_name("sign_synch2_level", reunion_signal_parts)<<";" <<endl;		
+					o<<tab<<"sign_synch2_out <= "<<getDelaySignalName("sign_synch2_level", reunionSignalParts_)<<";" <<endl;		
 					
 					o<<tab<<"exception_synch2_level <= exception_synch2_d;"<<endl;
-					o<<tab<<"exception_synch2_out <= "<<get_delay_signal_name("exception_synch2_level", reunion_signal_parts)<<";" <<endl;		
+					o<<tab<<"exception_synch2_out <= "<<getDelaySignalName("exception_synch2_level", reunionSignalParts_)<<";" <<endl;		
 														
 					o<<tab<<"reunion_signal_post_addition <= "<< reunion_signal_post_1_addition.str()<<";"<< endl;
 					
 					o<<tab<<"exponent_synch2_level <= exponent_synch2_d;"<<endl;
-					o<<tab<<"exponent_synch2_out <= "<<get_delay_signal_name("exponent_synch2_level", reunion_signal_parts)<<";" <<endl;						
+					o<<tab<<"exponent_synch2_out <= "<<getDelaySignalName("exponent_synch2_level", reunionSignalParts_)<<";" <<endl;						
 				
 				}   
 				else{
 					/* when the carry propagation on the reunion signal is not pipelined */
 					//add 1 to the reunited signal for rounding & normalize purposes
 					o<<tab<<"reunion_signal_out            <= reunion_signal;"<<endl;
-					o<<tab<<"reunion_signal_post_addition  <= reunion_signal + CONV_STD_LOGIC_VECTOR(1, "<< 2+ wFR<<");"<<endl;
+					o<<tab<<"reunion_signal_post_addition  <= reunion_signal + CONV_STD_LOGIC_VECTOR(1, "<< 2+ wFR_<<");"<<endl;
 					o<<tab<<"between_fp_numbers_out             <= between_fp_numbers;"<<endl;
 					o<<tab<<"LSB_of_result_significand_out <= LSB_of_result_significand;"<<endl;
 					o<<tab<<"sign_synch2_out               <= sign_synch2_d;"<<endl;
@@ -654,11 +632,11 @@ void FPMultiplier::output_vhdl(std::ostream& o, std::string name) {
 				                        
 				
 				
-				o<<tab<<"exponent_synch2_out_post_rounding <= exponent_synch2_out + (CONV_STD_LOGIC_VECTOR(0,"<<wEX+1<<") & reunion_signal_post_rounding("<<1+wFR<<"));"<<endl;    
+				o<<tab<<"exponent_synch2_out_post_rounding <= exponent_synch2_out + (CONV_STD_LOGIC_VECTOR(0,"<<wEX_+1<<") & reunion_signal_post_rounding("<<1+wFR_<<"));"<<endl;    
 				
 				                        
 				//update exception 
-				o<<tab<<"with exponent_synch2_out_post_rounding("<<wER+1<<" downto "<< wER <<") select"<<endl;                       
+				o<<tab<<"with exponent_synch2_out_post_rounding("<<wER_+1<<" downto "<< wER_ <<") select"<<endl;                       
 				o<<tab<<"ResultException   <= exception_synch2_out      when \"00\","<<endl;
 				o<<tab<<"                            \"10\"             when \"01\", "<<endl;
 				o<<tab<<"                            \"00\"             when \"11\"|\"10\","<<endl;
@@ -667,26 +645,26 @@ void FPMultiplier::output_vhdl(std::ostream& o, std::string name) {
 				                        
 				                        
 				//update exception                       
-				//o<<tab<<"ResultException   <= exception_synch2_out when reunion_signal_post_rounding("<<wEX + wFR+1<<")='0' else"<<endl;
+				//o<<tab<<"ResultException   <= exception_synch2_out when reunion_signal_post_rounding("<<wEX_ + wFR_+1<<")='0' else"<<endl;
 				//o<<tab<<"                     \"10\";"<<endl;                                                   
 
-				o<<tab<<"ResultExponent    <= exponent_synch2_out_post_rounding("<<wER-1<<" downto "<<0<<");"<<endl;  
-				o<<tab<<"ResultSignificand <= \"1\" & reunion_signal_post_rounding("<<wFR<<" downto 1);"<<endl;
+				o<<tab<<"ResultExponent    <= exponent_synch2_out_post_rounding("<<wER_-1<<" downto "<<0<<");"<<endl;  
+				o<<tab<<"ResultSignificand <= \"1\" & reunion_signal_post_rounding("<<wFR_<<" downto 1);"<<endl;
 				o<<tab<<"ResultSign        <= sign_synch2_out;"<<endl;
 			}
 		}
 		else { //TODO
-		/* Non-Normalized case ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-			if (1+wFR < wFX+wFY+2){
+		/* Non-normalized_ case ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+			if (1+wFR_ < wFX_+wFY_+2){
 				//check if in the middle of two FP numbers
 				//generate two xor strings
 				str1.str(""); 
-				str1<<"\"1"<< zero_generator( wFX+wFY+2 - (1+wFR) -1, 1);
+				str1<<"\"1"<< zeroGenerator( wFX_+wFY_+2 - (1+wFR_) -1, 1);
 				
 				zeros1.str("");
-				zeros1<< zero_generator( wFX+wFY+2 - (1+wFR) , 0);
+				zeros1<< zeroGenerator( wFX_+wFY_+2 - (1+wFR_) , 0);
 
-				o<<tab<<"check_string <= (significand_synch ("<< wFX+wFY+2 - (1+wFR) -1<<" downto 0) xor "<<str1.str()<<"); "<<endl;
+				o<<tab<<"check_string <= (significand_synch ("<< wFX_+wFY_+2 - (1+wFR_) -1<<" downto 0) xor "<<str1.str()<<"); "<<endl;
 				
 				o<<tab<<"process(clk)"<<endl;
 				o<<tab<<"begin"<<endl;
@@ -706,71 +684,71 @@ void FPMultiplier::output_vhdl(std::ostream& o, std::string name) {
 				o<<tab<<"sign_synch2             <= sign_synch;"<<endl;
 				//~~~~~~~~~~~~~~~~~~~~~
 				
-				o<<tab<<"reunion_signal <= (\"0\"  & significand_synch2_d("<< wFX+wFY+1<<" downto "<<wFX+wFY+1 - (wFR+1) <<" ));"<<endl;; 
+				o<<tab<<"reunion_signal <= (\"0\"  & significand_synch2_d("<< wFX_+wFY_+1<<" downto "<<wFX_+wFY_+1 - (wFR_+1) <<" ));"<<endl;; 
               
-				o<<tab<<"LSB_of_result_significand <= significand_synch2_d("<< wFX+wFY+1 - wFR<<" );"<<endl;
+				o<<tab<<"LSB_of_result_significand <= significand_synch2_d("<< wFX_+wFY_+1 - wFR_<<" );"<<endl;
 				
 				/* pipeline the possible carry_in propagation caused by rounding */
 				
 				//connect the first part of the pipeline structure to the signals
-				if (reunion_signal_parts != 1){
-					for (j = 1; j <= reunion_signal_parts; j++){
+				if (reunionSignalParts_ != 1){
+					for (j = 1; j <= reunionSignalParts_; j++){
 						if (j == 1)
-							o<<"Last_Addition_Level_"<<1<<"_Reg_"<<j<<" <= (\"0\" & reunion_signal("<<j*addition_chunk_width-1<<" downto "<<(j-1)*addition_chunk_width<<")) + '1';"<<endl;
+							o<<"Last_Addition_Level_"<<1<<"_Reg_"<<j<<" <= (\"0\" & reunion_signal("<<j*additionChunkWidth_-1<<" downto "<<(j-1)*additionChunkWidth_<<")) + '1';"<<endl;
 						else
-							if (j!=reunion_signal_parts)
-								o<<"Last_Addition_Level_"<<1<<"_Reg_"<<j<<" <= (\"0\" & reunion_signal("<<j*addition_chunk_width-1<<" downto "<<(j-1)*addition_chunk_width<<"));"<<endl;	
+							if (j!=reunionSignalParts_)
+								o<<"Last_Addition_Level_"<<1<<"_Reg_"<<j<<" <= (\"0\" & reunion_signal("<<j*additionChunkWidth_-1<<" downto "<<(j-1)*additionChunkWidth_<<"));"<<endl;	
 							else
-								o<<"Last_Addition_Level_"<<1<<"_Reg_"<<j<<" <=  reunion_signal("<<(j-1)*addition_chunk_width + addition_last_chunk_width -1<<" downto "<<(j-1)*addition_chunk_width<<");"<<endl;	
+								o<<"Last_Addition_Level_"<<1<<"_Reg_"<<j<<" <=  reunion_signal("<<(j-1)*additionChunkWidth_ + additionLastChunkWidth_ -1<<" downto "<<(j-1)*additionChunkWidth_<<");"<<endl;	
 					}
 					
 					//put together the pipeline
-					for (j=1; j<=reunion_signal_parts-1;j++)	
-						for (i=1;i<=reunion_signal_parts;i++)
+					for (j=1; j<=reunionSignalParts_-1;j++)	
+						for (i=1;i<=reunionSignalParts_;i++)
 							if ((i<=j)||(i>j+1))
 								o<<tab<<"Last_Addition_Level_"<<j+1<<"_Reg_"<<i<<" <= Last_Addition_Level_"<<j<<"_Reg_"<<i<<"_d;"<<endl;
 							else
-								o<<tab<<"Last_Addition_Level_"<<j+1<<"_Reg_"<<i<<" <= Last_Addition_Level_"<<j<<"_Reg_"<<i<<"_d + Last_Addition_Level_"<<j<<"_Reg_"<<i-1<<"_d("<<addition_chunk_width<<") ;"<<endl; 
+								o<<tab<<"Last_Addition_Level_"<<j+1<<"_Reg_"<<i<<" <= Last_Addition_Level_"<<j<<"_Reg_"<<i<<"_d + Last_Addition_Level_"<<j<<"_Reg_"<<i-1<<"_d("<<additionChunkWidth_<<") ;"<<endl; 
 
 					//put the result back together
 					ostringstream reunion_signal_post_1_addition;
-					for (i = reunion_signal_parts; i > 0; i--) 
-						if ( (i!=1) && (i!=reunion_signal_parts) )
-							reunion_signal_post_1_addition<<"Last_Addition_Level_"<<reunion_signal_parts<<"_Reg_"<<i<<"_d("<<addition_chunk_width -1<<" downto 0) &" ;
+					for (i = reunionSignalParts_; i > 0; i--) 
+						if ( (i!=1) && (i!=reunionSignalParts_) )
+							reunion_signal_post_1_addition<<"Last_Addition_Level_"<<reunionSignalParts_<<"_Reg_"<<i<<"_d("<<additionChunkWidth_ -1<<" downto 0) &" ;
 						else
-							if (i==reunion_signal_parts)
-								reunion_signal_post_1_addition<<"Last_Addition_Level_"<<reunion_signal_parts<<"_Reg_"<<i<<"_d("<<addition_last_chunk_width -1<<" downto 0) & ";
+							if (i==reunionSignalParts_)
+								reunion_signal_post_1_addition<<"Last_Addition_Level_"<<reunionSignalParts_<<"_Reg_"<<i<<"_d("<<additionLastChunkWidth_ -1<<" downto 0) & ";
 							else
-								reunion_signal_post_1_addition<<"Last_Addition_Level_"<<reunion_signal_parts<<"_Reg_"<<i<<"_d("<<addition_chunk_width -1<<" downto 0)" ;
+								reunion_signal_post_1_addition<<"Last_Addition_Level_"<<reunionSignalParts_<<"_Reg_"<<i<<"_d("<<additionChunkWidth_ -1<<" downto 0)" ;
 					
 				
-					//propagate the rest of the signals reunion_signal_parts steps
+					//propagate the rest of the signals reunionSignalParts_ steps
 					
 					o<<tab<<"reunion_signal_level <=reunion_signal;"<<endl;
-					o<<tab<<"reunion_signal_out <= "<<get_delay_signal_name("reunion_signal_level", reunion_signal_parts)<<";" <<endl;		
+					o<<tab<<"reunion_signal_out <= "<<getDelaySignalName("reunion_signal_level", reunionSignalParts_)<<";" <<endl;		
 					
 					o<<tab<<"LSB_of_result_significand_level <= LSB_of_result_significand;"<<endl;
-					o<<tab<<"LSB_of_result_significand_out <= "<<get_delay_signal_name("LSB_of_result_significand_level", reunion_signal_parts)<<";" <<endl;		
+					o<<tab<<"LSB_of_result_significand_out <= "<<getDelaySignalName("LSB_of_result_significand_level", reunionSignalParts_)<<";" <<endl;		
 					
 					o<<tab<<"between_fp_numbers_level <= between_fp_numbers;"<<endl;
-					o<<tab<<"between_fp_numbers_out <= "<<get_delay_signal_name("between_fp_numbers_level", reunion_signal_parts)<<";" <<endl;		
+					o<<tab<<"between_fp_numbers_out <= "<<getDelaySignalName("between_fp_numbers_level", reunionSignalParts_)<<";" <<endl;		
 					
 					o<<tab<<"sign_synch2_level <= sign_synch2_d;"<<endl;
-					o<<tab<<"sign_synch2_out <= "<<get_delay_signal_name("sign_synch2_level", reunion_signal_parts)<<";" <<endl;		
+					o<<tab<<"sign_synch2_out <= "<<getDelaySignalName("sign_synch2_level", reunionSignalParts_)<<";" <<endl;		
 					
 					o<<tab<<"exception_synch2_level <= exception_synch2_d;"<<endl;
-					o<<tab<<"exception_synch2_out <= "<<get_delay_signal_name("exception_synch2_level", reunion_signal_parts)<<";" <<endl;		
+					o<<tab<<"exception_synch2_out <= "<<getDelaySignalName("exception_synch2_level", reunionSignalParts_)<<";" <<endl;		
 														
 					o<<tab<<"reunion_signal_post_addition <= "<< reunion_signal_post_1_addition.str()<<";"<< endl;
 					
 					o<<tab<<"exponent_synch2_level <= exponent_synch2_d;"<<endl;
-					o<<tab<<"exponent_synch2_out <= "<<get_delay_signal_name("exponent_synch2_level", reunion_signal_parts)<<";" <<endl;						
+					o<<tab<<"exponent_synch2_out <= "<<getDelaySignalName("exponent_synch2_level", reunionSignalParts_)<<";" <<endl;						
 				}   
 				else{
 					/* when the carry propagation on the reunion signal is not pipelined */
 					//add 1 to the reunited signal for rounding & normalize purposes
 					o<<tab<<"reunion_signal_out            <= reunion_signal;"<<endl;
-					o<<tab<<"reunion_signal_post_addition  <= reunion_signal + CONV_STD_LOGIC_VECTOR(1, "<< 2+wFR<<");"<<endl;
+					o<<tab<<"reunion_signal_post_addition  <= reunion_signal + CONV_STD_LOGIC_VECTOR(1, "<< 2+wFR_<<");"<<endl;
 					o<<tab<<"between_fp_numbers_out             <= between_fp_numbers;"<<endl;
 					o<<tab<<"LSB_of_result_significand_out <= LSB_of_result_significand;"<<endl;
 					o<<tab<<"sign_synch2_out               <= sign_synch2_d;"<<endl;
@@ -786,44 +764,44 @@ void FPMultiplier::output_vhdl(std::ostream& o, std::string name) {
 				o<<tab<<"reunion_signal_post_rounding <= reunion_signal_post_addition when between_fp_numbers_out='0' else"<<endl;
 				o<<tab<<"                       	     between_fp_numbers_result_significand;"<<endl;
 				
-				o<<tab<<"exponent_synch2_out_post_rounding <= exponent_synch2_out + (CONV_STD_LOGIC_VECTOR(0,"<<wEX+1<<") & reunion_signal_post_rounding("<<2+wFR<<"));"<<endl;    
+				o<<tab<<"exponent_synch2_out_post_rounding <= exponent_synch2_out + (CONV_STD_LOGIC_VECTOR(0,"<<wEX_+1<<") & reunion_signal_post_rounding("<<2+wFR_<<"));"<<endl;    
 				
 				                        
 				//update exception 
-				o<<tab<<"with exponent_synch2_out_post_rounding("<<wER+1<<" downto "<< wER <<") select"<<endl;                       
+				o<<tab<<"with exponent_synch2_out_post_rounding("<<wER_+1<<" downto "<< wER_ <<") select"<<endl;                       
 				o<<tab<<"ResultException   <= exception_synch2_out      when \"00\","<<endl;
 				o<<tab<<"                            \"10\"             when \"01\", "<<endl;
 				o<<tab<<"                            \"00\"             when \"11\"|\"10\","<<endl;
 				o<<tab<<"                            \"11\"             when others;"<<endl;						
 			
 
-				o<<tab<<"ResultExponent    <= exponent_synch2_out_post_rounding("<<wEX -1<<" downto "<<0<<");"<<endl;  
+				o<<tab<<"ResultExponent    <= exponent_synch2_out_post_rounding("<<wEX_ -1<<" downto "<<0<<");"<<endl;  
 					
-				o<<tab<<"ResultSignificand <= (\"11\" & reunion_signal_post_rounding("<<wFR-1<<" downto 1)) when reunion_signal_out("<<wFR+1<<" downto "<<wFR<<")=\"11\" else"<<endl;
-				o<<tab<<"					  reunion_signal_post_rounding("<<wFR+1<<" downto 1);"<<endl;	
+				o<<tab<<"ResultSignificand <= (\"11\" & reunion_signal_post_rounding("<<wFR_-1<<" downto 1)) when reunion_signal_out("<<wFR_+1<<" downto "<<wFR_<<")=\"11\" else"<<endl;
+				o<<tab<<"					  reunion_signal_post_rounding("<<wFR_+1<<" downto 1);"<<endl;	
 				o<<tab<<"ResultSign        <= sign_synch2_out;"<<endl;
 
 			}
 			else{
-			/* No rounding is needed. If wFR+1>wFX+wFY+2 then the ResultSignificand must be padded with 0s to the right */
-				if (wFX+wFY+2 == wFR+1)
+			/* No rounding is needed. If wFR_+1>wFX_+wFY_+2 then the ResultSignificand must be padded with 0s to the right */
+				if (wFX_+wFY_+2 == wFR_+1)
 					o<<tab<<"ResultSignificand <= significand_synch;"<<endl;
 				else 	
-					o<<tab<<"ResultSignificand <= significand_synch & "<<zero_generator((wFR+1) - (wFX+wFY+2), 0 )<<";"<<endl;
+					o<<tab<<"ResultSignificand <= significand_synch & "<<zeroGenerator((wFR_+1) - (wFX_+wFY_+2), 0 )<<";"<<endl;
 					
-				o<<tab<<"with exponent_synch("<<wER+1<<" downto "<< wER <<") select"<<endl;                       
+				o<<tab<<"with exponent_synch("<<wER_+1<<" downto "<< wER_ <<") select"<<endl;                       
 				o<<tab<<"ResultException   <= exception_synch  when \"00\","<<endl;
 				o<<tab<<"                            \"10\"    when \"01\", "<<endl;
 				o<<tab<<"                            \"00\"    when \"11\"|\"10\","<<endl;
 				o<<tab<<"                            \"11\"    when others;"<<endl;							
 					
-				o<<tab<<"ResultExponent  <= exponent_synch("<<wER-1<<" downto 0 "<< ");"<<endl;
+				o<<tab<<"ResultExponent  <= exponent_synch("<<wER_-1<<" downto 0 "<< ");"<<endl;
 				
 				o<<tab<<"ResultSign <= sign_synch;"<<endl;
 			}				
     
 			
-		}//end else not normalized
+		}//end else not normalized_
        
 	}//end if pipelined
 	else
@@ -832,28 +810,28 @@ void FPMultiplier::output_vhdl(std::ostream& o, std::string name) {
 		/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 		/* Exponent Handling */
 			// Fetch exponents from inputs 
-			o<<tab<<"exponentX <= X("<<wEX + wFX -1<<" downto "<<wFX<<");"<<endl; 
-			o<<tab<<"exponentY <= Y("<<wEY + wFY -1<<" downto "<<wFY<<");"<<endl<<endl;
+			o<<tab<<"exponentX <= X("<<wEX_ + wFX_ -1<<" downto "<<wFX_<<");"<<endl; 
+			o<<tab<<"exponentY <= Y("<<wEY_ + wFY_ -1<<" downto "<<wFY_<<");"<<endl<<endl;
 			//Add exponents and put sum into register
-			o<<tab<<"Exponents_Sum_Pre_Bias_Substraction <= (\"00\" & exponentX) + (\"00\" & exponentY);"<<endl; //wEX+2 bits
-			o<<tab<<"bias <= CONV_STD_LOGIC_VECTOR("<<bias_val<<","<<wER+2<<");"<<endl; 
+			o<<tab<<"Exponents_Sum_Pre_Bias_Substraction <= (\"00\" & exponentX) + (\"00\" & exponentY);"<<endl; //wEX_+2 bits
+			o<<tab<<"bias <= CONV_STD_LOGIC_VECTOR("<<bias_val<<","<<wER_+2<<");"<<endl; 
 			//substract the bias value from the exponent sum
-			o<<tab<<"Exponents_Sum_Post_Bias_Substraction <= Exponents_Sum_Pre_Bias_Substraction - bias;"<<endl;//wEX + 2   
+			o<<tab<<"Exponents_Sum_Post_Bias_Substraction <= Exponents_Sum_Pre_Bias_Substraction - bias;"<<endl;//wEX_ + 2   
 
 		/* Significand Handling */
 			//fetch and build significands by adding a "1" in MSB position 
-			o<<tab<< "significandX <= \"1\" & X("<<(wFX-1)<<" downto 0);"<<endl;
-			o<<tab<< "significandY <= \"1\" & Y("<<(wFY-1)<<" downto 0);"<<endl<<endl;
+			o<<tab<< "significandX <= \"1\" & X("<<(wFX_-1)<<" downto 0);"<<endl;
+			o<<tab<< "significandY <= \"1\" & Y("<<(wFY_-1)<<" downto 0);"<<endl<<endl;
 			//multiply significands 
-			o<<tab<< "int_multiplier_component: " << intmult->getOperatorName() << endl;
-			o<<tab<< "      port map ( X => significandX, " << endl; //wFX+1 bits (1 bit is the hidden 1)
-			o<<tab<< "                 Y => significandY, " << endl; //wFY+1 bits
-			o<<tab<< "                 R => significand_product " << endl; //wFX+wFY+2 bits
+			o<<tab<< "int_multiplier_component: " << intmult_->getOperatorName() << endl;
+			o<<tab<< "      port map ( X => significandX, " << endl; //wFX_+1 bits (1 bit is the hidden 1)
+			o<<tab<< "                 Y => significandY, " << endl; //wFY_+1 bits
+			o<<tab<< "                 R => significand_product " << endl; //wFX_+wFY_+2 bits
 			o<<tab<< "               );" << endl<<endl;
 
 		/* Exception bits Handling */
 			//Concatenate the exception bits of the two input numbers
-			o<<tab<<"exception_selector <= X("<<wEX + wFX +2<<" downto "<<wEX + wFX + 1<<") & Y("<<wEY + wFY +2<<" downto "<<wEY + wFY +1<<");"<<endl<<endl;
+			o<<tab<<"exception_selector <= X("<<wEX_ + wFX_ +2<<" downto "<<wEX_ + wFX_ + 1<<") & Y("<<wEY_ + wFY_ +2<<" downto "<<wEY_ + wFY_ +1<<");"<<endl<<endl;
 			//select proper exception with selector			
 			o<<tab<<"process (exception_selector)"<<endl;
 			o<<tab<<"begin"<<endl;
@@ -881,27 +859,27 @@ void FPMultiplier::output_vhdl(std::ostream& o, std::string name) {
 			
 		/* Normalization */
 			// assign selector signal to MSB of signif. multiplication 
-			o<<tab<<"normalization_selector <= significand_product ("<<wFX+wFY+1<<");"<<endl;
+			o<<tab<<"normalization_selector <= significand_product ("<<wFX_+wFY_+1<<");"<<endl;
 			// add the selector bit to the exponent in order to normalize the result 
-			o<<tab<<"exponent_post_normalization <= Exponents_Sum_Post_Bias_Substraction + (CONV_STD_LOGIC_VECTOR(0 ,"<<wER+1<<") & normalization_selector);"<<endl;
+			o<<tab<<"exponent_post_normalization <= Exponents_Sum_Post_Bias_Substraction + (CONV_STD_LOGIC_VECTOR(0 ,"<<wER_+1<<") & normalization_selector);"<<endl;
 			o<<tab<<"exception_post_normalization <= Exception_Reg_0;"<<endl;			
 
 		/* Rounding */
-			if (1+wFR >= wFX+wFY+2) {
+			if (1+wFR_ >= wFX_+wFY_+2) {
 				/* No rounding needed */
 				/* Possible 0 padding to the length of the fractional part of the result */
-				o<<tab<<"with exponent_post_normalization("<< wER+1 <<" downto "<< wER <<") select"<<endl;		
+				o<<tab<<"with exponent_post_normalization("<< wER_+1 <<" downto "<< wER_ <<") select"<<endl;		
 				o<<tab<<" ResultException <= exception_post_normalization when \"00\","<<endl;
 				o<<tab<<"                            \"10\"                           when \"01\", "<<endl;
 				o<<tab<<"                            \"00\"                           when \"11\"|\"10\","<<endl;
 				o<<tab<<"                             \"11\"                          when others;"<<endl;
 											
 				// Assign the architecture outputs
-				o<<tab<<"ResultExponent    <= exponent_post_normalization("<<wEX - 1<<" downto 0);"<<endl;  
-				o<<tab<<"ResultSignificand <= significand_product & "<< zero_generator(1+wFR - (wFX+wFY+2) , 0) <<" when normalization_selector='1' else"<<endl;
-				o<<tab<<"                     significand_product("<<wFX+wFY<<" downto 0) & "<<zero_generator(1+wFR - (wFX+wFY+2) , 0)<<" & \"0\";"<<endl;
+				o<<tab<<"ResultExponent    <= exponent_post_normalization("<<wEX_ - 1<<" downto 0);"<<endl;  
+				o<<tab<<"ResultSignificand <= significand_product & "<< zeroGenerator(1+wFR_ - (wFX_+wFY_+2) , 0) <<" when normalization_selector='1' else"<<endl;
+				o<<tab<<"                     significand_product("<<wFX_+wFY_<<" downto 0) & "<<zeroGenerator(1+wFR_ - (wFX_+wFY_+2) , 0)<<" & \"0\";"<<endl;
 				//o<<tab<<"ResultException   <= exception_post_normalization;"<<endl;
-				o<<tab<<"ResultSign        <= X("<<wEX + wFX<<") xor Y("<<wEY + wFY<<");"<<endl;
+				o<<tab<<"ResultSign        <= X("<<wEX_ + wFX_<<") xor Y("<<wEY_ + wFY_<<");"<<endl;
 			}
 			else{
 				/* Rounding needed */
@@ -909,35 +887,35 @@ void FPMultiplier::output_vhdl(std::ostream& o, std::string name) {
 
 				// generate two 1000...0000 and 0100....000 strings 
 				str1.str(""); str2.str(""); //init
-				str1<<"\"1" << zero_generator( wFX+wFY+2 - (1+wFR) -1, 1);
-				str2<<"\"01"<< zero_generator( wFX+wFY+2 - (1+wFR) -1 -1, 1);
+				str1<<"\"1" << zeroGenerator( wFX_+wFY_+2 - (1+wFR_) -1, 1);
+				str2<<"\"01"<< zeroGenerator( wFX_+wFY_+2 - (1+wFR_) -1 -1, 1);
 				
 				// the check string represent the LSBits of the significand product to the right of the rounding bit
-				o<<tab<<"check_string <= (significand_product ("<< wFX+wFY+2 - (1+wFR) -1<<" downto 0) xor "<<str1.str()<<") when normalization_selector='1' else"<<endl;
-				o<<tab<<"                ( (\"0\" & significand_product ("<< wFX+wFY+2 - (1+wFR) -1-1<<" downto 0)) xor "<<str2.str()<<");"<<endl;
+				o<<tab<<"check_string <= (significand_product ("<< wFX_+wFY_+2 - (1+wFR_) -1<<" downto 0) xor "<<str1.str()<<") when normalization_selector='1' else"<<endl;
+				o<<tab<<"                ( (\"0\" & significand_product ("<< wFX_+wFY_+2 - (1+wFR_) -1-1<<" downto 0)) xor "<<str2.str()<<");"<<endl;
 
 				// In the middle of 2 FP numbers <=> LSBits to the right of the rounding bit are 100...00
 				o<<tab<<"process(check_string)"<<endl;
 				o<<tab<<"begin"<<endl;
-				o<<tab<<tab<<"      if ( "<< zero_generator( wFX+wFY+2 - (1+wFR) , 0) <<" = check_string ) then"<<endl; 
+				o<<tab<<tab<<"      if ( "<< zeroGenerator( wFX_+wFY_+2 - (1+wFR_) , 0) <<" = check_string ) then"<<endl; 
 				o<<tab<<tab<<"         between_fp_numbers <= '1';"<<endl;
 				o<<tab<<tab<<"      else "<<endl;
 				o<<tab<<tab<<"         between_fp_numbers <= '0';"<<endl;
 				o<<tab<<tab<<"      end if;"<<endl;
 				o<<tab<<tab<<"end process; "<<endl;
 
-				// the signal exponent_post_normalization2 has wEX + 1 bits
+				// the signal exponent_post_normalization2 has wEX_ + 1 bits
 				
 				// the reunion signal is a concatenation of 0 & Significand      
-				o<<tab<<"reunion_signal <= (\"0\" & significand_product("<< wFX+wFY<<" downto "<<wFX+wFY - (wFR) <<" )) when normalization_selector='1' else"<<endl;
-				o<<tab<<"                  (\"0\" & significand_product("<< wFX+wFY-1<<" downto "<<wFX+wFY - (wFR) -1<<" ));"<<endl; 
+				o<<tab<<"reunion_signal <= (\"0\" & significand_product("<< wFX_+wFY_<<" downto "<<wFX_+wFY_ - (wFR_) <<" )) when normalization_selector='1' else"<<endl;
+				o<<tab<<"                  (\"0\" & significand_product("<< wFX_+wFY_-1<<" downto "<<wFX_+wFY_ - (wFR_) -1<<" ));"<<endl; 
 				               
-				// LSB_of_result_significand = LSB of the wFR part of the significand_product 
-				o<<tab<<"LSB_of_result_significand <= significand_product("<< wFX+wFY+1 - wFR<<" ) when  normalization_selector='1' else"<<endl;
-				o<<tab<<"                             significand_product("<< wFX+wFY+1 - wFR -1<<" );"<<endl;              
+				// LSB_of_result_significand = LSB of the wFR_ part of the significand_product 
+				o<<tab<<"LSB_of_result_significand <= significand_product("<< wFX_+wFY_+1 - wFR_<<" ) when  normalization_selector='1' else"<<endl;
+				o<<tab<<"                             significand_product("<< wFX_+wFY_+1 - wFR_ -1<<" );"<<endl;              
 				   		     			
 				// add 1 to the reunited signal for rounding & normalize purposes
-				o<<tab<<"reunion_signal_post_addition <= reunion_signal + CONV_STD_LOGIC_VECTOR(1, "<< 2 + wFR<<");"<<endl;
+				o<<tab<<"reunion_signal_post_addition <= reunion_signal + CONV_STD_LOGIC_VECTOR(1, "<< 2 + wFR_<<");"<<endl;
 				
 				o<<tab<<"between_fp_numbers_result_significand <= reunion_signal_post_addition when LSB_of_result_significand = '1' else"<<endl;
 				o<<tab<<"                                         reunion_signal;"<<endl;    		     
@@ -946,20 +924,20 @@ void FPMultiplier::output_vhdl(std::ostream& o, std::string name) {
 				o<<tab<<"                                between_fp_numbers_result_significand;"<<endl;
 				                   
 				
-				o<<tab<<"exponent_post_rounding <= exponent_post_normalization + (CONV_STD_LOGIC_VECTOR(0,"<<wER+1<<") & reunion_signal_post_rounding("<<wFR+1<<"));"<<endl;
+				o<<tab<<"exponent_post_rounding <= exponent_post_normalization + (CONV_STD_LOGIC_VECTOR(0,"<<wER_+1<<") & reunion_signal_post_rounding("<<wFR_+1<<"));"<<endl;
 				
 				                        
 				//update exception        
 				 
-				o<<tab<<"with exponent_post_rounding("<< wER+1 <<" downto "<< wER <<") select"<<endl;		
+				o<<tab<<"with exponent_post_rounding("<< wER_+1 <<" downto "<< wER_ <<") select"<<endl;		
 				o<<tab<<"ResultException <= exception_post_normalization when \"00\","<<endl;
 				o<<tab<<"                            \"10\"              when \"01\", "<<endl;
 				o<<tab<<"                            \"00\"              when \"11\"|\"10\","<<endl;
 				o<<tab<<"                            \"11\"              when others;"<<endl;						               
                                          
-				o<<tab<<"ResultExponent    <= exponent_post_rounding("<<wER -1<<" downto "<<0<<");"<<endl;  
-				o<<tab<<"ResultSignificand <= \"1\" & reunion_signal_post_rounding("<<wFR<<" downto 1);"<<endl;
-				o<<tab<<"ResultSign        <= X("<<wEX + wFX<<") xor Y("<<wEY + wFY<<");"<<endl;
+				o<<tab<<"ResultExponent    <= exponent_post_rounding("<<wER_ -1<<" downto "<<0<<");"<<endl;  
+				o<<tab<<"ResultSignificand <= \"1\" & reunion_signal_post_rounding("<<wFR_<<" downto 1);"<<endl;
+				o<<tab<<"ResultSign        <= X("<<wEX_ + wFX_<<") xor Y("<<wEY_ + wFY_<<");"<<endl;
 			}
 
 	}//end the combinational part   
@@ -967,43 +945,15 @@ void FPMultiplier::output_vhdl(std::ostream& o, std::string name) {
 	o<< "end architecture;" << endl << endl;
 }
 
- 
-/**
- * A zero generator method which takes as input two arguments and returns a string of zeros with quotes as stated by the second argurment
- * @param[in] n		    integer argument representing the number of zeros on the output string
- * @param[in] margins	integer argument determining the position of the quotes in the output string. The options are: -2= no quotes; -1=left quote; 0=both quotes 1=right quote
- * @return returns a string of zeros with the corresonding quotes given by margins
- **/
-string FPMultiplier::zero_generator(int n, int margins)
-{
-ostringstream left,full, right, zeros;
-int i;
-
-	for (i=1; i<=n;i++)
-		zeros<<"0";
-
-	left<<"\""<<zeros.str();
-	full<<left.str()<<"\"";
-	right<<zeros.str()<<"\"";
-
-	switch(margins){
-		case -2: return zeros.str(); break;
-		case -1: return left.str(); break;
-		case  0: return full.str(); break;
-		case  1: return right.str(); break;
-		default: return full.str();
-	}
-}
-
 TestIOMap FPMultiplier::getTestIOMap()
 {
 	TestIOMap tim;
-	tim.add(*get_signal_by_name("X"));
-	tim.add(*get_signal_by_name("Y"));
-	tim.add(*get_signal_by_name("ResultException"));
-	tim.add(*get_signal_by_name("ResultSign"));
-	tim.add(*get_signal_by_name("ResultExponent"));
-	tim.add(*get_signal_by_name("ResultSignificand"));
+	tim.add(*getSignalByName("X"));
+	tim.add(*getSignalByName("Y"));
+	tim.add(*getSignalByName("ResultException"));
+	tim.add(*getSignalByName("ResultSign"));
+	tim.add(*getSignalByName("ResultExponent"));
+	tim.add(*getSignalByName("ResultSignificand"));
 	return tim;
 }
 
@@ -1018,7 +968,7 @@ void FPMultiplier::fillTestCase(mpz_class a[])
 	mpz_class &svfra = a[5];
 
 	/* Compute result */
-	FPNumber x(wEX, wFX), y(wEY, wFY), r(wER, wFR, normalized);
+	FPNumber x(wEX_, wFX_), y(wEY_, wFY_), r(wER_, wFR_, normalized_);
 	x = svx; y = svy;
 	r = x * y;
 

@@ -13,7 +13,10 @@ class Signal;
  */
 class TestIOMap {
 public:
+	/** Default Constructor */
 	TestIOMap();
+	
+	/** Destructor */
 	~TestIOMap();
 
 	/** The data-type which stores the test case input/output map */

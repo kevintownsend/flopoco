@@ -25,31 +25,30 @@
 #include <sstream>
 #include "../utils.hpp"
 
-double VirtexIV::adder_delay(int size) {
-  return _lut_delay  +  size * _fastcarry_delay; 
+double VirtexIV::adderDelay(int size) {
+  return lutDelay_  +  size * fastcarryDelay_; 
 };
 
-double VirtexIV::carry_propagate_delay() {
-  return  _fastcarry_delay; 
+double VirtexIV::carryPropagateDelay() {
+  return  fastcarryDelay_; 
 };
 
-double VirtexIV::local_wire_delay(){
-  return _lut2lut_delay;
+double VirtexIV::localWireDelay(){
+  return lut2lutDelay_;
 };
 
-double VirtexIV::distant_wire_delay(int n){
-  return n*_elem_wire_delay;
+double VirtexIV::distantWireDelay(int n){
+  return n*elemWireDelay_;
 };
 
-double VirtexIV::lut_delay(){
-  return _lut_delay;
+double VirtexIV::lutDelay(){
+  return lutDelay_;
 };
 
-
-bool VirtexIV::suggest_submult_size(int &x, int &y, int wInX, int wInY){
-int i;
-
-	if (get_use_hard_multipliers()){
+bool VirtexIV::suggestSubmultSize(int &x, int &y, int wInX, int wInY){
+	int i;
+	
+	if (getUseHardMultipliers()){
 		if ((wInX<=17) && (wInY<=17))	{
 			x = max(wInX, wInY);
 			y = x;
@@ -76,8 +75,6 @@ int i;
 				else 
 					return false;
 			} 
-			
-			
 		}
 	}else{
 		int f1=(wInX % 17 ==0)?0:1;
@@ -142,21 +139,17 @@ int i;
 				}
 			}	
 		}
-	
-		
 	}
 };	 
 	 
-	 
-bool VirtexIV::suggest_subadd_size(int &x, int wIn){
+bool VirtexIV::suggestSubaddSize(int &x, int wIn){
 
-	int chunk_size = (int)floor( (1./frequency() - lut_delay()) / carry_propagate_delay()); // 1 if no need for pipeline
-	
-	x = chunk_size;		
-	
-	if (x>0) return true;
+	int chunkSize = (int)floor( (1./frequency() - lutDelay()) / carryPropagateDelay()); // 1 if no need for pipeline
+	x = chunkSize;		
+	if (x > 0) 
+		return true;
 	else {
-		x=1;		
+		x = 1;		
 		return false;
 	} 
 };

@@ -38,27 +38,30 @@ int inline round4(int x)
 }
 
 BigTestBench::BigTestBench(Target* target, Operator* op, int n):
-	Operator(target), op(op), n(n)
+	Operator(target), op_(op), n_(n)
 {
-	unique_name = "BigTestBench_" + op->getOperatorName();
-	set_pipeline_depth(42);	// could be any number
+	setPipelineDepth(42);	// could be any number
 
 	// declare internal registered signals
-	for(int i=0; i<op->getIOListSize(); i++){
-		string idext = op->getIOListSignal(i)->id() ;
-		add_signal(idext, op->getIOListSignal(i)->width());
+	for(int i=0; i<op_->getIOListSize(); i++){
+		string idext = op_->getIOListSignal(i)->getSignalName() ;
+		addSignal(idext, op_->getIOListSignal(i)->width());
 	}
 
 	/* add bogus clk and rst signal if the UUT does not have them */
 	try {
-		add_signal("clk", 1);
-		add_signal("rst", 1);
+		addSignal("clk", 1);
+		addSignal("rst", 1);
 	} catch (std::string) {
 		/* silently ignore */
 	}
 }
 
 BigTestBench::~BigTestBench() { }
+
+void BigTestBench::setOperatorName(){
+	uniqueName_ = "BigTestBench_" + op_->getOperatorName();
+}
 
 /**
  * Gets the name of the variable which is somehow related to a signal.
@@ -73,7 +76,7 @@ inline std::string s2vg(std::string type, const Signal& s, int var = -1)
 	std::stringstream o;
 
 	o << type << "_";
-	char *x = strdup(s.id().c_str());
+	char *x = strdup(s.getSignalName().c_str());
 	for (char *p = x; *p; p++)
 		switch (*p)
 		{
@@ -112,14 +115,14 @@ inline std::string s2g(const Signal& s, int var = -1)
 	return s2vg("g", s, var);
 }
 
-void BigTestBench::output_vhdl(ostream& o, string name) {
+void BigTestBench::outputVHDL(ostream& o, string name) {
 	cerr << "Generating BIG test bench ... ";
 
 	/* Get IO Map */
-	TestIOMap::TestIOMapContainer tim = op->getTestIOMap().get();
+	TestIOMap::TestIOMapContainer tim = op_->getTestIOMap().get();
 	typedef TestIOMap::TestIOMapContainer::iterator TIMit;
 
-	Licence(o,"Cristian KLEIN (2008)");
+	licence(o,"Cristian KLEIN (2008)");
 	o << "library ieee;" <<endl;
 	o << "use ieee.std_logic_textio.all;" <<endl;
 	o << "use ieee.std_logic_1164.all;" <<endl;
@@ -127,16 +130,16 @@ void BigTestBench::output_vhdl(ostream& o, string name) {
 	o << endl;
 	o << "library work;" <<endl;
 
-	output_vhdl_entity(o);
+	outputVHDLEntity(o);
 	o << "architecture behavorial of " << name  << " is" << endl;
 
 	// the operator to wrap
-	op->output_vhdl_component(o);
+	op_->outputVHDLComponent(o);
 	// The local signals
-	output_vhdl_signal_declarations(o);
+	outputVHDLSignalDeclarations(o);
 
 	o << tab << "file fTest : text open read_mode is \""
-		<< op->getOperatorName() << ".test\";" <<endl;
+		<< op_->getOperatorName() << ".test\";" <<endl;
 	
 	o << endl <<
 		tab << "-- FP compare function (found vs. real)\n" <<
@@ -153,18 +156,18 @@ void BigTestBench::output_vhdl(ostream& o, string name) {
 
 	// the instance
 	// XXX: Ugly! Will write something to encapsulate this.
-	o << tab << "uut:" << op->getOperatorName() << "\n"
+	o << tab << "uut:" << op_->getOperatorName() << "\n"
 		<< tab << tab << "port map ( ";
-	for(int i=0; i<op->getIOListSize(); i++) {
-		//Signal& s = *op->getIOListSignal(i);
+	for(int i=0; i<op_->getIOListSize(); i++) {
+		//Signal& s = *op_->getIOListSignal(i);
 		if(i>0) 
 			o << tab << tab << "           ";
-		string idext =  op->getIOListSignal(i)->id() ;
-		if(op->getIOListSignal(i)->type() == Signal::in)
-			o << op->getIOListSignal(i)->id()  << " =>  " << idext;
+		string idext =  op_->getIOListSignal(i)->getSignalName() ;
+		if(op_->getIOListSignal(i)->type() == Signal::in)
+			o << op_->getIOListSignal(i)->getSignalName()  << " =>  " << idext;
 		else
-			o << op->getIOListSignal(i)->id()  << " =>  " << idext;
-		if (i < op->getIOListSize()-1) 
+			o << op_->getIOListSignal(i)->getSignalName()  << " =>  " << idext;
+		if (i < op_->getIOListSize()-1) 
 			o << "," << endl;
 	}
 	o << ");" <<endl;
@@ -236,10 +239,10 @@ void BigTestBench::output_vhdl(ostream& o, string name) {
 		{
 			o << tab << tab << tab;
 			if (s.width() == 1)
-				o << s.id() << " <= " << s2v(s,i) << "; ";
+				o << s.getSignalName() << " <= " << s2v(s,i) << "; ";
 			else
-				o << s.id() << " <= to_stdlogicvector(" << s2v(s,i) << "(" << s.width()-1 << " downto 0)); "; 
-			o << "assert " << s2g(s,i) << " report \"Invalid input for " << s.id() << "\" severity failure;\n";
+				o << s.getSignalName() << " <= to_stdlogicvector(" << s2v(s,i) << "(" << s.width()-1 << " downto 0)); "; 
+			o << "assert " << s2g(s,i) << " report \"Invalid input for " << s.getSignalName() << "\" severity failure;\n";
 		}
 	}
 
@@ -258,18 +261,18 @@ void BigTestBench::output_vhdl(ostream& o, string name) {
 			o << tab << tab << tab << tab << "or (" << s2g(s,i) << " and "; 
 			if (s.isFP())
 			{
-				o << "fp_equal(" << s.id() << ", to_stdlogicvector(" << s2v(s,i) << "(" << s.width()-1 << " downto 0)))";
+				o << "fp_equal(" << s.getSignalName() << ", to_stdlogicvector(" << s2v(s,i) << "(" << s.width()-1 << " downto 0)))";
 			}
 			else
 			{
 				if (s.width() == 1)
-					o << s.id() << " = " << s2v(s,i);
+					o << s.getSignalName() << " = " << s2v(s,i);
 				else
-					o << s.id() << " = to_stdlogicvector(" << s2v(s,i) << "(" << s.width()-1 << " downto 0))"; 
+					o << s.getSignalName() << " = to_stdlogicvector(" << s2v(s,i) << "(" << s.width()-1 << " downto 0))"; 
 			}
 			o << ")\n";
 		}
-		o << tab << tab << tab << tab << "report \"Incorrect value for " << s.id() << "\";\n";
+		o << tab << tab << tab << tab << "report \"Incorrect value for " << s.getSignalName() << "\";\n";
 	}
  
 	o << tab << tab << "end loop;" <<endl;
@@ -278,7 +281,7 @@ void BigTestBench::output_vhdl(ostream& o, string name) {
 	o << "end architecture;" <<endl;
 
 	/* Generate the test file */
-	FILE *f = fopen((op->getOperatorName() + ".test").c_str(), "w");
+	FILE *f = fopen((op_->getOperatorName() + ".test").c_str(), "w");
 
 	/* Get number of TestCase I/O values */
 	int size = 0;
@@ -328,7 +331,7 @@ void BigTestBench::output_vhdl(ostream& o, string name) {
 	 * implemented as a circular buffer
 	 * new value go to head */
 	int head = 0;
-	int depth = op->pipeline_depth();
+	int depth = op_->getPipelineDepth();
 
 	mpz_class** a;
 	a = new mpz_class*[depth+2];
@@ -340,7 +343,7 @@ void BigTestBench::output_vhdl(ostream& o, string name) {
 	a[depth+1] = a[0];
 
 	/* Output test I/O values */
-	for (int i = 0; i < n; i++)
+	for (int i = 0; i < n_; i++)
 	{
 		/* Fill inputs, erase outputs */
 		for (int j = 0; j < size; j++)
@@ -357,7 +360,7 @@ void BigTestBench::output_vhdl(ostream& o, string name) {
 		}
 
 		/* Get correct outputs */
-		op->fillTestCase(a[head]);
+		op_->fillTestCase(a[head]);
 
 		/* Write it to the file */
 		for (int j = 0; j < size; j++)

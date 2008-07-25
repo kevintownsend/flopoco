@@ -37,7 +37,7 @@ public:
 
 	// Overloading the virtual functions of Operator
 	//  void output_vhdl_component(ostream& o, string name);
-	void output_vhdl(ostream& o, string name);
+	void outputVHDL(ostream& o, string name);
 
 	/* The value of the constant multiplicand */
 	mpfr_t mpY;

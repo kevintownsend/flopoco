@@ -20,6 +20,8 @@ public:
 	 * @see TestCase
 	 */
 	TestCaseList();
+	
+	/** Destructor */
 	~TestCaseList();
 
 	/**
@@ -57,12 +59,14 @@ public:
 	{
 		bool operator()(const Signal& s1, const Signal& s2) const
 		{
-			return (s1.id() < s2.id());
+			return (s1.getSignalName() < s2.getSignalName());
 		}
 	};
 
-	/** Map used to store input & output signals */
+	/** Map used to store input signals */
 	typedef std::map<Signal, int, ltsignal> Inputs;
+	
+	/** Map used to store output signals */
 	typedef std::map<Signal, int, ltsignal> Outputs;
 
 	/**
@@ -205,7 +209,7 @@ private:
 	{
 		bool operator()(const Signal& s1, const Signal& s2) const
 		{
-			return (s1.id() < s2.id());
+			return (s1.getSignalName() < s2.getSignalName());
 		}
 	};
 

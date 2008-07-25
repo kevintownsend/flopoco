@@ -39,103 +39,97 @@ using namespace std;
 
 extern vector<Operator*> oplist;
 
-LongAcc2FP::LongAcc2FP(Target* target, int MaxMSBX, int LSBA, int MSBA, int wE_out, int wF_out): 
+LongAcc2FP::LongAcc2FP(Target* target, int MaxMSBX, int LSBA, int MSBA, int wEOut, int wFOut): 
 	Operator(target), 
-	MaxMSBX(MaxMSBX), LSBA(LSBA), MSBA(MSBA), wE_out(wE_out), wF_out(wF_out)
+	MaxMSBX_(MaxMSBX), LSBA_(LSBA), MSBA_(MSBA), wEOut_(wEOut), wFOut_(wFOut)
 {
-	ostringstream name; 
 	int i;
-	
-	name <<"LongAcc2FP_"
-			 <<(MaxMSBX>=0?"":"M")<<abs(MaxMSBX)<<"_"
-			 <<(LSBA>=0?"":"M")<<abs(LSBA)<<"_"
-			 <<(MSBA>=0?"":"M")<<abs(MSBA)<<"_"
-			 <<wE_out<<"_"<<wF_out;
-	unique_name=name.str();
-
+	setOperatorName();
+	setSequential();
 
 	// Set up various architectural parameters
-	sizeAcc = MSBA-LSBA+1;	
+	sizeAcc_ = MSBA_-LSBA_+1;	
 	
 	//instantiate a leading zero/one counter
-	wOutLZOC = log2(sizeAcc)+1;
-	leadZOCounter = new LZOC(target, sizeAcc, wOutLZOC);
-	oplist.push_back(leadZOCounter);
+	wOutLZOC_ = log2(sizeAcc_)+1;
+	leadZOCounter_ = new LZOC(target, sizeAcc_, wOutLZOC_);
+	oplist.push_back(leadZOCounter_);
 
 	//instantiate a left shifter
-	leftShifter = new Shifter(target,sizeAcc,sizeAcc,Left);
-	oplist.push_back(leftShifter);
+	leftShifter_ = new Shifter(target,sizeAcc_,sizeAcc_,Left);
+	oplist.push_back(leftShifter_);
 
 	// This operator is a sequential one
-	set_sequential();
-	set_pipeline_depth(leadZOCounter->pipeline_depth() + leftShifter->pipeline_depth());
-
+	setPipelineDepth(leadZOCounter_->getPipelineDepth() + leftShifter_->getPipelineDepth());
 
 	//compute the bias value
-	expBias = (1<<(wE_out-1)) -1; 
+	expBias_ = (1<<(wEOut_-1)) -1; 
 
 	//inputs and outputs
-	add_input  ("A", sizeAcc);
-	add_output ("R", 3 + wE_out + wF_out);
+	addInput  ("A", sizeAcc_);
+	addOutput ("R", 3 + wEOut_ + wFOut_);
 
 	
-	add_delay_signal_no_reset("resultSign0",1,leadZOCounter->pipeline_depth() + leftShifter->pipeline_depth());	
-	add_delay_signal_bus_no_reset("pipeA",sizeAcc,leadZOCounter->pipeline_depth());
-	add_delay_signal_no_reset("expRAdjusted",wE_out,leftShifter->pipeline_depth());
-	add_delay_signal_no_reset("excBits",2, leftShifter->pipeline_depth());
+	addDelaySignalNoReset("resultSign0",1,leadZOCounter_->getPipelineDepth() + leftShifter_->getPipelineDepth());	
+	addDelaySignalBusNoReset("pipeA",sizeAcc_,leadZOCounter_->getPipelineDepth());
+	addDelaySignalNoReset("expRAdjusted",wEOut_,leftShifter_->getPipelineDepth());
+	addDelaySignalNoReset("excBits",2, leftShifter_->getPipelineDepth());
 	
+	addSignal("nZO",wOutLZOC_);
+	addSignal("c2nZO",wOutLZOC_+1);
+	addSignal("expTest",1);
+	addSignal("expAdjValue",wEOut_);
+	addSignal("excRes",2);
+	addSignal("expR",wEOut_);
 	
-	add_signal("nZO",wOutLZOC);
-	add_signal("c2nZO",wOutLZOC+1);
-	add_signal("expTest",1);
-	add_signal("expAdjValue",wE_out);
-	add_signal("excRes",2);
-	add_signal("expR",wE_out);
+	addSignal("resFrac",sizeAcc_ + sizeAcc_);
 	
-	add_signal("resFrac",sizeAcc + sizeAcc);
-	
-	add_signal("posExpAdj",wOutLZOC+1);
-	add_signal("negExpAdj",wOutLZOC+1);
-	add_signal("expAdj",wOutLZOC+1);
-	
-	
-	
-	add_signal("expAdjustedExt",wOutLZOC+1);
-	add_signal("signExpAdjustedExt",1);
-	add_signal("modulusExpAdjusted",wOutLZOC);
-	add_signal("maxExponent",wOutLZOC);
-	add_signal("expOverflow",1);
-	add_signal("expUnderflow",1);
+	addSignal("posExpAdj",wOutLZOC_+1);
+	addSignal("negExpAdj",wOutLZOC_+1);
+	addSignal("expAdj",wOutLZOC_+1);
+		
+	addSignal("expAdjustedExt",wOutLZOC_+1);
+	addSignal("signExpAdjustedExt",1);
+	addSignal("modulusExpAdjusted",wOutLZOC_);
+	addSignal("maxExponent",wOutLZOC_);
+	addSignal("expOverflow",1);
+	addSignal("expUnderflow",1);
 }
-
-
-
-
 
 LongAcc2FP::~LongAcc2FP() {
 }
 
+void LongAcc2FP::setOperatorName(){
+	ostringstream name;
+	name <<"LongAcc2FP_"
+			 <<(MaxMSBX_>=0?"":"M")<<abs(MaxMSBX_)<<"_"
+			 <<(LSBA_>=0?"":"M")<<abs(LSBA_)<<"_"
+			 <<(MSBA_>=0?"":"M")<<abs(MSBA_)<<"_"
+			 <<wEOut_<<"_"<<wFOut_;
+	uniqueName_=name.str();
 
-void LongAcc2FP::output_vhdl(ostream& o, string name) {
+}
+
+void LongAcc2FP::outputVHDL(ostream& o, string name) {
 int i;
-	Licence(o,"Bogdan Pasca (2008)");
-	Operator::StdLibs(o);
-	output_vhdl_entity(o);
-	new_architecture(o,name);
-	leadZOCounter->output_vhdl_component(o);
-	leftShifter->output_vhdl_component(o);
-	output_vhdl_signal_declarations(o);
-	begin_architecture(o);
-	output_vhdl_registers(o); o<<endl;
+	licence(o,"Bogdan Pasca (2008)");
+	Operator::stdLibs(o);
+	outputVHDLEntity(o);
+	newArchitecture(o,name);
+	leadZOCounter_->outputVHDLComponent(o);
+	leftShifter_->outputVHDLComponent(o);
+	outputVHDLSignalDeclarations(o);
+	beginArchitecture(o);
+	outputVHDLRegisters(o); o<<endl;
 
 	//the sign of the result 
-	o<<tab<<"resultSign0 <= A("<<sizeAcc-1<<");"<<endl;
+	o<<tab<<"resultSign0 <= A("<<sizeAcc_-1<<");"<<endl;
 	
 	o<<tab<<"pipeA <= A;"<<endl;
 	
 	//count the number of zeros/ones in order to determine the size of the exponent
 	//Leading Zero/One counter 
-	o<<tab<< "LZOC_component: " << leadZOCounter->getOperatorName() << endl;
+	o<<tab<< "LZOC_component: " << leadZOCounter_->getOperatorName() << endl;
 	o<<tab<< "      port map ( I => A, "                      << endl; 
 	o<<tab<< "                 OZB => resultSign0, "          << endl; 
 	o<<tab<< "                 O => nZO, "                    << endl; 
@@ -146,14 +140,14 @@ int i;
 	//readjust exponent
 	
 	//compute the 2's complement value of the number of leading Z/O
-	o<<tab<<"c2nZO <= ("<<wOutLZOC<<" downto 0 => '1') - (\"0\" & nZO) + '1';"<<endl;
+	o<<tab<<"c2nZO <= ("<<wOutLZOC_<<" downto 0 => '1') - (\"0\" & nZO) + '1';"<<endl;
 	
 	//determine if the value to be added to the exponent bias is negative or positive.
-	o<<tab<<"expTest <= '1' when (CONV_STD_LOGIC_VECTOR("<<MSBA<<","<<wOutLZOC<<")>nZO) else '0';"<<endl;
+	o<<tab<<"expTest <= '1' when (CONV_STD_LOGIC_VECTOR("<<MSBA_<<","<<wOutLZOC_<<")>nZO) else '0';"<<endl;
 	
 	//compute the exponent operations in both cases => may need pipelining but are generally short additions	
-	//o<<tab<<"posExpAdj <= CONV_STD_LOGIC_VECTOR("<<MSBA<<","<<wOutLZOC+1<<")- (\"0\" & nZO); "<<endl;
-	o<<tab<<"negExpAdj <= CONV_STD_LOGIC_VECTOR("<<MSBA<<","<<wOutLZOC+1<<") + c2nZO;"<<endl;
+	//o<<tab<<"posExpAdj <= CONV_STD_LOGIC_VECTOR("<<MSBA_<<","<<wOutLZOC_+1<<")- (\"0\" & nZO); "<<endl;
+	o<<tab<<"negExpAdj <= CONV_STD_LOGIC_VECTOR("<<MSBA_<<","<<wOutLZOC_+1<<") + c2nZO;"<<endl;
 	
 	//select the actual value which will be added to the expoent bias
 	//o<<tab<<"expAdj <= posExpAdj when expTest='1' else"<<endl;
@@ -162,59 +156,56 @@ int i;
 	o<<tab<<"expAdj <= negExpAdj;"<<endl;
 		
 	//the exponent bias	
-	o<<tab<<"expR <= CONV_STD_LOGIC_VECTOR("<<expBias<<","<<wE_out<<");"<<endl;
+	o<<tab<<"expR <= CONV_STD_LOGIC_VECTOR("<<expBias_<<","<<wEOut_<<");"<<endl;
 	
 	
-	if (wOutLZOC+1 < wE_out){
-		o<<tab<<"expRAdjusted <= expR + (("<<wE_out-1<<" downto "<<wOutLZOC+1<<" => expAdj("<<wOutLZOC<<")) & expAdj);"<<endl;
+	if (wOutLZOC_+1 < wEOut_){
+		o<<tab<<"expRAdjusted <= expR + (("<<wEOut_-1<<" downto "<<wOutLZOC_+1<<" => expAdj("<<wOutLZOC_<<")) & expAdj);"<<endl;
 		o<<tab<<"excBits <=\"01\";"<<endl;
 	}
 	else
-		if (wOutLZOC+1 == wE_out){
+		if (wOutLZOC_+1 == wEOut_){
 			o<<tab<<"expRAdjusted <= expR + expAdj;"<<endl;
 			o<<tab<<"excBits <=\"01\";"<<endl;
 		}	
 		else
 		{
-			o<<tab<<"expAdjustedExt <= (("<<wOutLZOC<<" downto "<<wE_out<<" =>'0') & expR) + expAdj;"<<endl;
+			o<<tab<<"expAdjustedExt <= (("<<wOutLZOC_<<" downto "<<wEOut_<<" =>'0') & expR) + expAdj;"<<endl;
 			
-			o<<tab<<"signExpAdjustedExt <= expAdjustedExt("<<wOutLZOC<<");"<<endl;
-			o<<tab<<"modulusExpAdjusted <= (("<<wOutLZOC-1<<" downto 0 => signExpAdjustedExt) xor expAdjustedExt("<<wOutLZOC-1<<" downto 0)) + signExpAdjustedExt;"<<endl;
+			o<<tab<<"signExpAdjustedExt <= expAdjustedExt("<<wOutLZOC_<<");"<<endl;
+			o<<tab<<"modulusExpAdjusted <= (("<<wOutLZOC_-1<<" downto 0 => signExpAdjustedExt) xor expAdjustedExt("<<wOutLZOC_-1<<" downto 0)) + signExpAdjustedExt;"<<endl;
 				
-			o<<tab<<"maxExponent <= CONV_STD_LOGIC_VECTOR("<<(1<<wE_out)-1<<" , "<<wOutLZOC<<");"<<endl;
+			o<<tab<<"maxExponent <= CONV_STD_LOGIC_VECTOR("<<(1<<wEOut_)-1<<" , "<<wOutLZOC_<<");"<<endl;
 			
 			o<<tab<<"expOverflow <= '1' when (modulusExpAdjusted>maxExponent) and (signExpAdjustedExt='0') else '0';"<<endl;
 			o<<tab<<"expUnderflow <= '1' when (modulusExpAdjusted>maxExponent) and (signExpAdjustedExt='1') else '0';"<<endl;
 			
-			
 			o<<tab<<"excBits(1) <= expOverflow and  not(expUnderflow);"<<endl;
 			o<<tab<<"excBits(0) <= not(expOverflow) and not(expUnderflow);"<<endl;
 					
-			o<<tab<<"expRAdjusted<=expAdjustedExt("<<wE_out-1<<" downto 0);"<<endl;
-		
-		}			
-	
+			o<<tab<<"expRAdjusted<=expAdjustedExt("<<wEOut_-1<<" downto 0);"<<endl;
+	}			
 		
 	// shift 
-	o<<tab<< "left_shifter_component: " << leftShifter->getOperatorName() << endl;
-	o<<tab<< "      port map ( X => "<<get_delay_signal_name("pipeA",leadZOCounter->pipeline_depth())<<", "<< endl; 
+	o<<tab<< "left_shifter_component: " << leftShifter_->getOperatorName() << endl;
+	o<<tab<< "      port map ( X => "<<getDelaySignalName("pipeA",leadZOCounter_->getPipelineDepth())<<", "<< endl; 
 	o<<tab<< "                 S => nZO, " << endl; 
 	o<<tab<< "                 R => resFrac, " <<endl; 
 	o<<tab<< "                 clk => clk, " << endl;
 	o<<tab<< "                 rst => rst " << endl;
 	o<<tab<< "               );" << endl<<endl;		
 		
-	o<<tab<<"excRes <= "<<get_delay_signal_name("excBits", leftShifter->pipeline_depth() ) <<";"<<endl;	
+	o<<tab<<"excRes <= "<<getDelaySignalName("excBits", leftShifter_->getPipelineDepth() ) <<";"<<endl;	
 	o<<tab<< "R <= excRes & "
-			 <<get_delay_signal_name("resultSign0",leadZOCounter->pipeline_depth())<<" & "
-			 <<get_delay_signal_name("expRAdjusted",leftShifter->pipeline_depth())<<"("<<wE_out-1<<" downto 0) & ";
+			 <<getDelaySignalName("resultSign0",leadZOCounter_->getPipelineDepth())<<" & "
+			 <<getDelaySignalName("expRAdjusted",leftShifter_->getPipelineDepth())<<"("<<wEOut_-1<<" downto 0) & ";
 
-	if (sizeAcc-1-wF_out>=0)		 
-			o <<"resFrac("<<sizeAcc-2<<" downto "<<sizeAcc-1-wF_out<<");"<<endl;
+	if (sizeAcc_-1-wFOut_>=0)		 
+			o <<"resFrac("<<sizeAcc_-2<<" downto "<<sizeAcc_-1-wFOut_<<");"<<endl;
 	else
-			o <<"resFrac("<<sizeAcc-2<<" downto "<<0<<")& CONV_STD_LOGIC_VECTOR(0,"<<-(sizeAcc-1-wF_out)<<");"<<endl;
+			o <<"resFrac("<<sizeAcc_-2<<" downto "<<0<<")& CONV_STD_LOGIC_VECTOR(0,"<<-(sizeAcc_-1-wFOut_)<<");"<<endl;
 	
-	end_architecture(o);
+	endArchitecture(o);
 		
 }
 

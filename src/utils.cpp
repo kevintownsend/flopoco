@@ -28,12 +28,8 @@
 
 using namespace std;
 
-
-
-
 /** return a string representation of an mpz_class on a given number of bits */
-
-string unsigned_binary(mpz_class x, int size){
+string unsignedBinary(mpz_class x, int size){
 	string s;
 	mpz_class po2, number;
 	char bit;
@@ -59,10 +55,8 @@ string unsigned_binary(mpz_class x, int size){
 	return s;
 }
 
-
 /** return the binary representation of a floating point number in the
 		FPLibrary/FloPoCo format */
-
 string fp2bin(mpfr_t x, int wE, int wF){
 	mpfr_t mpx, one, two;
 	ostringstream s;
@@ -134,7 +128,7 @@ string fp2bin(mpfr_t x, int wE, int wF){
 	}
 
 	// exponent
-	s << unsigned_binary(biased_exponent, wE);
+	s << unsignedBinary(biased_exponent, wE);
 		
 	// significand
 	
@@ -155,13 +149,7 @@ string fp2bin(mpfr_t x, int wE, int wF){
 	return s.str();
 }
 
-
-
-
-
-
-
-// Print out binary writing of an integer on "size" bits
+/** Print out binary writing of an integer on "size" bits */
 // TODO remove this function
 void printBinNum(ostream& o, uint64_t x, int size)
 {
@@ -190,11 +178,7 @@ void printBinNum(ostream& o, uint64_t x, int size)
 	}
 }
 
-
-
-
-void printBinNumGMP(ostream& o, mpz_class x, int size)
-{
+void printBinNumGMP(ostream& o, mpz_class x, int size){
 	mpz_class px;  
 	if(x<0) {
 		o<<"-";
@@ -207,39 +191,10 @@ void printBinNumGMP(ostream& o, mpz_class x, int size)
 	printBinPosNumGMP(o, px, size);
 }
 
-
-
-
 void printBinPosNumGMP(ostream& o, mpz_class x, int size)
 {
-#if 0 // to be removed some day
-	mpz_class po2, number;
-	char bit;
-
-	if(x<0) {
-		cerr<<"printBinPosNumGMP: Positive number expected, got x="<<x.get_d()<<endl;
-		exit(1);
-	}
-	po2 = ((mpz_class) 1)<<size;
-	number=x;
-		
-	for (int i = 0; i < size ; i++) {
-		po2 = po2>>1;
-		if (number >= po2) {
-			bit = '1';
-			number -= po2;
-		}
-		else {
-			bit = '0';
-		}
-		o << bit;
-	}
-#else
-	o << unsigned_binary(x,size);
-#endif
+	o << unsignedBinary(x,size);
 }
-
-
 
 double iround(double number, int bits)
 {
@@ -294,7 +249,6 @@ int intlog2(mpz_class number)
 	return result;
 }
 
-
 mpz_class maxExp(int wE){
 	return mpz_class(1)<<(wE-1);
 }
@@ -306,7 +260,6 @@ mpz_class minExp(int wE){
 mpz_class bias(int wE){
 	return (mpz_class(1)<<(wE-1)) - 1;
 }
-
 
 mpz_class getLargeRandom(int n)
 {
@@ -322,17 +275,9 @@ mpz_class getLargeRandom(int n)
 	return o;
 }
 
-
-/**
- * A zero generator method which takes as input two arguments and returns a string of zeros with quotes as stated by the second argurment
- * @param[in] n		    integer argument representing the number of zeros on the output string
- * @param[in] margins	integer argument determining the position of the quotes in the output string. The options are: -2= no quotes; -1=left quote; 0=both quotes 1=right quote
- * @return returns a string of zeros with the corresonding quotes given by margins
- **/
-string zero_generator(int n, int margins)
-{
-ostringstream left,full, right, zeros;
-int i;
+string zeroGenerator(int n, int margins){
+	ostringstream left,full, right, zeros;
+	int i;
 
 	for (i=1; i<=n;i++)
 		zeros<<"0";

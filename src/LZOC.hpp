@@ -5,56 +5,54 @@
 #include <gmp.h>
 #include <mpfr.h>
 #include <gmpxx.h>
-
 #include "Operator.hpp"
 
-/*
- * A leading zero/one counter for FloPoCo
- *
- * Authors : Florent de Dinechin, Bogdan Pasca
- *
- * This file is part of the FloPoCo project developed by the Arenaire
- * team at Ecole Normale Superieure de Lyon
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or 
- * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
-*/
-
-
-/* 
+/** The Leading zero/one counter class.  
  * Recursive structure with wOut stages. At most 2^wOut-1 leading zeros are counted.
  */
+class LZOC : public Operator{
 
-
-class LZOC : public Operator
-{
 public:
+	/** The LZOC constructor
+	 * @param[in] target the target device for this operator
+	 * @param[in] wIn the width of the input
+	 * @param[in] wOut the width of the output 
+	 */
 	LZOC(Target* target, int wIn, int wOut);
+	
+	/** The LZOC destructor	*/
 	~LZOC();
 
-	int wIn;
-	int wOut;
-	int p2wOut;
+	/**
+	 * Method belonging to the Operator class overloaded by the LZOC class
+	 * @param[in,out] o     the stream where the current architecture will be outputed to
+	 * @param[in]     name  the name of the entity corresponding to the architecture generated in this method
+	 **/
+	void outputVHDL(std::ostream& o, std::string name);
 
+	/** 
+	 * Sets the default name of this operator
+	 */
+	void setOperatorName();
 
-	// Overloading the virtual functions of Operator
-	void output_vhdl(std::ostream& o, std::string name);
-
+	/**
+	 * Gets the signals which are interesting for TestCases.
+	 * @see TestIOMap
+	 */
 	TestIOMap getTestIOMap();
+
+	/**
+	 * Gets the correct value associated to one or more inputs.
+	 * @param a the array which contains both already filled inputs and
+	 *          to be filled outputs in the order specified in getTestIOMap.
+	 */
 	void fillTestCase(mpz_class a[]);
+	
+protected:
+
+	int wIn_;    /**< The width of the input */
+	int wOut_;   /**< The width of the output */
+	int p2wOut_; /**< The value of 2^wOut, which is computed as 1<<wOut */
+
 };
-
-
-
 #endif

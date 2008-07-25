@@ -22,7 +22,7 @@ public:
 	~HOTBM();
 
 	// Overloading the virtual functions of Operator
-	void output_vhdl(std::ostream& o, std::string name);
+	void outputVHDL(std::ostream& o, std::string name);
 
 	TestIOMap getTestIOMap();
 	void fillTestCase(mpz_class a[]);

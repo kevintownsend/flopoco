@@ -5,129 +5,206 @@
 #include <sstream>
 
 /**
- * A class representing a signal
+ * A class representing a signal. This is the basic block that operators use
  */
 class Signal
 {
 public:
-	typedef enum {in,out,wire,registered,registered_with_async_reset,
-		registered_with_sync_reset } type_t;
+	/** The possible types of a signal*/
+	typedef enum {
+	in,                        /**< if the signal is an input signal */
+	out,                       /**< if the signal is an output signal */
+	wire,                      /**< if the signal is a wire (not registered) */
+	registeredWithoutReset,    /**< if the signal is registered, but does not have a reset */
+	registeredWithAsyncReset,  /**< if the signal is registered, and has an asynchronous reset */
+	registeredWithSyncReset    /**< if the signal is registered, and has an synchronous reset */
+	} SignalType;
 
-	Signal(const std::string name, const type_t type, const int width = 1, const bool isBus = false) : 
-		_name(name), _type(type), _wE(0), _wF(0), _width(width), _low(0), _high(width-1),
-		_isSubSignal(false), _isBus(isBus),	_isFP()
-	{
-		updateId();
-	}
-
-	Signal(const std::string name, const type_t type, const int wE, const int wF) : 
-		_name(name), _type(type), _wE(wE), _wF(wF), _width(wE+wF+3),
-		_low(0), _high(_width-1), _isSubSignal(false),_isBus(false), _isFP(true)
-	{
-		updateId();
-	}
+	/** Signal constructor.
+	 * The standard constructor for signals which are not floating-point.
+	 * @param name      the name of the signal
+	 * @param type      the type of the signal, @see SignalType
+	 * @param width     the width of the signal
+	 * @param isBus     the flag which signals if the signal is a bus (std_logic_vector)
+	 */
+	Signal(const std::string name, const SignalType type, const int width = 1, const bool isBus = false) : 
+		name_(name), type_(type), wE_(0), wF_(0), width_(width), low_(0), high_(width-1),
+		isSubSignal_(false), isBus_(isBus),	isFP_(false) {
 		
+		updateSignalName();
+	}
+
+	/** Signal constructor.
+	 * The standard constructor for signals which are not floating-point.
+	 * @param name      the name of the signal
+	 * @param type      the type of the signal, @see SignalType
+	 * @param width     the width of the signal
+	 * @param isBus     the flag which signals if the signal is a bus (std_logic_vector)
+	 */
+	Signal(const std::string name, const SignalType type, const int wE, const int wF) : 
+		name_(name), type_(type), wE_(wE), wF_(wF), width_(wE+wF+3),
+		low_(0), high_(width_-1), isSubSignal_(false),isBus_(false), isFP_(true)
+	{
+		updateSignalName();
+	}
+
+	/** Signal destructor.
+	 */		
 	~Signal(){}
-		
-	const std::string& id() const { return _id; }
+	
+	/** Returns the name of the signal
+	 * @return the name of the signal
+	 */	
+	const std::string& getSignalName() const { 
+		return id_; 
+	}
 
-	void updateId()
-	{
-		if (_isSubSignal == false)
-			_id = _name;
+	/** Updates the name of the signal.
+	 * It takes into consideration the fact that we might have subsignals
+	 */	
+	void updateSignalName()	{
+		if (isSubSignal_ == false)
+			id_ = name_;
 		else
 		{
 			std::stringstream o;
-			if (_width == 1)
-				o << _name << "(" << _low << ")";
+			if (width_ == 1)
+				o << name_ << "(" << low_ << ")";
 			else
-				o << _name << "(" << _high << " downto " << _low << ")";
-			_id = o.str();
+				o << name_ << "(" << high_ << " downto " << low_ << ")";
+			id_ = o.str();
 		}
 	}
-		
-	int width() const{return _width;}
-	int wE() const {return(_wE);}
-	int wF() const {return(_wF);}
-	bool isFP() const {return _isFP;}
-	bool isBus() const {return _isBus;}
-	type_t type() const {return _type;}
-		
+	
+	/** Returns the width of the signal
+	 * @return the width of the signal
+	 */	
+	int width() const{return width_;}
+	
+	/** Returns the exponent width of the signal
+	 * @return the width of the exponent if signal is isFP_
+	 */	
+	int wE() const {return(wE_);}
+
+	/** Returns the fraction width of the signal
+	 * @return the width of the fraction if signal is isFP_
+	 */	
+	int wF() const {return(wF_);}
+	
+	/** Reports if the signal is a floating-point signal
+	 * @return if the signal is a FP siglal
+	 */	
+	bool isFP() const {return isFP_;}
+
+	/** Reports if the signal has the bus flag active
+	 * @return true if the signal is of bus type (std_logic_vector)
+	 */		
+	bool isBus() const {return isBus_;}
+
+	/** Returns the type of the signal
+	 * @return type of signal, @see SignalType
+	 */	
+	SignalType type() const {return type_;}
+	
+	/** outputs the VHDL code for declaring this signal 
+	 * @return the VHDL for this signal. 
+	 */	
 	std::string toVHDL() {
 		std::ostringstream o; 
-		if(type()==Signal::wire || type()==Signal::registered || type()==Signal::registered_with_async_reset || type()==Signal::registered_with_sync_reset) 
+		if(type()==Signal::wire || type()==Signal::registeredWithoutReset || type()==Signal::registeredWithAsyncReset || type()==Signal::registeredWithSyncReset) 
 			o << "signal ";
-		o << id();
+		o << getSignalName();
 		o << " : ";
 		if (type()==Signal::in)
 			 o << "in ";
 		if(type()==Signal::out)
 			 o << "out ";
 
-		if ((1==width())&&(!_isBus)) 
+		if ((1==width())&&(!isBus_)) 
 			o << "std_logic" ;
 		else 
-			if(_isFP) 
+			if(isFP_) 
 				o << " std_logic_vector(" << wE() <<"+"<<wF() << "+2 downto 0)";
 			else
 				o << " std_logic_vector(" << width()-1 << " downto 0)";
 		return o.str();
 	}
 
+	/** Returns a subsignal of the this signal
+	 * @param low the low index of subsignal
+	 * @param high the high index of the subsignal
+	 * @return the corresponding subsignal
+	 */	
 	Signal getSubSignal(int low, int high)
 	{
-		if (low < _low)
+		if (low < low_)
 			throw std::string("Attempted to return subsignal with smaller low index.");
-		if (high > _high)
+		if (high > high_)
 			throw std::string("Attempted to return subsignal with bigger high index."); 
 
-		Signal s(_name, _type, high-low+1);
-		s._low = low;
-		s._high = high;
-		s._isSubSignal = true;
+		Signal s(name_, type_, high-low+1);
+		s.low_ = low;
+		s.high_ = high;
+		s.isSubSignal_ = true;
 
 		return s;
 	}
-
+	
+	/** Returns a subsignal containing the exception bits of this signal
+	 * @return the corresponding subsignal
+	 */	
 	Signal getException()
 	{
-		if (!_isFP)
+		if (!isFP_)
 			throw std::string("Not a floating point signal.");
-		return getSubSignal(1+_wE+_wF, 2+_wE+_wF);
+		return getSubSignal(1+wE_+wF_, 2+wE_+wF_);
 	}
 
+	/** Returns a subsignal containing the sign bit of this signal
+	 * @return the corresponding subsignal
+	 */	
 	Signal getSign()
 	{
-		if (!_isFP)
+		if (!isFP_)
 			throw std::string("Not a floating point signal.");
-		return getSubSignal(_wE+_wF, _wE+_wF);
+		return getSubSignal(wE_+wF_, wE_+wF_);
 	}
 
+	/** Returns a subsignal containing the exponent bits of this signal
+	 * @return the corresponding subsignal
+	 */	
 	Signal getExponent()
 	{
-		if (!_isFP)
+		if (!isFP_)
 			throw std::string("Not a floating point signal.");
-		return getSubSignal(_wF, _wE+_wF-1);
+		return getSubSignal(wF_, wE_+wF_-1);
 	}
 
+	/** Returns a subsignal containing the fraction bits of this signal
+	 * @return the corresponding subsignal
+	 */	
 	Signal getMantissa()
 	{
-		if (!_isFP)
+		if (!isFP_)
 			throw std::string("Not a floating point signal.");
-		return getSubSignal(0, _wF-1);
+		return getSubSignal(0, wF_-1);
 	}
 
 private:
-	std::string _name;
-	std::string _id;
-	type_t _type;
-	uint32_t _width;
-	bool _isFP;
-	uint32_t _wE;  // used only for FP signals
-	uint32_t _wF;  // used only for FP signals
-	bool _isSubSignal;
-	uint32_t _low, _high; // used only for „subsignals”, which are non FP
-	bool _isBus;
+	std::string   name_;        /**< The name of the signal */
+	std::string   id_;          /**< The id of the signal. It is the same as name_ for regular signals, and is name_(high_-1 downto low_) for subsignals */
+	SignalType    type_;        /**< The type of the signal, see SignalType */
+	uint32_t      width_;       /**< The width of the signal */
+	
+	bool          isFP_;        /**< If the signal is of floating-point type */  
+	uint32_t      wE_;          /**< The width of the exponent. Used for FP signals */
+	uint32_t      wF_;          /**< The width of the fraction. Used for FP signals */
+	
+	bool          isSubSignal_; /**< If the signal is a subsignal */
+	uint32_t      low_;         /**< The low index of the signal */
+	uint32_t      high_;        /**< The high index of the signal */
+	
+	bool          isBus_;       /**< True is the signal is a bus (std_logic_vector)*/
 };
 
 #endif

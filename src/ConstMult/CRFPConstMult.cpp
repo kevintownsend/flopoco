@@ -139,7 +139,7 @@ CRFPConstMult::CRFPConstMult(Target* target, int wE_in, int wF_in, int wE_out, i
 	name <<"FPConstMult_"<<(cst_sgn==0?"":"M") <<cst_sig<<"b"
 		  <<(cst_exp_when_mantissa_int<0?"M":"")<<abs(cst_exp_when_mantissa_int)
 		  <<"_"<<wE_in<<"_"<<wF_in<<"_"<<wE_out<<"_"<<wF_out;
-	unique_name=name.str();
+	uniqueName_=name.str();
 
 
 	// cleaning up
@@ -148,10 +148,10 @@ CRFPConstMult::CRFPConstMult(Target* target, int wE_in, int wF_in, int wE_out, i
 	icm = new IntConstMult(target, wF_in+1, cst_sig);
 	oplist.push_back(icm);
 
-	if (target->is_pipelined())
-		set_sequential();
+	if (target->isPipelined())
+		setSequential();
 	else 
-		set_combinatorial();
+		setCombinatorial();
 
 	setup();
 

@@ -16,17 +16,22 @@ public:
 	 * @param n Number of tests
 	 */
 	TestBench(Target *target, Operator *op, int n);
+	
+	/** Destructor */
 	~TestBench();
-	void set_operator_name(std::string prefix, std::string postfix);
-	void output_vhdl(ostream& o, string name);
+	
+	/** Overloaded method which sets the operator name */
+	void setOperatorName();
+	
+	/** Method belonging to the Operator class overloaded by the Wrapper class
+	 * @param[in,out] o     the stream where the current architecture will be outputed to
+	 * @param[in]     name  the name of the entity corresponding to the architecture generated in this method
+	 **/
+	void outputVHDL(ostream& o, string name);
+
 private:
-	/** The unit under test UUT */
-	Operator *op;
-
-	/** The parameter from the constructor */
-	int n;
+	Operator *op_; /**< The unit under test UUT */
+	int       n_;   /**< The parameter from the constructor */
 };
-
-
 #endif
 

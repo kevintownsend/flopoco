@@ -29,34 +29,34 @@ using namespace std;
 
 extern int verbose;
 
-void Target::set_pipelined() {
-	_pipeline=true;
+void Target::setPipelined() {
+	pipeline_=true;
 }
 
-void Target::set_not_pipelined() {
-	_pipeline=false;
+void Target::setNotPipelined() {
+	pipeline_=false;
 }
 
-bool Target::is_pipelined() {
-	return _pipeline;
+bool Target::isPipelined() {
+	return pipeline_;
 }
 
-int Target::lut_inputs() {
-	return _lut_inputs;
+int Target::lutInputs() {
+	return lutInputs_;
 }
 
 double Target::frequency(){
-	return _frequency;
-};
+	return frequency_;
+}
 
-void Target::set_frequency(double f){
-	_frequency=f;
-};
+void Target::setFrequency(double f){
+	frequency_ = f;
+}
 
-void Target::set_use_hard_multipliers(bool v){
-				_use_hard_multipliers = v;  
-};
+void Target::setUseHardMultipliers(bool v){
+	useHardMultipliers_ = v;  
+}
 
-bool Target::get_use_hard_multipliers(){
-				return _use_hard_multipliers;
-}; 
+bool Target::getUseHardMultipliers(){
+	return useHardMultipliers_ ;
+} 

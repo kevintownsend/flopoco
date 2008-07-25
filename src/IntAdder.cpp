@@ -37,56 +37,50 @@
 
 using namespace std;
 
-/**
- * The IntAdder constructor
- * @param[in]		target		the target device
- * @param[in]		wIn			  the with of the inputs and output
- **/
-IntAdder::IntAdder(Target* target, int wIn, const int p) :
-	Operator(target), wIn(wIn), forcePipeline(p) {
 
-	ostringstream name;
-	name <<"IntAdder_"<<wIn;
-	unique_name=name.str();
+IntAdder::IntAdder(Target* target, int wIn, const int p) :
+	Operator(target), wIn_(wIn), forcePipeline_(p) {
+
+	setOperatorName();
 
 	// Set up the IO signals
-	add_input ("X"  , wIn);
-	add_input ("Y"  , wIn);
-	add_input ("Cin", 1  );
-	add_output("R"  , wIn);
+	addInput ("X"  , wIn_);
+	addInput ("Y"  , wIn_);
+	addInput ("Cin", 1  );
+	addOutput("R"  , wIn_);
 
-	if (target->is_pipelined())
-		set_sequential();
+	if (target->isPipelined())
+		setSequential();
 	else
-		set_combinatorial();
+		setCombinatorial();
 
-	if (is_sequential()){
+	if (isSequential()){
 		//the maximum chunk size so that (optimisically) the target freqency can be reached. 
-		chunk_size = (int)floor( (1./target->frequency() - target->lut_delay()) / target->carry_propagate_delay()); 
-		//the pipe_levels gives th number of chunks that the addition must be split in so that the frequency will ve reached
+		chunkSize_ = (int)floor( (1./target->frequency() - target->lutDelay()) / target->carryPropagateDelay()); 
+		//the pipeLevels_ gives th number of chunks that the addition must be split in so that the frequency will ve reached
 		
 		//set the pipeline depth 
-		if (wIn<=chunk_size)
-			pipe_levels=0;
+		if (wIn_ <= chunkSize_)
+			pipeLevels_ = 0;
 		else
-			pipe_levels=wIn/chunk_size;
+			pipeLevels_ = wIn_ / chunkSize_;
 			
-		set_pipeline_depth(pipe_levels+p); 
+		setPipelineDepth(pipeLevels_+p); 
 		if(verbose) {
-			cout << tab <<"Estimated delay will be " << target->adder_delay(wIn) <<endl; 
-			cout << tab << "chunk="<<chunk_size << " freq=" << 1e-6/target->adder_delay(chunk_size) <<" levels="<<pipe_levels <<endl;
+			cout << tab <<"Estimated delay will be " << target->adderDelay(wIn) <<endl; 
+			cout << tab << "chunk="<<chunkSize_ << " freq=" << 1e-6/target->adderDelay(chunkSize_) <<" levels="<<pipeLevels_ <<endl;
 		}
-		if(chunk_size > (wIn/(pipe_levels+1))+2)
-			chunk_size = (wIn/(pipe_levels+1))+2;
+		if(chunkSize_ > (wIn/(pipeLevels_+1))+2)
+			chunkSize_ = (wIn/(pipeLevels_+1))+2;
 		if(verbose)
-			cout << tab << "after chunk balancing, chunk=="<<chunk_size << " freq=" << 1e-6/target->adder_delay(chunk_size) <<"  levels="<<pipe_levels <<endl;
-		last_chunk_size = wIn - (pipe_levels)*chunk_size;
+			cout << tab << "after chunk balancing, chunk=="<<chunkSize_ << " freq=" << 1e-6/target->adderDelay(chunkSize_) <<"  levels="<<pipeLevels_ <<endl;
+		lastChunkSize_ = wIn - (pipeLevels_)*chunkSize_;
 		if(verbose)
-			cout << tab << "last chunk=="<<last_chunk_size <<endl;
+			cout << tab << "last chunk=="<<lastChunkSize_ <<endl;
 
 		//if no pipelining is required - then these signals are not present
-		if (pipe_levels>0)
-			for(int i=0; i<=pipe_levels; i++){
+		if (pipeLevels_>0)
+			for(int i=0; i<=pipeLevels_; i++){
 				ostringstream snamex, snamey, snamer, cOutR, iSum;
 				int size;
 				
@@ -96,60 +90,53 @@ IntAdder::IntAdder(Target* target, int wIn, const int p) :
 				snamer <<"ir_"<<i;
 				cOutR<<"cOutR"<<i;
 				
-				if(i<pipe_levels)
-					size = chunk_size;
+				if(i<pipeLevels_)
+					size = chunkSize_;
 				else
-					size = last_chunk_size;
+					size = lastChunkSize_;
 							
-				add_delay_signal_bus(snamex.str(), size, i);
-				add_delay_signal_bus(snamey.str(), size, i);
+				addDelaySignalBus(snamex.str(), size, i);
+				addDelaySignalBus(snamey.str(), size, i);
 				
-				if (i<pipe_levels)	
-					add_signal(iSum.str(),size+1); //is larger because inputs are padded with one 0 each in MSB position
+				if (i<pipeLevels_)	
+					addSignal(iSum.str(),size+1); //is larger because inputs are padded with one 0 each in MSB position
 				else
-					add_signal(iSum.str(),size);
+					addSignal(iSum.str(),size);
 				
-				add_delay_signal_bus(snamer.str(), size, pipe_levels-i);
+				addDelaySignalBus(snamer.str(), size, pipeLevels_-i);
 				
-				if (i<pipe_levels)
-					add_registered_signal_with_sync_reset(cOutR.str(), 1);
+				if (i<pipeLevels_)
+					addRegisteredSignalWithSyncReset(cOutR.str(), 1);
 			}	
 		
 	}
 	if (p==1)
-	add_registered_signal_with_sync_reset("r1reg",wIn);
+		addRegisteredSignalWithSyncReset("r1reg",wIn_);
 	
 }
 
-
-
-/**
- *  destructor
- */
 IntAdder::~IntAdder() {
 }
 
+void IntAdder::setOperatorName(){
+	ostringstream name;
+	name << "IntAdder_" << wIn_;
+	uniqueName_ = name.str();
+}
 
-/**
- * Method belonging to the Operator class overloaded by the IntAdder class
- * @param[in,out] o     the stream where the current architecture will be outputed to
- * @param[in]     name  the name of the entity corresponding to the architecture generated in this method
- **/
-void IntAdder::output_vhdl(std::ostream& o, std::string name) {
+void IntAdder::outputVHDL(std::ostream& o, std::string name) {
 	ostringstream signame;
-	Licence(o,"Florent de Dinechin, Bogdan Pasca (2007)");
-	Operator::StdLibs(o);
-	output_vhdl_entity(o);
-
-	o << "architecture arch of " << name  << " is" << endl;
+	licence(o,"Florent de Dinechin, Bogdan Pasca (2007)");
+	Operator::stdLibs(o);
+	outputVHDLEntity(o);
+	newArchitecture(o,name);
+	outputVHDLSignalDeclarations(o);
+	beginArchitecture(o);
 	
-	output_vhdl_signal_declarations(o);
-
-	o << "begin" << endl;
-	if(is_sequential()){
-		if(pipe_levels==0){
+	if(isSequential()){
+		if(pipeLevels_==0){
 			//addition simplification
-			if (forcePipeline==0)
+			if (forcePipeline_==0)
 			o << tab << "R <= X + Y + Cin;" <<endl;      
 			else
 			{
@@ -160,14 +147,14 @@ void IntAdder::output_vhdl(std::ostream& o, std::string name) {
 		}
 		else{
 			// Initialize the chunks
-			for(int i=0; i<=pipe_levels; i++){
-				if (!((i==pipe_levels)&&(last_chunk_size==0)))
+			for(int i=0; i<=pipeLevels_; i++){
+				if (!((i==pipeLevels_)&&(lastChunkSize_==0)))
 				{
 					int maxIndex;
-					if(i==pipe_levels)
-						maxIndex = wIn-1;
+					if(i==pipeLevels_)
+						maxIndex = wIn_-1;
 					else 
-						maxIndex = i*chunk_size+chunk_size-1;
+						maxIndex = i*chunkSize_+chunkSize_-1;
 						
 					ostringstream snamex, snamey, snamer;
 					snamex <<"ix_"<<i;
@@ -175,25 +162,25 @@ void IntAdder::output_vhdl(std::ostream& o, std::string name) {
 					snamer <<"ir_"<<i;
 				
 					o << tab << snamex.str() << " <= ";
-					if(i < pipe_levels)
+					if(i < pipeLevels_)
 						o << "";
-						o << "X(" << maxIndex<< " downto " << i*chunk_size << ");" << endl;
+						o << "X(" << maxIndex<< " downto " << i*chunkSize_ << ");" << endl;
 				
 					o << tab << snamey.str() << " <= ";
-					if(i < pipe_levels)
+					if(i < pipeLevels_)
 						o << "";
-						o << "Y(" << maxIndex<< " downto " << i*chunk_size << ");" << endl;
+						o << "Y(" << maxIndex<< " downto " << i*chunkSize_ << ");" << endl;
 				}
 			}
-			// then the pipe_level adders of size chunk_size
-			for(int i=0; i<=pipe_levels; i++){
-				if (!((i==pipe_levels)&&(last_chunk_size==0)))
+			// then the pipe_level adders of size chunkSize_
+			for(int i=0; i<=pipeLevels_; i++){
+				if (!((i==pipeLevels_)&&(lastChunkSize_==0)))
 				{
 					int size;
-					if(i==pipe_levels) 
-						size= last_chunk_size -1 ;
+					if(i==pipeLevels_) 
+						size= lastChunkSize_ -1 ;
 					else  
-						size = chunk_size;
+						size = chunkSize_;
 					
 					ostringstream snamex, snamey, snamer, iSum, cOutR, cOutRM;
 					snamex <<"ix_"<<i;
@@ -206,70 +193,70 @@ void IntAdder::output_vhdl(std::ostream& o, std::string name) {
 					o<<endl<<endl;
 					
 					o << tab << iSum.str() << " <= ";
-					if(i!=pipe_levels)
+					if(i!=pipeLevels_)
 						o<< "(\"0\" & ";
-						o<< get_delay_signal_name(snamex.str(), i) ; 
-					if(i!=pipe_levels)	
+						o<< getDelaySignalName(snamex.str(), i) ; 
+					if(i!=pipeLevels_)	
 						o<< ")";
 						o<< " + ";
-					if(i!=pipe_levels)	
+					if(i!=pipeLevels_)	
 						o<< "(\"0\" & ";
-						o<< get_delay_signal_name(snamey.str(), i);
-					if(i!=pipe_levels)	
+						o<< getDelaySignalName(snamey.str(), i);
+					if(i!=pipeLevels_)	
 						o<< ")";
 					
 					// add the carry in
 					if(i>0) {
 						ostringstream carry;
 						carry <<"ir_"<<i-1;
-						o  << " + " << get_delay_signal_name(cOutRM.str() , 1);
+						o  << " + " << getDelaySignalName(cOutRM.str() , 1);
 					}else
 						o  << " + Cin";
 					
 					o << ";" << endl;
 					
-					if(i<pipe_levels) 
+					if(i<pipeLevels_) 
 						o << tab<<snamer.str() <<" <= "<< iSum.str()<<"("<<size-1<<" downto 0);"<<endl;
 					else 
 						o << tab<<snamer.str() <<" <= "<< iSum.str()<<"("<<size<<" downto 0);"<<endl;
 						
-					if(i<pipe_levels) 
+					if(i<pipeLevels_) 
 						o << tab<< cOutR.str() <<" <= "<< iSum.str()<<"("<<size<<");"<<endl;
 				}
 			}
 			// Then the output to R 
-			for(int i=0; i<=pipe_levels; i++){
-				if (!((i==pipe_levels)&&(last_chunk_size==0)))
+			for(int i=0; i<=pipeLevels_; i++){
+				if (!((i==pipeLevels_)&&(lastChunkSize_==0)))
 				{
 					int maxIndex, size;
-					if(i==pipe_levels) {
-						maxIndex = wIn-1;
-						size=last_chunk_size;
+					if(i==pipeLevels_) {
+						maxIndex = wIn_-1;
+						size=lastChunkSize_;
 					}
 					else  {
-						maxIndex = i*chunk_size+chunk_size-1;
-						size = chunk_size;
+						maxIndex = i*chunkSize_+chunkSize_-1;
+						size = chunkSize_;
 					}
-					if (forcePipeline==0)
+					if (forcePipeline_==0)
 					{
 						ostringstream snamer;
 						snamer <<"ir_"<<i;
-						o << tab << "R(" << maxIndex << " downto " << i*chunk_size << ")  <=  "
-							<<  get_delay_signal_name(snamer.str(), pipe_levels -i) << "(" << size-1 << " downto 0);" << endl; 
+						o << tab << "R(" << maxIndex << " downto " << i*chunkSize_ << ")  <=  "
+							<<  getDelaySignalName(snamer.str(), pipeLevels_ -i) << "(" << size-1 << " downto 0);" << endl; 
 					}
 					else
 					{
 					ostringstream snamer;
 						snamer <<"ir_"<<i;
-						o << tab << "r1reg_d(" << maxIndex << " downto " << i*chunk_size << ")  <=  "
-							<<  get_delay_signal_name(snamer.str(), pipe_levels -i) << "(" << size-1 << " downto 0);" << endl; 
+						o << tab << "r1reg_d(" << maxIndex << " downto " << i*chunkSize_ << ")  <=  "
+							<<  getDelaySignalName(snamer.str(), pipeLevels_ -i) << "(" << size-1 << " downto 0);" << endl; 
 					o<<tab<<"R<=r1reg_d;"<<endl;
 					}
 					
 				}
 			}
 		}
-		output_vhdl_registers(o);
+		outputVHDLRegisters(o);
 	}
 	else{
 		o << tab << "R <= X + Y + Cin;" <<endl;
@@ -277,15 +264,13 @@ void IntAdder::output_vhdl(std::ostream& o, std::string name) {
 	o << "end architecture;" << endl << endl;
 }
 
-
-
 TestIOMap IntAdder::getTestIOMap()
 {
 	TestIOMap tim;
-	tim.add(*get_signal_by_name("X"));
-	tim.add(*get_signal_by_name("Y"));
-	tim.add(*get_signal_by_name("Cin"));
-	tim.add(*get_signal_by_name("R"));
+	tim.add(*getSignalByName("X"));
+	tim.add(*getSignalByName("Y"));
+	tim.add(*getSignalByName("Cin"));
+	tim.add(*getSignalByName("R"));
 	return tim;
 }
 
@@ -298,8 +283,7 @@ void IntAdder::fillTestCase(mpz_class a[])
 
 	svR = svX + svY + svC;
 	// Don't allow overflow
-	mpz_clrbit(svR.get_mpz_t(),wIn); 
-	
+	mpz_clrbit(svR.get_mpz_t(),wIn_); 
 }
 
 

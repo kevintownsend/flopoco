@@ -29,104 +29,85 @@
 #include <gmpxx.h>
 #include "utils.hpp"
 #include "Operator.hpp"
-
 #include "LZOC.hpp"
 
 using namespace std;
 
-/** The LZOC constructor
-*@param[in] target the target device for this operator
-*@param[in] wIn the width of the input
-*@param[in] wOut the width of the output 
-*/
 LZOC::LZOC(Target* target, int wIn, int wOut) :
-	Operator(target), wIn(wIn), wOut(wOut)  {
+	Operator(target), wIn_(wIn), wOut_(wOut)  {
 
-	p2wOut = 1<<wOut; // no need for GMP here
-	ostringstream name; 
-	name <<"LZOC_"<<wIn<<"_"<<wOut;
+	p2wOut_ = 1<<wOut_; // no need for GMP here
 
-	unique_name=name.str();
-
+	setOperatorName();
+	setOperatorType();
+	
 	//Set up the IO signals
-	add_input ("I", wIn);
-	add_input ("OZB");  
-	add_output("O", wOut);
-
-	if (target->is_pipelined())
-		set_sequential();
-	else
-		set_combinatorial();	
+	addInput ("I", wIn_);
+	addInput ("OZB");  
+	addOutput("O", wOut_);
 
 	//Set up the internal architecture signals
-	if (is_sequential()){
-			add_delay_signal("sozb",1,wOut-1);
+	if (isSequential()){
+			addDelaySignal("sozb",1,wOut_-1);
 			
-			for (int i=wOut; i>0; i--){
+			for (int i=wOut_; i>0; i--){
 			ostringstream signalName;
 			signalName<<"level"<<i;
 			if (i!=1)
-				add_registered_signal_with_sync_reset(signalName.str(), (1<<i));
+				addRegisteredSignalWithSyncReset(signalName.str(), (1<<i));
 			else
-				add_signal(signalName.str(), (1<<i));
+				addSignal(signalName.str(), (1<<i));
 			}
 	}
 	else{
-		add_signal("tmpO", wOut);
+		addSignal("tmpO", wOut_);
 	
-		for (int i=wOut; i>0; i--){
+		for (int i=wOut_; i>0; i--){
 			ostringstream signalName;
 			signalName<<"level"<<i;
-			add_signal(signalName.str(), (1<<i));
+			addSignal(signalName.str(), (1<<i));
 		}
 	}
 	 
-	if (is_sequential())
-	set_pipeline_depth(wOut-1); 
-	 
-	 
+	if (isSequential())
+	setPipelineDepth(wOut_-1); 
+
 }
 
-
-/** The LZOC destructor
-*/
 LZOC::~LZOC() {}
 
+void LZOC::setOperatorName(){
+	ostringstream name; 
+	name <<"LZOC_"<<wIn_<<"_"<<wOut_;
+	uniqueName_ = name.str();
+}
 
-
-/**
- * Method belonging to the Operator class overloaded by the LZOC class
- * @param[in,out] o     the stream where the current architecture will be outputed to
- * @param[in]     name  the name of the entity corresponding to the architecture generated in this method
- **/
-
-void LZOC::output_vhdl(std::ostream& o, std::string name) {
-	Licence(o,"Florent de Dinechin, Bogdan Pasca (2007)");
-	Operator::StdLibs(o);
-	output_vhdl_entity(o);
-	new_architecture(o,name);
+void LZOC::outputVHDL(std::ostream& o, std::string name) {
+	licence(o,"Florent de Dinechin, Bogdan Pasca (2007)");
+	Operator::stdLibs(o);
+	outputVHDLEntity(o);
+	newArchitecture(o,name);
+	outputVHDLSignalDeclarations(o);	
 	
-	output_vhdl_signal_declarations(o);	
-	for (int i=wOut; i>0; i--){
-		o << tab << "signal tmpO"<<i<<"  : std_logic_vector("<<wOut-1<<" downto "<<i-1<<");"<<endl;
-		o << tab << "signal tmpO"<<i<<"_d: std_logic_vector("<<wOut-1<<" downto "<<i-1<<");"<<endl;				
+	for (int i=wOut_; i>0; i--){
+		o << tab << "signal tmpO"<<i<<"  : std_logic_vector("<<wOut_-1<<" downto "<<i-1<<");"<<endl;
+		o << tab << "signal tmpO"<<i<<"_d: std_logic_vector("<<wOut_-1<<" downto "<<i-1<<");"<<endl;				
 	}
-	
-	
-	begin_architecture(o);
-	
-	if (is_sequential()){
 		
-		output_vhdl_registers(o); o<<endl;
+	beginArchitecture(o);
+	
+	if (isSequential()){
+		
+		outputVHDLRegisters(o); o<<endl;
 		
 		o << tab << "process(clk, rst)"<<endl;
 		o << tab << "  begin"<<endl;
 		o << tab << "if clk'event and clk = '1' then"<<endl;
 		o << tab << "     if rst = '1' then"<<endl;
-		for (int i=wOut; i>0; i--)
-		o << tab << "        tmpO"<<i<<"_d <= ("<<wOut-1<<" downto "<<i-1<<" => '0');"<<endl;				
+		for (int i=wOut_; i>0; i--)
+		o << tab << "        tmpO"<<i<<"_d <= ("<<wOut_-1<<" downto "<<i-1<<" => '0');"<<endl;				
 		o << tab << "     else"<<endl;
-		for (int i=wOut; i>0; i--)
+		for (int i=wOut_; i>0; i--)
 		o << tab << "        tmpO"<<i<<"_d <= tmpO"<<i<<";"<<endl;				
 		o << tab << "     end if;"<<endl;
 		o << tab << "  end if;"<<endl;
@@ -136,40 +117,39 @@ void LZOC::output_vhdl(std::ostream& o, std::string name) {
 		
 		
 		// connect first stage to I
-		cout<<"p2wOut is = "<<p2wOut<<endl;
-		if (p2wOut==wIn)
-			o << "  level"<<wOut<<" <=  I ;" << endl;
-		else if (p2wOut>wIn) // pad input with zeroes/ones function of what we count. If LZC pad with 1, else pad with 
-			o << "  level"<<wOut<<" <=  I & ("<<p2wOut-wIn-1<<" downto 0 => not(sozb)) ;" << endl;
-		else if (p2wOut<wIn)
-			o << "  level"<<wOut<<" <=  I("<<wIn-1<<" downto "<<wIn - p2wOut <<") ;" << endl;
+		cout<<"p2wOut_ is = "<<p2wOut_<<endl;
+		if (p2wOut_==wIn_)
+			o << "  level"<<wOut_<<" <=  I ;" << endl;
+		else if (p2wOut_>wIn_) // pad input with zeroes/ones function of what we count. If LZC pad with 1, else pad with 
+			o << "  level"<<wOut_<<" <=  I & ("<<p2wOut_-wIn_-1<<" downto 0 => not(sozb)) ;" << endl;
+		else if (p2wOut_<wIn_)
+			o << "  level"<<wOut_<<" <=  I("<<wIn_-1<<" downto "<<wIn_ - p2wOut_ <<") ;" << endl;
 		// recursive structure
-		for (int i=wOut; i>1; i--) {
-			if (i!=wOut)
-			o << "  tmpO"<<i<<"("<<wOut-1<<" downto "<<i<<") <= tmpO"<<i+1<<"_d("<<wOut-1<<" downto "<<i<<");"<<endl;
+		for (int i=wOut_; i>1; i--) {
+			if (i!=wOut_)
+			o << "  tmpO"<<i<<"("<<wOut_-1<<" downto "<<i<<") <= tmpO"<<i+1<<"_d("<<wOut_-1<<" downto "<<i<<");"<<endl;
 			
 			o << "  tmpO"<<i<<"("<<i-1<<") <= '1' when level"<<i<<"("<<(1<<i)-1<<" downto "<<(1<<(i-1))<<") = ("<<(1<<i)-1<<" downto "<<(1<<(i-1))<<" => "
-																				<<get_delay_signal_name("sozb",wOut-i)<<") else '0';"<< endl;
+											<<getDelaySignalName("sozb",wOut_-i)<<") else '0';"<< endl;
 			o << "  level"<<i-1<<" <= level"<<i<<"_d("<<(1<<(i-1))-1<<" downto 0) when tmpO"<<i<<"_d("<<i-1<<") = '1'"<< endl
 				<< "               else level"<<i<<"_d("<<(1<<i)-1<<" downto "<<(1<<(i-1))<<");" << endl;
 		}
-		o << "  tmpO"<<1<<"("<<wOut-1<<" downto "<<1<<") <= tmpO"<<2<<"_d("<<wOut-1<<" downto "<<1<<");"<<endl;
-		o << "  tmpO1(0) <= '1' when level1(1) =  "<<get_delay_signal_name("sozb",wOut-1)<<" else '0';"<< endl;
-		
-		
+		o << "  tmpO"<<1<<"("<<wOut_-1<<" downto "<<1<<") <= tmpO"<<2<<"_d("<<wOut_-1<<" downto "<<1<<");"<<endl;
+		o << "  tmpO1(0) <= '1' when level1(1) =  "<<getDelaySignalName("sozb",wOut_-1)<<" else '0';"<< endl;
+				
 		o << " O <= tmpO1;"<<endl;
 	}
 	else{
 		// connect first stage to I
-		cout<<"p2wOut is = "<<p2wOut<<endl;
-		if (p2wOut==wIn)
-			o << "  level"<<wOut<<" <=  I ;" << endl;
-		else if (p2wOut>wIn) // pad input with zeroes/ones function of what we count. If LZC pad with 1, else pad with 
-			o << "  level"<<wOut<<" <=  I & ("<<p2wOut-wIn-1<<" downto 0 => not(ozb)) ;" << endl;
-		else if (p2wOut<wIn)
-			o << "  level"<<wOut<<" <=  I("<<wIn-1<<" downto "<<wIn - p2wOut <<") ;" << endl;
+		cout<<"p2wOut_ is = "<<p2wOut_<<endl;
+		if (p2wOut_==wIn_)
+			o << "  level"<<wOut_<<" <=  I ;" << endl;
+		else if (p2wOut_>wIn_) // pad input with zeroes/ones function of what we count. If LZC pad with 1, else pad with 
+			o << "  level"<<wOut_<<" <=  I & ("<<p2wOut_-wIn_-1<<" downto 0 => not(ozb)) ;" << endl;
+		else if (p2wOut_<wIn_)
+			o << "  level"<<wOut_<<" <=  I("<<wIn_-1<<" downto "<<wIn_ - p2wOut_ <<") ;" << endl;
 		// recursive structure
-		for (int i=wOut; i>1; i--) {
+		for (int i=wOut_; i>1; i--) {
 			o << "  tmpO("<<i-1<<") <= '1' when level"<<i<<"("<<(1<<i)-1<<" downto "<<(1<<(i-1))<<") = ("<<(1<<i)-1<<" downto "<<(1<<(i-1))<<" => ozb) else '0';"<< endl;
 			o << "  level"<<i-1<<" <= level"<<i<<"("<<(1<<(i-1))-1<<" downto 0) when tmpO("<<i-1<<") = '1'"<< endl
 				<< "               else level"<<i<<"("<<(1<<i)-1<<" downto "<<(1<<(i-1))<<");" << endl;
@@ -178,15 +158,15 @@ void LZOC::output_vhdl(std::ostream& o, std::string name) {
 		o << " O <= tmpO;"<<endl;
 	}
 	
-	end_architecture(o);
+	endArchitecture(o);
 }
 
 TestIOMap LZOC::getTestIOMap()
 {
 	TestIOMap tim;
-	tim.add(*get_signal_by_name("I"));
-	tim.add(*get_signal_by_name("OZB"));
-	tim.add(*get_signal_by_name("O"));
+	tim.add(*getSignalByName("I"));
+	tim.add(*getSignalByName("OZB"));
+	tim.add(*getSignalByName("O"));
 	return tim;
 }
 
@@ -198,9 +178,9 @@ void LZOC::fillTestCase(mpz_class a[])
 	
 	int j;
 	int bit = (sozb == 0) ? 0 : 1;
-	for (j = 0; j < wIn; j++)
+	for (j = 0; j < wIn_; j++)
 	{
-		if (mpz_tstbit(si.get_mpz_t(), wIn - j - 1) != bit)
+		if (mpz_tstbit(si.get_mpz_t(), wIn_ - j - 1) != bit)
 			break;
 	}
 	so = j;

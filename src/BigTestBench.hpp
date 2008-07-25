@@ -18,15 +18,24 @@ public:
 	 * @param n Number of tests
 	 */
 	BigTestBench(Target *target, Operator *op, int n);
+	
+	/** Destructor */
 	~BigTestBench();
 
-	void output_vhdl(ostream& o, string name);
+	/** Method belonging to the Operator class overloaded by the Wrapper class
+	 * @param[in,out] o     the stream where the current architecture will be outputed to
+	 * @param[in]     name  the name of the entity corresponding to the architecture generated in this method
+	 **/
+	void outputVHDL(ostream& o, string name);
+	
+	/** Overloaded method which sets the operator name */	
+	void setOperatorName();
 private:
 	/** The unit under test UUT */
-	Operator *op;
+	Operator *op_;
 
 	/** The parameter from the constructor */
-	int n;
+	int n_;
 	
 	/**
 	 * Offers an ordering relationship on Signal-s based on their name.
@@ -36,11 +45,9 @@ private:
 	{
 		bool operator()(Signal s1, Signal s2) const
 		{
-			return (s1.id() < s2.id());
+			return (s1.getSignalName() < s2.getSignalName());
 		}
 	};
 };
-
-
 #endif
 
