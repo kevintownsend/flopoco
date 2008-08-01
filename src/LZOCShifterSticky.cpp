@@ -44,7 +44,7 @@ LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut, bool com
 	else
 		setEntityType(specific);
 
-	Operator::setOperatorName();
+	setOperatorName();
 	setOperatorType();
 
 	/* Set up the internal architecture signals */
