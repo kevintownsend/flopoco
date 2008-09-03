@@ -305,7 +305,8 @@ FPMultiplier::FPMultiplier(Target* target, int wEX, int wFX, int wEY, int wFY, i
 			}
 		}
 	}
-	else{ 
+	else{
+		 
 		/* Signals for the combinational version */
 		addSignal("normalization_selector",1);
 		addSignal("exponent_post_normalization",2+wER_);
@@ -328,6 +329,7 @@ FPMultiplier::FPMultiplier(Target* target, int wEX, int wFX, int wEY, int wFY, i
 		
 	}	
 
+	
 	//set pipeline depth 
 	if (!isSequential())
 		setPipelineDepth(0);
@@ -348,7 +350,7 @@ FPMultiplier::FPMultiplier(Target* target, int wEX, int wFX, int wEY, int wFY, i
 					setPipelineDepth(max(2,intMultPipelineDepth_) + 1);
 				else
 					setPipelineDepth(max(2,intMultPipelineDepth_) + 1 + reunionSignalParts_);
-		
+
 }
 
 FPMultiplier::~FPMultiplier() {
@@ -364,14 +366,15 @@ void FPMultiplier::setOperatorName(){
 
 
 void FPMultiplier::outputVHDL(std::ostream& o, std::string name) {
-  
+  	
 	ostringstream signame, synch1, synch2, xname,zeros, zeros1, zeros2, str1, str2;
-
+	
 	int bias_val=int(pow(double(2),double(wEX_-1)))-1;
 	int i, j; 
 
 	licence(o,"Bogdan Pasca (2008)");
 	Operator::stdLibs(o);
+		
 	o<<endl<<endl;	
 	outputVHDLEntity(o);
 
@@ -382,6 +385,7 @@ void FPMultiplier::outputVHDL(std::ostream& o, std::string name) {
 	o<<endl;
 
 	beginArchitecture(o);
+	
 	
 	if (isSequential()){
 		/* common code for both normalized_ and non-normalized_ version */

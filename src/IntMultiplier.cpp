@@ -278,13 +278,16 @@ void IntMultiplier::outputVHDL(std::ostream& o, std::string name) {
 	outputVHDLEntity(o);
 	newArchitecture(o,name);
 
-	if ((partsY_==1)&&(partsX_>1))
-		intAdd_->outputVHDLComponent(o);//output the IntAdder component
-	else
-		if (!((partsX_==partsY_) && (partsX_==1))){
-			intAdd1_->outputVHDLComponent(o);
-			intAdd2_->outputVHDLComponent(o);
-		}
+	
+	if (isSequential()) { 
+		if ((partsY_==1)&&(partsX_>1))
+			intAdd_->outputVHDLComponent(o);//output the IntAdder component
+		else
+			if (!((partsX_==partsY_) && (partsX_==1))){
+				intAdd1_->outputVHDLComponent(o);
+				intAdd2_->outputVHDLComponent(o);
+			}
+	}
 		
 	outputVHDLSignalDeclarations(o);
 	beginArchitecture(o);
