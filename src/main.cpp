@@ -177,6 +177,7 @@ int checkSign(char* s, char* cmd) {
 void addOperator(Operator *op) {
 	if(cl_name!="")	{
 		op->setCommentedName(op->getOperatorName());
+		op->setOperatorName(cl_name);
 		cl_name="";
 	}
 	// TODO check name not already in list...
