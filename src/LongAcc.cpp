@@ -200,7 +200,7 @@ int i;
 	}
 	o << endl;
 	o << tab << "-- shift of the input into the proper place " << endl;
-	o << tab << "input_shifter_: " << shifter_->getOperatorName() << endl;
+	o << tab << "input_shifter : " << shifter_->getOperatorName() << endl;
 	o << tab << "    port map ( X => fracX, " << endl;
 	o << tab << "               S => shiftval("<< shifter_->getShiftAmmount() - 1 <<" downto 0), " << endl;
 	o << tab << "               R => shifted_frac";

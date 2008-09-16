@@ -1,3 +1,27 @@
+/*
+ * A floating-point logarithm for FloPoCo
+ * 
+ * Author : Florent de Dinechin
+ *
+ * For a description of the algorithm, see the Arith17 paper. 
+ *
+ * This file is part of the FloPoCo project developed by the Arenaire
+ * team at Ecole Normale Superieure de Lyon
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or 
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
+*/
 #include <iostream>
 #include <sstream>
 #include <fstream>
@@ -121,6 +145,7 @@ void LogArch::describe(){
 
 
 // An auxiliary function because mpz_class doesn't support long double. Strange.
+// To remove as soon as it does.
 mpz_class mpz_class_(uint64_t x) {
 	uint64_t xh,xl;
 	mpz_class r;

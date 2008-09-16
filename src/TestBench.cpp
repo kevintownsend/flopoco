@@ -260,7 +260,7 @@ void TestBench::outputVHDL(ostream& o, string name) {
 	
 	o << "end architecture;" << endl << endl;
 
-	cerr << "To run the simulation, type the following in 'rlwrap vsim -c':" <<endl;
+	cerr << "To run the simulation, type the following in 'vsim -c':" <<endl;
 	cerr << tab << "vdel -all -lib work" <<endl;
 	cerr << tab << "vlib work" <<endl;
 	cerr << tab << "vcom flopoco.vhdl" <<endl;
