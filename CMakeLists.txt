@@ -102,7 +102,6 @@ ADD_EXECUTABLE(flopoco
  src/fplog/FirstLogTable.cpp
  src/fplog/OtherLogTable.cpp
  src/fplog/SecondInvTable.cpp
- src/fplog/Signal.cpp
  src/FPLog
 )
 TARGET_LINK_LIBRARIES(flopoco  mpfr gmp gmpxx ${HOTBM_LIB})
