@@ -1,7 +1,7 @@
 /*
  * A long accumulator for FloPoCo
  *
- * Author : Florent de Dinechin and Bogdan Pasca
+ * Authors : Florent de Dinechin and Bogdan Pasca
  *
  * This file is part of the FloPoCo project developed by the Arenaire
  * team at Ecole Normale Superieure de Lyon
@@ -47,6 +47,7 @@ LongAcc::LongAcc(Target* target, int wEX, int wFX, int MaxMSBX, int LSBA, int MS
 	//check input constraints, i.e, MaxMSBX <= MSBA, LSBA<MaxMSBx
 	if ((MaxMSBX_ > MSBA_)||(LSBA_>=MaxMSBX_)){
 		cerr << " Input constraints are not met. Please consult FloPoCo help for more details."<<endl;
+		cerr << " For help, type flopoco without any parameters"<<endl;
 		exit (EXIT_FAILURE);
 	}
 
@@ -57,31 +58,39 @@ LongAcc::LongAcc(Target* target, int wEX, int wFX, int MaxMSBX, int LSBA, int MS
 	// Set up various architectural parameters
 	sizeAcc_ = MSBA_-LSBA_+1;
 		
-	maxShift_ = MaxMSBX_-LSBA_; // shift is 0 when the implicit 1 is at LSBA_
-	sizeShift_ = intlog2(maxShift_);
-	sizeSummand_ = MaxMSBX_-LSBA_+1; 
-	sizeShiftedFrac_ = maxShift_ + wFX_+1;
-	E0X_ = (1<<(wEX_-1)) -1; // exponent bias
-	// The left shift value is MaxMSBX_ - (EX-E0X_) if it is positive
-	// If it is negative, it means the summand is shifted out completely: it will be set to 0.
-	// So we have to compute (MaxMSBX_+E0X_) - EX
-	// The constant should fit on wEX_ bits, because MaxMSBX_ is one possible exponent of X
-	// so we have a subtraction of two wEX_-bit numbers.
+	maxShift_ = MaxMSBX_-LSBA_;              // shift is 0 when the implicit 1 is at LSBA_
+	sizeShift_ = intlog2(maxShift_);         // the number of bits needed to control the shifter
+	sizeSummand_ = MaxMSBX_-LSBA_+1;         // the size of the summand (the maximum one - when the inplicit 1 is on MaxMSBX)
+	sizeShiftedFrac_ = maxShift_ + wFX_+1;   
+	E0X_ = (1<<(wEX_-1)) -1;                 // exponent bias
+	// Shift is 0 when implicit 1 is on LSBA, that is when EX-bias = LSBA
+	// that is, EX-bias-LSBA = 0, EX-(bias + LSBA) = 0
+	// We are working in sign-magnitude, so we differentiate 2 cases:
+	// 1. when bias+LSBA >=0, that is, sign bit is 0, then shiftValue = Exp - (bias+LSBA) ;  (0)Exp - (0)(bias+LSBA)
+	// 2. when bias+LSBA <=0, which means that the sign bit is 1. Because in this case we have a substraction of a negative number,
+	// we replace it whit an addition of -(bias+LSBA), that is (0)Exp + (0)(- (bias + LSBA))
+	//	
+	// If the shift value is negative, then the input is shifted out completely, and a 0 is added to the accumulator 
+	// All above computations are performed on wEx+1 bits	
+	
+	//MaxMSBx is one valid exponent value, that is, 
+	//1. after bias is added, value should be >= 0
+	//2. after bias is added, representation should still fit on no more than wEX bits
 	int biasedMaxMSBX_ = MaxMSBX_ + E0X_;
 	if(biasedMaxMSBX_ < 0 || intlog2(biasedMaxMSBX_)>wEX_) {
-		cerr << "ERROR in LongAcc: MaxMSBX_="<<MaxMSBX_<<" is not a valid exponent of X (range " << (-E0X_) << " to " << ((1<<wEX_)-1)-E0X_ <<endl;
+		cerr<<"ERROR in LongAcc: MaxMSBX_="<<MaxMSBX_<<" is not a valid exponent of X (range "
+		    <<(-E0X_)<< " to " << ((1<<wEX_)-1)-E0X_ <<endl;
 		exit (EXIT_FAILURE);
 	}
 
-	setOperatorName();	
-
-	// Create an instance of the required input shifter_. 
+	// Create an instance of the required left input shifter. 
+	// It's input is on wFX + 1 bits (after adding the inplicit 1)
+	// the maximum shift value is maxMSBX - LSBA, (see above for details)
 	shifter_ = new Shifter(target, wFX_+1, maxShift_, Left);
 	oplist.push_back(shifter_);
 
 	if(verbose)
-		cout << "   shifter_ pipeline depth is "<<shifter_->getPipelineDepth()<<endl;
-
+		cout << " LEFT shifter pipeline depth is "<<shifter_->getPipelineDepth()<<endl;
 
 	addFPInput ("X", wEX_,wFX_);
 	addOutput ("A", sizeAcc_);  
@@ -108,13 +117,14 @@ LongAcc::LongAcc(Target* target, int wEX, int wFX, int MaxMSBX, int LSBA, int MS
 	}
 	
 	int suggestedAdditionChunkSize;
+	//get the addition chunk sizes for the given input frequency	
 	bool status = target->suggestSubaddSize(suggestedAdditionChunkSize ,sizeAcc_);
-
+	
 	if (!status)
 		cout << "Warning: the desired frequency is not possible; optimizing to maximum frequency"<<endl;
 	
 	additionNumberOfChunks_ = (sizeAcc_/suggestedAdditionChunkSize) + (((sizeAcc_%suggestedAdditionChunkSize)==0)?0:1); 
-	//rebalance chunks;
+	//rebalance chunks
 	rebalancedAdditionChunkSize_ = (sizeAcc_ / additionNumberOfChunks_)  + (((sizeAcc_%additionNumberOfChunks_)==0)?0:1); 
 	rebalancedAdditionLastChunkSize_ = sizeAcc_ - (additionNumberOfChunks_-1)*rebalancedAdditionChunkSize_;
 
@@ -189,7 +199,7 @@ void LongAcc::setOperatorName(){
 void LongAcc::outputVHDL(ostream& o, string name) {
 int i;
 
-	licence(o,"Florent de Dinechin (2007)");
+	licence(o,"Florent de Dinechin (2007), Bogdan Pasca (2008)");
 	Operator::stdLibs(o);
 	outputVHDLEntity(o);
 	newArchitecture(o,name);
