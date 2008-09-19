@@ -43,6 +43,7 @@ LongAcc::LongAcc(Target* target, int wEX, int wFX, int MaxMSBX, int LSBA, int MS
 	wEX_(wEX), wFX_(wFX), MaxMSBX_(MaxMSBX), LSBA_(LSBA), MSBA_(MSBA)
 {
 	int i;
+	setOperatorName();
 	// This operator is a sequential one
 	setSequential();
 
