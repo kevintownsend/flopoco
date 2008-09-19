@@ -103,10 +103,15 @@ class Target
 	 */
 	bool isPipelined();
 	
-	/** Returns the desired frequency for this target
+	/** Returns the desired frequency for this target in Hz
 	 * @return the frequency
 	 */
 	double frequency();
+
+	/** Returns the desired frequency for this target in MHz
+	 * @return the frequency
+	 */
+	double frequencyMHz();
 	
 	/** Sets the desired frequency for this target
 	 * @param f the desired frequency

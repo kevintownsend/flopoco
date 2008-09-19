@@ -1,7 +1,7 @@
 /*
  * A long accumulator for FloPoCo
  *
- * Author : Florent de Dinechin
+ * Author : Florent de Dinechin and Bogdan Pasca
  *
  * This file is part of the FloPoCo project developed by the Arenaire
  * team at Ecole Normale Superieure de Lyon
@@ -43,6 +43,13 @@ LongAcc::LongAcc(Target* target, int wEX, int wFX, int MaxMSBX, int LSBA, int MS
 	wEX_(wEX), wFX_(wFX), MaxMSBX_(MaxMSBX), LSBA_(LSBA), MSBA_(MSBA)
 {
 	int i;
+
+	//check input constraints, i.e, MaxMSBX <= MSBA, LSBA<MaxMSBx
+	if ((MaxMSBX_ > MSBA_)||(LSBA_>=MaxMSBX_)){
+		cerr << " Input constraints are not met. Please consult FloPoCo help for more details."<<endl;
+		exit (EXIT_FAILURE);
+	}
+
 	setOperatorName();
 	// This operator is a sequential one
 	setSequential();
@@ -65,6 +72,8 @@ LongAcc::LongAcc(Target* target, int wEX, int wFX, int MaxMSBX, int LSBA, int MS
 		cerr << "ERROR in LongAcc: MaxMSBX_="<<MaxMSBX_<<" is not a valid exponent of X (range " << (-E0X_) << " to " << ((1<<wEX_)-1)-E0X_ <<endl;
 		exit (EXIT_FAILURE);
 	}
+
+	setOperatorName();	
 
 	// Create an instance of the required input shifter_. 
 	shifter_ = new Shifter(target, wFX_+1, maxShift_, Left);

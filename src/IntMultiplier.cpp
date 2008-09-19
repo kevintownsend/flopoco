@@ -53,12 +53,13 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 	// set up the variables and parameters for the sequential version	
 		//given the input widths and the specific target this method suggests the chunk widths for X and Y
 		bool test = target->suggestSubmultSize(multiplierWidthX_, multiplierWidthY_, wInX_, wInY_);
-		cout<<"Frequency report (multiplications):"<<endl;
+		cout<<"Multiplication frequency report:"<<endl;
 		if (test)
-			cout<<tab<<"Frequency can be reached = "<<"YES"<<" suggested sizes: X="<<multiplierWidthX_<<" Y="<<multiplierWidthY_<<endl;
+			cout<<tab<<"Frequency can be reached. Suggested multiplier sizes are: X="<<multiplierWidthX_<<" Y="<<multiplierWidthY_<<endl;
 		else
-			cout<<tab<<"WARNING: Frequency can be reached = "<<"NO"<<" suggested sizes: X="<<multiplierWidthX_<<" Y="<<multiplierWidthY_<<endl;
-		
+			cout<<tab<<"WARNING: It might not be possible to reach frequency "<<target->frequencyMHz() << "MHz"
+			         <<" with suggested sizes: X="<<multiplierWidthX_<<" Y="<<multiplierWidthY_<<endl;		
+
 		// decide in how many parts should the numbers be split depending on the recommended sizes
 		partsX_ = ((wInX_ % multiplierWidthX_)==0) ? (wInX_ / multiplierWidthX_) : (wInX_ / multiplierWidthX_+1);
 		partsY_ = ((wInY_ % multiplierWidthY_)==0) ? (wInY_ / multiplierWidthY_) : (wInY_ / multiplierWidthY_+1);
@@ -378,13 +379,38 @@ void IntMultiplier::outputVHDL(std::ostream& o, std::string name) {
 }
 
 void IntMultiplier::padInputs(std::ostream& o){
+ostringstream padString;
+
 	if (reverse_ == true){
-		o<<tab<< "i_Y <= "<< zeroGenerator(numberOfZerosY_,0)<<" & X;"<<endl;
-		o<<tab<< "i_X <= "<< zeroGenerator(numberOfZerosX_,0)<<" & Y;"<<endl;
+		if (numberOfZerosY_==0)
+			padString<<"";
+		else 
+			padString<<zeroGenerator(numberOfZerosY_,0)<<" &";
+		o<<tab<< "i_Y <= "<< padString.str() <<"X;"<<endl;
+
+		padString.str(""); //steam initialization		
+		if (numberOfZerosX_==0)
+			padString<<"";
+		else 
+			padString<<zeroGenerator(numberOfZerosX_,0)<<" &";
+
+		o<<tab<< "i_X <= "<< padString.str()<<" Y;"<<endl;
 		newLine(o);
 	}else{
-		o<<tab<< "i_X <= "<< zeroGenerator(numberOfZerosX_,0)<<" & X;"<<endl;
-		o<<tab<< "i_Y <= "<< zeroGenerator(numberOfZerosY_,0)<<" & Y;"<<endl;
+		if (numberOfZerosX_==0)
+			padString<<"";
+		else 
+			padString<<zeroGenerator(numberOfZerosX_,0)<<" &";
+		o<<tab<< "i_X <= "<< padString.str()<<" X;"<<endl;
+
+		padString.str(""); //steam initialization		
+
+		if (numberOfZerosY_==0)
+			padString<<"";
+		else 
+			padString<<zeroGenerator(numberOfZerosY_,0)<<" &";
+		o<<tab<< "i_Y <= "<< padString.str() <<" Y"<<endl;
+
 		newLine(o);
 	}		
 }

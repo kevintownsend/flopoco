@@ -49,6 +49,10 @@ double Target::frequency(){
 	return frequency_;
 }
 
+double Target::frequencyMHz(){
+	return frequency_/1000000;
+}
+
 void Target::setFrequency(double f){
 	frequency_ = f;
 }
