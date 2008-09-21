@@ -93,10 +93,10 @@ LongAcc::LongAcc(Target* target, int wEX, int wFX, int MaxMSBX, int LSBA, int MS
 		cout << " LEFT shifter pipeline depth is "<<shifter_->getPipelineDepth()<<endl;
 
 	addFPInput ("X", wEX_,wFX_);
-	addOutput ("A", sizeAcc_);  
-	//  add_output ("XOverflow");  
+	addOutput  ("A", sizeAcc_);  
+	addOutput  ("XOverflow");  
 	//  add_output ("XUnderflow");  
-	//  add_output ("AccOverflow");  
+	addOutput  ("AccOverflow");  
 
 	// Unregistered signal
 	addSignal("exnX", 2);
@@ -106,7 +106,6 @@ LongAcc::LongAcc(Target* target, int wEX, int wFX, int MaxMSBX, int LSBA, int MS
 	addSignal("shiftval", wEX_+1); //, "includes a sign bit");
 	
 	// setup the pipeline 
-
 	if(target->isPipelined()) {
 		// TODO here code to pipeline the 2's complement if the target frequency is high, see IntAdder 
 		// meanwhile we just do it in 1 level, assuming there is a register at the out of the shifter_.
@@ -121,7 +120,7 @@ LongAcc::LongAcc(Target* target, int wEX, int wFX, int MaxMSBX, int LSBA, int MS
 	bool status = target->suggestSubaddSize(suggestedAdditionChunkSize ,sizeAcc_);
 	
 	if (!status)
-		cout << "Warning: the desired frequency is not possible; optimizing to maximum frequency"<<endl;
+		cout << "Warning: the desired frequency is not possible; optimizing for maximum frequency"<<endl;
 	
 	additionNumberOfChunks_ = (sizeAcc_/suggestedAdditionChunkSize) + (((sizeAcc_%suggestedAdditionChunkSize)==0)?0:1); 
 	//rebalance chunks
@@ -152,15 +151,20 @@ LongAcc::LongAcc(Target* target, int wEX, int wFX, int MaxMSBX, int LSBA, int MS
 			}
 	}
 	 
-	addRegisteredSignalWithSyncReset("carryIn",1);
-	//define the carry propagation registers
-	if (additionNumberOfChunks_>1)
-		for (i=1;i<additionNumberOfChunks_;i++){
-			ostringstream carryBit;
-			carryBit<< "carryBit_"<<i;
-			addRegisteredSignalWithSyncReset(carryBit.str(), 1);  
-		}
-			
+	//This bit depends on the initial sign of the summand together with information regarding wether or not 
+	// the summand has been shifted out of the accumulator. 
+	
+	// addRegisteredSignalWithSyncReset("carryIn",1);
+	
+	//addSignal("accumulatorOverflow",1);
+	
+	//define the carry propagation registers. The last carryBit represents the overflow bit of the accumulator
+	// and the first carry bit carryBit_0 represents the carry in of the accumulator
+	for (i=0;i<=additionNumberOfChunks_;i++){
+		ostringstream carryBit;
+		carryBit<< "carryBit_"<<i;
+		addRegisteredSignalWithSyncReset(carryBit.str(), 1);  
+	}
 
 	// on one side, add delays for the non-complemented signal
 	addDelaySignal("summand", sizeSummand_, c2PipelineDepth_); 
@@ -178,9 +182,12 @@ LongAcc::LongAcc(Target* target, int wEX, int wFX, int MaxMSBX, int LSBA, int MS
 	// all equal, but the synthesiser optimises it out
 	addRegisteredSignalWithSyncReset("ext_summand2c", sizeAcc_);
 	addSignal("acc", sizeAcc_); //,  "includes overflow bit");
-
+	
 	if(verbose)
 		cout << tab <<getOperatorName()<< " pipeline depth is " << getPipelineDepth() << " cycles" <<endl;
+
+	addRegisteredSignalWithSyncReset("xOverflowRegister", 1);
+	addDelaySignal("xOverflowCond",1,shifter_->getPipelineDepth());
 }
 
 LongAcc::~LongAcc() {
@@ -194,7 +201,6 @@ void LongAcc::setOperatorName(){
 			 <<(MSBA_>=0?"":"M")<<abs(MSBA_) ;
 	uniqueName_=name.str();
 }
-
 
 void LongAcc::outputVHDL(ostream& o, string name) {
 int i;
@@ -211,6 +217,9 @@ int i;
 	o << tab << "expX <= X("<<wEX_+wFX_-1<<" downto "<<wFX_<<");" << endl;
 	o << tab << "signX <= X("<<wEX_+wFX_<<");" << endl;
 	o << tab << "exnX <= X("<<wEX_+wFX_+2<<" downto "<<wEX_+wFX_+1<<");" << endl;
+	
+	o << tab << "xOverflowCond <= '1' when (( expX > \""; printBinNum(o, MaxMSBX_,  wEX_);  o<<"\") or (exnX >=\"10\") ) else '0' ;"<<endl;  
+	//determination of the shift value
 	int64_t exp_offset = E0X_+LSBA_;
 	if(exp_offset >=0) {
 		o << tab << "shiftval <=  (\"0\"&expX) - \"";  printBinNum(o, exp_offset,  wEX_+1); o << "\";" << endl;
@@ -219,6 +228,8 @@ int i;
 		o << tab << "shiftval <=  (\"0\"&expX) + \"";  printBinNum(o, -exp_offset,  wEX_+1); o  << "\";" << endl;
 	}
 	o << endl;
+
+	//input shifter mappings
 	o << tab << "-- shift of the input into the proper place " << endl;
 	o << tab << "input_shifter : " << shifter_->getOperatorName() << endl;
 	o << tab << "    port map ( X => fracX, " << endl;
@@ -231,7 +242,9 @@ int i;
 	}
 	o << tab << "             );" << endl; 
 	o << endl;
- 
+ 	
+	//determine if the input has been shifted out from the accumulator. 
+	//in this case the accumulator will be incremented with 0
 	o << tab << "flushedToZero <=     '1' when (shiftval("<<wEX_<<")='1' -- negative left shift " << endl;
 	o << tab << "                               or exnX=\"00\")" << endl;
 	o << tab << "                 else'0';" << endl;
@@ -239,7 +252,8 @@ int i;
 	o << endl;
 
 	o << tab << "-- 2's complement of the summand" << endl;
-	//Don't compute 2's complement just yet, just invert the bits and leave the addition of the extra 1 in accumulation.
+	// Don't compute 2's complement just yet, just invert the bits and leave the addition of the extra 1 in accumulation,
+	// as a carry in bit
 	o << tab << "summand2c <= summand when "<< getDelaySignalName("signX", shifter_->getPipelineDepth()) <<"='0' else not(summand); "<< endl;
 	
 	o << endl;
@@ -251,57 +265,51 @@ int i;
 	o << endl;
 	o << tab << "-- accumulation itself" << endl;
 	
-	o << tab << "carryIn <= ("<<getDelaySignalName("signX", shifter_->getPipelineDepth())
-		<< " and not " << getDelaySignalName("flushedToZero", shifter_->getPipelineDepth() ) << ");"<<endl;  
-	
-	
-	
+	//determine the value of the carry in bit
+	o << tab << "carryBit_0 <= ("<<getDelaySignalName("signX", shifter_->getPipelineDepth())
+		<< " and not " << getDelaySignalName("flushedToZero", shifter_->getPipelineDepth() ) << ");"<<endl; 
+		
 	for (i=0;i<additionNumberOfChunks_;i++) {
 		ostringstream accReg;
 		accReg<<"acc_"<<i;
-			if ((i==0) & (additionNumberOfChunks_==1) )
-				o << tab << "acc_0 <= acc_0_d + ext_summand2c_d + carryIn_d;"<<endl;
-			else 
-				if ((i==0) & (additionNumberOfChunks_!=1) )
-					o << tab << "acc_0 <= acc_0_d + ext_summand2c_d("<<rebalancedAdditionChunkSize_ -1 << " downto  0" <<") + carryIn_d;"<<endl;
-				else 
-					if (i!=additionNumberOfChunks_-1){
-						o<<tab<<"acc_"<<i<<"_ext <= ( \"0\" & acc_"<<i<<"_d ) + ( \"0\" & ext_summand2c_d("<<rebalancedAdditionChunkSize_*(i+1)-1 << " downto "<<rebalancedAdditionChunkSize_*i<<")) + carryBit_"<<i<<"_d;"<<endl;
-					
-						o<<tab<<"acc_"<<i<<" <= acc_"<<i<<"_ext("<<rebalancedAdditionChunkSize_ -1 <<" downto 0);"<<endl;
-						o<<tab<<"carryBit_"<<i<<" <= acc_"<<i<<"_ext("<<rebalancedAdditionChunkSize_<<");"<<endl;
-					}  
-					else{
-						o<<tab<<"acc_"<<i<<"_ext <= ( \"0\" & acc_"<<i<<"_d) + (\"0\" & ext_summand2c_d("<<sizeAcc_-1 << " downto "<<rebalancedAdditionChunkSize_*i<<")) + carryBit_"<<i<<"_d;"<<endl;
-						
-						o<<tab<<"acc_"<<i<<" <= acc_"<<i<<"_ext("<<rebalancedAdditionLastChunkSize_-1<<" downto 0);"<<endl;
-						o<<tab<<"carryBit_"<<i<<" <= acc_"<<i<<"_ext("<<rebalancedAdditionLastChunkSize_<<");"<<endl;
-					}
+		
+		if (i!=additionNumberOfChunks_-1){
+			o<<tab<<"acc_"<<i<<"_ext <= ( \"0\" & acc_"<<i<<"_d ) + "<<
+						    "( \"0\" & ext_summand2c_d("<<rebalancedAdditionChunkSize_*(i+1)-1 << " downto "<<rebalancedAdditionChunkSize_*i<<")) "<<
+			                            " + carryBit_"<<i<<"_d;"<<endl;
+		
+			o<<tab<<"acc_"<<i<<" <= acc_"<<i<<"_ext("<<rebalancedAdditionChunkSize_ -1 <<" downto 0);"<<endl;
+			o<<tab<<"carryBit_"<<i+1<<" <= acc_"<<i<<"_ext("<<rebalancedAdditionChunkSize_<<");"<<endl;
+		}  
+		else{
+			o<<tab<<"acc_"<<i<<"_ext <= ( \"0\" & acc_"<<i<<"_d) + "<<
+			                           "( \"0\" & ext_summand2c_d("<<sizeAcc_-1 << " downto "<<rebalancedAdditionChunkSize_*i<<")) + "<<
+			                           " carryBit_"<<i<<"_d;"<<endl;
+			
+			o<<tab<<"acc_"<<i<<" <= acc_"<<i<<"_ext("<<rebalancedAdditionLastChunkSize_-1<<" downto 0);"<<endl;
+			o<<tab<<"carryBit_"<<i<<" <= acc_"<<i<<"_ext("<<rebalancedAdditionLastChunkSize_<<");"<<endl;
+		}
 	}
-	
 
-//  o << tab << "acc <= ext_summand2c_d   +   acc_d  +  lateAdditionBit;" << endl;
-	
 		//compose the acc signal 
 		
 		o << tab << "acc <= ";
 		for (i=additionNumberOfChunks_-1;i>=0;i--) {
-			
-			if (additionNumberOfChunks_==1) 
-				o<< "acc_0_d;";
+			if (i>0)
+				o<< "acc_"<<i<<"_d & ";
 			else
-				if (i!=0)
-					o<< "acc_"<<i<<"_d & ";
-				else
-					o<< "acc_"<<i<<"_d;";
+				o<< "acc_"<<i<<"_d;";
 		}
 	
 	o << endl;
 
+	o << tab << " xOverflowRegister <= xOverflowRegister_d or "<<getDelaySignalName("xOverflowCond",shifter_->getPipelineDepth())<<";"<<endl;
+
 	outputVHDLRegisters(o);
 
 	o << tab << "  A <=   acc;" << endl;
-	
+	o << tab << "  AccOverflow <= carryBit_"<<additionNumberOfChunks_<<"_d or carryBit_"<<additionNumberOfChunks_<<";"<<endl;
+	o << tab << "  XOverflow <= xOverflowRegister_d;"<<endl; 
 	//TODO sticky overflow for the accumulator.
 	//TODO sticky overflow for the input.
 	//TODO sticky underflow for the input.

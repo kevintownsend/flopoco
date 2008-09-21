@@ -11,7 +11,7 @@
 
 # PARAMETERS SET MANUALLY BY USER
 ########################################################
-xilinxPath=/home/bogdan/Xilinx10.1/ISE
+xilinxPath=/home/bogdan/Xilinx/10.1/ISE
 resultsPath=$HOME/Results
 ########################################################
 ########################################################
