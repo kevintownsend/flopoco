@@ -95,7 +95,7 @@ LongAcc::LongAcc(Target* target, int wEX, int wFX, int MaxMSBX, int LSBA, int MS
 	addFPInput ("X", wEX_,wFX_);
 	addOutput  ("A", sizeAcc_);  
 	addOutput  ("XOverflow");  
-	//  add_output ("XUnderflow");  
+	addOutput ("XUnderflow");  
 	addOutput  ("AccOverflow");  
 
 	// Unregistered signal
@@ -187,8 +187,15 @@ LongAcc::LongAcc(Target* target, int wEX, int wFX, int MaxMSBX, int LSBA, int MS
 		cout << tab <<getOperatorName()<< " pipeline depth is " << getPipelineDepth() << " cycles" <<endl;
 
 	addRegisteredSignalWithSyncReset("xOverflowRegister", 1);
-	addDelaySignal("xOverflowCond",1,shifter_->getPipelineDepth());
+	addDelaySignal("xOverflowCond",1,shifter_->getPipelineDepth()+1);
+	
+	addRegisteredSignalWithSyncReset("xUnderflowRegister", 1);
+	addDelaySignal("xUnderflowCond",1,shifter_->getPipelineDepth()+1);
+	
+
+	addRegisteredSignalWithSyncReset("accOverflowRegister",1);
 }
+
 
 LongAcc::~LongAcc() {
 }
@@ -218,7 +225,8 @@ int i;
 	o << tab << "signX <= X("<<wEX_+wFX_<<");" << endl;
 	o << tab << "exnX <= X("<<wEX_+wFX_+2<<" downto "<<wEX_+wFX_+1<<");" << endl;
 	
-	o << tab << "xOverflowCond <= '1' when (( expX > \""; printBinNum(o, MaxMSBX_,  wEX_);  o<<"\") or (exnX >=\"10\") ) else '0' ;"<<endl;  
+	o << tab << "xOverflowCond <= '1' when (( expX > \""; printBinNum(o, MaxMSBX_ + E0X_,  wEX_);  o<<"\") or (exnX >=\"10\") ) else '0' ;"<<endl; 
+	o << tab << "xUnderflowCond <= '1' when ( expX < \""; printBinNum(o, LSBA_ + E0X_,  wEX_);  o<<"\") else '0' ;"<<endl;  
 	//determination of the shift value
 	int64_t exp_offset = E0X_+LSBA_;
 	if(exp_offset >=0) {
@@ -303,16 +311,17 @@ int i;
 	
 	o << endl;
 
-	o << tab << " xOverflowRegister <= xOverflowRegister_d or "<<getDelaySignalName("xOverflowCond",shifter_->getPipelineDepth())<<";"<<endl;
-
+	o << tab << " xOverflowRegister <= xOverflowRegister_d or "<<getDelaySignalName("xOverflowCond",shifter_->getPipelineDepth()+1)<<";"<<endl;
+	o << tab << " xUnderflowRegister <= xUnderflowRegister_d  or "<<getDelaySignalName("xUnderflowCond",shifter_->getPipelineDepth()+1)<<";"<<endl;
+	o << tab << " accOverflowRegister <= accOverflowRegister_d or carryBit_"<<additionNumberOfChunks_<<"_d;"<<endl;
 	outputVHDLRegisters(o);
 
 	o << tab << "  A <=   acc;" << endl;
-	o << tab << "  AccOverflow <= carryBit_"<<additionNumberOfChunks_<<"_d or carryBit_"<<additionNumberOfChunks_<<";"<<endl;
+	//if accumulator overflows this flag will be set to 1 until a maunal reset is performed
+	o << tab << "  AccOverflow <= accOverflowRegister_d;"<<endl; 
+	//if the input overflows then this flag will be set to 1, and will remain 1 until manual reset is performed
 	o << tab << "  XOverflow <= xOverflowRegister_d;"<<endl; 
-	//TODO sticky overflow for the accumulator.
-	//TODO sticky overflow for the input.
-	//TODO sticky underflow for the input.
+	o << tab << "  XUnderflow <= xUnderflowRegister_d;"<<endl; 
 
 	endArchitecture(o);
 }

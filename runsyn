@@ -155,7 +155,7 @@ fi
 
 if [ $# -lt 3 ]; then 
 	echo "=================== runsyn HELP ======================================="
-	echo "Input shoud be of form: PATH Out2FILE VERBOSE [extended list]"
+	echo "Input shoud be of form: PATH OPERATOR Out2FILE VERBOSE [Optional]"
 	echo "	>PATH    : the path to the project containing the .ise file"
 	echo "	>OPERATOR: the name of the top module "
 	echo "	>OUT2FILE: {0|1} - outputs the synthesis results to the file in "
@@ -169,6 +169,8 @@ if [ $# -lt 3 ]; then
 	echo "                > op2=frequency in MHz ofthe operator to be synthetized" 
 	echo "                > op3={yes|no|auto} the synthetis option for use DSP48"
 	echo "======================================================================="
+	echo "Example: "
+	echo "runsyn /home/uesrname/ISElongAcc/ LongAcc_8_23_15_M30_20 1 1 0 seq_400_auto"
 	echo "Exiting ..."
 	exit
 fi
