@@ -101,7 +101,7 @@ static void usage(char *name){
 #endif // HAVE_SOLLYA
 	cerr << "    LongAcc wE_in wF_in MaxMSB_in LSB_acc MSB_acc\n";
 	cerr << "      Long fixed-point accumulator\n";
-	cerr << "    LongAcc2FP MaxMSB_in LSB_acc MSB_acc wE_out wF_out \n";
+	cerr << "    LongAcc2FP LSB_acc MSB_acc wE_out wF_out \n";
 	cerr << "      Post-normalisation unit for LongAcc \n";
 	cerr << "    DotProduct wE wFX wFY MaxMSB_in LSB_acc MSB_acc\n";
 	cerr << "      Floating-point dot product unit \n";
@@ -472,17 +472,16 @@ bool parseCommandLine(int argc, char* argv[]){
 			}    
 		}
 		else if(opname=="LongAcc2FP"){
-			int nargs = 5;
+			int nargs = 4;
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
-				int MaxMSBX = atoi(argv[i++]); // may be negative
 				int LSBA = atoi(argv[i++]); // may be negative
 				int MSBA = atoi(argv[i++]); // may be negative
 				int wE_out = checkStrictyPositive(argv[i++], argv[0]);
 				int wF_out = checkStrictyPositive(argv[i++], argv[0]);
-				cerr << "> Post-Normalization unit for Long accumulator MaxMSBX="<<MaxMSBX<<", LSBA="<<LSBA<<", MSBA="<<MSBA<<" wE_out="<<wE_out<<", wF_out="<<wF_out<<"\n";
-				op = new LongAcc2FP(target, MaxMSBX, LSBA, MSBA, wE_out, wF_out);
+				cerr << "> Post-Normalization unit for Long accumulator, LSBA="<<LSBA<<", MSBA="<<MSBA<<" wE_out="<<wE_out<<", wF_out="<<wF_out<<"\n";
+				op = new LongAcc2FP(target, LSBA, MSBA, wE_out, wF_out);
 				addOperator(op);
 			}
 		}

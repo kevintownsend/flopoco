@@ -5,7 +5,7 @@
 #include <gmpxx.h>
 #include "Operator.hpp"
 #include "Shifters.hpp"
-#include "LZOC.hpp"
+#include "LZOCShifterSticky.hpp"
 
 
 /** Operator which converts the output of the long accumulator to the desired FP format
@@ -22,7 +22,7 @@ public:
  	 * @param wEOut the width of the output exponent 
 	 * @param eFOut the width of the output fractional part
 	 */ 
-	LongAcc2FP(Target* target, int MaxMSBX, int LSBA, int MSBA, int wEOut, int wFOut);
+	LongAcc2FP(Target* target, int LSBA, int MSBA, int wEOut, int wFOut);
 
 	/** Destructor */
 	~LongAcc2FP();
@@ -40,18 +40,16 @@ public:
 	void setOperatorName(); 
 
 protected:
-	int MaxMSBX_; /**< the weight of the MSB of the expected exponent of X */
 	int LSBA_;    /**< the weight of the least significand bit of the accumulator */
 	int MSBA_;    /**< the weight of the most significand bit of the accumulator */
 	int wEOut_;   /**< the width of the output exponent */
 	int wFOut_;   /**< the width of the output fractional part */
 
 private:
-	LZOC*    leadZOCounter_; /**< leading zero counter for determining the exponent */
-	Shifter* leftShifter_;   /**< TODO*/
+	LZOCShifterSticky* lzocShifterSticky_;   
 	int      sizeAcc_;       /**< The size of the accumulator  = MSBA-LSBA+1; */
 	int      expBias_;       /**< the exponent bias value */
-	int      wOutLZOC_;      /**< the number of bits that the leading zero/one conunter outputs the result on */
+	int      countWidth_;    /**< the number of bits that the leading zero/one conunter outputs the result on */
 
 };
 #endif
