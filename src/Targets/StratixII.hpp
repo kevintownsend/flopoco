@@ -42,9 +42,9 @@ public:
 		fastcarryDelay_ = 3.3e-11; // s    
 		elemWireDelay_  = 0.3e-11;
 		lut2lutDelay_   = 1.5e-10;
-		lutDelay_       = 2.3e-9; 
-		multXInputs_    = 18;
-		multYInputs_    = 18;
+		lutDelay_       = 1.5e-9; 
+		multXInputs_    = 36;
+		multYInputs_    = 36;
 	}
 	
 	/** The destructor */

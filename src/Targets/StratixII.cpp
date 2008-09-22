@@ -47,7 +47,8 @@ double StratixII::lutDelay(){
 
 bool StratixII::suggestSubmultSize(int &x, int &y, int wInX, int wInY){
 int i;
-
+// TODO This is the VirtexIV function. Stratix II is more interesting
+// (DSP blocks are 36x36 and my be split as 9x9 or 18x18)
 	if (getUseHardMultipliers()){
 		if ((wInX<=17) && (wInY<=17))	{
 			x = max(wInX, wInY);

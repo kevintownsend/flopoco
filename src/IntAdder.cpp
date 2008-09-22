@@ -42,21 +42,21 @@ IntAdder::IntAdder(Target* target, int wIn, const int p) :
 	Operator(target), wIn_(wIn), forcePipeline_(p) {
 
 	setOperatorName();
-
+	setOperatorType();
 	// Set up the IO signals
 	addInput ("X"  , wIn_);
 	addInput ("Y"  , wIn_);
 	addInput ("Cin", 1  );
 	addOutput("R"  , wIn_);
 
-	if (target->isPipelined())
-		setSequential();
-	else
-		setCombinatorial();
 
 	if (isSequential()){
 		//the maximum chunk size so that (optimisically) the target freqency can be reached. 
-		chunkSize_ = (int)floor( (1./target->frequency() - target->lutDelay()) / target->carryPropagateDelay()); 
+	bool status = target->suggestSubaddSize(chunkSize_ ,wIn_);
+	
+	if (!status)
+		cout << "Warning: the desired frequency is not possible; optimizing to maximum frequency"<<endl;
+
 		//the pipeLevels_ gives th number of chunks that the addition must be split in so that the frequency will ve reached
 		
 		//set the pipeline depth 
