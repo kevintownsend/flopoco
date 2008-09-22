@@ -6,6 +6,7 @@
 #include "Operator.hpp"
 #include "Shifters.hpp"
 #include "LZOCShifterSticky.hpp"
+#include "IntAdder.hpp"
 
 
 /** Operator which converts the output of the long accumulator to the desired FP format
@@ -46,6 +47,7 @@ protected:
 	int wFOut_;   /**< the width of the output fractional part */
 
 private:
+	IntAdder* adder_;
 	LZOCShifterSticky* lzocShifterSticky_;   
 	int      sizeAcc_;       /**< The size of the accumulator  = MSBA-LSBA+1; */
 	int      expBias_;       /**< the exponent bias value */

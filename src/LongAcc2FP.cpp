@@ -34,6 +34,7 @@
 #include "utils.hpp"
 #include "Operator.hpp"
 #include "LongAcc2FP.hpp"
+#include "IntAdder.hpp"
 
 using namespace std;
 
@@ -55,9 +56,12 @@ LongAcc2FP::LongAcc2FP(Target* target, int LSBA, int MSBA, int wEOut, int wFOut)
 
 	lzocShifterSticky_ = new LZOCShifterSticky(target, sizeAcc_, wFOut_ + 1,0,-1); // target, inputNbOfBits,outputNbOfBits, computeSticky, countType 
 	oplist.push_back(lzocShifterSticky_);
+	
+	adder_ = new IntAdder(target, wFOut_ + 1);
+	oplist.push_back(adder_);
 
 	// This operator is a sequential one
-	setPipelineDepth(lzocShifterSticky_->getPipelineDepth());
+	setPipelineDepth(lzocShifterSticky_->getPipelineDepth() + adder_->getPipelineDepth());
 
 	//compute the bias value
 	expBias_ = (1<<(wEOut_-1)) -1; 
@@ -69,16 +73,19 @@ LongAcc2FP::LongAcc2FP(Target* target, int LSBA, int MSBA, int wEOut, int wFOut)
 	addInput  ("AccOverflow",1);
 	addOutput ("R", 3 + wEOut_ + wFOut_);
 
-	addDelaySignalNoReset("resultSign0",1,lzocShifterSticky_->getPipelineDepth());	
+	addDelaySignalNoReset("resultSign0",1,lzocShifterSticky_->getPipelineDepth()+adder_->getPipelineDepth());	
 	addDelaySignal("AccOverflowFlag",1,lzocShifterSticky_->getPipelineDepth());	
 	
 	addSignal("nZO"    ,countWidth_);
-	addSignal("resFrac",wFOut_ + 1);
+	addDelaySignal("resFrac",wFOut_ + 1,adder_->getPipelineDepth());
+	addSignal("notResFrac", wFOut_ + 1);
+	addSignal("postResFrac", wFOut_ + 1);
+	addSignal("resultFraction",wFOut_ + 1);
 	
 	addSignal("expBias"     ,wEOut_);
 	addSignal("c2MnZO"      ,countWidth_+1);
 	addSignal("expAdj"      ,countWidth_+1);
-	addSignal("expRAdjusted",wEOut_);
+	addDelaySignal("expRAdjusted",wEOut_,adder_->getPipelineDepth());
 	addSignal("excBits"     ,2);
 
 	//rare case
@@ -91,7 +98,7 @@ LongAcc2FP::LongAcc2FP(Target* target, int LSBA, int MSBA, int wEOut, int wFOut)
 		addSignal("expUnderflow",1);
 	}
 	
-	addSignal("excRes",2);
+	addDelaySignal("excRes",2,adder_->getPipelineDepth());
 
 }
 
@@ -115,6 +122,7 @@ int i;
 	outputVHDLEntity(o);
 	newArchitecture(o,name);
 	lzocShifterSticky_->outputVHDLComponent(o);
+	adder_->outputVHDLComponent(o);
 	outputVHDLSignalDeclarations(o);
 	beginArchitecture(o);
 	outputVHDLRegisters(o); o<<endl;
@@ -176,12 +184,31 @@ int i;
 					
 			o<<tab<<"expRAdjusted<=expAdjustedExt("<<wEOut_-1<<" downto 0);"<<endl;
 		}			
-		
+	
 	o<<tab<<"excRes <=  excBits when ("<<getDelaySignalName("AccOverflowFlag",lzocShifterSticky_->getPipelineDepth())<<"='0') else \"10\";"<<endl;
-	o<<tab<< "R <= excRes & "
-			 <<getDelaySignalName("resultSign0",lzocShifterSticky_->getPipelineDepth())<<" & "
-			 << "expRAdjusted("<<wEOut_-1<<" downto 0) & "
-			 << "resFrac("<<wFOut_-1<<" downto 0);"<<endl;
+
+	//c2 of the fraction
+	o<<tab<< " notResFrac <= not(resFrac);"<<endl;
+
+	//count the number of zeros/ones in order to determine the value of the exponent
+	//Leading Zero/One counter 
+	o<<tab<< "Adder: " << adder_->getOperatorName() << endl;
+	o<<tab<< "      port map ( X => notResFrac, "  << endl; 
+	o<<tab<< "                 Y => "<< zeroGenerator(wFOut_ + 1, 0)<<", " << endl; 
+	o<<tab<< "                 Cin =>"<<getDelaySignalName("resultSign0",lzocShifterSticky_->getPipelineDepth())<< ", "<< endl; 
+	o<<tab<< "                 R => postResFrac, "           <<endl;
+	o<<tab<< "                 clk => clk, "                  << endl;
+	o<<tab<< "                 rst => rst "                   << endl;
+	o<<tab<< "               );"                       << endl<< endl;		
+	
+	o<<tab<<" resultFraction <= "<<getDelaySignalName("resFrac",adder_->getPipelineDepth())<<
+			                   " when ("<<getDelaySignalName("resultSign0",lzocShifterSticky_->getPipelineDepth()+adder_->getPipelineDepth())<<"='0')"<<
+							   " else postResFrac;"<<endl;
+	
+	o<<tab<< "R <= "<<getDelaySignalName("excRes",adder_->getPipelineDepth()) <<" & "
+			 <<getDelaySignalName("resultSign0",lzocShifterSticky_->getPipelineDepth()+ adder_->getPipelineDepth())<<" & "
+			 << getDelaySignalName("expRAdjusted",adder_->getPipelineDepth())<<"("<<wEOut_-1<<" downto 0) & "
+			 << "resultFraction("<<wFOut_-1<<" downto 0);"<<endl;
 	
 	endArchitecture(o);
 }
