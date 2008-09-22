@@ -238,7 +238,7 @@ bool parseCommandLine(int argc, char* argv[]){
 					if (freq>1 && freq<10000) {
 						target->setFrequency(1e6*(double)freq);
 						if(verbose) 
-							cerr << "Frequency set to "<<target->frequency()<< "MHz" <<endl; 
+							cerr << "Frequency set to "<<target->frequency()<< " Hz" <<endl; 
 					}
 					else {
 						cerr<<"WARNING: frequency out of reasonible range, ignoring it."<<endl; 
@@ -513,8 +513,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			int n  = checkStrictyPositive(argv[i++], argv[0]);
 			cerr << "> HOTBM func='" << func << "', wI=" << wI << ", wO=" << wO <<endl;
 			op = new HOTBM(target, func, wI, wO, n);
-			if(cl_name!="")	op->setOperatorName(cl_name);
-			oplist.push_back(op);
+			addOperator(op);
 		}
 #endif // HAVE_HOTBM
 		else if (opname == "FPExp")
@@ -526,8 +525,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			int wF = checkStrictyPositive(argv[i++], argv[0]);
 			cerr << "> FPExp: wE=" << wE << " wF=" << wF << endl;
 			op = new FPExp(target, wE, wF);
-			if(cl_name!="")	op->setOperatorName(cl_name);
-			oplist.push_back(op);
+			addOperator(op);
 		}
 		else if (opname == "FPLog")
 		{
@@ -538,8 +536,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			int wF = checkStrictyPositive(argv[i++], argv[0]);
 			cerr << "> FPLog: wE=" << wE << " wF=" << wF << endl;
 			op = new FPLog(target, wE, wF);
-			if(cl_name!="")	op->setOperatorName(cl_name);;
-			oplist.push_back(op);
+			addOperator(op);
 		}
 		else if (opname == "Wrapper") {
 			int nargs = 0;
