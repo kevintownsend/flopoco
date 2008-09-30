@@ -61,7 +61,7 @@ IF (SOLLYA_LIB)
 		src/HOTBM/PowerROM.cc
 		src/HOTBM/TermPowMult.cc
 	)
-	TARGET_LINK_LIBRARIES(hotbm sollya pari xml2 mpfi)
+	TARGET_LINK_LIBRARIES(hotbm sollya xml2 mpfi)
 	SET(HOTBM_LIB hotbm)
 ENDIF (SOLLYA_LIB)
 
