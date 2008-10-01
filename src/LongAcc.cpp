@@ -45,9 +45,15 @@ LongAcc::LongAcc(Target* target, int wEX, int wFX, int MaxMSBX, int LSBA, int MS
 	int i;
 
 	//check input constraints, i.e, MaxMSBX <= MSBA, LSBA<MaxMSBx
-	if ((MaxMSBX_ > MSBA_)||(LSBA_>=MaxMSBX_)){
-		cerr << " Input constraints are not met. Please consult FloPoCo help for more details."<<endl;
-		cerr << " For help, type flopoco without any parameters"<<endl;
+	if ((MaxMSBX_ > MSBA_)){
+		cerr << 
+			" LongAcc: Input constraint MaxMSBX <= MSBA not met."<<endl;
+		exit (EXIT_FAILURE);
+	}
+	if ((LSBA_ >= MaxMSBX_)){
+		cerr << 
+			" LongAcc: Input constraint LSBA<MaxMSBx not met:"  <<
+			"   This accumulator would never accumulate a bit."<<endl;
 		exit (EXIT_FAILURE);
 	}
 
@@ -539,3 +545,33 @@ void LongAcc::test_precision2() {
 	exit(0);
 
 }
+
+
+
+TestIOMap LongAcc::getTestIOMap()
+{
+	TestIOMap tim;
+	// tim.add(*getSignalByName("rst"));
+	tim.add(*getSignalByName("X"));
+	tim.add(*getSignalByName("A"));
+	tim.add(*getSignalByName("XOverflow"));
+	tim.add(*getSignalByName("AccOverflow"));
+	return tim;
+}
+
+
+
+void LongAcc::fillTestCase(mpz_class a[])
+{
+	// mpz_class& svRst = a[0];
+	// mpz_class& svX   = a[1];
+	// mpz_class& svA   = a[2];
+	// mpz_class& svXOv = a[3];
+	// mpz_class& svAOv = a[4];
+
+	//svR = svX + svY + svC;
+	// Don't allow overflow
+	//	mpz_clrbit(svR.get_mpz_t(),wIn_); 
+}
+
+
