@@ -96,8 +96,14 @@ LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut, bool com
 		levelName << "level"  << i;
 		stickyName << "sticky" << i;
 		level_[i] = levelName.str();
-		double stageDelay = 1.2 * target->localWireDelay() * (1<<i);
-		
+
+	double stageDelay;
+	if (entityType_==generic) 
+		stageDelay =  2* target->localWireDelay() * (1<<i);
+	else		
+		stageDelay =  1.2 * target->localWireDelay() * (1<<i);		//TODO
+
+
 		if (i==wCount_)
 		{
 			criticalPath=stageDelay;
@@ -158,8 +164,7 @@ LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut, bool com
 			
 		if (entityType_==generic)
 			addDelaySignalNoReset("sozb",1, getPipelineDepth());
-
-	}else /* combinatorial verison */
+	}else /* combinatorial version */
 	{
 		setPipelineDepth(0);
 		for (int i=wCount_; i>=0; i--){
