@@ -102,11 +102,21 @@ double invintpow2(int minusPower);
  */
 int intlog2(double number);
 
+/** computes a logarithm in a given base
+ * @param base base of the logarithm
+ * @param number the number to be represented (floating point)
+ * @return the result is bits (ceil)
+ */
+int intlog(int base, double number);
+
+
 /** How many bits does it take to write number. 
  * @param number the number to be represented (mpz_class)
  * @return the number of bits
  */
 int intlog2(mpz_class number);
+
+
 
 /** Maximum.
  * @param[double] x first number 

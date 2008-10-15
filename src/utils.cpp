@@ -238,6 +238,15 @@ int intlog2(double number)
 	return result;
 }
 
+int intlog(int base, double number)
+{
+double n1,n2,r;
+	n1 = intlog2(number);
+	n2 = intlog2(base);
+	r = ceil(n1/n2);
+	return int(r);
+}
+
 int intlog2(mpz_class number)
 {
 	mpz_class po2 = 1; 
