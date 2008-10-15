@@ -69,6 +69,8 @@ string cl_name=""; // used for the -name option
 int verbose=0;
 Target* target;
 
+map<string, double> emptyDelayMap;
+
 static void usage(char *name){
 	cerr << "\nUsage: "<<name<<" <operator specification list>\n" ;
 	cerr << "Each operator specification is one of: \n";
@@ -293,7 +295,10 @@ bool parseCommandLine(int argc, char* argv[]){
 			}        
 		} 	
 #ifdef HAVE_SOLLYA
-		else if(opname=="CRFPConstMult"){
+		else if(opname=="CRFPConstMult"){ new IntAdder(target, 1 + partsX_ * multiplierWidthX_);
+./.svn/text-base/IntMultiplier.cpp.svn-base:                    intAdd1_ = new IntAdder(target, partsX_ * multiplierWidthX_);
+./.svn/text-base/IntMultiplier.cpp.svn-base:                            intAdd_ = new IntAdder(target, partsX_ * multiplierWidthX_);
+
 			int nargs = 5;
 			if (i+nargs > argc)
 				usage(argv[0]);
@@ -318,6 +323,9 @@ bool parseCommandLine(int argc, char* argv[]){
 			else {
 				int wIn = checkStrictyPositive(argv[i++], argv[0]);
 				int maxShift = checkStrictyPositive(argv[i++], argv[0]);
+				map<string, double> inputDelays;
+				inputDelays["X"]=0;
+				inputDelays["S"]=0;
 				cerr << "> LeftShifter, wIn="<<wIn<<", maxShift="<<maxShift<<"\n";
 				op = new Shifter(target, wIn, maxShift, Left);
 				addOperator(op);
@@ -330,8 +338,11 @@ bool parseCommandLine(int argc, char* argv[]){
 			else {
 				int wIn = checkStrictyPositive(argv[i++], argv[0]);
 				int maxShift = checkStrictyPositive(argv[i++], argv[0]);
+				map<string, double> inputDelays;
+				inputDelays["X"]=0;
+				inputDelays["S"]=0;
 				cerr << "> RightShifter, wIn="<<wIn<<", maxShift="<<maxShift<<"\n";
-				op = new Shifter(target, wIn, maxShift, Right);
+				op = new Shifter(target, wIn, maxShift, Right, inputDelays);
 				addOperator(op);
 			}
 		}
@@ -368,10 +379,10 @@ bool parseCommandLine(int argc, char* argv[]){
 			else {
 				int wIn = checkStrictyPositive(argv[i++], argv[0]);
 				cerr << "> IntAdder, wIn="<<wIn<<endl  ;
-				op = new IntAdder(target, wIn);
+				op = new IntAdder(target,wIn);
 				addOperator(op);
 			}    
-		}   
+		}
 		else if(opname=="IntMultiplier"){
 			int nargs = 2;
 			if (i+nargs > argc)
@@ -515,6 +526,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			addOperator(op);
 		}
 #endif // HAVE_HOTBM
+		
 		else if (opname == "FPExp")
 		{
 			int nargs = 2;

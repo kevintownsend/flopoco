@@ -6,7 +6,7 @@
 #include <gmpxx.h>
 #include "Operator.hpp"
 
-
+extern map<string, double> emptyDelayMap;
 /** The IntAdder class for experimenting with adders. 
 */
 class IntAdder : public Operator
@@ -16,9 +16,11 @@ public:
 	 * The IntAdder constructor
 	 * @param[in] target the target device
 	 * @param[in] wIn    the with of the inputs and output
-	 * @param[in] p      if we want to force the pipeline //XXX Soon obsolete
+	 * @param[in] inputDelays the delays for each input
 	 **/
-	IntAdder(Target* target, int wIn, const int p=0);
+	IntAdder(Target* target, int wIn, map<string, double> inputDelays = emptyDelayMap);
+	/*IntAdder(Target* target, int wIn);
+	void cmn(Target* target, int wIn, map<string, double> inputDelays);*/
 	
 	/**
 	 *  Destructor
@@ -51,12 +53,15 @@ public:
 	void setOperatorName(); 
 	 
 protected:
-	int wIn_;           /**< the width for X, Y and R*/
+	int wIn_;                         /**< the width for X, Y and R*/
 
 private:
-	int chunkSize_;     /**< the maximum chunk size for an addition so that the requested frequency can theoretically be used*/
-	int lastChunkSize_; /**< the last chunk size - the last one is slightly smaller*/
-	int pipeLevels_;    /**< the number of pieline levels of the sequential operator*/ 
-	int forcePipeline_; /**< force pipeline */
+	map<string, double> inputDelays_; /**< a map between input signal names and their maximum delays */
+	int bufferedInputs;               /**< variable denoting an initial buffering of the inputs */
+	double maxInputDelay;             /**< the maximum delay between the inputs present in the map*/
+	int nbOfChunks;                   /**< the number of chunks that the addition will be split in */
+	int chunkSize_;                   /**< the suggested chunk size so that the addition can take place at the objective frequency*/
+	int *cSize;                       /**< array containing the chunk sizes for all nbOfChunks*/
+
 };
 #endif

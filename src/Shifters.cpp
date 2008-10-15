@@ -36,7 +36,7 @@ using namespace std;
 
 // TODO there is a small inefficiency here, as most bits of s don't need to be copied all the way down
 
-Shifter::Shifter(Target* target, int wIn, int maxShift, ShiftDirection direction) :
+Shifter::Shifter(Target* target, int wIn, int maxShift, ShiftDirection direction, map<string, double> inputDelays) :
 	Operator(target), wIn_(wIn), maxShift_(maxShift), direction_(direction) {
 
 	wOut_ = wIn_ + maxShift_;
@@ -49,22 +49,64 @@ Shifter::Shifter(Target* target, int wIn, int maxShift, ShiftDirection direction
 	addInput ("S", wShiftIn_);  
 	addOutput("R", wOut_);
  
-	// evaluate the pipeline
+	// evaluate the pipeline (initialization)
 	double criticalPath = 0.0;
 	for (int i=0; i<wShiftIn_; i++) 
 		levelRegistered_[i] = false;
 
 	if(isSequential()) {
+		//compute the maximum input delay
+		maxInputDelay = 0;
+		map<string, double>::iterator iter;
+		for (iter = inputDelays.begin(); iter!=inputDelays.end();++iter)
+			if (iter->second > maxInputDelay)
+				maxInputDelay = iter->second;
+	
+		if (verbose)
+			cout << "The maximum input delay is "<<	maxInputDelay<<endl;
+		
+		double	objectivePeriod;
+		objectivePeriod = 1/ target->frequency();
+		
+		if (verbose)
+			cout << "Objective period "<< objectivePeriod<<" at an objective frequency of "<<target->frequency() << endl;
+		
+		if (objectivePeriod<maxInputDelay){
+			//It is the responsability of the previous components to not have a delay larger than the period
+			cout << "Warning, the combinatorial delay at the input of "<<this->getOperatorName()<<"is above limit"<<endl;
+			maxInputDelay = objectivePeriod;
+		}
+
+		short lastRegLevel = -1;
+		double stageDelay = 0;
+		double dep;
+		int k = 0;
 		for (int i=0; i<wShiftIn_; i++) {
 			/* approximate delay of this stage */
-			double stageDelay = /*target->lut_delay() + */ 1.2 * target->localWireDelay() * (1<<i) ;
-			if (criticalPath + stageDelay > 1/target->frequency()) {
-				criticalPath=stageDelay; 	// reset critical path
+			k = i - lastRegLevel;
+			if ( intpow2(k-1)> wIn+i+1) 
+				dep = wIn+i+1 + k -1;
+			else
+				dep = intpow2(k-1);
+			
+			if (verbose)
+				cout<<"depth = "<<dep<<" at i="<<i<<endl;	
+			
+			stageDelay = intlog(target->lutInputs(),dep) * target->lutDelay() + (intlog(target->lutInputs(),dep)-1) * target->localWireDelay();
+			if (lastRegLevel==-1)
+				stageDelay+=maxInputDelay;
+
+
+			double period = (1.0)/target->frequency();
+			if (verbose) cout<<" stage delay = "<<stageDelay<<" period is "<<period<< endl;			
+		
+			if (stageDelay > period) {
+				// reset critical path
 				levelRegistered_[i+1]= true;
+				lastRegLevel = i;
 				incrementPipelineDepth();
 			}
 			else{ 
-				criticalPath += stageDelay; // augment critical path
 				levelRegistered_[i+1] = false;
 			}
 		}
@@ -123,7 +165,7 @@ void Shifter::setOperatorName(){
 
 void Shifter::outputVHDL(std::ostream& o, std::string name) {
 	ostringstream signame;
-	licence(o,"Florent de Dinechin, Bogdan Pasca (2007)");
+	licence(o,"Florent de Dinechin, Bogdan Pasca (2007,2008)");
 	Operator::stdLibs(o);
 	outputVHDLEntity(o);
 	newArchitecture(o,name);

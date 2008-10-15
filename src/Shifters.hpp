@@ -4,10 +4,11 @@
 #include <sstream>
 #include <gmp.h>
 #include <gmpxx.h>
+#include "utils.hpp"
 
 #include "Operator.hpp"
 
-
+extern map<string, double> emptyDelayMap;
 /** The types of shifting */
 typedef enum {
 			Left, /**< Left Shifter */
@@ -27,8 +28,8 @@ public:
 	 * @param[in]		maxShift	the maximum shift ammount
 	 * @param[in]		direction	can be either Left of Right. Determines the shift direction
 	 **/
-	Shifter(Target* target, int wIn, int maxShift, ShiftDirection dir);
-	
+	Shifter(Target* target, int wIn, int maxShift, ShiftDirection dir, map<string, double> inputDelays = emptyDelayMap);
+
 	/** Destructor */
 	~Shifter();
 
@@ -66,9 +67,11 @@ protected:
 	int maxShift_;     /**< the maximum shift ammount*/
 	int wOut_;         /**< the width of the output */
 	int wShiftIn_; 	   /**< the number of bits of the input which determines the shift ammount*/
+	map<string, double> inputDelays_;
 
 private:
 	ShiftDirection direction_;            /**< determines the shift direction. can be Left or Right */
 	bool           levelRegistered_[128]; /**< if boolean true, the corresponding level signal is registered*/ 
+	double maxInputDelay;
 };
 #endif

@@ -366,7 +366,9 @@ public:
 	 * reports the pipeline depth, but feel free to overload if you have any
 	 * thing useful to tell to the end user
 	*/
-	virtual void outputFinalReport();
+		virtual void outputFinalReport();	
+	
+	
 
 
 protected:    
@@ -374,7 +376,7 @@ protected:
 	string          uniqueName_; /**< By default, a name derived from the operator class and the parameters */
 	vector<Signal*> ioList_;     /**< The list of I/O signals of the operator */
 	vector<Signal*> signalList_; /**< The list of internal signals of the operator */
-
+	map<string, double>    outDelayMap;
 
 private:
 	int                    numberOfInputs_;             /**< The number of inputs of the operator */
@@ -386,5 +388,7 @@ private:
 	bool                   hasRegistersWithAsyncReset_; /**< True if the operator has registers having an asynch reset */
 	bool                   hasRegistersWithSyncReset_;  /**< True if the operator has registers having a synch reset */
 	string                 commentedName_;              /**< Usually is the default name of the architecture.  */
+				
+
 };
 #endif
