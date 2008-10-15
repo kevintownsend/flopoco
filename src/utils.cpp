@@ -238,13 +238,15 @@ int intlog2(double number)
 	return result;
 }
 
-int intlog(int base, double number)
+int intlog(mpz_class base, mpz_class number)
 {
-double n1,n2,r;
-	n1 = intlog2(number);
-	n2 = intlog2(base);
-	r = ceil(n1/n2);
-	return int(r);
+	mpz_class poBase = 1; 
+	int result = 0;
+	while (poBase <= number) {
+		poBase *= base;
+		result++;
+	}
+	return result;
 }
 
 int intlog2(mpz_class number)

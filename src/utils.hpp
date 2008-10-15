@@ -107,7 +107,7 @@ int intlog2(double number);
  * @param number the number to be represented (floating point)
  * @return the result is bits (ceil)
  */
-int intlog(int base, double number);
+int intlog(mpz_class base, mpz_class number);
 
 
 /** How many bits does it take to write number. 
