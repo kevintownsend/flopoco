@@ -46,7 +46,15 @@ LongAcc2FP::LongAcc2FP(Target* target, int LSBA, int MSBA, int wEOut, int wFOut)
 {
 	int i;
 	setOperatorName();
-	setSequential();
+	if (target->isPipelined()) 
+		setSequential();
+	else
+		setCombinatorial();
+	
+	if (isSequential())
+		extraPipeLevel=1;
+	else
+		extraPipeLevel=0;
 
 	// Set up various architectural parameters
 	sizeAcc_ = MSBA_-LSBA_+1;	
@@ -61,7 +69,7 @@ LongAcc2FP::LongAcc2FP(Target* target, int LSBA, int MSBA, int wEOut, int wFOut)
 	oplist.push_back(adder_);
 
 	// This operator is a sequential one
-	setPipelineDepth(lzocShifterSticky_->getPipelineDepth() + adder_->getPipelineDepth());
+	setPipelineDepth(lzocShifterSticky_->getPipelineDepth() + adder_->getPipelineDepth()+extraPipeLevel);
 
 	//compute the bias value
 	expBias_ = (1<<(wEOut_-1)) -1; 
@@ -73,19 +81,19 @@ LongAcc2FP::LongAcc2FP(Target* target, int LSBA, int MSBA, int wEOut, int wFOut)
 	addInput  ("AccOverflow",1);
 	addOutput ("R", 3 + wEOut_ + wFOut_);
 
-	addDelaySignalNoReset("resultSign0",1,lzocShifterSticky_->getPipelineDepth()+adder_->getPipelineDepth());	
+	addDelaySignalNoReset("resultSign0",1,lzocShifterSticky_->getPipelineDepth()+adder_->getPipelineDepth()+extraPipeLevel);	
 	addDelaySignal("AccOverflowFlag",1,lzocShifterSticky_->getPipelineDepth());	
 	
 	addSignal("nZO"    ,countWidth_);
-	addDelaySignal("resFrac",wFOut_ + 1,adder_->getPipelineDepth());
+	addDelaySignal("resFrac",wFOut_ + 1,adder_->getPipelineDepth()+extraPipeLevel);
 	addSignal("notResFrac", wFOut_ + 1);
-	addSignal("postResFrac", wFOut_ + 1);
+	addDelaySignal("postResFrac", wFOut_ + 1,extraPipeLevel);
 	addSignal("resultFraction",wFOut_ + 1);
 	
 	addSignal("expBias"     ,wEOut_);
 	addSignal("c2MnZO"      ,countWidth_+1);
 	addSignal("expAdj"      ,countWidth_+1);
-	addDelaySignal("expRAdjusted",wEOut_,adder_->getPipelineDepth());
+	addDelaySignal("expRAdjusted",wEOut_,adder_->getPipelineDepth()+extraPipeLevel);
 	addSignal("excBits"     ,2);
 
 	//rare case
@@ -98,7 +106,7 @@ LongAcc2FP::LongAcc2FP(Target* target, int LSBA, int MSBA, int wEOut, int wFOut)
 		addSignal("expUnderflow",1);
 	}
 	
-	addDelaySignal("excRes",2,adder_->getPipelineDepth());
+	addDelaySignal("excRes",2,adder_->getPipelineDepth()+extraPipeLevel);
 
 }
 
@@ -125,7 +133,11 @@ int i;
 	adder_->outputVHDLComponent(o);
 	outputVHDLSignalDeclarations(o);
 	beginArchitecture(o);
-	outputVHDLRegisters(o); o<<endl;
+	
+	if (isSequential())	
+	outputVHDLRegisters(o); 
+
+	o<<endl;
 
 	//the sign of the result 
 	o<<tab<<"resultSign0 <= A("<<sizeAcc_-1<<");"<<endl;
@@ -137,9 +149,12 @@ int i;
 	o<<tab<< "      port map ( I => A, "                      << endl; 
 	o<<tab<< "                 Count => nZO, "                    << endl; 
 	o<<tab<< "                 O => resFrac, "                    << endl; 
-	o<<tab<< "                 OZB => resultSign0, "          << endl; 
-	o<<tab<< "                 clk => clk, "                  << endl;
+	o<<tab<< "                 OZB => resultSign0 ";
+	if (isSequential()){ 
+	o<<","<<endl;
+	o<<tab<< "                 clk => clk, "                  << endl;		
 	o<<tab<< "                 rst => rst "                   << endl;
+	}
 	o<<tab<< "               );"                       << endl<< endl;		
 
 	//the exponent bias	
@@ -162,7 +177,7 @@ int i;
 	}
 	else
 		if (countWidth_+1 == wEOut_){
-			o<<tab<<"expRAdjusted <= expR + expAdj;"<<endl;
+			o<<tab<<"expRAdjusted <= expBias + expAdj;"<<endl;
 			o<<tab<<"excBits <=\"01\";"<<endl;
 		}	
 		else
@@ -188,26 +203,29 @@ int i;
 	o<<tab<<"excRes <=  excBits when ("<<getDelaySignalName("AccOverflowFlag",lzocShifterSticky_->getPipelineDepth())<<"='0') else \"10\";"<<endl;
 
 	//c2 of the fraction
-	o<<tab<< " notResFrac <= not(resFrac);"<<endl;
+	o<<tab<< " notResFrac <= not("<<getDelaySignalName("resFrac",extraPipeLevel)<<");"<<endl;
 
 	//count the number of zeros/ones in order to determine the value of the exponent
 	//Leading Zero/One counter 
 	o<<tab<< "Adder: " << adder_->getOperatorName() << endl;
 	o<<tab<< "      port map ( X => notResFrac, "  << endl; 
 	o<<tab<< "                 Y => "<< zeroGenerator(wFOut_ + 1, 0)<<", " << endl; 
-	o<<tab<< "                 Cin =>"<<getDelaySignalName("resultSign0",lzocShifterSticky_->getPipelineDepth())<< ", "<< endl; 
-	o<<tab<< "                 R => postResFrac, "           <<endl;
-	o<<tab<< "                 clk => clk, "                  << endl;
+	o<<tab<< "                 Cin =>"<<getDelaySignalName("resultSign0",lzocShifterSticky_->getPipelineDepth()+extraPipeLevel)<< ", "<< endl; 
+	o<<tab<< "                 R => postResFrac "           <<endl;
+	if (isSequential()){ 
+	o<<","<<endl;
+	o<<tab<< "                 clk => clk, "                  << endl;		
 	o<<tab<< "                 rst => rst "                   << endl;
+	}
 	o<<tab<< "               );"                       << endl<< endl;		
-	
-	o<<tab<<" resultFraction <= "<<getDelaySignalName("resFrac",adder_->getPipelineDepth())<<
-			                   " when ("<<getDelaySignalName("resultSign0",lzocShifterSticky_->getPipelineDepth()+adder_->getPipelineDepth())<<"='0')"<<
+		
+	o<<tab<<" resultFraction <= "<<getDelaySignalName("resFrac",adder_->getPipelineDepth()+extraPipeLevel)<<
+			                   " when ("<<getDelaySignalName("resultSign0",lzocShifterSticky_->getPipelineDepth()+adder_->getPipelineDepth()+extraPipeLevel)<<"='0')"<<
 							   " else postResFrac;"<<endl;
 	
-	o<<tab<< "R <= "<<getDelaySignalName("excRes",adder_->getPipelineDepth()) <<" & "
-			 <<getDelaySignalName("resultSign0",lzocShifterSticky_->getPipelineDepth()+ adder_->getPipelineDepth())<<" & "
-			 << getDelaySignalName("expRAdjusted",adder_->getPipelineDepth())<<"("<<wEOut_-1<<" downto 0) & "
+	o<<tab<< "R <= "<<getDelaySignalName("excRes",adder_->getPipelineDepth()+extraPipeLevel) <<" & "
+			 <<getDelaySignalName("resultSign0",lzocShifterSticky_->getPipelineDepth()+ adder_->getPipelineDepth()+extraPipeLevel)<<" & "
+			 << getDelaySignalName("expRAdjusted",adder_->getPipelineDepth()+extraPipeLevel)<<"("<<wEOut_-1<<" downto 0) & "
 			 << "resultFraction("<<wFOut_-1<<" downto 0);"<<endl;
 	
 	endArchitecture(o);

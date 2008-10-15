@@ -45,6 +45,7 @@ protected:
 	int MSBA_;    /**< the weight of the most significand bit of the accumulator */
 	int wEOut_;   /**< the width of the output exponent */
 	int wFOut_;   /**< the width of the output fractional part */
+	int extraPipeLevel;
 
 private:
 	IntAdder* adder_;
