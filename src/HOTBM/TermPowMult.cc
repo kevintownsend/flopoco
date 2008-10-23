@@ -360,11 +360,14 @@ void TermPowMult::genVHDL(ostream &os, string name)
 
 	os << "architecture arch of " << name << " is" << endl;
 	os << "  signal sign   : std_logic;" << endl;
-	os << "  signal b0     : std_logic_vector(" << (tp.beta-2) << " downto 0);" << endl;
+	if(tp.beta >= 2)
+		os << "  signal b0     : std_logic_vector(" << (tp.beta-2) << " downto 0);" << endl;
 	os << "  signal s      : std_logic_vector(" << (tp.p->lambda-1) << " downto 0);" << endl;
 	os << "  component " << name << "_pow is" << endl;
-	os << "    port ( x : in  std_logic_vector(" << (tp.beta-2) << " downto 0);" << endl;
-	os << "           r : out std_logic_vector(" << (tp.p->lambda-1) << " downto 0) );" << endl;
+	os << "    port ( ";
+	if(tp.beta >= 2)
+		os << "x : in  std_logic_vector(" << (tp.beta-2) << " downto 0);" << endl << "           ";
+	os << "r : out std_logic_vector(" << (tp.p->lambda-1) << " downto 0) );" << endl;
 	os << "  end component;" << endl;
 
 	for (int i = 0; i < tp.mM+tp.mT; i++) {
@@ -391,12 +394,15 @@ void TermPowMult::genVHDL(ostream &os, string name)
 
 	os << "begin" << endl;
 	os << "  sign <= not b(" << (tp.beta-1) << ");" << endl;
-	os << "  b0 <= b(" << (tp.beta-2) << " downto 0) xor (" << (tp.beta-2) << " downto 0 => sign);" << endl;
+	if(tp.beta >= 2)
+		os << "  b0 <= b(" << (tp.beta-2) << " downto 0) xor (" << (tp.beta-2) << " downto 0 => sign);" << endl;
 	os << endl;
 
 	os << "  pow : " << name << "_pow" << endl;
-	os << "    port map ( x => b0," << endl;
-	os << "               r => s );" << endl;
+	os << "    port map ( ";
+	if(tp.beta >= 2)
+		os << "x => b0," << endl << "               ";
+	os << "r => s );" << endl;
 	os << endl;
 
 	for (int i = 0; i < tp.mM+tp.mT; i++) {

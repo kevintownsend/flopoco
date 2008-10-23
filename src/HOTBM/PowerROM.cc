@@ -99,8 +99,10 @@ void PowerROM::genVHDL(ostream &os, string name)
 	os << endl;
 
 	os << "entity " << name << " is" << endl;
-	os << "  port ( x : in  std_logic_vector(" << (pp.beta-2) << " downto 0);" << endl;
-	os << "         r : out std_logic_vector(" << (pp.lambda-1) << " downto 0) );" << endl;
+	os << "  port ( ";
+	if(pp.beta >= 2)
+		os << "x : in  std_logic_vector(" << (pp.beta-2) << " downto 0);" << endl << "         ";
+	os << "r : out std_logic_vector(" << (pp.lambda-1) << " downto 0) );" << endl;
 	os << "end entity;" << endl;
 	os << endl;
 
@@ -113,7 +115,13 @@ void PowerROM::genVHDL(ostream &os, string name)
 		mpEval(mpT[i], i);
 	}
 
-	VHDLGen::genROM(os, mpT, pp.beta-1, pp.lambda, "x", "r");
+	if(pp.beta >= 2)
+		VHDLGen::genROM(os, mpT, pp.beta-1, pp.lambda, "x", "r");
+	else {
+		os << "  r <= ";
+		VHDLGen::genInteger(os, mpT[0], pp.lambda);
+		os << ";" << endl;
+	}		
 
 	for (long long int i = 0; i < P(pp.beta-1); i++)
 		mpz_clear(mpT[i]);
