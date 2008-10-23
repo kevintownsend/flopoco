@@ -295,10 +295,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			}        
 		} 	
 #ifdef HAVE_SOLLYA
-		else if(opname=="CRFPConstMult"){ new IntAdder(target, 1 + partsX_ * multiplierWidthX_);
-./.svn/text-base/IntMultiplier.cpp.svn-base:                    intAdd1_ = new IntAdder(target, partsX_ * multiplierWidthX_);
-./.svn/text-base/IntMultiplier.cpp.svn-base:                            intAdd_ = new IntAdder(target, partsX_ * multiplierWidthX_);
-
+		else if(opname=="CRFPConstMult"){ 
 			int nargs = 5;
 			if (i+nargs > argc)
 				usage(argv[0]);
