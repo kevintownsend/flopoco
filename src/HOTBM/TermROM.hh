@@ -32,7 +32,14 @@ private:
 
 	long long int *table;
 	int wTable;
-	bool signTable;
+	
+	enum TableSign {
+		SignPositive,	/**< unsigned values in table */
+		SignNegative,	/**< unsigned values, opposite */
+		SignMixed		/**< 2's-complement */
+	};
+	
+	TableSign signTable;
 };
 
 #endif // _TERMROM_HH_

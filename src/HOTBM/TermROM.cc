@@ -1,6 +1,6 @@
 #include "TermROM.hh"
 
-
+#include <iostream>
 
 TermROM::TermROM(int d_, double *k_, Param &p_)
 	: Term(d_, k_, p_), tp(*(TermROMParam *)p.t[d]), pList(new Polynomial[P(tp.alpha)]), table(NULL)
@@ -29,7 +29,7 @@ TermROM::~TermROM()
 void TermROM::roundTables(int g, bool full, double *kAdjust)
 {
 	p.g = g;
-
+	
 	int beta_ = tp.beta ? tp.beta-1 : 0;
 
 	if (full) {
@@ -56,11 +56,30 @@ void TermROM::roundTables(int g, bool full, double *kAdjust)
 		}
 	}
 
-	if ((tMin < 0) && (tMax >= 0))
-		throw "TermROM::roundTables: Non-constant sign.";
-	signTable = tMin < 0;
-	tMax = signTable ? -tMin-1 : tMax;
-	wTable = !tMax ? 1 : (int)floor(log2(tMax))+1;
+	if(tMin < 0) {
+		if(tMax >= 0) {
+			// Both positive and negative values: use 2's-complement encoding
+			signTable = SignMixed;
+		}
+		else {
+			signTable = SignNegative;
+		}
+	}
+	else {
+		signTable = SignPositive;
+	}
+	
+	if(signTable == SignMixed) {
+		// 2's-complement
+		tMax = std::max(tMax, -tMin-1);
+		wTable = !tMax ? 1 : (int)floor(log2(tMax))+2;
+	}
+	else {
+		// 2's-complement with implicit sign bit
+		if(signTable == SignNegative)
+			tMax = -tMin-1;
+		wTable = !tMax ? 1 : (int)floor(log2(tMax))+1;
+	}
 }
 
 double TermROM::estimArea()
@@ -137,7 +156,7 @@ void TermROM::genVHDL(ostream &os, string name)
 		os << "beta_" << d << " = " << tp.beta << " (1+" << (tp.beta-1) << ")" << "; ";
 	else
 		os << "beta_" << d << " = 0; ";
-	os << "wO_" << d << " = " << wTable << "." << endl;
+	os << "wO_" << d << " = " << wTable << "; " << "wO = " << p.wO << "; " << "g = " << p.g << "." << endl;
 	os << endl;
 
 	os << "library ieee;" << endl;
@@ -179,6 +198,8 @@ void TermROM::genVHDL(ostream &os, string name)
 	if (tp.beta || tp.alpha)
 		os << endl;
 
+	if (signTable == SignMixed)
+		os << "  -- Table in 2's-complement" << endl;
 	if (beta_ || tp.alpha)
 		VHDLGen::genROM(os, table, tp.alpha+beta_, wTable, "x0", "r0");
 	else {
@@ -188,14 +209,28 @@ void TermROM::genVHDL(ostream &os, string name)
 	}
 	os << endl;
 
-	if ((d%2) && tp.beta)
+	if ((d%2) && tp.beta){
 		os << "  r(" << (wTable-1) << " downto 0) <= r0 xor (" << (wTable-1) << " downto 0 => ("
-			 << (signTable ? "not " : "") << "sign));" << endl;
+			 << "sign));" << endl;
+		// Do NOT negate sign when signTable==SignNegative here
+	}
 	else
 		os << "  r(" << (wTable-1) << " downto 0) <= r0;" << endl;
+
 	if (p.wO+p.g+1 > wTable) {
+		os << "  -- Sign extension" << endl;
 		os << "  r(" << (p.wO+p.g) << " downto " << wTable << ") <= (" << (p.wO+p.g) << " downto " << wTable << " => ("
-			 << (signTable ? "not " : "") << ((d%2) && tp.beta ? "sign" : "'0'") << "));" << endl;
+			 << (signTable == SignNegative ? "not " : "");
+			 
+		if(signTable == SignMixed) {
+			if ((d%2) && tp.beta)
+				os << "sign xor ";
+			os << "r0(" << (wTable-1) << ")";	// cannot use r as an input
+		}
+		else {
+			os << (((d%2) && tp.beta) ? "sign" : "'0'");
+		}
+		os << "));" << endl;
 	}
 
 	os << "end architecture;" << endl;
