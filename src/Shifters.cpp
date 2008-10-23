@@ -92,7 +92,7 @@ Shifter::Shifter(Target* target, int wIn, int maxShift, ShiftDirection direction
 			if (verbose)
 				cout<<"depth = "<<dep<<" at i="<<i<<endl;	
 			
-			stageDelay = intlog(target->lutInputs(),dep) * target->lutDelay() + (intlog(target->lutInputs(),dep)-1) * target->localWireDelay();
+			stageDelay = intlog(mpz_class(target->lutInputs()), mpz_class(dep)) * target->lutDelay() + (intlog(mpz_class(target->lutInputs()),mpz_class(dep))-1) * target->localWireDelay();
 			if (lastRegLevel==-1)
 				stageDelay+=maxInputDelay;
 

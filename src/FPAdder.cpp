@@ -418,16 +418,16 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 		//                             SEQUENTIAL                                  |
 		//                                                                         |
 		//=========================================================================|
-	
+
 		outputVHDLRegisters(o); o<<endl;
-		//=========================================================================|	
-	  //                          Swap/Difference                                |
-	  // ========================================================================|
-	  o<<"-- Swap Difference --"<<endl;
-    // signal which indicates whether or not the exception bits of X are greater or equal than the exception bits of Y		  
-    o<<tab<<"exceptionXSuperiorY <= '1' when X("<<wEX+wFX+2<<" downto "<<wEX+wFX+1<<") >= Y("<<wEY+wFY+2<<" downto "<<wEY+wF+1<<") else"<<endl;
+		//=========================================================================|
+		//                          Swap/Difference                                |
+		// ========================================================================|
+		o<<"-- Swap Difference --"<<endl;
+		// signal which indicates whether or not the exception bits of X are greater or equal than/to the exception bits of Y		  
+		o<<tab<<"exceptionXSuperiorY <= '1' when X("<<wEX+wFX+2<<" downto "<<wEX+wFX+1<<") >= Y("<<wEY+wFY+2<<" downto "<<wEY+wF+1<<") else"<<endl;
 		o<<tab<<"                       '0';"<<endl;
-			
+		
 		// signal which indicates whether or not the exception bits of X are equal to the exception bits of Y		  
 		o<<tab<<"exceptionXEqualY <= '1' when X("<<wEX+wFX+2<<" downto "<<wEX+wFX+1<<") = Y("<<wEY+wFY+2<<" downto "<<wEY+wFY+1<<") else"<<endl;
 		o<<tab<<"                    '0';"<<endl;
@@ -436,19 +436,19 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 		// pad exponents with sign bit
 		o<<tab<<"signedExponentX <= \"0\" & X("<<wEX+wFX-1<<" downto "<<wFX<<");"<<endl;
 		o<<tab<<"signedExponentY <= \"0\" & Y("<<wEX+wFX-1<<" downto "<<wFX<<");"<<endl;
-		// make not(expY)	
+		// make not(expY)
 		o<<tab<<"invSignedExponentY <= not(signedExponentY);"<<endl;
 		// perform addition with carry in
 		o<<tab<<"exponentDifference0 <= signedExponentX + invSignedExponentY + '1';"<<endl;
 		
-  	// SWAP when: [excX=excY and expY>expX] or [excY>excX]
+		// SWAP when: [excX=excY and expY>expX] or [excY>excX]
 		o<<tab<<"swap <= (exceptionXEqualY and exponentDifference0("<<wE<<")) or (not(exceptionXSuperiorY));"<<endl;
 
 		// depending on the value of swap, assign the corresponding values to the newX and newY signals 
 		o<<tab<<"newX <= Y when swap = '1' else"<<endl;
 		o<<tab<<"        X;"                    <<endl;   
 		o<<tab<<"newY <= X when swap = '1' else"<<endl;
-    o<<tab<<"        Y;"                    <<endl;
+		o<<tab<<"        Y;"                    <<endl;
 
 		// readjust for the exponents difference after the potential swap
 		// sign extend swap to the size of the exponent
@@ -456,7 +456,7 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 		// compute NewExponentDifference = (OldExponentDifference xor extendedSWAP) + swap.
 		o<<tab<<"exponentDifference1 <= exponentDifference0_d("<<wE-1<<" downto "<<0<<") xor extendSwap_d;"<<endl;
 		o<<tab<<"exponentDifference <= exponentDifference1 + swap_d;"<<endl;
-	
+
 		// compute sdSignAB as (signA xor signB)
 		o<<tab<<"sdSignAB <= newX_d("<<wEX+wFX<<") xor newY_d("<<wEY+wFY<<");"<<endl;
 		
@@ -469,13 +469,12 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 		o<<tab<<"sdX <= newX_d;"<<endl;
 		o<<tab<<"sdY <= newY_d;"<<endl;
 		o<<tab<<"sdExponentDifference <= exponentDifference;"<<endl;
-		// sdxXY is a concatenation of the exception bits of X and Y		
+		// sdxXY is a concatenation of the exception bits of X and Y
 		o<<tab<<"sdxXY <= newX_d("<<wE+wF+2<<" downto "<<wE+wF+1<<") & newY_d("<<wE+wF+2<<" downto "<<wE+wF+1<<");"<<endl;
 		o<<tab<<"sdSignY <= newY_d("<<wE+wF<<");"<<endl;
-	
+
 		// swapDifferencePipelineDepth = 1; ==for now, this section has a constant depth of 1.         
-	
-		
+
 		//=========================================================================|
 		//                            close path                                   |
 		//=========================================================================|
@@ -608,10 +607,11 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
  		o<<tab<< "fracNewY <= '1' & fY("<<wF-1<<" downto 0);"<<endl;
 		
 		//selectioSignal=the number of positions that fracY must be shifted to the right				
-		if (wE-1>sizeRightShift)
+		if (wE-1>=sizeRightShift)
 			o<<tab<<"selectionSignal <= fexponentDifference("<< sizeRightShift-1<<" downto 0"<<"); " << endl; 
 		else
-			o<<tab<<"selectionSignal <= CONV_STD_LOGIC_VECTOR(0,"<<sizeRightShift-(wE-1)<<") & fexponentDifference("<< wE-1<<" downto 0"<<"); " << endl; 			
+			o<<tab<<"selectionSignal <= CONV_STD_LOGIC_VECTOR(0,"<<sizeRightShift-(wE-1)<<") & fexponentDifference("<< wE-1<<" downto 0"<<"); " <<
+ endl; 			
 								
 		// shift right the significand of new Y with as many positions as the exponent difference suggests (alignment) //		
 		o<<tab<< "right_shifter_component: " << rightShifter->getOperatorName() << endl;
