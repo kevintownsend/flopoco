@@ -123,8 +123,8 @@ Operator(target), wIn_(wIn), inputDelays_(inputDelays)
 		
 		for (int i=0;i<nbOfChunks;i++){
 			ostringstream t; t<<"X"<<i;	
-			addDelaySignal(t.str(),cSize[i],bufferedInputs); t.str(""); t<<"Y"<<i;
-			addDelaySignal(t.str(),cSize[i],bufferedInputs); t.str(""); 
+			addDelaySignalBus(t.str(),cSize[i],bufferedInputs); t.str(""); t<<"Y"<<i;
+			addDelaySignalBus(t.str(),cSize[i],bufferedInputs); t.str(""); 
 			if (i==0)
 				addDelaySignal("Carry",1,bufferedInputs); 
 		}
@@ -138,13 +138,13 @@ Operator(target), wIn_(wIn), inputDelays_(inputDelays)
 		for (int i=0; i<nbOfChunks;i++){
 			ostringstream t;
 			t<<"r"<<i;
-			addDelaySignal(t.str(),cSize[i],nbOfChunks-2-i);
+			addDelaySignalBus(t.str(),cSize[i],nbOfChunks-2-i);
 		}	
 		
 		for (int i=0; i<nbOfChunks;i++){
 			ostringstream t; t<<"sX"<<i;
-			addDelaySignal(t.str(),cSize[i],i); t.str(""); t<<"sY"<<i;
-			addDelaySignal(t.str(),cSize[i],i); t.str("");
+			addDelaySignalBus(t.str(),cSize[i],i); t.str(""); t<<"sY"<<i;
+			addDelaySignalBus(t.str(),cSize[i],i); t.str("");
 			if (i==0)
 			addSignal("cin0",1);
 		}	
