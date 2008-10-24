@@ -78,6 +78,7 @@ void TestBench::outputVHDL(ostream& o, string name) {
 		int maxNumValues = it->second;
 		size += maxNumValues;
 	}
+	
 
 	/* Allocate buffer which store I/O values metadata */
 	bool *a_isIn = new bool[size];
@@ -124,7 +125,7 @@ void TestBench::outputVHDL(ostream& o, string name) {
 
 		/* Get correct outputs */
 		op_->fillTestCase(a);
-
+		
 		/* Store test case */
 		TestCase tc;
 		for (int j = 0; j < size; j++)
@@ -133,8 +134,9 @@ void TestBench::outputVHDL(ostream& o, string name) {
 				tc.addInput(*a_s[j], a[j]);
 			else
 			{
-				if (a[j] >= 0)
+				if (a[j] != -1)          //TODO find a better method to validate only some expected outputs
 					tc.addExpectedOutput(*a_s[j], a[j]);
+					
 			}
 		}
 		tcl.add(tc);

@@ -6,6 +6,7 @@ std::string TestCase::signalValueToVHDL(const Signal& s, mpz_class v, bool quot)
 	std::string r;
 
 	/* Get base 2 representation */
+
 	r = v.get_str(2);
 
 	/* Some check */

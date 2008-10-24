@@ -1,5 +1,5 @@
-#ifndef INTADDERS_HPP
-#define INTADDERS_HPP
+#ifndef IntDualSub_HPP
+#define IntDualSub_HPP
 #include <vector>
 #include <sstream>
 #include <gmp.h>
@@ -7,28 +7,28 @@
 #include "Operator.hpp"
 
 extern map<string, double> emptyDelayMap;
-/** The IntAdder class for experimenting with adders. 
+/** The IntDualSub class for experimenting with adders. 
 */
-class IntAdder : public Operator
+class IntDualSub : public Operator
 {
 public:
 	/**
-	 * The IntAdder constructor
+	 * The IntDualSub constructor
 	 * @param[in] target the target device
 	 * @param[in] wIn    the with of the inputs and output
 	 * @param[in] inputDelays the delays for each input
 	 **/
-	IntAdder(Target* target, int wIn, map<string, double> inputDelays = emptyDelayMap);
-	/*IntAdder(Target* target, int wIn);
+	IntDualSub(Target* target, int wIn, map<string, double> inputDelays = emptyDelayMap);
+	/*IntDualSub(Target* target, int wIn);
 	void cmn(Target* target, int wIn, map<string, double> inputDelays);*/
 	
 	/**
 	 *  Destructor
 	 */
-	~IntAdder();
+	~IntDualSub();
 
 	/**
-	 * Method belonging to the Operator class overloaded by the IntAdder class
+	 * Method belonging to the Operator class overloaded by the IntDualSub class
 	 * @param[in,out] o     the stream where the current architecture will be outputed to
 	 * @param[in]     name  the name of the entity corresponding to the architecture generated in this method
 	 **/
