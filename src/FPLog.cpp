@@ -1,5 +1,6 @@
 #include <fstream>
 #include <sstream>
+#include <cstdlib>
 #include <math.h>	// for NaN
 
 #include "FPLog.hpp"

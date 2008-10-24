@@ -5,6 +5,7 @@
 #include <gmp.h>
 #include <mpfr.h>
 #include <gmpxx.h>
+#include <cstdlib>
 
 #include "../Operator.hpp"
 #include "ShiftAddOp.hpp"

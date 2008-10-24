@@ -28,6 +28,7 @@
 #include <string>
 #include <vector>
 #include <mpfr.h>
+#include <cstdlib>
 
 #include"../utils.hpp"
 using namespace std;

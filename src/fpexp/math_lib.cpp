@@ -1,4 +1,5 @@
 #include <iostream>
+#include <cstdlib>
 #include "math_lib.h"
 #include "math.h"
 

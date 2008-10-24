@@ -83,7 +83,7 @@ FPNumber FPNumber::operator*(FPNumber fp)
 	if (mpfr_get_exp(x) + mpfr_get_exp(y) != mpfr_get_exp(r))
 		flofp.mustAddLeadingZero = true;
 
-	mpfr_clears(r, x, y, 0);
+	mpfr_clears(r, x, y, 0, NULL);
 	return flofp;
 }
 
@@ -337,7 +337,7 @@ FPNumber FPNumber::exp()
 	ret = mpR;
 
 	/* Cleanup */
-	mpfr_clears(mpX, mpR, 0);
+	mpfr_clears(mpX, mpR, 0, NULL);
 
 	return ret;
 }
@@ -357,7 +357,7 @@ FPNumber FPNumber::log()
 	ret = mpR;
 
 	/* Cleanup */
-	mpfr_clears(mpX, mpR, 0);
+	mpfr_clears(mpX, mpR, 0, NULL);
 
 	return ret;
 }

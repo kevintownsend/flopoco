@@ -29,6 +29,7 @@
 #include <vector>
 #include <gmpxx.h>
 #include <mpfr.h>
+#include <cstdlib>
 
 #include"../utils.hpp"
 using namespace std;

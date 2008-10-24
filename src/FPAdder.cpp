@@ -89,8 +89,11 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 	
 	if (isSequential())
 	{
-
-		intaddClose1 = new IntAdder(target, wF + 3);
+		map<string, double> inputs;
+		inputs["X"]=0;
+		inputs["Y"]=1.5e-10;
+		inputs["Cin"]=0;
+		intaddClose1 = new IntAdder(target, wF + 3, inputs);
 		intaddClose1->Operator::setOperatorName("intaddClose1");
 		oplist.push_back(intaddClose1);
 

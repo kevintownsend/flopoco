@@ -2,6 +2,7 @@
 #define FIRST_INV_TABLE_H
 
 #include "../Table.hpp"
+#include <cstdlib>
 
 class FirstInvTable : public Table
 {

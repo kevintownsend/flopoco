@@ -26,6 +26,7 @@
 #include <fstream>
 #include <string>
 #include <sstream>
+#include <cstdlib>
 #include "Operator.hpp"
 
 

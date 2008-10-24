@@ -60,7 +60,7 @@ void FPExp::outputVHDL(std::ostream& o, std::string name)
 
 		mpfr_t mp2, mp1, mp;
 		mpfr_init2(mp, 2*(wE+wF+g));	// XXX: way too much precision
-		mpfr_inits(mp1, mp2, 0);
+		mpfr_inits(mp1, mp2, 0, NULL);
 		mpfr_set_si(mp1, 1, GMP_RNDN);
 		mpfr_set_si(mp2, 2, GMP_RNDN);
 
@@ -87,7 +87,7 @@ void FPExp::outputVHDL(std::ostream& o, std::string name)
 			cstInvLog2 = o.str();
 		}
 
-		mpfr_clears(mp1, mp2, mp, 0);
+		mpfr_clears(mp1, mp2, mp, 0, NULL);
 	}
 
 	fp_exp <<

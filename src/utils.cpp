@@ -24,6 +24,7 @@
 #include <iostream>
 #include <sstream>
 #include "utils.hpp"
+#include <cstdlib>
 #include "math.h"
 
 using namespace std;

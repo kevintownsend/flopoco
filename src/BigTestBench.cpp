@@ -25,6 +25,8 @@
 #include <fstream>
 #include <vector>
 #include <gmpxx.h>
+#include <cstdlib>
+
 #include "Operator.hpp"
 #include "TestIOMap.hpp"
 #include "BigTestBench.hpp"

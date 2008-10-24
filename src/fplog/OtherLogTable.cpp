@@ -1,5 +1,6 @@
 #include <iostream>
 #include <math.h>
+#include <cstdlib>
 #include "math_lib.hpp"
 #include "OtherLogTable.hpp"
 using namespace std;

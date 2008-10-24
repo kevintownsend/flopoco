@@ -1,6 +1,7 @@
 #include <iostream>
 #include <math.h>
 #include "math_lib.hpp"
+#include <cstdlib>
 #include "FirstInvTable.hpp"
 #include "FirstLogTable.hpp"
 using namespace std;

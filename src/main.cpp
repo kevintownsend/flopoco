@@ -27,6 +27,7 @@
 #include <string>
 #include <vector>
 #include <mpfr.h>
+#include <cstdlib>
 
 #include "Operator.hpp"
 #include "Target.hpp"
@@ -36,6 +37,7 @@
 #include "LZOC.hpp"
 #include "LZOCShifterSticky.hpp"
 #include "IntAdder.hpp"
+#include "IntDualSub.hpp"
 #include "IntMultiplier.hpp"
 #include "Karatsuba.hpp"
 #include "FPMultiplier.hpp"
@@ -377,6 +379,18 @@ bool parseCommandLine(int argc, char* argv[]){
 				int wIn = checkStrictyPositive(argv[i++], argv[0]);
 				cerr << "> IntAdder, wIn="<<wIn<<endl  ;
 				op = new IntAdder(target,wIn);
+				addOperator(op);
+			}    
+		}
+		//HIDDEN
+		else if(opname=="IntDualSub"){
+			int nargs = 1;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int wIn = checkStrictyPositive(argv[i++], argv[0]);
+				cerr << "> IntDualSub, wIn="<<wIn<<endl  ;
+				op = new IntDualSub(target,wIn);
 				addOperator(op);
 			}    
 		}
