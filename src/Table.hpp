@@ -1,12 +1,18 @@
 #ifndef TABLE_HPP
 #define TABLE_HPP
 #include <gmpxx.h>
+#include <string>
+//#include <sstream>
+#include <iosfwd>
 
 // A basic hardware table, with its VHDL output. 
 
 // If the input to your table are negative, etc, or if you want to
 // define errors, or... then derive a class from this one.
 
+using std::string;
+using std::ostream;
+using std::cerr;
 
 class Table
 {
@@ -32,10 +38,8 @@ class Table
 			cerr<<"ERROR in Table::Table, maxIn too large\n";
 			exit(EXIT_FAILURE);
 		}
-		if((minIn==0) && (maxIn==(1<<wIn)-1)) 
-			full=true;
-		else
-			full=false;
+		
+		// table is never full
 	}
 
 	virtual ~Table() {};
@@ -67,8 +71,6 @@ class Table
 	
 	int size_in_LUTs();
  private:
-	bool full; // true if there is no "don't care" inputs, i.e. minIn=0 and maxIn=2^wIn-1
-	void output_lines(ostream& o);
 };
 
 

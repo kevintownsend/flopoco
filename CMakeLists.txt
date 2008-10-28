@@ -65,6 +65,19 @@ IF (SOLLYA_LIB)
 	SET(HOTBM_LIB hotbm)
 ENDIF (SOLLYA_LIB)
 
+IF (HOTBM_LIB)
+	ADD_DEFINITIONS(-DHAVE_LNS)
+	ADD_LIBRARY(lns STATIC
+		src/LNS/LNSAdd
+		src/LNS/Cotran
+		src/LNS/CotranHybrid
+		src/LNS/CotranTables
+	)
+	TARGET_LINK_LIBRARIES(${HOTBM_LIB})
+	SET(LNS_LIB lns)
+ENDIF (HOTBM_LIB)
+
+
 ADD_EXECUTABLE(flopoco
  src/main
  src/utils
@@ -105,7 +118,7 @@ ADD_EXECUTABLE(flopoco
  src/fplog/SecondInvTable.cpp
  src/FPLog
 )
-TARGET_LINK_LIBRARIES(flopoco  mpfr gmp gmpxx ${HOTBM_LIB})
+TARGET_LINK_LIBRARIES(flopoco  mpfr gmp gmpxx ${HOTBM_LIB} $(LNS_LIB))
 
 ADD_EXECUTABLE(fp2bin src/Tools/fp2bin  src/utils)
 TARGET_LINK_LIBRARIES(fp2bin  mpfr gmp gmpxx)

@@ -95,8 +95,8 @@ void Table::output(ostream& o, string name)
 	if (wIn > 10)
 		cerr << "Avertissement : production d'une table avec " << wIn << " bits en entree" << endl;
 
-	o<<"library ieee;\nuse ieee.std_logic_1164.all;\nuse ieee.std_logic_arith.all;"<<endl
-	 <<"use ieee.std_logic_unsigned.all;\n\n";
+	o<<"library ieee;\nuse ieee.std_logic_1164.all;\n"
+	 "\n\n";
 	o << "entity  " << name << " is" << endl
 		<< "    port ( x : in  std_logic_vector(" << wIn-1  << " downto 0);" << endl
 		<< "           y : out std_logic_vector(" << wOut - 1 << " downto 0) );" << endl
@@ -120,12 +120,15 @@ void Table::output(ostream& o, string name)
 	for (x = minIn; x <= maxIn; x++) {
 		y=this->function(x);
 		//    cout << x <<"  "<< y << endl;
-		o << "\"";
-			printBinPosNumGMP(o, y, wOut);
-		o << "\" when \"";
-		printBinNum(o, x, wIn);
-		o << "\"," << endl
-			<< margin;
+		if(y >= 0)	// otherwise, treat as don't care
+		{
+			o << "\"";
+				printBinPosNumGMP(o, y, wOut);
+			o << "\" when \"";
+			printBinNum(o, x, wIn);
+			o << "\"," << endl
+				<< margin;
+		}
 	}
 	o << "\"";
 	for (i = 0; i < wOut; i++) o << "-";

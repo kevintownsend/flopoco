@@ -178,9 +178,9 @@ string zeroGenerator(int n, int margins);
 
 /**
  * Turns an arbitrary string (e.g. Sollya expression or FP number) to
- * a valid VHDL identifier. May (and usually will) loose information.
+ * part of a valid VHDL identifier. May (and usually will) loose information.
  * Looks ugly.
- * Bug: may begin with an underscore or digit.
+ * May begin with a digit.
  * @param[in] expr		expression to convert
  **/
 string vhdlize(string const & expr);

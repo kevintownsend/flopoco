@@ -311,19 +311,40 @@ string zeroGenerator(int n, int margins){
 }
 
 // Does not handle multi-byte encodings.
-char vhdlize_char(char c)
+char vhdlizeChar(char c)
 {
 	if(isalnum(c)) {
 		return c;
 	}
-	return '_';
+	if(isspace(c)) {
+		return '_';
+	}
+	if(ispunct(c)) {
+		return '_';
+	}
+	return 'x';
+}
+
+bool bothUnderscore(char a, char b)
+{
+	return (a == '_') && (b == '_');
 }
 
 string vhdlize(string const & expr)
 {
 	string result(expr.size(), 0);
-	transform(expr.begin(), expr.end(), result.begin(), ptr_fun(vhdlize_char));
-	return result;
+	transform(expr.begin(), expr.end(), result.begin(), ptr_fun(vhdlizeChar));
+	
+	// Multiple consecutive underscores are forbidden in VHDL identifiers!
+	string::iterator newend = unique(result.begin(), result.end(), bothUnderscore);
+	
+	// Leading underscores and numbers are forbidden in VHDL identifiers!
+//	if(isdigit(*result.begin()) || *result.begin() == '_')
+//		*result.begin() = 'x';
+	// but this function becomes unusable with numbers if we enforce this...
+	if(*result.begin() == '_')
+		*result.begin() = 'x';
+	return result.substr(0, newend - result.begin());
 }
 
 string vhdlize(double num)
