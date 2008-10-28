@@ -297,12 +297,15 @@ void IntDualSub::fillTestCase(mpz_class a[])
 	mpz_class& svR1 = a[2];
 	mpz_class& svR2 = a[3];
 
+	svX = getLargeRandom(wIn_-1);	
+	svY = getLargeRandom(wIn_-1);
+
 	svR1 = svX - svY;
 	svR2 = svY - svX;
-	cout<<endl<< "x is "<< svX <<" y is "<<svY << "x-y is "<<	svR1 << " y-x is "<<svR2<<endl;
+	cout<<endl<< "x is "<< svX <<" y is "<<svY << " x-y is "<<	svR1 << " y-x is "<<svR2<<endl;
 	// Don't allow overflow
-	mpz_clrbit(svR1.get_mpz_t(),wIn_);
-	mpz_clrbit(svR2.get_mpz_t(),wIn_);  
+	//mpz_clrbit(svR1.get_mpz_t(),wIn_);
+	//mpz_clrbit(svR2.get_mpz_t(),wIn_);  
 }
 
 
