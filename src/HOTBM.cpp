@@ -5,8 +5,8 @@
 #include "HOTBM/Exhaustive.hh"
 #include "utils.hpp"
 
-HOTBM::HOTBM(Target* target, string func, int wI, int wO, int n)
-	: inst(0), f(*new Function(func)), wI(wI), wO(wO)
+HOTBM::HOTBM(Target* target, string func, string namebase, int wI, int wO, int n, double xmin, double xmax, double scale)
+	: inst(0), f(*new Function(func, xmin, xmax, scale)), wI(wI), wO(wO)
 {
 	try {
 		Param p(wI, wO, n);
@@ -21,10 +21,13 @@ HOTBM::HOTBM(Target* target, string func, int wI, int wO, int n)
 	if (!inst)
 		throw std::string("HOTBM cound not be generated.");
 
-	// TODO: Better unique name
 	{
 		std::ostringstream o;
-		o << "hotbm_" << wI << "_" << wO << "_" << n;
+ 		if(namebase != "")
+ 			o << namebase << "_";
+ 
+ 		o << "hotbm_" << vhdlize(func) << wI << "_" << wO << "_" << n;
+ 		o << "_" << vhdlize(xmin) << "_" << vhdlize(xmax) << "_" << vhdlize(scale);
 		uniqueName_ = o.str();
 	}
 	setCombinatorial();

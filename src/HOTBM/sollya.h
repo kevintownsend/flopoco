@@ -80,6 +80,7 @@ void invalidateRecoverEnvironment();
 
 sollya_node_t makeVariable();
 sollya_node_t makeConstant(mpfr_t x);
+sollya_node_t makeConstantDouble(double d);
 sollya_node_t makeAdd(sollya_node_t op1, sollya_node_t op2);
 sollya_node_t makeSub(sollya_node_t op1, sollya_node_t op2);
 sollya_node_t makeMul(sollya_node_t op1, sollya_node_t op2);

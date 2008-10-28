@@ -18,7 +18,7 @@ class Function;
 class HOTBM : public Operator
 {
 public:
-	HOTBM(Target* target, string func, int wI, int wO, int n);
+	HOTBM(Target* target, string func, string namebase, int wI, int wO, int n, double xmin = 0, double xmax = 1, double scale = 1);
 	~HOTBM();
 
 	// Overloading the virtual functions of Operator
@@ -26,6 +26,9 @@ public:
 
 	TestIOMap getTestIOMap();
 	void fillTestCase(mpz_class a[]);
+	
+	int wIn() const { return wI; }
+	int wOut() const { return wO + 1; }
 
 private:
 	HOTBMInstance *inst;

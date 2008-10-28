@@ -118,6 +118,10 @@ static void usage(char *name){
 	cerr << "      High-Order Table-Based Method for fixed-point functions (NPY)\n";
 	cerr << "      wI - input width, wO - output width, degree - degree of polynomial approx\n";
 	cerr << "      function - sollya-syntaxed function to implement, between double quotes\n";
+	cerr << "    HOTBMRange function wI wO degree xmin xmax scale\n";
+	cerr << "      Same as HOTBM, with explicit range and scale (NPY)\n";
+	cerr << "      xmin xmax - bounds of the input range, mapped to [0,1[\n";
+	cerr << "      scale - scaling factor to apply to the function output\n";
 #endif // HAVE_HOTBM
 	cerr << "    TestBench n\n";
 	cerr << "       Behavorial test bench for the preceding operator\n";
@@ -534,9 +538,29 @@ bool parseCommandLine(int argc, char* argv[]){
 			int wO = checkStrictyPositive(argv[i++], argv[0]);
 			int n  = checkStrictyPositive(argv[i++], argv[0]);
 			cerr << "> HOTBM func='" << func << "', wI=" << wI << ", wO=" << wO <<endl;
-			op = new HOTBM(target, func, wI, wO, n);
+			op = new HOTBM(target, func, "", wI, wO, n);
 			addOperator(op);
 		}
+		
+		else if (opname == "HOTBMRange") {
+			int nargs = 7;
+			if (i+nargs > argc)
+				usage(argv[0]); // and exit
+			string func = argv[i++];
+			int wI = checkStrictyPositive(argv[i++], argv[0]);
+			int wO = checkStrictyPositive(argv[i++], argv[0]);
+			int n  = checkStrictyPositive(argv[i++], argv[0]);
+			double xmin = atof(argv[i++]);
+			double xmax = atof(argv[i++]);
+
+			// xmax < xmin is a valid use case...
+			double scale = atof(argv[i++]);
+			cerr << "> HOTBM func='" << func << "', wI=" << wI << ", wO=" << wO
+			     << ", xmin=" << xmin << ", xmax=" << xmax << ", scale=" << scale <<endl;
+			op = new HOTBM(target, func, "", wI, wO, n, xmin, xmax, scale);
+			addOperator(op);
+		}
+		
 #endif // HAVE_HOTBM
 		
 		else if (opname == "FPExp")

@@ -1,15 +1,35 @@
 #include "Function.hh"
+#include <sstream>
 
-Function::Function(string name_)
-  : name(name_)
+Function::Function(string name_, double xmin, double xmax, double scale)
 {
 	/* Convert the input string into a sollya evaluation tree */
-	node = parseString(name_.c_str());
+	sollya_node_t sF = parseString(name_.c_str());
+
+	// Name HAS to be unique!
+	// will cause weird bugs otherwise
+	ostringstream complete_name;
+	complete_name << name_ << " * " << scale << " on [" << xmin << ", " << xmax << "]"; 
+	name = complete_name.str();
 
 	/* If conversion did not succeed (i.e. parse error)
 	 * throw an exception */
-	if (node == 0)
+	if (sF == 0)
 		throw "Unable to parse input function.";
+		
+	/* Map the input to the [0,1[ range */
+	// g(y) = scale * f(y * (xmax - xmin) + xmin)
+	sollya_node_t sXW = makeConstantDouble(xmax - xmin);
+	sollya_node_t sXMin = makeConstantDouble(xmin);
+	
+	sollya_node_t sX = makeAdd(makeMul(makeVariable(), sXW), sXMin);
+	sollya_node_t sG = substitute(sF, sX);
+	
+	node = makeMul(makeConstantDouble(scale), sG);
+	if (node == 0)
+		throw "Sollya error when performing range mapping.";
+	
+	// No need to free memory for Sollya subexpressions (?)
 }
 
 Function::~Function()
@@ -19,7 +39,7 @@ Function::~Function()
 
 string Function::getName() const
 {
-  return name;
+	return name;
 }
 
 void Function::eval(mpfr_t r, mpfr_t x) const

@@ -26,6 +26,9 @@
 #include "utils.hpp"
 #include <cstdlib>
 #include "math.h"
+#include <functional>
+#include <algorithm>
+#include <cctype>
 
 using namespace std;
 
@@ -306,3 +309,27 @@ string zeroGenerator(int n, int margins){
 		default: return full.str();
 	}
 }
+
+// Does not handle multi-byte encodings.
+char vhdlize_char(char c)
+{
+	if(isalnum(c)) {
+		return c;
+	}
+	return '_';
+}
+
+string vhdlize(string const & expr)
+{
+	string result(expr.size(), 0);
+	transform(expr.begin(), expr.end(), result.begin(), ptr_fun(vhdlize_char));
+	return result;
+}
+
+string vhdlize(double num)
+{
+	ostringstream oss;
+	oss << num;
+	return vhdlize(oss.str());
+}
+
