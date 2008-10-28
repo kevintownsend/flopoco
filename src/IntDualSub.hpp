@@ -18,7 +18,7 @@ public:
 	 * @param[in] wIn    the with of the inputs and output
 	 * @param[in] inputDelays the delays for each input
 	 **/
-	IntDualSub(Target* target, int wIn, map<string, double> inputDelays = emptyDelayMap);
+	IntDualSub(Target* target, int wIn, int opType, map<string, double> inputDelays = emptyDelayMap);
 	/*IntDualSub(Target* target, int wIn);
 	void cmn(Target* target, int wIn, map<string, double> inputDelays);*/
 	
@@ -54,6 +54,8 @@ public:
 	 
 protected:
 	int wIn_;                         /**< the width for X, Y and R*/
+	int opType_;					  /**< the operation type. if 0, op type is x-y y-x; if 1 op_type is x-y x+y */
+	ostringstream son_;				  /**< second output name; can be RyMx or RxPy */
 
 private:
 	map<string, double> inputDelays_; /**< a map between input signal names and their maximum delays */

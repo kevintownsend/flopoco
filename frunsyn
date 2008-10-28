@@ -5,7 +5,7 @@
 ## Author:  Bogdan Pasca (2008)
 ################################################################################
 
-bash runsyn /home/bogdan/ISE/misc $1 1 1 0 seq_400_auto
+bash runsyn /home/bogdan/ISE/Shifter $1 1 1 0 seq_400_auto
 topmodule=$1
 operator=${topmodule%%_*}
 opProp=${topmodule#*_}

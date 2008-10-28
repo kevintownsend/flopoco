@@ -384,13 +384,14 @@ bool parseCommandLine(int argc, char* argv[]){
 		}
 		//HIDDEN
 		else if(opname=="IntDualSub"){
-			int nargs = 1;
+			int nargs = 2;
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
 				int wIn = checkStrictyPositive(argv[i++], argv[0]);
-				cerr << "> IntDualSub, wIn="<<wIn<<endl  ;
-				op = new IntDualSub(target,wIn);
+				int opType = checkBoolean(argv[i++], argv[0]);
+				cerr << "> IntDualSub, wIn="<<wIn<<" OpType="<<opType<<endl  ;
+				op = new IntDualSub(target,wIn,opType);
 				addOperator(op);
 			}    
 		}

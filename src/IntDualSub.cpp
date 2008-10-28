@@ -37,19 +37,24 @@
 
 using namespace std;
 
-IntDualSub::IntDualSub(Target* target, int wIn, map<string, double> inputDelays):
-Operator(target), wIn_(wIn), inputDelays_(inputDelays)
+IntDualSub::IntDualSub(Target* target, int wIn, int opType, map<string, double> inputDelays):
+Operator(target), wIn_(wIn), inputDelays_(inputDelays), opType_(opType)
 {
 	int pipelineDepth=0;
 	setOperatorName();
 	setOperatorType();
 
+	if (opType==0) 
+		son_ << "yMx";
+	else
+		son_ << "xPy";
+	
 	// Set up the IO signals
 	addInput ("X"  , wIn_);
 	addInput ("Y"  , wIn_);
 	addOutput("RxMy", wIn_);
-	addOutput("RyMx", wIn_);
-
+	addOutput("R"+son_.str(), wIn_);
+	
 	if (verbose){
 		cout <<"delay for X is   "<< inputDelays["X"]<<endl;	
 		cout <<"delay for Y is   "<< inputDelays["Y"]<<endl;
@@ -133,7 +138,7 @@ Operator(target), wIn_(wIn), inputDelays_(inputDelays)
 			t<<"xMycin"<<i+1<<"r"<<i;
 			addRegisteredSignalWithSyncReset(t.str(),cSize[i]+1);
 			t.str("");
-			t<<"yMxcin"<<i+1<<"r"<<i;
+			t<<son_.str()<<"cin"<<i+1<<"r"<<i;
 			addRegisteredSignalWithSyncReset(t.str(),cSize[i]+1);
 		}
 		
@@ -142,7 +147,7 @@ Operator(target), wIn_(wIn), inputDelays_(inputDelays)
 			t<<"xMyr"<<i;
 			addDelaySignalBus(t.str(),cSize[i],nbOfChunks-2-i);
 			t.str("");
-			t<<"yMxr"<<i;
+			t<<son_.str()<<"r"<<i;
 			addDelaySignalBus(t.str(),cSize[i],nbOfChunks-2-i);
 		}	
 		
@@ -157,7 +162,7 @@ Operator(target), wIn_(wIn), inputDelays_(inputDelays)
 		setPipelineDepth(nbOfChunks-1+bufferedInputs);
 
 		outDelayMap["RxMy"] = target->adderDelay(cSize[nbOfChunks-1]);
-		outDelayMap["RyMx"] = target->adderDelay(cSize[nbOfChunks-1]);  
+		outDelayMap["R"+son_.str()] = target->adderDelay(cSize[nbOfChunks-1]);  
 		if (verbose)
 			cout<< "Last addition size is "<<cSize[nbOfChunks-1]<< " having a delay of "<<target->adderDelay(cSize[nbOfChunks-1])<<endl;
 
@@ -199,7 +204,7 @@ void IntDualSub::outputVHDL(std::ostream& o, std::string name) {
 			o << tab << "sX"<<i<<" <= X"<<i<<getDelaySignalName("",bufferedInputs)<<";"<<endl;
 			o << tab << "sY"<<i<<" <= Y"<<i<<getDelaySignalName("",bufferedInputs)<<";"<<endl;
 			if (i==0)
-			o << tab << "cin0 <= "<<"'1';"<<endl;
+				o << tab << "cin0 <= "<<"'"<< not(opType_) <<"';"<<endl;
 		}
 
 		//additions	for x - y	
@@ -209,19 +214,29 @@ void IntDualSub::outputVHDL(std::ostream& o, std::string name) {
 			else 
 				if (i<nbOfChunks-1)
 					o << tab << "xMycin"<<i+1<<"r"<<i<<" <= ( \"0\" & sX"<<i<<getDelaySignalName("",i)<< ")"
-					                                 " + ( \"1\" & not(sY"<<i<<getDelaySignalName("",i)<< "))"
-					                                 " + xMycin"<<i<<"r"<<i-1<<"_d("<<cSize[i-1]<<");"<<endl;
+					                                 << " + ( \"1\" & not(sY"<<i<<getDelaySignalName("",i)<< "))"
+					                                 << " + xMycin"<<i<<"r"<<i-1<<"_d("<<cSize[i-1]<<");"<<endl;
 		}
 
-		//additions	for y - x	
+		//additions	for y - x	or x + y
 		for (int i=0;i<nbOfChunks;i++){
-			if (i==0 && nbOfChunks>1)
-				o << tab << "yMxcin"<<i+1<<"r"<<i<<" <= (\"1\" & not(sX"<<i<<")) + (\"0\" & sY"<<i<<") + cin0;"<<endl;
-			else 
-				if (i<nbOfChunks-1)
-					o << tab << "yMxcin"<<i+1<<"r"<<i<<" <= ( \"1\" & not(sX"<<i<<getDelaySignalName("",i)<< "))"
-					                                 " + ( \"0\" & sY"<<i<<getDelaySignalName("",i)<< ")"
-					                                 " + yMxcin"<<i<<"r"<<i-1<<"_d("<<cSize[i-1]<<");"<<endl;
+			if (i==0 && nbOfChunks>1){
+				o << tab << son_.str()<<"cin"<<i+1<<"r"<<i<<" <= ";
+				if (opType_==0)
+					o<<"(\"1\" & not(sX"<<i<<")) + (\"0\" & sY"<<i<<") + cin0;"<<endl;
+				else
+					o<<"(\"0\" & sX"<<i<<") + (\"0\" & sY"<<i<<") + cin0;"<<endl;
+
+			}else 
+				if (i<nbOfChunks-1){
+					o << tab << "yMxcin"<<i+1<<"r"<<i<<" <=";
+					if (opType_==0)	
+						o<<" ( \"1\" & not(sX"<<i<<getDelaySignalName("",i)<< "))";
+					else
+						o<<" ( \"0\" & sX"<<i<<getDelaySignalName("",i)<< ")";
+					o << " + ( \"0\" & sY"<<i<<getDelaySignalName("",i)<< ")"
+					  << " + yMxcin"<<i<<"r"<<i-1<<"_d("<<cSize[i-1]<<");"<<endl;
+				}
 		}
 
 		//assign the partial additions which will propagate to the result for x-y
@@ -238,20 +253,19 @@ void IntDualSub::outputVHDL(std::ostream& o, std::string name) {
 			}
 		}
 
-		//assign the partial additions which will propagate to the result for y-x
+		//assign the partial additions which will propagate to the result for y-x || x +y
 		for (int i=0;i<nbOfChunks;i++){
 			if (i<nbOfChunks-1)
-				o << tab << "yMxr"<<i<<" <= yMxcin"<<i+1<<"r"<<i<<"_d("<<cSize[i]-1<<" downto 0);"<<endl;
+				o << tab << son_.str()<<"r"<<i<<" <= "<<son_.str()<<"cin"<<i+1<<"r"<<i<<"_d("<<cSize[i]-1<<" downto 0);"<<endl;
 			else{
-				o << tab << "yMxr"<<i<<" <= not(sX"<<i<<getDelaySignalName("",i)<<")"<<
+				o << tab << son_.str()<<"r"<<i<<" <= not(sX"<<i<<getDelaySignalName("",i)<<")"<<
 	                                 " + sY"<<i<<getDelaySignalName("",i);
 									if (nbOfChunks>1)				
-	                                o << " + yMxcin"<<i<<"r"<<i-1<<"_d("<<cSize[i-1]<<");"<<endl;
+	                                o << " + "<<son_.str()<<"cin"<<i<<"r"<<i-1<<"_d("<<cSize[i-1]<<");"<<endl;
 									else
 	                                o << " + cin0;"<<endl;	
 			}
 		}
-
 
 		//assign output by composing the result for x - y
 		o << tab << "RxMy <= ";
@@ -259,23 +273,23 @@ void IntDualSub::outputVHDL(std::ostream& o, std::string name) {
 			if (i==0)
 			o << "xMyr"<<i<<getDelaySignalName("",nbOfChunks-2-i)<<";"<<endl;
 			else
-			o << "XmYr"<<i<<getDelaySignalName("",nbOfChunks-2-i)<<" & ";			
+			o << "xMyr"<<i<<getDelaySignalName("",nbOfChunks-2-i)<<" & ";			
 		} o<<endl;
 
-		//assign output by composing the result for y - x
-		o << tab << "RyMx <= ";
+		//assign output by composing the result for y - x || x + y
+		o << tab << "R"<<son_.str()<<" <= ";
 		for (int i=nbOfChunks-1;i>=0;i--){
 			if (i==0)
-			o << "yMxr"<<i<<getDelaySignalName("",nbOfChunks-2-i)<<";"<<endl;
+			o << son_.str()<<"r"<<i<<getDelaySignalName("",nbOfChunks-2-i)<<";"<<endl;
 			else
-			o << "yMxr"<<i<<getDelaySignalName("",nbOfChunks-2-i)<<" & ";			
+			o << son_.str()<<"r"<<i<<getDelaySignalName("",nbOfChunks-2-i)<<" & ";			
 		} o<<endl;
 
 		outputVHDLRegisters(o);
 	}
 	else{
 		o << tab << "RxMy <= X + not(Y) + '1';" <<endl;
-		o << tab << "RyMx <= not(X) + Y + '1';" <<endl;
+		o << tab << "R"<<son_.str()<<" <= "<< (opType_==0?"not(X)":"X")<<" + Y + '1';" <<endl;
 	}
 	o << "end architecture;" << endl << endl;
 }
@@ -304,8 +318,8 @@ void IntDualSub::fillTestCase(mpz_class a[])
 	svR2 = svY - svX;
 	cout<<endl<< "x is "<< svX <<" y is "<<svY << " x-y is "<<	svR1 << " y-x is "<<svR2<<endl;
 	// Don't allow overflow
-	//mpz_clrbit(svR1.get_mpz_t(),wIn_);
-	//mpz_clrbit(svR2.get_mpz_t(),wIn_);  
+	mpz_clrbit(svR1.get_mpz_t(),wIn_);
+	mpz_clrbit(svR2.get_mpz_t(),wIn_);  
 }
 
 
