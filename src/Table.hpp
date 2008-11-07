@@ -4,6 +4,8 @@
 #include <string>
 //#include <sstream>
 #include <iosfwd>
+#include <cstdlib>
+#include <iostream>
 
 // A basic hardware table, with its VHDL output. 
 

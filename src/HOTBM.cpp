@@ -69,7 +69,7 @@ void HOTBM::fillTestCase(mpz_class a[])
 	int outSign = 0;
 
 	mpfr_t mpX, mpR;
-	mpfr_inits(mpX, mpR, 0);
+	mpfr_inits(mpX, mpR, 0, NULL);
 
 	/* Convert a random signal to an mpfr_t in [0,1[ */
 	mpfr_set_z(mpX, x.get_mpz_t(), GMP_RNDN);

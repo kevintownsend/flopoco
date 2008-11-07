@@ -6,6 +6,7 @@
 #include <cmath>
 #include <gmpxx.h>
 #include <memory>
+#include <cstdlib>
 
 using namespace std;
 

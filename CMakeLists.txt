@@ -118,7 +118,7 @@ ADD_EXECUTABLE(flopoco
  src/fplog/SecondInvTable.cpp
  src/FPLog
 )
-TARGET_LINK_LIBRARIES(flopoco  mpfr gmp gmpxx ${HOTBM_LIB} $(LNS_LIB))
+TARGET_LINK_LIBRARIES(flopoco  mpfr gmp gmpxx ${HOTBM_LIB} ${LNS_LIB})
 
 ADD_EXECUTABLE(fp2bin src/Tools/fp2bin  src/utils)
 TARGET_LINK_LIBRARIES(fp2bin  mpfr gmp gmpxx)
