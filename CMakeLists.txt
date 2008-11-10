@@ -1,28 +1,37 @@
 PROJECT(FloPoCo C CXX)
+
 MESSAGE("Trying to build FloPoCo on " ${CMAKE_SYSTEM_NAME} ", compiler is "${CMAKE_C_COMPILER})
+
+# CMake's way of handling various versions
+cmake_minimum_required(VERSION 2.4)
+if(COMMAND cmake_policy)
+  cmake_policy(SET CMP0003 NEW)
+endif(COMMAND cmake_policy)
+
+
 
 INCLUDE(CPack)
 
 # Uncomment for profiling
 #SET(CMAKE_CXX_FLAGS_DEBUG "-g -pg")
-SET(CMAKE_BUILD_TYPE debug)
+
+# Do you want an executable of 9GB ?
+#SET(CMAKE_BUILD_TYPE debug)
+SET(CMAKE_BUILD_TYPE release)
 
 FIND_PATH(MPFR_H
 	  mpfr.h
-	  /usr/include/ /usr/local/include/
 	  DOC "Path of mpfr.h, the include file for GNU MPFR library"
 )
 
 FIND_LIBRARY(MPFR_LIB
 	NAMES mpfr 
-	PATH /usr/lib/ /usr/local/lib/
 	DOC "Directory of the MPFR library")
 
+
 # Detect Sollya's Presence
-FIND_LIBRARY(
-	SOLLYA_LIB
-	NAMES sollya
-	PATH /usr/lib/ /usr/local/lib)
+FIND_LIBRARY( SOLLYA_LIB sollya )
+
 IF (SOLLYA_LIB)
 	ADD_DEFINITIONS(-DHAVE_SOLLYA)
 	MESSAGE(STATUS "Found Sollya: ${SOLLYA_LIB}")
@@ -61,7 +70,7 @@ IF (SOLLYA_LIB)
 		src/HOTBM/PowerROM.cc
 		src/HOTBM/TermPowMult.cc
 	)
-	TARGET_LINK_LIBRARIES(hotbm sollya xml2 mpfi)
+	TARGET_LINK_LIBRARIES(hotbm  xml2 mpfi ${SOLLYA_LIB})
 	SET(HOTBM_LIB hotbm)
 ENDIF (SOLLYA_LIB)
 
@@ -73,7 +82,7 @@ IF (HOTBM_LIB)
 		src/LNS/CotranHybrid
 		src/LNS/CotranTables
 	)
-	TARGET_LINK_LIBRARIES(${HOTBM_LIB})
+	TARGET_LINK_LIBRARIES(lns ${HOTBM_LIB})
 	SET(LNS_LIB lns)
 ENDIF (HOTBM_LIB)
 
@@ -118,7 +127,18 @@ ADD_EXECUTABLE(flopoco
  src/fplog/SecondInvTable.cpp
  src/FPLog
 )
-TARGET_LINK_LIBRARIES(flopoco  mpfr gmp gmpxx ${HOTBM_LIB} ${LNS_LIB})
+
+IF (SOLLYA_LIB)
+  TARGET_LINK_LIBRARIES(
+    flopoco  
+    mpfr gmp gmpxx xml2 mpfi lns hotbm  ${SOLLYA_LIB}
+    )
+ELSE (SOLLYA_LIB)
+  TARGET_LINK_LIBRARIES(
+    flopoco  
+    mpfr gmp gmpxx)
+ENDIF (SOLLYA_LIB)
+
 
 ADD_EXECUTABLE(fp2bin src/Tools/fp2bin  src/utils)
 TARGET_LINK_LIBRARIES(fp2bin  mpfr gmp gmpxx)
