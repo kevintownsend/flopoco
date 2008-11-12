@@ -5,6 +5,7 @@
 #include <gmpxx.h>
 #include "Operator.hpp"
 #include "Shifters.hpp"
+#include "FPNumber.hpp"
 
 /** Implements a long, fixed point accumulator for accumulating floating point numbers
  */
@@ -52,12 +53,16 @@ public:
 	 */
 	void fillTestCase(mpz_class a[]);
 
+	mpz_class mapFP2Acc(FPNumber X);
+
 protected:
 	int wEX_;     /**< the width of the exponent  */
 	int wFX_;     /**< the width of the fractional part */
 	int MaxMSBX_; /**< the weight of the MSB of the expected exponent of X */
 	int LSBA_;    /**< the weight of the least significand bit of the accumulator */
 	int MSBA_;    /**< the weight of the most significand bit of the accumulator */
+
+	mpz_class AccValue_;	
 
 private:
 	Shifter* shifter_;          /**<Shifter object for shifting X in place */

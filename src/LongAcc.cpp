@@ -42,7 +42,7 @@ extern vector<Operator*> oplist;
 
 LongAcc::LongAcc(Target* target, int wEX, int wFX, int MaxMSBX, int LSBA, int MSBA): 
 	Operator(target), 
-	wEX_(wEX), wFX_(wFX), MaxMSBX_(MaxMSBX), LSBA_(LSBA), MSBA_(MSBA)
+	wEX_(wEX), wFX_(wFX), MaxMSBX_(MaxMSBX), LSBA_(LSBA), MSBA_(MSBA), AccValue_(0)
 {
 	int i;
 
@@ -103,7 +103,7 @@ LongAcc::LongAcc(Target* target, int wEX, int wFX, int MaxMSBX, int LSBA, int MS
 	addFPInput ("X", wEX_,wFX_);
 	addOutput  ("A", sizeAcc_);  
 	addOutput  ("XOverflow");  
-	addOutput ("XUnderflow");  
+	addOutput  ("XUnderflow");  
 	addOutput  ("AccOverflow");  
 
 	// Unregistered signal
@@ -565,7 +565,20 @@ TestIOMap LongAcc::getTestIOMap()
 
 void LongAcc::fillTestCase(mpz_class a[])
 {
-	// mpz_class& svRst = a[0];
+
+	mpz_class& sX = a[0];
+	mpz_class& sXOverflow = a[2];
+
+	FPNumber fpX(wEX_, wFX_);
+	fpX = sX;
+
+	if ((fpX.getExceptionSignalValue()>1) || (fpX.getExponentSignalValue()-(pow(2,wEX_-1)-1)>MaxMSBX_))
+		sXOverflow = 1;
+	else
+		sXOverflow = 0;
+
+
+
 	// mpz_class& svX   = a[1];
 	// mpz_class& svA   = a[2];
 	// mpz_class& svXOv = a[3];
@@ -574,6 +587,14 @@ void LongAcc::fillTestCase(mpz_class a[])
 	//svR = svX + svY + svC;
 	// Don't allow overflow
 	//	mpz_clrbit(svR.get_mpz_t(),wIn_); 
+}
+
+mpz_class LongAcc::mapFP2Acc(FPNumber X)
+{
+
+
+
+
 }
 
 
