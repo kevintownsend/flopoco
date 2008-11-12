@@ -32,9 +32,11 @@
 #include "Operator.hpp"
 #include "TestBench.hpp"
 
+extern int LongAccN;
 TestBench::TestBench(Target* target, Operator* op, int n):
 	Operator(target), op_(op), n_(n)
 {
+	LongAccN = n;
 	setOperatorName();
 	setPipelineDepth(42);	// could be any number
 
@@ -216,9 +218,9 @@ void TestBench::outputVHDL(ostream& o, string name) {
 	o << tab << "-- Ticking clock signal" <<endl;
 	o << tab << "process" <<endl;
 	o << tab << "begin" <<endl;
-	o << tab << tab << "clk <= '1';" <<endl;
-	o << tab << tab << "wait for 5 ns;" <<endl;
 	o << tab << tab << "clk <= '0';" <<endl;
+	o << tab << tab << "wait for 5 ns;" <<endl;
+	o << tab << tab << "clk <= '1';" <<endl;
 	o << tab << tab << "wait for 5 ns;" <<endl;
 	o << tab << "end process;" <<endl;
 	o <<endl;

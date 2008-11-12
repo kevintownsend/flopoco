@@ -70,6 +70,7 @@ string cl_name=""; // used for the -name option
 
 int verbose=0;
 Target* target;
+int LongAccN;
 
 map<string, double> emptyDelayMap;
 

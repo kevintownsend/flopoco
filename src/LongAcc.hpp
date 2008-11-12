@@ -62,7 +62,9 @@ protected:
 	int LSBA_;    /**< the weight of the least significand bit of the accumulator */
 	int MSBA_;    /**< the weight of the most significand bit of the accumulator */
 
-	mpz_class AccValue_;	
+	mpz_class AccValue_;
+	int crtCase;
+	int xOvf;	
 
 private:
 	Shifter* shifter_;          /**<Shifter object for shifting X in place */

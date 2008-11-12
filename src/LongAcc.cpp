@@ -39,10 +39,11 @@
 using namespace std;
 
 extern vector<Operator*> oplist;
+extern int LongAccN;
 
 LongAcc::LongAcc(Target* target, int wEX, int wFX, int MaxMSBX, int LSBA, int MSBA): 
 	Operator(target), 
-	wEX_(wEX), wFX_(wFX), MaxMSBX_(MaxMSBX), LSBA_(LSBA), MSBA_(MSBA), AccValue_(0)
+	wEX_(wEX), wFX_(wFX), MaxMSBX_(MaxMSBX), LSBA_(LSBA), MSBA_(MSBA), AccValue_(0), xOvf(0)
 {
 	int i;
 
@@ -568,16 +569,40 @@ void LongAcc::fillTestCase(mpz_class a[])
 
 	mpz_class& sX = a[0];
 	mpz_class& sXOverflow = a[2];
+	mpz_class& sA = a[1];
+	
+	crtCase++;
+
+	
+	if (crtCase  > LongAccN - additionNumberOfChunks_ + 1)
+	sX=0;
 
 	FPNumber fpX(wEX_, wFX_);
 	fpX = sX;
+	
+	while ((fpX.getExponentSignalValue()-(pow(2,wEX_-1)-1)>MaxMSBX_)||(fpX.getSignSignalValue()==1) || (fpX.getExceptionSignalValue()!=1)){
+		sX = getLargeRandom(wEX_+wFX_+3);
+		fpX = sX;
+	}
+
 
 	if ((fpX.getExceptionSignalValue()>1) || (fpX.getExponentSignalValue()-(pow(2,wEX_-1)-1)>MaxMSBX_))
-		sXOverflow = 1;
+		xOvf = xOvf or 1;
+	
+	sXOverflow = xOvf;
+
+	if (fpX.getSignSignalValue()==0)
+		AccValue_ = AccValue_ + mapFP2Acc(fpX);
 	else
-		sXOverflow = 0;
-
-
+		AccValue_ = AccValue_ - mapFP2Acc(fpX);
+	
+	
+	cout<< "Iteration "<<crtCase<<" Accumulated value="<<AccValue_<<" current X exponent="<<fpX.getExponentSignalValue()-(pow(2,wEX_-1)-1)<<" and sign="<<fpX.getSignSignalValue() <<endl;
+	
+	
+	if (crtCase==LongAccN)
+		sA = AccValue_;
+		
 
 	// mpz_class& svX   = a[1];
 	// mpz_class& svA   = a[2];
@@ -591,10 +616,16 @@ void LongAcc::fillTestCase(mpz_class a[])
 
 mpz_class LongAcc::mapFP2Acc(FPNumber X)
 {
-
-
-
-
+	//get true exponent of X
+	mpz_class expX = X.getExponentSignalValue() - ( pow(2,wEX_-1)-1 ); 
+	
+	int keepBits = -LSBA_ + expX.get_si();
+	if (keepBits<=0)
+		return 0;
+	else if (wFX_>keepBits)
+			return (X.getFractionSignalValue()/mpz_class(pow(2,wFX_-keepBits)));
+		else
+			return (X.getFractionSignalValue()*mpz_class(pow(2,keepBits-wFX_)));
 }
 
 
