@@ -185,7 +185,7 @@ LongAcc::LongAcc(Target* target, int wEX, int wFX, int MaxMSBX, int LSBA, int MS
 	// final pipeline depth is the sum of shifter_ pipeline and 2's
 	// complement pipeline, plus 1 for the accumulator itself.
 	//TODO when the accumulator is pipelined: replace this 1 with the acc's pipeline depth
-	setPipelineDepth(shifter_->getPipelineDepth() + c2PipelineDepth_+  additionNumberOfChunks_ + 1);
+	setPipelineDepth(shifter_->getPipelineDepth() + c2PipelineDepth_ + 1);
 
 	// it is rather stupid to register all the extended bits as they are
 	// all equal, but the synthesiser optimises it out
@@ -304,7 +304,7 @@ int i;
 			                           " carryBit_"<<i<<"_d;"<<endl;
 			
 			o<<tab<<"acc_"<<i<<" <= acc_"<<i<<"_ext("<<rebalancedAdditionLastChunkSize_-1<<" downto 0);"<<endl;
-			o<<tab<<"carryBit_"<<i<<" <= acc_"<<i<<"_ext("<<rebalancedAdditionLastChunkSize_<<");"<<endl;
+			o<<tab<<"carryBit_"<<i+1<<" <= acc_"<<i<<"_ext("<<rebalancedAdditionLastChunkSize_<<");"<<endl;
 		}
 	}
 
@@ -571,47 +571,54 @@ void LongAcc::fillTestCase(mpz_class a[])
 	mpz_class& sXOverflow = a[2];
 	mpz_class& sA = a[1];
 	
-	crtCase++;
+	currentIteration++;
 
-	
-	if (crtCase  > LongAccN - additionNumberOfChunks_ + 1)
-	sX=0;
+	//the last additionNumberOfChunks_-1 inputs must be 0 in order to propagate the carry bit in the accumulator
+	if (currentIteration  > LongAccN - additionNumberOfChunks_ + 1)
+		sX = 0;
 
+	//convert this raw number into a FP number accornding to the flopoco FP format
 	FPNumber fpX(wEX_, wFX_);
 	fpX = sX;
 	
-	while ((fpX.getExponentSignalValue()-(pow(2,wEX_-1)-1)>MaxMSBX_)||(fpX.getSignSignalValue()==1) || (fpX.getExceptionSignalValue()!=1)){
+	//for now, we do not accept inputs which overflow, negative inputs or inputs having the exception bits INF and NaN
+	while ((fpX.getExponentSignalValue()-(pow(2,wEX_-1)-1)>MaxMSBX_)||(fpX.getSignSignalValue()==1) || (fpX.getExceptionSignalValue()>1)){
 		sX = getLargeRandom(wEX_+wFX_+3);
 		fpX = sX;
 	}
 
-
+	
 	if ((fpX.getExceptionSignalValue()>1) || (fpX.getExponentSignalValue()-(pow(2,wEX_-1)-1)>MaxMSBX_))
 		xOvf = xOvf or 1;
 	
 	sXOverflow = xOvf;
+	
+	if (verbose==1)
+		cout<<" i="         << currentIteration
+		    <<",a=" << AccValue_;
 
-	if (fpX.getSignSignalValue()==0)
-		AccValue_ = AccValue_ + mapFP2Acc(fpX);
-	else
-		AccValue_ = AccValue_ - mapFP2Acc(fpX);
+	if (fpX.getExceptionSignalValue()!=0)  
+		if (fpX.getSignSignalValue()==0)
+			AccValue_ = AccValue_ + mapFP2Acc(fpX);
+		else
+			AccValue_ = AccValue_ - mapFP2Acc(fpX);
 	
+	if (verbose==1){
+		if (fpX.getExceptionSignalValue()!=0)
+			cout<< (fpX.getSignSignalValue()==0?" + ":" - ")<< mapFP2Acc(fpX) << " = "<<AccValue_<<";"; 
+			
+		cout<< "Exc="<<fpX.getExceptionSignalValue()
+			<<", S="<<fpX.getSignSignalValue()
+			<<", Exp="<<fpX.getExponentSignalValue()-(pow(2,wEX_-1)-1)
+			<<", Frac="<<fpX.getFractionSignalValue()<<endl;
+				 
+	}
 	
-	cout<< "Iteration "<<crtCase<<" Accumulated value="<<AccValue_<<" current X exponent="<<fpX.getExponentSignalValue()-(pow(2,wEX_-1)-1)<<" and sign="<<fpX.getSignSignalValue() <<endl;
-	
-	
-	if (crtCase==LongAccN)
+	//assign value to sA only at final iteration	
+	if (currentIteration==LongAccN)
 		sA = AccValue_;
-		
-
-	// mpz_class& svX   = a[1];
-	// mpz_class& svA   = a[2];
-	// mpz_class& svXOv = a[3];
-	// mpz_class& svAOv = a[4];
-
-	//svR = svX + svY + svC;
-	// Don't allow overflow
-	//	mpz_clrbit(svR.get_mpz_t(),wIn_); 
+	
+ 
 }
 
 mpz_class LongAcc::mapFP2Acc(FPNumber X)

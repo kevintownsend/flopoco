@@ -6,6 +6,7 @@
 #include "Operator.hpp"
 #include "Shifters.hpp"
 #include "FPNumber.hpp"
+#include "utils.hpp"
 
 /** Implements a long, fixed point accumulator for accumulating floating point numbers
  */
@@ -63,7 +64,7 @@ protected:
 	int MSBA_;    /**< the weight of the most significand bit of the accumulator */
 
 	mpz_class AccValue_;
-	int crtCase;
+	int currentIteration;
 	int xOvf;	
 
 private:
