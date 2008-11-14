@@ -627,7 +627,7 @@ mpz_class LongAcc::mapFP2Acc(FPNumber X)
 	mpz_class expX = X.getExponentSignalValue() - ( pow(2,wEX_-1)-1 ); 
 	
 	int keepBits = -LSBA_ + expX.get_si();
-	if (keepBits<=0)
+	if (keepBits<0)
 		return 0;
 	else if (wFX_>keepBits)
 			return (X.getFractionSignalValue()/mpz_class(pow(2,wFX_-keepBits)));
