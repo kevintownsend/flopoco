@@ -271,7 +271,8 @@ int i;
 	o << tab << "-- 2's complement of the summand" << endl;
 	// Don't compute 2's complement just yet, just invert the bits and leave the addition of the extra 1 in accumulation,
 	// as a carry in bit
-	o << tab << "summand2c <= summand when "<< getDelaySignalName("signX", shifter_->getPipelineDepth()) <<"='0' else not(summand); "<< endl;
+	o << tab << "summand2c <= summand when ("<< getDelaySignalName("signX", shifter_->getPipelineDepth()) <<"='0' or "
+	         << getDelaySignalName("flushedToZero", shifter_->getPipelineDepth()) <<"='1') else not(summand); "<< endl;
 	
 	o << endl;
 	o << tab << "-- extension of the summand to accumulator size" << endl;
@@ -292,6 +293,7 @@ int i;
 		
 		if (i!=additionNumberOfChunks_-1){
 			o<<tab<<"acc_"<<i<<"_ext <= ( \"0\" & acc_"<<i<<"_d ) + "<<
+//			o<<tab<<"acc_"<<i<<"_ext <= ( acc_"<<i<<"_d("<<rebalancedAdditionChunkSize_-1<<") & acc_"<<i<<"_d ) + "<<
 						    "( \"0\" & ext_summand2c_d("<<rebalancedAdditionChunkSize_*(i+1)-1 << " downto "<<rebalancedAdditionChunkSize_*i<<")) "<<
 			                            " + carryBit_"<<i<<"_d;"<<endl;
 		
@@ -582,7 +584,9 @@ void LongAcc::fillTestCase(mpz_class a[])
 	fpX = sX;
 	
 	//for now, we do not accept inputs which overflow, negative inputs or inputs having the exception bits INF and NaN
-	while ((fpX.getExponentSignalValue()-(pow(2,wEX_-1)-1)>MaxMSBX_)||(fpX.getSignSignalValue()==1) || (fpX.getExceptionSignalValue()>1)){
+	while ((fpX.getExponentSignalValue()-(pow(2,wEX_-1)-1)>MaxMSBX_)
+			//||(fpX.getSignSignalValue()==1) 
+			|| (fpX.getExceptionSignalValue()>1)){
 		sX = getLargeRandom(wEX_+wFX_+3);
 		fpX = sX;
 	}
@@ -616,7 +620,7 @@ void LongAcc::fillTestCase(mpz_class a[])
 	
 	//assign value to sA only at final iteration	
 	if (currentIteration==LongAccN)
-		sA = AccValue_;
+		sA = sInt2C2(AccValue_, sizeAcc_);
 	
  
 }
@@ -633,6 +637,18 @@ mpz_class LongAcc::mapFP2Acc(FPNumber X)
 			return (X.getFractionSignalValue()/mpz_class(pow(2,wFX_-keepBits)));
 		else
 			return (X.getFractionSignalValue()*mpz_class(pow(2,keepBits-wFX_)));
+}
+
+mpz_class LongAcc::sInt2C2(mpz_class X, int width)
+{
+	if (X>=0)
+		return X;
+	else{
+		return (pow(2, width)+X);
+	}
+		
+
+
 }
 
 

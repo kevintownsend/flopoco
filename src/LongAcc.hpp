@@ -55,6 +55,8 @@ public:
 	void fillTestCase(mpz_class a[]);
 
 	mpz_class mapFP2Acc(FPNumber X);
+	
+	mpz_class sInt2C2(mpz_class X, int width);
 
 protected:
 	int wEX_;     /**< the width of the exponent  */
