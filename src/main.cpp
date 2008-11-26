@@ -81,7 +81,7 @@ static void usage(char *name){
 	cerr << "    RightShifter wIn  MaxShift\n";
 	cerr << "    LZOC wIn wOut\n";
 	cerr << "    LZOCShifterSticky wIn wOut computeSticky countType\n";
-	cerr << "      CountType=0|1 fixed counting. -1 generic Counting (extra entity port)\n";
+	cerr << "      computeSticky=0|1, countType=0|1|-1 (-1 adds a countWhat input)\n";
 	//	cerr << "    Mux wIn n \n"; killed by Florent
 	cerr << "    IntAdder wIn\n";
 	cerr << "      Integer adder, possibly pipelined\n";

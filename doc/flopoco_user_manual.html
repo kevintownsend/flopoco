@@ -192,7 +192,13 @@ reference.</p>
   <dt><code>RightShifter wIn MaxShift</code> </dt>
     <dd>Same, but to the right.</dd>
   <dt><code>LZOC wIn wOut</code></dt>
-    <dd>Leading Zero/One Counter (mostly untested).</dd>
+    <dd>Leading Zero/One Counter.</dd>
+  <dt><code>LZOCShifterSticky wIn wOut computeSticky countType</code></dt>
+    <dd>Leading Zero/One Counter merged with a shifter. If
+    computeSticky=0 the bits shifted out are discarded, if 1 they are
+    ORed into a sticky bit. If countType=0, a leading zero counter is
+    built, if 1 a leading one counter is built, if -1 the value to
+    count is input from an extra input port.</dd>
 </dl>
 
 <h3>Pipelined integer standard operators</h3>
@@ -217,10 +223,11 @@ reference.</p>
       arbitrary precision -- including an exact result if wFR is larger than
       wFX+wFY+1.</dd>
   <dt><code>FPAdder wEX wFX wEY wFY wER wFR</code></dt>
-    <dd>A floating-point adder, with pepper: it may add numbers of
-      different precisions, and provide you with the correct rounding to
-      arbitrary precision -- including an exact result if wFR is larger than
-      wFX+wFY+1.</dd>
+    <dd>A floating-point adder. Currently the three wE must be equal
+      and the three wF must be equal. Eventually it should add numbers
+      of different precisions, and provide you with the correct
+      rounding to arbitrary precision -- including an exact result if
+      wFR is larger than wFX+wFY+1.</dd>
 </dl>
 
 <h3>Long fixed-point accumulator, and derivatives</h3>
@@ -288,6 +295,7 @@ High-Order Table-Based Method, best described in
 
 <dl>
 	<dt><code>HOTBM func wI wO degree</code></dt>
+	<dt><code>HOTBMRange func wI wO degree xmin xmax scale</code></dt>
 	<dd>HOTBM implementation of a function. <code>func</code> is a
 	  sollya-like expression of the function, <code>wI</code> is the
 	  input width, <code>wO</code> is the output width and <code>degree</code>
@@ -295,12 +303,14 @@ High-Order Table-Based Method, best described in
 	</dd>
 </dl>
 
-<p>The input of the HOTBM operand is interpreted as a fixed-point number,
+<p>For HOTBM The input operand is interpreted as a positive fixed-point number,
 with the point before the leftmost bit. The function to be implemented
 is assumed to be well defined in [0;1[. The output is a fixed-point
 number, where the first bit is the sign and the point is placed right
 after it. Note that the output is in fact <code>wO+1</code> bits
 wide.</p>
+
+<p>HOTBMRange uses HOTBM after mapping [xmin,xmax[ to [0,1[,  applying the scaling factor scale to the output.</p>
 
 <p>Due to the fact that the expression of the function might contain
 characters which are treated specially by the shell, you should
