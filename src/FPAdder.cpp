@@ -1,7 +1,7 @@
 /*
  * Floating Point Adder for FloPoCo
  *
- * Author : Bogdan Pasca
+ * Author : Bogdan Pasca, Florent de Dinechin
  *
  * This file is part of the FloPoCo project developed by the Arenaire
  * team at Ecole Normale Superieure de Lyon
@@ -178,13 +178,7 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 		addSignal("sdClose",1);
 		addSignal("sdExponentDifference",wE);
 		
-		//close path
-		//		addDelaySignalNoReset("cClose",1,intaddClose1->getPipelineDepth() + intaddClose2->getPipelineDepth()+2);
-		addDelaySignalNoReset("cX",wE+wF+3,intaddClose1->getPipelineDepth() + intaddClose2->getPipelineDepth());
-		//addSignal("cY",wE+wF+3);
-		addSignal("cExponentDifference",wE);
-		
-		addDelaySignalNoReset("expXClose",wE, intaddClose1->getPipelineDepth() + intaddClose2->getPipelineDepth() + 3 + lzocs->getPipelineDepth() ); 
+		//close path		
 		
 		addSignal("fracXClose1",wF+3);
 		addSignal("fracYClose1",wF+3);
@@ -216,13 +210,6 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 		
 		
 		//Far path
-		addDelaySignalNoReset("fX",wE+wF+3,rightShifter->getPipelineDepth() + intaddFar1->getPipelineDepth() );//CHECK XXX
-		addDelaySignalNoReset("fracFX",wF,rightShifter->getPipelineDepth() + intaddFar1->getPipelineDepth()+2);
-		addDelaySignalNoReset("expFX",wE,rightShifter->getPipelineDepth() + intaddFar1->getPipelineDepth()+3);
-		
-		
-		//		addSignal("fY",wE+wF+3);
-		addSignal("fExponentDifference",wE);
 		
 		addDelaySignalNoReset("shiftedOut",1, rightShifter->getPipelineDepth() + intaddFar1->getPipelineDepth() +2);
 		
@@ -233,7 +220,7 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 		
 		addSignal("sticky",1);
 		
-		addDelaySignalNoReset("fracXfar3",wF+5,2); //XXX
+		addSignal("fracXfar3",wF+5);
 		addSignal("fracYfar3",wF+5);
 		
 		addDelaySignalNoReset("opSelector",1,2);
@@ -473,19 +460,13 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 		//=========================================================================|
 		
 		o<<"-- Close Path --"<<endl;
-		// input interface signal assignment
-		o<<tab<<"cX <= pipeX;"<<endl;
-		//o<<tab<<"cY <= sdY;"<<endl;
-		o<<tab<<"expXClose <= cX("<<wE+wF-1<<" downto "<<wF<<");"<<endl;
-		o<<tab<<"cExponentDifference <= sdExponentDifference;"<<endl;
-		//o<<tab<<"cClose <= sdClose;"<<endl;	
 		
 		// build the fraction signals
 			// padding: [sign bit][inplicit "1"][fracX][guard bit]
-			o<<tab<<"fracXClose1 <= \"01\" & cX("<<wFX-1<<" downto "<<0<<") & '0';"<<endl;
+			o<<tab<<"fracXClose1 <= \"01\" & pipeX("<<wFX-1<<" downto "<<0<<") & '0';"<<endl;
 			// the close path is considered when the |exponentDifference|<=1, so 
 			// the alignment of fracY is of at most 1 position
-			o<<tab<<"with cExponentDifference(0) select"<<endl;
+			o<<tab<<"with sdExponentDifference(0) select"<<endl;
 			o<<tab<<"fracYClose1 <=  \"01\" & sdY("<<wF-1<<" downto "<<0<<") & '0' when '0',"<<endl;
 			o<<tab<<"               \"001\" & sdY("<<wF-1<<" downto "<<0<<")       when others;"<<endl;
 
@@ -540,8 +521,8 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 		// NORMALIZATION
 		int delayExp;
 		delayExp=lzocs->getPipelineDepth() + intaddClose2->getPipelineDepth() + intaddClose1->getPipelineDepth()+3;
-		o<<tab<< "exponentResultClose1<= "<<getDelaySignalName("expXClose",delayExp)
-		                                  <<" - (CONV_STD_LOGIC_VECTOR(0,"<<wE-lzocs->getCountWidth()<<") & nZerosNew);"<<endl;
+		o<<tab<< "exponentResultClose1<= "<<getDelaySignalName("pipeX",delayExp)
+		                                  <<"("<<wE+wF-1<<" downto "<<wF<<") - (CONV_STD_LOGIC_VECTOR(0,"<<wE-lzocs->getCountWidth()<<") & nZerosNew);"<<endl;
 		
 		// ROUNDING
 		// during fraction alignment, the fraction of Y is shifted at most one position to the right, so 1 extra bit is enough to perform rounding 
@@ -574,20 +555,15 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 		o<<"-- Far Path --"<<endl;
 		
 		//input interface signals
-		o<<tab<<"fX <= pipeX;"<<endl;
-		o<<tab<<"fracFX<=fX("<<wF-1<<" downto 0"<<");"<<endl;
-		o<<tab<<"expFX<=fX("<<wF+wE-1<<" downto "<<wF<<");"<<endl;
-		//o<<tab<<"fY <= sdY;"<<endl;
-		o<<tab<<"fExponentDifference <= sdExponentDifference;"<<endl;
 		
 		// determine if the fractional part of Y was shifted out of the opperation //
 		if (wE-1>sizeRightShift){
 			o<<tab<<" shiftedOut <= "; 
 			for (int i=wE-1;i>=sizeRightShift;i--)
 				if (((wE-1)==sizeRightShift)||(i==sizeRightShift))
-					o<< "fExponentDifference("<<i<<")";
+					o<< "sdExponentDifference("<<i<<")";
 				else
-					o<< "fExponentDifference("<<i<<") or ";
+					o<< "sdExponentDifference("<<i<<") or ";
 			o<<";"<<endl;
 		}
 		else
@@ -598,9 +574,9 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 		
 		//selectioSignal=the number of positions that fracY must be shifted to the right				
 		if (wE-1>=sizeRightShift)
-			o<<tab<<"selectionSignal <= fexponentDifference("<< sizeRightShift-1<<" downto 0"<<"); " << endl; 
+			o<<tab<<"selectionSignal <= sdExponentDifference("<< sizeRightShift-1<<" downto 0"<<"); " << endl; 
 		else
-			o<<tab<<"selectionSignal <= CONV_STD_LOGIC_VECTOR(0,"<<sizeRightShift-(wE-1)<<") & fexponentDifference("<< wE-1<<" downto 0"<<"); " <<
+			o<<tab<<"selectionSignal <= CONV_STD_LOGIC_VECTOR(0,"<<sizeRightShift-(wE-1)<<") & sdExponentDifference("<< wE-1<<" downto 0"<<"); " <<
  endl; 			
 								
 		// shift right the significand of new Y with as many positions as the exponent difference suggests (alignment) //		
@@ -616,7 +592,7 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 		o<<tab<< "sticky<= '0' when (shiftedFracY("<<wF<<" downto 0)=CONV_STD_LOGIC_VECTOR(0,"<<wF<<")) else '1';"<<endl;
 						
 		//pad fraction of X [sign][inplicit 1][fracX][guard bits]				
-		o<<tab<< "fracXfar3 <= \"01\" & "<<getDelaySignalName("fracFX",rightShifter->getPipelineDepth())<<" & \"000\";"<<endl;
+		o<<tab<< "fracXfar3 <= \"01\" & ("<<getDelaySignalName("pipeX",rightShifter->getPipelineDepth()+1)<<"("<<wF-1<<" downto 0"<<")) & \"000\";"<<endl;
   	//pad fraction of Y [sign][shifted frac having inplicit 1][guard bits]
   	o<<tab<< "fracYfar3 <= \"0\" & shiftedFracY("<<2*wF+3<<" downto "<<2*wF+4- (wF+4)+1<<") & sticky;"<<endl;	
 		
@@ -628,7 +604,7 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 			o<<tab<<"fracYfar3XorOp <= fracYfar3 xor ("<<wF+4<<" downto 0 => opSelector);"<<endl;
 			// perform carry in addition
 			o<<tab<< "int_adder_componentf1: " << intaddFar1->getOperatorName()<< endl;
-			o<<tab<< "  port map ( X => fracXfar3_d, " << endl; 
+			o<<tab<< "  port map ( X => fracXfar3, " << endl; 
 			o<<tab<< "             Y => fracYfar3XorOp_d, " << endl; 
 			o<<tab<< "             Cin => opSelector_d ," << endl;
 			o<<tab<< "             R => fracResultfar0, " << endl; 
@@ -638,11 +614,11 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 				
 		// if the second operand was shifted out of the operation, then the result of the operation becomes = to the first operand //		
 		o<<tab<< "fracResultfar0wSh <= fracResultfar0_d when "<< getDelaySignalName("shiftedOut",rightShifter->getPipelineDepth()+intaddFar1->getPipelineDepth()+2)<<"='0' else "
-		                            <<"(\"01\" & "<<getDelaySignalName("fracFX",rightShifter->getPipelineDepth()+intaddFar1->getPipelineDepth()+2)<<"&\"000\");"<<endl;
+		                            <<"(\"01\" & ("<<getDelaySignalName("pipeX",rightShifter->getPipelineDepth()+intaddFar1->getPipelineDepth()+2)<<"("<<wF-1<<" downto 0"<<"))&\"000\");"<<endl;
 		
 
 		// the result exponent before normalization and rounding is = to the exponent of the first operand //
-		o<<tab<<"exponentResultfar0<=\"0\" & "<<getDelaySignalName("expFX",rightShifter->getPipelineDepth()+intaddFar1->getPipelineDepth()+3)<<";"<<endl;
+		o<<tab<<"exponentResultfar0<=\"0\" & ("<<getDelaySignalName("pipeX",rightShifter->getPipelineDepth()+intaddFar1->getPipelineDepth()+3)<<"("<<wF+wE-1<<" downto "<<wF<<"));"<<endl;
 		
 		
 		//perform NORMALIZATION and recalculation of the sticky bit 
