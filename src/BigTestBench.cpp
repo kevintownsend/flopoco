@@ -42,6 +42,7 @@ int inline round4(int x)
 BigTestBench::BigTestBench(Target* target, Operator* op, int n):
 	Operator(target), op_(op), n_(n)
 {
+	setOperatorName();
 	setPipelineDepth(42);	// could be any number
 
 	// declare internal registered signals
