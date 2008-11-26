@@ -156,33 +156,33 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 		
 		addSignal("signedExponentX",wE+1);
 		addSignal("signedExponentY",wE+1);
-		addSignal("invSignedExponentY",wE+1);
+		//		addSignal("invSignedExponentY",wE+1);
 				
 		addRegisteredSignalWithoutReset("exceptionXSuperiorY",1);
 		addRegisteredSignalWithoutReset("exceptionXEqualY",1);
 		
-		addDelaySignal("exponentDifference0",wE+1,1);
+		addDelaySignal("exponentDifferenceXY",wE+1,1);
+		addSignal("exponentDifferenceYX",wE);
 		
 		addDelaySignal("swap",1,1);
-		addDelaySignal("extendSwap",wE,1);
 		
-		addSignal("exponentDifference1",wER); 
-		addSignal("exponentDifference",wER);  
+		addDelaySignal("exponentDifference0",wE,1); 
+		addSignal("exponentDifference1",wE);  
+
+		addDelaySignal("EffSub0",1,1);
 			
 		addDelaySignal("newX",wE+wF+3, 1);
 		addDelaySignal("newY",wE+wF+3, 1);
 							
-		addSignal("sdX",wE+wF+3);
 		addSignal("sdY",wE+wF+3);
-		addSignal("sdSignAB",1);
+		addDelaySignal("sdClose0",1,1);
 		addSignal("sdClose",1);
 		addSignal("sdExponentDifference",wE);
 		
-		
 		//close path
-		addDelaySignal("cClose",1,intaddClose1->getPipelineDepth() + intaddClose2->getPipelineDepth()+2);
+		//		addDelaySignal("cClose",1,intaddClose1->getPipelineDepth() + intaddClose2->getPipelineDepth()+2);
 		addDelaySignal("cX",wE+wF+3,intaddClose1->getPipelineDepth() + intaddClose2->getPipelineDepth());
-		addSignal("cY",wE+wF+3);
+		//addSignal("cY",wE+wF+3);
 		addSignal("cExponentDifference",wE);
 		
 		addDelaySignal("expXClose",wE, intaddClose1->getPipelineDepth() + intaddClose2->getPipelineDepth() + 3 + lzocs->getPipelineDepth() ); 
@@ -222,9 +222,8 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 		addDelaySignal("expFX",wE,rightShifter->getPipelineDepth() + intaddFar1->getPipelineDepth()+3);
 		
 		
-		addSignal("fY",wE+wF+3);
+		//		addSignal("fY",wE+wF+3);
 		addSignal("fExponentDifference",wE);
-		addDelaySignal("fSignAB",1,rightShifter->getPipelineDepth());
 		
 		addDelaySignal("shiftedOut",1, rightShifter->getPipelineDepth() + intaddFar1->getPipelineDepth() +2);
 		
@@ -233,7 +232,7 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 		addSignal("fracNewY",wF+1);
 		addSignal("shiftedFracY", 2*wF + 4);
 		
-		addSignal("stiky",1);
+		addSignal("sticky",1);
 		
 		addDelaySignal("fracXfar3",wF+5,2); //XXX
 		addSignal("fracYfar3",wF+5);
@@ -263,15 +262,15 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 		
 		addDelaySignal("pipeClose",1, maxPathDepth);
 		addSignal("syncClose",1);
-		
+				
 		addSignal("eTest",2);
 		addSignal("sdxXY",4);
 		
 		addDelaySignal("pipeXAB",4,maxPathDepth);
 		addDelaySignal("syncXAB",4,2);
 		
-		addDelaySignal("pipeSignAB",1,maxPathDepth);
-		addDelaySignal("syncSignAB",1,2);
+		addDelaySignal("EffSub",1,maxPathDepth);
+		addDelaySignal("syncEffSub",1,2);
 
 		addDelaySignal("pipeX",3+wE+wF,maxPathDepth);
 		addDelaySignal("syncX",3+wE+wF,2);
@@ -328,7 +327,7 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 		addSignal("zeroExtendedSwap",wER);
 		addSignal("newX",wEX+wFX+3);
 		addSignal("newY",wEX+wFX+3);
-		addSignal("signAB",1);
+		addSignal("EffSub",1);
 		addSignal("close",1);		
 		addSignal("fracXClose1",wFX+3);
 		addSignal("fracYClose1",wFX+3);
@@ -365,7 +364,7 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 		addSignal("fractionResultCloseC",1+wF);
 		addSignal("exponentResultCloseC",wE+2);
 		addSignal("shiftedOut",1);
-		addSignal("stiky",1);
+		addSignal("sticky",1);
 		addSignal("borrow",1);
 		addSignal("roundClose",1);
 	}
@@ -439,43 +438,36 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 		// pad exponents with sign bit
 		o<<tab<<"signedExponentX <= \"0\" & X("<<wEX+wFX-1<<" downto "<<wFX<<");"<<endl;
 		o<<tab<<"signedExponentY <= \"0\" & Y("<<wEX+wFX-1<<" downto "<<wFX<<");"<<endl;
-		// make not(expY)
-		o<<tab<<"invSignedExponentY <= not(signedExponentY);"<<endl;
-		// perform addition with carry in
-		o<<tab<<"exponentDifference0 <= signedExponentX + invSignedExponentY + '1';"<<endl;
-		
+		o<<tab<<"exponentDifferenceXY <= signedExponentX - SignedExponentY ;"<<endl;
+		o<<tab<<"ExponentDifferenceYX <= SignedExponentY("<<wE-1<<" downto 0) - SignedExponentX("<<wE-1<<" downto 0);"<<endl;
+
 		// SWAP when: [excX=excY and expY>expX] or [excY>excX]
-		o<<tab<<"swap <= (exceptionXEqualY and exponentDifference0("<<wE<<")) or (not(exceptionXSuperiorY));"<<endl;
+		o<<tab<<"swap <= (exceptionXEqualY and exponentDifferenceXY("<<wE<<")) or (not(exceptionXSuperiorY));"<<endl;
 
 		// depending on the value of swap, assign the corresponding values to the newX and newY signals 
-		o<<tab<<"newX <= Y when swap = '1' else"<<endl;
-		o<<tab<<"        X;"                    <<endl;   
-		o<<tab<<"newY <= X when swap = '1' else"<<endl;
-		o<<tab<<"        Y;"                    <<endl;
+		o<<tab<<"newX <= Y when swap = '1' else X;"<<endl;
+		o<<tab<<"newY <= X when swap = '1' else Y;"<<endl;
+		o<<tab<<"exponentDifference0 <= exponentDifferenceYX when swap = '1' else exponentDifferenceXY("<<wE-1<<" downto 0);"<<endl;
+		o<<tab<<"exponentDifference1 <= exponentDifference0_d;"<<endl;
 
-		// readjust for the exponents difference after the potential swap
-		// sign extend swap to the size of the exponent
-		o<<tab<<"extendSwap <= ("<<wE-1<<" downto "<<0<<" => swap);"<<endl;
-		// compute NewExponentDifference = (OldExponentDifference xor extendedSWAP) + swap.
-		o<<tab<<"exponentDifference1 <= exponentDifference0_d("<<wE-1<<" downto "<<0<<") xor extendSwap_d;"<<endl;
-		o<<tab<<"exponentDifference <= exponentDifference1 + swap_d;"<<endl;
 
-		// compute sdSignAB as (signA xor signB)
-		o<<tab<<"sdSignAB <= newX_d("<<wEX+wFX<<") xor newY_d("<<wEY+wFY<<");"<<endl;
+		// compute sdEffSub as (signA xor signB) at cycle 1
+		o<<tab<<"EffSub0 <= X("<<wEX+wFX<<") xor Y("<<wEY+wFY<<");"<<endl;
+		o<<tab<<"EffSub <= EffSub0_d;"<<endl;
 		
-		// check if we are found on the CLOSE or the FAR path 
+		// select the CLOSE or the FAR path 
 		// the close path is considered only when (signA!=signB) and |exponentDifference|<=1 
-		o<<tab<<"sdClose  <= sdSignAB when exponentDifference("<<wER-1<<" downto "<<1<<") = ("<<wER-1<<" downto "<<1<<" => '0') else"<<endl;
-		o<<tab<<"           '0';"<<endl;
+		o<<tab<<"sdClose0  <= EffSub0 when exponentDifference0("<<wER-1<<" downto "<<1<<") = ("<<wER-1<<" downto "<<1<<" => '0') else '0';"<<endl;
 		
 		// assign interface signals
-		o<<tab<<"sdX <= newX_d;"<<endl;
+		o<<tab<<"pipeX <= newX_d;"<<endl;
 		o<<tab<<"sdY <= newY_d;"<<endl;
-		o<<tab<<"sdExponentDifference <= exponentDifference;"<<endl;
+
+		o<<tab<<"sdExponentDifference <= exponentDifference1;"<<endl;
 		// sdxXY is a concatenation of the exception bits of X and Y
 		o<<tab<<"sdxXY <= newX_d("<<wE+wF+2<<" downto "<<wE+wF+1<<") & newY_d("<<wE+wF+2<<" downto "<<wE+wF+1<<");"<<endl;
 		o<<tab<<"sdSignY <= newY_d("<<wE+wF<<");"<<endl;
-
+		o<<tab<<"sdClose  <= sdClose0_d;"<<endl;
 		// swapDifferencePipelineDepth = 1; ==for now, this section has a constant depth of 1.         
 
 		//=========================================================================|
@@ -484,11 +476,11 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 		
 		o<<"-- Close Path --"<<endl;
 		// input interface signal assignment
-		o<<tab<<"cX <= sdX;"<<endl;
-		o<<tab<<"cY <= sdY;"<<endl;
+		o<<tab<<"cX <= pipeX;"<<endl;
+		//o<<tab<<"cY <= sdY;"<<endl;
 		o<<tab<<"expXClose <= cX("<<wE+wF-1<<" downto "<<wF<<");"<<endl;
 		o<<tab<<"cExponentDifference <= sdExponentDifference;"<<endl;
-		o<<tab<<"cClose <= sdClose;"<<endl;	
+		//o<<tab<<"cClose <= sdClose;"<<endl;	
 		
 		// build the fraction signals
 			// padding: [sign bit][inplicit "1"][fracX][guard bit]
@@ -496,8 +488,8 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 			// the close path is considered when the |exponentDifference|<=1, so 
 			// the alignment of fracY is of at most 1 position
 			o<<tab<<"with cExponentDifference(0) select"<<endl;
-			o<<tab<<"fracYClose1 <=  \"01\" & cY("<<wF-1<<" downto "<<0<<") & '0' when '0',"<<endl;
-			o<<tab<<"               \"001\" & cY("<<wF-1<<" downto "<<0<<")       when others;"<<endl;
+			o<<tab<<"fracYClose1 <=  \"01\" & sdY("<<wF-1<<" downto "<<0<<") & '0' when '0',"<<endl;
+			o<<tab<<"               \"001\" & sdY("<<wF-1<<" downto "<<0<<")       when others;"<<endl;
 
 		// substract the fraction signals for the close path; 
 		// substraction fX - fY = fX + not(fY)+1
@@ -529,14 +521,12 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 			o<<tab<< "             rst => rst " << endl;
 			o<<tab<< "               );" << endl<<endl;
 		
-		ostringstream cCloseSNPostPipeline;
-		ostringstream cXSNPostPipeline;
 		
-		cCloseSNPostPipeline << getDelaySignalName("cClose",intaddClose1->getPipelineDepth()+intaddClose2->getPipelineDepth()+2);
-		cXSNPostPipeline << getDelaySignalName("pipeX",intaddClose1->getPipelineDepth()+intaddClose2->getPipelineDepth()+2);
+		string cCloseSNPostPipeline = getDelaySignalName("pipeClose",intaddClose1->getPipelineDepth()+intaddClose2->getPipelineDepth()+2);
+		string cXSNPostPipeline = getDelaySignalName("pipeX",intaddClose1->getPipelineDepth()+intaddClose2->getPipelineDepth()+2);
 				
-		o << tab << "crs <= '0' when "<<cCloseSNPostPipeline.str()<<"='1' and fracRClose1 = ("<<wF+1<<" downto 0 => '0') else"<<endl;
-    o << tab << "          "<<cXSNPostPipeline.str()<<"("<<wE+wF<<") xor ("<<cCloseSNPostPipeline.str()<<" and "
+		o << tab << "crs <= '0' when "<<cCloseSNPostPipeline<<"='1' and fracRClose1 = ("<<wF+1<<" downto 0 => '0') else"<<endl;
+    o << tab << "          "<<cXSNPostPipeline<<"("<<wE+wF<<") xor ("<<cCloseSNPostPipeline<<" and "
 		                        <<getDelaySignalName("fracRClose0",intaddClose2->getPipelineDepth()+2)<<"("<<wF+2<<"));"<<endl;
 		
 			
@@ -586,12 +576,11 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 		o<<"-- Far Path --"<<endl;
 		
 		//input interface signals
-		o<<tab<<"fX <= sdX;"<<endl;
+		o<<tab<<"fX <= pipeX;"<<endl;
 		o<<tab<<"fracFX<=fX("<<wF-1<<" downto 0"<<");"<<endl;
 		o<<tab<<"expFX<=fX("<<wF+wE-1<<" downto "<<wF<<");"<<endl;
-		o<<tab<<"fY <= sdY;"<<endl;
+		//o<<tab<<"fY <= sdY;"<<endl;
 		o<<tab<<"fExponentDifference <= sdExponentDifference;"<<endl;
-		o<<tab<<"fSignAB <= sdSignAB;"<<endl;
 		
 		// determine if the fractional part of Y was shifted out of the opperation //
 		if (wE-1>sizeRightShift){
@@ -607,7 +596,7 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 			o<<tab<<" shiftedOut <= '0';"<<endl; 
 						
 		//add inplicit 1 for frac1. Fêter la fin de l'année Universitaire
- 		o<<tab<< "fracNewY <= '1' & fY("<<wF-1<<" downto 0);"<<endl;
+ 		o<<tab<< "fracNewY <= '1' & sdY("<<wF-1<<" downto 0);"<<endl;
 		
 		//selectioSignal=the number of positions that fracY must be shifted to the right				
 		if (wE-1>=sizeRightShift)
@@ -625,18 +614,18 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 		o<<tab<< "                 rst => rst " << endl;
 		o<<tab<< "               );" << endl<<endl;		
 			
-		// compute stiky bit as the or of the shifted out bits during the alignment //
-		o<<tab<< "stiky<= '0' when (shiftedFracY("<<wF<<" downto 0)=CONV_STD_LOGIC_VECTOR(0,"<<wF<<")) else '1';"<<endl;
+		// compute sticky bit as the or of the shifted out bits during the alignment //
+		o<<tab<< "sticky<= '0' when (shiftedFracY("<<wF<<" downto 0)=CONV_STD_LOGIC_VECTOR(0,"<<wF<<")) else '1';"<<endl;
 						
 		//pad fraction of X [sign][inplicit 1][fracX][guard bits]				
 		o<<tab<< "fracXfar3 <= \"01\" & "<<getDelaySignalName("fracFX",rightShifter->getPipelineDepth())<<" & \"000\";"<<endl;
   	//pad fraction of Y [sign][shifted frac having inplicit 1][guard bits]
-  	o<<tab<< "fracYfar3 <= \"0\" & shiftedFracY("<<2*wF+3<<" downto "<<2*wF+4- (wF+4)+1<<") & stiky;"<<endl;	
+  	o<<tab<< "fracYfar3 <= \"0\" & shiftedFracY("<<2*wF+3<<" downto "<<2*wF+4- (wF+4)+1<<") & sticky;"<<endl;	
 		
 		// depending on the signs of the operands, perform addition or substraction			
 		// the result will be: a + (b xor operation) + operation, where operation=0=addition and operation=1=substraction
 			// the operation selector is the xor between the signs of the operands
-			o<<tab<<"opSelector <= "<<getDelaySignalName("fSignAB",rightShifter->getPipelineDepth())<<";"<<endl;
+			o<<tab<<"opSelector <= "<<getDelaySignalName("EffSub",rightShifter->getPipelineDepth())<<";"<<endl;
 			// perform xor 
 			o<<tab<<"fracYfar3XorOp <= fracYfar3 xor ("<<wF+4<<" downto 0 => opSelector);"<<endl;
 			// perform carry in addition
@@ -658,7 +647,7 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 		o<<tab<<"exponentResultfar0<=\"0\" & "<<getDelaySignalName("expFX",rightShifter->getPipelineDepth()+intaddFar1->getPipelineDepth()+3)<<";"<<endl;
 		
 		
-		//perform NORMALIZATION and recalculation of the stiky bit 
+		//perform NORMALIZATION and recalculation of the sticky bit 
 		//delay the possible exponent adjustment until the rounding phase
 	  o<<tab<<"fracResultfar1<=fracResultfar0wSh("<<wF+3<<" downto 2) & "
 	  											<<"(fracResultfar0wSh(1) or fracResultfar0wSh(0)) when fracResultfar0wSh("<<wF+4<<" downto "<<wF+3<<") = \"01\" else"<<endl;
@@ -725,11 +714,9 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 		o<<tab<<"syncXAB <= "<<getDelaySignalName("pipeXAB",maxPathDepth)<<";"<<endl;
 				
 		//sign bit
-		o<<tab<<"pipeSignAB <= sdSignAB;"<<endl;
-		o<<tab<<"syncSignAB <= "<<getDelaySignalName("pipeSignAB",maxPathDepth)<<";"<<endl;
+		o<<tab<<"syncEffSub <= "<<getDelaySignalName("EffSub",maxPathDepth)<<";"<<endl;
 				
 		//X
-		o<<tab<<"pipeX <= sdX ;"<<endl;
 		o<<tab<<"syncX <= "<<getDelaySignalName("pipeX",maxPathDepth)<<";"<<endl;
 		
 		//signY
@@ -804,7 +791,7 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 	 
 	  o<<tab<< "with syncXAB_d select"<<endl;
 	  o<<tab<< "  nnR("<<wE+wF+2<<" downto "<<wE+wF+1<<") <= nRn_d("<<wE+wF+2<<" downto "<<wE+wF+1<<") when \"0101\","<<endl;
-	  o<<tab<< "                                 \"1\" & syncSignAB_d              when \"1010\","<<endl;
+	  o<<tab<< "                                 \"1\" & syncEffSub_d              when \"1010\","<<endl;
 	  o<<tab<< "                                 \"11\"            		           when \"1011\","<<endl;
 	  o<<tab<< "                                 syncXAB_d(3 downto 2)             when others;"<<endl;
 	  o<<tab<< "with syncXAB_d select"<<endl;
@@ -876,9 +863,9 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 		//CLOSE PATH
 				
 		/* check if we are found on the CLOSE or the FAR path */
-		/* compute signAB as signA xor signB. The close path is considered only when signA!=signB */
-		o<<tab<<"signAB <= X("<<wEX+wFX<<") xor Y("<<wEY+wFY<<");"<<endl;
-		o<<tab<<"close  <= signAB when exponentDifference("<<wER-1<<" downto "<<1<<") = ("<<wER-1<<" downto "<<1<<" => '0') else"<<endl;
+		/* compute EffSub as signA xor signB. The close path is considered only when signA!=signB */
+		o<<tab<<"EffSub <= X("<<wEX+wFX<<") xor Y("<<wEY+wFY<<");"<<endl;
+		o<<tab<<"close  <= EffSub when exponentDifference("<<wER-1<<" downto "<<1<<") = ("<<wER-1<<" downto "<<1<<" => '0') else"<<endl;
 		o<<tab<<"          '0';"<<endl;
 
 		/* build the fraction signals */
@@ -955,15 +942,15 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 		o<<tab<<" shiftedOut <= '0'"; 
 		
 		
-		/* compute stiky bit as the or of the shifted out bits during the alignment */
-		o<<tab<< " stiky<= '0' when (shiftedFracY("<<wF<<" downto 0)=CONV_STD_LOGIC_VECTOR(0,"<<wF<<")) else '1';"<<endl;
-		o<<tab<< " borrow <= stiky and signAB;"<<endl;//in the case of substraction and when the shifted out bits contain a 1, borrow:=1
+		/* compute sticky bit as the or of the shifted out bits during the alignment */
+		o<<tab<< " sticky<= '0' when (shiftedFracY("<<wF<<" downto 0)=CONV_STD_LOGIC_VECTOR(0,"<<wF<<")) else '1';"<<endl;
+		o<<tab<< " borrow <= sticky and EffSub;"<<endl;//in the case of substraction and when the shifted out bits contain a 1, borrow:=1
 				
 		o<<tab<< "fracXfar3 <= \"01\" & newX("<<wF-1<<" downto 0) & \"0\" & \"0\" & \"0\";"<<endl;
-  	o<<tab<< "fracYfar3 <= \"0\" & shiftedFracY("<<2*wF+3<<" downto "<<2*wF+4- (wF+4)+1<<") & stiky;"<<endl;	
+  	o<<tab<< "fracYfar3 <= \"0\" & shiftedFracY("<<2*wF+3<<" downto "<<2*wF+4- (wF+4)+1<<") & sticky;"<<endl;	
 		
 		/* depending on the sign, perform addition or substraction */			
-		o<<tab<< "with signAB select"<<endl;
+		o<<tab<< "with EffSub select"<<endl;
     o<<tab<< "fracResultfar0 <= fracXfar3 - fracYfar3 when '1',"<<endl;
     o<<tab<< "        					fracXfar3 + fracYfar3 when others;"<<endl;
 		
@@ -972,7 +959,7 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 		/* the result exponent before normalization and rounding is = to the exponent of the first operand */
 		o<<tab<< "exponentResultfar0 <= \"0\" & newX("<<wE+wF-1<<" downto "<<wF<<");"<<endl;
 		
-		/*perform normalization and recalculation of the stiky bit */
+		/*perform normalization and recalculation of the sticky bit */
 	  o<<tab<<"fracResultfar1<=fracResultfar0wSh("<<wF+3<<" downto 2) & "
 	  											<<"(fracResultfar0wSh(1) or fracResultfar0wSh(0)) when fracResultfar0wSh("<<wF+4<<" downto "<<wF+3<<") = \"01\" else"<<endl;
     o<<tab<< "    					 fracResultfar0wSh("<<wF+2<<" downto 0) 	 when fracResultfar0wSh("<<wF+4<<" downto "<<wF+3<<") = \"00\" else"<<endl;
@@ -1013,7 +1000,7 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
   
 	  o<<tab<< "with xAB select"<<endl;
 	  o<<tab<< "  nnR("<<wE+wF+2<<" downto "<<wE+wF+1<<") <= nRn("<<wE+wF+2<<" downto "<<wE+wF+1<<") when \"0101\","<<endl;
-	  o<<tab<< "                                 \"1\" & signAB              when \"1010\","<<endl;
+	  o<<tab<< "                                 \"1\" & EffSub              when \"1010\","<<endl;
 	  o<<tab<< "                                 \"11\"                      when \"1011\","<<endl;
 	  o<<tab<< "                                 xAB(3 downto 2)             when others;"<<endl;
 	  o<<tab<< "with xAB select"<<endl;
