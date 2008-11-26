@@ -50,7 +50,7 @@ LNSAddSub::~LNSAddSub()
 
 void LNSAddSub::setOperatorName(){
 	ostringstream name;
-	/* The name has the format: FPAdder_wE_wF where: 
+	/* The name has the format: LNSAddSub_wE_wF where: 
 	   wE = width of the integral part of the exponent
 	   wF = width of the fractional part of the exponent */
 	name << "LNSAddSub_" << wE << "_" << wF; 
@@ -64,7 +64,7 @@ void LNSAddSub::outputVHDL(std::ostream& o, std::string name)
 	// Translated back from VHDL...
 	int DBMaxInput = (int)rint(double(1 << wF) * log((1.0 - (pow(2.0, (-pow(2.0, -wF)))))) / log(2.));;
 
-	licence(o,"Sylvain Collange (2008)");
+	licence(o,"Jérémie Detrey, Florent de Dinechin (2003-2004), Sylvain Collange (2008)");
 	o << 
 	"library ieee;\n"
 	"use ieee.std_logic_1164.all;\n"
@@ -175,6 +175,6 @@ void LNSAddSub::outputVHDL(std::ostream& o, std::string name)
 	<< tab << "								nA_r(wE+wF-1 downto 0)	when \"0100\",\n"
 	<< tab << "								nB_r(wE+wF-1 downto 0)	when others;\n"
 	<< tab << "\n"
-	<< tab << "end architecture;\n";
+	<< "end architecture;\n";
 
 }

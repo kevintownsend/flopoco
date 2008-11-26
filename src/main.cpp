@@ -62,6 +62,9 @@
 #include "LNS/CotranTables.hpp"
 #include "LNS/Cotran.hpp"
 #include "LNS/CotranHybrid.hpp"
+#include "LNS/LNSMul.hpp"
+#include "LNS/LNSDiv.hpp"
+#include "LNS/LNSSqrt.hpp"
 #endif
 
 using namespace std;
@@ -133,6 +136,12 @@ static void usage(char *name){
 #ifdef HAVE_LNS
 	cerr << "    LNSAddSub wE wF\n";
 	cerr << "      Addition in Logarithmic Number System.\n";
+	cerr << "    LNSMul wE wF\n";
+	cerr << "      LNS multiplication.\n";
+	cerr << "    LNSDiv wE wF\n";
+	cerr << "      LNS division.\n";
+	cerr << "    LNSSqrt wE wF\n";
+	cerr << "      LNS square root.\n";
 #endif // HAVE_LNS
 	cerr << "    TestBench n\n";
 	cerr << "       Behavorial test bench for the preceding operator\n";
@@ -606,6 +615,42 @@ bool parseCommandLine(int argc, char* argv[]){
 			int wF = checkStrictyPositive(argv[i++], argv[0]);
 			cerr << "> LNSAddSub: wE=" << wE << " wF=" << wF << endl;
 			op = new LNSAddSub(target, wE, wF);
+			if(cl_name!="")	op->setOperatorName(cl_name);
+			addOperator(op);
+		}
+		else if (opname == "LNSMul")
+		{
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0]); // and exit
+			int wE = atoi(argv[i++]);	// can be null or negative
+			int wF = checkStrictyPositive(argv[i++], argv[0]);
+			cerr << "> LNSMul: wE=" << wE << " wF=" << wF << endl;
+			op = new LNSMul(target, wE, wF);
+			if(cl_name!="")	op->setOperatorName(cl_name);
+			addOperator(op);
+		}
+		else if (opname == "LNSDiv")
+		{
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0]); // and exit
+			int wE = atoi(argv[i++]);	// can be null or negative
+			int wF = checkStrictyPositive(argv[i++], argv[0]);
+			cerr << "> LNSDiv: wE=" << wE << " wF=" << wF << endl;
+			op = new LNSDiv(target, wE, wF);
+			if(cl_name!="")	op->setOperatorName(cl_name);
+			addOperator(op);
+		}
+		else if (opname == "LNSSqrt")
+		{
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0]); // and exit
+			int wE = atoi(argv[i++]);	// can be null or negative
+			int wF = checkStrictyPositive(argv[i++], argv[0]);
+			cerr << "> LNSSqrt: wE=" << wE << " wF=" << wF << endl;
+			op = new LNSSqrt(target, wE, wF);
 			if(cl_name!="")	op->setOperatorName(cl_name);
 			addOperator(op);
 		}
