@@ -81,6 +81,7 @@ IF (HOTBM_LIB)
 		src/LNS/Cotran
 		src/LNS/CotranHybrid
 		src/LNS/CotranTables
+		src/LNS/LNSAddSub
 	)
 	TARGET_LINK_LIBRARIES(lns ${HOTBM_LIB})
 	SET(LNS_LIB lns)

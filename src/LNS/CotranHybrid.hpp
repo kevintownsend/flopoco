@@ -17,6 +17,8 @@ struct CotranHybrid : Operator
 
 	//virtual TestIOMap getTestIOMap();
 	//virtual void fillTestCase(mpz_class a[]);
+	
+	int getJ();
 
 private:
 	HOTBM * gen_db_table(int i, int order);

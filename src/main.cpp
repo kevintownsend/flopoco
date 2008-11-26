@@ -56,7 +56,13 @@
 #ifdef HAVE_HOTBM
 #include "HOTBM.hpp"
 #endif
-
+#ifdef HAVE_LNS
+#include "LNS/LNSAddSub.hpp"
+#include "LNS/LNSAdd.hpp"
+#include "LNS/CotranTables.hpp"
+#include "LNS/Cotran.hpp"
+#include "LNS/CotranHybrid.hpp"
+#endif
 
 using namespace std;
 
@@ -124,6 +130,10 @@ static void usage(char *name){
 	cerr << "      xmin xmax - bounds of the input range, mapped to [0,1[\n";
 	cerr << "      scale - scaling factor to apply to the function output\n";
 #endif // HAVE_HOTBM
+#ifdef HAVE_LNS
+	cerr << "    LNSAddSub wE wF\n";
+	cerr << "      Addition in Logarithmic Number System.\n";
+#endif // HAVE_LNS
 	cerr << "    TestBench n\n";
 	cerr << "       Behavorial test bench for the preceding operator\n";
 	cerr << "       This test bench will include standard tests, plus n random tests.\n";
@@ -586,6 +596,104 @@ bool parseCommandLine(int argc, char* argv[]){
 			op = new FPLog(target, wE, wF);
 			addOperator(op);
 		}
+#ifdef HAVE_LNS
+		else if (opname == "LNSAddSub")
+		{
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0]); // and exit
+			int wE = atoi(argv[i++]);	// can be null or negative
+			int wF = checkStrictyPositive(argv[i++], argv[0]);
+			cerr << "> LNSAddSub: wE=" << wE << " wF=" << wF << endl;
+			op = new LNSAddSub(target, wE, wF);
+			if(cl_name!="")	op->setOperatorName(cl_name);
+			addOperator(op);
+		}
+		
+		// Undocumented LNS operators, for debugging purposes
+		else if (opname == "LNSAdd")
+		{
+			int nargs = 3;
+			if (i+nargs > argc)
+				usage(argv[0]); // and exit
+			int wE = atoi(argv[i++]);	// can be null or negative
+			int wF = checkStrictyPositive(argv[i++], argv[0]);
+			int o = checkStrictyPositive(argv[i++], argv[0]);
+			cerr << "> LNSAdd: wE=" << wE << " wF=" << wF << " o=" << o << endl;
+			op = new LNSAdd(target, wE, wF, o);
+			if(cl_name!="")	op->setOperatorName(cl_name);
+			oplist.push_back(op);
+		}
+		else if (opname == "CotranF1")
+		{
+			int nargs = 3;
+			if (i+nargs > argc)
+				usage(argv[0]); // and exit
+			int wF = checkStrictyPositive(argv[i++], argv[0]);
+			int j = checkStrictyPositive(argv[i++], argv[0]);
+			int wE = atoi(argv[i++]);
+			cerr << "> CotranF1: wF=" << wF << " j=" << j << " wE=" << wE << endl;
+			op = new TableOp(target, new CotranF1Table(wF, j, wE));
+			if(cl_name!="")	op->setOperatorName(cl_name);
+			oplist.push_back(op);
+		}
+		else if (opname == "CotranF2")
+		{
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0]); // and exit
+			int wF = checkStrictyPositive(argv[i++], argv[0]);
+			int j = checkStrictyPositive(argv[i++], argv[0]);
+			cerr << "> CotranF2: wF=" << wF << " j=" << j << endl;
+			op = new TableOp(target, new CotranF2Table(wF, j));
+			if(cl_name!="")	op->setOperatorName(cl_name);
+			oplist.push_back(op);
+		}
+		else if (opname == "CotranF3")
+		{
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0]); // and exit
+			int wF = checkStrictyPositive(argv[i++], argv[0]);
+			int j = checkStrictyPositive(argv[i++], argv[0]);
+			cerr << "> CotranF3: wF=" << wF << " j=" << j << endl;
+			op = new TableOp(target, new CotranF3Table(wF, j));
+			if(cl_name!="")	op->setOperatorName(cl_name);
+			oplist.push_back(op);
+		}
+		else if (opname == "Cotran")
+		{
+			int nargs = 4;
+			if (i+nargs > argc)
+				usage(argv[0]); // and exit
+			int wE = atoi(argv[i++]);	// can be null or negative
+			int wF = checkStrictyPositive(argv[i++], argv[0]);
+			int j = checkStrictyPositive(argv[i++], argv[0]);
+			int wECotran = atoi(argv[i++]);
+			int o = atoi(argv[i++]);
+			cerr << "> Cotran: wE=" << wE << " wF=" << wF << " j=" << j
+				<< " wECotran=" << wECotran << " o=" << o << endl;
+			op = new Cotran(target, wE, wF, j, wECotran);
+			if(cl_name!="")	op->setOperatorName(cl_name);
+			oplist.push_back(op);
+		}
+		else if (opname == "CotranHybrid")
+		{
+			int nargs = 4;
+			if (i+nargs > argc)
+				usage(argv[0]); // and exit
+			int wE = atoi(argv[i++]);	// can be null or negative
+			int wF = checkStrictyPositive(argv[i++], argv[0]);
+			int j = checkStrictyPositive(argv[i++], argv[0]);
+			int wECotran = atoi(argv[i++]);
+			int o = atoi(argv[i++]);
+			cerr << "> Cotran: wE=" << wE << " wF=" << wF << " j=" << j 
+				<< " wECotran=" << wECotran << " o=" << o << endl;
+			op = new CotranHybrid(target, wE, wF, j, wECotran);
+			if(cl_name!="")	op->setOperatorName(cl_name);
+			oplist.push_back(op);
+		}
+#endif
 		else if (opname == "Wrapper") {
 			int nargs = 0;
 			if (i+nargs > argc)

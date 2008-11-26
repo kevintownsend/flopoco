@@ -1,4 +1,25 @@
-// Copyright blabla
+/*
+ * Helper table for LNS Cotransformation
+ *
+ * Author : Sylvain Collange
+ *
+ * This file is part of the FloPoCo project developed by the Arenaire
+ * team at Ecole Normale Superieure de Lyon
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or 
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
+*/
 
 #include "CotranTables.hpp"
 #include <cmath>
@@ -173,7 +194,7 @@ double CotranF3Table::SbArg(int z)
 {
 	// Direct translation from a Perl script from a few years ago.
 	// No more idea how it works, but supposed to work.
-	// BUG: not, it doesn't work!!!
+	// TODO: make sure it actually works
 	double zh = (floor((double)z / (1 << j))) * (1 << j) / (1 << wF);
 	double zl = (double)(z % (1 << j)) / (1 << wF);
 	double f1 = db2(-zh - dh);

@@ -1,4 +1,25 @@
-// Copyright blabla
+/*
+ * LNS Hybrid Cotransformation operator : evaluates log2(1+2^x) or log2(1-2^x)
+ *
+ * Author : Sylvain Collange
+ *
+ * This file is part of the FloPoCo project developed by the Arenaire
+ * team at Ecole Normale Superieure de Lyon
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or 
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
+*/
 
 #include "CotranHybrid.hpp"
 #include "../utils.hpp"
@@ -6,16 +27,16 @@
 #include "LNSAdd.hpp"
 
 using namespace std;
-extern vector<Operator*> oplist;	// ???
+extern vector<Operator*> oplist;
 
-CotranHybrid::CotranHybrid(Target * target, int wE, int wF, int j, int wECotran, int o) :
-	Operator(target), wE(wE), wF(wF), j(j), wECotran(wECotran)
+CotranHybrid::CotranHybrid(Target * target, int wE, int wF, int jl, int wECotranl, int o) :
+	Operator(target), wE(wE), wF(wF), j(jl), wECotran(wECotranl)
 {
-	if(j < 0)
-		select_j();
-	
 	if(wECotran < 0)
 		wECotran = wE;
+
+	if(j < 0)
+		select_j();
 	
 	ostringstream name;
 	name<<"Cotran_Hybrid_"<< wE <<"_"<< wF << "_" << j << "_" << wECotran << "_" << o;
@@ -55,6 +76,11 @@ CotranHybrid::~CotranHybrid()
 void CotranHybrid::select_j()
 {
 	j = (wF + wECotran) / 2;
+}
+
+int CotranHybrid::getJ()
+{
+	return j;
 }
 
 double db(double z)
