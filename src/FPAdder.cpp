@@ -161,54 +161,53 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 		addRegisteredSignalWithoutReset("exceptionXSuperiorY",1);
 		addRegisteredSignalWithoutReset("exceptionXEqualY",1);
 		
-		addDelaySignal("exponentDifferenceXY",wE+1,1);
+		addDelaySignalNoReset("exponentDifferenceXY",wE+1,1);
 		addSignal("exponentDifferenceYX",wE);
 		
-		addDelaySignal("swap",1,1);
+		addDelaySignalNoReset("swap",1,1);
 		
-		addDelaySignal("exponentDifference0",wE,1); 
+		addDelaySignalNoReset("exponentDifference0",wE,1); 
 		addSignal("exponentDifference1",wE);  
 
-		addDelaySignal("EffSub0",1,1);
+		addDelaySignalNoReset("EffSub0",1,1);
 			
-		addDelaySignal("newX",wE+wF+3, 1);
-		addDelaySignal("newY",wE+wF+3, 1);
+		addDelaySignalNoReset("newX",wE+wF+3, 1);
+		addDelaySignalNoReset("newY",wE+wF+3, 1);
 							
 		addSignal("sdY",wE+wF+3);
-		addDelaySignal("sdClose0",1,1);
 		addSignal("sdClose",1);
 		addSignal("sdExponentDifference",wE);
 		
 		//close path
-		//		addDelaySignal("cClose",1,intaddClose1->getPipelineDepth() + intaddClose2->getPipelineDepth()+2);
-		addDelaySignal("cX",wE+wF+3,intaddClose1->getPipelineDepth() + intaddClose2->getPipelineDepth());
+		//		addDelaySignalNoReset("cClose",1,intaddClose1->getPipelineDepth() + intaddClose2->getPipelineDepth()+2);
+		addDelaySignalNoReset("cX",wE+wF+3,intaddClose1->getPipelineDepth() + intaddClose2->getPipelineDepth());
 		//addSignal("cY",wE+wF+3);
 		addSignal("cExponentDifference",wE);
 		
-		addDelaySignal("expXClose",wE, intaddClose1->getPipelineDepth() + intaddClose2->getPipelineDepth() + 3 + lzocs->getPipelineDepth() ); 
+		addDelaySignalNoReset("expXClose",wE, intaddClose1->getPipelineDepth() + intaddClose2->getPipelineDepth() + 3 + lzocs->getPipelineDepth() ); 
 		
 		addSignal("fracXClose1",wF+3);
 		addSignal("fracYClose1",wF+3);
 		addSignal("InvFracYClose1",wFX+3);
-		addDelaySignal("fracRClose0",wF+3,intaddClose2->getPipelineDepth()+2);
+		addDelaySignalNoReset("fracRClose0",wF+3,intaddClose2->getPipelineDepth()+2);
 		
 		
-		addDelaySignal("fracSignClose",1,1);
-		addDelaySignal("fracRClose1xor", wF+2,1);
-		addDelaySignal("fracRClose1",wFX+2, lzocs->getPipelineDepth());
+		addDelaySignalNoReset("fracSignClose",1,1);
+		addDelaySignalNoReset("fracRClose1xor", wF+2,1);
+		addDelaySignalNoReset("fracRClose1",wFX+2, lzocs->getPipelineDepth());
 
 
-		addDelaySignal("crs",1,lzocs->getPipelineDepth() + intaddClose3->getPipelineDepth()+2);
-	//	addDelaySignal("exponentResultClose1",wEX+2,leadingZeroCounter->getPipelineDepth()+leftShifter->getPipelineDepth());
+		addDelaySignalNoReset("crs",1,lzocs->getPipelineDepth() + intaddClose3->getPipelineDepth()+2);
+	//	addDelaySignalNoReset("exponentResultClose1",wEX+2,leadingZeroCounter->getPipelineDepth()+leftShifter->getPipelineDepth());
 
-		addDelaySignal("nZerosNew",lzocs->getCountWidth(),lzocs->getPipelineDepth());
-		addDelaySignal("shiftedFrac",wFX+2,2);
+		addDelaySignalNoReset("nZerosNew",lzocs->getCountWidth(),lzocs->getPipelineDepth());
+		addDelaySignalNoReset("shiftedFrac",wFX+2,2);
 				
 		addSignal("exponentResultClose",wEX+2);
 		addSignal("exponentResultClose1",wEX);
 		addSignal("roundClose",1);
 		addSignal("exponentConcatFrac0",wE+wF+2);
-		addDelaySignal("exponentConcatFrac1",wE+wF+2,2);
+		addDelaySignalNoReset("exponentConcatFrac1",wE+wF+2,2);
 		
 		
 		addSignal("fractionResultCloseC",wF + 1);
@@ -217,15 +216,15 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 		
 		
 		//Far path
-		addDelaySignal("fX",wE+wF+3,rightShifter->getPipelineDepth() + intaddFar1->getPipelineDepth() );//CHECK XXX
-		addDelaySignal("fracFX",wF,rightShifter->getPipelineDepth() + intaddFar1->getPipelineDepth()+2);
-		addDelaySignal("expFX",wE,rightShifter->getPipelineDepth() + intaddFar1->getPipelineDepth()+3);
+		addDelaySignalNoReset("fX",wE+wF+3,rightShifter->getPipelineDepth() + intaddFar1->getPipelineDepth() );//CHECK XXX
+		addDelaySignalNoReset("fracFX",wF,rightShifter->getPipelineDepth() + intaddFar1->getPipelineDepth()+2);
+		addDelaySignalNoReset("expFX",wE,rightShifter->getPipelineDepth() + intaddFar1->getPipelineDepth()+3);
 		
 		
 		//		addSignal("fY",wE+wF+3);
 		addSignal("fExponentDifference",wE);
 		
-		addDelaySignal("shiftedOut",1, rightShifter->getPipelineDepth() + intaddFar1->getPipelineDepth() +2);
+		addDelaySignalNoReset("shiftedOut",1, rightShifter->getPipelineDepth() + intaddFar1->getPipelineDepth() +2);
 		
 		addSignal("selectionSignal",sizeRightShift);
 		
@@ -234,52 +233,52 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 		
 		addSignal("sticky",1);
 		
-		addDelaySignal("fracXfar3",wF+5,2); //XXX
+		addDelaySignalNoReset("fracXfar3",wF+5,2); //XXX
 		addSignal("fracYfar3",wF+5);
 		
-		addDelaySignal("opSelector",1,2);
-		addDelaySignal("fracYfar3XorOp",wF+5,2);
-		addDelaySignal("fracResultfar0",wF+5,2);
+		addDelaySignalNoReset("opSelector",1,2);
+		addDelaySignalNoReset("fracYfar3XorOp",wF+5,2);
+		addDelaySignalNoReset("fracResultfar0",wF+5,2);
 		
 		
 		addSignal("fracResultfar0wSh",wF+5);
 		addSignal("exponentResultfar0",wE+1);
 		
-		addDelaySignal("exponentResultfar1",wE+1,2);	
-		addDelaySignal("expOperationSel",2,2);
+		addDelaySignalNoReset("exponentResultfar1",wE+1,2);	
+		addDelaySignalNoReset("expOperationSel",2,2);
 		
 		
-		addDelaySignal("expSecOperand",wE+1,2);
+		addDelaySignalNoReset("expSecOperand",wE+1,2);
 		
-		addDelaySignal("fracResultfar1",wF+3,intaddFar2->getPipelineDepth()+2);
+		addDelaySignalNoReset("fracResultfar1",wF+3,intaddFar2->getPipelineDepth()+2);
 		addSignal("expConcatFrac",wE+1 + wF+1);
-		addDelaySignal("expConcatFracResult",wE+1 + wF+1,2);
-		addDelaySignal("round",1,intaddFar2->getPipelineDepth()+2);
+		addDelaySignalNoReset("expConcatFracResult",wE+1 + wF+1,2);
+		addDelaySignalNoReset("round",1,intaddFar2->getPipelineDepth()+2);
 		
 		
 		addSignal("exponentResultfar",wE+1);
 		addSignal("fractionResultfar",wF+1);
 		
-		addDelaySignal("pipeClose",1, maxPathDepth);
+		addDelaySignalNoReset("pipeClose",1, maxPathDepth);
 		addSignal("syncClose",1);
 				
 		addSignal("eTest",2);
 		addSignal("sdxXY",4);
 		
-		addDelaySignal("pipeXAB",4,maxPathDepth);
-		addDelaySignal("syncXAB",4,2);
+		addDelaySignalNoReset("pipeXAB",4,maxPathDepth);
+		addDelaySignalNoReset("syncXAB",4,2);
 		
-		addDelaySignal("EffSub",1,maxPathDepth);
-		addDelaySignal("syncEffSub",1,2);
+		addDelaySignalNoReset("EffSub",1,maxPathDepth);
+		addDelaySignalNoReset("syncEffSub",1,2);
 
-		addDelaySignal("pipeX",3+wE+wF,maxPathDepth);
-		addDelaySignal("syncX",3+wE+wF,2);
+		addDelaySignalNoReset("pipeX",3+wE+wF,maxPathDepth);
+		addDelaySignalNoReset("syncX",3+wE+wF,2);
 				
 		addSignal("sdSignY",1);
-		addDelaySignal("pipeSignY",1,maxPathDepth);
-		addDelaySignal("syncSignY",1,2);
+		addDelaySignalNoReset("pipeSignY",1,maxPathDepth);
+		addDelaySignalNoReset("syncSignY",1,2);
 		
-		addDelaySignal("nRn",wE+wF+3,2);
+		addDelaySignalNoReset("nRn",wE+wF+3,2);
 		addSignal("nnR",wE+wF+3);
 		addSignal("exponentResultn",wE+2);
 		addSignal("fractionResultn",wF+1);
@@ -294,8 +293,8 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 			
 		}else
 			if (closePathDepth > farPathDepth){
-				addDelaySignal("pipeExpResFar",wE+1,closePathDepth-farPathDepth);
-				addDelaySignal("pipeFracResFar",wF+1,closePathDepth-farPathDepth);
+				addDelaySignalNoReset("pipeExpResFar",wE+1,closePathDepth-farPathDepth);
+				addDelaySignalNoReset("pipeFracResFar",wF+1,closePathDepth-farPathDepth);
 						
 				addSignal("expResClose",wE+2);
 				addSignal("expResFar",wE+1);
@@ -303,9 +302,9 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 				addSignal("fracResFar",wF+1);
 				addSignal("syncRS",1);	
 			}else	{
-				addDelaySignal("pipeExpResClose",wE+2,farPathDepth-closePathDepth);
-				addDelaySignal("pipeFracResClose",wF+1,farPathDepth-closePathDepth);
-				addDelaySignal("pipeSyncRS",1,farPathDepth-closePathDepth);		
+				addDelaySignalNoReset("pipeExpResClose",wE+2,farPathDepth-closePathDepth);
+				addDelaySignalNoReset("pipeFracResClose",wF+1,farPathDepth-closePathDepth);
+				addDelaySignalNoReset("pipeSyncRS",1,farPathDepth-closePathDepth);		
 			
 				addSignal("expResClose",wE+2);
 				addSignal("expResFar",wE+1);
@@ -448,16 +447,15 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 		o<<tab<<"newX <= Y when swap = '1' else X;"<<endl;
 		o<<tab<<"newY <= X when swap = '1' else Y;"<<endl;
 		o<<tab<<"exponentDifference0 <= exponentDifferenceYX when swap = '1' else exponentDifferenceXY("<<wE-1<<" downto 0);"<<endl;
-		o<<tab<<"exponentDifference1 <= exponentDifference0_d;"<<endl;
 
 
-		// compute sdEffSub as (signA xor signB) at cycle 1
-		o<<tab<<"EffSub0 <= X("<<wEX+wFX<<") xor Y("<<wEY+wFY<<");"<<endl;
-		o<<tab<<"EffSub <= EffSub0_d;"<<endl;
+		// compute EffSub as (signA xor signB) at cycle 1
+		o<<tab<<"EffSub <= newX_d("<<wEX+wFX<<") xor newY_d("<<wEY+wFY<<");"<<endl;
 		
-		// select the CLOSE or the FAR path 
+		// compute the close/far path selection signal at cycle1 
 		// the close path is considered only when (signA!=signB) and |exponentDifference|<=1 
-		o<<tab<<"sdClose0  <= EffSub0 when exponentDifference0("<<wER-1<<" downto "<<1<<") = ("<<wER-1<<" downto "<<1<<" => '0') else '0';"<<endl;
+		o<<tab<<"exponentDifference1 <= exponentDifference0_d;"<<endl;
+		o<<tab<<"sdClose  <= EffSub when exponentDifference1("<<wER-1<<" downto "<<1<<") = ("<<wER-1<<" downto "<<1<<" => '0') else '0';"<<endl;
 		
 		// assign interface signals
 		o<<tab<<"pipeX <= newX_d;"<<endl;
@@ -467,7 +465,7 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 		// sdxXY is a concatenation of the exception bits of X and Y
 		o<<tab<<"sdxXY <= newX_d("<<wE+wF+2<<" downto "<<wE+wF+1<<") & newY_d("<<wE+wF+2<<" downto "<<wE+wF+1<<");"<<endl;
 		o<<tab<<"sdSignY <= newY_d("<<wE+wF<<");"<<endl;
-		o<<tab<<"sdClose  <= sdClose0_d;"<<endl;
+
 		// swapDifferencePipelineDepth = 1; ==for now, this section has a constant depth of 1.         
 
 		//=========================================================================|
