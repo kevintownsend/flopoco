@@ -132,7 +132,24 @@ respectively.</p>
 <p>The utilities <code>fp2bin</code> and <code>bin2fp</code> will allow
 you to get familiar with the format and set up test benches.</p>
 
+<h2>LNS format</h2>
 
+<p>Numbers in the Logarithm Number System used in FloPoCo have an encoding
+similar to the floating-point format, which is also the same as the one used in
+<a
+href="http://www.ens-lyon.fr/LIP/Arenaire/Ware/FPLibrary/">FPLibrary</a>.</p>
+
+<p>Its fields are:
+<dl>
+  <dt>A 2-bit exception field</dt>
+    <dd>Same encoding as floating-point: 00 for zero, 01 for the general case, 10 for infinities, and 11 for NaN</dd>
+  <dt>A sign bit</dt>
+    <dd>0 for positive, 1 for negative</dd>
+  <dt>The integral part of the exponent on wE bits</dt>
+  <dt>The fractional part of the exponent on wF bits</dt>
+    <dd>The fixed-point exponent is encoded in two's-complement.</dd>
+</dl>
+</p>
 
 
 <h2>Pipelining</h2>
@@ -294,22 +311,27 @@ High-Order Table-Based Method, best described in
 
 <dl>
 	<dt><code>HOTBM func wI wO degree</code></dt>
+	<dt><code>HOTBMFX func wE_in wF_in wE_out wF_out degree</code></dt>
 	<dt><code>HOTBMRange func wI wO degree xmin xmax scale</code></dt>
 	<dd>HOTBM implementation of a function. <code>func</code> is a
 	  sollya-like expression of the function, <code>wI</code> is the
 	  input width, <code>wO</code> is the output width and <code>degree</code>
 	  is the degree of the Remez polynomial.
+	  <code>wE_in</code>, <code>wF_in</code>, <code>wE_out</code>, <code>wF_out</code>
+	  are the width of the integral and fractional parts of the input and the output,
+	  respectively.
+	  [<code>xmin</code>, <code>xmax</code>] is the input domain of the
+	  function, and <code>scale</code> is a scaling factor to be applied to
+	  the output.
 	</dd>
 </dl>
 
-<p>For HOTBM The input operand is interpreted as a positive fixed-point number,
+<p>For HOTBM the input operand is interpreted as a positive fixed-point number,
 with the point before the leftmost bit. The function to be implemented
 is assumed to be well defined in [0;1[. The output is a fixed-point
 number, where the first bit is the sign and the point is placed right
 after it. Note that the output is in fact <code>wO+1</code> bits
 wide.</p>
-
-<p>HOTBMRange uses HOTBM after mapping [xmin,xmax[ to [0,1[,  applying the scaling factor scale to the output.</p>
 
 <p>Due to the fact that the expression of the function might contain
 characters which are treated specially by the shell, you should
@@ -319,13 +341,55 @@ enclose it within quotes.</p>
 <code>flopoco HOTBM "sin(x*Pi/2)" 16 16 3</code>
 </p>
 
+<p>The HOTBMFX version allows to select arbitrary fixed-point representations for the
+input and output. Negative values are allowed.</p>
+
+<p>Example:<br/>
+<code>flopoco HOTBMFX "log2(1+2^(-x))" 2 8 -1 8 1</code>
+</p>
+
+<p>HOTBMRange uses HOTBM after mapping [<code>xmin</code>,<code>xmax</code>[ to [0,1[, then multiplies the output by the scaling factor <code>scale</code>.</p>
+
 <p>Note that this launches an exploration process that typically takes a few minutes for 16 bits, and may take hours for 24 bits.</p>
 
 <p>HOTBM uses a polynomial approximation. It works well for functions
 which are regular enough (in mathematical terms, they should be
 defined and n-times continuously differentiable on the domain).<p>
 
+<h3>LNS</h3>
 
+<p>These operators compute in the Logarithmic Number System. They are mostly useful
+for low-precisions systems performing few additions and many multiplications, divisions
+or square roots.</p>
+
+<p>
+<dl>
+	<dt><code>LNSAddSub wE wF</code></dt>
+	<dd>
+		LNS addition operator. Both operands and the output have
+		<code>wE</code> integral bits and <code>wF</code> fractional
+		bits in their exponents.
+	</dd>
+	<dt><code>LNSMul wE wF</code></dt>
+	<dd>
+		LNS multiplication operator. Both operands and the output have
+		<code>wE</code> integral bits and <code>wF</code> fractional
+		bits in their exponents.
+	</dd>
+	<dt><code>LNSDiv wE wF</code></dt>
+	<dd>
+		LNS division operator. Both operands and the output have
+		<code>wE</code> integral bits and <code>wF</code> fractional
+		bits in their exponents.
+	</dd>
+	<dt><code>LNSSqrt wE wF</code></dt>
+	<dd>
+		LNS square root operator. Both input and output have
+		<code>wE</code> integral bits and <code>wF</code> fractional
+		bits in their exponents.
+	</dd>
+</dl>
+</p>
 
 <h3>Test Benches</h3>
 

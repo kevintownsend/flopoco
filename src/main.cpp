@@ -128,6 +128,9 @@ static void usage(char *name){
 	cerr << "      High-Order Table-Based Method for fixed-point functions (NPY)\n";
 	cerr << "      wI - input width, wO - output width, degree - degree of polynomial approx\n";
 	cerr << "      function - sollya-syntaxed function to implement, between double quotes\n";
+	cerr << "    HOTBMFX function wE_in wF_in wE_out wF_out degree\n";
+	cerr << "      Same as HOTBM, with explicit fixed-point formats (NPY)\n";
+	cerr << "      Note: input is unsigned, output is signed.\n";
 	cerr << "    HOTBMRange function wI wO degree xmin xmax scale\n";
 	cerr << "      Same as HOTBM, with explicit range and scale (NPY)\n";
 	cerr << "      xmin xmax - bounds of the input range, mapped to [0,1[\n";
@@ -559,6 +562,30 @@ bool parseCommandLine(int argc, char* argv[]){
 			int n  = checkStrictyPositive(argv[i++], argv[0]);
 			cerr << "> HOTBM func='" << func << "', wI=" << wI << ", wO=" << wO <<endl;
 			op = new HOTBM(target, func, "", wI, wO, n);
+			addOperator(op);
+		}
+
+		else if (opname == "HOTBMFX") {
+			int nargs = 6;
+			if (i+nargs > argc)
+				usage(argv[0]); // and exit
+			string func = argv[i++];
+			int wE_in = atoi(argv[i++]); // may be negative
+			int wF_in = atoi(argv[i++]); // may be negative
+			int wE_out = atoi(argv[i++]); // may be negative
+			int wF_out = atoi(argv[i++]); // may be negative
+			int n  = checkStrictyPositive(argv[i++], argv[0]);
+			
+			// Input of HOTBM is unsigned, but output is in 2's-complement!
+			// Use 1 more bit for the output sign
+			int wI = wE_in + wF_in;
+			int wO = wE_out + wF_out + 1;
+			double xmin = 0;
+			double xmax = ldexp(1.0, wE_in);
+			double scale = ldexp(1.0, -wE_out);
+			cerr << "> HOTBM func='" << func << "', wE_in=" << wE_in << ", wF_in=" << wF_in
+			     << ", wE_out=" << wE_out << ", wF_out=" << wF_out << endl;
+			op = new HOTBM(target, func, "", wI, wO, n, xmin, xmax, scale);
 			addOperator(op);
 		}
 		
