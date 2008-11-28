@@ -78,7 +78,7 @@ private:
 	string       leveld_[42];            /**< Same but possibly delayed  */
 	int          size_[42];              /**< Their size. Do we need to count more than 2^42 bits in FloPoCo? */      
 	entityType_t entityType_;            /**< Entity type. Can be either generic or specific */
-	bool         levelRegistered_ [128]; /**< if boolean true, the corresponding level signal is registered*/ 
+	bool         levelRegistered_ [42]; /**< if boolean true, the corresponding level signal is registered*/ 
 	int          countDepth_[42];        /**< the depths for the levels of the architecture */	
 	mpz_class    maxValue_;              /**< utilitary var */
 };

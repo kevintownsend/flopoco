@@ -108,7 +108,8 @@ public:
 	 */	
 	void addRegisteredSignalWithoutReset(const std::string name, const int width=1);
 	
-	/** Adds a registered with asynchronous reset signal to the signal list.
+#if 0 // removed by Florent
+  	/** Adds a registered with asynchronous reset signal to the signal list.
 	 * Adds a signal of type Signal::registeredWithAsyncReset to the the signal list. This leads
 	 * to adding two signals to the list, the second having the name = name + "_d" and having the type
 	 * Signal::wire
@@ -116,7 +117,8 @@ public:
 	 * @param width the width of the signal
 	 */	
 	void addRegisteredSignalWithAsyncReset(const std::string name, const int width=1);
-	
+#endif	
+
 	/** Adds a registered with synchronous reset signal to the signal list.
 	 * Adds a signal of type Signal::registeredWithSyncReset to the the signal list. This leads
 	 * to adding two signals to the list, the second having the name = name + "_d".

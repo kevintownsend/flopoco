@@ -98,49 +98,11 @@ void Operator::addSignalBus(const std::string name, const int width) {
 	signalList_.push_back(s);
 }
 
+// TODO remove completely? 
 void Operator::addRegisteredSignalWithoutReset(const std::string name, const int width) {
-	if (signalMap_.find(name) != signalMap_.end()) {
-		cerr << "ERROR in addInput , signal " << name<< " seems to already exist" << endl;
-		exit(EXIT_FAILURE);
-	}
-	Signal *s;
-	s = new Signal(name, Signal::registeredWithoutReset, width);
-	signalList_.push_back(s);
-	signalMap_[name] = s ;
-
-	string o =  name + "_d";
-	if (signalMap_.find(o) != signalMap_.end()) {
-		cerr << "ERROR in addInput , signal " << name<< " seems to already exist" << endl;
-		exit(EXIT_FAILURE);
-	}
-	s = new Signal(o, Signal::wire, width);
-	signalList_.push_back(s);
-	signalMap_[name] = s ;
-
-	hasRegistersWithoutReset_ = true;
+	addDelaySignalNoReset( name,  width, 1);
 }
 
-void Operator::addRegisteredSignalWithAsyncReset(const std::string name, const int width) {
-	if (signalMap_.find(name) != signalMap_.end()) {
-		cerr << "ERROR in addInput , signal " << name<< " seems to already exist" << endl;
-		exit(EXIT_FAILURE);
-	}
-	Signal *s;
-	s = new Signal(name, Signal::registeredWithAsyncReset, width);
-	signalList_.push_back(s);
-	signalMap_[name] = s ;
-
-	string o = name + "_d";
-	if (signalMap_.find(o) != signalMap_.end()) {
-		cerr << "ERROR in addInput , signal " << name<< " seems to already exist" << endl;
-		exit(EXIT_FAILURE);
-	}
-	s = new Signal(o, Signal::wire, width);
-	signalList_.push_back(s);
-	signalMap_[name] = s ;
-
-	hasRegistersWithAsyncReset_ = true;
-}
 
 void Operator::addRegisteredSignalWithSyncReset(const std::string name, const int width) {
 	if (signalMap_.find(name) != signalMap_.end()) {
@@ -196,13 +158,14 @@ string Operator::addDelaySignal(const string name, const int width, const int de
 
 string Operator::addDelaySignalNoReset(const string name, const int width, const int delay) {
 	ostringstream o;
+
 	Signal *s;
 	o << name;
 	// if the delay is zero it is equivalent to addSignal
 	if (delay > 0) {
 		for (int i=0; i<delay; i++){
 			if (signalMap_.find(o.str()) != signalMap_.end()) {
-				cerr << "ERROR in addInput , signal " << name<< " seems to already exist" << endl;
+				cerr << "ERROR in addDelaySignalNoReset , signal " << name<< " seems to already exist" << endl;
 				exit(EXIT_FAILURE);
 			}
 			s = new Signal(o.str(), Signal::registeredWithoutReset, width);
@@ -214,7 +177,7 @@ string Operator::addDelaySignalNoReset(const string name, const int width, const
 	}
 
 	if (signalMap_.find(o.str()) != signalMap_.end()) {
-		cerr << "ERROR in addInput , signal " << name<< " seems to already exist" << endl;
+		cerr << "ERROR in addDelaySignalNoReset , signal " << name<< " seems to already exist" << endl;
 		exit(EXIT_FAILURE);
 	}
 	s = new Signal(o.str(), Signal::wire, width);

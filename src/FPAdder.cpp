@@ -158,18 +158,16 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 		addSignal("signedExponentY",wE+1);
 		//		addSignal("invSignedExponentY",wE+1);
 				
-		addRegisteredSignalWithoutReset("exceptionXSuperiorY",1);
-		addRegisteredSignalWithoutReset("exceptionXEqualY",1);
+		addSignal("exceptionXSuperiorY");
+		addSignal("exceptionXEqualY");
 		
-		addDelaySignalNoReset("exponentDifferenceXY",wE+1,1);
+		addSignal("exponentDifferenceXY",wE+1);
 		addSignal("exponentDifferenceYX",wE);
 		
-		addDelaySignalNoReset("swap",1,1);
+		addSignal("swap",1);
 		
 		addDelaySignalNoReset("exponentDifference0",wE,1); 
 		addSignal("exponentDifference1",wE);  
-
-		addDelaySignalNoReset("EffSub0",1,1);
 			
 		addDelaySignalNoReset("newX",wE+wF+3, 1);
 		addDelaySignalNoReset("newY",wE+wF+3, 1);
@@ -195,13 +193,13 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 	//	addDelaySignalNoReset("exponentResultClose1",wEX+2,leadingZeroCounter->getPipelineDepth()+leftShifter->getPipelineDepth());
 
 		addDelaySignalNoReset("nZerosNew",lzocs->getCountWidth(),lzocs->getPipelineDepth());
-		addDelaySignalNoReset("shiftedFrac",wFX+2,2);
+		addSignal("shiftedFrac",wFX+2);
 				
 		addSignal("exponentResultClose",wEX+2);
 		addSignal("exponentResultClose1",wEX);
 		addSignal("roundClose",1);
 		addSignal("exponentConcatFrac0",wE+wF+2);
-		addDelaySignalNoReset("exponentConcatFrac1",wE+wF+2,2);
+		addDelaySignalNoReset("exponentConcatFrac1",wE+wF+2,1);
 		
 		
 		addSignal("fractionResultCloseC",wF + 1);
@@ -223,23 +221,23 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 		addSignal("fracXfar3",wF+5);
 		addSignal("fracYfar3",wF+5);
 		
-		addDelaySignalNoReset("opSelector",1,2);
-		addDelaySignalNoReset("fracYfar3XorOp",wF+5,2);
-		addDelaySignalNoReset("fracResultfar0",wF+5,2);
+		addDelaySignalNoReset("opSelector",1,1);
+		addDelaySignalNoReset("fracYfar3XorOp",wF+5,1);
+		addDelaySignalNoReset("fracResultfar0",wF+5,1);
 		
 		
 		addSignal("fracResultfar0wSh",wF+5);
 		addSignal("exponentResultfar0",wE+1);
 		
-		addDelaySignalNoReset("exponentResultfar1",wE+1,2);	
-		addDelaySignalNoReset("expOperationSel",2,2);
+		addDelaySignalNoReset("exponentResultfar1",wE+1,1);	
+		addDelaySignalNoReset("expOperationSel",2,1);
 		
 		
-		addDelaySignalNoReset("expSecOperand",wE+1,2);
+		addDelaySignalNoReset("expSecOperand",wE+1,1);
 		
 		addDelaySignalNoReset("fracResultfar1",wF+3,intaddFar2->getPipelineDepth()+2);
 		addSignal("expConcatFrac",wE+1 + wF+1);
-		addDelaySignalNoReset("expConcatFracResult",wE+1 + wF+1,2);
+		addDelaySignalNoReset("expConcatFracResult",wE+1 + wF+1,1);
 		addDelaySignalNoReset("round",1,intaddFar2->getPipelineDepth()+2);
 		
 		
@@ -253,19 +251,19 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 		addSignal("sdxXY",4);
 		
 		addDelaySignalNoReset("pipeXAB",4,maxPathDepth);
-		addDelaySignalNoReset("syncXAB",4,2);
+		addDelaySignalNoReset("syncXAB",4,1);
 		
 		addDelaySignalNoReset("EffSub",1,maxPathDepth);
-		addDelaySignalNoReset("syncEffSub",1,2);
+		addDelaySignalNoReset("syncEffSub",1,1);
 
 		addDelaySignalNoReset("pipeX",3+wE+wF,maxPathDepth);
-		addDelaySignalNoReset("syncX",3+wE+wF,2);
+		addDelaySignalNoReset("syncX",3+wE+wF,1);
 				
 		addSignal("sdSignY",1);
 		addDelaySignalNoReset("pipeSignY",1,maxPathDepth);
-		addDelaySignalNoReset("syncSignY",1,2);
+		addDelaySignalNoReset("syncSignY",1,1);
 		
-		addDelaySignalNoReset("nRn",wE+wF+3,2);
+		addDelaySignalNoReset("nRn",wE+wF+3,1);
 		addSignal("nnR",wE+wF+3);
 		addSignal("exponentResultn",wE+2);
 		addSignal("fractionResultn",wF+1);

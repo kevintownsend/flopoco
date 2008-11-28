@@ -127,7 +127,7 @@ LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut, bool com
 				leveld_[i] = level_[i] + "_d" ;
 				ostringstream levelName;
 				levelName << "level"<<i;		
-				addRegisteredSignalWithoutReset(levelName.str(), size_[i]);	
+				addDelaySignalNoReset(levelName.str(), size_[i],1);	
 			}
 			else{
 				leveld_[i] = level_[i];
@@ -140,7 +140,7 @@ LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut, bool com
 		for (int i=wCount_-1; i>=0; i--){
 			ostringstream countName;
 			countName << "count"<<i;		
-			addDelaySignal(countName.str(), 1, countDepth_[i]);
+			addDelaySignalNoReset(countName.str(), 1, countDepth_[i]);
 		}
 			
 		if(computeSticky_){
@@ -153,7 +153,7 @@ LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut, bool com
 				stickyName<<"sticky"<<j;
 				
 				if (levelRegistered_[j])			
-					addRegisteredSignalWithoutReset(stickyName.str());
+					addDelaySignalNoReset(stickyName.str(),1,1);
 				else
 					addSignal(stickyName.str());
 			
