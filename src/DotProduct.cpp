@@ -133,45 +133,70 @@ void DotProduct::outputVHDL(std::ostream& o, std::string name) {
 } 
 
 void DotProduct::test_precision(int n) {
-	mpfr_t ref_acc, long_acc, fp_acc, r, d, one, two, msb;
+	mpfr_t ref_acc, long_acc, fp_acc, x, y, r, d, one, two, msb;
 	double sum, error;
 
 	// initialisation
 	mpfr_init2(ref_acc, 10000);
 	mpfr_init2(long_acc, sizeAcc_+1);
 	mpfr_init2(fp_acc, wFX+1);
+	mpfr_init2(x, wFX+1);
+	mpfr_init2(y, wFY+1);
 	
 	mpfr_init2(r, 2*(wFX+1) );
-	mpfr_init2(d, 100);
+	mpfr_init2(d, 10000);
 	mpfr_init2(one, 100);
 	mpfr_init2(two, 100);
-	mpfr_init2(msb, 100);
+	mpfr_init2(msb, 10);
 	mpfr_set_d(one, 1.0, GMP_RNDN);
 	mpfr_set_d(two, 2.0, GMP_RNDN);
 	mpfr_set_d(msb, (double)(1<<(MSBA+1)), GMP_RNDN); // works for MSBA_<32
+	mpfr_mul_2si(msb, one, MSBA+1, GMP_RNDN); // works for MSBA_<32
+
+	cout <<endl;
+	mpfr_out_str(stdout, 2, sizeAcc_, msb, GMP_RNDN);
+	cout <<endl;
 
 	//cout<<"%-------Acc. of positive numbers--------------- "<<endl;
 	mpfr_set_d(ref_acc, 0.0, GMP_RNDN);
 	mpfr_set_d(fp_acc, 0.0, GMP_RNDN);
+	mpfr_set_d(long_acc, 0.0, GMP_RNDN);
 	//put a one in the MSBA_+1 bit will turn all the subsequent additions
 	// into fixed-point ones
-	mpfr_set_d(long_acc, (double)(1<<(MSBA+1)), GMP_RNDN);
+	mpfr_add(long_acc, long_acc, msb, GMP_RNDN);
+
+	gmp_randstate_t state;
+	gmp_randinit_default(state);
 
 	for(int i=0; i<n; i++){
-		mpfr_random(r); // deprecated function; r is [0,1]
-		//    mpfr_add(r, one, r, GMP_RNDN); // r in [1 2[
+		mpfr_urandomb(d,state); // deprecated function; r is [0,1]
+		mpfr_set(x,d,GMP_RNDN);		
+		mpfr_urandomb(d,state); // deprecated function; r is [0,1]
+		mpfr_set(y,d,GMP_RNDN);		
+
+		mpfr_mul(r,x,y,GMP_RNDN);//    mpfr_add(r, one, r, GMP_RNDN); // r in [1 2[
 		
 		mpfr_add(fp_acc, fp_acc, r, GMP_RNDN);
-		mpfr_add(ref_acc, ref_acc, r, GMP_RNDN);
-		mpfr_add(long_acc, long_acc, r, GMP_RNDN);
-		if(mpfr_greaterequal_p(long_acc, msb)) 
-			mpfr_sub(long_acc, long_acc, msb, GMP_RNDN);
+		mpfr_add(ref_acc, ref_acc, r, GMP_RNDN);		
+		mpfr_add(long_acc, long_acc, r, GMP_RNDZ);
 			
 	}
+	cout <<endl;
+	mpfr_out_str(stdout, 2, sizeAcc_+1, long_acc, GMP_RNDN);
+	cout <<endl;
+	mpfr_out_str(stdout, 2, sizeAcc_+1, ref_acc, GMP_RNDN);
+	cout <<endl;
 
 	// remove the leading one from long acc
-	if(mpfr_greaterequal_p(long_acc, msb)) 
-		mpfr_sub(long_acc, long_acc, msb, GMP_RNDN);
+
+	mpfr_sub(long_acc, long_acc, msb, GMP_RNDN);
+
+	cout <<endl;
+	mpfr_out_str(stdout, 2, sizeAcc_+1, long_acc, GMP_RNDN);
+	cout <<endl;
+	mpfr_out_str(stdout, 2, sizeAcc_+1, ref_acc, GMP_RNDN);
+	cout <<endl;
+
 	cout << "*************----***********"<<endl;		
 	sum=mpfr_get_d(ref_acc, GMP_RNDN);
 	cout  << "% unif[0 1] :sum="<< sum;
@@ -189,6 +214,10 @@ void DotProduct::test_precision(int n) {
 	cout << scientific << setprecision(2)  << error << " &1 ";
 	// compute the error for the long acc
 	mpfr_sub(d, long_acc, ref_acc, GMP_RNDN);
+
+	error=mpfr_get_d(d, GMP_RNDN);
+    cout << endl<< " Diff "<< scientific << setprecision(20)<< error << endl;
+
 	mpfr_div(d, d, ref_acc, GMP_RNDN);
 	error=mpfr_get_d(d, GMP_RNDN);
 	//  cout << "Relative error between long_acc and ref_acc is "<< error << endl;
