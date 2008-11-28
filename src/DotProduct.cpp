@@ -23,18 +23,20 @@
 
 #include <iostream>
 #include <sstream>
+#include <fstream>
+#include <iomanip>
 #include <vector>
 #include <math.h>
 #include <string.h>
-
 #include <gmp.h>
 #include <mpfr.h>
-
+#include <cstdlib>
 #include <gmpxx.h>
 #include "utils.hpp"
 #include "Operator.hpp"
 
 #include "DotProduct.hpp"
+
 
 using namespace std;
 extern vector<Operator*> oplist;
@@ -52,7 +54,8 @@ DotProduct::DotProduct(Target* target, int wE, int wFX, int wFY, int MaxMSBX, in
 
   /* This operator is sequential.*/
 	setSequential();
-
+ 
+  sizeAcc_ = MSBA-LSBA+1;
   /* Instantiate one FPMultiplier used to multiply the two inputs fp numbers, X and Y */
   int fpMultiplierResultExponentWidth = wE;
   int fpMultiplierResultFractionWidth = wFX + wFY + 1;
@@ -129,4 +132,112 @@ void DotProduct::outputVHDL(std::ostream& o, std::string name) {
 	endArchitecture(o);
 } 
 
+void DotProduct::test_precision(int n) {
+	mpfr_t ref_acc, long_acc, fp_acc, r, d, one, two, msb;
+	double sum, error;
+
+	// initialisation
+	mpfr_init2(ref_acc, 10000);
+	mpfr_init2(long_acc, sizeAcc_+1);
+	mpfr_init2(fp_acc, wFX+1);
+	
+	mpfr_init2(r, 2*(wFX+1) );
+	mpfr_init2(d, 100);
+	mpfr_init2(one, 100);
+	mpfr_init2(two, 100);
+	mpfr_init2(msb, 100);
+	mpfr_set_d(one, 1.0, GMP_RNDN);
+	mpfr_set_d(two, 2.0, GMP_RNDN);
+	mpfr_set_d(msb, (double)(1<<(MSBA+1)), GMP_RNDN); // works for MSBA_<32
+
+	//cout<<"%-------Acc. of positive numbers--------------- "<<endl;
+	mpfr_set_d(ref_acc, 0.0, GMP_RNDN);
+	mpfr_set_d(fp_acc, 0.0, GMP_RNDN);
+	//put a one in the MSBA_+1 bit will turn all the subsequent additions
+	// into fixed-point ones
+	mpfr_set_d(long_acc, (double)(1<<(MSBA+1)), GMP_RNDN);
+
+	for(int i=0; i<n; i++){
+		mpfr_random(r); // deprecated function; r is [0,1]
+		//    mpfr_add(r, one, r, GMP_RNDN); // r in [1 2[
+		
+		mpfr_add(fp_acc, fp_acc, r, GMP_RNDN);
+		mpfr_add(ref_acc, ref_acc, r, GMP_RNDN);
+		mpfr_add(long_acc, long_acc, r, GMP_RNDN);
+		if(mpfr_greaterequal_p(long_acc, msb)) 
+			mpfr_sub(long_acc, long_acc, msb, GMP_RNDN);
+			
+	}
+
+	// remove the leading one from long acc
+	if(mpfr_greaterequal_p(long_acc, msb)) 
+		mpfr_sub(long_acc, long_acc, msb, GMP_RNDN);
+	cout << "*************----***********"<<endl;		
+	sum=mpfr_get_d(ref_acc, GMP_RNDN);
+	cout  << "% unif[0 1] :sum="<< sum;
+	sum=mpfr_get_d(fp_acc, GMP_RNDN);
+	cout << "   FPAcc="<< sum;
+	sum=mpfr_get_d(long_acc, GMP_RNDN);
+	cout << "   LongAcc="<< sum;
+
+	cout <<endl << n << " & ";
+	// compute the error for the FP adder
+	mpfr_sub(d, fp_acc, ref_acc, GMP_RNDN);
+	mpfr_div(d, d, ref_acc, GMP_RNDN);
+	error=mpfr_get_d(d, GMP_RNDN);
+	// cout << " Relative error between fp_acc and ref_acc is "<< error << endl;
+	cout << scientific << setprecision(2)  << error << " &1 ";
+	// compute the error for the long acc
+	mpfr_sub(d, long_acc, ref_acc, GMP_RNDN);
+	mpfr_div(d, d, ref_acc, GMP_RNDN);
+	error=mpfr_get_d(d, GMP_RNDN);
+	//  cout << "Relative error between long_acc and ref_acc is "<< error << endl;
+	cout << scientific << setprecision(2)  << error << " &2 ";
+
+  /*
+		//cout<<"%-------Acc. of positive/negative numbers--------------- "<<endl;
+
+	mpfr_set_d(ref_acc, 0.0, GMP_RNDN);
+	mpfr_set_d(fp_acc, 0.0, GMP_RNDN);
+	//put a one in the MSBA_+1 bit will turn all the subsequent additions
+	// into fixed-point ones
+	mpfr_set_d(long_acc, (double)(1<<(MSBA+1)), GMP_RNDN);
+
+	for(int i=0; i<n; i++){
+		mpfr_random(r); // deprecated function; r is [0,1]
+		mpfr_mul(r, r, two, GMP_RNDN); 
+		mpfr_sub(r, r, one, GMP_RNDN); 
+		
+		mpfr_add(fp_acc, fp_acc, r, GMP_RNDN);
+		mpfr_add(ref_acc, ref_acc, r, GMP_RNDN);
+		mpfr_add(long_acc, long_acc, r, GMP_RNDN);
+	}
+
+	// remove the leading one from long acc
+	mpfr_sub(long_acc, long_acc, msb, GMP_RNDN);
+
+
+	// compute the error for the FP adder
+	mpfr_sub(d, fp_acc, ref_acc, GMP_RNDN);
+	mpfr_div(d, d, ref_acc, GMP_RNDN);
+	error=mpfr_get_d(d, GMP_RNDN);
+	// cout << "Relative error between fp_acc and ref_acc is "<< error << endl;
+	cout << scientific << setprecision(2) << error << " & ";
+
+	// compute the error for the long acc
+	mpfr_sub(d, long_acc, ref_acc, GMP_RNDN);
+	mpfr_div(d, d, ref_acc, GMP_RNDN);
+	error=mpfr_get_d(d, GMP_RNDN);
+	//  cout << "Relative error between long_acc and ref_acc is "<< error << endl;
+	cout << scientific << setprecision(2)  << error << " \\\\ \n     \\hline \n";
+
+	sum=mpfr_get_d(ref_acc, GMP_RNDN);
+	cout << "% unif[-1 1] : sum="<< sum;
+	sum=mpfr_get_d(fp_acc, GMP_RNDN);
+	 cout << "   FPAcc="<< sum;
+	sum=mpfr_get_d(long_acc, GMP_RNDN);
+	 cout << "   LongAcc="<< sum;
+		cout <<endl;
+  */
+}
 

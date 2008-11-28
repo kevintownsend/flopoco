@@ -7,6 +7,7 @@
 #include <gmpxx.h>
 #include <cstdlib>
 
+
 #include "Operator.hpp"
 #include "FPMultiplier.hpp"
 #include "LongAcc.hpp"
@@ -45,6 +46,11 @@ public:
 	 */
 	void setOperatorName(); 
 	
+	/**
+	 * Tests the operator accuracy and relative error
+	 */
+	void test_precision(int n);
+	
 protected:
 	/** The width of the exponent for the inputs X and Y*/
 	int wE; 
@@ -58,6 +64,8 @@ protected:
 	int LSBA;
 	/** The weight of the MSB of the accumulator; has to greater than that of the maximal expected result*/
 	int MSBA;
+	/** The width in bits of the accumulator*/
+	int sizeAcc_;
 
 private:
 /** instance of a FPMultiplier */

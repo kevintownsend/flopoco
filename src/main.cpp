@@ -535,6 +535,24 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(op);
 			}
 		}
+		// hidden and undocumented
+		else if(opname=="DotProdPrecTest"){
+			int nargs = 6; // same as LongAcc, plus an iteration count
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int wE = checkStrictyPositive(argv[i++], argv[0]);
+				int wFX = checkStrictyPositive(argv[i++], argv[0]);
+				int wFY = checkStrictyPositive(argv[i++], argv[0]);
+				int MaxMSBX = atoi(argv[i++]);
+				int LSBA = atoi(argv[i++]);
+				int MSBA = atoi(argv[i++]);
+				int n = atoi(argv[i++]);
+				cerr << "> Test of DotProduct accuracy, wEX="<<wE<<", wFX="<<wFX<<", wFY="<<wFY<<", MaxMSBX="<<MaxMSBX<<", LSBA="<<LSBA<<", MSBA="<<MSBA<<", "<< n << " tests\n";
+				DotProduct * op = new DotProduct(target, wE, wFX, wFY, MaxMSBX, LSBA, MSBA);
+				op->test_precision(n);
+			}    
+		}
 		else if(opname=="DotProduct"){
 			int nargs = 6;
 			if (i+nargs > argc)
