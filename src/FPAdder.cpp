@@ -93,13 +93,13 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 		inputs["X"]=0;
 		inputs["Y"]=1.5e-10;
 		inputs["Cin"]=0;
-		intaddClose1 = new IntAdder(target, wF + 3, inputs);
-		intaddClose1->Operator::setOperatorName("intaddClose1");
-		oplist.push_back(intaddClose1);
+		fracSubClose = new IntAdder(target, wF + 3, inputs);
+		fracSubClose->Operator::setOperatorName("fracSubClose");
+		oplist.push_back(fracSubClose);
 
-		intaddClose2 = new IntAdder(target, wF + 2);
-		intaddClose2->Operator::setOperatorName("intaddClose2");
-		oplist.push_back(intaddClose2);
+		complementAdderClose = new IntAdder(target, wF + 2);
+		complementAdderClose->Operator::setOperatorName("complementAdderClose");
+		oplist.push_back(complementAdderClose);
 
 		intaddClose3 = new IntAdder(target, wE + wF + 2);
 		intaddClose3->Operator::setOperatorName("intaddClose3");
@@ -126,8 +126,8 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 		//swap/Difference pipeline depth
 		swapDifferencePipelineDepth = 1;
 		
-		closePathDepth = intaddClose1->getPipelineDepth() + 
-										 intaddClose2->getPipelineDepth() + 
+		closePathDepth = fracSubClose->getPipelineDepth() + 
+										 complementAdderClose->getPipelineDepth() + 
 										 lzocs->getPipelineDepth() + 
 										 intaddClose3->getPipelineDepth() + 4;
 	
@@ -181,7 +181,7 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 		addSignal("fracXClose1",wF+3);
 		addSignal("fracYClose1",wF+3);
 		addSignal("InvFracYClose1",wFX+3);
-		addDelaySignalNoReset("fracRClose0",wF+3,intaddClose2->getPipelineDepth()+2);
+		addDelaySignalNoReset("fracRClose0",wF+3,complementAdderClose->getPipelineDepth()+2);
 		
 		
 		addDelaySignalNoReset("fracSignClose",1,1);
@@ -387,8 +387,8 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 	}	
 	rightShifter->outputVHDLComponent(o);
 	
-	intaddClose1->outputVHDLComponent(o);
-	intaddClose2->outputVHDLComponent(o);
+	fracSubClose->outputVHDLComponent(o);
+	complementAdderClose->outputVHDLComponent(o);
 	intaddClose3->outputVHDLComponent(o);
 	intaddFar1->outputVHDLComponent(o);
 	intaddFar2->outputVHDLComponent(o);
@@ -473,7 +473,7 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 			// perform inversion
 			o<<tab<<"InvFracYClose1 <= not(fracYClose1);"<<endl;
 			// perform addition with carry in = 1
-			o<<tab<< "int_adder_componentc1: " << intaddClose1->getOperatorName() << endl;
+			o<<tab<< "FracSubInClosePath: " << fracSubClose->getOperatorName() << endl;
 			o<<tab<< "  port map ( X => fracXClose1 , " << endl; 
 			o<<tab<< "             Y => InvFracYClose1, " << endl; 
 			o<<tab<< "             Cin => '1' ," << endl;
@@ -489,7 +489,7 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 			// perform xor
 			o<<tab<<"fracRClose1xor <= fracRClose0_d("<<wF+1<<" downto 0) xor ("<<wF+1<<" downto 0 => fracSignClose);"<<endl;
 			// perform carry in addition 
-			o<<tab<< "int_adder_componentc2: " << intaddClose2->getOperatorName() << endl;
+			o<<tab<< "ComplementAdderClosePath: " << complementAdderClose->getOperatorName() << endl;
 			o<<tab<< "  port map ( X => fracRClose1xor_d , " << endl; 
 			o<<tab<< "             Y => ("<<wF+1<<" downto 0 => '0'), " << endl; 
 			o<<tab<< "             Cin => fracSignClose_d ," << endl;
@@ -499,12 +499,12 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 			o<<tab<< "               );" << endl<<endl;
 		
 		
-		string cCloseSNPostPipeline = getDelaySignalName("pipeClose",intaddClose1->getPipelineDepth()+intaddClose2->getPipelineDepth()+2);
-		string cXSNPostPipeline = getDelaySignalName("pipeX",intaddClose1->getPipelineDepth()+intaddClose2->getPipelineDepth()+2);
+		string cCloseSNPostPipeline = getDelaySignalName("pipeClose",fracSubClose->getPipelineDepth()+complementAdderClose->getPipelineDepth()+2);
+		string cXSNPostPipeline = getDelaySignalName("pipeX",fracSubClose->getPipelineDepth()+complementAdderClose->getPipelineDepth()+2);
 				
 		o << tab << "crs <= '0' when "<<cCloseSNPostPipeline<<"='1' and fracRClose1 = ("<<wF+1<<" downto 0 => '0') else"<<endl;
     o << tab << "          "<<cXSNPostPipeline<<"("<<wE+wF<<") xor ("<<cCloseSNPostPipeline<<" and "
-		                        <<getDelaySignalName("fracRClose0",intaddClose2->getPipelineDepth()+2)<<"("<<wF+2<<"));"<<endl;
+		                        <<getDelaySignalName("fracRClose0",complementAdderClose->getPipelineDepth()+2)<<"("<<wF+2<<"));"<<endl;
 		
 			
 		// LZC + Shifting. The number of leading zeros are returned together with the sifted input
@@ -518,7 +518,7 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 	
 		// NORMALIZATION
 		int delayExp;
-		delayExp=lzocs->getPipelineDepth() + intaddClose2->getPipelineDepth() + intaddClose1->getPipelineDepth()+3;
+		delayExp=lzocs->getPipelineDepth() + fracSubClose->getPipelineDepth() + complementAdderClose->getPipelineDepth()+3;
 		o<<tab<< "exponentResultClose1<= "<<getDelaySignalName("pipeX",delayExp)
 		                                  <<"("<<wE+wF-1<<" downto "<<wF<<") - (CONV_STD_LOGIC_VECTOR(0,"<<wE-lzocs->getCountWidth()<<") & nZerosNew);"<<endl;
 		

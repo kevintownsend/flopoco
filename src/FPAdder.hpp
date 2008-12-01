@@ -78,9 +78,9 @@ private:
 	/** The integer adder object */
 	IntAdder *intadd2; 
 	/** The integer adder object */
-	IntAdder *intaddClose1; 
+	IntAdder *fracSubClose; 
 	/** The integer adder object */
-	IntAdder *intaddClose2; 
+	IntAdder *complementAdderClose; 
 	/** The integer adder object */
 	IntAdder *intaddClose3; 
 

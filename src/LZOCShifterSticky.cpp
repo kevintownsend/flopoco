@@ -276,31 +276,43 @@ void LZOCShifterSticky::outputVHDL(std::ostream& o, std::string name) {
 		int p2i = 1 << i;
 		int p2io2 = 1 << (i-1);
 
-		//======================================================================
-		o << tab << "count" << i-1 << " <= '1' when " << leveld_[i] << "(" << size_[i]-1 << " downto " << size_[i]-p2io2 << ") = (" << p2io2-1 << " downto 0 => "; 
+		//=====================COUNT=================================================
+		o << tab << "count" << i-1 << " <= '1' "
+		  << "when " << leveld_[i] << "(" << size_[i]-1 << " downto " << size_[i]-p2io2 << ") "
+		  << "= (" << size_[i]-1 << " downto " << size_[i]-p2io2 << " => "; 
 		if (entityType_==generic)
 			o<<getDelaySignalName("sozb",getPipelineDepth()-countDepth_[i-1]);
 		else
 			o<<"'"<<countType_<<"'";
 		o<<" )   else '0';" << endl; 
-		//======================================================================
-		// REM in the followIn_g,  size_[i]-size_[i-1]-1 is almost always equal to p2io2, except in the first stage
-		if (i==wCount_){
-			o << tab << level_[i-1] << " <= " ;
-			o << " " << "("<<leveld_[i] << "(" << size_[i]/2 -1 << " downto " << 0 << ") & "<<zeroGenerator(size_[i-1]-size_[i]/2, 0)<<" )  when count" << i-1 << "='1'" << endl;
-			
-			if (size_[i-1]-size_[i]>0)
-				o << tab << tab << tab <<  "else (" << leveld_[i] << "(" << size_[i]-1 << " downto 0) &  "<<zeroGenerator(size_[i-1]-size_[i],0)<<") ;" << endl; 
-			else
-				o << tab << tab << tab <<  "else " << leveld_[i] << "(" << size_[i]-1 << " downto "<<size_[i]-size_[i-1]<<");" << endl; 
+
+		//There must be a unified way of unifying the two branches, but it's clearer this way
+		if(wOut_<wIn_) {
+			//=====================SHIFT=================================================
+			// REM in the following,  size_[i]-size_[i-1]-1 is almost always equal to p2io2, except in the first stage
+			if (i==wCount_){ //first stage
+				o << tab << level_[i-1] << " <= " ;
+				o << " " << "("<<leveld_[i] << "(" << size_[i]/2 -1 << " downto 0) & "
+				  << "(" << size_[i-1]-size_[i]/2 -1 << " downto 0 => '0') )  when count" << i-1 << "='1'" << endl;
+				
+				if (size_[i-1]-size_[i]>0)
+					o << tab << tab << tab <<  "else (" << leveld_[i] << "(" << size_[i]-1 << " downto 0) &  "<<zeroGenerator(size_[i-1]-size_[i],0)<<") ;" << endl; 
+				else
+					o << tab << tab << tab <<  "else " << leveld_[i] << "(" << size_[i]-1 << " downto "<<size_[i]-size_[i-1]<<");" << endl; 
+			}
+			else {  // generic stage
+				o << tab << level_[i-1] << " <= " ;
+				o << " " << leveld_[i] << "(" << size_[i]-1 << " downto " << size_[i]-size_[i-1] << ")   when count" << i-1 << "='0'" << endl;
+				o << tab << tab << tab <<  "else " << leveld_[i] << "(" << size_[i-1]-1 << " downto 0);" << endl; 
+			}
 		}
-		else
-		{
+		else { // wOut=wIn 	
 			o << tab << level_[i-1] << " <= " ;
-			o << " " << leveld_[i] << "(" << size_[i]-1 << " downto " << size_[i]-size_[i-1] << ")   when count" << i-1 << "='0'" << endl;
-			o << tab << tab << tab <<  "else " << leveld_[i] << "(" << size_[i-1]-1 << " downto 0);" << endl; 
-		}
+			o << " " << leveld_[i] << " when count" << i-1 << "='0'" << endl;
+			o << tab << tab << tab <<  "else " << leveld_[i] << "(" << size_[i-1] - p2io2 -1 << " downto 0) "
+			  << " & (" << p2io2-1 << " downto 0 => '0');" << endl; 
 		
+		}
 		if(computeSticky_){
 			ostringstream eqVer;
 			ostringstream newSticky;
