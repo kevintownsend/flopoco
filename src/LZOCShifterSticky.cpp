@@ -56,25 +56,6 @@ LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut, bool com
 	/*  from the end of the pipeline to the beginning, 
 	    determine the sizes of all register levels */
 
-#if 0
-	// TODO: the following is OK for the accumulator or FPLog, where wOut < wIn
-	// It sucks for the FPAdder where wOut=wIn
-	i=0;
-	size_[0] = wOut_; /* size of the result */
-	while(size_[i]-wOut_ < wIn_){
-		i++;
-		p2i = 1<<(i-1);
-		size_[i] = size_[i-1] + p2i;
-		/* Invariant: size_[i] = wOut_ + 2^i -1 */
-	}
-	/* the attribute that gives the number of bits of the LZO count */
-	wCount_ = i;
-	/* the first stage doesn't need to register zeroes */
-	size_[wCount_] = 1<<wCount_;
-	
-	/* should be identical to : wCount_ = intlog2(wIn_+1); 
-		+1 for the case all zeroes */
-#else
 	if(wOut_<wIn_) {
 		i=0;
 		size_[0] = wOut_; /* size of the result */
@@ -98,7 +79,7 @@ LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut, bool com
 			size_[i] = wOut;
 		}
 	}
-#endif
+
 	/* Set up the IO signals */
 	addInput ("I", wIn_);
 	/* The width of the lzo count output will be floor(log2(wIn_+1)). */		

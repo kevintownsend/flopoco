@@ -21,6 +21,9 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
 */
 
+
+// TODO add option to LZOCShifterSticky not to output the count.
+// TODO only one normalization
 #include <iostream>
 #include <sstream>
 #include <vector>
@@ -126,19 +129,22 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 		//swap/Difference pipeline depth
 		swapDifferencePipelineDepth = 1;
 		
-		closePathDepth = fracSubClose->getPipelineDepth() + 
-										 complementAdderClose->getPipelineDepth() + 
-										 lzocs->getPipelineDepth() + 
-										 intaddClose3->getPipelineDepth() + 4;
+		closePathDepth = 
+			fracSubClose->getPipelineDepth() + 
+			complementAdderClose->getPipelineDepth() + 
+			lzocs->getPipelineDepth() +1 + 
+			intaddClose3->getPipelineDepth() + 4;
 	
-		farPathDepth = intaddFar1->getPipelineDepth()+
-									 intaddFar2->getPipelineDepth()+
-									 intaddFar3->getPipelineDepth()+
-									 rightShifter->getPipelineDepth()
-									 +5;
+		farPathDepth = 
+			intaddFar1->getPipelineDepth()+
+			intaddFar2->getPipelineDepth()+
+			intaddFar3->getPipelineDepth()+
+			rightShifter->getPipelineDepth()
+			+5;
 		
-		cout<<"depths="<<intaddFar1->getPipelineDepth()<<" "<<intaddFar2->getPipelineDepth()<<" "<<intaddFar3->getPipelineDepth()<<" "<<rightShifter->getPipelineDepth()<<endl;
-		
+		if(verbose){
+			cout<<"depths="<<intaddFar1->getPipelineDepth()<<" "<<intaddFar2->getPipelineDepth()<<" "<<intaddFar3->getPipelineDepth()<<" "<<rightShifter->getPipelineDepth()<<endl;
+		}
 		
 		cout<<endl<<"Close path depth = "<< closePathDepth;
 		cout<<endl<<"Far path depth   = "<< farPathDepth;
@@ -189,11 +195,11 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 		addDelaySignalNoReset("fracRClose1",wFX+2, lzocs->getPipelineDepth());
 
 
-		addDelaySignalNoReset("crs",1,lzocs->getPipelineDepth() + intaddClose3->getPipelineDepth()+2);
+		addDelaySignalNoReset("crs",1,lzocs->getPipelineDepth()+1 + intaddClose3->getPipelineDepth()+2);
 	//	addDelaySignalNoReset("exponentResultClose1",wEX+2,leadingZeroCounter->getPipelineDepth()+leftShifter->getPipelineDepth());
 
 		addDelaySignalNoReset("nZerosNew",lzocs->getCountWidth(),lzocs->getPipelineDepth());
-		addSignal("shiftedFrac",wFX+2);
+		addDelaySignalNoReset("shiftedFrac",wFX+2,1);
 				
 		addSignal("exponentResultClose",wEX+2);
 		addSignal("exponentResultClose1",wEX);
@@ -507,7 +513,7 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 		                        <<getDelaySignalName("fracRClose0",complementAdderClose->getPipelineDepth()+2)<<"("<<wF+2<<"));"<<endl;
 		
 			
-		// LZC + Shifting. The number of leading zeros are returned together with the sifted input
+		// LZC + Shifting. The number of leading zeros are returned together with the shifted input
 		o<<tab<< "LZCOCS_component: " << lzocs->getOperatorName() << endl;
 		o<<tab<< "      port map ( I => fracRClose1_d, " << endl; 
 		o<<tab<< "                 Count => nZerosNew, "<<endl;
@@ -518,18 +524,18 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 	
 		// NORMALIZATION
 		int delayExp;
-		delayExp=lzocs->getPipelineDepth() + fracSubClose->getPipelineDepth() + complementAdderClose->getPipelineDepth()+3;
+		delayExp=lzocs->getPipelineDepth()+1 + fracSubClose->getPipelineDepth() + complementAdderClose->getPipelineDepth()+3;
 		o<<tab<< "exponentResultClose1<= "<<getDelaySignalName("pipeX",delayExp)
-		                                  <<"("<<wE+wF-1<<" downto "<<wF<<") - (CONV_STD_LOGIC_VECTOR(0,"<<wE-lzocs->getCountWidth()<<") & nZerosNew);"<<endl;
+		                                  <<"("<<wE+wF-1<<" downto "<<wF<<") - (CONV_STD_LOGIC_VECTOR(0,"<<wE-lzocs->getCountWidth()<<") & nZerosNew_d);"<<endl;
 		
 		// ROUNDING
 		// during fraction alignment, the fraction of Y is shifted at most one position to the right, so 1 extra bit is enough to perform rounding 
 			// the rounding bit is computed:
-			o<<tab<< "roundClose <= shiftedFrac(0) and shiftedFrac(1);"<<endl;
+			o<<tab<< "roundClose <= shiftedFrac_d(0) and shiftedFrac_d(1);"<<endl;
 			// add two bits in order to absorb exceptions 		 		
 			o<<tab<< "exponentResultClose <= \"00\" & exponentResultClose1;"<<endl;
 			// concatenate exponent with fractional part before rounding so the possible carry propagation automatically increments the exponent 
-			o<<tab<<" exponentConcatFrac0 <= exponentResultClose("<<wE+1<<" downto 0) & shiftedFrac("<<wF<<" downto 1);"<<endl; 
+			o<<tab<<" exponentConcatFrac0 <= exponentResultClose("<<wE+1<<" downto 0) & shiftedFrac_d("<<wF<<" downto 1);"<<endl; 
 			// perform the actual rounding //
 			o<<tab<< "int_adder_componentc3: " << intaddClose3->getOperatorName() << endl;
 			o<<tab<< "  port map ( X => exponentConcatFrac0 , " << endl; 
@@ -544,7 +550,7 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 		o<<tab<<" fractionResultCloseC <= \"1\" & exponentConcatFrac1_d("<<wF-1<<" downto 0);"<<endl;
 		o<<tab<<" exponentResultCloseC <= exponentConcatFrac1_d("<<wF+wE+1<<" downto "<<wF<<");"<<endl;
 	
-		o<<tab<<" crsOut <= "<<getDelaySignalName("crs", lzocs->getPipelineDepth() + intaddClose3->getPipelineDepth()+2)<<";"<<endl;
+		o<<tab<<" crsOut <= "<<getDelaySignalName("crs", lzocs->getPipelineDepth()+1 + intaddClose3->getPipelineDepth()+2)<<";"<<endl;
 
 		
 		//=========================================================================|
