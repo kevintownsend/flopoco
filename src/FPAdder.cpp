@@ -76,10 +76,12 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 	
 	if (isSequential())
 	{
+#if 0
 		map<string, double> inputs;
 		inputs["X"]=0;
 		inputs["Y"]=1.5e-10;
 		inputs["Cin"]=0;
+
 		fracSubClose = new IntAdder(target, wF + 3, inputs);
 		fracSubClose->Operator::setOperatorName("fracSubClose");
 		oplist.push_back(fracSubClose);
@@ -87,6 +89,18 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 		complementAdderClose = new IntAdder(target, wF + 2);
 		complementAdderClose->Operator::setOperatorName("complementAdderClose");
 		oplist.push_back(complementAdderClose);
+
+		addDelaySignalNoReset("fracRClose0",wF+3,complementAdderClose->getPipelineDepth()+2);
+  		addDelaySignalNoReset("fracSignClose",1, 1 + complementAdderClose->getPipelineDepth() + 1);
+#else
+		dualSubClose = new 	IntDualSub(target, wF + 3, 0);
+		dualSubClose->Operator::setOperatorName("DualSubClose");
+		oplist.push_back(dualSubClose);
+
+		addDelaySignalNoReset("fracRClosexMy",wF+3, 1);
+		addDelaySignalNoReset("fracRCloseyMx",wF+3, 1);
+  		addDelaySignalNoReset("fracSignClose",1, 1);
+#endif
 
 		// finalRoundAdd will add the mantissa concatenated with exponent, there is one bit reserved for possible overflow 
 		finalRoundAdd = new IntAdder(target, wE + wF + 2); 
@@ -110,6 +124,7 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 		//swap/Difference pipeline depth
 		swapDifferencePipelineDepth = 1;
 		
+#if 0
 		closePathDepth = 
 			fracSubClose->getPipelineDepth()  
 			+ 1  // sub output is registered
@@ -120,6 +135,16 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 			+ 1  //output registered
 			+ 1   // exponent update
 			;
+#else
+		closePathDepth = 
+			+ dualSubClose->getPipelineDepth()
+			+ 1  // output registered 
+			+ 1  // swap 
+			+ lzocs->getPipelineDepth()
+			+ 1  //output registered
+			+ 1   // exponent update
+			;
+#endif
 
 		farPathDepth = 
 			rightShifter->getPipelineDepth() 
@@ -173,12 +198,9 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 		addSignal("fracXClose1",wF+3);
 		addSignal("fracYClose1",wF+3);
 		addSignal("InvFracYClose1",wFX+3);
-		addDelaySignalNoReset("fracRClose0",wF+3,complementAdderClose->getPipelineDepth()+2);
-		
-		
-		addDelaySignalNoReset("fracSignClose",1, 1 + complementAdderClose->getPipelineDepth() + 1);
-		addDelaySignalNoReset("fracRClose1xor", wF+2,1);
+
 		addDelaySignalNoReset("fracRClose1",wFX+2, lzocs->getPipelineDepth());
+		addDelaySignalNoReset("fracRClose1xor", wF+2,1);
 
 
 		addDelaySignalNoReset("resSign",1,lzocs->getPipelineDepth()+1 + finalRoundAdd->getPipelineDepth()+2);
@@ -355,8 +377,12 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 	}	
 	rightShifter->outputVHDLComponent(o);
 	
+#if 0
 	fracSubClose->outputVHDLComponent(o);
 	complementAdderClose->outputVHDLComponent(o);
+#else
+	dualSubClose->outputVHDLComponent(o);
+#endif
 	finalRoundAdd->outputVHDLComponent(o);
 	fracAddFar->outputVHDLComponent(o);
 	// intaddFar2->outputVHDLComponent(o);
@@ -434,6 +460,8 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 		o<<tab<<"               \"001\" & sdY("<<wF-1<<" downto "<<0<<")       when others;"<<endl;
 		
 		// substract the fraction signals for the close path; 
+
+#if 0
 		// substraction fX - fY = fX + not(fY)+1
 		// perform inversion
 		o<<tab<<"InvFracYClose1 <= not(fracYClose1);"<<endl;
@@ -476,6 +504,34 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 		// else sign(x) xor (close and sign(resclose))
 		o << tab << "          " << XDelayed1 << "("<<wE+wF<<") xor (" << closeDelayed1 << " and " 
 		  << getDelaySignalName("fracSignClose", 1 + complementAdderClose->getPipelineDepth()+1) << ");"<<endl;
+
+
+
+#else
+		// instanciate the box that computes X-Y and Y-X. Note that it could take its inputs before the swap (TODO ?)
+		o<<tab<< "DualSubO: " << dualSubClose->getOperatorName() 
+		 << "  -- pipelineDepth="<< dualSubClose->getPipelineDepth()<< endl;
+		o<<tab<< "  port map ( X => fracXClose1 , " << endl; 
+		o<<tab<< "             Y => FracYClose1, " << endl; 
+		o<<tab<< "             RxMy => fracRClosexMy, " << endl; 
+		o<<tab<< "             RyMx => fracRCloseyMx, " << endl; 
+		o<<tab<< "             clk => clk, " << endl;
+		o<<tab<< "             rst => rst " << endl;
+		o<<tab<< "               );" << endl<<endl;
+		// register the output -- TODO merge the mux with the last stage of the adder in case of sufficient slack
+
+		o<<tab<< "fracSignClose <= fracRClosexMy_d("<<wF+2<<");"<<endl;
+		o<<tab<< "fracRClose1 <= fracRClosexMy_d("<<wF+1<<" downto 0) when fracSignClose='0' else fracRCloseyMx_d("<<wF+1<<" downto 0);"<<endl;
+		int delayFromSD = dualSubClose->getPipelineDepth() + 2; 
+		string closeDelayed1 = getDelaySignalName("pipeClose", delayFromSD);
+		string XDelayed1 = getDelaySignalName("pipeX", delayFromSD);
+				
+		//TODO check the test if significand is all zero is useful. Should not. Bug in test bench probably.
+		o << tab << "resSign <= '0' when "<<closeDelayed1<<"='1' and fracRClose1_d = ("<<wF+1<<" downto 0 => '0') else"<<endl;
+		// else sign(x) xor (close and sign(resclose))
+		o << tab << "          " << XDelayed1 << "("<<wE+wF<<") xor (" << closeDelayed1 << " and " 
+		  << getDelaySignalName("fracSignClose", 1) << ");"<<endl;
+#endif
 		
 			
 		// LZC + Shifting. The number of leading zeros are returned together with the shifted input

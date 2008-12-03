@@ -11,6 +11,7 @@
 #include "Shifters.hpp"
 #include "FPNumber.hpp"
 #include "IntAdder.hpp"
+#include "IntDualSub.hpp"
 #include "LZOCShifterSticky.hpp"
 
 /** The FPAdder class */
@@ -79,6 +80,8 @@ private:
 	/** The integer adder object */
 	IntAdder *complementAdderClose; 
 
+	/** The dual subtractor for the close path */
+	IntDualSub *dualSubClose;
 	/** The integer adder object */
 	IntAdder *fracAddFar; 
 	/** The integer adder object */

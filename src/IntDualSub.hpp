@@ -16,6 +16,7 @@ public:
 	 * The IntDualSub constructor
 	 * @param[in] target the target device
 	 * @param[in] wIn    the with of the inputs and output
+	 * @param[in] opType:  if 1, compute x-y and x+y; if 0, compute x-y and y-x
 	 * @param[in] inputDelays the delays for each input
 	 **/
 	IntDualSub(Target* target, int wIn, int opType, map<string, double> inputDelays = emptyDelayMap);
