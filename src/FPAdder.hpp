@@ -74,22 +74,15 @@ private:
 	/** Signal if the output of the operator is to be or not normalized*/
 
 	/** The integer adder object */
-	IntAdder *intadd1; 
-	/** The integer adder object */
-	IntAdder *intadd2; 
 	/** The integer adder object */
 	IntAdder *fracSubClose; 
 	/** The integer adder object */
 	IntAdder *complementAdderClose; 
-	/** The integer adder object */
-	IntAdder *intaddClose3; 
 
 	/** The integer adder object */
-	IntAdder *intaddFar1; 
+	IntAdder *fracAddFar; 
 	/** The integer adder object */
-	IntAdder *intaddFar2; 
-	/** The integer adder object */
-	IntAdder *intaddFar3; 
+	IntAdder *finalRoundAdd; 
 
 	LZOC* leadingZeroCounter;
 	Shifter* leftShifter;
