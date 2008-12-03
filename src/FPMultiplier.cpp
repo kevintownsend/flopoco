@@ -37,6 +37,8 @@
 using namespace std;
 extern vector<Operator*> oplist;
 
+#define VHDLDEBUG 0 // Not sure it works when set to 1.
+
 FPMultiplier::FPMultiplier(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, int wFR, int norm) :
 	Operator(target), wEX_(wEX), wFX_(wFX), wEY_(wEY), wFY_(wFY), wER_(wER), wFR_(wFR) {
 
@@ -58,10 +60,19 @@ FPMultiplier::FPMultiplier(Target* target, int wEX, int wFX, int wEY, int wFY, i
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	addFPInput ("X", wEX_, wFX_);
 	addFPInput ("Y", wEY_, wFY_);
-	addOutput ("ResultExponent"   , wER_    );  
-	addOutput ("ResultSignificand", wFR_ + 1);
-	addOutput ("ResultException"  , 2      );
-	addOutput ("ResultSign"       , 1      ); 
+	if(normalized_) {
+		addSignal ("ResultExponent"   , wER_    );  
+		addSignal ("ResultSignificand", wFR_ + 1);
+		addSignal ("ResultException"  , 2      );
+		addSignal ("ResultSign"       , 1      ); 
+		addFPOutput ("R"   , wER_, wFR    );  
+	}
+	else {
+		addOutput ("ResultExponent"   , wER_    );  
+		addOutput ("ResultSignificand", wFR_ + 1);
+		addOutput ("ResultException"  , 2      );
+		addOutput ("ResultSign"       , 1      ); 
+	}
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~	
 		   
 	/* Instantiate an intmult_iplier -> multiply the significands */
@@ -655,6 +666,7 @@ void FPMultiplier::outputVHDL(std::ostream& o, std::string name) {
 				o<<tab<<"ResultExponent    <= exponent_synch2_out_post_rounding("<<wER_-1<<" downto "<<0<<");"<<endl;  
 				o<<tab<<"ResultSignificand <= \"1\" & reunion_signal_post_rounding("<<wFR_<<" downto 1);"<<endl;
 				o<<tab<<"ResultSign        <= sign_synch2_out;"<<endl;
+				o<<tab<<"R <= ResultException & ResultSign & ResultExponent & ResultSignificand("<<wFR_-1<<" downto 0);" << endl;
 			}
 		}
 		else { //TODO
@@ -942,6 +954,7 @@ void FPMultiplier::outputVHDL(std::ostream& o, std::string name) {
 				o<<tab<<"ResultExponent    <= exponent_post_rounding("<<wER_ -1<<" downto "<<0<<");"<<endl;  
 				o<<tab<<"ResultSignificand <= \"1\" & reunion_signal_post_rounding("<<wFR_<<" downto 1);"<<endl;
 				o<<tab<<"ResultSign        <= X("<<wEX_ + wFX_<<") xor Y("<<wEY_ + wFY_<<");"<<endl;
+				o<<tab<<"R <= ResultException & ResultSign & ResultExponent & ResultSignificand("<<wFR_-1<<" downto 0);" << endl;
 			}
 
 	}//end the combinational part   
@@ -954,10 +967,13 @@ TestIOMap FPMultiplier::getTestIOMap()
 	TestIOMap tim;
 	tim.add(*getSignalByName("X"));
 	tim.add(*getSignalByName("Y"));
+	tim.add(*getSignalByName("R"));
+#if VHDLDEBUG
 	tim.add(*getSignalByName("ResultException"));
 	tim.add(*getSignalByName("ResultSign"));
 	tim.add(*getSignalByName("ResultExponent"));
 	tim.add(*getSignalByName("ResultSignificand"));
+#endif
 	return tim;
 }
 
@@ -966,16 +982,21 @@ void FPMultiplier::fillTestCase(mpz_class a[])
 	/* Get I/Os */
 	mpz_class &svx = a[0];
 	mpz_class &svy = a[1];
-	mpz_class &svexc = a[2];
-	mpz_class &svsgn = a[3];
-	mpz_class &svexp = a[4];
-	mpz_class &svfra = a[5];
-
+	mpz_class &svr = a[2];
+#if VHDLDEBUG // For debugging
+	mpz_class &svexc = a[3];
+	mpz_class &svsgn = a[4];
+	mpz_class &svexp = a[5];
+	mpz_class &svfra = a[6];
+#endif
 	/* Compute result */
 	FPNumber x(wEX_, wFX_), y(wEY_, wFY_), r(wER_, wFR_, normalized_);
 	x = svx; y = svy;
 	r = x * y;
+	svr = r.getSignalValue();
 
+
+#if VHDLDEBUG // For debugging
 	svexc = r.getExceptionSignalValue();
 	svsgn = r.getSignSignalValue();
 	// Exponent and fraction are not defined for zero, inf or NaN
@@ -984,5 +1005,6 @@ void FPMultiplier::fillTestCase(mpz_class a[])
 		svexp = r.getExponentSignalValue();
 		svfra = r.getFractionSignalValue();
 	}
+#endif
 }
 

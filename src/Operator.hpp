@@ -146,6 +146,7 @@ public:
 	 * @param name  the name of the signal
 	 * @param width the width of the signal
 	 * @param delay the delay of the signal. The number of register levels that this signal needs to be delayed with.
+	 If delay<=0 then this is equivalent to addSignal
 	 */
 	string addDelaySignalNoReset(const std::string name, const int width, const int delay);
 
@@ -156,6 +157,7 @@ public:
 	 * @param name  the name of the signal
 	 * @param width the width of the signal
 	 * @param delay the delay of the signal. The number of register levels that this signal needs to be delayed with.
+	 If delay<=0 then this is equivalent to addSignal
 	 */
 	string addDelaySignalBus(const std::string name, const int width, const int delay);
 	
@@ -166,6 +168,7 @@ public:
 	 * @param name  the name of the signal
 	 * @param width the width of the signal
 	 * @param delay the delay of the signal. The number of register levels that this signal needs to be delayed with.
+	 If delay<=0 then this is equivalent to addSignal.
 	 */
 	string addDelaySignalBusNoReset(const std::string name, const int width, const int delay);
 	
@@ -173,6 +176,9 @@ public:
 	 * Returns a string of the form name_d_d_d..._d where #(_d)=delay
 	 * @param name  the name of the signal
 	 * @param delay the delay of the signal. The number of register levels that this signal needs to be delayed with.
+	 If delay<=0 then no delay is inserted. This way the following code synchronizes signals from two paths with different delays:
+	 getDelaySignalName(s1,  s2_delay - s1_delay)  // will be delayed if s2_delay>s1_delay
+    getDelaySignalName(s2,  s1_delay - s2_delay)  // will be delayed if s1_delay>s2_delay
 	 */	 
 	string  getDelaySignalName(const string name, const int delay);
 
