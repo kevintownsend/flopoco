@@ -130,7 +130,7 @@ string Operator::addDelaySignal(const string name, const int width, const int de
 	ostringstream o;
 	Signal *s;
 	o << name;
-	// if the delay is zero it is equivalent to addSignal
+	// if delay <= 0 it is equivalent to addSignal
 	if (delay > 0) {
 		for (int i=0; i<delay; i++){
 			if (signalMap_.find(o.str()) != signalMap_.end()) {
@@ -161,7 +161,7 @@ string Operator::addDelaySignalNoReset(const string name, const int width, const
 
 	Signal *s;
 	o << name;
-	// if the delay is zero it is equivalent to addSignal
+	// if delay <= 0 it is equivalent to addSignal
 	if (delay > 0) {
 		for (int i=0; i<delay; i++){
 			if (signalMap_.find(o.str()) != signalMap_.end()) {
@@ -191,7 +191,7 @@ string Operator::addDelaySignalBus(const string name, const int width, const int
 	ostringstream o;
 	Signal *s;
 	o << name;
-	// if the delay is zero it is equivalent to addSignal
+	// if delay <= 0 it is equivalent to addSignal
 	if( delay > 0) {
 		for (int i=0; i<delay; i++){
 			if (signalMap_.find(o.str()) != signalMap_.end()) {
@@ -221,7 +221,7 @@ string Operator::addDelaySignalBusNoReset(const string name, const int width, co
 	ostringstream o;
 	Signal *s;
 	o << name;
-	// if the delay is zero it is equivalent to addSignal
+	// if delay<=0 it is equivalent to addSignal
 	if (delay > 0) {
 		for (int i=0; i<delay; i++){
 			if(signalMap_.find(o.str()) != signalMap_.end()) {
@@ -249,7 +249,7 @@ string Operator::addDelaySignalBusNoReset(const string name, const int width, co
 
 string Operator::getDelaySignalName(const string name, const int delay) {
 	ostringstream o;
-	if (delay==0 || isSequential()==false)
+	if (delay<=0 || isSequential()==false)
 		return name;
 	else {
 		o << name;
