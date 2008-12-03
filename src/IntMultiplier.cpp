@@ -409,7 +409,7 @@ ostringstream padString;
 			padString<<"";
 		else 
 			padString<<zeroGenerator(numberOfZerosY_,0)<<" &";
-		o<<tab<< "i_Y <= "<< padString.str() <<" Y"<<endl;
+		o<<tab<< "i_Y <= "<< padString.str() <<" Y;"<<endl;
 
 		newLine(o);
 	}		
