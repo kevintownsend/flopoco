@@ -103,8 +103,8 @@ private:
 	int swapDifferencePipelineDepth;
 	int closePathDepth;
 	int farPathDepth;
-	int maxPathDepth;
-	
+	int maxPathDepth;	
+	int delaySDToRound;
 };
 
 #endif
