@@ -108,16 +108,6 @@ public:
 	 */	
 	void addRegisteredSignalWithoutReset(const std::string name, const int width=1);
 	
-#if 0 // removed by Florent
-  	/** Adds a registered with asynchronous reset signal to the signal list.
-	 * Adds a signal of type Signal::registeredWithAsyncReset to the the signal list. This leads
-	 * to adding two signals to the list, the second having the name = name + "_d" and having the type
-	 * Signal::wire
-	 * @param name  the name of the signal
-	 * @param width the width of the signal
-	 */	
-	void addRegisteredSignalWithAsyncReset(const std::string name, const int width=1);
-#endif	
 
 	/** Adds a registered with synchronous reset signal to the signal list.
 	 * Adds a signal of type Signal::registeredWithSyncReset to the the signal list. This leads
@@ -179,6 +169,10 @@ public:
 	 If delay<=0 then no delay is inserted. This way the following code synchronizes signals from two paths with different delays:
 	 getDelaySignalName(s1,  s2_delay - s1_delay)  // will be delayed if s2_delay>s1_delay
     getDelaySignalName(s2,  s1_delay - s2_delay)  // will be delayed if s1_delay>s2_delay
+
+	 If the operator is not sequential, the string returned is simply
+	 name. In principle, the code for a sequential operator is thus
+	 gracefully degraded into combinatorial code. See FPAdder for an example.
 	 */	 
 	string  getDelaySignalName(const string name, const int delay);
 
