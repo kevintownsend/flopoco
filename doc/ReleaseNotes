@@ -1,4 +1,23 @@
 ======================================================================
+Version 0.9 vastly improves FPAdder, stabilizes LongAcc, and sees an
+invasion of Logarithm Number System operators developed by external
+contributor Sylvain Collange.
+
+Logarithm Number System is an alternative to Floating-Point
+where multiplication and division are faster, cheaper and more
+accurate while addition and subtraction are more expensive and less
+accurate. It may be the right thing for your application.  
+
+======================================================================
+Version 0.8beta introduces FPLog and FPExp operators (currently not
+pipelined) and LongAcc2FP. It improves automatic test bench
+generation.  It also introduces the Altera Stratix II target.  It
+improves pipelining of LongAcc and FPMultiplier, and introduces
+pipelined version of IntConstMult (still buggy for some large
+constants).  This is still a beta release, comments and bug reports
+welcome.
+
+======================================================================
 Version 0.5beta adds the HOTBM operator 
 and fixes bugs in the other operators.
 

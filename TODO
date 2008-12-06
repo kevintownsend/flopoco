@@ -2,15 +2,18 @@ TODO file for FloPoCo
 
 
 General:
-pipeline FPConstMult, HOTBM, FPExp, FPLog
+pipeline HOTBM, FPExp, FPLog
 add FPDivider and FPSquareRoot
 
 Pipeline framework, Operator and Targets:
+* better evaluation of the frequency of the shifters and LZOCs 
 * finetune Altera target
-* replace the _d_d_d_d names with shorter, index-based ones.
-* get the constants right to have a better evaluation of the frequency of the shifters
+* get rid of _d in the outputVHDL codes, replace them with getDelaySignalName
+* before or after, rename getDelaySignalName() into D() for code readability
+* Then replace the _d_d_d_d names with shorter, index-based ones.
 * manage a notion of cycle at the Operator level?
-* add an output_vhdl_instance method to Operator? Not sure.
+   => Add automatic or semi-automatic synchro checking (not clear yet how)
+* add slack delay information
 
 
 ConstMult:
@@ -22,11 +25,11 @@ ConstMult:
 * Use DSP: find the most interesting constant fitting on 18 bits
 * Implement the continued fraction stuff for FPCRConstMult
 
-LongAcc:
-* add test bench generation
-* add overflow flags
+FPAdder
+* a few optimization opportunities, see the TODO inside FPAdder.cpp
 
 FPMultiplier:
+* Cleaning up
 * refine the DSP model in Targets/StratixII
 
 SumOfProducts
@@ -47,8 +50,9 @@ Version 0.5 : HOTBM integration
 Version 0.6 : FPLog
 Version 0.7 : FPExp
 Version 0.8 : DotProduct
+Version 0.9 : LNS operators, thanks to Sylvain Collange
 -- we're here (much faster than expected)
-Version ???   FPSquarer
+Version ???   FPDiv, FPSqrt
 Version ???   FPAddSub (for FFT butterfly structure)
 Version ???   FixToFPUniformDist (2008 ASAP paper by Thomas with improvements)
 Version ???   FPSquarer
