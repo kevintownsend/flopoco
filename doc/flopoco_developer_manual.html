@@ -9,243 +9,184 @@
 	<META NAME="CHANGED" CONTENT="20081206;14420300">
 	<META NAME="DC.date" CONTENT="2008-07-22T10:14:32">
 	<STYLE TYPE="text/css">
-	<!--
-		P { font-family: "Times New Roman", serif; font-size: 14pt }
-		P.preformattedtext { border: none; padding: 0cm; font-family: "DejaVu Sans Mono", monospace; font-size: 11pt }
-		P.textbody { margin-bottom: 0.25cm; border: none; padding: 0cm; font-family: "Times New Roman", serif; font-size: 14pt }
-		P.standard { border: none; padding: 0cm; font-family: "Times New Roman", serif; font-size: 14pt }
-		P.tablecontents { border: none; padding: 0cm; font-family: "Times New Roman", serif; font-size: 14pt }
-		H2 { margin-top: 0.46cm; margin-bottom: 0.25cm; border: none; padding: 0cm; font-family: "Times New Roman", serif; font-size: 21pt; font-style: italic }
-	-->
 	</STYLE>
 </HEAD>
 <BODY LANG="en-US" DIR="LTR">
 <H1>Getting started with FloPoCo</H1>
-<P ALIGN=LEFT>Welcome to new developers!</P>
-<P ALIGN=LEFT>If you are unfamiliar with the cmake system, there is
+
+<P>Welcome to new developers!</P>
+
+<P>If you are unfamiliar with the cmake system, there is
 little to learn, really. When adding .hpp and .cpp files to the
-project, you will need to edit CmakeLists.txt. It is probably going
+project, you will need to edit CMakeLists.txt. It is probably going
 to be straightforward, just do some imitation of what is already
 there. Anyway cmake is well documented. 
 </P>
-<P ALIGN=LEFT>In FloPoCo, everything is_a Operator. Go read
-Operator.hpp first. 
+
+<P>In FloPoCo, everything is an Operator. Go read Operator.hpp first. 
 </P>
-<P ALIGN=LEFT>Operator is a virtual class. For an example of simple
+
+<P>Operator is a virtual class. For an example of simple
 Operator, go read IntAdder. Addition is written as + in modern VHDL,
 but the class IntAdder implements adders pipelined to arbitrary
 frequency, so you'll get an idea on how FloPoCo implements
 frequency-directed pipelining. 
 </P>
-<P ALIGN=LEFT>For a more complex class with subcomponents, go read
+
+<P>For a more complex class with subcomponents, go read
 FPAdder. It instantiates several IntAdders, leading zero counters and
-shifters, asks them their pipeline depth, then builds its own
-pipeline out of this information. There should be a figure in the
-doc/Figures directory.</P>
-<P ALIGN=LEFT>To understand the command line, go read main.cpp. It is
+shifters, asks them their pipeline depth, then builds its own pipeline
+out of this information. There should be a figure in the doc/Figures
+directory. This class is also an example of the best way to write a
+single code for both a pipelined operator and the combinatorial
+version.</P>
+
+<P>To understand the command line, go read main.cpp. It is
 not the part we are the most proud of, but it does the job.</P>
-<P ALIGN=LEFT>The rest is arithmetic! 
+
+<P>The rest is arithmetic! 
 </P>
-<P ALIGN=LEFT>And do not hesitate to contact us: Florent.de.Dinechin,
+
+<P>And do not hesitate to contact us: Florent.de.Dinechin,
 à ens-lyon.fr</P>
-<P ALIGN=LEFT><BR><BR>
+
+<P><BR><BR>
 </P>
-<H1><!-- This file was converted to xhtml by Writer2xhtml ver. 0.5. See http://www.hj-gym.dk/~hj/writer2latex for more info. -->FloPoCo
-Coding Standards</H1>
-<P CLASS="standard" ALIGN=LEFT STYLE="font-weight: medium"><FONT SIZE=4>As
+
+
+
+<H2>FloPoCo Coding Standards</H2>
+<P>As
 the complexity and size of this project increase, it feels necessary
 to define a set of coding rules and guidelines in order to have a
-clean an consistent code. </FONT>
+clean an consistent code. 
 </P>
-<P CLASS="standard" ALIGN=LEFT STYLE="font-weight: medium"><FONT SIZE=4>If
-you don't like it, change it, but change it in all the code :)</FONT></P>
-<P CLASS="standard" ALIGN=LEFT STYLE="font-weight: medium"><FONT SIZE=5><I>Stylistic
-Conventions</I></FONT></P>
+
+<H3>File Names</H3>
 <UL>
-	<LI><P CLASS="textbody">Source code should use <B>UTF8</B> character
-	set. 
-	</P>
-	<LI><P CLASS="textbody">Variable <B>names</B> and <B>comments</B>
+  <LI><P>The extensions should be .hpp/.cpp for C++
+		headers/code. 
+	 </P>
+  <LI><P>C++ files should have the same name and case
+		than the class they contain. For example class FPAdder should be
+		declared in file FPAdder.hpp and implemented in FPAdder.cpp. 
+	 </P>
+</UL>
+
+<H3>Stylistic conventions</H3>
+
+<UL>
+  <LI><P>Source code should use <B>UTF8</B> character set.</P>
+  <LI><P>Variable names and comments
 	should be in <B>English</B>. 
 	</P>
-	<LI><P CLASS="textbody">Class names are nouns, in mixed-case, with
+	<LI><P>Class names are nouns, in mixed-case, with
 	an initial upper-case letter and the ﬁrst letter of each
 	subsequent word capitalized (e.g. TestBench). 
 	</P>
-	<LI><P CLASS="textbody">Method names are <B>verbs</B> or <SPAN STYLE="font-weight: medium">nouns</SPAN>
-	in mixed-case, <B>starting with a lower-case letter </B>(e.g.
+	<LI><P>Method names are verbs or nouns
+	in <B>mixed-case, starting with a lower-case letter </B>(e.g.
 	update() or addElement()). 
 	</P>
-	<LI><P CLASS="textbody">Methods that <B>return</B> a value should
+	<LI><P>Methods that return a value should
 	take the form getSize(). 
 	</P>
-	<LI><P CLASS="textbody">The <B>names of local variables</B> should
+	<LI><P>The <B>names of local variables</B> should
 	be in mixed case, starting with a lower-case letter (e.g.
 	countDepth). This also applies to the formal parameters of methods.
 	<FONT COLOR="#ff0000">Do not use names starting with underscore</FONT>.
 		</P>
-	<LI><P CLASS="textbody">Private and protected data member names must
+	<LI><P>Private and protected data member names must
 	end with underscore &quot;_&quot;</P>
-	<LI><P CLASS="textbody">The names of <B>macro</B> or <B>static const</B>
+	<LI><P>The names of macros or <CODE>static const</CODE>
 	should be all upper-case words, separated by underscore: 
 	</P>
-</UL><A NAME="Table17Ctable"></A>
-<TABLE CELLPADDING=2 CELLSPACING=0>
-	<TR>
-		<TD>
-			<P CLASS="preformattedtext" STYLE="border: 1px solid #000000; padding: 0.1cm">
-			#define MIN_WIDTH 3</P>
-			<P CLASS="preformattedtext" STYLE="border: 1px solid #000000; padding: 0.1cm">
-			static const string VERSION = &quot;0.8&quot;;</P>
-		</TD>
-	</TR>
-</TABLE>
-<P CLASS="textbody">Indentation should be done with <B>tabs</B>, <FONT COLOR="#ff0000">not
-spaces</FONT>. This allows each developers to use his favorite indent
-size without changing the code. 
+	<PRE STYLE="border: 1px solid #000000; padding: 0.1cm">
+#define MIN_WIDTH 3
+static const string VERSION = &quot;0.8&quot;;</PRE>
+
+	<LI> <P>Indentation should be done
+		 with <B>tabs</B>, <FONT COLOR="#ff0000">not
+			spaces</FONT>. This allows each developers to use his
+		 favorite indent size without changing the code.
+	  </P>
+	<LI><P>Preferred layout for braces: </P>
+	  <PRE STYLE="border: 1px solid #000000; padding: 0.1cm">
+void MyClass::myMethod(int x){
+  if (x&gt;10){
+    cout &lt;&lt; &quot;Some text&quot; &lt;&lt; endl;
+  }
+}</PRE>
+
+<LI><P>When wrapping lines from long function calls,
+where the wrapped line does not start at the same level of
+indentation as the start of the function call, tab up to the start of
+the function call, and then use spaces to the opening parenthesis. 
 </P>
-<UL>
-	<LI><P CLASS="textbody">Use the following layout for braces: 
-	</P>
-</UL><A NAME="Table27Ctable"></A>
-<TABLE CELLPADDING=2 CELLSPACING=0>
-	<TR>
-		<TD>
-			<P CLASS="preformattedtext" STYLE="border: 1px solid #000000; padding: 0.1cm">
-			void MyClass::myMethod(int x){</P>
-			<P CLASS="preformattedtext" STYLE="border: 1px solid #000000; padding: 0.1cm">
-			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if (x&gt;10){</P>
-			<P CLASS="preformattedtext" STYLE="border: 1px solid #000000; padding: 0.1cm">
-			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cout
-			&lt;&lt; &quot;Some text&quot; &lt;&lt; endl;</P>
-			<P CLASS="preformattedtext" STYLE="border: 1px solid #000000; padding: 0.1cm">
-			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</P>
-			<P CLASS="preformattedtext" STYLE="border: 1px solid #000000; padding: 0.1cm">
-			}</P>
-		</TD>
-	</TR>
-</TABLE>
-<P CLASS="textbody">Use blank lines as follows: 
-</P>
-<UL>
-	<UL>
-		<LI><P CLASS="textbody">1 between methods, before (block or single
-		line) comment 
-		</P>
-		<LI><P CLASS="textbody">1 between logical sections of a method 
-		</P>
-		<LI><P CLASS="textbody">2 between sections of a source ﬁle 
-		</P>
-	</UL>
-	<LI><P CLASS="textbody"><I>enums</I> should follow the QT
+<PRE  STYLE="border: 1px solid #000000; padding: 0.1cm">
+[--tab-][--tab-][--tab-]someFunction(param, ...
+[--tab-][--tab-][--tab-][  spaces   ]moreparams, ...);</PRE>
+
+	<LI><P><I>enums</I> should follow the QT
 	conventions. i.e. CamelCase with First letter capitalization for
 	both enum type and enum values. Should be document with doxygen. The
 	/**&lt; tag */ can be used to add descriptions on the same line as
 	an enum value, e.g. 
-	</P>
-</UL><A NAME="Table37Ctable"></A>
-<TABLE CELLPADDING=2 CELLSPACING=0>
-	<TR>
-		<TD>
-			<P CLASS="preformattedtext" STYLE="border: 1px solid #000000; padding: 0.1cm">
-			/** @enum EnumName Here is a description of the enum */</P>
-			<P CLASS="preformattedtext" STYLE="border: 1px solid #000000; padding: 0.1cm">
-			enum EnumName</P>
-			<P CLASS="preformattedtext" STYLE="border: 1px solid #000000; padding: 0.1cm">
-			{</P>
-			<P CLASS="preformattedtext" STYLE="border: 1px solid #000000; padding: 0.1cm">
-			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;EnumValueOne,
-			&nbsp;/**&lt; Some doxygen description of EnumValueOne */</P>
-			<P CLASS="preformattedtext" STYLE="border: 1px solid #000000; padding: 0.1cm">
-			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;EnumValueTwo,
-			&nbsp;/**&lt; Some doxygen description of EnumValueTwo */</P>
-			<P CLASS="preformattedtext" STYLE="border: 1px solid #000000; padding: 0.1cm">
-			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;EnumValueThree
-			/**&lt; Some doxygen description of EnumValueThree */</P>
-			<P CLASS="preformattedtext" STYLE="border: 1px solid #000000; padding: 0.1cm">
-			};</P>
-		</TD>
-	</TR>
-</TABLE>
-<P CLASS="preformattedtext"><A NAME="FileNames"></A><A NAME="bkmFileNames"></A>
-<SPAN STYLE="text-decoration: none"><FONT FACE="Times New Roman, serif"><FONT SIZE=4 STYLE="font-size: 15pt"><B><I>File
-Names</I></B></FONT></FONT></SPAN></P>
-<UL>
-	<LI><P CLASS="textbody">The extensions are .hpp/.cpp for C++
-	headers/code. 
-	</P>
-	<LI><P CLASS="textbody">C++ files should have the same name and case
-	than the class they contain. For example class FPAdder should be
-	declared in file FPAdder.hpp and implemented in FPAdder.cpp. 
-	</P>
+	  <PRE STYLE="border: 1px solid #000000; padding: 0.1cm">
+/** @enum EnumName Here is a description of the enum *
+enum EnumName {
+   EnumValueOne,  /**&lt; Some doxygen description of EnumValueOne */
+   EnumValueTwo,  /**&lt; Some doxygen description of EnumValueTwo */
+   EnumValueThree /**&lt; Some doxygen description of EnumValueThree */
+};
+</PRE>
 </UL>
-<H2><A NAME="toc0"></A><A NAME="DoxygenComments"></A><A NAME="bkmDoxygenComments"></A>
-Doxygen Comments 
-</H2>
-<P CLASS="textbody">FloPoCo source code should be documented with
+
+
+
+<H3>Doxygen Comments </H3>
+<P>FloPoCo source code should be documented with
 <A HREF="http://www.stack.nl/%7Edimitri/doxygen/index.html">Doxygen</A>.
 From Doxygen webpage: 
 </P>
-<P CLASS="textbody"><I>&quot;Doxygen is a documentation system for
-C++, C, Java, [...] It can generate an on-line documentation browser
-(in HTML) and/or an off-line reference manual (in LaTeX) from a set
-of documented source files. [...] The documentation is extracted
+<P><I>&quot;Doxygen is a documentation system for
+	 C++, C, Java, [...] It can generate an on-line documentation browser
+	 (in HTML) and/or an off-line reference manual (in LaTeX) from a set
+	 of documented source files. [...] The documentation is extracted
 directly from the sources, which makes it much easier to keep the
 documentation consistent with the source code. [...] You can also
 visualize the relations between the various elements by means of
 include dependency graphs, inheritance diagrams, and collaboration
 diagrams, which are all generated automatically.</I> 
 </P>
-<P CLASS="textbody">(Quote extracted from the Sellarium Project
+<P>(Quote extracted from the Sellarium Project
 webpage)</P>
-<P CLASS="textbody"><FONT COLOR="#ff0000">All public and protected
+<P><FONT COLOR="#ff0000">All public and protected
 classes and methods from FloPoCo should be fully documented in the
 headers (.hpp). </FONT>
 </P>
-<P CLASS="textbody">There are different ways to comment C++ code with
+<P>There are different ways to comment C++ code with
 Doxygen, in FloPoCo use the following for headers files: 
-</P><A NAME="Table47Ctable"></A>
-<TABLE CELLPADDING=2 CELLSPACING=0>
-	<TR>
-		<TD>
-			<P CLASS="tablecontents" STYLE="border: 1px solid #000000; padding: 0.1cm">
-			<FONT FACE="DejaVu Sans Mono, monospace"><FONT SIZE=2 STYLE="font-size: 11pt">/**
-			</FONT></FONT>
-			</P>
-			<P CLASS="tablecontents" STYLE="border: 1px solid #000000; padding: 0.1cm">
-			&nbsp;<FONT FACE="DejaVu Sans Mono, monospace"><FONT SIZE=2 STYLE="font-size: 11pt">*
-			Adds a TestCase to this TestCaseList. Detailled description</FONT></FONT></P>
-			<P CLASS="tablecontents" STYLE="border: 1px solid #000000; padding: 0.1cm">
-			&nbsp;<FONT FACE="DejaVu Sans Mono, monospace"><FONT SIZE=2 STYLE="font-size: 11pt">*
-			@param t TestCase to add </FONT></FONT>
-			</P>
-			<P CLASS="tablecontents" STYLE="border: 1px solid #000000; padding: 0.1cm">
-			&nbsp;<FONT FACE="DejaVu Sans Mono, monospace"><FONT SIZE=2 STYLE="font-size: 11pt">*/
-			</FONT></FONT>
-			</P>
-			<P CLASS="tablecontents" STYLE="border: 1px solid #000000; padding: 0.1cm">
-			<FONT FACE="DejaVu Sans Mono, monospace"><FONT SIZE=2 STYLE="font-size: 11pt">void
-			add(TestCase t); </FONT></FONT>
-			</P>
-		</TD>
-	</TR>
-</TABLE>
-<P CLASS="textbody">Brief descriptions are single line only, and stop
+</P>
+<PRE STYLE="border: 1px solid #000000; padding: 0.1cm">
+/**
+&nbsp;* Adds a TestCase to this TestCaseList. 
+   Detailled description
+&nbsp;*@param t TestCase to add<
+&nbsp;*/
+void add(TestCase t);
+</PRE>
+
+<P>Brief descriptions are single line only, and stop
 at the first full stop (period). Any subsequent sentences which occur
 before @param or a similar tag are considered to be part of a
 detailed description. 
 </P>
-<P CLASS="textbody"><A NAME="TabandSpaceIndentationMethod"></A><A NAME="bkmTabandSpaceIndentationMethod"></A>
-<FONT SIZE=5 STYLE="font-size: 21pt"><I>Tab and Space Indentation
-Method</I></FONT></P>
-<P CLASS="textbody">When wrapping lines from long function calls,
-where the wrapped line does not start at the same level of
-indentation as the start of the function call, tab up to the start of
-the function call, and then use spaces to the opening parenthesis. 
-</P>
-<P CLASS="preformattedtext">[--tab-][--tab-][--tab-]someFunction(param,
-...</P>
-<P CLASS="preformattedtext" STYLE="margin-bottom: 0.56cm">[--tab-][--tab-][--tab-][
-&nbsp;spaces &nbsp;&nbsp;]moreparams, ...);</P>
+
+
+<H3>Stylistic conventions for generated VHDL</H3>
+
+... may be formalized some day. Currently, the main advice is to use helper functions of the  Operator class as much as possible.
+
 </BODY>
 </HTML>
