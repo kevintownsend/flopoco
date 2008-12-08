@@ -9,8 +9,17 @@ if(COMMAND cmake_policy)
 endif(COMMAND cmake_policy)
 
 
+#####################For packaging (source file distrib so far)#######
+# Use  make package_source to build a release
+# Currently it doesn't work at all
+
+SET(CPACK_SOURCE_GENERATOR "TGZ")
+SET(CPACK_PACKAGE_VERSION_MAJOR "0")
+SET(CPACK_PACKAGE_VERSION_MINOR "9")
+SET(CPACK_PACKAGE_VERSION_PATCH "0")
 
 INCLUDE(CPack)
+
 
 # Uncomment for profiling
 #SET(CMAKE_CXX_FLAGS_DEBUG "-g -pg")
