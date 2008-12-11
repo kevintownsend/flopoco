@@ -25,6 +25,7 @@
 //   if it becomes a part of the critical path
 // TODO remove pipeline stage after finalRoundAdd if slack allows
 // TODO clean up X propagation to remove warnings
+// TODO Single path adder
 
 #include <iostream>
 #include <sstream>
@@ -483,7 +484,7 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 		// result fracResultfar0 of this adder is registered
 		int delayFromSD2 = rightShifter->getPipelineDepth() + 1 + fracAddFar->getPipelineDepth() + 1;
 		// if the second operand was shifted out of the operation, then the result of the operation becomes = to the first operand //		
-		o << tab << "-- normalisation stage" <<endl; 
+		o << tab << "-- 2-bit normalisation" <<endl; 
 
 		o << tab << "fracResultFarNormStage <= " << getDelaySignalName("fracResultfar0",1) << ";"<<endl;
 
