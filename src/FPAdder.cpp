@@ -479,7 +479,7 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 	             	// below, + 1 because XOR stage
 		o<<tab<<tab<<tab<< "Cin => "<<getDelaySignalName("cInAddFar",1) << "," << endl;
 		o<<tab<<tab<<tab<< "R => fracResultfar0 " << endl; 
-		o<<tab<<tab<<tab<< ");" << endl<<endl;
+		o<<tab<<tab<<tab<< ");" << endl;
 	
 		// result fracResultfar0 of this adder is registered
 		int delayFromSD2 = rightShifter->getPipelineDepth() + 1 + fracAddFar->getPipelineDepth() + 1;
@@ -536,7 +536,7 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 		//=========================================================================|
 		//                              Synchronization                            |
 		//=========================================================================|				
-		o<<"-- Synchronization of both paths --"<<endl;
+		o<<endl<<"-- Synchronization of both paths --"<<endl;
 
 				
 		//synchronize the close signal
