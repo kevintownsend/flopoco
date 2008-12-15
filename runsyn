@@ -1,4 +1,4 @@
-#! /bin/sh -e
+##
 ################################################################################
 ##                    Compilation and Result Generation script
 ## This tool is part of  FloPoCo
@@ -7,8 +7,8 @@
 ################################################################################
 
 
-quartus_map --source=flopoco.vhdl --family=StratixII  Test
-quartus_fit --parallel=3 --fmax=400MHz  Test
+#quartus_map --source=flopoco.vhdl --family=StratixII  Test
+#quartus_fit --parallel=3 --fmax=400MHz  Test
 
 # Suggestions:  
 # 2 different scripts, one for Xilinx and one for Altera. 
@@ -25,7 +25,7 @@ quartus_fit --parallel=3 --fmax=400MHz  Test
 #
 #COMMAND:  quartus_fit Test
 #COMMENT: place and route. 
-	  Assigns pins to the IO (see Test.pin)
+#	  Assigns pins to the IO (see Test.pin)
 #          writes some reports Test.fit.summary has the area information, the delay is at the end of Test.fit.rpt	
 # OPTIONS: see quartus_fit --help
 # --fmax=400MHz  
@@ -39,11 +39,6 @@ xilinxPath=/home/bogdan/Xilinx/10.1/ISE
 resultsPath=$HOME/Results
 ########################################################
 ########################################################
-
-
-
-
-
 
 
 function buildXST {
@@ -172,6 +167,7 @@ else
 	exit
 fi
 }
+
 ################################################################################
 ################################################################################
 # Here is the actual place where the script starts
@@ -308,6 +304,7 @@ fi
 #move to project directory
 cd $projectPath
 
+
 #===============================================================================
 #THE XILINX PATH IS SET MANUALLY
 
@@ -315,7 +312,7 @@ settingsFilename=settings32.sh
 pf=$xilinxPath/$settingsFilename
 #execute commands from filename in the current shell
 if [ -a $pf ]; then
-	source $pf
+	sh $pf
 else
 	echo "> ERROR: Xilinx Path NOT set correctly. Modify path at the top of this file"	
 	echo "  Exiting ..."
@@ -330,8 +327,10 @@ if [ "$pName" == "" ]; then
 	exit
 fi
 
+
+
 #remove all project locks
-rm -R -f *.lock 														
+rm -R -f *.lock 
 
 # Set up the DSP block parameter
 if [ $# -eq 6 ]; then
@@ -410,7 +409,12 @@ fi
 cd ..	
 	
 #running xst script	
-xst -ise "$projectFilePath" -intstyle ise -ifn $topModule.xst -ofn $topModule.syr | tee console.out
+pName=${pName%%.ise*}
+
+projectFilePath="$projectPath""$pName" #TODO 
+echo "The project file path=|$projectFilePath|"
+echo "The top module is=|$topModule|"
+xst -ise $projectFilePath -intstyle ise -ifn $topModule.xst -ofn $topModule.syr | tee console.out
 
 echo -en "\033[0;33;40m"
 grep 'WARNING' console.out
