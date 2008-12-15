@@ -6,7 +6,6 @@
 ## Author:  Bogdan Pasca (2008)
 ################################################################################
 
-
 #quartus_map --source=flopoco.vhdl --family=StratixII  Test
 #quartus_fit --parallel=3 --fmax=400MHz  Test
 
@@ -37,6 +36,15 @@
 ########################################################
 xilinxPath=/home/bogdan/Xilinx/10.1/ISE
 resultsPath=$HOME/Results
+settingsFilename=settings32.sh 
+pf=$xilinxPath/$settingsFilename
+
+#if results are to be outputed to a file or not
+out2file=1
+#if verbose option is active or not
+verbose=0
+#if showing warnings is active or not
+warnings=0
 ########################################################
 ########################################################
 
@@ -170,19 +178,30 @@ fi
 
 ################################################################################
 ################################################################################
+################################################################################
+################################################################################
+################################################################################
+################################################################################
+################################################################################
+################################################################################
+################################################################################
+################################################################################
+################################################################################
+################################################################################
+
 # Here is the actual place where the script starts
 #clear
 
-if [ $# -lt 3 ]; then 
+if [ $# -gt 2]; then 
 	echo "=================== runsyn HELP ======================================="
-	echo "Input shoud be of form: PATH OPERATOR Out2FILE VERBOSE [Optional]"
-	echo "	>PATH    : the path to the project containing the .ise file"
+	echo "Input shoud be of form: OPERATOR [Optional]"
 	echo "	>OPERATOR: the name of the top module "
+	echo " Hidden: (set internally)"
 	echo "	>OUT2FILE: {0|1} - outputs the synthesis results to the file in "
-	echo "             $HOME/Results/ProjectName/OperatorValues"
-	echo "	>VERBOSE : {0|1} - the verbose option"
-	echo "Optional: (must be all present - if any is present)"
-	echo "	>warnings: {0|1} - if the bash warnings are or not displayed"
+	echo "             $HOME/Results/ProjectName/OperatorValues (set on 1)" 
+	echo "	>VERBOSE : {0|1} - the verbose option (set on 0)"
+	echo "	>WARNINGS: {0|1} - if the bash warnings are or not displayed (set on 0)"
+	echo "Optional: "
 	echo "	>filenameTAG: is a tuple of op1_op2_op3 where:"
 	echo "                > op1={seq|cmb} ->eye candy for filename to distinguish"
 	echo "                  fast if operator is sequential or combinatorial"
@@ -190,25 +209,13 @@ if [ $# -lt 3 ]; then
 	echo "                > op3={yes|no|auto} the synthetis option for use DSP48"
 	echo "======================================================================="
 	echo "Example: "
-	echo "runsyn /home/uesrname/ISElongAcc/ LongAcc_8_23_15_M30_20 1 1 0 seq_400_auto"
+	echo "runsyn LongAcc_8_23_15_M30_20 seq_400_auto"
 	echo "Exiting ..."
 	exit
 fi
 
 #===============================================================================
-projectPath=$1
-#check if $projectPath exists
-if [ -a $projectPath ]; then
-	echo "> INFO: Project path: $projectPath is valid"
-	echo "> INFO: Project path is set to: $projectPath"
-else
-	echo "> ERROR: The specified project path: $projectPath does NOT exist"	
-	echo "  Exiting ..."
-	exit 
-fi
-#===============================================================================
-
-topModule=$2
+topModule=$1
 echo "> INFO: Top Module name is: |$topModule| "
 #check if $topModule exists
 searchPattern="entity $topModule is"
@@ -222,9 +229,21 @@ if [ "$grepResult" == "" ]; then
 		exit
 	fi
 fi
-#===============================================================================
 
-out2file=$3
+#===============================================================================
+if [ $# -eq 1 ]; then
+	echo "> WARNING: optional parameters NOT present"
+else
+	if [ $# -eq 2 ]; then
+		echo "> INFO: optional parameters present"
+	else
+		echo "> ERROR: the total number of parameters exceeded"
+		echo "  Exiting ..."
+		exit 
+	fi
+fi
+
+#===============================================================================
 if [ $out2file -eq 1 -o $out2file -eq 0 ]; then
 	if [ $out2file -eq 1 ]; then
 		echo "> INFO: The synthetis results WILL BE outputed to disk"
@@ -237,8 +256,6 @@ else
 	exit
 fi
 #===============================================================================
-
-verbose=$4
 if [ $verbose -eq 1 -o $verbose -eq 0 ]; then
 	if [ $verbose -eq 1 ]; then
 		echo "> INFO: verbose option IS active"
@@ -251,20 +268,6 @@ else
 	exit
 fi
 #===============================================================================
-
-if [ $# -eq 4 ]; then
-	echo "> WARNING: optional parameters NOT present"
-else
-	if [ $# -eq 6 ]; then
-		echo "> INFO: optioal parameters present"
-	else
-		echo "> ERROR: the total number of parameters exceeded"
-		echo "  Exiting ..."
-		exit 
-	fi
-fi
-#===============================================================================
-warnings=$5
 if [ $warnings -eq 1 -o $warnings -eq 0 ]; then
 	if [ $warnings -eq 1 ]; then
 		echo "> INFO: warning option IS active"
@@ -277,39 +280,22 @@ else
 	exit
 fi
 #===============================================================================
-filenameTAG=$6
-#this should work when this bug is fixed
-#Bug #109931 in Ubuntu Website
-#if [[ "$filenameTAG" =~ (seq|cmb)_[1-9]+_(auto|yes|no)$ ]]
-#then
-#  echo "> INFO: Correct filename_tag"
-#else
-#	echo "> ERROR: the filename tag format is invalid. Pleas consult HELP"
-#	echo "> The entered filename tag was: |$filenameTAG|"
-#	echo "  Exiting ..."
-#	exit
-#fi
-
+filenameTAG=$2
 ################################################################################
 ################################################################################
 
 #set the startPath to the current path
 startPath=$PWD
 
-#check if the file flopoco.vhdl exists. If it does it is copied at the project path
-if [ -a "flopoco.vhdl" ]; then
-	cp "flopoco.vhdl" $projectPath
+#check if the file flopoco.vhdl exists
+if [! -a "flopoco.vhdl" ]; then
+	echo "> ERROR: the file flopoco.vhdl does not exist"
+	echo "  Exiting ..."
+	exit
 fi 
-
-#move to project directory
-cd $projectPath
-
 
 #===============================================================================
 #THE XILINX PATH IS SET MANUALLY
-
-settingsFilename=settings32.sh 
-pf=$xilinxPath/$settingsFilename
 #execute commands from filename in the current shell
 if [ -a $pf ]; then
 	sh $pf
@@ -319,15 +305,6 @@ else
 	exit	
 fi
 #===============================================================================
-
-pName=`find *.ise`
-if [ "$pName" == "" ]; then
-	echo "> ERROR: The project folder does not contain any .ise files "
-	echo "  Exiting ..."
-	exit
-fi
-
-
 
 #remove all project locks
 rm -R -f *.lock 
@@ -408,13 +385,7 @@ else
 fi	
 cd ..	
 	
-#running xst script	
-pName=${pName%%.ise*}
-
-projectFilePath="$projectPath""$pName" #TODO 
-echo "The project file path=|$projectFilePath|"
-echo "The top module is=|$topModule|"
-xst -ise $projectFilePath -intstyle ise -ifn $topModule.xst -ofn $topModule.syr | tee console.out
+xst  -ifn $topModule.xst -ofn $topModule.syr | tee console.out
 
 echo -en "\033[0;33;40m"
 grep 'WARNING' console.out
@@ -474,7 +445,7 @@ else
 	echo "  Exiting ..."
 	exit
 fi
-
+projectPath=$PWD
 cd $resultsPath/$operator/$opProp
 #copy the result summary
 rm -f $opProp\_$filenameTAG.syr
@@ -491,5 +462,41 @@ else
 	exit
 fi
 
+${#frequency=$freq}
+
+s=""
+function zeroGenerator {
+n=$1
+s=""
+for i in `seq 1 $n`
+do
+s=$s" "
+done
+}
+
+t="frequency=$freq"
+st=$((72-${#t}))
+
 echo "> INFO: Synthesis result written to: "$resultsPath/$operator/$opProp/
- 
+echo "================================================================================"
+echo "*                      SYNTHETHIS RESULTS                                      *"
+zeroGenerator $st
+spaces=$s
+echo "*     frequency=$freq $spaces*"
+t="$numberOfSlices"
+st=$((73-${#t}))
+zeroGenerator $st
+spaces=$s
+echo "*    $numberOfSlices $spaces*"
+t="$numberOfSliceFlipFlops"
+st=$((73-${#t}))
+zeroGenerator $st
+spaces=$s
+echo "*    $numberOfSliceFlipFlops $spaces*"
+t="$numberOf4InputLUTs"
+st=$((73-${#t}))
+zeroGenerator $st
+spaces=$s
+echo "*    $numberOf4InputLUTs $spaces*"
+echo "================================================================================"
+

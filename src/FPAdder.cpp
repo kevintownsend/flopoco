@@ -128,12 +128,12 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 		cout<<"depths="<<fracAddFar->getPipelineDepth()<<" "<<" "<<" "<<rightShifter->getPipelineDepth()<<endl;
 	}
 		
-	cout<<endl<<"Close path depth = "<< closePathDepth;
-	cout<<endl<<"Far path depth   = "<< farPathDepth;
+	//cout<<endl<<"Close path depth = "<< closePathDepth;
+	//cout<<endl<<"Far path depth   = "<< farPathDepth;
 	
 	maxPathDepth = max(closePathDepth, farPathDepth);							 
 	
-	cout<<endl<<"Max path depth   = "<< maxPathDepth<<endl;
+	//cout<<endl<<"Max path depth   = "<< maxPathDepth<<endl;
 	if(isSequential())		
 		setPipelineDepth(swapDifferencePipelineDepth + maxPathDepth + finalRoundAdd->getPipelineDepth() + 1);
 	else
