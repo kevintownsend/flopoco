@@ -225,7 +225,7 @@ void IntDualSub::outputVHDL(std::ostream& o, std::string name) {
 			if (i==0 && nbOfChunks>1){
 				o << tab << son_.str()<<"cin"<<i+1<<"r"<<i<<" <= ";
 				if (opType_==0)
-					o<<"(\"1\" & not(sX"<<i<<")) + (\"0\" & sY"<<i<<") + cin0;"<<endl;
+					o<<"(\"0\" & not(sX"<<i<<")) + (\"0\" & sY"<<i<<") + cin0;"<<endl;
 				else
 					o<<"(\"0\" & sX"<<i<<") + (\"0\" & sY"<<i<<") + cin0;"<<endl;
 
@@ -233,7 +233,7 @@ void IntDualSub::outputVHDL(std::ostream& o, std::string name) {
 				if (i<nbOfChunks-1){
 					o << tab << "yMxcin"<<i+1<<"r"<<i<<" <=";
 					if (opType_==0)	
-						o<<" ( \"1\" & not(sX"<<i<<getDelaySignalName("",i)<< "))";
+						o<<" ( \"0\" & not(sX"<<i<<getDelaySignalName("",i)<< "))";
 					else
 						o<<" ( \"0\" & sX"<<i<<getDelaySignalName("",i)<< ")";
 					o << " + ( \"0\" & sY"<<i<<getDelaySignalName("",i)<< ")"
