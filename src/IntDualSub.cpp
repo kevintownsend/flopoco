@@ -127,34 +127,36 @@ Operator(target), wIn_(wIn), inputDelays_(inputDelays), opType_(opType)
 		
 		for (int i=0;i<nbOfChunks;i++){
 			ostringstream t; t<<"X"<<i;	
-			addDelaySignalBus(t.str(),cSize[i],bufferedInputs); t.str(""); t<<"Y"<<i;
-			addDelaySignalBus(t.str(),cSize[i],bufferedInputs); t.str(""); 
-			//if (i==0)
-			//	addDelaySignal("Carry",1,bufferedInputs); 
+			addDelaySignalBusNoReset(t.str(),cSize[i],bufferedInputs); 
+			t.str(""); 
+			t<<"Y"<<i;
+			addDelaySignalBusNoReset(t.str(),cSize[i],bufferedInputs); 
+			t.str(""); 
 		}
 		
 		for (int i=0; i<nbOfChunks-1;i++){
 			ostringstream t;
 			t<<"xMycin"<<i+1<<"r"<<i;
-			addRegisteredSignalWithSyncReset(t.str(),cSize[i]+1);
+			addDelaySignalNoReset(t.str(),cSize[i]+1,1);
 			t.str("");
 			t<<son_.str()<<"cin"<<i+1<<"r"<<i;
-			addRegisteredSignalWithSyncReset(t.str(),cSize[i]+1);
+			addDelaySignalNoReset(t.str(),cSize[i]+1,1);
 		}
 		
 		for (int i=0; i<nbOfChunks;i++){
 			ostringstream t;
 			t<<"xMyr"<<i;
-			addDelaySignalBus(t.str(),cSize[i],nbOfChunks-2-i);
+			addDelaySignalBusNoReset(t.str(),cSize[i],nbOfChunks-2-i);
 			t.str("");
 			t<<son_.str()<<"r"<<i;
-			addDelaySignalBus(t.str(),cSize[i],nbOfChunks-2-i);
+			addDelaySignalBusNoReset(t.str(),cSize[i],nbOfChunks-2-i);
 		}	
 		
 		for (int i=0; i<nbOfChunks;i++){
 			ostringstream t; t<<"sX"<<i;
-			addDelaySignalBus(t.str(),cSize[i],i); t.str(""); t<<"sY"<<i;
-			addDelaySignalBus(t.str(),cSize[i],i); t.str("");
+			addDelaySignalBusNoReset(t.str(),cSize[i],i); t.str(""); 
+			t<<"sY"<<i;
+			addDelaySignalBusNoReset(t.str(),cSize[i],i); t.str("");
 			if (i==0)
 			addSignal("cin0",1);
 		}	
@@ -210,11 +212,11 @@ void IntDualSub::outputVHDL(std::ostream& o, std::string name) {
 		//additions	for x - y	
 		for (int i=0;i<nbOfChunks;i++){
 			if (i==0 && nbOfChunks>1)
-				o << tab << "xMycin"<<i+1<<"r"<<i<<" <= (\"0\" & sX"<<i<<") + (\"1\" & not(sY"<<i<<")) + cin0;"<<endl;
+				o << tab << "xMycin"<<i+1<<"r"<<i<<" <= (\"0\" & sX"<<i<<") + (\"0\" & not(sY"<<i<<")) + cin0;"<<endl;
 			else 
 				if (i<nbOfChunks-1)
 					o << tab << "xMycin"<<i+1<<"r"<<i<<" <= ( \"0\" & sX"<<i<<getDelaySignalName("",i)<< ")"
-					                                 << " + ( \"1\" & not(sY"<<i<<getDelaySignalName("",i)<< "))"
+					                                 << " + ( \"0\" & not(sY"<<i<<getDelaySignalName("",i)<< "))"
 					                                 << " + xMycin"<<i<<"r"<<i-1<<"_d("<<cSize[i-1]<<");"<<endl;
 		}
 
@@ -304,6 +306,8 @@ TestIOMap IntDualSub::getTestIOMap()
 	return tim;
 }
 
+
+// FIXME doesn't work for:    flopoco  -frequency=500 IntDualSub 26 0 TestBench 10000
 void IntDualSub::fillTestCase(mpz_class a[])
 {
 	mpz_class& svX = a[0];
@@ -316,7 +320,8 @@ void IntDualSub::fillTestCase(mpz_class a[])
 
 	svR1 = svX - svY;
 	svR2 = svY - svX;
-	cout<<endl<< "x is "<< svX <<" y is "<<svY << " x-y is "<<	svR1 << " y-x is "<<svR2<<endl;
+	if(verbose)
+		cout<<endl<< "x is "<< svX <<" y is "<<svY << " x-y is "<<	svR1 << " y-x is "<<svR2<<endl;
 	// Don't allow overflow
 	mpz_clrbit(svR1.get_mpz_t(),wIn_);
 	mpz_clrbit(svR2.get_mpz_t(),wIn_);  
