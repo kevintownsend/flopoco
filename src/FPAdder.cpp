@@ -24,7 +24,12 @@
 // TODO move close path prenormalization up to the Swap Difference box
 //   if it becomes a part of the critical path
 // TODO remove pipeline stage after finalRoundAdd if slack allows
+
 // TODO clean up X propagation to remove warnings
+
+// TODO Rename FracXFar -> FracXFar, same for Y and other 3   
+// TODO remove last pipe stage from the Shifter -- beware fix LongAcc also
+
 // TODO Single path adder
 
 #include <iostream>
@@ -71,39 +76,42 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 	addFPOutput("R", wER, wFR);
 
 		
-	//instantiate a right shifter
-	rightShifter = new Shifter(target,wFX+1,wFX+3,Right);
-	oplist.push_back(rightShifter);
+	// map<string, double> inputs;
+	// inputs["X"]=0;
+	// inputs["Y"]=1.5e-10;
+	// inputs["Cin"]=0;
 	
-	map<string, double> inputs;
-	inputs["X"]=0;
-	inputs["Y"]=1.5e-10;
-	inputs["Cin"]=0;
+
+	// -----Sub-components---------------------------------
 	
+	// Close path
 	dualSubClose = new 	IntDualSub(target, wF + 3, 0);
 	dualSubClose->Operator::setOperatorName("DualSubClose");
 	oplist.push_back(dualSubClose);
-	
-	addDelaySignalNoReset("fracRClosexMy",wF+3, 1);
-	addDelaySignalNoReset("fracRCloseyMx",wF+3, 1);
-	addDelaySignalNoReset("fracSignClose",1, 1);
-
-	// finalRoundAdd will add the mantissa concatenated with exponent, two bits reserved for possible under/overflow 
-	finalRoundAdd = new IntAdder(target, wE + wF + 2); 
-	finalRoundAdd->Operator::setOperatorName("finalRoundAdd");
-	oplist.push_back(finalRoundAdd);
-	
-	fracAddFar = new IntAdder(target,wF+4);
-	fracAddFar->Operator::setOperatorName("fracAddFar");
-	oplist.push_back(fracAddFar);
-	
+		
 	lzocs = new LZOCShifterSticky(target, wFX+2, wFX+2,0, 0);
 	if(lzocs->getCountWidth() > wE){
 		cout << endl << "****WARNING****: wE < log2(wF), the generated VHDL is probably broken."<<endl;
 		cout << "    Try increasing wE."<<endl;
 	}
 	oplist.push_back(lzocs);
-		
+
+	// Far path
+	rightShifter = new Shifter(target,wFX+1,wFX+3,Right);
+	oplist.push_back(rightShifter);
+
+ 	fracAddFar = new IntAdder(target,wF+4);
+	fracAddFar->Operator::setOperatorName("fracAddFar");
+	oplist.push_back(fracAddFar);
+
+	// finalRoundAdd will add the mantissa concatenated with exponent, two bits reserved for possible under/overflow 
+	finalRoundAdd = new IntAdder(target, wE + wF + 2); 
+	finalRoundAdd->Operator::setOperatorName("finalRoundAdd");
+	oplist.push_back(finalRoundAdd);
+
+
+	// Pipeline setup-------------------------------------------------
+
 	//swap/Difference pipeline depth
 	swapDifferencePipelineDepth = 1;
 		
@@ -124,16 +132,18 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 		+ 1 // normalization stage
 		;
 	
-	if(verbose){
-		cout<<"depths="<<fracAddFar->getPipelineDepth()<<" "<<" "<<" "<<rightShifter->getPipelineDepth()<<endl;
-	}
-		
-	//cout<<endl<<"Close path depth = "<< closePathDepth;
-	//cout<<endl<<"Far path depth   = "<< farPathDepth;
 	
 	maxPathDepth = max(closePathDepth, farPathDepth);							 
-	
-	//cout<<endl<<"Max path depth   = "<< maxPathDepth<<endl;
+
+	if(verbose){
+		cout<<endl<<"Close path depth = "<< closePathDepth<<endl;
+		cout<<"Far path depth   = "<< farPathDepth<<endl;
+		//cout<<endl<<"Max path depth   = "<< maxPathDepth<<endl;
+		//cout<<"depths="<<fracAddFar->getPipelineDepth()<<" "<<" "<<" "<<rightShifter->getPipelineDepth()<<endl;
+	}
+
+
+
 	if(isSequential())		
 		setPipelineDepth(swapDifferencePipelineDepth + maxPathDepth + finalRoundAdd->getPipelineDepth() + 1);
 	else
@@ -144,6 +154,15 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 		+ finalRoundAdd->getPipelineDepth() 
 		+ 1 ; // finalRoundAdd output is registered -- TODO save it if slack allows
 	
+
+
+	// Signals-------------------------------
+
+	addDelaySignalNoReset("fracRClosexMy",wF+3, 1);
+	addDelaySignalNoReset("fracRCloseyMx",wF+3, 1);
+	addDelaySignalNoReset("fracSignClose",1, 1);
+
+
 	addSignal("signedExponentX",wE+1);
 	addSignal("signedExponentY",wE+1);
 	//		addSignal("invSignedExponentY",wE+1);
@@ -193,12 +212,12 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 	addDelaySignalNoReset("sticky",1,  1 + fracAddFar->getPipelineDepth() +1); 
 	// + 1 for the xor stage, + 1 because output is registered
 		
-	addSignal("fracXfar3",wF+4);
-	addSignal("fracYfar3",wF+4);
+	addSignal("fracXfar",wF+4);
+	addSignal("fracYfar",wF+4);
 		
 	addDelaySignalNoReset("cInAddFar",1,1);
 	
-	addDelaySignalNoReset("fracYfar3XorOp",wF+4,1);
+	addDelaySignalNoReset("fracYfarXorOp",wF+4,1);
 	addDelaySignalNoReset("fracResultfar0",wF+4,1);
 		
 	addSignal("fracResultFarNormStage",wF+4);
@@ -328,8 +347,7 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 			 << getDelaySignalName("exponentDifference",0) << "("<< sizeRightShift-1<<" downto 0"<<")"
 			 << " when shiftedOut='0'"<<endl
 			 <<tab << tab << "    else CONV_STD_LOGIC_VECTOR("<<wFX+3<<","<<sizeRightShift<<") ;" << endl; 
-		}
-		else	{ // TODO test this branch
+		}		else	{ // TODO test this branch
 			o<<tab<<"shiftVal <= CONV_STD_LOGIC_VECTOR(0,"<<sizeRightShift-(wE-1)<<") & " << getDelaySignalName("exponentDifference",0) << "("<< wE-1<<" downto 0"<<"); " <<	endl; 			
 		}
 
@@ -456,15 +474,15 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 		o<<tab<< "sticky<= '0' when (shiftedFracY("<<wF<<" downto 0)=CONV_STD_LOGIC_VECTOR(0,"<<wF<<")) else '1';"<<endl;
 		
 		//pad fraction of Y [sign][shifted frac having inplicit 1][guard bits]
-		o<<tab<< "fracYfar3 <= \"0\" & shiftedFracY("<<2*wF+3<<" downto "<<wF+1<<");"<<endl;	
+		o<<tab<< "fracYfar <= \"0\" & shiftedFracY("<<2*wF+3<<" downto "<<wF+1<<");"<<endl;	
 		
 		// depending on the signs of the operands, perform addition or substraction			
 		// the result will be: a + (b xor operation) + operation, where operation=0=addition and operation=1=substraction
 		// the operation selector is the xor between the signs of the operands
 		// perform xor 
-		o<<tab<<"fracYfar3XorOp <= fracYfar3 xor ("<<wF+3<<" downto 0 => "<<getDelaySignalName("EffSub",rightShifter->getPipelineDepth())<<");"<<endl;
+		o<<tab<<"fracYfarXorOp <= fracYfar xor ("<<wF+3<<" downto 0 => "<<getDelaySignalName("EffSub",rightShifter->getPipelineDepth())<<");"<<endl;
 		//pad fraction of X [sign][inplicit 1][fracX][guard bits]				
-		o<<tab<< "fracXfar3 <= \"01\" & ("<<getDelaySignalName("newX",rightShifter->getPipelineDepth()+2)<<"("<<wF-1<<" downto 0"<<")) & \"00\";"<<endl;
+		o<<tab<< "fracXfar <= \"01\" & ("<<getDelaySignalName("newX",rightShifter->getPipelineDepth()+2)<<"("<<wF-1<<" downto 0"<<")) & \"00\";"<<endl;
 		o<<tab<< "cInAddFar <= " << getDelaySignalName("EffSub",rightShifter->getPipelineDepth())<<" and not sticky;"<< endl;
 		// perform carry in addition
 		o<<tab<< "fracAddFar0: " << fracAddFar->getOperatorName()
@@ -474,16 +492,14 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 			o<<tab<<tab<<tab<< "clk => clk, " << endl;
 			o<<tab<<tab<<tab<< "rst => rst, " << endl;
 		}
-		o<<tab<<tab<<tab<< "X => fracXfar3, " << endl; 
-		o<<tab<<tab<<tab<< "Y => "<<getDelaySignalName("fracYfar3XorOp",1) << ", " << endl; 
+		o<<tab<<tab<<tab<< "X => fracXfar, " << endl; 
+		o<<tab<<tab<<tab<< "Y => "<<getDelaySignalName("fracYfarXorOp",1) << ", " << endl; 
 	             	// below, + 1 because XOR stage
 		o<<tab<<tab<<tab<< "Cin => "<<getDelaySignalName("cInAddFar",1) << "," << endl;
 		o<<tab<<tab<<tab<< "R => fracResultfar0 " << endl; 
 		o<<tab<<tab<<tab<< ");" << endl;
 	
-		// result fracResultfar0 of this adder is registered
-		int delayFromSD2 = rightShifter->getPipelineDepth() + 1 + fracAddFar->getPipelineDepth() + 1;
-		// if the second operand was shifted out of the operation, then the result of the operation becomes = to the first operand //		
+
 		o << tab << "-- 2-bit normalisation" <<endl; 
 
 		o << tab << "fracResultFarNormStage <= " << getDelaySignalName("fracResultfar0",1) << ";"<<endl;
@@ -518,6 +534,9 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 		//the second operand depends on the operation selector
 		o<<tab<<"exponentUpdate <= ("<<wE+1<<" downto 1 => expOperationSel(1)) & expOperationSel(0);"<<endl;
 		
+		// // result fracResultfar0 of this adder is registered
+	   int delayFromSD2 = rightShifter->getPipelineDepth() + 1 + fracAddFar->getPipelineDepth() + 1;
+
 		// the result exponent before normalization and rounding is = to the exponent of the first operand //
 		o<<tab<<"exponentResultfar0<=\"00\" & ("<<getDelaySignalName("newX", delayFromSD2+1)<<"("<<wF+wE-1<<" downto "<<wF<<"));"<<endl;
 		
@@ -574,7 +593,7 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 		//signY
 		o<<tab<<"syncSignY <= "<<getDelaySignalName("pipeSignY", delaySDToRound)<<";"<<endl;
 		
-		// resSign comes from closer
+		// resSign comes from closer  TODO FIXME BUG HERE if some day close path is shorter than far path
 		o<<tab<<"syncResSign <= "<<getDelaySignalName("resSign", lzocs->getPipelineDepth()+ 2 + finalRoundAdd->getPipelineDepth()+1)<<";"<<endl;
 
 
@@ -584,8 +603,8 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 
 		o<<tab<< "with UnderflowOverflow select"<<endl;
 		o<<tab<< "resultNoExn("<<wE+wF+2<<" downto "<<wE+wF+1<<") <= \"10\" when \"01\", -- overflow"<<endl;
-		o<<tab<< "                               \"00\" when \"10\" | \"11\",  -- underflow"<<endl;
-		o<<tab<< "                               \"01\" when others; -- normal "<<endl;
+		o<<tab<< "                              \"00\" when \"10\" | \"11\",  -- underflow"<<endl;
+		o<<tab<< "                              \"01\" when others; -- normal "<<endl;
   	
 		o<<tab<< "resultNoExn("<<wE+wF<<" downto 0) <= syncResSign & "<<getDelaySignalName("resultRounded",1) << "("<<wE+wF-1<<" downto 0);"<<endl;
 	 
@@ -594,12 +613,12 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 		o<<tab<< "with syncExnXY select"<<endl;
 		o<<tab<< "  finalResult("<<wE+wF+2<<" downto "<<wE+wF+1<<") <= resultNoExn("<<wE+wF+2<<" downto "<<wE+wF+1<<") when \"0101\","<<endl;
 		o<<tab<< "                                 \"1\" & syncEffSub              when \"1010\","<<endl;
-		o<<tab<< "                                 \"11\"            		           when \"1011\","<<endl;
-		o<<tab<< "                                 syncExnXY(3 downto 2)             when others;"<<endl;
+		o<<tab<< "                                 \"11\"            	            when \"1011\","<<endl;
+		o<<tab<< "                                 syncExnXY(3 downto 2)         when others;"<<endl;
 		o<<tab<< "with syncExnXY select"<<endl;
-		o<<tab<< "  finalResult("<<wE+wF<<") <= resultNoExn("<<wE+wF<<")             when \"0101\","<<endl;
-		o<<tab<< "                syncX("<<wE+wF<<") and syncSignY when \"0000\","<<endl;
-		o<<tab<< "                syncX("<<wE+wF<<")                 when others;"<<endl;
+		o<<tab<< "  finalResult("<<wE+wF<<") <= resultNoExn("<<wE+wF<<")         when \"0101\","<<endl;
+		o<<tab<< "                     syncX("<<wE+wF<<") and syncSignY when \"0000\","<<endl;
+		o<<tab<< "                     syncX("<<wE+wF<<")               when others;"<<endl;
 		
 		o<<tab<< "with syncExnXY select"<<endl;
 		o<<tab<< "  finalResult("<<wE+wF-1<<" downto 0) <= resultNoExn("<<wE+wF-1<<" downto 0) when \"0101\","<<endl;
