@@ -89,7 +89,12 @@ int IntConstMult::build_pipeline(ShiftAddOp* sao, double &partial_delay) {
 			return 0;
 		case Add:
 			ipd = build_pipeline(sao->i, idelay);
-			jpd = build_pipeline(sao->j, jdelay);
+			if(sao->i == sao->j) {
+				jpd=ipd;
+				//cout <<endl<<*sao<<endl;
+			}
+			else
+				jpd = build_pipeline(sao->j, jdelay);
 			if (ipd>jpd) { // unbalanced pipeline depth between children
 				//register the shorter
 				sao->j->is_registered = true;
@@ -114,6 +119,10 @@ int IntConstMult::build_pipeline(ShiftAddOp* sao, double &partial_delay) {
 				// Anyway this resets its delay
 				idelay=0;
 			}
+			if(ipd==jpd) {
+				sao->i_delayed_by =0;
+				sao->j_delayed_by =0;
+			}
 			maxchildrenpd = max(ipd,jpd);
 			max_children_delay = max(idelay,jdelay);
 			cost = sao->cost_in_full_adders;
@@ -123,16 +132,19 @@ int IntConstMult::build_pipeline(ShiftAddOp* sao, double &partial_delay) {
  				// TODO
  			}
 
-			if(max_children_delay + local_delay > 1./target_->frequency()) {
+			if(max_children_delay + local_delay > 1./target_->frequency()   
+				&& (sao->i->op != X || sao->j->op != X)) { // no delay if both children are X
 				// insert a register at the output of each child
 				sao->i->is_registered = true;
 				sao->i_delayed_by++;
 				if(sao->i_delayed_by > sao->i->delayed_by)
 					sao->i->delayed_by = sao->i_delayed_by; 
 				sao->j->is_registered = true;
+				//				if(sao->i!=sao->j) { // check that both children are not the same
 				sao->j_delayed_by++;
 				if(sao->j_delayed_by > sao->j->delayed_by)
 					sao->j->delayed_by = sao->j_delayed_by; 
+					//				}
 				// This resets the partial delay to that of this ShiftAddOp
 				partial_delay = target_->adderDelay(cost);
 				// and increases pipeline depth by 1
@@ -158,15 +170,21 @@ int IntConstMult::build_pipeline(ShiftAddOp* sao, double &partial_delay) {
 // 			}
 
 			if(idelay + local_delay > 1./target_->frequency()) {
-				// insert a register at the output of the child
-				sao->i->is_registered = true;
-				sao->i_delayed_by = 1;
-				if(sao->i_delayed_by > sao->i->delayed_by)
-					sao->i->delayed_by = sao->i_delayed_by; 
-				// This resets the partial delay to that of this ShiftAddOp
-				partial_delay = target_->adderDelay(cost);
-				// and increases pipeline depth by 1
-				return 1+ipd;
+				// insert a register at the output of the child, unless it is X
+				if(sao->i->op ==X ) {
+					partial_delay = target_->adderDelay(cost);
+					return 0;
+				}
+				else {
+					sao->i->is_registered = true;
+					sao->i_delayed_by = 1;
+					if(sao->i_delayed_by > sao->i->delayed_by)
+						sao->i->delayed_by = sao->i_delayed_by; 
+					// This resets the partial delay to that of this ShiftAddOp
+					partial_delay = target_->adderDelay(cost);
+					// and increases pipeline depth by 1
+					return 1+ipd;
+				}
 			}
 			else{ // this ShiftAddOp and its child will be in the same pipeline level
 				partial_delay = idelay + local_delay;
@@ -220,8 +238,6 @@ IntConstMult::IntConstMult(Target* _target, int _xsize, mpz_class _n) :
 
 	// pipeline it
 	if (target_->isPipelined()) {
-		// TODO get rid of this warning when the bug is fixed
-		cerr << "\n *************WARNING**************\n  Pipelined IntConstMult sometimes still buggy! Use TestBench on the ones you build!\n"<<endl;
 		setSequential();
 	}
 	else

@@ -252,19 +252,19 @@ void FPConstMult::outputVHDL(ostream& o, string name) {
 	if (minExp(wE_in) + cst_exp_when_mantissa_1_2 > minExp(wE_out)) // no overflow can ever happen
 		o << tab << tab << "underflow <= '0'; --  underflow never happens for this constant and these (wE_in, wE_out)" << endl;
 	else 
-		o << tab << tab << "underflow <= '0' when r_exp_nopb(" << wE_sum << ") = '1'     else '1';" << endl;
+		o << tab << tab << "underflow <=  r_exp_nopb(" << wE_sum << ");" << endl;
 			 
 	
 	o << tab << tab << "r_exp <= r_exp_nopb("<<wE_out-1<<" downto 0) ;"<<endl;
 
-	o << tab << tab << "r_exn <=      \"00\" when ((x_exn = \"00\") or (underflow='1'))  -- zero"<<endl 
-		<< tab << tab << "         else \"10\" when ((x_exn = \"10\") or (overflow='1'))   -- infinity"<<endl
-		<< tab << tab << "         else \"11\" when  (x_exn = \"11\")                      -- NaN"<<endl
+	o << tab << tab << "r_exn <=      \"00\" when (("<<delaySignal("x_exn")<<" = \"00\") or (underflow='1'))  -- zero"<<endl 
+		<< tab << tab << "         else \"10\" when (("<<delaySignal("x_exn")<<" = \"10\") or (overflow='1'))   -- infinity"<<endl
+		<< tab << tab << "         else \"11\" when  ("<<delaySignal("x_exn")<<" = \"11\")                      -- NaN"<<endl
 		<< tab << tab << "         else \"01\";                                          -- normal number"<<endl;
 
 	outputVHDLRegisters(o);
 
-	o << tab << tab << "r <= " << delaySignal("r_exn", icm_depth) << " & " << delaySignal("r_sgn", icm_depth) << " & r_exp & r_frac;"<<endl;
+	o << tab << tab << "r <= " << delaySignal("r_exn", icm_depth) << " & " << delaySignal("r_sgn", icm_depth) << " & " << delaySignal("r_exp", icm_depth) << " & r_frac;"<<endl;
 	o << "end architecture;" << endl << endl;		
 }
 
@@ -278,15 +278,26 @@ TestIOMap FPConstMult::getTestIOMap()
 
 void FPConstMult::fillTestCase(mpz_class a[])
 {
- 	mpfr_t signedY;
- 	mpfr_init(signedY);
- 	mpfr_neg(signedY, mpY, GMP_RNDN);
-
 	mpz_class& svX = a[0];
 	mpz_class& svR = a[1];
+
 	FPNumber x(wE_in, wF_in), r(wE_out, wF_out);
+	mpfr_t mpx, mpr, signedY;
+	
+ 	mpfr_init(signedY);
+	if(cst_sgn==1)
+		mpfr_neg(signedY, mpY, GMP_RNDN);
+	else
+		mpfr_set(signedY, mpY, GMP_RNDN);
+
+
+	mpfr_init2(mpx, wF_in+1);
 	x = svX;
-	r = x * signedY;
+	x.getMPFR(mpx);
+	mpfr_init2(mpr, wF_out+1);
+	mpfr_mul(mpr, mpx, signedY, GMP_RNDN);
+	r = mpr;
 	svR = r.getSignalValue();
+	mpfr_clears(mpr, mpx, signedY, 0, NULL);
 }
 
