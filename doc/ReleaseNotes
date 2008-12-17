@@ -1,5 +1,7 @@
+Version 0.9.2 corrects bugs in FPConstMult and cleans up the pipeline framework.
+
 ======================================================================
-Version 0.9 vastly improves FPAdder, stabilizes LongAcc, and sees an
+Version 0.9.1 vastly improves FPAdder, stabilizes LongAcc, and sees an
 invasion of Logarithm Number System operators developed by external
 contributor Sylvain Collange.
 
