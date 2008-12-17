@@ -50,6 +50,7 @@ public:
 	 */	
 	virtual ~Operator() {}
 
+
 	/** Adds an input signal to the operator.
 	 * Adds a signal of type Signal::in to the the I/O signal list.
 	 * @param name  the name of the signal
@@ -57,6 +58,7 @@ public:
 	 */
 	void addInput  (const std::string name, const int width=1);
 	
+
 	/** Adds an output signal to the operator.
 	 * Adds a signal of type Signal::out to the the I/O signal list.
 	 * @param name  the name of the signal
@@ -64,6 +66,7 @@ public:
 	 */
 	void addOutput(const std::string name, const int width=1);
 	
+
 	/** Adds a floating point input signal to the operator.
 	 * Adds a signal of type Signal::in to the the I/O signal list, 
 	 * having the FP flag set on true. The total width of this signal will
@@ -74,6 +77,7 @@ public:
 	 */
 	void addFPInput(const std::string name, const int wE, const int wF);
 
+
 	/** Adds a floating point output signal to the operator.
 	 * Adds a signal of type Signal::out to the the I/O signal list, 
 	 * having the FP flag set on true. The total width of this signal will
@@ -83,6 +87,7 @@ public:
 	 * @param wF   the withh of the fraction
 	 */	
 	void addFPOutput(const std::string name, const int wE, const int wF);
+
 	
 	/** Adds a signal to the signal list.
 	 * Adds a signal of type Signal::wire to the the signal list.
@@ -92,75 +97,70 @@ public:
 	void addSignal(const std::string name, const int width=1);
 
 	/** Adds a bus signal to the signal list.
-	 * Adds a signal of type Signal::wire to the the signal list havig a flag 
-	 * indicating that the signal in question is a bus. Even if the signal will
-	 * have width=1, it will be declared as a standard_logic_vector(0 downto 0)
+	 * Adds a signal of type Signal::wire to the the signal list. 
+	 * The signal added by this method has a flag indicating that it is a bus. 
+	 * Even if the signal will have width=1, it will be declared as a standard_logic_vector(0 downto 0)
 	 * @param name  the name of the signal
 	 * @param width the width of the signal
 	 */	
 	void addSignalBus(const std::string name, const int width=1);
 	
-	/** Adds a registered signal to the signal list.
-	 * Adds a signal of type Signal::registeredWithoutReset to the the signal list. This leads
-	 * to adding two signals to the list, the second having the name = name + "_d".
+
+	/** Adds a delayed signal (without reset) to the signal list.
+	 * Adds to the the signal list
+	 * one signal of type Signal::wire
+	 * and max(0,delay) signals of type Signal::registeredWithoutReset. 
+	 * The signal names are: name, name_d, name_d_d .. and so on. 
+	 * This method is equivalent to addSignal if delay<=0
 	 * @param name  the name of the signal
 	 * @param width the width of the signal
+	 * @param delay the delay of the signal. The number of register levels that this signal needs to be delayed. If negative, treated as zero (useful for pipeline synchronization)
 	 */	
-	void addRegisteredSignalWithoutReset(const std::string name, const int width=1);
-	
+	void addDelaySignal(const std::string name, const int width, const int delay=1);
 
-	/** Adds a registered with synchronous reset signal to the signal list.
-	 * Adds a signal of type Signal::registeredWithSyncReset to the the signal list. This leads
-	 * to adding two signals to the list, the second having the name = name + "_d".
-	 * @param name  the name of the signal
-	 * @param width the width of the signal
-	 */	
-	void addRegisteredSignalWithSyncReset(const std::string name, const int width=1);
-
-	/** The following adds a signal, and also a shift register on it of depth delay.
-			There will be depth levels of registers, named name_d, name_d_d and so on.
-			The string returned is the name of the last signal. */
-
-	/** Adds a delayed signal synchronous reset to the signal list.
-	 * Adds a delay-1 signals of type Signal::registeredWithSyncReset to the the signal list, and one 
-	 * signal of type Signal::wire. The signal names are: name, name_d, name_d_d .. and so on. 
-	 * @param name  the name of the signal
-	 * @param width the width of the signal
-	 * @param delay the delay of the signal. The number of register levels that this signal needs to be delayed with.
-	 */	
-	string addDelaySignal(const std::string name, const int width, const int delay);
-
-	/** Adds a delayed signal without reset to the signal list.
-	 * Adds a delay-1 signals of type Signal::registeredWithoutReset to the the signal list, and one 
-	 * signal of type Signal::wire. The signal names are: name, name_d, name_d_d .. and so on. 
-	 * @param name  the name of the signal
-	 * @param width the width of the signal
-	 * @param delay the delay of the signal. The number of register levels that this signal needs to be delayed with.
-	 If delay<=0 then this is equivalent to addSignal
-	 */
-	string addDelaySignalNoReset(const std::string name, const int width, const int delay);
 
 	/** Adds a delayed signal with synchronous reset to the signal list.
-	 * Adds a delay-1 signals of type Signal::registeredWithSyncReset to the the signal list, and one 
-	 * signal of type Signal::wire. The signal names are: name, name_d, name_d_d .. and so on. 
-	 * The delay-1 signals are flagged so that they act like std_logic_vectors even for width = 1 
+	 * Adds to the the signal list
+	 * one signal of type Signal::wire
+	 * and max(0,delay) signals of type Signal::registeredWithSyncReset. 
+	 * The signal names are: name, name_d, name_d_d .. and so on. 
+	 * This method is equivalent to addSignal if delay<=0
 	 * @param name  the name of the signal
 	 * @param width the width of the signal
-	 * @param delay the delay of the signal. The number of register levels that this signal needs to be delayed with.
-	 If delay<=0 then this is equivalent to addSignal
-	 */
-	string addDelaySignalBus(const std::string name, const int width, const int delay);
+	 * @param delay the delay of the signal. The number of register levels that this signal needs to be delayed. If negative, treated as zero (useful for pipeline synchronization)
+	 */	
+	void addDelaySignalSyncReset(const std::string name, const int width, const int delay=1);
+
+
+	/** Adds a delayed signal bus with synchronous reset to the signal list.
+	 * Adds to the the signal list
+	 * one signal of type Signal::wire
+	 * and max(0,delay) signals of type Signal::registeredWithSyncReset. 
+	 * The signal names are: name, name_d, name_d_d .. and so on. 
+	 * Each signal added by this method has a flag indicating that it is a bus. 
+	 * Even if the signal will have width=1, it will be declared as a standard_logic_vector(0 downto 0)
+	 * This method is equivalent to addSignalBus if delay<=0
+	 * @param name  the name of the signal
+	 * @param width the width of the signal
+	 * @param delay the delay of the signal. The number of register levels that this signal needs to be delayed. If negative, treated as zero (useful for pipeline synchronization)
+	 */	
+	void addDelaySignalBus(const std::string name, const int width, const int delay=1);
+
+
+	/** Adds a delayed signal bus with synchronous reset to the signal list.
+	 * Adds to the the signal list
+	 * one signal of type Signal::wire
+	 * and max(0,delay) signals of type Signal::registeredWithSyncReset. 
+	 * The signal names are: name, name_d, name_d_d .. and so on. 
+	 * Each signal added by this method has a flag indicating that it is a bus. 
+	 * Even if the signal will have width=1, it will be declared as a standard_logic_vector(0 downto 0)
+	 * This method is equivalent to addSignalBus if delay<=0
+	 * @param name  the name of the signal
+	 * @param width the width of the signal
+	 * @param delay the delay of the signal. The number of register levels that this signal needs to be delayed. If negative, treated as zero (useful for pipeline synchronization)
+	 */	
+	void addDelaySignalBusSyncReset(const std::string name, const int width, const int delay=1);
 	
-	/** Adds a delayed signal without reset to the signal list.
-	 * Adds a delay-1 signals of type Signal::registeredWithoutReset to the the signal list, and one 
-	 * signal of type Signal::wire. The signal names are: name, name_d, name_d_d .. and so on. 
-	 * The delay-1 signals are flagged so that they act like std_logic_vectors even for width = 1 
-	 * @param name  the name of the signal
-	 * @param width the width of the signal
-	 * @param delay the delay of the signal. The number of register levels that this signal needs to be delayed with.
-	 If delay<=0 then this is equivalent to addSignal.
-	 */
-	string addDelaySignalBusNoReset(const std::string name, const int width, const int delay);
 	
 	/** Returns the name of a signal at a certain delay.
 	 * Returns a string of the form name_d_d_d..._d where #(_d)=delay
@@ -174,7 +174,8 @@ public:
 	 name. In principle, the code for a sequential operator is thus
 	 gracefully degraded into combinatorial code. See FPAdder for an example.
 	 */	 
-	string  getDelaySignalName(const string name, const int delay);
+	string  getDelaySignalName(const string name, const int delay=1);
+
 
 	/** Sets Operator name to default name.
 	 * This method must be overridden by all classes which extend Operator

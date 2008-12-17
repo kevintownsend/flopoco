@@ -90,7 +90,7 @@ void Operator::addSignal(const std::string name, const int width) {
 void Operator::addSignalBus(const std::string name, const int width) {
 	if (signalMap_.find(name) != signalMap_.end()) {
 		std::ostringstream o;
-		o << "ERROR in addSignal, signal " << name << " seems to already exist";
+		o << "ERROR in addSignalBus, signal " << name << " seems to already exist";
 		throw o.str();  
 	}
 	Signal *s = new Signal(name, Signal::wire, width, true);
@@ -98,35 +98,70 @@ void Operator::addSignalBus(const std::string name, const int width) {
 	signalList_.push_back(s);
 }
 
-// TODO remove completely? 
-void Operator::addRegisteredSignalWithoutReset(const std::string name, const int width) {
-	addDelaySignalNoReset( name,  width, 1);
-}
 
 
-void Operator::addRegisteredSignalWithSyncReset(const std::string name, const int width) {
-	if (signalMap_.find(name) != signalMap_.end()) {
-		cerr << "ERROR in addInput , signal " << name<< " seems to already exist" << endl;
-		exit(EXIT_FAILURE);
-	}
+void Operator::addDelaySignal(const string name, const int width, const int delay) {
+	ostringstream o;
+
 	Signal *s;
-	s = new Signal(name, Signal::registeredWithSyncReset, width);
-	signalList_.push_back(s);
-	signalMap_[name] = s ;
+	o << name;
+	// if delay <= 0 it is equivalent to addSignal
+	if (isSequential() && delay > 0) {
+		for (int i=0; i<delay; i++){
+			if (signalMap_.find(o.str()) != signalMap_.end()) {
+				cerr << "ERROR in addDelaySignal , signal " << name<< " seems to already exist" << endl;
+				exit(EXIT_FAILURE);
+			}
+			s = new Signal(o.str(), Signal::registeredWithoutReset, width);
+			signalList_.push_back(s);    
+			signalMap_[name] = s ;
+			o  << "_d";
+		}
+		hasRegistersWithoutReset_ = true;
+	}
 
-	string o = name + "_d";
-	if (signalMap_.find(o) != signalMap_.end()) {
+	if (signalMap_.find(o.str()) != signalMap_.end()) {
+		cerr << "ERROR in addDelaySignal , signal " << name<< " seems to already exist" << endl;
+		exit(EXIT_FAILURE);
+	}
+	s = new Signal(o.str(), Signal::wire, width);
+	signalList_.push_back(s);    
+	signalMap_[name] = s ;
+	
+	// return o.str();
+}
+
+void Operator::addDelaySignalBus(const string name, const int width, const int delay) {
+	ostringstream o;
+	Signal *s;
+	o << name;
+	// if delay<=0 it is equivalent to addSignal
+	if (isSequential() && delay > 0) {
+		for (int i=0; i<delay; i++){
+			if(signalMap_.find(o.str()) != signalMap_.end()) {
+				cerr << "ERROR in addDelaySignalBus , signal " << name<< " seems to already exist" << endl;
+				exit(EXIT_FAILURE);
+			}
+			s = new Signal(o.str(), Signal::registeredWithoutReset, width, true);
+			signalList_.push_back(s);    
+			signalMap_[name] = s ;
+			o  << "_d";
+		}
+		hasRegistersWithoutReset_ = true;
+	}
+
+	if (signalMap_.find(o.str()) != signalMap_.end()) {
 		cerr << "ERROR in addInput , signal " << name<< " seems to already exist" << endl;
 		exit(EXIT_FAILURE);
 	}
-	s = new Signal(o, Signal::wire, width);
-	signalList_.push_back(s);
+	s = new Signal(o.str(), Signal::wire, width, true);
+	signalList_.push_back(s);    
 	signalMap_[name] = s ;
-
-	hasRegistersWithSyncReset_ = true;
+	
+	// return o.str();
 }
 
-string Operator::addDelaySignal(const string name, const int width, const int delay) {
+void Operator::addDelaySignalSyncReset(const string name, const int width, const int delay) {
 	ostringstream o;
 	Signal *s;
 	o << name;
@@ -134,7 +169,7 @@ string Operator::addDelaySignal(const string name, const int width, const int de
 	if (isSequential() && delay > 0) {
 		for (int i=0; i<delay; i++){
 			if (signalMap_.find(o.str()) != signalMap_.end()) {
-				cerr << "ERROR in addInput , signal " << name<< " seems to already exist" << endl;
+				cerr << "ERROR in addDelaySignalSyncReset , signal " << name<< " seems to already exist" << endl;
 				exit(EXIT_FAILURE);
 			}
 			s = new Signal(o.str(), Signal::registeredWithSyncReset, width);
@@ -153,41 +188,10 @@ string Operator::addDelaySignal(const string name, const int width, const int de
 	signalList_.push_back(s);    
 	signalMap_[name] = s ;
 	
-	return o.str();
+	// return o.str();
 }
 
-string Operator::addDelaySignalNoReset(const string name, const int width, const int delay) {
-	ostringstream o;
-
-	Signal *s;
-	o << name;
-	// if delay <= 0 it is equivalent to addSignal
-	if (isSequential() && delay > 0) {
-		for (int i=0; i<delay; i++){
-			if (signalMap_.find(o.str()) != signalMap_.end()) {
-				cerr << "ERROR in addDelaySignalNoReset , signal " << name<< " seems to already exist" << endl;
-				exit(EXIT_FAILURE);
-			}
-			s = new Signal(o.str(), Signal::registeredWithoutReset, width);
-			signalList_.push_back(s);    
-			signalMap_[name] = s ;
-			o  << "_d";
-		}
-		hasRegistersWithoutReset_ = true;
-	}
-
-	if (signalMap_.find(o.str()) != signalMap_.end()) {
-		cerr << "ERROR in addDelaySignalNoReset , signal " << name<< " seems to already exist" << endl;
-		exit(EXIT_FAILURE);
-	}
-	s = new Signal(o.str(), Signal::wire, width);
-	signalList_.push_back(s);    
-	signalMap_[name] = s ;
-	
-	return o.str();
-}
-
-string Operator::addDelaySignalBus(const string name, const int width, const int delay) {
+void Operator::addDelaySignalBusSyncReset(const string name, const int width, const int delay) {
 	ostringstream o;
 	Signal *s;
 	o << name;
@@ -214,38 +218,9 @@ string Operator::addDelaySignalBus(const string name, const int width, const int
 	signalList_.push_back(s);    
 	signalMap_[name] = s ;
 	
-	return o.str();
+	// return o.str();
 }
 
-string Operator::addDelaySignalBusNoReset(const string name, const int width, const int delay) {
-	ostringstream o;
-	Signal *s;
-	o << name;
-	// if delay<=0 it is equivalent to addSignal
-	if (isSequential() && delay > 0) {
-		for (int i=0; i<delay; i++){
-			if(signalMap_.find(o.str()) != signalMap_.end()) {
-				cerr << "ERROR in addInput , signal " << name<< " seems to already exist" << endl;
-				exit(EXIT_FAILURE);
-			}
-			s = new Signal(o.str(), Signal::registeredWithoutReset, width, true);
-			signalList_.push_back(s);    
-			signalMap_[name] = s ;
-			o  << "_d";
-		}
-		hasRegistersWithoutReset_ = true;
-	}
-
-	if (signalMap_.find(o.str()) != signalMap_.end()) {
-		cerr << "ERROR in addInput , signal " << name<< " seems to already exist" << endl;
-		exit(EXIT_FAILURE);
-	}
-	s = new Signal(o.str(), Signal::wire, width, true);
-	signalList_.push_back(s);    
-	signalMap_[name] = s ;
-	
-	return o.str();
-}
 
 string Operator::getDelaySignalName(const string name, const int delay) {
 	ostringstream o;

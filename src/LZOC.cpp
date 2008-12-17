@@ -54,7 +54,7 @@ LZOC::LZOC(Target* target, int wIn, int wOut) :
 			ostringstream signalName;
 			signalName<<"level"<<i;
 			if (i!=1)
-				addRegisteredSignalWithSyncReset(signalName.str(), (1<<i));
+				addDelaySignal(signalName.str(), (1<<i));
 			else
 				addSignal(signalName.str(), (1<<i));
 			}

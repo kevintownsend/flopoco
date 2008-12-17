@@ -127,18 +127,18 @@ void FPConstMult::setup() {
  		icm_depth = icm->getPipelineDepth();
  		setPipelineDepth(icm_depth+1);
 
-		addDelaySignalBusNoReset("x_exn",          2,         1);
-		addDelaySignalNoReset    ("x_sgn",          1,         1);
-		addDelaySignalBusNoReset("x_exp",          wE_in,     1);
-		addDelaySignalBusNoReset("shifted_frac",    wF_out+1,  1);
+		addDelaySignalBus("x_exn",          2,         1);
+		addDelaySignal    ("x_sgn",          1,         1);
+		addDelaySignalBus("x_exp",          wE_in,     1);
+		addDelaySignalBus("shifted_frac",    wF_out+1,  1);
 
-		addDelaySignalNoReset    ("gt_than_xcut",   1,         icm_depth);
+		addDelaySignal    ("gt_than_xcut",   1,         icm_depth);
 
-		addDelaySignalBusNoReset("r_exp_nopb",    wE_out+1,   1);
+		addDelaySignalBus("r_exp_nopb",    wE_out+1,   1);
 
-		addDelaySignalBusNoReset("r_exn",         2,          icm_depth);
-		addDelaySignalNoReset    ("r_sgn",         1,          icm_depth);
-		addDelaySignalBusNoReset("r_exp",         wE_out,     icm_depth);
+		addDelaySignalBus("r_exn",         2,          icm_depth);
+		addDelaySignal    ("r_sgn",         1,          icm_depth);
+		addDelaySignalBus("r_exp",         wE_out,     icm_depth);
 
 
  	}

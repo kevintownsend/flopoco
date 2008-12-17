@@ -149,12 +149,12 @@ LongAcc::LongAcc(Target* target, int wEX, int wFX, int MaxMSBX, int LSBA, int MS
 		ostringstream accReg;
 		accReg<<"acc_"<<i;
 			if (i==additionNumberOfChunks_-1){
-				addRegisteredSignalWithSyncReset(accReg.str(), rebalancedAdditionLastChunkSize_); 
+				addDelaySignalBusSyncReset(accReg.str(), rebalancedAdditionLastChunkSize_); 
 				accReg << "_ext";
 				addSignal(accReg.str(), rebalancedAdditionLastChunkSize_ + 1);   
 			}
 			else{
-				addRegisteredSignalWithSyncReset(accReg.str(), rebalancedAdditionChunkSize_);  
+				addDelaySignalBusSyncReset(accReg.str(), rebalancedAdditionChunkSize_);  
 				accReg << "_ext";
 				addSignal(accReg.str(), rebalancedAdditionChunkSize_ + 1);   
 			}
@@ -163,7 +163,7 @@ LongAcc::LongAcc(Target* target, int wEX, int wFX, int MaxMSBX, int LSBA, int MS
 	//This bit depends on the initial sign of the summand together with information regarding wether or not 
 	// the summand has been shifted out of the accumulator. 
 	
-	// addRegisteredSignalWithSyncReset("carryIn",1);
+	// addRegisteredSignalSyncReset("carryIn",1);
 	
 	//addSignal("accumulatorOverflow",1);
 	
@@ -172,7 +172,7 @@ LongAcc::LongAcc(Target* target, int wEX, int wFX, int MaxMSBX, int LSBA, int MS
 	for (i=0;i<=additionNumberOfChunks_;i++){
 		ostringstream carryBit;
 		carryBit<< "carryBit_"<<i;
-		addRegisteredSignalWithSyncReset(carryBit.str(), 1);  
+		addDelaySignalSyncReset(carryBit.str(), 1);  
 	}
 
 	// on one side, add delays for the non-complemented signal
@@ -189,20 +189,20 @@ LongAcc::LongAcc(Target* target, int wEX, int wFX, int MaxMSBX, int LSBA, int MS
 
 	// it is rather stupid to register all the extended bits as they are
 	// all equal, but the synthesiser optimises it out
-	addRegisteredSignalWithSyncReset("ext_summand2c", sizeAcc_);
+	addDelaySignal("ext_summand2c", sizeAcc_);
 	addSignal("acc", sizeAcc_); //,  "includes overflow bit");
 	
 	if(verbose)
 		cout << tab <<getOperatorName()<< " pipeline depth is " << getPipelineDepth() << " cycles" <<endl;
 
-	addRegisteredSignalWithSyncReset("xOverflowRegister", 1);
+	addDelaySignalSyncReset("xOverflowRegister", 1);
 	addDelaySignal("xOverflowCond",1,shifter_->getPipelineDepth()+1);
 	
-	addRegisteredSignalWithSyncReset("xUnderflowRegister", 1);
+	addDelaySignalSyncReset("xUnderflowRegister", 1);
 	addDelaySignal("xUnderflowCond",1,shifter_->getPipelineDepth()+1);
 	
 
-	addRegisteredSignalWithSyncReset("accOverflowRegister",1);
+	addDelaySignalSyncReset("accOverflowRegister",1);
 }
 
 

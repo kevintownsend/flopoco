@@ -125,7 +125,7 @@ Shifter::Shifter(Target* target, int wIn, int maxShift, ShiftDirection direction
 			ostringstream sname;
 			sname << "level"<<i;
 			if (levelRegistered_[i])
-				addRegisteredSignalWithSyncReset(sname.str(), wIn_ + (1<<i) -1 );
+				addDelaySignal(sname.str(), wIn_ + (1<<i) -1 );
 			else
 				addSignal(sname.str(), wIn_ + (1<<i) -1);
 		}

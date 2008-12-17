@@ -83,7 +83,7 @@ LongAcc2FP::LongAcc2FP(Target* target, int LSBA, int MSBA, int wEOut, int wFOut)
 	addInput  ("AccOverflow",1);
 	addOutput ("R", 3 + wEOut_ + wFOut_);
 
-	addDelaySignalNoReset("resultSign0",1,lzocShifterSticky_->getPipelineDepth()+adder_->getPipelineDepth()+extraPipeLevel);	
+	addDelaySignal("resultSign0",1,lzocShifterSticky_->getPipelineDepth()+adder_->getPipelineDepth()+extraPipeLevel);	
 	addDelaySignal("AccOverflowFlag",1,lzocShifterSticky_->getPipelineDepth());	
 	
 	addSignal("nZO"    ,countWidth_);

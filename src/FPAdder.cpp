@@ -158,9 +158,9 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 
 	// Signals-------------------------------
 
-	addDelaySignalNoReset("fracRClosexMy",wF+3, 1);
-	addDelaySignalNoReset("fracRCloseyMx",wF+3, 1);
-	addDelaySignalNoReset("fracSignClose",1, 1);
+	addDelaySignal("fracRClosexMy",wF+3, 1);
+	addDelaySignal("fracRCloseyMx",wF+3, 1);
+	addDelaySignal("fracSignClose",1, 1);
 
 
 	addSignal("signedExponentX",wE+1);
@@ -175,50 +175,50 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 		
 	addSignal("swap",1);
 	
-	addDelaySignalNoReset("exponentDifference",wE,1); 
+	addDelaySignal("exponentDifference",wE,1); 
 			
-	addDelaySignalNoReset("newY",wE+wF+3, 1);
+	addDelaySignal("newY",wE+wF+3, 1);
 			
 	//close path		
 	
 	addSignal("fracXClose1",wF+3);
 	addSignal("fracYClose1",wF+3);
 	
-	addDelaySignalNoReset("fracRClose1",wFX+2, lzocs->getPipelineDepth());
+	addDelaySignal("fracRClose1",wFX+2, lzocs->getPipelineDepth());
 
 
-	addDelaySignalNoReset("resSign",1,lzocs->getPipelineDepth()+1 + finalRoundAdd->getPipelineDepth()+2);
+	addDelaySignal("resSign",1,lzocs->getPipelineDepth()+1 + finalRoundAdd->getPipelineDepth()+2);
 
-	addDelaySignalNoReset("nZerosNew",lzocs->getCountWidth(),lzocs->getPipelineDepth());
-	addDelaySignalNoReset("shiftedFrac",wFX+2,2);
+	addDelaySignal("nZerosNew",lzocs->getCountWidth(),lzocs->getPipelineDepth());
+	addDelaySignal("shiftedFrac",wFX+2,2);
 	
-	addDelaySignalNoReset("exponentResultClose",wEX+2, 1);
+	addDelaySignal("exponentResultClose",wEX+2, 1);
 	// The following magical lines will delay the signal if needed to align it with that of the close path
-	addDelaySignalNoReset("roundClose0", 1, 1);
-	addDelaySignalNoReset("roundClose", 1, farPathDepth - closePathDepth);
-	addDelaySignalNoReset("resultBeforeRoundClose",wE+1 + wF+1, farPathDepth - closePathDepth);
+	addDelaySignal("roundClose0", 1, 1);
+	addDelaySignal("roundClose", 1, farPathDepth - closePathDepth);
+	addDelaySignal("resultBeforeRoundClose",wE+1 + wF+1, farPathDepth - closePathDepth);
 
 
 	addSignal("syncResSign",1);
 		
 	//Far path
-	addDelaySignalNoReset("shiftedOut",1, rightShifter->getPipelineDepth() + fracAddFar->getPipelineDepth() +3);
+	addDelaySignal("shiftedOut",1, rightShifter->getPipelineDepth() + fracAddFar->getPipelineDepth() +3);
 		
-	addDelaySignalNoReset("shiftVal",sizeRightShift, 1);
+	addDelaySignal("shiftVal",sizeRightShift, 1);
 	
 	addSignal("fracNewY",wF+1);
 	addSignal("shiftedFracY", 2*wF + 4);
 	
-	addDelaySignalNoReset("sticky",1,  1 + fracAddFar->getPipelineDepth() +1); 
+	addDelaySignal("sticky",1,  1 + fracAddFar->getPipelineDepth() +1); 
 	// + 1 for the xor stage, + 1 because output is registered
 		
 	addSignal("fracXfar",wF+4);
 	addSignal("fracYfar",wF+4);
 		
-	addDelaySignalNoReset("cInAddFar",1,1);
+	addDelaySignal("cInAddFar",1,1);
 	
-	addDelaySignalNoReset("fracYfarXorOp",wF+4,1);
-	addDelaySignalNoReset("fracResultfar0",wF+4,1);
+	addDelaySignal("fracYfarXorOp",wF+4,1);
+	addDelaySignal("fracResultfar0",wF+4,1);
 		
 	addSignal("fracResultFarNormStage",wF+4);
 	addSignal("fracLeadingBits",2);
@@ -226,38 +226,38 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 	addSignal("exponentResultfar0",wE+2);
 	addSignal("expOperationSel",2);
 	addSignal("exponentUpdate",wE+2);
-	addDelaySignalNoReset("exponentResultFar1",wE+2,1);	
+	addDelaySignal("exponentResultFar1",wE+2,1);	
 		
-	addDelaySignalNoReset("fracResultFar1",wF, 1);
+	addDelaySignal("fracResultFar1",wF, 1);
 	addSignal("fracResultRoundBit",1);
 	addSignal("fracResultStickyBit",1);
 	// The following magical line will delay the signal if needed to align it with that of the close path
-	addDelaySignalNoReset("resultBeforeRoundFar",wE+1 + wF+1, closePathDepth-farPathDepth);
-	addDelaySignalNoReset("roundFar",1,closePathDepth-farPathDepth);
+	addDelaySignal("resultBeforeRoundFar",wE+1 + wF+1, closePathDepth-farPathDepth);
+	addDelaySignal("roundFar",1,closePathDepth-farPathDepth);
 
-	addDelaySignalNoReset("roundFar1",1,1);
+	addDelaySignal("roundFar1",1,1);
 	
-	addDelaySignalNoReset("selectClosePath",1, delaySDToRound);
+	addDelaySignal("selectClosePath",1, delaySDToRound);
 	addSignal("syncClose",1);
 	addSignal("resultBeforeRound",wE+1 + wF+1);				
 	addSignal("UnderflowOverflow",2);
 	
-	addDelaySignalNoReset("sdExnXY",4, delaySDToRound);
+	addDelaySignal("sdExnXY",4, delaySDToRound);
 	addSignal("syncExnXY",4);
 		
-	addDelaySignalNoReset("EffSub",1, delaySDToRound);
+	addDelaySignal("EffSub",1, delaySDToRound);
 	addSignal("syncEffSub");
 
-	addDelaySignalNoReset("newX",3+wE+wF, delaySDToRound+1);
+	addDelaySignal("newX",3+wE+wF, delaySDToRound+1);
 	addSignal("syncX",3+wE+wF);
 	addSignal("round",1);
 		
-	addDelaySignalNoReset("resultRounded",wE+wF+2, 1);
+	addDelaySignal("resultRounded",wE+wF+2, 1);
 				
-	addDelaySignalNoReset("pipeSignY",1, delaySDToRound);
+	addDelaySignal("pipeSignY",1, delaySDToRound);
 	addSignal("syncSignY");
 		
-	addDelaySignalNoReset("resultNoExn",wE+wF+3,1);
+	addDelaySignal("resultNoExn",wE+wF+3,1);
 	addSignal("finalResult",wE+wF+3);
 					
 	//		cout<<"signals pass";	

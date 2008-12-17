@@ -56,7 +56,7 @@ Wrapper::Wrapper(Target* target, Operator *op):
 		string idext = "i_" + (op->getIOListSignal(i))->getSignalName();
 		//the clock is not registred
 		if ( op->getIOListSignal(i)->getSignalName()!="clk")
-			addRegisteredSignalWithoutReset(idext, op->getIOListSignal(i)->width());
+			addDelaySignal(idext, op->getIOListSignal(i)->width());
 	}
 
 	//set pipeline parameters

@@ -106,15 +106,15 @@ FPMultiplier::FPMultiplier(Target* target, int wEX, int wFX, int wEY, int wFY, i
 		addSignal("sign_synch", 1); 
 		
 		/* Registered signals */
-		//addRegisteredSignalWithSyncReset("Exponents_Sum_Pre_Bias_Substraction",  wEX_+2 );
-		//addRegisteredSignalWithSyncReset("Exponents_Sum_Post_Bias_Substraction", wEX_+2 );
-		//addRegisteredSignalWithSyncReset("Exception_Reg_0",2); 
-		//addRegisteredSignalWithSyncReset("Exception_Reg_1",2);
+		//addDelaySignal("Exponents_Sum_Pre_Bias_Substraction",  wEX_+2 );
+		//addDelaySignal("Exponents_Sum_Post_Bias_Substraction", wEX_+2 );
+		//addDelaySignal("Exception_Reg_0",2); 
+		//addDelaySignal("Exception_Reg_1",2);
 		
-		addRegisteredSignalWithoutReset("Exponents_Sum_Pre_Bias_Substraction",  wEX_+2 );
-		addRegisteredSignalWithoutReset("Exponents_Sum_Post_Bias_Substraction", wEX_+2 );
-		addRegisteredSignalWithoutReset("Exception_Reg_0",2); 
-		addRegisteredSignalWithoutReset("Exception_Reg_1",2);
+		addDelaySignal("Exponents_Sum_Pre_Bias_Substraction",  wEX_+2 );
+		addDelaySignal("Exponents_Sum_Post_Bias_Substraction", wEX_+2 );
+		addDelaySignal("Exception_Reg_0",2); 
+		addDelaySignal("Exception_Reg_1",2);
 		
 		
 		
@@ -125,19 +125,19 @@ FPMultiplier::FPMultiplier(Target* target, int wEX, int wFX, int wEY, int wFY, i
 				synch.str(""); synch2.str("");
 				synch<<"Exponent_Synchronization_"<<i;
 				
-				//addRegisteredSignalWithSyncReset(synch.str(), wEX_+2 );
-				addRegisteredSignalWithoutReset(synch.str(), wEX_+2 );
+				//addDelaySignal(synch.str(), wEX_+2 );
+				addDelaySignal(synch.str(), wEX_+2 );
 				
 				synch2<<"Exception_Synchronization_"<<i;
-				//addRegisteredSignalWithSyncReset(synch2.str(), 2 );
-				addRegisteredSignalWithoutReset(synch2.str(), 2 );
+				//addDelaySignal(synch2.str(), 2 );
+				addDelaySignal(synch2.str(), 2 );
 			}
 			//when the integer multiplication has less than 2 levels
 			for (i=0;i<=1-intMultPipelineDepth_;i++)	{
 				synch.str("");
 				synch<<"Int_Synchronization_"<<i;
-				//addRegisteredSignalWithSyncReset(synch.str(), wFX_+wFY_+2);
-				addRegisteredSignalWithoutReset(synch.str(), wFX_+wFY_+2);				
+				//addDelaySignal(synch.str(), wFX_+wFY_+2);
+				addDelaySignal(synch.str(), wFX_+wFY_+2);				
 			}	
 			addDelaySignal("Sign_Synchronization", 1, max(2,intMultPipelineDepth_));
 
@@ -150,17 +150,17 @@ FPMultiplier::FPMultiplier(Target* target, int wEX, int wFX, int wEY, int wFY, i
 			
 			if (1+wFR_ < wFX_+wFY_+2) {
 				
-				//addRegisteredSignalWithSyncReset("exponent_synch2",wEX_+2);
-				addRegisteredSignalWithoutReset("exponent_synch2",wEX_+2);
+				//addDelaySignal("exponent_synch2",wEX_+2);
+				addDelaySignal("exponent_synch2",wEX_+2);
 				
-				addRegisteredSignalWithSyncReset("exception_synch2",2);
+				addDelaySignal("exception_synch2",2);
 				
-				//addRegisteredSignalWithSyncReset("significand_synch2",wFX_ + wFY_ + 2);
-				addRegisteredSignalWithoutReset("significand_synch2",wFX_ + wFY_ + 2);
+				//addDelaySignal("significand_synch2",wFX_ + wFY_ + 2);
+				addDelaySignal("significand_synch2",wFX_ + wFY_ + 2);
 				
 				
-				addRegisteredSignalWithSyncReset("sign_synch2",1);
-				addRegisteredSignalWithSyncReset("normalization_selector2",1);
+				addDelaySignal("sign_synch2",1);
+				addDelaySignal("normalization_selector2",1);
 		
 				addSignal("between_fp_numbers",1);	
 				addSignal("LSB_of_result_significand_out",1);	
@@ -201,12 +201,12 @@ FPMultiplier::FPMultiplier(Target* target, int wEX, int wFX, int wEY, int wFY, i
 							name<<"Last_Addition_Level_"<<j<<"_Reg_"<<i;
 							if (i!=reunionSignalParts_){
 								//addDelaySignalBus(name.str(), additionChunkWidth_ + 1 ,1);
-								addDelaySignalBusNoReset(name.str(), additionChunkWidth_ + 1 ,1);
+								addDelaySignalBus(name.str(), additionChunkWidth_ + 1 ,1);
 							}
 							else
 							{
 								//addDelaySignalBus(name.str(), additionLastChunkWidth_,1 );	
-								addDelaySignalBusNoReset(name.str(), additionLastChunkWidth_,1 );	
+								addDelaySignalBus(name.str(), additionLastChunkWidth_,1 );	
 							
 							}
 		        }
@@ -220,12 +220,12 @@ FPMultiplier::FPMultiplier(Target* target, int wEX, int wFX, int wEY, int wFY, i
 					addDelaySignal("exponent_synch2_level",2+wER_,reunionSignalParts_);
 					*/
 					
-					addDelaySignalNoReset("reunion_signal_level",2+wFR_,reunionSignalParts_);
-					addDelaySignalNoReset("LSB_of_result_significand_level",1,reunionSignalParts_);		
-					addDelaySignalNoReset("between_fp_numbers_level",1,reunionSignalParts_);			
-					addDelaySignalNoReset("sign_synch2_level",1,reunionSignalParts_);
-					addDelaySignalNoReset("exception_synch2_level",2,reunionSignalParts_);
-					addDelaySignalNoReset("exponent_synch2_level",2+wER_,reunionSignalParts_);
+					addDelaySignal("reunion_signal_level",2+wFR_,reunionSignalParts_);
+					addDelaySignal("LSB_of_result_significand_level",1,reunionSignalParts_);		
+					addDelaySignal("between_fp_numbers_level",1,reunionSignalParts_);			
+					addDelaySignal("sign_synch2_level",1,reunionSignalParts_);
+					addDelaySignal("exception_synch2_level",2,reunionSignalParts_);
+					addDelaySignal("exponent_synch2_level",2+wER_,reunionSignalParts_);
 					
 					
 				}
@@ -238,16 +238,16 @@ FPMultiplier::FPMultiplier(Target* target, int wEX, int wFX, int wEY, int wFY, i
 			if ((wFX_+wFY_+2 > wFR_+1))
 			{
 				/*
-				addRegisteredSignalWithSyncReset("exponent_synch2",wEX_+2);
-				addRegisteredSignalWithSyncReset("exception_synch2",2);
-				addRegisteredSignalWithSyncReset("significand_synch2",wFX_ + wFY_ + 2);
-				addRegisteredSignalWithSyncReset("sign_synch2",1);
+				addDelaySignal("exponent_synch2",wEX_+2);
+				addDelaySignal("exception_synch2",2);
+				addDelaySignal("significand_synch2",wFX_ + wFY_ + 2);
+				addDelaySignal("sign_synch2",1);
 				*/
 				
-				addRegisteredSignalWithoutReset("exponent_synch2",wEX_+2);
-				addRegisteredSignalWithoutReset("exception_synch2",2);
-				addRegisteredSignalWithoutReset("significand_synch2",wFX_ + wFY_ + 2);
-				addRegisteredSignalWithoutReset("sign_synch2",1);
+				addDelaySignal("exponent_synch2",wEX_+2);
+				addDelaySignal("exception_synch2",2);
+				addDelaySignal("significand_synch2",wFX_ + wFY_ + 2);
+				addDelaySignal("sign_synch2",1);
 						
 				addSignal("between_fp_numbers",1);	
 				addSignal("LSB_of_result_significand_out",1);	
@@ -277,12 +277,12 @@ FPMultiplier::FPMultiplier(Target* target, int wEX, int wFX, int wEY, int wFY, i
 						name<<"Last_Addition_Level_"<<j<<"_Reg_"<<i;
 						if (i!=reunionSignalParts_)
 						{
-							//addRegisteredSignalWithSyncReset(name.str(), additionChunkWidth_ + 1 );
-							addRegisteredSignalWithSyncReset(name.str(), additionChunkWidth_ + 1 );
+							//addDelaySignal(name.str(), additionChunkWidth_ + 1 );
+							addDelaySignal(name.str(), additionChunkWidth_ + 1 );
 						}
 						else{
-							//addRegisteredSignalWithSyncReset(name.str(), additionLastChunkWidth_ );
-							addRegisteredSignalWithoutReset(name.str(), additionLastChunkWidth_ );		
+							//addDelaySignal(name.str(), additionLastChunkWidth_ );
+							addDelaySignal(name.str(), additionLastChunkWidth_ );		
 						}
 	        }
 				
@@ -295,12 +295,12 @@ FPMultiplier::FPMultiplier(Target* target, int wEX, int wFX, int wEY, int wFY, i
 					addDelaySignal("exponent_synch2_level",2+wER_,reunionSignalParts_);
 					*/
 					
-					addDelaySignalNoReset("reunion_signal_level",3+wFR_,reunionSignalParts_);
-					addDelaySignalNoReset("LSB_of_result_significand_level",1,reunionSignalParts_);		
-					addDelaySignalNoReset("between_fp_numbers_level",1,reunionSignalParts_);			
-					addDelaySignalNoReset("sign_synch2_level",1,reunionSignalParts_);
-					addDelaySignalNoReset("exception_synch2_level",2,reunionSignalParts_);
-					addDelaySignalNoReset("exponent_synch2_level",2+wER_,reunionSignalParts_);					
+					addDelaySignal("reunion_signal_level",3+wFR_,reunionSignalParts_);
+					addDelaySignal("LSB_of_result_significand_level",1,reunionSignalParts_);		
+					addDelaySignal("between_fp_numbers_level",1,reunionSignalParts_);			
+					addDelaySignal("sign_synch2_level",1,reunionSignalParts_);
+					addDelaySignal("exception_synch2_level",2,reunionSignalParts_);
+					addDelaySignal("exponent_synch2_level",2+wER_,reunionSignalParts_);					
 					
 					
 				}

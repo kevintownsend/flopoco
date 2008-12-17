@@ -94,16 +94,16 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 		for (i=1;i<=partsX_;i++){
 			name.str("");
 			name <<"X_"<<i;
-			//addRegisteredSignalWithSyncReset(name.str(), multiplierWidthX_);
-			addRegisteredSignalWithSyncReset(name.str(), multiplierWidthX_);  
+			//addDelaySignal(name.str(), multiplierWidthX_);
+			addDelaySignal(name.str(), multiplierWidthX_);  
 		}
 
 		//declare the signals needed to split Y 
 		for (i=1;i<=partsY_;i++){
 			name.str("");
 			name <<"Y_"<<i;
-			//addRegisteredSignalWithSyncReset(name.str(), multiplierWidthY_); 
-			addRegisteredSignalWithSyncReset(name.str(), multiplierWidthY_); 
+			//addDelaySignal(name.str(), multiplierWidthY_); 
+			addDelaySignal(name.str(), multiplierWidthY_); 
 		}
 
 		//declare the registers needed to store the partial products
@@ -111,8 +111,8 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 			for (j=1;j<=partsX_;j++){
 				name.str("");;
 				name <<"Y_"<<i<<"_X_"<<j;
-				//addRegisteredSignalWithSyncReset(name.str(), multiplierWidthX_ + multiplierWidthY_);
-				addRegisteredSignalWithSyncReset(name.str(), multiplierWidthX_ + multiplierWidthY_);
+				//addDelaySignal(name.str(), multiplierWidthX_ + multiplierWidthY_);
+				addDelaySignal(name.str(), multiplierWidthX_ + multiplierWidthY_);
 			} 
 
 		if (!((partsX_==partsY_) && (partsX_==1)))
@@ -150,7 +150,7 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 				 name.str("");
 				 name<<"Buffer_H_"<<i;
 				 //add_delay_signal(name.str(), partsX_ * multiplierWidthX_,intAdd2_->getPipelineDepth());
-				 addDelaySignalBusNoReset(name.str(), partsX_ * multiplierWidthX_,intAdd2_->getPipelineDepth());
+				 addDelaySignalBus(name.str(), partsX_ * multiplierWidthX_,intAdd2_->getPipelineDepth());
 			}
 			
 			//for the low and high tree
@@ -177,16 +177,16 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 					}
 					else{
 						//add_delay_signal(nameL.str(), 1 + partsX_ * multiplierWidthX_,intAdd2_->getPipelineDepth());
-						addDelaySignalBusNoReset(nameL.str(), 1 + partsX_ * multiplierWidthX_,intAdd2_->getPipelineDepth());
+						addDelaySignalBus(nameL.str(), 1 + partsX_ * multiplierWidthX_,intAdd2_->getPipelineDepth());
 						
 						//add_delay_signal(nameH.str(), 1 + partsX_ * multiplierWidthX_,intAdd2_->getPipelineDepth());
-						addDelaySignalBusNoReset(nameH.str(), 1 + partsX_ * multiplierWidthX_,intAdd2_->getPipelineDepth());
+						addDelaySignalBus(nameH.str(), 1 + partsX_ * multiplierWidthX_,intAdd2_->getPipelineDepth());
 					}
 				}
 		
 			//one more registers for the Low part for synchronization 
 			//add_delay_signal("Low1", 1 + partsX_ * multiplierWidthX_,intAdd2_->getPipelineDepth());
-			addDelaySignalBusNoReset("Low1", 1 + partsX_ * multiplierWidthX_,intAdd2_->getPipelineDepth());
+			addDelaySignalBus("Low1", 1 + partsX_ * multiplierWidthX_,intAdd2_->getPipelineDepth());
 			
 			//one more signal for the high part
 			addSignal("High1", 1 + partsX_ * multiplierWidthX_);
@@ -199,7 +199,7 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 					name.str("");;
 					name<<"PartialBits_Level_"<<j<<"_Reg_"<<i;
 					//add_delay_signal(name.str(), multiplierWidthY_ + 1,intAdd2_->getPipelineDepth() );
-					addDelaySignalBusNoReset(name.str(), multiplierWidthY_ + 1,intAdd2_->getPipelineDepth() );
+					addDelaySignalBus(name.str(), multiplierWidthY_ + 1,intAdd2_->getPipelineDepth() );
 			 }
 
 			/* Use a state of the art adder to take care of pipelining the last addition */
@@ -207,7 +207,7 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 			oplist.push_back(intAdd1_);
 			
 			//add_delay_signal("PartialBits_Reg",partsY_ * multiplierWidthY_,intAdd1_->getPipelineDepth());
-			addDelaySignalBusNoReset("PartialBits_Reg",partsY_ * multiplierWidthY_,intAdd1_->getPipelineDepth());  
+			addDelaySignalBus("PartialBits_Reg",partsY_ * multiplierWidthY_,intAdd1_->getPipelineDepth());  
 			
 			addSignal("temp_result",  partsX_ * multiplierWidthX_ );
 			addSignal("partial_bits", partsY_ * multiplierWidthY_ );
@@ -232,7 +232,7 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 				addSignal("addition_result", partsX_  * multiplierWidthX_);
 				
 				//add_delay_signal("delayed_bits",multiplierWidthY_, IntAddPipelineDepth);
-				addDelaySignalBusNoReset("delayed_bits",multiplierWidthY_, IntAddPipelineDepth);
+				addDelaySignalBus("delayed_bits",multiplierWidthY_, IntAddPipelineDepth);
 			}
 	
 			addSignal("temp_result", partsX_  * multiplierWidthX_ + partsY_ * multiplierWidthY_);

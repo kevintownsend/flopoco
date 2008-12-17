@@ -136,7 +136,7 @@ LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut, bool com
 				leveld_[i] = level_[i] + "_d" ;
 				ostringstream levelName;
 				levelName << "level"<<i;		
-				addDelaySignalNoReset(levelName.str(), size_[i],1);	
+				addDelaySignal(levelName.str(), size_[i],1);	
 			}
 			else{
 				leveld_[i] = level_[i];
@@ -149,7 +149,7 @@ LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut, bool com
 		for (int i=wCount_-1; i>=0; i--){
 			ostringstream countName;
 			countName << "count"<<i;		
-			addDelaySignalNoReset(countName.str(), 1, countDepth_[i]);
+			addDelaySignal(countName.str(), 1, countDepth_[i]);
 		}
 			
 		if(computeSticky_){
@@ -162,7 +162,7 @@ LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut, bool com
 				stickyName<<"sticky"<<j;
 				
 				if (levelRegistered_[j])			
-					addDelaySignalNoReset(stickyName.str(),1,1);
+					addDelaySignal(stickyName.str(),1,1);
 				else
 					addSignal(stickyName.str());
 			
@@ -172,7 +172,7 @@ LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut, bool com
 		}						
 			
 		if (entityType_==generic)
-			addDelaySignalNoReset("sozb",1, getPipelineDepth());
+			addDelaySignal("sozb",1, getPipelineDepth());
 	}else /* combinatorial version */
 	{
 		setPipelineDepth(0);
