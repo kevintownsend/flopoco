@@ -176,9 +176,9 @@ LongAcc::LongAcc(Target* target, int wEX, int wFX, int MaxMSBX, int LSBA, int MS
 	}
 
 	// on one side, add delays for the non-complemented signal
-	addDelaySignal("summand", sizeSummand_, c2PipelineDepth_); 
-	addDelaySignal("flushedToZero", 1, shifter_->getPipelineDepth());
-	addDelaySignal("signX", 1, shifter_->getPipelineDepth());
+	addDelaySignalSyncReset("summand", sizeSummand_, c2PipelineDepth_); 
+	addDelaySignalSyncReset("flushedToZero", 1, shifter_->getPipelineDepth());
+	addDelaySignalSyncReset("signX", 1, shifter_->getPipelineDepth());
 
 	addSignal("summand2c", sizeSummand_);
 
@@ -196,10 +196,10 @@ LongAcc::LongAcc(Target* target, int wEX, int wFX, int MaxMSBX, int LSBA, int MS
 		cout << tab <<getOperatorName()<< " pipeline depth is " << getPipelineDepth() << " cycles" <<endl;
 
 	addDelaySignalSyncReset("xOverflowRegister", 1);
-	addDelaySignal("xOverflowCond",1,shifter_->getPipelineDepth()+1);
+	addDelaySignalSyncReset("xOverflowCond",1,shifter_->getPipelineDepth()+1);
 	
 	addDelaySignalSyncReset("xUnderflowRegister", 1);
-	addDelaySignal("xUnderflowCond",1,shifter_->getPipelineDepth()+1);
+	addDelaySignalSyncReset("xUnderflowCond",1,shifter_->getPipelineDepth()+1);
 	
 
 	addDelaySignalSyncReset("accOverflowRegister",1);
