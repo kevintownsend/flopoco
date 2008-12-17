@@ -73,11 +73,6 @@ public:
 	FPNumber operator+(FPNumber);
 	
 
-	/**
-	 * Multiplies a FPNumber with an MPFR.
-	 * @return a FPNumber representing the result of the multiplication.
-	 */
-	FPNumber operator*(mpfr_t);
 
 	/**
 	 * Converts the currently stored FPNumber to an mpfr_t
