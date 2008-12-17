@@ -462,8 +462,6 @@ else
 	exit
 fi
 
-${#frequency=$freq}
-
 s=""
 function zeroGenerator {
 n=$1
