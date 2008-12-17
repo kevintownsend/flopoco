@@ -174,7 +174,7 @@ public:
 	 name. In principle, the code for a sequential operator is thus
 	 gracefully degraded into combinatorial code. See FPAdder for an example.
 	 */	 
-	string  getDelaySignalName(const string name, const int delay=1);
+	string  delaySignal(const string name, const int delay=1);
 
 
 	/** Sets Operator name to default name.

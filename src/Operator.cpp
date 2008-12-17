@@ -222,7 +222,7 @@ void Operator::addDelaySignalBusSyncReset(const string name, const int width, co
 }
 
 
-string Operator::getDelaySignalName(const string name, const int delay) {
+string Operator::delaySignal(const string name, const int delay) {
 	ostringstream o;
 	if (delay<=0 || isSequential()==false)
 		return name;

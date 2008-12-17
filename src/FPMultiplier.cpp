@@ -499,7 +499,7 @@ void FPMultiplier::outputVHDL(std::ostream& o, std::string name) {
 		}
 		//sign synchronization
 		o<<tab<<"Sign_Synchronization <= X("<<wEX_ + wFX_<<") xor Y("<<wEY_ + wFY_<<");"<<endl;
-		o<<tab<<"sign_synch <= "<<getDelaySignalName("Sign_Synchronization",max(2,intMultPipelineDepth_))<<";"<<endl<<endl;
+		o<<tab<<"sign_synch <= "<<delaySignal("Sign_Synchronization",max(2,intMultPipelineDepth_))<<";"<<endl<<endl;
 	
 	
 		if (normalized_==true){	
@@ -605,24 +605,24 @@ void FPMultiplier::outputVHDL(std::ostream& o, std::string name) {
 					//propagate the rest of the signals reunionSignalParts_ steps
 					
 					o<<tab<<"reunion_signal_level <=reunion_signal;"<<endl;
-					o<<tab<<"reunion_signal_out <= "<<getDelaySignalName("reunion_signal_level", reunionSignalParts_)<<";" <<endl;		
+					o<<tab<<"reunion_signal_out <= "<<delaySignal("reunion_signal_level", reunionSignalParts_)<<";" <<endl;		
 					
 					o<<tab<<"LSB_of_result_significand_level <= LSB_of_result_significand;"<<endl;
-					o<<tab<<"LSB_of_result_significand_out <= "<<getDelaySignalName("LSB_of_result_significand_level", reunionSignalParts_)<<";" <<endl;		
+					o<<tab<<"LSB_of_result_significand_out <= "<<delaySignal("LSB_of_result_significand_level", reunionSignalParts_)<<";" <<endl;		
 					
 					o<<tab<<"between_fp_numbers_level <= between_fp_numbers;"<<endl;
-					o<<tab<<"between_fp_numbers_out <= "<<getDelaySignalName("between_fp_numbers_level", reunionSignalParts_)<<";" <<endl;		
+					o<<tab<<"between_fp_numbers_out <= "<<delaySignal("between_fp_numbers_level", reunionSignalParts_)<<";" <<endl;		
 					
 					o<<tab<<"sign_synch2_level <= sign_synch2_d;"<<endl;
-					o<<tab<<"sign_synch2_out <= "<<getDelaySignalName("sign_synch2_level", reunionSignalParts_)<<";" <<endl;		
+					o<<tab<<"sign_synch2_out <= "<<delaySignal("sign_synch2_level", reunionSignalParts_)<<";" <<endl;		
 					
 					o<<tab<<"exception_synch2_level <= exception_synch2_d;"<<endl;
-					o<<tab<<"exception_synch2_out <= "<<getDelaySignalName("exception_synch2_level", reunionSignalParts_)<<";" <<endl;		
+					o<<tab<<"exception_synch2_out <= "<<delaySignal("exception_synch2_level", reunionSignalParts_)<<";" <<endl;		
 														
 					o<<tab<<"reunion_signal_post_addition <= "<< reunion_signal_post_1_addition.str()<<";"<< endl;
 					
 					o<<tab<<"exponent_synch2_level <= exponent_synch2_d;"<<endl;
-					o<<tab<<"exponent_synch2_out <= "<<getDelaySignalName("exponent_synch2_level", reunionSignalParts_)<<";" <<endl;						
+					o<<tab<<"exponent_synch2_out <= "<<delaySignal("exponent_synch2_level", reunionSignalParts_)<<";" <<endl;						
 				
 				}   
 				else{
@@ -741,24 +741,24 @@ void FPMultiplier::outputVHDL(std::ostream& o, std::string name) {
 					//propagate the rest of the signals reunionSignalParts_ steps
 					
 					o<<tab<<"reunion_signal_level <=reunion_signal;"<<endl;
-					o<<tab<<"reunion_signal_out <= "<<getDelaySignalName("reunion_signal_level", reunionSignalParts_)<<";" <<endl;		
+					o<<tab<<"reunion_signal_out <= "<<delaySignal("reunion_signal_level", reunionSignalParts_)<<";" <<endl;		
 					
 					o<<tab<<"LSB_of_result_significand_level <= LSB_of_result_significand;"<<endl;
-					o<<tab<<"LSB_of_result_significand_out <= "<<getDelaySignalName("LSB_of_result_significand_level", reunionSignalParts_)<<";" <<endl;		
+					o<<tab<<"LSB_of_result_significand_out <= "<<delaySignal("LSB_of_result_significand_level", reunionSignalParts_)<<";" <<endl;		
 					
 					o<<tab<<"between_fp_numbers_level <= between_fp_numbers;"<<endl;
-					o<<tab<<"between_fp_numbers_out <= "<<getDelaySignalName("between_fp_numbers_level", reunionSignalParts_)<<";" <<endl;		
+					o<<tab<<"between_fp_numbers_out <= "<<delaySignal("between_fp_numbers_level", reunionSignalParts_)<<";" <<endl;		
 					
 					o<<tab<<"sign_synch2_level <= sign_synch2_d;"<<endl;
-					o<<tab<<"sign_synch2_out <= "<<getDelaySignalName("sign_synch2_level", reunionSignalParts_)<<";" <<endl;		
+					o<<tab<<"sign_synch2_out <= "<<delaySignal("sign_synch2_level", reunionSignalParts_)<<";" <<endl;		
 					
 					o<<tab<<"exception_synch2_level <= exception_synch2_d;"<<endl;
-					o<<tab<<"exception_synch2_out <= "<<getDelaySignalName("exception_synch2_level", reunionSignalParts_)<<";" <<endl;		
+					o<<tab<<"exception_synch2_out <= "<<delaySignal("exception_synch2_level", reunionSignalParts_)<<";" <<endl;		
 														
 					o<<tab<<"reunion_signal_post_addition <= "<< reunion_signal_post_1_addition.str()<<";"<< endl;
 					
 					o<<tab<<"exponent_synch2_level <= exponent_synch2_d;"<<endl;
-					o<<tab<<"exponent_synch2_out <= "<<getDelaySignalName("exponent_synch2_level", reunionSignalParts_)<<";" <<endl;						
+					o<<tab<<"exponent_synch2_out <= "<<delaySignal("exponent_synch2_level", reunionSignalParts_)<<";" <<endl;						
 				}   
 				else{
 					/* when the carry propagation on the reunion signal is not pipelined */

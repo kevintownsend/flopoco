@@ -130,12 +130,12 @@ void LZOC::outputVHDL(std::ostream& o, std::string name) {
 			o << "  tmpO"<<i<<"("<<wOut_-1<<" downto "<<i<<") <= tmpO"<<i+1<<"_d("<<wOut_-1<<" downto "<<i<<");"<<endl;
 			
 			o << "  tmpO"<<i<<"("<<i-1<<") <= '1' when level"<<i<<"("<<(1<<i)-1<<" downto "<<(1<<(i-1))<<") = ("<<(1<<i)-1<<" downto "<<(1<<(i-1))<<" => "
-											<<getDelaySignalName("sozb",wOut_-i)<<") else '0';"<< endl;
+											<<delaySignal("sozb",wOut_-i)<<") else '0';"<< endl;
 			o << "  level"<<i-1<<" <= level"<<i<<"_d("<<(1<<(i-1))-1<<" downto 0) when tmpO"<<i<<"_d("<<i-1<<") = '1'"<< endl
 				<< "               else level"<<i<<"_d("<<(1<<i)-1<<" downto "<<(1<<(i-1))<<");" << endl;
 		}
 		o << "  tmpO"<<1<<"("<<wOut_-1<<" downto "<<1<<") <= tmpO"<<2<<"_d("<<wOut_-1<<" downto "<<1<<");"<<endl;
-		o << "  tmpO1(0) <= '1' when level1(1) =  "<<getDelaySignalName("sozb",wOut_-1)<<" else '0';"<< endl;
+		o << "  tmpO1(0) <= '1' when level1(1) =  "<<delaySignal("sozb",wOut_-1)<<" else '0';"<< endl;
 				
 		o << " O <= tmpO1;"<<endl;
 	}

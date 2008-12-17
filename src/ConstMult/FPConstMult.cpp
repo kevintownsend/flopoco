@@ -225,22 +225,22 @@ void FPConstMult::outputVHDL(ostream& o, string name) {
 	o << ");"<<endl;
 	// Possibly shift the significand one bit left, and remove implicit 1 
 	o << tab << tab << "gt_than_xcut <= '1' when ( x_sig("<<wF_in-1<<" downto 0) > xcut_rd("<<wF_in-1<<" downto 0) ) else '0';"<<endl;
-	o << tab << tab << "shifted_frac <=  sig_prod("<<icm->rsize -2<<" downto "<<icm->rsize - wF_out - 2<<")  when " << getDelaySignalName("gt_than_xcut", icm_depth) << " = '1'"<<endl
+	o << tab << tab << "shifted_frac <=  sig_prod("<<icm->rsize -2<<" downto "<<icm->rsize - wF_out - 2<<")  when " << delaySignal("gt_than_xcut", icm_depth) << " = '1'"<<endl
 		<< tab << tab << "           else sig_prod("<<icm->rsize -3<<" downto "<<icm->rsize - wF_out - 3<<");"<<endl;  
 	// add the rounding bit
-	o << tab << tab << "rounded_frac <= (("<<wF_out <<" downto 1 => '0') & '1') + " << getDelaySignalName("shifted_frac", 1) << ";"<<endl;
+	o << tab << tab << "rounded_frac <= (("<<wF_out <<" downto 1 => '0') & '1') + " << delaySignal("shifted_frac", 1) << ";"<<endl;
 	o << tab << tab << "r_frac <= rounded_frac("<<wF_out <<" downto  1);"<<endl;
 	// Handling signs is trivial
 	if(cst_sgn==0)
-		o << tab << tab << "r_sgn <= " << getDelaySignalName("x_sgn",1) << "; -- positive constant"<<endl;
+		o << tab << tab << "r_sgn <= " << delaySignal("x_sgn",1) << "; -- positive constant"<<endl;
 	else
-		o << tab << tab << "r_sgn <= not " << getDelaySignalName("x_sgn",1) << "; -- negative constant"<<endl;
+		o << tab << tab << "r_sgn <= not " << delaySignal("x_sgn",1) << "; -- negative constant"<<endl;
 
 	// exponent handling
 	o << tab << tab << "r_exp_nopb <= ";
-	o << "((" << wE_sum << " downto " << wE_in << " => '0')  & " << getDelaySignalName("x_exp", 1) << ")  ";
+	o << "((" << wE_sum << " downto " << wE_in << " => '0')  & " << delaySignal("x_exp", 1) << ")  ";
 	o << (expAddendSign==0 ? "+" : "-" ) << "  abs_unbiased_cst_exp";
-	o << "  +  (("<<wE_sum<<" downto 1 => '0') & " <<  getDelaySignalName("gt_than_xcut", 1) << ");"<<endl;
+	o << "  +  (("<<wE_sum<<" downto 1 => '0') & " <<  delaySignal("gt_than_xcut", 1) << ");"<<endl;
 
 	// overflow handling
 	if (maxExp(wE_in) + cst_exp_when_mantissa_1_2 + 1 < maxExp(wE_out)) // no overflow can ever happen
@@ -264,7 +264,7 @@ void FPConstMult::outputVHDL(ostream& o, string name) {
 
 	outputVHDLRegisters(o);
 
-	o << tab << tab << "r <= " << getDelaySignalName("r_exn", icm_depth) << " & " << getDelaySignalName("r_sgn", icm_depth) << " & r_exp & r_frac;"<<endl;
+	o << tab << tab << "r <= " << delaySignal("r_exn", icm_depth) << " & " << delaySignal("r_sgn", icm_depth) << " & r_exp & r_frac;"<<endl;
 	o << "end architecture;" << endl << endl;		
 }
 

@@ -328,7 +328,7 @@ void IntMultiplier::outputVHDL(std::ostream& o, std::string name) {
 				o<<tab<<"delayed_bits <= Low_1("<<multiplierWidthY_-1<<" downto 0 )"<<";"<<endl;
 				
 				//the concatenation of the addtion result and the delayed bits form the result
-				o<<tab<<"temp_result <= addition_result & "<<getDelaySignalName("delayed_bits", IntAddPipelineDepth) <<";"<<endl;
+				o<<tab<<"temp_result <= addition_result & "<<delaySignal("delayed_bits", IntAddPipelineDepth) <<";"<<endl;
 			}else{
 				//when both X and Y have 1 part the result is simply the product of these two parts
 				o<<tab<<"temp_result <= Y_1_X_1_d;"<<endl;
@@ -511,7 +511,7 @@ int i;
 	{
 	ostringstream temp;
 	temp<<"Buffer_H_"<<i;
-		o<<tab<<"H_Level_0_Reg_"<<i<<" <= \"0\" & "<<getDelaySignalName(temp.str(),intAdd2_->getPipelineDepth())<<";"<<endl;
+		o<<tab<<"H_Level_0_Reg_"<<i<<" <= \"0\" & "<<delaySignal(temp.str(),intAdd2_->getPipelineDepth())<<";"<<endl;
 	}
 }
 
@@ -543,7 +543,7 @@ ostringstream first_summand, second_summand;
 					{
 						ostringstream tmpSig;
 						tmpSig<<"L_Level_"<<i<<"_Reg_"<<j;
-						o<<tab<<"L_Level_"<<i+1<<"_Reg_"<<j-1<<"<="<< getDelaySignalName(tmpSig.str(),intAdd2_->getPipelineDepth())<<";"<<endl;
+						o<<tab<<"L_Level_"<<i+1<<"_Reg_"<<j-1<<"<="<< delaySignal(tmpSig.str(),intAdd2_->getPipelineDepth())<<";"<<endl;
 					}	
 		}
 	}
@@ -582,7 +582,7 @@ ostringstream first_summand, second_summand;
 					{
 					ostringstream tmpSig;
 						tmpSig<<"H_Level_"<<i<<"_Reg_"<<j;
-						o<<tab<<"H_Level_"<<i+1<<"_Reg_"<<j-1<<"<="<< getDelaySignalName(tmpSig.str(),intAdd2_->getPipelineDepth())<<";"<<endl;
+						o<<tab<<"H_Level_"<<i+1<<"_Reg_"<<j-1<<"<="<< delaySignal(tmpSig.str(),intAdd2_->getPipelineDepth())<<";"<<endl;
 								
 					//	o<<tab<<"H_Level_"<<i+1<<"_Reg_"<<j-1<<"<="<<"H_Level_"<<i<<"_Reg_"<<j<<"_d;"<<endl;
 					}
@@ -605,7 +605,7 @@ int i,j;
 				{
 					ostringstream temp;
 					temp<<"PartialBits_Level_"<<j-1<<"_Reg_"<<i;
-					o<<tab<<"PartialBits_Level_"<<j<<"_Reg_"<<i <<"<= "<<getDelaySignalName(temp.str(),intAdd2_->getPipelineDepth())<<";"<<endl;
+					o<<tab<<"PartialBits_Level_"<<j<<"_Reg_"<<i <<"<= "<<delaySignal(temp.str(),intAdd2_->getPipelineDepth())<<";"<<endl;
 				}
 				else //if i=j compute the jth register
 				{
@@ -613,7 +613,7 @@ int i,j;
 					temp<<"PartialBits_Level_"<<j-1<<"_Reg_"<<i-1;
 					o<<tab<<"PartialBits_Level_"<<j<<"_Reg_"<<i<<"<= "<<"(\"0\" & L_Level_"<<j-1<<"_Reg_1("<<multiplierWidthY_-1<<" downto 0)) + "
 					      <<"(\"0\" & H_Level_"<<j-2<<"_Reg_1("<<multiplierWidthY_-1<<" downto 0)) + "
-					      << getDelaySignalName(temp.str(),intAdd2_->getPipelineDepth())<<"("<<multiplierWidthY_<<");"<<endl; 
+					      << delaySignal(temp.str(),intAdd2_->getPipelineDepth())<<"("<<multiplierWidthY_<<");"<<endl; 
 				}
 			}	
 		}
@@ -624,9 +624,9 @@ void IntMultiplier::pipelineAddition(std::ostream& o)
 ostringstream temp;
 temp<<"PartialBits_Level_"<< partsY_ <<"_Reg_"<< partsY_;
 		o<<tab<< "int_adder_component: " << intAdd1_->getOperatorName() << endl;
-		o<<tab<< "  port map ( X => "<< getDelaySignalName("Low1",intAdd2_->getPipelineDepth())<< "("<<partsX_ * multiplierWidthX_ -1<<" downto 0"<<") , " << endl; 
+		o<<tab<< "  port map ( X => "<< delaySignal("Low1",intAdd2_->getPipelineDepth())<< "("<<partsX_ * multiplierWidthX_ -1<<" downto 0"<<") , " << endl; 
 		o<<tab<< "             Y => High1("<<partsX_ * multiplierWidthX_ -1<<" downto 0"<<"), " << endl; 
-		o<<tab<< "             Cin => "<<getDelaySignalName(temp.str(),intAdd2_->getPipelineDepth()) <<"("<< multiplierWidthY_ <<")," << endl;
+		o<<tab<< "             Cin => "<<delaySignal(temp.str(),intAdd2_->getPipelineDepth()) <<"("<< multiplierWidthY_ <<")," << endl;
 		o<<tab<< "             R => temp_result, " << endl; 
 		o<<tab<< "             clk => clk, " << endl;
 		o<<tab<< "             rst => rst " << endl;
@@ -645,14 +645,14 @@ void IntMultiplier::delayPartialBits(std::ostream& o)
 	ostringstream temp;
 	temp<<"PartialBits_Level_"<< partsY_ <<"_Reg_"<<i;
 		if (i!=1) 
-			the_bits << getDelaySignalName(temp.str(),intAdd2_->getPipelineDepth())<<"("<< multiplierWidthY_-1 << " downto 0" <<")"<<" & ";
+			the_bits << delaySignal(temp.str(),intAdd2_->getPipelineDepth())<<"("<< multiplierWidthY_-1 << " downto 0" <<")"<<" & ";
 		else
-			the_bits << getDelaySignalName(temp.str(),intAdd2_->getPipelineDepth())<<"("<< multiplierWidthY_-1 << " downto 0" <<")";
+			the_bits << delaySignal(temp.str(),intAdd2_->getPipelineDepth())<<"("<< multiplierWidthY_-1 << " downto 0" <<")";
 	
 	}
 	//setup the pipeline part that will carry the low part of the final result
 	o<<tab<<"PartialBits_Reg <= "<<the_bits.str()<<";"<<endl;
-	o<<tab<<"partial_bits <= "<<getDelaySignalName("PartialBits_Reg",intAdd1_->getPipelineDepth())<<";"<<endl;
+	o<<tab<<"partial_bits <= "<<delaySignal("PartialBits_Reg",intAdd1_->getPipelineDepth())<<";"<<endl;
 }
 
 TestIOMap IntMultiplier::getTestIOMap()

@@ -203,8 +203,8 @@ void IntDualSub::outputVHDL(std::ostream& o, std::string name) {
 		}
 		//connect first assignments to second level of signals
 		for (int i=0;i<nbOfChunks;i++){
-			o << tab << "sX"<<i<<" <= X"<<i<<getDelaySignalName("",bufferedInputs)<<";"<<endl;
-			o << tab << "sY"<<i<<" <= Y"<<i<<getDelaySignalName("",bufferedInputs)<<";"<<endl;
+			o << tab << "sX"<<i<<" <= X"<<i<<delaySignal("",bufferedInputs)<<";"<<endl;
+			o << tab << "sY"<<i<<" <= Y"<<i<<delaySignal("",bufferedInputs)<<";"<<endl;
 			if (i==0)
 				o << tab << "cin0 <= "<<"'"<< not(opType_) <<"';"<<endl;
 		}
@@ -215,8 +215,8 @@ void IntDualSub::outputVHDL(std::ostream& o, std::string name) {
 				o << tab << "xMycin"<<i+1<<"r"<<i<<" <= (\"0\" & sX"<<i<<") + (\"0\" & not(sY"<<i<<")) + cin0;"<<endl;
 			else 
 				if (i<nbOfChunks-1)
-					o << tab << "xMycin"<<i+1<<"r"<<i<<" <= ( \"0\" & sX"<<i<<getDelaySignalName("",i)<< ")"
-					                                 << " + ( \"0\" & not(sY"<<i<<getDelaySignalName("",i)<< "))"
+					o << tab << "xMycin"<<i+1<<"r"<<i<<" <= ( \"0\" & sX"<<i<<delaySignal("",i)<< ")"
+					                                 << " + ( \"0\" & not(sY"<<i<<delaySignal("",i)<< "))"
 					                                 << " + xMycin"<<i<<"r"<<i-1<<"_d("<<cSize[i-1]<<");"<<endl;
 		}
 
@@ -233,10 +233,10 @@ void IntDualSub::outputVHDL(std::ostream& o, std::string name) {
 				if (i<nbOfChunks-1){
 					o << tab << "yMxcin"<<i+1<<"r"<<i<<" <=";
 					if (opType_==0)	
-						o<<" ( \"0\" & not(sX"<<i<<getDelaySignalName("",i)<< "))";
+						o<<" ( \"0\" & not(sX"<<i<<delaySignal("",i)<< "))";
 					else
-						o<<" ( \"0\" & sX"<<i<<getDelaySignalName("",i)<< ")";
-					o << " + ( \"0\" & sY"<<i<<getDelaySignalName("",i)<< ")"
+						o<<" ( \"0\" & sX"<<i<<delaySignal("",i)<< ")";
+					o << " + ( \"0\" & sY"<<i<<delaySignal("",i)<< ")"
 					  << " + yMxcin"<<i<<"r"<<i-1<<"_d("<<cSize[i-1]<<");"<<endl;
 				}
 		}
@@ -246,8 +246,8 @@ void IntDualSub::outputVHDL(std::ostream& o, std::string name) {
 			if (i<nbOfChunks-1)
 				o << tab << "xMyr"<<i<<" <= xMycin"<<i+1<<"r"<<i<<"_d("<<cSize[i]-1<<" downto 0);"<<endl;
 			else{
-				o << tab << "xMyr"<<i<<" <= sX"<<i<<getDelaySignalName("",i)<<
-	                                 " + not(sY"<<i<<getDelaySignalName("",i)<<")";
+				o << tab << "xMyr"<<i<<" <= sX"<<i<<delaySignal("",i)<<
+	                                 " + not(sY"<<i<<delaySignal("",i)<<")";
 									if (nbOfChunks>1)				
 	                                o << " + xMycin"<<i<<"r"<<i-1<<"_d("<<cSize[i-1]<<");"<<endl;
 									else
@@ -260,8 +260,8 @@ void IntDualSub::outputVHDL(std::ostream& o, std::string name) {
 			if (i<nbOfChunks-1)
 				o << tab << son_.str()<<"r"<<i<<" <= "<<son_.str()<<"cin"<<i+1<<"r"<<i<<"_d("<<cSize[i]-1<<" downto 0);"<<endl;
 			else{
-				o << tab << son_.str()<<"r"<<i<<" <= not(sX"<<i<<getDelaySignalName("",i)<<")"<<
-	                                 " + sY"<<i<<getDelaySignalName("",i);
+				o << tab << son_.str()<<"r"<<i<<" <= not(sX"<<i<<delaySignal("",i)<<")"<<
+	                                 " + sY"<<i<<delaySignal("",i);
 									if (nbOfChunks>1)				
 	                                o << " + "<<son_.str()<<"cin"<<i<<"r"<<i-1<<"_d("<<cSize[i-1]<<");"<<endl;
 									else
@@ -273,18 +273,18 @@ void IntDualSub::outputVHDL(std::ostream& o, std::string name) {
 		o << tab << "RxMy <= ";
 		for (int i=nbOfChunks-1;i>=0;i--){
 			if (i==0)
-			o << "xMyr"<<i<<getDelaySignalName("",nbOfChunks-2-i)<<";"<<endl;
+			o << "xMyr"<<i<<delaySignal("",nbOfChunks-2-i)<<";"<<endl;
 			else
-			o << "xMyr"<<i<<getDelaySignalName("",nbOfChunks-2-i)<<" & ";			
+			o << "xMyr"<<i<<delaySignal("",nbOfChunks-2-i)<<" & ";			
 		} o<<endl;
 
 		//assign output by composing the result for y - x || x + y
 		o << tab << "R"<<son_.str()<<" <= ";
 		for (int i=nbOfChunks-1;i>=0;i--){
 			if (i==0)
-			o << son_.str()<<"r"<<i<<getDelaySignalName("",nbOfChunks-2-i)<<";"<<endl;
+			o << son_.str()<<"r"<<i<<delaySignal("",nbOfChunks-2-i)<<";"<<endl;
 			else
-			o << son_.str()<<"r"<<i<<getDelaySignalName("",nbOfChunks-2-i)<<" & ";			
+			o << son_.str()<<"r"<<i<<delaySignal("",nbOfChunks-2-i)<<" & ";			
 		} o<<endl;
 
 		outputVHDLRegisters(o);

@@ -262,7 +262,7 @@ void LZOCShifterSticky::outputVHDL(std::ostream& o, std::string name) {
 		  << "when " << leveld_[i] << "(" << size_[i]-1 << " downto " << size_[i]-p2io2 << ") "
 		  << "= (" << size_[i]-1 << " downto " << size_[i]-p2io2 << " => "; 
 		if (entityType_==generic)
-			o<<getDelaySignalName("sozb",getPipelineDepth()-countDepth_[i-1]);
+			o<<delaySignal("sozb",getPipelineDepth()-countDepth_[i-1]);
 		else
 			o<<"'"<<countType_<<"'";
 		o<<" )   else '0';" << endl; 
@@ -333,7 +333,7 @@ void LZOCShifterSticky::outputVHDL(std::ostream& o, std::string name) {
 		ostringstream name;
 		name << "count" << i;
 		if (isSequential())
-			o << getDelaySignalName(name.str(), countDepth_[i]);
+			o << delaySignal(name.str(), countDepth_[i]);
 		else
 			o << name.str();
 		if (i>0) o << " & ";

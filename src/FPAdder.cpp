@@ -333,9 +333,9 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 			o<<tab<<"shiftedOut <= "; 
 			for (int i=wE-1;i>=sizeRightShift;i--)
 				if (((wE-1)==sizeRightShift)||(i==sizeRightShift))
-					o << getDelaySignalName("exponentDifference",0) << "("<<i<<")";
+					o << delaySignal("exponentDifference",0) << "("<<i<<")";
 				else
-					o << getDelaySignalName("exponentDifference",0) << "("<<i<<") or ";
+					o << delaySignal("exponentDifference",0) << "("<<i<<") or ";
 			o<<";"<<endl;
 		}
 		else
@@ -344,25 +344,25 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 		//shiftVal=the number of positions that fracY must be shifted to the right				
 		if (wE-1>=sizeRightShift) {
 			o<<tab<<"shiftVal <= " 
-			 << getDelaySignalName("exponentDifference",0) << "("<< sizeRightShift-1<<" downto 0"<<")"
+			 << delaySignal("exponentDifference",0) << "("<< sizeRightShift-1<<" downto 0"<<")"
 			 << " when shiftedOut='0'"<<endl
 			 <<tab << tab << "    else CONV_STD_LOGIC_VECTOR("<<wFX+3<<","<<sizeRightShift<<") ;" << endl; 
 		}		else	{ // TODO test this branch
-			o<<tab<<"shiftVal <= CONV_STD_LOGIC_VECTOR(0,"<<sizeRightShift-(wE-1)<<") & " << getDelaySignalName("exponentDifference",0) << "("<< wE-1<<" downto 0"<<"); " <<	endl; 			
+			o<<tab<<"shiftVal <= CONV_STD_LOGIC_VECTOR(0,"<<sizeRightShift-(wE-1)<<") & " << delaySignal("exponentDifference",0) << "("<< wE-1<<" downto 0"<<"); " <<	endl; 			
 		}
 
 		// compute EffSub as (signA xor signB) at cycle 1
-		o<<tab<<"EffSub <= " << getDelaySignalName("newX",1) << "("<<wEX+wFX<<") xor " << getDelaySignalName("newY",1) << "("<<wEY+wFY<<");"<<endl;
+		o<<tab<<"EffSub <= " << delaySignal("newX",1) << "("<<wEX+wFX<<") xor " << delaySignal("newY",1) << "("<<wEY+wFY<<");"<<endl;
 		
 		// compute the close/far path selection signal at cycle1 
 		// the close path is considered only when (signA!=signB) and |exponentDifference|<=1 
-		o<<tab<<"selectClosePath  <= EffSub when " << getDelaySignalName("exponentDifference",1) << "("<<wER-1<<" downto "<<1<<") = ("<<wER-1<<" downto "<<1<<" => '0') else '0';"<<endl;
+		o<<tab<<"selectClosePath  <= EffSub when " << delaySignal("exponentDifference",1) << "("<<wER-1<<" downto "<<1<<") = ("<<wER-1<<" downto "<<1<<" => '0') else '0';"<<endl;
 		
 
 		// sdExnXY is a concatenation of the exception bits of X and Y
-		o<<tab<<"sdExnXY <= " << getDelaySignalName("newX",1) << "("<<wE+wF+2<<" downto "<<wE+wF+1<<") "
-		 << "& " << getDelaySignalName("newY",1) << "("<<wE+wF+2<<" downto "<<wE+wF+1<<");"<<endl;
-		o<<tab<<"pipeSignY <= " << getDelaySignalName("newY",1) << "("<<wE+wF<<");"<<endl;
+		o<<tab<<"sdExnXY <= " << delaySignal("newX",1) << "("<<wE+wF+2<<" downto "<<wE+wF+1<<") "
+		 << "& " << delaySignal("newY",1) << "("<<wE+wF+2<<" downto "<<wE+wF+1<<");"<<endl;
+		o<<tab<<"pipeSignY <= " << delaySignal("newY",1) << "("<<wE+wF<<");"<<endl;
 
 		// swapDifferencePipelineDepth = 1; ==for now, this section has a constant depth of 1.         
 
@@ -374,13 +374,13 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 		
 		// build the fraction signals
 		// padding: [sign bit][inplicit "1"][fracX][guard bit]
-		o<<tab<<"fracXClose1 <= \"01\" & " << getDelaySignalName("newX",1) << "("<<wFX-1<<" downto "<<0<<") & '0';"<<endl;
+		o<<tab<<"fracXClose1 <= \"01\" & " << delaySignal("newX",1) << "("<<wFX-1<<" downto "<<0<<") & '0';"<<endl;
 
 		// the close path is considered when the |exponentDifference|<=1, so 
 		// the alignment of fracY is of at most 1 position
-		o<<tab<<"with " << getDelaySignalName("exponentDifference",1) << "(0) select"<<endl;
-		o<<tab<<"fracYClose1 <=  \"01\" & " << getDelaySignalName("newY",1) << "("<<wF-1<<" downto "<<0<<") & '0' when '0',"<<endl;
-		o<<tab<<"               \"001\" & " << getDelaySignalName("newY",1) << "("<<wF-1<<" downto "<<0<<")       when others;"<<endl;
+		o<<tab<<"with " << delaySignal("exponentDifference",1) << "(0) select"<<endl;
+		o<<tab<<"fracYClose1 <=  \"01\" & " << delaySignal("newY",1) << "("<<wF-1<<" downto "<<0<<") & '0' when '0',"<<endl;
+		o<<tab<<"               \"001\" & " << delaySignal("newY",1) << "("<<wF-1<<" downto "<<0<<")       when others;"<<endl;
 		
 		// substract the fraction signals for the close path; 
 
@@ -399,17 +399,17 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 		o<<tab<<tab<<tab<< ");" << endl<<endl;
 		// register the output -- TODO merge the mux with the last stage of the adder in case of sufficient slack
 
-		o<<tab<< "fracSignClose <= " << getDelaySignalName("fracRClosexMy",1) << "("<<wF+2<<");"<<endl;
-		o<<tab<< "fracRClose1 <= " << getDelaySignalName("fracRClosexMy",1) << "("<<wF+1<<" downto 0) when fracSignClose='0' else " << getDelaySignalName("fracRCloseyMx",1) << "("<<wF+1<<" downto 0);"<<endl;
+		o<<tab<< "fracSignClose <= " << delaySignal("fracRClosexMy",1) << "("<<wF+2<<");"<<endl;
+		o<<tab<< "fracRClose1 <= " << delaySignal("fracRClosexMy",1) << "("<<wF+1<<" downto 0) when fracSignClose='0' else " << delaySignal("fracRCloseyMx",1) << "("<<wF+1<<" downto 0);"<<endl;
 		int delayFromSD = dualSubClose->getPipelineDepth() + 2; 
-		string closeDelayed1 = getDelaySignalName("selectClosePath", delayFromSD);
-		string XDelayed1 = getDelaySignalName("newX", delayFromSD+1);
+		string closeDelayed1 = delaySignal("selectClosePath", delayFromSD);
+		string XDelayed1 = delaySignal("newX", delayFromSD+1);
 				
 		//TODO check the test if significand is all zero is useful. 
-		o << tab << "resSign <= '0' when "<<closeDelayed1<<"='1' and" << getDelaySignalName(" fracRClose1",1) << " = ("<<wF+1<<" downto 0 => '0') else"<<endl;
+		o << tab << "resSign <= '0' when "<<closeDelayed1<<"='1' and" << delaySignal(" fracRClose1",1) << " = ("<<wF+1<<" downto 0 => '0') else"<<endl;
 		// else sign(x) xor (close and sign(resclose))
 		o << tab << "          " << XDelayed1 << "("<<wE+wF<<") xor (" << closeDelayed1 << " and " 
-		  << getDelaySignalName("fracSignClose", 1) << ");"<<endl;
+		  << delaySignal("fracSignClose", 1) << ");"<<endl;
 			
 		// LZC + Shifting. The number of leading zeros are returned together with the shifted input
 		o<<tab<< "LZCOCS_component: " << lzocs->getOperatorName() 
@@ -419,7 +419,7 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 			o<<tab<<tab<<tab<< "clk => clk, " << endl;
 			o<<tab<<tab<<tab<< "rst => rst, " << endl;
 		}
-		o<<tab<<tab<<tab<< "I => " << getDelaySignalName("fracRClose1",1) << ", " << endl; 
+		o<<tab<<tab<<tab<< "I => " << delaySignal("fracRClose1",1) << ", " << endl; 
 		o<<tab<<tab<<tab<< "Count => nZerosNew, "<<endl;
 		o<<tab<<tab<<tab<< "O => shiftedFrac " <<endl; 
 		o<<tab<<tab<<tab<< ");" << endl<<endl;		
@@ -429,17 +429,17 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 		// shiftedFrac(0) is the round bit, shiftedFrac(1) is the parity bit, 
 		// shiftedFrac(wF) is the leading one, to be discarded
 		// the rounding bit is computed:
-		o<<tab<< "roundClose0 <= " << getDelaySignalName("shiftedFrac",1) << "(0) and " << getDelaySignalName("shiftedFrac",1) << "(1);"<<endl;
+		o<<tab<< "roundClose0 <= " << delaySignal("shiftedFrac",1) << "(0) and " << delaySignal("shiftedFrac",1) << "(1);"<<endl;
 		// add two bits in order to absorb exceptions: 
 		// the second 0 will become a 1 in case of overflow, 
 		// the first 0 will become a 1 in case of underflow (negative biased exponent)
 		o<<tab<< "exponentResultClose <= (\"00\" & "
-		 << getDelaySignalName("newX",closePathDepth-1+1) <<"("<<wE+wF-1<<" downto "<<wF<<")) "
-		 <<"- (CONV_STD_LOGIC_VECTOR(0,"<<wE-lzocs->getCountWidth()+2<<") & " << getDelaySignalName("nZerosNew",1) << ");"
+		 << delaySignal("newX",closePathDepth-1+1) <<"("<<wE+wF-1<<" downto "<<wF<<")) "
+		 <<"- (CONV_STD_LOGIC_VECTOR(0,"<<wE-lzocs->getCountWidth()+2<<") & " << delaySignal("nZerosNew",1) << ");"
 		 <<endl;
 		// concatenate exponent with fractional part before rounding so the possible carry propagation automatically increments the exponent 
-		o<<tab<<"resultBeforeRoundClose <= " << getDelaySignalName("exponentResultClose",1) << "("<<wE+1<<" downto 0) & " << getDelaySignalName("shiftedFrac",2) << "("<<wF<<" downto 1);"<<endl; 
-		o<<tab<< "roundClose <= " << getDelaySignalName("roundClose0",1) << ";"<<endl;
+		o<<tab<<"resultBeforeRoundClose <= " << delaySignal("exponentResultClose",1) << "("<<wE+1<<" downto 0) & " << delaySignal("shiftedFrac",2) << "("<<wF<<" downto 1);"<<endl; 
+		o<<tab<< "roundClose <= " << delaySignal("roundClose0",1) << ";"<<endl;
 
 
 
@@ -454,7 +454,7 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 		
 		
 		//add inplicit 1 for frac1. 
- 		o<<tab<< "fracNewY <= '1' & " << getDelaySignalName("newY",1) << "("<<wF-1<<" downto 0);"<<endl;
+ 		o<<tab<< "fracNewY <= '1' & " << delaySignal("newY",1) << "("<<wF-1<<" downto 0);"<<endl;
 		
 								
 		// shift right the significand of new Y with as many positions as the exponent difference suggests (alignment) //		
@@ -466,7 +466,7 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 			o<<tab<<tab<<tab<< "rst => rst, " << endl;
 		}
 		o<<tab<<tab<<tab<< "X => fracNewY, " << endl; 
-		o<<tab<<tab<<tab<< "S => " << getDelaySignalName("shiftVal",1) << "," << endl; 
+		o<<tab<<tab<<tab<< "S => " << delaySignal("shiftVal",1) << "," << endl; 
 		o<<tab<<tab<<tab<< "R => shiftedFracY " <<endl; 
 		o<<tab<<tab<<tab<< ");" << endl<<endl;		
 			
@@ -480,10 +480,10 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 		// the result will be: a + (b xor operation) + operation, where operation=0=addition and operation=1=substraction
 		// the operation selector is the xor between the signs of the operands
 		// perform xor 
-		o<<tab<<"fracYfarXorOp <= fracYfar xor ("<<wF+3<<" downto 0 => "<<getDelaySignalName("EffSub",rightShifter->getPipelineDepth())<<");"<<endl;
+		o<<tab<<"fracYfarXorOp <= fracYfar xor ("<<wF+3<<" downto 0 => "<<delaySignal("EffSub",rightShifter->getPipelineDepth())<<");"<<endl;
 		//pad fraction of X [sign][inplicit 1][fracX][guard bits]				
-		o<<tab<< "fracXfar <= \"01\" & ("<<getDelaySignalName("newX",rightShifter->getPipelineDepth()+2)<<"("<<wF-1<<" downto 0"<<")) & \"00\";"<<endl;
-		o<<tab<< "cInAddFar <= " << getDelaySignalName("EffSub",rightShifter->getPipelineDepth())<<" and not sticky;"<< endl;
+		o<<tab<< "fracXfar <= \"01\" & ("<<delaySignal("newX",rightShifter->getPipelineDepth()+2)<<"("<<wF-1<<" downto 0"<<")) & \"00\";"<<endl;
+		o<<tab<< "cInAddFar <= " << delaySignal("EffSub",rightShifter->getPipelineDepth())<<" and not sticky;"<< endl;
 		// perform carry in addition
 		o<<tab<< "fracAddFar0: " << fracAddFar->getOperatorName()
 		 << "  -- pipelineDepth="<< fracAddFar->getPipelineDepth()<< endl;
@@ -493,16 +493,16 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 			o<<tab<<tab<<tab<< "rst => rst, " << endl;
 		}
 		o<<tab<<tab<<tab<< "X => fracXfar, " << endl; 
-		o<<tab<<tab<<tab<< "Y => "<<getDelaySignalName("fracYfarXorOp",1) << ", " << endl; 
+		o<<tab<<tab<<tab<< "Y => "<<delaySignal("fracYfarXorOp",1) << ", " << endl; 
 	             	// below, + 1 because XOR stage
-		o<<tab<<tab<<tab<< "Cin => "<<getDelaySignalName("cInAddFar",1) << "," << endl;
+		o<<tab<<tab<<tab<< "Cin => "<<delaySignal("cInAddFar",1) << "," << endl;
 		o<<tab<<tab<<tab<< "R => fracResultfar0 " << endl; 
 		o<<tab<<tab<<tab<< ");" << endl;
 	
 
 		o << tab << "-- 2-bit normalisation" <<endl; 
 
-		o << tab << "fracResultFarNormStage <= " << getDelaySignalName("fracResultfar0",1) << ";"<<endl;
+		o << tab << "fracResultFarNormStage <= " << delaySignal("fracResultfar0",1) << ";"<<endl;
 
 		// NORMALIZATION 
 		// The leading one may be at position wF+3, wF+2 or wF+1
@@ -520,9 +520,9 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 		o<<tab<<tab<< "else fracResultFarNormStage(2) ;"<<endl;
 		
 		o<<tab<< "fracResultStickyBit <=" << endl ;
-		o<<tab<<tab<< "     "<<getDelaySignalName("sticky", 1 + fracAddFar->getPipelineDepth() +1)<<" 	 when fracLeadingBits = \"00\" "<<endl;
-		o<<tab<<tab<< "else fracResultFarNormStage(0) or  "<<getDelaySignalName("sticky", 1 + fracAddFar->getPipelineDepth() +1)<<"   when fracLeadingBits = \"01\" "<<endl;
-		o<<tab<<tab<< "else fracResultFarNormStage(1) or fracResultFarNormStage(0) or "<<getDelaySignalName("sticky", 1 + fracAddFar->getPipelineDepth() +1)<<";"<<endl;
+		o<<tab<<tab<< "     "<<delaySignal("sticky", 1 + fracAddFar->getPipelineDepth() +1)<<" 	 when fracLeadingBits = \"00\" "<<endl;
+		o<<tab<<tab<< "else fracResultFarNormStage(0) or  "<<delaySignal("sticky", 1 + fracAddFar->getPipelineDepth() +1)<<"   when fracLeadingBits = \"01\" "<<endl;
+		o<<tab<<tab<< "else fracResultFarNormStage(1) or fracResultFarNormStage(0) or "<<delaySignal("sticky", 1 + fracAddFar->getPipelineDepth() +1)<<";"<<endl;
 		// round bit
 		o<<tab<< "roundFar1 <= fracResultRoundBit and (fracResultStickyBit or fracResultFar1(0));"<<endl;
 
@@ -538,15 +538,15 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 	   int delayFromSD2 = rightShifter->getPipelineDepth() + 1 + fracAddFar->getPipelineDepth() + 1;
 
 		// the result exponent before normalization and rounding is = to the exponent of the first operand //
-		o<<tab<<"exponentResultfar0<=\"00\" & ("<<getDelaySignalName("newX", delayFromSD2+1)<<"("<<wF+wE-1<<" downto "<<wF<<"));"<<endl;
+		o<<tab<<"exponentResultfar0<=\"00\" & ("<<delaySignal("newX", delayFromSD2+1)<<"("<<wF+wE-1<<" downto "<<wF<<"));"<<endl;
 		
 		o<<tab<<"exponentResultFar1 <= exponentResultfar0 + exponentUpdate;" << endl;
 		
 		// End of normalization stage
 		o<<tab<<"resultBeforeRoundFar <= "
-		 << getDelaySignalName("exponentResultFar1",1) 
-		 << " & " <<getDelaySignalName("fracResultFar1",1)<<";" << endl;		
-		o<<tab<< "roundFar <= " <<getDelaySignalName("roundFar1",1)<<";" << endl;
+		 << delaySignal("exponentResultFar1",1) 
+		 << " & " <<delaySignal("fracResultFar1",1)<<";" << endl;		
+		o<<tab<< "roundFar <= " <<delaySignal("roundFar1",1)<<";" << endl;
 		
 				
 		
@@ -559,15 +559,15 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 
 				
 		//synchronize the close signal
-		o<<tab<<"syncClose <= "<<getDelaySignalName("selectClosePath", maxPathDepth)<<";"<<endl; 
+		o<<tab<<"syncClose <= "<<delaySignal("selectClosePath", maxPathDepth)<<";"<<endl; 
 				
 		// select between the results of the close or far path as the result of the operation 
 		o<<tab<< "with syncClose select"<<endl;
-		o<<tab<< "resultBeforeRound <= " << getDelaySignalName("resultBeforeRoundClose",farPathDepth - closePathDepth) <<" when '1',"<<endl;
-		o<<tab<< "                     " << getDelaySignalName("resultBeforeRoundFar",  closePathDepth - farPathDepth) <<"   when others;"<<endl;
+		o<<tab<< "resultBeforeRound <= " << delaySignal("resultBeforeRoundClose",farPathDepth - closePathDepth) <<" when '1',"<<endl;
+		o<<tab<< "                     " << delaySignal("resultBeforeRoundFar",  closePathDepth - farPathDepth) <<"   when others;"<<endl;
 		o<<tab<< "with syncClose select"<<endl;
-		o<<tab<< "round <= " << getDelaySignalName("roundClose",farPathDepth - closePathDepth) <<" when '1',"<<endl;
-		o<<tab<< "         " << getDelaySignalName("roundFar", closePathDepth - farPathDepth) <<"   when others;"<<endl;
+		o<<tab<< "round <= " << delaySignal("roundClose",farPathDepth - closePathDepth) <<" when '1',"<<endl;
+		o<<tab<< "         " << delaySignal("roundFar", closePathDepth - farPathDepth) <<"   when others;"<<endl;
 		
 		o << endl << "-- Rounding --" << endl;
 		// perform the actual rounding //
@@ -585,20 +585,20 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 
 
 		//sign bit
-		o<<tab<<"syncEffSub <= "<<getDelaySignalName("EffSub", delaySDToRound)<<";"<<endl;
+		o<<tab<<"syncEffSub <= "<<delaySignal("EffSub", delaySDToRound)<<";"<<endl;
 		
 		//X
-		o<<tab<<"syncX <= "<<getDelaySignalName("newX", delaySDToRound+1)<<";"<<endl;
+		o<<tab<<"syncX <= "<<delaySignal("newX", delaySDToRound+1)<<";"<<endl;
 		
 		//signY
-		o<<tab<<"syncSignY <= "<<getDelaySignalName("pipeSignY", delaySDToRound)<<";"<<endl;
+		o<<tab<<"syncSignY <= "<<delaySignal("pipeSignY", delaySDToRound)<<";"<<endl;
 		
 		// resSign comes from closer  TODO FIXME BUG HERE if some day close path is shorter than far path
-		o<<tab<<"syncResSign <= "<<getDelaySignalName("resSign", lzocs->getPipelineDepth()+ 2 + finalRoundAdd->getPipelineDepth()+1)<<";"<<endl;
+		o<<tab<<"syncResSign <= "<<delaySignal("resSign", lzocs->getPipelineDepth()+ 2 + finalRoundAdd->getPipelineDepth()+1)<<";"<<endl;
 
 
 		// compute the exception bits of the result considering the possible underflow and overflow 
-		o<<tab<< "UnderflowOverflow <= " << getDelaySignalName("resultRounded",1) 
+		o<<tab<< "UnderflowOverflow <= " << delaySignal("resultRounded",1) 
 		 << "("<<wE+1+wF<<" downto "<<wE+wF<<");"<<endl;
 
 		o<<tab<< "with UnderflowOverflow select"<<endl;
@@ -606,9 +606,9 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 		o<<tab<< "                              \"00\" when \"10\" | \"11\",  -- underflow"<<endl;
 		o<<tab<< "                              \"01\" when others; -- normal "<<endl;
   	
-		o<<tab<< "resultNoExn("<<wE+wF<<" downto 0) <= syncResSign & "<<getDelaySignalName("resultRounded",1) << "("<<wE+wF-1<<" downto 0);"<<endl;
+		o<<tab<< "resultNoExn("<<wE+wF<<" downto 0) <= syncResSign & "<<delaySignal("resultRounded",1) << "("<<wE+wF-1<<" downto 0);"<<endl;
 	 
-		o<<tab<< "syncExnXY <= "<<getDelaySignalName("sdExnXY",delaySDToRound)<<";"<<endl;
+		o<<tab<< "syncExnXY <= "<<delaySignal("sdExnXY",delaySDToRound)<<";"<<endl;
 
 		o<<tab<< "with syncExnXY select"<<endl;
 		o<<tab<< "  finalResult("<<wE+wF+2<<" downto "<<wE+wF+1<<") <= resultNoExn("<<wE+wF+2<<" downto "<<wE+wF+1<<") when \"0101\","<<endl;

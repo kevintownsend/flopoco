@@ -549,8 +549,8 @@ void IntConstMult::outputVHDL(std::ostream& o, std::string name) {
 			break;
 
 		case Add:
-			iname = getDelaySignalName(p->i->name, p->i_delayed_by); // even works for unregistered signals
-			jname = getDelaySignalName(p->j->name, p->j_delayed_by); // even works for unregistered signals
+			iname = delaySignal(p->i->name, p->i_delayed_by); // even works for unregistered signals
+			jname = delaySignal(p->j->name, p->j_delayed_by); // even works for unregistered signals
 			if(p->s==0) {
 				o << tab << p->name << " <= " ;
 				// The i part
@@ -616,7 +616,7 @@ void IntConstMult::outputVHDL(std::ostream& o, std::string name) {
 
 		case Shift:
 		case Neg:
-			iname = getDelaySignalName(p->i->name, p->i_delayed_by); // even works for unregistered signals
+			iname = delaySignal(p->i->name, p->i_delayed_by); // even works for unregistered signals
 			o << tab << p->name << " <= " ;
 			if(p->op == Neg)   
 				o << "("<< p->size -1 <<" downto 0 => '0') - " ; 

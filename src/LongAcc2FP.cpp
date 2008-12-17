@@ -202,17 +202,17 @@ int i;
 			o<<tab<<"expRAdjusted<=expAdjustedExt("<<wEOut_-1<<" downto 0);"<<endl;
 		}			
 	
-	o<<tab<<"excRes <=  excBits when ("<<getDelaySignalName("AccOverflowFlag",lzocShifterSticky_->getPipelineDepth())<<"='0') else \"10\";"<<endl;
+	o<<tab<<"excRes <=  excBits when ("<<delaySignal("AccOverflowFlag",lzocShifterSticky_->getPipelineDepth())<<"='0') else \"10\";"<<endl;
 
 	//c2 of the fraction
-	o<<tab<< " notResFrac <= not("<<getDelaySignalName("resFrac",extraPipeLevel)<<");"<<endl;
+	o<<tab<< " notResFrac <= not("<<delaySignal("resFrac",extraPipeLevel)<<");"<<endl;
 
 	//count the number of zeros/ones in order to determine the value of the exponent
 	//Leading Zero/One counter 
 	o<<tab<< "Adder: " << adder_->getOperatorName() << endl;
 	o<<tab<< "      port map ( X => notResFrac, "  << endl; 
 	o<<tab<< "                 Y => "<< zeroGenerator(wFOut_ + 1, 0)<<", " << endl; 
-	o<<tab<< "                 Cin =>"<<getDelaySignalName("resultSign0",lzocShifterSticky_->getPipelineDepth()+extraPipeLevel)<< ", "<< endl; 
+	o<<tab<< "                 Cin =>"<<delaySignal("resultSign0",lzocShifterSticky_->getPipelineDepth()+extraPipeLevel)<< ", "<< endl; 
 	o<<tab<< "                 R => postResFrac "           <<endl;
 	if (isSequential()){ 
 	o<<","<<endl;
@@ -221,13 +221,13 @@ int i;
 	}
 	o<<tab<< "               );"                       << endl<< endl;		
 		
-	o<<tab<<" resultFraction <= "<<getDelaySignalName("resFrac",adder_->getPipelineDepth()+extraPipeLevel)<<
-			                   " when ("<<getDelaySignalName("resultSign0",lzocShifterSticky_->getPipelineDepth()+adder_->getPipelineDepth()+extraPipeLevel)<<"='0')"<<
+	o<<tab<<" resultFraction <= "<<delaySignal("resFrac",adder_->getPipelineDepth()+extraPipeLevel)<<
+			                   " when ("<<delaySignal("resultSign0",lzocShifterSticky_->getPipelineDepth()+adder_->getPipelineDepth()+extraPipeLevel)<<"='0')"<<
 							   " else postResFrac;"<<endl;
 	
-	o<<tab<< "R <= "<<getDelaySignalName("excRes",adder_->getPipelineDepth()+extraPipeLevel) <<" & "
-			 <<getDelaySignalName("resultSign0",lzocShifterSticky_->getPipelineDepth()+ adder_->getPipelineDepth()+extraPipeLevel)<<" & "
-			 << getDelaySignalName("expRAdjusted",adder_->getPipelineDepth()+extraPipeLevel)<<"("<<wEOut_-1<<" downto 0) & "
+	o<<tab<< "R <= "<<delaySignal("excRes",adder_->getPipelineDepth()+extraPipeLevel) <<" & "
+			 <<delaySignal("resultSign0",lzocShifterSticky_->getPipelineDepth()+ adder_->getPipelineDepth()+extraPipeLevel)<<" & "
+			 << delaySignal("expRAdjusted",adder_->getPipelineDepth()+extraPipeLevel)<<"("<<wEOut_-1<<" downto 0) & "
 			 << "resultFraction("<<wFOut_-1<<" downto 0);"<<endl;
 	
 	endArchitecture(o);
@@ -243,7 +243,7 @@ int i;
 	// shift 
 	/*
 	o<<tab<< "left_shifter_component: " << leftShifter_->getOperatorName() << endl;
-	o<<tab<< "      port map ( X => "<<getDelaySignalName("pipeA",leadZOCounter_->getPipelineDepth())<<", "<< endl; 
+	o<<tab<< "      port map ( X => "<<delaySignal("pipeA",leadZOCounter_->getPipelineDepth())<<", "<< endl; 
 	o<<tab<< "                 S => nZO, " << endl; 
 	o<<tab<< "                 R => resFrac, " <<endl; 
 	o<<tab<< "                 clk => clk, " << endl;

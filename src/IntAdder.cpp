@@ -190,10 +190,10 @@ void IntAdder::outputVHDL(std::ostream& o, std::string name) {
 		}
 		//connect first assignments to second level of signals
 		for (int i=0;i<nbOfChunks;i++){
-			o << tab << "sX"<<i<<" <= X"<<i<<getDelaySignalName("",bufferedInputs)<<";"<<endl;
-			o << tab << "sY"<<i<<" <= Y"<<i<<getDelaySignalName("",bufferedInputs)<<";"<<endl;
+			o << tab << "sX"<<i<<" <= X"<<i<<delaySignal("",bufferedInputs)<<";"<<endl;
+			o << tab << "sY"<<i<<" <= Y"<<i<<delaySignal("",bufferedInputs)<<";"<<endl;
 			if (i==0)
-			o << tab << "cin0 <= "<<getDelaySignalName("carry",bufferedInputs)<<";"<<endl;
+			o << tab << "cin0 <= "<<delaySignal("carry",bufferedInputs)<<";"<<endl;
 		}
 
 		//additions		
@@ -202,8 +202,8 @@ void IntAdder::outputVHDL(std::ostream& o, std::string name) {
 				o << tab << "cin"<<i+1<<"r"<<i<<" <= (\"0\" & sX"<<i<<") + (\"0\" & sY"<<i<<") + cin0;"<<endl;
 			else 
 				if (i<nbOfChunks-1)
-					o << tab << "cin"<<i+1<<"r"<<i<<" <= ( \"0\" & sX"<<i<<getDelaySignalName("",i)<< ")"
-					                                 " + ( \"0\" & sY"<<i<<getDelaySignalName("",i)<< ")"
+					o << tab << "cin"<<i+1<<"r"<<i<<" <= ( \"0\" & sX"<<i<<delaySignal("",i)<< ")"
+					                                 " + ( \"0\" & sY"<<i<<delaySignal("",i)<< ")"
 					                                 " + cin"<<i<<"r"<<i-1<<"_d("<<cSize[i-1]<<");"<<endl;
 		}
 		//assign the partial additions which will propagate to the result
@@ -211,8 +211,8 @@ void IntAdder::outputVHDL(std::ostream& o, std::string name) {
 			if (i<nbOfChunks-1)
 				o << tab << "r"<<i<<" <= cin"<<i+1<<"r"<<i<<"_d("<<cSize[i]-1<<" downto 0);"<<endl;
 			else{
-				o << tab << "r"<<i<<" <= sX"<<i<<getDelaySignalName("",i)<<
-	                                 " + sY"<<i<<getDelaySignalName("",i);
+				o << tab << "r"<<i<<" <= sX"<<i<<delaySignal("",i)<<
+	                                 " + sY"<<i<<delaySignal("",i);
 									if (nbOfChunks>1)				
 	                                o << " + cin"<<i<<"r"<<i-1<<"_d("<<cSize[i-1]<<");"<<endl;
 									else
@@ -224,9 +224,9 @@ void IntAdder::outputVHDL(std::ostream& o, std::string name) {
 		o << tab << "R <= ";
 		for (int i=nbOfChunks-1;i>=0;i--){
 			if (i==0)
-			o << "r"<<i<<getDelaySignalName("",nbOfChunks-2-i)<<";"<<endl;
+			o << "r"<<i<<delaySignal("",nbOfChunks-2-i)<<";"<<endl;
 			else
-			o << "r"<<i<<getDelaySignalName("",nbOfChunks-2-i)<<" & ";			
+			o << "r"<<i<<delaySignal("",nbOfChunks-2-i)<<" & ";			
 		} o<<endl;
 
 		outputVHDLRegisters(o);

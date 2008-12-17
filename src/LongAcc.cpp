@@ -265,27 +265,27 @@ int i;
 	o << tab << "flushedToZero <=     '1' when (shiftval("<<wEX_<<")='1' -- negative left shift " << endl;
 	o << tab << "                               or exnX=\"00\")" << endl;
 	o << tab << "                 else'0';" << endl;
-	o << tab << "summand <= ("<<sizeSummand_-1<<" downto 0 => '0')  when "<< getDelaySignalName("flushedToZero", shifter_->getPipelineDepth()) << "='1'  else shifted_frac("<<sizeShiftedFrac_-1<<" downto "<<wFX_<<");" << endl;
+	o << tab << "summand <= ("<<sizeSummand_-1<<" downto 0 => '0')  when "<< delaySignal("flushedToZero", shifter_->getPipelineDepth()) << "='1'  else shifted_frac("<<sizeShiftedFrac_-1<<" downto "<<wFX_<<");" << endl;
 	o << endl;
 
 	o << tab << "-- 2's complement of the summand" << endl;
 	// Don't compute 2's complement just yet, just invert the bits and leave the addition of the extra 1 in accumulation,
 	// as a carry in bit
-	o << tab << "summand2c <= summand when ("<< getDelaySignalName("signX", shifter_->getPipelineDepth()) <<"='0' or "
-	         << getDelaySignalName("flushedToZero", shifter_->getPipelineDepth()) <<"='1') else not(summand); "<< endl;
+	o << tab << "summand2c <= summand when ("<< delaySignal("signX", shifter_->getPipelineDepth()) <<"='0' or "
+	         << delaySignal("flushedToZero", shifter_->getPipelineDepth()) <<"='1') else not(summand); "<< endl;
 	
 	o << endl;
 	o << tab << "-- extension of the summand to accumulator size" << endl;
 	o << tab << "ext_summand2c <= ("<<sizeAcc_-1<<" downto "<<sizeSummand_<<"=> (" 
-		<< getDelaySignalName("signX", shifter_->getPipelineDepth()) 
-		<< " and not " << getDelaySignalName("flushedToZero", shifter_->getPipelineDepth())
+		<< delaySignal("signX", shifter_->getPipelineDepth()) 
+		<< " and not " << delaySignal("flushedToZero", shifter_->getPipelineDepth())
 		<<")) & summand2c;" << endl;
 	o << endl;
 	o << tab << "-- accumulation itself" << endl;
 	
 	//determine the value of the carry in bit
-	o << tab << "carryBit_0 <= ("<<getDelaySignalName("signX", shifter_->getPipelineDepth())
-		<< " and not " << getDelaySignalName("flushedToZero", shifter_->getPipelineDepth() ) << ");"<<endl; 
+	o << tab << "carryBit_0 <= ("<<delaySignal("signX", shifter_->getPipelineDepth())
+		<< " and not " << delaySignal("flushedToZero", shifter_->getPipelineDepth() ) << ");"<<endl; 
 		
 	for (i=0;i<additionNumberOfChunks_;i++) {
 		ostringstream accReg;
@@ -322,8 +322,8 @@ int i;
 	
 	o << endl;
 
-	o << tab << " xOverflowRegister <= xOverflowRegister_d or "<<getDelaySignalName("xOverflowCond",shifter_->getPipelineDepth()+1)<<";"<<endl;
-	o << tab << " xUnderflowRegister <= xUnderflowRegister_d  or "<<getDelaySignalName("xUnderflowCond",shifter_->getPipelineDepth()+1)<<";"<<endl;
+	o << tab << " xOverflowRegister <= xOverflowRegister_d or "<<delaySignal("xOverflowCond",shifter_->getPipelineDepth()+1)<<";"<<endl;
+	o << tab << " xUnderflowRegister <= xUnderflowRegister_d  or "<<delaySignal("xUnderflowCond",shifter_->getPipelineDepth()+1)<<";"<<endl;
 	o << tab << " accOverflowRegister <= accOverflowRegister_d or carryBit_"<<additionNumberOfChunks_<<"_d;"<<endl;
 	outputVHDLRegisters(o);
 
