@@ -68,6 +68,9 @@ mpz_class FPNumber::getFractionSignalValue()
 	return mantissa + (mpz_class(1)<<wF);
 }
 
+
+
+
 FPNumber FPNumber::operator*(FPNumber fp)
 {
 	mpfr_t x, y, r;
@@ -87,12 +90,6 @@ FPNumber FPNumber::operator*(FPNumber fp)
 	return flofp;
 }
 
-FPNumber FPNumber::operator*(mpfr_t mpX)
-{
-	FPNumber fpX(24, mpfr_get_prec(mpX)+32, mpX);
-
-	return *this * fpX;
-}
 
 FPNumber FPNumber::operator+(FPNumber fp)
 {
@@ -248,7 +245,7 @@ FPNumber& FPNumber::operator=(mpfr_t mp_)
 	}
 
 	if (mantissa >= mpz_class(1) << wF)
-		throw std::string("Mantissa is to big after conversion to VHDL signal.");
+		throw std::string("Mantissa is too big after conversion to VHDL signal.");
 	if (mantissa < 0)
 		throw std::string("Mantissa is negative after conversion to VHDL signal.");
 
