@@ -278,11 +278,15 @@ TestIOMap FPConstMult::getTestIOMap()
 
 void FPConstMult::fillTestCase(mpz_class a[])
 {
+ 	mpfr_t signedY;
+ 	mpfr_init(signedY);
+ 	mpfr_neg(signedY, mpY, GMP_RNDN);
+
 	mpz_class& svX = a[0];
 	mpz_class& svR = a[1];
 	FPNumber x(wE_in, wF_in), r(wE_out, wF_out);
 	x = svX;
-	r = x * mpY;
+	r = x * signedY;
 	svR = r.getSignalValue();
 }
 
