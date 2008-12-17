@@ -111,6 +111,7 @@ ADD_EXECUTABLE(flopoco
  src/BigTestBench
  src/FPMultiplier
  src/IntMultiplier
+ src/IntMult2
  src/Karatsuba
  src/IntAdder
  src/IntDualSub

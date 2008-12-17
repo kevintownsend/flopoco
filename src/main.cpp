@@ -39,6 +39,7 @@
 #include "IntAdder.hpp"
 #include "IntDualSub.hpp"
 #include "IntMultiplier.hpp"
+#include "IntMult2.hpp"
 #include "Karatsuba.hpp"
 #include "FPMultiplier.hpp"
 #include "LongAcc.hpp"
@@ -434,6 +435,19 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(op);
 			}
 		}
+		else if(opname=="IntMult2"){
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int wInX = checkStrictyPositive(argv[i++], argv[0]);
+				int wInY = checkStrictyPositive(argv[i++], argv[0]);
+				cerr << "> IntMultiplier , wInX="<<wInX<<", wInY="<<wInY<<"\n";
+				op = new IntMult2(target, wInX, wInY);
+				addOperator(op);
+			}
+		}
+
 		else if(opname=="Karatsuba"){
 			int nargs = 2;
 			if (i+nargs > argc)
