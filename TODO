@@ -6,6 +6,8 @@ pipeline HOTBM, FPExp, FPLog
 add FPDivider and FPSquareRoot
 
 Pipeline framework, Operator and Targets:
+* remove getTestIOMap which should be automatic when we do addInput etc
+* refactor test bench generation for better support of operator-specific cases
 * better evaluation of the frequency of the shifters and LZOCs 
 * finetune Altera target
 * get rid of _d in the outputVHDL codes, replace them with getDelaySignalName
