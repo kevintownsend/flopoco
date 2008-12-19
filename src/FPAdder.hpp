@@ -89,10 +89,7 @@ private:
 
 	LZOC* leadingZeroCounter;
 	Shifter* leftShifter;
-	Shifter* rightShifter;
-	
-	IntAdder* adderList[8];
-	
+	Shifter* rightShifter;	
 	LZOCShifterSticky* lzocs; 
 
 	int wF;

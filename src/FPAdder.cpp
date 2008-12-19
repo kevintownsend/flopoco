@@ -637,7 +637,8 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 		o<<tab<< "R <= finalResult;"<<endl;
 		
 				   
-	o<< "end architecture;" << endl << endl;
+		endArchitecture(o);
+
 }
 
 
