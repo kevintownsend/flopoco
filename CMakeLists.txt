@@ -109,17 +109,18 @@ ADD_EXECUTABLE(flopoco
  src/Wrapper
  src/TestBench 
  src/BigTestBench
- src/FPMultiplier
- src/IntMultiplier
- src/IntMult2
- src/Karatsuba
  src/IntAdder
  src/IntDualSub
+ src/IntMultiplier
+ src/Karatsuba
  src/LZOC src/LZOCShifterSticky
  src/Shifters
+ src/FPAdder
+ src/FPMultiplier
+ src/FPDiv
+ src/IntMult2
  src/LongAcc
  src/LongAcc2FP
- src/FPAdder
  src/DotProduct
  src/ConstMult/IntConstMult src/ConstMult/ShiftAddOp src/ConstMult/ShiftAddDag 
  src/ConstMult/FPConstMult 
