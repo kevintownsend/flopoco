@@ -34,9 +34,6 @@ public:
 	 **/
 	void outputVHDL(std::ostream& o, std::string name);
 
-	/** Method for setting the operator name
-	*/
-	void setOperatorName();	
 
 	/**
 	 * Gets the signals which are interesting for TestCases.

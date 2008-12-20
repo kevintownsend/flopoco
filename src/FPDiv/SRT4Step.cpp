@@ -54,7 +54,7 @@ SRT4Step::SRT4Step(Target* target, int wF) :
 	setOperatorType();
 		
 	addInput ("x", wF+3);
-	addInput ("d", wF);
+	addInput ("d", wF+1);
 	addInput ("dtimes3", wF+3);
 	addOutput ("q", 3);
 	addOutput ("w", wF+3);
