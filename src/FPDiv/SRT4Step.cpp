@@ -46,9 +46,11 @@ SRT4Step::SRT4Step(Target* target, int wF) :
 	Operator(target), wF(wF) {
 
 	int i, j;
-	ostringstream name, synch, synch2;
+	ostringstream name;
 
-	setOperatorName();
+	name<<"SRT4Step_"<<wF; 
+	uniqueName_ = name.str(); 
+
 	setOperatorType();
 		
 	addInput ("x", wF+3);
@@ -80,11 +82,6 @@ SRT4Step::SRT4Step(Target* target, int wF) :
 SRT4Step::~SRT4Step() {
 }
 
-void SRT4Step::setOperatorName(){
-	ostringstream name;
-	name<<"SRT4Step__"<<wF; 
-	uniqueName_ = name.str(); 
-}
 
 void SRT4Step::outputVHDL(std::ostream& o, std::string name) {
   
@@ -100,7 +97,7 @@ void SRT4Step::outputVHDL(std::ostream& o, std::string name) {
 	beginArchitecture(o);
 	outputVHDLRegisters(o); o<<endl;
 
-	o << tab << "sel <= x(" << wF+2 << " << downto " << wF-1 << ") & d(" << wF-1 << ");" << endl; 
+	o << tab << "sel <= x(" << wF+2 << " downto " << wF-1 << ") & d(" << wF-1 << ");" << endl; 
   	o << tab << "with sel select" << endl;
    o << tab << "qi <= " << endl;
 	o << tab << tab << "\"001\" when \"00010\" | \"00011\"," << endl;
@@ -113,20 +110,20 @@ void SRT4Step::outputVHDL(std::ostream& o, std::string name) {
 	o << tab << tab << "\"---\" when others;" << endl;
 	o << endl;
 	o << tab << "with qi select" << endl;
-   o << tab << tab << "qiTimesD <= "<< endl ;
+   o << tab << tab << "qTimesD <= "<< endl ;
 	o << tab << tab << tab << "\"000\" & d            when \"001\" | \"111\"," << endl;
 	o << tab << tab << tab << "\"00\" & d & \"0\"     when \"010\" | \"110\"," << endl;
 	o << tab << tab << tab << "\"0\" & dTimes3             when \"011\" | \"101\"," << endl;
-	o << tab << tab << tab << "(wF+3 downto 0 => '0') when \"000\"," << endl;
-	o << tab << tab << tab << "(wF+3 downto 0 => '-') when others;" << endl;
+	o << tab << tab << tab << "(" << wF+3 << " downto 0 => '0') when \"000\"," << endl;
+	o << tab << tab << tab << "(" << wF+3 << " downto 0 => '-') when others;" << endl;
 	o << endl;
-	o << tab << "x0 <= x & \"0\"" << endl;
+	o << tab << "x0 <= x & \"0\";" << endl;
 	o << tab << "with qi(2) select" << endl;
    o << tab << "w0 <= x0 - qTimesD when '0'," << endl;
 	o << tab << "      x0 + qTimesD when others;" << endl;
 	o << endl;
 	o << tab << "q <= qi;" << endl;
-  	o << tab << "w <= w0(" << wF+2 << " downto 1) & \"0\"" << endl;
+  	o << tab << "w <= w0(" << wF+2 << " downto 1) & \"0\";" << endl;
 	endArchitecture(o);
 }
 
