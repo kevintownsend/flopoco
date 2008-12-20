@@ -8,6 +8,7 @@
 
 #include "Operator.hpp"
 #include "FPNumber.hpp"
+#include "FPDiv/SRT4Step.hpp"
 
 /** The FPDiv class */
 class FPDiv : public Operator
@@ -56,7 +57,10 @@ private:
 	/** The width of the fraction for the input X */
 	int wF; 
 	/** The number of iterations */
-	int nDigit; 
+	int nDigit;
+	
+	/** A SRT4Step subcomponent */
+	SRT4Step* srt4step;
 };
 
 #endif //FPDIV_HPP

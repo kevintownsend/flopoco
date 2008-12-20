@@ -117,7 +117,8 @@ ADD_EXECUTABLE(flopoco
  src/Shifters
  src/FPAdder
  src/FPMultiplier
- src/FPDiv
+ src/FPDiv.cpp src/FPDiv.hpp
+ src/FPDiv/SRT4Step
  src/IntMult2
  src/LongAcc
  src/LongAcc2FP

@@ -45,6 +45,7 @@
 #include "LongAcc.hpp"
 #include "LongAcc2FP.hpp"
 #include "FPAdder.hpp"
+#include "FPDiv.hpp"
 #include "DotProduct.hpp"
 #include "Wrapper.hpp"
 #include "TestBench.hpp"
@@ -502,6 +503,17 @@ bool parseCommandLine(int argc, char* argv[]){
 						cerr<<"(For now) the inputs and outputs must have the same size"<<endl;
 			}
 		} 
+		else if (opname == "FPDiv")
+		{
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0]); // and exit
+			int wE = checkStrictyPositive(argv[i++], argv[0]);
+			int wF = checkStrictyPositive(argv[i++], argv[0]);
+			cerr << "> FPDiv: wE=" << wE << " wF=" << wF << endl;
+			op = new FPDiv(target, wE, wF);
+			addOperator(op);
+		}
 		else if(opname=="LongAcc"){
 			int nargs = 5;
 			if (i+nargs > argc)
