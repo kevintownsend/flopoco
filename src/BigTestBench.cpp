@@ -377,6 +377,10 @@ void BigTestBench::outputVHDL(ostream& o, string name) {
 			if (z < 0)
 			{
 				res=fwrite("N/A\n", 4, 1, f);
+				if(res!=1) {
+					cerr << "BigTestBench: Error in fwrite (disk full?)\n";
+					exit(1);
+				}
 				continue;
 			}
 
@@ -393,6 +397,10 @@ void BigTestBench::outputVHDL(ostream& o, string name) {
 			p[l] = '\n'; p[l+1] = 0; l++;
 			/* Write to file */
 			res=fwrite(p, l, 1, f);
+			if(res!=1) {
+				cerr << "BigTestBench: Error in fwrite (disk full?)\n";
+				exit(1);
+			}
 		}
 
 		/* Advance pipeline circular buffer */
@@ -413,7 +421,7 @@ void BigTestBench::outputVHDL(ostream& o, string name) {
 
 	cerr << endl << endl;
 
-	cerr << "To run the simulation, type the following in 'rlwrap vsim -c':" <<endl;
+	cerr << "To run the simulation, type the following in 'vsim -c':" <<endl;
 	cerr << tab << "vdel -all -lib work" <<endl;
 	cerr << tab << "vlib work" <<endl;
 	cerr << tab << "vcom flopoco.vhdl" <<endl;
