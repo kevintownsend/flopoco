@@ -23,6 +23,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <cstdlib>
 #include "utils.hpp"
 #include "Table.hpp"
 

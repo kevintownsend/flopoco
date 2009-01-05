@@ -1,5 +1,6 @@
 #include <iostream>
 #include <math.h>
+#include <cstdlib>
 #include "../utils.hpp"
 #include "FirstInvTable.hpp"
 #include "FirstLogTable.hpp"
