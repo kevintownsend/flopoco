@@ -51,7 +51,7 @@ SRT4Step::SRT4Step(Target* target, int wF) :
 	name<<"SRT4Step_"<<wF; 
 	uniqueName_ = name.str(); 
 
-	setOperatorType();
+	setCombinatorial();
 		
 	addInput ("x", wF+3);
 	addInput ("d", wF+1);
@@ -106,16 +106,26 @@ void SRT4Step::outputVHDL(std::ostream& o, std::string name) {
 	o << tab << tab << "\"101\" when \"11000\" | \"10110\" | \"10111\" | \"10100\" | \"10101\" | \"10011\" | \"10001\"," << endl;
 	o << tab << tab << "\"110\" when \"11010\" | \"11011\" | \"11001\"," << endl;
 	o << tab << tab << "\"111\" when \"11100\" | \"11101\"," << endl;
+#if 0 
+	// FPLibrary's version, leaves more freedom to the optimizer 
+	// No noticeable difference in synthesis results, and it adds a lot of warnings to the simulation
 	o << tab << tab << "\"000\" when \"00000\" | \"00001\" | \"11110\" | \"11111\"," << endl;
 	o << tab << tab << "\"---\" when others;" << endl;
+#else
+	o << tab << tab << "\"000\" when others;" << endl;
+#endif
 	o << endl;
 	o << tab << "with qi select" << endl;
    o << tab << tab << "qTimesD <= "<< endl ;
 	o << tab << tab << tab << "\"000\" & d            when \"001\" | \"111\"," << endl;
 	o << tab << tab << tab << "\"00\" & d & \"0\"     when \"010\" | \"110\"," << endl;
 	o << tab << tab << tab << "\"0\" & dTimes3             when \"011\" | \"101\"," << endl;
+#if 0 // FPLibrary's version, leaves more freedom to the optimizer
 	o << tab << tab << tab << "(" << wF+3 << " downto 0 => '0') when \"000\"," << endl;
 	o << tab << tab << tab << "(" << wF+3 << " downto 0 => '-') when others;" << endl;
+#else
+	o << tab << tab << tab << "(" << wF+3 << " downto 0 => '0') when others;" << endl;
+#endif
 	o << endl;
 	o << tab << "x0 <= x & \"0\";" << endl;
 	o << tab << "with qi(2) select" << endl;
@@ -123,7 +133,7 @@ void SRT4Step::outputVHDL(std::ostream& o, std::string name) {
 	o << tab << "      x0 + qTimesD when others;" << endl;
 	o << endl;
 	o << tab << "q <= qi;" << endl;
-  	o << tab << "w <= w0(" << wF+2 << " downto 1) & \"0\";" << endl;
+  	o << tab << "w <= w0(" << wF+1 << " downto 0) & \"0\";" << endl;
 	endArchitecture(o);
 }
 

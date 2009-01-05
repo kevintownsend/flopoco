@@ -4,6 +4,9 @@
 /* Exponent of 2, used to represent signed zero */
 #define ZERO_EXPONENT -1000000000
 
+// All this is broken if wf_out is different from wf_in
+// Replace all the operators with an emulate() method of Operator.
+
 /* SwW: Slipper when Wet
  * When the FPMultiplier is set not to normalise results,
  * it outputs significants and exponents which have little 
@@ -76,7 +79,7 @@ FPNumber FPNumber::operator*(FPNumber fp)
 	mpfr_t x, y, r;
 	mpfr_init2(x, wF+1);
 	mpfr_init2(y, fp.wF+1);
-	mpfr_init2(r, wF+fp.wF+2);
+	mpfr_init2(r,   wF + fp.wF + 2); // r will hold an exact product
 	getMPFR(x);
 	fp.getMPFR(y);
 	mpfr_mul(r, x, y, GMP_RNDN);
@@ -90,8 +93,21 @@ FPNumber FPNumber::operator*(FPNumber fp)
 	return flofp;
 }
 
-
 FPNumber FPNumber::operator+(FPNumber fp)
+{
+	mpfr_t x, y, r;
+	mpfr_init2(x, 1+wF);
+	mpfr_init2(y, 1+fp.wF);
+	mpfr_init2(r, wF+fp.wF+3); // FIXME double rounding here
+	getMPFR(x);
+	fp.getMPFR(y);
+	mpfr_add(r, x, y, GMP_RNDN);
+	FPNumber flofp(wE, wF, r);
+
+	return flofp;
+}
+
+FPNumber FPNumber::operator/(FPNumber fp)
 {
 	mpfr_t x, y, r;
 	mpfr_init2(x, 1+wF);
@@ -99,7 +115,7 @@ FPNumber FPNumber::operator+(FPNumber fp)
 	mpfr_init2(r, wF+fp.wF+3);
 	getMPFR(x);
 	fp.getMPFR(y);
-	mpfr_add(r, x, y, GMP_RNDN);
+	mpfr_div(r, x, y, GMP_RNDN);
 	FPNumber flofp(wE, wF, r);
 
 	return flofp;

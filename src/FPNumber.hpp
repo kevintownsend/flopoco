@@ -67,6 +67,12 @@ public:
 	FPNumber operator*(FPNumber);
 
 	/**
+	 * Divides two FPNumbers using MPFR.
+	 * @return a FPNumber which is the correctly rounded quotient.
+	 */
+	FPNumber operator/(FPNumber);
+
+	/**
 	 * Adds two FPNumbers using MPFR.
 	 * @return a FPNumber representing the result of the addition.
 	 */

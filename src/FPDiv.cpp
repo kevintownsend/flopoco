@@ -52,7 +52,7 @@ FPDiv::FPDiv(Target* target, int wE, int wF) :
 	name<<"FPDiv_"<<wE<<"_"<<wF; 
 	uniqueName_ = name.str(); 
 
-	setOperatorType();
+	setCombinatorial();
 		
 	// -------- Parameter set up -----------------
 	nDigit = int(ceil((wF+6)/2));
@@ -68,8 +68,6 @@ FPDiv::FPDiv(Target* target, int wE, int wF) :
 		
 
 	// -------- Pipeline setup--------------------
-
-
 
 
 	if(isSequential())		
@@ -214,7 +212,7 @@ void FPDiv::outputVHDL(std::ostream& o, std::string name) {
 	o << tab << tab << "exnRfinal <= " <<endl;
 	o << tab << tab << tab << "exnR   when \"01\", -- normal" <<endl;
 	o << tab << tab << tab << "exnR0  when others;" <<endl;
-	o << tab << "sR <= X(" << wE+wF << ") xor X(" << wE+wF<< ");" << endl;
+	o << tab << "sR <= X(" << wE+wF << ") xor Y(" << wE+wF<< ");" << endl;
 	o << tab << "R <= exnRfinal & sR & expfracR(" << wE+wF-1 << " downto 0);" <<endl;
 	endArchitecture(o);
 }
@@ -242,7 +240,8 @@ void FPDiv::fillTestCase(mpz_class a[])
 	FPNumber x(wE, wF), y(wE, wF), r(wE, wF);
 	x = svX;
 	y = svY;
-	r = x+y; // TODO
+
+	r = x/y; // TODO
 	/* Set outputs */
 	svR = r.getSignalValue();
 	
