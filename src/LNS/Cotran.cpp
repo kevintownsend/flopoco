@@ -40,18 +40,10 @@ Cotran::Cotran(Target * target, int wE, int wF, int j, int wECotran, int o) :
 	ostringstream name;
 	name<<"Cotran_"<< wE <<"_"<< wF << "_" << j << "_" << wECotran; 
 	uniqueName_ = name.str();
-	
-	name.str("");
-	name<<"Cotran_F1_"<< wF <<"_"<< j;
-	f1_name  = name.str();
-	
-	name.str("");
-	name<<"Cotran_F2_"<< wF <<"_"<< j;
-	f2_name  = name.str();
 
-	name.str("");
-	name<<"Cotran_F3_"<< wF <<"_"<< j;
-	f3_name  = name.str();
+	setCombinatorial();	
+	setPipelineDepth(0);
+	
 	
 //	wEssZero = min(wE, log2(wF+1)+1)+wF;
 	wEssZero = min(wE, intlog2(wF)) + wF;
@@ -67,12 +59,16 @@ Cotran::Cotran(Target * target, int wE, int wF, int j, int wECotran, int o) :
 	// Output signals manually...
 
 	// Delayed construction, after computation of j...
-	f1 = auto_ptr<CotranF1Table>(new CotranF1Table(wF, j, wECotran));
-	f2 = auto_ptr<CotranF2Table>(new CotranF2Table(wF, j));
-	f3 = auto_ptr<CotranF3Table>(new CotranF3Table(wF, j));
-	
+	f1 = new CotranF1Table(target, wF, j, wECotran);
+	oplist.push_back(f1);
+
+	f2 = new CotranF2Table(target, wF, j);
+	oplist.push_back(f2);
+
+	f3 = new CotranF3Table(target, wF, j);
+	oplist.push_back(f3);
+
 	sb = new LNSAdd(target, wE, wF, o);	// TODO: + guard bits!
-	
 	oplist.push_back(sb);
 }
 
@@ -89,10 +85,6 @@ void Cotran::outputVHDL(std::ostream& o, std::string name)
 {
 	licence(o,"Sylvain Collange, Jesus Garcia (2005-2008)");
 	
-	// Output tables
-	f1->output(o, f1_name);
-	f2->output(o, f2_name);
-	f3->output(o, f3_name);
 
 	//Operator::StdLibs(o);
 	o
@@ -135,10 +127,9 @@ void Cotran::outputVHDL(std::ostream& o, std::string name)
 	<< tab << "signal SBEssZero : std_logic;\n";
 
 
-	f1->outputComponent(o, f1_name);
-	f2->outputComponent(o, f2_name);
-	f3->outputComponent(o, f3_name);
-	
+	f1->outputVHDLComponent(o);
+	f2->outputVHDLComponent(o);
+	f3->outputVHDLComponent(o);
 	sb->outputVHDLComponent(o);
 
 	beginArchitecture(o);
@@ -158,7 +149,7 @@ void Cotran::outputVHDL(std::ostream& o, std::string name)
 //	<< tab << "			RMax when others;\n"
 //	<< tab << "\n"
 
-	<< tab << "f1 : " << f1_name << "\n"
+	<< tab << "f1 : " << f1->getOperatorName() << "\n"
 	<< tab << "  port map (\n"
 	<< tab << "    x => Zh,\n"
 	<< tab << "    y => F1_v(" << f1->wOut - 1 << " downto 0));\n"
@@ -169,7 +160,7 @@ void Cotran::outputVHDL(std::ostream& o, std::string name)
 	}
 	
 	o
-	<< tab << "f2 : " << f2_name << "\n"
+	<< tab << "f2 : " << f2->getOperatorName() << "\n"
 	<< tab << "  port map (\n"
 	<< tab << "    x => Zl,\n"
 	<< tab << "    y => F2_v(" << f2->wOut - 1 << " downto 0));\n"
@@ -179,7 +170,7 @@ void Cotran::outputVHDL(std::ostream& o, std::string name)
 	}
 
 	o
-	<< tab << "f3 : " << f3_name << "\n"
+	<< tab << "f3 : " << f3->getOperatorName() << "\n"
 	<< tab << "  port map (\n"
 	<< tab << "    x => Z(" << j+1 << " downto 0),\n"
 	<< tab << "    y => SBPos);\n";

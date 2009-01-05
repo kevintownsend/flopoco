@@ -1,55 +1,52 @@
+/*
+ * An FP logarithm for FloPoCo
+ *
+ * Author : Florent de Dinechin
+ *
+ * This file is part of the FloPoCo project developed by the Arenaire
+ * team at Ecole Normale Superieure de Lyon
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or 
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
+*/
 #include <fstream>
 #include <sstream>
-#include <cstdlib>
 #include <math.h>	// for NaN
 
 #include "FPLog.hpp"
 #include "FPNumber.hpp"
 #include "utils.hpp"
 
-#include "fplog/FirstInvTable.hpp"
-#include "fplog/FirstLogTable.hpp"
-#include "fplog/SecondInvTable.hpp"
-#include "fplog/OtherLogTable.hpp"
-
-#include "LZOC.hpp"
-#include "Shifters.hpp"
 
 using namespace std;
 
-// XXX: Not well encapsulated
 extern vector<Operator *> oplist;
 
-// TODO: get rid of this
-void mpfr_shift_left(mpfr_t& x, int s) {
-  mpfr_t two;
-  int i;
-
-  mpfr_init2(two, 2);
-  mpfr_set_ui(two, 2, GMP_RNDD);
-  for(i=0; i<s; i++) {
-    mpfr_mul(x, x, two, GMP_RNDD);
-  }
-  mpfr_clear(two);
-}
 
 
 FPLog::FPLog(Target* target, int wE, int wF)
 	: Operator(target), wE(wE), wF(wF)
 {
-	/* Generate unique name */
-	{
-		std::ostringstream o;
-		o << "FPLog_" << wE << "_" << wF;
-		uniqueName_ = o.str();
-	}
+	setOperatorName();
+	setOperatorType();
 
 	addFPInput("x", wE, wF);
 	addFPOutput("r", wE, wF);
 
 	int i;
 
-	gLog = 5; // XXX: To pesimistic 
+	gLog = 4; // TODO : compute or tabulate 
 	target_prec = wF+((wF+1)>>1) +gLog;
 
 	// First compute the precision of each iteration 
@@ -104,26 +101,306 @@ FPLog::FPLog(Target* target, int wE, int wF)
 	// Deduce the number of stages
 	stages = i-1;
 
+	// Various variables that make life more concise
+	sfinal =  s[stages+1];
+	pfinal = p[stages+1];
+	lzc_size = max(intlog2(wF), intlog2(wE+p[stages+1]+1)); // TODO look at it
+
+
+
 	// MSB of squarer input is p[stages+1];
 	// LSB will be target_prec
 	// size will be target_prec - p[stages+1]  
 
-	cout<<"LogArch::LogArch: needs "<<stages<<" stages"<<endl;
+	if(verbose)
+		cout<<"FPLog: needs "<<stages<<" range reduction stages"<<endl;
 
-	// Now allocate the various table objects
-
-	it0 = new FirstInvTable(a[0], a[0]+1);
-	lt0 = new FirstLogTable(a[0], target_prec, it0);
-	it1 = new SecondInvTable(a[1], p[1]);
-	for(i=1; i<=stages; i++) {
-		lt[i] = new OtherLogTable(a[i], target_prec - p[i], p[i], i); 
-	 }
+	//TODO move somewhere
 	int computedG = intlog2(3*(stages+1));
+
+
+	
+	// Now allocate the sub-components (the range reduction box will in turn allocate various tables
+	// First change Target so that it is combinatorial
+	bool wasPipelined = target->isPipelined();
+	target->setNotPipelined();
+
+	lzoc = new LZOC(target, wF, intlog2(wF));
+	oplist.push_back(lzoc);
+
+	// ao stands for "almost one"
+	ao_rshift = new Shifter(target, s[stages+1]-p[stages+1]+1, s[stages+1]-p[stages+1]+1, Right) ;
+	oplist.push_back(ao_rshift);
+
+	ao_lshift = new Shifter(target, wF-p[stages+1]+2,wF-p[stages+1]+2, Left);   
+	oplist.push_back(ao_lshift);
+
+	final_norm = new LZOCShifterSticky(target, wE+target_prec, wE+target_prec, 0);
+	oplist.push_back(final_norm);
+
+	rrbox = new LogRangeRed(target, this);
+	oplist.push_back(rrbox);
+
+	// restore target
+	if(wasPipelined) 	target->setPipelined();
+
+
+	// Declaration of local signals
+	addSignal("FirstBit");
+	addSignal("Y0", wF+2);
+	addSignal("E", wE);
+	addSignal("absE", wE);
+	addSignal("absELog2", wF+wE+gLog);
+	addSignal("absELog2_pad", wE+target_prec);
+	addSignal("LogF_normal_pad", wE+target_prec);
+	addSignal("Log_normal", wE+target_prec);
+	addSignal("Log_normal_normd", wE+target_prec);
+	addSignal("E_small", wE);
+	addSignal("ER", wE);
+	addSignal("E_normal", lzc_size);
+	addSignal("Log_small_normd", wF+gLog);
+	addSignal("Log_g", wF+gLog);
+	addSignal("EFR", wE+wF);
+	addSignal("lzo", intlog2(wF));
+	addSignal("shiftval", intlog2(wF)+1);
+	addSignal("absZ0", wF-pfinal+2);
+	addSignal("absZ0s", wF-pfinal+2);
+	addSignal("Zfinal", sfinal);
+	addSignal("Log1p_normal", sfinal);
+	addSignal("Z2o2_full", 2*(sfinal-pfinal));
+	addSignal("squarerIn", sfinal-pfinal);
+	addSignal("Z2o2_small_s", sfinal-pfinal+1);
+	addSignal("Z2o2", sfinal-pfinal+1);
+	addSignal("Log_small", wF+gLog+2);
+	addSignal("Z_small", wF+gLog+2);
+	addSignal("Z2o2_small", wF+gLog+2);
+	addSignal("almostLog", target_prec);
+	addSignal("logF_normal", target_prec);
+	addSignal("E0_sub",2);
+	addSignal("sR");
+	addSignal("small");
+	addSignal("doRR");
+	addSignal("ufl");
+	addSignal("sticky");
+	addSignal("round");
+
+
 }	
 
 FPLog::~FPLog()
 {
+	delete lzoc;
 }
+
+
+
+void FPLog::setOperatorName()	{
+		std::ostringstream o;
+		o << "FPLog_" << wE << "_" << wF;
+		uniqueName_ = o.str();
+	}
+
+
+#if 1
+void FPLog::outputVHDL(std::ostream& o, std::string name)
+{
+	int i;
+	mpfr_t two, log2;
+	mpz_t zlog2;
+
+
+	licence(o, "F. de Dinechin, C. Klein  (2008)");
+	Operator::stdLibs(o);
+	outputVHDLEntity(o);
+
+	newArchitecture(o,name);
+
+	// subcomponents
+	ao_lshift->outputVHDLComponent(o);
+	ao_rshift->outputVHDLComponent(o);
+	lzoc->outputVHDLComponent(o);
+	rrbox->outputVHDLComponent(o);
+	final_norm->outputVHDLComponent(o);
+
+	// signal declarations
+	outputVHDLSignalDeclarations(o);
+
+	// constants
+	o <<   "  constant g   : positive := "<<gLog<<";"<<endl;
+	o <<   "  constant a0 : positive := "<< a[0] <<";"<<endl;
+	o <<   "  constant log2wF : positive := "<< intlog2(wF) <<";"<<endl;
+	o <<   "  constant targetprec : positive := "<< target_prec <<";"<<endl;
+	o <<   "  constant sfinal : positive := "<< s[stages+1] <<";"<<endl;
+	o <<   "  constant pfinal : positive := "<< p[stages+1] <<";"<<endl;
+	o <<   "  constant lzc_size : positive := "<< max(intlog2(wF), intlog2(wE+p[stages+1]+1)) << ";" << endl;
+
+	// the maximum shift distance in the "small" path ?
+	// o << "  constant shiftvalsize : positive := "<< intlog2(wF + 1 - p[stages+1]) <<";"<<endl;
+
+	// The log2 constant
+	mpfr_init2(two, 2);
+	mpfr_set_d(two, 2.0, GMP_RNDN);
+	mpfr_init2(log2, wF+gLog);
+	mpfr_log(log2, two, GMP_RNDN);
+	mpfr_mul_2si(log2, log2, wF+gLog, GMP_RNDN); // shift left
+	mpz_init2(zlog2, wF+gLog);
+	mpfr_get_z(zlog2, log2, GMP_RNDN);
+	o << "  signal log2 : std_logic_vector(wF+g-1 downto 0) := \"";
+	printBinPosNumGMP(o, mpz_class(zlog2), wF+gLog);
+	o << "\";"<<endl;
+	o << "  signal E0offset : std_logic_vector(wE-1 downto 0) := \"";
+	printBinPosNumGMP(o, (mpz_class(1)<<(wE-1)) -2 + wE , wE);
+	o << "\"; -- E0 + wE "<<endl;
+	o << "  signal pfinal_s : std_logic_vector(log2wF -1 downto 0) := \"";
+	printBinPosNumGMP(o, mpz_class(p[stages+1]), intlog2(wF));
+	o << "\";"<<endl;
+
+	beginArchitecture(o);
+	o <<
+		"  FirstBit <=  X(wF-1);\n"
+		"  Y0 <=      \"1\"  & X(wF-1 downto 0) & \"0\" when FirstBit = '0'\n"
+		"        else \"01\" & X(wF-1 downto 0);\n"
+		"\n"
+		"  E  <= (X(wE+wF-1 downto wF)) - (\"0\" & (wE-2 downto 1 => '1') & (not FirstBit));\n"
+		"\n"
+		"  sR <= '0'   when    X(wE+wF-1 downto wF)   =   '0' &(wE-2 downto 0 => '1')  -- binade [1..2)\n"
+		"        else not X(wE+wF-1);                -- MSB of exponent\n"
+		"\n"
+		"  absE <= ((wE-1 downto 0 => '0') - E)   when sR = '1'\n"
+		"          else E;\n"
+		"\n"
+		"  absELog2 <= absE * log2;\n"
+		"  \n"
+		"  lzoc1 : " << lzoc->getOperatorName() << "\n"
+		"    port map (  i => Y0(wF downto 1), ozb => FirstBit,  o => lzo);\n"
+		"\n"
+		"  shiftval <= ('0' & lzo) - ('0' & pfinal_s); \n"
+		"\n"
+		"  doRR <= shiftval(log2wF);             -- sign of the result\n"
+		"\n"
+		"  small <= '1' when ((E=(wE-1 downto 0 => '0')) and (doRR='0'))\n"
+		"          else '0';\n"
+		"\n"
+		"-- The range reduction instance\n"
+		"  rr: " <<  rrbox->getOperatorName() <<
+		"\n     port map ( A => X(wF-1 downto wF-a0), Y0 => Y0,\n";
+
+	if(isSequential())
+		o << "                clk=>clk,"<<endl;
+	
+	o <<
+		"                Z => Zfinal, almostLog => almostLog);\n"
+		"  absZ0 <=   Y0(wF-pfinal+1 downto 0)          when (sR='0') else\n"
+		"             ((wF-pfinal+1 downto 0 => '0') - Y0(wF-pfinal+1 downto 0));\n"
+		"\n"
+		"--  absZ0 <=   Y0(wF-pfinal downto 0)   xor (wF-pfinal downto 0 => sR);\n"
+		"\n"
+		"  ao_lshift: " << ao_rshift->getOperatorName() << 
+		"\n    port map (  i => absZ0, s => shiftval(log2wF-1 downto 0), o => absZ0s );\n"
+		"\n"
+		"  -- Z2o2 will be of size sfinal-pfinal, set squarer input size to that\n"
+		"  sqintest: if sfinal > wf+2 generate\n"
+		"    squarerIn <= Zfinal(sfinal-1 downto pfinal) when doRR='1'\n"
+		"                 else (absZ0s &  (sfinal-wF-3 downto 0 => '0'));  \n"
+		"  end generate sqintest;\n"
+		"  sqintest2: if sfinal <= wf+2 generate\n"
+		"    squarerIn <= Zfinal(sfinal-1 downto pfinal) when doRR='1'\n"
+		"                 else absZ0s(wF-pfinal+1 downto wf+2-sfinal);  \n"
+		"  end generate sqintest2;\n"
+		"\n"
+		"  -- Z2o2 will be of size sfinal - pfinal -1, set squarer input size to that\n"
+		"--  sqintest: if sfinal >= wf+3 generate\n"
+		"--    squarerIn <= Zfinal(sfinal-1 downto pfinal+1) when doRR='1'\n"
+		"--                 else (absZ0s &  (sfinal-wF-4 downto 0 => '0'));  \n"
+		"--  end generate sqintest;\n"
+		"--  sqintest2: if sfinal < wf+3 generate\n"
+		"--    squarerIn <= Zfinal(sfinal-1 downto pfinal+1) when doRR='1'\n"
+		"--                 else absZ0s(wF-pfinal+1 downto wf+3-sfinal);  \n"
+		"--  end generate sqintest2;\n"
+			" \n"
+		"  Z2o2_full <= (squarerIn * squarerIn);\n"
+		"  Z2o2 <= Z2o2_full (2*(sfinal-pfinal)-1  downto sfinal-pfinal-1);\n"
+		"\n"
+		"  Log1p_normal  <=   Zfinal  -  ((sfinal-1 downto sfinal-pfinal-1  => '0') & (Z2o2(sfinal-pfinal downto 2)));\n"
+		"\n"
+		"  LogF_normal <=   almostLog + ((targetprec-1 downto sfinal => '0') & Log1p_normal);\n"
+		"\n"
+		"  absELog2_pad <=   absELog2 & (targetprec-wF-g-1 downto 0 => '0');       \n"
+		"  LogF_normal_pad <= (wE-1  downto 0 => LogF_normal(targetprec-1))  & LogF_normal;\n"
+		"  \n"
+		"  Log_normal <=  absELog2_pad  + LogF_normal_pad when sR='0'  \n"
+		"                else absELog2_pad - LogF_normal_pad;\n"
+		"\n"
+		"  final_norm : " << final_norm->getOperatorName() <<
+		"\n    port map (i => Log_normal, z => E_normal, o => Log_normal_normd);\n"
+		"\n"
+		"\n"
+		"  ao_rshift: " << ao_rshift->getOperatorName() <<
+		"\n    port map (i => Z2o2,\n"
+		"              s => shiftval(log2wF-1 downto 0),\n"
+		"              o => Z2o2_small_s);\n"
+		"\n"
+		"  -- send the MSB to position pfinal\n"
+		"  Z2o2_small <=  (pfinal-1 downto 0  => '0') & Z2o2_small_s & (wF+g-sfinal downto 0  => '0') ;\n"
+		"\n"
+		"  -- mantissa will be either Y0-z^2/2  or  -Y0+z^2/2,  depending on sR  \n"
+		"\n"
+		"  Z_small <= (absZ0s & (pfinal+g-1 downto 0 => '0'));\n"
+		"  Log_small  <=       Z_small -  Z2o2_small when (sR='0')\n"
+		"                else  Z_small +  Z2o2_small;\n"
+		"\n"
+		"  -- Possibly subtract 1 or 2 to the exponent, depending on the LZC of Log_small\n"
+		"  E0_sub <=      \"11\" when Log_small(wF+g+1) = '1'\n"
+		"            else \"10\" when Log_small(wF+g+1 downto wF+g) = \"01\"\n"
+		"            else \"01\" ;\n"
+		"\n"
+		"  E_small <=  \"0\" & (wE-2 downto 2 => '1') & E0_sub\n"
+		"               - ((wE-1 downto log2wF => '0') & lzo) ;\n"
+		"\n"
+		"  Log_small_normd <= Log_small(wF+g+1 downto 2) when Log_small(wF+g+1)='1'\n"
+		"             else Log_small(wF+g downto 1)  when Log_small(wF+g)='1'  -- remove the first zero\n"
+		"             else Log_small(wF+g-1 downto 0)  ; -- remove two zeroes (extremely rare, 001000000 only)\n"
+		"                                               \n"
+		"  ER <= E_small when small='1'\n"
+		"        else E0offset - ((wE-1 downto lzc_size => '0') & E_normal);\n"
+		"  -- works only if wE > lzc_size approx log2wF, OK for usual exp/prec\n"
+		"\n"
+		"  Log_g  <=  Log_small_normd (wF+g-2 downto 0) & \"0\" when small='1'           -- remove implicit 1\n"
+		"        else Log_normal_normd(wE+targetprec-2 downto wE+targetprec-wF-g-1 );  -- remove implicit 1\n"
+		"\n"
+		"  sticky <= '0' when Log_g(g-2 downto 0) = (g-2 downto 0 => '0') else\n"
+		"            '1';\n"
+		"  round <= Log_g(g-1) and (Log_g(g) or sticky);\n"
+		"\n"
+		"  -- use a trick: if round leads to a change of binade, the carry propagation\n"
+		"  -- magically updates both mantissa and exponent\n"
+		"  EFR <= (ER & Log_g(wF+g-1 downto g)) + ((wE+wF-1 downto 1 => '0') & round); \n"
+		"\n"
+		"\n"
+		"  -- The smallest log will be log(1+2^{-wF}) \\approx 2^{-wF}\n"
+		"  -- The smallest representable number is 2^{-2^(wE-1)} \n"
+		"  -- Therefore, if \n"
+		"--    underflow : if max(wE, log2(wF)+1) > wE generate\n"
+		"--      ufl <=      '1' when (eR2(wE0-1) = '1') or (eR = (wE-1 downto 0 => '0'))\n"
+		"--             else '0';\n"
+		"--    end generate;\n"
+		"\n"
+		"--    no_underflow : if max(wE, log2(wE+wF)+2) = wE generate\n"
+		"      ufl <= '0';\n"
+		"--    end generate;\n"
+		"\n"
+		"  R(wE+wF+2 downto wE+wF) <= \"110\" when ((X(wE+wF+2) and (X(wE+wF+1) or X(wE+wF))) or (X(wE+wF+1) and X(wE+wF))) = '1' else\n"
+		"                               \"101\" when X(wE+wF+2 downto wE+wF+1) = \"00\"                                                       else\n"
+		"                               \"100\" when X(wE+wF+2 downto wE+wF+1) = \"10\"                                                       else\n"
+		"                               \"00\" & sR when (((Log_normal_normd(wE+targetprec-1)='0') and (small='0')) or ( (Log_small_normd (wF+g-1)='0') and (small='1'))) or (ufl = '1') else\n"
+		"                               \"01\" & sR;\n"
+		"\n"
+		"  R(wE+wF-1 downto 0) <=  EFR;\n";
+	
+	endArchitecture(o);
+}
+
+#else
 
 // Overloading the virtual functions of Operator
 void FPLog::outputVHDL(std::ostream& o, std::string name)
@@ -132,8 +409,6 @@ void FPLog::outputVHDL(std::ostream& o, std::string name)
 	int t_pipelined = target_->isPipelined();
 	target_->setNotPipelined();
 
-	LZOC *lzoc = new LZOC(target_, wF, intlog2(wF));
-	oplist.push_back(lzoc);
 
 	if (t_pipelined) target_->setPipelined();
 
@@ -419,9 +694,9 @@ void FPLog::outputVHDL(std::ostream& o, std::string name)
 	o <<   "  constant a0 : positive := "<< a[0] <<";"<<endl;
 	o <<   "  constant log2wF : positive := "<< intlog2(wF) <<";"<<endl;
 	o <<   "  constant targetprec : positive := "<< target_prec <<";"<<endl;
-	o <<   "  constant sfinal : positive := "<< s[stages+1] <<";"<<endl;
-	o <<   "  constant pfinal : positive := "<< p[stages+1] <<";"<<endl;
-	o <<   "  constant lzc_size : positive := "<< max(intlog2(wF), intlog2(wE+p[stages+1]+1)) << ";" << endl;
+	o <<   "  constant sfinal : positive := "<< sfinal <<";"<<endl;
+	o <<   "  constant pfinal : positive := "<< pfinal <<";"<<endl;
+	o <<   "  constant lzc_size : positive := "<< lzc_size << ";" << endl;
 
 	// the maximum shift distance in the "small" path ?
 	// o << "  constant shiftvalsize : positive := "<< intlog2(wF + 1 - p[stages+1]) <<";"<<endl;
@@ -809,6 +1084,8 @@ void FPLog::outputVHDL(std::ostream& o, std::string name)
 		lt[i]->output(o, name6.str()); 
 	}
 }
+#endif // commented out
+
 
 TestIOMap FPLog::getTestIOMap()
 {

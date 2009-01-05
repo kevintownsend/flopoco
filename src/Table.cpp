@@ -23,8 +23,6 @@
 
 #include <iostream>
 #include <sstream>
-#include <cstdlib>
-
 #include "utils.hpp"
 #include "Table.hpp"
 
@@ -54,90 +52,65 @@ double Table::output2double(mpz_class x) {
 }
 
 
+Table::Table(Target* target, int _wIn, int _wOut, int _minIn, int _maxIn) : 
+	Operator(target),
+	wIn(_wIn), wOut(_wOut), minIn(_minIn), maxIn(_maxIn)
+	{
 
-
-
-
-
-void Table::outputComponent(ostream& o, string name)
-{
-	o << "  component " << name << " is" << endl
-		<< "    port ( x : in  std_logic_vector(" << wIn-1  << " downto 0);" << endl
-		<< "           y : out std_logic_vector(" << wOut - 1 << " downto 0) );" << endl
-		<< "  end component;" << endl << endl;
-
-}
-
-void Table::outputComponent(ostream& o, string name, int component_id)
-{
-	ostringstream n;
-	n << name << "_" << component_id;
-	outputComponent(o,  n.str()); 
-}
-
-
-
-
-
-
-
-
-void Table::output(ostream& o, string name, int component_id)
-{
-	ostringstream n;
-	n << name << "_" << component_id;
-	output(o,  n.str()); 
-}
-
-
-void Table::output(ostream& o, string name)
-{
+	// Set up the IO signals
+	addInput ("X"  , wIn);
+	addOutput ("Y"  , wOut);
+	if(maxIn==-1) maxIn=(1<<wIn)-1;
+	if(minIn<0) {
+		cerr<<"ERROR in Table::Table, minIn<0\n";
+		exit(EXIT_FAILURE);
+	}
+	if(maxIn>=(1<<wIn)) {
+		cerr<<"ERROR in Table::Table, maxIn too large\n";
+		exit(EXIT_FAILURE);
+	}
+	if((minIn==0) && (maxIn==(1<<wIn)-1)) 
+		full=true;
+	else
+		full=false;
 	if (wIn > 10)
-		cerr << "Avertissement : production d'une table avec " << wIn << " bits en entree" << endl;
+		cerr << "WARNING : FloPoCo is building a table with " << wIn << " input bits, it will be large." << endl;
+	}
 
-	o<<"library ieee;\nuse ieee.std_logic_1164.all;\n"
-	 "\n\n";
-	o << "entity  " << name << " is" << endl
-		<< "    port ( x : in  std_logic_vector(" << wIn-1  << " downto 0);" << endl
-		<< "           y : out std_logic_vector(" << wOut - 1 << " downto 0) );" << endl
-		<< "end entity;" << endl << endl;
 
-	// retrait du code (sauf pour la première ligne) */
-	const int spaces = 9;
+
+void Table::outputVHDL(ostream& o, string name)
+{
+
+	licence(o,"Florent de Dinechin (2007)");
+	Operator::stdLibs(o);
+	outputVHDLEntity(o);
+	newArchitecture(o,name);
+	outputVHDLSignalDeclarations(o);
+	beginArchitecture(o);
+
 	int i,x;
 	mpz_class y;
-	char* margin = new char[spaces + 1];
+	o	<< "  with x select  y <= " << endl;
 
-	o << "architecture arch of " << name  << " is" << endl
-		<< "begin" << endl
-		<< "  with x select" << endl
-		<< "    y <= ";
-
-	// mise en retrait du code
-	for (i = 0; i < spaces; i++) margin[i] = ' ';
-	margin[i] = '\0';
 
 	for (x = minIn; x <= maxIn; x++) {
 		y=this->function(x);
 		//    cout << x <<"  "<< y << endl;
-		if(y >= 0)	// otherwise, treat as don't care
-		{
-			o << "\"";
-				printBinPosNumGMP(o, y, wOut);
-			o << "\" when \"";
-			printBinNum(o, x, wIn);
-			o << "\"," << endl
-				<< margin;
-		}
+		o 	<< tab << "\"";
+			printBinPosNumGMP(o, y, wOut);
+		o << "\" when \"";
+		printBinNum(o, x, wIn);
+		o << "\"," << endl;
 	}
-	o << "\"";
+	o << tab << "\"";
 	for (i = 0; i < wOut; i++) o << "-";
-	o << "\" when others;" << endl;
-	delete [] margin;
-	o << "end architecture;" << endl << endl;
+	o <<  "\" when others;" << endl;
+
+	endArchitecture(o);
 }
 
 
 int Table::size_in_LUTs() {
-	return wOut*int(intpow2(wIn-4));
+	return wOut*int(intpow2(wIn-target_->lutInputs()));
 }

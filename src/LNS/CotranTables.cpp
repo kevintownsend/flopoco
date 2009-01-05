@@ -27,28 +27,6 @@
 
 using namespace std;
 
-mpz_class FXTable::double2output(double x)
-{
-	// Result in [0, 1[
-	// Map to [0, 2^wOut[
-	if(x < 0 || x >= 1) {
-		throw "FXTable::double2output : argument out of range";
-	}
-	
-	x = ldexp(x, wOut);
-	// which rounding??
-	return mpz_class(x);
-}
-
-double FXTable::input2double(int x)
-{
-	// x in [0, 2^wIn[
-	// Map to [0, 1[
-	return ldexp((double)x, -wIn);
-}
-
-
-////////////////////////////////////////////////
 
 double db2(double z)
 {
@@ -80,13 +58,22 @@ int CotranF1Table::esszero(int wF, int j, int wE)
 	return max(0, int(floor((1.+esszero1 / (1 << k)) * (1 << addrLen(wF, j, wE)))));
 }
 
-CotranF1Table::CotranF1Table(int wF, int j, int wE) :
-	Table(addrLen(wF, j, wE),
-	        dataLen(wF, j, wE),
-	        esszero(wF, j, wE),
-	        (1 << addrLen(wF, j, wE)) - 2),
+CotranF1Table::CotranF1Table(Target* target, int wF, int j, int wE) :
+	Table(target, 
+			addrLen(wF, j, wE),
+			dataLen(wF, j, wE),
+			esszero(wF, j, wE),
+			(1 << addrLen(wF, j, wE)) - 2),
 	wF(wF), j(j), k(int(log(wF+1)/log(2)+1)), wE(wE)
 {
+	ostringstream name;
+	name << "CotranF1Table_" << wE << "_" << wF<< "_" << j; 
+	uniqueName_ = name.str(); 
+
+
+	setCombinatorial();	
+	setPipelineDepth(0);
+
 	dh = 1. / (1 << (wF - j));
 }
 
@@ -118,11 +105,19 @@ int CotranF2Table::dataLen(int wF, int j)
 }
 
 
-CotranF2Table::CotranF2Table(int wF, int j) :
-	Table(addrLen(wF, j),
-	        dataLen(wF, j)),
+CotranF2Table::CotranF2Table(Target* target, int wF, int j) :
+	Table(target, 
+			addrLen(wF, j),
+			dataLen(wF, j)),
 	wF(wF), j(j), k(int(log(wF+1)/log(2)+1))
 {
+	ostringstream name;
+	name << "CotranF2Table_"  << wF<< "_" << j; 
+	uniqueName_ = name.str();
+
+	setCombinatorial();	
+	setPipelineDepth(0);
+ 
 	dh = 1. / (1 << (wF - j));
 }
 
@@ -175,14 +170,22 @@ int CotranF3Table::end(int wF, int j)
 	return two_compl(ceil(-log(2 * pow(2., dh) - 1)/log(2) * (1 << wF)), j + 2);
 }
 
-CotranF3Table::CotranF3Table(int wF, int j) :
-	Table(addrLen(wF, j),
+CotranF3Table::CotranF3Table(Target* target, int wF, int j) :
+	Table(target, 
+			addrLen(wF, j),
 	      dataLen(wF, j),
 	      begin(wF, j),
 	      end(wF, j)),
 	wF(wF), j(j), k(int(log(wF+1)/log(2)+1))
 {
+	ostringstream name;
+	name << "CotranF3Table_" << wF<< "_" << j; 
+	uniqueName_ = name.str(); 
 	dh = 1. / (1 << (wF - j));
+
+	setCombinatorial();	
+	setPipelineDepth(0);
+	
 }
 
 double sb2(double z)

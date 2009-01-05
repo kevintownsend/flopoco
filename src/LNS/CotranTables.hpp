@@ -10,45 +10,10 @@
 
 using namespace std;
 
-struct TableOp : Operator
+class CotranF1Table : public Table
 {
-	// Acquires ownership of table
-	TableOp(Target * target, Table /*const*/ * table) :
-		Operator(target),
-		table(table)
-	{
-		// TODO: use better name
-		ostringstream name;
-		name<<"Table_"<< table->wIn <<"_"<< table->wOut; 
-		uniqueName_ = name.str();
-
-	}
-
-	virtual void outputVHDL(std::ostream& o, std::string name) {
-		table->output(o, name);
-	}
-
-	virtual void outputVHDLComponent(std::ostream& o, std::string name) {
-		table->outputComponent(o, name);
-	}
-		
-private:
-	auto_ptr<Table> table;
-};
-
-struct FXTable : Table
-{
-	FXTable(int wIn, int wOut, int minIn=0, int maxIn=-1) :
-		Table(wIn, wOut, minIn, maxIn) {}
-		
-	virtual  mpz_class double2output(double x);
-	virtual double input2double(int x);
-
-};
-
-struct CotranF1Table : Table
-{
-	CotranF1Table(int wF, int j, int wE);
+ public:
+	CotranF1Table(Target* target, int wF, int j, int wE);
 		
 	virtual ~CotranF1Table() {}
 
@@ -67,9 +32,10 @@ private:
 
 };
 
-struct CotranF2Table : Table
+class CotranF2Table : public Table
 {
-	CotranF2Table(int wF, int j);
+ public:
+	CotranF2Table(Target* target, int wF, int j);
 		
 	virtual ~CotranF2Table() {}
 
@@ -86,9 +52,10 @@ private:
 
 };
 
-struct CotranF3Table : Table
+class CotranF3Table : public Table
 {
-	CotranF3Table(int wF, int j);
+ public:
+	CotranF3Table(Target* target, int wF, int j);
 		
 	virtual ~CotranF3Table() {}
 

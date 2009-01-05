@@ -6,8 +6,9 @@
 #include "CotranTables.hpp"
 #include "LNSAdd.hpp"
 
-struct Cotran : Operator
+class Cotran : public Operator
 {
+ public:
 	Cotran(Target * target, int wE, int wF, int j = -1, int wECotran = -1, int o = 1);
 	virtual ~Cotran();
 
@@ -24,13 +25,9 @@ private:
 	
 	void select_j();
 	
-	std::auto_ptr<CotranF1Table> f1;
-	std::auto_ptr<CotranF2Table> f2;
-	std::auto_ptr<CotranF3Table> f3;
-	std::string f1_name;
-	std::string f2_name;
-	std::string f3_name;
-	
+	CotranF1Table* f1;
+	CotranF2Table* f2;
+	CotranF3Table* f3;
 	LNSAdd * sb;
 	
 	int wEssZero;

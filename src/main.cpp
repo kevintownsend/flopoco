@@ -740,6 +740,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			if(cl_name!="")	op->setOperatorName(cl_name);
 			oplist.push_back(op);
 		}
+#if 0
 		else if (opname == "CotranF1")
 		{
 			int nargs = 3;
@@ -777,6 +778,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			if(cl_name!="")	op->setOperatorName(cl_name);
 			oplist.push_back(op);
 		}
+#endif
 		else if (opname == "Cotran")
 		{
 			int nargs = 4;

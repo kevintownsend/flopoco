@@ -141,6 +141,7 @@ ADD_EXECUTABLE(flopoco
  src/fplog/FirstLogTable.cpp
  src/fplog/OtherLogTable.cpp
  src/fplog/SecondInvTable.cpp
+ src/fplog/LogRangeRed.cpp
  src/FPLog
 )
 
