@@ -86,7 +86,7 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 	
 	// Close path
 	dualSubClose = new 	IntDualSub(target, wF + 3, 0);
-	dualSubClose->Operator::setOperatorName("DualSubClose");
+	dualSubClose->Operator::setOperatorName(getOperatorName()+"_DualSubClose");
 	oplist.push_back(dualSubClose);
 		
 	lzocs = new LZOCShifterSticky(target, wFX+2, wFX+2,0, 0);
@@ -101,12 +101,12 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 	oplist.push_back(rightShifter);
 
  	fracAddFar = new IntAdder(target,wF+4);
-	fracAddFar->Operator::setOperatorName("fracAddFar");
+	fracAddFar->Operator::setOperatorName(getOperatorName()+"_fracAddFar");
 	oplist.push_back(fracAddFar);
 
 	// finalRoundAdd will add the mantissa concatenated with exponent, two bits reserved for possible under/overflow 
 	finalRoundAdd = new IntAdder(target, wE + wF + 2); 
-	finalRoundAdd->Operator::setOperatorName("finalRoundAdd");
+	finalRoundAdd->Operator::setOperatorName(getOperatorName()+"_finalRoundAdd");
 	oplist.push_back(finalRoundAdd);
 
 
