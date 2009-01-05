@@ -119,6 +119,7 @@ inline std::string s2g(const Signal& s, int var = -1)
 }
 
 void BigTestBench::outputVHDL(ostream& o, string name) {
+	size_t res;
 	cerr << "Generating BIG test bench ... ";
 
 	/* Get IO Map */
@@ -375,7 +376,7 @@ void BigTestBench::outputVHDL(ostream& o, string name) {
 			/* Should this value be outputed */
 			if (z < 0)
 			{
-				fwrite("N/A\n", 4, 1, f);
+				res=fwrite("N/A\n", 4, 1, f);
 				continue;
 			}
 
@@ -391,7 +392,7 @@ void BigTestBench::outputVHDL(ostream& o, string name) {
 			/* Add newline */
 			p[l] = '\n'; p[l+1] = 0; l++;
 			/* Write to file */
-			fwrite(p, l, 1, f);
+			res=fwrite(p, l, 1, f);
 		}
 
 		/* Advance pipeline circular buffer */
