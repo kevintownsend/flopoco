@@ -1,24 +1,17 @@
 #include <iostream>
 #include <math.h>
-#include "../utils.hpp"
+#include <cstdlib>
+#include "math_lib.hpp"
 #include "FirstInvTable.hpp"
 using namespace std;
 
 
 
-FirstInvTable::FirstInvTable(Target* target, int wIn, int wOut) : 
-   Table(target, wIn, wOut)  
-{
-	setOperatorName();
-}
+FirstInvTable::FirstInvTable(int wIn, int wOut) : 
+   Table(wIn, wOut)  {}
 
 FirstInvTable::~FirstInvTable() {}
 
-void FirstInvTable::setOperatorName(){
-	ostringstream name; 
-	name <<"InvTable_0_"<<wIn<<"_"<<wOut;
-	uniqueName_=name.str();
-}
   
 
 int    FirstInvTable::double2input(double x){
@@ -62,6 +55,8 @@ mpz_class FirstInvTable::function(int x)
   return r;
 }
 
+
+static const int verbose=1;
 
 
 #if 0

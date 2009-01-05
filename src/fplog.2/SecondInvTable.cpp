@@ -1,28 +1,24 @@
 #include <iostream>
 #include <math.h>
-#include "../utils.hpp"
+#include <cstdlib>
+#include "math_lib.hpp"
 #include "SecondInvTable.hpp"
 using namespace std;
 
 
 
-SecondInvTable::SecondInvTable(Target* target, int a1, int p1) : 
-	Table(target, a1, a1+1) , a1(a1), p1(p1) 
+SecondInvTable::SecondInvTable(int a1, int p1) : 
+  Table(a1, a1+1) , a1(a1), p1(p1) 
  {
    if(2*a1!=(p1+a1)) {
-     cerr << "??? SecondInvTable::SecondInvTable()  2*a1!=(p1+a1), exiting"<<endl;
+     cerr << "??? SecondInvTable::  2*a1!=(p1+a1), exiting"<<endl;
      exit(1);
    }
  }
 
 SecondInvTable::~SecondInvTable() {}
 
-void SecondInvTable::setOperatorName(){
-	ostringstream name; 
-	name <<"InvTable_1_"<<a1<<"_"<<wOut;
-	uniqueName_=name.str();
-}
-
+  
 
 // int    SecondInvTable::double2input(double x){
 //   int result;

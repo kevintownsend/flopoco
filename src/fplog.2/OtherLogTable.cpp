@@ -1,6 +1,7 @@
 #include <iostream>
 #include <math.h>
-#include "../utils.hpp"
+#include <cstdlib>
+#include "math_lib.hpp"
 #include "OtherLogTable.hpp"
 using namespace std;
 
@@ -9,21 +10,15 @@ using namespace std;
 // -log(1-x) where x < 2^-p and x on a+1 bits.
 // the log is then smaller than 2^-p+1
 //  outputPrecision is the weight of the last bit in the real domain
-OtherLogTable::OtherLogTable(Target* target, int wIn, int outputPrecision, int p, int which) : 
-	Table(target, wIn, outputPrecision),  p(p),  which(which)
+OtherLogTable::OtherLogTable(int wIn, int outputPrecision, int p, int which) : 
+  Table(wIn, outputPrecision),  p(p),  which(which)
  {
    //   cout<<"**** "<<outputPrecision<<"   p="<<p<<" wIn="<<wIn<<endl;
-	 setOperatorName();
 }
 
 OtherLogTable::~OtherLogTable() {}
 
-void OtherLogTable::setOperatorName(){
-	ostringstream name; 
-	name <<"LogTable_"<<which<<"_"<<wIn<<"_"<<wOut;
-	uniqueName_=name.str();
-}
-
+  
 
 int    OtherLogTable::double2input(double x){
   int result;
@@ -97,8 +92,7 @@ mpz_class OtherLogTable::function(int x) {
   mpfr_set_d(i, apprinv, GMP_RNDN);
   mpfr_log1p(l, i, GMP_RNDN);
   mpfr_neg(l, l, GMP_RNDN);
-  //mpfr_shift_left(l, p+wOut); // TODO CHECK IT WAS EQUIVALENT 
-  mpfr_mul_2si(l, l, p+wOut, GMP_RNDN);
+  mpfr_shift_left(l, p+wOut);
   mpfr_get_z(r, l, GMP_RNDD);
   result=mpz_class(r);
   mpfr_clear(i);

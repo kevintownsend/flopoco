@@ -1,31 +1,26 @@
 #include <iostream>
 #include <math.h>
-#include "../utils.hpp"
+#include "math_lib.hpp"
+#include <cstdlib>
 #include "FirstInvTable.hpp"
 #include "FirstLogTable.hpp"
 using namespace std;
 
 
-FirstLogTable::FirstLogTable(Target *target, int wIn, int wOut, FirstInvTable* fit) : 
-	Table(target, wIn, wOut), fit(fit)
+FirstLogTable::FirstLogTable(int wIn, int wOut, FirstInvTable* fit) : 
+  Table(wIn, wOut), fit(fit)
  {
-	 setOperatorName();
-	 minIn = 0;
-	 maxIn = (1<<wIn) -1;
-	 if (wIn!=fit->wIn) {
-		 cerr<< "FirstLogTable::FirstLogTable should use same wIn as FirstInvTable"<<endl;
-		 exit(1);
-	 }
+   minIn = 0;
+   maxIn = (1<<wIn) -1;
+   if (wIn!=fit->wIn) {
+     cerr<< "FirstLogTable::FirstLogTable: Please use same wIn as FirstInvTable"<<endl;
+     exit(1);
+   }
  }
 
 FirstLogTable::~FirstLogTable() {}
 
-void FirstLogTable::setOperatorName(){
-	ostringstream name; 
-	name <<"LogTable_0_"<<wIn<<"_"<<wOut;
-	uniqueName_=name.str();
-}
-
+  
 
 int    FirstLogTable::double2input(double x){
   int result;
@@ -83,15 +78,13 @@ mpz_class FirstLogTable::function(int x)
 
 #if 0
   if (x>>(wIn-1)) { // the log will be positive
-	  //mpfr_shift_left(l, wOut); 
-	  mpfr_mul_2si(l, l, wOut, GMP_RNDN);
-	  mpfr_get_z(r, l, GMP_RNDD);
-	  result=mpz_class(r);
+    mpfr_shift_left(l, wOut); 
+    mpfr_get_z(r, l, GMP_RNDD);
+    result=mpz_class(r);
   }
   else { // the log will be negative -- code it in two's complement
     mpfr_neg(l, l, GMP_RNDN);
-    //mpfr_shift_left(l, wOut); 
-	  mpfr_mul_2si(l, l, wOut, GMP_RNDN);
+    mpfr_shift_left(l, wOut); 
     mpfr_get_z(r, l, GMP_RNDD);
     result=mpz_class(r);
   };
@@ -99,9 +92,8 @@ mpz_class FirstLogTable::function(int x)
 #else
 
   if (x>>(wIn-1)) { // the log will be negative  -- code it in two's complement
-	  //mpfr_shift_left(l, wOut); 
-	 mpfr_mul_2si(l, l, wOut, GMP_RNDN);
-	 mpfr_get_z(r, l, GMP_RNDD);
+    mpfr_shift_left(l, wOut); 
+    mpfr_get_z(r, l, GMP_RNDD);
     result=mpz_class(r);
     // code in two's complement
     mpz_class t = mpz_class(1) << wOut;
@@ -109,9 +101,8 @@ mpz_class FirstLogTable::function(int x)
   }
   else { // the log will be positive
     mpfr_neg(l, l, GMP_RNDN);
-    //mpfr_shift_left(l, wOut); 
-	 mpfr_mul_2si(l, l, wOut, GMP_RNDN);
-	 mpfr_get_z(r, l, GMP_RNDD);
+    mpfr_shift_left(l, wOut); 
+    mpfr_get_z(r, l, GMP_RNDD);
     result=mpz_class(r);
   };
 #endif  

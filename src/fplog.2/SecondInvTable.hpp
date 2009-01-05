@@ -5,14 +5,13 @@
 
 class SecondInvTable : public Table
 {
-public:
-	SecondInvTable(Target* target, int a1, int p1);
-	
+ public:
+  SecondInvTable(int a1, int p1);
+  
   ~SecondInvTable();
-	
-	void setOperatorName();
-		
-	mpz_class function(int x);
+  
+
+  mpz_class function(int x);
 
 //   int    double2input(double x);
 
@@ -25,8 +24,10 @@ public:
 //   double maxMulOut;
 //   double minMulOut;
 
-	int a1;
-	int p1;
+  int a1;
+  int p1;
+private:
+
   
 };
 
