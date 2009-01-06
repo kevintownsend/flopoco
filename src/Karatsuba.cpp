@@ -42,6 +42,7 @@ Karatsuba:: Karatsuba(Target* target, int wInX, int wInY) :
 	int depth, i, j;
 	ostringstream name, nameH, nameL;
 	setOperatorType();
+	setOperatorName();
 	
 	/* Set up the IO signals
 	  * X and Y have wInX_ and wInY_ bits respectively 
@@ -61,7 +62,7 @@ Karatsuba:: Karatsuba(Target* target, int wInX, int wInY) :
 	     the values for the best reachable frequency */   
 	bool status = target->suggestSubmultSize(multiplierXWidth_, multiplierYWidth, wInX_, wInY_); 
 	if (!status)
-		cout<<"Warning: the requested frequency cannot be reached. "<<endl;
+		cout<<"Warning: the requested frequency may not be reached. "<<endl;
 
 	if (verbose)
 	cout<<"The suggested width for the multiplier is: "<<  multiplierXWidth_<<endl;
@@ -91,7 +92,7 @@ void Karatsuba::setOperatorName(){
 
 void Karatsuba::outputVHDL(std::ostream& o, std::string name) {
 	//temporary stream. When the method BuildCombinationalKaratsuba will return, this stream will contain the contents of the combinational version for the Karatsuba
-	// architecture (all lines of code between "begin" and "end architecture"
+	// architecture (all lines of code between "begin" and "end architecture")
 	ostringstream tempCombinationalKaratsubaStream;
   
 	licence(o,"Bogdan Pasca (2008)");
@@ -131,9 +132,11 @@ void Karatsuba::BuildCombinationalKaratsuba(std::ostream& o, int L, int R, strin
 	int basisBits; // the width of the determined basis for this level of recursion. The number of bits of the basis are computed as floor(termWidth/2).
 	ostringstream t1_LeftTerm, t1_RightTerm, t1, t0, t2, sum_t0_t2, t1_PostSubstractions, sum_shifted_t2_t0;
 
+  o<<tab<<"-- Enter Level "<<depth<<" from branch "<<branch<<";"<<endl;
+
   // the recursivity ends when the width of the multiplication terms becames <= multiplierXWidth_ 
   if (L-R+1 <= multiplierXWidth_)
-    o << resultName << " <= "<< lName <<"("<<L<<" downto "<<R<<") * "<<
+    o <<tab<< resultName << " <= "<< lName <<"("<<L<<" downto "<<R<<") * "<<
                                 rName <<"("<<L<<" downto "<<R<<");"<<endl;
   else{ 
 		/* parameters setup */
@@ -182,9 +185,10 @@ void Karatsuba::BuildCombinationalKaratsuba(std::ostream& o, int L, int R, strin
 		addSignal( t1_LeftTerm.str() , basisBits+1); 
 		addSignal( t1_RightTerm.str(), basisBits+1);
 		
-		o<<  t1_LeftTerm.str() <<" <= (\"0"<<  ((termWidth % 2 == 0)?"":"0") <<"\" & "<<lName<<"("<< L            <<" downto "<< L - basisBits +((termWidth % 2 == 0)?1:2)<<")) + "
+				
+		o<<tab<< t1_LeftTerm.str() <<" <= (\"0"<<  ((termWidth % 2 == 0)?"":"0") <<"\" & "<<lName<<"("<< L            <<" downto "<< L - basisBits +((termWidth % 2 == 0)?1:2)<<")) + "
 		                       <<"(\"0\" & "<<lName<<"("<<L - basisBits +((termWidth % 2 == 0)?1:2) -1 <<" downto "<<L -2*basisBits +((termWidth % 2 == 0)?1:2)<<"));"<<endl;    
-		o<< t1_RightTerm.str() <<" <= (\"0"<<  ((termWidth % 2 == 0)?"":"0") <<"\" & "<<rName<<"("<< L            <<" downto "<< L - basisBits +((termWidth % 2 == 0)?1:2)<<")) + "
+		o<<tab<< t1_RightTerm.str() <<" <= (\"0"<<  ((termWidth % 2 == 0)?"":"0") <<"\" & "<<rName<<"("<< L            <<" downto "<< L - basisBits +((termWidth % 2 == 0)?1:2)<<")) + "
 		                       <<"(\"0\" & "<<rName<<"("<<L - basisBits +((termWidth % 2 == 0)?1:2) -1 <<" downto "<<L -2*basisBits +((termWidth % 2 == 0)?1:2)<<"));"<<endl;
 
 		addSignal(t1.str(),2*(basisBits+1));
@@ -194,21 +198,30 @@ void Karatsuba::BuildCombinationalKaratsuba(std::ostream& o, int L, int R, strin
 		addSignal(t2.str(),2* ((termWidth % 2 == 0)?basisBits:(basisBits-1))  );
 
 		BuildCombinationalKaratsuba(o, basisBits, 0 , t1_LeftTerm.str(), t1_RightTerm.str(), t1.str(), depth+1, branch + "_cb");
+		o<<tab<<"-- Exit Level "<<depth+1<<" from branch "<<branch<<"_cb;"<<endl;
 		BuildCombinationalKaratsuba(o, L-basisBits+((termWidth % 2 == 0)?1:2)-1, L-2*basisBits+((termWidth % 2 == 0)?1:2), lName , rName, t0.str(), depth+1, branch + "_rb");
+		o<<tab<<"-- Exit Level "<<depth+1<<" from branch "<<branch<<"_rb;"<<endl;
 		BuildCombinationalKaratsuba(o, L , L-basisBits + ((termWidth % 2 == 0)?1:2) , lName, rName, t2.str(), depth+1, branch + "_lb");
-
+		o<<tab<<"-- Exit Level "<<depth+1<<" from branch "<<branch<<"_lb;"<<endl;
 
 		addSignal(sum_t0_t2.str()           ,2* basisBits+1 );
 		addSignal(t1_PostSubstractions.str(),2*(basisBits+1));
 		addSignal(sum_shifted_t2_t0.str()   ,2*(L-R+1)      ); 
 		  
-		o<< sum_t0_t2.str()            <<" <= "<<"( \"0\" & "<<t0.str() << ") + ( \"0\" & "<< t2.str()<<");"<<endl;
-		o<< t1_PostSubstractions.str() <<" <= "<< t1.str()              <<  " - "<<"(\"0\" & "<< sum_t0_t2.str()<<")"<<";"<<endl;
+		o<<tab<< sum_t0_t2.str()            <<" <= "<<"( \"0\" & "<<t0.str() << ") + ( \"0\" & "<< t2.str()<<");"<<endl;
+		o<<tab<< t1_PostSubstractions.str() <<" <= "<< t1.str()              <<  " - "<<"(\"0\" & "<< sum_t0_t2.str()<<")"<<";"<<endl;
 
-		o<< sum_shifted_t2_t0.str()    <<" <= "<< "("<< t2.str()                            <<" & "<< zeroGenerator(2*basisBits,0)<<") + "
-		                                       << "("<< zeroGenerator( 2*(L-R+1) - 2*basisBits,0)<<" & "<< t0.str()               <<");"<<endl;
-		o<< resultName             <<" <= "<< sum_shifted_t2_t0.str() << " + "
-		                                << "("<<zeroGenerator(2*(L-R+1)-(3*basisBits+2),0)<<" & "<< t1_PostSubstractions.str()<<" & "<<zeroGenerator(basisBits,0)<<");"<<endl;   
+//		o<<tab<< sum_shifted_t2_t0.str()    <<" <= "<< "("<< t2.str()                            <<" & "<< zeroGenerator(2*basisBits,0)<<") + "
+//		                                       << "("<< zeroGenerator( 2*(L-R+1) - 2*basisBits,0)<<" & "<< t0.str()               <<");"<<endl;
+
+		o<<tab<< sum_shifted_t2_t0.str()    <<" <= "<<t2.str()<<" & "<< t0.str() <<";"<<endl;
+
+//		o<<tab<< resultName             <<" <= "<< sum_shifted_t2_t0.str() << " + "
+//		                                << "("<<zeroGenerator(2*(L-R+1)-(3*basisBits+2),0)<<" & "<< t1_PostSubstractions.str()<<" & "<<zeroGenerator(basisBits,0)<<");"<<endl;   
+
+		o<<tab<< resultName             <<" <=( "<< sum_shifted_t2_t0.str() << "("<<2*(L-R+1)-1<<" downto "<<basisBits<<") + "
+		                                << "("<<zeroGenerator(2*(L-R+1)-(3*basisBits+2),0)<<" & "<< t1_PostSubstractions.str()<<")) & "<< sum_shifted_t2_t0.str()<<"("<<basisBits-1<<" downto 0) ;"<<endl;   
+
 	}
 }                            
 
