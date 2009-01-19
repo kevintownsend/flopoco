@@ -5,6 +5,14 @@
 #include <gmp.h>
 #include <mpfr.h>
 #include <gmpxx.h>
+
+#ifdef _WIN32
+  #include "pstdint.h"
+#else
+  #include <inttypes.h>
+#endif
+
+
 #include <inttypes.h>
 
 using namespace std;

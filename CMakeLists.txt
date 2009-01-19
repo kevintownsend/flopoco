@@ -30,11 +30,13 @@ SET(CMAKE_BUILD_TYPE release)
 
 FIND_PATH(MPFR_H
 	  mpfr.h
+	  HINTS "C:/Program Files/Microsoft Visual Studio 9.0/VC/include"
 	  DOC "Path of mpfr.h, the include file for GNU MPFR library"
 )
 
 FIND_LIBRARY(MPFR_LIB
-	NAMES mpfr 
+	NAMES mpfr mpfr.lib
+	HINTS "C:/Program Files/Microsoft Visual Studio 9.0/VC/lib"
 	DOC "Directory of the MPFR library")
 
 
@@ -109,6 +111,7 @@ ADD_EXECUTABLE(flopoco
  src/Wrapper
  src/TestBench 
  src/BigTestBench
+ src/GenericTestBench
  src/IntAdder
  src/IntDualSub
  src/IntMultiplier

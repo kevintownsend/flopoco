@@ -25,31 +25,25 @@ IntMult2:: IntMult2(Target* target, int wInX, int wInY) :
 	addOutput("R", wOut_); /* wOut_ = wInX_ + wInY_ */
 
 	partsX=4;
-	partsY=1;
+	partsY=4;
 	size=17;
-	
 
-	for (i=1;i<=partsX;i++){
-		ostringstream ii;
-		ii<<i;
+	for (j=1;j<=partsY;j++){
+		ostringstream jj; 
+		jj<<j;
+		for (i=1;i<=partsX;i++){
+			ostringstream ii;
+			ii<<i;
 		
-		addDelaySignal("p1"+ii.str(),2*size,i-2);
-		
-		if (i==1){
-			addDelaySignal("p1"+ii.str()+"Low",size,partsX-i);
+			addDelaySignal("p"+jj.str()+ii.str(),2*size,i-2);
+			if (i==1) addDelaySignal("p"+jj.str()+ii.str()+"Low",size,partsX-i);
+			else{
+				addDelaySignal("s"+jj.str()+ii.str(),2*size+(i==partsX?0:1),0);
+				if (i<partsX) addDelaySignal("s"+jj.str()+ii.str()+"Low",size,partsX-i);
+			}
 		}
-		else{
-			addDelaySignal("s1"+ii.str(),2*size+(i==partsX?0:1),0);
-			if (i<partsX) addDelaySignal("s1"+ii.str()+"Low",size,partsX-i);
-		}
-/*		
-		if (i==1) addDelaySignal("p1"+ii.str(),2*size,partsX-i);
-		if (i>1){
-			addDelaySignal("p1"+ii.str(),2*size,i-2); 
-			addDelaySignal("s1"+ii.str(),2*size+(i<partsX?1:0),partsX-i);
-		}*/
+		addSignal("sum"+jj.str(),size*partsX);
 	}
-	
 	
 	setPipelineDepth(partsX);
 
@@ -103,7 +97,6 @@ void IntMult2::outputVHDL(std::ostream& o, std::string name) {
 	o<<"R<=";
 	for (i=partsX;i>=1;i--){
 		if (i>1) o<<"s1"<<i<<(i<partsX?"Low":"")<<delaySignal("",partsX-i); else o<<"p1"<<i<<"Low"<<delaySignal("",partsX-i);
-		//if (i!=partsX) o<<"("<<size-1<<" downto 0)";
 		if (i>1) o<<" & "; else o<<";"<<endl;
 	}
 

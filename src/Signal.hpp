@@ -4,6 +4,13 @@
 #include <iostream>
 #include <sstream>
 
+#ifdef _WIN32
+  #include "pstdint.h"
+#else
+  #include <inttypes.h>
+#endif
+
+
 /**
  * A class representing a signal. This is the basic block that operators use
  */

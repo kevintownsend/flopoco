@@ -29,14 +29,21 @@
 #include <mpfr.h>
 #include <cstdlib>
 
+
 #include "Operator.hpp"
 #include "Target.hpp"
 #include "Targets/VirtexIV.hpp"
 #include "Targets/StratixII.hpp"
+
+#ifndef _WIN32
 #include "Shifters.hpp"
 #include "LZOC.hpp"
 #include "LZOCShifterSticky.hpp"
+#endif
+
 #include "IntAdder.hpp"
+
+#ifndef _WIN32
 #include "IntDualSub.hpp"
 #include "IntMultiplier.hpp"
 #include "IntMult2.hpp"
@@ -47,9 +54,14 @@
 #include "FPAdder.hpp"
 #include "FPDiv.hpp"
 #include "DotProduct.hpp"
+#endif
+
 #include "Wrapper.hpp"
+
+#ifndef _WIN32
 #include "TestBench.hpp"
 #include "BigTestBench.hpp"
+#include "GenericTestBench.hpp"
 #include "ConstMult/IntConstMult.hpp"
 #include "ConstMult/FPConstMult.hpp"
 #include "ConstMult/CRFPConstMult.hpp"
@@ -68,6 +80,8 @@
 #include "LNS/LNSDiv.hpp"
 #include "LNS/LNSSqrt.hpp"
 #endif
+#endif
+
 
 using namespace std;
 
@@ -294,6 +308,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				}
 			}
 		}
+		#ifndef _WIN32
 		else if(opname=="IntConstMult"){
 			int nargs = 2;
 			if (i+nargs > argc)
@@ -400,6 +415,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(op);
 			}
 		}
+		#endif
 		else if(opname=="IntAdder"){
 			int nargs = 1;
 			if (i+nargs > argc)
@@ -411,6 +427,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(op);
 			}    
 		}
+		#ifndef _WIN32
 		//HIDDEN
 		else if(opname=="IntDualSub"){
 			int nargs = 2;
@@ -433,6 +450,19 @@ bool parseCommandLine(int argc, char* argv[]){
 				int wInY = checkStrictyPositive(argv[i++], argv[0]);
 				cerr << "> IntMultiplier , wInX="<<wInX<<", wInY="<<wInY<<"\n";
 				op = new IntMultiplier(target, wInX, wInY);
+				addOperator(op);
+			}
+		}
+		else if(opname=="GenericTestBench"){
+			int nargs = 3;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				string aName = argv[i++];
+				int depth= checkStrictyPositive(argv[i++], argv[0]);
+				int wIn = checkStrictyPositive(argv[i++], argv[0]);
+				cerr << "> GenericTestBench , entityName="<<aName<<", pipelineDepth="<<depth<<", input width="<<wIn<<"\n";
+				op = new GenericTestBench(target, aName,depth, wIn);
 				addOperator(op);
 			}
 		}
@@ -812,6 +842,8 @@ bool parseCommandLine(int argc, char* argv[]){
 			oplist.push_back(op);
 		}
 #endif
+
+#endif //ifndef _WIN32
 		else if (opname == "Wrapper") {
 			int nargs = 0;
 			if (i+nargs > argc)
@@ -827,6 +859,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(op);
 			}
 		}
+		#ifndef _WIN32
 		else if (opname == "TestBench") {
 			int nargs = 1;
 			if (i+nargs > argc)
@@ -855,6 +888,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			if(cl_name!="")	op->setOperatorName(cl_name);
 			oplist.push_back(new BigTestBench(target, toWrap, n));
 		}
+		#endif
 		else  {
 			cerr << "ERROR: Problem parsing input line, exiting";
 			usage(argv[0]);
