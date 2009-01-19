@@ -101,7 +101,54 @@ IF (HOTBM_LIB)
 	SET(LNS_LIB lns)
 ENDIF (HOTBM_LIB)
 
+IF(WIN32)
+ADD_EXECUTABLE(flopoco
+ src/main
+ src/utils
+ src/Target src/Targets/VirtexIV src/Targets/StratixII
+ src/Operator
+# src/Table 
+ src/Wrapper
+# src/TestBench 
+# src/BigTestBench
+# src/GenericTestBench
+ src/IntAdder
+# src/IntDualSub
+# src/IntMultiplier
+# src/Karatsuba
+# src/LZOC src/LZOCShifterSticky
+# src/Shifters
+# src/FPAdder
+# src/FPMultiplier
+# src/FPDiv.cpp src/FPDiv.hpp
+# src/FPDiv/SRT4Step
+# src/IntMult2
+# src/LongAcc
+# src/LongAcc2FP
+# src/DotProduct
+# src/ConstMult/IntConstMult src/ConstMult/ShiftAddOp src/ConstMult/ShiftAddDag 
+# src/ConstMult/FPConstMult 
+# src/ConstMult/CRFPConstMult 
+ src/TestCase
+ src/TestIOMap
+ src/FPNumber
+# src/fpexp/math_lib.cpp
+# src/fpexp/signal.cpp
+# src/fpexp/fragment.cpp
+# src/fpexp/stdfragment.cpp
+# src/fpexp/logfragment.cpp
+# src/fpexp/gen_table.cpp
+# src/fpexp/explore.cpp
+# src/FPExp
+# src/fplog/FirstInvTable.cpp
+# src/fplog/FirstLogTable.cpp
+# src/fplog/OtherLogTable.cpp
+# src/fplog/SecondInvTable.cpp
+# src/fplog/LogRangeRed.cpp
+# src/FPLog
+)
 
+ELSE(WIN32)
 ADD_EXECUTABLE(flopoco
  src/main
  src/utils
@@ -147,6 +194,10 @@ ADD_EXECUTABLE(flopoco
  src/fplog/LogRangeRed.cpp
  src/FPLog
 )
+ENDIF(WIN32) 
+
+
+
 
 IF (SOLLYA_LIB)
   TARGET_LINK_LIBRARIES(
