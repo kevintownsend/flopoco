@@ -13,8 +13,6 @@
 #endif
 
 
-#include <inttypes.h>
-
 using namespace std;
 
 /** Returns under the form of a string of given size, the unsigned binary represenation of an integer.
