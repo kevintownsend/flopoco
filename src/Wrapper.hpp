@@ -1,8 +1,5 @@
 #ifndef WRAPPER_HPP
 #define WRAPPER_HPP
-#include <gmp.h>
-#include <mpfr.h>
-#include <gmpxx.h>
 #include "Wrapper.hpp"
 
 /** 

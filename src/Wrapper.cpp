@@ -28,11 +28,6 @@
 
 #include <iostream>
 #include <sstream>
-#include <vector>
-#include <gmp.h>
-#include <mpfr.h>
-#include <gmpxx.h>
-#include "utils.hpp"
 #include "Operator.hpp"
 #include "Wrapper.hpp"
 
@@ -43,11 +38,12 @@ Wrapper::Wrapper(Target* target, Operator *op):
 	wrapped followd by _Wrapper */
 	setOperatorName();
 		
-	if (!target->isPipelined()) 	
-		setSequential();	
+	//this operator is a sequential one	
+	setSequential();	
 	
-	// Copy the signals of the wrapped operator
+	// Copy the signals of the wrapped operator except clk and rst
 	for(int i=0; i < op->getIOListSize(); i++)	{
+		if (( op->getIOListSignal(i)->getSignalName()!="clk") && ( op->getIOListSignal(i)->getSignalName()!="rst"))
 		ioList_.push_back( new Signal ( * op->getIOListSignal(i) ) );
 	}
 		
@@ -56,7 +52,7 @@ Wrapper::Wrapper(Target* target, Operator *op):
 		string idext = "i_" + (op->getIOListSignal(i))->getSignalName();
 		//the clock is not registred
 		if ( op->getIOListSignal(i)->getSignalName()!="clk")
-			addDelaySignal(idext, op->getIOListSignal(i)->width());
+			addDelaySignal(idext, op->getIOListSignal(i)->width(),1);
 	}
 
 	//set pipeline parameters

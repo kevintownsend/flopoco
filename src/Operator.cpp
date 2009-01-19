@@ -102,14 +102,13 @@ void Operator::addSignalBus(const std::string name, const int width) {
 
 void Operator::addDelaySignal(const string name, const int width, const int delay) {
 	ostringstream o;
-
 	Signal *s;
 	o << name;
-	// if delay <= 0 it is equivalent to addSignal
+	// if delay<=0 it is equivalent to addSignal
 	if (isSequential() && delay > 0) {
 		for (int i=0; i<delay; i++){
-			if (signalMap_.find(o.str()) != signalMap_.end()) {
-				cerr << "ERROR in addDelaySignal , signal " << name<< " seems to already exist" << endl;
+			if(signalMap_.find(o.str()) != signalMap_.end()) {
+				cerr << "ERROR in addDelaySignalBus , signal " << name<< " seems to already exist" << endl;
 				exit(EXIT_FAILURE);
 			}
 			s = new Signal(o.str(), Signal::registeredWithoutReset, width);
@@ -121,7 +120,7 @@ void Operator::addDelaySignal(const string name, const int width, const int dela
 	}
 
 	if (signalMap_.find(o.str()) != signalMap_.end()) {
-		cerr << "ERROR in addDelaySignal , signal " << name<< " seems to already exist" << endl;
+		cerr << "ERROR in addInput , signal " << name<< " seems to already exist" << endl;
 		exit(EXIT_FAILURE);
 	}
 	s = new Signal(o.str(), Signal::wire, width);
