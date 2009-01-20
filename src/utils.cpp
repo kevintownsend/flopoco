@@ -29,7 +29,8 @@
 #include <functional>
 #include <algorithm>
 #include <cctype>
-
+#include <gmp.h>
+#include <gmpxx.h>
 using namespace std;
 
 /** return a string representation of an mpz_class on a given number of bits */
@@ -276,6 +277,31 @@ mpz_class bias(int wE){
 	return (mpz_class(1)<<(wE-1)) - 1;
 }
 
+
+#ifdef _WIN32
+mpz_class getLargeRandom(int n)
+{
+	mpz_class o = 0;
+	mpz_class tmp;
+	int iterations = n / 10;
+	int quotient = n % 10;
+	int r;
+
+
+	for (int i=0; i<=iterations-1;i++){
+		r = rand() % 1024;
+		tmp = r;
+		o = o + (tmp<<(i*10));
+	}
+	if (quotient>0){
+		r = rand() % int((intpow2(quotient)-1));
+		tmp = r;
+		o = o + (tmp<<(iterations*10));
+	}
+	
+	return o;
+}
+#else
 mpz_class getLargeRandom(int n)
 {
 	static gmp_randstate_t state;
@@ -289,6 +315,8 @@ mpz_class getLargeRandom(int n)
 	mpz_urandomb(o.get_mpz_t(), state, n);
 	return o;
 }
+
+#endif 
 
 string zeroGenerator(int n, int margins){
 	ostringstream left,full, right, zeros;
