@@ -43,6 +43,7 @@ Shifter::Shifter(Target* target, int wIn, int maxShift, ShiftDirection direction
 	wShiftIn_ = intlog2(maxShift_);
 	setOperatorName();
 	setOperatorType();
+	setPipelineDepth(0);//initialization
 
 	// Set up the IO signals
 	addInput ("X", wIn_);
