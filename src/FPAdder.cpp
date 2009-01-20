@@ -609,19 +609,21 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 		o<<tab<< "resultNoExn("<<wE+wF<<" downto 0) <= syncResSign & "<<delaySignal("resultRounded",1) << "("<<wE+wF-1<<" downto 0);"<<endl;
 	 
 		o<<tab<< "syncExnXY <= "<<delaySignal("sdExnXY",delaySDToRound)<<";"<<endl;
-
+		o<<tab<< "-- Exception bits of the result" << endl;
 		o<<tab<< "with syncExnXY select"<<endl;
 		o<<tab<< "  finalResult("<<wE+wF+2<<" downto "<<wE+wF+1<<") <= resultNoExn("<<wE+wF+2<<" downto "<<wE+wF+1<<") when \"0101\","<<endl;
 		o<<tab<< "                                 \"1\" & syncEffSub              when \"1010\","<<endl;
 		o<<tab<< "                                 \"11\"            	            when \"1011\","<<endl;
 		o<<tab<< "                                 syncExnXY(3 downto 2)         when others;"<<endl;
+		o<<tab<< "-- Sign bit of the result" << endl;
 		o<<tab<< "with syncExnXY select"<<endl;
 		o<<tab<< "  finalResult("<<wE+wF<<") <= resultNoExn("<<wE+wF<<")         when \"0101\","<<endl;
 		o<<tab<< "                     syncX("<<wE+wF<<") and syncSignY when \"0000\","<<endl;
 		o<<tab<< "                     syncX("<<wE+wF<<")               when others;"<<endl;
 		
+		o<<tab<< "-- Exponent and significand of the result" << endl;
 		o<<tab<< "with syncExnXY select"<<endl;
-		o<<tab<< "  finalResult("<<wE+wF-1<<" downto 0) <= resultNoExn("<<wE+wF-1<<" downto 0) when \"0101\","<<endl;
+		o<<tab<< "  finalResult("<<wE+wF-1<<" downto 0) <= resultNoExn("<<wE+wF-1<<" downto 0) when \"0101\" | \"0100\" | \"0001\","<<endl;
 		o<<tab<< "                                 syncX("<<wE+wF-1<<" downto "<<wE+wF-3<<") & ("<<wE+wF-4<<" downto 0 =>'0') when others;"<<endl;
 		
 		// assign results 

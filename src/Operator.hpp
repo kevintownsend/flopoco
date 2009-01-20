@@ -369,10 +369,13 @@ public:
 	 * reports the pipeline depth, but feel free to overload if you have any
 	 * thing useful to tell to the end user
 	*/
-		virtual void outputFinalReport();	
+	virtual void outputFinalReport();	
 	
-	
-
+#if 0
+	/** Emulate the operator, using mpfr. 
+	 */	
+	virtual void emulate();	
+#endif 
 
 protected:    
 	Target*         target_;     /**< The target on which the operator will be deployed */
