@@ -597,7 +597,7 @@ void IntMultiplier::connectPartialBits(std::ostream& o)
 int i,j;
 	for (j=1; j<=partsY_;j++)
 		for (i=1;i<=j;i++){
-			if ((j==1) and (i==1) )
+			if ((j==1) && (i==1) )
 				o<<tab<<"PartialBits_Level_1_Reg_1 <= \"0\" & L_Level_0_Reg_1("<< multiplierWidthY_ -1 <<" downto 0);"<< endl;
 			else{
 				//just propagate the registers from 1 to j-1
