@@ -153,15 +153,27 @@ href="http://www.ens-lyon.fr/LIP/Arenaire/Ware/FPLibrary/">FPLibrary</a>.</p>
 
 
 <h2>Pipelining</h2>
-Two command-line options control the pipelining of the FloPoCo operators that follow them.
+
+<p>An operator may be combinatorial, or pipelined. A combinatorial operator has pipeline depth 0. An operator of pipeline depth 1 is obtained by inserting one and only one register on any path from an input to an output. Hopefully, this divides  the critical path delay by almost 2.  An operator of pipeline depth 2 is obtained by inserting two register levels, etc.</p>
+
+<p>It should be noted that, according to this definition, pipelined
+operators usually do not directly buffer neither their inputs nor
+their outputs. For instance, connecting the input of a 400MHz operator
+to the output of another 400MHz operator may well lead to a circuit
+working at 200MHz only. It is the responsibility of the user or
+calling program to insert one more level of registers between two
+FloPoCo operators. This convention may be felt as a burden to the
+user, but it is the most sensible choice. It makes it possible to
+assemble sub-component without inserting registers in many situations,
+thus reducing the latency of complex components. Besides, different
+application contexts may have different policies (registers on output,
+or registers on input). <p>
+
+<p>Two command-line options control the pipelining of the FloPoCo
+operators that follow them.
 
 <dl>
   <dt><code>-pipeline=[yes|no]</code>  (default yes)</dt>
-    <dd>
-		Requires the operators to be pipelined. If <code>yes</code>, at least one register
-		will be inserted (at the output of the operator), and maybe more
-		inside the operator. If <code>no</code>, the operator will be combinatorial.
-	 </dd>
   <dt><code>-frequency=[frequency in MHz]</code>  (default 300)</dt>
     <dd>Sets the target frequency. If the <code>-pipeline</code>
     option is set, then FloPoCo will try to pipeline the operator to
@@ -169,8 +181,12 @@ Two command-line options control the pipelining of the FloPoCo operators that fo
     frequency-directed pipelining is not yet implemented for this
     operator.
 	 </dd>
+    <dd>
+		Requires the operators to be pipelined. If <code>no</code>, the operator will be combinatorial. If <code>yes</code>,  registers
+		may be inserted if needed to reach the target frequency. 
+	 </dd>
 </dl>
-
+</p>
 
 
 <p>The philosophy of FloPoCo's approach to pipelining is the following:
