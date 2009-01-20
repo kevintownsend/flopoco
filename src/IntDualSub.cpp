@@ -206,7 +206,7 @@ void IntDualSub::outputVHDL(std::ostream& o, std::string name) {
 			o << tab << "sX"<<i<<" <= X"<<i<<delaySignal("",bufferedInputs)<<";"<<endl;
 			o << tab << "sY"<<i<<" <= Y"<<i<<delaySignal("",bufferedInputs)<<";"<<endl;
 			if (i==0)
-				o << tab << "cin0 <= "<<"'"<< not(opType_) <<"';"<<endl;
+				o << tab << "cin0 <= "<<"'"<< !(opType_) <<"';"<<endl;
 		}
 
 		//additions	for x - y	
@@ -320,8 +320,10 @@ void IntDualSub::fillTestCase(mpz_class a[])
 
 	svR1 = svX - svY;
 	svR2 = svY - svX;
+#ifndef _WIN32
 	if(verbose)
 		cout<<endl<< "x is "<< svX <<" y is "<<svY << " x-y is "<<	svR1 << " y-x is "<<svR2<<endl;
+#endif
 	// Don't allow overflow
 	mpz_clrbit(svR1.get_mpz_t(),wIn_);
 	mpz_clrbit(svR2.get_mpz_t(),wIn_);  
