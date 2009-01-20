@@ -108,7 +108,7 @@ void Operator::addDelaySignal(const string name, const int width, const int dela
 	if (isSequential() && delay > 0) {
 		for (int i=0; i<delay; i++){
 			if(signalMap_.find(o.str()) != signalMap_.end()) {
-				cerr << "ERROR in addDelaySignalBus , signal " << name<< " seems to already exist" << endl;
+				cerr << "ERROR in addDelaySignal , signal " << name<< " seems to already exist" << endl;
 				exit(EXIT_FAILURE);
 			}
 			s = new Signal(o.str(), Signal::registeredWithoutReset, width);
@@ -120,7 +120,7 @@ void Operator::addDelaySignal(const string name, const int width, const int dela
 	}
 
 	if (signalMap_.find(o.str()) != signalMap_.end()) {
-		cerr << "ERROR in addInput , signal " << name<< " seems to already exist" << endl;
+		cerr << "ERROR in addDelaySignal , signal " << name<< " seems to already exist" << endl;
 		exit(EXIT_FAILURE);
 	}
 	s = new Signal(o.str(), Signal::wire, width);
@@ -150,7 +150,7 @@ void Operator::addDelaySignalBus(const string name, const int width, const int d
 	}
 
 	if (signalMap_.find(o.str()) != signalMap_.end()) {
-		cerr << "ERROR in addInput , signal " << name<< " seems to already exist" << endl;
+		cerr << "ERROR in addDelaySignalBus, signal " << name<< " seems to already exist" << endl;
 		exit(EXIT_FAILURE);
 	}
 	s = new Signal(o.str(), Signal::wire, width, true);
@@ -180,7 +180,7 @@ void Operator::addDelaySignalSyncReset(const string name, const int width, const
 	}
 
 	if (signalMap_.find(o.str()) != signalMap_.end()) {
-		cerr << "ERROR in addInput , signal " << name<< " seems to already exist" << endl;
+		cerr << "ERROR in addDelaySignalSyncReset , signal " << name<< " seems to already exist" << endl;
 		exit(EXIT_FAILURE);
 	}
 	s = new Signal(o.str(), Signal::wire, width);
@@ -198,7 +198,7 @@ void Operator::addDelaySignalBusSyncReset(const string name, const int width, co
 	if(isSequential() &&  delay > 0) {
 		for (int i=0; i<delay; i++){
 			if (signalMap_.find(o.str()) != signalMap_.end()) {
-				cerr << "ERROR in addInput , signal " << name<< " seems to already exist" << endl;
+				cerr << "ERROR in addDelaySignalBusSyncReset, signal " << name<< " seems to already exist" << endl;
 				exit(EXIT_FAILURE);
 			}
 			s = new Signal(o.str(), Signal::registeredWithSyncReset, width, true);
@@ -210,7 +210,7 @@ void Operator::addDelaySignalBusSyncReset(const string name, const int width, co
 	}
 
 	if (signalMap_.find(o.str()) != signalMap_.end()) {
-		cerr << "ERROR in addInput , signal " << name<< " seems to already exist" << endl;
+		cerr << "ERROR in addDelaySignalBusSyncReset, signal " << name<< " seems to already exist" << endl;
 		exit(EXIT_FAILURE);
 	}
 	s = new Signal(o.str(), Signal::wire, width, true);
