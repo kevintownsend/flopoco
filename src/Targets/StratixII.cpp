@@ -145,7 +145,7 @@ int i;
 	
 		
 	}
-};	 
+}	 
 	 	 
 bool StratixII::suggestSubaddSize(int &x, int wIn){
 
@@ -156,5 +156,5 @@ bool StratixII::suggestSubaddSize(int &x, int wIn){
 		x=1;		
 		return false;
 	} 
-};
+}
   
