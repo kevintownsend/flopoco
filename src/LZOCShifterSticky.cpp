@@ -40,12 +40,13 @@ LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut, bool com
 	int i, p2i;
 
 	if (countType_ < 0)
-		setEntityType(generic);
+		setEntityType(gen);
 	else
-		setEntityType(specific);
+		setEntityType(spec);
 
 	setOperatorName();
 	setOperatorType();
+	setPipelineDepth(0);//initialization
 
 	/* Set up the internal architecture signals */
 
@@ -86,7 +87,7 @@ LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut, bool com
 	addOutput("Count", wCount_);
 	addOutput("O", wOut_);
 	/* if we generate a generic LZOC */
-	if (entityType_==generic) 
+	if (entityType_==gen) 
 		addInput ("OZb"); 
 	/* if we require a sticky bit computation */
 	if(computeSticky_) 
@@ -98,7 +99,11 @@ LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut, bool com
 			cout << size_[i]<<" ";
 		cout <<endl;
 	}
-
+#ifdef _WIN32
+	//initialization needed for windows compiler
+	for (int i=0;i<42;i++)
+		countDepth_[i]=0;
+#endif
 	double criticalPath = 0.0;
 	for (int i=wCount_; i>=0; i--){
 		ostringstream levelName, leveldName, stickyName;
@@ -107,7 +112,7 @@ LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut, bool com
 		level_[i] = levelName.str();
 
 	double stageDelay;
-	if (entityType_==generic) 
+	if (entityType_==gen) 
 		stageDelay =  2* target->localWireDelay() * (1<<i);
 	else		
 		stageDelay =  1.2 * target->localWireDelay() * (1<<i);		//TODO
@@ -171,7 +176,7 @@ LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut, bool com
 			}
 		}						
 			
-		if (entityType_==generic)
+		if (entityType_==gen)
 			addDelaySignal("sozb",1, getPipelineDepth());
 	}else /* combinatorial version */
 	{
@@ -247,7 +252,7 @@ void LZOCShifterSticky::outputVHDL(std::ostream& o, std::string name) {
 	else 
 		o << "I & (" << size_[wCount_]-wIn_-1 << " downto 0 => '0');" << endl ;
 
-	if (entityType_==generic)
+	if (entityType_==gen)
 		o<<tab<<"sozb <= OZb;"<<endl;
 	
 	if(computeSticky_)
@@ -261,7 +266,7 @@ void LZOCShifterSticky::outputVHDL(std::ostream& o, std::string name) {
 		o << tab << "count" << i-1 << " <= '1' "
 		  << "when " << leveld_[i] << "(" << size_[i]-1 << " downto " << size_[i]-p2io2 << ") "
 		  << "= (" << size_[i]-1 << " downto " << size_[i]-p2io2 << " => "; 
-		if (entityType_==generic)
+		if (entityType_==gen)
 			o<<delaySignal("sozb",getPipelineDepth()-countDepth_[i-1]);
 		else
 			o<<"'"<<countType_<<"'";
@@ -364,7 +369,7 @@ TestIOMap LZOCShifterSticky::getTestIOMap()
 	tim.add(*getSignalByName("O"));
 	if (computeSticky_)
 		tim.add(*getSignalByName("Sticky"));
-	if (entityType_ == generic )
+	if (entityType_ == gen )
 		tim.add(*getSignalByName("OZb"));	
 	
 	return tim;
@@ -373,7 +378,7 @@ TestIOMap LZOCShifterSticky::getTestIOMap()
 
 void LZOCShifterSticky::fillTestCase(mpz_class a[])
 {
-	if (entityType_==specific)
+	if (entityType_==spec)
 	{
 		mpz_class& si     = a[0];
 		mpz_class& scount = a[1];
@@ -450,7 +455,8 @@ void LZOCShifterSticky::fillTestCase(mpz_class a[])
 		if (computeSticky_)
 			/* assign the sticky bit computation to the output if required*/	
 			ssticky = sticky;
-				
+		
+#ifndef _WIN32
 		if (verbose)
 		{
 			cout<<"TestCase report:"<<endl;
@@ -460,7 +466,7 @@ void LZOCShifterSticky::fillTestCase(mpz_class a[])
 			if (computeSticky_)
 			cout<<tab<<"Sitcky value:"<<ssticky<<endl;
 		}		
-			
+#endif			
 	}
 	else
 	{ /* if entity type is generic */

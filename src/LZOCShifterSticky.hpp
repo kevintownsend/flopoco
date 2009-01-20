@@ -16,8 +16,8 @@ class LZOCShifterSticky : public Operator
 public:
 	/** The different entity types for this operator */
 	typedef enum {
-				generic, /**< generic entity type. The OZB: in std_logic is present in entity */
-				specific /**< specific entity type. The OZB: in std_logic is NOT present in entity */
+				gen, /**< generic entity type. The OZB: in std_logic is present in entity */
+				spec /**< specific entity type. The OZB: in std_logic is NOT present in entity */
 				} entityType_t;
 
 	/** 
