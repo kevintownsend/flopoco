@@ -1,3 +1,7 @@
+Version 0.9.3 corrects a bug in FPAdder (adding zero was giving wrong
+results). Thanks to A. Rolim for pointing it out.
+
+======================================================================
 Version 0.9.2 corrects bugs in FPConstMult and cleans up the pipeline
 framework.
 
