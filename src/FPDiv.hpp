@@ -55,9 +55,16 @@ private:
 	int wF; 
 	/** The number of iterations */
 	int nDigit;
+
+	int mult3AdderDelay;
+	int conversionAdderDelay;
+	int finalRoundAdderDelay;
 	
 	/** A SRT4Step subcomponent */
 	SRT4Step* srt4step;
+	int stepDelay;
+	int srtDelay;
+
 };
 
 #endif //FPDIV_HPP

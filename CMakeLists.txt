@@ -107,6 +107,7 @@ ADD_EXECUTABLE(flopoco
  src/utils
  src/Target src/Targets/VirtexIV src/Targets/StratixII
  src/Operator
+ src/Signal
 # src/Table 
  src/Wrapper
 # src/TestBench 
@@ -154,6 +155,7 @@ ADD_EXECUTABLE(flopoco
  src/utils
  src/Target src/Targets/VirtexIV src/Targets/StratixII
  src/Operator
+ src/Signal
  src/Table 
  src/Wrapper
  src/TestBench 

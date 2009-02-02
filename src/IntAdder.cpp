@@ -131,13 +131,13 @@ Operator(target), wIn_(wIn), inputDelays_(inputDelays)
 		
 		for (int i=0; i<nbOfChunks-1;i++){
 			ostringstream t;
-			t<<"cin"<<i+1<<"r"<<i;
+			t<<"cin"<<i+1<<"R"<<i;
 			addDelaySignal(t.str(),cSize[i]+1,1);
 		}
 		
 		for (int i=0; i<nbOfChunks;i++){
 			ostringstream t;
-			t<<"r"<<i;
+			t<<"R"<<i;
 			addDelaySignalBus(t.str(),cSize[i],nbOfChunks-2-i);
 		}	
 		
@@ -182,7 +182,7 @@ void IntAdder::outputVHDL(std::ostream& o, std::string name) {
 		// if the (T-inputDelay)<lutDelay
 		for (int i=0;i<nbOfChunks;i++){
 			if (i==0)
-				o << tab << "carry <= Cin; "<<endl;
+				o << tab << "Carry <= Cin; "<<endl;
 			int sum=0;
 			for (int j=0;j<=i;j++) sum+=cSize[j];
 			o << tab << "X"<<i<<" <= X("<<sum-1<<" downto "<<sum-cSize[i]<<");"<<endl;
@@ -190,44 +190,57 @@ void IntAdder::outputVHDL(std::ostream& o, std::string name) {
 		}
 		//connect first assignments to second level of signals
 		for (int i=0;i<nbOfChunks;i++){
-			o << tab << "sX"<<i<<" <= X"<<i<<delaySignal("",bufferedInputs)<<";"<<endl;
-			o << tab << "sY"<<i<<" <= Y"<<i<<delaySignal("",bufferedInputs)<<";"<<endl;
+			ostringstream xi,yi;
+			xi << "X"<<i;
+			yi << "Y"<<i;
+			o << tab << "sX"<<i<<" <= " << delaySignal(xi.str(), bufferedInputs)<<";"<<endl;
+			o << tab << "sY"<<i<<" <= " << delaySignal(yi.str(), bufferedInputs)<<";"<<endl;
 			if (i==0)
-			o << tab << "cin0 <= "<<delaySignal("carry",bufferedInputs)<<";"<<endl;
+			o << tab << "cin0 <= "<<delaySignal("Carry",bufferedInputs)<<";"<<endl;
 		}
 
 		//additions		
 		for (int i=0;i<nbOfChunks;i++){
+			ostringstream sxi,syi;
+			sxi << "sX"<<i;
+			syi << "sY"<<i;
 			if (i==0 && nbOfChunks>1)
-				o << tab << "cin"<<i+1<<"r"<<i<<" <= (\"0\" & sX"<<i<<") + (\"0\" & sY"<<i<<") + cin0;"<<endl;
+				o << tab << "cin"<<i+1<<"R"<<i<<" <= (\"0\" & sX"<<i<<") + (\"0\" & sY"<<i<<") + cin0;"<<endl;
 			else 
 				if (i<nbOfChunks-1)
-					o << tab << "cin"<<i+1<<"r"<<i<<" <= ( \"0\" & sX"<<i<<delaySignal("",i)<< ")"
-					                                 " + ( \"0\" & sY"<<i<<delaySignal("",i)<< ")"
-					                                 " + cin"<<i<<"r"<<i-1<<"_d("<<cSize[i-1]<<");"<<endl;
-		}
-		//assign the partial additions which will propagate to the result
-		for (int i=0;i<nbOfChunks;i++){
-			if (i<nbOfChunks-1)
-				o << tab << "r"<<i<<" <= cin"<<i+1<<"r"<<i<<"_d("<<cSize[i]-1<<" downto 0);"<<endl;
-			else{
-				o << tab << "r"<<i<<" <= sX"<<i<<delaySignal("",i)<<
-	                                 " + sY"<<i<<delaySignal("",i);
-									if (nbOfChunks>1)				
-	                                o << " + cin"<<i<<"r"<<i-1<<"_d("<<cSize[i-1]<<");"<<endl;
-									else
-	                                o << " + cin0;"<<endl;
-			}
+					o << tab << "cin"<<i+1<<"R"<<i<<" <= ( \"0\" & " << delaySignal(sxi.str(), i) << ")"
+					  << " + ( \"0\" & " << delaySignal(syi.str(),i)<< ")"
+					  << " + cin"<<i<<"R"<<i-1<<"_d("<<cSize[i-1]<<");"<<endl;
 		}
 
+		//assign the partial additions which will propagate to the result
+		for (int i=0;i<nbOfChunks;i++){
+			ostringstream sxi,syi;
+			sxi << "sX"<<i;
+			syi << "sY"<<i;
+			if (i<nbOfChunks-1)
+				o << tab << "R"<<i<<" <= cin"<<i+1<<"R"<<i<<"_d("<<cSize[i]-1<<" downto 0);"<<endl;
+			else{
+				o << tab << "R"<<i<<" <= "<< delaySignal(sxi.str(), i)
+				  << " + " << delaySignal(syi.str(), i);
+				if (nbOfChunks>1)				
+					o << " + cin"<<i<<"R"<<i-1<<"_d("<<cSize[i-1]<<");"<<endl;
+				else
+					o << " + cin0;"<<endl;
+			}
+		}
+		
 		//assign output by composing the result
 		o << tab << "R <= ";
 		for (int i=nbOfChunks-1;i>=0;i--){
+			ostringstream ri;
+			ri << "R"<<i;
 			if (i==0)
-			o << "r"<<i<<delaySignal("",nbOfChunks-2-i)<<";"<<endl;
+				o << delaySignal(ri.str(), nbOfChunks-2-i)<<";"<<endl;
 			else
-			o << "r"<<i<<delaySignal("",nbOfChunks-2-i)<<" & ";			
-		} o<<endl;
+				o << delaySignal(ri.str(),nbOfChunks-2-i)<<" & ";			
+		} 
+		o<<endl;
 
 		outputVHDLRegisters(o);
 	}
@@ -236,6 +249,7 @@ void IntAdder::outputVHDL(std::ostream& o, std::string name) {
 	}
 	o << "end architecture;" << endl << endl;
 }
+
 
 TestIOMap IntAdder::getTestIOMap()
 {

@@ -76,156 +76,94 @@ void Operator::addFPOutput(const std::string name, const int wE, const int wF) {
 	numberOfOutputs_ ++;
 }
 
-void Operator::addSignal(const std::string name, const int width) {
-	if (signalMap_.find(name) != signalMap_.end()) {
-		std::ostringstream o;
-		o << "ERROR in addSignal, signal " << name << " seems to already exist";
-		throw o.str();  
-	}
-	Signal *s = new Signal(name, Signal::wire, width);
-	signalMap_[name] = s ;
-	signalList_.push_back(s);
-}
-
-void Operator::addSignalBus(const std::string name, const int width) {
-	if (signalMap_.find(name) != signalMap_.end()) {
-		std::ostringstream o;
-		o << "ERROR in addSignalBus, signal " << name << " seems to already exist";
-		throw o.str();  
-	}
-	Signal *s = new Signal(name, Signal::wire, width, true);
-	signalMap_[name] = s ;
-	signalList_.push_back(s);
-}
 
 
 
-void Operator::addDelaySignal(const string name, const int width, const int delay) {
+void Operator::addSignalGeneric(const string name, const int width, const int delay, Signal::SignalType regType, bool isbus) {
 	ostringstream o;
 	Signal *s;
+
 	o << name;
-	// if delay<=0 it is equivalent to addSignal
-	if (isSequential() && delay > 0) {
+	if (isSequential() && delay > 0) { 	// if delay<=0,  it is equivalent to addSignal
 		for (int i=0; i<delay; i++){
 			if(signalMap_.find(o.str()) != signalMap_.end()) {
-				cerr << "ERROR in addDelaySignal , signal " << name<< " seems to already exist" << endl;
+				cerr << "ERROR in addSignalGeneric , signal " << o.str() << " seems to already exist" << endl;
 				exit(EXIT_FAILURE);
 			}
-			s = new Signal(o.str(), Signal::registeredWithoutReset, width);
+			s = new Signal(o.str(), regType, width, isbus, delay-i);
+			//std::cout <<"Signal" << o.str() << " " << delay-i << "    "  << s->getTTL()<< std::endl;
 			signalList_.push_back(s);    
-			signalMap_[name] = s ;
+			signalMap_[o.str()] = s ;
 			o  << "_d";
 		}
-		hasRegistersWithoutReset_ = true;
+		if(regType==Signal::registeredWithoutReset)
+			hasRegistersWithoutReset_ = true;
+		if(regType==Signal::registeredWithSyncReset)
+			hasRegistersWithSyncReset_ = true;
+		if(regType==Signal::registeredWithAsyncReset)
+			hasRegistersWithAsyncReset_ = true;
 	}
 
 	if (signalMap_.find(o.str()) != signalMap_.end()) {
-		cerr << "ERROR in addDelaySignal , signal " << name<< " seems to already exist" << endl;
+		cerr << "ERROR in addSignalGeneric, signal " << o.str() << " seems to already exist" << endl;
 		exit(EXIT_FAILURE);
 	}
 	s = new Signal(o.str(), Signal::wire, width);
 	signalList_.push_back(s);    
-	signalMap_[name] = s ;
-	
-	// return o.str();
+	signalMap_[o.str()] = s ;
+}
+
+
+
+
+void Operator::addSignal(const std::string name, const int width) {
+	addSignalGeneric(name,  width, 0, Signal::wire, //unused
+						  false);
+}
+
+
+
+void Operator::addSignalBus(const std::string name, const int width) {
+	addSignalGeneric(name,  width, 0, Signal::wire, //unused
+						  true);
+}
+
+void Operator::addDelaySignal(const string name, const int width, const int delay) {
+	addSignalGeneric(name,  width, delay, Signal::registeredWithoutReset, false);
 }
 
 void Operator::addDelaySignalBus(const string name, const int width, const int delay) {
-	ostringstream o;
-	Signal *s;
-	o << name;
-	// if delay<=0 it is equivalent to addSignal
-	if (isSequential() && delay > 0) {
-		for (int i=0; i<delay; i++){
-			if(signalMap_.find(o.str()) != signalMap_.end()) {
-				cerr << "ERROR in addDelaySignalBus , signal " << name<< " seems to already exist" << endl;
-				exit(EXIT_FAILURE);
-			}
-			s = new Signal(o.str(), Signal::registeredWithoutReset, width, true);
-			signalList_.push_back(s);    
-			signalMap_[name] = s ;
-			o  << "_d";
-		}
-		hasRegistersWithoutReset_ = true;
-	}
-
-	if (signalMap_.find(o.str()) != signalMap_.end()) {
-		cerr << "ERROR in addDelaySignalBus, signal " << name<< " seems to already exist" << endl;
-		exit(EXIT_FAILURE);
-	}
-	s = new Signal(o.str(), Signal::wire, width, true);
-	signalList_.push_back(s);    
-	signalMap_[name] = s ;
-	
-	// return o.str();
+	addSignalGeneric(name,  width, delay, Signal::registeredWithoutReset, true);
 }
 
-void Operator::addDelaySignalSyncReset(const string name, const int width, const int delay) {
-	ostringstream o;
-	Signal *s;
-	o << name;
-	// if delay <= 0 it is equivalent to addSignal
-	if (isSequential() && delay > 0) {
-		for (int i=0; i<delay; i++){
-			if (signalMap_.find(o.str()) != signalMap_.end()) {
-				cerr << "ERROR in addDelaySignalSyncReset , signal " << name<< " seems to already exist" << endl;
-				exit(EXIT_FAILURE);
-			}
-			s = new Signal(o.str(), Signal::registeredWithSyncReset, width);
-			signalList_.push_back(s);    
-			signalMap_[name] = s ;
-			o  << "_d";
-		}
-		hasRegistersWithSyncReset_ = true;
-	}
-
-	if (signalMap_.find(o.str()) != signalMap_.end()) {
-		cerr << "ERROR in addDelaySignalSyncReset , signal " << name<< " seems to already exist" << endl;
-		exit(EXIT_FAILURE);
-	}
-	s = new Signal(o.str(), Signal::wire, width);
-	signalList_.push_back(s);    
-	signalMap_[name] = s ;
-	
-	// return o.str();
+void Operator::addDelaySignalSyncReset(const string name, const int width, const int delay) {	
+	addSignalGeneric(name,  width, delay, Signal::registeredWithSyncReset, false);
 }
 
 void Operator::addDelaySignalBusSyncReset(const string name, const int width, const int delay) {
-	ostringstream o;
-	Signal *s;
-	o << name;
-	// if delay <= 0 it is equivalent to addSignal
-	if(isSequential() &&  delay > 0) {
-		for (int i=0; i<delay; i++){
-			if (signalMap_.find(o.str()) != signalMap_.end()) {
-				cerr << "ERROR in addDelaySignalBusSyncReset, signal " << name<< " seems to already exist" << endl;
-				exit(EXIT_FAILURE);
-			}
-			s = new Signal(o.str(), Signal::registeredWithSyncReset, width, true);
-			signalList_.push_back(s);    
-			signalMap_[name] = s ;
-			o  << "_d";
-		}
-		hasRegistersWithSyncReset_ = true;
-	}
-
-	if (signalMap_.find(o.str()) != signalMap_.end()) {
-		cerr << "ERROR in addDelaySignalBusSyncReset, signal " << name<< " seems to already exist" << endl;
-		exit(EXIT_FAILURE);
-	}
-	s = new Signal(o.str(), Signal::wire, width, true);
-	signalList_.push_back(s);    
-	signalMap_[name] = s ;
-	
-	// return o.str();
+	addSignalGeneric(name,  width, delay, Signal::registeredWithSyncReset, true);
 }
 
 
 string Operator::delaySignal(const string name, const int delay) {
 	ostringstream o;
+	Signal* s;
+	bool isDeclared=true;
+	
+	if(signalMap_.find(name) ==  signalMap_.end()) {
+		cerr << "WARNING in delaySignal, signal " << name << " not declared through addSignal" << endl;
+		isDeclared=false;
+	}
+
 	if (delay<=0 || isSequential()==false)
 		return name;
 	else {
+		if(isDeclared) {
+			s=getSignalByName(name);
+			if(s->getTTL()<delay) {
+				cerr << "WARNING in delaySignal, signal " << name << " declared with Time To Live "<< s->getTTL() << " and delayed by "<<delay << endl;
+			}
+		}
 		o << name;
 		for (int i=0; i<delay; i++){
 			o  << "_d";

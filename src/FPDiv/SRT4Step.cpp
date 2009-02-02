@@ -51,7 +51,7 @@ SRT4Step::SRT4Step(Target* target, int wF) :
 	name<<"SRT4Step_"<<wF; 
 	uniqueName_ = name.str(); 
 
-	setCombinatorial();
+	setOperatorType();
 		
 	addInput ("x", wF+3);
 	addInput ("d", wF+1);

@@ -89,6 +89,18 @@ public:
 	void addFPOutput(const std::string name, const int wE, const int wF);
 
 	
+	/** Generic function that adds a signal to the signal list.
+	 * The functions add*Signal* are implemented as instances of this functions.
+	 * @param name  the name of the signal
+	 * @param width the width of the signal
+	 * @param delay the delay of the signal. The number of register levels that this signal needs to be delayed. If negative, treated as zero (useful for pipeline synchronization)
+	 * @param regType the register type (registeredWithoutReset,registeredWithAsyncReset,registeredWithSyncReset, see Signal::SignalType)
+	 * @param isBus if true, a signal with a width of 1 is declared as std_logic_vector; if false it is declared as std_logic.
+	 */	
+	void addSignalGeneric(const string name, const int width, const int delay, Signal::SignalType regType, bool isBus);
+
+
+
 	/** Adds a signal to the signal list.
 	 * Adds a signal of type Signal::wire to the the signal list.
 	 * @param name  the name of the signal

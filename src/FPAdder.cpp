@@ -411,7 +411,7 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 		string XDelayed1 = delaySignal("newX", delayFromSD+1);
 				
 		//TODO check the test if significand is all zero is useful. 
-		o << tab << "resSign <= '0' when "<<closeDelayed1<<"='1' and" << delaySignal(" fracRClose1",1) << " = ("<<wF+1<<" downto 0 => '0') else"<<endl;
+		o << tab << "resSign <= '0' when "<<closeDelayed1<<"='1' and" << delaySignal("fracRClose1",1) << " = ("<<wF+1<<" downto 0 => '0') else"<<endl;
 		// else sign(x) xor (close and sign(resclose))
 		o << tab << "          " << XDelayed1 << "("<<wE+wF<<") xor (" << closeDelayed1 << " and " 
 		  << delaySignal("fracSignClose", 1) << ");"<<endl;

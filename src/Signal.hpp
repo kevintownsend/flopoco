@@ -34,174 +34,112 @@ public:
 	 * @param width     the width of the signal
 	 * @param isBus     the flag which signals if the signal is a bus (std_logic_vector)
 	 */
-	Signal(const std::string name, const SignalType type, const int width = 1, const bool isBus = false) : 
-		name_(name), type_(type), wE_(0), wF_(0), width_(width), low_(0), high_(width-1),
-		isSubSignal_(false), isBus_(isBus),	isFP_(false) {
-		
-		updateSignalName();
-	}
+	Signal(const std::string name, const SignalType type, const int width = 1, const bool isBus=false, const int ttl=0);
 
 	/** Signal constructor.
-	 * The standard constructor for signals which are not floating-point.
+	 * The standard constructor for signals which are floating-point.
 	 * @param name      the name of the signal
 	 * @param type      the type of the signal, @see SignalType
-	 * @param width     the width of the signal
-	 * @param isBus     the flag which signals if the signal is a bus (std_logic_vector)
+	 * @param wE        the exponent width
+	 * @param wF        the significand width
 	 */
-	Signal(const std::string name, const SignalType type, const int wE, const int wF) : 
-		name_(name), type_(type), wE_(wE), wF_(wF), width_(wE+wF+3),
-		low_(0), high_(width_-1), isSubSignal_(false),isBus_(false), isFP_(true)
-	{
-		updateSignalName();
-	}
+	Signal(const std::string name, const SignalType type, const int wE, const int wF);
 
 	/** Signal destructor.
 	 */		
-	~Signal(){}
+	~Signal();
 	
 	/** Returns the name of the signal
 	 * @return the name of the signal
 	 */	
-	const std::string& getSignalName() const { 
-		return id_; 
-	}
+	const std::string& getSignalName() const;
 
 	/** Updates the name of the signal.
 	 * It takes into consideration the fact that we might have subsignals
 	 */	
-	void updateSignalName()	{
-		if (isSubSignal_ == false)
-			id_ = name_;
-		else
-		{
-			std::stringstream o;
-			if (width_ == 1)
-				o << name_ << "(" << low_ << ")";
-			else
-				o << name_ << "(" << high_ << " downto " << low_ << ")";
-			id_ = o.str();
-		}
-	}
-	
+	void updateSignalName();
+
+
 	/** Returns the width of the signal
 	 * @return the width of the signal
 	 */	
-	int width() const{return width_;}
+	int width() const;
+
 	
 	/** Returns the exponent width of the signal
 	 * @return the width of the exponent if signal is isFP_
 	 */	
-	int wE() const {return(wE_);}
+	int wE() const;
 
 	/** Returns the fraction width of the signal
 	 * @return the width of the fraction if signal is isFP_
 	 */	
-	int wF() const {return(wF_);}
+	int wF() const;
 	
 	/** Reports if the signal is a floating-point signal
 	 * @return if the signal is a FP siglal
 	 */	
-	bool isFP() const {return isFP_;}
+	bool isFP() const;
 
 	/** Reports if the signal has the bus flag active
 	 * @return true if the signal is of bus type (std_logic_vector)
 	 */		
-	bool isBus() const {return isBus_;}
+	bool isBus() const;
 
 	/** Returns the type of the signal
 	 * @return type of signal, @see SignalType
 	 */	
-	SignalType type() const {return type_;}
+	SignalType type() const;
 	
 	/** outputs the VHDL code for declaring this signal 
 	 * @return the VHDL for this signal. 
 	 */	
-	std::string toVHDL() {
-		std::ostringstream o; 
-		if(type()==Signal::wire || type()==Signal::registeredWithoutReset || type()==Signal::registeredWithAsyncReset || type()==Signal::registeredWithSyncReset) 
-			o << "signal ";
-		o << getSignalName();
-		o << " : ";
-		if (type()==Signal::in)
-			 o << "in ";
-		if(type()==Signal::out)
-			 o << "out ";
-
-		if ((1==width())&&(!isBus_)) 
-			o << "std_logic" ;
-		else 
-			if(isFP_) 
-				o << " std_logic_vector(" << wE() <<"+"<<wF() << "+2 downto 0)";
-			else
-				o << " std_logic_vector(" << width()-1 << " downto 0)";
-		return o.str();
-	}
+	std::string toVHDL();
 
 	/** Returns a subsignal of the this signal
 	 * @param low the low index of subsignal
 	 * @param high the high index of the subsignal
 	 * @return the corresponding subsignal
 	 */	
-	Signal getSubSignal(int low, int high)
-	{
-		if (low < low_)
-			throw std::string("Attempted to return subsignal with smaller low index.");
-		if (high > high_)
-			throw std::string("Attempted to return subsignal with bigger high index."); 
-
-		Signal s(name_, type_, high-low+1);
-		s.low_ = low;
-		s.high_ = high;
-		s.isSubSignal_ = true;
-
-		return s;
-	}
+	Signal getSubSignal(int low, int high);
 	
 	/** Returns a subsignal containing the exception bits of this signal
 	 * @return the corresponding subsignal
 	 */	
-	Signal getException()
-	{
-		if (!isFP_)
-			throw std::string("Not a floating point signal.");
-		return getSubSignal(1+wE_+wF_, 2+wE_+wF_);
-	}
+	Signal getException();
 
 	/** Returns a subsignal containing the sign bit of this signal
 	 * @return the corresponding subsignal
 	 */	
-	Signal getSign()
-	{
-		if (!isFP_)
-			throw std::string("Not a floating point signal.");
-		return getSubSignal(wE_+wF_, wE_+wF_);
-	}
+	Signal getSign();
 
 	/** Returns a subsignal containing the exponent bits of this signal
 	 * @return the corresponding subsignal
 	 */	
-	Signal getExponent()
-	{
-		if (!isFP_)
-			throw std::string("Not a floating point signal.");
-		return getSubSignal(wF_, wE_+wF_-1);
-	}
+	Signal getExponent();
 
 	/** Returns a subsignal containing the fraction bits of this signal
 	 * @return the corresponding subsignal
 	 */	
-	Signal getMantissa()
-	{
-		if (!isFP_)
-			throw std::string("Not a floating point signal.");
-		return getSubSignal(0, wF_-1);
-	}
+	Signal getMantissa();
+
+	/** sets the time to live value (consider using the constructor instead)
+	 * @return the corresponding subsignal
+	 */	
+	void setTTL(uint32_t ttl);
+
+
+	/** obtain the time to live value of this signal
+	 * @return the TTL value
+	 */	
+	uint32_t getTTL();
 
 private:
 	std::string   name_;        /**< The name of the signal */
 	std::string   id_;          /**< The id of the signal. It is the same as name_ for regular signals, and is name_(high_-1 downto low_) for subsignals */
 	SignalType    type_;        /**< The type of the signal, see SignalType */
 	uint32_t      width_;       /**< The width of the signal */
+	uint32_t      ttl_;         /**< Time To Live for a delayed signal; used for early error reporting in delaySignal() */
 	
 	bool          isFP_;        /**< If the signal is of floating-point type */  
 	uint32_t      wE_;          /**< The width of the exponent. Used for FP signals */

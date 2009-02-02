@@ -203,25 +203,35 @@ void IntDualSub::outputVHDL(std::ostream& o, std::string name) {
 		}
 		//connect first assignments to second level of signals
 		for (int i=0;i<nbOfChunks;i++){
-			o << tab << "sX"<<i<<" <= X"<<i<<delaySignal("",bufferedInputs)<<";"<<endl;
-			o << tab << "sY"<<i<<" <= Y"<<i<<delaySignal("",bufferedInputs)<<";"<<endl;
+			ostringstream xi,yi;
+			xi << "X"<<i;
+			yi << "Y"<<i;
+			o << tab << "sX"<<i<<" <= " << delaySignal(xi.str(), bufferedInputs) << ";" << endl;
+			o << tab << "sY"<<i<<" <= " << delaySignal(yi.str(), bufferedInputs)<<";"<<endl;
 			if (i==0)
 				o << tab << "cin0 <= "<<"'"<< !(opType_) <<"';"<<endl;
 		}
 
 		//additions	for x - y	
 		for (int i=0;i<nbOfChunks;i++){
+			ostringstream sxi,syi;
+			sxi << "sX"<<i;
+			syi << "sY"<<i;
 			if (i==0 && nbOfChunks>1)
 				o << tab << "xMycin"<<i+1<<"r"<<i<<" <= (\"0\" & sX"<<i<<") + (\"0\" & not(sY"<<i<<")) + cin0;"<<endl;
 			else 
 				if (i<nbOfChunks-1)
-					o << tab << "xMycin"<<i+1<<"r"<<i<<" <= ( \"0\" & sX"<<i<<delaySignal("",i)<< ")"
-					                                 << " + ( \"0\" & not(sY"<<i<<delaySignal("",i)<< "))"
-					                                 << " + xMycin"<<i<<"r"<<i-1<<"_d("<<cSize[i-1]<<");"<<endl;
+					o << tab << "xMycin"<<i+1<<"r"<<i<<" <= ( \"0\" & " << delaySignal(sxi.str(), i)<< ")"
+					  << " + ( \"0\" & not(" << delaySignal(syi.str(), i)<< "))"
+					  << " + xMycin"<<i<<"r"<<i-1<<"_d("<<cSize[i-1]<<");"<<endl;
 		}
 
 		//additions	for y - x	or x + y
 		for (int i=0;i<nbOfChunks;i++){
+			ostringstream sxi,syi;
+			sxi << "sX"<<i;
+			syi << "sY"<<i;
+
 			if (i==0 && nbOfChunks>1){
 				o << tab << son_.str()<<"cin"<<i+1<<"r"<<i<<" <= ";
 				if (opType_==0)
@@ -233,58 +243,69 @@ void IntDualSub::outputVHDL(std::ostream& o, std::string name) {
 				if (i<nbOfChunks-1){
 					o << tab << "yMxcin"<<i+1<<"r"<<i<<" <=";
 					if (opType_==0)	
-						o<<" ( \"0\" & not(sX"<<i<<delaySignal("",i)<< "))";
+						o<<" ( \"0\" & not(" << delaySignal(sxi.str(), i)<< "))";
 					else
-						o<<" ( \"0\" & sX"<<i<<delaySignal("",i)<< ")";
-					o << " + ( \"0\" & sY"<<i<<delaySignal("",i)<< ")"
+						o<<" ( \"0\" & " << delaySignal(sxi.str(), i) << ")";
+					o << " + ( \"0\" & " << delaySignal(syi.str(), i)<< ")"
 					  << " + yMxcin"<<i<<"r"<<i-1<<"_d("<<cSize[i-1]<<");"<<endl;
 				}
 		}
 
 		//assign the partial additions which will propagate to the result for x-y
 		for (int i=0;i<nbOfChunks;i++){
+			ostringstream sxi,syi;
+			sxi << "sX"<<i;
+			syi << "sY"<<i;
 			if (i<nbOfChunks-1)
 				o << tab << "xMyr"<<i<<" <= xMycin"<<i+1<<"r"<<i<<"_d("<<cSize[i]-1<<" downto 0);"<<endl;
 			else{
-				o << tab << "xMyr"<<i<<" <= sX"<<i<<delaySignal("",i)<<
-	                                 " + not(sY"<<i<<delaySignal("",i)<<")";
-									if (nbOfChunks>1)				
-	                                o << " + xMycin"<<i<<"r"<<i-1<<"_d("<<cSize[i-1]<<");"<<endl;
-									else
-	                                o << " + cin0;"<<endl;	
+				o << tab << "xMyr"<<i<<" <= " << delaySignal(sxi.str(), i)
+				  << " + not(" << delaySignal(syi.str(), i)<<")";
+				if (nbOfChunks>1)				
+					o << " + xMycin"<<i<<"r"<<i-1<<"_d("<<cSize[i-1]<<");"<<endl;
+				else
+					o << " + cin0;"<<endl;	
 			}
 		}
 
 		//assign the partial additions which will propagate to the result for y-x || x +y
 		for (int i=0;i<nbOfChunks;i++){
+			ostringstream sxi,syi;
+			sxi << "sX"<<i;
+			syi << "sY"<<i;
 			if (i<nbOfChunks-1)
 				o << tab << son_.str()<<"r"<<i<<" <= "<<son_.str()<<"cin"<<i+1<<"r"<<i<<"_d("<<cSize[i]-1<<" downto 0);"<<endl;
 			else{
-				o << tab << son_.str()<<"r"<<i<<" <= not(sX"<<i<<delaySignal("",i)<<")"<<
-	                                 " + sY"<<i<<delaySignal("",i);
-									if (nbOfChunks>1)				
-	                                o << " + "<<son_.str()<<"cin"<<i<<"r"<<i-1<<"_d("<<cSize[i-1]<<");"<<endl;
-									else
-	                                o << " + cin0;"<<endl;	
+				o << tab << son_.str()<<"r"<<i<<" <= not(" << delaySignal(sxi.str(), i)<<")"<<
+					" + " << delaySignal(syi.str(), i);
+				if (nbOfChunks>1)				
+					o << " + "<<son_.str()<<"cin"<<i<<"r"<<i-1<<"_d("<<cSize[i-1]<<");"<<endl;
+				else
+					o << " + cin0;"<<endl;	
 			}
 		}
 
 		//assign output by composing the result for x - y
 		o << tab << "RxMy <= ";
 		for (int i=nbOfChunks-1;i>=0;i--){
+			ostringstream xmyri;
+			xmyri << "xMyr"<<i;
 			if (i==0)
-			o << "xMyr"<<i<<delaySignal("",nbOfChunks-2-i)<<";"<<endl;
+				o << delaySignal(xmyri.str(), nbOfChunks-2-i)<<";"<<endl;
 			else
-			o << "xMyr"<<i<<delaySignal("",nbOfChunks-2-i)<<" & ";			
-		} o<<endl;
+				o << delaySignal(xmyri.str(), nbOfChunks-2-i)<<" & ";			
+		} 
+		o<<endl;
 
 		//assign output by composing the result for y - x || x + y
-		o << tab << "R"<<son_.str()<<" <= ";
+		o << tab << "R" << son_.str() << " <= ";
 		for (int i=nbOfChunks-1;i>=0;i--){
+			ostringstream ri;
+			ri << son_.str() << "r"<<i;
 			if (i==0)
-			o << son_.str()<<"r"<<i<<delaySignal("",nbOfChunks-2-i)<<";"<<endl;
+				o <<  delaySignal(ri.str(), nbOfChunks-2-i)<<";"<<endl;
 			else
-			o << son_.str()<<"r"<<i<<delaySignal("",nbOfChunks-2-i)<<" & ";			
+				o << delaySignal(ri.str(), nbOfChunks-2-i)<<" & ";			
 		} o<<endl;
 
 		outputVHDLRegisters(o);
