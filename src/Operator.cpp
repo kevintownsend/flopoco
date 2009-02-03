@@ -87,8 +87,9 @@ void Operator::addSignalGeneric(const string name, const int width, const int de
 	if (isSequential() && delay > 0) { 	// if delay<=0,  it is equivalent to addSignal
 		for (int i=0; i<delay; i++){
 			if(signalMap_.find(o.str()) != signalMap_.end()) {
-				cerr << "ERROR in addSignalGeneric , signal " << o.str() << " seems to already exist" << endl;
-				exit(EXIT_FAILURE);
+				std::ostringstream o;
+				o << "ERROR in addSignalGeneric, signal " << name<< " seems to already exist";
+				throw o.str();
 			}
 			s = new Signal(o.str(), regType, width, isbus, delay-i);
 			if(i>0)  // FIXME This is a hack to suppress warnings for the delayed signals. They should be handled properly
@@ -107,8 +108,9 @@ void Operator::addSignalGeneric(const string name, const int width, const int de
 	}
 
 	if (signalMap_.find(o.str()) != signalMap_.end()) {
-		cerr << "ERROR in addSignalGeneric, signal " << o.str() << " seems to already exist" << endl;
-		exit(EXIT_FAILURE);
+		std::ostringstream o;
+		o << "ERROR in addSignalGeneric, signal " << name<< " seems to already exist";
+		throw o.str();
 	}
 	s = new Signal(o.str(), Signal::wire, width);
 	signalList_.push_back(s);    
