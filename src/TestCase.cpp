@@ -13,7 +13,7 @@ std::string TestCase::signalValueToVHDL(const Signal& s, mpz_class v, bool quot)
 	if (r.size() > s.width())
 	{
 		std::ostringstream o;
-		o << "Error in " <<  __FILE__ << "@" << __LINE__ << ": value (" << r << ") is larger than signal " << s.getSignalName();
+		o << "Error in " <<  __FILE__ << "@" << __LINE__ << ": value (" << r << ") is larger than signal " << s.getName();
 		throw o.str();
 	}
 
@@ -41,7 +41,7 @@ std::string TestCase::signalValueToVHDLHex(const Signal& s, mpz_class v, bool qu
 	if (o.size() * 4 > s.width() + 4)
 	{
 		std::ostringstream o;
-		o << "Error in " <<  __FILE__ << "@" << __LINE__ << ": value is larger than signal " << s.getSignalName();
+		o << "Error in " <<  __FILE__ << "@" << __LINE__ << ": value is larger than signal " << s.getName();
 		throw o.str();
 	}
 
@@ -84,7 +84,7 @@ std::string TestCase::getInputVHDL(std::string prepend)
 		Signal s = it->first;
 		mpz_class v = it->second;
 		o << prepend;
-		o << s.getSignalName() << " <= " << signalValueToVHDL(s, v) << "; ";
+		o << s.getName() << " <= " << signalValueToVHDL(s, v) << "; ";
 		o << std::endl;
 	}
 
@@ -115,13 +115,13 @@ std::string TestCase::getExpectedOutputVHDL(std::string prepend)
 			mpz_class v = *it;
 			o << " or ";
 			if (s.isFP())
-				o << "fp_equal(" << s.getSignalName() << ",fp" << s.width() << "'("<< signalValueToVHDL(s,v) << "))";
+				o << "fp_equal(" << s.getName() << ",fp" << s.width() << "'("<< signalValueToVHDL(s,v) << "))";
 			else
-				o << s.getSignalName() << "=" << signalValueToVHDL(s,v);
+				o << s.getName() << "=" << signalValueToVHDL(s,v);
 			expected += " " + signalValueToVHDL(s,v,false);
 		}
 
-		o << " report \"Incorrect output value for " << s.getSignalName() << ", expected" << expected << "\" severity ERROR; ";
+		o << " report \"Incorrect output value for " << s.getName() << ", expected" << expected << "\" severity ERROR; ";
 		o << std::endl;
 	}
 
@@ -137,7 +137,7 @@ mpz_class TestCase::getInput(const Signal& s)
 {
 	Inputs::iterator it = inputs.find(s);
 	if (it == inputs.end())
-		throw std::string("TestCase::getInput: input not found ") + s.getSignalName();
+		throw std::string("TestCase::getInput: input not found ") + s.getName();
 	return it->second;
 }
 
@@ -145,7 +145,7 @@ mpz_class TestCase::getOneExpectedOutput(const Signal& s)
 {
 	std::vector<mpz_class> vs = outputs[s];
 	if (vs.size() > 1)
-		throw std::string("TestCase::getOneExpectedOutput: multiple expected values for output ") + s.getSignalName();
+		throw std::string("TestCase::getOneExpectedOutput: multiple expected values for output ") + s.getName();
 	if (vs.size() < 1)
 		throw 0;	// XXX: Should be a clear exception class.
 	return *vs.begin();

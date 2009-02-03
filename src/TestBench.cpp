@@ -42,7 +42,7 @@ TestBench::TestBench(Target* target, Operator* op, int n):
 
 	// declare internal registered signals
 	for(int i=0; i < op_->getIOListSize(); i++){
-		string idext = op_->getIOListSignal(i)->getSignalName() ;
+		string idext = op_->getIOListSignal(i)->getName() ;
 		addSignal(idext, op_->getIOListSignal(i)->width());
 	}
 
@@ -203,11 +203,11 @@ void TestBench::outputVHDL(ostream& o, string name) {
 		Signal s = *op_->getIOListSignal(i);
 		if(i>0) 
 			o << tab << tab << "           ";
-		string idext =  op_->getIOListSignal(i)->getSignalName() ;
+		string idext =  op_->getIOListSignal(i)->getName() ;
 		if(op_->getIOListSignal(i)->type() == Signal::in)
-			o << op_->getIOListSignal(i)->getSignalName()  << " =>  " << idext;
+			o << op_->getIOListSignal(i)->getName()  << " =>  " << idext;
 		else
-			o << op_->getIOListSignal(i)->getSignalName()  << " =>  " << idext;
+			o << op_->getIOListSignal(i)->getName()  << " =>  " << idext;
 		if (i < op_->getIOListSize()-1) 
 			o << "," << endl;
 	}

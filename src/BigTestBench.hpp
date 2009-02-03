@@ -45,7 +45,7 @@ private:
 	{
 		bool operator()(Signal s1, Signal s2) const
 		{
-			return (s1.getSignalName() < s2.getSignalName());
+			return (s1.getName() < s2.getName());
 		}
 	};
 };

@@ -36,7 +36,7 @@ void Operator::addInput(const std::string name, const int width) {
 		o << "ERROR in addInput, signal " << name<< " seems to already exist";
 		throw o.str();
 	}
-	Signal *s = new Signal(name, Signal::in, width, 0) ;
+	Signal *s = new Signal(name, Signal::in, width) ; // default TTL and cycle OK
 	ioList_.push_back(s);
 	signalMap_[name] = s ;
 	numberOfInputs_ ++;
@@ -59,7 +59,7 @@ void Operator::addFPInput(const std::string name, const int wE, const int wF) {
 		cerr << "ERROR in addInput , signal " << name<< " seems to already exist" << endl;
 		exit(EXIT_FAILURE);
 	}
-	Signal *s = new Signal(name, Signal::in, wE, wF, 0);
+	Signal *s = new Signal(name, Signal::in, wE, wF);
 	ioList_.push_back(s);
 	signalMap_[name] = s ;
 	numberOfInputs_ ++;
@@ -91,10 +91,10 @@ void Operator::addSignalGeneric(const string name, const int width, const int de
 				o << "ERROR in addSignalGeneric, signal " << name<< " seems to already exist";
 				throw o.str();
 			}
-			s = new Signal(o.str(), regType, width, isbus, delay-i);
+			s = new Signal(o.str(), regType, width, isbus);
+			s->setTTL(delay-i);
 			if(i>0)  // FIXME This is a hack to suppress warnings for the delayed signals. They should be handled properly
 				s->updateMaxDelay(delay-i); // we know it will be delayed at least by that
-			//std::cout <<"Signal" << o.str() << " " << delay-i << "    "  << s->getTTL()<< std::endl;
 			signalList_.push_back(s);    
 			signalMap_[o.str()] = s ;
 			o  << "_d";
@@ -112,7 +112,7 @@ void Operator::addSignalGeneric(const string name, const int width, const int de
 		o << "ERROR in addSignalGeneric, signal " << name<< " seems to already exist";
 		throw o.str();
 	}
-	s = new Signal(o.str(), Signal::wire, width);
+	s = new Signal(o.str(), Signal::wire, width, isbus);
 	signalList_.push_back(s);    
 	signalMap_[o.str()] = s ;
 }
@@ -229,7 +229,7 @@ void  Operator::checkDelays() {
 	for (int i=0; i < this->signalList_.size(); i++){
 		Signal* s = this->signalList_[i];
 		if (s->getMaxDelay() < s->getTTL())
-			cerr << "WARNING: Signal " << s->getSignalName() << " declared with max TTL " << s->getTTL() 
+			cerr << "WARNING: Signal " << s->getName() << " declared with max TTL " << s->getTTL() 
 				  << " and used with max delay " << s->getMaxDelay() <<endl; 
 	}
 }
@@ -253,7 +253,7 @@ void  Operator::outputVHDLRegisters(std::ostream& o) {
 			for(int i=0; i<signalList_.size(); i++) {
 				Signal *s = signalList_[i];
 				if(s->type()==Signal::registeredWithoutReset) 
-					o << tab <<tab << tab << s->getSignalName() <<"_d" << " <=  " << s->getSignalName() <<";\n";
+					o << tab <<tab << tab << s->getName() <<"_d" << " <=  " << s->getName() <<";\n";
 			}
 			o << tab << tab << "end if;\n";
 			o << tab << "end process;\n"; 
@@ -268,15 +268,15 @@ void  Operator::outputVHDLRegisters(std::ostream& o) {
 				Signal *s = signalList_[i];
 				if(s->type()==Signal::registeredWithAsyncReset)
 					if ((s->width()>1)||(s->isBus())) 
-						o << tab <<tab << tab << s->getSignalName() <<"_d" << " <=  (" << s->width()-1 <<" downto 0 => '0');\n";
+						o << tab <<tab << tab << s->getName() <<"_d" << " <=  (" << s->width()-1 <<" downto 0 => '0');\n";
 					else
-						o << tab <<tab << tab << s->getSignalName() <<"_d" << " <=  '0';\n";
+						o << tab <<tab << tab << s->getName() <<"_d" << " <=  '0';\n";
 			}
 			o << tab << tab << tab << "elsif clk'event and clk = '1' then" << endl;
 			for(int i=0; i<signalList_.size(); i++) {
 				Signal *s = signalList_[i];
 				if(s->type()==Signal::registeredWithAsyncReset) 
-					o << tab <<tab << tab << s->getSignalName() <<"_d" << " <=  " << s->getSignalName() <<";\n";
+					o << tab <<tab << tab << s->getName() <<"_d" << " <=  " << s->getName() <<";\n";
 			}
 			o << tab << tab << tab << "end if;" << endl;
 			o << tab << tab << "end process;" << endl;
@@ -292,15 +292,15 @@ void  Operator::outputVHDLRegisters(std::ostream& o) {
 				Signal *s = signalList_[i];
 				if(s->type()==Signal::registeredWithSyncReset)
 					if ((s->width()>1)||(s->isBus())) 
-						o << tab <<tab << tab << s->getSignalName() <<"_d" << " <=  (" << s->width()-1 <<" downto 0 => '0');\n";
+						o << tab <<tab << tab << s->getName() <<"_d" << " <=  (" << s->width()-1 <<" downto 0 => '0');\n";
 					else
-						o << tab <<tab << tab << s->getSignalName() <<"_d" << " <=  '0';\n";
+						o << tab <<tab << tab << s->getName() <<"_d" << " <=  '0';\n";
 			}
 			o << tab << tab << tab << "else" << endl;
 			for(int i=0; i<signalList_.size(); i++) {
 				Signal *s = signalList_[i];
 				if(s->type()==Signal::registeredWithSyncReset) 
-					o << tab <<tab << tab << s->getSignalName() <<"_d" << " <=  " << s->getSignalName() <<";\n";
+					o << tab <<tab << tab << s->getName() <<"_d" << " <=  " << s->getName() <<";\n";
 			}
 			o << tab << tab << tab << "end if;" << endl;
 			o << tab << tab << "end if;" << endl;

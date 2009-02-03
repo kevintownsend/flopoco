@@ -34,8 +34,7 @@ public:
 	 * @param width     the width of the signal
 	 * @param isBus     the flag which signals if the signal is a bus (std_logic_vector)
 	 */
-	Signal(const std::string name, const SignalType type, const int width = 1, const bool isBus=false, const int ttl=0, const int cycle=-1);
-
+	Signal(const std::string name, const Signal::SignalType type, const int width = 1, const bool isBus=false);
 	/** Signal constructor.
 	 * The standard constructor for signals which are floating-point.
 	 * @param name      the name of the signal
@@ -43,7 +42,7 @@ public:
 	 * @param wE        the exponent width
 	 * @param wF        the significand width
 	 */
-	Signal(const std::string name, const SignalType type, const int wE, const int wF, const int cycle=-1);
+	Signal(const std::string name, const SignalType type, const int wE, const int wF);
 
 	/** Signal destructor.
 	 */		
@@ -52,7 +51,7 @@ public:
 	/** Returns the name of the signal
 	 * @return the name of the signal
 	 */	
-	const std::string& getSignalName() const;
+	const std::string& getName() const;
 
 	/** Updates the name of the signal.
 	 * It takes into consideration the fact that we might have subsignals

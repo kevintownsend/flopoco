@@ -59,7 +59,7 @@ public:
 	{
 		bool operator()(const Signal& s1, const Signal& s2) const
 		{
-			return (s1.getSignalName() < s2.getSignalName());
+			return (s1.getName() < s2.getName());
 		}
 	};
 
@@ -209,7 +209,7 @@ private:
 	{
 		bool operator()(const Signal& s1, const Signal& s2) const
 		{
-			return (s1.getSignalName() < s2.getSignalName());
+			return (s1.getName() < s2.getName());
 		}
 	};
 

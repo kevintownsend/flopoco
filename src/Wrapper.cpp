@@ -43,15 +43,15 @@ Wrapper::Wrapper(Target* target, Operator *op):
 	
 	// Copy the signals of the wrapped operator except clk and rst
 	for(int i=0; i < op->getIOListSize(); i++)	{
-		if (( op->getIOListSignal(i)->getSignalName()!="clk") && ( op->getIOListSignal(i)->getSignalName()!="rst"))
+		if (( op->getIOListSignal(i)->getName()!="clk") && ( op->getIOListSignal(i)->getName()!="rst"))
 		ioList_.push_back( new Signal ( * op->getIOListSignal(i) ) );
 	}
 		
 	// declare internal registered signals
 	for(int i=0; i < op->getIOListSize(); i++){
-		string idext = "i_" + (op->getIOListSignal(i))->getSignalName();
+		string idext = "i_" + (op->getIOListSignal(i))->getName();
 		//the clock is not registred
-		if ( op->getIOListSignal(i)->getSignalName()!="clk")
+		if ( op->getIOListSignal(i)->getName()!="clk")
 			addDelaySignal(idext, op->getIOListSignal(i)->width(),1);
 	}
 
@@ -79,9 +79,9 @@ void Wrapper::outputVHDL(ostream& o, string name) {
 	o << "--wrapper operator"<<endl;
 	// connect inputs
 	for(int i=0; i < op_->getIOListSize(); i++){
-		string idext = "i_" + op_->getIOListSignal(i)->getSignalName() ;
-		if ((op_->getIOListSignal(i)->type() == Signal::in) && (op_->getIOListSignal(i)->getSignalName()!="clk"))
-			o << tab << idext << " <=  " << op_->getIOListSignal(i)->getSignalName() << ";" << endl;
+		string idext = "i_" + op_->getIOListSignal(i)->getName() ;
+		if ((op_->getIOListSignal(i)->type() == Signal::in) && (op_->getIOListSignal(i)->getName()!="clk"))
+			o << tab << idext << " <=  " << op_->getIOListSignal(i)->getName() << ";" << endl;
 	}
 
 	// the instance
@@ -91,14 +91,14 @@ void Wrapper::outputVHDL(ostream& o, string name) {
 		Signal s = *op_->getIOListSignal(i);
 		if(i>0) 
 			o << tab << tab << "           ";
-		string idext = "i_" + op_->getIOListSignal(i)->getSignalName() ;
+		string idext = "i_" + op_->getIOListSignal(i)->getName() ;
 		if (op_->getIOListSignal(i)->type() == Signal::in)
-			if (op_->getIOListSignal(i)->getSignalName()!="clk")
-				o << op_->getIOListSignal(i)->getSignalName()  << " =>  " << idext << "_d";
+			if (op_->getIOListSignal(i)->getName()!="clk")
+				o << op_->getIOListSignal(i)->getName()  << " =>  " << idext << "_d";
 			else
-				o << op_->getIOListSignal(i)->getSignalName()  << " =>  clk";
+				o << op_->getIOListSignal(i)->getName()  << " =>  clk";
 		else
-			o << op_->getIOListSignal(i)->getSignalName()  << " =>  " << idext;
+			o << op_->getIOListSignal(i)->getName()  << " =>  " << idext;
 		if (i < op_->getIOListSize()-1) 
 			o << "," << endl;
 	}
@@ -109,9 +109,9 @@ void Wrapper::outputVHDL(ostream& o, string name) {
 
 	// connect outputs
 	for(int i=0; i<op_->getIOListSize(); i++){
-		string idext = "i_" + op_->getIOListSignal(i)->getSignalName() ;
+		string idext = "i_" + op_->getIOListSignal(i)->getName() ;
 		if(op_->getIOListSignal(i)->type() == Signal::out)
-			o << tab << op_->getIOListSignal(i)->getSignalName() << " <=  " << idext << "_d;" << endl;
+			o << tab << op_->getIOListSignal(i)->getName() << " <=  " << idext << "_d;" << endl;
 	}
 	
 	endArchitecture(o);

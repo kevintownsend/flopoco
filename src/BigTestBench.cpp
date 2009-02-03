@@ -47,7 +47,7 @@ BigTestBench::BigTestBench(Target* target, Operator* op, int n):
 
 	// declare internal registered signals
 	for(int i=0; i<op_->getIOListSize(); i++){
-		string idext = op_->getIOListSignal(i)->getSignalName() ;
+		string idext = op_->getIOListSignal(i)->getName() ;
 		addSignal(idext, op_->getIOListSignal(i)->width());
 	}
 
@@ -79,7 +79,7 @@ inline std::string s2vg(std::string type, const Signal& s, int var = -1)
 	std::stringstream o;
 
 	o << type << "_";
-	char *x = strdup(s.getSignalName().c_str());
+	char *x = strdup(s.getName().c_str());
 	for (char *p = x; *p; p++)
 		switch (*p)
 		{
@@ -166,11 +166,11 @@ void BigTestBench::outputVHDL(ostream& o, string name) {
 		//Signal& s = *op_->getIOListSignal(i);
 		if(i>0) 
 			o << tab << tab << "           ";
-		string idext =  op_->getIOListSignal(i)->getSignalName() ;
+		string idext =  op_->getIOListSignal(i)->getName() ;
 		if(op_->getIOListSignal(i)->type() == Signal::in)
-			o << op_->getIOListSignal(i)->getSignalName()  << " =>  " << idext;
+			o << op_->getIOListSignal(i)->getName()  << " =>  " << idext;
 		else
-			o << op_->getIOListSignal(i)->getSignalName()  << " =>  " << idext;
+			o << op_->getIOListSignal(i)->getName()  << " =>  " << idext;
 		if (i < op_->getIOListSize()-1) 
 			o << "," << endl;
 	}
@@ -243,10 +243,10 @@ void BigTestBench::outputVHDL(ostream& o, string name) {
 		{
 			o << tab << tab << tab;
 			if (s.width() == 1)
-				o << s.getSignalName() << " <= " << s2v(s,i) << "; ";
+				o << s.getName() << " <= " << s2v(s,i) << "; ";
 			else
-				o << s.getSignalName() << " <= to_stdlogicvector(" << s2v(s,i) << "(" << s.width()-1 << " downto 0)); "; 
-			o << "assert " << s2g(s,i) << " report \"Invalid input for " << s.getSignalName() << "\" severity failure;\n";
+				o << s.getName() << " <= to_stdlogicvector(" << s2v(s,i) << "(" << s.width()-1 << " downto 0)); "; 
+			o << "assert " << s2g(s,i) << " report \"Invalid input for " << s.getName() << "\" severity failure;\n";
 		}
 	}
 
@@ -265,18 +265,18 @@ void BigTestBench::outputVHDL(ostream& o, string name) {
 			o << tab << tab << tab << tab << "or (" << s2g(s,i) << " and "; 
 			if (s.isFP())
 			{
-				o << "fp_equal(" << s.getSignalName() << ", to_stdlogicvector(" << s2v(s,i) << "(" << s.width()-1 << " downto 0)))";
+				o << "fp_equal(" << s.getName() << ", to_stdlogicvector(" << s2v(s,i) << "(" << s.width()-1 << " downto 0)))";
 			}
 			else
 			{
 				if (s.width() == 1)
-					o << s.getSignalName() << " = " << s2v(s,i);
+					o << s.getName() << " = " << s2v(s,i);
 				else
-					o << s.getSignalName() << " = to_stdlogicvector(" << s2v(s,i) << "(" << s.width()-1 << " downto 0))"; 
+					o << s.getName() << " = to_stdlogicvector(" << s2v(s,i) << "(" << s.width()-1 << " downto 0))"; 
 			}
 			o << ")\n";
 		}
-		o << tab << tab << tab << tab << "report \"Incorrect value for " << s.getSignalName() << "\";\n";
+		o << tab << tab << tab << tab << "report \"Incorrect value for " << s.getName() << "\";\n";
 	}
  
 	o << tab << tab << "end loop;" <<endl;

@@ -3,22 +3,22 @@
 #include "Signal.hpp"
 
 
-Signal::Signal(const std::string name, const Signal::SignalType type, const int width, const bool isBus, const int ttl, const int cycle) : 
+Signal::Signal(const std::string name, const Signal::SignalType type, const int width, const bool isBus) : 
 	name_(name), type_(type), wE_(0), wF_(0), width_(width), low_(0), high_(width-1),
-	isSubSignal_(false), isBus_(isBus),	isFP_(false), ttl_(ttl), cycle_(cycle), maxDelay_(0) {
+	isSubSignal_(false), isBus_(isBus),	isFP_(false), ttl_(0), cycle_(0), maxDelay_(0) {
 	updateSignalName();
 }
 
-Signal::Signal(const std::string name, const Signal::SignalType type, const int wE, const int wF, const int cycle) : 
+Signal::Signal(const std::string name, const Signal::SignalType type, const int wE, const int wF) : 
 	name_(name), type_(type), wE_(wE), wF_(wF), width_(wE+wF+3),
-	low_(0), high_(width_-1), isSubSignal_(false),isBus_(false), isFP_(true), ttl_(0), cycle_(cycle), maxDelay_(0)
+	low_(0), high_(width_-1), isSubSignal_(false),isBus_(false), isFP_(true), ttl_(0), cycle_(0), maxDelay_(0)
 {
 	updateSignalName();
 }
 
 Signal::~Signal(){}
 
-const std::string& Signal::getSignalName() const { 
+const std::string& Signal::getName() const { 
 	return id_; 
 }
 
@@ -52,7 +52,7 @@ std::string Signal::toVHDL() {
 	std::ostringstream o; 
 	if(type()==Signal::wire || type()==Signal::registeredWithoutReset || type()==Signal::registeredWithAsyncReset || type()==Signal::registeredWithSyncReset) 
 		o << "signal ";
-	o << getSignalName();
+	o << getName();
 	o << " : ";
 	if (type()==Signal::in)
 		o << "in ";
