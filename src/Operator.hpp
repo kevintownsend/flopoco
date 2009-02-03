@@ -189,6 +189,10 @@ public:
 	string  delaySignal(const string name, const int delay=1);
 
 
+	/** Checks that each delayed signal is indeed used.
+	*/
+	void checkDelays();
+
 	/** Sets Operator name to default name.
 	 * This method must be overridden by all classes which extend Operator
 	 *  

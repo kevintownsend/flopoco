@@ -36,7 +36,7 @@ void Operator::addInput(const std::string name, const int width) {
 		o << "ERROR in addInput, signal " << name<< " seems to already exist";
 		throw o.str();
 	}
-	Signal *s = new Signal(name, Signal::in, width) ;
+	Signal *s = new Signal(name, Signal::in, width, 0) ;
 	ioList_.push_back(s);
 	signalMap_[name] = s ;
 	numberOfInputs_ ++;
@@ -59,7 +59,7 @@ void Operator::addFPInput(const std::string name, const int wE, const int wF) {
 		cerr << "ERROR in addInput , signal " << name<< " seems to already exist" << endl;
 		exit(EXIT_FAILURE);
 	}
-	Signal *s = new Signal(name, Signal::in, wE, wF) ;
+	Signal *s = new Signal(name, Signal::in, wE, wF, 0);
 	ioList_.push_back(s);
 	signalMap_[name] = s ;
 	numberOfInputs_ ++;
@@ -91,6 +91,8 @@ void Operator::addSignalGeneric(const string name, const int width, const int de
 				exit(EXIT_FAILURE);
 			}
 			s = new Signal(o.str(), regType, width, isbus, delay-i);
+			if(i>0)  // FIXME This is a hack to suppress warnings for the delayed signals. They should be handled properly
+				s->updateMaxDelay(delay-i); // we know it will be delayed at least by that
 			//std::cout <<"Signal" << o.str() << " " << delay-i << "    "  << s->getTTL()<< std::endl;
 			signalList_.push_back(s);    
 			signalMap_[o.str()] = s ;
@@ -161,8 +163,9 @@ string Operator::delaySignal(const string name, const int delay) {
 		if(isDeclared) {
 			s=getSignalByName(name);
 			if(s->getTTL()<delay) {
-				cerr << "WARNING in delaySignal, signal " << name << " declared with Time To Live "<< s->getTTL() << " and delayed by "<<delay << endl;
+				cerr << "ERROR in delaySignal, signal " << name << ", with Time To Live "<< s->getTTL() << ", is delayed by "<<delay << endl;
 			}
+			s->updateMaxDelay(delay);
 		}
 		o << name;
 		for (int i=0; i<delay; i++){
@@ -220,6 +223,16 @@ const Signal * Operator::getIOListSignal(int i){
   return ioList_[i];
 }
 			
+void  Operator::checkDelays() {
+	for (int i=0; i < this->signalList_.size(); i++){
+		Signal* s = this->signalList_[i];
+		if (s->getMaxDelay() < s->getTTL())
+			cerr << "WARNING: Signal " << s->getSignalName() << " declared with max TTL " << s->getTTL() 
+				  << " and used with max delay " << s->getMaxDelay() <<endl; 
+	}
+}
+
+
 void  Operator::outputVHDLSignalDeclarations(std::ostream& o) {
 	for (int i=0; i < this->signalList_.size(); i++){
 		Signal* s = this->signalList_[i];

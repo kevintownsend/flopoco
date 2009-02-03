@@ -34,7 +34,7 @@ public:
 	 * @param width     the width of the signal
 	 * @param isBus     the flag which signals if the signal is a bus (std_logic_vector)
 	 */
-	Signal(const std::string name, const SignalType type, const int width = 1, const bool isBus=false, const int ttl=0);
+	Signal(const std::string name, const SignalType type, const int width = 1, const bool isBus=false, const int ttl=0, const int cycle=-1);
 
 	/** Signal constructor.
 	 * The standard constructor for signals which are floating-point.
@@ -43,7 +43,7 @@ public:
 	 * @param wE        the exponent width
 	 * @param wF        the significand width
 	 */
-	Signal(const std::string name, const SignalType type, const int wE, const int wF);
+	Signal(const std::string name, const SignalType type, const int wE, const int wF, const int cycle=-1);
 
 	/** Signal destructor.
 	 */		
@@ -118,10 +118,12 @@ public:
 	 */	
 	Signal getExponent();
 
+
 	/** Returns a subsignal containing the fraction bits of this signal
 	 * @return the corresponding subsignal
 	 */	
 	Signal getMantissa();
+
 
 	/** sets the time to live value (consider using the constructor instead)
 	 * @return the corresponding subsignal
@@ -134,12 +136,37 @@ public:
 	 */	
 	uint32_t getTTL();
 
+
+	/** sets the cycle at which the signal is active
+	 */	
+	void setCycle(uint32_t cycle) ;
+
+
+	/** obtain the declared cycle of this signal
+	 * @return the cycle
+	 */	
+	uint32_t getCycle();
+
+
+	/** Updates the max delay associated to a signal
+	 */	
+	void updateMaxDelay(uint32_t delay) ;
+
+
+	/** obtain max delay that has been applied to this signal
+	 * @return the max delay 
+	 */	
+	uint32_t getMaxDelay() ;
+
 private:
 	std::string   name_;        /**< The name of the signal */
 	std::string   id_;          /**< The id of the signal. It is the same as name_ for regular signals, and is name_(high_-1 downto low_) for subsignals */
 	SignalType    type_;        /**< The type of the signal, see SignalType */
 	uint32_t      width_;       /**< The width of the signal */
+
 	uint32_t      ttl_;         /**< Time To Live for a delayed signal; used for early error reporting in delaySignal() */
+	uint32_t      maxDelay_;    /**< The max delay that will be applied to this signal; set by delaySignal(), should be eventually equal to ttl_, otherwise a warning may be produced */
+	uint32_t      cycle_;       /**<  the cycle at which this signal is active in a pipelined operator. 0 means synchronized with the inputs */
 	
 	bool          isFP_;        /**< If the signal is of floating-point type */  
 	uint32_t      wE_;          /**< The width of the exponent. Used for FP signals */

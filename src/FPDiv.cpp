@@ -240,6 +240,7 @@ void FPDiv::outputVHDL(std::ostream& o, std::string name) {
 	  << delaySignal("sR", getPipelineDepth()) 
 	  << " & expfracR(" << wE+wF-1 << " downto 0);" <<endl;
 	endArchitecture(o);
+	checkDelays();
 }
 
 

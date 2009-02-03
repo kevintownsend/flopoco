@@ -3,15 +3,15 @@
 #include "Signal.hpp"
 
 
-Signal::Signal(const std::string name, const Signal::SignalType type, const int width, const bool isBus, const int ttl) : 
+Signal::Signal(const std::string name, const Signal::SignalType type, const int width, const bool isBus, const int ttl, const int cycle) : 
 	name_(name), type_(type), wE_(0), wF_(0), width_(width), low_(0), high_(width-1),
-	isSubSignal_(false), isBus_(isBus),	isFP_(false), ttl_(ttl) {
+	isSubSignal_(false), isBus_(isBus),	isFP_(false), ttl_(ttl), cycle_(cycle), maxDelay_(0) {
 	updateSignalName();
 }
 
-Signal::Signal(const std::string name, const Signal::SignalType type, const int wE, const int wF) : 
+Signal::Signal(const std::string name, const Signal::SignalType type, const int wE, const int wF, const int cycle) : 
 	name_(name), type_(type), wE_(wE), wF_(wF), width_(wE+wF+3),
-	low_(0), high_(width_-1), isSubSignal_(false),isBus_(false), isFP_(true), ttl_(0)
+	low_(0), high_(width_-1), isSubSignal_(false),isBus_(false), isFP_(true), ttl_(0), cycle_(cycle), maxDelay_(0)
 {
 	updateSignalName();
 }
@@ -118,5 +118,23 @@ void Signal::setTTL(uint32_t ttl) {
 
 uint32_t Signal::getTTL() {
 	return ttl_;
+}
+
+void Signal::setCycle(uint32_t cycle) {
+	cycle_ = cycle;
+}
+
+uint32_t Signal::getCycle() {
+	return cycle_;
+}
+
+void Signal::updateMaxDelay(uint32_t delay) {
+	if(delay>maxDelay_)
+		maxDelay_=delay;
+	//TODO add TTL check
+}
+
+uint32_t Signal::getMaxDelay() {
+	return maxDelay_;
 }
 

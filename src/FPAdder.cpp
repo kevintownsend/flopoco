@@ -655,6 +655,7 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 		
 				   
 		endArchitecture(o);
+	checkDelays();
 
 }
 
