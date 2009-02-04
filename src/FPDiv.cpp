@@ -145,7 +145,7 @@ void FPDiv::outputVHDL(std::ostream& o, std::string name) {
 	o << tab << "fY <= \"1\" & Y(" << wF-1 << " downto 0);" << endl;
 
 	o << tab << "fYTimes3 <= (\"00\" & fY) + (\"0\" & fY & \"0\");" << endl; // TODO an IntAdder here
-	o << tab << "w"<<nDigit-1<<" <=  \"00\" & " << delaySignal("fX", mult3AdderDelay) << ";" << endl;
+	o << tab << "w"<<nDigit-1<<" <=  \"00\" & " << delaySignal("fX", 0) << ";" << endl;
 
 	for(i=nDigit-1; i>=1; i--) {
 		ostringstream wi;
@@ -157,7 +157,7 @@ void FPDiv::outputVHDL(std::ostream& o, std::string name) {
 		o << endl;
 		o << tab << tab << "port map ( x       => " << delaySignal(wi.str(),1) << "," << endl;
 		o << tab << tab << "           d       => " 
-		  << delaySignal("fY", nDigit -i + mult3AdderDelay) << "," << endl;
+		  << delaySignal("fY", nDigit -i -1 + mult3AdderDelay) << "," << endl;
 		o << tab << tab << "           dtimes3 => " 
 		  << delaySignal("fYTimes3",nDigit-i) << "," << endl;
 		if(isSequential()) {
@@ -238,7 +238,7 @@ void FPDiv::outputVHDL(std::ostream& o, std::string name) {
 	o << tab << "sR <= X(" << wE+wF << ") xor Y(" << wE+wF<< ");" << endl;
 	o << tab << "R <= exnRfinal & " 
 	  << delaySignal("sR", getPipelineDepth()) 
-	  << " & expfracR(" << wE+wF-1 << " downto 0);" <<endl;
+	  << " & " << delaySignal("expfracR", 1) << "(" << wE+wF-1 << " downto 0);" <<endl;
 	endArchitecture(o);
 	checkDelays();
 }

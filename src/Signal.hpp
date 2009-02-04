@@ -95,6 +95,17 @@ public:
 	 */	
 	std::string toVHDL();
 
+	/** obtain the name of a signal delayed by delay 
+	 * @param delay*/
+	std::string delayedName(int delay);
+
+
+	/** outputs the VHDL code for declaring a signal with all its delayed versions
+	 * This is the 2.0 equivalent of toVHDL()
+	 * @return the VHDL for the declarations. 
+	 */	
+	std::string toVHDLDeclaration();
+
 	/** Returns a subsignal of the this signal
 	 * @param low the low index of subsignal
 	 * @param high the high index of the subsignal

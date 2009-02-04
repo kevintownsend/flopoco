@@ -178,8 +178,14 @@ string Operator::delaySignal(const string name, const int delay) {
 }
 
 Signal * Operator::getSignalByName(string name) {
+	ostringstream e;
+	if(signalMap_.find(name) ==  signalMap_.end()) {
+		e << "ERROR in getSignalByName, signal " << name<< " not declared";
+		throw e.str();
+	}
 	return signalMap_[name];
 }
+
 
 void Operator::setOperatorName(std::string prefix, std::string postfix){
 		ostringstream pr, po;
@@ -407,3 +413,109 @@ void Operator::outputFinalReport() {
 		cout << tab << "Not pipelined"<< endl;
 }
 
+
+
+void Operator::setCycle(int cycle) {
+	cycle_=cycle;
+	// automatically update pipeline depth of the operator 
+	if (cycle_ > pipelineDepth_) 
+		pipelineDepth_ = cycle_;
+}
+
+
+void Operator::nextCycle() {
+	cycle_ ++; 
+	// automatically update pipeline depth of the operator 
+	if (cycle_ > pipelineDepth_) 
+		pipelineDepth_ = cycle_;
+}
+
+
+void Operator::syncCycleFromSignal(string name) {
+	Signal* s;
+	s=getSignalByName(name);
+	if( s->getCycle() < 0 ) {
+		ostringstream o;
+		o << "ERROR in syncCycleFromSignal, signal " << name<< " doesn't have (yet?) a valid cycle";
+		throw o.str();
+	} 
+	cycle_ = s->getCycle();
+	// automatically update pipeline depth of the operator 
+	if (cycle_ > pipelineDepth_) 
+		pipelineDepth_ = cycle_;
+}
+
+
+
+string Operator::lhs(string name, const int width, bool isbus) {
+	Signal* s;
+	ostringstream e;
+	// check the signals doesn't already exist
+	if(signalMap_.find(name) !=  signalMap_.end()) {
+		e << "ERROR in lhs(), signal " << name<< " already exists";
+		throw e.str();
+	}
+	// construct the signal (maxDelay and cycle are reset to 0 by the constructor)
+	s = new Signal(name, Signal::wire, width, isbus);
+	// define its cycle 
+	if(isSequential())
+		s->setCycle(this->cycle_);
+	// add the signal to signalMap and signalList
+	signalList_.push_back(s);    
+	signalMap_[name] = s ;
+	return name;
+}
+
+string Operator::rhs(string name) {
+	if(isSequential()) {
+		Signal *s;
+		s=getSignalByName(name);
+		if(s->getCycle() < 0) {
+			ostringstream e;
+			e << "ERROR in rhs(), signal " << name<< " doesn't have (yet?) a valid cycle";
+			throw e.str();
+		} 
+		if(s->getCycle() > cycle_) {
+			ostringstream e;
+			e << "ERROR in rhs(), active cycle of signal " << name<< " is later than current cycle, cannot delay it";
+			throw e.str();
+		} 
+		// update the maxDelay value of s
+		s->updateMaxDelay( cycle_ - s->getCycle() );
+		return s->delayedName( cycle_ - s->getCycle() );
+	}
+	else
+		return name;
+}
+
+
+string Operator::buildVHDLSignalDeclarations() {
+	ostringstream o;
+	for(int i=0; i<signalList_.size(); i++) {
+		Signal *s = signalList_[i];
+		o << s->toVHDLDeclaration() << endl;
+	}
+	
+	return o.str();	
+}
+
+
+string  Operator::buildVHDLRegisters() {
+	ostringstream o;
+
+	// execute only if the operator is sequential, otherwise output nothing
+	if (isSequential()){
+		o << tab << "process(clk)  begin\n"
+		  << tab << tab << "if clk'event and clk = '1' then\n";
+		for(int i=0; i<signalList_.size(); i++) {
+			Signal *s = signalList_[i];
+			if(s->getMaxDelay() >0) {
+				for(int j=0; j<s->getMaxDelay(); j++)
+					o << tab <<tab << tab << s->delayedName(i) << " <=  " << s->delayedName(i-1) <<";" << endl;
+			}
+		}
+		o << tab << tab << "end if;\n";
+		o << tab << "end process;\n"; 
+	}
+	return o.str();
+}
