@@ -62,7 +62,11 @@ LongAcc2FP::LongAcc2FP(Target* target, int LSBA, int MSBA, int wEOut, int wFOut)
 	sizeAcc_ = MSBA_-LSBA_+1;	
 	
 	//instantiate a leading zero/one counter
+#ifdef _WIN32
+	countWidth_ = intlog2(sizeAcc_)+1;
+#else
 	countWidth_ = log2(sizeAcc_)+1;
+#endif
 
 	lzocShifterSticky_ = new LZOCShifterSticky(target, sizeAcc_, wFOut_ + 1,0,-1); // target, inputNbOfBits,outputNbOfBits, computeSticky, countType 
 	oplist.push_back(lzocShifterSticky_);

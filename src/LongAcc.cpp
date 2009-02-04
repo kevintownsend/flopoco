@@ -584,7 +584,7 @@ void LongAcc::fillTestCase(mpz_class a[])
 	fpX = sX;
 	
 	//for now, we do not accept inputs which overflow, negative inputs or inputs having the exception bits INF and NaN
-	while ((fpX.getExponentSignalValue()-(pow(2,wEX_-1)-1)>MaxMSBX_)
+	while ((fpX.getExponentSignalValue()-(intpow2(wEX_-1)-1)>MaxMSBX_)
 			//||(fpX.getSignSignalValue()==1) 
 			|| (fpX.getExceptionSignalValue()>1)){
 		sX = getLargeRandom(wEX_+wFX_+3);
@@ -592,14 +592,18 @@ void LongAcc::fillTestCase(mpz_class a[])
 	}
 
 	
-	if ((fpX.getExceptionSignalValue()>1) || (fpX.getExponentSignalValue()-(pow(2,wEX_-1)-1)>MaxMSBX_))
-		xOvf = xOvf or 1;
+	if ((fpX.getExceptionSignalValue()>1) || (fpX.getExponentSignalValue()-(intpow2(wEX_-1)-1)>MaxMSBX_))
+		xOvf = 1;
 	
 	sXOverflow = xOvf;
 	
 	if (verbose==1)
 		cout<<" i="         << currentIteration
-		    <<",a=" << AccValue_;
+#ifdef  _WIN32	
+		<<",a=" << mpz2string(AccValue_);
+#else
+		<<",a=" << AccValue_;
+#endif
 
 	if (fpX.getExceptionSignalValue()!=0)  
 		if (fpX.getSignSignalValue()==0)
@@ -609,13 +613,24 @@ void LongAcc::fillTestCase(mpz_class a[])
 	
 	if (verbose==1){
 		if (fpX.getExceptionSignalValue()!=0)
-			cout<< (fpX.getSignSignalValue()==0?" + ":" - ")<< mapFP2Acc(fpX) << " = "<<AccValue_<<";"; 
-			
+#ifdef  _WIN32
+		cout<< (fpX.getSignSignalValue()==0?" + ":" - ")<< mpz2string(mapFP2Acc(fpX)) << " = "<<mpz2string(AccValue_)<<";"; 
+#else 
+		cout<< (fpX.getSignSignalValue()==0?" + ":" - ")<< mapFP2Acc(fpX) << " = "<<AccValue_<<";"; 
+#endif
+
+#ifdef  _WIN32
+		cout<< "Exc="<<mpz2string(fpX.getExceptionSignalValue())
+			<<", S="<<mpz2string(fpX.getSignSignalValue())
+			<<", Exp="<<mpz2string(fpX.getExponentSignalValue()-(intpow2(wEX_-1)-1))
+			<<", Frac="<<mpz2string(fpX.getFractionSignalValue())<<endl;
+
+#else
 		cout<< "Exc="<<fpX.getExceptionSignalValue()
 			<<", S="<<fpX.getSignSignalValue()
-			<<", Exp="<<fpX.getExponentSignalValue()-(pow(2,wEX_-1)-1)
+			<<", Exp="<<fpX.getExponentSignalValue()-(intpow2(wEX_-1)-1)
 			<<", Frac="<<fpX.getFractionSignalValue()<<endl;
-				 
+#endif				 
 	}
 	
 	//assign value to sA only at final iteration	
@@ -628,15 +643,15 @@ void LongAcc::fillTestCase(mpz_class a[])
 mpz_class LongAcc::mapFP2Acc(FPNumber X)
 {
 	//get true exponent of X
-	mpz_class expX = X.getExponentSignalValue() - ( pow(2,wEX_-1)-1 ); 
+	mpz_class expX = X.getExponentSignalValue() - ( intpow2(wEX_-1)-1 ); 
 	
 	int keepBits = -LSBA_ + expX.get_si();
 	if (keepBits<0)
 		return 0;
 	else if (wFX_>keepBits)
-			return (X.getFractionSignalValue()/mpz_class(pow(2,wFX_-keepBits)));
+			return (X.getFractionSignalValue()/mpz_class(intpow2(wFX_-keepBits)));
 		else
-			return (X.getFractionSignalValue()*mpz_class(pow(2,keepBits-wFX_)));
+			return (X.getFractionSignalValue()*mpz_class(intpow2(keepBits-wFX_)));
 }
 
 mpz_class LongAcc::sInt2C2(mpz_class X, int width)
@@ -644,7 +659,7 @@ mpz_class LongAcc::sInt2C2(mpz_class X, int width)
 	if (X>=0)
 		return X;
 	else{
-		return (pow(2, width)+X);
+		return (intpow2( width)+X);
 	}
 		
 

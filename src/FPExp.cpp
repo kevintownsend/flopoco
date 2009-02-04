@@ -7,8 +7,8 @@
 #include "FPNumber.hpp"
 #include "utils.hpp"
 
-#include "fpexp/stdfragment.h"
-#include "fpexp/explore.h"
+#include "fpexponential/stdfragment.h"
+#include "fpexponential/explore.h"
 
 using namespace std;
 

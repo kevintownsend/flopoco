@@ -64,7 +64,7 @@ double OtherLogTable::input2double(int x) {
 
 mpz_class    OtherLogTable::double2output(double y){
   mpz_class z; 
-  z =(mpz_class)  round(  y *  ((double)(((int64_t)1)<< outputPrecision)) );
+  z =(mpz_class) (  y *  ((double)(((int64_t)1)<< outputPrecision)) );
   if (0 != z>>wOut) {
     cerr<<"OtherLogTable::double2output: output does not fit output format"<<endl; 
   }

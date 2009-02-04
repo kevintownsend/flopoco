@@ -200,7 +200,14 @@ int IntConstMult::build_pipeline(ShiftAddOp* sao, double &partial_delay) {
 IntConstMult::IntConstMult(Target* _target, int _xsize, mpz_class _n) :
 	Operator(_target), xsize(_xsize), n(_n){
 	ostringstream name; 
+#ifdef _WIN32
+//C++ wrapper for GMP does not work properly, using C
+	char buffer[100];
+	sprintf(buffer,"%d",n);
+	name <<"IntConstMult_"<<xsize<<"_"<<buffer;
+#else
 	name <<"IntConstMult_"<<xsize<<"_"<<n;
+#endif
 	uniqueName_=name.str();
 
 	implementation = new ShiftAddDag(this);

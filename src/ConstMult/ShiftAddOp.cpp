@@ -66,11 +66,23 @@ ShiftAddOp::ShiftAddOp(ShiftAddDag* impl, OpType op, ShiftAddOp* i, int s, Shift
 	j_delayed_by=0;
 
 	// build the variable name
-	ostringstream o; 
+	ostringstream o;
+	
+	
+#ifdef _WIN32
+	char  buffer[200];
+	sprintf(buffer,"%d",n);
+	if(n==1)         o <<"X"; 
+	else  if(n>=0)   o<<"P"<<buffer<<"X";  
+	else             o<<"M-"<<buffer<<"X";
+	name =  o.str();
+#else
 	if(n==1)         o <<"X"; 
 	else  if(n>=0)   o<<"P"<<n<<"X";  
 	else             o<<"M"<<-n<<"X";
 	name =  o.str();
+#endif
+
 
 	// and add this object to the dictionary of the implementation
 	if (op!=X)

@@ -65,9 +65,12 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 	//parameter set up
 	wF = wFX;
 	wE = wEX;
-				
-	sizeRightShift = int ( ceil( log2(wF+3)));	
 	
+#ifdef _WIN32
+	sizeRightShift = intlog2(wF+4);	
+#else
+	sizeRightShift = int ( ceil( log2(wF+3)));	
+#endif	
 	/* Set up the IO signals */
 	/* Inputs: 2b(Exception) + 1b(Sign) + wEX bits (Exponent) + wFX bits(Fraction) */
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

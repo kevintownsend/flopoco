@@ -108,45 +108,48 @@ ADD_EXECUTABLE(flopoco
  src/Target src/Targets/VirtexIV src/Targets/StratixII
  src/Operator
  src/Signal
-# src/Table 
+ src/Table 
  src/Wrapper
-# src/TestBench 
+ src/TestBench 
 # src/BigTestBench
-# src/GenericTestBench
+ src/GenericTestBench
  src/IntAdder
-# src/IntDualSub
-# src/IntMultiplier
-# src/Karatsuba
-# src/LZOC src/LZOCShifterSticky
-# src/Shifters
-# src/FPAdder
-# src/FPMultiplier
-# src/FPDiv.cpp src/FPDiv.hpp
-# src/FPDiv/SRT4Step
-# src/IntMult2
-# src/LongAcc
-# src/LongAcc2FP
-# src/DotProduct
-# src/ConstMult/IntConstMult src/ConstMult/ShiftAddOp src/ConstMult/ShiftAddDag 
-# src/ConstMult/FPConstMult 
+ src/IntDualSub
+ src/IntMultiplier
+ src/IntMult2
+ src/Karatsuba
+ src/LZOC src/LZOCShifterSticky
+ src/Shifters
+ src/FPAdder
+ src/FPMultiplier
+ src/FPDiv.cpp src/FPDiv.hpp
+ src/FPDiv/SRT4Step
+ src/LongAcc
+ src/LongAcc2FP
+ src/DotProduct
+ src/ConstMult/IntConstMult src/ConstMult/ShiftAddOp src/ConstMult/ShiftAddDag 
+ src/ConstMult/FPConstMult 
 # src/ConstMult/CRFPConstMult 
  src/TestCase
  src/TestIOMap
  src/FPNumber
-# src/fpexp/math_lib.cpp
-# src/fpexp/signal.cpp
-# src/fpexp/fragment.cpp
-# src/fpexp/stdfragment.cpp
-# src/fpexp/logfragment.cpp
-# src/fpexp/gen_table.cpp
-# src/fpexp/explore.cpp
-# src/FPExp
-# src/fplog/FirstInvTable.cpp
-# src/fplog/FirstLogTable.cpp
-# src/fplog/OtherLogTable.cpp
-# src/fplog/SecondInvTable.cpp
-# src/fplog/LogRangeRed.cpp
-# src/FPLog
+ 
+ 
+ src/fpexponential/math_lib
+ src/fpexponential/signal
+ src/fpexponential/fragment
+ src/fpexponential/stdfragment
+ src/fpexponential/logfragment
+ src/fpexponential/gen_table
+ src/fpexponential/explore
+ src/FPExp
+ 
+ src/fplogarithm/FirstInvTable
+ src/fplogarithm/FirstLogTable
+ src/fplogarithm/OtherLogTable
+ src/fplogarithm/SecondInvTable
+ src/fplogarithm/LogRangeRed
+ src/FPLog
 )
 
 ELSE(WIN32)

@@ -31,6 +31,8 @@ public:
 		hasRegistersWithoutReset_   = false;
 		hasRegistersWithAsyncReset_ = false;
 		hasRegistersWithSyncReset_  = false;
+		pipelineDepth_              = 0;
+		cycle_                      = 0;
 	}
 	
 	/** Operator Constructor.
@@ -44,6 +46,8 @@ public:
 		hasRegistersWithoutReset_   = false;
 		hasRegistersWithAsyncReset_ = false;
 		hasRegistersWithSyncReset_  = false;
+		pipelineDepth_              = 0;
+		cycle_                      = 0;
 	}
 
 	/** Operator Destructor.

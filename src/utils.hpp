@@ -194,4 +194,7 @@ string vhdlize(string const & expr);
 
 string vhdlize(double num);
 
+string mpz2string(mpz_class x);
+
+
 #endif

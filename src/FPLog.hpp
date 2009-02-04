@@ -29,7 +29,7 @@
 #include "LZOC.hpp"
 #include "LZOCShifterSticky.hpp"
 #include "Shifters.hpp"
-#include "fplog/LogRangeRed.hpp"
+#include "fplogarithm/LogRangeRed.hpp"
 
 class FPNumber;
 

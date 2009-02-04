@@ -33,19 +33,21 @@ int Fragment::prepare(double& area, double& max_error, bool with_sign, int accur
 void Fragment::generate(std::string prefix, ostream& code_file, ostream& table_file)
 {
   table_file << "library ieee;\n"
-             << "use ieee.std_logic_1164.all;\n"
-	     << "use ieee.std_logic_arith.all;\n"
-	     << "use ieee.std_logic_unsigned.all;\n\n"
-	     << "package pkg_" << prefix << "_exp_tbl is" << endl;
+			 << "use ieee.std_logic_1164.all;\n"
+			 << "use ieee.std_logic_arith.all;\n"
+			 << "use ieee.std_logic_unsigned.all;\n\n"
+			 << "package pkg_" << prefix << "_exp_tbl is" << endl;
+  
   write_tbl_declaration(prefix, table_file);
   table_file << "end package;\n" << endl;
   write_tbl_arch(prefix, table_file);
 
   code_file << "library ieee;\n"
-            << "use ieee.std_logic_1164.all;\n"
-	    << "use ieee.std_logic_arith.all;\n"
-	    << "use ieee.std_logic_unsigned.all;\n\n"
-	    << "package pkg_" << prefix << "_exp is" << endl;
+	<< "use ieee.std_logic_1164.all;\n"
+	<< "use ieee.std_logic_arith.all;\n"
+	<< "use ieee.std_logic_unsigned.all;\n\n"
+	<< "package pkg_" << prefix << "_exp is" << endl;
+  
   write_declaration(prefix, code_file);
   code_file << "end package;\n" << endl;
   write_arch(prefix, code_file);
@@ -88,9 +90,9 @@ void Fragment::write_declaration(std::string prefix, std::ostream& o)
 {
   if (next_part != 0) next_part->write_declaration(prefix, o);
   int input_size = accuracy - start;
-  o << "  component " << prefix << "_exp_" << input_size << " is\n"
-    << "    port (x : in  std_logic_vector(" << input_size << " - 1 downto 0);" << endl
-    << "          y : out std_logic_vector(" << input_size + 1 << " - 1 downto 0)";
+  o << "  component " << prefix << "_exp_" << input_size << " is\n";
+  o << "    port (x : in  std_logic_vector(" << input_size << " - 1 downto 0);" << endl;
+  o << "          y : out std_logic_vector(" << input_size + 1 << " - 1 downto 0)";
   if (is_signed)
     o << ';' << endl << "          sign : in std_logic";
   o << ");" << endl << "  end component;" << endl;
@@ -101,26 +103,26 @@ void Fragment::write_arch(std::string prefix, std::ostream& o)
   if (next_part != 0) next_part->write_arch(prefix, o);
   int input_size = accuracy - start;
 
-  o << "-- exp d'un nombre avec une mantisse de " << accuracy << " bits dont " << accuracy - start << " non nuls" << endl
-    << "-- =============================================================" << endl << endl
-    << "library ieee;" << endl
-    << "use ieee.std_logic_1164.all;" << endl
-    << "use ieee.std_logic_arith.all;" << endl
-    << "use ieee.std_logic_unsigned.all;" << endl
-    << "library work;" << endl
-    << "use work.pkg_" << prefix << "_exp_tbl.all;" << endl;
+  o  << "-- exp d'un nombre avec une mantisse de " << accuracy << " bits dont " << accuracy - start << " non nuls" << endl;
+  o  << "-- =============================================================" << endl << endl;
+  o  << "library ieee;" << endl;
+  o  << "use ieee.std_logic_1164.all;" << endl;
+  o  << "use ieee.std_logic_arith.all;" << endl;
+  o  << "use ieee.std_logic_unsigned.all;" << endl;
+  o  << "library work;" << endl;
+  o  << "use work.pkg_" << prefix << "_exp_tbl.all;" << endl;
 
   if (next_part != 0)
     o << "use work.pkg_" << prefix << "_exp." << prefix << "_exp_" << accuracy - next_part->start << ';' << endl;
 
-  o << endl
-    << "entity " << prefix << "_exp_" << input_size << " is" << endl
-    << "  port (x : in  std_logic_vector(" << input_size << " - 1 downto 0);" << endl
-    << "        y : out std_logic_vector(" << input_size + 1 << " - 1 downto 0)";
+  o  << endl;
+  o  << "entity " << prefix << "_exp_" << input_size << " is" << endl;
+  o  << "  port (x : in  std_logic_vector(" << input_size << " - 1 downto 0);" << endl;
+  o  << "        y : out std_logic_vector(" << input_size + 1 << " - 1 downto 0)";
   if (is_signed)
     o << ';' << endl << "        sign : in std_logic";
-  o << ");" << endl << "end entity;" << endl << endl
-    << "architecture arch of " << prefix << "_exp_" << input_size << " is" << endl;
+  o << ");" << endl << "end entity;" << endl << endl;
+  o  << "architecture arch of " << prefix << "_exp_" << input_size << " is" << endl;
 }
 
 void Fragment::write_tbl_declaration(std::string prefix, std::ostream& o)
@@ -132,8 +134,8 @@ void Fragment::write_tbl_arch(std::string prefix, std::ostream& o)
 {
   if (next_part != 0) next_part->write_tbl_arch(prefix, o);
 
-  o << "-- tables pour le composant exp_" << accuracy - start << endl
-    << "-- ===============================" << endl << endl;
+  o << "-- tables pour le composant exp_" << accuracy - start << endl;
+  o << "-- ===============================" << endl << endl;
 }
 
 double table_area(int input_bits, int output_bits)

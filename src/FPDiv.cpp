@@ -57,7 +57,7 @@ FPDiv::FPDiv(Target* target, int wE, int wF) :
 
 		
 	// -------- Parameter set up -----------------
-	nDigit = int(ceil((wF+6)/2));
+	nDigit = int(ceil( double(wF+6)/2));
 
 	addFPInput ("X", wE, wF);
 	addFPInput ("Y", wE, wF);
@@ -69,8 +69,7 @@ FPDiv::FPDiv(Target* target, int wE, int wF) :
 	oplist.push_back(srt4step);
 
 
-	// -------- Pipeline setup--------------------
-	
+
 	setOperatorType();
 	
 	vhdl << tab << lhs("fX",wF+1) << " <= \"1\" & X(" << wF-1 << " downto 0);" << endl;

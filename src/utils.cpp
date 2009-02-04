@@ -382,3 +382,11 @@ string vhdlize(double num)
 	return vhdlize(oss.str());
 }
 
+string mpz2string(mpz_class x)
+{
+	char buffer[1000];
+	sprintf(buffer,"%d",x);
+	ostringstream tmp;
+	tmp<<buffer;
+	return tmp.str();	
+}

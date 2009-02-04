@@ -34,42 +34,40 @@
 #include "Target.hpp"
 #include "Targets/VirtexIV.hpp"
 #include "Targets/StratixII.hpp"
-
-#ifndef _WIN32
 #include "Shifters.hpp"
 #include "LZOC.hpp"
 #include "LZOCShifterSticky.hpp"
-#endif
-
 #include "IntAdder.hpp"
-
-#ifndef _WIN32
 #include "IntDualSub.hpp"
 #include "IntMultiplier.hpp"
 #include "IntMult2.hpp"
 #include "Karatsuba.hpp"
 #include "FPMultiplier.hpp"
-#include "LongAcc.hpp"
-#include "LongAcc2FP.hpp"
 #include "FPAdder.hpp"
 #include "FPDiv.hpp"
+#include "LongAcc.hpp"
+#include "LongAcc2FP.hpp"
 #include "DotProduct.hpp"
-#endif
-
 #include "Wrapper.hpp"
-
-#ifndef _WIN32
 #include "TestBench.hpp"
-#include "BigTestBench.hpp"
 #include "GenericTestBench.hpp"
+
 #include "ConstMult/IntConstMult.hpp"
 #include "ConstMult/FPConstMult.hpp"
-#include "ConstMult/CRFPConstMult.hpp"
+
 #include "FPExp.hpp"
 #include "FPLog.hpp"
+
+
+#ifndef _WIN32
+#include "BigTestBench.hpp"
+#include "ConstMult/CRFPConstMult.hpp"
+
+
 #ifdef HAVE_HOTBM
 #include "HOTBM.hpp"
 #endif
+
 #ifdef HAVE_LNS
 #include "LNS/LNSAddSub.hpp"
 #include "LNS/LNSAdd.hpp"
@@ -308,7 +306,6 @@ bool parseCommandLine(int argc, char* argv[]){
 				}
 			}
 		}
-		#ifndef _WIN32
 		else if(opname=="IntConstMult"){
 			int nargs = 2;
 			if (i+nargs > argc)
@@ -316,7 +313,14 @@ bool parseCommandLine(int argc, char* argv[]){
 			else {
 				int w = atoi(argv[i++]);
 				mpz_class mpc(argv[i++]);
+#ifdef _WIN32
+//the c++ wrapper for GMP does not work
+				char buffer[100];
+				sprintf(buffer,"%d",mpc);
+				cerr << "> IntConstMult , w="<<w<<", c="<<buffer<<"\n";
+#else
 				cerr << "> IntConstMult , w="<<w<<", c="<<mpc<<"\n";
+#endif
 				op = new IntConstMult(target, w, mpc);
 				addOperator(op);
 			}        
@@ -333,9 +337,18 @@ bool parseCommandLine(int argc, char* argv[]){
 				int cst_sgn  = checkSign(argv[i++], argv[0]); 
 				int cst_exp  = atoi(argv[i++]); // TODO no check on this arg
 				mpz_class cst_sig(argv[i++]);
+#ifdef _WIN32
+//the c++ wrapper for GMP does not work
+				cerr << "> FPConstMult, wE_in="<<wE_in<<", wF_in="<<wF_in
+						 <<", wE_out="<<wE_out<<", wF_out="<<wF_out
+						 <<", cst_sgn="<<cst_sgn<<", cst_exp="<<cst_exp<< ", cst_sig="<<mpz2string(cst_sig)<<endl;
+			
+#else
+
 				cerr << "> FPConstMult, wE_in="<<wE_in<<", wF_in="<<wF_in
 						 <<", wE_out="<<wE_out<<", wF_out="<<wF_out
 						 <<", cst_sgn="<<cst_sgn<<", cst_exp="<<cst_exp<< ", cst_sig="<<cst_sig<<endl;
+#endif
 				op = new FPConstMult(target, wE_in, wF_in, wE_out, wF_out, cst_sgn, cst_exp, cst_sig);
 				addOperator(op);
 			}        
@@ -415,7 +428,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(op);
 			}
 		}
-		#endif
+
 		else if(opname=="IntAdder"){
 			int nargs = 1;
 			if (i+nargs > argc)
@@ -427,7 +440,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(op);
 			}    
 		}
-		#ifndef _WIN32
+
 		//HIDDEN
 		else if(opname=="IntDualSub"){
 			int nargs = 2;
@@ -453,6 +466,31 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(op);
 			}
 		}
+		else if(opname=="IntMult2"){
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int wInX = checkStrictyPositive(argv[i++], argv[0]);
+				int wInY = checkStrictyPositive(argv[i++], argv[0]);
+				cerr << "> IntMultiplier , wInX="<<wInX<<", wInY="<<wInY<<"\n";
+				op = new IntMult2(target, wInX, wInY);
+				addOperator(op);
+			}
+		}
+		else if(opname=="Karatsuba"){
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int wInX = checkStrictyPositive(argv[i++], argv[0]);
+				int wInY = checkStrictyPositive(argv[i++], argv[0]);
+				cerr << "> Karatsuba , wInX="<<wInX<<", wInY="<<wInY<<"\n";
+				op = new Karatsuba(target, wInX, wInY);
+				addOperator(op);
+			}    
+		}   
+		
 		else if(opname=="GenericTestBench"){
 			int nargs = 3;
 			if (i+nargs > argc)
@@ -466,31 +504,6 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(op);
 			}
 		}
-		else if(opname=="IntMult2"){
-			int nargs = 2;
-			if (i+nargs > argc)
-				usage(argv[0]);
-			else {
-				int wInX = checkStrictyPositive(argv[i++], argv[0]);
-				int wInY = checkStrictyPositive(argv[i++], argv[0]);
-				cerr << "> IntMultiplier , wInX="<<wInX<<", wInY="<<wInY<<"\n";
-				op = new IntMult2(target, wInX, wInY);
-				addOperator(op);
-			}
-		}
-
-		else if(opname=="Karatsuba"){
-			int nargs = 2;
-			if (i+nargs > argc)
-				usage(argv[0]);
-			else {
-				int wInX = checkStrictyPositive(argv[i++], argv[0]);
-				int wInY = checkStrictyPositive(argv[i++], argv[0]);
-				cerr << "> Karatsuba , wInX="<<wInX<<", wInY="<<wInY<<"\n";
-				op = new Karatsuba(target, wInX, wInY);
-				addOperator(op);
-			}    
-		}   
 		else if(opname=="FPMultiplier"){
 			int nargs = 6; 
 			if (i+nargs > argc)
@@ -532,7 +545,8 @@ bool parseCommandLine(int argc, char* argv[]){
 					}else
 						cerr<<"(For now) the inputs and outputs must have the same size"<<endl;
 			}
-		} 
+		}
+		
 		else if (opname == "FPDiv")
 		{
 			int nargs = 2;
@@ -559,6 +573,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(op);
 			}
 		}
+
 		// hidden and undocumented
 		else if(opname=="LongAccPrecTest"){
 			int nargs = 6; // same as LongAcc, plus an iteration count
@@ -577,6 +592,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				op->test_precision2();
 			}    
 		}
+
 		else if(opname=="LongAcc2FP"){
 			int nargs = 4;
 			if (i+nargs > argc)
@@ -591,9 +607,10 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(op);
 			}
 		}
+#ifndef _WIN32
 		// hidden and undocumented
 		else if(opname=="DotProdPrecTest"){
-			int nargs = 6; // same as LongAcc, plus an iteration count
+			int nargs = 7; // same as LongAcc, plus an iteration count
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
@@ -609,6 +626,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				op->test_precision(n);
 			}    
 		}
+#endif
 		else if(opname=="DotProduct"){
 			int nargs = 6;
 			if (i+nargs > argc)
@@ -625,6 +643,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(op);
 			}
 		}
+#ifndef _WIN32
 #ifdef HAVE_HOTBM
 		else if (opname == "HOTBM") {
 			int nargs = 4;
@@ -683,7 +702,9 @@ bool parseCommandLine(int argc, char* argv[]){
 		}
 		
 #endif // HAVE_HOTBM
-		
+
+#endif
+
 		else if (opname == "FPExp")
 		{
 			int nargs = 2;
@@ -695,6 +716,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			op = new FPExp(target, wE, wF);
 			addOperator(op);
 		}
+
 		else if (opname == "FPLog")
 		{
 			int nargs = 2;
@@ -706,6 +728,8 @@ bool parseCommandLine(int argc, char* argv[]){
 			op = new FPLog(target, wE, wF);
 			addOperator(op);
 		}
+
+#ifndef _WIN32
 #ifdef HAVE_LNS
 		else if (opname == "LNSAddSub")
 		{
@@ -859,7 +883,6 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(op);
 			}
 		}
-		#ifndef _WIN32
 		else if (opname == "TestBench") {
 			int nargs = 1;
 			if (i+nargs > argc)
@@ -874,6 +897,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			if(cl_name!="")	op->setOperatorName(cl_name);
 			oplist.push_back(new TestBench(target, toWrap, n));
 		}
+		#ifndef _WIN32
 		else if (opname == "BigTestBench") {
 			int nargs = 1;
 			if (i+nargs > argc)
