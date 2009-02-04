@@ -78,49 +78,124 @@ FPDiv::FPDiv(Target* target, int wE, int wF) :
 	
 	setOperatorType();
 	
-	if(isSequential())		
-		setPipelineDepth(nDigit+mult3AdderDelay+conversionAdderDelay+finalRoundAdderDelay);
-	else
-		setPipelineDepth(0);
+	vhdl << tab << lhs("fX",wF+1) << " <= \"1\" & X(" << wF-1 << " downto 0);" << endl;
+	vhdl << tab << lhs("fY",wF+1) << " <= \"1\" & Y(" << wF-1 << " downto 0);" << endl;
 
+	vhdl << tab << "-- exponent difference, sign and exception combination computed early, to have less bits to pipeline" << endl;
+	 
+	vhdl << tab << lhs("expR0", wE+2) << " <= (\"00\" & X(" << wE+wF-1 << " downto " << wF << ")) - (\"00\" & Y(" << wE+wF-1 << " downto " << wF<< "));" << endl;
+	vhdl << tab << lhs("sR") << " <= X(" << wE+wF << ") xor Y(" << wE+wF<< ");" << endl;
+	vhdl << tab << "-- early exception handling " <<endl;
+	vhdl << tab << lhs("exnXY",4) << " <= X(" << wE+wF+2 << " downto " << wE+wF+1  << ") & Y(" << wE+wF+2 << " downto " << wE+wF+1 << ");" <<endl;
+	vhdl << tab << "with exnXY select" <<endl;
+	vhdl << tab << tab << lhs("exnR0", 2) << " <= " << endl;
+	vhdl << tab << tab << tab << "\"01\"  when \"0101\",                   -- normal" <<endl;
+	vhdl << tab << tab << tab << "\"00\"  when \"0001\" | \"0010\" | \"0110\", -- zero" <<endl;
+	vhdl << tab << tab << tab << "\"10\"  when \"0100\" | \"1000\" | \"1001\", -- overflow" <<endl;
+	vhdl << tab << tab << tab << "\"11\"  when others;                   -- NaN" <<endl;
+	vhdl << tab << " -- compute 3Y" << endl;
+	vhdl << tab << lhs("fYTimes3",wF+3) << " <= (\"00\" & fY) + (\"0\" & fY & \"0\");" << endl; // TODO an IntAdder here
 	
+	ostringstream wInit;
+	wInit << "w"<<nDigit-1;
+	vhdl << tab << lhs(wInit.str(), wF+3) <<" <=  \"00\" & fX;" << endl;
+
+	nextCycle();/////////////////////////////////////////////////////////////
+
+	for(i=nDigit-1; i>=1; i--) {
+		ostringstream wi, qi, wim1;
+		wi << "w" << i;
+		qi << "q" << i;
+		wim1 << "w" << i-1;
+		//		vhdl << tab << "-- SRT4 step "; 
+		vhdl << tab << "step" << i << ": " << srt4step->getOperatorName();
+		if (isSequential()) 
+		vhdl << "  -- pipelineDepth="<< srt4step->getPipelineDepth();
+		vhdl << endl;
+		vhdl << tab << tab << "port map ( x       => " << rhs(wi.str()) << "," << endl;
+		vhdl << tab << tab << "           d       => " << rhs("fY") << "," << endl;
+		vhdl << tab << tab << "           dtimes3 => " << rhs("fYTimes3") << "," << endl;
+		if(isSequential()) {
+			vhdl << tab << tab << "           clk  => clk, " << endl;
+			vhdl << tab << tab << "           rst  => rst, " << endl;
+		}
+		vhdl << tab << tab << "              q  => " << lhs(qi.str(),3) << "," << endl;
+		vhdl << tab << tab << "              w  => " << lhs(wim1.str(), wF+3) << "     );" <<endl;
+		nextCycle();///////////////////////////////////////////////////////////////////////
+
+	}
+ 
+ 
+	
+  	vhdl << tab << lhs("q0",3) << "(2 downto 0) <= \"000\" when  " << rhs("w0") << " = (" << wF+2 << " downto 0 => '0')" << endl;
+	vhdl << tab << "             else " << rhs("w0") << "(" << wF+2 << ") & \"10\";" << endl;
+
+	for(i=nDigit-1; i>=1; i--) {
+		ostringstream qi, qPi, qMi;
+		qi << "q" << i;
+		qPi << "qP" << i;
+		qMi << "qM" << i;
+		vhdl << tab << lhs(qPi.str(), 2) <<" <=      " << rhs(qi.str()) << "(1 downto 0);" << endl;
+		vhdl << tab << lhs(qMi.str(), 2)<<" <=      " << rhs(qi.str()) << "(2) & \"0\";" << endl;
+	}
+
+	vhdl << tab << lhs("qP0", 2) << " <= " << rhs("q0") << "(1 downto 0);" << endl;
+	vhdl << tab << lhs("qM0", 2) << " <= " << rhs("q0") << "(2)  & \"0\";" << endl;
+
+	vhdl << tab << lhs("qP", 2*nDigit) << " <= qP" << nDigit-1;
+	for (i=nDigit-2; i>=0; i--)
+		vhdl << " & qP" << i;
+	vhdl << ";" << endl;
+
+	vhdl << tab << lhs("qM", 2*nDigit) << " <= qM" << nDigit-1 << "(0)";
+	for (i=nDigit-2; i>=0; i--)
+		vhdl << " & qM" << i;
+	vhdl << " & \"0\";" << endl;
 
 
-	// Signals-------------------------------
-	addDelaySignal("fX", wF+1, mult3AdderDelay);
-	addDelaySignal("fY", wF+1, srtDelay + mult3AdderDelay);
-	addDelaySignal("fYTimes3", wF+3, srtDelay);
-	for(i=0; i<=nDigit-1; i++){
-		ostringstream w;
-		w << "w" << i;
-		addDelaySignal(w.str(), wF+3, 1);
-	}
-	for(i=0; i<nDigit; i++){
-		ostringstream  q, qP, qM;
-		q << "q" << i;
-		addDelaySignal(q.str(), 3, i);
-		qP << "qP" << i;
-		addSignal(qP.str(), 2);
-		qM << "qM" << i;
-		addSignal(qM.str(), 2);
-	}
-	addDelaySignal("qP", 2*nDigit,1);
-	addDelaySignal("qM", 2*nDigit,1); 
-	addDelaySignal("fR0", 2*nDigit, 1);
-	addSignal("fR", wF+4); // significand plus ov bit on the left and round and sticky bit on the right  
-	addSignal("fRn1", wF+2); // normd significand, without implicit 1, plus round and sticky bit on the right  
-	// The computation is done early, to have less bits to pipeline. Same for sR
-	addDelaySignal("eRn0", wE+2,     // two bits more on the left to detect overflow and underflow conditions
-				 srtDelay + mult3AdderDelay + 1 + conversionAdderDelay); 
-	addDelaySignal("eRn1", wE+2, 1); // idem
-	addSignal("round");
-	addSignal("expfrac", wE+wF+2); // two bits more to detect overflow and underflow
-	addSignal("expfracR", wE+wF+2); // idem
-	addDelaySignal("sR", 1, srtDelay + mult3AdderDelay + conversionAdderDelay + finalRoundAdderDelay);
-	addSignal("exnXY ", 4);
-	addDelaySignal("exnR0", 2, srtDelay + mult3AdderDelay + conversionAdderDelay + finalRoundAdderDelay);
-	addSignal("exnR ", 2);
-	addSignal("exnRfinal ", 2);
+	// TODO an IntAdder here
+  	vhdl << tab << lhs("fR0", 2*nDigit) << " <= " << rhs("qP") << " - " << rhs("qM") << ";" << endl;
+
+	nextCycle();///////////////////////////////////////////////////////////////////////
+	
+	vhdl << tab << lhs("fR", wF+4) << " <= "; 
+	if (1 == (wF & 1) ) // odd wF
+    	vhdl << rhs("fR0") << "(" << 2*nDigit-1 << " downto 1);  -- odd wF" << endl;
+	else 
+    	vhdl << rhs("fR0") << "(" << 2*nDigit-1 << " downto 3)  & (fR0(2) or fR0(1));  -- even wF, fixing the round bit" << endl;
+
+
+	vhdl << tab << "-- normalisation" << endl;
+	vhdl << tab << "with " << rhs("fR") << "(" << wF+3 << ") select" << endl;
+
+	vhdl << tab << tab << lhs("fRn1", wF+2) << " <= " << rhs("fR") << "(" << wF+2 << " downto 2) & (" << rhs("fR") << "(1) or " << rhs("fR") << "(0)) when '1'," << endl;
+	vhdl << tab << tab << "        " << rhs("fR") << "(" << wF+1 << " downto 0)                    when others;" << endl;
+
+	vhdl << tab << lhs("expR1", wE+2) << " <= "<< rhs("expR0") 
+		  << " + (\"000\" & (" << wE-2 << " downto 1 => '1') & " << rhs("fR") <<"(" << wF+3 << ")); -- add back bias" << endl;
+
+
+
+	vhdl << tab << lhs("round") << " <= " << rhs("fRn1") << "(1) and (" << rhs("fRn1") << "(2) or " << rhs("fRn1") << "(0)); -- fRn1(0) is the sticky bit" << endl;
+
+	nextCycle();///////////////////////////////////////////////////////////////////////
+	vhdl << tab << "-- final rounding" <<endl;
+	vhdl << tab <<  lhs("expfrac", wE+wF+2) << " <= " 
+		  << rhs("expR1") << " & " << rhs("fRn1") << "(" << wF+1 << " downto 2) ;" << endl;
+	vhdl << tab << lhs("expfracR", wE+wF+2) << " <= " 
+		  << rhs("expfrac") <<" + ((" << wE+wF+1 << " downto 1 => '0') & " << rhs("round") << ");" << endl;
+	vhdl << tab <<  lhs("exnR", 2) << " <=      \"00\"  when " << rhs("expfracR") << "(" << wE+wF+1 << ") = '1'   -- underflow" <<endl;
+	vhdl << tab << "        else \"10\"  when  " << rhs("expfracR") << "(" << wE+wF+1 << " downto " << wE+wF << ") =  \"01\" -- overflow" <<endl;
+	vhdl << tab << "        else \"01\";      -- 00, normal case" <<endl;
+
+
+	vhdl << tab << "with " << rhs("exnR0") << " select" <<endl;
+	vhdl << tab << tab << lhs("exnRfinal", 2) << " <= " <<endl;
+	vhdl << tab << tab << tab << rhs("exnR") << "   when \"01\", -- normal" <<endl;
+	vhdl << tab << tab << tab << rhs("exnR0") << "  when others;" <<endl;
+	vhdl << tab << "R <= " << rhs("exnRfinal") << " & " << rhs("sR") << " & " 
+		  << rhs("expfracR") << "(" << wE+wF-1 << " downto 0);" <<endl;
+
 }
 
 FPDiv::~FPDiv() {
@@ -135,112 +210,25 @@ void FPDiv::outputVHDL(std::ostream& o, std::string name) {
 	licence(o,"Jeremie Detrey, Florent de Dinechin (2008)");
 	Operator::stdLibs(o);
 	outputVHDLEntity(o);
+#if 0
 	newArchitecture(o,name);	
 	srt4step->outputVHDLComponent(o);
 	outputVHDLSignalDeclarations(o);	  
 	beginArchitecture(o);
 	outputVHDLRegisters(o); o<<endl;
-
-	o << tab << "fX <= \"1\" & X(" << wF-1 << " downto 0);" << endl;
-	o << tab << "fY <= \"1\" & Y(" << wF-1 << " downto 0);" << endl;
-
-	o << tab << "fYTimes3 <= (\"00\" & fY) + (\"0\" & fY & \"0\");" << endl; // TODO an IntAdder here
-	o << tab << "w"<<nDigit-1<<" <=  \"00\" & " << delaySignal("fX", 0) << ";" << endl;
-
-	for(i=nDigit-1; i>=1; i--) {
-		ostringstream wi;
-		wi << "w" << i;
-		//		o << tab << "-- SRT4 step "; 
-		o << tab << "step" << i << ": " << srt4step->getOperatorName();
-		if (isSequential()) 
-		o << "  -- pipelineDepth="<< srt4step->getPipelineDepth();
-		o << endl;
-		o << tab << tab << "port map ( x       => " << delaySignal(wi.str(),1) << "," << endl;
-		o << tab << tab << "           d       => " 
-		  << delaySignal("fY", nDigit -i -1 + mult3AdderDelay) << "," << endl;
-		o << tab << tab << "           dtimes3 => " 
-		  << delaySignal("fYTimes3",nDigit-i) << "," << endl;
-		if(isSequential()) {
-			o << tab << tab << "           clk  => clk, " << endl;
-			o << tab << tab << "           rst  => rst, " << endl;
-		}
-		o << tab << tab << "              q  => q" << i << "," << endl;
-		o << tab << tab << "              w  => w" << i-1 << "     );" <<endl;
-	}
- 
- 
-	
-  	o << tab << "q0(2 downto 0) <= \"000\" when  " << delaySignal("w0", 1) << " = (" << wF+2 << " downto 0 => '0')" << endl;
-	o << tab << "             else " << delaySignal("w0", 1) << "(" << wF+2 << ") & \"10\";" << endl;
-
-	for(i=nDigit-1; i>=1; i--) {
-		ostringstream qi;
-		qi << "q" << i;
-		o << tab << "qP" << i <<" <=      " << delaySignal(qi.str(), i) << "(1 downto 0);" << endl;
-		o << tab << "qM" << i <<" <=      " << delaySignal(qi.str(), i) << "(2) & \"0\";" << endl;
-	}
-
-	o << tab << "qP0 <= q0(1 downto 0);" << endl;
-	o << tab << "qM0 <= q0(2)  & \"0\";" << endl;
-
-	o << tab << "qP <= qP" << nDigit-1;
-	for (i=nDigit-2; i>=0; i--)
-		o << " & qP" << i;
-	o << ";" << endl;
-
-	o << tab << "qM <= qM" << nDigit-1 << "(0)";
-	for (i=nDigit-2; i>=0; i--)
-		o << " & qM" << i;
-	o << " & \"0\";" << endl;
-
-	// TODO an IntAdder here
-  	o << tab << "fR0 <= " << delaySignal("qP",1) << " - " << delaySignal("qM", 1) << ";" << endl;
-
-	if (1 == (wF & 1) ) // odd wF
-    	o << tab << "fR <= "<< delaySignal("fR0",1) << "(" << 2*nDigit-1 << " downto 1);  -- odd wF" << endl;
-	else 
-    	o << tab << "fR <= "<< delaySignal("fR0",1) << "(" << 2*nDigit-1 << " downto 3)  & (fR0(2) or fR0(1));  -- even wF, fixing the round bit" << endl;
-
-
-	o << tab << "-- normalisation" << endl;
-	o << tab << "with fR(" << wF+3 << ") select" << endl;
-
-	o << tab << tab << "fRn1 <= fR(" << wF+2 << " downto 2) & (fR(1) or fR(0)) when '1'," << endl;
-	o << tab << tab << "        fR(" << wF+1 << " downto 0)                    when others;" << endl;
-
-	o << tab << "-- exponent difference" << endl;
-	// The computation is done early, to have less bits to pipeline. Same for sR
-	o << tab << "eRn0 <= (\"00\" & X(" << wE+wF-1 << " downto " << wF << ")) - (\"00\" & Y(" << wE+wF-1 << " downto " << wF<< "));" << endl;
-	o << tab << "eRn1 <= "<< delaySignal("eRn0",  mult3AdderDelay + srtDelay + 1 + conversionAdderDelay) << " + (\"000\" & (" << wE-2 << " downto 1 => '1') & fR(" << wF+3 << ")); -- add back bias" << endl;
-
-	o << tab << "-- final rounding" <<endl;
-	o << tab << "round <= fRn1(1) and (fRn1(2) or fRn1(0)); -- fRn1(0) is the sticky bit" << endl;
-	o << tab << "expfrac <= eRn1 & fRn1(" << wF+1 << " downto 2) ;" << endl;
-	o << tab << "expfracR <= expfrac + ((" << wE+wF+1 << " downto 1 => '0') & round);" << endl;
-	o << tab << "exnR <=      \"00\"  when expfracR(" << wE+wF+1 << ") = '1'   -- underflow" <<endl;
-	o << tab << "        else \"10\"  when expfracR(" << wE+wF+1 << " downto " << wE+wF << ") =  \"01\" -- overflow" <<endl;
-	o << tab << "        else \"01\";      -- 00, normal case" <<endl;
-
-	o << tab << "-- exception handling" <<endl;
-	// Computed at early stage so that less signals are pipelined through
-	o << tab << "exnXY <= X(" << wE+wF+2 << " downto " << wE+wF+1  << ") & Y(" << wE+wF+2 << " downto " << wE+wF+1 << ");" <<endl;
-	o << tab << "with exnXY select" <<endl;
-	o << tab << tab << "exnR0 <= " << endl;
-	o << tab << tab << tab << "\"01\"  when \"0101\",                   -- normal" <<endl;
-	o << tab << tab << tab << "\"00\"  when \"0001\" | \"0010\" | \"0110\", -- zero" <<endl;
-	o << tab << tab << tab << "\"10\"  when \"0100\" | \"1000\" | \"1001\", -- overflow" <<endl;
-	o << tab << tab << tab << "\"11\"  when others;                   -- NaN" <<endl;
-
-	o << tab << "with " << delaySignal("exnR0", getPipelineDepth()) << " select" <<endl;
-	o << tab << tab << "exnRfinal <= " <<endl;
-	o << tab << tab << tab << "exnR   when \"01\", -- normal" <<endl;
-	o << tab << tab << tab << "exnR0  when others;" <<endl;
-	o << tab << "sR <= X(" << wE+wF << ") xor Y(" << wE+wF<< ");" << endl;
-	o << tab << "R <= exnRfinal & " 
-	  << delaySignal("sR", getPipelineDepth()) 
-	  << " & " << delaySignal("expfracR", 1) << "(" << wE+wF-1 << " downto 0);" <<endl;
 	endArchitecture(o);
 	checkDelays();
+#else
+	newArchitecture(o,name);	
+	srt4step->outputVHDLComponent(o);
+	o << buildVHDLSignalDeclarations();
+	beginArchitecture(o);
+	o << buildVHDLRegisters();
+	o << vhdl.str();
+	endArchitecture(o);
+
+#endif
+
 }
 
 

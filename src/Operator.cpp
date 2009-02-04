@@ -416,33 +416,41 @@ void Operator::outputFinalReport() {
 
 
 void Operator::setCycle(int cycle) {
-	cycle_=cycle;
-	// automatically update pipeline depth of the operator 
-	if (cycle_ > pipelineDepth_) 
-		pipelineDepth_ = cycle_;
+	if(isSequential()) {
+		cycle_=cycle;
+		vhdl << tab << "----------------Synchro barrier, entering cycle " << cycle_ << "----------------" << endl ;
+		// automatically update pipeline depth of the operator 
+		if (cycle_ > pipelineDepth_) 
+			pipelineDepth_ = cycle_;
+	}
 }
 
-
 void Operator::nextCycle() {
-	cycle_ ++; 
-	// automatically update pipeline depth of the operator 
-	if (cycle_ > pipelineDepth_) 
-		pipelineDepth_ = cycle_;
+	if(isSequential()) {
+		cycle_ ++; 
+		vhdl << tab << "----------------Synchro barrier, entering cycle " << cycle_ << "----------------" << endl ;
+		// automatically update pipeline depth of the operator 
+		if (cycle_ > pipelineDepth_) 
+			pipelineDepth_ = cycle_;
+	}
 }
 
 
 void Operator::syncCycleFromSignal(string name) {
-	Signal* s;
-	s=getSignalByName(name);
-	if( s->getCycle() < 0 ) {
-		ostringstream o;
-		o << "ERROR in syncCycleFromSignal, signal " << name<< " doesn't have (yet?) a valid cycle";
+	if(isSequential()) {
+		Signal* s;
+		s=getSignalByName(name);
+		if( s->getCycle() < 0 ) {
+			ostringstream o;
+			o << "ERROR in syncCycleFromSignal, signal " << name<< " doesn't have (yet?) a valid cycle";
 		throw o.str();
-	} 
-	cycle_ = s->getCycle();
-	// automatically update pipeline depth of the operator 
-	if (cycle_ > pipelineDepth_) 
-		pipelineDepth_ = cycle_;
+		} 
+		cycle_ = s->getCycle();
+		vhdl << tab << "----------------Synchro barrier, entering cycle " << cycle_ << "----------------" << endl ;
+		// automatically update pipeline depth of the operator 
+		if (cycle_ > pipelineDepth_) 
+			pipelineDepth_ = cycle_;
+	}
 }
 
 
@@ -510,8 +518,8 @@ string  Operator::buildVHDLRegisters() {
 		for(int i=0; i<signalList_.size(); i++) {
 			Signal *s = signalList_[i];
 			if(s->getMaxDelay() >0) {
-				for(int j=0; j<s->getMaxDelay(); j++)
-					o << tab <<tab << tab << s->delayedName(i) << " <=  " << s->delayedName(i-1) <<";" << endl;
+				for(int j=1; j <= s->getMaxDelay(); j++)
+					o << tab <<tab << tab << s->delayedName(j) << " <=  " << s->delayedName(j-1) <<";" << endl;
 			}
 		}
 		o << tab << tab << "end if;\n";

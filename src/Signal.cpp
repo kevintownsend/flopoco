@@ -92,13 +92,9 @@ string Signal::delayedName(int delay){
 
 string Signal::toVHDLDeclaration() {
 	ostringstream o; 
-	o << "signal ";
-	for (int i=0; i<maxDelay_; i++) {
-		if(i>0) 
-			o << ", ";
-		o << getName();
-		if(i>0) 
-			o << "_d" << i;
+	o << "signal " << getName();
+	for (int i=1; i<=maxDelay_; i++) {
+			o << ", " << getName() << "_d" << i;
 	}
 	o << " : ";
 	if ((1==width())&&(!isBus_)) 
