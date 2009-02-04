@@ -52,9 +52,7 @@ FPConstMult::FPConstMult(Target* target, int wE_in, int wF_in, int wE_out, int w
 	ostringstream name;
 
 #ifdef _WIN32
-	char buffer[100];
-	sprintf(buffer,"%d",cst_sig);
-	name <<"FPConstMult_"<<(cst_sgn==0?"":"M") <<buffer<<"b"<<(cst_exp<0?"M":"")<<abs(cst_exp)<<"_"<<wE_in<<"_"<<wF_in<<"_"<<wE_out<<"_"<<wF_out;
+	name <<"FPConstMult_"<<(cst_sgn==0?"":"M") <<mpz2string(cst_sig)<<"b"<<(cst_exp<0?"M":"")<<abs(cst_exp)<<"_"<<wE_in<<"_"<<wF_in<<"_"<<wE_out<<"_"<<wF_out;
 #else
 	name <<"FPConstMult_"<<(cst_sgn==0?"":"M") <<cst_sig<<"b"<<(cst_exp<0?"M":"")<<abs(cst_exp)<<"_"<<wE_in<<"_"<<wF_in<<"_"<<wE_out<<"_"<<wF_out;
 #endif
@@ -92,12 +90,8 @@ FPConstMult::FPConstMult(Target* target, int wE_in, int wF_in, int wE_out, int w
 	if(verbose) {
 		cout << "mpfr_cst_sig  = " << mpfr_get_d(mpfr_cst_sig, GMP_RNDN) <<endl;
 		cout << "mpfr_xcut_sig = " << mpfr_get_d(mpfr_xcut_sig, GMP_RNDN) <<endl;
-		
 		//GMP's C++ wrapper problem
-		char buffer[100];
-		sprintf(buffer,"%d",xcut_sig_rd);
-		
-		cout << "xcut_sig_rd   = " << buffer << "   ";
+		cout << "xcut_sig_rd   = " << mpz2string(xcut_sig_rd) << "   ";
 		printBinNumGMP(cout, xcut_sig_rd, wF_in+1);  cout << endl;
 	}
 #else

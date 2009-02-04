@@ -202,9 +202,7 @@ IntConstMult::IntConstMult(Target* _target, int _xsize, mpz_class _n) :
 	ostringstream name; 
 #ifdef _WIN32
 //C++ wrapper for GMP does not work properly, using C
-	char buffer[100];
-	sprintf(buffer,"%d",n);
-	name <<"IntConstMult_"<<xsize<<"_"<<buffer;
+	name <<"IntConstMult_"<<xsize<<"_"<<mpz2string(n);
 #else
 	name <<"IntConstMult_"<<xsize<<"_"<<n;
 #endif

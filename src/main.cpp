@@ -315,9 +315,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				mpz_class mpc(argv[i++]);
 #ifdef _WIN32
 //the c++ wrapper for GMP does not work
-				char buffer[100];
-				sprintf(buffer,"%d",mpc);
-				cerr << "> IntConstMult , w="<<w<<", c="<<buffer<<"\n";
+				cerr << "> IntConstMult , w="<<w<<", c="<<mpz2string(mpc)<<"\n";
 #else
 				cerr << "> IntConstMult , w="<<w<<", c="<<mpc<<"\n";
 #endif

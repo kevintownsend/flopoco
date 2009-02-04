@@ -70,11 +70,9 @@ ShiftAddOp::ShiftAddOp(ShiftAddDag* impl, OpType op, ShiftAddOp* i, int s, Shift
 	
 	
 #ifdef _WIN32
-	char  buffer[200];
-	sprintf(buffer,"%d",n);
 	if(n==1)         o <<"X"; 
-	else  if(n>=0)   o<<"P"<<buffer<<"X";  
-	else             o<<"M-"<<buffer<<"X";
+	else  if(n>=0)   o<<"P"<<mpz2string(n)<<"X";  
+	else             o<<"M-"<<mpz2string(n)<<"X";
 	name =  o.str();
 #else
 	if(n==1)         o <<"X"; 

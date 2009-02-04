@@ -384,9 +384,5 @@ string vhdlize(double num)
 
 string mpz2string(mpz_class x)
 {
-	char buffer[1000];
-	sprintf(buffer,"%d",x);
-	ostringstream tmp;
-	tmp<<buffer;
-	return tmp.str();	
+	return x.get_str(10);	
 }
