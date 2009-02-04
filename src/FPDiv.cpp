@@ -67,12 +67,7 @@ FPDiv::FPDiv(Target* target, int wE, int wF) :
 
 	srt4step = new SRT4Step(target, wF);
 	oplist.push_back(srt4step);
-	stepDelay= srt4step->getPipelineDepth()+1;
-	srtDelay=nDigit*stepDelay;
 
-	mult3AdderDelay=1; // TODO replace with an IntAdder
-	conversionAdderDelay=1;
-	finalRoundAdderDelay=1;
 
 	// -------- Pipeline setup--------------------
 	
@@ -203,22 +198,9 @@ FPDiv::~FPDiv() {
 
 
 void FPDiv::outputVHDL(std::ostream& o, std::string name) {
-	
-	ostringstream signame, synch1, synch2, xname,zeros, zeros1, zeros2, str1, str2;
-	int i;
-
 	licence(o,"Jeremie Detrey, Florent de Dinechin (2008)");
 	Operator::stdLibs(o);
 	outputVHDLEntity(o);
-#if 0
-	newArchitecture(o,name);	
-	srt4step->outputVHDLComponent(o);
-	outputVHDLSignalDeclarations(o);	  
-	beginArchitecture(o);
-	outputVHDLRegisters(o); o<<endl;
-	endArchitecture(o);
-	checkDelays();
-#else
 	newArchitecture(o,name);	
 	srt4step->outputVHDLComponent(o);
 	o << buildVHDLSignalDeclarations();
@@ -226,9 +208,6 @@ void FPDiv::outputVHDL(std::ostream& o, std::string name) {
 	o << buildVHDLRegisters();
 	o << vhdl.str();
 	endArchitecture(o);
-
-#endif
-
 }
 
 
