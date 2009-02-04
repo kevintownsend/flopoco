@@ -455,12 +455,12 @@ void Operator::syncCycleFromSignal(string name) {
 
 
 
-string Operator::lhs(string name, const int width, bool isbus) {
+string Operator::declare(string name, const int width, bool isbus) {
 	Signal* s;
 	ostringstream e;
 	// check the signals doesn't already exist
 	if(signalMap_.find(name) !=  signalMap_.end()) {
-		e << "ERROR in lhs(), signal " << name<< " already exists";
+		e << "ERROR in declare(), signal " << name<< " already exists";
 		throw e.str();
 	}
 	// construct the signal (maxDelay and cycle are reset to 0 by the constructor)
@@ -474,18 +474,18 @@ string Operator::lhs(string name, const int width, bool isbus) {
 	return name;
 }
 
-string Operator::rhs(string name) {
+string Operator::use(string name) {
 	if(isSequential()) {
 		Signal *s;
 		s=getSignalByName(name);
 		if(s->getCycle() < 0) {
 			ostringstream e;
-			e << "ERROR in rhs(), signal " << name<< " doesn't have (yet?) a valid cycle";
+			e << "ERROR in use(), signal " << name<< " doesn't have (yet?) a valid cycle";
 			throw e.str();
 		} 
 		if(s->getCycle() > cycle_) {
 			ostringstream e;
-			e << "ERROR in rhs(), active cycle of signal " << name<< " is later than current cycle, cannot delay it";
+			e << "ERROR in use(), active cycle of signal " << name<< " is later than current cycle, cannot delay it";
 			throw e.str();
 		} 
 		// update the maxDelay value of s

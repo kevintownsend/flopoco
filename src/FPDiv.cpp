@@ -72,27 +72,27 @@ FPDiv::FPDiv(Target* target, int wE, int wF) :
 
 	setOperatorType();
 	
-	vhdl << tab << lhs("fX",wF+1) << " <= \"1\" & X(" << wF-1 << " downto 0);" << endl;
-	vhdl << tab << lhs("fY",wF+1) << " <= \"1\" & Y(" << wF-1 << " downto 0);" << endl;
+	vhdl << tab << declare("fX",wF+1) << " <= \"1\" & X(" << wF-1 << " downto 0);" << endl;
+	vhdl << tab << declare("fY",wF+1) << " <= \"1\" & Y(" << wF-1 << " downto 0);" << endl;
 
 	vhdl << tab << "-- exponent difference, sign and exception combination computed early, to have less bits to pipeline" << endl;
 	 
-	vhdl << tab << lhs("expR0", wE+2) << " <= (\"00\" & X(" << wE+wF-1 << " downto " << wF << ")) - (\"00\" & Y(" << wE+wF-1 << " downto " << wF<< "));" << endl;
-	vhdl << tab << lhs("sR") << " <= X(" << wE+wF << ") xor Y(" << wE+wF<< ");" << endl;
+	vhdl << tab << declare("expR0", wE+2) << " <= (\"00\" & X(" << wE+wF-1 << " downto " << wF << ")) - (\"00\" & Y(" << wE+wF-1 << " downto " << wF<< "));" << endl;
+	vhdl << tab << declare("sR") << " <= X(" << wE+wF << ") xor Y(" << wE+wF<< ");" << endl;
 	vhdl << tab << "-- early exception handling " <<endl;
-	vhdl << tab << lhs("exnXY",4) << " <= X(" << wE+wF+2 << " downto " << wE+wF+1  << ") & Y(" << wE+wF+2 << " downto " << wE+wF+1 << ");" <<endl;
+	vhdl << tab << declare("exnXY",4) << " <= X(" << wE+wF+2 << " downto " << wE+wF+1  << ") & Y(" << wE+wF+2 << " downto " << wE+wF+1 << ");" <<endl;
 	vhdl << tab << "with exnXY select" <<endl;
-	vhdl << tab << tab << lhs("exnR0", 2) << " <= " << endl;
+	vhdl << tab << tab << declare("exnR0", 2) << " <= " << endl;
 	vhdl << tab << tab << tab << "\"01\"  when \"0101\",                   -- normal" <<endl;
 	vhdl << tab << tab << tab << "\"00\"  when \"0001\" | \"0010\" | \"0110\", -- zero" <<endl;
 	vhdl << tab << tab << tab << "\"10\"  when \"0100\" | \"1000\" | \"1001\", -- overflow" <<endl;
 	vhdl << tab << tab << tab << "\"11\"  when others;                   -- NaN" <<endl;
 	vhdl << tab << " -- compute 3Y" << endl;
-	vhdl << tab << lhs("fYTimes3",wF+3) << " <= (\"00\" & fY) + (\"0\" & fY & \"0\");" << endl; // TODO an IntAdder here
+	vhdl << tab << declare("fYTimes3",wF+3) << " <= (\"00\" & fY) + (\"0\" & fY & \"0\");" << endl; // TODO an IntAdder here
 	
 	ostringstream wInit;
 	wInit << "w"<<nDigit-1;
-	vhdl << tab << lhs(wInit.str(), wF+3) <<" <=  \"00\" & fX;" << endl;
+	vhdl << tab << declare(wInit.str(), wF+3) <<" <=  \"00\" & fX;" << endl;
 
 	nextCycle();/////////////////////////////////////////////////////////////
 
@@ -106,89 +106,89 @@ FPDiv::FPDiv(Target* target, int wE, int wF) :
 		if (isSequential()) 
 		vhdl << "  -- pipelineDepth="<< srt4step->getPipelineDepth();
 		vhdl << endl;
-		vhdl << tab << tab << "port map ( x       => " << rhs(wi.str()) << "," << endl;
-		vhdl << tab << tab << "           d       => " << rhs("fY") << "," << endl;
-		vhdl << tab << tab << "           dtimes3 => " << rhs("fYTimes3") << "," << endl;
+		vhdl << tab << tab << "port map ( x       => " << use(wi.str()) << "," << endl;
+		vhdl << tab << tab << "           d       => " << use("fY") << "," << endl;
+		vhdl << tab << tab << "           dtimes3 => " << use("fYTimes3") << "," << endl;
 		if(isSequential()) {
 			vhdl << tab << tab << "           clk  => clk, " << endl;
 			vhdl << tab << tab << "           rst  => rst, " << endl;
 		}
-		vhdl << tab << tab << "              q  => " << lhs(qi.str(),3) << "," << endl;
-		vhdl << tab << tab << "              w  => " << lhs(wim1.str(), wF+3) << "     );" <<endl;
+		vhdl << tab << tab << "              q  => " << declare(qi.str(),3) << "," << endl;
+		vhdl << tab << tab << "              w  => " << declare(wim1.str(), wF+3) << "     );" <<endl;
 		nextCycle();///////////////////////////////////////////////////////////////////////
 
 	}
  
  
 	
-  	vhdl << tab << lhs("q0",3) << "(2 downto 0) <= \"000\" when  " << rhs("w0") << " = (" << wF+2 << " downto 0 => '0')" << endl;
-	vhdl << tab << "             else " << rhs("w0") << "(" << wF+2 << ") & \"10\";" << endl;
+  	vhdl << tab << declare("q0",3) << "(2 downto 0) <= \"000\" when  " << use("w0") << " = (" << wF+2 << " downto 0 => '0')" << endl;
+	vhdl << tab << "             else " << use("w0") << "(" << wF+2 << ") & \"10\";" << endl;
 
 	for(i=nDigit-1; i>=1; i--) {
 		ostringstream qi, qPi, qMi;
 		qi << "q" << i;
 		qPi << "qP" << i;
 		qMi << "qM" << i;
-		vhdl << tab << lhs(qPi.str(), 2) <<" <=      " << rhs(qi.str()) << "(1 downto 0);" << endl;
-		vhdl << tab << lhs(qMi.str(), 2)<<" <=      " << rhs(qi.str()) << "(2) & \"0\";" << endl;
+		vhdl << tab << declare(qPi.str(), 2) <<" <=      " << use(qi.str()) << "(1 downto 0);" << endl;
+		vhdl << tab << declare(qMi.str(), 2)<<" <=      " << use(qi.str()) << "(2) & \"0\";" << endl;
 	}
 
-	vhdl << tab << lhs("qP0", 2) << " <= " << rhs("q0") << "(1 downto 0);" << endl;
-	vhdl << tab << lhs("qM0", 2) << " <= " << rhs("q0") << "(2)  & \"0\";" << endl;
+	vhdl << tab << declare("qP0", 2) << " <= " << use("q0") << "(1 downto 0);" << endl;
+	vhdl << tab << declare("qM0", 2) << " <= " << use("q0") << "(2)  & \"0\";" << endl;
 
-	vhdl << tab << lhs("qP", 2*nDigit) << " <= qP" << nDigit-1;
+	vhdl << tab << declare("qP", 2*nDigit) << " <= qP" << nDigit-1;
 	for (i=nDigit-2; i>=0; i--)
 		vhdl << " & qP" << i;
 	vhdl << ";" << endl;
 
-	vhdl << tab << lhs("qM", 2*nDigit) << " <= qM" << nDigit-1 << "(0)";
+	vhdl << tab << declare("qM", 2*nDigit) << " <= qM" << nDigit-1 << "(0)";
 	for (i=nDigit-2; i>=0; i--)
 		vhdl << " & qM" << i;
 	vhdl << " & \"0\";" << endl;
 
 
 	// TODO an IntAdder here
-  	vhdl << tab << lhs("fR0", 2*nDigit) << " <= " << rhs("qP") << " - " << rhs("qM") << ";" << endl;
+  	vhdl << tab << declare("fR0", 2*nDigit) << " <= " << use("qP") << " - " << use("qM") << ";" << endl;
 
 	nextCycle();///////////////////////////////////////////////////////////////////////
 	
-	vhdl << tab << lhs("fR", wF+4) << " <= "; 
+	vhdl << tab << declare("fR", wF+4) << " <= "; 
 	if (1 == (wF & 1) ) // odd wF
-    	vhdl << rhs("fR0") << "(" << 2*nDigit-1 << " downto 1);  -- odd wF" << endl;
+    	vhdl << use("fR0") << "(" << 2*nDigit-1 << " downto 1);  -- odd wF" << endl;
 	else 
-    	vhdl << rhs("fR0") << "(" << 2*nDigit-1 << " downto 3)  & (fR0(2) or fR0(1));  -- even wF, fixing the round bit" << endl;
+    	vhdl << use("fR0") << "(" << 2*nDigit-1 << " downto 3)  & (fR0(2) or fR0(1));  -- even wF, fixing the round bit" << endl;
 
 
 	vhdl << tab << "-- normalisation" << endl;
-	vhdl << tab << "with " << rhs("fR") << "(" << wF+3 << ") select" << endl;
+	vhdl << tab << "with " << use("fR") << "(" << wF+3 << ") select" << endl;
 
-	vhdl << tab << tab << lhs("fRn1", wF+2) << " <= " << rhs("fR") << "(" << wF+2 << " downto 2) & (" << rhs("fR") << "(1) or " << rhs("fR") << "(0)) when '1'," << endl;
-	vhdl << tab << tab << "        " << rhs("fR") << "(" << wF+1 << " downto 0)                    when others;" << endl;
+	vhdl << tab << tab << declare("fRn1", wF+2) << " <= " << use("fR") << "(" << wF+2 << " downto 2) & (" << use("fR") << "(1) or " << use("fR") << "(0)) when '1'," << endl;
+	vhdl << tab << tab << "        " << use("fR") << "(" << wF+1 << " downto 0)                    when others;" << endl;
 
-	vhdl << tab << lhs("expR1", wE+2) << " <= "<< rhs("expR0") 
-		  << " + (\"000\" & (" << wE-2 << " downto 1 => '1') & " << rhs("fR") <<"(" << wF+3 << ")); -- add back bias" << endl;
+	vhdl << tab << declare("expR1", wE+2) << " <= "<< use("expR0") 
+		  << " + (\"000\" & (" << wE-2 << " downto 1 => '1') & " << use("fR") <<"(" << wF+3 << ")); -- add back bias" << endl;
 
 
 
-	vhdl << tab << lhs("round") << " <= " << rhs("fRn1") << "(1) and (" << rhs("fRn1") << "(2) or " << rhs("fRn1") << "(0)); -- fRn1(0) is the sticky bit" << endl;
+	vhdl << tab << declare("round") << " <= " << use("fRn1") << "(1) and (" << use("fRn1") << "(2) or " << use("fRn1") << "(0)); -- fRn1(0) is the sticky bit" << endl;
 
 	nextCycle();///////////////////////////////////////////////////////////////////////
 	vhdl << tab << "-- final rounding" <<endl;
-	vhdl << tab <<  lhs("expfrac", wE+wF+2) << " <= " 
-		  << rhs("expR1") << " & " << rhs("fRn1") << "(" << wF+1 << " downto 2) ;" << endl;
-	vhdl << tab << lhs("expfracR", wE+wF+2) << " <= " 
-		  << rhs("expfrac") <<" + ((" << wE+wF+1 << " downto 1 => '0') & " << rhs("round") << ");" << endl;
-	vhdl << tab <<  lhs("exnR", 2) << " <=      \"00\"  when " << rhs("expfracR") << "(" << wE+wF+1 << ") = '1'   -- underflow" <<endl;
-	vhdl << tab << "        else \"10\"  when  " << rhs("expfracR") << "(" << wE+wF+1 << " downto " << wE+wF << ") =  \"01\" -- overflow" <<endl;
+	vhdl << tab <<  declare("expfrac", wE+wF+2) << " <= " 
+		  << use("expR1") << " & " << use("fRn1") << "(" << wF+1 << " downto 2) ;" << endl;
+	vhdl << tab << declare("expfracR", wE+wF+2) << " <= " 
+		  << use("expfrac") <<" + ((" << wE+wF+1 << " downto 1 => '0') & " << use("round") << ");" << endl;
+	vhdl << tab <<  declare("exnR", 2) << " <=      \"00\"  when " << use("expfracR") << "(" << wE+wF+1 << ") = '1'   -- underflow" <<endl;
+	vhdl << tab << "        else \"10\"  when  " << use("expfracR") << "(" << wE+wF+1 << " downto " << wE+wF << ") =  \"01\" -- overflow" <<endl;
 	vhdl << tab << "        else \"01\";      -- 00, normal case" <<endl;
 
 
-	vhdl << tab << "with " << rhs("exnR0") << " select" <<endl;
-	vhdl << tab << tab << lhs("exnRfinal", 2) << " <= " <<endl;
-	vhdl << tab << tab << tab << rhs("exnR") << "   when \"01\", -- normal" <<endl;
-	vhdl << tab << tab << tab << rhs("exnR0") << "  when others;" <<endl;
-	vhdl << tab << "R <= " << rhs("exnRfinal") << " & " << rhs("sR") << " & " 
-		  << rhs("expfracR") << "(" << wE+wF-1 << " downto 0);" <<endl;
+	vhdl << tab << "with " << use("exnR0") << " select" <<endl;
+	vhdl << tab << tab << declare("exnRfinal", 2) << " <= " <<endl;
+	vhdl << tab << tab << tab << use("exnR") << "   when \"01\", -- normal" <<endl;
+	vhdl << tab << tab << tab << use("exnR0") << "  when others;" <<endl;
+	vhdl << tab << "R <= " << use("exnRfinal") << " & " << use("sR") << " & " 
+		  << use("expfracR") << "(" << wE+wF-1 << " downto 0);" <<endl;
 
 }
 

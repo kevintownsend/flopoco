@@ -424,22 +424,22 @@ public:
 	 * @param isbus: a signal of width 1 is declared as std_logic when false, as std_logic_vector when true (optional, default false)
 	 * @return name
 	 */
-	string lhs(string name, const int width=1, bool isbus=false);
+	string declare(string name, const int width=1, bool isbus=false);
 
 	/** use a signal on the Right 
 	 * @param name is the name of the signal
 	 * @return name
 	 */
-	string rhs(string name);
+	string use(string name);
 
 	
-	/** build all the signal declarations from signals implicitely declared by lhs().
+	/** build all the signal declarations from signals implicitely declared by declare().
 	 *  This is the 2.0 equivalent of outputVHDLSignalDeclarations
 	 */
 	string buildVHDLSignalDeclarations();
 
 
-	/** build all the registers from signals implicitely delayed by lhs() 
+	/** build all the registers from signals implicitely delayed by declare() 
 	 *	 This is the 2.0 equivalent of outputVHDLSignalRegisters
 	 */
 	string buildVHDLRegisters();
