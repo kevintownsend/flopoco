@@ -184,19 +184,19 @@ ADD_EXECUTABLE(flopoco
  src/TestCase
  src/TestIOMap
  src/FPNumber
- src/fpexp/math_lib.cpp
- src/fpexp/signal.cpp
- src/fpexp/fragment.cpp
- src/fpexp/stdfragment.cpp
- src/fpexp/logfragment.cpp
- src/fpexp/gen_table.cpp
- src/fpexp/explore.cpp
+ src/fpexponential/math_lib.cpp
+ src/fpexponential/signal.cpp
+ src/fpexponential/fragment.cpp
+ src/fpexponential/stdfragment.cpp
+ src/fpexponential/logfragment.cpp
+ src/fpexponential/gen_table.cpp
+ src/fpexponential/explore.cpp
  src/FPExp
- src/fplog/FirstInvTable.cpp
- src/fplog/FirstLogTable.cpp
- src/fplog/OtherLogTable.cpp
- src/fplog/SecondInvTable.cpp
- src/fplog/LogRangeRed.cpp
+ src/fplogarithm/FirstInvTable.cpp
+ src/fplogarithm/FirstLogTable.cpp
+ src/fplogarithm/OtherLogTable.cpp
+ src/fplogarithm/SecondInvTable.cpp
+ src/fplogarithm/LogRangeRed.cpp
  src/FPLog
 )
 ENDIF(WIN32) 
