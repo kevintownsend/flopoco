@@ -99,11 +99,9 @@ LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut, bool com
 			cout << size_[i]<<" ";
 		cout <<endl;
 	}
-#ifdef _WIN32
 	//initialization needed for windows compiler
 	for (int i=0;i<42;i++)
 		countDepth_[i]=0;
-#endif
 	double criticalPath = 0.0;
 	for (int i=wCount_; i>=0; i--){
 		ostringstream levelName, leveldName, stickyName;
