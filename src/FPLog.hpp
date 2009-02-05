@@ -43,7 +43,6 @@ public:
 
 	//		Overloading the virtual functions of Operator
 	void outputVHDL(std::ostream& o, std::string name);
-	void setOperatorName();
 	TestIOMap getTestIOMap();
 	void fillTestCase(mpz_class a[]);
 

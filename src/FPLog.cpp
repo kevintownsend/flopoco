@@ -38,7 +38,11 @@ extern vector<Operator *> oplist;
 FPLog::FPLog(Target* target, int wE, int wF)
 	: Operator(target), wE(wE), wF(wF)
 {
-	setOperatorName();
+
+	std::ostringstream o;
+	o << "FPLog_" << wE << "_" << wF;
+	uniqueName_ = o.str();
+
 	setOperatorType();
 
 	addFPInput("x", wE, wF);
@@ -108,6 +112,9 @@ FPLog::FPLog(Target* target, int wE, int wF)
 
 
 
+
+	// On we go
+
 	// MSB of squarer input is p[stages+1];
 	// LSB will be target_prec
 	// size will be target_prec - p[stages+1]  
@@ -118,90 +125,134 @@ FPLog::FPLog(Target* target, int wE, int wF)
 	//TODO move somewhere
 	int computedG = intlog2(3*(stages+1));
 
+	vhdl << tab << declare("FirstBit") << " <=  X(wF-1);" << endl;
+	vhdl << tab << declare("Y0", wF+2) << " <=      \"1\"  & X(wF-1 downto 0) & \"0\" when FirstBit = '0'" 
+		  << 		"        else \"01\" & X(wF-1 downto 0);" << endl;
+	vhdl << tab << declare("E", wE) << " <= (X(wE+wF-1 downto wF)) - (\"0\" & (wE-2 downto 1 => '1') & (not FirstBit));" << endl;
+	vhdl << tab << 	declare("sR") << " <= '0'   when    X(wE+wF-1 downto wF)   =   '0' &(wE-2 downto 0 => '1')  -- binade [1..2)" << endl
+		  << "        else not X(wE+wF-1);                -- MSB of exponent" << endl;
+	vhdl << tab << declare("absE", wE) << " <= ((wE-1 downto 0 => '0') - E)   when sR = '1'" << endl
+		  << "          else E;" << endl;
+	vhdl << tab << declare("absELog2", wF+wE+gLog) << " <= absE * log2;" << endl;
 
-	
-	// Now allocate the sub-components (the range reduction box will in turn allocate various tables
-	// First change Target so that it is combinatorial
-	bool wasPipelined = target->isPipelined();
-	target->setNotPipelined();
 
 	lzoc = new LZOC(target, wF, intlog2(wF));
 	oplist.push_back(lzoc);
+	
+vhdl << declare("Y0h", wF) << " <= Y0(wF downto 1)" << endl; 
+	inPortMap(lzoc, "I", "Y0h");
+	inPortMap(lzoc, "OZB", "FirstBit");
+	outPortMap(lzoc, "O", "lzo"); // 	size should be  intlog2(wF);
+	vhdl << instance(lzoc, "lzoc1");
+
+	vhdl << tab << declare("shiftval", intlog2(wF)+1) << " <= ('0' & lzo) - ('0' & pfinal_s); " << endl;
+	vhdl << tab << declare("doRR") << " <= shiftval(log2wF);             -- sign of the result" << endl;
+	vhdl << tab << declare("small") << " <= '1' when ((E=(wE-1 downto 0 => '0')) and (doRR='0'))" << endl
+		  << "          else '0';" << endl;
+
+	vhdl << tab << "-- The range reduction instance" << endl;
+	rrbox = new LogRangeRed(target, this);
+	oplist.push_back(rrbox);
+	vhdl << tab << declare("rrA", a[0]) << " <= X(wF-1 downto wF-a0);" << endl;
+	inPortMap(rrbox, "A", "rrA");
+	inPortMap(rrbox, "Y0", "Y0");
+	outPortMap(rrbox, "Z", "Zfinal");
+	outPortMap(rrbox, "almostLog", "almostLog");
+	vhdl << instance(rrbox, "rr");
+	
+	vhdl << tab << declare("absZ0", wF-pfinal+2) << " <=   Y0(wF-pfinal+1 downto 0)          when (sR='0') else" << endl
+		  << "             ((wF-pfinal+1 downto 0 => '0') - Y0(wF-pfinal+1 downto 0));" << endl;
+
+
+	vhdl << tab << declare("shiftvalin", intlog2(wF)) << " <= shiftval(log2wF-1 downto 0);" << endl;
 
 	// ao stands for "almost one"
-	ao_rshift = new Shifter(target, s[stages+1]-p[stages+1]+1, s[stages+1]-p[stages+1]+1, Right) ;
-	oplist.push_back(ao_rshift);
-
 	ao_lshift = new Shifter(target, wF-p[stages+1]+2,wF-p[stages+1]+2, Left);   
 	oplist.push_back(ao_lshift);
 
-	final_norm = new LZOCShifterSticky(target, wE+target_prec, wE+target_prec, 0);
+	inPortMap(ao_lshift, "X", "absZ0");
+	inPortMap(ao_lshift, "S", "shiftvalin");
+	outPortMap(ao_lshift, "R", "absZ0s");
+	vhdl << instance(ao_lshift, "ao_lshift");
+
+
+	vhdl << tab << "-- Z2o2 will be of size sfinal-pfinal, set squarer input size to that" << endl;
+	vhdl << tab << declare("squarerIn", sfinal-pfinal) << " <= Zfinal(sfinal-1 downto pfinal) when doRR='1'" << endl;
+	if(sfinal>wF+2)
+		vhdl << tab << "                 else (absZ0s &  (sfinal-wF-3 downto 0 => '0'));  " << endl;
+	else  // sfinal <= wf+2 
+		vhdl << tab << "                 else absZ0s(wF-pfinal+1 downto wf+2-sfinal);  " << endl<< endl;
+	vhdl << tab << "-- Z2o2 will be of size sfinal - pfinal -1, set squarer input size to that" << endl;
+	vhdl << tab << declare("Z2o2_full", 2*(sfinal-pfinal)) << " <= (squarerIn * squarerIn);" << endl;
+	vhdl << tab << declare("Z2o2", sfinal-pfinal+1) << " <= Z2o2_full (2*(sfinal-pfinal)-1  downto sfinal-pfinal-1);" << endl;
+	vhdl << tab << declare("Log1p_normal", sfinal) << " <=   Zfinal  -  ((sfinal-1 downto sfinal-pfinal-1  => '0') & (Z2o2(sfinal-pfinal downto 2)));" << endl;
+	vhdl << tab << declare("LogF_normal", target_prec) << " <=   almostLog + ((targetprec-1 downto sfinal => '0') & Log1p_normal);" << endl;
+	vhdl << tab << declare("absELog2_pad", wE+target_prec) << " <=   absELog2 & (targetprec-wF-g-1 downto 0 => '0');       " << endl;
+	vhdl << tab << declare("LogF_normal_pad", wE+target_prec) << " <= (wE-1  downto 0 => LogF_normal(targetprec-1))  & LogF_normal;" << endl;
+	vhdl << tab << declare("Log_normal", wE+target_prec) << " <=  absELog2_pad  + LogF_normal_pad when sR='0'  " << endl
+		  << "                else absELog2_pad - LogF_normal_pad;" << endl;
+
+	final_norm = new LZOCShifterSticky(target, wE+target_prec, wE+target_prec, false); // FIXME infinite loop here
 	oplist.push_back(final_norm);
+	inPortMap(final_norm, "I", "Log_normal");
+	outPortMap(final_norm, "Count", "E_normal");
+	outPortMap(final_norm, "O", "Log_normal_normd");
+	vhdl << instance(final_norm, "final_norm");
 
-	rrbox = new LogRangeRed(target, this);
-	oplist.push_back(rrbox);
+	ao_rshift = new Shifter(target, s[stages+1]-p[stages+1]+1, s[stages+1]-p[stages+1]+1, Right) ;
+	oplist.push_back(ao_rshift);
+	inPortMap(ao_rshift, "X", "Z2o2");
+	inPortMap(ao_rshift, "S", "shiftvalin");
+	outPortMap(ao_rshift, "R", "Z2o2_small_s");
+	vhdl << instance(ao_rshift, "ao_rshift");
 
-	// restore target
-	if(wasPipelined) 	target->setPipelined();
-
-
-	// Declaration of local signals
-	addSignal("FirstBit");
-	addSignal("Y0", wF+2);
-	addSignal("E", wE);
-	addSignal("absE", wE);
-	addSignal("absELog2", wF+wE+gLog);
-	addSignal("absELog2_pad", wE+target_prec);
-	addSignal("LogF_normal_pad", wE+target_prec);
-	addSignal("Log_normal", wE+target_prec);
-	addSignal("Log_normal_normd", wE+target_prec);
-	addSignal("E_small", wE);
-	addSignal("ER", wE);
-	addSignal("E_normal", lzc_size);
-	addSignal("Log_small_normd", wF+gLog);
-	addSignal("Log_g", wF+gLog);
-	addSignal("EFR", wE+wF);
-	addSignal("lzo", intlog2(wF));
-	addSignal("shiftval", intlog2(wF)+1);
-	addSignal("absZ0", wF-pfinal+2);
-	addSignal("absZ0s", wF-pfinal+2);
-	addSignal("Zfinal", sfinal);
-	addSignal("Log1p_normal", sfinal);
-	addSignal("Z2o2_full", 2*(sfinal-pfinal));
-	addSignal("squarerIn", sfinal-pfinal);
-	addSignal("Z2o2_small_s", sfinal-pfinal+1);
-	addSignal("Z2o2", sfinal-pfinal+1);
-	addSignal("Log_small", wF+gLog+2);
-	addSignal("Z_small", wF+gLog+2);
-	addSignal("Z2o2_small", wF+gLog+2);
-	addSignal("almostLog", target_prec);
-	addSignal("logF_normal", target_prec);
-	addSignal("E0_sub",2);
-	addSignal("sR");
-	addSignal("small");
-	addSignal("doRR");
-	addSignal("ufl");
-	addSignal("sticky");
-	addSignal("round");
-
-
+	vhdl << tab << "  -- send the MSB to position pfinal" << endl;
+	vhdl << tab << declare("Z2o2_small", wF+gLog+2) << " <=  (pfinal-1 downto 0  => '0') & Z2o2_small_s & (wF+g-sfinal downto 0  => '0') ;" << endl;
+	vhdl << tab << "-- mantissa will be either Y0-z^2/2  or  -Y0+z^2/2,  depending on sR  " << endl;
+	vhdl << tab << declare("Z_small", wF+gLog+2) << " <= (absZ0s & (pfinal+g-1 downto 0 => '0'));" << endl;
+	vhdl << tab << declare("Log_small", wF+gLog+2) << " <=       Z_small -  Z2o2_small when (sR='0')" << endl
+		  << "              else  Z_small +  Z2o2_small;" << endl;
+	vhdl << tab << "-- Possibly subtract 1 or 2 to the exponent, depending on the LZC of Log_small" << endl;
+	vhdl << tab << declare("E0_sub", 2) << " <=      \"11\" when Log_small(wF+g+1) = '1'" << endl
+		  << "          else \"10\" when Log_small(wF+g+1 downto wF+g) = \"01\"" << endl
+		  << "          else \"01\" ;" << endl;
+	vhdl << tab << declare("E_small", wE) << " <=  \"0\" & (wE-2 downto 2 => '1') & E0_sub" << endl
+		  << "             - ((wE-1 downto log2wF => '0') & lzo) ;" << endl;
+	vhdl << tab << declare("Log_small_normd", wE+target_prec) << " <= Log_small(wF+g+1 downto 2) when Log_small(wF+g+1)='1'" << endl
+		  << "           else Log_small(wF+g downto 1)  when Log_small(wF+g)='1'  -- remove the first zero" << endl
+		  << "           else Log_small(wF+g-1 downto 0)  ; -- remove two zeroes (extremely rare, 001000000 only)" << endl ;
+	vhdl << tab << declare("ER", wE) << " <= E_small when small='1'" << endl
+		  << "      else E0offset - ((wE-1 downto lzc_size => '0') & E_normal);" << endl
+		  << "-- works only if wE > lzc_size approx log2wF, OK for usual exp/prec" << endl;
+	vhdl << tab << declare("Log_g", wF+gLog) << " <=  Log_small_normd (wF+g-2 downto 0) & \"0\" when small='1'           -- remove implicit 1" << endl
+		  << "      else Log_normal_normd(wE+targetprec-2 downto wE+targetprec-wF-g-1 );  -- remove implicit 1" << endl ;
+	vhdl << tab << declare("sticky") << " <= '0' when Log_g(g-2 downto 0) = (g-2 downto 0 => '0')    else '1';" << endl;
+	vhdl << tab << declare("round") << " <= Log_g(g-1) and (Log_g(g) or sticky);" << endl;
+	vhdl << tab << "-- if round leads to a change of binade, the carry propagation" << endl
+		  << tab << "-- magically updates both mantissa and exponent" << endl;
+	vhdl << tab << declare("EFR", wE+wF) << " <= (ER & Log_g(wF+g-1 downto g)) + ((wE+wF-1 downto 1 => '0') & round); " << endl;
+	vhdl << tab <<	"-- The smallest log will be log(1+2^{-wF}) \\approx 2^{-wF}" << endl
+		  << tab << "-- The smallest representable number is 2^{-2^(wE-1)} " << endl;
+	vhdl << tab << declare("ufl") << " <= '0';" << endl;
+	vhdl << tab << "R(wE+wF+2 downto wE+wF) <= \"110\" when ((X(wE+wF+2) and (X(wE+wF+1) or X(wE+wF))) or (X(wE+wF+1) and X(wE+wF))) = '1' else" << endl
+		  << "                               \"101\" when X(wE+wF+2 downto wE+wF+1) = \"00\"                                                       else" << endl
+		  << "                               \"100\" when X(wE+wF+2 downto wE+wF+1) = \"10\"                                                       else" << endl
+		  << "                               \"00\" & sR when (((Log_normal_normd(wE+targetprec-1)='0') and (small='0')) or ( (Log_small_normd (wF+g-1)='0') and (small='1'))) or (ufl = '1') else" << endl
+		  << "                               \"01\" & sR;" << endl;
+		vhdl << tab << "R(wE+wF-1 downto 0) <=  EFR;" << endl;
 }	
 
 FPLog::~FPLog()
 {
 	delete lzoc;
+	delete ao_rshift;
+	delete ao_lshift;
+	delete rrbox;
+	delete final_norm;
 }
 
 
 
-void FPLog::setOperatorName()	{
-		std::ostringstream o;
-		o << "FPLog_" << wE << "_" << wF;
-		uniqueName_ = o.str();
-	}
-
-
-#if 1
 void FPLog::outputVHDL(std::ostream& o, std::string name)
 {
 	int i;
@@ -256,835 +307,10 @@ void FPLog::outputVHDL(std::ostream& o, std::string name)
 	o << "\";"<<endl;
 
 	beginArchitecture(o);
-	o <<
-		"  FirstBit <=  X(wF-1);\n"
-		"  Y0 <=      \"1\"  & X(wF-1 downto 0) & \"0\" when FirstBit = '0'\n"
-		"        else \"01\" & X(wF-1 downto 0);\n"
-		"\n"
-		"  E  <= (X(wE+wF-1 downto wF)) - (\"0\" & (wE-2 downto 1 => '1') & (not FirstBit));\n"
-		"\n"
-		"  sR <= '0'   when    X(wE+wF-1 downto wF)   =   '0' &(wE-2 downto 0 => '1')  -- binade [1..2)\n"
-		"        else not X(wE+wF-1);                -- MSB of exponent\n"
-		"\n"
-		"  absE <= ((wE-1 downto 0 => '0') - E)   when sR = '1'\n"
-		"          else E;\n"
-		"\n"
-		"  absELog2 <= absE * log2;\n"
-		"  \n"
-		"  lzoc1 : " << lzoc->getOperatorName() << "\n"
-		"    port map (  i => Y0(wF downto 1), ozb => FirstBit,  o => lzo);\n"
-		"\n"
-		"  shiftval <= ('0' & lzo) - ('0' & pfinal_s); \n"
-		"\n"
-		"  doRR <= shiftval(log2wF);             -- sign of the result\n"
-		"\n"
-		"  small <= '1' when ((E=(wE-1 downto 0 => '0')) and (doRR='0'))\n"
-		"          else '0';\n"
-		"\n"
-		"-- The range reduction instance\n"
-		"  rr: " <<  rrbox->getOperatorName() <<
-		"\n     port map ( A => X(wF-1 downto wF-a0), Y0 => Y0,\n";
-
-	if(isSequential())
-		o << "                clk=>clk,"<<endl;
-	
-	o <<
-		"                Z => Zfinal, almostLog => almostLog);\n"
-		"  absZ0 <=   Y0(wF-pfinal+1 downto 0)          when (sR='0') else\n"
-		"             ((wF-pfinal+1 downto 0 => '0') - Y0(wF-pfinal+1 downto 0));\n"
-		"\n"
-		"--  absZ0 <=   Y0(wF-pfinal downto 0)   xor (wF-pfinal downto 0 => sR);\n"
-		"\n"
-		"  ao_lshift: " << ao_rshift->getOperatorName() << 
-		"\n    port map (  i => absZ0, s => shiftval(log2wF-1 downto 0), o => absZ0s );\n"
-		"\n"
-		"  -- Z2o2 will be of size sfinal-pfinal, set squarer input size to that\n"
-		"  sqintest: if sfinal > wf+2 generate\n"
-		"    squarerIn <= Zfinal(sfinal-1 downto pfinal) when doRR='1'\n"
-		"                 else (absZ0s &  (sfinal-wF-3 downto 0 => '0'));  \n"
-		"  end generate sqintest;\n"
-		"  sqintest2: if sfinal <= wf+2 generate\n"
-		"    squarerIn <= Zfinal(sfinal-1 downto pfinal) when doRR='1'\n"
-		"                 else absZ0s(wF-pfinal+1 downto wf+2-sfinal);  \n"
-		"  end generate sqintest2;\n"
-		"\n"
-		"  -- Z2o2 will be of size sfinal - pfinal -1, set squarer input size to that\n"
-		"--  sqintest: if sfinal >= wf+3 generate\n"
-		"--    squarerIn <= Zfinal(sfinal-1 downto pfinal+1) when doRR='1'\n"
-		"--                 else (absZ0s &  (sfinal-wF-4 downto 0 => '0'));  \n"
-		"--  end generate sqintest;\n"
-		"--  sqintest2: if sfinal < wf+3 generate\n"
-		"--    squarerIn <= Zfinal(sfinal-1 downto pfinal+1) when doRR='1'\n"
-		"--                 else absZ0s(wF-pfinal+1 downto wf+3-sfinal);  \n"
-		"--  end generate sqintest2;\n"
-			" \n"
-		"  Z2o2_full <= (squarerIn * squarerIn);\n"
-		"  Z2o2 <= Z2o2_full (2*(sfinal-pfinal)-1  downto sfinal-pfinal-1);\n"
-		"\n"
-		"  Log1p_normal  <=   Zfinal  -  ((sfinal-1 downto sfinal-pfinal-1  => '0') & (Z2o2(sfinal-pfinal downto 2)));\n"
-		"\n"
-		"  LogF_normal <=   almostLog + ((targetprec-1 downto sfinal => '0') & Log1p_normal);\n"
-		"\n"
-		"  absELog2_pad <=   absELog2 & (targetprec-wF-g-1 downto 0 => '0');       \n"
-		"  LogF_normal_pad <= (wE-1  downto 0 => LogF_normal(targetprec-1))  & LogF_normal;\n"
-		"  \n"
-		"  Log_normal <=  absELog2_pad  + LogF_normal_pad when sR='0'  \n"
-		"                else absELog2_pad - LogF_normal_pad;\n"
-		"\n"
-		"  final_norm : " << final_norm->getOperatorName() <<
-		"\n    port map (i => Log_normal, z => E_normal, o => Log_normal_normd);\n"
-		"\n"
-		"\n"
-		"  ao_rshift: " << ao_rshift->getOperatorName() <<
-		"\n    port map (i => Z2o2,\n"
-		"              s => shiftval(log2wF-1 downto 0),\n"
-		"              o => Z2o2_small_s);\n"
-		"\n"
-		"  -- send the MSB to position pfinal\n"
-		"  Z2o2_small <=  (pfinal-1 downto 0  => '0') & Z2o2_small_s & (wF+g-sfinal downto 0  => '0') ;\n"
-		"\n"
-		"  -- mantissa will be either Y0-z^2/2  or  -Y0+z^2/2,  depending on sR  \n"
-		"\n"
-		"  Z_small <= (absZ0s & (pfinal+g-1 downto 0 => '0'));\n"
-		"  Log_small  <=       Z_small -  Z2o2_small when (sR='0')\n"
-		"                else  Z_small +  Z2o2_small;\n"
-		"\n"
-		"  -- Possibly subtract 1 or 2 to the exponent, depending on the LZC of Log_small\n"
-		"  E0_sub <=      \"11\" when Log_small(wF+g+1) = '1'\n"
-		"            else \"10\" when Log_small(wF+g+1 downto wF+g) = \"01\"\n"
-		"            else \"01\" ;\n"
-		"\n"
-		"  E_small <=  \"0\" & (wE-2 downto 2 => '1') & E0_sub\n"
-		"               - ((wE-1 downto log2wF => '0') & lzo) ;\n"
-		"\n"
-		"  Log_small_normd <= Log_small(wF+g+1 downto 2) when Log_small(wF+g+1)='1'\n"
-		"             else Log_small(wF+g downto 1)  when Log_small(wF+g)='1'  -- remove the first zero\n"
-		"             else Log_small(wF+g-1 downto 0)  ; -- remove two zeroes (extremely rare, 001000000 only)\n"
-		"                                               \n"
-		"  ER <= E_small when small='1'\n"
-		"        else E0offset - ((wE-1 downto lzc_size => '0') & E_normal);\n"
-		"  -- works only if wE > lzc_size approx log2wF, OK for usual exp/prec\n"
-		"\n"
-		"  Log_g  <=  Log_small_normd (wF+g-2 downto 0) & \"0\" when small='1'           -- remove implicit 1\n"
-		"        else Log_normal_normd(wE+targetprec-2 downto wE+targetprec-wF-g-1 );  -- remove implicit 1\n"
-		"\n"
-		"  sticky <= '0' when Log_g(g-2 downto 0) = (g-2 downto 0 => '0') else\n"
-		"            '1';\n"
-		"  round <= Log_g(g-1) and (Log_g(g) or sticky);\n"
-		"\n"
-		"  -- use a trick: if round leads to a change of binade, the carry propagation\n"
-		"  -- magically updates both mantissa and exponent\n"
-		"  EFR <= (ER & Log_g(wF+g-1 downto g)) + ((wE+wF-1 downto 1 => '0') & round); \n"
-		"\n"
-		"\n"
-		"  -- The smallest log will be log(1+2^{-wF}) \\approx 2^{-wF}\n"
-		"  -- The smallest representable number is 2^{-2^(wE-1)} \n"
-		"  -- Therefore, if \n"
-		"--    underflow : if max(wE, log2(wF)+1) > wE generate\n"
-		"--      ufl <=      '1' when (eR2(wE0-1) = '1') or (eR = (wE-1 downto 0 => '0'))\n"
-		"--             else '0';\n"
-		"--    end generate;\n"
-		"\n"
-		"--    no_underflow : if max(wE, log2(wE+wF)+2) = wE generate\n"
-		"      ufl <= '0';\n"
-		"--    end generate;\n"
-		"\n"
-		"  R(wE+wF+2 downto wE+wF) <= \"110\" when ((X(wE+wF+2) and (X(wE+wF+1) or X(wE+wF))) or (X(wE+wF+1) and X(wE+wF))) = '1' else\n"
-		"                               \"101\" when X(wE+wF+2 downto wE+wF+1) = \"00\"                                                       else\n"
-		"                               \"100\" when X(wE+wF+2 downto wE+wF+1) = \"10\"                                                       else\n"
-		"                               \"00\" & sR when (((Log_normal_normd(wE+targetprec-1)='0') and (small='0')) or ( (Log_small_normd (wF+g-1)='0') and (small='1'))) or (ufl = '1') else\n"
-		"                               \"01\" & sR;\n"
-		"\n"
-		"  R(wE+wF-1 downto 0) <=  EFR;\n";
-	
+	o << vhdl.str();
 	endArchitecture(o);
 }
 
-#else
-
-// Overloading the virtual functions of Operator
-void FPLog::outputVHDL(std::ostream& o, std::string name)
-{
-	/* Reuse other FloPoCo stuff */
-	int t_pipelined = target_->isPipelined();
-	target_->setNotPipelined();
-
-
-	if (t_pipelined) target_->setPipelined();
-
-	licence(o, "J. Detrey, F. de Dinechin, C. Klein  (2008)");
-	
-	int i;
-	mpfr_t two;
-	mpfr_t log2;
-	mpz_t zlog2;
-
-	o <<
-		"-------------------------------------------------------------------------------\n"
-		"-- Left barrel shifter\n"
-		"--\n"
-		"-- Generics:\n"
-		"--   - w : width of the input operand\n"
-		"--   - n : number of shifting stages (width of the signal s)\n"
-		"--\n"
-		"-- Ports:\n"
-		"--   - i [in]  : input signal\n"
-		"--   - s [in]  : shift by s\n"
-		"--   - o [out] :  output\n"
-		"--\n"
-		"-- Recursive structure with n stages.\n"
-		"-------------------------------------------------------------------------------\n"
-		"\n"
-		"library ieee;\n"
-		"use ieee.std_logic_1164.all;\n"
-		"\n"
-		"entity " << uniqueName_ << "_lshift is\n"
-		"  generic ( w : positive;\n"
-		"            n : positive );\n"
-		"  port ( i  : in  std_logic_vector(w-1 downto 0);\n"
-		"         s  : in std_logic_vector(n-1 downto 0);\n"
-		"         o  : out std_logic_vector(w-1 downto 0));\n"
-		"end entity;\n"
-		"\n"
-		"architecture arch of " << uniqueName_ << "_lshift is\n"
-		"  component " << uniqueName_ << "_lshift is\n"
-		"  generic ( w : positive;\n"
-		"            n : positive );\n"
-		"  port ( i  : in  std_logic_vector(w-1 downto 0);\n"
-		"         s  : in std_logic_vector(n-1 downto 0);\n"
-		"         o  : out std_logic_vector(w-1 downto 0));\n"
-		"  end component;\n"
-		"  signal o0 : std_logic_vector(w-1 downto 0);\n"
-		"begin\n"
-		"\n"
-		"  check1: if 2**(n-1)>=w generate\n"
-		"    o0 <=      i                      when s(n-1) = '0'\n"
-		"          else (w-1 downto 0 => '0');\n"
-		"  end generate;\n"
-		"  check2: if 2**(n-1)<w generate\n"
-		"    o0 <= i   when s(n-1) = '0' else\n"
-		"          i(w-2**(n-1)-1 downto 0) & (2**(n-1)-1 downto 0 => '0');\n"
-		"  end generate;\n"
-		"  \n"
-		"  ------------------------------------------------------------- Recursive stage\n"
-		"\n"
-		"  recursive : if n > 1 generate\n"
-		"    shift0 : " << uniqueName_ << "_lshift\n"
-		"      generic map ( w => w,\n"
-		"                    n => n-1 )\n"
-		"      port map (  i => o0,\n"
-		"                  s => s(n-2 downto 0),\n"
-		"                  o => o   );\n"
-		"  end generate;\n"
-		"\n"
-		"  ----------------------------------------------------------------- Final stage\n"
-		"  single : if n = 1 generate\n"
-		"    o <= o0;\n"
-		"  end generate;\n"
-		"\n"
-		"end architecture; -------------------------------------------------------------\n"
-		"\n"
-		"\n"
-		"\n"
-		"\n"
-		"\n"
-		"\n"
-		"\n"
-		"\n"
-		"-------------------------------------------------------------------------------\n"
-		"-- Right barrel shifter\n"
-		"--\n"
-		"-- Generics:\n"
-		"--   - w : width of the input operand\n"
-		"--   - n : number of shifting stages (width of the signal s)\n"
-		"--\n"
-		"-- Ports:\n"
-		"--   - i [in]  : input signal\n"
-		"--   - s [in]  : shift by s\n"
-		"--   - o [out] :  output\n"
-		"--\n"
-		"-- Recursive structure with n stages.\n"
-		"-------------------------------------------------------------------------------\n"
-		"\n"
-		"library ieee;\n"
-		"use ieee.std_logic_1164.all;\n"
-		"\n"
-		"entity " << uniqueName_ << "_rshift is\n"
-		"  generic ( w : positive;\n"
-		"            n : positive );\n"
-		"  port ( i  : in  std_logic_vector(w-1 downto 0);\n"
-		"         s  : in std_logic_vector(n-1 downto 0);\n"
-		"         o  : out std_logic_vector(w-1 downto 0));\n"
-		"end entity;\n"
-		"\n"
-		"  architecture arch of " << uniqueName_ << "_rshift is\n"
-		"  component " << uniqueName_ << "_rshift is\n"
-		"  generic ( w : positive;\n"
-		"            n : positive );\n"
-		"  port ( i  : in  std_logic_vector(w-1 downto 0);\n"
-		"         s  : in std_logic_vector(n-1 downto 0);\n"
-		"         o  : out std_logic_vector(w-1 downto 0));\n"
-		"  end component;\n"
-		"  signal o0 : std_logic_vector(w-1 downto 0);\n"
-		"begin\n"
-		"\n"
-		"  check1: if 2**(n-1)>=w generate\n"
-		"    o0 <= i   when s(n-1) = '0' else\n"
-		"     (w-1 downto 0 => '0');\n"
-		"  end generate;\n"
-		"  check2: if 2**(n-1)<w generate\n"
-		"  o0 <= i   when s(n-1) = '0' else\n"
-		"           (w-1 downto w-2**(n-1) => '0')  &  i(w-1 downto 2**(n-1));\n"
-		"  end generate;\n"
-		"  \n"
-		"  ------------------------------------------------------------- Recursive stage\n"
-		"\n"
-		"  recursive : if n > 1 generate\n"
-		"    shift0 : " << uniqueName_ << "_rshift\n"
-		"      generic map ( w => w,\n"
-		"                    n => n-1 )\n"
-		"      port map (  i => o0,\n"
-		"                  s => s(n-2 downto 0),\n"
-		"                  o => o   );\n"
-		"  end generate;\n"
-		"\n"
-		"  ----------------------------------------------------------------- Final stage\n"
-		"  single : if n = 1 generate\n"
-		"    o <= o0;\n"
-		"  end generate;\n"
-		"\n"
-		"end architecture; -------------------------------------------------------------\n"
-		"\n"
-		"\n"
-		"\n"
-		"\n"
-		"\n"
-		"\n"
-		"-------------------------------------------------------------------------------\n"
-		"-- Leading-zero counter and normalization\n"
-		"--\n"
-		"-- Generics:\n"
-		"--   - w : width of the input operand\n"
-		"--   - n : number of LZC and shifting stages (width of the signal z)\n"
-		"--\n"
-		"-- Ports:\n"
-		"--   - i [in]  : input signal\n"
-		"--   - z [out] : number of leading zeros\n"
-		"--   - o [out] : normalized signal\n"
-		"--\n"
-		"-- Recursive structure with n stages. At most 2^n-1 leading zeros are counted.\n"
-		"-------------------------------------------------------------------------------\n"
-		"\n"
-		"library ieee;\n"
-		"use ieee.std_logic_1164.all;\n"
-		"\n"
-		"entity " << uniqueName_ << "_lzc_norm is\n"
-		"    generic ( w : positive;\n"
-		"              n : positive );\n"
-		"    port ( i : in  std_logic_vector(w-1 downto 0);\n"
-		"           z : out std_logic_vector(n-1 downto 0);\n"
-		"           o : out std_logic_vector(w-1 downto 0) );\n"
-		"end entity;\n"
-		"\n"
-		"architecture arch of " << uniqueName_ << "_lzc_norm is\n"
-		"  component " << uniqueName_ << "_lzc_norm is\n"
-		"    generic ( w : positive;\n"
-		"              n : positive );\n"
-		"    port ( i : in  std_logic_vector(w-1 downto 0);\n"
-		"           z : out std_logic_vector(n-1 downto 0);\n"
-		"           o : out std_logic_vector(w-1 downto 0) );\n"
-		"  end component;\n"
-		"\n"
-		"  signal z0 : std_logic;\n"
-		"  signal o0 : std_logic_vector(w-1 downto 0);\n"
-		"begin ---------------------------------------------- Test 2^(n-1) leading zeros\n"
-		"  z0 <= '1' when i(w-1 downto w-2**(n-1)) = (w-1 downto w-2**(n-1) => '0') else\n"
-		"        '0';\n"
-		"\n"
-		"  o0 <= i                                                    when z0 = '0' else\n"
-		"        i(w-2**(n-1)-1 downto 0) & (2**(n-1)-1 downto 0 => '0');\n"
-		"   z(n-1) <= z0;\n"
-		"    ----------------------------------------------------------------- Final stage\n"
-		"  single : if n = 1 generate\n"
-		"    o <= o0;\n"
-		"  end generate;\n"
-		"  ------------------------------------------------------------- Recursive stage\n"
-		"  recursive : if n > 1 generate\n"
-		"    lzc_norm0 : " << uniqueName_ << "_lzc_norm\n"
-		"      generic map ( w => w,\n"
-		"                    n => n-1 )\n"
-		"      port map ( i => o0,\n"
-		"                 z => z(n-2 downto 0),\n"
-		"                 o => o );\n"
-		"  end generate;\n"
-		"\n"
-		"end architecture; -------------------------------------------------------------\n"
-		"\n"
-		"\n"
-		"\n"
-		"\n"
-		"\n"
-		"\n"
-		"\n"
-		"\n"
-		"\n"
-		"\n"
-		"\n"
-		"\n"
-		"library ieee;\n"
-		"use ieee.std_logic_1164.all;\n"
-		"use ieee.std_logic_arith.all;\n"
-		"use ieee.std_logic_unsigned.all;\n"
-		"\n"
-		"-- Entity fp_log defined here\n"
-		" \n";
-
-	// TODO replace with constants
-	o << "entity " << name << " is " << endl;
-	o << "  generic ( wE : positive := " << wE  << ";" << endl;
-	o << "            wF : positive := "  << wF << ");" << endl;
-	o << "  port ( X : in  std_logic_vector(2+wE+wF downto 0);" << endl;
-	o << "         R : out std_logic_vector(2+wE+wF downto 0)";
-	if (isSequential())
-		o  << ";" << endl << "         clk : in  std_logic  );" << endl;
-	else
-		o  << "  );" << endl;
-		
-	o << "end entity;" << endl;
-	o << "architecture arch of "  << name << " is " << endl;
-
-	lzoc->outputVHDLComponent(o);
-	o <<
-		"\n"
-		"  component " << uniqueName_ << "_lshift is\n"
-		"    generic ( w : positive;\n"
-		"              n : positive );\n"
-		"    port ( i  : in  std_logic_vector(w-1 downto 0);\n"
-		"           s  : in std_logic_vector(n-1 downto 0);\n"
-		"           o  : out std_logic_vector(w-1 downto 0) );\n"
-		"  end component;\n"
-		"\n"	
-		"  component " << uniqueName_ << "_rshift is\n"
-		"    generic ( w : positive;\n"
-		"              n : positive );\n"
-		"    port ( i  : in  std_logic_vector(w-1 downto 0);\n"
-		"           s  : in std_logic_vector(n-1 downto 0);\n"
-		"           o  : out std_logic_vector(w-1 downto 0) );\n"
-		"  end component;\n"
-		"\n"
-		"  component " << uniqueName_ << "_lzc_norm is\n"
-		"    generic ( w : positive;\n"
-		"              n : positive );\n"
-		"    port ( i : in  std_logic_vector(w-1 downto 0);\n"
-		"           z : out std_logic_vector(n-1 downto 0);\n"
-		"           o : out std_logic_vector(w-1 downto 0) );\n"
-		"  end component;\n"
-		"\n"
-		"  -- def of component range_red, and many constants and signals,  here\n";
-
-	o <<   "  component " << uniqueName_ << "_range_red is port ("<<endl;
-	o <<   "            Y0 : in  std_logic_vector("<<wF+1<<" downto 0);"<<endl;
-	o <<   "            A  : in std_logic_vector("<< a[0]-1 <<" downto 0);"<<endl;
-	if(isSequential()) 
-		o << "          clk  : in std_logic;"<<endl;
-	o <<   "            Z  : out std_logic_vector("<< s[stages+1]-1 <<" downto 0);"<<endl;
-	o <<   "    almostLog  : out std_logic_vector("<< lt0->wOut-1 <<" downto 0)  );"<<endl;
-	o <<   "  end component;"<<endl;
-	o <<   "  constant g   : positive := "<<gLog<<";"<<endl;
-	o <<   "  constant a0 : positive := "<< a[0] <<";"<<endl;
-	o <<   "  constant log2wF : positive := "<< intlog2(wF) <<";"<<endl;
-	o <<   "  constant targetprec : positive := "<< target_prec <<";"<<endl;
-	o <<   "  constant sfinal : positive := "<< sfinal <<";"<<endl;
-	o <<   "  constant pfinal : positive := "<< pfinal <<";"<<endl;
-	o <<   "  constant lzc_size : positive := "<< lzc_size << ";" << endl;
-
-	// the maximum shift distance in the "small" path ?
-	// o << "  constant shiftvalsize : positive := "<< intlog2(wF + 1 - p[stages+1]) <<";"<<endl;
-
-	// The log2 constant
-	mpfr_init2(two, 2);
-	mpfr_set_d(two, 2.0, GMP_RNDN);
-	mpfr_init2(log2, wF+gLog);
-	mpfr_log(log2, two, GMP_RNDN);
-	mpfr_shift_left(log2, wF+gLog);
-	mpz_init2(zlog2, wF+gLog);
-	mpfr_get_z(zlog2, log2, GMP_RNDN);
-	o << "  signal log2 : std_logic_vector(wF+g-1 downto 0) := \"";
-	printBinPosNumGMP(o, mpz_class(zlog2), wF+gLog);
-	o << "\";"<<endl;
-	o << "  signal E0offset : std_logic_vector(wE-1 downto 0) := \"";
-	printBinPosNumGMP(o, (mpz_class(1)<<(wE-1)) -2 + wE , wE);
-	o << "\"; -- E0 + wE "<<endl;
-	o << "  signal pfinal_s : std_logic_vector(log2wF -1 downto 0) := \"";
-	printBinPosNumGMP(o, mpz_class(p[stages+1]), intlog2(wF));
-	o << "\";"<<endl;
-
-	o <<
-		"  signal FirstBit : std_logic;\n"
-		"  signal Y0 : std_logic_vector(wF+1 downto 0);\n"
-		"  signal E  : std_logic_vector(wE-1 downto 0);\n"
-		"  signal absE  : std_logic_vector(wE-1 downto 0);\n"
-		"  signal absELog2  : std_logic_vector(wF+wE+g-1 downto 0);\n"
-		"  signal absELog2_pad, LogF_normal_pad, Log_normal, Log_normal_normd  : std_logic_vector(wE+targetprec-1 downto 0);\n"
-		"  signal E_small,ER  : std_logic_vector(wE-1 downto 0);\n"
-		"  signal E_normal  : std_logic_vector(lzc_size-1 downto 0);\n"
-		"  signal Log_small_normd, Log_g  : std_logic_vector(wF+g-1 downto 0);\n"
-		"  signal EFR  : std_logic_vector(wE+wF-1 downto 0);\n"
-		"  signal lzo : std_logic_vector(log2wF-1 downto 0);\n"
-		"  signal shiftval : std_logic_vector(log2wF downto 0);\n"
-		"  signal absZ0, absZ0s : std_logic_vector(wF-pfinal+1 downto 0);\n"
-		"  signal Zfinal, Log1p_normal : std_logic_vector(sfinal-1 downto 0);\n"
-		"  signal Z2o2_full: std_logic_vector(2*(sfinal-pfinal) -1 downto 0);\n"
-		"  signal squarerIn: std_logic_vector(sfinal-pfinal-1 downto 0);\n"
-		"  signal Z2o2_small_s, Z2o2: std_logic_vector(sfinal-pfinal downto 0);\n"
-		"  signal Log_small, Z_small, Z2o2_small: std_logic_vector(wF+g+1 downto 0);  \n"
-		"  signal almostLog, logF_normal : std_logic_vector(targetprec-1 downto 0);\n"
-		"  signal E0_sub : std_logic_vector(1 downto 0);\n"
-		"  signal sR, small, doRR, ufl, sticky, round: std_logic;\n"
-		"begin\n"
-		"\n"
-		"  FirstBit <=  X(wF-1);\n"
-		"  Y0 <=      \"1\"  & X(wF-1 downto 0) & \"0\" when FirstBit = '0'\n"
-		"        else \"01\" & X(wF-1 downto 0);\n"
-		"\n"
-		"  E  <= (X(wE+wF-1 downto wF)) - (\"0\" & (wE-2 downto 1 => '1') & (not FirstBit));\n"
-		"\n"
-		"  sR <= '0'   when    X(wE+wF-1 downto wF)   =   '0' &(wE-2 downto 0 => '1')  -- binade [1..2)\n"
-		"        else not X(wE+wF-1);                -- MSB of exponent\n"
-		"\n"
-		"  absE <= ((wE-1 downto 0 => '0') - E)   when sR = '1'\n"
-		"          else E;\n"
-		"\n"
-		"  absELog2 <= absE * log2;\n"
-		"  \n"
-		"  lzoc1 : " << lzoc->getOperatorName() << "\n"
-		"    port map (  i => Y0(wF downto 1), ozb => FirstBit,  o => lzo);\n"
-		"\n"
-		"  shiftval <= ('0' & lzo) - ('0' & pfinal_s); \n"
-		"\n"
-		"  doRR <= shiftval(log2wF);             -- sign of the result\n"
-		"\n"
-		"  small <= '1' when ((E=(wE-1 downto 0 => '0')) and (doRR='0'))\n"
-		"          else '0';\n"
-		"\n"
-		"-- The range reduction instance\n"
-		"  rr: " << uniqueName_ << "_range_red\n"
-		"     port map ( A => X(wF-1 downto wF-a0), Y0 => Y0,\n";
-
-	if(isSequential())
-		o << "                clk=>clk,"<<endl;
-
-	o <<
-			"                Z => Zfinal, almostLog => almostLog);\n"
-			"  absZ0 <=   Y0(wF-pfinal+1 downto 0)          when (sR='0') else\n"
-			"             ((wF-pfinal+1 downto 0 => '0') - Y0(wF-pfinal+1 downto 0));\n"
-			"\n"
-			"--  absZ0 <=   Y0(wF-pfinal downto 0)   xor (wF-pfinal downto 0 => sR);\n"
-			"\n"
-			"  lshiftsmall: " << uniqueName_ << "_lshift\n"
-			"    generic map (w => wF-pfinal+2, n => log2wF)\n"
-			"    port map (  i => absZ0, s => shiftval(log2wF-1 downto 0), o => absZ0s );\n"
-			"\n"
-			"  -- Z2o2 will be of size sfinal-pfinal, set squarer input size to that\n"
-			"  sqintest: if sfinal > wf+2 generate\n"
-			"    squarerIn <= Zfinal(sfinal-1 downto pfinal) when doRR='1'\n"
-			"                 else (absZ0s &  (sfinal-wF-3 downto 0 => '0'));  \n"
-			"  end generate sqintest;\n"
-			"  sqintest2: if sfinal <= wf+2 generate\n"
-			"    squarerIn <= Zfinal(sfinal-1 downto pfinal) when doRR='1'\n"
-			"                 else absZ0s(wF-pfinal+1 downto wf+2-sfinal);  \n"
-			"  end generate sqintest2;\n"
-			"\n"
-			"  -- Z2o2 will be of size sfinal - pfinal -1, set squarer input size to that\n"
-			"--  sqintest: if sfinal >= wf+3 generate\n"
-			"--    squarerIn <= Zfinal(sfinal-1 downto pfinal+1) when doRR='1'\n"
-			"--                 else (absZ0s &  (sfinal-wF-4 downto 0 => '0'));  \n"
-			"--  end generate sqintest;\n"
-			"--  sqintest2: if sfinal < wf+3 generate\n"
-			"--    squarerIn <= Zfinal(sfinal-1 downto pfinal+1) when doRR='1'\n"
-			"--                 else absZ0s(wF-pfinal+1 downto wf+3-sfinal);  \n"
-			"--  end generate sqintest2;\n"
-			" \n"
-			"  Z2o2_full <= (squarerIn * squarerIn);\n"
-			"  Z2o2 <= Z2o2_full (2*(sfinal-pfinal)-1  downto sfinal-pfinal-1);\n"
-			"\n"
-			"  Log1p_normal  <=   Zfinal  -  ((sfinal-1 downto sfinal-pfinal-1  => '0') & (Z2o2(sfinal-pfinal downto 2)));\n"
-			"\n"
-			"  LogF_normal <=   almostLog + ((targetprec-1 downto sfinal => '0') & Log1p_normal);\n"
-			"\n"
-			"  absELog2_pad <=   absELog2 & (targetprec-wF-g-1 downto 0 => '0');       \n"
-			"  LogF_normal_pad <= (wE-1  downto 0 => LogF_normal(targetprec-1))  & LogF_normal;\n"
-			"  \n"
-			"  Log_normal <=  absELog2_pad  + LogF_normal_pad when sR='0'  \n"
-			"                else absELog2_pad - LogF_normal_pad;\n"
-			"\n"
-			"  lzc_norm_0 : " << uniqueName_ << "_lzc_norm\n"
-			"    generic map (w => wE+targetprec, n => lzc_size)\n"
-			"    port map (i => Log_normal, z => E_normal, o => Log_normal_normd);\n"
-			"\n"
-			"\n"
-			"  rshiftsmall: " << uniqueName_ << "_rshift\n"
-			"    generic map (w => sfinal-pfinal+1,  n => log2wF) \n"
-			"    port map (i => Z2o2,\n"
-			"              s => shiftval(log2wF-1 downto 0),\n"
-			"              o => Z2o2_small_s);\n"
-			"\n"
-			"  -- send the MSB to position pfinal\n"
-			"  Z2o2_small <=  (pfinal-1 downto 0  => '0') & Z2o2_small_s & (wF+g-sfinal downto 0  => '0') ;\n"
-			"\n"
-			"  -- mantissa will be either Y0-z^2/2  or  -Y0+z^2/2,  depending on sR  \n"
-			"\n"
-			"  Z_small <= (absZ0s & (pfinal+g-1 downto 0 => '0'));\n"
-			"  Log_small  <=       Z_small -  Z2o2_small when (sR='0')\n"
-			"                else  Z_small +  Z2o2_small;\n"
-			"\n"
-			"  -- Possibly subtract 1 or 2 to the exponent, depending on the LZC of Log_small\n"
-			"  E0_sub <=      \"11\" when Log_small(wF+g+1) = '1'\n"
-			"            else \"10\" when Log_small(wF+g+1 downto wF+g) = \"01\"\n"
-			"            else \"01\" ;\n"
-			"\n"
-			"  E_small <=  \"0\" & (wE-2 downto 2 => '1') & E0_sub\n"
-			"               - ((wE-1 downto log2wF => '0') & lzo) ;\n"
-			"\n"
-			"  Log_small_normd <= Log_small(wF+g+1 downto 2) when Log_small(wF+g+1)='1'\n"
-			"             else Log_small(wF+g downto 1)  when Log_small(wF+g)='1'  -- remove the first zero\n"
-			"             else Log_small(wF+g-1 downto 0)  ; -- remove two zeroes (extremely rare, 001000000 only)\n"
-			"                                               \n"
-			"  ER <= E_small when small='1'\n"
-			"        else E0offset - ((wE-1 downto lzc_size => '0') & E_normal);\n"
-			"  -- works only if wE > lzc_size approx log2wF, OK for usual exp/prec\n"
-			"\n"
-			"  Log_g  <=  Log_small_normd (wF+g-2 downto 0) & \"0\" when small='1'           -- remove implicit 1\n"
-			"        else Log_normal_normd(wE+targetprec-2 downto wE+targetprec-wF-g-1 );  -- remove implicit 1\n"
-			"\n"
-			"  sticky <= '0' when Log_g(g-2 downto 0) = (g-2 downto 0 => '0') else\n"
-			"            '1';\n"
-			"  round <= Log_g(g-1) and (Log_g(g) or sticky);\n"
-			"\n"
-			"  -- use a trick: if round leads to a change of binade, the carry propagation\n"
-			"  -- magically updates both mantissa and exponent\n"
-			"  EFR <= (ER & Log_g(wF+g-1 downto g)) + ((wE+wF-1 downto 1 => '0') & round); \n"
-			"\n"
-			"\n"
-			"  -- The smallest log will be log(1+2^{-wF}) \\approx 2^{-wF}\n"
-			"  -- The smallest representable number is 2^{-2^(wE-1)} \n"
-			"  -- Therefore, if \n"
-			"--    underflow : if max(wE, log2(wF)+1) > wE generate\n"
-			"--      ufl <=      '1' when (eR2(wE0-1) = '1') or (eR = (wE-1 downto 0 => '0'))\n"
-			"--             else '0';\n"
-			"--    end generate;\n"
-			"\n"
-			"--    no_underflow : if max(wE, log2(wE+wF)+2) = wE generate\n"
-			"      ufl <= '0';\n"
-			"--    end generate;\n"
-			"\n"
-			"  R(wE+wF+2 downto wE+wF) <= \"110\" when ((X(wE+wF+2) and (X(wE+wF+1) or X(wE+wF))) or (X(wE+wF+1) and X(wE+wF))) = '1' else\n"
-			"                               \"101\" when X(wE+wF+2 downto wE+wF+1) = \"00\"                                                       else\n"
-			"                               \"100\" when X(wE+wF+2 downto wE+wF+1) = \"10\"                                                       else\n"
-			"                               \"00\" & sR when (((Log_normal_normd(wE+targetprec-1)='0') and (small='0')) or ( (Log_small_normd (wF+g-1)='0') and (small='1'))) or (ufl = '1') else\n"
-			"                               \"01\" & sR;\n"
-			"\n"
-			"  R(wE+wF-1 downto 0) <=  EFR;\n"
-			"\n"
-			"end architecture;\n"
-			"\n"
-			"\n"
-			"\n"
-			"\n"
-			"\n"
-			"\n"
-			"\n"
-			"\n"
-			"\n"
-			"\n"
-			"\n"
-			"-------------------------------------------------------------------------------\n"
-			"-- Range Reduction box\n"
-			"-------------------------------------------------------------------------------\n"
-			"library ieee;\n"
-			"use ieee.std_logic_1164.all;\n"
-			"use ieee.std_logic_arith.all;\n"
-			"use ieee.std_logic_unsigned.all;\n"
-			"\n"
-			"\n";
-
-	//---------------Range reduction entity----------------------------------------------
-
-	o <<   "entity " << uniqueName_ << "_range_red is port ("<<endl;
-	o <<   "          Y0 : in  std_logic_vector("<<wF+1<<" downto 0);"<<endl;
-	o <<   "          A  : in std_logic_vector("<< a[0]-1 <<" downto 0);"<<endl;
-	if(isSequential()) 
-		o << "          clk  : in std_logic;"<<endl;
-	o <<   "          Z  : out std_logic_vector("<< s[stages+1]-1 <<" downto 0);"<<endl;
-	o <<   "  almostLog  : out std_logic_vector("<< lt0->wOut-1 <<" downto 0)  );"<<endl;
-	o <<   "end entity;"<<endl<<endl;
-
-
-	o << "architecture arch of " << uniqueName_ << "_range_red is " <<endl<<endl;
-	// All the components for the tables
-	ostringstream nameIT0;
-	nameIT0 << uniqueName_ << "_invtable0_" << wE << "_" <<wF;
-	it0->outputComponent(o, nameIT0.str());
-
-	ostringstream nameLT0;
-	nameLT0 << uniqueName_ << "_logtable0_" << wE << "_" <<wF;
-	lt0->outputComponent(o, nameLT0.str());
-
-	for(i=1; i<=stages; i++) {
-		ostringstream name3;
-		name3 << uniqueName_ << "_logtable"<<i<<"_" << wE << "_" <<wF;
-		lt[i]->outputComponent(o, name3.str()); 
-	}
-
-
-	for (i=0; i<= stages; i++) {
-		o << "   signal       A"<<i<<":  std_logic_vector("<< a[i] - 1  <<" downto 0);"<<endl;
-	}
-
-	
-	for (i=1; i<= stages; i++)
-			o << "   signal       B"<<i<<":  std_logic_vector("<< s[i] - a[i] - 1  <<" downto 0);"<<endl;
-
-	for (i=0; i<= stages+1; i++)
-		o << "   signal Z"<<i<<", Z"<<i<<"_d:  std_logic_vector("<< s[i] - 1  <<" downto 0);"<<endl;
-
-	for (i=1; i<= stages; i++) {
-		o << "   signal    epsZ"<<i<<":  std_logic_vector("<< s[i]+p[i]+1  <<" downto 0);"<<endl;
-	}
-	// we compute Z[i+1] = B[i] - A[i]Z[i] + (1+Z[i])>>eps[i]
-	// Product  A[i]Z[i] has MSB 2*p[i], LSB target_prec, therefore size target_prec - 2*p[i]
-	// We need only this many bits of Z[i] to compute it.
-	for (i=1; i<= stages; i++) {
-		o << "   signal      ZM"<<i<<":  std_logic_vector("<< psize[i] - 1  <<" downto 0);"<<endl;
-	}
-
-	o << "   signal       P0:  std_logic_vector("<<  it0->wOut + s[0] - 1  <<" downto 0);"<<endl;
-
-	for (i=1; i<= stages; i++) {
-		o << "   signal       P"<<i<<":  std_logic_vector("<< psize[i]+a[i] - 1  <<" downto 0);"<<endl;
-	}
-
-	o << "   signal       L0:  std_logic_vector("<< lt0->wOut -1 <<" downto 0);"<<endl;
-
-	for (i=1; i<= stages; i++)
-			o << "   signal       L"<<i<<":  std_logic_vector("<< lt[i]->wOut -1 <<" downto 0);"<<endl;
-
-	// Note that all the Si have the size of L0: absence of carry out is proven.
-	for (i=1; i<= stages+1; i++)
-		o << "   signal S"<<i<<", S"<<i<<"_d:  std_logic_vector("<< lt0->wOut-1 <<" downto 0);"<<endl;
-
-	o << "   signal    InvA0:  std_logic_vector("<< a[0]  <<" downto 0);"<<endl;
-	//  o << "   " <<endl;
-
-
-
-	o << "begin" <<endl;
-	//  o << "   A0 <= Fx (wF-1 downto wF-"<<a[0]<<");" <<endl;
-	o << "   A0 <= A;"<<endl;
-	o << "   it0:"<<nameIT0.str()<<" port map (x=>A0, y=>InvA0);" <<endl; 
-	o << "   lt0:"<<nameLT0.str()<<" port map (x=>A0, y=>L0);"<<endl;
-	o << "   P0 <= InvA0 * Y0;" <<endl <<endl;
-	if(isSequential()) 
-	{
-		o << "   -- Synchronization barrier 1 " <<endl;
-		o << "   process(clk)  begin\n     if clk'event and clk='1' then"<<endl;
-		o << "     Z1_d <= P0("<< s[1] -1<<" downto 0);"<<endl;
-		o << "     S1_d <= L0;"<<endl;
-		o << "     end if;\n   end process;"<<endl<<endl;
-	}
-	else
-	{
-		o << "   Z1_d <= P0("<< s[1] -1<<" downto 0);"<<endl;
-		o << "   S1_d <= L0;"<<endl;
-	}
-
-	for (i=1; i<= stages; i++) {
-
-		o <<endl;
-			//computation
-		o << "   A"<<i<<" <= Z"<<i<<"_d(" << s[i] - 1  <<" downto "<< s[i] - a[i]  << ");"<<endl;
-		o << "   B"<<i<<" <= Z"<<i<<"_d(" << s[i] - a[i] - 1  <<" downto 0 );"<<endl;
-		o << "   lt"<<i<<":" << uniqueName_ << "_logtable"<<i<<"_"<< wE <<"_"<<wF<<" port map (x=>A"<<i<<", y=>L"<<i<<");"<<endl;
-		if(psize[i] == s[i])
-			o << "   ZM"<<i<<" <= Z"<<i<< "_d;"<<endl;   
-		else
-			o << "   ZM"<<i<<" <= Z"<<i<<"_d(" <<s[i]-1   <<" downto "<< s[i]-psize[i]  << ");"<<endl;   
-		o << "   P"<<i<<" <= A"<<i<<"*ZM"<<i<<";"<<endl;
-
-		if(i==1) // special case for the first iteration
-			{
-				o << "   epsZ"<<i<<" <= ("<<s[i]+p[i]+1<<" downto 0 => '0') "
-				     << "     when  A1 = ("<<a[1]-1<<" downto 0 => '0')"<<endl
-				     << "       else (\"01\" & ("<<p[i]-1<<" downto 0 => '0') & Z"<<i<<"_d )"
-				     << "  when ((A1("<<a[1]-1<<")='0') and (A1("<<a[1]-2<<" downto 0) /= ("<<a[1]-2<<" downto 0 => '0')))"<<endl
-				     << "       else "
-				     << "(\"1\" & ("<<p[i]-1<<" downto 0 => '0') & Z"<<i<<"_d  & \"0\") "
-				     << ";"<<endl;
-			}
-		else 
-			{
-				o << "   epsZ"<<i<<" <=  ("<< s[i]+p[i]+1<<" downto 0 => '0') "
-				     << "     when  A"<<i<<" = ("<<a[i]-1<<" downto 0 => '0')"<<endl
-				     << "     else    (\"01\" & ("<<p[i]-1<<" downto 0 => '0') & Z"<<i<<"_d);"<<endl;
-			}
-
-		o << "   Z"<<i+1<<" <=   (\"0\" & B"<<i;
-		if (s[i+1] > 1+(s[i]-a[i]))  // need to padd Bi
-			o << " & ("<<s[i+1] - 1-(s[i]-a[i]) -1<<" downto 0 => '0') ";    
-		o <<")"<<endl 
-				 << "         - ( ("<<p[i]-a[i]<<" downto 0 => '0') & P"<<i;
-		// either pad, or truncate P
-		if(p[i]-a[i]+1  + psize[i]+a[i]  < s[i+1]) // size of leading 0s + size of p 
-			 o << " & ("<<s[i+1] - (p[i]-a[i]+1  + psize[i]+a[i]) - 1 <<" downto 0 => '0')";  // Pad
-		if(p[i]-a[i]+1  + psize[i]+a[i]  > s[i+1]) 
-			//truncate
-			o <<"("<< psize[i]+a[i] - 1  <<" downto "<<  p[i]-a[i]+1  + psize[i]+a[i]  - s[i+1] << " )";
-		o << "  )"<< endl;
-
-		o << "         + epsZ"<<i << "("<<s[i]+p[i]+1<<" downto "<<s[i]+p[i] +2 - s[i+1]<<")"
-				 << ";"<<endl;
-			
-
-		o << "   S"<<i+1<<" <=   S"<<i<<"_d + (("<<lt0->wOut-1<<" downto "<<lt[i]->wOut<<" =>'0') & L"<<i<<");"<<endl;
-
-		o << endl;
-		if (isSequential()) 
-			{
-				o << "   -- Synchronization barrier "<<i+1 <<endl;
-				o << "   process(clk)  begin\n     if clk'event and clk='1' then"<<endl;
-				o << "     Z"<<i+1<<"_d <=   Z"<<i+1<< ";"<<endl;
-				o << "     S"<<i+1<<"_d <=   S"<<i+1<< ";"<<endl;
-				o << "     end if;\n   end process;"<<endl<<endl;
-			}
-		else
-			{
-				o << "   Z"<<i+1<<"_d <=   Z"<<i+1<< ";"<<endl;
-				o << "   S"<<i+1<<"_d <=   S"<<i+1<< ";"<<endl<<endl;
-			}
-	}
-
-
-	o << "   Z <= Z"<<stages+1<<"_d;"<<endl;  
-	o << "   almostLog <= S"<<stages+1<<"_d;"<<endl;  
-
-	o << "end architecture;" <<endl<<endl;
-
-	// All the tables 
-	ostringstream  name4;
-	name4 << uniqueName_ << "_invtable0_" << wE << "_" <<wF;
-	it0->output(o, name4.str());
-
-	ostringstream name5;
-	name5 << uniqueName_ << "_logtable0_" << wE << "_" <<wF;
-	lt0->output(o, name5.str());
-
-	for(i=1; i<=stages; i++) {
-		ostringstream name6;
-		name6 << uniqueName_ << "_logtable"<<i<<"_" << wE << "_" <<wF;
-		lt[i]->output(o, name6.str()); 
-	}
-}
-#endif // commented out
 
 
 TestIOMap FPLog::getTestIOMap()
