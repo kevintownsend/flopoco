@@ -433,6 +433,32 @@ public:
 	string use(string name);
 
 	
+	/** Declare an output mapping for an instance of a sub-component
+	 * Also declares the local signal implicitely, with width taken from the component 	
+	 * @param op is a pointer to the subcomponent
+	 * @param componentPortName is the name of the port on the component
+	 * @param actualSignalName is the name of the signal in This mapped to this port
+	 * @return name
+	 */
+	void outPortMap(Operator* op, string componentPortName, string actualSignalName);
+
+
+	/** use a signal as input of a subcomponent
+	 * @param componentPortName is the name of the port on the component
+	 * @param actualSignalName is the name of the signal in This mapped to this port
+	 * @return name
+	 */
+	void inPortMap(Operator* op, string componentPortName, string actualSignalName);
+
+
+	/** returns the VHDL for an instance of a sub-component. 
+	 * @param componentPortName is the name of the port on the component
+	 * @param actualSignalName is the name of the signal in This mapped to this port
+	 * @return name
+	 */
+	string instance(Operator* op, string instanceName);
+
+	
 	/** build all the signal declarations from signals implicitely declared by declare().
 	 *  This is the 2.0 equivalent of outputVHDLSignalDeclarations
 	 */
@@ -455,6 +481,7 @@ protected:
 	string          uniqueName_; /**< By default, a name derived from the operator class and the parameters */
 	vector<Signal*> ioList_;     /**< The list of I/O signals of the operator */
 	vector<Signal*> signalList_; /**< The list of internal signals of the operator */
+	map<string, string>  portMap_;/**< Port map for an instance of this operator */
 	map<string, double>    outDelayMap;
 	ostringstream     vhdl;      /**< The internal stream to which the constructor will build the VHDL code */
 private:

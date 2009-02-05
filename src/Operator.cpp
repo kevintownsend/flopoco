@@ -437,12 +437,22 @@ void Operator::nextCycle() {
 
 
 void Operator::syncCycleFromSignal(string name) {
+	ostringstream e;
+	e << "ERROR in syncCycleFromSignal, "; // just in case
+
 	if(isSequential()) {
 		Signal* s;
-		s=getSignalByName(name);
+		try {
+			s=getSignalByName(name);
+		}
+		catch (string e2) {
+			e << endl << tab << e2;
+			throw e.str();
+		}
+
 		if( s->getCycle() < 0 ) {
 			ostringstream o;
-			o << "ERROR in syncCycleFromSignal, signal " << name<< " doesn't have (yet?) a valid cycle";
+			o << "signal " << name<< " doesn't have (yet?) a valid cycle";
 		throw o.str();
 		} 
 		cycle_ = s->getCycle();
@@ -474,18 +484,28 @@ string Operator::declare(string name, const int width, bool isbus) {
 	return name;
 }
 
+
+
 string Operator::use(string name) {
+	ostringstream e;
+	e << "ERROR in use(), "; // just in case
+	
 	if(isSequential()) {
 		Signal *s;
-		s=getSignalByName(name);
+		try {
+			s=getSignalByName(name);
+		}
+		catch (string e2) {
+			e << endl << tab << e2;
+			throw e.str();
+		}
 		if(s->getCycle() < 0) {
-			ostringstream e;
-			e << "ERROR in use(), signal " << name<< " doesn't have (yet?) a valid cycle";
+			e << "signal " << name<< " doesn't have (yet?) a valid cycle";
 			throw e.str();
 		} 
 		if(s->getCycle() > cycle_) {
 			ostringstream e;
-			e << "ERROR in use(), active cycle of signal " << name<< " is later than current cycle, cannot delay it";
+			e << "active cycle of signal " << name<< " is later than current cycle, cannot delay it";
 			throw e.str();
 		} 
 		// update the maxDelay value of s
@@ -495,6 +515,130 @@ string Operator::use(string name) {
 	else
 		return name;
 }
+
+
+
+
+void Operator::outPortMap(Operator* op, string componentPortName, string actualSignalName){
+	Signal* formal;
+	Signal* s;
+	ostringstream e;
+	e << "ERROR in outPortMap(), "; // just in case
+	// check the signals doesn't already exist
+	if(signalMap_.find(actualSignalName) !=  signalMap_.end()) {
+		e << "signal " << actualSignalName << " already exists";
+		throw e.str();
+	}
+	try {
+		formal=op->getSignalByName(componentPortName);
+	}
+	catch (string e2) {
+		e << endl << tab << e2;
+		throw e.str();
+	}
+	if (formal->type()!=Signal::out){
+		e << "signal " << componentPortName << " of component " << op->getOperatorName() 
+		  << " doesn't seem to be an output port";
+		throw e.str();
+	}
+	int width = formal -> width();
+	bool isbus = formal -> isBus();
+	// construct the signal (maxDelay and cycle are reset to 0 by the constructor)
+	s = new Signal(actualSignalName, Signal::wire, width, isbus);
+	// define its cycle 
+	if(isSequential())
+		s->setCycle( this->cycle_ + op->getPipelineDepth() );
+	// add the signal to signalMap and signalList
+	signalList_.push_back(s);    
+	signalMap_[actualSignalName] = s ;
+
+	// add the mapping to the mapping list of Op
+	op->portMap_[componentPortName] = actualSignalName;
+}
+
+
+void Operator::inPortMap(Operator* op, string componentPortName, string actualSignalName){
+	Signal* formal;
+	Signal* s;
+	ostringstream e;
+	string name;
+	e << "ERROR in inPortMap(), "; // just in case
+	
+	if(isSequential()) {
+		Signal *s;
+		try {
+			s=getSignalByName(actualSignalName);
+		}
+		catch (string e2) {
+			e << endl << tab << e2;
+			throw e.str();
+		}
+		if(s->getCycle() < 0) {
+			ostringstream e;
+			e << "signal " << actualSignalName<< " doesn't have (yet?) a valid cycle";
+			throw e.str();
+		} 
+		if(s->getCycle() > cycle_) {
+			ostringstream e;
+			e << "active cycle of signal " << actualSignalName<< " is later than current cycle, cannot delay it";
+			throw e.str();
+		} 
+		// update the maxDelay value of s
+		s->updateMaxDelay( cycle_ - s->getCycle() );
+		name = s->delayedName( cycle_ - s->getCycle() );
+	}
+	else
+		name = actualSignalName;
+
+	try {
+		formal=op->getSignalByName(componentPortName);
+	}
+	catch (string e2) {
+		e << endl << tab << e2;
+		throw e.str();
+	}
+	if (formal->type()!=Signal::in){
+		e << "signal " << componentPortName << " of component " << op->getOperatorName() 
+		  << " doesn't seem to be an input port";
+		throw e.str();
+	}
+
+
+	// add the mapping to the mapping list of Op
+	op->portMap_[componentPortName] = name;
+}
+
+
+string Operator::instance(Operator* op, string instanceName){
+	ostringstream o;
+	// TODO add checks here?
+	
+	o << tab << instanceName << ": " << op->getOperatorName();
+	if (isSequential()) 
+		o << "  -- pipelineDepth="<< op->getPipelineDepth();
+	o << endl;
+	o << tab << tab << "port map (";
+	// build vhdl and erase portMap_
+	map<string,string>::iterator it;
+	if(isSequential()) {
+		o <<            " clk  => clk, " << endl;
+		o <<  tab <<tab << "           rst  => rst, " << endl;
+	}
+	it=op->portMap_.begin();
+	o << tab << tab << "           " << (*it).first << " => "  << (*it).second;
+	op->portMap_.erase(it);
+	it++;
+	for (  ; it != op->portMap_.end(); it++ ) {
+		o << "," << endl;
+		o <<  tab << tab << "           " << (*it).first << " => "  << (*it).second;
+		op->portMap_.erase(it);
+	}
+	o << ");" << endl;
+
+	return o.str();
+}
+	
+
 
 
 string Operator::buildVHDLSignalDeclarations() {
@@ -507,6 +651,19 @@ string Operator::buildVHDLSignalDeclarations() {
 	return o.str();	
 }
 
+
+
+#if 0 // the world is not ready yet
+string Operator::buildVHDLComponentDeclarations() {
+	ostringstream o;
+	for(int i=0; i<subComponentList_.size(); i++) {
+		Operator *op = subComponentList_[i];
+		outputVHDLComponent(o);
+		o<< endl;
+	}
+	return o.str();	
+}
+#endif
 
 string  Operator::buildVHDLRegisters() {
 	ostringstream o;

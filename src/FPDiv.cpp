@@ -57,7 +57,7 @@ FPDiv::FPDiv(Target* target, int wE, int wF) :
 
 		
 	// -------- Parameter set up -----------------
-	nDigit = int(ceil( double(wF+6)/2));
+	nDigit = (wF+6) >> 1; 
 
 	addFPInput ("X", wE, wF);
 	addFPInput ("Y", wE, wF);
@@ -97,10 +97,22 @@ FPDiv::FPDiv(Target* target, int wE, int wF) :
 	nextCycle();/////////////////////////////////////////////////////////////
 
 	for(i=nDigit-1; i>=1; i--) {
-		ostringstream wi, qi, wim1;
+		ostringstream wi, qi, wim1, stepi;
 		wi << "w" << i;
 		qi << "q" << i;
 		wim1 << "w" << i-1;
+		stepi << "step" << i; // the instance name
+	
+#if 1
+	
+		inPortMap(srt4step, "x", wi.str());
+		inPortMap(srt4step, "d", "fY");
+		inPortMap(srt4step, "dtimes3", "fYTimes3");
+		outPortMap(srt4step, "q", qi.str());
+		outPortMap(srt4step, "w", wim1.str());
+		vhdl << instance(srt4step, stepi.str());
+
+#else
 		//		vhdl << tab << "-- SRT4 step "; 
 		vhdl << tab << "step" << i << ": " << srt4step->getOperatorName();
 		if (isSequential()) 
@@ -115,6 +127,8 @@ FPDiv::FPDiv(Target* target, int wE, int wF) :
 		}
 		vhdl << tab << tab << "              q  => " << declare(qi.str(),3) << "," << endl;
 		vhdl << tab << tab << "              w  => " << declare(wim1.str(), wF+3) << "     );" <<endl;
+
+#endif
 		nextCycle();///////////////////////////////////////////////////////////////////////
 
 	}
@@ -152,11 +166,12 @@ FPDiv::FPDiv(Target* target, int wE, int wF) :
 
 	nextCycle();///////////////////////////////////////////////////////////////////////
 	
+
 	vhdl << tab << declare("fR", wF+4) << " <= "; 
 	if (1 == (wF & 1) ) // odd wF
     	vhdl << use("fR0") << "(" << 2*nDigit-1 << " downto 1);  -- odd wF" << endl;
 	else 
-    	vhdl << use("fR0") << "(" << 2*nDigit-1 << " downto 3)  & (fR0(2) or fR0(1));  -- even wF, fixing the round bit" << endl;
+    	vhdl << use("fR0") << "(" << 2*nDigit-1 << " downto 3)  & (" << use("fR0") << "(2) or " << use("fR0") << "(1));  -- even wF, fixing the round bit" << endl;
 
 
 	vhdl << tab << "-- normalisation" << endl;
