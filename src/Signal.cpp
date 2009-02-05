@@ -6,13 +6,13 @@ using namespace std;
 
 Signal::Signal(const string name, const Signal::SignalType type, const int width, const bool isBus) : 
 	name_(name), type_(type), wE_(0), wF_(0), width_(width), low_(0), high_(width-1),
-	isSubSignal_(false), isBus_(isBus),	isFP_(false), ttl_(0), cycle_(0), liveRange_(0) {
+	isSubSignal_(false), isBus_(isBus),	isFP_(false), ttl_(0), cycle_(0), lifeSpan_(0) {
 	updateSignalName();
 }
 
 Signal::Signal(const string name, const Signal::SignalType type, const int wE, const int wF) : 
 	name_(name), type_(type), wE_(wE), wF_(wF), width_(wE+wF+3),
-	low_(0), high_(width_-1), isSubSignal_(false),isBus_(false), isFP_(true), ttl_(0), cycle_(0), liveRange_(0)
+	low_(0), high_(width_-1), isSubSignal_(false),isBus_(false), isFP_(true), ttl_(0), cycle_(0), lifeSpan_(0)
 {
 	updateSignalName();
 }
@@ -93,7 +93,7 @@ string Signal::delayedName(int delay){
 string Signal::toVHDLDeclaration() {
 	ostringstream o; 
 	o << "signal " << getName();
-	for (int i=1; i<=liveRange_; i++) {
+	for (int i=1; i<=lifeSpan_; i++) {
 			o << ", " << getName() << "_d" << i;
 	}
 	o << " : ";
@@ -167,13 +167,13 @@ uint32_t Signal::getCycle() {
 	return cycle_;
 }
 
-void Signal::updateLiveRange(uint32_t delay) {
-	if(delay>liveRange_)
-		liveRange_=delay;
+void Signal::updateLifeSpan(uint32_t delay) {
+	if(delay>lifeSpan_)
+		lifeSpan_=delay;
 	//TODO add TTL check
 }
 
-uint32_t Signal::getLiveRange() {
-	return liveRange_;
+uint32_t Signal::getLifeSpan() {
+	return lifeSpan_;
 }
 

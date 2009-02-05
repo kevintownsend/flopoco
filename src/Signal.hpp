@@ -160,13 +160,13 @@ public:
 
 	/** Updates the max delay associated to a signal
 	 */	
-	void updateLiveRange(uint32_t delay) ;
+	void updateLifeSpan(uint32_t delay) ;
 
 
 	/** obtain max delay that has been applied to this signal
 	 * @return the max delay 
 	 */	
-	uint32_t getLiveRange() ;
+	uint32_t getLifeSpan() ;
 
 private:
 	std::string   name_;        /**< The name of the signal */
@@ -175,7 +175,7 @@ private:
 	uint32_t      width_;       /**< The width of the signal */
 
 	uint32_t      ttl_;         /**< Time To Live for a delayed signal; used for early error reporting in delaySignal() */
-	uint32_t      liveRange_;    /**< The max delay that will be applied to this signal; set by delaySignal(), should be eventually equal to ttl_, otherwise a warning may be produced */
+	uint32_t      lifeSpan_;    /**< The max delay that will be applied to this signal; set by delaySignal(), should be eventually equal to ttl_, otherwise a warning may be produced */
 	uint32_t      cycle_;       /**<  the cycle at which this signal is active in a pipelined operator. 0 means synchronized with the inputs */
 	
 	bool          isFP_;        /**< If the signal is of floating-point type */  

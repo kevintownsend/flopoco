@@ -117,7 +117,6 @@ void LZOC::outputVHDL(std::ostream& o, std::string name) {
 		
 		
 		// connect first stage to I
-		cout<<"p2wOut_ is = "<<p2wOut_<<endl;
 		if (p2wOut_==wIn_)
 			o << "  level"<<wOut_<<" <=  I ;" << endl;
 		else if (p2wOut_>wIn_) // pad input with zeroes/ones function of what we count. If LZC pad with 1, else pad with 

@@ -94,7 +94,7 @@ void Operator::addSignalGeneric(const string name, const int width, const int de
 			s = new Signal(o.str(), regType, width, isbus);
 			s->setTTL(delay-i);
 			if(i>0)  // FIXME This is a hack to suppress warnings for the delayed signals. They should be handled properly
-				s->updateLiveRange(delay-i); // we know it will be delayed at least by that
+				s->updateLifeSpan(delay-i); // we know it will be delayed at least by that
 			signalList_.push_back(s);    
 			signalMap_[o.str()] = s ;
 			o  << "_d";
@@ -167,7 +167,7 @@ string Operator::delaySignal(const string name, const int delay) {
 			if(s->getTTL()<delay) {
 				cerr << "ERROR in delaySignal, signal " << name << ", with Time To Live "<< s->getTTL() << ", is delayed by "<<delay << endl;
 			}
-			s->updateLiveRange(delay);
+			s->updateLifeSpan(delay);
 		}
 		o << name;
 		for (int i=0; i<delay; i++){
@@ -234,9 +234,9 @@ const Signal * Operator::getIOListSignal(int i){
 void  Operator::checkDelays() {
 	for (int i=0; i < this->signalList_.size(); i++){
 		Signal* s = this->signalList_[i];
-		if (s->getLiveRange() < s->getTTL())
+		if (s->getLifeSpan() < s->getTTL())
 			cerr << "WARNING: Signal " << s->getName() << " declared with max TTL " << s->getTTL() 
-				  << " and used with max delay " << s->getLiveRange() <<endl; 
+				  << " and used with max delay " << s->getLifeSpan() <<endl; 
 	}
 }
 
@@ -473,7 +473,7 @@ string Operator::declare(string name, const int width, bool isbus) {
 		e << "ERROR in declare(), signal " << name<< " already exists";
 		throw e.str();
 	}
-	// construct the signal (liveRange and cycle are reset to 0 by the constructor)
+	// construct the signal (lifeSpan and cycle are reset to 0 by the constructor)
 	s = new Signal(name, Signal::wire, width, isbus);
 	// define its cycle 
 	if(isSequential())
@@ -508,8 +508,8 @@ string Operator::use(string name) {
 			e << "active cycle of signal " << name<< " is later than current cycle, cannot delay it";
 			throw e.str();
 		} 
-		// update the liveRange of s
-		s->updateLiveRange( cycle_ - s->getCycle() );
+		// update the lifeSpan of s
+		s->updateLifeSpan( cycle_ - s->getCycle() );
 		return s->delayedName( cycle_ - s->getCycle() );
 	}
 	else
@@ -543,7 +543,7 @@ void Operator::outPortMap(Operator* op, string componentPortName, string actualS
 	}
 	int width = formal -> width();
 	bool isbus = formal -> isBus();
-	// construct the signal (liveRange and cycle are reset to 0 by the constructor)
+	// construct the signal (lifeSpan and cycle are reset to 0 by the constructor)
 	s = new Signal(actualSignalName, Signal::wire, width, isbus);
 	// define its cycle 
 	if(isSequential())
@@ -583,8 +583,8 @@ void Operator::inPortMap(Operator* op, string componentPortName, string actualSi
 			e << "active cycle of signal " << actualSignalName<< " is later than current cycle, cannot delay it";
 			throw e.str();
 		} 
-		// update the liveRange of s
-		s->updateLiveRange( cycle_ - s->getCycle() );
+		// update the lifeSpan of s
+		s->updateLifeSpan ( cycle_ - s->getCycle() );
 		name = s->delayedName( cycle_ - s->getCycle() );
 	}
 	else
@@ -674,8 +674,8 @@ string  Operator::buildVHDLRegisters() {
 		  << tab << tab << "if clk'event and clk = '1' then\n";
 		for(int i=0; i<signalList_.size(); i++) {
 			Signal *s = signalList_[i];
-			if(s->getLiveRange() >0) {
-				for(int j=1; j <= s->getLiveRange(); j++)
+			if(s->getLifeSpan() >0) {
+				for(int j=1; j <= s->getLifeSpan(); j++)
 					o << tab <<tab << tab << s->delayedName(j) << " <=  " << s->delayedName(j-1) <<";" << endl;
 			}
 		}
