@@ -331,11 +331,14 @@ string zeroGenerator(int n, int margins){
 
 	switch(margins){
 		case -2: return zeros.str(); break;
-		case -1: return left.str(); break;
-		case  0: return full.str(); break;
+		case -1: return left.str();  break;
+		case  0: return full.str();  break;
 		case  1: return right.str(); break;
-		default: return full.str();
+		default: return full.str(); 
 	}
+	
+	//default (will not get here)
+	return "";
 }
 
 // Does not handle multi-byte encodings.

@@ -56,9 +56,9 @@ int check_strictly_positive(char* s, char* cmd) {
 int main(int argc, char* argv[] )
 {
   if(argc != 7) usage(argv[0]);
-  int wE = check_strictly_positive(argv[1], argv[0]);
-  int wF = check_strictly_positive(argv[2], argv[0]);
-  int MaxMSBX = atoi(argv[3]);
+//  int wE = check_strictly_positive(argv[1], argv[0]);
+//  int wF = check_strictly_positive(argv[2], argv[0]);
+//  int MaxMSBX = atoi(argv[3]);
   int LSBA = atoi(argv[4]);
   int MSBA = atoi(argv[5]);
   int sizeAcc = MSBA-LSBA+1;
