@@ -168,14 +168,24 @@ public:
 	 */	
 	uint32_t getLifeSpan() ;
 
+	/** Set the number of possible output values. */
+	void  setNumberOfPossibleValues(uint32_t n);
+
+
+	/** Get the number of possible output values. */
+	uint32_t getNumberOfPossibleValues(); 
+
+
+
 private:
 	std::string   name_;        /**< The name of the signal */
 	std::string   id_;          /**< The id of the signal. It is the same as name_ for regular signals, and is name_(high_-1 downto low_) for subsignals */
 	SignalType    type_;        /**< The type of the signal, see SignalType */
 	uint32_t      width_;       /**< The width of the signal */
 
-	uint32_t      ttl_;         /**< Time To Live for a delayed signal; used for early error reporting in delaySignal() */
-	uint32_t      lifeSpan_;    /**< The max delay that will be applied to this signal; set by delaySignal(), should be eventually equal to ttl_, otherwise a warning may be produced */
+	uint32_t      numberOfPossibleValues_; /**< For signals of type out, indicates how many values will be acceptable. Typically 1 for correct rounding, and 2 for faithful rounding */
+
+	uint32_t      lifeSpan_;    /**< The max delay that will be applied to this signal; */
 	uint32_t      cycle_;       /**<  the cycle at which this signal is active in a pipelined operator. 0 means synchronized with the inputs */
 	
 	bool          isFP_;        /**< If the signal is of floating-point type */  

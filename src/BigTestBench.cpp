@@ -1,5 +1,5 @@
 /*
- * Author: Cristian KLEIN 
+ * Author: Cristian Klein, Florent de Dinechin 
  *
  * This file is part of the FloPoCo project developed by the Arenaire
  * team at Ecole Normale Superieure de Lyon
@@ -74,12 +74,12 @@ void BigTestBench::setOperatorName(){
  * @param var the zero-based expected output variant number, or -1 for input signal
  * @return a string which can be used as a VHDL identifier
  */
-inline std::string s2vg(std::string type, const Signal& s, int var = -1)
+inline std::string s2vg(std::string type,  Signal* s, int var = -1)
 {
 	std::stringstream o;
 
 	o << type << "_";
-	char *x = strdup(s.getName().c_str());
+	char *x = strdup(s->getName().c_str());
 	for (char *p = x; *p; p++)
 		switch (*p)
 		{
@@ -104,7 +104,7 @@ inline std::string s2vg(std::string type, const Signal& s, int var = -1)
  * @param var the zero-based expected output variant number, or -1 for input signal
  * @return a string which can be used as a VHDL identifier
  */
-inline std::string s2v(const Signal& s, int var = -1)
+inline std::string s2v(Signal* s, int var = -1)
 {
 	return s2vg("v", s, var);
 }
@@ -113,7 +113,7 @@ inline std::string s2v(const Signal& s, int var = -1)
  * Like s2v, but gets the „good” signal.
  * @see s2v.
  */
-inline std::string s2g(const Signal& s, int var = -1)
+inline std::string s2g(Signal* s, int var = -1)
 {
 	return s2vg("g", s, var);
 }
@@ -122,11 +122,8 @@ void BigTestBench::outputVHDL(ostream& o, string name) {
 	size_t res;
 	cerr << "Generating BIG test bench ... ";
 
-	/* Get IO Map */
-	TestIOMap::TestIOMapContainer tim = op_->getTestIOMap().get();
-	typedef TestIOMap::TestIOMapContainer::iterator TIMit;
 
-	licence(o,"Cristian KLEIN (2008)");
+	licence(o,"Cristian Klein, Florent de Dinechin (2008)");
 	o << "library ieee;" <<endl;
 	o << "use ieee.std_logic_textio.all;" <<endl;
 	o << "use ieee.std_logic_1164.all;" <<endl;
@@ -161,7 +158,7 @@ void BigTestBench::outputVHDL(ostream& o, string name) {
 	// the instance
 	// XXX: Ugly! Will write something to encapsulate this.
 	o << tab << "uut:" << op_->getOperatorName() << "\n"
-		<< tab << tab << "port map ( ";
+	  << tab << tab << "port map ( clk => clk, rst => rst," << endl;
 	for(int i=0; i<op_->getIOListSize(); i++) {
 		//Signal& s = *op_->getIOListSignal(i);
 		if(i>0) 
@@ -177,7 +174,7 @@ void BigTestBench::outputVHDL(ostream& o, string name) {
 	o << ");" <<endl;
 
 	o <<endl;
-
+	
 	o << tab << "-- Ticking clock signal" <<endl;
 	o << tab << "process" <<endl;
 	o << tab << "begin" <<endl;
@@ -192,21 +189,20 @@ void BigTestBench::outputVHDL(ostream& o, string name) {
 	o << tab << "process" <<endl;
 	o << tab << tab << "variable buf : line;" <<endl;
 
-	for (TIMit it = tim.begin(); it != tim.end(); it++)
-	{
-		const Signal& s = it->first;
-		int maxValNum = it->second;
-
+	for (int i=0; i<op_->getIOListSize(); i++){
+		Signal* s = op_->getIOListSignal(i);
+		int maxValNum = s->getNumberOfPossibleValues();
+		
 		for (int i = 0; i < maxValNum; i++)
 		{
 			o << tab << tab << "variable " << s2v(s,i) << ": std_ulogic"; 
-			if (s.width() > 1)
-				o << "_vector(" << round4(s.width())-1 << " downto 0)";
+			if (s->width() > 1)
+				o << "_vector(" << round4(s->width())-1 << " downto 0)";
 			o << ";" << endl;
 			o << tab << tab << "variable " << s2g(s,i) << ": boolean;\n";
 		}
 	}
-
+	
 	o << tab << "begin" <<endl;
 	o << tab << tab << "rst <= '1';" <<endl;
 	o << tab << tab << "wait until falling_edge(clk);" <<endl;
@@ -216,15 +212,13 @@ void BigTestBench::outputVHDL(ostream& o, string name) {
 	o << tab << tab << tab << "-- wait for clk" << endl;
 	o << tab << tab << tab << "wait until falling_edge(clk);" << endl;
 	o << tab << tab << tab << "-- read everything from file" << endl;
-	for (TIMit it = tim.begin(); it != tim.end(); it++)
-	{
-		const Signal& s = it->first;
-		int numMaxValues = it->second;
-
-		for (int i = 0; i < numMaxValues; i++)
-		{
+	for (int i=0; i<op_->getIOListSize(); i++){
+		Signal* s = op_->getIOListSignal(i);
+		int numMaxValues = s->getNumberOfPossibleValues();
+		
+		for (int i = 0; i < numMaxValues; i++){
 			o << tab << tab << tab << "readline(fTest,buf); ";
-			if (s.width() == 1)
+			if (s->width() == 1)
 				o << "read(buf," << s2v(s,i) << "," << s2g(s,i) << ");\n";
 			else
 				o << "hread(buf," << s2v(s,i) << "," << s2g(s,i) << ");\n"; 
@@ -232,69 +226,67 @@ void BigTestBench::outputVHDL(ostream& o, string name) {
 	}
 	
 	o << tab << tab << tab << "-- assign inputs" << endl;
-	for (TIMit it = tim.begin(); it != tim.end(); it++)
-	{
-		const Signal& s = it->first;
-		int numMaxValues = it->second;
-		if (s.type() != Signal::in) continue;
 
+	for (int i=0; i<op_->getIOListSize(); i++){
+		Signal* s = op_->getIOListSignal(i);
+		int numMaxValues = s->getNumberOfPossibleValues();
+		if (s->type() != Signal::in) continue;
+		
 		/* XXX: useless, but uniform */
-		for (int i = 0; i < numMaxValues; i++)
-		{
+		for (int i = 0; i < numMaxValues; i++) {
 			o << tab << tab << tab;
-			if (s.width() == 1)
-				o << s.getName() << " <= " << s2v(s,i) << "; ";
+			if (s->width() == 1)
+				o << s->getName() << " <= " << s2v(s,i) << "; ";
 			else
-				o << s.getName() << " <= to_stdlogicvector(" << s2v(s,i) << "(" << s.width()-1 << " downto 0)); "; 
-			o << "assert " << s2g(s,i) << " report \"Invalid input for " << s.getName() << "\" severity failure;\n";
+				o << s->getName() << " <= to_stdlogicvector(" << s2v(s,i) << "(" << s->width()-1 << " downto 0)); "; 
+			o << "assert " << s2g(s,i) << " report \"Invalid input for " << s->getName() << "\" severity failure;\n";
 		}
 	}
 
 	o << tab << tab << tab << "-- wait a bit\n";
 	o << tab << tab << tab << "wait for 1 ns;\n";
  	o << tab << tab << tab << "-- check outputs" << endl;
-	for (TIMit it = tim.begin(); it != tim.end(); it++)
-	{
-		const Signal& s = it->first;
-		int numMaxValues = it->second;
-		if (s.type() != Signal::out) continue;
+	for (int i=0; i<op_->getIOListSize(); i++){
+		Signal* s = op_->getIOListSignal(i);
+		int numMaxValues = s->getNumberOfPossibleValues();
+		if (s->type() != Signal::out) continue;
 
 		o << tab << tab << tab << "assert (not " << s2g(s,0) << ") -- we don't care at all about this signal or\n";
-		for (int i = 0; i < numMaxValues; i++)
-		{
+		for (int i = 0; i < numMaxValues; i++) {
 			o << tab << tab << tab << tab << "or (" << s2g(s,i) << " and "; 
-			if (s.isFP())
-			{
-				o << "fp_equal(" << s.getName() << ", to_stdlogicvector(" << s2v(s,i) << "(" << s.width()-1 << " downto 0)))";
+			if (s->isFP()) {
+				o << "fp_equal(" << s->getName() << ", to_stdlogicvector(" << s2v(s,i) << "(" << s->width()-1 << " downto 0)))";
 			}
 			else
-			{
-				if (s.width() == 1)
-					o << s.getName() << " = " << s2v(s,i);
+				{
+				if (s->width() == 1)
+					o << s->getName() << " = " << s2v(s,i);
 				else
-					o << s.getName() << " = to_stdlogicvector(" << s2v(s,i) << "(" << s.width()-1 << " downto 0))"; 
-			}
+					o << s->getName() << " = to_stdlogicvector(" << s2v(s,i) << "(" << s->width()-1 << " downto 0))"; 
+				}
 			o << ")\n";
 		}
-		o << tab << tab << tab << tab << "report \"Incorrect value for " << s.getName() << "\";\n";
+		o << tab << tab << tab << tab << "report \"Incorrect value for " << s->getName() << "\";\n";
 	}
  
 	o << tab << tab << "end loop;" <<endl;
 	o << tab << tab << "assert false report \"End of simulation\" severity failure;" << endl;
 	o << tab << "end process;" <<endl;
 	o << "end architecture;" <<endl;
-
+	
 	/* Generate the test file */
 	FILE *f = fopen((op_->getOperatorName() + ".test").c_str(), "w");
-
+	
 	/* Get number of TestCase I/O values */
 	int size = 0;
-	for (TIMit it = tim.begin(); it != tim.end(); it++)
-		size += it->second;
-
+	for (int i=0; i<op_->getIOListSize(); i++){
+		Signal* s = op_->getIOListSignal(i);
+		int numMaxValues = s->getNumberOfPossibleValues();
+		size += numMaxValues;
+	}
 	/* WARNING: Highly optimized (i.e. hard to read, hard to not make mistakes)
 	 * code ahead */
-
+		
 	/* Allocate buffer which store I/O values metadata */
 	bool *a_isIn = new bool[size];
 	bool *a_isFP = new bool[size];
@@ -303,16 +295,15 @@ void BigTestBench::outputVHDL(ostream& o, string name) {
 	/* Get the metadata */
 	size = 0;
 	int max_bits = 0;
-	for (TIMit it = tim.begin(); it != tim.end(); it++)
-	{
-		const Signal& s = it->first;
-		int maxNumValues = it->second;
-
+	for (int i=0; i<op_->getIOListSize(); i++){
+		Signal* s = op_->getIOListSignal(i);
+		int maxNumValues = s->getNumberOfPossibleValues();
+		
 		for (int j = 0; j < maxNumValues; j++)
 		{
-			a_isIn[size] = (s.type() == Signal::in);
-			a_isFP[size] = s.isFP();
-			a_w   [size] = s.width();
+			a_isIn[size] = (s->type() == Signal::in);
+			a_isFP[size] = s->isFP();
+			a_w   [size] = s->width();
 			max_bits = max(max_bits, a_w[size]);
 			size++;
 		}
@@ -428,4 +419,3 @@ void BigTestBench::outputVHDL(ostream& o, string name) {
 	cerr << tab << "vsim " << name <<endl;
 	cerr << tab << "run -all" << endl;
 }
-

@@ -317,16 +317,6 @@ void IntDualSub::outputVHDL(std::ostream& o, std::string name) {
 	o << "end architecture;" << endl << endl;
 }
 
-TestIOMap IntDualSub::getTestIOMap()
-{
-	TestIOMap tim;
-	tim.add(*getSignalByName("X"));
-	tim.add(*getSignalByName("Y"));
-	tim.add(*getSignalByName("RyMx"));
-	tim.add(*getSignalByName("RyMx"));
-	return tim;
-}
-
 
 // FIXME doesn't work for:    flopoco  -frequency=500 IntDualSub 26 0 TestBench 10000
 void IntDualSub::fillTestCase(mpz_class a[])

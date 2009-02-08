@@ -86,12 +86,12 @@ LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut, bool com
 	/* The width of the lzo count output will be floor(log2(wIn_+1)). */		
 	addOutput("Count", wCount_);
 	addOutput("O", wOut_);
-	/* if we generate a generic LZOC */
-	if (entityType_==gen) 
-		addInput ("OZb"); 
 	/* if we require a sticky bit computation */
 	if(computeSticky_) 
 		addOutput("Sticky"); 
+	/* if we generate a generic LZOC */
+	if (entityType_==gen) 
+		addInput ("OZb"); 
 		
 	if(verbose){
 		cout <<endl<<"  wCount_=" << wCount_ << "    Level sizes: ";
@@ -358,22 +358,7 @@ void LZOCShifterSticky::outputVHDL(std::ostream& o, std::string name) {
 }
 
 
-
-TestIOMap LZOCShifterSticky::getTestIOMap()
-{
-	TestIOMap tim;
-	tim.add(*getSignalByName("I"));
-	tim.add(*getSignalByName("Count"));
-	tim.add(*getSignalByName("O"));
-	if (computeSticky_)
-		tim.add(*getSignalByName("Sticky"));
-	if (entityType_ == gen )
-		tim.add(*getSignalByName("OZb"));	
-	
-	return tim;
-}
-
-
+// FIXME: factor this code
 void LZOCShifterSticky::fillTestCase(mpz_class a[])
 {
 	if (entityType_==spec)

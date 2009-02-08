@@ -225,14 +225,7 @@ void Karatsuba::BuildCombinationalKaratsuba(std::ostream& o, int L, int R, strin
 	}
 }                            
 
-TestIOMap Karatsuba::getTestIOMap()
-{
-	TestIOMap tim;
-	tim.add(*getSignalByName("X"));
-	tim.add(*getSignalByName("Y"));
-	tim.add(*getSignalByName("R"));
-	return tim;
-}
+
 
 void Karatsuba::fillTestCase(mpz_class a[])
 {

@@ -33,7 +33,7 @@ HOTBM::HOTBM(Target* target, string func, string namebase, int wI, int wO, int n
 	setCombinatorial();
 	setPipelineDepth(0);
 	addInput("x", wI);
-	addOutput("r", wO+1);
+	addOutput("r", wO+1, 2);  // faithful rounding
 }
 
 HOTBM::~HOTBM()
@@ -51,13 +51,6 @@ void HOTBM::outputVHDL(std::ostream& o, std::string name)
 	inst->genVHDL(o, name);
 }
 
-TestIOMap HOTBM::getTestIOMap()
-{
-	TestIOMap tim;
-	tim.add(*getSignalByName("x"));
-	tim.add(*getSignalByName("r"), 2); // Faithful rounding
-	return tim;
-}
 
 void HOTBM::fillTestCase(mpz_class a[])
 {

@@ -23,7 +23,7 @@ FPExp::FPExp(Target* target, int wE, int wF)
 	}
 
 	addFPInput("x", wE, wF);
-	addFPOutput("r", wE, wF);
+	addFPOutput("r", wE, wF, 2);  // 2 because faithfully rounded
 
 	int explore_size = wF;
 	int exponent_size = wE;
@@ -357,14 +357,6 @@ void FPExp::outputVHDL(std::ostream& o, std::string name)
 		"end architecture;\n";
 
 	o << fixp_exp_tbl.str() << fixp_exp.str() << fp_exp.str();
-}
-
-TestIOMap FPExp::getTestIOMap()
-{
-	TestIOMap tim;
-	tim.add(*getSignalByName("x"));
-	tim.add(*getSignalByName("r"), 2);
-	return tim;
 }
 
 

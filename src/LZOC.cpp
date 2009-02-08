@@ -160,15 +160,6 @@ void LZOC::outputVHDL(std::ostream& o, std::string name) {
 	endArchitecture(o);
 }
 
-TestIOMap LZOC::getTestIOMap()
-{
-	TestIOMap tim;
-	tim.add(*getSignalByName("I"));
-	tim.add(*getSignalByName("OZB"));
-	tim.add(*getSignalByName("O"));
-	return tim;
-}
-
 void LZOC::fillTestCase(mpz_class a[])
 {
 	mpz_class& si   = a[0];

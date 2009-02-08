@@ -668,14 +668,6 @@ void optimizeLefevre(const vector<mpz_class>& constants) {
 };
 
 
-TestIOMap IntConstMult::getTestIOMap()
-{
-	TestIOMap tim;
-	tim.add(*getSignalByName("inX"));
-	tim.add(*getSignalByName("R"));
-	return tim;
-}
-
 void IntConstMult::fillTestCase(mpz_class a[])
 {
 	mpz_class& svX = a[0];

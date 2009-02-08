@@ -12,7 +12,6 @@ struct LNSAdd : Operator
 
 	virtual void outputVHDL(std::ostream& o, std::string name);
 
-	virtual TestIOMap getTestIOMap();
 	//virtual void fillTestCase(mpz_class a[]);
 
 	int wE;

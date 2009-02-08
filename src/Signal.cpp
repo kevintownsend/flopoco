@@ -6,13 +6,13 @@ using namespace std;
 
 Signal::Signal(const string name, const Signal::SignalType type, const int width, const bool isBus) : 
 	name_(name), type_(type), wE_(0), wF_(0), width_(width), low_(0), high_(width-1),
-	isSubSignal_(false), isBus_(isBus),	isFP_(false), ttl_(0), cycle_(0), lifeSpan_(0) {
+	isSubSignal_(false), isBus_(isBus),	isFP_(false), numberOfPossibleValues_(1), cycle_(0), lifeSpan_(0) {
 	updateSignalName();
 }
 
 Signal::Signal(const string name, const Signal::SignalType type, const int wE, const int wF) : 
 	name_(name), type_(type), wE_(wE), wF_(wF), width_(wE+wF+3),
-	low_(0), high_(width_-1), isSubSignal_(false),isBus_(false), isFP_(true), ttl_(0), cycle_(0), lifeSpan_(0)
+	low_(0), high_(width_-1), isSubSignal_(false),isBus_(false), isFP_(true), numberOfPossibleValues_(1),  cycle_(0), lifeSpan_(0)
 {
 	updateSignalName();
 }
@@ -151,13 +151,6 @@ Signal Signal::getMantissa()
 	return getSubSignal(0, wF_-1);
 }
 
-void Signal::setTTL(uint32_t ttl) {
-	ttl_ = ttl;
-}
-
-uint32_t Signal::getTTL() {
-	return ttl_;
-}
 
 void Signal::setCycle(uint32_t cycle) {
 	cycle_ = cycle;
@@ -175,5 +168,15 @@ void Signal::updateLifeSpan(uint32_t delay) {
 
 uint32_t Signal::getLifeSpan() {
 	return lifeSpan_;
+}
+
+
+void  Signal::setNumberOfPossibleValues(uint32_t n){
+	numberOfPossibleValues_ = n;
+}
+
+
+uint32_t  Signal::getNumberOfPossibleValues(){
+	return numberOfPossibleValues_;
 }
 

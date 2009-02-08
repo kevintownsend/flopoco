@@ -3,7 +3,7 @@ TODO file for FloPoCo
 
 General:
 pipeline HOTBM, FPExp, FPLog
-add FPDivider and FPSquareRoot
+add FPSquareRoot
 
 Pipeline framework, Operator and Targets:
 * remove getTestIOMap which should be automatic when we do addInput etc
@@ -65,5 +65,17 @@ Version ??    FPBoxMuller
 Version ???   Interval operators
 
 We'll leave 0.xx for 1.xx when all the FPLibrary operators are backported with working pipeline
+
+
+//// Small stuff
+Global replaces:
+
+fillTestCase( -> emulate(
+getIOListSignal( -> getIOSignal
+setOperatorName( -> setName(
+getOperatorName( -> getName(
+setOperatorType( -> setType(
+getOperatorType( -> getType(
+updateSignalName(->updateName(
 
 

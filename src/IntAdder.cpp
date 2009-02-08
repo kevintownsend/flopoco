@@ -251,16 +251,6 @@ void IntAdder::outputVHDL(std::ostream& o, std::string name) {
 }
 
 
-TestIOMap IntAdder::getTestIOMap()
-{
-	TestIOMap tim;
-	tim.add(*getSignalByName("X"));
-	tim.add(*getSignalByName("Y"));
-	tim.add(*getSignalByName("Cin"));
-	tim.add(*getSignalByName("R"));
-	return tim;
-}
-
 void IntAdder::fillTestCase(mpz_class a[])
 {
 	mpz_class& svX = a[0];

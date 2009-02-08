@@ -72,15 +72,6 @@ void GenericTestBench::outputVHDL(std::ostream& o, std::string name) {
 
 }
 
-TestIOMap GenericTestBench::getTestIOMap()
-{
-	TestIOMap tim;
-	tim.add(*getSignalByName("X"));
-	tim.add(*getSignalByName("Y"));
-	tim.add(*getSignalByName("R"));
-	return tim;
-}
-
 void GenericTestBench::fillTestCase(mpz_class a[])
 {
 	mpz_class &x = a[0];

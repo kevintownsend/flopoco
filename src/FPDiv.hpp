@@ -36,12 +36,6 @@ public:
 
 
 	/**
-	 * Gets the signals which are interesting for TestCases.
-	 * @see TestIOMap
-	 */
-	TestIOMap getTestIOMap();
-
-	/**
 	 * Gets the correct value associated to one or more inputs.
 	 * @param a the array which contains both already filled inputs and
 	 *          to be filled outputs in the order specified in getTestIOMap.

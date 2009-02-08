@@ -957,14 +957,7 @@ void FPMultiplier::outputVHDL(std::ostream& o, std::string name) {
 	o<< "end architecture;" << endl << endl;
 }
 
-TestIOMap FPMultiplier::getTestIOMap()
-{
-	TestIOMap tim;
-	tim.add(*getSignalByName("X"));
-	tim.add(*getSignalByName("Y"));
-	tim.add(*getSignalByName("R"));
-	return tim;
-}
+
 
 void FPMultiplier::fillTestCase(mpz_class a[])
 {

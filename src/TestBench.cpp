@@ -1,7 +1,7 @@
 /*
  * A test bench generator for FloPoCo. 
  *
- * Author : KLEIN Cristian
+ * Author : Cristian Klein, Florent de Dinechin
  *
  * This file is part of the FloPoCo project developed by the Arenaire
  * team at Ecole Normale Superieure de Lyon
@@ -68,44 +68,42 @@ void TestBench::outputVHDL(ostream& o, string name) {
 	 * We do this as early as possible, so that no VHDL is generated
 	 * if test cases are not implemented for the given operator
 	 */
-	TestIOMap::TestIOMapContainer tim = op_->getTestIOMap().get();
-	typedef TestIOMap::TestIOMapContainer::iterator TIMit;
 
 	TestCaseList tcl;
 
 	/* Get the size of the I/O Map */
 	int size = 0;
-	for (TIMit it = tim.begin(); it != tim.end(); it++)
-	{
-		int maxNumValues = it->second;
-		size += maxNumValues;
+	for (int i=0; i<op_->getIOListSize(); i++){
+		Signal* s = op_->getIOListSignal(i);
+		size += s->getNumberOfPossibleValues() ; // will be 1 for the inputs and possibly more for the outputs
 	}
-	
+
 
 	/* Allocate buffer which store I/O values metadata */
 	bool *a_isIn = new bool[size];
 	bool *a_isFP = new bool[size];
 	int *a_w = new int[size];
 	const Signal **a_s = new const Signal*[size];
-	
+
 	/* Get the metadata */
 	size = 0;
 	int max_bits = 0;
-	for (TIMit it = tim.begin(); it != tim.end(); it++)
-	{
-		const Signal& s = it->first;
-		int maxNumValues = it->second;
+	for (int i=0; i<op_->getIOListSize(); i++){
+		Signal* s = op_->getIOListSignal(i);
+		int maxNumValues = s->getNumberOfPossibleValues();
 
 		for (int j = 0; j < maxNumValues; j++)
 		{
-			a_s   [size] = &s;
-			a_isIn[size] = (s.type() == Signal::in);
-			a_isFP[size] = s.isFP();
-			a_w   [size] = s.width();
+			a_s   [size] = s;
+			a_isIn[size] = (s->type() == Signal::in);
+			a_isFP[size] = s->isFP();
+			a_w   [size] = s->width();
 			max_bits = max(max_bits, a_w[size]);
 			size++;
 		}
 	}
+	
+	
 
 	/* Generate test cases */
 	mpz_class *a = new mpz_class[size];
@@ -117,7 +115,7 @@ void TestBench::outputVHDL(ostream& o, string name) {
 			if (a_isIn[j])
 			{
 				if (a_isFP[j])
-					a[j] = (mpz_class(1) << (a_w[j]-2)) + getLargeRandom(a_w[j]-2);
+					a[j] = (mpz_class(1) << (a_w[j]-2)) + getLargeRandom(a_w[j]-2); // FIXME Here bug: operation with a zero never tested
 				else
 					a[j] = getLargeRandom(a_w[j]);
 			}
@@ -127,7 +125,7 @@ void TestBench::outputVHDL(ostream& o, string name) {
 
 		/* Get correct outputs */
 		op_->fillTestCase(a);
-		
+
 		/* Store test case */
 		TestCase tc;
 		for (int j = 0; j < size; j++)
@@ -149,7 +147,7 @@ void TestBench::outputVHDL(ostream& o, string name) {
 	delete[] a_isFP;
 	delete[] a_w;
 
-	licence(o,"Cristian KLEIN (2007)");
+	licence(o,"Florent de Dinechin, Cristian Klein (2007)");
 	Operator::stdLibs(o);
 
 	outputVHDLEntity(o);
@@ -160,7 +158,7 @@ void TestBench::outputVHDL(ostream& o, string name) {
 	// The local signals
 	outputVHDLSignalDeclarations(o);
 
-	o << endl <<
+	o << endl <<  // FIXME! Check this
 		tab << "-- FP compare function (found vs. real)\n" <<
 		tab << "function fp_equal(a : std_logic_vector; b : std_logic_vector) return boolean is\n" <<
 		tab << "begin\n" <<
@@ -176,12 +174,12 @@ void TestBench::outputVHDL(ostream& o, string name) {
 	 */
 	{
 		std::set<int> widths;
-		for (TIMit it = tim.begin(); it != tim.end(); it++)
-		{
-			const Signal& s = it->first;
-			if (s.type() != Signal::out) continue;
-			if (s.isFP() != true) continue;
-			widths.insert(s.width());
+		for (int i=0; i<op_->getIOListSize(); i++){
+			Signal* s = op_->getIOListSignal(i);
+			
+			if (s->type() != Signal::out) continue;
+			if (s->isFP() != true) continue;
+			widths.insert(s->width());
 		}
 
 		if (widths.size() > 0)
@@ -192,17 +190,14 @@ void TestBench::outputVHDL(ostream& o, string name) {
 			o << tab << "subtype fp" << w << " is std_logic_vector(" << w-1 << " downto 0);\n";
 		}
 	}
-
+	
 	o << "begin\n";
 
 	// the instance
-	// XXX: Ugly! Will write something to encapsulate this.
 	o << tab << "uut:" << op_->getOperatorName() << "\n"
-		<< tab << tab << "port map ( ";
+	  << tab << tab << "port map ( clk => clk, rst => rst," << endl;
 	for(int i=0; i<op_->getIOListSize(); i++) {
-		Signal s = *op_->getIOListSignal(i);
-		if(i>0) 
-			o << tab << tab << "           ";
+		o << tab << tab << "           ";
 		string idext =  op_->getIOListSignal(i)->getName() ;
 		if(op_->getIOListSignal(i)->type() == Signal::in)
 			o << op_->getIOListSignal(i)->getName()  << " =>  " << idext;

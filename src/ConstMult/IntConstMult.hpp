@@ -45,7 +45,6 @@ public:
 	// Overloading the virtual functions of Operator
 	void outputVHDL(std::ostream& o, std::string name);
 
-	TestIOMap getTestIOMap();
 	void fillTestCase(mpz_class a[]);
 	map<string, mpz_class> emulate(map<string, mpz_class>);	
 

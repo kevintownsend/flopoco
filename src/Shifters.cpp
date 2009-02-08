@@ -237,14 +237,6 @@ void Shifter::outputVHDL(std::ostream& o, std::string name) {
 	endArchitecture(o);		
 }
 
-TestIOMap Shifter::getTestIOMap()
-{
-	TestIOMap tim;
-	tim.add(*getSignalByName("X"));
-	tim.add(*getSignalByName("S"));
-	tim.add(*getSignalByName("R"));
-	return tim;
-}
 
 void Shifter::fillTestCase(mpz_class a[])
 {

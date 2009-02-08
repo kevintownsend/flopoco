@@ -6,7 +6,6 @@
 #include "Target.hpp"
 #include "Signal.hpp"
 #include "TestCase.hpp"
-#include "TestIOMap.hpp"
 
 using namespace std;
 
@@ -14,6 +13,8 @@ using namespace std;
 
 extern  int verbose;
 const std::string tab = "   ";
+
+
 
 /**
  * This is a top-level class representing an Operator.
@@ -55,6 +56,8 @@ public:
 	virtual ~Operator() {}
 
 
+
+
 	/** Adds an input signal to the operator.
 	 * Adds a signal of type Signal::in to the the I/O signal list.
 	 * @param name  the name of the signal
@@ -67,8 +70,9 @@ public:
 	 * Adds a signal of type Signal::out to the the I/O signal list.
 	 * @param name  the name of the signal
 	 * @param width the number of bits of the signal.
-	 */
-	void addOutput(const std::string name, const int width=1);
+	 * @param numberOfPossibleOutputValues (optional, defaults to 1) set to 2 for a faithfully rounded operator for instance
+	 */	
+	void addOutput(const std::string name, const int width=1, const int numberOfPossibleOutputValues=1);
 	
 
 	/** Adds a floating point input signal to the operator.
@@ -89,8 +93,9 @@ public:
 	 * @param name the name of the signal
 	 * @param wE   the width of the exponent
 	 * @param wF   the withh of the fraction
+	 * @param numberOfPossibleOutputValues (optional, defaults to 1) set to 2 for a faithfully rounded operator for instance
 	 */	
-	void addFPOutput(const std::string name, const int wE, const int wF);
+	void addFPOutput(const std::string name, const int wE, const int wF, const int numberOfPossibleOutputValues=1);
 
 	
 	/** Generic function that adds a signal to the signal list.
@@ -193,9 +198,6 @@ public:
 	string  delaySignal(const string name, const int delay=1);
 
 
-	/** Checks that each delayed signal is indeed used.
-	*/
-	void checkDelays();
 
 	/** Sets Operator name to default name.
 	 * This method must be overridden by all classes which extend Operator
@@ -249,7 +251,7 @@ public:
 	 * @param the index of the signal in the list
 	 * @return pointer to the i'th signal of ioList 
 	 */
-	const Signal * getIOListSignal(int i);
+	Signal * getIOListSignal(int i);
 		
 	/** Returns a pointer to the signal having the name s. Throws an exception if the signal is not yet declared.
 	  * @param s then name of the signal we want to return
@@ -368,14 +370,6 @@ public:
 	*/
 	void incrementPipelineDepth();
 	
-	/**
-	 * Gets the signals which are interesting for TestCases.
-	 * @see TestIOMap
-	 */
-	virtual TestIOMap getTestIOMap() {
-		throw std::string("getTestIOMap: not implemented for ") + uniqueName_;
-	}
-
 
 	// TODO: rename to emulate()
 	/**
@@ -473,13 +467,13 @@ public:
 	//////////////////End of FloPoCoPipelineFramework2.0
 
 protected:    
-	Target*         target_;     /**< The target on which the operator will be deployed */
-	string          uniqueName_; /**< By default, a name derived from the operator class and the parameters */
-	vector<Signal*> ioList_;     /**< The list of I/O signals of the operator */
-	vector<Signal*> signalList_; /**< The list of internal signals of the operator */
-	map<string, string>  portMap_;/**< Port map for an instance of this operator */
-	map<string, double>    outDelayMap;
-	ostringstream     vhdl;      /**< The internal stream to which the constructor will build the VHDL code */
+	Target*             target_;     /**< The target on which the operator will be deployed */
+	string              uniqueName_; /**< By default, a name derived from the operator class and the parameters */
+	vector<Signal*>     ioList_;     /**< The list of I/O signals of the operator */
+	vector<Signal*>     signalList_; /**< The list of internal signals of the operator */
+	map<string, string> portMap_;    /**< Port map for an instance of this operator */
+	map<string, double> outDelayMap; /**< Slack delays on the outputs */
+	ostringstream       vhdl;        /**< The internal stream to which the constructor will build the VHDL code */
 private:
 	int                    numberOfInputs_;             /**< The number of inputs of the operator */
 	int                    numberOfOutputs_;            /**< The number of outputs of the operator */

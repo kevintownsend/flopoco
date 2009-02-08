@@ -24,7 +24,6 @@ public:
 	// Overloading the virtual functions of Operator
 	void outputVHDL(std::ostream& o, std::string name);
 
-	TestIOMap getTestIOMap();
 	void fillTestCase(mpz_class a[]);
 	
 	int wIn() const { return wI; }

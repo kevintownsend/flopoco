@@ -283,13 +283,6 @@ void FPConstMult::outputVHDL(ostream& o, string name) {
 	o << "end architecture;" << endl << endl;		
 }
 
-TestIOMap FPConstMult::getTestIOMap()
-{
-	TestIOMap tim;
-	tim.add(*getSignalByName("X"));
-	tim.add(*getSignalByName("R"));
-	return tim;
-}
 
 void FPConstMult::fillTestCase(mpz_class a[])
 {

@@ -553,25 +553,20 @@ void LongAcc::test_precision2() {
 
 
 
-TestIOMap LongAcc::getTestIOMap()
-{
-	TestIOMap tim;
-	// tim.add(*getSignalByName("rst"));
-	tim.add(*getSignalByName("X"));
-	tim.add(*getSignalByName("A"));
-	tim.add(*getSignalByName("XOverflow"));
-	tim.add(*getSignalByName("AccOverflow"));
-	return tim;
-}
 
-
+//FIXME 	: IOs are defined as
+   // addFPInput ("X", wEX_,wFX_);
+	// addOutput  ("A", sizeAcc_);  
+	// addOutput  ("XOverflow");  
+	// addOutput  ("XUnderflow");  
+	// addOutput  ("AccOverflow");  
+// In the following there is no check on the two last ones
 
 void LongAcc::fillTestCase(mpz_class a[])
 {
-
 	mpz_class& sX = a[0];
-	mpz_class& sXOverflow = a[2];
 	mpz_class& sA = a[1];
+	mpz_class& sXOverflow = a[2];
 	
 	currentIteration++;
 

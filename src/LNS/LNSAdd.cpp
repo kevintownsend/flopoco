@@ -39,7 +39,7 @@ LNSAdd::LNSAdd(Target * target, int wE, int wF, int o) :
 	uniqueName_ = name.str();
 	
 	addInput ("x", wE + wF);
-	addOutput("r", wF);
+	addOutput("r", wF, 2); // Faithful rounding;
 	
 	if(wF > 7) {
 		addSignal("out_t0", wF - 6);
@@ -129,14 +129,6 @@ void LNSAdd::outputVHDL(std::ostream& o, std::string name)
 	o << "out_t2(" << (wF-1) << " downto 0);\n";
 	
 	o<< "end architecture;" << endl << endl;
-}
-
-TestIOMap LNSAdd::getTestIOMap()
-{
-	TestIOMap tim;
-	tim.add(*getSignalByName("x"));
-	tim.add(*getSignalByName("r"), 2); // Faithful rounding
-	return tim;
 }
 
 

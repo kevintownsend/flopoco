@@ -227,15 +227,6 @@ void FPDiv::outputVHDL(std::ostream& o, std::string name) {
 
 
 
-TestIOMap FPDiv::getTestIOMap()
-{
-	TestIOMap tim;
-	tim.add(*getSignalByName("X"));
-	tim.add(*getSignalByName("Y"));
-	tim.add(*getSignalByName("R"));
-	return tim;
-}
-
 void FPDiv::fillTestCase(mpz_class a[])
 {
 	/* Get I/O values */

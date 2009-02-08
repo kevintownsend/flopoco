@@ -46,11 +46,6 @@ public:
 	*/
 	void setOperatorName();	
 
-	/**
-	 * Gets the signals which are interesting for TestCases.
-	 * @see TestIOMap
-	 */
-	TestIOMap getTestIOMap();
 
 	/**
 	 * Gets the correct value associated to one or more inputs.

@@ -42,7 +42,6 @@ public:
 	/* The value of the constant multiplicand */
 	mpfr_t mpY;
 
-	TestIOMap getTestIOMap();
 	void fillTestCase(mpz_class a[]);
 };
 

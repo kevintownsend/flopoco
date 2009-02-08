@@ -655,14 +655,6 @@ void IntMultiplier::delayPartialBits(std::ostream& o)
 	o<<tab<<"partial_bits <= "<<delaySignal("PartialBits_Reg",intAdd1_->getPipelineDepth())<<";"<<endl;
 }
 
-TestIOMap IntMultiplier::getTestIOMap()
-{
-	TestIOMap tim;
-	tim.add(*getSignalByName("X"));
-	tim.add(*getSignalByName("Y"));
-	tim.add(*getSignalByName("R"));
-	return tim;
-}
 
 void IntMultiplier::fillTestCase(mpz_class a[])
 {

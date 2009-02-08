@@ -46,7 +46,7 @@ FPLog::FPLog(Target* target, int wE, int wF)
 	setOperatorType();
 
 	addFPInput("x", wE, wF);
-	addFPOutput("r", wE, wF);
+	addFPOutput("r", wE, wF, 2); // 2 because faithfully rounded
 
 	int i;
 
@@ -314,14 +314,6 @@ void FPLog::outputVHDL(std::ostream& o, std::string name)
 }
 
 
-
-TestIOMap FPLog::getTestIOMap()
-{
-	TestIOMap tim;
-	tim.add(*getSignalByName("x"));
-	tim.add(*getSignalByName("r"), 2); /* faithful rounding */
-	return tim;
-}
 
 
 

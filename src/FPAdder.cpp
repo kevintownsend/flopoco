@@ -658,30 +658,22 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 		
 				   
 		endArchitecture(o);
-	checkDelays();
 
 }
 
 
 
-
-TestIOMap FPAdder::getTestIOMap()
-{
-	TestIOMap tim;
-	tim.add(*getSignalByName("X"));
-	tim.add(*getSignalByName("Y"));
-	tim.add(*getSignalByName("R"));
-	return tim;
-}
 
 
 
 void FPAdder::fillTestCase(mpz_class a[])
 {
+	
 	/* Get I/O values */
 	mpz_class& svX = a[0];
 	mpz_class& svY = a[1];
 	mpz_class& svR = a[2];
+
 
 	/* Compute correct value */
 	FPNumber fpx(wEX, wFX), fpy(wEY, wFY);

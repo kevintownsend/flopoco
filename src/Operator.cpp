@@ -42,13 +42,14 @@ void Operator::addInput(const std::string name, const int width) {
 	numberOfInputs_ ++;
 }
 
-void Operator::addOutput(const std::string name, const int width) {
+void Operator::addOutput(const std::string name, const int width, const int numberOfPossibleOutputValues) {
 	if (signalMap_.find(name) != signalMap_.end()) {
 		std::ostringstream o;
 		o << "ERROR in addInput, signal " << name << " seems to already exist";
 		throw o.str();
 	}
 	Signal *s = new Signal(name, Signal::out, width) ;
+	s -> setNumberOfPossibleValues(numberOfPossibleOutputValues);
 	ioList_.push_back(s);
 	signalMap_[name] = s ;
 	numberOfOutputs_ ++;
@@ -65,12 +66,13 @@ void Operator::addFPInput(const std::string name, const int wE, const int wF) {
 	numberOfInputs_ ++;
 }
 
-void Operator::addFPOutput(const std::string name, const int wE, const int wF) {
+void Operator::addFPOutput(const std::string name, const int wE, const int wF, const int numberOfPossibleOutputValues) {
 	if (signalMap_.find(name) != signalMap_.end()) {
 		cerr << "ERROR in addInput , signal " << name<< " seems to already exist" << endl;
 		exit(EXIT_FAILURE);
 	}
 	Signal *s = new Signal(name, Signal::out, wE, wF) ;
+	s -> setNumberOfPossibleValues(numberOfPossibleOutputValues);
 	ioList_.push_back(s);
 	signalMap_[name] = s ;
 	numberOfOutputs_ ++;
@@ -92,9 +94,6 @@ void Operator::addSignalGeneric(const string name, const int width, const int de
 				throw o.str();
 			}
 			s = new Signal(o.str(), regType, width, isbus);
-			s->setTTL(delay-i);
-			if(i>0)  // FIXME This is a hack to suppress warnings for the delayed signals. They should be handled properly
-				s->updateLifeSpan(delay-i); // we know it will be delayed at least by that
 			signalList_.push_back(s);    
 			signalMap_[o.str()] = s ;
 			o  << "_d";
@@ -164,10 +163,6 @@ string Operator::delaySignal(const string name, const int delay) {
 	else {
 		if(isDeclared) {
 			s=getSignalByName(name);
-			if(s->getTTL()<delay) {
-				cerr << "ERROR in delaySignal, signal " << name << ", with Time To Live "<< s->getTTL() << ", is delayed by "<<delay << endl;
-			}
-			s->updateLifeSpan(delay);
 		}
 		o << name;
 		for (int i=0; i<delay; i++){
@@ -227,19 +222,11 @@ vector<Signal*> * Operator::getIOList(){
   return &ioList_; 
 }
 
-const Signal * Operator::getIOListSignal(int i){
+Signal * Operator::getIOListSignal(int i){
   return ioList_[i];
 }
 			
-void  Operator::checkDelays() {
-	for (int i=0; i < this->signalList_.size(); i++){
-		Signal* s = this->signalList_[i];
-		if (s->getLifeSpan() < s->getTTL())
-			cerr << "WARNING: Signal " << s->getName() << " declared with max TTL " << s->getTTL() 
-				  << " and used with max delay " << s->getLifeSpan() <<endl; 
-	}
-}
-
+ 
 
 void  Operator::outputVHDLSignalDeclarations(std::ostream& o) {
 	for (int i=0; i < this->signalList_.size(); i++){
@@ -320,9 +307,13 @@ void Operator::outputVHDLComponent(std::ostream& o, std::string name) {
 	if (ioList_.size() > 0)
 	{
 		o << tab << tab << "port ( ";
+		if(isSequential()) {
+			// add clk and rst signals which are no longer member of iolist
+			o << "clk, rst : in std_logic," <<endl;
+		}
 		for (int i=0; i<this->ioList_.size(); i++){
 			Signal* s = this->ioList_[i];
-			if (i>0) // align signal names 
+			if (i>0 || isSequential()) // align signal names 
 				o<<tab<<"          ";
 			o<<  s->toVHDL();
 			if(i < this->ioList_.size()-1)  o<<";" << endl;
@@ -343,9 +334,13 @@ void Operator::outputVHDLEntity(std::ostream& o) {
 	{
 		o << tab << "port ( ";
 
+		if(isSequential()) {
+			// add clk and rst signals which are no longer member of iolist
+			o << "clk, rst : in std_logic," <<endl;
+		}
 		for (int i=0; i<this->ioList_.size(); i++){
 			Signal* s = this->ioList_[i];
-			if (i>0) // align signal names 
+			if (i>0 || isSequential()) // align signal names 
 				o<<"          ";
 			o<<  s->toVHDL();
 			if(i < this->ioList_.size()-1)  o<<";" << endl;
@@ -385,8 +380,8 @@ bool Operator::isSequential() {
 
 void Operator::setSequential() {
 	isSequential_=true; 
-	addInput("clk");
-	addInput("rst");
+	//	addInput("clk");
+	// addInput("rst");
 }
 
 void Operator::setCombinatorial() {
@@ -584,7 +579,7 @@ void Operator::inPortMap(Operator* op, string componentPortName, string actualSi
 			throw e.str();
 		} 
 		// update the lifeSpan of s
-		s->updateLifeSpan ( cycle_ - s->getCycle() );
+		s->updateLifeSpan( cycle_ - s->getCycle() );
 		name = s->delayedName( cycle_ - s->getCycle() );
 	}
 	else
