@@ -244,13 +244,21 @@ void FPDiv::fillTestCase(mpz_class a[])
 	mpz_class& svR = a[2];
 
 	/* Compute correct value */
-	FPNumber x(wE, wF), y(wE, wF), r(wE, wF);
-	x = svX;
-	y = svY;
+	FPNumber fpx(wE, wF), fpy(wE, wF);
+	fpx = svX;
+	fpy = svY;
+	mpfr_t x, y, r;
+	mpfr_init2(x, 1+wF);
+	mpfr_init2(y, 1+wF);
+	mpfr_init2(r, 1+wF); 
+	fpx.getMPFR(x);
+	fpy.getMPFR(y);
+	mpfr_div(r, x, y, GMP_RNDN);
+	FPNumber  fpr(wE, wF, r);
 
-	r = x/y; // TODO
 	/* Set outputs */
-	svR = r.getSignalValue();
+	svR = fpr.getSignalValue();
 	
 }
+
 

@@ -674,6 +674,8 @@ TestIOMap FPAdder::getTestIOMap()
 	return tim;
 }
 
+
+
 void FPAdder::fillTestCase(mpz_class a[])
 {
 	/* Get I/O values */
@@ -682,12 +684,21 @@ void FPAdder::fillTestCase(mpz_class a[])
 	mpz_class& svR = a[2];
 
 	/* Compute correct value */
-	FPNumber x(wEX, wFX), y(wEY, wFY), r(wER, wFR);
-	x = svX;
-	y = svY;
-	r = x+y;
+	FPNumber fpx(wEX, wFX), fpy(wEY, wFY);
+	fpx = svX;
+	fpy = svY;
+	mpfr_t x, y, r;
+	mpfr_init2(x, 1+wFX);
+	mpfr_init2(y, 1+wFY);
+	mpfr_init2(r, 1+wFR); 
+	fpx.getMPFR(x);
+	fpy.getMPFR(y);
+	mpfr_add(r, x, y, GMP_RNDN);
+	FPNumber  fpr(wER, wFR, r);
+
 	/* Set outputs */
-	svR = r.getSignalValue();
+	svR = fpr.getSignalValue();
 	
+	mpfr_clears(x, y, r, 0, NULL);
 }
 

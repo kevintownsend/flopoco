@@ -47,6 +47,7 @@ public:
 
 	TestIOMap getTestIOMap();
 	void fillTestCase(mpz_class a[]);
+	map<string, mpz_class> emulate(map<string, mpz_class>);	
 
 private:
 	int build_pipeline(ShiftAddOp* sao, double& delay);

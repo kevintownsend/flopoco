@@ -37,7 +37,6 @@
 using namespace std;
 extern vector<Operator*> oplist;
 
-#define VHDLDEBUG 0 // Not sure it works when set to 1.
 
 FPMultiplier::FPMultiplier(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, int wFR, int norm) :
 	Operator(target), wEX_(wEX), wFX_(wFX), wEY_(wEY), wFY_(wFY), wER_(wER), wFR_(wFR) {
@@ -60,18 +59,14 @@ FPMultiplier::FPMultiplier(Target* target, int wEX, int wFX, int wEY, int wFY, i
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	addFPInput ("X", wEX_, wFX_);
 	addFPInput ("Y", wEY_, wFY_);
+
+	// FIXME remove all these output ports in the normalized case. Or, add them to all the operators
+	addSignal ("ResultExponent"   , wER_    );  
+	addSignal ("ResultSignificand", wFR_ + 1);
+	addSignal ("ResultException"  , 2      );
+	addSignal ("ResultSign"       , 1      ); 
 	if(normalized_) {
-		addSignal ("ResultExponent"   , wER_    );  
-		addSignal ("ResultSignificand", wFR_ + 1);
-		addSignal ("ResultException"  , 2      );
-		addSignal ("ResultSign"       , 1      ); 
 		addFPOutput ("R"   , wER_, wFR    );  
-	}
-	else {
-		addOutput ("ResultExponent"   , wER_    );  
-		addOutput ("ResultSignificand", wFR_ + 1);
-		addOutput ("ResultException"  , 2      );
-		addOutput ("ResultSign"       , 1      ); 
 	}
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~	
 		   
@@ -968,12 +963,6 @@ TestIOMap FPMultiplier::getTestIOMap()
 	tim.add(*getSignalByName("X"));
 	tim.add(*getSignalByName("Y"));
 	tim.add(*getSignalByName("R"));
-#if VHDLDEBUG
-	tim.add(*getSignalByName("ResultException"));
-	tim.add(*getSignalByName("ResultSign"));
-	tim.add(*getSignalByName("ResultExponent"));
-	tim.add(*getSignalByName("ResultSignificand"));
-#endif
 	return tim;
 }
 
@@ -983,28 +972,65 @@ void FPMultiplier::fillTestCase(mpz_class a[])
 	mpz_class &svx = a[0];
 	mpz_class &svy = a[1];
 	mpz_class &svr = a[2];
-#if VHDLDEBUG // For debugging
-	mpz_class &svexc = a[3];
-	mpz_class &svsgn = a[4];
-	mpz_class &svexp = a[5];
-	mpz_class &svfra = a[6];
-#endif
 	/* Compute result */
-	FPNumber x(wEX_, wFX_), y(wEY_, wFY_), r(wER_, wFR_, normalized_);
-	x = svx; y = svy;
-	r = x * y;
-	svr = r.getSignalValue();
+	FPNumber fpx(wEX_, wFX_), fpy(wEY_, wFY_);
+	fpx = svx; fpy = svy;
 
-
-#if VHDLDEBUG // For debugging
-	svexc = r.getExceptionSignalValue();
-	svsgn = r.getSignSignalValue();
-	// Exponent and fraction are not defined for zero, inf or NaN
-	if (r.getExceptionSignalValue() == 1)
-	{
-		svexp = r.getExponentSignalValue();
-		svfra = r.getFractionSignalValue();
+	mpfr_t x, y, r;
+	mpfr_init2(x, wFX_+1);
+	mpfr_init2(y, wFY_+1);
+	mpfr_init2(r,   wFX_ + wFY_ + 2); // r will hold an exact product
+	fpx.getMPFR(x);
+	fpy.getMPFR(y);
+	if(normalized_) {
+		mpfr_mul(r, x, y, GMP_RNDN);
+		FPNumber fpr(wER_, wFR_, r);
+		svr = fpr.getSignalValue();
 	}
+	else {
+		throw std::string("fillTestCase not yet implememented for non-normalized results");
+#if 0
+		//This is the relevant SWW code purged from FPNumber& FPNumber::operator=(mpfr_t mp_)
+		// It should be implemented here instead of polluting all of FPNumber.
+
+/* SwW: Slipper when Wet
+ * When the FPMultiplier is set not to normalise results,
+ * it outputs significants and exponents which have little 
+ * logic when viewed from a software side. Unfortunately,
+ * in order to have a good test bench, we have to emulate
+ * those behaviours in software. Whenever you see this tag
+ * expect hard-to-understand or ilogic code.
+ *
+ * What happens is that the binary fraction comma is placed
+ * after the second bit. Exponents are
+ * simply added together. Sometimes the first bit
+ * is 1 (the result is „overnormalised”), other times
+ * it is 0 (the result is normalized). We will detect this
+ * „condition” by seeing if the exponent of the normalized result
+ * is higher than the sum of the exponents of the operands.
+ *
+ * We will do the following. We will always store numbers as
+ * normalized numbers (1.mantissa), exponents like FPMultiplier
+ * and when necessary (i.e. mustunnormalize==true)), we will do
+ * rounding with one bit „faster” and shift the significant in
+ * getFractionSignalValue().
+ */
+
+	if (!normalise && mustAddLeadingZero)
+	{
+		/* SwW: we need to round with one bit earlier */ 
+		mpfr_mul_2si(mp, mp, wF-1, GMP_RNDN);
+		mpfr_get_z(mantissa.get_mpz_t(), mp, GMP_RNDN);
+		mantissa = mantissa << 1;
+	}
+	/* SwW: exponent is smaller in the „normalised” case */
+	if (!normalise && !mustAddLeadingZero)
+		exp--;
+
 #endif
+	}
+
+	mpfr_clears(x, y, r, 0, NULL);
+
 }
 

@@ -376,6 +376,8 @@ public:
 		throw std::string("getTestIOMap: not implemented for ") + uniqueName_;
 	}
 
+
+	// TODO: rename to emulate()
 	/**
 	 * Gets the correct value associated to one or more inputs.
 	 * @param a the array which contains both already filled inputs and
@@ -391,12 +393,6 @@ public:
 	*/
 	virtual void outputFinalReport();	
 	
-#if 0
-	/** Emulate the operator, using mpfr. 
-	 */	
-	virtual void emulate();	
-#endif 
-
 
 	//////////////////From here on we have methods of FloPoCoPipelineFramework2.0
 	// The main incompatibility with previous FloPoCo is that a delayed signal is now added only once to signalList

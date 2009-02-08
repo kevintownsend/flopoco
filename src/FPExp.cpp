@@ -367,6 +367,8 @@ TestIOMap FPExp::getTestIOMap()
 	return tim;
 }
 
+
+
 void FPExp::fillTestCase(mpz_class a[])
 {
 	mpz_class& svX  = a[0];
@@ -375,9 +377,20 @@ void FPExp::fillTestCase(mpz_class a[])
 
 	FPNumber fpX(wE, wF), fpR(wE, wF);
 	fpX = svX;
-	fpR = fpX.exp();
 
-	svRD = fpR.getRoundedDownSignalValue();
-	svRU = fpR.getRoundedUpSignalValue();
+	mpfr_t x, ru,rd;
+	mpfr_init2(x,  1+wF);
+	mpfr_init2(ru, 1+wF);
+	mpfr_init2(rd, 1+wF); 
+	fpX.getMPFR(x);
+	mpfr_exp(rd, x, GMP_RNDD);
+	mpfr_exp(ru, x, GMP_RNDU);
+	FPNumber  fprd(wE, wF, rd);
+	FPNumber  fpru(wE, wF, ru);
+
+	svRD = fprd.getSignalValue();
+	svRU = fpru.getSignalValue();
+	mpfr_clears(x, ru, rd, 0, NULL);
+
 }
 

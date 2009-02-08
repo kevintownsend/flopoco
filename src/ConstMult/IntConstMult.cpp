@@ -667,6 +667,7 @@ void optimizeLefevre(const vector<mpz_class>& constants) {
 
 };
 
+
 TestIOMap IntConstMult::getTestIOMap()
 {
 	TestIOMap tim;

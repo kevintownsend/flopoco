@@ -139,7 +139,7 @@ FPLog::FPLog(Target* target, int wE, int wF)
 	lzoc = new LZOC(target, wF, intlog2(wF));
 	oplist.push_back(lzoc);
 	
-vhdl << declare("Y0h", wF) << " <= Y0(wF downto 1)" << endl; 
+	vhdl << tab << declare("Y0h", wF) << " <= Y0(wF downto 1);" << endl; 
 	inPortMap(lzoc, "I", "Y0h");
 	inPortMap(lzoc, "OZB", "FirstBit");
 	outPortMap(lzoc, "O", "lzo"); // 	size should be  intlog2(wF);
@@ -164,10 +164,10 @@ vhdl << declare("Y0h", wF) << " <= Y0(wF downto 1)" << endl;
 		  << "             ((wF-pfinal+1 downto 0 => '0') - Y0(wF-pfinal+1 downto 0));" << endl;
 
 
-	vhdl << tab << declare("shiftvalin", intlog2(wF)) << " <= shiftval(log2wF-1 downto 0);" << endl;
+	vhdl << tab << declare("shiftvalin", intlog2(wF-pfinal+2)) << " <= shiftval(" << intlog2(wF-pfinal+2)-1 << " downto 0);" << endl;
 
 	// ao stands for "almost one"
-	ao_lshift = new Shifter(target, wF-p[stages+1]+2,wF-p[stages+1]+2, Left);   
+	ao_lshift = new Shifter(target, wF-p[stages+1]+2,  wF-p[stages+1]+2, Left);   
 	oplist.push_back(ao_lshift);
 
 	inPortMap(ao_lshift, "X", "absZ0");
@@ -179,7 +179,7 @@ vhdl << declare("Y0h", wF) << " <= Y0(wF downto 1)" << endl;
 	vhdl << tab << "-- Z2o2 will be of size sfinal-pfinal, set squarer input size to that" << endl;
 	vhdl << tab << declare("squarerIn", sfinal-pfinal) << " <= Zfinal(sfinal-1 downto pfinal) when doRR='1'" << endl;
 	if(sfinal>wF+2)
-		vhdl << tab << "                 else (absZ0s &  (sfinal-wF-3 downto 0 => '0'));  " << endl;
+		vhdl << tab << "                 else (absZ0s &  (sfinal - wF-2 -1 downto 0 => '0'));  " << endl;
 	else  // sfinal <= wf+2 
 		vhdl << tab << "                 else absZ0s(wF-pfinal+1 downto wf+2-sfinal);  " << endl<< endl;
 	vhdl << tab << "-- Z2o2 will be of size sfinal - pfinal -1, set squarer input size to that" << endl;
@@ -192,7 +192,7 @@ vhdl << declare("Y0h", wF) << " <= Y0(wF downto 1)" << endl;
 	vhdl << tab << declare("Log_normal", wE+target_prec) << " <=  absELog2_pad  + LogF_normal_pad when sR='0'  " << endl
 		  << "                else absELog2_pad - LogF_normal_pad;" << endl;
 
-	final_norm = new LZOCShifterSticky(target, wE+target_prec, wE+target_prec, false); // FIXME infinite loop here
+	final_norm = new LZOCShifterSticky(target, wE+target_prec, wE+target_prec, false, 0);
 	oplist.push_back(final_norm);
 	inPortMap(final_norm, "I", "Log_normal");
 	outPortMap(final_norm, "Count", "E_normal");
@@ -279,6 +279,8 @@ void FPLog::outputVHDL(std::ostream& o, std::string name)
 	// constants
 	o <<   "  constant g   : positive := "<<gLog<<";"<<endl;
 	o <<   "  constant a0 : positive := "<< a[0] <<";"<<endl;
+	o <<   "  constant wE : positive := " << wE <<";"<<endl;
+	o <<   "  constant wF : positive := " << wF <<";"<<endl;
 	o <<   "  constant log2wF : positive := "<< intlog2(wF) <<";"<<endl;
 	o <<   "  constant targetprec : positive := "<< target_prec <<";"<<endl;
 	o <<   "  constant sfinal : positive := "<< s[stages+1] <<";"<<endl;
@@ -321,20 +323,28 @@ TestIOMap FPLog::getTestIOMap()
 	return tim;
 }
 
-void FPLog::fillTestCase(mpz_class a[])
-{
-	/* Get I/Os */
+
+
+void FPLog::fillTestCase(mpz_class a[]){
 	mpz_class& svX  = a[0];
 	mpz_class& svRD = a[1];
 	mpz_class& svRU = a[2];
 
-	/* Compute Log */
 	FPNumber fpX(wE, wF), fpR(wE, wF);
 	fpX = svX;
-	fpR = fpX.log();
 
-	/* Set correct outputs */
-	svRD = fpR.getRoundedDownSignalValue();
-	svRU = fpR.getRoundedUpSignalValue();
+	mpfr_t x, ru,rd;
+	mpfr_init2(x,  1+wF);
+	mpfr_init2(ru, 1+wF);
+	mpfr_init2(rd, 1+wF); 
+	fpX.getMPFR(x);
+	mpfr_log(rd, x, GMP_RNDD);
+	mpfr_log(ru, x, GMP_RNDU);
+	FPNumber  fprd(wE, wF, rd);
+	FPNumber  fpru(wE, wF, ru);
+
+	svRD = fprd.getSignalValue();
+	svRU = fpru.getSignalValue();
+	mpfr_clears(x, ru, rd, 0, NULL);
 }
 

@@ -18,7 +18,7 @@ public:
 	 * @param wE the width of the exponent
 	 * @param wF the width of the significant
 	 */
-	FPNumber(int wE, int wF, bool normalise = true);
+	FPNumber(int wE, int wF);
 
 	/**
 	 * Constructs a new initialised FPNumber.
@@ -26,7 +26,7 @@ public:
 	 * @param wF the width of the significant
 	 * @param m the initial value.
 	 */
-	FPNumber(int wE, int wF, mpfr_t m, bool normalise = true);
+	FPNumber(int wE, int wF, mpfr_t m);
 
 	/**
 	 * Retrieves the significant.
@@ -59,25 +59,6 @@ public:
 	 * @return the exponent as a VHDL signal.
 	 */
 	mpz_class getExponentSignalValue();
-
-	/**
-	 * Multiplies two FPNumbers using MPFR.
-	 * @return a FPNumber representing the result of the multiplication.
-	 */
-	FPNumber operator*(FPNumber);
-
-	/**
-	 * Divides two FPNumbers using MPFR.
-	 * @return a FPNumber which is the correctly rounded quotient.
-	 */
-	FPNumber operator/(FPNumber);
-
-	/**
-	 * Adds two FPNumbers using MPFR.
-	 * @return a FPNumber representing the result of the addition.
-	 */
-	FPNumber operator+(FPNumber);
-	
 
 
 	/**
@@ -112,27 +93,7 @@ public:
 	 */
 	FPNumber &operator=(FPNumber fp);
 
-	/**
-	 * Returns the exponential of the current FPNumber.
-	 * @return a FPNumber storing the exponential.
-	 */
-	FPNumber exp();
 
-	/**
-	 * Returns the natural logarithm of the current FPNumber.
-	 * @return a FPNumber storing the natural logarithm.
-	 */
-	FPNumber log();
-
-	/**
-	 * Returns the whole signal rounded down.
-	 */
-	mpz_class getRoundedDownSignalValue();
-
-	/**
-	 * Returns the whole signal rounded up.
-	 */
-	mpz_class getRoundedUpSignalValue();
 
 	/**
 	 * Returns wE and wF.
@@ -191,16 +152,6 @@ private:
 	/** The value of the mantissa (without leading one) */
 	mpz_class mantissa;
 
-	/** Should we operate like a normalising or unnormalising
-	 * FPMultiplier */
-	bool normalise;
-
-	/** Should we shift the fraction with one bit?
-	 * See the comment at the beginig of FPNumber.cpp */
-	bool mustAddLeadingZero;
-
-	/** Should we store all values rounded down? */
-	bool mustRoundDown;
 };
 
 #endif
