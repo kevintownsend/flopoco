@@ -28,7 +28,6 @@
 #include <cstdlib>
 
 #include "Operator.hpp"
-#include "TestIOMap.hpp"
 #include "BigTestBench.hpp"
 
 mpz_class getLargeRandom(int w);

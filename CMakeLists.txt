@@ -131,7 +131,6 @@ ADD_EXECUTABLE(flopoco
  src/ConstMult/FPConstMult 
 # src/ConstMult/CRFPConstMult 
  src/TestCase
- src/TestIOMap
  src/FPNumber
  
  
@@ -182,7 +181,6 @@ ADD_EXECUTABLE(flopoco
  src/ConstMult/FPConstMult 
  src/ConstMult/CRFPConstMult 
  src/TestCase
- src/TestIOMap
  src/FPNumber
  src/fpexponential/math_lib.cpp
  src/fpexponential/signal.cpp
