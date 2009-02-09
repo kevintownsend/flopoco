@@ -8,7 +8,6 @@
 class TestBench : public Operator
 {
 public:
-	/* XXX: To discuss what n represents. */
 	/**
 	 * Creates a TestBench.
 	 * @param target The target architecture
@@ -32,6 +31,8 @@ public:
 private:
 	Operator *op_; /**< The unit under test UUT */
 	int       n_;   /**< The parameter from the constructor */
+	TestCaseList tcl_; /**< Test case list */
+
 };
 #endif
 

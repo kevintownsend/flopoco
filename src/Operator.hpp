@@ -371,16 +371,38 @@ public:
 	void incrementPipelineDepth();
 	
 
-	// TODO: rename to emulate()
+
+	/*   Functions related to simulation and testing */
+
 	/**
 	 * Gets the correct value associated to one or more inputs.
-	 * @param a the array which contains both already filled inputs and
-	 *          to be filled outputs in the order specified in getTestIOMap.
+	 * @param tc the test case, filled with the input values, to be filled with the output values.
+	 * @see FPAdder for an example implementation
 	 */
-	virtual void fillTestCase(mpz_class a[]) {
-		throw std::string("fillTestCorrectValues: not implemented for ") + uniqueName_;
-	}
+	virtual void emulate(TestCase * tc);
 		
+	/**
+	 * Append standard test cases to a test case list. Standard test
+	 * cases are operator-dependent and should include any specific
+	 * corner cases you may think of. Never mind removing a standard test case because you think it is no longer useful!
+	 * @param tcl a TestCaseList
+	 */
+	virtual void buildStandardTestCases(TestCaseList* tcl);
+
+
+	/**
+	 * Append random test cases to a test case list. There is a default
+	 * implementation using a uniform random generator, but most
+	 * operators are not exercised efficiently using such a
+	 * generator. For instance, in FPAdder, the random number generator
+	 * should be biased to favor exponents which are relatively close
+	 * so that an effective addition takes place.
+	 * @param tcl a TestCaseList
+	 * @param n the number of random test cases to add
+	 */
+	virtual void buildRandomTestCases(TestCaseList* tcl, int n);
+
+
 	/** Final report function, prints to the terminal.  By default
 	 * reports the pipeline depth, but feel free to overload if you have any
 	 * thing useful to tell to the end user
@@ -467,13 +489,14 @@ public:
 	//////////////////End of FloPoCoPipelineFramework2.0
 
 protected:    
-	Target*             target_;     /**< The target on which the operator will be deployed */
-	string              uniqueName_; /**< By default, a name derived from the operator class and the parameters */
-	vector<Signal*>     ioList_;     /**< The list of I/O signals of the operator */
-	vector<Signal*>     signalList_; /**< The list of internal signals of the operator */
-	map<string, string> portMap_;    /**< Port map for an instance of this operator */
-	map<string, double> outDelayMap; /**< Slack delays on the outputs */
-	ostringstream       vhdl;        /**< The internal stream to which the constructor will build the VHDL code */
+	Target*             target_;          /**< The target on which the operator will be deployed */
+	string              uniqueName_;      /**< By default, a name derived from the operator class and the parameters */
+	vector<Signal*>     ioList_;          /**< The list of I/O signals of the operator */
+	vector<Signal*>     testCaseSignals_; /**< The list of pointers to the signals in a test case entry. Its size also gives the dimension of a test case */
+	vector<Signal*>     signalList_;      /**< The list of internal signals of the operator */
+	map<string, string> portMap_;         /**< Port map for an instance of this operator */
+	map<string, double> outDelayMap;      /**< Slack delays on the outputs */
+	ostringstream       vhdl;             /**< The internal stream to which the constructor will build the VHDL code */
 private:
 	int                    numberOfInputs_;             /**< The number of inputs of the operator */
 	int                    numberOfOutputs_;            /**< The number of outputs of the operator */

@@ -46,14 +46,17 @@ public:
 	*/
 	void setOperatorName();	
 
-
 	/**
-	 * Gets the correct value associated to one or more inputs.
-	 * @param a the array which contains both already filled inputs and
-	 *          to be filled outputs in the order specified in getTestIOMap.
+	 * Emulate a correctly rounded addition using MPFR.
+	 * @param tc a TestCase partially filled with input values 
 	 */
-	void fillTestCase(mpz_class a[]);
+	void emulate(TestCase * tc);
 	
+
+	void buildStandardTestCases(TestCaseList* tcl);
+
+
+
 private:
 	/** The width of the exponent for the input X */
 	int wEX; 

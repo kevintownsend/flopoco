@@ -28,6 +28,7 @@
 #include <sstream>
 #include <cstdlib>
 #include "Operator.hpp"
+#include "utils.hpp"
 
 
 void Operator::addInput(const std::string name, const int width) {
@@ -51,6 +52,8 @@ void Operator::addOutput(const std::string name, const int width, const int numb
 	Signal *s = new Signal(name, Signal::out, width) ;
 	s -> setNumberOfPossibleValues(numberOfPossibleOutputValues);
 	ioList_.push_back(s);
+	for(int i=0; i<numberOfPossibleOutputValues; i++) 
+		testCaseSignals_.push_back(s);
 	signalMap_[name] = s ;
 	numberOfOutputs_ ++;
 }
@@ -74,6 +77,8 @@ void Operator::addFPOutput(const std::string name, const int wE, const int wF, c
 	Signal *s = new Signal(name, Signal::out, wE, wF) ;
 	s -> setNumberOfPossibleValues(numberOfPossibleOutputValues);
 	ioList_.push_back(s);
+	for(int i=0; i<numberOfPossibleOutputValues; i++) 
+		testCaseSignals_.push_back(s);
 	signalMap_[name] = s ;
 	numberOfOutputs_ ++;
 }
@@ -678,4 +683,45 @@ string  Operator::buildVHDLRegisters() {
 		o << tab << "end process;\n"; 
 	}
 	return o.str();
+}
+
+
+void Operator::buildStandardTestCases(TestCaseList* tcl) {
+	// Each operator should overload this method. If not, it is mostly harmless but deserves a warning.
+	cerr << "WARNING: No standard test cases implemented for this operator" << endl;
+}
+
+
+
+
+void Operator::buildRandomTestCases(TestCaseList* tcl, int n){
+
+	TestCase *tc;
+	/* Generate test cases using random input numbers */
+	for (int i = 0; i < n; i++) {
+		tc = new TestCase(this); // TODO free all this memory when exiting TestBench
+		/* Fill inputs */
+		for (int j = 0; j < ioList_.size(); j++) {
+			Signal* s = ioList_[j]; 
+			if (s->type() == Signal::in) {
+				mpz_class a = getLargeRandom(s->width());
+				tc->addInput(s->getName(), a);
+			}
+		}
+		/* Get correct outputs */
+		emulate(tc);
+
+		//		cout << tc->getInputVHDL();
+		//    cout << tc->getExpectedOutputVHDL();
+
+
+		// add to the test case list
+		tcl->add(tc);
+	}
+}
+
+
+
+void Operator::emulate(TestCase * tc) {
+		throw std::string("emulate() not implemented for ") + uniqueName_;
 }

@@ -163,8 +163,8 @@ static void usage(char *name){
 	cerr << "    TestBench n\n";
 	cerr << "       Behavorial test bench for the preceding operator\n";
 	cerr << "       This test bench will include standard tests, plus n random tests.\n";
-	cerr << "    BigTestBench n\n";
-	cerr << "       Same as above, more VHDL efficient, less practical for debugging.\n";
+	//	cerr << "    BigTestBench n\n";
+	//	cerr << "       Same as above, more VHDL efficient, less practical for debugging.\n";
 	cerr << "    Wrapper\n";
 	cerr << "       Wraps the preceding operator between registers\n";
 	cerr << "(NPY) Not pipelined yet\n";

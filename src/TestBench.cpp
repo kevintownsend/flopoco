@@ -53,6 +53,10 @@ TestBench::TestBench(Target* target, Operator* op, int n):
 	} catch (std::string) {
 		/* silently ignore */
 	}
+
+	// Generate the standard and random test cases for this operator
+	op-> buildStandardTestCases(&tcl_);
+	op-> buildRandomTestCases(&tcl_, n);
 }
 
 TestBench::~TestBench() { 
@@ -63,90 +67,6 @@ void TestBench::setOperatorName(){
 }
 
 void TestBench::outputVHDL(ostream& o, string name) {
-	/*
-	 * Generate some TestCases
-	 * We do this as early as possible, so that no VHDL is generated
-	 * if test cases are not implemented for the given operator
-	 */
-
-	TestCaseList tcl;
-
-	/* Get the size of the I/O Map */
-	int size = 0;
-	for (int i=0; i<op_->getIOListSize(); i++){
-		Signal* s = op_->getIOListSignal(i);
-		size += s->getNumberOfPossibleValues() ; // will be 1 for the inputs and possibly more for the outputs
-	}
-
-
-	/* Allocate buffer which store I/O values metadata */
-	bool *a_isIn = new bool[size];
-	bool *a_isFP = new bool[size];
-	int *a_w = new int[size];
-	const Signal **a_s = new const Signal*[size];
-
-	/* Get the metadata */
-	size = 0;
-	int max_bits = 0;
-	for (int i=0; i<op_->getIOListSize(); i++){
-		Signal* s = op_->getIOListSignal(i);
-		int maxNumValues = s->getNumberOfPossibleValues();
-
-		for (int j = 0; j < maxNumValues; j++)
-		{
-			a_s   [size] = s;
-			a_isIn[size] = (s->type() == Signal::in);
-			a_isFP[size] = s->isFP();
-			a_w   [size] = s->width();
-			max_bits = max(max_bits, a_w[size]);
-			size++;
-		}
-	}
-	
-	
-
-	/* Generate test cases */
-	mpz_class *a = new mpz_class[size];
-	for (int i = 0; i < n_; i++)
-	{
-		/* Fill inputs, erase outputs */
-		for (int j = 0; j < size; j++)
-		{
-			if (a_isIn[j])
-			{
-				if (a_isFP[j])
-					a[j] = (mpz_class(1) << (a_w[j]-2)) + getLargeRandom(a_w[j]-2); // FIXME Here bug: operation with a zero never tested
-				else
-					a[j] = getLargeRandom(a_w[j]);
-			}
-			else
-				a[j] = -1;
-		}
-
-		/* Get correct outputs */
-		op_->fillTestCase(a);
-
-		/* Store test case */
-		TestCase tc;
-		for (int j = 0; j < size; j++)
-		{
-			if (a_isIn[j])
-				tc.addInput(*a_s[j], a[j]);
-			else
-			{
-				if (a[j] != -1)          //TODO find a better method to validate only some expected outputs
-					tc.addExpectedOutput(*a_s[j], a[j]);
-					
-			}
-		}
-		tcl.add(tc);
-	}
-	delete[] a;
-	delete[] a_s;
-	delete[] a_isIn;
-	delete[] a_isFP;
-	delete[] a_w;
-
 	licence(o,"Florent de Dinechin, Cristian Klein (2007)");
 	Operator::stdLibs(o);
 
@@ -158,7 +78,7 @@ void TestBench::outputVHDL(ostream& o, string name) {
 	// The local signals
 	outputVHDLSignalDeclarations(o);
 
-	o << endl <<  // FIXME! Check this
+	o << endl <<  // FIXME This function considers NaNs signed, which is wrong
 		tab << "-- FP compare function (found vs. real)\n" <<
 		tab << "function fp_equal(a : std_logic_vector; b : std_logic_vector) return boolean is\n" <<
 		tab << "begin\n" <<
@@ -227,9 +147,9 @@ void TestBench::outputVHDL(ostream& o, string name) {
 	o << tab << tab << "rst <= '1';" << endl;
 	o << tab << tab << "wait for 10 ns;" << endl;
 	o << tab << tab << "rst <= '0';" << endl;
-	for (int i = 0; i < tcl.getNumberOfTestCases(); i++)
+	for (int i = 0; i < tcl_.getNumberOfTestCases(); i++)
 	{
-		o << tcl.getTestCase(i).getInputVHDL(tab + tab);
+		o << tcl_.getTestCase(i)->getInputVHDL(tab + tab);
 		o << tab << tab << "wait for 10 ns;" <<endl;
 	} 
 	o << tab << tab << "wait for 100000 ns; -- allow simulation to finish" << endl;
@@ -244,13 +164,13 @@ void TestBench::outputVHDL(ostream& o, string name) {
 	currentOutputTime += 10;
 	o << tab << tab << "wait for "<< op_->getPipelineDepth()*10 <<" ns; -- wait for pipeline to flush" <<endl;
 	currentOutputTime += op_->getPipelineDepth()*10;
-	for (int i = 0; i < tcl.getNumberOfTestCases(); i++)
+	for (int i = 0; i < tcl_.getNumberOfTestCases(); i++)
 	{
 		o << tab << tab << "wait for 5 ns;" <<endl;
 		currentOutputTime += 5;
 		o << tab << tab << "-- " << "current time: " << currentOutputTime <<endl;
-		o << tcl.getTestCase(i).getInputVHDL(tab + tab + "-- input: ");
-		o << tcl.getTestCase(i).getExpectedOutputVHDL(tab + tab);
+		o << tcl_.getTestCase(i)->getInputVHDL(tab + tab + "-- input: ");
+		o << tcl_.getTestCase(i)->getExpectedOutputVHDL(tab + tab);
 		o << tab << tab << "wait for 5 ns;" <<endl;
 		currentOutputTime += 5;
 	} 

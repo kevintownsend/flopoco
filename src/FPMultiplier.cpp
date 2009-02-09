@@ -959,6 +959,36 @@ void FPMultiplier::outputVHDL(std::ostream& o, std::string name) {
 
 
 
+
+// FIXME: the following is only functional for a correctly rounded multiplier.
+// The old code for the non-normalized case is commented out below, just in case.
+void FPMultiplier::emulate(TestCase * tc)
+{
+	/* Get I/O values */
+	mpz_class svX = tc->getInputValue("X");
+	mpz_class svY = tc->getInputValue("Y");
+
+	/* Compute correct value */
+	FPNumber fpx(wEX_, wFX_), fpy(wEY_, wFY_);
+	fpx = svX;
+	fpy = svY;
+	mpfr_t x, y, r;
+	mpfr_init2(x, 1+wFX_);
+	mpfr_init2(y, 1+wFY_);
+	mpfr_init2(r, 1+wFR_); 
+	fpx.getMPFR(x);
+	fpy.getMPFR(y);
+	mpfr_mul(r, x, y, GMP_RNDN);
+	FPNumber  fpr(wER_, wFR_, r);
+
+	/* Set outputs */
+
+	mpz_class svR = fpr.getSignalValue();
+	tc->addExpectedOutput("R", svR);
+}
+
+
+#if 0
 void FPMultiplier::fillTestCase(mpz_class a[])
 {
 	/* Get I/Os */
@@ -1026,4 +1056,4 @@ void FPMultiplier::fillTestCase(mpz_class a[])
 	mpfr_clears(x, y, r, 0, NULL);
 
 }
-
+#endif // end commented out code

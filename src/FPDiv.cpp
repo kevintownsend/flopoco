@@ -227,12 +227,11 @@ void FPDiv::outputVHDL(std::ostream& o, std::string name) {
 
 
 
-void FPDiv::fillTestCase(mpz_class a[])
+void FPDiv::emulate(TestCase * tc)
 {
 	/* Get I/O values */
-	mpz_class& svX = a[0];
-	mpz_class& svY = a[1];
-	mpz_class& svR = a[2];
+	mpz_class svX = tc->getInputValue("X");
+	mpz_class svY = tc->getInputValue("Y");
 
 	/* Compute correct value */
 	FPNumber fpx(wE, wF), fpy(wE, wF);
@@ -248,8 +247,9 @@ void FPDiv::fillTestCase(mpz_class a[])
 	FPNumber  fpr(wE, wF, r);
 
 	/* Set outputs */
-	svR = fpr.getSignalValue();
-	
+
+	mpz_class svR = fpr.getSignalValue();
+	tc->addExpectedOutput("R", svR);
 }
 
 

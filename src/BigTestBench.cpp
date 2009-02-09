@@ -57,6 +57,11 @@ BigTestBench::BigTestBench(Target* target, Operator* op, int n):
 	} catch (std::string) {
 		/* silently ignore */
 	}
+
+	// Generate the standard and random test cases for this operator
+	// TODO bring back the code that writes the file from below up to here,
+	// but calling	op-> buildRandomTestCases(&tcl_, n); for small values of n at a time.
+
 }
 
 BigTestBench::~BigTestBench() { }
@@ -121,7 +126,6 @@ void BigTestBench::outputVHDL(ostream& o, string name) {
 	size_t res;
 	cerr << "Generating BIG test bench ... ";
 
-
 	licence(o,"Cristian Klein, Florent de Dinechin (2008)");
 	o << "library ieee;" <<endl;
 	o << "use ieee.std_logic_textio.all;" <<endl;
@@ -141,7 +145,7 @@ void BigTestBench::outputVHDL(ostream& o, string name) {
 	o << tab << "file fTest : text open read_mode is \""
 		<< op_->getOperatorName() << ".test\";" <<endl;
 	
-	o << endl <<
+	o << endl << // FIXME Signed NANs
 		tab << "-- FP compare function (found vs. real)\n" <<
 		tab << "function fp_equal(a : std_logic_vector; b : std_logic_vector) return boolean is\n" <<
 		tab << "begin\n" <<
@@ -155,7 +159,6 @@ void BigTestBench::outputVHDL(ostream& o, string name) {
 	o << "begin\n";
 
 	// the instance
-	// XXX: Ugly! Will write something to encapsulate this.
 	o << tab << "uut:" << op_->getOperatorName() << "\n"
 	  << tab << tab << "port map ( clk => clk, rst => rst," << endl;
 	for(int i=0; i<op_->getIOListSize(); i++) {
@@ -354,7 +357,7 @@ void BigTestBench::outputVHDL(ostream& o, string name) {
 		}
 
 		/* Get correct outputs */
-		op_->fillTestCase(a[head]);
+		// op_->fillTestCase(a[head]);
 
 		/* Write it to the file */
 		for (int j = 0; j < size; j++)

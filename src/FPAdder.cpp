@@ -655,8 +655,7 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 #endif		
 			
 		o<<tab<< "R <= finalResult;"<<endl;
-		
-				   
+						   
 		endArchitecture(o);
 
 }
@@ -666,14 +665,13 @@ void FPAdder::outputVHDL(std::ostream& o, std::string name) {
 
 
 
-void FPAdder::fillTestCase(mpz_class a[])
-{
-	
-	/* Get I/O values */
-	mpz_class& svX = a[0];
-	mpz_class& svY = a[1];
-	mpz_class& svR = a[2];
 
+
+void FPAdder::emulate(TestCase * tc)
+{
+	/* Get I/O values */
+	mpz_class svX = tc->getInputValue("X");
+	mpz_class svY = tc->getInputValue("Y");
 
 	/* Compute correct value */
 	FPNumber fpx(wEX, wFX), fpy(wEY, wFY);
@@ -689,8 +687,30 @@ void FPAdder::fillTestCase(mpz_class a[])
 	FPNumber  fpr(wER, wFR, r);
 
 	/* Set outputs */
-	svR = fpr.getSignalValue();
+	mpz_class svR = fpr.getSignalValue();
+	tc->addExpectedOutput("R", svR);
+}
+
+
+
+
+
+void FPAdder::buildStandardTestCases(TestCaseList* tcl){
+	TestCase *tc;
+
+	// Regression tests 
+	tc = new TestCase(this); 
+	tc->addInput("X", 1.0);
+	tc->addInput("Y", -1.0);
+	emulate(tc);
+	tcl->add(tc);
+
+	tc = new TestCase(this); 
+	tc->addInput("X", 1.0);
+	tc->addInput("Y", 0.0);
+	emulate(tc);
+	tcl->add(tc);
+
 	
-	mpfr_clears(x, y, r, 0, NULL);
 }
 

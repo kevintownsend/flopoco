@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <gmpxx.h>
 
 #ifdef _WIN32
   #include "pstdint.h"
@@ -174,6 +175,24 @@ public:
 
 	/** Get the number of possible output values. */
 	uint32_t getNumberOfPossibleValues(); 
+
+	/**
+	 * Converts the value of the signal into a nicely formated VHDL expression,
+	 * including padding and putting quot or apostrophe.
+	 * @param v value
+	 * @param quot also put quotes around the value
+	 * @return a string holding the value in binary
+	 */
+	std::string valueToVHDL(mpz_class v, bool quot = true);
+	
+	/**
+	 * Converts the value of the signal into a nicely formated VHDL expression,
+	 * including padding and putting quot or apostrophe. (Hex version.)
+	 * @param v value
+	 * @param quot also put quotes around the value
+	 * @return a string holding the value in hexa
+	 */
+	std::string valueToVHDLHex(mpz_class v, bool quot = true);
 
 
 

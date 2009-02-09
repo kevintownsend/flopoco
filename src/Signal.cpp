@@ -180,3 +180,57 @@ uint32_t  Signal::getNumberOfPossibleValues(){
 	return numberOfPossibleValues_;
 }
 
+
+
+std::string Signal::valueToVHDL(mpz_class v, bool quot){
+	std::string r;
+
+	/* Get base 2 representation */
+	r = v.get_str(2);
+
+	/* Some checks */
+	if (r.size() > width())	{
+		std::ostringstream o;
+		o << "Error in " <<  __FILE__ << "@" << __LINE__ << ": value (" << r << ") is larger than signal " << getName();
+		throw o.str();
+	}
+
+	/* Do padding */
+	while (r.size() < width())
+		r = "0" + r;
+
+	/* Put apostrophe / quot */
+	if (!quot) return r;
+	if (width() > 1)
+		return "\"" + r + "\"";
+	else
+		return "'" + r + "'";
+}
+
+
+std::string Signal::valueToVHDLHex(mpz_class v, bool quot){
+	std::string o;
+
+	/* Get base 16 representation */
+	o = v.get_str(16);
+
+	/* Some check */
+	/* XXX: Too permissive */
+	if (o.size() * 4 > width() + 4)	{
+		std::ostringstream o;
+		o << "Error in " <<  __FILE__ << "@" << __LINE__ << ": value is larger than signal " << getName();
+		throw o.str();
+	}
+
+	/* Do padding */
+	while (o.size() * 4 < width())
+		o = "0" + o;
+
+	/* Put apostrophe / quot */
+	if (!quot) return o;
+	if (width() > 1)
+		return "x\"" + o + "\"";
+	else
+		return "'" + o + "'";
+}
+
