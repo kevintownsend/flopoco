@@ -28,6 +28,8 @@ ConstMult:
 * Implement the continued fraction stuff for FPCRConstMult
 
 FPAdder
+* clean up the input parameters of FPAdder, for instance wEX and wEY should
+be replaced by wE
 * a few optimization opportunities, see the TODO inside FPAdder.cpp
 
 FPMultiplier:
