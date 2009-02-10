@@ -163,8 +163,6 @@ while i<len(operators):
 			child_stdin.close()
 			child_stderr.close()
 			#p.wait()
-			res.append( [run_cmd,`pass_test`])
-			pass_all = pass_all and pass_test
 			if pass_test:
 				print "Test: ", run_cmd , " has SUCCEDED "
 			else:

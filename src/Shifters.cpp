@@ -145,7 +145,7 @@ Shifter::Shifter(Target* target, int wIn, int maxShift, ShiftDirection direction
 				addSignal(sname.str(), wIn_ + (1<<i) -1);
 		}	
 	
-		addSignal("ps", wShiftIn_);
+		addSignalBus("ps", wShiftIn_); //this line changed by Bogdan
 	}
 	
 	if (verbose){

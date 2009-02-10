@@ -314,7 +314,7 @@ void Operator::outputVHDLComponent(std::ostream& o, std::string name) {
 		o << tab << tab << "port ( ";
 		if(isSequential()) {
 			// add clk and rst signals which are no longer member of iolist
-			o << "clk, rst : in std_logic," <<endl;
+			o << "clk, rst : in std_logic;" <<endl;
 		}
 		for (int i=0; i<this->ioList_.size(); i++){
 			Signal* s = this->ioList_[i];
@@ -341,7 +341,7 @@ void Operator::outputVHDLEntity(std::ostream& o) {
 
 		if(isSequential()) {
 			// add clk and rst signals which are no longer member of iolist
-			o << "clk, rst : in std_logic," <<endl;
+			o << "clk, rst : in std_logic;" <<endl;
 		}
 		for (int i=0; i<this->ioList_.size(); i++){
 			Signal* s = this->ioList_[i];

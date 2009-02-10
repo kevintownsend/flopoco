@@ -22,11 +22,11 @@ INCLUDE(CPack)
 
 
 # Uncomment for profiling
-#SET(CMAKE_CXX_FLAGS_DEBUG "-g -pg")
+SET(CMAKE_CXX_FLAGS_DEBUG "-g -pg -Wall")
 
 # Do you want an executable of 9GB ?
-#SET(CMAKE_BUILD_TYPE debug)
-SET(CMAKE_BUILD_TYPE release)
+SET(CMAKE_BUILD_TYPE debug)
+#SET(CMAKE_BUILD_TYPE release)
 
 FIND_PATH(MPFR_H
 	  mpfr.h
