@@ -28,7 +28,7 @@ SET(CMAKE_CXX_FLAGS_DEBUG "-g -pg -Wall")
 # Do you want an executable of 9GB ?
 SET(CMAKE_BUILD_TYPE debug)
 #SET(CMAKE_BUILD_TYPE release)
-ENDIF
+ENDIF(WIN32)
 
 
 FIND_PATH(MPFR_H
