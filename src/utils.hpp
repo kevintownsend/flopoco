@@ -5,6 +5,7 @@
 #include <gmp.h>
 #include <mpfr.h>
 #include <gmpxx.h>
+#include <map>
 
 #ifdef _WIN32
   #include "pstdint.h"
@@ -196,5 +197,11 @@ string vhdlize(double num);
 
 string mpz2string(mpz_class x);
 
+
+/**
+ *@param[in] inputDelays	map between signal names and their respective delays
+ *@return the maximum delay of the input map 
+ */ 
+double getMaxInputDelays( map<string, double> inputDelays );
 
 #endif

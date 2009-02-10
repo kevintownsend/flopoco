@@ -38,119 +38,75 @@ using namespace std;
 
 Shifter::Shifter(Target* target, int wIn, int maxShift, ShiftDirection direction, map<string, double> inputDelays) :
 	Operator(target), wIn_(wIn), maxShift_(maxShift), direction_(direction) {
+	
+	ostringstream name;
+	
+	name << "Shift"<<(direction==Left?"Left":"Right")<<"_"<<wIn_<<"_by_max_"<<maxShift_;
+	uniqueName_ = name.str();
 
-	wOut_ = wIn_ + maxShift_;
-	wShiftIn_ = intlog2(maxShift_);
-	setOperatorName();
-	setOperatorType();
-	setPipelineDepth(0);//initialization
 
-	// Set up the IO signals
+	// -------- Parameter set up -----------------
+	wOut_         = wIn_ + maxShift_;
+	wShiftIn_     = intlog2(maxShift_);
+	maxInputDelay_ = getMaxInputDelays(inputDelays); 
+
 	addInput ("X", wIn_);
 	addInput ("S", wShiftIn_);  
 	addOutput("R", wOut_);
- 
-	// evaluate the pipeline (initialization)
-	double criticalPath = 0.0;
-	for (int i=0; i<wShiftIn_; i++) 
-		levelRegistered_[i] = false;
 
-	if(isSequential()) {
-		//compute the maximum input delay
-		maxInputDelay = 0;
-		map<string, double>::iterator iter;
-		for (iter = inputDelays.begin(); iter!=inputDelays.end();++iter)
-			if (iter->second > maxInputDelay)
-				maxInputDelay = iter->second;
+	setOperatorType();
+
+	vhdl << tab << declare("level0",wIn_  ) << "<= X;" <<endl;
+	vhdl << tab << declare("ps", wShiftIn_) << "<= S;" <<endl;
 	
-		if (verbose)
-			cout << "The maximum input delay is "<<	maxInputDelay<<endl;
+	// local variables
+	double period = (1.0)/target->frequency();
+	double stageDelay = 0.0;
+	int    lastRegLevel = -1;
+	int    unregisteredLevels = 0;
+	int    dep = 0;
 		
-		double	objectivePeriod;
-		objectivePeriod = 1/ target->frequency();
-		
-		if (verbose)
-			cout << "Objective period "<< objectivePeriod<<" at an objective frequency of "<<target->frequency() << endl;
-		
-		if (objectivePeriod<maxInputDelay){
-			//It is the responsability of the previous components to not have a delay larger than the period
-			cout << "Warning, the combinatorial delay at the input of "<<this->getOperatorName()<<"is above limit"<<endl;
-			maxInputDelay = objectivePeriod;
-		}
-
-		short lastRegLevel = -1;
-		double stageDelay = 0;
-		double dep;
-		int k = 0;
-		for (int i=0; i<wShiftIn_; i++) {
-			/* approximate delay of this stage */
-			k = i - lastRegLevel;
-			if ( intpow2(k-1)> wIn+i+1) 
-				dep = wIn+i+1 + k -1;
-			else
-				dep = intpow2(k-1);
-			
-			if (verbose)
-				cout<<"depth = "<<dep<<" at i="<<i<<endl;	
-			
-			stageDelay = intlog(mpz_class(target->lutInputs()), mpz_class(dep)) * target->lutDelay() + (intlog(mpz_class(target->lutInputs()),mpz_class(dep))-1) * target->localWireDelay();
-			if (lastRegLevel==-1)
-				stageDelay+=maxInputDelay;
-
-
-			double period = (1.0)/target->frequency();
-			if (verbose) cout<<" stage delay = "<<stageDelay<<" period is "<<period<< endl;			
-		
-			if (stageDelay > period) {
-				// reset critical path
-				levelRegistered_[i+1]= true;
-				lastRegLevel = i;
-				incrementPipelineDepth();
-			}
-			else{ 
-				levelRegistered_[i+1] = false;
-			}
-		}
-		// register the last level anyway
-		if(!levelRegistered_[wShiftIn_]) {
-			levelRegistered_[wShiftIn_] = true;
-			incrementPipelineDepth();
-		}
-	}
-
-	// Set up the intermediate signals 
-	if (isSequential()){
-		addSignal("level0", wIn_);
-		
-		for (int i=1; i<=wShiftIn_; i++) {
-			ostringstream sname;
-			sname << "level"<<i;
-			if (levelRegistered_[i])
-				addDelaySignal(sname.str(), wIn_ + (1<<i) -1 );
-			else
-				addSignal(sname.str(), wIn_ + (1<<i) -1);
-		}
-
-		// The shift input has to be delayed as well now
-		if(getPipelineDepth()>=1) 
-			addDelaySignal("ps", wShiftIn_, getPipelineDepth()-1); 
+	for (int currentLevel=0; currentLevel<wShiftIn_; currentLevel++){
+		//compute current level delay
+		//TODO REMEMBER WHY THIS DOES WORK
+		unregisteredLevels = currentLevel - lastRegLevel;
+		if ( intpow2(unregisteredLevels-1) > wIn_+currentLevel+1 ) 
+			dep = wIn+currentLevel+1 + unregisteredLevels -1;
 		else
-			addSignal("ps", wShiftIn_);
+			dep = intpow2(unregisteredLevels-1);
+		
+		if (verbose)
+			cout<<"depth = "<<dep<<" at i="<<currentLevel<<endl;	
 
+		stageDelay = intlog(mpz_class(target->lutInputs()), mpz_class(dep)) * target->lutDelay() + (intlog(mpz_class(target->lutInputs()),mpz_class(dep))-1) * target->localWireDelay();
+		if (lastRegLevel == -1)
+			stageDelay+= maxInputDelay_;
+		
+		if (stageDelay>period){
+			lastRegLevel = currentLevel;
+			nextCycle(); ////////////////////////////////////////////////
+		}
+			ostringstream currentLevelName, nextLevelName;
+			currentLevelName << "level"<<currentLevel;
+			nextLevelName << "level"<<currentLevel+1;
+			if (direction==Right){
+				vhdl << tab << declare(nextLevelName.str(),wIn+intpow2(currentLevel+1)-1 ) 
+					        <<"<=  ("<<intpow2(currentLevel)-1 <<" downto 0 => '0') & "<<use(currentLevelName.str())<<" when "<<use("ps")<<"("<<currentLevel<<") = '1' else "
+					 << tab << use(currentLevelName.str()) <<" & ("<<intpow2(currentLevel)-1<<" downto 0 => '0');"<<endl;
+			}else{
+				vhdl << tab << declare(nextLevelName.str(),wIn+intpow2(currentLevel+1)-1 ) 
+					        << "<= " << use(currentLevelName.str()) << " & ("<<intpow2(currentLevel)-1 <<" downto 0 => '0') when "<<use("ps")<<"("<<currentLevel<<") = '1' else "
+					 << tab <<" ("<<intpow2(currentLevel)-1<<" downto 0 => '0') & "<< use(currentLevelName.str()) <<";"<<endl;
+			}
+			
 	}
-	else{
-		for (int i=0; i<=wShiftIn_; i++) {
-				ostringstream sname;
-				sname << "level"<<i;
-				addSignal(sname.str(), wIn_ + (1<<i) -1);
-		}	
-	
-		addSignalBus("ps", wShiftIn_); //this line changed by Bogdan
-	}
-	
-	if (verbose){
-		cout <<"wShiftIn="<<wShiftIn_<<endl;
-	}
+	ostringstream lastLevelName;
+	lastLevelName << "level"<<wShiftIn_;
+	if (direction==Right)
+		vhdl << tab << "R <= "<<use(lastLevelName.str())<<"("<< wIn + intpow2(wShiftIn_)-1-1 << " downto " << wIn_ + intpow2(wShiftIn_)-1 - wOut_ <<");"<<endl;
+	else
+		vhdl << tab << "R <= "<<use(lastLevelName.str())<<"("<< wOut_-1 << " downto 0);"<<endl;
+
 }
 
 Shifter::~Shifter() {
@@ -166,99 +122,44 @@ void Shifter::setOperatorName(){
 
 void Shifter::outputVHDL(std::ostream& o, std::string name) {
 	ostringstream signame;
-	licence(o,"Florent de Dinechin, Bogdan Pasca (2007,2008)");
+	licence(o,"Florent de Dinechin, Bogdan Pasca (2007,2008,2009)");
 	Operator::stdLibs(o);
 	outputVHDLEntity(o);
 	newArchitecture(o,name);
-	outputVHDLSignalDeclarations(o);
+	o << buildVHDLSignalDeclarations();
 	beginArchitecture(o);
-	
-	if (isSequential())
-	{
-		outputVHDLRegisters(o);
-		
-		int stage=0;
-		o << "   level0 <=  X ;" << endl;
-		o << "   ps <=  s;" <<endl;
-		ostringstream psname;
-		psname << "ps";
-		for (int i=0; i<wShiftIn_; i++) {
-			ostringstream lname;
-			lname << "level"<<i;
-			if (levelRegistered_[i]) { // use the registered signal instead
-				lname << "_d";
-				// and use next stage of ps
-				psname << "_d",
-				// add a synchronisation barrier here
-				o <<"  ----- synchro barrier ------- " <<endl;
-				stage++;
-			}
-							
-			o << "   level"<<i+1<<" <=  ";
-			o << "("<<intpow2(i)-1<<" downto 0 => '0') & "<<lname.str()
-				<<"  when "<<psname.str()<<"("<<i<<") = '"<<(direction_==Right?1:0)<<"'   else  ";
-			o << lname.str()<<" & ("<<intpow2(i)-1<<" downto 0 => '0');" << endl;
-			
-		}
-		if(levelRegistered_[wShiftIn_])
-			o <<"  ----- synchro barrier ------- " <<endl;
-
-		o << "   R <=  level"<<wShiftIn_;
-		if(levelRegistered_[wShiftIn_]) 
-			o << "_d";
-		if (direction_==Left)
-			o << "("<< wOut_-1<<" downto 0);" << endl << endl;
-		else
-			o << "("<< wIn_ + (1<<wShiftIn_) -2<<" downto "<<wIn_ + (1<<wShiftIn_) -1 - wOut_ <<");"<<endl << endl;
-			
-	}
-	else
-	{ //combinatorial version
-		o << "   level0 <=  X ;" << endl;
-		o << "   ps <=  s;" <<endl;
-		ostringstream psname;
-		psname << "ps";
-		
-		for (int i=0; i<wShiftIn_; i++) {
-			ostringstream lname;
-			lname << "level"<<i;
-									
-			o << " level"<<i+1<<" <=  ";
-			o << "("<<intpow2(i)-1<<" downto 0 => '0') & "<<lname.str()
-				<<"  when "<<psname.str()<<"("<<i<<") = '"<<(direction_==Right?1:0)<<"'   else  ";
-			o << lname.str()<<" & ("<<intpow2(i)-1<<" downto 0 => '0');" << endl;
-		}
-		if (direction_==Left)
-			o << "   R <=  level"<<wShiftIn_<<"("<< wOut_-1<<" downto 0);" << endl << endl;		
-		else
-			o << "   R <=  level"<<wShiftIn_<<"("<< wIn_ + (1<<wShiftIn_) -2<<" downto "<<wIn_ + (1<<wShiftIn_) -1 - wOut_ <<");" << endl << endl;
-	}
-	
-	endArchitecture(o);		
+	o << buildVHDLRegisters();
+	o << vhdl.str();
+	endArchitecture(o);
 }
 
-
-void Shifter::fillTestCase(mpz_class a[])
+void Shifter::emulate(TestCase* tc)
 {
-	mpz_class& sx   = a[0];
-	mpz_class& ss   = a[1];
-	mpz_class& sr   = a[2];
-				
-	while (ss>maxShift_)
-	ss=getLargeRandom(wShiftIn_);
+	mpz_class sx = tc->getInputValue("X");
+	mpz_class ss = tc->getInputValue("S");
+	mpz_class sr ;
+	
+	while (ss > maxShift_)
+		ss = getLargeRandom(wShiftIn_);
 
 	mpz_class shiftAmmount;
 	if (direction_==Right)
 		shiftAmmount=maxShift_-ss;
 	else
 		shiftAmmount=ss;
-		
+	
 	mpz_class shiftedInput;
 	shiftedInput=sx;
-	
+
 	int i;
 	for (i=0;i<shiftAmmount;i++)
 			shiftedInput=shiftedInput*2;
-		
-	sr=shiftedInput;		
+	
+	sr=shiftedInput;
+
+	tc->addExpectedOutput("R", sr);
+
 }
+
+
+

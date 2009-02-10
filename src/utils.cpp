@@ -389,3 +389,14 @@ string mpz2string(mpz_class x)
 {
 	return x.get_str(10);	
 }
+
+double getMaxInputDelays( map<string, double> inputDelays )
+{
+	double maxInputDelay = 0;
+	map<string, double>::iterator iter;
+	for (iter = inputDelays.begin(); iter!=inputDelays.end();++iter)
+		if (iter->second > maxInputDelay)
+			maxInputDelay = iter->second;
+			
+	return maxInputDelay;
+}

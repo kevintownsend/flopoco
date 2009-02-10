@@ -45,15 +45,15 @@ public:
 	 */
 	void setOperatorName(); 
 
-
 	/**
-	 * Gets the correct value associated to one or more inputs.
-	 * @param a the array which contains both already filled inputs and
-	 *          to be filled outputs in the order specified in getTestIOMap.
+	 * Emulate a correctly rounded division using MPFR.
+	 * @param tc a TestCase partially filled with input values 
 	 */
-	void fillTestCase(mpz_class a[]);
+	void emulate(TestCase * tc);
 
-	/** Returns the number of bits of the sift ammount */
+	/** Returns the number of bits of the sift ammount 
+	 *@return number of bits of the shift ammount
+	*/
 	int getShiftAmmount(){
 		return wShiftIn_;
 	}
@@ -62,11 +62,9 @@ protected:
 	int maxShift_;     /**< the maximum shift ammount*/
 	int wOut_;         /**< the width of the output */
 	int wShiftIn_; 	   /**< the number of bits of the input which determines the shift ammount*/
-	map<string, double> inputDelays_;
 
 private:
-	ShiftDirection direction_;            /**< determines the shift direction. can be Left or Right */
-	bool           levelRegistered_[128]; /**< if boolean true, the corresponding level signal is registered*/ 
-	double maxInputDelay;
+	ShiftDirection direction_;  /**< determines the shift direction. can be Left or Right */
+	double maxInputDelay_;      /**< the maximum delay found in the input map */
 };
 #endif
