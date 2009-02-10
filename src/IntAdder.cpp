@@ -94,15 +94,11 @@ Operator(target), wIn_(wIn), inputDelays_(inputDelays)
 			bufferedInputs=0;
 			int maxInAdd = ceil(((objectivePeriod - maxInputDelay) - target->lutDelay())/target->carryPropagateDelay()); 			
 			cS0 = (maxInAdd<=wIn_?maxInAdd:wIn_);
-			cout << "CS0 is : "<< cS0 <<endl;
 			if ((wIn_-cS0)>0)
 			{
 				int newWIn = wIn_-cS0;
-				cout << "newWIn : "<<newWIn<<endl;
 				target->suggestSubaddSize(chunkSize_,newWIn);
-				cout << "chunkSize: "<<chunkSize_<<endl;
 				nbOfChunks = ceil( double(newWIn)/double(chunkSize_));
-				cout << "Number of chunks is : "<<nbOfChunks<<endl;
 				cSize = new int[nbOfChunks+1];
 				cSize[0] = cS0;
 				cSize[nbOfChunks]=( (( (wIn_-cSize[0])%chunkSize_)==0)?chunkSize_:(wIn_-cSize[0])-(nbOfChunks-1)*chunkSize_);
