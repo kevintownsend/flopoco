@@ -36,12 +36,9 @@ public:
 	void outputVHDL(std::ostream& o, std::string name);
 
 	
-	/**
-	 * Gets the correct value associated to one or more inputs.
-	 * @param a the array which contains both already filled inputs and
-	 *          to be filled outputs in the order specified in getTestIOMap.
-	 */
-	void fillTestCase(mpz_class a[]);
+	void emulate(TestCase* tc);
+	void buildStandardTestCases(TestCaseList* tcl);
+
 
 	/** 
 	 * Sets the default name of this operator
@@ -49,9 +46,9 @@ public:
 	void setOperatorName(); 
 	 
 protected:
-	int wIn_;                         /**< the width for X, Y and R*/
+	int wIn_;                         /**< the width for X, Y and the results */
 	int opType_;					  /**< the operation type. if 0, op type is x-y y-x; if 1 op_type is x-y x+y */
-	ostringstream son_;				  /**< second output name; can be RyMx or RxPy */
+	string son_;			   	  /**< second output name; can be yMx or xPy */
 
 private:
 	map<string, double> inputDelays_; /**< a map between input signal names and their maximum delays */

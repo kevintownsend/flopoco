@@ -38,22 +38,21 @@
 using namespace std;
 
 IntDualSub::IntDualSub(Target* target, int wIn, int opType, map<string, double> inputDelays):
-Operator(target), wIn_(wIn), inputDelays_(inputDelays), opType_(opType)
+Operator(target), wIn_(wIn), opType_(opType), inputDelays_(inputDelays)
 {
-	int pipelineDepth=0;
 	setOperatorName();
 	setOperatorType();
 
 	if (opType==0) 
-		son_ << "yMx";
+		son_ = "yMx";
 	else
-		son_ << "xPy";
+		son_ = "xPy";
 	
 	// Set up the IO signals
 	addInput ("X"  , wIn_);
 	addInput ("Y"  , wIn_);
 	addOutput("RxMy", wIn_);
-	addOutput("R"+son_.str(), wIn_);
+	addOutput("R"+son_, wIn_);
 	
 	if (verbose){
 		cout <<"delay for X is   "<< inputDelays["X"]<<endl;	
@@ -86,7 +85,7 @@ Operator(target), wIn_(wIn), inputDelays_(inputDelays), opType_(opType)
 		if (((objectivePeriod - maxInputDelay) - target->lutDelay())<0)	{
 			bufferedInputs = 1;
 			maxInputDelay=0;
-			bool status = target->suggestSubaddSize(chunkSize_ ,wIn_);
+			//			bool status = target->suggestSubaddSize(chunkSize_ ,wIn_);
 			nbOfChunks = ceil(double(wIn_)/double(chunkSize_));
 			cSize = new int[nbOfChunks+1];
 			cSize[nbOfChunks-1]=( ((wIn_%chunkSize_)==0)?chunkSize_:wIn_-(nbOfChunks-1)*chunkSize_);
@@ -101,7 +100,7 @@ Operator(target), wIn_(wIn), inputDelays_(inputDelays), opType_(opType)
 			if ((wIn_-cS0)>0)
 			{
 				int newWIn = wIn_-cS0;
-				bool status = target->suggestSubaddSize(chunkSize_,newWIn);
+				//				bool status = target->suggestSubaddSize(chunkSize_,newWIn);
 				nbOfChunks = ceil( double(newWIn)/double(chunkSize_));
 				cSize = new int[nbOfChunks+1];
 				cSize[0] = cS0;
@@ -139,7 +138,7 @@ Operator(target), wIn_(wIn), inputDelays_(inputDelays), opType_(opType)
 			t<<"xMycin"<<i+1<<"r"<<i;
 			addDelaySignal(t.str(),cSize[i]+1,1);
 			t.str("");
-			t<<son_.str()<<"cin"<<i+1<<"r"<<i;
+			t<<son_<<"cin"<<i+1<<"r"<<i;
 			addDelaySignal(t.str(),cSize[i]+1,1);
 		}
 		
@@ -148,7 +147,7 @@ Operator(target), wIn_(wIn), inputDelays_(inputDelays), opType_(opType)
 			t<<"xMyr"<<i;
 			addDelaySignalBus(t.str(),cSize[i],nbOfChunks-2-i);
 			t.str("");
-			t<<son_.str()<<"r"<<i;
+			t<<son_<<"r"<<i;
 			addDelaySignalBus(t.str(),cSize[i],nbOfChunks-2-i);
 		}	
 		
@@ -164,7 +163,7 @@ Operator(target), wIn_(wIn), inputDelays_(inputDelays), opType_(opType)
 		setPipelineDepth(nbOfChunks-1+bufferedInputs);
 
 		outDelayMap["RxMy"] = target->adderDelay(cSize[nbOfChunks-1]);
-		outDelayMap["R"+son_.str()] = target->adderDelay(cSize[nbOfChunks-1]);  
+		outDelayMap["R"+son_] = target->adderDelay(cSize[nbOfChunks-1]);  
 		if (verbose)
 			cout<< "Last addition size is "<<cSize[nbOfChunks-1]<< " having a delay of "<<target->adderDelay(cSize[nbOfChunks-1])<<endl;
 
@@ -233,7 +232,7 @@ void IntDualSub::outputVHDL(std::ostream& o, std::string name) {
 			syi << "sY"<<i;
 
 			if (i==0 && nbOfChunks>1){
-				o << tab << son_.str()<<"cin"<<i+1<<"r"<<i<<" <= ";
+				o << tab << son_<<"cin"<<i+1<<"r"<<i<<" <= ";
 				if (opType_==0)
 					o<<"(\"0\" & not(sX"<<i<<")) + (\"0\" & sY"<<i<<") + cin0;"<<endl;
 				else
@@ -274,12 +273,12 @@ void IntDualSub::outputVHDL(std::ostream& o, std::string name) {
 			sxi << "sX"<<i;
 			syi << "sY"<<i;
 			if (i<nbOfChunks-1)
-				o << tab << son_.str()<<"r"<<i<<" <= "<<son_.str()<<"cin"<<i+1<<"r"<<i<<"_d("<<cSize[i]-1<<" downto 0);"<<endl;
+				o << tab << son_<<"r"<<i<<" <= "<<son_<<"cin"<<i+1<<"r"<<i<<"_d("<<cSize[i]-1<<" downto 0);"<<endl;
 			else{
-				o << tab << son_.str()<<"r"<<i<<" <= not(" << delaySignal(sxi.str(), i)<<")"<<
+				o << tab << son_<<"r"<<i<<" <= not(" << delaySignal(sxi.str(), i)<<")"<<
 					" + " << delaySignal(syi.str(), i);
 				if (nbOfChunks>1)				
-					o << " + "<<son_.str()<<"cin"<<i<<"r"<<i-1<<"_d("<<cSize[i-1]<<");"<<endl;
+					o << " + "<<son_<<"cin"<<i<<"r"<<i-1<<"_d("<<cSize[i-1]<<");"<<endl;
 				else
 					o << " + cin0;"<<endl;	
 			}
@@ -298,10 +297,10 @@ void IntDualSub::outputVHDL(std::ostream& o, std::string name) {
 		o<<endl;
 
 		//assign output by composing the result for y - x || x + y
-		o << tab << "R" << son_.str() << " <= ";
+		o << tab << "R" << son_ << " <= ";
 		for (int i=nbOfChunks-1;i>=0;i--){
 			ostringstream ri;
-			ri << son_.str() << "r"<<i;
+			ri << son_ << "r"<<i;
 			if (i==0)
 				o <<  delaySignal(ri.str(), nbOfChunks-2-i)<<";"<<endl;
 			else
@@ -312,11 +311,59 @@ void IntDualSub::outputVHDL(std::ostream& o, std::string name) {
 	}
 	else{
 		o << tab << "RxMy <= X + not(Y) + '1';" <<endl;
-		o << tab << "R"<<son_.str()<<" <= "<< (opType_==0?"not(X)":"X")<<" + Y + '1';" <<endl;
+		o << tab << "R"<<son_<<" <= "<< (opType_==0?"not(X)":"X")<<" + Y + '1';" <<endl;
 	}
 	o << "end architecture;" << endl << endl;
 }
 
+
+
+
+
+void IntDualSub::emulate(TestCase* tc)
+{
+	mpz_class svX = tc->getInputValue("X");
+	mpz_class svY = tc->getInputValue("Y");
+
+	mpz_class svRxMy = svX - svY;
+	tc->addExpectedOutput("RxMy", svRxMy);
+
+	mpz_class svR2;
+	if (opType_==0)
+		svR2=svY-svX;  
+	else {
+		svR2=svX+svY;
+		// Don't allow overflow
+		mpz_clrbit(svR2.get_mpz_t(),wIn_); 
+	}
+	tc->addExpectedOutput("R"+son_, svR2);
+}
+
+
+void IntDualSub::buildStandardTestCases(TestCaseList* tcl){
+	TestCase *tc;
+
+	tc = new TestCase(this); 
+	tc->addInput("X", mpz_class(0) );
+	tc->addInput("Y", mpz_class(1));
+	emulate(tc);
+	tcl->add(tc);
+
+	tc = new TestCase(this); 
+	tc->addInput("X", mpz_class(0) );
+	tc->addInput("Y", mpz_class(-1));
+	emulate(tc);
+	tcl->add(tc);
+
+	
+}
+
+
+
+
+
+
+#if 0 // to keep the FIXME below
 
 // FIXME doesn't work for:    flopoco  -frequency=500 IntDualSub 26 0 TestBench 10000
 void IntDualSub::fillTestCase(mpz_class a[])
@@ -339,5 +386,8 @@ void IntDualSub::fillTestCase(mpz_class a[])
 	mpz_clrbit(svR1.get_mpz_t(),wIn_);
 	mpz_clrbit(svR2.get_mpz_t(),wIn_);  
 }
+#endif
+
+
 
 

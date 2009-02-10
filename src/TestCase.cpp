@@ -45,10 +45,17 @@ TestCase::~TestCase() {
 }
 
 
-void TestCase::addInput(string s, mpz_class v)
+void TestCase::addInput(string name, mpz_class v)
 {
-	// TODO Check that the signal exists, then check that the value has the right size
-	inputs[s] = v;
+	Signal* s = op_->getSignalByName(name);
+	if (v >= (mpz_class(1) << s->width())) 
+		throw "ERROR in TestCase::addInput, signal value out of range";
+	if (v<0) {
+		if (v < - (mpz_class(1) << s->width())) 
+			throw "ERROR in TestCase::addInput, negative signal value out of range";
+		v += (mpz_class(1) << s->width()); 
+	}
+	inputs[name] = v;
 }
 
 
@@ -72,10 +79,18 @@ mpz_class TestCase::getInputValue(string s){
 	return inputs[s];
 }
 
-void TestCase::addExpectedOutput(string s, mpz_class v)
+void TestCase::addExpectedOutput(string name, mpz_class v)
 {
-	// TODO Check that the signal exists, then check that the value has the right size and that we haven't added too many possible outputs already
-	outputs[s].push_back(v);
+	Signal* s = op_->getSignalByName(name);
+	//TODO Check if we have already too many values for this output
+	if (v >= (mpz_class(1) << s->width())) 
+		throw "ERROR in TestCase::addExpectedOutput, signal value out of range";
+	if (v<0) {
+		if (v < - (mpz_class(1) << s->width())) 
+			throw "ERROR in TestCase::addExpectedOutput, negative signal value out of range";
+		v += (mpz_class(1) << s->width()); 
+	}
+	outputs[name].push_back(v);
 }
 
  
