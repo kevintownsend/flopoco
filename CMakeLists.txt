@@ -20,13 +20,16 @@ SET(CPACK_PACKAGE_VERSION_PATCH "0")
 
 INCLUDE(CPack)
 
-
+IF(WIN32)
+SET(CMAKE_BUILD_TYPE release)
+ELSE(WIN32)
 # Uncomment for profiling
 SET(CMAKE_CXX_FLAGS_DEBUG "-g -pg -Wall")
-
 # Do you want an executable of 9GB ?
 SET(CMAKE_BUILD_TYPE debug)
 #SET(CMAKE_BUILD_TYPE release)
+ENDIF
+
 
 FIND_PATH(MPFR_H
 	  mpfr.h
