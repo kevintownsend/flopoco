@@ -22,8 +22,8 @@ FPExp::FPExp(Target* target, int wE, int wF)
 		uniqueName_ = o.str();
 	}
 
-	addFPInput("x", wE, wF);
-	addFPOutput("r", wE, wF, 2);  // 2 because faithfully rounded
+	addFPInput("X", wE, wF);
+	addFPOutput("R", wE, wF, 2);  // 2 because faithfully rounded
 
 	int explore_size = wF;
 	int exponent_size = wE;
@@ -361,28 +361,28 @@ void FPExp::outputVHDL(std::ostream& o, std::string name)
 
 
 
-void FPExp::fillTestCase(mpz_class a[])
+void FPExp::emulate(TestCase * tc)
 {
-	mpz_class& svX  = a[0];
-	mpz_class& svRD = a[1];
-	mpz_class& svRU = a[2];
+	/* Get I/O values */
+	mpz_class svX = tc->getInputValue("X");
 
-	FPNumber fpX(wE, wF), fpR(wE, wF);
-	fpX = svX;
+	/* Compute correct value */
+	FPNumber fpx(wE, wF);
+	fpx = svX;
 
 	mpfr_t x, ru,rd;
 	mpfr_init2(x,  1+wF);
 	mpfr_init2(ru, 1+wF);
 	mpfr_init2(rd, 1+wF); 
-	fpX.getMPFR(x);
+	fpx.getMPFR(x);
 	mpfr_exp(rd, x, GMP_RNDD);
 	mpfr_exp(ru, x, GMP_RNDU);
 	FPNumber  fprd(wE, wF, rd);
 	FPNumber  fpru(wE, wF, ru);
-
-	svRD = fprd.getSignalValue();
-	svRU = fpru.getSignalValue();
-	mpfr_clears(x, ru, rd, 0, NULL);
-
+	mpz_class svRD = fprd.getSignalValue();
+	mpz_class svRU = fpru.getSignalValue();
+	tc->addExpectedOutput("R", svRD);
+	tc->addExpectedOutput("R", svRU);
+	mpfr_clears(x, ru, rd, NULL);
 }
-
+ 

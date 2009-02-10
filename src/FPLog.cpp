@@ -341,7 +341,7 @@ void FPLog::emulate(TestCase * tc)
 	tc->addExpectedOutput("R", svRU);
 	mpfr_clears(x, ru, rd, NULL);
 }
-
+ 
 
 // TEST FUNCTIONS
 

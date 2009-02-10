@@ -17,7 +17,7 @@ public:
 	// Overloading the virtual functions of Operator
 	void outputVHDL(std::ostream& o, std::string name);
 
-	void fillTestCase(mpz_class a[]);
+	void emulate(TestCase * tc);
 
 private:
 	int wE, wF;

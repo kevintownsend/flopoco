@@ -46,13 +46,7 @@ public:
 	*/
 	void setOperatorName();	
 
-	/**
-	 * Emulate a correctly rounded addition using MPFR.
-	 * @param tc a TestCase partially filled with input values 
-	 */
 	void emulate(TestCase * tc);
-	
-
 	void buildStandardTestCases(TestCaseList* tcl);
 
 
