@@ -77,11 +77,11 @@ Operator(target), wIn_(wIn), inputDelays_(inputDelays)
 			cout << "Warning, the combinatorial delay at the input of "<<this->getOperatorName()<<"is above limit"<<endl;
 			maxInputDelay = objectivePeriod;
 		}
-		
+
 		if (((objectivePeriod - maxInputDelay) - target->lutDelay())<0)	{
 			bufferedInputs = 1;
 			maxInputDelay=0;
-			//bool status = target->suggestSubaddSize(chunkSize_ ,wIn_);
+			target->suggestSubaddSize(chunkSize_ ,wIn_);
 			nbOfChunks = ceil(double(wIn_)/double(chunkSize_));
 			cSize = new int[nbOfChunks+1];
 			cSize[nbOfChunks-1]=( ((wIn_%chunkSize_)==0)?chunkSize_:wIn_-(nbOfChunks-1)*chunkSize_);
@@ -89,15 +89,20 @@ Operator(target), wIn_(wIn), inputDelays_(inputDelays)
 				cSize[i]=chunkSize_;				
 		}
 		else{
+
 			int cS0; 
 			bufferedInputs=0;
 			int maxInAdd = ceil(((objectivePeriod - maxInputDelay) - target->lutDelay())/target->carryPropagateDelay()); 			
 			cS0 = (maxInAdd<=wIn_?maxInAdd:wIn_);
+			cout << "CS0 is : "<< cS0 <<endl;
 			if ((wIn_-cS0)>0)
 			{
 				int newWIn = wIn_-cS0;
-				//bool status = target->suggestSubaddSize(chunkSize_,newWIn);
+				cout << "newWIn : "<<newWIn<<endl;
+				target->suggestSubaddSize(chunkSize_,newWIn);
+				cout << "chunkSize: "<<chunkSize_<<endl;
 				nbOfChunks = ceil( double(newWIn)/double(chunkSize_));
+				cout << "Number of chunks is : "<<nbOfChunks<<endl;
 				cSize = new int[nbOfChunks+1];
 				cSize[0] = cS0;
 				cSize[nbOfChunks]=( (( (wIn_-cSize[0])%chunkSize_)==0)?chunkSize_:(wIn_-cSize[0])-(nbOfChunks-1)*chunkSize_);
