@@ -45,8 +45,8 @@ FPLog::FPLog(Target* target, int wE, int wF)
 
 	setOperatorType();
 
-	addFPInput("x", wE, wF);
-	addFPOutput("r", wE, wF, 2); // 2 because faithfully rounded
+	addFPInput("X", wE, wF);
+	addFPOutput("R", wE, wF, 2); // 2 because faithfully rounded
 
 	int i;
 
@@ -317,26 +317,77 @@ void FPLog::outputVHDL(std::ostream& o, std::string name)
 
 
 
-void FPLog::fillTestCase(mpz_class a[]){
-	mpz_class& svX  = a[0];
-	mpz_class& svRD = a[1];
-	mpz_class& svRU = a[2];
+void FPLog::emulate(TestCase * tc)
+{
+	/* Get I/O values */
+	mpz_class svX = tc->getInputValue("X");
 
-	FPNumber fpX(wE, wF), fpR(wE, wF);
-	fpX = svX;
+	/* Compute correct value */
+	FPNumber fpx(wE, wF);
+	fpx = svX;
 
 	mpfr_t x, ru,rd;
 	mpfr_init2(x,  1+wF);
 	mpfr_init2(ru, 1+wF);
 	mpfr_init2(rd, 1+wF); 
-	fpX.getMPFR(x);
+	fpx.getMPFR(x);
 	mpfr_log(rd, x, GMP_RNDD);
 	mpfr_log(ru, x, GMP_RNDU);
 	FPNumber  fprd(wE, wF, rd);
 	FPNumber  fpru(wE, wF, ru);
+	mpz_class svRD = fprd.getSignalValue();
+	mpz_class svRU = fpru.getSignalValue();
+	tc->addExpectedOutput("R", svRD);
+	tc->addExpectedOutput("R", svRU);
+	mpfr_clears(x, ru, rd, NULL);
+}
 
-	svRD = fprd.getSignalValue();
-	svRU = fpru.getSignalValue();
-	mpfr_clears(x, ru, rd, 0, NULL);
+
+// TEST FUNCTIONS
+
+
+void FPLog::buildStandardTestCases(TestCaseList* tcl){
+	TestCase *tc;
+
+	tc = new TestCase(this); 
+	tc->addInput("X", 1.0);
+	emulate(tc);
+	tcl->add(tc);
+
+
+}
+
+
+
+// One test out of 8 fully random (tests NaNs etc)
+// All the remaining ones test positive numbers.
+// with special treatment for exponents 0 and -1.
+ 
+void FPLog::buildRandomTestCases(TestCaseList* tcl, int n){
+
+	TestCase *tc;
+	mpz_class a;
+
+	for (int i = 0; i < n; i++) {
+		tc = new TestCase(this); 
+		/* Fill inputs */
+		if ((i & 7) == 0)
+			a = getLargeRandom(wE+wF+3);
+		else if ((i & 7) == 1) // exponent of 1
+			a  = getLargeRandom(wF) + ((((mpz_class(1)<<(wE-1))-1)) << wF); 
+		else if ((i & 7) == 2) // exponent of 0.5
+			a  = getLargeRandom(wF) + ((((mpz_class(1)<<(wE-1))-2)) << wF); 
+		else
+			a  = getLargeRandom(wE+wF) + (mpz_class(1)<<(wE+wF+1)); // 010xxxxxx
+		
+		tc->addInput("X", a);
+		/* Get correct outputs */
+		emulate(tc);
+
+		//		cout << tc->getInputVHDL();
+		//    cout << tc->getExpectedOutputVHDL();
+		// add to the test case list
+		tcl->add(tc);
+	}
 }
 

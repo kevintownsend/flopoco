@@ -43,7 +43,10 @@ public:
 
 	//		Overloading the virtual functions of Operator
 	void outputVHDL(std::ostream& o, std::string name);
-	void fillTestCase(mpz_class a[]);
+	void emulate(TestCase * tc);
+	void buildStandardTestCases(TestCaseList* tcl);
+	/**Overloading the function of Operator with a function that tests only positive FP numbers (full range)*/
+	void buildRandomTestCases(TestCaseList* tcl, int n); 
 
 	int wE, wF;
 	// The input sizes to the successive tables

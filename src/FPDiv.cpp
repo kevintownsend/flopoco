@@ -247,9 +247,9 @@ void FPDiv::emulate(TestCase * tc)
 	FPNumber  fpr(wE, wF, r);
 
 	/* Set outputs */
-
 	mpz_class svR = fpr.getSignalValue();
 	tc->addExpectedOutput("R", svR);
+	mpfr_clears(x, y, r, NULL);
 }
 
 

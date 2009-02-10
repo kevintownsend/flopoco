@@ -979,12 +979,14 @@ void FPMultiplier::emulate(TestCase * tc)
 	fpx.getMPFR(x);
 	fpy.getMPFR(y);
 	mpfr_mul(r, x, y, GMP_RNDN);
+
+	// Set outputs 
 	FPNumber  fpr(wER_, wFR_, r);
-
-	/* Set outputs */
-
 	mpz_class svR = fpr.getSignalValue();
 	tc->addExpectedOutput("R", svR);
+
+	// clean up
+	mpfr_clears(x, y, r, NULL);
 }
 
 

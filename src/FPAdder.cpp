@@ -684,11 +684,14 @@ void FPAdder::emulate(TestCase * tc)
 	fpx.getMPFR(x);
 	fpy.getMPFR(y);
 	mpfr_add(r, x, y, GMP_RNDN);
-	FPNumber  fpr(wER, wFR, r);
 
-	/* Set outputs */
+	// Set outputs 
+	FPNumber  fpr(wER, wFR, r);
 	mpz_class svR = fpr.getSignalValue();
 	tc->addExpectedOutput("R", svR);
+
+	// clean up
+	mpfr_clears(x, y, r, NULL);
 }
 
 
