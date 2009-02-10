@@ -40,7 +40,6 @@ using namespace std;
 IntAdder::IntAdder(Target* target, int wIn, map<string, double> inputDelays):
 Operator(target), wIn_(wIn), inputDelays_(inputDelays)
 {
-	int pipelineDepth=0;
 	setOperatorName();
 	setOperatorType();
 
@@ -82,7 +81,7 @@ Operator(target), wIn_(wIn), inputDelays_(inputDelays)
 		if (((objectivePeriod - maxInputDelay) - target->lutDelay())<0)	{
 			bufferedInputs = 1;
 			maxInputDelay=0;
-			bool status = target->suggestSubaddSize(chunkSize_ ,wIn_);
+			//bool status = target->suggestSubaddSize(chunkSize_ ,wIn_);
 			nbOfChunks = ceil(double(wIn_)/double(chunkSize_));
 			cSize = new int[nbOfChunks+1];
 			cSize[nbOfChunks-1]=( ((wIn_%chunkSize_)==0)?chunkSize_:wIn_-(nbOfChunks-1)*chunkSize_);
@@ -97,7 +96,7 @@ Operator(target), wIn_(wIn), inputDelays_(inputDelays)
 			if ((wIn_-cS0)>0)
 			{
 				int newWIn = wIn_-cS0;
-				bool status = target->suggestSubaddSize(chunkSize_,newWIn);
+				//bool status = target->suggestSubaddSize(chunkSize_,newWIn);
 				nbOfChunks = ceil( double(newWIn)/double(chunkSize_));
 				cSize = new int[nbOfChunks+1];
 				cSize[0] = cS0;
@@ -251,16 +250,17 @@ void IntAdder::outputVHDL(std::ostream& o, std::string name) {
 }
 
 
-void IntAdder::fillTestCase(mpz_class a[])
+void IntAdder::emulate(TestCase* tc)
 {
-	mpz_class& svX = a[0];
-	mpz_class& svY = a[1];
-	mpz_class& svC = a[2];
-	mpz_class& svR = a[3];
+	mpz_class svX = tc->getInputValue("X");
+	mpz_class svY = tc->getInputValue("Y");
+	mpz_class svC = tc->getInputValue("Cin");
 
-	svR = svX + svY + svC;
+	mpz_class svR = svX + svY + svC;
 	// Don't allow overflow
 	mpz_clrbit(svR.get_mpz_t(),wIn_); 
+
+	tc->addExpectedOutput("R", svR);
 }
 
 
