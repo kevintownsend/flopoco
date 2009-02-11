@@ -921,10 +921,12 @@ bool parseCommandLine(int argc, char* argv[]){
 
 int main(int argc, char* argv[] )
 {
+	uint32_t i;
+
 	target = new VirtexIV();
 
 	try {
-		bool command_line_OK =  parseCommandLine(argc, argv);
+		parseCommandLine(argc, argv);
 	} catch (std::string s) {
 		cerr << "Exception while parsing command line: " << s << endl;
 		return 1;
@@ -939,7 +941,7 @@ int main(int argc, char* argv[] )
 	file.open(filename.c_str(), ios::out);
 	cerr<< "Output file: " << filename <<endl;
 	
-	for(int i=0; i<oplist.size(); i++) {
+	for(i=0; i<oplist.size(); i++) {
 		try {
 			oplist[i]->outputVHDL(file);
 		} catch (std::string s) {
@@ -949,7 +951,7 @@ int main(int argc, char* argv[] )
 	file.close();
 	
 	cout << endl<<"Final report:"<<endl;
-	for(int i=0; i<oplist.size(); i++) {
+	for(i=0; i<oplist.size(); i++) {
 		oplist[i]->outputFinalReport();
 	}
 	return 0;
