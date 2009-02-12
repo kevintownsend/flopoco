@@ -7,6 +7,7 @@
 #include <gmpxx.h>
 #include "Operator.hpp"
 
+extern map<string, double> emptyDelayMap;
 /** The Leading zero/one counter class.  
  * Recursive structure with wOut stages. At most 2^wOut-1 leading zeros are counted.
  */
@@ -18,7 +19,7 @@ public:
 	 * @param[in] wIn the width of the input
 	 * @param[in] wOut the width of the output 
 	 */
-	LZOC(Target* target, int wIn);
+	LZOC(Target* target, int wIn, map<string, double> inputDelays = emptyDelayMap);
 	
 	/** The LZOC destructor	*/
 	~LZOC();

@@ -33,7 +33,7 @@
 
 using namespace std;
 
-LZOC::LZOC(Target* target, int wIn) :
+LZOC::LZOC(Target* target, int wIn, map<string, double> inputDelays) :
 	Operator(target), wIn_(wIn) {
 	ostringstream currLevel, currDigit, nextLevel;
 	
@@ -63,6 +63,7 @@ LZOC::LZOC(Target* target, int wIn) :
 	vhdl << tab << declare(currLevel.str(),intpow2(wOut_)) << "<= I" << padStr.str() <<";"<<endl; //zero padding if necessary
 	//each operation is formed of a comparisson folloewd by a multiplexing
 	double delay = 0.0;
+	delay+=getMaxInputDelays(inputDelays);
 	for (int i=wOut_;i>=1;i--){
 		currDigit.str(""); currDigit << "digit" << i ;
 		currLevel.str(""); currLevel << "level" << i;
@@ -86,6 +87,8 @@ LZOC::LZOC(Target* target, int wIn) :
 		            <<"else "<<use(currLevel.str())<<"("<<intpow2(i)-1<<" downto "<<intpow2(i-1)<<");"<<endl;
 		}
 	}
+	//update output slack
+	outDelayMap["O"] = period - delay;
 	
 	vhdl << tab << "O <= ";
 	for (int i=wOut_;i>=1;i--){
