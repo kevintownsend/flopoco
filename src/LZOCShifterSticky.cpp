@@ -257,7 +257,7 @@ void LZOCShifterSticky::outputVHDL(std::ostream& o, std::string name) {
 		o<<tab<<"sticky" << wCount_ << " <= '0';"<<endl;
 
 	for  (int i = wCount_; i>=1; i--){
-		int p2i = 1 << i;
+		//int p2i = 1 << i;
 		int p2io2 = 1 << (i-1);
 
 		//=====================COUNT=================================================
@@ -276,8 +276,10 @@ void LZOCShifterSticky::outputVHDL(std::ostream& o, std::string name) {
 			// REM in the following,  size_[i]-size_[i-1]-1 is almost always equal to p2io2, except in the first stage
 			if (i==wCount_){ //first stage
 				o << tab << level_[i-1] << " <= " ;
-				o << " " << "("<<leveld_[i] << "(" << size_[i]/2 -1 << " downto 0) & "
-				  << "(" << size_[i-1]-size_[i]/2 -1 << " downto 0 => '0') )  when count" << i-1 << "='1'" << endl;
+				o << " " << "("<<leveld_[i] << "(" << size_[i]/2 -1 << " downto 0)";
+				if ((size_[i-1]-size_[i]/2 -1)>=0)
+					o << "& (" << size_[i-1]-size_[i]/2 -1 << " downto 0 => '0')";
+				o << " )  when count" << i-1 << "='1'" << endl;
 				
 				if (size_[i-1]-size_[i]>0)
 					o << tab << tab << tab <<  "else (" << leveld_[i] << "(" << size_[i]-1 << " downto 0) &  "<<zeroGenerator(size_[i-1]-size_[i],0)<<") ;" << endl; 
@@ -286,8 +288,13 @@ void LZOCShifterSticky::outputVHDL(std::ostream& o, std::string name) {
 			}
 			else {  // generic stage
 				o << tab << level_[i-1] << " <= " ;
-				o << " " << leveld_[i] << "(" << size_[i]-1 << " downto " << size_[i]-size_[i-1] << ")   when count" << i-1 << "='0'" << endl;
-				o << tab << tab << tab <<  "else " << leveld_[i] << "(" << size_[i-1]-1 << " downto 0);" << endl; 
+				if (size_[i-1]-1 > 0){
+					o << " " << leveld_[i] << "(" << size_[i]-1 << " downto " << size_[i]-size_[i-1] << ")   when count" << i-1 << "='0'" << endl;
+					o << tab << tab << tab <<  "else " << leveld_[i] << "(" << size_[i-1]-1 << " downto 0);" << endl; 
+				}else{
+					o << " " << leveld_[i] << "(" << size_[i]-1<<")   when count" << i-1 << "='0'" << endl;
+					o << tab << tab << tab <<  "else " << leveld_[i] << "(" << size_[i-1]-1 << ");" << endl; 
+				}
 			}
 		}
 		else { // wOut=wIn 	
@@ -324,12 +331,13 @@ void LZOCShifterSticky::outputVHDL(std::ostream& o, std::string name) {
 		o << endl;
 	}
 
-	if(computeSticky_)
-		if (levelRegistered_[0])
+	if(computeSticky_){
+		if (levelRegistered_[0]){
 			o << tab << "sticky <= sticky0_d;" << endl;
-		else
+		}else{
 			o << tab << "sticky <= sticky0;" << endl;
-			
+		}
+	}
 	o << tab << "O      <= "<<leveld_[0]<<";" << endl;
 	o << tab << "preCount  <= ";
 	for (int i=wCount_-1; i >=0; i--){
@@ -359,18 +367,20 @@ void LZOCShifterSticky::outputVHDL(std::ostream& o, std::string name) {
 
 
 // FIXME: factor this code
-void LZOCShifterSticky::fillTestCase(mpz_class a[])
+void LZOCShifterSticky::emulate(TestCase* tc)
 {
 	if (entityType_==spec)
 	{
-		mpz_class& si     = a[0];
-		mpz_class& scount = a[1];
-		mpz_class& so     = a[2];
-		mpz_class& ssticky = a[3];
+		mpz_class si      = tc->getInputValue("I");;
+		
+		mpz_class scount;
+		mpz_class so;
+		mpz_class ssticky;
 		
 		int sticky=0;
 		
 		/* Count the leading zero/one s */
+		//---------------------------------
 		int j = wIn_-1;                      /* the index of the MSB of the input */
 		int bit = (countType_ == 0) ? 0 : 1; /* what are we counting in the specific case */
 		/* from the MSB towards the LSB, check if current bit of input = to the bit we test against */
@@ -383,17 +393,17 @@ void LZOCShifterSticky::fillTestCase(mpz_class a[])
 		
 		/* assign this value to the scount output */
 		scount = icount; 
-	
+		tc->addExpectedOutput("Count", scount);
+		//----------------------------------
+		
 		/* compute the max value on wOut_ bits */
-		maxValue_=2;
-		for (int i=2;i<=wOut_;i++)
-			maxValue_=maxValue_*2;
-		maxValue_--;
+		maxValue_ = mpzpow2(wOut_)-1;
 	
 		mpz_class inputValue;
 		inputValue=si;
 		sticky=0;
-
+		
+		//compute output value and sticky
 		if (countType_==0) /* if we are counting zeros */
 			if (inputValue!=0) 
 				while (!((inputValue<=maxValue_)&&(2*inputValue>maxValue_)))
@@ -433,11 +443,14 @@ void LZOCShifterSticky::fillTestCase(mpz_class a[])
 		}
 				
 		/* assign the shifted result to the testCase output */		
-		so=inputValue;
+		so = inputValue;
+		tc->addExpectedOutput("O",so);
 				
-		if (computeSticky_)
+		if (computeSticky_){
 			/* assign the sticky bit computation to the output if required*/	
 			ssticky = sticky;
+			tc->addExpectedOutput("Sticky",ssticky);
+		}
 		
 #ifndef _WIN32
 		if (verbose)
@@ -455,10 +468,11 @@ void LZOCShifterSticky::fillTestCase(mpz_class a[])
 	{ /* if entity type is generic */
 		if (! computeSticky_)
 		{
-			mpz_class& si     = a[0];
-			mpz_class& scount = a[1];
-			mpz_class& so     = a[2];
-			mpz_class& sozb   = a[3];
+		mpz_class si      = tc->getInputValue("I");
+		mpz_class sozb    = tc->getInputValue("OZb");
+		
+		mpz_class scount;
+		mpz_class so;
 		
 			int j=wIn_-1;
 			/* Count the leading zero/one s */
@@ -468,6 +482,8 @@ void LZOCShifterSticky::fillTestCase(mpz_class a[])
 		
 			int icount =(wIn_-1)-j;
 			scount = icount; 	
+			
+			tc->addExpectedOutput("Count",scount);
 			
 			/* compute max value on wOut_ bits */
 			maxValue_=2;
@@ -510,15 +526,17 @@ void LZOCShifterSticky::fillTestCase(mpz_class a[])
 						inputValue=inputValue/2;
 			}
 			
-			so=inputValue;	
+			so=inputValue;
+			tc->addExpectedOutput("O",so);
 		}
 		else{
 		/* if we also require a sticky bit computation */
-			mpz_class& si     = a[0];
-			mpz_class& scount = a[1];
-			mpz_class& so     = a[2];
-			mpz_class& ssticky= a[3];
-			mpz_class& sozb   = a[4];
+			mpz_class si      = tc->getInputValue("I");
+			mpz_class sozb      = tc->getInputValue("OZb");
+		
+			mpz_class scount;
+			mpz_class so;
+			mpz_class ssticky;
 			
 			
 			int sticky = 0;
@@ -530,6 +548,8 @@ void LZOCShifterSticky::fillTestCase(mpz_class a[])
 		
 			int icount =(wIn_-1)-j;
 			scount = icount; //the count result
+			
+			tc->addExpectedOutput("Count",scount);
 			
 			//compute max value on wOut_ bits
 			maxValue_=2;
@@ -580,6 +600,9 @@ void LZOCShifterSticky::fillTestCase(mpz_class a[])
 			}
 			so=inputValue;
 			ssticky = sticky;
+			
+			tc->addExpectedOutput("O",so);
+			tc->addExpectedOutput("Sticky",ssticky);
 		}
 	}
 }
