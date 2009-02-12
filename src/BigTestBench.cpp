@@ -145,16 +145,19 @@ void BigTestBench::outputVHDL(ostream& o, string name) {
 	o << tab << "file fTest : text open read_mode is \""
 		<< op_->getOperatorName() << ".test\";" <<endl;
 	
-	o << endl << // FIXME Signed NANs
+	o << endl <<  // Fixed by Bodgan
 		tab << "-- FP compare function (found vs. real)\n" <<
 		tab << "function fp_equal(a : std_logic_vector; b : std_logic_vector) return boolean is\n" <<
 		tab << "begin\n" <<
 		tab << tab << "if b(b'high downto b'high-1) = \"01\" then\n" <<
 		tab << tab << tab << "return a = b;\n" <<
+		tab << tab << "elsif b(b'high downto b'high-1) = \"11\" then\n" <<
+		tab << tab << tab << "return (a(a'high downto a'high-1)=b(b'high downto b'high-1));\n" <<
 		tab << tab << "else\n" <<
 		tab << tab << tab << "return a(a'high downto a'high-2) = b(b'high downto b'high-2);\n" <<
 		tab << tab << "end if;\n" <<
 		tab << "end;\n";
+
 
 	o << "begin\n";
 
