@@ -366,244 +366,69 @@ void LZOCShifterSticky::outputVHDL(std::ostream& o, std::string name) {
 }
 
 
-// FIXME: factor this code
 void LZOCShifterSticky::emulate(TestCase* tc)
 {
-	if (entityType_==spec)
-	{
-		mpz_class si      = tc->getInputValue("I");;
-		
-		mpz_class scount;
-		mpz_class so;
-		mpz_class ssticky;
-		
-		int sticky=0;
-		
-		/* Count the leading zero/one s */
-		//---------------------------------
-		int j = wIn_-1;                      /* the index of the MSB of the input */
-		int bit = (countType_ == 0) ? 0 : 1; /* what are we counting in the specific case */
-		/* from the MSB towards the LSB, check if current bit of input = to the bit we test against */
-		for (j = wIn_-1; j >= 0; j--)
-				if (mpz_tstbit(si.get_mpz_t(), j) != bit)
-					break;
-		
-		/* the number of bits is then equal to the index of the MSB - the index where we stoped previously */
-		int icount = wIn_ - 1 - j;
-		
-		/* assign this value to the scount output */
-		scount = icount; 
-		tc->addExpectedOutput("Count", scount);
-		//----------------------------------
-		
-		/* compute the max value on wOut_ bits */
-		maxValue_ = mpzpow2(wOut_)-1;
+	mpz_class si   = tc->getInputValue("I");
 	
-		mpz_class inputValue;
-		inputValue=si;
-		sticky=0;
-		
-		//compute output value and sticky
-		if (countType_==0) /* if we are counting zeros */
-			if (inputValue!=0) 
-				while (!((inputValue<=maxValue_)&&(2*inputValue>maxValue_)))
-					if (inputValue>maxValue_){
-						if(mpz_tstbit(inputValue.get_mpz_t(), 0)==1)
-							sticky=1;
-						inputValue=inputValue/2;
-					}
-					else
-						inputValue=inputValue*2;
-			else {}
-		else /* if we are counting ones */
-		{
-			int restOfBits = wIn_ - icount;
-			if (icount>0)
-			{
-				mpz_class ones = 1;
-				for (int i=1;i<=icount;i++)
-					ones = ones*2;
-			
-				ones=ones-1;
-						
-				for (int i=1;i<=restOfBits;i++)
-					ones=ones*2;
-				inputValue=inputValue-ones; // the input without the leading ones
-			}
+	mpz_class sozb = 42; //dummy value
+	if (countType_ == -1) 
+		sozb = tc->getInputValue("OZb");
+	
+	int sticky=0;
+	int j, icount;
+	
+	/* Count the leading zero/one s */
+	mpz_class bit = (countType_ == -1) ? sozb : (countType_ == 0 ? 0 : 1); /* what are we counting in the specific case */
+	/* from the MSB towards the LSB, check if current bit of input = to the bit we test against */
+	for (j = wIn_-1; j >= 0; j--)
+			if (mpz_tstbit(si.get_mpz_t(), j) != bit)
+				break;
+	
+	/* the number of bits is then equal to:
+	 the index of the MSB - the index where we stoped previously */
+	icount = (wIn_-1) - j;
+	tc->addExpectedOutput("Count", icount);
 
-			if ((wIn_<=wOut_) || ((wIn_>wOut_) && (restOfBits<wOut_) ))	//shift result in place	
-				for (int i=1;i<=(wOut_-restOfBits);i++)
-					inputValue=inputValue*2;
-			else
-				for (int i=1;i<=restOfBits-wOut_;i++){
-					if(mpz_tstbit(inputValue.get_mpz_t(), 0)==1)
+	/* compute the max value on wOut_ bits */
+	maxValue_ = mpzpow2(wOut_)-1;
+	mpz_class inputValue = si;
+	
+	//compute output value and sticky
+	mpz_class stickyTest =  (countType_==-1) ? (sozb==0?1:0) : (countType_ == 0 ? 1 : 0) ;
+	if ((countType_==0) || (sozb==0)) 
+		if (inputValue > 0) 
+			while (!((inputValue<=maxValue_)&&(2*inputValue>maxValue_)))
+				if (inputValue>maxValue_){
+					if(mpz_tstbit(inputValue.get_mpz_t(), 0)==stickyTest)
 						sticky=1;
 					inputValue=inputValue/2;
-				}
+				}else
+					inputValue=inputValue*2;
+		else {}
+	else /* if we are counting ones */
+	{
+		int restOfBits = wIn_ - icount;
+		if (icount>0){
+			mpz_class ones = mpzpow2(icount)-1;
+			ones *= mpzpow2(restOfBits);
+			
+			inputValue-=ones; // the input without the leading ones
 		}
-				
-		/* assign the shifted result to the testCase output */		
-		so = inputValue;
-		tc->addExpectedOutput("O",so);
-				
-		if (computeSticky_){
-			/* assign the sticky bit computation to the output if required*/	
-			ssticky = sticky;
-			tc->addExpectedOutput("Sticky",ssticky);
-		}
-		
-#ifndef _WIN32
-		if (verbose)
-		{
-			cout<<"TestCase report:"<<endl;
-			cout<<tab<<"Input value:"<<si<<endl;
-			cout<<tab<<"Count value:"<<icount<<endl;
-			cout<<tab<<"Output value:"<<so<<endl;
-			if (computeSticky_)
-			cout<<tab<<"Sitcky value:"<<ssticky<<endl;
-		}		
-#endif			
+
+		if ((wIn_<=wOut_) || ((wIn_>wOut_) && (restOfBits<wOut_) ))	//shift result in place	
+			inputValue *=mpzpow2(wOut_-restOfBits);
+		else
+			for (int i=1;i<=restOfBits-wOut_;i++){
+				if(mpz_tstbit(inputValue.get_mpz_t(), 0)==stickyTest) //FIXME What do we count out when we count ones, the one or the zero?
+					sticky=1;
+				inputValue=inputValue/2;
+			}
 	}
-	else
-	{ /* if entity type is generic */
-		if (! computeSticky_)
-		{
-		mpz_class si      = tc->getInputValue("I");
-		mpz_class sozb    = tc->getInputValue("OZb");
-		
-		mpz_class scount;
-		mpz_class so;
-		
-			int j=wIn_-1;
-			/* Count the leading zero/one s */
-			for (j = (wIn_-1); j >= 0; j--)
-				if (mpz_tstbit(si.get_mpz_t(), j) != sozb)
-					break;
-		
-			int icount =(wIn_-1)-j;
-			scount = icount; 	
 			
-			tc->addExpectedOutput("Count",scount);
+	tc->addExpectedOutput("O",inputValue);
 			
-			/* compute max value on wOut_ bits */
-			maxValue_=2;
-			for (int i=2;i<=wOut_;i++)
-				maxValue_=maxValue_*2;
-			maxValue_--;
-	
-			mpz_class inputValue;
-			inputValue=si;
-			
-			if (sozb==0) /* if we are counting zeros */
-				if (inputValue!=0) 
-					while (!((inputValue<=maxValue_)&&(2*inputValue>maxValue_)))
-						if (inputValue>maxValue_)
-							inputValue=inputValue/2;
-						else
-							inputValue=inputValue*2;
-				else {}
-			else /* if we are counting ones */
-			{
-				int restOfBits = wIn_ - icount;
-				if (icount>0)
-				{
-					mpz_class ones=1;
-					for (int i=1;i<=icount;i++)
-						ones = ones*2;
-			
-					ones=ones-1;
-						
-					for (int i=1;i<=restOfBits;i++)
-						ones=ones*2;
-					inputValue=inputValue-ones; /* the input without the leading ones */
-				}
-
-				if ((wIn_<=wOut_) || ((wIn_>wOut_) && (restOfBits<wOut_) ))	/* shift result in place */	
-					for (int i=1;i<=(wOut_-restOfBits);i++)
-						inputValue=inputValue*2;
-				else
-					for (int i=1;i<=restOfBits-wOut_;i++)
-						inputValue=inputValue/2;
-			}
-			
-			so=inputValue;
-			tc->addExpectedOutput("O",so);
-		}
-		else{
-		/* if we also require a sticky bit computation */
-			mpz_class si      = tc->getInputValue("I");
-			mpz_class sozb      = tc->getInputValue("OZb");
-		
-			mpz_class scount;
-			mpz_class so;
-			mpz_class ssticky;
-			
-			
-			int sticky = 0;
-			int j=wIn_-1;
-			/* Count the leading zero/one s */
-			for (j = (wIn_-1); j >= 0; j--)
-				if (mpz_tstbit(si.get_mpz_t(), j) != sozb)
-					break;
-		
-			int icount =(wIn_-1)-j;
-			scount = icount; //the count result
-			
-			tc->addExpectedOutput("Count",scount);
-			
-			//compute max value on wOut_ bits
-			maxValue_=2;
-			for (int i=2;i<=wOut_;i++)
-				maxValue_=maxValue_*2;
-			maxValue_--;
-	
-			mpz_class inputValue;
-			inputValue=si;
-			sticky=0;
-
-			if (sozb==0) /* if we are counting zeros */
-				if (inputValue!=0) 
-					while (!((inputValue<=maxValue_)&&(2*inputValue>maxValue_)))
-						if (inputValue>maxValue_){
-							if(mpz_tstbit(inputValue.get_mpz_t(), 0)==1)
-								sticky=1;
-							inputValue=inputValue/2;
-						}
-						else
-							inputValue=inputValue*2;
-				else {}
-			else /* if we are counting ones */
-			{
-				int restOfBits = wIn_ - icount;
-				if (icount>0)
-				{
-					mpz_class ones=1;
-					for (int i=1;i<=icount;i++)
-						ones = ones*2;
-			
-					ones=ones-1;
-						
-					for (int i=1;i<=restOfBits;i++)
-						ones=ones*2;
-					inputValue=inputValue-ones; // the input without the leading ones
-				}
-
-				if ((wIn_<=wOut_) || ((wIn_>wOut_) && (restOfBits<wOut_) ))	//shift result in place	
-					for (int i=1;i<=(wOut_-restOfBits);i++)
-						inputValue=inputValue*2;
-				else
-					for (int i=1;i<=restOfBits-wOut_;i++){
-						if(mpz_tstbit(inputValue.get_mpz_t(), 0)==1)
-							sticky=1;
-						inputValue=inputValue/2;
-					}
-			}
-			so=inputValue;
-			ssticky = sticky;
-			
-			tc->addExpectedOutput("O",so);
-			tc->addExpectedOutput("Sticky",ssticky);
-		}
+	if (computeSticky_){
+		tc->addExpectedOutput("Sticky",sticky);
 	}
 }
 
