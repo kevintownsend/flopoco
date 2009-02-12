@@ -97,6 +97,14 @@ mpz_class bias(int wE);
  */
 double intpow2(int power);
 
+/** 2 to the power function.
+ * @param power the power at which 2 is raised
+ * @return 2^power
+ */
+mpz_class mpzpow2(int power);
+
+
+
 /** 2 ^ (- minusPower). Exact, no round
  * @param minusPower - the power at which 2 will be raised
  * @return 2 ^ (- minusPower)

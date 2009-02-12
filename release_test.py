@@ -70,16 +70,16 @@ executable_name = "./flopoco"
 operators = [ 
              ["LeftShifter",      [ ["wIn", "in", 1, 64 ], ["MaxShift", "in", 1, 64]]],
              ["RightShifter",     [ ["wIn", "in", 1, 64 ], ["MaxShift", "in", 1, 64]]],
-             ["LZOC",             [ ["wIn", "in", 1, 64 ], ["wOut", "out", 1, 7]]],
-             ["LZOCShifterSticky",[ ["wIn", "in", 1, 64 ], ["wOut", "out", 1, 7], ["computeSticky", "in", 0, 1], ["countType", "in", -1, 1] ]],   
-             ["IntAdder",         [ ["wIn", "in", 1, 64 ]  ]], 
-             ["FPAdder",           [ ["wEX", "in", 1, 11 ], ["wFX","in", 1, 52],["wEY","in", 1, 11 ], ["wFY","in", 1, 52], ["wER","out", 1, 11 ], ["wFR","out", 1, 52], ]],
-             ["IntMultiplier",     [ ["wInX","in", 1, 64 ], ["wInY","in", 1, 64] ]]
+             #["LZOC",             [ ["wIn", "in", 1, 64 ], ["wOut", "out", 1, 7]]],
+             #["LZOCShifterSticky",[ ["wIn", "in", 1, 64 ], ["wOut", "out", 1, 7], ["computeSticky", "in", 0, 1], ["countType", "in", -1, 1] ]],   
+             #["IntAdder",         [ ["wIn", "in", 1, 64 ]  ]], 
+             #["FPAdder",           [ ["wEX", "in", 1, 11 ], ["wFX","in", 1, 52],["wEY","in", 1, 11 ], ["wFY","in", 1, 52], ["wER","out", 1, 11 ], ["wFR","out", 1, 52], ]],
+             #["IntMultiplier",     [ ["wInX","in", 1, 64 ], ["wInY","in", 1, 64] ]]
  
             ] #TODO Add the rest of operators
 res = []
-input_combinations_per_operator = 10;
-test_cases_per_combination = 500;
+input_combinations_per_operator = 30;
+test_cases_per_combination = 200;
 
 #REMOVE TEMPORARY MODELSIM FILES
 os.system("rm wlf*")
@@ -125,16 +125,15 @@ while i<len(operators):
 			child_stdin.write("vdel -all -lib work\n")
 			child_stdin.write('vlib work\n')
 			child_stdin.write('vcom flopoco.vhdl \n')
-			child_stdin.write('vcom flopoco.vhdl \n')
-			child_stdin.write( modelsim_food[string.find(modelsim_food,"vsim"):string.find(modelsim_food,"add")-1]+"\n" )
+			child_stdin.write( modelsim_food[string.find(modelsim_food,"vsim"):string.find(modelsim_food,"add")+1]+"\n" )
 			child_stdin.write('add wave -r * \n')
 			child_stdin.write(modelsim_food[string.find(modelsim_food,"run"):]+"\n")
 			child_stdin.write('exit \n')
 		
 			while ((not finished) and (did_compile)):
 				st = child_stdout.readline()
-				print st[:len(st)-2]
-				logfile.write(st[:len(st)-2]+"\n")
+				print st[:len(st)-1]
+				logfile.write(st[:len(st)-1]+"\n")
 
 
 

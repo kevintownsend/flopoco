@@ -223,6 +223,15 @@ double intpow2(int power)
 	return x;
 }
 
+mpz_class mpzpow2(int power)
+{
+	mpz_class x = 1;
+	for (int i = 0; i < power; i++)
+		x *= 2;
+	return x;
+}
+
+
 //  2 ^ -minusPower. Exact, no round
 double invintpow2(int minusPower)
 {

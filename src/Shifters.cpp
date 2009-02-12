@@ -26,6 +26,7 @@
 #include <vector>
 #include <gmp.h>
 #include <mpfr.h>
+#include <stdio.h>
 #include <gmpxx.h>
 #include "utils.hpp"
 #include "Operator.hpp"
@@ -39,11 +40,7 @@ using namespace std;
 Shifter::Shifter(Target* target, int wIn, int maxShift, ShiftDirection direction, map<string, double> inputDelays) :
 	Operator(target), wIn_(wIn), maxShift_(maxShift), direction_(direction) {
 	
-	ostringstream name;
-	
-	name << "Shift"<<(direction==Left?"Left":"Right")<<"_"<<wIn_<<"_by_max_"<<maxShift_;
-	uniqueName_ = name.str();
-
+	setOperatorName();
 
 	// -------- Parameter set up -----------------
 	wOut_         = wIn_ + maxShift_;
@@ -71,7 +68,7 @@ Shifter::Shifter(Target* target, int wIn, int maxShift, ShiftDirection direction
 		//TODO REMEMBER WHY THIS DOES WORK
 		unregisteredLevels = currentLevel - lastRegLevel;
 		if ( intpow2(unregisteredLevels-1) > wIn_+currentLevel+1 ) 
-			dep = wIn+currentLevel+1 + unregisteredLevels -1;
+			dep = wIn + currentLevel + unregisteredLevels;
 		else
 			dep = intpow2(unregisteredLevels-1);
 		
@@ -91,11 +88,17 @@ Shifter::Shifter(Target* target, int wIn, int maxShift, ShiftDirection direction
 			nextLevelName << "level"<<currentLevel+1;
 			if (direction==Right){
 				vhdl << tab << declare(nextLevelName.str(),wIn+intpow2(currentLevel+1)-1 ) 
-					        <<"<=  ("<<intpow2(currentLevel)-1 <<" downto 0 => '0') & "<<use(currentLevelName.str())<<" when "<<use("ps")<<"("<<currentLevel<<") = '1' else "
+					        <<"<=  ("<<intpow2(currentLevel)-1 <<" downto 0 => '0') & "<<use(currentLevelName.str())<<" when "<<use("ps");
+					        if (wShiftIn_ > 1) 
+					        	vhdl << "(" << currentLevel << ")";
+					        vhdl << " = '1' else "
 					 << tab << use(currentLevelName.str()) <<" & ("<<intpow2(currentLevel)-1<<" downto 0 => '0');"<<endl;
 			}else{
-				vhdl << tab << declare(nextLevelName.str(),wIn+intpow2(currentLevel+1)-1 ) 
-					        << "<= " << use(currentLevelName.str()) << " & ("<<intpow2(currentLevel)-1 <<" downto 0 => '0') when "<<use("ps")<<"("<<currentLevel<<") = '1' else "
+				vhdl << tab << declare(nextLevelName.str(),wIn+intpow2(currentLevel+1)-1 )
+					        << "<= " << use(currentLevelName.str()) << " & ("<<intpow2(currentLevel)-1 <<" downto 0 => '0') when "<<use("ps");
+					        if (wShiftIn_>1) 
+					        	vhdl << "(" << currentLevel<< ")";
+					        vhdl << "= '1' else "
 					 << tab <<" ("<<intpow2(currentLevel)-1<<" downto 0 => '0') & "<< use(currentLevelName.str()) <<";"<<endl;
 			}
 			
@@ -105,7 +108,8 @@ Shifter::Shifter(Target* target, int wIn, int maxShift, ShiftDirection direction
 	if (direction==Right)
 		vhdl << tab << "R <= "<<use(lastLevelName.str())<<"("<< wIn + intpow2(wShiftIn_)-1-1 << " downto " << wIn_ + intpow2(wShiftIn_)-1 - wOut_ <<");"<<endl;
 	else
-		vhdl << tab << "R <= "<<use(lastLevelName.str())<<"("<< wOut_-1 << " downto 0);"<<endl;
+			vhdl << tab << "R <= "<<use(lastLevelName.str())<<"("<< wOut_-1 << " downto 0);"<<endl;
+
 
 }
 
@@ -138,27 +142,32 @@ void Shifter::emulate(TestCase* tc)
 	mpz_class sx = tc->getInputValue("X");
 	mpz_class ss = tc->getInputValue("S");
 	mpz_class sr ;
-	
-	while (ss > maxShift_)
-		ss = getLargeRandom(wShiftIn_);
 
-	mpz_class shiftAmmount;
-	if (direction_==Right)
-		shiftAmmount=maxShift_-ss;
-	else
-		shiftAmmount=ss;
-	
-	mpz_class shiftedInput;
-	shiftedInput=sx;
-
+	mpz_class shiftedInput = sx;
 	int i;
-	for (i=0;i<shiftAmmount;i++)
-			shiftedInput=shiftedInput*2;
 	
+	if (direction_==Left){
+		mpz_class shiftAmmount = ss;
+		for (i=0;i<shiftAmmount;i++)
+				shiftedInput=shiftedInput*2;
+		
+		for (i= wIn_+intpow2(wShiftIn_)-1-1; i>=wOut_;i--)
+			if ( mpzpow2(i) <= shiftedInput )
+				shiftedInput-=mpzpow2(i);
+	}else{
+		mpz_class shiftAmmount = maxShift_-ss;
+
+		if (shiftAmmount > 0){
+			for (i=0;i<shiftAmmount;i++)
+				shiftedInput=shiftedInput*2;
+		}else{
+			for (i=0;i>shiftAmmount;i--)
+				shiftedInput=shiftedInput/2;
+		}
+	}
+
 	sr=shiftedInput;
-
 	tc->addExpectedOutput("R", sr);
-
 }
 
 
