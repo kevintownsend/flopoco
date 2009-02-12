@@ -33,44 +33,69 @@
 
 using namespace std;
 
-LZOC::LZOC(Target* target, int wIn, int wOut) :
-	Operator(target), wIn_(wIn), wOut_(wOut)  {
-
+LZOC::LZOC(Target* target, int wIn) :
+	Operator(target), wIn_(wIn) {
+	ostringstream currLevel, currDigit, nextLevel;
+	
+	
+	// -------- Parameter set up -----------------
+	wOut_ = intlog2(wIn);
 	p2wOut_ = 1<<wOut_; // no need for GMP here
+	double period = (1.0)/target->frequency();
+
 
 	setOperatorName();
-	setOperatorType();
-	
-	//Set up the IO signals
+
 	addInput ("I", wIn_);
 	addInput ("OZB");  
 	addOutput("O", wOut_);
-
-	//Set up the internal architecture signals
-	if (isSequential()){
-			addDelaySignal("sozb",1,wOut_-1);
-			
-			for (int i=wOut_; i>0; i--){
-			ostringstream signalName;
-			signalName<<"level"<<i;
-			if (i!=1)
-				addDelaySignal(signalName.str(), (1<<i));
-			else
-				addSignal(signalName.str(), (1<<i));
-			}
-	}
-	else{
-		addSignal("tmpO", wOut_);
 	
-		for (int i=wOut_; i>0; i--){
-			ostringstream signalName;
-			signalName<<"level"<<i;
-			addSignal(signalName.str(), (1<<i));
+	setOperatorType();
+	
+	
+	
+	vhdl << tab << declare("sozb",1) <<" <= ozb;" << endl;
+	currLevel << "level"<<wOut_;
+	ostringstream padStr;
+	if (wIn_==intpow2(wOut_)) padStr<<"";
+	else padStr << "& ("<<intpow2(wOut_)-wIn_-1 << " downto 0 => not(sozb))";
+		
+	vhdl << tab << declare(currLevel.str(),intpow2(wOut_)) << "<= I" << padStr.str() <<";"<<endl; //zero padding if necessary
+	//each operation is formed of a comparisson folloewd by a multiplexing
+	double delay = 0.0;
+	for (int i=wOut_;i>=1;i--){
+		currDigit.str(""); currDigit << "digit" << i ;
+		currLevel.str(""); currLevel << "level" << i;
+		nextLevel.str(""); nextLevel << "level" << i-1;
+		delay += intlog(mpz_class(target->lutInputs()), intpow2(i-1)) * target->lutDelay() + intlog(mpz_class(target->lutInputs()), intpow2(i-1))* target->localWireDelay();
+		if (delay > period ) {
+			nextCycle();////////////////////////
+			delay =0.0;
+		}
+		vhdl << tab <<declare(currDigit.str(),1) << "<= '1' when " << use(currLevel.str()) << "("<<intpow2(i)-1<<" downto "<<intpow2(i-1)<<") = "
+		            <<"("<<intpow2(i)-1<<" downto "<<intpow2(i-1)<<" => "<<use("sozb") <<")"
+		            << " else '0';"<<endl;
+
+		if (i>1){
+			delay +=target->lutDelay();
+			if (delay > period ) {
+				nextCycle();////////////////////////
+				delay =0.0;
+			}
+			vhdl << tab << declare(nextLevel.str(),intpow2(i-1)) << "<= "<<use(currLevel.str()) << "("<<intpow2(i-1)-1<<" downto 0) when " << use(currDigit.str())<<"='1' "
+		            <<"else "<<use(currLevel.str())<<"("<<intpow2(i)-1<<" downto "<<intpow2(i-1)<<");"<<endl;
 		}
 	}
-	 
-	if (isSequential())
-	setPipelineDepth(wOut_-1); 
+	
+	vhdl << tab << "O <= ";
+	for (int i=wOut_;i>=1;i--){
+		currDigit.str(""); currDigit << "digit" << i ;
+		vhdl << use(currDigit.str());
+		if (i==1)
+			vhdl << ";"<<endl;
+		else
+			vhdl << " & ";
+	}
 
 }
 
@@ -83,88 +108,23 @@ void LZOC::setOperatorName(){
 }
 
 void LZOC::outputVHDL(std::ostream& o, std::string name) {
-	licence(o,"Florent de Dinechin, Bogdan Pasca (2007)");
+	licence(o,"Florent de Dinechin, Bogdan Pasca (2007,2009)");
 	Operator::stdLibs(o);
 	outputVHDLEntity(o);
 	newArchitecture(o,name);
-	outputVHDLSignalDeclarations(o);	
-	
-	for (int i=wOut_; i>0; i--){
-		o << tab << "signal tmpO"<<i<<"  : std_logic_vector("<<wOut_-1<<" downto "<<i-1<<");"<<endl;
-		o << tab << "signal tmpO"<<i<<"_d: std_logic_vector("<<wOut_-1<<" downto "<<i-1<<");"<<endl;				
-	}
-		
+	o << buildVHDLSignalDeclarations();
 	beginArchitecture(o);
-	
-	if (isSequential()){
-		
-		outputVHDLRegisters(o); o<<endl;
-		
-		o << tab << "process(clk, rst)"<<endl;
-		o << tab << "  begin"<<endl;
-		o << tab << "if clk'event and clk = '1' then"<<endl;
-		o << tab << "     if rst = '1' then"<<endl;
-		for (int i=wOut_; i>0; i--)
-		o << tab << "        tmpO"<<i<<"_d <= ("<<wOut_-1<<" downto "<<i-1<<" => '0');"<<endl;				
-		o << tab << "     else"<<endl;
-		for (int i=wOut_; i>0; i--)
-		o << tab << "        tmpO"<<i<<"_d <= tmpO"<<i<<";"<<endl;				
-		o << tab << "     end if;"<<endl;
-		o << tab << "  end if;"<<endl;
-		o << tab << "end process;"<<endl;
-		
-		o<<tab<<"sozb <= ozb;"<<endl;
-		
-		
-		// connect first stage to I
-		if (p2wOut_==wIn_)
-			o << "  level"<<wOut_<<" <=  I ;" << endl;
-		else if (p2wOut_>wIn_) // pad input with zeroes/ones function of what we count. If LZC pad with 1, else pad with 
-			o << "  level"<<wOut_<<" <=  I & ("<<p2wOut_-wIn_-1<<" downto 0 => not(sozb)) ;" << endl;
-		else if (p2wOut_<wIn_)
-			o << "  level"<<wOut_<<" <=  I("<<wIn_-1<<" downto "<<wIn_ - p2wOut_ <<") ;" << endl;
-		// recursive structure
-		for (int i=wOut_; i>1; i--) {
-			if (i!=wOut_)
-			o << "  tmpO"<<i<<"("<<wOut_-1<<" downto "<<i<<") <= tmpO"<<i+1<<"_d("<<wOut_-1<<" downto "<<i<<");"<<endl;
-			
-			o << "  tmpO"<<i<<"("<<i-1<<") <= '1' when level"<<i<<"("<<(1<<i)-1<<" downto "<<(1<<(i-1))<<") = ("<<(1<<i)-1<<" downto "<<(1<<(i-1))<<" => "
-											<<delaySignal("sozb",wOut_-i)<<") else '0';"<< endl;
-			o << "  level"<<i-1<<" <= level"<<i<<"_d("<<(1<<(i-1))-1<<" downto 0) when tmpO"<<i<<"_d("<<i-1<<") = '1'"<< endl
-				<< "               else level"<<i<<"_d("<<(1<<i)-1<<" downto "<<(1<<(i-1))<<");" << endl;
-		}
-		o << "  tmpO"<<1<<"("<<wOut_-1<<" downto "<<1<<") <= tmpO"<<2<<"_d("<<wOut_-1<<" downto "<<1<<");"<<endl;
-		o << "  tmpO1(0) <= '1' when level1(1) =  "<<delaySignal("sozb",wOut_-1)<<" else '0';"<< endl;
-				
-		o << " O <= tmpO1;"<<endl;
-	}
-	else{
-		// connect first stage to I
-		cout<<"p2wOut_ is = "<<p2wOut_<<endl;
-		if (p2wOut_==wIn_)
-			o << "  level"<<wOut_<<" <=  I ;" << endl;
-		else if (p2wOut_>wIn_) // pad input with zeroes/ones function of what we count. If LZC pad with 1, else pad with 
-			o << "  level"<<wOut_<<" <=  I & ("<<p2wOut_-wIn_-1<<" downto 0 => not(ozb)) ;" << endl;
-		else if (p2wOut_<wIn_)
-			o << "  level"<<wOut_<<" <=  I("<<wIn_-1<<" downto "<<wIn_ - p2wOut_ <<") ;" << endl;
-		// recursive structure
-		for (int i=wOut_; i>1; i--) {
-			o << "  tmpO("<<i-1<<") <= '1' when level"<<i<<"("<<(1<<i)-1<<" downto "<<(1<<(i-1))<<") = ("<<(1<<i)-1<<" downto "<<(1<<(i-1))<<" => ozb) else '0';"<< endl;
-			o << "  level"<<i-1<<" <= level"<<i<<"("<<(1<<(i-1))-1<<" downto 0) when tmpO("<<i-1<<") = '1'"<< endl
-				<< "               else level"<<i<<"("<<(1<<i)-1<<" downto "<<(1<<(i-1))<<");" << endl;
-		}
-		o << "  tmpO(0) <= '1' when level1(1) =  ozb else '0';"<< endl;
-		o << " O <= tmpO;"<<endl;
-	}
-	
+	o << buildVHDLRegisters();
+	o << vhdl.str();
 	endArchitecture(o);
 }
 
-void LZOC::fillTestCase(mpz_class a[])
+
+void LZOC::emulate(TestCase* tc)
 {
-	mpz_class& si   = a[0];
-	mpz_class& sozb = a[1];
-	mpz_class& so   = a[2];
+	mpz_class si   = tc->getInputValue("I");
+	mpz_class sozb = tc->getInputValue("OZB");
+	mpz_class so;
 	
 	int j;
 	int bit = (sozb == 0) ? 0 : 1;
@@ -173,6 +133,8 @@ void LZOC::fillTestCase(mpz_class a[])
 		if (mpz_tstbit(si.get_mpz_t(), wIn_ - j - 1) != bit)
 			break;
 	}
+	
 	so = j;
+	tc->addExpectedOutput("O", so);
 }
 

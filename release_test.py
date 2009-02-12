@@ -68,9 +68,9 @@ print "-------------------------------------------------------------------------
 print "--------------------------- FloPoCo PreRelease Tests ---------------------------"
 executable_name = "./flopoco"
 operators = [ 
-             ["LeftShifter",      [ ["wIn", "in", 1, 64 ], ["MaxShift", "in", 1, 64]]],
-             ["RightShifter",     [ ["wIn", "in", 1, 64 ], ["MaxShift", "in", 1, 64]]],
-             #["LZOC",             [ ["wIn", "in", 1, 64 ], ["wOut", "out", 1, 7]]],
+             ["LeftShifter",      [ ["wIn", "in", 1, 64 ], ["MaxShift", "in", 1, 64]]], #XXX Tested
+             ["RightShifter",     [ ["wIn", "in", 1, 64 ], ["MaxShift", "in", 1, 64]]], #XXX Tested
+             ["LZOC",              [ ["wIn", "in", 1, 64 ] ]], #XXX Tested
              #["LZOCShifterSticky",[ ["wIn", "in", 1, 64 ], ["wOut", "out", 1, 7], ["computeSticky", "in", 0, 1], ["countType", "in", -1, 1] ]],   
              #["IntAdder",         [ ["wIn", "in", 1, 64 ]  ]], 
              #["FPAdder",           [ ["wEX", "in", 1, 11 ], ["wFX","in", 1, 52],["wEY","in", 1, 11 ], ["wFY","in", 1, 52], ["wER","out", 1, 11 ], ["wFR","out", 1, 52], ]],

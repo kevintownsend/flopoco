@@ -136,7 +136,7 @@ FPLog::FPLog(Target* target, int wE, int wF)
 	vhdl << tab << declare("absELog2", wF+wE+gLog) << " <= absE * log2;" << endl;
 
 
-	lzoc = new LZOC(target, wF, intlog2(wF));
+	lzoc = new LZOC(target, wF); //This line was modified by Bogdan
 	oplist.push_back(lzoc);
 	
 	vhdl << tab << declare("Y0h", wF) << " <= Y0(wF downto 1);" << endl; 

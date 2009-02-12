@@ -102,7 +102,7 @@ static void usage(char *name){
 	cerr << "Each operator specification is one of: \n";
 	cerr << "    LeftShifter  wIn  MaxShift\n";
 	cerr << "    RightShifter wIn  MaxShift\n";
-	cerr << "    LZOC wIn wOut\n";
+	cerr << "    LZOC wIn\n";
 	cerr << "    LZOCShifterSticky wIn wOut computeSticky countType\n";
 	cerr << "      computeSticky=0|1, countType=0|1|-1 (-1 adds a countWhat input)\n";
 	//	cerr << "    Mux wIn n \n"; killed by Florent
@@ -401,14 +401,13 @@ bool parseCommandLine(int argc, char* argv[]){
 			}
 		}
 		else if(opname=="LZOC"){
-			int nargs = 2;
+			int nargs = 1;
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
 				int wIn = checkStrictyPositive(argv[i++], argv[0]);
-				int wOut = checkStrictyPositive(argv[i++], argv[0]);
-				cerr << "> LZOC, wIn="<<wIn<<", wOut="<<wOut<<"\n";
-				op = new LZOC(target, wIn, wOut);
+				cerr << "> LZOC, wIn="<<wIn<<"\n";
+				op = new LZOC(target, wIn);
 				addOperator(op);
 			}
 		}

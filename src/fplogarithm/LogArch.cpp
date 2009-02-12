@@ -109,7 +109,7 @@ LogArch::LogArch(int wE, int wF) :
 	int computedG = (int) ceil(log(3*(stages+1))/log(2));
 
 	/* Use FloPoCo operators */
-	lzoc = new LZOC(target, wF, intlog2(wF));
+	lzoc = new LZOC(target, wF); //This line was modified by Bogdan
 	lzoc->set_combinatorial();
 } 
 
