@@ -87,6 +87,10 @@ void Wrapper::outputVHDL(ostream& o, string name) {
 	// the instance
 	o << tab << "test:" << op_->getOperatorName() << "\n"
 		<< tab << tab << "port map ( ";
+	if (op_->isSequential()) {
+		o << tab << tab << "clk => clk, "<<endl
+		  << tab << tab << "rst => rst, "<<endl;
+	}
 	for(int i=0; i < op_->getIOListSize(); i++) {
 		Signal s = *op_->getIOListSignal(i);
 		if(i>0) 
