@@ -103,6 +103,9 @@ Shifter::Shifter(Target* target, int wIn, int maxShift, ShiftDirection direction
 			}
 			
 	}
+	//update the output slack
+	outDelayMap["R"] = period - stageDelay;
+	
 	ostringstream lastLevelName;
 	lastLevelName << "level"<<wShiftIn_;
 	if (direction==Right)
