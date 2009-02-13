@@ -103,8 +103,14 @@ static void usage(char *name){
 	cerr << "    LeftShifter  wIn  MaxShift\n";
 	cerr << "    RightShifter wIn  MaxShift\n";
 	cerr << "    LZOC wIn\n";
-	cerr << "    LZOCShifterSticky wIn wOut computeSticky countType\n";
-	cerr << "      computeSticky=0|1, countType=0|1|-1 (-1 adds a countWhat input)\n";
+	cerr << "    LZOCShifter wIn wOut\n";
+	cerr << "    LZCShifter wIn wOut\n";
+	cerr << "    LOCShifter wIn wOut\n";
+	cerr << "    LZOCShifterSticky wIn wOut\n";
+	cerr << "    LZCShifterSticky wIn wOut\n";
+	cerr << "    LOCShifterSticky wIn wOut\n";
+//	cerr << "    LZOCShifterSticky wIn wOut computeSticky countType\n";
+//	cerr << "      computeSticky=0|1, countType=0|1|-1 (-1 adds a countWhat input)\n";
 	//	cerr << "    Mux wIn n \n"; killed by Florent
 	cerr << "    IntAdder wIn\n";
 	cerr << "      Integer adder, possibly pipelined\n";
@@ -411,21 +417,96 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(op);
 			}
 		}
-		else if(opname=="LZOCShifterSticky"){
-			int nargs = 4;
+		else if(opname=="LZOCShifter"){
+			int nargs = 2;
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
-				int wIn = checkStrictyPositive(argv[i++], argv[0]);
+				int wIn  = checkStrictyPositive(argv[i++], argv[0]);
 				int wOut = checkStrictyPositive(argv[i++], argv[0]);
-				bool computesticky  = checkBoolean(argv[i++], argv[0]);
-				int countWhat = atoi(argv[i++]);
-				cerr << "> LZOCShifterSticky, wIn="<<wIn<<", wOut="<<wOut<<", compute_sticky=" << computesticky<<", zeroOrOne="<<countWhat<< endl;
-				op = new LZOCShifterSticky(target, wIn, wOut, computesticky, countWhat);
-				addOperator(op);
+				if (wIn > 1){
+					cerr << "> LZOCShifter, wIn="<<wIn<<", wOut="<<wOut<< endl;
+					op = new LZOCShifterSticky(target, wIn, wOut, 0, -1);
+					addOperator(op);
+				}else
+					cerr << "wIn must be > 1"<<endl;
 			}
 		}
-
+		else if(opname=="LZCShifter"){
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int wIn  = checkStrictyPositive(argv[i++], argv[0]);
+				int wOut = checkStrictyPositive(argv[i++], argv[0]);
+				if (wIn > 1){
+					cerr << "> LZCShifter, wIn="<<wIn<<", wOut="<<wOut<< endl;
+					op = new LZOCShifterSticky(target, wIn, wOut, 0, 0);
+					addOperator(op);
+				}else
+					cerr << "wIn must be > 1"<<endl;
+			}
+		}
+		else if(opname=="LOCShifter"){
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int wIn  = checkStrictyPositive(argv[i++], argv[0]);
+				int wOut = checkStrictyPositive(argv[i++], argv[0]);
+				if (wIn > 1){
+					cerr << "> LOCShifter, wIn="<<wIn<<", wOut="<<wOut<< endl;
+					op = new LZOCShifterSticky(target, wIn, wOut, 0, 1);
+					addOperator(op);
+				}else
+					cerr << "wIn must be > 1"<<endl;
+			}
+		}
+		else if(opname=="LZOCShifterSticky"){
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int wIn  = checkStrictyPositive(argv[i++], argv[0]);
+				int wOut = checkStrictyPositive(argv[i++], argv[0]);
+				if (wIn > 1){
+					cerr << "> LZOCShifterSticky, wIn="<<wIn<<", wOut="<<wOut<< endl;
+					op = new LZOCShifterSticky(target, wIn, wOut, 1, -1);
+					addOperator(op);
+				}else
+					cerr << "wIn must be > 1"<<endl;
+			}
+		}
+		else if(opname=="LZCShifterSticky"){
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int wIn  = checkStrictyPositive(argv[i++], argv[0]);
+				int wOut = checkStrictyPositive(argv[i++], argv[0]);
+				if (wIn > 1){
+					cerr << "> LZCShifterSticky, wIn="<<wIn<<", wOut="<<wOut<< endl;
+					op = new LZOCShifterSticky(target, wIn, wOut, 1, 0);
+					addOperator(op);
+				}else
+					cerr << "wIn must be > 1"<<endl;
+			}
+		}
+		else if(opname=="LOCShifterSticky"){
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int wIn  = checkStrictyPositive(argv[i++], argv[0]);
+				int wOut = checkStrictyPositive(argv[i++], argv[0]);
+				if (wIn > 1){
+					cerr << "> LOCShifterSticky, wIn="<<wIn<<", wOut="<<wOut<< endl;
+					op = new LZOCShifterSticky(target, wIn, wOut, 1, 1);
+					addOperator(op);
+				}else
+					cerr << "wIn must be > 1"<<endl;
+			}
+		}
 		else if(opname=="IntAdder"){
 			int nargs = 1;
 			if (i+nargs > argc)

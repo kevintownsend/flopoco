@@ -29,15 +29,12 @@
 #include <gmpxx.h>
 #include "utils.hpp"
 #include "Operator.hpp"
-
 #include "LZOCShifterSticky.hpp"
 
 using namespace std;
 
 LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut, bool computeSticky, const int countType) :
 	Operator(target), wIn_(wIn), wOut_(wOut), computeSticky_(computeSticky), countType_(countType) {
-	
-	ostringstream currLevel, prevLevel, currSticky, currCount;
 	
 	// -------- Parameter set up -----------------
 	setEntityType( (countType_==-1?gen:spec) );
@@ -46,39 +43,57 @@ LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut, bool com
 
 	setOperatorName();
 	setOperatorType();
-
+	
+	// we consider that wOut <= wIn. We fix this at the end if not the case
+	int wOut_true = wOut_;
+	wOut_ = wOut > wIn_ ? wIn_ : wOut;
+	
 	addInput ("I", wIn_);
 	if (entityType_==gen) addInput ("OZb"); /* if we generate a generic LZOC */
 	addOutput("Count", wCount_);
 	addOutput("O", wOut_);
 	if (computeSticky_)   addOutput("Sticky"); /* if we require a sticky bit computation */
 	
-	currLevel << "level" <<wCount_;
-	currSticky <<"sticky"<<wCount_; 
+	vhdl << tab << declare(join("level",wCount_), wIn_) << " <= I ;"   <<endl; 
+	if (entityType_==gen) vhdl << tab << declare("sozb",1) << "<= OZb;"<<endl;
+	if (computeSticky_)   vhdl << tab << declare(join("sticky",wCount_), 1  ) << " <= '0' ;"<<endl; //init sticky 
 	
-	vhdl << tab << declare(currLevel.str(), wIn_) << " <= I ;"  <<endl; 
-	if (computeSticky_) vhdl << tab << declare(currLevel.str(), 1  ) << " <= '0' ;"<<endl; //init sticky 
+	int currLev=wIn, prevLev=0;
 	
 	for (int i=wCount_-1; i>=0; i--){
-		currLevel.str(""); currLevel << "level" << i;
-		prevLevel.str(""); prevLevel << "level" << i+1;
-		currCount.str(""); currCount << "count" << i;
+	//int currLev = (wOut_>intpow2(i)?wOut_:intpow2(i));
+	prevLev = currLev;
 	
-		vhdl << tab << declare(currCount.str(),1) << "<= '1' when " <<use(prevLevel.str())<<"("<< wIn_-1 <<" downto "<< wIn_ - intpow2(i) <<") = "
-		     << "("<< wIn-1 <<" downto "<< wIn - intpow2(i) <<"=>"<< (countType_==-1? use("sozb"): countType_==0?"'0'":"'1'")<<") else '0';"<<endl;
-		vhdl << tab << declare(currLevel.str(),wIn_) << "<= " << use(prevLevel.str()) << " when " << use(currCount.str()) << "='0' else "
-		     << use(prevLevel.str()) << "(" << wIn - intpow2(i)-1 << " downto 0) & (" << intpow2(i)-1 << " downto 0 => '0');"<<endl; //FIXME should we pad with zero ?
-//		     << (countType_==-1? "not("+use("sozb")+")": countType_==0?"'1'":"'0'")<<");"<<endl;
-		      
-	}
-	vhdl << tab << "O <= "<<use(currLevel.str())<<";"<<endl;
-	vhdl << tab << "Count <= ";
+	currLev = (wOut_>intpow2(i)?wOut_:intpow2(i));
+	currLev += (intpow2(i)-1); 
+	currLev = (currLev > wIn_? wIn_: currLev);
+	
+	//int prevLev = (i == wCount_-1 ? wIn_ : (wOut_>intpow2(i+1)?wOut_:intpow2(i+1)));
+		vhdl << tab << declare(join("count",i),1) << "<= '1' when " <<use(join("level",i+1))<<"("<<prevLev-1 <<" downto "<<prevLev - intpow2(i)<<") = "
+		     <<"("<<prevLev-1<<" downto "<<prevLev - intpow2(i)<<"=>"<< (countType_==-1? use("sozb"): countType_==0?"'0'":"'1'")<<") else '0';"<<endl;
+		vhdl << tab << declare(join("level",i),currLev) << "<= " << use(join("level",i+1))<<"("<<prevLev-1<<" downto "<< prevLev-currLev << ")"
+		     << " when " << use(join("count",i)) << "='0' else "
+		     << use(join("level",i+1)) << "("<<prevLev - intpow2(i) - 1 <<" downto 0)";
+		     
+		     if (prevLev - intpow2(i) < currLev )
+		     	vhdl << " & " << rangeAssign(currLev -(prevLev - intpow2(i))-1,0,"'0'");
+		     vhdl << ";"<<endl;
+		     
+		     vhdl <<endl;
+	}     
+	//assign back the value to wOut_
+	wOut_ =  wOut_true;
+	vhdl << tab << "O <= "<<use(join("level",0))<<";"<<endl;
+	//<< (wOut_<=wIn?range(wIn_-1,wIn_-wOut_):join("&",rangeAssign(wOut_-wIn-1,0,"'0'")))<<";"<<endl;
+	
+	vhdl << tab << declare("sCount",wCount_) <<" <= ";
 	for (int i=wCount_-1; i>=0; i--){
-		currCount.str(""); currCount << "count" << i;
-		vhdl << use(currCount.str());
-		if (i>0) vhdl << " & ";
-		else     vhdl << ";"<<endl;
-	}
+		vhdl << use(join("count",i));
+		vhdl << (i>0?" & ":join(";","\n"));
+	} 
+	vhdl << tab << "Count <= " << "CONV_STD_LOGIC_VECTOR("<<wIn_<<","<<wCount_<<") when "<<use("sCount")<<"=CONV_STD_LOGIC_VECTOR("<<intpow2(wCount_)-1<<","<<wCount_<<")"<<endl
+	     << tab << tab << "else "<<use("sCount")<<";"<<endl;
+	 
 }
 
 LZOCShifterSticky::~LZOCShifterSticky() {
@@ -94,18 +109,8 @@ int LZOCShifterSticky::getCountWidth() const{
 
 void LZOCShifterSticky::setOperatorName(){
 	ostringstream name; 
-	ostringstream computationInterface;
-	/* The computationInterface refers to the VHDL entity ports. 
-	   If computation is generic, then an extra input port is 
-	   available on the entity for specifying the count type */ 
-	if (countType_ < 0) 
-		computationInterface<<"gen";
-	else 
-		computationInterface<<"spec";
-	
-	name<<"LZOCShifterSticky_"<<wIn_<<"_"<<wOut_<<"_"<<computeSticky_<<"_" //semantic name
-	    <<computationInterface.str();
-	
+	name << "L" << (countType_<0?"ZO":((countType_>0)?"O":"Z")) << "CShifter"
+	     << (computeSticky_?"Sticky":"");
 	uniqueName_=name.str();
 }
 
@@ -184,9 +189,8 @@ void LZOCShifterSticky::emulate(TestCase* tc)
 			
 	tc->addExpectedOutput("O",inputValue);
 			
-	if (computeSticky_){
+	if (computeSticky_)
 		tc->addExpectedOutput("Sticky",sticky);
-	}
 }
 
 

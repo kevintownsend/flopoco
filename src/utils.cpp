@@ -409,3 +409,38 @@ double getMaxInputDelays( map<string, double> inputDelays )
 			
 	return maxInputDelay;
 }
+
+string join( std::string id, int n)
+{
+	ostringstream o;
+	o << id << n;
+	return o.str();
+}
+
+string join( std::string id, string n)
+{
+	ostringstream o;
+	o << id << n;
+	return o.str();
+}
+
+
+string range( int left, int right)
+{
+	ostringstream o;
+	if (left>=right) o<<"("<<left<<" downto " << right << ")";
+	else             o<<"("<<left<<" to "     << right << ")";
+
+	return o.str();
+}
+
+string rangeAssign( int left, int right, std::string s)
+{
+	ostringstream o;
+	if (left>=right) o<<"("<<left<<" downto " << right ;
+	else             o<<"("<<left<<" to "     << right ;
+	
+	o<<" => " << s << ")";
+	return o.str();
+}
+

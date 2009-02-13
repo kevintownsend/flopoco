@@ -71,14 +71,19 @@ operators = [
              #["LeftShifter",      [ ["wIn", "in", 1, 64 ], ["MaxShift", "in", 1, 64]]], #XXX Tested
              #["RightShifter",     [ ["wIn", "in", 1, 64 ], ["MaxShift", "in", 1, 64]]], #XXX Tested
              #["LZOC",              [ ["wIn", "in", 1, 64 ] ]], #XXX Tested
-             ["LZOCShifterSticky", [ ["wIn", "in", 1, 127 ], ["wOut", "out", 1, 127], ["computeSticky", "in", 0, 1], ["countType", "in", -1, 1] ]],   
+             ["LZOCShifter",       [ ["wIn", "in", 2, 127 ], ["wOut", "out", 2, 127],  ]],   
+             ["LZCShifter",       [ ["wIn", "in", 2, 127 ], ["wOut", "out", 2, 127],  ]],
+             ["LOCShifter",       [ ["wIn", "in", 2, 127 ], ["wOut", "out", 2, 127],  ]],
+             ["LZOCShifterSticky",       [ ["wIn", "in", 2, 127 ], ["wOut", "out", 2, 127],  ]],   
+             ["LZCShifterSticky",       [ ["wIn", "in", 2, 127 ], ["wOut", "out", 2, 127],  ]],
+             ["LOCShifterSticky",       [ ["wIn", "in", 2, 127 ], ["wOut", "out", 2, 127],  ]],
              #["IntAdder",         [ ["wIn", "in", 1, 64 ]  ]], 
              #["FPAdder",           [ ["wEX", "in", 1, 11 ], ["wFX","in", 1, 52],["wEY","in", 1, 11 ], ["wFY","in", 1, 52], ["wER","out", 1, 11 ], ["wFR","out", 1, 52], ]],
              #["IntMultiplier",     [ ["wInX","in", 1, 64 ], ["wInY","in", 1, 64] ]]
  
             ] #TODO Add the rest of operators
 res = []
-input_combinations_per_operator = 30;
+input_combinations_per_operator = 2;
 test_cases_per_combination = 200;
 
 #REMOVE TEMPORARY MODELSIM FILES
