@@ -46,7 +46,7 @@ LongAcc2FP::LongAcc2FP(Target* target, int LSBA, int MSBA, int wEOut, int wFOut)
 	Operator(target), 
 	LSBA_(LSBA), MSBA_(MSBA), wEOut_(wEOut), wFOut_(wFOut)
 {
-	int i;
+
 	setOperatorName();
 	if (target->isPipelined()) 
 		setSequential();
@@ -130,7 +130,7 @@ void LongAcc2FP::setOperatorName(){
 }
 
 void LongAcc2FP::outputVHDL(ostream& o, string name) {
-int i;
+
 	licence(o,"Bogdan Pasca (2008)");
 	Operator::stdLibs(o);
 	outputVHDLEntity(o);

@@ -33,13 +33,12 @@
 
 using namespace std;
 
-LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut, bool computeSticky, const int countType) :
+LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut, bool computeSticky, const int countType, map<string, double> inputDelays) :
 	Operator(target), wIn_(wIn), wOut_(wOut), computeSticky_(computeSticky), countType_(countType) {
 	
 	// -------- Parameter set up -----------------
 	setEntityType( (countType_==-1?gen:spec) );
 	wCount_ = intlog2(wIn_);
-	cout << " wCount is: "<<wCount_<<endl;
 
 	setOperatorName();
 	setOperatorType();
@@ -61,6 +60,9 @@ LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut, bool com
 	if ((computeSticky_)&&(wOut_<wIn))   vhdl << tab << declare(join("sticky",wCount_), 1  ) << " <= '0' ;"<<endl; //init sticky 
 	
 	int currLev=wIn, prevLev=0;
+	double stageDelay = getMaxInputDelays(inputDelays); 
+	double opDelay = 0.0;
+	double period = (1.0)/target->frequency();
 	
 	for (int i=wCount_-1; i>=0; i--){
 	//int currLev = (wOut_>intpow2(i)?wOut_:intpow2(i));
@@ -70,9 +72,19 @@ LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut, bool com
 	currLev = (wOut_>intpow2(i)?wOut_:intpow2(i));
 	currLev += (intpow2(i)-1); 
 	currLev = (currLev > wIn_? wIn_: currLev);
-	
+		opDelay = compDelay(intpow2(i));
+		if (stageDelay + opDelay > period){
+			nextCycle(); ///////////////////////////////////////
+			stageDelay = 0.0;
+		}
 		vhdl << tab << declare(join("count",i),1) << "<= '1' when " <<use(join("level",i+1))<<"("<<prevLev-1 <<" downto "<<prevLev - intpow2(i)<<") = "
 		     <<"("<<prevLev-1<<" downto "<<prevLev - intpow2(i)<<"=>"<< (countType_==-1? use("sozb"): countType_==0?"'0'":"'1'")<<") else '0';"<<endl;
+		stageDelay += opDelay;
+		opDelay = muxDelay();
+		if (stageDelay + opDelay > period){
+			nextCycle(); ///////////////////////////////////////
+			stageDelay = 0.0;
+		}
 		vhdl << tab << declare(join("level",i),currLev) << "<= " << use(join("level",i+1))<<"("<<prevLev-1<<" downto "<< prevLev-currLev << ")"
 		     << " when " << use(join("count",i)) << "='0' else "
 		     << use(join("level",i+1)) << "("<<prevLev - intpow2(i) - 1 <<" downto "<< (currLev < prevLev - intpow2(i) ? (prevLev - intpow2(i)) - currLev : 0 ) <<")";
@@ -80,8 +92,15 @@ LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut, bool com
 		     if (prevLev - intpow2(i) < currLev )
 		     	vhdl << " & " << rangeAssign(currLev -(prevLev - intpow2(i))-1,0,"'0'");
 		     vhdl << ";"<<endl;
+		stageDelay += opDelay;
 
 		if ((computeSticky_)&&(wOut_<wIn)) {
+			opDelay = compDelay( max( prevLev-currLev, (currLev < prevLev - intpow2(i) ? (prevLev - int(intpow2(i)) ) - currLev : 0 ))  );
+			if (stageDelay + opDelay > period){
+				nextCycle(); ///////////////////////////////////////
+				stageDelay = 0.0;
+			}
+
 			vhdl << tab << declare(join("sticky_high_",i),1) << "<= '0'";
 			if (prevLev-currLev > 0)
 				vhdl << "when " <<use(join("level",i+1))<<"("<<prevLev-currLev -1 <<" downto "<< 0 <<") = CONV_STD_LOGIC_VECTOR(0,"<< prevLev-currLev <<") else '1'";
@@ -92,9 +111,16 @@ LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut, bool com
 				vhdl << "when " <<use(join("level",i+1))<<"("<<(currLev < prevLev - intpow2(i) ? (prevLev - intpow2(i)) - currLev : 0 ) -1 
 				     <<" downto "<< 0 <<") = CONV_STD_LOGIC_VECTOR(0,"<< (currLev < prevLev - intpow2(i) ? (prevLev - intpow2(i)) - currLev : 0 ) <<") else '1'";
 		    vhdl << ";"<<endl;
-			
+
+			stageDelay += opDelay;
+			opDelay = muxDelay();
+			if (stageDelay + opDelay > period){
+				nextCycle(); ///////////////////////////////////////
+				stageDelay = 0.0;
+			}
 			vhdl << tab << declare(join("sticky",i),1) << "<= " << use(join("sticky",i+1)) << " or " << use(join("sticky_high_",i)) 
 			            << " when " << use(join("count",i)) << "='0' else " << use(join("sticky",i+1)) << " or " << use(join("sticky_low_",i))<<";"<<endl;
+			stageDelay += opDelay;
 		}
 		
 		vhdl <<endl;
@@ -218,6 +244,5 @@ void LZOCShifterSticky::emulate(TestCase* tc)
 	if (computeSticky_)
 		tc->addExpectedOutput("Sticky",sticky);
 }
-
 
 

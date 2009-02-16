@@ -7,7 +7,7 @@
 #include <gmpxx.h>
 #include "utils.hpp"
 #include "Operator.hpp"
-
+extern map<string, double> emptyDelayMap;
 /** 
  * A leading zero/one counter + shifter + sticky bit computer for FloPoCo
  */ 
@@ -26,7 +26,7 @@ public:
 	 * @param[in] wIn the width of the mantissa input
 	 * @param[in] wOut the width of the mantissa output
 	 */
-	LZOCShifterSticky(Target* target, int wIn, int wOut, bool compute_sticky, const int countType=-1);
+	LZOCShifterSticky(Target* target, int wIn, int wOut, bool compute_sticky, const int countType=-1, map<string, double> inputDelays = emptyDelayMap);
 	
 	/** The LZOCShifterSticky destructor */
 	~LZOCShifterSticky();
@@ -56,6 +56,23 @@ public:
 	
 	
 	void emulate(TestCase* tc);
+	
+	double compDelay(int n){
+		double fdcq = 0.826e-9;
+		double lutd = 0.147e-9;
+		double muxcy = 0.034e-9;
+		double fdd = 0.017e-9;
+		
+		return (fdcq + lutd + (muxcy*n/2) + fdd);
+	};
+	double muxDelay(){
+		double fdcq = 0.826e-9;
+		double lutd = 0.147e-9;
+		double fdd = 0.017e-9;
+		
+		return (fdcq + lutd + fdd);
+	}
+
 
 private:
 	
