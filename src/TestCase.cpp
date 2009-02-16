@@ -82,6 +82,7 @@ mpz_class TestCase::getInputValue(string s){
 void TestCase::addExpectedOutput(string name, mpz_class v)
 {
 	Signal* s = op_->getSignalByName(name);
+	
 	//TODO Check if we have already too many values for this output
 	if (v >= (mpz_class(1) << s->width())) 
 		throw "ERROR in TestCase::addExpectedOutput, signal value out of range";
