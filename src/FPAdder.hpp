@@ -86,14 +86,8 @@ private:
 
 	int wF;
 	int wE;
-	int wOutLZC;
 	int sizeRightShift;
 	
-	int swapDifferencePipelineDepth;
-	int closePathDepth;
-	int farPathDepth;
-	int maxPathDepth;	
-	int delaySDToRound;
 };
 
 #endif
