@@ -425,10 +425,16 @@ public:
 	void nextCycle() ;
 
 
-	/** Set the current cycle to that of a signal 
+	/** Set the current cycle to that of a signal. It may increase or decrease current cycle. 
 	 * @param name is the signal name. It must have been defined before */
-	void syncCycleFromSignal(string name) ;
+	void setCycleFromSignal(string name) ;
 
+	/** advance the current cycle to that of a signal. It may only increase current cycle. To synchronize
+		 two or more signals, first call setCycleFromSignal() on the
+		 first, then syncCycleFromSignal() on the remaining ones. It
+		 will synchronize to the latest of these signals.  
+		 * @param name is the signal name. It must have been defined before */
+	void syncCycleFromSignal(string name) ;
 
 	/** Declares a signal implicitely by having it appearing on the Left Hand Side of a VHDL assignment
 	 * @param name is the name of the signal
@@ -457,15 +463,19 @@ public:
 
 	/** use a signal as input of a subcomponent
 	 * @param componentPortName is the name of the port on the component
-	 * @param actualSignalName is the name of the signal in This mapped to this port
-	 * @return name
+	 * @param actualSignalName is the name of the signal (of this) mapped to this port
 	 */
 	void inPortMap(Operator* op, string componentPortName, string actualSignalName);
 
+	/** use a constant signal as input of a subcomponent. 
+	 * @param componentPortName is the name of the port on the component
+	 * @param actualSignal is the constant signal to be mapped to this port
+	 */
+	void inPortMapCst(Operator* op, string componentPortName, string actualSignal);
 
 	/** returns the VHDL for an instance of a sub-component. 
 	 * @param componentPortName is the name of the port on the component
-	 * @param actualSignalName is the name of the signal in This mapped to this port
+	 * @param actualSignalName is the name of the signal (of this) mapped to this port
 	 * @return name
 	 */
 	string instance(Operator* op, string instanceName);

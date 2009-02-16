@@ -436,7 +436,7 @@ void Operator::nextCycle() {
 }
 
 
-void Operator::syncCycleFromSignal(string name) {
+void Operator::setCycleFromSignal(string name) {
 	ostringstream e;
 	e << "ERROR in syncCycleFromSignal, "; // just in case
 
@@ -456,6 +456,37 @@ void Operator::syncCycleFromSignal(string name) {
 		throw o.str();
 		} 
 		cycle_ = s->getCycle();
+		vhdl << tab << "----------------Synchro barrier, entering cycle " << cycle_ << "----------------" << endl ;
+		// automatically update pipeline depth of the operator 
+		if (cycle_ > pipelineDepth_) 
+			pipelineDepth_ = cycle_;
+	}
+}
+
+
+void Operator::syncCycleFromSignal(string name) {
+	ostringstream e;
+	e << "ERROR in syncCycleFrom2Signals, "; // just in case
+
+	if(isSequential()) {
+		Signal* s;
+		try {
+			s=getSignalByName(name);
+		}
+		catch (string e2) {
+			e << endl << tab << e2;
+			throw e.str();
+		}
+
+		if( s->getCycle() < 0 ) {
+			ostringstream o;
+			o << "signal " << name << " doesn't have (yet?) a valid cycle";
+		throw o.str();
+		} 
+		// advance cycle if needed
+		if (s->getCycle()>cycle_)
+			cycle_ = s->getCycle();
+
 		vhdl << tab << "----------------Synchro barrier, entering cycle " << cycle_ << "----------------" << endl ;
 		// automatically update pipeline depth of the operator 
 		if (cycle_ > pipelineDepth_) 
@@ -603,15 +634,40 @@ void Operator::inPortMap(Operator* op, string componentPortName, string actualSi
 		throw e.str();
 	}
 
-
 	// add the mapping to the mapping list of Op
 	op->portMap_[componentPortName] = name;
 }
 
 
+
+void Operator::inPortMapCst(Operator* op, string componentPortName, string actualSignal){
+	Signal* formal;
+	Signal* s;
+	ostringstream e;
+	string name;
+	e << "ERROR in inPortMap(), "; // just in case
+
+	try {
+		formal=op->getSignalByName(componentPortName);
+	}
+	catch (string e2) {
+		e << endl << tab << e2;
+		throw e.str();
+	}
+	if (formal->type()!=Signal::in){
+		e << "signal " << componentPortName << " of component " << op->getOperatorName() 
+		  << " doesn't seem to be an input port";
+		throw e.str();
+	}
+
+	// add the mapping to the mapping list of Op
+	op->portMap_[componentPortName] = actualSignal;
+}
+
+
 string Operator::instance(Operator* op, string instanceName){
 	ostringstream o;
-	// TODO add checks here?
+	// TODO add checks here? Check that all the signals are covered for instance
 	
 	o << tab << instanceName << ": " << op->getOperatorName();
 	if (isSequential()) 
@@ -625,7 +681,11 @@ string Operator::instance(Operator* op, string instanceName){
 		o <<  tab <<tab << "           rst  => rst, " << endl;
 	}
 	it=op->portMap_.begin();
-	o << tab << tab << "           " << (*it).first << " => "  << (*it).second;
+	if(isSequential()) 
+		o << tab << tab << "           " ;
+	else
+		o <<  " " ;
+	o<< (*it).first << " => "  << (*it).second;
 	op->portMap_.erase(it);
 	it++;
 	for (  ; it != op->portMap_.end(); it++ ) {
