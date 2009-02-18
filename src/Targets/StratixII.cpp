@@ -46,7 +46,6 @@ double StratixII::lutDelay(){
 };
 
 bool StratixII::suggestSubmultSize(int &x, int &y, int wInX, int wInY){
-int i;
 // TODO This is the VirtexIV function. Stratix II is more interesting
 // (DSP blocks are 36x36 and my be split as 9x9 or 18x18)
 	if (getUseHardMultipliers()){
@@ -80,9 +79,6 @@ int i;
 			
 		}
 	}else{
-		int f1=(wInX % 17 ==0)?0:1;
-		int f2=(wInY % 17 ==0)?0:1;
-		int k=wInX/17+wInY/17 + f1+ f2;
 		double freq;
 		
 		if ((max(wInX,wInY)<=4)&&(max(wInX,wInY)>=2))
@@ -142,9 +138,9 @@ int i;
 				}
 			}	
 		}
-	
-		
 	}
+	// control should never get here
+	return false;
 }	 
 	 	 
 bool StratixII::suggestSubaddSize(int &x, int wIn){

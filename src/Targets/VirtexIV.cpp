@@ -46,8 +46,6 @@ double VirtexIV::lutDelay(){
 };
 
 bool VirtexIV::suggestSubmultSize(int &x, int &y, int wInX, int wInY){
-	int i;
-	
 	if (getUseHardMultipliers()){
 		if ((wInX<=17) && (wInY<=17))	{
 			x = max(wInX, wInY);
@@ -77,9 +75,10 @@ bool VirtexIV::suggestSubmultSize(int &x, int &y, int wInX, int wInY){
 			} 
 		}
 	}else{
-		int f1=(wInX % 17 ==0)?0:1;
-		int f2=(wInY % 17 ==0)?0:1;
-		int k=wInX/17+wInY/17 + f1+ f2;
+		// Following lines suppressed to remove a warning
+		//int f1=(wInX % 17 ==0)?0:1;
+		//int f2=(wInY % 17 ==0)?0:1;
+		// int k=wInX/17+wInY/17 + f1+ f2;
 		double freq;
 		
 		if ((max(wInX,wInY)<=4)&&(max(wInX,wInY)>=2))
@@ -140,6 +139,8 @@ bool VirtexIV::suggestSubmultSize(int &x, int &y, int wInX, int wInY){
 			}	
 		}
 	}
+	// To suppress a warning, but we should never get here
+	return false;
 };	 
 	 
 bool VirtexIV::suggestSubaddSize(int &x, int wIn){
