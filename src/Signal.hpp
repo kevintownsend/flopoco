@@ -136,45 +136,34 @@ public:
 	Signal getMantissa();
 
 
-	/** sets the time to live value (consider using the constructor instead)
-	 * @return the corresponding subsignal
-	 */	
-	void setTTL(uint32_t ttl);
-
-
-	/** obtain the time to live value of this signal
-	 * @return the TTL value
-	 */	
-	uint32_t getTTL();
-
 
 	/** sets the cycle at which the signal is active
 	 */	
-	void setCycle(uint32_t cycle) ;
+	void setCycle(int cycle) ;
 
 
 	/** obtain the declared cycle of this signal
 	 * @return the cycle
 	 */	
-	uint32_t getCycle();
+	int getCycle();
 
 
 	/** Updates the max delay associated to a signal
 	 */	
-	void updateLifeSpan(uint32_t delay) ;
+	void updateLifeSpan(int delay) ;
 
 
 	/** obtain max delay that has been applied to this signal
 	 * @return the max delay 
 	 */	
-	uint32_t getLifeSpan() ;
+	int getLifeSpan() ;
 
 	/** Set the number of possible output values. */
-	void  setNumberOfPossibleValues(uint32_t n);
+	void  setNumberOfPossibleValues(int n);
 
 
 	/** Get the number of possible output values. */
-	uint32_t getNumberOfPossibleValues(); 
+	int getNumberOfPossibleValues(); 
 
 	/**
 	 * Converts the value of the signal into a nicely formated VHDL expression,
@@ -200,20 +189,20 @@ private:
 	std::string   name_;        /**< The name of the signal */
 	std::string   id_;          /**< The id of the signal. It is the same as name_ for regular signals, and is name_(high_-1 downto low_) for subsignals */
 	SignalType    type_;        /**< The type of the signal, see SignalType */
-	uint32_t      width_;       /**< The width of the signal */
+	int           width_;       /**< The width of the signal */
 
-	uint32_t      numberOfPossibleValues_; /**< For signals of type out, indicates how many values will be acceptable. Typically 1 for correct rounding, and 2 for faithful rounding */
+	int           numberOfPossibleValues_; /**< For signals of type out, indicates how many values will be acceptable. Typically 1 for correct rounding, and 2 for faithful rounding */
 
-	uint32_t      lifeSpan_;    /**< The max delay that will be applied to this signal; */
-	uint32_t      cycle_;       /**<  the cycle at which this signal is active in a pipelined operator. 0 means synchronized with the inputs */
+	int           lifeSpan_;    /**< The max delay that will be applied to this signal; */
+	int           cycle_;       /**<  the cycle at which this signal is active in a pipelined operator. 0 means synchronized with the inputs */
 	
 	bool          isFP_;        /**< If the signal is of floating-point type */  
-	uint32_t      wE_;          /**< The width of the exponent. Used for FP signals */
-	uint32_t      wF_;          /**< The width of the fraction. Used for FP signals */
+	int           wE_;          /**< The width of the exponent. Used for FP signals */
+	int           wF_;          /**< The width of the fraction. Used for FP signals */
 	
 	bool          isSubSignal_; /**< If the signal is a subsignal */
-	uint32_t      low_;         /**< The low index of the signal */
-	uint32_t      high_;        /**< The high index of the signal */
+	int           low_;         /**< The low index of the signal */
+	int           high_;        /**< The high index of the signal */
 	
 	bool          isBus_;       /**< True is the signal is a bus (std_logic_vector)*/
 };

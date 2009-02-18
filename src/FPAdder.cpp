@@ -58,7 +58,9 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 
 	ostringstream name, synch, synch2;
 
-	setOperatorName();
+	name<<"FPAdder_"<<wEX<<"_"<<wFX<<"_"<<wEY<<"_"<<wFY<<"_"<<wER<<"_"<<wFR; 
+	uniqueName_ = name.str(); 
+
 	setOperatorType();
 		
 	//parameter set up
@@ -192,6 +194,8 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 		cout << endl << "****WARNING****: wE < log2(wF), the generated VHDL is probably broken."<<endl;
 		cout << "    Try increasing wE."<<endl;
 	}
+
+	lzocs->Operator::setOperatorName(getOperatorName()+"_LZCShifter");
 	oplist.push_back(lzocs);
 
 	inPortMap  (lzocs, "I", "fracRClose1");
@@ -248,6 +252,7 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 								
 	// shift right the significand of new Y with as many positions as the exponent difference suggests (alignment) //		
 	rightShifter = new Shifter(target,wFX+1,wFX+3,Right);
+	rightShifter->Operator::setOperatorName(getOperatorName()+"_RightShifter");
 	oplist.push_back(rightShifter);
 	inPortMap  (rightShifter, "X", "fracNewY");
 	inPortMap  (rightShifter, "S", "shiftVal");
@@ -425,40 +430,7 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 FPAdder::~FPAdder() {
 }
 
-void FPAdder::setOperatorName(){
-	ostringstream name;
-	/* The name has the format: FPAdder_wEX_wFX_wEY_wFY_wER_wFR where: 
-	   wEX = width of X exponenet and 
-	   wFX = width for the fractional part of X */
-	name<<"FPAdder_"<<wEX<<"_"<<wFX<<"_"<<wEY<<"_"<<wFY<<"_"<<wER<<"_"<<wFR; 
-	uniqueName_ = name.str(); 
-}
 
-void FPAdder::outputVHDL(std::ostream& o, std::string name) {
-  
-	ostringstream signame, synch1, synch2, xname,zeros, zeros1, zeros2, str1, str2;
-
-	licence(o,"Bogdan Pasca, Florent de Dinechin (2008)");
-	Operator::stdLibs(o);
-	outputVHDLEntity(o);
-	newArchitecture(o,name);	
-	
-	//output VHDL components
-	lzocs->outputVHDLComponent(o);
-	rightShifter->outputVHDLComponent(o);
-	dualSubClose->outputVHDLComponent(o);
-	finalRoundAdd->outputVHDLComponent(o);
-	fracAddFar->outputVHDLComponent(o);	
-	o << buildVHDLSignalDeclarations();
-	beginArchitecture(o);
-		
-	o<<buildVHDLRegisters();
-						   
-	o << vhdl.str();
-
-	endArchitecture(o);
-
-}
 
 
 

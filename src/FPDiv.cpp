@@ -49,7 +49,7 @@ extern vector<Operator*> oplist;
 FPDiv::FPDiv(Target* target, int wE, int wF) :
 	Operator(target), wE(wE), wF(wF) {
 
-	int i, j;
+	int i;
 	ostringstream name;
 
 	name<<"FPDiv_"<<wE<<"_"<<wF; 

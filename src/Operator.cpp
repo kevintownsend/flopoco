@@ -234,21 +234,21 @@ Signal * Operator::getIOListSignal(int i){
  
 
 void  Operator::outputVHDLSignalDeclarations(std::ostream& o) {
-	for (int i=0; i < this->signalList_.size(); i++){
+	for (unsigned int i=0; i < this->signalList_.size(); i++){
 		Signal* s = this->signalList_[i];
 		o<<tab<<  s->toVHDL() << ";" << endl;
 	}
 }
 
 void  Operator::outputVHDLRegisters(std::ostream& o) {
-
+	unsigned int i;
 	// execute only if the operator is sequential, otherwise output nothing
 	if (isSequential()){
 		// First registers without a reset
 		if (hasRegistersWithoutReset_) {
 			o << tab << "process(clk)  begin\n"
 			<< tab << tab << "if clk'event and clk = '1' then\n";
-			for(int i=0; i<signalList_.size(); i++) {
+			for(i=0; i<signalList_.size(); i++) {
 				Signal *s = signalList_[i];
 				if(s->type()==Signal::registeredWithoutReset) 
 					o << tab <<tab << tab << s->getName() <<"_d" << " <=  " << s->getName() <<";\n";
@@ -262,7 +262,7 @@ void  Operator::outputVHDLRegisters(std::ostream& o) {
 			o << tab << "process(clk, rst)" << endl;
 			o << tab << tab << "begin" << endl;
 			o << tab << tab << tab << "if rst = '1' then" << endl;
-			for(int i=0; i<signalList_.size(); i++) {
+			for(i=0; i<signalList_.size(); i++) {
 				Signal *s = signalList_[i];
 				if(s->type()==Signal::registeredWithAsyncReset)
 					if ((s->width()>1)||(s->isBus())) 
@@ -271,7 +271,7 @@ void  Operator::outputVHDLRegisters(std::ostream& o) {
 						o << tab <<tab << tab << s->getName() <<"_d" << " <=  '0';\n";
 			}
 			o << tab << tab << tab << "elsif clk'event and clk = '1' then" << endl;
-			for(int i=0; i<signalList_.size(); i++) {
+			for(i=0; i<signalList_.size(); i++) {
 				Signal *s = signalList_[i];
 				if(s->type()==Signal::registeredWithAsyncReset) 
 					o << tab <<tab << tab << s->getName() <<"_d" << " <=  " << s->getName() <<";\n";
@@ -286,7 +286,7 @@ void  Operator::outputVHDLRegisters(std::ostream& o) {
 			o << tab << tab << "begin" << endl;
 			o<<  "    if clk'event and clk = '1' then" << endl;
 			o << tab << tab << tab << "if rst = '1' then" << endl;
-			for(int i=0; i<signalList_.size(); i++) {
+			for(i=0; i<signalList_.size(); i++) {
 				Signal *s = signalList_[i];
 				if(s->type()==Signal::registeredWithSyncReset)
 					if ((s->width()>1)||(s->isBus())) 
@@ -295,7 +295,7 @@ void  Operator::outputVHDLRegisters(std::ostream& o) {
 						o << tab <<tab << tab << s->getName() <<"_d" << " <=  '0';\n";
 			}
 			o << tab << tab << tab << "else" << endl;
-			for(int i=0; i<signalList_.size(); i++) {
+			for(i=0; i<signalList_.size(); i++) {
 				Signal *s = signalList_[i];
 				if(s->type()==Signal::registeredWithSyncReset) 
 					o << tab <<tab << tab << s->getName() <<"_d" << " <=  " << s->getName() <<";\n";
@@ -308,6 +308,7 @@ void  Operator::outputVHDLRegisters(std::ostream& o) {
 }
 
 void Operator::outputVHDLComponent(std::ostream& o, std::string name) {
+	unsigned int i;
 	o << tab << "component " << name << " is" << endl;
 	if (ioList_.size() > 0)
 	{
@@ -316,7 +317,7 @@ void Operator::outputVHDLComponent(std::ostream& o, std::string name) {
 			// add clk and rst signals which are no longer member of iolist
 			o << "clk, rst : in std_logic;" <<endl;
 		}
-		for (int i=0; i<this->ioList_.size(); i++){
+		for (i=0; i<this->ioList_.size(); i++){
 			Signal* s = this->ioList_[i];
 			if (i>0 || isSequential()) // align signal names 
 				o<<tab<<"          ";
@@ -334,6 +335,7 @@ void Operator::outputVHDLComponent(std::ostream& o) {
 
 
 void Operator::outputVHDLEntity(std::ostream& o) {
+	unsigned int i;
 	o << "entity " << uniqueName_ << " is" << endl;
 	if (ioList_.size() > 0)
 	{
@@ -343,7 +345,7 @@ void Operator::outputVHDLEntity(std::ostream& o) {
 			// add clk and rst signals which are no longer member of iolist
 			o << "clk, rst : in std_logic;" <<endl;
 		}
-		for (int i=0; i<this->ioList_.size(); i++){
+		for (i=0; i<this->ioList_.size(); i++){
 			Signal* s = this->ioList_[i];
 			if (i>0 || isSequential()) // align signal names 
 				o<<"          ";
@@ -359,14 +361,14 @@ void Operator::outputVHDLEntity(std::ostream& o) {
 void Operator::licence(std::ostream& o, std::string authorsyears){
 	o<<"--------------------------------------------------------------------------------"<<endl;
 	// centering the unique name
-	int s;
+	int s, i;
 	if(uniqueName_.size()<76) s = (76-uniqueName_.size())/2; else s=0;
-	o<<"--"; for(int i=0; i<s; i++) o<<" "; o  << uniqueName_ << endl; 
+	o<<"--"; for(i=0; i<s; i++) o<<" "; o  << uniqueName_ << endl; 
 
 	// if this operator was renamed from the command line, show the original name
 	if(commentedName_!="") {
 		if(commentedName_.size()<74) s = (74-commentedName_.size())/2; else s=0;
-		o<<"--"; for(int i=0; i<s; i++) o<<" "; o << "(" << commentedName_ << ")" << endl; 
+		o<<"--"; for(i=0; i<s; i++) o<<" "; o << "(" << commentedName_ << ")" << endl; 
 	}
 
 	o<<"-- This operator is part of the Infinite Virtual Library FloPoCoLib"<<endl
@@ -590,7 +592,6 @@ void Operator::outPortMap(Operator* op, string componentPortName, string actualS
 
 void Operator::inPortMap(Operator* op, string componentPortName, string actualSignalName){
 	Signal* formal;
-	Signal* s;
 	ostringstream e;
 	string name;
 	e << "ERROR in inPortMap(), "; // just in case
@@ -642,7 +643,6 @@ void Operator::inPortMap(Operator* op, string componentPortName, string actualSi
 
 void Operator::inPortMapCst(Operator* op, string componentPortName, string actualSignal){
 	Signal* formal;
-	Signal* s;
 	ostringstream e;
 	string name;
 	e << "ERROR in inPortMap(), "; // just in case
@@ -695,6 +695,8 @@ string Operator::instance(Operator* op, string instanceName){
 	}
 	o << ");" << endl;
 
+	// add the operator to the subcomponent list 
+	subComponents_[op->getOperatorName()]  = op;
 	return o.str();
 }
 	
@@ -703,7 +705,7 @@ string Operator::instance(Operator* op, string instanceName){
 
 string Operator::buildVHDLSignalDeclarations() {
 	ostringstream o;
-	for(int i=0; i<signalList_.size(); i++) {
+	for(unsigned int i=0; i<signalList_.size(); i++) {
 		Signal *s = signalList_[i];
 		o << s->toVHDLDeclaration() << endl;
 	}
@@ -713,17 +715,15 @@ string Operator::buildVHDLSignalDeclarations() {
 
 
 
-#if 0 // the world is not ready yet
 string Operator::buildVHDLComponentDeclarations() {
 	ostringstream o;
-	for(int i=0; i<subComponentList_.size(); i++) {
-		Operator *op = subComponentList_[i];
-		outputVHDLComponent(o);
+	for(map<string, Operator*>::iterator it = subComponents_.begin(); it !=subComponents_.end(); it++) {
+		Operator *op = it->second;
+		op->outputVHDLComponent(o);
 		o<< endl;
 	}
 	return o.str();	
 }
-#endif
 
 string  Operator::buildVHDLRegisters() {
 	ostringstream o;
@@ -732,7 +732,7 @@ string  Operator::buildVHDLRegisters() {
 	if (isSequential()){
 		o << tab << "process(clk)  begin\n"
 		  << tab << tab << "if clk'event and clk = '1' then\n";
-		for(int i=0; i<signalList_.size(); i++) {
+		for(unsigned int i=0; i<signalList_.size(); i++) {
 			Signal *s = signalList_[i];
 			if(s->getLifeSpan() >0) {
 				for(int j=1; j <= s->getLifeSpan(); j++)
@@ -761,7 +761,7 @@ void Operator::buildRandomTestCases(TestCaseList* tcl, int n){
 	for (int i = 0; i < n; i++) {
 		tc = new TestCase(this); // TODO free all this memory when exiting TestBench
 		/* Fill inputs */
-		for (int j = 0; j < ioList_.size(); j++) {
+		for (unsigned int j = 0; j < ioList_.size(); j++) {
 			Signal* s = ioList_[j]; 
 			if (s->type() == Signal::in) {
 				mpz_class a = getLargeRandom(s->width());
@@ -778,6 +778,24 @@ void Operator::buildRandomTestCases(TestCaseList* tcl, int n){
 		// add to the test case list
 		tcl->add(tc);
 	}
+}
+
+
+void Operator::outputVHDL(std::ostream& o, std::string name) {
+  
+	ostringstream signame, synch1, synch2, xname,zeros, zeros1, zeros2, str1, str2;
+
+	licence(o,"Bogdan Pasca, Florent de Dinechin (2008)");
+	Operator::stdLibs(o);
+	outputVHDLEntity(o);
+	newArchitecture(o,name);
+	o << buildVHDLComponentDeclarations();	
+	o << buildVHDLSignalDeclarations();
+	beginArchitecture(o);		
+	o<<buildVHDLRegisters();
+	o << vhdl.str();
+	endArchitecture(o);
+
 }
 
 

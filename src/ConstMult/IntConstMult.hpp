@@ -45,8 +45,7 @@ public:
 	// Overloading the virtual functions of Operator
 	void outputVHDL(std::ostream& o, std::string name);
 
-	void fillTestCase(mpz_class a[]);
-	map<string, mpz_class> emulate(map<string, mpz_class>);	
+	void emulate(TestCase* tc);
 
 private:
 	int build_pipeline(ShiftAddOp* sao, double& delay);

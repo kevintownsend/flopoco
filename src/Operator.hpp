@@ -336,7 +336,7 @@ public:
 	 * @param o the stream where the entity will outputted
 	 * @param name the name of the architecture
 	 */
-	virtual void outputVHDL(std::ostream& o, std::string name) =0 ;
+	virtual void outputVHDL(std::ostream& o, std::string name);
 	
 	/** the main function outputs the VHDL for the operator 
 	 * @param o the stream where the entity will outputted
@@ -486,6 +486,9 @@ public:
 	 */
 	string buildVHDLSignalDeclarations();
 
+	/** build all the component declarations from the list built by instance().
+	 */
+	string buildVHDLComponentDeclarations();
 
 	/** build all the registers from signals implicitely delayed by declare() 
 	 *	 This is the 2.0 equivalent of outputVHDLSignalRegisters
@@ -504,6 +507,7 @@ protected:
 	vector<Signal*>     ioList_;          /**< The list of I/O signals of the operator */
 	vector<Signal*>     testCaseSignals_; /**< The list of pointers to the signals in a test case entry. Its size also gives the dimension of a test case */
 	vector<Signal*>     signalList_;      /**< The list of internal signals of the operator */
+	map<string, Operator*> subComponents_;/**< The list of sub-components */
 	map<string, string> portMap_;         /**< Port map for an instance of this operator */
 	map<string, double> outDelayMap;      /**< Slack delays on the outputs */
 	ostringstream       vhdl;             /**< The internal stream to which the constructor will build the VHDL code */

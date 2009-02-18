@@ -668,11 +668,9 @@ void optimizeLefevre(const vector<mpz_class>& constants) {
 };
 
 
-void IntConstMult::fillTestCase(mpz_class a[])
-{
-	mpz_class& svX = a[0];
-	mpz_class& svR = a[1];
-
-	svR = svX * n;
+void IntConstMult::emulate(TestCase *tc){
+	mpz_class svX = tc->getInputValue("inX");
+	mpz_class svR = svX * n;
+	tc->addExpectedOutput("R", svR);
 }
 
