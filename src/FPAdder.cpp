@@ -82,26 +82,31 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 	//                          Swap/Difference                                |
 	// ========================================================================|
 	vhdl<<"-- Exponent difference and swap  --"<<endl;
+	vhdl<<tab<<declare("inX",wE+wF+3) << " <= X;"<<endl;
+	vhdl<<tab<<declare("inY",wE+wF+3) << " <= Y;"<<endl;
 	// signal which indicates whether or not the exception bits of X are greater or equal than/to the exception bits of Y		  
-	vhdl<<tab<<declare("exceptionXSuperiorY") << " <= '1' when X("<<wEX+wFX+2<<" downto "<<wEX+wFX+1<<") >= Y("<<wEY+wFY+2<<" downto "<<wEY+wF+1<<") else '0';"<<endl;
+	vhdl<<tab<<declare("exceptionXSuperiorY") << " <= '1' when inX("<<wEX+wFX+2<<" downto "<<wEX+wFX+1<<") >= inY("<<wEY+wFY+2<<" downto "<<wEY+wF+1<<") else '0';"<<endl;
 		
 	// signal which indicates whether or not the exception bits of X are equal to the exception bits of Y		  
-	vhdl<<tab<<declare("exceptionXEqualY") << " <= '1' when X("<<wEX+wFX+2<<" downto "<<wEX+wFX+1<<") = Y("<<wEY+wFY+2<<" downto "<<wEY+wFY+1<<") else '0';"<<endl;
+	vhdl<<tab<<declare("exceptionXEqualY") << " <= '1' when inX("<<wEX+wFX+2<<" downto "<<wEX+wFX+1<<") = inY("<<wEY+wFY+2<<" downto "<<wEY+wFY+1<<") else '0';"<<endl;
 	
 	// make the difference between the exponents of X and Y; expX - expY = expX + not(expY) + 1
 	// pad exponents with sign bit
-	vhdl<<tab<<declare("signedExponentX",wE+1) << " <= \"0\" & X("<<wEX+wFX-1<<" downto "<<wFX<<");"<<endl;
-	vhdl<<tab<<declare("signedExponentY",wE+1) << " <= \"0\" & Y("<<wEX+wFX-1<<" downto "<<wFX<<");"<<endl;
+	vhdl<<tab<<declare("signedExponentX",wE+1) << " <= \"0\" & inX("<<wEX+wFX-1<<" downto "<<wFX<<");"<<endl;
+	vhdl<<tab<<declare("signedExponentY",wE+1) << " <= \"0\" & inY("<<wEX+wFX-1<<" downto "<<wFX<<");"<<endl;
 	vhdl<<tab<<declare("exponentDifferenceXY",wE+1) << " <= signedExponentX - signedExponentY ;"<<endl;
 	vhdl<<tab<<declare("exponentDifferenceYX",wE) << " <= signedExponentY("<<wE-1<<" downto 0) - signedExponentX("<<wE-1<<" downto 0);"<<endl;
 	
 	// SWAP when: [excX=excY and expY>expX] or [excY>excX]
 	vhdl<<tab<<declare("swap") << " <= (exceptionXEqualY and exponentDifferenceXY("<<wE<<")) or (not(exceptionXSuperiorY));"<<endl;
 	
+	if(0) 
+		nextCycle();
 	// depending on the value of swap, assign the corresponding values to the newX and newY signals 
-	vhdl<<tab<<declare("newX",wE+wF+3) << " <= Y when swap = '1' else X;"<<endl;
-	vhdl<<tab<<declare("newY",wE+wF+3) << " <= X when swap = '1' else Y;"<<endl;
-	vhdl<<tab<<declare("exponentDifference",wE) << " <= exponentDifferenceYX when swap = '1' else exponentDifferenceXY("<<wE-1<<" downto 0);"<<endl;
+	vhdl<<tab<<declare("newX",wE+wF+3) << " <= " << use("inY") << " when "<< use("swap") << " = '1' else " << use("inX") << ";"<<endl;
+	vhdl<<tab<<declare("newY",wE+wF+3) << " <= " << use("inX") << " when "<< use("swap") << " = '1' else " << use("inY") << ";"<<endl;
+	vhdl<<tab<<declare("exponentDifference",wE) << " <= " << use("exponentDifferenceYX") 
+		 << " when "<< use("swap") << " = '1' else " << use("exponentDifferenceXY") << "("<<wE-1<<" downto 0);"<<endl;
 	
 	// determine if the fractional part of Y was shifted out of the operation //
 	vhdl<<tab<<declare("shiftedOut") << " <= "; 
@@ -140,7 +145,7 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 	vhdl<<tab<<declare("selectClosePath") << " <= EffSub when " << use("exponentDifference") << "("<<wER-1<<" downto "<<1<<") = ("<<wER-1<<" downto "<<1<<" => '0') else '0';"<<endl;
 		
 
-	// sdExnXY is a concatenation of the exception bits of X and Y
+	// sdExnXY is a concatenation of the exception bits of X and Y, after swap, so exnX > exnY
 	vhdl<<tab<<declare("sdExnXY",4) << " <= " << use("newX") << "("<<wE+wF+2<<" downto "<<wE+wF+1<<") "
 		 << "& " << use("newY") << "("<<wE+wF+2<<" downto "<<wE+wF+1<<");"<<endl;
 	vhdl<<tab<<declare("pipeSignY") << " <= " << use("newY") << "("<<wE+wF<<");"<<endl;
@@ -165,6 +170,7 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 	
 	// substract the fraction signals for the close path; 
 	
+	cout << "AAAAAAAAAAAAAAAAAAAAAA"<<endl;
 	// instanciate the box that computes X-Y and Y-X. Note that it could take its inputs before the swap (TODO ?)
 	dualSubClose = new 	IntDualSub(target, wF + 3, 0);
 	dualSubClose->changeName(getName()+"_DualSubClose");
@@ -190,6 +196,7 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 	vhdl<< tab << "          " << use("newX") << "("<<wE+wF<<") xor (" << use("selectClosePath") << " and " 
 		 << use("fracSignClose") << ");"<<endl;
 	
+	cout << "AAAAAAAAAAAAAAAAAAAAAA"<<endl;
 	// LZC + Shifting. The number of leading zeros are returned together with the shifted input
 	lzocs = new LZOCShifterSticky(target, wFX+2, wFX+2,0, 0);
 	if(lzocs->getCountWidth() > wE){
@@ -251,7 +258,9 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 	
 	//add implicit 1 for frac1. 
 	vhdl<<tab<< declare("fracNewY",wF+1) << " <= '1' & " << use("newY") << "("<<wF-1<<" downto 0);"<<endl;
-								
+							
+	cout << "AAAAAAAAAAAAAAAAAAAAAA"<<endl;
+	
 	// shift right the significand of new Y with as many positions as the exponent difference suggests (alignment) //		
 	rightShifter = new Shifter(target,wFX+1,wFX+3,Right);
 	rightShifter->changeName(getName()+"_RightShifter");
@@ -264,10 +273,12 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 	syncCycleFromSignal("shiftedFracY");/////////////////////////////////////////////////////////////////
 	// register the output 
 	nextCycle();////////////////////////////////////////////////////////////////////////////////////
-
 			
 	// compute sticky bit as the or of the shifted out bits during the alignment //
 	vhdl<<tab<< declare("sticky") << " <= '0' when (" << use("shiftedFracY") << "("<<wF<<" downto 0)=CONV_STD_LOGIC_VECTOR(0,"<<wF<<")) else '1';"<<endl;
+
+	// one cycle only for the sticky (the far path has more time anyway)
+	nextCycle();////////////////////////////////////////////////////////////////////////////////////
 		
 	//pad fraction of Y [sign][shifted frac having inplicit 1][guard bits]
 	vhdl<<tab<< declare("fracYfar", wF+4) << " <= \"0\" & " << use("shiftedFracY") << "("<<2*wF+3<<" downto "<<wF+1<<");"<<endl;	
@@ -279,7 +290,7 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 	vhdl<<tab<<declare("fracYfarXorOp", wF+4) << " <= fracYfar xor ("<<wF+3<<" downto 0 => "<< use("EffSub")<<");"<<endl;
 	//pad fraction of X [sign][inplicit 1][fracX][guard bits]				
 	vhdl<<tab<< declare("fracXfar", wF+4) << " <= \"01\" & ("<< use("newX")<<"("<<wF-1<<" downto 0"<<")) & \"00\";"<<endl;
-	vhdl<<tab<< declare("cInAddFar") << " <= " << use("EffSub")<<" and not sticky;"<< endl;
+	vhdl<<tab<< declare("cInAddFar") << " <= " << use("EffSub")<<" and not " << use("sticky") << ";"<< endl;
 
 	// perform carry in addition
 	fracAddFar = new IntAdder(target,wF+4);
@@ -408,21 +419,21 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 	 
 	vhdl<<tab<< declare("syncExnXY", 4) << " <= "<< use("sdExnXY")<<";"<<endl;
 	vhdl<<tab<< "-- Exception bits of the result" << endl;
-	vhdl<<tab<< "with syncExnXY select"<<endl;
+	vhdl<<tab<< "with syncExnXY select -- remember that ExnX > ExnY "<<endl;
 	vhdl<<tab<<tab<< declare("exnR",2) <<" <= resultNoExn("<<wE+wF+2<<" downto "<<wE+wF+1<<") when \"0101\","<<endl;
-	vhdl<<tab<< "                                 \"1\" & syncEffSub              when \"1010\","<<endl;
-	vhdl<<tab<< "                                 \"11\"            	            when \"1011\","<<endl;
-	vhdl<<tab<< "                                 syncExnXY(3 downto 2)         when others;"<<endl;
+	vhdl<<tab<<tab<< "        \"1\" & syncEffSub          when \"1010\","<<endl;
+	vhdl<<tab<<tab<< "        \"11\"                      when \"1110\","<<endl;
+	vhdl<<tab<<tab<< "        syncExnXY(3 downto 2)     when others;"<<endl;
 	vhdl<<tab<< "-- Sign bit of the result" << endl;
 	vhdl<<tab<< "with syncExnXY select"<<endl;
 	vhdl<<tab<<tab<<declare("sgnR") << " <= resultNoExn("<<wE+wF<<")         when \"0101\","<<endl;
-	vhdl<<tab<< "                     syncX("<<wE+wF<<") and syncSignY when \"0000\","<<endl;
-	vhdl<<tab<< "                     syncX("<<wE+wF<<")               when others;"<<endl;
+	vhdl<<tab<< "           syncX("<<wE+wF<<") and syncSignY when \"0000\","<<endl;
+	vhdl<<tab<< "           syncX("<<wE+wF<<")               when others;"<<endl;
 	
 	vhdl<<tab<< "-- Exponent and significand of the result" << endl;
-	vhdl<<tab<< "with syncExnXY select"<<endl;
-	vhdl<<tab<<tab<< declare("expsigR", wE+wF) << " <= resultNoExn("<<wE+wF-1<<" downto 0) when \"0101\" | \"0100\" | \"0001\","<<endl;
-	vhdl<<tab<< "                                 syncX("<<wE+wF-1<<" downto "<<wE+wF-3<<") & ("<<wE+wF-4<<" downto 0 =>'0') when others;"<<endl;
+	vhdl<<tab<< "with syncExnXY select  "<<endl;
+	vhdl<<tab<<tab<< declare("expsigR", wE+wF) << " <= resultNoExn("<<wE+wF-1<<" downto 0)   when \"0101\" ,"<<endl;
+	vhdl<<tab<<tab<< "           syncX("<<wE+wF-1<<" downto  0)        when others; -- 0100, or at least one NaN or one infty "<<endl;
 		
 	// assign result 
 	vhdl<<tab<< "R <= exnR & sgnR & expsigR;"<<endl;
