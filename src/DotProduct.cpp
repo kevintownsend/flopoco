@@ -44,7 +44,14 @@ extern vector<Operator*> oplist;
 DotProduct::DotProduct(Target* target, int wE, int wFX, int wFY, int MaxMSBX, int LSBA, int MSBA ):
 	Operator(target), wE(wE), wFX(wFX), wFY(wFY), MaxMSBX(MaxMSBX), LSBA(LSBA), MSBA(MSBA)  {
 	
-	setOperatorName();
+	ostringstream name;
+	/* Set up the name of the entity */
+	name <<"DotProduct_"<<wE<<"_"<<wFX<<"_"<<wFY<<"_"
+			 <<(MaxMSBX>=0?"":"M")<<abs(MaxMSBX)<<"_"
+			 <<(LSBA>=0?"":"M")<<abs(LSBA)<<"_"
+			 <<(MSBA>=0?"":"M")<<abs(MSBA) ;
+
+	setName(name.str());
 	
 	/* Set up the I/O signals of of the entity */
 	addInput("X", 2 + 1 + wE + wFX);
@@ -81,15 +88,7 @@ DotProduct::DotProduct(Target* target, int wE, int wFX, int wFY, int MaxMSBX, in
 DotProduct::~DotProduct() {
 }
 
-void DotProduct::setOperatorName(){
-	ostringstream name;
-	/* Set up the name of the entity */
-	name <<"DotProduct_"<<wE<<"_"<<wFX<<"_"<<wFY<<"_"
-			 <<(MaxMSBX>=0?"":"M")<<abs(MaxMSBX)<<"_"
-			 <<(LSBA>=0?"":"M")<<abs(LSBA)<<"_"
-			 <<(MSBA>=0?"":"M")<<abs(MSBA) ;
-	uniqueName_=name.str();
-}
+
 
 void DotProduct::outputVHDL(std::ostream& o, std::string name) {
 	licence(o,"Bogdan Pasca (2008)");
@@ -102,7 +101,7 @@ void DotProduct::outputVHDL(std::ostream& o, std::string name) {
 	beginArchitecture(o);
 
 	/* Map the signals on the fp multiplier */
-	o << tab << "fp_multiplier: " << fpMultiplier->getOperatorName() << endl;
+	o << tab << "fp_multiplier: " << fpMultiplier->getName() << endl;
 	o << tab << "    port map ( X => X, " << endl;
 	o << tab << "               Y => Y, " << endl;
 	o << tab << "               ResultExponent => fpMultiplierResultExponent, " << endl;
@@ -121,7 +120,7 @@ void DotProduct::outputVHDL(std::ostream& o, std::string name) {
 	                                <<"fpMultiplierResultSignificand("<<wFX + wFY<<" downto "<< 0 <<");"<<endl;
 
 	/* Map the signals on the long accumulator */
-	o << tab << "long_acc: " << longAcc->getOperatorName() << endl;
+	o << tab << "long_acc: " << longAcc->getName() << endl;
 	o << tab << "    port map ( X => fpMultiplierResult, " << endl;
 	o << tab << "               A => A, " << endl;
 	o << tab << "               clk => clk," << endl;

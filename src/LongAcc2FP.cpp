@@ -46,8 +46,12 @@ LongAcc2FP::LongAcc2FP(Target* target, int LSBA, int MSBA, int wEOut, int wFOut)
 	Operator(target), 
 	LSBA_(LSBA), MSBA_(MSBA), wEOut_(wEOut), wFOut_(wFOut)
 {
-
-	setOperatorName();
+	ostringstream name;
+	name <<"LongAcc2FP_"
+		  <<(LSBA_>=0?"":"M")<<abs(LSBA_)<<"_"
+		  <<(MSBA_>=0?"":"M")<<abs(MSBA_)<<"_"
+		  <<wEOut_<<"_"<<wFOut_;
+	setName(name.str());
 	if (target->isPipelined()) 
 		setSequential();
 	else
@@ -119,15 +123,6 @@ LongAcc2FP::LongAcc2FP(Target* target, int LSBA, int MSBA, int wEOut, int wFOut)
 LongAcc2FP::~LongAcc2FP() {
 }
 
-void LongAcc2FP::setOperatorName(){
-	ostringstream name;
-	name <<"LongAcc2FP_"
-			 <<(LSBA_>=0?"":"M")<<abs(LSBA_)<<"_"
-			 <<(MSBA_>=0?"":"M")<<abs(MSBA_)<<"_"
-			 <<wEOut_<<"_"<<wFOut_;
-	uniqueName_=name.str();
-
-}
 
 void LongAcc2FP::outputVHDL(ostream& o, string name) {
 
@@ -151,7 +146,7 @@ void LongAcc2FP::outputVHDL(ostream& o, string name) {
 	
 	//count the number of zeros/ones in order to determine the value of the exponent
 	//Leading Zero/One counter 
-	o<<tab<< "LZOCShifterSticky: " << lzocShifterSticky_->getOperatorName() << endl;
+	o<<tab<< "LZOCShifterSticky: " << lzocShifterSticky_->getName() << endl;
 	o<<tab<< "      port map ( I => A, "                      << endl; 
 	o<<tab<< "                 Count => nZO, "                    << endl; 
 	o<<tab<< "                 O => resFrac, "                    << endl; 
@@ -213,7 +208,7 @@ void LongAcc2FP::outputVHDL(ostream& o, string name) {
 
 	//count the number of zeros/ones in order to determine the value of the exponent
 	//Leading Zero/One counter 
-	o<<tab<< "Adder: " << adder_->getOperatorName() << endl;
+	o<<tab<< "Adder: " << adder_->getName() << endl;
 	o<<tab<< "      port map ( X => notResFrac, "  << endl; 
 	o<<tab<< "                 Y => "<< zeroGenerator(wFOut_ + 1, 0)<<", " << endl; 
 	o<<tab<< "                 Cin =>"<<delaySignal("resultSign0",lzocShifterSticky_->getPipelineDepth()+extraPipeLevel)<< ", "<< endl; 
@@ -246,7 +241,7 @@ void LongAcc2FP::outputVHDL(ostream& o, string name) {
 	
 	// shift 
 	/*
-	o<<tab<< "left_shifter_component: " << leftShifter_->getOperatorName() << endl;
+	o<<tab<< "left_shifter_component: " << leftShifter_->getName() << endl;
 	o<<tab<< "      port map ( X => "<<delaySignal("pipeA",leadZOCounter_->getPipelineDepth())<<", "<< endl; 
 	o<<tab<< "                 S => nZO, " << endl; 
 	o<<tab<< "                 R => resFrac, " <<endl; 

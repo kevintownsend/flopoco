@@ -48,9 +48,10 @@ LogRangeRed :: LogRangeRed(Target* target,
 	a(fplog->a), p(fplog->p), psize(fplog->psize), s(fplog->s)
 
 {
-
 	int i;
-	setOperatorName();
+	ostringstream name; 
+	name << fplog->getName() <<"_RangeRed" ;
+	setName(name.str());
 	setOperatorType();
 
 
@@ -176,12 +177,6 @@ LogRangeRed::~LogRangeRed()
 
 
 
-void LogRangeRed::setOperatorName(){
-	ostringstream name; 
-	name << fplog->getOperatorName() <<"_RangeRed" ;
-	uniqueName_=name.str();
-}
-
 void LogRangeRed::outputVHDL(std::ostream& o, std::string name)
 {
 	int i;
@@ -198,8 +193,8 @@ void LogRangeRed::outputVHDL(std::ostream& o, std::string name)
 	beginArchitecture(o);
 
 	o << tab << "A0 <= A;"<<endl;
-	o << tab << "it0: "<< it0->getOperatorName() << " port map (x=>A0, y=>InvA0);" <<endl; 
-	o << tab << "lt0: "<< lt0->getOperatorName() << " port map (x=>A0, y=>L0);"<<endl;
+	o << tab << "it0: "<< it0->getName() << " port map (x=>A0, y=>InvA0);" <<endl; 
+	o << tab << "lt0: "<< lt0->getName() << " port map (x=>A0, y=>L0);"<<endl;
 	o << tab << "P0 <= InvA0 * Y0;" <<endl <<endl;
 	o << tab << "Z1 <= P0("<< s[1] -1<<" downto 0);"<<endl;
 	o << tab << "S1 <= L0;"<<endl;
@@ -209,7 +204,7 @@ void LogRangeRed::outputVHDL(std::ostream& o, std::string name)
 			//computation
 		o << tab << "A"<<i<<" <= Z"<<i<<"(" << s[i] - 1  <<" downto "<< s[i] - a[i]  << ");"<<endl;
 		o << tab << "B"<<i<<" <= Z"<<i<<"(" << s[i] - a[i] - 1  <<" downto 0 );"<<endl;
-		o << tab << "lt"<<i<<": " << lt[i]->getOperatorName() << " port map (x=>A"<<i<<", y=>L"<<i<<");"<<endl;
+		o << tab << "lt"<<i<<": " << lt[i]->getName() << " port map (x=>A"<<i<<", y=>L"<<i<<");"<<endl;
 		if(psize[i] == s[i])
 			o << tab << "ZM"<<i<<" <= Z"<<i<< ";"<<endl;   
 		else

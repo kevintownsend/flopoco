@@ -42,10 +42,6 @@ public:
 	 */	
 	void fillTestCase(mpz_class a[]);
 	
-	/** 
-	 * Sets the default name of this operator
-	 */
-	void setOperatorName(); 
 
 protected:
 

@@ -93,7 +93,7 @@ void LNSAdd::outputVHDL(std::ostream& o, std::string name)
 
 	if(wF > 7) {
 		o <<
-		"  inst_t0 : " << t[0]->getOperatorName() << endl <<
+		"  inst_t0 : " << t[0]->getName() << endl <<
 		"    port map ( x => x(" << (wF+wE-2) << " downto 0),\n"
 		"               r => out_t0 );\n";
 	}
@@ -101,14 +101,14 @@ void LNSAdd::outputVHDL(std::ostream& o, std::string name)
 	if(wF > 6) {
 		o <<
 		"\n"
-		"  inst_t1 : " << t[1]->getOperatorName() << endl <<
+		"  inst_t1 : " << t[1]->getName() << endl <<
 		"    port map ( x => x(" << (wF+1) << " downto 0),\n"
 		"               r => out_t1 );\n";
 	}
 
 	o <<
 	"\n"
-	"  inst_t2 : " << t[2]->getOperatorName() << endl <<
+	"  inst_t2 : " << t[2]->getName() << endl <<
 	"    port map ( x => x(" << (wF+1) << " downto 0),\n"
 	"               r => out_t2 );\n"
 	"\n";

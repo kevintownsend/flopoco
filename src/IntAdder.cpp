@@ -40,7 +40,10 @@ using namespace std;
 IntAdder::IntAdder(Target* target, int wIn, map<string, double> inputDelays):
 Operator(target), wIn_(wIn), inputDelays_(inputDelays)
 {
-	setOperatorName();
+	ostringstream name;
+	name << "IntAdder_" << wIn_;
+	setName(name.str());
+
 	setOperatorType();
 
 	// Set up the IO signals
@@ -74,7 +77,7 @@ Operator(target), wIn_(wIn), inputDelays_(inputDelays)
 
 		if (objectivePeriod<maxInputDelay){
 			//It is the responsability of the previous components to not have a delay larger than the period
-			cout << "Warning, the combinatorial delay at the input of "<<this->getOperatorName()<<"is above limit"<<endl;
+			cout << "Warning, the combinatorial delay at the input of "<<this->getName()<<"is above limit"<<endl;
 			maxInputDelay = objectivePeriod;
 		}
 
@@ -162,11 +165,6 @@ Operator(target), wIn_(wIn), inputDelays_(inputDelays)
 IntAdder::~IntAdder() {
 }
 
-void IntAdder::setOperatorName(){
-	ostringstream name;
-	name << "IntAdder_" << wIn_;
-	uniqueName_ = name.str();
-}
 
 void IntAdder::outputVHDL(std::ostream& o, std::string name) {
 	ostringstream signame;

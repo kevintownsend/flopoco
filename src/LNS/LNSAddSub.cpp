@@ -32,12 +32,18 @@ extern vector<Operator*> oplist;
 LNSAddSub::LNSAddSub(Target * target, int wE, int wF) :
 	wE(wE), wF(wF)
 {
+	ostringstream name;
+	/* The name has the format: LNSAddSub_wE_wF where: 
+	   wE = width of the integral part of the exponent
+	   wF = width of the fractional part of the exponent */
+	name << "LNSAddSub_" << wE << "_" << wF; 
+	setName(name.str());
+
 	addInput ("nA", wE + wF + 3);
 	addInput ("nB", wE + wF + 3);
 
 	addOutput("nR", wE + wF + 3);
 	
-	setOperatorName();
 
 	addsub = new CotranHybrid(target, wE, wF);
 	oplist.push_back(addsub);
@@ -46,15 +52,6 @@ LNSAddSub::LNSAddSub(Target * target, int wE, int wF) :
 
 LNSAddSub::~LNSAddSub()
 {
-}
-
-void LNSAddSub::setOperatorName(){
-	ostringstream name;
-	/* The name has the format: LNSAddSub_wE_wF where: 
-	   wE = width of the integral part of the exponent
-	   wF = width of the fractional part of the exponent */
-	name << "LNSAddSub_" << wE << "_" << wF; 
-	uniqueName_ = name.str(); 
 }
 
 void LNSAddSub::outputVHDL(std::ostream& o, std::string name)
@@ -130,7 +127,7 @@ void LNSAddSub::outputVHDL(std::ostream& o, std::string name)
 	<< tab << "		Za when '1',                        -- Y > X\n"
 	<< tab << "		Zb when others;                     -- X > Y\n"
 << tab << "\n"
-	<< tab << "addsub : " << addsub->getOperatorName() << "\n"
+	<< tab << "addsub : " << addsub->getName() << "\n"
 	<< tab << "	port map (\n"
 	<< tab << "		Z => Z,\n"
 	<< tab << "		IsSub => sAB,\n"

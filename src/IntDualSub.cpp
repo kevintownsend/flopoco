@@ -40,7 +40,10 @@ using namespace std;
 IntDualSub::IntDualSub(Target* target, int wIn, int opType, map<string, double> inputDelays):
 Operator(target), wIn_(wIn), opType_(opType), inputDelays_(inputDelays)
 {
-	setOperatorName();
+	ostringstream name;
+	name << "IntDualSub_" << wIn_;
+	setName(name.str());
+
 	setOperatorType();
 
 	if (opType==0) 
@@ -78,7 +81,7 @@ Operator(target), wIn_(wIn), opType_(opType), inputDelays_(inputDelays)
 
 		if (objectivePeriod<maxInputDelay){
 			//It is the responsability of the previous components to not have a delay larger than the period
-			cout << "Warning, the combinatorial delay at the input of "<<this->getOperatorName()<<"is above limit"<<endl;
+			cout << "Warning, the combinatorial delay at the input of "<<this->getName()<<"is above limit"<<endl;
 			maxInputDelay = objectivePeriod;
 		}
 		
@@ -174,11 +177,6 @@ Operator(target), wIn_(wIn), opType_(opType), inputDelays_(inputDelays)
 IntDualSub::~IntDualSub() {
 }
 
-void IntDualSub::setOperatorName(){
-	ostringstream name;
-	name << "IntDualSub_" << wIn_;
-	uniqueName_ = name.str();
-}
 
 void IntDualSub::outputVHDL(std::ostream& o, std::string name) {
 	ostringstream signame;

@@ -42,7 +42,14 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 	ostringstream name, nameH, nameL;
 
 	setOperatorType();
-	setOperatorName();
+
+	/* Name Setup procedure
+	 *  The name has the format: IntMultiplier_wInX__wInY_
+	 *  wInX_ = width of the X input
+	 *  wInY_ = width of the Y input
+	 */  
+	name <<"IntMultiplier_"<<wInX_<<"_"<<wInY_;
+	setName(name.str());
 	
 	addInput ("X", wInX_);
 	addInput ("Y", wInY_);
@@ -255,16 +262,6 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 IntMultiplier::~IntMultiplier() {
 }
 
-void IntMultiplier::setOperatorName(){	
-	/* Name Setup procedure
-	 *  The name has the format: IntMultiplier_wInX__wInY_
-	 *  wInX_ = width of the X input
-	 *  wInY_ = width of the Y input
-	 */  
-	ostringstream name;
-	name <<"IntMultiplier_"<<wInX_<<"_"<<wInY_;
-	uniqueName_ = name.str(); 
-}
 
 void IntMultiplier::outputVHDL(std::ostream& o, std::string name) {
 	
@@ -480,7 +477,7 @@ ostringstream nameL,nameH, concatH, concatL;
 
 void IntMultiplier::mapAdder(std::ostream& o,std::string left_term, std::string right_term, std::string result )
 {
-	o<<tab<< "int_adder_component: " << intAdd_->getOperatorName() << endl;
+	o<<tab<< "int_adder_component: " << intAdd_->getName() << endl;
 	o<<tab<< "  port map ( X => "<< left_term << ", " << endl; 
 	o<<tab<< "             Y => "<< right_term<< ", " << endl; 
 	o<<tab<< "             Cin => '0' ," << endl;
@@ -528,7 +525,7 @@ ostringstream first_summand, second_summand;
 				second_summand<<"L_Level_"<<i<<"_Reg_"<<j+1;
 				
 				o<<tab<<"L_Level_"<<i+1<<"_summand <= "<<first_summand.str()<<";"<<endl;								
-				o<<tab<< "int_adder_component_low_"<<i<<": " << intAdd2_->getOperatorName() << endl;
+				o<<tab<< "int_adder_component_low_"<<i<<": " << intAdd2_->getName() << endl;
 				o<<tab<< "  port map ( X => L_Level_"<<i+1<<"_summand , " << endl; 
 				o<<tab<< "             Y => "<<second_summand.str()<< ", " << endl; 
 				o<<tab<< "             Cin => '0'," << endl;
@@ -565,7 +562,7 @@ ostringstream first_summand, second_summand;
 				second_summand<<"H_Level_"<<i<<"_Reg_"<<j+1<<"";
 				
 				o<<tab<<"H_Level_"<<i+1<<"_summand <= "<<first_summand.str()<<";"<<endl;								
-				o<<tab<< "int_adder_component_high_"<<i<<": " << intAdd2_->getOperatorName() << endl;
+				o<<tab<< "int_adder_component_high_"<<i<<": " << intAdd2_->getName() << endl;
 				o<<tab<< "  port map ( X => H_Level_"<<i+1<<"_summand , " << endl; 
 				o<<tab<< "             Y => "<<second_summand.str()<< ", " << endl; 
 				o<<tab<< "             Cin => '0'," << endl;
@@ -623,7 +620,7 @@ void IntMultiplier::pipelineAddition(std::ostream& o)
 {
 ostringstream temp;
 temp<<"PartialBits_Level_"<< partsY_ <<"_Reg_"<< partsY_;
-		o<<tab<< "int_adder_component: " << intAdd1_->getOperatorName() << endl;
+		o<<tab<< "int_adder_component: " << intAdd1_->getName() << endl;
 		o<<tab<< "  port map ( X => "<< delaySignal("Low1",intAdd2_->getPipelineDepth())<< "("<<partsX_ * multiplierWidthX_ -1<<" downto 0"<<") , " << endl; 
 		o<<tab<< "             Y => High1("<<partsX_ * multiplierWidthX_ -1<<" downto 0"<<"), " << endl; 
 		o<<tab<< "             Cin => "<<delaySignal(temp.str(),intAdd2_->getPipelineDepth()) <<"("<< multiplierWidthY_ <<")," << endl;

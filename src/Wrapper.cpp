@@ -36,7 +36,7 @@ Wrapper::Wrapper(Target* target, Operator *op):
 {
 	/* the name of the Wrapped operator consists of the name of the operator to be 
 	wrapped followd by _Wrapper */
-	setOperatorName();
+	setName(op_->getName() + "_Wrapper");
 		
 	//this operator is a sequential one	
 	setSequential();	
@@ -62,9 +62,6 @@ Wrapper::Wrapper(Target* target, Operator *op):
 Wrapper::~Wrapper() {
 }
 
-void Wrapper::setOperatorName(){
-	uniqueName_ = op_->getOperatorName() + "_Wrapper";
-}
 
 void Wrapper::outputVHDL(ostream& o, string name) {
 
@@ -85,7 +82,7 @@ void Wrapper::outputVHDL(ostream& o, string name) {
 	}
 
 	// the instance
-	o << tab << "test:" << op_->getOperatorName() << "\n"
+	o << tab << "test:" << op_->getName() << "\n"
 		<< tab << tab << "port map ( ";
 	if (op_->isSequential()) {
 		o << tab << tab << "clk => clk, "<<endl

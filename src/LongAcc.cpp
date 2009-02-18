@@ -60,7 +60,13 @@ LongAcc::LongAcc(Target* target, int wEX, int wFX, int MaxMSBX, int LSBA, int MS
 		exit (EXIT_FAILURE);
 	}
 
-	setOperatorName();
+	ostringstream name; 
+	name <<"LongAcc_"<<wEX_<<"_"<<wFX_<<"_"
+			 <<(MaxMSBX_>=0?"":"M")<<abs(MaxMSBX_)<<"_"
+			 <<(LSBA_>=0?"":"M")<<abs(LSBA_)<<"_"
+			 <<(MSBA_>=0?"":"M")<<abs(MSBA_) ;
+	setName(name.str());
+
 	// This operator is a sequential one
 	setSequential();
 
@@ -193,7 +199,7 @@ LongAcc::LongAcc(Target* target, int wEX, int wFX, int MaxMSBX, int LSBA, int MS
 	addSignal("acc", sizeAcc_); //,  "includes overflow bit");
 	
 	if(verbose)
-		cout << tab <<getOperatorName()<< " pipeline depth is " << getPipelineDepth() << " cycles" <<endl;
+		cout << tab <<getName()<< " pipeline depth is " << getPipelineDepth() << " cycles" <<endl;
 
 	addDelaySignalSyncReset("xOverflowRegister", 1);
 	addDelaySignalSyncReset("xOverflowCond",1,shifter_->getPipelineDepth()+1);
@@ -209,14 +215,6 @@ LongAcc::LongAcc(Target* target, int wEX, int wFX, int MaxMSBX, int LSBA, int MS
 LongAcc::~LongAcc() {
 }
 
-void LongAcc::setOperatorName(){
-	ostringstream name; 
-	name <<"LongAcc_"<<wEX_<<"_"<<wFX_<<"_"
-			 <<(MaxMSBX_>=0?"":"M")<<abs(MaxMSBX_)<<"_"
-			 <<(LSBA_>=0?"":"M")<<abs(LSBA_)<<"_"
-			 <<(MSBA_>=0?"":"M")<<abs(MSBA_) ;
-	uniqueName_=name.str();
-}
 
 void LongAcc::outputVHDL(ostream& o, string name) {
 int i;
@@ -248,7 +246,7 @@ int i;
 
 	//input shifter mappings
 	o << tab << "-- shift of the input into the proper place " << endl;
-	o << tab << "input_shifter : " << shifter_->getOperatorName() << endl;
+	o << tab << "input_shifter : " << shifter_->getName() << endl;
 	o << tab << "    port map ( X => fracX, " << endl;
 	o << tab << "               S => shiftval("<< shifter_->getShiftAmmount() - 1 <<" downto 0), " << endl;
 	o << tab << "               R => shifted_frac";
@@ -449,7 +447,7 @@ void LongAcc::test_precision(int n) {
 void LongAcc::test_precision2() {
 
 	mpfr_t ref_acc, long_acc, fp_acc, r, d, one, two, msb;
-	double dr, dacc, sum, error;
+	double dr,  sum, error;
 
 	// initialisation
 #define DPFPAcc 1

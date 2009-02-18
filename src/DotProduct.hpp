@@ -41,10 +41,6 @@ public:
 	 **/
 	void outputVHDL(std::ostream& o, std::string name);
 
-	/** 
-	 * Sets the default name of this operator
-	 */
-	void setOperatorName(); 
 	
 	/**
 	 * Tests the operator accuracy and relative error

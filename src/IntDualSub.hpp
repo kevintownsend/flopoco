@@ -40,10 +40,6 @@ public:
 	void buildStandardTestCases(TestCaseList* tcl);
 
 
-	/** 
-	 * Sets the default name of this operator
-	 */
-	void setOperatorName(); 
 	 
 protected:
 	int wIn_;                         /**< the width for X, Y and the results */

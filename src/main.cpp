@@ -227,8 +227,7 @@ int checkSign(char* s, char* cmd) {
 
 void addOperator(Operator *op) {
 	if(cl_name!="")	{
-		op->setCommentedName(op->getOperatorName());
-		op->setOperatorName(cl_name);
+		op->changeName(cl_name);
 		cl_name="";
 	}
 	// TODO check name not already in list...
@@ -818,7 +817,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			int wF = checkStrictyPositive(argv[i++], argv[0]);
 			cerr << "> LNSAddSub: wE=" << wE << " wF=" << wF << endl;
 			op = new LNSAddSub(target, wE, wF);
-			if(cl_name!="")	op->setOperatorName(cl_name);
+			if(cl_name!="")	op->setName(cl_name);
 			addOperator(op);
 		}
 		else if (opname == "LNSMul")
@@ -830,7 +829,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			int wF = checkStrictyPositive(argv[i++], argv[0]);
 			cerr << "> LNSMul: wE=" << wE << " wF=" << wF << endl;
 			op = new LNSMul(target, wE, wF);
-			if(cl_name!="")	op->setOperatorName(cl_name);
+			if(cl_name!="")	op->setName(cl_name);
 			addOperator(op);
 		}
 		else if (opname == "LNSDiv")
@@ -842,7 +841,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			int wF = checkStrictyPositive(argv[i++], argv[0]);
 			cerr << "> LNSDiv: wE=" << wE << " wF=" << wF << endl;
 			op = new LNSDiv(target, wE, wF);
-			if(cl_name!="")	op->setOperatorName(cl_name);
+			if(cl_name!="")	op->setName(cl_name);
 			addOperator(op);
 		}
 		else if (opname == "LNSSqrt")
@@ -854,7 +853,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			int wF = checkStrictyPositive(argv[i++], argv[0]);
 			cerr << "> LNSSqrt: wE=" << wE << " wF=" << wF << endl;
 			op = new LNSSqrt(target, wE, wF);
-			if(cl_name!="")	op->setOperatorName(cl_name);
+			if(cl_name!="")	op->setName(cl_name);
 			addOperator(op);
 		}
 		
@@ -869,7 +868,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			int o = checkStrictyPositive(argv[i++], argv[0]);
 			cerr << "> LNSAdd: wE=" << wE << " wF=" << wF << " o=" << o << endl;
 			op = new LNSAdd(target, wE, wF, o);
-			if(cl_name!="")	op->setOperatorName(cl_name);
+			if(cl_name!="")	op->setName(cl_name);
 			oplist.push_back(op);
 		}
 #if 0
@@ -883,7 +882,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			int wE = atoi(argv[i++]);
 			cerr << "> CotranF1: wF=" << wF << " j=" << j << " wE=" << wE << endl;
 			op = new TableOp(target, new CotranF1Table(wF, j, wE));
-			if(cl_name!="")	op->setOperatorName(cl_name);
+			if(cl_name!="")	op->setName(cl_name);
 			oplist.push_back(op);
 		}
 		else if (opname == "CotranF2")
@@ -895,7 +894,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			int j = checkStrictyPositive(argv[i++], argv[0]);
 			cerr << "> CotranF2: wF=" << wF << " j=" << j << endl;
 			op = new TableOp(target, new CotranF2Table(wF, j));
-			if(cl_name!="")	op->setOperatorName(cl_name);
+			if(cl_name!="")	op->setName(cl_name);
 			oplist.push_back(op);
 		}
 		else if (opname == "CotranF3")
@@ -907,7 +906,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			int j = checkStrictyPositive(argv[i++], argv[0]);
 			cerr << "> CotranF3: wF=" << wF << " j=" << j << endl;
 			op = new TableOp(target, new CotranF3Table(wF, j));
-			if(cl_name!="")	op->setOperatorName(cl_name);
+			if(cl_name!="")	op->setName(cl_name);
 			oplist.push_back(op);
 		}
 #endif
@@ -924,7 +923,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			cerr << "> Cotran: wE=" << wE << " wF=" << wF << " j=" << j
 				<< " wECotran=" << wECotran << " o=" << o << endl;
 			op = new Cotran(target, wE, wF, j, wECotran);
-			if(cl_name!="")	op->setOperatorName(cl_name);
+			if(cl_name!="")	op->setName(cl_name);
 			oplist.push_back(op);
 		}
 		else if (opname == "CotranHybrid")
@@ -940,7 +939,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			cerr << "> Cotran: wE=" << wE << " wF=" << wF << " j=" << j 
 				<< " wECotran=" << wECotran << " o=" << o << endl;
 			op = new CotranHybrid(target, wE, wF, j, wECotran);
-			if(cl_name!="")	op->setOperatorName(cl_name);
+			if(cl_name!="")	op->setName(cl_name);
 			oplist.push_back(op);
 		}
 #endif
@@ -956,7 +955,7 @@ bool parseCommandLine(int argc, char* argv[]){
 					usage(argv[0]);
 				}
 				Operator* toWrap = oplist.back();
-				cerr << "> Wrapper for " << toWrap->getOperatorName()<<endl;
+				cerr << "> Wrapper for " << toWrap->getName()<<endl;
 				op =new Wrapper(target, toWrap);
 				addOperator(op);
 			}
@@ -971,8 +970,8 @@ bool parseCommandLine(int argc, char* argv[]){
 			}
 			int n = checkPositiveOrNull(argv[i++], argv[0]);
 			Operator* toWrap = oplist.back();
-			cerr << "> TestBench for " << toWrap->getOperatorName()<<endl;
-			if(cl_name!="")	op->setOperatorName(cl_name);
+			cerr << "> TestBench for " << toWrap->getName()<<endl;
+			if(cl_name!="")	op->setName(cl_name);
 			oplist.push_back(new TestBench(target, toWrap, n));
 		}
 		#ifndef _WIN32
@@ -986,8 +985,8 @@ bool parseCommandLine(int argc, char* argv[]){
 			}
 			int n = checkPositiveOrNull(argv[i++], argv[0]);
 			Operator* toWrap = oplist.back();
-			cerr << "> BigTestBench for " << toWrap->getOperatorName()<<endl;
-			if(cl_name!="")	op->setOperatorName(cl_name);
+			cerr << "> BigTestBench for " << toWrap->getName()<<endl;
+			if(cl_name!="")	op->setName(cl_name);
 			oplist.push_back(new BigTestBench(target, toWrap, n));
 		}
 		#endif
@@ -1025,7 +1024,7 @@ int main(int argc, char* argv[] )
 		try {
 			oplist[i]->outputVHDL(file);
 		} catch (std::string s) {
-			cerr << "Exception while generating '" << oplist[i]->getOperatorName() << "': " << s <<endl;
+			cerr << "Exception while generating '" << oplist[i]->getName() << "': " << s <<endl;
 		}
 	}
 	file.close();

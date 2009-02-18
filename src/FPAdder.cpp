@@ -165,7 +165,7 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 	
 	// instanciate the box that computes X-Y and Y-X. Note that it could take its inputs before the swap (TODO ?)
 	dualSubClose = new 	IntDualSub(target, wF + 3, 0);
-	dualSubClose->Operator::setOperatorName(getOperatorName()+"_DualSubClose");
+	dualSubClose->changeName(getName()+"_DualSubClose");
 	oplist.push_back(dualSubClose);
 	
 	inPortMap  (dualSubClose, "X", "fracXClose1");
@@ -195,7 +195,7 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 		cout << "    Try increasing wE."<<endl;
 	}
 
-	lzocs->Operator::setOperatorName(getOperatorName()+"_LZCShifter");
+	lzocs->changeName(getName()+"_LZCShifter");
 	oplist.push_back(lzocs);
 
 	inPortMap  (lzocs, "I", "fracRClose1");
@@ -252,7 +252,7 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 								
 	// shift right the significand of new Y with as many positions as the exponent difference suggests (alignment) //		
 	rightShifter = new Shifter(target,wFX+1,wFX+3,Right);
-	rightShifter->Operator::setOperatorName(getOperatorName()+"_RightShifter");
+	rightShifter->changeName(getName()+"_RightShifter");
 	oplist.push_back(rightShifter);
 	inPortMap  (rightShifter, "X", "fracNewY");
 	inPortMap  (rightShifter, "S", "shiftVal");
@@ -281,7 +281,7 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 
 	// perform carry in addition
 	fracAddFar = new IntAdder(target,wF+4);
-	fracAddFar->Operator::setOperatorName(getOperatorName()+"_fracAddFar");
+	fracAddFar->changeName(getName()+"_fracAddFar");
 	oplist.push_back(fracAddFar);
 	inPortMap  (fracAddFar, "X", "fracXfar");
 	inPortMap  (fracAddFar, "Y", "fracYfarXorOp");
@@ -367,7 +367,7 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 	// perform the actual rounding //
 	// finalRoundAdd will add the mantissa concatenated with exponent, two bits reserved for possible under/overflow 
 	finalRoundAdd = new IntAdder(target, wE + wF + 2); 
-	finalRoundAdd->Operator::setOperatorName(getOperatorName()+"_finalRoundAdd");
+	finalRoundAdd->changeName(getName()+"_finalRoundAdd");
 	oplist.push_back(finalRoundAdd);
 	
 	ostringstream zero;

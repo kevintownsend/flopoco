@@ -187,7 +187,7 @@ Signal * Operator::getSignalByName(string name) {
 }
 
 
-void Operator::setOperatorName(std::string prefix, std::string postfix){
+void Operator::setName(std::string prefix, std::string postfix){
 		ostringstream pr, po;
 		if (prefix.length()>0)
 			pr << prefix << "_"; 
@@ -200,7 +200,7 @@ void Operator::setOperatorName(std::string prefix, std::string postfix){
 		uniqueName_ = pr.str() + uniqueName_ + po.str();
 }
 
-void Operator::setOperatorName(std::string operatorName){
+void Operator::setName(std::string operatorName){
 	uniqueName_ = operatorName;
 }
 
@@ -211,11 +211,13 @@ void Operator::setOperatorType(){
 		setCombinatorial();	
 }
 
-void Operator::setCommentedName(std::string name){
-	commentedName_ = name;
+void  Operator::changeName(std::string operatorName){
+	commentedName_ = uniqueName_;
+	uniqueName_ = operatorName;
 }
 
-string Operator::getOperatorName() const{
+
+string Operator::getName() const{
   return uniqueName_;
 }
 
@@ -570,7 +572,7 @@ void Operator::outPortMap(Operator* op, string componentPortName, string actualS
 		throw e.str();
 	}
 	if (formal->type()!=Signal::out){
-		e << "signal " << componentPortName << " of component " << op->getOperatorName() 
+		e << "signal " << componentPortName << " of component " << op->getName() 
 		  << " doesn't seem to be an output port";
 		throw e.str();
 	}
@@ -630,7 +632,7 @@ void Operator::inPortMap(Operator* op, string componentPortName, string actualSi
 		throw e.str();
 	}
 	if (formal->type()!=Signal::in){
-		e << "signal " << componentPortName << " of component " << op->getOperatorName() 
+		e << "signal " << componentPortName << " of component " << op->getName() 
 		  << " doesn't seem to be an input port";
 		throw e.str();
 	}
@@ -655,7 +657,7 @@ void Operator::inPortMapCst(Operator* op, string componentPortName, string actua
 		throw e.str();
 	}
 	if (formal->type()!=Signal::in){
-		e << "signal " << componentPortName << " of component " << op->getOperatorName() 
+		e << "signal " << componentPortName << " of component " << op->getName() 
 		  << " doesn't seem to be an input port";
 		throw e.str();
 	}
@@ -669,7 +671,7 @@ string Operator::instance(Operator* op, string instanceName){
 	ostringstream o;
 	// TODO add checks here? Check that all the signals are covered for instance
 	
-	o << tab << instanceName << ": " << op->getOperatorName();
+	o << tab << instanceName << ": " << op->getName();
 	if (isSequential()) 
 		o << "  -- pipelineDepth="<< op->getPipelineDepth();
 	o << endl;
@@ -696,7 +698,7 @@ string Operator::instance(Operator* op, string instanceName){
 	o << ");" << endl;
 
 	// add the operator to the subcomponent list 
-	subComponents_[op->getOperatorName()]  = op;
+	subComponents_[op->getName()]  = op;
 	return o.str();
 }
 	

@@ -35,10 +35,6 @@ public:
 	 **/
 	void outputVHDL(ostream& o, string name);
 
-	/** 
-	 * Sets the default name of this operator
-	 */
-	void setOperatorName(); 
 
 protected:
 	int LSBA_;    /**< the weight of the least significand bit of the accumulator */

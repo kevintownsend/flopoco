@@ -36,10 +36,6 @@ public:
 	 **/
 	void outputVHDL(ostream& o, string name);
 
-	/** 
-	 * Sets the default name of this operator
-	 */
-	void setOperatorName(); 
 
 	
 	/**

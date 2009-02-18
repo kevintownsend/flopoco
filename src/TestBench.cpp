@@ -37,7 +37,7 @@ TestBench::TestBench(Target* target, Operator* op, int n):
 	Operator(target), op_(op), n_(n)
 {
 	LongAccN = n;
-	setOperatorName();
+	setName("TestBench_" + op_->getName());
 	setPipelineDepth(42);	// could be any number
 
 	// declare internal registered signals
@@ -62,9 +62,6 @@ TestBench::TestBench(Target* target, Operator* op, int n):
 TestBench::~TestBench() { 
 }
 
-void TestBench::setOperatorName(){
-	uniqueName_ = "TestBench_" + op_->getOperatorName();
-}
 
 void TestBench::outputVHDL(ostream& o, string name) {
 	licence(o,"Florent de Dinechin, Cristian Klein (2007)");
@@ -116,7 +113,7 @@ void TestBench::outputVHDL(ostream& o, string name) {
 	o << "begin\n";
 
 	// the instance
-	o << tab << "uut:" << op_->getOperatorName() << "\n"
+	o << tab << "uut:" << op_->getName() << "\n"
 	  << tab << tab << "port map ( clk => clk, rst => rst," << endl;
 	for(int i=0; i<op_->getIOListSize(); i++) {
 		o << tab << tab << "           ";

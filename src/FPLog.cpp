@@ -122,8 +122,8 @@ FPLog::FPLog(Target* target, int wE, int wF)
 	if(verbose)
 		cout<<"FPLog: needs "<<stages<<" range reduction stages"<<endl;
 
-	//TODO move somewhere
-	int computedG = intlog2(3*(stages+1));
+	//TODO move somewhere -- removed temporarily to suppress a warning
+	// int computedG = intlog2(3*(stages+1));
 
 	vhdl << tab << declare("FirstBit") << " <=  X(wF-1);" << endl;
 	vhdl << tab << declare("Y0", wF+2) << " <=      \"1\"  & X(wF-1 downto 0) & \"0\" when FirstBit = '0'" 
@@ -255,7 +255,6 @@ FPLog::~FPLog()
 
 void FPLog::outputVHDL(std::ostream& o, std::string name)
 {
-	int i;
 	mpfr_t two, log2;
 	mpz_t zlog2;
 

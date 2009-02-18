@@ -26,7 +26,6 @@ FPExp::FPExp(Target* target, int wE, int wF)
 	addFPOutput("R", wE, wF, 2);  // 2 because faithfully rounded
 
 	int explore_size = wF;
-	int exponent_size = wE;
 
 	f = explore(explore_size);
 	if (!f) throw std::string("FPExp::FPExp(): No fragment");

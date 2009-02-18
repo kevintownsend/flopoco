@@ -149,7 +149,7 @@ void Cotran::outputVHDL(std::ostream& o, std::string name)
 //	<< tab << "			RMax when others;\n"
 //	<< tab << "\n"
 
-	<< tab << "f1 : " << f1->getOperatorName() << "\n"
+	<< tab << "f1 : " << f1->getName() << "\n"
 	<< tab << "  port map (\n"
 	<< tab << "    x => Zh,\n"
 	<< tab << "    y => F1_v(" << f1->wOut - 1 << " downto 0));\n"
@@ -160,7 +160,7 @@ void Cotran::outputVHDL(std::ostream& o, std::string name)
 	}
 	
 	o
-	<< tab << "f2 : " << f2->getOperatorName() << "\n"
+	<< tab << "f2 : " << f2->getName() << "\n"
 	<< tab << "  port map (\n"
 	<< tab << "    x => Zl,\n"
 	<< tab << "    y => F2_v(" << f2->wOut - 1 << " downto 0));\n"
@@ -170,7 +170,7 @@ void Cotran::outputVHDL(std::ostream& o, std::string name)
 	}
 
 	o
-	<< tab << "f3 : " << f3->getOperatorName() << "\n"
+	<< tab << "f3 : " << f3->getName() << "\n"
 	<< tab << "  port map (\n"
 	<< tab << "    x => Z(" << j+1 << " downto 0),\n"
 	<< tab << "    y => SBPos);\n";
@@ -202,7 +202,7 @@ void Cotran::outputVHDL(std::ostream& o, std::string name)
 //	<< tab << "DBR <= std_logic_vector(signed(DB0(K+F) & DB0) + signed(R0(K+F) & R0));\n";
 
 	o
-	<< tab << "sb : " << sb->getOperatorName() << "\n"
+	<< tab << "sb : " << sb->getName() << "\n"
 	<< tab << "  port map (\n"
 	<< tab << "    x => SBArg(" << sb->wE + sb->wF - 1 << " downto 0),\n"
 	<< tab << "    r => SB0);\n";

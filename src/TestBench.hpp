@@ -19,9 +19,6 @@ public:
 	/** Destructor */
 	~TestBench();
 	
-	/** Overloaded method which sets the operator name */
-	void setOperatorName();
-	
 	/** Method belonging to the Operator class overloaded by the Wrapper class
 	 * @param[in,out] o     the stream where the current architecture will be outputed to
 	 * @param[in]     name  the name of the entity corresponding to the architecture generated in this method

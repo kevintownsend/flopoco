@@ -45,7 +45,6 @@ class LogRangeRed : public Operator
 
 	// overloading a function from Operator
    void outputVHDL(std::ostream& o, std::string name);
-	void setOperatorName();
 
   // The table objects
   FirstInvTable* it0;

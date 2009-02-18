@@ -9,7 +9,6 @@ struct LNSDiv : Operator
 	virtual ~LNSDiv();
 
 	virtual void outputVHDL(std::ostream& o, std::string name);
-	virtual void setOperatorName();	
 	
 private:
 	int wE;

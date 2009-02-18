@@ -41,7 +41,7 @@ int inline round4(int x)
 BigTestBench::BigTestBench(Target* target, Operator* op, int n):
 	Operator(target), op_(op), n_(n)
 {
-	setOperatorName();
+	setName("BigTestBench_" + op_->getName());
 	setPipelineDepth(42);	// could be any number
 
 	// declare internal registered signals
@@ -66,9 +66,6 @@ BigTestBench::BigTestBench(Target* target, Operator* op, int n):
 
 BigTestBench::~BigTestBench() { }
 
-void BigTestBench::setOperatorName(){
-	uniqueName_ = "BigTestBench_" + op_->getOperatorName();
-}
 
 /**
  * Gets the name of the variable which is somehow related to a signal.
@@ -143,7 +140,7 @@ void BigTestBench::outputVHDL(ostream& o, string name) {
 	outputVHDLSignalDeclarations(o);
 
 	o << tab << "file fTest : text open read_mode is \""
-		<< op_->getOperatorName() << ".test\";" <<endl;
+		<< op_->getName() << ".test\";" <<endl;
 	
 	o << endl <<  // Fixed by Bodgan
 		tab << "-- FP compare function (found vs. real)\n" <<
@@ -162,7 +159,7 @@ void BigTestBench::outputVHDL(ostream& o, string name) {
 	o << "begin\n";
 
 	// the instance
-	o << tab << "uut:" << op_->getOperatorName() << "\n"
+	o << tab << "uut:" << op_->getName() << "\n"
 	  << tab << tab << "port map ( clk => clk, rst => rst," << endl;
 	for(int i=0; i<op_->getIOListSize(); i++) {
 		//Signal& s = *op_->getIOListSignal(i);
@@ -280,7 +277,7 @@ void BigTestBench::outputVHDL(ostream& o, string name) {
 	o << "end architecture;" <<endl;
 	
 	/* Generate the test file */
-	FILE *f = fopen((op_->getOperatorName() + ".test").c_str(), "w");
+	FILE *f = fopen((op_->getName() + ".test").c_str(), "w");
 	
 	/* Get number of TestCase I/O values */
 	int size = 0;

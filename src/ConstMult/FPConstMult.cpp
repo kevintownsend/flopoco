@@ -233,7 +233,7 @@ void FPConstMult::outputVHDL(ostream& o, string name) {
 	o << tab << tab << "x_exp <=  x("<<wE_in<<"+"<<wF_in<<"-1 downto "<<wF_in<<");"<<endl;
 	o << tab << tab << "x_sig <= '1' & x("<<wF_in-1 <<" downto 0);"<<endl;
 	o << tab << tab << "sig_mult : "
-	  << icm->getOperatorName()<<endl
+	  << icm->getName()<<endl
 	  << tab<<tab<<tab << "port map(inx => x_sig, r => sig_prod";
 	if(isSequential())
 		o << ", clk => clk, rst => rst";

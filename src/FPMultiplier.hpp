@@ -45,10 +45,6 @@ public:
 	 */
 	void emulate(TestCase * tc);
 
-	/** 
-	 * Sets the default name of this operator
-	 */
-	void setOperatorName(); 
 
 protected:
 	

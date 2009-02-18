@@ -45,7 +45,6 @@ extern vector<Operator*> oplist;
 SRT4Step::SRT4Step(Target* target, int wF) :
 	Operator(target), wF(wF) {
 
-	int i, j;
 	ostringstream name;
 
 	name<<"SRT4Step_"<<wF; 
@@ -86,7 +85,6 @@ SRT4Step::~SRT4Step() {
 void SRT4Step::outputVHDL(std::ostream& o, std::string name) {
   
 	ostringstream signame, synch1, synch2, xname,zeros, zeros1, zeros2, str1, str2;
-	int i;
 
 	licence(o,"Jeremie Detrey, Florent de Dinechin (2008)");
 	Operator::stdLibs(o);

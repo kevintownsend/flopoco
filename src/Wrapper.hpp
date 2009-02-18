@@ -27,9 +27,6 @@ public:
 	 **/
 	void outputVHDL(ostream& o, string name);
 	
-	/** Overloaded method which sets the operator name */	
-	void setOperatorName();
-
 private:
 	Operator* op_; /**< The operator to wrap */
 };

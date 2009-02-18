@@ -28,8 +28,6 @@ public:
 	 **/
 	void outputVHDL(ostream& o, string name);
 	
-	/** Overloaded method which sets the operator name */	
-	void setOperatorName();
 private:
 	/** The unit under test UUT */
 	Operator *op_;

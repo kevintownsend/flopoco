@@ -44,7 +44,11 @@ FPMultiplier::FPMultiplier(Target* target, int wEX, int wFX, int wEY, int wFY, i
 	int i, j;
 	ostringstream name, synch, synch2;
 
-	setOperatorName();
+
+	/* The name has the format: FPMultiplier_wEX__wFX__wEY__wFY__wER__wFR_ where: wEX_ = width of X exponenet and wFX_ = width for the fractional part of X */
+	name<<"FPMultiplier_"<<wEX_<<"_"<<wFX_<<"_"<<wEY_<<"_"<<wFY_<<"_"<<wER_<<"_"<<wFR_; 
+	setName(name.str());
+
 	setOperatorType();
 
 	/* set if operator outputs a normalized_ result */
@@ -362,14 +366,6 @@ FPMultiplier::FPMultiplier(Target* target, int wEX, int wFX, int wEY, int wFY, i
 FPMultiplier::~FPMultiplier() {
 }
 
-void FPMultiplier::setOperatorName(){
-	/* The name has the format: FPMultiplier_wEX__wFX__wEY__wFY__wER__wFR_ where: wEX_ = width of X exponenet and wFX_ = width for the fractional part of X */
-	ostringstream name;
-	name.str("");
-	name<<"FPMultiplier_"<<wEX_<<"_"<<wFX_<<"_"<<wEY_<<"_"<<wFY_<<"_"<<wER_<<"_"<<wFR_; 
-	uniqueName_ = name.str(); 
-}
-
 
 void FPMultiplier::outputVHDL(std::ostream& o, std::string name) {
   	
@@ -411,7 +407,7 @@ void FPMultiplier::outputVHDL(std::ostream& o, std::string name) {
 			o<<tab<< "significandX <= \"1\" & X("<<(wFX_-1)<<" downto 0);"<<endl;
 			o<<tab<< "significandY <= \"1\" & Y("<<(wFY_-1)<<" downto 0);"<<endl<<endl;
 			//multiply significands 
-			o<<tab<< "int_multiplier_component: " << intmult_->getOperatorName() << endl;
+			o<<tab<< "int_multiplier_component: " << intmult_->getName() << endl;
 			o<<tab<< "      port map ( X => significandX, " << endl; //wFX_+1 bits (1 bit is the hidden 1)
 			o<<tab<< "                 Y => significandY, " << endl; //wFY_+1 bits
 			o<<tab<< "                 R => significand_product, " << endl; //wFX_+wFY_+2 bits
@@ -834,7 +830,7 @@ void FPMultiplier::outputVHDL(std::ostream& o, std::string name) {
 			o<<tab<< "significandX <= \"1\" & X("<<(wFX_-1)<<" downto 0);"<<endl;
 			o<<tab<< "significandY <= \"1\" & Y("<<(wFY_-1)<<" downto 0);"<<endl<<endl;
 			//multiply significands 
-			o<<tab<< "int_multiplier_component: " << intmult_->getOperatorName() << endl;
+			o<<tab<< "int_multiplier_component: " << intmult_->getName() << endl;
 			o<<tab<< "      port map ( X => significandX, " << endl; //wFX_+1 bits (1 bit is the hidden 1)
 			o<<tab<< "                 Y => significandY, " << endl; //wFY_+1 bits
 			o<<tab<< "                 R => significand_product " << endl; //wFX_+wFY_+2 bits

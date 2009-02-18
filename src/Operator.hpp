@@ -203,13 +203,18 @@ public:
 	 * This method must be overridden by all classes which extend Operator
 	 *  
 	*/
-	virtual void setOperatorName(){ uniqueName_ = "UnknownOperator";};
+	virtual void setName(){ uniqueName_ = "UnknownOperator";};
 	
 	/** Sets Operator name to givenName.
 	 * Sets the name of the operator to operatorName.
 	 * @param operatorName new name of the operator
 	*/
-	void setOperatorName(std::string operatorName);
+	void setName(std::string operatorName);
+	
+	/** This method should be used by an operator to change the default name of a sub-component. The default name becomes the commented name.
+	 * @param operatorName new name of the operator
+	*/
+	void changeName(std::string operatorName);
 	
 	/** Sets Operator name to prefix_(uniqueName_)_postfix
 	 * @param prefix the prefix string which will be palced in front of the operator name
@@ -217,24 +222,19 @@ public:
 	 * @param postfix the postfix string which will be palced at the end of the operator name
 	 *                formed with the operator internal parameters
 	*/
-	void setOperatorName(std::string prefix, std::string postfix);
+	void setName(std::string prefix, std::string postfix);
 	
 	/** Sets the type of the operator. 
 	 * The information is retrived from the deployment target 
 	 */
 	void setOperatorType();
 	
-	/** Sets the commented name of an operator. 
-	 * This is the name which will be shown in the comment of the operator.
-	 * @param name the name which will apear in the comment of the operator.
-	 */
-	void setCommentedName(std::string name);
 	
 	/** Return the operator name. 
 	 * Returns a string value representing the name of the operator. 
 	 * @return operator name
 	 */
-	string getOperatorName() const;
+	string getName() const;
 	
 	/** Return the number of input+output signals 
 	 * @return the size of the IO list. The total number of input and output signals

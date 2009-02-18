@@ -150,7 +150,7 @@ void CotranHybrid::outputVHDL(std::ostream& o, std::string name)
 	beginArchitecture(o);
 	
 	o
-	<< tab << "cotran : " << cotran->getOperatorName() << "\n"
+	<< tab << "cotran : " << cotran->getName() << "\n"
 	<< tab << "  port map (\n"
 	<< tab << "    Z => Z,\n"
 	<< tab << "    IsSub => IsSub,\n"
@@ -160,7 +160,7 @@ void CotranHybrid::outputVHDL(std::ostream& o, std::string name)
 	for(int i = 0; i < 4 - wECotran; ++i)
 	{
 		o
-		<< tab << "t" << i << " : " << db_tables[i]->getOperatorName() << "\n"
+		<< tab << "t" << i << " : " << db_tables[i]->getName() << "\n"
 		<< tab << "  port map (\n"
 		<< tab << "    x => Z(" << (db_tables[i]->wIn() - 1) << " downto 0),\n"
 		<< tab << "    r => Out_T" << i << ");\n"

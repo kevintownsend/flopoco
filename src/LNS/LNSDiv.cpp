@@ -30,27 +30,24 @@ using namespace std;
 LNSDiv::LNSDiv(Target * target, int wE, int wF) :
 	wE(wE), wF(wF)
 {
+	ostringstream name;
+	/* The name has the format: LNSDiv_wE_wF where: 
+	   wE = width of the integral part of the exponent
+	   wF = width of the fractional part of the exponent */
+	name << "LNSDiv_" << wE << "_" << wF; 
+	setName(name.str()); 
+
+
 	addInput ("nA", wE + wF + 3);
 	addInput ("nB", wE + wF + 3);
 
 	addOutput("nR", wE + wF + 3);
-	
-	setOperatorName();
-
 }
 
 LNSDiv::~LNSDiv()
 {
 }
 
-void LNSDiv::setOperatorName(){
-	ostringstream name;
-	/* The name has the format: LNSDiv_wE_wF where: 
-	   wE = width of the integral part of the exponent
-	   wF = width of the fractional part of the exponent */
-	name << "LNSDiv_" << wE << "_" << wF; 
-	uniqueName_ = name.str(); 
-}
 
 void LNSDiv::outputVHDL(std::ostream& o, std::string name)
 {

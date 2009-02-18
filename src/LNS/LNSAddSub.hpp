@@ -11,7 +11,6 @@ struct LNSAddSub : Operator
 	virtual ~LNSAddSub();
 
 	virtual void outputVHDL(std::ostream& o, std::string name);
-	virtual void setOperatorName();	
 	
 private:
 	int wE;
