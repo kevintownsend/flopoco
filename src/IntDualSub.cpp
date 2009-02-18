@@ -88,7 +88,7 @@ Operator(target), wIn_(wIn), opType_(opType), inputDelays_(inputDelays)
 		if (((objectivePeriod - maxInputDelay) - target->lutDelay())<0)	{
 			bufferedInputs = 1;
 			maxInputDelay=0;
-			//			bool status = target->suggestSubaddSize(chunkSize_ ,wIn_);
+			target->suggestSubaddSize(chunkSize_ ,wIn_);
 			nbOfChunks = ceil(double(wIn_)/double(chunkSize_));
 			cSize = new int[nbOfChunks+1];
 			cSize[nbOfChunks-1]=( ((wIn_%chunkSize_)==0)?chunkSize_:wIn_-(nbOfChunks-1)*chunkSize_);
@@ -103,7 +103,7 @@ Operator(target), wIn_(wIn), opType_(opType), inputDelays_(inputDelays)
 			if ((wIn_-cS0)>0)
 			{
 				int newWIn = wIn_-cS0;
-				//				bool status = target->suggestSubaddSize(chunkSize_,newWIn);
+				target->suggestSubaddSize(chunkSize_,newWIn);
 				nbOfChunks = ceil( double(newWIn)/double(chunkSize_));
 				cSize = new int[nbOfChunks+1];
 				cSize[0] = cS0;
