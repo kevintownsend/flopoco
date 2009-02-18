@@ -98,6 +98,335 @@ public:
 	void addFPOutput(const std::string name, const int wE, const int wF, const int numberOfPossibleOutputValues=1);
 
 	
+
+
+	/** Sets Operator name to givenName.
+	 * Sets the name of the operator to operatorName.
+	 * @param operatorName new name of the operator
+	*/
+	void setName(std::string operatorName = "UnknownOperator");
+	
+	/** This method should be used by an operator to change the default name of a sub-component. The default name becomes the commented name.
+	 * @param operatorName new name of the operator
+	*/
+	void changeName(std::string operatorName);
+	
+	/** Sets Operator name to prefix_(uniqueName_)_postfix
+	 * @param prefix the prefix string which will be placed in front of the operator name
+	 *               formed with the operator internal parameters
+	 * @param postfix the postfix string which will be placed at the end of the operator name
+	 *                formed with the operator internal parameters
+	*/
+	void setName(std::string prefix, std::string postfix);
+	
+
+	/** Sets the type of the operator (sequential or combinatorial). 
+	 * The information is retrieved from the deployment target 
+	 */
+	void setOperatorType();
+	
+
+	/*   Functions related to simulation and testing */
+
+	/**
+	 * Gets the correct value associated to one or more inputs.
+	 * @param tc the test case, filled with the input values, to be filled with the output values.
+	 * @see FPAdder for an example implementation
+	 */
+	virtual void emulate(TestCase * tc);
+		
+	/**
+	 * Append standard test cases to a test case list. Standard test
+	 * cases are operator-dependent and should include any specific
+	 * corner cases you may think of. Never mind removing a standard test case because you think it is no longer useful!
+	 * @param tcl a TestCaseList
+	 */
+	virtual void buildStandardTestCases(TestCaseList* tcl);
+
+
+	/**
+	 * Append random test cases to a test case list. There is a default
+	 * implementation using a uniform random generator, but most
+	 * operators are not exercised efficiently using such a
+	 * generator. For instance, in FPAdder, the random number generator
+	 * should be biased to favor exponents which are relatively close
+	 * so that an effective addition takes place.
+	 * @param tcl a TestCaseList
+	 * @param n the number of random test cases to add
+	 */
+	virtual void buildRandomTestCases(TestCaseList* tcl, int n);
+
+
+	/** the main function outputs the VHDL for the operator 
+	 * @param o the stream where the entity will outputted
+	 * @param name the name of the architecture
+	 */
+	virtual void outputVHDL(std::ostream& o, std::string name);
+	
+	/** the main function outputs the VHDL for the operator 
+	 * @param o the stream where the entity will outputted
+	 */	
+	void outputVHDL(std::ostream& o);   // calls the previous with name = uniqueName
+
+
+	/** True if the operator needs a clock signal; 
+	 * It will also get a rst but doesn't need to use it.
+	 */	
+	bool isSequential();  
+	
+	/** Set the operator to sequential
+	 */	
+	void setSequential(); 
+	
+	/** Set the operator to combinatorial
+	 */	
+	void setCombinatorial();
+	
+	/** Set the depth of the pipeline
+	 * @param d the depth of the pipeline for the operator
+	 */	
+
+
+
+	
+	/** Return the operator name. 
+	 * Returns a string value representing the name of the operator. 
+	 * @return operator name
+	 */
+	string getName() const;
+	
+
+	/** Returns a pointer to the signal having the name s. Throws an exception if the signal is not yet declared.
+	  * @param s then name of the signal we want to return
+	  * @return the pointer to the signal having name s 
+	  */
+	Signal* getSignalByName(string s);
+
+	/** Outputs component declaration 
+	 * @param o the stream where the component is outputed
+	 * @param name the name of the VHDL component we want to output to o
+	 */
+	virtual void outputVHDLComponent(std::ostream& o, std::string name);
+	
+	/** Outputs the VHDL component code of the current operator
+	 * @param o the stream where the component is outputed
+	 */
+	void outputVHDLComponent(std::ostream& o);  
+	
+	/** Function which outputs the processes which declare the registers ( assign name_d <= name )
+	 * @param o the stream where the component is outputed
+	 */
+	void outputVHDLRegisters(std::ostream& o);
+	
+		
+
+	/** Return the number of input+output signals 
+	 * @return the size of the IO list. The total number of input and output signals
+	 *         of the architecture.
+	 */
+	int getIOListSize() const;
+	
+	/** Returns a pointer to the list containing the IO signals.
+	 * @return pointer to ioList 
+	 */
+	vector<Signal*> * getIOList();
+	
+	/** Returns a pointer a signal from the ioList.
+	 * @param the index of the signal in the list
+	 * @return pointer to the i'th signal of ioList 
+	 */
+	Signal * getIOListSignal(int i);
+		
+
+
+	/** sets the copyright string, should be authors + year
+	 * @param authorsYears the names of the authors and the years of their contributions
+	 */
+	void setCopyrightString(std::string authorsYears);
+
+
+
+
+	/** Output the licence
+	 * @param o the stream where the licence is going to be outputted
+	 * @param authorsYears the names of the authors and the years of their contributions
+	 */
+	void licence(std::ostream& o, std::string authorsYears);
+
+
+	/** Output the licence, using copyrightString_
+	 * @param o the stream where the licence is going to be outputted
+	 */
+	void licence(std::ostream& o);
+
+	/** Output the standard library paperwork 
+	 * @param o the stream where the libraries will be written to
+	 */
+	static void stdLibs(std::ostream& o){
+		o<<"library ieee;\nuse ieee.std_logic_1164.all;"<<endl 
+		 <<"use ieee.std_logic_arith.all;"<<endl
+		 <<"use ieee.std_logic_unsigned.all;"<<endl 
+		 <<"library work;"<<endl<<endl;
+	};
+		
+	/** Output the VHDL entity of the current operator.
+	 * @param o the stream where the entity will be outputted
+	 */
+	void outputVHDLEntity(std::ostream& o);
+	
+	/** output all the signal declarations 
+	 * @param o the stream where the signal deca
+	 */
+	void outputVHDLSignalDeclarations(std::ostream& o);
+
+	/**
+	 * A new line inline function
+	 * @param[in,out] o the stream to which the new line will be added
+	 **/
+	inline void newLine(std::ostream& o) {	o<<endl; }
+	
+	/**
+	 * A new architecture inline function
+	 * @param[in,out] o 	- the stream to which the new architecture line will be added
+	 * @param[in]     name	- the name of the entity corresponding to this architecture
+	 **/
+	inline void newArchitecture(std::ostream& o, std::string name){
+		o << "architecture arch of " << name  << " is" << endl;
+	}
+	
+	/**
+	 * A begin architecture inline function 
+	 * @param[in,out] o 	- the stream to which the begin line will be added
+	 **/
+	inline void beginArchitecture(std::ostream& o){
+		o << "begin" << endl;
+	}
+
+	/**
+	 * A end architecture inline function 
+	 * @param[in,out] o 	- the stream to which the begin line will be added
+	 **/
+	inline void endArchitecture(std::ostream& o){
+		o << "end architecture;" << endl << endl;
+	}
+
+
+	/** Final report function, prints to the terminal.  By default
+	 * reports the pipeline depth, but feel free to overload if you have any
+	 * thing useful to tell to the end user
+	*/
+	virtual void outputFinalReport();	
+	
+
+	//////////////////From here on we have methods of FloPoCoPipelineFramework2.0
+	// The main incompatibility with previous FloPoCo is that a delayed signal is now added only once to signalList
+	// and all its delayed versions are generated by buildVHDLSignalDeclarations and buildVHDLRegisters
+
+	
+	/** Define the current cycle 
+	 * @param the new value of the current cycle */
+	void setCycle(int cycle) ;
+
+
+	/** Define the current cycle 
+	 * @param the new value of the current cycle */
+	void nextCycle() ;
+
+
+	/** Set the current cycle to that of a signal. It may increase or decrease current cycle. 
+	 * @param name is the signal name. It must have been defined before */
+	void setCycleFromSignal(string name) ;
+
+	/** advance the current cycle to that of a signal. It may only increase current cycle. To synchronize
+		 two or more signals, first call setCycleFromSignal() on the
+		 first, then syncCycleFromSignal() on the remaining ones. It
+		 will synchronize to the latest of these signals.  
+		 * @param name is the signal name. It must have been defined before */
+	void syncCycleFromSignal(string name) ;
+
+	/** Declares a signal implicitely by having it appearing on the Left Hand Side of a VHDL assignment
+	 * @param name is the name of the signal
+	 * @param width is the width of the signal (optional, default 1)
+	 * @param isbus: a signal of width 1 is declared as std_logic when false, as std_logic_vector when true (optional, default false)
+	 * @return name
+	 */
+	string declare(string name, const int width=1, bool isbus=false);
+
+	/** use a signal on the Right 
+	 * @param name is the name of the signal
+	 * @return name
+	 */
+	string use(string name);
+
+	
+	/** Declare an output mapping for an instance of a sub-component
+	 * Also declares the local signal implicitely, with width taken from the component 	
+	 * @param op is a pointer to the subcomponent
+	 * @param componentPortName is the name of the port on the component
+	 * @param actualSignalName is the name of the signal in This mapped to this port
+	 * @return name
+	 */
+	void outPortMap(Operator* op, string componentPortName, string actualSignalName);
+
+
+	/** use a signal as input of a subcomponent
+	 * @param componentPortName is the name of the port on the component
+	 * @param actualSignalName is the name of the signal (of this) mapped to this port
+	 */
+	void inPortMap(Operator* op, string componentPortName, string actualSignalName);
+
+	/** use a constant signal as input of a subcomponent. 
+	 * @param componentPortName is the name of the port on the component
+	 * @param actualSignal is the constant signal to be mapped to this port
+	 */
+	void inPortMapCst(Operator* op, string componentPortName, string actualSignal);
+
+	/** returns the VHDL for an instance of a sub-component. 
+	 * @param componentPortName is the name of the port on the component
+	 * @param actualSignalName is the name of the signal (of this) mapped to this port
+	 * @return name
+	 */
+	string instance(Operator* op, string instanceName);
+
+	
+	/** build all the signal declarations from signals implicitely declared by declare().
+	 *  This is the 2.0 equivalent of outputVHDLSignalDeclarations
+	 */
+	string buildVHDLSignalDeclarations();
+
+	/** build all the component declarations from the list built by instance().
+	 */
+	string buildVHDLComponentDeclarations();
+
+	/** build all the registers from signals implicitely delayed by declare() 
+	 *	 This is the 2.0 equivalent of outputVHDLSignalRegisters
+	 */
+	string buildVHDLRegisters();
+
+
+
+
+
+
+	// TODO: add methods that allow for signals with reset.
+
+	////////////////////////////////////////////////////////////////////////////////////////
+	// From here on we have methods that should be considered obsolete
+
+
+	void setPipelineDepth(int d);
+	
+	/** Gets the pipeline depth of this operator 
+	 * @return the pipeline depth of the operator
+	*/
+	int getPipelineDepth();
+	
+	/** Increments the pipeline depth of the current operator 
+	*/
+	void incrementPipelineDepth();
+	
+
+
 	/** Generic function that adds a signal to the signal list.
 	 * The functions add*Signal* are implemented as instances of this functions.
 	 * @param name  the name of the signal
@@ -198,309 +527,6 @@ public:
 	string  delaySignal(const string name, const int delay=1);
 
 
-
-	/** Sets Operator name to default name.
-	 * This method must be overridden by all classes which extend Operator
-	 *  
-	*/
-	virtual void setName(){ uniqueName_ = "UnknownOperator";};
-	
-	/** Sets Operator name to givenName.
-	 * Sets the name of the operator to operatorName.
-	 * @param operatorName new name of the operator
-	*/
-	void setName(std::string operatorName);
-	
-	/** This method should be used by an operator to change the default name of a sub-component. The default name becomes the commented name.
-	 * @param operatorName new name of the operator
-	*/
-	void changeName(std::string operatorName);
-	
-	/** Sets Operator name to prefix_(uniqueName_)_postfix
-	 * @param prefix the prefix string which will be palced in front of the operator name
-	 *               formed with the operator internal parameters
-	 * @param postfix the postfix string which will be palced at the end of the operator name
-	 *                formed with the operator internal parameters
-	*/
-	void setName(std::string prefix, std::string postfix);
-	
-	/** Sets the type of the operator. 
-	 * The information is retrived from the deployment target 
-	 */
-	void setOperatorType();
-	
-	
-	/** Return the operator name. 
-	 * Returns a string value representing the name of the operator. 
-	 * @return operator name
-	 */
-	string getName() const;
-	
-	/** Return the number of input+output signals 
-	 * @return the size of the IO list. The total number of input and output signals
-	 *         of the architecture.
-	 */
-	int getIOListSize() const;
-	
-	/** Returns a pointer to the list containing the IO signals.
-	 * @return pointer to ioList 
-	 */
-	vector<Signal*> * getIOList();
-	
-	/** Returns a pointer a signal from the ioList.
-	 * @param the index of the signal in the list
-	 * @return pointer to the i'th signal of ioList 
-	 */
-	Signal * getIOListSignal(int i);
-		
-	/** Returns a pointer to the signal having the name s. Throws an exception if the signal is not yet declared.
-	  * @param s then name of the signal we want to return
-	  * @return the pointer to the signal having name s 
-	  */
-	Signal* getSignalByName(string s);
-
-	/** Outputs component declaration 
-	 * @param o the stream where the component is outputed
-	 * @param name the name of the VHDL component we want to output to o
-	 */
-	virtual void outputVHDLComponent(std::ostream& o, std::string name);
-	
-	/** Outputs the VHDL component code of the current operator
-	 * @param o the stream where the component is outputed
-	 */
-	void outputVHDLComponent(std::ostream& o);  
-	
-	/** Function which outputs the processes which declare the registers ( assign name_d <= name )
-	 * @param o the stream where the component is outputed
-	 */
-	void outputVHDLRegisters(std::ostream& o);
-	
-	/** Output the licence
-	 * @param o the stream where the licence is going to be outputted
-	 * @param authorsYears the names of the authors and the years of their contributions
-	 */
-	void licence(std::ostream& o, std::string authorsYears);
-		
-	/** Output the standard library paperwork 
-	 * @param o the stream where the libraries will be written to
-	 */
-	static void stdLibs(std::ostream& o){
-		o<<"library ieee;\nuse ieee.std_logic_1164.all;"<<endl 
-		 <<"use ieee.std_logic_arith.all;"<<endl
-		 <<"use ieee.std_logic_unsigned.all;"<<endl 
-		 <<"library work;"<<endl<<endl;
-	};
-		
-	/** Output the VHDL entity of the current operator.
-	 * @param o the stream where the entity will be outputted
-	 */
-	void outputVHDLEntity(std::ostream& o);
-	
-	/** output all the signal declarations 
-	 * @param o the stream where the signal deca
-	 */
-	void outputVHDLSignalDeclarations(std::ostream& o);
-
-	/**
-	 * A new line inline function
-	 * @param[in,out] o the stream to which the new line will be added
-	 **/
-	inline void newLine(std::ostream& o) {	o<<endl; }
-	
-	/**
-	 * A new architecture inline function
-	 * @param[in,out] o 	- the stream to which the new architecture line will be added
-	 * @param[in]     name	- the name of the entity corresponding to this architecture
-	 **/
-	inline void newArchitecture(std::ostream& o, std::string name){
-		o << "architecture arch of " << name  << " is" << endl;
-	}
-	
-	/**
-	 * A begin architecture inline function 
-	 * @param[in,out] o 	- the stream to which the begin line will be added
-	 **/
-	inline void beginArchitecture(std::ostream& o){
-		o << "begin" << endl;
-	}
-
-	/**
-	 * A end architecture inline function 
-	 * @param[in,out] o 	- the stream to which the begin line will be added
-	 **/
-	inline void endArchitecture(std::ostream& o){
-		o << "end architecture;" << endl << endl;
-	}
-
-	/** the main function outputs the VHDL for the operator 
-	 * @param o the stream where the entity will outputted
-	 * @param name the name of the architecture
-	 */
-	virtual void outputVHDL(std::ostream& o, std::string name);
-	
-	/** the main function outputs the VHDL for the operator 
-	 * @param o the stream where the entity will outputted
-	 */	
-	void outputVHDL(std::ostream& o);   // calls the previous with name = uniqueName
-
-	/** True if the operator needs a clock signal; 
-	 * It will also get a rst but doesn't need to use it.
-	 */	
-	bool isSequential();  
-	
-	/** Set the operator to sequential
-	 */	
-	void setSequential(); 
-	
-	/** Set the operator to combinatorial
-	 */	
-	void setCombinatorial();
-	
-	/** Set the depth of the pipeline
-	 * @param d the depth of the pipeline for the operator
-	 */	
-	void setPipelineDepth(int d);
-	
-	/** Gets the pipeline depth of this operator 
-	 * @return the pipeline depth of the operator
-	*/
-	int getPipelineDepth();
-	
-	/** Increments the pipeline depth of the current operator 
-	*/
-	void incrementPipelineDepth();
-	
-
-
-	/*   Functions related to simulation and testing */
-
-	/**
-	 * Gets the correct value associated to one or more inputs.
-	 * @param tc the test case, filled with the input values, to be filled with the output values.
-	 * @see FPAdder for an example implementation
-	 */
-	virtual void emulate(TestCase * tc);
-		
-	/**
-	 * Append standard test cases to a test case list. Standard test
-	 * cases are operator-dependent and should include any specific
-	 * corner cases you may think of. Never mind removing a standard test case because you think it is no longer useful!
-	 * @param tcl a TestCaseList
-	 */
-	virtual void buildStandardTestCases(TestCaseList* tcl);
-
-
-	/**
-	 * Append random test cases to a test case list. There is a default
-	 * implementation using a uniform random generator, but most
-	 * operators are not exercised efficiently using such a
-	 * generator. For instance, in FPAdder, the random number generator
-	 * should be biased to favor exponents which are relatively close
-	 * so that an effective addition takes place.
-	 * @param tcl a TestCaseList
-	 * @param n the number of random test cases to add
-	 */
-	virtual void buildRandomTestCases(TestCaseList* tcl, int n);
-
-
-	/** Final report function, prints to the terminal.  By default
-	 * reports the pipeline depth, but feel free to overload if you have any
-	 * thing useful to tell to the end user
-	*/
-	virtual void outputFinalReport();	
-	
-
-	//////////////////From here on we have methods of FloPoCoPipelineFramework2.0
-	// The main incompatibility with previous FloPoCo is that a delayed signal is now added only once to signalList
-	// and all its delayed versions are generated by buildVHDLSignalDeclarations and buildVHDLRegisters
-
-	
-	/** Define the current cycle 
-	 * @param the new value of the current cycle */
-	void setCycle(int cycle) ;
-
-
-	/** Define the current cycle 
-	 * @param the new value of the current cycle */
-	void nextCycle() ;
-
-
-	/** Set the current cycle to that of a signal. It may increase or decrease current cycle. 
-	 * @param name is the signal name. It must have been defined before */
-	void setCycleFromSignal(string name) ;
-
-	/** advance the current cycle to that of a signal. It may only increase current cycle. To synchronize
-		 two or more signals, first call setCycleFromSignal() on the
-		 first, then syncCycleFromSignal() on the remaining ones. It
-		 will synchronize to the latest of these signals.  
-		 * @param name is the signal name. It must have been defined before */
-	void syncCycleFromSignal(string name) ;
-
-	/** Declares a signal implicitely by having it appearing on the Left Hand Side of a VHDL assignment
-	 * @param name is the name of the signal
-	 * @param width is the width of the signal (optional, default 1)
-	 * @param isbus: a signal of width 1 is declared as std_logic when false, as std_logic_vector when true (optional, default false)
-	 * @return name
-	 */
-	string declare(string name, const int width=1, bool isbus=false);
-
-	/** use a signal on the Right 
-	 * @param name is the name of the signal
-	 * @return name
-	 */
-	string use(string name);
-
-	
-	/** Declare an output mapping for an instance of a sub-component
-	 * Also declares the local signal implicitely, with width taken from the component 	
-	 * @param op is a pointer to the subcomponent
-	 * @param componentPortName is the name of the port on the component
-	 * @param actualSignalName is the name of the signal in This mapped to this port
-	 * @return name
-	 */
-	void outPortMap(Operator* op, string componentPortName, string actualSignalName);
-
-
-	/** use a signal as input of a subcomponent
-	 * @param componentPortName is the name of the port on the component
-	 * @param actualSignalName is the name of the signal (of this) mapped to this port
-	 */
-	void inPortMap(Operator* op, string componentPortName, string actualSignalName);
-
-	/** use a constant signal as input of a subcomponent. 
-	 * @param componentPortName is the name of the port on the component
-	 * @param actualSignal is the constant signal to be mapped to this port
-	 */
-	void inPortMapCst(Operator* op, string componentPortName, string actualSignal);
-
-	/** returns the VHDL for an instance of a sub-component. 
-	 * @param componentPortName is the name of the port on the component
-	 * @param actualSignalName is the name of the signal (of this) mapped to this port
-	 * @return name
-	 */
-	string instance(Operator* op, string instanceName);
-
-	
-	/** build all the signal declarations from signals implicitely declared by declare().
-	 *  This is the 2.0 equivalent of outputVHDLSignalDeclarations
-	 */
-	string buildVHDLSignalDeclarations();
-
-	/** build all the component declarations from the list built by instance().
-	 */
-	string buildVHDLComponentDeclarations();
-
-	/** build all the registers from signals implicitely delayed by declare() 
-	 *	 This is the 2.0 equivalent of outputVHDLSignalRegisters
-	 */
-	string buildVHDLRegisters();
-
-
-
-	// TODO: add methods that allow for signals with reset.
-
-	//////////////////End of FloPoCoPipelineFramework2.0
-
 protected:    
 	Target*             target_;          /**< The target on which the operator will be deployed */
 	string              uniqueName_;      /**< By default, a name derived from the operator class and the parameters */
@@ -521,6 +547,7 @@ private:
 	bool                   hasRegistersWithAsyncReset_; /**< True if the operator has registers having an asynch reset */
 	bool                   hasRegistersWithSyncReset_;  /**< True if the operator has registers having a synch reset */
 	string                 commentedName_;              /**< Usually is the default name of the architecture.  */
+	string                 copyrightString_;            /**< Authors and years.  */
 	int                    cycle_;                      /**< The current cycle, when building a pipeline */
 
 };

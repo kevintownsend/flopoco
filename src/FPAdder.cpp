@@ -62,7 +62,9 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 	uniqueName_ = name.str(); 
 
 	setOperatorType();
-		
+
+	setCopyrightString("Bogdan Pasca, Florent de Dinechin (2008)");		
+
 	//parameter set up
 	wF = wFX;
 	wE = wEX;

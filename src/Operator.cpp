@@ -360,6 +360,17 @@ void Operator::outputVHDLEntity(std::ostream& o) {
 	o << "end entity;" << endl << endl;
 }
 
+
+void Operator::setCopyrightString(std::string authorsYears){
+	copyrightString_ = authorsYears;
+}
+
+
+void Operator::licence(std::ostream& o){
+	licence(o, copyrightString_);
+}
+
+
 void Operator::licence(std::ostream& o, std::string authorsyears){
 	o<<"--------------------------------------------------------------------------------"<<endl;
 	// centering the unique name
@@ -787,7 +798,7 @@ void Operator::outputVHDL(std::ostream& o, std::string name) {
   
 	ostringstream signame, synch1, synch2, xname,zeros, zeros1, zeros2, str1, str2;
 
-	licence(o,"Bogdan Pasca, Florent de Dinechin (2008)");
+	licence(o);
 	Operator::stdLibs(o);
 	outputVHDLEntity(o);
 	newArchitecture(o,name);
