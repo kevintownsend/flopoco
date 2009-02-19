@@ -56,23 +56,19 @@ private:
 	int wFR;
 	/** Signal if the output of the operator is to be or not normalized*/
 
-	/** The integer adder object */
-	/** The integer adder object */
+	/** The combined leading zero counter and shifter for the close path */
+	LZOCShifterSticky* lzocs; 
+	/** The integer adder object for subtraction in the close path */
 	IntAdder *fracSubClose; 
-	/** The integer adder object */
-	IntAdder *complementAdderClose; 
-
 	/** The dual subtractor for the close path */
 	IntDualSub *dualSubClose;
-	/** The integer adder object */
+	/** The fraction adder for the far path */
 	IntAdder *fracAddFar; 
-	/** The integer adder object */
+	/** The adder that does the final rounding */
 	IntAdder *finalRoundAdd; 
-
-	LZOC* leadingZeroCounter;
-	Shifter* leftShifter;
+	/** The right shifter for the far path */
 	Shifter* rightShifter;	
-	LZOCShifterSticky* lzocs; 
+
 
 	int wF;
 	int wE;
