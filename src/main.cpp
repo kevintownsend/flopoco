@@ -970,9 +970,9 @@ bool parseCommandLine(int argc, char* argv[]){
 			}
 			int n = checkPositiveOrNull(argv[i++], argv[0]);
 			Operator* toWrap = oplist.back();
+			Operator* op = new TestBench(target, toWrap, n);
 			cerr << "> TestBench for " << toWrap->getName()<<endl;
-			if(cl_name!="")	op->setName(cl_name);
-			oplist.push_back(new TestBench(target, toWrap, n));
+			addOperator(op);
 		}
 		#ifndef _WIN32
 		else if (opname == "BigTestBench") {
@@ -986,8 +986,8 @@ bool parseCommandLine(int argc, char* argv[]){
 			int n = checkPositiveOrNull(argv[i++], argv[0]);
 			Operator* toWrap = oplist.back();
 			cerr << "> BigTestBench for " << toWrap->getName()<<endl;
-			if(cl_name!="")	op->setName(cl_name);
-			oplist.push_back(new BigTestBench(target, toWrap, n));
+			Operator* op = new BigTestBench(target, toWrap, n);
+			addOperator(op);
 		}
 		#endif
 		else  {
