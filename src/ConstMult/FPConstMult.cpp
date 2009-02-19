@@ -158,8 +158,6 @@ void FPConstMult::setup() {
 		wE_sum = wE_out;
 
 
-	vhdl << tab << declare("abs_unbiased_cst_exp",wE_sum+1) << " <= \""
-		  << unsignedBinary(expAddend, wE_sum+1) << "\";" << endl;
  	vhdl << tab << declare("xcut_rd", wF_in+1) << " <= \""
 		  << unsignedBinary(xcut_sig_rd, wF_in+1) << "\";"<<endl;
 	
@@ -179,8 +177,8 @@ void FPConstMult::setup() {
 	nextCycle();
 
 	// Possibly shift the significand one bit left, and remove implicit 1 
-	vhdl << tab << declare("shifted_frac",    wF_out+1) << " <=  sig_prod("<<icm->rsize -2<<" downto "<<icm->rsize - wF_out-2 <<")  when " << use("gt_than_xcut") << " = '1'"<<endl
-		  << tab << "           else sig_prod("<<icm->rsize -3<<" downto "<<icm->rsize - wF_out - 3<<");"<<endl;  
+	vhdl << tab << declare("shifted_frac",    wF_out+1) << " <= " << use("sig_prod") << "("<<icm->rsize -2<<" downto "<<icm->rsize - wF_out-2 <<")  when " << use("gt_than_xcut") << " = '1'"<<endl
+		  << tab << "           else " << use("sig_prod") << "("<<icm->rsize -3<<" downto "<<icm->rsize - wF_out - 3<<");"<<endl;  
 	// add the rounding bit
 	vhdl << tab << tab << declare("rounded_frac",   wF_out+1) << " <= (("<<wF_out <<" downto 1 => '0') & '1') + " << use("shifted_frac") << ";"<<endl;
 	vhdl << tab << tab << declare("r_frac", wF_out) << " <= rounded_frac("<<wF_out <<" downto  1);"<<endl;
@@ -191,6 +189,8 @@ void FPConstMult::setup() {
 		vhdl << tab << "r_sgn <= not " << use("x_sgn") << "; -- negative constant"<<endl;
 
 	// exponent handling
+	vhdl << tab << declare("abs_unbiased_cst_exp",wE_sum+1) << " <= \""
+		  << unsignedBinary(expAddend, wE_sum+1) << "\";" << endl;
 	vhdl << tab << declare("r_exp_nopb",    wE_out+1) << " <= "
 		  << "((" << wE_sum << " downto " << wE_in << " => '0')  & " << use("x_exp") << ")  "
 		  << (expAddendSign==0 ? "+" : "-" ) << "  abs_unbiased_cst_exp"
