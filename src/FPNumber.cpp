@@ -21,6 +21,46 @@ FPNumber::FPNumber(int wE, int wF, mpfr_t m)
 	operator=(m);
 }
 
+FPNumber::FPNumber(int wE, int wF, SpecialValue v)	
+  : wE(wE), wF(wF)
+{
+	if (wE > 30)
+		throw "FPNumber::FPNumber: Using exponents larger than 30 bits is not supported.";
+	switch(v)  {
+	case plusInfty: 
+		exception = 2;
+		sign = 0;
+		exponent = getLargeRandom(wE);
+		mantissa = getLargeRandom(wF);
+		break;
+	case minusInfty: 
+		exception = 2;
+		sign = 1;
+		exponent = getLargeRandom(wE);
+		mantissa = getLargeRandom(wF);
+		break;
+	case plusDirtyZero: 
+		exception = 0;
+		sign = 0;
+		exponent = getLargeRandom(wE);
+		mantissa = getLargeRandom(wF);
+		break;
+	case minusDirtyZero: 
+		exception = 0;
+		sign = 1;
+		exponent = getLargeRandom(wE);
+		mantissa = getLargeRandom(wF);
+		break;
+	case NaN: 
+		exception = 3;
+		sign = getLargeRandom(1);
+		exponent = getLargeRandom(wE);
+		mantissa = getLargeRandom(wF);
+		break;
+	}
+}
+
+
 mpz_class FPNumber::getMantissaSignalValue()
 {
 	return mantissa;

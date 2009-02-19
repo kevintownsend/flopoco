@@ -170,7 +170,6 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 	
 	// substract the fraction signals for the close path; 
 	
-	cout << "AAAAAAAAAAAAAAAAAAAAAA"<<endl;
 	// instanciate the box that computes X-Y and Y-X. Note that it could take its inputs before the swap (TODO ?)
 	dualSubClose = new 	IntDualSub(target, wF + 3, 0);
 	dualSubClose->changeName(getName()+"_DualSubClose");
@@ -196,7 +195,6 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 	vhdl<< tab << "          " << use("newX") << "("<<wE+wF<<") xor (" << use("selectClosePath") << " and " 
 		 << use("fracSignClose") << ");"<<endl;
 	
-	cout << "AAAAAAAAAAAAAAAAAAAAAA"<<endl;
 	// LZC + Shifting. The number of leading zeros are returned together with the shifted input
 	lzocs = new LZOCShifterSticky(target, wFX+2, wFX+2,0, 0);
 	if(lzocs->getCountWidth() > wE){
@@ -258,8 +256,6 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 	
 	//add implicit 1 for frac1. 
 	vhdl<<tab<< declare("fracNewY",wF+1) << " <= '1' & " << use("newY") << "("<<wF-1<<" downto 0);"<<endl;
-							
-	cout << "AAAAAAAAAAAAAAAAAAAAAA"<<endl;
 	
 	// shift right the significand of new Y with as many positions as the exponent difference suggests (alignment) //		
 	rightShifter = new Shifter(target,wFX+1,wFX+3,Right);
@@ -495,10 +491,33 @@ void FPAdder::buildStandardTestCases(TestCaseList* tcl){
 
 	tc = new TestCase(this); 
 	tc->addInput("X", 1.0);
-	tc->addInput("Y", 0.0);
+	tc->addInput("Y", FPNumber::plusDirtyZero);
 	emulate(tc);
 	tcl->add(tc);
 
+	tc = new TestCase(this); 
+	tc->addInput("X", 1.0);
+	tc->addInput("Y", FPNumber::minusDirtyZero);
+	emulate(tc);
+	tcl->add(tc);
+
+	tc = new TestCase(this); 
+	tc->addInput("X", FPNumber::plusInfty);
+	tc->addInput("Y", FPNumber::minusInfty);
+	emulate(tc);
+	tcl->add(tc);
+
+	tc = new TestCase(this); 
+	tc->addInput("X", FPNumber::plusInfty);
+	tc->addInput("Y", FPNumber::plusInfty);
+	emulate(tc);
+	tcl->add(tc);
+
+	tc = new TestCase(this); 
+	tc->addInput("X", FPNumber::minusInfty);
+	tc->addInput("Y", FPNumber::minusInfty);
+	emulate(tc);
+	tcl->add(tc);
 	
 }
 

@@ -1,7 +1,5 @@
-#include "Operator.hpp"
 #include "TestCase.hpp"
-#include "FPNumber.hpp"
-#include "utils.hpp"
+#include "Operator.hpp"
 
 
 
@@ -56,6 +54,20 @@ void TestCase::addInput(string name, mpz_class v)
 		v += (mpz_class(1) << s->width()); 
 	}
 	inputs[name] = v;
+}
+
+
+void TestCase::addInput(string name, FPNumber::SpecialValue v) {
+	// get signal size
+	Signal* s = op_->getSignalByName(name);
+	if(!s->isFP()) {
+		throw "TestCase::addInput: Cannot convert FPNumber::SpecialValue to non-FP signal";
+	} 
+	int wE=s->wE();
+	int wF=s->wF();
+	FPNumber  fpx(wE, wF,v);
+	mpz_class mpx = fpx.getSignalValue();
+	inputs[name] = mpx;
 }
 
 

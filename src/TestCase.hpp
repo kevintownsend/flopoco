@@ -4,9 +4,9 @@
 #include <string>
 #include <vector>
 #include <map>
-#include <gmpxx.h>
 
 #include "Signal.hpp"
+#include "FPNumber.hpp"
 
 using namespace std;
 
@@ -31,6 +31,7 @@ class TestCaseList;
 
 class TestCase {
 public:
+
 	/** Creates an empty TestCase for operator op */
 	TestCase(Operator* op);
 	~TestCase();
@@ -41,6 +42,12 @@ public:
 	 * @param v The value which will be assigned to the signal
 	 */
 	void addInput(string s, mpz_class v);
+	/**
+	 * Adds an input for this TestCase
+	 * @param s The signal which will value the given value
+	 * @param v The value which will be assigned to the signal
+	 */
+	void addInput(string s, FPNumber::SpecialValue v);
 
 	/**
 	 * Adds an input for this TestCase

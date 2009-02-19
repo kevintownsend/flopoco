@@ -13,12 +13,30 @@
 class FPNumber
 {
 public:
+
+	/** Several possible special values */
+	typedef enum {
+	plusInfty,                        /**< A positive infinity with random non-zero exponent and fraction bits  */
+	minusInfty,                       /**< A negative infinity with random non-zero exponent and fraction bits  */
+	plusDirtyZero,                    /**< A zero with non-zero exponent and fraction bits */
+	minusDirtyZero,                   /**< A zero with non-zero exponent and fraction bits */
+	NaN                       /**<  */
+	} SpecialValue;
+
 	/**
 	 * Constructs a new FPNumber.
 	 * @param wE the width of the exponent
 	 * @param wF the width of the significant
 	 */
 	FPNumber(int wE, int wF);
+
+	/**
+	 * Constructs a new FPNumber.
+	 * @param wE the width of the exponent
+	 * @param wF the width of the significant
+	 * @param v a special value
+	 */
+	FPNumber(int wE, int wF, SpecialValue v);
 
 	/**
 	 * Constructs a new initialised FPNumber.
