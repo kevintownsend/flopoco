@@ -59,7 +59,7 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 	ostringstream name, synch, synch2;
 
 	name<<"FPAdder_"<<wEX<<"_"<<wFX<<"_"<<wEY<<"_"<<wFY<<"_"<<wER<<"_"<<wFR; 
-	uniqueName_ = name.str(); 
+	setName(name.str()); 
 
 	setOperatorType();
 
