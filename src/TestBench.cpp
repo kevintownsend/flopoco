@@ -114,7 +114,9 @@ void TestBench::outputVHDL(ostream& o, string name) {
 
 	// the instance
 	o << tab << "uut:" << op_->getName() << "\n"
-	  << tab << tab << "port map ( clk => clk, rst => rst," << endl;
+	  << tab << tab << "port map ( ";
+	if (op_->isSequential()) 
+		o <<" clk => clk, rst => rst," << endl;
 	for(int i=0; i<op_->getIOListSize(); i++) {
 		o << tab << tab << "           ";
 		string idext =  op_->getIOListSignal(i)->getName() ;

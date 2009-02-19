@@ -430,20 +430,22 @@ void Operator::outputFinalReport() {
 
 
 
-void Operator::setCycle(int cycle) {
+void Operator::setCycle(int cycle, bool report) {
 	if(isSequential()) {
 		cycle_=cycle;
-		vhdl << tab << "----------------Synchro barrier, entering cycle " << cycle_ << "----------------" << endl ;
+		if(report)
+			vhdl << tab << "----------------Synchro barrier, entering cycle " << cycle_ << "----------------" << endl ;
 		// automatically update pipeline depth of the operator 
 		if (cycle_ > pipelineDepth_) 
 			pipelineDepth_ = cycle_;
 	}
 }
 
-void Operator::nextCycle() {
+void Operator::nextCycle(bool report) {
 	if(isSequential()) {
 		cycle_ ++; 
-		vhdl << tab << "----------------Synchro barrier, entering cycle " << cycle_ << "----------------" << endl ;
+		if(report)
+			vhdl << tab << "----------------Synchro barrier, entering cycle " << cycle_ << "----------------" << endl ;
 		// automatically update pipeline depth of the operator 
 		if (cycle_ > pipelineDepth_) 
 			pipelineDepth_ = cycle_;
@@ -451,7 +453,7 @@ void Operator::nextCycle() {
 }
 
 
-void Operator::setCycleFromSignal(string name) {
+void Operator::setCycleFromSignal(string name, bool report) {
 	ostringstream e;
 	e << "ERROR in syncCycleFromSignal, "; // just in case
 
@@ -471,7 +473,8 @@ void Operator::setCycleFromSignal(string name) {
 		throw o.str();
 		} 
 		cycle_ = s->getCycle();
-		vhdl << tab << "----------------Synchro barrier, entering cycle " << cycle_ << "----------------" << endl ;
+		if(report)
+			vhdl << tab << "----------------Synchro barrier, entering cycle " << cycle_ << "----------------" << endl ;
 		// automatically update pipeline depth of the operator 
 		if (cycle_ > pipelineDepth_) 
 			pipelineDepth_ = cycle_;
@@ -479,7 +482,7 @@ void Operator::setCycleFromSignal(string name) {
 }
 
 
-void Operator::syncCycleFromSignal(string name) {
+void Operator::syncCycleFromSignal(string name, bool report) {
 	ostringstream e;
 	e << "ERROR in syncCycleFrom2Signals, "; // just in case
 
@@ -502,7 +505,8 @@ void Operator::syncCycleFromSignal(string name) {
 		if (s->getCycle()>cycle_)
 			cycle_ = s->getCycle();
 
-		vhdl << tab << "----------------Synchro barrier, entering cycle " << cycle_ << "----------------" << endl ;
+		if(report)
+			vhdl << tab << "----------------Synchro barrier, entering cycle " << cycle_ << "----------------" << endl ;
 		// automatically update pipeline depth of the operator 
 		if (cycle_ > pipelineDepth_) 
 			pipelineDepth_ = cycle_;

@@ -16,7 +16,7 @@
 
 using namespace std;
 
-/** Returns under the form of a string of given size, the unsigned binary represenation of an integer.
+/** Returns under the form of a string of given size, the unsigned binary representation of an integer.
  * @param x the number to be represented in unsigned binary
  * @param size the size of the output string
  * @return the string binary representation of x

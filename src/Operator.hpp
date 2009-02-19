@@ -325,24 +325,28 @@ public:
 	
 	/** Define the current cycle 
 	 * @param the new value of the current cycle */
-	void setCycle(int cycle) ;
+	void setCycle(int cycle, bool report=false) ;
 
 
 	/** Define the current cycle 
 	 * @param the new value of the current cycle */
-	void nextCycle() ;
+	void nextCycle(bool report=true) ;
 
 
 	/** Set the current cycle to that of a signal. It may increase or decrease current cycle. 
-	 * @param name is the signal name. It must have been defined before */
-	void setCycleFromSignal(string name) ;
+	 * @param name is the signal name. It must have been defined before 
+	 * @param report is a boolean, if true it will report the cycle 
+	 */
+	void setCycleFromSignal(string name, bool report=false) ;
 
 	/** advance the current cycle to that of a signal. It may only increase current cycle. To synchronize
 		 two or more signals, first call setCycleFromSignal() on the
 		 first, then syncCycleFromSignal() on the remaining ones. It
 		 will synchronize to the latest of these signals.  
-		 * @param name is the signal name. It must have been defined before */
-	void syncCycleFromSignal(string name) ;
+		 * @param name is the signal name. It must have been defined before 
+		 * @param report is a boolean, if true it will report the cycle 
+		 */
+	void syncCycleFromSignal(string name, bool report=true) ;
 
 	/** Declares a signal implicitely by having it appearing on the Left Hand Side of a VHDL assignment
 	 * @param name is the name of the signal

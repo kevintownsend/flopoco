@@ -23,6 +23,7 @@ public:
 	mpz_class cst_sig;
 	string cst_name;
 
+	mpfr_t mpfr_cst; 
 	mpfr_t mpfr_cst_sig; // between 1 and 2
 	mpfr_t mpfr_xcut_sig; // between 1 and 2
 
@@ -35,9 +36,7 @@ public:
 	 It is called by the constructors of FPConstMult and CRFPConstMult to avoid code duplication */
 	void setup();
 
-	// Overloading the virtual functions of Operator
-	//  void output_vhdl_component(ostream& o, string name);
-	void outputVHDL(ostream& o, string name);
+	void emulate(TestCase *tc);
 
 	/* The value of the constant multiplicand */
 	mpfr_t mpY;

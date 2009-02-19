@@ -68,7 +68,14 @@ FPConstMult::FPConstMult(Target* target, int wE_in, int wF_in, int wE_out, int w
 	// all this is ugly because no mpfr equivalent of mpz_class
 	mpfr_init2(mpfr_cst_sig, cst_width);
 	mpfr_set_z(mpfr_cst_sig, cst_sig.get_mpz_t(), GMP_RNDN); // exact op
-	mpfr_mul_2si(mpfr_cst_sig, mpfr_cst_sig, -(cst_width-1), GMP_RNDN);  // exact op
+	mpfr_mul_2si(mpfr_cst_sig, mpfr_cst_sig, -(cst_width-1), GMP_RNDN);  // exact op, gets mpfr_cst_sig in 1..2
+	
+ 	mpfr_init(mpfr_cst);
+ 	mpfr_set(mpfr_cst, mpfr_cst_sig, GMP_RNDN);
+ 	mpfr_mul_2si(mpfr_cst, mpfr_cst, cst_exp_when_mantissa_1_2, GMP_RNDN);
+
+	if(cst_sgn==1)
+		mpfr_neg( mpfr_cst,  mpfr_cst, GMP_RNDN);
 	
 	// initialize mpfr_xcut_sig = 2/cst_sig, will be between 1 and 2
 	mpfr_init2(mpfr_xcut_sig, 4*(cst_width+wE_in+wE_out));
@@ -103,10 +110,6 @@ FPConstMult::FPConstMult(Target* target, int wE_in, int wF_in, int wE_out, int w
 	}
 #endif
 
- 	/* Initialize second operand */
- 	mpfr_init(mpY);
- 	mpfr_set(mpY, mpfr_cst_sig, GMP_RNDN);
- 	mpfr_mul_2si(mpY, mpY, cst_exp_when_mantissa_1_2, GMP_RNDN);
 
 	// do all the declarations. Pushed into a method so that CRFPConstMult can inherit it
 	icm = new IntConstMult(target, wF_in+1, cst_sig);
@@ -117,6 +120,9 @@ FPConstMult::FPConstMult(Target* target, int wE_in, int wF_in, int wE_out, int w
 	else 
 		setCombinatorial();
 	setup();
+
+
+
 }
 
 
@@ -129,48 +135,92 @@ void FPConstMult::setup() {
  	addFPOutput("R", wE_out, wF_out);
 
 
-	// Set up non-registered signals 
-	addSignalBus      ("x_sig",          wF_in+1);
-	addSignalBus      ("sig_prod",      icm->rsize);   // register the output of the int const mult
-	addSignalBus      ("rounded_frac",   wF_out+1);
-	addSignal          ("overflow");
-	addSignal          ("underflow");
-	addSignalBus      ("r_frac", wF_out);
- 
-	// Set up other signals and pipeline-related stuff
- 	if (isSequential()) {
- 		icm_depth = icm->getPipelineDepth();
- 		setPipelineDepth(icm_depth+1);
+	setCopyrightString("Florent de Dinechin (2007)");
 
-		addDelaySignalBus("x_exn",          2,         1);
-		addDelaySignal    ("x_sgn",          1,         1);
-		addDelaySignalBus("x_exp",          wE_in,     1);
-		addDelaySignalBus("shifted_frac",    wF_out+1,  1);
-
-		addDelaySignal    ("gt_than_xcut",   1,         icm_depth);
-
-		addDelaySignalBus("r_exp_nopb",    wE_out+1,   1);
-
-		addDelaySignalBus("r_exn",         2,          icm_depth);
-		addDelaySignal    ("r_sgn",         1,          icm_depth);
-		addDelaySignalBus("r_exp",         wE_out,     icm_depth);
+	// bit width of constant exponent
+	int wE_cst=intlog2(abs(cst_exp_when_mantissa_1_2));
+	if(verbose)
+		cout << "  wE_cst="<<wE_cst<<endl;
+	
+	// We have to compute Er = E_X - bias(wE_in) + E_C + bias(wE_R)
+	// Let us pack all the constants together
+	mpz_class expAddend = -bias(wE_in) + cst_exp_when_mantissa_1_2  + bias(wE_out);
+	int expAddendSign=0;
+	if (expAddend < 0) {
+		expAddend = -expAddend;
+		expAddendSign=1;
+	}
+	int wE_sum; // will be the max size of all the considered  exponents
+	wE_sum = intlog2(expAddend);
+	if(wE_in > wE_sum)
+		wE_sum = wE_in;
+	if(wE_out > wE_sum) 
+		wE_sum = wE_out;
 
 
- 	}
- 	else {
-		addSignalBus("x_exn",          2);
-		addSignal    ("x_sgn"           );
-		addSignalBus("x_exp",          wE_in);
+	vhdl << tab << declare("abs_unbiased_cst_exp",wE_sum+1) << " <= \""
+		  << unsignedBinary(expAddend, wE_sum+1) << "\";" << endl;
+ 	vhdl << tab << declare("xcut_rd", wF_in+1) << " <= \""
+		  << unsignedBinary(xcut_sig_rd, wF_in+1) << "\";"<<endl;
+	
+	vhdl << tab << declare("x_exn",2) << " <=  x("<<wE_in<<"+"<<wF_in<<"+2 downto "<<wE_in<<"+"<<wF_in<<"+1);"<<endl;
+	vhdl << tab << declare("x_sgn") << " <=  x("<<wE_in<<"+"<<wF_in<<");"<<endl;
+	vhdl << tab << declare("x_exp", wE_in) << " <=  x("<<wE_in<<"+"<<wF_in<<"-1 downto "<<wF_in<<");"<<endl;
+	vhdl << tab << declare("x_sig", wF_in+1) << " <= '1' & x("<<wF_in-1 <<" downto 0);"<<endl;
 
-		addSignalBus      ("shifted_frac",   wF_out+1);
-		addSignal    ("gt_than_xcut");
+	vhdl << tab << declare("gt_than_xcut") << " <= '1' when ( x_sig("<<wF_in-1<<" downto 0) > xcut_rd("<<wF_in-1<<" downto 0) ) else '0';"<<endl;
 
-		addSignalBus("r_exp_nopb",    wE_out+1);
 
-		addSignalBus      ("r_exn", 2);
-		addSignal          ("r_sgn");
-		addSignalBus      ("r_exp", wE_out);
- 	}
+
+	inPortMap  (icm, "inX", "x_sig");
+	outPortMap (icm, "R","sig_prod");
+	vhdl << instance(icm, "sig_mult");
+	setCycleFromSignal("sig_prod"); 
+	nextCycle();
+
+	// Possibly shift the significand one bit left, and remove implicit 1 
+	vhdl << tab << declare("shifted_frac",    wF_out+1) << " <=  sig_prod("<<icm->rsize -2<<" downto "<<icm->rsize - wF_out-2 <<")  when " << use("gt_than_xcut") << " = '1'"<<endl
+		  << tab << "           else sig_prod("<<icm->rsize -3<<" downto "<<icm->rsize - wF_out - 3<<");"<<endl;  
+	// add the rounding bit
+	vhdl << tab << tab << declare("rounded_frac",   wF_out+1) << " <= (("<<wF_out <<" downto 1 => '0') & '1') + " << use("shifted_frac") << ";"<<endl;
+	vhdl << tab << tab << declare("r_frac", wF_out) << " <= rounded_frac("<<wF_out <<" downto  1);"<<endl;
+	// Handling signs is trivial
+	if(cst_sgn==0)
+		vhdl << tab << declare("r_sgn") << " <= " << use("x_sgn") << "; -- positive constant"<<endl;
+	else
+		vhdl << tab << "r_sgn <= not " << use("x_sgn") << "; -- negative constant"<<endl;
+
+	// exponent handling
+	vhdl << tab << declare("r_exp_nopb",    wE_out+1) << " <= "
+		  << "((" << wE_sum << " downto " << wE_in << " => '0')  & " << use("x_exp") << ")  "
+		  << (expAddendSign==0 ? "+" : "-" ) << "  abs_unbiased_cst_exp"
+		  << "  +  (("<<wE_sum<<" downto 1 => '0') & " <<  use("gt_than_xcut") << ");"<<endl;
+
+	// overflow handling
+	vhdl << tab << declare("overflow") << " <= " ;
+	if (maxExp(wE_in) + cst_exp_when_mantissa_1_2 + 1 < maxExp(wE_out)) // no overflow can ever happen
+		vhdl << "'0'; --  overflow never happens for this constant and these (wE_in, wE_out)" << endl;
+	else 
+		vhdl <<  "'0' when r_exp_nopb(" << wE_sum << " downto " << wE_out << ") = (" << wE_sum << " downto " << wE_out <<" => '0')     else '1';" << endl;
+
+	// underflow handling
+	vhdl << tab << declare("underflow") << " <= " ;
+	if (minExp(wE_in) + cst_exp_when_mantissa_1_2 > minExp(wE_out)) // no overflow can ever happen
+		vhdl << "'0'; --  underflow never happens for this constant and these (wE_in, wE_out)" << endl;
+	else 
+		vhdl <<  "r_exp_nopb(" << wE_sum << ");" << endl;
+			 
+	
+	vhdl << tab << declare("r_exp", wE_out) << " <= r_exp_nopb("<<wE_out-1<<" downto 0) ;"<<endl;
+
+	vhdl << tab << declare("r_exn", 2) << " <=      \"00\" when (("<< use("x_exn")<<" = \"00\") or ("<<use("x_exn")<<" = \"01\" and underflow='1'))  -- zero"<<endl 
+		  << tab << "         else \"10\" when (("<<use("x_exn")<<" = \"10\") or ("<<use("x_exn")<<" = \"01\" and overflow='1'))   -- infinity"<<endl
+		  << tab << "         else \"11\" when  ("<<use("x_exn")<<" = \"11\")                      -- NaN"<<endl
+		  << tab << "         else \"01\";                                          -- normal number"<<endl;
+
+	vhdl  << tab << "r <= " << use("r_exn") << " & " << use("r_sgn") << " & " << use("r_exp") << " & r_frac;"<<endl;
+
+
 }
 
 
@@ -186,126 +236,33 @@ FPConstMult::FPConstMult(Target* target, int wE_in, int wF_in, int wE_out, int w
 FPConstMult::~FPConstMult() {
 	// TODO but who cares really
 	// delete icm; Better not: it has been added to oplist
-	// mpfr_clear(mpfr_xcut_sig);
-	// mpfr_clear(mpfr_cst_sig);
-	mpfr_clear(mpY);
+	mpfr_clears(mpfr_cst, mpfr_cst_sig, mpfr_xcut_sig, NULL);
 }
 
 
-void FPConstMult::outputVHDL(ostream& o, string name) {
-	licence(o,"Florent de Dinechin (2007)");
-	Operator::stdLibs(o);
-	outputVHDLEntity(o);
-	o << "architecture arch of " << name  << " is" << endl;
-
-	icm->Operator::outputVHDLComponent(o);
-
-	// bit width of constant exponent
-	int wE_cst=intlog2(abs(cst_exp_when_mantissa_1_2));
-	if(verbose)
-		cout << "  wE_cst="<<wE_cst<<endl;
-
-	// We have to compute Er = E_X - bias(wE_in) + E_C + bias(wE_R)
-	// Let us pack all the constants together
-	mpz_class expAddend = -bias(wE_in) + cst_exp_when_mantissa_1_2  + bias(wE_out);
-	int expAddendSign=0;
-	if (expAddend < 0) {
-		expAddend = -expAddend;
-		expAddendSign=1;
-	}
-	int wE_sum; // will be the max size of all the considered  exponents
-	wE_sum = intlog2(expAddend);
-	if(wE_in > wE_sum)
-		wE_sum = wE_in;
-	if(wE_out > wE_sum) 
-		wE_sum = wE_out;
-	outputVHDLSignalDeclarations(o);
 
 
-	o << tab << "signal abs_unbiased_cst_exp  : std_logic_vector("<<wE_sum<<" downto 0) := \"";
-	printBinNumGMP(o,  expAddend, wE_sum+1);    o << "\";"<<endl;
- 	o << tab << "signal xcut_rd      : std_logic_vector("<<wF_in<<" downto 0) := \"";
- 	printBinPosNumGMP(o, xcut_sig_rd, wF_in+1);     o<<"\";"<<endl;
-
-	o << tab << "begin"<<endl;
-	o << tab << tab << "x_exn <=  x("<<wE_in<<"+"<<wF_in<<"+2 downto "<<wE_in<<"+"<<wF_in<<"+1);"<<endl;
-	o << tab << tab << "x_sgn <=  x("<<wE_in<<"+"<<wF_in<<");"<<endl;
-	o << tab << tab << "x_exp <=  x("<<wE_in<<"+"<<wF_in<<"-1 downto "<<wF_in<<");"<<endl;
-	o << tab << tab << "x_sig <= '1' & x("<<wF_in-1 <<" downto 0);"<<endl;
-	o << tab << tab << "sig_mult : "
-	  << icm->getName()<<endl
-	  << tab<<tab<<tab << "port map(inx => x_sig, r => sig_prod";
-	if(isSequential())
-		o << ", clk => clk, rst => rst";
-	o << ");"<<endl;
-	// Possibly shift the significand one bit left, and remove implicit 1 
-	o << tab << tab << "gt_than_xcut <= '1' when ( x_sig("<<wF_in-1<<" downto 0) > xcut_rd("<<wF_in-1<<" downto 0) ) else '0';"<<endl;
-	o << tab << tab << "shifted_frac <=  sig_prod("<<icm->rsize -2<<" downto "<<icm->rsize - wF_out - 2<<")  when " << delaySignal("gt_than_xcut", icm_depth) << " = '1'"<<endl
-		<< tab << tab << "           else sig_prod("<<icm->rsize -3<<" downto "<<icm->rsize - wF_out - 3<<");"<<endl;  
-	// add the rounding bit
-	o << tab << tab << "rounded_frac <= (("<<wF_out <<" downto 1 => '0') & '1') + " << delaySignal("shifted_frac", 1) << ";"<<endl;
-	o << tab << tab << "r_frac <= rounded_frac("<<wF_out <<" downto  1);"<<endl;
-	// Handling signs is trivial
-	if(cst_sgn==0)
-		o << tab << tab << "r_sgn <= " << delaySignal("x_sgn",1) << "; -- positive constant"<<endl;
-	else
-		o << tab << tab << "r_sgn <= not " << delaySignal("x_sgn",1) << "; -- negative constant"<<endl;
-
-	// exponent handling
-	o << tab << tab << "r_exp_nopb <= ";
-	o << "((" << wE_sum << " downto " << wE_in << " => '0')  & " << delaySignal("x_exp", 1) << ")  ";
-	o << (expAddendSign==0 ? "+" : "-" ) << "  abs_unbiased_cst_exp";
-	o << "  +  (("<<wE_sum<<" downto 1 => '0') & " <<  delaySignal("gt_than_xcut", 1) << ");"<<endl;
-
-	// overflow handling
-	if (maxExp(wE_in) + cst_exp_when_mantissa_1_2 + 1 < maxExp(wE_out)) // no overflow can ever happen
-		o << tab << tab << "overflow <= '0'; --  overflow never happens for this constant and these (wE_in, wE_out)" << endl;
-	else 
-		o << tab << tab << "overflow <= '0' when r_exp_nopb(" << wE_sum << " downto " << wE_out << ") = (" << wE_sum << " downto " << wE_out <<" => '0')     else '1';" << endl;
-
-	// underflow handling
-	if (minExp(wE_in) + cst_exp_when_mantissa_1_2 > minExp(wE_out)) // no overflow can ever happen
-		o << tab << tab << "underflow <= '0'; --  underflow never happens for this constant and these (wE_in, wE_out)" << endl;
-	else 
-		o << tab << tab << "underflow <=  r_exp_nopb(" << wE_sum << ");" << endl;
-			 
-	
-	o << tab << tab << "r_exp <= r_exp_nopb("<<wE_out-1<<" downto 0) ;"<<endl;
-
-	o << tab << tab << "r_exn <=      \"00\" when (("<<delaySignal("x_exn")<<" = \"00\") or (underflow='1'))  -- zero"<<endl 
-		<< tab << tab << "         else \"10\" when (("<<delaySignal("x_exn")<<" = \"10\") or (overflow='1'))   -- infinity"<<endl
-		<< tab << tab << "         else \"11\" when  ("<<delaySignal("x_exn")<<" = \"11\")                      -- NaN"<<endl
-		<< tab << tab << "         else \"01\";                                          -- normal number"<<endl;
-
-	outputVHDLRegisters(o);
-
-	o << tab << tab << "r <= " << delaySignal("r_exn", icm_depth) << " & " << delaySignal("r_sgn", icm_depth) << " & " << delaySignal("r_exp", icm_depth) << " & r_frac;"<<endl;
-	o << "end architecture;" << endl << endl;		
-}
-
-
-void FPConstMult::fillTestCase(mpz_class a[])
+void FPConstMult::emulate(TestCase *tc)
 {
-	mpz_class& svX = a[0];
-	mpz_class& svR = a[1];
+	/* Get I/O values */
+	mpz_class svX = tc->getInputValue("X");
 
-	FPNumber x(wE_in, wF_in), r(wE_out, wF_out);
-	mpfr_t mpx, mpr, signedY;
-	
- 	mpfr_init(signedY);
-	if(cst_sgn==1)
-		mpfr_neg(signedY, mpY, GMP_RNDN);
-	else
-		mpfr_set(signedY, mpY, GMP_RNDN);
+	/* Compute correct value */
+	FPNumber fpx(wE_in, wF_in);
+	fpx = svX;
+	mpfr_t x, r;
+	mpfr_init2(x, 1+wF_in);
+	mpfr_init2(r, 1+wF_out); 
+	fpx.getMPFR(x);
+	mpfr_mul(r, x, mpfr_cst, GMP_RNDN);
 
+	// Set outputs 
+	FPNumber  fpr(wE_out, wF_out, r);
+	mpz_class svR = fpr.getSignalValue();
+	tc->addExpectedOutput("R", svR);
 
-	mpfr_init2(mpx, wF_in+1);
-	x = svX;
-	x.getMPFR(mpx);
-	mpfr_init2(mpr, wF_out+1);
-	mpfr_mul(mpr, mpx, signedY, GMP_RNDN);
-	r = mpr;
-	svR = r.getSignalValue();
-	mpfr_clears(mpr, mpx, signedY, 0, NULL);
+	// clean up
+	mpfr_clears(x, r, NULL);
+
 }
 
