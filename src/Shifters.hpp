@@ -25,7 +25,7 @@ public:
 	 * The Shifter constructor
 	 * @param[in]		target		the target device
 	 * @param[in]		wIn			  the with of the input
-	 * @param[in]		maxShift	the maximum shift ammount
+	 * @param[in]		maxShift	the maximum shift amount
 	 * @param[in]		direction	can be either Left of Right. Determines the shift direction
 	 **/
 	Shifter(Target* target, int wIn, int maxShift, ShiftDirection dir, map<string, double> inputDelays = emptyDelayMap);
@@ -51,17 +51,17 @@ public:
 	 */
 	void emulate(TestCase * tc);
 
-	/** Returns the number of bits of the sift ammount 
-	 *@return number of bits of the shift ammount
+	/** Returns the number of bits of the sift amount 
+	 *@return number of bits of the shift amount
 	*/
-	int getShiftAmmount(){
+	int getShiftInWidth(){
 		return wShiftIn_;
 	}
 protected:
 	int wIn_;          /**< the width of the input*/
-	int maxShift_;     /**< the maximum shift ammount*/
+	int maxShift_;     /**< the maximum shift amount*/
 	int wOut_;         /**< the width of the output */
-	int wShiftIn_; 	   /**< the number of bits of the input which determines the shift ammount*/
+	int wShiftIn_; 	 /**< the number of bits of the input which determines the shift amount*/
 
 private:
 	ShiftDirection direction_;  /**< determines the shift direction. can be Left or Right */

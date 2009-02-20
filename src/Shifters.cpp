@@ -150,21 +150,21 @@ void Shifter::emulate(TestCase* tc)
 	int i;
 	
 	if (direction_==Left){
-		mpz_class shiftAmmount = ss;
-		for (i=0;i<shiftAmmount;i++)
+		mpz_class shiftAmount = ss;
+		for (i=0;i<shiftAmount;i++)
 				shiftedInput=shiftedInput*2;
 		
 		for (i= wIn_+intpow2(wShiftIn_)-1-1; i>=wOut_;i--)
 			if ( mpzpow2(i) <= shiftedInput )
 				shiftedInput-=mpzpow2(i);
 	}else{
-		mpz_class shiftAmmount = maxShift_-ss;
+		mpz_class shiftAmount = maxShift_-ss;
 
-		if (shiftAmmount > 0){
-			for (i=0;i<shiftAmmount;i++)
+		if (shiftAmount > 0){
+			for (i=0;i<shiftAmount;i++)
 				shiftedInput=shiftedInput*2;
 		}else{
-			for (i=0;i>shiftAmmount;i--)
+			for (i=0;i>shiftAmount;i--)
 				shiftedInput=shiftedInput/2;
 		}
 	}

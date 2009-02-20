@@ -248,7 +248,7 @@ int i;
 	o << tab << "-- shift of the input into the proper place " << endl;
 	o << tab << "input_shifter : " << shifter_->getName() << endl;
 	o << tab << "    port map ( X => fracX, " << endl;
-	o << tab << "               S => shiftval("<< shifter_->getShiftAmmount() - 1 <<" downto 0), " << endl;
+	o << tab << "               S => shiftval("<< shifter_->getShiftInWidth() - 1 <<" downto 0), " << endl;
 	o << tab << "               R => shifted_frac";
 	if (shifter_->isSequential()) {
 		o<<"," << endl;
@@ -598,12 +598,12 @@ void LongAcc::fillTestCase(mpz_class a[])
 		<<",a=" << AccValue_;
 #endif
 
-	if (fpX.getExceptionSignalValue()!=0)  
+	if (fpX.getExceptionSignalValue()!=0)  {
 		if (fpX.getSignSignalValue()==0)
 			AccValue_ = AccValue_ + mapFP2Acc(fpX);
 		else
 			AccValue_ = AccValue_ - mapFP2Acc(fpX);
-	
+	}
 	if (verbose==1){
 		if (fpX.getExceptionSignalValue()!=0)
 #ifdef  _WIN32
