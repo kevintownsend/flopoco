@@ -89,64 +89,75 @@ LogRangeRed :: LogRangeRed(Target* target,
 	outPortMap      (it0, "Y", "InvA0");
 	vhdl << instance(it0, "itO");
 
+
 	vhdl << tab << "-- First log table" << endl;
 	inPortMap       (lt0, "X", "A0");
 	outPortMap      (lt0, "Y", "L0");
 	vhdl << instance(lt0, "ltO");
-
-	vhdl << tab << declare("P0",  it0->wOut + s[0]) << " <= InvA0 * Y0;" <<endl <<endl;
-	vhdl << tab << declare("Z1", s[1]) << " <= P0("<< s[1] -1<<" downto 0);"<<endl;
 	vhdl << tab << declare("S1", lt0->wOut) << " <= L0;"<<endl;
 
+	nextCycle();
+
+	vhdl << tab << declare("P0",  it0->wOut + s[0]) << " <= " << use("InvA0") << "*" << use("Y0") << ";" <<endl <<endl;
+	vhdl << tab << declare("Z1", s[1]) << " <= P0("<< s[1] -1<<" downto 0);"<<endl;
+
+
 	for (i=1; i<= stages; i++) {
+		nextCycle();
 		vhdl <<endl;
 		//computation
-		vhdl << tab << declare(join("A", i), a[i]) <<     " <= " << join("Z",i) << range(s[i]-1,      s[i]-a[i]) << ";"<<endl;
-		vhdl << tab << declare(join("B",i), s[i]-a[i]) << " <= " << join("Z",i) << range(s[i]-a[i]-1, 0        ) << ";"<<endl;
+		vhdl << tab << declare(join("A",i), a[i]) <<     " <= " << use(join("Z",i)) << range(s[i]-1,      s[i]-a[i]) << ";"<<endl;
+		vhdl << tab << declare(join("B",i), s[i]-a[i]) << " <= " << use(join("Z",i)) << range(s[i]-a[i]-1, 0        ) << ";"<<endl;
+
+		vhdl << tab << declare(join("ZM",i), psize[i]) << " <= " << use(join("Z",i)) ;
+		if(psize[i] == s[i])
+			vhdl << ";"<<endl;   
+		else
+			vhdl << range(s[i]-1, s[i]-psize[i])  << ";" << endl;   
+		vhdl << tab << declare(join("P",i),  psize[i] + a[i]) << " <= " << join("A",i) << "*" << join("ZM",i) << ";" << endl;
+
+
+		// TODO better pipeline the small input as late as possible than pipeline the large output
 		inPortMap       (lt[i], "X", join("A", i));
 		outPortMap      (lt[i], "Y", join("L", i));
 		vhdl << instance(lt[i], join("lt",i));
-		vhdl << tab << declare(join("ZM",i), psize[i]) << " <= ";
-		if(psize[i] == s[i])
-			vhdl << join("Z",i) << ";"<<endl;   
-		else
-			vhdl << join("Z",i) << range(s[i]-1, s[i]-psize[i])  << ";" << endl;   
-		vhdl << tab << declare(join("P",i),  psize[i] + a[i]) << " <= " << join("A",i) << "*" << join("ZM",i) << ";" << endl;
+
+		nextCycle();
 
 		vhdl << tab << declare(join("epsZ",i), s[i] + p[i] +2 ) << " <= " ;
 		if(i==1) { // special case for the first iteration
-			vhdl << 	rangeAssign(s[i]+p[i]+1,  0,  "'0'")  << " when  A1 = " << rangeAssign(a[1]-1, 0,  "'0'") << endl
-				  << tab << "    else (\"01\" & "<< rangeAssign(p[i]-1, 0, "'0'") << " & Z"<<i<<" )"
-				  << "  when ((A1("<< a[1]-1 << ")='0') and (A1" << range(a[1]-2, 0) << " /= " << rangeAssign(a[1]-2, 0, "'0'") << "))" << endl
-			  << tab << "    else " << "(\"1\" & " << rangeAssign(p[i]-1, 0, "'0'") << " & " << join("Z",i) << "  & \"0\") "
+			vhdl << 	rangeAssign(s[i]+p[i]+1,  0,  "'0'")  << " when  " << use("A1") << " = " << rangeAssign(a[1]-1, 0,  "'0'") << endl
+				  << tab << "    else (\"01\" & "<< rangeAssign(p[i]-1, 0, "'0'") << " & " << use(join("Z",i)) << " )"
+				  << "  when ((A1("<< a[1]-1 << ")='0') and (" << use("A1") << range(a[1]-2, 0) << " /= " << rangeAssign(a[1]-2, 0, "'0'") << "))" << endl
+				  << tab << "    else " << "(\"1\" & " << rangeAssign(p[i]-1, 0, "'0'") << " & " << use(join("Z",i)) << "  & \"0\") "
 			  << ";"<<endl;
 		}
 		else {
 			vhdl << rangeAssign(s[i]+p[i]+1,  0,  "'0'") 
-				  << tab << "  when " << join("A",i) << " = " << rangeAssign(a[i]-1,  0,  "'0'") << endl
-				  << tab << "  else    (\"01\" & " << rangeAssign(p[i]-1,  0,  "'0'") << " & " << join("Z",i) <<");"<<endl;
+				  << tab << "  when " << use(join("A",i)) << " = " << rangeAssign(a[i]-1,  0,  "'0'") << endl
+				  << tab << "  else    (\"01\" & " << rangeAssign(p[i]-1,  0,  "'0'") << " & " << use(join("Z",i)) <<");"<<endl;
 		}
 
-		vhdl << tab << declare(join("Z", i+1), s[i+1]) << " <=   (\"0\" & " << join("B",i);
+		vhdl << tab << declare(join("Z", i+1), s[i+1]) << " <=   (\"0\" & " << use(join("B",i));
 		if (s[i+1] > 1+(s[i]-a[i]))  // need to padd Bi
 			vhdl << " & " << rangeAssign(s[i+1] - 1-(s[i]-a[i]) -1,  0 , "'0'");    
 		vhdl <<")"<<endl 
-			  << tab << "      - ( " << rangeAssign(p[i]-a[i],  0,  "'0'") << " & " << join("P", i);
+			  << tab << "      - ( " << rangeAssign(p[i]-a[i],  0,  "'0'") << " & " << use(join("P", i));
 		// either pad, or truncate P
 		if(p[i]-a[i]+1  + psize[i]+a[i]  < s[i+1]) // size of leading 0s + size of p 
-			vhdl << " & ("<<s[i+1] - (p[i]-a[i]+1  + psize[i]+a[i]) - 1 <<" downto 0 => '0')";  // Pad
+			vhdl << " & "<< rangeAssign(s[i+1] - (p[i]-a[i]+1  + psize[i]+a[i]) - 1,    0,  "'0'");  // Pad
 		if(p[i]-a[i]+1  + psize[i]+a[i]  > s[i+1]) 
 			//truncate
-			vhdl <<"("<< psize[i]+a[i] - 1  <<" downto "<<  p[i]-a[i]+1  + psize[i]+a[i]  - s[i+1] << " )";
+			vhdl << range(psize[i]+a[i]-1,    p[i]-a[i]+1  + psize[i]+a[i] - s[i+1]);
 		vhdl << "  )"<< endl;
 		
-		vhdl << tab << "      + " << join("epsZ",i) << range(s[i]+p[i]+1,  s[i]+p[i] +2 - s[i+1]) << ";"<<endl;
+		vhdl << tab << "      + " << use(join("epsZ",i)) << range(s[i]+p[i]+1,  s[i]+p[i] +2 - s[i+1]) << ";"<<endl;
 		
 		vhdl << tab << declare(join("S",i+1),  lt0->wOut) << " <= " 
-			  <<  join("S",i)  << " + (" << rangeAssign(lt0->wOut-1, lt[i]->wOut,  "'0'") << " & " << join("L",i) <<");"<<endl;
+			  <<  use(join("S",i))  << " + (" << rangeAssign(lt0->wOut-1, lt[i]->wOut,  "'0'") << " & " << use(join("L",i)) <<");"<<endl;
 	}
-	vhdl << "   Z <= " << join("Z", stages+1) << ";" << endl;  
-	vhdl << "   almostLog <= " << join("S",stages+1) << ";" << endl;  
+	vhdl << "   Z <= " << use(join("Z", stages+1)) << ";" << endl;  
+	vhdl << "   almostLog <= " << use(join("S",stages+1)) << ";" << endl;  
 
 } 
 
