@@ -74,7 +74,6 @@ public:
 
 	int pfinal;  // equal to s[stages+1]
 
-	int lzc_size; // TODO look at it
 	// The guard bits 
 	int gLog;
 

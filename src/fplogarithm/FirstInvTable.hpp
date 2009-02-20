@@ -9,9 +9,7 @@ public:
 	FirstInvTable(Target* target, int p1, int w1);
 	
 	~FirstInvTable();
-	
-	void setOperatorName();
-	
+  	
 	mpz_class function(int x);
 	
 	//  int check_accuracy(int wF);

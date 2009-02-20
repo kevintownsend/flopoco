@@ -10,16 +10,14 @@ using namespace std;
 FirstInvTable::FirstInvTable(Target* target, int wIn, int wOut) : 
    Table(target, wIn, wOut)  
 {
-	setOperatorName();
+	ostringstream name; 
+	name <<"InvTable_0_"<<wIn<<"_"<<wOut;
+	setName(name.str());
+	setOperatorType();
+
 }
 
 FirstInvTable::~FirstInvTable() {}
-
-void FirstInvTable::setOperatorName(){
-	ostringstream name; 
-	name <<"InvTable_0_"<<wIn<<"_"<<wOut;
-	uniqueName_=name.str();
-}
   
 
 int    FirstInvTable::double2input(double x){

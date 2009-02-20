@@ -54,6 +54,7 @@ LogRangeRed :: LogRangeRed(Target* target,
 	setName(name.str());
 	setOperatorType();
 
+	setCopyrightString("F. de Dinechin (2008)");
 
 	// Now allocate the various table objects
 
@@ -74,16 +75,6 @@ LogRangeRed :: LogRangeRed(Target* target,
 	 }
 
 
-	// IO declarations
-
-	// Declare input and output signals
-	// o <<   "          Y0 : in  std_logic_vector("<<wF+1<<" downto 0);"<<endl;
-	// o <<   "          A  : in std_logic_vector("<< a[0]-1 <<" downto 0);"<<endl;
-	//	if(isSequential()) 
-	// 	o << "          clk  : in std_logic;"<<endl;
-	// o <<   "          Z  : out std_logic_vector("<< s[stages+1]-1 <<" downto 0);"<<endl;
-	// o <<   "  almostLog  : out std_logic_vector("<< lt0->wOut-1 <<" downto 0)  );"<<endl;
-
 
 	addInput("Y0", fplog->wF+2);
 	addInput("A", a[0]);
@@ -91,162 +82,86 @@ LogRangeRed :: LogRangeRed(Target* target,
 	addOutput("almostLog", lt0->wOut);
 
 
-	// Signal declarations
+	vhdl << tab << declare("A0", a[0]) << " <= A;"<<endl;
 
-	for (i=0; i<= stages; i++) {
-	// 		o << "   signal       A"<<i<<":  std_logic_vector("<< a[i] - 1  <<" downto 0);"<<endl;
-		ostringstream name; 
-		name << "A" << i ;
-		addSignal(name.str(), a[i]);
-	}
-	 	
- 	for (i=1; i<= stages; i++) {
-		// o << "   signal       B"<<i<<":  std_logic_vector("<< s[i] - a[i] - 1  <<" downto 0);"<<endl;
-		ostringstream name; 
-		name << "B" << i ;
-		addSignal(name.str(), s[i] - a[i]);
-	}
-	
-	for (i=0; i<= stages+1; i++) {
-		// o << "   signal Z"<<i<<", Z"<<i<<"_d:  std_logic_vector("<< s[i] - 1  <<" downto 0);"<<endl;
-		ostringstream name; 
-		name << "Z" << i ;
-		addSignal(name.str(), s[i]);
-	}
-	
-	for (i=1; i<= stages; i++) {
-		// o << "   signal    epsZ"<<i<<":  std_logic_vector("<< s[i]+p[i]+1  <<" downto 0);"<<endl;
-		ostringstream name; 
-		name << "epsZ" << i ;
-		addSignal(name.str(), s[i] + p[i]);
-	}
+	vhdl << tab << "-- First inv table" << endl;
+	inPortMap       (it0, "X", "A0");
+	outPortMap      (it0, "Y", "InvA0");
+	vhdl << instance(it0, "itO");
 
-	// we compute Z[i+1] = B[i] - A[i]Z[i] + (1+Z[i])>>eps[i]
-	// Product  A[i]Z[i] has MSB 2*p[i], LSB target_prec, therefore size target_prec - 2*p[i]
-	// We need only this many bits of Z[i] to compute it.
-	for (i=1; i<= stages; i++) {
-	// 		o << "   signal      ZM"<<i<<":  std_logic_vector("<< psize[i] - 1  <<" downto 0);"<<endl;
-		ostringstream name; 
-		name << "ZM" << i ;
-		addSignal(name.str(),  psize[i]);
-	}
-	
-	// 	o << "   signal       P0:  std_logic_vector("<<  it0->wOut + s[0] - 1  <<" downto 0);"<<endl;
-	addSignal("P0",  it0->wOut + s[0]);
-	for (i=1; i<= stages; i++) {
-		// o << "   signal       P"<<i<<":  std_logic_vector("<< psize[i]+a[i] - 1  <<" downto 0);"<<endl;
-		ostringstream name; 
-		name << "P" << i ;
-		addSignal(name.str(),  psize[i] + a[i]);
-	}
-	
-	// 	o << "   signal       L0:  std_logic_vector("<< lt0->wOut -1 <<" downto 0);"<<endl;
-	addSignal("L0",  lt0->wOut);
-	
-	for (i=1; i<= stages; i++) {
-	// 			o << "   signal       L"<<i<<":  std_logic_vector("<< lt[i]->wOut -1 <<" downto 0);"<<endl;
-		ostringstream name; 
-		name << "L" << i ;
-		addSignal(name.str(),  lt[i]->wOut);
-	}
-	
-	// Note that all the Si have the size of L0: absence of carry out is proven.
-	for (i=1; i<= stages+1; i++) {
-		//o << "   signal S"<<i<<", S"<<i<<"_d:  std_logic_vector("<< lt0->wOut-1 <<" downto 0);"<<endl;
-		ostringstream name; 
-		name << "S" << i ;
-		addSignal(name.str(),  lt0->wOut);
-	}
+	vhdl << tab << "-- First log table" << endl;
+	inPortMap       (lt0, "X", "A0");
+	outPortMap      (lt0, "Y", "L0");
+	vhdl << instance(lt0, "ltO");
 
-	// 	o << "   signal    InvA0:  std_logic_vector("<< a[0]  <<" downto 0);"<<endl;
-	addSignal("invA0",  a[0]+1);
+	vhdl << tab << declare("P0",  it0->wOut + s[0]) << " <= InvA0 * Y0;" <<endl <<endl;
+	vhdl << tab << declare("Z1", s[1]) << " <= P0("<< s[1] -1<<" downto 0);"<<endl;
+	vhdl << tab << declare("S1", lt0->wOut) << " <= L0;"<<endl;
+
+	for (i=1; i<= stages; i++) {
+		vhdl <<endl;
+		//computation
+		vhdl << tab << declare(join("A", i), a[i]) <<     " <= " << join("Z",i) << range(s[i]-1,      s[i]-a[i]) << ";"<<endl;
+		vhdl << tab << declare(join("B",i), s[i]-a[i]) << " <= " << join("Z",i) << range(s[i]-a[i]-1, 0        ) << ";"<<endl;
+		inPortMap       (lt[i], "X", join("A", i));
+		outPortMap      (lt[i], "Y", join("L", i));
+		vhdl << instance(lt[i], join("lt",i));
+		vhdl << tab << declare(join("ZM",i), psize[i]) << " <= ";
+		if(psize[i] == s[i])
+			vhdl << join("Z",i) << ";"<<endl;   
+		else
+			vhdl << join("Z",i) << range(s[i]-1, s[i]-psize[i])  << ";" << endl;   
+		vhdl << tab << declare(join("P",i),  psize[i] + a[i]) << " <= " << join("A",i) << "*" << join("ZM",i) << ";" << endl;
+
+		vhdl << tab << declare(join("epsZ",i), s[i] + p[i] +2 ) << " <= " ;
+		if(i==1) { // special case for the first iteration
+			vhdl << 	rangeAssign(s[i]+p[i]+1,  0,  "'0'")  << " when  A1 = " << rangeAssign(a[1]-1, 0,  "'0'") << endl
+				  << tab << "    else (\"01\" & "<< rangeAssign(p[i]-1, 0, "'0'") << " & Z"<<i<<" )"
+				  << "  when ((A1("<< a[1]-1 << ")='0') and (A1" << range(a[1]-2, 0) << " /= " << rangeAssign(a[1]-2, 0, "'0'") << "))" << endl
+			  << tab << "    else " << "(\"1\" & " << rangeAssign(p[i]-1, 0, "'0'") << " & " << join("Z",i) << "  & \"0\") "
+			  << ";"<<endl;
+		}
+		else {
+			vhdl << rangeAssign(s[i]+p[i]+1,  0,  "'0'") 
+				  << tab << "  when " << join("A",i) << " = " << rangeAssign(a[i]-1,  0,  "'0'") << endl
+				  << tab << "  else    (\"01\" & " << rangeAssign(p[i]-1,  0,  "'0'") << " & " << join("Z",i) <<");"<<endl;
+		}
+
+		vhdl << tab << declare(join("Z", i+1), s[i+1]) << " <=   (\"0\" & " << join("B",i);
+		if (s[i+1] > 1+(s[i]-a[i]))  // need to padd Bi
+			vhdl << " & " << rangeAssign(s[i+1] - 1-(s[i]-a[i]) -1,  0 , "'0'");    
+		vhdl <<")"<<endl 
+			  << tab << "      - ( " << rangeAssign(p[i]-a[i],  0,  "'0'") << " & " << join("P", i);
+		// either pad, or truncate P
+		if(p[i]-a[i]+1  + psize[i]+a[i]  < s[i+1]) // size of leading 0s + size of p 
+			vhdl << " & ("<<s[i+1] - (p[i]-a[i]+1  + psize[i]+a[i]) - 1 <<" downto 0 => '0')";  // Pad
+		if(p[i]-a[i]+1  + psize[i]+a[i]  > s[i+1]) 
+			//truncate
+			vhdl <<"("<< psize[i]+a[i] - 1  <<" downto "<<  p[i]-a[i]+1  + psize[i]+a[i]  - s[i+1] << " )";
+		vhdl << "  )"<< endl;
+		
+		vhdl << tab << "      + " << join("epsZ",i) << range(s[i]+p[i]+1,  s[i]+p[i] +2 - s[i+1]) << ";"<<endl;
+		
+		vhdl << tab << declare(join("S",i+1),  lt0->wOut) << " <= " 
+			  <<  join("S",i)  << " + (" << rangeAssign(lt0->wOut-1, lt[i]->wOut,  "'0'") << " & " << join("L",i) <<");"<<endl;
+	}
+	vhdl << "   Z <= " << join("Z", stages+1) << ";" << endl;  
+	vhdl << "   almostLog <= " << join("S",stages+1) << ";" << endl;  
 
 } 
 
 
 LogRangeRed::~LogRangeRed()
 {
+#if 0 // better done on oplist 
 	delete it0;
 	delete lt0;
 	//delete it1;
 	for(int i=1; i<=stages; i++) 
 		delete lt[i];
+#endif
 }
 
 
 
 
-
-void LogRangeRed::outputVHDL(std::ostream& o, std::string name)
-{
-	int i;
-	licence(o, "F. de Dinechin, C. Klein  (2008)");
-	Operator::stdLibs(o);
-	outputVHDLEntity(o);
-	newArchitecture(o,name);
-	it0->outputVHDLComponent(o);
-	lt0->outputVHDLComponent(o);
-	for(i=1;  i<= stages; i++) {
-		lt[i]->outputVHDLComponent(o);
-	 }
-	outputVHDLSignalDeclarations(o);
-	beginArchitecture(o);
-
-	o << tab << "A0 <= A;"<<endl;
-	o << tab << "it0: "<< it0->getName() << " port map (x=>A0, y=>InvA0);" <<endl; 
-	o << tab << "lt0: "<< lt0->getName() << " port map (x=>A0, y=>L0);"<<endl;
-	o << tab << "P0 <= InvA0 * Y0;" <<endl <<endl;
-	o << tab << "Z1 <= P0("<< s[1] -1<<" downto 0);"<<endl;
-	o << tab << "S1 <= L0;"<<endl;
-
-	for (i=1; i<= stages; i++) {
-		o <<endl;
-			//computation
-		o << tab << "A"<<i<<" <= Z"<<i<<"(" << s[i] - 1  <<" downto "<< s[i] - a[i]  << ");"<<endl;
-		o << tab << "B"<<i<<" <= Z"<<i<<"(" << s[i] - a[i] - 1  <<" downto 0 );"<<endl;
-		o << tab << "lt"<<i<<": " << lt[i]->getName() << " port map (x=>A"<<i<<", y=>L"<<i<<");"<<endl;
-		if(psize[i] == s[i])
-			o << tab << "ZM"<<i<<" <= Z"<<i<< ";"<<endl;   
-		else
-			o << tab << "ZM"<<i<<" <= Z"<<i<<"(" <<s[i]-1   <<" downto "<< s[i]-psize[i]  << ");"<<endl;   
-		o << tab << "P"<<i<<" <= A"<<i<<"*ZM"<<i<<";"<<endl;
-
-		if(i==1) { // special case for the first iteration
-			o << tab << "epsZ"<<i<<" <= ("<<s[i]+p[i]+1<<" downto 0 => '0') "
-			  << tab << "  when  A1 = ("<<a[1]-1<<" downto 0 => '0')"<<endl
-			  << tab << "    else (\"01\" & ("<<p[i]-1<<" downto 0 => '0') & Z"<<i<<" )"
-			  << "  when ((A1("<<a[1]-1<<")='0') and (A1("<<a[1]-2<<" downto 0) /= ("<<a[1]-2<<" downto 0 => '0')))"<<endl
-			  << tab << "    else "
-			  << "(\"1\" & ("<<p[i]-1<<" downto 0 => '0') & Z"<<i<<"  & \"0\") "
-			  << ";"<<endl;
-		}
-		else {
-			o << tab << "epsZ"<<i<<" <=  ("<< s[i]+p[i]+1<<" downto 0 => '0') "
-			  << tab << "  when  A"<<i<<" = ("<<a[i]-1<<" downto 0 => '0')"<<endl
-			  << tab << "  else    (\"01\" & ("<<p[i]-1<<" downto 0 => '0') & Z"<<i<<");"<<endl;
-		}
-
-		o << tab << "Z"<<i+1<<" <=   (\"0\" & B"<<i;
-		if (s[i+1] > 1+(s[i]-a[i]))  // need to padd Bi
-			o << " & ("<<s[i+1] - 1-(s[i]-a[i]) -1<<" downto 0 => '0') ";    
-		o <<")"<<endl 
-		  << tab << "      - ( ("<<p[i]-a[i]<<" downto 0 => '0') & P"<<i;
-		// either pad, or truncate P
-		if(p[i]-a[i]+1  + psize[i]+a[i]  < s[i+1]) // size of leading 0s + size of p 
-			o << " & ("<<s[i+1] - (p[i]-a[i]+1  + psize[i]+a[i]) - 1 <<" downto 0 => '0')";  // Pad
-		if(p[i]-a[i]+1  + psize[i]+a[i]  > s[i+1]) 
-			//truncate
-			o <<"("<< psize[i]+a[i] - 1  <<" downto "<<  p[i]-a[i]+1  + psize[i]+a[i]  - s[i+1] << " )";
-		o << "  )"<< endl;
-		
-		o << tab << "      + epsZ"<<i << "("<<s[i]+p[i]+1<<" downto "<<s[i]+p[i] +2 - s[i+1]<<")"
-		  << ";"<<endl;
-		
-		
-		o << tab << "S"<<i+1<<" <=   S"<<i<<" + (("<<lt0->wOut-1<<" downto "<<lt[i]->wOut<<" =>'0') & L"<<i<<");"<<endl;
-	}
-	o << "   Z <= Z"<<stages+1<<";"<<endl;  
-	o << "   almostLog <= S"<<stages+1<<";"<<endl;  
-	endArchitecture(o);
-
-}

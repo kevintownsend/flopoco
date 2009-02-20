@@ -13,8 +13,6 @@ public:
 	
 	FirstInvTable* fit;
 	
-	void setOperatorName();
-	
 	mpz_class function(int x);
 	
 	int    double2input(double x);

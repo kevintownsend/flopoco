@@ -266,11 +266,12 @@ void  Operator::outputVHDLRegisters(std::ostream& o) {
 			o << tab << tab << tab << "if rst = '1' then" << endl;
 			for(i=0; i<signalList_.size(); i++) {
 				Signal *s = signalList_[i];
-				if(s->type()==Signal::registeredWithAsyncReset)
+				if(s->type()==Signal::registeredWithAsyncReset) {
 					if ((s->width()>1)||(s->isBus())) 
 						o << tab <<tab << tab << s->getName() <<"_d" << " <=  (" << s->width()-1 <<" downto 0 => '0');\n";
 					else
 						o << tab <<tab << tab << s->getName() <<"_d" << " <=  '0';\n";
+				}
 			}
 			o << tab << tab << tab << "elsif clk'event and clk = '1' then" << endl;
 			for(i=0; i<signalList_.size(); i++) {
@@ -290,11 +291,12 @@ void  Operator::outputVHDLRegisters(std::ostream& o) {
 			o << tab << tab << tab << "if rst = '1' then" << endl;
 			for(i=0; i<signalList_.size(); i++) {
 				Signal *s = signalList_[i];
-				if(s->type()==Signal::registeredWithSyncReset)
+				if(s->type()==Signal::registeredWithSyncReset) {
 					if ((s->width()>1)||(s->isBus())) 
 						o << tab <<tab << tab << s->getName() <<"_d" << " <=  (" << s->width()-1 <<" downto 0 => '0');\n";
 					else
 						o << tab <<tab << tab << s->getName() <<"_d" << " <=  '0';\n";
+				}
 			}
 			o << tab << tab << tab << "else" << endl;
 			for(i=0; i<signalList_.size(); i++) {
@@ -800,10 +802,8 @@ void Operator::buildRandomTestCases(TestCaseList* tcl, int n){
 
 void Operator::outputVHDL(std::ostream& o, std::string name) {
   
-	ostringstream signame, synch1, synch2, xname,zeros, zeros1, zeros2, str1, str2;
-
 	licence(o);
-	Operator::stdLibs(o);
+	stdLibs(o);
 	outputVHDLEntity(o);
 	newArchitecture(o,name);
 	o << buildVHDLComponentDeclarations();	

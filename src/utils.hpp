@@ -207,7 +207,7 @@ string mpz2string(mpz_class x);
 
 string join( std::string id, int n);
 string join( std::string id, std::string);
-string range( int left, int right);
+string range(int left, int right);
 string rangeAssign( int left, int right, std::string s);
 
 /**

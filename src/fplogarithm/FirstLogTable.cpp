@@ -10,7 +10,11 @@ using namespace std;
 FirstLogTable::FirstLogTable(Target *target, int wIn, int wOut, FirstInvTable* fit) : 
 	Table(target, wIn, wOut), fit(fit)
  {
-	 setOperatorName();
+	 ostringstream name; 
+	 name <<"LogTable_0_"<<wIn<<"_"<<wOut;
+	 setName(name.str());
+	 setOperatorType();
+
 	 minIn = 0;
 	 maxIn = (1<<wIn) -1;
 	 if (wIn!=fit->wIn) {
@@ -20,12 +24,6 @@ FirstLogTable::FirstLogTable(Target *target, int wIn, int wOut, FirstInvTable* f
  }
 
 FirstLogTable::~FirstLogTable() {}
-
-void FirstLogTable::setOperatorName(){
-	ostringstream name; 
-	name <<"LogTable_0_"<<wIn<<"_"<<wOut;
-	uniqueName_=name.str();
-}
 
 
 int    FirstLogTable::double2input(double x){

@@ -57,6 +57,7 @@ Table::Table(Target* target, int _wIn, int _wOut, int _minIn, int _maxIn) :
 	Operator(target),
 	wIn(_wIn), wOut(_wOut), minIn(_minIn), maxIn(_maxIn)
 	{
+	setCopyrightString("Florent de Dinechin (2007)");
 
 	// Set up the IO signals
 	addInput ("X"  , wIn);
@@ -79,36 +80,23 @@ Table::Table(Target* target, int _wIn, int _wOut, int _minIn, int _maxIn) :
 	}
 
 
-
-void Table::outputVHDL(ostream& o, string name)
-{
-
-	licence(o,"Florent de Dinechin (2007)");
-	Operator::stdLibs(o);
-	outputVHDLEntity(o);
-	newArchitecture(o,name);
-	outputVHDLSignalDeclarations(o);
-	beginArchitecture(o);
-
+// We have to define this method because the constructor of Table cannot use the (pure virtual) function()
+void Table::outputVHDL(std::ostream& o, std::string name) {
 	int i,x;
 	mpz_class y;
-	o	<< "  with x select  y <= " << endl;
 
-
+	vhdl	<< "  with X select  Y <= " << endl;
 	for (x = minIn; x <= maxIn; x++) {
-		y=this->function(x);
+		y=function(x);
 		//    cout << x <<"  "<< y << endl;
-		o 	<< tab << "\"";
-			printBinPosNumGMP(o, y, wOut);
-		o << "\" when \"";
-		printBinNum(o, x, wIn);
-		o << "\"," << endl;
+		vhdl 	<< tab << "\"" << unsignedBinary(y, wOut) << "\" when \"" << unsignedBinary(x, wIn) << "\"," << endl;
 	}
-	o << tab << "\"";
-	for (i = 0; i < wOut; i++) o << "-";
-	o <<  "\" when others;" << endl;
+	vhdl << tab << "\"";
+	for (i = 0; i < wOut; i++) 
+		vhdl << "-";
+	vhdl <<  "\" when others;" << endl;
 
-	endArchitecture(o);
+	Operator::outputVHDL(o,  name);
 }
 
 

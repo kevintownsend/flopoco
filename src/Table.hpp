@@ -71,6 +71,7 @@ class Table : public Operator
 	virtual mpz_class function(int x) =0;
 
 
+	/** Overloading the method of Operator */
 	void outputVHDL(ostream& o, string name);
 
 	/** A function that translates an real value into an integer input

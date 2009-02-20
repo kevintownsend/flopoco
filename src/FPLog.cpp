@@ -23,7 +23,6 @@
 #include <fstream>
 #include <sstream>
 #include <math.h>	// for NaN
-
 #include "FPLog.hpp"
 #include "FPNumber.hpp"
 #include "utils.hpp"
@@ -50,7 +49,7 @@ FPLog::FPLog(Target* target, int wE, int wF)
 
 	int i;
 
-	gLog = 4; // TODO : compute or tabulate 
+	gLog = 5; // TODO : compute or tabulate 
 	target_prec = wF+((wF+1)>>1) +gLog;
 
 	// First compute the precision of each iteration 
@@ -108,7 +107,6 @@ FPLog::FPLog(Target* target, int wE, int wF)
 	// Various variables that make life more concise
 	sfinal =  s[stages+1];
 	pfinal = p[stages+1];
-	lzc_size = max(intlog2(wF), intlog2(wE+p[stages+1]+1)); // TODO look at it
 
 
 
@@ -167,7 +165,7 @@ FPLog::FPLog(Target* target, int wE, int wF)
 	vhdl << tab << declare("shiftvalin", intlog2(wF-pfinal+2)) << " <= shiftval(" << intlog2(wF-pfinal+2)-1 << " downto 0);" << endl;
 
 	// ao stands for "almost one"
-	ao_lshift = new Shifter(target, wF-p[stages+1]+2,  wF-p[stages+1]+2, Left);   
+	ao_lshift = new Shifter(target, wF-pfinal+2,  wF-pfinal+2, Left);   
 	oplist.push_back(ao_lshift);
 
 	inPortMap(ao_lshift, "X", "absZ0");
@@ -175,13 +173,13 @@ FPLog::FPLog(Target* target, int wE, int wF)
 	outPortMap(ao_lshift, "R", "absZ0s");
 	vhdl << instance(ao_lshift, "ao_lshift");
 
-
+	int absZ0sSize = getSignalByName("absZ0s")->width();
 	vhdl << tab << "-- Z2o2 will be of size sfinal-pfinal, set squarer input size to that" << endl;
 	vhdl << tab << declare("squarerIn", sfinal-pfinal) << " <= Zfinal(sfinal-1 downto pfinal) when doRR='1'" << endl;
-	if(sfinal>wF+2)
-		vhdl << tab << "                 else (absZ0s &  (sfinal - wF-2 -1 downto 0 => '0'));  " << endl;
-	else  // sfinal <= wf+2 
-		vhdl << tab << "                 else absZ0s(wF-pfinal+1 downto wf+2-sfinal);  " << endl<< endl;
+	if(sfinal-pfinal>absZ0sSize)
+		vhdl << tab << "                 else (absZ0s & " << rangeAssign(sfinal-pfinal-absZ0sSize-1, 0, "'0'") << ");  " << endl;
+	else  // sfinal-pfinal <= absZ0sSize
+		vhdl << tab << "                 else absZ0s" << range(absZ0sSize-1, absZ0sSize - (sfinal-pfinal)) << ";  " << endl<< endl;
 	vhdl << tab << "-- Z2o2 will be of size sfinal - pfinal -1, set squarer input size to that" << endl;
 	vhdl << tab << declare("Z2o2_full", 2*(sfinal-pfinal)) << " <= (squarerIn * squarerIn);" << endl;
 	vhdl << tab << declare("Z2o2", sfinal-pfinal+1) << " <= Z2o2_full (2*(sfinal-pfinal)-1  downto sfinal-pfinal-1);" << endl;
@@ -199,6 +197,7 @@ FPLog::FPLog(Target* target, int wE, int wF)
 	outPortMap(final_norm, "O", "Log_normal_normd");
 	vhdl << instance(final_norm, "final_norm");
 
+
 	ao_rshift = new Shifter(target, s[stages+1]-p[stages+1]+1, s[stages+1]-p[stages+1]+1, Right) ;
 	oplist.push_back(ao_rshift);
 	inPortMap(ao_rshift, "X", "Z2o2");
@@ -207,9 +206,11 @@ FPLog::FPLog(Target* target, int wE, int wF)
 	vhdl << instance(ao_rshift, "ao_rshift");
 
 	vhdl << tab << "  -- send the MSB to position pfinal" << endl;
-	vhdl << tab << declare("Z2o2_small", wF+gLog+2) << " <=  (pfinal-1 downto 0  => '0') & Z2o2_small_s & (wF+g-sfinal downto 0  => '0') ;" << endl;
+	int Z2o2_small_sSize = getSignalByName("Z2o2_small_s")->width();
+	vhdl << tab << declare("Z2o2_small", wF+gLog+2) << " <=  (pfinal-1 downto 0  => '0') & Z2o2_small_s"
+		  << range(Z2o2_small_sSize-1, Z2o2_small_sSize- (wF+gLog+2) + pfinal) << ";" << endl;
 	vhdl << tab << "-- mantissa will be either Y0-z^2/2  or  -Y0+z^2/2,  depending on sR  " << endl;
-	vhdl << tab << declare("Z_small", wF+gLog+2) << " <= (absZ0s & (pfinal+g-1 downto 0 => '0'));" << endl;
+	vhdl << tab << declare("Z_small", wF+gLog+2) << " <= absZ0s & " << rangeAssign((wF+gLog+2)-absZ0sSize-1, 0, "'0'") << ";" << endl;
 	vhdl << tab << declare("Log_small", wF+gLog+2) << " <=       Z_small -  Z2o2_small when (sR='0')" << endl
 		  << "              else  Z_small +  Z2o2_small;" << endl;
 	vhdl << tab << "-- Possibly subtract 1 or 2 to the exponent, depending on the LZC of Log_small" << endl;
@@ -218,12 +219,13 @@ FPLog::FPLog(Target* target, int wE, int wF)
 		  << "          else \"01\" ;" << endl;
 	vhdl << tab << declare("E_small", wE) << " <=  \"0\" & (wE-2 downto 2 => '1') & E0_sub" << endl
 		  << "             - ((wE-1 downto log2wF => '0') & lzo) ;" << endl;
-	vhdl << tab << declare("Log_small_normd", wE+target_prec) << " <= Log_small(wF+g+1 downto 2) when Log_small(wF+g+1)='1'" << endl
+	vhdl << tab << declare("Log_small_normd", wF+gLog) << " <= Log_small(wF+g+1 downto 2) when Log_small(wF+g+1)='1'" << endl
 		  << "           else Log_small(wF+g downto 1)  when Log_small(wF+g)='1'  -- remove the first zero" << endl
 		  << "           else Log_small(wF+g-1 downto 0)  ; -- remove two zeroes (extremely rare, 001000000 only)" << endl ;
+	int E_normalSize = getSignalByName("E_normal")->width(); 
 	vhdl << tab << declare("ER", wE) << " <= E_small when small='1'" << endl
-		  << "      else E0offset - ((wE-1 downto lzc_size => '0') & E_normal);" << endl
-		  << "-- works only if wE > lzc_size approx log2wF, OK for usual exp/prec" << endl;
+		  << "      else E0offset - (" << rangeAssign(wE-1,  E_normalSize, "'0'") << " & E_normal);" << endl
+		  << "-- works only if wE > E_normalSize approx log2wF, OK for usual exp/prec" << endl;
 	vhdl << tab << declare("Log_g", wF+gLog) << " <=  Log_small_normd (wF+g-2 downto 0) & \"0\" when small='1'           -- remove implicit 1" << endl
 		  << "      else Log_normal_normd(wE+targetprec-2 downto wE+targetprec-wF-g-1 );  -- remove implicit 1" << endl ;
 	vhdl << tab << declare("sticky") << " <= '0' when Log_g(g-2 downto 0) = (g-2 downto 0 => '0')    else '1';" << endl;
@@ -244,11 +246,13 @@ FPLog::FPLog(Target* target, int wE, int wF)
 
 FPLog::~FPLog()
 {
+#if 0 // probably to be performed on oplist
 	delete lzoc;
 	delete ao_rshift;
 	delete ao_lshift;
 	delete rrbox;
 	delete final_norm;
+#endif
 }
 
 
@@ -284,7 +288,6 @@ void FPLog::outputVHDL(std::ostream& o, std::string name)
 	o <<   "  constant targetprec : positive := "<< target_prec <<";"<<endl;
 	o <<   "  constant sfinal : positive := "<< s[stages+1] <<";"<<endl;
 	o <<   "  constant pfinal : positive := "<< p[stages+1] <<";"<<endl;
-	o <<   "  constant lzc_size : positive := "<< max(intlog2(wF), intlog2(wE+p[stages+1]+1)) << ";" << endl;
 
 	// the maximum shift distance in the "small" path ?
 	// o << "  constant shiftvalsize : positive := "<< intlog2(wF + 1 - p[stages+1]) <<";"<<endl;
@@ -329,9 +332,15 @@ void FPLog::emulate(TestCase * tc)
 	mpfr_init2(x,  1+wF);
 	mpfr_init2(ru, 1+wF);
 	mpfr_init2(rd, 1+wF); 
-	fpx.getMPFR(x);
+	fpx.getMPFR(x, false); // No fake zero here
 	mpfr_log(rd, x, GMP_RNDD);
 	mpfr_log(ru, x, GMP_RNDU);
+#if 0
+	mpfr_out_str (stderr, 10, 30, x, GMP_RNDN); cerr << " ";
+	mpfr_out_str (stderr, 10, 30, rd, GMP_RNDN); cerr << " ";
+	mpfr_out_str (stderr, 10, 30, ru, GMP_RNDN); cerr << " ";
+	cerr << endl;
+#endif
 	FPNumber  fprd(wE, wF, rd);
 	FPNumber  fpru(wE, wF, ru);
 	mpz_class svRD = fprd.getSignalValue();
