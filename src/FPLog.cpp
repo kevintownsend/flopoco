@@ -38,9 +38,11 @@ FPLog::FPLog(Target* target, int wE, int wF)
 	: Operator(target), wE(wE), wF(wF)
 {
 
-	std::ostringstream o;
+	setCopyrightString("F. de Dinechin, C. Klein  (2008)");
+
+	ostringstream o;
 	o << "FPLog_" << wE << "_" << wF;
-	uniqueName_ = o.str();
+	setName(o.str());
 
 	setOperatorType();
 
@@ -123,46 +125,67 @@ FPLog::FPLog(Target* target, int wE, int wF)
 	//TODO move somewhere -- removed temporarily to suppress a warning
 	// int computedG = intlog2(3*(stages+1));
 
+
+	vhdl << tab << declare("XExnSgn", 3) << " <=  X(wE+wF+2 downto wE+wF);";
 	vhdl << tab << declare("FirstBit") << " <=  X(wF-1);" << endl;
+	vhdl << tab << 	declare("sR") << " <= '0'   when  X(wE+wF-1 downto wF)   =   '0' &(wE-2 downto 0 => '1')  -- binade [1..2)" << endl
+		  << "        else not X(wE+wF-1);                -- MSB of exponent" << endl;
 	vhdl << tab << declare("Y0", wF+2) << " <=      \"1\"  & X(wF-1 downto 0) & \"0\" when FirstBit = '0'" 
 		  << 		"        else \"01\" & X(wF-1 downto 0);" << endl;
+	if(isSequential()) vhdl << tab << "-- Rem: the Y0 input is registered inside the RangeRed box" << endl;
+
+	vhdl << tab << declare("absZ0", wF-pfinal+2) << " <=   Y0(wF-pfinal+1 downto 0)          when (" << use("sR") << "='0') else" << endl
+		  << "             ((wF-pfinal+1 downto 0 => '0') - Y0(wF-pfinal+1 downto 0));" << endl;
+
+
 	vhdl << tab << declare("E", wE) << " <= (X(wE+wF-1 downto wF)) - (\"0\" & (wE-2 downto 1 => '1') & (not FirstBit));" << endl;
-	vhdl << tab << 	declare("sR") << " <= '0'   when    X(wE+wF-1 downto wF)   =   '0' &(wE-2 downto 0 => '1')  -- binade [1..2)" << endl
-		  << "        else not X(wE+wF-1);                -- MSB of exponent" << endl;
-	vhdl << tab << declare("absE", wE) << " <= ((wE-1 downto 0 => '0') - E)   when sR = '1'" << endl
-		  << "          else E;" << endl;
-	vhdl << tab << declare("absELog2", wF+wE+gLog) << " <= absE * log2;" << endl;
 
+	nextCycle();//////////////////////////////////////
+	vhdl << tab << declare("absE", wE) << " <= ((wE-1 downto 0 => '0') - "<< use("E") << ")   when " << use("sR") << " = '1'" << endl
+		  << "          else "<< use("E") << ";" << endl;
+	vhdl << tab << declare("EeqZero") << " <= '1' when "<< use("E") << "=(wE-1 downto 0 => '0') else '0';" << endl;
+	nextCycle();//////////////////////////////////////
 
-	lzoc = new LZOC(target, wF); //This line was modified by Bogdan
+	mpfr_t two, log2;
+	mpz_t zlog2;
+
+	// The log2 constant
+	mpfr_init2(two, 2);
+	mpfr_set_d(two, 2.0, GMP_RNDN);
+	mpfr_init2(log2, wF+gLog);
+	mpfr_log(log2, two, GMP_RNDN);
+	mpfr_mul_2si(log2, log2, wF+gLog, GMP_RNDN); // shift left
+	mpz_init2(zlog2, wF+gLog);
+	mpfr_get_z(zlog2, log2, GMP_RNDN);
+	vhdl << tab << declare("log2", wF+gLog) << " <= \"" << unsignedBinary(mpz_class(zlog2), wF+gLog) << "\";"<<endl;
+	// TODO replace with a KCM
+	vhdl << tab << declare("absELog2", wF+wE+gLog) << " <= " << use("absE") << " * log2;" << endl;
+
+	// Back to cycle 1, after the 1-bit shift
+	setCycle(1);//////////////////////////////////////
+
+	lzoc = new LZOC(target, wF); 
 	oplist.push_back(lzoc);
 	
 	vhdl << tab << declare("Y0h", wF) << " <= Y0(wF downto 1);" << endl; 
 	inPortMap(lzoc, "I", "Y0h");
 	inPortMap(lzoc, "OZB", "FirstBit");
-	outPortMap(lzoc, "O", "lzo"); // 	size should be  intlog2(wF);
+	outPortMap(lzoc, "O", "lzo"); 
 	vhdl << instance(lzoc, "lzoc1");
+	syncCycleFromSignal("lzo");
+	nextCycle();//////////////////////////////////////
 
-	vhdl << tab << declare("shiftval", intlog2(wF)+1) << " <= ('0' & lzo) - ('0' & pfinal_s); " << endl;
+	vhdl << tab << declare("pfinal_s", intlog2(wF)) << " <= \"" 
+		  << unsignedBinary(mpz_class(p[stages+1]), intlog2(wF)) << "\";"<<endl;
+
+	vhdl << tab << declare("shiftval", intlog2(wF)+1) << " <= ('0' & " << use("lzo") << ") - ('0' & pfinal_s); " << endl;
+	vhdl << tab << declare("shiftvalin", intlog2(wF-pfinal+2)) 
+		  << " <= shiftval(" << intlog2(wF-pfinal+2)-1 << " downto 0);" << endl;
 	vhdl << tab << declare("doRR") << " <= shiftval(log2wF);             -- sign of the result" << endl;
-	vhdl << tab << declare("small") << " <= '1' when ((E=(wE-1 downto 0 => '0')) and (doRR='0'))" << endl
-		  << "          else '0';" << endl;
 
-	vhdl << tab << "-- The range reduction instance" << endl;
-	rrbox = new LogRangeRed(target, this);
-	oplist.push_back(rrbox);
-	vhdl << tab << declare("rrA", a[0]) << " <= X(wF-1 downto wF-a0);" << endl;
-	inPortMap(rrbox, "A", "rrA");
-	inPortMap(rrbox, "Y0", "Y0");
-	outPortMap(rrbox, "Z", "Zfinal");
-	outPortMap(rrbox, "almostLog", "almostLog");
-	vhdl << instance(rrbox, "rr");
-	
-	vhdl << tab << declare("absZ0", wF-pfinal+2) << " <=   Y0(wF-pfinal+1 downto 0)          when (sR='0') else" << endl
-		  << "             ((wF-pfinal+1 downto 0 => '0') - Y0(wF-pfinal+1 downto 0));" << endl;
+	nextCycle();//////////////////////////////////////
+	vhdl << tab << declare("small") << " <= " << use("EeqZero") << " and not " << use("doRR") << ";" << endl;
 
-
-	vhdl << tab << declare("shiftvalin", intlog2(wF-pfinal+2)) << " <= shiftval(" << intlog2(wF-pfinal+2)-1 << " downto 0);" << endl;
 
 	// ao stands for "almost one"
 	ao_lshift = new Shifter(target, wF-pfinal+2,  wF-pfinal+2, Left);   
@@ -173,22 +196,48 @@ FPLog::FPLog(Target* target, int wE, int wF)
 	outPortMap(ao_lshift, "R", "absZ0s");
 	vhdl << instance(ao_lshift, "ao_lshift");
 
+
+
+	//////////////////////////////////////////////
+	setCycle(0);
+	vhdl << tab << "-- The range reduction instance" << endl;
+
+	rrbox = new LogRangeRed(target, this);
+	oplist.push_back(rrbox);
+	vhdl << tab << declare("rrA", a[0]) << " <= X(wF-1 downto wF-a0);" << endl;
+	inPortMap(rrbox, "A", "rrA");
+	inPortMap(rrbox, "Y0", "Y0");
+	outPortMap(rrbox, "Z", "Zfinal");
+	outPortMap(rrbox, "almostLog", "almostLog");
+	vhdl << instance(rrbox, "rr");
+
+	// Synchro between RR box and case almost 1
+	setCycleFromSignal("Zfinal", false);	
+	syncCycleFromSignal("absZ0s", false);
+	nextCycle(); ///////////////////// TODO check this one is useful
+
 	int absZ0sSize = getSignalByName("absZ0s")->width();
 	vhdl << tab << "-- Z2o2 will be of size sfinal-pfinal, set squarer input size to that" << endl;
-	vhdl << tab << declare("squarerIn", sfinal-pfinal) << " <= Zfinal(sfinal-1 downto pfinal) when doRR='1'" << endl;
+	vhdl << tab << declare("squarerIn", sfinal-pfinal) << " <= " 
+		  << use("Zfinal") << "(sfinal-1 downto pfinal) when " << use("doRR") << "='1'" << endl;
 	if(sfinal-pfinal>absZ0sSize)
-		vhdl << tab << "                 else (absZ0s & " << rangeAssign(sfinal-pfinal-absZ0sSize-1, 0, "'0'") << ");  " << endl;
+		vhdl << tab << "                 else (" << use("absZ0s") << " & " << rangeAssign(sfinal-pfinal-absZ0sSize-1, 0, "'0'") << ");  " << endl;
 	else  // sfinal-pfinal <= absZ0sSize
-		vhdl << tab << "                 else absZ0s" << range(absZ0sSize-1, absZ0sSize - (sfinal-pfinal)) << ";  " << endl<< endl;
+		vhdl << tab << "                 else " << use("absZ0s") << "" << range(absZ0sSize-1, absZ0sSize - (sfinal-pfinal)) << ";  " << endl<< endl;
 	vhdl << tab << "-- Z2o2 will be of size sfinal - pfinal -1, set squarer input size to that" << endl;
-	vhdl << tab << declare("Z2o2_full", 2*(sfinal-pfinal)) << " <= (squarerIn * squarerIn);" << endl;
+	nextCycle(); ///////////////////// 
+	vhdl << tab << declare("Z2o2_full", 2*(sfinal-pfinal)) << " <= (" << use("squarerIn") << " * " << use("squarerIn") << ");" << endl;
 	vhdl << tab << declare("Z2o2", sfinal-pfinal+1) << " <= Z2o2_full (2*(sfinal-pfinal)-1  downto sfinal-pfinal-1);" << endl;
-	vhdl << tab << declare("Log1p_normal", sfinal) << " <=   Zfinal  -  ((sfinal-1 downto sfinal-pfinal-1  => '0') & (Z2o2(sfinal-pfinal downto 2)));" << endl;
-	vhdl << tab << declare("LogF_normal", target_prec) << " <=   almostLog + ((targetprec-1 downto sfinal => '0') & Log1p_normal);" << endl;
-	vhdl << tab << declare("absELog2_pad", wE+target_prec) << " <=   absELog2 & (targetprec-wF-g-1 downto 0 => '0');       " << endl;
-	vhdl << tab << declare("LogF_normal_pad", wE+target_prec) << " <= (wE-1  downto 0 => LogF_normal(targetprec-1))  & LogF_normal;" << endl;
-	vhdl << tab << declare("Log_normal", wE+target_prec) << " <=  absELog2_pad  + LogF_normal_pad when sR='0'  " << endl
+	nextCycle(); ///////////////////// 
+	vhdl << tab << declare("Log1p_normal", sfinal) << " <=   " << use("Zfinal") << "  -  ((sfinal-1 downto sfinal-pfinal-1  => '0') & (" << use("Z2o2") << "(sfinal-pfinal downto 2)));" << endl;
+	nextCycle(); ///////////////////// 
+	vhdl << tab << declare("LogF_normal", target_prec) << " <=   " << use("almostLog") << " + ((targetprec-1 downto sfinal => '0') & Log1p_normal);" << endl;
+	nextCycle(); ///////////////////// 
+	vhdl << tab << declare("absELog2_pad", wE+target_prec) << " <=   " << use("absELog2") << " & (targetprec-wF-g-1 downto 0 => '0');       " << endl;
+	vhdl << tab << declare("LogF_normal_pad", wE+target_prec) << " <= (wE-1  downto 0 => " << use("LogF_normal") << "(targetprec-1))  & " << use("LogF_normal") << ";" << endl;
+	vhdl << tab << declare("Log_normal", wE+target_prec) << " <=  absELog2_pad  + LogF_normal_pad when " << use("sR") << "='0'  " << endl
 		  << "                else absELog2_pad - LogF_normal_pad;" << endl;
+	nextCycle(); ///////////////////// 
 
 	final_norm = new LZOCShifterSticky(target, wE+target_prec, wE+target_prec, false, 0);
 	oplist.push_back(final_norm);
@@ -197,6 +246,9 @@ FPLog::FPLog(Target* target, int wE, int wF)
 	outPortMap(final_norm, "O", "Log_normal_normd");
 	vhdl << instance(final_norm, "final_norm");
 
+	// back to the squarer output
+	setCycleFromSignal("Z2o2", false);
+	nextCycle(); ///////////////////// 
 
 	ao_rshift = new Shifter(target, s[stages+1]-p[stages+1]+1, s[stages+1]-p[stages+1]+1, Right) ;
 	oplist.push_back(ao_rshift);
@@ -205,43 +257,61 @@ FPLog::FPLog(Target* target, int wE, int wF)
 	outPortMap(ao_rshift, "R", "Z2o2_small_s");
 	vhdl << instance(ao_rshift, "ao_rshift");
 
+	setCycleFromSignal("Z2o2_small_s", false);
+	nextCycle(); ///////////////////// 
+
 	vhdl << tab << "  -- send the MSB to position pfinal" << endl;
 	int Z2o2_small_sSize = getSignalByName("Z2o2_small_s")->width();
 	vhdl << tab << declare("Z2o2_small", wF+gLog+2) << " <=  (pfinal-1 downto 0  => '0') & Z2o2_small_s"
 		  << range(Z2o2_small_sSize-1, Z2o2_small_sSize- (wF+gLog+2) + pfinal) << ";" << endl;
+
 	vhdl << tab << "-- mantissa will be either Y0-z^2/2  or  -Y0+z^2/2,  depending on sR  " << endl;
-	vhdl << tab << declare("Z_small", wF+gLog+2) << " <= absZ0s & " << rangeAssign((wF+gLog+2)-absZ0sSize-1, 0, "'0'") << ";" << endl;
-	vhdl << tab << declare("Log_small", wF+gLog+2) << " <=       Z_small -  Z2o2_small when (sR='0')" << endl
+	vhdl << tab << declare("Z_small", wF+gLog+2) << " <= " << use("absZ0s") << " & " << rangeAssign((wF+gLog+2)-absZ0sSize-1, 0, "'0'") << ";" << endl;
+	vhdl << tab << declare("Log_small", wF+gLog+2) << " <=       Z_small -  Z2o2_small when (" << use("sR") << "='0')" << endl
 		  << "              else  Z_small +  Z2o2_small;" << endl;
-	vhdl << tab << "-- Possibly subtract 1 or 2 to the exponent, depending on the LZC of Log_small" << endl;
-	vhdl << tab << declare("E0_sub", 2) << " <=      \"11\" when Log_small(wF+g+1) = '1'" << endl
-		  << "          else \"10\" when Log_small(wF+g+1 downto wF+g) = \"01\"" << endl
+
+
+	nextCycle(); ///////////////////// 
+	vhdl << tab << "-- Possibly subtract 1 or 2 to the exponent, depending on the LZC of " << use("Log_small") << "" << endl;
+	vhdl << tab << declare("E0_sub", 2) << " <=      \"11\" when " << use("Log_small") << "(wF+g+1) = '1'" << endl
+		  << "          else \"10\" when " << use("Log_small") << "(wF+g+1 downto wF+g) = \"01\"" << endl
 		  << "          else \"01\" ;" << endl;
 	vhdl << tab << declare("E_small", wE) << " <=  \"0\" & (wE-2 downto 2 => '1') & E0_sub" << endl
-		  << "             - ((wE-1 downto log2wF => '0') & lzo) ;" << endl;
-	vhdl << tab << declare("Log_small_normd", wF+gLog) << " <= Log_small(wF+g+1 downto 2) when Log_small(wF+g+1)='1'" << endl
-		  << "           else Log_small(wF+g downto 1)  when Log_small(wF+g)='1'  -- remove the first zero" << endl
-		  << "           else Log_small(wF+g-1 downto 0)  ; -- remove two zeroes (extremely rare, 001000000 only)" << endl ;
+		  << "             - ((wE-1 downto log2wF => '0') & " << use("lzo") << ") ;" << endl;
+	vhdl << tab << declare("Log_small_normd", wF+gLog) << " <= " << use("Log_small") << "(wF+g+1 downto 2) when " << use("Log_small") << "(wF+g+1)='1'" << endl
+		  << "           else " << use("Log_small") << "(wF+g downto 1)  when " << use("Log_small") << "(wF+g)='1'  -- remove the first zero" << endl
+		  << "           else " << use("Log_small") << "(wF+g-1 downto 0)  ; -- remove two zeroes (extremely rare, 001000000 only)" << endl ;
+
+	setCycleFromSignal("E_normal", false);
+	syncCycleFromSignal("E_small", false);
+	nextCycle(); ///////////////////// 
+
 	int E_normalSize = getSignalByName("E_normal")->width(); 
-	vhdl << tab << declare("ER", wE) << " <= E_small when small='1'" << endl
-		  << "      else E0offset - (" << rangeAssign(wE-1,  E_normalSize, "'0'") << " & E_normal);" << endl
+	vhdl << declare("E0offset", wE) << " <= \"" << unsignedBinary((mpz_class(1)<<(wE-1)) -2 + wE , wE) << "\"; -- E0 + wE "<<endl;
+	vhdl << tab << declare("ER", wE) << " <= " << use("E_small") << " when " << use("small") << "='1'" << endl
+		  << "      else E0offset - (" << rangeAssign(wE-1,  E_normalSize, "'0'") << " & " << use("E_normal") << ");" << endl
 		  << "-- works only if wE > E_normalSize approx log2wF, OK for usual exp/prec" << endl;
-	vhdl << tab << declare("Log_g", wF+gLog) << " <=  Log_small_normd (wF+g-2 downto 0) & \"0\" when small='1'           -- remove implicit 1" << endl
-		  << "      else Log_normal_normd(wE+targetprec-2 downto wE+targetprec-wF-g-1 );  -- remove implicit 1" << endl ;
+
+
+	vhdl << tab << declare("Log_g", wF+gLog) << " <=  " << use("Log_small_normd") << "(wF+g-2 downto 0) & \"0\" when " << use("small") << "='1'           -- remove implicit 1" << endl
+		  << "      else " << use("Log_normal_normd") << "(wE+targetprec-2 downto wE+targetprec-wF-g-1 );  -- remove implicit 1" << endl ;
 	vhdl << tab << declare("sticky") << " <= '0' when Log_g(g-2 downto 0) = (g-2 downto 0 => '0')    else '1';" << endl;
 	vhdl << tab << declare("round") << " <= Log_g(g-1) and (Log_g(g) or sticky);" << endl;
 	vhdl << tab << "-- if round leads to a change of binade, the carry propagation" << endl
 		  << tab << "-- magically updates both mantissa and exponent" << endl;
+	// TODO an IntAdder here ?
 	vhdl << tab << declare("EFR", wE+wF) << " <= (ER & Log_g(wF+g-1 downto g)) + ((wE+wF-1 downto 1 => '0') & round); " << endl;
+
+	nextCycle(); ///////////////////// 
 	vhdl << tab <<	"-- The smallest log will be log(1+2^{-wF}) \\approx 2^{-wF}" << endl
 		  << tab << "-- The smallest representable number is 2^{-2^(wE-1)} " << endl;
 	vhdl << tab << declare("ufl") << " <= '0';" << endl;
-	vhdl << tab << "R(wE+wF+2 downto wE+wF) <= \"110\" when ((X(wE+wF+2) and (X(wE+wF+1) or X(wE+wF))) or (X(wE+wF+1) and X(wE+wF))) = '1' else" << endl
-		  << "                               \"101\" when X(wE+wF+2 downto wE+wF+1) = \"00\"                                                       else" << endl
-		  << "                               \"100\" when X(wE+wF+2 downto wE+wF+1) = \"10\"                                                       else" << endl
-		  << "                               \"00\" & sR when (((Log_normal_normd(wE+targetprec-1)='0') and (small='0')) or ( (Log_small_normd (wF+g-1)='0') and (small='1'))) or (ufl = '1') else" << endl
-		  << "                               \"01\" & sR;" << endl;
-		vhdl << tab << "R(wE+wF-1 downto 0) <=  EFR;" << endl;
+	vhdl << tab << "R(wE+wF+2 downto wE+wF) <= \"110\" when ((" << use("XExnSgn") << "(2) and (" << use("XExnSgn") << "(1) or " << use("XExnSgn") << "(0))) or (" << use("XExnSgn") << "(1) and " << use("XExnSgn") << "(0))) = '1' else" << endl
+		  << "                               \"101\" when " << use("XExnSgn") << "(2 downto 1) = \"00\"                                                       else" << endl
+		  << "                               \"100\" when " << use("XExnSgn") << "(2 downto 1) = \"10\"                                                       else" << endl
+		  << "                               \"00\" & " << use("sR") << " when (((" << use("Log_normal_normd") << "(wE+targetprec-1)='0') and (" << use("small") << "='0')) or ( (" << use("Log_small_normd") << " (wF+g-1)='0') and (" << use("small") << "='1'))) or (ufl = '1') else" << endl
+		  << "                               \"01\" & " << use("sR") << ";" << endl;
+	vhdl << tab << "R(wE+wF-1 downto 0) <=  "<< use("EFR") << ";" << endl;
 }	
 
 FPLog::~FPLog()
@@ -259,26 +329,12 @@ FPLog::~FPLog()
 
 void FPLog::outputVHDL(std::ostream& o, std::string name)
 {
-	mpfr_t two, log2;
-	mpz_t zlog2;
-
-
-	licence(o, "F. de Dinechin, C. Klein  (2008)");
-	Operator::stdLibs(o);
+	licence(o);
+	stdLibs(o);
 	outputVHDLEntity(o);
-
 	newArchitecture(o,name);
-
-	// subcomponents
-	ao_lshift->outputVHDLComponent(o);
-	ao_rshift->outputVHDLComponent(o);
-	lzoc->outputVHDLComponent(o);
-	rrbox->outputVHDLComponent(o);
-	final_norm->outputVHDLComponent(o);
-
-	// signal declarations
-	outputVHDLSignalDeclarations(o);
-
+	o << buildVHDLComponentDeclarations();	
+	o << buildVHDLSignalDeclarations();
 	// constants
 	o <<   "  constant g   : positive := "<<gLog<<";"<<endl;
 	o <<   "  constant a0 : positive := "<< a[0] <<";"<<endl;
@@ -288,29 +344,8 @@ void FPLog::outputVHDL(std::ostream& o, std::string name)
 	o <<   "  constant targetprec : positive := "<< target_prec <<";"<<endl;
 	o <<   "  constant sfinal : positive := "<< s[stages+1] <<";"<<endl;
 	o <<   "  constant pfinal : positive := "<< p[stages+1] <<";"<<endl;
-
-	// the maximum shift distance in the "small" path ?
-	// o << "  constant shiftvalsize : positive := "<< intlog2(wF + 1 - p[stages+1]) <<";"<<endl;
-
-	// The log2 constant
-	mpfr_init2(two, 2);
-	mpfr_set_d(two, 2.0, GMP_RNDN);
-	mpfr_init2(log2, wF+gLog);
-	mpfr_log(log2, two, GMP_RNDN);
-	mpfr_mul_2si(log2, log2, wF+gLog, GMP_RNDN); // shift left
-	mpz_init2(zlog2, wF+gLog);
-	mpfr_get_z(zlog2, log2, GMP_RNDN);
-	o << "  signal log2 : std_logic_vector(wF+g-1 downto 0) := \"";
-	printBinPosNumGMP(o, mpz_class(zlog2), wF+gLog);
-	o << "\";"<<endl;
-	o << "  signal E0offset : std_logic_vector(wE-1 downto 0) := \"";
-	printBinPosNumGMP(o, (mpz_class(1)<<(wE-1)) -2 + wE , wE);
-	o << "\"; -- E0 + wE "<<endl;
-	o << "  signal pfinal_s : std_logic_vector(log2wF -1 downto 0) := \"";
-	printBinPosNumGMP(o, mpz_class(p[stages+1]), intlog2(wF));
-	o << "\";"<<endl;
-
-	beginArchitecture(o);
+	beginArchitecture(o);		
+	o<<buildVHDLRegisters();
 	o << vhdl.str();
 	endArchitecture(o);
 }

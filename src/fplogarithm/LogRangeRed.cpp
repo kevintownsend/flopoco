@@ -82,6 +82,8 @@ LogRangeRed :: LogRangeRed(Target* target,
 	addOutput("almostLog", lt0->wOut);
 
 
+	vhdl << tab << declare("Y0c", fplog->wF+2) << " <= Y0;"<<endl;
+
 	vhdl << tab << declare("A0", a[0]) << " <= A;"<<endl;
 
 	vhdl << tab << "-- First inv table" << endl;
@@ -98,7 +100,7 @@ LogRangeRed :: LogRangeRed(Target* target,
 
 	nextCycle();
 
-	vhdl << tab << declare("P0",  it0->wOut + s[0]) << " <= " << use("InvA0") << "*" << use("Y0") << ";" <<endl <<endl;
+	vhdl << tab << declare("P0",  it0->wOut + s[0]) << " <= " << use("InvA0") << "*" << use("Y0c") << ";" <<endl <<endl;
 	vhdl << tab << declare("Z1", s[1]) << " <= P0("<< s[1] -1<<" downto 0);"<<endl;
 
 

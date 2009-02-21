@@ -325,7 +325,7 @@ public:
 	
 	/** Define the current cycle 
 	 * @param the new value of the current cycle */
-	void setCycle(int cycle, bool report=false) ;
+	void setCycle(int cycle, bool report=true) ;
 
 
 	/** Define the current cycle 

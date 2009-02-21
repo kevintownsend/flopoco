@@ -10,7 +10,6 @@ public:
 	
 	~OtherLogTable();
 
-	void setOperatorName();
 
 	mpz_class function(int x);
 	

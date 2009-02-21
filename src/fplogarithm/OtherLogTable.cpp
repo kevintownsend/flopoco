@@ -13,17 +13,13 @@ using namespace std;
 OtherLogTable::OtherLogTable(Target* target, int wIn, int outputPrecision, int p, int which) : 
 	Table(target, wIn, outputPrecision),  p(p),  which(which)
  {
-   //   cout<<"**** "<<outputPrecision<<"   p="<<p<<" wIn="<<wIn<<endl;
-	 setOperatorName();
+	ostringstream name; 
+	name <<"LogTable_"<<which<<"_"<<wIn<<"_"<<wOut;
+	setName(name.str());
+	setOperatorType();
 }
 
 OtherLogTable::~OtherLogTable() {}
-
-void OtherLogTable::setOperatorName(){
-	ostringstream name; 
-	name <<"LogTable_"<<which<<"_"<<wIn<<"_"<<wOut;
-	uniqueName_=name.str();
-}
 
 
 int    OtherLogTable::double2input(double x){
