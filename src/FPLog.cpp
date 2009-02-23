@@ -129,7 +129,7 @@ FPLog::FPLog(Target* target, int wE, int wF)
 	// int computedG = intlog2(3*(stages+1));
 
 
-	vhdl << tab << declare("XExnSgn", 3) << " <=  X(wE+wF+2 downto wE+wF);";
+	vhdl << tab << declare("XExnSgn", 3) << " <=  X(wE+wF+2 downto wE+wF);" << endl;
 	vhdl << tab << declare("FirstBit") << " <=  X(wF-1);" << endl;
 	vhdl << tab << 	declare("sR") << " <= '0'   when  X(wE+wF-1 downto wF)   =   '0' &(wE-2 downto 0 => '1')  -- binade [1..2)" << endl
 		  << "        else not X(wE+wF-1);                -- MSB of exponent" << endl;
@@ -170,12 +170,12 @@ FPLog::FPLog(Target* target, int wE, int wF)
 	lzoc = new LZOC(target, wF); 
 	oplist.push_back(lzoc);
 	
-	vhdl << tab << declare("Y0h", wF) << " <= Y0(wF downto 1);" << endl; 
+	vhdl << tab << declare("Y0h", wF) << " <= " << use("Y0") << "(wF downto 1);" << endl; 
 	inPortMap(lzoc, "I", "Y0h");
 	inPortMap(lzoc, "OZB", "FirstBit");
 	outPortMap(lzoc, "O", "lzo"); 
 	vhdl << instance(lzoc, "lzoc1");
-	syncCycleFromSignal("lzo");
+	setCycleFromSignal("lzo", false);
 	nextCycle();//////////////////////////////////////
 
 	vhdl << tab << declare("pfinal_s", intlog2(wF)) << " <= \"" 
@@ -234,7 +234,7 @@ FPLog::FPLog(Target* target, int wE, int wF)
 	nextCycle(); ///////////////////// 
 	vhdl << tab << declare("Log1p_normal", sfinal) << " <=   " << use("Zfinal") << "  -  ((sfinal-1 downto sfinal-pfinal-1  => '0') & (" << use("Z2o2") << "(sfinal-pfinal downto 2)));" << endl;
 	nextCycle(); ///////////////////// 
-	vhdl << tab << declare("LogF_normal", target_prec) << " <=   " << use("almostLog") << " + ((targetprec-1 downto sfinal => '0') & Log1p_normal);" << endl;
+	vhdl << tab << declare("LogF_normal", target_prec) << " <=   " << use("almostLog") << " + ((targetprec-1 downto sfinal => '0') & " << use("Log1p_normal") << ");" << endl;
 	nextCycle(); ///////////////////// 
 	vhdl << tab << declare("absELog2_pad", wE+target_prec) << " <=   " << use("absELog2") << " & (targetprec-wF-g-1 downto 0 => '0');       " << endl;
 	vhdl << tab << declare("LogF_normal_pad", wE+target_prec) << " <= (wE-1  downto 0 => " << use("LogF_normal") << "(targetprec-1))  & " << use("LogF_normal") << ";" << endl;
@@ -265,18 +265,18 @@ FPLog::FPLog(Target* target, int wE, int wF)
 
 	vhdl << tab << "  -- send the MSB to position pfinal" << endl;
 	int Z2o2_small_sSize = getSignalByName("Z2o2_small_s")->width();
-	vhdl << tab << declare("Z2o2_small", wF+gLog+2) << " <=  (pfinal-1 downto 0  => '0') & Z2o2_small_s"
+	vhdl << tab << declare("Z2o2_small", wF+gLog+2) << " <=  (pfinal-1 downto 0  => '0') & " << use("Z2o2_small_s")
 		  << range(Z2o2_small_sSize-1, Z2o2_small_sSize- (wF+gLog+2) + pfinal) << ";" << endl;
 
 	vhdl << tab << "-- mantissa will be either Y0-z^2/2  or  -Y0+z^2/2,  depending on sR  " << endl;
 	vhdl << tab << declare("Z_small", wF+gLog+2) << " <= " << use("absZ0s") << " & " << rangeAssign((wF+gLog+2)-absZ0sSize-1, 0, "'0'") << ";" << endl;
 	vhdl << tab << declare("Log_small", wF+gLog+2) << " <=       Z_small -  Z2o2_small when (" << use("sR") << "='0')" << endl
-		  << "              else  Z_small +  Z2o2_small;" << endl;
+		  << "                else  Z_small +  Z2o2_small;" << endl;
 
 
 	nextCycle(); ///////////////////// 
 	vhdl << tab << "-- Possibly subtract 1 or 2 to the exponent, depending on the LZC of " << use("Log_small") << "" << endl;
-	vhdl << tab << declare("E0_sub", 2) << " <=      \"11\" when " << use("Log_small") << "(wF+g+1) = '1'" << endl
+	vhdl << tab << declare("E0_sub", 2) << " <=   \"11\" when " << use("Log_small") << "(wF+g+1) = '1'" << endl
 		  << "          else \"10\" when " << use("Log_small") << "(wF+g+1 downto wF+g) = \"01\"" << endl
 		  << "          else \"01\" ;" << endl;
 	vhdl << tab << declare("E_small", wE) << " <=  \"0\" & (wE-2 downto 2 => '1') & E0_sub" << endl
@@ -290,10 +290,10 @@ FPLog::FPLog(Target* target, int wE, int wF)
 	nextCycle(); ///////////////////// 
 
 	int E_normalSize = getSignalByName("E_normal")->width(); 
-	vhdl << declare("E0offset", wE) << " <= \"" << unsignedBinary((mpz_class(1)<<(wE-1)) -2 + wE , wE) << "\"; -- E0 + wE "<<endl;
+	vhdl << tab << declare("E0offset", wE) << " <= \"" << unsignedBinary((mpz_class(1)<<(wE-1)) -2 + wE , wE) << "\"; -- E0 + wE "<<endl;
 	vhdl << tab << declare("ER", wE) << " <= " << use("E_small") << " when " << use("small") << "='1'" << endl
 		  << "      else E0offset - (" << rangeAssign(wE-1,  E_normalSize, "'0'") << " & " << use("E_normal") << ");" << endl
-		  << "-- works only if wE > E_normalSize approx log2wF, OK for usual exp/prec" << endl;
+		  << tab << "-- works only if wE > E_normalSize approx log2wF, OK for usual exp/prec" << endl;
 
 
 	vhdl << tab << declare("Log_g", wF+gLog) << " <=  " << use("Log_small_normd") << "(wF+g-2 downto 0) & \"0\" when " << use("small") << "='1'           -- remove implicit 1" << endl
@@ -310,9 +310,9 @@ FPLog::FPLog(Target* target, int wE, int wF)
 		  << tab << "-- The smallest representable number is 2^{-2^(wE-1)} " << endl;
 	vhdl << tab << declare("ufl") << " <= '0';" << endl;
 	vhdl << tab << "R(wE+wF+2 downto wE+wF) <= \"110\" when ((" << use("XExnSgn") << "(2) and (" << use("XExnSgn") << "(1) or " << use("XExnSgn") << "(0))) or (" << use("XExnSgn") << "(1) and " << use("XExnSgn") << "(0))) = '1' else" << endl
-		  << "                               \"101\" when " << use("XExnSgn") << "(2 downto 1) = \"00\"                                                       else" << endl
-		  << "                               \"100\" when " << use("XExnSgn") << "(2 downto 1) = \"10\"                                                       else" << endl
-		  << "                               \"00\" & " << use("sR") << " when (((" << use("Log_normal_normd") << "(wE+targetprec-1)='0') and (" << use("small") << "='0')) or ( (" << use("Log_small_normd") << " (wF+g-1)='0') and (" << use("small") << "='1'))) or (ufl = '1') else" << endl
+		  << "                              \"101\" when " << use("XExnSgn") << "(2 downto 1) = \"00\"                                                       else" << endl
+		  << "                              \"100\" when " << use("XExnSgn") << "(2 downto 1) = \"10\"                                                       else" << endl
+		  << "                              \"00\" & " << use("sR") << " when (((" << use("Log_normal_normd") << "(wE+targetprec-1)='0') and (" << use("small") << "='0')) or ( (" << use("Log_small_normd") << " (wF+g-1)='0') and (" << use("small") << "='1'))) or (ufl = '1') else" << endl
 		  << "                               \"01\" & " << use("sR") << ";" << endl;
 	vhdl << tab << "R(wE+wF-1 downto 0) <=  "<< use("EFR") << ";" << endl;
 }	
