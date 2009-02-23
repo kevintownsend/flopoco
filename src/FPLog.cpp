@@ -46,6 +46,9 @@ FPLog::FPLog(Target* target, int wE, int wF)
 
 	setOperatorType();
 
+	if(isSequential())
+		cerr << endl << "************ WARNING: pipeline does not work yet" << endl << endl;
+
 	addFPInput("X", wE, wF);
 	addFPOutput("R", wE, wF, 2); // 2 because faithfully rounded
 
