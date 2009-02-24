@@ -68,9 +68,9 @@ print "-------------------------------------------------------------------------
 print "--------------------------- FloPoCo PreRelease Tests ---------------------------"
 executable_name = "./flopoco"
 operators = [ 
-             #["LeftShifter",      [ ["wIn", "in", 1, 64 ], ["MaxShift", "in", 1, 64]]], #XXX Tested
-             #["RightShifter",     [ ["wIn", "in", 1, 64 ], ["MaxShift", "in", 1, 64]]], #XXX Tested
-             #["LZOC",              [ ["wIn", "in", 1, 64 ] ]], #XXX Tested
+             ["LeftShifter",      [ ["wIn", "in", 1, 64 ], ["MaxShift", "in", 1, 64]]], #XXX Tested
+             ["RightShifter",     [ ["wIn", "in", 1, 64 ], ["MaxShift", "in", 1, 64]]], #XXX Tested
+             ["LZOC",              [ ["wIn", "in", 1, 64 ] ]], #XXX Tested
              ["LZOCShifter",       [ ["wIn", "in", 2, 127 ], ["wOut", "out", 2, 127],  ]],   
              ["LZCShifter",       [ ["wIn", "in", 2, 127 ], ["wOut", "out", 2, 127],  ]],
              ["LOCShifter",       [ ["wIn", "in", 2, 127 ], ["wOut", "out", 2, 127],  ]],
@@ -83,8 +83,8 @@ operators = [
  
             ] #TODO Add the rest of operators
 res = []
-input_combinations_per_operator = 2;
-test_cases_per_combination = 200;
+input_combinations_per_operator = 10;
+test_cases_per_combination = 500;
 
 #REMOVE TEMPORARY MODELSIM FILES
 os.system("rm wlf*")

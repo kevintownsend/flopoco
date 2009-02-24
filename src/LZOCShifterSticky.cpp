@@ -130,6 +130,9 @@ LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut, bool com
 	vhdl << tab << "O <= "<<use(join("level",0))
 	     << (wOut_<=wIn?"":join("&",rangeAssign(wOut_-wIn-1,0,"'0'")))<<";"<<endl;
 	
+	outDelayMap["O"] = period - stageDelay;
+	outDelayMap["Count"] = max(0.0, period - (stageDelay+muxDelay()));
+	
 	vhdl << tab << declare("sCount",wCount_) <<" <= ";
 	for (int i=wCount_-1; i>=0; i--){
 		vhdl << use(join("count",i));
@@ -139,6 +142,7 @@ LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut, bool com
 	     << tab << tab << "else "<<use("sCount")<<";"<<endl;
 	
 	if (computeSticky_){
+	outDelayMap["Sticky"] = period - stageDelay;
 		if (wOut_>=wIn)
 			vhdl << tab << "Sticky <= '0';"<<endl; 
 		else
