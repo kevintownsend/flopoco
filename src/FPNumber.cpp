@@ -1,10 +1,6 @@
 #include "FPNumber.hpp"
 #include "utils.hpp"
 
-/* signed zeroes are represented as +/- 2^ZERO_EXPONENT 
- This breaks test bench generation for very large wE... */
-#define ZERO_EXPONENT (-(1<<30))
-
 
 FPNumber::FPNumber(int wE, int wF)
 	: wE(wE), wF(wF)
@@ -81,7 +77,7 @@ mpz_class FPNumber::getFractionSignalValue()
 
 
 
-void FPNumber::getMPFR(mpfr_t mp, bool withFakeZero)
+void FPNumber::getMPFR(mpfr_t mp)
 {
 
 	/* NaN */
@@ -92,31 +88,15 @@ void FPNumber::getMPFR(mpfr_t mp, bool withFakeZero)
 	}
 
 	/* Infinity */
-	if (exception == 2)
-	{
+	if (exception == 2)	{
 		mpfr_set_inf(mp, (sign == 1) ? -1 : 1);
 		return;
 	}
 
 	/* Zero */
-	if (exception == 0)
-	{
-		if (withFakeZero)
-		{
-			/* MPFR does NOT have the concept of +/- zero due to its wide range of
-			 * exponent values. As FloPoCo does have +/- zero (as a result of different
-			 * underflows), we must somehow simulate it in MPFR. We will do this
-			 * by storing zero as a really small number, that we won't ever encounder in
-			 * FloPoCo */
-			mpfr_set_d(mp, (sign == 1) ? -1 : +1, GMP_RNDN);
-			mpfr_mul_2si(mp, mp, ZERO_EXPONENT, GMP_RNDN);
-			return;
-		}
-		else
-		{
-			mpfr_set_d(mp, 0, GMP_RNDN);
-			return;
-		}
+	if (exception == 0)	{
+		mpfr_set_d(mp, (sign == 1) ? -0.0 : +0.0, GMP_RNDN);
+		return;
 	}
 	
 	/* „Normal” numbers
@@ -167,7 +147,7 @@ FPNumber& FPNumber::operator=(mpfr_t mp_)
 	if (mpfr_zero_p(mp))
 	{
 		exception = 0;
-		sign = 0;	/* MPFR does not have a sign for zero */
+		sign = mpfr_signbit(mp) == 0 ? 0 : 1;
 		exponent = 0;
 		mantissa = 0;
 		return *this;

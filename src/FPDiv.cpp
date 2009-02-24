@@ -241,7 +241,7 @@ void FPDiv::emulate(TestCase * tc)
 	mpfr_init2(x, 1+wF);
 	mpfr_init2(y, 1+wF);
 	mpfr_init2(r, 1+wF); 
-	fpx.getMPFR(x);
+	fpx.getMPFR(x); // fake 0
 	fpy.getMPFR(y);
 	mpfr_div(r, x, y, GMP_RNDN);
 	FPNumber  fpr(wE, wF, r);
@@ -252,4 +252,24 @@ void FPDiv::emulate(TestCase * tc)
 	mpfr_clears(x, y, r, NULL);
 }
 
+
+
+void FPDiv::buildStandardTestCases(TestCaseList* tcl){
+	TestCase *tc;
+
+	// Regression tests 
+	tc = new TestCase(this); 
+	tc->addInput("X", 1.0);
+	tc->addInput("Y", FPNumber::plusDirtyZero);
+	emulate(tc);
+	tcl->add(tc);
+
+	tc = new TestCase(this); 
+	tc->addInput("X", FPNumber::minusDirtyZero);
+	tc->addInput("Y", FPNumber::plusInfty);
+	emulate(tc);
+	tcl->add(tc);
+
+	
+}
 

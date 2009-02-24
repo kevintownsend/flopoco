@@ -82,9 +82,8 @@ public:
 	/**
 	 * Converts the currently stored FPNumber to an mpfr_t
 	 * @param[out] m a preinitialized mpfr_t where to store the floating point
-	 * @param[in] withFakeZero use a very small number to represent zero, so that the sign is preserved
 	 */
-	void getMPFR(mpfr_t m, bool withFakeZero = true);
+	void getMPFR(mpfr_t m);
 
 	/**
 	 * Stores an mpfr_t as an internal representation of Flopoco.

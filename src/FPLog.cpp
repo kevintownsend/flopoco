@@ -370,7 +370,7 @@ void FPLog::emulate(TestCase * tc)
 	mpfr_init2(x,  1+wF);
 	mpfr_init2(ru, 1+wF);
 	mpfr_init2(rd, 1+wF); 
-	fpx.getMPFR(x, false); // No fake zero here
+	fpx.getMPFR(x); 
 	mpfr_log(rd, x, GMP_RNDD);
 	mpfr_log(ru, x, GMP_RNDU);
 #if 0

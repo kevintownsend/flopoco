@@ -40,6 +40,10 @@ public:
 	 * @param tc a TestCase partially filled with input values 
 	 */
 	void emulate(TestCase * tc);
+
+	/* Overloading the Operator method */
+	void buildStandardTestCases(TestCaseList* tcl);
+
 	
 private:
 	/** The width of the exponent for the input X */
