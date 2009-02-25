@@ -300,18 +300,16 @@ FPLog::FPLog(Target* target, int wE, int wF)
 		  << "      else " << use("Log_normal_normd") << "(wE+targetprec-2 downto wE+targetprec-wF-g-1 );  -- remove implicit 1" << endl ;
 	vhdl << tab << declare("sticky") << " <= '0' when Log_g(g-2 downto 0) = (g-2 downto 0 => '0')    else '1';" << endl;
 	vhdl << tab << declare("round") << " <= Log_g(g-1) and (Log_g(g) or sticky);" << endl;
-	vhdl << tab << "-- if round leads to a change of binade, the carry propagation" << endl
-		  << tab << "-- magically updates both mantissa and exponent" << endl;
+	vhdl << tab << "-- if round leads to a change of binade, the carry propagation magically updates both mantissa and exponent" << endl;
 	// TODO an IntAdder here ?
 	vhdl << tab << declare("EFR", wE+wF) << " <= (ER & Log_g(wF+g-1 downto g)) + ((wE+wF-1 downto 1 => '0') & round); " << endl;
 
-	nextCycle(); ///////////////////// 
 	vhdl << tab <<	"-- The smallest log will be log(1+2^{-wF}) \\approx 2^{-wF}" << endl
 		  << tab << "-- The smallest representable number is 2^{-2^(wE-1)} " << endl;
 	vhdl << tab << declare("ufl") << " <= '0';" << endl;
 	vhdl << tab << "R(wE+wF+2 downto wE+wF) <= \"110\" when ((" << use("XExnSgn") << "(2) and (" << use("XExnSgn") << "(1) or " << use("XExnSgn") << "(0))) or (" << use("XExnSgn") << "(1) and " << use("XExnSgn") << "(0))) = '1' else" << endl
-		  << "                              \"101\" when " << use("XExnSgn") << "(2 downto 1) = \"00\"                                                       else" << endl
-		  << "                              \"100\" when " << use("XExnSgn") << "(2 downto 1) = \"10\"                                                       else" << endl
+		  << "                              \"101\" when " << use("XExnSgn") << "(2 downto 1) = \"00\"  else" << endl
+		  << "                              \"100\" when " << use("XExnSgn") << "(2 downto 1) = \"10\"  else" << endl
 		  << "                              \"00\" & " << use("sR") << " when (((" << use("Log_normal_normd") << "(wE+targetprec-1)='0') and (" << use("small") << "='0')) or ( (" << use("Log_small_normd") << " (wF+g-1)='0') and (" << use("small") << "='1'))) or (ufl = '1') else" << endl
 		  << "                               \"01\" & " << use("sR") << ";" << endl;
 	vhdl << tab << "R(wE+wF-1 downto 0) <=  "<< use("EFR") << ";" << endl;
