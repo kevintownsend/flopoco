@@ -114,23 +114,25 @@ static void usage(char *name){
 	//	cerr << "    Mux wIn n \n"; killed by Florent
 	cerr << "    IntAdder wIn\n";
 	cerr << "      Integer adder, possibly pipelined\n";
-	cerr << "    FPAdder wEX wFX wEY wFY wER wFR\n";
-	cerr << "      Floating-point adder \n";
 	cerr << "    IntMultiplier wInX wInY \n";
 	cerr << "      Integer multiplier of two integers X and Y of sizes wInX and wInY \n";	
 	// not ready for release
 	//	cerr << "    Karatsuba wInX wInY \n";
 	//	cerr << "      integer multiplier of two integers X and Y of sizes wInX and wInY. For now the sizes must be equal \n";	
-	cerr << "    FPMultiplier wEX wFX wEY wFY wER wFR\n";
+	cerr << "    FPAdder wE wF\n";
+	cerr << "      Floating-point adder \n";
+	cerr << "    FPMultiplier wE wF\n";
 	cerr << "      Floating-point multiplier \n";
+	cerr << "    FPDiv wE wF\n";
+	cerr << "      Floating-point divider \n";
 	cerr << "    IntConstMult w c\n";
 	cerr << "      Integer constant multiplier: w - input size, c - the constant\n";
 	cerr << "    FPConstMult wE_in wF_in wE_out wF_out cst_sgn cst_exp cst_int_sig\n";
-	cerr << "      Floating-point constant multiplier (NPY)\n";
+	cerr << "      Floating-point constant multiplier\n";
 	cerr << "      The constant is provided as integral significand and integral exponent.\n";
 #ifdef HAVE_SOLLYA
 	cerr << "    CRFPConstMult  wE_in wF_in  wE_out wF_out  constant_expr \n";
-	cerr << "      Correctly-rounded floating-point constant multiplier (NPY)\n";
+	cerr << "      Correctly-rounded floating-point constant multiplier\n";
 	cerr << "      The constant is provided as a Sollya expression, between double quotes.\n";
 #endif // HAVE_SOLLYA
 	cerr << "    LongAcc wE_in wF_in MaxMSB_in LSB_acc MSB_acc\n";
@@ -142,7 +144,7 @@ static void usage(char *name){
 	cerr << "    FPExp wE wF\n";
 	cerr << "      Floating-point exponential function (NPY)\n";
 	cerr << "    FPLog wE wF\n";
-	cerr << "      Floating-point logarithm function (NPY)\n";
+	cerr << "      Floating-point logarithm function\n";
 #ifdef HAVE_HOTBM
 	cerr << "    HOTBM function wI wO degree\n";
 	cerr << "      High-Order Table-Based Method for fixed-point functions (NPY)\n";
@@ -581,49 +583,31 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(op);
 			}
 		}
-		else if(opname=="FPMultiplier"){
-			int nargs = 6; 
-			if (i+nargs > argc)
-				usage(argv[0]);
-			else {
-				int wEX = checkStrictyPositive(argv[i++], argv[0]);
-				int wFX = checkStrictyPositive(argv[i++], argv[0]);
-				int wEY = checkStrictyPositive(argv[i++], argv[0]);
-				int wFY = checkStrictyPositive(argv[i++], argv[0]);
-				int wER = checkStrictyPositive(argv[i++], argv[0]);
-				int wFR = checkStrictyPositive(argv[i++], argv[0]);
-
-				cerr << "> FPMultiplier , wEX="<<wEX<<", wFX="<<wFX<<", wEY="<<wEY<<", wFY="<<wFY<<", wER="<<wER<<", wFR="<<wFR<<" \n";
-				
-				if ((wEX==wEY) && (wEX==wER)){
-					op = new FPMultiplier(target, wEX, wFX, wEY, wFY, wER, wFR, 1);
-					addOperator(op);
-				}else
-					cerr<<"(For now) the inputs must have the same size"<<endl;
-			}
-		} 
 		else if(opname=="FPAdder"){
-			int nargs = 6;
+			int nargs = 2;
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
-				int wEX = checkStrictyPositive(argv[i++], argv[0]);
-				int wFX = checkStrictyPositive(argv[i++], argv[0]);
-				int wEY = checkStrictyPositive(argv[i++], argv[0]);
-				int wFY = checkStrictyPositive(argv[i++], argv[0]);
-				int wER = checkStrictyPositive(argv[i++], argv[0]);
-				int wFR = checkStrictyPositive(argv[i++], argv[0]);
+				int wE = checkStrictyPositive(argv[i++], argv[0]);
+				int wF = checkStrictyPositive(argv[i++], argv[0]);
 				
-				cerr << "> FPAdder , wEX="<<wEX<<", wFX="<<wFX<<", wEY="<<wEY<<", wFY="<<wFY<<", wER="<<wER<<", wFR="<<wFR<<" \n";
-						
-					if ((wEX==wEY) && (wEX==wER)){
-						op = new FPAdder(target, wEX, wFX, wEY, wFY, wER, wFR);
-						addOperator(op);
-					}else
-						cerr<<"(For now) the inputs and outputs must have the same size"<<endl;
+				cerr << "> FPAdder , wE="<<wE<<", wF="<<wF<<" \n";
+				op = new FPAdder(target, wE, wF, wE, wF, wE, wF);
+				addOperator(op);
 			}
 		}
-		
+		else if(opname=="FPMultiplier"){
+			int nargs = 2; 
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int wE = checkStrictyPositive(argv[i++], argv[0]);
+				int wF = checkStrictyPositive(argv[i++], argv[0]);
+				cerr << "> FPMultiplier , wE="<<wE<<", wF="<<wF<<" \n";
+				op = new FPMultiplier(target, wE, wF, wE, wF, wE, wF, 1);
+				addOperator(op);
+			}
+		} 
 		else if (opname == "FPDiv")
 		{
 			int nargs = 2;
@@ -841,7 +825,6 @@ bool parseCommandLine(int argc, char* argv[]){
 			int wF = checkStrictyPositive(argv[i++], argv[0]);
 			cerr << "> LNSDiv: wE=" << wE << " wF=" << wF << endl;
 			op = new LNSDiv(target, wE, wF);
-			if(cl_name!="")	op->setName(cl_name);
 			addOperator(op);
 		}
 		else if (opname == "LNSSqrt")
@@ -856,8 +839,6 @@ bool parseCommandLine(int argc, char* argv[]){
 			if(cl_name!="")	op->setName(cl_name);
 			addOperator(op);
 		}
-		
-		// Undocumented LNS operators, for debugging purposes
 		else if (opname == "LNSAdd")
 		{
 			int nargs = 3;
@@ -868,9 +849,9 @@ bool parseCommandLine(int argc, char* argv[]){
 			int o = checkStrictyPositive(argv[i++], argv[0]);
 			cerr << "> LNSAdd: wE=" << wE << " wF=" << wF << " o=" << o << endl;
 			op = new LNSAdd(target, wE, wF, o);
-			if(cl_name!="")	op->setName(cl_name);
-			oplist.push_back(op);
+			addOperator(op);
 		}
+		// Undocumented LNS operators, for debugging purposes
 #if 0
 		else if (opname == "CotranF1")
 		{
@@ -882,8 +863,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			int wE = atoi(argv[i++]);
 			cerr << "> CotranF1: wF=" << wF << " j=" << j << " wE=" << wE << endl;
 			op = new TableOp(target, new CotranF1Table(wF, j, wE));
-			if(cl_name!="")	op->setName(cl_name);
-			oplist.push_back(op);
+			addOperator(op);
 		}
 		else if (opname == "CotranF2")
 		{
@@ -894,8 +874,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			int j = checkStrictyPositive(argv[i++], argv[0]);
 			cerr << "> CotranF2: wF=" << wF << " j=" << j << endl;
 			op = new TableOp(target, new CotranF2Table(wF, j));
-			if(cl_name!="")	op->setName(cl_name);
-			oplist.push_back(op);
+			addOperator(op);
 		}
 		else if (opname == "CotranF3")
 		{
@@ -906,8 +885,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			int j = checkStrictyPositive(argv[i++], argv[0]);
 			cerr << "> CotranF3: wF=" << wF << " j=" << j << endl;
 			op = new TableOp(target, new CotranF3Table(wF, j));
-			if(cl_name!="")	op->setName(cl_name);
-			oplist.push_back(op);
+			addOperator(op);
 		}
 #endif
 		else if (opname == "Cotran")
@@ -923,8 +901,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			cerr << "> Cotran: wE=" << wE << " wF=" << wF << " j=" << j
 				<< " wECotran=" << wECotran << " o=" << o << endl;
 			op = new Cotran(target, wE, wF, j, wECotran);
-			if(cl_name!="")	op->setName(cl_name);
-			oplist.push_back(op);
+			addOperator(op);
 		}
 		else if (opname == "CotranHybrid")
 		{
@@ -939,8 +916,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			cerr << "> Cotran: wE=" << wE << " wF=" << wF << " j=" << j 
 				<< " wECotran=" << wECotran << " o=" << o << endl;
 			op = new CotranHybrid(target, wE, wF, j, wECotran);
-			if(cl_name!="")	op->setName(cl_name);
-			oplist.push_back(op);
+			addOperator(op);
 		}
 #endif
 
