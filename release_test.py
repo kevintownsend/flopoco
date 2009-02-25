@@ -104,6 +104,7 @@ while i<len(operators):
 	while j>0:
 		commands.getoutput("rm vsim*")
 		commands.getoutput("killall vsimk")
+		commands.getoutput("killall -9 vish")
 		print "--------------------------- ", operators[i][0]   ," ---------------------------"
 		print "Parameters: "
 		printParameters( operators[i][1] )
