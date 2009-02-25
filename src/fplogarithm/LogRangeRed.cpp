@@ -130,7 +130,7 @@ LogRangeRed :: LogRangeRed(Target* target,
 		if(i==1) { // special case for the first iteration
 			vhdl << 	rangeAssign(s[i]+p[i]+1,  0,  "'0'")  << " when  " << use("A1") << " = " << rangeAssign(a[1]-1, 0,  "'0'") << endl
 				  << tab << "    else (\"01\" & "<< rangeAssign(p[i]-1, 0, "'0'") << " & " << use(join("Z",i)) << " )"
-				  << "  when ((A1("<< a[1]-1 << ")='0') and (" << use("A1") << range(a[1]-2, 0) << " /= " << rangeAssign(a[1]-2, 0, "'0'") << "))" << endl
+				  << "  when ((" << use("A1") << "("<< a[1]-1 << ")='0') and (" << use("A1") << range(a[1]-2, 0) << " /= " << rangeAssign(a[1]-2, 0, "'0'") << "))" << endl
 				  << tab << "    else " << "(\"1\" & " << rangeAssign(p[i]-1, 0, "'0'") << " & " << use(join("Z",i)) << "  & \"0\") "
 			  << ";"<<endl;
 		}
