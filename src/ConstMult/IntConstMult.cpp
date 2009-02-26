@@ -241,13 +241,6 @@ IntConstMult::IntConstMult(Target* _target, int _xsize, mpz_class _n) :
 	buildMultBoothTree();
 	if(verbose) showShiftAddDag();
 
-	// pipeline it
-	if (target_->isPipelined()) {
-		setSequential();
-	}
-	else
-		setCombinatorial();
-
 	// declare its signals
 	if (isSequential()){
 		double delay;

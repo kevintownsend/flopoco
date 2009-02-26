@@ -50,8 +50,6 @@ SRT4Step::SRT4Step(Target* target, int wF) :
 	name<<"SRT4Step_"<<wF; 
 	uniqueName_ = name.str(); 
 
-	setOperatorType();
-		
 	addInput ("x", wF+3);
 	addInput ("d", wF+1);
 	addInput ("dtimes3", wF+3);

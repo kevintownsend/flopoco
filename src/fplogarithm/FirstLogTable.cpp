@@ -13,7 +13,6 @@ FirstLogTable::FirstLogTable(Target *target, int wIn, int wOut, FirstInvTable* f
 	 ostringstream name; 
 	 name <<"LogTable_0_"<<wIn<<"_"<<wOut;
 	 setName(name.str());
-	 setOperatorType();
 
 	 minIn = 0;
 	 maxIn = (1<<wIn) -1;

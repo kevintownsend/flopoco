@@ -33,7 +33,7 @@ public:
 		hasRegistersWithAsyncReset_ = false;
 		hasRegistersWithSyncReset_  = false;
 		pipelineDepth_              = 0;
-		cycle_                      = 0;
+		currentCycle_                      = 0;
 	}
 	
 	/** Operator Constructor.
@@ -48,7 +48,11 @@ public:
 		hasRegistersWithAsyncReset_ = false;
 		hasRegistersWithSyncReset_  = false;
 		pipelineDepth_              = 0;
-		cycle_                      = 0;
+		currentCycle_                      = 0;
+		if (target_->isPipelined())
+			setSequential();
+		else
+			setCombinatorial();	
 	}
 
 	/** Operator Destructor.
@@ -118,13 +122,7 @@ public:
 	 *                formed with the operator internal parameters
 	*/
 	void setName(std::string prefix, std::string postfix);
-	
-
-	/** Sets the type of the operator (sequential or combinatorial). 
-	 * The information is retrieved from the deployment target 
-	 */
-	void setOperatorType();
-	
+		
 
 	/*   Functions related to simulation and testing */
 
@@ -552,7 +550,7 @@ private:
 	bool                   hasRegistersWithSyncReset_;  /**< True if the operator has registers having a synch reset */
 	string                 commentedName_;              /**< Usually is the default name of the architecture.  */
 	string                 copyrightString_;            /**< Authors and years.  */
-	int                    cycle_;                      /**< The current cycle, when building a pipeline */
+	int                    currentCycle_;               /**< The current cycle, when building a pipeline */
 
 };
 #endif

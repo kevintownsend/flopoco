@@ -16,7 +16,6 @@ OtherLogTable::OtherLogTable(Target* target, int wIn, int outputPrecision, int p
 	ostringstream name; 
 	name <<"LogTable_"<<which<<"_"<<wIn<<"_"<<wOut;
 	setName(name.str());
-	setOperatorType();
 }
 
 OtherLogTable::~OtherLogTable() {}

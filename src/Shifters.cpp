@@ -51,8 +51,6 @@ Shifter::Shifter(Target* target, int wIn, int maxShift, ShiftDirection direction
 	addInput ("S", wShiftIn_);  
 	addOutput("R", wOut_);
 
-	setOperatorType();
-
 	vhdl << tab << declare("level0",wIn_  ) << "<= X;" <<endl;
 	vhdl << tab << declare("ps", wShiftIn_) << "<= S;" <<endl;
 	

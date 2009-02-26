@@ -115,10 +115,6 @@ FPConstMult::FPConstMult(Target* target, int wE_in, int wF_in, int wE_out, int w
 	icm = new IntConstMult(target, wF_in+1, cst_sig);
 	oplist.push_back(icm);
 
-	if (target->isPipelined())
-		setSequential();
-	else 
-		setCombinatorial();
 	setup();
 
 

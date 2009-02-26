@@ -13,7 +13,6 @@ FirstInvTable::FirstInvTable(Target* target, int wIn, int wOut) :
 	ostringstream name; 
 	name <<"InvTable_0_"<<wIn<<"_"<<wOut;
 	setName(name.str());
-	setOperatorType();
 
 }
 

@@ -52,7 +52,6 @@ LogRangeRed :: LogRangeRed(Target* target,
 	ostringstream name; 
 	name << fplog->getName() <<"_RangeRed" ;
 	setName(name.str());
-	setOperatorType();
 
 	setCopyrightString("F. de Dinechin (2008)");
 

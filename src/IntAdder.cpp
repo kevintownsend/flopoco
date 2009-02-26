@@ -44,8 +44,6 @@ Operator(target), wIn_(wIn), inputDelays_(inputDelays)
 	name << "IntAdder_" << wIn_;
 	setName(name.str());
 
-	setOperatorType();
-
 	// Set up the IO signals
 	addInput ("X"  , wIn_);
 	addInput ("Y"  , wIn_);

@@ -44,8 +44,6 @@ Operator(target), wIn_(wIn), opType_(opType), inputDelays_(inputDelays)
 	name << "IntDualSub_" << wIn_;
 	setName(name.str());
 
-	setOperatorType();
-
 	if (opType==0) 
 		son_ = "yMx";
 	else

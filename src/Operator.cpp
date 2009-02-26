@@ -204,12 +204,6 @@ void Operator::setName(std::string operatorName){
 	uniqueName_ = operatorName;
 }
 
-void Operator::setOperatorType(){
-	if (target_->isPipelined())
-		setSequential();
-	else
-		setCombinatorial();	
-}
 
 void  Operator::changeName(std::string operatorName){
 	commentedName_ = uniqueName_;
@@ -434,23 +428,23 @@ void Operator::outputFinalReport() {
 
 void Operator::setCycle(int cycle, bool report) {
 	if(isSequential()) {
-		cycle_=cycle;
+		currentCycle_=cycle;
 		if(report)
-			vhdl << tab << "----------------Synchro barrier, entering cycle " << cycle_ << "----------------" << endl ;
+			vhdl << tab << "----------------Synchro barrier, entering cycle " << currentCycle_ << "----------------" << endl ;
 		// automatically update pipeline depth of the operator 
-		if (cycle_ > pipelineDepth_) 
-			pipelineDepth_ = cycle_;
+		if (currentCycle_ > pipelineDepth_) 
+			pipelineDepth_ = currentCycle_;
 	}
 }
 
 void Operator::nextCycle(bool report) {
 	if(isSequential()) {
-		cycle_ ++; 
+		currentCycle_ ++; 
 		if(report)
-			vhdl << tab << "----------------Synchro barrier, entering cycle " << cycle_ << "----------------" << endl ;
+			vhdl << tab << "----------------Synchro barrier, entering cycle " << currentCycle_ << "----------------" << endl ;
 		// automatically update pipeline depth of the operator 
-		if (cycle_ > pipelineDepth_) 
-			pipelineDepth_ = cycle_;
+		if (currentCycle_ > pipelineDepth_) 
+			pipelineDepth_ = currentCycle_;
 	}
 }
 
@@ -474,12 +468,12 @@ void Operator::setCycleFromSignal(string name, bool report) {
 			o << "signal " << name<< " doesn't have (yet?) a valid cycle";
 		throw o.str();
 		} 
-		cycle_ = s->getCycle();
+		currentCycle_ = s->getCycle();
 		if(report)
-			vhdl << tab << "----------------Synchro barrier, entering cycle " << cycle_ << "----------------" << endl ;
+			vhdl << tab << "----------------Synchro barrier, entering cycle " << currentCycle_ << "----------------" << endl ;
 		// automatically update pipeline depth of the operator 
-		if (cycle_ > pipelineDepth_) 
-			pipelineDepth_ = cycle_;
+		if (currentCycle_ > pipelineDepth_) 
+			pipelineDepth_ = currentCycle_;
 	}
 }
 
@@ -504,14 +498,14 @@ void Operator::syncCycleFromSignal(string name, bool report) {
 		throw o.str();
 		} 
 		// advance cycle if needed
-		if (s->getCycle()>cycle_)
-			cycle_ = s->getCycle();
+		if (s->getCycle()>currentCycle_)
+			currentCycle_ = s->getCycle();
 
 		if(report)
-			vhdl << tab << "----------------Synchro barrier, entering cycle " << cycle_ << "----------------" << endl ;
+			vhdl << tab << "----------------Synchro barrier, entering cycle " << currentCycle_ << "----------------" << endl ;
 		// automatically update pipeline depth of the operator 
-		if (cycle_ > pipelineDepth_) 
-			pipelineDepth_ = cycle_;
+		if (currentCycle_ > pipelineDepth_) 
+			pipelineDepth_ = currentCycle_;
 	}
 }
 
@@ -529,7 +523,7 @@ string Operator::declare(string name, const int width, bool isbus) {
 	s = new Signal(name, Signal::wire, width, isbus);
 	// define its cycle 
 	if(isSequential())
-		s->setCycle(this->cycle_);
+		s->setCycle(this->currentCycle_);
 	// add the signal to signalMap and signalList
 	signalList_.push_back(s);    
 	signalMap_[name] = s ;
@@ -555,14 +549,14 @@ string Operator::use(string name) {
 			e << "signal " << name<< " doesn't have (yet?) a valid cycle";
 			throw e.str();
 		} 
-		if(s->getCycle() > cycle_) {
+		if(s->getCycle() > currentCycle_) {
 			ostringstream e;
 			e << "active cycle of signal " << name<< " is later than current cycle, cannot delay it";
 			throw e.str();
 		} 
 		// update the lifeSpan of s
-		s->updateLifeSpan( cycle_ - s->getCycle() );
-		return s->delayedName( cycle_ - s->getCycle() );
+		s->updateLifeSpan( currentCycle_ - s->getCycle() );
+		return s->delayedName( currentCycle_ - s->getCycle() );
 	}
 	else
 		return name;
@@ -599,7 +593,7 @@ void Operator::outPortMap(Operator* op, string componentPortName, string actualS
 	s = new Signal(actualSignalName, Signal::wire, width, isbus);
 	// define its cycle 
 	if(isSequential())
-		s->setCycle( this->cycle_ + op->getPipelineDepth() );
+		s->setCycle( this->currentCycle_ + op->getPipelineDepth() );
 	// add the signal to signalMap and signalList
 	signalList_.push_back(s);    
 	signalMap_[actualSignalName] = s ;
@@ -629,14 +623,14 @@ void Operator::inPortMap(Operator* op, string componentPortName, string actualSi
 			e << "signal " << actualSignalName<< " doesn't have (yet?) a valid cycle";
 			throw e.str();
 		} 
-		if(s->getCycle() > cycle_) {
+		if(s->getCycle() > currentCycle_) {
 			ostringstream e;
 			e << "active cycle of signal " << actualSignalName<< " is later than current cycle, cannot delay it";
 			throw e.str();
 		} 
 		// update the lifeSpan of s
-		s->updateLifeSpan( cycle_ - s->getCycle() );
-		name = s->delayedName( cycle_ - s->getCycle() );
+		s->updateLifeSpan( currentCycle_ - s->getCycle() );
+		name = s->delayedName( currentCycle_ - s->getCycle() );
 	}
 	else
 		name = actualSignalName;

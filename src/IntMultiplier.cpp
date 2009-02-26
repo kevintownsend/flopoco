@@ -41,8 +41,6 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 	int depth, i, j;
 	ostringstream name, nameH, nameL;
 
-	setOperatorType();
-
 	/* Name Setup procedure
 	 *  The name has the format: IntMultiplier_wInX__wInY_
 	 *  wInX_ = width of the X input

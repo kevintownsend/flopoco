@@ -38,7 +38,6 @@ extern vector<Operator*> oplist;
 GenericTestBench:: GenericTestBench(Target* target, string name, int depth, int wIn) :
 	Operator(target), _name(name){
  
-	setOperatorType();
 	setOperatorName();
 	
 	if(isSequential()) 

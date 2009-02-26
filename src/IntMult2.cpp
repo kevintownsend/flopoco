@@ -17,7 +17,6 @@ IntMult2:: IntMult2(Target* target, int wInX, int wInY) :
  
 	int depth, i, j;
 
-	setOperatorType();
 	setOperatorName();
 	
 	addInput ("X", wInX_);

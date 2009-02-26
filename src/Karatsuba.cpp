@@ -41,7 +41,6 @@ Karatsuba:: Karatsuba(Target* target, int wInX, int wInY) :
 
 	int depth, i, j;
 	ostringstream name, nameH, nameL;
-	setOperatorType();
 	setOperatorName();
 	
 	/* Set up the IO signals

@@ -44,8 +44,6 @@ FPLog::FPLog(Target* target, int wE, int wF)
 	o << "FPLog_" << wE << "_" << wF;
 	setName(o.str());
 
-	setOperatorType();
-
 	addFPInput("X", wE, wF);
 	addFPOutput("R", wE, wF, 2); // 2 because faithfully rounded
 

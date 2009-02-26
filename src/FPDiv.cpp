@@ -67,10 +67,6 @@ FPDiv::FPDiv(Target* target, int wE, int wF) :
 
 	srt4step = new SRT4Step(target, wF);
 	oplist.push_back(srt4step);
-
-
-
-	setOperatorType();
 	
 	vhdl << tab << declare("fX",wF+1) << " <= \"1\" & X(" << wF-1 << " downto 0);" << endl;
 	vhdl << tab << declare("fY",wF+1) << " <= \"1\" & Y(" << wF-1 << " downto 0);" << endl;

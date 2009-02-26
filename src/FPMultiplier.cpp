@@ -49,8 +49,6 @@ FPMultiplier::FPMultiplier(Target* target, int wEX, int wFX, int wEY, int wFY, i
 	name<<"FPMultiplier_"<<wEX_<<"_"<<wFX_<<"_"<<wEY_<<"_"<<wFY_<<"_"<<wER_<<"_"<<wFR_; 
 	setName(name.str());
 
-	setOperatorType();
-
 	/* set if operator outputs a normalized_ result */
 	if (norm == 0) 
 		normalized_ = false;

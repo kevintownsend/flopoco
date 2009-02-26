@@ -41,7 +41,6 @@ LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut, bool com
 	wCount_ = intlog2(wIn_);
 
 	setOperatorName();
-	setOperatorType();
 	
 	
 	addInput ("I", wIn_);

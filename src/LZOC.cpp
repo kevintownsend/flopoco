@@ -50,8 +50,6 @@ LZOC::LZOC(Target* target, int wIn, map<string, double> inputDelays) :
 	addInput ("OZB");  
 	addOutput("O", wOut_);
 	
-	setOperatorType();
-	
 	
 	
 	vhdl << tab << declare("sozb",1) <<" <= ozb;" << endl;
