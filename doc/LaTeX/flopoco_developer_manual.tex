@@ -4,7 +4,7 @@
 \usepackage[pdftex]{graphicx,color}
 \graphicspath{{Figures/}}
 
-\newcommand{\operator}{\verb!Operator!}
+\newcommand{\operator}{ \verb!Operator! }
 
 \title{FloPoCo developer manual}
 
@@ -162,8 +162,8 @@ with \verb!-pipeline=yes!, and will produce a combinatorial operator
 
 How does it work? 
 \begin{itemize}\item 
-  \operator\ has a \verb!currentCycle! attribute, initially equal to
-  zero. The main function of 	\verb!nextCycle()! is to increment \verb!cycle!.
+  \verb!Operator! has a \verb!currentCycle! attribute, initially equal to
+  zero. The main function of 	\verb!nextCycle()! is to increment \verb!currentCycle!.
 
 \item Every signal declared through \verb!addInput! or \verb!declare!
   has a \verb!cycle! attribute, which represents the cycle at which
@@ -182,18 +182,18 @@ How does it work?
 
 \item Wrapping a signal in \verb!use()! has the following  effect. First,
   \verb!use("X")! will compare \verb!currentCycle! and the
-  \verb!cycle! declared for \verb!X!. 
+  \verb!cycle! declared for \verb!X!, which we note \verb!X.cycle!. 
   \begin{itemize}\item 
     If they are equal, or if \verb!-pipeline=no!, \verb!use("X")! will
     simply return \verb!"X"!.
-  \item If \verb!currentCycle! $<$ \verb!cycle!, \verb!use("X")!
+  \item If \verb!currentCycle! $<$ \verb!X.cycle!, \verb!use("X")!
     will emit an error message complaining that \verb!X! is being
     used before the cycle at which it is defined.
-  \item If \verb!currentCycle! $>$ \verb!cycle!, \verb!use("X")!
+  \item If \verb!currentCycle! $>$ \verb!X.cycle!, \verb!use("X")!
     will delay signal \verb!X! by
-    n=\verb!currentCycle!$-$\verb!cycle! cycles. Technically
-    \verb!use("X")! just returns \verb!"X_dn"!. In this case,
-    it also updates the \verb!lifeSpan! of \verb!X! to be at least equal to n.
+    n=\verb!currentCycle!$-$\verb!X.cycle! cycles. Technically
+    \verb!use("X")! just returns \verb!"X_dn"!, but also. In this case,
+    it also updates \verb!X.lifeSpan! to be at least equal to n.
   \end{itemize}
 \end{itemize}
 
@@ -202,11 +202,11 @@ combinatorial operator. It also automatically adapts to random
 insertions and suppressions of synchronization barriers. Typically,
 one synthesizes an operator, and decides to break the critical path by
 inserting a synchronisation barrier in it. This may be as simple as
-inserting a single \verb!nextCycle()! in the code.
+inserting a single \verb!nextCycle()! in the code. FloPoCo takes care of the rest.
 
-It is also possible to have \verb!if!s
-before some of the \verb!nextCycle()!, so that the pipeline adapts to
-the frequency, the operator generic parameters, etc.
+It is also possible to have \verb!if!s before some of the
+\verb!nextCycle()!, so that the pipeline adapts to the frequency, the
+operator generic parameters, etc. See \verb!IntAdder! for an example.
 
 Some more notes:
 \begin{itemize}
@@ -217,10 +217,12 @@ Some more notes:
   are \verb!setCycle(int n)!, \verb!setCycleFromSignal(string s)!
   which sets the \verb!currentCycle! to the \verb!cycle! of the
   signal whose name is given as an argument (going back if needed),
-  and \verb!syncCycleFromSignal(string s)! which allows to synchronise
+  and \verb!syncCycleFromSignal(string s)! which may only advance \verb!currentCycle!. The latter allows to synchronise
   several signals by setting \verb!currentCycle! to the max of their
   \verb!cycle!. See \verb!FPAdder! or \verb!FPLog! for examples of
-  such synchronisations. All these functions have an optional boolean
+  such synchronisations. 
+
+All these functions have an optional boolean
   second argument which, if true, inserts in the generated VHDL a
   comment ``-- entering cycle n''.
 
@@ -239,29 +241,29 @@ automatically computed from the user-supplied frequency.
 
 \begin{verbatim}
 (...)
-   -- vhdl << declare("T", 64) << " <= Y * Z;" << endl;
+   // vhdl << declare("T", 64) << " <= Y * Z;" << endl;
 
 	IntMultiplier my_mult = new IntMultiplier(target, 32, 32);
 	oplist.push_back(my_mult); // some day this will be an addOperator method
-	inPortMap   (my_mult, "X", "Y");
+	inPortMap   (my_mult, "X", "Y"); // formal, actual
 	inPortMap   (my_mult, "Y", "Z");
 	outPortMap  (my_mult, "R","T");
-	vhdl << instance(my_mult, "my_mult"); // the VHDL instance name
+	vhdl << instance(my_mult, "my_mult"); // 2nd param is the VHDL instance name
    // advance to the cycle of the result
 	syncCycleFromSignal("T"); 
 
    // pipelined operators do not have a register on the output 
    nextCycle();
 
-   -- vhdl << "R <= " << use("X") << " + " << use("T") << ";" << endl;
+   // vhdl << "R <= " << use("X") << " + " << use("T") << ";" << endl;
 
 	IntAdder my_adder = new IntAdder(target, 64);
-	oplist.push_back(my_adder); // some day this will be an addOperator method
+	oplist.push_back(my_adder);
 	inPortMap   (my_adder, "X", "X");
 	inPortMap   (my_adder, "Y", "T");
 	inPortMapCst(my_adder, "Cin", "0"); -- carry in
 	outPortMap  (my_adder, "R","RR");
-	vhdl << instance(my_adder, "my_add"); // the VHDL instance name
+	vhdl << instance(my_adder, "my_add");
    // advance to the cycle of the result
 	syncCycleFromSignal("RR"); 
    vhdl << "R <= RR;" << endl; // no need for use since we are in the same cycle
