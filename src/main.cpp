@@ -427,7 +427,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				int wOut = checkStrictyPositive(argv[i++], argv[0]);
 				if (wIn > 1){
 					cerr << "> LZOCShifter, wIn="<<wIn<<", wOut="<<wOut<< endl;
-					op = new LZOCShifterSticky(target, wIn, wOut, 0, -1);
+					op = new LZOCShifterSticky(target, wIn, wOut, intlog2(wIn), 0, -1);
 					addOperator(op);
 				}else
 					cerr << "wIn must be > 1"<<endl;
@@ -442,7 +442,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				int wOut = checkStrictyPositive(argv[i++], argv[0]);
 				if (wIn > 1){
 					cerr << "> LZCShifter, wIn="<<wIn<<", wOut="<<wOut<< endl;
-					op = new LZOCShifterSticky(target, wIn, wOut, 0, 0);
+					op = new LZOCShifterSticky(target, wIn, wOut, intlog2(wIn), 0, 0);
 					addOperator(op);
 				}else
 					cerr << "wIn must be > 1"<<endl;
@@ -457,7 +457,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				int wOut = checkStrictyPositive(argv[i++], argv[0]);
 				if (wIn > 1){
 					cerr << "> LOCShifter, wIn="<<wIn<<", wOut="<<wOut<< endl;
-					op = new LZOCShifterSticky(target, wIn, wOut, 0, 1);
+					op = new LZOCShifterSticky(target, wIn, wOut, intlog2(wIn), 0, 1);
 					addOperator(op);
 				}else
 					cerr << "wIn must be > 1"<<endl;
@@ -472,7 +472,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				int wOut = checkStrictyPositive(argv[i++], argv[0]);
 				if (wIn > 1){
 					cerr << "> LZOCShifterSticky, wIn="<<wIn<<", wOut="<<wOut<< endl;
-					op = new LZOCShifterSticky(target, wIn, wOut, 1, -1);
+					op = new LZOCShifterSticky(target, wIn, wOut, intlog2(wIn), 1, -1);
 					addOperator(op);
 				}else
 					cerr << "wIn must be > 1"<<endl;
@@ -487,7 +487,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				int wOut = checkStrictyPositive(argv[i++], argv[0]);
 				if (wIn > 1){
 					cerr << "> LZCShifterSticky, wIn="<<wIn<<", wOut="<<wOut<< endl;
-					op = new LZOCShifterSticky(target, wIn, wOut, 1, 0);
+					op = new LZOCShifterSticky(target, wIn, wOut, intlog2(wIn), 1, 0);
 					addOperator(op);
 				}else
 					cerr << "wIn must be > 1"<<endl;
@@ -502,7 +502,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				int wOut = checkStrictyPositive(argv[i++], argv[0]);
 				if (wIn > 1){
 					cerr << "> LOCShifterSticky, wIn="<<wIn<<", wOut="<<wOut<< endl;
-					op = new LZOCShifterSticky(target, wIn, wOut, 1, 1);
+					op = new LZOCShifterSticky(target, wIn, wOut, intlog2(wIn), 1, 1);
 					addOperator(op);
 				}else
 					cerr << "wIn must be > 1"<<endl;
