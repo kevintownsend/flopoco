@@ -39,7 +39,7 @@ FPLog::FPLog(Target* target, int wE, int wF)
 {
 
 	if(wE<intlog2(wF)) {
-		throw string("ERROR FPLog doesn't allow wE<intlog2(wF). If you really need it get in touch with the FloPoCo team.")
+		throw string("ERROR FPLog doesn't allow wE<intlog2(wF). If you really need it get in touch with the FloPoCo team.");
 	}
 	setCopyrightString("F. de Dinechin, C. Klein  (2008)");
 
@@ -57,9 +57,14 @@ FPLog::FPLog(Target* target, int wE, int wF)
 
 	// First compute the precision of each iteration 
 
+
+	int bitsPerStage=4; //target->lutInputs();
+	if(verbose) 
+		cout << "Building an architecture optimized for " << target->lutInputs() << "-input LUTs" << endl;
+
 	// Stage 0
 	p[0] = 0;
-	a[0] = 5; 
+	a[0] = bitsPerStage+1; 
 	s[0] = wF+2;  
 	sfullZ[0] = wF+2;
 
@@ -73,7 +78,7 @@ FPLog::FPLog(Target* target, int wE, int wF)
 	// stage 1 needs a specific inverter table
 	i=1;
 	while(2*p[i] < wF+2){ // ensures 2*p[stages+1]>= wF+2, enough for faithful rounding
-		a[i] = 4;
+		a[i] = bitsPerStage;
 		p[i+1] = p[i] + a[i] - 1;
 
 		// size before truncation
@@ -243,7 +248,7 @@ FPLog::FPLog(Target* target, int wE, int wF)
 		  << "                else absELog2_pad - LogF_normal_pad;" << endl;
 	nextCycle(); ///////////////////// 
 
-	final_norm = new LZOCShifterSticky(target, wE+target_prec, target_prec, intlog2(wE)+1, false, 0); // check
+	final_norm = new LZOCShifterSticky(target, wE+target_prec, target_prec, intlog2(wE+(wF>>1)), false, 0); 
 	oplist.push_back(final_norm);
 	inPortMap(final_norm, "I", "Log_normal");
 	outPortMap(final_norm, "Count", "E_normal");
