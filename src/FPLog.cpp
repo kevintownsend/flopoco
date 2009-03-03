@@ -38,6 +38,9 @@ FPLog::FPLog(Target* target, int wE, int wF)
 	: Operator(target), wE(wE), wF(wF)
 {
 
+	if(wE<intlog2(wF)) {
+		throw string("ERROR FPLog doesn't allow wE<intlog2(wF). If you really need it get in touch with the FloPoCo team.")
+	}
 	setCopyrightString("F. de Dinechin, C. Klein  (2008)");
 
 	ostringstream o;
@@ -240,7 +243,7 @@ FPLog::FPLog(Target* target, int wE, int wF)
 		  << "                else absELog2_pad - LogF_normal_pad;" << endl;
 	nextCycle(); ///////////////////// 
 
-	final_norm = new LZOCShifterSticky(target, wE+target_prec, target_prec, intlog2(target_prec), false, 0); // check
+	final_norm = new LZOCShifterSticky(target, wE+target_prec, target_prec, intlog2(wE)+1, false, 0); // check
 	oplist.push_back(final_norm);
 	inPortMap(final_norm, "I", "Log_normal");
 	outPortMap(final_norm, "Count", "E_normal");
@@ -279,7 +282,7 @@ FPLog::FPLog(Target* target, int wE, int wF)
 		  << "          else \"01\" ;" << endl;
 	vhdl << tab << declare("E_small", wE) << " <=  (\"0\" & (wE-2 downto 2 => '1') & E0_sub)  -  ";
 	if(wE>intlog2(wF))
-		vhdl << "((wE-1 downto log2wF => '0') & " << use("lzo") << ") ;" << endl;
+		vhdl << "((wE-1 downto " << getSignalByName("lzo")->width() << " => '0') & " << use("lzo") << ") ;" << endl;
 	else
 		vhdl << use("lzo") << ";" << endl;
 	vhdl << tab << declare("Log_small_normd", wF+gLog) << " <= " << use("Log_small") << "(wF+g+1 downto 2) when " << use("Log_small") << "(wF+g+1)='1'" << endl

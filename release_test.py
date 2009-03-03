@@ -71,7 +71,7 @@ operators = [
              ["FPAdder",          [ ["wE", "in", 3, 11 ], ["wF","in", 8, 52] ]],
              ["FPMultiplier",     [ ["wE", "in", 3, 11 ], ["wF","in", 8, 52] ]],
              ["FPDiv",            [ ["wE", "in", 3, 11 ], ["wF","in", 8, 52] ]],
-             ["FPLog",            [ ["wE", "in", 3, 11 ], ["wF","in", 8, 52] ]],
+             ["FPLog",            [ ["wE", "in", 6, 11 ], ["wF","in", 8, 52] ]],
              ["LeftShifter",      [ ["wIn", "in", 1, 64 ], ["MaxShift", "in", 1, 64]]], #XXX Tested
              ["RightShifter",     [ ["wIn", "in", 1, 64 ], ["MaxShift", "in", 1, 64]]], #XXX Tested
              ["LZOC",             [ ["wIn", "in", 1, 64 ] ]], #XXX Tested
