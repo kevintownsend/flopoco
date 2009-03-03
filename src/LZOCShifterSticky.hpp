@@ -20,13 +20,15 @@ public:
 				spec /**< specific entity type. The OZB: in std_logic is NOT present in entity */
 				} entityType_t;
 
+	
 	/** 
-	 * The LZOCShifterSticky constructor
+	 * Another LZOCShifterSticky constructor, used in FPLog
 	 * @param[in] target the target device for this operator
 	 * @param[in] wIn the width of the mantissa input
 	 * @param[in] wOut the width of the mantissa output
+	 * @param[in] countSize the numbers of bits to count, often equal to wIn but sometimes less (see FPLog)
 	 */
-	LZOCShifterSticky(Target* target, int wIn, int wOut, bool compute_sticky, const int countType=-1, map<string, double> inputDelays = emptyDelayMap);
+	LZOCShifterSticky(Target* target, int wIn, int wOut, int wCount, bool compute_sticky, const int countType=-1, map<string, double> inputDelays = emptyDelayMap);
 	
 	/** The LZOCShifterSticky destructor */
 	~LZOCShifterSticky();
@@ -43,16 +45,6 @@ public:
 	int getCountWidth() const;
 	
 	
-	/**
-	 * Method belonging to the Operator class overloaded by the LZOCShifterSticky class
-	 * @param[in,out] o     the stream where the current architecture will be outputed to
-	 * @param[in]     name  the name of the entity corresponding to the architecture generated in this method
-	 **/
-	void outputVHDL(std::ostream& o, std::string name);
-	
-	/** Method for setting the operator name
-	*/
-	void setOperatorName();
 	
 	
 	void emulate(TestCase* tc);
@@ -77,8 +69,8 @@ public:
 private:
 	
 	int          wIn_;                   /**< The number of bits of the input */
-	int          wCount_;                /**< The number of bits of the count */
 	int          wOut_;                  /**< The number of bits of the shifted output */
+	int          wCount_;                /**< The number of bits of the count */
 	bool         computeSticky_;         /**< If true, compute the sticky bit. If false, save this hardware */
 	int          countType_;             /**< -1|0|1. If -1 is present then generic LZOC is instatiated */
 	string       level_[42];             /**< The names of the signals, just to make code more readable */ 

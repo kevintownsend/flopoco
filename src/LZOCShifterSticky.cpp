@@ -33,14 +33,27 @@
 
 using namespace std;
 
-LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut, bool computeSticky, const int countType, map<string, double> inputDelays) :
-	Operator(target), wIn_(wIn), wOut_(wOut), computeSticky_(computeSticky), countType_(countType) {
+
+
+
+
+
+LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut, int wCount, bool computeSticky, const int countType, map<string, double> inputDelays) :
+	Operator(target), wIn_(wIn), wOut_(wOut), wCount_(wCount), computeSticky_(computeSticky), countType_(countType) {
 	
 	// -------- Parameter set up -----------------
 	setEntityType( (countType_==-1?gen:spec) );
-	wCount_ = intlog2(wIn_);
 
-	setOperatorName();
+	ostringstream name; 
+	name << "L" << (countType_<0?"ZO":((countType_>0)?"O":"Z")) << "CShifter"
+	     << (computeSticky_?"Sticky":"") << "_" << wIn_ << "_to_"<<wOut_<<"_counting_"<<(1<<wCount_);
+	setName(name.str());
+
+	setCopyrightString("Florent de Dinechin, Bogdan Pasca (2007)");
+
+	
+	// -------- Parameter set up -----------------
+	setEntityType( (countType_==-1?gen:spec) );
 	
 	
 	addInput ("I", wIn_);
@@ -137,9 +150,14 @@ LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut, bool com
 		vhdl << use(join("count",i));
 		vhdl << (i>0?" & ":join(";","\n"));
 	} 
-	vhdl << tab << "Count <= " << "CONV_STD_LOGIC_VECTOR("<<wIn_<<","<<wCount_<<") when "<<use("sCount")<<"=CONV_STD_LOGIC_VECTOR("<<intpow2(wCount_)-1<<","<<wCount_<<")"<<endl
-	     << tab << tab << "else "<<use("sCount")<<";"<<endl;
-	
+
+	if((1<<wCount_)-1 > wIn_) {
+		vhdl << tab << "Count <= " << "CONV_STD_LOGIC_VECTOR("<<wIn_<<","<<wCount_<<") when "<<use("sCount")<<"=CONV_STD_LOGIC_VECTOR("<<intpow2(wCount_)-1<<","<<wCount_<<")"<<endl
+			  << tab << tab << "else "<<use("sCount")<<";"<<endl;
+	}
+	else {
+		vhdl << tab << "Count <= " << use("sCount")<<";"<<endl;
+	}
 	if (computeSticky_){
 	outDelayMap["Sticky"] = period - stageDelay;
 		if (wOut_>=wIn)
@@ -160,25 +178,6 @@ int LZOCShifterSticky::getCountWidth() const{
 	return wCount_;
 }
 
-void LZOCShifterSticky::setOperatorName(){
-	ostringstream name; 
-	name << "L" << (countType_<0?"ZO":((countType_>0)?"O":"Z")) << "CShifter"
-	     << (computeSticky_?"Sticky":"") << "_" << wIn_ << "_to"<<wOut_;
-	uniqueName_=name.str();
-}
-
-void LZOCShifterSticky::outputVHDL(std::ostream& o, std::string name) {
-	licence(o,"Florent de Dinechin, Bogdan Pasca (2007)");
-	Operator::stdLibs(o);
-	Operator::stdLibs(o);
-	outputVHDLEntity(o);
-	newArchitecture(o,name);
-	o << buildVHDLSignalDeclarations();
-	beginArchitecture(o);
-	o << buildVHDLRegisters();
-	o << vhdl.str();
-	endArchitecture(o);
-}
 
 
 void LZOCShifterSticky::emulate(TestCase* tc)

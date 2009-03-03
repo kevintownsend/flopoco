@@ -177,8 +177,11 @@ FPLog::FPLog(Target* target, int wE, int wF)
 		  << unsignedBinary(mpz_class(p[stages+1]), intlog2(wF)) << "\";"<<endl;
 
 	vhdl << tab << declare("shiftval", intlog2(wF)+1) << " <= ('0' & " << use("lzo") << ") - ('0' & pfinal_s); " << endl;
-	vhdl << tab << declare("shiftvalin", intlog2(wF-pfinal+2)) 
+	vhdl << tab << declare("shiftvalinL", intlog2(wF-pfinal+2)) 
 		  << " <= shiftval(" << intlog2(wF-pfinal+2)-1 << " downto 0);" << endl;
+	vhdl << tab << declare("shiftvalinR", intlog2(sfinal-pfinal+1)) 
+		  << " <= shiftval(" << intlog2(sfinal-pfinal+1)-1 << " downto 0);" << endl;
+
 	vhdl << tab << declare("doRR") << " <= shiftval(log2wF);             -- sign of the result" << endl;
 
 	nextCycle();//////////////////////////////////////
@@ -190,7 +193,7 @@ FPLog::FPLog(Target* target, int wE, int wF)
 	oplist.push_back(ao_lshift);
 
 	inPortMap(ao_lshift, "X", "absZ0");
-	inPortMap(ao_lshift, "S", "shiftvalin");
+	inPortMap(ao_lshift, "S", "shiftvalinL");
 	outPortMap(ao_lshift, "R", "absZ0s");
 	vhdl << instance(ao_lshift, "ao_lshift");
 
@@ -237,7 +240,7 @@ FPLog::FPLog(Target* target, int wE, int wF)
 		  << "                else absELog2_pad - LogF_normal_pad;" << endl;
 	nextCycle(); ///////////////////// 
 
-	final_norm = new LZOCShifterSticky(target, wE+target_prec, wE+target_prec, false, 0);
+	final_norm = new LZOCShifterSticky(target, wE+target_prec, target_prec, intlog2(target_prec), false, 0); // check
 	oplist.push_back(final_norm);
 	inPortMap(final_norm, "I", "Log_normal");
 	outPortMap(final_norm, "Count", "E_normal");
@@ -248,10 +251,10 @@ FPLog::FPLog(Target* target, int wE, int wF)
 	setCycleFromSignal("Z2o2", false);
 	nextCycle(); ///////////////////// 
 
-	ao_rshift = new Shifter(target, s[stages+1]-p[stages+1]+1, s[stages+1]-p[stages+1]+1, Right) ;
+	ao_rshift = new Shifter(target, sfinal-pfinal+1, sfinal-pfinal+1, Right) ;
 	oplist.push_back(ao_rshift);
 	inPortMap(ao_rshift, "X", "Z2o2");
-	inPortMap(ao_rshift, "S", "shiftvalin");
+	inPortMap(ao_rshift, "S", "shiftvalinR");
 	outPortMap(ao_rshift, "R", "Z2o2_small_s");
 	vhdl << instance(ao_rshift, "ao_rshift");
 
@@ -274,8 +277,11 @@ FPLog::FPLog(Target* target, int wE, int wF)
 	vhdl << tab << declare("E0_sub", 2) << " <=   \"11\" when " << use("Log_small") << "(wF+g+1) = '1'" << endl
 		  << "          else \"10\" when " << use("Log_small") << "(wF+g+1 downto wF+g) = \"01\"" << endl
 		  << "          else \"01\" ;" << endl;
-	vhdl << tab << declare("E_small", wE) << " <=  \"0\" & (wE-2 downto 2 => '1') & E0_sub" << endl
-		  << "             - ((wE-1 downto log2wF => '0') & " << use("lzo") << ") ;" << endl;
+	vhdl << tab << declare("E_small", wE) << " <=  (\"0\" & (wE-2 downto 2 => '1') & E0_sub)  -  ";
+	if(wE>intlog2(wF))
+		vhdl << "((wE-1 downto log2wF => '0') & " << use("lzo") << ") ;" << endl;
+	else
+		vhdl << use("lzo") << ";" << endl;
 	vhdl << tab << declare("Log_small_normd", wF+gLog) << " <= " << use("Log_small") << "(wF+g+1 downto 2) when " << use("Log_small") << "(wF+g+1)='1'" << endl
 		  << "           else " << use("Log_small") << "(wF+g downto 1)  when " << use("Log_small") << "(wF+g)='1'  -- remove the first zero" << endl
 		  << "           else " << use("Log_small") << "(wF+g-1 downto 0)  ; -- remove two zeroes (extremely rare, 001000000 only)" << endl ;
@@ -286,13 +292,11 @@ FPLog::FPLog(Target* target, int wE, int wF)
 
 	int E_normalSize = getSignalByName("E_normal")->width(); 
 	vhdl << tab << declare("E0offset", wE) << " <= \"" << unsignedBinary((mpz_class(1)<<(wE-1)) -2 + wE , wE) << "\"; -- E0 + wE "<<endl;
-	vhdl << tab << declare("ER", wE) << " <= " << use("E_small") << " when " << use("small") << "='1'" << endl
-		  << "      else E0offset - (" << rangeAssign(wE-1,  E_normalSize, "'0'") << " & " << use("E_normal") << ");" << endl
-		  << tab << "-- works only if wE > E_normalSize approx log2wF, OK for usual exp/prec" << endl;
-
+	vhdl << tab << declare("ER", wE) << " <= " << use("E_small") << " when " << use("small") << "='1'" << endl;
+	vhdl << "      else E0offset - (" << rangeAssign(wE-1,  E_normalSize, "'0'") << " & " << use("E_normal") << ");" << endl;
 
 	vhdl << tab << declare("Log_g", wF+gLog) << " <=  " << use("Log_small_normd") << "(wF+g-2 downto 0) & \"0\" when " << use("small") << "='1'           -- remove implicit 1" << endl
-		  << "      else " << use("Log_normal_normd") << "(wE+targetprec-2 downto wE+targetprec-wF-g-1 );  -- remove implicit 1" << endl ;
+		  << "      else " << use("Log_normal_normd") << "(targetprec-2 downto targetprec-wF-g-1 );  -- remove implicit 1" << endl ;
 	vhdl << tab << declare("sticky") << " <= '0' when Log_g(g-2 downto 0) = (g-2 downto 0 => '0')    else '1';" << endl;
 	vhdl << tab << declare("round") << " <= Log_g(g-1) and (Log_g(g) or sticky);" << endl;
 	vhdl << tab << "-- if round leads to a change of binade, the carry propagation magically updates both mantissa and exponent" << endl;
@@ -305,7 +309,7 @@ FPLog::FPLog(Target* target, int wE, int wF)
 	vhdl << tab << "R(wE+wF+2 downto wE+wF) <= \"110\" when ((" << use("XExnSgn") << "(2) and (" << use("XExnSgn") << "(1) or " << use("XExnSgn") << "(0))) or (" << use("XExnSgn") << "(1) and " << use("XExnSgn") << "(0))) = '1' else" << endl
 		  << "                              \"101\" when " << use("XExnSgn") << "(2 downto 1) = \"00\"  else" << endl
 		  << "                              \"100\" when " << use("XExnSgn") << "(2 downto 1) = \"10\"  else" << endl
-		  << "                              \"00\" & " << use("sR") << " when (((" << use("Log_normal_normd") << "(wE+targetprec-1)='0') and (" << use("small") << "='0')) or ( (" << use("Log_small_normd") << " (wF+g-1)='0') and (" << use("small") << "='1'))) or (ufl = '1') else" << endl
+		  << "                              \"00\" & " << use("sR") << " when (((" << use("Log_normal_normd") << "(targetprec-1)='0') and (" << use("small") << "='0')) or ( (" << use("Log_small_normd") << " (wF+g-1)='0') and (" << use("small") << "='1'))) or (ufl = '1') else" << endl
 		  << "                               \"01\" & " << use("sR") << ";" << endl;
 	vhdl << tab << "R(wE+wF-1 downto 0) <=  "<< use("EFR") << ";" << endl;
 }	

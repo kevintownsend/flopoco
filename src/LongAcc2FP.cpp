@@ -72,7 +72,7 @@ LongAcc2FP::LongAcc2FP(Target* target, int LSBA, int MSBA, int wEOut, int wFOut)
 	countWidth_ = log2(sizeAcc_)+1;
 #endif
 
-	lzocShifterSticky_ = new LZOCShifterSticky(target, sizeAcc_, wFOut_ + 1,0,-1); // target, inputNbOfBits,outputNbOfBits, computeSticky, countType 
+	lzocShifterSticky_ = new LZOCShifterSticky(target, sizeAcc_,  wFOut_ + 1, intlog2(sizeAcc_), false, -1); // target, inputNbOfBits, outputNbOfBits, wCount, computeSticky, countType 
 	oplist.push_back(lzocShifterSticky_);
 	
 	adder_ = new IntAdder(target, wFOut_ + 1);

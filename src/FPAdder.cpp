@@ -27,9 +27,6 @@
 
 // TODO clean up X propagation to remove warnings
 
-// TODO Rename FracXFar -> FracXFar, same for Y and other 3   
-// TODO remove last pipe stage from the Shifter -- beware fix LongAcc also
-
 // TODO Single path adder
 
 #include <iostream>
@@ -67,7 +64,7 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 	wF = wFX;
 	wE = wEX;
 	
-	sizeRightShift = intlog2(wF+4);	// TODO Check: +3 ?
+	sizeRightShift = intlog2(wF+3);
 
 	/* Set up the IO signals */
 	/* Inputs: 2b(Exception) + 1b(Sign) + wEX bits (Exponent) + wFX bits(Fraction) */
@@ -194,11 +191,7 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 		 << use("fracSignClose") << ");"<<endl;
 	
 	// LZC + Shifting. The number of leading zeros are returned together with the shifted input
-	lzocs = new LZOCShifterSticky(target, wFX+2, wFX+2,0, 0);
-	if(lzocs->getCountWidth() > wE){
-		cout << endl << "****WARNING****: wE < log2(wF), the generated VHDL is probably broken."<<endl;
-		cout << "    Try increasing wE."<<endl;
-	}
+	lzocs = new LZOCShifterSticky(target, wFX+2, wFX+2, intlog2(wFX+2), false, 0);
 
 	lzocs->changeName(getName()+"_LZCShifter");
 	oplist.push_back(lzocs);
@@ -405,7 +398,7 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 		 << "("<<wE+1+wF<<" downto "<<wE+wF<<");"<<endl;
 
 	vhdl<<tab<< "with UnderflowOverflow select"<<endl;
-	vhdl<<tab<< declare("resultNoExn",wE+wF+3) << "("<<wE+wF+2<<" downto "<<wE+wF+1<<") <= \"10\" when \"01\", -- overflow"<<endl;
+	vhdl<<tab<< declare("resultNoExn",wE+wF+3) << "("<<wE+wF+2<<" downto "<<wE+wF+1<<") <=   (not " << use("zeroFromClose") << ") & \"0\" when \"01\", -- overflow"<<endl;
 	vhdl<<tab<< "                              \"00\" when \"10\" | \"11\",  -- underflow"<<endl;
 	vhdl<<tab<< "                              \"0\" &  not " << use("zeroFromClose") << "  when others; -- normal "<<endl;
   	
