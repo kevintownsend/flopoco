@@ -74,7 +74,6 @@ LogRangeRed :: LogRangeRed(Target* target,
 	 }
 
 
-
 	addInput("Y0", fplog->wF+2);
 	addInput("A", a[0]);
 	addOutput("Z", s[stages+1]);

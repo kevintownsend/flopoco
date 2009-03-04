@@ -57,14 +57,14 @@ FPLog::FPLog(Target* target, int wE, int wF)
 
 	// First compute the precision of each iteration 
 
-
+	// TODO when >4, we have a problem with PO sometimes failing to cancel one bit.
 	int bitsPerStage=4; //target->lutInputs();
 	if(verbose) 
-		cout << "Building an architecture optimized for " << target->lutInputs() << "-input LUTs" << endl;
+		cout << "Building an architecture optimized for " << bitsPerStage << "-input LUTs" << endl;
 
 	// Stage 0
 	p[0] = 0;
-	a[0] = bitsPerStage+1; 
+	a[0] = bitsPerStage+1; // The +1 is needed, see OtherLogTable::input2double
 	s[0] = wF+2;  
 	sfullZ[0] = wF+2;
 
@@ -72,7 +72,7 @@ FPLog::FPLog(Target* target, int wE, int wF)
 	sbt[1] = wF+2 ;
 	s[1] = wF+2;
 	t[1] = 0;
-	sfullZ[1] = wF+7;
+	sfullZ[1] = sfullZ[0] + a[0] +1;
 
 	// Following stages -- this is true starting from stage 1, although
 	// stage 1 needs a specific inverter table
@@ -210,7 +210,6 @@ FPLog::FPLog(Target* target, int wE, int wF)
 	//////////////////////////////////////////////
 	setCycle(0);
 	vhdl << tab << "-- The range reduction instance" << endl;
-
 	rrbox = new LogRangeRed(target, this);
 	oplist.push_back(rrbox);
 	vhdl << tab << declare("rrA", a[0]) << " <= X(wF-1 downto wF-a0);" << endl;

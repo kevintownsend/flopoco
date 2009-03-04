@@ -47,7 +47,6 @@ double OtherLogTable::input2double(int x) {
     } 
     else 
 		 d += 1.;
-  
   }
   d = d / ((double) (((uint64_t) 1)<<(p+wIn+1)));
   return d; 
