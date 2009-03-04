@@ -29,9 +29,9 @@ int    OtherLogTable::double2input(double x){
 }
 
 
-// uses log1p ! 
 double OtherLogTable::input2double(int x) {
   double d; 
+  // function uses log1p ! 
   // computation in double is exact as long as we don't want a quad
   // operator...
 
@@ -40,16 +40,16 @@ double OtherLogTable::input2double(int x) {
   else{
     d = (double) (-(x<<1));
     if(which==1) {
-      if(x>>(wIn-1)) // MSB of x
-	d+=2.;  // MARCHE SEULEMENT SI a[1]=a[0]+1 !!!!!
-      else 
-	d+=1.; 
+		 if(x>>(wIn-1)) // MSB of x
+			 d+=2.;  // MARCHE SEULEMENT SI a[1]=a[0]+1 !!!!!
+		 else 
+			 d+=1.; 
     } 
     else 
-      d += 1.;
+		 d += 1.;
   
   }
-  d = d / ((double) (1<<(p+wIn+1)));
+  d = d / ((double) (((uint64_t) 1)<<(p+wIn+1)));
   return d; 
 }
 
@@ -59,7 +59,9 @@ double OtherLogTable::input2double(int x) {
 
 mpz_class    OtherLogTable::double2output(double y){
   mpz_class z; 
-  z =(mpz_class) (  y *  ((double)(((int64_t)1)<< outputPrecision)) );
+  z = (mpz_class) (  y *  ((double)(((int64_t)1)<< outputPrecision)) );
+  // TODO fix for more than 64-bit
+  //  z = (mpz_class(1)<< outputPrecision)  (  y *  ((double)(((int64_t)1)) );
   if (0 != z>>wOut) {
     cerr<<"OtherLogTable::double2output: output does not fit output format"<<endl; 
   }
@@ -79,21 +81,21 @@ double OtherLogTable::output2double(mpz_class x) {
 
 
 mpz_class OtherLogTable::function(int x) {
-  //  return  double2output(-log1p(input2double(x)));
   mpz_class result;
   double apprinv;
   mpfr_t i,l;
   mpz_t r;
-  
+
   mpfr_init(i);
   mpfr_init(l);
   mpz_init2(r,400);
 
+
   apprinv = input2double(x);
   mpfr_set_d(i, apprinv, GMP_RNDN);
   mpfr_log1p(l, i, GMP_RNDN);
+  // cout << "which=" << which <<  " div" << (p+wIn+1) << "  x=" << x << "  apprinv=" << apprinv << "  l=" << mpfr_get_d(l, GMP_RNDN) << endl; 
   mpfr_neg(l, l, GMP_RNDN);
-  //mpfr_shift_left(l, p+wOut); // TODO CHECK IT WAS EQUIVALENT 
   mpfr_mul_2si(l, l, p+wOut, GMP_RNDN);
   mpfr_get_z(r, l, GMP_RNDD);
   result=mpz_class(r);
