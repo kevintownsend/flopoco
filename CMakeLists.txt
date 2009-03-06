@@ -25,7 +25,7 @@ SET(CMAKE_BUILD_TYPE release)
 ELSE(WIN32) 
 #Compilation flags
 SET(CMAKE_CXX_FLAGS_DEBUG "-Wall")
-# Uncomment for profiling/debugging
+# Uncomment for profiling
 #SET(CMAKE_CXX_FLAGS_DEBUG "-g -pg -Wall")
 # Do you want an executable of 12MB ?
 SET(CMAKE_BUILD_TYPE debug)
