@@ -699,12 +699,12 @@ string Operator::instance(Operator* op, string instanceName){
 	else
 		o <<  " " ;
 	o<< (*it).first << " => "  << (*it).second;
-	op->portMap_.erase(it);
+	//op->portMap_.erase(it);
 	it++;
 	for (  ; it != op->portMap_.end(); it++ ) {
 		o << "," << endl;
 		o <<  tab << tab << "           " << (*it).first << " => "  << (*it).second;
-		op->portMap_.erase(it);
+		//op->portMap_.erase(it);
 	}
 	o << ");" << endl;
 
