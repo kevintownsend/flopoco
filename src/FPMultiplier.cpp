@@ -369,7 +369,8 @@ void FPMultiplier::outputVHDL(std::ostream& o, std::string name) {
   	
 	ostringstream signame, synch1, synch2, xname,zeros, zeros1, zeros2, str1, str2;
 	
-	int bias_val=int(pow(double(2),double(wEX_-1)))-1;
+	// urk!	int bias_val=int(pow(double(2),double(wEX_-1)))-1;
+	int bias_val= (1<<(wEX_-1))-1;
 	int i, j; 
 
 	licence(o,"Bogdan Pasca (2008)");
