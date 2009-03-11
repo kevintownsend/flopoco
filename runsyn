@@ -34,10 +34,10 @@
 
 # PARAMETERS SET MANUALLY BY USER
 ########################################################
-xilinxPath=/home/bogdan/Xilinx/10.1/ISE
+
 resultsPath=$HOME/Results
-settingsFilename=settings32.sh 
-pf=$xilinxPath/$settingsFilename
+settingsFilename=settings.sh 
+pf=$XILINX/$settingsFilename
 
 #if results are to be outputed to a file or not
 out2file=1
