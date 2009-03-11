@@ -58,6 +58,8 @@
 #include "FPExp.hpp"
 #include "FPLog.hpp"
 
+#include "Collision.hpp"
+
 
 #ifndef _WIN32
 #include "BigTestBench.hpp"
@@ -787,6 +789,18 @@ bool parseCommandLine(int argc, char* argv[]){
 			int wF = checkStrictyPositive(argv[i++], argv[0]);
 			cerr << "> FPLog: wE=" << wE << " wF=" << wF << endl;
 			op = new FPLog(target, wE, wF);
+			addOperator(op);
+		}
+
+		else if (opname == "Collision")
+		{
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0]); // and exit
+			int wE = checkStrictyPositive(argv[i++], argv[0]);
+			int wF = checkStrictyPositive(argv[i++], argv[0]);
+			cerr << "> Collision: wE=" << wE << " wF=" << wF << endl;
+			op = new Collision(target, wE, wF);
 			addOperator(op);
 		}
 

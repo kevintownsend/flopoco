@@ -195,12 +195,13 @@ ADD_EXECUTABLE(flopoco
  src/fpexponential/gen_table.cpp
  src/fpexponential/explore.cpp
  src/FPExp
- src/fplogarithm/FirstInvTable.cpp
- src/fplogarithm/FirstLogTable.cpp
- src/fplogarithm/OtherLogTable.cpp
- src/fplogarithm/SecondInvTable.cpp
- src/fplogarithm/LogRangeRed.cpp
+ src/fplogarithm/FirstInvTable
+ src/fplogarithm/FirstLogTable
+ src/fplogarithm/OtherLogTable
+ src/fplogarithm/SecondInvTable
+ src/fplogarithm/LogRangeRed
  src/FPLog
+ src/Collision
 )
 ENDIF(WIN32) 
 
