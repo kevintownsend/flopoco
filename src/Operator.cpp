@@ -480,7 +480,7 @@ void Operator::setCycleFromSignal(string name, bool report) {
 
 void Operator::syncCycleFromSignal(string name, bool report) {
 	ostringstream e;
-	e << "ERROR in syncCycleFrom2Signals, "; // just in case
+	e << "ERROR in syncCycleFromSignal, "; // just in case
 
 	if(isSequential()) {
 		Signal* s;
