@@ -38,7 +38,7 @@
 class Collision : public Operator
 {
 public:
-	Collision(Target* target, int wE, int wF);
+	Collision(Target* target, int wE, int wF, int optimize);
 	~Collision();
 
 	void emulate(TestCase * tc);

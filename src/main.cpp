@@ -794,13 +794,14 @@ bool parseCommandLine(int argc, char* argv[]){
 
 		else if (opname == "Collision")
 		{
-			int nargs = 2;
+			int nargs = 3;
 			if (i+nargs > argc)
 				usage(argv[0]); // and exit
 			int wE = checkStrictyPositive(argv[i++], argv[0]);
 			int wF = checkStrictyPositive(argv[i++], argv[0]);
-			cerr << "> Collision: wE=" << wE << " wF=" << wF << endl;
-			op = new Collision(target, wE, wF);
+			int optimize = checkBoolean(argv[i++], argv[0]);
+			cerr << "> Collision: wE=" << wE << " wF=" << wF << (optimize==0? " using FP operators" : " optimized version") << endl;
+			op = new Collision(target, wE, wF, optimize);
 			addOperator(op);
 		}
 

@@ -68,19 +68,7 @@ print "-------------------------------------------------------------------------
 print "--------------------------- FloPoCo PreRelease Tests ---------------------------"
 executable_name = "./flopoco"
 operators = [ 
-             ["FPAdder",          [ ["wE", "in", 3, 11 ], ["wF","in", 8, 52] ]],
-             ["FPMultiplier",     [ ["wE", "in", 3, 11 ], ["wF","in", 8, 52] ]],
-             ["FPDiv",            [ ["wE", "in", 3, 11 ], ["wF","in", 8, 52] ]],
              ["FPLog",            [ ["wE", "in", 6, 11 ], ["wF","in", 8, 52] ]],
-             ["LeftShifter",      [ ["wIn", "in", 1, 64 ], ["MaxShift", "in", 1, 64]]], #XXX Tested
-             ["RightShifter",     [ ["wIn", "in", 1, 64 ], ["MaxShift", "in", 1, 64]]], #XXX Tested
-             ["LZOC",             [ ["wIn", "in", 1, 64 ] ]], #XXX Tested
-             ["LZOCShifter",      [ ["wIn", "in", 2, 127 ], ["wOut", "out", 2, 127],  ]],   
-             ["LZCShifter",       [ ["wIn", "in", 2, 127 ], ["wOut", "out", 2, 127],  ]],
-             ["LOCShifter",       [ ["wIn", "in", 2, 127 ], ["wOut", "out", 2, 127],  ]],
-             ["LZOCShifterSticky",       [ ["wIn", "in", 2, 127 ], ["wOut", "out", 2, 127],  ]],   
-             ["LZCShifterSticky",       [ ["wIn", "in", 2, 127 ], ["wOut", "out", 2, 127],  ]],
-             ["LOCShifterSticky",       [ ["wIn", "in", 2, 127 ], ["wOut", "out", 2, 127],  ]],
              #["IntAdder",         [ ["wIn", "in", 1, 64 ]  ]], 
              #["IntMultiplier",     [ ["wInX","in", 1, 64 ], ["wInY","in", 1, 64] ]]
  
