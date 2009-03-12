@@ -1,5 +1,24 @@
 /*
- * A toy example so support the FPL paper
+ * A toy example so support the FPL paper 
+
+
+This is a collision detector: it inputs 3 FP coordinates X,Y and Z and
+the square of a radius, R2, and computes a boolean predicate which is
+true iff X^2 + Y^2 + Z^2 < R2
+
+There are two versions, selectable by changing the value of
+USE_FP_OPERATORS below. One combines existing FloPoCo floating-point
+operators, and the other one is a specific datapath designed in the
+FloPoCo philosophy. 
+
+Both versions have its "grey area", situations where the predicate may
+be wrong with respect to the true result. This happens when X^2+Y^2+Z^2 is very close to R2. 
+
+The grey area of the combination of FP operators is about 2.5 units in the last place of R2. 
+The pure FloPoCo version is slightly more accurate, with a grey area smaller than 1 ulp of R2.
+
+It is also a lot smaller and faster, of course.
+ 
  *
  * Author : Florent de Dinechin
  *
@@ -33,6 +52,8 @@ using namespace std;
 extern vector<Operator *> oplist;
 
 
+#define USE_FP_OPERATORS 1
+
 
 Collision::Collision(Target* target, int wE, int wF)
 	: Operator(target), wE(wE), wF(wF)
@@ -49,7 +70,7 @@ Collision::Collision(Target* target, int wE, int wF)
 	addFPInput("R2", wE, wF);
 	addOutput("P"); 
 
-#if 1
+#if USE_FP_OPERATORS
 	vhdl << tab << declare("R2pipe", wE+wF) << " <= R2(" << wE+wF-1 << " downto 0);"  << endl; 
 	//////////////////////////////////////////////////////////////////:
 	//            A version that assembles FP operators             //
@@ -99,7 +120,53 @@ Collision::Collision(Target* target, int wE, int wF)
 	
 #else
 
-	// Square the mantissas 
+	// Error analysis
+	// 3 ulps in the multiplier truncation
+	// 2 half-ulps in the addition: we add one carry in that turns the two truncations into two roundings 
+	// Total 5 ulps, or 3 bits
+
+	// guard bits for a faithful result
+	int g=4; // so we're safe 
+
+
+	// extract the three biased exponents. 
+	vhdl << declare("EX", wE) << " <=  X" << range(wE+wF-1, wF)  << ";" << endl;
+	vhdl << declare("EY", wE) << " <=  Y" << range(wE+wF-1, wF) << ";" << endl;
+	vhdl << declare("EZ", wE) << " <=  Z" << range(wE+wF-1, wF) << ";" << endl;
+
+	// determine the max of the exponents
+	vhdl << declare("DEXY", wE+1) << " <=   ('0' & EX) - ('0' & EY);" << endl;
+	vhdl << declare("DEYZ", wE+1) << " <=   ('0' & EY) - ('0' & EZ);" << endl;
+	vhdl << declare("DEXZ", wE+1) << " <=   ('0' & EX) - ('0' & EZ);" << endl;
+	vhdl << declare("XltY") << " <=   DEXY("<< wE<<");" << endl;
+	vhdl << declare("YltZ") << " <=   DEYZ("<< wE<<");" << endl;
+	vhdl << declare("XltZ") << " <=   DEXZ("<< wE<<");" << endl;
+
+	// rename the exponents  to A,B,C with A>=(B,C)
+  	vhdl << tab << declare("EA", wE)  << " <= " << endl
+		  << tab << tab << use("EZ") << " when (" << use("XltZ") << "='1') and (" << use("YltZ") << "='1')  else " << endl
+		  << tab << tab << use("EY") << " when (" << use("XltY") << "='1') and (" << use("YltZ") << "='0')  else " << endl
+		  << tab << tab << use("EX") << " when others; " << endl;
+  	vhdl << tab << declare("EB", wE)  << " <= " << endl
+		  << tab << tab << use("EX") << " when (" << use("XltZ") << "='1') and (" << use("YltZ") << "='1')  else " << endl
+		  << tab << tab << use("EZ") << " when (" << use("XltY") << "='1') and (" << use("YltZ") << "='0')  else " << endl
+		  << tab << tab << use("EY") << " when others; " << endl;
+  	vhdl << tab << declare("EC", wE)  << " <= " << endl
+		  << tab << tab << use("EY") << " when (" << use("XltZ") << "='1') and (" << use("YltZ") << "='1')  else " << endl
+		  << tab << tab << use("EX") << " when (" << use("XltY") << "='1') and (" << use("YltZ") << "='0')  else " << endl
+		  << tab << tab << use("EZ") << " when others; " << endl;
+
+	nextCycle();
+
+	// Now recompute our two shift values -- they were already computed at cycle 0 but it is cheaper this way.
+	vhdl << declare("ShiftValB", wE) << " <=    " << use("EA") << " - " << use("EB") << "; -- positive result, no overflow " << endl;
+	vhdl << declare("ShiftValC", wE) << " <=    " << use("EA") << " - " << use("EC") << "; -- positive result, no overflow" << endl;
+	
+
+
+	// Back to cycle 0 for the significand datapath
+	setCycle(0);
+	// Square the significands TODO an IntSquarer here some day
 	IntMultiplier* mult = new IntMultiplier(target, 1+ wF, 1+ wF);
 	oplist.push_back(mult);
 
@@ -109,38 +176,84 @@ Collision::Collision(Target* target, int wE, int wF)
 	inPortMap (mult, "Y", "mX");
 	outPortMap(mult, "R", "mX2");
 	vhdl << instance(mult, "multx");
-
-	vhdl << tab << declare("mY", wF+1)  << " << '1' & Y" << range(wF-1, 0) << "; " << endl;
+	
+	vhdl << tab << declare("mY", wF+1)  << " <= '1' & Y" << range(wF-1, 0) << "; " << endl;
 
 	inPortMap (mult, "X", "mY");
 	inPortMap (mult, "Y", "mY");
 	outPortMap(mult, "R", "mY2");
 	vhdl << instance(mult, "multy");
 
-	vhdl << tab << declare("mZ", wF+1)  << " << '1' & Z" << range(wF-1, 0) << "; " << endl;
+	vhdl << tab << declare("mZ", wF+1)  << " <= '1' & Z" << range(wF-1, 0) << "; " << endl;
 	
 	inPortMap (mult, "X", "mZ");
 	inPortMap (mult, "Y", "mZ");
 	outPortMap(mult, "R", "mZ2");
 	vhdl << instance(mult, "multz");
 
-	syncCycleFromSignal("X2PY2PZ2", false);
+	syncCycleFromSignal("mZ2", false);
+
+	// truncate the three results to wF+g+1
+  	vhdl << tab << declare("X2t", wF+g+1)  << " <= " << use("mX2") << range(wF+g, 0) << "; " << endl;
+  	vhdl << tab << declare("Y2t", wF+g+1)  << " <= " << use("mY2") << range(wF+g, 0) << "; " << endl;
+  	vhdl << tab << declare("Z2t", wF+g+1)  << " <= " << use("mZ2") << range(wF+g, 0) << "; " << endl;
+
 	nextCycle(); 
 
-	// Shift the three squares to align them to R2
 	
-	vhdl << declare("EX2", wE+1) << " <=  X" << range(wE+wF-1, wF) << " & '0';" << endl;
-	vhdl << declare("EY2", wE+1) << " <=  Y" << range(wE+wF-1, wF) << " & '0';" << endl;
-	vhdl << declare("EZ2", wE+1) << " <=  Z" << range(wE+wF-1, wF) << " & '0';" << endl;
-	int bias_val= (1<<(wEX_-1))-1;
-	vhdl << tab << declare("bias", wE+1) << " <= CONV_STD_LOGIC_VECTOR("<<bias_val<<","<<wE_+1<<");"<<endl; 
-	vhdl << declare("ER2", wE+1) << " <= '0' & R2" << range(wE+wF-1, wF) << ";" << endl;
-	vhdl << tab << 
-			//substract the bias value from the exponents' sum
-			o<<tab<<"Exponents_Sum_Post_Bias_Substraction <= Exponents_Sum_Pre_Bias_Substraction_d - bias;"<<endl;//wEX_ + 2   
+	// Now we have our three FP squares, we rename them to A,B,C with A>=(B,C) 
+	// only 3 3-muxes
 
-	Shifter* 
-	
+  	vhdl << tab << declare("MA", wF+g+1)  << " <= " << endl
+		  << tab << tab << use("mZ2") << " when (" << use("XltZ") << "='1') and (" << use("YltZ") << "='1')  else " << endl
+		  << tab << tab << use("mY2") << " when (" << use("XltY") << "='1') and (" << use("YltZ") << "='0')  else " << endl
+		  << tab << tab << use("mX2") << " when others; " << endl;
+  	vhdl << tab << declare("MB", wF+g+1)  << " <= " << endl
+		  << tab << tab << use("mX2") << " when (" << use("XltZ") << "='1') and (" << use("YltZ") << "='1')  else " << endl
+		  << tab << tab << use("mZ2") << " when (" << use("XltY") << "='1') and (" << use("YltZ") << "='0')  else " << endl
+		  << tab << tab << use("mY2") << " when others; " << endl;
+  	vhdl << tab << declare("MC", wF+g+1)  << " <= " << endl
+		  << tab << tab << use("mY2") << " when (" << use("XltZ") << "='1') and (" << use("YltZ") << "='1')  else " << endl
+		  << tab << tab << use("mX2") << " when (" << use("XltY") << "='1') and (" << use("YltZ") << "='0')  else " << endl
+		  << tab << tab << use("mZ2") << " when others; " << endl;
+
+
+	//Synchronize exponent and significand datapath
+	setCycleFromSignal("MA", false); // useless here but harmless, too
+	syncCycleFromSignal("ShiftValB", false);
+	nextCycle();
+
+	Shifter* rightShifter = new Shifter(target,wF+g+1, wF+g+1,Right); 
+	oplist.push_back(rightShifter);
+
+	inPortMap  (rightShifter, "X", "MB");
+	inPortMap  (rightShifter, "S", "ShiftValB");
+	outPortMap (rightShifter, "R","shiftedB");
+	vhdl << instance(rightShifter, "ShifterForB");
+
+	inPortMap  (rightShifter, "X", "MC");
+	inPortMap  (rightShifter, "S", "ShiftValC");
+	outPortMap (rightShifter, "R","shiftedC");
+	vhdl << instance(rightShifter, "ShifterForC");
+
+	// superbly ignore the bits that are shifted out
+	syncCycleFromSignal("shiftedB", false);
+	int shiftedB_size = getSignalByName("shiftedB")->width();
+  	vhdl << tab << declare("alignedB", wF+g+1)  << " <= " << use("shiftedB") << range(shiftedB_size-1, shiftedB_size -(wF+g)) << "; " << endl;
+  	vhdl << tab << declare("alignedC", wF+g+1)  << " <= " << use("shiftedC") << range(shiftedB_size-1, shiftedB_size -(wF+g)) << "; " << endl;
+
+	nextCycle();
+
+	IntAdder* fracAddFar = new IntAdder(target,wF+4);
+	fracAddFar->changeName(getName()+"_fracAddFar");
+	oplist.push_back(fracAddFar);
+	inPortMap  (fracAddFar, "X", "fracXfar");
+	inPortMap  (fracAddFar, "Y", "fracYfarXorOp");
+	inPortMap  (fracAddFar, "Cin", "cInAddFar");
+	outPortMap (fracAddFar, "R","fracResultfar0");
+	vhdl << instance(fracAddFar, "fracAdderFar");
+
+
 #endif
 
 }	
