@@ -202,7 +202,7 @@ ADD_EXECUTABLE(flopoco
  src/fplogarithm/LogRangeRed
  src/FPLog
  src/Collision
- src/Squarer
+ src/IntSquarer
 )
 ENDIF(WIN32) 
 

@@ -1,5 +1,5 @@
-#ifndef SquarerS_HPP
-#define SquarerS_HPP
+#ifndef IntSquarerS_HPP
+#define IntSquarerS_HPP
 #include <vector>
 #include <sstream>
 #include <gmp.h>
@@ -8,28 +8,28 @@
 #include "IntAdder.hpp"
 
 extern map<string, double> emptyDelayMap;
-/** The Squarer class for experimenting with adders. 
+/** The IntSquarer class for experimenting with adders. 
 */
-class Squarer : public Operator
+class IntSquarer : public Operator
 {
 public:
 	/**
-	 * The Squarer constructor
+	 * The IntSquarer constructor
 	 * @param[in] target the target device
 	 * @param[in] wIn    the with of the inputs and output
 	 * @param[in] inputDelays the delays for each input
 	 **/
-	Squarer(Target* target, int wIn, map<string, double> inputDelays = emptyDelayMap);
-	/*Squarer(Target* target, int wIn);
+	IntSquarer(Target* target, int wIn, map<string, double> inputDelays = emptyDelayMap);
+	/*IntSquarer(Target* target, int wIn);
 	void cmn(Target* target, int wIn, map<string, double> inputDelays);*/
 	
 	/**
 	 *  Destructor
 	 */
-	~Squarer();
+	~IntSquarer();
 
 	/**
-	 * Method belonging to the Operator class overloaded by the Squarer class
+	 * Method belonging to the Operator class overloaded by the IntSquarer class
 	 * @param[in,out] o     the stream where the current architecture will be outputed to
 	 * @param[in]     name  the name of the entity corresponding to the architecture generated in this method
 	 **/

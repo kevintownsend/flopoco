@@ -36,7 +36,7 @@
 ########################################################
 
 resultsPath=$HOME/Results
-settingsFilename=settings.sh 
+settingsFilename=settings32.sh 
 pf=$XILINX/$settingsFilename
 
 #if results are to be outputed to a file or not

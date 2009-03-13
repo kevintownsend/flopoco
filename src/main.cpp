@@ -59,7 +59,7 @@
 #include "FPLog.hpp"
 
 #include "Collision.hpp"
-#include "Squarer.hpp"
+#include "IntSquarer.hpp"
 
 #ifndef _WIN32
 #include "BigTestBench.hpp"
@@ -804,14 +804,14 @@ bool parseCommandLine(int argc, char* argv[]){
 			op = new Collision(target, wE, wF, optimize);
 			addOperator(op);
 		}
-		else if (opname == "Squarer")
+		else if (opname == "IntSquarer")
 		{
 			int nargs = 1;
 			if (i+nargs > argc)
 				usage(argv[0]); // and exit
 			int wIn = checkStrictyPositive(argv[i++], argv[0]);
-			cerr << "> Squarer: wIn=" << wIn << endl;
-			op = new Squarer(target, wIn);
+			cerr << "> IntSquarer: wIn=" << wIn << endl;
+			op = new IntSquarer(target, wIn);
 			addOperator(op);
 		}
 #ifndef _WIN32

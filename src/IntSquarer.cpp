@@ -1,5 +1,5 @@
 /*
- * An squarer for FloPoCo
+ * An IntSquarer for FloPoCo
  *
  * It may be pipelined to arbitrary frequency.
  * Also useful to derive the carry-propagate delays for the subclasses of Target
@@ -33,16 +33,16 @@
 #include <gmpxx.h>
 #include "utils.hpp"
 #include "Operator.hpp"
-#include "Squarer.hpp"
+#include "IntSquarer.hpp"
 
 using namespace std;
 extern vector<Operator *> oplist;
 
-Squarer::Squarer(Target* target, int wIn, map<string, double> inputDelays):
+IntSquarer::IntSquarer(Target* target, int wIn, map<string, double> inputDelays):
 Operator(target), wIn_(wIn), inputDelays_(inputDelays)
 {
 	ostringstream name;
-	name << "Squarer_" << wIn_;
+	name << "IntSquarer_" << wIn_;
 	setName(name.str());
 
 	// Set up the IO signals
@@ -132,11 +132,11 @@ Operator(target), wIn_(wIn), inputDelays_(inputDelays)
 	}
 }
 
-Squarer::~Squarer() {
+IntSquarer::~IntSquarer() {
 }
 
 
-//void Squarer::outputVHDL(std::ostream& o, std::string name) {
+//void IntSquarer::outputVHDL(std::ostream& o, std::string name) {
 //	ostringstream signame;
 //	licence(o,"Bogdan Pasca (2009)");
 //	Operator::stdLibs(o);
@@ -152,7 +152,7 @@ Squarer::~Squarer() {
 
 
 
-void Squarer::emulate(TestCase* tc)
+void IntSquarer::emulate(TestCase* tc)
 {
 	mpz_class svX = tc->getInputValue("X");
 	mpz_class svR = svX * svX ;
