@@ -49,17 +49,20 @@ Operator(target), wIn_(wIn), inputDelays_(inputDelays)
 	addInput ("X"  , wIn_);
 	addOutput("R"  , 2*wIn_);
 
-	// --------- Sub-components ------------------
-
-	intadder = new IntAdder(target, 84);
-	oplist.push_back(intadder);
 
 	if (verbose){
 		cout <<"delay for X is   "<< inputDelays["X"]<<endl;	
 	}
 
 	if (isSequential()){
-		if (wIn==51) {
+		if ((wIn>34) && (wIn<=51)) {
+			// --------- Sub-components ------------------
+			intadder = new IntAdder(target, 84);
+			oplist.push_back(intadder);
+
+			if (wIn<51)  
+			vhdl << declare("sigX",51) << "<= "<<zeroGenerator(51-wIn,0) <<" & X;"<<endl;
+			else
 			vhdl << declare("sigX",51) << "<= X;"<<endl;
 			vhdl << declare("x0_16_sqr",34) << "<= " << use("sigX")<<range(16,0) << " * " << use("sigX")<<range(16,0)<<";"<<endl;
 			vhdl << declare("x17_33_sqr",34) << "<= " << use("sigX")<<range(33,17) << " * " << use("sigX")<<range(33,17)<<";"<<endl;
@@ -81,7 +84,50 @@ Operator(target), wIn_(wIn), inputDelays_(inputDelays)
 			
 			syncCycleFromSignal("adderOutput", false);
 			
-			vhdl << "R <= " << use("adderOutput") << " & " << use("x0_16_sqr")<<range(17,0)<<";"<<endl;
+			vhdl << "R <= " << use("adderOutput")<<range(2*wIn-19,0) << " & " << use("x0_16_sqr")<<range(17,0)<<";"<<endl;
+		}
+		if ((wIn>51) && (wIn<=68)) {
+			// --------- Sub-components ------------------
+			intadder = new IntAdder(target, 101);
+			oplist.push_back(intadder);
+
+			if (wIn<68)  
+			vhdl << declare("sigX",68) << "<= "<<zeroGenerator(68-wIn,0) <<" & X;"<<endl;
+			else
+			vhdl << declare("sigX",68) << "<= X;"<<endl;
+
+			vhdl << declare("x0_16_x17_33",34) << "<= "<< use("sigX")<<range(16,0) << " * " << use("sigX")<<range(33,17)<<";"<<endl;
+			nextCycle(); ////////////////////////////////////////////////
+			vhdl << declare("x0_16_sqr",36) << "<= " << "(\"00\" & " << use("x0_16_x17_33")<<range(15,0)<<" & \"000000000000000000\") + " 
+			                                << "( \"0\" & "<< use("sigX")<<range(16,0) << ") * (\"0\" & " << use("sigX")<<range(16,0)<<");"<<endl;
+			vhdl << declare("x17_33_x34_50",34) << "<= "<< use("sigX")<<range(33,17) << " * " << use("sigX")<<range(50,34)<<";"<<endl;
+			nextCycle(); ////////////////////////////////////////////////
+			vhdl << declare("x17_33_sqr",36) << "<= " << "(\"00\" & " << use("x17_33_x34_50")<<range(15,0)<<" & "<<use("x0_16_x17_33")<<range(33,16) <<") + " << use("x0_16_sqr")<<"(34) + "
+			                                << "( \"0\" & "<< use("sigX")<<range(33,17) << ") * (\"0\" & " << use("sigX")<<range(33,17)<<");"<<endl;
+			vhdl << declare("x51_67_x34_50",34) << "<= "<< use("sigX")<<range(67,51) << " * " << use("sigX")<<range(50,34)<<";"<<endl;
+			vhdl << declare("x_0_16_34_50",34) << " <= " << "( "<< use("sigX")<<range(16,0) << ") * (" << use("sigX")<<range(50,34)<<");"<<endl;
+			nextCycle(); ////////////////////////////////////////////////
+			vhdl << declare("x34_50_sqr",36) << "<= " << "(\"00\" & " << use("x51_67_x34_50")<<range(15,0)<<" & "<<use("x17_33_x34_50")<<range(33,16) <<") + " << use("x17_33_sqr")<<"(34) + "
+			                                << "( \"0\" & "<< use("sigX")<<range(50,34) << ") * (\"0\" & " << use("sigX")<<range(50,34)<<");"<<endl;
+			vhdl << declare("x_0_16_51_67_pshift", 34) << " <= " << use("x_0_16_34_50")<<range(33,17) << " + "
+			                                << "( "<< use("sigX")<<range(16,0) << ") * (" << use("sigX")<<range(67,51)<<");"<<endl;
+			nextCycle(); ////////////////////////////////////////////////
+			vhdl << declare("x51_67_sqr",34) << "<= " << "( \"00000000000000\" & "<<use("x51_67_x34_50")<<range(33,16) <<") + " << use("x34_50_sqr")<<"(34) + "
+			                                << "( "<< use("sigX")<<range(67,51) << ") * (" << use("sigX")<<range(67,51)<<");"<<endl;
+			vhdl << declare("x_17_33_51_67_pshift", 34) << " <= " << use("x_0_16_51_67_pshift")<<range(33,17) << " + "
+			                                << "( "<< use("sigX")<<range(33,17) << ") * (" << use("sigX")<<range(67,51)<<");"<<endl;
+			nextCycle(); ////////////////////////////////////////////////
+			vhdl << declare("op1",101) << "<= "<< use("x51_67_sqr")<<" & " <<  use("x34_50_sqr")<<range(33,0) << " & " << use("x17_33_sqr")<<range(33,1) <<  ";"<<endl;
+			vhdl << declare("op2",101) << "<="<< zeroGenerator(101-68,0)<<" & " << use("x_17_33_51_67_pshift") << " & " << use("x_0_16_51_67_pshift")<<range(16,0)<<" & " << use("x_0_16_34_50")<<range(16,0)<<";"<<endl;
+			inPortMap(intadder, "X", "op1");
+			inPortMap(intadder, "Y", "op2");
+			inPortMapCst(intadder, "Cin", "'0'");
+			outPortMap(intadder, "R", "adderOutput");
+			vhdl << instance(intadder, "ADDER1");
+			
+			syncCycleFromSignal("adderOutput", false);
+			
+			vhdl << "R <= " << use("adderOutput")<<range(2*wIn-36,0) << " & " <<use("x17_33_sqr")<<range(0,0) << " & " << use("x0_16_sqr")<<range(33,0)<<";"<<endl;
 		}
 	}
 }
