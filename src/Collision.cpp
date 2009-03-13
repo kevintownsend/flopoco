@@ -115,9 +115,13 @@ Collision::Collision(Target* target, int wE, int wF, int optimize)
 		nextCycle(); 
 		
 		// TODO An IntAdder here
-		vhdl << tab << declare("diff", wE+wF+1) << " <= ('0'& " << use("R2pipe") << ") - ('0'& " << use("X2PY2PZ2") << range(wE+wF-1, 0) << ");" << endl;
+
+		// collision if X2PY2PZ2 < R2, ie X2PY2PZ2 - R2 < 0
+		vhdl << tab << declare("diff", wE+wF+1) << " <= ('0'& " << use("X2PY2PZ2") << range(wE+wF-1, 0) << ")  -  ('0'& " << use("R2pipe") << ");" << endl;
 		vhdl << tab <<  "P <= " << use("diff") << "(" << wE+wF << ");"  << endl ;
 	}
+
+
 
 	else { // here comes the FloPoCo version	
 
@@ -160,8 +164,8 @@ Collision::Collision(Target* target, int wE, int wF, int optimize)
 		nextCycle();
 		
 		// Now recompute our two shift values -- they were already computed at cycle 0 but it is cheaper this way.
-		vhdl << declare("fullShiftValB", wE) << " <=    " << use("EA") << " - " << use("EB") << "; -- positive result, no overflow " << endl;
-		vhdl << declare("fullShiftValC", wE) << " <=    " << use("EA") << " - " << use("EC") << "; -- positive result, no overflow" << endl;
+		vhdl << declare("fullShiftValB", wE) << " <=  (" << use("EA") << range(wE-2,0) << " - " << use("EB")<< range(wE-2,0) << ") & '0' ; -- positive result, no overflow " << endl;
+		vhdl << declare("fullShiftValC", wE) << " <=  (" << use("EA") << range(wE-2,0) << " - " << use("EC")<< range(wE-2,0) << ") & '0' ; -- positive result, no overflow " << endl;
 	
 		Shifter* rightShifter = new Shifter(target,wF+g+1, wF+g+1,Right); 
 		oplist.push_back(rightShifter);
@@ -253,9 +257,10 @@ Collision::Collision(Target* target, int wE, int wF, int optimize)
 		syncCycleFromSignal("mZ2", false);
 		
 		// truncate the three results to wF+g+1
-		vhdl << tab << declare("X2t", wF+g+1)  << " <= " << use("mX2") << range(wF+g, 0) << "; " << endl;
-		vhdl << tab << declare("Y2t", wF+g+1)  << " <= " << use("mY2") << range(wF+g, 0) << "; " << endl;
-		vhdl << tab << declare("Z2t", wF+g+1)  << " <= " << use("mZ2") << range(wF+g, 0) << "; " << endl;
+		int prodsize = 2+2*wF;
+		vhdl << tab << declare("X2t", wF+g+1)  << " <= " << use("mX2") << range(prodsize-1, prodsize - wF-g-1) << "; " << endl;
+		vhdl << tab << declare("Y2t", wF+g+1)  << " <= " << use("mY2") << range(prodsize-1, prodsize - wF-g-1) << "; " << endl;
+		vhdl << tab << declare("Z2t", wF+g+1)  << " <= " << use("mZ2") << range(prodsize-1, prodsize - wF-g-1) << "; " << endl;
 	
 		nextCycle(); 
 
@@ -330,24 +335,28 @@ Collision::Collision(Target* target, int wE, int wF, int optimize)
 
 		nextCycle();
 		
-		// Possible 2-bit normalisation
+		// Possible 2-bit normalisation, with a truncation
 		vhdl << tab << declare("finalFraction", wF+g)  << " <= " << endl
-			  << tab << tab << use("sum") << range(wF+g-1, 0) << "        when " << use("sum") << "(" << wF+g << ")='1'    else " << endl
-			  << tab << tab << use("sum") << range(wF+g-2, 0) << " & \"0\"  when (" << use("sum") << range(wF+g, wF+g-1) << "=\"01\")     else " << endl
-			  << tab << tab << use("sum") << range(wF+g-3, 0) << " & \"00\"; " << endl;
-		vhdl << tab << declare("exponentUpdate", wE)  << " <= " << endl
-			  << tab << tab << "CONV_STD_LOGIC_VECTOR(2,"<< wE <<")  when " << use("sum") << "(" << wF+g << ")='1'    else " << endl
-			  << tab << tab << "CONV_STD_LOGIC_VECTOR(1,"<< wE <<")  when (" << use("sum") << range(wF+g, wF+g-1) << "=\"01\")     else " << endl
-			  << tab << tab << "CONV_STD_LOGIC_VECTOR(0,"<< wE <<")  ; " << endl;
+			  << tab << tab << use("sum") << range(wF+g+1,2) << "   when " << use("sum") << "(" << wF+g+2 << ")='1'    else " << endl
+			  << tab << tab << use("sum") << range(wF+g, 1) <<  "   when (" << use("sum") << range(wF+g+2, wF+g+1) << "=\"01\")     else " << endl
+			  << tab << tab << use("sum") << range(wF+g-1, 0) << "; " << endl;
+
+		// Exponent datapath. We have to compute 2*EA - bias + an update that is 0, 1 or 2
+		// All the following ignores overflows, infinities, zeroes, etc for the sake of simplicity.
+		int bias = (1<<(wE-1))-1;
+		vhdl << tab << declare("exponentUpdate", wE+1)  << " <= " << endl
+			  << tab << tab << "CONV_STD_LOGIC_VECTOR(" << bias - 2 << ", "<< wE+1 <<")  when " << use("sum") << "(" << wF+g << ")='1'    else " << endl
+			  << tab << tab << "CONV_STD_LOGIC_VECTOR(" << bias - 1 << ", "<< wE+1 <<")  when (" << use("sum") << range(wF+g, wF+g-1) << "=\"01\")     else " << endl
+			  << tab << tab << "CONV_STD_LOGIC_VECTOR(" << bias << ", "<< wE+1 <<")  ; " << endl;
 		
-		vhdl << tab << declare("finalExp", wE)  << " <= " << use("EA") << " + " << use("exponentUpdate") << " ; " << endl;
+		vhdl << tab << declare("finalExp", wE+1)  << " <= (" << use("EA") << " & '0') - " << use("exponentUpdate") << " ; " << endl;
 
 		nextCycle();
 		
-		vhdl << tab << declare("X2PY2PZ2", wE+wF+g)  << " <= " << use("finalExp") << " & " << use("finalFraction") << "; " << endl;
+		vhdl << tab << declare("X2PY2PZ2", wE+wF+g)  << " <= " << use("finalExp") << range(wE-1,0) << " & " << use("finalFraction") << "; " << endl;
 
 
-		vhdl << tab << declare("diff", wE+wF+g+1) << " <= ('0'& " << use("R2pipe") << " & CONV_STD_LOGIC_VECTOR(0, " << g << ") ) - ('0'& " << use("X2PY2PZ2") << ");" << endl;
+		vhdl << tab << declare("diff", wE+wF+g+1) << " <=  ('0'& " << use("X2PY2PZ2") << ")  - ('0'& " << use("R2pipe") << " & CONV_STD_LOGIC_VECTOR(0, " << g << ") );" << endl;
 		vhdl << tab <<  "P <= " << use("diff") << "(" << wE+wF+g << ");"  << endl ;
 
 	}
@@ -425,12 +434,12 @@ void Collision::emulate(TestCase * tc)
 	mpz_class predtrue =  1;
 
 	if(mpfr_cmp(r2, rd)<0) { // R2< X^2+Y^2+Z^2
-		tc->addExpectedOutput("P", predtrue);
-		tc->addExpectedOutput("P", predtrue);
+		tc->addExpectedOutput("P", predfalse);
+		tc->addExpectedOutput("P", predfalse);
 	}
 	else if(mpfr_cmp(r2, ru)>0) {
-		tc->addExpectedOutput("P", predfalse);
-		tc->addExpectedOutput("P", predfalse);
+		tc->addExpectedOutput("P", predtrue);
+		tc->addExpectedOutput("P", predtrue);
 	}
 	else{ // grey area
 		tc->addExpectedOutput("P", predtrue);
@@ -444,3 +453,36 @@ void Collision::emulate(TestCase * tc)
 }
  
 
+
+// This method is cloned from Operator, just resetting sign and exception bits
+// (see ***************** below )
+void Collision::buildRandomTestCases(TestCaseList* tcl, int n){
+
+	TestCase *tc;
+	/* Generate test cases using random input numbers */
+	for (int i = 0; i < n; i++) {
+		tc = new TestCase(this); // TODO free all this memory when exiting TestBench
+		/* Fill inputs */
+		for (unsigned int j = 0; j < ioList_.size(); j++) {
+			Signal* s = ioList_[j]; 
+			if (s->type() == Signal::in) {
+				// ****** Modification: positive normal numbers with small exponents 
+				mpz_class m = getLargeRandom(wF);
+				mpz_class bias = (mpz_class(1)<<(wE-1)) - 1; 
+				mpz_class e = getLargeRandom(wE-2) - (mpz_class(1)<<(wE-3)) + bias; // ensure no overflow
+				mpz_class a = (mpz_class(1)<<(wE+wF+1)) // 01 to denote a normal number
+					+ (e<<wF) + m;
+				tc->addInput(s->getName(), a);
+			}
+		}
+		/* Get correct outputs */
+		emulate(tc);
+
+		//		cout << tc->getInputVHDL();
+		//    cout << tc->getExpectedOutputVHDL();
+
+
+		// add to the test case list
+		tcl->add(tc);
+	}
+}

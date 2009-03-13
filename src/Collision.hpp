@@ -43,6 +43,8 @@ public:
 
 	void emulate(TestCase * tc);
 
+	void buildRandomTestCases(TestCaseList* tcl, int n);
+
 	int wE, wF;
 
 };
