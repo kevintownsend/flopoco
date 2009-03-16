@@ -19,6 +19,9 @@ the last place of R2.  The pure FloPoCo version is slightly more
 accurate, with a grey area smaller than 1 ulp of R2.
 
 It is also a lot smaller and faster, of course.
+
+TODO: turn it into a more generally useful sum-of-square, and manage exceptions.
+
  
  *
  * Author : Florent de Dinechin
@@ -128,13 +131,13 @@ Collision::Collision(Target* target, int wE, int wF, int optimize)
 	else { // here comes the FloPoCo version	
 
 		// Error analysis
-		// 3 ulps in the multiplier truncation
-		// 2 half-ulps in the addition: we add one carry in that turns the two truncations into two roundings 
-		// Total 5 ulps, or 3 bits
+		// 3 ulps(wF+g) in the multiplier truncation
+		// Again 2 ulps(wF+g) in the shifter output truncation
+		// Normalisation truncation: either 0 (total 5), or 1 ulp(wF+g) but dividing the previous by 2 (total 3.5)
+		// Total max 5 ulps, we're safe with 3 guard bits
 		
 		// guard bits for a faithful result
-		int g=4; // so we're safe 
-		
+		int g=3; 
 
 		// extract the three biased exponents. 
 		vhdl << declare("EX", wE) << " <=  X" << range(wE+wF-1, wF)  << ";" << endl;
@@ -169,7 +172,7 @@ Collision::Collision(Target* target, int wE, int wF, int optimize)
 		vhdl << declare("fullShiftValB", wE) << " <=  (" << use("EA") << range(wE-2,0) << " - " << use("EB")<< range(wE-2,0) << ") & '0' ; -- positive result, no overflow " << endl;
 		vhdl << declare("fullShiftValC", wE) << " <=  (" << use("EA") << range(wE-2,0) << " - " << use("EC")<< range(wE-2,0) << ") & '0' ; -- positive result, no overflow " << endl;
 	
-		Shifter* rightShifter = new Shifter(target,wF+g+1, wF+g+1,Right); 
+		Shifter* rightShifter = new Shifter(target,wF+g+2, wF+g+2,Right); 
 		oplist.push_back(rightShifter);
 
 		int sizeRightShift = rightShifter->getShiftInWidth(); 
@@ -271,9 +274,9 @@ Collision::Collision(Target* target, int wE, int wF, int optimize)
 		
 		// truncate the three results to wF+g+1
 		int prodsize = 2+2*wF;
-		vhdl << tab << declare("X2t", wF+g+1)  << " <= " << use("mX2") << range(prodsize-1, prodsize - wF-g-1) << "; " << endl;
-		vhdl << tab << declare("Y2t", wF+g+1)  << " <= " << use("mY2") << range(prodsize-1, prodsize - wF-g-1) << "; " << endl;
-		vhdl << tab << declare("Z2t", wF+g+1)  << " <= " << use("mZ2") << range(prodsize-1, prodsize - wF-g-1) << "; " << endl;
+		vhdl << tab << declare("X2t", wF+g+2)  << " <= " << use("mX2") << range(prodsize-1, prodsize - wF-g-2) << "; " << endl;
+		vhdl << tab << declare("Y2t", wF+g+2)  << " <= " << use("mY2") << range(prodsize-1, prodsize - wF-g-2) << "; " << endl;
+		vhdl << tab << declare("Z2t", wF+g+2)  << " <= " << use("mZ2") << range(prodsize-1, prodsize - wF-g-2) << "; " << endl;
 	
 		nextCycle(); 
 
@@ -281,15 +284,15 @@ Collision::Collision(Target* target, int wE, int wF, int optimize)
 		// Now we have our three FP squares, we rename them to A,B,C with A>=(B,C) 
 		// only 3 3-muxes
 		
-		vhdl << tab << declare("MA", wF+g+1)  << " <= " << endl
+		vhdl << tab << declare("MA", wF+g+2)  << " <= " << endl
 			  << tab << tab << use("Z2t") << " when (" << use("XltZ") << "='1') and (" << use("YltZ") << "='1')  else " << endl
 			  << tab << tab << use("Y2t") << " when (" << use("XltY") << "='1') and (" << use("YltZ") << "='0')  else " << endl
 			  << tab << tab << use("X2t") << "; " << endl;
-		vhdl << tab << declare("MB", wF+g+1)  << " <= " << endl
+		vhdl << tab << declare("MB", wF+g+2)  << " <= " << endl
 			  << tab << tab << use("X2t") << " when (" << use("XltZ") << "='1') and (" << use("YltZ") << "='1')  else " << endl
 			  << tab << tab << use("Z2t") << " when (" << use("XltY") << "='1') and (" << use("YltZ") << "='0')  else " << endl
 			  << tab << tab << use("Y2t") << "; " << endl;
-		vhdl << tab << declare("MC", wF+g+1)  << " <= " << endl
+		vhdl << tab << declare("MC", wF+g+2)  << " <= " << endl
 			  << tab << tab << use("Y2t") << " when (" << use("XltZ") << "='1') and (" << use("YltZ") << "='1')  else " << endl
 			  << tab << tab << use("X2t") << " when (" << use("XltY") << "='1') and (" << use("YltZ") << "='0')  else " << endl
 			  << tab << tab << use("Z2t") << "; " << endl;
@@ -314,16 +317,16 @@ Collision::Collision(Target* target, int wE, int wF, int optimize)
 		// superbly ignore the bits that are shifted out
 		syncCycleFromSignal("shiftedB", false);
 		int shiftedB_size = getSignalByName("shiftedB")->width();
-		vhdl << tab << declare("alignedB", wF+g+1)  << " <= " << use("shiftedB") << range(shiftedB_size-1, shiftedB_size -(wF+g+1)) << "; " << endl;
-		vhdl << tab << declare("alignedC", wF+g+1)  << " <= " << use("shiftedC") << range(shiftedB_size-1, shiftedB_size -(wF+g+1)) << "; " << endl;
+		vhdl << tab << declare("alignedB", wF+g+2)  << " <= " << use("shiftedB") << range(shiftedB_size-1, shiftedB_size -(wF+g+2)) << "; " << endl;
+		vhdl << tab << declare("alignedC", wF+g+2)  << " <= " << use("shiftedC") << range(shiftedB_size-1, shiftedB_size -(wF+g+2)) << "; " << endl;
 		
 		nextCycle();
 		
-		vhdl << tab << declare("paddedA", wF+g+3)  << " <= \"00\" & " << use("MA") << "; " << endl;
-		vhdl << tab << declare("paddedB", wF+g+3)  << " <= \"00\" & " << use("alignedB") << "; " << endl;
-		vhdl << tab << declare("paddedC", wF+g+3)  << " <= \"00\" & " << use("alignedC") << "; " << endl;
+		vhdl << tab << declare("paddedA", wF+g+4)  << " <= \"00\" & " << use("MA") << "; " << endl;
+		vhdl << tab << declare("paddedB", wF+g+4)  << " <= \"00\" & " << use("alignedB") << "; " << endl;
+		vhdl << tab << declare("paddedC", wF+g+4)  << " <= \"00\" & " << use("alignedC") << "; " << endl;
 		
-		IntAdder* adder = new IntAdder(target,wF+g+3);
+		IntAdder* adder = new IntAdder(target,wF+g+4);
 		oplist.push_back(adder);
 		
 
@@ -349,19 +352,22 @@ Collision::Collision(Target* target, int wE, int wF, int optimize)
 		syncCycleFromSignal("sum", false);
 		nextCycle();
 		
-		// Possible 2-bit normalisation, with a truncation
+		// Possible 3-bit normalisation, with a truncation
 		vhdl << tab << declare("finalFraction", wF+g)  << " <= " << endl
-			  << tab << tab << use("sum") << range(wF+g+1,2) << "   when " << use("sum") << "(" << wF+g+2 << ")='1'    else " << endl
-			  << tab << tab << use("sum") << range(wF+g, 1) <<  "   when (" << use("sum") << range(wF+g+2, wF+g+1) << "=\"01\")     else " << endl
+			  << tab << tab << use("sum") << range(wF+g+2,3) << "   when " << use("sum") << "(" << wF+g+3 << ")='1'    else " << endl
+			  << tab << tab << use("sum") << range(wF+g+1, 2) <<  "   when (" << use("sum") << range(wF+g+3, wF+g+2) << "=\"01\")     else " << endl
+			  << tab << tab << use("sum") << range(wF+g, 1) <<  "   when (" << use("sum") << range(wF+g+3, wF+g+1) << "=\"001\")     else " << endl
 			  << tab << tab << use("sum") << range(wF+g-1, 0) << "; " << endl;
 
-		// Exponent datapath. We have to compute 2*EA - bias + an update that is 0, 1 or 2
+		// Exponent datapath. We have to compute 2*EA - bias + an update corresponding to the normalisatiobn
+		// since (1.m)*(1.m) = xx.xxxxxx sum is xxxx.xxxxxx
 		// All the following ignores overflows, infinities, zeroes, etc for the sake of simplicity.
 		int bias = (1<<(wE-1))-1;
 		vhdl << tab << declare("exponentUpdate", wE+1)  << " <= " << endl
-			  << tab << tab << "CONV_STD_LOGIC_VECTOR(" << bias - 2 << ", "<< wE+1 <<")  when " << use("sum") << "(" << wF+g << ")='1'    else " << endl
-			  << tab << tab << "CONV_STD_LOGIC_VECTOR(" << bias - 1 << ", "<< wE+1 <<")  when (" << use("sum") << range(wF+g, wF+g-1) << "=\"01\")     else " << endl
-			  << tab << tab << "CONV_STD_LOGIC_VECTOR(" << bias << ", "<< wE+1 <<")  ; " << endl;
+			  << tab << tab << "CONV_STD_LOGIC_VECTOR(" << bias-3 << ", "<< wE+1 <<")  when " << use("sum") << "(" << wF+g+3 << ")='1'    else " << endl
+			  << tab << tab << "CONV_STD_LOGIC_VECTOR(" << bias-2 << ", "<< wE+1 <<")  when (" << use("sum") << range(wF+g+3, wF+g+2) << "=\"01\")     else " << endl
+			  << tab << tab << "CONV_STD_LOGIC_VECTOR(" << bias-1 << ", "<< wE+1 <<")  when (" << use("sum") << range(wF+g+3, wF+g+1) << "=\"001\")     else " << endl
+			  << tab << tab << "CONV_STD_LOGIC_VECTOR(" << bias   << ", "<< wE+1 <<")  ; " << endl;
 		
 		vhdl << tab << declare("finalExp", wE+1)  << " <= (" << use("EA") << " & '0') - " << use("exponentUpdate") << " ; " << endl;
 
