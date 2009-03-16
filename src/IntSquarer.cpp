@@ -56,8 +56,55 @@ Operator(target), wIn_(wIn), inputDelays_(inputDelays)
 
 	if (isSequential()){
 		if ((wIn>17) && (wIn<=34)) {
-			// --------- Sub-components ------------------
-			//TODO
+//			x0_16<=X(16 downto 0);
+//			x17_33<=X(33 downto 17);
+
+//			proc: process(clk)
+//			begin
+//				if clk'event and clk='1' then
+//					x0_16_d <= x0_16;
+//					x17_33_d<=x17_33;
+//					x17_33_d_d<=x17_33;
+//	
+//					p0<=x0_16*x0_16;
+//					p1<=x17_33_d*x0_16_d + ("0"&p0(33 downto 18));
+//					p2<=x17_33_d_d*x17_33_d_d + ("0"&p1(33 downto 16));
+//		
+//					f0<=p0(17 downto 0);
+//					f0_d<=f0;
+//		
+//					f1<=p1(15 downto 0);
+//				end if;
+
+//			end process proc;
+
+//			R<=p2 & f1 & f0_d;
+
+
+			vhdl << declare("x0_16",17) << " <= "<<use("X") << range(16,0) << ";" << endl;
+			if (wIn<34)
+				vhdl << declare("x17_33",17) << " <= "<<zeroGenerator(34-wIn,0) << " & " <<  use("X") << range(wIn,17) << ";" << endl;
+			else
+				vhdl << declare("x17_33",17) << " <= "<<use("X") << range(33,17) << ";" << endl;
+			
+			nextCycle();//////////////////////////////////////////////
+			
+			vhdl << declare("p0",34) << " <= " << use("x0_16") << " * " << use("x0_16") << ";" <<endl;
+
+			nextCycle();//////////////////////////////////////////////
+			
+			vhdl << declare("p1",34) << " <= " << use("x17_33") << " * " << use("x0_16") << " + " << "( \"0\" & "<< use("p0")<<range(33,18) <<")" << ";" <<endl;
+			vhdl << declare("f0",18) << " <= " << use("p0") << range(17,0) << ";" << endl;
+			
+			nextCycle();//////////////////////////////////////////////
+
+			vhdl << declare("p2",34) << " <= " << use("x17_33") << " * " << use("x17_33") << " + " << "( \"0\" & "<< use("p1")<<range(33,16) <<")" << ";" <<endl;
+			vhdl << declare("f1",16) << " <= " << use("p1") << range(15,0) << ";" << endl;
+
+			nextCycle();//////////////////////////////////////////////
+
+			vhdl << "R <= " << use("p2") << " & " << use("f1") << " & " << use("f0") << ";" << endl;
+
 		}
 		if ((wIn>34) && (wIn<=51)) {
 			// --------- Sub-components ------------------
