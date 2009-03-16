@@ -31,6 +31,7 @@
 #include "LZOCShifterSticky.hpp"
 #include "IntAdder.hpp"
 #include "IntMultiplier.hpp"
+#include "IntSquarer.hpp"
 #include "FPMultiplier.hpp"
 #include "FPAdder.hpp"
 

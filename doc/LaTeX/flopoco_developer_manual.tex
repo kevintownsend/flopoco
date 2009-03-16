@@ -192,8 +192,7 @@ How does it work?
   \item If \verb!currentCycle! $>$ \verb!X.cycle!, \verb!use("X")!
     will delay signal \verb!X! by
     n=\verb!currentCycle!$-$\verb!X.cycle! cycles. Technically
-    \verb!use("X")! just returns \verb!"X_dn"!, but also. In this case,
-    it also updates \verb!X.lifeSpan! to be at least equal to n.
+    \verb!use("X")! just returns \verb!"X_dn"!, and updates \verb!X.lifeSpan! to be at least equal to n.
   \end{itemize}
 \end{itemize}
 

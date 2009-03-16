@@ -61,6 +61,8 @@ Collision::Collision(Target* target, int wE, int wF, int optimize)
 
 	ostringstream o;
 	o << "Collision_" << wE << "_" << wF;
+	if(!optimize)
+		o << "_FP";
 	setName(o.str());
 
 	addFPInput("X", wE, wF);
@@ -229,28 +231,39 @@ Collision::Collision(Target* target, int wE, int wF, int optimize)
 
 		// Back to cycle 0 for the significand datapath
 		setCycle(0);
-		// Square the significands TODO an IntSquarer here some day
+		// Square the significands 
+#define USE_SQUARER 1
+#if  USE_SQUARER
+		IntSquarer* mult = new IntSquarer(target,  1+ wF);
+#else
 		IntMultiplier* mult = new IntMultiplier(target, 1+ wF, 1+ wF);
+#endif
 		oplist.push_back(mult);
 		
 		vhdl << tab << declare("mX", wF+1)  << " <= '1' & X" << range(wF-1, 0) << "; " << endl;
 		
 		inPortMap (mult, "X", "mX");
+#if  !USE_SQUARER
 		inPortMap (mult, "Y", "mX");
+#endif
 		outPortMap(mult, "R", "mX2");
 		vhdl << instance(mult, "multx");
 	
 		vhdl << tab << declare("mY", wF+1)  << " <= '1' & Y" << range(wF-1, 0) << "; " << endl;
 
 		inPortMap (mult, "X", "mY");
+#if  !USE_SQUARER	
 		inPortMap (mult, "Y", "mY");
+#endif
 		outPortMap(mult, "R", "mY2");
 		vhdl << instance(mult, "multy");
 		
 		vhdl << tab << declare("mZ", wF+1)  << " <= '1' & Z" << range(wF-1, 0) << "; " << endl;
 		
 		inPortMap (mult, "X", "mZ");
+#if  !USE_SQUARER	
 		inPortMap (mult, "Y", "mZ");
+#endif
 		outPortMap(mult, "R", "mZ2");
 		vhdl << instance(mult, "multz");
 
@@ -333,6 +346,7 @@ Collision::Collision(Target* target, int wE, int wF, int optimize)
 		outPortMap  (adder, "R","sum");
 		vhdl << instance(adder, "adder2");
 
+		syncCycleFromSignal("sum", false);
 		nextCycle();
 		
 		// Possible 2-bit normalisation, with a truncation
