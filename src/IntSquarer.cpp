@@ -55,15 +55,18 @@ Operator(target), wIn_(wIn), inputDelays_(inputDelays)
 	}
 
 	if (isSequential()){
+		if ((wIn>17) && (wIn<=34)) {
+			// --------- Sub-components ------------------
+			//TODO
+		}
 		if ((wIn>34) && (wIn<=51)) {
 			// --------- Sub-components ------------------
 			intadder = new IntAdder(target, 84);
 			oplist.push_back(intadder);
-
 			if (wIn<51)  
-			vhdl << declare("sigX",51) << "<= "<<zeroGenerator(51-wIn,0) <<" & X;"<<endl;
+				vhdl << declare("sigX",51) << "<= "<<zeroGenerator(51-wIn,0) <<" & X;"<<endl;
 			else
-			vhdl << declare("sigX",51) << "<= X;"<<endl;
+				vhdl << declare("sigX",51) << "<= X;"<<endl;
 			vhdl << declare("x0_16_sqr",34) << "<= " << use("sigX")<<range(16,0) << " * " << use("sigX")<<range(16,0)<<";"<<endl;
 			vhdl << declare("x17_33_sqr",34) << "<= " << use("sigX")<<range(33,17) << " * " << use("sigX")<<range(33,17)<<";"<<endl;
 			vhdl << declare("x34_50_sqr",34) << "<= " << use("sigX")<<range(50,34) << " * " << use("sigX")<<range(50,34)<<";"<<endl;
@@ -86,7 +89,7 @@ Operator(target), wIn_(wIn), inputDelays_(inputDelays)
 			
 			vhdl << "R <= " << use("adderOutput")<<range(2*wIn-19,0) << " & " << use("x0_16_sqr")<<range(17,0)<<";"<<endl;
 		}
-		if ((wIn>51) && (wIn<=68)) {
+		if ((wIn>51) && (wIn<=68) && (wIn!=53) ) {
 			// --------- Sub-components ------------------
 			intadder = new IntAdder(target, 101);
 			oplist.push_back(intadder);
@@ -128,6 +131,77 @@ Operator(target), wIn_(wIn), inputDelays_(inputDelays)
 			syncCycleFromSignal("adderOutput", false);
 			
 			vhdl << "R <= " << use("adderOutput")<<range(2*wIn-36,0) << " & " <<use("x17_33_sqr")<<range(0,0) << " & " << use("x0_16_sqr")<<range(33,0)<<";"<<endl;
+		}
+		if (wIn==53){
+			//instantiate a 51bit squarer
+			intsquarer = new IntSquarer(target, 51);
+			oplist.push_back(intsquarer);
+			
+			bool tempPipelineStatus = target->isPipelined();
+			bool tempDSPStatus = target->getUseHardMultipliers();
+			target->setNotPipelined();
+			target->setUseHardMultipliers(false);
+			
+			intmul1 = new IntMultiplier(target,2,2);
+			//intmul2 = new IntMultiplier(target,2,51);
+
+			oplist.push_back(intmul1);
+			//oplist.push_back(intmul2);
+
+				if (tempPipelineStatus) 
+				target->setPipelined();
+			if (tempDSPStatus)
+				target->setUseHardMultipliers(true);
+
+			intadder = new IntAdder(target, 54);
+			oplist.push_back(intadder);
+			intadd2 = new IntAdder(target, 53);
+			oplist.push_back(intadd2);
+
+			
+			vhdl << declare("sigX",53) << "<= X;"<<endl;
+			
+			inPortMapCst(intsquarer, "X", "sigX(50 downto 0)");
+			outPortMap(intsquarer, "R", "out_Squarer_51");
+			vhdl << instance(intsquarer, "SQUARER51");
+
+
+			vhdl << declare("op1mul2",53) << "<= "<< "(\"00\" & "<< use("sigX")<<range(50,0) <<") when "<<use("sigX")<<"(51)='1' else "<<zeroGenerator(53,0) << ";"<<endl;
+			vhdl << declare("op2mul2",53) << "<= "<< "(\"0\" & "<< use("sigX")<<range(50,0) <<" & \"0\") when "<<use("sigX")<<"(52)='1' else "<<zeroGenerator(53,0) << ";"<<endl;
+
+			nextCycle(); ////////////////////////////////////////////////
+
+			inPortMap(intadd2, "X", "op1mul2");
+			inPortMap(intadd2, "Y", "op2mul2");
+			inPortMapCst(intadd2, "Cin", "'0'");
+			outPortMap(intadd2, "R", "x51_52_times_x_0_50");
+			vhdl << instance(intadd2, "MULT2");
+
+			syncCycleFromSignal("out_Squarer_51",true);
+			
+			vhdl << declare("opmul1",2) << "<= "<< use("sigX")<<range(52,51) << ";"<<endl;
+			inPortMap(intmul1, "X", "opmul1");
+			inPortMap(intmul1, "Y", "opmul1");
+			outPortMap(intmul1, "R", "x51_52_sqr");
+			vhdl << instance(intmul1, "MULT1");
+			
+			
+//			vhdl << declare("x51_52_sqr",4) << " <= " << use("sigX")<<range(52,51) << " * "<< use("sigX")<<range(52,51) <<  ";"<< endl;
+//			vhdl << declare("x51_52_times_x_0_50",53) << " <= " << use("sigX")<<range(52,51) << " * "<< use("sigX")<<range(50,0)<<  ";" << endl;
+			
+			nextCycle(); ////////////////////////////////////////////////
+			vhdl << declare("op1",54) << "<= "<< use("x51_52_sqr")<<" & " <<  use("out_Squarer_51")<<range(101,52) <<  ";"<<endl;
+			vhdl << declare("op2",54) << "<="<< zeroGenerator(1,0)<<" & " <<  use("x51_52_times_x_0_50") <<";"<<endl;
+
+			inPortMap(intadder, "X", "op1");
+			inPortMap(intadder, "Y", "op2");
+			inPortMapCst(intadder, "Cin", "'0'");
+			outPortMap(intadder, "R", "adderOutput");
+			vhdl << instance(intadder, "ADDER54");
+			
+			syncCycleFromSignal("adderOutput", false);
+			
+			vhdl << "R <= " << use("adderOutput") << " & " <<use("out_Squarer_51")<<range(51,0)<<";"<<endl;
 		}
 	}
 }

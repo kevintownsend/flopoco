@@ -6,6 +6,7 @@
 #include <gmpxx.h>
 #include "Operator.hpp"
 #include "IntAdder.hpp"
+#include "IntMultiplier.hpp"
 
 extern map<string, double> emptyDelayMap;
 /** The IntSquarer class for experimenting with adders. 
@@ -49,5 +50,9 @@ private:
 	int *cSize;                       /**< array containing the chunk sizes for all nbOfChunks*/
 /** A IntAdder subcomponent */
 	IntAdder* intadder;
+	IntAdder* intadd2;
+	IntMultiplier *intmul1;
+	IntMultiplier *intmul2;
+	IntSquarer *intsquarer;
 };
 #endif
