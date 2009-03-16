@@ -51,8 +51,6 @@ private:
 /** A IntAdder subcomponent */
 	IntAdder* intadder;
 	IntAdder* intadd2;
-	IntMultiplier *intmul1;
-	IntMultiplier *intmul2;
 	IntSquarer *intsquarer;
 };
 #endif

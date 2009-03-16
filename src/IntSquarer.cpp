@@ -56,34 +56,10 @@ Operator(target), wIn_(wIn), inputDelays_(inputDelays)
 
 	if (isSequential()){
 		if ((wIn>17) && (wIn<=34)) {
-//			x0_16<=X(16 downto 0);
-//			x17_33<=X(33 downto 17);
-
-//			proc: process(clk)
-//			begin
-//				if clk'event and clk='1' then
-//					x0_16_d <= x0_16;
-//					x17_33_d<=x17_33;
-//					x17_33_d_d<=x17_33;
-//	
-//					p0<=x0_16*x0_16;
-//					p1<=x17_33_d*x0_16_d + ("0"&p0(33 downto 18));
-//					p2<=x17_33_d_d*x17_33_d_d + ("0"&p1(33 downto 16));
-//		
-//					f0<=p0(17 downto 0);
-//					f0_d<=f0;
-//		
-//					f1<=p1(15 downto 0);
-//				end if;
-
-//			end process proc;
-
-//			R<=p2 & f1 & f0_d;
-
 
 			vhdl << declare("x0_16",17) << " <= "<<use("X") << range(16,0) << ";" << endl;
 			if (wIn<34)
-				vhdl << declare("x17_33",17) << " <= "<<zeroGenerator(34-wIn,0) << " & " <<  use("X") << range(wIn,17) << ";" << endl;
+				vhdl << declare("x17_33",17) << " <= "<<zeroGenerator(34-wIn,0) << " & " <<  use("X") << range(wIn-1,17) << ";" << endl;
 			else
 				vhdl << declare("x17_33",17) << " <= "<<use("X") << range(33,17) << ";" << endl;
 			
@@ -103,7 +79,10 @@ Operator(target), wIn_(wIn), inputDelays_(inputDelays)
 
 			nextCycle();//////////////////////////////////////////////
 
-			vhdl << "R <= " << use("p2") << " & " << use("f1") << " & " << use("f0") << ";" << endl;
+			if (wIn<34)
+				vhdl << "R <= " << use("p2")<<range(2*wIn-34-1,0) << " & " << use("f1") << " & " << use("f0") << ";" << endl;
+			else
+				vhdl << "R <= " << use("p2") << " & " << use("f1") << " & " << use("f0") << ";" << endl;
 
 		}
 		if ((wIn>34) && (wIn<=51)) {
@@ -189,13 +168,7 @@ Operator(target), wIn_(wIn), inputDelays_(inputDelays)
 			target->setNotPipelined();
 			target->setUseHardMultipliers(false);
 			
-			intmul1 = new IntMultiplier(target,2,2);
-			//intmul2 = new IntMultiplier(target,2,51);
-
-			oplist.push_back(intmul1);
-			//oplist.push_back(intmul2);
-
-				if (tempPipelineStatus) 
+			if (tempPipelineStatus) 
 				target->setPipelined();
 			if (tempDSPStatus)
 				target->setUseHardMultipliers(true);
@@ -226,15 +199,7 @@ Operator(target), wIn_(wIn), inputDelays_(inputDelays)
 
 			syncCycleFromSignal("out_Squarer_51",true);
 			
-			vhdl << declare("opmul1",2) << "<= "<< use("sigX")<<range(52,51) << ";"<<endl;
-			inPortMap(intmul1, "X", "opmul1");
-			inPortMap(intmul1, "Y", "opmul1");
-			outPortMap(intmul1, "R", "x51_52_sqr");
-			vhdl << instance(intmul1, "MULT1");
-			
-			
-//			vhdl << declare("x51_52_sqr",4) << " <= " << use("sigX")<<range(52,51) << " * "<< use("sigX")<<range(52,51) <<  ";"<< endl;
-//			vhdl << declare("x51_52_times_x_0_50",53) << " <= " << use("sigX")<<range(52,51) << " * "<< use("sigX")<<range(50,0)<<  ";" << endl;
+			vhdl << declare("x51_52_sqr",4) << " <= " << use("sigX")<<range(52,51) << " * " << use("sigX")<<range(52,51) <<";"<<endl;
 			
 			nextCycle(); ////////////////////////////////////////////////
 			vhdl << declare("op1",54) << "<= "<< use("x51_52_sqr")<<" & " <<  use("out_Squarer_51")<<range(101,52) <<  ";"<<endl;
