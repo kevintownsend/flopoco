@@ -154,6 +154,9 @@ ADD_EXECUTABLE(flopoco
  src/fplogarithm/SecondInvTable
  src/fplogarithm/LogRangeRed
  src/FPLog
+ 
+ src/Collision
+ src/IntSquarer
 )
 
 ELSE(WIN32)
