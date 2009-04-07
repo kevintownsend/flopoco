@@ -76,6 +76,68 @@ The rest is arithmetic!
 And do not hesitate to contact us: \texttt{Florent.de.Dinechin} or
 \texttt{Bogdan.Pasca}, at \texttt{ens-lyon.fr}
 
+\begin{center}
+  \includegraphics[width=0.7\textwidth]{../Figures/FloPoCoClasses}
+\end{center}
+
+\section{Test bench generation}
+
+The command\\
+ \texttt{flopoco FPAdder 8 23 TestBench 500} \\
+produces a test bench of 500 test vectors to exercise FPAdder.
+
+\subsection{Operator emulation}
+
+
+It requires only one additional method, \texttt{emulate}. As the name
+indicates, this method provides a bit-accurate simulation of the operator. 
+\begin{itemize}
+\item Most operators should be fully specified: for a given input
+  vector, they must output a uniquely defined vector. Imitate
+  \texttt{IntAdder} for an integer operator. For floating-point
+  operators, this unique output is the combination of a mathematical
+  function and a well-defined rounding mode. The bit-exact MPFR
+  library is used in this case. Imitate \texttt{FPAdder} in this case.
+
+\item Other operators are not defined so strictly, and may take
+  several output values. The last parameter of \texttt{addOutput}
+  defines how many values this output may take. An acceptable
+  requirement in floating-point is \texttt{faithful rounding}: the
+  operator should return one of the two FP values surrounding the
+  exact result. These values may be obtained thanks to the
+  \emph{rounding up} and \emph{rounding down} modes supported by
+  MPFR. See \texttt{FPLog} for a simple example, and
+  \texttt{Collision} for a more complex example (computing the two
+  faithful values for $x^2+y^2+z^2$).
+\end{itemize}
+
+\subsection{Operator-specific test  vector generation}
+Overloading \texttt{\small emulate()} is enough for FloPoCo to be able
+to create a generic test bench using random inputs. However, function
+analysis also allows for better, more operator-specific test-case
+generation. Let us just take two examples.
+
+\begin{itemize}\item 
+  A double-precision exponential returns $+\infty$ for all inputs
+  larger than 710 and returns $0$ for all inputs smaller than
+  $-746$. In other terms, the most interesting test domain for this
+  function is when the input exponent is between $-10$ and $10$, a
+  fraction of the full double-precision exponent domain ($-1024$ to
+  $1023$). Generating random 64-bit integers and using them as
+  floating-point inputs would mean testing mostly the
+  overflow/underflow logic, which is a tiny part of the operator.
+
+
+\item In a floating-point adder, if the difference between the exponents
+  of the two operands is large, the adder will simply return the
+  biggest of the two, and again this is the most probable situation
+  when taking two random operands. Here it is better to generate
+  random cases where the two operands have close exponents.
+\end{itemize}
+  Such cases are managed by overloading the Operator method
+  \texttt{\small buildRandomTestCases()}. Finally,
+  \texttt{\small buildStandardTestCases()} allows to test corner cases which
+  random testing has little chance to find.
 
 
 \section{Pipelining made easy: a tutorial}
