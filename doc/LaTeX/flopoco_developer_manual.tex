@@ -6,7 +6,8 @@
 
 \newcommand{\operator}{ \verb!Operator! }
 
-\title{FloPoCo developer manual}
+\title{FloPoCo \input{../../VERSION} developer manual
+}
 
 \author{Florent de Dinechin, Bogdan Pasca}
 
@@ -48,10 +49,18 @@ documented. The web page of the CMake project is \url{http://www.cmake.org/}.
 In FloPoCo, everything is an \texttt{Operator}. Operator is a virtual
 class, all FloPoCo operators inherit this class. A good way to design
 a new operator is to imitate a simple one. We suggest
-\texttt{IntAdder} or \texttt{Shifter} for simple integer operators,
-and \texttt{FPAdder} for a complex operator with several
-sub-components. Meanwhile, browse through \texttt{Operator.hpp}. The
-automatic pipeline framework is described in Section~\ref{sec:pme} below.
+%\texttt{IntAdder} or 
+\texttt{Shifter} for simple integer operators, and \texttt{FPAdder}
+for a complex operator with several sub-components. An example of
+assembling several FP operators in a larger pipeline is
+\texttt{Collision}.
+
+ Meanwhile, browse
+through \texttt{Operator.hpp}. It has become quite bloated, showing
+the history of the project. Try not to use methods flagged as
+deprecated, as they will be removed in the future.  Instead, use the
+automatic pipeline framework is described in Section~\ref{sec:pme}
+below.
 
 Another important class hierarchy in FloPoCo is \texttt{Target}, which
 defines the architecture of the target FPGA. It currently has two
@@ -269,7 +278,6 @@ automatically computed from the user-supplied frequency.
 (...)
 \end{verbatim}
 
-(TODO check the previous code, the pipeline framework does work but this specific code is untested)
 
 And that's it. In the code above, an \verb!inPortMap()! does the same
 job as a \verb!use()!, and an \verb!outPortMap()! does the same job as
