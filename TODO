@@ -6,25 +6,21 @@ pipeline HOTBM, FPExp, FPLog
 add FPSquareRoot
 
 Pipeline framework, Operator and Targets:
-* remove getTestIOMap which should be automatic when we do addInput etc
-* refactor test bench generation for better support of operator-specific cases
-* better evaluation of the frequency of the shifters and LZOCs 
+* Clean up deprecated methods
+* uniformize declare and addInput, so that use() may be invoked on input signals
 * finetune Altera target
-* get rid of _d in the outputVHDL codes, replace them with getDelaySignalName
-* before or after, rename getDelaySignalName() into D() for code readability
-* Then replace the _d_d_d_d names with shorter, index-based ones.
-* manage a notion of cycle at the Operator level?
-   => Add automatic or semi-automatic synchro checking (not clear yet how)
-* add slack delay information
 
 
 ConstMult:
+* upgrade to the new pipeline framework
 * implement KCM algorithm and select it if it means less hardware
-    (it should for small wX/large constants)
+    (it will for small wX/large constants)
 * For FPConstMult, don't output the LSBs of the IntConstMult 
    but only their sticky
-* Try left to right and right to left
+* Try left to right and right to left; try variations of the initial recoding
+* more clever, Lefevre-inspired algorithm
 * Use DSP: find the most interesting constant fitting on 18 bits
+* compare with Spiral.net
 * Implement the continued fraction stuff for FPCRConstMult
 
 FPAdder
@@ -33,7 +29,7 @@ be replaced by wE
 * a few optimization opportunities, see the TODO inside FPAdder.cpp
 
 FPMultiplier:
-* Cleaning up
+* Cleaning up and rewriting in the new pipeline framework
 * refine the DSP model in Targets/StratixII
 
 SumOfProducts
@@ -55,8 +51,9 @@ Version 0.6 : FPLog
 Version 0.7 : FPExp
 Version 0.8 : DotProduct
 Version 0.9 : LNS operators, thanks to Sylvain Collange
--- we're here (much faster than expected)
-Version ???   FPDiv, FPSqrt
+Version 0.11:   FPDiv, IntSquarer, new pipeline framework
+-- we're here (faster than expected)
+Version 1.0   FPSqrt
 Version ???   FPAddSub (for FFT butterfly structure)
 Version ???   FixToFPUniformDist (2008 ASAP paper by Thomas with improvements)
 Version ???   FPSquarer
@@ -68,16 +65,5 @@ Version ???   Interval operators
 
 We'll leave 0.xx for 1.xx when all the FPLibrary operators are backported with working pipeline
 
-
-//// Small stuff
-Global replaces:
-
-fillTestCase( -> emulate(
-getIOListSignal( -> getIOSignal
-setOperatorName( -> setName(
-getOperatorName( -> getName(
-setOperatorType( -> setType(
-getOperatorType( -> getType(
-updateSignalName(->updateName(
 
 
