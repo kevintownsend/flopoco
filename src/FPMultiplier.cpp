@@ -643,8 +643,8 @@ void FPMultiplier::outputVHDL(std::ostream& o, std::string name) {
 				//update exception 
 				o<<tab<<"with exponent_synch2_out_post_rounding("<<wER_+1<<" downto "<< wER_ <<") select"<<endl;                       
 				o<<tab<<"ResultException   <= exception_synch2_out      when \"00\","<<endl;
-				o<<tab<<"                            \"10\"             when \"01\", "<<endl;
-				o<<tab<<"                            \"00\"             when \"11\"|\"10\","<<endl;
+				o<<tab<<"                            ( ((exception_synch2_out(1) and exception_synch2_out(0))or(exception_synch2_out(1)and (not exception_synch2_out(0)))or(exception_synch2_out(0)and (not exception_synch2_out(1)))) & ( exception_synch2_out(1) and exception_synch2_out(0)))             when \"01\", "<<endl;
+				o<<tab<<"                            (( exception_synch2_out(1) & (exception_synch2_out(1) and exception_synch2_out(0))))             when \"11\"|\"10\","<<endl;
 				o<<tab<<"                            \"11\"             when others;"<<endl;						
 			                
 				                        
