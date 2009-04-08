@@ -1,8 +1,10 @@
 /*
- * A toy example so support the FPL paper 
 
+ * An FP collision operator for FloPoCo
 
-This is a collision detector: it inputs 3 FP coordinates X,Y and Z and
+This is mostly an example of a coarse-grain, nonstandard operator.
+
+A 3D collision detector inputs 3 FP coordinates X,Y and Z and
 the square of a radius, R2, and computes a boolean predicate which is
 true iff X^2 + Y^2 + Z^2 < R2
 
@@ -10,15 +12,14 @@ There are two versions, selectable by the useFPOperators parameter.
 One combines existing FloPoCo floating-point operators, and the other
 one is a specific datapath designed in the FloPoCo philosophy.
 
-Both versions have its "grey area", situations where the predicate may
-be wrong with respect to the true result. This happens when
-X^2+Y^2+Z^2 is very close to R2.
+As this is a floating-point operator, each versions has its "grey
+area", when X^2+Y^2+Z^2 is very close to R2.  In this case the
+predicate may be wrong with respect to the infinitely accurate result.
 
 The grey area of the combination of FP operators is about 2.5 units in
-the last place of R2.  The pure FloPoCo version is slightly more
-accurate, with a grey area smaller than 1 ulp of R2.
-
-It is also a lot smaller and faster, of course.
+the last place of R2.  The pure FloPoCo version (which is a lot
+smaller and faster) is more accurate, with a grey area smaller than 1
+ulp of R2.
 
 TODO: turn it into a more generally useful sum-of-square, and manage exceptions.
 
@@ -128,7 +129,7 @@ Collision::Collision(Target* target, int wE, int wF, int optimize)
 
 
 
-	else { // here comes the FloPoCo version	
+	else { ////////////////// here comes the FloPoCo version	//////////////////////////:
 
 		// Error analysis
 		// 3 ulps(wF+g) in the multiplier truncation
@@ -392,11 +393,13 @@ Collision::~Collision()
 
 
 
-
+/* We compute the acceptable values according to the FP operator
+combination, using interval arithmetic, so emulate() is not stricter
+when the operator is the optimized one (TODO). All it checks is that
+the optimized version is at least as accurate as the FP one. */
 
 void Collision::emulate(TestCase * tc)
 {
-#if 1
 	/* Get I/O values */
 	mpz_class svX = tc->getInputValue("X");
 	mpz_class svY = tc->getInputValue("Y");
@@ -468,13 +471,12 @@ void Collision::emulate(TestCase * tc)
 
 	mpfr_clears(x,y,z,r2, ru, rd, NULL);
 
-
-#endif
 }
  
 
 
 // This method is cloned from Operator, just resetting sign and exception bits
+// (because we don't have any exception support in this toy example)
 // (see ***************** below )
 void Collision::buildRandomTestCases(TestCaseList* tcl, int n){
 

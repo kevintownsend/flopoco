@@ -1,5 +1,25 @@
 /*
- * An FP logarithm for FloPoCo
+ * An FP collision operator for FloPoCo
+
+This is mostly an example of a coarse-grain, nonstandard operator.
+
+A 3D collision detector inputs 3 FP coordinates X,Y and Z and
+the square of a radius, R2, and computes a boolean predicate which is
+true iff X^2 + Y^2 + Z^2 < R2
+
+There are two versions, selectable by the useFPOperators parameter.
+One combines existing FloPoCo floating-point operators, and the other
+one is a specific datapath designed in the FloPoCo philosophy.
+
+As this is a floating-point operator, each versions has its "grey
+area", when X^2+Y^2+Z^2 is very close to R2.  In this case the
+predicate may be wrong with respect to the infinitely accurate result.
+
+The grey area of the combination of FP operators is about 2.5 units in
+the last place of R2.  The pure FloPoCo version (which is a lot
+smaller and faster) is more accurate, with a grey area smaller than 1
+ulp of R2.
+
  *
  * Author : Florent de Dinechin
  *
