@@ -651,12 +651,13 @@ void IntMultiplier::delayPartialBits(std::ostream& o)
 }
 
 
-void IntMultiplier::fillTestCase(mpz_class a[])
+void IntMultiplier::emulate(TestCase* tc)
 {
-	mpz_class &x = a[0];
-	mpz_class &y = a[1];
-	mpz_class &r = a[2];
+	mpz_class svX = tc->getInputValue("X");
+	mpz_class svY = tc->getInputValue("Y");
 
-	r = x * y;
+	mpz_class svR = svX * svY;
+
+	tc->addExpectedOutput("R", svR);
 }
 
