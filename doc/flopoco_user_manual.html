@@ -11,6 +11,7 @@
 <body>
 <h1>FloPoCo user manual</h1>
 
+ <img src="FloPoCoLogoSmall.png">
 
 <h2>Installation</h2>
 
@@ -246,20 +247,27 @@ reference.</p>
       limited by the DSP blocks available. wInX and wInY are the input widths
       of both operands. This is an unsigned operation.</dd>
     <dd></dd>
+  <dt><code>IntSquarer wInX wInY</code></dt>
+    <dd>Same for squaring. For large multiplications on some FPGAs, it
+    saves DSP blocks (your mileage may vary).</dd>
+    <dd></dd>
 </dl>
 
-<h3>Classical floating-point operators</h3>
+<h3>Classical floating-point operators</h3> 
+
+These operators are correctly rounded to the nearest, in a way
+compatible with IEEE-754, with the exception that subnormal numbers
+are flushed to zero.
+
 <dl>
-  <dt><code>FPMultiplier wEX wFX wEY wFY wER wFR</code></dt>
-    <dd>A floating-point multiplier, with pepper: it may multiply numbers of
-      different precisions, and provide you with the correct rounding to
-      arbitrary precision -- including an exact result if wFR is larger than
-      wFX+wFY+1.</dd>
-  <dt><code>FPAdder wEX wFX wEY wFY wER wFR</code></dt>
-    <dd>A floating-point adder. Currently the three wE must be equal
-      and the three wF must be equal. Eventually it should add numbers
-      of different precisions, and provide you with the correct
-      rounding to arbitrary precision.</dd>
+  <dt><code>FPMultiplier wE wF</code></dt>
+    <dd>A floating-point multiplier. The actual FloPoCo
+      component supports different input and output sizes, but this is
+      not available from the command line.</dd>
+  <dt><code>FPAdder wE wF</code></dt>
+    <dd>A floating-point adder.</dd>
+  <dt><code>FPDiv wE wF</code></dt>
+    <dd>A floating-point divider.</dd>
 </dl>
 
 <h3>Long fixed-point accumulator, and derivatives</h3>
