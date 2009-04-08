@@ -67,10 +67,23 @@ def cmdLine(paramList):
 print "--------------------------------------------------------------------------------"
 print "--------------------------- FloPoCo PreRelease Tests ---------------------------"
 executable_name = "./flopoco"
-operators = [ 
-             ["FPLog",            [ ["wE", "in", 6, 11 ], ["wF","in", 8, 52] ]],
-             #["IntAdder",         [ ["wIn", "in", 1, 64 ]  ]], 
-             #["IntMultiplier",     [ ["wInX","in", 1, 64 ], ["wInY","in", 1, 64] ]]
+operators = [
+             ["LeftShifter",   [ ["wIn","in",4, 120] ,["MaxShift","in",2,64]]],
+             ["RightShifter",   [ ["wIn","in",4, 120] ,["MaxShift","in",2,64]]],
+             ["LZOC",          [ ["wIn","in",4, 120]]] ,
+             ["LZOCShifter",   [ ["wIn","in",4, 120], ["wOut","in",4, 120] ]],
+             ["LZCShifter",   [ ["wIn","in",4, 120], ["wOut","in",4, 120] ]],
+             ["LOCShifter",   [ ["wIn","in",4, 120], ["wOut","in",4, 120] ]] ,   
+             ["LZOCShifterSticky",   [ ["wIn","in",4, 120], ["wOut","in",4, 120] ]],
+             ["LZCShifterSticky",   [ ["wIn","in",4, 120], ["wOut","in",4, 120] ]],
+             ["LOCShifterSticky",   [ ["wIn","in",4, 120], ["wOut","in",4, 120] ]],
+			 ["FPAdder",   [ ["wE","in",4, 15], ["wF","in",8, 64] ]],
+			 ["FPMultiplier",   [ ["wE","in",4, 15], ["wF","in",8, 64] ]],
+			 ["FPDiv",   [ ["wE","in",4, 15], ["wF","in",8, 64] ]],
+			 ["FPExp",   [ ["wE","in",4, 15], ["wF","in",8, 64] ]],
+             ["FPLog",            [ ["wE", "in", 6, 11 ], ["wF","in", 8, 52]]],
+             ["IntAdder",         [ ["wIn", "in", 1, 64 ]  ]], 
+             ["IntMultiplier",     [ ["wInX","in", 1, 64 ], ["wInY","in", 1, 64] ]] 
  
             ] #TODO Add the rest of operators
 res = []
