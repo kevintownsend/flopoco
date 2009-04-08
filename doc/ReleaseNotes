@@ -1,8 +1,8 @@
-Version 0.10.0 adds FPDiv and a rudimentary pipeline to FPLog (work
-still in progress). It also adds Collision, an example coarse-grain
-operator. From the developer point of view, this version is the first
-with Pipeline Made Easy, the new framework for cycle-based pipeline
-description. 
+Version 0.11.0 adds an IntSquarer, an FPDiv, and a rudimentary
+pipeline to FPLog (work still in progress). It also adds Collision, an
+example coarse-grain operator. From the developer point of view, this
+version is the first with Pipeline Made Easy, the new framework for
+cycle-based pipeline description.
 
 ======================================================================
 Version 0.9.3 corrects a bug in FPAdder (adding zero was giving wrong
