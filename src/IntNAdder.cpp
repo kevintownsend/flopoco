@@ -126,76 +126,8 @@ Operator(target), wIn_(wIn), N_(N), inputDelays_(inputDelays)
 			cout<<endl; 
 		}	
 		
-		//=================================================
-		if (N==3){
-		//split the inputs ( this should be reusable )
-			for (int i=0;i<N;i++)
-				for (int j=0; j<nbOfChunks; j++){
-					ostringstream name;
-					name << "sX"<<j<<"_"<<i;
-					int low=0, high=0;
-					for (int k=0;k<=j;k++)
-						high+=cSize[k];
-					for (int k=0;k<=j-1;k++)
-						low+=cSize[k];
-					vhdl << tab << declare (name.str(),cSize[j]) << " <= " << "X"<<i<<range(high-1,low)<<";"<<endl;
-				}
-			
-			//perform first round of additions and propagate the third input (which is done automatically)
-			for (int j=0; j<nbOfChunks; j++){
-				ostringstream dname, uname1, uname2;
-				dname << "sX"<<j<<"_0_l0";
-				uname1 << "sX"<<j<<"_0";
-				uname2 << "sX"<<j<<"_1";
-				vhdl << tab << declare(dname.str(),cSize[j]+1) << " <= (\"0\" & "<< use(uname1.str()) <<") +  (\"0\" & "<< use(uname2.str())<<")";
-				if (j==0) vhdl << " + Cin";
-				vhdl << ";" << endl;
-			}
-				
-			//from this point we just add two numbers with internal propagations, so perform addition and then take care of the propagations in a loop-like manner
-			for (int j=0; j<nbOfChunks; j++){
-				ostringstream dname, uname;
-				dname << "sX"<<j<<"_1_l0";
-				uname << "sX"<<j<<"_2";
-				vhdl << tab << declare(dname.str(), cSize[j]+1) << " <= " << " \"0\" & " << use(uname.str()) << ";" <<endl;
-			}
-			nextCycle();
-			
-			//perform second round of additions 
-			for (int j=0; j<nbOfChunks; j++){
-				ostringstream dname, uname1, uname2, uname3;
-				dname << "sX"<<j<<"_0_l1";
-				uname1 << "sX"<<j<<"_0_l0";
-				uname2 << "sX"<<j<<"_1_l0";
-				uname3 << "sX"<<j-1<<"_0_l0";
-				vhdl << tab << declare(dname.str(),cSize[j]+1) << " <= (\"0\" & "<< use(uname1.str())<<range(cSize[j]-1,0) <<") +  (\"0\" & "<< use(uname2.str())<< range(cSize[j]-1,0) <<")";  
-				if (j>0) vhdl << " + " << use(uname3.str())<<"("<<cSize[j-1]<<") ";
-				vhdl << ";" << endl;
-			}
-			
-			nextCycle();
-			for (int i=2; i<nbOfChunks+1; i++){
-				for (int j=i-1; j< nbOfChunks ; j++){
-					ostringstream dname, uname1, uname2;
-					dname << "sX"<<j<<"_0_l"<<i;
-					uname1 << "sX"<<j<<"_0_l"<<i-1;
-					uname2 << "sX"<<j-1<<"_0_l"<<i-1;
-					vhdl << tab << declare(dname.str(), cSize[j]+1) << " <= ( \"0\" & " << use(uname1.str())<<range(cSize[j]-1,0) << ") + " << use(uname2.str()) << "(" << cSize[j-1] << ")" << ";" <<endl;
-				}
-			if (i<nbOfChunks) nextCycle();
-			}
-			vhdl << tab << "R <= ";
-			for (int i=nbOfChunks-1; i>=0; i--){
-				ostringstream uname;
-				uname << "sX"<<i<<"_0_l"<<i+1;
-				vhdl << use(uname.str()) << range(cSize[i]-1,0);
-				if (i > 0) vhdl << " & ";
-			}
-			vhdl << ";" <<endl;
-			
-		}
 				//=================================================
-		if (N>3){
+		if (N>=2){
 		//split the inputs ( this should be reusable )
 			for (int i=0;i<N;i++)
 				for (int j=0; j<nbOfChunks; j++){
