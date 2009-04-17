@@ -52,7 +52,12 @@ IntMultiplier2:: IntMultiplier2(Target* target, int wInX, int wInY) :
 	addInput ("Y", wInY_);
 	addOutput("R", wOut_); /* wOut_ = wInX_ + wInY_ */
 
-	if ((wInX==wInY) && (wInX>17) && (wInX<=34)){
+	int chunksX, chunksY;
+	chunksX =  int(ceil( ( double(wInX) / 17.0 ) ));
+	chunksY =  int(ceil( ( double(wInX) / 17.0 ) ));
+
+
+	if ((wInX>17) && (wInX<=34) && (wInY>17) && (wInY<=34) ){ //this case is for a 2 x 2 chunk multiplier scheme
 		//sigle precision optimizations
 		vhdl << tab << declare("sX",34) << " <= " << zeroGenerator(34-wInX,0) << " & " << "X" << ";" << endl;
 		vhdl << tab << declare("sY",34) << " <= " << zeroGenerator(34-wInY,0) << " & " << "Y" << ";" << endl;
@@ -86,172 +91,81 @@ IntMultiplier2:: IntMultiplier2(Target* target, int wInX, int wInY) :
 		
 		syncCycleFromSignal("addResult");
 		vhdl << tab << "R <=" << use("addResult")<<range(2*wInX-1-17,0) << " & " << use("p00") << range(16,0) << ";" << endl;  
-	}
-	if ((wInX==wInY) && (wInX>51) && (wInX<=68)){
-		//a 16 DSP version
-		//sigle precision optimizations
-		vhdl << tab << declare("sX",68) << " <= " << zeroGenerator(68-wInX,0) << " & " << "X" << ";" << endl;
-		vhdl << tab << declare("sY",68) << " <= " << zeroGenerator(68-wInY,0) << " & " << "Y" << ";" << endl;
+	}else
+		if (chunksX + chunksY > 2) { // up to 17 x 17 bit on Virtex4 can be written as an "*" @ 400++ MHz 
+		// to be general version (parametrized etc) 
+			//TODO swap X and Y under certain conditions
+			int chunksX, chunksY;
+			chunksX =  int(ceil( ( double(wInX) / 17.0 ) ));
+			chunksY =  int(ceil( ( double(wInX) / 17.0 ) ));
+			if (verbose)
+				cout << "X splitted in "<< chunksX << " chunks and Y in " << chunksY << " chunks; " << endl;
+			vhdl << tab << declare("sX",17*chunksX) << " <= " << zeroGenerator(17*chunksX-wInX,0) << " & " << "X" << ";" << endl;
+			vhdl << tab << declare("sY",17*chunksX) << " <= " << zeroGenerator(17*chunksX-wInY,0) << " & " << "Y" << ";" << endl;
+			////////////////////////////////////////////////////
+			//SPLITTINGS
+			for (int k=0; k<chunksX ; k++){
+				ostringstream dname;
+				dname << "x"<<k;
+				vhdl << tab << declare(dname.str(),17) << " <= " << "sX" << range((k+1)*17-1,k*17) << ";" << endl;
+			}
+			for (int k=0; k<chunksX ; k++){
+				ostringstream dname;
+				dname << "y"<<k;
+				vhdl << tab << declare(dname.str(),17) << " <= " << "sY" << range((k+1)*17-1,k*17) << ";" << endl;
+			}
 
-		vhdl << tab << declare("x0",17) << " <= " << "sX" << range(16,0 ) << ";" << endl;
-		vhdl << tab << declare("x1",17) << " <= " << "sX" << range(33,17) << ";" << endl;
-		vhdl << tab << declare("x2",17) << " <= " << "sX" << range(50,34) << ";" << endl;
-		vhdl << tab << declare("x3",17) << " <= " << "sX" << range(67,51) << ";" << endl;
-	
-		vhdl << tab << declare("y0",17) << " <= " << "sY" << range(16,0 ) << ";" << endl;
-		vhdl << tab << declare("y1",17) << " <= " << "sY" << range(33,17) << ";" << endl;
-		vhdl << tab << declare("y2",17) << " <= " << "sY" << range(50,34) << ";" << endl;
-		vhdl << tab << declare("y3",17) << " <= " << "sY" << range(67,51) << ";" << endl;
+			//MULTIPLICATIONS WITH SOME ACCUMULATIONS
+			for (int i=0; i<chunksX; i++){ 
+				for (int j=0; j<chunksY; j++){ 
+					ostringstream currP; //currentProduct
+					ostringstream currPS;//currentProductSum
+					ostringstream prevPS;//previous Product/ProductSum
+					currP  << "tp" << "x" << i << "y" << j;
+					currPS <<  "p" << "x" << i << "y" << j;
+					prevPS << "p" << "x" << i << "y" << j-1;
+					if (j==0){ // @ the first the operation is only multiplication, not MAC
+						vhdl << tab << declare(currPS.str(),34) << " <= " << use(join("x",i)) << " * " << use(join("y",j)) << ";" << endl;
+					}else{
+						vhdl << tab << declare(currP.str(),34) << " <= " << use(join("x",i)) << " * " << use(join("y",j))  << ";" << endl; 
+						vhdl << tab << declare(currPS.str(),35) << " <= " << "( \"0\" & " << use(currP.str()) << ")" << " + " << use(prevPS.str())<<range(33,17) << ";" << endl; 
+					}
+					nextCycle();
+				}
+				if (i<chunksX-1) setCycle(0);
+			}
+			//FORM THE INTERMEDIARY PRODUCTS
+			vhdl << tab << declare ("sum0Low", 17) << " <= " << use("px0y0")<<range(16,0) << ";" << endl;
+			for (int i=0; i<chunksX ; i++){
+				vhdl << tab << declare(join("sum",i),17*(chunksY+1)) << " <= "; 
+				for (int j=chunksY-1;j>=0; j--){
+					ostringstream uname;
+					uname << "px" << i << "y"<<j;
+					vhdl << use(uname.str()) << range ( (j==chunksY-1?33:16) ,0) << (j==0 ? ";" : " & ");
+				}
+				vhdl << endl;
+			}
+			IntNAdder* add =  new IntNAdder(target, 17*(chunksX+chunksY-1), chunksX);
+			oplist.push_back(add);
+		
+			for (int i=0; i< chunksX; i++){
+				if (i==0) vhdl << tab << declare (join("addOp",i),17*(chunksX+chunksY-1)) << " <= " << zeroGenerator(17*(chunksX-1),0) << " & " << use(join("sum",i)) << range(17*(chunksY+1)-1,17) << ";" <<endl;
+				if (i==1) vhdl << tab << declare (join("addOp",i),17*(chunksX+chunksY-1)) << " <= " << zeroGenerator(17*(chunksX-2),0) << " & " << use(join("sum",i)) << range(17*(chunksY+1)-1,0) << ";" <<endl;
+				if (i> 1) 
+					vhdl << tab << declare (join("addOp",i),17*(chunksX+chunksY-1)) << " <= " << zeroGenerator(17*(chunksX-(i+1)),0) << " & " << use(join("sum",i)) << range(17*(chunksY+1)-1,0) << " & "
+						                                                                      << zeroGenerator(17*(i-1),0) << ";" <<endl;
+			}
+			for (int i=0; i< chunksX; i++)
+				inPortMap (add, join("X",i) , join("addOp",i));
+		
+			inPortMapCst(add, "Cin", "'0'");
+			outPortMap(add, "R", "addRes");
+			vhdl << instance(add, "adder");
 
-		for (int i=0; i<=3; i++){
-			ostringstream x, p0, p1, p2 ,p3, tp1, tp2, tp3;
-			x << "x" << i;
-			p0 << "p" << x.str() << "y0";
-			p1 << "p" << x.str() << "y1";
-			p2 << "p" << x.str() << "y2";
-			p3 << "p" << x.str() << "y3";
-			tp1 << "t" << p1.str();
-			tp2 << "t" << p2.str();
-			tp3 << "t" << p3.str();
-
-			vhdl << tab << declare(p0.str(),34) << " <= " << use(x.str()) << " * " << use("y0") << ";" << endl;
-			nextCycle();
-			vhdl << tab << declare(tp1.str(),34) << " <= " << use(x.str()) << " * " << use("y1")  << ";" << endl; 
-			vhdl << tab << declare(p1.str(),35) << " <= " << "( \"0\" & " << use(tp1.str()) << ")" << " + " << use(p0.str())<<range(33,17) << ";" << endl; 
-			nextCycle();
-			vhdl << tab << declare(tp2.str(),34) << " <= " << use(x.str()) << " * " << use("y2")  << ";" << endl; 
-			vhdl << tab << declare(p2.str(),35) << " <= " << "( \"0\" & " << use(tp2.str()) << ")" << " + " << use(p1.str())<<range(33,17) << ";" << endl; 
-			nextCycle();
-			vhdl << tab << declare(tp3.str(),34) << " <= " << use(x.str()) << " * " << use("y3")  << ";" << endl; 
-			vhdl << tab << declare(p3.str(),35) << " <= " << "( \"0\" & " << use(tp3.str()) << ")" << " + " << use(p2.str())<<range(33,17) << ";" << endl; 
-						
-			if (i<3) setCycle(0); 
+			syncCycleFromSignal("addRes");
+		
+			vhdl << tab << "R <= " << use("addRes")<<range(wInX+wInY-1-17,0) << " & " <<  use("sum0Low") << ";" << endl;
 		}
-		
-		nextCycle();
-		vhdl << tab << declare("sum0",85) << " <= " << use("px0y3") << range(33, 0) << " & " << 
-		                                               use("px0y2") << range(16, 0) << " & " << 
-		                                               use("px0y1") << range(16, 0) << " & " << 
-		                                               use("px0y0") << range(16, 0) << ";" << endl;
-		vhdl << tab << declare("sum0Low",17) << "<=" << use("sum0")<<range(16,0) << ";" << endl;
-		vhdl << tab << declare("sum1",85) << " <= " << use("px1y3") << range(33, 0) << " & " << 
-		                                               use("px1y2") << range(16, 0) << " & " << 
-		                                               use("px1y1") << range(16, 0) << " & " << 
-		                                               use("px1y0") << range(16, 0) << ";" << endl;
-		vhdl << tab << declare("sum2",85) << " <= " << use("px2y3") << range(33, 0) << " & " << 
-		                                               use("px2y2") << range(16, 0) << " & " << 
-		                                               use("px2y1") << range(16, 0) << " & " << 
-		                                               use("px2y0") << range(16, 0) << ";" << endl;
-		vhdl << tab << declare("sum3",85) << " <= " << use("px3y3") << range(33, 0) << " & " << 
-		                                               use("px3y2") << range(16, 0) << " & " << 
-		                                               use("px3y1") << range(16, 0) << " & " << 
-		                                               use("px3y0") << range(16, 0) << ";" << endl;
-		IntNAdder* add =  new IntNAdder(target, 119, 4);
-		oplist.push_back(add);
-		
-		vhdl << tab << declare ("addOp0",119) << " <= " << zeroGenerator(51,0) << " & " << use("sum0") << range(84,17) << ";" <<endl;
-		vhdl << tab << declare ("addOp1",119) << " <= " << zeroGenerator(34,0) << " & " << use("sum1") << range(84,0) << ";" <<endl;
-		vhdl << tab << declare ("addOp2",119) << " <= " << zeroGenerator(17,0) << " & " << use("sum2") << range(84,0) << " &  " << zeroGenerator(17,0) << ";" <<endl;
-		vhdl << tab << declare ("addOp3",119) << " <= " << use("sum3")<< range(84,0)  << " & " <<  zeroGenerator(34,0) << ";" <<endl;
-		
-		inPortMap (add, "X0", "addOp0");
-		inPortMap (add, "X1", "addOp1");
-		inPortMap (add, "X2", "addOp2");
-		inPortMap (add, "X3", "addOp3");
-		inPortMapCst(add, "Cin", "'0'");
-		outPortMap(add, "R", "addRes");
-		vhdl << instance(add, "adder4");
-
-		syncCycleFromSignal("addRes");
-		
-		vhdl << tab << "R <= " << use("addRes")<<range(wInX+wInY-1-17,0) << " & " <<  use("sum0Low") << ";" << endl;
-	
-	}
-	if (0==1){
-	// to be general version (parametrized etc) 
-			//a 16 DSP version
-		//sigle precision optimizations
-		vhdl << tab << declare("sX",68) << " <= " << zeroGenerator(68-wInX,0) << " & " << "X" << ";" << endl;
-		vhdl << tab << declare("sY",68) << " <= " << zeroGenerator(68-wInY,0) << " & " << "Y" << ";" << endl;
-
-		vhdl << tab << declare("x0",17) << " <= " << "sX" << range(16,0 ) << ";" << endl;
-		vhdl << tab << declare("x1",17) << " <= " << "sX" << range(33,17) << ";" << endl;
-		vhdl << tab << declare("x2",17) << " <= " << "sX" << range(50,34) << ";" << endl;
-		vhdl << tab << declare("x3",17) << " <= " << "sX" << range(67,51) << ";" << endl;
-	
-		vhdl << tab << declare("y0",17) << " <= " << "sY" << range(16,0 ) << ";" << endl;
-		vhdl << tab << declare("y1",17) << " <= " << "sY" << range(33,17) << ";" << endl;
-		vhdl << tab << declare("y2",17) << " <= " << "sY" << range(50,34) << ";" << endl;
-		vhdl << tab << declare("y3",17) << " <= " << "sY" << range(67,51) << ";" << endl;
-
-		for (int i=0; i<=3; i++){
-			ostringstream x, p0, p1, p2 ,p3, tp1, tp2, tp3;
-			x << "x" << i;
-			p0 << "p" << x.str() << "y0";
-			p1 << "p" << x.str() << "y1";
-			p2 << "p" << x.str() << "y2";
-			p3 << "p" << x.str() << "y3";
-			tp1 << "t" << p1.str();
-			tp2 << "t" << p2.str();
-			tp3 << "t" << p3.str();
-
-			vhdl << tab << declare(p0.str(),34) << " <= " << use(x.str()) << " * " << use("y0") << ";" << endl;
-			nextCycle();
-			vhdl << tab << declare(tp1.str(),34) << " <= " << use(x.str()) << " * " << use("y1")  << ";" << endl; 
-			vhdl << tab << declare(p1.str(),35) << " <= " << "( \"0\" & " << use(tp1.str()) << ")" << " + " << use(p0.str())<<range(33,17) << ";" << endl; 
-			nextCycle();
-			vhdl << tab << declare(tp2.str(),34) << " <= " << use(x.str()) << " * " << use("y2")  << ";" << endl; 
-			vhdl << tab << declare(p2.str(),35) << " <= " << "( \"0\" & " << use(tp2.str()) << ")" << " + " << use(p1.str())<<range(33,17) << ";" << endl; 
-			nextCycle();
-			vhdl << tab << declare(tp3.str(),34) << " <= " << use(x.str()) << " * " << use("y3")  << ";" << endl; 
-			vhdl << tab << declare(p3.str(),35) << " <= " << "( \"0\" & " << use(tp3.str()) << ")" << " + " << use(p2.str())<<range(33,17) << ";" << endl; 
-						
-			if (i<3) setCycle(0); 
-		}
-		
-		nextCycle();
-		vhdl << tab << declare("sum0",85) << " <= " << use("px0y3") << range(33, 0) << " & " << 
-		                                               use("px0y2") << range(16, 0) << " & " << 
-		                                               use("px0y1") << range(16, 0) << " & " << 
-		                                               use("px0y0") << range(16, 0) << ";" << endl;
-		vhdl << tab << declare("sum0Low",17) << "<=" << use("sum0")<<range(16,0) << ";" << endl;
-		vhdl << tab << declare("sum1",85) << " <= " << use("px1y3") << range(33, 0) << " & " << 
-		                                               use("px1y2") << range(16, 0) << " & " << 
-		                                               use("px1y1") << range(16, 0) << " & " << 
-		                                               use("px1y0") << range(16, 0) << ";" << endl;
-		vhdl << tab << declare("sum2",85) << " <= " << use("px2y3") << range(33, 0) << " & " << 
-		                                               use("px2y2") << range(16, 0) << " & " << 
-		                                               use("px2y1") << range(16, 0) << " & " << 
-		                                               use("px2y0") << range(16, 0) << ";" << endl;
-		vhdl << tab << declare("sum3",85) << " <= " << use("px3y3") << range(33, 0) << " & " << 
-		                                               use("px3y2") << range(16, 0) << " & " << 
-		                                               use("px3y1") << range(16, 0) << " & " << 
-		                                               use("px3y0") << range(16, 0) << ";" << endl;
-		IntNAdder* add =  new IntNAdder(target, 119, 4);
-		oplist.push_back(add);
-		
-		vhdl << tab << declare ("addOp0",119) << " <= " << zeroGenerator(51,0) << " & " << use("sum0") << range(84,17) << ";" <<endl;
-		vhdl << tab << declare ("addOp1",119) << " <= " << zeroGenerator(34,0) << " & " << use("sum1") << range(84,0) << ";" <<endl;
-		vhdl << tab << declare ("addOp2",119) << " <= " << zeroGenerator(17,0) << " & " << use("sum2") << range(84,0) << " &  " << zeroGenerator(17,0) << ";" <<endl;
-		vhdl << tab << declare ("addOp3",119) << " <= " << use("sum3")<< range(84,0)  << " & " <<  zeroGenerator(34,0) << ";" <<endl;
-		
-		inPortMap (add, "X0", "addOp0");
-		inPortMap (add, "X1", "addOp1");
-		inPortMap (add, "X2", "addOp2");
-		inPortMap (add, "X3", "addOp3");
-		inPortMapCst(add, "Cin", "'0'");
-		outPortMap(add, "R", "addRes");
-		vhdl << instance(add, "adder4");
-
-		syncCycleFromSignal("addRes");
-		
-		vhdl << tab << "R <= " << use("addRes")<<range(wInX+wInY-1-17,0) << " & " <<  use("sum0Low") << ";" << endl;
-	
-
-	
-	
-	
-	}
 
 	  
 }
