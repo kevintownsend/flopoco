@@ -212,32 +212,6 @@ Operator(target), wIn_(wIn), N_(N), inputDelays_(inputDelays)
 	
 				////////////////////////////////////////////////
 				int currentLevel = 1;
-//				for (int l=1; l<N; l++){
-//					//perform addition round; there is only one additon per round 
-//					for (int j=0; j<nbOfChunks; j++){
-//						ostringstream dname, uname1, uname2, uname3;
-//						dname << "sX"<<j<<"_0_l"<<l;
-//						uname1 << "sX"<<j<<"_0_l"<<l-1;
-//						uname2 << "sX"<<j<<"_1_l"<<l-1;
-//						uname3 << "sX"<<j-1<<"_0_l"<<l-1;
-//						vhdl << tab << declare(dname.str(),cSize[j]+1) << " <= (\"0\" & "<< use(uname1.str())<<range(cSize[j]-1,0) <<") +  (\"0\" & "<< use(uname2.str())<<range(cSize[j]-1,0)<<")";
-//						if ((j==0)&&(l==1)) vhdl << " + Cin";
-//						if (j>0) vhdl << " + " << use(uname3.str())<<"("<<cSize[j-1]<<") ";
-//						vhdl << ";" << endl;				}
-//		
-//					//from this point we just add two numbers with internal propagations, so perform addition and then take care of the propagations in a loop-like manner
-//					for (int propL=2; propL<=N-l; propL++)
-//						for (int j=0; j<nbOfChunks; j++){
-//							ostringstream dname, uname;
-//							dname << "sX"<<j<<"_"<<propL-1<<"_l"<<l;
-//							uname << "sX"<<j<<"_"<<propL<<"_l"<<l-1;
-//							vhdl << tab << declare(dname.str(), cSize[j]+1) << " <= " << use(uname.str()) << ";" <<endl;
-//						}
-//						nextCycle();
-//				currentLevel++;
-//				}
-				////////////////////////////////////////////////
-	
 				for (int i=2; i<nbOfChunks+2; i++){
 					for (int j=i-2; j< nbOfChunks ; j++){
 						ostringstream dname, uname1, uname2;
