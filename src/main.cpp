@@ -38,8 +38,10 @@
 #include "LZOC.hpp"
 #include "LZOCShifterSticky.hpp"
 #include "IntAdder.hpp"
+#include "IntNAdder.hpp"
 #include "IntDualSub.hpp"
 #include "IntMultiplier.hpp"
+#include "IntMultiplier2.hpp"
 #include "IntMult2.hpp"
 #include "Karatsuba.hpp"
 #include "FPMultiplier.hpp"
@@ -521,6 +523,18 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(op);
 			}    
 		}
+		else if(opname=="IntNAdder"){
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int wIn = checkStrictyPositive(argv[i++], argv[0]);
+				int N   = checkStrictyPositive(argv[i++], argv[0]);
+				cerr << "> IntNAdder, wIn="<<wIn<<" N="<<N<<endl  ;
+				op = new IntNAdder(target,wIn,N);
+				addOperator(op);
+			}    
+		}
 
 		//HIDDEN
 		else if(opname=="IntDualSub"){
@@ -547,6 +561,19 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(op);
 			}
 		}
+		else if(opname=="IntMultiplier2"){
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int wInX = checkStrictyPositive(argv[i++], argv[0]);
+				int wInY = checkStrictyPositive(argv[i++], argv[0]);
+				cerr << "> IntMultiplier2 , wInX="<<wInX<<", wInY="<<wInY<<"\n";
+				op = new IntMultiplier2(target, wInX, wInY);
+				addOperator(op);
+			}
+		}
+
 		else if(opname=="IntMult2"){
 			int nargs = 2;
 			if (i+nargs > argc)
