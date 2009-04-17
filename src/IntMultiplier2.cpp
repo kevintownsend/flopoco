@@ -54,7 +54,9 @@ IntMultiplier2:: IntMultiplier2(Target* target, int wInX, int wInY) :
 
 	int chunksX, chunksY;
 	chunksX =  int(ceil( ( double(wInX) / 17.0 ) ));
-	chunksY =  int(ceil( ( double(wInX) / 17.0 ) ));
+	chunksY =  int(ceil( ( double(wInY) / 17.0 ) ));
+	if (verbose)
+		cout << "X splitted in "<< chunksX << " chunks and Y in " << chunksY << " chunks; " << endl;
 
 
 	if ((wInX>17) && (wInX<=34) && (wInY>17) && (wInY<=34) ){ //this case is for a 2 x 2 chunk multiplier scheme
@@ -95,13 +97,28 @@ IntMultiplier2:: IntMultiplier2(Target* target, int wInX, int wInY) :
 		if (chunksX + chunksY > 2) { // up to 17 x 17 bit on Virtex4 can be written as an "*" @ 400++ MHz 
 		// to be general version (parametrized etc) 
 			//TODO swap X and Y under certain conditions
-			int chunksX, chunksY;
-			chunksX =  int(ceil( ( double(wInX) / 17.0 ) ));
-			chunksY =  int(ceil( ( double(wInX) / 17.0 ) ));
+
+			//NOT TOO SMART
+			bool swap=false;
+			if (chunksX > chunksY) 
+				swap=true;
+			
+			if (swap){
+				int tmp = chunksX;
+				chunksX = chunksY;
+				chunksY = tmp; 
+			}
+			
 			if (verbose)
-				cout << "X splitted in "<< chunksX << " chunks and Y in " << chunksY << " chunks; " << endl;
-			vhdl << tab << declare("sX",17*chunksX) << " <= " << zeroGenerator(17*chunksX-wInX,0) << " & " << "X" << ";" << endl;
-			vhdl << tab << declare("sY",17*chunksX) << " <= " << zeroGenerator(17*chunksX-wInY,0) << " & " << "Y" << ";" << endl;
+				cout << "Perform swapping = " << swap << endl;
+			
+			if (swap){
+				vhdl << tab << declare("sX",17*chunksY) << " <= " << zeroGenerator(17*chunksY-wInY,0) << " & " << "Y" << ";" << endl;
+				vhdl << tab << declare("sY",17*chunksX) << " <= " << zeroGenerator(17*chunksX-wInX,0) << " & " << "X" << ";" << endl;
+			}else{
+				vhdl << tab << declare("sX",17*chunksX) << " <= " << zeroGenerator(17*chunksX-wInX,0) << " & " << "X" << ";" << endl;
+				vhdl << tab << declare("sY",17*chunksY) << " <= " << zeroGenerator(17*chunksY-wInY,0) << " & " << "Y" << ";" << endl;
+			}
 			////////////////////////////////////////////////////
 			//SPLITTINGS
 			for (int k=0; k<chunksX ; k++){
@@ -109,7 +126,7 @@ IntMultiplier2:: IntMultiplier2(Target* target, int wInX, int wInY) :
 				dname << "x"<<k;
 				vhdl << tab << declare(dname.str(),17) << " <= " << "sX" << range((k+1)*17-1,k*17) << ";" << endl;
 			}
-			for (int k=0; k<chunksX ; k++){
+			for (int k=0; k<chunksY ; k++){
 				ostringstream dname;
 				dname << "y"<<k;
 				vhdl << tab << declare(dname.str(),17) << " <= " << "sY" << range((k+1)*17-1,k*17) << ";" << endl;
@@ -145,29 +162,34 @@ IntMultiplier2:: IntMultiplier2(Target* target, int wInX, int wInY) :
 				}
 				vhdl << endl;
 			}
-			IntNAdder* add =  new IntNAdder(target, 17*(chunksX+chunksY-1), chunksX);
-			oplist.push_back(add);
+
+			if (chunksX>1){
+				IntNAdder* add =  new IntNAdder(target, 17*(chunksX+chunksY-1), chunksX);
+				oplist.push_back(add);
 		
-			for (int i=0; i< chunksX; i++){
-				if (i==0) vhdl << tab << declare (join("addOp",i),17*(chunksX+chunksY-1)) << " <= " << zeroGenerator(17*(chunksX-1),0) << " & " << use(join("sum",i)) << range(17*(chunksY+1)-1,17) << ";" <<endl;
-				if (i==1) vhdl << tab << declare (join("addOp",i),17*(chunksX+chunksY-1)) << " <= " << zeroGenerator(17*(chunksX-2),0) << " & " << use(join("sum",i)) << range(17*(chunksY+1)-1,0) << ";" <<endl;
-				if (i> 1) 
-					vhdl << tab << declare (join("addOp",i),17*(chunksX+chunksY-1)) << " <= " << zeroGenerator(17*(chunksX-(i+1)),0) << " & " << use(join("sum",i)) << range(17*(chunksY+1)-1,0) << " & "
-						                                                                      << zeroGenerator(17*(i-1),0) << ";" <<endl;
+				for (int i=0; i< chunksX; i++){
+					if (i==0) vhdl << tab << declare (join("addOp",i),17*(chunksX+chunksY-1)) << " <= " << zeroGenerator(17*(chunksX-1),0) << " & " << use(join("sum",i)) << range(17*(chunksY+1)-1,17) << ";" <<endl;
+					if (i==1) vhdl << tab << declare (join("addOp",i),17*(chunksX+chunksY-1)) << " <= " << zeroGenerator(17*(chunksX-2),0) << " & " << use(join("sum",i)) << range(17*(chunksY+1)-1,0) << ";" <<endl;
+					if (i> 1) 
+						vhdl << tab << declare (join("addOp",i),17*(chunksX+chunksY-1)) << " <= " << zeroGenerator(17*(chunksX-(i+1)),0) << " & " << use(join("sum",i)) << range(17*(chunksY+1)-1,0) << " & "
+								                                                                  << zeroGenerator(17*(i-1),0) << ";" <<endl;
+				}
+				for (int i=0; i< chunksX; i++)
+					inPortMap (add, join("X",i) , join("addOp",i));
+		
+				inPortMapCst(add, "Cin", "'0'");
+				outPortMap(add, "R", "addRes");
+				vhdl << instance(add, "adder");
+
+				syncCycleFromSignal("addRes");
+		
+				vhdl << tab << "R <= " << use("addRes")<<range(wInX+wInY-1-17,0) << " & " <<  use("sum0Low") << ";" << endl;
+			}else{
+				vhdl << tab << "R <= " << use(join("sum",0))<<range(wInX+wInY-1,0) << ";" << endl;
 			}
-			for (int i=0; i< chunksX; i++)
-				inPortMap (add, join("X",i) , join("addOp",i));
-		
-			inPortMapCst(add, "Cin", "'0'");
-			outPortMap(add, "R", "addRes");
-			vhdl << instance(add, "adder");
-
-			syncCycleFromSignal("addRes");
-		
-			vhdl << tab << "R <= " << use("addRes")<<range(wInX+wInY-1-17,0) << " & " <<  use("sum0Low") << ";" << endl;
 		}
-
-	  
+		else 
+			vhdl << tab << "R <= X * Y ;" <<endl;
 }
 
 IntMultiplier2::~IntMultiplier2() {
