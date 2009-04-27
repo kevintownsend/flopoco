@@ -39,6 +39,7 @@
 #include "LZOCShifterSticky.hpp"
 #include "IntAdder.hpp"
 #include "IntNAdder.hpp"
+#include "LongIntAdder.hpp"
 #include "IntDualSub.hpp"
 #include "IntMultiplier.hpp"
 #include "IntMultiplier2.hpp"
@@ -532,6 +533,17 @@ bool parseCommandLine(int argc, char* argv[]){
 				int N   = checkStrictyPositive(argv[i++], argv[0]);
 				cerr << "> IntNAdder, wIn="<<wIn<<" N="<<N<<endl  ;
 				op = new IntNAdder(target,wIn,N);
+				addOperator(op);
+			}    
+		}
+		else if(opname=="LongIntAdder"){
+			int nargs = 1;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int wIn = checkStrictyPositive(argv[i++], argv[0]);
+				cerr << "> LongIntAdder, wIn="<<wIn<<endl  ;
+				op = new LongIntAdder(target,wIn);
 				addOperator(op);
 			}    
 		}

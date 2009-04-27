@@ -120,6 +120,7 @@ ADD_EXECUTABLE(flopoco
  src/GenericTestBench
  src/IntAdder
  src/IntNAdder
+ src/LongIntAdder
  src/IntDualSub
  src/IntMultiplier
  src/IntMultiplier2
@@ -175,6 +176,7 @@ ADD_EXECUTABLE(flopoco
  src/GenericTestBench
  src/IntAdder
  src/IntNAdder
+ src/LongIntAdder
  src/IntDualSub
  src/IntMultiplier
  src/IntMultiplier2
