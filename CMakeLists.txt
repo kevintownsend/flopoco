@@ -119,8 +119,10 @@ ADD_EXECUTABLE(flopoco
 # src/BigTestBench
  src/GenericTestBench
  src/IntAdder
+ src/IntNAdder
  src/IntDualSub
  src/IntMultiplier
+ src/IntMultiplier2
  src/IntMult2
  src/Karatsuba
  src/LZOC src/LZOCShifterSticky
