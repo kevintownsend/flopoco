@@ -247,23 +247,17 @@ IntNAdder::~IntNAdder() {
 
 void IntNAdder::emulate(TestCase* tc)
 {
-	mpz_class svX[N_];
+	mpz_class svX;
+	mpz_class svC =  tc->getInputValue("Cin");
+	mpz_class svR = svC;
+
 	for (int i=0; i<N_; i++){
 	ostringstream iName;
 		iName << "X"<<i;
-		svX[i] = tc->getInputValue(iName.str());
-	}
-	mpz_class svC =  tc->getInputValue("Cin");
-
-	mpz_class svR = svX[0] + svC;
-	mpz_clrbit(svR.get_mpz_t(),wIn_); 
-	for (int i=1; i<N_; i++){
-		svR = svR + svX[i];
+		svX = tc->getInputValue(iName.str());
+		svR = svR + svX;
 		mpz_clrbit(svR.get_mpz_t(),wIn_); 
 	}
-
-	tc->addExpectedOutput("R", svR);
-
 }
 
 
