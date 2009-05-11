@@ -55,11 +55,31 @@ FPSqrt::FPSqrt(Target* target, int wE, int wF) :
 
 	uniqueName_ = name.str(); 
 
-		
+	if(wF!=23)
+		throw "Only wF=23 at the moment";
+
 	// -------- Parameter set up -----------------
 
 	addFPInput ("X", wE, wF);
 	addFPOutput("R", wE, wF);
+
+	int coeff_msb[3];
+	coeff_msb[0]=1;
+	coeff_msb[1]=-2;
+	coeff_msb[2]=-9;
+
+	int res_lsb=-26;
+	int y_lsb=-wF;
+	int y_msb=-8;
+
+	
+	vhdl << tab << declare("fX", wF) << " <= X" << range(wF-1, 0) << ";"  << endl; 
+	vhdl << tab << declare("expX", wE) << " <= X" << range(wE+wF-1, wF) << ";"  << endl; 
+	vhdl << tab << declare("OddExp") << " <= expX(0);"  << endl;  
+	
+
+	vhdl << tab << declare("address", 0-y_msb) << " <= X" << range(wF, wF+y_msb+1) << ";"  << endl; 
+	vhdl << tab << declare("Y", 16) << " <= X" << range(wF+y_msb, wF+y_lsb) << ";"  << endl;
 	
 	// --------- Sub-components ------------------
 
