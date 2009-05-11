@@ -8,7 +8,7 @@
 
 #include "Operator.hpp"
 #include "FPNumber.hpp"
-#include "FPDiv/SRT4Step.hpp"
+#include "division/SRT4Step.hpp"
 
 /** The FPDiv class */
 class FPDiv : public Operator

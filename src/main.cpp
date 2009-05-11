@@ -48,6 +48,7 @@
 #include "FPMultiplier.hpp"
 #include "FPAdder.hpp"
 #include "FPDiv.hpp"
+#include "FPSqrt.hpp"
 #include "LongAcc.hpp"
 #include "LongAcc2FP.hpp"
 #include "DotProduct.hpp"
@@ -130,6 +131,8 @@ static void usage(char *name){
 	cerr << "      Floating-point multiplier \n";
 	cerr << "    FPDiv wE wF\n";
 	cerr << "      Floating-point divider \n";
+	cerr << "    FPSqrt wE wF\n";
+	cerr << "      Floating-point square root\n";
 	cerr << "    IntConstMult w c\n";
 	cerr << "      Integer constant multiplier: w - input size, c - the constant\n";
 	cerr << "    FPConstMult wE_in wF_in wE_out wF_out cst_sgn cst_exp cst_int_sig\n";
@@ -658,6 +661,17 @@ bool parseCommandLine(int argc, char* argv[]){
 			int wF = checkStrictyPositive(argv[i++], argv[0]);
 			cerr << "> FPDiv: wE=" << wE << " wF=" << wF << endl;
 			op = new FPDiv(target, wE, wF);
+			addOperator(op);
+		}
+		else if (opname == "FPSqrt")
+		{
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0]); // and exit
+			int wE = checkStrictyPositive(argv[i++], argv[0]);
+			int wF = checkStrictyPositive(argv[i++], argv[0]);
+			cerr << "> FPSqrt: wE=" << wE << " wF=" << wF << endl;
+			op = new FPSqrt(target, wE, wF);
 			addOperator(op);
 		}
 		else if(opname=="LongAcc"){

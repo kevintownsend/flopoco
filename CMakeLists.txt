@@ -130,8 +130,10 @@ ADD_EXECUTABLE(flopoco
  src/Shifters
  src/FPAdder
  src/FPMultiplier
- src/FPDiv.cpp src/FPDiv.hpp
- src/FPDiv/SRT4Step
+ src/FPDiv
+ src/division/SRT4Step
+ src/FPSqrt
+ src/squareroot/PolynomialTable.hpp
  src/LongAcc
  src/LongAcc2FP
  src/DotProduct
@@ -185,8 +187,10 @@ ADD_EXECUTABLE(flopoco
  src/Shifters
  src/FPAdder
  src/FPMultiplier
- src/FPDiv.cpp src/FPDiv.hpp
- src/FPDiv/SRT4Step
+ src/FPDiv
+ src/division/SRT4Step
+ src/FPSqrt
+ src/squareroot/PolynomialTable.hpp
  src/IntMult2
  src/LongAcc
  src/LongAcc2FP
