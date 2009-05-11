@@ -273,7 +273,7 @@ Collision::Collision(Target* target, int wE, int wF, int optimize)
 
 		syncCycleFromSignal("mZ2", false);
 		
-		// truncate the three results to wF+g+1
+		// truncate the three results to wF+g+2
 		int prodsize = 2+2*wF;
 		vhdl << tab << declare("X2t", wF+g+2)  << " <= " << use("mX2") << range(prodsize-1, prodsize - wF-g-2) << "; " << endl;
 		vhdl << tab << declare("Y2t", wF+g+2)  << " <= " << use("mY2") << range(prodsize-1, prodsize - wF-g-2) << "; " << endl;
