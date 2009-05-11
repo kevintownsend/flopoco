@@ -3,12 +3,12 @@
 
 #include "../Table.hpp"
 
-class FirstInvTable : public Table
+class PolynomialTable : public Table
 {
 public:
-	FirstInvTable(Target* target, int p1, int w1);
+	PolynomialTable(Target* target, int p1, int w1);
 	
-	~FirstInvTable();
+	~PolynomialTable();
   	
 	mpz_class function(int x);
 	
@@ -29,11 +29,6 @@ private:
 	
 	
 };
-
-
-
-
-
 
 #endif //FIRST_TABLE_H
 
