@@ -1,5 +1,5 @@
-#ifndef FIRST_INV_TABLE_H
-#define FIRST_INV_TABLE_H
+#ifndef POLYNOMIALTABLE_H
+#define POLYNOMIALTABLE_H
 
 #include "../Table.hpp"
 
@@ -30,5 +30,5 @@ private:
 	
 };
 
-#endif //FIRST_TABLE_H
+#endif
 
