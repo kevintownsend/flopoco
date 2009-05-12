@@ -58,6 +58,7 @@
 
 #include "ConstMult/IntConstMult.hpp"
 #include "ConstMult/FPConstMult.hpp"
+#include "ConstMult/IntIntKCM.hpp"
 
 #include "FPExp.hpp"
 #include "FPLog.hpp"
@@ -321,6 +322,23 @@ bool parseCommandLine(int argc, char* argv[]){
 				}
 			}
 		}
+		else if(opname=="IntIntKCM"){
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int w = atoi(argv[i++]);
+				mpz_class mpc(argv[i++]);
+#ifdef _WIN32
+//the c++ wrapper for GMP does not work
+				cerr << "> IntIntKCM , w="<<w<<", c="<<mpz2string(mpc)<<"\n";
+#else
+				cerr << "> IntIntKCM , w="<<w<<", c="<<mpc<<"\n";
+#endif
+				op = new IntIntKCM(target, w, mpc);
+				addOperator(op);
+			}        
+		}
 		else if(opname=="IntConstMult"){
 			int nargs = 2;
 			if (i+nargs > argc)
@@ -338,6 +356,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(op);
 			}        
 		}
+
 		else if(opname=="FPConstMult"){
 			int nargs = 7;
 			if (i+nargs > argc)
