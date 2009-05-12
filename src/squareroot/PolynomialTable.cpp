@@ -55,7 +55,6 @@ mpz_class PolynomialTable::function(int x)
 
   switch(x) {
   
-
 case 0 : r= 
 mpz_class( 67108864 )+(mpz_class( 131071 )<< 27 )+(mpz_class( 508 )<< 44 );
 break;
@@ -823,8 +822,6 @@ mpz_class( 133692412 )+(mpz_class( 65793 )<< 27 )+(mpz_class( 64 )<< 44 );
 break;
 case 255 : r= 
 mpz_class( 133955328 )+(mpz_class( 65664 )<< 27 )+(mpz_class( 64 )<< 44 );
-break; 
-default: r=0;
 break;
 }
   return r;
