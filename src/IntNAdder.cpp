@@ -84,9 +84,13 @@ Operator(target), wIn_(wIn), N_(N), inputDelays_(inputDelays)
 		}
 
 		if (((objectivePeriod - maxInputDelay) - target->lutDelay())<0)	{
+			//need to buffer the inputs
 			bufferedInputs = 1;
 			maxInputDelay=0;
 			target->suggestSubaddSize(chunkSize_ ,wIn_);
+			if (verbose)
+				cout << "The maximum addition operand width for this frequency is=" << chunkSize_ << endl;
+			chunkSize_--; //additions are performed on chunksize+1 bits for this operator;
 			nbOfChunks = ceil(double(wIn_)/double(chunkSize_));
 			cSize = new int[nbOfChunks+1];
 			cSize[nbOfChunks-1]=( ((wIn_%chunkSize_)==0)?chunkSize_:wIn_-(nbOfChunks-1)*chunkSize_);
@@ -94,15 +98,22 @@ Operator(target), wIn_(wIn), N_(N), inputDelays_(inputDelays)
 				cSize[i]=chunkSize_;				
 		}
 		else{
-
+			//if we don't need to buffer the inputs
 			int cS0; 
 			bufferedInputs=0;
-			int maxInAdd = ceil(((objectivePeriod - maxInputDelay) - target->lutDelay())/target->carryPropagateDelay()); 			
+			int maxInAdd;
+			target->suggestSlackSubaddSize(maxInAdd, wIn_, maxInputDelay);
+			if (verbose)
+				cout << "The maximum addition operand width for this frequency and consideing input slack is=" << maxInAdd << endl;
+			maxInAdd--;
+//			ceil(((objectivePeriod - maxInputDelay) - target->lutDelay())/target->carryPropagateDelay()); 			
 			cS0 = (maxInAdd<=wIn_?maxInAdd:wIn_);
 			if ((wIn_-cS0)>0)
 			{
 				int newWIn = wIn_-cS0;
 				target->suggestSubaddSize(chunkSize_,newWIn);
+				cout << "The maximum addition operand width for this frequency is=" << chunkSize_ << endl;
+				chunkSize_--; //same reason as above
 				nbOfChunks = ceil( double(newWIn)/double(chunkSize_));
 				cSize = new int[nbOfChunks+1];
 				cSize[0] = cS0;
@@ -200,7 +211,6 @@ Operator(target), wIn_(wIn), N_(N), inputDelays_(inputDelays)
 					for (int j=0; j<nbOfChunks; j++){
 						ostringstream name;
 						//the naming standard: sX j _ i _ l
-						//j=the chunk index i is the input index and l is the current level
 						name << "sX"<<j<<"_"<<i<<"_l"<<0;
 						int low=0, high=0;
 						for (int k=0;k<=j;k++)
@@ -238,6 +248,12 @@ Operator(target), wIn_(wIn), N_(N), inputDelays_(inputDelays)
 				}
 				vhdl << ";" <<endl;
 			}
+	}else{
+		vhdl << tab << "R <= ";
+		for (int i=N-1; i>=0; i--){
+			vhdl << "X"<<i<< " + ";
+		} 
+		vhdl << " Cin ;"<<endl;
 	}
 }
 
