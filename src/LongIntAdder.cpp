@@ -72,14 +72,14 @@ Operator(target), wIn_(wIn), inputDelays_(inputDelays)
 			cout << "The maximum input delay is "<<	maxInputDelay<<endl;
 	
 		double	objectivePeriod;
-		objectivePeriod = 1/ target->frequency();
+		objectivePeriod = 1/ (1.45*target->frequency());
 		
 		if (verbose)
 			cout << "Objective period is "<< objectivePeriod<<" at an objective frequency of "<<target->frequency() << endl;
 
 		if (objectivePeriod<maxInputDelay){
 			//It is the responsability of the previous components to not have a delay larger than the period
-			cout << "Warning, the combinatorial delay at the input of "<<this->getName()<<"is above limit"<<endl;
+			cout << "Warning, the combinatorial delay at the input of "<<this->getName()<<" is above limit"<<endl;
 			maxInputDelay = objectivePeriod;
 		}
 
@@ -102,7 +102,9 @@ Operator(target), wIn_(wIn), inputDelays_(inputDelays)
 			if ((wIn_-cS0)>0)
 			{
 				int newWIn = wIn_-cS0;
+				target->setFrequency(target->frequency() * 1.45);
 				target->suggestSubaddSize(chunkSize_,newWIn);
+				target->setFrequency(target->frequency() / 1.45);
 				nbOfChunks = ceil( double(newWIn)/double(chunkSize_));
 				cSize = new int[nbOfChunks+1];
 				cSize[0] = cS0;
@@ -128,6 +130,7 @@ Operator(target), wIn_(wIn), inputDelays_(inputDelays)
 		
 		//=================================================
 		//split the inputs ( this should be reusable )
+		vhdl << tab << "--split the inputs into chunks of bits depending on the frequency" << endl;
 		for (int i=0;i<2;i++)
 			for (int j=0; j<nbOfChunks; j++){
 				ostringstream name;
@@ -142,80 +145,164 @@ Operator(target), wIn_(wIn), inputDelays_(inputDelays)
 				vhdl << tab << declare (name.str(),cSize[j]+1) << " <= " << " \"0\" & X"<<i<<range(high-1,low)<<";"<<endl;
 			}
 		vhdl << tab << declare("scIn",1) << " <= " << "Cin;"<<endl;
-		
-		////////////////////////////////////////////////
-		//perform addition round; there is only one additon per round 
-		int l=1;
-		for (int j=0; j<nbOfChunks; j++){
-			ostringstream dnameZero, dnameOne, uname1, uname2;
-			dnameZero << "sX"<<j<<"_0_l"<<l<<"_Zero";
-			dnameOne  << "sX"<<j<<"_0_l"<<l<<"_One";
-			uname1 << "sX"<<j<<"_0_l"<<l-1;
-			uname2 << "sX"<<j<<"_1_l"<<l-1;
-			vhdl << tab << declare(dnameZero.str(),cSize[j]+1) << " <= (\"0\" & "<< use(uname1.str())<<range(cSize[j]-1,0) <<") +  (\"0\" & "<< use(uname2.str())<<range(cSize[j]-1,0)<<");"<<endl;
-			vhdl << tab << declare(dnameOne.str(),cSize[j]+1) << " <= (\"0\" & "<< use(uname1.str())<<range(cSize[j]-1,0) <<") +  (\"0\" & "<< use(uname2.str())<<range(cSize[j]-1,0)<<") + '1';"<<endl;
+		if (true){
+			int l=1;
+			for (int j=0; j<nbOfChunks; j++){
+				ostringstream dnameZero, dnameOne, uname1, uname2, dnameCin;
+				dnameZero << "sX"<<j<<"_0_l"<<l<<"_Zero";
+				dnameOne  << "sX"<<j<<"_0_l"<<l<<"_One";
+				dnameCin  << "sX"<<j<<"_0_l"<<l<<"_Cin";
+				
+				uname1 << "sX"<<j<<"_0_l"<<l-1;
+				uname2 << "sX"<<j<<"_1_l"<<l-1;
+				if (j>0){ //for all chunks greater than zero we perform this additions
+					vhdl << tab << declare(dnameZero.str(),cSize[j]+1) << " <= (\"0\" & "<< use(uname1.str())<<range(cSize[j]-1,0) <<") +  (\"0\" & "<< use(uname2.str())<<range(cSize[j]-1,0)<<");"<<endl;
+					vhdl << tab << declare(dnameOne.str(),cSize[j]+1) << "  <= (\"0\" & "<< use(uname1.str())<<range(cSize[j]-1,0) <<") +  (\"0\" & "<< use(uname2.str())<<range(cSize[j]-1,0)<<") + '1';"<<endl;
+				}else{
+					vhdl << tab << "-- the carry resulting from the addition of the chunk + Cin is obtained directly" << endl;
+					vhdl << tab << declare(dnameCin.str(),cSize[j]+1) << "  <= (\"0\" & "<< use(uname1.str())<<range(cSize[j]-1,0) <<") +  (\"0\" & "<< use(uname2.str())<<range(cSize[j]-1,0)<<") + "<<use("scIn")<<";"<<endl;
+				}
+			}
+			
+			
+			vhdl << tab <<"--form the two carry string"<<endl;
+			vhdl << tab << declare("carryStringZero",2*(nbOfChunks-2)) << " <= "; 
+			for (int i=2*(nbOfChunks-2)-1; i>=0; i--) {
+				ostringstream dnameZero;
+				if (i%2==0){
+					dnameZero << "sX"<<(i/2)+1<<"_0_l"<<l<<"_Zero";
+					vhdl << " " << use(dnameZero.str()) <<"(" << cSize[(i/2)+1] << ")";
+				}else
+					vhdl << " \"0\" ";
+				if (i>0) vhdl << " & ";
+				else     vhdl << " ; ";
+			} vhdl << endl;
+			vhdl << tab << declare("carryStringOne",2*(nbOfChunks-2)) << "  <= "; 
+			for (int i=2*(nbOfChunks-2)-1; i>=0; i--) {
+				ostringstream dnameOne;
+				if (i%2==0){
+					dnameOne << "sX"<<(i/2)+1<<"_0_l"<<l<<"_One";
+					vhdl << " " << use(dnameOne.str()) <<"(" << cSize[(i/2)+1] << ") ";
+				}else
+					vhdl << " \"1\" ";
+				if (i>0) vhdl << " & ";
+				else     vhdl << " ; ";
+			} vhdl << endl;
+
+			nextCycle();/////////////////////
+
+			vhdl << tab << "--perform the short carry additions" << endl;
+			ostringstream unameCin;
+			unameCin  << "sX"<<0<<"_0_l"<<l<<"_Cin";
+			vhdl << tab << declare("rawCarrySum",2*(nbOfChunks-2)) << " <= " << use("carryStringOne") << " + " << use("carryStringZero") << " + " << use(unameCin.str()) << "(" << cSize[0] << ")" << " ;" << endl;
+
+//			nextCycle();/////////////////////
+			vhdl << tab <<"--get the final pipe results"<<endl;
+			for ( int i=0; i<nbOfChunks; i++){
+				ostringstream unameZero, unameOne, unameCin;
+				unameZero << "sX"<<i<<"_0_l"<<l<<"_Zero";
+				unameOne  << "sX"<<i<<"_0_l"<<l<<"_One";
+				unameCin  << "sX"<<0<<"_0_l"<<l<<"_Cin";
+				if (i==0) vhdl << tab << declare(join("res",i),cSize[i]) << " <= " << use(unameCin.str())<< range(cSize[0]-1,0) <<  ";" << endl;
+				else {
+					if (i==1) vhdl << tab << declare(join("res",i),cSize[i]) << " <= " << use(unameZero.str()) << range(cSize[i]-1,0) << " + " << use(unameCin.str()) << "(" << cSize[0] << ")" << ";"<<endl;
+					else      vhdl << tab << declare(join("res",i),cSize[i]) << " <= " << use(unameZero.str()) << range(cSize[i]-1,0) << " + not(" << use("rawCarrySum")<<"("<<2*(i-2)+1<<"));"<<endl;
+				}
+			}
+			
+			vhdl << tab << "R <= ";
+			int k=0;
+			for (int i=nbOfChunks-1; i>=0; i--){
+				vhdl << use(join("res",i));
+				if (i > 0) vhdl << " & ";
+				k++;
+			}
+			vhdl << ";" <<endl;
+
+
+
+
 		}
-		nextCycle(); //////////////////////////////////////////////////////
-		vhdl << tab << declare("carryStringZero",nbOfChunks) << " <= "; 
-		for (int i=nbOfChunks-1; i>=0; i--) {
-			ostringstream dnameZero;
-			dnameZero << "sX"<<i<<"_0_l"<<l<<"_Zero";
-			vhdl << " " << use(dnameZero.str()) <<"(" << cSize[i] << ")";
-			if (i>0) vhdl << " & ";
-			else     vhdl << " ; ";
-		} vhdl << endl;
-		vhdl << tab << declare("carryStringOne",nbOfChunks) << " <= "; 
-		for (int i=nbOfChunks-1; i>=0; i--) {
-			ostringstream dnameOne;
-			dnameOne << "sX"<<i<<"_0_l"<<l<<"_One";
-			vhdl << " " << use(dnameOne.str()) <<"(" << cSize[i] << ")";
-			if (i>0) vhdl << " & ";
-			else     vhdl << " ; ";
-		} vhdl << endl;
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-		for (int i=0; i<nbOfChunks; i++){
-			ostringstream unameZero, unameOne;;
-			unameZero << "sX"<<i<<"_0_l"<<l<<"_Zero";
-			unameOne << "sX"<<i<<"_0_l"<<l<<"_One";
-			vhdl << tab << declare(join("s",i),2) << " <= " << " (\"0\" & "<<use("carryStringZero") << range(i,i) << ") + " 
-			                                                << " (\"0\" & "<<use("carryStringOne")  << range(i,i) << ") + ";
-			if (i==0)
-			vhdl << use("scIn")<<";"<<endl;
-			else
-			vhdl << use(join("s",i-1))<<"("<<1<<");"<<endl;
-		}
-		vhdl << tab << declare("carrySum",nbOfChunks) << " <= ";
-		for (int i=nbOfChunks-1;i>=0;i--){
-				vhdl << use(join("s",i))<< "("<< (i==nbOfChunks-1?0:1)<<")" << (i==0?";":" & ");
-		} vhdl << endl;
+		if (false){
+			//the first version
+			////////////////////////////////////////////////
+			//perform addition round; there is only one additon per round 
+			int l=1;
+			for (int j=0; j<nbOfChunks; j++){
+				ostringstream dnameZero, dnameOne, uname1, uname2;
+				dnameZero << "sX"<<j<<"_0_l"<<l<<"_Zero";
+				dnameOne  << "sX"<<j<<"_0_l"<<l<<"_One";
+				uname1 << "sX"<<j<<"_0_l"<<l-1;
+				uname2 << "sX"<<j<<"_1_l"<<l-1;
+				vhdl << tab << declare(dnameZero.str(),cSize[j]+1) << " <= (\"0\" & "<< use(uname1.str())<<range(cSize[j]-1,0) <<") +  (\"0\" & "<< use(uname2.str())<<range(cSize[j]-1,0)<<");"<<endl;
+				vhdl << tab << declare(dnameOne.str(),cSize[j]+1) << " <= (\"0\" & "<< use(uname1.str())<<range(cSize[j]-1,0) <<") +  (\"0\" & "<< use(uname2.str())<<range(cSize[j]-1,0)<<") + '1';"<<endl;
+			}
 
-		nextCycle(); //////////////////////////////////////////////////////
-		//up to this point there is only one pipeline level
+			nextCycle(); //////////////////////////////////////////////////////
+
+			vhdl << tab << declare("carryStringZero",nbOfChunks) << " <= "; 
+			for (int i=nbOfChunks-1; i>=0; i--) {
+				ostringstream dnameZero;
+				dnameZero << "sX"<<i<<"_0_l"<<l<<"_Zero";
+				vhdl << " " << use(dnameZero.str()) <<"(" << cSize[i] << ")";
+				if (i>0) vhdl << " & ";
+				else     vhdl << " ; ";
+			} vhdl << endl;
+			vhdl << tab << declare("carryStringOne",nbOfChunks) << " <= "; 
+			for (int i=nbOfChunks-1; i>=0; i--) {
+				ostringstream dnameOne;
+				dnameOne << "sX"<<i<<"_0_l"<<l<<"_One";
+				vhdl << " " << use(dnameOne.str()) <<"(" << cSize[i] << ")";
+				if (i>0) vhdl << " & ";
+				else     vhdl << " ; ";
+			} vhdl << endl;
+			for (int i=0; i<nbOfChunks; i++){
+				ostringstream unameZero, unameOne;;
+				unameZero << "sX"<<i<<"_0_l"<<l<<"_Zero";
+				unameOne << "sX"<<i<<"_0_l"<<l<<"_One";
+				vhdl << tab << declare(join("s",i),2) << " <= " << " (\"0\" & "<<use("carryStringZero") << range(i,i) << ") + " 
+					                                            << " (\"0\" & "<<use("carryStringOne")  << range(i,i) << ") + ";
+				if (i==0)
+				vhdl << use("scIn")<<";"<<endl;
+				else
+				vhdl << use(join("s",i-1))<<"("<<1<<");"<<endl;
+			}
+			vhdl << tab << declare("carrySum",nbOfChunks) << " <= ";
+			for (int i=nbOfChunks-1;i>=0;i--){
+					vhdl << use(join("s",i))<< "("<< (i==nbOfChunks-1?0:1)<<")" << (i==0?";":" & ");
+			} vhdl << endl;
+
+			nextCycle(); //////////////////////////////////////////////////////
 		
-		//get the final pipe results;
-		for ( int i=0; i< nbOfChunks; i++){
-			ostringstream unameZero, unameOne;
-			unameZero << "sX"<<i<<"_0_l"<<l<<"_Zero";
-			unameOne  << "sX"<<i<<"_0_l"<<l<<"_One";
-//			if (i==0)vhdl << tab << declare(join("res",i),cSize[i]) << " <= " << use(unameZero.str()) << range(cSize[i]-1,0) << " when " << use("scIn") <<"='0' else " << use(unameOne.str())<<range(cSize[i]-1,0) << ";" << endl;
-//			else vhdl << tab << declare(join("res",i),cSize[i]) << " <= " << use(unameZero.str()) << range(cSize[i]-1,0) << " when " << use("carrySum")<<"("<<i-1<<")"
-//			                                                    <<"='0' else " << use(unameOne.str())<<range(cSize[i]-1,0) << ";" << endl;
-			if (i==0) vhdl << tab << declare(join("res",i),cSize[i]) << " <= " << use(unameZero.str()) << range(cSize[i]-1,0) << " + " << use("scIn") << ";" << endl;
-			else vhdl << tab << declare(join("res",i),cSize[i]) << " <= " << use(unameZero.str()) << range(cSize[i]-1,0) << " + " << use("carrySum")<<"("<<i-1<<");"<<endl;
-
-
-		}
+			//get the final pipe results;
+			for ( int i=0; i< nbOfChunks; i++){
+				ostringstream unameZero, unameOne;
+				unameZero << "sX"<<i<<"_0_l"<<l<<"_Zero";
+				unameOne  << "sX"<<i<<"_0_l"<<l<<"_One";
+	//			if (i==0)vhdl << tab << declare(join("res",i),cSize[i]) << " <= " << use(unameZero.str()) << range(cSize[i]-1,0) << " when " << use("scIn") <<"='0' else " << use(unameOne.str())<<range(cSize[i]-1,0) << ";" << endl;
+	//			else vhdl << tab << declare(join("res",i),cSize[i]) << " <= " << use(unameZero.str()) << range(cSize[i]-1,0) << " when " << use("carrySum")<<"("<<i-1<<")"
+	//			                                                    <<"='0' else " << use(unameOne.str())<<range(cSize[i]-1,0) << ";" << endl;
+				if (i==0) vhdl << tab << declare(join("res",i),cSize[i]) << " <= " << use(unameZero.str()) << range(cSize[i]-1,0) << " + " << use("scIn") << ";" << endl;
+				else vhdl << tab << declare(join("res",i),cSize[i]) << " <= " << use(unameZero.str()) << range(cSize[i]-1,0) << " + " << use("carrySum")<<"("<<i-1<<");"<<endl;
+			}
 		
 		
-		vhdl << tab << "R <= ";
-		int k=0;
-		for (int i=nbOfChunks-1; i>=0; i--){
-			vhdl << use(join("res",i));
-			if (i > 0) vhdl << " & ";
-			k++;
+			vhdl << tab << "R <= ";
+			int k=0;
+			for (int i=nbOfChunks-1; i>=0; i--){
+				vhdl << use(join("res",i));
+				if (i > 0) vhdl << " & ";
+				k++;
+			}
+			vhdl << ";" <<endl;
 		}
-		vhdl << ";" <<endl;
 	}else
 		vhdl << tab << " R <= X0 + X1 + Cin;"<<endl;
 }
