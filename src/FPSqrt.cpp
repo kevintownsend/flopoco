@@ -22,8 +22,6 @@
 */
 
 
-// TODO Test even and odd significands
-// use IntAdder for normalization and SRT4Step
 
 #include <iostream>
 #include <sstream>
@@ -74,26 +72,82 @@ FPSqrt::FPSqrt(Target* target, int wE, int wF) :
 	int y_lsb=-wF;
 	int y_msb=-8;
 
+	if(useDSP) {
+		vhdl << tab << declare("fX", wF) << " <= X" << range(wF-1, 0) << ";"  << endl; 
+		vhdl << tab << declare("expX", wE) << " <= X" << range(wE+wF-1, wF) << ";"  << endl; 
+		vhdl << tab << declare("OddExp") << " <= expX(0);"  << endl;  
 	
-	vhdl << tab << declare("fX", wF) << " <= X" << range(wF-1, 0) << ";"  << endl; 
-	vhdl << tab << declare("expX", wE) << " <= X" << range(wE+wF-1, wF) << ";"  << endl; 
-	vhdl << tab << declare("OddExp") << " <= expX(0);"  << endl;  
+
+		vhdl << tab << declare("address", 0-y_msb) << " <= X" << range(wF, wF+y_msb+1) << ";"  << endl; 
+		vhdl << tab << declare("Y", 16) << " <= X" << range(wF+y_msb, wF+y_lsb) << ";"  << endl;
 	
-
-	vhdl << tab << declare("address", 0-y_msb) << " <= X" << range(wF, wF+y_msb+1) << ";"  << endl; 
-	vhdl << tab << declare("Y", 16) << " <= X" << range(wF+y_msb, wF+y_lsb) << ";"  << endl;
-	
-	vhdl << tab << declare("exnsX", 3) << " <= X" << range(wE+wF+2, wE+wF) << ";"  << endl;
+		vhdl << tab << declare("exnsX", 3) << " <= X" << range(wE+wF+2, wE+wF) << ";"  << endl;
 
 
 
-	vhdl << tab << "-- sign/exception handling" << endl;
-	vhdl << tab << "with " << use("exnsX") << " select" <<endl
-		  << tab << tab <<  declare("exnR", 3) << " <= " << "\"01\" when \"010\", -- positive, normal number (TODO underflow) " << endl
-		  << tab << tab << use("exnsX") << range(2, 1) << " when \"001\" | \"000\" | \"100\", " << endl
-		  << tab << tab << "\"11\" when others;"  << endl;
+		vhdl << tab << "-- sign/exception handling" << endl;
+		vhdl << tab << "with " << use("exnsX") << " select" <<endl
+			  << tab << tab <<  declare("exnR", 3) << " <= " << "\"01\" when \"010\", -- positive, normal number (TODO underflow) " << endl
+			  << tab << tab << use("exnsX") << range(2, 1) << " when \"001\" | \"000\" | \"100\", " << endl
+			  << tab << tab << "\"11\" when others;"  << endl;
 
-	vhdl << tab << "R <= exnR & '0' & computed; -- TODO" << endl; 
+		vhdl << tab << "R <= exnR & '0' & computed; -- TODO" << endl; 
+	}
+
+	else {		// Digit-recurrence implementation recycled from FPLibrary
+
+		vhdl << tab << declare("fX", wF) << " <= X" << range(wF-1, 0) << ";"  << endl; 
+		vhdl << tab << declare("fA0", wF+2) << " <= \"1\" & fX when X(wF) = '0' else"
+			  << tab << "\"01\" & fX;" << endl;
+
+		vhdl << tab << declare(join("w",wF+3), wF+4) << " <= \"111\" & fX & \"0\" when X(" << wF << ") = '0' else" << endl
+			  << tab << tab << "\"1101\" & fX;" << endl;
+		vhdl << tab << declare(join("d",wF+3)) << " <= '0';" << endl;
+
+		for(int i=wF+2; i>0; i--) {
+
+		}
+#if 0
+  sqrt : FPSqrt_Sqrt
+    generic map ( wF => wF )
+    port map ( fA => fA0,
+               fR => fRn0 );
+  with fRn0(wF+3) select
+    fRn1(wF+2 downto 0) <= fRn0(wF+3 downto 2) & (fRn0(1) or fRn0(0)) when '1',
+                              fRn0(wF+2 downto 0)                        when others;
+
+  eRn0 <= "00" & nA(wE+wF-1 downto wF+1);
+  eRn1 <= eRn0 + ("000" & (wE-3 downto 0 => '1')) + nA(wF);
+
+  round : FP_Round
+    generic map ( wE => wE,
+                  wF => wF )
+    port map ( eA => eRn1,
+               fA => fRn1,
+               eR => eRn,
+               fR => fRn );
+
+  sRn <= nA(wE+wF);
+
+  format : FP_Format
+    generic map ( wE => wE,
+                  wF => wF )
+    port map ( sA => sRn,
+               eA => eRn,
+               fA => fRn,
+               nR => nRn );
+
+  xsA <= nA(wE+wF+2 downto wE+wF);
+
+  with xsA select
+    nR(wE+wF+2 downto wE+wF+1) <= nRn(wE+wF+2 downto wE+wF+1) when "010",
+                                            xsA(2 downto 1)                       when "001" | "000" | "100",
+                                            "11"                                  when others;
+  nR(wE+wF downto 0) <= nRn(wE+wF downto 0);
+
+#endif
+	}
+
 
 }
 

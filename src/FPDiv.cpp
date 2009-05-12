@@ -99,7 +99,6 @@ FPDiv::FPDiv(Target* target, int wE, int wF) :
 		wim1 << "w" << i-1;
 		stepi << "step" << i; // the instance name
 	
-#if 1
 	
 		inPortMap(srt4step, "x", wi.str());
 		inPortMap(srt4step, "d", "fY");
@@ -108,23 +107,6 @@ FPDiv::FPDiv(Target* target, int wE, int wF) :
 		outPortMap(srt4step, "w", wim1.str());
 		vhdl << instance(srt4step, stepi.str());
 
-#else
-		//		vhdl << tab << "-- SRT4 step "; 
-		vhdl << tab << "step" << i << ": " << srt4step->getOperatorName();
-		if (isSequential()) 
-		vhdl << "  -- pipelineDepth="<< srt4step->getPipelineDepth();
-		vhdl << endl;
-		vhdl << tab << tab << "port map ( x       => " << use(wi.str()) << "," << endl;
-		vhdl << tab << tab << "           d       => " << use("fY") << "," << endl;
-		vhdl << tab << tab << "           dtimes3 => " << use("fYTimes3") << "," << endl;
-		if(isSequential()) {
-			vhdl << tab << tab << "           clk  => clk, " << endl;
-			vhdl << tab << tab << "           rst  => rst, " << endl;
-		}
-		vhdl << tab << tab << "              q  => " << declare(qi.str(),3) << "," << endl;
-		vhdl << tab << tab << "              w  => " << declare(wim1.str(), wF+3) << "     );" <<endl;
-
-#endif
 		nextCycle();///////////////////////////////////////////////////////////////////////
 
 	}

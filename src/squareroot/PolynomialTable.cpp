@@ -37,7 +37,7 @@ double PolynomialTable::input2double(int x) {
 mpz_class PolynomialTable::double2output(double x){
   cerr << "??? PolynomialTable::double2input not yet implemented ";
   exit(1);
-  return result;
+  return 0;
 }
 
 double PolynomialTable::output2double(mpz_class x) {
@@ -52,10 +52,11 @@ double PolynomialTable::output2double(mpz_class x) {
 mpz_class PolynomialTable::function(int x)
 {
   mpz_class r;
+#if 0
   switch(x) {
   
  case 0 : r= 
-67108864 +( 262143 << 27 )+( 509 << 45 );
+		  mpz_class(67108864) +( mpz_class(262143) << 27 )+( mpz_class(509) << 45 );
 break; 
  case 1 : r= 
 67370498 +( 261125 << 27 )+( 503 << 45 );
@@ -823,7 +824,7 @@ break;
 133955328 +( 131328 << 27 )+( 64 << 45 );
 break;
 default: r=0;
- 
+#endif 
   return r;
 }
 
