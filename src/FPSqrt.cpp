@@ -49,6 +49,8 @@ extern vector<Operator*> oplist;
 FPSqrt::FPSqrt(Target* target, int wE, int wF) :
 	Operator(target), wE(wE), wF(wF) {
 
+	correctRounding=false; //TODO set by the constructor
+	useDSP=true; //TODO set by the constructor
 	ostringstream name;
 
 	name<<"FPSqrt_"<<wE<<"_"<<wF;
@@ -81,8 +83,17 @@ FPSqrt::FPSqrt(Target* target, int wE, int wF) :
 	vhdl << tab << declare("address", 0-y_msb) << " <= X" << range(wF, wF+y_msb+1) << ";"  << endl; 
 	vhdl << tab << declare("Y", 16) << " <= X" << range(wF+y_msb, wF+y_lsb) << ";"  << endl;
 	
-	// --------- Sub-components ------------------
+	vhdl << tab << declare("exnsX", 3) << " <= X" << range(wE+wF+2, wE+wF) << ";"  << endl;
 
+
+
+	vhdl << tab << "-- sign/exception handling" << endl;
+	vhdl << tab << "with " << use("exnsX") << " select" <<endl
+		  << tab << tab <<  declare("exnR", 3) << " <= " << "\"01\" when \"010\", -- positive, normal number (TODO underflow) " << endl
+		  << tab << tab << use("exnsX") << range(2, 1) << " when \"001\" | \"000\" | \"100\", " << endl
+		  << tab << tab << "\"11\" when others;"  << endl;
+
+	vhdl << tab << "R <= exnR & '0' & computed; -- TODO" << endl; 
 
 }
 
@@ -96,6 +107,38 @@ FPSqrt::~FPSqrt() {
 
 void FPSqrt::emulate(TestCase * tc)
 {
+	/* Get I/O values */
+	mpz_class svX = tc->getInputValue("X");
+
+	/* Compute correct value */
+	FPNumber fpx(wE, wF);
+	fpx = svX;
+	mpfr_t x, r;
+	mpfr_init2(x, 1+wF);
+	mpfr_init2(r, 1+wF); 
+	fpx.getMPFR(x);
+
+	if(correctRounding) {
+		mpfr_sqrt(r, x, GMP_RNDN);
+		FPNumber  fpr(wE, wF, r);
+		/* Set outputs */
+		mpz_class svr= fpr.getSignalValue();
+		tc->addExpectedOutput("R", svr);
+	}
+	else { // faithful rounding 
+		mpfr_sqrt(r, x, GMP_RNDU);
+		FPNumber  fpru(wE, wF, r);
+		mpz_class svru = fpru.getSignalValue();
+		tc->addExpectedOutput("R", svru);
+
+		mpfr_sqrt(r, x, GMP_RNDD);
+		FPNumber  fprd(wE, wF, r);
+		mpz_class svrd = fprd.getSignalValue();
+		/* Set outputs */
+		tc->addExpectedOutput("R", svrd);
+	}
+
+	mpfr_clears(x, r, NULL);
 }
 
 

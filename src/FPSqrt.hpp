@@ -44,7 +44,12 @@ private:
 	int wE; 
 	/** The width of the fraction for the input X */
 	int wF; 
+	/** A boolean selecting between IEEE-compliant correct rounding
+		 or faithful (last-bit accurate) result  */
+	bool correctRounding;
 
+	/** A boolean selecting between the old digit recurrence implementation, or the polynomial-based one */
+	bool useDSP;
 };
 
 #endif //FPSQRT_HPP
