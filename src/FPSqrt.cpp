@@ -81,7 +81,7 @@ FPSqrt::FPSqrt(Target* target, int wE, int wF) :
 	
 	int msb_x = -6; //number of zeros after the dot
 	
-	int tableAddressWidth = msb_x + 1; //the +1 comes from the LSB of the exponent
+	int tableAddressWidth = -msb_x + 2; //the +1 comes from the LSB of the exponent
 
 	int sizeOfX = 16;
 	int keepBits = 0;
@@ -93,9 +93,9 @@ FPSqrt::FPSqrt(Target* target, int wE, int wF) :
 	
 	//first estimation of the exponent
 	vhdl << tab << declare("biasm1", wE+1) << " <= " << "CONV_STD_LOGIC_VECTOR("<< (1<<(wE-1))-2 <<","<<wE+1<<")"<<";"<<endl;
-	vhdl << tab << declare("exp_addition", wE+1) << " <= " << "( \"0\" & " << use("expX") << ") + "<<use("biasm1") << " + " << use("OddExp") << ";"<<endl;
+	vhdl << tab << declare("exp_addition", wE+1) << " <= " << "( \"0\" & " << use("expX") << ") + "<<use("biasm1") << " + not(" << use("OddExp") << ");"<<endl;
 	
-	vhdl << tab << declare("address", tableAddressWidth) << " <= X" << range(wF, wF-tableAddressWidth-1) << ";"  << endl; //the MSB of address is the LSB of the exponent
+	vhdl << tab << declare("address", tableAddressWidth) << " <= "<< use("OddExp") << " & X" << range(wF-1, wF-tableAddressWidth+1) << ";"  << endl; //the MSB of address is the LSB of the exponent
 
 	//instantiate the coefficient table
 	PolynomialTable* t = new PolynomialTable(target, tableAddressWidth, coeffTableWidth);
@@ -108,27 +108,28 @@ FPSqrt::FPSqrt(Target* target, int wE, int wF) :
 	syncCycleFromSignal("data");
 	
 	//get the correct size of x for the multiplication
-	vhdl << tab << declare("lowX", sizeOfX + 1) << " <= " << "(\"0\" & " << use("X")<<range(sizeOfX-1,0) << ") when " << use("X")<<"("<< wF <<")='0' else "
-	                                            << "(" << use("X")<<range(sizeOfX-1,0) << " & \"0\" ;"<<endl;
+	vhdl << tab << declare("lowX", sizeOfX + 1) << " <= " << "(\"0\" & " << use("X")<<range(sizeOfX-1,0) << ") when " << use("OddExp")<<"='0' else "
+	                                            << "(" << use("X")<<range(sizeOfX-1,0) << " & \"0\") ;"<<endl;
 	                                      
 	//get a2 from memory
 	vhdl << tab << declare("a2", coeffStorageSizes[2]) << "<=" << use("data")<<range(coeffTableWidth-1, coeffTableWidth-coeffStorageSizes[2]) <<";"<<endl;
 	//perform (-a2)*x
-	vhdl << tab << declare("prod_a2_x",coeffStorageSizes[2] + sizeOfX + 1) << " <= " << use("lowX") << " * " << use("a2");
+	vhdl << tab << declare("prod_a2_x",coeffStorageSizes[2] + sizeOfX + 1) << " <= " << use("lowX") << " * " << use("a2") << ";" << endl;
 	
 	//sign-extend and pad a1 for a1 - (-a2*x)
 	vhdl << tab << declare("ext_a1_pad", 1 + coeffStorageSizes[1] + keepBits) << " <= " << "\"0\" & " 
 	                                                                                    << use("data")<<range(coeffStorageSizes[0] + coeffStorageSizes[1] - 1, coeffStorageSizes[0]) << " & "
 	                                                                                    << zeroGenerator(keepBits, 0) << ";" << endl;
 	vhdl << tab << declare("ext_prod_a2_x_pad", 1 + coeffStorageSizes[1] + keepBits) << " <= " << zeroGenerator(9,0) << " & " 
-	                                                                                      << use("prod_a2_x")<< range(coeffStorageSizes[2] + sizeOfX, coeffStorageSizes[2] + sizeOfX - (1 + coeffStorageSizes[1] + keepBits - 9 ))
+	                                                                                      << use("prod_a2_x")<< range(coeffStorageSizes[2] + sizeOfX, coeffStorageSizes[2] + sizeOfX - (1 + coeffStorageSizes[1] + keepBits - 9 )+1)
 	                                                                                      << ";"<<endl;
+	vhdl << tab << declare("neg_ext_prod_a2_x_pad", 1 + coeffStorageSizes[1] + keepBits) << " <= not(" << use("ext_prod_a2_x_pad") << ");"<<endl;
 	//subtract (-a2*x) from a1, => instantiate IntAdder
 	IntAdder* add1 = new IntAdder(target, 1 + coeffStorageSizes[1] + keepBits);
 	oplist.push_back(add1);
 	
 	inPortMap(add1,"X", "ext_a1_pad");
-	inPortMap(add1,"Y", "ext_prod_a2_x_pad");
+	inPortMap(add1,"Y", "neg_ext_prod_a2_x_pad");
 	inPortMapCst(add1,"Cin", "'1'");
 	outPortMap(add1,"R", "add1Res");
 	vhdl << instance(add1, "Adder_a1_prod_x_a2");
@@ -136,15 +137,16 @@ FPSqrt::FPSqrt(Target* target, int wE, int wF) :
 	syncCycleFromSignal("add1Res"); 
 	
 	//perform the multiplication between x and ( a1 + a2x )    
-	vhdl << tab << declare("prod_x_prev_prod", (sizeOfX+1)+ coeffStorageSizes[1] + keepBits) << " <= " << use("lowX") << " * " 
-	                                                                                         << use("add1Res")<<range( coeffStorageSizes[1] + keepBits -1, 0)<<";" <<endl;
+	vhdl << tab << declare("prod_x_prev_prod", (sizeOfX+1)+ coeffStorageSizes[1] + keepBits ) << " <= " << use("lowX") << " * " 
+	                                                                                         << use("add1Res")<<range( coeffStorageSizes[1] + keepBits-1, 0)<<";" <<endl;
 	                                                                               
 	//compose the operands for the addition a0 + [ prev_computation ]
-	vhdl << tab << declare ("right_term", 1+coeffStorageSizes[0]) << " <= " << zeroGenerator(1 + (1+coeff_msb[0])+1-msb_x , 0)  << " & "
-         << use("prod_x_prev_prod")<<range((sizeOfX+1)+ coeffStorageSizes[1] + keepBits-1, (sizeOfX+1)+ coeffStorageSizes[1] + keepBits - (coeffStorageSizes[0]+msb_x+1+(1+ coeff_msb[0]))) << ";" <<endl; 
+	vhdl << tab << declare ("right_term", 1 + coeffStorageSizes[0]) << " <= " << zeroGenerator(1 + (1+coeff_msb[0])+1-msb_x , 0)  << " & "
+         << use("prod_x_prev_prod")<<range((sizeOfX+1)+ coeffStorageSizes[1] -1 + keepBits, keepBits + (sizeOfX+1)+ coeffStorageSizes[1] - (coeffStorageSizes[0]- (-msb_x+1+(1+ coeff_msb[0])))) << ";" <<endl; 
 	vhdl << tab << declare ("left_term", 1+	coeffStorageSizes[0]) << " <= " << " \"0\" & " << use("data") << range(coeffStorageSizes[0]-1,0) << ";" << endl;
 	
 	IntAdder * add2 =  new IntAdder(target, 1+	coeffStorageSizes[0]);
+	oplist.push_back(add2);
 	inPortMap(add2,"X", "left_term");
 	inPortMap(add2,"Y", "right_term");
 	inPortMapCst(add2,"Cin", "'0'");
@@ -155,8 +157,8 @@ FPSqrt::FPSqrt(Target* target, int wE, int wF) :
 	
 	vhdl << declare("norm_bit",1) << " <= " << use("add2Res") << "(" << coeffStorageSizes[0] << ")"<<";"<<endl;
 	
-	vhdl << declare("finalFrac", wF) << " <= " << use("add2Res") << range(coeffStorageSizes[0], coeffStorageSizes[0]-wF+1) << " when " << use("norm_bit") <<"='1' else"
-	                                           << use("add2Res") << range(coeffStorageSizes[0]-1, coeffStorageSizes[0]-wF) << ";" << endl;
+	vhdl << declare("finalFrac", wF) << " <= " << use("add2Res") << range(coeffStorageSizes[0]-1, coeffStorageSizes[0]-wF) << " when " << use("norm_bit") <<"='1' else "
+	                                           << use("add2Res") << range(coeffStorageSizes[0]-2, coeffStorageSizes[0]-wF-1) << ";" << endl;
 	vhdl << declare("finalExp", wE) << " <= " << use("exp_addition")<<range(wE,1) << " + " << use("norm_bit")<<";"<<endl;
 
 	vhdl << tab << "-- sign/exception handling" << endl;
@@ -165,7 +167,7 @@ FPSqrt::FPSqrt(Target* target, int wE, int wF) :
 		  << tab << tab << use("exnsX") << range(2, 1) << " when \"001\" | \"000\" | \"100\", " << endl
 		  << tab << tab << "\"11\" when others;"  << endl;
 
-	vhdl << tab << "R <= "<<use("exnR")<<" & \"0\" & " << use("finalExp") << " & " << use("finalFrac")<< ";" << endl; 
+	vhdl << tab << "R <= "<<use("exnR")<<" & "<< use("exnsX") <<"(0) & " << use("finalExp") << " & " << use("finalFrac")<< ";" << endl; 
 	
 	
 	}

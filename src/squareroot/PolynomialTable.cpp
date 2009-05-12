@@ -51,7 +51,7 @@ double PolynomialTable::output2double(mpz_class x) {
 
 mpz_class PolynomialTable::function(int x)
 {
-  mpz_class r;
+  mpz_class r=0;
 
   switch(x) {
   
@@ -828,45 +828,3 @@ break;
 }
 
 
-
-#if 0
-int FirstInvTable::check_accuracy(int wF) {
-  int i;
-  mpz_class j;
-  double x1,x2,y,e1,e2;
-  double maxerror=0.0;
-  double prod=0.0;
-
-  maxMulOut=0;
-  minMulOut=2;
-
-  for (i=minIn; i<=maxIn; i++) {
-    // x1 and x2 are respectively the smallest and largest FP possible
-    // values leading to input i
-    x1=input2double(i); 
-    if(i>>(wIn-1)) //MSB of input
-      x2= - negPowOf2(wF)          // <--wF --->
-	+ ((double)(i+1+(1<<wIn))) //   11 11...11 (binary)
-	/ ((double)(1<<(wIn+1))); // 0.11 11...11 (binary)
-    else
-      x2= - negPowOf2(wF-1) 
-	+ ((double)(i+1+(1<<wIn))) //  10 11...11 (binary)
-	/ ((double)(1<<(wIn))); // 1.0 11...11 (binary)
-    j=function(i);
-    y=output2double(j);
-    if(verbose)
-      cout << "i="<<i<< " ("<<input2double(i)<<") j="<<j
-	   <<" min="<< x1*y <<" max="<< x2*y<< endl;
-    prod=x1*y; if (prod<minMulOut) minMulOut=prod;
-    prod=x2*y; if (prod>maxMulOut) maxMulOut=prod;
-    e1= fabs(x1*y-1); if (e1>maxerror) maxerror=e1;
-    e2= fabs(x2*y-1); if (e2>maxerror) maxerror=e2;
-  } 
-  cout << "FirstInvTable: Max error=" <<maxerror << "  log2=" << log2(maxerror) <<endl; 
-  cout << "               minMulOut=" <<minMulOut << " maxMulOut=" <<maxMulOut  <<endl; 
-
-  printf("%1.30e\n", log2(maxerror));
-
-  return (int) (ceil(log2(maxerror)));
-}
-#endif
