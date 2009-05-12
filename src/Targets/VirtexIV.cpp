@@ -26,7 +26,7 @@
 #include "../utils.hpp"
 
 double VirtexIV::adderDelay(int size) {
-  return lutDelay_  +  size * fastcarryDelay_; 
+  return fdCtoQ_ + netDelay_ + lut2_ + muxcyStoO_ + double(size-2)*muxcyCINtoO_ + xorcyCintoO_ +  ffd_; 
 };
 
 double VirtexIV::carryPropagateDelay() {
@@ -145,7 +145,25 @@ bool VirtexIV::suggestSubmultSize(int &x, int &y, int wInX, int wInY){
 	 
 bool VirtexIV::suggestSubaddSize(int &x, int wIn){
 
-	int chunkSize = (int)floor( (1./frequency() - lutDelay()) / carryPropagateDelay()); // 1 if no need for pipeline
+//	int chunkSize = (int)floor( (1./frequency() - lutDelay()) / carryPropagateDelay()); // 1 if no need for pipeline
+
+
+	int chunkSize = 2 + (int)floor( (1./frequency() - (fdCtoQ_ + netDelay_ + lut2_ + muxcyStoO_ + xorcyCintoO_ + ffd_)) / muxcyCINtoO_ );
+	x = chunkSize;		
+	if (x > 0) 
+		return true;
+	else {
+		x = 2;		
+		return false;
+	} 
+};
+
+bool VirtexIV::suggestSlackSubaddSize(int &x, int wIn, double slack){
+
+//	int chunkSize = (int)floor( (1./frequency() - lutDelay()) / carryPropagateDelay()); // 1 if no need for pipeline
+
+
+	int chunkSize = 2 + (int)floor( (1./frequency() - slack - (fdCtoQ_ + netDelay_ + lut2_ + muxcyStoO_ + xorcyCintoO_ + ffd_)) / muxcyCINtoO_ );
 	x = chunkSize;		
 	if (x > 0) 
 		return true;

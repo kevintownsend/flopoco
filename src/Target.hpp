@@ -64,6 +64,14 @@ class Target
 	 */
 	virtual bool suggestSubaddSize(int &x, int wIn)=0; 	
 
+	/** Function for determining the subadition sizes so that the design is able 
+	 * to function at a desired frequency ( addition is considerd X + Y )
+	 * @param[in,out] x the size of the subaddition for x and y
+	 * @param[in] wIn the widths of X and Y
+	 * @param[in] slack the time delay consumed out of the input period 
+	 */
+	virtual bool   suggestSlackSubaddSize(int &x, int wIn, double slack)=0;
+
 	// Delay-related methods
 	/** Function which returns the lutDelay for this target
 	 * @return the LUT delay

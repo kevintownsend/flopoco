@@ -153,4 +153,17 @@ bool StratixII::suggestSubaddSize(int &x, int wIn){
 		return false;
 	} 
 }
+
+bool  StratixII::suggestSlackSubaddSize(int &x, int wIn, double slack){
+
+	int chunkSize = (int)floor( (1./frequency() - slack - lutDelay()) / carryPropagateDelay()); // 1 if no need for pipeline
+	x = chunkSize;		
+	if (x>0) return true;
+	else {
+		x=1;		
+		return false;
+	} 
+
+
+}
   

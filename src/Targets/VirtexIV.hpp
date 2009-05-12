@@ -45,6 +45,17 @@ public:
 		lutDelay_       = 1.5e-9; 
 		multXInputs_    = 18;
 		multYInputs_    = 18;
+		// all these values are set precisely to match the Virtex4
+		fdCtoQ_         = 0.272e-9; //the deterministic delay + an approximate NET delay
+		lut2_           = 0.147e-9;
+		lut3_           = 0.147e-9; //TODO
+		lut4_           = 0.147e-9; //TODO
+		muxcyStoO_      = 0.278e-9;
+		muxcyCINtoO_    = 0.034e-9;
+		ffd_            = 0.017e-9;
+		muxf5_          = 0.291e-9;
+		netDelay_       = 0.436e-9;
+		xorcyCintoO_    = 0.273e-9;
 	}
 
 	/** The destructor */
@@ -60,12 +71,25 @@ public:
 	double distantWireDelay(int n);
 	bool   suggestSubmultSize(int &x, int &y, int wInX, int wInY);
 	bool   suggestSubaddSize(int &x, int wIn);
+	bool   suggestSlackSubaddSize(int &x, int wIn, double slack);
 
 private:
 	double fastcarryDelay_; /**< The delay of the fast carry chain */
 	double lut2lutDelay_;   /**< The delay between two LUTs */
 	double elemWireDelay_;  /**< The elementary wire dealy (for computing the distant wire delay) */
 	double lutDelay_;       /**< The LUT delay (in seconds)*/
+	
+	// Added by Bogdan
+	double fdCtoQ_;         /**< The delay of the FlipFlop. Also contains an approximate Net Delay experimentally determined */
+	double lut2_;           /**< The LUT delay for 2 inputs */
+	double lut3_;           /**< The LUT delay for 3 inputs */
+	double lut4_;           /**< The LUT delay for 4 inputs */
+	double muxcyStoO_;      /**< The delay of the carry propagation MUX, from Source to Out*/
+	double muxcyCINtoO_;    /**< The delay of the carry propagation MUX, from CarryIn to Out*/
+	double ffd_;            /**< The Flip-Flop D delay*/
+	double muxf5_;          /**< The delay of the almighty mux F5*/
+	double netDelay_;       /**< This is approximate. It approximates the wire delays between Slices */
+	double xorcyCintoO_;    /**< the S to O delay of the xor gate */
 };
 
 #endif
