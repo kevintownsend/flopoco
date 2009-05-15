@@ -184,7 +184,8 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 	vhdl<<tab<< declare("fracSignClose") << " <= " << use("fracRClosexMy") << "("<<wF+2<<");"<<endl;
 	vhdl<<tab<< declare("fracRClose1",wFX+2) << " <= " << use("fracRClosexMy") << "("<<wF+1<<" downto 0) when fracSignClose='0' else " << use("fracRCloseyMx") << "("<<wF+1<<" downto 0);"<<endl;
 
-	nextCycle();////////////////////////////////////////////////////////////////////////////////////
+	if (wFX>40) //SP does not need this level
+		nextCycle();////////////////////////////////////////////////////////////////////////////////////
 				
 	//TODO check the test if significand is all zero is useful. 
 	vhdl<< tab << declare("resSign") << " <= '0' when " << use("selectClosePath") <<"='1' and " << use("fracRClose1") << " = ("<<wF+1<<" downto 0 => '0') else"<<endl;
@@ -366,8 +367,8 @@ FPAdder::FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, in
 	vhdl<<tab<< declare("zeroFromClose") << " <= syncClose and " << use("resultCloseIsZero") << ";" <<endl;
 		
 		
-		
-	nextCycle();	
+	if (wFX>20) //SP does not need this level
+		nextCycle();	
 	vhdl<< endl << "-- Rounding --" << endl;
 	// perform the actual rounding //
 	// finalRoundAdd will add the mantissa concatenated with exponent, two bits reserved for possible under/overflow 
