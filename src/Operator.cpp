@@ -38,6 +38,7 @@ void Operator::addInput(const std::string name, const int width) {
 		throw o.str();
 	}
 	Signal *s = new Signal(name, Signal::in, width) ; // default TTL and cycle OK
+	s->setCycle(0);
 	ioList_.push_back(s);
 	signalMap_[name] = s ;
 	numberOfInputs_ ++;
@@ -64,6 +65,7 @@ void Operator::addFPInput(const std::string name, const int wE, const int wF) {
 		exit(EXIT_FAILURE);
 	}
 	Signal *s = new Signal(name, Signal::in, wE, wF);
+	s->setCycle(0);
 	ioList_.push_back(s);
 	signalMap_[name] = s ;
 	numberOfInputs_ ++;
@@ -234,6 +236,7 @@ void  Operator::outputVHDLSignalDeclarations(std::ostream& o) {
 		Signal* s = this->signalList_[i];
 		o<<tab<<  s->toVHDL() << ";" << endl;
 	}
+
 }
 
 void  Operator::outputVHDLRegisters(std::ostream& o) {
@@ -722,6 +725,14 @@ string Operator::buildVHDLSignalDeclarations() {
 		Signal *s = signalList_[i];
 		o << s->toVHDLDeclaration() << endl;
 	}
+	//now the signals from the I/O List which have the cycle>0
+	for (unsigned int i=0; i<ioList_.size(); i++) {
+		Signal *s = ioList_[i];
+		if (s->getLifeSpan()>0){
+			o << s->toVHDLDeclaration() << endl;	
+		}
+		
+	}
 	
 	return o.str();	
 }
@@ -752,6 +763,14 @@ string  Operator::buildVHDLRegisters() {
 					o << tab <<tab << tab << s->delayedName(j) << " <=  " << s->delayedName(j-1) <<";" << endl;
 			}
 		}
+		for(unsigned int i=0; i<ioList_.size(); i++) {
+			Signal *s = ioList_[i];
+			if(s->getLifeSpan() >0) {
+				for(int j=1; j <= s->getLifeSpan(); j++)
+					o << tab <<tab << tab << s->delayedName(j) << " <=  " << s->delayedName(j-1) <<";" << endl;
+			}
+		}
+
 		o << tab << tab << "end if;\n";
 		o << tab << "end process;\n"; 
 	}

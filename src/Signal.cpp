@@ -93,8 +93,11 @@ string Signal::delayedName(int delay){
 
 string Signal::toVHDLDeclaration() {
 	ostringstream o; 
-	o << "signal " << getName();
-	for (int i=1; i<=lifeSpan_; i++) {
+	o << "signal ";
+	if (type_!=Signal::in)
+		o << getName() << ", ";
+	o << getName() << "_d" << 1;
+	for (int i=2; i<=lifeSpan_; i++) {
 			o << ", " << getName() << "_d" << i;
 	}
 	o << " : ";
