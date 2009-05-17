@@ -1,8 +1,9 @@
 /*
- * Floating Point Divider for FloPoCo
+ * Floating Point Square Root for FloPoCo
  *
- * Author : Jeremie Detrey, Florent de Dinechin
- *
+ * Authors : 
+ * Jeremie Detrey, Florent de Dinechin (digit-recurrence version)
+ * Mioara Joldes, Bogdan Pasca (polynomial version)
  * This file is part of the FloPoCo project developed by the Arenaire
  * team at Ecole Normale Superieure de Lyon
  *
@@ -49,7 +50,7 @@ FPSqrt::FPSqrt(Target* target, int wE, int wF) :
 	Operator(target), wE(wE), wF(wF) {
 
 	correctRounding=false; //TODO set by the constructor
-	useDSP=true; //TODO set by the constructor
+	useDSP=false; //TODO set by the constructor
 	ostringstream name;
 
 	name<<"FPSqrt_"<<wE<<"_"<<wF;
@@ -179,21 +180,52 @@ FPSqrt::FPSqrt(Target* target, int wE, int wF) :
 	
 	
 	}
-
-	else {		// Digit-recurrence implementation recycled from FPLibrary
+	////////////////////////////////////////////////////////////////////////////////////
+	else {
+		// Digit-recurrence implementation recycled from FPLibrary
 
 		vhdl << tab << declare("fX", wF) << " <= X" << range(wF-1, 0) << ";"  << endl; 
-		vhdl << tab << declare("fA0", wF+2) << " <= \"1\" & fX when X(wF) = '0' else"
-			  << tab << "\"01\" & fX;" << endl;
-
 		vhdl << tab << declare(join("w",wF+3), wF+4) << " <= \"111\" & fX & \"0\" when X(" << wF << ") = '0' else" << endl
-			  << tab << tab << "\"1101\" & fX;" << endl;
+			  << tab << "       \"1101\" & fX;" << endl;
 		vhdl << tab << declare(join("d",wF+3)) << " <= '0';" << endl;
+		vhdl << tab << declare(join("s",wF+3),1) << " <= '1';" << endl;
 
-		for(int i=wF+2; i>0; i--) {
+		for(int step=1; step<=wF+2; step++) {
+			int i = wF+3-step; // to do the same as FPLibrary 
+			vhdl << tab << "-- Step " << i << endl;
+			string di = join("d", i);
+			string xi = join("x", i);
+			string wip = join("w", i+1);
+			string zs = join("zs", i);
+			string ds = join("ds", i);
+			string xh = join("xh", i);
+			string wh = join("wh", i);
+			string wi = join("w", i);
+			vhdl << tab << declare(di) << " <= "<< wip << "("<< wF+3<<");" << endl;
+			vhdl << tab << declare(xi,wF+5) << " <= "<< wip << " & \"0\";" << endl;
+			vhdl << tab << declare(zs,step+1) << " <= \"0\" & " << join("s", i+1) << ";" << endl;
+			vhdl << tab << declare(ds,step+3) << " <= " << zs << range(step,1) << "& (not " << di << ") & " << di << " & \"1\";" << endl;
+			vhdl << tab << declare(xh,step+3) << " <= " << xi << range(wF+4, wF+2-step) << ";" << endl;
+			vhdl << tab << "with " << di << " select" << endl
+				  << tab << tab <<  declare(wh, step+3) << " <= " << xh << " - " << ds << " when '0'," << endl
+				  << tab << tab << "      " << xh << " + " << ds << " when others;" << endl;
+			vhdl << tab << declare(wi, wF+4) << " <= " << wh << range(step+1,0);
+			if(step <= wF+1) 
+				vhdl << " & " << xi << range(wF+1-step, 0) << ";" << endl;  
+			else
+				vhdl << ";" << endl; 
+			if(step==1)
+				vhdl << tab << declare(join("s", i), step+1) << " <= not " << di << " & '1';"<< endl; 
+			else
+				vhdl << tab << declare(join("s", i), step+1) << " <= "
+					  << join("s",i+1) << range(step-1,1) << " & not " << di << " & '1';"<< endl; 
+				
 
 		}
+		vhdl << tab << declare("d0") << " <= " << join("w", 1) << "(" << wF+3 << ") ;" << endl;
+
 #if 0
+
   sqrt : FPSqrt_Sqrt
     generic map ( wF => wF )
     port map ( fA => fA0,
