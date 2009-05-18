@@ -209,6 +209,7 @@ string join( std::string id, int n);
 string join( std::string id, std::string);
 string range(int left, int right);
 string rangeAssign( int left, int right, std::string s);
+string of( int x);
 
 /**
  *@param[in] inputDelays	map between signal names and their respective delays

@@ -444,3 +444,10 @@ string rangeAssign( int left, int right, std::string s)
 	return o.str();
 }
 
+string of( int x)
+{
+	ostringstream o;
+	o << "("<<x<<")";
+	return o.str();
+}
+
