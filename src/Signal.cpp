@@ -95,8 +95,9 @@ string Signal::toVHDLDeclaration() {
 	ostringstream o; 
 	o << "signal ";
 	if (type_!=Signal::in)
-		o << getName() << ", ";
-	o << getName() << "_d" << 1;
+		o << getName() << (lifeSpan_ > 0 ? ", ": "");
+	if (lifeSpan_ > 0)
+		o << getName() << "_d" << 1;
 	for (int i=2; i<=lifeSpan_; i++) {
 			o << ", " << getName() << "_d" << i;
 	}
