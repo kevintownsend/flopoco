@@ -167,13 +167,13 @@ void TestBench::outputVHDL(ostream& o, string name) {
 	currentOutputTime += op_->getPipelineDepth()*10;
 	for (int i = 0; i < tcl_.getNumberOfTestCases(); i++)
 	{
-		o << tab << tab << "wait for 5 ns;" <<endl;
-		currentOutputTime += 5;
+//		o << tab << tab << "wait for 5 ns;" <<endl;
+//		currentOutputTime += 5;
 		o << tab << tab << "-- " << "current time: " << currentOutputTime <<endl;
 		o << tcl_.getTestCase(i)->getInputVHDL(tab + tab + "-- input: ");
 		o << tcl_.getTestCase(i)->getExpectedOutputVHDL(tab + tab);
-		o << tab << tab << "wait for 5 ns;" <<endl;
-		currentOutputTime += 5;
+		o << tab << tab << "wait for 10 ns;" <<endl;
+		currentOutputTime += 10;
 	} 
 	o << tab << tab << "assert false report \"End of simulation\" severity failure;" <<endl;
 	o << tab << "end process;" <<endl;
