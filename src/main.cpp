@@ -46,6 +46,7 @@
 #include "IntMult2.hpp"
 #include "Karatsuba.hpp"
 #include "FPMultiplier.hpp"
+#include "FPSquarer.hpp"
 #include "FPAdder.hpp"
 #include "FPDiv.hpp"
 #include "FPSqrt.hpp"
@@ -668,6 +669,19 @@ bool parseCommandLine(int argc, char* argv[]){
 				int wF = checkStrictyPositive(argv[i++], argv[0]);
 				cerr << "> FPMultiplier , wE="<<wE<<", wF="<<wF<<" \n";
 				op = new FPMultiplier(target, wE, wF, wE, wF, wE, wF, 1);
+				addOperator(op);
+			}
+		} 
+		else if(opname=="FPSquarer"){
+			int nargs = 3; 
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int wE = checkStrictyPositive(argv[i++], argv[0]);
+				int wFX = checkStrictyPositive(argv[i++], argv[0]);
+				int wFR = checkStrictyPositive(argv[i++], argv[0]);
+				cerr << "> FPSquarer , wE="<<wE<<", wFX="<<wFX<<" wFR="<<wFR<< " \n";
+				op = new FPSquarer(target, wE, wFX, wFR);
 				addOperator(op);
 			}
 		} 

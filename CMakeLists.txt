@@ -130,6 +130,7 @@ ADD_EXECUTABLE(flopoco
  src/Shifters
  src/FPAdder
  src/FPMultiplier
+ src/FPSquarer
  src/FPDiv
  src/division/SRT4Step
  src/FPSqrt
@@ -189,6 +190,7 @@ ADD_EXECUTABLE(flopoco
  src/Shifters
  src/FPAdder
  src/FPMultiplier
+ src/FPSquarer
  src/FPDiv
  src/division/SRT4Step
  src/FPSqrt
