@@ -20,7 +20,7 @@ public:
 	 * @param[in]		wE			the the with of the exponent for the f-p number X
 	 * @param[in]		wF			the the with of the fraction for the f-p number X
 	 */
-	FPSqrt(Target* target, int wE, int wF, bool correctlyRounded = false);
+	FPSqrt(Target* target, int wE, int wF, bool useDSP, bool correctlyRounded = false);
 
 	/**
 	 * FPSqrt destructor
@@ -44,12 +44,12 @@ private:
 	int wE; 
 	/** The width of the fraction for the input X */
 	int wF; 
+	/** A boolean selecting between the old digit recurrence implementation, or the polynomial-based one */
+	bool useDSP;
 	/** A boolean selecting between IEEE-compliant correct rounding
 		 or faithful (last-bit accurate) result  */
 	bool correctRounding;
-
-	/** A boolean selecting between the old digit recurrence implementation, or the polynomial-based one */
-	bool useDSP;
-};
+}
+;
 
 #endif //FPSQRT_HPP

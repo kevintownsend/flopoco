@@ -46,10 +46,9 @@ extern vector<Operator*> oplist;
 #define DEBUGVHDL 0
 
 
-FPSqrt::FPSqrt(Target* target, int wE, int wF, bool correctlyRounded) :
-	Operator(target), wE(wE), wF(wF), correctRounding(correctlyRounded) {
+FPSqrt::FPSqrt(Target* target, int wE, int wF, bool useDSP, bool correctlyRounded) :
+	Operator(target), wE(wE), wF(wF), useDSP(useDSP), correctRounding(correctlyRounded) {
 
-	useDSP=true; //TODO set by the constructor
 	ostringstream name;
 
 	name<<"FPSqrt_"<<wE<<"_"<<wF;
@@ -274,47 +273,32 @@ FPSqrt::FPSqrt(Target* target, int wE, int wF, bool correctlyRounded) :
 
 		}
 		vhdl << tab << declare("d0") << " <= " << join("w", 1) << "(" << wF+3 << ") ;" << endl;
+		vhdl << tab << declare("fR", wF+4) << " <= s1" << range(wF+2, 1) << " & not d0 & '1';" << endl;
 
-#if 0
+		// end of component FPSqrt_Sqrt in fplibrary
+		vhdl << tab << "-- normalisation of the result" << endl;
+		vhdl << tab <<  "with fR(" << wF+3 << ") select" << endl
+			  << tab << tab << declare("fRn1", wF+3) << " <= fR" << range(wF+3, 2) << " & (fR(1) or fR(0)) when '1'," << endl
+			  << tab << tab << "        fR" <<range(wF+2, 0) << "                    when others;" << endl;
 
-  sqrt : FPSqrt_Sqrt
-    generic map ( wF => wF )
-    port map ( fA => fA0,
-               fR => fRn0 );
-  with fRn0(wF+3) select
-    fRn1(wF+2 downto 0) <= fRn0(wF+3 downto 2) & (fRn0(1) or fRn0(0)) when '1',
-                              fRn0(wF+2 downto 0)                        when others;
-
-  eRn0 <= "00" & nA(wE+wF-1 downto wF+1);
-  eRn1 <= eRn0 + ("000" & (wE-3 downto 0 => '1')) + nA(wF);
-
-  round : FP_Round
-    generic map ( wE => wE,
-                  wF => wF )
-    port map ( eA => eRn1,
-               fA => fRn1,
-               eR => eRn,
-               fR => fRn );
-
-  sRn <= nA(wE+wF);
-
-  format : FP_Format
-    generic map ( wE => wE,
-                  wF => wF )
-    port map ( sA => sRn,
-               eA => eRn,
-               fA => fRn,
-               nR => nRn );
-
-  xsA <= nA(wE+wF+2 downto wE+wF);
-
-  with xsA select
-    nR(wE+wF+2 downto wE+wF+1) <= nRn(wE+wF+2 downto wE+wF+1) when "010",
-                                            xsA(2 downto 1)                       when "001" | "000" | "100",
-                                            "11"                                  when others;
-  nR(wE+wF downto 0) <= nRn(wE+wF downto 0);
-
-#endif
+		vhdl << tab << "-- exponent processing" << endl;
+		vhdl << tab << declare("eRn0", wE) << " <= \"0\" & X" << range(wE+wF-1, wF+1) << ";" << endl;
+		vhdl << tab << declare("eRn1", wE) << " <= eRn0 + (\"00\" & " << rangeAssign(wE-3, 0, "'1'") << ") + X(" << wF << ");" << endl;
+		vhdl << tab << declare("Rn1", wE+wF) << " <= eRn1 & fRn1"<< range(wF+2, 3) << ";" << endl;
+		vhdl << tab << declare("round") << " <= Rn1(1) and (Rn1(2) or Rn1(0)) ; -- round  and (lsb or sticky) : that's RN, tie to even" << endl;
+		vhdl << tab << declare("Rn2", wE+wF) << " <= Rn1"<< range(wE+wF+2, 3) 
+			  << " + (" << rangeAssign(wE+wF-2, 0, "'0'") << " & round); -- never overflows for sqrt" << endl;
+		
+		vhdl << tab << "-- sign and exception processing" << endl;
+		vhdl << tab << declare("xsX", 3) << " <= X"<< range(wE+wF+2, wE+wF) << "; -- exception and sign" << endl;
+		vhdl << tab <<  "with xsX select" << endl
+			  << tab << tab << declare("xsR", 3) << " <= \"010\"  when \"010\",  -- normal case" << endl
+			  << tab << tab <<  "       \"100\"  when \"100\",  -- +infty" << endl
+			  << tab << tab <<  "       \"000\"  when \"000\",  -- +0" << endl
+			  << tab << tab <<  "       \"001\"  when \"001\",  -- the infamous sqrt(-0)=-0" << endl
+			  << tab << tab <<  "       \"110\"  when others; -- return NaN" << endl;
+			
+		vhdl << tab << "R <= xsR & Rn2; " << endl; 
 	}
 
 

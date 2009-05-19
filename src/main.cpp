@@ -133,8 +133,9 @@ static void usage(char *name){
 	cerr << "      Floating-point multiplier \n";
 	cerr << "    FPDiv wE wF\n";
 	cerr << "      Floating-point divider \n";
-	cerr << "    FPSqrt wE wF\n";
+	cerr << "    FPSqrt wE wF useDSP correctlyRounded\n";
 	cerr << "      Floating-point square root\n";
+	cerr << "      useDSP (O or 1) selects between two possible algorithms. correctlyRounded (0 or 1) selects between faithful and correct rounding\n";
 	cerr << "    IntConstMult w c\n";
 	cerr << "      Integer constant multiplier: w - input size, c - the constant\n";
 	cerr << "    FPConstMult wE_in wF_in wE_out wF_out cst_sgn cst_exp cst_int_sig\n";
@@ -698,13 +699,15 @@ bool parseCommandLine(int argc, char* argv[]){
 		}
 		else if (opname == "FPSqrt")
 		{
-			int nargs = 2;
+			int nargs = 4;
 			if (i+nargs > argc)
 				usage(argv[0]); // and exit
 			int wE = checkStrictyPositive(argv[i++], argv[0]);
 			int wF = checkStrictyPositive(argv[i++], argv[0]);
+			int useDSP = checkBoolean(argv[i++], argv[0]);
+			int correctlyRounded = checkBoolean(argv[i++], argv[0]);
 			cerr << "> FPSqrt: wE=" << wE << " wF=" << wF << endl;
-			op = new FPSqrt(target, wE, wF);
+			op = new FPSqrt(target, wE, wF, useDSP, correctlyRounded);
 			addOperator(op);
 		}
 		else if (opname == "CRFPSqrt")

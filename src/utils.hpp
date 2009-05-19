@@ -200,15 +200,29 @@ string zeroGenerator(int n, int margins);
  **/
 string vhdlize(string const & expr);
 
-
 string vhdlize(double num);
 
 string mpz2string(mpz_class x);
 
+/** Helper function for VHDL output: concatenates an id and a number. 
+	 vhdl << join("z", i) << ...       
+	 is a (rather useless) shorthand for 
+    vhdl << "z" << i << ...
+	 Its main advantage is that join("z", i) can also be used inside 
+	 declare(),  use(), etc. */
 string join( std::string id, int n);
+
+/** Same for concatenating two ids. Maybe + would do? */
 string join( std::string id, std::string);
+
+/** Helper function for VHDL output: returns (left downto right)
+*/
 string range(int left, int right);
+
+/** Helper function for VHDL output: returns (left downto right => s)
+*/
 string rangeAssign( int left, int right, std::string s);
+
 string of( int x);
 
 /**
