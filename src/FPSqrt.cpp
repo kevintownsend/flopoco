@@ -37,7 +37,7 @@
 #include "utils.hpp"
 #include "Operator.hpp"
 #include "IntAdder.hpp"
-
+#include "IntSquarer.hpp"
 #include "FPSqrt.hpp"
 
 using namespace std;
@@ -46,11 +46,10 @@ extern vector<Operator*> oplist;
 #define DEBUGVHDL 0
 
 
-FPSqrt::FPSqrt(Target* target, int wE, int wF) :
-	Operator(target), wE(wE), wF(wF) {
+FPSqrt::FPSqrt(Target* target, int wE, int wF, bool correctlyRounded) :
+	Operator(target), wE(wE), wF(wF), correctRounding(correctlyRounded) {
 
-	correctRounding=false; //TODO set by the constructor
-	useDSP=false; //TODO set by the constructor
+	useDSP=true; //TODO set by the constructor
 	ostringstream name;
 
 	name<<"FPSqrt_"<<wE<<"_"<<wF;
@@ -163,21 +162,73 @@ FPSqrt::FPSqrt(Target* target, int wE, int wF) :
 	
 	syncCycleFromSignal("add2Res"); 
 	
+	if (!correctlyRounded){
+		vhdl << declare("norm_bit",1) << " <= " << use("add2Res") << "(" << coeffStorageSizes[0] << ")"<<";"<<endl;
 	
-	vhdl << declare("norm_bit",1) << " <= " << use("add2Res") << "(" << coeffStorageSizes[0] << ")"<<";"<<endl;
-	
-	vhdl << declare("finalFrac", wF) << " <= " << use("add2Res") << range(coeffStorageSizes[0]-1, coeffStorageSizes[0]-wF) << " when " << use("norm_bit") <<"='1' else "
-	                                           << use("add2Res") << range(coeffStorageSizes[0]-2, coeffStorageSizes[0]-wF-1) << ";" << endl;
-	vhdl << declare("finalExp", wE) << " <= " << use("exp_addition")<<range(wE,1) << " + " << use("norm_bit")<<";"<<endl;
+		vhdl << declare("finalFrac", wF) << " <= " << use("add2Res") << range(coeffStorageSizes[0]-1, coeffStorageSizes[0]-wF) << " when " << use("norm_bit") <<"='1' else "
+			                                       << use("add2Res") << range(coeffStorageSizes[0]-2, coeffStorageSizes[0]-wF-1) << ";" << endl;
+		vhdl << declare("finalExp", wE) << " <= " << use("exp_addition")<<range(wE,1) << " + " << use("norm_bit")<<";"<<endl;
 
-	vhdl << tab << "-- sign/exception handling" << endl;
-	vhdl << tab << "with " << use("exnsX") << " select" <<endl
-		  << tab << tab <<  declare("exnR", 2) << " <= " << "\"01\" when \"010\", -- positive, normal number" << endl
-		  << tab << tab << use("exnsX") << range(2, 1) << " when \"001\" | \"000\" | \"100\", " << endl
-		  << tab << tab << "\"11\" when others;"  << endl;
+		vhdl << tab << "-- sign/exception handling" << endl;
+		vhdl << tab << "with " << use("exnsX") << " select" <<endl
+			  << tab << tab <<  declare("exnR", 2) << " <= " << "\"01\" when \"010\", -- positive, normal number" << endl
+			  << tab << tab << use("exnsX") << range(2, 1) << " when \"001\" | \"000\" | \"100\", " << endl
+			  << tab << tab << "\"11\" when others;"  << endl;
 
-	vhdl << tab << "R <= "<<use("exnR")<<" & "<< use("exnsX") <<"(0) & " << use("finalExp") << " & " << use("finalFrac")<< ";" << endl; 
-	
+		vhdl << tab << "R <= "<<use("exnR")<<" & "<< use("exnsX") <<"(0) & " << use("finalExp") << " & " << use("finalFrac")<< ";" << endl; 
+	}else{
+		vhdl << declare("norm_bit",1) << " <= " << use("add2Res") << "(" << coeffStorageSizes[0] << ")"<<";"<<endl;
+		vhdl << declare("preSquareFrac", wF+2) << " <= " << use("add2Res") << range(coeffStorageSizes[0], coeffStorageSizes[0]-wF-1) << " when " << use("norm_bit") <<"='1' else "
+			                                           << use("add2Res") << range(coeffStorageSizes[0]-1, coeffStorageSizes[0]-wF-2) << ";" << endl;
+		vhdl << declare("preSquareExp", wE) << " <= " << use("exp_addition") << range(wE,1) << " + " << use("norm_bit")<<";"<<endl;
+	    vhdl << declare("preSquareConcat", 1 + wE + wF+1) << " <= " << zeroGenerator(1,0) << " & " << use("preSquareExp") << " & " << use("preSquareFrac")<<range(wF,0)<<";"<<endl;;
+	    
+	    IntAdder *predictAdder = new IntAdder(target, 1 + wE + wF+1);
+	    oplist.push_back(predictAdder);
+
+	    inPortMap(predictAdder,"X",use("preSquareConcat"));	
+	    inPortMapCst(predictAdder,"Y",zeroGenerator(1 + wE + wF+1,0));
+	    inPortMapCst(predictAdder,"Cin","'1'");
+	    outPortMap(predictAdder,"R","my_predictor");
+	    vhdl << tab << instance(predictAdder, "Predictor");
+	    	    
+	    IntSquarer *iSquarer = new IntSquarer(target,wF+2);
+	    oplist.push_back(iSquarer);
+	    
+	    inPortMap(iSquarer, "X", use("preSquareFrac"));
+	    outPortMap(iSquarer,"R", "sqrResult");
+	    vhdl << instance(iSquarer,"FractionSquarer");
+	    
+	    syncCycleFromSignal("sqrResult");
+	    
+	    vhdl << tab << declare("approxSqrtXSqr", 2*(wF+2) + 1) << " <= " << zeroGenerator(1,0) << " & " << use("sqrResult")<<";"<<endl;
+	    vhdl << tab << declare("realXFrac", 2*(wF+2) + 1) << " <= " << "( \"10\" & not(" <<  use("fX") << ") & not(" << zeroGenerator(2*(wF+2) + 1-2-wF ,0)<<")) when " << use("OddExp") <<"='0' else "<<endl;
+	    vhdl << tab << tab << "( \"110\" & not(" <<  use("fX") << ") & not(" << zeroGenerator(2*(wF+2) + 1-2-wF-1,0)<<"));"<<endl;
+	    
+	    IntAdder *myIntAdd = new IntAdder(target, 2*(wF+2) + 1);
+	    oplist.push_back(myIntAdd);
+	    
+	    inPortMap(myIntAdd,"X",use("approxSqrtXSqr"));	
+	    inPortMap(myIntAdd,"Y",use("realXFrac"));
+	    inPortMapCst(myIntAdd,"Cin","'1'");
+	    outPortMap(myIntAdd,"R","my_add_result");
+	    vhdl << tab << instance(myIntAdd, "Comparator");
+
+	    syncCycleFromSignal("my_add_result");
+	    vhdl << tab << declare("greater",1) << " <= " << use("my_add_result")<<of(2*(wF+2))<<";"<<endl;
+
+		syncCycleFromSignal("my_predictor");    
+
+		vhdl << tab << "-- sign/exception handling" << endl;
+		vhdl << tab << "with " << use("exnsX") << " select" <<endl
+			  << tab << tab <<  declare("exnR", 2) << " <= " << "\"01\" when \"010\", -- positive, normal number" << endl
+			  << tab << tab << use("exnsX") << range(2, 1) << " when \"001\" | \"000\" | \"100\", " << endl
+			  << tab << tab << "\"11\" when others;"  << endl;
+
+		vhdl << tab << "R <= (" << use("exnR") << " & " << use("exnsX") <<"(0) & " << use("preSquareConcat")<<range(wE + wF,1) << ") when " << use("greater")<<"='1' else "<<endl;;
+		vhdl << tab << tab << "(" << use("exnR") << " & " << use("exnsX") <<"(0) & " << use("my_predictor")<<range(wE + wF,1) << ");"<<endl;
+	    
+	}
 	
 	}
 	////////////////////////////////////////////////////////////////////////////////////

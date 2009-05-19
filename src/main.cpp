@@ -707,6 +707,18 @@ bool parseCommandLine(int argc, char* argv[]){
 			op = new FPSqrt(target, wE, wF);
 			addOperator(op);
 		}
+		else if (opname == "CRFPSqrt")
+		{
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0]); // and exit
+			int wE = checkStrictyPositive(argv[i++], argv[0]);
+			int wF = checkStrictyPositive(argv[i++], argv[0]);
+			cerr << "> FPSqrt: wE=" << wE << " wF=" << wF << endl;
+			op = new FPSqrt(target, wE, wF, true);
+			addOperator(op);
+		}
+
 		else if(opname=="LongAcc"){
 			int nargs = 5;
 			if (i+nargs > argc)
