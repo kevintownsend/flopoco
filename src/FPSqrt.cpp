@@ -234,7 +234,12 @@ FPSqrt::FPSqrt(Target* target, int wE, int wF, bool useDSP, bool correctlyRounde
 	else {
 		// Digit-recurrence implementation recycled from FPLibrary
 
-		vhdl << tab << declare("fX", wF) << " <= X" << range(wF-1, 0) << ";"  << endl; 
+		vhdl << tab << declare("fX", wF) << " <= X" << range(wF-1, 0) << "; -- fraction"  << endl; 
+		vhdl << tab << declare("eRn0", wE) << " <= \"0\" & X" << range(wE+wF-1, wF+1) << "; -- exponent" << endl;
+		vhdl << tab << declare("xsX", 3) << " <= X"<< range(wE+wF+2, wE+wF) << "; -- exception and sign" << endl;
+
+		vhdl << tab << declare("eRn1", wE) << " <= eRn0 + (\"00\" & " << rangeAssign(wE-3, 0, "'1'") << ") + X(" << wF << ");" << endl;
+
 		vhdl << tab << declare(join("w",wF+3), wF+4) << " <= \"111\" & fX & \"0\" when X(" << wF << ") = '0' else" << endl
 			  << tab << "       \"1101\" & fX;" << endl;
 		//		vhdl << tab << declare(join("d",wF+3)) << " <= '0';" << endl;
@@ -270,29 +275,27 @@ FPSqrt::FPSqrt(Target* target, int wE, int wF, bool useDSP, bool correctlyRounde
 			if(step==1)
 				vhdl << "not " << di << " & '1';"<< endl; 
 			else
-				vhdl << join("s",i+1) << range(step-1,1) << " & not " << di << " & '1';"<< endl; 
+				vhdl << use(sip) << range(step-1,1) << " & not " << di << " & '1';"<< endl; 
 				
 			nextCycle();
 		}
-		vhdl << tab << declare("d0") << " <= " << join("w", 1) << "(" << wF+3 << ") ;" << endl;
-		vhdl << tab << declare("fR", wF+4) << " <= s1" << range(wF+2, 1) << " & not d0 & '1';" << endl;
+		vhdl << tab << declare("d0") << " <= " << use("w1") << "(" << wF+3 << ") ;" << endl;
+		vhdl << tab << declare("fR", wF+4) << " <= " << use("s1") << range(wF+2, 1) << " & not d0 & '1';" << endl;
 
 		// end of component FPSqrt_Sqrt in fplibrary
 		vhdl << tab << "-- normalisation of the result, removing leading 1" << endl;
 		vhdl << tab <<  "with fR(" << wF+3 << ") select" << endl
 			  << tab << tab << declare("fRn1", wF+2) << " <= fR" << range(wF+2, 2) << " & (fR(1) or fR(0)) when '1'," << endl
 			  << tab << tab << "        fR" <<range(wF+1, 0) << "                    when others;" << endl;
-
-		vhdl << tab << "-- exponent processing" << endl;
-		vhdl << tab << declare("eRn0", wE) << " <= \"0\" & X" << range(wE+wF-1, wF+1) << ";" << endl;
-		vhdl << tab << declare("eRn1", wE) << " <= eRn0 + (\"00\" & " << rangeAssign(wE-3, 0, "'1'") << ") + X(" << wF << ");" << endl;
-		vhdl << tab << declare("Rn1", wE+wF) << " <= eRn1 & fRn1"<< range(wF+1, 2) << ";" << endl;
 		vhdl << tab << declare("round") << " <= fRn1(1) and (fRn1(2) or fRn1(0)) ; -- round  and (lsb or sticky) : that's RN, tie to even" << endl;
-		vhdl << tab << declare("Rn2", wE+wF) << " <= Rn1 + (" << rangeAssign(wE+wF-2, 0, "'0'") << " & round); -- never overflows for sqrt" << endl;
+
+		nextCycle();
+		
+		vhdl << tab << declare("Rn1", wE+wF) << " <= " << use("eRn1") << " & " << use("fRn1") << range(wF+1, 2) << ";" << endl;
+		vhdl << tab << declare("Rn2", wE+wF) << " <= Rn1 + (" << rangeAssign(wE+wF-2, 0, "'0'") << " & " << use("round")  << "); -- never overflows for sqrt" << endl;
 		
 		vhdl << tab << "-- sign and exception processing" << endl;
-		vhdl << tab << declare("xsX", 3) << " <= X"<< range(wE+wF+2, wE+wF) << "; -- exception and sign" << endl;
-		vhdl << tab <<  "with xsX select" << endl
+		vhdl << tab <<  "with " << use("xsX") << " select" << endl
 			  << tab << tab << declare("xsR", 3) << " <= \"010\"  when \"010\",  -- normal case" << endl
 			  << tab << tab <<  "       \"100\"  when \"100\",  -- +infty" << endl
 			  << tab << tab <<  "       \"000\"  when \"000\",  -- +0" << endl
