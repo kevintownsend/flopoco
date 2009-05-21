@@ -199,13 +199,6 @@ FPSqrt::FPSqrt(Target* target, int wE, int wF, bool useDSP, bool correctlyRounde
 	syncCycleFromSignal("sumA0ProdXA1sumA2X"); 
 		
 	if (!correctlyRounded){
-//		vhdl << tab << declare("normalizeBit",1) << " <= " << use("sumA0ProdXA1sumA2X") << "(" << coeffStorageSizes[0] << ")"<<";"<<endl;
-//		nextCycle();/////////////////////////
-//		vhdl << tab << declare("finalFrac", wF) << " <= " << use("sumA0ProdXA1sumA2X") << range(coeffStorageSizes[0]-1, coeffStorageSizes[0]-wF) << " when " << use("normalizeBit") <<"='1' else "
-//			                                       << use("sumA0ProdXA1sumA2X") << range(coeffStorageSizes[0]-2, coeffStorageSizes[0]-wF-1) << ";" << endl;
-//		vhdl << tab << declare("finalExp", wE) << " <= " << use("expPostBiasAddition") << range(wE,1) << " + " << use("normalizeBit")<<";"<<endl;
-
-
 		vhdl << tab << declare("finalFrac", wF) << " <= " << use("sumA0ProdXA1sumA2X") << range(coeffStorageSizes[0]-2, coeffStorageSizes[0]-wF-1) << ";" << endl;
 		vhdl << tab << declare("finalExp", wE) << " <= " << use("expPostBiasAddition") << range(wE,1) <<";"<<endl;
 
@@ -217,11 +210,16 @@ FPSqrt::FPSqrt(Target* target, int wE, int wF, bool useDSP, bool correctlyRounde
 
 		vhdl << tab << "R <= "<<use("exnR")<<" & "<< use("excsX") <<"(0) & " << use("finalExp") << " & " << use("finalFrac")<< ";" << endl; 
 	}else{
-		vhdl << tab << declare("normalizeBit",1) << " <= " << use("sumA0ProdXA1sumA2X") << "(" << coeffStorageSizes[0] << ")"<<";"<<endl;
-		nextCycle();/////////////////////////
-		vhdl << tab << declare("preSquareFrac", wF+2) << " <= " << use("sumA0ProdXA1sumA2X") << range(coeffStorageSizes[0], coeffStorageSizes[0]-wF-1) << " when " << use("normalizeBit") <<"='1' else "
-			                                           << use("sumA0ProdXA1sumA2X") << range(coeffStorageSizes[0]-1, coeffStorageSizes[0]-wF-2) << ";" << endl;
-		vhdl << tab << declare("preSquareExp", wE) << " <= " << use("expPostBiasAddition") << range(wE,1) << " + " << use("normalizeBit")<<";"<<endl;
+//		vhdl << tab << declare("normalizeBit",1) << " <= " << use("sumA0ProdXA1sumA2X") << "(" << coeffStorageSizes[0] << ")"<<";"<<endl;
+//		nextCycle();/////////////////////////
+//		vhdl << tab << declare("preSquareFrac", wF+2) << " <= " << use("sumA0ProdXA1sumA2X") << range(coeffStorageSizes[0], coeffStorageSizes[0]-wF-1) << " when " << use("normalizeBit") <<"='1' else "
+//			                                           << use("sumA0ProdXA1sumA2X") << range(coeffStorageSizes[0]-1, coeffStorageSizes[0]-wF-2) << ";" << endl;
+//		vhdl << tab << declare("preSquareExp", wE) << " <= " << use("expPostBiasAddition") << range(wE,1) << " + " << use("normalizeBit")<<";"<<endl;
+
+		vhdl << tab << declare("preSquareFrac", wF+2) << " <= " << use("sumA0ProdXA1sumA2X") << range(coeffStorageSizes[0]-1, coeffStorageSizes[0]-wF-2) << ";" << endl;
+		vhdl << tab << declare("preSquareExp", wE) << " <= " << use("expPostBiasAddition") << range(wE,1) <<";"<<endl;
+
+
 	    vhdl << tab << declare("preSquareConcat", 1 + wE + wF+1) << " <= " << zeroGenerator(1,0) << " & " << use("preSquareExp") << " & " << use("preSquareFrac")<<range(wF,0)<<";"<<endl;;
 	    
 	    IntAdder *predictAdder = new IntAdder(target, 1 + wE + wF+1);
