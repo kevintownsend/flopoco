@@ -168,7 +168,7 @@ FPSqrt::FPSqrt(Target* target, int wE, int wF, bool useDSP, bool correctlyRounde
 	//perform the multiplication between x and ( a1 + a2x )  //TODO pipeline if keepbits2 > 0  
 	//FIXME for now we instantiate an int Multiplier, but we can do better
 		
-	IntMultiplier * my_mul = new IntMultiplier(target, (sizeOfX+1), coeffStorageSizes[1] + keepBits2);
+	IntMultiplier2 * my_mul = new IntMultiplier2(target, (sizeOfX+1), coeffStorageSizes[1] + keepBits2);
 	oplist.push_back(my_mul);
 	
 	inPortMapCst(my_mul,"X", use("lowX"));
@@ -199,11 +199,15 @@ FPSqrt::FPSqrt(Target* target, int wE, int wF, bool useDSP, bool correctlyRounde
 	syncCycleFromSignal("sumA0ProdXA1sumA2X"); 
 		
 	if (!correctlyRounded){
-		vhdl << tab << declare("normalizeBit",1) << " <= " << use("sumA0ProdXA1sumA2X") << "(" << coeffStorageSizes[0] << ")"<<";"<<endl;
-		nextCycle();/////////////////////////
-		vhdl << tab << declare("finalFrac", wF) << " <= " << use("sumA0ProdXA1sumA2X") << range(coeffStorageSizes[0]-1, coeffStorageSizes[0]-wF) << " when " << use("normalizeBit") <<"='1' else "
-			                                       << use("sumA0ProdXA1sumA2X") << range(coeffStorageSizes[0]-2, coeffStorageSizes[0]-wF-1) << ";" << endl;
-		vhdl << tab << declare("finalExp", wE) << " <= " << use("expPostBiasAddition") << range(wE,1) << " + " << use("normalizeBit")<<";"<<endl;
+//		vhdl << tab << declare("normalizeBit",1) << " <= " << use("sumA0ProdXA1sumA2X") << "(" << coeffStorageSizes[0] << ")"<<";"<<endl;
+//		nextCycle();/////////////////////////
+//		vhdl << tab << declare("finalFrac", wF) << " <= " << use("sumA0ProdXA1sumA2X") << range(coeffStorageSizes[0]-1, coeffStorageSizes[0]-wF) << " when " << use("normalizeBit") <<"='1' else "
+//			                                       << use("sumA0ProdXA1sumA2X") << range(coeffStorageSizes[0]-2, coeffStorageSizes[0]-wF-1) << ";" << endl;
+//		vhdl << tab << declare("finalExp", wE) << " <= " << use("expPostBiasAddition") << range(wE,1) << " + " << use("normalizeBit")<<";"<<endl;
+
+
+		vhdl << tab << declare("finalFrac", wF) << " <= " << use("sumA0ProdXA1sumA2X") << range(coeffStorageSizes[0]-2, coeffStorageSizes[0]-wF-1) << ";" << endl;
+		vhdl << tab << declare("finalExp", wE) << " <= " << use("expPostBiasAddition") << range(wE,1) <<";"<<endl;
 
 		vhdl << tab << "-- sign/exception handling" << endl;
 		vhdl << tab << "with " << use("excsX") << " select" <<endl
