@@ -706,7 +706,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			int wF = checkStrictyPositive(argv[i++], argv[0]);
 			int useDSP = checkBoolean(argv[i++], argv[0]);
 			int correctlyRounded = checkBoolean(argv[i++], argv[0]);
-			cerr << "> FPSqrt: wE=" << wE << " wF=" << wF << endl;
+			cerr << "> FPSqrt: wE=" << wE << " wF=" << wF << " useDSP="<<useDSP<<" correctlyRounded="<< correctlyRounded << endl;
 			op = new FPSqrt(target, wE, wF, useDSP, correctlyRounded);
 			addOperator(op);
 		}
@@ -718,7 +718,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			int wE = checkStrictyPositive(argv[i++], argv[0]);
 			int wF = checkStrictyPositive(argv[i++], argv[0]);
 			cerr << "> FPSqrt: wE=" << wE << " wF=" << wF << endl;
-			op = new FPSqrt(target, wE, wF, true);
+			op = new FPSqrt(target, wE, wF, true, true);
 			addOperator(op);
 		}
 

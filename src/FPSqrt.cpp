@@ -37,6 +37,8 @@
 #include "utils.hpp"
 #include "Operator.hpp"
 #include "IntAdder.hpp"
+#include "IntMultiplier.hpp"
+#include "IntMultiplier2.hpp"
 #include "IntSquarer.hpp"
 #include "FPSqrt.hpp"
 
@@ -83,104 +85,140 @@ FPSqrt::FPSqrt(Target* target, int wE, int wF, bool useDSP, bool correctlyRounde
 	int tableAddressWidth = -msb_x + 2; //the +1 comes from the LSB of the exponent
 
 	int sizeOfX = 16;
-	int keepBits = 0;
+	//make the truncature before the first addition
+	int keepBits;
 	
-	vhdl << tab << declare("fX",   wF) << " <= X" << range(wF-1, 0) << ";"  << endl; 
-	vhdl << tab << declare("expX", wE) << " <= X" << range(wE+wF-1, wF) << ";"  << endl; 
-	vhdl << tab << declare("exnsX", 3) << " <= X" << range(wE+wF+2, wE+wF) << ";"  << endl; 
+	//how many extra bits I keep from the first addition result for correct rounding
+	int keepBits2;
+	
+	if (correctRounding){
+		keepBits = 17;
+		keepBits2 = 2;
+
+	}
+	else{
+		keepBits = 0;
+		keepBits2 = 0;
+	}
+	
+	vhdl << "--Split the Floating-Point input"<<endl;
+	vhdl << tab << declare("fracX",wF) << " <= X" << range(wF-1, 0) << ";"  << endl; 
+	vhdl << tab << declare("expX", wE)<< "  <= X" << range(wE+wF-1, wF) << ";"  << endl; 
+	vhdl << "--A concatenation of the exception bits and the sign bit"<<endl;
+	vhdl << tab << declare("excsX", 3) << " <= X" << range(wE+wF+2, wE+wF) << ";"  << endl; 
+	vhdl << "--If the real exponent is odd"<<endl;
 	vhdl << tab << declare("OddExp")   << " <= not(expX(0));"  << endl;  
 	
 	//first estimation of the exponent
-	vhdl << tab << declare("biasm1", wE+1) << " <= " << "CONV_STD_LOGIC_VECTOR("<< (1<<(wE-1))-2 <<","<<wE+1<<")"<<";"<<endl;
-	vhdl << tab << declare("exp_addition", wE+1) << " <= " << "( \"0\" & " << use("expX") << ") + "<<use("biasm1") << " + not(" << use("OddExp") << ");"<<endl;
+	vhdl << tab << declare("expBiasPostDecrement", wE+1) << " <= " << "CONV_STD_LOGIC_VECTOR("<< (1<<(wE-1))-2 <<","<<wE+1<<")"<<";"<<endl;
+	vhdl << tab << declare("expPostBiasAddition", wE+1) << " <= " << "( \"0\" & " << use("expX") << ") + "<<use("expBiasPostDecrement") << " + not(" << use("OddExp") << ");"<<endl;
 	
+	//the addres bits for the coefficient ROM
 	vhdl << tab << declare("address", tableAddressWidth) << " <= "<< use("OddExp") << " & X" << range(wF-1, wF-tableAddressWidth+1) << ";"  << endl; //the MSB of address is the LSB of the exponent
 
-	//get the correct size of x for the multiplicat	ion
+	//get the correct size of x for the multiplication
 	vhdl << tab << declare("lowX", sizeOfX + 1) << " <= " << "(\"0\" & " << use("X")<<range(sizeOfX-1,0) << ") when " << use("OddExp")<<"='0' else "
-	                                            << "(" << use("X")<<range(sizeOfX-1,0) << " & \"0\") ;"<<endl;
+	                                            << "(" << use("X")<<range(sizeOfX-1,0) << " & \"0\") ;"<<endl<<endl;
 	//instantiate the coefficient table
-	PolynomialTable* t = new PolynomialTable(target, tableAddressWidth, coeffTableWidth);
+	Table* t;
+	if (correctRounding)
+		t = new PolynomialTableCorrectRounded(target, tableAddressWidth, coeffTableWidth);
+	else
+		t = new PolynomialTable(target, tableAddressWidth, coeffTableWidth);
 	oplist.push_back(t);
 	
-	nextCycle();////
+	nextCycle();//// this pipeline level is needed in order to infer a BRAM here
 	
 	inPortMapCst (t, "X", use("address"));
-	outPortMap(t, "Y", "data");
+	outPortMap   (t, "Y", "data");
 	vhdl << instance(t, "SQRT_Coeffs_Table");
 
 	syncCycleFromSignal("data");
 
-	nextCycle();///////////////////////////////////
-
-	                                      
+	nextCycle();/////////////////////////////////// The Coefficent ROM has a registered output
+                                      
 	//get a2 from memory
-	vhdl << tab << declare("a2", coeffStorageSizes[2]) << "<=" << use("data")<<range(coeffTableWidth-1, coeffTableWidth-coeffStorageSizes[2]) <<";"<<endl;
-	//perform (-a2)*x
-	vhdl << tab << declare("prod_a2_x",coeffStorageSizes[2] + sizeOfX + 1) << " <= " << use("lowX") << " * " << use("a2") << ";" << endl;
-	nextCycle();////
+	vhdl <<endl << tab << declare("a2", coeffStorageSizes[2]) << "<=" << use("data")<<range(coeffTableWidth-1, coeffTableWidth-coeffStorageSizes[2]) <<";"<<endl;
+	//perform (-a2)*x, each term is <= than 17 bits so * will be mapped into one DSP block
+	vhdl << tab << declare("prodA2X",coeffStorageSizes[2] + sizeOfX + 1) << " <= " << use("lowX") << " * " << use("a2") << ";" << endl;
+
+	nextCycle();/////////////////////////////////// Will be absorbed by the DSP macro
 	
+	//get a1 from memory
+	vhdl <<endl << tab << declare("a1",coeffStorageSizes[1]) << " <= " << use("data")<<range(coeffStorageSizes[0] + coeffStorageSizes[1] - 1, coeffStorageSizes[0]) << ";" <<endl;
 	//sign-extend and pad a1 for a1 - (-a2*x)
-	vhdl << tab << declare("ext_a1_pad", 1 + coeffStorageSizes[1] + keepBits) << " <= " << "\"0\" & " 
-	                                                                                    << use("data")<<range(coeffStorageSizes[0] + coeffStorageSizes[1] - 1, coeffStorageSizes[0]) << " & "
-	                                                                                    << zeroGenerator(keepBits, 0) << ";" << endl;
-	vhdl << tab << declare("ext_prod_a2_x_pad", 1 + coeffStorageSizes[1] + keepBits) << " <= " << zeroGenerator(9,0) << " & " 
-	                                                                                      << use("prod_a2_x")<< range(coeffStorageSizes[2] + sizeOfX, coeffStorageSizes[2] + sizeOfX - (1 + coeffStorageSizes[1] + keepBits - 9 )+1)
-	                                                                                      << ";"<<endl;
-	vhdl << tab << declare("neg_ext_prod_a2_x_pad", 1 + coeffStorageSizes[1] + keepBits) << " <= not(" << use("ext_prod_a2_x_pad") << ");"<<endl;
+	vhdl << tab << declare("signExtA1ZeroPad", 1 + coeffStorageSizes[1] + keepBits) << " <= " << "\"0\" & " << use("a1") << " & " << zeroGenerator(keepBits, 0) << ";" << endl;
+	//sign-extend and align the -a2*x product
+	vhdl << tab << declare("signExtAlignedProdA2X", 1 + coeffStorageSizes[1] + keepBits) << " <= " << "\"0\" & " << zeroGenerator(coeff_msb[1]-(coeff_msb[2]+msb_x),0) << " & " 
+	                  << use("prodA2X")<< range(coeffStorageSizes[2] + sizeOfX, coeffStorageSizes[2] + sizeOfX - (1 + coeffStorageSizes[1] + keepBits + coeff_msb[2]+msb_x )+1) << ";"<<endl;
+	vhdl << tab << declare("negSignExtAlignedProdA2X", 1 + coeffStorageSizes[1] + keepBits) << " <= not(" << use("signExtAlignedProdA2X") << ");"<<endl;
 	//subtract (-a2*x) from a1, => instantiate IntAdder
 	IntAdder* add1 = new IntAdder(target, 1 + coeffStorageSizes[1] + keepBits);
 	oplist.push_back(add1);
 	
-	inPortMap(add1,"X", "ext_a1_pad");
-	inPortMap(add1,"Y", "neg_ext_prod_a2_x_pad");
+	inPortMap(add1,"X", "signExtA1ZeroPad");
+	inPortMap(add1,"Y", "negSignExtAlignedProdA2X");
 	inPortMapCst(add1,"Cin", "'1'");
 	outPortMap(add1,"R", "add1Res");
 	vhdl << instance(add1, "Adder_a1_prod_x_a2");
 	
 	syncCycleFromSignal("add1Res"); 
-	
 	nextCycle();//////////////////
-	//perform the multiplication between x and ( a1 + a2x )    
-	vhdl << tab << declare("prod_x_prev_prod", (sizeOfX+1)+ coeffStorageSizes[1] + keepBits ) << " <= " << use("lowX") << " * " 
-	                                                                                         << use("add1Res")<<range( coeffStorageSizes[1] + keepBits-1, 0)<<";" <<endl;
 	
+	//perform the multiplication between x and ( a1 + a2x )  //TODO pipeline if keepbits2 > 0  
+	//FIXME for now we instantiate an int Multiplier, but we can do better
+		
+	IntMultiplier * my_mul = new IntMultiplier(target, (sizeOfX+1), coeffStorageSizes[1] + keepBits2);
+	oplist.push_back(my_mul);
+	
+	inPortMapCst(my_mul,"X", use("lowX"));
+	inPortMapCst(my_mul,"Y", use("add1Res")+range(coeffStorageSizes[1] + keepBits-1, keepBits - keepBits2) );
+	outPortMap(my_mul, "R", "prodXA1sumA2X");
+	vhdl << tab << instance(my_mul,"SecondMultiplier");
+	
+	syncCycleFromSignal("prodXA1sumA2X"); 
+		
+	//vhdl << tab << declare("prodXA1sumA2X", (sizeOfX+1)+ coeffStorageSizes[1] + keepBits2 ) << " <= " << use("lowX") << " * " 
+    //                                                                                    << use("add1Res")<<range( coeffStorageSizes[1] + keepBits-1, keepBits - keepBits2)<<";" <<endl;
 	nextCycle();/////////////////                                                                               
 	//compose the operands for the addition a0 + [ prev_computation ]
-	vhdl << tab << declare ("right_term", 1 + coeffStorageSizes[0]) << " <= " << zeroGenerator(1 + (1+coeff_msb[0])+1-msb_x , 0)  << " & "
-         << use("prod_x_prev_prod")<<range((sizeOfX+1)+ coeffStorageSizes[1] -1 + keepBits, keepBits + (sizeOfX+1)+ coeffStorageSizes[1] - (coeffStorageSizes[0]- (-msb_x+1+(1+ coeff_msb[0])))) << ";" <<endl; 
-	vhdl << tab << declare ("left_term", 1+	coeffStorageSizes[0]) << " <= " << " \"0\" & " << use("data") << range(coeffStorageSizes[0]-1,0) << ";" << endl;
+	//fetch a0 from memory
+	vhdl << endl << tab << declare("a0",coeffStorageSizes[0]) << " <= " << use("data") << range(coeffStorageSizes[0]-1,0) << ";" << endl;
+	vhdl << tab << declare ("ovfGuardA0", 1 + coeffStorageSizes[0]) << " <= " << " \"0\" & " << use("a0")<< ";" << endl;
+	vhdl << tab << declare ("ovfGuardAlignProdXA1sumA2X", 1 + coeffStorageSizes[0]) << " <= " << " \"0\" & " << zeroGenerator((1+coeff_msb[0])+1-msb_x , 0)  << " & "
+         << use("prodXA1sumA2X")<<range((sizeOfX+1)+ coeffStorageSizes[1] -1 + keepBits2, keepBits2 + (sizeOfX+1)+ coeffStorageSizes[1] - (coeffStorageSizes[0]- (-msb_x+1+(1+ coeff_msb[0])))) << ";" <<endl; 
 	
-	IntAdder * add2 =  new IntAdder(target, 1+	coeffStorageSizes[0]);
+	IntAdder * add2 =  new IntAdder(target, 1 + coeffStorageSizes[0]);
 	oplist.push_back(add2);
-	inPortMap(add2,"X", "left_term");
-	inPortMap(add2,"Y", "right_term");
+	inPortMap(add2,"X", "ovfGuardA0");
+	inPortMap(add2,"Y", "ovfGuardAlignProdXA1sumA2X");
 	inPortMapCst(add2,"Cin", "'0'");
-	outPortMap(add2,"R", "add2Res");
+	outPortMap(add2,"R", "sumA0ProdXA1sumA2X");
 	vhdl << instance(add2, "FinalAdder");
 	
-	syncCycleFromSignal("add2Res"); 
-	
+	syncCycleFromSignal("sumA0ProdXA1sumA2X"); 
+		
 	if (!correctlyRounded){
-		vhdl << declare("norm_bit",1) << " <= " << use("add2Res") << "(" << coeffStorageSizes[0] << ")"<<";"<<endl;
-	
-		vhdl << declare("finalFrac", wF) << " <= " << use("add2Res") << range(coeffStorageSizes[0]-1, coeffStorageSizes[0]-wF) << " when " << use("norm_bit") <<"='1' else "
-			                                       << use("add2Res") << range(coeffStorageSizes[0]-2, coeffStorageSizes[0]-wF-1) << ";" << endl;
-		vhdl << declare("finalExp", wE) << " <= " << use("exp_addition")<<range(wE,1) << " + " << use("norm_bit")<<";"<<endl;
+		vhdl << tab << declare("normalizeBit",1) << " <= " << use("sumA0ProdXA1sumA2X") << "(" << coeffStorageSizes[0] << ")"<<";"<<endl;
+		nextCycle();/////////////////////////
+		vhdl << tab << declare("finalFrac", wF) << " <= " << use("sumA0ProdXA1sumA2X") << range(coeffStorageSizes[0]-1, coeffStorageSizes[0]-wF) << " when " << use("normalizeBit") <<"='1' else "
+			                                       << use("sumA0ProdXA1sumA2X") << range(coeffStorageSizes[0]-2, coeffStorageSizes[0]-wF-1) << ";" << endl;
+		vhdl << tab << declare("finalExp", wE) << " <= " << use("expPostBiasAddition") << range(wE,1) << " + " << use("normalizeBit")<<";"<<endl;
 
 		vhdl << tab << "-- sign/exception handling" << endl;
-		vhdl << tab << "with " << use("exnsX") << " select" <<endl
+		vhdl << tab << "with " << use("excsX") << " select" <<endl
 			  << tab << tab <<  declare("exnR", 2) << " <= " << "\"01\" when \"010\", -- positive, normal number" << endl
-			  << tab << tab << use("exnsX") << range(2, 1) << " when \"001\" | \"000\" | \"100\", " << endl
+			  << tab << tab << use("excsX") << range(2, 1) << " when \"001\" | \"000\" | \"100\", " << endl
 			  << tab << tab << "\"11\" when others;"  << endl;
 
-		vhdl << tab << "R <= "<<use("exnR")<<" & "<< use("exnsX") <<"(0) & " << use("finalExp") << " & " << use("finalFrac")<< ";" << endl; 
+		vhdl << tab << "R <= "<<use("exnR")<<" & "<< use("excsX") <<"(0) & " << use("finalExp") << " & " << use("finalFrac")<< ";" << endl; 
 	}else{
-		vhdl << declare("norm_bit",1) << " <= " << use("add2Res") << "(" << coeffStorageSizes[0] << ")"<<";"<<endl;
-		vhdl << declare("preSquareFrac", wF+2) << " <= " << use("add2Res") << range(coeffStorageSizes[0], coeffStorageSizes[0]-wF-1) << " when " << use("norm_bit") <<"='1' else "
-			                                           << use("add2Res") << range(coeffStorageSizes[0]-1, coeffStorageSizes[0]-wF-2) << ";" << endl;
-		vhdl << declare("preSquareExp", wE) << " <= " << use("exp_addition") << range(wE,1) << " + " << use("norm_bit")<<";"<<endl;
-	    vhdl << declare("preSquareConcat", 1 + wE + wF+1) << " <= " << zeroGenerator(1,0) << " & " << use("preSquareExp") << " & " << use("preSquareFrac")<<range(wF,0)<<";"<<endl;;
+		vhdl << tab << declare("normalizeBit",1) << " <= " << use("sumA0ProdXA1sumA2X") << "(" << coeffStorageSizes[0] << ")"<<";"<<endl;
+		nextCycle();/////////////////////////
+		vhdl << tab << declare("preSquareFrac", wF+2) << " <= " << use("sumA0ProdXA1sumA2X") << range(coeffStorageSizes[0], coeffStorageSizes[0]-wF-1) << " when " << use("normalizeBit") <<"='1' else "
+			                                           << use("sumA0ProdXA1sumA2X") << range(coeffStorageSizes[0]-1, coeffStorageSizes[0]-wF-2) << ";" << endl;
+		vhdl << tab << declare("preSquareExp", wE) << " <= " << use("expPostBiasAddition") << range(wE,1) << " + " << use("normalizeBit")<<";"<<endl;
+	    vhdl << tab << declare("preSquareConcat", 1 + wE + wF+1) << " <= " << zeroGenerator(1,0) << " & " << use("preSquareExp") << " & " << use("preSquareFrac")<<range(wF,0)<<";"<<endl;;
 	    
 	    IntAdder *predictAdder = new IntAdder(target, 1 + wE + wF+1);
 	    oplist.push_back(predictAdder);
@@ -191,24 +229,28 @@ FPSqrt::FPSqrt(Target* target, int wE, int wF, bool useDSP, bool correctlyRounde
 	    outPortMap(predictAdder,"R","my_predictor");
 	    vhdl << tab << instance(predictAdder, "Predictor");
 	    	    
-	    IntSquarer *iSquarer = new IntSquarer(target,wF+2);
+	    IntSquarer *iSquarer = new IntSquarer(target,max(wF+2,34));
 	    oplist.push_back(iSquarer);
 	    
-	    inPortMap(iSquarer, "X", use("preSquareFrac"));
+	    vhdl << tab << declare("op1",max(wF+2,34)) << " <= " << zeroGenerator(34-(wF+2),0) << " & " << use("preSquareFrac") << ";" << endl;
+	    
+	    inPortMap(iSquarer, "X", use("op1"));
 	    outPortMap(iSquarer,"R", "sqrResult");
 	    vhdl << instance(iSquarer,"FractionSquarer");
 	    
 	    syncCycleFromSignal("sqrResult");
 	    
-	    vhdl << tab << declare("approxSqrtXSqr", 2*(wF+2) + 1) << " <= " << zeroGenerator(1,0) << " & " << use("sqrResult")<<";"<<endl;
-	    vhdl << tab << declare("realXFrac", 2*(wF+2) + 1) << " <= " << "( \"10\" & not(" <<  use("fX") << ") & not(" << zeroGenerator(2*(wF+2) + 1-2-wF ,0)<<")) when " << use("OddExp") <<"='0' else "<<endl;
-	    vhdl << tab << tab << "( \"110\" & not(" <<  use("fX") << ") & not(" << zeroGenerator(2*(wF+2) + 1-2-wF-1,0)<<"));"<<endl;
+	    vhdl << tab << declare("approxSqrtXSqr", 2*(wF+2) + 1) << " <= " << zeroGenerator(1,0) << " & " << use("sqrResult")<<range(2*(wF+2)-1,0)<<";"<<endl;
+	    vhdl << tab << declare("realXFrac", 2*(wF+2) + 1) << " <= " << "( \"001\" & " <<  use("fracX") << " & " << zeroGenerator(2*(wF+2) + 1-2-wF-1 ,0)<<") when " << use("OddExp") <<"='0' else "<<endl;
+	    vhdl << tab << tab << "( \"01\" & " <<  use("fracX") << " & " << zeroGenerator(2*(wF+2) + 1-2-wF,0)<<");"<<endl;
+	    
+	    vhdl << tab << declare("negRealXFrac", 2*(wF+2) + 1) << " <= " << "not("<<use("realXFrac")<<");"<<endl;
 	    
 	    IntAdder *myIntAdd = new IntAdder(target, 2*(wF+2) + 1);
 	    oplist.push_back(myIntAdd);
 	    
 	    inPortMap(myIntAdd,"X",use("approxSqrtXSqr"));	
-	    inPortMap(myIntAdd,"Y",use("realXFrac"));
+	    inPortMap(myIntAdd,"Y",use("negRealXFrac"));
 	    inPortMapCst(myIntAdd,"Cin","'1'");
 	    outPortMap(myIntAdd,"R","my_add_result");
 	    vhdl << tab << instance(myIntAdd, "Comparator");
@@ -219,13 +261,13 @@ FPSqrt::FPSqrt(Target* target, int wE, int wF, bool useDSP, bool correctlyRounde
 		syncCycleFromSignal("my_predictor");    
 
 		vhdl << tab << "-- sign/exception handling" << endl;
-		vhdl << tab << "with " << use("exnsX") << " select" <<endl
+		vhdl << tab << "with " << use("excsX") << " select" <<endl
 			  << tab << tab <<  declare("exnR", 2) << " <= " << "\"01\" when \"010\", -- positive, normal number" << endl
-			  << tab << tab << use("exnsX") << range(2, 1) << " when \"001\" | \"000\" | \"100\", " << endl
+			  << tab << tab << use("excsX") << range(2, 1) << " when \"001\" | \"000\" | \"100\", " << endl
 			  << tab << tab << "\"11\" when others;"  << endl;
 
-		vhdl << tab << "R <= (" << use("exnR") << " & " << use("exnsX") <<"(0) & " << use("preSquareConcat")<<range(wE + wF,1) << ") when " << use("greater")<<"='1' else "<<endl;;
-		vhdl << tab << tab << "(" << use("exnR") << " & " << use("exnsX") <<"(0) & " << use("my_predictor")<<range(wE + wF,1) << ");"<<endl;
+		vhdl << tab << "R <= (" << use("exnR") << " & " << use("excsX") <<"(0) & " << use("preSquareConcat")<<range(wE + wF,1) << ") when " << use("greater")<<"='0' else "<<endl;;
+		vhdl << tab << tab << "(" << use("exnR") << " & " << use("excsX") <<"(0) & " << use("my_predictor")<<range(wE + wF,1) << ");"<<endl;
 	    
 	}
 	
@@ -234,14 +276,14 @@ FPSqrt::FPSqrt(Target* target, int wE, int wF, bool useDSP, bool correctlyRounde
 	else {
 		// Digit-recurrence implementation recycled from FPLibrary
 
-		vhdl << tab << declare("fX", wF) << " <= X" << range(wF-1, 0) << "; -- fraction"  << endl; 
+		vhdl << tab << declare("fracX", wF) << " <= X" << range(wF-1, 0) << "; -- fraction"  << endl; 
 		vhdl << tab << declare("eRn0", wE) << " <= \"0\" & X" << range(wE+wF-1, wF+1) << "; -- exponent" << endl;
 		vhdl << tab << declare("xsX", 3) << " <= X"<< range(wE+wF+2, wE+wF) << "; -- exception and sign" << endl;
 
 		vhdl << tab << declare("eRn1", wE) << " <= eRn0 + (\"00\" & " << rangeAssign(wE-3, 0, "'1'") << ") + X(" << wF << ");" << endl;
 
-		vhdl << tab << declare(join("w",wF+3), wF+4) << " <= \"111\" & fX & \"0\" when X(" << wF << ") = '0' else" << endl
-			  << tab << "       \"1101\" & fX;" << endl;
+		vhdl << tab << declare(join("w",wF+3), wF+4) << " <= \"111\" & fracX & \"0\" when X(" << wF << ") = '0' else" << endl
+			  << tab << "       \"1101\" & fracX;" << endl;
 		//		vhdl << tab << declare(join("d",wF+3)) << " <= '0';" << endl;
 		vhdl << tab << declare(join("s",wF+3),1) << " <= '1';" << endl;
 

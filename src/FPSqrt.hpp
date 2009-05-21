@@ -9,6 +9,7 @@
 #include "Operator.hpp"
 #include "FPNumber.hpp"
 #include "squareroot/PolynomialTable.hpp"
+#include "squareroot/PolynomialTableCorrectRounded.hpp"
 
 /** The FPSqrt class */
 class FPSqrt : public Operator
