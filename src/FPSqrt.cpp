@@ -273,6 +273,9 @@ FPSqrt::FPSqrt(Target* target, int wE, int wF, bool useDSP, bool correctlyRounde
 	    
 	}
 	
+
+
+
 	}
 	////////////////////////////////////////////////////////////////////////////////////
 	else {
@@ -335,8 +338,8 @@ FPSqrt::FPSqrt(Target* target, int wE, int wF, bool useDSP, bool correctlyRounde
 
 		nextCycle();
 		
-		vhdl << tab << declare("Rn1", wE+wF) << " <= " << use("eRn1") << " & " << use("fRn1") << range(wF+1, 2) << ";" << endl;
-		vhdl << tab << declare("Rn2", wE+wF) << " <= Rn1 + (" << rangeAssign(wE+wF-2, 0, "'0'") << " & " << use("round")  << "); -- never overflows for sqrt" << endl;
+		vhdl << tab << declare("fRn2", wF) << " <= " <<  use("fRn1") << range(wF+1, 2) <<" + (" << rangeAssign(wF-1, 1, "'0'") << " & " << use("round")  << "); -- rounding sqrt never changes exponents " << endl;
+		vhdl << tab << declare("Rn2", wE+wF) << " <= " << use("eRn1") << " & " << use("fRn2") << ";" << endl;
 		
 		vhdl << tab << "-- sign and exception processing" << endl;
 		vhdl << tab <<  "with " << use("xsX") << " select" << endl
