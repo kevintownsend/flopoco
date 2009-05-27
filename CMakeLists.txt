@@ -110,7 +110,7 @@ IF(WIN32)
 ADD_EXECUTABLE(flopoco
  src/main
  src/utils
- src/Target src/Targets/VirtexIV src/Targets/StratixII
+ src/Target src/Targets/Virtex4 src/Targets/StratixII
  src/Operator
  src/Signal
  src/Table 
@@ -170,7 +170,7 @@ ELSE(WIN32)
 ADD_EXECUTABLE(flopoco
  src/main
  src/utils
- src/Target src/Targets/VirtexIV src/Targets/StratixII
+ src/Target src/Targets/Virtex4 src/Targets/StratixII
  src/Operator
  src/Signal
  src/Table 

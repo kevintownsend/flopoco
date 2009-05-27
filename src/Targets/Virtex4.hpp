@@ -21,8 +21,8 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
 */
 
-#ifndef VIRTEXIV_HPP
-#define VIRTEXIV_HPP
+#ifndef VIRTEX4_HPP
+#define VIRTEX4_HPP
 #include "../Target.hpp"
 #include <iostream>
 #include <sstream>
@@ -32,12 +32,12 @@
 #include <mpfr.h>
 #include <gmpxx.h>
 
-/** Class for representing an VirtexIV target */
-class VirtexIV : public Target
+/** Class for representing an Virtex4 target */
+class Virtex4 : public Target
 {
 public:
 	/** The default constructor. */  
-	VirtexIV() : Target()	{
+	Virtex4() : Target()	{
 		// all these values are set more or less randomly, to match  virtex 4 more or less
 		fastcarryDelay_ = 0.034e-9; //s   
 		elemWireDelay_  = 0.03e-9;
@@ -58,7 +58,7 @@ public:
 	}
 
 	/** The destructor */
-	virtual ~VirtexIV() {}
+	virtual ~Virtex4() {}
 
 	/** overloading the virtual functions of Target
 	 * @see the target class for more details 

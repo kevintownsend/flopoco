@@ -20,37 +20,37 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
 */
-#include "VirtexIV.hpp"
+#include "Virtex4.hpp"
 #include <iostream>
 #include <sstream>
 #include "../utils.hpp"
 
-double VirtexIV::adderDelay(int size) {
+double Virtex4::adderDelay(int size) {
   return lut2_ + muxcyStoO_ + double(size-2)*muxcyCINtoO_ + xorcyCintoO_ ; 
 };
 
 
-double VirtexIV::ffDelay() {
+double Virtex4::ffDelay() {
   return fdCtoQ_ + ffd_; 
 };
 
-double VirtexIV::carryPropagateDelay() {
+double Virtex4::carryPropagateDelay() {
   return  fastcarryDelay_; 
 };
 
-double VirtexIV::localWireDelay(){
+double Virtex4::localWireDelay(){
   return slice2sliceDelay_ ;
 };
 
-double VirtexIV::distantWireDelay(int n){
+double Virtex4::distantWireDelay(int n){
   return n*elemWireDelay_;
 };
 
-double VirtexIV::lutDelay(){
+double Virtex4::lutDelay(){
   return lutDelay_;
 };
 
-bool VirtexIV::suggestSubmultSize(int &x, int &y, int wInX, int wInY){
+bool Virtex4::suggestSubmultSize(int &x, int &y, int wInX, int wInY){
 	if (getUseHardMultipliers()){
 		if ((wInX<=17) && (wInY<=17))	{
 			x = max(wInX, wInY);
@@ -148,7 +148,7 @@ bool VirtexIV::suggestSubmultSize(int &x, int &y, int wInX, int wInY){
 	return false;
 };	 
 	 
-bool VirtexIV::suggestSubaddSize(int &x, int wIn){
+bool Virtex4::suggestSubaddSize(int &x, int wIn){
 
 //	int chunkSize = (int)floor( (1./frequency() - lutDelay()) / carryPropagateDelay()); // 1 if no need for pipeline
 
@@ -163,7 +163,7 @@ bool VirtexIV::suggestSubaddSize(int &x, int wIn){
 	} 
 };
 
-bool VirtexIV::suggestSlackSubaddSize(int &x, int wIn, double slack){
+bool Virtex4::suggestSlackSubaddSize(int &x, int wIn, double slack){
 
 //	int chunkSize = (int)floor( (1./frequency() - lutDelay()) / carryPropagateDelay()); // 1 if no need for pipeline
 
