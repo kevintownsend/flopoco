@@ -78,6 +78,12 @@ class Target
 	 */
 	virtual double lutDelay() =0;
 	
+	/** Function which returns the flip-flop Delay for this target
+		 (not including any net delay)
+	 * @return the flip-flop delay
+	 */
+	virtual double ffDelay() =0;
+	
 	/** Function which returns the carry propagate delay
 	 * @return the carry propagate dealy
 	 */

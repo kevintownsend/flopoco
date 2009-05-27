@@ -26,7 +26,12 @@
 #include "../utils.hpp"
 
 double VirtexIV::adderDelay(int size) {
-  return fdCtoQ_ + netDelay_ + lut2_ + muxcyStoO_ + double(size-2)*muxcyCINtoO_ + xorcyCintoO_ +  ffd_; 
+  return lut2_ + muxcyStoO_ + double(size-2)*muxcyCINtoO_ + xorcyCintoO_ ; 
+};
+
+
+double VirtexIV::ffDelay() {
+  return fdCtoQ_ + ffd_; 
 };
 
 double VirtexIV::carryPropagateDelay() {
@@ -34,7 +39,7 @@ double VirtexIV::carryPropagateDelay() {
 };
 
 double VirtexIV::localWireDelay(){
-  return lut2lutDelay_;
+  return slice2sliceDelay_ ;
 };
 
 double VirtexIV::distantWireDelay(int n){
@@ -148,7 +153,7 @@ bool VirtexIV::suggestSubaddSize(int &x, int wIn){
 //	int chunkSize = (int)floor( (1./frequency() - lutDelay()) / carryPropagateDelay()); // 1 if no need for pipeline
 
 
-	int chunkSize = 2 + (int)floor( (1./frequency() - (fdCtoQ_ + netDelay_ + lut2_ + muxcyStoO_ + xorcyCintoO_ + ffd_)) / muxcyCINtoO_ );
+	int chunkSize = 2 + (int)floor( (1./frequency() - (fdCtoQ_ + slice2sliceDelay_ + lut2_ + muxcyStoO_ + xorcyCintoO_ + ffd_)) / muxcyCINtoO_ );
 	x = chunkSize;		
 	if (x > 0) 
 		return true;
@@ -163,7 +168,7 @@ bool VirtexIV::suggestSlackSubaddSize(int &x, int wIn, double slack){
 //	int chunkSize = (int)floor( (1./frequency() - lutDelay()) / carryPropagateDelay()); // 1 if no need for pipeline
 
 
-	int chunkSize = 2 + (int)floor( (1./frequency() - slack - (fdCtoQ_ + netDelay_ + lut2_ + muxcyStoO_ + xorcyCintoO_ + ffd_)) / muxcyCINtoO_ );
+	int chunkSize = 2 + (int)floor( (1./frequency() - slack - (fdCtoQ_ + slice2sliceDelay_ + lut2_ + muxcyStoO_ + xorcyCintoO_ + ffd_)) / muxcyCINtoO_ );
 	x = chunkSize;		
 	if (x > 0) 
 		return true;

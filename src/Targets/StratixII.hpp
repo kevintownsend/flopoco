@@ -43,6 +43,7 @@ public:
 		elemWireDelay_  = 0.3e-11;
 		lut2lutDelay_   = 1.5e-10;
 		lutDelay_       = 1.5e-9; 
+		ffDelay_       = 1.5e-9; // totally random , don't trust this value
 		multXInputs_    = 36;
 		multYInputs_    = 36;
 	}
@@ -57,6 +58,7 @@ public:
 	double adderDelay(int size);
 	double localWireDelay();
 	double lutDelay();
+	double ffDelay();
 	double distantWireDelay(int n);
 	bool   suggestSubmultSize(int &x, int &y, int wInX, int wInY);
 	bool   suggestSubaddSize(int &x, int wIn);
@@ -66,6 +68,7 @@ private:
 
 	double fastcarryDelay_; /**< The delay of the fast carry chain */
 	double lut2lutDelay_;   /**< The delay between two LUTs */
+	double ffDelay_;   /**< The delay between two flipflops (not including elemWireDelay_) */
 	double elemWireDelay_;  /**< The elementary wire dealy (for computing the distant wire delay) */
 	double lutDelay_;       /**< The LUT delay (in seconds)*/
 };

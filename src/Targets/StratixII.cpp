@@ -45,6 +45,10 @@ double StratixII::lutDelay(){
   return lutDelay_;
 };
 
+double StratixII::ffDelay(){
+  return ffDelay_;
+};
+
 bool StratixII::suggestSubmultSize(int &x, int &y, int wInX, int wInY){
 // TODO This is the VirtexIV function. Stratix II is more interesting
 // (DSP blocks are 36x36 and my be split as 9x9 or 18x18)

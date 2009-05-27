@@ -283,7 +283,7 @@ FPSqrt::FPSqrt(Target* target, int wE, int wF, bool useDSP, bool correctlyRounde
 	////////////////////////////////////////////////////////////////////////////////////
 	else {
 		// Digit-recurrence implementation recycled from FPLibrary
-
+		//cout << "   DDDD" <<  target->adderDelay(10) << "  " <<  target->localWireDelay() << "  " << target->lutDelay();
 		vhdl << tab << declare("fracX", wF) << " <= X" << range(wF-1, 0) << "; -- fraction"  << endl; 
 		vhdl << tab << declare("eRn0", wE) << " <= \"0\" & X" << range(wE+wF-1, wF+1) << "; -- exponent" << endl;
 		vhdl << tab << declare("xsX", 3) << " <= X"<< range(wE+wF+2, wE+wF) << "; -- exception and sign" << endl;
@@ -295,7 +295,7 @@ FPSqrt::FPSqrt(Target* target, int wE, int wF, bool useDSP, bool correctlyRounde
 		//		vhdl << tab << declare(join("d",wF+3)) << " <= '0';" << endl;
 		vhdl << tab << declare(join("s",wF+3),1) << " <= '1';" << endl;
 
-		double delay=0.0; // This variable will accumulate the estimated delay
+		double delay= target->lutDelay() + target->localWireDelay() + target->ffDelay(); // estimated delay so far (one mux)
 		for(int step=1; step<=wF+2; step++) {
 			int i = wF+3-step; // to have the same indices as FPLibrary 
 			vhdl << tab << "-- Step " << i << endl;
@@ -329,17 +329,19 @@ FPSqrt::FPSqrt(Target* target, int wE, int wF, bool useDSP, bool correctlyRounde
 				vhdl << use(sip) << range(step-1,1) << " & not " << di << " & '1';"<< endl; 
 				
 			// Pipeline management
-			double stageDelay= target->adderDelay(i) + target->localWireDelay() + target->lutDelay();
+			double stageDelay= target->adderDelay(step) + target->localWireDelay() + 2*target->lutDelay();
 			delay += stageDelay;
 			if (verbose>=2) {
-				cout << "estimated delay for stage "<< i << " is " << stageDelay << "s" << endl;
-				cout << "   cumulated delay is " << delay << "s" << endl;
+				cout << "estimated delay for stage "<< step << " is " << stageDelay << "s" << endl;
+				cout << "   cumulated delay would be " << delay << "s,   target is " << 1/target->frequency()<< endl;
 			}
 			if(delay > 1/target->frequency()) {
 				// insert a pipeline register and reset the cumulated delay
 				nextCycle();
-				delay=0.0;
-			}
+				delay= target->ffDelay() + stageDelay;
+				if (verbose>=2) 
+					cout << "----inserted a register level" << endl;
+				}
 		}
 		vhdl << tab << declare("d0") << " <= " << use("w1") << "(" << wF+3 << ") ;" << endl;
 		vhdl << tab << declare("fR", wF+4) << " <= " << use("s1") << range(wF+2, 1) << " & not d0 & '1';" << endl;
