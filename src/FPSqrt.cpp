@@ -47,7 +47,6 @@ extern vector<Operator*> oplist;
 
 #define DEBUGVHDL 0
 
-
 FPSqrt::FPSqrt(Target* target, int wE, int wF, bool useDSP, bool correctlyRounded) :
 	Operator(target), wE(wE), wF(wF), useDSP(useDSP), correctRounding(correctlyRounded) {
 
@@ -62,8 +61,12 @@ FPSqrt::FPSqrt(Target* target, int wE, int wF, bool useDSP, bool correctlyRounde
 	addFPInput ("X", wE, wF);
 	addFPOutput("R", wE, wF);
 
+
+
 	if(useDSP) {
-	
+		////////////////////////////////////////////////////////////////////////////////////
+	//      Original polynomial version 
+
 		/*These are the amount of shifts with respect to 0 that the coefficients a2 a1 and a0 are shifted */
 	if(wF!=23)
 		throw "Only wF=23 at the moment";
@@ -292,6 +295,7 @@ FPSqrt::FPSqrt(Target* target, int wE, int wF, bool useDSP, bool correctlyRounde
 		//		vhdl << tab << declare(join("d",wF+3)) << " <= '0';" << endl;
 		vhdl << tab << declare(join("s",wF+3),1) << " <= '1';" << endl;
 
+		double delay=0.0; // This variable will accumulate the estimated delay
 		for(int step=1; step<=wF+2; step++) {
 			int i = wF+3-step; // to have the same indices as FPLibrary 
 			vhdl << tab << "-- Step " << i << endl;
@@ -324,7 +328,18 @@ FPSqrt::FPSqrt(Target* target, int wE, int wF, bool useDSP, bool correctlyRounde
 			else
 				vhdl << use(sip) << range(step-1,1) << " & not " << di << " & '1';"<< endl; 
 				
-			nextCycle();
+			// Pipeline management
+			double stageDelay= target->adderDelay(i) + target->localWireDelay() + target->lutDelay();
+			delay += stageDelay;
+			if (verbose>=2) {
+				cout << "estimated delay for stage "<< i << " is " << stageDelay << "s" << endl;
+				cout << "   cumulated delay is " << delay << "s" << endl;
+			}
+			if(delay > 1/target->frequency()) {
+				// insert a pipeline register and reset the cumulated delay
+				nextCycle();
+				delay=0.0;
+			}
 		}
 		vhdl << tab << declare("d0") << " <= " << use("w1") << "(" << wF+3 << ") ;" << endl;
 		vhdl << tab << declare("fR", wF+4) << " <= " << use("s1") << range(wF+2, 1) << " & not d0 & '1';" << endl;
