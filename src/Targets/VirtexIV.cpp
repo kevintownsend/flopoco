@@ -1,5 +1,5 @@
 /*
- * A model of FPGA that works well enough for Altera and Virtex chips. 
+ * A model of FPGA that works well enough for Virtex-4 chips  (LX, speedgrade -12, e.g. xc4vlx15-12) 
  *
  * Author : Florent de Dinechin
  *

@@ -87,6 +87,9 @@ operator with a user-provided one. This allows in particular to change
 parameters while keeping the same entity name, so that these changes
 are transparent to the rest of the project. Options related to pipelining are reviewed below.</p>
 
+<p>The <code>-target</code> option selects the target FPGA family. We
+try to optimize for the highest speed grade available for this
+family (see below for pipelining options).</p>
 <h3>Built-in help</h3>
 
 <p>To obtain a concise list of the available operators and options, simply
@@ -95,7 +98,7 @@ type</p>
 <p><code>./flopoco </code></p>
 
 <p>In addition this help may be more in sync with the code than this file,
-especially if you are using a svn snpashot.</p>
+especially if you are using a svn snapshot.</p>
 
 <h3>Helper programs</h3>
 
@@ -199,7 +202,19 @@ operators that follow them.
 		get the frequency you asked (sometimes you will even get a
 		higher one). However, in such cases, increasing or decreasing
 		the target frequency should also increase or decrease the
-		obtained frequency.</li>
+		obtained frequency. Note that you may do so on a per-operator
+		basis, as in: <code>flopoco -frequency=200 FPAdder 11 52
+		-frequency=300 FPMultiplier 8 23</code></li>
+
+	 <li> If the obtained frequency is higher than needed, reducing
+	 the <code>-frequency</code> option may save resources.</li>
+
+	 <li> The pipeline built by FloPoCo may depend on the target. When
+	 tuning it, we use the best possible speed grade for a given target
+	 family, for insance -12 for Virtex-4. If you want to target a FPGA
+	 with a lower speed grade, you may need to
+	 update <code>-frequency</code> accordingly.</li>
+
 	 <li> Better results will always be obtained by using retiming
 		tools, which can work on a circuit netlist after technology
 		mapping. The pipeline built by FloPoCo should help these
@@ -268,6 +283,10 @@ are flushed to zero.
     <dd>A floating-point adder.</dd>
   <dt><code>FPDiv wE wF</code></dt>
     <dd>A floating-point divider.</dd>
+  <dt><code>FPSqrt wE wF useDSP correctRounding</code></dt>
+    <dd>A floating-point square root. useDSP (0/1) is a boolean selecting between the classical digit-recurrence algorithm and a polynomial-based algorithm. The latter is currently only available for single precision (8,23). correctRounding (0/1) is a boolean selecting the rounding mode for the polynomial approach. If set to 0, the operator will be faithful (last-bit accurate, but not necessarily correctly rounded). This boolean is ignored if useDSP=0.</dd>
+  <dt><code>FPSquarer wE wF</code></dt>
+    <dd>A floating-point squarer, using IntSquarer for the mantissa.</dd>
 </dl>
 
 <h3>Long fixed-point accumulator, and derivatives</h3>
@@ -317,15 +336,27 @@ href="http://prunel.ccsd.cnrs.fr/ensl-00269219/">this article</a>.</p>
 	<dt><code>FPExp wE wF</code></dt>
 	<dd>An exponential operator, where both inputs and outputs  have <code>wE</code> bits exponent and
 	<code>wF</code> bits significand. This operator implements the exponential function as described in
-	<a href="http://jeremie.detrey.free.fr/publications/DetDinPuj_arith_2007.pdf">this article</a>.
+	<a href="http://perso.ens-lyon.fr/florent.de.dinechin/recherche/publis/2007-Arith.pdf">this article</a>.
 	</dd>
 
 	<dt><code>FPLog wE wF</code></dt>
 	<dd>A natural logarithm operator, where both inputs and outputs  have <code>wE</code> bits exponent and
 	<code>wF</code> bits significand. This operator implements the natural logarithm function as described in
-<a href="http://jeremie.detrey.free.fr/publications/DetDinPuj_arith_2007.pdf">this article</a>.
+<a href="http://perso.ens-lyon.fr/florent.de.dinechin/recherche/publis/2007-Arith.pdf">this article</a>.
 	</dd>
 </dl>	
+
+
+<h3>Miscelanous floating-point operators</h3>
+
+<dl>
+	<dt><code>Collision wE wF</code></dt>
+	<dd>A collision operator. This is mostly a case study for a compound operator. It is described in 
+	<a href="http://prunel.ccsd.cnrs.fr/ensl-00379154/">this article</a>.
+	</dd>
+</dl>	
+
+
 
 <h3>HOTBM</h3>
 
@@ -428,15 +459,13 @@ are generating using a pseudo-random number generator, being
 initialised with the same seed, so that the test bench will be
 deterministic.
 
-Currently, only the following operators are able to generate test cases
-required for test bench generation: <code>HOTBM</code>,
- <code>IntMultiplier</code>, <code>FPAdder</code>, <code>FPMultipier</code>, <code>IntConstMult</code>,
-<code>FPConstMult</code>, <code>FPExp</code>, <code>FPLog</code>.
 
 <p>Example:<br/>
 <code>flopoco HOTBM "sin(x*Pi/2)" 16 16 3 TestBench 1000</code>
 </p>
 
+
+<!--
 <code>BigTestBench</code> is similar to <code>TestBench</code> but is
 optimized for large tests (up to 1 million). It generates a very short VHDL code, which
 reads test vectors from a predetermined file (the filename is
@@ -449,13 +478,15 @@ sure that the UUT is working perfectly.
 <p>Example:<br/>
 <code>flopoco FPExp 8 16 BigTestBench 200000</code>
 </p>
+-->
 
 <h3>Miscellanous</h3>
 <dl>
   <dt><code>Wrapper</code></dt>
-    <dd>Produce a wrapper for the preceding operator
-      (useful to get synthesis results without having the operator optimised
-      out).</dd>
+    <dd>Produce a wrapper for the preceding operator: this operator simply adds registers before and after the preceding operator.
+      It is useful in some cases to get synthesis results without having the operator optimised
+      out, or to get critical path information  including the delay of the first and last stages connected to registers, not to I/O.
+	 </dd>
 </dl>
 </body>
 </html>

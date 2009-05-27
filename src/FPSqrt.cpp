@@ -3,7 +3,7 @@
  *
  * Authors : 
  * Jeremie Detrey, Florent de Dinechin (digit-recurrence version)
- * Mioara Joldes, Bogdan Pasca (polynomial version)
+ * Mioara Joldes, Guillaume Revy, Bogdan Pasca (polynomial version)
  * This file is part of the FloPoCo project developed by the Arenaire
  * team at Ecole Normale Superieure de Lyon
  *

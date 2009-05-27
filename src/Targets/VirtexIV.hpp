@@ -1,5 +1,5 @@
 /*
- * A model of FPGA that works well enough for Virtex IV chips. 
+ * A model of FPGA that works well enough for Virtex-4 chips. 
  *
  * Author : Florent de Dinechin
  *
