@@ -308,7 +308,9 @@ public:
 	virtual void buildRandomTestCases(TestCaseList* tcl, int n);
 
 
-
+	Target* target() {
+		return target_;
+	}
 
 
 
