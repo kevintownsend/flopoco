@@ -293,7 +293,7 @@ FPSqrt::FPSqrt(Target* target, int wE, int wF, bool useDSP, bool correctlyRounde
 		vhdl << tab << declare(join("w",wF+3), wF+4) << " <= \"111\" & fracX & \"0\" when X(" << wF << ") = '0' else" << endl
 			  << tab << "       \"1101\" & fracX;" << endl;
 		//		vhdl << tab << declare(join("d",wF+3)) << " <= '0';" << endl;
-		vhdl << tab << declare(join("s",wF+3),1) << " <= '1';" << endl;
+		//		vhdl << tab << declare(join("s",wF+3),1) << " <= '1';" << endl;
 
 		double delay= target->lutDelay() + target->localWireDelay() + target->ffDelay(); // estimated delay so far (one mux)
 		for(int step=1; step<=wF+2; step++) {
@@ -305,14 +305,17 @@ FPSqrt::FPSqrt(Target* target, int wE, int wF, bool useDSP, bool correctlyRounde
 			string wip = join("w", i+1);
 			string si = join("s", i);
 			string sip = join("s", i+1);
-			string zs = join("zs", i);
+			//			string zs = join("zs", i);
 			string ds = join("ds", i);
 			string xh = join("xh", i);
 			string wh = join("wh", i);
 			vhdl << tab << declare(di) << " <= "<< use(wip) << "("<< wF+3<<");" << endl;
 			vhdl << tab << declare(xi,wF+5) << " <= "<< use(wip) << " & \"0\";" << endl;
-			vhdl << tab << declare(zs,step+1) << " <= \"0\" & " << use(sip) << ";" << endl;
-			vhdl << tab << declare(ds,step+3) << " <= " << zs << range(step,1) << "& (not " << di << ") & " << di << " & \"1\";" << endl;
+			//			vhdl << tab << declare(zs,step,true) << " <= \"0\" & " << use(sip) << ";" << endl;
+			vhdl << tab << declare(ds,step+3) << " <=  \"0\" & ";
+			if (step>1)
+				vhdl 	<< use(sip) << " & ";
+			vhdl << " (not " << di << ") & " << di << " & \"1\";" << endl;
 			vhdl << tab << declare(xh,step+3) << " <= " << xi << range(wF+4, wF+2-step) << ";" << endl;
 			vhdl << tab << "with " << di << " select" << endl
 				  << tab << tab <<  declare(wh, step+3) << " <= " << xh << " - " << ds << " when '0'," << endl
@@ -322,11 +325,11 @@ FPSqrt::FPSqrt(Target* target, int wE, int wF, bool useDSP, bool correctlyRounde
 				vhdl << " & " << xi << range(wF+1-step, 0) << ";" << endl;  
 			else
 				vhdl << ";" << endl; 
-			vhdl << tab << declare(si, step+1) << " <= ";
+			vhdl << tab << declare(si, step) << " <= ";
 			if(step==1)
-				vhdl << "not " << di << " & '1';"<< endl; 
+				vhdl << "not " << di << " ;"<< endl; 
 			else
-				vhdl << use(sip) << range(step-1,1) << " & not " << di << " & '1';"<< endl; 
+				vhdl << use(sip) /*<< range(step-1,1)*/ << " & not " << di << ";"<< endl; 
 				
 			// Pipeline management
 			double stageDelay= target->adderDelay(step) + target->localWireDelay() + 2*target->lutDelay();
@@ -344,7 +347,7 @@ FPSqrt::FPSqrt(Target* target, int wE, int wF, bool useDSP, bool correctlyRounde
 				}
 		}
 		vhdl << tab << declare("d0") << " <= " << use("w1") << "(" << wF+3 << ") ;" << endl;
-		vhdl << tab << declare("fR", wF+4) << " <= " << use("s1") << range(wF+2, 1) << " & not d0 & '1';" << endl;
+		vhdl << tab << declare("fR", wF+4) << " <= " << use("s1") << " & not d0 & '1';" << endl;
 
 		// end of component FPSqrt_Sqrt in fplibrary
 		vhdl << tab << "-- normalisation of the result, removing leading 1" << endl;
