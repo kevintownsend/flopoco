@@ -187,4 +187,9 @@ void TestBench::outputVHDL(ostream& o, string name) {
 	cerr << tab << "vsim " << name <<endl;
 	cerr << tab << "add wave -r *" <<endl;
 	cerr << tab << "run " << currentOutputTime << endl;
+	cerr << "Or type the following in a shell prompt:" <<endl;
+	cerr << tab << "ghdl -a --ieee=synopsys -fexplicit flopoco.vhdl" <<endl;
+	cerr << tab << "ghdl -e --ieee=synopsys -fexplicit " << getName() <<endl;
+	cerr << tab << "ghdl -r --ieee=synopsys " << getName() << " --vcd=" << getName() << ".vcd" <<endl;
+	cerr << tab << "gtkwave " << getName() << ".vcd" << endl;
 }
