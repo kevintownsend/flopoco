@@ -36,7 +36,8 @@ public:
 	 */
 	void emulate(TestCase * tc);
 
-	/* Overloading the Operator method */
+	/* Overloading the Operator method to limit testing of NaNs and negative numbers*/
+	void buildRandomTestCases(TestCaseList* tcl, int n);
 	//	void buildStandardTestCases(TestCaseList* tcl);
 
 	
