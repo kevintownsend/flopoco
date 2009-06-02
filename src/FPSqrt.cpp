@@ -46,6 +46,7 @@ using namespace std;
 extern vector<Operator*> oplist;
 
 #define DEBUGVHDL 0
+//#define LESS_DSPS
 
 FPSqrt::FPSqrt(Target* target, int wE, int wF, bool useDSP, bool correctlyRounded) :
 	Operator(target), wE(wE), wF(wF), useDSP(useDSP), correctRounding(correctlyRounded) {
@@ -96,7 +97,7 @@ FPSqrt::FPSqrt(Target* target, int wE, int wF, bool useDSP, bool correctlyRounde
 	
 	if (correctRounding){
 		keepBits = 17;
-		keepBits2 = 2;
+		keepBits2 = 2; //was 2
 
 	}
 	else{
@@ -170,20 +171,43 @@ FPSqrt::FPSqrt(Target* target, int wE, int wF, bool useDSP, bool correctlyRounde
 	
 	//perform the multiplication between x and ( a1 + a2x )  //TODO pipeline if keepbits2 > 0  
 	//FIXME for now we instantiate an int Multiplier, but we can do better
+
+#ifdef LESS_DSPS		
+	if ((correctRounding)&&(false)){
+#else
+	if (correctRounding){
+#endif
+//		IntMultiplier2 * my_mul = new IntMultiplier2(target, (sizeOfX+1), coeffStorageSizes[1] + keepBits2);
+		IntMultiplier2 * my_mul = new IntMultiplier2(target, (sizeOfX+1), 34);
+		oplist.push_back(my_mul);
 		
-	IntMultiplier2 * my_mul = new IntMultiplier2(target, (sizeOfX+1), coeffStorageSizes[1] + keepBits2);
-	oplist.push_back(my_mul);
+		vhdl << tab << declare("justASignal",34) << " <= " << zeroGenerator(15,0) << " & " << use("add1Res")<<range(coeffStorageSizes[1] + keepBits-1, keepBits - keepBits2) << ";" << endl;
 	
-	inPortMapCst(my_mul,"X", use("lowX"));
-	inPortMapCst(my_mul,"Y", use("add1Res")+range(coeffStorageSizes[1] + keepBits-1, keepBits - keepBits2) );
-	outPortMap(my_mul, "R", "prodXA1sumA2X");
-	vhdl << tab << instance(my_mul,"SecondMultiplier");
+		inPortMapCst(my_mul,"X", use("lowX"));
+//		inPortMapCst(my_mul,"Y", use("add1Res")+range(coeffStorageSizes[1] + keepBits-1, keepBits - keepBits2) );
+		inPortMapCst(my_mul,"Y", use("justASignal"));
+//		outPortMap(my_mul, "R", "prodXA1sumA2X");
+		outPortMap(my_mul, "R", "prodXA1sumA2X_large");
+		vhdl << tab << instance(my_mul,"SecondMultiplier");
 	
-	syncCycleFromSignal("prodXA1sumA2X"); 
+		syncCycleFromSignal("prodXA1sumA2X_large"); 
 		
+		vhdl << tab << declare("prodXA1sumA2X",36) << " <= " << use("prodXA1sumA2X_large")<<range(35,0) << ";" << endl;
+	}else{
+		IntMultiplier2 * my_mul = new IntMultiplier2(target, (sizeOfX+1), coeffStorageSizes[1] + keepBits2);
+		oplist.push_back(my_mul);
+		inPortMapCst(my_mul,"X", use("lowX"));
+		inPortMapCst(my_mul,"Y", use("add1Res")+range(coeffStorageSizes[1] + keepBits-1, keepBits - keepBits2) );
+		outPortMap(my_mul, "R", "prodXA1sumA2X");
+		vhdl << tab << instance(my_mul,"SecondMultiplier");
+	
+		syncCycleFromSignal("prodXA1sumA2X"); 
+	}
 	//vhdl << tab << declare("prodXA1sumA2X", (sizeOfX+1)+ coeffStorageSizes[1] + keepBits2 ) << " <= " << use("lowX") << " * " 
     //                                                                                    << use("add1Res")<<range( coeffStorageSizes[1] + keepBits-1, keepBits - keepBits2)<<";" <<endl;
+#ifndef LESS_DSPS    
 	nextCycle();/////////////////                                                                               
+#endif
 	//compose the operands for the addition a0 + [ prev_computation ]
 	//fetch a0 from memory
 	vhdl << endl << tab << declare("a0",coeffStorageSizes[0]) << " <= " << use("data") << range(coeffStorageSizes[0]-1,0) << ";" << endl;
@@ -202,6 +226,7 @@ FPSqrt::FPSqrt(Target* target, int wE, int wF, bool useDSP, bool correctlyRounde
 	syncCycleFromSignal("sumA0ProdXA1sumA2X"); 
 		
 	if (!correctlyRounded){
+	
 		vhdl << tab << declare("finalFrac", wF) << " <= " << use("sumA0ProdXA1sumA2X") << range(coeffStorageSizes[0]-2, coeffStorageSizes[0]-wF-1) << ";" << endl;
 		vhdl << tab << declare("finalExp", wE) << " <= " << use("expPostBiasAddition") << range(wE,1) <<";"<<endl;
 
@@ -224,11 +249,14 @@ FPSqrt::FPSqrt(Target* target, int wE, int wF, bool useDSP, bool correctlyRounde
 
 
 	    vhdl << tab << declare("preSquareConcat", 1 + wE + wF+1) << " <= " << zeroGenerator(1,0) << " & " << use("preSquareExp") << " & " << use("preSquareFrac")<<range(wF,0)<<";"<<endl;;
-	    
+
+#ifndef LESS_DSPS
+		nextCycle();//////////////////	    
+#endif
 	    IntAdder *predictAdder = new IntAdder(target, 1 + wE + wF+1);
 	    oplist.push_back(predictAdder);
 
-	    inPortMap(predictAdder,"X",use("preSquareConcat"));	
+	    inPortMapCst(predictAdder,"X",use("preSquareConcat"));	
 	    inPortMapCst(predictAdder,"Y",zeroGenerator(1 + wE + wF+1,0));
 	    inPortMapCst(predictAdder,"Cin","'1'");
 	    outPortMap(predictAdder,"R","my_predictor");
