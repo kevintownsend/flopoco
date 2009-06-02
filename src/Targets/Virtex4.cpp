@@ -173,7 +173,7 @@ bool Virtex4::suggestSlackSubaddSize(int &x, int wIn, double slack){
 	if (x > 0) 
 		return true;
 	else {
-		x = 1;		
+		x = 2;		
 		return false;
 	} 
 };

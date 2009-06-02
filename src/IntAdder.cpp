@@ -83,6 +83,7 @@ Operator(target), wIn_(wIn), inputDelays_(inputDelays)
 			bufferedInputs = 1;
 			maxInputDelay=0;
 			target->suggestSubaddSize(chunkSize_ ,wIn_);
+			if (verbose) cout << "The suggested subaddition chunk size is: " << chunkSize_ << endl;
 			nbOfChunks = ceil(double(wIn_)/double(chunkSize_));
 			cSize = new int[nbOfChunks+1];
 			cSize[nbOfChunks-1]=( ((wIn_%chunkSize_)==0)?chunkSize_:wIn_-(nbOfChunks-1)*chunkSize_);
@@ -93,7 +94,10 @@ Operator(target), wIn_(wIn), inputDelays_(inputDelays)
 
 			int cS0; 
 			bufferedInputs=0;
-			int maxInAdd = ceil(((objectivePeriod - maxInputDelay) - target->lutDelay())/target->carryPropagateDelay()); 			
+//			int maxInAdd = ceil(((objectivePeriod - maxInputDelay) - target->lutDelay())/target->carryPropagateDelay());
+
+			int maxInAdd;
+			target->suggestSlackSubaddSize(maxInAdd, wIn_, maxInputDelay); 			 			
 			cS0 = (maxInAdd<=wIn_?maxInAdd:wIn_);
 			if ((wIn_-cS0)>0)
 			{
