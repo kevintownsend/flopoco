@@ -22,7 +22,7 @@ public:
 
 	
 	/** 
-	 * Another LZOCShifterSticky constructor, used in FPLog
+	 *  LZOCShifterSticky constructor, used in FPLog
 	 * @param[in] target the target device for this operator
 	 * @param[in] wIn the width of the mantissa input
 	 * @param[in] wOut the width of the mantissa output
