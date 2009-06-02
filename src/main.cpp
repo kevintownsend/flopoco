@@ -64,6 +64,9 @@
 #include "FPExp.hpp"
 #include "FPLog.hpp"
 
+#include "InputIEEE.hpp"
+#include "OutputIEEE.hpp"
+ 
 #include "Collision.hpp"
 #include "IntSquarer.hpp"
 
@@ -156,6 +159,12 @@ static void usage(char *name){
 	cerr << "      Floating-point exponential function (NPY)\n";
 	cerr << "    FPLog wE wF\n";
 	cerr << "      Floating-point logarithm function\n";
+	cerr << "    OutputIEEE wEI wFI wEO wFO\n";
+	cerr << "      Conversion from FloPoCo to IEEE-754-like floating-point formats\n";
+	cerr << "    InputIEEE wEI wFI wEO wFO\n";
+	cerr << "      Conversion from IEEE-754-like to FloPoCo floating-point formats\n";
+
+
 #ifdef HAVE_HOTBM
 	cerr << "    HOTBM function wI wO degree\n";
 	cerr << "      High-Order Table-Based Method for fixed-point functions (NPY)\n";
@@ -892,6 +901,21 @@ bool parseCommandLine(int argc, char* argv[]){
 			op = new FPLog(target, wE, wF);
 			addOperator(op);
 		}
+
+		else if (opname == "InputIEEE")
+		{
+			int nargs = 4;
+			if (i+nargs > argc)
+				usage(argv[0]); // and exit
+			int wEI = checkStrictyPositive(argv[i++], argv[0]);
+			int wFI = checkStrictyPositive(argv[i++], argv[0]);
+			int wEO = checkStrictyPositive(argv[i++], argv[0]);
+			int wFO = checkStrictyPositive(argv[i++], argv[0]);
+			cerr << "> InputIEEE: wEI=" << wEI << " wFI=" << wFI << " wEO=" << wEO << " wFO=" << wFO << endl;
+			op = new InputIEEE(target, wEI, wFI, wEO, wFO);
+			addOperator(op);
+		}
+
 
 		else if (opname == "Collision")
 		{

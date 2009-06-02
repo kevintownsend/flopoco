@@ -161,6 +161,9 @@ ADD_EXECUTABLE(flopoco
  src/fplogarithm/SecondInvTable
  src/fplogarithm/LogRangeRed
  src/FPLog
+
+ src/InputIEEE
+ src/OutputIEEE
  
  src/Collision
  src/IntSquarer
@@ -218,6 +221,8 @@ ADD_EXECUTABLE(flopoco
  src/fplogarithm/SecondInvTable
  src/fplogarithm/LogRangeRed
  src/FPLog
+ src/InputIEEE
+ src/OutputIEEE
  src/Collision
  src/IntSquarer
 )
