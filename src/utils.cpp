@@ -410,12 +410,28 @@ double getMaxInputDelays( map<string, double> inputDelays )
 	return maxInputDelay;
 }
 
+string printInputDelays( map <string, double> inputDelays){
+	ostringstream o;
+	map<string, double>::iterator iter;
+	for (iter = inputDelays.begin(); iter!=inputDelays.end();++iter)
+		o << "The delay for " << iter->first << " is " << iter->second << endl;			
+	return o.str();
+}
+
 string join( std::string id, int n)
 {
 	ostringstream o;
 	o << id << n;
 	return o.str();
 }
+
+string join( std::string id, int n, std::string id2, int n2)
+{
+	ostringstream o;
+	o << id << n << id2 << n2;
+	return o.str();
+}
+
 
 string join( std::string id, string n)
 {
@@ -450,4 +466,6 @@ string of( int x)
 	o << "("<<x<<")";
 	return o.str();
 }
+
+
 

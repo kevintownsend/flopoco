@@ -212,6 +212,8 @@ string mpz2string(mpz_class x);
 	 declare(),  use(), etc. */
 string join( std::string id, int n);
 
+string join( std::string id, int n, std::string id2 , int n2);
+
 /** Same for concatenating two ids. Maybe + would do? */
 string join( std::string id, std::string);
 
@@ -230,5 +232,11 @@ string of( int x);
  *@return the maximum delay of the input map 
  */ 
 double getMaxInputDelays( map<string, double> inputDelays );
+
+/**
+ *@param[in] inputDelays	map between signal names and their respective delays
+ *@return prints the delays
+ */ 
+string printInputDelays( map <string, double> inputDelays);
 
 #endif

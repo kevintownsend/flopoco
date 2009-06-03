@@ -27,13 +27,6 @@ public:
 	 */
 	~IntAdder();
 
-	/**
-	 * Method belonging to the Operator class overloaded by the IntAdder class
-	 * @param[in,out] o     the stream where the current architecture will be outputed to
-	 * @param[in]     name  the name of the entity corresponding to the architecture generated in this method
-	 **/
-	void outputVHDL(std::ostream& o, std::string name);
-
 	void emulate(TestCase* tc);
 
 protected:
@@ -41,11 +34,11 @@ protected:
 
 private:
 	map<string, double> inputDelays_; /**< a map between input signal names and their maximum delays */
-	int bufferedInputs;               /**< variable denoting an initial buffering of the inputs */
 	double maxInputDelay;             /**< the maximum delay between the inputs present in the map*/
 	int nbOfChunks;                   /**< the number of chunks that the addition will be split in */
 	int chunkSize_;                   /**< the suggested chunk size so that the addition can take place at the objective frequency*/
 	int *cSize;                       /**< array containing the chunk sizes for all nbOfChunks*/
+	int *cIndex;                       /**< array containing the indexes for all Chunks*/
 
 };
 #endif

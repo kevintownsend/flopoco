@@ -41,7 +41,7 @@ IntAdder::IntAdder(Target* target, int wIn, map<string, double> inputDelays):
 Operator(target), wIn_(wIn), inputDelays_(inputDelays)
 {
 	ostringstream name;
-	name << "IntAdder_" << wIn_;
+	name << "IntAdder_" << wIn_<<"_f"<<target->frequencyMHz();
 	setName(name.str());
 
 	// Set up the IO signals
@@ -50,111 +50,97 @@ Operator(target), wIn_(wIn), inputDelays_(inputDelays)
 	addInput ("Cin", 1  );
 	addOutput("R"  , wIn_);
 
-	if (verbose){
-		cout <<"delay for X is   "<< inputDelays["X"]<<endl;	
-		cout <<"delay for Y is   "<< inputDelays["Y"]<<endl;
-		cout <<"delay for Cin is "<< inputDelays["Cin"]<<endl;
-	}
+	if (verbose)
+		cout << printInputDelays( inputDelays );
 
 	if (isSequential()){
-		//compute the maximum input delay
-		maxInputDelay = 0;
-		map<string, double>::iterator iter;
-		for (iter = inputDelays.begin(); iter!=inputDelays.end();++iter)
-			if (iter->second > maxInputDelay)
-				maxInputDelay = iter->second;
-	
+		maxInputDelay = getMaxInputDelays (inputDelays);
 		if (verbose)
-			cout << "The maximum input delay is "<<	maxInputDelay<<endl;
+			cout << "The maximum input delay is: " << maxInputDelay << endl;
 	
-		double	objectivePeriod;
-		objectivePeriod = 1/ target->frequency();
+		double objectivePeriod = 1 / target->frequency();
 		
-		if (verbose)
-			cout << "Objective period is "<< objectivePeriod<<" at an objective frequency of "<<target->frequency() << endl;
-
-		if (objectivePeriod<maxInputDelay){
-			//It is the responsability of the previous components to not have a delay larger than the period
-			cout << "Warning, the combinatorial delay at the input of "<<this->getName()<<"is above limit"<<endl;
+		if ( maxInputDelay > objectivePeriod ){
+			//the maximum combinatorial delay of the input is larger than the objective period, so the requested frequency might not be reached.
+			cout << "WARNING: the combinatorial delay at the input of " << this->getName() << " is above objective period "<<endl;
 			maxInputDelay = objectivePeriod;
 		}
 
-		if (((objectivePeriod - maxInputDelay) - target->lutDelay())<0)	{
-			bufferedInputs = 1;
-			maxInputDelay=0;
+		if ( ((objectivePeriod - maxInputDelay) - target->adderDelay(1) ) < 0 )	{
+			nextCycle();////////////////////////////////////////////////////////
 			target->suggestSubaddSize(chunkSize_ ,wIn_);
 			if (verbose) cout << "The suggested subaddition chunk size is: " << chunkSize_ << endl;
 			nbOfChunks = ceil(double(wIn_)/double(chunkSize_));
 			cSize = new int[nbOfChunks+1];
-			cSize[nbOfChunks-1]=( ((wIn_%chunkSize_)==0)?chunkSize_:wIn_-(nbOfChunks-1)*chunkSize_);
-			for (int i=0;i<=nbOfChunks-2;i++)
+			for (int i=0; i <= nbOfChunks-2; i++)
 				cSize[i]=chunkSize_;				
+			cSize[nbOfChunks-1]=( ((wIn_%chunkSize_)==0)?chunkSize_:wIn_-(nbOfChunks-1)*chunkSize_);
 		}
 		else{
 
-			int cS0; 
-			bufferedInputs=0;
-//			int maxInAdd = ceil(((objectivePeriod - maxInputDelay) - target->lutDelay())/target->carryPropagateDelay());
-
 			int maxInAdd;
-			target->suggestSlackSubaddSize(maxInAdd, wIn_, maxInputDelay); 			 			
-			cS0 = (maxInAdd<=wIn_?maxInAdd:wIn_);
-			if ((wIn_-cS0)>0)
-			{
-				int newWIn = wIn_-cS0;
-				target->suggestSubaddSize(chunkSize_,newWIn);
-				nbOfChunks = ceil( double(newWIn)/double(chunkSize_));
-				cSize = new int[nbOfChunks+1];
-				cSize[0] = cS0;
-				cSize[nbOfChunks]=( (( (wIn_-cSize[0])%chunkSize_)==0)?chunkSize_:(wIn_-cSize[0])-(nbOfChunks-1)*chunkSize_);
-				for (int i=1;i<=nbOfChunks-1;i++)
-					cSize[i]=chunkSize_;				
-				nbOfChunks++;			
+			//the size of the first addition is dependent on the input slack
+			target->suggestSlackSubaddSize(maxInAdd, wIn_, maxInputDelay); 
+						 			
+			int firstChunkSize = ( maxInAdd <= wIn_? maxInAdd : wIn_ );
+			if ( wIn_ - firstChunkSize > 0){
+				int remainingBits = wIn_ - firstChunkSize;
+				target->suggestSubaddSize( chunkSize_, remainingBits);
+				nbOfChunks = ceil( double(remainingBits)/double(chunkSize_));
+				nbOfChunks++;
+				cSize = new int[nbOfChunks];
+				cSize[0] = firstChunkSize;
+				cSize[nbOfChunks-1]=( (( remainingBits % chunkSize_)==0) ? chunkSize_ : remainingBits - (nbOfChunks-2)*chunkSize_ );
+				for (int i=1; i <= nbOfChunks-2; i++)
+					cSize[i] = chunkSize_;				
+							
 			}
 			else{
-				nbOfChunks=1;
+				nbOfChunks = 1;
 				cSize = new int[1];
-				cSize[0] = cS0;
+				cSize[0] = firstChunkSize;
 			}
 		}
+
+		cIndex = new int[nbOfChunks];
+		cIndex[0]= cSize[0];
+		for (int i=1; i < nbOfChunks; i++)
+			cIndex[i] = cIndex[i-1] + cSize[i];
 		
 		if (verbose){
-			cout<<endl<<endl<<"Buffered Inputs "<<(bufferedInputs?"yes":"no")<<endl;
-			cout<<endl;
+			cout << "The chunk sizes[MSB-->LSB]: "<<endl;
 			for (int i=nbOfChunks-1;i>=0;i--)
 				cout<<cSize[i]<<" ";
 			cout<<endl; 
+			cout << "The index sizes[MSB-->LSB]: "<<endl;
+			for (int i=nbOfChunks-1;i>=0;i--)
+				cout<<cIndex[i]<<" ";
+			cout<<endl; 
 		}	
 		
-		for (int i=0;i<nbOfChunks;i++){
-			ostringstream t; t<<"X"<<i;	
-			addDelaySignalBus(t.str(),cSize[i],bufferedInputs); t.str(""); t<<"Y"<<i;
-			addDelaySignalBus(t.str(),cSize[i],bufferedInputs); t.str(""); 
-			if (i==0)
-				addDelaySignal("Carry",1,bufferedInputs); 
+		
+		////////////////////////////////////////////////////////////////////////
+		
+		for (int i=0; i < nbOfChunks; i++){
+			vhdl << tab << declare (join("sum_l",0,"_idx",i), cSize[i]+1) << " <= " << "( \"0\" & " << use("X") << range(cIndex[i]-1, (i>0?cIndex[i-1]:0)) << ") + "
+			                                                             << "( \"0\" & " << use("Y") << range(cIndex[i]-1, (i>0?cIndex[i-1]:0)) << ")" ;
+			if (i==0) vhdl << " + " << use("Cin");
+			vhdl << ";" << endl;
 		}
 		
-		for (int i=0; i<nbOfChunks-1;i++){
-			ostringstream t;
-			t<<"cin"<<i+1<<"R"<<i;
-			addDelaySignal(t.str(),cSize[i]+1,1);
+		for (int i=1; i <= nbOfChunks-1 ; i++){
+			nextCycle(); ///////////////////////////////////////////////////////
+			for (int j=i; j <= nbOfChunks-1; j++){
+				vhdl << tab << declare(join("sum_l",i,"_idx",j), cSize[j]+1) << " <= " << "( \"0\" & " << use(join("sum_l",i-1,"_idx",j))<<range(cSize[j]-1,0) << ") + "
+				                                                                       << use(join("sum_l",i-1,"_idx",j-1))<<of(cSize[j-1])<<";"<<endl;
+				}
 		}
 		
-		for (int i=0; i<nbOfChunks;i++){
-			ostringstream t;
-			t<<"R"<<i;
-			addDelaySignalBus(t.str(),cSize[i],nbOfChunks-2-i);
-		}	
-		
-		for (int i=0; i<nbOfChunks;i++){
-			ostringstream t; t<<"sX"<<i;
-			addDelaySignalBus(t.str(),cSize[i],i); t.str(""); t<<"sY"<<i;
-			addDelaySignalBus(t.str(),cSize[i],i); t.str("");
-			if (i==0)
-			addSignal("cin0",1);
-		}	
-
-		setPipelineDepth(nbOfChunks-1+bufferedInputs);
+		vhdl << tab << "R <= ";
+		for (int i=nbOfChunks-1; i >= 1; i--){
+			vhdl << use(join("sum_l",i,"_idx",i))<<range(cSize[i]-1,0)<< " & ";
+		}
+		vhdl << use("sum_l0_idx0")<<range(cSize[0]-1,0)<<";"<<endl;
 
 		outDelayMap["R"] = target->adderDelay(cSize[nbOfChunks-1]); 
 		if (verbose)
@@ -165,89 +151,6 @@ Operator(target), wIn_(wIn), inputDelays_(inputDelays)
 }
 
 IntAdder::~IntAdder() {
-}
-
-
-void IntAdder::outputVHDL(std::ostream& o, std::string name) {
-	ostringstream signame;
-	licence(o,"Florent de Dinechin, Bogdan Pasca (2007, 2008)");
-	Operator::stdLibs(o);
-	outputVHDLEntity(o);
-	newArchitecture(o,name);
-	outputVHDLSignalDeclarations(o);
-	beginArchitecture(o);
-	
-	if(isSequential()){
-		//first assignments. This level might be transformed from signals to registers
-		// if the (T-inputDelay)<lutDelay
-		for (int i=0;i<nbOfChunks;i++){
-			if (i==0)
-				o << tab << "Carry <= Cin; "<<endl;
-			int sum=0;
-			for (int j=0;j<=i;j++) sum+=cSize[j];
-			o << tab << "X"<<i<<" <= X("<<sum-1<<" downto "<<sum-cSize[i]<<");"<<endl;
-			o << tab << "Y"<<i<<" <= Y("<<sum-1<<" downto "<<sum-cSize[i]<<");"<<endl;
-		}
-		//connect first assignments to second level of signals
-		for (int i=0;i<nbOfChunks;i++){
-			ostringstream xi,yi;
-			xi << "X"<<i;
-			yi << "Y"<<i;
-			o << tab << "sX"<<i<<" <= " << delaySignal(xi.str(), bufferedInputs)<<";"<<endl;
-			o << tab << "sY"<<i<<" <= " << delaySignal(yi.str(), bufferedInputs)<<";"<<endl;
-			if (i==0)
-			o << tab << "cin0 <= "<<delaySignal("Carry",bufferedInputs)<<";"<<endl;
-		}
-
-		//additions		
-		for (int i=0;i<nbOfChunks;i++){
-			ostringstream sxi,syi;
-			sxi << "sX"<<i;
-			syi << "sY"<<i;
-			if (i==0 && nbOfChunks>1)
-				o << tab << "cin"<<i+1<<"R"<<i<<" <= (\"0\" & sX"<<i<<") + (\"0\" & sY"<<i<<") + cin0;"<<endl;
-			else 
-				if (i<nbOfChunks-1)
-					o << tab << "cin"<<i+1<<"R"<<i<<" <= ( \"0\" & " << delaySignal(sxi.str(), i) << ")"
-					  << " + ( \"0\" & " << delaySignal(syi.str(),i)<< ")"
-					  << " + cin"<<i<<"R"<<i-1<<"_d("<<cSize[i-1]<<");"<<endl;
-		}
-
-		//assign the partial additions which will propagate to the result
-		for (int i=0;i<nbOfChunks;i++){
-			ostringstream sxi,syi;
-			sxi << "sX"<<i;
-			syi << "sY"<<i;
-			if (i<nbOfChunks-1)
-				o << tab << "R"<<i<<" <= cin"<<i+1<<"R"<<i<<"_d("<<cSize[i]-1<<" downto 0);"<<endl;
-			else{
-				o << tab << "R"<<i<<" <= "<< delaySignal(sxi.str(), i)
-				  << " + " << delaySignal(syi.str(), i);
-				if (nbOfChunks>1)				
-					o << " + cin"<<i<<"R"<<i-1<<"_d("<<cSize[i-1]<<");"<<endl;
-				else
-					o << " + cin0;"<<endl;
-			}
-		}
-		
-		//assign output by composing the result
-		o << tab << "R <= ";
-		for (int i=nbOfChunks-1;i>=0;i--){
-			ostringstream ri;
-			ri << "R"<<i;
-			if (i==0)
-				o << delaySignal(ri.str(), nbOfChunks-2-i)<<";"<<endl;
-			else
-				o << delaySignal(ri.str(),nbOfChunks-2-i)<<" & ";			
-		} 
-		o<<endl;
-
-		outputVHDLRegisters(o);
-	}
-	else{
-		o << tab << "R <= X + Y + Cin;" <<endl;
-	}
-	o << "end architecture;" << endl << endl;
 }
 
 
