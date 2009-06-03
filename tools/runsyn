@@ -151,7 +151,7 @@ run
 -resource_sharing YES
 -async_to_sync NO
 -use_dsp48 $DSP
--iobuf YES
+-iobuf NO
 -max_fanout 500
 -bufg 32
 -bufr 16
