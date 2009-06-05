@@ -163,8 +163,15 @@ void TestBench::outputVHDL(ostream& o, string name) {
 	o << tab << "begin" <<endl;
 	o << tab << tab << "wait for 10 ns; -- wait for reset to complete" <<endl;
 	currentOutputTime += 10;
-	o << tab << tab << "wait for "<< op_->getPipelineDepth()*10 <<" ns; -- wait for pipeline to flush" <<endl;
-	currentOutputTime += op_->getPipelineDepth()*10;
+	if (op_->getPipelineDepth() > 0){
+		o << tab << tab << "wait for "<< op_->getPipelineDepth()*10 <<" ns; -- wait for pipeline to flush" <<endl;
+		currentOutputTime += op_->getPipelineDepth()*10;
+	}
+	else{
+		o << tab << tab << "wait for "<< 2 <<" ns; -- wait for pipeline to flush" <<endl;
+		currentOutputTime += 2;
+	}
+	
 	for (int i = 0; i < tcl_.getNumberOfTestCases(); i++)
 	{
 //		o << tab << tab << "wait for 5 ns;" <<endl;
