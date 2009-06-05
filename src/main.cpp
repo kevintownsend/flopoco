@@ -159,11 +159,12 @@ static void usage(char *name){
 	cerr << "      Floating-point exponential function (NPY)\n";
 	cerr << "    FPLog wE wF\n";
 	cerr << "      Floating-point logarithm function\n";
+#if 0 // TODO!
 	cerr << "    OutputIEEE wEI wFI wEO wFO\n";
 	cerr << "      Conversion from FloPoCo to IEEE-754-like floating-point formats\n";
 	cerr << "    InputIEEE wEI wFI wEO wFO\n";
 	cerr << "      Conversion from IEEE-754-like to FloPoCo floating-point formats\n";
-
+#endif
 
 #ifdef HAVE_HOTBM
 	cerr << "    HOTBM function wI wO degree\n";
@@ -188,6 +189,12 @@ static void usage(char *name){
 	cerr << "    LNSSqrt wE wF\n";
 	cerr << "      LNS square root.\n";
 #endif // HAVE_LNS
+	
+
+	cerr << "    Collision wE wF opt n\n";
+	cerr << "       A collision detection operator, computes the predicate X²+Y²+Z²<R2\n";
+	cerr << "       opt: assemble FP operators if 0, optimized architecture if 1 \n";
+
 	cerr << "    TestBench n\n";
 	cerr << "       Behavorial test bench for the preceding operator\n";
 	cerr << "       This test bench will include standard tests, plus n random tests.\n";
