@@ -96,16 +96,36 @@ void InputIEEE::emulate(TestCase * tc)
 {
 	/* Get I/O values */
 	mpz_class svX = tc->getInputValue("X");
-
-	/* Compute correct value */
-	FPNumber fpx(wEI, wFI);
-	fpx = svX;
-	mpfr_t x, r;
+	mpz_class sgnX = (svX >> (wFI+wEI));
+	mpz_class expX = (svX >> wFI) & ((mpz_class(1)<<wEI)-1);
+	mpz_class fracX = svX & ((mpz_class(1)<<wFI)-1);
+	mpfr_t x;
 	mpfr_init2(x, 1+wFI);
-	mpfr_init2(r, 1+wFO); 
-	fpx.getMPFR(x);
+	
+	if(expX==0){ 
+		// 0 or subnormal
+		if(fracX==0){
+			mpfr_set_d(x, (sgnX == 1) ? -0.0 : +0.0, GMP_RNDN);
+		}
+		else { //subnormal
+			mpfr_set_z(x, fracX.get_mpz_t(), GMP_RNDN);
+			mpfr_mul_2si(x, x, -((1<<(wEI-1))-2) -wFI, GMP_RNDN); // TODO check
+		}
+	}
+	else if(expX==((mpz_class(1)<<wEI)-1)) {
+		if(fracX==0) 
+			mpfr_set_inf(x, (sgnX == 1) ? -1 : 1);
+		else 
+			mpfr_set_nan(x);
+	}
+	else { //normal number
+		mpz_class sigX = fracX + ((mpz_class(1)<<wFI));
+		mpfr_mul_2si(x, x,  expX - ((1<<(wEI-1))-1) -wFI,   GMP_RNDN);
 
-	mpfr_set(r, x, GMP_RNDN); ///TODO probably not enough
+	}
+	mpfr_t r;
+	mpfr_init2(r, 1+wFO); 
+	mpfr_set(r, x, GMP_RNDN);
 	FPNumber  fpr(wEO, wFO, r);
 
 	/* Set outputs */
@@ -114,6 +134,5 @@ void InputIEEE::emulate(TestCase * tc)
 
 	mpfr_clears(x, r, NULL);
 }
-
 
 

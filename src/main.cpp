@@ -923,6 +923,19 @@ bool parseCommandLine(int argc, char* argv[]){
 			addOperator(op);
 		}
 
+		else if (opname == "OutputIEEE")
+		{
+			int nargs = 4;
+			if (i+nargs > argc)
+				usage(argv[0]); // and exit
+			int wEI = checkStrictyPositive(argv[i++], argv[0]);
+			int wFI = checkStrictyPositive(argv[i++], argv[0]);
+			int wEO = checkStrictyPositive(argv[i++], argv[0]);
+			int wFO = checkStrictyPositive(argv[i++], argv[0]);
+			cerr << "> OutputIEEE: wEI=" << wEI << " wFI=" << wFI << " wEO=" << wEO << " wFO=" << wFO << endl;
+			op = new OutputIEEE(target, wEI, wFI, wEO, wFO);
+			addOperator(op);
+		}
 
 		else if (opname == "Collision")
 		{
