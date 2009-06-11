@@ -102,6 +102,7 @@ void InputIEEE::emulate(TestCase * tc)
 	mpfr_t x;
 	mpfr_init2(x, 1+wFI);
 	
+#if 0
 	if(expX==0){ 
 		// 0 or subnormal
 		if(fracX==0){
@@ -133,6 +134,7 @@ void InputIEEE::emulate(TestCase * tc)
 	tc->addExpectedOutput("R", svr);
 
 	mpfr_clears(x, r, NULL);
+#endif
 }
 
 
