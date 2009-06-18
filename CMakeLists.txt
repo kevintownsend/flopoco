@@ -129,6 +129,7 @@ ADD_EXECUTABLE(flopoco
  src/LZOC src/LZOCShifterSticky
  src/Shifters
  src/FPAdder
+ src/Fix2FP
  src/FPMultiplier
  src/FPSquarer
  src/FPDiv
@@ -191,6 +192,7 @@ ADD_EXECUTABLE(flopoco
  src/LZOC src/LZOCShifterSticky
  src/Shifters
  src/FPAdder
+ src/Fix2FP
  src/FPMultiplier
  src/FPSquarer
  src/FPDiv

@@ -48,6 +48,7 @@
 #include "FPMultiplier.hpp"
 #include "FPSquarer.hpp"
 #include "FPAdder.hpp"
+#include "Fix2FP.hpp"
 #include "FPDiv.hpp"
 #include "FPSqrt.hpp"
 #include "LongAcc.hpp"
@@ -131,6 +132,7 @@ static void usage(char *name){
 	//	cerr << "    Karatsuba wInX wInY \n";
 	//	cerr << "      integer multiplier of two integers X and Y of sizes wInX and wInY. For now the sizes must be equal \n";	
 	cerr << "    FPAdder wE wF\n";
+	cerr << "    Fix2FP MSB LSB wE wF\n";
 	cerr << "      Floating-point adder \n";
 	cerr << "    FPMultiplier wE wF\n";
 	cerr << "      Floating-point multiplier \n";
@@ -674,6 +676,21 @@ bool parseCommandLine(int argc, char* argv[]){
 				
 				cerr << "> FPAdder , wE="<<wE<<", wF="<<wF<<" \n";
 				op = new FPAdder(target, wE, wF, wE, wF, wE, wF);
+				addOperator(op);
+			}
+		}
+		else if(opname=="Fix2FP"){
+			int nargs = 4;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int MSB = atoi(argv[i++]);//checkStrictyPositive(argv[i++], argv[0]);
+				int LSB = atoi(argv[i++]);//checkStrictyPositive(argv[i++], argv[0]);
+				int wE = checkStrictyPositive(argv[i++], argv[0]);
+				int wF = checkStrictyPositive(argv[i++], argv[0]);
+				
+				cerr << "> Fix2FP , MSB="<<MSB<<", LSB="<<LSB<<", wE="<<wE<<", wF="<<wF<<" \n";
+				op = new Fix2FP(target, MSB, LSB, wE, wF);
 				addOperator(op);
 			}
 		}
