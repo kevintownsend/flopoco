@@ -66,7 +66,10 @@ Fix2FP::Fix2FP(Target* target, int MSBI, int LSBI, int wER, int wFR) :
 	
 	wF = wFR;
 	wE = wER;
-	MSB=MSBI;
+		if(MSBI>0)
+			MSB=MSBI+1;
+		else
+			MSB=MSBI;
 	LSB=LSBI;
 		
 			
