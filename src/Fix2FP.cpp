@@ -36,13 +36,27 @@
 #include <string.h>
 
 #include <gmp.h>
-#include <mpfr.h>
+
 
 #include <gmpxx.h>
 #include "utils.hpp"
 #include "Operator.hpp"
 
 #include "Fix2FP.hpp"
+
+#include <cstdlib>
+#include <iostream>
+#include <iomanip>
+#include <sstream>
+#include <string>
+#include <list>
+#include <map>
+#include <vector>
+#include <math.h>
+#include <locale>
+
+#include <stdio.h>
+#include <mpfr.h>
 
 using namespace std;
 extern vector<Operator*> oplist;
@@ -51,7 +65,7 @@ extern vector<Operator*> oplist;
 
 
 Fix2FP::Fix2FP(Target* target, int MSBI, int LSBI, int wER, int wFR) :
-	Operator(target), MSBI(MSB), LSBI(LSB), wER(wER), wFR(wFR) {
+	Operator(target), MSBI(MSBI), LSBI(LSBI), wER(wER), wFR(wFR) {
 
 	ostringstream name;
 
@@ -77,7 +91,7 @@ Fix2FP::Fix2FP(Target* target, int MSBI, int LSBI, int wER, int wFR) :
 	/* Set up the IO signals */
 		
 	addInput ("I", MSB-LSB);
-	addOutput("O", 3+wE+wF);
+	addFPOutput("O", wE,wF);
 	
 	/*	VHDL code description	*/
 	
@@ -447,18 +461,53 @@ Fix2FP::~Fix2FP() {
 }
 
 
-
-
-
-
-
-
-
-
 void Fix2FP::emulate(TestCase * tc)
 {
+	cout << "MSBI="<<MSBI << ", LSBI=" << LSBI << endl;
+	
+	/* Get I/O values */
+	mpz_class svX = tc->getInputValue("I");
+	cout << " " << unsignedBinary(svX, (MSBI-LSBI+1))<< endl;
+	
+	mpz_class tmpSUB = (1 << (MSBI-LSBI+1));
+	mpz_class tmpCMP = (1 << (MSBI-LSBI))-1;
+	cout << " " << unsignedBinary(tmpCMP, (MSBI-LSBI+1))<< endl;
+	cout << unsignedBinary(tmpSUB, (MSBI-LSBI+1)+1)<< endl;
+
+
+	if (svX > tmpCMP){ //negative number 
+		svX = svX - tmpSUB;
+		cout << "-" << unsignedBinary(-svX, (MSBI-LSBI+1))<< endl;
+	}
+	
+	mpfr_t x;
+	mpfr_init2(x, 10000); //init to infinite prec
+	mpfr_set_z(x, svX.get_mpz_t(), GMP_RNDN);
+	
+	mpfr_t cst, tmp2;
+	mpfr_init2(cst, 10000); //init to infinite prec
+	mpfr_init2(tmp2, 10000); //init to infinite prec
 	
 	
+	mpfr_set_ui(cst, 2 , GMP_RNDN);
+	mpfr_set_si(tmp2, LSBI , GMP_RNDN);
+	mpfr_pow(cst, cst, tmp2, GMP_RNDN);
+	
+	mpfr_mul(x, x, cst, GMP_RNDN);
+	
+    //mpfr_printf ("%.40R \n", GMP_RNDN, x);
+
+	mpfr_t myFP;
+	mpfr_init2(myFP, wFR);
+	mpfr_set(myFP, x, GMP_RNDN);
+	
+	FPNumber  fpr(wER, wFR, myFP);
+	mpz_class svR = fpr.getSignalValue();
+	tc->addExpectedOutput("O", svR);
+
+	// clean-up
+	mpfr_clears(x, myFP, NULL);
+
 }
 
 
