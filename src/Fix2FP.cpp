@@ -105,7 +105,7 @@ Fix2FP::Fix2FP(Target* target, int MSBI, int LSBI, int wER, int wFR) :
 		//code for the case when a rounding is required
 	int maximalOutputValue = (MSB-LSB)>wF+4? MSB-LSB:wF+4;
 	
-	lzocs		= new LZOCShifterSticky(target,inputWidth-1 , maximalOutputValue, intlog2(inputWidth), 0, -1);
+	lzocs		= new LZOCShifterSticky(target,inputWidth-1 , maximalOutputValue, intlog2(inputWidth-1), 0, -1);
 	lzocs->changeName(getName()+"_LZCS");
 	oplist.push_back(lzocs);
 	//inPortMap  (lzocs, "I", magnitudeRange.str());
@@ -126,7 +126,7 @@ Fix2FP::Fix2FP(Target* target, int MSBI, int LSBI, int wER, int wFR) :
 	
 	
 	vhdl<<declare("MSB2Signal",wE)<<"<="<<"CONV_STD_LOGIC_VECTOR("<<MSB-1<<","<<wE<<");"<<endl;
-	vhdl<<declare("zeroPadding4Exponent",wE- intlog2(inputWidth))<<"<="<<"CONV_STD_LOGIC_VECTOR(0,"<<wE- intlog2(inputWidth)<<");"<<endl;
+	vhdl<<declare("zeroPadding4Exponent",wE- intlog2(inputWidth-1))<<"<="<<"CONV_STD_LOGIC_VECTOR(0,"<<wE- intlog2(inputWidth-1)<<");"<<endl;
 	vhdl<<declare("valueExponent",wE)<<"<= not("<<use("zeroPadding4Exponent")<<" & "<<use("temporalExponent")<<");"<<endl;
 	//vhdl<<declare("oneBit",1)<<"<='1';"<<endl;
 	
@@ -321,7 +321,7 @@ Fix2FP::Fix2FP(Target* target, int MSBI, int LSBI, int wER, int wFR) :
 	
 	setCycleFromSignal("input2LZOC");
 	
-	lzocs		= new LZOCShifterSticky(target,inputWidth-1 , maximalOutputValue, intlog2(inputWidth), 0, -1);
+	lzocs		= new LZOCShifterSticky(target,inputWidth-1 , maximalOutputValue, intlog2(inputWidth-1), 0, -1);
 	lzocs->changeName(getName()+"_LZCS");
 	oplist.push_back(lzocs);
 	inPortMap  (lzocs, "I", use("input2LZOC"));
@@ -377,7 +377,7 @@ Fix2FP::Fix2FP(Target* target, int MSBI, int LSBI, int wER, int wFR) :
 	setCycleFromSignal("temporalExponent");
 
 	vhdl<<declare("MSB2Signal",wE)<<"<="<<"CONV_STD_LOGIC_VECTOR("<<MSB-1<<","<<wE<<");"<<endl;
-	vhdl<<declare("zeroPadding4Exponent",wE- intlog2(inputWidth))<<"<="<<"CONV_STD_LOGIC_VECTOR(0,"<<wE- intlog2(inputWidth)<<");"<<endl;
+	vhdl<<declare("zeroPadding4Exponent",wE- intlog2(inputWidth-1))<<"<="<<"CONV_STD_LOGIC_VECTOR(0,"<<wE- intlog2(inputWidth-1)<<");"<<endl;
 	vhdl<<declare("valueExponent",wE)<<"<= not("<<use("zeroPadding4Exponent")<<" & "<<use("temporalExponent")<<");"<<endl;
 	//vhdl<<declare("oneBit",1)<<"<='1';"<<endl;
 	
