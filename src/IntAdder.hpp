@@ -18,7 +18,7 @@ public:
 	 * @param[in] wIn    the with of the inputs and output
 	 * @param[in] inputDelays the delays for each input
 	 **/
-	IntAdder(Target* target, int wIn, map<string, double> inputDelays = emptyDelayMap);
+	IntAdder(Target* target, int wIn, map<string, double> inputDelays = emptyDelayMap, int aType = 0 );
 	/*IntAdder(Target* target, int wIn);
 	void cmn(Target* target, int wIn, map<string, double> inputDelays);*/
 	
@@ -37,6 +37,7 @@ private:
 	double maxInputDelay;             /**< the maximum delay between the inputs present in the map*/
 	int nbOfChunks;                   /**< the number of chunks that the addition will be split in */
 	int chunkSize_;                   /**< the suggested chunk size so that the addition can take place at the objective frequency*/
+	int lastChunkSize;
 	int *cSize;                       /**< array containing the chunk sizes for all nbOfChunks*/
 	int *cIndex;                       /**< array containing the indexes for all Chunks*/
 

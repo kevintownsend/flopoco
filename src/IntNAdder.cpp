@@ -167,7 +167,8 @@ Operator(target), wIn_(wIn), N_(N), inputDelays_(inputDelays)
 					vhdl << tab << declare(dname.str(),cSize[j]+1) << " <= (\"0\" & "<< use(uname1.str())<<range(cSize[j]-1,0) <<") +  (\"0\" & "<< use(uname2.str())<<range(cSize[j]-1,0)<<")";
 					if ((j==0)&&(l==1)) vhdl << " + Cin";
 					if (j>0) vhdl << " + " << use(uname3.str())<<"("<<cSize[j-1]<<") ";
-					vhdl << ";" << endl;				}
+					vhdl << ";" << endl;				
+				}
 				
 				//from this point we just add two numbers with internal propagations, so perform addition and then take care of the propagations in a loop-like manner
 				for (int propL=2; propL<=N-l; propL++)
@@ -177,10 +178,15 @@ Operator(target), wIn_(wIn), N_(N), inputDelays_(inputDelays)
 						uname << "sX"<<j<<"_"<<propL<<"_l"<<l-1;
 						vhdl << tab << declare(dname.str(), cSize[j]+1) << " <= " << use(uname.str()) << ";" <<endl;
 					}
+				if ((nbOfChunks>1) || (N>2)) { 
 					nextCycle();
-			currentLevel++;
+					currentLevel++;
+				}
 			}
 			////////////////////////////////////////////////
+			
+			if (verbose)
+				cout << "The number of chunks is: " << nbOfChunks << endl;
 			
 			for (int i=2; i<nbOfChunks+1; i++){
 				for (int j=i-1; j< nbOfChunks ; j++){
@@ -190,8 +196,8 @@ Operator(target), wIn_(wIn), N_(N), inputDelays_(inputDelays)
 					uname2 << "sX"<<j-1<<"_0_l"<<currentLevel-1;
 					vhdl << tab << declare(dname.str(), cSize[j]+1) << " <= ( \"0\" & " << use(uname1.str())<<range(cSize[j]-1,0) << ") + " << use(uname2.str()) << "(" << cSize[j-1] << ")" << ";" <<endl;
 				}
-			currentLevel++;
-			if (i<nbOfChunks) nextCycle();
+				currentLevel++;
+				if (i<nbOfChunks) nextCycle();
 			}
 			currentLevel--;
 			vhdl << tab << "R <= ";

@@ -566,6 +566,23 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(op);
 			}    
 		}
+		else if(opname=="MyIntAdder"){
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int wIn = checkStrictyPositive(argv[i++], argv[0]);
+				int type = atoi(argv[i++]);
+				cerr << "> IntAdder, wIn="<<wIn<<endl  ;
+				switch (type) {
+					case 0: op = new IntAdder(target, wIn, emptyDelayMap, 0); break; //fast and small
+					case 1: op = new IntAdder(target, wIn, emptyDelayMap, 1); break; //fast and medium
+					default: op = new IntAdder(target,wIn, emptyDelayMap, 0); break;
+				}
+				addOperator(op);
+			}    
+		}
+
 		else if(opname=="IntNAdder"){
 			int nargs = 2;
 			if (i+nargs > argc)
