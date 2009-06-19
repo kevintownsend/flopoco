@@ -55,6 +55,8 @@ public:
 		muxf5_          = 0.291e-9;
 		slice2sliceDelay_       = 0.436e-9;
 		xorcyCintoO_    = 0.273e-9;
+		
+		lutInputs_ = 4;
 	}
 
 	/** The destructor */
@@ -75,7 +77,7 @@ public:
 
 private:
 	double fastcarryDelay_; /**< The delay of the fast carry chain */
-	double lutDelay_;   /**< The delay between two LUTs */
+	double lutDelay_;       /**< The delay between two LUTs */
 	double elemWireDelay_;  /**< The elementary wire dealy (for computing the distant wire delay) */
 	
 	// Added by Bogdan

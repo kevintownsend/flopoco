@@ -39,6 +39,7 @@
 #include "LZOCShifterSticky.hpp"
 #include "IntAdder.hpp"
 #include "IntNAdder.hpp"
+#include "IntCompressorTree.hpp"
 #include "LongIntAdder.hpp"
 #include "IntDualSub.hpp"
 #include "IntMultiplier.hpp"
@@ -577,6 +578,19 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(op);
 			}    
 		}
+		else if(opname=="IntCompressorTree"){
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int wIn = checkStrictyPositive(argv[i++], argv[0]);
+				int N   = checkStrictyPositive(argv[i++], argv[0]);
+				cerr << "> IntCompressorTree, wIn="<<wIn<<" N="<<N<<endl  ;
+				op = new IntCompressorTree(target, wIn, N);
+				addOperator(op);
+			}    
+		}
+		
 		else if(opname=="LongIntAdder"){
 			int nargs = 1;
 			if (i+nargs > argc)
