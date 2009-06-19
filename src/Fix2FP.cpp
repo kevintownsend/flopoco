@@ -142,7 +142,7 @@ Fix2FP::Fix2FP(Target* target, int MSBI, int LSBI, int wER, int wFR) :
 	//Code for creating the exponent
 	
 	
-	vhdl<<declare("MSB2Signal",wE)<<"<="<<"CONV_STD_LOGIC_VECTOR("<<MSB-1<<","<<wE<<");"<<endl;
+	vhdl<<declare("MSB2Signal",wE)<<"<="<<"CONV_STD_LOGIC_VECTOR("<<MSB-2<<","<<wE<<");"<<endl;
 	vhdl<<declare("zeroPadding4Exponent",wE- intlog2(inputWidth-1))<<"<="<<"CONV_STD_LOGIC_VECTOR(0,"<<wE- intlog2(inputWidth-1)<<");"<<endl;
 	vhdl<<declare("valueExponent",wE)<<"<= not("<<use("zeroPadding4Exponent")<<" & "<<use("temporalExponent")<<");"<<endl;
 	//vhdl<<declare("oneBit",1)<<"<='1';"<<endl;
@@ -212,23 +212,26 @@ Fix2FP::Fix2FP(Target* target, int MSBI, int LSBI, int wER, int wFR) :
 	//syncCycleFromSignal("tempFractionResult");
 	setCycleFromSignal("temporalFraction");
 	
-	vhdl<<declare("tfr",sizeFractionPlusOne) <<"<="<<use("temporalFraction")<<range(maximalOutputValue-1,maximalOutputValue-sizeFractionPlusOne)<<";"<<endl;
+	//vhdl<<declare("tfr",sizeFractionPlusOne) <<"<="<<use("temporalFraction")<<range(maximalOutputValue-1,maximalOutputValue-sizeFractionPlusOne)<<";"<<endl;
 		
 	//vhdl<<declare("semn1",23)<<"<="<<"CONV_STD_LOGIC_VECTOR("<<5<<","<<bbb<<");"<<endl;
-	vhdl<<declare("sign2vector",sizeFractionPlusOne)<<"<="<<"(others=>"<<use("signSignal")<<");"<<endl;
-	vhdl<<declare("tempConvert",sizeFractionPlusOne)<<"<="<<use("sign2vector")<<" or "<<use("tfr")<<";"<<endl;
+	
+	vhdl<<declare("sign2vector",maximalOutputValue)<<"<="<<"(others=>"<<use("signSignal")<<");"<<endl;
+	vhdl<<declare("tempConvert",maximalOutputValue)<<"<="<<use("sign2vector")<<" xor "<<use("temporalFraction")<<";"<<endl;
+	vhdl<<declare("tempConvert0",maximalOutputValue+1)<<"<= '0' & "<<use("tempConvert")<<";"<<endl;
 	//vhdl<<declare("tempAddSign",sizeFractionPlusOne)<<"<="<<"CONV_STD_LOGIC_VECTOR("<< use("input")<<of(MSB-1)<<","<<sizeFractionPlusOne<<");"<<endl;
-	vhdl<<declare("tempPaddingAddSign",sizeFractionPlusOne-1)<<"<=(others=>'0');"<<endl;
-	vhdl<<declare("tempAddSign",sizeFractionPlusOne)<<"<="<<use("tempPaddingAddSign")<<" & "<<use("signSignal")<<";"<<endl;
+	vhdl<<declare("tempPaddingAddSign",maximalOutputValue)<<"<=(others=>'0');"<<endl;
+	vhdl<<declare("tempAddSign",maximalOutputValue+1)<<"<="<<use("tempPaddingAddSign")<<" & "<<use("signSignal")<<";"<<endl;
+	
 	
 		//Integer adder for obtaining the fraction value
 		
 	//vhdl<<declare("zeroBit",1)<<"<="<<" '0'; "<<endl;
 	
-	fractionConvert = new IntAdder(target,sizeFractionPlusOne);
+	fractionConvert = new IntAdder(target,maximalOutputValue+1);
 	fractionConvert->changeName(getName()+"_fractionConvert");
 	oplist.push_back(fractionConvert);
-	inPortMap  (fractionConvert, "X", use("tempConvert"));
+	inPortMap  (fractionConvert, "X", use("tempConvert0"));
 	inPortMap  (fractionConvert, "Y", use("tempAddSign"));
 	inPortMapCst(fractionConvert, "Cin", "'0'");
 	//inPortMap  (fractionConvert, "Cin", "zeroBit");
@@ -236,16 +239,16 @@ Fix2FP::Fix2FP(Target* target, int MSBI, int LSBI, int wER, int wFR) :
 	vhdl << instance(fractionConvert, "fractionConverter");
 	
 	syncCycleFromSignal("tempFractionResult");
-	
-	vhdl<<declare("fractionConverted",wF)<<"<="<<use("tempFractionResult")<<range(wF-1,0)<<";"<<endl;
+	vhdl<<declare("correctingExponent",1)<<"<="<<use("tempFractionResult")<<of(maximalOutputValue)<<";"<<endl;
+	vhdl<<declare("fractionConverted",wF)<<"<="<<use("tempFractionResult")<<range(maximalOutputValue-2,maximalOutputValue -wF-1)<<";"<<endl;
 	
 	//Zero Compare of the bits from the remainder of magnitude
 	
 	int sizeOfRemainder=maximalOutputValue-sizeFractionPlusOne-1;
 	
-	setCycleFromSignal("temporalFraction");
+	setCycleFromSignal("tempFractionResult");
 	vhdl<<declare("minusOne",sizeOfRemainder)<<"<="<<"CONV_STD_LOGIC_VECTOR("<<-1<<","<<sizeOfRemainder<<");"<<endl;
-	vhdl<<declare("fractionRemainder",sizeOfRemainder)<<"<="<<use("temporalFraction")<<range(sizeOfRemainder-1,0)<<";"<<endl;
+	vhdl<<declare("fractionRemainder",sizeOfRemainder)<<"<="<<use("tempFractionResult")<<range(sizeOfRemainder-1,0)<<";"<<endl;
 	//vhdl<<declare("zeroBit2",1)<<"<="<<" '0'; "<<endl;
 	
 	//cout<<"aici "<<sizeOfRemainder<<" tot aici";
@@ -262,20 +265,23 @@ Fix2FP::Fix2FP(Target* target, int MSBI, int LSBI, int wER, int wFR) :
 	
 	syncCycleFromSignal("zeroFractionResult");
 	//selection of mux 2
-	vhdl<<declare("zeroRemainder",1)<<"<= not( "<<"not ("<<use("temporalFraction")<<of(sizeOfRemainder-1)<<") and "<<use("zeroFractionResult")<<of(sizeOfRemainder-1)<<");"<<endl;
+	vhdl<<declare("zeroRemainder",1)<<"<= not( "<<"not ("<<use("tempFractionResult")<<of(sizeOfRemainder-1)<<") and "<<use("zeroFractionResult")<<of(sizeOfRemainder-1)<<");"<<endl;
 	
 	
 	// signals for Muxes
 	//selection of mux 1
-	vhdl<<declare("firstBitofRest",1)<<"<="<<use("temporalFraction")<<of(maximalOutputValue-sizeFractionPlusOne-1)<<";"<<endl;
+	//de luat semnalele dupa conversie
+	vhdl<<declare("firstBitofRest",1)<<"<="<<use("tempFractionResult")<<of(maximalOutputValue-wF-2)<<";"<<endl;
+	
 	//selection of mux 3
-	vhdl<<declare("lastBitOfFraction")<<"<="<<use("fractionConverted")<<of(0)<<";"<<endl;
+	vhdl<<declare("lastBitOfFraction")<<"<="<<use("tempFractionResult")<<of(maximalOutputValue-wF-1)<<";"<<endl;
 	
 	//vhdl<<"with "<<use("lastBitOfFraction")<<"select "<<endl<<declare("outputOfMux3",1)<<" <= '0' when '0', "<<endl<<"'1' when others;";
 	vhdl<<declare("outputOfMux3",1)<<"<="<<use("lastBitOfFraction")<<";"<<endl;
 	vhdl<<"with "<<use("zeroRemainder")<<" select "<<endl<<declare("outputOfMux2",1)<<" <= "<< use("outputOfMux3")<<" when '0', "<<endl<<"\t'1' when others;"<<endl;
 	vhdl<<"with "<<use("firstBitofRest")<<" select "<<endl<<declare("outputOfMux1",1)<<" <= "<< use("outputOfMux2")<<" when '1', "<<endl<<"\t'0' when others;"<<endl;
-	vhdl<<declare("zeroInput4Rounding",wF+wE+1)<<"<="<<"CONV_STD_LOGIC_VECTOR(0,"<<wF+wE+1<<");"<<endl;
+	//vhdl<<declare("zeroInput4Rounding",wF+wE+1)<<"<="<<"CONV_STD_LOGIC_VECTOR(0,"<<wF+wE+1<<");"<<endl;
+	vhdl<<declare("possibleCorrector4Rounding",wF+wE+1)<<"<="<<"CONV_STD_LOGIC_VECTOR(0,"<<wE<<") & "<<use("correctingExponent")<<" & "<<"CONV_STD_LOGIC_VECTOR(0,"<<wF<<");"<<endl;
 	vhdl<<declare("concatenationForRounding",wE+wF+1)<<"<= '0' &"<<use("convertedExponent")<<" & "<<use("fractionConverted")<<";"<<endl;
 	
 	
@@ -283,7 +289,7 @@ Fix2FP::Fix2FP(Target* target, int MSBI, int LSBI, int wER, int wFR) :
 	roundingApproximator->changeName(getName()+"roundingApproximator");
 	oplist.push_back(roundingApproximator);
 	inPortMap  (roundingApproximator, "X", use("concatenationForRounding"));
-	inPortMap  (roundingApproximator, "Y", use("zeroInput4Rounding"));
+	inPortMap  (roundingApproximator, "Y", use("possibleCorrector4Rounding"));
 	inPortMap  (roundingApproximator, "Cin", use("outputOfMux1"));
 	outPortMap (roundingApproximator, "R","roundedResult");
 	vhdl << instance(roundingApproximator, "roundingApproximator");
@@ -295,7 +301,7 @@ Fix2FP::Fix2FP(Target* target, int MSBI, int LSBI, int wER, int wFR) :
 	vhdl<<declare("convertedFractionAfterRounding",wF)<<"<="<<use("roundedResult")<<range(wF-1,0)<<";"<<endl;
 	
 	vhdl<<declare("MSBSelection",1)<<"<= "<<use("overflowSignal")<<" or "<<use("roundedResult")<<of(wF+wE)<<";"<<endl;
-	vhdl<<declare("LSBSelection",1)<<"<= "<<use("underflowSignal")<<" and not ( "<<use("zeroInput")<<" ) ;"<<endl;
+	vhdl<<declare("LSBSelection",1)<<"<= not("<<use("underflowSignal")<<" and not ( "<<use("zeroInput")<<" )) ;"<<endl;
 	vhdl<<declare("Selection",2)<<"<="<<use("MSBSelection")<<" & "<<use("LSBSelection")<<";"<<endl;
 	
 	//vhdl<< "with "<<use("Selection")<<"select"<<endl << declare("specialBits",2)<<" <= "<< " \"00\" when "..
@@ -364,17 +370,19 @@ Fix2FP::Fix2FP(Target* target, int MSBI, int LSBI, int wER, int wFR) :
 	vhdl<<declare("tfr",sizeFractionPlusOne) <<"<="<<use("temporalFraction")<<range(maximalOutputValue-1,maximalOutputValue-sizeFractionPlusOne)<<";"<<endl;
 		
 	vhdl<<declare("sign2vector",sizeFractionPlusOne)<<"<="<<"(others=>"<<use("signSignal")<<");"<<endl;
-	vhdl<<declare("tempConvert",sizeFractionPlusOne)<<"<="<<use("sign2vector")<<" or "<<use("tfr")<<";"<<endl;
+	vhdl<<declare("tempConvert",sizeFractionPlusOne)<<"<="<<use("sign2vector")<<" xor "<<use("tfr")<<";"<<endl;
 	//vhdl<<declare("tempAddSign",sizeFractionPlusOne)<<"<="<<"CONV_STD_LOGIC_VECTOR("<< use("signSignal")<<","<<sizeFractionPlusOne<<");"<<endl;
-	vhdl<<declare("tempPaddingAddSign",sizeFractionPlusOne-1)<<"<=(others=>'0');"<<endl;
-	vhdl<<declare("tempAddSign",sizeFractionPlusOne)<<"<="<<use("tempPaddingAddSign")<<" & "<<use("signSignal") <<";"<<endl;
+	vhdl<<declare("tempPaddingAddSign",sizeFractionPlusOne)<<"<=(others=>'0');"<<endl;
+	vhdl<<declare("tempAddSign",sizeFractionPlusOne+1)<<"<="<<use("tempPaddingAddSign")<<" & "<<use("signSignal") <<";"<<endl;
+	vhdl<<declare("tempConvert0",sizeFractionPlusOne+1)<<"<= '0' & "<<use("tempConvert")<<";"<<endl;
+	
 	
 		//Integer adder for obtaining the fraction value
 	
-	fractionConvert = new IntAdder(target,sizeFractionPlusOne);
+	fractionConvert = new IntAdder(target,sizeFractionPlusOne+1);
 	fractionConvert->changeName(getName()+"_fractionConvert");
 	oplist.push_back(fractionConvert);
-	inPortMap  (fractionConvert, "X", use("tempConvert"));
+	inPortMap  (fractionConvert, "X", use("tempConvert0"));
 	inPortMap  (fractionConvert, "Y", use("tempAddSign"));
 	//inPortMap  (fractionConvert, "X", "tempConvert");
 	//inPortMap  (fractionConvert, "Y", "tempAddSign");
@@ -384,7 +392,7 @@ Fix2FP::Fix2FP(Target* target, int MSBI, int LSBI, int wER, int wFR) :
 	
 	syncCycleFromSignal("tempFractionResult");
 	
-	
+	vhdl<<declare("correctingExponent",1)<<"<="<<use("tempFractionResult")<<of(sizeFractionPlusOne)<<";"<<endl;
 	vhdl<<declare("convertedFraction",wF)<<"<="<<use("tempFractionResult")<<range(wF-1,0)<<";"<<endl;
 	
 	
@@ -393,7 +401,7 @@ Fix2FP::Fix2FP(Target* target, int MSBI, int LSBI, int wER, int wFR) :
 
 	setCycleFromSignal("temporalExponent");
 
-	vhdl<<declare("MSB2Signal",wE)<<"<="<<"CONV_STD_LOGIC_VECTOR("<<MSB-1<<","<<wE<<");"<<endl;
+	vhdl<<declare("MSB2Signal",wE)<<"<="<<"CONV_STD_LOGIC_VECTOR("<<MSB-2<<","<<wE<<");"<<endl;
 	vhdl<<declare("zeroPadding4Exponent",wE- intlog2(inputWidth-1))<<"<="<<"CONV_STD_LOGIC_VECTOR(0,"<<wE- intlog2(inputWidth-1)<<");"<<endl;
 	vhdl<<declare("valueExponent",wE)<<"<= not("<<use("zeroPadding4Exponent")<<" & "<<use("temporalExponent")<<");"<<endl;
 	//vhdl<<declare("oneBit",1)<<"<='1';"<<endl;
@@ -429,18 +437,43 @@ Fix2FP::Fix2FP(Target* target, int MSBI, int LSBI, int wER, int wFR) :
 	
 	syncCycleFromSignal("convertedExponentBit");
 	
-	vhdl<<declare("convertedExponent",wE)<<"<= "<<use("convertedExponentBit")<<range(wE-1,0)<<";"<<endl;
+	vhdl<<declare("OUflowSignal1",2)<<"<="<<use("convertedExponentBit")<<range(wE,wE-1)<<";"<<endl;
+	
+	vhdl<<declare("underflowSignal",1)<<"<= '1' when ("<<use("sign4OU")<<" = '1' and "<<use("OUflowSignal1")<<" = \"01\" ) else '0' ;"<<endl;
+	vhdl<<declare("overflowSignal1",1)<<"<= '1' when ("<<use("sign4OU")<<" = '0' and "<<use("OUflowSignal1")<<" = \"10\" ) else '0' ;"<<endl;
 	
 	
-	vhdl<<declare("underflowSignal",1)<<"<= '1' when ("<<use("sign4OU")<<" = '1' and "<<use("convertedExponentBit")<<range(wE,wE-1)<<" = \"01\" ) else '0' ;"<<endl;
-	vhdl<<declare("overflowSignal",1)<<"<= '1' when ("<<use("sign4OU")<<" = '0' and "<<use("convertedExponentBit")<<range(wE,wE-1)<<" = \"10\" ) else '0' ;"<<endl;
+	vhdl<<declare("zeroInput4Exponent",wE+1)<<"<=(others=>'0');"<<endl;
+	vhdl<<declare("possibleConvertedExponent2",wE)<<"<= "<<use("convertedExponentBit")<<range(wE-1,0)<<";"<<endl;
+	vhdl<<declare("possibleConvertedExponent20",wE+1)<<"<= '0' & "<<use("possibleConvertedExponent2")<<";"<<endl;
+	vhdl<<declare("sign4OU2",1)<<"<="<<use("possibleConvertedExponent2")<<of(wE-1)<<";"<<endl;
+	
+	expCorrect = new IntAdder(target,wE+1);
+	expCorrect->changeName(getName()+"expCorrect");
+	oplist.push_back(expCorrect);
+	inPortMap  (expCorrect, "X", use("possibleConvertedExponent20"));
+	inPortMap  (expCorrect, "Y", use("zeroInput4Exponent"));
+	inPortMap  (expCorrect, "Cin", use("correctingExponent"));
+	outPortMap (expCorrect, "R","finalConvertedExponent");
+	vhdl << instance(expCorrect, "expCorrect");
+	
+	syncCycleFromSignal("finalConvertedExponent");
+	
+	
+	vhdl<<declare("convertedExponent",wE)<<"<= "<<use("finalConvertedExponent")<<range(wE-1,0)<<";"<<endl;
+	
+	vhdl<<declare("overflowSignal2",1)<<"<= '1' when ("<<use("sign4OU2")<<" = '0' and "<<use("finalConvertedExponent")<<range(wE,wE-1)<<" = \"10\" ) else '0' ;"<<endl;
+	
+	vhdl<<declare("overflowSignal",1)<<"<="<<use("overflowSignal2")<<" or "<<use("overflowSignal1")<<";"<<endl;
+	
+	
 		
 	
 	
 	//code for the special bits
 	
 	vhdl<<declare("MSBSelection",1)<<"<= "<<use("overflowSignal")<<";"<<endl;
-	vhdl<<declare("LSBSelection",1)<<"<= "<<use("underflowSignal")<<" and not ( "<<use("zeroInput")<<" ) ;"<<endl;
+	vhdl<<declare("LSBSelection",1)<<"<= not("<<use("underflowSignal")<<" and not ( "<<use("zeroInput")<<" ) ) ;"<<endl;
 	vhdl<<declare("Selection",2)<<"<="<<use("MSBSelection")<<" & "<<use("LSBSelection")<<";"<<endl;
 	
 	//vhdl<< "with "<<use("Selection")<<"select"<<endl << declare("specialBits",2)<<" <= "<< " \"00\" when "..
@@ -463,21 +496,21 @@ Fix2FP::~Fix2FP() {
 
 void Fix2FP::emulate(TestCase * tc)
 {
-	cout << "MSBI="<<MSBI << ", LSBI=" << LSBI << endl;
+	
 	
 	/* Get I/O values */
 	mpz_class svX = tc->getInputValue("I");
-	cout << " " << unsignedBinary(svX, (MSBI-LSBI+1))<< endl;
+	//cout << " " << unsignedBinary(svX, (MSBI-LSBI+1))<< endl;
 	
 	mpz_class tmpSUB = (1 << (MSBI-LSBI+1));
 	mpz_class tmpCMP = (1 << (MSBI-LSBI))-1;
-	cout << " " << unsignedBinary(tmpCMP, (MSBI-LSBI+1))<< endl;
-	cout << unsignedBinary(tmpSUB, (MSBI-LSBI+1)+1)<< endl;
+	//cout << " " << unsignedBinary(tmpCMP, (MSBI-LSBI+1))<< endl;
+	//cout << unsignedBinary(tmpSUB, (MSBI-LSBI+1)+1)<< endl;
 
 
 	if (svX > tmpCMP){ //negative number 
 		svX = svX - tmpSUB;
-		cout << "-" << unsignedBinary(-svX, (MSBI-LSBI+1))<< endl;
+		//cout << "-" << unsignedBinary(-svX, (MSBI-LSBI+1))<< endl;
 	}
 	
 	mpfr_t x;
@@ -495,11 +528,19 @@ void Fix2FP::emulate(TestCase * tc)
 	
 	mpfr_mul(x, x, cst, GMP_RNDN);
 	
-    //mpfr_printf ("%.40R \n", GMP_RNDN, x);
-
+	//cout << "x: ";
+        //mpfr_out_str (stdout, 2,  40, x, GMP_RNDN);
+	//cout << endl;
+   
+	
 	mpfr_t myFP;
-	mpfr_init2(myFP, wFR);
+	mpfr_init2(myFP, wFR+1);
 	mpfr_set(myFP, x, GMP_RNDN);
+	
+	//cout << "my: x";
+        //mpfr_out_str (stdout, 2,  40, myFP, GMP_RNDN);
+	//cout << endl;
+	
 	
 	FPNumber  fpr(wER, wFR, myFP);
 	mpz_class svR = fpr.getSignalValue();

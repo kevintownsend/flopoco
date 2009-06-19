@@ -62,8 +62,11 @@ private:
 	IntAdder* exponentConvertion;
 	/** The integer adder object for adding the biass to the exponent*/
 	IntAdder* exponentFinal;
-	/** The integer adder object for zero detectro of the input*/
+	/** The integer adder object for zero detector of the input*/
 	IntAdder* zeroD;
+	/** The integer adder object for correcting the exponent*/
+	IntAdder* expCorrect;
+	
 	
 	
 	
