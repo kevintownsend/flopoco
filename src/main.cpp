@@ -131,8 +131,9 @@ static void usage(char *name){
 	// not ready for release
 	//	cerr << "    Karatsuba wInX wInY \n";
 	//	cerr << "      integer multiplier of two integers X and Y of sizes wInX and wInY. For now the sizes must be equal \n";	
-	cerr << "    FPAdder wE wF\n";
 	cerr << "    Fix2FP MSB LSB wE wF\n";
+	cerr << "      Convert a fixed-point number in the bit range MSB...LSB into floating-point\n";
+	cerr << "    FPAdder wE wF\n";
 	cerr << "      Floating-point adder \n";
 	cerr << "    FPMultiplier wE wF\n";
 	cerr << "      Floating-point multiplier \n";
@@ -349,12 +350,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			else {
 				int w = atoi(argv[i++]);
 				mpz_class mpc(argv[i++]);
-#ifdef _WIN32
-//the c++ wrapper for GMP does not work
 				cerr << "> IntIntKCM , w="<<w<<", c="<<mpz2string(mpc)<<"\n";
-#else
-				cerr << "> IntIntKCM , w="<<w<<", c="<<mpc<<"\n";
-#endif
 				op = new IntIntKCM(target, w, mpc);
 				addOperator(op);
 			}        
@@ -366,12 +362,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			else {
 				int w = atoi(argv[i++]);
 				mpz_class mpc(argv[i++]);
-#ifdef _WIN32
-//the c++ wrapper for GMP does not work
 				cerr << "> IntConstMult , w="<<w<<", c="<<mpz2string(mpc)<<"\n";
-#else
-				cerr << "> IntConstMult , w="<<w<<", c="<<mpc<<"\n";
-#endif
 				op = new IntConstMult(target, w, mpc);
 				addOperator(op);
 			}        
@@ -389,18 +380,9 @@ bool parseCommandLine(int argc, char* argv[]){
 				int cst_sgn  = checkSign(argv[i++], argv[0]); 
 				int cst_exp  = atoi(argv[i++]); // TODO no check on this arg
 				mpz_class cst_sig(argv[i++]);
-#ifdef _WIN32
-//the c++ wrapper for GMP does not work
 				cerr << "> FPConstMult, wE_in="<<wE_in<<", wF_in="<<wF_in
 						 <<", wE_out="<<wE_out<<", wF_out="<<wF_out
 						 <<", cst_sgn="<<cst_sgn<<", cst_exp="<<cst_exp<< ", cst_sig="<<mpz2string(cst_sig)<<endl;
-			
-#else
-
-				cerr << "> FPConstMult, wE_in="<<wE_in<<", wF_in="<<wF_in
-						 <<", wE_out="<<wE_out<<", wF_out="<<wF_out
-						 <<", cst_sgn="<<cst_sgn<<", cst_exp="<<cst_exp<< ", cst_sig="<<cst_sig<<endl;
-#endif
 				op = new FPConstMult(target, wE_in, wF_in, wE_out, wF_out, cst_sgn, cst_exp, cst_sig);
 				addOperator(op);
 			}        
