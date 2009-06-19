@@ -473,7 +473,7 @@ Fix2FP::Fix2FP(Target* target, int MSBI, int LSBI, int wER, int wFR) :
 	//code for the special bits
 	
 	vhdl<<declare("MSBSelection",1)<<"<= "<<use("overflowSignal")<<";"<<endl;
-	vhdl<<declare("LSBSelection",1)<<"<= not("<<use("underflowSignal")<<" and not ( "<<use("zeroInput")<<" ) ) ;"<<endl;
+	vhdl<<declare("LSBSelection",1)<<"<= not("<<use("underflowSignal")<<" or  "<<use("zeroInput")<<"  ) ;"<<endl;
 	vhdl<<declare("Selection",2)<<"<="<<use("MSBSelection")<<" & "<<use("LSBSelection")<<";"<<endl;
 	
 	//vhdl<< "with "<<use("Selection")<<"select"<<endl << declare("specialBits",2)<<" <= "<< " \"00\" when "..
