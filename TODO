@@ -3,11 +3,9 @@ TODO file for FloPoCo
 
 General:
 pipeline HOTBM, FPExp, FPLog
-add FPSquareRoot
 
 Pipeline framework, Operator and Targets:
 * Clean up deprecated methods
-* uniformize declare and addInput, so that use() may be invoked on input signals
 * finetune Altera target
 
 
@@ -27,10 +25,11 @@ FPAdder
 * clean up the input parameters of FPAdder, for instance wEX and wEY should
 be replaced by wE
 * a few optimization opportunities, see the TODO inside FPAdder.cpp
+* implement a single-path version
 
 FPMultiplier:
 * Cleaning up and rewriting in the new pipeline framework
-* refine the DSP model in Targets/StratixII
+* refine the DSP model in Targets
 
 SumOfProducts
 * add test bench generation
@@ -52,8 +51,8 @@ Version 0.7 : FPExp
 Version 0.8 : DotProduct
 Version 0.9 : LNS operators, thanks to Sylvain Collange
 Version 0.11:   FPDiv, IntSquarer, new pipeline framework
--- we're here (faster than expected)
 Version 1.0   FPSqrt
+-- we're here (faster than expected)
 Version ???   FPAddSub (for FFT butterfly structure)
 Version ???   FixToFPUniformDist (2008 ASAP paper by Thomas with improvements)
 Version ???   FPSquarer
@@ -63,7 +62,7 @@ Version ???   FPSinCos
 Version ??    FPBoxMuller
 Version ???   Interval operators
 
-We'll leave 0.xx for 1.xx when all the FPLibrary operators are backported with working pipeline
+We have left  0.xx for 1.xx when all the basic operators have been backported with working pipeline
 
 
 
