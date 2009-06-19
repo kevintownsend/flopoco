@@ -501,16 +501,16 @@ void Fix2FP::emulate(TestCase * tc)
 	/* Get I/O values */
 	mpz_class svX = tc->getInputValue("I");
 	//cout << " " << unsignedBinary(svX, (MSBI-LSBI+1))<< endl;
-	
-	mpz_class tmpSUB = (1 << (MSBI-LSBI+1));
-	mpz_class tmpCMP = (1 << (MSBI-LSBI))-1;
-	//cout << " " << unsignedBinary(tmpCMP, (MSBI-LSBI+1))<< endl;
-	//cout << unsignedBinary(tmpSUB, (MSBI-LSBI+1)+1)<< endl;
+	//cout<<"width "<<MSBI-LSBI << endl;
+	mpz_class tmpSUB = (mpz_class(1) << (MSBI-LSBI+1));
+	mpz_class tmpCMP = (mpz_class(1)  << (MSBI-LSBI))-1;
+//	cout << " " << unsignedBinary(tmpCMP, (MSBI-LSBI+1))<< endl;
+//	cout << unsignedBinary(tmpSUB, (MSBI-LSBI+1)+1)<< endl;
 
 
 	if (svX > tmpCMP){ //negative number 
 		svX = svX - tmpSUB;
-		//cout << "-" << unsignedBinary(-svX, (MSBI-LSBI+1))<< endl;
+//		cout << "-" << unsignedBinary(-svX, (MSBI-LSBI+1))<< endl;
 	}
 	
 	mpfr_t x;
