@@ -45,10 +45,10 @@ Operator(target), wIn_(wIn), inputDelays_(inputDelays)
 	setName(name.str());
 
 	// Set up the IO signals
-	addInput ("X"  , wIn_);
-	addInput ("Y"  , wIn_);
-	addInput ("Cin", 1  );
-	addOutput("R"  , wIn_);
+	addInput ("X"  , wIn_, true);
+	addInput ("Y"  , wIn_, true);
+	addInput ("Cin", 1 );
+	addOutput("R"  , wIn_, 1 , true);
 
 	if (verbose) 
 		cout << printInputDelays( inputDelays );
@@ -137,7 +137,7 @@ Operator(target), wIn_(wIn), inputDelays_(inputDelays)
 			////////////////////////////////////////////////////////////////////////
 		
 			for (int i=0; i < nbOfChunks; i++){
-				vhdl << tab << declare (join("sum_l",0,"_idx",i), cSize[i]+1) << " <= " << "( \"0\" & " << use("X") << range(cIndex[i]-1, (i>0?cIndex[i-1]:0)) << ") + "
+				vhdl << tab << declare (join("sum_l",0,"_idx",i), cSize[i]+1, true) << " <= " << "( \"0\" & " << use("X") << range(cIndex[i]-1, (i>0?cIndex[i-1]:0)) << ") + "
 					                                                         << "( \"0\" & " << use("Y") << range(cIndex[i]-1, (i>0?cIndex[i-1]:0)) << ")" ;
 				if (i==0) vhdl << " + " << use("Cin");
 				vhdl << ";" << endl;
@@ -146,7 +146,7 @@ Operator(target), wIn_(wIn), inputDelays_(inputDelays)
 			for (int i=1; i <= nbOfChunks-1 ; i++){
 				nextCycle(); ///////////////////////////////////////////////////////
 				for (int j=i; j <= nbOfChunks-1; j++){
-					vhdl << tab << declare(join("sum_l",i,"_idx",j), cSize[j]+1) << " <= " << "( \"0\" & " << use(join("sum_l",i-1,"_idx",j))<<range(cSize[j]-1,0) << ") + "
+					vhdl << tab << declare(join("sum_l",i,"_idx",j), cSize[j]+1, true) << " <= " << "( \"0\" & " << use(join("sum_l",i-1,"_idx",j))<<range(cSize[j]-1,0) << ") + "
 						                                                                   << use(join("sum_l",i-1,"_idx",j-1))<<of(cSize[j-1])<<";"<<endl;
 					}
 			}
@@ -265,12 +265,12 @@ Operator(target), wIn_(wIn), inputDelays_(inputDelays)
 
 			//TODO - fill-in the implementation
 			for (int i=0; i < nbOfChunks; i++){
-				vhdl << tab << declare( join("x",i), cSize[i]) << " <= " << use("X") << range(cIndex[i]-1,(i>0?cIndex[i-1]:0)) << ";" << endl;
-				vhdl << tab << declare( join("y",i), cSize[i]) << " <= " << use("Y") << range(cIndex[i]-1,(i>0?cIndex[i-1]:0)) << ";" << endl;
+				vhdl << tab << declare( join("x",i), cSize[i],true) << " <= " << use("X") << range(cIndex[i]-1,(i>0?cIndex[i-1]:0)) << ";" << endl;
+				vhdl << tab << declare( join("y",i), cSize[i],true) << " <= " << use("Y") << range(cIndex[i]-1,(i>0?cIndex[i-1]:0)) << ";" << endl;
 			}
 			
 			for (int i=0; i < nbOfChunks; i++){
-				vhdl << tab << declare(join("sum",i),cSize[i]+1) << " <= " << "( \"0\" & "<< use(join("x",i)) << ") + " << "( \"0\" & "<< use(join("y",i)) << ")  + ";
+				vhdl << tab << declare(join("sum",i),cSize[i]+1,true) << " <= " << "( \"0\" & "<< use(join("x",i)) << ") + " << "( \"0\" & "<< use(join("y",i)) << ")  + ";
 				if (i==0)
 					vhdl << use("Cin");
 				else

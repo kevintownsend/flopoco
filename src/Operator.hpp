@@ -90,8 +90,9 @@ public:
 	 * Adds a signal of type Signal::in to the the I/O signal list.
 	 * @param name  the name of the signal
 	 * @param width the number of bits of the signal.
+	 * @param isBus describes if this signal is a bus, that is, an instance of std_logic_vector
 	 */
-	void addInput  (const std::string name, const int width=1);
+	void addInput  (const std::string name, const int width=1, const bool isBus=false);
 	
 
 	/** Adds an output signal to the operator.
@@ -99,8 +100,9 @@ public:
 	 * @param name  the name of the signal
 	 * @param width the number of bits of the signal.
 	 * @param numberOfPossibleOutputValues (optional, defaults to 1) set to 2 for a faithfully rounded operator for instance
+	 * @param isBus describes if this signal is a bus, that is, an instance of std_logic_vector
 	 */	
-	void addOutput(const std::string name, const int width=1, const int numberOfPossibleOutputValues=1);
+	void addOutput(const std::string name, const int width=1, const int numberOfPossibleOutputValues=1, const bool isBus=false);
 	
 
 	/** Adds a floating point input signal to the operator.

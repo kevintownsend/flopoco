@@ -31,26 +31,26 @@
 #include "utils.hpp"
 
 
-void Operator::addInput(const std::string name, const int width) {
+void Operator::addInput(const std::string name, const int width, const bool isBus) {
 	if (signalMap_.find(name) != signalMap_.end()) {
 		std::ostringstream o;
 		o << "ERROR in addInput, signal " << name<< " seems to already exist";
 		throw o.str();
 	}
-	Signal *s = new Signal(name, Signal::in, width) ; // default TTL and cycle OK
+	Signal *s = new Signal(name, Signal::in, width, isBus) ; // default TTL and cycle OK
 	s->setCycle(0);
 	ioList_.push_back(s);
 	signalMap_[name] = s ;
 	numberOfInputs_ ++;
 }
 
-void Operator::addOutput(const std::string name, const int width, const int numberOfPossibleOutputValues) {
+void Operator::addOutput(const std::string name, const int width, const int numberOfPossibleOutputValues, const bool isBus) {
 	if (signalMap_.find(name) != signalMap_.end()) {
 		std::ostringstream o;
 		o << "ERROR in addInput, signal " << name << " seems to already exist";
 		throw o.str();
 	}
-	Signal *s = new Signal(name, Signal::out, width) ;
+	Signal *s = new Signal(name, Signal::out, width, isBus) ;
 	s -> setNumberOfPossibleValues(numberOfPossibleOutputValues);
 	ioList_.push_back(s);
 	for(int i=0; i<numberOfPossibleOutputValues; i++) 
