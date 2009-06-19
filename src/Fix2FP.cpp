@@ -271,6 +271,10 @@ Fix2FP::Fix2FP(Target* target, int MSBI, int LSBI, int wER, int wFR) :
 	// signals for Muxes
 	//selection of mux 1
 	//de luat semnalele dupa conversie
+	
+	if(inputWidth>32&&target->frequencyMHz()>=250)
+		nextCycle();
+	
 	vhdl<<declare("firstBitofRest",1)<<"<="<<use("tempFractionResult")<<of(maximalOutputValue-wF-2)<<";"<<endl;
 	
 	//selection of mux 3
@@ -284,6 +288,14 @@ Fix2FP::Fix2FP(Target* target, int MSBI, int LSBI, int wER, int wFR) :
 	vhdl<<declare("possibleCorrector4Rounding",wF+wE+1)<<"<="<<"CONV_STD_LOGIC_VECTOR(0,"<<wE<<") & "<<use("correctingExponent")<<" & "<<"CONV_STD_LOGIC_VECTOR(0,"<<wF<<");"<<endl;
 	vhdl<<declare("concatenationForRounding",wE+wF+1)<<"<= '0' &"<<use("convertedExponent")<<" & "<<use("fractionConverted")<<";"<<endl;
 	
+ 	//~ if(inputWidth>32&&target->frequencyMHz()>=250)
+ 		//~ nextCycle();
+ 	
+  	vhdl<<declare("testC",wE+wF+1)<<"<="<<use("concatenationForRounding")<<";"<<endl;
+  	vhdl<<declare("testR",wE+wF+1)<<"<="<<use("possibleCorrector4Rounding")<<";"<<endl;
+ 	vhdl<<declare("testM",1)<<"<="<<use("outputOfMux1")<<";"<<endl;
+ 
+	
 	
 	roundingApproximator = new IntAdder(target,wF+wE+1);
 	roundingApproximator->changeName(getName()+"roundingApproximator");
@@ -291,6 +303,9 @@ Fix2FP::Fix2FP(Target* target, int MSBI, int LSBI, int wER, int wFR) :
 	inPortMap  (roundingApproximator, "X", use("concatenationForRounding"));
 	inPortMap  (roundingApproximator, "Y", use("possibleCorrector4Rounding"));
 	inPortMap  (roundingApproximator, "Cin", use("outputOfMux1"));
+	//~ inPortMap  (roundingApproximator, "X", use("testC"));
+	 //~ inPortMap  (roundingApproximator, "Y", use("testR"));
+	 //~ inPortMap  (roundingApproximator, "Cin", use("testM"));
 	outPortMap (roundingApproximator, "R","roundedResult");
 	vhdl << instance(roundingApproximator, "roundingApproximator");
 	
@@ -442,6 +457,7 @@ Fix2FP::Fix2FP(Target* target, int MSBI, int LSBI, int wER, int wFR) :
 	vhdl<<declare("underflowSignal",1)<<"<= '1' when ("<<use("sign4OU")<<" = '1' and "<<use("OUflowSignal1")<<" = \"01\" ) else '0' ;"<<endl;
 	vhdl<<declare("overflowSignal1",1)<<"<= '1' when ("<<use("sign4OU")<<" = '0' and "<<use("OUflowSignal1")<<" = \"10\" ) else '0' ;"<<endl;
 	
+	syncCycleFromSignal("correctingExponent");
 	
 	vhdl<<declare("zeroInput4Exponent",wE+1)<<"<=(others=>'0');"<<endl;
 	vhdl<<declare("possibleConvertedExponent2",wE)<<"<= "<<use("convertedExponentBit")<<range(wE-1,0)<<";"<<endl;
@@ -500,8 +516,9 @@ void Fix2FP::emulate(TestCase * tc)
 	
 	/* Get I/O values */
 	mpz_class svX = tc->getInputValue("I");
-	//cout << " " << unsignedBinary(svX, (MSBI-LSBI+1))<< endl;
-	//cout<<"width "<<MSBI-LSBI << endl;
+ 	//cout << " " << unsignedBinary(svX, (MSBI-LSBI+1))<< endl;
+ 	//cout<<"width "<<MSBI-LSBI << endl;
+
 	mpz_class tmpSUB = (mpz_class(1) << (MSBI-LSBI+1));
 	mpz_class tmpCMP = (mpz_class(1)  << (MSBI-LSBI))-1;
 //	cout << " " << unsignedBinary(tmpCMP, (MSBI-LSBI+1))<< endl;
