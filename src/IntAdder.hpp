@@ -17,10 +17,11 @@ public:
 	 * @param[in] target the target device
 	 * @param[in] wIn    the with of the inputs and output
 	 * @param[in] inputDelays the delays for each input
+	 * @param[in] aType	the type of adder we want to instantiate. 
+	 *			For now we have 2 versions available, 
+	 *			0 = fastest CPA, 1 = previous version
 	 **/
 	IntAdder(Target* target, int wIn, map<string, double> inputDelays = emptyDelayMap, int aType = 0 );
-	/*IntAdder(Target* target, int wIn);
-	void cmn(Target* target, int wIn, map<string, double> inputDelays);*/
 	
 	/**
 	 *  Destructor
