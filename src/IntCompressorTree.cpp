@@ -62,11 +62,14 @@ Operator(target), wIn_(wIn), N_(N), inputDelays_(inputDelays)
 	}
 
 	int lutSize = target->lutInputs();
-	int nbOfCompressors;
 	bool processing = true;
 	int nbOfInputs = N_;
 	int treeLevel = 1;
-	int inputsLastCompressor;
+
+//	a = new int[lutSize+1];
+//	sol = new int[lutSize+1];
+
+
 	
 	IntAdder *finalAdder = new IntAdder(target, wIn_);
 	oplist.push_back(finalAdder);	
@@ -95,49 +98,94 @@ Operator(target), wIn_(wIn), N_(N), inputDelays_(inputDelays)
 			vhdl << tab << "R <= " << use("myR") << ";" << endl;
 			processing = false;
 		}else{
-			nbOfCompressors = ceil( double(nbOfInputs) / double(lutSize) );
-			if ((nbOfCompressors * lutSize) == 	nbOfInputs)
-				inputsLastCompressor = lutSize;
-			else
-				inputsLastCompressor = nbOfInputs - (nbOfCompressors-1) * lutSize;
+			int a[16];    //possibly in the future LUTS may have up to 16 inputs
+			int sol[16];
+			int bestSol[16];
+	
+			for (int i=0;i <= lutSize; i++){
+				sol[i]=0;
+				bestSol[i]=0;
+			}
+			bestSol[0]=999;
+	
+			for (int i=lutSize; i>=1 ; i--){
+				a[i]= intlog2(double(i));
+			} 
+			a[0]=0;
+	
+			for (int i=1; i<= lutSize; i++)
+				cout << a[i] << ", "; 
+			cout << endl;
 
-				for (int i=0; i < nbOfCompressors ; i++){ //for each compressor stages in the level 
-					//form the summs 
-					ostringstream name;
-					int sumSize = intlog2( (i==nbOfCompressors-1? inputsLastCompressor : lutSize));					
+			bt(1, lutSize, nbOfInputs, sol, a, nbOfInputs, bestSol);
+	
+			cout << "BACKTRACKING FINISHED" << endl;
+			cout << endl;
+			cout << " Solution = ";
+			for (int i=1; i <=lutSize; i++)
+				cout << bestSol[i] << ", ";
+			cout << " having score " << bestSol[0] << endl;
 
-					for (int j=0; j < wIn_; j++){ //do the compressor computation
-						name.str("");
-						name << "level_" << treeLevel << "_compressor_"<<i<< "_column_" << j ;
-						vhdl << tab << declare(name.str(), sumSize, true) << " <= ";
-						if ( i < nbOfCompressors -1){
-							for (int k=lutSize*i; k< lutSize*(i+1); k++) {
+			int currentlyMapped = 0;
+			int currentOutput = 0;
+			int currentCompressor = 0;
+			for (int i=lutSize; i>=1; i--){
+				cout << "mapping compressors " << i << " to " << intlog2(i) << endl;
+				int sumSize = intlog2(i);			
+				for (int h=1; h<=bestSol[i]; h++){
+					cout << tab << "number " << h << endl;
+					if (i>2){
+						for (int j=0; j < wIn_; j++){ //do the compressor computation
+							name.str("");
+							name << "level_" << treeLevel << "_compressor_"<<currentCompressor<< "_column_" << j ;
+							vhdl << tab << declare(name.str(), sumSize, true) << " <= ";
+							for (int k=currentlyMapped; k<currentlyMapped+i; k++) {
 								name.str("");
 								name << "level_" << treeLevel-1 << "_sum_"<<k;
 								vhdl << "("	<< zeroGenerator(sumSize-1,0) << " & " << use(name.str())<<of(j)<<")";
-								if (k < lutSize*(i+1)-1)
+								if (k < currentlyMapped+i-1)
 									vhdl << " + ";
+								}
+								vhdl << ";" << endl;
 							}
-							vhdl << ";" << endl;
-						}else{
-							for (int k=lutSize*i; k< lutSize*i + inputsLastCompressor; k++) {
-								name.str("");
-								name << "level_" << treeLevel-1 << "_sum_"<<k;
-								vhdl << "("	<< zeroGenerator(sumSize-1,0) << " & " << use(name.str())<<of(j)<<")";
-								if (k < lutSize*i + inputsLastCompressor-1)
-									vhdl << " + ";
-							}
-							vhdl << ";" << endl;
-						}
+						currentCompressor++;
 					}
+					if (i == 2){
+						name.str("");
+						name << "level_" << treeLevel << "_compressor_"<<currentCompressor<< "_column_" << 0 ;
+						vhdl << tab << declare(name.str(), wIn_, true) << " <= ";
+						name.str("");
+						name << "level_" << treeLevel-1 << "_sum_"<<currentlyMapped;
+						vhdl << use(name.str()) << ";" << endl;
+
+						name.str("");
+						name << "level_" << treeLevel << "_compressor_"<<currentCompressor<< "_column_" << 1 ;
+						vhdl << tab << declare(name.str(), wIn_, true) << " <= ";
+						name.str("");
+						name << "level_" << treeLevel-1 << "_sum_"<<currentlyMapped+1;
+						vhdl << use(name.str()) << ";" << endl;
+						currentCompressor++;
+					}
+					if (i == 1){
+						name.str("");
+						name << "level_" << treeLevel << "_compressor_"<<currentCompressor<< "_column_" << 0 ;
+						vhdl << tab << declare(name.str(), wIn, true) << " <= ";
+						name.str("");
+						name << "level_" << treeLevel-1 << "_sum_"<<currentlyMapped;
+						vhdl << use(name.str()) << ";" << endl;
+						currentCompressor++;
+					}
+				
+				
 					//form the summs for the current compressor
+					if (i>2){
 						for (int m=0; m < sumSize; m++){
 							name.str("");
-							name << "level_" << treeLevel << "_sum_"<< i*intlog2(lutSize) + m;
+							name << "level_" << treeLevel << "_sum_"<< currentOutput + m;
 							vhdl << tab << declare (name.str(), wIn_, true) << " <= ";
 							for (int k=wIn_-1-m; k >= 0; k--)	{							
 								name.str("");//emptyName
-								name << "level_" << treeLevel << "_compressor_"<<i<< "_column_" << k ;
+								name << "level_" << treeLevel << "_compressor_"<<currentCompressor-1<< "_column_" << k ;
 								vhdl << use(name.str())<<of(m);
 								if (k!=0)
 									vhdl << " & ";
@@ -146,23 +194,127 @@ Operator(target), wIn_(wIn), N_(N), inputDelays_(inputDelays)
 								vhdl << " & " <<  zeroGenerator(m,0);
 							vhdl << ";" << endl;
 						}
+					}else{
+						if (i==2){
+							name.str("");
+							name << "level_" << treeLevel << "_sum_"<< currentOutput;
+							vhdl << tab << declare (name.str(), wIn_, true) << " <= ";
+							name.str("");//emptyName
+							name << "level_" << treeLevel << "_compressor_"<<currentCompressor-1<< "_column_" << 0 ;
+							vhdl << use(name.str())<<";"<<endl;
+							
+							name.str("");
+							name << "level_" << treeLevel << "_sum_"<< currentOutput+1;
+							vhdl << tab << declare (name.str(), wIn_, true) << " <= ";
+							name.str("");//emptyName
+							name << "level_" << treeLevel << "_compressor_"<<currentCompressor-1<< "_column_" << 1 ;
+							vhdl << use(name.str())<<";"<<endl;
+						}else
+							if (i==1){
+								name.str("");
+								name << "level_" << treeLevel << "_sum_"<< currentOutput;
+								vhdl << tab << declare (name.str(), wIn_, true) << " <= ";
+								name.str("");//emptyName
+								name << "level_" << treeLevel << "_compressor_"<<currentCompressor-1<< "_column_" << 0 ;
+								vhdl << use(name.str())<<";"<<endl;
+							}
 					
+					}
+					
+					currentlyMapped += i;
+					currentOutput += intlog2(i);
+				}
+			}
+			//form the sums
+			
+			nbOfInputs = bestSol[0];
+			treeLevel++;
+		}
+	}		
+}		
+
+
+bool IntCompressorTree::solution(int k, int n, int targetSum, int * sol, int * coef){
+	int val=0;
+	for (int i=1; i<=n; i++)
+		val+=sol[i]*i;
+	if ((k==n+1) && ( val==targetSum))
+		return true;
+	else
+		return false;
+}
+
+void IntCompressorTree::printSolution(int n, int * sol, int * coef, int *bestSol){
+	cout << endl << "solution !!! :"; 
+	for (int i=1; i<=n; i++)
+		cout << sol[i] << ", ";
+
+	int val=0;
+	for (int i=1; i<=n; i++)
+		val+=sol[i]*coef[i];
+		
+	cout << " score = " << val << " coeficinets=";
+	
+	if (val < bestSol[0]){
+		for (int i=1; i<=n; i++)
+			bestSol[i] = sol[i];
+		bestSol[0]=val;
+	}
+	
+	for (int i=1; i<=n ; i ++)
+		cout << coef[i] << "::";	
+
+	
+}
+
+bool IntCompressorTree::successor( int k, int sum, int * sol){
+	if (sol[k] < sum) {
+		sol[k]++;
+		return true;
+	}else
+		return false;
+}
+
+bool IntCompressorTree::valid(int k, int sum, int n, int * sol, int * coef){
+//	cout << "check valid " << endl;
+	int val = 0;
+	for (int i=1; i<= (k>n?n:k); i++)  
+		val+=sol[i]*coef[i];
+	
+//	cout << "end check" << endl;	
+	if ((val <= sum ) && (k<=n+1))
+		return true;
+	else
+		return false;
+}
+
+void IntCompressorTree::bt(int k, int n, int sum, int* sol, int* coef, int targetSum, int * bestSol){
+//	cout<<endl << "k=" << k << " === ";
+//	int val=0;
+//	for (int i=1; i<= (k>n?n:k); i++){
+//		val+= sol[i]* coef[i];
+//		cout << sol [ i ] << " : ";
+//	}
+//	cout << "current_sum=" << val << ", target_sum="<<targetSum;
+	
+	if (solution(k, n, targetSum, sol, coef))
+		printSolution(n, sol, coef, bestSol);
+	else{
+		sol[k]=-1;
+			while (successor(k, sum, sol)) { //to make more efficinet
+//				cout << "doing while with k = "<<k << " and sol[k]"<<sol[k] << endl;
+				if (valid(k,sum, n, sol, coef)){ 
+//					cout << tab << " go to k+1" << endl;
+					bt(k+1, n, sum, sol, coef, targetSum, bestSol);
 				}
 				
-			
-			cout << tab << "Level " << treeLevel << endl;
-			cout << tab << tab << "Inputs/level: " << nbOfInputs << endl;
-			cout << tab << tab << "Compressors: " << nbOfCompressors << endl;
-			cout << tab << tab << "InputsLastCompressor: " << inputsLastCompressor << endl;
-			
-			nbOfInputs = (nbOfCompressors-1)*intlog2(lutSize) + intlog2(inputsLastCompressor);
-			treeLevel++;
-			
-		}
-	} 
-	
-
+			}
+		
+	}
+//	cout << "return from recursion: k="<<k<<endl;
 }
+
+
 
 IntCompressorTree::~IntCompressorTree() {
 }

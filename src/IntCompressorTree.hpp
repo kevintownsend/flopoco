@@ -20,6 +20,12 @@ public:
 	 **/
 	IntCompressorTree(Target* target, int wIn, int N, map<string, double> inputDelays = emptyDelayMap);
 	
+	bool solution(int k, int n, int targetSum, int * sol, int * coef);
+	void printSolution(int n, int * sol, int * coef, int *bestSol);
+	bool successor( int k, int sum, int * sol);
+	bool valid(int k, int sum, int n, int * sol, int * coef);
+	void bt(int k, int n, int sum, int* sol, int* coef, int targetSum, int *bestSol);
+	
 	/**
 	 *  Destructor
 	 */
@@ -40,5 +46,8 @@ private:
 	int chunkSize_;                   /**< the suggested chunk size so that the addition can take place at the objective frequency*/
 	int *cSize;                       /**< array containing the chunk sizes for all nbOfChunks*/
 
+//	int *a;
+//	int *sol;
+	
 };
 #endif
