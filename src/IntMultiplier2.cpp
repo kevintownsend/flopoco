@@ -55,6 +55,7 @@ IntMultiplier2:: IntMultiplier2(Target* target, int wInX, int wInY) :
 	int chunksX, chunksY;
 	chunksX =  int(ceil( ( double(wInX) / 17.0 ) ));
 	chunksY =  int(ceil( ( double(wInY) / 17.0 ) ));
+	
 	if (verbose)
 		cout << "X splitted in "<< chunksX << " chunks and Y in " << chunksY << " chunks; " << endl;
 
@@ -68,7 +69,8 @@ IntMultiplier2:: IntMultiplier2(Target* target, int wInX, int wInY) :
 		vhdl << tab << declare("x1",17) << " <= " << use("sX") << range(33,17) << ";" << endl;
 		vhdl << tab << declare("y0",17) << " <= " << use("sY") << range(16,0)  << ";" << endl;
 		vhdl << tab << declare("y1",17) << " <= " << use("sY") << range(33,17) << ";" << endl;
-
+		
+		nextCycle();///////////
 
 		vhdl << tab << declare("p00",34) << " <= " << use("x0") << " * " << use("y0") << ";" << endl; 
 		nextCycle();
@@ -113,8 +115,8 @@ IntMultiplier2:: IntMultiplier2(Target* target, int wInX, int wInY) :
 				cout << "Perform swapping = " << swap << endl;
 			
 			if (swap){
-				vhdl << tab << declare("sX",17*chunksY) << " <= " << zeroGenerator(17*chunksY-wInY,0) << " & " << "Y" << ";" << endl;
-				vhdl << tab << declare("sY",17*chunksX) << " <= " << zeroGenerator(17*chunksX-wInX,0) << " & " << "X" << ";" << endl;
+				vhdl << tab << declare("sX",17*chunksX) << " <= " << zeroGenerator(17*chunksX-wInY,0) << " & " << "Y" << ";" << endl;
+				vhdl << tab << declare("sY",17*chunksY) << " <= " << zeroGenerator(17*chunksY-wInX,0) << " & " << "X" << ";" << endl;
 			}else{
 				vhdl << tab << declare("sX",17*chunksX) << " <= " << zeroGenerator(17*chunksX-wInX,0) << " & " << "X" << ";" << endl;
 				vhdl << tab << declare("sY",17*chunksY) << " <= " << zeroGenerator(17*chunksY-wInY,0) << " & " << "Y" << ";" << endl;
