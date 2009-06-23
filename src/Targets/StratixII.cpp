@@ -1,7 +1,7 @@
 /*
  * A model of Stratix II FPGA 
  *
- * Author : Florent de Dinechin
+ * Author : Florent de Dinechin, Sebastian Banescu
  *
  * This file is part of the FloPoCo project developed by the Arenaire
  * team at Ecole Normale Superieure de Lyon
@@ -26,7 +26,11 @@
 #include "../utils.hpp"
 
 double StratixII::adderDelay(int size) {
-  return lutDelay_  +  size * fastcarryDelay_; 
+  return (fdCtoQ_ + lut2_ + muxStoO_ + shareOutToCarryOut_ + 
+			((size-3) * fastcarryDelay_) + 
+			((size/8) * (innerLABcarryDelay_- fastcarryDelay_)) + 
+			((size/16) * (interLABcarryDelay_ - innerLABcarryDelay_)) + 
+			carryInToSumOut_ + ffDelay_); 
 };
 
 double StratixII::carryPropagateDelay() {
@@ -149,7 +153,7 @@ bool StratixII::suggestSubmultSize(int &x, int &y, int wInX, int wInY){
 	 	 
 bool StratixII::suggestSubaddSize(int &x, int wIn){
 
-	int chunkSize = (int)floor( (1./frequency() - lutDelay()) / carryPropagateDelay()); // 1 if no need for pipeline
+	int chunkSize = (int)floor( (1./frequency() - (fdCtoQ_ + lutDelay() + muxStoO_ + shareOutToCarryOut_ + carryInToSumOut_ + ffDelay_ + interLABcarryDelay_)) / carryPropagateDelay()); // 1 if no need for pipeline
 	x = chunkSize;		
 	if (x>0) return true;
 	else {
@@ -160,7 +164,10 @@ bool StratixII::suggestSubaddSize(int &x, int wIn){
 
 bool  StratixII::suggestSlackSubaddSize(int &x, int wIn, double slack){
 
-	int chunkSize = (int)floor( (1./frequency() - slack - lutDelay()) / carryPropagateDelay()); // 1 if no need for pipeline
+	int chunkSize = (int)floor( (1./frequency() - slack - (fdCtoQ_ + lutDelay() + muxStoO_ + shareOutToCarryOut_ + carryInToSumOut_ + ffDelay_ + interLABcarryDelay_)) / carryPropagateDelay()); // 1 if no need for pipeline
+	
+	//int chunkSize = 2 + (int)floor( (1./frequency() - slack - (fdCtoQ_ + slice2sliceDelay_ + lut2_ + muxcyStoO_ + xorcyCintoO_ + ffd_)) / muxcyCINtoO_ );
+	
 	x = chunkSize;		
 	if (x>0) return true;
 	else {
