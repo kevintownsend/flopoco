@@ -59,43 +59,6 @@ IntMultiplier2:: IntMultiplier2(Target* target, int wInX, int wInY) :
 	if (verbose)
 		cout << "X splitted in "<< chunksX << " chunks and Y in " << chunksY << " chunks; " << endl;
 
-
-	if ((wInX>17) && (wInX<=34) && (wInY>17) && (wInY<=34) ){ //this case is for a 2 x 2 chunk multiplier scheme
-		//sigle precision optimizations
-		vhdl << tab << declare("sX",34) << " <= " << zeroGenerator(34-wInX,0) << " & " << "X" << ";" << endl;
-		vhdl << tab << declare("sY",34) << " <= " << zeroGenerator(34-wInY,0) << " & " << "Y" << ";" << endl;
-		
-		vhdl << tab << declare("x0",17) << " <= " << use("sX") << range(16,0)  << ";" << endl;
-		vhdl << tab << declare("x1",17) << " <= " << use("sX") << range(33,17) << ";" << endl;
-		vhdl << tab << declare("y0",17) << " <= " << use("sY") << range(16,0)  << ";" << endl;
-		vhdl << tab << declare("y1",17) << " <= " << use("sY") << range(33,17) << ";" << endl;
-		
-		nextCycle();///////////
-
-		vhdl << tab << declare("p00",34) << " <= " << use("x0") << " * " << use("y0") << ";" << endl; 
-		nextCycle();
-		vhdl << tab << declare("p01",34) << " <= " << use("x0") << " * " << use("y1") << ";" << endl;
-		vhdl << tab << declare("ps01",35) << " <= " << "(\"0\" & " << use("p01") << ")" <<  " + " << use("p00")<<range(33,17) << ";" << endl; 
-		nextCycle();
-		vhdl << tab << declare("p11",34) << " <= " << use("x1") << " * " << use("y1") << ";" << endl;
-		vhdl << tab << declare("ps11",34) << " <= "<< use("p11") << " + " << use("ps01")<<range(34,17) << ";" << endl; 
-		vhdl << tab << declare("p10",34) << " <= " << use("x1") << " * " << use("y0") << ";" << endl;
-		nextCycle();
-		vhdl << tab << declare("operand1", 51) << " <= " << use("ps11") << " & " <<  use("ps01") << range(16,0) << ";" <<endl;
-		vhdl << tab << declare("operand2", 51) << " <= " << zeroGenerator(51-34,0) << " & " << use("p10") << ";" <<endl;
-
-		IntAdder* add =  new IntAdder(target, 51);
-		oplist.push_back(add);
-		
-		inPortMap (add, "X", "operand1");
-		inPortMap (add, "Y", "operand2");
-		inPortMapCst(add, "Cin", "'0'");
-		outPortMap(add, "R", "addResult");
-		vhdl << instance(add, "addition");
-		
-		syncCycleFromSignal("addResult");
-		vhdl << tab << "R <=" << use("addResult")<<range(2*wInX-1-17,0) << " & " << use("p00") << range(16,0) << ";" << endl;  
-	}else
 		if (chunksX + chunksY > 2) { // up to 17 x 17 bit on Virtex4 can be written as an "*" @ 400++ MHz 
 		// to be general version (parametrized etc) 
 			//TODO swap X and Y under certain conditions
@@ -115,11 +78,11 @@ IntMultiplier2:: IntMultiplier2(Target* target, int wInX, int wInY) :
 				cout << "Perform swapping = " << swap << endl;
 			
 			if (swap){
-				vhdl << tab << declare("sX",17*chunksX) << " <= " << zeroGenerator(17*chunksX-wInY,0) << " & " << "Y" << ";" << endl;
-				vhdl << tab << declare("sY",17*chunksY) << " <= " << zeroGenerator(17*chunksY-wInX,0) << " & " << "X" << ";" << endl;
+				vhdl << tab << declare("sX",17*chunksX) << " <= " << "Y" << " & " << zeroGenerator(17*chunksX-wInY,0) << ";" << endl;
+				vhdl << tab << declare("sY",17*chunksY) << " <= " << "X" << " & " << zeroGenerator(17*chunksY-wInX,0) << ";" << endl;
 			}else{
-				vhdl << tab << declare("sX",17*chunksX) << " <= " << zeroGenerator(17*chunksX-wInX,0) << " & " << "X" << ";" << endl;
-				vhdl << tab << declare("sY",17*chunksY) << " <= " << zeroGenerator(17*chunksY-wInY,0) << " & " << "Y" << ";" << endl;
+				vhdl << tab << declare("sX",17*chunksX) << " <= " << "X" << " & " << zeroGenerator(17*chunksX-wInX,0) << ";" << endl;
+				vhdl << tab << declare("sY",17*chunksY) << " <= " << "Y" << " & " << zeroGenerator(17*chunksY-wInY,0) << ";" << endl;
 			}
 			////////////////////////////////////////////////////
 			//SPLITTINGS
@@ -185,7 +148,12 @@ IntMultiplier2:: IntMultiplier2(Target* target, int wInX, int wInY) :
 
 				syncCycleFromSignal("addRes");
 		
-				vhdl << tab << "R <= " << use("addRes")<<range(wInX+wInY-1-17,0) << " & " <<  use("sum0Low") << ";" << endl;
+				if ((17*(chunksX+chunksY)) - wInX - wInY < 17){
+					vhdl << tab << "R <= " << use("addRes")<<range((17*(chunksX+chunksY-1))-1,0) << " & " <<  use("sum0Low")<<range(16, 16 + ((17*(chunksX+chunksY-1)) - wInX - wInY)+1) << ";" << endl;
+				}else{
+					vhdl << tab << "R <= " << use("addRes")<<range((17*(chunksX+chunksY-1))-1, ((17*(chunksX+chunksY-1)) - wInX - wInY)) << ";" << endl;
+				
+				}
 			}else{
 				vhdl << tab << "R <= " << use(join("sum",0))<<range(wInX+wInY-1,0) << ";" << endl;
 			}
