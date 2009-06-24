@@ -96,13 +96,18 @@ Operator(target), wIn_(wIn), opType_(opType), inputDelays_(inputDelays)
 		else{
 			int cS0; 
 			bufferedInputs=0;
-			int maxInAdd = ceil(((objectivePeriod - maxInputDelay) - target->lutDelay())/target->carryPropagateDelay()); 			
+			int maxInAdd;
+			target->suggestSlackSubaddSize(maxInAdd, wIn_, maxInputDelay);
+			//int maxInAdd = ceil(((objectivePeriod - maxInputDelay) - target->lutDelay())/target->carryPropagateDelay()); 			
 			cS0 = (maxInAdd<=wIn_?maxInAdd:wIn_);
 			if ((wIn_-cS0)>0)
 			{
 				int newWIn = wIn_-cS0;
 				target->suggestSubaddSize(chunkSize_,newWIn);
+				cout << "chunckSize" << chunkSize_ << endl;
+				cout << "newWIn" << newWIn << endl;
 				nbOfChunks = ceil( double(newWIn)/double(chunkSize_));
+				
 				cSize = new int[nbOfChunks+1];
 				cSize[0] = cS0;
 				cSize[nbOfChunks]=( (( (wIn_-cSize[0])%chunkSize_)==0)?chunkSize_:(wIn_-cSize[0])-(nbOfChunks-1)*chunkSize_);
