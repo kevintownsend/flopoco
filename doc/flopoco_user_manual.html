@@ -349,10 +349,10 @@ href="http://prunel.ccsd.cnrs.fr/ensl-00269219/">this article</a>.</p>
 
 <h3>Conversion operators</h3>
 <dl>
-	<dt><code> Fix2FP MSB LSB wE wF</code></dt>
-	<dd>Convert a fixed-point number in the bit range MSB...LSB (both
+	<dt><code> Fix2FP LSB MSB wE wF</code></dt>
+	<dd>Convert a 2's complement fixed-point number in the bit range MSB...LSB (both
 	included) into floating-point. Example: 
-	  <code>Fix2FP 31 0 8 23</code> converts an input integer into a single-precision number.
+	  <code>Fix2FP 0 31 8 23</code> converts an input integer into a single-precision number.
 	</dd>
 	<dt><code>InputIEEE wEI wFI wEO wFO</code></dt>
 	<dd>Conversion from IEEE-754 formats.  Use <code>InputIEEE 8 23 wEO

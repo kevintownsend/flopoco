@@ -130,8 +130,8 @@ static void usage(char *name){
 	// not ready for release
 	//	cerr << "    Karatsuba wInX wInY \n";
 	//	cerr << "      integer multiplier of two integers X and Y of sizes wInX and wInY. For now the sizes must be equal \n";	
-	cerr << "    Fix2FP MSB LSB wE wF\n";
-	cerr << "      Convert a fixed-point number in the bit range MSB...LSB (both included) into floating-point\n";
+	cerr << "    Fix2FP LSB MSB wE wF\n";
+	cerr << "      Convert a 2's compliment fixed-point number in the bit range MSB...LSB into floating-point\n";
 	cerr << "    FPAdder wE wF\n";
 	cerr << "      Floating-point adder \n";
 	cerr << "    FPMultiplier wE wF\n";
@@ -668,12 +668,12 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
-				int MSB = atoi(argv[i++]);//checkStrictyPositive(argv[i++], argv[0]);
 				int LSB = atoi(argv[i++]);//checkStrictyPositive(argv[i++], argv[0]);
+				int MSB = atoi(argv[i++]);//checkStrictyPositive(argv[i++], argv[0]);
 				int wE = checkStrictyPositive(argv[i++], argv[0]);
 				int wF = checkStrictyPositive(argv[i++], argv[0]);
 				
-				cerr << "> Fix2FP , MSB="<<MSB<<", LSB="<<LSB<<", wE="<<wE<<", wF="<<wF<<" \n";
+				cerr << "> Fix2FP, LSB="<<LSB<<", MSB="<<MSB<<", wE="<<wE<<", wF="<<wF<<" \n";
 				op = new Fix2FP(target, MSB, LSB, wE, wF);
 				addOperator(op);
 			}
