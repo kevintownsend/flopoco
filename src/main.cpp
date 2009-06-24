@@ -48,6 +48,7 @@
 #include "FPSquarer.hpp"
 #include "FPAdder.hpp"
 #include "Fix2FP.hpp"
+#include "apps/CoilInductance/CoordinatesTableX.hpp"
 #include "FPDiv.hpp"
 #include "FPSqrt.hpp"
 #include "LongAcc.hpp"
@@ -131,6 +132,7 @@ static void usage(char *name){
 	//	cerr << "    Karatsuba wInX wInY \n";
 	//	cerr << "      integer multiplier of two integers X and Y of sizes wInX and wInY. For now the sizes must be equal \n";	
 	cerr << "    Fix2FP LSB MSB wE wF\n";
+	cerr << "    CoordinatesTableX wIn LSB MSB \n";
 	cerr << "      Convert a 2's compliment fixed-point number in the bit range MSB...LSB into floating-point\n";
 	cerr << "    FPAdder wE wF\n";
 	cerr << "      Floating-point adder \n";
@@ -675,6 +677,19 @@ bool parseCommandLine(int argc, char* argv[]){
 				
 				cerr << "> Fix2FP, LSB="<<LSB<<", MSB="<<MSB<<", wE="<<wE<<", wF="<<wF<<" \n";
 				op = new Fix2FP(target, MSB, LSB, wE, wF);
+				addOperator(op);
+			}
+		}
+		else if(opname=="CoordinatesTableX"){
+			int nargs = 3;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int wIn = checkStrictyPositive(argv[i++], argv[0]);
+				int LSB = atoi(argv[i++]);
+				int MSB = atoi(argv[i++]);
+				cerr << "> CoordinatesTableX, wIn="<<wIn<<", LSB="<<LSB<<", MSB="<<MSB<<" \n";
+				op = new CoordinatesTableX(target, wIn,LSB, MSB);
 				addOperator(op);
 			}
 		}
