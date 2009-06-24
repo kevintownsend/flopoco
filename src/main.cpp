@@ -133,7 +133,7 @@ static void usage(char *name){
 	//	cerr << "    Karatsuba wInX wInY \n";
 	//	cerr << "      integer multiplier of two integers X and Y of sizes wInX and wInY. For now the sizes must be equal \n";	
 	cerr << "    Fix2FP MSB LSB wE wF\n";
-	cerr << "      Convert a fixed-point number in the bit range MSB...LSB into floating-point\n";
+	cerr << "      Convert a fixed-point number in the bit range MSB...LSB (both included) into floating-point\n";
 	cerr << "    FPAdder wE wF\n";
 	cerr << "      Floating-point adder \n";
 	cerr << "    FPMultiplier wE wF\n";
@@ -163,12 +163,10 @@ static void usage(char *name){
 	cerr << "      Floating-point exponential function (NPY)\n";
 	cerr << "    FPLog wE wF\n";
 	cerr << "      Floating-point logarithm function\n";
-#if 0 // TODO!
 	cerr << "    OutputIEEE wEI wFI wEO wFO\n";
 	cerr << "      Conversion from FloPoCo to IEEE-754-like floating-point formats\n";
 	cerr << "    InputIEEE wEI wFI wEO wFO\n";
 	cerr << "      Conversion from IEEE-754-like to FloPoCo floating-point formats\n";
-#endif
 
 #ifdef HAVE_HOTBM
 	cerr << "    HOTBM function wI wO degree\n";
