@@ -119,8 +119,8 @@ IntKaratsuba:: IntKaratsuba(Target* target, int wIn) :
 		vhdl << tab << declare("tk",36) << " <= " << use("tk_0") << " + " << use("p11") << ";" << endl;
 		vhdl << tab << declare("t2k_1",36) << " <= " << use("t2k_0") << " + " << use("p00") << ";" << endl;
 		vhdl << tab << declare("t3k",36) << " <= " << use("t3k_0") << " + " << use("p11") << ";" << endl;
-		vhdl << tab << declare("s1_1",34) << " <= " << use("p22")<<range(33,0)<< " + (\"0\" & " << use("t3k")<<range(34,17)<<");"<<endl;
 		nextCycle();////////////////////////////////////////////////////////////
+		vhdl << tab << declare("s1_1",34) << " <= " << use("p22")<<range(33,0)<< " + (\"0\" & " << use("t3k")<<range(34,17)<<");"<<endl;
 		vhdl << tab << declare("t2k",36) << " <= " << use("t2k_1") << " + " << use("p22") << ";" << endl;
 		vhdl << tab << declare("s0",35) << " <= ( \"0\" & " << use("p00")<<range(33,17)<<") + " << use("tk")<<range(34,0) << ";" << endl;
 		vhdl << tab << declare("s1",51) << " <= " << use("s1_1") << " & " << use("t3k")<<range(16,0) << ";" << endl;
@@ -134,7 +134,7 @@ IntKaratsuba:: IntKaratsuba(Target* target, int wIn) :
 		vhdl << tab << declare("finalSumLow_2",17) << " <= " << use("l5_0") << range(16,0) << ";" << endl;
 		vhdl << tab << declare("l6_0",27) << " <= " << use("l5_1")<< " + (\"0\" & " << use("l5_0")<<range(17,17) << ");" << endl;		
 		vhdl << tab << declare("l6_1",25) << " <= " << use("l5_2") << ";" << endl;
-		
+		nextCycle();////////////////////////////////////////////////////////////
 				
 		vhdl << tab << declare("finalSumLow_3",26) << " <= " << use("l6_0")<<range(25,0) << ";" << endl;
 		vhdl << tab << declare("finalSumLow_4",25) << " <= " << use("l6_1") << " + " << use("l6_0")<<of(26) << ";" << endl;
