@@ -43,7 +43,7 @@
 #include "LongIntAdder.hpp"
 #include "IntDualSub.hpp"
 #include "IntMultiplier.hpp"
-#include "Karatsuba.hpp"
+#include "IntKaratsuba.hpp"
 #include "FPMultiplier.hpp"
 #include "FPSquarer.hpp"
 #include "FPAdder.hpp"
@@ -626,15 +626,14 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(op);
 			}
 		}
-		else if(opname=="Karatsuba"){
-			int nargs = 2;
+		else if(opname=="IntKaratsuba"){
+			int nargs = 1;
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
-				int wInX = checkStrictyPositive(argv[i++], argv[0]);
-				int wInY = checkStrictyPositive(argv[i++], argv[0]);
-				cerr << "> Karatsuba , wInX="<<wInX<<", wInY="<<wInY<<"\n";
-				op = new Karatsuba(target, wInX, wInY);
+				int wIn = checkStrictyPositive(argv[i++], argv[0]);
+				cerr << "> IntKaratsuba , wIn="<<wIn<<"\n";
+				op = new IntKaratsuba(target, wIn);
 				addOperator(op);
 			}    
 		}   
