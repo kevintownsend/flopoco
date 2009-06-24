@@ -198,7 +198,6 @@ ADD_EXECUTABLE(flopoco
  src/division/SRT4Step
  src/FPSqrt
  src/squareroot/PolynomialTable src/squareroot/PolynomialTableCorrectRounded
- src/IntMult2
  src/LongAcc
  src/LongAcc2FP
  src/DotProduct
