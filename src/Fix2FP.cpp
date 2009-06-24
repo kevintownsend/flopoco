@@ -66,7 +66,7 @@ Fix2FP::Fix2FP(Target* target, int MSBI, int LSBI, int wER, int wFR) :
 	name<<"Fix2FP_"<<absLSB<<"_"<< absMSB <<"_"<<wER<<"_"<<wFR; 
 	setName(name.str()); 
 
-	setCopyrightString("Bogdan Pasca, Florent de Dinechin, Radu Tudoran (2009)");		
+	setCopyrightString("Bogdan Pasca, Radu Tudoran (2009)");		
 
 	//parameter set up
 	

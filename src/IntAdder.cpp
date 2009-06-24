@@ -41,6 +41,7 @@ IntAdder::IntAdder(Target* target, int wIn, map<string, double> inputDelays, int
 Operator(target), wIn_(wIn), inputDelays_(inputDelays)
 {
 	ostringstream name;
+	setCopyrightString("Bogdan Pasca (2008)");		
 	name << "IntAdder_" << wIn_<<"_f"<<target->frequencyMHz();
 	setName(name.str());
 

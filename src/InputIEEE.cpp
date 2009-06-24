@@ -46,6 +46,9 @@ extern vector<Operator*> oplist;
 InputIEEE::InputIEEE(Target* target, int wEI, int wFI, int wEO, int wFO, bool flushToZero) :
 	Operator(target), wEI(wEI), wFI(wFI), wEO(wEO), wFO(wFO), flushToZero(flushToZero){
 
+
+	setCopyrightString("Florent de Dinechin (2008)");		
+
 	ostringstream name;
 
 	name<<"InputIEEE_"<<wEI<<"_"<<wFI<<"_to_"<<wEO<<"_"<<wFO;
