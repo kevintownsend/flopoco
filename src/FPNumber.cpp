@@ -6,14 +6,14 @@ FPNumber::FPNumber(int wE, int wF)
 	: wE(wE), wF(wF)
 {
 	if (wE > 30)
-		throw "FPNumber::FPNumber: Using exponents larger than 30 bits is not supported.";
+		throw std::string("FPNumber::FPNumber: Using exponents larger than 30 bits is not supported.");
 }
 
 FPNumber::FPNumber(int wE, int wF, mpfr_t m)
 	: wE(wE), wF(wF)
 {
 	if (wE > 30)
-		throw "FPNumber::FPNumber: Using exponents larger than 30 bits is not supported.";
+		throw std::string("FPNumber::FPNumber: Using exponents larger than 30 bits is not supported.");
 	operator=(m);
 }
 
@@ -21,7 +21,7 @@ FPNumber::FPNumber(int wE, int wF, SpecialValue v)
   : wE(wE), wF(wF)
 {
 	if (wE > 30)
-		throw "FPNumber::FPNumber: Using exponents larger than 30 bits is not supported.";
+		throw std::string("FPNumber::FPNumber: Using exponents larger than 30 bits is not supported.");
 	switch(v)  {
 	case plusInfty: 
 		exception = 2;
