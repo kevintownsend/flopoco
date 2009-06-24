@@ -98,7 +98,11 @@ Fix2FP::Fix2FP(Target* target, int LSBI, int MSBI, int Signed,int wER, int wFR) 
 	
 	// code for the LZOCShifter part
 	
+	if(Signed!=0)
 	vhdl<<tab<<declare("signSignal",1)<<"<="<<use("input")<<of(MSB-1-LSB)<<";"<<endl;
+	else
+	vhdl<<tab<<declare("signSignal",1)<<"<= '0';"<<endl;
+	
 	vhdl<<tab<<declare("passedInput",inputWidth)<<"<="<<use("input")<<range(MSB-1 -LSB,0)<<";"<<endl;
 	vhdl<<tab<<declare("input2LZOC",inputWidth-1)<<"<="<<use("passedInput")<<range(MSB-2 -LSB,0)<<";"<<endl;
 	
@@ -124,10 +128,11 @@ Fix2FP::Fix2FP(Target* target, int LSBI, int MSBI, int Signed,int wER, int wFR) 
 	}
 	else
 	{
-		lzcs = new LZOCShifterSticky(target, inputWidth-1 , maximalOutputValue, intlog2(inputWidth-1), 0, 0);
+		
+		lzcs = new LZOCShifterSticky(target, inputWidth , maximalOutputValue, intlog2(inputWidth), 0, 0);
 		lzcs->changeName(getName()+"_LZCS");
 		oplist.push_back(lzcs);
-		inPortMap  (lzcs, "I", use("input2LZOC"));
+		inPortMap  (lzcs, "I", use("passedInput"));
 		outPortMap (lzcs, "Count","temporalExponent");
 		outPortMap (lzcs, "O","temporalFraction");
 		vhdl << instance(lzcs, "LZC_component");
@@ -140,9 +145,16 @@ Fix2FP::Fix2FP(Target* target, int LSBI, int MSBI, int Signed,int wER, int wFR) 
 	syncCycleFromSignal("temporalExponent");
 	
 	//Code for creating the exponent
-	
+	if(Signed!=0)
 	vhdl<<tab<<declare("MSB2Signal",wE)<<"<="<<"CONV_STD_LOGIC_VECTOR("<<MSB-2<<","<<wE<<");"<<endl;
+	else
+	vhdl<<tab<<declare("MSB2Signal",wE)<<"<="<<"CONV_STD_LOGIC_VECTOR("<<MSB-1<<","<<wE<<");"<<endl;
+	
+	if(Signed!=0)
 	vhdl<<tab<<declare("zeroPadding4Exponent",wE- intlog2(inputWidth-1))<<"<="<<"CONV_STD_LOGIC_VECTOR(0,"<<wE- intlog2(inputWidth-1)<<");"<<endl;
+	else
+	vhdl<<tab<<declare("zeroPadding4Exponent",wE- intlog2(inputWidth))<<"<="<<"CONV_STD_LOGIC_VECTOR(0,"<<wE- intlog2(inputWidth)<<");"<<endl;
+	
 	vhdl<<tab<<declare("valueExponent",wE)<<"<= not("<<use("zeroPadding4Exponent")<<" & "<<use("temporalExponent")<<");"<<endl;
 	
 	exponentConversion = new IntAdder(target,wE);
@@ -183,6 +195,8 @@ Fix2FP::Fix2FP(Target* target, int LSBI, int MSBI, int Signed,int wER, int wFR) 
 	
 	setCycleFromSignal("passedInput");
 	
+	if(Signed!=0)
+	{
 	vhdl<<tab<<declare("minusOne4ZD",MSB -LSB)<<"<="<<"CONV_STD_LOGIC_VECTOR("<<-1<<","<<MSB-LSB<<");"<<endl;
 	
 	zeroD = new IntAdder(target, MSB-LSB );
@@ -197,7 +211,25 @@ Fix2FP::Fix2FP(Target* target, int LSBI, int MSBI, int Signed,int wER, int wFR) 
 	syncCycleFromSignal("zeroDS");
 	
 	vhdl<<tab<<declare("zeroInput",1)<<"<= "<<use("zeroDS")<<of(MSB-LSB-1)<<" and not("<<use("signSignal")<<");"<<endl;
+	}
+	else
+	{
+	vhdl<<tab<<declare("minusOne4ZD",MSB -LSB+1)<<"<="<<"CONV_STD_LOGIC_VECTOR("<<-1<<","<<MSB-LSB+1<<");"<<endl;
+	vhdl<<tab<<declare("passedInputBit",MSB-LSB+1)<<"<= '0' & "<<use("passedInput")<<";"<<endl;
+	zeroD = new IntAdder(target, MSB-LSB +1);
+	zeroD->changeName(getName()+"zeroD");
+	oplist.push_back(zeroD);
+	inPortMap  (zeroD, "X", use("passedInputBit"));
+	inPortMap  (zeroD, "Y", "minusOne4ZD");
+	inPortMapCst(zeroD, "Cin", "'0'");
+	outPortMap (zeroD, "R","zeroDS");
+	vhdl << instance(zeroD, "zeroD");
 	
+	setCycleFromSignal("zeroDS");
+	
+	vhdl<<tab<<declare("zeroInput",1)<<"<= "<<use("zeroDS")<<of(MSB-LSB)<<" and not ("<<use("signSignal")<<");"<<endl;
+		
+	}
 	//code for the Convertion of the fraction
 	
 	setCycleFromSignal("temporalFraction");
@@ -316,7 +348,7 @@ Fix2FP::Fix2FP(Target* target, int LSBI, int MSBI, int Signed,int wER, int wFR) 
 		
 	//code for zero detector of the input
 
-	
+	if(Signed!=0){
 	vhdl<<tab<<declare("minusOne4ZD",MSB -LSB)<<"<="<<"CONV_STD_LOGIC_VECTOR("<<-1<<","<<MSB-LSB<<");"<<endl;
 	
 	zeroD = new IntAdder(target, MSB-LSB );
@@ -331,7 +363,25 @@ Fix2FP::Fix2FP(Target* target, int LSBI, int MSBI, int Signed,int wER, int wFR) 
 	setCycleFromSignal("zeroDS");
 	
 	vhdl<<tab<<declare("zeroInput",1)<<"<= "<<use("zeroDS")<<of(MSB-LSB-1)<<" and not ("<<use("signSignal")<<");"<<endl;
+	}
+	else
+	{
+	vhdl<<tab<<declare("minusOne4ZD",MSB -LSB+1)<<"<="<<"CONV_STD_LOGIC_VECTOR("<<-1<<","<<MSB-LSB+1<<");"<<endl;
+	vhdl<<tab<<declare("passedInputBit",MSB-LSB+1)<<"<= '0' & "<<use("passedInput")<<";"<<endl;
+	zeroD = new IntAdder(target, MSB-LSB +1);
+	zeroD->changeName(getName()+"zeroD");
+	oplist.push_back(zeroD);
+	inPortMap  (zeroD, "X", use("passedInputBit"));
+	inPortMap  (zeroD, "Y", "minusOne4ZD");
+	inPortMapCst(zeroD, "Cin", "'0'");
+	outPortMap (zeroD, "R","zeroDS");
+	vhdl << instance(zeroD, "zeroD");
+	
+	setCycleFromSignal("zeroDS");
+	
+	vhdl<<tab<<declare("zeroInput",1)<<"<= "<<use("zeroDS")<<of(MSB-LSB)<<" and not ("<<use("signSignal")<<");"<<endl;
 		
+	}
 	//code for the leading zeros/ones
 	
 	
@@ -354,10 +404,10 @@ Fix2FP::Fix2FP(Target* target, int LSBI, int MSBI, int Signed,int wER, int wFR) 
 	}
 	else
 	{
-		lzcs = new LZOCShifterSticky(target, inputWidth-1 , maximalOutputValue, intlog2(inputWidth-1), 0, 0);
+		lzcs = new LZOCShifterSticky(target, inputWidth , maximalOutputValue, intlog2(inputWidth), 0, 0);
 		lzcs->changeName(getName()+"_LZCS");
 		oplist.push_back(lzcs);
-		inPortMap  (lzcs, "I", use("input2LZOC"));
+		inPortMap  (lzcs, "I", use("passedInput"));
 		outPortMap (lzcs, "Count","temporalExponent");
 		outPortMap (lzcs, "O","temporalFraction");
 		vhdl << instance(lzcs, "LZC_component");
@@ -416,9 +466,16 @@ Fix2FP::Fix2FP(Target* target, int LSBI, int MSBI, int Signed,int wER, int wFR) 
 	//code for creating the exponent
 
 	setCycleFromSignal("temporalExponent");
-
+	if(Signed!=0)
 	vhdl<<tab<<declare("MSB2Signal",wE)<<"<="<<"CONV_STD_LOGIC_VECTOR("<<MSB-2<<","<<wE<<");"<<endl;
+	else
+	vhdl<<tab<<declare("MSB2Signal",wE)<<"<="<<"CONV_STD_LOGIC_VECTOR("<<MSB-1<<","<<wE<<");"<<endl;
+	
+	if(Signed!=0)
 	vhdl<<tab<<declare("zeroPadding4Exponent",wE- intlog2(inputWidth-1))<<"<="<<"CONV_STD_LOGIC_VECTOR(0,"<<wE- intlog2(inputWidth-1)<<");"<<endl;
+	else
+	vhdl<<tab<<declare("zeroPadding4Exponent",wE- intlog2(inputWidth))<<"<="<<"CONV_STD_LOGIC_VECTOR(0,"<<wE- intlog2(inputWidth)<<");"<<endl;
+	
 	vhdl<<tab<<declare("valueExponent",wE)<<"<= not("<<use("zeroPadding4Exponent")<<" & "<<use("temporalExponent")<<");"<<endl;
 	
 	exponentConversion = new IntAdder(target,wE);
@@ -452,7 +509,11 @@ Fix2FP::Fix2FP(Target* target, int LSBI, int MSBI, int Signed,int wER, int wFR) 
 	
 	vhdl<<tab<<declare("OUflowSignal1",2)<<"<="<<use("convertedExponentBit")<<range(wE,wE-1)<<";"<<endl;
 	
+	//if(Signed!=0)
 	vhdl<<tab<<declare("underflowSignal",1)<<"<= '1' when ("<<use("sign4OU")<<" = '1' and "<<use("OUflowSignal1")<<" = \"01\" ) else '0' ;"<<endl;
+	//else
+	//vhdl<<tab<<declare("underflowSignal",1)<<"<= '0' ;"<<endl;
+	
 	vhdl<<tab<<declare("overflowSignal1",1)<<"<= '1' when ("<<use("sign4OU")<<" = '0' and "<<use("OUflowSignal1")<<" = \"10\" ) else '0' ;"<<endl;
 	
 	syncCycleFromSignal("correctingExponent");
