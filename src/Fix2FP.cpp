@@ -436,42 +436,42 @@ Fix2FP::~Fix2FP() {
 void Fix2FP::emulate(TestCase * tc)
 {
 	
-	
-	/* Get I/O values */
-	mpz_class svX = tc->getInputValue("I");
- 	
-	mpz_class tmpSUB = (mpz_class(1) << (MSBI-LSBI+1));
-	mpz_class tmpCMP = (mpz_class(1)  << (MSBI-LSBI))-1;
+		/* Get I/O values */
+		mpz_class svX = tc->getInputValue("I");
+	 	
+		mpz_class tmpSUB = (mpz_class(1) << (MSBI-LSBI+1));
+		mpz_class tmpCMP = (mpz_class(1)  << (MSBI-LSBI))-1;
 
-	if (svX > tmpCMP){ //negative number 
-		svX = svX - tmpSUB;
-	}
+		if (Signed == 1)
+			if (svX > tmpCMP){ //negative number 
+				svX = svX - tmpSUB;
+			}
 	
-	mpfr_t x;
-	mpfr_init2(x, 10000); //init to infinite prec
-	mpfr_set_z(x, svX.get_mpz_t(), GMP_RNDN);
+		mpfr_t x;
+		mpfr_init2(x, 10000); //init to infinite prec
+		mpfr_set_z(x, svX.get_mpz_t(), GMP_RNDN);
 	
-	mpfr_t cst, tmp2;
-	mpfr_init2(cst, 10000); //init to infinite prec
-	mpfr_init2(tmp2, 10000); //init to infinite prec
+		mpfr_t cst, tmp2;
+		mpfr_init2(cst, 10000); //init to infinite prec
+		mpfr_init2(tmp2, 10000); //init to infinite prec
 	
 	
-	mpfr_set_ui(cst, 2 , GMP_RNDN);
-	mpfr_set_si(tmp2, LSBI , GMP_RNDN);
-	mpfr_pow(cst, cst, tmp2, GMP_RNDN);
+		mpfr_set_ui(cst, 2 , GMP_RNDN);
+		mpfr_set_si(tmp2, LSBI , GMP_RNDN);
+		mpfr_pow(cst, cst, tmp2, GMP_RNDN);
 	
-	mpfr_mul(x, x, cst, GMP_RNDN);
+		mpfr_mul(x, x, cst, GMP_RNDN);
 	
-	mpfr_t myFP;
-	mpfr_init2(myFP, wFR+1);
-	mpfr_set(myFP, x, GMP_RNDN);
+		mpfr_t myFP;
+		mpfr_init2(myFP, wFR+1);
+		mpfr_set(myFP, x, GMP_RNDN);
 	
-	FPNumber  fpr(wER, wFR, myFP);
-	mpz_class svR = fpr.getSignalValue();
-	tc->addExpectedOutput("O", svR);
+		FPNumber  fpr(wER, wFR, myFP);
+		mpz_class svR = fpr.getSignalValue();
+		tc->addExpectedOutput("O", svR);
 
-	// clean-up
-	mpfr_clears(x, myFP, NULL);
+		// clean-up
+		mpfr_clears(x, myFP, NULL);
 
 }
 
