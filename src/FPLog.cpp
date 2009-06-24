@@ -417,6 +417,7 @@ void FPLog::buildRandomTestCases(TestCaseList* tcl, int n){
 
 	TestCase *tc;
 	mpz_class a;
+	mpz_class normalExn = mpz_class(1)<<(wE+wF+1);
 
 	for (int i = 0; i < n; i++) {
 		tc = new TestCase(this); 
@@ -424,11 +425,11 @@ void FPLog::buildRandomTestCases(TestCaseList* tcl, int n){
 		if ((i & 7) == 0)
 			a = getLargeRandom(wE+wF+3);
 		else if ((i & 7) == 1) // exponent of 1
-			a  = getLargeRandom(wF) + ((((mpz_class(1)<<(wE-1))-1)) << wF); 
+			a  = getLargeRandom(wF) + ((((mpz_class(1)<<(wE-1))-1)) << wF) + normalExn; 
 		else if ((i & 7) == 2) // exponent of 0.5
-			a  = getLargeRandom(wF) + ((((mpz_class(1)<<(wE-1))-2)) << wF); 
+			a  = getLargeRandom(wF) + ((((mpz_class(1)<<(wE-1))-2)) << wF) + normalExn; 
 		else
-			a  = getLargeRandom(wE+wF) + (mpz_class(1)<<(wE+wF+1)); // 010xxxxxx
+			a  = getLargeRandom(wE+wF)  + normalExn; // 010xxxxxx
 		
 		tc->addInput("X", a);
 		/* Get correct outputs */
