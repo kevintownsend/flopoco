@@ -8,6 +8,16 @@ Pipeline framework, Operator and Targets:
 * Clean up deprecated methods
 * finetune Altera target
 
+FPAdder
+* clean up the input parameters of FPAdder, for instance wEX and wEY should
+be replaced by wE
+* a few optimization opportunities, see the TODO inside FPAdder.cpp
+* implement a single-path version
+
+FPMultiplier:
+* Cleaning up and rewriting in the new pipeline framework
+* refine the DSP model in Targets
+
 
 ConstMult:
 * upgrade to the new pipeline framework
@@ -21,16 +31,6 @@ ConstMult:
 * compare with Spiral.net
 * Implement the continued fraction stuff for FPCRConstMult
 
-FPAdder
-* clean up the input parameters of FPAdder, for instance wEX and wEY should
-be replaced by wE
-* a few optimization opportunities, see the TODO inside FPAdder.cpp
-* implement a single-path version
-
-FPMultiplier:
-* Cleaning up and rewriting in the new pipeline framework
-* refine the DSP model in Targets
-
 SumOfProducts
 * add test bench generation
 
@@ -41,7 +41,8 @@ General
 * Doxygenize while it's not too late
 
 Tentative roadmap 
-(version number count, more or less, the number of working operators):
+(minor version number count, more or less, the number of working operators. 
+We have left  0.xx for 1.xx when all the basic operators have been backported with working pipeline):
 
 Version 0.1: IntConstMult, FPConstMult, FPCRConstMult
 Version 0.4: LongAccumulator, FPMultiplier
@@ -51,18 +52,16 @@ Version 0.7 : FPExp
 Version 0.8 : DotProduct
 Version 0.9 : LNS operators, thanks to Sylvain Collange
 Version 0.11:   FPDiv, IntSquarer, new pipeline framework
-Version 1.0   FPSqrt
+Version 1.15   FPSqrt FPSquarer InputIEEE Fix2FP 
 -- we're here (faster than expected)
 Version ???   FPAddSub (for FFT butterfly structure)
 Version ???   FixToFPUniformDist (2008 ASAP paper by Thomas with improvements)
-Version ???   FPSquarer
 Version ???   FPNorm2D
 Version ???   FPNorm3D
 Version ???   FPSinCos
 Version ??    FPBoxMuller
 Version ???   Interval operators
 
-We have left  0.xx for 1.xx when all the basic operators have been backported with working pipeline
 
 
 
