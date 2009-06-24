@@ -128,9 +128,8 @@ static void usage(char *name){
 	cerr << "      Integer adder, possibly pipelined\n";
 	cerr << "    IntMultiplier wInX wInY \n";
 	cerr << "      Integer multiplier of two integers X and Y of sizes wInX and wInY \n";	
-	// not ready for release
-	//	cerr << "    Karatsuba wInX wInY \n";
-	//	cerr << "      integer multiplier of two integers X and Y of sizes wInX and wInY. For now the sizes must be equal \n";	
+	cerr << "    IntKaratsuba wIn \n";
+	cerr << "      integer multiplier of two integers X and Y of sizes wIn. 17 < wIn <= 51 (for now) \n";	
 	cerr << "    Fix2FP LSB MSB Signed wE wF\n";
 	cerr << "    CoordinatesTableX wIn LSB MSB \n";
 	cerr << "      Convert a 2's compliment fixed-point number in the bit range MSB...LSB into floating-point\n";
