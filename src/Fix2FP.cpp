@@ -123,14 +123,14 @@ Fix2FP::Fix2FP(Target* target, int MSBI, int LSBI, int wER, int wFR) :
 	vhdl<<declare("zeroPadding4Exponent",wE- intlog2(inputWidth-1))<<"<="<<"CONV_STD_LOGIC_VECTOR(0,"<<wE- intlog2(inputWidth-1)<<");"<<endl;
 	vhdl<<declare("valueExponent",wE)<<"<= not("<<use("zeroPadding4Exponent")<<" & "<<use("temporalExponent")<<");"<<endl;
 	
-	exponentConvertion = new IntAdder(target,wE);
-	exponentConvertion->changeName(getName()+"exponentConvertion");
-	oplist.push_back(exponentConvertion);
-	inPortMap  (exponentConvertion, "X", use("MSB2Signal"));
-	inPortMap  (exponentConvertion, "Y", use("valueExponent"));
-	inPortMapCst(exponentConvertion, "Cin", "'1'");
-	outPortMap (exponentConvertion, "R","partialConvertedExponent");
-	vhdl << instance(exponentConvertion, "exponentConvertion");
+	exponentConversion = new IntAdder(target,wE);
+	exponentConversion->changeName(getName()+"exponentConversion");
+	oplist.push_back(exponentConversion);
+	inPortMap  (exponentConversion, "X", use("MSB2Signal"));
+	inPortMap  (exponentConversion, "Y", use("valueExponent"));
+	inPortMapCst(exponentConversion, "Cin", "'1'");
+	outPortMap (exponentConversion, "R","partialConvertedExponent");
+	vhdl << instance(exponentConversion, "exponentConversion");
 	
 	syncCycleFromSignal("partialConvertedExponent");
 	
@@ -244,14 +244,14 @@ Fix2FP::Fix2FP(Target* target, int MSBI, int LSBI, int wER, int wFR) :
  
 	
 	
-	roundingApproximator = new IntAdder(target,wF+wE+1);
-	roundingApproximator->changeName(getName()+"roundingApproximator");
-	oplist.push_back(roundingApproximator);
-	inPortMap  (roundingApproximator, "X", use("concatenationForRounding"));
-	inPortMap  (roundingApproximator, "Y", use("possibleCorrector4Rounding"));
-	inPortMap  (roundingApproximator, "Cin", use("outputOfMux1"));
-	outPortMap (roundingApproximator, "R","roundedResult");
-	vhdl << instance(roundingApproximator, "roundingApproximator");
+	roundingAdder = new IntAdder(target,wF+wE+1);
+	roundingAdder->changeName(getName()+"roundingAdder");
+	oplist.push_back(roundingAdder);
+	inPortMap  (roundingAdder, "X", use("concatenationForRounding"));
+	inPortMap  (roundingAdder, "Y", use("possibleCorrector4Rounding"));
+	inPortMap  (roundingAdder, "Cin", use("outputOfMux1"));
+	outPortMap (roundingAdder, "R","roundedResult");
+	vhdl << instance(roundingAdder, "roundingAdder");
 	
 	syncCycleFromSignal("roundedResult");
 	
@@ -352,14 +352,14 @@ Fix2FP::Fix2FP(Target* target, int MSBI, int LSBI, int wER, int wFR) :
 	vhdl<<declare("zeroPadding4Exponent",wE- intlog2(inputWidth-1))<<"<="<<"CONV_STD_LOGIC_VECTOR(0,"<<wE- intlog2(inputWidth-1)<<");"<<endl;
 	vhdl<<declare("valueExponent",wE)<<"<= not("<<use("zeroPadding4Exponent")<<" & "<<use("temporalExponent")<<");"<<endl;
 	
-	exponentConvertion = new IntAdder(target,wE);
-	exponentConvertion->changeName(getName()+"exponentConvertion");
-	oplist.push_back(exponentConvertion);
-	inPortMap  (exponentConvertion, "X", use("MSB2Signal"));
-	inPortMap  (exponentConvertion, "Y", use("valueExponent"));
-	inPortMapCst(exponentConvertion, "Cin", "'1'");
-	outPortMap (exponentConvertion, "R","partialConvertedExponent");
-	vhdl << instance(exponentConvertion, "exponentConvertion");
+	exponentConversion = new IntAdder(target,wE);
+	exponentConversion->changeName(getName()+"exponentConversion");
+	oplist.push_back(exponentConversion);
+	inPortMap  (exponentConversion, "X", use("MSB2Signal"));
+	inPortMap  (exponentConversion, "Y", use("valueExponent"));
+	inPortMapCst(exponentConversion, "Cin", "'1'");
+	outPortMap (exponentConversion, "R","partialConvertedExponent");
+	vhdl << instance(exponentConversion, "exponentConversion");
 	
 	syncCycleFromSignal("partialConvertedExponent");
 	

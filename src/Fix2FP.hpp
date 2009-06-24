@@ -55,11 +55,11 @@ private:
 	/** The integer adder object for subtraction from the MSB the position of the leading 1, for shifting the number */
 	IntAdder* fractionConvert;
 	/** The integer adder object for adding 1 to the fraction part*/
-	IntAdder* roundingApproximator;
+	IntAdder* roundingAdder;
 	/** The integer adder object for substracting 1 from the remainder of the fraction to establish if it is zero*/
 	IntAdder* oneSubstracter;
 	/** The integer adder object for transforming the Count of LZO to exponent*/
-	IntAdder* exponentConvertion;
+	IntAdder* exponentConversion;
 	/** The integer adder object for adding the biass to the exponent*/
 	IntAdder* exponentFinal;
 	/** The integer adder object for zero detector of the input*/
