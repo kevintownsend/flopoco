@@ -38,7 +38,6 @@
 #include "Operator.hpp"
 #include "IntAdder.hpp"
 #include "IntMultiplier.hpp"
-#include "IntMultiplier2.hpp"
 #include "IntSquarer.hpp"
 #include "FPSqrt.hpp"
 
@@ -177,8 +176,7 @@ FPSqrt::FPSqrt(Target* target, int wE, int wF, bool useDSP, bool correctlyRounde
 #else
 	if (correctRounding){
 #endif
-//		IntMultiplier2 * my_mul = new IntMultiplier2(target, (sizeOfX+1), coeffStorageSizes[1] + keepBits2);
-		IntMultiplier2 * my_mul = new IntMultiplier2(target, (sizeOfX+1), 34);
+		IntMultiplier * my_mul = new IntMultiplier(target, (sizeOfX+1), 34);
 		oplist.push_back(my_mul);
 		
 		vhdl << tab << declare("justASignal",34) << " <= " << zeroGenerator(15,0) << " & " << use("add1Res")<<range(coeffStorageSizes[1] + keepBits-1, keepBits - keepBits2) << ";" << endl;
@@ -194,7 +192,7 @@ FPSqrt::FPSqrt(Target* target, int wE, int wF, bool useDSP, bool correctlyRounde
 		
 		vhdl << tab << declare("prodXA1sumA2X",36) << " <= " << use("prodXA1sumA2X_large")<<range(35,0) << ";" << endl;
 	}else{
-		IntMultiplier2 * my_mul = new IntMultiplier2(target, (sizeOfX+1), coeffStorageSizes[1] + keepBits2);
+		IntMultiplier * my_mul = new IntMultiplier(target, (sizeOfX+1), coeffStorageSizes[1] + keepBits2);
 		oplist.push_back(my_mul);
 		inPortMapCst(my_mul,"X", use("lowX"));
 		inPortMapCst(my_mul,"Y", use("add1Res")+range(coeffStorageSizes[1] + keepBits-1, keepBits - keepBits2) );
