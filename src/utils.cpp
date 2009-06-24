@@ -79,32 +79,30 @@ string fp2bin(mpfr_t x, int wE, int wF){
 		return s.str();
 	}
 
+	// sign bit
+	string sign;
+	if(mpfr_sgn(mpx)<0) {
+		sign="1";
+		mpfr_neg(mpx, mpx, GMP_RNDN);
+	}
+	else
+		sign="0";
+
 	if(mpfr_zero_p (mpx)) {
-		s << "00";
-		for(int i=0; i<wE+wF+1; i++)
+		s << "00" << sign;
+		for(int i=0; i<wE+wF; i++)
 			s<< "0";
 		return s.str();
 	}
 
 	if(mpfr_inf_p (mpx)) {
-		s << "10";
-		for(int i=0; i<wE+wF+1; i++)
+		s << "10"<<sign;
+		for(int i=0; i<wE+wF; i++)
 			s<< "0";
 		return s.str();
 	}
 
 	// otherwise normal number
-	s << "01";
-
-	// sign bit
-	int sign = mpfr_sgn(mpx);
-
-	if(sign<0) {
-		mpfr_neg(mpx, mpx, GMP_RNDN);
-		s << "1";
-	}
-	else
-		s << "0";
 
 	// compute exponent and mantissa
 	mpz_class exponent = 0;
@@ -127,10 +125,24 @@ string fp2bin(mpfr_t x, int wE, int wF){
 	// add exponent bias
 	biased_exponent = exponent + (mpz_class(1)<<(wE-1)) - 1;
 
-	if ( biased_exponent<0 || biased_exponent>=(mpz_class(1)<<wE) )  {
-		cerr << "Exponent out of range in fp2bin, exiting"<<endl;
-		exit(EXIT_FAILURE);
+	if ( biased_exponent<0 )  {
+		cerr << "fp2bin warning: underflow, flushing to zero"<<endl;
+		s << "00" << sign;
+		for(int i=0; i<wE+wF; i++)
+			s<< "0";
+		return s.str();
 	}
+
+	if (biased_exponent >= (mpz_class(1)<<wE) )  {
+		cerr << "fp2bin warning: overflow, returning infinity"<<endl;
+		s << "10"<<sign;
+		for(int i=0; i<wE+wF; i++)
+			s<< "0";
+		return s.str();
+	}
+
+	// normal number
+	s << "01" << sign;
 
 	// exponent
 	s << unsignedBinary(biased_exponent, wE);
