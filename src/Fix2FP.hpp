@@ -26,7 +26,7 @@ public:
 	 * @param[in]		wER			the with of the exponent for the convertion result
 	 * @param[in]		wFR			the with of the fraction for the convertion result
 	 */
-	Fix2FP(Target* target, int MSBI, int LSBI, int wER, int wFR);
+	Fix2FP(Target* target, int LSBI, int MSBI, int Signed,int wER, int wFR);
 
 	/**
 	 * FPAdder destructor
@@ -44,14 +44,18 @@ private:
 	int MSBI; 
 	/** The LSB for the input */
 	int LSBI; 
+	/** are all numbers positive or not */
+	int Signed;
 	/** The width of the exponent for the output R */
 	int wER; 
 	/** The width of the fraction for the output R */
 	int wFR;
 	
 
-	/**The leading zero counter	*/
+	/**The leading sign counter	*/
 	LZOCShifterSticky* lzocs; 
+	/**The leading zero counter	*/
+	LZOCShifterSticky* lzcs; 
 	/** The integer adder object for subtraction from the MSB the position of the leading 1, for shifting the number */
 	IntAdder* fractionConvert;
 	/** The integer adder object for adding 1 to the fraction part*/
@@ -77,6 +81,7 @@ private:
 	int MSB;
 	int LSB;
 	int inputWidth;
+	
 
 };
 

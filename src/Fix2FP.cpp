@@ -56,10 +56,16 @@ extern vector<Operator*> oplist;
 #define DEBUGVHDL 0
 
 
-Fix2FP::Fix2FP(Target* target, int MSBI, int LSBI, int wER, int wFR) :
-	Operator(target), MSBI(MSBI), LSBI(LSBI), wER(wER), wFR(wFR) {
+Fix2FP::Fix2FP(Target* target, int LSBI, int MSBI, int Signed,int wER, int wFR) :
+	Operator(target), MSBI(MSBI), LSBI(LSBI), Signed(Signed),wER(wER), wFR(wFR) {
 
 	ostringstream name;
+	
+	if ((MSB > LSB)){
+		cerr << 
+			" Fix2FP: Input constraint LSB <= MSB not met."<<endl;
+		exit (EXIT_FAILURE);
+	}
 
 	long absMSB=MSBI>=0?MSBI:-MSBI;
 	long absLSB=LSBI>=0?LSBI:-LSBI;
@@ -88,13 +94,13 @@ Fix2FP::Fix2FP(Target* target, int MSBI, int LSBI, int wER, int wFR) :
 	
 	inputWidth=MSB-LSB;
 	
-	vhdl<<declare("input",inputWidth) << " <= I;"<<endl;
+	vhdl<<tab<<declare("input",inputWidth) << " <= I;"<<endl;
 	
 	// code for the LZOCShifter part
 	
-	vhdl<<declare("signSignal",1)<<"<="<<use("input")<<of(MSB-1-LSB)<<";"<<endl;
-	vhdl<<declare("passedInput",inputWidth)<<"<="<<use("input")<<range(MSB-1 -LSB,0)<<";"<<endl;
-	vhdl<<declare("input2LZOC",inputWidth-1)<<"<="<<use("passedInput")<<range(MSB-2 -LSB,0)<<";"<<endl;
+	vhdl<<tab<<declare("signSignal",1)<<"<="<<use("input")<<of(MSB-1-LSB)<<";"<<endl;
+	vhdl<<tab<<declare("passedInput",inputWidth)<<"<="<<use("input")<<range(MSB-1 -LSB,0)<<";"<<endl;
+	vhdl<<tab<<declare("input2LZOC",inputWidth-1)<<"<="<<use("passedInput")<<range(MSB-2 -LSB,0)<<";"<<endl;
 	
 	if((MSB-LSB)>(wF))
 	{
@@ -102,8 +108,10 @@ Fix2FP::Fix2FP(Target* target, int MSBI, int LSBI, int wER, int wFR) :
 		//code for the case when a rounding is required
 	int maximalOutputValue = (MSB-LSB)>wF+4? MSB-LSB:wF+4;
 	
+	if(Signed!=0)
+	{	
 	lzocs		= new LZOCShifterSticky(target,inputWidth-1 , maximalOutputValue, intlog2(inputWidth-1), 0, -1);
-	lzocs->changeName(getName()+"_LZCS");
+	lzocs->changeName(getName()+"_LZOCS");
 	oplist.push_back(lzocs);
 	inPortMap  (lzocs, "I", use("input2LZOC"));
 	inPortMap	(lzocs,"OZb",use("signSignal"));
@@ -112,16 +120,30 @@ Fix2FP::Fix2FP(Target* target, int MSBI, int LSBI, int wER, int wFR) :
 	vhdl << instance(lzocs, "LZOC_component");
 	
 	sizeExponentValue=lzocs->getCountWidth();
+	
+	}
+	else
+	{
+		lzcs = new LZOCShifterSticky(target, inputWidth-1 , maximalOutputValue, intlog2(inputWidth-1), 0, 0);
+		lzcs->changeName(getName()+"_LZCS");
+		oplist.push_back(lzcs);
+		inPortMap  (lzcs, "I", use("input2LZOC"));
+		outPortMap (lzcs, "Count","temporalExponent");
+		outPortMap (lzcs, "O","temporalFraction");
+		vhdl << instance(lzcs, "LZC_component");
+	
+		sizeExponentValue=lzcs->getCountWidth();
+	}
+	
 	sizeFractionPlusOne=wF+1;
 	
 	syncCycleFromSignal("temporalExponent");
 	
-	
 	//Code for creating the exponent
 	
-	vhdl<<declare("MSB2Signal",wE)<<"<="<<"CONV_STD_LOGIC_VECTOR("<<MSB-2<<","<<wE<<");"<<endl;
-	vhdl<<declare("zeroPadding4Exponent",wE- intlog2(inputWidth-1))<<"<="<<"CONV_STD_LOGIC_VECTOR(0,"<<wE- intlog2(inputWidth-1)<<");"<<endl;
-	vhdl<<declare("valueExponent",wE)<<"<= not("<<use("zeroPadding4Exponent")<<" & "<<use("temporalExponent")<<");"<<endl;
+	vhdl<<tab<<declare("MSB2Signal",wE)<<"<="<<"CONV_STD_LOGIC_VECTOR("<<MSB-2<<","<<wE<<");"<<endl;
+	vhdl<<tab<<declare("zeroPadding4Exponent",wE- intlog2(inputWidth-1))<<"<="<<"CONV_STD_LOGIC_VECTOR(0,"<<wE- intlog2(inputWidth-1)<<");"<<endl;
+	vhdl<<tab<<declare("valueExponent",wE)<<"<= not("<<use("zeroPadding4Exponent")<<" & "<<use("temporalExponent")<<");"<<endl;
 	
 	exponentConversion = new IntAdder(target,wE);
 	exponentConversion->changeName(getName()+"exponentConversion");
@@ -134,11 +156,11 @@ Fix2FP::Fix2FP(Target* target, int MSBI, int LSBI, int wER, int wFR) :
 	
 	syncCycleFromSignal("partialConvertedExponent");
 	
-	vhdl<<declare("biassOfOnes",wE-1)<<"<=CONV_STD_LOGIC_VECTOR("<<pow(2,wE)-1<<","<<wE-1<<");"<<endl;
-	vhdl<<declare("biassSignal",wE)<<"<="<<"'0' &"<<use("biassOfOnes")<<";"<<endl;
-	vhdl<<declare("biassSignalBit",wE+1)<<"<="<<"'0' &"<<use("biassSignal")<<";"<<endl;
-	vhdl<<declare("partialConvertedExponentBit",wE+1)<<"<= '0' & "<<use("partialConvertedExponent")<<";"<<endl;
-	vhdl<<declare("sign4OU",1)<<"<="<<use("partialConvertedExponent")<<of(wE-1)<<";"<<endl;
+	vhdl<<tab<<declare("biassOfOnes",wE-1)<<"<=CONV_STD_LOGIC_VECTOR("<<pow(2,wE)-1<<","<<wE-1<<");"<<endl;
+	vhdl<<tab<<declare("biassSignal",wE)<<"<="<<"'0' &"<<use("biassOfOnes")<<";"<<endl;
+	vhdl<<tab<<declare("biassSignalBit",wE+1)<<"<="<<"'0' &"<<use("biassSignal")<<";"<<endl;
+	vhdl<<tab<<declare("partialConvertedExponentBit",wE+1)<<"<= '0' & "<<use("partialConvertedExponent")<<";"<<endl;
+	vhdl<<tab<<declare("sign4OU",1)<<"<="<<use("partialConvertedExponent")<<of(wE-1)<<";"<<endl;
 	
 	exponentFinal = new IntAdder(target,wE+1);
 	exponentFinal->changeName(getName()+"exponentFinal");
@@ -151,17 +173,17 @@ Fix2FP::Fix2FP(Target* target, int MSBI, int LSBI, int wER, int wFR) :
 	
 	syncCycleFromSignal("convertedExponentBit");
 	
-	vhdl<<declare("convertedExponent",wE)<<"<= "<<use("convertedExponentBit")<<range(wE-1,0)<<";"<<endl;
+	vhdl<<tab<<declare("convertedExponent",wE)<<"<= "<<use("convertedExponentBit")<<range(wE-1,0)<<";"<<endl;
 	
 	
-	vhdl<<declare("underflowSignal",1)<<"<= '1' when ("<<use("sign4OU")<<" = '1' and "<<use("convertedExponentBit")<<range(wE,wE-1)<<" = \"01\" ) else '0' ;"<<endl;
-	vhdl<<declare("overflowSignal",1)<<"<= '1' when ("<<use("sign4OU")<<" = '0' and "<<use("convertedExponentBit")<<range(wE,wE-1)<<" = \"10\" ) else '0' ;"<<endl;
+	vhdl<<tab<<declare("underflowSignal",1)<<"<= '1' when ("<<use("sign4OU")<<" = '1' and "<<use("convertedExponentBit")<<range(wE,wE-1)<<" = \"01\" ) else '0' ;"<<endl;
+	vhdl<<tab<<declare("overflowSignal",1)<<"<= '1' when ("<<use("sign4OU")<<" = '0' and "<<use("convertedExponentBit")<<range(wE,wE-1)<<" = \"10\" ) else '0' ;"<<endl;
 	
 	//code for verifing if the number is zero
 	
 	setCycleFromSignal("passedInput");
 	
-	vhdl<<declare("minusOne4ZD",MSB -LSB)<<"<="<<"CONV_STD_LOGIC_VECTOR("<<-1<<","<<MSB-LSB<<");"<<endl;
+	vhdl<<tab<<declare("minusOne4ZD",MSB -LSB)<<"<="<<"CONV_STD_LOGIC_VECTOR("<<-1<<","<<MSB-LSB<<");"<<endl;
 	
 	zeroD = new IntAdder(target, MSB-LSB );
 	zeroD->changeName(getName()+"zeroD");
@@ -174,17 +196,21 @@ Fix2FP::Fix2FP(Target* target, int MSBI, int LSBI, int wER, int wFR) :
 	
 	syncCycleFromSignal("zeroDS");
 	
-	vhdl<<declare("zeroInput",1)<<"<= "<<use("zeroDS")<<of(MSB-LSB-1)<<" and not("<<use("signSignal")<<");"<<endl;
+	vhdl<<tab<<declare("zeroInput",1)<<"<= "<<use("zeroDS")<<of(MSB-LSB-1)<<" and not("<<use("signSignal")<<");"<<endl;
 	
 	//code for the Convertion of the fraction
 	
 	setCycleFromSignal("temporalFraction");
 	
-	vhdl<<declare("sign2vector",maximalOutputValue)<<"<="<<"(others=>"<<use("signSignal")<<");"<<endl;
-	vhdl<<declare("tempConvert",maximalOutputValue)<<"<="<<use("sign2vector")<<" xor "<<use("temporalFraction")<<";"<<endl;
-	vhdl<<declare("tempConvert0",maximalOutputValue+1)<<"<= '0' & "<<use("tempConvert")<<";"<<endl;
-	vhdl<<declare("tempPaddingAddSign",maximalOutputValue)<<"<=(others=>'0');"<<endl;
-	vhdl<<declare("tempAddSign",maximalOutputValue+1)<<"<="<<use("tempPaddingAddSign")<<" & "<<use("signSignal")<<";"<<endl;
+	if(Signed!=0){
+	
+	
+	
+	vhdl<<tab<<declare("sign2vector",maximalOutputValue)<<"<="<<"(others=>"<<use("signSignal")<<");"<<endl;
+	vhdl<<tab<<declare("tempConvert",maximalOutputValue)<<"<="<<use("sign2vector")<<" xor "<<use("temporalFraction")<<";"<<endl;
+	vhdl<<tab<<declare("tempConvert0",maximalOutputValue+1)<<"<= '0' & "<<use("tempConvert")<<";"<<endl;
+	vhdl<<tab<<declare("tempPaddingAddSign",maximalOutputValue)<<"<=(others=>'0');"<<endl;
+	vhdl<<tab<<declare("tempAddSign",maximalOutputValue+1)<<"<="<<use("tempPaddingAddSign")<<" & "<<use("signSignal")<<";"<<endl;
 	
 	
 		//Integer adder for obtaining the fraction value
@@ -199,16 +225,30 @@ Fix2FP::Fix2FP(Target* target, int MSBI, int LSBI, int wER, int wFR) :
 	vhdl << instance(fractionConvert, "fractionConverter");
 	
 	syncCycleFromSignal("tempFractionResult");
-	vhdl<<declare("correctingExponent",1)<<"<="<<use("tempFractionResult")<<of(maximalOutputValue)<<";"<<endl;
-	vhdl<<declare("fractionConverted",wF)<<"<="<<use("tempFractionResult")<<range(maximalOutputValue-2,maximalOutputValue -wF-1)<<";"<<endl;
+	}
+	
+	
+	else
+	{
+		vhdl<<tab<<declare("tempFractionResult",maximalOutputValue+1)<<"<= '0' &"<<use("temporalFraction")<<";"<<endl;
+	}
+	
+	vhdl<<tab<<declare("correctingExponent",1)<<"<="<<use("tempFractionResult")<<of(maximalOutputValue)<<";"<<endl;
+	vhdl<<tab<<declare("fractionConverted",wF)<<"<="<<use("tempFractionResult")<<range(maximalOutputValue-2,maximalOutputValue -wF-1)<<";"<<endl;
+	
+	
+	vhdl<<tab<<declare("firstBitofRest",1)<<"<="<<use("tempFractionResult")<<of(maximalOutputValue-wF-2)<<";"<<endl;
+	
+	//selection of mux 3
+	vhdl<<tab<<declare("lastBitOfFraction")<<"<="<<use("tempFractionResult")<<of(maximalOutputValue-wF-1)<<";"<<endl;
 	
 	//Zero Compare of the bits from the remainder of magnitude
 	
 	int sizeOfRemainder=maximalOutputValue-sizeFractionPlusOne-1;
 	
 	setCycleFromSignal("tempFractionResult");
-	vhdl<<declare("minusOne",sizeOfRemainder)<<"<="<<"CONV_STD_LOGIC_VECTOR("<<-1<<","<<sizeOfRemainder<<");"<<endl;
-	vhdl<<declare("fractionRemainder",sizeOfRemainder)<<"<="<<use("tempFractionResult")<<range(sizeOfRemainder-1,0)<<";"<<endl;
+	vhdl<<tab<<declare("minusOne",sizeOfRemainder)<<"<="<<"CONV_STD_LOGIC_VECTOR("<<-1<<","<<sizeOfRemainder<<");"<<endl;
+	vhdl<<tab<<declare("fractionRemainder",sizeOfRemainder)<<"<="<<use("tempFractionResult")<<range(sizeOfRemainder-1,0)<<";"<<endl;
 	oneSubstracter = new IntAdder(target,sizeOfRemainder);
 	oneSubstracter->changeName(getName()+"_oneSubstracter");
 	oplist.push_back(oneSubstracter);
@@ -220,7 +260,7 @@ Fix2FP::Fix2FP(Target* target, int MSBI, int LSBI, int wER, int wFR) :
 	
 	syncCycleFromSignal("zeroFractionResult");
 	
-	vhdl<<declare("zeroRemainder",1)<<"<= not( "<<"not ("<<use("tempFractionResult")<<of(sizeOfRemainder-1)<<") and "<<use("zeroFractionResult")<<of(sizeOfRemainder-1)<<");"<<endl;
+	vhdl<<tab<<declare("zeroRemainder",1)<<"<= not( "<<"not ("<<use("tempFractionResult")<<of(sizeOfRemainder-1)<<") and "<<use("zeroFractionResult")<<of(sizeOfRemainder-1)<<");"<<endl;
 	
 	
 	// signals for Muxes
@@ -228,19 +268,16 @@ Fix2FP::Fix2FP(Target* target, int MSBI, int LSBI, int wER, int wFR) :
 	if(inputWidth>32&&target->frequencyMHz()>=250)
 		nextCycle();
 	
-	vhdl<<declare("firstBitofRest",1)<<"<="<<use("tempFractionResult")<<of(maximalOutputValue-wF-2)<<";"<<endl;
-	
 	//selection of mux 3
-	vhdl<<declare("lastBitOfFraction")<<"<="<<use("tempFractionResult")<<of(maximalOutputValue-wF-1)<<";"<<endl;
-	vhdl<<declare("outputOfMux3",1)<<"<="<<use("lastBitOfFraction")<<";"<<endl;
-	vhdl<<"with "<<use("zeroRemainder")<<" select "<<endl<<declare("outputOfMux2",1)<<" <= "<< use("outputOfMux3")<<" when '0', "<<endl<<"\t'1' when others;"<<endl;
-	vhdl<<"with "<<use("firstBitofRest")<<" select "<<endl<<declare("outputOfMux1",1)<<" <= "<< use("outputOfMux2")<<" when '1', "<<endl<<"\t'0' when others;"<<endl;
-	vhdl<<declare("possibleCorrector4Rounding",wF+wE+1)<<"<="<<"CONV_STD_LOGIC_VECTOR(0,"<<wE<<") & "<<use("correctingExponent")<<" & "<<"CONV_STD_LOGIC_VECTOR(0,"<<wF<<");"<<endl;
-	vhdl<<declare("concatenationForRounding",wE+wF+1)<<"<= '0' &"<<use("convertedExponent")<<" & "<<use("fractionConverted")<<";"<<endl;
+	vhdl<<tab<<declare("outputOfMux3",1)<<"<="<<use("lastBitOfFraction")<<";"<<endl;
+	vhdl<<tab<<"with "<<use("zeroRemainder")<<" select "<<endl<<tab<<declare("outputOfMux2",1)<<" <= "<< use("outputOfMux3")<<" when '0', "<<endl<<tab<<"\t'1' when others;"<<endl;
+	vhdl<<tab<<"with "<<use("firstBitofRest")<<" select "<<endl<<tab<<declare("outputOfMux1",1)<<" <= "<< use("outputOfMux2")<<" when '1', "<<endl<<tab<<"\t'0' when others;"<<endl;
+	vhdl<<tab<<declare("possibleCorrector4Rounding",wF+wE+1)<<"<="<<"CONV_STD_LOGIC_VECTOR(0,"<<wE<<") & "<<use("correctingExponent")<<" & "<<"CONV_STD_LOGIC_VECTOR(0,"<<wF<<");"<<endl;
+	vhdl<<tab<<declare("concatenationForRounding",wE+wF+1)<<"<= '0' &"<<use("convertedExponent")<<" & "<<use("fractionConverted")<<";"<<endl;
 	
-  	vhdl<<declare("testC",wE+wF+1)<<"<="<<use("concatenationForRounding")<<";"<<endl;
-  	vhdl<<declare("testR",wE+wF+1)<<"<="<<use("possibleCorrector4Rounding")<<";"<<endl;
- 	vhdl<<declare("testM",1)<<"<="<<use("outputOfMux1")<<";"<<endl;
+  	vhdl<<tab<<declare("testC",wE+wF+1)<<"<="<<use("concatenationForRounding")<<";"<<endl;
+  	vhdl<<tab<<declare("testR",wE+wF+1)<<"<="<<use("possibleCorrector4Rounding")<<";"<<endl;
+ 	vhdl<<tab<<declare("testM",1)<<"<="<<use("outputOfMux1")<<";"<<endl;
  
 	
 	
@@ -256,17 +293,17 @@ Fix2FP::Fix2FP(Target* target, int MSBI, int LSBI, int wER, int wFR) :
 	syncCycleFromSignal("roundedResult");
 	
 	
-	vhdl<<declare("convertedExponentAfterRounding",wE)<<"<="<<use("roundedResult")<<range(wE+wF-1,wF)<<";"<<endl;
-	vhdl<<declare("convertedFractionAfterRounding",wF)<<"<="<<use("roundedResult")<<range(wF-1,0)<<";"<<endl;
+	vhdl<<tab<<declare("convertedExponentAfterRounding",wE)<<"<="<<use("roundedResult")<<range(wE+wF-1,wF)<<";"<<endl;
+	vhdl<<tab<<declare("convertedFractionAfterRounding",wF)<<"<="<<use("roundedResult")<<range(wF-1,0)<<";"<<endl;
 	
-	vhdl<<declare("MSBSelection",1)<<"<= "<<use("overflowSignal")<<" or "<<use("roundedResult")<<of(wF+wE)<<";"<<endl;
-	vhdl<<declare("LSBSelection",1)<<"<= not("<<use("underflowSignal")<<" and not ( "<<use("zeroInput")<<" )) ;"<<endl;
-	vhdl<<declare("Selection",2)<<"<="<<use("MSBSelection")<<" & "<<use("LSBSelection")<<";"<<endl;
-	vhdl<<declare("specialBits",2)<<" <= "<<use("Selection")<<";"<<endl;
+	vhdl<<tab<<declare("MSBSelection",1)<<"<= "<<use("overflowSignal")<<" or "<<use("roundedResult")<<of(wF+wE)<<";"<<endl;
+	vhdl<<tab<<declare("LSBSelection",1)<<"<= not("<<use("underflowSignal")<<" and not ( "<<use("zeroInput")<<" )) ;"<<endl;
+	vhdl<<tab<<declare("Selection",2)<<"<="<<use("MSBSelection")<<" & "<<use("LSBSelection")<<";"<<endl;
+	vhdl<<tab<<declare("specialBits",2)<<" <= "<<use("Selection")<<";"<<endl;
 	
 	//assembling the result
 
-	vhdl<<"O<="<<use("specialBits")<<"&"<<use("signSignal")<<"&"<<use("convertedExponentAfterRounding")<<"&"<<use("convertedFractionAfterRounding")<<";"<<endl;
+	vhdl<<tab<<"O<="<<use("specialBits")<<"&"<<use("signSignal")<<"&"<<use("convertedExponentAfterRounding")<<"&"<<use("convertedFractionAfterRounding")<<";"<<endl;
 	
 	
 	}
@@ -280,7 +317,7 @@ Fix2FP::Fix2FP(Target* target, int MSBI, int LSBI, int wER, int wFR) :
 	//code for zero detector of the input
 
 	
-	vhdl<<declare("minusOne4ZD",MSB -LSB)<<"<="<<"CONV_STD_LOGIC_VECTOR("<<-1<<","<<MSB-LSB<<");"<<endl;
+	vhdl<<tab<<declare("minusOne4ZD",MSB -LSB)<<"<="<<"CONV_STD_LOGIC_VECTOR("<<-1<<","<<MSB-LSB<<");"<<endl;
 	
 	zeroD = new IntAdder(target, MSB-LSB );
 	zeroD->changeName(getName()+"zeroD");
@@ -293,12 +330,16 @@ Fix2FP::Fix2FP(Target* target, int MSBI, int LSBI, int wER, int wFR) :
 	
 	setCycleFromSignal("zeroDS");
 	
-	vhdl<<declare("zeroInput",1)<<"<= "<<use("zeroDS")<<of(MSB-LSB-1)<<" and not ("<<use("signSignal")<<");"<<endl;
+	vhdl<<tab<<declare("zeroInput",1)<<"<= "<<use("zeroDS")<<of(MSB-LSB-1)<<" and not ("<<use("signSignal")<<");"<<endl;
 		
 	//code for the leading zeros/ones
 	
+	
+	
 	setCycleFromSignal("input2LZOC");
 	
+	if(Signed!=0)
+	{
 	lzocs		= new LZOCShifterSticky(target,inputWidth-1 , maximalOutputValue, intlog2(inputWidth-1), 0, -1);
 	lzocs->changeName(getName()+"_LZCS");
 	oplist.push_back(lzocs);
@@ -309,9 +350,27 @@ Fix2FP::Fix2FP(Target* target, int MSBI, int LSBI, int wER, int wFR) :
 	vhdl << instance(lzocs, "LZOC_component");
 	
 	sizeExponentValue=lzocs->getCountWidth();
+		
+	}
+	else
+	{
+		lzcs = new LZOCShifterSticky(target, inputWidth-1 , maximalOutputValue, intlog2(inputWidth-1), 0, 0);
+		lzcs->changeName(getName()+"_LZCS");
+		oplist.push_back(lzcs);
+		inPortMap  (lzcs, "I", use("input2LZOC"));
+		outPortMap (lzcs, "Count","temporalExponent");
+		outPortMap (lzcs, "O","temporalFraction");
+		vhdl << instance(lzcs, "LZC_component");
+	
+		sizeExponentValue=lzcs->getCountWidth();
+	}	
+		
+		
 	sizeFractionPlusOne=wF+1;
 	
 	syncCycleFromSignal("temporalExponent");
+	
+
 		
 	//code for the fraction
 	
@@ -319,13 +378,17 @@ Fix2FP::Fix2FP(Target* target, int MSBI, int LSBI, int wER, int wFR) :
 	
 	int sizeFractionPlusOne=wF+1;
 	
-	vhdl<<declare("tfr",sizeFractionPlusOne) <<"<="<<use("temporalFraction")<<range(maximalOutputValue-1,maximalOutputValue-sizeFractionPlusOne)<<";"<<endl;
+	
+	
+	if(Signed!=0)
+	{
+	vhdl<<tab<<declare("tfr",sizeFractionPlusOne) <<"<="<<use("temporalFraction")<<range(maximalOutputValue-1,maximalOutputValue-sizeFractionPlusOne)<<";"<<endl;
 		
-	vhdl<<declare("sign2vector",sizeFractionPlusOne)<<"<="<<"(others=>"<<use("signSignal")<<");"<<endl;
-	vhdl<<declare("tempConvert",sizeFractionPlusOne)<<"<="<<use("sign2vector")<<" xor "<<use("tfr")<<";"<<endl;
-	vhdl<<declare("tempPaddingAddSign",sizeFractionPlusOne)<<"<=(others=>'0');"<<endl;
-	vhdl<<declare("tempAddSign",sizeFractionPlusOne+1)<<"<="<<use("tempPaddingAddSign")<<" & "<<use("signSignal") <<";"<<endl;
-	vhdl<<declare("tempConvert0",sizeFractionPlusOne+1)<<"<= '0' & "<<use("tempConvert")<<";"<<endl;
+	vhdl<<tab<<declare("sign2vector",sizeFractionPlusOne)<<"<="<<"(others=>"<<use("signSignal")<<");"<<endl;
+	vhdl<<tab<<declare("tempConvert",sizeFractionPlusOne)<<"<="<<use("sign2vector")<<" xor "<<use("tfr")<<";"<<endl;
+	vhdl<<tab<<declare("tempPaddingAddSign",sizeFractionPlusOne)<<"<=(others=>'0');"<<endl;
+	vhdl<<tab<<declare("tempAddSign",sizeFractionPlusOne+1)<<"<="<<use("tempPaddingAddSign")<<" & "<<use("signSignal") <<";"<<endl;
+	vhdl<<tab<<declare("tempConvert0",sizeFractionPlusOne+1)<<"<= '0' & "<<use("tempConvert")<<";"<<endl;
 	
 	
 		//Integer adder for obtaining the fraction value
@@ -341,16 +404,22 @@ Fix2FP::Fix2FP(Target* target, int MSBI, int LSBI, int wER, int wFR) :
 	
 	syncCycleFromSignal("tempFractionResult");
 	
-	vhdl<<declare("correctingExponent",1)<<"<="<<use("tempFractionResult")<<of(sizeFractionPlusOne)<<";"<<endl;
-	vhdl<<declare("convertedFraction",wF)<<"<="<<use("tempFractionResult")<<range(wF-1,0)<<";"<<endl;
+	}
+	else
+	{
+		vhdl<<tab<<declare("tempFractionResult",maximalOutputValue+1)<<"<= '0' &"<<use("temporalFraction")<<";"<<endl;
+	}
+	
+	vhdl<<tab<<declare("correctingExponent",1)<<"<="<<use("tempFractionResult")<<of(sizeFractionPlusOne)<<";"<<endl;
+	vhdl<<tab<<declare("convertedFraction",wF)<<"<="<<use("tempFractionResult")<<range(wF-1,0)<<";"<<endl;
 	
 	//code for creating the exponent
 
 	setCycleFromSignal("temporalExponent");
 
-	vhdl<<declare("MSB2Signal",wE)<<"<="<<"CONV_STD_LOGIC_VECTOR("<<MSB-2<<","<<wE<<");"<<endl;
-	vhdl<<declare("zeroPadding4Exponent",wE- intlog2(inputWidth-1))<<"<="<<"CONV_STD_LOGIC_VECTOR(0,"<<wE- intlog2(inputWidth-1)<<");"<<endl;
-	vhdl<<declare("valueExponent",wE)<<"<= not("<<use("zeroPadding4Exponent")<<" & "<<use("temporalExponent")<<");"<<endl;
+	vhdl<<tab<<declare("MSB2Signal",wE)<<"<="<<"CONV_STD_LOGIC_VECTOR("<<MSB-2<<","<<wE<<");"<<endl;
+	vhdl<<tab<<declare("zeroPadding4Exponent",wE- intlog2(inputWidth-1))<<"<="<<"CONV_STD_LOGIC_VECTOR(0,"<<wE- intlog2(inputWidth-1)<<");"<<endl;
+	vhdl<<tab<<declare("valueExponent",wE)<<"<= not("<<use("zeroPadding4Exponent")<<" & "<<use("temporalExponent")<<");"<<endl;
 	
 	exponentConversion = new IntAdder(target,wE);
 	exponentConversion->changeName(getName()+"exponentConversion");
@@ -363,12 +432,12 @@ Fix2FP::Fix2FP(Target* target, int MSBI, int LSBI, int wER, int wFR) :
 	
 	syncCycleFromSignal("partialConvertedExponent");
 	
-	vhdl<<declare("biassOfOnes",wE-1)<<"<=CONV_STD_LOGIC_VECTOR("<<pow(2,wE)-1<<","<<wE-1<<");"<<endl;
-	vhdl<<declare("biassSignal",wE)<<"<="<<"'0' &"<<use("biassOfOnes")<<";"<<endl;
-	vhdl<<declare("biassSignalBit",wE+1)<<"<="<<"'0' &"<<use("biassSignal")<<";"<<endl;
-	vhdl<<declare("zeroBitExponent",1)<<"<='0';"<<endl;
-	vhdl<<declare("partialConvertedExponentBit",wE+1)<<"<= '0' & "<<use("partialConvertedExponent")<<";"<<endl;
-	vhdl<<declare("sign4OU",1)<<"<="<<use("partialConvertedExponent")<<of(wE-1)<<";"<<endl;
+	vhdl<<tab<<declare("biassOfOnes",wE-1)<<"<=CONV_STD_LOGIC_VECTOR("<<pow(2,wE)-1<<","<<wE-1<<");"<<endl;
+	vhdl<<tab<<declare("biassSignal",wE)<<"<="<<"'0' &"<<use("biassOfOnes")<<";"<<endl;
+	vhdl<<tab<<declare("biassSignalBit",wE+1)<<"<="<<"'0' &"<<use("biassSignal")<<";"<<endl;
+	vhdl<<tab<<declare("zeroBitExponent",1)<<"<='0';"<<endl;
+	vhdl<<tab<<declare("partialConvertedExponentBit",wE+1)<<"<= '0' & "<<use("partialConvertedExponent")<<";"<<endl;
+	vhdl<<tab<<declare("sign4OU",1)<<"<="<<use("partialConvertedExponent")<<of(wE-1)<<";"<<endl;
 	
 	exponentFinal = new IntAdder(target,wE+1);
 	exponentFinal->changeName(getName()+"exponentFinal");
@@ -381,17 +450,17 @@ Fix2FP::Fix2FP(Target* target, int MSBI, int LSBI, int wER, int wFR) :
 	
 	syncCycleFromSignal("convertedExponentBit");
 	
-	vhdl<<declare("OUflowSignal1",2)<<"<="<<use("convertedExponentBit")<<range(wE,wE-1)<<";"<<endl;
+	vhdl<<tab<<declare("OUflowSignal1",2)<<"<="<<use("convertedExponentBit")<<range(wE,wE-1)<<";"<<endl;
 	
-	vhdl<<declare("underflowSignal",1)<<"<= '1' when ("<<use("sign4OU")<<" = '1' and "<<use("OUflowSignal1")<<" = \"01\" ) else '0' ;"<<endl;
-	vhdl<<declare("overflowSignal1",1)<<"<= '1' when ("<<use("sign4OU")<<" = '0' and "<<use("OUflowSignal1")<<" = \"10\" ) else '0' ;"<<endl;
+	vhdl<<tab<<declare("underflowSignal",1)<<"<= '1' when ("<<use("sign4OU")<<" = '1' and "<<use("OUflowSignal1")<<" = \"01\" ) else '0' ;"<<endl;
+	vhdl<<tab<<declare("overflowSignal1",1)<<"<= '1' when ("<<use("sign4OU")<<" = '0' and "<<use("OUflowSignal1")<<" = \"10\" ) else '0' ;"<<endl;
 	
 	syncCycleFromSignal("correctingExponent");
 	
-	vhdl<<declare("zeroInput4Exponent",wE+1)<<"<=(others=>'0');"<<endl;
-	vhdl<<declare("possibleConvertedExponent2",wE)<<"<= "<<use("convertedExponentBit")<<range(wE-1,0)<<";"<<endl;
-	vhdl<<declare("possibleConvertedExponent20",wE+1)<<"<= '0' & "<<use("possibleConvertedExponent2")<<";"<<endl;
-	vhdl<<declare("sign4OU2",1)<<"<="<<use("possibleConvertedExponent2")<<of(wE-1)<<";"<<endl;
+	vhdl<<tab<<declare("zeroInput4Exponent",wE+1)<<"<=(others=>'0');"<<endl;
+	vhdl<<tab<<declare("possibleConvertedExponent2",wE)<<"<= "<<use("convertedExponentBit")<<range(wE-1,0)<<";"<<endl;
+	vhdl<<tab<<declare("possibleConvertedExponent20",wE+1)<<"<= '0' & "<<use("possibleConvertedExponent2")<<";"<<endl;
+	vhdl<<tab<<declare("sign4OU2",1)<<"<="<<use("possibleConvertedExponent2")<<of(wE-1)<<";"<<endl;
 	
 	expCorrect = new IntAdder(target,wE+1);
 	expCorrect->changeName(getName()+"expCorrect");
@@ -405,23 +474,23 @@ Fix2FP::Fix2FP(Target* target, int MSBI, int LSBI, int wER, int wFR) :
 	syncCycleFromSignal("finalConvertedExponent");
 	
 	
-	vhdl<<declare("convertedExponent",wE)<<"<= "<<use("finalConvertedExponent")<<range(wE-1,0)<<";"<<endl;
+	vhdl<<tab<<declare("convertedExponent",wE)<<"<= "<<use("finalConvertedExponent")<<range(wE-1,0)<<";"<<endl;
 	
-	vhdl<<declare("overflowSignal2",1)<<"<= '1' when ("<<use("sign4OU2")<<" = '0' and "<<use("finalConvertedExponent")<<range(wE,wE-1)<<" = \"10\" ) else '0' ;"<<endl;
+	vhdl<<tab<<declare("overflowSignal2",1)<<"<= '1' when ("<<use("sign4OU2")<<" = '0' and "<<use("finalConvertedExponent")<<range(wE,wE-1)<<" = \"10\" ) else '0' ;"<<endl;
 	
-	vhdl<<declare("overflowSignal",1)<<"<="<<use("overflowSignal2")<<" or "<<use("overflowSignal1")<<";"<<endl;
+	vhdl<<tab<<declare("overflowSignal",1)<<"<="<<use("overflowSignal2")<<" or "<<use("overflowSignal1")<<";"<<endl;
 	
 	
 	//code for the special bits
 	
-	vhdl<<declare("MSBSelection",1)<<"<= "<<use("overflowSignal")<<";"<<endl;
-	vhdl<<declare("LSBSelection",1)<<"<= not("<<use("underflowSignal")<<" or  "<<use("zeroInput")<<"  ) ;"<<endl;
-	vhdl<<declare("Selection",2)<<"<="<<use("MSBSelection")<<" & "<<use("LSBSelection")<<";"<<endl;
-	vhdl<<declare("specialBits",2)<<" <= "<<use("Selection")<<";"<<endl;
+	vhdl<<tab<<declare("MSBSelection",1)<<"<= "<<use("overflowSignal")<<";"<<endl;
+	vhdl<<tab<<declare("LSBSelection",1)<<"<= not("<<use("underflowSignal")<<" or  "<<use("zeroInput")<<"  ) ;"<<endl;
+	vhdl<<tab<<declare("Selection",2)<<"<="<<use("MSBSelection")<<" & "<<use("LSBSelection")<<";"<<endl;
+	vhdl<<tab<<declare("specialBits",2)<<" <= "<<use("Selection")<<";"<<endl;
 		
 	//assembling the result
 
-	vhdl<<"O<="<<use("specialBits")<<"&"<<use("signSignal")<<"&"<<use("convertedExponent")<<"&"<<use("convertedFraction")<<";"<<endl;
+	vhdl<<tab<<"O<="<<use("specialBits")<<"&"<<use("signSignal")<<"&"<<use("convertedExponent")<<"&"<<use("convertedFraction")<<";"<<endl;
 	
 		
 	}
@@ -442,10 +511,11 @@ void Fix2FP::emulate(TestCase * tc)
 		mpz_class tmpSUB = (mpz_class(1) << (MSBI-LSBI+1));
 		mpz_class tmpCMP = (mpz_class(1)  << (MSBI-LSBI))-1;
 
-		if (Signed == 1)
+	if (Signed != 0)
 			if (svX > tmpCMP){ //negative number 
 				svX = svX - tmpSUB;
 			}
+
 	
 		mpfr_t x;
 		mpfr_init2(x, 10000); //init to infinite prec

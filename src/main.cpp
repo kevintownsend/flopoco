@@ -131,7 +131,7 @@ static void usage(char *name){
 	// not ready for release
 	//	cerr << "    Karatsuba wInX wInY \n";
 	//	cerr << "      integer multiplier of two integers X and Y of sizes wInX and wInY. For now the sizes must be equal \n";	
-	cerr << "    Fix2FP LSB MSB wE wF\n";
+	cerr << "    Fix2FP LSB MSB Signed wE wF\n";
 	cerr << "    CoordinatesTableX wIn LSB MSB \n";
 	cerr << "      Convert a 2's compliment fixed-point number in the bit range MSB...LSB into floating-point\n";
 	cerr << "    FPAdder wE wF\n";
@@ -666,17 +666,18 @@ bool parseCommandLine(int argc, char* argv[]){
 			}
 		}
 		else if(opname=="Fix2FP"){
-			int nargs = 4;
+			int nargs = 5;
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
 				int LSB = atoi(argv[i++]);//checkStrictyPositive(argv[i++], argv[0]);
 				int MSB = atoi(argv[i++]);//checkStrictyPositive(argv[i++], argv[0]);
+				int sign = atoi(argv[i++]);
 				int wE = checkStrictyPositive(argv[i++], argv[0]);
 				int wF = checkStrictyPositive(argv[i++], argv[0]);
 				
 				cerr << "> Fix2FP, LSB="<<LSB<<", MSB="<<MSB<<", wE="<<wE<<", wF="<<wF<<" \n";
-				op = new Fix2FP(target, MSB, LSB, wE, wF);
+				op = new Fix2FP(target, LSB, MSB, sign,wE, wF);
 				addOperator(op);
 			}
 		}
