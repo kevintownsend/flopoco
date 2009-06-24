@@ -177,8 +177,11 @@ void TestBench::outputVHDL(ostream& o, string name) {
 //		o << tab << tab << "wait for 5 ns;" <<endl;
 //		currentOutputTime += 5;
 		o << tab << tab << "-- " << "current time: " << currentOutputTime <<endl;
-		o << tcl_.getTestCase(i)->getInputVHDL(tab + tab + "-- input: ");
-		o << tcl_.getTestCase(i)->getExpectedOutputVHDL(tab + tab);
+		TestCase* tc = tcl_.getTestCase(i);
+		if (tc->getComment() != "")
+			o << tab <<  "-- " << tc->getComment() << endl;
+		o << tc->getInputVHDL(tab + tab + "-- input: ");
+		o << tc->getExpectedOutputVHDL(tab + tab);
 		o << tab << tab << "wait for 10 ns;" <<endl;
 		currentOutputTime += 10;
 	} 

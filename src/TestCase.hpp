@@ -91,6 +91,12 @@ public:
 	 */
 	std::string getExpectedOutputVHDL(std::string prepend = "");
 
+	/**
+	 * Return the comment string for this test case
+	 * @return A single-line VHDL code.
+	 */
+	std::string getComment();
+
 
 private:
 	Operator *op_;                       /**< The operator for which this test case is being built */

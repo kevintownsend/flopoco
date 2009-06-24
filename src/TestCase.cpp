@@ -47,10 +47,10 @@ void TestCase::addInput(string name, mpz_class v)
 {
 	Signal* s = op_->getSignalByName(name);
 	if (v >= (mpz_class(1) << s->width())) 
-		throw "ERROR in TestCase::addInput, signal value out of range";
+		throw string("ERROR in TestCase::addInput, signal value out of range");
 	if (v<0) {
 		if (v < - (mpz_class(1) << s->width())) 
-			throw "ERROR in TestCase::addInput, negative signal value out of range";
+			throw string("ERROR in TestCase::addInput, negative signal value out of range");
 		v += (mpz_class(1) << s->width()); 
 	}
 	inputs[name] = v;
@@ -61,7 +61,7 @@ void TestCase::addInput(string name, FPNumber::SpecialValue v) {
 	// get signal size
 	Signal* s = op_->getSignalByName(name);
 	if(!s->isFP()) {
-		throw "TestCase::addInput: Cannot convert FPNumber::SpecialValue to non-FP signal";
+		throw string("TestCase::addInput: Cannot convert FPNumber::SpecialValue to non-FP signal");
 	} 
 	int wE=s->wE();
 	int wF=s->wF();
@@ -75,7 +75,7 @@ void TestCase::addInput(string name, double x) {
 	// get signal size
 	Signal* s = op_->getSignalByName(name);
 	if(!s->isFP()) {
-		throw "TestCase::addInput: Cannot convert a double into non-FP signal";
+		throw string("TestCase::addInput: Cannot convert a double into non-FP signal");
 	} 
 	int wE=s->wE();
 	int wF=s->wF();
@@ -97,10 +97,10 @@ void TestCase::addExpectedOutput(string name, mpz_class v)
 	
 	//TODO Check if we have already too many values for this output
 	if (v >= (mpz_class(1) << s->width())) 
-		throw "ERROR in TestCase::addExpectedOutput, signal value out of range";
+		throw string("ERROR in TestCase::addExpectedOutput, signal value out of range");
 	if (v<0) {
 		if (v < - (mpz_class(1) << s->width())) 
-			throw "ERROR in TestCase::addExpectedOutput, negative signal value out of range";
+			throw string("ERROR in TestCase::addExpectedOutput, negative signal value out of range");
 		v += (mpz_class(1) << s->width()); 
 	}
 	outputs[name].push_back(v);
@@ -110,10 +110,6 @@ void TestCase::addExpectedOutput(string name, mpz_class v)
 string TestCase::getInputVHDL(string prepend)
 {
 	ostringstream o;
-
-	/* Add comment if there is one */
-	if (comment != "")
-		o << prepend << "-- " << comment << endl;
 
 	/* Iterate through input signals */
 	for (map<string, mpz_class>::iterator it = inputs.begin(); it != inputs.end(); it++)
@@ -135,9 +131,6 @@ string TestCase::getExpectedOutputVHDL(string prepend)
 {
 	ostringstream o;
 
-	/* Add comment, if there is one */
-	if (comment != "")
-		o << prepend << "-- " << comment << endl;
 
 	/* Iterate through output signals */
 	for (map<string, vector<mpz_class> >::iterator it = outputs.begin(); it != outputs.end(); it++)
@@ -173,6 +166,10 @@ string TestCase::getExpectedOutputVHDL(string prepend)
 
 void TestCase::addComment(string c) {
 	comment = c;
+}
+
+string TestCase::getComment() {
+	return comment;
 }
 
 
