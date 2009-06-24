@@ -113,7 +113,7 @@ LongAcc operator (see below) to human-readable form.</p>
 <h2>Floating-point format</h2>
 
 <p>The floating-point format used in FloPoCo is identical to the one used in  <a
-href="http://www.ens-lyon.fr/LIP/Arenaire/Ware/FPLibrary/">FPLibrary</a>. It is  inspired from the IEEE-754 standard, from which it differs only for exceptional cases (zeroes, infinities and Not a Number or NaN). </p>
+href="http://www.ens-lyon.fr/LIP/Arenaire/Ware/FPLibrary/">FPLibrary</a>. It is  inspired from the IEEE-754 standard, from which it differs only for exceptional cases (zeroes, infinities and Not a Number or NaN). Conversion operators from and to IEEE-754 formats (simple and double precision) are available, see below.</p>
 
 <p>
 An FP  number is a bit vector consisting of 4 fields. From left to right: 
@@ -134,7 +134,7 @@ and wF which define the sizes of the exponent and fraction fields
 respectively.</p>
 
 <p>The utilities <code>fp2bin</code> and <code>bin2fp</code> will allow
-you to get familiar with the format and set up test benches.</p>
+you to get familiar with the format and set up test benches. </p>
 
 <h2>LNS format</h2>
 
@@ -284,7 +284,7 @@ are flushed to zero.
   <dt><code>FPDiv wE wF</code></dt>
     <dd>A floating-point divider.</dd>
   <dt><code>FPSqrt wE wF useDSP correctRounding</code></dt>
-    <dd>A floating-point square root. useDSP (0/1) is a boolean selecting between the classical digit-recurrence algorithm and a polynomial-based algorithm. The latter is currently only available for single precision (8,23). correctRounding (0/1) is a boolean selecting the rounding mode for the polynomial approach. If set to 0, the operator will be faithful (last-bit accurate, but not necessarily correctly rounded). This boolean is ignored if useDSP=0.</dd>
+    <dd>A floating-point square root. useDSP (0/1) is a boolean selecting between the classical digit-recurrence algorithm and a polynomial-based algorithm. The latter is currently only available for single precision (8,23). correctRounding (0/1) is a boolean selecting the rounding mode for the polynomial approach. If set to 0, the operator will be faithful (last-bit accurate, but not necessarily correctly rounded). This boolean is ignored if useDSP=0: the digit-recurrence algorithm always returns correctly rounded results.</dd>
   <dt><code>FPSquarer wE wF</code></dt>
     <dd>A floating-point squarer, using IntSquarer for the mantissa.</dd>
 </dl>
@@ -347,7 +347,30 @@ href="http://prunel.ccsd.cnrs.fr/ensl-00269219/">this article</a>.</p>
 </dl>	
 
 
+<h3>Conversion operators</h3>
+<dl>
+	<dt><code> Fix2FP MSB LSB wE wF</code></dt>
+	<dd>Convert a fixed-point number in the bit range MSB...LSB (both
+	included) into floating-point. Example: 
+	  <code>Fix2FP 31 0 8 23</code> converts an input integer into a single-precision number.
+	</dd>
+	<dt><code>InputIEEE wEI wFI wEO wFO</code></dt>
+	<dd>Conversion from IEEE-754 formats.  Use <code>InputIEEE 8 23 wEO
+	wFO</code> to convert from single-precision (or binary32) format,
+	or <code>InputIEEE 11 52 wEO wFO</code> to convert from
+	double-precision (or binary64) format. You may convert to a larger internal format or to a narrower one. Conversions are always correctly rounded. 
+	</dd>
+	<dt><code>OurputIEEE wEI wFI wEO wFO</code></dt>
+	<dd>Conversion to IEEE-754 formats. Not implemented yet. Do not hesitate to ask for it.
+	</dd>
+	<dt><code>FP2FP wEI wFI wEO wFO</code></dt>
+	<dd>Conversion from a FloPoCo format to another one.  Not implemented yet. Do not hesitate to ask for it.
+	</dd>
+</dl>	
+
+
 <h3>Miscelanous floating-point operators</h3>
+
 
 <dl>
 	<dt><code>Collision wE wF</code></dt>
@@ -455,7 +478,7 @@ unit under test, UUT).
 Test cases are highly UUT specific. They include both standard tests
 and random tests. The single parameter of the <code>TestBench</code>
 specifies the number of random tests to generate. Random tests
-are generating using a pseudo-random number generator, being
+use a pseudo-random number generator
 initialised with the same seed, so that the test bench will be
 deterministic.
 
