@@ -49,6 +49,8 @@
 #include "FPAdder.hpp"
 #include "Fix2FP.hpp"
 #include "apps/CoilInductance/CoordinatesTableX.hpp"
+#include "apps/CoilInductance/CoordinatesTableZ.hpp"
+#include "apps/CoilInductance/CoordinatesTableY.hpp"
 #include "FPDiv.hpp"
 #include "FPSqrt.hpp"
 #include "LongAcc.hpp"
@@ -132,6 +134,8 @@ static void usage(char *name){
 	cerr << "      integer multiplier of two integers X and Y of sizes wIn. 17 < wIn <= 51 (for now) \n";	
 	cerr << "    Fix2FP LSB MSB Signed wE wF\n";
 	cerr << "    CoordinatesTableX wIn LSB MSB FilePath\n";
+	cerr << "    CoordinatesTableY wIn LSB MSB FilePath\n";
+	cerr << "    CoordinatesTableZ wIn LSB MSB FilePath\n";
 	cerr << "      Convert a 2's compliment fixed-point number in the bit range MSB...LSB into floating-point\n";
 	cerr << "    FPAdder wE wF\n";
 	cerr << "      Floating-point adder \n";
@@ -690,6 +694,34 @@ bool parseCommandLine(int argc, char* argv[]){
 				char *pa=argv[i++];
 				cerr << "> CoordinatesTableX, wIn="<<wIn<<", LSB="<<LSB<<", MSB="<<MSB<<" \n";
 				op = new CoordinatesTableX(target, wIn,LSB, MSB,pa);
+				addOperator(op);
+			}
+		}
+		else if(opname=="CoordinatesTableZ"){
+			int nargs = 4;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int wIn = checkStrictyPositive(argv[i++], argv[0]);
+				int LSB = atoi(argv[i++]);
+				int MSB = atoi(argv[i++]);
+				char *pa=argv[i++];
+				cerr << "> CoordinatesTableZ, wIn="<<wIn<<", LSB="<<LSB<<", MSB="<<MSB<<" \n";
+				op = new CoordinatesTableZ(target, wIn,LSB, MSB,pa);
+				addOperator(op);
+			}
+		}
+		else if(opname=="CoordinatesTableY"){
+			int nargs = 4;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int wIn = checkStrictyPositive(argv[i++], argv[0]);
+				int LSB = atoi(argv[i++]);
+				int MSB = atoi(argv[i++]);
+				char *pa=argv[i++];
+				cerr << "> CoordinatesTableY, wIn="<<wIn<<", LSB="<<LSB<<", MSB="<<MSB<<" \n";
+				op = new CoordinatesTableY(target, wIn,LSB, MSB,pa);
 				addOperator(op);
 			}
 		}

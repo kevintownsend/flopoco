@@ -20,8 +20,6 @@ CoordinatesTableX::CoordinatesTableX(Target* target, int wIn, int LSBI,int MSBI,
 	ostringstream name; 
 	name <<"CoordinatesX_"<<wIn<<"_"<<MSBI<<"_"<<LSBI;
 	setName(name.str());
-	   
-	//cout<<filepath;   
 	
 	readParams();
 	
@@ -67,7 +65,6 @@ ifstream indata; // indata is like cin
 	
 	
 	indata>>L>>NrSVert;
-	//cout<<L<<NrSVert;
 	   
 	 config = new int*[L];
 	   for(int j=0;j<L;j++)
@@ -81,10 +78,6 @@ ifstream indata; // indata is like cin
 			nrTurns++;
 			}
 	
-	//~ for(int j=0;j<L;j++)
-	   //~ for(int i=0;i<NrSVert;i++)
-		//~ cout<<config[j][i]<<" ";
-	
 	indata>>out_radius>>turn_radius>>insulation>>N;
 
 	indata.close();
@@ -92,7 +85,6 @@ ifstream indata; // indata is like cin
 }
 void CoordinatesTableX::initParameters()
 {
-	//cout<<L<<NrSVert;
 	
 	//declaratii si initializari
 	mpfr_set_default_prec(1000);
@@ -260,13 +252,8 @@ mpz_class CoordinatesTableX::function(int x)
 						ver=0;
 				
 				}
-	//~ if(i>L|| myx>0)
-	//~ {cout<<"Not good"<<endl;
-	//~ cout<<i<<" "<<j<<" "<<k<<" "<<q<<" "<<myx<<endl;
-		//~ }
-				
+		
 	if(myx==0){
-	//cout<<i<<" "<<j<<" "<<k<<" "<<q<<endl;
 				
 	//~ //computing the mpfr value of this coordinate
 				
@@ -324,9 +311,6 @@ mpz_class CoordinatesTableX::function(int x)
 					mpfr_add(xv,displacementX[i],temp1,GMP_RNDN);
 					
 					
-		//we have the x value
-	
-		//cout<<"pusca "<<endl;
 		
 		ver =1;
 		

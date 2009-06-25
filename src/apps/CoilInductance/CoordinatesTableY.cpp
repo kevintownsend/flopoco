@@ -20,8 +20,6 @@ CoordinatesTableY::CoordinatesTableY(Target* target, int wIn, int LSBI,int MSBI,
 	ostringstream name; 
 	name <<"CoordinatesX_"<<wIn<<"_"<<MSBI<<"_"<<LSBI;
 	setName(name.str());
-	   
-	//cout<<filepath;   
 	
 	readParams();
 	
@@ -62,12 +60,11 @@ double CoordinatesTableY::output2double(mpz_class x) {
 
 void CoordinatesTableY::readParams()
 {
-ifstream indata; // indata is like cin
+	ifstream indata; // indata is like cin
 	indata.open(filepath);
 	
 	
 	indata>>L>>NrSVert;
-	//cout<<L<<NrSVert;
 	   
 	 config = new int*[L];
 	   for(int j=0;j<L;j++)
@@ -81,10 +78,6 @@ ifstream indata; // indata is like cin
 			nrTurns++;
 			}
 	
-	//~ for(int j=0;j<L;j++)
-	   //~ for(int i=0;i<NrSVert;i++)
-		//~ cout<<config[j][i]<<" ";
-	
 	indata>>out_radius>>turn_radius>>insulation>>N;
 
 	indata.close();
@@ -92,8 +85,6 @@ ifstream indata; // indata is like cin
 }
 void CoordinatesTableY::initParameters()
 {
-	//cout<<L<<NrSVert;
-	
 	//declaratii si initializari
 	mpfr_set_default_prec(1000);
 	
@@ -170,14 +161,9 @@ mpz_class CoordinatesTableY::function(int x)
 						ver=0;
 				
 				}
-	//~ if(i>L|| myx>0)
-	//~ {cout<<"Not good"<<endl;
-	//~ cout<<i<<" "<<j<<" "<<k<<" "<<q<<" "<<myx<<endl;
-		//~ }
 				
 	if(myx==0){
-	//cout<<i<<" "<<j<<" "<<k<<" "<<q<<endl;
-				
+					
 	//~ //computing the mpfr value of this coordinate
 				
 	
@@ -195,38 +181,14 @@ mpz_class CoordinatesTableY::function(int x)
 				mpfr_sub(rk,out_rad_m,deltak,GMP_RNDN);
 			
 				
-					//float temp=rk *(1.0+cos((q)*fi))+deltak ;
-					mpfr_mul_ui(temp1,fi,q,GMP_RNDN);
-					mpfr_cos(temp1,temp1,GMP_RNDN);
-					mpfr_add_ui(temp1,temp1,1,GMP_RNDN);
-					mpfr_mul(temp1,temp1,rk,GMP_RNDN);
-					mpfr_add(temp,temp1,deltak,GMP_RNDN);
-					/*float tauqj;
-					if(temp==0)
-						tauqj=M_PI/2;
-					else
-						tauqj=atan(ddj/temp);*/
-					if(mpfr_sgn(temp)==0)
-					{
-						mpfr_const_pi(temp1,GMP_RNDN);
-						mpfr_div_ui(tauqj,temp1,2,GMP_RNDN);	
-					}
-					else
-					{
-						mpfr_div(temp1,ddj,temp,GMP_RNDN);
-						mpfr_atan(tauqj,temp1,GMP_RNDN);
-					}
-					
+										
 						//float yv=rk*sin(q*fi);
 					
 					mpfr_mul_ui(temp1,fi,q,GMP_RNDN);
 					mpfr_sin(temp1,temp1,GMP_RNDN);
 					mpfr_mul(yv,rk,temp1,GMP_RNDN);
 					
-					
-		//we have the x value
-	
-		//cout<<"pusca "<<endl;
+		
 		
 		ver =1;
 		

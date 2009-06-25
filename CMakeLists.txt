@@ -129,7 +129,9 @@ ADD_EXECUTABLE(flopoco
  src/Shifters
  src/FPAdder
  src/Fix2FP
- src/CoordinatesTableX
+ src/apps/CoilInductance/CoordinatesTableX
+ src/apps/CoilInductance/CoordinatesTableZ
+ src/apps/CoilInductance/CoordinatesTableY
  src/FPMultiplier
  src/FPSquarer
  src/FPDiv
@@ -194,6 +196,8 @@ ADD_EXECUTABLE(flopoco
  src/FPAdder
  src/Fix2FP
  src/apps/CoilInductance/CoordinatesTableX
+ src/apps/CoilInductance/CoordinatesTableZ
+ src/apps/CoilInductance/CoordinatesTableY
  src/FPMultiplier
  src/FPSquarer
  src/FPDiv

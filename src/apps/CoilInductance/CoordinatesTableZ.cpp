@@ -80,11 +80,7 @@ ifstream indata; // indata is like cin
 			{indata>>config[j][i];
 			nrTurns++;
 			}
-	
-	//~ for(int j=0;j<L;j++)
-	   //~ for(int i=0;i<NrSVert;i++)
-		//~ cout<<config[j][i]<<" ";
-	
+		
 	indata>>out_radius>>turn_radius>>insulation>>N;
 
 	indata.close();
@@ -92,8 +88,6 @@ ifstream indata; // indata is like cin
 }
 void CoordinatesTableZ::initParameters()
 {
-	//cout<<L<<NrSVert;
-	
 	//declaratii si initializari
 	mpfr_set_default_prec(1000);
 	
@@ -125,7 +119,8 @@ void CoordinatesTableZ::initParameters()
 	mpfr_mul_ui(fi,temp1,2,GMP_RNDN);
 		
 	for(int j=0;j<5;j++)
-		{//mpfr_inits(displacemenX[j],displacementZ[j],alfa[j],(mpfr_ptr) 0);
+		{
+		//mpfr_inits(displacemenX[j],displacementZ[j],alfa[j],(mpfr_ptr) 0);
 		mpfr_init_set_si(displacementZ[j],(+0),GMP_RNDN);
 		mpfr_init_set_si(alfa[j],(+0),GMP_RNDN);
 		}
@@ -248,13 +243,9 @@ mpz_class CoordinatesTableZ::function(int x)
 						ver=0;
 				
 				}
-	//~ if(i>L|| myx>0)
-	//~ {cout<<"Not good"<<endl;
-	//~ cout<<i<<" "<<j<<" "<<k<<" "<<q<<" "<<myx<<endl;
-		//~ }
+	
 				
 	if(myx==0){
-	//cout<<i<<" "<<j<<" "<<k<<" "<<q<<endl;
 				
 	//~ //computing the mpfr value of this coordinate
 				
@@ -303,10 +294,6 @@ mpz_class CoordinatesTableZ::function(int x)
 					mpfr_add(zv,displacementZ[i],temp1,GMP_RNDN);
 					
 					
-		//we have the x value
-	
-		//cout<<"pusca "<<endl;
-		
 		ver =1;
 		
 		if(mpfr_sgn(zv)<0)
