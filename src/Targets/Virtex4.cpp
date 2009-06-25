@@ -51,6 +51,8 @@ double Virtex4::lutDelay(){
 };
 
 bool Virtex4::suggestSubmultSize(int &x, int &y, int wInX, int wInY){
+	x = y = 17;
+/**	
 	if (getUseHardMultipliers()){
 		if ((wInX<=17) && (wInY<=17))	{
 			x = max(wInX, wInY);
@@ -144,6 +146,7 @@ bool Virtex4::suggestSubmultSize(int &x, int &y, int wInX, int wInY){
 			}	
 		}
 	}
+	**/
 	// To suppress a warning, but we should never get here
 	return false;
 };	 

@@ -57,96 +57,30 @@ bool StratixII::suggestSubmultSize(int &x, int &y, int wInX, int wInY){
 // TODO This is the VirtexIV function. Stratix II is more interesting
 // (DSP blocks are 36x36 and my be split as 9x9 or 18x18)
 	if (getUseHardMultipliers()){
-		if ((wInX<=17) && (wInY<=17))	{
-			x = max(wInX, wInY);
-			y = x;
-			 if (frequency()>600000000)
-			 	return false;
-			 else
-			 	return true;
-		}else{
-			int f1=(wInX % 17 ==0)?0:1;
-			int f2=(wInY % 17 ==0)?0:1;
-			int k=wInX/17+wInY/17 + f1+ f2;
-			x = 17;	y = 17;
-					
-			if (k<=4)
-				if (frequency()<=400000000)
-					return true;
-				else 
-					return false; 
-			else{
-				double freq;
-				freq = 11.2 + 1560/k;
-				if (frequency()<=freq*1000000)			
-					return true;
-				else 
-					return false;
-			} 
+		x = y = max(wInX, wInY);
+		
+		double maxF; // will hold the maximum possible freqeuncy for each multiplier width
+		for (int i=0; i<3; i++){ // for each multiplier width available
+			maxF = 1/(inputRegDelay_[i] + multiplierDelay_[i]); // maximum possible freqeuncy 
 			
-			
+			if ((x < multiplierWidth_[i]) && (frequency() < maxF))
+				return true;
+		}
+		
+		// we have the maximum frequency for 36x36 in maxF
+		if (maxF > frequency()){ // for low freqency we prefer 36x36
+			x = y = 36;
+			return true;
+		}else{	// to obtain the highest freqency we need 18x18
+			x = y = 18;
+			return true;
 		}
 	}else{
-		double freq;
-		
-		if ((max(wInX,wInY)<=4)&&(max(wInX,wInY)>=2))
-		{
-			freq = 669-13* (max(wInX,wInY));
-			
-			x=wInX;
-			y=wInY;
-			if (frequency()<=freq*1000000)			
-				return true;
-			else 
-				return false;
-		} else if ((max(wInX,wInY)<=15)&&(max(wInX,wInY)>=5)){
-			freq = 411-9*(max(wInX,wInY));
-			if (frequency()<=freq*1000000){			
-				x=wInX;
-				y=wInY;			
-				return true;
-			}
-			else{
-				freq = 121.3+549/2+988/4;
-				if (frequency()>freq*1000000){
-					x=2;
-					y=2;
-					return false;
-				}else{
-					int i=2;
-					while ( ((121.3+549/i+988/(i*i))*1000000) > frequency())
-						i++;
-					
-					x=i-1;
-					y=i-1;
-					return true;
-				}
-			}
-		} else if (max(wInX,wInY)>15){
-			freq = 80.2+34037/(max(wInX,wInY)*max(wInX,wInY));
-			if (frequency()<=freq*1000000){
-				x=wInX;
-				y=wInY;			
-				return true;
-			}
-			else{
-				freq = 121.3+549/2+988/4;
-				if (frequency()>freq*1000000){
-					x=2;
-					y=2;
-					return false;
-				}else{
-					int i=2;
-					while ( ((121.3+549/i+988/(i*i))*1000000) > frequency())
-						i++;
-					
-					x=i-1;
-					y=i-1;
-					return true;
-				}
-			}	
-		}
+		// TODO functional approximation of multiplier size based on frequency
+		x = y = 9;
+		return true;
 	}
+		
 	// control should never get here
 	return false;
 }	 

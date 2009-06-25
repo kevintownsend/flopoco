@@ -58,7 +58,21 @@ public:
 		muxStoO_			= 0.189e-9; // obtained from Quartus 2 Chip Planner by subtraction
 		fdCtoQ_				= 0.352e-9; // obtained from Quartus 2 Chip Planner by subtraction
 		carryInToSumOut_	= 0.125e-9;	// obtained from Quartus 2 Chip Planner
+		// DSP parameters
+		multiplierWidth_[0] = 9;
+		multiplierWidth_[1] = 18;
+		multiplierWidth_[2] = 36;
 		
+	 	multiplierDelay_[0] = 2.880e-9;
+		multiplierDelay_[1] = 2.990e-9;
+		multiplierDelay_[2] = 4.450e-9;
+		
+		inputRegDelay_[0] = 2.030e-9;
+		inputRegDelay_[1] = 2.010e-9;
+		inputRegDelay_[2] = 2.010e-9;
+	
+		pipe2OutReg2Add = 1.450e-9; 
+		pipe2OutReg4Add = 1.850e-9; 
 	}
 	
 	/** The destructor */
@@ -95,5 +109,12 @@ private:
 	double muxStoO_;			/**< The delay of the MUX right after the 3-LUT of a LAB */	
 	double fdCtoQ_;				/**< The delay of the FlipFlop. Also contains an approximate Net Delay experimentally determined */	
 	double carryInToSumOut_;	/**< The delay between the carry in and the adder outup of one LAB */
+
+	// DSP parameters
+	int 	multiplierWidth_[3];/**< The multiplier width available */
+	double 	multiplierDelay_[3];/**< The corresponding delay for each multiplier width available */
+	double	inputRegDelay_[3];	/**< The input register delay to DSP block for each multiplier width available */
+	double	pipe2OutReg2Add; 	/**< The DPS block pipeline register to output register delay in two-multipliers adder mode */
+	double  pipe2OutReg4Add; 	/**< The DPS block pipeline register to output register delay in four-multipliers adder mode */
 };
 #endif
