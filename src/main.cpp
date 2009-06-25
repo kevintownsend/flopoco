@@ -131,7 +131,7 @@ static void usage(char *name){
 	cerr << "    IntKaratsuba wIn \n";
 	cerr << "      integer multiplier of two integers X and Y of sizes wIn. 17 < wIn <= 51 (for now) \n";	
 	cerr << "    Fix2FP LSB MSB Signed wE wF\n";
-	cerr << "    CoordinatesTableX wIn LSB MSB \n";
+	cerr << "    CoordinatesTableX wIn LSB MSB FilePath\n";
 	cerr << "      Convert a 2's compliment fixed-point number in the bit range MSB...LSB into floating-point\n";
 	cerr << "    FPAdder wE wF\n";
 	cerr << "      Floating-point adder \n";
@@ -680,15 +680,16 @@ bool parseCommandLine(int argc, char* argv[]){
 			}
 		}
 		else if(opname=="CoordinatesTableX"){
-			int nargs = 3;
+			int nargs = 4;
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
 				int wIn = checkStrictyPositive(argv[i++], argv[0]);
 				int LSB = atoi(argv[i++]);
 				int MSB = atoi(argv[i++]);
+				char *pa=argv[i++];
 				cerr << "> CoordinatesTableX, wIn="<<wIn<<", LSB="<<LSB<<", MSB="<<MSB<<" \n";
-				op = new CoordinatesTableX(target, wIn,LSB, MSB);
+				op = new CoordinatesTableX(target, wIn,LSB, MSB,pa);
 				addOperator(op);
 			}
 		}
