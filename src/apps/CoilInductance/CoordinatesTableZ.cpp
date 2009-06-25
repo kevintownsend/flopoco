@@ -3,7 +3,7 @@
 #include <math.h>
 #include <cstdlib>
 #include "../../utils.hpp"
-#include "CoordinatesTableX.hpp"
+#include "CoordinatesTableZ.hpp"
 #include <stdio.h>
 #include <mpfr.h>
 
@@ -14,7 +14,7 @@ using std::ifstream;
 
 
 
-CoordinatesTableX::CoordinatesTableX(Target* target, int wIn, int LSBI,int MSBI,char *filename) : 
+CoordinatesTableZ::CoordinatesTableZ(Target* target, int wIn, int LSBI,int MSBI,char *filename) : 
    Table(target, wIn, (MSBI-LSBI)), MSBI(MSBI), LSBI(LSBI), adrWidth(wIn) , wOutm(MSBI-LSBI),filepath(filename)
    {
 	ostringstream name; 
@@ -27,10 +27,10 @@ CoordinatesTableX::CoordinatesTableX(Target* target, int wIn, int LSBI,int MSBI,
 	
  }
 
-CoordinatesTableX::~CoordinatesTableX() {}
+CoordinatesTableZ::~CoordinatesTableZ() {}
 	
 
-int    CoordinatesTableX::double2input(double x){
+int    CoordinatesTableZ::double2input(double x){
   int result;
   cerr << "??? PolynomialTable::double2input not yet implemented ";
   exit(1);
@@ -38,20 +38,20 @@ int    CoordinatesTableX::double2input(double x){
 }
 
 
-double CoordinatesTableX::input2double(int x) {
+double CoordinatesTableZ::input2double(int x) {
   double y;
   cerr << "??? PolynomialTable::double2input not yet implemented ";
   exit(1);
   return(y);
 }
 
-mpz_class CoordinatesTableX::double2output(double x){
+mpz_class CoordinatesTableZ::double2output(double x){
   cerr << "??? PolynomialTable::double2input not yet implemented ";
   exit(1);
   return 0;
 }
 
-double CoordinatesTableX::output2double(mpz_class x) {
+double CoordinatesTableZ::output2double(mpz_class x) {
   double y;
   cerr << "??? PolynomialTable::double2input not yet implemented ";
   exit(1);
@@ -60,7 +60,7 @@ double CoordinatesTableX::output2double(mpz_class x) {
 }
 
 
-void CoordinatesTableX::readParams()
+void CoordinatesTableZ::readParams()
 {
 ifstream indata; // indata is like cin
 	indata.open(filepath);
@@ -90,7 +90,7 @@ ifstream indata; // indata is like cin
 	indata.close();
 	initParameters();	
 }
-void CoordinatesTableX::initParameters()
+void CoordinatesTableZ::initParameters()
 {
 	//cout<<L<<NrSVert;
 	
@@ -126,7 +126,7 @@ void CoordinatesTableX::initParameters()
 		
 	for(int j=0;j<5;j++)
 		{//mpfr_inits(displacemenX[j],displacementZ[j],alfa[j],(mpfr_ptr) 0);
-		mpfr_init_set_si(displacementX[j],(+0),GMP_RNDN);
+		mpfr_init_set_si(displacementZ[j],(+0),GMP_RNDN);
 		mpfr_init_set_si(alfa[j],(+0),GMP_RNDN);
 		}
 	switch(L){
@@ -135,19 +135,19 @@ void CoordinatesTableX::initParameters()
 				break;
 		case 2:	
 			
-				//deplasamentX[1]=-2*insulation;
-				mpfr_mul_si(displacementX[1],insu_m,(-2),GMP_RNDN);
+				//deplasamentZ[1]=(NrSVert-1)*(2.0*turn_radius+insulation);
+				mpfr_mul_si(temp1,turn_rad_m,2,GMP_RNDN);
+				mpfr_add(temp1,temp1,insu_m,GMP_RNDN);
+				mpfr_mul_si(displacementZ[1],temp1,(NrSVert-1),GMP_RNDN);
 			
 				//alfa[1]=M_PI;
 				mpfr_const_pi(alfa[1],GMP_RNDN);
 		
 				break;
 		case 3:	
-				//deplasamentX[1]=-insulation;   deplasamentX[2]=-h-2*insulation;
-				mpfr_set(displacementX[1],insu_m,GMP_RNDN);
-				mpfr_mul_si(temp1,insu_m,2,GMP_RNDN);
-				mpfr_mul_si(temp2,h,(-1),GMP_RNDN);
-				mpfr_sub(displacementX[2],temp2,temp1,GMP_RNDN);
+				//deplasamentZ[1]=h+insulation;deplasamentZ[2]=h;     
+				mpfr_add(displacementZ[1],h,insu_m,GMP_RNDN);
+				mpfr_set(displacementZ[2],h,GMP_RNDN);
 				
 				//alfa[1]=M_PI/2.0;		alfa[2]=M_PI;
 				mpfr_const_pi(temp1,GMP_RNDN);
@@ -156,15 +156,12 @@ void CoordinatesTableX::initParameters()
 		
 				break;
 		case 4:	
-				//deplasamentX[2]=-h*cos(M_PI/6.0)-insulation; deplasamentX[3]=-2.0*h*cos(M_PI/6.0)-insulation;
-				mpfr_const_pi(temp1,GMP_RNDN);
-				mpfr_div_ui(temp1,temp1,6,GMP_RNDN);	
-				mpfr_cos(temp1,temp1,GMP_RNDN);
-				mpfr_mul_si(temp2,h,(-1),GMP_RNDN);
-				mpfr_mul(temp3,temp1,temp2,GMP_RNDN);
-				mpfr_sub(displacementX[2],temp3,insu_m,GMP_RNDN);
-				mpfr_mul_si(temp2,h,(-2),GMP_RNDN);
-				mpfr_mul(displacementX[3],temp2,temp1,GMP_RNDN);
+				//deplasamentZ[1]=h+insulation;deplasamentZ[2]=h*3.0/2.0+insulation;         deplasamentZ[3]=h;   
+				mpfr_add(displacementZ[1],h,insu_m,GMP_RNDN);
+				mpfr_mul_ui(temp1,h,3,GMP_RNDN);
+				mpfr_div_ui(temp1,temp1,2,GMP_RNDN);
+				mpfr_add(displacementZ[2],temp1,insu_m,GMP_RNDN);
+				mpfr_set(displacementZ[3],h,GMP_RNDN);
 			
 				//alfa[1]=M_PI/3.0;		alfa[2]=2.0*M_PI/3.0;		alfa[3]=M_PI;
 				mpfr_const_pi(temp1,GMP_RNDN);
@@ -175,28 +172,18 @@ void CoordinatesTableX::initParameters()
 		
 				break;
 		case 5:	
-				//deplasamentX[1]=-insulation;    deplasamentX[2]=-h*cos(M_PI/4.0)-2*insulation; 
-				//deplasamentX[3]=-h*(1.0 + cos(M_PI/4.0))-3*insulation;deplasamentX[4]=-h*(1.0 + 2.0*cos(M_PI/4.0))-4*insulation;
-				mpfr_mul_si(temp3,insu_m,(-1),GMP_RNDN);
-				mpfr_set(displacementX[1],temp3,GMP_RNDN);
+				//deplasamentZ[1]=h+insulation; deplasamentZ[2]=h*(1.0+sin(M_PI/4.0))+insulation;
+				//deplasamentZ[3]=h*(1.0+sin(M_PI/4.0))+insulation;      deplasamentZ[4]=h;
+				mpfr_add(displacementZ[1],h,insu_m,GMP_RNDN);
 				mpfr_const_pi(temp1,GMP_RNDN);
 				mpfr_div_ui(temp1,temp1,4,GMP_RNDN);	
-				mpfr_cos(temp1,temp1,GMP_RNDN);
-				mpfr_mul_si(temp2,h,(-1),GMP_RNDN);
-				mpfr_mul(temp2,temp2,temp1,GMP_RNDN);
-				mpfr_sub(temp3,temp3,insu_m,GMP_RNDN);
-				mpfr_add(displacementX[2],temp2,temp3,GMP_RNDN);
-				mpfr_add_ui(temp4,temp1,1,GMP_RNDN);
-				mpfr_mul_si(temp2,h,(-1),GMP_RNDN);
-				mpfr_mul(temp2,temp2,temp4,GMP_RNDN);
-				mpfr_sub(temp3,temp3,insu_m,GMP_RNDN);
-				mpfr_add(displacementX[3],temp2,temp3,GMP_RNDN);
-				mpfr_mul_ui(temp1,temp1,2,GMP_RNDN);
-				mpfr_add_ui(temp4,temp1,1,GMP_RNDN);
-				mpfr_mul_si(temp2,h,(-1),GMP_RNDN);
-				mpfr_mul(temp2,temp2,temp4,GMP_RNDN);
-				mpfr_sub(temp3,temp3,insu_m,GMP_RNDN);
-				mpfr_add(displacementX[4],temp2,temp3,GMP_RNDN);
+				mpfr_sin(temp1,temp1,GMP_RNDN);
+				mpfr_add_ui(temp1,temp1,1,GMP_RNDN);
+				mpfr_mul(temp1,temp1,h,GMP_RNDN);
+				mpfr_add(temp1,temp1,insu_m,GMP_RNDN);
+				mpfr_set(displacementZ[2],temp1,GMP_RNDN);
+				mpfr_set(displacementZ[3],temp1,GMP_RNDN);
+				mpfr_set(displacementZ[4],h,GMP_RNDN);
 		
 					
 				//alfa[1]=M_PI/4.0;		alfa[2]=M_PI/2.0;		alfa[3]=3.0*M_PI/4.0;		alfa[4]=M_PI;
@@ -218,7 +205,7 @@ void CoordinatesTableX::initParameters()
 		mpfr_clear(temp4);
 }
 
-mpz_class CoordinatesTableX::function(int x)
+mpz_class CoordinatesTableZ::function(int x)
 {
 	
 		
@@ -235,8 +222,9 @@ mpz_class CoordinatesTableX::function(int x)
 	mpfr_init2(temp,1000);
 	mpfr_init2(tauqj,1000);
 
-	mpfr_t xv;
-	mpfr_init2(xv,1000);
+
+	mpfr_t zv;
+	mpfr_init2(zv,1000);
 	
 	int q;
 	
@@ -307,21 +295,12 @@ mpz_class CoordinatesTableX::function(int x)
 						mpfr_atan(tauqj,temp1,GMP_RNDN);
 					}
 					
-					//float xv=deplasamentX[i]+sqrt(pow(ddj,2)+pow(temp,2))*cos(alfa[i]+tauqj);
+					//float zv=deplasamentZ[i]+sqrt(pow(ddj,2)+pow(temp,2))*sin(alfa[i]+tauqj);
 					mpfr_hypot(temp1,ddj,temp,GMP_RNDN);
-					
-					
-					//pt test
-					//mpfr_sqr(xv,temp,GMP_RNDN);
-					//mpfr_set(xv,temp1,GMP_RNDN);
-					
-					//mpfr_fprintf(stdout,"A:= %f  \n",mpfr_get_d(alfa[i],GMP_RNDN));
-					//mpfr_fprintf(stdout,"T:= %f  \n",mpfr_get_d(tauqj,GMP_RNDN));
-					
 					mpfr_add(temp2,alfa[i],tauqj,GMP_RNDN);
-					mpfr_cos(temp2,temp2,GMP_RNDN);
+					mpfr_sin(temp2,temp2,GMP_RNDN);
 					mpfr_mul(temp1,temp1,temp2,GMP_RNDN);
-					mpfr_add(xv,displacementX[i],temp1,GMP_RNDN);
+					mpfr_add(zv,displacementZ[i],temp1,GMP_RNDN);
 					
 					
 		//we have the x value
@@ -330,9 +309,9 @@ mpz_class CoordinatesTableX::function(int x)
 		
 		ver =1;
 		
-		if(mpfr_sgn(xv)<0)
+		if(mpfr_sgn(zv)<0)
 		{ver=0;
-		mpfr_mul_si(xv,xv,(-1),GMP_RNDN);
+		mpfr_mul_si(zv,zv,(-1),GMP_RNDN);
 		}
 		
 		mpfr_set_ui(temp1, 2 , GMP_RNDN);
@@ -340,11 +319,11 @@ mpz_class CoordinatesTableX::function(int x)
 		mpfr_pow(temp1, temp1, temp2, GMP_RNDN);
 				
 				
-		mpfr_mul(xv, xv, temp1, GMP_RNDN);	
+		mpfr_mul(zv, zv, temp1, GMP_RNDN);	
 		
 		mpz_t xvz;
 		mpz_init2(xvz,1000);
-		mpfr_get_z(xvz,xv,GMP_RNDN);
+		mpfr_get_z(xvz,zv,GMP_RNDN);
 		r=mpz_class(xvz);
 		
 		if(ver==0)//if the number was negative..covert to binary
