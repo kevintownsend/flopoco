@@ -158,7 +158,7 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 				
 				}
 			}else{
-				vhdl << tab << "R <= " << use(join("sum",0))<<range(wInX+wInY-1,0) << ";" << endl;
+				vhdl << tab << "R <= " << use(join("sum",0))<<range(chunkSize_*(chunksX+chunksY)-1, chunkSize_*(chunksX+chunksY) -( wInX+wInY)) << ";" << endl;
 			}
 		}
 		else 
