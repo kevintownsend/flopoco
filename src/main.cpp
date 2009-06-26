@@ -696,7 +696,6 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
-				int wIn = checkStrictyPositive(argv[i++], argv[0]);
 				int LSBI = atoi(argv[i++]);
 				int MSBI = atoi(argv[i++]);
 				int LSBO = atoi(argv[i++]);

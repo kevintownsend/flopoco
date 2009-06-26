@@ -49,6 +49,22 @@ private:
 	/** configuration file path from which to initialize the parameters of the coil*/
 	char *filepath;
 
+	
+	/** The integer adder object for computing the first segment with coordinates X*/
+	IntAdder* segment1X;
+	/** The integer adder object for computing the second segment with coordinates X*/
+	IntAdder* segment2X;
+	/** The integer adder object for computing the first segment with coordinates Y*/
+	IntAdder* segment1Y;
+	/** The integer adder object for computing the second segment with coordinates Y*/
+	IntAdder* segment2Y;
+	/** The integer adder object for computing the first segment with coordinates Z*/
+	IntAdder* segment1Z;
+	/** The integer adder object for computing the second segment with coordinates Z*/
+	IntAdder* segment2Z;
+
+
+
 	//~ /**The leading sign counter	*/
 	//~ LZOCShifterSticky* lzocs; 
 	//~ /**The leading zero counter	*/
