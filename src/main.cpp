@@ -48,6 +48,7 @@
 #include "FPSquarer.hpp"
 #include "FPAdder.hpp"
 #include "Fix2FP.hpp"
+#include "apps/CoilInductance/CoilInductance.hpp"
 #include "apps/CoilInductance/CoordinatesTableX.hpp"
 #include "apps/CoilInductance/CoordinatesTableZ.hpp"
 #include "apps/CoilInductance/CoordinatesTableY.hpp"
@@ -133,6 +134,7 @@ static void usage(char *name){
 	cerr << "    IntKaratsuba wIn \n";
 	cerr << "      integer multiplier of two integers X and Y of sizes wIn. 17 < wIn <= 51 (for now) \n";	
 	cerr << "    Fix2FP LSB MSB Signed wE wF\n";
+	cerr << "    CoilInductance LSBI MSBI LSBO MSBO FilePath\n";
 	cerr << "    CoordinatesTableX wIn LSB MSB FilePath\n";
 	cerr << "    CoordinatesTableY wIn LSB MSB FilePath\n";
 	cerr << "    CoordinatesTableZ wIn LSB MSB FilePath\n";
@@ -680,6 +682,22 @@ bool parseCommandLine(int argc, char* argv[]){
 				
 				cerr << "> Fix2FP, LSB="<<LSB<<", MSB="<<MSB<<", wE="<<wE<<", wF="<<wF<<" \n";
 				op = new Fix2FP(target, LSB, MSB, sign,wE, wF);
+				addOperator(op);
+			}
+		}
+		else if(opname=="CoilInductance"){
+			int nargs = 5;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int wIn = checkStrictyPositive(argv[i++], argv[0]);
+				int LSBI = atoi(argv[i++]);
+				int MSBI = atoi(argv[i++]);
+				int LSBO = atoi(argv[i++]);
+				int MSBO = atoi(argv[i++]);
+				char *pa=argv[i++];
+				cerr << "> CoilInductance "<<" LSBI="<<LSBI<<", MSBI="<<MSBI<<", LSBO="<<LSBO<<", MSBO="<<MSBO<<" \n";
+				op = new CoilInductance(target, LSBI, MSBI,LSBO,MSBO,pa);
 				addOperator(op);
 			}
 		}

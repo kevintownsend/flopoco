@@ -17,12 +17,16 @@ using std::ifstream;
 CoordinatesTableZ::CoordinatesTableZ(Target* target, int wIn, int LSBI,int MSBI,char *filename) : 
    Table(target, wIn, (MSBI-LSBI)), MSBI(MSBI), LSBI(LSBI), adrWidth(wIn) , wOutm(MSBI-LSBI),filepath(filename)
    {
+	if ((MSBI < LSBI)){
+		cerr << 
+			" CoordinatesTableZ: Input constraint LSBI <= MSBI not met."<<endl;
+		exit (EXIT_FAILURE);
+	}
+	   
 	ostringstream name; 
-	name <<"CoordinatesX_"<<wIn<<"_"<<MSBI<<"_"<<LSBI;
+	name <<"CoordinatesX_"<<wIn<<"_"<<abs(LSBI)<<"_"<<abs(MSBI);
 	setName(name.str());
 	   
-	//cout<<filepath;   
-	
 	readParams();
 	
  }
