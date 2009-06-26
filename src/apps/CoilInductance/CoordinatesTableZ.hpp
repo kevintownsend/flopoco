@@ -62,3 +62,4 @@ private:
 	mpfr_t h;
 	mpfr_t displacementZ[5],alfa[5];//,displacementZ[5];
 };
+

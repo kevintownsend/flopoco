@@ -329,3 +329,4 @@ mpz_class CoordinatesTableZ::function(int x)
 	
 	return r;
 }
+

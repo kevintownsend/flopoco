@@ -88,3 +88,4 @@ void CoilInductance::emulate(TestCase * tc)
 void CoilInductance::buildStandardTestCases(TestCaseList* tcl){
 	
 }
+

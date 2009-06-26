@@ -134,11 +134,7 @@ static void usage(char *name){
 	cerr << "    IntKaratsuba wIn \n";
 	cerr << "      integer multiplier of two integers X and Y of sizes wIn. 17 < wIn <= 51 (for now) \n";	
 	cerr << "    Fix2FP LSB MSB Signed wE wF\n";
-	cerr << "    CoilInductance LSBI MSBI LSBO MSBO FilePath\n";
-	cerr << "    CoordinatesTableX wIn LSB MSB FilePath\n";
-	cerr << "    CoordinatesTableY wIn LSB MSB FilePath\n";
-	cerr << "    CoordinatesTableZ wIn LSB MSB FilePath\n";
-	cerr << "      Convert a 2's compliment fixed-point number in the bit range MSB...LSB into floating-point\n";
+	cerr << "      Convert a 2's compliment fixed-point number in the bit range MSB...LSB [into floating-point\n";
 	cerr << "    FPAdder wE wF\n";
 	cerr << "      Floating-point adder \n";
 	cerr << "    FPMultiplier wE wF\n";
@@ -197,10 +193,20 @@ static void usage(char *name){
 	cerr << "      LNS square root.\n";
 #endif // HAVE_LNS
 	
-
+	
 	cerr << "    Collision wE wF opt n\n";
 	cerr << "       A collision detection operator, computes the predicate X²+Y²+Z²<R2\n";
 	cerr << "       opt: assemble FP operators if 0, optimized architecture if 1 \n";
+
+	cerr << "  Applications: \n";
+	cerr << "    CoilInductance LSBI MSBI LSBO MSBO FilePath\n";
+	cerr << "      TODO - Description here; a parameter such as FilePath should not exist !!! \n";
+	//To be removed from command line interface
+	cerr << "    CoordinatesTableX wIn LSB MSB FilePath\n";
+	cerr << "    CoordinatesTableY wIn LSB MSB FilePath\n";
+	cerr << "    CoordinatesTableZ wIn LSB MSB FilePath\n";
+	//=====================================================
+
 
 	cerr << "    TestBench n\n";
 	cerr << "       Behavorial test bench for the preceding operator\n";

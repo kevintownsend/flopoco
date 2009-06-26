@@ -227,3 +227,4 @@ mpz_class CoordinatesTableY::function(int x)
 	
 	return r;
 }
+
