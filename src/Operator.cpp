@@ -440,6 +440,10 @@ void Operator::setCycle(int cycle, bool report) {
 	}
 }
 
+int Operator::getCurrentCycle(){
+	return currentCycle_;
+} 
+
 void Operator::nextCycle(bool report) {
 	if(isSequential()) {
 		currentCycle_ ++; 

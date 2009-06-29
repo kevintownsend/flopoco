@@ -83,8 +83,8 @@ operators = [
 			 ["FPExp",   [ ["wE","in",4, 15], ["wF","in",8, 64] ]],
              ["FPLog",            [ ["wE", "in", 6, 11 ], ["wF","in", 8, 52]]],
              ["IntAdder",         [ ["wIn", "in", 1, 64 ]  ]], 
-             ["IntMultiplier",     [ ["wInX","in", 1, 64 ], ["wInY","in", 1, 64] ]] 
- 
+             ["IntMultiplier",     [ ["wInX","in", 1, 64 ], ["wInY","in", 1, 64] ]], 
+             ["IntKaratsuba", [ ["wIn","in", 18, 51]]] 
             ] #TODO Add the rest of operators
 res = []
 input_combinations_per_operator = 10;

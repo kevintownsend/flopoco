@@ -175,6 +175,9 @@ public:
 	 * @param the new value of the current cycle */
 	void setCycle(int cycle, bool report=true) ;
 
+	/** Return the current cycle 
+	 * @return the current cycle */
+	int getCurrentCycle(); 
 
 	/** Define the current cycle 
 	 * @param the new value of the current cycle */
