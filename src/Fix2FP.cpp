@@ -61,7 +61,7 @@ Fix2FP::Fix2FP(Target* target, int LSBI, int MSBI, int Signed,int wER, int wFR) 
 
 	ostringstream name;
 	
-	if ((MSB < LSB)){
+	if ((MSBI < LSBI)){
 		cerr << 
 			" Fix2FP: Input constraint LSB <= MSB not met."<<endl;
 		exit (EXIT_FAILURE);

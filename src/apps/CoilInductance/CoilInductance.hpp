@@ -54,51 +54,19 @@ private:
 	char *filepath;
 
 	
-	/** The integer adder object for computing the first segment with coordinates X*/
-	IntAdder* segment1X;
-	/** The integer adder object for computing the second segment with coordinates X*/
-	IntAdder* segment2X;
-	/** The integer adder object for computing the first segment with coordinates Y*/
-	IntAdder* segment1Y;
-	/** The integer adder object for computing the second segment with coordinates Y*/
-	IntAdder* segment2Y;
-	/** The integer adder object for computing the first segment with coordinates Z*/
-	IntAdder* segment1Z;
-	/** The integer adder object for computing the second segment with coordinates Z*/
-	IntAdder* segment2Z;
-
-
-	/** The integer adder object for converting the difference x1-x0 into positive*/
-	IntAdder* covertInitialXS1v1;
-	/** The integer adder object for converting the difference x3-x2 into positive*/
-	IntAdder* covertInitialXS2v1;
-	/** The integer adder object for converting back the product of X segments*/
-	IntAdder* covertFinalXv1;
+	
 	/** The integer multiplier object for computing the product of X segments*/
 	IntMultiplier* multiplierXSegv1;
 	
-	/** The integer adder object for converting the difference y1-y0 into positive*/
-	IntAdder* covertInitialYS1v1;
-	/** The integer adder object for converting the difference y3-y2 into positive*/
-	IntAdder* covertInitialYS2v1;
-	/** The integer adder object for converting back the product of Y segments*/
-	IntAdder* covertFinalYv1;
 	/** The integer multiplier object for computing the product of Y segments*/
 	IntMultiplier* multiplierYSegv1;
 	
 	
-	/** The integer adder object for converting the difference z1-z0 into positive*/
-	IntAdder* covertInitialZS1v1;
-	/** The integer adder object for converting the difference z3-z2 into positive*/
-	IntAdder* covertInitialZS2v1;
-	/** The integer adder object for converting back the product of Z segments*/
-	IntAdder* covertFinalZv1;
 	/** The integer multiplier object for computing the product of Z segments*/
 	IntMultiplier* multiplierZSegv1;
 	
 	/** The  2 integers for adding the products of the segments for computing variable1 */
-	IntAdder* adderPartialResult4Var1;
-	IntAdder* adderResult4Var1;
+	IntNAdder* adder4var1;
 	/** Fix2FP object for variable 1 */
 	Fix2FP* convert2FPv1;
 	
@@ -110,8 +78,7 @@ private:
 	/** The squarer for the Z part of the variable 2 */
 	IntSquarer* sqrZv2;
 	/** The  2 integers for adding the products of the segments for computing the the intermidiate sum for var2 */
-	IntAdder* adderPartialResult4SQRTv2;
-	IntAdder* adderResult4SQRTv2;
+	IntNAdder* adder4SQRTv2;
 	/** Fix2FP object for variable 2 ; input to the sqrt*/
 	Fix2FP* convert2FP4sqrtv2;
 	/** The SQRT for the variable 2 */
@@ -119,6 +86,25 @@ private:
 
 	
 	
+	/** The multiplier for the (xo-x1)*t in variable 3*/
+	IntMultiplier* multiplierXv3;
+	/** The multiplier for the (yo-y1)*t in variable 3*/
+	IntMultiplier* multiplierYv3;
+	/** The multiplier for the (zo-z1)*t in variable 3*/
+	IntMultiplier* multiplierZv3;
+	
+	/** The squarer for the X part of the variable 3 */
+	IntSquarer* sqrXv3;
+	/** The squarer for the Y part of the variable 3 */
+	IntSquarer* sqrYv3;
+	/** The squarer for the Z part of the variable 3 */
+	IntSquarer* sqrZv3;
+	/** The  2 integers for adding the products of the segments for computing the the intermidiate sum for var3 */
+	IntNAdder* adder4SQRTv3;
+	/** Fix2FP object for variable 3 ; input to the sqrt*/
+	Fix2FP* convert2FP4sqrtv3;
+	/** The SQRT for the variable 2 */
+	FPSqrt* sqrt4var3;
 	
 	
 	int MSB;
@@ -127,7 +113,9 @@ private:
 	int inputWidthSegments;
 	int outputWidth;
 	int wE,wF;
-	
+	int integratorWidth;
+	int referenceCycle1;
+	int referenceCycle2;
 
 };
 

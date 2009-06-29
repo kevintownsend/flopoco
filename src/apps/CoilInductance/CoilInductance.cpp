@@ -82,10 +82,22 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int LSBO, int
 	
 	inputWidth= MSBI-LSBI;
 	outputWidth= MSBO-LSBO;
+	integratorWidth=3;
 	
 	addOutput("O",outputWidth);
 	
 	//Counters for addressing the memories and for frequency division
+	
+	vhdl<<endl;
+	vhdl<<tab<<"process (clk)"<<endl<<tab<<"variable count:std_logic_vector"<<range(integratorWidth,0)<<":=(others=>'0');"<<endl<<tab<<"begin"<<endl<<tab<<tab<<"if clk'event and clk = '1' then"<<endl;
+	vhdl<<tab<<tab<<tab<<"if count < "<<pow(2,integratorWidth)<<" then "<<endl<<tab<<tab<<tab<<tab<<"count:=count+'1';"<<endl<<tab<<tab<<tab<<tab<<declare("out_clk1",1)<<"<= '0';"<<endl<<tab<<tab<<tab<<tab<<declare("out_rst",1)<<"<= '0'; "<<endl;
+	vhdl<<tab<<tab<<tab<<"elsif count = "<<pow(2,integratorWidth)<<" then "<<endl<<tab<<tab<<tab<<tab<<"count:=count+'1';"<<endl<<tab<<tab<<tab<<tab<<use("out_clk1")<<"<= '1'; "<<endl<<tab<<tab<<tab<<tab<<use("out_rst")<<"<= '0'; "<<endl;
+	vhdl<<tab<<tab<<tab<<"else "<<endl<<tab<<tab<<tab<<tab<<"count:= CONV_STD_LOGIC_VECTOR(0,"<<integratorWidth<<");"<<endl<<tab<<tab<<tab<<tab<<use("out_clk1")<<"<= '0'; "<<endl<<tab<<tab<<tab<<tab<<use("out_rst")<<"<= '1'; "<<endl;
+	vhdl<<tab<<tab<<tab<<"end if;"<<endl;
+	vhdl<<tab<<tab<<"end if;"<<endl;
+	vhdl<<tab<<declare("signal_t",integratorWidth)<<"<="<<" count"<<range(integratorWidth-1,0)<<";"<<endl;
+	vhdl<<tab<<"end process;"<<endl;
+	vhdl<<endl;
 	
 	//Memories instantiation
 	
@@ -110,165 +122,133 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int LSBO, int
 	vhdl<<tab<<declare("signal_z1",inputWidth)<<"<= "<<"(others=>'0')"<<";"<<endl;
 	vhdl<<tab<<declare("signal_z2",inputWidth)<<"<= "<<"(others=>'0')"<<";"<<endl;
 	vhdl<<tab<<declare("signal_z3",inputWidth)<<"<= "<<"(others=>'0')"<<";"<<endl;
+	
+	
 		
 	
 	//performing x1-x0
 	
 	setCycleFromSignal("signal_x0");
 	
-	vhdl<<tab<<declare("not_x0",inputWidth)<<"<= not( "<<use("signal_x0")<<");"<<endl;
+	vhdl<<tab<<declare("segmentX1mX0",inputWidth)<<"<="<<use("signal_x1")<<" - "<<use("signal_x0")<<";"<<endl;
 	
-	segment1X = new IntAdder(target,inputWidth);
-	segment1X->changeName(getName()+"segment1X");
-	oplist.push_back(segment1X);
-	inPortMap  (segment1X, "X", use("signal_x1"));
-	inPortMap  (segment1X, "Y", use("not_x0"));
-	inPortMapCst(segment1X, "Cin", "'1'");
-	outPortMap (segment1X, "R","segmentX1mX0");
-	vhdl << instance(segment1X, "segment1X");
+	//performing x0-x1
 	
-	syncCycleFromSignal("segmentX1mX0");
+	setCycleFromSignal("signal_x1");
+	
+	vhdl<<tab<<declare("segmentX0mX1",inputWidth)<<"<="<<use("signal_x0")<<" - "<<use("signal_x1")<<";"<<endl;
 	
 	
 	//performing x3-x2
 	
 	setCycleFromSignal("signal_x2");
 	
-	vhdl<<tab<<declare("not_x2",inputWidth)<<"<= not( "<<use("signal_x2")<<");"<<endl;
+	vhdl<<tab<<declare("segmentX3mX2",inputWidth)<<"<="<<use("signal_x3")<<" - "<<use("signal_x2")<<";"<<endl;
 	
-	segment2X = new IntAdder(target,inputWidth);
-	segment2X->changeName(getName()+"segment2X");
-	oplist.push_back(segment2X);
-	inPortMap  (segment2X, "X", use("signal_x3"));
-	inPortMap  (segment2X, "Y", use("not_x2"));
-	inPortMapCst(segment2X, "Cin", "'1'");
-	outPortMap (segment2X, "R","segmentX3mX2");
-	vhdl << instance(segment2X, "segment2X");
 	
-	syncCycleFromSignal("segmentX3mX2");
+	//performing x3-x0
 	
+	setCycleFromSignal("signal_x0");
+	
+	vhdl<<tab<<declare("segmentX3mX0",inputWidth)<<"<="<<use("signal_x3")<<" - "<<use("signal_x0")<<";"<<endl;
 	
 	
 	//performing y1-y0
 	
 	setCycleFromSignal("signal_y0");
 	
-	vhdl<<tab<<declare("not_y0",inputWidth)<<"<= not( "<<use("signal_y0")<<");"<<endl;
+	vhdl<<tab<<declare("segmentY1mY0",inputWidth)<<"<="<<use("signal_y1")<<" - "<<use("signal_y0")<<";"<<endl;
 	
-	segment1Y = new IntAdder(target,inputWidth);
-	segment1Y->changeName(getName()+"segment1Y");
-	oplist.push_back(segment1Y);
-	inPortMap  (segment1Y, "X", use("signal_y1"));
-	inPortMap  (segment1Y, "Y", use("not_y0"));
-	inPortMapCst(segment1Y, "Cin", "'1'");
-	outPortMap (segment1Y, "R","segmentY1mY0");
-	vhdl << instance(segment1Y, "segment1Y");
+	//performing y0-y1
 	
-	syncCycleFromSignal("segmentY1mY0");
+	setCycleFromSignal("signal_y1");
+	
+	vhdl<<tab<<declare("segmentY0mY1",inputWidth)<<"<="<<use("signal_y0")<<" - "<<use("signal_y1")<<";"<<endl;
+	
 	
 	
 	//performing y3-y2
 	
 	setCycleFromSignal("signal_y2");
 	
-	vhdl<<tab<<declare("not_y2",inputWidth)<<"<= not( "<<use("signal_y2")<<");"<<endl;
+	vhdl<<tab<<declare("segmentY3mY2",inputWidth)<<"<="<<use("signal_y3")<<" - "<<use("signal_y2")<<";"<<endl;
 	
-	segment2Y = new IntAdder(target,inputWidth);
-	segment2Y->changeName(getName()+"segment2Y");
-	oplist.push_back(segment2Y);
-	inPortMap  (segment2Y, "X", use("signal_y3"));
-	inPortMap  (segment2Y, "Y", use("not_y2"));
-	inPortMapCst(segment2Y, "Cin", "'1'");
-	outPortMap (segment2Y, "R","segmentY3mY2");
-	vhdl << instance(segment2Y, "segment2Y");
 	
-	syncCycleFromSignal("segmentY3mY2");
+	//performing y3-y0
+	
+	setCycleFromSignal("signal_y0");
+	
+	vhdl<<tab<<declare("segmentY3mY0",inputWidth)<<"<="<<use("signal_y3")<<" - "<<use("signal_y0")<<";"<<endl;
 	
 	
 	//performing z1-z0
 	
 	setCycleFromSignal("signal_z0");
+
+	vhdl<<tab<<declare("segmentZ1mZ0",inputWidth)<<"<="<<use("signal_z1")<<" - "<<use("signal_z0")<<";"<<endl;
+
+		
+	//performing z0-z1
 	
-	vhdl<<tab<<declare("not_z0",inputWidth)<<"<= not( "<<use("signal_z0")<<");"<<endl;
+	setCycleFromSignal("signal_z1");
 	
-	segment1Z = new IntAdder(target,inputWidth);
-	segment1Z->changeName(getName()+"segment1Z");
-	oplist.push_back(segment1Z);
-	inPortMap  (segment1Z, "X", use("signal_z1"));
-	inPortMap  (segment1Z, "Y", use("not_z0"));
-	inPortMapCst(segment1Z, "Cin", "'1'");
-	outPortMap (segment1Z, "R","segmentZ1mZ0");
-	vhdl << instance(segment1Z, "segment1Z");
-	
-	syncCycleFromSignal("segmentZ1mZ0");
-	
+	vhdl<<tab<<declare("segmentZ0mZ1",inputWidth)<<"<="<<use("signal_z0")<<" - "<<use("signal_z1")<<";"<<endl;
+		
 	
 	//performing z3-z2
 	
 	setCycleFromSignal("signal_z2");
 	
-	vhdl<<tab<<declare("not_z2",inputWidth)<<"<= not( "<<use("signal_z2")<<");"<<endl;
+	vhdl<<tab<<declare("segmentZ3mZ2",inputWidth)<<"<="<<use("signal_z3")<<" - "<<use("signal_z2")<<";"<<endl;
 	
-	segment2Z = new IntAdder(target,inputWidth);
-	segment2Z->changeName(getName()+"segment2Z");
-	oplist.push_back(segment2Z);
-	inPortMap  (segment2Z, "X", use("signal_z3"));
-	inPortMap  (segment2Z, "Y", use("not_z2"));
-	inPortMapCst(segment2Z, "Cin", "'1'");
-	outPortMap (segment2Z, "R","segmentZ3mZ2");
-	vhdl << instance(segment2Z, "segment2Z");
 	
-	syncCycleFromSignal("segmentZ3mZ2");
+	//performing z3-z0
 	
+	setCycleFromSignal("signal_z0");
+	
+	vhdl<<tab<<declare("segmentZ3mZ0",inputWidth)<<"<="<<use("signal_z3")<<" - "<<use("signal_z0")<<";"<<endl;
+	
+	nextCycle();
+	
+	//referenceCycle1 = getCurrentCycle();
 	
 	//computing the var1 (x1-x0)*(x3-x2)+(y1-y0)*(y3-y2)+(z1-z0)*(z3-z2)
 	
 	
 		//(x1-x0)*(x3-x2)
-	setCycleFromSignal("segmentX1mX0");
+	//setCycleFromSignal("signX1mX0v1");
+	//setCycle(referenceCycle1);
 	
 	vhdl<<tab<<declare("signX1mX0v1",1)<<"<= "<<use("segmentX1mX0")<<of(inputWidth-1)<<";"<<endl;
 	vhdl<<tab<<declare("sign2vectorX1mX0v1",inputWidth-1)<<"<= ( others=> "<<use("signX1mX0v1")<<");"<<endl;
 	vhdl<<tab<<declare("partialConverted2PositiveX1mX0v1",inputWidth-1)<<"<="<<use("sign2vectorX1mX0v1")<<" xor "<<use("segmentX1mX0")<<range(inputWidth-2,0)<<";"<<endl;
-	vhdl<<tab<<declare("zeroInput4ConvertionXv1",inputWidth-1)<<"<= (others => '0' );"<<endl;
+	
+	
+	vhdl<<declare("converted2PositiveX1mX0v1",inputWidth-1)<<"<="<<use("partialConverted2PositiveX1mX0v1") << " + "<< use("signX1mX0v1")<<";"<<endl;
+	
+	
 	
 	vhdl<<tab<<declare("signX3mX2v1",1)<<"<= "<<use("segmentX3mX2")<<of(inputWidth-1)<<";"<<endl;
 	vhdl<<tab<<declare("sign2vectorX3mX2v1",inputWidth-1)<<"<= ( others=> "<<use("signX3mX2v1")<<");"<<endl;
 	vhdl<<tab<<declare("partialConverted2PositiveX3mX2v1",inputWidth-1)<<"<="<<use("sign2vectorX3mX2v1")<<" xor "<<use("segmentX3mX2")<<range(inputWidth-2,0)<<";"<<endl;
 	
+	vhdl<<tab<<declare("converted2PositiveX3mX2v1",inputWidth-1)<<"<="<<use("partialConverted2PositiveX3mX2v1") << " + "<< use("signX3mX2v1")<<";"<<endl;
+	
+	//referenceCycle2 = getCurrentCycle();
 	
 	vhdl<<tab<<declare("signSegmentXv1",1)<<" <= "<<use("signX1mX0v1")<<" xor "<<use("signX3mX2v1")<<";"<<endl;
 	
 	
-	covertInitialXS1v1 = new IntAdder(target,inputWidth-1);
-	covertInitialXS1v1->changeName(getName()+"covertInitialXS1v1");
-	oplist.push_back(covertInitialXS1v1);
-	inPortMap  (covertInitialXS1v1, "X", use("partialConverted2PositiveX1mX0v1"));
-	inPortMap  (covertInitialXS1v1, "Y", use("zeroInput4ConvertionXv1"));
-	inPortMap  (covertInitialXS1v1, "Cin", use("signX1mX0v1") );
-	outPortMap (covertInitialXS1v1, "R","converted2PositiveX1mX0v1");
-	vhdl << instance(covertInitialXS1v1, "covertInitialXS1v1");
+	nextCycle();
 	
-	syncCycleFromSignal("converted2PositiveX1mX0v1");
-	
-	setCycleFromSignal("zeroInput4ConvertionXv1");
-	
-	covertInitialXS2v1 = new IntAdder(target,inputWidth-1);
-	covertInitialXS2v1->changeName(getName()+"covertInitialXS2v1");
-	oplist.push_back(covertInitialXS2v1);
-	inPortMap  (covertInitialXS2v1, "X", use("partialConverted2PositiveX3mX2v1"));
-	inPortMap  (covertInitialXS2v1, "Y", use("zeroInput4ConvertionXv1"));
-	inPortMap  (covertInitialXS2v1, "Cin", use("signX3mX2v1") );
-	outPortMap (covertInitialXS2v1, "R","converted2PositiveX3mX2v1");
-	vhdl << instance(covertInitialXS2v1, "covertInitialXS2v1");
-	
-	syncCycleFromSignal("converted2PositiveX3mX2v1");
+	vhdl<<tab<<declare("converted2PositiveX1mX0v1temp", inputWidth-1)<<"<="<<use("converted2PositiveX1mX0v1")<<";"<<endl;
+	vhdl<<tab<<declare("converted2PositiveX3mX2v1temp", inputWidth-1)<<"<="<<use("converted2PositiveX3mX2v1")<<";"<<endl;
 	
 	multiplierXSegv1 = new IntMultiplier(target, inputWidth-1, inputWidth-1);
 	multiplierXSegv1->changeName(getName()+"multiplierXSegv1");
 	oplist.push_back(multiplierXSegv1);
-	inPortMap  (multiplierXSegv1, "X", use("converted2PositiveX1mX0v1"));
-	inPortMap  (multiplierXSegv1, "Y", use("converted2PositiveX3mX2v1"));
+	inPortMap  (multiplierXSegv1, "X", use("converted2PositiveX1mX0v1temp"));
+	inPortMap  (multiplierXSegv1, "Y", use("converted2PositiveX3mX2v1temp"));
 	outPortMap (multiplierXSegv1, "R","partialComputedProductSX1v1");
 	vhdl << instance(multiplierXSegv1, "multiplierXSegv1");
 	
@@ -279,70 +259,41 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int LSBO, int
 	vhdl<<tab<<declare("sign2VectorSegmentXv1",inputWidthSegments)<<"<= (others => "<<use("signSegmentXv1")<<");"<<endl;
 	vhdl<<tab<<declare("partialConvertedProductSX1v1",inputWidthSegments)<<"<="<<use("partialComputedProductSX1v1Bit")<<" xor "<<use("sign2VectorSegmentXv1")<<";"<<endl;
 	
-	//~ if(target->frequencyMHz()>=250)
-		//~ nextCycle();
+	
+	vhdl<<tab<<declare("convertedSegmentXv1",inputWidthSegments)<<"<="<<use("partialConvertedProductSX1v1")<<" + "<<use("signSegmentXv1") <<";"<<endl;
+	
 		
-	vhdl<<tab<<declare("zeroInput4FinalConvertionXv1",inputWidthSegments)<<"<= (others => '0' );"<<endl;
-	vhdl<<tab<<declare("tempsignSegmentXv1",1)<<"<="<<use("signSegmentXv1")<<";"<<endl;
-	
-	covertFinalXv1 = new IntAdder(target,inputWidthSegments);
-	covertFinalXv1->changeName(getName()+"covertFinalXv1");
-	oplist.push_back(covertFinalXv1);
-	inPortMap  (covertFinalXv1, "X", use("partialConvertedProductSX1v1"));
-	inPortMap  (covertFinalXv1, "Y", use("zeroInput4FinalConvertionXv1"));
-	inPortMap  (covertFinalXv1, "Cin", use("tempsignSegmentXv1") );
-	outPortMap (covertFinalXv1, "R","convertedSegmentXv1");
-	vhdl << instance(covertFinalXv1, "covertFinalXv1");
-	
-	syncCycleFromSignal("convertedSegmentXv1");
-	
 	
 		
 	//(y1-y0)*(y3-y2)
-	setCycleFromSignal("segmentY1mY0");
+	setCycleFromSignal("signX1mX0v1");
+	//setCycle(referenceCycle1);
 	
 	vhdl<<tab<<declare("signY1mY0v1",1)<<"<= "<<use("segmentY1mY0")<<of(inputWidth-1)<<";"<<endl;
 	vhdl<<tab<<declare("sign2vectorY1mY0v1",inputWidth-1)<<"<= ( others=> "<<use("signY1mY0v1")<<");"<<endl;
 	vhdl<<tab<<declare("partialConverted2PositiveY1mY0v1",inputWidth-1)<<"<="<<use("sign2vectorY1mY0v1")<<" xor "<<use("segmentY1mY0")<<range(inputWidth-2,0)<<";"<<endl;
-	vhdl<<tab<<declare("zeroInput4ConvertionYv1",inputWidth-1)<<"<= (others => '0' );"<<endl;
+		
+	vhdl<<declare("converted2PositiveY1mY0v1",inputWidth-1)<<"<="<<use("partialConverted2PositiveY1mY0v1") << " + "<< use("signY1mY0v1")<<";"<<endl;
 	
 	vhdl<<tab<<declare("signY3mY2v1",1)<<"<= "<<use("segmentY3mY2")<<of(inputWidth-1)<<";"<<endl;
 	vhdl<<tab<<declare("sign2vectorY3mY2v1",inputWidth-1)<<"<= ( others=> "<<use("signY3mY2v1")<<");"<<endl;
 	vhdl<<tab<<declare("partialConverted2PositiveY3mY2v1",inputWidth-1)<<"<="<<use("sign2vectorY3mY2v1")<<" xor "<<use("segmentY3mY2")<<range(inputWidth-2,0)<<";"<<endl;
 	
+	vhdl<<tab<<declare("converted2PositiveY3mY2v1",inputWidth-1)<<"<="<<use("partialConverted2PositiveY3mY2v1") << " + "<< use("signY3mY2v1")<<";"<<endl;
 	
 	vhdl<<tab<<declare("signSegmentYv1",1)<<" <= "<<use("signY1mY0v1")<<" xor "<<use("signY3mY2v1")<<";"<<endl;
 	
 	
-	covertInitialYS1v1 = new IntAdder(target,inputWidth-1);
-	covertInitialYS1v1->changeName(getName()+"covertInitialYS1v1");
-	oplist.push_back(covertInitialYS1v1);
-	inPortMap  (covertInitialYS1v1, "X", use("partialConverted2PositiveY1mY0v1"));
-	inPortMap  (covertInitialYS1v1, "Y", use("zeroInput4ConvertionYv1"));
-	inPortMap  (covertInitialYS1v1, "Cin", use("signY1mY0v1") );
-	outPortMap (covertInitialYS1v1, "R","converted2PositiveY1mY0v1");
-	vhdl << instance(covertInitialYS1v1, "covertInitialYS1v1");
+	nextCycle();
 	
-	syncCycleFromSignal("converted2PositiveY1mY0v1");
-	
-	setCycleFromSignal("zeroInput4ConvertionYv1");
-	
-	covertInitialYS2v1 = new IntAdder(target,inputWidth-1);
-	covertInitialYS2v1->changeName(getName()+"covertInitialYS2v1");
-	oplist.push_back(covertInitialYS2v1);
-	inPortMap  (covertInitialYS2v1, "X", use("partialConverted2PositiveY3mY2v1"));
-	inPortMap  (covertInitialYS2v1, "Y", use("zeroInput4ConvertionYv1"));
-	inPortMap  (covertInitialYS2v1, "Cin", use("signY3mY2v1") );
-	outPortMap (covertInitialYS2v1, "R","converted2PositiveY3mY2v1");
-	vhdl << instance(covertInitialYS2v1, "covertInitialYS2v1");
-	
-	syncCycleFromSignal("converted2PositiveY3mY2v1");
+	vhdl<<tab<<declare("converted2PositiveY1mY0v1temp", inputWidth-1)<<"<="<<use("converted2PositiveY1mY0v1")<<";"<<endl;
+	vhdl<<tab<<declare("converted2PositiveY3mY2v1temp", inputWidth-1)<<"<="<<use("converted2PositiveY3mY2v1")<<";"<<endl;
 	
 	multiplierYSegv1 = new IntMultiplier(target, inputWidth-1, inputWidth-1);
 	multiplierYSegv1->changeName(getName()+"multiplierYSegv1");
 	oplist.push_back(multiplierYSegv1);
-	inPortMap  (multiplierYSegv1, "X", use("converted2PositiveY1mY0v1"));
-	inPortMap  (multiplierYSegv1, "Y", use("converted2PositiveY3mY2v1"));
+	inPortMap  (multiplierYSegv1, "X", use("converted2PositiveY1mY0v1temp"));
+	inPortMap  (multiplierYSegv1, "Y", use("converted2PositiveY3mY2v1temp"));
 	outPortMap (multiplierYSegv1, "R","partialComputedProductSY1v1");
 	vhdl << instance(multiplierYSegv1, "multiplierYSegv1");
 	
@@ -353,69 +304,40 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int LSBO, int
 	vhdl<<tab<<declare("sign2VectorSegmentYv1",inputWidthSegments)<<"<= (others => "<<use("signSegmentYv1")<<");"<<endl;
 	vhdl<<tab<<declare("partialConvertedProductSY1v1",inputWidthSegments)<<"<="<<use("partialComputedProductSY1v1Bit")<<" xor "<<use("sign2VectorSegmentYv1")<<";"<<endl;
 	
-	//~ if(target->frequencyMHz()>=250)
-		//~ nextCycle();
-		
-	vhdl<<tab<<declare("zeroInput4FinalConvertionYv1",inputWidthSegments)<<"<= (others => '0' );"<<endl;
-	vhdl<<tab<<declare("tempsignSegmentYv1",1)<<"<="<<use("signSegmentYv1")<<";"<<endl;
+	vhdl<<tab<<declare("convertedSegmentYv1",inputWidthSegments)<<"<="<<use("partialConvertedProductSY1v1")<<" + "<<use("signSegmentYv1") <<";"<<endl;
 	
-	covertFinalYv1 = new IntAdder(target,inputWidthSegments);
-	covertFinalYv1->changeName(getName()+"covertFinalYv1");
-	oplist.push_back(covertFinalYv1);
-	inPortMap  (covertFinalYv1, "X", use("partialConvertedProductSY1v1"));
-	inPortMap  (covertFinalYv1, "Y", use("zeroInput4FinalConvertionYv1"));
-	inPortMap  (covertFinalYv1, "Cin", use("tempsignSegmentYv1") );
-	outPortMap (covertFinalYv1, "R","convertedSegmentYv1");
-	vhdl << instance(covertFinalYv1, "covertFinalYv1");
 	
-	syncCycleFromSignal("convertedSegmentYv1");
 	
 			
 		//(z1-z0)*(z3-z2)
-	setCycleFromSignal("segmentZ1mZ0");
+	setCycleFromSignal("signX1mX0v1");
+	//setCycle(referenceCycle1);
 	
 	vhdl<<tab<<declare("signZ1mZ0v1",1)<<"<= "<<use("segmentZ1mZ0")<<of(inputWidth-1)<<";"<<endl;
 	vhdl<<tab<<declare("sign2vectorZ1mZ0v1",inputWidth-1)<<"<= ( others=> "<<use("signZ1mZ0v1")<<");"<<endl;
 	vhdl<<tab<<declare("partialConverted2PositiveZ1mZ0v1",inputWidth-1)<<"<="<<use("sign2vectorZ1mZ0v1")<<" xor "<<use("segmentZ1mZ0")<<range(inputWidth-2,0)<<";"<<endl;
 	vhdl<<tab<<declare("zeroInput4ConvertionZv1",inputWidth-1)<<"<= (others => '0' );"<<endl;
 	
+	vhdl<<declare("converted2PositiveZ1mZ0v1",inputWidth-1)<<"<="<<use("partialConverted2PositiveZ1mZ0v1") << " + "<< use("signZ1mZ0v1")<<";"<<endl;
+	
 	vhdl<<tab<<declare("signZ3mZ2v1",1)<<"<= "<<use("segmentZ3mZ2")<<of(inputWidth-1)<<";"<<endl;
 	vhdl<<tab<<declare("sign2vectorZ3mZ2v1",inputWidth-1)<<"<= ( others=> "<<use("signZ3mZ2v1")<<");"<<endl;
 	vhdl<<tab<<declare("partialConverted2PositiveZ3mZ2v1",inputWidth-1)<<"<="<<use("sign2vectorZ3mZ2v1")<<" xor "<<use("segmentZ3mZ2")<<range(inputWidth-2,0)<<";"<<endl;
 	
+	vhdl<<tab<<declare("converted2PositiveZ3mZ2v1",inputWidth-1)<<"<="<<use("partialConverted2PositiveZ3mZ2v1") << " + "<< use("signZ3mZ2v1")<<";"<<endl;
 	
 	vhdl<<tab<<declare("signSegmentZv1",1)<<" <= "<<use("signZ1mZ0v1")<<" xor "<<use("signZ3mZ2v1")<<";"<<endl;
 	
+	nextCycle();
 	
-	covertInitialZS1v1 = new IntAdder(target,inputWidth-1);
-	covertInitialZS1v1->changeName(getName()+"covertInitialZS1v1");
-	oplist.push_back(covertInitialZS1v1);
-	inPortMap  (covertInitialZS1v1, "X", use("partialConverted2PositiveZ1mZ0v1"));
-	inPortMap  (covertInitialZS1v1, "Y", use("zeroInput4ConvertionZv1"));
-	inPortMap  (covertInitialZS1v1, "Cin", use("signZ1mZ0v1") );
-	outPortMap (covertInitialZS1v1, "R","converted2PositiveZ1mZ0v1");
-	vhdl << instance(covertInitialZS1v1, "covertInitialZS1v1");
-	
-	syncCycleFromSignal("converted2PositiveZ1mZ0v1");
-	
-	setCycleFromSignal("zeroInput4ConvertionZv1");
-	
-	covertInitialZS2v1 = new IntAdder(target,inputWidth-1);
-	covertInitialZS2v1->changeName(getName()+"covertInitialZS2v1");
-	oplist.push_back(covertInitialZS2v1);
-	inPortMap  (covertInitialZS2v1, "X", use("partialConverted2PositiveZ3mZ2v1"));
-	inPortMap  (covertInitialZS2v1, "Y", use("zeroInput4ConvertionZv1"));
-	inPortMap  (covertInitialZS2v1, "Cin", use("signZ3mZ2v1") );
-	outPortMap (covertInitialZS2v1, "R","converted2PositiveZ3mZ2v1");
-	vhdl << instance(covertInitialZS2v1, "covertInitialZS2v1");
-	
-	syncCycleFromSignal("converted2PositiveZ3mZ2v1");
+	vhdl<<tab<<declare("converted2PositiveZ1mZ0v1temp", inputWidth-1)<<"<="<<use("converted2PositiveZ1mZ0v1")<<";"<<endl;
+	vhdl<<tab<<declare("converted2PositiveZ3mZ2v1temp", inputWidth-1)<<"<="<<use("converted2PositiveZ3mZ2v1")<<";"<<endl;
 	
 	multiplierZSegv1 = new IntMultiplier(target, inputWidth-1, inputWidth-1);
 	multiplierZSegv1->changeName(getName()+"multiplierZSegv1");
 	oplist.push_back(multiplierZSegv1);
-	inPortMap  (multiplierZSegv1, "X", use("converted2PositiveZ1mZ0v1"));
-	inPortMap  (multiplierZSegv1, "Y", use("converted2PositiveZ3mZ2v1"));
+	inPortMap  (multiplierZSegv1, "X", use("converted2PositiveZ1mZ0v1temp"));
+	inPortMap  (multiplierZSegv1, "Y", use("converted2PositiveZ3mZ2v1temp"));
 	outPortMap (multiplierZSegv1, "R","partialComputedProductSZ1v1");
 	vhdl << instance(multiplierZSegv1, "multiplierZSegv1");
 	
@@ -426,56 +348,33 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int LSBO, int
 	vhdl<<tab<<declare("sign2VectorSegmentZv1",inputWidthSegments)<<"<= (others => "<<use("signSegmentZv1")<<");"<<endl;
 	vhdl<<tab<<declare("partialConvertedProductSZ1v1",inputWidthSegments)<<"<="<<use("partialComputedProductSZ1v1Bit")<<" xor "<<use("sign2VectorSegmentZv1")<<";"<<endl;
 	
-	//~ if(target->frequencyMHz()>=250)
-		//~ nextCycle();
-		
-	vhdl<<tab<<declare("zeroInput4FinalConvertionZv1",inputWidthSegments)<<"<= (others => '0' );"<<endl;
-	vhdl<<tab<<declare("tempsignSegmentZv1",1)<<"<="<<use("signSegmentZv1")<<";"<<endl;
+	vhdl<<tab<<declare("convertedSegmentZv1",inputWidthSegments)<<"<="<<use("partialConvertedProductSZ1v1")<<" + "<<use("signSegmentZv1") <<";"<<endl;
 	
-	covertFinalZv1 = new IntAdder(target,inputWidthSegments);
-	covertFinalZv1->changeName(getName()+"covertFinalZv1");
-	oplist.push_back(covertFinalZv1);
-	inPortMap  (covertFinalZv1, "X", use("partialConvertedProductSZ1v1"));
-	inPortMap  (covertFinalZv1, "Y", use("zeroInput4FinalConvertionZv1"));
-	inPortMap  (covertFinalZv1, "Cin", use("tempsignSegmentZv1") );
-	outPortMap (covertFinalZv1, "R","convertedSegmentZv1");
-	vhdl << instance(covertFinalZv1, "covertFinalZv1");
 	
-	syncCycleFromSignal("convertedSegmentZv1");
+	nextCycle();
 	
 		//ading the 3 results for segments
 	
 	vhdl<<tab<<declare("convertedSegmentYv1temp",inputWidthSegments)<<"<="<<use("convertedSegmentYv1")<<";"<<endl;
 	vhdl<<tab<<declare("convertedSegmentZv1temp",inputWidthSegments)<<"<="<<use("convertedSegmentZv1")<<";"<<endl;
-	
-	adderPartialResult4Var1 = new IntAdder(target,inputWidthSegments);
-	adderPartialResult4Var1->changeName(getName()+"adderPartialResult4Var1");
-	oplist.push_back(adderPartialResult4Var1);
-	inPortMap  (adderPartialResult4Var1, "X", use("convertedSegmentYv1temp"));
-	inPortMap  (adderPartialResult4Var1, "Y", use("convertedSegmentZv1temp"));
-	inPortMapCst(adderPartialResult4Var1, "Cin", "'0'" );
-	outPortMap (adderPartialResult4Var1, "R","partialResult4Var1");
-	vhdl << instance(adderPartialResult4Var1, "adderPartialResult4Var1");
-	
-	syncCycleFromSignal("partialResult4Var1");
-	
 	vhdl<<tab<<declare("convertedSegmentXv1temp",inputWidthSegments)<<"<="<<use("convertedSegmentXv1")<<";"<<endl;
 	
-	adderResult4Var1 = new IntAdder(target,inputWidthSegments);
-	adderResult4Var1->changeName(getName()+"adderResult4Var1");
-	oplist.push_back(adderResult4Var1);
-	inPortMap  (adderResult4Var1, "X", use("partialResult4Var1"));
-	inPortMap  (adderResult4Var1, "Y", use("convertedSegmentXv1temp"));
-	inPortMapCst(adderResult4Var1, "Cin", "'0'" );
-	outPortMap (adderResult4Var1, "R","result4Var1");
-	vhdl << instance(adderResult4Var1, "adderResult4Var1");
+	adder4var1 = new IntNAdder(target,inputWidthSegments,3);
+	adder4var1->changeName(getName()+"adder4var1");
+	oplist.push_back(adder4var1);
+	inPortMap  (adder4var1, "X0", use("convertedSegmentYv1temp"));
+	inPortMap  (adder4var1, "X1", use("convertedSegmentZv1temp"));
+	inPortMap  (adder4var1, "X2", use("convertedSegmentXv1temp") );
+	inPortMapCst(adder4var1,"Cin","'0'");
+	outPortMap (adder4var1, "R","result4Var1");
+	vhdl << instance(adder4var1, "adder4var1");
 	
 	syncCycleFromSignal("result4Var1");
 	
 	//int signofLSBI=LSBI>=0?(+1):(-1);
 	int signofMSBI=MSBI>=0?(+1):(-1);
 	
-	//cout<<"new Lsbi:= "<<(LSBI)*2<<"new Msbi:= "<<signofMSBI*(abs(MSBI)-1)*2+1<<endl;
+	//cout<<"new Lsbi:= "<<(LSBI)*2<<"new Msbi:= "<<signofMSBI*(abs(MSBI)-1)*2<<endl;
 	
 	convert2FPv1 = new Fix2FP(target,(LSBI)*2,signofMSBI*(abs(MSBI)-1)*2,1,wE,wF);
 	convert2FPv1->changeName(getName()+"convert2FPv1");
@@ -486,12 +385,13 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int LSBO, int
 	
 	syncCycleFromSignal("Var1");
 	
-	
+		
 	//computing the var2 sqrt( (x3-x2)^2 +  (y3-y2)^2 +(z3-z2)^2 )
 	
 		//computing (x3-x2)^2
 	
-	setCycleFromSignal("converted2PositiveX3mX2v1");
+	setCycleFromSignal("converted2PositiveX3mX2v1temp");
+	//setCycle(referenceCycle2);
 	
 	vhdl<<tab<<declare("segmentX3mX2ns",inputWidth-1)<<"<="<<use("converted2PositiveX3mX2v1")<<";"<<endl;
 	
@@ -508,7 +408,8 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int LSBO, int
 	
 		//computing (y3-y2)^2
 	
-	setCycleFromSignal("converted2PositiveY3mY2v1");
+	setCycleFromSignal("converted2PositiveY3mY2v1temp");
+	//setCycle(referenceCycle2);
 	
 	vhdl<<tab<<declare("segmentY3mY2ns",inputWidth-1)<<"<="<<use("converted2PositiveY3mY2v1")<<";"<<endl;
 	
@@ -524,7 +425,8 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int LSBO, int
 	
 		//computing (z3-z2)^2
 	
-	setCycleFromSignal("converted2PositiveZ3mZ2v1");
+	setCycleFromSignal("converted2PositiveZ3mZ2v1temp");
+	//setCycle(referenceCycle2);
 	
 	vhdl<<tab<<declare("segmentZ3mZ2ns",inputWidth-1)<<"<="<<use("converted2PositiveZ3mZ2v1")<<";"<<endl;
 	
@@ -541,35 +443,23 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int LSBO, int
 	
 	//ading the 3 results for segments to be feed to sqrt
 	
-		
-	adderPartialResult4SQRTv2 = new IntAdder(target,(inputWidth-1)*2);
-	adderPartialResult4SQRTv2->changeName(getName()+"adderPartialResult4SQRTv2");
-	oplist.push_back(adderPartialResult4SQRTv2);
-	inPortMap  (adderPartialResult4SQRTv2, "X", use("sqrY3mY2ns"));
-	inPortMap  (adderPartialResult4SQRTv2, "Y", use("sqrZ3mZ2ns"));
-	inPortMapCst(adderPartialResult4SQRTv2, "Cin", "'0'" );
-	outPortMap (adderPartialResult4SQRTv2, "R","partialResult4SQRTv2");
-	vhdl << instance(adderPartialResult4SQRTv2, "adderPartialResult4SQRTv2");
 	
-	syncCycleFromSignal("partialResult4SQRTv2");
-	
-	vhdl<<tab<<declare("sqrX3mX2nstemp",(inputWidth-1)*2)<<"<="<<use("sqrX3mX2ns")<<";"<<endl;
-	
-	adderResult4SQRTv2 = new IntAdder(target,(inputWidth-1)*2);
-	adderResult4SQRTv2->changeName(getName()+"adderResult4SQRTv2");
-	oplist.push_back(adderResult4SQRTv2);
-	inPortMap  (adderResult4SQRTv2, "X", use("sqrX3mX2nstemp"));
-	inPortMap  (adderResult4SQRTv2, "Y", use("partialResult4SQRTv2"));
-	inPortMapCst(adderResult4SQRTv2, "Cin", "'0'" );
-	outPortMap (adderResult4SQRTv2, "R","result4SQRTv2");
-	vhdl << instance(adderResult4SQRTv2, "adderResult4SQRTv2");
+	adder4SQRTv2 = new IntNAdder(target,(inputWidth-1)*2,3);
+	adder4SQRTv2->changeName(getName()+"adder4SQRTv2");
+	oplist.push_back(adder4SQRTv2);
+	inPortMap  (adder4SQRTv2, "X0", use("sqrY3mY2ns"));
+	inPortMap  (adder4SQRTv2, "X1", use("sqrZ3mZ2ns"));
+	inPortMap  (adder4SQRTv2, "X2", use("sqrX3mX2ns") );
+	inPortMapCst(adder4SQRTv2,"Cin","'0'");
+	outPortMap (adder4SQRTv2, "R","result4SQRTv2");
+	vhdl << instance(adder4SQRTv2, "adder4SQRTv2");
 	
 	syncCycleFromSignal("result4SQRTv2");
 	
 	
 	signofMSBI=MSBI>=0?(+1):(-1);
 	
-	//cout<<"new Lsbi:= "<<(LSBI)*2<<"new Msbi:= "<<signofMSBI*(abs(MSBI)-1)*2+1<<endl;
+	//cout<<"new Lsbi:= "<<(LSBI)*2<<"new Msbi:= "<<signofMSBI*(abs(MSBI)-1)*2-1<<endl;
 	
 	convert2FP4sqrtv2 = new Fix2FP(target,(LSBI)*2,signofMSBI*(abs(MSBI)-1)*2-1,0,wE,wF);
 	convert2FP4sqrtv2->changeName(getName()+"convert2FP4sqrtv2");
@@ -595,8 +485,216 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int LSBO, int
 	syncCycleFromSignal("Var2");
 	
 	
+	//computing the var3 sart(((x3-x0)+(x0-x1)*t)^2+((y3-y0)*(y0-y1)*t)^2+((z3-z0)*(z0-z1)*t)^2)
 	
-	vhdl<<tab<<"O<="<<use("Var1")<<range(outputWidth-1,0)<< "or "<<use("Var2")<<range(outputWidth-1,0)<<";"<<endl;
+	
+	
+	
+	
+	
+		//(x3-x0)+(x0-x1)*t
+	setCycleFromSignal("signX1mX0v1");
+	
+	vhdl<<tab<<declare("signX0mX1",1)<<"<="<<use("segmentX0mX1")<<of(inputWidth-1)<<";"<<endl;
+	vhdl<<tab<<declare("sign2vectorX0mX1",inputWidth-1)<<" <= (others => "<<use("signX0mX1")<<");"<<endl;
+	
+	vhdl<<tab<<declare("segmentX0mX1PartialPositive",inputWidth-1)<<"<="<<use("sign2vectorX0mX1")<<" xor "<<use("segmentX0mX1")<<range(inputWidth-2,0)<<";"<<endl;
+	vhdl<<tab<<declare("segmentX0mX12Positive",inputWidth-1)<<"<="<<use("segmentX0mX1PartialPositive")<<" + "<<use("signX0mX1")<<";"<<endl;
+	
+	nextCycle();
+	
+	vhdl<<tab<<declare("segmentX0mX12Positivetemp",inputWidth-1)<<"<="<<use("segmentX0mX12Positive")<<";"<<endl;
+	vhdl<<tab<<declare("signal_t_temp",integratorWidth)<<"<="<<use("signal_t")<<";"<<endl;
+	
+	multiplierXv3 = new IntMultiplier(target, inputWidth-1,integratorWidth);
+	multiplierXv3->changeName(getName()+"multiplierXv3");
+	oplist.push_back(multiplierXv3);
+	inPortMap  (multiplierXv3, "X", use("segmentX0mX12Positivetemp"));
+	inPortMap  (multiplierXv3, "Y", use("signal_t_temp"));
+	outPortMap (multiplierXv3, "R","partialComputedProductSXv3");
+	vhdl << instance(multiplierXv3, "multiplierXv3");
+	
+	syncCycleFromSignal("partialComputedProductSXv3");
+	
+	vhdl<<tab<<declare("sign2vectorX0mX1_2",inputWidth)<<"<= (others => "<<use("signX0mX1")<<");"<<endl;
+	vhdl<<tab<<declare("partialComputedProductSXv3Bit",inputWidth)<<"<= '0' & "<<use("partialComputedProductSXv3")<<range(inputWidth-2+integratorWidth,integratorWidth)<<";"<<endl;
+	vhdl<<tab<<declare("partialConvertedProductSXv3",inputWidth)<<"<="<<use("partialComputedProductSXv3Bit")<<" xor "<< use("sign2vectorX0mX1_2")<<";"<<endl;
+
+	vhdl<<tab<<declare("sumXPartv3",inputWidth)<<"<="<<use("partialConvertedProductSXv3")<<" + "<<use("segmentX3mX0")<<" + "<<use("signX0mX1")<<";"<<endl;
+	
+	vhdl<<tab<<declare("signsumXPartv3",1)<<"<="<<use("sumXPartv3")<<of(inputWidth-1)<<";"<<endl;
+	vhdl<<tab<<declare("sign2vector4sumXPartv3",inputWidth-1)<<"<= (others => "<<use("signsumXPartv3")<<");"<<endl;
+	vhdl<<tab<<declare("sumX2PartialPositivePartv3",inputWidth-1)<<"<="<<use("sumXPartv3")<<range(inputWidth-2,0)<<" xor "<<use("sign2vector4sumXPartv3")<<";"<<endl;
+	vhdl<<tab<<declare("sumX2PositivePartv3",inputWidth-1)<<"<="<<use("sumX2PartialPositivePartv3")<<" + "<<use("signsumXPartv3")<<";"<<endl;
+	
+	
+	nextCycle();
+	
+	vhdl<<tab<<declare("sumX2PositivePartv3temp",inputWidth-1)<<"<="<<use("sumX2PositivePartv3")<<";"<<endl;
+	
+	sqrXv3 = new IntSquarer(target, inputWidth-1);
+	sqrXv3->changeName(getName()+"sqrXv3");
+	oplist.push_back(sqrXv3);
+	inPortMap  (sqrXv3, "X", use("sumX2PositivePartv3temp"));
+	outPortMap (sqrXv3, "R","sqrXnsv3");
+	vhdl << instance(sqrXv3, "sqrXv3");
+	
+	syncCycleFromSignal("sqrXnsv3");
+	
+	
+	
+		//(y3-y0)+(y0-y1)*t
+	setCycleFromSignal("signY1mY0v1");
+	
+	vhdl<<tab<<declare("signY0mY1",1)<<"<="<<use("segmentY0mY1")<<of(inputWidth-1)<<";"<<endl;
+	vhdl<<tab<<declare("sign2vectorY0mY1",inputWidth-1)<<" <= (others => "<<use("signY0mY1")<<");"<<endl;
+	
+	vhdl<<tab<<declare("segmentY0mY1PartialPositive",inputWidth-1)<<"<="<<use("sign2vectorY0mY1")<<" xor "<<use("segmentY0mY1")<<range(inputWidth-2,0)<<";"<<endl;
+	vhdl<<tab<<declare("segmentY0mY12Positive",inputWidth-1)<<"<="<<use("segmentY0mY1PartialPositive")<<" + "<<use("signY0mY1")<<";"<<endl;
+	
+	nextCycle();
+	
+	vhdl<<tab<<declare("segmentY0mY12Positivetemp",inputWidth-1)<<"<="<<use("segmentY0mY12Positive")<<";"<<endl;
+	//vhdl<<tab<<declare("signal_t_temp",integratorWidth)<<"<="<<use("signal_t")<<";"<<endl;
+	
+	multiplierYv3 = new IntMultiplier(target, inputWidth-1,integratorWidth);
+	multiplierYv3->changeName(getName()+"multiplierYv3");
+	oplist.push_back(multiplierYv3);
+	inPortMap  (multiplierYv3, "X", use("segmentY0mY12Positivetemp"));
+	inPortMap  (multiplierYv3, "Y", use("signal_t_temp"));
+	outPortMap (multiplierYv3, "R","partialComputedProductSYv3");
+	vhdl << instance(multiplierYv3, "multiplierYv3");
+	
+	syncCycleFromSignal("partialComputedProductSYv3");
+	
+	vhdl<<tab<<declare("sign2vectorY0mY1_2",inputWidth)<<"<= (others => "<<use("signY0mY1")<<");"<<endl;
+	vhdl<<tab<<declare("partialComputedProductSYv3Bit",inputWidth)<<"<= '0' & "<<use("partialComputedProductSYv3")<<range(inputWidth-2+integratorWidth,integratorWidth)<<";"<<endl;
+	vhdl<<tab<<declare("partialConvertedProductSYv3",inputWidth)<<"<="<<use("partialComputedProductSYv3Bit")<<" xor "<< use("sign2vectorY0mY1_2")<<";"<<endl;
+		
+	vhdl<<tab<<declare("sumYPartv3",inputWidth)<<"<="<<use("partialConvertedProductSYv3")<<" + "<<use("segmentY3mY0")<<" + "<<use("signY0mY1")<<";"<<endl;
+	
+	vhdl<<tab<<declare("signsumYPartv3",1)<<"<="<<use("sumYPartv3")<<of(inputWidth-1)<<";"<<endl;
+	vhdl<<tab<<declare("sign2vector4sumYPartv3",inputWidth-1)<<"<= (others => "<<use("signsumYPartv3")<<");"<<endl;
+	vhdl<<tab<<declare("sumY2PartialPositivePartv3",inputWidth-1)<<"<="<<use("sumYPartv3")<<range(inputWidth-2,0)<<" xor "<<use("sign2vector4sumYPartv3")<<";"<<endl;
+	vhdl<<tab<<declare("sumY2PositivePartv3",inputWidth-1)<<"<="<<use("sumY2PartialPositivePartv3")<<" + "<<use("signsumYPartv3")<<";"<<endl;
+	
+	
+	nextCycle();
+	
+	vhdl<<tab<<declare("sumY2PositivePartv3temp",inputWidth-1)<<"<="<<use("sumY2PositivePartv3")<<";"<<endl;
+	
+	sqrYv3 = new IntSquarer(target, inputWidth-1);
+	sqrYv3->changeName(getName()+"sqrYv3");
+	oplist.push_back(sqrYv3);
+	inPortMap  (sqrYv3, "X", use("sumY2PositivePartv3temp"));
+	outPortMap (sqrYv3, "R","sqrYnsv3");
+	vhdl << instance(sqrYv3, "sqrYv3");
+	
+	syncCycleFromSignal("sqrYnsv3");
+	
+	
+	
+	//(z3-z0)+(z0-z1)*t
+	setCycleFromSignal("signZ1mZ0v1");
+	
+	vhdl<<tab<<declare("signZ0mZ1",1)<<"<="<<use("segmentZ0mZ1")<<of(inputWidth-1)<<";"<<endl;
+	vhdl<<tab<<declare("sign2vectorZ0mZ1",inputWidth-1)<<" <= (others => "<<use("signZ0mZ1")<<");"<<endl;
+	
+	vhdl<<tab<<declare("segmentZ0mZ1PartialPositive",inputWidth-1)<<"<="<<use("sign2vectorZ0mZ1")<<" xor "<<use("segmentZ0mZ1")<<range(inputWidth-2,0)<<";"<<endl;
+	vhdl<<tab<<declare("segmentZ0mZ12Positive",inputWidth-1)<<"<="<<use("segmentZ0mZ1PartialPositive")<<" + "<<use("signZ0mZ1")<<";"<<endl;
+	
+	nextCycle();
+	
+	vhdl<<tab<<declare("segmentZ0mZ12Positivetemp",inputWidth-1)<<"<="<<use("segmentZ0mZ12Positive")<<";"<<endl;
+	//vhdl<<tab<<declare("signal_t_temp",integratorWidth)<<"<="<<use("signal_t")<<";"<<endl;
+	
+	multiplierZv3 = new IntMultiplier(target, inputWidth-1,integratorWidth);
+	multiplierZv3->changeName(getName()+"multiplierZv3");
+	oplist.push_back(multiplierZv3);
+	inPortMap  (multiplierZv3, "X", use("segmentZ0mZ12Positivetemp"));
+	inPortMap  (multiplierZv3, "Y", use("signal_t_temp"));
+	outPortMap (multiplierZv3, "R","partialComputedProductSZv3");
+	vhdl << instance(multiplierZv3, "multiplierZv3");
+	
+	syncCycleFromSignal("partialComputedProductSZv3");
+	
+	vhdl<<tab<<declare("sign2vectorZ0mZ1_2",inputWidth)<<"<= (others => "<<use("signZ0mZ1")<<");"<<endl;
+	vhdl<<tab<<declare("partialComputedProductSZv3Bit",inputWidth)<<"<= '0' & "<<use("partialComputedProductSZv3")<<range(inputWidth-2+integratorWidth,integratorWidth)<<";"<<endl;
+	vhdl<<tab<<declare("partialConvertedProductSZv3",inputWidth)<<"<="<<use("partialComputedProductSZv3Bit")<<" xor "<< use("sign2vectorZ0mZ1_2")<<";"<<endl;
+		
+	vhdl<<tab<<declare("sumZPartv3",inputWidth)<<"<="<<use("partialConvertedProductSZv3")<<" + "<<use("segmentZ3mZ0")<<" + "<<use("signZ0mZ1")<<";"<<endl;
+	
+	vhdl<<tab<<declare("signsumZPartv3",1)<<"<="<<use("sumZPartv3")<<of(inputWidth-1)<<";"<<endl;
+	vhdl<<tab<<declare("sign2vector4sumZPartv3",inputWidth-1)<<"<= (others => "<<use("signsumZPartv3")<<");"<<endl;
+	vhdl<<tab<<declare("sumZ2PartialPositivePartv3",inputWidth-1)<<"<="<<use("sumZPartv3")<<range(inputWidth-2,0)<<" xor "<<use("sign2vector4sumZPartv3")<<";"<<endl;
+	vhdl<<tab<<declare("sumZ2PositivePartv3",inputWidth-1)<<"<="<<use("sumZ2PartialPositivePartv3")<<" + "<<use("signsumZPartv3")<<";"<<endl;
+	
+	
+	nextCycle();
+	
+	vhdl<<tab<<declare("sumZ2PositivePartv3temp",inputWidth-1)<<"<="<<use("sumZ2PositivePartv3")<<";"<<endl;
+	
+	sqrZv3 = new IntSquarer(target, inputWidth-1);
+	sqrZv3->changeName(getName()+"sqrZv3");
+	oplist.push_back(sqrZv3);
+	inPortMap  (sqrZv3, "X", use("sumZ2PositivePartv3temp"));
+	outPortMap (sqrZv3, "R","sqrZnsv3");
+	vhdl << instance(sqrZv3, "sqrZv3");
+	
+	syncCycleFromSignal("sqrZnsv3");
+	
+	
+	
+	//ading the 3 results for segments to be feed to sqrt
+	
+	
+	adder4SQRTv3 = new IntNAdder(target,(inputWidth-1)*2,3);
+	adder4SQRTv3->changeName(getName()+"adder4SQRTv3");
+	oplist.push_back(adder4SQRTv3);
+	inPortMap  (adder4SQRTv3, "X0", use("sqrYnsv3"));
+	inPortMap  (adder4SQRTv3, "X1", use("sqrZnsv3"));
+	inPortMap  (adder4SQRTv3, "X2", use("sqrXnsv3") );
+	inPortMapCst(adder4SQRTv3,"Cin","'0'");
+	outPortMap (adder4SQRTv3, "R","result4SQRTv3");
+	vhdl << instance(adder4SQRTv3, "adder4SQRTv3");
+	
+	syncCycleFromSignal("result4SQRTv3");
+	
+	
+	signofMSBI=MSBI>=0?(+1):(-1);
+	
+	//cout<<"new Lsbi:= "<<(LSBI)*2<<"new Msbi:= "<<signofMSBI*(abs(MSBI)-1)*2-1<<endl;
+	
+	convert2FP4sqrtv3 = new Fix2FP(target,(LSBI)*2,signofMSBI*(abs(MSBI)-1)*2-1,0,wE,wF);
+	convert2FP4sqrtv3->changeName(getName()+"convert2FP4sqrtv3");
+	oplist.push_back(convert2FP4sqrtv3);
+	inPortMap  (convert2FP4sqrtv3, "I", use("result4SQRTv3"));
+	outPortMap (convert2FP4sqrtv3, "O","fpSQRVar3");
+	vhdl << instance(convert2FP4sqrtv3, "convert2FP4sqrtv3");
+	
+	syncCycleFromSignal("fpSQRVar3");
+	
+	if(target->frequencyMHz()>=250)
+		nextCycle();
+	
+	vhdl<<tab<<declare("fpSQRVar3temp",wE+wF+3)<<"<="<<use("fpSQRVar3")<<";"<<endl;
+	
+	sqrt4var3 = new  FPSqrt(target, wE, wF, 1, 1);
+	sqrt4var3->changeName(getName()+"sqrt4var3");
+	oplist.push_back(sqrt4var3);
+	inPortMap  (sqrt4var3, "X", use("fpSQRVar3temp"));
+	outPortMap (sqrt4var3, "R","Var3");
+	vhdl << instance(sqrt4var3, "sqrt4var3");
+	
+	syncCycleFromSignal("Var3");
+	
+	
+	
+	
+	
+	
+	
+	vhdl<<tab<<"O<="<<use("Var1")<<range(outputWidth-1,0)<< "or "<<use("Var2")<<range(outputWidth-1,0)<<" or "<<use("Var3")<<range(outputWidth-1,0)<<";"<<endl;
 
 	}
 
