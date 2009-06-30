@@ -128,6 +128,17 @@ private:
 	FPSqrt* sqrt4var4;
 	
 	
+	/** The multiplier for the (x1-x0)*t in variable 4*/
+	IntMultiplier* multiplierXv5;
+	/** The multiplier for the (y1-y0)*t in variable 4*/
+	IntMultiplier* multiplierYv5;
+	/** The multiplier for the (z1-z0)*t in variable 4*/
+	IntMultiplier* multiplierZv5;
+	/** The  2 integers for adding the products of the segments for computing variable5 */
+	IntNAdder* adder4var5;
+	/** Fix2FP object for variable 5 */
+	Fix2FP* convert2FPv5;
+	
 	int MSB;
 	int LSB;
 	int inputWidth;

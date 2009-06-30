@@ -504,7 +504,7 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int LSBO, int
 	syncCycleFromSignal("Var2");
 	
 	
-	//computing the var3 sart(((x3-x0)+(x0-x1)*t)^2+((y3-y0)+(y0-y1)*t)^2+((z3-z0)+(z0-z1)*t)^2)
+	//computing the var3 sqrt(((x3-x0)+(x0-x1)*t)^2+((y3-y0)+(y0-y1)*t)^2+((z3-z0)+(z0-z1)*t)^2)
 	
 	
 	
@@ -708,7 +708,7 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int LSBO, int
 	syncCycleFromSignal("Var3");
 	
 	
-	//computing the var4 sart(((x0-x2)+(x1-x0)*t)^2+((y0-y2)+(y1-y0)*t)^2+((z0-z2)+(z1-z0)*t)^2)
+	//computing the var4 sqrt(((x0-x2)+(x1-x0)*t)^2+((y0-y2)+(y1-y0)*t)^2+((z0-z2)+(z1-z0)*t)^2)
 	
 	
 	
@@ -892,11 +892,138 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int LSBO, int
 	
 	
 	
+	//computing the var4 ( ((x0-x2)+(x1-x0)*t)*(x3-x2) +((y0-y2)+(y1-y0)*t)*(y3-y2)+((z0-z2)+(z1-z0)*t)*(z3-z2))
 	
 	
 	
 	
-	vhdl<<tab<<"O<="<<use("Var1")<<range(outputWidth-1,0)<< "or "<<use("Var2")<<range(outputWidth-1,0)<<" or "<<use("Var3")<<range(outputWidth-1,0)<<" or "<<use("Var4")<<range(outputWidth-1,0)<<";"<<endl;
+	
+		//((x0-x2)+(x1-x0)*t)*(x3-x2)
+	setCycleFromSignal("converted2PositiveX3mX2v1temp");
+	
+	vhdl<<tab<<declare("segmentX3mX2v5",inputWidth-1)<<"<="<<use("converted2PositiveX3mX2v1")<<";"<<endl;
+	vhdl<<tab<<declare("signXv5",1)<<"<="<<use("signX3mX2v1")<<" xor "<<use("signsumXPartv4")<<";"<<endl;
+	
+	setCycleFromSignal("sumX2PositivePartv4temp");
+	
+	vhdl<<tab<<declare("segmentX3mX2v5temp",inputWidth-1)<<"<="<<use("segmentX3mX2v5")<<";"<<endl;
+	
+	multiplierXv5 = new IntMultiplier(target, inputWidth-1,inputWidth-1);
+	multiplierXv5->changeName(getName()+"multiplierXv5");
+	oplist.push_back(multiplierXv5);
+	inPortMap  (multiplierXv5, "X", use("sumX2PositivePartv4temp"));
+	inPortMap  (multiplierXv5, "Y", use("segmentX3mX2v5temp"));
+	outPortMap (multiplierXv5, "R","partialComputedProductSXv5");
+	vhdl << instance(multiplierXv5, "multiplierXv5");
+	
+	syncCycleFromSignal("partialComputedProductSXv5");
+	
+	
+	vhdl<<tab<<declare("sign2vectorXv5",inputWidthSegments)<<"<= (others => "<<use("signXv5")<<");"<<endl;
+	vhdl<<tab<<declare("partialComputedProductSXv5Bit",inputWidthSegments)<<"<= '0' & "<<use("partialComputedProductSXv5")<<";"<<endl;
+	vhdl<<tab<<declare("partialConvertedProductSXv5",inputWidthSegments)<<"<="<<use("partialComputedProductSXv5Bit")<<" xor "<< use("sign2vectorXv5")<<";"<<endl;
+
+	
+		//((y0-y2)+(y1-y0)*t)*(y3-y2)
+	setCycleFromSignal("converted2PositiveY3mY2v1temp");
+	
+	vhdl<<tab<<declare("segmentY3mY2v5",inputWidth-1)<<"<="<<use("converted2PositiveY3mY2v1")<<";"<<endl;
+	vhdl<<tab<<declare("signYv5",1)<<"<="<<use("signY3mY2v1")<<" xor "<<use("signsumYPartv4")<<";"<<endl;
+	
+	setCycleFromSignal("sumY2PositivePartv4temp");
+	
+	vhdl<<tab<<declare("segmentY3mY2v5temp",inputWidth-1)<<"<="<<use("segmentY3mY2v5")<<";"<<endl;
+	
+	multiplierYv5 = new IntMultiplier(target, inputWidth-1,inputWidth-1);
+	multiplierYv5->changeName(getName()+"multiplierYv5");
+	oplist.push_back(multiplierYv5);
+	inPortMap  (multiplierYv5, "X", use("sumY2PositivePartv4temp"));
+	inPortMap  (multiplierYv5, "Y", use("segmentY3mY2v5temp"));
+	outPortMap (multiplierYv5, "R","partialComputedProductSYv5");
+	vhdl << instance(multiplierYv5, "multiplierYv5");
+	
+	syncCycleFromSignal("partialComputedProductSYv5");
+	
+	
+	vhdl<<tab<<declare("sign2vectorYv5",inputWidthSegments)<<"<= (others => "<<use("signYv5")<<");"<<endl;
+	vhdl<<tab<<declare("partialComputedProductSYv5Bit",inputWidthSegments)<<"<= '0' & "<<use("partialComputedProductSYv5")<<";"<<endl;
+	vhdl<<tab<<declare("partialConvertedProductSYv5",inputWidthSegments)<<"<="<<use("partialComputedProductSYv5Bit")<<" xor "<< use("sign2vectorYv5")<<";"<<endl;
+	
+		//((z0-z2)+(z1-z0)*t)*(z3-z2)
+	setCycleFromSignal("converted2PositiveZ3mZ2v1temp");
+	
+	vhdl<<tab<<declare("segmentZ3mZ2v5",inputWidth-1)<<"<="<<use("converted2PositiveZ3mZ2v1")<<";"<<endl;
+	vhdl<<tab<<declare("signZv5",1)<<"<="<<use("signZ3mZ2v1")<<" xor "<<use("signsumZPartv4")<<";"<<endl;
+	
+	setCycleFromSignal("sumZ2PositivePartv4temp");
+	
+	vhdl<<tab<<declare("segmentZ3mZ2v5temp",inputWidth-1)<<"<="<<use("segmentZ3mZ2v5")<<";"<<endl;
+	
+	multiplierZv5 = new IntMultiplier(target, inputWidth-1,inputWidth-1);
+	multiplierZv5->changeName(getName()+"multiplierZv5");
+	oplist.push_back(multiplierZv5);
+	inPortMap  (multiplierZv5, "X", use("sumZ2PositivePartv4temp"));
+	inPortMap  (multiplierZv5, "Y", use("segmentZ3mZ2v5temp"));
+	outPortMap (multiplierZv5, "R","partialComputedProductSZv5");
+	vhdl << instance(multiplierZv5, "multiplierZv5");
+	
+	syncCycleFromSignal("partialComputedProductSZv5");
+	
+	
+	vhdl<<tab<<declare("sign2vectorZv5",inputWidthSegments)<<"<= (others => "<<use("signZv5")<<");"<<endl;
+	vhdl<<tab<<declare("partialComputedProductSZv5Bit",inputWidthSegments)<<"<= '0' & "<<use("partialComputedProductSZv5")<<";"<<endl;
+	vhdl<<tab<<declare("partialConvertedProductSZv5",inputWidthSegments)<<"<="<<use("partialComputedProductSZv5Bit")<<" xor "<< use("sign2vectorZv5")<<";"<<endl;
+	
+	
+	//Adding the 3 results and the caries that are neded to finalize the transformation of the numbers in 2's complement
+	
+	vhdl<<tab<<declare("signofallv5",3)<<"<="<<use("signZv5")<<" & "<<use("signYv5")<<" & "<<use("signXv5")<<";"<<endl;
+	vhdl<<tab<<" with "<<use("signofallv5")<<" select"<<endl<<tab<<tab<<declare("carries4v5",2)<<"<= "<<" \"01\" when \"001\", "<<endl<<tab<<tab<<" \"01\" when \"010\", "<<endl<<tab<<tab<<" \"01\" when \"100\", "<<endl<<tab<<tab<<" \"11\" when \"111\", ";
+	vhdl<<endl<<tab<<tab<<" \"10\" when \"011\", "<<endl<<tab<<tab<<" \"10\" when \"101\", "<<endl<<tab<<tab<<" \"10\" when \"110\", "<<endl<<tab<<tab<<" \"00\" when others; "<<endl;
+	
+	nextCycle();
+	
+	vhdl<<tab<<declare("partialConvertedProductSYv5temp",inputWidthSegments)<<"<="<<use("partialConvertedProductSYv5")<<";"<<endl;
+	vhdl<<tab<<declare("partialConvertedProductSZv5temp",inputWidthSegments)<<"<="<<use("partialConvertedProductSZv5")<<";"<<endl;
+	vhdl<<tab<<declare("partialConvertedProductSXv5temp",inputWidthSegments)<<"<="<<use("partialConvertedProductSXv5")<<";"<<endl;
+	vhdl<<tab<<declare("zeropadding4carryv5",inputWidthSegments-2)<<"<= CONV_STD_LOGIC_VECTOR(0,"<<inputWidthSegments-2<<");"<<endl;
+	vhdl<<tab<<declare("carries4v5all",inputWidthSegments)<<"<="<<use("zeropadding4carryv5")<<" & "<<use("carries4v5")<<";"<<endl;
+	
+	adder4var5 = new IntNAdder(target,inputWidthSegments,4);
+	adder4var5->changeName(getName()+"adder4var5");
+	oplist.push_back(adder4var5);
+	inPortMap  (adder4var5, "X0", use("partialConvertedProductSYv5temp"));
+	inPortMap  (adder4var5, "X1", use("partialConvertedProductSZv5temp"));
+	inPortMap  (adder4var5, "X2", use("partialConvertedProductSXv5temp") );
+	inPortMap  (adder4var5, "X3", use("carries4v5all") );
+	inPortMapCst(adder4var5,"Cin","'0'");
+	outPortMap (adder4var5, "R","result4Var5");
+	vhdl << instance(adder4var5, "adder4var5");
+	
+	syncCycleFromSignal("result4Var5");
+	
+	//int signofLSBI=LSBI>=0?(+1):(-1);
+	signofMSBI=MSBI>=0?(+1):(-1);
+	
+	//cout<<"new Lsbi:= "<<(LSBI)*2<<"new Msbi:= "<<signofMSBI*(abs(MSBI)-1)*2<<endl;
+	
+	convert2FPv5 = new Fix2FP(target,(LSBI)*2,signofMSBI*(abs(MSBI)-1)*2,1,wE,wF);
+	convert2FPv5->changeName(getName()+"convert2FPv5");
+	oplist.push_back(convert2FPv5);
+	inPortMap  (convert2FPv5, "I", use("result4Var5"));
+	outPortMap (convert2FPv5, "O","Var5");
+	vhdl << instance(convert2FPv5, "convert2FPv5");
+	
+	syncCycleFromSignal("Var5");
+	
+	
+	
+	
+	
+	syncCycleFromSignal("Var4");
+	
+	
+	vhdl<<tab<<"O<="<<use("Var1")<<range(outputWidth-1,0)<< "or "<<use("Var2")<<range(outputWidth-1,0)<<" or "<<use("Var3")<<range(outputWidth-1,0)<<" or "<<use("Var4")<<range(outputWidth-1,0)<<" or "<<use("Var5")<<range(outputWidth-1,0)<<";"<<endl;
 
 	}
 
