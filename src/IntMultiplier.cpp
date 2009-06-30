@@ -51,7 +51,9 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 	addInput ("X", wInX_);
 	addInput ("Y", wInY_);
 	addOutput("R", wOut_); /* wOut_ = wInX_ + wInY_ */
-
+	
+	if (target->getUseHardMultipliers())
+	{
 	int chunksX, chunksY;
 	int x, y;
 	target->suggestSubmultSize(x, y, wInX, wInY);
@@ -163,6 +165,107 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 		}
 		else 
 			vhdl << tab << "R <= X * Y ;" <<endl;
+	}
+	else
+	{
+		int chunkSize_ = target->lutInputs()/2;
+	
+	int chunksX =  int(ceil( ( double(wInX) / (double) chunkSize_) ));
+	int chunksY =  int(ceil( ( double(wInY) / (double) chunkSize_) ));
+		
+	if (verbose)
+        cout << "X splitted in "<< chunksX << " chunks and Y in " << chunksY << " chunks; " << endl;
+	
+	int widthX = wInX_;
+	int widthY = wInY_;	
+	
+	if (chunksX > chunksY)
+	{
+		int tmp = chunksX;
+		chunksX = chunksY;
+		chunksY = tmp;
+		
+		tmp = widthX;
+		widthX = widthY;
+		widthY = tmp;
+	}
+	
+	vhdl << tab << declare("sX",chunkSize_*chunksX) << " <= " << "X" << " & " << zeroGenerator(chunkSize_*chunksX-widthX,0) << ";" << endl;
+    vhdl << tab << declare("sY",chunkSize_*chunksY) << " <= " << "Y" << " & " << zeroGenerator(chunkSize_*chunksY-widthY,0) << ";" << endl;
+    
+	////////////////////////////////////////////////////
+    //SPLITTINGS
+    for (int k=0; k<chunksX ; k++)
+	{
+		ostringstream dname;
+        dname << "x"<<k;
+        vhdl << tab << declare(dname.str(),chunkSize_) << " <= " << "sX" << range((k+1)*chunkSize_-1,k*chunkSize_) << ";" << endl;
+    }
+    for (int k=0; k<chunksY ; k++)
+	{
+		ostringstream dname;
+        dname << "y"<<k;
+        vhdl << tab << declare(dname.str(),chunkSize_) << " <= " << "sY" << range((k+1)*chunkSize_-1,k*chunkSize_) << ";" << endl;
+    }
+
+	// COMPUTE PARTIAL PRODUCTS
+	for (int i=0; i<chunksY; i++)
+	{
+		for (int j=0; j<chunksX; j++)
+		{
+			ostringstream partialProd;
+            partialProd  << "p" << "x" << j << "y" << i;
+			vhdl << tab << declare(partialProd.str(),2*chunkSize_) << " <= " << use(join("x",j)) << " * " << use(join("y",i)) << ";" << endl;
+		}
+	}		
+	
+	int adderWidth = (chunksX+chunksY)*chunkSize_;
+	
+	// CONCATENATE PARTIAL PRODUCTS
+	for (int i=0; i<chunkSize_; i++)
+	{
+		for (int j=0; j<chunksX; j++)
+		{
+			ostringstream concatPartialProd;
+            concatPartialProd  << "cp" << i << j;
+			vhdl << tab << declare(concatPartialProd.str(),adderWidth) << " <= ";
+			
+			int startIdx = chunksY-1-i;
+			int paddWidth = adderWidth - 2*chunkSize_*(startIdx/chunkSize_+1);
+			int endPaddWidth = chunkSize_*(j+startIdx%chunkSize_);
+			vhdl << zeroGenerator(paddWidth-endPaddWidth,0); 
+			
+			for (int k=startIdx; k>=0; k-=chunkSize_)
+			{
+				ostringstream partialProd;
+				partialProd  << "p" << "x" << j << "y" << k;
+				vhdl << " & " << use(partialProd.str());
+			}
+			vhdl << " & " << zeroGenerator(endPaddWidth,0) << ";" << endl;
+		}
+	}
+	
+	IntNAdder* add =  new IntNAdder(target, adderWidth, chunksX*chunkSize_);
+    oplist.push_back(add);
+	
+	for (int i=0; i<chunkSize_; i++)
+		for (int j=0; j<chunksX; j++)
+		{
+			ostringstream concatPartialProd;
+            concatPartialProd  << "cp" << i << j;
+			
+			inPortMap (add, join("X",i*chunksX+j) , concatPartialProd.str());
+		}	
+			
+	inPortMapCst(add, "Cin", "'0'");
+    outPortMap(add, "R", "addRes");
+    vhdl << instance(add, "adder");
+
+    syncCycleFromSignal("addRes");
+	
+	vhdl << tab << "R <= " << use("addRes")<<range(adderWidth-1,adderWidth-wInX_-wInY_) << ";" << endl;		
+	
+	}
 }
 
 IntMultiplier::~IntMultiplier() {
