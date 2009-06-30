@@ -103,8 +103,29 @@ private:
 	IntNAdder* adder4SQRTv3;
 	/** Fix2FP object for variable 3 ; input to the sqrt*/
 	Fix2FP* convert2FP4sqrtv3;
-	/** The SQRT for the variable 2 */
+	/** The SQRT for the variable 3 */
 	FPSqrt* sqrt4var3;
+	
+	
+	/** The multiplier for the (x1-x0)*t in variable 4*/
+	IntMultiplier* multiplierXv4;
+	/** The multiplier for the (y1-y0)*t in variable 4*/
+	IntMultiplier* multiplierYv4;
+	/** The multiplier for the (z1-z0)*t in variable 4*/
+	IntMultiplier* multiplierZv4;
+	
+	/** The squarer for the X part of the variable 4 */
+	IntSquarer* sqrXv4;
+	/** The squarer for the Y part of the variable 4 */
+	IntSquarer* sqrYv4;
+	/** The squarer for the Z part of the variable 4 */
+	IntSquarer* sqrZv4;
+	/** The  2 integers for adding the products of the segments for computing the the intermidiate sum for var4 */
+	IntNAdder* adder4SQRTv4;
+	/** Fix2FP object for variable 4 ; input to the sqrt*/
+	Fix2FP* convert2FP4sqrtv4;
+	/** The SQRT for the variable 4 */
+	FPSqrt* sqrt4var4;
 	
 	
 	int MSB;
