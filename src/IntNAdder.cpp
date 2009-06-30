@@ -182,6 +182,8 @@ Operator(target), wIn_(wIn), N_(N), inputDelays_(inputDelays)
 					}
 				if ((nbOfChunks>1) || (N>2)) { 
 					nextCycle();
+				}
+				if ((nbOfChunks>1) || (N>=2)) { 
 					currentLevel++;
 				}
 			}
