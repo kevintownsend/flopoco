@@ -20,7 +20,9 @@ FirstKCMTable::~FirstKCMTable() {}
 
 mpz_class FirstKCMTable::function(int x) {
   mpz_class result;
+  
   result = mpz_class(x) * C_;
+
   if (result < 0 )
   	result = (mpz_class(1)<<(wOut_)) + result; //this is how we pass negatives to 2's complement
   return  result;

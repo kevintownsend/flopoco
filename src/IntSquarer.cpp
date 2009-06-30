@@ -57,7 +57,7 @@ Operator(target), wIn_(wIn), inputDelays_(inputDelays)
 	}
 
 	if (isSequential()){
-		if (wIn < 17 ) {
+		if (wIn <= 17 ) {
 			vhdl << tab << "R <= X * X;" << endl; 
 		}
 		else if ((wIn>17) && (wIn<=34)) {

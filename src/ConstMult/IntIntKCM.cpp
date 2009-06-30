@@ -1,10 +1,10 @@
 /*
- * An integer adder for FloPoCo
+ * An constant multiplier for FloPoCo using the KCM method
  *
  * It may be pipelined to arbitrary frequency.
  * Also useful to derive the carry-propagate delays for the subclasses of Target
  *
- * Authors : Florent de Dinechin, Bogdan Pasca
+ * Authors : Bogdan Pasca
  *
  * This file is part of the FloPoCo project developed by the Arenaire
  * team at Ecole Normale Superieure de Lyon
@@ -55,35 +55,20 @@ Operator(target), wIn_(wIn), C_(C), inputDelays_(inputDelays)
 	name << "IntIntKCM_" << wIn_<<"_"<< wOut_;
 	setName(name.str());
 
+	cout << "C="<<unsignedBinary( (C<0? (0-C) :C) , intlog2( (C<0? (0-C) :C) ) +1  ) << endl;
 
 	if (verbose){
 		cout <<"delay for X is   "<< inputDelays["X"]<<endl;	
 	}
-
-//      compute the maximum input delay
-//		maxInputDelay = 0;
-//		map<string, double>::iterator iter;
-//		for (iter = inputDelays.begin(); iter!=inputDelays.end();++iter)
-//			if (iter->second > maxInputDelay)
-//				maxInputDelay = iter->second;
-//	
-//		if (verbose)
-//			cout << "The maximum input delay is "<<	maxInputDelay<<endl;
-//	
-//		double	objectivePeriod;
-//		objectivePeriod = 1/ target->frequency();
-//		
-//		if (verbose)
-//			cout << "Objective period is "<< objectivePeriod<<" at an objective frequency of "<<target->frequency() << endl;
-//TODO <= do chunk size
 	
 	int constantWidth = intlog2( (C < 0?0-C:C) ) + 1; //the constant is represented in 2's complement
 	int lutWidth = target->lutInputs();
+	chunkSize_ = lutWidth;
 	int nbOfTables = int ( ceil( double(wIn)/double(lutWidth)) );
 	int lastLutWidth = (wIn%lutWidth==0?lutWidth: wIn%lutWidth);
 	
-	FirstKCMTable* t1;
-	LastKCMTable* t2;
+	FirstKCMTable* t1; 
+	LastKCMTable* t2; //will containt the signed multiplication result 
 	
 	if (verbose){
 		cout << "The width of the constant in 2's complement is = " << constantWidth<<endl;
@@ -107,7 +92,7 @@ Operator(target), wIn_(wIn), C_(C), inputDelays_(inputDelays)
 	
 	//first split the input X into digits having lutWidth bits -> this is as generic as it gets :)
 		for (int i=0; i<nbOfTables; i++)
-			if (i<nbOfTables-1)
+			if (i < nbOfTables-1)
 				vhdl << tab << declare( join("d",i), lutWidth ) << " <= " << use("X") << range(4*(i+1)-1, 4*i ) << ";" <<endl;
 			else
 				vhdl << tab << declare( join("d",i), wIn -  4*i ) << " <= " << use("X") << range( wIn-1 , 4*i ) << ";" <<endl;
@@ -122,24 +107,27 @@ Operator(target), wIn_(wIn), C_(C), inputDelays_(inputDelays)
 				vhdl << instance(t2, join("LastKCMTable_SignedMul",i));
 				cout << "Generated map for last table " << endl;
 			}else{
-				cout << "Generated map for first table " << endl;
 				//instantiate the KCMLastTable
 				inPortMap (t1, "X", join("d",i));
 				outPortMap(t1, "Y", join("pp",i));
 				vhdl << instance(t1, join("FirstKCMTable_UnsignedMul",i));
+				cout << "Generated map for first table " << endl;
 			}
 		}
 		
 		//determine the addition operand size
 		int addOpSize = (nbOfTables - 2) * lutWidth + (constantWidth + 	lastLutWidth);
+		if (verbose)
+			cout << "The addition operand size is: " << addOpSize << endl;
 		
 		for (int i=0; i<nbOfTables; i++){
 			vhdl << tab << declare( join("addOp",i), addOpSize ) << " <= ";
-				if (i!=nbOfTables-1){
-					for (int j=addOpSize-1; j>= (constantWidth + lutWidth) + (i-1)*lutWidth ; j--)
-						vhdl << use(join("pp",i))<<range(constantWidth + lutWidth -1,constantWidth + lutWidth -1) << " & ";
+				if (i!=nbOfTables-1){ //if not the last table
+					for (int j=addOpSize-1; j>= (constantWidth + lutWidth) + (i-1)*lutWidth ; j--) //sign extension
+//						vhdl << use(join("pp",i))<<range(constantWidth + lutWidth -1,constantWidth + lutWidth -1) << " & ";
+						vhdl << use(join("pp",i))<<of(constantWidth + lutWidth -1) << " & ";
 					
-					vhdl << use(join("pp",i)) << range(constantWidth + lutWidth -1, (i==0?lutWidth:0)) << " & " << zeroGenerator((i-2)*lutWidth,0) << ";" << endl;
+					vhdl << use(join("pp",i)) << range(constantWidth + lutWidth -1, (i==0?lutWidth:0)) << " & " << zeroGenerator((i-1)*lutWidth,0) << ";" << endl;
 				}
 				else{
 						for (int j=addOpSize-1; j>= (constantWidth + lastLutWidth)+ (i-1)*lutWidth ; j--)
@@ -176,19 +164,21 @@ void IntIntKCM::emulate(TestCase* tc)
 	cout << "X="<<unsignedBinary(svX, wIn_);
 	bool xneg = false;
 	//x is in 2's complement, so it's value is 
-	if ( svX > ( (1<<(wIn_-1))-1) ){
+	if ( svX > ( (mpz_class(1)<<(wIn_-1))-1) ){
+		cout << "X is negative" << endl;
 		xneg = true;
-		svX = svX - (1<<(wIn_-1));
-		svX = (1<<(wIn_-1)) - svX;
+		svX = svX - (mpz_class(1)<<wIn_);
 	}
 		
 	mpz_class svR;
-
+	
 	svR = svX * C_;
+
+	if ( svR < 0)
+		svR = (mpz_class(1)<<wOut_) + svR;
 	
-	if (xneg)
-		svR = (1<<(wIn_-1)) + svR;
-	
+	cout << "R="<<unsignedBinary(svR, wOut_);
+
  	tc->addExpectedOutput("R", svR);
 }
 

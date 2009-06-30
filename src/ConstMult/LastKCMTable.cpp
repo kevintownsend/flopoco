@@ -31,7 +31,7 @@ mpz_class LastKCMTable::function(int x) {
   
   //determine if x is positive or negative
     
-  result = mpz_class(x) * C_;
+  result = mpz_class(mx) * C_;
   if (result < 0 )
   	result = (mpz_class(1)<<(wOut_)) + result; //this is how we pass negatives to 2's complement
   return  result;

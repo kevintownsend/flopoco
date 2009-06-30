@@ -31,6 +31,7 @@ public:
 
 protected:
 	int wIn_;                         /**< the width for the input X*/
+	int chunkSize_;                   /**< the size of the lut> **/
 	mpz_class C_;                           /**< the constant to be used for the multiplication*/
 	int wOut_;
 	
