@@ -45,7 +45,7 @@ FPSquarer::FPSquarer(Target* target, int wE, int wFX, int wFR) :
 	ostringstream name;
 	name<<"FPSquarer_"<<wE_<<"_"<<wFX_<<"_"<<wFR_; 
 	setName(name.str());
-
+	setCopyrightString("Bogdan Pasca (2009)");
 	
 	/* Set up the IO signals */
 	/* Inputs: 2b(Exception) + 1b(Sign) + wE_ bits (Exponent) + wFX_ bits(Fraction) */

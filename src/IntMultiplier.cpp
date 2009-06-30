@@ -48,6 +48,8 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 	name <<"IntMultiplier_"<<wInX_<<"_"<<wInY_;
 	setName(name.str());
 	
+	setCopyrightString("Bogdan Pasca, Sebastian Banescu (2008-2009)");
+	
 	addInput ("X", wInX_);
 	addInput ("Y", wInY_);
 	addOutput("R", wOut_); /* wOut_ = wInX_ + wInY_ */

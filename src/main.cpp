@@ -133,6 +133,8 @@ static void usage(char *name){
 	cerr << "      Integer multiplier of two integers X and Y of sizes wInX and wInY \n";	
 	cerr << "    IntKaratsuba wIn \n";
 	cerr << "      integer multiplier of two integers X and Y of sizes wIn. 17 < wIn <= 51 (for now) \n";	
+	cerr << "    IntSquarer wIn \n";
+	cerr << "      integer squarer. For now wIn <=68 \n";	
 	cerr << "    Fix2FP LSB MSB Signed wE wF\n";
 	cerr << "      Convert a 2's compliment fixed-point number in the bit range MSB...LSB [into floating-point\n";
 	cerr << "    FPAdder wE wF\n";

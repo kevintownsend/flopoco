@@ -44,6 +44,8 @@ Operator(target), wIn_(wIn), N_(N), inputDelays_(inputDelays)
 	name << "IntNAdder_" << wIn_;
 	setName(name.str());
 
+	setCopyrightString("Bogdan Pasca (2009)");
+
 	// Set up the IO signals
 	for (int i=0; i<N; i++){
 		name.str(""); //init a ostringstream variable

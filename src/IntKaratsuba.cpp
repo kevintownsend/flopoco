@@ -24,6 +24,7 @@
 #include <iostream>
 #include <sstream>
 #include <vector>
+#include <cstdlib>
 #include <math.h>
 #include <gmp.h>
 #include <mpfr.h>
@@ -41,6 +42,7 @@ IntKaratsuba:: IntKaratsuba(Target* target, int wIn) :
 
 	ostringstream name;
 	name << "IntKaratsuba_" << wIn_<<"_f"<<target->frequencyMHz();
+	setCopyrightString("Bogdan Pasca (2008-2009)");
 	setName(name.str());
 	
 	/* Set up the IO signals
@@ -51,13 +53,14 @@ IntKaratsuba:: IntKaratsuba(Target* target, int wIn) :
 	addInput ("Y", wIn_);
 	addOutput("R", wOut_);
 	
-	//the 17 should be replaced by a generic multiplierWidth()
+	//TODO replace 17 with a generic multiplierWidth()
 	
 	int chunks = ( wIn % 17 ==0 ? wIn/17 : ceil( double(wIn)/double(17)) );
 
-	if (chunks == 1)
-		cerr << " The TwoWayKaratsuba and the ThreeWayKaratsuba are implemented. Your 17 < wIn <= 51" << endl;
-	else if (chunks == 2){
+	if ((chunks == 1) || (chunks > 3) ){
+		cerr << " The TwoWayKaratsuba and the ThreeWayKaratsuba are implemented. (17 < wIn <= 51 )" << endl;
+		exit ( EXIT_FAILURE );	
+	}else if (chunks == 2){
 		//pad inputs to 34 bits
 		vhdl << tab << declare ("sX", 34) << " <= " << use("X") << " & " << zeroGenerator(34-wIn, 0) << ";" << endl;
 		vhdl << tab << declare ("sY", 34) << " <= " << use("Y") << " & " << zeroGenerator(34-wIn, 0) << ";" << endl;
@@ -138,7 +141,6 @@ IntKaratsuba:: IntKaratsuba(Target* target, int wIn) :
 				
 		vhdl << tab << declare("finalSumLow_3",26) << " <= " << use("l6_0")<<range(25,0) << ";" << endl;
 		vhdl << tab << declare("finalSumLow_4",25) << " <= " << use("l6_1") << " + " << use("l6_0")<<of(26) << ";" << endl;
-
 		
 		if (102-2*wIn < 17){                        
 			vhdl << tab << " R <= " << use("finalSumLow_4") << " & " 
@@ -155,8 +157,8 @@ IntKaratsuba:: IntKaratsuba(Target* target, int wIn) :
 	}
 }
 
+
 void IntKaratsuba::outputVHDL(std::ostream& o, std::string name) {
-  
 	licence(o);
 	o << "library ieee; " << endl;
 	o << "use ieee.std_logic_1164.all;" << endl;
@@ -171,20 +173,17 @@ void IntKaratsuba::outputVHDL(std::ostream& o, std::string name) {
 	o<<buildVHDLRegisters();
 	o << vhdl.str();
 	endArchitecture(o);
-
 }
 
 
 IntKaratsuba::~IntKaratsuba() {
 }
 
-void IntKaratsuba::emulate(TestCase* tc)
-{
+
+void IntKaratsuba::emulate(TestCase* tc){
 	mpz_class svX = tc->getInputValue("X");
 	mpz_class svY = tc->getInputValue("Y");
-
 	mpz_class svR = svX * svY;
-
 	tc->addExpectedOutput("R", svR);
 }
 

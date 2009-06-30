@@ -45,6 +45,7 @@ Operator(target), wIn_(wIn), N_(N), inputDelays_(inputDelays)
 	ostringstream name;
 	name << "IntCompressorTree_" << wIn_<<"_"<<N_;
 	setName(name.str());
+	setCopyrightString("Bogdan Pasca (2009)");
 
 	// Set up the IO signals
 	for (int i=0; i<N; i++){

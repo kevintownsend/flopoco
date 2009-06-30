@@ -45,6 +45,7 @@ Operator(target), wIn_(wIn), inputDelays_(inputDelays)
 	ostringstream name;
 	name << "IntSquarer_" << wIn_;
 	setName(name.str());
+	setCopyrightString("Bogdan Pasca (2009)");
 
 	// Set up the IO signals
 	addInput ("X"  , wIn_);
