@@ -27,6 +27,7 @@
 #include <iostream>
 #include <sstream>
 #include <vector>
+#include <cstdlib>
 #include <math.h>
 #include <gmp.h>
 #include <mpfr.h>
@@ -55,7 +56,10 @@ Operator(target), wIn_(wIn), inputDelays_(inputDelays)
 	}
 
 	if (isSequential()){
-		if ((wIn>17) && (wIn<=34)) {
+		if (wIn < 17 ) {
+			vhdl << tab << "R <= X * X;" << endl; 
+		}
+		else if ((wIn>17) && (wIn<=34)) {
 
 			vhdl << declare("x0_16",17) << " <= "<<use("X") << range(16,0) << ";" << endl;
 			if (wIn<34)
@@ -85,7 +89,7 @@ Operator(target), wIn_(wIn), inputDelays_(inputDelays)
 				vhdl << "R <= " << use("p2") << " & " << use("f1") << " & " << use("f0") << ";" << endl;
 
 		}
-		if ((wIn>34) && (wIn<=51)) {
+		else if ((wIn>34) && (wIn<=51)) {
 			// --------- Sub-components ------------------
 			intadder = new IntAdder(target, 84);
 			oplist.push_back(intadder);
@@ -115,7 +119,7 @@ Operator(target), wIn_(wIn), inputDelays_(inputDelays)
 			
 			vhdl << "R <= " << use("adderOutput")<<range(2*wIn-19,0) << " & " << use("x0_16_sqr")<<range(17,0)<<";"<<endl;
 		}
-		if ((wIn>51) && (wIn<=68) && (wIn!=53) ) {
+		else if ((wIn>51) && (wIn<=68) && (wIn!=53) ) {
 			// --------- Sub-components ------------------
 			intadder = new IntAdder(target, 101);
 			oplist.push_back(intadder);
@@ -158,7 +162,7 @@ Operator(target), wIn_(wIn), inputDelays_(inputDelays)
 			
 			vhdl << "R <= " << use("adderOutput")<<range(2*wIn-36,0) << " & " <<use("x17_33_sqr")<<range(0,0) << " & " << use("x0_16_sqr")<<range(33,0)<<";"<<endl;
 		}
-		if (wIn==53){
+		else if (wIn==53){
 			//instantiate a 51bit squarer
 			intsquarer = new IntSquarer(target, 51);
 			oplist.push_back(intsquarer);
@@ -214,6 +218,9 @@ Operator(target), wIn_(wIn), inputDelays_(inputDelays)
 			syncCycleFromSignal("adderOutput", false);
 			
 			vhdl << "R <= " << use("adderOutput") << " & " <<use("out_Squarer_51")<<range(51,0)<<";"<<endl;
+		} else {
+			cerr << " For the moment IntSquarer does not support inputs larger than 68 bits. " << endl;
+			exit (EXIT_FAILURE);
 		}
 	}
 }
