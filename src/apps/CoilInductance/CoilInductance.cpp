@@ -499,7 +499,9 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int LSBO, int
 	syncCycleFromSignal("Var3");
 	
 	
+	target->setNotPipelined();
 	acc4var = new FPAdder(target, wE, wF, wE, wF, wE, wF);
+	target->setPipelined();
 	acc4var->changeName(getName()+"accumulator4var");
 	oplist.push_back(acc4var);
 	inPortMap  (acc4var, "X", use("Var3"));
@@ -510,9 +512,14 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int LSBO, int
 	syncCycleFromSignal("tempVar3");
 	
 	vhdl<<tab<<"process(clk)"<<endl<<tab<<"variable temp: std_logic_vector( "<<wE+wF+3-1<<" downto 0):=(others=>'0');"<<endl<<tab<<"begin"<<endl;
-	vhdl<<tab<<tab<<" if out_clk2'event and out_clk2 = '1' then"<<endl<<tab<<tab<<tab<<"if out_rst = '0' then"<<endl<<tab<<tab<<tab<<tab<<"temp:="<<use("tempVar3")<<";"<<endl;
-	vhdl<<tab<<tab<<tab<<"else"<<endl<<tab<<tab<<tab<<tab<<"temp:=(others=>'0');"<<endl<<tab<<tab<<tab<<"end if;"<<endl<<tab<<tab<<"end if;"<<endl;
-	vhdl<<tab<<tab<<declare("accVar3",wF+wE+3)<<"<= temp;"<<endl<<tab<<"end process;"<<endl;
+	vhdl<<tab<<tab<<" if out_clk2'event and out_clk2 = '1' then"<<endl;
+	vhdl<<tab<<tab<<tab<<"if out_rst = '0' then"<<endl;
+	vhdl<<tab<<tab<<tab<<tab<<"temp:="<<use("tempVar3")<<";"<<endl;
+	vhdl<<tab<<tab<<tab<<"else"<<endl<<tab<<tab<<tab<<tab<<"temp:=(others=>'0');"<<endl;
+	vhdl<<tab<<tab<<tab<<"end if;"<<endl;
+	vhdl<<tab<<tab<<"end if;"<<endl;
+	vhdl<<tab<<tab<<declare("accVar3",wF+wE+3)<<"<= temp;"<<endl;
+	vhdl<<tab<<"end process;"<<endl;
 	
 	
 	
