@@ -63,84 +63,83 @@ Operator(target), wIn_(wIn), N_(N), inputDelays_(inputDelays)
 	}
 
 	if (isSequential()){
-		//compute the maximum input delay
-		maxInputDelay = 0;
-		map<string, double>::iterator iter;
-		for (iter = inputDelays.begin(); iter!=inputDelays.end();++iter)
-			if (iter->second > maxInputDelay)
-				maxInputDelay = iter->second;
-	
+		double objectivePeriod = 1 / target->frequency();	
+		int lastChunkSize;
+		int *cIndex;                       /**< array containing the indexes for all Chunks*/
+		maxInputDelay = getMaxInputDelays (inputDelays);
 		if (verbose)
-			cout << "The maximum input delay is "<<	maxInputDelay<<endl;
+			cout << "The maximum input delay is: " << maxInputDelay << endl;
 	
-		double	objectivePeriod;
-		objectivePeriod = 1/ target->frequency();
-		
-		if (verbose)
-			cout << "Objective period is "<< objectivePeriod<<" at an objective frequency of "<<target->frequency() << endl;
-
-		if (objectivePeriod<maxInputDelay){
-			//It is the responsability of the previous components to not have a delay larger than the period
-			cout << "Warning, the combinatorial delay at the input of "<<this->getName()<<"is above limit"<<endl;
+		if ( maxInputDelay > objectivePeriod ){
+			//the maximum combinatorial delay of the input is larger than the objective period, so the requested frequency might not be reached.
+			cout << "WARNING: the combinatorial delay at the input of " << this->getName() << " is above objective period "<<endl;
 			maxInputDelay = objectivePeriod;
 		}
 
-		if (((objectivePeriod - maxInputDelay) - target->lutDelay())<0)	{
-			//need to buffer the inputs
-			bufferedInputs = 1;
-			maxInputDelay=0;
+		if ( ((objectivePeriod - maxInputDelay) - target->adderDelay(1) ) < 0 )	{
+			//if not enough slack is available for any combinatorial circuit, we register the inputs
+			nextCycle();
 			target->suggestSubaddSize(chunkSize_ ,wIn_);
-			if (verbose)
-				cout << "The maximum addition operand width for this frequency is=" << chunkSize_ << endl;
-			chunkSize_--; //additions are performed on chunksize+1 bits for this operator;
 			nbOfChunks = ceil(double(wIn_)/double(chunkSize_));
-			cSize = new int[nbOfChunks+1];
-			cSize[nbOfChunks-1]=( ((wIn_%chunkSize_)==0)?chunkSize_:wIn_-(nbOfChunks-1)*chunkSize_);
-			for (int i=0;i<=nbOfChunks-2;i++)
-				cSize[i]=chunkSize_;				
+			lastChunkSize = ( wIn_ % chunkSize_ == 0 ? chunkSize_ : wIn_ % chunkSize_);
 		}
 		else{
-			//if we don't need to buffer the inputs
-			int cS0; 
-			bufferedInputs=0;
 			int maxInAdd;
-			target->suggestSlackSubaddSize(maxInAdd, wIn_, maxInputDelay);
-			if (verbose)
-				cout << "The maximum addition operand width for this frequency and consideing input slack is=" << maxInAdd << endl;
-			maxInAdd--;
-//			ceil(((objectivePeriod - maxInputDelay) - target->lutDelay())/target->carryPropagateDelay()); 			
-			cS0 = (maxInAdd<=wIn_?maxInAdd:wIn_);
-			if ((wIn_-cS0)>0)
-			{
-				int newWIn = wIn_-cS0;
-				target->suggestSubaddSize(chunkSize_,newWIn);
-				cout << "The maximum addition operand width for this frequency is=" << chunkSize_ << endl;
-				chunkSize_--; //same reason as above
-				nbOfChunks = ceil( double(newWIn)/double(chunkSize_));
-				cSize = new int[nbOfChunks+1];
-				cSize[0] = cS0;
-				cSize[nbOfChunks]=( (( (wIn_-cSize[0])%chunkSize_)==0)?chunkSize_:(wIn_-cSize[0])-(nbOfChunks-1)*chunkSize_);
-				for (int i=1;i<=nbOfChunks-1;i++)
-					cSize[i]=chunkSize_;				
-				nbOfChunks++;			
-			}
-			else{
-				nbOfChunks=1;
-				cSize = new int[1];
-				cSize[0] = cS0;
+			//explore 2 designs and chose the best				
+			target->suggestSlackSubaddSize(maxInAdd, wIn_, maxInputDelay); 
+			int nbOfChunksFirstDesign = ceil(double(wIn_)/double(maxInAdd));
+			int scoreFirstDesign = nbOfChunksFirstDesign - 1;
+			if (verbose) cout << "Exploring first design ... score is:"<< scoreFirstDesign << endl;
+			
+			target->suggestSubaddSize(maxInAdd, wIn_); 
+			int nbOfChunksSecondDesign = ceil(double(wIn_)/double(maxInAdd));
+			int scoreSecondDesign = nbOfChunksSecondDesign;
+			if (verbose) cout << "Exploring second design ... score is:"<< scoreSecondDesign << endl;
+			
+			if (scoreFirstDesign > scoreSecondDesign){
+				if (verbose) cout << "Implementation of the second design" << endl;
+				nbOfChunks = nbOfChunksSecondDesign;
+				target->suggestSubaddSize(chunkSize_, wIn_); 
+				lastChunkSize = ( wIn_ % chunkSize_ == 0 ? chunkSize_ : wIn_ % chunkSize_);
+			}else{
+				if (verbose) cout << "Implementation of the first design" << endl;
+				nbOfChunks = nbOfChunksFirstDesign;
+				target->suggestSubaddSize(chunkSize_, wIn_); 
+				lastChunkSize = ( wIn_ % chunkSize_ == 0 ? chunkSize_ : wIn_ % chunkSize_);
 			}
 		}
-		
+		//the sizes of the chunks
+		cSize = new int[nbOfChunks+1];
+		if ( nbOfChunks > 1 ){
+			for (int i=0; i<nbOfChunks-1; i++)
+				cSize[i] = chunkSize_;
+			cSize[nbOfChunks-1] = lastChunkSize;
+		}
+		else{
+			nbOfChunks = 1;
+			cSize = new int[1];
+			cSize[0] = wIn_;
+		}
+		//the indexes in the inputs of the chunks
+		cIndex = new int[nbOfChunks];
+		cIndex[0]= cSize[0];
+		for (int i=1; i < nbOfChunks; i++)
+			cIndex[i] = cIndex[i-1] + cSize[i];
+	
 		if (verbose){
-			cout<<endl<<endl<<"Buffered Inputs "<<(bufferedInputs?"yes":"no")<<endl;
-			cout<<endl;
+			cout << "The chunk sizes[MSB-->LSB]: "<<endl;
 			for (int i=nbOfChunks-1;i>=0;i--)
 				cout<<cSize[i]<<" ";
+			cout<<endl; 
+			cout << "The index sizes[MSB-->LSB]: "<<endl;
+			for (int i=nbOfChunks-1;i>=0;i--)
+				cout<<cIndex[i]<<" ";
 			cout<<endl; 
 		}	
 		
 				//=================================================
 		if (N>=2){
+			double delay = 0.0;
 		//split the inputs ( this should be reusable )
 			for (int i=0;i<N;i++)
 				for (int j=0; j<nbOfChunks; j++){
@@ -180,14 +179,21 @@ Operator(target), wIn_(wIn), N_(N), inputDelays_(inputDelays)
 						uname << "sX"<<j<<"_"<<propL<<"_l"<<l-1;
 						vhdl << tab << declare(dname.str(), cSize[j]+1) << " <= " << use(uname.str()) << ";" <<endl;
 					}
-				if ((nbOfChunks>1) || (N>2)) { 
-					nextCycle();
-				}
-				if ((nbOfChunks>1) || (N>=2)) { 
+				
+				if (nbOfChunks>1) { 
 					currentLevel++;
+					nextCycle();
+				}else{
+					currentLevel++;
+					delay += target->adderDelay(wIn_) + target->localWireDelay();
+					if (delay > objectivePeriod){
+						nextCycle();
+						delay = target->adderDelay(wIn_) + target->localWireDelay();
+					}
 				}
 			}
 			////////////////////////////////////////////////
+			vhdl << tab << "--final propagations " << endl; 
 			
 			if (verbose)
 				cout << "The number of chunks is: " << nbOfChunks << endl;
@@ -284,6 +290,8 @@ void IntNAdder::emulate(TestCase* tc)
 		svR = svR + svX;
 		mpz_clrbit(svR.get_mpz_t(),wIn_); 
 	}
+	
+	tc->addExpectedOutput("R", svR);
 }
 
 

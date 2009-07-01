@@ -66,6 +66,7 @@ Operator(target), wIn_(wIn), C_(C), inputDelays_(inputDelays)
 	chunkSize_ = lutWidth;
 	int nbOfTables = int ( ceil( double(wIn)/double(lutWidth)) );
 	int lastLutWidth = (wIn%lutWidth==0?lutWidth: wIn%lutWidth);
+	double delay = 0.0;
 	
 	FirstKCMTable* t1; 
 	LastKCMTable* t2; //will containt the signed multiplication result 
@@ -86,10 +87,6 @@ Operator(target), wIn_(wIn), C_(C), inputDelays_(inputDelays)
 	t2 = new LastKCMTable(target, lastLutWidth , constantWidth + lastLutWidth, C);
 	oplist.push_back(t2);
 		
-	
-	//the last table will have a variable number of inputs
-		//TODO
-	
 	//first split the input X into digits having lutWidth bits -> this is as generic as it gets :)
 		for (int i=0; i<nbOfTables; i++)
 			if (i < nbOfTables-1)
@@ -115,6 +112,8 @@ Operator(target), wIn_(wIn), C_(C), inputDelays_(inputDelays)
 			}
 		}
 		
+		delay += target->lutDelay();
+		
 		//determine the addition operand size
 		int addOpSize = (nbOfTables - 2) * lutWidth + (constantWidth + 	lastLutWidth);
 		if (verbose)
@@ -124,7 +123,6 @@ Operator(target), wIn_(wIn), C_(C), inputDelays_(inputDelays)
 			vhdl << tab << declare( join("addOp",i), addOpSize ) << " <= ";
 				if (i!=nbOfTables-1){ //if not the last table
 					for (int j=addOpSize-1; j>= (constantWidth + lutWidth) + (i-1)*lutWidth ; j--) //sign extension
-//						vhdl << use(join("pp",i))<<range(constantWidth + lutWidth -1,constantWidth + lutWidth -1) << " & ";
 						vhdl << use(join("pp",i))<<of(constantWidth + lutWidth -1) << " & ";
 					
 					vhdl << use(join("pp",i)) << range(constantWidth + lutWidth -1, (i==0?lutWidth:0)) << " & " << zeroGenerator((i-1)*lutWidth,0) << ";" << endl;
@@ -137,7 +135,10 @@ Operator(target), wIn_(wIn), C_(C), inputDelays_(inputDelays)
 				}
 		}
 		
-		IntNAdder* adder = new IntNAdder(target, addOpSize, nbOfTables);
+		map<string, double> inMap;
+		inMap["X0"] = delay;
+		
+		IntNAdder* adder = new IntNAdder(target, addOpSize, nbOfTables, inMap);
 		oplist.push_back(adder);
 		for (int i=0; i<nbOfTables; i++)
 			inPortMap (adder, join("X",i) , join("addOp",i));
@@ -149,13 +150,14 @@ Operator(target), wIn_(wIn), C_(C), inputDelays_(inputDelays)
 		syncCycleFromSignal("OutRes");
 		
 		vhdl << tab << "R <= " << use("OutRes") << " & " << use( "pp0")<<range(lutWidth-1,0) << ";" <<endl;
-		
-
 }
 
 IntIntKCM::~IntIntKCM() {
 }
 
+int IntIntKCM::getOutputWidth(){
+	return wOut_;
+}
 
 void IntIntKCM::emulate(TestCase* tc)
 {
