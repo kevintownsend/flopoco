@@ -96,7 +96,9 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int LSBO, int
 	vhdl<<tab<<tab<<tab<<"else "<<endl<<tab<<tab<<tab<<tab<<"count:= CONV_STD_LOGIC_VECTOR(0,"<<integratorWidth<<");"<<endl<<tab<<tab<<tab<<tab<<use("out_clk1")<<"<= '0'; "<<endl<<tab<<tab<<tab<<tab<<use("out_rst")<<"<= '1'; "<<endl;
 	vhdl<<tab<<tab<<tab<<"end if;"<<endl;
 	vhdl<<tab<<tab<<"end if;"<<endl;
-	vhdl<<tab<<declare("signal_t",integratorWidth)<<" <= "<<" count"<<range(integratorWidth-1,0)<<";"<<endl;
+	
+	vhdl<<tab<<declare("out_clk2",1)<<"<="<<"clk;"<<endl;
+	//vhdl<<tab<<declare("signal_t",integratorWidth)<<" <= "<<" count"<<range(integratorWidth-1,0)<<";"<<endl;
 	vhdl<<tab<<declare("signal_tp",integratorWidth+1)<<" <= '0' & "<<" count"<<range(integratorWidth-1,0)<<";"<<endl;
 	vhdl<<tab<<"end process;"<<endl;
 	vhdl<<endl;
@@ -372,7 +374,7 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int LSBO, int
 	
 	vhdl<<tab<<declare("fpSQRVar2temp",wE+wF+3)<<" <= "<<use("fpSQRVar2")<<";"<<endl;
 	
-	sqrt4var = new  FPSqrt(target, wE, wF, 1, 0);
+	sqrt4var = new  FPSqrt(target, wE, wF, 1, 1);
 	sqrt4var->changeName(getName()+"sqrt4var2");
 	oplist.push_back(sqrt4var);
 	inPortMap  (sqrt4var, "X", use("fpSQRVar2temp"));
@@ -497,6 +499,23 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int LSBO, int
 	syncCycleFromSignal("Var3");
 	
 	
+	acc4var = new FPAdder(target, wE, wF, wE, wF, wE, wF);
+	acc4var->changeName(getName()+"accumulator4var");
+	oplist.push_back(acc4var);
+	inPortMap  (acc4var, "X", use("Var3"));
+	inPortMapCst (acc4var, "Y","accVar3");
+	outPortMap (acc4var, "R","tempVar3");
+	vhdl << instance(acc4var, "accumulator4var3");
+	
+	syncCycleFromSignal("tempVar3");
+	
+	vhdl<<tab<<"process(clk)"<<endl<<tab<<"variable temp: std_logic_vector( "<<wE+wF+3-1<<" downto 0):=(others=>'0');"<<endl<<tab<<"begin"<<endl;
+	vhdl<<tab<<tab<<" if out_clk2'event and out_clk2 = '1' then"<<endl<<tab<<tab<<tab<<"if out_rst = '0' then"<<endl<<tab<<tab<<tab<<tab<<"temp:="<<use("tempVar3")<<";"<<endl;
+	vhdl<<tab<<tab<<tab<<"else"<<endl<<tab<<tab<<tab<<tab<<"temp:=(others=>'0');"<<endl<<tab<<tab<<tab<<"end if;"<<endl<<tab<<tab<<"end if;"<<endl;
+	vhdl<<tab<<tab<<declare("accVar3",wF+wE+3)<<"<= temp;"<<endl<<tab<<"end process;"<<endl;
+	
+	
+	
 	//computing the var4 sqrt(((x0-x2)+(x1-x0)*t)^2+((y0-y2)+(y1-y0)*t)^2+((z0-z2)+(z1-z0)*t)^2)
 	
 	
@@ -602,7 +621,22 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int LSBO, int
 	syncCycleFromSignal("Var4");
 	
 	
+	oplist.push_back(acc4var);
+	inPortMap  (acc4var, "X", use("Var4"));
+	inPortMapCst (acc4var, "Y","accVar4");
+	outPortMap (acc4var, "R","tempVar4");
+	vhdl << instance(acc4var, "accumulator4var4");
 	
+	syncCycleFromSignal("tempVar4");
+	
+	nextCycle(); //in order for the whole pipeline to be syncronized with the accumulator -> used as a reference signal for syncronization the accVar4
+	
+	vhdl<<tab<<"process(clk)"<<endl<<tab<<"variable temp: std_logic_vector( "<<wE+wF+3-1<<" downto 0):=(others=>'0');"<<endl<<tab<<"begin"<<endl;
+	vhdl<<tab<<tab<<" if out_clk2'event and out_clk2 = '1' then"<<endl<<tab<<tab<<tab<<"if out_rst = '0' then"<<endl<<tab<<tab<<tab<<tab<<"temp:="<<use("tempVar4")<<";"<<endl;
+	vhdl<<tab<<tab<<tab<<"else"<<endl<<tab<<tab<<tab<<tab<<"temp:=(others=>'0');"<<endl<<tab<<tab<<tab<<"end if;"<<endl<<tab<<tab<<"end if;"<<endl;
+	vhdl<<tab<<tab<<declare("accVar4",wF+wE+3)<<"<= temp;"<<endl<<tab<<"end process;"<<endl;
+	
+		
 	
 	//computing the var5 ( ((x0-x2)+(x1-x0)*t)*(x3-x2) +((y0-y2)+(y1-y0)*t)*(y3-y2)+((z0-z2)+(z1-z0)*t)*(z3-z2))
 	
@@ -660,22 +694,69 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int LSBO, int
 	
 	//cout<<"new Lsbi:= "<<(LSBI)*2<<"new Msbi:= "<<signofMSBI*(abs(MSBI)-1)*2<<endl;
 	
+	
+	nextCycle();
+	
+	vhdl<<tab<<declare("tempVar5",inputWidthSegments)<<" <= "<<use("result4Var5")<<" + accVar5fix"<<";"<<endl; //the value is hardcoded because otherwise some problems would occur because of the later declaration
+	
+	vhdl<<tab<<"process(clk)"<<endl<<tab<<"variable temp: std_logic_vector( "<<inputWidthSegments-1<<" downto 0):=(others=>'0');"<<endl<<tab<<"begin"<<endl;
+	vhdl<<tab<<tab<<" if out_clk2'event and out_clk2 = '1' then"<<endl<<tab<<tab<<tab<<"if out_rst = '0' then"<<endl<<tab<<tab<<tab<<tab<<"temp:="<<use("tempVar5")<<";"<<endl;
+	vhdl<<tab<<tab<<tab<<"else"<<endl<<tab<<tab<<tab<<tab<<"temp:=(others=>'0');"<<endl<<tab<<tab<<tab<<"end if;"<<endl<<tab<<tab<<"end if;"<<endl;
+	vhdl<<tab<<tab<<declare("accVar5fix",inputWidthSegments)<<"<= temp;"<<endl<<tab<<"end process;"<<endl;
 		
 	oplist.push_back(convert2FP);
-	inPortMap  (convert2FP, "I", use("result4Var5"));
-	outPortMap (convert2FP, "O","Var5");
+	inPortMap  (convert2FP, "I", use("accVar5fix"));
+	outPortMap (convert2FP, "O","accVar5");
 	vhdl << instance(convert2FP, "convert2FPv5");
 	
-	syncCycleFromSignal("Var5");
+	syncCycleFromSignal("accVar5");
+	
+	
+	syncCycleFromSignal("accVar4");
+	
+	//de aici in jos toate componentele ar trebui sa functioneze pe clockul out_clk1 (este o diviziune cu 9+1 a clk)
+	
+	vhdl<<tab<<declare("Var2temp",wE+wF+3)<<" <= "<<use("Var2")<<";"<<endl;
+	vhdl<<tab<<declare("accVar3temp",wE+wF+3)<<" <= "<<use("accVar3")<<";"<<endl;
+	
+	oplist.push_back(acc4var);
+	inPortMap  (acc4var, "X", use("Var2temp"));
+	inPortMap (acc4var, "Y",use("accVar3temp"));
+	outPortMap (acc4var, "R","var3pvar2");
+	vhdl << instance(acc4var, "var3plusvar2");
+	
+	syncCycleFromSignal("var3pvar2");
+	
+	syncCycleFromSignal("accVar4");
+	
+	vhdl<<tab<<declare("accVar5temp",wE+wF+3)<<" <= "<<use("accVar5")<<";"<<endl;
+	vhdl<<tab<<declare("Var2temp2",wE+wF+3)<<" <= "<<use("Var2")<<";"<<endl;
+	
+	div4Log =new FPDiv(target, wE, wF);
+	div4Log->changeName(getName()+"div4Log");
+	oplist.push_back(div4Log);
+	inPortMap  (div4Log, "X", use("accVar5temp"));
+	inPortMap (div4Log, "Y",use("Var2temp2"));
+	outPortMap (div4Log, "R","var5divvar2");
+	vhdl << instance(div4Log, "var5divvar24log");
+	
+	syncCycleFromSignal("var5divvar2");
+	
+	vhdl<<tab<<declare("var3pvar2temp",wE+wF+3)<<" <= "<<use("var3pvar2")<<";"<<endl;
+	
+	oplist.push_back(acc4var);
+	inPortMap  (acc4var, "X", use("var3pvar2temp"));
+	inPortMap (acc4var, "Y",use("var5divvar2"));
+	outPortMap (acc4var, "R","numerator4Log");
+	vhdl << instance(acc4var, "numerator4LogAdder");
+	
+	syncCycleFromSignal("numerator4Log");
 	
 	
 	
+	//syncCycleFromSignal("accVar4");
 	
-	
-	syncCycleFromSignal("Var4");
-	
-	
-	vhdl<<tab<<"O<="<<use("Var1")<<range(outputWidth-1,0)<< "or "<<use("Var2")<<range(outputWidth-1,0)<<" or "<<use("Var3")<<range(outputWidth-1,0)<<" or "<<use("Var4")<<range(outputWidth-1,0)<<" or "<<use("Var5")<<range(outputWidth-1,0)<<";"<<endl;
+	vhdl<<tab<<"O<="<<use("Var1")<<range(outputWidth-1,0)<<" or "<<use("accVar4")<<range(outputWidth-1,0)<<" or "<<use("numerator4Log")<<range(outputWidth-1,0)<<";"<<endl;
 
 	}
 

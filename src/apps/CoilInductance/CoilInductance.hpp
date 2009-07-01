@@ -13,6 +13,8 @@
 #include "../../Fix2FP.hpp"
 #include "../../IntSquarer.hpp"
 #include "../../FPSqrt.hpp"
+#include "../../FPAdder.hpp"
+#include "../../FPDiv.hpp"
 
 
 
@@ -72,6 +74,11 @@ private:
 	/** The SQRT for the variables  */
 	FPSqrt* sqrt4var;
 
+	/** The FPAdder object for creating the accumulator for the variables 3 & 4*/
+	FPAdder* acc4var;
+	
+	/** The FP Division operator used in the final accumulator formula */
+	FPDiv* div4Log;
 
 		
 	int MSB;
