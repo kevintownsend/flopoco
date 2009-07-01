@@ -374,7 +374,7 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int LSBO, int
 	
 	vhdl<<tab<<declare("fpSQRVar2temp",wE+wF+3)<<" <= "<<use("fpSQRVar2")<<";"<<endl;
 	
-	sqrt4var = new  FPSqrt(target, wE, wF, 1, 1);
+	sqrt4var = new  FPSqrt(target, wE, wF, 1, 0);
 	sqrt4var->changeName(getName()+"sqrt4var2");
 	oplist.push_back(sqrt4var);
 	inPortMap  (sqrt4var, "X", use("fpSQRVar2temp"));
