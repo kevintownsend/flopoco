@@ -180,4 +180,44 @@ bool Virtex4::suggestSlackSubaddSize(int &x, int wIn, double slack){
 		return false;
 	} 
 };
+
+int Virtex4::multiplierLUTCost(int wInX, int wInY){
+	
+	int lutCost = 0;
+	int chunkSize_ = this->lutInputs()/2;
+	
+	int chunksX =  int(ceil( ( double(wInX) / (double) chunkSize_) ));
+	int chunksY =  int(ceil( ( double(wInY) / (double) chunkSize_) ));
+	
+	if (chunksX > 0)
+	{
+		// FIRST SET OF PARTIAL PRODUCTS
+		for (int i=0; i<chunksY; i++)
+		{
+			if (i%chunkSize_ == 0) 
+				lutCost += 6; // one LUT for each: CY<1>, CY<2>_mand, lut<1>, xor<2>, product of 2 pairs of underlying bits
+			else
+				lutCost += 4; // one LUT for each: CY<2>, lut<1>, xor<2>, product of 1 pair of underlying LSBs
+		}
+		
+		if (chunksX > 1)
+		{
+			// SECOND SET OF PARTIAL PRODUCTS
+			for (int i=0; i<chunksY; i++)
+			{	
+				if (i%chunkSize_ == 0) 
+					lutCost += 3; // one LUT for each: CY<2>, lut<1>, product of 1 pair of underlying LSBs
+				else
+					lutCost += 4; // one LUT for each: CY<2>, lut<1>, xor<2>, product of 1 pair of underlying LSBs
+			}
+			
+			for (int i=2; i<chunksX; i++)
+				for (int j=0; j<chunksY; j++)
+					lutCost += 4; // one LUT for each: CY<2>, lut<1>, xor<2>, product of 1 pair of underlying LSBs
+			
+		}
+	}
+	
+	return lutCost;//TODO + this->intNAdderLUTCost(chunksX*x, chunksY*y, frequency);
+};
   

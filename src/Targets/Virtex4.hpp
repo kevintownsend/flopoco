@@ -74,7 +74,7 @@ public:
 	bool   suggestSubmultSize(int &x, int &y, int wInX, int wInY);
 	bool   suggestSubaddSize(int &x, int wIn);
 	bool   suggestSlackSubaddSize(int &x, int wIn, double slack);
-
+	int    multiplierLUTCost(int wInX, int wInY);
 private:
 	double fastcarryDelay_; /**< The delay of the fast carry chain */
 	double lutDelay_;       /**< The delay between two LUTs */

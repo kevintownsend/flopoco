@@ -1,7 +1,7 @@
 /*
  * An integer multiplier for FloPoCo
  *
- * Authors : Bogdan Pasca
+ * Authors : Bogdan Pasca, Sebastian Banescu
  *
  * This file is part of the FloPoCo project developed by the Arenaire
  * team at Ecole Normale Superieure de Lyon
@@ -177,7 +177,7 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 		
 	if (verbose)
         cout << "X splitted in "<< chunksX << " chunks and Y in " << chunksY << " chunks; " << endl;
-	
+	if (chunksX + chunksY > 2) {
 	int widthX = wInX_;
 	int widthY = wInY_;	
 	
@@ -266,7 +266,9 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
     syncCycleFromSignal("addRes");
 	
 	vhdl << tab << "R <= " << use("addRes")<<range(adderWidth-1,adderWidth-wInX_-wInY_) << ";" << endl;		
-	
+	}
+		else 
+			vhdl << tab << "R <= X * Y ;" <<endl;
 	}
 }
 

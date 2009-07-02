@@ -142,6 +142,13 @@ class Target
 	 */
 	bool getUseHardMultipliers(); 
 
+	/** Function which returns the number of LUTs needed to implement
+	 *	 a multiplier of the given width
+	 * @param	wInX the width (in bits) of the first operand
+	 * @param	wInY the width (in bits) of the second operand
+	 */
+	virtual int multiplierLUTCost(int wInX, int wInY) =0;
+
 protected:
 	int    lutInputs_;          /**< The number of inputs for the LUTs */
 	bool   pipeline_;           /**< True if the target is pipelined/ false otherwise */
