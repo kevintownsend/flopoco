@@ -94,7 +94,8 @@ private:
 	/** The FP Multiplier operator used in the final accumulator formula */
 	LongAcc* finalAcc;
 
-		
+	int addressLength();
+	
 	int MSB;
 	int LSB;
 	int inputWidth;
@@ -102,8 +103,7 @@ private:
 	int outputWidth;
 	int wE,wF;
 	int integratorWidth;
-	int referenceCycle1;
-	int referenceCycle2;
+	int addrWidth;
 
 };
 

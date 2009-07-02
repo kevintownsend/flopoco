@@ -22,6 +22,7 @@
 */
 
 #include <iostream>
+#include <fstream>
 #include <sstream>
 #include <vector>
 #include <math.h>
@@ -51,6 +52,7 @@
 #include <mpfr.h>
 
 using namespace std;
+using std::ifstream;
 extern vector<Operator*> oplist;
 
 #define DEBUGVHDL 0
@@ -85,23 +87,116 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,i
 	integratorWidth=3;
 	inputWidthSegments=2*(inputWidth-1)+1;
 	
+	addrWidth =addressLength();
+	
 	addOutput("O",outputWidth);
 	
 	//Counters for addressing the memories and for frequency division
 	
 	vhdl<<endl;
-	vhdl<<tab<<"process (clk)"<<endl<<tab<<"variable count:std_logic_vector"<<range(integratorWidth,0)<<":=(others=>'0');"<<endl<<tab<<"begin"<<endl<<tab<<tab<<"if clk'event and clk = '1' then"<<endl;
-	vhdl<<tab<<tab<<tab<<"if count < "<<pow(2,integratorWidth)<<" then "<<endl<<tab<<tab<<tab<<tab<<"count:=count+'1';"<<endl<<tab<<tab<<tab<<tab<<declare("out_clk1",1)<<"<= '0';"<<endl<<tab<<tab<<tab<<tab<<declare("out_rst",1)<<"<= '0'; "<<endl;
-	vhdl<<tab<<tab<<tab<<"elsif count = "<<pow(2,integratorWidth)<<" then "<<endl<<tab<<tab<<tab<<tab<<"count:=count+'1';"<<endl<<tab<<tab<<tab<<tab<<use("out_clk1")<<"<= '1'; "<<endl<<tab<<tab<<tab<<tab<<use("out_rst")<<"<= '0'; "<<endl;
-	vhdl<<tab<<tab<<tab<<"else "<<endl<<tab<<tab<<tab<<tab<<"count:= CONV_STD_LOGIC_VECTOR(0,"<<integratorWidth<<");"<<endl<<tab<<tab<<tab<<tab<<use("out_clk1")<<"<= '0'; "<<endl<<tab<<tab<<tab<<tab<<use("out_rst")<<"<= '1'; "<<endl;
+	vhdl<<tab<<"process (clk)"<<endl;
+	vhdl<<tab<<"variable count:std_logic_vector"<<range(integratorWidth,0)<<":=(others=>'0');"<<endl;
+	vhdl<<tab<<"begin"<<endl<<tab<<tab<<"if clk'event and clk = '1' then"<<endl;
+	vhdl<<tab<<tab<<tab<<"if count < "<<pow(2,integratorWidth)<<" then "<<endl;
+	vhdl<<tab<<tab<<tab<<tab<<"count:=count+'1';"<<endl;
+	vhdl<<tab<<tab<<tab<<tab<<declare("out_clk1",1)<<"<= '0';"<<endl;
+	vhdl<<tab<<tab<<tab<<tab<<declare("out_rst",1)<<"<= '0'; "<<endl;
+	vhdl<<tab<<tab<<tab<<"elsif count = "<<pow(2,integratorWidth)<<" then "<<endl;
+	vhdl<<tab<<tab<<tab<<tab<<"count:=count+'1';"<<endl;
+	vhdl<<tab<<tab<<tab<<tab<<use("out_clk1")<<"<= '1'; "<<endl;
+	vhdl<<tab<<tab<<tab<<tab<<use("out_rst")<<"<= '0'; "<<endl;
+	vhdl<<tab<<tab<<tab<<"else "<<endl<<tab<<tab<<tab<<tab<<"count:= CONV_STD_LOGIC_VECTOR(0,"<<integratorWidth<<");"<<endl;
+	vhdl<<tab<<tab<<tab<<tab<<use("out_clk1")<<"<= '0'; "<<endl;
+	vhdl<<tab<<tab<<tab<<tab<<use("out_rst")<<"<= '1'; "<<endl;
 	vhdl<<tab<<tab<<tab<<"end if;"<<endl;
 	vhdl<<tab<<tab<<"end if;"<<endl;
-	
 	vhdl<<tab<<declare("out_clk2",1)<<"<="<<"clk;"<<endl;
-	//vhdl<<tab<<declare("signal_t",integratorWidth)<<" <= "<<" count"<<range(integratorWidth-1,0)<<";"<<endl;
 	vhdl<<tab<<declare("signal_tp",integratorWidth+1)<<" <= '0' & "<<" count"<<range(integratorWidth-1,0)<<";"<<endl;
 	vhdl<<tab<<"end process;"<<endl;
 	vhdl<<endl;
+	
+	
+	
+	vhdl<<tab<<"process(out_clk1)"<<endl;
+	vhdl<<tab<<"variable c1:std_logic_vector(5 downto 0):=(others=> '0');"<<endl;
+	vhdl<<tab<<"variable temp:std_logic_vector(1 downto 0):= \"01\";"<<endl;
+	vhdl<<tab<<"begin"<<endl;
+	vhdl<<tab<<tab<<" if out_clk1'event and out_clk1 = '1' then"<<endl;
+	vhdl<<tab<<tab<<tab<<"if c1 = 0 and temp = \"00\" then"<<endl;
+	vhdl<<tab<<tab<<tab<<tab<<" c1:=(others=>'0');"<<endl;
+	vhdl<<tab<<tab<<tab<<tab<<" temp:=\"01\";"<<endl;
+	vhdl<<tab<<tab<<tab<<tab<<declare("selectionVal1",1)<<" <= '0'; "<<endl;
+	vhdl<<tab<<tab<<tab<<tab<<declare("out_clk3",1)<<"<= '1'; "<<endl;
+	vhdl<<tab<<tab<<tab<<"elsif temp= \"01\" then"<<endl;
+	vhdl<<tab<<tab<<tab<<tab<<use("out_clk3")<<" <= '0';"<<endl;
+	vhdl<<tab<<tab<<tab<<tab<<use("selectionVal1")<<" <= '1'; "<<endl;
+	vhdl<<tab<<tab<<tab<<tab<<" c1:=c1 + '1';"<<endl;
+	vhdl<<tab<<tab<<tab<<tab<<" temp:=\"10\";"<<endl;
+	vhdl<<tab<<tab<<tab<<"else"<<endl;
+	vhdl<<tab<<tab<<tab<<tab<<use("out_clk3")<<" <= '0';"<<endl;
+	vhdl<<tab<<tab<<tab<<tab<<"temp:=\"00\";"<<endl;
+	vhdl<<tab<<tab<<tab<<tab<<"c1:=c1+'1';"<<endl;
+	vhdl<<tab<<tab<<tab<<tab<<use("selectionVal1")<<" <= '0'; "<<endl;
+	vhdl<<tab<<tab<<tab<<"end if;"<<endl;
+	vhdl<<tab<<tab<<"end if;"<<endl;
+	vhdl<<tab<<declare("lowAddress1",6)<<" <= c1;"<<endl;
+	vhdl<<tab<<"end process;"<<endl;
+	vhdl<<endl;
+	
+	
+	vhdl<<tab<<"process(out_clk3)"<<endl;
+	vhdl<<tab<<"variable c1:std_logic_vector("<<addrWidth - 6 -1<<" downto 0):=(others=> '0');"<<endl;
+	vhdl<<tab<<"begin"<<endl;
+	vhdl<<tab<<tab<<" if out_clk3'event and out_clk3 = '1' then"<<endl;
+	vhdl<<tab<<tab<<tab<<"c1:=c1+'1';"<<endl;
+	vhdl<<tab<<tab<<"end if;"<<endl;
+	vhdl<<tab<<declare("highAddress1",addrWidth - 6)<<" <= c1;"<<endl;
+	vhdl<<tab<<"end process;"<<endl;
+	vhdl<<endl;
+	
+	vhdl<<tab<<declare("Address1",addrWidth)<<" <= "<<use("highAddress1")<<" & "<<use("lowAddress1")<<";"<<endl<<endl;
+	
+	vhdl<<tab<<"process(out_clk3)"<<endl;
+	vhdl<<tab<<"variable c2:std_logic_vector(5 downto 0):=(others=> '0');"<<endl;
+	vhdl<<tab<<"variable temp:std_logic_vector(1 downto 0):= \"01\";"<<endl;
+	vhdl<<tab<<"begin"<<endl;
+	vhdl<<tab<<tab<<" if out_clk3'event and out_clk3 = '1' then"<<endl;
+	vhdl<<tab<<tab<<tab<<"if c2 = 0 and temp = \"00\" then"<<endl;
+	vhdl<<tab<<tab<<tab<<tab<<"c2:=(others=>'0');"<<endl;
+	vhdl<<tab<<tab<<tab<<tab<<" temp:=\"01\";"<<endl;
+	vhdl<<tab<<tab<<tab<<tab<<declare("selectionVal2",1)<<" <= '0'; "<<endl;
+	vhdl<<tab<<tab<<tab<<tab<<declare("out_clk4",1)<<"<= '1'; "<<endl;
+	vhdl<<tab<<tab<<tab<<"elsif temp= \"01\" then"<<endl;
+	vhdl<<tab<<tab<<tab<<tab<<use("out_clk4")<<" <= '0';"<<endl;
+	vhdl<<tab<<tab<<tab<<tab<<use("selectionVal2")<<" <= '1'; "<<endl;
+	vhdl<<tab<<tab<<tab<<tab<<" c2:=c2 + '1';"<<endl;
+	vhdl<<tab<<tab<<tab<<tab<<" temp:=\"10\";"<<endl;
+	vhdl<<tab<<tab<<tab<<"else"<<endl;
+	vhdl<<tab<<tab<<tab<<tab<<use("out_clk4")<<" <= '0';"<<endl;
+	vhdl<<tab<<tab<<tab<<tab<<"temp:=\"00\";"<<endl;
+	vhdl<<tab<<tab<<tab<<tab<<"c2:=c2+'1';"<<endl;
+	vhdl<<tab<<tab<<tab<<tab<<use("selectionVal2")<<" <= '0'; "<<endl;
+	vhdl<<tab<<tab<<tab<<"end if;"<<endl;
+	vhdl<<tab<<tab<<"end if;"<<endl;
+	vhdl<<tab<<declare("lowAddress2",6)<<" <= c2;"<<endl;
+	vhdl<<tab<<"end process;"<<endl;
+	vhdl<<endl;
+	
+	
+	vhdl<<tab<<"process(out_clk4)"<<endl;
+	vhdl<<tab<<"variable c2:std_logic_vector("<<addrWidth - 6 -1<<" downto 0):=(others=> '0');"<<endl;
+	vhdl<<tab<<"begin"<<endl;
+	vhdl<<tab<<tab<<" if out_clk4'event and out_clk4 = '1' then"<<endl;
+	vhdl<<tab<<tab<<tab<<"c2:=c2+'1';"<<endl;
+	vhdl<<tab<<tab<<"end if;"<<endl;
+	vhdl<<tab<<declare("highAddress2",addrWidth - 6)<<" <= c2;"<<endl;
+	vhdl<<tab<<"end process;"<<endl;
+	vhdl<<endl;
+	
+	vhdl<<tab<<declare("Address2",addrWidth)<<" <= "<<use("highAddress2")<<" & "<<use("lowAddress2")<<";"<<endl<<endl;
+	
+	
+	vhdl<<tab<<declare("selectionVal",1)<<" <= "<<use("selectionVal2")<<" or "<<use("selectionVal1")<<";"<<endl;
 	
 	//Memories instantiation
 	
@@ -522,7 +617,7 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,i
 	
 	syncCycleFromSignal("tempVar3");
 	
-	vhdl<<tab<<"process(clk)"<<endl<<tab<<"variable temp: std_logic_vector( "<<wE+wF+3-1<<" downto 0):=(others=>'0');"<<endl<<tab<<"begin"<<endl;
+	vhdl<<tab<<"process(out_clk2)"<<endl<<tab<<"variable temp: std_logic_vector( "<<wE+wF+3-1<<" downto 0):=(others=>'0');"<<endl<<tab<<"begin"<<endl;
 	vhdl<<tab<<tab<<" if out_clk2'event and out_clk2 = '1' then"<<endl;
 	vhdl<<tab<<tab<<tab<<"if out_rst = '0' then"<<endl;
 	vhdl<<tab<<tab<<tab<<tab<<"temp:="<<use("tempVar3")<<";"<<endl;
@@ -645,7 +740,7 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,i
 	
 	nextCycle(); //in order for the whole pipeline to be syncronized with the accumulator -> used as a reference signal for syncronization the accVar4
 	
-	vhdl<<tab<<"process(clk)"<<endl;
+	vhdl<<tab<<"process(out_clk2)"<<endl;
 	vhdl<<tab<<"variable temp: std_logic_vector( "<<wE+wF+3-1<<" downto 0):=(others=>'0');"<<endl;
 	vhdl<<tab<<"begin"<<endl;
 	vhdl<<tab<<tab<<" if out_clk2'event and out_clk2 = '1' then"<<endl;
@@ -720,7 +815,7 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,i
 	
 	vhdl<<tab<<declare("tempVar5",inputWidthSegments)<<" <= "<<use("result4Var5")<<" + accVar5fix"<<";"<<endl; //the value is hardcoded because otherwise some problems would occur because of the later declaration
 	
-	vhdl<<tab<<"process(clk)"<<endl;
+	vhdl<<tab<<"process(out_clk2)"<<endl;
 	vhdl<<tab<<"variable temp: std_logic_vector( "<<inputWidthSegments-1<<" downto 0):=(others=>'0');"<<endl;
 	vhdl<<tab<<"begin"<<endl;
 	vhdl<<tab<<tab<<" if out_clk2'event and out_clk2 = '1' then"<<endl;
@@ -893,5 +988,42 @@ void CoilInductance::emulate(TestCase * tc)
 
 void CoilInductance::buildStandardTestCases(TestCaseList* tcl){
 	
+}
+
+int CoilInductance::addressLength()
+{
+	
+	int L;
+	int NrSVert;
+	int **config;
+	int nrTurns;
+	float out_radius;
+	float turn_radius;
+	float insulation;
+	int N;
+	
+ifstream indata; // indata is like cin
+	indata.open(filepath);
+	
+	
+	indata>>L>>NrSVert;
+	   
+	 config = new int*[L];
+	   for(int j=0;j<L;j++)
+		config[j]= new int[NrSVert];
+	 
+
+	   nrTurns=0;
+	   for(int j=0;j<L;j++)
+		for(int i=0;i<NrSVert;i++)
+			{indata>>config[j][i];
+			nrTurns+=config[j][i];
+			}
+	
+	indata>>out_radius>>turn_radius>>insulation>>N;
+
+	indata.close();
+	
+	return ((int) intlog2(N*nrTurns));
 }
 
