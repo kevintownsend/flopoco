@@ -690,18 +690,18 @@ string Operator::instance(Operator* op, string instanceName){
 	// TODO add checks here? Check that all the signals are covered for instance
 	
 	o << tab << instanceName << ": " << op->getName();
-	if (isSequential()) 
+	if (op->isSequential()) 
 		o << "  -- pipelineDepth="<< op->getPipelineDepth();
 	o << endl;
 	o << tab << tab << "port map (";
 	// build vhdl and erase portMap_
 	map<string,string>::iterator it;
-	if(isSequential()) {
+	if(op->isSequential()) {
 		o <<            " clk  => clk, " << endl;
 		o <<  tab <<tab << "           rst  => rst, " << endl;
 	}
 	it=op->portMap_.begin();
-	if(isSequential()) 
+	if(op->isSequential()) 
 		o << tab << tab << "           " ;
 	else
 		o <<  " " ;
