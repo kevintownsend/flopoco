@@ -201,7 +201,7 @@ static void usage(char *name){
 	cerr << "       opt: assemble FP operators if 0, optimized architecture if 1 \n";
 
 	cerr << "  Applications: \n";
-	cerr << "    CoilInductance LSBI MSBI LSBO MSBO FilePath\n";
+	cerr << "    CoilInductance LSBI MSBI MaxMSBO LSBO MSBO FilePath\n";
 	cerr << "      TODO - Description here; a parameter such as FilePath should not exist !!! \n";
 	//To be removed from command line interface
 	cerr << "    CoordinatesTableX wIn LSB MSB FilePath\n";
@@ -700,11 +700,12 @@ bool parseCommandLine(int argc, char* argv[]){
 			else {
 				int LSBI = atoi(argv[i++]);
 				int MSBI = atoi(argv[i++]);
+				int MaxMSBO= atoi(argv[i++]);
 				int LSBO = atoi(argv[i++]);
 				int MSBO = atoi(argv[i++]);
 				char *pa=argv[i++];
-				cerr << "> CoilInductance "<<" LSBI="<<LSBI<<", MSBI="<<MSBI<<", LSBO="<<LSBO<<", MSBO="<<MSBO<<" \n";
-				op = new CoilInductance(target, LSBI, MSBI,LSBO,MSBO,pa);
+				cerr << "> CoilInductance "<<" LSBI="<<LSBI<<", MSBI="<<MSBI<<", MaxMSBO="<<MaxMSBO<<", LSBO="<<LSBO<<", MSBO="<<MSBO<<" \n";
+				op = new CoilInductance(target, LSBI, MSBI,MaxMSBO,LSBO,MSBO,pa);
 				addOperator(op);
 			}
 		}

@@ -15,6 +15,9 @@
 #include "../../FPSqrt.hpp"
 #include "../../FPAdder.hpp"
 #include "../../FPDiv.hpp"
+#include "../../FPLog.hpp"
+#include "../../FPMultiplier.hpp"
+#include "../../LongAcc.hpp"
 
 
 
@@ -30,7 +33,7 @@ public:
 	 * @param[in]		wER			the with of the exponent for the convertion result
 	 * @param[in]		wFR			the with of the fraction for the convertion result
 	 */
-	CoilInductance(Target* target, int LSBI, int MSBI, int LSBO, int MSBO, char *filepath);
+	CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,int LSBO, int MSBO, char *filepath);
 
 
 	void outputVHDL(std::ostream& o, std::string name);
@@ -50,6 +53,8 @@ private:
 	int MSBI; 
 	/** The LSB for the input */
 	int LSBI; 
+	/** The width of the MaxMSB for the output result*/
+	int MaxMSBO;
 	/** The width of the exponent for the output R */
 	int LSBO; 
 	/** The width of the fraction for the output R */
@@ -79,6 +84,15 @@ private:
 	
 	/** The FP Division operator used in the final accumulator formula */
 	FPDiv* div4Log;
+	
+	/** The FP Logarithm operator used in the final accumulator formula */
+	FPLog* log4Acc;
+	
+	/** The FP Multiplier operator used in the final accumulator formula */
+	FPMultiplier* mult4Acc;
+	
+	/** The FP Multiplier operator used in the final accumulator formula */
+	LongAcc* finalAcc;
 
 		
 	int MSB;
