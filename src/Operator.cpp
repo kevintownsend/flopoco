@@ -720,7 +720,40 @@ string Operator::instance(Operator* op, string instanceName){
 	return o.str();
 }
 	
+string Operator::instance(Operator* op, string instanceName, string clkName, string rstName){
+	ostringstream o;
+	// TODO add checks here? Check that all the signals are covered for instance
+	
+	o << tab << instanceName << ": " << op->getName();
+	if (op->isSequential()) 
+		o << "  -- pipelineDepth="<< op->getPipelineDepth();
+	o << endl;
+	o << tab << tab << "port map (";
+	// build vhdl and erase portMap_
+	map<string,string>::iterator it;
+	if(op->isSequential()) {
+		o <<            " clk  => "<<clkName << ", " << endl;
+		o <<  tab <<tab << "           rst  => "<< rstName <<", " << endl;
+	}
+	it=op->portMap_.begin();
+	if(op->isSequential()) 
+		o << tab << tab << "           " ;
+	else
+		o <<  " " ;
+	o<< (*it).first << " => "  << (*it).second;
+	//op->portMap_.erase(it);
+	it++;
+	for (  ; it != op->portMap_.end(); it++ ) {
+		o << "," << endl;
+		o <<  tab << tab << "           " << (*it).first << " => "  << (*it).second;
+		//op->portMap_.erase(it);
+	}
+	o << ");" << endl;
 
+	// add the operator to the subcomponent list 
+	subComponents_[op->getName()]  = op;
+	return o.str();
+}
 
 
 string Operator::buildVHDLSignalDeclarations() {

@@ -245,12 +245,20 @@ public:
 	void inPortMapCst(Operator* op, string componentPortName, string actualSignal);
 
 	/** returns the VHDL for an instance of a sub-component. 
-	 * @param componentPortName is the name of the port on the component
-	 * @param actualSignalName is the name of the signal (of this) mapped to this port
+	 * @param op represents the operator to be port mapped 
+	 * @param instanceName is the name of the instance as a label
 	 * @return name
 	 */
 	string instance(Operator* op, string instanceName);
 
+	/** returns the VHDL for an instance of a sub-component. 
+	 * @param op represents the operator to be port mapped 
+	 * @param instanceName is the name of the instance as a label
+	 * @param clkName the name of the input clock signal
+ 	 * @param clkName the name of the input rst signal
+	 * @return name
+	 */
+	string instance(Operator* op, string instanceName, string clkName, string rstName);
 
 	/**
 	 * A new architecture inline function
