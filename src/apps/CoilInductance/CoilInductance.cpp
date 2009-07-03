@@ -90,6 +90,7 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,i
 	addrWidth =addressLength();
 	
 	addOutput("O",outputWidth);
+	//addFPOutput("O",8,23);
 	
 	//Counters for addressing the memories and for frequency division
 	
@@ -99,14 +100,14 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,i
 	vhdl<<tab<<"begin"<<endl<<tab<<tab<<"if clk'event and clk = '1' then"<<endl;
 	vhdl<<tab<<tab<<tab<<"if count < "<<pow(2,integratorWidth)<<" then "<<endl;
 	vhdl<<tab<<tab<<tab<<tab<<"count:=count+'1';"<<endl;
-	vhdl<<tab<<tab<<tab<<tab<<declare("out_clk1",1)<<"<= '0';"<<endl;
+	vhdl<<tab<<tab<<tab<<tab<<declare("out_clk11",1)<<"<= '0';"<<endl;
 	vhdl<<tab<<tab<<tab<<tab<<declare("out_rst",1)<<"<= '0'; "<<endl;
 	vhdl<<tab<<tab<<tab<<"elsif count = "<<pow(2,integratorWidth)<<" then "<<endl;
 	vhdl<<tab<<tab<<tab<<tab<<"count:=count+'1';"<<endl;
-	vhdl<<tab<<tab<<tab<<tab<<use("out_clk1")<<"<= '1'; "<<endl;
+	vhdl<<tab<<tab<<tab<<tab<<use("out_clk11")<<"<= '1'; "<<endl;
 	vhdl<<tab<<tab<<tab<<tab<<use("out_rst")<<"<= '0'; "<<endl;
 	vhdl<<tab<<tab<<tab<<"else "<<endl<<tab<<tab<<tab<<tab<<"count:= CONV_STD_LOGIC_VECTOR(0,"<<integratorWidth<<");"<<endl;
-	vhdl<<tab<<tab<<tab<<tab<<use("out_clk1")<<"<= '0'; "<<endl;
+	vhdl<<tab<<tab<<tab<<tab<<use("out_clk11")<<"<= '0'; "<<endl;
 	vhdl<<tab<<tab<<tab<<tab<<use("out_rst")<<"<= '1'; "<<endl;
 	vhdl<<tab<<tab<<tab<<"end if;"<<endl;
 	vhdl<<tab<<tab<<"end if;"<<endl;
@@ -115,7 +116,10 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,i
 	vhdl<<tab<<"end process;"<<endl;
 	vhdl<<endl;
 	
+	vhdl<<tab<<declare("out_clk1",1)<<" <= "<<use("out_clk11")<<";"<<endl;
+	//vhdl<<tab<<declare("out_clk1",1)<<" <= "<<use("out_clk11")<<" and "<<" clk ;"<<endl;
 	
+	//cout<<"adresa:="<<addrWidth;
 	
 	vhdl<<tab<<"process(out_clk1)"<<endl;
 	vhdl<<tab<<"variable c1:std_logic_vector(5 downto 0):=(others=> '0');"<<endl;
@@ -832,6 +836,15 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,i
 	
 	syncCycleFromSignal("accVar5");
 	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	//de aici in jos toate componentele ar trebui sa functioneze pe clockul out_clk1 (este o diviziune cu 9+1 a clk)
 	
 	setCycleFromSignal("accVar4");
@@ -846,7 +859,8 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,i
 	inPortMap  (div4Log, "X", use("Var1temp"));
 	inPortMap (div4Log, "Y",use("Var2temp1"));
 	outPortMap (div4Log, "R","var1divvar2");
-	vhdl << instance(div4Log, "var1divvar24acc");
+	vhdl << instance(div4Log, "var1divvar24acc","out_clk1","rst");
+	//vhdl << instance(div4Log, "var1divvar24acc");
 	
 	syncCycleFromSignal("var1divvar2");
 	
@@ -874,7 +888,8 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,i
 	inPortMap  (div4Log, "X", use("accVar5temp"));
 	inPortMap (div4Log, "Y",use("Var2temp2"));
 	outPortMap (div4Log, "R","var5divvar2");
-	vhdl << instance(div4Log, "var5divvar24log");
+	vhdl << instance(div4Log, "var5divvar24log","out_clk1","rst");
+	//vhdl << instance(div4Log, "var5divvar24log");
 	
 	syncCycleFromSignal("var5divvar2");
 	
@@ -905,7 +920,8 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,i
 	inPortMap  (div4Log, "X", use("numerator4Log"));
 	inPortMap (div4Log, "Y",use("denominator4Log"));
 	outPortMap (div4Log, "R","result4Log");
-	vhdl << instance(div4Log, "div4log");
+	vhdl << instance(div4Log, "div4log","out_clk1","rst");
+	//vhdl << instance(div4Log, "div4log");
 	
 	syncCycleFromSignal("result4Log");
 	
@@ -916,7 +932,8 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,i
 	oplist.push_back(log4Acc);
 	inPortMap  (log4Acc, "X", use("result4Log"));
 	outPortMap (log4Acc, "R","resultLog");
-	vhdl << instance(log4Acc, "log4acc");
+	vhdl << instance(log4Acc, "log4acc","out_clk1","rst");
+	//vhdl << instance(log4Acc, "log4acc");
 	
 	
 	syncCycleFromSignal("resultLog");
@@ -948,7 +965,8 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,i
 	outPortMap (finalAcc, "XOverflow","XOverflow");
 	outPortMap (finalAcc, "XUnderflow","XUnderflow");
 	outPortMap (finalAcc, "AccOverflow","AccOverflow");
-	vhdl << instance(finalAcc, "finalAcc");
+	vhdl << instance(finalAcc, "finalAcc","out_clk1","rst");
+	//vhdl << instance(finalAcc, "finalAcc");
 		
 	syncCycleFromSignal("finalResult");
 		
