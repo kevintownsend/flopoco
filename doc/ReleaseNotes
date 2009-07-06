@@ -1,3 +1,9 @@
+Version 1.15.0 adds a Karatsuba multiplier (Virtex-only so far),
+FPSquarer, FPSQrt, Fix2FP, InputIEEE, and a lot of cleaning up and bug fixes.
+With FPSqrt, we now have the 4 basic operations, so we proudly leave
+the 0.xxx version numbers for 1.xxx, and drop FPLibrary for good.
+
+======================================================================
 Version 0.11.0 adds an IntSquarer, an FPDiv, and a rudimentary
 pipeline to FPLog (work still in progress). It also adds Collision, an
 example coarse-grain operator. From the developer point of view, this
