@@ -193,14 +193,14 @@ std::string Signal::valueToVHDL(mpz_class v, bool quot){
 	r = v.get_str(2);
 
 	/* Some checks */
-	if (r.size() > width())	{
+	if ((int) r.size() > width())	{
 		std::ostringstream o;
 		o << "Error in " <<  __FILE__ << "@" << __LINE__ << ": value (" << r << ") is larger than signal " << getName();
 		throw o.str();
 	}
 
 	/* Do padding */
-	while (r.size() < width())
+	while ((int)r.size() < width())
 		r = "0" + r;
 
 	/* Put apostrophe / quot */
@@ -220,14 +220,14 @@ std::string Signal::valueToVHDLHex(mpz_class v, bool quot){
 
 	/* Some check */
 	/* XXX: Too permissive */
-	if (o.size() * 4 > width() + 4)	{
+	if ((int)o.size() * 4 > width() + 4)	{
 		std::ostringstream o;
 		o << "Error in " <<  __FILE__ << "@" << __LINE__ << ": value is larger than signal " << getName();
 		throw o.str();
 	}
 
 	/* Do padding */
-	while (o.size() * 4 < width())
+	while ((int)o.size() * 4 < width())
 		o = "0" + o;
 
 	/* Put apostrophe / quot */
