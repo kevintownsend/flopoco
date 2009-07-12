@@ -65,6 +65,15 @@ Fix2FP::Fix2FP(Target* target, int LSBI, int MSBI, int Signed,int wER, int wFR) 
 		cerr << " Fix2FP: Input constraint LSB <= MSB not met."<<endl;
 		exit (EXIT_FAILURE);
 	}
+	
+	mpz_class maxExpWE = mpz_class(1)<<(wER-1);
+	mpz_class minExpWE = 1 - maxExpWE;
+	
+	if (( maxExpWE < MSBI ) || ( minExpWE > LSBI)){
+		cerr << " The exponent is too small for full coverage. Try increasing the exponent !"<<endl;
+		exit (EXIT_FAILURE);
+	}
+	
 
 	int absMSB = MSBI>=0?MSBI:-MSBI;
 	int absLSB = LSBI>=0?LSBI:-LSBI;
