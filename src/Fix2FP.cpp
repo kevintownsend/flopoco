@@ -172,7 +172,7 @@ Fix2FP::Fix2FP(Target* target, int LSBI, int MSBI, int Signed,int wER, int wFR) 
 	
 		syncCycleFromSignal("partialConvertedExponent");
 	
-		vhdl << tab << declare("biassOfOnes",wE-1)<<"<=CONV_STD_LOGIC_VECTOR("<<pow(2,wE)-1<<","<<wE-1<<");"<<endl;
+		vhdl << tab << declare("biassOfOnes",wE-1)<<"<=CONV_STD_LOGIC_VECTOR("<<pow(double(2),wE)-1<<","<<wE-1<<");"<<endl;
 		vhdl << tab << declare("biassSignal",wE)<<"<="<<"'0' &"<<use("biassOfOnes")<<";"<<endl;
 		vhdl << tab << declare("biassSignalBit",wE+1)<<"<="<<"'0' &"<<use("biassSignal")<<";"<<endl;
 		vhdl << tab << declare("partialConvertedExponentBit",wE+1)<<"<= '0' & "<<use("partialConvertedExponent")<<";"<<endl;
@@ -455,7 +455,7 @@ Fix2FP::Fix2FP(Target* target, int LSBI, int MSBI, int Signed,int wER, int wFR) 
 	
 		syncCycleFromSignal("partialConvertedExponent");
 	
-		vhdl << tab << declare("biassOfOnes",wE-1)<<"<=CONV_STD_LOGIC_VECTOR("<<pow(2,wE)-1<<","<<wE-1<<");"<<endl;
+		vhdl << tab << declare("biassOfOnes",wE-1)<<"<=CONV_STD_LOGIC_VECTOR("<<pow(double(2),wE)-1<<","<<wE-1<<");"<<endl;
 		vhdl << tab << declare("biassSignal",wE)<<"<="<<"'0' &"<<use("biassOfOnes")<<";"<<endl;
 		vhdl << tab << declare("biassSignalBit",wE+1)<<"<="<<"'0' &"<<use("biassSignal")<<";"<<endl;
 		vhdl << tab << declare("zeroBitExponent",1)<<"<='0';"<<endl;
