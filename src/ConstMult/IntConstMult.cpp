@@ -398,10 +398,10 @@ void IntConstMult::build_pipeline(ShiftAddOp* sao, double &partial_delay) {
 			else{ // this ShiftAddOp and its child will be in the same pipeline level
 				partial_delay = idelay + target_->localWireDelay() + local_delay;
 			}
-			vhdl << tab << declare(sao->name, sao->size) << " <= " ;
+			vhdl << tab << declare(sao->name, size) << " <= " ;
 			// TODO use a pipelined IntAdder when necessary
 			if(op == Neg)   
-				vhdl << "("<< sao->size -1 <<" downto 0 => '0') - " << use(iname) <<";"<<endl; 
+				vhdl << "("<< size -1 <<" downto 0 => '0') - " << use(iname) <<";"<<endl; 
 			else { // Shift
 				if (shift == 0) 
 					vhdl << use(iname) <<";"<<endl; 
@@ -432,8 +432,6 @@ IntConstMult::IntConstMult(Target* _target, int _xsize, mpz_class _n) :
 
 	addInput("inX", xsize);
 	addOutput("R", rsize);
-	
-	cout << "  Power of two" <<intlog2(n) << " " <<  (mpz_class(1) << intlog2(n)) << endl;
 
 	if((mpz_class(1) << (intlog2(n)-1)) == n) { // power of two
 		if(verbose) 

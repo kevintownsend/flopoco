@@ -22,14 +22,15 @@ INCLUDE(CPack)
 
 IF(WIN32)
 SET(CMAKE_BUILD_TYPE release)
+
 ELSE(WIN32) 
 #Compilation flags
 SET(CMAKE_CXX_FLAGS_DEBUG "-Wall")
 # Uncomment for profiling
 #SET(CMAKE_CXX_FLAGS_DEBUG "-g -pg -Wall")
 # Do you want an executable of 12MB ?
-SET(CMAKE_BUILD_TYPE debug)
-#SET(CMAKE_BUILD_TYPE release)
+#SET(CMAKE_BUILD_TYPE debug)
+SET(CMAKE_BUILD_TYPE release)
 ENDIF(WIN32)
 
 

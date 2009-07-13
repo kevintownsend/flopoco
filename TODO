@@ -20,7 +20,6 @@ FPMultiplier:
 
 
 ConstMult:
-* upgrade to the new pipeline framework
 * implement KCM algorithm and select it if it means less hardware
     (it will for small wX/large constants)
 * For FPConstMult, don't output the LSBs of the IntConstMult 
