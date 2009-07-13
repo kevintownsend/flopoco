@@ -255,7 +255,7 @@ FPLog::FPLog(Target* target, int wE, int wF)
 		  << "                else absELog2_pad - LogF_normal_pad;" << endl;
 	nextCycle(); ///////////////////// 
 
-	final_norm = new LZOCShifterSticky(target, wE+target_prec, target_prec, intlog2(wE+(wF>>1)), false, 0); 
+	final_norm = new LZOCShifterSticky(target, wE+target_prec, target_prec, intlog2(wE+(wF>>1))+1, false, 0); 
 	oplist.push_back(final_norm);
 	inPortMap(final_norm, "I", "Log_normal");
 	outPortMap(final_norm, "Count", "E_normal");
