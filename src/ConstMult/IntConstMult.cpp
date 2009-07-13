@@ -428,7 +428,7 @@ IntConstMult::IntConstMult(Target* _target, int _xsize, mpz_class _n) :
 
 	implementation = new ShiftAddDag(this);
 	nsize = intlog2(n);
-	rsize = intlog2(n * ((1<<xsize)-1));
+	rsize = intlog2(n * ((mpz_class(1)<<xsize)-1));
 
 	addInput("inX", xsize);
 	addOutput("R", rsize);
@@ -776,11 +776,11 @@ void IntConstMult::buildStandardTestCases(TestCaseList* tcl){
 	tc->addComment("Multiplication by the max positive value");
 	tcl->add(tc);
 
-	tc = new TestCase(this); 
-	tc->addInput("inX", (mpz_class(1) << (xsize) -1) + mpz_class(1));
-	emulate(tc);
-	tc->addComment("Multiplication by 10...01");
-	tcl->add(tc);
+//	tc = new TestCase(this); 
+//	tc->addInput("inX", (mpz_class(1) << (xsize) -1) + mpz_class(1));
+//	emulate(tc);
+//	tc->addComment("Multiplication by 10...01");
+//	tcl->add(tc);
 
 
 }
