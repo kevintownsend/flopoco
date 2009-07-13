@@ -26,7 +26,7 @@
 #include "../utils.hpp"
 
 double Virtex4::adderDelay(int size) {
-  return lut2_ + muxcyStoO_ + double(size-2)*muxcyCINtoO_ + xorcyCintoO_ ; 
+  return lut2_ + muxcyStoO_ + double(size-1)*muxcyCINtoO_ + xorcyCintoO_ ; 
 };
 
 
@@ -39,7 +39,7 @@ double Virtex4::carryPropagateDelay() {
 };
 
 double Virtex4::localWireDelay(){
-  return slice2sliceDelay_ ;
+  return  elemWireDelay_ ;
 };
 
 double Virtex4::distantWireDelay(int n){

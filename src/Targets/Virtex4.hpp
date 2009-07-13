@@ -40,7 +40,7 @@ public:
 	Virtex4() : Target()	{
 		// all these values are set more or less randomly, to match  virtex 4 more or less
 		fastcarryDelay_ = 0.034e-9; //s   
-		elemWireDelay_  = 0.03e-9;
+		elemWireDelay_  = 0.436e-9;
 		lutDelay_       = 0.15e-9; 
 		multXInputs_    = 18;
 		multYInputs_    = 18;

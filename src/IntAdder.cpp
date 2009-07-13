@@ -167,7 +167,7 @@ Operator(target), wIn_(wIn), inputDelays_(inputDelays)
 		//SECOND BEST PIPELINED VERSION OF CPA1
 		else if ( aType == 1 ){
 			int selectedDesign;
-			int firstChunkSize, middleChunkSize, lastChunkSize;
+			int firstChunkSize, middleChunkSize;
 			maxInputDelay = getMaxInputDelays (inputDelays);
 			if (verbose)
 				cout << "The maximum input delay is: " << maxInputDelay << endl;
@@ -291,7 +291,7 @@ Operator(target), wIn_(wIn), inputDelays_(inputDelays)
 		}
 		else{}
 	}else{
-		vhdl << tab << " R " << "<=" << "X + Y + Cin;" << endl;
+		vhdl << tab << " R <= X + Y + Cin;" << endl;
 		outDelayMap["R"] = target->adderDelay(wIn_); 
 	}
 	

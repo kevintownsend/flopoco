@@ -166,8 +166,8 @@ static void usage(char *name){
 	cerr << "      Floating-point exponential function (NPY)\n";
 	cerr << "    FPLog wE wF\n";
 	cerr << "      Floating-point logarithm function\n";
-	cerr << "    OutputIEEE wEI wFI wEO wFO\n";
-	cerr << "      Conversion from FloPoCo to IEEE-754-like floating-point formats\n";
+	// cerr << "    OutputIEEE wEI wFI wEO wFO\n";
+	// cerr << "      Conversion from FloPoCo to IEEE-754-like floating-point formats\n";
 	cerr << "    InputIEEE wEI wFI wEO wFO\n";
 	cerr << "      Conversion from IEEE-754-like to FloPoCo floating-point formats\n";
 
@@ -219,13 +219,13 @@ static void usage(char *name){
 	cerr << "       Wraps the preceding operator between registers\n";
 	cerr << "(NPY) Not pipelined yet\n";
 	cerr << "General options, affecting the operators that follow them:\n";
-	cerr << "   -outputfile=<output file name>    (default=flopoco.vhdl)\n";
-	cerr << "   -verbose=<1|2|3>                  (default=0)\n";
-	cerr << "   -pipeline=<yes|no>                (default=yes)\n";
-	cerr << "   -frequency=<frequency in MHz>     (default=400)\n";
-	cerr << "   -target=<StratixII|Virtex4>      (default=Virtex4)\n";
+	cerr << "   -outputfile=<output file name>           (default=flopoco.vhdl)\n";
+	cerr << "   -verbose=<1|2|3>                         (default=0)\n";
+	cerr << "   -pipeline=<yes|no>                       (default=yes)\n";
+	cerr << "   -frequency=<target frequency in MHz>     (default=400)\n";
+	cerr << "   -target=<StratixII|Virtex4>              (default=Virtex4)\n";
 	cerr << "   -DSP_blocks=<yes|no>\n";
-	cerr << "       optimize for the use of DSP blocks (default=yes)\n";
+	cerr << "       optimize for the use of DSP blocks   (default=yes)\n";
 	cerr << "   -name=<entity name>\n";
 	cerr << "       defines the name of the VHDL entity of the next operator\n";
 	exit (EXIT_FAILURE);

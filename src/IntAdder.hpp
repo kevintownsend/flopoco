@@ -28,6 +28,15 @@ public:
 	 */
 	~IntAdder();
 
+	/**
+		A method returning the size of last chunk. 
+		Typical use: target->adderDelay(getLastChunkSize())  provides the output slack delay
+	 */
+	int getLastChunkSize() {
+		return lastChunkSize;
+	}
+
+
 	void emulate(TestCase* tc);
 
 protected:

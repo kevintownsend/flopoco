@@ -20,6 +20,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
 */
+
+// TODO List: 
+//  * test cases for boundary cases pfinal etc
+//  * finetune pipeline  
 #include <fstream>
 #include <sstream>
 #include <math.h>	// for NaN
@@ -197,14 +201,19 @@ FPLog::FPLog(Target* target, int wE, int wF)
 
 
 	// ao stands for "almost one"
+	vhdl << tab << "-- The left shifter for the 'small' case" <<endl; 
 	ao_lshift = new Shifter(target, wF-pfinal+2,  wF-pfinal+2, Left);   
 	oplist.push_back(ao_lshift);
 
 	inPortMap(ao_lshift, "X", "absZ0");
 	inPortMap(ao_lshift, "S", "shiftvalinL");
-	outPortMap(ao_lshift, "R", "absZ0s");
-	vhdl << instance(ao_lshift, "ao_lshift");
+	outPortMap(ao_lshift, "R", "small_absZ0_normd_full");
+	vhdl << instance(ao_lshift, "small_lshift");
 
+	syncCycleFromSignal("small_absZ0_normd_full");
+
+	int small_absZ0_normd_size = getSignalByName("small_absZ0_normd_full")->width() - (wF-pfinal+2);
+	vhdl << tab << declare("small_absZ0_normd", small_absZ0_normd_size) << " <= " << use("small_absZ0_normd_full") << range(small_absZ0_normd_size -1, 0) << "; -- get rid of leading zeroes" << endl; 
 
 
 	//////////////////////////////////////////////
@@ -219,19 +228,18 @@ FPLog::FPLog(Target* target, int wE, int wF)
 	outPortMap(rrbox, "almostLog", "almostLog");
 	vhdl << instance(rrbox, "rr");
 
-	// Synchro between RR box and case almost 1
+	// Synchro between RR box and "almost 1" case 
 	setCycleFromSignal("Zfinal", false);	
-	syncCycleFromSignal("absZ0s", false);
+	syncCycleFromSignal("small_absZ0_normd", false);
 	nextCycle(); ///////////////////// TODO check this one is useful
 
-	int absZ0sSize = getSignalByName("absZ0s")->width();
 	vhdl << tab << "-- Z2o2 will be of size sfinal-pfinal, set squarer input size to that" << endl;
 	vhdl << tab << declare("squarerIn", sfinal-pfinal) << " <= " 
 		  << use("Zfinal") << "(sfinal-1 downto pfinal) when " << use("doRR") << "='1'" << endl;
-	if(sfinal-pfinal>absZ0sSize)
-		vhdl << tab << "                 else (" << use("absZ0s") << " & " << rangeAssign(sfinal-pfinal-absZ0sSize-1, 0, "'0'") << ");  " << endl;
-	else  // sfinal-pfinal <= absZ0sSize
-		vhdl << tab << "                 else " << use("absZ0s") << "" << range(absZ0sSize-1, absZ0sSize - (sfinal-pfinal)) << ";  " << endl<< endl;
+	if(sfinal-pfinal>small_absZ0_normd_size)
+		vhdl << tab << "                 else (" << use("small_absZ0_normd") << " & " << rangeAssign(sfinal-pfinal-small_absZ0_normd_size-1, 0, "'0'") << ");  " << endl;
+	else  // sfinal-pfinal <= small_absZ0_normd_size
+		vhdl << tab << "                 else " << use("small_absZ0_normd") << "" << range(small_absZ0_normd_size-1, small_absZ0_normd_size - (sfinal-pfinal)) << ";  " << endl<< endl;
 	vhdl << tab << "-- Z2o2 will be of size sfinal - pfinal -1, set squarer input size to that" << endl;
 	nextCycle(); ///////////////////// 
 	vhdl << tab << declare("Z2o2_full", 2*(sfinal-pfinal)) << " <= (" << use("squarerIn") << " * " << use("squarerIn") << ");" << endl;
@@ -271,10 +279,10 @@ FPLog::FPLog(Target* target, int wE, int wF)
 	vhdl << tab << "  -- send the MSB to position pfinal" << endl;
 	int Z2o2_small_sSize = getSignalByName("Z2o2_small_s")->width();
 	vhdl << tab << declare("Z2o2_small", wF+gLog+2) << " <=  (pfinal-1 downto 0  => '0') & " << use("Z2o2_small_s")
-		  << range(Z2o2_small_sSize-1, Z2o2_small_sSize- (wF+gLog+2) + pfinal) << ";" << endl;
+				  << range(Z2o2_small_sSize-1,  Z2o2_small_sSize - (wF+gLog+2) + pfinal) << ";" << endl;
 
 	vhdl << tab << "-- mantissa will be either Y0-z^2/2  or  -Y0+z^2/2,  depending on sR  " << endl;
-	vhdl << tab << declare("Z_small", wF+gLog+2) << " <= " << use("absZ0s") << " & " << rangeAssign((wF+gLog+2)-absZ0sSize-1, 0, "'0'") << ";" << endl;
+	vhdl << tab << declare("Z_small", wF+gLog+2) << " <= " << use("small_absZ0_normd") << " & " << rangeAssign((wF+gLog+2)-small_absZ0_normd_size-1, 0, "'0'") << ";" << endl;
 	vhdl << tab << declare("Log_small", wF+gLog+2) << " <=       Z_small -  Z2o2_small when (" << use("sR") << "='0')" << endl
 		  << "                else  Z_small +  Z2o2_small;" << endl;
 
