@@ -35,38 +35,52 @@
 
 using namespace std;
 
-mpz_class ShiftAddDag::computeConstant(OpType op, ShiftAddOp* i, int s, ShiftAddOp* j) {
+mpz_class ShiftAddDag::computeConstant(ShiftAddOpType op, ShiftAddOp* i, int s, ShiftAddOp* j) {
 	switch(op) {
 	case X:
 		if(i!=NULL || j!=NULL) {
-			cerr << "ERROR Unexpected non-null pointer in computeConstant(X,..). \n";
-			exit(EXIT_FAILURE);
+			throw string("ERROR in ShiftAddDag::computeConstant: Unexpected non-null pointer in X\n");
 		}
-		return 1;
+		return mpz_class(1);
+		break;
 
 	case Add: 
 		if(i==NULL || j==NULL) {
-			cerr << "ERROR Unexpected null pointer in computeConstant(Add, ...), exiting. \n";
-			exit(EXIT_FAILURE);
+			throw string("ERROR in ShiftAddDag::computeConstant: Unexpected non-null pointer in Add\n");
 		}
-		// the constant by which this variable multiplies 
 		return (i->n << s) +  j->n;
+		break;
+
+	case Sub: 
+		if(i==NULL || j==NULL) {
+			throw string("ERROR in ShiftAddDag::computeConstant: Unexpected non-null pointer in Sub\n");
+		}
+		return (i->n << s) -  j->n;
+		break;
+
+	case RSub: 
+		if(i==NULL || j==NULL) {
+			throw string("ERROR in ShiftAddDag::computeConstant: Unexpected non-null pointer in RSub\n");
+		}
+		return  j->n - (i->n << s) ;
+		break;
 
 	case Shift:
 		if(i==NULL || j!=NULL) {
-			cerr << "ERROR In inputs to computeConstant(Shift,...), exiting. \n";
-			exit(EXIT_FAILURE);
+			throw string("ERROR in ShiftAddDag::computeConstant: Unexpected pointer in Shift\n");
 		}
 		return i->n << s ;
+		break;
 
 	case Neg:
 		if(i==NULL) {
-			cerr << "ERROR In ShiftAddOp, cannot construct such a Neg, exiting. \n";
-			exit(EXIT_FAILURE);
+			throw string("ERROR in ShiftAddDag::computeConstant: Unexpected null pointer in Neg\n");
 		}
 		return - i->n;
+		break;
 	}
 
+	return 0; 	// should never be reached, added to suppress a warning
 }
 
 
@@ -74,9 +88,9 @@ mpz_class ShiftAddDag::computeConstant(OpType op, ShiftAddOp* i, int s, ShiftAdd
 // This method looks up in the current Dag if the requireed op
 // exists, and either returns a pointer to it, or creates the
 // corresponding node.
-ShiftAddOp* ShiftAddDag::provideShiftAddOp(OpType op, ShiftAddOp* i, int s, ShiftAddOp* j){
+ShiftAddOp* ShiftAddDag::provideShiftAddOp(ShiftAddOpType op, ShiftAddOp* i, int s, ShiftAddOp* j){
 	mpz_class n=this->computeConstant(op, i, s, j);
-	for(int ii=0; ii<this->saolist.size(); ii++) {
+	for(unsigned int ii=0; ii<this->saolist.size(); ii++) {
 		if (n==saolist[ii]->n) 
 			return saolist[ii];
 	}

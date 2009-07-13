@@ -37,11 +37,31 @@
 //#include "rigo.h"
 
 using namespace std;
+extern vector<Operator*> oplist;
 
 
+void reset_visited(ShiftAddOp* sao) {
+	if (sao!=NULL) {
+		sao->already_visited=false;
+		switch(sao->op) {
+		case X:
+			break;
+		case Add:
+		case Sub:
+		case RSub:
+			reset_visited(sao->i);
+			reset_visited(sao->j);
+			break;
+		case Shift:
+		case Neg:
+			reset_visited(sao->i);
+			break;
+		}
+	}
+}
 
 
-// probably useless in the long term
+// No longer used
 
 int compute_tree_depth(ShiftAddOp* sao) {
 	int ipd, jpd;
@@ -52,6 +72,8 @@ int compute_tree_depth(ShiftAddOp* sao) {
 		case X:
 			return 0;
 		case Add:
+		case Sub:
+		case RSub:
 			ipd = compute_tree_depth(sao->i);
 			jpd = compute_tree_depth(sao->j);
 			return 1+max(ipd, jpd);
@@ -61,226 +83,409 @@ int compute_tree_depth(ShiftAddOp* sao) {
 		case Neg:
 			ipd = compute_tree_depth(sao->i);
 			return 1+ipd;
-		}   
+		}
+		return 0;
 	}
 }
 
+// Do not forget to call reset_visited before calling this one.
+int compute_total_cost_rec(ShiftAddOp* sao) {
+	if (sao==NULL || sao->already_visited)
+		return 0;
+	else {
+		sao->already_visited=true;
+		switch(sao->op) {
+		case X:
+			return 0;
+		case Add:
+		case Sub:
+		case RSub:
+			return sao->cost_in_full_adders + compute_total_cost_rec(sao->i) + compute_total_cost_rec(sao->j);
+		case Shift:
+		case Neg:
+			return sao->cost_in_full_adders + compute_total_cost_rec(sao->i);
+		}
+	}
+	throw string("This exception in IntConstMult::compute_total_cost_rec should never happen");
+}
+
+int compute_total_cost(ShiftAddOp* sao) {
+	reset_visited(sao);
+	return compute_total_cost_rec(sao);
+}
+
+
 
 /**
- * Depth-first traversal of the DAG to evaluate the pipeline depth.
+ * Depth-first traversal of the DAG to build the pipeline.
  * @param partial_delay accumulates the delays of several stages
 
  Starting from the leaves, we accumulate partial delays until target_period is reached.
  Then pipeline level will be inserted.
-
- Initially every node should be unregistered, with delayed_by equal to zero.
  
  */
 
-int IntConstMult::build_pipeline(ShiftAddOp* sao, double &partial_delay) {
-	int ipd, jpd, maxchildrenpd, cost, levels;
-	double idelay,jdelay, max_children_delay, local_delay;
+void IntConstMult::build_pipeline(ShiftAddOp* sao, double &partial_delay) {
+	string iname, jname, isignal, jsignal;
+	double idelay,jdelay, max_children_delay;
+	int size, isize, jsize, shift, adder_size; 
+	bool use_pipelined_adder;
+	IntAdder* adder;
+	
 	if (sao==NULL)
-		return 0;
+		return;
 	else {
-		switch(sao->op) {
+
+		// First check that the sub-DAG has not been already visited
+
+		bool already_visited=true;
+		try { 
+			getSignalByName(sao->name);
+		} catch (std::string s) {
+			already_visited=false;
+		}
+		if(already_visited)
+			return;
+
+		// A few variables to make the code below easier to read
+		ShiftAddOpType op = sao->op;
+		size = sao->size;
+		shift = sao->s;
+			
+		switch(op) {
 		case X:
 			partial_delay=0;
-			return 0;
+			setCycle(0, false);
+			return;
+
 		case Add:
-			ipd = build_pipeline(sao->i, idelay);
-			if(sao->i == sao->j) {
-				jpd=ipd;
-				//cout <<endl<<*sao<<endl;
+		case Sub:
+		case RSub:
+			// A few variables to make the code below easier to read
+			isize = sao->i->size;
+			jsize = sao->j->size;
+
+			build_pipeline(sao->i, idelay);
+			if(sao->i != sao->j) {
+				build_pipeline(sao->j, jdelay);
 			}
-			else
-				jpd = build_pipeline(sao->j, jdelay);
-			if (ipd>jpd) { // unbalanced pipeline depth between children
-				//register the shorter
-				sao->j->is_registered = true;
-				// set the info that will be needed in output_vhdl for this node
-				sao->j_delayed_by  = ipd-jpd; 
-				// set the info that will be needed for the signal declaration
-				// (the max of all the delays that this child will have)
-				if( (ipd-jpd) > sao->j->delayed_by)
-					sao->j->delayed_by = ipd-jpd; 
-				// Anyway this resets its delay
-				jdelay=0;
-			}
-			if (jpd>ipd) { // unbalanced pipeline depth between children
-				//register the shorter
-				sao->i->is_registered = true;
-				// set the info that will be needed in output_vhdl for this node
-				sao->i_delayed_by  = jpd-ipd; 
-				// set the info that will be needed for the signal declaration
-				// (the max of all the delays that this child will have)
-				if( (jpd-ipd) > sao->i->delayed_by)
-					sao->i->delayed_by = jpd-ipd; 
-				// Anyway this resets its delay
-				idelay=0;
-			}
-			if(ipd==jpd) {
-				sao->i_delayed_by =0;
-				sao->j_delayed_by =0;
-			}
-			maxchildrenpd = max(ipd,jpd);
+			iname = sao->i->name; 
+			jname = sao->j->name; 
+
+			adder_size = sao->cost_in_full_adders+1;
+			vhdl << endl << tab << "-- " << *sao <<endl; // comment what we're doing
+			setCycleFromSignal(iname, false);
+			syncCycleFromSignal(jname, false);
+
 			max_children_delay = max(idelay,jdelay);
-			cost = sao->cost_in_full_adders;
-			local_delay = target_->adderDelay(cost);
- 			if(local_delay>1/target_->frequency()) {
- 				cerr << "*** Currently unable to reach target frequency "<< endl;
- 				// TODO
- 			}
 
-			if(max_children_delay + local_delay > 1./target_->frequency()   
-				&& (sao->i->op != X || sao->j->op != X)) { // no delay if both children are X
-				// insert a register at the output of each child
-				sao->i->is_registered = true;
-				sao->i_delayed_by++;
-				if(sao->i_delayed_by > sao->i->delayed_by)
-					sao->i->delayed_by = sao->i_delayed_by; 
-				sao->j->is_registered = true;
-				//				if(sao->i!=sao->j) { // check that both children are not the same
-				sao->j_delayed_by++;
-				if(sao->j_delayed_by > sao->j->delayed_by)
-					sao->j->delayed_by = sao->j_delayed_by; 
-					//				}
-				// This resets the partial delay to that of this ShiftAddOp
-				partial_delay = target_->adderDelay(cost);
-				// and increases pipeline depth by 1
-				return 1+maxchildrenpd;
+			// Now decide what kind of adder we will use, and compute the remaining delay
+			use_pipelined_adder=false;
+			if (isSequential()) {
+				// First case: using a plain adder fits within the current pipeline level
+				double tentative_delay = max_children_delay + target_->adderDelay(adder_size) + target_->localWireDelay();
+				if(tentative_delay <= 1./target_->frequency()) {
+					use_pipelined_adder=false;
+					partial_delay = tentative_delay;					
+				}
+				else { 
+					// register the children 
+					nextCycle();
+					// Is a standard adder OK ?
+					tentative_delay = target_->ffDelay() + target_->localWireDelay() + target_->adderDelay(adder_size);
+					if(tentative_delay <= 1./target_->frequency()) {
+						use_pipelined_adder=false;
+						partial_delay = tentative_delay;					
+					}
+					else { // Need to instantiate an IntAdder
+						use_pipelined_adder=true;
+						adder = new IntAdder(target_, adder_size);
+						adder->changeName(getName() + "_" + sao->name + "_adder");
+						oplist.push_back(adder);
+
+						partial_delay = target_->adderDelay(adder->getLastChunkSize());
+					}
+				}
 			}
-			else{ // this ShiftAddOp and its child will be in the same pipeline level
-				partial_delay = max_children_delay + local_delay;
-				return ipd;
+			// Now generate VHDL
+
+			if(shift==0) { // Add with no shift -- this shouldn't happen with current DAGs so te following code is mostly untested
+				if(op==Sub || op==RSub)
+					throw string("In IntConstMult::build_pipeline, Sub and RSub with zero shift currently unimplemented"); // TODO
+				isignal = sao->name + "_High_L";  
+				jsignal = sao->name + "_High_R"; 
+
+				// The i part
+				vhdl << tab << declare(isignal, size) << " <= ";
+				if(size>isize+1) // need to sign-extend x
+					vhdl <<"(" << size-1 << " downto " << isize <<" => '" << (sao->i->n >= 0 ? "0" : "1" ) << "') & ";
+				vhdl << use(iname) << ";" << endl;
+				// the y part
+				vhdl << tab << declare(jsignal, size) << " <= ";
+				if(size>jsize) // need to sign-extend y
+					vhdl << "(" << size-1 <<" downto " << jsize <<" => '" << (sao->j->n >= 0 ? "0" : "1" ) << "') & ";
+				vhdl << use(jname) << ";" << endl;
+
+				if(use_pipelined_adder) { // Need to use an IntAdder subcomponent
+					inPortMap  (adder, "X", isignal);
+					inPortMap  (adder, "Y", jsignal);
+					inPortMapCst  (adder, "Cin", "'0'");
+					outPortMap (adder, "R",sao->name);
+					vhdl << instance(adder, sao->name + "_adder");
+				}
+				else
+					vhdl << tab << declare(sao->name, size) << " <= " << use(isignal) << " + " << use(jsignal) << ";" << endl;
 			}
+
+
+			else { // Add with actual shift
+				if(op == Add || op==RSub) {
+					if(shift >= jsize) { // Simpler case when the two words to add are disjoint; size=isize+s+1
+						//                        jjjjjj
+						//             +/-  iiii
+						// TODO perf: use an IntAdder here when needed
+						// The lower bits of the sum are those of y, possibly sign-extended but otherwise untouched
+						vhdl << tab << declare(sao->name, sao->size) << "("<< shift - 1 <<" downto 0) <= " ;
+						if(shift>jsize) {
+							vhdl << "(" <<  shift-1 <<" downto " << jsize << " => ";
+							if(sao->j->n >= 0)  vhdl << "'0'"; // pad with 0s 
+							else                vhdl << use(jname) << "(" << jsize-1 << ")";// sign extend
+							vhdl << ") & ";
+						}
+						vhdl << use(jname) << ";   -- lower bits untouched"<<endl;
+
+						if(op == Add) {
+							// The higher bits (size-1 downto s) of the result are those of x, possibly plus 11...1 if y was negative
+							vhdl << tab << sao->name << "("<<sao->size-1<<" downto "<< shift<<") <= " << use(iname) ;
+							if(sao->j->n < 0) { 
+								vhdl <<" + (" << sao->size-1 <<" downto " <<  shift <<" => " << use(jname) << "(" << jsize-1 << ")) "
+									  << ";   -- sum of higher bits"<<endl;
+							}
+							else 
+								vhdl << ";   -- higher bits also untouched"<<endl;
+						}
+						else {// op == RSub
+							// The higher bits (size-1 downto s) of the result are those of -x, possibly plus 11...1 if y was negative
+							vhdl << tab << sao->name << "("<<sao->size-1<<" downto "<< shift<<") <= " ;
+							if(sao->j->n < 0) 
+								vhdl <<"(" << sao->size-1 << " downto " <<  shift <<" => " << use(jname) << "(" << jsize-1 << ")) ";
+							else
+								vhdl <<"(" << sao->size-1 << " downto " <<  shift <<" => " << "'0') ";
+							vhdl << " - " << use(iname) << ";   -- sum of higher bits"<<endl;
+						}
+					} // end if (shift >= jsize)
+					else{ 
+						// jsize>s.        Cases:      xxxxx              xxxxxx
+						//                                yyyyyyyyyy             yyyyyyyyyyyy
+						// so we may need to sign-extend Vx, or Vy, or even both.
+						// The higher bits of the result are sum/diff
+						isignal = sao->name + "_High_L";  
+						jsignal = sao->name + "_High_R"; 
+						// The x part
+						vhdl << tab << declare(isignal,  size - shift) << " <= ";
+						if(size >= isize +  shift +1) { // need to sign-extend vx. If the constant is positive, padding with 0s is enough
+							vhdl <<" (" << size-1 << " downto " << isize +  shift <<" => ";
+							if(sao->i->n >= 0)   vhdl << "'0'";// pad with 0s 
+							else                 vhdl << use(iname) << "(" << isize-1 << ")"; // sign extend
+							vhdl << ") & ";
+						}
+						vhdl << use(iname) << "("<< isize -1 <<" downto 0) ;" << endl;
+						// the y part
+						vhdl << tab << declare(jsignal,  size - shift) << " <= ";
+						if(size >= jsize+1) {// need to sign-extend vy. If the constant is positive padding with 0s is enough
+							vhdl <<" (" << size-1 << " downto " << jsize <<" => ";
+							if(sao->j->n >= 0)  vhdl << "'0'"; // pad with 0s 
+							else                vhdl << use(jname) << "(" << jsize-1 << ")";// sign extend
+							vhdl << ") & ";
+						}
+						vhdl << use(jname) << "("<< jsize -1 <<" downto " <<  shift << "); " << endl;
+					
+						// do the sum
+						if(use_pipelined_adder) {
+							inPortMap  (adder, "X", jsignal);
+							if(op==Add) {
+								inPortMap  (adder, "Y", isignal);
+								inPortMapCst  (adder, "Cin", "'0'");
+							} 
+							else { // RSub
+								string isignalneg = isignal+"_neg"; 
+								vhdl << declare(isignalneg, size - shift) << " <= not " << use(isignal);
+								inPortMap  (adder, "Y", isignal);
+								inPortMapCst  (adder, "Cin", "'1'");
+							}
+							string resname=sao->name+"_h";
+							outPortMap (adder, "R",resname);
+							vhdl << instance(adder, sao->name + "_adder");
+
+							syncCycleFromSignal(resname, false);
+							//nextCycle();
+							vhdl << tab << declare(sao->name, sao->size) << "("<<size-1<<" downto " <<  shift << ") <= " << use(resname) + ";" << endl;
+						}
+						else
+							vhdl << tab << declare(sao->name, sao->size) << "("<<size-1<<" downto " <<  shift << ") <= " // vz (size-1 downto s)
+								  << use(jsignal) << (op==Add ? " + " : "-") << use(isignal) << ";   -- sum of higher bits" << endl; 
+			
+						// In both cases the lower bits of the result (s-1 downto 0) are untouched
+						vhdl << tab << sao->name << "("<<shift-1<<" downto 0) <= " << use(jname) <<"("<< shift-1<<" downto 0);   -- lower bits untouched"<<endl;
+
+					} // end if (shift >= jsize) else
+				} // end if(op == Add || op == RSub) 
+				else { // op=Sub 
+					// Do a normal subtraction of size size
+					isignal = sao->name + "_L";  
+					jsignal = sao->name + "_R"; 
+					vhdl << tab << declare(isignal,  size) << " <= ";
+					if(size > isize+shift) {// need to sign-extend vx. If the constant is positive padding with 0s is enough
+						vhdl <<" (" << size-1 << " downto " << isize+shift <<" => ";
+						if(sao->i->n >= 0)   vhdl << "'0'";// pad with 0s 
+						else                 vhdl << use(iname) << "(" << isize-1 << ")";// sign extend
+						vhdl << ") & ";
+					}
+					vhdl << use(iname) << " & (" << shift-1 << " downto 0 => '0')" << ";" << endl;
+
+					vhdl << tab << declare(jsignal,  size) << " <= ";
+					vhdl <<" (" << size-1 << " downto " << jsize <<" => ";
+					if(sao->j->n >= 0)   vhdl << "'0'";// pad with 0s 
+					else                 vhdl << use(jname) << "(" << jsize-1 << ")";// sign extend
+					vhdl << ") & ";
+					vhdl << use(jname) << ";" << endl;
+					
+					// do the subtraction
+					if(use_pipelined_adder) {
+						string jsignalneg = jsignal+"_neg"; 
+						vhdl << declare(jsignalneg, size) << " <= not " << use(jsignal);
+						inPortMap  (adder, "X", isignal);
+						inPortMap  (adder, "Y", jsignalneg);
+						inPortMapCst  (adder, "Cin", "'1'");
+						string resname=sao->name+"_h";
+						outPortMap (adder, "R",resname);
+						vhdl << instance(adder, sao->name + "_adder");
+
+						syncCycleFromSignal(resname, false);
+						//nextCycle();
+						vhdl << tab << declare(sao->name, size) << " <=  " << use(resname) + ";" << endl;
+						
+					}
+				}
+			}
+			
+			return;
+
+			// shift and neg almost identical
 		case Shift:
-			ipd = build_pipeline(sao->i, idelay);
-			partial_delay = idelay;
-			return ipd;
-
 		case Neg:
-			ipd = build_pipeline(sao->i, idelay);
-			cost = sao->cost_in_full_adders;
-			local_delay = target_->adderDelay(cost);
+			isize = sao->i->size;
 
-// 			if(target_->suggest_subadd_size(levels, cost)) {
-// 				cerr << "*** Currently unable to reach target frequency "<< endl;
-// 				// TODO
-// 			}
+			double local_delay;
+			if(op == Neg){   
+				local_delay = target_->adderDelay(sao->cost_in_full_adders);
+			}
+			else 
+				local_delay=0;
 
-			if(idelay + local_delay > 1./target_->frequency()) {
-				// insert a register at the output of the child, unless it is X
-				if(sao->i->op ==X ) {
-					partial_delay = target_->adderDelay(cost);
-					return 0;
-				}
-				else {
-					sao->i->is_registered = true;
-					sao->i_delayed_by = 1;
-					if(sao->i_delayed_by > sao->i->delayed_by)
-						sao->i->delayed_by = sao->i_delayed_by; 
-					// This resets the partial delay to that of this ShiftAddOp
-					partial_delay = target_->adderDelay(cost);
-					// and increases pipeline depth by 1
-					return 1+ipd;
-				}
+			build_pipeline(sao->i, idelay);
+
+			iname = sao->i->name; 
+			setCycleFromSignal(iname, false);
+
+			if(isSequential() 
+				&& idelay +  target_->localWireDelay() + local_delay > 1./target_->frequency()
+				&& sao->i->op != X) {
+				// This resets the partial delay to that of this ShiftAddOp
+				nextCycle();
+				partial_delay =  target_->ffDelay() + target_->adderDelay(sao->cost_in_full_adders);
 			}
 			else{ // this ShiftAddOp and its child will be in the same pipeline level
-				partial_delay = idelay + local_delay;
-				return ipd;
+				partial_delay = idelay + target_->localWireDelay() + local_delay;
 			}
+			vhdl << tab << declare(sao->name, sao->size) << " <= " ;
+			// TODO use a pipelined IntAdder when necessary
+			if(op == Neg)   
+				vhdl << "("<< sao->size -1 <<" downto 0 => '0') - " << use(iname) <<";"<<endl; 
+			else { // Shift
+				if (shift == 0) 
+					vhdl << use(iname) <<";"<<endl; 
+				else
+					vhdl << use(iname) <<" & ("<< shift - 1 <<" downto 0 => '0');"<<endl;
+			}
+			break;
+
 		}   
 	}
 }
 
 
 
-
 IntConstMult::IntConstMult(Target* _target, int _xsize, mpz_class _n) :
-	Operator(_target), xsize(_xsize), n(_n){
+	Operator(_target), n(_n), xsize(_xsize){
 	ostringstream name; 
-#ifdef _WIN32
-//C++ wrapper for GMP does not work properly, using C
+
+	setCopyrightString("Florent de Dinechin (2007)");
+
+	//C++ wrapper for GMP does not work properly on win32, using mpz2string
 	name <<"IntConstMult_"<<xsize<<"_"<<mpz2string(n);
-#else
-	name <<"IntConstMult_"<<xsize<<"_"<<n;
-#endif
 	uniqueName_=name.str();
 
 	implementation = new ShiftAddDag(this);
 	nsize = intlog2(n);
-	rsize = nsize+xsize;
+	rsize = intlog2(n * ((1<<xsize)-1));
 
 	addInput("inX", xsize);
 	addOutput("R", rsize);
+	
+	cout << "  Power of two" <<intlog2(n) << " " <<  (mpz_class(1) << intlog2(n)) << endl;
 
-
-	bits = new int[nsize];
-	BoothCode = new int[nsize+1];
-	// Build the binary representation
-	mpz_class nn = n;
-	int l = 0;
-	while(nn!=0) {
-		bits[l] = (nn.get_ui())%2;
-		l++;
-		nn = nn>>1;
+	if((mpz_class(1) << (intlog2(n)-1)) == n) { // power of two
+		if(verbose) 
+			cout << "  Power of two" << endl;
+		vhdl << tab << "R <= inX & " << rangeAssign(intlog2(n)-2, 0, "'0'") << ";" << endl;
 	}
-	if(verbose) {
-		cout<<" "; 
-		for (int i=nsize-1; i>=0; i--)    cout << ((int) bits[i]);   
-		cout << endl;
-	}
-	recodeBooth();
-	if(verbose) printBoothCode();
-	if(verbose) cout << "   Non-zero digits:" << nonZeroInBoothCode <<endl;
-
-
-
-	// Build in implementation a tree constant multiplier 
-	buildMultBoothTree();
-	if(verbose) showShiftAddDag();
-
-	// declare its signals
-	if (isSequential()){
-		double delay;
-		int pipeline_depth = build_pipeline(implementation->result, delay);
-		// register the output, too
-		implementation->result->is_registered = true;
-		implementation->result->delayed_by = 1;
-		pipeline_depth++;
-
-		setPipelineDepth(pipeline_depth);
-
-
-		if(verbose)	cout<<"  Pipeline depth is "<< pipeline_depth << endl;
-		for (int i=0; i<implementation->saolist.size(); i++) {
-			ShiftAddOp *sao = implementation->saolist[i];
-			if(sao->is_registered) {
-				addDelaySignalBus(sao->name, sao->size, sao->delayed_by);
-			}
-			else { 
-				addSignalBus(sao->name, sao->size);
-			}	
+	else {
+		vhdl << tab << declare("X", xsize) << " <= inX;" << endl; // no longer useful but harmless
+		bits = new int[nsize];
+		BoothCode = new int[nsize+1];
+		// Build the binary representation -- I'm sure there is a mpz method for it
+		mpz_class nn = n;
+		int l = 0;
+		while(nn!=0) {
+			bits[l] = (nn.get_ui())%2;
+			l++;
+			nn = nn>>1;
 		}
-		// Special case for X
-		ShiftAddOp *px = implementation->PX;
-			if(px->is_registered) {
-				addDelaySignalBus(px->name, px->size, px->delayed_by);
-			}
-			else { 
-				addSignalBus(px->name, px->size);
-			}	
+		if(verbose) {
+			cout<<" "; 
+			for (int i=nsize-1; i>=0; i--)    cout << ((int) bits[i]);   
+			cout << endl;
+		}
+		recodeBooth();
+		if(verbose) printBoothCode();
+		if(verbose) cout << "   Non-zero digits:" << nonZeroInBoothCode <<endl;
+
+
+
+		// Build in implementation a tree constant multiplier 
+		buildMultBoothTree();
+		if(verbose) showShiftAddDag();
+		int cost=compute_total_cost(implementation->result);
+		if(verbose) {
+			cout << "Estimated bare cost (not counting pipeline overhead) : " << cost << " FA/LUT" << endl;
+		}
+
+		
+		double delay=0.0;
+		// recursively build the pipeline in the vhdl stream
+		build_pipeline(implementation->result, delay);
+		
+		// copy the top of the DAG into variable R
+		vhdl << endl << tab << "R <= " << implementation->result->name << "("<< rsize-1 <<" downto 0);"<<endl;
 		
 	}
-	else { 
-		for (int i=0; i<implementation->saolist.size(); i++) 
-			addSignalBus(implementation->saolist[i]->name, implementation->saolist[i]->size);
-		addSignalBus("X", xsize);
-	}
+}
 
-	// That's all folks. The remaining of this method is a handcoded
-	// Lefevre multiplier, for comparison purposes
+
+
+
+	// One hand-coded Lefevre multiplier, for comparison purposes -- to be inserted somewhere in the constructor
 
 #if 0
 	if(false && n==mpz_class("254876276031724631276054471292942"))
@@ -340,8 +545,6 @@ R = u101 + u202
 		}
 	//	else
 #endif
-}
-
 
 
 IntConstMult::~IntConstMult() {
@@ -362,7 +565,7 @@ void IntConstMult::printBoothCode() {
 
 void IntConstMult::recodeBooth() {
 	int i;
-	int *b, *c, *d;
+	int *b, *c;
 	nonZeroInBoothCode = 0;
 
 	b = new int[nsize+1];
@@ -407,7 +610,7 @@ void IntConstMult::recodeBooth() {
 
 // The simple, sequential version: the DAG is a rake
 void  IntConstMult::buildMultBooth(){
-	int v,k,i;
+	int k,i;
 	ShiftAddOp *z;
 	i=0;
 
@@ -451,7 +654,7 @@ void  IntConstMult::buildMultBooth(){
 
 // The same as the previous, but builds a balanced tree.
 void  IntConstMult::buildMultBoothTree(){
-	int v,k,i,j,nk;
+	int k,i,j,nk;
 	ShiftAddOp *z;
 	ShiftAddOp**  level;
 	int*     shifts;
@@ -507,13 +710,6 @@ void  IntConstMult::buildMultBoothTree(){
 			implementation->result = level[0];
 		else
 			implementation->result = implementation->provideShiftAddOp(Shift, level[0], globalshift);
-		
-//     cout << "(";
-//     for (j=0; j<nonZeroInBoothCode; j++) {
-//       if (level[j]==MX) cout <<"-"; else cout<<"+";
-//       cout << "<<"<<shifts[j];
-//     }
-//     cout<<")<<"<<globalshift;
 
 	}
 
@@ -527,7 +723,7 @@ void  IntConstMult::buildMultBoothTree(){
 
 void IntConstMult::showShiftAddDag(){
 	cout<<"    ShiftAddDag"<<endl;
-	for (int i=0; i<implementation->saolist.size(); i++) {
+	for (uint32_t i=0; i<implementation->saolist.size(); i++) {
 		cout << "     "<<*(implementation->saolist[i]) <<endl;
 	}
 };
@@ -537,122 +733,6 @@ void IntConstMult::showShiftAddDag(){
 
 
 
-
-
-
-void IntConstMult::outputVHDL(std::ostream& o, std::string name) {
-	string iname, jname;
-	int k,i,j;
-
-	licence(o,"Florent de Dinechin (2007)");
-	Operator::stdLibs(o);
-	outputVHDLEntity(o);
-	newArchitecture(o,name);
-	outputVHDLSignalDeclarations(o);
-	beginArchitecture(o);
-	
-	// Architecture
-	o << tab << "X <= inX;" << endl;
-	for (i=0; i<implementation->saolist.size(); i++) {
-		ShiftAddOp *p = implementation->saolist[i];
-		o<<tab<<"-- " << *p <<endl;
-
-		switch(p->op) {
-		case X: 
-			cerr << "ERROR unexpected ShiftAddOp(X) in output_vhdl()"; exit(EXIT_FAILURE);
-			break;
-
-		case Add:
-			iname = delaySignal(p->i->name, p->i_delayed_by); // even works for unregistered signals
-			jname = delaySignal(p->j->name, p->j_delayed_by); // even works for unregistered signals
-			if(p->s==0) {
-				o << tab << p->name << " <= " ;
-				// The i part
-				if(p->size>p->i->size+1) // need to sign-extend x
-					o <<"( (" << p->size-1 << " downto " << p->i->size <<" => '" << (p->i->n >= 0 ? "0" : "1" ) << "') & " << iname << ")";
-				else 
-					o << iname;
-				o<<" + " ;
-				// the y part
-				if(p->size>p->j->size+1) // need to sign-extend y
-					o << "( (" << p->size-1 <<" downto " << p->j->size <<" => '" << (p->j->n >= 0 ? "0" : "1" ) << "') & " << jname << ") ;";
-				else 
-					o << jname << ";";
-			}
-
-			else { // Add with actual shift
-				if(p->s >= p->j->size) { // Simpler case when the two words to add are disjoint; size=p->i->size+s+1
-					//                   xxxxx
-					//                           yyyyy
-					// The lower bits of the sum are those of y, possibly sign-extended but otherwise untouched
-					o << tab << p->name << "("<< p->s - 1 <<" downto 0) <= "
-						<< "(" <<  p->s-1 <<" downto " << p->j->size <<" => " << jname << "(" << p->j->size-1 << ")) & "    // sign extend y
-					<< jname << ";   -- lower bits untouched"<<endl;
-					// The higher bits (size-1 downto s) of the result are those of x, possibly plus 11...1 if y was negative
-					o << tab << p->name << "("<<p->size-1<<" downto "<< p->s<<") <= " << iname ;
-					if(p->j->n < 0) 
-						o<<" + (" << p->size-1 <<" downto " <<  p->s <<" => " << jname << "(" << p->j->size-1 << ")) ";
-					o<< ";   -- sum of higher bits"<<endl;     
-				}
-				else{ // p->j->size>s.        Cases:      xxxxx              xxxxxx
-					//                                yyyyyyyyyy             yyyyyyyyyyyy
-					// so we may need to sign-extend Vx, or Vy, or even both.
-					// In both cases the lower bits of the result (s-1 downto 0) are untouched
-					o << tab << p->name << "("<<p->s-1<<" downto 0) <= " << jname <<"("<< p->s-1<<" downto 0);   -- lower bits untouched"<<endl;
-					// The higher bits of the result are sum/diff
-					o << tab << p->name << "("<<p->size-1<<" downto " <<  p->s << ") <= "; // vz (size-1 downto s) <=
-					// The x part
-					o <<"(";
-					if(p->size >= p->i->size +  p->s +1) {// need to sign-extend vx. If the constant is positive padding with 0s is enough
-						o <<" (" << p->size-1 << " downto " << p->i->size +  p->s <<" => ";
-						if(p->i->n >= 0) // pad with 0s 
-							o<< "'0'";
-						else // sign extend
-							o<< iname << "(" << p->i->size-1 << ")";
-						o << ") & ";
-					}
-					o << iname << "("<< p->i->size -1 <<" downto 0)";
-					o << ")   +   (" ;
-					// the y part
-					if(p->size>=p->j->size+1) {// need to sign-extend vy. If the constant is positive padding with 0s is enough
-						o<<" (" << p->size-1 << " downto " << p->j->size <<" => ";
-						if(p->j->n >= 0) // pad with 0s 
-							o<< "'0'";
-						else // sign extend
-							o << jname << "(" << p->j->size-1 << ")";
-						o << ") & ";
-					}
-					o << jname << "("<< p->j->size -1 <<" downto " <<  p->s << ") ); " <<endl;
-				}
-			}
-		
-		break;
-
-		case Shift:
-		case Neg:
-			iname = delaySignal(p->i->name, p->i_delayed_by); // even works for unregistered signals
-			o << tab << p->name << " <= " ;
-			if(p->op == Neg)   
-				o << "("<< p->size -1 <<" downto 0 => '0') - " ; 
-			if (p->s == 0) 
-				o << iname <<";"<<endl; 
-			else
-				o  << iname <<" & ("<< p->s - 1 <<" downto 0 => '0');"<<endl; 
-			break;
-		}     
-	}
-
-	if(isSequential()){
-		outputVHDLRegisters(o);
-	// Sometimes the size of the result variable is one bit more than r.
-		o << tab << "r <= " << implementation->result->name << "_d("<< rsize-1 <<" downto 0);"<<endl;
-	}
-	else{
-		o << tab << "r <= " << implementation->result->name << "("<< rsize-1 <<" downto 0);"<<endl;
-	}
-	o << "end architecture;" << endl << endl;
-		
-}
 
 
 void optimizeLefevre(const vector<mpz_class>& constants) {
@@ -665,5 +745,43 @@ void IntConstMult::emulate(TestCase *tc){
 	mpz_class svX = tc->getInputValue("inX");
 	mpz_class svR = svX * n;
 	tc->addExpectedOutput("R", svR);
+}
+
+
+
+void IntConstMult::buildStandardTestCases(TestCaseList* tcl){
+	TestCase *tc;
+
+	tc = new TestCase(this); 
+	tc->addInput("inX", mpz_class(0));
+	emulate(tc);
+	tc->addComment("Multiplication by 0");
+	tcl->add(tc);
+
+	tc = new TestCase(this); 
+	tc->addInput("inX", mpz_class(1));
+	emulate(tc);
+	tc->addComment("Multiplication by 1");
+	tcl->add(tc);
+
+	tc = new TestCase(this); 
+	tc->addInput("inX", mpz_class(2));
+	emulate(tc);
+	tc->addComment("Multiplication by 2");
+	tcl->add(tc);
+
+	tc = new TestCase(this); 
+	tc->addInput("inX", (mpz_class(1) << xsize) -1);
+	emulate(tc);
+	tc->addComment("Multiplication by the max positive value");
+	tcl->add(tc);
+
+	tc = new TestCase(this); 
+	tc->addInput("inX", (mpz_class(1) << (xsize) -1) + mpz_class(1));
+	emulate(tc);
+	tc->addComment("Multiplication by 10...01");
+	tcl->add(tc);
+
+
 }
 

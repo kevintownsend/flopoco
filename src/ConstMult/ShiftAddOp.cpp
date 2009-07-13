@@ -37,49 +37,49 @@ using namespace std;
 
 
 
-ShiftAddOp::ShiftAddOp(ShiftAddDag* impl, OpType op, ShiftAddOp* i, int s, ShiftAddOp* j) :
-	impl(impl), op(op), i(i), s(s), j(j) {
+ShiftAddOp::ShiftAddOp(ShiftAddDag* impl, ShiftAddOpType op, ShiftAddOp* i, int s, ShiftAddOp* j) :
+	impl(impl), op(op), i(i), j(j), s(s) {
 	n=impl->computeConstant(op, i, s, j);
-	// now compute the size according to this constant
+	// now compute the size according to this constant, as the log2 of the max value the result can take
 	if (n >= 0)
-		size = intlog2(n-1) + impl->icm->xsize; // -1 so that powers of two are handled properly
+		size = intlog2(n * ((1<<impl->icm->xsize)-1));
 	else
-		size = intlog2(-n-1) + impl->icm->xsize + 1; // we need a sign bit
+		size = 1 + intlog2(-n* ((1<<impl->icm->xsize)-1));  // we need a sign bit
+	if(n==1)
+		size=impl->icm->xsize;
 
 	// compute the cost in terms of full adders of this node
 	switch(op) {
-	case X:        cost_in_full_adders = 0;   break;
+	case X:
+		cost_in_full_adders = 0;   break;
 	case Add:      
-		if (s >= j->size && j>=0) // no overlap of bits of Vi<<s and Vj
+		if (s >= j->size) // no overlap of bits of Vi<<s and Vj
 			cost_in_full_adders = 0;
 		else
-			cost_in_full_adders = size - s;    
+			cost_in_full_adders = size - s - 1; // -1 because the cout bit is for free    
 		break;
-	case Shift:    cost_in_full_adders = 0;   break;
-	case Neg:      cost_in_full_adders = size; break;
+	case Sub:      
+		cost_in_full_adders = size - 1; // -1 because the cout bit is for free    
+		break;
+	case RSub:      
+		if (s >= j->size) // no overlap of bits of Vi<<s and Vj
+			cost_in_full_adders = i->size - 1; // still need to negate i
+		else
+			cost_in_full_adders = size - s - 1; // -1 because the cout bit is for free    
+		break;
+	case Shift:    cost_in_full_adders = 0; 
+		break;
+	case Neg:      cost_in_full_adders = size -1; // -1 because the cout bit is for free
+		break;
 	}   
 	
-	//initialy unpipelined
-	is_registered=false;
-	delayed_by=0;
-	i_delayed_by=0;
-	j_delayed_by=0;
-
 	// build the variable name
 	ostringstream o;
-	
-	
-#ifdef _WIN32
+		
 	if(n==1)         o <<"X"; 
 	else  if(n>=0)   o<<"P"<<mpz2string(n)<<"X";  
-	else             o<<"M-"<<mpz2string(n)<<"X";
+	else             o<<"M"<<mpz2string(-n)<<"X";
 	name =  o.str();
-#else
-	if(n==1)         o <<"X"; 
-	else  if(n>=0)   o<<"P"<<n<<"X";  
-	else             o<<"M"<<-n<<"X";
-	name =  o.str();
-#endif
 
 
 	// and add this object to the dictionary of the implementation

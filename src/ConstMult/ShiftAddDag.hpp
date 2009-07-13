@@ -29,9 +29,9 @@ public:
 	// This method looks up in the current Dag if the required op
 	// exists, and either returns a pointer to it, or creates the
 	// corresponding node.
-	ShiftAddOp* provideShiftAddOp(OpType op, ShiftAddOp* i, int s, ShiftAddOp* j=NULL);
+	ShiftAddOp* provideShiftAddOp(ShiftAddOpType op, ShiftAddOp* i, int s, ShiftAddOp* j=NULL);
 
-	mpz_class computeConstant(OpType op, ShiftAddOp* i, int s, ShiftAddOp* j);
+	mpz_class computeConstant(ShiftAddOpType op, ShiftAddOp* i, int s, ShiftAddOp* j);
 
 
 	ShiftAddOp* result; 

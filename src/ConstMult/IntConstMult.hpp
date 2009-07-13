@@ -10,6 +10,7 @@
 #include "../Operator.hpp"
 #include "ShiftAddOp.hpp"
 #include "ShiftAddDag.hpp"
+#include "../IntAdder.hpp"
 
 /**
 	Integer constant multiplication.
@@ -43,12 +44,12 @@ public:
 
 
 	// Overloading the virtual functions of Operator
-	void outputVHDL(std::ostream& o, std::string name);
 
 	void emulate(TestCase* tc);
+	void buildStandardTestCases(TestCaseList* tcl);
 
 private:
-	int build_pipeline(ShiftAddOp* sao, double& delay);
+	void build_pipeline(ShiftAddOp* sao, double& delay);
 	void recodeBooth();
 	void printBoothCode();
 	void buildMultBooth();
