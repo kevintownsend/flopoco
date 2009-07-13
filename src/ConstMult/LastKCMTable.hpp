@@ -15,8 +15,8 @@ public:
 
 	mpz_class C_; //the constant
 
-	int wOut_; /**< the width of the output */
 	int wIn_;  /**< the width of the input */
+	int wOut_; /**< the width of the output */
 	
 };
 
