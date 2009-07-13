@@ -432,8 +432,6 @@ IntConstMult::IntConstMult(Target* _target, int _xsize, mpz_class _n) :
 
 	addInput("inX", xsize);
 	addOutput("R", rsize);
-	
-	cout << "  Power of two" <<intlog2(n) << " " <<  mpz2string((mpz_class(1) << intlog2(n))) << endl;
 
 	if((mpz_class(1) << (intlog2(n)-1)) == n) { // power of two
 		if(verbose) 
