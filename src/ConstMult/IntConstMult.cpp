@@ -127,7 +127,7 @@ int compute_total_cost(ShiftAddOp* sao) {
 
 void IntConstMult::build_pipeline(ShiftAddOp* sao, double &partial_delay) {
 	string iname, jname, isignal, jsignal;
-	double idelay,jdelay, max_children_delay;
+	double idelay=0,jdelay=0, max_children_delay;
 	int size, isize, jsize, shift, adder_size; 
 	bool use_pipelined_adder;
 	IntAdder* adder;
@@ -432,6 +432,8 @@ IntConstMult::IntConstMult(Target* _target, int _xsize, mpz_class _n) :
 
 	addInput("inX", xsize);
 	addOutput("R", rsize);
+	
+	cout << "  Power of two" <<intlog2(n) << " " <<  mpz2string((mpz_class(1) << intlog2(n))) << endl;
 
 	if((mpz_class(1) << (intlog2(n)-1)) == n) { // power of two
 		if(verbose) 
