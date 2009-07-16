@@ -308,6 +308,7 @@ void  Operator::outputVHDLRegisters(std::ostream& o) {
 	}
 }
 
+
 void Operator::outputVHDLComponent(std::ostream& o, std::string name) {
 	unsigned int i;
 	o << tab << "component " << name << " is" << endl;
@@ -518,7 +519,7 @@ void Operator::syncCycleFromSignal(string name, bool report) {
 
 
 
-string Operator::declare(string name, const int width, bool isbus) {
+string Operator::declare(string name, const int width, bool isbus, Signal::SignalType regType) {
 	Signal* s;
 	ostringstream e;
 	// check the signals doesn't already exist
@@ -527,7 +528,15 @@ string Operator::declare(string name, const int width, bool isbus) {
 		throw e.str();
 	}
 	// construct the signal (lifeSpan and cycle are reset to 0 by the constructor)
-	s = new Signal(name, Signal::wire, width, isbus);
+	s = new Signal(name, regType, width, isbus);
+	if(regType==Signal::registeredWithoutReset)
+		hasRegistersWithoutReset_ = true;
+	if(regType==Signal::registeredWithSyncReset)
+		hasRegistersWithSyncReset_ = true;
+	if(regType==Signal::registeredWithAsyncReset)
+		hasRegistersWithAsyncReset_ = true;
+
+	
 	// define its cycle 
 	if(isSequential())
 		s->setCycle(this->currentCycle_);
@@ -791,25 +800,87 @@ string  Operator::buildVHDLRegisters() {
 
 	// execute only if the operator is sequential, otherwise output nothing
 	if (isSequential()){
-		o << tab << "process(clk)  begin\n"
-		  << tab << tab << "if clk'event and clk = '1' then\n";
-		for(unsigned int i=0; i<signalList_.size(); i++) {
-			Signal *s = signalList_[i];
-			if(s->getLifeSpan() >0) {
-				for(int j=1; j <= s->getLifeSpan(); j++)
-					o << tab <<tab << tab << s->delayedName(j) << " <=  " << s->delayedName(j-1) <<";" << endl;
+		o << tab << "process(clk)" << endl;
+		o << tab << tab << "begin" << endl;
+		o << tab << tab << tab << "if clk'event and clk = '1' then" << endl;
+			for(unsigned int i=0; i<signalList_.size(); i++) {
+				Signal *s = signalList_[i];
+				if ((s->type() == Signal::registeredWithoutReset) || (s->type() == Signal::wire)) 
+					if(s->getLifeSpan() >0) {
+						for(int j=1; j <= s->getLifeSpan(); j++)
+							o << tab << tab <<tab << tab << s->delayedName(j) << " <=  " << s->delayedName(j-1) <<";" << endl;
+					}
 			}
-		}
-		for(unsigned int i=0; i<ioList_.size(); i++) {
-			Signal *s = ioList_[i];
-			if(s->getLifeSpan() >0) {
-				for(int j=1; j <= s->getLifeSpan(); j++)
-					o << tab <<tab << tab << s->delayedName(j) << " <=  " << s->delayedName(j-1) <<";" << endl;
+			for(unsigned int i=0; i<ioList_.size(); i++) {
+				Signal *s = ioList_[i];
+				if(s->getLifeSpan() >0) {
+					for(int j=1; j <= s->getLifeSpan(); j++)
+						o << tab << tab <<tab << tab << s->delayedName(j) << " <=  " << s->delayedName(j-1) <<";" << endl;
+				}
 			}
+		o << tab << tab << tab << "end if;\n";
+		o << tab << tab << "end process;\n"; 
+		
+		// then registers with a reset
+		if (hasRegistersWithAsyncReset_) {
+			o << tab << "process(clk, rst)" << endl;
+			o << tab << tab << "begin" << endl;
+			o << tab << tab << tab << "if rst = '1' then" << endl;
+			for(unsigned int i=0; i<signalList_.size(); i++) {
+				Signal *s = signalList_[i];
+				if (s->type() == Signal::registeredWithAsyncReset)  
+					if(s->getLifeSpan() >0) {
+						for(int j=1; j <= s->getLifeSpan(); j++){
+							if ( (s->width()>1) || (s->isBus()))
+								o << tab << tab <<tab << tab << s->delayedName(j) << " <=  " << "(others => '0')" <<";" << endl;
+							else
+								o << tab <<tab << tab << tab << s->delayedName(j) << " <=  " << "'0'" <<";" << endl;
+						}
+					}
+			}			
+			o << tab << tab << tab << "elsif clk'event and clk = '1' then" << endl;
+			for(unsigned int i=0; i<signalList_.size(); i++) {
+				Signal *s = signalList_[i];
+				if (s->type() == Signal::registeredWithAsyncReset)  
+					if(s->getLifeSpan() >0) {
+						for(int j=1; j <= s->getLifeSpan(); j++)
+							o << tab <<tab << tab << tab << s->delayedName(j) << " <=  " << s->delayedName(j-1) <<";" << endl;
+					}
+			}			o << tab << tab << tab << "end if;" << endl;
+			o << tab << tab <<"end process;" << endl;
 		}
-
-		o << tab << tab << "end if;\n";
-		o << tab << "end process;\n"; 
+		
+		// then registers with synchronous reset
+		if (hasRegistersWithSyncReset_) {
+			o << tab << "process(clk, rst)" << endl;
+			o << tab << tab << "begin" << endl;
+			o << tab << tab << tab << "if clk'event and clk = '1' then" << endl;
+			o << tab << tab << tab << tab << "if rst = '1' then" << endl;
+			for(unsigned int i=0; i<signalList_.size(); i++) {
+				Signal *s = signalList_[i];
+				if (s->type() == Signal::registeredWithSyncReset)  
+					if(s->getLifeSpan() >0) {
+						for(int j=1; j <= s->getLifeSpan(); j++){
+							if ( (s->width()>1) || (s->isBus()))
+								o << tab <<tab << tab <<tab << tab << s->delayedName(j) << " <=  " << "(others => '0')" <<";" << endl;
+							else
+								o << tab <<tab << tab <<tab << tab << s->delayedName(j) << " <=  " << "'0'" <<";" << endl;
+						}
+					}
+				}			
+			o << tab << tab << tab << tab << "else" << endl;
+			for(unsigned int i=0; i<signalList_.size(); i++) {
+				Signal *s = signalList_[i];
+				if (s->type() == Signal::registeredWithSyncReset)  
+					if(s->getLifeSpan() >0) {
+						for(int j=1; j <= s->getLifeSpan(); j++)
+							o << tab <<tab << tab <<tab << tab << s->delayedName(j) << " <=  " << s->delayedName(j-1) <<";" << endl;
+					}
+			}			
+			o << tab << tab << tab << tab << "end if;" << endl;
+			o << tab << tab << tab << "end if;" << endl;
+			o << tab << tab << "end process;" << endl;
+		}
 	}
 	return o.str();
 }

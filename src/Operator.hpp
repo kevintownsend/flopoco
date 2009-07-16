@@ -204,9 +204,10 @@ public:
 	 * @param name is the name of the signal
 	 * @param width is the width of the signal (optional, default 1)
 	 * @param isbus: a signal of width 1 is declared as std_logic when false, as std_logic_vector when true (optional, default false)
+	 * @param regType: the registring type of this signal. See also the Signal Class for more info
 	 * @return name
 	 */
-	string declare(string name, const int width=1, bool isbus=false);
+	string declare(string name, const int width=1, bool isbus=false, Signal::SignalType regType = Signal::wire );
 	// TODO: add methods that allow for signals with reset (when rewriting LongAcc for the new framework)
 
 
