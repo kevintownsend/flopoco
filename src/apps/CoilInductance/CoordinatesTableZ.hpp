@@ -1,7 +1,7 @@
-#include "../../Table.hpp"
+#include "../../DualTable.hpp"
 
 
-class CoordinatesTableZ : public Table
+class CoordinatesTableZ : public DualTable
 {
 	public:
 	

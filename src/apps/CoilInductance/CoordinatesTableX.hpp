@@ -1,17 +1,17 @@
-#include "../../Table.hpp"
+#include "../../DualTable.hpp"
 
 
-class CoordinatesTableX : public Table
+class CoordinatesTableX : public DualTable
 {
 	public:
-	
+				
 	CoordinatesTableX(Target* target, int wIn, int LSBI,int MSBI,char *filename);
 	
 	~CoordinatesTableX();
   	
 	mpz_class function(int x);
 	
-	
+		
 	int    double2input(double x);
 	
 	double input2double(int x);
@@ -23,43 +23,46 @@ class CoordinatesTableX : public Table
 	double maxMulOut;
 	double minMulOut;
 	
-private:
+private:	
 
 	/** The MSB for the input */
-	int MSBI; 
+	 int MSBI; 
 	/** The LSB for the input */
-	int LSBI; 
+	 int LSBI; 
 	/** The width of the exponent for the output R */
 	int adrWidth; 
 	/**		*/
 	int wOutm;
 	/** configuration file path from which to initialize the parameters of the coil*/
-	char *filepath;
+	 char *filepath;
 	/** number of coils	*/
-	int L;
+	 int L;
 	/** number of vertical stages	*/
-	int NrSVert;
+	 int NrSVert;
 	/** configuration */
 	//int  config [L][NrSVert];
-	int **config;
+	 int **config;
 	/** number of turns */
-	int nrTurns;
+	 int nrTurns;
 	/** outer radius */
-	float out_radius;
+	 float out_radius;
 	/* radius of a turn */
-	float turn_radius;
+	 float turn_radius;
 	/**	insulation	*/
-	float insulation;
+	 float insulation;
 	/** number of points to divide a turn */
-	int N;
+	 int N;
 	
 
-	void initParameters();
-	void readParams();
+	 void initParameters();
+	 void readParams();
 	
-	mpfr_t out_rad_m,turn_rad_m,insu_m,nr_m;
-	mpfr_t fi;
-	mpfr_t h;
-	mpfr_t displacementX[5],alfa[5];//,displacementZ[5];
+	 mpfr_t out_rad_m,turn_rad_m,insu_m,nr_m;
+	 mpfr_t fi;
+	 mpfr_t h;
+	 mpfr_t displacementX[5],alfa[5];//,displacementZ[5];
+
+
 };
+
 

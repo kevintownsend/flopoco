@@ -155,9 +155,9 @@ Fix2FP::Fix2FP(Target* target, int LSBI, int MSBI, int Signed,int wER, int wFR) 
 			vhdl << tab << declare("MSB2Signal",wE)<<"<="<<"CONV_STD_LOGIC_VECTOR("<<MSB-1<<","<<wE<<");"<<endl;
 	
 		if(Signed!=0)
-			vhdl << tab << declare("zeroPadding4Exponent",wE- intlog2(inputWidth-1))<<"<="<<"CONV_STD_LOGIC_VECTOR(0,"<<wE- intlog2(inputWidth-1)<<");"<<endl;
+			vhdl << tab << declare("zeroPadding4Exponent",wE- intlog2(inputWidth-1),true)<<"<="<<"CONV_STD_LOGIC_VECTOR(0,"<<wE- intlog2(inputWidth-1)<<");"<<endl;
 		else
-			vhdl << tab << declare("zeroPadding4Exponent",wE- intlog2(inputWidth))<<"<="<<"CONV_STD_LOGIC_VECTOR(0,"<<wE- intlog2(inputWidth)<<");"<<endl;
+			vhdl << tab << declare("zeroPadding4Exponent",wE- intlog2(inputWidth),true)<<"<="<<"CONV_STD_LOGIC_VECTOR(0,"<<wE- intlog2(inputWidth)<<");"<<endl;
 	
 		vhdl << tab << declare("valueExponent",wE)<<"<= not("<<use("zeroPadding4Exponent")<<" & "<<use("temporalExponent")<<");"<<endl;
 	

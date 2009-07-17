@@ -14,9 +14,12 @@ using std::ifstream;
 
 
 
-CoordinatesTableX::CoordinatesTableX(Target* target, int wIn, int LSBI,int MSBI,char *filename) : 
-   Table(target, wIn, (MSBI-LSBI)), MSBI(MSBI), LSBI(LSBI), adrWidth(wIn) , wOutm(MSBI-LSBI),filepath(filename)
+CoordinatesTableX::CoordinatesTableX(Target* target, int wIn, int LSBIt,int MSBIt,char *filename) : 
+     DualTable(target, wIn, (MSBIt-LSBIt)), MSBI(MSBI), LSBI(LSBI),  adrWidth(wIn) , wOutm(MSBIt-LSBIt),filepath(filename)
    {
+	   //~ filepath=filename;
+	   //~ MSBI = MSBIt;
+	   //~ LSBI=LSBIt;
 	if ((MSBI < LSBI)){
 		cerr << 
 			" CoordinatesTableX: Input constraint LSBI <= MSBI not met."<<endl;
@@ -28,6 +31,8 @@ CoordinatesTableX::CoordinatesTableX(Target* target, int wIn, int LSBI,int MSBI,
 	setName(name.str());
 	
 	readParams();
+	
+	
 	
  }
 
@@ -86,11 +91,17 @@ ifstream indata; // indata is like cin
 	
 	indata>>out_radius>>turn_radius>>insulation>>N;
 
+	//cout<<"citeste";
+			
 	indata.close();
 	initParameters();	
+			
+			
 }
 void CoordinatesTableX::initParameters()
 {
+	
+	//cout<<"initializeaza";
 	
 	//declaratii si initializari
 	mpfr_set_default_prec(1000);
@@ -216,10 +227,21 @@ void CoordinatesTableX::initParameters()
 		mpfr_clear(temp4);
 }
 
-mpz_class CoordinatesTableX::function(int x)
+//~ mpz_class  CoordinatesTableX::function(int x)
+//~ {
+	//~ //cout<<CoordinatesTableX::myfun();
+	//~ return ( mpz_class )3332;
+	//~ }
+
+
+	
+
+	
+mpz_class  CoordinatesTableX::function(int x)
 {
 	
-		
+	//cout<<"aiai";	
+	
 	mpz_class r;
 	
 	mpfr_t temp1,temp2;

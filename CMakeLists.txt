@@ -115,6 +115,7 @@ ADD_EXECUTABLE(flopoco
  src/Operator
  src/Signal
  src/Table 
+ src/DualTable 
  src/Wrapper
  src/TestBench 
 # src/BigTestBench
@@ -182,7 +183,8 @@ ADD_EXECUTABLE(flopoco
  src/Operator
  src/Signal
  src/Table 
- src/Wrapper
+ src/DualTable 
+  src/Wrapper
  src/TestBench 
  src/BigTestBench
  src/GenericTestBench
