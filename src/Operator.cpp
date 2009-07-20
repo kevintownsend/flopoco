@@ -421,11 +421,11 @@ void Operator::setPipelineDepth(int d) {
 }
 
 void Operator::outputFinalReport() {
-	cout << "Entity " << uniqueName_ <<":"<< endl;
+	cerr << "Entity " << uniqueName_ <<":"<< endl;
 	if(this->getPipelineDepth()!=0)
-		cout << tab << "Pipeline depth = " << getPipelineDepth() << endl;
+		cerr << tab << "Pipeline depth = " << getPipelineDepth() << endl;
 	else
-		cout << tab << "Not pipelined"<< endl;
+		cerr << tab << "Not pipelined"<< endl;
 }
 
 
