@@ -1,23 +1,28 @@
 TODO file for FloPoCo
 
 
-General:
-pipeline HOTBM, FPExp, FPLog
-
 Pipeline framework, Operator and Targets:
 * Clean up deprecated methods
 * finetune Altera target
 
 FPAdder
-* clean up the input parameters of FPAdder, for instance wEX and wEY should
-be replaced by wE
-* a few optimization opportunities, see the TODO inside FPAdder.cpp
+* several optimization opportunities, see the TODO inside FPAdder.cpp
 * implement a single-path version
 
 FPMultiplier:
 * Cleaning up and rewriting in the new pipeline framework
 * refine the DSP model in Targets
 
+FPLog:
+* better (DSP-aware) architectural exploration
+
+FPExp:
+* pipeline
+* better (DSP-aware) architectural exploration
+
+HOTBM:
+* pipeline
+* better (DSP-aware) architectural exploration
 
 ConstMult:
 * implement KCM algorithm and select it if it means less hardware
@@ -30,6 +35,9 @@ ConstMult:
 * compare with Spiral.net
 * Implement the continued fraction stuff for FPCRConstMult
 
+LongAcc
+* upgrade to new pipeline framework
+
 SumOfProducts
 * add test bench generation
 
@@ -39,6 +47,8 @@ Shifters
 General
 * Doxygenize while it's not too late
 * replace all the cout messages by cerr ones
+
+********************************************************************
 
 Tentative roadmap 
 (minor version number count, more or less, the number of working operators. 
@@ -61,7 +71,7 @@ Version ???   FPNorm3D
 Version ???   FPSinCos
 Version ??    FPBoxMuller
 Version ???   Interval operators
-
+(insert your wishlist here)
 
 
 
