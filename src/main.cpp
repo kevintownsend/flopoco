@@ -1130,7 +1130,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			op = new TableOp(target, new CotranF3Table(wF, j));
 			addOperator(op);
 		}
-#endif
+#endif // #if 0
 		else if (opname == "Cotran")
 		{
 			int nargs = 4;
@@ -1192,8 +1192,20 @@ bool parseCommandLine(int argc, char* argv[]){
 			Operator* op = new TestBench(target, toWrap, n);
 			cerr << "> TestBench for " << toWrap->getName()<<endl;
 			addOperator(op);
+			cerr << "To run the simulation using ModelSim, type the following in 'vsim -c':" <<endl;
+			cerr << tab << "vdel -all -lib work" <<endl;
+			cerr << tab << "vlib work" <<endl;
+			cerr << tab << "vcom " << filename <<endl;
+			cerr << tab << "vsim " << op->getName() <<endl;
+			cerr << tab << "add wave -r *" <<endl;
+			cerr << tab << "run " << ((TestBench*)op)->getSimulationTime() << endl;
+			cerr << "To run the simulation using gHDL, type the following in a shell prompt:" <<endl;
+			cerr << tab << "ghdl -a --ieee=synopsys -fexplicit "<< filename <<endl;
+			cerr << tab << "ghdl -e --ieee=synopsys -fexplicit " << op->getName() <<endl;
+			cerr << tab << "ghdl -r --ieee=synopsys " << op->getName() << " --vcd=" << op->getName() << ".vcd" <<endl;
+			cerr << tab << "gtkwave " << op->getName() << ".vcd" << endl;
 		}
-		#ifndef _WIN32
+#if 0  //We should resurrect it some day
 		else if (opname == "BigTestBench") {
 			int nargs = 1;
 			if (i+nargs > argc)
@@ -1208,7 +1220,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			Operator* op = new BigTestBench(target, toWrap, n);
 			addOperator(op);
 		}
-		#endif
+ #endif
 		else  {
 			cerr << "ERROR: Problem parsing input line, exiting";
 			usage(argv[0]);
@@ -1237,7 +1249,6 @@ int main(int argc, char* argv[] )
 
 	ofstream file;
 	file.open(filename.c_str(), ios::out);
-	cerr<< "Output file: " << filename <<endl;
 	
 	for(i=0; i<oplist.size(); i++) {
 		try {
@@ -1248,9 +1259,10 @@ int main(int argc, char* argv[] )
 	}
 	file.close();
 	
-	cout << endl<<"Final report:"<<endl;
+	cerr << endl<<"Final report:"<<endl;
 	for(i=0; i<oplist.size(); i++) {
 		oplist[i]->outputFinalReport();
 	}
+	cerr<< "Output file: " << filename <<endl;
 	return 0;
 }
