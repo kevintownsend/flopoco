@@ -98,12 +98,16 @@ LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut, int wCou
 			stageDelay = 0.0;
 		}
 		vhdl << tab << declare(join("level",i),currLev) << "<= " << use(join("level",i+1))<<"("<<prevLev-1<<" downto "<< prevLev-currLev << ")"
-		     << " when " << use(join("count",i)) << "='0' else "
-		     << use(join("level",i+1)) << "("<<prevLev - intpow2(i) - 1 <<" downto "<< (currLev < prevLev - intpow2(i) ? (prevLev - intpow2(i)) - currLev : 0 ) <<")";
+		     << " when " << use(join("count",i)) << "='0' else ";
+		int l,r;
+		l = prevLev - intpow2(i) - 1;
+		r = (currLev < prevLev - intpow2(i) ? (prevLev - intpow2(i)) - currLev : 0 );
+		if (l>=r)
+		    vhdl << use(join("level",i+1)) << "("<<prevLev - intpow2(i) - 1 <<" downto "<< (currLev < prevLev - intpow2(i) ? (prevLev - intpow2(i)) - currLev : 0 ) <<")";
 		     
-		     if (prevLev - intpow2(i) < currLev )
-		     	vhdl << " & " << rangeAssign(currLev -(prevLev - intpow2(i))-1,0,"'0'");
-		     vhdl << ";"<<endl;
+	     if (prevLev - intpow2(i) < currLev )
+	     	vhdl << (l>=r?" & ":"") << rangeAssign(currLev -(prevLev - intpow2(i))-1,0,"'0'");
+	     vhdl << ";"<<endl;
 		stageDelay += opDelay;
 
 		if ((computeSticky_)&&(wOut_<wIn)) {
