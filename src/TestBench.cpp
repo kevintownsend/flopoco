@@ -57,6 +57,84 @@ TestBench::TestBench(Target* target, Operator* op, int n):
 	// Generate the standard and random test cases for this operator
 	op-> buildStandardTestCases(&tcl_);
 	op-> buildRandomTestCases(&tcl_, n);
+	
+	// the instance
+	vhdl << tab << "uut:" << op_->getName() << "\n"
+	  << tab << tab << "port map ( ";
+	if (op_->isSequential()) 
+		vhdl <<" clk => clk, rst => rst," << endl;
+	for(int i=0; i<op_->getIOListSize(); i++) {
+		vhdl << tab << tab << "           ";
+		string idext =  op_->getIOListSignal(i)->getName() ;
+		if(op_->getIOListSignal(i)->type() == Signal::in)
+			vhdl << op_->getIOListSignal(i)->getName()  << " =>  " << idext;
+		else
+			vhdl << op_->getIOListSignal(i)->getName()  << " =>  " << idext;
+		if (i < op_->getIOListSize()-1) 
+			vhdl << "," << endl;
+	}
+	vhdl << ");" <<endl;
+
+	vhdl <<endl;
+
+	vhdl << tab << "-- Ticking clock signal" <<endl;
+	vhdl << tab << "process" <<endl;
+	vhdl << tab << "begin" <<endl;
+	vhdl << tab << tab << "clk <= '0';" <<endl;
+	vhdl << tab << tab << "wait for 5 ns;" <<endl;
+	vhdl << tab << tab << "clk <= '1';" <<endl;
+	vhdl << tab << tab << "wait for 5 ns;" <<endl;
+	vhdl << tab << "end process;" <<endl;
+	vhdl <<endl;
+
+	vhdl << tab << "-- Setting the inputs" <<endl;
+	vhdl << tab << "process" <<endl;
+	vhdl << tab << "begin" <<endl;
+	vhdl << tab << tab << "-- Send reset" <<endl;
+	vhdl << tab << tab << "rst <= '1';" << endl;
+	vhdl << tab << tab << "wait for 10 ns;" << endl;
+	vhdl << tab << tab << "rst <= '0';" << endl;
+	for (int i = 0; i < tcl_.getNumberOfTestCases(); i++)
+	{
+		vhdl << tcl_.getTestCase(i)->getInputVHDL(tab + tab);
+		vhdl << tab << tab << "wait for 10 ns;" <<endl;
+	} 
+	vhdl << tab << tab << "wait for 100000 ns; -- allow simulation to finish" << endl;
+	vhdl << tab << "end process;" <<endl;
+	vhdl <<endl;
+
+	int currentOutputTime = 0;
+	vhdl << tab << "-- Checking the outputs" <<endl;
+	vhdl << tab << "process" <<endl;
+	vhdl << tab << "begin" <<endl;
+	vhdl << tab << tab << "wait for 10 ns; -- wait for reset to complete" <<endl;
+	currentOutputTime += 10;
+	if (op_->getPipelineDepth() > 0){
+		vhdl << tab << tab << "wait for "<< op_->getPipelineDepth()*10 <<" ns; -- wait for pipeline to flush" <<endl;
+		currentOutputTime += op_->getPipelineDepth()*10;
+	}
+	else{
+		vhdl << tab << tab << "wait for "<< 2 <<" ns; -- wait for pipeline to flush" <<endl;
+		currentOutputTime += 2;
+	}
+	
+	for (int i = 0; i < tcl_.getNumberOfTestCases(); i++)
+	{
+//		vhdl << tab << tab << "wait for 5 ns;" <<endl;
+//		currentOutputTime += 5;
+		vhdl << tab << tab << "-- " << "current time: " << currentOutputTime <<endl;
+		TestCase* tc = tcl_.getTestCase(i);
+		if (tc->getComment() != "")
+			vhdl << tab <<  "-- " << tc->getComment() << endl;
+		vhdl << tc->getInputVHDL(tab + tab + "-- input: ");
+		vhdl << tc->getExpectedOutputVHDL(tab + tab);
+		vhdl << tab << tab << "wait for 10 ns;" <<endl;
+		currentOutputTime += 10;
+	} 
+	vhdl << tab << tab << "assert false report \"End of simulation\" severity failure;" <<endl;
+	vhdl << tab << "end process;" <<endl;
+	
+	simulationTime=currentOutputTime;
 }
 
 TestBench::~TestBench() { 
@@ -111,84 +189,8 @@ void TestBench::outputVHDL(ostream& o, string name) {
 	}
 	
 	o << "begin\n";
-
-	// the instance
-	o << tab << "uut:" << op_->getName() << "\n"
-	  << tab << tab << "port map ( ";
-	if (op_->isSequential()) 
-		o <<" clk => clk, rst => rst," << endl;
-	for(int i=0; i<op_->getIOListSize(); i++) {
-		o << tab << tab << "           ";
-		string idext =  op_->getIOListSignal(i)->getName() ;
-		if(op_->getIOListSignal(i)->type() == Signal::in)
-			o << op_->getIOListSignal(i)->getName()  << " =>  " << idext;
-		else
-			o << op_->getIOListSignal(i)->getName()  << " =>  " << idext;
-		if (i < op_->getIOListSize()-1) 
-			o << "," << endl;
-	}
-	o << ");" <<endl;
-
-	o <<endl;
-
-	o << tab << "-- Ticking clock signal" <<endl;
-	o << tab << "process" <<endl;
-	o << tab << "begin" <<endl;
-	o << tab << tab << "clk <= '0';" <<endl;
-	o << tab << tab << "wait for 5 ns;" <<endl;
-	o << tab << tab << "clk <= '1';" <<endl;
-	o << tab << tab << "wait for 5 ns;" <<endl;
-	o << tab << "end process;" <<endl;
-	o <<endl;
-
-	o << tab << "-- Setting the inputs" <<endl;
-	o << tab << "process" <<endl;
-	o << tab << "begin" <<endl;
-	o << tab << tab << "-- Send reset" <<endl;
-	o << tab << tab << "rst <= '1';" << endl;
-	o << tab << tab << "wait for 10 ns;" << endl;
-	o << tab << tab << "rst <= '0';" << endl;
-	for (int i = 0; i < tcl_.getNumberOfTestCases(); i++)
-	{
-		o << tcl_.getTestCase(i)->getInputVHDL(tab + tab);
-		o << tab << tab << "wait for 10 ns;" <<endl;
-	} 
-	o << tab << tab << "wait for 100000 ns; -- allow simulation to finish" << endl;
-	o << tab << "end process;" <<endl;
-	o <<endl;
-
-	int currentOutputTime = 0;
-	o << tab << "-- Checking the outputs" <<endl;
-	o << tab << "process" <<endl;
-	o << tab << "begin" <<endl;
-	o << tab << tab << "wait for 10 ns; -- wait for reset to complete" <<endl;
-	currentOutputTime += 10;
-	if (op_->getPipelineDepth() > 0){
-		o << tab << tab << "wait for "<< op_->getPipelineDepth()*10 <<" ns; -- wait for pipeline to flush" <<endl;
-		currentOutputTime += op_->getPipelineDepth()*10;
-	}
-	else{
-		o << tab << tab << "wait for "<< 2 <<" ns; -- wait for pipeline to flush" <<endl;
-		currentOutputTime += 2;
-	}
-	
-	for (int i = 0; i < tcl_.getNumberOfTestCases(); i++)
-	{
-//		o << tab << tab << "wait for 5 ns;" <<endl;
-//		currentOutputTime += 5;
-		o << tab << tab << "-- " << "current time: " << currentOutputTime <<endl;
-		TestCase* tc = tcl_.getTestCase(i);
-		if (tc->getComment() != "")
-			o << tab <<  "-- " << tc->getComment() << endl;
-		o << tc->getInputVHDL(tab + tab + "-- input: ");
-		o << tc->getExpectedOutputVHDL(tab + tab);
-		o << tab << tab << "wait for 10 ns;" <<endl;
-		currentOutputTime += 10;
-	} 
-	o << tab << tab << "assert false report \"End of simulation\" severity failure;" <<endl;
-	o << tab << "end process;" <<endl;
-	
+	o << vhdl.str() << endl;
 	o << "end architecture;" << endl << endl;
 
-	simulationTime=currentOutputTime;
+
 }
