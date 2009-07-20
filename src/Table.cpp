@@ -33,24 +33,31 @@ using namespace std;
 
 
 int Table::double2input(double x){
-	cerr << "Error, double2input is being used and has not been overriden";
-	return 1;
+	throw string("Error, double2input is being used and has not been overriden");
 }
 
 double Table::input2double(int x) {
-	cerr << "Error, input2double is being used and has not been overriden";
-	return 1;
+	throw string("Error, input2double is being used and has not been overriden");
 }
 
 mpz_class Table::double2output(double x){
-	cerr << "Error, double2output is being used and has not been overriden";
-	return 0;
+	throw string("Error, double2output is being used and has not been overriden");
 }
 
 double Table::output2double(mpz_class x) {
-	cerr << "Error, output2double is being used and has not been overriden";
-	return 1;
+	throw string("Error, output2double is being used and has not been overriden");
 }
+
+#if 0 // TODO some day
+mpz_class Table::mpfr2output(mpfr_t x){
+	throw string("Error, mpfr2output is being used and has not been overriden");
+}
+
+void Table::output2mpfr(mpz_class x, mpfr_t y) {
+	throw string("Error, output2mpfr is being used and has not been overriden");
+}
+#endif
+
 
 
 Table::Table(Target* target, int _wIn, int _wOut, int _minIn, int _maxIn) : 
