@@ -21,7 +21,7 @@ public:
 	mpz_class double2output(double x);
 	
 	double output2double(mpz_class x);
-	
+		
 	double maxMulOut;
 	double minMulOut;
 	

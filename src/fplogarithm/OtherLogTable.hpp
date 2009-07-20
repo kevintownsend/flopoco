@@ -6,7 +6,7 @@
 class OtherLogTable : public Table
 {
 public:
-	OtherLogTable(Target* target, int wIn, int wOut, int p, int which);
+	OtherLogTable(Target* target, int wIn, int wOut, int p, int which, int ai, int pi);
 	
 	~OtherLogTable();
 
@@ -23,8 +23,14 @@ public:
 	
 	int p;
 	
-	// Which table is that ? useful because the first is different from the others.
+	/** Which table is that ? useful because the first is different from the others.*/
 	int which;
+
+	/** ai is needed to determine epsiloni */
+	int ai;
+
+	/** pi is needed to determine epsiloni */
+	int pi;
 	
 	int outputPrecision;
 	

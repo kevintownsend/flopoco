@@ -42,9 +42,6 @@ FPLog::FPLog(Target* target, int wE, int wF)
 	: Operator(target), wE(wE), wF(wF)
 {
 
-	if(wE<intlog2(wF)) {
-		throw string("ERROR FPLog doesn't allow wE<intlog2(wF). If you really need it get in touch with the FloPoCo team.");
-	}
 	setCopyrightString("F. de Dinechin, C. Klein  (2008)");
 
 	ostringstream o;
@@ -55,39 +52,68 @@ FPLog::FPLog(Target* target, int wE, int wF)
 	addFPOutput("R", wE, wF, 2); // 2 because faithfully rounded
 
 	int i;
+#define GENERICVERSION 1  // otherwise, stable  version
 
-	gLog = 5; // TODO : compute or tabulate 
-	target_prec = wF+((wF+1)>>1) +gLog;
 
-	// First compute the precision of each iteration 
+#if GENERICVERSION
+	int bitsPerStage=target->lutInputs();
+#else
+	int bitsPerStage=4; 
+#endif
 
-	// TODO when >4, we have a problem with PO sometimes failing to cancel one bit.
-	int bitsPerStage=4; //target->lutInputs();
 	if(verbose) 
-		cout << "Building an architecture optimized for " << bitsPerStage << "-input LUTs" << endl;
+		cerr << "> FPLog" << tab << "Building an architecture optimized for " << bitsPerStage << "-input LUTs" << endl;
+	
+	// First compute the parameters of each iteration 
 
 	// Stage 0
 	p[0] = 0;
+#if 0
 	a[0] = bitsPerStage+1; // The +1 is needed, see OtherLogTable::input2double
-	s[0] = wF+2;  
-	sfullZ[0] = wF+2;
+#else
+	a[0] = 5;   // To benefit from the lucky situation
+#endif
+
 
 	p[1] = a[0]-1; 
+
+	// Following stages -- all the computation is OK starting from stage 1, although
+	// stage 1 needs a specific inverter table
+	i=1;
+	while(2*p[i] <= wF){ // for faithful rounding
+		if(i==1)
+			a[i] = 4; // otherwise we P1 has higher MSB than B1
+		else
+			a[i] = bitsPerStage;
+		p[i+1] = p[i] + a[i] - 1;
+		i++;
+	}  
+
+	// The number of stages
+	stages = i-1;
+
+	// Deduce the number of guard bits
+	gLog=ceil(log2(3*stages+1));
+ 
+	if(verbose)
+		cerr << "> FPLog"<<tab<<"Guard bits: " << gLog << endl;
+
+	pfinal = p[stages+1];
+	target_prec = wF + pfinal +gLog;
+	if(verbose==2)
+		cerr << "> FPLog"<<tab<<"Target precision: " << target_prec << endl;
+
+	s[0] = wF+2;  
+	sfullZ[0] = wF+2;
 	sbt[1] = wF+2 ;
 	s[1] = wF+2;
 	t[1] = 0;
 	sfullZ[1] = sfullZ[0] + a[0] +1;
 
-	// Following stages -- this is true starting from stage 1, although
-	// stage 1 needs a specific inverter table
-	i=1;
-	while(2*p[i] < wF+2){ // ensures 2*p[stages+1]>= wF+2, enough for faithful rounding
-		a[i] = bitsPerStage;
-		p[i+1] = p[i] + a[i] - 1;
-
+	for(i=1; i<=stages; i++) { 
 		// size before truncation
 		sbt[i+1] = s[i] +  p[i] + 2;
-
+		sfullZ[i+1] =  sfullZ[i] + a[i] + p[i] + 1;
 		if(p[i+1]+sbt[i+1] <= target_prec) 
 			{ // No truncation at all
 				psize[i] = s[i];
@@ -105,35 +131,34 @@ FPLog::FPLog(Target* target, int wE, int wF)
 				s[i+1] = target_prec - p[i+1];
 				t[i+1] = sbt[i+1] - s[i+1];
 			}
+	}
 
- 
- 
-		sfullZ[i+1] =  sfullZ[i] + a[i] + p[i] + 1;
-		i++;
-	}  
-
-
-	// Deduce the number of stages
-	stages = i-1;
-
-	// Various variables that make life more concise
 	sfinal =  s[stages+1];
-	pfinal = p[stages+1];
-
-
-
-
-	// On we go
 
 	// MSB of squarer input is p[stages+1];
 	// LSB will be target_prec
 	// size will be target_prec - p[stages+1]  
 
+
 	if(verbose)
-		cout<<"FPLog: needs "<<stages<<" range reduction stages"<<endl;
+		cerr<<"> FPLog\t needs "<<stages<<" range reduction stages"<<endl;
+	if(verbose>=2) {
+		for(i=0; i<=stages; i++) {
+			cerr << "> FPLog\t";
+			cerr<<"\ta"<<i<<"=" << a[i];
+			cerr<<"\tp"<<i<<"=" << p[i];
+			cerr<<"\ts"<<i<<"=" << s[i];
+			cerr<<"\tpsize"<<i<<"=" << psize[i];
+			cerr <<endl;
+		}
+		cerr << "> FPLog\t\tsfinal=" << sfinal << "\tpfinal=" << pfinal << endl;
+		
+	}
 
 	//TODO move somewhere -- removed temporarily to suppress a warning
 	// int computedG = intlog2(3*(stages+1));
+
+	// On we go
 
 
 	vhdl << tab << declare("XExnSgn", 3) << " <=  X(wE+wF+2 downto wE+wF);" << endl;
@@ -186,7 +211,7 @@ FPLog::FPLog(Target* target, int wE, int wF)
 	nextCycle();//////////////////////////////////////
 
 	vhdl << tab << declare("pfinal_s", intlog2(wF)) << " <= \"" 
-		  << unsignedBinary(mpz_class(p[stages+1]), intlog2(wF)) << "\";"<<endl;
+		  << unsignedBinary(mpz_class(pfinal), intlog2(wF)) << "\";"<<endl;
 
 	vhdl << tab << declare("shiftval", intlog2(wF)+1) << " <= ('0' & " << use("lzo") << ") - ('0' & pfinal_s); " << endl;
 	vhdl << tab << declare("shiftvalinL", intlog2(wF-pfinal+2)) 
@@ -233,19 +258,27 @@ FPLog::FPLog(Target* target, int wE, int wF)
 	syncCycleFromSignal("small_absZ0_normd", false);
 	nextCycle(); ///////////////////// TODO check this one is useful
 
-	vhdl << tab << "-- Z2o2 will be of size sfinal-pfinal, set squarer input size to that" << endl;
-	vhdl << tab << declare("squarerIn", sfinal-pfinal) << " <= " 
-		  << use("Zfinal") << "(sfinal-1 downto pfinal) when " << use("doRR") << "='1'" << endl;
-	if(sfinal-pfinal>small_absZ0_normd_size)
-		vhdl << tab << "                 else (" << use("small_absZ0_normd") << " & " << rangeAssign(sfinal-pfinal-small_absZ0_normd_size-1, 0, "'0'") << ");  " << endl;
+	// In the small path we need Z2O2 accurate to  (wF+gLog+2) - pfinal
+	// In the RR path we need Z2O2 accurate to sfinal-pfinal
+	// Take the max. This is useful  for small precs only
+	int squarerInSize;
+ 	if((wF+gLog+2) - pfinal > sfinal-pfinal) 
+		squarerInSize = (wF+gLog+2) - pfinal;
+	else 
+		squarerInSize = sfinal-pfinal;
+		
+		
+	vhdl << tab << declare("squarerIn", squarerInSize) << " <= " 
+		  << use("Zfinal") << "(sfinal-1 downto sfinal-"<< squarerInSize << ") when " << use("doRR") << "='1'" << endl;
+	if(squarerInSize>small_absZ0_normd_size)
+		vhdl << tab << "                 else (" << use("small_absZ0_normd") << " & " << rangeAssign(squarerInSize-small_absZ0_normd_size-1, 0, "'0'") << ");  " << endl;
 	else  // sfinal-pfinal <= small_absZ0_normd_size
-		vhdl << tab << "                 else " << use("small_absZ0_normd") << "" << range(small_absZ0_normd_size-1, small_absZ0_normd_size - (sfinal-pfinal)) << ";  " << endl<< endl;
-	vhdl << tab << "-- Z2o2 will be of size sfinal - pfinal -1, set squarer input size to that" << endl;
+		vhdl << tab << "                 else " << use("small_absZ0_normd")  << range(small_absZ0_normd_size-1, small_absZ0_normd_size - squarerInSize) << ";  " << endl<< endl;
 	nextCycle(); ///////////////////// 
-	vhdl << tab << declare("Z2o2_full", 2*(sfinal-pfinal)) << " <= (" << use("squarerIn") << " * " << use("squarerIn") << ");" << endl;
-	vhdl << tab << declare("Z2o2", sfinal-pfinal+1) << " <= Z2o2_full (2*(sfinal-pfinal)-1  downto sfinal-pfinal-1);" << endl;
+	vhdl << tab << declare("Z2o2_full", 2*squarerInSize) << " <= (" << use("squarerIn") << " * " << use("squarerIn") << ");" << endl;
+	vhdl << tab << declare("Z2o2_normal", sfinal-pfinal-1) << " <= Z2o2_full ("<< 2*squarerInSize-1 << "  downto " << 2*squarerInSize - (sfinal-pfinal-1) << ");" << endl;
 	nextCycle(); ///////////////////// 
-	vhdl << tab << declare("Log1p_normal", sfinal) << " <=   " << use("Zfinal") << "  -  ((sfinal-1 downto sfinal-pfinal-1  => '0') & (" << use("Z2o2") << "(sfinal-pfinal downto 2)));" << endl;
+	vhdl << tab << declare("Log1p_normal", sfinal) << " <=   " << use("Zfinal") << "  -  ((pfinal downto 0  => '0') & " << use("Z2o2_normal")		<< ");" << endl;
 	nextCycle(); ///////////////////// 
 	vhdl << tab << declare("LogF_normal", target_prec) << " <=   " << use("almostLog") << " + ((targetprec-1 downto sfinal => '0') & " << use("Log1p_normal") << ");" << endl;
 	nextCycle(); ///////////////////// 
@@ -263,12 +296,14 @@ FPLog::FPLog(Target* target, int wE, int wF)
 	vhdl << instance(final_norm, "final_norm");
 
 	// back to the squarer output
-	setCycleFromSignal("Z2o2", false);
+	setCycleFromSignal("Z2o2_full", false);
 	nextCycle(); ///////////////////// 
+	int Z2o2_small_size=(wF+gLog+2) - pfinal; // we need   (wF+gLog+2) - pfinal bits of Z2O2
 
-	ao_rshift = new Shifter(target, sfinal-pfinal+1, sfinal-pfinal+1, Right) ;
+	vhdl << tab << declare("Z2o2_small_bs", Z2o2_small_size)  << " <= " << use("Z2o2_full") << range(2*squarerInSize -1, 2*squarerInSize -Z2o2_small_size) << ";" << endl;
+	ao_rshift = new Shifter(target, Z2o2_small_size, sfinal-pfinal+1, Right) ;
 	oplist.push_back(ao_rshift);
-	inPortMap(ao_rshift, "X", "Z2o2");
+	inPortMap(ao_rshift, "X", "Z2o2_small_bs");
 	inPortMap(ao_rshift, "S", "shiftvalinR");
 	outPortMap(ao_rshift, "R", "Z2o2_small_s");
 	vhdl << instance(ao_rshift, "ao_rshift");
@@ -280,7 +315,7 @@ FPLog::FPLog(Target* target, int wE, int wF)
 	int Z2o2_small_sSize = getSignalByName("Z2o2_small_s")->width();
 	vhdl << tab << declare("Z2o2_small", wF+gLog+2) << " <=  (pfinal-1 downto 0  => '0') & " << use("Z2o2_small_s")
 				  << range(Z2o2_small_sSize-1,  Z2o2_small_sSize - (wF+gLog+2) + pfinal) << ";" << endl;
-
+	
 	vhdl << tab << "-- mantissa will be either Y0-z^2/2  or  -Y0+z^2/2,  depending on sR  " << endl;
 	vhdl << tab << declare("Z_small", wF+gLog+2) << " <= " << use("small_absZ0_normd") << " & " << rangeAssign((wF+gLog+2)-small_absZ0_normd_size-1, 0, "'0'") << ";" << endl;
 	vhdl << tab << declare("Log_small", wF+gLog+2) << " <=       Z_small -  Z2o2_small when (" << use("sR") << "='0')" << endl
@@ -288,15 +323,28 @@ FPLog::FPLog(Target* target, int wE, int wF)
 
 
 	nextCycle(); ///////////////////// 
-	vhdl << tab << "-- Possibly subtract 1 or 2 to the exponent, depending on the LZC of " << use("Log_small") << "" << endl;
+	vhdl << tab << "-- Possibly subtract 1 or 2 to the exponent, depending on the LZC of " << use("Log_small") << endl;
 	vhdl << tab << declare("E0_sub", 2) << " <=   \"11\" when " << use("Log_small") << "(wF+g+1) = '1'" << endl
 		  << "          else \"10\" when " << use("Log_small") << "(wF+g+1 downto wF+g) = \"01\"" << endl
 		  << "          else \"01\" ;" << endl;
-	vhdl << tab << declare("E_small", wE) << " <=  (\"0\" & (wE-2 downto 2 => '1') & E0_sub)  -  ";
-	if(wE>intlog2(wF))
-		vhdl << "((wE-1 downto " << getSignalByName("lzo")->width() << " => '0') & " << use("lzo") << ") ;" << endl;
-	else
-		vhdl << use("lzo") << ";" << endl;
+	// Is underflow possible?
+	vhdl << tab <<	"-- The smallest log will be log(1+2^{-wF}) \\approx 2^{-wF}  = 2^" << -wF <<  endl
+		  << tab << "-- The smallest representable number is 2^{1-2^(wE-1)} = 2^" << 1 -(1<<(wE-1))<< endl;
+	if(1 -(1<<(wE-1)) < -wF) {
+		vhdl << tab <<	"-- No underflow possible" <<  endl;
+		vhdl << tab << declare("ufl") << " <= '0';" << endl;
+		vhdl << tab << declare("E_small", wE) << " <=  (\"0\" & (wE-2 downto 2 => '1') & E0_sub)  -  ";
+		if(wE>getSignalByName("lzo")->width())
+			vhdl << "((wE-1 downto " << getSignalByName("lzo")->width() << " => '0') & " << use("lzo") << ") ;" << endl;
+		else
+			vhdl << use("lzo") << ";" << endl;
+	}
+	else{
+		vhdl << tab <<	"-- Underflow may happen" <<  endl;
+		vhdl << tab << declare("E_small", wE+1) << " <=  (\"00\" & (wE-2 downto 2 => '1') & E0_sub)  -  (";
+		vhdl << "'0' & " << use("lzo") << ");" << endl;
+		vhdl << tab << declare("ufl") << " <= E_small(wE);" << endl;
+	}	
 	vhdl << tab << declare("Log_small_normd", wF+gLog) << " <= " << use("Log_small") << "(wF+g+1 downto 2) when " << use("Log_small") << "(wF+g+1)='1'" << endl
 		  << "           else " << use("Log_small") << "(wF+g downto 1)  when " << use("Log_small") << "(wF+g)='1'  -- remove the first zero" << endl
 		  << "           else " << use("Log_small") << "(wF+g-1 downto 0)  ; -- remove two zeroes (extremely rare, 001000000 only)" << endl ;
@@ -307,24 +355,24 @@ FPLog::FPLog(Target* target, int wE, int wF)
 
 	int E_normalSize = getSignalByName("E_normal")->width(); 
 	vhdl << tab << declare("E0offset", wE) << " <= \"" << unsignedBinary((mpz_class(1)<<(wE-1)) -2 + wE , wE) << "\"; -- E0 + wE "<<endl;
-	vhdl << tab << declare("ER", wE) << " <= " << use("E_small") << " when " << use("small") << "='1'" << endl;
-	vhdl << "      else E0offset - (" << rangeAssign(wE-1,  E_normalSize, "'0'") << " & " << use("E_normal") << ");" << endl;
-
+	vhdl << tab << declare("ER", wE) << " <= " << use("E_small") << range(wE-1,0) << " when " << use("small") << "='1'" << endl;
+	if(wE>E_normalSize)
+		vhdl << "      else E0offset - (" << rangeAssign(wE-1,  E_normalSize, "'0'") << " & " << use("E_normal") << ");" << endl;
+	else
+		vhdl << "      else E0offset - " << use("E_normal") << ";" << endl;
 	vhdl << tab << declare("Log_g", wF+gLog) << " <=  " << use("Log_small_normd") << "(wF+g-2 downto 0) & \"0\" when " << use("small") << "='1'           -- remove implicit 1" << endl
 		  << "      else " << use("Log_normal_normd") << "(targetprec-2 downto targetprec-wF-g-1 );  -- remove implicit 1" << endl ;
-	vhdl << tab << declare("sticky") << " <= '0' when Log_g(g-2 downto 0) = (g-2 downto 0 => '0')    else '1';" << endl;
-	vhdl << tab << declare("round") << " <= Log_g(g-1) and (Log_g(g) or sticky);" << endl;
+	// Sticky is always 1 for a transcendental function !
+	// vhdl << tab << declare("sticky") << " <= '0' when Log_g(g-2 downto 0) = (g-2 downto 0 => '0')    else '1';" << endl;
+	vhdl << tab << declare("round") << " <= Log_g(g-1) ; -- sticky is always 1 for a transcendental function " << endl;
 	vhdl << tab << "-- if round leads to a change of binade, the carry propagation magically updates both mantissa and exponent" << endl;
 	// TODO an IntAdder here ?
 	vhdl << tab << declare("EFR", wE+wF) << " <= (ER & Log_g(wF+g-1 downto g)) + ((wE+wF-1 downto 1 => '0') & round); " << endl;
 
-	vhdl << tab <<	"-- The smallest log will be log(1+2^{-wF}) \\approx 2^{-wF}" << endl
-		  << tab << "-- The smallest representable number is 2^{-2^(wE-1)} " << endl;
-	vhdl << tab << declare("ufl") << " <= '0';" << endl;
 	vhdl << tab << "R(wE+wF+2 downto wE+wF) <= \"110\" when ((" << use("XExnSgn") << "(2) and (" << use("XExnSgn") << "(1) or " << use("XExnSgn") << "(0))) or (" << use("XExnSgn") << "(1) and " << use("XExnSgn") << "(0))) = '1' else" << endl
 		  << "                              \"101\" when " << use("XExnSgn") << "(2 downto 1) = \"00\"  else" << endl
 		  << "                              \"100\" when " << use("XExnSgn") << "(2 downto 1) = \"10\"  else" << endl
-		  << "                              \"00\" & " << use("sR") << " when (((" << use("Log_normal_normd") << "(targetprec-1)='0') and (" << use("small") << "='0')) or ( (" << use("Log_small_normd") << " (wF+g-1)='0') and (" << use("small") << "='1'))) or (ufl = '1') else" << endl
+		  << "                              \"00\" & " << use("sR") << " when (((" << use("Log_normal_normd") << "(targetprec-1)='0') and (" << use("small") << "='0')) or ( (" << use("Log_small_normd") << " (wF+g-1)='0') and (" << use("small") << "='1'))) or (" << use("ufl") << " = '1') else" << endl
 		  << "                               \"01\" & " << use("sR") << ";" << endl;
 	vhdl << tab << "R(wE+wF-1 downto 0) <=  "<< use("EFR") << ";" << endl;
 }	
@@ -406,11 +454,24 @@ void FPLog::emulate(TestCase * tc)
 
 void FPLog::buildStandardTestCases(TestCaseList* tcl){
 	TestCase *tc;
+	mpz_class x;
+
 
 	tc = new TestCase(this); 
 	tc->addInput("X", 1.0);
+	tc->addComment("1.0");
 	emulate(tc);
 	tcl->add(tc);
+
+	tc = new TestCase(this);
+	tc->addComment("The worst case of the error analysis: max cancellation, and full range reduction");
+	x = (mpz_class(1) << wF) - (mpz_class(1) << (wF-pfinal+2)) // mantissa
+		+ (((mpz_class(1) << (wE-1)) -2) << wF)  // exponent
+		+ (mpz_class(1) << (wE+wF+1))	; // exn=010
+	tc->addInput("X", x);
+	emulate(tc);
+	tcl->add(tc);
+
 
 
 }
@@ -419,7 +480,8 @@ void FPLog::buildStandardTestCases(TestCaseList* tcl){
 
 // One test out of 8 fully random (tests NaNs etc)
 // All the remaining ones test positive numbers.
-// with special treatment for exponents 0 and -1.
+// with special treatment for exponents 0 and -1, 
+// and for the range reduction worst case.
  
 void FPLog::buildRandomTestCases(TestCaseList* tcl, int n){
 
@@ -436,15 +498,18 @@ void FPLog::buildRandomTestCases(TestCaseList* tcl, int n){
 			a  = getLargeRandom(wF) + ((((mpz_class(1)<<(wE-1))-1)) << wF) + normalExn; 
 		else if ((i & 7) == 2) // exponent of 0.5
 			a  = getLargeRandom(wF) + ((((mpz_class(1)<<(wE-1))-2)) << wF) + normalExn; 
+		else if ((i & 7) == 3) { // worst case for range reduction
+			tc->addComment("The worst case of the error analysis: max cancellation, and full range reduction");
+			a = (mpz_class(1) << wF) - (mpz_class(1) << (wF-pfinal+2)) + getLargeRandom(wF-pfinal+2) // mantissa
+				+ (((mpz_class(1) << (wE-1)) -2) << wF)  // exponent
+				+ (mpz_class(1) << (wE+wF+1))	; // exn=010
+		}
 		else
 			a  = getLargeRandom(wE+wF)  + normalExn; // 010xxxxxx
 		
 		tc->addInput("X", a);
 		/* Get correct outputs */
 		emulate(tc);
-
-		//		cout << tc->getInputVHDL();
-		//    cout << tc->getExpectedOutputVHDL();
 		// add to the test case list
 		tcl->add(tc);
 	}

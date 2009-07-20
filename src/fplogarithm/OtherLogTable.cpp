@@ -10,8 +10,8 @@ using namespace std;
 // -log(1-x) where x < 2^-p and x on a+1 bits.
 // the log is then smaller than 2^-p+1
 //  outputPrecision is the weight of the last bit in the real domain
-OtherLogTable::OtherLogTable(Target* target, int wIn, int outputPrecision, int p, int which) : 
-	Table(target, wIn, outputPrecision),  p(p),  which(which)
+OtherLogTable::OtherLogTable(Target* target, int wIn, int outputPrecision, int p, int which, int ai, int pi) : 
+	Table(target, wIn, outputPrecision),  p(p),  which(which), ai(ai), pi(pi)
  {
 	ostringstream name; 
 	name <<"LogTable_"<<which<<"_"<<wIn<<"_"<<wOut;
@@ -31,17 +31,18 @@ int    OtherLogTable::double2input(double x){
 
 double OtherLogTable::input2double(int x) {
   double d; 
-  // function uses log1p ! 
+  // function uses log1p, so we prepare $d$ for that 
   // computation in double is exact as long as we don't want a quad
   // operator...
 
+  // This is actually the computation of the inverse
   if(x==0) 
     d = 0.;
   else{
     d = (double) (-(x<<1));
     if(which==1) {
 		 if(x>>(wIn-1)) // MSB of x
-			 d+=2.;  // MARCHE SEULEMENT SI a[1]=a[0]+1 !!!!!
+			 d+=2.; 
 		 else 
 			 d+=1.; 
     } 
@@ -86,7 +87,7 @@ mpz_class OtherLogTable::function(int x) {
   mpz_t r;
 
   mpfr_init(i);
-  mpfr_init(l);
+  mpfr_init2(l,wOut);
   mpz_init2(r,400);
 
 
@@ -96,7 +97,7 @@ mpz_class OtherLogTable::function(int x) {
   // cout << "which=" << which <<  " div" << (p+wIn+1) << "  x=" << x << "  apprinv=" << apprinv << "  l=" << mpfr_get_d(l, GMP_RNDN) << endl; 
   mpfr_neg(l, l, GMP_RNDN);
   mpfr_mul_2si(l, l, p+wOut, GMP_RNDN);
-  mpfr_get_z(r, l, GMP_RNDD);
+  mpfr_get_z(r, l, GMP_RNDN);
   result=mpz_class(r);
   mpfr_clear(i);
   mpfr_clear(l);

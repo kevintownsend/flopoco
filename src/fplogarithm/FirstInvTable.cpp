@@ -52,11 +52,12 @@ double FirstInvTable::output2double(mpz_class x) {
 
 mpz_class FirstInvTable::function(int x)
 {
-  double d,y;
+  double d;
   mpz_class r;
-  d=input2double(x); 
-  y=1/d;
-  r =  ceil(y * ((double)(1<<(wOut-1))));
+  d=input2double(x);
+  r =  ceil( ((double)(1<<(wOut-1))) / d); // double rounding, but who cares really
+  // The following line allows us to prove that the case a0=5 is lucky enough to need one bit less than the general case
+  //cout << "FirstInvTable> x=" << x<< "  r=" <<r << "  error=" << ceil( ((double)(1<<(wOut-1))) / d)  - ( ((double)(1<<(wOut-1))) / d) << endl;
   return r;
 }
 

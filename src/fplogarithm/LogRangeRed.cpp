@@ -69,7 +69,7 @@ LogRangeRed :: LogRangeRed(Target* target,
 	// oplist.push_back(it1);
 
 	for(i=1;  i<= stages; i++) {
-		lt[i] = new OtherLogTable(target, a[i], fplog->target_prec - p[i], p[i], i); 
+		lt[i] = new OtherLogTable(target, a[i], fplog->target_prec - p[i], p[i], i, a[i], p[i]); 
 		oplist.push_back(lt[i]);
 	 }
 

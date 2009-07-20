@@ -70,7 +70,7 @@ mpz_class FirstLogTable::function(int x)
   mpz_t r;
 
   mpfr_init(i);
-  mpfr_init(l);
+  mpfr_init2(l,wOut);
   mpz_init2(r,400);
   apprinv = fit->output2double(fit->function(x));;
   // result = double2output(log(apprinv));
@@ -79,28 +79,11 @@ mpz_class FirstLogTable::function(int x)
 
 
 
-#if 0
-  if (x>>(wIn-1)) { // the log will be positive
-	  //mpfr_shift_left(l, wOut); 
-	  mpfr_mul_2si(l, l, wOut, GMP_RNDN);
-	  mpfr_get_z(r, l, GMP_RNDD);
-	  result=mpz_class(r);
-  }
-  else { // the log will be negative -- code it in two's complement
-    mpfr_neg(l, l, GMP_RNDN);
-    //mpfr_shift_left(l, wOut); 
-	  mpfr_mul_2si(l, l, wOut, GMP_RNDN);
-    mpfr_get_z(r, l, GMP_RNDD);
-    result=mpz_class(r);
-  };
-
-#else
-
   if (x>>(wIn-1)) { // the log will be negative  -- code it in two's complement
-	  //mpfr_shift_left(l, wOut); 
+	  // shift left(l, wOut); 
 	 mpfr_mul_2si(l, l, wOut, GMP_RNDN);
-	 mpfr_get_z(r, l, GMP_RNDD);
-    result=mpz_class(r);
+	 mpfr_get_z(r, l, GMP_RNDN);
+    result = mpz_class(r);
     // code in two's complement
     mpz_class t = mpz_class(1) << wOut;
     result = t-result;
@@ -109,10 +92,9 @@ mpz_class FirstLogTable::function(int x)
     mpfr_neg(l, l, GMP_RNDN);
     //mpfr_shift_left(l, wOut); 
 	 mpfr_mul_2si(l, l, wOut, GMP_RNDN);
-	 mpfr_get_z(r, l, GMP_RNDD);
+	 mpfr_get_z(r, l, GMP_RNDN);
     result=mpz_class(r);
   };
-#endif  
 
 
   //  cout << "x="<<x<<" apprinv="<<apprinv<<" logapprinv="<<log(apprinv)<<" result="<<result<<endl;
