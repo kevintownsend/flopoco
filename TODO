@@ -38,6 +38,7 @@ Shifters
 
 General
 * Doxygenize while it's not too late
+* replace all the cout messages by cerr ones
 
 Tentative roadmap 
 (minor version number count, more or less, the number of working operators. 
