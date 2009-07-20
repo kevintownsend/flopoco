@@ -93,7 +93,7 @@ FPLog::FPLog(Target* target, int wE, int wF)
 	stages = i-1;
 
 	// Deduce the number of guard bits
-	gLog=ceil(log2(3*stages+1));
+	gLog=intlog2(3*stages+1);
  
 	if(verbose)
 		cerr << "> FPLog"<<tab<<"Guard bits: " << gLog << endl;
