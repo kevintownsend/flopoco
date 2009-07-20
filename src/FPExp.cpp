@@ -32,6 +32,7 @@ FPExp::FPExp(Target* target, int wE, int wF)
 
 	result_length = f->prepare(area, max_error);
 
+	// How many guard bits do we need?
 	g = intlog2(max_error) + 2;
 	cout
 		<< "    Estimated area (for fixed-point part): " << area << endl

@@ -25,11 +25,16 @@ public:
 	 **/
 	void outputVHDL(ostream& o, string name);
 
+	/** Return the total simulation time*/
+	int getSimulationTime(){
+		return simulationTime;
+	}
+
 private:
 	Operator *op_; /**< The unit under test UUT */
 	int       n_;   /**< The parameter from the constructor */
 	TestCaseList tcl_; /**< Test case list */
-
+	int simulationTime; /**< Total simulation time */
 };
 #endif
 
