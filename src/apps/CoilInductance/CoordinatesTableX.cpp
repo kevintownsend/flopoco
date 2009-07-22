@@ -14,12 +14,13 @@ using std::ifstream;
 
 
 
-CoordinatesTableX::CoordinatesTableX(Target* target, int wIn, int LSBIt,int MSBIt,char *filename) : 
-     DualTable(target, wIn, (MSBIt-LSBIt)), MSBI(MSBI), LSBI(LSBI),  adrWidth(wIn) , wOutm(MSBIt-LSBIt),filepath(filename)
+CoordinatesTableX::CoordinatesTableX(Target* target, int wIn, int LSBI,int MSBI,char *filename) : 
+     DualTable(target, wIn, (MSBI-LSBI)), MSBI(MSBI), LSBI(LSBI),  adrWidth(wIn) , wOutm(MSBI-LSBI),filepath(filename)
    {
 	   //~ filepath=filename;
 	   //~ MSBI = MSBIt;
 	   //~ LSBI=LSBIt;
+	   
 	if ((MSBI < LSBI)){
 		cerr << 
 			" CoordinatesTableX: Input constraint LSBI <= MSBI not met."<<endl;

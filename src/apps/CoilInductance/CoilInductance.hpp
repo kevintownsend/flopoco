@@ -18,6 +18,9 @@
 #include "../../FPLog.hpp"
 #include "../../FPMultiplier.hpp"
 #include "../../LongAcc.hpp"
+#include "CoordinatesTableX.hpp"
+#include "CoordinatesTableY.hpp"
+#include "CoordinatesTableZ.hpp"
 
 
 
@@ -93,6 +96,14 @@ private:
 	
 	/** The FP Multiplier operator used in the final accumulator formula */
 	LongAcc* finalAcc;
+	
+	/**The memories for the coordinates(X,Y,Z)*/
+	CoordinatesTableX* memCoordX;
+	CoordinatesTableY* memCoordY;
+	CoordinatesTableZ* memCoordZ;
+	
+	
+	
 
 	int addressLength();
 	

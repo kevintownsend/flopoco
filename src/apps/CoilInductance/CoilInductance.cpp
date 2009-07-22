@@ -98,11 +98,11 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,i
 	vhdl<<tab<<"process (clk)"<<endl;
 	vhdl<<tab<<"variable count:std_logic_vector"<<range(integratorWidth,0)<<":=(others=>'0');"<<endl;
 	vhdl<<tab<<"begin"<<endl<<tab<<tab<<"if clk'event and clk = '1' then"<<endl;
-	vhdl<<tab<<tab<<tab<<"if count < "<<pow(2,integratorWidth)<<" then "<<endl;
+	vhdl<<tab<<tab<<tab<<"if count < "<<intpow2(integratorWidth)<<" then "<<endl;
 	vhdl<<tab<<tab<<tab<<tab<<"count:=count+'1';"<<endl;
 	vhdl<<tab<<tab<<tab<<tab<<declare("out_clk11",1)<<"<= '0';"<<endl;
 	vhdl<<tab<<tab<<tab<<tab<<declare("out_rst",1)<<"<= '0'; "<<endl;
-	vhdl<<tab<<tab<<tab<<"elsif count = "<<pow(2,integratorWidth)<<" then "<<endl;
+	vhdl<<tab<<tab<<tab<<"elsif count = "<<intpow2(integratorWidth)<<" then "<<endl;
 	vhdl<<tab<<tab<<tab<<tab<<"count:=count+'1';"<<endl;
 	vhdl<<tab<<tab<<tab<<tab<<use("out_clk11")<<"<= '1'; "<<endl;
 	vhdl<<tab<<tab<<tab<<tab<<use("out_rst")<<"<= '0'; "<<endl;
@@ -136,6 +136,14 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,i
 	vhdl<<tab<<tab<<tab<<tab<<use("selectionVal1")<<" <= '1'; "<<endl;
 	vhdl<<tab<<tab<<tab<<tab<<" c1:=c1 + '1';"<<endl;
 	vhdl<<tab<<tab<<tab<<tab<<" temp:=\"10\";"<<endl;
+	
+	vhdl<<tab<<tab<<tab<<"elsif temp=\"10\" then"<<endl;
+	vhdl<<tab<<tab<<tab<<tab<<use("out_clk3")<<" <= '0';"<<endl;
+	vhdl<<tab<<tab<<tab<<tab<<use("selectionVal1")<<" <= '1'; "<<endl;
+	vhdl<<tab<<tab<<tab<<tab<<" c1:=c1 + '1';"<<endl;
+	vhdl<<tab<<tab<<tab<<tab<<" temp:=\"11\";"<<endl;
+	
+	
 	vhdl<<tab<<tab<<tab<<"else"<<endl;
 	vhdl<<tab<<tab<<tab<<tab<<use("out_clk3")<<" <= '0';"<<endl;
 	vhdl<<tab<<tab<<tab<<tab<<"temp:=\"00\";"<<endl;
@@ -175,6 +183,16 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,i
 	vhdl<<tab<<tab<<tab<<tab<<use("selectionVal2")<<" <= '1'; "<<endl;
 	vhdl<<tab<<tab<<tab<<tab<<" c2:=c2 + '1';"<<endl;
 	vhdl<<tab<<tab<<tab<<tab<<" temp:=\"10\";"<<endl;
+	
+	
+	vhdl<<tab<<tab<<tab<<"elsif temp= \"10\" then"<<endl;
+	vhdl<<tab<<tab<<tab<<tab<<use("out_clk4")<<" <= '0';"<<endl;
+	vhdl<<tab<<tab<<tab<<tab<<use("selectionVal2")<<" <= '1'; "<<endl;
+	vhdl<<tab<<tab<<tab<<tab<<" c2:=c2 + '1';"<<endl;
+	vhdl<<tab<<tab<<tab<<tab<<" temp:=\"11\";"<<endl;
+	
+	
+	
 	vhdl<<tab<<tab<<tab<<"else"<<endl;
 	vhdl<<tab<<tab<<tab<<tab<<use("out_clk4")<<" <= '0';"<<endl;
 	vhdl<<tab<<tab<<tab<<tab<<"temp:=\"00\";"<<endl;
@@ -204,24 +222,196 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,i
 	
 	//Memories instantiation
 	
+	 
+	
+	//cout<<"LSBI:++++ "<<LSBI<<endl;
+	memCoordX = new CoordinatesTableX(target,13,LSBI, MSBI,filepath); // perhaps adding a new parameter for number of addresses -> suggestion NO
+	memCoordX->changeName(getName()+"memCoordX");	
+	oplist.push_back(memCoordX);
+	inPortMap  (memCoordX, "X1", "Address1");
+	inPortMap  (memCoordX, "X2", "Address2");
+	outPortMap (memCoordX, "Y1","dataX1");
+	outPortMap (memCoordX, "Y2","dataX2");
+	vhdl << instance(memCoordX, "memCoordX");
+			
+	
+	memCoordY = new CoordinatesTableY(target,13,LSBI, MSBI,filepath) ;// perhaps adding a new parameter for number of addresses -> suggestion NO
+	memCoordY->changeName(getName()+"memCoordY");	
+	oplist.push_back(memCoordY);
+	inPortMap  (memCoordY, "X1", "Address1");
+	inPortMap  (memCoordY, "X2", "Address2");
+	outPortMap (memCoordY, "Y1","dataY1");
+	outPortMap (memCoordY, "Y2","dataY2");
+	vhdl << instance(memCoordY, "memCoordY");
+	
+	memCoordZ = new CoordinatesTableZ(target,13,LSBI, MSBI,filepath) ;// perhaps adding a new parameter for number of addresses -> suggestion NO
+	memCoordZ->changeName(getName()+"memCoordZ");	
+	oplist.push_back(memCoordZ);
+	inPortMap  (memCoordZ, "X1", "Address1");
+	inPortMap  (memCoordZ, "X2", "Address2");
+	outPortMap (memCoordZ, "Y1","dataZ1");
+	outPortMap (memCoordZ, "Y2","dataZ2");
+	vhdl << instance(memCoordZ, "memCoordZ");
+	
+	vhdl<<endl;
+	vhdl<<tab<<"process(out_clk1)"<<endl;
+	vhdl<<tab<<"variable tempX: std_logic_vector("<<inputWidth-1<<" downto 0):=(others=>'0');"<<endl;
+	vhdl<<tab<<"variable tempY: std_logic_vector("<<inputWidth-1<<" downto 0):=(others=>'0');"<<endl;
+	vhdl<<tab<<"variable tempZ: std_logic_vector("<<inputWidth-1<<" downto 0):=(others=>'0');"<<endl;
+	vhdl<<tab<<"begin"<<endl;
+	vhdl<<tab<<tab<<"if  out_clk1'event and out_clk1 = '1' then"<<endl;
+	vhdl<<tab<<tab<<tab<<"tempX:="<<use("dataX1")<<";"<<endl;
+	vhdl<<tab<<tab<<tab<<"tempY:="<<use("dataY1")<<";"<<endl;
+	vhdl<<tab<<tab<<tab<<"tempZ:="<<use("dataZ1")<<";"<<endl;
+	vhdl<<tab<<tab<<"end if;"<<endl;
+	vhdl<<tab<<tab<<declare("dataD1X1",inputWidth)<<" <= tempX;"<<endl;
+	vhdl<<tab<<tab<<declare("dataD1Y1",inputWidth)<<" <= tempY;"<<endl;
+	vhdl<<tab<<tab<<declare("dataD1Z1",inputWidth)<<" <= tempZ;"<<endl;
+	vhdl<<tab<<"end process;"<<endl;
+	
+	
+	vhdl<<endl;
+	vhdl<<tab<<"process(out_clk1)"<<endl;
+	vhdl<<tab<<"variable tempX: std_logic_vector("<<inputWidth-1<<" downto 0):=(others=>'0');"<<endl;
+	vhdl<<tab<<"variable tempY: std_logic_vector("<<inputWidth-1<<" downto 0):=(others=>'0');"<<endl;
+	vhdl<<tab<<"variable tempZ: std_logic_vector("<<inputWidth-1<<" downto 0):=(others=>'0');"<<endl;
+	vhdl<<tab<<"begin"<<endl;
+	vhdl<<tab<<tab<<"if  out_clk1'event and out_clk1 = '1' then"<<endl;
+	vhdl<<tab<<tab<<tab<<"tempX:="<<use("dataD1X1")<<";"<<endl;
+	vhdl<<tab<<tab<<tab<<"tempY:="<<use("dataD1Y1")<<";"<<endl;
+	vhdl<<tab<<tab<<tab<<"tempZ:="<<use("dataD1Z1")<<";"<<endl;
+	vhdl<<tab<<tab<<"end if;"<<endl;
+	vhdl<<tab<<tab<<declare("dataD2X1",inputWidth)<<" <= tempX;"<<endl;
+	vhdl<<tab<<tab<<declare("dataD2Y1",inputWidth)<<" <= tempY;"<<endl;
+	vhdl<<tab<<tab<<declare("dataD2Z1",inputWidth)<<" <= tempZ;"<<endl;
+	vhdl<<tab<<"end process;"<<endl;
+	
+	
+	vhdl<<endl;
+	vhdl<<tab<<"process(out_clk3)"<<endl;
+	vhdl<<tab<<"variable tempX: std_logic_vector("<<inputWidth-1<<" downto 0):=(others=>'0');"<<endl;
+	vhdl<<tab<<"variable tempY: std_logic_vector("<<inputWidth-1<<" downto 0):=(others=>'0');"<<endl;
+	vhdl<<tab<<"variable tempZ: std_logic_vector("<<inputWidth-1<<" downto 0):=(others=>'0');"<<endl;
+	vhdl<<tab<<"begin"<<endl;
+	vhdl<<tab<<tab<<"if  out_clk3'event and out_clk3 = '1' then"<<endl;
+	vhdl<<tab<<tab<<tab<<"tempX:="<<use("dataX2")<<";"<<endl;
+	vhdl<<tab<<tab<<tab<<"tempY:="<<use("dataY2")<<";"<<endl;
+	vhdl<<tab<<tab<<tab<<"tempZ:="<<use("dataZ2")<<";"<<endl;
+	vhdl<<tab<<tab<<"end if;"<<endl;
+	vhdl<<tab<<tab<<declare("dataD1X2",inputWidth)<<" <= tempX;"<<endl;
+	vhdl<<tab<<tab<<declare("dataD1Y2",inputWidth)<<" <= tempY;"<<endl;
+	vhdl<<tab<<tab<<declare("dataD1Z2",inputWidth)<<" <= tempZ;"<<endl;
+	vhdl<<tab<<"end process;"<<endl;
+	
+	
+	vhdl<<endl;
+	vhdl<<tab<<"process(out_clk3)"<<endl;
+	vhdl<<tab<<"variable tempX: std_logic_vector("<<inputWidth-1<<" downto 0):=(others=>'0');"<<endl;
+	vhdl<<tab<<"variable tempY: std_logic_vector("<<inputWidth-1<<" downto 0):=(others=>'0');"<<endl;
+	vhdl<<tab<<"variable tempZ: std_logic_vector("<<inputWidth-1<<" downto 0):=(others=>'0');"<<endl;
+	vhdl<<tab<<"begin"<<endl;
+	vhdl<<tab<<tab<<"if  out_clk3'event and out_clk3 = '1' then"<<endl;
+	vhdl<<tab<<tab<<tab<<"tempX:="<<use("dataD1X2")<<";"<<endl;
+	vhdl<<tab<<tab<<tab<<"tempY:="<<use("dataD1Y2")<<";"<<endl;
+	vhdl<<tab<<tab<<tab<<"tempZ:="<<use("dataD1Z2")<<";"<<endl;
+	vhdl<<tab<<tab<<"end if;"<<endl;
+	vhdl<<tab<<tab<<declare("dataD2X2",inputWidth)<<" <= tempX;"<<endl;
+	vhdl<<tab<<tab<<declare("dataD2Y2",inputWidth)<<" <= tempY;"<<endl;
+	vhdl<<tab<<tab<<declare("dataD2Z2",inputWidth)<<" <= tempZ;"<<endl;
+	vhdl<<tab<<"end process;"<<endl;
+	
+	vhdl<<tab<<"with "<<use("selectionVal")<<" select "<<declare("dataD2X1s",inputWidth)<<" <= "<<endl;
+	vhdl<<tab<<tab<<use("dataD2X1")<<" when '0', "<<endl;
+	vhdl<<tab<<tab<<"(others=> '0' ) when others;"<<endl;
+	vhdl<<endl;
+	vhdl<<tab<<"with "<<use("selectionVal")<<" select "<<declare("dataD2Y1s",inputWidth)<<" <= "<<endl;
+	vhdl<<tab<<tab<<use("dataD2Y1")<<" when '0', "<<endl;
+	vhdl<<tab<<tab<<"(others=> '0' ) when others;"<<endl;
+	vhdl<<endl;
+	vhdl<<tab<<"with "<<use("selectionVal")<<" select "<<declare("dataD2Z1s",inputWidth)<<" <= "<<endl;
+	vhdl<<tab<<tab<<use("dataD2Z1")<<" when '0', "<<endl;
+	vhdl<<tab<<tab<<"(others=> '0' ) when others;"<<endl;
+	vhdl<<endl;
+	
+	
+	vhdl<<tab<<"with "<<use("selectionVal")<<" select "<<declare("dataD1X1s",inputWidth)<<" <= "<<endl;
+	vhdl<<tab<<tab<<use("dataD1X1")<<" when '0', "<<endl;
+	vhdl<<tab<<tab<<"(others=> '0' ) when others;"<<endl;
+	vhdl<<endl;
+	vhdl<<tab<<"with "<<use("selectionVal")<<" select "<<declare("dataD1Y1s",inputWidth)<<" <= "<<endl;
+	vhdl<<tab<<tab<<use("dataD1Y1")<<" when '0', "<<endl;
+	vhdl<<tab<<tab<<"(others=> '0' ) when others;"<<endl;
+	vhdl<<endl;
+	vhdl<<tab<<"with "<<use("selectionVal")<<" select "<<declare("dataD1Z1s",inputWidth)<<" <= "<<endl;
+	vhdl<<tab<<tab<<use("dataD1Z1")<<" when '0', "<<endl;
+	vhdl<<tab<<tab<<"(others=> '0' ) when others;"<<endl;
+	vhdl<<endl;
+	
+	
+	vhdl<<tab<<"with "<<use("selectionVal")<<" select "<<declare("dataD2X2s",inputWidth)<<" <= "<<endl;
+	vhdl<<tab<<tab<<use("dataD2X2")<<" when '0', "<<endl;
+	vhdl<<tab<<tab<<"(others=> '0' ) when others;"<<endl;
+	vhdl<<endl;
+	vhdl<<tab<<"with "<<use("selectionVal")<<" select "<<declare("dataD2Y2s",inputWidth)<<" <= "<<endl;
+	vhdl<<tab<<tab<<use("dataD2Y2")<<" when '0', "<<endl;
+	vhdl<<tab<<tab<<"(others=> '0' ) when others;"<<endl;
+	vhdl<<endl;
+	vhdl<<tab<<"with "<<use("selectionVal")<<" select "<<declare("dataD2Z2s",inputWidth)<<" <= "<<endl;
+	vhdl<<tab<<tab<<use("dataD2Z2")<<" when '0', "<<endl;
+	vhdl<<tab<<tab<<"(others=> '0' ) when others;"<<endl;
+	vhdl<<endl;
+	
+	
+	vhdl<<tab<<"with "<<use("selectionVal")<<" select "<<declare("dataD1X2s",inputWidth)<<" <= "<<endl;
+	vhdl<<tab<<tab<<use("dataD1X2")<<" when '0', "<<endl;
+	vhdl<<tab<<tab<<"(others=> '0' ) when others;"<<endl;
+	vhdl<<endl;
+	vhdl<<tab<<"with "<<use("selectionVal")<<" select "<<declare("dataD1Y2s",inputWidth)<<" <= "<<endl;
+	vhdl<<tab<<tab<<use("dataD1Y2")<<" when '0', "<<endl;
+	vhdl<<tab<<tab<<"(others=> '0' ) when others;"<<endl;
+	vhdl<<endl;
+	vhdl<<tab<<"with "<<use("selectionVal")<<" select "<<declare("dataD1Z2s",inputWidth)<<" <= "<<endl;
+	vhdl<<tab<<tab<<use("dataD1Z2")<<" when '0', "<<endl;
+	vhdl<<tab<<tab<<"(others=> '0' ) when others;"<<endl;
+	vhdl<<endl;
+	
+	
+	vhdl<<tab<<declare("signal_x0",inputWidth)<<"<= "<<use("dataD2X1s")<<";"<<endl;
+	vhdl<<tab<<declare("signal_x1",inputWidth)<<"<= "<<use("dataD1X1s")<<";"<<endl;
+	vhdl<<tab<<declare("signal_x2",inputWidth)<<"<= "<<use("dataD2X2s")<<";"<<endl;
+	vhdl<<tab<<declare("signal_x3",inputWidth)<<"<= "<<use("dataD1X2s")<<";"<<endl;
+	
+	vhdl<<tab<<declare("signal_y0",inputWidth)<<"<= "<<use("dataD2Y1s")<<";"<<endl;
+	vhdl<<tab<<declare("signal_y1",inputWidth)<<"<= "<<use("dataD1Y1s")<<";"<<endl;
+	vhdl<<tab<<declare("signal_y2",inputWidth)<<"<= "<<use("dataD2Y2s")<<";"<<endl;
+	vhdl<<tab<<declare("signal_y3",inputWidth)<<"<= "<<use("dataD1Y2s")<<";"<<endl;
+	
+	vhdl<<tab<<declare("signal_z0",inputWidth)<<"<= "<<use("dataD2Z1s")<<";"<<endl;
+	vhdl<<tab<<declare("signal_z1",inputWidth)<<"<= "<<use("dataD1Z1s")<<";"<<endl;
+	vhdl<<tab<<declare("signal_z2",inputWidth)<<"<= "<<use("dataD2Z2s")<<";"<<endl;
+	vhdl<<tab<<declare("signal_z3",inputWidth)<<"<= "<<use("dataD1Z2s")<<";"<<endl;
+	
+	
+	
+	
 	//Computing the segments x1-x0 x3-x2 y1-y0 y3-y2 z1-z0 z3-z2
 	
 	//syncCycleFromSignal("????"); sincronization with memories
 	
-	addInput("signal_x0",inputWidth);
-	addInput("signal_x1",inputWidth);
-	addInput("signal_x2",inputWidth);
-	addInput("signal_x3",inputWidth);
+	//~ addInput("signal_x0",inputWidth);
+	//~ addInput("signal_x1",inputWidth);
+	//~ addInput("signal_x2",inputWidth);
+	//~ addInput("signal_x3",inputWidth);
 	
-	addInput("signal_y0",inputWidth);
-	addInput("signal_y1",inputWidth);
-	addInput("signal_y2",inputWidth);
-	addInput("signal_y3",inputWidth);
+	//~ addInput("signal_y0",inputWidth);
+	//~ addInput("signal_y1",inputWidth);
+	//~ addInput("signal_y2",inputWidth);
+	//~ addInput("signal_y3",inputWidth);
 	
-	addInput("signal_z0",inputWidth);
-	addInput("signal_z1",inputWidth);
-	addInput("signal_z2",inputWidth);
-	addInput("signal_z3",inputWidth);
+	//~ addInput("signal_z0",inputWidth);
+	//~ addInput("signal_z1",inputWidth);
+	//~ addInput("signal_z2",inputWidth);
+	//~ addInput("signal_z3",inputWidth);
 	
 	/*
 	vhdl<<tab<<declare("signal_x0",inputWidth)<<"<= "<<"(others=>'0')"<<";"<<endl;  //possible need to add 2 bits for the special bits ; modified to take the appropriate value read from memory
@@ -927,7 +1117,10 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,i
 	
 	
 
+	double tempFreq=target->frequency();
+	target->setFrequency(((double) 50000000) );
 	log4Acc = new FPLog(target, wE, wF);
+	target->setFrequency(tempFreq);
 	log4Acc->changeName(getName()+"log4Acc");
 	oplist.push_back(log4Acc);
 	inPortMap  (log4Acc, "X", use("result4Log"));
