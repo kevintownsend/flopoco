@@ -46,17 +46,16 @@ LongAcc::LongAcc(Target* target, int wEX, int wFX, int MaxMSBX, int LSBA, int MS
 	wEX_(wEX), wFX_(wFX), MaxMSBX_(MaxMSBX), LSBA_(LSBA), MSBA_(MSBA), AccValue_(0), xOvf(0)
 {
 	int i;
+	setCopyrightString("Florent de Dinechin, Bogdan Pasca (2008-2009)");		
 
 	//check input constraints, i.e, MaxMSBX <= MSBA, LSBA<MaxMSBx
 	if ((MaxMSBX_ > MSBA_)){
-		cerr << 
-			" LongAcc: Input constraint MaxMSBX <= MSBA not met."<<endl;
+		cerr << " LongAcc: Input constraint MaxMSBX <= MSBA not met." << endl;
 		exit (EXIT_FAILURE);
 	}
 	if ((LSBA_ >= MaxMSBX_)){
-		cerr << 
-			" LongAcc: Input constraint LSBA<MaxMSBx not met:"  <<
-			"   This accumulator would never accumulate a bit."<<endl;
+		cerr << " LongAcc: Input constraint LSBA<MaxMSBx not met:"<<
+		        " This accumulator would never accumulate a bit." << endl;
 		exit (EXIT_FAILURE);
 	}
 
@@ -72,10 +71,17 @@ LongAcc::LongAcc(Target* target, int wEX, int wFX, int MaxMSBX, int LSBA, int MS
 
 	// Set up various architectural parameters
 	sizeAcc_ = MSBA_-LSBA_+1;
+
+	addFPInput ("X", wEX_,wFX_);
+	addOutput  ("A", sizeAcc_);  
+	addOutput  ("C", sizeAcc_);
+	addOutput  ("XOverflow");  
+	addOutput  ("XUnderflow");  
+	addOutput  ("AccOverflow");  
 		
-	maxShift_ = MaxMSBX_-LSBA_;              // shift is 0 when the implicit 1 is at LSBA_
-	sizeShift_ = intlog2(maxShift_);         // the number of bits needed to control the shifter
-	sizeSummand_ = MaxMSBX_-LSBA_+1;         // the size of the summand (the maximum one - when the inplicit 1 is on MaxMSBX)
+	maxShift_        = MaxMSBX_-LSBA_;              // shift is 0 when the implicit 1 is at LSBA_
+	sizeShift_       = intlog2(maxShift_);         // the number of bits needed to control the shifter
+	sizeSummand_     = MaxMSBX_-LSBA_+1;         // the size of the summand (the maximum one - when the inplicit 1 is on MaxMSBX)
 	sizeShiftedFrac_ = maxShift_ + wFX_+1;   
 	E0X_ = (1<<(wEX_-1)) -1;                 // exponent bias
 	// Shift is 0 when implicit 1 is on LSBA, that is when EX-bias = LSBA
@@ -97,242 +103,125 @@ LongAcc::LongAcc(Target* target, int wEX, int wFX, int MaxMSBX, int LSBA, int MS
 		    <<(-E0X_)<< " to " << ((1<<wEX_)-1)-E0X_ <<endl;
 		exit (EXIT_FAILURE);
 	}
+		
+	int chunkSize_;
+	target->suggestSubaddSize(chunkSize_ , sizeAcc_);
+	int nbOfChunks = ceil(double(sizeAcc_)/double(chunkSize_));
+	int lastChunkSize = ( sizeAcc_ % chunkSize_ == 0 ? chunkSize_ : sizeAcc_ % chunkSize_);
 
-	// Create an instance of the required left input shifter. 
-	// It's input is on wFX + 1 bits (after adding the inplicit 1)
-	// the maximum shift value is maxMSBX - LSBA, (see above for details)
+	vhdl << tab << declare("fracX",wFX_+1) << " <= " << " \"1\" & " << use("X") << range(wFX_-1,0) << ";" << endl;
+	vhdl << tab << declare("expX" ,wEX_  ) << " <= " << use("X") << range(wEX_+wFX_-1,wFX_) << ";" << endl;
+	vhdl << tab << declare("signX",1     ) << " <= " << use("X") << of(wEX_+wFX_) << ";" << endl;
+	vhdl << tab << declare("exnX" ,2     ) << " <= " << use("X") << range(wEX_+wFX_+2,wEX_+wFX_+1) << ";" << endl;
+	
+	vhdl << tab << declare("xOverflowCond",1) << " <= '1' when (( " << use("expX") << " > CONV_STD_LOGIC_VECTOR("<<MaxMSBX_ + E0X_<<","<< wEX_<<")) or ("<<use("exnX")<<" >= \"10\")) else '0' ;"<<endl; 
+	vhdl << tab << declare("xUnderflowCond",1) << " <= '1' when ("<<use("expX")<<" < CONV_STD_LOGIC_VECTOR("<<LSBA_ + E0X_<<","<<wEX_<<")) else '0' ;" << endl;  
+	//determination of the shift value
+	int64_t exp_offset = E0X_+LSBA_;
+	vhdl << tab << declare("shiftVal",wEX_+1) << " <= (\"0\" & " << use("expX") << ") + CONV_STD_LOGIC_VECTOR("<< exp_offset <<","<<  wEX_+1<<");" << endl;
+
+	//input shifter mappings
 	shifter_ = new Shifter(target, wFX_+1, maxShift_, Left);
 	oplist.push_back(shifter_);
 
-	if(verbose)
-		cout << " LEFT shifter pipeline depth is "<<shifter_->getPipelineDepth()<<endl;
+	inPortMap   (shifter_, "X", "fracX");
+	inPortMapCst(shifter_, "S", use("shiftVal")+range(shifter_->getShiftInWidth() - 1,0));
+	outPortMap  (shifter_, "R", "shifted_frac");
+	vhdl << instance(shifter_, "LongAccInputShifter");
+	
+	syncCycleFromSignal("shifted_frac");
+	//determine if the input has been shifted out from the accumulator. 
+	//in this case the accumulator will be incremented with 0
+	vhdl << tab << declare("flushedToZero",1) << " <= '1' when ("<<use("shiftVal")<<of(wEX_)<<"='1' -- negative left shift " << endl;
+	vhdl << tab << "                               or exnX=\"00\")" << endl;
+	vhdl << tab << "                 else '0';" << endl;
+	vhdl << tab << declare("summand", sizeSummand_, true, Signal::registeredWithSyncReset) << "<= " << rangeAssign(sizeSummand_-1,0,"'0'") << " when "<< use("flushedToZero") << "='1' " << 
+	                                                                                                  " else " << use("shifted_frac")<<range(sizeShiftedFrac_-1,wFX_)<<";" << endl;
 
-	addFPInput ("X", wEX_,wFX_);
-	addOutput  ("A", sizeAcc_);  
-	addOutput  ("XOverflow");  
-	addOutput  ("XUnderflow");  
-	addOutput  ("AccOverflow");  
+	vhdl << tab << "-- 2's complement of the summand" << endl;
+	// Don't compute 2's complement just yet, just invert the bits and leave the addition of the extra 1 in accumulation, as a carry in bit
+	vhdl << tab << declare("summand2c", sizeSummand_, true) << " <= " << use("summand") << " when (" << use("signX")<<"='0' or "<<use("flushedToZero")<<"='1') "<<
+	                                                                 "else not(" << use("summand") << ");"<< endl;
 
-	// Unregistered signal
-	addSignal("exnX", 2);
-	addSignal("expX", wEX_);
-	addSignal("fracX", wFX_+1);
-	addSignal("shifted_frac", sizeShiftedFrac_);
-	addSignal("shiftval", wEX_+1); //, "includes a sign bit");
-	
-	// setup the pipeline 
-	if(target->isPipelined()) {
-		// TODO here code to pipeline the 2's complement if the target frequency is high, see IntAdder 
-		// meanwhile we just do it in 1 level, assuming there is a register at the out of the shifter_.
-		c2PipelineDepth_ = 1;
-	} 
-	else {
-		c2PipelineDepth_ = 0;
-	}
-	
-	int suggestedAdditionChunkSize;
-	//get the addition chunk sizes for the given input frequency	
-	bool status = target->suggestSubaddSize(suggestedAdditionChunkSize ,sizeAcc_);
-	
-	if (!status)
-		cout << "Warning: the desired frequency is not possible; optimizing for maximum frequency"<<endl;
-	
-	additionNumberOfChunks_ = (sizeAcc_/suggestedAdditionChunkSize) + (((sizeAcc_%suggestedAdditionChunkSize)==0)?0:1); 
-	//rebalance chunks
-	rebalancedAdditionChunkSize_ = (sizeAcc_ / additionNumberOfChunks_)  + (((sizeAcc_%additionNumberOfChunks_)==0)?0:1); 
-	rebalancedAdditionLastChunkSize_ = sizeAcc_ - (additionNumberOfChunks_-1)*rebalancedAdditionChunkSize_;
+	vhdl << tab << "-- extension of the summand to accumulator size" << endl;
+	vhdl << tab << declare("ext_summand2c",sizeAcc_,true) << " <= " << rangeAssign(sizeAcc_-1, sizeSummand_, use("signX")+ " and not " + use("flushedToZero")) << " & " <<use("summand2c")<<";" << endl;
 
-	if (verbose){
-		cout << "acumulator size ="<<sizeAcc_<<endl;
-		cout << "suggested Addition Chunk Size =  "<<suggestedAdditionChunkSize<<endl; 
-		cout << "addition Number Of Chunks =  "<<additionNumberOfChunks_<<endl; 
-		cout << "rebalanced Addition Chunk Size =  "<<rebalancedAdditionChunkSize_<<endl; 
-		cout << "rebalanced Addition Last Chunk Size =  "<<rebalancedAdditionLastChunkSize_<<endl;
-	}
-	
-	//define the registers which now form the accumulator
-	for (i=0;i<additionNumberOfChunks_;i++) {
+	vhdl << tab << "-- accumulation itself" << endl;
+	//determine the value of the carry in bit
+	vhdl << tab << declare("carryBit_0",1,false) << " <= " << use("signX") << " and not " << use("flushedToZero") << ";" << endl; 
+		
+		
+	for (i=0; i < nbOfChunks; i++) {
 		ostringstream accReg;
 		accReg<<"acc_"<<i;
-			if (i==additionNumberOfChunks_-1){
-				addDelaySignalBusSyncReset(accReg.str(), rebalancedAdditionLastChunkSize_); 
-				accReg << "_ext";
-				addSignal(accReg.str(), rebalancedAdditionLastChunkSize_ + 1);   
-			}
-			else{
-				addDelaySignalBusSyncReset(accReg.str(), rebalancedAdditionChunkSize_);  
-				accReg << "_ext";
-				addSignal(accReg.str(), rebalancedAdditionChunkSize_ + 1);   
-			}
-	}
-	 
-	//This bit depends on the initial sign of the summand together with information regarding wether or not 
-	// the summand has been shifted out of the accumulator. 
-	
-	// addRegisteredSignalSyncReset("carryIn",1);
-	
-	//addSignal("accumulatorOverflow",1);
-	
-	//define the carry propagation registers. The last carryBit represents the overflow bit of the accumulator
-	// and the first carry bit carryBit_0 represents the carry in of the accumulator
-	for (i=0;i<=additionNumberOfChunks_;i++){
-		ostringstream carryBit;
-		carryBit<< "carryBit_"<<i;
-		addDelaySignalSyncReset(carryBit.str(), 1);  
+
+		vhdl << tab << declare(join("acc_",i),(i!=nbOfChunks-1?chunkSize_:lastChunkSize) ,true, Signal::registeredWithSyncReset) << " <= " << 
+		                                                                        join("acc_",i,"_ext")<<range((i!=nbOfChunks-1?chunkSize_-1:lastChunkSize-1),0) << ";" << endl;
+		vhdl << tab << declare(join("carryBit_",i+1),1, false, Signal::registeredWithSyncReset) <<"  <= " << join("acc_",i,"_ext")<<of((i!=nbOfChunks-1?chunkSize_:lastChunkSize)) << ";" << endl;
+		nextCycle();		
+		vhdl << tab << declare(join("acc_",i,"_ext"),(i!=nbOfChunks-1?chunkSize_:lastChunkSize)+1) << " <= ( \"0\" & " << use(join("acc_",i)) << ") + " <<
+					                                                      "( \"0\" & " << use("ext_summand2c") << range( (i!=nbOfChunks-1?chunkSize_*(i+1)-1:sizeAcc_-1), chunkSize_*i) << ") + " << 
+					                                                       use(join("carryBit_",i)) << ";" << endl;
+		setCycleFromSignal("carryBit_0");
 	}
 
-	// on one side, add delays for the non-complemented signal
-	addDelaySignalSyncReset("summand", sizeSummand_, c2PipelineDepth_); 
-	addDelaySignalSyncReset("flushedToZero", 1, shifter_->getPipelineDepth());
-	addDelaySignalSyncReset("signX", 1, shifter_->getPipelineDepth());
-
-	addSignal("summand2c", sizeSummand_);
-
-	// final pipeline depth is the sum of shifter_ pipeline and 2's
-	// complement pipeline, plus 1 for the accumulator itself.
-	//TODO when the accumulator is pipelined: replace this 1 with the acc's pipeline depth
-	setPipelineDepth(shifter_->getPipelineDepth() + c2PipelineDepth_ + 1);
-
-	// it is rather stupid to register all the extended bits as they are
-	// all equal, but the synthesiser optimises it out
-	addDelaySignal("ext_summand2c", sizeAcc_);
-	addSignal("acc", sizeAcc_); //,  "includes overflow bit");
+	nextCycle();
+	//compose the acc signal 
+		
+	vhdl << tab << declare("acc", sizeAcc_) << " <= ";
+	for (i=nbOfChunks-1;i>=0;i--) {
+		if (i>0)
+			vhdl << use(join("acc_",i)) << " & ";
+		else
+			vhdl << use(join("acc_",i)) << ";" << endl;
+	}
 	
-	if(verbose)
-		cout << tab <<getName()<< " pipeline depth is " << getPipelineDepth() << " cycles" <<endl;
+	vhdl << tab << declare("carry", sizeAcc_) << " <= ";
+	for (i=nbOfChunks-1;i>=0; i--){
+		if (i<nbOfChunks-1){
+			vhdl << use( join("carryBit_",i+1) ); 
+		}
 
-	addDelaySignalSyncReset("xOverflowRegister", 1);
-	addDelaySignalSyncReset("xOverflowCond",1,shifter_->getPipelineDepth()+1);
-	
-	addDelaySignalSyncReset("xUnderflowRegister", 1);
-	addDelaySignalSyncReset("xUnderflowCond",1,shifter_->getPipelineDepth()+1);
-	
+		if (i<nbOfChunks-1)
+			vhdl << " & ";
+		
+		if (i==nbOfChunks-1)			
+				vhdl << zeroGenerator(lastChunkSize-1,0);
+		else
+			if (i>0)
+				vhdl << zeroGenerator(chunkSize_-1,0);
+			else
+				vhdl << zeroGenerator(chunkSize_,0);
 
-	addDelaySignalSyncReset("accOverflowRegister",1);
+		if (i>0)
+			vhdl << " & ";
+
+	}
+	vhdl << ";" << endl;
+
+	vhdl << tab << declare("xOverflowRegister",1) << " <= "; nextCycle(false); vhdl << use("xOverflowRegister") << " or "<<use("xOverflowCond") << ";"<<endl;
+	setCycleFromSignal("acc",false);
+	vhdl << tab << declare("xUnderflowRegister",1) << " <= "; nextCycle(false); vhdl << use("xUnderflowRegister") << " or "<<use("xUnderflowCond") << ";"<<endl;
+	setCycleFromSignal("acc",false);
+	vhdl << tab << declare("accOverflowRegister",1) << " <= "; nextCycle(false); vhdl << use("accOverflowRegister") << " or "<<use(join("carryBit_",nbOfChunks)) << ";"<<endl;
+	setCycleFromSignal("acc",false);
+
+	vhdl << tab << "A <=   acc;" << endl;
+	vhdl << tab << "C <=   carry;" << endl;
+
+	nextCycle();
+	//if accumulator overflows this flag will be set to 1 until a maunal reset is performed
+	vhdl << tab << "AccOverflow <= " << use("accOverflowRegister")<<";"<<endl; 
+	//if the input overflows then this flag will be set to 1, and will remain 1 until manual reset is performed
+	vhdl << tab << "XOverflow <= " << use("xOverflowRegister")<<";"<<endl; 
+	vhdl << tab << "XUnderflow <= "<< use("xUnderflowRegister")<<";"<<endl; 
+
+	setCycleFromSignal("acc");
+
 }
 
 
 LongAcc::~LongAcc() {
-}
-
-
-void LongAcc::outputVHDL(ostream& o, string name) {
-int i;
-
-	licence(o,"Florent de Dinechin (2007), Bogdan Pasca (2008)");
-	Operator::stdLibs(o);
-	outputVHDLEntity(o);
-	newArchitecture(o,name);
-	shifter_->outputVHDLComponent(o);
-	outputVHDLSignalDeclarations(o);
-	beginArchitecture(o);
-	
-	o << tab << "fracX <= \"1\" & X("<<wFX_-1<<" downto 0);" << endl;
-	o << tab << "expX <= X("<<wEX_+wFX_-1<<" downto "<<wFX_<<");" << endl;
-	o << tab << "signX <= X("<<wEX_+wFX_<<");" << endl;
-	o << tab << "exnX <= X("<<wEX_+wFX_+2<<" downto "<<wEX_+wFX_+1<<");" << endl;
-	
-	o << tab << "xOverflowCond <= '1' when (( expX > \""; printBinNum(o, MaxMSBX_ + E0X_,  wEX_);  o<<"\") or (exnX >=\"10\") ) else '0' ;"<<endl; 
-	o << tab << "xUnderflowCond <= '1' when ( expX < \""; printBinNum(o, LSBA_ + E0X_,  wEX_);  o<<"\") else '0' ;"<<endl;  
-	//determination of the shift value
-	int64_t exp_offset = E0X_+LSBA_;
-	if(exp_offset >=0) {
-		o << tab << "shiftval <=  (\"0\"&expX) - \"";  printBinNum(o, exp_offset,  wEX_+1); o << "\";" << endl;
-	}
-	else {
-		o << tab << "shiftval <=  (\"0\"&expX) + \"";  printBinNum(o, -exp_offset,  wEX_+1); o  << "\";" << endl;
-	}
-	o << endl;
-
-	//input shifter mappings
-	o << tab << "-- shift of the input into the proper place " << endl;
-	o << tab << "input_shifter : " << shifter_->getName() << endl;
-	o << tab << "    port map ( X => fracX, " << endl;
-	o << tab << "               S => shiftval("<< shifter_->getShiftInWidth() - 1 <<" downto 0), " << endl;
-	o << tab << "               R => shifted_frac";
-	if (shifter_->isSequential()) {
-		o<<"," << endl;
-		o << tab << "             clk => clk," << endl;
-		o << tab << "             rst => rst " << endl;
-	}
-	o << tab << "             );" << endl; 
-	o << endl;
- 	
-	//determine if the input has been shifted out from the accumulator. 
-	//in this case the accumulator will be incremented with 0
-	o << tab << "flushedToZero <=     '1' when (shiftval("<<wEX_<<")='1' -- negative left shift " << endl;
-	o << tab << "                               or exnX=\"00\")" << endl;
-	o << tab << "                 else'0';" << endl;
-	o << tab << "summand <= ("<<sizeSummand_-1<<" downto 0 => '0')  when "<< delaySignal("flushedToZero", shifter_->getPipelineDepth()) << "='1'  else shifted_frac("<<sizeShiftedFrac_-1<<" downto "<<wFX_<<");" << endl;
-	o << endl;
-
-	o << tab << "-- 2's complement of the summand" << endl;
-	// Don't compute 2's complement just yet, just invert the bits and leave the addition of the extra 1 in accumulation,
-	// as a carry in bit
-	o << tab << "summand2c <= summand when ("<< delaySignal("signX", shifter_->getPipelineDepth()) <<"='0' or "
-	         << delaySignal("flushedToZero", shifter_->getPipelineDepth()) <<"='1') else not(summand); "<< endl;
-	
-	o << endl;
-	o << tab << "-- extension of the summand to accumulator size" << endl;
-	o << tab << "ext_summand2c <= ("<<sizeAcc_-1<<" downto "<<sizeSummand_<<"=> (" 
-		<< delaySignal("signX", shifter_->getPipelineDepth()) 
-		<< " and not " << delaySignal("flushedToZero", shifter_->getPipelineDepth())
-		<<")) & summand2c;" << endl;
-	o << endl;
-	o << tab << "-- accumulation itself" << endl;
-	
-	//determine the value of the carry in bit
-	o << tab << "carryBit_0 <= ("<<delaySignal("signX", shifter_->getPipelineDepth())
-		<< " and not " << delaySignal("flushedToZero", shifter_->getPipelineDepth() ) << ");"<<endl; 
-		
-	for (i=0;i<additionNumberOfChunks_;i++) {
-		ostringstream accReg;
-		accReg<<"acc_"<<i;
-		
-		if (i!=additionNumberOfChunks_-1){
-			o<<tab<<"acc_"<<i<<"_ext <= ( \"0\" & acc_"<<i<<"_d ) + "<<
-//			o<<tab<<"acc_"<<i<<"_ext <= ( acc_"<<i<<"_d("<<rebalancedAdditionChunkSize_-1<<") & acc_"<<i<<"_d ) + "<<
-						    "( \"0\" & ext_summand2c_d("<<rebalancedAdditionChunkSize_*(i+1)-1 << " downto "<<rebalancedAdditionChunkSize_*i<<")) "<<
-			                            " + carryBit_"<<i<<"_d;"<<endl;
-		
-			o<<tab<<"acc_"<<i<<" <= acc_"<<i<<"_ext("<<rebalancedAdditionChunkSize_ -1 <<" downto 0);"<<endl;
-			o<<tab<<"carryBit_"<<i+1<<" <= acc_"<<i<<"_ext("<<rebalancedAdditionChunkSize_<<");"<<endl;
-		}  
-		else{
-			o<<tab<<"acc_"<<i<<"_ext <= ( \"0\" & acc_"<<i<<"_d) + "<<
-			                           "( \"0\" & ext_summand2c_d("<<sizeAcc_-1 << " downto "<<rebalancedAdditionChunkSize_*i<<")) + "<<
-			                           " carryBit_"<<i<<"_d;"<<endl;
-			
-			o<<tab<<"acc_"<<i<<" <= acc_"<<i<<"_ext("<<rebalancedAdditionLastChunkSize_-1<<" downto 0);"<<endl;
-			o<<tab<<"carryBit_"<<i+1<<" <= acc_"<<i<<"_ext("<<rebalancedAdditionLastChunkSize_<<");"<<endl;
-		}
-	}
-
-		//compose the acc signal 
-		
-		o << tab << "acc <= ";
-		for (i=additionNumberOfChunks_-1;i>=0;i--) {
-			if (i>0)
-				o<< "acc_"<<i<<"_d & ";
-			else
-				o<< "acc_"<<i<<"_d;";
-		}
-	
-	o << endl;
-
-	o << tab << " xOverflowRegister <= xOverflowRegister_d or "<<delaySignal("xOverflowCond",shifter_->getPipelineDepth()+1)<<";"<<endl;
-	o << tab << " xUnderflowRegister <= xUnderflowRegister_d  or "<<delaySignal("xUnderflowCond",shifter_->getPipelineDepth()+1)<<";"<<endl;
-	o << tab << " accOverflowRegister <= accOverflowRegister_d or carryBit_"<<additionNumberOfChunks_<<"_d;"<<endl;
-	outputVHDLRegisters(o);
-
-	o << tab << "  A <=   acc;" << endl;
-	//if accumulator overflows this flag will be set to 1 until a maunal reset is performed
-	o << tab << "  AccOverflow <= accOverflowRegister_d;"<<endl; 
-	//if the input overflows then this flag will be set to 1, and will remain 1 until manual reset is performed
-	o << tab << "  XOverflow <= xOverflowRegister_d;"<<endl; 
-	o << tab << "  XUnderflow <= xUnderflowRegister_d;"<<endl; 
-
-	endArchitecture(o);
 }
 
 void LongAcc::test_precision(int n) {

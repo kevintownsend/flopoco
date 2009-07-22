@@ -437,6 +437,14 @@ string join( std::string id, int n)
 	return o.str();
 }
 
+string join( std::string id1, int n, std::string id2)
+{
+	ostringstream o;
+	o << id1 << n << id2;
+	return o.str();
+}
+
+
 string join( std::string id, int n, std::string id2, int n2)
 {
 	ostringstream o;

@@ -212,6 +212,8 @@ string mpz2string(mpz_class x);
 	 declare(),  use(), etc. */
 string join( std::string id, int n);
 
+string join( std::string id1, int n, std::string id2);
+
 string join( std::string id, int n, std::string id2 , int n2);
 
 /** Same for concatenating two ids. Maybe + would do? */
