@@ -75,11 +75,12 @@ int i=1;
 	prec= MSBI-LSBI;
 	//prec=atoi(argv[i++]); //precision
 	
-	//cout<<prec;
+	
 	mpfr_set_default_prec(prec);
 	
 	readParams();
-	initParameters();
+
+	//initParameters();
 	initParametersX();
 	initParametersZ();
 	
@@ -166,12 +167,12 @@ int i=1;
 	mpfr_inits2(prec*2,temp1,temp2,temp3,temp4,temp5,temp6,temp7,(mpfr_ptr) 0);
 	
 	mpfr_t var1,var2,var3,var4,var5;
-	mpfr_inits2(23,var1,var2,var3,var4,var5,(mpfr_ptr) 0);
+	mpfr_inits2(24,var1,var2,var3,var4,var5,(mpfr_ptr) 0);
 	mpfr_t var1m,var2m,var3m,var4m,var5m;
-	mpfr_inits2(23,var1m,var2m,var3m,var4m,var5m,(mpfr_ptr) 0);
+	mpfr_inits2(24,var1m,var2m,var3m,var4m,var5m,(mpfr_ptr) 0);
 	mp_exp_t minV1 = 255,maxV1 = -255,minV2= 255,maxV2= -255,minV3= 255,maxV3= -255,minV4= 255,maxV4= -255,minV5= 255,maxV5= -255,texp;
 	mpfr_t miV1,maV1,miV2,maV2,miV3,maV3,miV4,maV4,miV5,maV5;
-	mpfr_inits2(23,miV1,maV1,miV2,maV2,miV3,maV3,miV4,maV4,miV5,maV5,(mpfr_ptr)0);
+	mpfr_inits2(24,miV1,maV1,miV2,maV2,miV3,maV3,miV4,maV4,miV5,maV5,(mpfr_ptr)0);
 	mpfr_set_si(var1m,-255,GMP_RNDN);
 	mpfr_set_si(var2m,-255,GMP_RNDN);
 	mpfr_set_si(var3m,-255,GMP_RNDN);
@@ -179,11 +180,11 @@ int i=1;
 	mpfr_set_si(var5m,-255,GMP_RNDN);
 	
 	mpfr_t temp1_23;
-	mpfr_init2(temp1_23,23);
+	mpfr_init2(temp1_23,24);
 	mpfr_t temp2_23;
-	mpfr_init2(temp2_23,23);
+	mpfr_init2(temp2_23,24);
 	mpfr_t temp3_23;
-	mpfr_init2(temp3_23,23);
+	mpfr_init2(temp3_23,24);
 	mpfr_t sigt;
 	mpfr_init2(sigt,3);
 	mpfr_t acc,acc1,acc2;
@@ -199,13 +200,20 @@ int i=1;
 	//~ printf("\n%d\n",((int)minV1));
 	//mpfr_printf("aaaaaa");
 	mpfr_t accvar3,accvar4,accvar5,accvar3_2,accvar3_1,maxD1,maxD2,accvar4_2,accvar4_1,accvar5_2,accvar5_1;
-	mpfr_inits2(23,accvar3,accvar4,accvar5,accvar3_2,accvar3_1,maxD1,maxD2,accvar4_2,accvar4_1,accvar5_2,accvar5_1,(mpfr_ptr) 0);
+	mpfr_inits2(24,accvar3,accvar4,accvar5,accvar3_2,accvar3_1,maxD1,maxD2,accvar4_2,accvar4_1,accvar5_2,accvar5_1,(mpfr_ptr) 0);
 	mpfr_set_si(maxD1,0,GMP_RNDN);
 	mpfr_set_si(maxD2,0,GMP_RNDN);
 	
-	
+	int cc1=2;
 	for(int a1=0;a1<limit;a1++)
 	{		
+		if(a1%cc1==0)
+		{
+		cout<<(a1+1)*100/limit<<"%"<<endl;
+		if(cc1<32)
+		cc1*=2;
+		}
+	
 		for(int a2=0;a2<limit;a2++)
 		if(abs(a1-a2)>1)
 		{
@@ -667,6 +675,7 @@ int i=1;
 	mpfr_printf("Final value with t on 1 bits is:=%Rf\n",acc1);
 	
 	
+	mpfr_clears(acc, acc2, acc1, var1, var2, var3, var4, var5, temp1_23, temp2_23, temp3_23, accvar4_1, accvar3_1, accvar5_1, accvar4_2, accvar3_2, accvar5_2,temp1,temp2,temp3,temp4,temp5,temp6,temp7,(mpfr_ptr) 0);
 }
 
 void initParametersX()
@@ -1020,7 +1029,8 @@ mpz_class functionY(int x)
 		mpz_init2(xvz,1000);
 		mpfr_get_z(xvz,yv,GMP_RNDN);
 		r=mpz_class(xvz);
-		
+		mpz_clear(xvz);
+			
 		if(ver==0)//if the number was negative..covert to binary
 		{	
 		mpz_class tmpSUB = (mpz_class(1) << (MSBI-LSBI+1));
@@ -1030,7 +1040,13 @@ mpz_class functionY(int x)
 		
 	}
 	
-	
+	mpfr_clear(ddj);
+	mpfr_clear(deltak);
+	mpfr_clear(rk);
+	mpfr_clear(temp1);
+	mpfr_clear(temp2);
+	mpfr_clear(yv);
+		mpfr_free_cache();
 	return r;
 }
 
@@ -1144,7 +1160,7 @@ mpz_class functionZ(int x)
 		mpz_init2(xvz,1000);
 		mpfr_get_z(xvz,zv,GMP_RNDN);
 		r=mpz_class(xvz);
-		
+		mpz_clear(xvz);		
 		if(ver==0)//if the number was negative..covert to binary
 		{	
 		mpz_class tmpSUB = (mpz_class(1) << (MSBI-LSBI+1));
@@ -1154,7 +1170,14 @@ mpz_class functionZ(int x)
 		
 	}
 	
-	
+
+	mpfr_clear(ddj);
+	mpfr_clear(deltak);
+	mpfr_clear(rk);
+	mpfr_clear(temp1);
+	mpfr_clear(temp2);
+	mpfr_clear(zv);
+		mpfr_free_cache();
 	return r;
 }
 
@@ -1269,6 +1292,7 @@ mpz_class  functionX(int x)
 		mpz_init2(xvz,1000);
 		mpfr_get_z(xvz,xv,GMP_RNDN);
 		r=mpz_class(xvz);
+		mpz_clear(xvz);
 		
 		if(ver==0)//if the number was negative..covert to binary
 		{	
@@ -1278,6 +1302,14 @@ mpz_class  functionX(int x)
 		}	
 		
 	}
+	
+	mpfr_clear(ddj);
+	mpfr_clear(deltak);
+	mpfr_clear(rk);
+	mpfr_clear(temp1);
+	mpfr_clear(temp2);
+	mpfr_clear(xv);
+	mpfr_free_cache();
 	
 	
 	return r;
