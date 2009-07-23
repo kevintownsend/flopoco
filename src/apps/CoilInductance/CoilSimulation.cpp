@@ -84,6 +84,33 @@ int i=1;
 	initParametersX();
 	initParametersZ();
 	
+		mpz_class tmpSUB = (mpz_class(1) << (MSBI-LSBI+1));
+	mpz_class tmpCMP = (mpz_class(1)  << (MSBI-LSBI))-1;
+	
+	
+	//~ mpfr_t te1;
+	//~ mpfr_init2(te1,24);
+	//~ mpfr_set_ld(te1,1.1,GMP_RNDN);
+	//~ cout<<"ceva";
+	//~ mpz_class temmpz1;
+	//~ for(int oo1=0;oo1<limit;oo1++)
+		//~ for(int oo2=0;oo2<limit;oo2++)
+		//~ {
+			//~ mpfr_mul(te1,te1,te1,GMP_RNDN);
+			//~ mpfr_pow_si(te1,te1,3,GMP_RNDN);
+			//~ mpfr_sqrt(te1,te1,GMP_RNDN);
+			
+			//~ temmpz1 = functionX(oo1);
+			//~ if (temmpz1  > tmpCMP){ //negative number 
+				//~ temmpz1  = temmpz1  - tmpSUB;
+			//~ }
+			//~ mpfr_set_z(te1,temmpz1.get_mpz_t(),GMP_RNDN);
+			
+			//~ }
+	//~ cout<<"gata";
+	//~ return 0;
+			
+			
 	mpfr_t cst1,cst2,cst3,cst4;
 	mpfr_init(cst1);
 	mpfr_init2(cst2,3);
@@ -98,8 +125,7 @@ int i=1;
 	mpfr_pow_si(cst3,cst3,-2,GMP_RNDN);
 	mpfr_pow_si(cst4,cst4,-1,GMP_RNDN);
 	
-	mpz_class tmpSUB = (mpz_class(1) << (MSBI-LSBI+1));
-	mpz_class tmpCMP = (mpz_class(1)  << (MSBI-LSBI))-1;
+
 
 	
 	
@@ -207,6 +233,7 @@ int i=1;
 	int cc1=2;
 	for(int a1=0;a1<limit;a1++)
 	{		
+
 		if(a1%cc1==0)
 		{
 		cout<<(a1+1)*100/limit<<"%"<<endl;
@@ -214,6 +241,7 @@ int i=1;
 		cc1*=2;
 		}
 	
+
 		for(int a2=0;a2<limit;a2++)
 		if(abs(a1-a2)>1)
 		{
@@ -676,6 +704,8 @@ int i=1;
 	
 	
 	mpfr_clears(acc, acc2, acc1, var1, var2, var3, var4, var5, temp1_23, temp2_23, temp3_23, accvar4_1, accvar3_1, accvar5_1, accvar4_2, accvar3_2, accvar5_2,temp1,temp2,temp3,temp4,temp5,temp6,temp7,(mpfr_ptr) 0);
+	mpfr_clears(cst1,cst2,cst3,cst4,accvar5,accvar3,accvar4,(mpfr_ptr)0);
+	mpfr_clears(var1m,var2m,var3m,var4m,var5m,miV1,maV1,miV2,maV2,miV3,maV3,miV4,maV4,miV5,maV5,(mpfr_ptr)0);
 }
 
 void initParametersX()
@@ -846,31 +876,6 @@ for(int j=0;j<5;j++)
 	
 }
 
-string unsignedBinary(mpz_class x, int size){
-	string s;
-	mpz_class po2, number;
-	char bit;
-
-	if(x<0) {
-		cerr<<"unsigned_binary: Positive number expected, got x="<<x.get_d()<<endl;
-		exit(EXIT_FAILURE);
-	}
-	po2 = ((mpz_class) 1)<<size;
-	number=x;
-		
-	for (int i = 0; i < size ; i++) {
-		po2 = po2>>1;
-		if (number >= po2) {
-			bit = '1';
-			number -= po2;
-		}
-		else {
-			bit = '0';
-		}
-		s +=  bit;
-	}
-	return s;
-}
 
 void initParameters()
 {
@@ -903,7 +908,9 @@ void initParameters()
 	mpfr_const_pi(temp2,GMP_RNDN);
 	mpfr_div_si(temp1,temp2,N,GMP_RNDN);
 	mpfr_mul_ui(fi,temp1,2,GMP_RNDN);
-		
+	mpfr_clear(temp1);
+	mpfr_clear(temp2);
+	
 	
 }
 
@@ -1046,6 +1053,8 @@ mpz_class functionY(int x)
 	mpfr_clear(temp1);
 	mpfr_clear(temp2);
 	mpfr_clear(yv);
+	mpfr_clear(temp);
+	mpfr_clear(tauqj);
 		mpfr_free_cache();
 	return r;
 }
@@ -1177,6 +1186,8 @@ mpz_class functionZ(int x)
 	mpfr_clear(temp1);
 	mpfr_clear(temp2);
 	mpfr_clear(zv);
+	mpfr_clear(temp);
+	mpfr_clear(tauqj);
 		mpfr_free_cache();
 	return r;
 }
@@ -1310,7 +1321,9 @@ mpz_class  functionX(int x)
 	mpfr_clear(temp2);
 	mpfr_clear(xv);
 	mpfr_free_cache();
+	mpfr_clear(temp);
+	mpfr_clear(tauqj);
 	
-	
+	mpfr_free_cache();
 	return r;
 }
