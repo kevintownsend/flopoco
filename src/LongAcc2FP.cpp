@@ -47,205 +47,145 @@ LongAcc2FP::LongAcc2FP(Target* target, int LSBA, int MSBA, int wEOut, int wFOut)
 	LSBA_(LSBA), MSBA_(MSBA), wEOut_(wEOut), wFOut_(wFOut)
 {
 	ostringstream name;
+	setCopyrightString("Bogdan Pasca (2008-2009)");		
 	name <<"LongAcc2FP_"
 		  <<(LSBA_>=0?"":"M")<<abs(LSBA_)<<"_"
 		  <<(MSBA_>=0?"":"M")<<abs(MSBA_)<<"_"
 		  <<wEOut_<<"_"<<wFOut_;
 	setName(name.str());
+	
+	sizeAcc_ = MSBA - LSBA + 1;
+	
+	//inputs and outputs
+	addInput  ("A", sizeAcc_);
+	addInput  ("C", sizeAcc_);
+	addInput  ("AccOverflow",1);
+	addOutput ("R", 3 + wEOut_ + wFOut_);
+
+	
 	if (target->isPipelined()) 
 		setSequential();
 	else
 		setCombinatorial();
 	
-	if (isSequential())
-		extraPipeLevel=1;
-	else
-		extraPipeLevel=0;
-
 	// Set up various architectural parameters
 	sizeAcc_ = MSBA_-LSBA_+1;	
+
+	vhdl << tab <<declare("signA") << " <= " << use("A")<<of(sizeAcc_-1)<<";"<<endl;
+	vhdl << tab <<declare("signC") << " <= " << use("C")<<of(sizeAcc_-1)<<";"<<endl;
+	vhdl << tab <<declare("AccOverflowFlag") << " <= " << use("AccOverflow")<<";"<<endl;	
+
+	IntAdder *a = new IntAdder(target, sizeAcc_);
+	oplist.push_back(a);
 	
-	//instantiate a leading zero/one counter
-#ifdef _WIN32
-	countWidth_ = intlog2(sizeAcc_)+1;
-#else
-	countWidth_ = log2(sizeAcc_)+1;
-#endif
-
-	lzocShifterSticky_ = new LZOCShifterSticky(target, sizeAcc_,  wFOut_ + 1, intlog2(sizeAcc_), false, -1); // target, inputNbOfBits, outputNbOfBits, wCount, computeSticky, countType 
-	oplist.push_back(lzocShifterSticky_);
+	inPortMap( a,   "X",   "A");
+	inPortMap( a,   "Y",   "C");
+	inPortMapCst(a, "Cin", "'0'");
+	outPortMap( a,  "R",   "cpR");
+	vhdl << instance(a,    "CarryPropagation");
 	
-	adder_ = new IntAdder(target, wFOut_ + 1);
-	oplist.push_back(adder_);
-
-	// This operator is a sequential one
-	setPipelineDepth(lzocShifterSticky_->getPipelineDepth() + adder_->getPipelineDepth()+extraPipeLevel);
-
-	//compute the bias value
-	expBias_ = (1<<(wEOut_-1)) -1; 
-
-	countWidth_ = lzocShifterSticky_->getCountWidth();
-
-	//inputs and outputs
-	addInput  ("A", sizeAcc_);
-	addInput  ("AccOverflow",1);
-	addOutput ("R", 3 + wEOut_ + wFOut_);
-
-	addDelaySignal("resultSign0",1,lzocShifterSticky_->getPipelineDepth()+adder_->getPipelineDepth()+extraPipeLevel);	
-	addDelaySignal("AccOverflowFlag",1,lzocShifterSticky_->getPipelineDepth());	
+	syncCycleFromSignal("cpR");
+	nextCycle();
+	vhdl << tab << declare("resSign") << " <= " << use("cpR")<<of(sizeAcc_-1) << ";" << endl;
 	
-	addSignal("nZO"    ,countWidth_);
-	addDelaySignal("resFrac",wFOut_ + 1,adder_->getPipelineDepth()+extraPipeLevel);
-	addSignal("notResFrac", wFOut_ + 1);
-	addDelaySignal("postResFrac", wFOut_ + 1,extraPipeLevel);
-	addSignal("resultFraction",wFOut_ + 1);
+	//detect Addition overflow
+	vhdl << tab << declare("signConcat",3) << " <= " << use("signA") << " & " << use("signC") << " & " << use("resSign") << ";" << endl;
+	vhdl << tab << "with " << use("signConcat") << " select " << endl;
+	vhdl << tab << declare("ovf") << " <= '0' when \"000\", "<<endl;
+	vhdl << tab << "       '1' when \"001\","<<endl;
+	vhdl << tab << "       '0' when \"010\","<<endl;
+	vhdl << tab << "       '0' when \"011\","<<endl;
+	vhdl << tab << "       '0' when \"100\","<<endl;
+	vhdl << tab << "       '0' when \"101\","<<endl;
+	vhdl << tab << "       '1' when \"110\","<<endl;
+	vhdl << tab << "       '0' when \"111\","<<endl;
+	vhdl << tab << "       '0' when others;"<<endl;
 	
-	addSignal("expBias"     ,wEOut_);
-	addSignal("c2MnZO"      ,countWidth_+1);
-	addSignal("expAdj"      ,countWidth_+1);
-	addDelaySignal("expRAdjusted",wEOut_,adder_->getPipelineDepth()+extraPipeLevel);
-	addSignal("excBits"     ,2);
-
-	//rare case
-	if (countWidth_+1 > wEOut_)	{
-		addSignal("expAdjustedExt",countWidth_+1);
-		addSignal("signExpAdjustedExt",1);	
-		addSignal("modulusExpAdjusted",countWidth_);
-		addSignal("maxExponent",countWidth_);
-		addSignal("expOverflow",1);
-		addSignal("expUnderflow",1);
-	}
-	
-	addDelaySignal("excRes",2,adder_->getPipelineDepth()+extraPipeLevel);
-
-}
-
-LongAcc2FP::~LongAcc2FP() {
-}
-
-
-void LongAcc2FP::outputVHDL(ostream& o, string name) {
-
-	licence(o,"Bogdan Pasca (2008)");
-	Operator::stdLibs(o);
-	outputVHDLEntity(o);
-	newArchitecture(o,name);
-	lzocShifterSticky_->outputVHDLComponent(o);
-	adder_->outputVHDLComponent(o);
-	outputVHDLSignalDeclarations(o);
-	beginArchitecture(o);
-	
-	if (isSequential())	
-	outputVHDLRegisters(o); 
-
-	o<<endl;
-
-	//the sign of the result 
-	o<<tab<<"resultSign0 <= A("<<sizeAcc_-1<<");"<<endl;
-	o<<tab<<"AccOverflowFlag <= AccOverflow;"<<endl;	
-	
+	vhdl << tab << declare("ovf_updated") << " <= " << use("ovf") << " or " << use("AccOverflow") << ";" << endl;
+		
 	//count the number of zeros/ones in order to determine the value of the exponent
 	//Leading Zero/One counter 
-	o<<tab<< "LZOCShifterSticky: " << lzocShifterSticky_->getName() << endl;
-	o<<tab<< "      port map ( I => A, "                      << endl; 
-	o<<tab<< "                 Count => nZO, "                    << endl; 
-	o<<tab<< "                 O => resFrac, "                    << endl; 
-	o<<tab<< "                 OZB => resultSign0 ";
-	if (isSequential()){ 
-	o<<","<<endl;
-	o<<tab<< "                 clk => clk, "                  << endl;		
-	o<<tab<< "                 rst => rst "                   << endl;
-	}
-	o<<tab<< "               );"                       << endl<< endl;		
-
+	
+	lzocShifterSticky_ = new LZOCShifterSticky(target, sizeAcc_,  wFOut_ + 1, intlog2(sizeAcc_), false, -1); // target, inputNbOfBits, outputNbOfBits, wCount, computeSticky, countType 
+	oplist.push_back(lzocShifterSticky_);
+	countWidth_ = lzocShifterSticky_->getCountWidth();
+	
+	inPortMap(lzocShifterSticky_, "I", "cpR");
+	inPortMap(lzocShifterSticky_, "OZb", "resSign");
+	outPortMap(lzocShifterSticky_, "Count", "nZO");
+	outPortMap(lzocShifterSticky_, "O"    , "resFrac");
+	vhdl << tab << instance(lzocShifterSticky_, "InputLZOCShifter");
+		
+	syncCycleFromSignal("resFrac");	
+//	nextCycle();
 	//the exponent bias	
-	o<<tab<<"expBias <= CONV_STD_LOGIC_VECTOR("<<expBias_<<","<<wEOut_<<");"<<endl; //fixed value
+	vhdl << tab << declare("expBias",wEOut_) << " <= CONV_STD_LOGIC_VECTOR("<<expBias_<<","<<wEOut_<<");"<<endl; //fixed value
 
 	// c2MnZO is  -nZO in 2'c complement with a twist. Usually for 2's complement all bits must be inverted
 	// and then a 1 must be added to the LSB. We postpone the extra 1 addition until later.
-	o<<tab<<"c2MnZO <= \"1\" & not(nZO);"<<endl; //the bit inversion is done in O(1)
+	vhdl << tab <<declare("c2MnZO", countWidth_+1) << " <= \"1\" & not(nZO);"<<endl; //the bit inversion is done in O(1)
 	
 	// the 1 is added here, as a carry in bit for the substraction MSBA - nZO,
 	// which is an addition in 2's complement
-	o<<tab<<"expAdj <= CONV_STD_LOGIC_VECTOR("<<MSBA_<<","<<countWidth_+1<<") + c2MnZO + 1;"<<endl;
+	vhdl << tab <<declare("expAdj", countWidth_+1) << " <= CONV_STD_LOGIC_VECTOR("<<MSBA_<<","<<countWidth_+1<<") + c2MnZO + 1;"<<endl;
 	
 	if (countWidth_+1 < wEOut_){
 		// this case is encountered most often.
 		// by adding expBias to expAdj, we always get a positive quantity, so no need to converte back to SM
-		o<<tab<<"expRAdjusted <= expBias + "<< // + sign extended expAdj
-		                         "(("<<wEOut_-1<<" downto "<<countWidth_+1<<" => expAdj("<<countWidth_<<")) & expAdj);"<<endl;
-		o<<tab<<"excBits <=\"01\";"<<endl;
+		vhdl << tab <<declare("expRAdjusted",wEOut_) << " <= "<< use("expBias") <<" + "<< // + sign extended expAdj
+		                         "(" << rangeAssign(wEOut_-1,countWidth_+1, use("expAdj")+of(countWidth_)) << " & " << use("expAdj")<<");"<<endl;
+		vhdl << tab <<declare("excBits",2) << " <=\"01\";"<<endl;
 	}
 	else
 		if (countWidth_+1 == wEOut_){
-			o<<tab<<"expRAdjusted <= expBias + expAdj;"<<endl;
-			o<<tab<<"excBits <=\"01\";"<<endl;
+			vhdl << tab <<declare("expRAdjusted",wEOut_) <<" <= " << use("expBias") << " + " << use("expAdj") << ";"<<endl;
+			vhdl << tab <<declare("excBits",2) << " <=\"01\";"<<endl;
 		}	
 		else
 		{
 		// case encountered when we wish to put the contents of the accumulator in a floating point number 
 		// with a very small exponent
-			o<<tab<<"expAdjustedExt <= (("<<countWidth_<<" downto "<<wEOut_<<" =>'0') & expR) + expAdj;"<<endl;
+			vhdl << tab <<declare("expAdjustedExt",countWidth_+1)<<" <= " << "(" << rangeAssign(countWidth_, wEOut_, "'0'") << " & " << use("expBias") << ") + "<<use("expAdj")<<";"<<endl;
 			
-			o<<tab<<"signExpAdjustedExt <= expAdjustedExt("<<countWidth_<<");"<<endl;
-			o<<tab<<"modulusExpAdjusted <= (("<<countWidth_-1<<" downto 0 => signExpAdjustedExt) xor expAdjustedExt("<<countWidth_-1<<" downto 0)) + signExpAdjustedExt;"<<endl;
+			vhdl << tab <<declare("signExpAdjustedExt") << " <= "<< use("expAdjustedExt")<<of(countWidth_)<<";"<<endl;
+			vhdl << tab <<declare("modulusExpAdjusted",countWidth_) << "<= ("<<rangeAssign(countWidth_-1,0, use("signExpAdjustedExt"))<<" xor "<<use("expAdjustedExt")<<range(countWidth_-1,0)<<") + "<<
+			                                                     use("signExpAdjustedExt")<<";"<<endl;
 				
-			o<<tab<<"maxExponent <= CONV_STD_LOGIC_VECTOR("<<(1<<wEOut_)-1<<" , "<<countWidth_<<");"<<endl;
+			vhdl << tab <<declare("maxExponent",countWidth_)<<" <= CONV_STD_LOGIC_VECTOR("<<(mpz_class(1)<<wEOut_)-1<<" , "<<countWidth_<<");"<<endl;
 			
-			o<<tab<<"expOverflow <= '1' when (modulusExpAdjusted>maxExponent) and (signExpAdjustedExt='0') else '0';"<<endl;
-			o<<tab<<"expUnderflow <= '1' when (modulusExpAdjusted>maxExponent) and (signExpAdjustedExt='1') else '0';"<<endl;
+			vhdl << tab <<declare("expOverflow")<<" <= '1' when (("<<use("modulusExpAdjusted")<< " > " << use("maxExponent") << ") and ("<<use("signExpAdjustedExt")<<"='0')) else '0';"<<endl;
+			vhdl << tab <<declare("expUnderflow")<<" <= '1' when (("<<use("modulusExpAdjusted")<< " > " << use("maxExponent") << ") and ("<<use("signExpAdjustedExt")<<"='1')) else '0';"<<endl;
 			
-			o<<tab<<"excBits(1) <= expOverflow and  not(expUnderflow);"<<endl;
-			o<<tab<<"excBits(0) <= not(expOverflow) and not(expUnderflow);"<<endl;
+			declare("excBits",2);
+			vhdl << tab <<"excBits(1) <= " << use("expOverflow") << " and  not(" << use("expUnderflow")<<");"<<endl;
+			vhdl << tab <<"excBits(0) <= not("<<use("expOverflow")<<") and not("<<use("expUnderflow")<<");"<<endl;
 					
-			o<<tab<<"expRAdjusted<=expAdjustedExt("<<wEOut_-1<<" downto 0);"<<endl;
+			vhdl << tab <<declare("expRAdjusted",wEOut_) << " <= " << use("expAdjustedExt")<< range(wEOut_-1,0)<<";"<<endl;
 		}			
 	
-	o<<tab<<"excRes <=  excBits when ("<<delaySignal("AccOverflowFlag",lzocShifterSticky_->getPipelineDepth())<<"='0') else \"10\";"<<endl;
+	vhdl << tab <<declare("excRes",2) << " <= " << use("excBits") << " when " << use("ovf_updated")<<"='0' else \"10\";"<<endl;
 
 	//c2 of the fraction
-	o<<tab<< " notResFrac <= not("<<delaySignal("resFrac",extraPipeLevel)<<");"<<endl;
+//	nextCycle();
+	vhdl << tab << declare("notResFrac",wFOut_+1) << " <= not("<<use("resFrac")<<");"<<endl;
 
-	//count the number of zeros/ones in order to determine the value of the exponent
-	//Leading Zero/One counter 
-	o<<tab<< "Adder: " << adder_->getName() << endl;
-	o<<tab<< "      port map ( X => notResFrac, "  << endl; 
-	o<<tab<< "                 Y => "<< zeroGenerator(wFOut_ + 1, 0)<<", " << endl; 
-	o<<tab<< "                 Cin =>"<<delaySignal("resultSign0",lzocShifterSticky_->getPipelineDepth()+extraPipeLevel)<< ", "<< endl; 
-	o<<tab<< "                 R => postResFrac "           <<endl;
-	if (isSequential()){ 
-	o<<","<<endl;
-	o<<tab<< "                 clk => clk, "                  << endl;		
-	o<<tab<< "                 rst => rst "                   << endl;
-	}
-	o<<tab<< "               );"                       << endl<< endl;		
-		
-	o<<tab<<" resultFraction <= "<<delaySignal("resFrac",adder_->getPipelineDepth()+extraPipeLevel)<<
-			                   " when ("<<delaySignal("resultSign0",lzocShifterSticky_->getPipelineDepth()+adder_->getPipelineDepth()+extraPipeLevel)<<"='0')"<<
-							   " else postResFrac;"<<endl;
+	//a possible carry propagation
+	IntAdder *b = new IntAdder(target,wFOut_ + 1);
+	oplist.push_back(b);
 	
-	o<<tab<< "R <= "<<delaySignal("excRes",adder_->getPipelineDepth()+extraPipeLevel) <<" & "
-			 <<delaySignal("resultSign0",lzocShifterSticky_->getPipelineDepth()+ adder_->getPipelineDepth()+extraPipeLevel)<<" & "
-			 << delaySignal("expRAdjusted",adder_->getPipelineDepth()+extraPipeLevel)<<"("<<wEOut_-1<<" downto 0) & "
-			 << "resultFraction("<<wFOut_-1<<" downto 0);"<<endl;
+	inPortMap(b, "X", "notResFrac");
+	inPortMapCst(b, "Y", zeroGenerator(wFOut+1,0));
+	inPortMap(b, "Cin", "resSign");
+	outPortMap(b, "R", "postResFrac");
+	vhdl << tab << instance(b, "carryPropagator");
 	
-	endArchitecture(o);
+	syncCycleFromSignal("postResFrac");		
+	
+	vhdl << tab << declare("resultFraction",wFOut_+1) << " <= "<<use("resFrac") << " when ("<<use("resSign")<<"='0') else "<<use("postResFrac")<<";"<<endl;
+	
+	vhdl << tab << "R <= "<<use("excRes") << " & " <<use("resSign")<<" & "<< use("expRAdjusted")<<range(wEOut_-1,0)<<" & "<<use("resultFraction") <<range(wFOut_-1,0) <<";"<<endl;
 }
 
+LongAcc2FP::~LongAcc2FP() {
+}
 
-
-	//determine if the value to be added to the exponent bias is negative or positive.
-	// expTest _ 1 if true exponent value (unbiased) is positive
-	//         | 0 if exp value negatives
-//	o<<tab<<"expTest <= '1' when (CONV_STD_LOGIC_VECTOR("<<MSBA_<<","<<countWidth_<<")>nZO) else '0';"<<endl;
-	
-	// shift 
-	/*
-	o<<tab<< "left_shifter_component: " << leftShifter_->getName() << endl;
-	o<<tab<< "      port map ( X => "<<delaySignal("pipeA",leadZOCounter_->getPipelineDepth())<<", "<< endl; 
-	o<<tab<< "                 S => nZO, " << endl; 
-	o<<tab<< "                 R => resFrac, " <<endl; 
-	o<<tab<< "                 clk => clk, " << endl;
-	o<<tab<< "                 rst => rst " << endl;
-	o<<tab<< "               );" << endl<<endl;		
-	*/

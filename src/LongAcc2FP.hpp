@@ -28,12 +28,6 @@ public:
 	/** Destructor */
 	~LongAcc2FP();
 
-	/**
-	 * Method belonging to the Operator class overloaded by the LongAcc2FP class
-	 * @param[in,out] o     the stream where the current architecture will be outputed to
-	 * @param[in]     name  the name of the entity corresponding to the architecture generated in this method
-	 **/
-	void outputVHDL(ostream& o, string name);
 
 
 protected:
@@ -41,7 +35,6 @@ protected:
 	int MSBA_;    /**< the weight of the most significand bit of the accumulator */
 	int wEOut_;   /**< the width of the output exponent */
 	int wFOut_;   /**< the width of the output fractional part */
-	int extraPipeLevel;
 
 private:
 	IntAdder* adder_;
