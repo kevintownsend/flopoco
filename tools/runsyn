@@ -425,6 +425,7 @@ numberOfSlices=`grep ' Number of Slices:' $topModule.syr`
 numberOfSliceFlipFlops=`grep ' Number of Slice Flip Flops:' $topModule.syr`
 numberOf4InputLUTs=`grep ' Number of 4 input LUTs' $topModule.syr`
 numberOfDSPs=`grep ' Number of DSP48s' $topModule.syr`
+numberOfBRAMs=`grep ' Number of FIFO16/RAMB16s' $topModule.syr`
 
 if [ $warnings -eq 1 ]; then
 	parents=""
@@ -502,5 +503,10 @@ st=$((73-${#t}))
 zeroGenerator $st
 spaces=$s
 echo "*    $numberOfDSPs $spaces*"
+t="$numberOfBRAMs"
+st=$((73-${#t}))
+zeroGenerator $st
+spaces=$s
+echo "*    $numberOfBRAMs $spaces*"
 echo "================================================================================"
 
