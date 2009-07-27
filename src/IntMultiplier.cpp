@@ -64,7 +64,7 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 	chunksY =  int(ceil( ( double(wInY) / (double) chunkSize_) ));
 	
 	if (verbose)
-		cout << "X splitted in "<< chunksX << " chunks and Y in " << chunksY << " chunks; " << endl;
+		cerr << "> IntMultiplier:   X splitted in "<< chunksX << " chunks and Y in " << chunksY << " chunks; " << endl;
 
 		if (chunksX + chunksY > 2) { // up to 17 x 17 bit on Virtex4 can be written as an "*" @ 400++ MHz 
 		// to be general version (parametrized etc) 
@@ -82,7 +82,7 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 			}
 			
 			if (verbose)
-				cout << "Perform swapping = " << swap << endl;
+				cerr << "> IntMultiplier:   Perform swapping = " << swap << endl;
 			
 			if (swap){
 				vhdl << tab << declare("sX",chunkSize_*chunksX) << " <= " << "Y" << " & " << zeroGenerator(chunkSize_*chunksX-wInY,0) << ";" << endl;
@@ -176,7 +176,7 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 	int chunksY =  int(ceil( ( double(wInY) / (double) chunkSize_) ));
 		
 	if (verbose)
-        cout << "X splitted in "<< chunksX << " chunks and Y in " << chunksY << " chunks; " << endl;
+        cerr << "> IntMultiplier:  X splitted in "<< chunksX << " chunks and Y in " << chunksY << " chunks; " << endl;
 	if (chunksX + chunksY > 2) {
 	int widthX = wInX_;
 	int widthY = wInY_;	
