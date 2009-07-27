@@ -26,6 +26,7 @@
 #define LOGRANGERED_H
 
 #include "../Operator.hpp"
+#include "../IntMultiplier.hpp"
 #include "FirstInvTable.hpp"
 #include "FirstLogTable.hpp"
 #include "SecondInvTable.hpp"

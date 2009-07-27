@@ -6,7 +6,7 @@
 class OtherLogTable : public Table
 {
 public:
-	OtherLogTable(Target* target, int wIn, int wOut, int p, int which, int ai, int pi);
+	OtherLogTable(Target* target, int wIn, int wOut, int which, int ai, int pi);
 	
 	~OtherLogTable();
 
@@ -21,7 +21,6 @@ public:
 	
 	double output2double(mpz_class x);
 	
-	int p;
 	
 	/** Which table is that ? useful because the first is different from the others.*/
 	int which;

@@ -164,8 +164,9 @@ static void usage(char *name){
 	cerr << "      Floating-point dot product unit \n";
 	cerr << "    FPExp wE wF\n";
 	cerr << "      Floating-point exponential function (NPY)\n";
-	cerr << "    FPLog wE wF\n";
-	cerr << "      Floating-point logarithm function\n";
+	cerr << "    FPLog wE wF InTableSize\n";
+	cerr << "      Floating-point logarithm function;\n";
+	cerr << "      InTableSize is the numbers of bits to input to the tables. O defaults to something sensible\n";
 	// cerr << "    OutputIEEE wEI wFI wEO wFO\n";
 	// cerr << "      Conversion from FloPoCo to IEEE-754-like floating-point formats\n";
 	cerr << "    InputIEEE wEI wFI wEO wFO\n";
@@ -973,13 +974,14 @@ bool parseCommandLine(int argc, char* argv[]){
 
 		else if (opname == "FPLog")
 		{
-			int nargs = 2;
+			int nargs = 3;
 			if (i+nargs > argc)
 				usage(argv[0]); // and exit
 			int wE = checkStrictyPositive(argv[i++], argv[0]);
 			int wF = checkStrictyPositive(argv[i++], argv[0]);
+			int inTableSize=atoi(argv[i++]);
 			cerr << "> FPLog: wE=" << wE << " wF=" << wF << endl;
-			op = new FPLog(target, wE, wF);
+			op = new FPLog(target, wE, wF, inTableSize);
 			addOperator(op);
 		}
 

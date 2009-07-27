@@ -10,8 +10,8 @@ using namespace std;
 // -log(1-x) where x < 2^-p and x on a+1 bits.
 // the log is then smaller than 2^-p+1
 //  outputPrecision is the weight of the last bit in the real domain
-OtherLogTable::OtherLogTable(Target* target, int wIn, int outputPrecision, int p, int which, int ai, int pi) : 
-	Table(target, wIn, outputPrecision),  p(p),  which(which), ai(ai), pi(pi)
+OtherLogTable::OtherLogTable(Target* target, int wIn, int outputPrecision, int which, int ai, int pi) : 
+	Table(target, wIn, outputPrecision),  which(which), ai(ai), pi(pi)
  {
 	ostringstream name; 
 	name <<"LogTable_"<<which<<"_"<<wIn<<"_"<<wOut;
@@ -31,11 +31,12 @@ int    OtherLogTable::double2input(double x){
 
 double OtherLogTable::input2double(int x) {
   double d; 
-  // function uses log1p, so we prepare $d$ for that 
+  // function uses log1p, so we prepare d for that 
   // computation in double is exact as long as we don't want a quad
   // operator...
 
   // This is actually the computation of the inverse
+#if 0
   if(x==0) 
     d = 0.;
   else{
@@ -49,7 +50,18 @@ double OtherLogTable::input2double(int x) {
     else 
 		 d += 1.;
   }
-  d = d / ((double) (((uint64_t) 1)<<(p+wIn+1)));
+  d = d / ((double) (((uint64_t) 1)<<(pi+wIn+1)));
+#else
+  if(x==0) 
+    d = 0.;
+  else{
+	  d = ((double) (-x))   /   ((double) (((uint64_t) 1)<<(pi+wIn)));
+	  double Ei = 1.0 / ((double) (((uint64_t) 1)<<(2*pi)));
+	  //cout << endl << d << " " << Ei << "   " ;
+	  d += Ei;
+	  //cout << d;
+  }
+#endif
   return d; 
 }
 
@@ -94,9 +106,9 @@ mpz_class OtherLogTable::function(int x) {
   apprinv = input2double(x);
   mpfr_set_d(i, apprinv, GMP_RNDN);
   mpfr_log1p(l, i, GMP_RNDN);
-  // cout << "which=" << which <<  " div" << (p+wIn+1) << "  x=" << x << "  apprinv=" << apprinv << "  l=" << mpfr_get_d(l, GMP_RNDN) << endl; 
+  // cout << "which=" << which <<  " div" << (pi+wIn+1) << "  x=" << x << "  apprinv=" << apprinv << "  l=" << mpfr_get_d(l, GMP_RNDN) << endl; 
   mpfr_neg(l, l, GMP_RNDN);
-  mpfr_mul_2si(l, l, p+wOut, GMP_RNDN);
+  mpfr_mul_2si(l, l, pi+wOut, GMP_RNDN);
   mpfr_get_z(r, l, GMP_RNDN);
   result=mpz_class(r);
   mpfr_clear(i);

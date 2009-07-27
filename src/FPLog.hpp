@@ -38,7 +38,7 @@ class FPNumber;
 class FPLog : public Operator
 {
 public:
-	FPLog(Target* target, int wE, int wF);
+	FPLog(Target* target, int wE, int wF, int inTableSize=0);
 	~FPLog();
 
 	//		Overloading the virtual functions of Operator
@@ -49,23 +49,32 @@ public:
 	void buildRandomTestCases(TestCaseList* tcl, int n); 
 
 	int wE, wF;
-	// The input sizes to the successive tables
+
+	/** The input sizes to the successive tables*/
 	int a[MAXRRSTAGES]; 
-	// The intermediate precision: at step i, the exp part is bounded by
-	//    1 <= m < 1+2^-p[i]
+
+	/** The intermediate precision: at step i, the exp part is bounded by
+	    1 <= m < 1+2^-p[i]*/
 	int p[MAXRRSTAGES]; 
 
-	// The size of the product, and hence of the subword of Z[i] input to the mult
+	/** The useful size of the product Ai*Zi, and hence of the subword of Zi input to the mult.  */
 	int psize[MAXRRSTAGES]; 
 
-	// The total size of non-zero bits, will be limited to wF+g
+
+	/** size of the virtual mantissa:
+	 1.000(p[i] zeroes)00000zzzzzzz
+	 the zzzz are the bits of Zi, which will be actually computed  */
+	int sfullZ[MAXRRSTAGES]; 
+
+	/** size of Zi before truncation, should be equal to s[i]+t[i] */
+	int sbt[MAXRRSTAGES];
+
+	/** The number of non-zero bits of Zi, will be limited to wF+g */
 	int s[MAXRRSTAGES]; 
 
-	// The numbers of bits to truncate to limit the size to wF+g
+	/** The numbers of bits of the full Zi to truncate to limit the size to wF+g */
 	int t[MAXRRSTAGES];
 
-	// size before truncation, should be equal to s[i]+t[i]
-	int sbt[MAXRRSTAGES];
 
 	// The max number of stages
 	int stages;
@@ -80,10 +89,6 @@ public:
 	// The range reduction box
 	LogRangeRed* rr;
 
-	// This is the size of the virtual mantissa:
-	// 1.000(p[i] zeroes)00000xxxxxxx
-	// the xxx which will be actually computed have p[i] bits less 
-	int sfullZ[MAXRRSTAGES]; 
 
 	// A global boolean flag disabling the simulation of the fullsize mantissa
 	// as soon as it would be more than 64 bits

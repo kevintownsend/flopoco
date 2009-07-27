@@ -22,14 +22,19 @@
 */
 
 // TODO List: 
-//  * test cases for boundary cases pfinal etc
-//  * finetune pipeline  
+//  * test cases for boundary cases pfinal etc 
+//  * finetune pipeline
 #include <fstream>
 #include <sstream>
 #include <math.h>	// for NaN
 #include "FPLog.hpp"
 #include "FPNumber.hpp"
 #include "utils.hpp"
+#include "IntSquarer.hpp"
+#include "fplogarithm/FirstInvTable.hpp"
+#include "fplogarithm/FirstLogTable.hpp"
+#include "fplogarithm/SecondInvTable.hpp"
+#include "fplogarithm/OtherLogTable.hpp"
 
 
 using namespace std;
@@ -38,82 +43,129 @@ extern vector<Operator *> oplist;
 
 
 
-FPLog::FPLog(Target* target, int wE, int wF)
+FPLog::FPLog(Target* target, int wE, int wF, int inTableSize)
 	: Operator(target), wE(wE), wF(wF)
 {
 
 	setCopyrightString("F. de Dinechin, C. Klein  (2008)");
 
 	ostringstream o;
-	o << "FPLog_" << wE << "_" << wF;
+
+	o << "FPLog_" << wE << "_" << wF << "_" << inTableSize << "_";
+	if(target->isPipelined()) 
+		o << target->frequencyMHz() ;
+	else
+		o << "comb";
 	setName(o.str());
 
 	addFPInput("X", wE, wF);
 	addFPOutput("R", wE, wF, 2); // 2 because faithfully rounded
 
-	int i;
-#define GENERICVERSION 1  // otherwise, stable  version
+	int i, bitsPerStage;
+
+	if (inTableSize==0) {
+		if (wF>=20)
+			bitsPerStage=12;
+		else
+			bitsPerStage=8; // somehow arbitrary
+	}
+	else
+		 bitsPerStage=inTableSize;
+
+	if(bitsPerStage <6)
+		throw string("FPLog error: tables need at least 6 input bits");
 
 
-#if GENERICVERSION
-	int bitsPerStage=target->lutInputs();
-#else
-	int bitsPerStage=4; 
-#endif
 
-	if(verbose) 
-		cerr << "> FPLog" << tab << "Building an architecture optimized for " << bitsPerStage << "-input LUTs" << endl;
-	
 	// First compute the parameters of each iteration 
 
-	// Stage 0
+	// stage 0, needs a specific inverter table
 	p[0] = 0;
-#if 0
-	a[0] = bitsPerStage+1; // The +1 is needed, see OtherLogTable::input2double
-#else
-	a[0] = 5;   // To benefit from the lucky situation
-#endif
+	a[0] = bitsPerStage;   
+	// How many bits have been zeroed?  a0=5 is a lucky case but it messes up the following
+	p[1] = a[0]-2; // if a0==5, would be a0-1
 
-
-	p[1] = a[0]-1; 
-
-	// Following stages -- all the computation is OK starting from stage 1, although
-	// stage 1 needs a specific inverter table
 	i=1;
 	while(2*p[i] <= wF){ // for faithful rounding
-		if(i==1)
-			a[i] = 4; // otherwise we P1 has higher MSB than B1
-		else
+		if(i==1) { 	// stage 1 cannot be more accurate than 2p1-1
+			a[1] = p[1];
+			p[2] = p[1] + a[1] -1; // 2p[1]-1
+		}
+		else {
 			a[i] = bitsPerStage;
-		p[i+1] = p[i] + a[i] - 1;
+			p[i+1] = p[i] + a[i] - 1; // and we zero out a[i]-1 bits
+		}
 		i++;
 	}  
-
-	// The number of stages
+	
+	// The number of stages, not counting stage 0
 	stages = i-1;
-
+	
+	if(verbose>=2) {
+		cerr << "> FPLog\t Initial parameters:" << endl;
+		for(i=0; i<=stages; i++) {
+			cerr << "> FPLog\t";
+			cerr<<"\tp"<<i<<"=" << p[i];
+			cerr<<"\ta"<<i<<"=" << a[i];
+			cerr <<endl;
+		}
+	}
+	// Now we probably have reduced too far
+	pfinal = p[stages+1];
+	int extraBits = pfinal - (wF>>1) -1;
+	int extraBitsperstage =  floor(((double)extraBits) / ((double)(stages+1)));
+	if(verbose)
+		cerr << "> FPLog\t before optimization:  pfinal=" << pfinal << "--- extraBits=" << extraBits << "---extraBitsperstage=" << extraBitsperstage << endl;
+	for (i=0; i<= stages; i++)
+		a[i] -= extraBitsperstage;
+	
+	// Recompute the pis
+	p[1] = a[0]-2;
+	
+	for(i=1; i<=stages; i++){ // for faithful rounding
+		if(i==1)   	// stage 1 cannot be more accurate than 2p1-1
+			p[2] = p[1] + a[1] -1; // 2p[1]-1
+		else
+			p[i+1] = p[i] + a[i] - 1;
+	}
+	pfinal = p[stages+1];
+	extraBits = pfinal - (wF>>1) -1;
+	if(stages>=2) { // remove extra bits from stages 2 to stages
+		extraBitsperstage =  floor(((double)extraBits) / ((double)(stages-1)));
+		for(i=2; i<= stages; i++) {
+			a[i] -= extraBitsperstage;
+			p[i+1] = p[i] + a[i] - 1;
+		} 
+		pfinal = p[stages+1];
+	}
+	extraBits = pfinal - (wF>>1) -1;
+	cerr << "> FPLog\t after optimization:   pfinal=" << pfinal << "--- extraBits=" << extraBits << endl;
+	
 	// Deduce the number of guard bits
-	gLog=intlog2(3*stages+1);
+	gLog=max(3, intlog2(3*(stages+1)));
  
 	if(verbose)
 		cerr << "> FPLog"<<tab<<"Guard bits: " << gLog << endl;
 
-	pfinal = p[stages+1];
 	target_prec = wF + pfinal +gLog;
 	if(verbose==2)
 		cerr << "> FPLog"<<tab<<"Target precision: " << target_prec << endl;
 
 	s[0] = wF+2;  
-	sfullZ[0] = wF+2;
-	sbt[1] = wF+2 ;
-	s[1] = wF+2;
+	psize[0] = s[0] + a[0]+1;
+	//	sfullZ[0] = wF+2;
+	sbt[1] = psize[0] - p[1] -2; // -2 because P0 begins with 01   was: wF+2 ;
+	s[1] = sbt[1];
 	t[1] = 0;
-	sfullZ[1] = sfullZ[0] + a[0] +1;
+	//	sfullZ[1] = sfullZ[0]      +    a[0] + 1;  
+	//         size of Y0          size of approx inv of A0
 
 	for(i=1; i<=stages; i++) { 
-		// size before truncation
-		sbt[i+1] = s[i] +  p[i] + 2;
-		sfullZ[i+1] =  sfullZ[i] + a[i] + p[i] + 1;
+		// size of Z before truncation; Zi = 0Bi - 0AiZi + ... ; AiZi has weight -2*p[i], and size a[i]+s[i]
+		sbt[i+1] =    s[i]      +    a[i]        +  1;
+		//         size of Zi   +   size of Ai   + the leading bit
+
+		//	sfullZ[i+1] =  sfullZ[i] + a[i] + p[i] + 1;
 		if(p[i+1]+sbt[i+1] <= target_prec) 
 			{ // No truncation at all
 				psize[i] = s[i];
@@ -141,12 +193,12 @@ FPLog::FPLog(Target* target, int wE, int wF)
 
 
 	if(verbose)
-		cerr<<"> FPLog\t needs "<<stages<<" range reduction stages"<<endl;
+		cerr<<"> FPLog\t needs 1+"<<stages<<" range reduction stages"<<endl;
 	if(verbose>=2) {
 		for(i=0; i<=stages; i++) {
 			cerr << "> FPLog\t";
-			cerr<<"\ta"<<i<<"=" << a[i];
 			cerr<<"\tp"<<i<<"=" << p[i];
+			cerr<<"\ta"<<i<<"=" << a[i];
 			cerr<<"\ts"<<i<<"=" << s[i];
 			cerr<<"\tpsize"<<i<<"=" << psize[i];
 			cerr <<endl;
@@ -155,10 +207,8 @@ FPLog::FPLog(Target* target, int wE, int wF)
 		
 	}
 
-	//TODO move somewhere -- removed temporarily to suppress a warning
-	// int computedG = intlog2(3*(stages+1));
 
-	// On we go
+	// On we go with the vhdl
 
 
 	vhdl << tab << declare("XExnSgn", 3) << " <=  X(wE+wF+2 downto wE+wF);" << endl;
@@ -243,17 +293,182 @@ FPLog::FPLog(Target* target, int wE, int wF)
 
 	//////////////////////////////////////////////
 	setCycle(0);
-	vhdl << tab << "-- The range reduction instance" << endl;
+	vhdl << tab << "---------------- The range reduction box ---------------" << endl;
+
+
+#if 0
+	vhdl << tab << declare("rrA", a[0]) << " <= X" << range(wF-1,  wF-a[0]) < ";" << endl;
 	rrbox = new LogRangeRed(target, this);
 	oplist.push_back(rrbox);
-	vhdl << tab << declare("rrA", a[0]) << " <= X(wF-1 downto wF-a0);" << endl;
 	inPortMap(rrbox, "A", "rrA");
 	inPortMap(rrbox, "Y0", "Y0");
 	outPortMap(rrbox, "Z", "Zfinal");
 	outPortMap(rrbox, "almostLog", "almostLog");
 	vhdl << instance(rrbox, "rr");
+#else
 
-	// Synchro between RR box and "almost 1" case 
+
+	vhdl << tab << declare("A0", a[0]) << " <= X" << range(wF-1,  wF-a[0]) << ";" << endl;
+
+	vhdl << tab << "-- First inv table" << endl;
+	FirstInvTable* it0 = new FirstInvTable(target, a[0], a[0]+1);
+	oplist.push_back(it0);
+	inPortMap       (it0, "X", "A0");
+	outPortMap      (it0, "Y", "InvA0");
+	vhdl << instance(it0, "itO");
+
+	nextCycle();
+	// TODO: somehow arbitrary
+	if(target->isPipelined() && a[0]+1>=9) {  
+		IntMultiplier* p0 = new IntMultiplier(target, a[0]+1, wF+2);
+		oplist.push_back(p0);
+		inPortMap  (p0, "X", "InvA0");
+		inPortMap  (p0, "Y", "Y0");
+		outPortMap (p0, "R", "P0");
+		vhdl << instance(p0, "p0_mult");
+	}
+	else {
+		if(verbose) cerr << "> FPLog: unpipelined multiplier for P0, implemented as * in VHDL" << endl;  
+		vhdl << tab << declare("P0",  psize[0]) << " <= " << use("InvA0") << "*" << use("Y0") << ";" <<endl <<endl;
+	}	
+
+	setCycleFromSignal("P0", true);
+	vhdl << tab << declare("Z1", s[1]) << " <= " << use("P0") << range (psize[0] - p[1]-3,  0) << ";" << endl;
+
+
+	for (i=1; i<= stages; i++) {
+
+		vhdl <<endl;
+		//computation
+		vhdl << tab << declare(join("A",i), a[i]) <<     " <= " << use(join("Z",i)) << range(s[i]-1,      s[i]-a[i]) << ";"<<endl;
+		vhdl << tab << declare(join("B",i), s[i]-a[i]) << " <= " << use(join("Z",i)) << range(s[i]-a[i]-1, 0        ) << ";"<<endl;
+
+		vhdl << tab << declare(join("ZM",i), psize[i]) << " <= " << use(join("Z",i)) ;
+		if(psize[i] == s[i])
+			vhdl << ";"<<endl;   
+		else
+			vhdl << range(s[i]-1, s[i]-psize[i])  << ";" << endl;   
+
+		nextCycle();
+
+	if(target->isPipelined() && a[0]+1>=9) {  
+		IntMultiplier* pi = new IntMultiplier(target, a[i], psize[i]);
+		oplist.push_back(pi);
+		inPortMap  (pi, "X", join("A",i));
+		inPortMap  (pi, "Y", join("ZM",i));
+		outPortMap (pi, "R", join("P",i));
+		vhdl << instance(pi, join("p",i)+"_mult");
+	}
+	else {
+		if(verbose) cerr << "> FPLog: unpipelined multiplier for P"<<i<<", implemented as * in VHDL" << endl;  
+		vhdl << tab << declare(join("P",i),  psize[i] + a[i]) << " <= " << use(join("A",i)) << "*" << use(join("ZM",i)) << ";" << endl;
+	}
+
+
+#if 0 // Old code from the Arith paper 
+		vhdl << tab << declare(join("epsZ",i), s[i] + p[i] +2 ) << " <= " ;
+		if(i==1) { // special case for the first iteration
+			vhdl << 	rangeAssign(s[i]+p[i]+1,  0,  "'0'")  << " when  " << use("A1") << " = " << rangeAssign(a[1]-1, 0,  "'0'") << endl
+				  << tab << "    else (\"01\" & "<< rangeAssign(p[i]-1, 0, "'0'") << " & " << use(join("Z",i)) << " )"
+				  << "  when ((" << use("A1") << "("<< a[1]-1 << ")='0') and (" << use("A1") << range(a[1]-2, 0) << " /= " << rangeAssign(a[1]-2, 0, "'0'") << "))" << endl
+				  << tab << "    else " << "(\"1\" & " << rangeAssign(p[i]-1, 0, "'0'") << " & " << use(join("Z",i)) << "  & \"0\") "
+			  << ";"<<endl;
+		}
+		else {
+			vhdl << rangeAssign(s[i]+p[i]+1,  0,  "'0'") 
+				  << tab << "  when " << use(join("A",i)) << " = " << rangeAssign(a[i]-1,  0,  "'0'") << endl
+				  << tab << "  else    (\"01\" & " << rangeAssign(p[i]-1,  0,  "'0'") << " & " << use(join("Z",i)) <<");"<<endl;
+		}
+		vhdl << tab << declare(join("Z", i+1), s[i+1]) << " <=   (\"0\" & " << use(join("B",i));
+		if (s[i+1] > 1+(s[i]-a[i]))  // need to padd Bi
+			vhdl << " & " << rangeAssign(s[i+1] - 1-(s[i]-a[i]) -1,  0 , "'0'");    
+		vhdl <<")"<<endl 
+			  << tab << "      - ( " << rangeAssign(p[i]-a[i],  0,  "'0'") << " & " << use(join("P", i));
+		// either pad, or truncate P
+		if(p[i]-a[i]+1  + psize[i]+a[i]  < s[i+1]) // size of leading 0s + size of p 
+			vhdl << " & "<< rangeAssign(s[i+1] - (p[i]-a[i]+1  + psize[i]+a[i]) - 1,    0,  "'0'");  // Pad
+		if(p[i]-a[i]+1  + psize[i]+a[i]  > s[i+1]) 
+			//truncate
+			vhdl << range(psize[i]+a[i]-1,    p[i]-a[i]+1  + psize[i]+a[i] - s[i+1]);
+		vhdl << "  )"<< endl;
+		
+		vhdl << tab << "      + " << use(join("epsZ",i)) << range(s[i]+p[i]+1,  s[i]+p[i] +2 - s[i+1]) << ";"<<endl;
+		
+
+
+
+#else
+		int yisize = s[i]+p[i]+1; // +1 because implicit 1
+
+		// While the multiplication takes place, we may prepare the other term 
+		vhdl << tab << declare(join("Y",i), yisize) << " <= " 
+			  << " \"1\" & " << rangeAssign(p[i]-1,  0,  "'0'") << " & " << use(join("Z",i)) <<";"<<endl;
+
+		vhdl << tab << declare(join("epsY",i), s[i+1]) << " <= " 
+			  << rangeAssign(s[i+1]-1,  0,  "'0'")  << tab << "  when " << use(join("A",i)) << " = " << rangeAssign(a[i]-1,  0,  "'0'") << endl
+			  << tab << "  else ";
+		if(2*p[i] - p[i+1] -1 > 0) 
+			vhdl << rangeAssign(2*p[i] - p[i+1] - 2,  0,  "'0'")     // 2*p[i] - p[i+1] -1 zeros to perform multiplication by 2^2*pi
+				  << " & " << use(join("Y",i)) << range(yisize-1,  yisize - s[i+1] +   2*p[i] - p[i+1] - 1 ) << ";" << endl;   
+		//else 2*p[i] - p[i+1] -1 = 0, or there is something frankly wrong
+		else
+			vhdl << use(join("Y",i)) << range (yisize-1, yisize-s[i+1]) << ";" << endl;
+
+		nextCycle();
+		// IntAdder here?
+		vhdl << tab << declare(join("epsYPB",i), s[i+1]) << " <= " 
+			  << " (\"0\" & " << use(join("B",i));
+		if (s[i+1] > 1+(s[i]-a[i]))  // need to padd Bi
+			vhdl << " & " << rangeAssign(s[i+1] - 1-(s[i]-a[i]) -1,  0 , "'0'");    
+		vhdl <<")"<<  " + " << use(join("epsY",i)) << ";" << endl; 
+
+		syncCycleFromSignal(join("P",i), false);
+		nextCycle();
+
+
+#if 1 // simple addition
+		vhdl << tab << declare(join("Pp", i), s[i+1])  << " <= " 
+			  << rangeAssign(p[i]-a[i],  0,  "'0'") << " & " << use(join("P", i));
+		// either pad, or truncate P
+		if(p[i]-a[i]+1  + psize[i]+a[i]  < s[i+1]) // size of leading 0s + size of p 
+			vhdl << " & "<< rangeAssign(s[i+1] - (p[i]-a[i]+1  + psize[i]+a[i]) - 1,    0,  "'0'");  // Pad
+		if(p[i]-a[i]+1  + psize[i]+a[i]  > s[i+1]) 
+			//truncate
+			vhdl << range(psize[i]+a[i]-1,    p[i]-a[i]+1  + psize[i]+a[i] - s[i+1]);
+		vhdl << ";"<<endl;
+
+		vhdl << tab << declare(join("Z", i+1), s[i+1])  << " <= " 
+			  << use(join("epsYPB",i)) << " - " << use(join("Pp", i)) << ";"<<endl;
+#else
+		// THIS CODE DOESN'T WORK -- look for the bug !	
+		vhdl << tab << "--  compute epsYPBi - Pi" << endl;
+		vhdl << tab << declare(join("mP", i), s[i+1])  << " <= " 
+			  << " not (" << rangeAssign(p[i]-a[i],  0,  "'0'") << " & " << use(join("P", i));
+		// either pad, or truncate P
+		if(p[i]-a[i]+1  + psize[i]+a[i]  < s[i+1]) // size of leading 0s + size of p 
+			vhdl << " & "<< rangeAssign(s[i+1] - (p[i]-a[i]+1  + psize[i]+a[i]) - 1,    0,  "'0'");  // Pad
+		if(p[i]-a[i]+1  + psize[i]+a[i]  > s[i+1]) 
+			//truncate
+			vhdl << range(psize[i]+a[i]-1,    p[i]-a[i]+1  + psize[i]+a[i] - s[i+1]);
+		vhdl << "  );"<<endl;
+		IntAdder* ai = new IntAdder(target, s[i+1]);
+		oplist.push_back(ai);
+		inPortMap     (ai, "X", join("mP",i));
+		inPortMap     (ai, "Y", join("epsY",i));
+		inPortMapCst  (ai, "Cin", "'1'");
+		outPortMap    (ai, "R", join("Z",i+1));
+		vhdl << instance(ai, join("Z",i+1)+"adder");
+#endif
+		
+#endif
+	}
+
+	vhdl << tab << declare("Zfinal", s[stages+1]) << " <= " << use(join("Z", stages+1)) << ";" << endl;  
+
+#endif
+
+
+	vhdl << tab << "--  Synchro between RR box and case almost 1" << endl;  
 	setCycleFromSignal("Zfinal", false);	
 	syncCycleFromSignal("small_absZ0_normd", false);
 	nextCycle(); ///////////////////// TODO check this one is useful
@@ -274,11 +489,49 @@ FPLog::FPLog(Target* target, int wE, int wF)
 		vhdl << tab << "                 else (" << use("small_absZ0_normd") << " & " << rangeAssign(squarerInSize-small_absZ0_normd_size-1, 0, "'0'") << ");  " << endl;
 	else  // sfinal-pfinal <= small_absZ0_normd_size
 		vhdl << tab << "                 else " << use("small_absZ0_normd")  << range(small_absZ0_normd_size-1, small_absZ0_normd_size - squarerInSize) << ";  " << endl<< endl;
-	nextCycle(); ///////////////////// 
-	vhdl << tab << declare("Z2o2_full", 2*squarerInSize) << " <= (" << use("squarerIn") << " * " << use("squarerIn") << ");" << endl;
+	nextCycle(); /////////////////////
+	if(squarerInSize<=17)
+		vhdl << tab << declare("Z2o2_full", 2*squarerInSize) << " <= (" << use("squarerIn") << " * " << use("squarerIn") << ");" << endl;
+	else{
+			IntSquarer* sq = new IntSquarer(target, squarerInSize);
+			oplist.push_back(sq);
+			inPortMap  (sq, "X", "squarerIn");
+			outPortMap (sq, "R", "Z2o2_full");
+			vhdl << instance(sq, "squarer");
+			setCycleFromSignal("Z2o2_full", true);
+	}
 	vhdl << tab << declare("Z2o2_normal", sfinal-pfinal-1) << " <= Z2o2_full ("<< 2*squarerInSize-1 << "  downto " << 2*squarerInSize - (sfinal-pfinal-1) << ");" << endl;
 	nextCycle(); ///////////////////// 
 	vhdl << tab << declare("Log1p_normal", sfinal) << " <=   " << use("Zfinal") << "  -  ((pfinal downto 0  => '0') & " << use("Z2o2_normal")		<< ");" << endl;
+
+	vhdl << endl << tab << "-- Now the log tables, as late as possible" << endl;
+	setCycle(getCurrentCycle() - stages -1 , true);
+
+	vhdl << tab << "-- First log table" << endl;
+	FirstLogTable* lt0 = new FirstLogTable(target, a[0], target_prec, it0);
+	oplist.push_back(lt0);
+	inPortMap       (lt0, "X", "A0");
+	outPortMap      (lt0, "Y", "L0");
+	vhdl << instance(lt0, "ltO");
+	vhdl << tab << declare("S1", lt0->wOut) << " <= L0;"<<endl;
+	nextCycle();
+
+	for (i=1; i<= stages; i++) {
+
+		// TODO better pipeline the small input as late as possible than pipeline the large output
+		OtherLogTable* lti = new OtherLogTable(target, a[i], target_prec - p[i], i, a[i], p[i]); 
+		oplist.push_back(lti);
+		inPortMap       (lti, "X", join("A", i));
+		outPortMap      (lti, "Y", join("L", i));
+		vhdl << instance(lti, join("lt",i));
+		nextCycle();
+		vhdl << tab << declare(join("S",i+1),  lt0->wOut) << " <= " 
+			  <<  use(join("S",i))  << " + (" << rangeAssign(lt0->wOut-1, lti->wOut,  "'0'") << " & " << use(join("L",i)) <<");"<<endl;
+	}
+
+	vhdl << tab << declare("almostLog", lt0->wOut) << " <= " << use(join("S",stages+1)) << ";" << endl;  
+
+
 	nextCycle(); ///////////////////// 
 	vhdl << tab << declare("LogF_normal", target_prec) << " <=   " << use("almostLog") << " + ((targetprec-1 downto sfinal => '0') & " << use("Log1p_normal") << ");" << endl;
 	nextCycle(); ///////////////////// 
@@ -400,7 +653,6 @@ void FPLog::outputVHDL(std::ostream& o, std::string name)
 	o << buildVHDLSignalDeclarations();
 	// constants
 	o <<   "  constant g   : positive := "<<gLog<<";"<<endl;
-	o <<   "  constant a0 : positive := "<< a[0] <<";"<<endl;
 	o <<   "  constant wE : positive := " << wE <<";"<<endl;
 	o <<   "  constant wF : positive := " << wF <<";"<<endl;
 	o <<   "  constant log2wF : positive := "<< intlog2(wF) <<";"<<endl;

@@ -64,12 +64,8 @@ LogRangeRed :: LogRangeRed(Target* target,
 	lt0 = new FirstLogTable(target, a[0], fplog->target_prec, it0);
 	oplist.push_back(lt0);
 
-	// TODO: check this one is useful
-	// it1 = new SecondInvTable(target, fplog->a[1], fplog->p[1]);
-	// oplist.push_back(it1);
-
 	for(i=1;  i<= stages; i++) {
-		lt[i] = new OtherLogTable(target, a[i], fplog->target_prec - p[i], p[i], i, a[i], p[i]); 
+		lt[i] = new OtherLogTable(target, a[i], fplog->target_prec - p[i], i, a[i], p[i]); 
 		oplist.push_back(lt[i]);
 	 }
 
@@ -90,20 +86,29 @@ LogRangeRed :: LogRangeRed(Target* target,
 	vhdl << instance(it0, "itO");
 
 
-	vhdl << tab << "-- First log table" << endl;
-	inPortMap       (lt0, "X", "A0");
-	outPortMap      (lt0, "Y", "L0");
-	vhdl << instance(lt0, "ltO");
-	vhdl << tab << declare("S1", lt0->wOut) << " <= L0;"<<endl;
 
 	nextCycle();
 
-	vhdl << tab << declare("P0",  it0->wOut + s[0]) << " <= " << use("InvA0") << "*" << use("Y0c") << ";" <<endl <<endl;
-	vhdl << tab << declare("Z1", s[1]) << " <= P0("<< s[1] -1<<" downto 0);"<<endl;
+#define USE_FLOPOCO_INTMULT 1
+
+#ifdef USE_FLOPOCO_INTMULT
+	IntMultiplier* p0 = new IntMultiplier(target, a[0]+1, fplog->wF+2);
+	oplist.push_back(p0);
+	inPortMap  (p0, "X", "InvA0");
+	inPortMap  (p0, "Y", "Y0c");
+	outPortMap (p0, "R", "P0");
+	vhdl << instance(p0, "p0_mult");
+	setCycleFromSignal("P0", true);
+#else
+	vhdl << tab << declare("P0",  psize[0]) << " <= " << use("InvA0") << "*" << use("Y0c") << ";" <<endl <<endl;
+#endif
+	
+
+	vhdl << tab << declare("Z1", s[1]) << " <= " << use("P0") << range (psize[0] - p[1]-3,  0) << ";" << endl;
 
 
 	for (i=1; i<= stages; i++) {
-		nextCycle();
+
 		vhdl <<endl;
 		//computation
 		vhdl << tab << declare(join("A",i), a[i]) <<     " <= " << use(join("Z",i)) << range(s[i]-1,      s[i]-a[i]) << ";"<<endl;
@@ -114,16 +119,23 @@ LogRangeRed :: LogRangeRed(Target* target,
 			vhdl << ";"<<endl;   
 		else
 			vhdl << range(s[i]-1, s[i]-psize[i])  << ";" << endl;   
-		vhdl << tab << declare(join("P",i),  psize[i] + a[i]) << " <= " << join("A",i) << "*" << join("ZM",i) << ";" << endl;
-
-
-		// TODO better pipeline the small input as late as possible than pipeline the large output
-		inPortMap       (lt[i], "X", join("A", i));
-		outPortMap      (lt[i], "Y", join("L", i));
-		vhdl << instance(lt[i], join("lt",i));
 
 		nextCycle();
 
+#ifdef USE_FLOPOCO_INTMULT
+		IntMultiplier* pi = new IntMultiplier(target, a[i], psize[i]);
+		oplist.push_back(pi);
+		inPortMap  (pi, "X", join("A",i));
+		inPortMap  (pi, "Y", join("ZM",i));
+		outPortMap (pi, "R", join("P",i));
+		vhdl << instance(pi, join("p",i)+"_mult");
+#else
+		vhdl << tab << declare(join("P",i),  psize[i] + a[i]) << " <= " << join("A",i) << "*" << join("ZM",i) << ";" << endl;
+		nextCycle();
+#endif
+
+
+#if 0
 		vhdl << tab << declare(join("epsZ",i), s[i] + p[i] +2 ) << " <= " ;
 		if(i==1) { // special case for the first iteration
 			vhdl << 	rangeAssign(s[i]+p[i]+1,  0,  "'0'")  << " when  " << use("A1") << " = " << rangeAssign(a[1]-1, 0,  "'0'") << endl
@@ -137,7 +149,6 @@ LogRangeRed :: LogRangeRed(Target* target,
 				  << tab << "  when " << use(join("A",i)) << " = " << rangeAssign(a[i]-1,  0,  "'0'") << endl
 				  << tab << "  else    (\"01\" & " << rangeAssign(p[i]-1,  0,  "'0'") << " & " << use(join("Z",i)) <<");"<<endl;
 		}
-
 		vhdl << tab << declare(join("Z", i+1), s[i+1]) << " <=   (\"0\" & " << use(join("B",i));
 		if (s[i+1] > 1+(s[i]-a[i]))  // need to padd Bi
 			vhdl << " & " << rangeAssign(s[i+1] - 1-(s[i]-a[i]) -1,  0 , "'0'");    
@@ -153,9 +164,100 @@ LogRangeRed :: LogRangeRed(Target* target,
 		
 		vhdl << tab << "      + " << use(join("epsZ",i)) << range(s[i]+p[i]+1,  s[i]+p[i] +2 - s[i+1]) << ";"<<endl;
 		
+
+
+
+#else
+		// While the multiplication takes place, we may prepare the other term 
+		// nextCycle();
+		
+		int yisize = s[i]+p[i]+1; // +1 because implicit 1
+
+		vhdl << tab << declare(join("Y",i), yisize) << " <= " 
+			  << " \"1\" & " << rangeAssign(p[i]-1,  0,  "'0'") << " & " << use(join("Z",i)) <<";"<<endl;
+
+		vhdl << tab << declare(join("epsY",i), s[i+1]) << " <= " 
+			  << rangeAssign(s[i+1]-1,  0,  "'0'")  << tab << "  when " << use(join("A",i)) << " = " << rangeAssign(a[i]-1,  0,  "'0'") << endl
+			  << tab << "  else ";
+		if(2*p[i] - p[i+1] -1 > 0) 
+			vhdl << rangeAssign(2*p[i] - p[i+1] - 2,  0,  "'0'")     // 2*p[i] - p[i+1] -1 zeros to perform multiplication by 2^2*pi
+				  << " & " << use(join("Y",i)) << range(yisize-1,  yisize - s[i+1] +   2*p[i] - p[i+1] - 1 ) << ";" << endl;   
+		//else 2*p[i] - p[i+1] -1 = 0, or there is something frankly wrong
+		else
+			vhdl << use(join("Y",i)) << range (yisize-1, yisize-s[i+1]) << ";" << endl;
+
+		nextCycle();
+		// IntAdder here?
+		vhdl << tab << declare(join("epsYPB",i), s[i+1]) << " <= " 
+			  << " (\"0\" & " << use(join("B",i));
+		if (s[i+1] > 1+(s[i]-a[i]))  // need to padd Bi
+			vhdl << " & " << rangeAssign(s[i+1] - 1-(s[i]-a[i]) -1,  0 , "'0'");    
+		vhdl <<")"<<  " + " << use(join("epsY",i)) << ";" << endl; 
+
+		syncCycleFromSignal(join("P",i), false);
+		nextCycle();
+
+
+#if 1 // simple addition
+		vhdl << tab << declare(join("Pp", i), s[i+1])  << " <= " 
+			  << rangeAssign(p[i]-a[i],  0,  "'0'") << " & " << use(join("P", i));
+		// either pad, or truncate P
+		if(p[i]-a[i]+1  + psize[i]+a[i]  < s[i+1]) // size of leading 0s + size of p 
+			vhdl << " & "<< rangeAssign(s[i+1] - (p[i]-a[i]+1  + psize[i]+a[i]) - 1,    0,  "'0'");  // Pad
+		if(p[i]-a[i]+1  + psize[i]+a[i]  > s[i+1]) 
+			//truncate
+			vhdl << range(psize[i]+a[i]-1,    p[i]-a[i]+1  + psize[i]+a[i] - s[i+1]);
+		vhdl << ";"<<endl;
+
+		vhdl << tab << declare(join("Z", i+1), s[i+1])  << " <= " 
+			  << use(join("epsYPB",i)) << " - " << use(join("Pp", i)) << ";"<<endl;
+#else
+		// THIS CODE DOESN'T WORK -- look for the bug !	
+		vhdl << tab << "--  compute epsYPBi - Pi" << endl;
+		vhdl << tab << declare(join("mP", i), s[i+1])  << " <= " 
+			  << " not (" << rangeAssign(p[i]-a[i],  0,  "'0'") << " & " << use(join("P", i));
+		// either pad, or truncate P
+		if(p[i]-a[i]+1  + psize[i]+a[i]  < s[i+1]) // size of leading 0s + size of p 
+			vhdl << " & "<< rangeAssign(s[i+1] - (p[i]-a[i]+1  + psize[i]+a[i]) - 1,    0,  "'0'");  // Pad
+		if(p[i]-a[i]+1  + psize[i]+a[i]  > s[i+1]) 
+			//truncate
+			vhdl << range(psize[i]+a[i]-1,    p[i]-a[i]+1  + psize[i]+a[i] - s[i+1]);
+		vhdl << "  );"<<endl;
+		IntAdder* ai = new IntAdder(target, s[i+1]);
+		oplist.push_back(ai);
+		inPortMap     (ai, "X", join("mP",i));
+		inPortMap     (ai, "Y", join("epsY",i));
+		inPortMapCst  (ai, "Cin", "'1'");
+		outPortMap    (ai, "R", join("Z",i+1));
+		vhdl << instance(ai, join("Z",i+1)+"adder");
+#endif
+		
+#endif
+	}
+
+	
+	vhdl << endl << tab << "-- Now the log tables, as late as possible" << endl;
+	setCycle(getCurrentCycle() - stages -1 , true);
+
+
+	vhdl << tab << "-- First log table" << endl;
+	inPortMap       (lt0, "X", "A0");
+	outPortMap      (lt0, "Y", "L0");
+	vhdl << instance(lt0, "ltO");
+	vhdl << tab << declare("S1", lt0->wOut) << " <= L0;"<<endl;
+	nextCycle();
+
+	for (i=1; i<= stages; i++) {
+
+		// TODO better pipeline the small input as late as possible than pipeline the large output
+		inPortMap       (lt[i], "X", join("A", i));
+		outPortMap      (lt[i], "Y", join("L", i));
+		vhdl << instance(lt[i], join("lt",i));
+		nextCycle();
 		vhdl << tab << declare(join("S",i+1),  lt0->wOut) << " <= " 
 			  <<  use(join("S",i))  << " + (" << rangeAssign(lt0->wOut-1, lt[i]->wOut,  "'0'") << " & " << use(join("L",i)) <<");"<<endl;
 	}
+
 	vhdl << "   Z <= " << use(join("Z", stages+1)) << ";" << endl;  
 	vhdl << "   almostLog <= " << use(join("S",stages+1)) << ";" << endl;  
 
