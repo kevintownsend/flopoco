@@ -107,7 +107,11 @@ LongAcc::LongAcc(Target* target, int wEX, int wFX, int MaxMSBX, int LSBA, int MS
 	int chunkSize_;
 	target->suggestSubaddSize(chunkSize_ , sizeAcc_);
 	int nbOfChunks = ceil(double(sizeAcc_)/double(chunkSize_));
-	int lastChunkSize = ( sizeAcc_ % chunkSize_ == 0 ? chunkSize_ : sizeAcc_ % chunkSize_);
+	
+	
+	int lastChunkSize = ( sizeAcc_ % chunkSize_ == 0 ? chunkSize_  : sizeAcc_ % chunkSize_);
+	
+	
 
 	vhdl << tab << declare("fracX",wFX_+1) << " <= " << " \"1\" & " << use("X") << range(wFX_-1,0) << ";" << endl;
 	vhdl << tab << declare("expX" ,wEX_  ) << " <= " << use("X") << range(wEX_+wFX_-1,wFX_) << ";" << endl;
@@ -177,6 +181,7 @@ LongAcc::LongAcc(Target* target, int wEX, int wFX, int MaxMSBX, int LSBA, int MS
 	}
 	
 	vhdl << tab << declare("carry", sizeAcc_) << " <= ";
+	
 	for (i=nbOfChunks-1;i>=0; i--){
 		if (i<nbOfChunks-1){
 			vhdl << use( join("carryBit_",i+1) ); 
@@ -186,7 +191,12 @@ LongAcc::LongAcc(Target* target, int wEX, int wFX, int MaxMSBX, int LSBA, int MS
 			vhdl << " & ";
 		
 		if (i==nbOfChunks-1)			
+		{
+			if(nbOfChunks-1==0&&lastChunkSize-1<sizeAcc_)
+				vhdl << zeroGenerator(lastChunkSize,0);
+			else			
 				vhdl << zeroGenerator(lastChunkSize-1,0);
+		}
 		else
 			if (i>0)
 				vhdl << zeroGenerator(chunkSize_-1,0);
