@@ -56,7 +56,6 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 	
 	if (target->getUseHardMultipliers())
 	{
-<<<<<<< .mine
 		if (target->lutInputs() == 4) // then the target is Virtex 4 (TODO: change this to something like: if (target instanceof Virtex4))
 		{
 			int chunksX, chunksY;
@@ -67,18 +66,7 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 			chunksY =  int(ceil( ( double(wInY) / (double) chunkSize_) ));
 			
 			if (verbose)
-				cout << "X splitted in "<< chunksX << " chunks and Y in " << chunksY << " chunks; " << endl;
-=======
-	int chunksX, chunksY;
-	int x, y;
-	target->suggestSubmultSize(x, y, wInX, wInY);
-	int chunkSize_ = x;
-	chunksX =  int(ceil( ( double(wInX) / (double) chunkSize_) ));
-	chunksY =  int(ceil( ( double(wInY) / (double) chunkSize_) ));
-	
-	if (verbose)
-		cerr << "> IntMultiplier:   X splitted in "<< chunksX << " chunks and Y in " << chunksY << " chunks; " << endl;
->>>>>>> .r702
+				cerr << "> IntMultiplier:   X splitted in "<< chunksX << " chunks and Y in " << chunksY << " chunks; " << endl;
 
 				if (chunksX + chunksY > 2) { // up to 17 x 17 bit on Virtex4 can be written as an "*" @ 400++ MHz 
 				// to be general version (parametrized etc) 
@@ -96,7 +84,7 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 					}
 					
 					if (verbose)
-						cout << "Perform swapping = " << swap << endl;
+						cerr << "> IntMultiplier:  Perform swapping = " << swap << endl;
 					
 					if (swap){
 						vhdl << tab << declare("sX",chunkSize_*chunksX) << " <= " << "Y" << " & " << zeroGenerator(chunkSize_*chunksX-wInY,0) << ";" << endl;
@@ -195,19 +183,12 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 					(f > 367))
 					chunkSize_ = 9;
 			
-<<<<<<< .mine
 				if ((f > 250 && chunkSize_ == 18) || 	// don't use 36x36
 					(f > 367 && chunkSize_ == 9)) 	// don't use 18x18
 						quadMultiply = true;
-						
-				cout << "chunkSize = " << chunkSize_ << endl;
 				
 				int chunksX =  int(ceil( ( double(wInX) / (double) chunkSize_) ));
 				int chunksY =  int(ceil( ( double(wInY) / (double) chunkSize_) ));
-=======
-			if (verbose)
-				cerr << "> IntMultiplier:   Perform swapping = " << swap << endl;
->>>>>>> .r702
 			
 				int widthX = wInX_;
 				int widthY = wInY_;	
@@ -231,22 +212,21 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 					vhdl << tab << declare("sY",chunkSize_*chunksY) << " <= " << "Y" << " & " << zeroGenerator(chunkSize_*chunksY-widthY,0) << ";" << endl;
 				}
 				
-				cout << "chunksX = " << chunksX << endl;
-				cout << "chunksY = " << chunksY << endl;
+				if (verbose)
+					cerr << "> IntMultiplier:  X splitted in "<< chunksX << " chunks and Y in " << chunksY << " chunks; The chunk size is " << chunkSize_ << ";" << endl;
+
+				int chX = chunksX; 	// number of chunks of X and decreases at each iteration of the while loop below
+				int level = 0;		// index of the current iteration of the while loop
+				int height;			// height of the tiling after the while loop
 				
+				int adderWidth = (chunksX+chunksY)*chunkSize_;	// width of the final adder
+				int opCount = 0;								// current index of the operands of the final adder
 				
-				int chX = chunksX;
-				int level = 0;
-				int height;
-				
-				int adderWidth = (chunksX+chunksY)*chunkSize_;
-				int opCount = 0;
-				
-				ostringstream partialProd;
-				ostringstream partialProd2;
-				ostringstream sum;
-				ostringstream operands[2];
-				ostringstream carrys;
+				ostringstream partialProd;	// temporary holder of a partial product
+				ostringstream partialProd2; // temporary holder of a partial product
+				ostringstream sum;			// temporary holder of a sum of partial products
+				ostringstream operands[2];	// operands of the final summation that hold the concatenation of partial products
+				ostringstream carrys;		// operand of the final summation that holds the concatenation of carry bits of the partial products
 
 			// COMPUTE PARTIAL PRODUCTS
 			if (quadMultiply)
@@ -266,17 +246,18 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 					dname << "y"<<k;
 					vhdl << tab << declare(dname.str(),chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << "sY" << range((k+1)*chunkSize_-1,k*chunkSize_) << ";" << endl;
 				}
+				
+				if (verbose)	
+					cerr << "> IntMultiplier: Cannot use double chunckSize_ multipliers" << endl;
 					
-				cout << "Cannot use double chunckSize_ multipliers" << endl;
 				while (chX/4 > 0)
 				{
-					cout << "While iteration no. " << level << endl;
-				
 					// top-right tile
 					setCycle(1);
 					partialProd.str("");
 					partialProd << "px0y" << 4*level;
 					vhdl << tab << declare(partialProd.str(),2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << use("x0") << " * " << use(join("y", 4*level)) << ";" << endl;
+					
 					setCycle(3);
 					operands[0] << use(partialProd.str()) << " & " << zeroGenerator(chunkSize_*4*level,0) << ";" << endl;
 					
@@ -289,10 +270,12 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 					partialProd.str("");
 					partialProd << "px1y" << 4*level;
 					vhdl << tab << declare(partialProd.str(),2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << use("x1") << " * " << use(join("y",4*level)) << ";" << endl;
+					
 					setCycle(2);
 					sum.str("");
 					sum << "addOp" << level << "_shift_" << 4*level+1;
 					vhdl << tab << declare(sum.str(), 2*chunkSize_+1,true,Signal::registeredWithAsyncReset) << " <= (\"0\" & " << use(partialProd.str()) << ") + (\"0\" & " << use(partialProd2.str()) << ");" << endl; 
+					
 					setCycle(3);
 					operands[1] << use(sum.str()) << range(2*chunkSize_-1,0) << " & " << zeroGenerator((4*level+1)*chunkSize_,0) << ";" << endl;
 					carrys << use(sum.str()) << range(2*chunkSize_,2*chunkSize_) << " & " << zeroGenerator((4*level+3)*chunkSize_,0) << ";" << endl;
@@ -311,7 +294,6 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 					// add the 3 partial products
 					sum.str("");
 					sum << "addOp" << level << "_shift_" << 4*level+2;
-					cout << sum.str() << endl;
 					vhdl << tab << declare(sum.str(), 2*chunkSize_+2,true,Signal::registeredWithAsyncReset) << " <= (\"00\" & ";
 					
 					for (int j=0; j<3; j++)
@@ -324,6 +306,7 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 							vhdl << ") + (\"00\" & " << use(partialProd.str());
 					}
 					vhdl << ");" << endl;
+					
 					setCycle(3);
 					operands[0].seekp(ios_base::beg);
 					operands[0] << use(sum.str()) << range(2*chunkSize_-1,0) << " & " << operands[0].str();
@@ -342,7 +325,6 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 						{
 							partialProd.str("");
 							partialProd << "px" << i-j << "y" << j+4*level;
-							cout << "partialProd = " << partialProd.str() << endl;
 							vhdl << tab << declare(partialProd.str(),2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << use(join("x",i-j)) << " * " << use(join("y",j+4*level)) << ";" << endl;
 						}
 						setCycle(2);
@@ -361,6 +343,7 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 								vhdl << ") + (\"00\" & " << use(partialProd.str());
 						}
 						vhdl << ");" << endl;
+						
 						setCycle(3);
 						operands[i%2].seekp(ios_base::beg);
 						operands[i%2] << use(sum.str()) << range(2*chunkSize_-1,0) << " & " << operands[i%2].str();  
@@ -383,7 +366,6 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 						// add the 4 partial products
 						sum.str("");
 						sum << "addOp" << level << "_shift_" << chX+j-1;
-						cout << sum.str() << endl;
 						vhdl << tab << declare(sum.str(), 2*chunkSize_+2,true,Signal::registeredWithAsyncReset) << " <= (\"00\" & ";
 						
 						for (int i=0; i<4; i++)
@@ -396,6 +378,7 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 								vhdl << ") + (\"00\" & " << use(partialProd.str());
 						}
 						vhdl << ");" << endl;
+						
 						setCycle(3);
 						operands[(j+chX-1)%2].seekp(ios_base::beg);
 						operands[(j+chX-1)%2] << use(sum.str()) << range(2*chunkSize_-1,0) << " & " << operands[(j+chX-1)%2].str(); 
@@ -416,7 +399,6 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 					// add the 3 partial products
 					sum.str("");
 					sum << "addOp" << level << "_shift_" << chunksY+chX-4;
-					cout << sum.str() << endl;
 					vhdl << tab << declare(sum.str(), 2*chunkSize_+2,true,Signal::registeredWithAsyncReset) << " <= (\"00\" & ";
 					
 					for (int j=0; j<3; j++)
@@ -429,6 +411,7 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 							vhdl << ") + (\"00\" & " << use(partialProd.str());
 					}
 					vhdl << ");" << endl;
+					
 					setCycle(3);
 					operands[(chX+chunksY-4)%2].seekp(ios_base::beg);
 					operands[(chX+chunksY-4)%2] << use(sum.str()) << range(2*chunkSize_-1,0) << " & " << operands[(chX+chunksY-4)%2].str();
@@ -443,10 +426,12 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 					partialProd.str("");
 					partialProd << "px" << chX-2 << "y" << chunksY-1;
 					vhdl << tab << declare(partialProd.str(),2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << use(join("x", chX-2)) << " * " << use(join("y", chunksY-1)) << ";" << endl;
+					
 					setCycle(2);
 					sum.str("");
 					sum << "addOp" << level << "_shift_" << chX+chunksY-3;
 					vhdl << tab << declare(sum.str(), 2*chunkSize_+1,true,Signal::registeredWithAsyncReset) << " <= (\"0\" & " << use(partialProd.str()) << ") + (\"0\" & " << use(partialProd2.str()) << ");" << endl; 
+					
 					setCycle(3);
 					operands[(chX+chunksY-3)%2].seekp(ios_base::beg);
 					operands[(chX+chunksY-3)%2] << zeroGenerator((4*level+1)*chunkSize_,0) << " & " << use(sum.str()) << range(2*chunkSize_-1,0) << " & " << operands[(chX+chunksY-3)%2].str();
@@ -458,6 +443,7 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 					partialProd.str("");
 					partialProd << "px"<< chX-1 << "y" << chunksY-1;
 					vhdl << tab << declare(partialProd.str(),2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << use(join("x",chX-1)) << " * " << use(join("y", chunksY-1)) << ";" << endl;
+					
 					setCycle(3);
 					operands[(chX+chunksY-2)%2].seekp(ios_base::beg);
 					operands[(chX+chunksY-2)%2] << zeroGenerator(4*level*chunkSize_,0) << " & " << use(partialProd.str()) << " & " << operands[(chX+chunksY-2)%2].str();
@@ -483,12 +469,14 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 				switch (chX)
 				{
 					case 1: // remaining tiles are in a single column
-						cout << "Case 1: remaining tiles are in a single column" << endl;
+						if (verbose)
+							cerr << ">IntMultiplier: Case 1: remaining tiles are in a single column" << endl;
 						
 						operands[i%2] << zeroGenerator(level*4*chunkSize_,0) << ";";
 						if (chunksY-i > 1) // then there are more than one tiles in the column
 						{
-							cout << "More than one tile in the column" << endl;
+							if (verbose)
+								cerr << ">IntMultiplier: More than one tile in the column" << endl;
 							operands[(i+1)%2] << zeroGenerator((level*4+1)*chunkSize_,0) << ";";
 							oneCol = false;
 						}
@@ -498,7 +486,6 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 							setCycle(1);
 							partialProd.str("");
 							partialProd << "px0y" << i;
-							cout << "partialProd = " << partialProd.str() << endl;
 							vhdl << tab << declare(partialProd.str(),2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << use("x0") << " * " << use(join("y",i)) << ";" << endl;
 							
 							setCycle(3);
@@ -522,7 +509,8 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 							
 						break;
 					case 2: // remaining tiles are in 2 columns
-						cout << "Case 2: remaining tiles are in 2 columns" << endl;
+						if (verbose)
+							cerr << ">IntMultiplier: Case 2: remaining tiles are in 2 columns" << endl;
 						setCycle(1);
 						// top right tile
 						partialProd.str("");
@@ -583,16 +571,17 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 						carrys.str("");
 						break;
 					case 3: // Remaining tiles are on 3 columns
-						cout << "Case 3: Remaining tiles are on 3 columns" << endl;
+						if (verbose)
+							cerr << ">IntMultiplier: Case 3: Remaining tiles are on 3 columns" << endl;
 						
 						height = chunksY - i;
-						cout << "Height = " << height << endl;
 						
 						switch (height)
 						{
 							case 0: break;
 							case 1: // only one row
-								cout << tab << "Subcase 1: there is one row" << endl;
+								if (verbose)
+									cerr << ">IntMultiplier:" << tab << " Subcase 1: there is one row" << endl;
 							
 								operands[i%2] << zeroGenerator(level*4*chunkSize_,0) << ";";
 								operands[(i+1)%2] << zeroGenerator((level*4+1)*chunkSize_,0) << ";";
@@ -619,7 +608,8 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 								opCount++;
 								break;
 							case 2: // two rows
-								cout << tab << "Subcase 2: there are two rows" << endl;
+								if (verbose)
+									cerr << ">IntMultiplier:" << tab << " Subcase 2: there are two rows" << endl;
 								
 								operands[i%2] << zeroGenerator(level*4*chunkSize_,0) << ";";
 								operands[(i+1)%2] << zeroGenerator((level*4+1)*chunkSize_,0) << ";";
@@ -679,7 +669,8 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 								carrys.str(""); 
 								break;
 							default: // more than 2 tiles
-								cout << tab << "Subcase 3: there are more than 2 rows" << endl;
+								if (verbose)
+									cerr << ">IntMultiplier:" << tab << " Subcase 3: there are more than 2 rows" << endl;
 								
 								operands[i%2] << zeroGenerator(level*4*chunkSize_,0) << ";";
 								operands[(i+1)%2] << zeroGenerator((level*4+1)*chunkSize_,0) << ";";
@@ -722,14 +713,12 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 									{
 										partialProd.str("");
 										partialProd << "px" << j << "y" << i+2-j;
-										cout << partialProd.str() << endl;
 										vhdl << tab << declare(partialProd.str(),2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << use(join("x",j)) << " * " << use(join("y",i+2-j)) << ";" << endl; 
 									}
 									setCycle(2);
 									// add the 3 partial products
 									sum.str("");
 									sum << "addOp" << level << "_shift_" << i+2;
-									cout << sum.str() << endl;
 									vhdl << tab << declare(sum.str(), 2*chunkSize_+2,true,Signal::registeredWithAsyncReset) << " <= (\"00\" & ";
 									
 									for (int j=0; j<3; j++)
@@ -800,7 +789,8 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 			{	
 				if (chunkSize_ == 18)
 				{
-					cout << "Block by block adition using double chunkSize multipliers" << endl;
+					if (verbose)
+						cerr << ">IntMultiplier: Block by block adition using double chunkSize multipliers" << endl;
 					int i, j, k;	
 					
 					////////////////////////////////////////////////////
@@ -887,8 +877,6 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 					
 					operands[0] << "\"\";";
 					operands[1] << zeroGenerator(chunkSize_,0) << ";";
-					
-					cout << "i = " << i << endl << "j = " << j << endl;
 					
 					bool halfPadded = false; /* TRUE when there is either 
 												a chunkSize width column on the left side of the tiling or 
@@ -984,7 +972,8 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 				}
 				else // then chunkSize is 9 and we can use double chunkSize multipliers
 				{
-					cout << "Using double chunkSize_ multipliers" << endl;
+					if (verbose)
+						cerr << ">IntMultiplier: Using double chunkSize_ multipliers" << endl;
 					
 					int i, j, k;	
 					
@@ -1036,8 +1025,7 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 					
 					while (chX/4 > 0)
 					{
-						cout << "While iteration no. " << level << endl;
-					
+						
 						// top-right tile
 						setCycle(1);
 						partialProd.str("");
@@ -1077,7 +1065,6 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 						// add the 3 partial products
 						sum.str("");
 						sum << "addOp" << level << "_shift_" << 4*level+2;
-						cout << sum.str() << endl;
 						vhdl << tab << declare(sum.str(), 2*chunkSize_+2,true,Signal::registeredWithAsyncReset) << " <= (\"00\" & ";
 						
 						for (int j=0; j<3; j++)
@@ -1108,7 +1095,6 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 							{
 								partialProd.str("");
 								partialProd << "px" << i-j << "y" << j+4*level;
-								cout << "partialProd = " << partialProd.str() << endl;
 								vhdl << tab << declare(partialProd.str(),2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << use(join("x",i-j)) << " * " << use(join("y",j+4*level)) << ";" << endl;
 							}
 							setCycle(2);
@@ -1149,7 +1135,6 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 							// add the 4 partial products
 							sum.str("");
 							sum << "addOp" << level << "_shift_" << chX+j-1;
-							cout << sum.str() << endl;
 							vhdl << tab << declare(sum.str(), 2*chunkSize_+2,true,Signal::registeredWithAsyncReset) << " <= (\"00\" & ";
 							
 							for (int i=0; i<4; i++)
@@ -1182,7 +1167,6 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 						// add the 3 partial products
 						sum.str("");
 						sum << "addOp" << level << "_shift_" << chunksY+chX-4;
-						cout << sum.str() << endl;
 						vhdl << tab << declare(sum.str(), 2*chunkSize_+2,true,Signal::registeredWithAsyncReset) << " <= (\"00\" & ";
 						
 						for (int j=0; j<3; j++)
@@ -1249,12 +1233,14 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 					switch (chX)
 					{
 						case 1: // remaining tiles are in a single column
-							cout << "Case 1: remaining tiles are in a single column" << endl;
+							if (verbose)
+								cerr << ">IntMultiplier: Case 1: remaining tiles are in a single column" << endl;
 							
 							operands[i%2] << zeroGenerator(level*4*chunkSize_ + start*chunkSize_/2,0) << ";";
 							if (chunksY-i > 1) // then there are more than one tiles in the column
 							{
-								cout << "More than one tile in the column" << endl;
+								if (verbose)
+									cerr << ">IntMultiplier: More than one tile in the column" << endl;
 								operands[(i+1)%2] << zeroGenerator((level*4+1)*chunkSize_ + start*chunkSize_/2,0) << ";";
 								oneCol = false;
 							}
@@ -1264,7 +1250,6 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 								setCycle(1);
 								partialProd.str("");
 								partialProd << "px0y" << i;
-								cout << "partialProd = " << partialProd.str() << endl;
 								vhdl << tab << declare(partialProd.str(),2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << use("x0") << " * " << use(join("y",i)) << ";" << endl;
 								
 								setCycle(3);
@@ -1288,7 +1273,8 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 								
 							break;
 						case 2: // remaining tiles are in 2 columns
-							cout << "Case 2: remaining tiles are in 2 columns" << endl;
+							if (verbose)
+								cerr << ">IntMultiplier: Case 2: remaining tiles are in 2 columns" << endl;
 							setCycle(1);
 							// top right tile
 							partialProd.str("");
@@ -1347,16 +1333,17 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 							opCount++;	
 							break;
 						case 3: // Remaining tiles are on 3 columns
-							cout << "Case 3: Remaining tiles are on 3 columns" << endl;
+							if (verbose)
+								cerr << ">IntMultiplier: Case 3: Remaining tiles are on 3 columns" << endl;
 							
 							height = chunksY - i;
-							cout << "Height = " << height << endl;
 							
 							switch (height)
 							{
 								case 0: break;
 								case 1: // only one row
-									cout << tab << "Subcase 1: there is one row" << endl;
+									if (verbose)
+										cerr << ">IntMultiplier: " << tab << "Subcase 1: there is one row" << endl;
 								
 									operands[i%2] << zeroGenerator(level*4*chunkSize_ + start*chunkSize_/2,0) << ";";
 									operands[(i+1)%2] << zeroGenerator((level*4+1)*chunkSize_ + start*chunkSize_/2,0) << ";";
@@ -1383,7 +1370,8 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 									opCount++;
 									break;
 								case 2: // two rows
-									cout << tab << "Subcase 2: there are two rows" << endl;
+									if (verbose)
+										cerr << ">IntMultiplier: " << tab << "Subcase 2: there are two rows" << endl;
 									
 									operands[i%2] << zeroGenerator(level*4*chunkSize_ + start*chunkSize_/2,0) << ";";
 									operands[(i+1)%2] << zeroGenerator((level*4+1)*chunkSize_ + start*chunkSize_/2,0) << ";";
@@ -1441,7 +1429,8 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 									opCount++;	
 									break;
 								default: // more than 2 tiles
-									cout << tab << "Subcase 3: there are more than 2 rows" << endl;
+									if (verbose)
+										cerr << ">IntMultiplier: " << tab << "Subcase 3: there are more than 2 rows" << endl;
 									
 									operands[i%2] << zeroGenerator(level*4*chunkSize_ + start*chunkSize_/2,0) << ";";
 									operands[(i+1)%2] << zeroGenerator((level*4+1)*chunkSize_ + start*chunkSize_/2,0) << ";";
@@ -1484,14 +1473,12 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 										{
 											partialProd.str("");
 											partialProd << "px" << j << "y" << i+2-j;
-											cout << partialProd.str() << endl;
 											vhdl << tab << declare(partialProd.str(),2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << use(join("x",j)) << " * " << use(join("y",i+2-j)) << ";" << endl; 
 										}
 										setCycle(2);
 										// add the 3 partial products
 										sum.str("");
 										sum << "addOp" << level << "_shift_" << i+2;
-										cout << sum.str() << endl;
 										vhdl << tab << declare(sum.str(), 2*chunkSize_+2,true,Signal::registeredWithAsyncReset) << " <= (\"00\" & ";
 										
 										for (int j=0; j<3; j++)
