@@ -18,6 +18,7 @@
 #include "../../FPLog.hpp"
 #include "../../FPMultiplier.hpp"
 #include "../../LongAcc.hpp"
+#include "../../ConstMult/IntConstMult.hpp"
 #include "CoordinatesTableX.hpp"
 #include "CoordinatesTableY.hpp"
 #include "CoordinatesTableZ.hpp"
@@ -70,6 +71,9 @@ private:
 	/** 3 input adder for variables */
 	IntNAdder* adder4var;
 
+	/** 3 input adder for each coordinate of var 5 */
+	IntNAdder* adder4coordvar5;
+
 	/** Fix2FP converter */
 	Fix2FP* convert2FP;
 	
@@ -96,6 +100,9 @@ private:
 	
 	/** The FP Multiplier operator used in the final accumulator formula */
 	LongAcc* finalAcc;
+	
+	/** The Constant Multiplier for computing var 3 and var 4 in the point 0.0111....*/
+	IntConstMult* cstMult;
 	
 	/**The memories for the coordinates(X,Y,Z)*/
 	CoordinatesTableX* memCoordX;
