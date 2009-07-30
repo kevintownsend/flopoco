@@ -25,6 +25,8 @@
 #ifndef TARGET_HPP
 #define TARGET_HPP
 
+#include "DSP.hpp"
+
 /** Abstract target Class. All classes which model real chips inherit from this class */
 class Target
 {
@@ -154,6 +156,11 @@ class Target
 	 * @param	wInY the width (in bits) of the second operand
 	 */
 	virtual int multiplierLUTCost(int wInX, int wInY) =0;
+	
+	/** Constructs a specific DSP to each target */
+	
+	virtual DSP* createDSP() = 0;
+	
 
 protected:
 	int    lutInputs_;          /**< The number of inputs for the LUTs */
@@ -163,6 +170,7 @@ protected:
 	int    multYInputs_;        /**< The size for the Y dimmension of the hardware multipliers */
 	bool   useHardMultipliers_; /**< If true the operator design can use the hardware multipliers */
 	long sizeOfBlock;		/**<The size of a primitive memory block> */
+	
 };
 
 

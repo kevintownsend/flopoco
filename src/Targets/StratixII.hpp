@@ -93,6 +93,7 @@ public:
 	bool   suggestSlackSubaddSize(int &x, int wIn, double slack);
 	int    multiplierLUTCost(int wInX, int wInY);
 	long sizeOfMemoryBlock();
+	DSP* createDSP() ;
 
 private:
 

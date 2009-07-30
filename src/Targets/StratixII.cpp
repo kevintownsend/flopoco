@@ -58,6 +58,13 @@ long StratixII::sizeOfMemoryBlock()
 return sizeOfBlock;	
 };
 
+ DSP* StratixII::createDSP() 
+{
+	DSP* dsp_ = new DSP();
+	
+	return dsp_;
+};
+
 bool StratixII::suggestSubmultSize(int &x, int &y, int wInX, int wInY){
 // TODO This is the VirtexIV function. Stratix II is more interesting
 // (DSP blocks are 36x36 and my be split as 9x9 or 18x18)

@@ -55,6 +55,14 @@ long Virtex4::sizeOfMemoryBlock()
 return sizeOfBlock;	
 };
 
+
+ DSP* Virtex4::createDSP() 
+{
+	DSP* dsp_ = new DSP();
+	
+	return dsp_;
+};
+
 bool Virtex4::suggestSubmultSize(int &x, int &y, int wInX, int wInY){
 	x = y = 17;
 /**	
