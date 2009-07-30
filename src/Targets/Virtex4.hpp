@@ -38,6 +38,7 @@ class Virtex4 : public Target
 public:
 	/** The default constructor. */  
 	Virtex4() : Target()	{
+		sizeOfBlock = 18432;	// the size of a primitive block is 2^11 * 9
 		// all these values are set more or less randomly, to match  virtex 4 more or less
 		fastcarryDelay_ = 0.034e-9; //s   
 		elemWireDelay_  = 0.436e-9;
@@ -75,6 +76,8 @@ public:
 	bool   suggestSubaddSize(int &x, int wIn);
 	bool   suggestSlackSubaddSize(int &x, int wIn, double slack);
 	int    multiplierLUTCost(int wInX, int wInY);
+	long sizeOfMemoryBlock();
+		
 private:
 	double fastcarryDelay_; /**< The delay of the fast carry chain */
 	double lutDelay_;       /**< The delay between two LUTs */

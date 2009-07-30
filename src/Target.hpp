@@ -99,6 +99,12 @@ class Target
 	 * @return local wire delay 
 	 */
 	virtual double localWireDelay() =0;
+	
+	/** Function which returns the size of a primitive memory block,which could be recognized by the sintetyzer as a dual block.
+	* @return the size of the primitive memory block
+	*/	
+	
+	virtual long sizeOfMemoryBlock() = 0 ;
 
 	/** Function which returns the distant wire delay.
 	 * @return distant wire delay 
@@ -156,6 +162,7 @@ protected:
 	int    multXInputs_;        /**< The size for the X dimmension of the hardware multipliers */
 	int    multYInputs_;        /**< The size for the Y dimmension of the hardware multipliers */
 	bool   useHardMultipliers_; /**< If true the operator design can use the hardware multipliers */
+	long sizeOfBlock;		/**<The size of a primitive memory block> */
 };
 
 

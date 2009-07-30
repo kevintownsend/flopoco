@@ -50,6 +50,11 @@ double Virtex4::lutDelay(){
   return lutDelay_;
 };
 
+long Virtex4::sizeOfMemoryBlock()
+{
+return sizeOfBlock;	
+};
+
 bool Virtex4::suggestSubmultSize(int &x, int &y, int wInX, int wInY){
 	x = y = 17;
 /**	

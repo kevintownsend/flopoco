@@ -65,7 +65,8 @@ DualTable::DualTable(Target* target, int _wIn, int _wOut, int _minIn, int _maxIn
 	{
 	setCopyrightString("Radu Tudoran (2009)");
 
-	 limitSingleMemory = intpow2(11)*9;
+	 //limitSingleMemory = intpow2(11)*9;
+	limitSingleMemory = target->sizeOfMemoryBlock();
 		
 	// Set up the IO signals
 	

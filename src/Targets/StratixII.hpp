@@ -39,6 +39,7 @@ public:
 
 	/** The default constructor. */  
 	StratixII() : Target()	{
+		sizeOfBlock = 4608; 			// the size of a primitive block is 2^9 * 9
 		fastcarryDelay_ 	= 3.5e-11; 	// aproximately right    
 		elemWireDelay_  	= 0.3e-11; 	// ???
 		lut2lutDelay_   	= 1.5e-10; 	// ???
@@ -91,6 +92,7 @@ public:
 	bool   suggestSubaddSize(int &x, int wIn);
 	bool   suggestSlackSubaddSize(int &x, int wIn, double slack);
 	int    multiplierLUTCost(int wInX, int wInY);
+	long sizeOfMemoryBlock();
 
 private:
 
