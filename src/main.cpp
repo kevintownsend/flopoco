@@ -43,6 +43,7 @@
 #include "LongIntAdder.hpp"
 #include "IntDualSub.hpp"
 #include "IntMultiplier.hpp"
+#include "IntTillingMult.hpp"
 #include "IntKaratsuba.hpp"
 #include "FPMultiplier.hpp"
 #include "FPSquarer.hpp"
@@ -130,6 +131,8 @@ static void usage(char *name){
 	cerr << "    IntAdder wIn\n";
 	cerr << "      Integer adder, possibly pipelined\n";
 	cerr << "    IntMultiplier wInX wInY \n";
+	cerr << "      Integer multiplier of two integers X and Y of sizes wInX and wInY \n";	
+	cerr << "    IntTillingMult wInX wInY \n";
 	cerr << "      Integer multiplier of two integers X and Y of sizes wInX and wInY \n";	
 	cerr << "    IntKaratsuba wIn \n";
 	cerr << "      integer multiplier of two integers X and Y of sizes wIn. 17 < wIn <= 51 (for now) \n";	
@@ -637,6 +640,18 @@ bool parseCommandLine(int argc, char* argv[]){
 				int wInY = checkStrictyPositive(argv[i++], argv[0]);
 				cerr << "> IntMultiplier , wInX="<<wInX<<", wInY="<<wInY<<"\n";
 				op = new IntMultiplier(target, wInX, wInY);
+				addOperator(op);
+			}
+		}
+		else if(opname=="IntTillingMult"){
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int wInX = checkStrictyPositive(argv[i++], argv[0]);
+				int wInY = checkStrictyPositive(argv[i++], argv[0]);
+				cerr << "> IntTillingMult , wInX="<<wInX<<", wInY="<<wInY<<"\n";
+				op = new IntTillingMult(target, wInX, wInY);
 				addOperator(op);
 			}
 		}
