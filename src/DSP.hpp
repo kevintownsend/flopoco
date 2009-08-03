@@ -42,6 +42,98 @@ class DSP
 	/** The destructor */
 	virtual ~DSP() {}
 
+	/** Returns the with of the multiplier that this DSP block is using 
+	 * @return the with of the multiplier that this DSP block is using */
+	int getMultiplierWidth();
+	
+	/** Assigns the designated width to the multiplier of the DSP block
+	 * @param w width assigned to the multiplier of the DSP block.
+	 */
+	void setMultiplierWidth(int w);
+	
+	/** Returns the amount by which an input can be shifted inside the DSP block 
+	 * @return the amount by which an input can be shifted inside the DSP block */
+	int getShiftAmount();
+	
+	/** Assigns the shift amount that is used within this DSP block.
+	 * @param s shift amount used within this DSP block.
+	 */
+	void setShiftAmount(int s);
+	
+	/** Returns the number of adders this DSP block is using
+	 * @return the number of adders this DSP block is using */
+	int getNumberOfAdders();
+	
+	/** Assign the number of adders used by this DSP block in order to know the number of addition operands.
+	 * @param o	number of addition operands
+	 */
+	void setNumberOfAdders(int o);
+	
+	/** Returns TRUE if the DSP block is configured to perform multiply-accumulate
+	 * @return TRUE if the DSP block is configured to perform multiply-accumulate */
+	bool isMultiplyAccumulate();
+	
+	/** Sets a flag that will configure the DSP block to multiply-accumulate when TRUE.
+	 * @param m value assigned to multiply-accumulate flag
+	 */
+	void setMultiplyAccumulate(bool m);
+	
+	/** Procedure that return by the value of its two parameters the coordinates
+	 * of the top-right corner of the DSP within a tiling.
+	 * @param x the horizontal coordinate of the top-right corner
+	 * @param y the vertical coordinate of the top-right corner
+	 */
+	void getTopRightCorner(int &x, int &y);
+	
+	/** Assigns the x and y coordinates of the top-right corner of the DSP within the tiling.
+	 * @param x the horizontal coordinate of the top-right corner
+	 * @param y the vertical coordinate of the top-right corner
+	 */
+	void setTopRightCorner(int x, int y);
+	
+	/** Procedure that return by the value of its two parameters the coordinates
+	 * of the bottom-left corner of the DSP within a tiling.
+	 * @param x the horizontal coordinate of the bottom-left corner
+	 * @param y the vertical coordinate of the bottom-left corner
+	 */
+	void getBottomLeftCorner(int &x, int &y);
+	
+	/** Assigns the x and y coordinates of the bottom-left corner of the DSP within the tiling.
+	 * @param x the horizontal coordinate of the bottom-left corner
+	 * @param y the vertical coordinate of the bottom-left corner
+	 */
+	void setBottomLeftCorner(int x, int y);
+	
+	/** Returns a reference to the DSP object whose output is the shifted input
+	 * for this DSP block. This method will be mainly used for Virtex architecture. 
+	 * @return a reference to the DSP object whose output is the shifted input for this DSP block*/
+	DSP* getShiftIn();
+	
+	/** Assign the DSP object whose output is the shifted input for this DSP block.
+	 *  This method will be mainly used for Virtex architecture.
+	 * @param d the DSP object whose output is the shifted input for this DSP block.
+	 */
+	void setShiftIn(DSP* d);
+	
+	/** Returns a reference to the DSP object whose shifted input is the output
+	 * of this DSP block. This method will be mainly used for Virtex architecture 
+	 * @return a reference to the DSP object whose shifted input is the output of this DSP block*/
+	DSP* getShiftOut();
+	
+	/** Assign the DSP object whose shifted input is the output of this DSP block.
+	 *  This method will be mainly used for Virtex architecture.
+	 * @param d the DSP object whose shifted input is the output of this DSP block.
+	 */
+	void setShiftOut(DSP* d);
+	
+	/** Returns references to all DSP objects that must be added with this DSP.
+	 * @return  references to all DSP objects that must be added with this DSP */
+	DSP** getAdditionOperands();
+	
+	/** Assigns an array containing the operands of the addition that this DSP is part of.
+	 * @param o the array containing the operands of the addition that this DSP is part of.
+	 */
+	void setAdditionOperands(DSP** o);
 	
 protected:
 	int    multiplierWidth_;	/**< The recommended with of the multiplier used by this DSP */
@@ -50,11 +142,11 @@ protected:
 	bool   multAccumulate_;     /**< If true the DSP block will be configured as Multiply-Accumulate */
 	
 	// attributes used for tilling algorithm
-	int 	positionX;		/**< The X coordinates for the 2 points that mark the position of the DSP block inside the tiling */
-	int		positionY;		/**< The Y coordinates for the 2 points that mark the position of the DSP block inside the tiling */
-	DSP*   	shiftIn;        	/**< The DSP block from which this block obtains a shifted operand (Virtex4) */
-	DSP*	shiftOut;			/**< The DSP block to which this block provides a shifted operand (Virtex4) */
-	DSP*	addOperands;		/**< The DSP blocks whose multiplication results may be added to this one depending on the number of adders used (StratixII)*/
+	int 	positionX_[2];		/**< The X coordinates for the 2 points that mark the position of the DSP block inside the tiling */
+	int		positionY_[2];		/**< The Y coordinates for the 2 points that mark the position of the DSP block inside the tiling */
+	DSP*   	shiftIn_;        	/**< The DSP block from which this block obtains a shifted operand (Virtex4) */
+	DSP*	shiftOut_;			/**< The DSP block to which this block provides a shifted operand (Virtex4) */
+	DSP**	addOperands_;		/**< The DSP blocks whose multiplication results may be added to this one depending on the number of adders used (StratixII)*/
 };
 
 

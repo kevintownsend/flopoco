@@ -28,3 +28,78 @@ using namespace std;
 
 extern int verbose;
 
+int DSP::getMultiplierWidth(){
+	return multiplierWidth_;
+}
+
+void DSP::setMultiplierWidth(int w){
+	multiplierWidth_ = w;
+}
+
+int DSP::getShiftAmount(){
+	return fixedShift_;
+}
+
+void DSP::setShiftAmount(int s){
+	fixedShift_ = s;
+}
+
+int DSP::getNumberOfAdders(){
+	return nrAdders_;
+}
+
+void DSP::setNumberOfAdders(int o){
+	nrAdders_ = o;
+}
+
+bool DSP::isMultiplyAccumulate(){
+	return multAccumulate_;
+}
+
+void DSP::setMultiplyAccumulate(bool m){
+	multAccumulate_ = m;
+}
+
+void DSP::getTopRightCorner(int &x, int &y){
+	x = positionX_[0];
+	y = positionY_[0];
+}
+
+void DSP::setTopRightCorner(int x, int y){
+	positionX_[0] = x;
+	positionY_[0] = y;
+}
+
+void DSP::getBottomLeftCorner(int &x, int &y){
+	x = positionX_[1];
+	y = positionY_[1];
+}
+
+void DSP::setBottomLeftCorner(int x, int y){
+	positionX_[1] = x;
+	positionY_[1] = y;
+}
+
+DSP* DSP::getShiftIn(){
+	return shiftIn_;
+}
+
+void DSP::setShiftIn(DSP* d){
+	shiftIn_ = d;
+}
+
+DSP* DSP::getShiftOut(){
+	return shiftOut_;
+}
+
+void DSP::setShiftOut(DSP* d){
+	shiftOut_ = d;
+}
+
+DSP** DSP::getAdditionOperands(){
+	return addOperands_;
+}
+
+void DSP::setAdditionOperands(DSP** o){
+	addOperands_ = o;
+}

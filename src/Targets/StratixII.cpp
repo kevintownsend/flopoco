@@ -22,7 +22,7 @@
 */
 #include "StratixII.hpp"
 #include <iostream>
-#include <sstream>
+#include <sstream> 
 #include "../utils.hpp"
 
 double StratixII::adderDelay(int size) {
@@ -61,6 +61,10 @@ return sizeOfBlock;
  DSP* StratixII::createDSP() 
 {
 	DSP* dsp_ = new DSP();
+	// set the multiplier width acording to the desired frequency
+	for (int i=0; i<3; i++)
+		if (this->frequency() < 1/multiplierDelay_[i])
+			dsp_->setMultiplierWidth(multiplierWidth_[i]);
 	
 	return dsp_;
 };

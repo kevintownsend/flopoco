@@ -64,9 +64,9 @@ public:
 		multiplierWidth_[1] = 18;
 		multiplierWidth_[2] = 36;
 		
-	 	multiplierDelay_[0] = 2.880e-9;
-		multiplierDelay_[1] = 2.990e-9;
-		multiplierDelay_[2] = 4.450e-9;
+		multiplierDelay_[0] = 2.439e-9; // obtained experimentaly from Quartus 2. Value in handbook is: 2.880e-9
+		multiplierDelay_[1] = 2.724e-9; // obtained experimentaly from Quartus 2. Value in handbook is: 2.990e-9
+		multiplierDelay_[2] = 4.000e-9; // obtained experimentaly from Quartus 2. Value in handbook is: 4.450e-9
 		
 		inputRegDelay_[0] = 2.030e-9;
 		inputRegDelay_[1] = 2.010e-9;
