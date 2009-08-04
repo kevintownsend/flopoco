@@ -121,5 +121,15 @@ void IntTillingMult::buildStandardTestCases(TestCaseList* tcl){
 }
 
 
+bool IntTillingMult::checkOverlap(DSP** config, int index){	
+}
 
+void IntTillingMult::move(DSP** config, int index){
+}
+
+void IntTillingMult::replace(DSP** config, int index){
+}
+
+void IntTillingMult::initTiling(DSP** config){
+}
 	

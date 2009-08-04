@@ -31,9 +31,41 @@ public:
 	void emulate(TestCase * tc);
 	void buildStandardTestCases(TestCaseList* tcl);
 
-
-
 private:
+	/**
+	 * Verifies that the indicated DSP block does not overlap with any 
+	 * other block in the given configuration.
+	 * @param config the tiling configuration containing DSP objects
+	 * @param index the index of the DSP object we want to check is not overlapping in the configuration
+	 * @return TRUE if no DSP blocks overlap on the tiling configuration
+	 */
+	bool checkOverlap(DSP** config, int index);
+	
+	/**
+	 * Displaces the DSP block in the 'next' valid configuration, i.e.
+	 * The DSP block in the configuration, indicated by the index parameter
+	 * is moved in downward and to the left.
+	 * @param config the tiling configuration containing DSP objects
+	 * @param index the index of the DSP object we want to move within the configuration
+	 * @return FALSE if we have reached the bottom-left most corner of the tiling
+	 */
+	bool move(DSP** config, int index);
+	
+	/**
+	 * Repositions the indicated DSP object within the configuration in the 
+	 * top-right most position possible.
+	 * @param config the tiling configuration containing DSP objects
+	 * @param index the index of the DSP object we want to move within the configuration
+	 */
+	void replace(DSP** config, int index);
+	
+	/**
+	 * Initializes the tiling grid with the DSP-s being positioned in the right-most
+	 * and top-most position possible without any overlapping of the DSP blocks
+	 */
+	void initTiling(DSP** config);
+
+
 	/** The width of first input*/
 	int wInX; 
 	/** The width of second input*/
