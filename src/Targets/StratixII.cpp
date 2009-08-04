@@ -60,11 +60,14 @@ return sizeOfBlock;
 
  DSP* StratixII::createDSP() 
 {
-	DSP* dsp_ = new DSP();
+	int multW, multH;
 	// set the multiplier width acording to the desired frequency
 	for (int i=0; i<3; i++)
 		if (this->frequency() < 1/multiplierDelay_[i])
-			dsp_->setMultiplierWidth(multiplierWidth_[i]);
+			multW = multH = multiplierWidth_[i];
+	
+	// create a DSP block having a shifting amount of 0
+	DSP* dsp_ = new DSP(0, multW, multH);
 	
 	return dsp_;
 };

@@ -58,7 +58,10 @@ return sizeOfBlock;
 
  DSP* Virtex4::createDSP() 
 {
-	DSP* dsp_ = new DSP();
+	/* create DSP block with constant shift of 17
+	 * and a maxium unsigned multiplier width (17x17) for this target
+	 */
+	DSP* dsp_ = new DSP(17, 17, 17);
 	
 	return dsp_;
 };
