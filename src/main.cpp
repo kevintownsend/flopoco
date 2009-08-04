@@ -650,8 +650,15 @@ bool parseCommandLine(int argc, char* argv[]){
 			else {
 				int wInX = checkStrictyPositive(argv[i++], argv[0]);
 				int wInY = checkStrictyPositive(argv[i++], argv[0]);
+				float ratio = atof(argv[i++]);
+				if(ratio < 0 )
+				{
+				cerr<<"ERROR: got "<<argv[i++]<<", expected strictly positive number."<<endl;
+				usage(argv[0]);
+				}
+				
 				cerr << "> IntTillingMult , wInX="<<wInX<<", wInY="<<wInY<<"\n";
-				op = new IntTillingMult(target, wInX, wInY);
+				op = new IntTillingMult(target, wInX, wInY,ratio);
 				addOperator(op);
 			}
 		}

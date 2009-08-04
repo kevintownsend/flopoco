@@ -20,7 +20,7 @@ public:
 	 * @param[in]		wER			the with of the exponent for the convertion result
 	 * @param[in]		wFR			the with of the fraction for the convertion result
 	 */
-	IntTillingMult(Target* target, int wInX, int wInY);
+	IntTillingMult(Target* target, int wInX, int wInY,float ratio);
 
 	/**
 	 * IntTillingMult destructor
@@ -40,7 +40,22 @@ private:
 	int wInY; 
 	/** The width of output */
 	int wOut;
-	
+	/** The ratio between the number of DSPs and slices */
+	float ratio;
+	/* The working configuration of the tilling algorithm on DSPs */
+	DSP** globalConfig;
+	/* The best configuration of the after tilling DSPs */
+	DSP** bestConfig;
+	/* The target */
+	Target * target;
+
+	/* The number of estimated DSPs that will be used according to this parameter */
+	int nrDSPs;
+
+	int estimateDSPs();
+
+
+	void tillingAlgorithm();
 	
 
 

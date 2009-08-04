@@ -55,8 +55,8 @@ extern vector<Operator*> oplist;
 
 #define DEBUGVHDL 0
 
-IntTillingMult:: IntTillingMult(Target* target, int wInX, int wInY) :
-	Operator(target), wInX(wInX), wInY(wInY), wOut(wInX + wInY){
+IntTillingMult:: IntTillingMult(Target* target, int wInX, int wInY,float ratio) :
+	Operator(target), target(target),wInX(wInX), wInY(wInY), wOut(wInX + wInY),ratio(ratio){
  
 	ostringstream name;
 
@@ -69,10 +69,42 @@ IntTillingMult:: IntTillingMult(Target* target, int wInX, int wInY) :
 	addInput ("Y", wInY);
 	addOutput("R", wOut); /* wOut = wInX + wInY */
 		
+	nrDSPs = estimateDSPs();
+	cout<< nrDSPs <<endl;
+		
+	
+		
 	}
 	
 IntTillingMult::~IntTillingMult() {
 }
+
+
+int IntTillingMult::estimateDSPs()
+{
+	if(1==ratio) //all dsps can be used. A function from target must be created in order to get the maximum number of dsp
+	{
+		return 50;
+	}
+	else
+	{	
+		if(0==ratio)
+		{
+		ratio = ratio + 0.000000001;
+		}
+		return ((int) (target->multiplierLUTCost(wInX,wInY) * ratio  / (1- ratio) ) );
+	}
+	
+	return 0;
+}
+
+
+void IntTillingMult::tillingAlgorithm()
+{
+	
+}
+
+
 
 void IntTillingMult::emulate(TestCase* tc)
 {
@@ -87,4 +119,7 @@ void IntTillingMult::emulate(TestCase* tc)
 void IntTillingMult::buildStandardTestCases(TestCaseList* tcl){
 	
 }
+
+
+
 	
