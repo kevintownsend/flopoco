@@ -28,12 +28,38 @@ using namespace std;
 
 extern int verbose;
 
+DSP::DSP(int Shift,int maxMultWidth,int maxMultHeight):
+fixedShift_(Shift),maxMultiplierWidth_(maxMultWidth) , maxMultiplierHeight_(maxMultHeight) 
+{
+			multiplierWidth_ = 0;
+			multiplierHeight_ = 0;
+			nrAdders_ = 1;
+			multAccumulate_ = false;	
+}
+
 int DSP::getMultiplierWidth(){
 	return multiplierWidth_;
 }
 
+int DSP::getMaxMultiplierWidth(){
+	return maxMultiplierWidth_;
+}
+
+int DSP::getMultiplierHeight(){
+	return multiplierHeight_;
+}
+
+int DSP::getMaxMultiplierHeight(){
+	return maxMultiplierHeight_;
+}
+
+
 void DSP::setMultiplierWidth(int w){
 	multiplierWidth_ = w;
+}
+
+void DSP::setMultiplierHeight(int h){
+	multiplierHeight_ = h;
 }
 
 int DSP::getShiftAmount(){

@@ -33,11 +33,16 @@ class DSP
 	 * not configured to do multiply-accumulate
  	 */ 
 	DSP()   {
-			multiplierWidth_ = 18;
+			maxMultiplierWidth_ = 18;
+			maxMultiplierHeight_ = 18;
+			multiplierWidth_ = 0;
+			multiplierHeight_ = 0;
 			fixedShift_ = 0;
 			nrAdders_ = 1;
 			multAccumulate_ = false;
 	}
+	
+	DSP(int Shift,int maxMultWidth,int maxMultHeight);
 	
 	/** The destructor */
 	virtual ~DSP() {}
@@ -50,15 +55,29 @@ class DSP
 	 * @param w width assigned to the multiplier of the DSP block.
 	 */
 	void setMultiplierWidth(int w);
+		
+	/** Returns the height of the multiplier that this DSP block is using 
+	 * @return the height of the multiplier that this DSP block is using */
+	int getMultiplierHeight();
+	
+	/** Assigns the designated height to the multiplier of the DSP block
+	 * @param w height assigned to the multiplier of the DSP block.
+	 */
+	void setMultiplierHeight(int w);
 	
 	/** Returns the amount by which an input can be shifted inside the DSP block 
 	 * @return the amount by which an input can be shifted inside the DSP block */
 	int getShiftAmount();
 	
-	/** Assigns the shift amount that is used within this DSP block.
-	 * @param s shift amount used within this DSP block.
-	 */
-	void setShiftAmount(int s);
+	/** Returns the maximum with of the multiplier that this DSP block is using 
+	 * @return the maximum with of the multiplier that this DSP block is using */
+	int getMaxMultiplierWidth();
+	
+		
+	/** Returns the maximum height of the multiplier that this DSP block is using 
+	 * @return the maximum height of the multiplier that this DSP block is using */
+	int getMaxMultiplierHeight();
+	
 	
 	/** Returns the number of adders this DSP block is using
 	 * @return the number of adders this DSP block is using */
@@ -137,6 +156,10 @@ class DSP
 	
 protected:
 	int    multiplierWidth_;	/**< The recommended with of the multiplier used by this DSP */
+	int    maxMultiplierWidth_;	/**< The recommended with of the multiplier used by this DSP */
+	int    multiplierHeight_;	/**< The recommended with of the multiplier used by this DSP */
+	int    maxMultiplierHeight_;	/**< The recommended with of the multiplier used by this DSP */
+
 	int    fixedShift_;         /**< The shift capacity of one input of the DSP block */
 	int    nrAdders_;          	/**< The number of adders used by this DSP reflects the number of multipliers used and the number of outputs */
 	bool   multAccumulate_;     /**< If true the DSP block will be configured as Multiply-Accumulate */
@@ -147,6 +170,13 @@ protected:
 	DSP*   	shiftIn_;        	/**< The DSP block from which this block obtains a shifted operand (Virtex4) */
 	DSP*	shiftOut_;			/**< The DSP block to which this block provides a shifted operand (Virtex4) */
 	DSP**	addOperands_;		/**< The DSP blocks whose multiplication results may be added to this one depending on the number of adders used (StratixII)*/
+private:
+	/** Assigns the shift amount that is used within this DSP block.
+	 * @param s shift amount used within this DSP block.
+	 */
+	void setShiftAmount(int s);
+	
+
 };
 
 
