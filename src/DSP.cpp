@@ -129,3 +129,9 @@ DSP** DSP::getAdditionOperands(){
 void DSP::setAdditionOperands(DSP** o){
 	addOperands_ = o;
 }
+
+void DSP::rotate(){
+	int tmp = multiplierHeight_;
+	multiplierHeight_ = multiplierWidth_;
+	multiplierWidth_ = tmp;
+}

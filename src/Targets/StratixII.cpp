@@ -61,10 +61,7 @@ return sizeOfBlock;
  DSP* StratixII::createDSP() 
 {
 	int multW, multH;
-	// set the multiplier width acording to the desired frequency
-	for (int i=0; i<3; i++)
-		if (this->frequency() < 1/multiplierDelay_[i])
-			multW = multH = multiplierWidth_[i];
+	getDSPWidths(multW, multH);
 	
 	// create a DSP block having a shifting amount of 0
 	DSP* dsp_ = new DSP(0, multW, multH);
@@ -175,18 +172,41 @@ int StratixII::multiplierLUTCost(int wInX, int wInY){
 
 }
 
-int StratixII::getEquivalenceSliceDSP() 
-{
-return 0;	
-};
+void StratixII::getDSPWidths(int &x, int &y){
+	// set the multiplier width acording to the desired frequency
+	for (int i=0; i<3; i++)
+		if (this->frequency() < 1/multiplierDelay_[i])
+			x = y = multiplierWidth_[i];
+}
+
+int StratixII::getEquivalenceSliceDSP(){
+	int lutCost = 0;
+	int x, y;
+	getDSPWidths(x,y);
+	// add multiplier cost
+	lutCost += multiplierLUTCost(x, y);
+	// add accumulator cost
+	//lutCost += accumulatorLUTCost(x, y);
+	// add partial cost of final adder
+	//lutCost += adderLUTCost(x,y);
+	return lutCost;
+}
 	
 int StratixII::getNumberOfDSPs() 
 {
-return 0;		
+	int dsps = 96; // number of 9-bit elements
+	int x, y;
+	getDSPWidths(x, y);
+	
+	switch (x)
+	{
+		case 9: y = dsps;
+			break;
+		case 18: y = dsps/2;
+			break;
+		case 36: y = dsps/8;
+			break;
+	}
+	return y;		
 };
-void StratixII::getDSPWidths(int &x, int &y){
-x=0;
-y=0;	
-		
-} ;
 

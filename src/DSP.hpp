@@ -154,6 +154,12 @@ class DSP
 	 */
 	void setAdditionOperands(DSP** o);
 	
+	/** Swaps the width and height of the DSP block. This is used in case of asymetrical DSP
+	 * blocks when we want to do a vertical/horizontal replacement of the block and we need
+	 * to rotate the block by 90 degrees.
+	 */
+	void rotate();
+	
 protected:
 	int    multiplierWidth_;	/**< The recommended with of the multiplier used by this DSP */
 	int    maxMultiplierWidth_;	/**< The recommended with of the multiplier used by this DSP */

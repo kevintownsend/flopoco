@@ -58,29 +58,16 @@ return sizeOfBlock;
 
  DSP* Virtex4::createDSP() 
 {
+	int x, y;
+	getDSPWidths(x, y);
+	
 	/* create DSP block with constant shift of 17
 	 * and a maxium unsigned multiplier width (17x17) for this target
 	 */
-	DSP* dsp_ = new DSP(17, 17, 17);
+	DSP* dsp_ = new DSP(17, x, y);
 	
 	return dsp_;
 };
-
-
-int Virtex4::getEquivalenceSliceDSP() 
-{
-return 0;	
-};
-	
-int Virtex4::getNumberOfDSPs() 
-{
-return 0;		
-};
-void Virtex4::getDSPWidths(int &x, int &y){
-x=0;
-y=0;	
-		
-} ;
 
 bool Virtex4::suggestSubmultSize(int &x, int &y, int wInX, int wInY){
 	x = y = 17;
@@ -253,3 +240,23 @@ int Virtex4::multiplierLUTCost(int wInX, int wInY){
 	return lutCost;//TODO + this->intNAdderLUTCost(chunksX*x, chunksY*y, frequency);
 };
   
+void Virtex4::getDSPWidths(int &x, int &y){
+	x = 17;
+	y = 17;
+}
+
+int Virtex4::getEquivalenceSliceDSP(){
+	int lutCost = 0;
+	int x, y;
+	getDSPWidths(x,y);
+	// add multiplier cost
+	lutCost += multiplierLUTCost(x, y);
+	// add shifter and accumulator cost
+	//lutCost += accumulatorLUTCost(x, y);
+	return lutCost;
+}
+
+int Virtex4::getNumberOfDSPs() 
+{
+	return 32; // XC4VLX15 has 1 column of 32 DSPs		
+};
