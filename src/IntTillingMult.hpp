@@ -62,8 +62,10 @@ private:
 	/**
 	 * Initializes the tiling grid with the DSP-s being positioned in the right-most
 	 * and top-most position possible without any overlapping of the DSP blocks
+	 * @param config the tiling configuration containing DSP objects
+	 * @param dspCount the number of DSP blocks in the configuration
 	 */
-	void initTiling(DSP** config);
+	void initTiling(DSP** config, int dspCount);
 	
 	/**
 	* This function returns the amount of extra displacemnet on the tilling board that a dsp block can have on vertical axis
