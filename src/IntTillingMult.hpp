@@ -64,7 +64,19 @@ private:
 	 * and top-most position possible without any overlapping of the DSP blocks
 	 */
 	void initTiling(DSP** config);
+	
+	/**
+	* This function returns the amount of extra displacemnet on the tilling board that a dsp block can have on vertical axis
+	* @return extra height
+	*/
+	int getExtraHeight();
 
+	/**
+	* This function returns the amount of extra displacemnet on the tilling board that a dsp block can have on horizonta axis
+	* @return extra width
+	*/
+	int getExtraWidth();
+	
 
 	/** The width of first input*/
 	int wInX; 

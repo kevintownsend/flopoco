@@ -71,6 +71,7 @@ IntTillingMult:: IntTillingMult(Target* target, int wInX, int wInY,float ratio) 
 		
 	nrDSPs = estimateDSPs();
 	cout<< nrDSPs <<endl;
+	cout<<"Extra width:= "<<getExtraWidth()<<" \n Extra height"<<getExtraHeight()<<endl;
 		
 	
 		
@@ -82,22 +83,41 @@ IntTillingMult::~IntTillingMult() {
 
 int IntTillingMult::estimateDSPs()
 {
-	if(1==ratio) //all dsps can be used. A function from target must be created in order to get the maximum number of dsp
+	if(1==ratio) 
 	{
-		return 50;
+		return target->getNumberOfDSPs();
 	}
 	else
 	{	
-		if(0==ratio)
+		float temp = (target->multiplierLUTCost(wInX,wInY) * ratio)  /   ((1- ratio)  *  target->getEquivalenceSliceDSP() ) ;
+		if(temp - ((int)temp)  > 0 ) // if the estimated number of dsps is a number with nonzero real part than we will return the integer number grather then this computed value. eg. 2.3 -> 3
 		{
-		ratio = ratio + 0.000000001;
+		temp++;	
 		}
-		return ((int) (target->multiplierLUTCost(wInX,wInY) * ratio  / (1- ratio) ) );
+		
+		return ((int)  temp) ;
 	}
 	
 	return 0;
 }
 
+
+int  IntTillingMult::getExtraHeight()
+{
+int x,y;	
+target->getDSPWidths(x,  y);
+float temp = ratio * 0.75 * ((float) y);
+return ((int)temp);
+}
+
+	
+int  IntTillingMult::getExtraWidth()
+{
+int x,y;	
+target->getDSPWidths(x,y);
+float temp = ratio * 0.75 * ((float) x);
+return ((int)temp);
+}
 
 void IntTillingMult::tillingAlgorithm()
 {
