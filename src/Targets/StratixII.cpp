@@ -174,3 +174,19 @@ int StratixII::multiplierLUTCost(int wInX, int wInY){
 	return lutCost;//TODO + this->intNAdderLUTCost(chunksX*x, chunksY*y, frequency);
 
 }
+
+int StratixII::getEquivalenceSliceDSP() 
+{
+return 0;	
+};
+	
+int StratixII::getNumberOfDSPs() 
+{
+return 0;		
+};
+void StratixII::getDSPWidths(int &x, int &y){
+x=0;
+y=0;	
+		
+} ;
+

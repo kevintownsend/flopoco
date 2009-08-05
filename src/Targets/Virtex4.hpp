@@ -78,6 +78,9 @@ public:
 	int    multiplierLUTCost(int wInX, int wInY);
 	long sizeOfMemoryBlock();
 	 DSP* createDSP(); 
+	int getEquivalenceSliceDSP() ;
+	int getNumberOfDSPs() ;
+	void getDSPWidths(int &x, int &y) ;
 		
 private:
 	double fastcarryDelay_; /**< The delay of the fast carry chain */

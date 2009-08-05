@@ -66,6 +66,22 @@ return sizeOfBlock;
 	return dsp_;
 };
 
+
+int Virtex4::getEquivalenceSliceDSP() 
+{
+return 0;	
+};
+	
+int Virtex4::getNumberOfDSPs() 
+{
+return 0;		
+};
+void Virtex4::getDSPWidths(int &x, int &y){
+x=0;
+y=0;	
+		
+} ;
+
 bool Virtex4::suggestSubmultSize(int &x, int &y, int wInX, int wInY){
 	x = y = 17;
 /**	

@@ -112,6 +112,25 @@ class Target
 	 * @return distant wire delay 
 	 */
 	virtual double distantWireDelay(int n) =0;
+	
+	/** Function which returns the Equivalence between slices and a DSP.
+	* @return X ,  where X * Slices = 1 DSP
+	*/
+	
+	virtual int getEquivalenceSliceDSP() = 0;
+	
+	/** Function which returns the number of DSPs that exist in FPGA
+	* @return number of DSPs
+	*/
+	
+	virtual int getNumberOfDSPs() = 0;
+	
+	/** Function which returns the maximum widths of the operands of a DSP
+	* @return widths
+	*/
+	
+	virtual void getDSPWidths(int &x, int &y) = 0;
+	
 
 	// Methods related to target behaviour and performance
 	/** Sets the target to pipelined */
