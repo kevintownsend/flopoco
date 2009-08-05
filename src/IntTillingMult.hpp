@@ -1,5 +1,5 @@
 #ifndef IntTillingMult_HPP
-#define IntTillingMult_HPP
+#define InTtillingMult_HPP
 #include <vector>
 #include <sstream>
 #include <gmp.h>
@@ -8,8 +8,8 @@
 
 #include "Operator.hpp"
 
-/** The IntTillingMult class */
-class IntTillingMult : public Operator
+/** The InttilingMult class */
+class IntTilingMult : public Operator
 {
 public:
 	/**
@@ -20,12 +20,12 @@ public:
 	 * @param[in]		wER			the with of the exponent for the convertion result
 	 * @param[in]		wFR			the with of the fraction for the convertion result
 	 */
-	IntTillingMult(Target* target, int wInX, int wInY,float ratio);
+	IntTilingMult(Target* target, int wInX, int wInY,float ratio);
 
 	/**
-	 * IntTillingMult destructor
+	 * IntTilingMult destructor
 	 */
-	~IntTillingMult();
+	~IntTilingMult();
 
 
 	void emulate(TestCase * tc);
@@ -68,13 +68,13 @@ private:
 	void initTiling(DSP** config, int dspCount);
 	
 	/**
-	* This function returns the amount of extra displacemnet on the tilling board that a dsp block can have on vertical axis
+	* This function returns the amount of extra displacemnet on the tiling board that a dsp block can have on vertical axis
 	* @return extra height
 	*/
 	int getExtraHeight();
 
 	/**
-	* This function returns the amount of extra displacemnet on the tilling board that a dsp block can have on horizonta axis
+	* This function returns the amount of extra displacemnet on the tiling board that a dsp block can have on horizonta axis
 	* @return extra width
 	*/
 	int getExtraWidth();
@@ -88,9 +88,11 @@ private:
 	int wOut;
 	/** The ratio between the number of DSPs and slices */
 	float ratio;
-	/* The working configuration of the tilling algorithm on DSPs */
+	/* The working configuration of the tiling algorithm on DSPs */
 	DSP** globalConfig;
-	/* The best configuration of the after tilling DSPs */
+	/** The best cost obtained so far*/
+	float bestCost;
+	/* The best configuration of the after tiling DSPs */
 	DSP** bestConfig;
 	/* The target */
 	Target * target;
@@ -98,10 +100,21 @@ private:
 	/* The number of estimated DSPs that will be used according to this parameter */
 	int nrDSPs;
 
+	/** This function estimates the maximum number of DSPs that can be used with respect to the preference of the user */
 	int estimateDSPs();
 
+	/** This function computes the cost of the configuration received as input parameter */
+	
+	float computeCost(DSP** config);
 
-	void tillingAlgorithm();
+	/** This function compares the cost of the current configuration( globalConfig) with the best configuration obtained so far(bestConfig). If the current one is better then the best one, 
+	then it will copy the current configuration into the best one.
+	*/
+	void compareCost();
+	
+	/** This function is the backtracking function for finding the best configuration with respect to the user preference
+	*/
+	void tilingAlgorithm(int i, int n, bool rot,bool repl);
 	
 
 

@@ -132,7 +132,7 @@ static void usage(char *name){
 	cerr << "      Integer adder, possibly pipelined\n";
 	cerr << "    IntMultiplier wInX wInY \n";
 	cerr << "      Integer multiplier of two integers X and Y of sizes wInX and wInY \n";	
-	cerr << "    IntTillingMult wInX wInY \n";
+	cerr << "    IntTilingMult wInX wInY \n";
 	cerr << "      Integer multiplier of two integers X and Y of sizes wInX and wInY \n";	
 	cerr << "    IntKaratsuba wIn \n";
 	cerr << "      integer multiplier of two integers X and Y of sizes wIn. 17 < wIn <= 51 (for now) \n";	
@@ -643,7 +643,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(op);
 			}
 		}
-		else if(opname=="IntTillingMult"){
+		else if(opname=="IntTilingMult"){
 			int nargs = 2;
 			if (i+nargs > argc)
 				usage(argv[0]);
@@ -657,8 +657,8 @@ bool parseCommandLine(int argc, char* argv[]){
 				usage(argv[0]);
 				}
 				
-				cerr << "> IntTillingMult , wInX="<<wInX<<", wInY="<<wInY<<"\n";
-				op = new IntTillingMult(target, wInX, wInY,ratio);
+				cerr << "> IntTilingMult , wInX="<<wInX<<", wInY="<<wInY<<"\n";
+				op = new IntTilingMult(target, wInX, wInY,ratio);
 				addOperator(op);
 			}
 		}

@@ -46,6 +46,7 @@
 #include <vector>
 #include <math.h>
 #include <locale>
+#include <cfloat>
 
 #include <stdio.h>
 #include <mpfr.h>
@@ -55,7 +56,7 @@ extern vector<Operator*> oplist;
 
 #define DEBUGVHDL 0
 
-IntTillingMult:: IntTillingMult(Target* target, int wInX, int wInY,float ratio) :
+IntTilingMult:: IntTilingMult(Target* target, int wInX, int wInY,float ratio) :
 	Operator(target), target(target),wInX(wInX), wInY(wInY), wOut(wInX + wInY),ratio(ratio){
  
 	ostringstream name;
@@ -70,11 +71,45 @@ IntTillingMult:: IntTillingMult(Target* target, int wInX, int wInY,float ratio) 
 	addOutput("R", wOut); /* wOut = wInX + wInY */
 		
 	nrDSPs = estimateDSPs();
-	cout<< nrDSPs <<endl;
-	cout<<"Extra width:= "<<getExtraWidth()<<" \n Extra height"<<getExtraHeight()<<endl;
+	cout<<"Estimated DSPs:= "<<nrDSPs <<endl;
+	int x,y;
+	target->getDSPWidths(x,y);
+	cout<<"Width of DSP is := "<<x<<" Height of DSP is:="<<y<<endl;
+	cout<<"Extra width:= "<<getExtraWidth()<<" \nExtra height:="<<getExtraHeight()<<endl;
 		
+	/*we will try the algorithm with 2 values of nrDSPs	
+	One will be the estimated value(nrDSPs) and the second one will be nrDSPs-1	
+	*/
 	
-	initTiling(globalConfig, 4);
+	
+	 initTiling(globalConfig,nrDSPs);	
+			
+	//this will initialize the bestConfig with the first configuration
+	bestCost = FLT_MAX ;
+	//bestConfig = (DSP**)malloc(nrDSPs * sizeof(DSP*));
+	bestConfig = new DSP*[nrDSPs];
+	compareCost();
+	
+	//the best configuration should be consider initially the first one. So the bestConfig parameter will be initialized with global config and hence the bestCost will be initialized with the first cost
+		
+	tilingAlgorithm(nrDSPs,nrDSPs,false,false);
+	
+		
+	// After all configurations with the nrDSPs number of DSPs were evaluated then a new search is carryed with one DSP less
+	// After the initialization of the new configuration with nrDSPs-1, the cost must be evaluated and confrunted with the best score obtained so far.
+	
+	if(nrDSPs-1>0)
+	{
+	
+		initTiling(globalConfig,nrDSPs -1);	
+		compareCost();
+		tilingAlgorithm(nrDSPs-1,nrDSPs-1,false,false);
+	}
+
+	
+	
+	
+	/*initTiling(globalConfig, 4);
 	int x, y;
 	
 		for (int i=0; i<4; i++)
@@ -84,13 +119,106 @@ IntTillingMult:: IntTillingMult(Target* target, int wInX, int wInY,float ratio) 
 			globalConfig[i]->getBottomLeftCorner(x,y);
 			cout << "and bottom-left: (" << x << ", " << y << ")" << endl;
 		}
+        */
+	
+	
 	}
 	
-IntTillingMult::~IntTillingMult() {
+IntTilingMult::~IntTilingMult() {
 }
 
+void IntTilingMult::tilingAlgorithm(int i, int n, bool rot,bool repl)
+{
 
-int IntTillingMult::estimateDSPs()
+//~ if(i==n)
+//~ {	
+//~ if(repl==true)
+//~ {
+	//~ replace(globalConfig,i);
+	//~ compareCost();
+	//~ tilingAlgorithm(i,n,rot,repl,false);	
+//~ }
+//~ else
+//~ {
+	
+	//~ if(move(globalConfig,i))
+	//~ {
+		//~ compareCost();
+		//~ tilingAlgorithm(i,n,rot,repl);
+	//~ }
+	//~ else
+	//~ {
+		//~ if(rot==false)
+		//~ {
+			//~ globalConfig[i]->rotate();
+			//~ replace(globalConfig,i);
+			//~ compareCost();
+			//~ tilingAlgorithm(i,n,true,repl);
+		//~ }
+		//~ else
+		//~ {
+			//~ if(i-1>=0)
+			//~ tilingAlgorithm(i-1,n,false,repl);		
+		//~ }
+	//~ }
+
+//~ }
+//~ }
+//~ else
+//~ {
+	//~ if(repl==true)
+	//~ {
+		//~ replace(globalConfig,i);
+		//~ tilingAlgorithm(i+1,n,rot,repl);
+		
+	//~ }
+	//~ else
+	//~ {	
+		//~ if(move(globalConfig,i))
+		//~ {
+		
+			//~ tilingAlgorithm(i+1,n,rot,true);
+		//~ }
+		//~ else
+		//~ {
+			//~ if(rot==false)
+			//~ {
+				//~ globalConfig[i]->rotate();
+				//~ replace(globalConfig,i);
+				//~ tilingAlgorithm(i+1,n,true,true);
+			//~ }
+			//~ else
+			//~ {
+				//~ if(i-1>=0)
+				//~ tilingAlgorithm(i-1,n,false,repl);		
+			//~ }
+		//~ }
+	//~ }
+//~ }
+
+	
+}
+
+	
+	
+
+
+void IntTilingMult::compareCost()
+{
+	float temp = computeCost(globalConfig);
+	if(temp >= bestCost)
+	{
+	memcpy(bestConfig,globalConfig,sizeof(globalConfig));	
+	}
+	
+}
+
+float IntTilingMult::computeCost(DSP** config)
+{
+	
+}
+
+int IntTilingMult::estimateDSPs()
 {
 	if(1==ratio) 
 	{
@@ -98,9 +226,12 @@ int IntTillingMult::estimateDSPs()
 	}
 	else
 	{	
+		//cout<<target->multiplierLUTCost(wInX,wInY) <<"    "<<target->getEquivalenceSliceDSP()<<endl;
 		float temp = (target->multiplierLUTCost(wInX,wInY) * ratio)  /   ((1- ratio)  *  target->getEquivalenceSliceDSP() ) ;
+		//cout<<temp<<endl;
 		if(temp - ((int)temp)  > 0 ) // if the estimated number of dsps is a number with nonzero real part than we will return the integer number grather then this computed value. eg. 2.3 -> 3
 		{
+		//cout<<"Intra"<<endl;	
 		temp++;	
 		}
 		
@@ -111,7 +242,7 @@ int IntTillingMult::estimateDSPs()
 }
 
 
-int  IntTillingMult::getExtraHeight()
+int  IntTilingMult::getExtraHeight()
 {
 int x,y;	
 target->getDSPWidths(x,  y);
@@ -120,7 +251,7 @@ return ((int)temp);
 }
 
 	
-int  IntTillingMult::getExtraWidth()
+int  IntTilingMult::getExtraWidth()
 {
 int x,y;	
 target->getDSPWidths(x,y);
@@ -128,14 +259,11 @@ float temp = ratio * 0.75 * ((float) x);
 return ((int)temp);
 }
 
-void IntTillingMult::tillingAlgorithm()
-{
-	
-}
 
 
 
-void IntTillingMult::emulate(TestCase* tc)
+
+void IntTilingMult::emulate(TestCase* tc)
 {
 	mpz_class svX = tc->getInputValue("X");
 	mpz_class svY = tc->getInputValue("Y");
@@ -145,18 +273,19 @@ void IntTillingMult::emulate(TestCase* tc)
 	tc->addExpectedOutput("R", svR);
 }
 
-void IntTillingMult::buildStandardTestCases(TestCaseList* tcl){
+void IntTilingMult::buildStandardTestCases(TestCaseList* tcl){
 	
 }
 
 
-bool IntTillingMult::checkOverlap(DSP** config, int index)
+bool IntTilingMult::checkOverlap(DSP** config, int index)
 {	
 	int xtr1, ytr1, xbl1, ybl1, xtr2, ytr2, xbl2, ybl2;
 	//int nrdsp = sizeof(config)/sizeof(DSP*);
 	config[index]->getTopRightCorner(xtr1, ytr1);
 	config[index]->getBottomLeftCorner(xbl1, ybl1);
 	
+	if(verbose)
 	cout << tab << tab << "checkOverlap: ref is block #" << index << ". Top-right is at (" << xtr1 << ", " << ytr1 << ") and Bottom-right is at (" << xbl1 << ", " << ybl1 << ")" << endl;
 	
 	for (int i=0; i<nrDSPs; i++)
@@ -165,6 +294,7 @@ bool IntTillingMult::checkOverlap(DSP** config, int index)
 			config[i]->getTopRightCorner(xtr2, ytr2);
 			config[i]->getBottomLeftCorner(xbl2, ybl2);
 			
+			if(verbose)
 			cout << tab << tab << "checkOverlap: comparing with block #" << i << ". Top-right is at (" << xtr2 << ", " << ytr2 << ") and Bottom-right is at (" << xbl1 << ", " << ybl1 << ")" << endl;
 			
 			if (((xtr2 < xbl1) && (ytr2 < ybl1) && (xtr2 >= xtr1) && (ytr2 >= ytr1)) || // config[index] overlaps the upper and/or right part(s) of config[i]
@@ -180,12 +310,13 @@ bool IntTillingMult::checkOverlap(DSP** config, int index)
 				((xbl1 > xbl2) && (ybl1 < ybl2) && (ytr1 > ytr2) && (xtr1 < xtr2))    // config[i] overlaps the center part of config[index]
 				)
 				return true;
-		}		
+		}	
+	if(verbose)
 	cout << tab << tab << "checkOverlap: return false" << endl;	
 	return false;
 }
 
-bool IntTillingMult::move(DSP** config, int index)
+bool IntTilingMult::move(DSP** config, int index)
 {
 	int xtr1, ytr1, xbl1, ybl1;
 	int w, h;
@@ -222,7 +353,7 @@ bool IntTillingMult::move(DSP** config, int index)
 	return true;
 }
 
-void IntTillingMult::replace(DSP** config, int index)
+void IntTilingMult::replace(DSP** config, int index)
 {
 	int xtr1, ytr1, xbl1, ybl1;
 	int w, h;
@@ -235,6 +366,7 @@ void IntTillingMult::replace(DSP** config, int index)
 	config[index]->setTopRightCorner(xtr1, ytr1);
 	config[index]->setBottomLeftCorner(xbl1, ybl1);
 	
+	if(verbose)
 	cout << tab << "replace : DSP width is " << w << ", height is " << h << endl; 
 	while (checkOverlap(config, index))
 	{
@@ -242,6 +374,7 @@ void IntTillingMult::replace(DSP** config, int index)
 		ytr1++;
 		ybl1++;
 		
+		if(verbose)
 		cout << tab << "replace : moved DSP one unit down." << endl;
  		if (ybl1 > h+2*getExtraHeight()) // the DSP block has reached the bottom limit of the tiling grid
 		{
@@ -250,11 +383,13 @@ void IntTillingMult::replace(DSP** config, int index)
 			xbl1++;
 			ytr1 = 0;
 			ybl1 = h-1;
+			if(verbose)
 			cout << tab << "replace : moved DSP up and one unit left." << endl;
 		}			
 		
 		config[index]->setTopRightCorner(xtr1, ytr1);
 		config[index]->setBottomLeftCorner(xbl1, ybl1);
+		if(verbose)
 		cout << tab << "replace : Top-right is at ( " << xtr1 << ", " << ytr1 << ") and Bottom-right is at (" << xbl1 << ", " << ybl1 << ")" << endl;
 	}
 	
@@ -263,12 +398,13 @@ void IntTillingMult::replace(DSP** config, int index)
 	config[index]->setBottomLeftCorner(xbl1, ybl1);
 }
 
-void IntTillingMult::initTiling(DSP** config, int dspCount)
+void IntTilingMult::initTiling(DSP** config, int dspCount)
 {
 	config = new DSP*[nrDSPs];
 	
 	for (int i=0; i<dspCount; i++)
 	{
+		if(verbose)
 		cout << "initTiling : iteration #" << i << endl; 
 		config[i] = target->createDSP();
 		replace(config, i);
