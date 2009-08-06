@@ -77,33 +77,51 @@ IntTilingMult:: IntTilingMult(Target* target, int wInX, int wInY,float ratio) :
 	cout<<"Width of DSP is := "<<x<<" Height of DSP is:="<<y<<endl;
 	cout<<"Extra width:= "<<getExtraWidth()<<" \nExtra height:="<<getExtraHeight()<<endl;
 		
-	/*we will try the algorithm with 2 values of nrDSPs	
-	One will be the estimated value(nrDSPs) and the second one will be nrDSPs-1	
-	*/
+		
+		initTiling(globalConfig,nrDSPs);
+		partitionOfGridSlices(globalConfig);
 	
-	 initTiling(globalConfig,nrDSPs);	
+	//~ /*we will try the algorithm with 2 values of nrDSPs	
+	//~ One will be the estimated value(nrDSPs) and the second one will be nrDSPs-1	
+	//~ */
+	//~ rot = new bool[nrDSPs];
+	//~ for(int i =0;i<nrDSPs;i++)
+		//~ rot[i]=false;
+	
+	
+	
+	 //~ initTiling(globalConfig,nrDSPs);	
 			
-	//this will initialize the bestConfig with the first configuration
-	bestCost = FLT_MAX ;
-	//bestConfig = (DSP**)malloc(nrDSPs * sizeof(DSP*));
-	bestConfig = new DSP*[nrDSPs];
-	compareCost();
+	//~ //this will initialize the bestConfig with the first configuration
+	//~ bestCost = FLT_MAX ;
+	//~ //bestConfig = (DSP**)malloc(nrDSPs * sizeof(DSP*));
+	//~ bestConfig = new DSP*[nrDSPs];
+	//~ compareCost();
 	
-	//the best configuration should be consider initially the first one. So the bestConfig parameter will be initialized with global config and hence the bestCost will be initialized with the first cost
+	//~ //the best configuration should be consider initially the first one. So the bestConfig parameter will be initialized with global config and hence the bestCost will be initialized with the first cost
+	
+	
+	//~ tilingAlgorithm(nrDSPs-1,nrDSPs-1,false);
+	
 		
-	tilingAlgorithm(nrDSPs,nrDSPs,false,false);
+	//~ // After all configurations with the nrDSPs number of DSPs were evaluated then a new search is carryed with one DSP less
+	//~ // After the initialization of the new configuration with nrDSPs-1, the cost must be evaluated and confrunted with the best score obtained so far.
+	
+	//~ if(nrDSPs-1>0)
+	//~ {
+		
+	
+		//~ for(int i =0;i<nrDSPs;i++)
+			//~ rot[i]=false;
+		
+		//~ initTiling(globalConfig,nrDSPs -1);	
+		//~ compareCost();
+		//~ tilingAlgorithm(nrDSPs-2,nrDSPs-2,false);
+	//~ }
 	
 		
-	// After all configurations with the nrDSPs number of DSPs were evaluated then a new search is carryed with one DSP less
-	// After the initialization of the new configuration with nrDSPs-1, the cost must be evaluated and confrunted with the best score obtained so far.
-	
-	if(nrDSPs-1>0)
-	{
-	
-		initTiling(globalConfig,nrDSPs -1);	
-		compareCost();
-		tilingAlgorithm(nrDSPs-1,nrDSPs-1,false,false);
-	}
+		
+		
 
 	/*
 	
@@ -130,80 +148,146 @@ IntTilingMult:: IntTilingMult(Target* target, int wInX, int wInY,float ratio) :
 IntTilingMult::~IntTilingMult() {
 }
 
-void IntTilingMult::tilingAlgorithm(int i, int n, bool rot,bool repl)
+
+
+void IntTilingMult::tilingAlgorithm(int i, int n,bool repl)
 {
 
-//~ if(i==n)
-//~ {	
-//~ if(repl==true)
-//~ {
-	//~ replace(globalConfig,i);
-	//~ compareCost();
-	//~ tilingAlgorithm(i,n,rot,repl,false);	
-//~ }
-//~ else
-//~ {
+if(i==n)
+{	
+if(repl==true)
+{
+	cout<<" Pas 4_1 "<<i<<endl;
+	replace(globalConfig,i);
+	compareCost();
+	rot[i]=false;
+	tilingAlgorithm(i,n,false);	
+}
+else
+{
 	
-	//~ if(move(globalConfig,i))
-	//~ {
-		//~ compareCost();
-		//~ tilingAlgorithm(i,n,rot,repl);
-	//~ }
-	//~ else
-	//~ {
-		//~ if(rot==false)
-		//~ {
-			//~ globalConfig[i]->rotate();
-			//~ replace(globalConfig,i);
-			//~ compareCost();
-			//~ tilingAlgorithm(i,n,true,repl);
-		//~ }
-		//~ else
-		//~ {
-			//~ if(i-1>=0)
-			//~ tilingAlgorithm(i-1,n,false,repl);		
-		//~ }
-	//~ }
+	if(move(globalConfig,i))
+	{
+		cout<<" Pas 1_1 "<<i<<endl;
+		compareCost();
+		tilingAlgorithm(i,n,repl);		//repl should be false
+	}
+	else
+	{
+		if(rot[i]==false && (globalConfig[i]->getMaxMultiplierWidth() != globalConfig[i]->getMaxMultiplierHeight() ))
+		{
+			cout<<" Pas 2_1 "<<i<<endl;
+			globalConfig[i]->rotate();
+			rot[i]=true;
+			replace(globalConfig,i);
+			compareCost();
+			tilingAlgorithm(i,n,repl);		//repl should be false
+		}
+		else
+		{
+			cout<<" Pas 3_1 "<<i<<endl;
+			if(i-1>=0)
+			tilingAlgorithm(i-1,n,repl);		//repl should be false
+		}
+	}
 
-//~ }
-//~ }
-//~ else
-//~ {
-	//~ if(repl==true)
-	//~ {
-		//~ replace(globalConfig,i);
-		//~ tilingAlgorithm(i+1,n,rot,repl);
+}
+}
+else
+{
+	if(repl==true)
+	{
+		cout<<" Pas 4_2 "<<i<<endl;
+		replace(globalConfig,i);
+		rot[i]=false;
+		tilingAlgorithm(i+1,n,repl);
 		
-	//~ }
-	//~ else
-	//~ {	
-		//~ if(move(globalConfig,i))
-		//~ {
-		
-			//~ tilingAlgorithm(i+1,n,rot,true);
-		//~ }
-		//~ else
-		//~ {
-			//~ if(rot==false)
-			//~ {
-				//~ globalConfig[i]->rotate();
-				//~ replace(globalConfig,i);
-				//~ tilingAlgorithm(i+1,n,true,true);
-			//~ }
-			//~ else
-			//~ {
-				//~ if(i-1>=0)
-				//~ tilingAlgorithm(i-1,n,false,repl);		
-			//~ }
-		//~ }
-	//~ }
-//~ }
+	}
+	else
+	{	
+		if(move(globalConfig,i))
+		{
+			cout<<" Pas 1_2 "<<i<<endl;
+			tilingAlgorithm(i+1,n,true);
+		}
+		else
+		{
+			if(rot==false && (globalConfig[i]->getMaxMultiplierWidth() != globalConfig[i]->getMaxMultiplierHeight() ))
+			{
+				cout<<" Pas 2_2 "<<i<<endl;
+				globalConfig[i]->rotate();
+				replace(globalConfig,i);
+				rot[i]=true;
+				tilingAlgorithm(i+1,n,true);
+			}
+			else
+			{
+				cout<<" Pas 3_2 "<<i<<endl;
+				if(i-1>=0)
+				tilingAlgorithm(i-1,n,repl);		//repl should be false
+			}
+		}
+	}
+}
 
 	
 }
 
 	
+
+void IntTilingMult::fillMatrix(int **&matrix,int topleftX,int topleftY,int botomrightX,int botomrightY,int value)
+{
+	for(int j=topleftX;j<=botomrightX;j++)
+	{
+		for(int i=topleftY;i<=botomrightY;i++)
+		{
+			matrix[i][j]=value;
+		}
+	}
 	
+}
+
+
+ int IntTilingMult::partitionOfGridSlices(DSP** config)
+{
+	cout<<"Incepe"<<endl;
+	int **mat;
+	int n,m;
+	int count=1;
+	n=wInX + 2* getExtraWidth();
+	m=wInY + 2* getExtraHeight();
+	cout<<"width "<<n<<"height "<<m<<endl;
+	mat = new int*[m];
+	for(int i=0;i<m;i++)
+		{
+			mat[i] = new int [n];
+			for(int j=0;j<n;j++)
+			mat[i][j]=0;
+		}
+	for(int i=0;i<nrDSPs;i++)
+		{
+			int c1X,c2X,c1Y,c2Y;
+			
+			config[i]->getTopRightCorner(c1X,c1Y);
+			config[i]->getBottomLeftCorner(c2X,c2Y);
+			cout<<"DSP #"<<i+1<<"has toprigh ("<<c1X<<","<<c1Y<<") and botomleft ("<<c2X<<","<<c2Y<<")"<<endl;
+			c1X=n-c1X-1;
+			c2X=n-c2X-1;
+			cout<<"new x1 "<<c1X<<" new x2 "<<c2X<<endl;
+			
+			fillMatrix(mat,c2X,c1Y,c1X,c2Y,count);
+			count++;			
+		}
+	for(int i=0;i<m;i++)
+		{
+			for(int j=0;j<n;j++)
+			{
+				cout<<mat[i][j];
+			}
+			cout<<endl;
+		}
+	
+}	
 
 
 void IntTilingMult::compareCost()

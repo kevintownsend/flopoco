@@ -96,6 +96,9 @@ private:
 	DSP** bestConfig;
 	/* The target */
 	Target * target;
+	
+	/** The vector which will mark if a dsp in the tiling algorithm was or not rotated */
+	bool* rot;
 
 	/* The number of estimated DSPs that will be used according to this parameter */
 	int nrDSPs;
@@ -112,9 +115,16 @@ private:
 	*/
 	void compareCost();
 	
-	/** This function is the backtracking function for finding the best configuration with respect to the user preference
+		/** This function is the backtracking function for finding the best configuration with respect to the user preference
 	*/
-	void tilingAlgorithm(int i, int n, bool rot,bool repl);
+	void tilingAlgorithm(int i, int n, bool repl);
+	
+	/** This function will take a configuration and will try to maximize the multiplications that are realized in slices */
+	int partitionOfGridSlices(DSP** config);
+	 
+	 /** This function will fill the input matrix between the limits received as parameters with the value received as parameter */
+	 
+	 void fillMatrix(int **&matrix,int topleftX,int topleftY,int botomrightX,int botomrightY,int value);
 	
 
 
