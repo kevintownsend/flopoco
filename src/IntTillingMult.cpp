@@ -81,7 +81,6 @@ IntTilingMult:: IntTilingMult(Target* target, int wInX, int wInY,float ratio) :
 	One will be the estimated value(nrDSPs) and the second one will be nrDSPs-1	
 	*/
 	
-	
 	 initTiling(globalConfig,nrDSPs);	
 			
 	//this will initialize the bestConfig with the first configuration
@@ -106,11 +105,15 @@ IntTilingMult:: IntTilingMult(Target* target, int wInX, int wInY,float ratio) :
 		tilingAlgorithm(nrDSPs-1,nrDSPs-1,false,false);
 	}
 
+	/*
 	
 	
-	
-	/*initTiling(globalConfig, 4);
-	int x, y;
+	initTiling(globalConfig, 4);
+	for (int i=0; i<19; i++)
+	move(globalConfig, 0);
+	replace(globalConfig, 1);
+	move(globalConfig, 2);
+	//int x, y;
 	
 		for (int i=0; i<4; i++)
 		{
@@ -119,8 +122,8 @@ IntTilingMult:: IntTilingMult(Target* target, int wInX, int wInY,float ratio) :
 			globalConfig[i]->getBottomLeftCorner(x,y);
 			cout << "and bottom-left: (" << x << ", " << y << ")" << endl;
 		}
-        */
-	
+        
+	*/
 	
 	}
 	
@@ -297,17 +300,17 @@ bool IntTilingMult::checkOverlap(DSP** config, int index)
 			if(verbose)
 			cout << tab << tab << "checkOverlap: comparing with block #" << i << ". Top-right is at (" << xtr2 << ", " << ytr2 << ") and Bottom-right is at (" << xbl1 << ", " << ybl1 << ")" << endl;
 			
-			if (((xtr2 < xbl1) && (ytr2 < ybl1) && (xtr2 >= xtr1) && (ytr2 >= ytr1)) || // config[index] overlaps the upper and/or right part(s) of config[i]
-				((xbl2 < xbl1) && (ybl2 < ybl1) && (xbl2 > xtr1) && (ybl2 > ytr1)) || // config[index] overlaps the bottom and/or left part(s) of config[i]
-				((xtr2 < xbl1) && (ybl2 < ybl1) && (xtr2 > xtr1) && (ybl2 > ytr1)) || // config[index] overlaps the upper and/or left part(s) of config[i]
-				((xbl2 < xbl1) && (ytr2 < ybl1) && (xbl2 > xtr1) && (ytr2 > ytr1)) || // config[index] overlaps the bottom and/or right part(s) of config[i]
-				((xbl2 > xbl1) && (ybl2 < ybl1) && (ytr2 > ytr1) && (xtr2 < xtr1)) || // config[index] overlaps the center part of config[i]
+			if (((xtr2 <= xbl1) && (ytr2 <= ybl1) && (xtr2 >= xtr1) && (ytr2 >= ytr1)) || // config[index] overlaps the upper and/or right part(s) of config[i]
+				((xbl2 <= xbl1) && (ybl2 <= ybl1) && (xbl2 >= xtr1) && (ybl2 >= ytr1)) || // config[index] overlaps the bottom and/or left part(s) of config[i]
+				((xtr2 <= xbl1) && (ybl2 <= ybl1) && (xtr2 >= xtr1) && (ybl2 >= ytr1)) || // config[index] overlaps the upper and/or left part(s) of config[i]
+				((xbl2 <= xbl1) && (ytr2 <= ybl1) && (xbl2 >= xtr1) && (ytr2 >= ytr1)) || // config[index] overlaps the bottom and/or right part(s) of config[i]
+				((xbl2 >= xbl1) && (ybl2 <= ybl1) && (ytr2 >= ytr1) && (xtr2 <= xtr1)) || // config[index] overlaps the center part of config[i]
 				
-				((xtr1 < xbl2) && (ytr1 < ybl2) && (xtr1 > xtr2) && (ytr1 > ytr2)) || // config[i] overlaps the upper and/or right part(s) of config[index]
-				((xbl1 < xbl2) && (ybl1 < ybl2) && (xbl1 > xtr2) && (ybl1 > ytr2)) || // config[i] overlaps the bottom and/or left part(s) of config[index]
-				((xtr1 < xbl2) && (ybl1 < ybl2) && (xtr1 > xtr2) && (ybl1 > ytr2)) || // config[i] overlaps the upper and/or left part(s) of config[index]
-				((xbl1 < xbl2) && (ytr1 < ybl2) && (xbl1 > xtr2) && (ytr1 > ytr2)) || // config[i] overlaps the bottom and/or right part(s) of config[index]
-				((xbl1 > xbl2) && (ybl1 < ybl2) && (ytr1 > ytr2) && (xtr1 < xtr2))    // config[i] overlaps the center part of config[index]
+				((xtr1 <= xbl2) && (ytr1 <= ybl2) && (xtr1 >= xtr2) && (ytr1 >= ytr2)) || // config[i] overlaps the upper and/or right part(s) of config[index]
+				((xbl1 <= xbl2) && (ybl1 <= ybl2) && (xbl1 >= xtr2) && (ybl1 >= ytr2)) || // config[i] overlaps the bottom and/or left part(s) of config[index]
+				((xtr1 <= xbl2) && (ybl1 <= ybl2) && (xtr1 >= xtr2) && (ybl1 >= ytr2)) || // config[i] overlaps the upper and/or left part(s) of config[index]
+				((xbl1 <= xbl2) && (ytr1 <= ybl2) && (xbl1 >= xtr2) && (ytr1 >= ytr2)) || // config[i] overlaps the bottom and/or right part(s) of config[index]
+				((xbl1 >= xbl2) && (ybl1 <= ybl2) && (ytr1 >= ytr2) && (xtr1 <= xtr2))    // config[i] overlaps the center part of config[index]
 				)
 				return true;
 		}	
@@ -331,7 +334,7 @@ bool IntTilingMult::move(DSP** config, int index)
 		ytr1++;
 		ybl1++;
 		
-		if (ybl1 > h+2*getExtraHeight()-1) // the DSP block has reached the bottom limit of the tiling grid
+		if (ybl1 > wInY+2*getExtraHeight()-1) // the DSP block has reached the bottom limit of the tiling grid
 		{
 			// move to top of grid and one unit to the left 
 			xtr1++;
@@ -339,7 +342,7 @@ bool IntTilingMult::move(DSP** config, int index)
 			ytr1 = 0;
 			ybl1 = h-1;
 			
-			if (xbl1 > w+2*getExtraWidth()-1) // the DSP block has reached the left limit of the tiling grid
+			if (xbl1 > wInX+2*getExtraWidth()-1) // the DSP block has reached the left limit of the tiling grid
 				return false;
 		}			
 		
@@ -376,7 +379,7 @@ void IntTilingMult::replace(DSP** config, int index)
 		
 		if(verbose)
 		cout << tab << "replace : moved DSP one unit down." << endl;
- 		if (ybl1 > h+2*getExtraHeight()) // the DSP block has reached the bottom limit of the tiling grid
+ 		if (ybl1 > wInY+2*getExtraHeight()) // the DSP block has reached the bottom limit of the tiling grid
 		{
 			// move to top of grid and one unit to the left 
 			xtr1++;
@@ -398,7 +401,7 @@ void IntTilingMult::replace(DSP** config, int index)
 	config[index]->setBottomLeftCorner(xbl1, ybl1);
 }
 
-void IntTilingMult::initTiling(DSP** config, int dspCount)
+void IntTilingMult::initTiling(DSP** &config, int dspCount)
 {
 	config = new DSP*[nrDSPs];
 	

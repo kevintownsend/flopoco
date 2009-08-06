@@ -65,7 +65,7 @@ private:
 	 * @param config the tiling configuration containing DSP objects
 	 * @param dspCount the number of DSP blocks in the configuration
 	 */
-	void initTiling(DSP** config, int dspCount);
+	void initTiling(DSP** &config, int dspCount);
 	
 	/**
 	* This function returns the amount of extra displacemnet on the tiling board that a dsp block can have on vertical axis
