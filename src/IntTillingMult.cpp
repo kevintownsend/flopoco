@@ -78,8 +78,16 @@ IntTilingMult:: IntTilingMult(Target* target, int wInX, int wInY,float ratio) :
 	cout<<"Extra width:= "<<getExtraWidth()<<" \nExtra height:="<<getExtraHeight()<<endl;
 		
 		
+		cout<<"Starting initializing DSPs"<<endl;
 		initTiling(globalConfig,nrDSPs);
-		partitionOfGridSlices(globalConfig);
+		//~ globalConfig[0]->setTopRightCorner(5,8);
+		//~ globalConfig[0]->setBottomLeftCorner(23,26);
+		//~ globalConfig[0]->setTopRightCorner(27,15);
+		//~ globalConfig[0]->setBottomLeftCorner(45,33);
+		//~ globalConfig[1]->setTopRightCorner(2,0);
+		//~ globalConfig[1]->setBottomLeftCorner(20,18);
+		cout<<"Finnish initializing DSPs"<<endl;
+		cout<<"Number of slices for multiplication is "<<partitionOfGridSlices(globalConfig)<<endl;
 	
 	//~ /*we will try the algorithm with 2 values of nrDSPs	
 	//~ One will be the estimated value(nrDSPs) and the second one will be nrDSPs-1	
@@ -235,13 +243,14 @@ else
 
 	
 
-void IntTilingMult::fillMatrix(int **&matrix,int topleftX,int topleftY,int botomrightX,int botomrightY,int value)
+void IntTilingMult::fillMatrix(int **&matrix,int lw,int lh,int topleftX,int topleftY,int botomrightX,int botomrightY,int value)
 {
 	for(int j=topleftX;j<=botomrightX;j++)
 	{
 		for(int i=topleftY;i<=botomrightY;i++)
 		{
-			matrix[i][j]=value;
+			if(j>-1&&i>-1&&i<lh&&j<lw)
+				matrix[i][j]=value;
 		}
 	}
 	
@@ -250,7 +259,8 @@ void IntTilingMult::fillMatrix(int **&matrix,int topleftX,int topleftY,int botom
 
  int IntTilingMult::partitionOfGridSlices(DSP** config)
 {
-	cout<<"Incepe"<<endl;
+	//~ cout<<"Incepe"<<endl;
+	int costSlice=0;
 	int **mat;
 	int n,m;
 	int count=1;
@@ -275,18 +285,171 @@ void IntTilingMult::fillMatrix(int **&matrix,int topleftX,int topleftY,int botom
 			c2X=n-c2X-1;
 			cout<<"new x1 "<<c1X<<" new x2 "<<c2X<<endl;
 			
-			fillMatrix(mat,c2X,c1Y,c1X,c2Y,count);
+			fillMatrix(mat,n,m,c2X,c1Y,c1X,c2Y,count);
 			count++;			
 		}
+	
+		
+	for(int i=0;i<m;i++)
+		{
+			for(int j=0;j<n;j++)
+				{
+					if(mat[i][j]==0)
+					{
+						int ver =0;
+						int ii=i,jj=j;
+						while(ver<6&&(ii<m-1||jj<n-1))
+						{
+							
+							
+							if(ver<3)
+							{
+								
+								if(ver==0||ver==1)
+									ii++;
+								if(ii>m-1)
+								{
+									ii=m-1;
+									ver=2;							
+								}
+							
+								if(ver==0||ver==2)
+								jj++;
+							
+								if(jj>n-1)
+								{
+									jj=n-1;
+									ver=1;
+								}
+							//~ if(count==3)
+							 //~ cout<<"P0  ii:="<<ii<<" jj:="<<jj<<" ver:="<<ver<<endl;
+								
+								
+							
+								for(int k=ii,q=jj;k>i-1&&(ver==0||ver==2);k--)
+									if(mat[k][q]!=0)
+										{
+											if(ver==0)
+												ver=1;
+											else
+												ver=3;
+											jj--;
+										}
+								//~ if(count==3)
+								//~ {
+									//~ cout<<"P1   ii:="<<ii<<" jj:="<<jj<<" ver:="<<ver<<endl; 
+								//~ }
+									
+								for(int k=ii,q=jj;q>j-1&&(ver==0||ver==1);q--)
+									if(mat[k][q]!=0)
+										{
+											if(ver=0)
+												ver=2;
+											else
+												ver=3;
+											ii--;
+										}
+								//~ if(count==3)
+								//~ {cout<<"P2  ii:="<<ii<<" jj:="<<jj<<" ver:="<<ver<<endl;
+								//~ cout<<endl;
+								//~ }
+							
+							}
+							else
+							{
+								if(ver==3||ver==5)
+								jj++;
+							
+								if(jj>n-1)
+								{
+									jj=n-1;
+									ver=4;
+								}
+								
+								//~ if(count==3)
+								//~ cout<<"P3  ii:="<<ii<<" jj:="<<jj<<" ver:="<<ver<<endl;
+								
+								if(ver==3||ver==4)
+									ii++;
+								if(ii>m-1)
+								{
+									ii=m-1;
+									ver=5;							
+								}
+							
+								
+							//~ if(count==3)
+							 //~ cout<<"P3  ii:="<<ii<<" jj:="<<jj<<" ver:="<<ver<<endl;
+
+								
+								for(int k=ii,q=jj;q>j-1&&(ver==3||ver==4);q--)
+									if(mat[k][q]!=0)
+										{
+											if(ver=3)
+												ver=5;
+											else
+												ver=6;
+											ii--;
+										}
+								//~ if(count==3)
+								//~ {
+									//~ cout<<"P4   ii:="<<ii<<" jj:="<<jj<<" ver:="<<ver<<endl; 
+								//~ }
+								
+								for(int k=ii,q=jj;k>i-1&&(ver==3||ver==5);k--)
+									if(mat[k][q]!=0)
+										{
+											if(ver==3)
+												ver=4;
+											else
+												ver=6;
+											jj--;
+										}
+								if(ver==5&&jj==n-1)
+									ver=6;
+								if(ver==4&&ii==m-1)
+									ver=6;
+										
+								//~ if(count==3)
+								//~ {cout<<"P5  ii:="<<ii<<" jj:="<<jj<<" ver:="<<ver<<endl;
+								//~ cout<<endl;
+								//~ }
+							
+								
+							}
+						}
+						
+						//~ cout<<count<<endl;
+						costSlice +=target->multiplierLUTCost(jj-j+1,ii-i+1);
+						fillMatrix(mat,n,m,j,i,jj,ii,count);
+						count++;
+						
+					}
+				}
+			
+		}
+				
+		
+		 
+		
+		char af;
+		int afi;
 	for(int i=0;i<m;i++)
 		{
 			for(int j=0;j<n;j++)
 			{
-				cout<<mat[i][j];
+				if(mat[i][j]<10)
+					afi=mat[i][j];
+				else
+					afi=mat[i][j]+8;
+				af=(int)afi+48;
+				cout<<af;
 			}
 			cout<<endl;
 		}
 	
+	//~ cout<<"gata"<<endl;
+	return costSlice;
 }	
 
 

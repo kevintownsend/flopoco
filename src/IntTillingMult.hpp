@@ -124,7 +124,7 @@ private:
 	 
 	 /** This function will fill the input matrix between the limits received as parameters with the value received as parameter */
 	 
-	 void fillMatrix(int **&matrix,int topleftX,int topleftY,int botomrightX,int botomrightY,int value);
+	 void fillMatrix(int **&matrix,int lw,int lh,int topleftX,int topleftY,int botomrightX,int botomrightY,int value);
 	
 
 
