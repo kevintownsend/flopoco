@@ -42,7 +42,6 @@ public:
 	~FPLog();
 
 	//		Overloading the virtual functions of Operator
-	void outputVHDL(std::ostream& o, std::string name);
 	void emulate(TestCase * tc);
 	void buildStandardTestCases(TestCaseList* tcl);
 	/**Overloading the function of Operator with a function that tests only positive FP numbers (full range)*/
