@@ -88,6 +88,7 @@ IntTilingMult:: IntTilingMult(Target* target, int wInX, int wInY,float ratio) :
 		//~ globalConfig[1]->setBottomLeftCorner(20,18);
 		cout<<"Finnish initializing DSPs"<<endl;
 		cout<<"Number of slices for multiplication is "<<partitionOfGridSlices(globalConfig)<<endl;
+		
 	
 	//~ /*we will try the algorithm with 2 values of nrDSPs	
 	//~ One will be the estimated value(nrDSPs) and the second one will be nrDSPs-1	
