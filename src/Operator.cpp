@@ -795,6 +795,26 @@ string Operator::buildVHDLComponentDeclarations() {
 	return o.str();	
 }
 
+void Operator::addConstant(std::string name, std::string t, mpz_class v) {
+	constants_[name] =  make_pair(t, v);
+	}
+
+void Operator::addConstant(std::string name, std::string t, int v) {
+	constants_[name] =  make_pair(t, mpz_class(v));
+	}
+
+
+string Operator::buildVHDLConstantDeclarations() {
+	ostringstream o;
+	for(map<string, pair<string, mpz_class> >::iterator it = constants_.begin(); it !=constants_.end(); it++) {
+		string name  = it->first;
+		string type = it->second.first;
+		mpz_class value = it->second.second;
+		o <<  "constant " << name << ": " << type << " := " << value << ";" << endl;
+	}
+	return o.str();	
+}
+
 string  Operator::buildVHDLRegisters() {
 	ostringstream o;
 
@@ -929,6 +949,7 @@ void Operator::outputVHDL(std::ostream& o, std::string name) {
 	newArchitecture(o,name);
 	o << buildVHDLComponentDeclarations();	
 	o << buildVHDLSignalDeclarations();
+	o << buildVHDLConstantDeclarations();
 	beginArchitecture(o);		
 	o<<buildVHDLRegisters();
 	o << vhdl.str();

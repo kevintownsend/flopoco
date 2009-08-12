@@ -348,6 +348,9 @@ public:
 	string buildVHDLRegisters();
 
 
+	/** output the VHDL constants. */
+	string buildVHDLConstantDeclarations();
+
 
 
 
@@ -440,7 +443,7 @@ public:
 	 */
 	Signal * getIOListSignal(int i);
 		
-
+	
 
 
 
@@ -477,12 +480,22 @@ public:
 	 */
 	void outputVHDLSignalDeclarations(std::ostream& o);
 
+
+	/** Add a VHDL constant. This may make the code easier to read, but more difficult to debug. */
+	void addConstant(std::string name, std::string ctype, int cvalue);
+
+	/** Add a VHDL constant. This may make the code easier to read, but more difficult to debug. */
+	void addConstant(std::string name, std::string ctype, mpz_class cvalue);
+	
+
+
 	/**
 	 * A new line inline function
 	 * @param[in,out] o the stream to which the new line will be added
 	 **/
 	inline void newLine(std::ostream& o) {	o<<endl; }
-	
+
+
 
 	/** Final report function, prints to the terminal.  By default
 	 * reports the pipeline depth, but feel free to overload if you have any
@@ -638,6 +651,7 @@ private:
 	bool                   isSequential_;               /**< True if the operator needs a clock signal*/
 	int                    pipelineDepth_;              /**< The pipeline depth of the operator. 0 for combinatorial circuits */
 	map<string, Signal*>   signalMap_;                  /**< A container of tuples for recovering the signal based on it's name */ 
+	map<string, pair<string, mpz_class> > constants_;    /**< The list of constants of the operator: name, <type, value> */
 	bool                   hasRegistersWithoutReset_;   /**< True if the operator has registers without a reset */
 	bool                   hasRegistersWithAsyncReset_; /**< True if the operator has registers having an asynch reset */
 	bool                   hasRegistersWithSyncReset_;  /**< True if the operator has registers having a synch reset */
