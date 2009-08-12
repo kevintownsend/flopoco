@@ -24,6 +24,7 @@
 // TODO List: 
 //  * test cases for boundary cases pfinal etc 
 //  * finetune pipeline
+//  * Port back the Arith paper
 #include <fstream>
 #include <sstream>
 #include <math.h>	// for NaN
@@ -35,6 +36,7 @@
 #include "fplogarithm/FirstLogTable.hpp"
 #include "fplogarithm/SecondInvTable.hpp"
 #include "fplogarithm/OtherLogTable.hpp"
+#include "ConstMult/IntIntKCM.hpp"
 
 
 using namespace std;
@@ -132,7 +134,10 @@ FPLog::FPLog(Target* target, int wE, int wF, int inTableSize)
 	extraBits = pfinal - (wF>>1) -1;
 	if(stages>=2) { // remove extra bits from stages 2 to stages
 		extraBitsperstage =  floor(((double)extraBits) / ((double)(stages-1)));
-		for(i=2; i<= stages; i++) {
+		int extraBitsStage2 = extraBits - (stages-1)*extraBitsperstage;
+		a[2] -= extraBitsperstage + extraBitsStage2;
+		p[2+1] = p[2] + a[2] - 1;
+		for(i=3; i<= stages; i++) {
 			a[i] -= extraBitsperstage;
 			p[i+1] = p[i] + a[i] - 1;
 		} 
@@ -211,6 +216,15 @@ FPLog::FPLog(Target* target, int wE, int wF, int inTableSize)
 	// On we go with the vhdl
 
 
+	addConstant("g",  "positive",          gLog);
+	addConstant("wE", "positive",          wE);
+	addConstant("wF", "positive",          wF);
+	addConstant("log2wF", "positive",     intlog2(wF));
+	addConstant("targetprec", "positive", target_prec);
+	addConstant("sfinal", "positive",     s[stages+1]);
+	addConstant("pfinal", "positive",     p[stages+1]);
+
+
 	vhdl << tab << declare("XExnSgn", 3) << " <=  X(wE+wF+2 downto wE+wF);" << endl;
 	vhdl << tab << declare("FirstBit") << " <=  X(wF-1);" << endl;
 	vhdl << tab << 	declare("sR") << " <= '0'   when  X(wE+wF-1 downto wF)   =   '0' &(wE-2 downto 0 => '1')  -- binade [1..2)" << endl
@@ -230,21 +244,6 @@ FPLog::FPLog(Target* target, int wE, int wF, int inTableSize)
 		  << "          else "<< use("E") << ";" << endl;
 	vhdl << tab << declare("EeqZero") << " <= '1' when "<< use("E") << "=(wE-1 downto 0 => '0') else '0';" << endl;
 	nextCycle();//////////////////////////////////////
-
-	mpfr_t two, log2;
-	mpz_t zlog2;
-
-	// The log2 constant
-	mpfr_init2(two, 2);
-	mpfr_set_d(two, 2.0, GMP_RNDN);
-	mpfr_init2(log2, wF+gLog);
-	mpfr_log(log2, two, GMP_RNDN);
-	mpfr_mul_2si(log2, log2, wF+gLog, GMP_RNDN); // shift left
-	mpz_init2(zlog2, wF+gLog);
-	mpfr_get_z(zlog2, log2, GMP_RNDN);
-	vhdl << tab << declare("log2", wF+gLog) << " <= \"" << unsignedBinary(mpz_class(zlog2), wF+gLog) << "\";"<<endl;
-	// TODO replace with a KCM
-	vhdl << tab << declare("absELog2", wF+wE+gLog) << " <= " << use("absE") << " * log2;" << endl;
 
 	// Back to cycle 1, after the 1-bit shift
 	setCycle(1);//////////////////////////////////////
@@ -295,17 +294,6 @@ FPLog::FPLog(Target* target, int wE, int wF, int inTableSize)
 	setCycle(0);
 	vhdl << tab << "---------------- The range reduction box ---------------" << endl;
 
-
-#if 0
-	vhdl << tab << declare("rrA", a[0]) << " <= X" << range(wF-1,  wF-a[0]) < ";" << endl;
-	rrbox = new LogRangeRed(target, this);
-	oplist.push_back(rrbox);
-	inPortMap(rrbox, "A", "rrA");
-	inPortMap(rrbox, "Y0", "Y0");
-	outPortMap(rrbox, "Z", "Zfinal");
-	outPortMap(rrbox, "almostLog", "almostLog");
-	vhdl << instance(rrbox, "rr");
-#else
 
 
 	vhdl << tab << declare("A0", a[0]) << " <= X" << range(wF-1,  wF-a[0]) << ";" << endl;
@@ -465,7 +453,6 @@ FPLog::FPLog(Target* target, int wE, int wF, int inTableSize)
 
 	vhdl << tab << declare("Zfinal", s[stages+1]) << " <= " << use(join("Z", stages+1)) << ";" << endl;  
 
-#endif
 
 
 	vhdl << tab << "--  Synchro between RR box and case almost 1" << endl;  
@@ -534,8 +521,36 @@ FPLog::FPLog(Target* target, int wE, int wF, int inTableSize)
 
 	nextCycle(); ///////////////////// 
 	vhdl << tab << declare("LogF_normal", target_prec) << " <=   " << use("almostLog") << " + ((targetprec-1 downto sfinal => '0') & " << use("Log1p_normal") << ");" << endl;
+	// The log2 constant
+	mpfr_t two, log2;
+	mpz_t zlog2;
+	mpfr_init2(two, 2);
+	mpfr_set_d(two, 2.0, GMP_RNDN);
+	mpfr_init2(log2, wF+gLog);
+	mpfr_log(log2, two, GMP_RNDN);
+	mpfr_mul_2si(log2, log2, wF+gLog, GMP_RNDN); // shift left
+	mpz_init2(zlog2, wF+gLog);
+	mpfr_get_z(zlog2, log2, GMP_RNDN);
+#if 0
+	// TODO replace with a KCM
+	vhdl << tab << declare("log2", wF+gLog) << " <= \"" << unsignedBinary(mpz_class(zlog2), wF+gLog) << "\";"<<endl;
+	vhdl << tab << declare("absELog2", wF+wE+gLog) << " <= " << use("absE") << " * log2;" << endl;
 	nextCycle(); ///////////////////// 
 	vhdl << tab << declare("absELog2_pad", wE+target_prec) << " <=   " << use("absELog2") << " & (targetprec-wF-g-1 downto 0 => '0');       " << endl;
+#else
+	IntIntKCM* kcm=new IntIntKCM(target, wE, mpz_class(zlog2));
+	oplist.push_back(kcm);
+	// get back enough cycles to synchronize it with LogF_normal
+	setCycle(getCurrentCycle() - kcm->getPipelineDepth());
+	inPortMap       (kcm, "X", "absE");
+	outPortMap      (kcm, "R", "absELog2");
+	vhdl << instance(kcm, "Log2KCM");
+	setCycle(getCurrentCycle() + kcm->getPipelineDepth(), false);
+	nextCycle(); ///////////////////// 
+	vhdl << tab << declare("absELog2_pad", wE+target_prec) << " <=   " 
+		  << use("absELog2") << " & (targetprec-wF-g-1 downto 0 => '0');       " << endl;		
+#endif
+
 	vhdl << tab << declare("LogF_normal_pad", wE+target_prec) << " <= (wE-1  downto 0 => " << use("LogF_normal") << "(targetprec-1))  & " << use("LogF_normal") << ";" << endl;
 	vhdl << tab << declare("Log_normal", wE+target_prec) << " <=  absELog2_pad  + LogF_normal_pad when " << use("sR") << "='0'  " << endl
 		  << "                else absELog2_pad - LogF_normal_pad;" << endl;
@@ -642,28 +657,6 @@ FPLog::~FPLog()
 }
 
 
-
-void FPLog::outputVHDL(std::ostream& o, std::string name)
-{
-	licence(o);
-	stdLibs(o);
-	outputVHDLEntity(o);
-	newArchitecture(o,name);
-	o << buildVHDLComponentDeclarations();	
-	o << buildVHDLSignalDeclarations();
-	// constants
-	o <<   "  constant g   : positive := "<<gLog<<";"<<endl;
-	o <<   "  constant wE : positive := " << wE <<";"<<endl;
-	o <<   "  constant wF : positive := " << wF <<";"<<endl;
-	o <<   "  constant log2wF : positive := "<< intlog2(wF) <<";"<<endl;
-	o <<   "  constant targetprec : positive := "<< target_prec <<";"<<endl;
-	o <<   "  constant sfinal : positive := "<< s[stages+1] <<";"<<endl;
-	o <<   "  constant pfinal : positive := "<< p[stages+1] <<";"<<endl;
-	beginArchitecture(o);		
-	o<<buildVHDLRegisters();
-	o << vhdl.str();
-	endArchitecture(o);
-}
 
 
 
