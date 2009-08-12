@@ -62,17 +62,23 @@ Operator(target), wIn_(wIn), inputDelays_(inputDelays)
 		}
 		else if ((wIn>17) && (wIn<=34)) {
 
+
 			vhdl << declare("x0_16",17) << " <= "<<use("X") << range(16,0) << ";" << endl;
 			if (wIn<34)
 				vhdl << declare("x17_33",17) << " <= "<<zeroGenerator(34-wIn,0) << " & " <<  use("X") << range(wIn-1,17) << ";" << endl;
 			else
 				vhdl << declare("x17_33",17) << " <= "<<use("X") << range(33,17) << ";" << endl;
-			
-			nextCycle();//////////////////////////////////////////////
-			
+						
+
+
+#if 0
 			vhdl << declare("p0",34) << " <= " << use("x0_16") << " * " << use("x0_16") << ";" <<endl;
 
 			nextCycle();//////////////////////////////////////////////
+
+			// The following is needed to bring up freq to 368MHz. Without it, we have 170 Mhz
+			// 	nextCycle();//////////////////////////////////////////////
+			// 	nextCycle();//////////////////////////////////////////////
 			
 			vhdl << declare("p1",34) << " <= " << use("x17_33") << " * " << use("x0_16") << " + " << "( \"0\" & "<< use("p0")<<range(33,18) <<")" << ";" <<endl;
 			vhdl << declare("f0",18) << " <= " << use("p0") << range(17,0) << ";" << endl;
@@ -82,12 +88,33 @@ Operator(target), wIn_(wIn), inputDelays_(inputDelays)
 			vhdl << declare("p2",34) << " <= " << use("x17_33") << " * " << use("x17_33") << " + " << "( \"0\" & "<< use("p1")<<range(33,16) <<")" << ";" <<endl;
 			vhdl << declare("f1",16) << " <= " << use("p1") << range(15,0) << ";" << endl;
 
+			// TODO: registering output is not standard FloPoCo practice 
 			nextCycle();//////////////////////////////////////////////
 
+#else  // This code is simpler, 3 cycles only, complies with standard practice and is synthesized at 350 MHz with 48 slices
+			vhdl << declare("p0",34) << " <= " << use("x0_16") << " * " << use("x0_16") << ";" <<endl;
+			vhdl << declare("p1",34) << " <= " << use("x17_33") << " * " << use("x0_16") << ";" <<endl;
+
+			nextCycle();//////////////////////////////////////////////
+			
+			vhdl << declare("s1",34) << " <= " << use("p1") << " + " << "( \"0\" & "<< use("p0")<<range(33,18) <<")" << ";" <<endl;
+			vhdl << declare("f0",18) << " <= " << use("p0") << range(17,0) << ";" << endl;
+			
+			vhdl << declare("p2",34) << " <= " << use("x17_33") << " * " << use("x17_33") << ";" <<endl;
+			
+			
+			nextCycle();//////////////////////////////////////////////
+			
+			vhdl << declare("s2",34) << " <= " << use("p2") << " + " << "( \"0\" & "<< use("s1")<<range(33,16) <<")" << ";" <<endl;
+			vhdl << declare("f1",16) << " <= " << use("s1") << range(15,0) << ";" << endl;
+
+			nextCycle();////////////////////////////////////////////// 
+
+#endif
 			if (wIn<34)
-				vhdl << "R <= " << use("p2")<<range(2*wIn-34-1,0) << " & " << use("f1") << " & " << use("f0") << ";" << endl;
+				vhdl << "R <= " << use("s2")<<range(2*wIn-34-1,0) << " & " << use("f1") << " & " << use("f0") << ";" << endl;
 			else
-				vhdl << "R <= " << use("p2") << " & " << use("f1") << " & " << use("f0") << ";" << endl;
+				vhdl << "R <= " << use("s2") << " & " << use("f1") << " & " << use("f0") << ";" << endl;
 
 		}
 		else if ((wIn>34) && (wIn<=51)) {
