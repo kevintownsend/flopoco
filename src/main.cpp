@@ -144,6 +144,8 @@ static void usage(char *name){
 	cerr << "      Floating-point adder \n";
 	cerr << "    FPMultiplier wE wF\n";
 	cerr << "      Floating-point multiplier \n";
+	cerr << "    FPSquarer wE wFin wFout\n";
+	cerr << "      Floating-point squarer \n";
 	cerr << "    FPDiv wE wF\n";
 	cerr << "      Floating-point divider \n";
 	cerr << "    FPSqrt wE wF useDSP correctlyRounded\n";
