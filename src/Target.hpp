@@ -176,6 +176,15 @@ class Target
 	 */
 	virtual int multiplierLUTCost(int wInX, int wInY) =0;
 	
+	
+	/** Function which return the number of Slices needed to implement
+	 * an adder that has 2 or more operands.
+	 * @param wIn the width (in bits) of the adder operands
+	 * @param n the number of operands
+	 * @return the cost of the adder in Slices/ALMs
+	 */
+	virtual int getIntNAdderCost(int wIn, int n) =0;
+	
 	/** Constructs a specific DSP to each target */
 	
 	virtual DSP* createDSP() = 0;
