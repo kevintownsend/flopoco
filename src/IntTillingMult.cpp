@@ -225,7 +225,7 @@ else
 		}
 		else
 		{
-			if(rot==false && (globalConfig[i]->getMaxMultiplierWidth() != globalConfig[i]->getMaxMultiplierHeight() ))
+			if(rot[i]==false && (globalConfig[i]->getMaxMultiplierWidth() != globalConfig[i]->getMaxMultiplierHeight() ))
 			{
 				cout<<" Pas 2_2 "<<i<<endl;
 				globalConfig[i]->rotate();
@@ -425,7 +425,7 @@ void IntTilingMult::fillMatrix(int **&matrix,int lw,int lh,int topleftX,int topl
 						}
 						
 						//~ cout<<count<<endl;
-						costSlice +=target->multiplierLUTCost(jj-j+1,ii-i+1);
+						costSlice +=target->getIntMultiplierCost(jj-j+1,ii-i+1);
 						fillMatrix(mat,n,m,j,i,jj,ii,count);
 						count++;
 						
@@ -482,7 +482,7 @@ int IntTilingMult::estimateDSPs()
 	else
 	{	
 		//cout<<target->multiplierLUTCost(wInX,wInY) <<"    "<<target->getEquivalenceSliceDSP()<<endl;
-		float temp = (target->multiplierLUTCost(wInX,wInY) * ratio)  /   ((1- ratio)  *  target->getEquivalenceSliceDSP() ) ;
+		float temp = (target->getIntMultiplierCost(wInX,wInY) * ratio)  /   ((1- ratio)  *  target->getEquivalenceSliceDSP() ) ;
 		//cout<<temp<<endl;
 		if(temp - ((int)temp)  > 0 ) // if the estimated number of dsps is a number with nonzero real part than we will return the integer number grather then this computed value. eg. 2.3 -> 3
 		{

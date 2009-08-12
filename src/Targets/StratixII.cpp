@@ -155,7 +155,7 @@ bool  StratixII::suggestSlackSubaddSize(int &x, int wIn, double slack){
 
 }
   
-int StratixII::multiplierLUTCost(int wInX, int wInY){
+int StratixII::getIntMultiplierCost(int wInX, int wInY){
 	
 	int lutCost = 0;
 	//int chunkSize_ = this->lutInputs()/2; SYNTHESIS NOT EFFICIENT WITH 6-LUTs
@@ -184,7 +184,7 @@ int StratixII::getEquivalenceSliceDSP(){
 	int x, y;
 	getDSPWidths(x,y);
 	// add multiplier cost
-	lutCost += multiplierLUTCost(x, y);
+	lutCost += getIntMultiplierCost(x, y);
 	// add accumulator cost
 	//lutCost += accumulatorLUTCost(x, y);
 	// add partial cost of final adder

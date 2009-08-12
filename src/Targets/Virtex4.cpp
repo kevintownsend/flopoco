@@ -200,7 +200,7 @@ bool Virtex4::suggestSlackSubaddSize(int &x, int wIn, double slack){
 	} 
 };
 
-int Virtex4::multiplierLUTCost(int wInX, int wInY){
+int Virtex4::getIntMultiplierCost(int wInX, int wInY){
 	
 	int lutCost = 0;
 	int chunkSize_ = this->lutInputs()/2;
@@ -250,7 +250,7 @@ int Virtex4::getEquivalenceSliceDSP(){
 	int x, y;
 	getDSPWidths(x,y);
 	// add multiplier cost
-	lutCost += multiplierLUTCost(x, y);
+	lutCost += getIntMultiplierCost(x, y);
 	// add shifter and accumulator cost
 	//lutCost += accumulatorLUTCost(x, y);
 	return lutCost;

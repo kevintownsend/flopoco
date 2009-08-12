@@ -75,7 +75,7 @@ public:
 	bool   suggestSubmultSize(int &x, int &y, int wInX, int wInY);
 	bool   suggestSubaddSize(int &x, int wIn);
 	bool   suggestSlackSubaddSize(int &x, int wIn, double slack);
-	int    multiplierLUTCost(int wInX, int wInY);
+	int    getIntMultiplierCost(int wInX, int wInY);
 	long   sizeOfMemoryBlock();
 	DSP*   createDSP(); 
 	int    getEquivalenceSliceDSP();

@@ -12,7 +12,7 @@
  * the Free Software Foundation; either version 2 of the License, or 
  * (at your option) any later version.
  * 
- * This program is distributed in the hope that it will be useful,
+ * This program is distributed in the hope that it will be useful,getMultiplierCost
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -174,7 +174,7 @@ class Target
 	 * @param	wInX the width (in bits) of the first operand
 	 * @param	wInY the width (in bits) of the second operand
 	 */
-	virtual int multiplierLUTCost(int wInX, int wInY) =0;
+	virtual int getIntMultiplierCost(int wInX, int wInY) =0;
 	
 	
 	/** Function which return the number of Slices needed to implement
