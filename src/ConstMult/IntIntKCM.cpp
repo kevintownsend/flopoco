@@ -2,7 +2,6 @@
  * An constant multiplier for FloPoCo using the KCM method
  *
  * It may be pipelined to arbitrary frequency.
- * Also useful to derive the carry-propagate delays for the subclasses of Target
  *
  * Authors : Bogdan Pasca
  *
@@ -41,13 +40,15 @@
 using namespace std;
 extern vector<Operator *> oplist;
 
-IntIntKCM::IntIntKCM(Target* target, int wIn, mpz_class C, map<string, double> inputDelays):
+IntIntKCM::IntIntKCM(Target* target, int wIn, mpz_class C, bool inputTwosComplement, map<string, double> inputDelays):
 Operator(target), wIn_(wIn), C_(C), inputDelays_(inputDelays) 
 {
+
+	if(inputTwosComplement){
 	// Set up the IO signals
 	addInput ("X" , wIn_);
 
-	//ititialize the output width
+	//initialize the output width
 	wOut_ = intlog2( (C<0? (0-C) :C) ) + 1 +  wIn_;
 	addOutput("R" , wOut_);
 
@@ -55,7 +56,7 @@ Operator(target), wIn_(wIn), C_(C), inputDelays_(inputDelays)
 	name << "IntIntKCM_" << wIn_<<"_"<< wOut_;
 	setName(name.str());
 
-	cout << "C="<<unsignedBinary( (C<0? (0-C) :C) , intlog2( (C<0? (0-C) :C) ) +1  ) << endl;
+	// cout << "C="<<unsignedBinary( (C<0? (0-C) :C) , intlog2( (C<0? (0-C) :C) ) +1  ) << endl;
 
 	if (verbose){
 		cout <<"delay for X is   "<< inputDelays["X"]<<endl;	
@@ -150,6 +151,97 @@ Operator(target), wIn_(wIn), C_(C), inputDelays_(inputDelays)
 		syncCycleFromSignal("OutRes");
 		
 		vhdl << tab << "R <= " << use("OutRes") << " & " << use( "pp0")<<range(lutWidth-1,0) << ";" <<endl;
+	}
+
+
+	else {
+		// Set up the IO signals
+		addInput ("X" , wIn_);
+
+		//initialize the output width
+		wOut_ = intlog2( (C<0? (0-C) :C) ) +  wIn_;
+		addOutput("R" , wOut_);
+
+		ostringstream name;
+		name << "IntIntKCM_" << wIn_<<"_"<< mpz2string(C);
+		setName(name.str());
+
+	// cout << "C="<<unsignedBinary( (C<0? (0-C) :C) , intlog2( (C<0? (0-C) :C) ) +1  ) << endl;
+
+		if (verbose==2){
+			cerr <<"> IntIntKCM:\t delay for X is   "<< inputDelays["X"]<<endl;	
+		}
+	
+	int constantWidth = intlog2( (C < 0?0-C:C) ); //the constant is represented in 2's complement
+	int lutWidth = target->lutInputs();
+	chunkSize_ = lutWidth;
+	int nbOfTables = int ( ceil( double(wIn)/double(lutWidth)) );
+	int lastLutWidth = (wIn%lutWidth==0?lutWidth: wIn%lutWidth);
+	double delay = 0.0;
+	
+	
+	if (verbose){
+		cerr << "> IntIntKCM:\t The width of the constant is = " << constantWidth<<endl;
+		cerr << "> IntIntKCM:\t The number of inputs / LUT is = " << lutWidth << endl;
+		cerr << "> IntIntKCM:\t The number of tables needed is = " << nbOfTables << endl;
+	}
+	
+	FirstKCMTable* t1; 
+	t1 = new FirstKCMTable(target, lutWidth, constantWidth + lutWidth, C);
+	oplist.push_back(t1);
+		
+	//first split the input X into digits having lutWidth bits -> this is as generic as it gets :)
+		for (int i=0; i<nbOfTables; i++)
+			if (i < nbOfTables-1)
+				vhdl << tab << declare( join("d",i), lutWidth ) << " <= " << use("X") << range(4*(i+1)-1, 4*i ) << ";" <<endl;
+			else {
+				vhdl << tab << declare( join("d",i), lutWidth ) << " <= " ;
+				if(4*(i+1)>wIn)	
+					vhdl << rangeAssign(4*(i+1)-1, wIn, "'0'") << " & ";
+				vhdl << use("X") << range( wIn-1 , 4*i ) << ";" <<endl;
+			}
+		//perform nbOfTables multiplications
+		for ( int i=nbOfTables-1; i >= 0; i--){
+			inPortMap (t1, "X", join("d",i));
+			outPortMap(t1, "Y", join("pp",i));
+			vhdl << instance(t1, join("KCMTable_UnsignedMul",i));
+		}
+		
+		delay += target->lutDelay();
+		
+		//determine the addition operand size
+		int addOpSize = (nbOfTables - 2) * lutWidth + (constantWidth +  lastLutWidth);
+		if (verbose)
+			cerr << "> IntIntKCM:\t The addition operand size is: " << addOpSize << endl;
+		
+		for (int i=0; i<nbOfTables; i++){
+			vhdl << tab << declare( join("addOp",i), addOpSize ) << " <= ";
+				if (i!=nbOfTables-1){ //if not the last table
+					vhdl << rangeAssign(addOpSize-1, constantWidth + i*lutWidth, "'0'") << " & " 
+							  <<  use(join("pp",i)) << range(constantWidth + lutWidth -1, (i==0?lutWidth:0)) << " & " 
+							  << zeroGenerator((i-1)*lutWidth,0) << ";" << endl;
+				}
+				else{
+					vhdl << use(join("pp",i))<<range(constantWidth + lastLutWidth -1, (i==0?lutWidth:0))<< " & " << zeroGenerator((i-1)*lutWidth,0) << ";" << endl;
+				}
+		}
+		
+		map<string, double> inMap;
+		inMap["X0"] = delay;
+		
+		IntNAdder* adder = new IntNAdder(target, addOpSize, nbOfTables, inMap);
+		oplist.push_back(adder);
+		for (int i=0; i<nbOfTables; i++)
+			inPortMap (adder, join("X",i) , join("addOp",i));
+		
+		inPortMapCst(adder, "Cin", "'0'");
+		outPortMap(adder, "R", "OutRes");
+		vhdl << instance(adder, "Result_Adder");
+		
+		syncCycleFromSignal("OutRes");
+		
+		vhdl << tab << "R <= " << use("OutRes") << " & " << use( "pp0")<<range(lutWidth-1,0) << ";" <<endl;
+ }
 }
 
 IntIntKCM::~IntIntKCM() {

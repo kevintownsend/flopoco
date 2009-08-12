@@ -7,7 +7,7 @@
 #include "../Operator.hpp"
 
 extern map<string, double> emptyDelayMap;
-/** The IntIntKCM class for experimenting with adders. 
+/** The IntIntKCM class. 
 */
 class IntIntKCM : public Operator
 {
@@ -15,10 +15,11 @@ public:
 	/**
 	 * The IntIntKCM constructor
 	 * @param[in] target the target device
-	 * @param[in] wIn    the with of the inputs and output
+	 * @param[in] wIn    the with of the input
+	 * @param[in] C      the constant
 	 * @param[in] inputDelays the delays for each input
 	 **/
-	IntIntKCM(Target* target, int wIn, mpz_class C, map<string, double> inputDelays = emptyDelayMap);
+	IntIntKCM(Target* target, int wIn, mpz_class C, bool inputTwosComplement=false, map<string, double> inputDelays = emptyDelayMap);
 
 	/**
 	 *  Destructor
@@ -37,11 +38,6 @@ protected:
 	
 private:
 	map<string, double> inputDelays_; /**< a map between input signal names and their maximum delays */
-//	int bufferedInputs;               /**< variable denoting an initial buffering of the inputs */
-//	double maxInputDelay;             /**< the maximum delay between the inputs present in the map*/
-//	int nbOfChunks;                   /**< the number of chunks that the addition will be split in */
-//	int chunkSize_;                   /**< the suggested chunk size so that the addition can take place at the objective frequency*/
-//	int *cSize;                       /**< array containing the chunk sizes for all nbOfChunks*/
 
 };
 #endif
