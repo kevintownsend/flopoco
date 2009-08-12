@@ -1,12 +1,11 @@
 #include <iostream>
 #include <fstream>
-#include "math_lib.h"
-#include "fragment.h"
+#include "Fragment.hpp"
 
 using namespace std;
 
-Fragment::Fragment(int length, Fragment* next_part) :
-length(length), next_part(next_part)
+Fragment::Fragment(Target* target, int length, Fragment* next_part) :
+	Operator(target), length(length), next_part(next_part)
 {
 }
 
@@ -28,29 +27,6 @@ int Fragment::prepare(double& area, double& max_error, bool with_sign, int accur
   area = this->area();
   max_error = this->max_error(2.5); // 2.5 à cause de la réduction d'argument
   return accuracy;
-}
-
-void Fragment::generate(std::string prefix, ostream& code_file, ostream& table_file)
-{
-  table_file << "library ieee;\n"
-			 << "use ieee.std_logic_1164.all;\n"
-			 << "use ieee.std_logic_arith.all;\n"
-			 << "use ieee.std_logic_unsigned.all;\n\n"
-			 << "package pkg_" << prefix << "_exp_tbl is" << endl;
-  
-  write_tbl_declaration(prefix, table_file);
-  table_file << "end package;\n" << endl;
-  write_tbl_arch(prefix, table_file);
-
-  code_file << "library ieee;\n"
-	<< "use ieee.std_logic_1164.all;\n"
-	<< "use ieee.std_logic_arith.all;\n"
-	<< "use ieee.std_logic_unsigned.all;\n\n"
-	<< "package pkg_" << prefix << "_exp is" << endl;
-  
-  write_declaration(prefix, code_file);
-  code_file << "end package;\n" << endl;
-  write_arch(prefix, code_file);
 }
 
 int Fragment::totallength()
@@ -85,6 +61,16 @@ void Fragment::showinfo(int number)
   else
     cout << "unsigned";
 }
+
+
+
+void Fragment::generate(std::string prefix)
+{
+  if (next_part != 0) 
+	  next_part->generate(prefix);
+}
+
+#if 0 // replaced by FloPoCo framework
 
 void Fragment::write_declaration(std::string prefix, std::ostream& o)
 {
@@ -138,18 +124,22 @@ void Fragment::write_tbl_arch(std::string prefix, std::ostream& o)
   o << "-- ===============================" << endl << endl;
 }
 
+#endif
+
+
+
 double table_area(int input_bits, int output_bits)
 {
   double base_size;
 
   if (input_bits <= 7)
-    base_size = 1.0 * powOf2(input_bits) / 32.0;
+	  base_size = (1.0 * (1<<input_bits)) / 32.0;  // safe because nobody wants a table with more than 31 inputs
   else if (input_bits == 8)
     base_size = 8.077;
   else if (input_bits == 9)
     base_size = 16.75;
   else
-    base_size = 33.538 * powOf2(input_bits) / 1024.0;
+	  base_size = 33.538 * (1<<(input_bits)) / 1024.0;
 
   return base_size * static_cast<double>(output_bits);
 }

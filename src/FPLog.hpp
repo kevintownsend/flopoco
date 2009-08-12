@@ -29,7 +29,6 @@
 #include "LZOC.hpp"
 #include "LZOCShifterSticky.hpp"
 #include "Shifters.hpp"
-#include "fplogarithm/LogRangeRed.hpp"
 
 class FPNumber;
 
@@ -85,9 +84,6 @@ public:
 	// The guard bits 
 	int gLog;
 
-	// The range reduction box
-	LogRangeRed* rr;
-
 
 	// A global boolean flag disabling the simulation of the fullsize mantissa
 	// as soon as it would be more than 64 bits
@@ -100,7 +96,6 @@ public:
 	Shifter *ao_lshift;   // ao stands for "almost one"
 	Shifter *ao_rshift;
 	LZOC *lzoc;
-	LogRangeRed *rrbox;
 	LZOCShifterSticky *final_norm;
 };
 

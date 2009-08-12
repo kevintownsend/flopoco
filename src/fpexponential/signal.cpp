@@ -1,7 +1,6 @@
 #include <iostream>
 #include <sstream>
 #include <string>
-#include "math_lib.h"
 #include "signal.h"
 
 using namespace FloPoCo::import::FPExp;

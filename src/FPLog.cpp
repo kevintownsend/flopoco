@@ -34,7 +34,6 @@
 #include "IntSquarer.hpp"
 #include "fplogarithm/FirstInvTable.hpp"
 #include "fplogarithm/FirstLogTable.hpp"
-#include "fplogarithm/SecondInvTable.hpp"
 #include "fplogarithm/OtherLogTable.hpp"
 #include "ConstMult/IntIntKCM.hpp"
 

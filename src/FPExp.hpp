@@ -15,7 +15,7 @@ public:
 	~FPExp();
 
 	// Overloading the virtual functions of Operator
-	void outputVHDL(std::ostream& o, std::string name);
+	// void outputVHDL(std::ostream& o, std::string name);
 
 	void emulate(TestCase * tc);
 
