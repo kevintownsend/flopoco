@@ -140,10 +140,10 @@ IntTilingMult:: IntTilingMult(Target* target, int wInX, int wInY,float ratio) :
 	
 	
 	initTiling(globalConfig, 4);
-	//for (int i=0; i<19; i++)
-	//move(globalConfig, 0);
+	for (int i=0; i<19; i++)
+	move(globalConfig, 2);
 	//replace(globalConfig, 1);
-	//move(globalConfig, 2);
+	//move(globalConfig, 0);
 	//int x, y;
 	
 		for (int i=0; i<4; i++)
@@ -541,7 +541,7 @@ bool IntTilingMult::checkOverlap(DSP** config, int index)
 	config[index]->getBottomLeftCorner(xbl1, ybl1);
 	
 	if(verbose)
-	cout << tab << tab << "checkOverlap: ref is block #" << index << ". Top-right is at (" << xtr1 << ", " << ytr1 << ") and Bottom-right is at (" << xbl1 << ", " << ybl1 << ")" << endl;
+		cout << tab << tab << "checkOverlap: ref is block #" << index << ". Top-right is at (" << xtr1 << ", " << ytr1 << ") and Bottom-right is at (" << xbl1 << ", " << ybl1 << ")" << endl;
 	
 	for (int i=0; i<nrDSPs; i++)
 		if ((config[i] != NULL) && (i != index))
@@ -550,7 +550,7 @@ bool IntTilingMult::checkOverlap(DSP** config, int index)
 			config[i]->getBottomLeftCorner(xbl2, ybl2);
 			
 			if(verbose)
-			cout << tab << tab << "checkOverlap: comparing with block #" << i << ". Top-right is at (" << xtr2 << ", " << ytr2 << ") and Bottom-right is at (" << xbl1 << ", " << ybl1 << ")" << endl;
+				cout << tab << tab << "checkOverlap: comparing with block #" << i << ". Top-right is at (" << xtr2 << ", " << ytr2 << ") and Bottom-right is at (" << xbl1 << ", " << ybl1 << ")" << endl;
 			
 			if (((xtr2 <= xbl1) && (ytr2 <= ybl1) && (xtr2 >= xtr1) && (ytr2 >= ytr1)) || // config[index] overlaps the upper and/or right part(s) of config[i]
 				((xbl2 <= xbl1) && (ybl2 <= ybl1) && (xbl2 >= xtr1) && (ybl2 >= ytr1)) || // config[index] overlaps the bottom and/or left part(s) of config[i]
@@ -567,7 +567,7 @@ bool IntTilingMult::checkOverlap(DSP** config, int index)
 				return true;
 		}	
 	if(verbose)
-	cout << tab << tab << "checkOverlap: return false" << endl;	
+		cout << tab << tab << "checkOverlap: return false" << endl;	
 	return false;
 }
 
@@ -581,27 +581,55 @@ bool IntTilingMult::move(DSP** config, int index)
 	config[index]->getTopRightCorner(xtr1, ytr1);
 	config[index]->getBottomLeftCorner(xbl1, ybl1);
 	
-	do{
-		// move down one unit
-		ytr1++;
-		ybl1++;
-		
-		if (ybl1 > wInY+2*getExtraHeight()-1) // the DSP block has reached the bottom limit of the tiling grid
-		{
-			// move to top of grid and one unit to the left 
-			xtr1++;
-			xbl1++;
-			ytr1 = 0;
-			ybl1 = h-1;
-			
-			if (xbl1 > wInX+2*getExtraWidth()-1) // the DSP block has reached the left limit of the tiling grid
-				return false;
-		}			
-		
-		config[index]->setTopRightCorner(xtr1, ytr1);
-		config[index]->setBottomLeftCorner(xbl1, ybl1);
-	}while (checkOverlap(config, index));
+	if(verbose)
+		cout << tab << "replace : DSP #" << index << " width is " << w << ", height is " << h << endl; 
 	
+	if ((xtr1 < 0) || (ytr1 < 0) || (xbl1 > wInX+2*getExtraWidth()-1) || (ybl1 > wInY+2*getExtraHeight()-1))
+	{// then the DSP block is placed outside the bounds 
+		do{
+			// move down one unit
+			ytr1++;
+			ybl1++;
+			
+			if (ytr1 > wInY+getExtraHeight()-1) // the DSP block has reached the bottom limit of the tiling grid
+			{
+				// move to top of grid and one unit to the left 
+				xtr1++;
+				xbl1++;
+				ytr1 = getExtraHeight() - h+1;
+				ybl1 = ytr1 + h-1;
+				
+				if (xtr1 > wInX+getExtraWidth()-1) // the DSP block has reached the left limit of the tiling grid
+					return false;
+			}			
+			
+			config[index]->setTopRightCorner(xtr1, ytr1);
+			config[index]->setBottomLeftCorner(xbl1, ybl1);
+		}while (checkOverlap(config, index));
+	}
+	else
+	{
+		do{
+			// move down one unit
+			ytr1++;
+			ybl1++;
+			
+			if (ybl1 > wInY+2*getExtraHeight()-1) // the DSP block has reached the bottom limit of the tiling grid
+			{
+				// move to top of grid and one unit to the left 
+				xtr1++;
+				xbl1++;
+				ytr1 = 0;
+				ybl1 = h-1;
+				
+				if (xbl1 > wInX+2*getExtraWidth()-1) // the DSP block has reached the left limit of the tiling grid
+					return false;
+			}			
+			
+			config[index]->setTopRightCorner(xtr1, ytr1);
+			config[index]->setBottomLeftCorner(xbl1, ybl1);
+		}while (checkOverlap(config, index));
+	}
 	// set the current position of the DSP block within the tiling grid
 	config[index]->setTopRightCorner(xtr1, ytr1);
 	config[index]->setBottomLeftCorner(xbl1, ybl1);
@@ -622,7 +650,7 @@ void IntTilingMult::replace(DSP** config, int index)
 	config[index]->setBottomLeftCorner(xbl1, ybl1);
 	
 	if(verbose)
-	cout << tab << "replace : DSP width is " << w << ", height is " << h << endl; 
+		cout << tab << "replace : DSP width is " << w << ", height is " << h << endl; 
 	// try yo place the DSP block inside the extended region of the tiling grid
 	while (checkOverlap(config, index))
 	{
@@ -631,7 +659,7 @@ void IntTilingMult::replace(DSP** config, int index)
 		ybl1++;
 		
 		if(verbose)
-		cout << tab << "replace : moved DSP one unit down." << endl;
+			cout << tab << "replace : moved DSP one unit down." << endl;
  		if (ybl1 > wInY+2*getExtraHeight()) // the DSP block has reached the bottom limit of the tiling grid
 		{
 			// move to top of grid and one unit to the left 
@@ -646,7 +674,7 @@ void IntTilingMult::replace(DSP** config, int index)
 		config[index]->setTopRightCorner(xtr1, ytr1);
 		config[index]->setBottomLeftCorner(xbl1, ybl1);
 		if(verbose)
-		cout << tab << "replace : Top-right is at ( " << xtr1 << ", " << ytr1 << ") and Bottom-right is at (" << xbl1 << ", " << ybl1 << ")" << endl;
+			cout << tab << "replace : Top-right is at ( " << xtr1 << ", " << ytr1 << ") and Bottom-right is at (" << xbl1 << ", " << ybl1 << ")" << endl;
 	}
 	
 	if (xbl1 > wInX+2*getExtraWidth()) // it was not possible to place the DSP inside the extended grid
@@ -660,7 +688,7 @@ void IntTilingMult::replace(DSP** config, int index)
 		config[index]->setBottomLeftCorner(xbl1, ybl1);
 		
 		if(verbose)
-		cout << tab << "replace : DSP width is " << w << ", height is " << h << endl; 
+			cout << tab << "replace : DSP width is " << w << ", height is " << h << endl; 
 		while (checkOverlap(config, index))
 		{
 			// move down one unit
@@ -668,7 +696,7 @@ void IntTilingMult::replace(DSP** config, int index)
 			ybl1++;
 			
 			if(verbose)
-			cout << tab << "replace : moved DSP one unit down." << endl;
+				cout << tab << "replace : moved DSP one unit down." << endl;
 			if (ytr1 > wInY+getExtraHeight()) // the DSP block has reached the bottom limit of the tiling grid
 			{
 				// move to top of grid and one unit to the left 
@@ -679,13 +707,13 @@ void IntTilingMult::replace(DSP** config, int index)
 				ybl1 = ytr1 + h-1;
 				
 				if(verbose)
-				cout << tab << "replace : moved DSP up and one unit left." << endl;
+					cout << tab << "replace : moved DSP up and one unit left." << endl;
 			}			
 			
 			config[index]->setTopRightCorner(xtr1, ytr1);
 			config[index]->setBottomLeftCorner(xbl1, ybl1);
 			if(verbose)
-			cout << tab << "replace : Top-right is at ( " << xtr1 << ", " << ytr1 << ") and Bottom-right is at (" << xbl1 << ", " << ybl1 << ")" << endl;
+				cout << tab << "replace : Top-right is at ( " << xtr1 << ", " << ytr1 << ") and Bottom-right is at (" << xbl1 << ", " << ybl1 << ")" << endl;
 		}
 	
 	}
@@ -706,7 +734,7 @@ void IntTilingMult::initTiling(DSP** &config, int dspCount)
 	for (int i=0; i<dspCount; i++)
 	{
 		if(verbose)
-		cout << "initTiling : iteration #" << i << endl; 
+			cout << "initTiling : iteration #" << i << endl; 
 		config[i] = target->createDSP();
 		replace(config, i);
 	}
