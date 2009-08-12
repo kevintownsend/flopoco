@@ -168,7 +168,7 @@ int StratixII::multiplierLUTCost(int wInX, int wInY){
 		for (int j=0; j<chunksY; j++)
 			lutCost += 4; // one lut for each bit of a partial product
 						
-	return lutCost;//TODO + this->intNAdderLUTCost(chunksX*x, chunksY*y, frequency);
+	return lutCost + this->getIntNAdderCost(chunksX*chunkSize_, chunksY*chunkSize_);
 
 }
 
@@ -209,4 +209,17 @@ int StratixII::getNumberOfDSPs()
 	}
 	return y;		
 };
+
+int StratixII::getIntNAdderCost(int wIn, int n)
+{
+	int chunkSize, lastChunkSize, nr, a, b, cost;
+	
+	suggestSubaddSize(chunkSize, wIn);
+	lastChunkSize = wIn%chunkSize;
+	nr = ceil((double) wIn/chunkSize);
+	a = (nr-1)*wIn + (nr-1)*nr/2 + wIn*((n-1)*n/2-1);
+	b = nr*lastChunkSize + (nr-2)*(nr-1)*chunkSize/2 + nr*(nr-1)/2 + (n-1)*chunkSize;
+	cost = max(a,b)/2;
+	return cost;
+}
 

@@ -92,12 +92,12 @@ public:
 	bool   suggestSubaddSize(int &x, int wIn);
 	bool   suggestSlackSubaddSize(int &x, int wIn, double slack);
 	int    multiplierLUTCost(int wInX, int wInY);
-	long sizeOfMemoryBlock();
-	DSP* createDSP() ;
-		
-	int getEquivalenceSliceDSP() ;
-	int getNumberOfDSPs() ;
-	void getDSPWidths(int &x, int &y) ;	
+	long   sizeOfMemoryBlock();
+	DSP*   createDSP(); 
+	int    getEquivalenceSliceDSP();
+	int    getNumberOfDSPs();
+	void   getDSPWidths(int &x, int &y);
+	int    getIntNAdderCost(int wIn, int n);	
 		
 
 private:

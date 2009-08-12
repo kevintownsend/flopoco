@@ -237,7 +237,7 @@ int Virtex4::multiplierLUTCost(int wInX, int wInY){
 		}
 	}
 	
-	return lutCost;//TODO + this->intNAdderLUTCost(chunksX*x, chunksY*y, frequency);
+	return lutCost + this->getIntNAdderCost(chunksX*chunkSize_, chunksY*chunkSize_);
 };
   
 void Virtex4::getDSPWidths(int &x, int &y){
@@ -260,3 +260,16 @@ int Virtex4::getNumberOfDSPs()
 {
 	return 32; // XC4VLX15 has 1 column of 32 DSPs		
 };
+
+int Virtex4::getIntNAdderCost(int wIn, int n)
+{
+	int chunkSize, lastChunkSize, nr, a, b, cost;
+	
+	suggestSubaddSize(chunkSize, wIn);
+	lastChunkSize = wIn%chunkSize;
+	nr = ceil((double) wIn/chunkSize);
+	a = (nr-2)*lastChunkSize/2 + nr*wIn/2 + 2*(nr-1 + wIn) + chunkSize + (2*wIn+(nr-1))*(n-3);
+	b = nr*lastChunkSize/2 + nr*wIn/2 + (nr-2)*chunkSize + wIn + 2*wIn*(n-3);
+	cost = a+b*0.25;
+	return cost;
+}
