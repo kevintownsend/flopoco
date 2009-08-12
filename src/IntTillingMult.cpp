@@ -92,6 +92,7 @@ IntTilingMult:: IntTilingMult(Target* target, int wInX, int wInY,float ratio) :
 		//~ globalConfig[1]->setBottomLeftCorner(20,18);
 		cout<<"Finnish initializing DSPs"<<endl;
 		cout<<"Number of slices for multiplication is "<<partitionOfGridSlices(globalConfig)<<endl;
+		cout<<"Cost of configuration is "<<computeCost(globalConfig)<<endl;
 
 	
 	//~ /*we will try the algorithm with 2 values of nrDSPs	
@@ -271,7 +272,7 @@ void IntTilingMult::fillMatrix(int **&matrix,int lw,int lh,int topleftX,int topl
 	int count=1;
 	n=wInX + 2* getExtraWidth();
 	m=wInY + 2* getExtraHeight();
-	cout<<"width "<<n<<"height "<<m<<endl;
+	//~ cout<<"width "<<n<<"height "<<m<<endl;
 	mat = new int*[m];
 	for(int i=0;i<m;i++)
 		{
@@ -285,10 +286,10 @@ void IntTilingMult::fillMatrix(int **&matrix,int lw,int lh,int topleftX,int topl
 			
 			config[i]->getTopRightCorner(c1X,c1Y);
 			config[i]->getBottomLeftCorner(c2X,c2Y);
-			cout<<"DSP #"<<i+1<<"has toprigh ("<<c1X<<","<<c1Y<<") and botomleft ("<<c2X<<","<<c2Y<<")"<<endl;
+			//~ cout<<"DSP #"<<i+1<<"has toprigh ("<<c1X<<","<<c1Y<<") and botomleft ("<<c2X<<","<<c2Y<<")"<<endl;
 			c1X=n-c1X-1;
 			c2X=n-c2X-1;
-			cout<<"new x1 "<<c1X<<" new x2 "<<c2X<<endl;
+			//~ cout<<"new x1 "<<c1X<<" new x2 "<<c2X<<endl;
 			
 			fillMatrix(mat,n,m,c2X,c1Y,c1X,c2Y,count);
 			count++;			
@@ -437,21 +438,21 @@ void IntTilingMult::fillMatrix(int **&matrix,int lw,int lh,int topleftX,int topl
 		
 		 
 		
-		char af;
-		int afi;
-	for(int i=0;i<m;i++)
-		{
-			for(int j=0;j<n;j++)
-			{
-				if(mat[i][j]<10)
-					afi=mat[i][j];
-				else
-					afi=mat[i][j]+8;
-				af=(int)afi+48;
-				cout<<af;
-			}
-			cout<<endl;
-		}
+		//~ char af;
+		//~ int afi;
+	//~ for(int i=0;i<m;i++)
+		//~ {
+			//~ for(int j=0;j<n;j++)
+			//~ {
+				//~ if(mat[i][j]<10)
+					//~ afi=mat[i][j];
+				//~ else
+					//~ afi=mat[i][j]+8;
+				//~ af=(int)afi+48;
+				//~ cout<<af;
+			//~ }
+			//~ cout<<endl;
+		//~ }
 	
 	//~ cout<<"gata"<<endl;
 	return costSlice;
@@ -471,13 +472,60 @@ void IntTilingMult::compareCost()
 float IntTilingMult::computeCost(DSP** config)
 {
 	
+	float const scale=100.0;
+	float acc=0.0;
+	float costDSP,costLUT;
+	costDSP = ( (1.0+scale) - scale * ratio );
+	costLUT = ( (1.0+scale) - scale * (1-ratio) ) /  ((float) target->getEquivalenceSliceDSP() );
+	
+	cout<<"Cost of a DSP is "<<costDSP<<endl<<"Cost of a Slice is "<<costLUT<<endl;
+	
+	for(int i=0;i<nrDSPs;i++)
+		if(config[i]!=NULL)
+			acc+=costDSP;
+	
+		acc += costLUT * partitionOfGridSlices(config);
+		
+	return acc;
+			
 }
 
 int IntTilingMult::estimateDSPs()
 {
+	float t1,t2;
+	int Xd,Yd;
+	target->getDSPWidths(Xd,Yd);
+	bool ver=true;
+	int maxDSP= target->getNumberOfDSPs();
+	
+	//~ cout<<"Existing DSP on the board "<< target->getNumberOfDSPs()<<endl;
+	
+	t1= ((float) wInX) / ((float) Xd);
+		t2= ((float) wInY) / ((float) Yd);
+		
+		if(t1 - ((int)t1) >0)
+		{
+			t1++;
+		}
+		if(t2 - ((int)t2) >0)
+		{
+			t2++;
+		}
+		
+		if(maxDSP> ((int)t1) * ((int)t2) )
+		{
+			ver=false;
+			maxDSP = ((int)t1) * ((int)t2);
+			
+		}
+	
 	if(1==ratio) 
 	{
-		return target->getNumberOfDSPs();
+		if(ver==true)
+			cout<<"Warning!!! The number of existing DSPs on this board is not enough to cover the whole multiplication!"<<endl;
+		else
+			cout<<"Warning!!! The minimum number of DSP that is neccessary to cover the whole addition will be used!"<<endl;
+		return maxDSP;
 	}
 	else
 	{	
@@ -488,6 +536,16 @@ int IntTilingMult::estimateDSPs()
 		{
 		//cout<<"Intra"<<endl;	
 		temp++;	
+		}
+		
+		if(temp>maxDSP)
+		{
+			if(ver==false)
+				cout<<"Warning!!! The number of estimated DSPs with respect with this ratio of preference is grather then the needed number of DSPs to perform this multiplication!"<<endl;
+			else
+				cout<<"Warning!!! The number of estimated DSPs with respect with this ratio of preference is grather then the total number of DSPs that exist on this board!"<<endl;
+			
+			temp=maxDSP;
 		}
 		
 		return ((int)  temp) ;
