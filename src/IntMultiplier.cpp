@@ -21,6 +21,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
 */
 
+#include <typeinfo>
 #include <iostream>
 #include <sstream>
 #include <vector>
@@ -56,7 +57,10 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 	
 	if (target->getUseHardMultipliers())
 	{
-		if (target->lutInputs() == 4) // then the target is Virtex 4 (TODO: change this to something like: if (target instanceof Virtex4))
+		if (verbose)
+			cout << "The target is " << typeid(*target).name() << endl;
+			
+		if (strncmp(typeid(*target).name(), "7Virtex", 7) == 0) // then the target is Virtex
 		{
 			int chunksX, chunksY;
 			int x, y;
