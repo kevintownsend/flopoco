@@ -119,8 +119,10 @@ private:
 	*/
 	void tilingAlgorithm(int i, int n, bool repl);
 	
-	/** This function will take a configuration and will try to maximize the multiplications that are realized in slices */
-	int partitionOfGridSlices(DSP** config);
+	/** This function will take a configuration and will try to maximize the multiplications that are realized in slices 
+	* It will return the number of slices that are required to ferform those multiplications, and through the parameter partitions it will return the number of such partitions
+	*/
+	int partitionOfGridSlices(DSP** config,int &partitions);
 	 
 	 /** This function will fill the input matrix between the limits received as parameters with the value received as parameter */
 	 

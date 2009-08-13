@@ -91,7 +91,7 @@ IntTilingMult:: IntTilingMult(Target* target, int wInX, int wInY,float ratio) :
 		//~ globalConfig[1]->setTopRightCorner(2,0);
 		//~ globalConfig[1]->setBottomLeftCorner(20,18);
 		cout<<"Finnish initializing DSPs"<<endl;
-		cout<<"Number of slices for multiplication is "<<partitionOfGridSlices(globalConfig)<<endl;
+		//cout<<"Number of slices for multiplication is "<<partitionOfGridSlices(globalConfig)<<endl;
 		cout<<"Cost of configuration is "<<computeCost(globalConfig)<<endl;
 
 	
@@ -263,7 +263,7 @@ void IntTilingMult::fillMatrix(int **&matrix,int lw,int lh,int topleftX,int topl
 }
 
 
- int IntTilingMult::partitionOfGridSlices(DSP** config)
+ int IntTilingMult::partitionOfGridSlices(DSP** config,int &partitions)
 {
 	//~ cout<<"Incepe"<<endl;
 	int costSlice=0;
@@ -294,7 +294,7 @@ void IntTilingMult::fillMatrix(int **&matrix,int lw,int lh,int topleftX,int topl
 			fillMatrix(mat,n,m,c2X,c1Y,c1X,c2Y,count);
 			count++;			
 		}
-	
+	partitions = count;
 		
 	for(int i=0;i<m;i++)
 		{
@@ -434,8 +434,12 @@ void IntTilingMult::fillMatrix(int **&matrix,int lw,int lh,int topleftX,int topl
 				}
 			
 		}
-				
 		
+		//de verificat
+		
+		//cout<<"Count "<<count<<" Partitions "<<partitions<<endl;
+		
+		partitions =count -partitions;
 		 
 		
 		//~ char af;
@@ -447,7 +451,7 @@ void IntTilingMult::fillMatrix(int **&matrix,int lw,int lh,int topleftX,int topl
 				//~ if(mat[i][j]<10)
 					//~ afi=mat[i][j];
 				//~ else
-					//~ afi=mat[i][j]+8;
+					//~ afi=mat[i][j]+7;
 				//~ af=(int)afi+48;
 				//~ cout<<af;
 			//~ }
@@ -480,11 +484,25 @@ float IntTilingMult::computeCost(DSP** config)
 	
 	cout<<"Cost of a DSP is "<<costDSP<<endl<<"Cost of a Slice is "<<costLUT<<endl;
 	
+	int nrOfUsedDSPs=0;
+	
 	for(int i=0;i<nrDSPs;i++)
 		if(config[i]!=NULL)
+		{
 			acc+=costDSP;
+			nrOfUsedDSPs++;
+		}
+	int partitions;
+		acc += costLUT * partitionOfGridSlices(config,partitions);
+		
+	cout<<"Number of partitions for LUTs is "<<partitions<<endl;
+		
 	
-		acc += costLUT * partitionOfGridSlices(config);
+	 
+	acc += ((float)target->getIntNAdderCost(wInX + wInY,nrOfUsedDSPs+partitions) ) * costLUT;	
+		
+			//~ Substracting the cost of different additions that can be done in DSPs(Virtex) or the cost of a DSP if they can be combined(Altera)
+		
 		
 	return acc;
 			
