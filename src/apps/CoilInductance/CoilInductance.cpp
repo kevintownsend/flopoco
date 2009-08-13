@@ -91,6 +91,7 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,i
 	
 	double tempFreq=target->frequency();
 	long internFreq = 200000000;
+	int limitOfPoints=4480;
 	
 	internFreq = tempFreq;
 	
@@ -121,6 +122,9 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,i
 	//~ vhdl<<tab<<"end process;"<<endl;
 	//~ vhdl<<endl;
 	
+	
+	//vhdl<<tab<<declare("signal_tp",integratorWidth+1)<<" <= \"0101\";"<<endl;
+	
 	vhdl<<tab<<declare("out_clk1",1)<<" <= clk;"<<endl;
 	vhdl<<tab<<declare("out_rst",1)<<" <= '0';"<<endl;
 	//vhdl<<tab<<declare("out_clk1",1)<<" <= "<<use("out_clk11")<<" and "<<" clk ;"<<endl;
@@ -143,11 +147,11 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,i
 	vhdl<<tab<<tab<<tab<<tab<<" c1:=c1 + '1';"<<endl;
 	vhdl<<tab<<tab<<tab<<tab<<" temp:=\"10\";"<<endl;
 	
-	vhdl<<tab<<tab<<tab<<"elsif temp=\"10\" then"<<endl;
-	vhdl<<tab<<tab<<tab<<tab<<use("out_clk3")<<" <= '0';"<<endl;
-	vhdl<<tab<<tab<<tab<<tab<<use("selectionVal1")<<" <= '1'; "<<endl;
-	vhdl<<tab<<tab<<tab<<tab<<" c1:=c1 + '1';"<<endl;
-	vhdl<<tab<<tab<<tab<<tab<<" temp:=\"11\";"<<endl;
+	//~ vhdl<<tab<<tab<<tab<<"elsif temp=\"10\" then"<<endl;
+	//~ vhdl<<tab<<tab<<tab<<tab<<use("out_clk3")<<" <= '0';"<<endl;
+	//~ vhdl<<tab<<tab<<tab<<tab<<use("selectionVal1")<<" <= '0'; "<<endl;
+	//~ vhdl<<tab<<tab<<tab<<tab<<" c1:=c1 + '1';"<<endl;
+	//~ vhdl<<tab<<tab<<tab<<tab<<" temp:=\"11\";"<<endl;
 	
 	
 	vhdl<<tab<<tab<<tab<<"else"<<endl;
@@ -162,11 +166,18 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,i
 	vhdl<<endl;
 	
 	
+	
 	vhdl<<tab<<"process(out_clk3)"<<endl;
 	vhdl<<tab<<"variable c1:std_logic_vector("<<addrWidth - 6 -1<<" downto 0):=(others=> '0');"<<endl;
 	vhdl<<tab<<"begin"<<endl;
 	vhdl<<tab<<tab<<" if out_clk3'event and out_clk3 = '1' then"<<endl;
+	vhdl<<tab<<tab<<" if c1 = "<<limitOfPoints<<" then "<<endl;
+	vhdl<<tab<<tab<<tab<<declare("out_clk2",1)<<" <= '1';"<<endl;
+	vhdl<<tab<<tab<<tab<<"c1 := (others=>'0');"<<endl;
+	vhdl<<tab<<tab<<" else "<<endl;
+	vhdl<<tab<<tab<<tab<<use("out_clk2")<<" <= '0';"<<endl;
 	vhdl<<tab<<tab<<tab<<"c1:=c1+'1';"<<endl;
+	vhdl<<tab<<tab<<"end if;"<<endl;
 	vhdl<<tab<<tab<<"end if;"<<endl;
 	vhdl<<tab<<declare("highAddress1",addrWidth - 6)<<" <= c1;"<<endl;
 	vhdl<<tab<<"end process;"<<endl;
@@ -174,11 +185,13 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,i
 	
 	vhdl<<tab<<declare("Address1",addrWidth)<<" <= "<<use("highAddress1")<<" & "<<use("lowAddress1")<<";"<<endl<<endl;
 	
-	vhdl<<tab<<"process(out_clk3)"<<endl;
+	
+	
+	vhdl<<tab<<"process(out_clk2)"<<endl;
 	vhdl<<tab<<"variable c2:std_logic_vector(5 downto 0):=(others=> '0');"<<endl;
 	vhdl<<tab<<"variable temp:std_logic_vector(1 downto 0):= \"01\";"<<endl;
 	vhdl<<tab<<"begin"<<endl;
-	vhdl<<tab<<tab<<" if out_clk3'event and out_clk3 = '1' then"<<endl;
+	vhdl<<tab<<tab<<" if out_clk2'event and out_clk2 = '1' then"<<endl;
 	vhdl<<tab<<tab<<tab<<"if c2 = 0 and temp = \"00\" then"<<endl;
 	vhdl<<tab<<tab<<tab<<tab<<"c2:=(others=>'0');"<<endl;
 	vhdl<<tab<<tab<<tab<<tab<<" temp:=\"01\";"<<endl;
@@ -191,11 +204,11 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,i
 	vhdl<<tab<<tab<<tab<<tab<<" temp:=\"10\";"<<endl;
 	
 	
-	vhdl<<tab<<tab<<tab<<"elsif temp= \"10\" then"<<endl;
-	vhdl<<tab<<tab<<tab<<tab<<use("out_clk4")<<" <= '0';"<<endl;
-	vhdl<<tab<<tab<<tab<<tab<<use("selectionVal2")<<" <= '1'; "<<endl;
-	vhdl<<tab<<tab<<tab<<tab<<" c2:=c2 + '1';"<<endl;
-	vhdl<<tab<<tab<<tab<<tab<<" temp:=\"11\";"<<endl;
+	//~ vhdl<<tab<<tab<<tab<<"elsif temp= \"10\" then"<<endl;
+	//~ vhdl<<tab<<tab<<tab<<tab<<use("out_clk4")<<" <= '0';"<<endl;
+	//~ vhdl<<tab<<tab<<tab<<tab<<use("selectionVal2")<<" <= '1'; "<<endl;
+	//~ vhdl<<tab<<tab<<tab<<tab<<" c2:=c2 + '1';"<<endl;
+	//~ vhdl<<tab<<tab<<tab<<tab<<" temp:=\"11\";"<<endl;
 	
 	
 	
@@ -211,11 +224,22 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,i
 	vhdl<<endl;
 	
 	
+	//out_clk6 will be used for incrementing the values of signal_t
+	
 	vhdl<<tab<<"process(out_clk4)"<<endl;
 	vhdl<<tab<<"variable c2:std_logic_vector("<<addrWidth - 6 -1<<" downto 0):=(others=> '0');"<<endl;
 	vhdl<<tab<<"begin"<<endl;
 	vhdl<<tab<<tab<<" if out_clk4'event and out_clk4 = '1' then"<<endl;
+	
+	vhdl<<tab<<tab<<" if c2 = "<<limitOfPoints<<" then "<<endl;
+	vhdl<<tab<<tab<<tab<<declare("out_clk6",1)<<" <= '1';"<<endl;
+	vhdl<<tab<<tab<<tab<<"c2 := (others=>'0');"<<endl;
+	vhdl<<tab<<tab<<" else "<<endl;
+	vhdl<<tab<<tab<<tab<<use("out_clk6")<<" <= '0';"<<endl;
 	vhdl<<tab<<tab<<tab<<"c2:=c2+'1';"<<endl;
+	vhdl<<tab<<tab<<"end if;"<<endl;
+	
+	//vhdl<<tab<<tab<<tab<<"c2:=c2+'1';"<<endl;
 	vhdl<<tab<<tab<<"end if;"<<endl;
 	vhdl<<tab<<declare("highAddress2",addrWidth - 6)<<" <= c2;"<<endl;
 	vhdl<<tab<<"end process;"<<endl;
@@ -223,6 +247,17 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,i
 	
 	vhdl<<tab<<declare("Address2",addrWidth)<<" <= "<<use("highAddress2")<<" & "<<use("lowAddress2")<<";"<<endl<<endl;
 	
+	//here a finnish signal can be inserted when variable temp has reached 1000..
+	
+	vhdl<<tab<<"process(out_clk6)"<<endl;
+	vhdl<<tab<<"variable temp: std_logic_vector("<<integratorWidth+1<<" downto 0):=(others=>'0');"<<endl;
+	vhdl<<tab<<"begin"<<endl;
+	vhdl<<tab<<tab<<"if out_clk6'event and out_clk6='1' then"<<endl;
+	vhdl<<tab<<tab<<tab<<"temp :=temp + '1';"<<endl;
+	vhdl<<tab<<tab<<"end if;"<<endl;
+	vhdl<<tab<<declare("signal_tp",integratorWidth+1)<<" <= '0' & temp"<<range(integratorWidth-1,0)<<";"<<endl;
+	vhdl<<tab<<"end process;"<<endl;
+	vhdl<<endl;
 	
 	
 	vhdl<<tab<<"process(Address1,Address2)"<<endl;
@@ -745,77 +780,70 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,i
 	
 	
 	
-
 	//(x3-x0)+(x0-x1)*t
 	setCycleFromSignal("convertedSegmentXv1");
 	
-	target->setFrequency(((double) internFreq) );
-	cstMult = new  IntConstMult(target, inputWidth, 14349);
-	target->setFrequency(tempFreq);
-	cstMult->changeName(getName()+"cstMult");	
-	oplist.push_back(cstMult);
-	inPortMap  (cstMult, "inX", "segmentX1mX0");
-	outPortMap (cstMult, "R","multTXvar3");
-	vhdl << instance(cstMult, "cstMult3X");
-	 
-	syncCycleFromSignal("multTXvar3");
-	
-	
-	vhdl<<tab<<declare("partialConvertedProductSXv3",inputWidth)<<" <= "<<use("multTXvar3")<<of(inputWidth-1 + 14)<<" & "<<use("multTXvar3")<<range(inputWidth-1 + 14,15)<<";"<<endl;
-	
-	vhdl<<tab<<declare("sumXPartv3",inputWidth)<<" <= "<<use("segmentX3mX0")<<" - "<<use("partialConvertedProductSXv3")<<";"<<endl;
 
-	//nextCycle();
+	//the sum of the widths is inputWidth+integratoWidth+1, but we discard a bit because we don't need to sign bits
+	vhdl<<tab<<declare("partialProductXtv3",inputWidth+integratorWidth)<<" <= "<<use("segmentX1mX0")<<" * "<<use("signal_tp")<<";"<<endl;
+	vhdl<<tab<<declare("productXtvar3",inputWidth)<<" <= "<<use("partialProductXtv3")<<range(inputWidth+integratorWidth-1,integratorWidth)<<";"<<endl;
+	
+	
+	//~ if(target->frequencyMHz()>=250)
+		//~ nextCycle();
+	
+	vhdl<<tab<<declare("sumXPartv3",inputWidth)<<" <= "<<use("segmentX3mX0")<<" - "<<use("productXtvar3")<<";"<<endl;
+	
+
+	nextCycle();
 	
 	vhdl<<tab<<declare("sqrXsv3",inputWidthSegments)<<" <= "<<use("sumXPartv3")<<" * "<<use("sumXPartv3")<<";"<<endl;
 	
 	vhdl<<tab<<declare("sqrXnsv3",(inputWidth-1)*2)<<" <= "<<use("sqrXsv3")<<range(inputWidthSegments-2,0)<<";"<<endl;
-
 	
-
+	
+	
 		//(y3-y0)+(y0-y1)*t
 	setCycleFromSignal("convertedSegmentXv1");
 	
 	
-	inPortMap  (cstMult, "inX", "segmentY1mY0");
-	outPortMap (cstMult, "R","multTYvar3");
-	vhdl << instance(cstMult, "cstMult3Y");
-	 
-	syncCycleFromSignal("multTYvar3");
+	//the sum of the widths is inputWidth+integratoWidth+1, but we discard a bit because we don't need to sign bits
+	vhdl<<tab<<declare("partialProductYtv3",inputWidth+integratorWidth)<<" <= "<<use("segmentY1mY0")<<" * "<<use("signal_tp")<<";"<<endl;
+	vhdl<<tab<<declare("productYtvar3",inputWidth)<<" <= "<<use("partialProductYtv3")<<range(inputWidth+integratorWidth-1,integratorWidth)<<";"<<endl;
+	
+	//~ if(target->frequencyMHz()>=250)
+		//~ nextCycle();
 	
 	
-	vhdl<<tab<<declare("partialConvertedProductSYv3",inputWidth)<<" <= "<<use("multTYvar3")<<of(inputWidth-1 + 14)<<" & "<<use("multTYvar3")<<range(inputWidth-1 + 14,15)<<";"<<endl;
+	vhdl<<tab<<declare("sumYPartv3",inputWidth)<<" <= "<<use("segmentY3mY0")<<" - "<<use("productYtvar3")<<";"<<endl;
 	
-	vhdl<<tab<<declare("sumYPartv3",inputWidth)<<" <= "<<use("segmentY3mY0")<<" - "<<use("partialConvertedProductSYv3")<<";"<<endl;
-	
-	//nextCycle();
+	nextCycle();
 	
 	vhdl<<tab<<declare("sqrYsv3",inputWidthSegments)<<" <= "<<use("sumYPartv3")<<" * "<<use("sumYPartv3")<<";"<<endl;
 	
 	vhdl<<tab<<declare("sqrYnsv3",(inputWidth-1)*2)<<" <= "<<use("sqrYsv3")<<range(inputWidthSegments-2,0)<<";"<<endl;
-
 	
 
 	//(z3-z0)+(z0-z1)*t
 	setCycleFromSignal("convertedSegmentXv1");
 	
+	//the sum of the widths is inputWidth+integratoWidth+1, but we discard a bit because we don't need to sign bits
+	vhdl<<tab<<declare("partialProductZtv3",inputWidth+integratorWidth)<<" <= "<<use("segmentZ1mZ0")<<" * "<<use("signal_tp")<<";"<<endl;
+	vhdl<<tab<<declare("productZtvar3",inputWidth)<<" <= "<<use("partialProductZtv3")<<range(inputWidth+integratorWidth-1,integratorWidth)<<";"<<endl;
 	
-	inPortMap  (cstMult, "inX", "segmentZ1mZ0");
-	outPortMap (cstMult, "R","multTZvar3");
-	vhdl << instance(cstMult, "cstMult3Z");
-	 
-	syncCycleFromSignal("multTZvar3");
+	//~ if(target->frequencyMHz()>=250)
+		//~ nextCycle();
+		
 	
+	vhdl<<tab<<declare("sumZPartv3",inputWidth)<<" <= "<<use("segmentZ3mZ0")<<" - "<<use("productZtvar3")<<";"<<endl;
 	
-	vhdl<<tab<<declare("partialConvertedProductSZv3",inputWidth)<<" <= "<<use("multTZvar3")<<of(inputWidth-1 + 14)<<" & "<<use("multTZvar3")<<range(inputWidth-1 + 14,15)<<";"<<endl;
-	
-	vhdl<<tab<<declare("sumZPartv3",inputWidth)<<" <= "<<use("segmentZ3mZ0")<<" - "<<use("partialConvertedProductSZv3")<<";"<<endl;
-	
-	//nextCycle();
+	nextCycle();
 	
 	vhdl<<tab<<declare("sqrZsv3",inputWidthSegments)<<" <= "<<use("sumZPartv3")<<" * "<<use("sumZPartv3")<<";"<<endl;
 	
 	vhdl<<tab<<declare("sqrZnsv3",(inputWidth-1)*2)<<" <= "<<use("sqrZsv3")<<range(inputWidthSegments-2,0)<<";"<<endl;
+
+	
 	
 			
 	
@@ -866,10 +894,13 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,i
 	
 
 	
-	vhdl<<tab<<declare("expVar3shift",wE)<<" <= "<<use("Var3")<<" - "<<" CONV_STD_LOGIC_VECTOR(3,"<<wE<<");"<<endl;
+	// the value of the var3...var 5 don't need to be shifted. Only the final resul from the accumulator must be divided with respect to t
 	
-	vhdl<<tab<<declare("accVar3",wF+wE+3)<<" <= "<<use("Var3")<<range(wE+wF+3-1,wE+wF)<<" & "<<use("expVar3shift")<<" & "<<use("Var3")<<range(wF-1,0)<<";"<<endl;
+	//~ vhdl<<tab<<declare("expVar3shift",wE)<<" <= "<<use("Var3")<<" - "<<" CONV_STD_LOGIC_VECTOR(3,"<<wE<<");"<<endl;
 	
+	//~ vhdl<<tab<<declare("accVar3",wF+wE+3)<<" <= "<<use("Var3")<<range(wE+wF+3-1,wE+wF)<<" & "<<use("expVar3shift")<<" & "<<use("Var3")<<range(wF-1,0)<<";"<<endl;
+	
+	vhdl<<tab<<declare("accVar3",wF+wE+3)<<" <= "<<use("Var3")<<";"<<endl;
 	
 	
 		
@@ -884,41 +915,38 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,i
 	
 	
 	//((x0-x2)+(x1-x0)*t)^2
-	setCycleFromSignal("multTXvar3");
+	setCycleFromSignal("sumXPartv3");
 	
-	
-	vhdl<<tab<<declare("partialConvertedProductSXv4",inputWidth)<<" <= "<<use("multTXvar3")<<of(inputWidth-1 + 14)<<" & "<<use("multTXvar3")<<range(inputWidth-1 + 14,15)<<";"<<endl;
-	vhdl<<tab<<declare("sumXv4",inputWidth)<<" <= "<<use("partialConvertedProductSXv4")<<" + "<<use("segmentX0mX2")<<";"<<endl;
 
-	//nextCycle();
+	
+	vhdl<<tab<<declare("sumXv4",inputWidth)<<" <= "<<use("productXtvar3")<<" + "<<use("segmentX0mX2")<<";"<<endl;
+
+	nextCycle();
 	
 	vhdl<<tab<<declare("sqrXsv4",inputWidthSegments)<<" <= "<<use("sumXv4")<<" * "<<use("sumXv4")<<";"<<endl;
 	
 	vhdl<<tab<<declare("sqrXnsv4",(inputWidth-1)*2)<<" <= "<<use("sqrXsv4")<<range(inputWidthSegments-2,0)<<";"<<endl;
-	
-	
+
+
 
 	//((y0-y2)+(y1-y0)*t)^2
-	setCycleFromSignal("multTYvar3");
+	setCycleFromSignal("sumYPartv3");
 	
-	vhdl<<tab<<declare("partialConvertedProductSYv4",inputWidth)<<" <= "<<use("multTYvar3")<<of(inputWidth-1 + 14)<<" & "<<use("multTYvar3")<<range(inputWidth-1 + 14,15)<<";"<<endl;
-	vhdl<<tab<<declare("sumYv4",inputWidth)<<" <= "<<use("partialConvertedProductSYv4")<<" + "<<use("segmentY0mY2")<<";"<<endl;
+	vhdl<<tab<<declare("sumYv4",inputWidth)<<" <= "<<use("productYtvar3")<<" + "<<use("segmentY0mY2")<<";"<<endl;
 	
-	//nextCycle();
+	nextCycle();
 	
 	vhdl<<tab<<declare("sqrYsv4",inputWidthSegments)<<" <= "<<use("sumYv4")<<" * "<<use("sumYv4")<<";"<<endl;
 	
 	vhdl<<tab<<declare("sqrYnsv4",(inputWidth-1)*2)<<" <= "<<use("sqrYsv4")<<range(inputWidthSegments-2,0)<<";"<<endl;	
 	
-		
-		
+	
 	//((z0-z2)+(z1-z0)*t)^2
-	setCycleFromSignal("multTZvar3");
+	setCycleFromSignal("sumZPartv3");
 	
-	vhdl<<tab<<declare("partialConvertedProductSZv4",inputWidth)<<" <= "<<use("multTZvar3")<<of(inputWidth-1 + 14)<<" & "<<use("multTZvar3")<<range(inputWidth-1 + 14,15)<<";"<<endl;
-	vhdl<<tab<<declare("sumZv4",inputWidth)<<" <= "<<use("partialConvertedProductSZv4")<<" + "<<use("segmentZ0mZ2")<<";"<<endl;
+	vhdl<<tab<<declare("sumZv4",inputWidth)<<" <= "<<use("productZtvar3")<<" + "<<use("segmentZ0mZ2")<<";"<<endl;
 	
-	//nextCycle();
+	nextCycle();
 	
 	vhdl<<tab<<declare("sqrZsv4",inputWidthSegments)<<" <= "<<use("sumZv4")<<" * "<<use("sumZv4")<<";"<<endl;
 	
@@ -968,13 +996,13 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,i
 	syncCycleFromSignal("Var4");
 
 
-
-	vhdl<<tab<<declare("expVar4shift",wE)<<" <= "<<use("Var4")<<" - "<<" CONV_STD_LOGIC_VECTOR(3,"<<wE<<");"<<endl;
+	// the value of the var3...var 5 don't need to be shifted. Only the final resul from the accumulator must be divided with respect to t
+	//~ vhdl<<tab<<declare("expVar4shift",wE)<<" <= "<<use("Var4")<<" - "<<" CONV_STD_LOGIC_VECTOR(3,"<<wE<<");"<<endl;
 	
-	vhdl<<tab<<declare("accVar4",wF+wE+3)<<" <= "<<use("Var4")<<range(wE+wF+3-1,wE+wF)<<" & "<<use("expVar4shift")<<" & "<<use("Var4")<<range(wF-1,0)<<";"<<endl;
+	//~ vhdl<<tab<<declare("accVar4",wF+wE+3)<<" <= "<<use("Var4")<<range(wE+wF+3-1,wE+wF)<<" & "<<use("expVar4shift")<<" & "<<use("Var4")<<range(wF-1,0)<<";"<<endl;
 	
 	
-	
+	vhdl<<tab<<declare("accVar4",wF+wE+3)<<" <= "<<use("Var4")<<";"<<endl;
 	
 	
 	
@@ -989,92 +1017,33 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,i
 	//computing the var5 ( ((x0-x2)+(x1-x0)*t)*(x3-x2) +((y0-y2)+(y1-y0)*t)*(y3-y2)+((z0-z2)+(z1-z0)*t)*(z3-z2))
 	
 	
-		//((x0-x2)+(x1-x0)*t)*(x3-x2)
-	setCycleFromSignal("convertedSegmentXv1");
 	
-	vhdl<<tab<<declare("shiftX1var5",inputWidth)<<" <= "<<use("segmentX1mX0")<<of(inputWidth-1)<<" & "<<use("segmentX1mX0")<<range(inputWidth-1,1)<<";"<<endl;
-	vhdl<<tab<<declare("shiftX4var5",inputWidth)<<" <= "<<use("segmentX1mX0")<<of(inputWidth-1)<<" & "<<use("segmentX1mX0")<<of(inputWidth-1)<<" & "<<use("segmentX1mX0")<<of(inputWidth-1)<<" & "<<use("segmentX1mX0")<<of(inputWidth-1)<<" & "<<use("segmentX1mX0")<<range(inputWidth-1,4)<<";"<<endl;
-	vhdl<<tab<<declare("shiftX4var5neg",inputWidth)<<" <= not("<<use("shiftX4var5")<<");"<<endl;
+	//((x0-x2)+(x1-x0)*t)*(x3-x2)
 	
+	setCycleFromSignal("sqrXsv4");
 	
-	target->setFrequency(((double) internFreq) );
+	vhdl<<tab<<declare("convertedProductSXv5",inputWidthSegments )<<" <= "<<use("segmentX3mX2")<<" * "<<use("sumXv4")<<";"<<endl;
+
+
+
+	//((y0-y2)+(y1-y0)*t)*(y3-y2)
+	setCycleFromSignal("sqrYsv4");
 	
-	adder4coordvar5 = new IntNAdder(target,inputWidth,3);
-	target->setFrequency(tempFreq);
-	
-	adder4coordvar5->changeName(getName()+"adder4coordvar5");	
-	oplist.push_back(adder4coordvar5);
-	inPortMap  (adder4coordvar5, "X0", "shiftX1var5");
-	inPortMap  (adder4coordvar5, "X1", "shiftX4var5neg");
-	inPortMap  (adder4coordvar5, "X2", "segmentX0mX2" );
-	inPortMapCst(adder4coordvar5,"Cin","'1'");
-	outPortMap (adder4coordvar5, "R","sumX4var5");
-	vhdl << instance(adder4coordvar5, "adder4coordvar5X");
-	
-	syncCycleFromSignal("sumX4var5");
+	vhdl<<tab<<declare("convertedProductSYv5",inputWidthSegments)<<" <= "<<use("segmentY3mY2")<<" * "<<use("sumYv4")<<";"<<endl;
 	
 	
+
+	//((z0-z2)+(z1-z0)*t)*(z3-z2)
+	setCycleFromSignal("sqrZsv4");
 	
-	//nextCycle();
-	
-	vhdl<<tab<<declare("convertedProductSXv5",inputWidthSegments )<<" <= "<<use("segmentX3mX2")<<" * "<<use("sumX4var5")<<";"<<endl;
-	
-	
-	
-		//((y0-y2)+(y1-y0)*t)*(y3-y2)
-	setCycleFromSignal("convertedSegmentXv1");
-	
-	vhdl<<tab<<declare("shiftY1var5",inputWidth)<<" <= "<<use("segmentY1mY0")<<of(inputWidth-1)<<" & "<<use("segmentY1mY0")<<range(inputWidth-1,1)<<";"<<endl;
-	vhdl<<tab<<declare("shiftY4var5",inputWidth)<<" <= "<<use("segmentY1mY0")<<of(inputWidth-1)<<" & "<<use("segmentY1mY0")<<of(inputWidth-1)<<" & "<<use("segmentY1mY0")<<of(inputWidth-1)<<" & "<<use("segmentY1mY0")<<of(inputWidth-1)<<" & "<<use("segmentY1mY0")<<range(inputWidth-1,4)<<";"<<endl;
-	vhdl<<tab<<declare("shiftY4var5neg",inputWidth)<<" <= not("<<use("shiftY4var5")<<");"<<endl;
-	
-	
-	inPortMap  (adder4coordvar5, "X0", "shiftY1var5");
-	inPortMap  (adder4coordvar5, "X1", "shiftY4var5neg");
-	inPortMap  (adder4coordvar5, "X2", "segmentY0mY2" );
-	inPortMapCst(adder4coordvar5,"Cin","'1'");
-	outPortMap (adder4coordvar5, "R","sumY4var5");
-	vhdl << instance(adder4coordvar5, "adder4coordvar5Y");
-	
-	syncCycleFromSignal("sumY4var5");
-	
-	
-	
-	//nextCycle();
-	
-	vhdl<<tab<<declare("convertedProductSYv5",inputWidthSegments)<<" <= "<<use("segmentY3mY2")<<" * "<<use("sumY4var5")<<";"<<endl;
-	
-	
-		//((z0-z2)+(z1-z0)*t)*(z3-z2)
-	setCycleFromSignal("convertedSegmentXv1");
-	
-	
-	vhdl<<tab<<declare("shiftZ1var5",inputWidth)<<" <= "<<use("segmentZ1mZ0")<<of(inputWidth-1)<<" & "<<use("segmentZ1mZ0")<<range(inputWidth-1,1)<<";"<<endl;
-	vhdl<<tab<<declare("shiftZ4var5",inputWidth)<<" <= "<<use("segmentZ1mZ0")<<of(inputWidth-1)<<" & "<<use("segmentZ1mZ0")<<of(inputWidth-1)<<" & "<<use("segmentZ1mZ0")<<of(inputWidth-1)<<" & "<<use("segmentZ1mZ0")<<of(inputWidth-1)<<" & "<<use("segmentZ1mZ0")<<range(inputWidth-1,4)<<";"<<endl;
-	vhdl<<tab<<declare("shiftZ4var5neg",inputWidth)<<" <= not("<<use("shiftZ4var5")<<");"<<endl;
-	
-	
-	inPortMap  (adder4coordvar5, "X0", "shiftZ1var5");
-	inPortMap  (adder4coordvar5, "X1", "shiftZ4var5neg");
-	inPortMap  (adder4coordvar5, "X2", "segmentZ0mZ2" );
-	inPortMapCst(adder4coordvar5,"Cin","'1'");
-	outPortMap (adder4coordvar5, "R","sumZ4var5");
-	vhdl << instance(adder4coordvar5, "adder4coordvar5Z");
-	
-	syncCycleFromSignal("sumZ4var5");
-	
-	
-	
-	//nextCycle();
-	
-	vhdl<<tab<<declare("convertedProductSZv5",inputWidthSegments )<<" <= "<<use("segmentZ3mZ2")<<" * "<<use("sumZ4var5")<<";"<<endl;
+	vhdl<<tab<<declare("convertedProductSZv5",inputWidthSegments )<<" <= "<<use("segmentZ3mZ2")<<" * "<<use("sumZv4")<<";"<<endl;
 	
 	
 	
 	
 	
 	
-	//Adding the 3 results and the caries that are neded to finalize the transformation of the numbers in 2's complement
+	//Adding the 3 numbers
 	
 	nextCycle();
 	
@@ -1117,6 +1086,7 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,i
 	setCycleFromSignal("accVar4");
 	
 	
+	
 	vhdl<<tab<<declare("Var1temp",wE+wF+3)<<" <= "<<use("Var1")<<";"<<endl;
 	vhdl<<tab<<declare("Var2temp1",wE+wF+3)<<" <= "<<use("Var2")<<";"<<endl;
 	
@@ -1135,6 +1105,9 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,i
 	
 	
 	setCycleFromSignal("accVar4");
+	syncCycleFromSignal("accVar3");
+	syncCycleFromSignal("accVar5");
+	syncCycleFromSignal("Var2");
 		
 	
 	vhdl<<tab<<declare("Var2temp",wE+wF+3)<<" <= "<<use("Var2")<<";"<<endl;
@@ -1157,7 +1130,9 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,i
 	
 	nextCycle();
 	
-	setCycleFromSignal("accVar4");
+	setCycleFromSignal("accVar5");
+	syncCycleFromSignal("Var2");
+	
 	
 	vhdl<<tab<<declare("accVar5temp",wE+wF+3)<<" <= "<<use("accVar5")<<";"<<endl;
 	vhdl<<tab<<declare("Var2temp2",wE+wF+3)<<" <= "<<use("Var2")<<";"<<endl;
