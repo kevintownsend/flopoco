@@ -65,12 +65,13 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 			int chunksX, chunksY;
 			int x, y;
 			target->suggestSubmultSize(x, y, wInX, wInY);
-			int chunkSize_ = x;
-			chunksX =  int(ceil( ( double(wInX) / (double) chunkSize_) ));
-			chunksY =  int(ceil( ( double(wInY) / (double) chunkSize_) ));
+			int extension = (y<x)?(-x):(-y); // for asymetric sized multipliers (e.g. 24x17 on Virtex5)  
+			
+			chunksX =  int(ceil( ( double(wInX) / (double) x) ));
+			chunksY =  int(ceil( ( double(wInY) / (double) y) ));
 			
 			if (verbose)
-				cerr << "> IntMultiplier:   X splitted in "<< chunksX << " chunks and Y in " << chunksY << " chunks; " << endl;
+				cerr << "> IntMultiplier:   X splitted in "<< chunksX << " chunks of " << x << " and Y in " << chunksY << " chunks of " << y << "; " << endl;
 
 				if (chunksX + chunksY > 2) { // up to 17 x 17 bit on Virtex4 can be written as an "*" @ 400++ MHz 
 				// to be general version (parametrized etc) 
@@ -78,7 +79,7 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 
 					//NOT TOO SMART
 					bool swap=false;
-					if (chunksX > chunksY) 
+					if ((chunksX > chunksY) && (x == y))
 						swap=true;
 					
 					if (swap){
@@ -91,23 +92,23 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 						cerr << "> IntMultiplier:  Perform swapping = " << swap << endl;
 					
 					if (swap){
-						vhdl << tab << declare("sX",chunkSize_*chunksX) << " <= " << "Y" << " & " << zeroGenerator(chunkSize_*chunksX-wInY,0) << ";" << endl;
-						vhdl << tab << declare("sY",chunkSize_*chunksY) << " <= " << "X" << " & " << zeroGenerator(chunkSize_*chunksY-wInX,0) << ";" << endl;
+						vhdl << tab << declare("sX",x*chunksX) << " <= " << "Y" << " & " << zeroGenerator(x*chunksX-wInY,0) << ";" << endl;
+						vhdl << tab << declare("sY",y*chunksY) << " <= " << "X" << " & " << zeroGenerator(y*chunksY-wInX,0) << ";" << endl;
 					}else{
-						vhdl << tab << declare("sX",chunkSize_*chunksX) << " <= " << "X" << " & " << zeroGenerator(chunkSize_*chunksX-wInX,0) << ";" << endl;
-						vhdl << tab << declare("sY",chunkSize_*chunksY) << " <= " << "Y" << " & " << zeroGenerator(chunkSize_*chunksY-wInY,0) << ";" << endl;
+						vhdl << tab << declare("sX",x*chunksX) << " <= " << "X" << " & " << zeroGenerator(x*chunksX-wInX,0) << ";" << endl;
+						vhdl << tab << declare("sY",y*chunksY) << " <= " << "Y" << " & " << zeroGenerator(y*chunksY-wInY,0) << ";" << endl;
 					}
 					////////////////////////////////////////////////////
 					//SPLITTINGS
 					for (int k=0; k<chunksX ; k++){
 						ostringstream dname;
 						dname << "x"<<k;
-						vhdl << tab << declare(dname.str(),chunkSize_) << " <= " << "sX" << range((k+1)*chunkSize_-1,k*chunkSize_) << ";" << endl;
+						vhdl << tab << declare(dname.str(),x) << " <= " << "sX" << range((k+1)*x-1,k*x) << ";" << endl;
 					}
 					for (int k=0; k<chunksY ; k++){
 						ostringstream dname;
 						dname << "y"<<k;
-						vhdl << tab << declare(dname.str(),chunkSize_) << " <= " << "sY" << range((k+1)*chunkSize_-1,k*chunkSize_) << ";" << endl;
+						vhdl << tab << declare(dname.str(),y) << " <= " << "sY" << range((k+1)*y-1,k*y) << ";" << endl;
 					}
 
 					//MULTIPLICATIONS WITH SOME ACCUMULATIONS
@@ -120,37 +121,37 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 							currPS <<  "p" << "x" << i << "y" << j;
 							prevPS << "p" << "x" << i << "y" << j-1;
 							if (j==0){ // @ the first the operation is only multiplication, not MAC
-								vhdl << tab << declare(currPS.str(),2*chunkSize_) << " <= " << use(join("x",i)) << " * " << use(join("y",j)) << ";" << endl;
+								vhdl << tab << declare(currPS.str(),x+y) << " <= " << use(join("x",i)) << " * " << use(join("y",j)) << ";" << endl;
 							}else{
-								vhdl << tab << declare(currP.str(),2*chunkSize_) << " <= " << use(join("x",i)) << " * " << use(join("y",j))  << ";" << endl; 
-								vhdl << tab << declare(currPS.str(),2*chunkSize_+1) << " <= " << "( \"0\" & " << use(currP.str()) << ")" << " + " << use(prevPS.str())<<range(2*chunkSize_-1,chunkSize_) << ";" << endl; 
+								vhdl << tab << declare(currP.str(),x+y) << " <= " << use(join("x",i)) << " * " << use(join("y",j))  << ";" << endl; 
+								vhdl << tab << declare(currPS.str(),x+y+1) << " <= " << "( \"0\" & " << use(currP.str()) << ")" << " + " << use(prevPS.str())<<range(x+y-1,y) << ";" << endl; 
 							}
 							nextCycle();
 						}
 						if (i<chunksX-1) setCycle(0);
 					}
 					//FORM THE INTERMEDIARY PRODUCTS
-					vhdl << tab << declare ("sum0Low", chunkSize_) << " <= " << use("px0y0")<<range(chunkSize_-1,0) << ";" << endl;
+					
 					for (int i=0; i<chunksX ; i++){
-						vhdl << tab << declare(join("sum",i),chunkSize_*(chunksY+1)) << " <= "; 
+						vhdl << tab << declare(join("sum",i),y*chunksY+x) << " <= "; 
 						for (int j=chunksY-1;j>=0; j--){
 							ostringstream uname;
 							uname << "px" << i << "y"<<j;
-							vhdl << use(uname.str()) << range ( (j==chunksY-1?(2*chunkSize_-1):chunkSize_-1) ,0) << (j==0 ? ";" : " & ");
+							vhdl << use(uname.str()) << range ( (j==chunksY-1?(x+y-1):y-1) ,0) << (j==0 ? ";" : " & ");
 						}
 						vhdl << endl;
 					}
-
+					vhdl << tab << declare ("sum0Low", x) << " <= " << use("sum0")<<range(x-1,0) << ";" << endl;
+					
 					if (chunksX>1){
-						IntNAdder* add =  new IntNAdder(target, chunkSize_*(chunksX+chunksY-1), chunksX);
+						IntNAdder* add =  new IntNAdder(target, x*chunksX+y*chunksY+extension, chunksX);
 						oplist.push_back(add);
 				
 						for (int i=0; i< chunksX; i++){
-							if (i==0) vhdl << tab << declare (join("addOp",i),chunkSize_*(chunksX+chunksY-1)) << " <= " << zeroGenerator(chunkSize_*(chunksX-1),0) << " & " << use(join("sum",i)) << range(chunkSize_*(chunksY+1)-1,chunkSize_) << ";" <<endl;
-							if (i==1) vhdl << tab << declare (join("addOp",i),chunkSize_*(chunksX+chunksY-1)) << " <= " << zeroGenerator(chunkSize_*(chunksX-2),0) << " & " << use(join("sum",i)) << range(chunkSize_*(chunksY+1)-1,0) << ";" <<endl;
+							if (i==0) vhdl << tab << declare (join("addOp",i),x*chunksX+y*chunksY+extension) << " <= " << zeroGenerator(x*chunksX+extension,0) << " & " << use(join("sum",i)) << range(y*chunksY+x-1,x) << ";" <<endl;
+							if (i==1) vhdl << tab << declare (join("addOp",i),x*chunksX+y*chunksY+extension) << " <= " << zeroGenerator(x*chunksX+extension-x,0) << " & " << use(join("sum",i)) << range(y*chunksY+x-1,0) << ";" <<endl;
 							if (i> 1) 
-								vhdl << tab << declare (join("addOp",i),chunkSize_*(chunksX+chunksY-1)) << " <= " << zeroGenerator(chunkSize_*(chunksX-(i+1)),0) << " & " << use(join("sum",i)) << range(chunkSize_*(chunksY+1)-1,0) << " & "
-																										  << zeroGenerator(chunkSize_*(i-1),0) << ";" <<endl;
+								vhdl << tab << declare (join("addOp",i),x*chunksX+y*chunksY+extension) << " <= " << zeroGenerator(x*chunksX-x*i+extension,0) << " & " << use(join("sum",i)) << range(y*chunksY+x-1,0) << " & " << zeroGenerator(x*i-x,0) << ";" <<endl;
 						}
 						for (int i=0; i< chunksX; i++)
 							inPortMap (add, join("X",i) , join("addOp",i));
@@ -161,14 +162,14 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 
 						syncCycleFromSignal("addRes");
 				
-						if ((chunkSize_*(chunksX+chunksY)) - wInX - wInY < chunkSize_){
-							vhdl << tab << "R <= " << use("addRes")<<range((chunkSize_*(chunksX+chunksY-1))-1,0) << " & " <<  use("sum0Low")<<range(chunkSize_-1, chunkSize_-1 + ((chunkSize_*(chunksX+chunksY-1)) - wInX - wInY)+1) << ";" << endl;
+						if ((x*chunksX+y*chunksY) - wInX - wInY < -extension){
+							vhdl << tab << "R <= " << use("addRes")<<range((x*chunksX+y*chunksY+extension)-1,0) << " & " <<  use("sum0Low")<<range(x-1, x-1 + ((x*chunksX+y*chunksY+extension) - wInX - wInY)+1) << ";" << endl;
 						}else{
-							vhdl << tab << "R <= " << use("addRes")<<range((chunkSize_*(chunksX+chunksY-1))-1, ((chunkSize_*(chunksX+chunksY-1)) - wInX - wInY)) << ";" << endl;
+							vhdl << tab << "R <= " << use("addRes")<<range((x*chunksX+y*chunksY+extension)-1, ((x*chunksX+y*chunksY+extension) - wInX - wInY)) << ";" << endl;
 						
 						}
 					}else{
-						vhdl << tab << "R <= " << use(join("sum",0))<<range(chunkSize_*(chunksX+chunksY)-1, chunkSize_*(chunksX+chunksY) -( wInX+wInY)) << ";" << endl;
+						vhdl << tab << "R <= " << use(join("sum",0))<<range(y*chunksY+x-1, x*chunksX+y*chunksY -( wInX+wInY)) << ";" << endl;
 					}
 				}
 				else 
@@ -788,7 +789,7 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 				}
 				setCycle(3);
 			}
-		/**********************************************************************************************************************/
+		//**********************************************************************************************************************
 			else // not(quadMultiply) => can use double chunckSize_ multipliers
 			{	
 				if (chunkSize_ == 18)
@@ -806,10 +807,10 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 						vhdl << tab << declare(dname.str(),2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << "sX" << range((k+2)*chunkSize_-1,k*chunkSize_) << ";" << endl;
 					}
 					
-					/* The following splitting for y uses a small trick, i.e. if we have an even number of chunks for y
-					 * nothing changes and the splitting procedes normally. Otherwise we skip over the first chunk y(17:0)
-					 * and start counting the chunks from then on. At the end the last indexed chunk will be y(17:0).
-					 * This was done to avoid major changes in the partial product computation and concatenation algorithm.*/
+					// * The following splitting for y uses a small trick, i.e. if we have an even number of chunks for y
+					// * nothing changes and the splitting procedes normally. Otherwise we skip over the first chunk y(17:0)
+					// * and start counting the chunks from then on. At the end the last indexed chunk will be y(17:0).
+					// * This was done to avoid major changes in the partial product computation and concatenation algorithm.
 					int start = 0;
 					
 					if (chunksY%2 == 1)
@@ -882,9 +883,9 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 					operands[0] << "\"\";";
 					operands[1] << zeroGenerator(chunkSize_,0) << ";";
 					
-					bool halfPadded = false; /* TRUE when there is either 
-												a chunkSize width column on the left side of the tiling or 
-												a chunkSize width row on the bottom side of the tiling */	
+					bool halfPadded = false; // TRUE when there is either 
+											 //	a chunkSize width column on the left side of the tiling or 
+											 //	a chunkSize width row on the bottom side of the tiling 	
 					
 					if (start == 1) // then there is a chunkSize width row on the bottom side of the tiling
 					{
@@ -990,10 +991,10 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 						vhdl << tab << declare(dname.str(),2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << "sX" << range((k+2)*chunkSize_-1,k*chunkSize_) << ";" << endl;
 					}
 					
-					/* The following splitting for y uses a small trick, i.e. if we have an even number of chunks for y
-					 * nothing changes and the splitting procedes normally. Otherwise we skip over the first chunk y(17:0)
-					 * and start counting the chunks from then on. At the end the last indexed chunk will be y(17:0).
-					 * This was done to avoid major changes in the partial product computation and concatenation algorithm.*/
+					//* The following splitting for y uses a small trick, i.e. if we have an even number of chunks for y
+					//* nothing changes and the splitting procedes normally. Otherwise we skip over the first chunk y(17:0)
+					//* and start counting the chunks from then on. At the end the last indexed chunk will be y(17:0).
+					//* This was done to avoid major changes in the partial product computation and concatenation algorithm.
 					int start = 0;
 					
 					if (chunksY%2 == 1)
@@ -1020,8 +1021,8 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 						startX = 1;
 					}
 					
-					/* modifing the quantities so that we can use the same algorithm as for the case where we have no
-					 * double chunkSize multipliers */
+					//* modifing the quantities so that we can use the same algorithm as for the case where we have no
+					//* double chunkSize multipliers 
 					chX /= 2;
 					chunksY /= 2;
 					chunksX /= 2;
@@ -1557,9 +1558,9 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 					operands[1].str("");
 					operands[1] << zeroGenerator(chunkSize_,0) << ";";
 					
-					bool halfPadded = false; /* TRUE when there is either 
-												a chunkSize width column on the left side of the tiling or 
-												a chunkSize width row on the bottom side of the tiling */	
+					bool halfPadded = false; // TRUE when there is either 
+											 //	a chunkSize width column on the left side of the tiling or 
+											 //	a chunkSize width row on the bottom side of the tiling 	
 					
 					if (start == 1) // then there is a chunkSize width row on the top side of the tiling
 					{
@@ -1755,7 +1756,11 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 				partialProd  << "p" << "x" << j << "y" << k;
 				vhdl << " & " << use(partialProd.str());
 			}
-			vhdl << " & " << zeroGenerator(endPaddWidth,0) << ";" << endl;
+			
+			if (startIdx < 0)
+				vhdl << " & " << zeroGenerator(chunkSize_,0) << ";" << endl;
+			else
+				vhdl << " & " << zeroGenerator(endPaddWidth,0) << ";" << endl;
 		}
 	}
 	
