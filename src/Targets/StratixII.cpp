@@ -1,5 +1,5 @@
 /*
- * A model of Stratix II FPGA 
+ * A model of Stratix II FPGA optimized for (EP2S15F484C3 speed grade -3)
  *
  * Author : Florent de Dinechin, Sebastian Banescu
  *

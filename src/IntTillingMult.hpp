@@ -79,6 +79,13 @@ private:
 	*/
 	int getExtraWidth();
 	
+	/**
+	 * This functions tries to bind together as many multiplier blocks as possible into the same DSP block of the StratixII 
+	 * architecture which has up to 3 adders
+	 * @param the configuration of the tiling grid
+	 * @return the number of operands for the final adder, which has been reduced from individual DSP count to sums of DSPs
+	 */
+	int bindDSP4Stratix(DSP** config);
 
 	/** The width of first input*/
 	int wInX; 

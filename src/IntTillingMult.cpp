@@ -99,10 +99,6 @@ IntTilingMult:: IntTilingMult(Target* target, int wInX, int wInY,float ratio) :
 		
 		
 		cout<<"Cost of configuration is "<<computeCost(globalConfig)<<endl;
-		
-		
-		
-
 	
 	//~ /*we will try the algorithm with 2 values of nrDSPs	
 	//~ One will be the estimated value(nrDSPs) and the second one will be nrDSPs-1	
@@ -965,3 +961,100 @@ void IntTilingMult::initTiling(DSP** &config, int dspCount)
 	}
 }
 	
+int IntTilingMult::bindDSP4Stratix(DSP** config)
+{
+	int nrDSPs_ = estimateDSPs();
+	int DSPcount = nrDSPs_;
+	
+	for (int i=0; i<nrDSPs_; i++)
+		if (config[i] == NULL)
+			DSPcount--;
+		
+			
+	for (int i=0; i<DSPcount; i++)
+		if (config[i]->getNumberOfAdders() < 3) // serach for an aligned DSP block that can be added with this one
+		{
+			int xtri, ytri, wx, wy, nrOp;
+			bool bound;
+			config[i]->getTopRightCorner(xtri, ytri);
+			target->getDSPWidths(wx,wy);
+				
+			//if (verbose)
+				cout << "bindDSP4Stratix: DSP #" << i << " has less than 3 operands. Top-right is at ( " << xtri << ", " << ytri << ") width is " << wx << endl;
+			
+			for (int j=0; j<DSPcount; j++)
+			if (i != j)
+			{
+				nrOp = config[i]->getNumberOfAdders();
+				if (nrOp == 3)
+					break;
+			
+				DSP** operands = config[i]->getAdditionOperands();
+				bound = false;
+				// check if the DSP blocks are bound
+				for (int k=0; k<nrOp; k++)
+					if (operands[k] == config[j]) // the DSPs are allready bound
+					{
+						//if (verbose)
+							cout << "bindDSP4Stratix: DSP #" << j << " has #" << i << " as one of its operands allready." << endl;
+						bound = true;
+						break;
+					}
+				
+				if (bound)
+					continue;
+				// if they are not bound
+				int xtrj, ytrj, nrOpj;
+				config[j]->getTopRightCorner(xtrj, ytrj);
+				nrOpj = config[j]->getNumberOfAdders();
+				
+				//if (verbose)
+					cout << "bindDSP4Stratix:" << tab << " Checking against DSP #" << j << " Top-right is at ( " << xtrj << ", " << ytrj << ") width is " << wx << endl;
+			
+				if ((((xtrj-xtri == -wx) && (ytrj-ytri == wy)) || ((xtrj-xtri == wx) && (ytrj-ytri == -wy))) && // if they have the same alignment
+					(nrOpj + nrOp < 3)) // if the DSPs we want to bind have less than 3 other DSPs to add together
+				{ // copy the operands from one another and bind them 
+					
+					//if (verbose)
+						cout << "bindDSP4Stratix : DSP #" << j << " together with #" << i << " have fewer than 3 operands. We can bind them." << endl;
+					DSP** operandsj = config[j]->getAdditionOperands();
+					
+					for (int k=0; k<nrOp; k++)
+					{
+						operandsj[nrOpj+k] = operands[k];
+						operands[k]->setNumberOfAdders(nrOp+nrOpj+1);
+					}
+					operandsj[nrOp+nrOpj] = config[i];
+					config[j]->setAdditionOperands(operandsj);
+					config[j]->setNumberOfAdders(nrOp+nrOpj+1);
+					
+					for (int k=0; k<nrOpj; k++)
+					{
+						operands[nrOp+k] = operandsj[k];
+						operandsj[k]->setNumberOfAdders(nrOp+nrOpj+1);
+					}
+					operands[nrOp+nrOpj] = config[j];
+					config[i]->setAdditionOperands(operands);
+					config[i]->setNumberOfAdders(nrOp+nrOpj+1);
+				}
+			}
+		}
+		
+	/* We now have:
+	 * 	- pairs of DSP objects which have the number of operands set to 1
+	 * 	- triplets of DSP objects which have the number of operands set to 2
+	 * 	- quadruplets of DSP objects which have the number of operands set to 3 
+	 * We keep a counter for each possible number of operands. */
+	int pair[3] = {0, 0, 0};
+	
+	
+	for (int i=0; i<DSPcount; i++)
+	{
+		cout << "bindDSP4Stratix : DSP #" << i << " has " << config[i]->getNumberOfAdders() << " adders" << endl;
+		pair[config[i]->getNumberOfAdders()-1]++;
+	}
+	cout << "bindDSP4Stratix : one " << pair[0] << endl;
+	cout << "bindDSP4Stratix : two " << pair[1] << endl;
+	cout << "bindDSP4Stratix : three " << pair[2] << endl;
+	return (DSPcount - pair[0]/2 - pair[1]*2/3 - pair[2]*3/4);
+}
