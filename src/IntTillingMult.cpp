@@ -91,8 +91,17 @@ IntTilingMult:: IntTilingMult(Target* target, int wInX, int wInY,float ratio) :
 		//~ globalConfig[1]->setTopRightCorner(2,0);
 		//~ globalConfig[1]->setBottomLeftCorner(20,18);
 		cout<<"Finnish initializing DSPs"<<endl;
-		//cout<<"Number of slices for multiplication is "<<partitionOfGridSlices(globalConfig)<<endl;
+		 //~ int t;
+		//~ cout<<"Number of slices for multiplication is "<<partitionOfGridSlices(globalConfig,t)<<endl;
+		//~ sortDSPs(globalConfig);
+		
+		//~ cout<<"Number of slices for multiplication is "<<partitionOfGridSlices(globalConfig,t)<<endl;
+		
+		
 		cout<<"Cost of configuration is "<<computeCost(globalConfig)<<endl;
+		
+		
+		
 
 	
 	//~ /*we will try the algorithm with 2 values of nrDSPs	
@@ -110,6 +119,8 @@ IntTilingMult:: IntTilingMult(Target* target, int wInX, int wInY,float ratio) :
 	//~ bestCost = FLT_MAX ;
 	//~ //bestConfig = (DSP**)malloc(nrDSPs * sizeof(DSP*));
 	//~ bestConfig = new DSP*[nrDSPs];
+	//~ for(int i=0;i<nrDSPs;i++)
+	//~ 		bestConfig[i]= new DSP();
 	//~ compareCost();
 	
 	//~ //the best configuration should be consider initially the first one. So the bestConfig parameter will be initialized with global config and hence the bestCost will be initialized with the first cost
@@ -462,18 +473,153 @@ void IntTilingMult::fillMatrix(int **&matrix,int lw,int lh,int topleftX,int topl
 	return costSlice;
 }	
 
-
-void IntTilingMult::compareCost()
+void IntTilingMult::resetConnections(DSP** &config)
 {
-	float temp = computeCost(globalConfig);
-	if(temp >= bestCost)
+for(int i=0;i<nrDSPs;i++)
 	{
-	memcpy(bestConfig,globalConfig,sizeof(globalConfig));	
+		if(config[i]!=NULL)
+		{
+			
+		}
+		
+	}
+
+	
+}
+
+int IntTilingMult::bindDSPs4Virtex(DSP** &config)
+{
+	int nrOfUsedDSPs=0;
+	for(int i=0;i<nrDSPs;i++)
+		if(config[i]!=NULL)
+		{
+			nrOfUsedDSPs++;
+		}
+	DSP* ref;
+	
+	sortDSPs(config);
+		
+	int itx,ity,jtx,jty,ibx,iby;//,jbx,jby;
+		
+	for(int i=0;i<nrDSPs;i++)
+		{
+			if(config[i]!=NULL)
+			{
+				ref=config[i];
+				bool ver=true;
+				while(ver==true&&ref->getShiftOut()==NULL)
+				{
+					ver=false;
+					ref->getTopRightCorner(itx,ity);
+					ref->getBottomLeftCorner(ibx,iby);
+					
+					
+					for(int j=0;j<nrDSPs&&ver==false;j++)
+					{
+						if(config[j]!=NULL &&j!=i)
+						{
+							config[j]->getTopRightCorner(jtx,jty);
+							//config[j]->getBottomLeftCorner(jbx,jby);
+							if(jtx==ibx&&jty==ity&&ref->getMaxMultiplierWidth()==config[j]->getShiftAmount()&&config[j]->getShiftIn()==NULL)
+							{
+								ver=true;
+								ref->setShiftOut(config[j]);
+								config[j]->setShiftIn(ref);
+								nrOfUsedDSPs--;
+								ref=config[j];
+							}
+						}
+					}
+					
+					for(int j=0;j<nrDSPs&&ver==false;j++)
+					{
+						if(config[j]!=NULL &&j!=i)
+						{
+							config[j]->getTopRightCorner(jtx,jty);
+							//config[j]->getBottomLeftCorner(jbx,jby);
+							if(iby==jty&&itx==jtx&&ref->getMaxMultiplierHeight()==config[j]->getShiftAmount()&&config[j]->getShiftIn()==NULL)
+							{
+								ver=true;
+								ref->setShiftOut(config[j]);
+								config[j]->setShiftIn(ref);
+								nrOfUsedDSPs--;
+								ref=config[j];								
+							}
+							
+						}						
+					}					
+				}
+				
+			}
+			
+		}
+	
+		return nrOfUsedDSPs;
+	
+}
+
+void IntTilingMult::sortDSPs(DSP** &config)
+{
+	int ix,iy,jx,jy;
+	DSP* temp;
+	for(int i=0;i<nrDSPs-1;i++)
+	{		
+		for(int j=i+1;j<nrDSPs;j++)
+		{
+			config[i]->getTopRightCorner(ix,iy);
+			config[j]->getTopRightCorner(jx,jy);
+			if(iy>jy)
+			{
+				temp=config[i];
+				config[i]=config[j];
+				config[j]=temp;				
+			}
+			else
+				if(iy==jy)
+				{
+					if(ix>jx)
+					{
+						temp=config[i];
+						config[i]=config[j];
+						config[j]=temp;						
+					}
+				}
+		}
 	}
 	
 }
 
-float IntTilingMult::computeCost(DSP** config)
+int IntTilingMult::bindDSPs(DSP** &config)
+{
+	
+		return bindDSPs4Virtex(config);
+		
+}
+
+
+void IntTilingMult::compareCost()
+{
+	DSP** tempc;
+		
+	tempc= new DSP*[nrDSPs];
+	for(int ii=0;ii<nrDSPs;ii++)
+		tempc[ii]= new DSP();
+		
+	memcpy(tempc,globalConfig,sizeof(globalConfig));
+	
+	float temp = computeCost(tempc);
+	if(temp >= bestCost)
+	{
+	memcpy(bestConfig,tempc,sizeof(globalConfig));	
+	}
+	
+	delete[] (tempc);
+	
+}
+
+
+// de revazut costul sa fie calculat nu si pentru extensii!!!!!!!!!
+float IntTilingMult::computeCost(DSP** &config)
 {
 	
 	float const scale=100.0;
@@ -486,14 +632,17 @@ float IntTilingMult::computeCost(DSP** config)
 	
 	int nrOfUsedDSPs=0;
 	
-	for(int i=0;i<nrDSPs;i++)
-		if(config[i]!=NULL)
-		{
-			acc+=costDSP;
-			nrOfUsedDSPs++;
-		}
+	//~ for(int i=0;i<nrDSPs;i++)
+		//~ if(config[i]!=NULL)
+		//~ {
+			//~ acc+=costDSP;
+			//~ nrOfUsedDSPs++;
+		//~ }
+	nrOfUsedDSPs = bindDSPs(config);
+		
+		
 	int partitions;
-		acc += costLUT * partitionOfGridSlices(config,partitions);
+		acc =((float)nrOfUsedDSPs)*costDSP + costLUT * partitionOfGridSlices(config,partitions);
 		
 	cout<<"Number of partitions for LUTs is "<<partitions<<endl;
 		

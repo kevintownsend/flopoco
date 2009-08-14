@@ -108,7 +108,7 @@ private:
 
 	/** This function computes the cost of the configuration received as input parameter */
 	
-	float computeCost(DSP** config);
+	float computeCost(DSP** &config);
 
 	/** This function compares the cost of the current configuration( globalConfig) with the best configuration obtained so far(bestConfig). If the current one is better then the best one, 
 	then it will copy the current configuration into the best one.
@@ -128,7 +128,21 @@ private:
 	 
 	 void fillMatrix(int **&matrix,int lw,int lh,int topleftX,int topleftY,int botomrightX,int botomrightY,int value);
 	
-
+	/** This function resets all the conections that exists between DSPs of a configuration */
+	
+	void resetConnections(DSP** &config);
+	
+	/** This function will create connections between the existing DSPs in the configuration according to the policies of Altera or Virtex */
+	
+	int bindDSPs(DSP** &config);
+	
+	/** This function will create the shifts between DSPs for Virtex boards */
+	
+	int bindDSPs4Virtex(DSP** &config);
+	
+	/** This function will sort the DSPs blocks by the topright corner */
+	
+	void sortDSPs(DSP** &config);
 
 };
 
