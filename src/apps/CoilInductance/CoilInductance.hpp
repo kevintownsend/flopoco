@@ -101,9 +101,7 @@ private:
 	/** The FP Multiplier operator used in the final accumulator formula */
 	LongAcc* finalAcc;
 	
-	/** The Constant Multiplier for computing var 3 and var 4 in the point 0.0111....*/
-	IntConstMult* cstMult;
-	
+		
 	/**The memories for the coordinates(X,Y,Z)*/
 	CoordinatesTableX* memCoordX;
 	CoordinatesTableY* memCoordY;

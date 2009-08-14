@@ -663,7 +663,7 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,i
 	
 	//cout<<"new Lsbi:= "<<(LSBI)*2<<"new Msbi:= "<<signofMSBI*(abs(MSBI)-1)*2<<endl;
 	
-	if(tempFreq>200000000)
+	if(tempFreq>100000000)
 		nextCycle();
 	
 	
@@ -1212,7 +1212,17 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,i
 	
 	nextCycle();
 	
-	vhdl<<tab<<declare("value4LongAcctemp",wE+wF+3)<<" <= "<<use("value4LongAcc")<<";"<<endl;
+	
+	
+	//The final result is now scaled with 1/2^8
+	
+	vhdl<<tab<<declare("expVar4shift",wE)<<" <= "<<use("value4LongAcc")<<" - "<<" CONV_STD_LOGIC_VECTOR(3,"<<wE<<");"<<endl;
+	
+	vhdl<<tab<<declare("value4LongAccShift",wF+wE+3)<<" <= "<<use("value4LongAcc")<<range(wE+wF+3-1,wE+wF)<<" & "<<use("expVar4shift")<<" & "<<use("value4LongAcc")<<range(wF-1,0)<<";"<<endl;
+	
+	
+	
+	vhdl<<tab<<declare("value4LongAcctemp",wE+wF+3)<<" <= "<<use("value4LongAccShift")<<";"<<endl;
 	
 	target->setFrequency(((double) internFreq) );
 	finalAcc = new LongAcc(target, wE, wF, MaxMSBO, LSBO, MSBO);
