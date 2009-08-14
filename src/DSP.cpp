@@ -33,8 +33,19 @@ fixedShift_(Shift),maxMultiplierWidth_(maxMultWidth) , maxMultiplierHeight_(maxM
 {
 			multiplierWidth_ = 0;
 			multiplierHeight_ = 0;
-			nrAdders_ = 1;
+			nrAdders_ = 0;
 			multAccumulate_ = false;	
+			
+			DSP** ops = new DSP*[3];
+	
+			for (int j=0; j<3; j++)
+			{
+				ops[j] = NULL;
+			}
+			
+			addOperands_ = ops;
+			shiftIn_ = NULL;
+			shiftOut_ = NULL;
 }
 
 int DSP::getMultiplierWidth(){
