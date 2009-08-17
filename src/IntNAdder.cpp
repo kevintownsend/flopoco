@@ -152,7 +152,18 @@ Operator(target), wIn_(wIn), N_(N), inputDelays_(inputDelays)
 						high+=cSize[k];
 					for (int k=0;k<=j-1;k++)
 						low+=cSize[k];
-					vhdl << tab << declare (name.str(),cSize[j]+1) << " <= " << " \"0\" & X"<<i<<range(high-1,low)<<";"<<endl;
+					if(high-1<=wIn)
+						vhdl << tab << declare (name.str(),cSize[j]+1) << " <= " << " \"0\" & X"<<i<<range(high-1,low)<<";"<<endl;
+					else
+					{
+						if(low<wIn)
+							vhdl << tab << declare (name.str(),cSize[j]+1) << " <= " << zeroGenerator(cSize[j]-(wIn -low)+1,0) <<" & X"<<i<<range(wIn-1,low)<<";"<<endl;
+						else
+							if(low==wIn)
+								vhdl << tab << declare (name.str(),cSize[j]+1) << " <= " << zeroGenerator(cSize[j],0) <<" & X"<<i<<of(wIn-1)<<";"<<endl;
+							else
+								vhdl << tab << declare (name.str(),cSize[j]+1) << " <= " << zeroGenerator(cSize[j]+1,0) <<";"<<endl;
+					}
 				}
 			
 			////////////////////////////////////////////////
@@ -212,14 +223,22 @@ Operator(target), wIn_(wIn), N_(N), inputDelays_(inputDelays)
 			currentLevel--;
 			vhdl << tab << "R <= ";
 			int k=0;
-			for (int i=nbOfChunks-1; i>=0; i--){
-				ostringstream uname;
-				uname << "sX"<<i<<"_0_l"<<currentLevel-k;
-				vhdl << use(uname.str()) << range(cSize[i]-1,0);
-				if (i > 0) vhdl << " & ";
-				k++;
-			}
+			ostringstream uname;
+			uname << "sX"<<nbOfChunks-1<<"_0_l"<<currentLevel-k;
+			vhdl << use(uname.str()) << range(cSize[nbOfChunks-1]-1,0);
 			vhdl << ";" <<endl;
+			
+			//~ for (int i=nbOfChunks-1; i>=0; i--){
+				//~ ostringstream uname;
+				//~ uname << "sX"<<i<<"_0_l"<<currentLevel-k;
+				
+				//~ vhdl << use(uname.str()) << range(cSize[i]-1,0);
+				
+				
+				//~ if (i > 0) vhdl << " & ";
+				//~ k++;
+			//~ }
+			//~ vhdl << ";" <<endl;
 		}else
 			if (N==1){
 			//split the inputs ( this should be reusable )

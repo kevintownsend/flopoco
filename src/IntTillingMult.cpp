@@ -92,19 +92,20 @@ IntTilingMult:: IntTilingMult(Target* target, int wInX, int wInY,float ratio) :
 		//~ globalConfig[1]->setTopRightCorner(2,0);
 		//~ globalConfig[1]->setBottomLeftCorner(20,18);
 		cout<<"Finnish initializing DSPs"<<endl;
-		 //~ int t;
+		 int t;
 		//~ cout<<"Number of slices for multiplication is "<<partitionOfGridSlices(globalConfig,t)<<endl;
 		//~ sortDSPs(globalConfig);
 		
 		//~ cout<<"Number of slices for multiplication is "<<partitionOfGridSlices(globalConfig,t)<<endl;
 		
 		
-		cout<<"Cost of configuration is "<<computeCost(globalConfig)<<endl;
-		cout<<"Add operands of DSP1 " << globalConfig[3]->getNumberOfAdders();
-		DSP **oper = globalConfig[1]->getAdditionOperands();
-		int xx, yy;
-		oper[0]->getTopRightCorner(xx, yy);
-		cout<<" Operand is block with top right in ("<< xx << ", " << yy <<");" << endl;
+		//~ cout<<"Cost of configuration is "<<computeCost(globalConfig)<<endl;
+		
+		cout<<"Partitions of grid before binding "<<partitionOfGridSlices(globalConfig,t)<<endl;
+		cout<<"Operands from DSPs, from a maximum of "<<nrDSPs<<" we use "<<bindDSPs(globalConfig)<<endl;
+		cout<<"Partitions of grid after binding "<<partitionOfGridSlices(globalConfig,t)<<endl;
+		
+		
 	//~ /*we will try the algorithm with 2 values of nrDSPs	
 	//~ One will be the estimated value(nrDSPs) and the second one will be nrDSPs-1	
 	//~ */
@@ -454,21 +455,21 @@ void IntTilingMult::fillMatrix(int **&matrix,int lw,int lh,int topleftX,int topl
 		partitions =count -partitions;
 		 
 		
-		//~ char af;
-		//~ int afi;
-	//~ for(int i=0;i<m;i++)
-		//~ {
-			//~ for(int j=0;j<n;j++)
-			//~ {
-				//~ if(mat[i][j]<10)
-					//~ afi=mat[i][j];
-				//~ else
-					//~ afi=mat[i][j]+7;
-				//~ af=(int)afi+48;
-				//~ cout<<af;
-			//~ }
-			//~ cout<<endl;
-		//~ }
+		char af;
+		int afi;
+	for(int i=0;i<m;i++)
+		{
+			for(int j=0;j<n;j++)
+			{
+				if(mat[i][j]<10)
+					afi=mat[i][j];
+				else
+					afi=mat[i][j]+7;
+				af=(int)afi+48;
+				cout<<af;
+			}
+			cout<<endl;
+		}
 	
 	//~ cout<<"gata"<<endl;
 	return costSlice;
