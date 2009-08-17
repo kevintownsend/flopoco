@@ -85,7 +85,7 @@ private:
 	 * @param the configuration of the tiling grid
 	 * @return the number of operands for the final adder, which has been reduced from individual DSP count to sums of DSPs
 	 */
-	int bindDSP4Stratix(DSP** config);
+	int bindDSPs4Stratix(DSP** config);
 
 	/** The width of first input*/
 	int wInX; 
