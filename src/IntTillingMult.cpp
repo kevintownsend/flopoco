@@ -99,11 +99,30 @@ IntTilingMult:: IntTilingMult(Target* target, int wInX, int wInY,float ratio) :
 		//~ cout<<"Number of slices for multiplication is "<<partitionOfGridSlices(globalConfig,t)<<endl;
 		
 		
-		//~ cout<<"Cost of configuration is "<<computeCost(globalConfig)<<endl;
+		cout<<"Cost of configuration is "<<computeCost(globalConfig)<<endl;
 		
-		cout<<"Partitions of grid before binding "<<partitionOfGridSlices(globalConfig,t)<<endl;
-		cout<<"Operands from DSPs, from a maximum of "<<nrDSPs<<" we use "<<bindDSPs(globalConfig)<<endl;
-		cout<<"Partitions of grid after binding "<<partitionOfGridSlices(globalConfig,t)<<endl;
+		//~ cout<<"Partitions of grid before binding "<<partitionOfGridSlices(globalConfig,t)<<endl;
+		//~ cout<<"Operands from DSPs, from a maximum of "<<nrDSPs<<" we use "<<bindDSPs(globalConfig)<<endl;
+		//~ cout<<"Partitions of grid after binding "<<partitionOfGridSlices(globalConfig,t)<<endl;
+		
+		//~ for(int i=0;i<nrDSPs;i++)
+		//~ {
+			//~ if(globalConfig[i]!=NULL)
+			//~ {
+				//~ if(globalConfig[i]->getShiftIn()!=NULL)
+				//~ {
+					//~ for(int j=0;j<nrDSPs;j++)
+						//~ if(globalConfig[j]==globalConfig[i]->getShiftIn())
+							//~ cout<<"Exista legatura In la dspul "<<i+1<<" de la DSPul"<<j+1<<endl;
+				//~ }
+				//~ if(globalConfig[i]->getShiftOut()!=NULL)
+				//~ {
+					//~ for(int j=0;j<nrDSPs;j++)
+						//~ if(globalConfig[j]==globalConfig[i]->getShiftOut())
+							//~ cout<<"Exista legatura Out la dspul "<<i+1<<" catre DSPul"<<j+1<<endl;
+				//~ }
+			//~ }
+		//~ }
 		
 		
 	//~ /*we will try the algorithm with 2 values of nrDSPs	
@@ -455,21 +474,21 @@ void IntTilingMult::fillMatrix(int **&matrix,int lw,int lh,int topleftX,int topl
 		partitions =count -partitions;
 		 
 		
-		char af;
-		int afi;
-	for(int i=0;i<m;i++)
-		{
-			for(int j=0;j<n;j++)
-			{
-				if(mat[i][j]<10)
-					afi=mat[i][j];
-				else
-					afi=mat[i][j]+7;
-				af=(int)afi+48;
-				cout<<af;
-			}
-			cout<<endl;
-		}
+		//~ char af;
+		//~ int afi;
+	//~ for(int i=0;i<m;i++)
+		//~ {
+			//~ for(int j=0;j<n;j++)
+			//~ {
+				//~ if(mat[i][j]<10)
+					//~ afi=mat[i][j];
+				//~ else
+					//~ afi=mat[i][j]+7;
+				//~ af=(int)afi+48;
+				//~ cout<<af;
+			//~ }
+			//~ cout<<endl;
+		//~ }
 	
 	//~ cout<<"gata"<<endl;
 	return costSlice;
@@ -501,6 +520,7 @@ int IntTilingMult::bindDSPs4Virtex(DSP** &config)
 	
 	sortDSPs(config);
 		
+			
 	int itx,ity,jtx,jty,ibx,iby;//,jbx,jby;
 		
 	for(int i=0;i<nrDSPs;i++)
@@ -521,8 +541,9 @@ int IntTilingMult::bindDSPs4Virtex(DSP** &config)
 						if(config[j]!=NULL &&j!=i)
 						{
 							config[j]->getTopRightCorner(jtx,jty);
+							//cout<<"Now considering taking(in left) dsp nr. "<<i<<" with tx:="<<itx<<" ty:="<<ity<<" bx:="<<ibx<<"by:="<<iby<<" with dsp nr. "<<j<<" with tx:="<<jtx<<" ty:="<<jty<<endl;
 							//config[j]->getBottomLeftCorner(jbx,jby);
-							if(jtx==ibx&&jty==ity&&ref->getMaxMultiplierWidth()==config[j]->getShiftAmount()&&config[j]->getShiftIn()==NULL)
+							if(jtx==ibx+1&&jty==ity&&ref->getMaxMultiplierWidth()==config[j]->getShiftAmount()&&config[j]->getShiftIn()==NULL)
 							{
 								ver=true;
 								ref->setShiftOut(config[j]);
@@ -538,8 +559,9 @@ int IntTilingMult::bindDSPs4Virtex(DSP** &config)
 						if(config[j]!=NULL &&j!=i)
 						{
 							config[j]->getTopRightCorner(jtx,jty);
+							//cout<<"Now considering taking(down) dsp nr. "<<i<<" with tx:="<<itx<<" ty:="<<ity<<" bx:="<<ibx<<"by:="<<iby<<" with dsp nr. "<<j<<" with tx:="<<jtx<<" ty:="<<jty<<endl;
 							//config[j]->getBottomLeftCorner(jbx,jby);
-							if(iby==jty&&itx==jtx&&ref->getMaxMultiplierHeight()==config[j]->getShiftAmount()&&config[j]->getShiftIn()==NULL)
+							if(iby+1==jty&&itx==jtx&&ref->getMaxMultiplierHeight()==config[j]->getShiftAmount()&&config[j]->getShiftIn()==NULL)
 							{
 								ver=true;
 								ref->setShiftOut(config[j]);
@@ -594,9 +616,15 @@ void IntTilingMult::sortDSPs(DSP** &config)
 int IntTilingMult::bindDSPs(DSP** &config)
 {
 	if (strncmp(typeid(*target).name(), "7Virtex", 7) == 0) // then the target is Virtex
+	{
+		//cout<<"Virtex!"<<endl;
 		return bindDSPs4Virtex(config);
+	}
 	else // the target is Stratix
+	{
+		//cout<<"Stratix"<<endl;
 		return bindDSPs4Stratix(config);
+	}
 		
 }
 
@@ -636,19 +664,22 @@ float IntTilingMult::computeCost(DSP** &config)
 	
 	int nrOfUsedDSPs=0;
 	
-	//~ for(int i=0;i<nrDSPs;i++)
-		//~ if(config[i]!=NULL)
-		//~ {
-			//~ acc+=costDSP;
-			//~ nrOfUsedDSPs++;
-		//~ }
-	nrOfUsedDSPs = bindDSPs(config);
+	for(int i=0;i<nrDSPs;i++)
+		if(config[i]!=NULL)
+		{
+			acc+=costDSP;
+			nrOfUsedDSPs++;
+		}
+	
 		
+	cout<<"Number of used DSP blocks is "<<nrOfUsedDSPs<<endl;
 		
 	int partitions;
 		acc =((float)nrOfUsedDSPs)*costDSP + costLUT * partitionOfGridSlices(config,partitions);
 		
 	cout<<"Number of partitions for LUTs is "<<partitions<<endl;
+	nrOfUsedDSPs = bindDSPs(config);
+	cout<<"Number of operands coming from DSPs is "<<nrOfUsedDSPs<<endl;
 		
 	
 	 
