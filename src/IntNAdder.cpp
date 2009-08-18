@@ -104,7 +104,7 @@ Operator(target), wIn_(wIn), N_(N), inputDelays_(inputDelays)
 			}else{
 				if (verbose) cout << "Implementation of the first design" << endl;
 				nbOfChunks = nbOfChunksFirstDesign;
-				target->suggestSubaddSize(chunkSize_, wIn_); 
+				target->suggestSlackSubaddSize(chunkSize_, wIn_, maxInputDelay); 
 				lastChunkSize = ( wIn_ % chunkSize_ == 0 ? chunkSize_ : wIn_ % chunkSize_);
 			}
 		}
@@ -223,22 +223,22 @@ Operator(target), wIn_(wIn), N_(N), inputDelays_(inputDelays)
 			currentLevel--;
 			vhdl << tab << "R <= ";
 			int k=0;
-			ostringstream uname;
-			uname << "sX"<<nbOfChunks-1<<"_0_l"<<currentLevel-k;
-			vhdl << use(uname.str()) << range(cSize[nbOfChunks-1]-1,0);
-			vhdl << ";" <<endl;
+			//ostringstream uname;
+			//uname << "sX"<<nbOfChunks-1<<"_0_l"<<currentLevel-k;
+			//vhdl << use(uname.str()) << range(cSize[nbOfChunks-1]-1,0);
+			//vhdl << ";" <<endl;
 			
-			//~ for (int i=nbOfChunks-1; i>=0; i--){
-				//~ ostringstream uname;
-				//~ uname << "sX"<<i<<"_0_l"<<currentLevel-k;
+			 for (int i=nbOfChunks-1; i>=0; i--){
+				 ostringstream uname;
+				 uname << "sX"<<i<<"_0_l"<<currentLevel-k;
 				
-				//~ vhdl << use(uname.str()) << range(cSize[i]-1,0);
+				 vhdl << use(uname.str()) << range(cSize[i]-1,0);
 				
 				
-				//~ if (i > 0) vhdl << " & ";
-				//~ k++;
-			//~ }
-			//~ vhdl << ";" <<endl;
+				 if (i > 0) vhdl << " & ";
+				 k++;
+			 }
+			 vhdl << ";" <<endl;
 		}else
 			if (N==1){
 			//split the inputs ( this should be reusable )
