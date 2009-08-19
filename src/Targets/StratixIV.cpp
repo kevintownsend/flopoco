@@ -1,5 +1,5 @@
 /*
- * A model of Stratix II FPGA optimized for (EP2S15F484C3 speed grade -3)
+ * A model of Stratix IV FPGA optimized for (EP4S40G2F40C2ES1 speed grade 2)
  *
  * Author : Florent de Dinechin, Sebastian Banescu
  *
@@ -20,45 +20,45 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
 */
-#include "StratixII.hpp"
+#include "StratixIV.hpp"
 #include <iostream>
 #include <sstream> 
 #include "../utils.hpp"
 
-double StratixII::adderDelay(int size) {
-  return (fdCtoQ_ + lut2_ + muxStoO_ + shareOutToCarryOut_ + 
+double StratixIV::adderDelay(int size) {
+  return (distantWireDelay(10) + fdCtoQ_ + lutDelay() + 
 			((size-3) * fastcarryDelay_) + 
 			((size/almsPerLab_) * (innerLABcarryDelay_- fastcarryDelay_)) + 
 			((size/(almsPerLab_*2)) * (interLABcarryDelay_ - innerLABcarryDelay_)) + 
 			carryInToSumOut_ + ffDelay_); 
 };
 
-double StratixII::carryPropagateDelay() {
+double StratixIV::carryPropagateDelay() {
   return  fastcarryDelay_; 
 };
 
-double StratixII::localWireDelay(){
+double StratixIV::localWireDelay(){
   return lut2lutDelay_;
 };
 
-double StratixII::distantWireDelay(int n){
+double StratixIV::distantWireDelay(int n){
   return n*elemWireDelay_;
 };
 
-double StratixII::lutDelay(){
+double StratixIV::lutDelay(){
   return lutDelay_;
 };
 
-double StratixII::ffDelay(){
+double StratixIV::ffDelay(){
   return ffDelay_;
 };
 
-long StratixII::sizeOfMemoryBlock()
+long StratixIV::sizeOfMemoryBlock()
 {
 return sizeOfBlock;	
 };
 
- DSP* StratixII::createDSP() 
+ DSP* StratixIV::createDSP() 
 {
 	int multW, multH;
 	getDSPWidths(multW, multH);
@@ -69,7 +69,7 @@ return sizeOfBlock;
 	return dsp_;
 };
 
-bool StratixII::suggestSubmultSize(int &x, int &y, int wInX, int wInY){
+bool StratixIV::suggestSubmultSize(int &x, int &y, int wInX, int wInY){
 // TODO This is the VirtexIV function. Stratix II is more interesting
 // (DSP blocks are 36x36 and my be split as 9x9 or 18x18)
 	if (getUseHardMultipliers()){
@@ -128,10 +128,12 @@ bool StratixII::suggestSubmultSize(int &x, int &y, int wInX, int wInY){
 	return false;
 }	 
 	 	 
-bool StratixII::suggestSubaddSize(int &x, int wIn){
+bool StratixIV::suggestSubaddSize(int &x, int wIn){
 
-	int chunkSize = (int)floor( (1./frequency() - (fdCtoQ_ + lutDelay() + muxStoO_ + shareOutToCarryOut_ + carryInToSumOut_ + ffDelay_ + interLABcarryDelay_)) / carryPropagateDelay()); // 1 if no need for pipeline
-	x = chunkSize;		
+	//int chunkSize = (int)floor( (1./frequency() - (fdCtoQ_ + lutDelay() + carryInToSumOut_ + ffDelay_ + interLABcarryDelay_)) / carryPropagateDelay()); // 1 if no need for pipeline
+	suggestSlackSubaddSize(x, wIn, 0);
+	
+	//x = chunkSize;		
 	if (x>0) return true;
 	else {
 		x=1;		
@@ -139,11 +141,42 @@ bool StratixII::suggestSubaddSize(int &x, int wIn){
 	} 
 }
 
-bool  StratixII::suggestSlackSubaddSize(int &x, int wIn, double slack){
+bool  StratixIV::suggestSlackSubaddSize(int &x, int wIn, double slack){
 
-	int chunkSize = (int)floor( (1./frequency() - slack - (fdCtoQ_ + lutDelay() + muxStoO_ + shareOutToCarryOut_ + carryInToSumOut_ + ffDelay_ + interLABcarryDelay_)) / carryPropagateDelay()); // 1 if no need for pipeline
+	float time = 1./frequency() - slack - (distantWireDelay(10) + fdCtoQ_ + lutDelay() + carryInToSumOut_ + ffDelay_);
+	cout << "suggestSubaddSize : time = " << time << endl;
+	int carryFlag = 0;
+	int chunkSize = 0;
 	
-	//int chunkSize = 2 + (int)floor( (1./frequency() - slack - (fdCtoQ_ + slice2sliceDelay_ + lut2_ + muxcyStoO_ + xorcyCintoO_ + ffd_)) / muxcyCINtoO_ );
+	while (time > 0)
+	{
+		chunkSize++;
+		cout << "suggestSubaddSize : chunkSize = " << chunkSize << " time = " << time << endl;
+		
+		if (carryFlag == 0) 
+		{
+			time -= fastcarryDelay_;
+			cout << "suggestSubaddSize : subtracted fastcarryDelay"<< endl;
+			if (chunkSize % (almsPerLab_*2) == 0)
+				carryFlag = 2;
+			else if (chunkSize % almsPerLab_ == 0)
+				carryFlag = 1;
+			
+		}
+		else if (carryFlag == 1)
+		{
+			time -= innerLABcarryDelay_;
+			cout << "suggestSubaddSize : subtracted innerLABCarryDelay"<< endl;
+			carryFlag = 0;
+		}	
+		else if (carryFlag == 2)
+		{
+			time -= interLABcarryDelay_;
+			cout << "suggestSubaddSize : subtracted interLABCarryDelay"<< endl;
+			carryFlag = 0;
+		}
+	}
+	chunkSize--; // decremented because of the loop condition (time > 0). When exiting the loop the time is negative
 	
 	x = chunkSize;		
 	if (x>0) return true;
@@ -155,7 +188,7 @@ bool  StratixII::suggestSlackSubaddSize(int &x, int wIn, double slack){
 
 }
   
-int StratixII::getIntMultiplierCost(int wInX, int wInY){
+int StratixIV::getIntMultiplierCost(int wInX, int wInY){
 	
 	int lutCost = 0;
 	//int chunkSize_ = this->lutInputs()/2; SYNTHESIS NOT EFFICIENT WITH 6-LUTs
@@ -172,14 +205,14 @@ int StratixII::getIntMultiplierCost(int wInX, int wInY){
 
 }
 
-void StratixII::getDSPWidths(int &x, int &y){
+void StratixIV::getDSPWidths(int &x, int &y){
 	// set the multiplier width acording to the desired frequency
 	for (int i=0; i<3; i++)
 		if (this->frequency() < 1/multiplierDelay_[i])
 			x = y = multiplierWidth_[i];
 }
 
-int StratixII::getEquivalenceSliceDSP(){
+int StratixIV::getEquivalenceSliceDSP(){
 	int lutCost = 0;
 	int x, y;
 	getDSPWidths(x,y);
@@ -192,9 +225,9 @@ int StratixII::getEquivalenceSliceDSP(){
 	return lutCost;
 }
 	
-int StratixII::getNumberOfDSPs() 
+int StratixIV::getNumberOfDSPs() 
 {
-	int dsps = 96; // number of 9-bit elements
+	int dsps = 1288; // number of 9-bit elements
 	int x, y;
 	getDSPWidths(x, y);
 	
@@ -202,24 +235,26 @@ int StratixII::getNumberOfDSPs()
 	{
 		case 9: y = dsps;
 			break;
+		case 12: y = dsps*3/4;
+			break;
 		case 18: y = dsps/2;
 			break;
-		case 36: y = dsps/8;
+		case 36: y = dsps/4;
 			break;
 	}
 	return y;		
 };
 
-int StratixII::getIntNAdderCost(int wIn, int n)
+int StratixIV::getIntNAdderCost(int wIn, int n)
 {
 	int chunkSize, lastChunkSize, nr, a, b, cost;
 	
 	suggestSubaddSize(chunkSize, wIn);
 	lastChunkSize = wIn%chunkSize;
 	nr = ceil((double) wIn/chunkSize);
-	a = (nr-1)*wIn + (nr-1)*nr/2 + wIn*((n-1)*n/2-1);
-	b = nr*lastChunkSize + (nr-2)*(nr-1)*chunkSize/2 + nr*(nr-1)/2 + (n-1)*chunkSize;
-	cost = max(a,b)/2;
+	a = (nr-1)*wIn + (nr-1)*nr/2 + wIn*((n-1)*n/2-1)+nr*(n-2);
+	b = nr*lastChunkSize + nr*(nr-1)*(chunkSize+1)/2 + nr*(n-1) + (n-2)*wIn;
+	cost = (a+b)/2;
 	return cost;
 }
 

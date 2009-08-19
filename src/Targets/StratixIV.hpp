@@ -1,5 +1,5 @@
 /*
- * A model of Stratix II FPGA optimized for (EP2S15F484C3 speed grade -3)
+ * A model of Stratix IV FPGA optimized for (EP4S40G2F40C2ES1 speed grade 2)
  *
  * Author : Florent de Dinechin, Sebastian Banescu
  *
@@ -21,8 +21,8 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
 */
 
-#ifndef STRATIXII_HPP
-#define  STRATIXII_HPP
+#ifndef STRATIXIV_HPP
+#define  STRATIXIV_HPP
 #include <iostream>
 #include <sstream>
 #include <vector>
@@ -32,53 +32,56 @@
 #include <gmpxx.h>
 #include "../Target.hpp"
 
-/** Class for representing an StratixII target */
-class StratixII : public Target
+/** Class for representing an StratixIV target */
+class StratixIV : public Target
 {
 public:
 
 	/** The default constructor. */  
-	StratixII() : Target()	{
+	StratixIV() : Target()	{
 		sizeOfBlock 		= 4608; 	// the size of a primitive block is 2^9 * 9
-		fastcarryDelay_ 	= 3.5e-11; 	// aproximately right    
-		elemWireDelay_  	= 0.3e-11; 	// ???
+		fastcarryDelay_ 	= 0.9e-11; 	// *aproximately right    
+		elemWireDelay_  	= 0.105e-9;// *obtained from Quartus 2 Chip Planner
 		lut2lutDelay_   	= 1.5e-10; 	// ???
-		lutDelay_       	= 0.378e-9; // 378 ps  
-		ffDelay_        	= 0.127e-9; // 127 ps LE register clock-to-output max delay for -3 speed grade
+		lutDelay_       	= 0.355e-9; // 355 ps  
+		ffDelay_        	= 0.069e-9; // *obtained from Quartus 2 Chip Planner
 		multXInputs_    	= 36;
 		multYInputs_    	= 36;
 		lutInputs_			= 6;
-		almsPerLab_			= 8;		// there are 8 ALMs per LAB
+		almsPerLab_			= 10;		// there are 10 ALMs per LAB
 		//slice2sliceDelay_	= 0.265e-9;	// an average value over R4, R24, C4, C16 interconnects delays
 		// all these values are set precisely to match the Stratix 2
-		lut2_ 				= 0.162e-9; // obtained from Handbook
-		lut3_				= 0.280e-9; // obtained from Handbook
-		lut4_				= 0.378e-9; // obtained from Handbook
-		innerLABcarryDelay_	= 0.146e-9; // obtained from Quartus 2 Chip Planner
-		interLABcarryDelay_	= 0.245e-9; // obtained from Quartus 2 Chip Planner
+		lut2_ 				= 0.184e-9; // *obtained from Quartus 2 Chip Planner
+		lut3_				= 0.228e-9; // *obtained from Quartus 2 Chip Planner
+		lut4_				= 0.235e-9; // *obtained from Handbook
+		innerLABcarryDelay_	= 0.067e-9; // *obtained from Quartus 2 Chip Planner
+		interLABcarryDelay_	= 0.129e-9; // *obtained from Quartus 2 Chip Planner
 		shareOutToCarryOut_	= 0.172e-9; // obtained from Quartus 2 Chip Planner
-		muxStoO_			= 0.189e-9; // obtained from Quartus 2 Chip Planner by subtraction
-		fdCtoQ_				= 0.352e-9; // obtained from Quartus 2 Chip Planner by subtraction
-		carryInToSumOut_	= 0.125e-9;	// obtained from Quartus 2 Chip Planner
+		//muxStoO_			= 0.189e-9; // obtained from Quartus 2 Chip Planner by subtraction
+		fdCtoQ_				= 0.214e-9; // *obtained from Quartus 2 Chip Planner by subtraction
+		carryInToSumOut_	= 0.291e-9;	// *obtained from Quartus 2 Chip Planner
 		// DSP parameters
 		multiplierWidth_[0] = 9;
-		multiplierWidth_[1] = 18;
-		multiplierWidth_[2] = 36;
+		multiplierWidth_[1] = 12;
+		multiplierWidth_[2] = 18;
+		multiplierWidth_[3] = 36;
 		
-		multiplierDelay_[0] = 2.439e-9; // obtained experimentaly from Quartus 2. Value in handbook is: 2.880e-9
-		multiplierDelay_[1] = 2.724e-9; // obtained experimentaly from Quartus 2. Value in handbook is: 2.990e-9
-		multiplierDelay_[2] = 4.000e-9; // obtained experimentaly from Quartus 2. Value in handbook is: 4.450e-9
+		multiplierDelay_[0] = 3.156e-9; // *obtained experimentaly from Quartus 2
+		multiplierDelay_[1] = 3.069e-9; // *obtained experimentaly from Quartus 2
+		multiplierDelay_[2] = 2.744e-9; // *obtained experimentaly from Quartus 2
+		multiplierDelay_[3] = 3.604e-9; // *obtained experimentaly from Quartus 2
 		
 		inputRegDelay_[0] = 2.030e-9;
 		inputRegDelay_[1] = 2.010e-9;
 		inputRegDelay_[2] = 2.010e-9;
+		inputRegDelay_[3] = 2.010e-9;
 	
 		pipe2OutReg2Add = 1.450e-9; 
 		pipe2OutReg4Add = 1.850e-9; 
 	}
 	
 	/** The destructor */
-	virtual ~StratixII() {}
+	virtual ~StratixIV() {}
 
 	/** overloading the virtual functions of Target
 	 * @see the target class for more details 
@@ -122,9 +125,9 @@ private:
 	int    almsPerLab_;			/**< The number of ALMs contained by a LAB */
 	
 	// DSP parameters
-	int 	multiplierWidth_[3];/**< The multiplier width available */
-	double 	multiplierDelay_[3];/**< The corresponding delay for each multiplier width available */
-	double	inputRegDelay_[3];	/**< The input register delay to DSP block for each multiplier width available */
+	int 	multiplierWidth_[4];/**< The multiplier width available */
+	double 	multiplierDelay_[4];/**< The corresponding delay for each multiplier width available */
+	double	inputRegDelay_[4];	/**< The input register delay to DSP block for each multiplier width available */
 	double	pipe2OutReg2Add; 	/**< The DPS block pipeline register to output register delay in two-multipliers adder mode */
 	double  pipe2OutReg4Add; 	/**< The DPS block pipeline register to output register delay in four-multipliers adder mode */
 };
