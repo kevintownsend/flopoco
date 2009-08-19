@@ -96,6 +96,7 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,i
 	internFreq = tempFreq;
 	
 	addOutput("O",outputWidth);
+	addOutput("C",outputWidth);
 	addOutput("F",1);
 	//addFPOutput("O",8,23);
 	
@@ -132,11 +133,23 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,i
 	
 	//cout<<"adresa:="<<addrWidth;
 	
-	vhdl<<tab<<"process(out_clk1)"<<endl;
+	vhdl<<tab<<"process(out_clk1,rst)"<<endl;
 	vhdl<<tab<<"variable c1:std_logic_vector(5 downto 0):=(others=> '0');"<<endl;
 	vhdl<<tab<<"variable temp:std_logic_vector(1 downto 0):= \"01\";"<<endl;
 	vhdl<<tab<<"begin"<<endl;
+	
+	vhdl<<tab<<tab<<"if rst='1' then"<<endl;
+	vhdl<<tab<<tab<<tab<<"c1:=(others=>'0');"<<endl;
+	vhdl<<tab<<tab<<tab<<"temp:=\"01\";"<<endl;
+	vhdl<<tab<<tab<<tab<<"selectionVal1<='1';"<<endl;
+	vhdl<<tab<<tab<<tab<<"out_clk3<='0'; "<<endl;
+	vhdl<<tab<<tab<<"else "<<endl;
+	
+	
 	vhdl<<tab<<tab<<" if out_clk1'event and out_clk1 = '1' then"<<endl;
+	
+	
+	
 	vhdl<<tab<<tab<<tab<<"if c1 = 0 and temp = \"00\" then"<<endl;
 	vhdl<<tab<<tab<<tab<<tab<<" c1:=(others=>'0');"<<endl;
 	vhdl<<tab<<tab<<tab<<tab<<" temp:=\"01\";"<<endl;
@@ -162,22 +175,34 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,i
 	vhdl<<tab<<tab<<tab<<tab<<use("selectionVal1")<<" <= '0'; "<<endl;
 	vhdl<<tab<<tab<<tab<<"end if;"<<endl;
 	vhdl<<tab<<tab<<"end if;"<<endl;
+	vhdl<<tab<<tab<<"end if;"<<endl;
 	vhdl<<tab<<declare("lowAddress1",6)<<" <= c1;"<<endl;
 	vhdl<<tab<<"end process;"<<endl;
 	vhdl<<endl;
 	
 	
 	
-	vhdl<<tab<<"process(out_clk3)"<<endl;
+	vhdl<<tab<<"process(out_clk3,rst)"<<endl;
 	vhdl<<tab<<"variable c1:std_logic_vector("<<addrWidth - 6 -1<<" downto 0):=(others=> '0');"<<endl;
 	vhdl<<tab<<"begin"<<endl;
+	
+	vhdl<<tab<<tab<<"if rst='1' then"<<endl;
+	vhdl<<tab<<tab<<tab<<"c1:=(others=>'0');"<<endl;
+	vhdl<<tab<<tab<<tab<<"out_clk2<='0'; "<<endl;
+	vhdl<<tab<<tab<<"else "<<endl;
+	
 	vhdl<<tab<<tab<<" if out_clk3'event and out_clk3 = '1' then"<<endl;
+	
+	
+	
+	
 	vhdl<<tab<<tab<<" if c1 = "<<limitOfPoints<<" then "<<endl;
 	vhdl<<tab<<tab<<tab<<declare("out_clk2",1)<<" <= '1';"<<endl;
 	vhdl<<tab<<tab<<tab<<"c1 := (others=>'0');"<<endl;
 	vhdl<<tab<<tab<<" else "<<endl;
 	vhdl<<tab<<tab<<tab<<use("out_clk2")<<" <= '0';"<<endl;
 	vhdl<<tab<<tab<<tab<<"c1:=c1+'1';"<<endl;
+	vhdl<<tab<<tab<<"end if;"<<endl;
 	vhdl<<tab<<tab<<"end if;"<<endl;
 	vhdl<<tab<<tab<<"end if;"<<endl;
 	vhdl<<tab<<declare("highAddress1",addrWidth - 6)<<" <= c1;"<<endl;
@@ -188,11 +213,22 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,i
 	
 	
 	
-	vhdl<<tab<<"process(out_clk2)"<<endl;
+	vhdl<<tab<<"process(out_clk2,rst)"<<endl;
 	vhdl<<tab<<"variable c2:std_logic_vector(5 downto 0):=(others=> '0');"<<endl;
 	vhdl<<tab<<"variable temp:std_logic_vector(1 downto 0):= \"01\";"<<endl;
 	vhdl<<tab<<"begin"<<endl;
+	
+	vhdl<<tab<<tab<<"if rst='1' then"<<endl;
+	vhdl<<tab<<tab<<tab<<"c2:=(others=>'0');"<<endl;
+	vhdl<<tab<<tab<<tab<<"temp:=\"01\";"<<endl;
+	vhdl<<tab<<tab<<tab<<"selectionVal2<='1';"<<endl;
+	vhdl<<tab<<tab<<tab<<"out_clk4<='0'; "<<endl;
+	vhdl<<tab<<tab<<"else "<<endl;
+	
 	vhdl<<tab<<tab<<" if out_clk2'event and out_clk2 = '1' then"<<endl;
+	
+	
+	
 	vhdl<<tab<<tab<<tab<<"if c2 = 0 and temp = \"00\" then"<<endl;
 	vhdl<<tab<<tab<<tab<<tab<<"c2:=(others=>'0');"<<endl;
 	vhdl<<tab<<tab<<tab<<tab<<" temp:=\"01\";"<<endl;
@@ -220,6 +256,7 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,i
 	vhdl<<tab<<tab<<tab<<tab<<use("selectionVal2")<<" <= '0'; "<<endl;
 	vhdl<<tab<<tab<<tab<<"end if;"<<endl;
 	vhdl<<tab<<tab<<"end if;"<<endl;
+	vhdl<<tab<<tab<<"end if;"<<endl;
 	vhdl<<tab<<declare("lowAddress2",6)<<" <= c2;"<<endl;
 	vhdl<<tab<<"end process;"<<endl;
 	vhdl<<endl;
@@ -227,10 +264,18 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,i
 	
 	//out_clk6 will be used for incrementing the values of signal_t
 	
-	vhdl<<tab<<"process(out_clk4)"<<endl;
+	vhdl<<tab<<"process(out_clk4,rst)"<<endl;
 	vhdl<<tab<<"variable c2:std_logic_vector("<<addrWidth - 6 -1<<" downto 0):=(others=> '0');"<<endl;
 	vhdl<<tab<<"begin"<<endl;
+	
+	vhdl<<tab<<tab<<"if rst='1' then"<<endl;
+	vhdl<<tab<<tab<<tab<<"c2:=(others=>'0');"<<endl;
+	vhdl<<tab<<tab<<tab<<"out_clk6<='0'; "<<endl;
+	vhdl<<tab<<tab<<"else "<<endl;
+	
 	vhdl<<tab<<tab<<" if out_clk4'event and out_clk4 = '1' then"<<endl;
+	
+	
 	
 	vhdl<<tab<<tab<<" if c2 = "<<limitOfPoints<<" then "<<endl;
 	vhdl<<tab<<tab<<tab<<declare("out_clk6",1)<<" <= '1';"<<endl;
@@ -242,6 +287,7 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,i
 	
 	//vhdl<<tab<<tab<<tab<<"c2:=c2+'1';"<<endl;
 	vhdl<<tab<<tab<<"end if;"<<endl;
+	vhdl<<tab<<tab<<"end if;"<<endl;
 	vhdl<<tab<<declare("highAddress2",addrWidth - 6)<<" <= c2;"<<endl;
 	vhdl<<tab<<"end process;"<<endl;
 	vhdl<<endl;
@@ -250,16 +296,26 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,i
 	
 	//here a finnish signal can be inserted when variable temp has reached 1000..
 	
-	vhdl<<tab<<"process(out_clk6)"<<endl;
+	vhdl<<tab<<"process(out_clk6,rst)"<<endl;
 	vhdl<<tab<<"variable temp: std_logic_vector("<<integratorWidth+1<<" downto 0):=(others=>'0');"<<endl;
 	vhdl<<tab<<"begin"<<endl;
+	
+	vhdl<<tab<<tab<<"if rst='1' then"<<endl;
+	vhdl<<tab<<tab<<tab<<"temp:=(others=>'0');"<<endl;
+	vhdl<<tab<<tab<<tab<<"finnishSignal<='0';"<<endl;
+	vhdl<<tab<<tab<<"else "<<endl;
+	
 	vhdl<<tab<<tab<<"if out_clk6'event and out_clk6='1' then"<<endl;
+	
+	
+	
 	vhdl<<tab<<tab<<tab<<"temp :=temp + '1';"<<endl;
 	vhdl<<tab<<tab<<"end if;"<<endl;
 	vhdl<<tab<<tab<<"if temp = "<<intpow2(integratorWidth)<<" then"<<endl;
 	vhdl<<tab<<tab<<tab<<declare("finnishSignal",1)<<" <= '1' ;"<<endl;
 	vhdl<<tab<<tab<<"else"<<endl;
 	vhdl<<tab<<tab<<tab<<use("finnishSignal")<<" <= '0';"<<endl;
+	vhdl<<tab<<tab<<"end if;"<<endl;	
 	vhdl<<tab<<tab<<"end if;"<<endl;	
 	vhdl<<tab<<declare("signal_tp",integratorWidth+1)<<" <= '0' & temp"<<range(integratorWidth-1,0)<<";"<<endl;
 	vhdl<<tab<<"end process;"<<endl;
@@ -277,13 +333,22 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,i
 	vhdl<<endl;
 	
 	
-	vhdl<<tab<<declare("selectionVal",1)<<" <= "<<use("selectionVal2")<<" or "<<use("selectionVal1")<<" or "<<use("closeAddr")<<" or "<<use("finnishSignal")<<";"<<endl;
+	vhdl<<tab<<declare("selectionVal",1)<<" <= "<<use("selectionVal2")<<" or "<<use("selectionVal1")<<" or "<<use("closeAddr")<<" or "<<use("finnishSignal")<<" or rst"<<";"<<endl;
 	
-	vhdl<<tab<<"process(out_clk1)"<<endl;
+	vhdl<<tab<<"process(out_clk1,rst)"<<endl;
 	vhdl<<tab<<"variable temp:std_logic:='0';"<<endl;
 	vhdl<<tab<<"begin"<<endl;
+	
+	vhdl<<tab<<tab<<"if rst='1' then"<<endl;
+	vhdl<<tab<<tab<<tab<<"temp:='0';"<<endl;	
+	vhdl<<tab<<tab<<"else "<<endl;
+	
 	vhdl<<tab<<tab<<"if out_clk1'event and out_clk1 = '1' then"<<endl;
+	
+	
+	
 	vhdl<<tab<<tab<<tab<<"temp:="<<use("selectionVal")<<";"<<endl;
+	vhdl<<tab<<tab<<"end if;"<<endl;
 	vhdl<<tab<<tab<<"end if;"<<endl;
 	vhdl<<tab<<declare("selectionValD",1)<<"<= temp;"<<endl;
 	vhdl<<tab<<"end process;"<<endl;
@@ -326,15 +391,26 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,i
 	vhdl << instance(memCoordZ, "memCoordZ");
 	
 	vhdl<<endl;
-	vhdl<<tab<<"process(out_clk1)"<<endl;
+	vhdl<<tab<<"process(out_clk1,rst)"<<endl;
 	vhdl<<tab<<"variable tempX: std_logic_vector("<<inputWidth-1<<" downto 0):=(others=>'0');"<<endl;
 	vhdl<<tab<<"variable tempY: std_logic_vector("<<inputWidth-1<<" downto 0):=(others=>'0');"<<endl;
 	vhdl<<tab<<"variable tempZ: std_logic_vector("<<inputWidth-1<<" downto 0):=(others=>'0');"<<endl;
 	vhdl<<tab<<"begin"<<endl;
+	
+	vhdl<<tab<<tab<<"if rst='1' then"<<endl;
+	vhdl<<tab<<tab<<tab<<"tempX:=(others=>'0');"<<endl;	
+	vhdl<<tab<<tab<<tab<<"tempY:=(others=>'0');"<<endl;	
+	vhdl<<tab<<tab<<tab<<"tempZ:=(others=>'0');"<<endl;	
+	vhdl<<tab<<tab<<"else "<<endl;
+	
 	vhdl<<tab<<tab<<"if  out_clk1'event and out_clk1 = '1' then"<<endl;
+	
+	
+	
 	vhdl<<tab<<tab<<tab<<"tempX:="<<use("dataX1")<<";"<<endl;
 	vhdl<<tab<<tab<<tab<<"tempY:="<<use("dataY1")<<";"<<endl;
 	vhdl<<tab<<tab<<tab<<"tempZ:="<<use("dataZ1")<<";"<<endl;
+	vhdl<<tab<<tab<<"end if;"<<endl;
 	vhdl<<tab<<tab<<"end if;"<<endl;
 	vhdl<<tab<<tab<<declare("dataD1X1",inputWidth)<<" <= tempX;"<<endl;
 	vhdl<<tab<<tab<<declare("dataD1Y1",inputWidth)<<" <= tempY;"<<endl;
@@ -343,15 +419,27 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,i
 	
 	
 	vhdl<<endl;
-	vhdl<<tab<<"process(out_clk1)"<<endl;
+	vhdl<<tab<<"process(out_clk1,rst)"<<endl;
 	vhdl<<tab<<"variable tempX: std_logic_vector("<<inputWidth-1<<" downto 0):=(others=>'0');"<<endl;
 	vhdl<<tab<<"variable tempY: std_logic_vector("<<inputWidth-1<<" downto 0):=(others=>'0');"<<endl;
 	vhdl<<tab<<"variable tempZ: std_logic_vector("<<inputWidth-1<<" downto 0):=(others=>'0');"<<endl;
 	vhdl<<tab<<"begin"<<endl;
+	
+	
+	vhdl<<tab<<tab<<"if rst='1' then"<<endl;
+	vhdl<<tab<<tab<<tab<<"tempX:=(others=>'0');"<<endl;	
+	vhdl<<tab<<tab<<tab<<"tempY:=(others=>'0');"<<endl;	
+	vhdl<<tab<<tab<<tab<<"tempZ:=(others=>'0');"<<endl;	
+	vhdl<<tab<<tab<<"else "<<endl;
+	
 	vhdl<<tab<<tab<<"if  out_clk1'event and out_clk1 = '1' then"<<endl;
+	
+
+	
 	vhdl<<tab<<tab<<tab<<"tempX:="<<use("dataD1X1")<<";"<<endl;
 	vhdl<<tab<<tab<<tab<<"tempY:="<<use("dataD1Y1")<<";"<<endl;
 	vhdl<<tab<<tab<<tab<<"tempZ:="<<use("dataD1Z1")<<";"<<endl;
+	vhdl<<tab<<tab<<"end if;"<<endl;
 	vhdl<<tab<<tab<<"end if;"<<endl;
 	vhdl<<tab<<tab<<declare("dataD2X1",inputWidth)<<" <= tempX;"<<endl;
 	vhdl<<tab<<tab<<declare("dataD2Y1",inputWidth)<<" <= tempY;"<<endl;
@@ -360,15 +448,26 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,i
 	
 	
 	vhdl<<endl;
-	vhdl<<tab<<"process(out_clk2)"<<endl;
+	vhdl<<tab<<"process(out_clk2,rst)"<<endl;
 	vhdl<<tab<<"variable tempX: std_logic_vector("<<inputWidth-1<<" downto 0):=(others=>'0');"<<endl;
 	vhdl<<tab<<"variable tempY: std_logic_vector("<<inputWidth-1<<" downto 0):=(others=>'0');"<<endl;
 	vhdl<<tab<<"variable tempZ: std_logic_vector("<<inputWidth-1<<" downto 0):=(others=>'0');"<<endl;
 	vhdl<<tab<<"begin"<<endl;
+	
+	vhdl<<tab<<tab<<"if rst='1' then"<<endl;
+	vhdl<<tab<<tab<<tab<<"tempX:=(others=>'0');"<<endl;	
+	vhdl<<tab<<tab<<tab<<"tempY:=(others=>'0');"<<endl;	
+	vhdl<<tab<<tab<<tab<<"tempZ:=(others=>'0');"<<endl;	
+	vhdl<<tab<<tab<<"else "<<endl;
+	
 	vhdl<<tab<<tab<<"if  out_clk2'event and out_clk2 = '1' then"<<endl;
+	
+	
+	
 	vhdl<<tab<<tab<<tab<<"tempX:="<<use("dataX2")<<";"<<endl;
 	vhdl<<tab<<tab<<tab<<"tempY:="<<use("dataY2")<<";"<<endl;
 	vhdl<<tab<<tab<<tab<<"tempZ:="<<use("dataZ2")<<";"<<endl;
+	vhdl<<tab<<tab<<"end if;"<<endl;
 	vhdl<<tab<<tab<<"end if;"<<endl;
 	vhdl<<tab<<tab<<declare("dataD1X2",inputWidth)<<" <= tempX;"<<endl;
 	vhdl<<tab<<tab<<declare("dataD1Y2",inputWidth)<<" <= tempY;"<<endl;
@@ -377,15 +476,26 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,i
 	
 	
 	vhdl<<endl;
-	vhdl<<tab<<"process(out_clk2)"<<endl;
+	vhdl<<tab<<"process(out_clk2,rst)"<<endl;
 	vhdl<<tab<<"variable tempX: std_logic_vector("<<inputWidth-1<<" downto 0):=(others=>'0');"<<endl;
 	vhdl<<tab<<"variable tempY: std_logic_vector("<<inputWidth-1<<" downto 0):=(others=>'0');"<<endl;
 	vhdl<<tab<<"variable tempZ: std_logic_vector("<<inputWidth-1<<" downto 0):=(others=>'0');"<<endl;
 	vhdl<<tab<<"begin"<<endl;
+	
+	vhdl<<tab<<tab<<"if rst='1' then"<<endl;
+	vhdl<<tab<<tab<<tab<<"tempX:=(others=>'0');"<<endl;	
+	vhdl<<tab<<tab<<tab<<"tempY:=(others=>'0');"<<endl;	
+	vhdl<<tab<<tab<<tab<<"tempZ:=(others=>'0');"<<endl;	
+	vhdl<<tab<<tab<<"else "<<endl;
+	
+	
 	vhdl<<tab<<tab<<"if  out_clk2'event and out_clk2 = '1' then"<<endl;
+	
+	
 	vhdl<<tab<<tab<<tab<<"tempX:="<<use("dataD1X2")<<";"<<endl;
 	vhdl<<tab<<tab<<tab<<"tempY:="<<use("dataD1Y2")<<";"<<endl;
 	vhdl<<tab<<tab<<tab<<"tempZ:="<<use("dataD1Z2")<<";"<<endl;
+	vhdl<<tab<<tab<<"end if;"<<endl;
 	vhdl<<tab<<tab<<"end if;"<<endl;
 	vhdl<<tab<<tab<<declare("dataD2X2",inputWidth)<<" <= tempX;"<<endl;
 	vhdl<<tab<<tab<<declare("dataD2Y2",inputWidth)<<" <= tempY;"<<endl;
@@ -1227,6 +1337,11 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,i
 	
 	syncCycleFromSignal("value4LongAcc");
 	
+	
+	//The value of the reset for the final accumulator should be delayed with number of pipeline stages until the accumulator -1
+	vhdl<<tab<<declare("myrst",1)<<" <= "<<use("out_rst")<<";"<<endl;
+	
+	
 	nextCycle();
 	
 	
@@ -1241,6 +1356,23 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,i
 	
 	vhdl<<tab<<declare("value4LongAcctemp",wE+wF+3)<<" <= "<<use("value4LongAccShift")<<";"<<endl;
 	
+	// in the eventuality that the undefinded inputs will be filtered from the accumulator
+	
+	//~ vhdl<<tab<<declare("filterSel",1)<<" <= ";
+	//~ for(int i=0;i<wE+wF+3;i++)
+		//~ if(i<wE+wF+3-1)
+			//~ vhdl<<"value4LongAcctemp"<<of(i)<<" or ";
+		//~ else
+			//~ vhdl<<"value4LongAcctemp"<<of(i)<<" ; ";
+	//~ vhdl<<endl;
+		
+	//~ vhdl<<tab<<"with "<<use("filterSel")<<" select "<<endl;
+	//~ vhdl<<tab<<tab<<declare("tempRez4AccFilter",wE+wF+3)<<" <= "<<endl;
+	//~ vhdl<<tab<<tab<<tab<<use("value4LongAcctemp")<<" when '0', "<<endl;
+	//~ vhdl<<tab<<tab<<tab<<use("value4LongAcctemp")<<" when '1', "<<endl;
+	//~ vhdl<<tab<<tab<<tab<<zeroGenerator(wE+wF+3,0)<<" when others; "<<endl;
+		
+	
 	target->setFrequency(((double) internFreq) );
 	finalAcc = new LongAcc(target, wE, wF, MaxMSBO, LSBO, MSBO);
 	target->setFrequency(tempFreq);
@@ -1248,16 +1380,18 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,i
 	oplist.push_back(finalAcc);
 	inPortMap  (finalAcc, "X", use("value4LongAcctemp"));
 	outPortMap (finalAcc, "A","finalResult");
+	outPortMap (finalAcc, "C","carryResult");
 	outPortMap (finalAcc, "XOverflow","XOverflow");
 	outPortMap (finalAcc, "XUnderflow","XUnderflow");
 	outPortMap (finalAcc, "AccOverflow","AccOverflow");
-	vhdl << instance(finalAcc, "finalAcc","out_clk1","rst");
+	vhdl << instance(finalAcc, "finalAcc","out_clk1","myrst");
 	//vhdl << instance(finalAcc, "finalAcc");
 		
 	syncCycleFromSignal("finalResult");
 		
 	
 	vhdl<<tab<<"O <= "<<use("finalResult")<<range(outputWidth-1,0)<<";"<<endl;
+	vhdl<<tab<<"C <= "<<use("carryResult")<<range(outputWidth-1,0)<<";"<<endl;
 	vhdl<<tab<<" F <= "<<use("finnishSignal")<<";"<<endl;
 	
 	//vhdl<<tab<<"O<="<<use("Var1")<<range(outputWidth-1,0)<<" or "<<use("accVar4")<<range(outputWidth-1,0)<<" or "<<use("numerator4Log")<<range(outputWidth-1,0)<<";"<<endl;
