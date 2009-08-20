@@ -83,7 +83,7 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,i
 	setCopyrightString("Bogdan Pasca, Radu Tudoran (2009)");
 	
 	inputWidth= MSBI-LSBI;
-	outputWidth= MSBO-LSBO;
+	outputWidth= MSBO-LSBO+1;
 	integratorWidth=3;
 	inputWidthSegments=2*(inputWidth-1)+1;
 	
@@ -355,7 +355,7 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,i
 	vhdl<<endl;
 	
 	vhdl<<tab<<declare("selection4Pipeline",1)<<" <= "<<use("selectionVal")<<" or "<<use("selectionValD")<<";"<<endl;
-	
+	vhdl<<tab<<declare("selectionAcc",1)<<" <= not( "<<use("selection4Pipeline")<<" );"<<endl;
 	
 	//Memories instantiation
 	
@@ -1353,8 +1353,12 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,i
 	vhdl<<tab<<declare("value4LongAccShift",wF+wE+3)<<" <= "<<use("value4LongAcc")<<range(wE+wF+3-1,wE+wF)<<" & "<<use("expVar4shift")<<" & "<<use("value4LongAcc")<<range(wF-1,0)<<";"<<endl;
 	
 	
-	
-	vhdl<<tab<<declare("value4LongAcctemp",wE+wF+3)<<" <= "<<use("value4LongAccShift")<<";"<<endl;
+	vhdl<<endl;
+	vhdl<<tab<<"with "<<use("selectionAcc")<<" select "<<endl;
+	vhdl<<tab<<declare("value4LongAcctemp",wE+wF+3)<<" <= "<<endl;
+	vhdl<<tab<<tab<<use("value4LongAccShift")<<" when '1',"<<endl;
+	vhdl<<tab<<tab<<zeroGenerator(wE+wF+3,0)<<" when others;"<<endl;
+	vhdl<<endl;
 	
 	// in the eventuality that the undefinded inputs will be filtered from the accumulator
 	
