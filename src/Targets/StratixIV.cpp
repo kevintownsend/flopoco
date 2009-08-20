@@ -74,12 +74,12 @@ bool StratixIV::suggestSubmultSize(int &x, int &y, int wInX, int wInY){
 // (DSP blocks are 36x36 and my be split as 9x9 or 18x18)
 	if (getUseHardMultipliers()){
 		x = y = 0;//max(wInX, wInY);
-		int padX[3], padY[3]; // nr of zero padding for a specific width multiplier
+		int padX[4], padY[4]; // nr of zero padding for a specific width multiplier
 		double maxF; // will hold the maximum possible freqeuncy for each multiplier width
-		for (int i=0; i<3; i++){ // for each multiplier width available
-			maxF = 1/(inputRegDelay_[i] + multiplierDelay_[i]); // maximum possible freqeuncy 
-			padX[i] = multiplierWidth_[i] - (wInX % multiplierWidth_[i]);
-			padY[i] = multiplierWidth_[i] - (wInY % multiplierWidth_[i]);
+		for (int i=0; i<4; i++){ // for each multiplier width available
+			maxF = 1/multiplierDelay_[i]; // maximum possible freqeuncy 
+			padX[i] = ceil((double)wInX/multiplierWidth_[i])*multiplierWidth_[i] - wInX + ceil((double)wInX/multiplierWidth_[i])*multiplierWidth_[i] - wInX;
+			padY[i] = ceil((double)wInY/multiplierWidth_[i])*multiplierWidth_[i] - wInY + ceil((double)wInY/multiplierWidth_[i])*multiplierWidth_[i] - wInY;
 			
 			if ((wInY < multiplierWidth_[i]) && (y != 0)){
 				if ((i > 0) && (padY[i] > 2*padY[i-1]))
@@ -113,9 +113,9 @@ bool StratixIV::suggestSubmultSize(int &x, int &y, int wInX, int wInY){
 			return true;
 		}else{	// to obtain the highest freqency with lower logic utilization we need 18x18
 			if (x == 0)
-				x = 9;
+				x = 18;
 			if (y == 0)
-				y = 36;
+				y = 18;
 			return true;
 		}
 	}else{
@@ -144,19 +144,16 @@ bool StratixIV::suggestSubaddSize(int &x, int wIn){
 bool  StratixIV::suggestSlackSubaddSize(int &x, int wIn, double slack){
 
 	float time = 1./frequency() - slack - (distantWireDelay(10) + fdCtoQ_ + lutDelay() + carryInToSumOut_ + ffDelay_);
-	cout << "suggestSubaddSize : time = " << time << endl;
 	int carryFlag = 0;
 	int chunkSize = 0;
 	
 	while (time > 0)
 	{
 		chunkSize++;
-		cout << "suggestSubaddSize : chunkSize = " << chunkSize << " time = " << time << endl;
 		
 		if (carryFlag == 0) 
 		{
 			time -= fastcarryDelay_;
-			cout << "suggestSubaddSize : subtracted fastcarryDelay"<< endl;
 			if (chunkSize % (almsPerLab_*2) == 0)
 				carryFlag = 2;
 			else if (chunkSize % almsPerLab_ == 0)
@@ -166,13 +163,11 @@ bool  StratixIV::suggestSlackSubaddSize(int &x, int wIn, double slack){
 		else if (carryFlag == 1)
 		{
 			time -= innerLABcarryDelay_;
-			cout << "suggestSubaddSize : subtracted innerLABCarryDelay"<< endl;
 			carryFlag = 0;
 		}	
 		else if (carryFlag == 2)
 		{
 			time -= interLABcarryDelay_;
-			cout << "suggestSubaddSize : subtracted interLABCarryDelay"<< endl;
 			carryFlag = 0;
 		}
 	}
@@ -190,26 +185,64 @@ bool  StratixIV::suggestSlackSubaddSize(int &x, int wIn, double slack){
   
 int StratixIV::getIntMultiplierCost(int wInX, int wInY){
 	
-	int lutCost = 0;
-	//int chunkSize_ = this->lutInputs()/2; SYNTHESIS NOT EFFICIENT WITH 6-LUTs
-	int chunkSize_ = 2; 
+	int cost = 0;
+	int halfLut = lutInputs_/2;
+	int cx = int(ceil((double) wInX/halfLut));
+	int cy = int(ceil((double) wInY/halfLut));
+	if (cx > cy) // set cx as the min and cy as the max
+	{
+		int tmp = cx;
+		cx = cy;
+		cy = tmp;
+	}
 	
-	int chunksX =  int(ceil( ( double(wInX) / (double) chunkSize_) ));
-	int chunksY =  int(ceil( ( double(wInY) / (double) chunkSize_) ));
+	float p = (double)cy/(double)halfLut; // number of chunks concatenated per operand
+	float r = p - floor(p); // relative error; used for detecting how many operands have ceil(p) chunks concatenated
+	int chunkSize, lastChunkSize, nr, aux;
+	suggestSubaddSize(chunkSize, wInX+wInY);
+	lastChunkSize = (wInX+wInY)%chunkSize;
+	nr = ceil((double) (wInX+wInY)/chunkSize);
 
-	for (int i=0; i<chunksX; i++)
-		for (int j=0; j<chunksY; j++)
-			lutCost += 4; // one lut for each bit of a partial product
-						
-	return lutCost + this->getIntNAdderCost(chunksX*chunkSize_, chunksY*chunkSize_);
-
+	
+	if (r == 0.0) // all IntNAdder operands have p concatenated partial products
+	{
+		aux = halfLut*cx;
+			
+		cost = p*lutInputs_*(aux-2)*(aux-1)/2; // registered partial products without zero paddings
+	}
+	else if (r > 0.5) // 2/3 of the IntNAdder operands have p concatenated partial products
+	{
+		aux = (halfLut-1)*cx;
+		
+		cost = ceil(p)*lutInputs_*(aux-2)*(aux-1)/2 + floor(p)*lutInputs_*((aux*cx)+(cx-2)*(cx-1)/2);// registered partial products without zero paddings
+	}
+	else if (r > 0) // 1/3 of the IntNAdder operands have p concatenated partial products
+	{
+		aux = (halfLut-1)*cx;
+		
+		cost = ceil(p)*lutInputs_*(cx-2)*(cx-1)/2 + floor(p)*lutInputs_*((aux*cx)+(aux-2)*(aux-1)/2);// registered partial products without zero paddings
+	}
+	
+	cost += p*lutInputs_*aux + halfLut*(aux-1)*aux/2; // registered addition results on each pipeline stage of the IntNAdder
+	cost += (nr-1)*(wInX+wInY) + (nr-1)*nr/2 + nr*lastChunkSize + nr*(nr-1)*(chunkSize+1)/2; // final IntAdder cost LUT + Registers
+	cost += cx*cy*lutInputs_*2; // LUT cost for small multiplications 
+	
+	return cost/2;
 }
 
 void StratixIV::getDSPWidths(int &x, int &y){
 	// set the multiplier width acording to the desired frequency
-	for (int i=0; i<3; i++)
+	bool widthSet = false;
+	
+	for (int i=0; i<4; i++)
 		if (this->frequency() < 1/multiplierDelay_[i])
+		{
 			x = y = multiplierWidth_[i];
+			widthSet = true;
+		}
+		
+	if (!widthSet) // this happens when the desired freqency is too high
+		x = y = 18;
 }
 
 int StratixIV::getEquivalenceSliceDSP(){
