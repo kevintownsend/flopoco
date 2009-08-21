@@ -96,7 +96,9 @@ Operator(target), wIn_(wIn), N_(N), inputDelays_(inputDelays)
 			int scoreSecondDesign = nbOfChunksSecondDesign;
 			if (verbose) cout << "Exploring second design ... score is:"<< scoreSecondDesign << endl;
 			
-			if (scoreFirstDesign > scoreSecondDesign){
+			if ((scoreFirstDesign > scoreSecondDesign) &&
+				(maxInputDelay <= 0)) // this expresion was added to ensure that the implemented design will have the necessary input delay
+			{
 				if (verbose) cout << "Implementation of the second design" << endl;
 				nbOfChunks = nbOfChunksSecondDesign;
 				target->suggestSubaddSize(chunkSize_, wIn_); 
