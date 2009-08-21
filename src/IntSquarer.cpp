@@ -52,11 +52,10 @@ Operator(target), wIn_(wIn), inputDelays_(inputDelays)
 	addOutput("R"  , 2*wIn_);
 
 
-	if (verbose){
-		cout <<"delay for X is   "<< inputDelays["X"]<<endl;	
+	if (verbose>=2){
+		cerr <<"> IntSquarer: delay for X is   "<< inputDelays["X"]<<endl;	
 	}
 
-	if (isSequential()){
 		if (wIn <= 17 ) {
 			vhdl << tab << "R <= X * X;" << endl; 
 		}
@@ -250,7 +249,7 @@ Operator(target), wIn_(wIn), inputDelays_(inputDelays)
 			cerr << " For the moment IntSquarer does not support inputs larger than 68 bits. " << endl;
 			exit (EXIT_FAILURE);
 		}
-	}
+	
 }
 
 IntSquarer::~IntSquarer() {
