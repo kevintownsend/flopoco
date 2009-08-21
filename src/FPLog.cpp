@@ -89,8 +89,8 @@ FPLog::FPLog(Target* target, int wE, int wF, int inTableSize)
 	i=1;
 	while(2*p[i] <= wF){ // for faithful rounding
 		if(i==1) { 	// stage 1 cannot be more accurate than 2p1-1
-			a[1] = p[1];
-			p[2] = p[1] + a[1] -1; // 2p[1]-1
+			a[1] = p[1];   // Cheating here, I am only able to prove for   p[1]-1
+			p[2] = 2*p[1]-1;
 		}
 		else {
 			a[i] = bitsPerStage;
@@ -120,7 +120,7 @@ FPLog::FPLog(Target* target, int wE, int wF, int inTableSize)
 	for (i=0; i<= stages; i++)
 		a[i] -= extraBitsperstage;
 	
-	// Recompute the pis
+	// Recompute the pi
 	p[1] = a[0]-2;
 	
 	for(i=1; i<=stages; i++){ // for faithful rounding
@@ -143,7 +143,8 @@ FPLog::FPLog(Target* target, int wE, int wF, int inTableSize)
 		pfinal = p[stages+1];
 	}
 	extraBits = pfinal - (wF>>1) -1;
-	cerr << "> FPLog\t after optimization:   pfinal=" << pfinal << "--- extraBits=" << extraBits << endl;
+	if(verbose>=2)
+		cerr << "> FPLog\t after optimization:   pfinal=" << pfinal << "--- extraBits=" << extraBits << endl;
 	
 	// Deduce the number of guard bits
 	gLog=max(3, intlog2(3*(stages+1)));
