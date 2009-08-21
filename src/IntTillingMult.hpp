@@ -135,9 +135,9 @@ private:
 	 
 	 void fillMatrix(int **&matrix,int lw,int lh,int topleftX,int topleftY,int botomrightX,int botomrightY,int value);
 	
-	/** This function resets all the conections that exists between DSPs of a configuration */
+	//~ /** This function resets all the conections that exists between DSPs of a configuration */
 	
-	void resetConnections(DSP** &config);
+	//~ void resetConnections(DSP** &config);
 	
 	/** This function will create connections between the existing DSPs in the configuration according to the policies of Altera or Virtex */
 	
@@ -150,6 +150,14 @@ private:
 	/** This function will sort the DSPs blocks by the topright corner */
 	
 	void sortDSPs(DSP** &config);
+	
+	/** This is a temporary function used only for displaing a configuration. It has no relevance to the algorithm. */
+	
+	void display(DSP** config);
+	
+	/** This function will be used to run the algorithm. the result of the algorithm (i..e. the best configuration) will be located in the member variable bestConfig */
+	
+	void runAlgorithm();
 
 };
 

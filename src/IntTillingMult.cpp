@@ -83,27 +83,30 @@ IntTilingMult:: IntTilingMult(Target* target, int wInX, int wInY,float ratio) :
 	One will be the estimated value(nrDSPs) and the second one will be nrDSPs-1	
 	*/
 		
-		cout<<"Starting initializing DSPs"<<endl;
-		initTiling(globalConfig,nrDSPs);
-		//~ globalConfig[0]->setTopRightCorner(5,8);
-		//~ globalConfig[0]->setBottomLeftCorner(23,26);
-		//~ globalConfig[0]->setTopRightCorner(27,15);
-		//~ globalConfig[0]->setBottomLeftCorner(45,33);
-		//~ globalConfig[1]->setTopRightCorner(2,0);
-		//~ globalConfig[1]->setBottomLeftCorner(20,18);
-		cout<<"Finnish initializing DSPs"<<endl;
-		 int t;
+	
+		
 		//~ cout<<"Number of slices for multiplication is "<<partitionOfGridSlices(globalConfig,t)<<endl;
 		//~ sortDSPs(globalConfig);
 		
 		//~ cout<<"Number of slices for multiplication is "<<partitionOfGridSlices(globalConfig,t)<<endl;
 		
 		
-		cout<<"Cost of configuration is "<<computeCost(globalConfig)<<endl;
+		
+		//cout<<"Cost of configuration is "<<computeCost(globalConfig)<<endl;
+		
+		//cout<<"Initial configuration"<<endl<<endl;
+		//display(globalConfig);
+		
+		
+		
 		
 		//~ cout<<"Partitions of grid before binding "<<partitionOfGridSlices(globalConfig,t)<<endl;
 		//~ cout<<"Operands from DSPs, from a maximum of "<<nrDSPs<<" we use "<<bindDSPs(globalConfig)<<endl;
 		//~ cout<<"Partitions of grid after binding "<<partitionOfGridSlices(globalConfig,t)<<endl;
+		
+		
+		
+		
 		
 		//~ for(int i=0;i<nrDSPs;i++)
 		//~ {
@@ -125,6 +128,42 @@ IntTilingMult:: IntTilingMult(Target* target, int wInX, int wInY,float ratio) :
 		//~ }
 		
 		
+		
+	runAlgorithm();
+	
+	cout<<"Estimated DSPs:= "<<nrDSPs <<endl;
+	target->getDSPWidths(x,y);
+	cout<<"Width of DSP is := "<<x<<" Height of DSP is:="<<y<<endl;
+	cout<<"Extra width:= "<<getExtraWidth()<<" \nExtra height:="<<getExtraHeight()<<endl;
+	
+	//~ initTiling(globalConfig,nrDSPs);
+	
+	//~ globalConfig[0]->setTopRightCorner(2,15);
+	//~ globalConfig[0]->setBottomLeftCorner(18,31);
+	//~ globalConfig[1]->setTopRightCorner(19,15);
+	//~ globalConfig[1]->setBottomLeftCorner(35,31);
+	
+	//~ int t;
+	//~ cout<<"cost of partitions is "<<partitionOfGridSlices(globalConfig,t);
+	//~ cout<<"Cost of obtained best is "<<computeCost(globalConfig)<<endl;
+	//~ display(globalConfig);
+	
+	//~ cout<<endl<<endl;
+	
+	//~ initTiling(globalConfig,nrDSPs);
+	
+	//~ globalConfig[0]->setTopRightCorner(2,14);
+	//~ globalConfig[0]->setBottomLeftCorner(18,30);
+	//~ globalConfig[1]->setTopRightCorner(19,14);
+	//~ globalConfig[1]->setBottomLeftCorner(35,30);
+	
+	//~ cout<<"cost of partitions is "<<partitionOfGridSlices(globalConfig,t);
+	//~ cout<<"Cost of obtained best is "<<computeCost(globalConfig)<<endl;
+	//~ display(globalConfig);
+		
+		
+	
+		
 	//~ /*we will try the algorithm with 2 values of nrDSPs	
 	//~ One will be the estimated value(nrDSPs) and the second one will be nrDSPs-1	
 	//~ */
@@ -138,18 +177,32 @@ IntTilingMult:: IntTilingMult(Target* target, int wInX, int wInY,float ratio) :
 			
 	//~ //this will initialize the bestConfig with the first configuration
 	//~ bestCost = FLT_MAX ;
+	//~ cout<<"Max score is"<<bestCost<<endl;
 	//~ //bestConfig = (DSP**)malloc(nrDSPs * sizeof(DSP*));
 	//~ bestConfig = new DSP*[nrDSPs];
 	//~ for(int i=0;i<nrDSPs;i++)
-	//~ 		bestConfig[i]= new DSP();
+			//~ bestConfig[i]= new DSP();
 	//~ compareCost();
+	//~ cout<<"New best score is"<<bestCost<<endl;
+	
+	//~ display(bestConfig);
+	
 	
 	//~ //the best configuration should be consider initially the first one. So the bestConfig parameter will be initialized with global config and hence the bestCost will be initialized with the first cost
 	
 	
 	//~ tilingAlgorithm(nrDSPs-1,nrDSPs-1,false);
 	
-		
+	//~ display(bestConfig);
+	//~ cout<<"Best cost is "<<bestCost<<endl;
+	
+	
+	
+	
+	
+	
+
+
 	//~ // After all configurations with the nrDSPs number of DSPs were evaluated then a new search is carryed with one DSP less
 	//~ // After the initialization of the new configuration with nrDSPs-1, the cost must be evaluated and confrunted with the best score obtained so far.
 	
@@ -195,49 +248,103 @@ IntTilingMult::~IntTilingMult() {
 }
 
 
+void IntTilingMult::runAlgorithm()
+{
+
+	/*we will try the algorithm with 2 values of nrDSPs	
+	One will be the estimated value(nrDSPs) and the second one will be nrDSPs-1	
+	*/
+	rot = new bool[nrDSPs];
+	for(int i =0;i<nrDSPs;i++)
+		rot[i]=false;
+	
+	
+	
+	 initTiling(globalConfig,nrDSPs);	
+			
+	//this will initialize the bestConfig with the first configuration
+	bestCost = FLT_MAX ;
+	cout<<"Max score is"<<bestCost<<endl;
+	//bestConfig = (DSP**)malloc(nrDSPs * sizeof(DSP*));
+	bestConfig = new DSP*[nrDSPs];
+	for(int i=0;i<nrDSPs;i++)
+			bestConfig[i]= new DSP();
+	compareCost();
+	cout<<"New best score is"<<bestCost<<endl;
+	
+	display(bestConfig);
+	
+	
+	//the best configuration should be consider initially the first one. So the bestConfig parameter will be initialized with global config and hence the bestCost will be initialized with the first cost
+	
+	
+	tilingAlgorithm(nrDSPs-1,nrDSPs-1,false);
+	
+	display(bestConfig);
+	cout<<"Best cost is "<<bestCost<<endl;
+	
+	
+	
+	
+
+	//~ // After all configurations with the nrDSPs number of DSPs were evaluated then a new search is carryed with one DSP less
+	//~ // After the initialization of the new configuration with nrDSPs-1, the cost must be evaluated and confrunted with the best score obtained so far.
+	
+	//~ if(nrDSPs-1>0)
+	//~ {
+		
+	
+		//~ for(int i =0;i<nrDSPs;i++)
+			//~ rot[i]=false;
+		
+		//~ initTiling(globalConfig,nrDSPs -1);	
+		//~ compareCost();
+		//~ tilingAlgorithm(nrDSPs-2,nrDSPs-2,false);
+	//~ }	
+	
+}
 
 void IntTilingMult::tilingAlgorithm(int i, int n,bool repl)
 {
 
 if(i==n)
 {	
-if(repl==true)
-{
-	cout<<" Pas 4_1 "<<i<<endl;
-	replace(globalConfig,i);
-	compareCost();
-	rot[i]=false;
-	tilingAlgorithm(i,n,false);	
-}
-else
-{
-	
-	if(move(globalConfig,i))
+	if(repl==true)
 	{
-		cout<<" Pas 1_1 "<<i<<endl;
+		cout<<" Pas 4_1 "<<i<<endl;
+		replace(globalConfig,i);
 		compareCost();
-		tilingAlgorithm(i,n,repl);		//repl should be false
+		rot[i]=false;
+		tilingAlgorithm(i,n,false);	
 	}
 	else
 	{
-		if(rot[i]==false && (globalConfig[i]->getMaxMultiplierWidth() != globalConfig[i]->getMaxMultiplierHeight() ))
+	
+		if(move(globalConfig,i))
 		{
-			cout<<" Pas 2_1 "<<i<<endl;
-			globalConfig[i]->rotate();
-			rot[i]=true;
-			replace(globalConfig,i);
+			cout<<" Pas 1_1 "<<i<<endl;
 			compareCost();
 			tilingAlgorithm(i,n,repl);		//repl should be false
 		}
 		else
 		{
-			cout<<" Pas 3_1 "<<i<<endl;
-			if(i-1>=0)
-			tilingAlgorithm(i-1,n,repl);		//repl should be false
+			if(rot[i]==false && (globalConfig[i]->getMaxMultiplierWidth() != globalConfig[i]->getMaxMultiplierHeight() ))
+			{
+				cout<<" Pas 2_1 "<<i<<endl;
+				globalConfig[i]->rotate();
+				rot[i]=true;
+				replace(globalConfig,i);
+				compareCost();
+				tilingAlgorithm(i,n,repl);		//repl should be false
+			}
+			else
+			{
+				cout<<" Pas 3_1 "<<i<<endl;
+				if(i-1>=0)
+				tilingAlgorithm(i-1,n,repl);		//repl should be false
+			}
 		}
 	}
-
-}
 }
 else
 {
@@ -295,6 +402,216 @@ void IntTilingMult::fillMatrix(int **&matrix,int lw,int lh,int topleftX,int topl
 }
 
 
+void IntTilingMult::display(DSP** config)
+{
+	
+	
+	int **mat;
+	int n,m;
+	int count=1;
+	n=wInX + 2* getExtraWidth();
+	m=wInY + 2* getExtraHeight();
+	cout<<"real width"<<wInX<<"real height"<<wInY<<endl;
+	cout<<"width "<<n<<"height "<<m<<endl;
+	mat = new int*[m];
+	for(int i=0;i<m;i++)
+		{
+			mat[i] = new int [n];
+			for(int j=0;j<n;j++)
+			mat[i][j]=0;
+		}
+	for(int i=0;i<nrDSPs;i++)
+		{
+			int c1X,c2X,c1Y,c2Y;
+			
+			config[i]->getTopRightCorner(c1X,c1Y);
+			config[i]->getBottomLeftCorner(c2X,c2Y);
+			cout<<"DSP #"<<i+1<<"has toprigh ("<<c1X<<","<<c1Y<<") and botomleft ("<<c2X<<","<<c2Y<<")"<<endl;
+			c1X=n-c1X-1;
+			c2X=n-c2X-1;
+			//~ cout<<"new x1 "<<c1X<<" new x2 "<<c2X<<endl;
+			
+			fillMatrix(mat,n,m,c2X,c1Y,c1X,c2Y,count);
+			count++;			
+		}
+	
+	count++;
+	for(int i=0;i<m;i++)
+		{
+			for(int j=0;j<n;j++)
+				{
+					if(mat[i][j]==0)
+					{
+						int ver =0;
+						int ii=i,jj=j;
+						while(ver<6&&(ii<m-1||jj<n-1))
+						{
+							
+							
+							if(ver<3)
+							{
+								
+								if(ver==0||ver==1)
+									ii++;
+								if(ii>m-1)
+								{
+									ii=m-1;
+									ver=2;							
+								}
+							
+								if(ver==0||ver==2)
+								jj++;
+							
+								if(jj>n-1)
+								{
+									jj=n-1;
+									ver=1;
+								}
+								
+								
+							
+								for(int k=ii,q=jj;k>i-1&&(ver==0||ver==2);k--)
+									if(mat[k][q]!=0)
+										{
+											if(ver==0)
+												ver=1;
+											else
+												ver=3;
+											jj--;
+										}
+									
+								for(int k=ii,q=jj;q>j-1&&(ver==0||ver==1);q--)
+									if(mat[k][q]!=0)
+										{
+											if(ver=0)
+												ver=2;
+											else
+												ver=3;
+											ii--;
+										}
+								
+							
+							}
+							else
+							{
+								if(ver==3||ver==5)
+								jj++;
+							
+								if(jj>n-1)
+								{
+									jj=n-1;
+									ver=4;
+								}
+								
+								
+								if(ver==3||ver==4)
+									ii++;
+								if(ii>m-1)
+								{
+									ii=m-1;
+									ver=5;							
+								}
+							
+								
+															
+								for(int k=ii,q=jj;q>j-1&&(ver==3||ver==4);q--)
+									if(mat[k][q]!=0)
+										{
+											if(ver=3)
+												ver=5;
+											else
+												ver=6;
+											ii--;
+										}
+								
+								for(int k=ii,q=jj;k>i-1&&(ver==3||ver==5);k--)
+									if(mat[k][q]!=0)
+										{
+											if(ver==3)
+												ver=4;
+											else
+												ver=6;
+											jj--;
+										}
+								if(ver==5&&jj==n-1)
+									ver=6;
+								if(ver==4&&ii==m-1)
+									ver=6;
+										
+															
+								
+							}
+						}
+						
+						
+						int nj,ni,njj,nii;
+						
+						if( j>= n-getExtraWidth() || jj< getExtraWidth() || i >= m - getExtraHeight() || ii < getExtraHeight())
+						{
+							cout<<"Partition number "<<count<<" is totally out of the real multiplication bounds. ("<<j<<" , "<<i<<" , "<<jj<<" , "<<ii<<")"<<endl;
+						}
+						else
+						{
+							if( j < getExtraWidth() )
+								nj = getExtraWidth() ;
+							else
+								nj = j;
+							if( jj >= n - getExtraWidth() )
+								njj = n -getExtraWidth() -1;
+							else
+								njj = jj;
+							
+							if( i < getExtraHeight() )
+								ni = getExtraHeight() ;
+							else
+								ni = i;
+							if( ii >= m - getExtraHeight() )
+								nii = m -getExtraHeight() -1;
+							else
+								nii = ii;
+							cout<<"Partition number "<<count<<" with bounds. ("<<j<<" , "<<i<<" , "<<jj<<" , "<<ii<<")"<<" has now bounds ("<<nj<<" , "<<ni<<" , "<<njj<<" , "<<nii<<")"<<endl;
+						}
+						
+						cout<<j<<" "<<i<<" "<<jj<<" "<<ii<<endl;
+						fillMatrix(mat,n,m,j,i,jj,ii,count);
+						count++;
+						
+					}
+				}
+			
+		}
+		
+		
+		
+		char af;
+		int afi;
+	for(int i=0;i<m;i++)
+		{
+			if(i==getExtraHeight())
+			cout<<endl;
+			
+			for(int j=0;j<n;j++)
+			{
+				if(j==getExtraWidth()-1)
+					cout<<" ";
+				if(j==n-getExtraWidth()-1)
+					cout<<" ";
+				
+				if(mat[i][j]<10)
+					afi=mat[i][j];
+				else
+					afi=mat[i][j]+7;
+				af=(int)afi+48;
+				cout<<af;
+			}
+			cout<<endl;
+			if(i==m-getExtraHeight()-1)
+			cout<<endl;
+		}
+	
+}
+
+
  int IntTilingMult::partitionOfGridSlices(DSP** config,int &partitions)
 {
 	//~ cout<<"Incepe"<<endl;
@@ -326,7 +643,8 @@ void IntTilingMult::fillMatrix(int **&matrix,int lw,int lh,int topleftX,int topl
 			fillMatrix(mat,n,m,c2X,c1Y,c1X,c2Y,count);
 			count++;			
 		}
-	partitions = count;
+	//partitions = count;
+	partitions = 0;
 		
 	for(int i=0;i<m;i++)
 		{
@@ -458,7 +776,44 @@ void IntTilingMult::fillMatrix(int **&matrix,int lw,int lh,int topleftX,int topl
 						}
 						
 						//~ cout<<count<<endl;
-						costSlice +=target->getIntMultiplierCost(jj-j+1,ii-i+1);
+						
+						int nj,ni,njj,nii;
+						
+						
+						if( j>=n-getExtraWidth() || jj< getExtraWidth() || i >= m - getExtraHeight() || ii < getExtraHeight())
+						{
+							
+						}
+						else
+						{
+							if( j < getExtraWidth() )
+								nj = getExtraWidth() ;
+							else
+								nj = j;
+							if( jj >= n - getExtraWidth() )
+								njj = n -getExtraWidth() -1;
+							else
+								njj = jj;
+							
+							if( i < getExtraHeight() )
+								ni = getExtraHeight() ;
+							else
+								ni = i;
+							if( ii >= m - getExtraHeight() )
+								nii = m -getExtraHeight() -1;
+							else
+								nii = ii;
+							
+							partitions++;
+							
+							costSlice +=target->getIntMultiplierCost(njj-nj+1,nii-ni+1);
+							
+							
+														
+						}
+						
+						
+						
 						fillMatrix(mat,n,m,j,i,jj,ii,count);
 						count++;
 						
@@ -471,7 +826,7 @@ void IntTilingMult::fillMatrix(int **&matrix,int lw,int lh,int topleftX,int topl
 		
 		//cout<<"Count "<<count<<" Partitions "<<partitions<<endl;
 		
-		partitions =count -partitions;
+		//partitions =count -partitions;
 		 
 		
 		//~ char af;
@@ -494,19 +849,19 @@ void IntTilingMult::fillMatrix(int **&matrix,int lw,int lh,int topleftX,int topl
 	return costSlice;
 }	
 
-void IntTilingMult::resetConnections(DSP** &config)
-{
-for(int i=0;i<nrDSPs;i++)
-	{
-		if(config[i]!=NULL)
-		{
+//~ void IntTilingMult::resetConnections(DSP** &config)
+//~ {
+//~ for(int i=0;i<nrDSPs;i++)
+	//~ {
+		//~ if(config[i]!=NULL)
+		//~ {
 			
-		}
+		//~ }
 		
-	}
+	//~ }
 
 	
-}
+//~ }
 
 int IntTilingMult::bindDSPs4Virtex(DSP** &config)
 {
@@ -637,13 +992,41 @@ void IntTilingMult::compareCost()
 	for(int ii=0;ii<nrDSPs;ii++)
 		tempc[ii]= new DSP();
 		
-	memcpy(tempc,globalConfig,sizeof(globalConfig));
+	//display(globalConfig);
+	
+	//memcpy(tempc,globalConfig,sizeof(DSP*) *nrDSPs );
+	for(int ii=0;ii<nrDSPs;ii++)
+		memcpy(tempc[ii],globalConfig[ii],sizeof(DSP) );
+	
+	//display(tempc);
 	
 	float temp = computeCost(tempc);
-	if(temp >= bestCost)
+	
+	cout<<"score temp is"<<temp<<" and current best is"<<bestCost<<endl;
+	
+	if(temp <= bestCost)
 	{
-	memcpy(bestConfig,tempc,sizeof(globalConfig));	
+		//~ int c1X,c2X,c1Y,c2Y;
+		//~ int n=wInX + 2* getExtraWidth();
+		//~ tempc[0]->getTopRightCorner(c1X,c1Y);
+		//~ tempc[0]->getBottomLeftCorner(c2X,c2Y);
+		//~ cout<<"DSP #"<<1<<"has toprigh ("<<c1X<<","<<c1Y<<") and botomleft ("<<c2X<<","<<c2Y<<")"<<endl;
+		//~ c1X=n-c1X-1;
+		//~ c2X=n-c2X-1;
+		//~ //cout<<"new x1 "<<c1X<<" new x2 "<<c2X<<endl;
+		//~ cout<<"matrix DSP #"<<1<<"has topleft ("<<c2X<<","<<c1Y<<") and botomright ("<<c1X<<","<<c2Y<<")"<<endl;
+		
+		bestCost=temp;
+		//memcpy(bestConfig,tempc,sizeof(DSP*) *nrDSPs );	
+		for(int ii=0;ii<nrDSPs;ii++)
+			memcpy(bestConfig[ii],tempc[ii],sizeof(DSP) );
+		display(bestConfig);
 	}
+	
+	
+	
+	for(int ii=0;ii<nrDSPs;ii++)
+		free(tempc[ii]);
 	
 	delete[] (tempc);
 	
@@ -660,7 +1043,7 @@ float IntTilingMult::computeCost(DSP** &config)
 	costDSP = ( (1.0+scale) - scale * ratio );
 	costLUT = ( (1.0+scale) - scale * (1-ratio) ) /  ((float) target->getEquivalenceSliceDSP() );
 	
-	cout<<"Cost of a DSP is "<<costDSP<<endl<<"Cost of a Slice is "<<costLUT<<endl;
+	//~ cout<<"Cost of a DSP is "<<costDSP<<endl<<"Cost of a Slice is "<<costLUT<<endl;
 	
 	int nrOfUsedDSPs=0;
 	
@@ -672,18 +1055,21 @@ float IntTilingMult::computeCost(DSP** &config)
 		}
 	
 		
-	cout<<"Number of used DSP blocks is "<<nrOfUsedDSPs<<endl;
+	//~ cout<<"Number of used DSP blocks is "<<nrOfUsedDSPs<<endl;
 		
 	int partitions;
 		acc =((float)nrOfUsedDSPs)*costDSP + costLUT * partitionOfGridSlices(config,partitions);
 		
-	cout<<"Number of partitions for LUTs is "<<partitions<<endl;
+	//~ cout<<"Number of partitions for LUTs is "<<partitions<<endl;
 	nrOfUsedDSPs = bindDSPs(config);
-	cout<<"Number of operands coming from DSPs is "<<nrOfUsedDSPs<<endl;
+	//~ cout<<"Number of operands coming from DSPs is "<<nrOfUsedDSPs<<endl;
 		
 	
-	 
-	acc += ((float)target->getIntNAdderCost(wInX + wInY,nrOfUsedDSPs+partitions) ) * costLUT;	
+	 float LUTs4NAdder=((float)target->getIntNAdderCost(wInX + wInY,nrOfUsedDSPs+partitions) );
+	
+	//~ cout<<"LUTs used for last "<<nrOfUsedDSPs+partitions<<" adder are"<<LUTs4NAdder<<endl;
+		
+	acc +=  LUTs4NAdder* costLUT;	
 		
 			//~ Substracting the cost of different additions that can be done in DSPs(Virtex) or the cost of a DSP if they can be combined(Altera)
 		

@@ -482,7 +482,7 @@ int i=1;
 			if(texp>maxV1&&(mpfr_sgn(var1)!=0)&&(mpfr_number_p(var1)!=0))
 			{maxV1=texp;
 			mpfr_set(maV1,var1,GMP_RNDN);
-				}
+			}
 			
 			
 			//var2
