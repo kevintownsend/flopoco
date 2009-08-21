@@ -351,6 +351,9 @@ public:
 	/** output the VHDL constants. */
 	string buildVHDLConstantDeclarations();
 
+	/** output the VHDL constants. */
+	string buildVHDLAttributes();
+
 
 
 
@@ -484,10 +487,12 @@ public:
 	/** Add a VHDL constant. This may make the code easier to read, but more difficult to debug. */
 	void addConstant(std::string name, std::string ctype, int cvalue);
 
-	/** Add a VHDL constant. This may make the code easier to read, but more difficult to debug. */
 	void addConstant(std::string name, std::string ctype, mpz_class cvalue);
 	
 
+	/** Add attribute, declaring the attribute name if it is not done already.
+	 */ 
+	void addAttribute(std::string attributeName,  std::string attributeType,  std::string object, std::string value );
 
 	/**
 	 * A new line inline function
@@ -652,6 +657,8 @@ private:
 	int                    pipelineDepth_;              /**< The pipeline depth of the operator. 0 for combinatorial circuits */
 	map<string, Signal*>   signalMap_;                  /**< A container of tuples for recovering the signal based on it's name */ 
 	map<string, pair<string, mpz_class> > constants_;    /**< The list of constants of the operator: name, <type, value> */
+	map<string, string>    attributes_;                  /**< The list of attribute declarations (name, type) */
+	map<pair<string,string>, string >  attributesValues_;/**< attribute values <attribute name, object (component, signal, etc)> ,  value> */
 	bool                   hasRegistersWithoutReset_;   /**< True if the operator has registers without a reset */
 	bool                   hasRegistersWithAsyncReset_; /**< True if the operator has registers having an asynch reset */
 	bool                   hasRegistersWithSyncReset_;  /**< True if the operator has registers having a synch reset */

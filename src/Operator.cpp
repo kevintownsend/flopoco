@@ -804,6 +804,14 @@ void Operator::addConstant(std::string name, std::string t, int v) {
 	}
 
 
+void Operator::addAttribute(std::string attributeName,  std::string attributeType,  std::string object, std::string value ) {
+	// TODO add some checks ?
+	attributes_[attributeName] = attributeType;
+	pair<string,string> p = make_pair(attributeName,object);
+	attributesValues_[p] = value;
+}
+
+
 string Operator::buildVHDLConstantDeclarations() {
 	ostringstream o;
 	for(map<string, pair<string, mpz_class> >::iterator it = constants_.begin(); it !=constants_.end(); it++) {
@@ -811,6 +819,28 @@ string Operator::buildVHDLConstantDeclarations() {
 		string type = it->second.first;
 		mpz_class value = it->second.second;
 		o <<  "constant " << name << ": " << type << " := " << value << ";" << endl;
+	}
+	return o.str();	
+}
+
+
+
+string Operator::buildVHDLAttributes() {
+	ostringstream o;
+	// First add the declarations of attribute names
+	for(map<string, string>::iterator it = attributes_.begin(); it !=attributes_.end(); it++) {
+		string name  = it->first;
+		string type = it->second;
+		o <<  "attribute " << name << ": " << type << ";" << endl;
+	}
+	// Then add the declarations of attribute values
+	for(map<pair<string, string>, string>::iterator it = attributesValues_.begin(); it !=attributesValues_.end(); it++) {
+		string name  = it->first.first;
+		string object = it->first.second;
+		string value = it->second;
+		if(attributes_[name]=="string")
+			value = '"' + value + '"';
+		o <<  "attribute " << name << " of " << object << " is " << value << ";" << endl;
 	}
 	return o.str();	
 }
@@ -950,6 +980,7 @@ void Operator::outputVHDL(std::ostream& o, std::string name) {
 	o << buildVHDLComponentDeclarations();	
 	o << buildVHDLSignalDeclarations();
 	o << buildVHDLConstantDeclarations();
+	o << buildVHDLAttributes();
 	beginArchitecture(o);		
 	o<<buildVHDLRegisters();
 	o << vhdl.str();

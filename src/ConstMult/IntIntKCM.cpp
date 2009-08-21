@@ -83,10 +83,14 @@ Operator(target), wIn_(wIn), C_(C), inputDelays_(inputDelays)
 		//let us build one table 
 		t1 = new FirstKCMTable(target, lutWidth, constantWidth + lutWidth, C);
 		oplist.push_back(t1);
+		addAttribute("rom_extract", "string", t1->getName()+": component", "yes");
+		addAttribute("rom_style", "string", t1->getName()+": component", "distributed");
 	}
 		
 	t2 = new LastKCMTable(target, lastLutWidth , constantWidth + lastLutWidth, C);
 	oplist.push_back(t2);
+	addAttribute("rom_extract", "string", t2->getName()+": component", "yes");
+	addAttribute("rom_style", "string", t2->getName()+": component", "distributed");
 		
 	//first split the input X into digits having lutWidth bits -> this is as generic as it gets :)
 		for (int i=0; i<nbOfTables; i++)
@@ -189,7 +193,9 @@ Operator(target), wIn_(wIn), C_(C), inputDelays_(inputDelays)
 	FirstKCMTable* t1; 
 	t1 = new FirstKCMTable(target, lutWidth, constantWidth + lutWidth, C);
 	oplist.push_back(t1);
-		
+	addAttribute("rom_extract", "string", t1->getName()+": component", "yes");
+	addAttribute("rom_style", "string", t1->getName()+": component", "distributed");
+	
 	//first split the input X into digits having lutWidth bits -> this is as generic as it gets :)
 		for (int i=0; i<nbOfTables; i++)
 			if (i < nbOfTables-1)
