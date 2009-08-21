@@ -55,6 +55,8 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 	addInput ("Y", wInY_);
 	addOutput("R", wOut_); /* wOut_ = wInX_ + wInY_ */
 	
+	double delay = 0.0;
+	
 	if (target->getUseHardMultipliers())
 	{
 		if (verbose)
@@ -236,7 +238,6 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 			// COMPUTE PARTIAL PRODUCTS
 			if (quadMultiply)
 			{
-				
 				////////////////////////////////////////////////////
 				//SPLITTINGS
 				for (int k=0; k<chunksX ; k++)
@@ -676,6 +677,7 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 							default: // more than 2 tiles
 								if (verbose)
 									cerr << ">IntMultiplier:" << tab << " Subcase 3: there are more than 2 rows" << endl;
+								delay += target->distantWireDelay(4);
 								
 								operands[i%2] << zeroGenerator(level*4*chunkSize_,0) << ";";
 								operands[(i+1)%2] << zeroGenerator((level*4+1)*chunkSize_,0) << ";";
@@ -1658,7 +1660,10 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 				}
 			}	
 			
-			IntNAdder* add =  new IntNAdder(target, adderWidth, opCount);
+			map<string, double> inMap;
+			inMap["X0"] = delay;
+	
+			IntNAdder* add =  new IntNAdder(target, adderWidth, opCount, inMap);
 			//IntCompressorTree* add =  new IntCompressorTree(target, adderWidth, opCount);
 			oplist.push_back(add);
 

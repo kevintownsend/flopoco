@@ -41,7 +41,7 @@ public:
 	StratixII() : Target()	{
 		sizeOfBlock 		= 4608; 	// the size of a primitive block is 2^9 * 9
 		fastcarryDelay_ 	= 3.5e-11; 	// aproximately right    
-		elemWireDelay_  	= 0.3e-11; 	// ???
+		elemWireDelay_  	= 0.265e-9; // an average value over R4, R24, C4, C16 interconnects delays
 		lut2lutDelay_   	= 1.5e-10; 	// ???
 		lutDelay_       	= 0.378e-9; // 378 ps  
 		ffDelay_        	= 0.127e-9; // 127 ps LE register clock-to-output max delay for -3 speed grade
@@ -49,13 +49,12 @@ public:
 		multYInputs_    	= 36;
 		lutInputs_			= 6;
 		almsPerLab_			= 8;		// there are 8 ALMs per LAB
-		//slice2sliceDelay_	= 0.265e-9;	// an average value over R4, R24, C4, C16 interconnects delays
 		// all these values are set precisely to match the Stratix 2
 		lut2_ 				= 0.162e-9; // obtained from Handbook
 		lut3_				= 0.280e-9; // obtained from Handbook
 		lut4_				= 0.378e-9; // obtained from Handbook
-		innerLABcarryDelay_	= 0.146e-9; // obtained from Quartus 2 Chip Planner
-		interLABcarryDelay_	= 0.245e-9; // obtained from Quartus 2 Chip Planner
+		innerLABcarryDelay_	= 0.136e-9; // obtained from Quartus 2 Chip Planner
+		interLABcarryDelay_	= 0.235e-9; // obtained from Quartus 2 Chip Planner
 		shareOutToCarryOut_	= 0.172e-9; // obtained from Quartus 2 Chip Planner
 		muxStoO_			= 0.189e-9; // obtained from Quartus 2 Chip Planner by subtraction
 		fdCtoQ_				= 0.352e-9; // obtained from Quartus 2 Chip Planner by subtraction

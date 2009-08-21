@@ -26,7 +26,7 @@
 #include "../utils.hpp"
 
 double StratixII::adderDelay(int size) {
-  return (fdCtoQ_ + lut2_ + muxStoO_ + shareOutToCarryOut_ + 
+  return (fdCtoQ_ + lut2_ + muxStoO_ + 
 			((size-3) * fastcarryDelay_) + 
 			((size/almsPerLab_) * (innerLABcarryDelay_- fastcarryDelay_)) + 
 			((size/(almsPerLab_*2)) * (interLABcarryDelay_ - innerLABcarryDelay_)) + 
@@ -130,8 +130,9 @@ bool StratixII::suggestSubmultSize(int &x, int &y, int wInX, int wInY){
 	 	 
 bool StratixII::suggestSubaddSize(int &x, int wIn){
 
-	int chunkSize = (int)floor( (1./frequency() - (fdCtoQ_ + lutDelay() + muxStoO_ + shareOutToCarryOut_ + carryInToSumOut_ + ffDelay_ + interLABcarryDelay_)) / carryPropagateDelay()); // 1 if no need for pipeline
-	x = chunkSize;		
+	suggestSlackSubaddSize(x, wIn, 0);
+	//int chunkSize = (int)floor( (1./frequency() - (fdCtoQ_ + lutDelay() + muxStoO_ + shareOutToCarryOut_ + carryInToSumOut_ + ffDelay_ + interLABcarryDelay_)) / carryPropagateDelay()); // 1 if no need for pipeline
+	//x = chunkSize;		
 	if (x>0) return true;
 	else {
 		x=1;		
@@ -141,7 +142,37 @@ bool StratixII::suggestSubaddSize(int &x, int wIn){
 
 bool  StratixII::suggestSlackSubaddSize(int &x, int wIn, double slack){
 
-	int chunkSize = (int)floor( (1./frequency() - slack - (fdCtoQ_ + lutDelay() + muxStoO_ + shareOutToCarryOut_ + carryInToSumOut_ + ffDelay_ + interLABcarryDelay_)) / carryPropagateDelay()); // 1 if no need for pipeline
+	float time = 1./frequency() - slack - (fdCtoQ_ + lutDelay() + muxStoO_ + carryInToSumOut_ + ffDelay_);
+	int carryFlag = 0;
+	int chunkSize = 0;
+	
+	while (time > 0)
+	{
+		chunkSize++;
+		
+		if (carryFlag == 0) 
+		{
+			time -= fastcarryDelay_;
+			if (chunkSize % (almsPerLab_*2) == 0)
+				carryFlag = 2;
+			else if (chunkSize % almsPerLab_ == 0)
+				carryFlag = 1;
+			
+		}
+		else if (carryFlag == 1)
+		{
+			time -= innerLABcarryDelay_;
+			carryFlag = 0;
+		}	
+		else if (carryFlag == 2)
+		{
+			time -= interLABcarryDelay_;
+			carryFlag = 0;
+		}
+	}
+	chunkSize--; // decremented because of the loop condition (time > 0). When exiting the loop the time is negative
+	
+	//int chunkSize = (int)floor( (1./frequency() - slack - (fdCtoQ_ + lutDelay() + muxStoO_ + shareOutToCarryOut_ + carryInToSumOut_ + ffDelay_ + interLABcarryDelay_)) / carryPropagateDelay()); // 1 if no need for pipeline
 	
 	//int chunkSize = 2 + (int)floor( (1./frequency() - slack - (fdCtoQ_ + slice2sliceDelay_ + lut2_ + muxcyStoO_ + xorcyCintoO_ + ffd_)) / muxcyCINtoO_ );
 	
