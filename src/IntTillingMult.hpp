@@ -158,6 +158,13 @@ private:
 	/** This function will be used to run the algorithm. the result of the algorithm (i..e. the best configuration) will be located in the member variable bestConfig */
 	
 	void runAlgorithm();
+	
+	/** This function is used in order to compare how much from the multiplication is occupied by the DSPs. It is used to compare the input parameter with the global maximum. 
+	It is used in the cases when the computed cost of the configuration is equal with the current maximum. This is neccessary because the Multiplication in LUT function reports same cost for
+	slightly different arguments in some cases.
+	*/
+	
+	bool compareOccupation(DSP** config);
 
 };
 
