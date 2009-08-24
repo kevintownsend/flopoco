@@ -26,6 +26,7 @@
 #include <iostream>
 #include <sstream>
 #include <vector>
+#include <typeinfo>
 #include <math.h>
 #include <gmp.h>
 #include <mpfr.h>
@@ -83,21 +84,29 @@ Operator(target), wIn_(wIn), C_(C), inputDelays_(inputDelays)
 		//let us build one table 
 		t1 = new FirstKCMTable(target, lutWidth, constantWidth + lutWidth, C);
 		oplist.push_back(t1);
-		addAttribute("rom_extract", "string", t1->getName()+": component", "yes");
-		addAttribute("rom_style", "string", t1->getName()+": component", "distributed");
+		if (strncmp(typeid(*target).name(), "7Virtex", 7) == 0) // then the target is Virtex
+		{
+			addAttribute("rom_extract", "string", t1->getName()+": component", "yes");
+			addAttribute("rom_style", "string", t1->getName()+": component", "distributed");
+		}else
+			addAttribute("altera_attribute", "string", t1->getName()+": component", "-name ALLOW_ANY_ROM_SIZE_FOR_RECOGNITION ON");
 	}
 		
 	t2 = new LastKCMTable(target, lastLutWidth , constantWidth + lastLutWidth, C);
 	oplist.push_back(t2);
-	addAttribute("rom_extract", "string", t2->getName()+": component", "yes");
-	addAttribute("rom_style", "string", t2->getName()+": component", "distributed");
-		
+	if (strncmp(typeid(*target).name(), "7Virtex", 7) == 0) // then the target is Virtex
+	{
+		addAttribute("rom_extract", "string", t2->getName()+": component", "yes");
+		addAttribute("rom_style", "string", t2->getName()+": component", "distributed");
+	}else
+		addAttribute("altera_attribute", "string", t2->getName()+": component", "-name ALLOW_ANY_ROM_SIZE_FOR_RECOGNITION ON");
+	
 	//first split the input X into digits having lutWidth bits -> this is as generic as it gets :)
 		for (int i=0; i<nbOfTables; i++)
 			if (i < nbOfTables-1)
-				vhdl << tab << declare( join("d",i), lutWidth ) << " <= " << use("X") << range(4*(i+1)-1, 4*i ) << ";" <<endl;
+				vhdl << tab << declare( join("d",i), lutWidth ) << " <= " << use("X") << range(lutWidth*(i+1)-1, lutWidth*i ) << ";" <<endl;
 			else
-				vhdl << tab << declare( join("d",i), wIn -  4*i ) << " <= " << use("X") << range( wIn-1 , 4*i ) << ";" <<endl;
+				vhdl << tab << declare( join("d",i), wIn -  lutWidth*i ) << " <= " << use("X") << range( wIn-1 , lutWidth*i ) << ";" <<endl;
 	
 	cout << "Generating the maps on the tables ... "<<endl;
 	//perform nbOfTables multiplications
@@ -193,18 +202,22 @@ Operator(target), wIn_(wIn), C_(C), inputDelays_(inputDelays)
 	FirstKCMTable* t1; 
 	t1 = new FirstKCMTable(target, lutWidth, constantWidth + lutWidth, C);
 	oplist.push_back(t1);
-	addAttribute("rom_extract", "string", t1->getName()+": component", "yes");
-	addAttribute("rom_style", "string", t1->getName()+": component", "distributed");
-	
+	if (strncmp(typeid(*target).name(), "7Virtex", 7) == 0) // then the target is Virtex
+	{
+		addAttribute("rom_extract", "string", t1->getName()+": component", "yes");
+		addAttribute("rom_style", "string", t1->getName()+": component", "distributed");
+	}else
+		addAttribute("altera_attribute", "string", t1->getName()+": component", "-name ALLOW_ANY_ROM_SIZE_FOR_RECOGNITION ON");
+
 	//first split the input X into digits having lutWidth bits -> this is as generic as it gets :)
 		for (int i=0; i<nbOfTables; i++)
 			if (i < nbOfTables-1)
-				vhdl << tab << declare( join("d",i), lutWidth ) << " <= " << use("X") << range(4*(i+1)-1, 4*i ) << ";" <<endl;
+				vhdl << tab << declare( join("d",i), lutWidth ) << " <= " << use("X") << range(lutWidth*(i+1)-1, lutWidth*i ) << ";" <<endl;
 			else {
 				vhdl << tab << declare( join("d",i), lutWidth ) << " <= " ;
-				if(4*(i+1)>wIn)	
-					vhdl << rangeAssign(4*(i+1)-1, wIn, "'0'") << " & ";
-				vhdl << use("X") << range( wIn-1 , 4*i ) << ";" <<endl;
+				if(lutWidth*(i+1)>wIn)	
+					vhdl << rangeAssign(lutWidth*(i+1)-1, wIn, "'0'") << " & ";
+				vhdl << use("X") << range( wIn-1 , lutWidth*i ) << ";" <<endl;
 			}
 		//perform nbOfTables multiplications
 		for ( int i=nbOfTables-1; i >= 0; i--){
