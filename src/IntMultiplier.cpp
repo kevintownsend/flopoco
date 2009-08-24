@@ -177,23 +177,22 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 				else 
 					vhdl << tab << "R <= X * Y ;" <<endl;
 		}
-		else // the target is a StratixII
+		else // the target is a Stratix
 		{
 			double f = target->frequencyMHz();
 			bool quadMultiply = false; // TRUE if we cannot use double the chunckSize width multipliers
 
-				int zeroPad18 = ceil((double)wInX/18)*18 - wInX + ceil((double)wInY/18)*18 - wInY;
-				int zeroPad9 = ceil((double)wInX/9)*9 - wInX + ceil((double)wInY/9)*9 - wInY;
-				int chunkSize_ = 18;
+				int chunkSize_ = 1, x, y;
 			
-				if ((zeroPad9 < zeroPad18) || 
-					(f > 367))
-					chunkSize_ = 9;
-			
-				if ((f > 250 && chunkSize_ == 18) || 	// don't use 36x36
-					(f > 367 && chunkSize_ == 9)) 	// don't use 18x18
-						quadMultiply = true;
+				quadMultiply = !target->suggestSubmultSize(x, y, wInX, wInY);
+				chunkSize_ = max(x, y);
 				
+				/*
+				if ((f > stx->getFrequencyOfMultiplier(18) && chunkSize_ == 18) || 	// don't use 36x36
+					(f > stx->getFrequencyOfMultiplier(9) && chunkSize_ == 9)  ||
+					(chunkSize_ == 12)) 	// don't use 18x18
+						quadMultiply = true;
+				*/
 				int chunksX =  int(ceil( ( double(wInX) / (double) chunkSize_) ));
 				int chunksY =  int(ceil( ( double(wInY) / (double) chunkSize_) ));
 			
@@ -1806,4 +1805,3 @@ void IntMultiplier::emulate(TestCase* tc)
 
 	tc->addExpectedOutput("R", svR);
 }
-

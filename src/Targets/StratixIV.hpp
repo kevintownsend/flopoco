@@ -61,6 +61,8 @@ public:
 		fdCtoQ_				= 0.214e-9; // *obtained from Quartus 2 Chip Planner by subtraction
 		carryInToSumOut_	= 0.291e-9;	// *obtained from Quartus 2 Chip Planner
 		// DSP parameters
+		nrConfigs_ = 4;					// StratixIV has 9, 12, 18, 36 bit multipliers by default
+		
 		multiplierWidth_[0] = 9;
 		multiplierWidth_[1] = 12;
 		multiplierWidth_[2] = 18;
@@ -101,8 +103,12 @@ public:
 	int    getEquivalenceSliceDSP();
 	int    getNumberOfDSPs();
 	void   getDSPWidths(int &x, int &y);
-	int    getIntNAdderCost(int wIn, int n);	
-		
+	int    getIntNAdderCost(int wIn, int n);
+	/** Return s the maximum working frequency of a multiplier given the width	
+	 * @param wIn the width of the multiplier
+	 * @return the maximum working frequency of the multiplier
+	 */
+	int    getFrequencyOfMultiplier(int wIn);	
 
 private:
 
@@ -125,10 +131,12 @@ private:
 	int    almsPerLab_;			/**< The number of ALMs contained by a LAB */
 	
 	// DSP parameters
+	int		nrConfigs_;			/**< The number of distinct predefinded multiplier widths */
 	int 	multiplierWidth_[4];/**< The multiplier width available */
 	double 	multiplierDelay_[4];/**< The corresponding delay for each multiplier width available */
 	double	inputRegDelay_[4];	/**< The input register delay to DSP block for each multiplier width available */
 	double	pipe2OutReg2Add; 	/**< The DPS block pipeline register to output register delay in two-multipliers adder mode */
 	double  pipe2OutReg4Add; 	/**< The DPS block pipeline register to output register delay in four-multipliers adder mode */
+	
 };
 #endif

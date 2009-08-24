@@ -72,60 +72,78 @@ return sizeOfBlock;
 bool StratixIV::suggestSubmultSize(int &x, int &y, int wInX, int wInY){
 // (DSP blocks are 36x36 and my be split as 9x9, 12x12 or 18x18)
 	if (getUseHardMultipliers()){
-		int padX[5], padY[5], ix, iy; // nr of zero padding for a specific width multiplier
-		double maxF[5]; // will hold the maximum possible freqeuncy for each multiplier width
+		int padX[nrConfigs_+1], padY[nrConfigs_+1], ix=1, iy=1; // nr of zero padding for a specific width multiplier
+		double maxF[nrConfigs_+1]; // will hold the maximum possible freqeuncy for each multiplier width
 		
 		x = y = 1;
-		padX[5] = wInX-x;
-		padY[5] = wInY-y;
-		maxF[5] = 0;
+		padX[nrConfigs_] = wInX-x;
+		padY[nrConfigs_] = wInY-y;
+		maxF[nrConfigs_] = 0;
 		
-		for (int i=0; i<4; i++)
+		for (int i=0; i<nrConfigs_; i++)
 		{ // for each multiplier width available
 			maxF[i] = 1/multiplierDelay_[i]; // maximum possible freqeuncy 
 			int chunksX = ceil((double)wInX/multiplierWidth_[i]);
 			int chunksY = ceil((double)wInY/multiplierWidth_[i]);
-			padX[i] = chunksX*multiplierWidth_[i];
-			padY[i] = chunksY*multiplierWidth_[i];
+			padX[i] = chunksX*multiplierWidth_[i] - wInX;
+			padY[i] = chunksY*multiplierWidth_[i] - wInY;
 			
-			if (frequency() > maxF[i])
+			cout << "Mult Size: " << multiplierWidth_[i] << ", Chunks X: " << chunksX << ", Y: " << chunksY << ", PaddX: "<<padX[i] << ", PaddY: " << padY[i] << endl;
+			if (frequency() > maxF[i]) 
 				continue;
-				
-			if (chunksX+chunksY == 2)
-			{
-				x = wInX;
-				y = wInY;
-				return true;
-			}
 			
-			if (padY[i] < (multiplierWidth_[i]/ (double)y)*padY[5])
+			
+			if ((padY[i] < (multiplierWidth_[i]/ (double)y)*padY[nrConfigs_]) ||
+				((padY[i] == (multiplierWidth_[i]/ (double)y)*padY[nrConfigs_]) &&
+				 (multiplierWidth_[i] > multiplierWidth_[iy])))
 			{
 				y = multiplierWidth_[i];
-				padY[5] = padY[i];
+				padY[nrConfigs_] = padY[i];
 				iy = i;
 			}
 			
-			if (padX[i] < (multiplierWidth_[i]/ (double)x)*padX[5])
+			if ((padX[i] < (multiplierWidth_[i]/ (double)x)*padX[nrConfigs_]) ||
+				((padX[i] == (multiplierWidth_[i]/ (double)x)*padX[nrConfigs_]) &&
+				 (multiplierWidth_[i] > multiplierWidth_[ix])))
 			{
 				x = multiplierWidth_[i];
-				padX[5] = padX[i];
+				padX[nrConfigs_] = padX[i];
 				ix = i;
 			}	
+			
+			if (x < y)
+			{
+				y = x;
+				iy = ix;
+				padY[nrConfigs_] = padY[iy];
+			}
+			else if (y < x)
+			{
+				x = y;
+				ix = iy;
+				padX[nrConfigs_] = padX[ix];
+			}
+			cout << "x: " << x << ", y: " << y << ", padX: " << padX[nrConfigs_] << ", padY: " << padY[nrConfigs_] << endl;
 		}
 		
 		if ((x != 1) && (y != 1))
 		{
 			int maxFx = 1/multiplierDelay_[ix];
 			int maxFy = 1/multiplierDelay_[iy]; 
-			maxF[5] = (maxFx>maxFy)?maxFy:maxFx;
+			maxF[nrConfigs_] = (maxFx>maxFy)?maxFy:maxFx;
 			
-			if (frequency() < maxF[5])
+			if (frequency() < maxF[nrConfigs_])
 				return true;
 			else
 			{
 				x = y = 18;
 				return false;
 			}
+		}
+		else // the desired frequency is too high
+		{
+			x = y = 18;
+			return false;
 		}
 	}else{
 		// TODO functional approximation of multiplier size based on frequency
@@ -298,5 +316,16 @@ int StratixIV::getIntNAdderCost(int wIn, int n)
 	b = nr*lastChunkSize + nr*(nr-1)*(chunkSize+1)/2 + nr*(n-1) + (n-2)*wIn;
 	cost = (a+b)/2;
 	return cost;
+}
+
+int StratixIV::getFrequencyOfMultiplier(int wIn)
+{
+	for (int i=0; i<nrConfigs_; i++)
+	{
+		if (wIn == multiplierWidth_[i])
+			return 1/multiplierDelay_[i];
+	}
+	
+	return 0;
 }
 

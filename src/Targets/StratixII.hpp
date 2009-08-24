@@ -60,6 +60,8 @@ public:
 		fdCtoQ_				= 0.352e-9; // obtained from Quartus 2 Chip Planner by subtraction
 		carryInToSumOut_	= 0.125e-9;	// obtained from Quartus 2 Chip Planner
 		// DSP parameters
+		nrConfigs_ = 3;					// StratixII has 9, 18, 36 bit multipliers by default
+		
 		multiplierWidth_[0] = 9;
 		multiplierWidth_[1] = 18;
 		multiplierWidth_[2] = 36;
@@ -98,7 +100,11 @@ public:
 	int    getNumberOfDSPs();
 	void   getDSPWidths(int &x, int &y);
 	int    getIntNAdderCost(int wIn, int n);	
-		
+	/** Return s the maximum working frequency of a multiplier given the width	
+	 * @param wIn the width of the multiplier
+	 * @return the maximum working frequency of the multiplier
+	 */
+	int    getFrequencyOfMultiplier(int wIn);			
 
 private:
 
@@ -121,6 +127,7 @@ private:
 	int    almsPerLab_;			/**< The number of ALMs contained by a LAB */
 	
 	// DSP parameters
+	int		nrConfigs_;			/**< The number of distinct predefinded multiplier widths */
 	int 	multiplierWidth_[3];/**< The multiplier width available */
 	double 	multiplierDelay_[3];/**< The corresponding delay for each multiplier width available */
 	double	inputRegDelay_[3];	/**< The input register delay to DSP block for each multiplier width available */

@@ -70,57 +70,84 @@ return sizeOfBlock;
 };
 
 bool StratixII::suggestSubmultSize(int &x, int &y, int wInX, int wInY){
-// TODO This is the VirtexIV function. Stratix II is more interesting
 // (DSP blocks are 36x36 and my be split as 9x9 or 18x18)
 	if (getUseHardMultipliers()){
-		x = y = 0;//max(wInX, wInY);
-		int padX[3], padY[3]; // nr of zero padding for a specific width multiplier
-		double maxF; // will hold the maximum possible freqeuncy for each multiplier width
-		for (int i=0; i<3; i++){ // for each multiplier width available
-			maxF = 1/(inputRegDelay_[i] + multiplierDelay_[i]); // maximum possible freqeuncy 
-			padX[i] = multiplierWidth_[i] - (wInX % multiplierWidth_[i]);
-			padY[i] = multiplierWidth_[i] - (wInY % multiplierWidth_[i]);
+		int padX[nrConfigs_+1], padY[nrConfigs_+1], ix=1, iy=1; // nr of zero padding for a specific width multiplier
+		double maxF[nrConfigs_+1]; // will hold the maximum possible freqeuncy for each multiplier width
+		
+		x = y = 1;
+		padX[nrConfigs_] = wInX-x;
+		padY[nrConfigs_] = wInY-y;
+		maxF[nrConfigs_] = 0;
+		
+		for (int i=0; i<nrConfigs_; i++)
+		{ // for each multiplier width available
+			maxF[i] = 1/multiplierDelay_[i]; // maximum possible freqeuncy 
+			int chunksX = ceil((double)wInX/multiplierWidth_[i]);
+			int chunksY = ceil((double)wInY/multiplierWidth_[i]);
+			padX[i] = chunksX*multiplierWidth_[i] - wInX;
+			padY[i] = chunksY*multiplierWidth_[i] - wInY;
 			
-			if ((wInY < multiplierWidth_[i]) && (y != 0)){
-				if ((i > 0) && (padY[i] > 2*padY[i-1]))
-					y = multiplierWidth_[i-1];
-				else
-					y = wInY;
-			}
-				
-			if ((wInX < multiplierWidth_[i]) && (x != 0)){
-				if ((i > 0) && (padX[i] > 2*padY[i-1]))
-					x = multiplierWidth_[i-1];
-				else
-					x = wInX;
-			}
+			cout << "Mult Size: " << multiplierWidth_[i] << ", Chunks X: " << chunksX << ", Y: " << chunksY << ", PaddX: "<<padX[i] << ", PaddY: " << padY[i] << endl;
+			if (frequency() > maxF[i]) 
+				continue;
 			
-			if ((x != 0) && (y != 0))
+			
+			if ((padY[i] < (multiplierWidth_[i]/ (double)y)*padY[nrConfigs_]) ||
+				((padY[i] == (multiplierWidth_[i]/ (double)y)*padY[nrConfigs_]) &&
+				 (multiplierWidth_[i] > multiplierWidth_[iy])))
 			{
-				if (frequency() < maxF)
-					return true;
-				else
-					return false;
+				y = multiplierWidth_[i];
+				padY[nrConfigs_] = padY[i];
+				iy = i;
 			}
+			
+			if ((padX[i] < (multiplierWidth_[i]/ (double)x)*padX[nrConfigs_]) ||
+				((padX[i] == (multiplierWidth_[i]/ (double)x)*padX[nrConfigs_]) &&
+				 (multiplierWidth_[i] > multiplierWidth_[ix])))
+			{
+				x = multiplierWidth_[i];
+				padX[nrConfigs_] = padX[i];
+				ix = i;
+			}	
+			
+			if (x < y)
+			{
+				y = x;
+				iy = ix;
+				padY[nrConfigs_] = padY[iy];
+			}
+			else if (y < x)
+			{
+				x = y;
+				ix = iy;
+				padX[nrConfigs_] = padX[ix];
+			}
+			cout << "x: " << x << ", y: " << y << ", padX: " << padX[nrConfigs_] << ", padY: " << padY[nrConfigs_] << endl;
 		}
 		
-		// we have the maximum frequency for 36x36 in maxF
-		if (maxF > frequency()){ // for lower freqency we prefer 36x36
-			if (x == 0)
-				x = 36;
-			if (y == 0)
-				y = 36;
-			return true;
-		}else{	// to obtain the highest freqency with lower logic utilization we need 18x18
-			if (x == 0)
-				x = 9;
-			if (y == 0)
-				y = 36;
-			return true;
+		if ((x != 1) && (y != 1))
+		{
+			int maxFx = 1/multiplierDelay_[ix];
+			int maxFy = 1/multiplierDelay_[iy]; 
+			maxF[nrConfigs_] = (maxFx>maxFy)?maxFy:maxFx;
+			
+			if (frequency() < maxF[nrConfigs_])
+				return true;
+			else
+			{
+				x = y = 18;
+				return false;
+			}
+		}
+		else // the desired frequency is too high
+		{
+			x = y = 18;
+			return false;
 		}
 	}else{
 		// TODO functional approximation of multiplier size based on frequency
-		x = y = 18;
+		x = y = lutInputs_/2;
 		return true;
 	}
 		
