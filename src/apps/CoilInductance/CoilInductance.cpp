@@ -98,6 +98,11 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,i
 	addOutput("O",outputWidth);
 	addOutput("C",outputWidth);
 	addOutput("F",1);
+	
+	addOutput("A1",13);
+	addOutput("A2",13);
+	addOutput("TA",4);
+	
 	//addFPOutput("O",8,23);
 	
 	//Counters for addressing the memories and for frequency division
@@ -210,7 +215,7 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,i
 	vhdl<<endl;
 	
 	vhdl<<tab<<declare("Address1",addrWidth)<<" <= "<<use("highAddress1")<<" & "<<use("lowAddress1")<<";"<<endl<<endl;
-	
+	vhdl<<tab<<"A1 <= "<<use("Address1")<<";"<<endl;
 	
 	
 	vhdl<<tab<<"process(out_clk2,rst)"<<endl;
@@ -293,6 +298,7 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,i
 	vhdl<<endl;
 	
 	vhdl<<tab<<declare("Address2",addrWidth)<<" <= "<<use("highAddress2")<<" & "<<use("lowAddress2")<<";"<<endl<<endl;
+	vhdl<<tab<<"A2 <= "<<use("Address2")<<";"<<endl;
 	
 	//here a finnish signal can be inserted when variable temp has reached 1000..
 	
@@ -308,8 +314,9 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,i
 	vhdl<<tab<<tab<<"if out_clk6'event and out_clk6='1' then"<<endl;
 	
 	
-	
+	vhdl<<tab<<tab<<"if temp< 8 then"<<endl;
 	vhdl<<tab<<tab<<tab<<"temp :=temp + '1';"<<endl;
+	vhdl<<tab<<tab<<"end if;"<<endl;
 	vhdl<<tab<<tab<<"end if;"<<endl;
 	vhdl<<tab<<tab<<"if temp = "<<intpow2(integratorWidth)<<" then"<<endl;
 	vhdl<<tab<<tab<<tab<<declare("finnishSignal",1)<<" <= '1' ;"<<endl;
@@ -321,6 +328,7 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,i
 	vhdl<<tab<<"end process;"<<endl;
 	vhdl<<endl;
 	
+	vhdl<<tab<<"TA <= "<<use("signal_tp")<<";"<<endl;
 	
 	vhdl<<tab<<"process(Address1,Address2)"<<endl;
 	vhdl<<tab<<"begin"<<endl;
@@ -333,7 +341,7 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,i
 	vhdl<<endl;
 	
 	
-	vhdl<<tab<<declare("selectionVal",1)<<" <= "<<use("selectionVal2")<<" or "<<use("selectionVal1")<<" or "<<use("closeAddr")<<" or "<<use("finnishSignal")<<" or rst"<<";"<<endl;
+	vhdl<<tab<<declare("selectionVal",1)<<" <= "<<use("selectionVal2")<<" or "<<use("selectionVal1")<<" or "<<use("closeAddr")<<" or "<<use("finnishSignal")<<" or rst or finnishSignal"<<";"<<endl;
 	
 	vhdl<<tab<<"process(out_clk1,rst)"<<endl;
 	vhdl<<tab<<"variable temp:std_logic:='0';"<<endl;

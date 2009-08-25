@@ -399,6 +399,8 @@ else
 		if(move(globalConfig,i))
 		{
 			//~ cout<<" Pas 1_2 "<<i<<endl;
+			if(i==0)
+				cout<<endl<<endl<<"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!Primul a mai facut un pas!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<<endl<<endl;
 			tilingAlgorithm(i+1,n,true);
 		}
 		else
@@ -430,7 +432,7 @@ bool IntTilingMult::compareOccupation(DSP** config)
 	int totalSize = wInX * wInY;
 	int sizeBest = totalSize;
 	int sizeConfig = totalSize;
-	cout<<"Total size is "<<totalSize<<endl;
+	//cout<<"Total size is "<<totalSize<<endl;
 	int c1X,c2X,c1Y,c2Y;
 	int nj,ni,njj,nii;
 	int ii,jj,i,j;
@@ -453,7 +455,7 @@ bool IntTilingMult::compareOccupation(DSP** config)
 			jj = c1X;
 			ii = c2Y;
 			
-			cout<<" New coordinates are ("<<j<<" , "<<i<<" , "<<jj<<" , "<<ii<<")"<<endl;
+			//cout<<" New coordinates are ("<<j<<" , "<<i<<" , "<<jj<<" , "<<ii<<")"<<endl;
 			
 			
 						
@@ -487,7 +489,7 @@ bool IntTilingMult::compareOccupation(DSP** config)
 			
 		}
 		
-		cout<<"Size config is"<<sizeConfig<<endl;
+		//cout<<"Size config is"<<sizeConfig<<endl;
 		
 		
 		for(int ti=0;ti<nrDSPs;ti++)
@@ -505,7 +507,7 @@ bool IntTilingMult::compareOccupation(DSP** config)
 			jj = c1X;
 			ii = c2Y;
 			
-			cout<<" New coordinates are ("<<j<<" , "<<i<<" , "<<jj<<" , "<<ii<<")"<<endl;
+			//cout<<" New coordinates are ("<<j<<" , "<<i<<" , "<<jj<<" , "<<ii<<")"<<endl;
 			
 			
 						
@@ -539,7 +541,7 @@ bool IntTilingMult::compareOccupation(DSP** config)
 			
 		}
 		
-		cout<<"Size best is "<<sizeBest<<endl;
+		//cout<<"Size best is "<<sizeBest<<endl;
 		
 		if(sizeBest >= sizeConfig)		
 			return true;
@@ -768,6 +770,13 @@ void IntTilingMult::display(DSP** config)
 			if(i==m-getExtraHeight()-1)
 			cout<<endl;
 		}
+		
+		for(int ii=0;ii<m;ii++)
+		   delete [] (mat[ii]);
+	
+	delete[] (mat);
+		
+		
 	
 }
 
@@ -1006,6 +1015,12 @@ void IntTilingMult::display(DSP** config)
 		//~ }
 	
 	//~ cout<<"gata"<<endl;
+	
+	for(int ii=0;ii<m;ii++)
+		    delete[](mat[ii]);
+	
+	delete[] (mat);
+	
 	return costSlice;
 }	
 
@@ -1162,11 +1177,12 @@ void IntTilingMult::compareCost()
 	
 	float temp = computeCost(tempc);
 	
-	cout<<"score temp is"<<temp<<" and current best is"<<bestCost<<endl;
+	//cout<<"score temp is"<<temp<<" and current best is"<<bestCost<<endl;
 	
 	if(temp < bestCost)
 	{
 		cout<<"Costul e mai bun la cel curent!Schimba"<<endl;
+		cout<<"score temp is"<<temp<<" and current best is"<<bestCost<<endl;
 		//~ int c1X,c2X,c1Y,c2Y;
 		//~ int n=wInX + 2* getExtraWidth();
 		//~ tempc[0]->getTopRightCorner(c1X,c1Y);
@@ -1190,6 +1206,7 @@ void IntTilingMult::compareCost()
 		{
 			cout<<"Cost egal!!!"<<endl;
 			cout<<"Rezult compare is"<<compareOccupation(tempc)<<endl;
+			cout<<"score temp is"<<temp<<" and current best is"<<bestCost<<endl;
 			//display(bestConfig);
 			if(compareOccupation(tempc)==true)
 			{
