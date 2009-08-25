@@ -131,17 +131,20 @@ IntTilingMult:: IntTilingMult(Target* target, int wInX, int wInY,float ratio) :
 		
 	runAlgorithm();
 	
-	//~ initTiling(bestConfig,nrDSPs);
+	//initTiling(bestConfig,nrDSPs);
 	
 	//~ bestCost=350.455;
+	/*
+	initTiling(globalConfig,nrDSPs);
 	
-	//~ initTiling(globalConfig,nrDSPs);
+	globalConfig[0]->setTopRightCorner(19,0);
+	globalConfig[0]->setBottomLeftCorner(35,16);
+	globalConfig[1]->setTopRightCorner(10,19);
+	globalConfig[1]->setBottomLeftCorner(26,35);
+	replace(globalConfig, 1);
 	
-	//~ globalConfig[0]->setTopRightCorner(2,4);
-	//~ globalConfig[0]->setBottomLeftCorner(18,20);
-	//~ globalConfig[1]->setTopRightCorner(19,4);
-	//~ globalConfig[1]->setBottomLeftCorner(35,20);
-	
+	display(globalConfig);
+	*/
 	
 	
 	//~ compareCost();
@@ -1389,6 +1392,13 @@ bool IntTilingMult::checkOverlap(DSP** config, int index)
 		{
 			config[i]->getTopRightCorner(xtr2, ytr2);
 			config[i]->getBottomLeftCorner(xbl2, ybl2);
+			
+			if ((i < index) && 
+				(((xtr2 >= xtr1) && (ytr2 > ybl1)) || 	// config[index] is above and to the right of config[i]
+				 (xbl1 < xtr2) 							// config[index] is to the right of config[i]
+				)
+			   )
+			   return true;
 			
 			if(verbose)
 				cout << tab << tab << "checkOverlap: comparing with block #" << i << ". Top-right is at (" << xtr2 << ", " << ytr2 << ") and Bottom-right is at (" << xbl1 << ", " << ybl1 << ")" << endl;
