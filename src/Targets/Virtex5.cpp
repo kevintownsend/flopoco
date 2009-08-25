@@ -159,8 +159,31 @@ int Virtex5::getIntNAdderCost(int wIn, int n)
 	suggestSubaddSize(chunkSize, wIn);
 	lastChunkSize = wIn%chunkSize;
 	nr = ceil((double) wIn/chunkSize);
-	a = (nr-2)*lastChunkSize/2 + nr*wIn/2 + 2*(nr-1 + wIn) + chunkSize + (2*wIn+(nr-1))*(n-3);
-	b = nr*lastChunkSize/2 + nr*wIn/2 + (nr-2)*chunkSize + wIn + 2*wIn*(n-3);
+	// IntAdder
+	a = (nr-1)*nr*chunkSize/2 + (nr-1)*lastChunkSize;
+	b = nr*lastChunkSize + (nr-1)*nr*chunkSize/2;
+	
+	if (nr > 2) // carry
+	{
+		a += (nr-1)*(nr-2)/2;
+	}
+	
+	if (nr == 3) // SRL16E
+	{
+		a += chunkSize;	
+	} 
+	else if (nr > 3) // SRL16E, FDE
+	{
+		a += (nr-3)*chunkSize + 1;
+		b += (nr-3)*chunkSize + 1;
+	}
+	// IntNAdder
+	if (n >= 3)
+	{
+		a += (2*n-4)*wIn + 1;
+		b += (2*n-5)*wIn;
+	}
+	
 	cost = a+b*0.25;
 	return cost;
 }
