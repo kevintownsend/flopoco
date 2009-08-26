@@ -116,18 +116,92 @@ bool Virtex5::suggestSlackSubaddSize(int &x, int wIn, double slack){
 
 int Virtex5::getIntMultiplierCost(int wInX, int wInY){
 	
-	int lutCost = 0;
-	int chunkSize_ = this->lutInputs()/2;
+	int cost = 0;
+	int halfLut = lutInputs_/2;
+	int cx = int(ceil((double) wInX/halfLut));	// number of chunks on X
+	int cy = int(ceil((double) wInY/halfLut));  // number of chunks on Y
+	int padX = cx*halfLut - wInX; 				// zero padding of X input
+	int padY = cy*halfLut - wInY; 				// zero padding of Y input
 	
-	int chunksX =  int(ceil( ( double(wInX) / (double) chunkSize_) ));
-	int chunksY =  int(ceil( ( double(wInY) / (double) chunkSize_) ));
+	if (cx > cy) // set cx as the min and cy as the max
+	{
+		int tmp = cx;
+		cx = cy;
+		cy = tmp;
+		tmp = padX;
+		padX = padY;
+		padY = tmp;
+	}
 	
-	for (int i=0; i<chunksX; i++)
-		for (int j=0; j<chunksY; j++)
-			lutCost += 3; // one LUT for each: CY<4>, lut<1>, product of 1 pair of underlying LSBs
-	// NOTE: each 6 input LUT function has 2 outputs
-			
-	return lutCost + this->getIntNAdderCost(chunksX*chunkSize_, chunksY*chunkSize_);
+	float p = (double)cy/(double)halfLut; // number of chunks concatenated per operand
+	float r = p - floor(p); // relative error; used for detecting how many operands have ceil(p) chunks concatenated
+	int chunkSize, lastChunkSize, nr, aux, srl;
+	suggestSubaddSize(chunkSize, wInX+wInY);
+	lastChunkSize = (wInX+wInY)%chunkSize;
+	nr = ceil((double) (wInX+wInY)/chunkSize);
+
+	
+	if (r == 0.0) // all IntNAdder operands have p concatenated partial products
+	{
+		aux = halfLut*cx; // number of operands having p concatenated chunks
+		
+		if (aux <= 4)	
+			cost = p*lutInputs_*(aux-2)*(aux-1)/2-(padX*cx*(cx+1)+padY*aux*(aux+1))/2; // registered partial products without zero paddings
+		else
+			cost = p*lutInputs_*3 + p*lutInputs_*(aux-4)-(padX*(cx+1)+padY*(aux+1)); // registered partial products without zero paddings including SRLs
+	}
+	else if (r > 0.5) // 2/3 of the IntNAdder operands have p concatenated partial products
+	{
+		aux = (halfLut-1)*cx; // number of operands having p concatenated chunks
+		
+		if (halfLut*cx <= 4)
+			cost = ceil(p)*lutInputs_*(aux-2)*(aux-1)/2 + floor(p)*lutInputs_*((aux*cx)+(cx-2)*(cx-1)/2);// registered partial products without zero paddings
+		else
+		{
+			if (aux - 4 > 0)
+			{
+				cost = ceil(p)*lutInputs_*3 - padY - 2*padX + 	// registered partial products without zero paddings
+						(ceil(p)*lutInputs_-padY) * (aux-4) + 	// SRLs for long concatenations
+						(floor(p)*lutInputs_*cx - cx*padY); 		// SRLs for shorter concatenations
+			}	
+			else
+			{
+				cost = cost = ceil(p)*lutInputs_*(aux-2)*(aux-1)/2 + floor(p)*lutInputs_*((aux*cx)+(cx+aux-6)*(cx+aux-5)/2); // registered partial products without zero paddings
+				cost += (floor(p)*lutInputs_-padY) * (aux+cx-4); // SRLs for shorter concatenations
+			}
+		}
+	}	
+	else if (r > 0) // 1/3 of the IntNAdder operands have p concatenated partial products
+	{
+		aux = (halfLut-1)*cx; // number of operands having p concatenated chunks
+		
+		if (halfLut*cx <= 4)
+			cost = ceil(p)*lutInputs_*(cx-2)*(cx-1)/2 + floor(p)*lutInputs_*((aux*cx)+(aux-2)*(aux-1)/2);// registered partial products without zero paddings
+		else
+		{
+			cost = ceil(p)*lutInputs_*(cx-2)*(cx-1)/2 + floor(p)*lutInputs_*((aux*cx)+(aux-2)*(aux-1)/2);// registered partial products without zero paddings
+			if (cx - 4 > 0)
+			{
+				cost = ceil(p)*lutInputs_*3 - padY - 2*padX; // registered partial products without zero paddings
+				cost += ceil(p)*lutInputs_*(cx-4) - (cx-4)*padY; // SRLs for long concatenations
+				cost += floor(p)*lutInputs_*aux - aux*padY; // SRLs for shorter concatenations
+			}	
+			else
+			{
+				cost = cost = ceil(p)*lutInputs_*(cx-2)*(cx-1)/2 + floor(p)*lutInputs_*((aux*cx)+(cx+aux-6)*(cx+aux-5)/2); // registered partial products without zero paddings
+				cost += (floor(p)*lutInputs_-padY) * (aux+cx-4); // SRLs for shorter concatenations
+			}
+		}
+	}
+	aux = halfLut*cx;
+	cost += p*lutInputs_*aux + halfLut*(aux-1)*aux/2; // registered addition results on each pipeline stage of the IntNAdder
+	
+	if (padX+padY > 0)
+		cost += (cx-1)*(cy-1)*lutInputs_ + cx*(lutInputs_-padY) + cy*(lutInputs_-padX);
+	else
+		cost += cx*cy*lutInputs_; // LUT cost for small multiplications 
+	
+	return cost*5/8;
 };
   
 void Virtex5::getDSPWidths(int &x, int &y){

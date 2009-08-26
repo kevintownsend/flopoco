@@ -130,6 +130,7 @@ IntTilingMult:: IntTilingMult(Target* target, int wInX, int wInY,float ratio) :
 		
 		
 	runAlgorithm();
+	multiplicationInDSPs(bestConfig);
 	
 	//initTiling(bestConfig,nrDSPs);
 	
@@ -1691,4 +1692,92 @@ int IntTilingMult::bindDSPs4Stratix(DSP** config)
 		cout << "bindDSP4Stratix : three " << pair[2] << endl;
 	}
 	return (DSPcount - pair[0]/2 - pair[1]*2/3 - pair[2]*3/4);
+}
+
+int IntTilingMult::multiplicationInDSPs(DSP** config)
+{
+	int nrOp = 1; // number of adder operands
+	int boundDSPs;  // number of bound DSPs in a group
+	int trx1, try1, blx1, bly1; // coordinates of the two corners of a DSP block 
+	int multW, multH; // width and height of the multiplier the DSP block is using
+	ostringstream xname, yname, mname;
+			
+	DSP** tempc = new DSP*[nrDSPs];
+	DSP** addOps;
+	memcpy(tempc, config, sizeof(DSP*) * nrDSPs );
+	
+	if (strncmp(typeid(*target).name(), "7Virtex", 7) == 0) // then the target is Virtex
+	{
+		//cout<<"Virtex!"<<endl;
+		return nrOp;
+	}
+	else // the target is Stratix
+	{
+		//cout<<"Stratix"<<endl;	
+		for (int i=0; (i<nrDSPs) && (tempc[i] != NULL); i++)
+		{
+			tempc[i]->getTopRightCorner(trx1, try1);
+			tempc[i]->getBottomLeftCorner(blx1, bly1);
+			multW = tempc[i]->getMultiplierWidth();
+			multH = tempc[i]->getMultiplierHeight();
+			
+			setCycle(0);
+			xname << "x" << i << "_0";
+			vhdl << tab << declare(xname.str(), multW, true, Signal::registeredWithAsyncReset) << " <= " << "X" << range(blx1, trx1) << ";" << endl;
+			yname << "y" << i << "_0";
+			vhdl << tab << declare(yname.str(), multH, true, Signal::registeredWithAsyncReset) << " <= " << "Y" << range(bly1, try1) << ";" << endl;
+			
+			boundDSPs = tempc[i]->getNumberOfAdders();
+			if (boundDSPs > 0) // need to traverse the addition operands list and perform addtion
+			{
+				nextCycle();
+				mname << "mult_" << i << "_0";
+				vhdl << tab << declare(mname.str(), multW+multH, true, Signal::registeredWithAsyncReset) << " <= " << use(xname.str()) << " * " << use(yname.str()) << ";" << endl;
+				
+				addOps = tempc[i]->getAdditionOperands();
+				
+				for (int j=0; j<boundDSPs; j++)
+				{
+					addOps[j]->getTopRightCorner(trx1, try1);
+					addOps[j]->getBottomLeftCorner(blx1, bly1);
+					multW = addOps[j]->getMultiplierWidth();
+					multH = addOps[j]->getMultiplierHeight();
+					
+					setCycle(0);
+					xname << "x" << i << "_" << j+1;
+					vhdl << tab << declare(xname.str(), multW, true, Signal::registeredWithAsyncReset) << " <= " << "X" << range(blx1, trx1) << ";" << endl;					
+					xname << "y" << i << "_" << j+1;
+					vhdl << tab << declare(yname.str(), multH, true, Signal::registeredWithAsyncReset) << " <= " << "Y" << range(bly1, try1) << ";" << endl;						
+					
+					nextCycle();
+					mname << "mult_" << i << "_" << j;
+					vhdl << tab << declare(mname.str(), multW+multH, true, Signal::registeredWithAsyncReset) << " <= " << use(xname.str()) << " * " << use(yname.str()) << ";" << endl;
+				}
+				
+				int ext = (boundDSPs>1)?2:1; // the number of carry bits of the addtion
+				
+				nextCycle();
+				vhdl << tab << declare(join("addOpDSP", nrOp), multW+multH+ext, true, Signal::registeredWithAsyncReset) << " <= ";
+				
+				int j=0;
+				
+				for (j=0; j<boundDSPs; j++)
+				{
+					mname << "mult_" << i << "_" << j;
+					vhdl << "(" << zeroGenerator(ext,0) << " & " << use(mname.str()) << ") * "; 
+				}
+				mname << "mult_" << i << "_" << j;
+				vhdl << "(" << zeroGenerator(ext,0) << " & " << use(mname.str()) << ");" << endl; 
+				
+			} 
+			else // multiply the two terms and you're done
+			{
+				nextCycle();
+				vhdl << tab << declare(join("addOpDSP", nrOp), multW+multH, true, Signal::registeredWithAsyncReset) << " <= " << use(xname.str()) << " * " << use(yname.str()) << ";" << endl;
+			}
+			
+		}
+		return nrOp;
+	}
+
 }

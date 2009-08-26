@@ -80,13 +80,20 @@ private:
 	int getExtraWidth();
 	
 	/**
-	 * This functions tries to bind together as many multiplier blocks as possible into the same DSP block of the StratixII 
+	 * This function tries to bind together as many multiplier blocks as possible into the same DSP block of the StratixII 
 	 * architecture which has up to 3 adders
 	 * @param the configuration of the tiling grid
 	 * @return the number of operands for the final adder, which has been reduced from individual DSP count to sums of DSPs
 	 */
 	int bindDSPs4Stratix(DSP** config);
 
+	/**
+	 * This function generates the vhdl code for multiplications using DSP blocks, guided by the settings of the DSP objects.
+	 * @param the configuration of the tiling grid
+	 * @return the number of addition operands that contain DSP block multiplications
+	 */
+	int multiplicationInDSPs(DSP** config);
+	 
 	/** The width of first input*/
 	int wInX; 
 	/** The width of second input*/
@@ -95,19 +102,19 @@ private:
 	int wOut;
 	/** The ratio between the number of DSPs and slices */
 	float ratio;
-	/* The working configuration of the tiling algorithm on DSPs */
+	/** The working configuration of the tiling algorithm on DSPs */
 	DSP** globalConfig;
 	/** The best cost obtained so far*/
 	float bestCost;
-	/* The best configuration of the after tiling DSPs */
+	/** The best configuration of the after tiling DSPs */
 	DSP** bestConfig;
-	/* The target */
+	/** The target */
 	Target * target;
 	
 	/** The vector which will mark if a dsp in the tiling algorithm was or not rotated */
 	bool* rot;
 
-	/* The number of estimated DSPs that will be used according to this parameter */
+	/** The number of estimated DSPs that will be used according to this parameter */
 	int nrDSPs;
 
 	/** This function estimates the maximum number of DSPs that can be used with respect to the preference of the user */

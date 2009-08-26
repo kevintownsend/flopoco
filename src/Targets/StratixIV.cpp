@@ -250,6 +250,7 @@ int StratixIV::getIntMultiplierCost(int wInX, int wInY){
 		cost = ceil(p)*lutInputs_*(cx-2)*(cx-1)/2 + floor(p)*lutInputs_*((aux*cx)+(aux-2)*(aux-1)/2);// registered partial products without zero paddings
 	}
 	
+	aux = halfLut*cx;
 	cost += p*lutInputs_*aux + halfLut*(aux-1)*aux/2; // registered addition results on each pipeline stage of the IntNAdder
 	cost += (nr-1)*(wInX+wInY) + (nr-1)*nr/2 + nr*lastChunkSize + nr*(nr-1)*(chunkSize+1)/2; // final IntAdder cost LUT + Registers
 	cost += cx*cy*lutInputs_*2; // LUT cost for small multiplications 
