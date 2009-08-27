@@ -122,7 +122,7 @@ LongAcc::LongAcc(Target* target, int wEX, int wFX, int MaxMSBX, int LSBA, int MS
 	vhdl << tab << declare("xUnderflowCond",1) << " <= '1' when ("<<use("expX")<<" < CONV_STD_LOGIC_VECTOR("<<LSBA_ + E0X_<<","<<wEX_<<")) else '0' ;" << endl;  
 	//determination of the shift value
 	int64_t exp_offset = E0X_+LSBA_;
-	vhdl << tab << declare("shiftVal",wEX_+1) << " <= (\"0\" & " << use("expX") << ") + CONV_STD_LOGIC_VECTOR("<< exp_offset <<","<<  wEX_+1<<");" << endl;
+	vhdl << tab << declare("shiftVal",wEX_+1) << " <= (\"0\" & " << use("expX") << ") - CONV_STD_LOGIC_VECTOR("<< exp_offset <<","<<  wEX_+1<<");" << endl;
 
 	//input shifter mappings
 	shifter_ = new Shifter(target, wFX_+1, maxShift_, Left);
