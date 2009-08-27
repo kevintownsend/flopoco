@@ -80,7 +80,8 @@ Collision::Collision(Target* target, int wE, int wF, int optimize)
 	if(!optimize) {
 		//////////////////////////////////////////////////////////////////:
 		//            A version that assembles FP operators             //
-		
+		//////////////////////////////////////////////////////////////////:
+
 		FPMultiplier* mult = new FPMultiplier(target, wE, wF, wE, wF, wE, wF, 1);
 		oplist.push_back(mult);
 		FPAdder* add =  new FPAdder(target, wE, wF, wE, wF, wE, wF);
@@ -141,17 +142,17 @@ Collision::Collision(Target* target, int wE, int wF, int optimize)
 		int g=3; 
 
 		// extract the three biased exponents. 
-		vhdl << declare("EX", wE) << " <=  X" << range(wE+wF-1, wF)  << ";" << endl;
-		vhdl << declare("EY", wE) << " <=  Y" << range(wE+wF-1, wF) << ";" << endl;
-		vhdl << declare("EZ", wE) << " <=  Z" << range(wE+wF-1, wF) << ";" << endl;
+		vhdl << tab << declare("EX", wE) << " <=  X" << range(wE+wF-1, wF)  << ";" << endl;
+		vhdl << tab << declare("EY", wE) << " <=  Y" << range(wE+wF-1, wF) << ";" << endl;
+		vhdl << tab << declare("EZ", wE) << " <=  Z" << range(wE+wF-1, wF) << ";" << endl;
 		
 		// determine the max of the exponents
-		vhdl << declare("DEXY", wE+1) << " <=   ('0' & EX) - ('0' & EY);" << endl;
-		vhdl << declare("DEYZ", wE+1) << " <=   ('0' & EY) - ('0' & EZ);" << endl;
-		vhdl << declare("DEXZ", wE+1) << " <=   ('0' & EX) - ('0' & EZ);" << endl;
-		vhdl << declare("XltY") << " <=   DEXY("<< wE<<");" << endl;
-		vhdl << declare("YltZ") << " <=   DEYZ("<< wE<<");" << endl;
-		vhdl << declare("XltZ") << " <=   DEXZ("<< wE<<");" << endl;
+		vhdl << tab << declare("DEXY", wE+1) << " <=   ('0' & EX) - ('0' & EY);" << endl;
+		vhdl << tab << declare("DEYZ", wE+1) << " <=   ('0' & EY) - ('0' & EZ);" << endl;
+		vhdl << tab << declare("DEXZ", wE+1) << " <=   ('0' & EX) - ('0' & EZ);" << endl;
+		vhdl << tab << declare("XltY") << " <=   DEXY("<< wE<<");" << endl;
+		vhdl << tab << declare("YltZ") << " <=   DEYZ("<< wE<<");" << endl;
+		vhdl << tab << declare("XltZ") << " <=   DEXZ("<< wE<<");" << endl;
 		
 		// rename the exponents  to A,B,C with A>=(B,C)
 		vhdl << tab << declare("EA", wE)  << " <= " << endl
@@ -170,8 +171,8 @@ Collision::Collision(Target* target, int wE, int wF, int optimize)
 		nextCycle();
 		
 		// Now recompute our two shift values -- they were already computed at cycle 0 but it is cheaper this way.
-		vhdl << declare("fullShiftValB", wE) << " <=  (" << use("EA") << range(wE-2,0) << " - " << use("EB")<< range(wE-2,0) << ") & '0' ; -- positive result, no overflow " << endl;
-		vhdl << declare("fullShiftValC", wE) << " <=  (" << use("EA") << range(wE-2,0) << " - " << use("EC")<< range(wE-2,0) << ") & '0' ; -- positive result, no overflow " << endl;
+		vhdl << tab << declare("fullShiftValB", wE) << " <=  (" << use("EA") << range(wE-2,0) << " - " << use("EB")<< range(wE-2,0) << ") & '0' ; -- positive result, no overflow " << endl;
+		vhdl << tab << declare("fullShiftValC", wE) << " <=  (" << use("EA") << range(wE-2,0) << " - " << use("EC")<< range(wE-2,0) << ") & '0' ; -- positive result, no overflow " << endl;
 	
 		Shifter* rightShifter = new Shifter(target,wF+g+2, wF+g+2,Right); 
 		oplist.push_back(rightShifter);
