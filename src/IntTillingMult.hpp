@@ -180,6 +180,13 @@ private:
 	*/
 	
 	bool compareOccupation(DSP** config);
+	
+	/**  This function will be used in order to create the Multipliers in LUTs for all parts that are not done in DSPs. The name of this operands that will be used for the final addition is addOpSlice#
+	* The configuration that will be used is bestConfig
+	* @return the number of such operands that must be added in the final IntNAdder.
+	*/
+	
+
 
 };
 

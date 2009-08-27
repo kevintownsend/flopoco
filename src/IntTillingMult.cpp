@@ -131,7 +131,54 @@ IntTilingMult:: IntTilingMult(Target* target, int wInX, int wInY,float ratio) :
 		
 	//runAlgorithm();
 	
+
+	//~ initTiling(bestConfig,nrDSPs);
 	
+	 //~ bestCost=367.455;
+	
+	//~ initTiling(globalConfig,nrDSPs);
+	
+	//~ globalConfig[0]->setTopRightCorner(15,19);
+	//~ globalConfig[0]->setBottomLeftCorner(23,27);
+	//~ globalConfig[1]->setTopRightCorner(24,10);
+	//~ globalConfig[1]->setBottomLeftCorner(32,18);
+	//~ globalConfig[2]->setTopRightCorner(24,19);
+	//~ globalConfig[2]->setBottomLeftCorner(32,27);
+	
+	
+	//~ cout<<"Initial configuration"<<endl<<endl;
+	//~ display(globalConfig);
+	
+	//~ cout<<endl<<endl;
+	
+	//~ compareCost();
+	
+	
+	//~ initTiling(globalConfig,nrDSPs);
+	
+	//~ globalConfig[0]->setTopRightCorner(24,0);
+	//~ globalConfig[0]->setBottomLeftCorner(32,8);
+	//~ globalConfig[1]->setTopRightCorner(15,9);
+	//~ globalConfig[1]->setBottomLeftCorner(23,17);
+	//~ globalConfig[2]->setTopRightCorner(6,18);
+	//~ globalConfig[2]->setBottomLeftCorner(14,26);
+	
+	
+	//~ cout<<"Teoretic configuration"<<endl<<endl;
+	//~ display(globalConfig);
+	
+	//~ cout<<endl<<endl;
+	
+	
+	//~ compareCost();
+	
+	//display(bestConfig);
+	
+	
+	//4 virtex ceva test
+
+	
+
 	//initTiling(bestConfig,nrDSPs);
 	
 	//~ bestCost=350.455;
@@ -793,6 +840,7 @@ void IntTilingMult::display(DSP** config)
 }
 
 
+
  int IntTilingMult::partitionOfGridSlices(DSP** config,int &partitions)
 {
 	//~ cout<<"Incepe"<<endl;
@@ -1189,7 +1237,7 @@ void IntTilingMult::compareCost()
 	
 	float temp = computeCost(tempc);
 	
-	//cout<<"score temp is"<<temp<<" and current best is"<<bestCost<<endl;
+	//~ cout<<"score temp is"<<temp<<" and current best is"<<bestCost<<endl;
 	
 	if(temp < bestCost)
 	{
@@ -1265,7 +1313,11 @@ float IntTilingMult::computeCost(DSP** &config)
 	//~ cout<<"Number of used DSP blocks is "<<nrOfUsedDSPs<<endl;
 		
 	int partitions;
-		acc =((float)nrOfUsedDSPs)*costDSP + costLUT * partitionOfGridSlices(config,partitions);
+	float LUTs4Multiplication =  partitionOfGridSlices(config,partitions);
+	
+	//~ cout<<"Number of slices 4 multiplication of the rest is "<<LUTs4Multiplication<<endl;
+		
+		acc =((float)nrOfUsedDSPs)*costDSP + costLUT * LUTs4Multiplication;
 		
 	//~ cout<<"Number of partitions for LUTs is "<<partitions<<endl;
 	nrOfUsedDSPs = bindDSPs(config);
@@ -1602,7 +1654,7 @@ void IntTilingMult::initTiling(DSP** &config, int dspCount)
 	
 int IntTilingMult::bindDSPs4Stratix(DSP** config)
 {
-	int nrDSPs_ = estimateDSPs();
+	int nrDSPs_ = nrDSPs;
 	int DSPcount = nrDSPs_;
 	
 	for (int i=0; i<nrDSPs_; i++)
