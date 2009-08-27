@@ -94,6 +94,14 @@ private:
 	 */
 	int multiplicationInDSPs(DSP** config);
 	 
+	 
+	/**
+	 * This function generates the vhdl code for multiplication using only Slices.
+	 * @param the configuration of the tiling grid
+	 * @return the number of addition operands that use only Slices for multiplications
+	 */
+	int multiplicationInSlices(DSP** config);
+	 
 	/** The width of first input*/
 	int wInX; 
 	/** The width of second input*/

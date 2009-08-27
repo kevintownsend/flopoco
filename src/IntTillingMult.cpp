@@ -34,7 +34,7 @@
 #include <gmpxx.h>
 #include "utils.hpp"
 #include "Operator.hpp"
-
+#include "IntMultiplier.hpp"
 #include "IntTillingMult.hpp"
 
 #include <cstdlib>
@@ -129,23 +129,31 @@ IntTilingMult:: IntTilingMult(Target* target, int wInX, int wInY,float ratio) :
 		
 		
 		
-	runAlgorithm();
-	multiplicationInDSPs(bestConfig);
+	//runAlgorithm();
+	
 	
 	//initTiling(bestConfig,nrDSPs);
 	
 	//~ bestCost=350.455;
-	/*
-	initTiling(globalConfig,nrDSPs);
 	
-	globalConfig[0]->setTopRightCorner(19,0);
-	globalConfig[0]->setBottomLeftCorner(35,16);
-	globalConfig[1]->setTopRightCorner(10,19);
-	globalConfig[1]->setBottomLeftCorner(26,35);
-	replace(globalConfig, 1);
+	initTiling(globalConfig,nrDSPs);
+	/*
+	globalConfig[0]->setTopRightCorner(6,19);
+	globalConfig[0]->setBottomLeftCorner(14,27);
+	globalConfig[1]->setTopRightCorner(15,19);
+	globalConfig[1]->setBottomLeftCorner(23,27);
+	globalConfig[2]->setTopRightCorner(24,10);
+	globalConfig[2]->setBottomLeftCorner(32,18);
+	globalConfig[3]->setTopRightCorner(24,19);
+	globalConfig[3]->setBottomLeftCorner(32,27);
+	*/
+	//replace(globalConfig, 1);
 	
 	display(globalConfig);
-	*/
+	bindDSPs(globalConfig);
+	multiplicationInDSPs(globalConfig);
+	multiplicationInSlices(globalConfig);
+	//display(globalConfig);
 	
 	
 	//~ compareCost();
@@ -1653,7 +1661,14 @@ int IntTilingMult::bindDSPs4Stratix(DSP** config)
 					for (int k=0; k<nrOp; k++)
 					{
 						operandsj[nrOpj+k] = operands[k];
+						// each operand of congif[i] also gets bounded 
+						int opcntk = operands[k]->getNumberOfAdders();
 						operands[k]->setNumberOfAdders(nrOp+nrOpj+1);
+						DSP** opsk = operands[k]->getAdditionOperands();
+						for (int l=0; l < nrOpj; l++)
+							opsk[l+opcntk] = operandsj[l];
+						opsk[nrOpj+opcntk] = config[j];
+						operands[k]->setAdditionOperands(opsk);
 					}
 					operandsj[nrOp+nrOpj] = config[i];
 					config[j]->setAdditionOperands(operandsj);
@@ -1662,7 +1677,14 @@ int IntTilingMult::bindDSPs4Stratix(DSP** config)
 					for (int k=0; k<nrOpj; k++)
 					{
 						operands[nrOp+k] = operandsj[k];
+						// each operand of congif[j] also gets bounded 
+						int opcntk = operandsj[k]->getNumberOfAdders();
 						operandsj[k]->setNumberOfAdders(nrOp+nrOpj+1);
+						DSP** opsk = operandsj[k]->getAdditionOperands();
+						for (int l=0; l < nrOp; l++)
+							opsk[l+opcntk] = operands[l];
+						opsk[nrOp+opcntk] = config[i];
+						operandsj[k]->setAdditionOperands(opsk);
 					}
 					operands[nrOp+nrOpj] = config[j];
 					config[i]->setAdditionOperands(operands);
@@ -1696,10 +1718,11 @@ int IntTilingMult::bindDSPs4Stratix(DSP** config)
 
 int IntTilingMult::multiplicationInDSPs(DSP** config)
 {
-	int nrOp = 1; // number of adder operands
-	int boundDSPs;  // number of bound DSPs in a group
-	int trx1, try1, blx1, bly1; // coordinates of the two corners of a DSP block 
-	int multW, multH; // width and height of the multiplier the DSP block is using
+	int nrOp = 1;		 			// number of adder operands
+	int boundDSPs;  				// number of bound DSPs in a group
+	int trx1, try1, blx1, bly1; 	// coordinates of the two corners of a DSP block 
+	int fpadX, fpadY, bpadX, bpadY;	// zero padding on both axis
+	int multW, multH; 				// width and height of the multiplier the DSP block is using
 	ostringstream xname, yname, mname;
 			
 	DSP** tempc = new DSP*[nrDSPs];
@@ -1713,44 +1736,89 @@ int IntTilingMult::multiplicationInDSPs(DSP** config)
 	}
 	else // the target is Stratix
 	{
-		//cout<<"Stratix"<<endl;	
-		for (int i=0; (i<nrDSPs) && (tempc[i] != NULL); i++)
+		for (int i=0; i<nrDSPs; i++)
+		if (tempc[i] != NULL)
 		{
+			cout << "At DSP#"<< i+1 << " tempc["<<i<<"]" << endl; 
 			tempc[i]->getTopRightCorner(trx1, try1);
 			tempc[i]->getBottomLeftCorner(blx1, bly1);
-			multW = tempc[i]->getMultiplierWidth();
-			multH = tempc[i]->getMultiplierHeight();
+			fpadX = blx1-wInX-getExtraWidth()-1;
+			fpadX = (fpadX<0)?0:fpadX;
+			fpadY = bly1-wInY-getExtraHeight()-1;
+			fpadY = (fpadY<0)?0:fpadY;
+			bpadX = getExtraWidth()-trx1;
+			bpadX = (bpadX<0)?0:bpadX;
+			bpadY = getExtraHeight()-try1;
+			bpadY = (bpadY<0)?0:bpadY;
+			multW = tempc[i]->getMaxMultiplierWidth();
+			multH = tempc[i]->getMaxMultiplierHeight();
 			
 			setCycle(0);
+			xname.str("");
 			xname << "x" << i << "_0";
-			vhdl << tab << declare(xname.str(), multW, true, Signal::registeredWithAsyncReset) << " <= " << "X" << range(blx1, trx1) << ";" << endl;
+			vhdl << tab << declare(xname.str(), multW, true, Signal::registeredWithAsyncReset) << " <= " << zeroGenerator(fpadX,0) << " & " << "X" << range(blx1-fpadX, trx1+bpadX) << " & " << zeroGenerator(bpadX,0) << ";" << endl;
+			yname.str("");
 			yname << "y" << i << "_0";
-			vhdl << tab << declare(yname.str(), multH, true, Signal::registeredWithAsyncReset) << " <= " << "Y" << range(bly1, try1) << ";" << endl;
+			vhdl << tab << declare(yname.str(), multH, true, Signal::registeredWithAsyncReset) << " <= " << zeroGenerator(fpadY,0) << " & " << "Y" << range(bly1-fpadY, try1+bpadY) << " & " << zeroGenerator(bpadY,0) << ";" << endl;
 			
 			boundDSPs = tempc[i]->getNumberOfAdders();
 			if (boundDSPs > 0) // need to traverse the addition operands list and perform addtion
 			{
+				cout << "boundDSPs = " << boundDSPs << endl;
 				nextCycle();
+				mname.str("");
 				mname << "mult_" << i << "_0";
 				vhdl << tab << declare(mname.str(), multW+multH, true, Signal::registeredWithAsyncReset) << " <= " << use(xname.str()) << " * " << use(yname.str()) << ";" << endl;
 				
 				addOps = tempc[i]->getAdditionOperands();
 				
+				//
+				for (int j=0; j<3; j++)
+					if (addOps[j] == NULL)
+						cout << "addOps["<< j << "]=NULL" << endl;
+					else
+						cout << "addOps["<< j << "]=not null" << endl;
+				
+				
+					
+				//
+				
 				for (int j=0; j<boundDSPs; j++)
 				{
+					cout << "j = " << j << endl;
+					for (int k=i+1; k<nrDSPs; k++)
+					{
+						if ((tempc[k] != NULL) && (tempc[k] == addOps[j]))
+						{
+							cout << "tempc[" << k << "] deleted" << endl;
+							tempc[k] = NULL;
+							break;
+						}
+					}
 					addOps[j]->getTopRightCorner(trx1, try1);
 					addOps[j]->getBottomLeftCorner(blx1, bly1);
-					multW = addOps[j]->getMultiplierWidth();
-					multH = addOps[j]->getMultiplierHeight();
+					fpadX = blx1-wInX-getExtraWidth()-1;
+					fpadX = (fpadX<0)?0:fpadX;
+					fpadY = bly1-wInY-getExtraHeight()-1;
+					fpadY = (fpadY<0)?0:fpadY;
+					bpadX = getExtraWidth()-trx1;
+					bpadX = (bpadX<0)?0:bpadX;
+					bpadY = getExtraHeight()-try1;
+					bpadY = (bpadY<0)?0:bpadY;
+					multW = addOps[j]->getMaxMultiplierWidth();
+					multH = addOps[j]->getMaxMultiplierHeight();
 					
 					setCycle(0);
+					xname.str("");
 					xname << "x" << i << "_" << j+1;
-					vhdl << tab << declare(xname.str(), multW, true, Signal::registeredWithAsyncReset) << " <= " << "X" << range(blx1, trx1) << ";" << endl;					
-					xname << "y" << i << "_" << j+1;
-					vhdl << tab << declare(yname.str(), multH, true, Signal::registeredWithAsyncReset) << " <= " << "Y" << range(bly1, try1) << ";" << endl;						
+					vhdl << tab << declare(xname.str(), multW, true, Signal::registeredWithAsyncReset) << " <= " << zeroGenerator(fpadX,0) << " & " << "X" << range(blx1-fpadX, trx1+bpadX) << " & " << zeroGenerator(bpadX,0) << ";" << endl;
+					yname.str("");
+					yname << "y" << i << "_" << j+1;
+					vhdl << tab << declare(yname.str(), multH, true, Signal::registeredWithAsyncReset) << " <= " << zeroGenerator(fpadY,0) << " & " << "Y" << range(bly1-fpadY, try1+bpadY) << " & " << zeroGenerator(bpadY,0) << ";" << endl;
 					
 					nextCycle();
-					mname << "mult_" << i << "_" << j;
+					mname.str("");
+					mname << "mult_" << i << "_" << j+1;
 					vhdl << tab << declare(mname.str(), multW+multH, true, Signal::registeredWithAsyncReset) << " <= " << use(xname.str()) << " * " << use(yname.str()) << ";" << endl;
 				}
 				
@@ -1763,9 +1831,12 @@ int IntTilingMult::multiplicationInDSPs(DSP** config)
 				
 				for (j=0; j<boundDSPs; j++)
 				{
+					mname.str("");
 					mname << "mult_" << i << "_" << j;
 					vhdl << "(" << zeroGenerator(ext,0) << " & " << use(mname.str()) << ") * "; 
 				}
+				
+				mname.str("");
 				mname << "mult_" << i << "_" << j;
 				vhdl << "(" << zeroGenerator(ext,0) << " & " << use(mname.str()) << ");" << endl; 
 				
@@ -1775,9 +1846,230 @@ int IntTilingMult::multiplicationInDSPs(DSP** config)
 				nextCycle();
 				vhdl << tab << declare(join("addOpDSP", nrOp), multW+multH, true, Signal::registeredWithAsyncReset) << " <= " << use(xname.str()) << " * " << use(yname.str()) << ";" << endl;
 			}
-			
+			nrOp++;
 		}
 		return nrOp;
 	}
 
 }
+
+int IntTilingMult::multiplicationInSlices(DSP** config)
+{
+	//~ cout<<"Incepe"<<endl;
+	int partitions=0;
+	int **mat;
+	int n,m;
+	int count=1;
+	n=wInX + 2* getExtraWidth();
+	m=wInY + 2* getExtraHeight();
+	//~ cout<<"width "<<n<<"height "<<m<<endl;
+	mat = new int*[m];
+	for(int i=0;i<m;i++)
+	{
+		mat[i] = new int [n];
+		for(int j=0;j<n;j++)
+		mat[i][j]=0;
+	}
+	for(int i=0;i<nrDSPs;i++)
+	{
+		int c1X,c2X,c1Y,c2Y;
+		
+		config[i]->getTopRightCorner(c1X,c1Y);
+		config[i]->getBottomLeftCorner(c2X,c2Y);
+		//~ cout<<"DSP #"<<i+1<<"has toprigh ("<<c1X<<","<<c1Y<<") and botomleft ("<<c2X<<","<<c2Y<<")"<<endl;
+		c1X=n-c1X-1;
+		c2X=n-c2X-1;
+		//~ cout<<"new x1 "<<c1X<<" new x2 "<<c2X<<endl;
+		
+		fillMatrix(mat,n,m,c2X,c1Y,c1X,c2Y,count);
+		count++;			
+	}
+	partitions=0;
+		
+	for(int i=0;i<m;i++)
+	{
+		for(int j=0;j<n;j++)
+		{
+			if(mat[i][j]==0)
+			{
+				int ver =0;
+				int ii=i,jj=j;
+				while(ver<6&&(ii<m-1||jj<n-1))
+				{
+					if(ver<3)
+					{
+						if(ver==0||ver==1)
+							ii++;
+						if(ii>m-1)
+						{
+							ii=m-1;
+							ver=2;							
+						}
+					
+						if(ver==0||ver==2)
+						jj++;
+					
+						if(jj>n-1)
+						{
+							jj=n-1;
+							ver=1;
+						}
+					
+						for(int k=ii,q=jj;k>i-1&&(ver==0||ver==2);k--)
+							if(mat[k][q]!=0)
+							{
+								if(ver==0)
+									ver=1;
+								else
+									ver=3;
+								jj--;
+							}
+						
+						for(int k=ii,q=jj;q>j-1&&(ver==0||ver==1);q--)
+							if(mat[k][q]!=0)
+							{
+								if(ver=0)
+									ver=2;
+								else
+									ver=3;
+								ii--;
+							}
+					}
+					else
+					{
+						if(ver==3||ver==5)
+						jj++;
+					
+						if(jj>n-1)
+						{
+							jj=n-1;
+							ver=4;
+						}
+						
+						if(ver==3||ver==4)
+							ii++;
+						if(ii>m-1)
+						{
+							ii=m-1;
+							ver=5;							
+						}
+					
+						for(int k=ii,q=jj;q>j-1&&(ver==3||ver==4);q--)
+							if(mat[k][q]!=0)
+							{
+								if(ver=3)
+									ver=5;
+								else
+									ver=6;
+								ii--;
+							}
+						
+						for(int k=ii,q=jj;k>i-1&&(ver==3||ver==5);k--)
+							if(mat[k][q]!=0)
+							{
+								if(ver==3)
+									ver=4;
+								else
+									ver=6;
+								jj--;
+							}
+						
+						if(ver==5&&jj==n-1)
+							ver=6;
+						if(ver==4&&ii==m-1)
+							ver=6;
+					}
+				}
+				
+				int nj,ni,njj,nii;
+				int extH = getExtraHeight();
+				int extW = getExtraWidth();
+				
+				
+				if( j >= n-extW || jj < extW || i >= m-extH || ii < extH)
+				{
+					cout<<"Partition number "<<count<<" is totally out of the real multiplication bounds. ("<<j<<" , "<<i<<" , "<<jj<<" , "<<ii<<")"<<endl;
+				}
+				else
+				{
+					if( j < extW )
+						nj = extW ;
+					else
+						nj = j;
+					if( jj >= n-extW )
+						njj = n-extW -1;
+					else
+						njj = jj;
+					
+					if( i < extH )
+						ni = extH;
+					else
+						ni = i;
+					if( ii >= m-extH )
+						nii = m-extH-1;
+					else
+						nii = ii;
+					setCycle(0);	
+					target->setUseHardMultipliers(false);
+					IntMultiplier* mult =  new IntMultiplier(target, njj-nj+1, nii-ni+1);
+					ostringstream cname;
+					cname << mult->getName() << "_" << partitions;
+					mult->changeName(cname.str());
+					oplist.push_back(mult);
+					
+					vhdl << tab << declare(join("x_",partitions)) << " <= " << use("X") << range(wInX-nj-1+extW, wInX-njj-1+extW) << ";" << endl;
+					inPortMap(mult, "X", join("x_",partitions));
+					vhdl << tab << declare(join("y_",partitions)) << " <= " << use("Y") << range(nii, ni) << ";" << endl;
+					inPortMap(mult, "Y", join("y_",partitions));
+					
+					outPortMap(mult, "R", join("addOpSlice", partitions));
+					
+					vhdl << instance(mult, join("Mult", partitions));
+
+					syncCycleFromSignal(join("addOpSlice", partitions));
+					cout<<"Partition number "<<count<<" with bounds. ("<<j<<" , "<<i<<" , "<<jj<<" , "<<ii<<")"<<" has now bounds ("<<nj<<" , "<<ni<<" , "<<njj<<" , "<<nii<<")"<<endl;
+					partitions++;
+				}
+				
+				fillMatrix(mat,n,m,j,i,jj,ii,count);
+				count++;
+				
+			}
+		}
+	
+	}
+	
+		//de verificat
+		
+		//cout<<"Count "<<count<<" Partitions "<<partitions<<endl;
+		
+		//partitions =count -partitions;
+		 
+		
+		//~ char af;
+		//~ int afi;
+	//~ for(int i=0;i<m;i++)
+		//~ {
+			//~ for(int j=0;j<n;j++)
+			//~ {
+				//~ if(mat[i][j]<10)
+					//~ afi=mat[i][j];
+				//~ else
+					//~ afi=mat[i][j]+7;
+				//~ af=(int)afi+48;
+				//~ cout<<af;
+			//~ }
+			//~ cout<<endl;
+		//~ }
+	
+	//~ cout<<"gata"<<endl;
+	
+	for(int ii=0;ii<m;ii++)
+		    delete[](mat[ii]);
+	
+	delete[] (mat);
+	
+	return partitions;
+}	
+
+
