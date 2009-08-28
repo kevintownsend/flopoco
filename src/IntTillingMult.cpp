@@ -27,6 +27,7 @@
 #include <typeinfo>
 #include <math.h>
 #include <string.h>
+#include <limits.h>
 
 #include <gmp.h>
 
@@ -144,7 +145,7 @@ IntTilingMult:: IntTilingMult(Target* target, int wInX, int wInY,float ratio) :
 		
 		
 		
-	runAlgorithm();
+	//runAlgorithm();
 	
 
 	//~ initTiling(bestConfig,nrDSPs);
@@ -198,7 +199,7 @@ IntTilingMult:: IntTilingMult(Target* target, int wInX, int wInY,float ratio) :
 	
 	//~ bestCost=350.455;
 	
-	//~ initTiling(globalConfig,nrDSPs);
+	initTiling(globalConfig,nrDSPs);
 	/*
 	globalConfig[0]->setTopRightCorner(6,19);
 	globalConfig[0]->setBottomLeftCorner(14,27);
@@ -211,10 +212,10 @@ IntTilingMult:: IntTilingMult(Target* target, int wInX, int wInY,float ratio) :
 	*/
 	//replace(globalConfig, 1);
 	
-	//~ display(globalConfig);
-	//~ bindDSPs(globalConfig);
-	//~ multiplicationInDSPs(globalConfig);
-	//~ multiplicationInSlices(globalConfig);
+	display(globalConfig);
+	bindDSPs(globalConfig);
+	multiplicationInDSPs(globalConfig);
+	multiplicationInSlices(globalConfig);
 	//display(globalConfig);
 	
 	
@@ -1822,38 +1823,146 @@ int IntTilingMult::bindDSPs4Stratix(DSP** config)
 
 int IntTilingMult::multiplicationInDSPs(DSP** config)
 {
-	int nrOp = 1;		 			// number of adder operands
-	int boundDSPs;  				// number of bound DSPs in a group
+	int nrOp = 1;		 			// number of resulting adder operands
 	int trx1, try1, blx1, bly1; 	// coordinates of the two corners of a DSP block 
 	int fpadX, fpadY, bpadX, bpadY;	// zero padding on both axis
+	int extW, extH;					// extra width and height of the tiling grid
 	int multW, multH; 				// width and height of the multiplier the DSP block is using
-	ostringstream xname, yname, mname;
+	ostringstream xname, yname, mname, cname, sname;
+	DSP** tempc = new DSP*[nrDSPs];	// buffer that with hold a copy of the global configuration
 			
-	DSP** tempc = new DSP*[nrDSPs];
-	DSP** addOps;
 	memcpy(tempc, config, sizeof(DSP*) * nrDSPs );
 	
 	if (strncmp(typeid(*target).name(), "7Virtex", 7) == 0) // then the target is Virtex
 	{
-		//cout<<"Virtex!"<<endl;
+		for (int i=0; i<nrDSPs; i++)
+		if (tempc[i] != NULL)
+		{
+			cout << "At DSP#"<< i+1 << " tempc["<<i<<"]" << endl; 
+			DSP* d = tempc[i];
+			int j=0;
+			int connected = 0;
+			
+			while (d != NULL)
+			{
+				connected++;
+				d = d->getShiftOut();
+			}
+			
+			d = tempc[i];
+			
+			while (d != NULL)
+			{
+				d->getTopRightCorner(trx1, try1);
+				d->getBottomLeftCorner(blx1, bly1);
+				extW = getExtraWidth();
+				extH = getExtraHeight();
+				fpadX = blx1-wInX-extW+1;
+				fpadX = (fpadX<0)?0:fpadX;
+				cout << "fpadX = " << fpadX << endl;
+				fpadY = bly1-wInY-extH+1;
+				cout << "fpadY = " << fpadY << endl;
+				fpadY = (fpadY<0)?0:fpadY;
+				bpadX = extW-trx1;
+				bpadX = (bpadX<0)?0:bpadX;
+				bpadY = extH-try1;
+				bpadY = (bpadY<0)?0:bpadY;
+				multW = d->getMaxMultiplierWidth();
+				multH = d->getMaxMultiplierHeight();
+			
+				setCycle(0);
+				xname.str("");
+				xname << "x" << i << "_" << j;
+				vhdl << tab << declare(xname.str(), multW) << " <= " << zeroGenerator(fpadX,0) << " & " << "X" << range(blx1-fpadX, trx1+bpadX) << " & " << zeroGenerator(bpadX,0) << ";" << endl;
+				yname.str("");
+				yname << "y" << i << "_" << j;
+				vhdl << tab << declare(yname.str(), multH) << " <= " << zeroGenerator(fpadY,0) << " & " << "Y" << range(bly1-fpadY, try1+bpadY) << " & " << zeroGenerator(bpadY,0) << ";" << endl;
+				
+				if (d->getShiftIn() != NULL) // multiply accumulate
+				{
+					mname.str("");
+					mname << "pxy" << i;
+					cname.str("");
+					cname << "txy" << i << j;
+					setCycle(j);
+					vhdl << tab << declare(cname.str(), multW+multH) << " <= " << use(xname.str()) << " * " << use(yname.str()) << ";" << endl;
+					vhdl << tab << declare(join(mname.str(),j), multW+multH+1) << " <= (\"0\" & " << use(cname.str()) << ") + " << use(join(mname.str(), j-1)) << range(multW+multH-1, d->getShiftAmount()) << ";" << endl;	
+					if (d->getShiftOut() == NULL) // concatenate the entire partial product
+					{
+						setCycle(connected);
+						sname.seekp(ios_base::beg);
+						sname << zeroGenerator(wInX+wInY+extW+extH-blx1-bly1-3, 0) << " & " << use(join(mname.str(),j)) << " & " << sname.str();
+					}
+					else // concatenate only the lower portion of the partial product
+					{
+						setCycle(connected);
+						sname.seekp(ios_base::beg);
+						sname << use(join(mname.str(),j)) << range(d->getShiftAmount()-1, 0) << " & " << sname.str();
+					}
+				}
+				else // only multiplication
+				{
+					mname.str("");
+					mname << "pxy" << i << j;
+					vhdl << tab << declare(mname.str(), multW+multH) << " <= " << use(xname.str()) << " * " << use(yname.str()) << ";" << endl;
+					sname.str("");
+					if (d->getShiftOut() == NULL) // concatenate the entire partial product
+					{
+						setCycle(connected);
+						sname << zeroGenerator(wInX+wInY+extW+extH-blx1-bly1-2, 0) << " & " << use(mname.str()) << range(multH+multW-1, bpadX+bpadY)<< " & " << zeroGenerator(trx1-extW,0) << " & " << zeroGenerator(try1-extH,0) <<  ";" << endl;
+					}
+					else // concatenate only the lower portion of the partial product
+					{
+						setCycle(connected);
+						sname << use(mname.str()) << range(d->getShiftAmount()-1, bpadX+bpadY) << " & " << zeroGenerator(trx1-extW,0) << " & " << zeroGenerator(try1-extH,0) << ";" << endl;
+					}
+				}
+				
+				// erase d from the tempc buffer to avoid handleing it twice
+				for (int k=i+1; k<nrDSPs; k++)
+				{
+					if ((tempc[k] != NULL) && (tempc[k] == d))
+					{
+						cout << "tempc[" << k << "] deleted" << endl;
+						tempc[k] = NULL;
+						break;
+					}
+				}
+				
+				
+				d = d->getShiftOut();
+				j++;
+			}	
+			sname.seekp(ios_base::beg);
+			sname << tab << declare(join("addOpDSP", nrOp)) << " <= " << sname.str();
+			vhdl << sname.str();
+			nrOp++;		
+		}
+		
 		return nrOp;
 	}
 	else // the target is Stratix
 	{
+		int boundDSPs;  				// number of bound DSPs in a group
+		DSP** addOps;					// addition operands bound to a certain DSP
+		int minPadX=INT_MAX, minPadY=INT_MAX;	// minimum padding of addition operands
+	
 		for (int i=0; i<nrDSPs; i++)
 		if (tempc[i] != NULL)
 		{
 			cout << "At DSP#"<< i+1 << " tempc["<<i<<"]" << endl; 
 			tempc[i]->getTopRightCorner(trx1, try1);
 			tempc[i]->getBottomLeftCorner(blx1, bly1);
-			fpadX = blx1-wInX-getExtraWidth()-1;
+			fpadX = blx1-wInX-getExtraWidth()+1;
 			fpadX = (fpadX<0)?0:fpadX;
-			fpadY = bly1-wInY-getExtraHeight()-1;
+			fpadY = bly1-wInY-getExtraHeight()+1;
 			fpadY = (fpadY<0)?0:fpadY;
 			bpadX = getExtraWidth()-trx1;
 			bpadX = (bpadX<0)?0:bpadX;
+			minPadX = (bpadX < minPadX)?bpadX:minPadX;
 			bpadY = getExtraHeight()-try1;
 			bpadY = (bpadY<0)?0:bpadY;
+			minPadY = (bpadY < minPadY)?bpadY:minPadY;
 			multW = tempc[i]->getMaxMultiplierWidth();
 			multH = tempc[i]->getMaxMultiplierHeight();
 			
@@ -1866,8 +1975,10 @@ int IntTilingMult::multiplicationInDSPs(DSP** config)
 			vhdl << tab << declare(yname.str(), multH, true, Signal::registeredWithAsyncReset) << " <= " << zeroGenerator(fpadY,0) << " & " << "Y" << range(bly1-fpadY, try1+bpadY) << " & " << zeroGenerator(bpadY,0) << ";" << endl;
 			
 			boundDSPs = tempc[i]->getNumberOfAdders();
+			int ext = 0; // the number of carry bits of the addtion
 			if (boundDSPs > 0) // need to traverse the addition operands list and perform addtion
 			{
+				ext = (boundDSPs>1)?2:1;
 				cout << "boundDSPs = " << boundDSPs << endl;
 				nextCycle();
 				mname.str("");
@@ -1887,9 +1998,11 @@ int IntTilingMult::multiplicationInDSPs(DSP** config)
 					
 				//
 				
+				
 				for (int j=0; j<boundDSPs; j++)
 				{
 					cout << "j = " << j << endl;
+					// erase addOps[j] from the tempc buffer to avoid handleing it twice
 					for (int k=i+1; k<nrDSPs; k++)
 					{
 						if ((tempc[k] != NULL) && (tempc[k] == addOps[j]))
@@ -1899,11 +2012,12 @@ int IntTilingMult::multiplicationInDSPs(DSP** config)
 							break;
 						}
 					}
+					
 					addOps[j]->getTopRightCorner(trx1, try1);
 					addOps[j]->getBottomLeftCorner(blx1, bly1);
-					fpadX = blx1-wInX-getExtraWidth()-1;
+					fpadX = blx1-wInX-getExtraWidth()+1;
 					fpadX = (fpadX<0)?0:fpadX;
-					fpadY = bly1-wInY-getExtraHeight()-1;
+					fpadY = bly1-wInY-getExtraHeight()+1;
 					fpadY = (fpadY<0)?0:fpadY;
 					bpadX = getExtraWidth()-trx1;
 					bpadX = (bpadX<0)?0:bpadX;
@@ -1926,10 +2040,8 @@ int IntTilingMult::multiplicationInDSPs(DSP** config)
 					vhdl << tab << declare(mname.str(), multW+multH, true, Signal::registeredWithAsyncReset) << " <= " << use(xname.str()) << " * " << use(yname.str()) << ";" << endl;
 				}
 				
-				int ext = (boundDSPs>1)?2:1; // the number of carry bits of the addtion
-				
 				nextCycle();
-				vhdl << tab << declare(join("addOpDSP", nrOp), multW+multH+ext, true, Signal::registeredWithAsyncReset) << " <= ";
+				vhdl << tab << declare(join("addDSP", nrOp), multW+multH+ext, true, Signal::registeredWithAsyncReset) << " <= ";
 				
 				int j=0;
 				
@@ -1937,7 +2049,7 @@ int IntTilingMult::multiplicationInDSPs(DSP** config)
 				{
 					mname.str("");
 					mname << "mult_" << i << "_" << j;
-					vhdl << "(" << zeroGenerator(ext,0) << " & " << use(mname.str()) << ") * "; 
+					vhdl << "(" << zeroGenerator(ext,0) << " & " << use(mname.str()) << ") + "; 
 				}
 				
 				mname.str("");
@@ -1948,8 +2060,10 @@ int IntTilingMult::multiplicationInDSPs(DSP** config)
 			else // multiply the two terms and you're done
 			{
 				nextCycle();
-				vhdl << tab << declare(join("addOpDSP", nrOp), multW+multH, true, Signal::registeredWithAsyncReset) << " <= " << use(xname.str()) << " * " << use(yname.str()) << ";" << endl;
+				vhdl << tab << declare(join("addDSP", nrOp), multW+multH, true, Signal::registeredWithAsyncReset) << " <= " << use(xname.str()) << " * " << use(yname.str()) << ";" << endl;
 			}
+			
+			vhdl << tab << declare(join("addOpDSP", nrOp)) << " <= " << zeroGenerator(wInX+minPadX-blx1-ext,0) << " & " << zeroGenerator(wInY+minPadY-bly1,0) << " & " << use(join("addDSP", nrOp)) << range(multW+multH+ext-1, minPadX+minPadY) << " & " << zeroGenerator(trx1+try1-bpadX-bpadY,0) << ";" << endl;
 			nrOp++;
 		}
 		return nrOp;
