@@ -119,6 +119,12 @@ private:
 	/** The target */
 	Target * target;
 	
+	/** Used for partitioning the grid in smaller multiplications */
+	int **mat;
+	
+	/**Used for creating a temporary storage of the current configuration in order to create binds between different DSPs */
+	DSP** tempc;
+	
 	/** The vector which will mark if a dsp in the tiling algorithm was or not rotated */
 	bool* rot;
 

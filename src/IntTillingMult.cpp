@@ -78,6 +78,21 @@ IntTilingMult:: IntTilingMult(Target* target, int wInX, int wInY,float ratio) :
 	cout<<"Width of DSP is := "<<x<<" Height of DSP is:="<<y<<endl;
 	cout<<"Extra width:= "<<getExtraWidth()<<" \nExtra height:="<<getExtraHeight()<<endl;
 		
+		
+	//asta trebe mutata in functia run algorithm
+
+	//~ int n,m;
+	//~ int count=1;
+	//~ n=wInX + 2* getExtraWidth();
+	//~ m=wInY + 2* getExtraHeight();
+	//~ mat = new int*[m];
+	//~ for(int i=0;i<m;i++)
+		//~ {
+			//~ mat[i] = new int [n];
+			//~ for(int j=0;j<n;j++)
+			//~ mat[i][j]=0;
+		//~ }
+		
 
 	/*we will try the algorithm with 2 values of nrDSPs	
 	One will be the estimated value(nrDSPs) and the second one will be nrDSPs-1	
@@ -129,7 +144,7 @@ IntTilingMult:: IntTilingMult(Target* target, int wInX, int wInY,float ratio) :
 		
 		
 		
-	//runAlgorithm();
+	runAlgorithm();
 	
 
 	//~ initTiling(bestConfig,nrDSPs);
@@ -183,7 +198,7 @@ IntTilingMult:: IntTilingMult(Target* target, int wInX, int wInY,float ratio) :
 	
 	//~ bestCost=350.455;
 	
-	initTiling(globalConfig,nrDSPs);
+	//~ initTiling(globalConfig,nrDSPs);
 	/*
 	globalConfig[0]->setTopRightCorner(6,19);
 	globalConfig[0]->setBottomLeftCorner(14,27);
@@ -196,10 +211,10 @@ IntTilingMult:: IntTilingMult(Target* target, int wInX, int wInY,float ratio) :
 	*/
 	//replace(globalConfig, 1);
 	
-	display(globalConfig);
-	bindDSPs(globalConfig);
-	multiplicationInDSPs(globalConfig);
-	multiplicationInSlices(globalConfig);
+	//~ display(globalConfig);
+	//~ bindDSPs(globalConfig);
+	//~ multiplicationInDSPs(globalConfig);
+	//~ multiplicationInSlices(globalConfig);
 	//display(globalConfig);
 	
 	
@@ -347,6 +362,23 @@ IntTilingMult::~IntTilingMult() {
 
 void IntTilingMult::runAlgorithm()
 {
+	
+	int n,m;
+	int count=1;
+	n=wInX + 2* getExtraWidth();
+	m=wInY + 2* getExtraHeight();
+	
+	mat = new int*[m];
+	for(int i=0;i<m;i++)
+		{
+			mat[i] = new int [n];
+			for(int j=0;j<n;j++)
+			mat[i][j]=0;
+		}
+		
+	tempc= new DSP*[nrDSPs];
+	for(int ii=0;ii<nrDSPs;ii++)
+		tempc[ii]= new DSP();
 
 	/*we will try the algorithm with 2 values of nrDSPs	
 	One will be the estimated value(nrDSPs) and the second one will be nrDSPs-1	
@@ -369,7 +401,7 @@ void IntTilingMult::runAlgorithm()
 	compareCost();
 	cout<<"New best score is"<<bestCost<<endl;
 	
-	display(bestConfig);
+	//display(bestConfig);
 	
 	
 	//the best configuration should be consider initially the first one. So the bestConfig parameter will be initialized with global config and hence the bestCost will be initialized with the first cost
@@ -398,6 +430,17 @@ void IntTilingMult::runAlgorithm()
 		//~ compareCost();
 		//~ tilingAlgorithm(nrDSPs-2,nrDSPs-2,false);
 	//~ }	
+	
+	
+	for(int ii=0;ii<m;ii++)
+		    delete[](mat[ii]);
+	
+	delete[] (mat);
+	
+	for(int ii=0;ii<nrDSPs;ii++)
+		free(tempc[ii]);
+	
+	delete[] (tempc);
 	
 }
 
@@ -459,7 +502,7 @@ else
 		{
 			//~ cout<<" Pas 1_2 "<<i<<endl;
 			if(i==0)
-				cout<<endl<<endl<<"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!Primul a mai facut un pas!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<<endl<<endl;
+				cout<<"Primul a mai facut un pas!"<<endl;
 			tilingAlgorithm(i+1,n,true);
 		}
 		else
@@ -845,18 +888,18 @@ void IntTilingMult::display(DSP** config)
 {
 	//~ cout<<"Incepe"<<endl;
 	int costSlice=0;
-	int **mat;
+	
 	int n,m;
 	int count=1;
 	n=wInX + 2* getExtraWidth();
 	m=wInY + 2* getExtraHeight();
 	//~ cout<<"width "<<n<<"height "<<m<<endl;
-	mat = new int*[m];
+	
 	for(int i=0;i<m;i++)
 		{
-			mat[i] = new int [n];
+			
 			for(int j=0;j<n;j++)
-			mat[i][j]=0;
+				mat[i][j]=0;
 		}
 	for(int i=0;i<nrDSPs;i++)
 		{
@@ -1076,27 +1119,15 @@ void IntTilingMult::display(DSP** config)
 	
 	//~ cout<<"gata"<<endl;
 	
-	for(int ii=0;ii<m;ii++)
-		    delete[](mat[ii]);
+	//~ for(int ii=0;ii<m;ii++)
+		    //~ delete[](mat[ii]);
 	
-	delete[] (mat);
+	//~ delete[] (mat);
 	
 	return costSlice;
 }	
 
-//~ void IntTilingMult::resetConnections(DSP** &config)
-//~ {
-//~ for(int i=0;i<nrDSPs;i++)
-	//~ {
-		//~ if(config[i]!=NULL)
-		//~ {
-			
-		//~ }
-		
-	//~ }
 
-	
-//~ }
 
 int IntTilingMult::bindDSPs4Virtex(DSP** &config)
 {
@@ -1221,11 +1252,11 @@ int IntTilingMult::bindDSPs(DSP** &config)
 
 void IntTilingMult::compareCost()
 {
-	DSP** tempc;
+	//~ DSP** tempc;
 		
-	tempc= new DSP*[nrDSPs];
-	for(int ii=0;ii<nrDSPs;ii++)
-		tempc[ii]= new DSP();
+	//~ tempc= new DSP*[nrDSPs];
+	//~ for(int ii=0;ii<nrDSPs;ii++)
+		//~ tempc[ii]= new DSP();
 		
 	//display(globalConfig);
 	
@@ -1259,31 +1290,31 @@ void IntTilingMult::compareCost()
 		//memcpy(bestConfig,tempc,sizeof(DSP*) *nrDSPs );	
 		for(int ii=0;ii<nrDSPs;ii++)
 			memcpy(bestConfig[ii],tempc[ii],sizeof(DSP) );
-		display(bestConfig);
+		//display(bestConfig);
 	}
 	else
 		if(temp == bestCost )
 		{
 			cout<<"Cost egal!!!"<<endl;
-			cout<<"Rezult compare is"<<compareOccupation(tempc)<<endl;
-			cout<<"score temp is"<<temp<<" and current best is"<<bestCost<<endl;
+			//cout<<"Rezult compare is"<<compareOccupation(tempc)<<endl;
+			//cout<<"score temp is"<<temp<<" and current best is"<<bestCost<<endl;
 			//display(bestConfig);
 			if(compareOccupation(tempc)==true)
 			{
-			
+				cout<<"Schimba. Now best has cost "<<temp<<endl;
 				bestCost=temp;
 			
 				for(int ii=0;ii<nrDSPs;ii++)
 					memcpy(bestConfig[ii],tempc[ii],sizeof(DSP) );
-				display(bestConfig);
+			//	display(bestConfig);
 			}
 		}
 	
 	
-	for(int ii=0;ii<nrDSPs;ii++)
-		free(tempc[ii]);
+	//~ for(int ii=0;ii<nrDSPs;ii++)
+		//~ free(tempc[ii]);
 	
-	delete[] (tempc);
+	//~ delete[] (tempc);
 	
 }
 
