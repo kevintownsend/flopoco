@@ -1302,6 +1302,7 @@ mpz_class  functiont(int x,mpfr_t &xv)
 		mpz_init2(xvz,1000);
 		mpfr_get_z(xvz,temp1,GMP_RNDN);
 		r=mpz_class(xvz);
+		mpz_clear(xvz);
 		
 		if(ver==0)//if the number was negative..covert to binary
 		{	
@@ -1554,6 +1555,7 @@ mpz_class functionzt(int x,mpfr_t &zv)
 		mpz_init2(xvz,1000);
 		mpfr_get_z(xvz,temp1,GMP_RNDN);
 		r=mpz_class(xvz);
+		mpz_clear(xvz);
 		
 		if(ver==0)//if the number was negative..covert to binary
 		{	
@@ -1705,12 +1707,15 @@ mpz_class functionyt(int x,mpfr_t &yv)
 		mpz_init2(xvz,1000);
 		mpfr_get_z(xvz,temp1,GMP_RNDN);
 		r=mpz_class(xvz);
+		mpz_clear(xvz);
 		
 		if(ver==0)//if the number was negative..covert to binary
 		{	
 		mpz_class tmpSUB = (mpz_class(1) << (MSBI-LSBI+1));
 		r =r - tmpSUB;
 		r= r*(mpz_class(-1));
+		
+		
 		}	
 		
 	}
