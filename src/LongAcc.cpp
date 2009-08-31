@@ -148,7 +148,7 @@ LongAcc::LongAcc(Target* target, int wEX, int wFX, int MaxMSBX, int LSBA, int MS
 	                                                                 "else not(" << use("summand") << ");"<< endl;
 
 	vhdl << tab << "-- extension of the summand to accumulator size" << endl;
-	vhdl << tab << declare("ext_summand2c",sizeAcc_,true) << " <= " << rangeAssign(sizeAcc_-1, sizeSummand_, use("signX")+ " and not " + use("flushedToZero")) << " & " <<use("summand2c")<<";" << endl;
+	vhdl << tab << declare("ext_summand2c",sizeAcc_,true) << " <= " << (sizeAcc_-1<sizeSummand_?"":rangeAssign(sizeAcc_-1, sizeSummand_, use("signX")+ " and not " + use("flushedToZero")) + " & " ) <<use("summand2c")<<";" << endl;
 
 	vhdl << tab << "-- accumulation itself" << endl;
 	//determine the value of the carry in bit
