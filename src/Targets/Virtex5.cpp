@@ -52,7 +52,7 @@ double Virtex5::lutDelay(){
 
 long Virtex5::sizeOfMemoryBlock()
 {
-return sizeOfBlock;	
+return sizeOfBlock_;	
 };
 
 
@@ -86,9 +86,6 @@ bool Virtex5::suggestSubmultSize(int &x, int &y, int wInX, int wInY){
 	 
 bool Virtex5::suggestSubaddSize(int &x, int wIn){
 
-//	int chunkSize = (int)floor( (1./frequency() - lutDelay()) / carryPropagateDelay()); // 1 if no need for pipeline
-
-
 	int chunkSize = 2 + (int)floor( (1./frequency() - (fdCtoQ_ + slice2sliceDelay_ + lut2_ + muxcyStoO_ + xorcyCintoO_ + ffd_)) / muxcyCINtoO_ );
 	x = chunkSize;		
 	if (x > 0) 
@@ -100,9 +97,6 @@ bool Virtex5::suggestSubaddSize(int &x, int wIn){
 };
 
 bool Virtex5::suggestSlackSubaddSize(int &x, int wIn, double slack){
-
-//	int chunkSize = (int)floor( (1./frequency() - lutDelay()) / carryPropagateDelay()); // 1 if no need for pipeline
-
 
 	int chunkSize = 2 + (int)floor( (1./frequency() - slack - (fdCtoQ_ + slice2sliceDelay_ + lut2_ + muxcyStoO_ + xorcyCintoO_ + ffd_)) / muxcyCINtoO_ );
 	x = chunkSize;		

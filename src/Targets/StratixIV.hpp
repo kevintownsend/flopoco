@@ -39,9 +39,9 @@ public:
 
 	/** The default constructor. */  
 	StratixIV() : Target()	{
-		sizeOfBlock 		= 4608; 	// the size of a primitive block is 2^9 * 9
+		sizeOfBlock_ 		= 4608; 	// the size of a primitive block is 2^9 * 9
 		fastcarryDelay_ 	= 0.9e-11; 	// *aproximately right    
-		elemWireDelay_  	= 0.105e-9;// *obtained from Quartus 2 Chip Planner
+		elemWireDelay_  	= 0.105e-11;// *obtained from Quartus 2 Chip Planner
 		lut2lutDelay_   	= 1.5e-10; 	// ???
 		lutDelay_       	= 0.355e-9; // 355 ps  
 		ffDelay_        	= 0.069e-9; // *obtained from Quartus 2 Chip Planner
@@ -104,12 +104,13 @@ public:
 	int    getNumberOfDSPs();
 	void   getDSPWidths(int &x, int &y);
 	int    getIntNAdderCost(int wIn, int n);
-	/** Return s the maximum working frequency of a multiplier given the width	
-	 * @param wIn the width of the multiplier
-	 * @return the maximum working frequency of the multiplier
+	/** Returns TRUE if the frequency requirement permits the usage of a double
+	 * size multiplier width than the value passed as parameter.
+	 * @param wIn - the width of the multiplier
+	 * @return TRUE if it is permited to use a double size multiplier
 	 */
-	int    getFrequencyOfMultiplier(int wIn);	
-
+	bool   allowDoubleMultiplier(int wIn);
+	
 private:
 
 	double fastcarryDelay_; /**< The delay of the fast carry chain */

@@ -38,7 +38,7 @@ class Virtex5 : public Target
 public:
 	/** The default constructor. */  
 	Virtex5() : Target()	{
-		sizeOfBlock = 18432;	// the size of a primitive block is 2^11 * 9
+		sizeOfBlock_ 	= 18432;	// the size of a primitive block is 2^11 * 9
 		// all these values are set more or less randomly, to match  virtex 5 more or less
 		fastcarryDelay_ = 0.023e-9; //s   
 		elemWireDelay_  = 0.436e-9;

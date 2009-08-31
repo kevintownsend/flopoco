@@ -55,7 +55,7 @@ double StratixIV::ffDelay(){
 
 long StratixIV::sizeOfMemoryBlock()
 {
-return sizeOfBlock;	
+return sizeOfBlock_;	
 };
 
  DSP* StratixIV::createDSP() 
@@ -130,10 +130,30 @@ bool StratixIV::suggestSubmultSize(int &x, int &y, int wInX, int wInY){
 		{
 			int maxFx = 1/multiplierDelay_[ix];
 			int maxFy = 1/multiplierDelay_[iy]; 
-			maxF[nrConfigs_] = (maxFx>maxFy)?maxFy:maxFx;
+			int wIn;
+			
+			if (maxFx>maxFy)
+			{
+				maxF[nrConfigs_] = maxFy;
+				wIn = y;
+			}
+			else
+			{
+				maxF[nrConfigs_] = maxFx;
+				wIn = x;
+			}
 			
 			if (frequency() < maxF[nrConfigs_])
-				return true;
+			{
+				double f = frequency();
+				
+				if ((f > 1./multiplierDelay_[2] && wIn == 18) || 	// don't use 36x36
+					(wIn == 12) ||									// don't have 24x24
+					(wIn > 18)) 	
+						return false;
+				else
+					return true;
+			}
 			else
 			{
 				x = y = 18;
@@ -319,14 +339,16 @@ int StratixIV::getIntNAdderCost(int wIn, int n)
 	return cost;
 }
 
-int StratixIV::getFrequencyOfMultiplier(int wIn)
+bool StratixIV::allowDoubleMultiplier(int wIn)
 {
-	for (int i=0; i<nrConfigs_; i++)
-	{
-		if (wIn == multiplierWidth_[i])
-			return 1/multiplierDelay_[i];
-	}
+	double f = frequency();
 	
-	return 0;
+	if ((f > 1./multiplierDelay_[2] && wIn == 18) || 	// don't use 36x36
+		(wIn == 12) ||									// don't have 24x24
+		(wIn > 18)) 	
+			return false;
+	else
+		return true;
 }
+
 

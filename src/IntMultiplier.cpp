@@ -187,12 +187,8 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 				quadMultiply = !target->suggestSubmultSize(x, y, wInX, wInY);
 				chunkSize_ = max(x, y);
 				
-				/*
-				if ((f > stx->getFrequencyOfMultiplier(18) && chunkSize_ == 18) || 	// don't use 36x36
-					(f > stx->getFrequencyOfMultiplier(9) && chunkSize_ == 9)  ||
-					(chunkSize_ == 12)) 	// don't use 18x18
-						quadMultiply = true;
-				*/
+				delay += target->distantWireDelay((int)target->frequencyMHz());
+				
 				int chunksX =  int(ceil( ( double(wInX) / (double) chunkSize_) ));
 				int chunksY =  int(ceil( ( double(wInY) / (double) chunkSize_) ));
 			
@@ -676,7 +672,7 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 							default: // more than 2 tiles
 								if (verbose)
 									cerr << ">IntMultiplier:" << tab << " Subcase 3: there are more than 2 rows" << endl;
-								delay += target->distantWireDelay(4);
+								//delay += target->distantWireDelay((int)target->frequencyMHz());
 								
 								operands[i%2] << zeroGenerator(level*4*chunkSize_,0) << ";";
 								operands[(i+1)%2] << zeroGenerator((level*4+1)*chunkSize_,0) << ";";

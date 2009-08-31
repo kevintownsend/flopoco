@@ -39,9 +39,9 @@ public:
 
 	/** The default constructor. */  
 	StratixII() : Target()	{
-		sizeOfBlock 		= 4608; 	// the size of a primitive block is 2^9 * 9
+		sizeOfBlock_ 		= 4608; 	// the size of a primitive block is 2^9 * 9
 		fastcarryDelay_ 	= 3.5e-11; 	// aproximately right    
-		elemWireDelay_  	= 0.265e-9; // an average value over R4, R24, C4, C16 interconnects delays
+		elemWireDelay_  	= 0.222e-11; // an average value over R4, R24, C4, C16 interconnects delays
 		lut2lutDelay_   	= 1.5e-10; 	// ???
 		lutDelay_       	= 0.378e-9; // 378 ps  
 		ffDelay_        	= 0.127e-9; // 127 ps LE register clock-to-output max delay for -3 speed grade
@@ -100,11 +100,12 @@ public:
 	int    getNumberOfDSPs();
 	void   getDSPWidths(int &x, int &y);
 	int    getIntNAdderCost(int wIn, int n);	
-	/** Return s the maximum working frequency of a multiplier given the width	
-	 * @param wIn the width of the multiplier
-	 * @return the maximum working frequency of the multiplier
+	/** Returns TRUE if the frequency requirement permits the usage of a double
+	 * size multiplier width than the value passed as parameter.
+	 * @param wIn - the width of the multiplier
+	 * @return TRUE if it is permited to use a double size multiplier
 	 */
-	int    getFrequencyOfMultiplier(int wIn);			
+	bool   allowDoubleMultiplier(int wIn);
 
 private:
 

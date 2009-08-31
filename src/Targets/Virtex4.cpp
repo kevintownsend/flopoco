@@ -52,7 +52,7 @@ double Virtex4::lutDelay(){
 
 long Virtex4::sizeOfMemoryBlock()
 {
-return sizeOfBlock;	
+return sizeOfBlock_;	
 };
 
 

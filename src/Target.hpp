@@ -197,7 +197,7 @@ protected:
 	int    multXInputs_;        /**< The size for the X dimmension of the hardware multipliers */
 	int    multYInputs_;        /**< The size for the Y dimmension of the hardware multipliers */
 	bool   useHardMultipliers_; /**< If true the operator design can use the hardware multipliers */
-	long sizeOfBlock;		/**<The size of a primitive memory block> */
+	long   sizeOfBlock_;			/**< The size of a primitive memory block */
 	
 };
 

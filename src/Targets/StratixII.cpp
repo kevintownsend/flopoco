@@ -55,7 +55,7 @@ double StratixII::ffDelay(){
 
 long StratixII::sizeOfMemoryBlock()
 {
-return sizeOfBlock;	
+return sizeOfBlock_;	
 };
 
  DSP* StratixII::createDSP() 
@@ -131,9 +131,30 @@ bool StratixII::suggestSubmultSize(int &x, int &y, int wInX, int wInY){
 			int maxFx = 1/multiplierDelay_[ix];
 			int maxFy = 1/multiplierDelay_[iy]; 
 			maxF[nrConfigs_] = (maxFx>maxFy)?maxFy:maxFx;
+			int wIn;
+			
+			if (maxFx>maxFy)
+			{
+				maxF[nrConfigs_] = maxFy;
+				wIn = y;
+			}
+			else
+			{
+				maxF[nrConfigs_] = maxFx;
+				wIn = x;
+			}
 			
 			if (frequency() < maxF[nrConfigs_])
-				return true;
+			{
+				double f = frequency();
+				
+				if ((f > 1./multiplierDelay_[1] && wIn <= 9)  ||	// don't use 18x18
+					(f > 1./multiplierDelay_[2] && wIn <= 18) || 	// don't use 36x36
+					(wIn > 18))
+						return false;
+				else
+					return true;
+			}
 			else
 			{
 				x = y = 18;
@@ -158,8 +179,7 @@ bool StratixII::suggestSubmultSize(int &x, int &y, int wInX, int wInY){
 bool StratixII::suggestSubaddSize(int &x, int wIn){
 
 	suggestSlackSubaddSize(x, wIn, 0);
-	//int chunkSize = (int)floor( (1./frequency() - (fdCtoQ_ + lutDelay() + muxStoO_ + shareOutToCarryOut_ + carryInToSumOut_ + ffDelay_ + interLABcarryDelay_)) / carryPropagateDelay()); // 1 if no need for pipeline
-	//x = chunkSize;		
+	
 	if (x>0) return true;
 	else {
 		x=1;		
@@ -198,10 +218,6 @@ bool  StratixII::suggestSlackSubaddSize(int &x, int wIn, double slack){
 		}
 	}
 	chunkSize--; // decremented because of the loop condition (time > 0). When exiting the loop the time is negative
-	
-	//int chunkSize = (int)floor( (1./frequency() - slack - (fdCtoQ_ + lutDelay() + muxStoO_ + shareOutToCarryOut_ + carryInToSumOut_ + ffDelay_ + interLABcarryDelay_)) / carryPropagateDelay()); // 1 if no need for pipeline
-	
-	//int chunkSize = 2 + (int)floor( (1./frequency() - slack - (fdCtoQ_ + slice2sliceDelay_ + lut2_ + muxcyStoO_ + xorcyCintoO_ + ffd_)) / muxcyCINtoO_ );
 	
 	x = chunkSize;		
 	if (x>0) return true;
@@ -281,3 +297,14 @@ int StratixII::getIntNAdderCost(int wIn, int n)
 	return cost;
 }
 
+bool StratixII::allowDoubleMultiplier(int wIn)
+{
+	double f = frequency();
+	
+	if ((f > 1./multiplierDelay_[1] && wIn <= 9)  ||	// don't use 18x18
+		(f > 1./multiplierDelay_[2] && wIn <= 18) || 	// don't use 36x36
+		(wIn > 18))
+			return false;
+	else
+		return true;
+}
