@@ -193,25 +193,25 @@ bool  StratixII::suggestSlackSubaddSize(int &x, int wIn, double slack){
 	int carryFlag = 0;
 	int chunkSize = 0;
 	
-	while (time > 0)
+	while (time > 0) // introduce bits in the chunk and subtract the corresponding carry delay
 	{
 		chunkSize++;
 		
-		if (carryFlag == 0) 
+		if (carryFlag == 0) // subtract fast carry delay
 		{
 			time -= fastcarryDelay_;
-			if (chunkSize % (almsPerLab_*2) == 0)
+			if (chunkSize % (almsPerLab_*2) == 0) // next carry delay is one between subsequent LABs
 				carryFlag = 2;
-			else if (chunkSize % almsPerLab_ == 0)
+			else if (chunkSize % almsPerLab_ == 0) // next carry delay is one between two halves of the same LAB
 				carryFlag = 1;
 			
 		}
-		else if (carryFlag == 1)
+		else if (carryFlag == 1) // subtract the carry delay between two halves of the same LAB
 		{
 			time -= innerLABcarryDelay_;
 			carryFlag = 0;
 		}	
-		else if (carryFlag == 2)
+		else if (carryFlag == 2) // subtract the carry delay between two subsequenct LABs
 		{
 			time -= interLABcarryDelay_;
 			carryFlag = 0;
@@ -268,17 +268,16 @@ int StratixII::getEquivalenceSliceDSP(){
 	
 int StratixII::getNumberOfDSPs() 
 {
-	int dsps = 96; // number of 9-bit elements
 	int x, y;
 	getDSPWidths(x, y);
 	
 	switch (x)
 	{
-		case 9: y = dsps;
+		case 9: y = totalDSPs_*8;
 			break;
-		case 18: y = dsps/2;
+		case 18: y = totalDSPs_*4;
 			break;
-		case 36: y = dsps/8;
+		case 36: y = totalDSPs_;
 			break;
 	}
 	return y;		
@@ -295,16 +294,4 @@ int StratixII::getIntNAdderCost(int wIn, int n)
 	b = nr*lastChunkSize + (nr-2)*(nr-1)*chunkSize/2 + nr*(nr-1)/2 + (n-1)*chunkSize;
 	cost = max(a,b)/2;
 	return cost;
-}
-
-bool StratixII::allowDoubleMultiplier(int wIn)
-{
-	double f = frequency();
-	
-	if ((f > 1./multiplierDelay_[1] && wIn <= 9)  ||	// don't use 18x18
-		(f > 1./multiplierDelay_[2] && wIn <= 18) || 	// don't use 36x36
-		(wIn > 18))
-			return false;
-	else
-		return true;
 }

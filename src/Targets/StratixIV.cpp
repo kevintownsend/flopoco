@@ -308,19 +308,18 @@ int StratixIV::getEquivalenceSliceDSP(){
 	
 int StratixIV::getNumberOfDSPs() 
 {
-	int dsps = 1288; // number of 9-bit elements
 	int x, y;
 	getDSPWidths(x, y);
 	
 	switch (x)
 	{
-		case 9: y = dsps;
+		case 9: y = totalDSPs_*8;
 			break;
-		case 12: y = dsps*3/4;
+		case 12: y = totalDSPs_*6;
 			break;
-		case 18: y = dsps/2;
+		case 18: y = totalDSPs_*4;
 			break;
-		case 36: y = dsps/4;
+		case 36: y = totalDSPs_*2;
 			break;
 	}
 	return y;		
@@ -337,18 +336,6 @@ int StratixIV::getIntNAdderCost(int wIn, int n)
 	b = nr*lastChunkSize + nr*(nr-1)*(chunkSize+1)/2 + nr*(n-1) + (n-2)*wIn;
 	cost = (a+b)/2;
 	return cost;
-}
-
-bool StratixIV::allowDoubleMultiplier(int wIn)
-{
-	double f = frequency();
-	
-	if ((f > 1./multiplierDelay_[2] && wIn == 18) || 	// don't use 36x36
-		(wIn == 12) ||									// don't have 24x24
-		(wIn > 18)) 	
-			return false;
-	else
-		return true;
 }
 
 
