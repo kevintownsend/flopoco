@@ -217,9 +217,9 @@ mpz_class CoordinatesTableY::function(int x)
 		
 		if(ver==0)//if the number was negative..covert to binary
 		{	
-		mpz_class tmpSUB = (mpz_class(1) << (MSBI-LSBI+1));
-		r =r - tmpSUB;
-		r= r*(mpz_class(-1));
+		mpz_class tmpSUB = (mpz_class(1) << (MSBI-LSBI));
+		r = tmpSUB -r;
+		//r= r*(mpz_class(-1));
 		}	
 		
 	}
