@@ -1703,11 +1703,15 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 		tmp = widthX;
 		widthX = widthY;
 		widthY = tmp;
+		
+		vhdl << tab << declare("sX",chunkSize_*chunksX) << " <= " << "Y" << " & " << zeroGenerator(chunkSize_*chunksX-widthX,0) << ";" << endl;
+		vhdl << tab << declare("sY",chunkSize_*chunksY) << " <= " << "X" << " & " << zeroGenerator(chunkSize_*chunksY-widthY,0) << ";" << endl;	
 	}
-	
-	vhdl << tab << declare("sX",chunkSize_*chunksX) << " <= " << "X" << " & " << zeroGenerator(chunkSize_*chunksX-widthX,0) << ";" << endl;
-    vhdl << tab << declare("sY",chunkSize_*chunksY) << " <= " << "Y" << " & " << zeroGenerator(chunkSize_*chunksY-widthY,0) << ";" << endl;
-    
+	else
+	{
+		vhdl << tab << declare("sX",chunkSize_*chunksX) << " <= " << "X" << " & " << zeroGenerator(chunkSize_*chunksX-widthX,0) << ";" << endl;
+		vhdl << tab << declare("sY",chunkSize_*chunksY) << " <= " << "Y" << " & " << zeroGenerator(chunkSize_*chunksY-widthY,0) << ";" << endl;
+    }
 	////////////////////////////////////////////////////
     //SPLITTINGS
     for (int k=0; k<chunksX ; k++)

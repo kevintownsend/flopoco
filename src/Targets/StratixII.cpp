@@ -231,18 +231,51 @@ bool  StratixII::suggestSlackSubaddSize(int &x, int wIn, double slack){
   
 int StratixII::getIntMultiplierCost(int wInX, int wInY){
 	
-	int lutCost = 0;
-	//int chunkSize_ = this->lutInputs()/2; SYNTHESIS NOT EFFICIENT WITH 6-LUTs
-	int chunkSize_ = 2; 
 	
-	int chunksX =  int(ceil( ( double(wInX) / (double) chunkSize_) ));
-	int chunksY =  int(ceil( ( double(wInY) / (double) chunkSize_) ));
+	int cost = 0;
+	int halfLut = lutInputs_/2;
+	int cx = int(ceil((double) wInX/halfLut));
+	int cy = int(ceil((double) wInY/halfLut));
+	if (cx > cy) // set cx as the min and cy as the max
+	{
+		int tmp = cx;
+		cx = cy;
+		cy = tmp;
+	}
+	
+	float p = (double)cy/(double)halfLut; // number of chunks concatenated per operand
+	float r = p - floor(p); // relative error; used for detecting how many operands have ceil(p) chunks concatenated
+	int chunkSize, lastChunkSize, nr, aux;
+	suggestSubaddSize(chunkSize, wInX+wInY);
+	lastChunkSize = (wInX+wInY)%chunkSize;
+	nr = ceil((double) (wInX+wInY)/chunkSize);
 
-	for (int i=0; i<chunksX; i++)
-		for (int j=0; j<chunksY; j++)
-			lutCost += 4; // one lut for each bit of a partial product
-						
-	return lutCost + this->getIntNAdderCost(chunksX*chunkSize_, chunksY*chunkSize_);
+	
+	if (r == 0.0) // all IntNAdder operands have p concatenated partial products
+	{
+		aux = halfLut*cx;
+			
+		cost = p*lutInputs_*(aux-2)*(aux-1)/2; // registered partial products without zero paddings
+	}
+	else if (r > 0.5) // 2/3 of the IntNAdder operands have p concatenated partial products
+	{
+		aux = (halfLut-1)*cx;
+		
+		cost = ceil(p)*lutInputs_*(aux-2)*(aux-1)/2 + floor(p)*lutInputs_*((aux*cx)+(cx-2)*(cx-1)/2);// registered partial products without zero paddings
+	}
+	else if (r > 0) // 1/3 of the IntNAdder operands have p concatenated partial products
+	{
+		aux = (halfLut-1)*cx;
+		
+		cost = ceil(p)*lutInputs_*(cx-2)*(cx-1)/2 + floor(p)*lutInputs_*((aux*cx)+(aux-2)*(aux-1)/2);// registered partial products without zero paddings
+	}
+	
+	aux = halfLut*cx;
+	cost += p*lutInputs_*aux + halfLut*(aux-1)*aux/2; // registered addition results on each pipeline stage of the IntNAdder
+	cost += (nr-1)*(wInX+wInY) + (nr-1)*nr/2 + nr*lastChunkSize + nr*(nr-1)*(chunkSize+1)/2; // final IntAdder cost LUT + Registers
+	cost += cx*cy*lutInputs_*2; // LUT cost for small multiplications 
+	
+	return cost/2;
 
 }
 
@@ -291,7 +324,7 @@ int StratixII::getIntNAdderCost(int wIn, int n)
 	lastChunkSize = wIn%chunkSize;
 	nr = ceil((double) wIn/chunkSize);
 	a = (nr-1)*wIn + (nr-1)*nr/2 + wIn*((n-1)*n/2-1);
-	b = nr*lastChunkSize + (nr-2)*(nr-1)*chunkSize/2 + nr*(nr-1)/2 + (n-1)*chunkSize;
+	b = nr*lastChunkSize + (nr-2)*(nr-1)*chunkSize/2 + nr*(nr-1)/2 + (n-1)*wIn;
 	cost = max(a,b)/2;
 	return cost;
 }
