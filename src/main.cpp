@@ -209,7 +209,7 @@ static void usage(char *name){
 	cerr << "       opt: assemble FP operators if 0, optimized architecture if 1 \n";
 
 	cerr << "  Applications: \n";
-	cerr << "    CoilInductance LSBI MSBI MaxMSBO LSBO MSBO FilePath\n";
+	cerr << "    CoilInductance LSBI MSBI wEIn wFIn MaxMSBO LSBO MSBO FilePath\n";
 	cerr << "      TODO - Description here; a parameter such as FilePath should not exist !!! \n";
 	//To be removed from command line interface
 	cerr << "    CoordinatesTableX wIn LSB MSB FilePath\n";
@@ -723,18 +723,20 @@ bool parseCommandLine(int argc, char* argv[]){
 			}
 		}
 		else if(opname=="CoilInductance"){
-			int nargs = 5;
+			int nargs = 7;
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
 				int LSBI = atoi(argv[i++]);
 				int MSBI = atoi(argv[i++]);
+				int wE = checkStrictyPositive(argv[i++], argv[0]);
+				int wF = checkStrictyPositive(argv[i++], argv[0]);				
 				int MaxMSBO= atoi(argv[i++]);
 				int LSBO = atoi(argv[i++]);
 				int MSBO = atoi(argv[i++]);
 				char *pa=argv[i++];
-				cerr << "> CoilInductance "<<" LSBI="<<LSBI<<", MSBI="<<MSBI<<", MaxMSBO="<<MaxMSBO<<", LSBO="<<LSBO<<", MSBO="<<MSBO<<" \n";
-				op = new CoilInductance(target, LSBI, MSBI,MaxMSBO,LSBO,MSBO,pa);
+				cerr << "> CoilInductance "<<" LSBI="<<LSBI<<", MSBI="<<MSBI<<",wEIn="<<wE<<",wFIn"<<wF<<", MaxMSBO="<<MaxMSBO<<", LSBO="<<LSBO<<", MSBO="<<MSBO<<" \n";
+				op = new CoilInductance(target, LSBI, MSBI,wE,wF,MaxMSBO,LSBO,MSBO,pa);
 				addOperator(op);
 			}
 		}

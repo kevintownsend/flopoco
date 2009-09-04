@@ -58,8 +58,8 @@ extern vector<Operator*> oplist;
 #define DEBUGVHDL 0
 
 
-CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,int LSBO, int MSBO, char *filepath) :
-	Operator(target), MSBI(MSBI), LSBI(LSBI), MaxMSBO(MaxMSBO),LSBO(LSBO), MSBO(MSBO) ,filepath(filepath){
+CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI,int wE,int wF, int MaxMSBO,int LSBO, int MSBO, char *filepath) :
+	Operator(target), MSBI(MSBI), LSBI(LSBI), wE(wE), wF(wF), MaxMSBO(MaxMSBO),LSBO(LSBO), MSBO(MSBO) ,filepath(filepath){
 	
 	if ((MSBI < LSBI)){
 		cerr << 
@@ -73,8 +73,8 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,i
 		exit (EXIT_FAILURE);
 	}
 	
-	wE=8;
-	wF=23;
+	//wE=8;
+	//wF=23;
 	
 	ostringstream name; 
 	name <<"CoilInductance_"<<abs(LSBI)<<"_"<<abs(MSBI)<<"_"<<abs(LSBO)<<"_"<<abs(MSBO);
@@ -341,7 +341,7 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,i
 	vhdl<<endl;
 	
 	
-	vhdl<<tab<<declare("selectionVal",1)<<" <= "<<use("selectionVal2")<<" or "<<use("selectionVal1")<<" or "<<use("closeAddr")<<" or "<<use("finnishSignal")<<" or rst or finnishSignal"<<";"<<endl;
+	vhdl<<tab<<declare("selectionVal",1)<<" <= "<<use("selectionVal2")<<" or "<<use("selectionVal1")<<" or "<<use("closeAddr")<<" or "<<use("finnishSignal")<<" or rst"<<";"<<endl;
 	
 	vhdl<<tab<<"process(out_clk1,rst)"<<endl;
 	vhdl<<tab<<"variable temp:std_logic:='0';"<<endl;
@@ -363,6 +363,9 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,i
 	vhdl<<endl;
 	
 	vhdl<<tab<<declare("selection4Pipeline",1)<<" <= "<<use("selectionVal")<<" or "<<use("selectionValD")<<";"<<endl;
+	
+	
+	//~ vhdl<<tab<<declare("selection4Pipeline",1)<<" <= "<<use("selectionVal")<<";"<<endl;
 	vhdl<<tab<<declare("selectionAcc",1)<<" <= not( "<<use("selection4Pipeline")<<" );"<<endl;
 	
 	//Memories instantiation

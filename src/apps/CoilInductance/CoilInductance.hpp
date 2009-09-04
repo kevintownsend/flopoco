@@ -37,7 +37,7 @@ public:
 	 * @param[in]		wER			the with of the exponent for the convertion result
 	 * @param[in]		wFR			the with of the fraction for the convertion result
 	 */
-	CoilInductance(Target* target, int LSBI, int MSBI, int MaxMSBO,int LSBO, int MSBO, char *filepath);
+	CoilInductance(Target* target, int LSBI, int MSBI,int wE,int wF, int MaxMSBO,int LSBO, int MSBO, char *filepath);
 
 
 	void outputVHDL(std::ostream& o, std::string name);
@@ -57,6 +57,10 @@ private:
 	int MSBI; 
 	/** The LSB for the input */
 	int LSBI; 
+	/** The wE of the internal operators */
+	int wE;
+	/** The wF of the internal operators */
+	int wF;
 	/** The width of the MaxMSB for the output result*/
 	int MaxMSBO;
 	/** The width of the exponent for the output R */
@@ -117,7 +121,7 @@ private:
 	int inputWidth;
 	int inputWidthSegments;
 	int outputWidth;
-	int wE,wF;
+	
 	int integratorWidth;
 	int addrWidth;
 

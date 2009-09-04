@@ -250,8 +250,9 @@ int i=1;
 			//cout<<"Intra la loop 2"<<endl;
 			
 			for(int a2=0;a2<limit2;a2++)
-				if(abs(a1-a2)>1)
+				if(abs(a1-a2)>1 &&a2!=63 &&a1!=63 )
 				{
+					//~ && !((a2%64==63) && (a2-63==a1)) && !((a1%64==63)&&(a1-63==a2))
 					 functiont(a2,sigX0);
 					if(a2%64!=63)
 					{
