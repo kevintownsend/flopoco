@@ -145,7 +145,7 @@ IntTilingMult:: IntTilingMult(Target* target, int wInX, int wInY,float ratio) :
 		
 		
 		
-	//runAlgorithm();
+	runAlgorithm();
 	
 
 	//~ initTiling(bestConfig,nrDSPs);
@@ -199,7 +199,7 @@ IntTilingMult:: IntTilingMult(Target* target, int wInX, int wInY,float ratio) :
 	
 	//~ bestCost=350.455;
 	
-	initTiling(globalConfig,nrDSPs);
+	//initTiling(globalConfig,nrDSPs);
 	/*
 	globalConfig[0]->setTopRightCorner(6,19);
 	globalConfig[0]->setBottomLeftCorner(14,27);
@@ -212,10 +212,10 @@ IntTilingMult:: IntTilingMult(Target* target, int wInX, int wInY,float ratio) :
 	*/
 	//replace(globalConfig, 1);
 	
-	display(globalConfig);
-	bindDSPs(globalConfig);
-	multiplicationInDSPs(globalConfig);
-	multiplicationInSlices(globalConfig);
+	//display(globalConfig);
+	//bindDSPs(globalConfig);
+	//multiplicationInDSPs(globalConfig);
+	//multiplicationInSlices(globalConfig);
 	//display(globalConfig);
 	
 	
@@ -1934,7 +1934,7 @@ int IntTilingMult::multiplicationInDSPs(DSP** config)
 				j++;
 			}	
 			sname.seekp(ios_base::beg);
-			sname << tab << declare(join("addOpDSP", nrOp)) << " <= " << sname.str();
+			sname << tab << declare(join("addOpDSP", nrOp),wInX+wInY) << " <= " << sname.str();
 			vhdl << sname.str();
 			nrOp++;		
 		}
@@ -1945,11 +1945,13 @@ int IntTilingMult::multiplicationInDSPs(DSP** config)
 	{
 		int boundDSPs;  				// number of bound DSPs in a group
 		DSP** addOps;					// addition operands bound to a certain DSP
-		int minPadX=INT_MAX, minPadY=INT_MAX;	// minimum padding of addition operands
+		int mPadX, mPadY, minPad;		// minimum padding of addition operands
 	
 		for (int i=0; i<nrDSPs; i++)
 		if (tempc[i] != NULL)
 		{
+			mPadX = INT_MIN;
+			mPadY = INT_MIN;
 			cout << "At DSP#"<< i+1 << " tempc["<<i<<"]" << endl; 
 			tempc[i]->getTopRightCorner(trx1, try1);
 			tempc[i]->getBottomLeftCorner(blx1, bly1);
@@ -1959,10 +1961,11 @@ int IntTilingMult::multiplicationInDSPs(DSP** config)
 			fpadY = (fpadY<0)?0:fpadY;
 			bpadX = getExtraWidth()-trx1;
 			bpadX = (bpadX<0)?0:bpadX;
-			minPadX = (bpadX < minPadX)?bpadX:minPadX;
+			mPadX = (bpadX>mPadX)?bpadX:mPadX;
 			bpadY = getExtraHeight()-try1;
 			bpadY = (bpadY<0)?0:bpadY;
-			minPadY = (bpadY < minPadY)?bpadY:minPadY;
+			mPadY = (bpadY>mPadY)?bpadY:mPadY;
+			minPad = bpadY+bpadX;
 			multW = tempc[i]->getMaxMultiplierWidth();
 			multH = tempc[i]->getMaxMultiplierHeight();
 			
@@ -2021,8 +2024,11 @@ int IntTilingMult::multiplicationInDSPs(DSP** config)
 					fpadY = (fpadY<0)?0:fpadY;
 					bpadX = getExtraWidth()-trx1;
 					bpadX = (bpadX<0)?0:bpadX;
+					mPadX = (bpadX>mPadX)?bpadX:mPadX;
 					bpadY = getExtraHeight()-try1;
 					bpadY = (bpadY<0)?0:bpadY;
+					mPadY = (bpadY>mPadY)?bpadY:mPadY;
+					minPad = (minPad<(bpadY+bpadX))?minPad:(bpadY+bpadX);
 					multW = addOps[j]->getMaxMultiplierWidth();
 					multH = addOps[j]->getMaxMultiplierHeight();
 					
@@ -2062,8 +2068,7 @@ int IntTilingMult::multiplicationInDSPs(DSP** config)
 				nextCycle();
 				vhdl << tab << declare(join("addDSP", nrOp), multW+multH, true, Signal::registeredWithAsyncReset) << " <= " << use(xname.str()) << " * " << use(yname.str()) << ";" << endl;
 			}
-			
-			vhdl << tab << declare(join("addOpDSP", nrOp)) << " <= " << zeroGenerator(wInX+minPadX-blx1-ext,0) << " & " << zeroGenerator(wInY+minPadY-bly1,0) << " & " << use(join("addDSP", nrOp)) << range(multW+multH+ext-1, minPadX+minPadY) << " & " << zeroGenerator(trx1+try1-bpadX-bpadY,0) << ";" << endl;
+			vhdl << tab << declare(join("addOpDSP", nrOp), wInX+wInY) << " <= " << zeroGenerator(wInX+minPad-blx1-ext,0) << " & " << zeroGenerator(wInY-bly1,0) << " & " << use(join("addDSP", nrOp)) << range(multW+multH+ext-1, minPad) << " & " << zeroGenerator(trx1+try1+minPad-mPadX-mPadY,0) << ";" << endl;
 			nrOp++;
 		}
 		return nrOp;
