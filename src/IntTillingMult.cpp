@@ -84,50 +84,13 @@ IntTilingMult:: IntTilingMult(Target* target, int wInX, int wInY,float ratio) :
 	
 	float tempDist =	 getExtraWidth() * getExtraWidth() /4.0 + getExtraHeight() * getExtraHeight() /4.0;
 	maxDist2Move = (int) ( sqrt(tempDist) );
-	if(maxDist2Move==0)
-		maxDist2Move=2;
+	//~ if(maxDist2Move==0)
+		//~ maxDist2Move=1;
 	cout<<"maxDist2Move:= "<<maxDist2Move<<endl;
-		
-		
-	//this should be moved(already done this) in the function runAlgorithm. This will be deleted from the constructor when the class is finnished
-
-	//~ int n,m;
-	//~ int count=1;
-	//~ n=wInX + 2* getExtraWidth();
-	//~ m=wInY + 2* getExtraHeight();
-	//~ mat = new int*[m];
-	//~ for(int i=0;i<m;i++)
-		//~ {
-			//~ mat[i] = new int [n];
-			//~ for(int j=0;j<n;j++)
-			//~ mat[i][j]=0;
-		//~ }
-		
-
-	/*we will try the algorithm with 2 values of nrDSPs	
-	One will be the estimated value(nrDSPs) and the second one will be nrDSPs-1	
-	*/
 		
 	
 		
-		//~ cout<<"Number of slices for multiplication is "<<partitionOfGridSlices(globalConfig,t)<<endl;
-		//~ sortDSPs(globalConfig);
 		
-		//~ cout<<"Number of slices for multiplication is "<<partitionOfGridSlices(globalConfig,t)<<endl;
-		
-		
-		
-		//cout<<"Cost of configuration is "<<computeCost(globalConfig)<<endl;
-		
-		//cout<<"Initial configuration"<<endl<<endl;
-		//display(globalConfig);
-		
-		
-		
-		
-		//~ cout<<"Partitions of grid before binding "<<partitionOfGridSlices(globalConfig,t)<<endl;
-		//~ cout<<"Operands from DSPs, from a maximum of "<<nrDSPs<<" we use "<<bindDSPs(globalConfig)<<endl;
-		//~ cout<<"Partitions of grid after binding "<<partitionOfGridSlices(globalConfig,t)<<endl;
 		
 		
 		
@@ -154,113 +117,32 @@ IntTilingMult:: IntTilingMult(Target* target, int wInX, int wInY,float ratio) :
 		
 		
 		
-	//runAlgorithm();
+	runAlgorithm();
 	
 
 	//~ initTiling(bestConfig,nrDSPs);
 	
 	 //~ bestCost=367.455;
 	
-	initTiling(globalConfig,nrDSPs);
-	
-	globalConfig[0]->setTopRightCorner(0,0);
-	globalConfig[0]->setBottomLeftCorner(8,8);
-	globalConfig[1]->setTopRightCorner(9,13);
-	globalConfig[1]->setBottomLeftCorner(17,21);
-	globalConfig[2]->setTopRightCorner(20,2);
-	globalConfig[2]->setBottomLeftCorner(28,10);
-	
-	
-	 cout<<"Initial configuration"<<endl<<endl;
-	 display(globalConfig);
-	
-	cout<<endl<<checkFarness(globalConfig) <<endl;
-	
-	//~ compareCost();
-	
-	
 	//~ initTiling(globalConfig,nrDSPs);
 	
-	//~ globalConfig[0]->setTopRightCorner(24,0);
-	//~ globalConfig[0]->setBottomLeftCorner(32,8);
-	//~ globalConfig[1]->setTopRightCorner(15,9);
-	//~ globalConfig[1]->setBottomLeftCorner(23,17);
-	//~ globalConfig[2]->setTopRightCorner(6,18);
-	//~ globalConfig[2]->setBottomLeftCorner(14,26);
+	//~ globalConfig[0]->setTopRightCorner(0,0);
+	//~ globalConfig[0]->setBottomLeftCorner(8,8);
+	//~ globalConfig[1]->setTopRightCorner(9,13);
+	//~ globalConfig[1]->setBottomLeftCorner(17,21);
+	//~ globalConfig[2]->setTopRightCorner(18,4);
+	//~ globalConfig[2]->setBottomLeftCorner(26,12);
 	
 	
-	//~ cout<<"Teoretic configuration"<<endl<<endl;
-	//~ display(globalConfig);
+	 //~ cout<<"Initial configuration"<<endl<<endl;
+	 //~ display(globalConfig);
 	
-	//~ cout<<endl<<endl;
-	
-	
-	//~ compareCost();
-	
-	//display(bestConfig);
-	
-	
-	//4 virtex ceva test
-
-	
-
-	//initTiling(bestConfig,nrDSPs);
-	
-	//~ bestCost=350.455;
-	
-
-	//~ initTiling(globalConfig,nrDSPs);
-
-	//initTiling(globalConfig,nrDSPs);
-
-	/*
-	globalConfig[0]->setTopRightCorner(6,19);
-	globalConfig[0]->setBottomLeftCorner(14,27);
-	globalConfig[1]->setTopRightCorner(15,19);
-	globalConfig[1]->setBottomLeftCorner(23,27);
-	globalConfig[2]->setTopRightCorner(24,10);
-	globalConfig[2]->setBottomLeftCorner(32,18);
-	globalConfig[3]->setTopRightCorner(24,19);
-	globalConfig[3]->setBottomLeftCorner(32,27);
-	*/
-	//replace(globalConfig, 1);
-	
-
-	//~ display(globalConfig);
-	//~ bindDSPs(globalConfig);
-	//~ multiplicationInDSPs(globalConfig);
-	//~ multiplicationInSlices(globalConfig);
-
-
-	//display(globalConfig);
-	//bindDSPs(globalConfig);
-	//multiplicationInDSPs(globalConfig);
-	//multiplicationInSlices(globalConfig);
-	//display(globalConfig);
-	
+	//~ cout<<endl<<checkFarness(globalConfig) <<endl;
 	
 	//~ compareCost();
-	
-	//~ cout<<"etapa 2"<<endl<<endl;
-
-	
-	//~ initTiling(globalConfig,nrDSPs);
-	
-	//~ globalConfig[0]->setTopRightCorner(2,5);
-	//~ globalConfig[0]->setBottomLeftCorner(18,21);
-	//~ globalConfig[1]->setTopRightCorner(19,5);
-	//~ globalConfig[1]->setBottomLeftCorner(35,21);
 	
 	
 		
-	
-	//~ cout<<endl<<endl;
-	//~ display(globalConfig);
-	//~ cout<<endl<<endl;	
-	//~ //display(bestConfig);
-	
-	//~ compareCost();
-	
 	
 	cout<<"Estimated DSPs:= "<<nrDSPs <<endl;
 	target->getDSPWidths(x,y);
@@ -292,64 +174,6 @@ IntTilingMult:: IntTilingMult(Target* target, int wInX, int wInY,float ratio) :
 	//~ cout<<"cost of partitions is "<<partitionOfGridSlices(globalConfig,t);
 	//~ cout<<"Cost of obtained best is "<<computeCost(globalConfig)<<endl;
 	//~ display(globalConfig);
-		
-		
-	
-		
-	//~ /*we will try the algorithm with 2 values of nrDSPs	
-	//~ One will be the estimated value(nrDSPs) and the second one will be nrDSPs-1	
-	//~ */
-	//~ rot = new bool[nrDSPs];
-	//~ for(int i =0;i<nrDSPs;i++)
-		//~ rot[i]=false;
-	
-	
-	
-	 //~ initTiling(globalConfig,nrDSPs);	
-			
-	//~ //this will initialize the bestConfig with the first configuration
-	//~ bestCost = FLT_MAX ;
-	//~ cout<<"Max score is"<<bestCost<<endl;
-	//~ //bestConfig = (DSP**)malloc(nrDSPs * sizeof(DSP*));
-	//~ bestConfig = new DSP*[nrDSPs];
-	//~ for(int i=0;i<nrDSPs;i++)
-			//~ bestConfig[i]= new DSP();
-	//~ compareCost();
-	//~ cout<<"New best score is"<<bestCost<<endl;
-	
-	//~ display(bestConfig);
-	
-	
-	//~ //the best configuration should be consider initially the first one. So the bestConfig parameter will be initialized with global config and hence the bestCost will be initialized with the first cost
-	
-	
-	//~ tilingAlgorithm(nrDSPs-1,nrDSPs-1,false);
-	
-	//~ display(bestConfig);
-	//~ cout<<"Best cost is "<<bestCost<<endl;
-	
-	
-	
-	
-	
-	
-
-
-	//~ // After all configurations with the nrDSPs number of DSPs were evaluated then a new search is carryed with one DSP less
-	//~ // After the initialization of the new configuration with nrDSPs-1, the cost must be evaluated and confrunted with the best score obtained so far.
-	
-	//~ if(nrDSPs-1>0)
-	//~ {
-		
-	
-		//~ for(int i =0;i<nrDSPs;i++)
-			//~ rot[i]=false;
-		
-		//~ initTiling(globalConfig,nrDSPs -1);	
-		//~ compareCost();
-		//~ tilingAlgorithm(nrDSPs-2,nrDSPs-2,false);
-	//~ }
-	
 		
 		
 		
