@@ -79,6 +79,15 @@ IntTilingMult:: IntTilingMult(Target* target, int wInX, int wInY,float ratio) :
 	cout<<"Width of DSP is := "<<x<<" Height of DSP is:="<<y<<endl;
 	cout<<"Extra width:= "<<getExtraWidth()<<" \nExtra height:="<<getExtraHeight()<<endl;
 		
+	vn=wInX + 2* getExtraWidth();
+	vm=wInY + 2* getExtraHeight();
+	
+	float tempDist =	 getExtraWidth() * getExtraWidth() /4.0 + getExtraHeight() * getExtraHeight() /4.0;
+	maxDist2Move = (int) ( sqrt(tempDist) );
+	if(maxDist2Move==0)
+		maxDist2Move=2;
+	cout<<"maxDist2Move:= "<<maxDist2Move<<endl;
+		
 		
 	//asta trebe mutata in functia run algorithm
 
@@ -154,18 +163,18 @@ IntTilingMult:: IntTilingMult(Target* target, int wInX, int wInY,float ratio) :
 	
 	//~ initTiling(globalConfig,nrDSPs);
 	
-	//~ globalConfig[0]->setTopRightCorner(15,19);
-	//~ globalConfig[0]->setBottomLeftCorner(23,27);
-	//~ globalConfig[1]->setTopRightCorner(24,10);
-	//~ globalConfig[1]->setBottomLeftCorner(32,18);
-	//~ globalConfig[2]->setTopRightCorner(24,19);
-	//~ globalConfig[2]->setBottomLeftCorner(32,27);
+	//~ globalConfig[0]->setTopRightCorner(0,0);
+	//~ globalConfig[0]->setBottomLeftCorner(8,8);
+	//~ globalConfig[1]->setTopRightCorner(9,13);
+	//~ globalConfig[1]->setBottomLeftCorner(17,21);
+	//~ globalConfig[2]->setTopRightCorner(20,5);
+	//~ globalConfig[2]->setBottomLeftCorner(28,13);
 	
 	
-	//~ cout<<"Initial configuration"<<endl<<endl;
-	//~ display(globalConfig);
+	 //~ cout<<"Initial configuration"<<endl<<endl;
+	 //~ display(globalConfig);
 	
-	//~ cout<<endl<<endl;
+	//~ cout<<endl<<checkFarness(globalConfig) <<endl;
 	
 	//~ compareCost();
 	
@@ -199,7 +208,11 @@ IntTilingMult:: IntTilingMult(Target* target, int wInX, int wInY,float ratio) :
 	
 	//~ bestCost=350.455;
 	
+
+	//~ initTiling(globalConfig,nrDSPs);
+
 	//initTiling(globalConfig,nrDSPs);
+
 	/*
 	globalConfig[0]->setTopRightCorner(6,19);
 	globalConfig[0]->setBottomLeftCorner(14,27);
@@ -212,6 +225,13 @@ IntTilingMult:: IntTilingMult(Target* target, int wInX, int wInY,float ratio) :
 	*/
 	//replace(globalConfig, 1);
 	
+
+	//~ display(globalConfig);
+	//~ bindDSPs(globalConfig);
+	//~ multiplicationInDSPs(globalConfig);
+	//~ multiplicationInSlices(globalConfig);
+
+
 	//display(globalConfig);
 	//bindDSPs(globalConfig);
 	//multiplicationInDSPs(globalConfig);
@@ -246,6 +266,7 @@ IntTilingMult:: IntTilingMult(Target* target, int wInX, int wInY,float ratio) :
 	target->getDSPWidths(x,y);
 	cout<<"Width of DSP is := "<<x<<" Height of DSP is:="<<y<<endl;
 	cout<<"Extra width:= "<<getExtraWidth()<<" \nExtra height:="<<getExtraHeight()<<endl;
+	cout<<"maxDist2Move:= "<<maxDist2Move<<endl;
 	
 	//~ initTiling(globalConfig,nrDSPs);
 	
@@ -366,8 +387,11 @@ void IntTilingMult::runAlgorithm()
 	
 	int n,m;
 	int count=1;
-	n=wInX + 2* getExtraWidth();
-	m=wInY + 2* getExtraHeight();
+	//~ n=wInX + 2* getExtraWidth();
+	//~ m=wInY + 2* getExtraHeight();
+
+	n=vn;
+	m=vm;
 	
 	mat = new int*[m];
 	for(int i=0;i<m;i++)
@@ -540,8 +564,10 @@ bool IntTilingMult::compareOccupation(DSP** config)
 	int nj,ni,njj,nii;
 	int ii,jj,i,j;
 	int n,m;
-	n=wInX + 2* getExtraWidth();
-	m=wInY + 2* getExtraHeight();
+	//~ n=wInX + 2* getExtraWidth();
+	//~ m=wInY + 2* getExtraHeight();
+	n=vm;
+	m=vm;
 	
 	for(int ti=0;ti<nrDSPs;ti++)
 		if(config[ti]!=NULL)
@@ -1470,12 +1496,75 @@ void IntTilingMult::buildStandardTestCases(TestCaseList* tcl){
 }
 
 
+int IntTilingMult::checkFarness(DSP** config)
+{
+	int xtr1, ytr1, xbl1, ybl1, xtr2, ytr2, xbl2, ybl2;
+	//if we run the algorithm with one less DSP then we should verify against the DSP nrDSP-2
+	config[nrDSPs-1]->getTopRightCorner(xtr1, ytr1);
+	config[nrDSPs-1]->getBottomLeftCorner(xbl1, ybl1);
+	int dist=0;
+	bool ver=false;
+	int sqrDist = maxDist2Move * maxDist2Move;
+	
+	dist=0;	
+	for (int i=0; i<nrDSPs-1; i++)
+		if ((config[i] != NULL) )
+		{
+			config[i]->getTopRightCorner(xtr2, ytr2);
+			config[i]->getBottomLeftCorner(xbl2, ybl2);
+			if(xtr1 >= xbl2 + maxDist2Move)
+				dist++;			
+		}
+	//~ cout<<dist<<endl;
+	
+	//cout<<"Sqr max is "<<sqrDist<<endl;
+	for (int i=0; i<nrDSPs-1; i++)
+		if ((config[i] != NULL) )
+		{
+			dist=0;
+			config[i]->getTopRightCorner(xtr2, ytr2);
+			config[i]->getBottomLeftCorner(xbl2, ybl2);
+			if(xtr1 >= xbl2)
+					dist +=(xtr1 - xbl2)*(xtr1 - xbl2);
+			//cout<<"xtr1= "<<xtr1<<" xbl2= "<<xbl2<<" Dist = "<<dist<<"  ";
+			if(ybl2 <= ytr1)
+					dist +=(ybl2-ytr1) * (ybl2-ytr1) ;
+				else
+					if(ybl1 <= ytr2)
+					{
+						dist +=(ybl1 - ytr2) *(ybl1 - ytr2) ;
+						ver =true;
+					}
+			
+			//cout<<"The distance for DSP "<<i<<" is "<<dist<<endl;
+			if(dist <= sqrDist)
+					{
+						//cout<<"Dist  was = "<<dist<<endl;
+						return 0; //OK
+					
+					}			
+		}
+	
+	if(dist == nrDSPs -1)
+		return 1;
+	
+	if(!ver)
+		return 2;
+	
+	return 3;
+	
+}
+
 bool IntTilingMult::checkOverlap(DSP** config, int index)
 {	
 	int xtr1, ytr1, xbl1, ybl1, xtr2, ytr2, xbl2, ybl2;
 	//int nrdsp = sizeof(config)/sizeof(DSP*);
 	config[index]->getTopRightCorner(xtr1, ytr1);
 	config[index]->getBottomLeftCorner(xbl1, ybl1);
+	
+	int dist=0;
+	
+	
 	
 	if(verbose)
 		cout << tab << tab << "checkOverlap: ref is block #" << index << ". Top-right is at (" << xtr1 << ", " << ytr1 << ") and Bottom-right is at (" << xbl1 << ", " << ybl1 << ")" << endl;
@@ -1492,6 +1581,30 @@ bool IntTilingMult::checkOverlap(DSP** config, int index)
 				)
 			   )
 			   return true;
+			
+			//~ dist=0;
+			//~ if(index == nrDSPs-1)  //de modificat dspul ultimul in cazul in care se incearca si cu unul mai putin
+			//~ {
+				//~ if(xtr1 > xbl2)
+					//~ dist +=(xtr1 - xbl2)*(xtr1 - xbl2);
+				//~ else
+					//~ if(xbl1 < xtr2)
+						//~ dist += (xbl1-xtr2)*(xbl1-xtr2);
+				//~ if(ybl2 < ytr1)
+					//~ dist +=(ybl2-ytr1) * (ybl2-ytr1) ;
+				//~ else
+					//~ if(ybl1 < ytr2)
+						//~ dist +=(ybl1 - ytr2) *(ybl1 - ytr2) ;
+				
+					//~ if(dist > maxDist2Move)
+					//~ {
+						//~ //cout<<"Dist  was = "<<dist<<endl;
+						//~ return true;
+					
+					//~ }
+				
+				
+			//~ }
 			
 			if(verbose)
 				cout << tab << tab << "checkOverlap: comparing with block #" << i << ". Top-right is at (" << xtr2 << ", " << ytr2 << ") and Bottom-right is at (" << xbl1 << ", " << ybl1 << ")" << endl;
@@ -1527,6 +1640,7 @@ bool IntTilingMult::checkOverlap(DSP** config, int index)
 				
 				if(  (a1&&a2||a3&&a4)&&(b1&&b2||b3&&b4) || (a4&&a6||a5&&a1)&&(b6&&b1||b4&&b5) || (a5&&b3&&b2&&a6) || (a3&&b6&&b5&&a2)	)
 					return true;
+				
 				
 			
 			
@@ -2083,8 +2197,10 @@ int IntTilingMult::multiplicationInSlices(DSP** config)
 	int **mat;
 	int n,m;
 	int count=1;
-	n=wInX + 2* getExtraWidth();
-	m=wInY + 2* getExtraHeight();
+	//~ n=wInX + 2* getExtraWidth();
+	//~ m=wInY + 2* getExtraHeight();
+	n=vn;
+	m=vm;
 	//~ cout<<"width "<<n<<"height "<<m<<endl;
 	mat = new int*[m];
 	for(int i=0;i<m;i++)

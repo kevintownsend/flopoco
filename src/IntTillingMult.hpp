@@ -130,6 +130,14 @@ private:
 
 	/** The number of estimated DSPs that will be used according to this parameter */
 	int nrDSPs;
+	
+	/** The width of the virtual board */
+	int vn;
+	/** The height of the virtual board */
+	int vm;
+	/** The maximum allow distance to move away from the others for the last block */
+	int maxDist2Move;
+	
 
 	/** This function estimates the maximum number of DSPs that can be used with respect to the preference of the user */
 	int estimateDSPs();
@@ -187,11 +195,11 @@ private:
 	
 	bool compareOccupation(DSP** config);
 	
-	/**  This function will be used in order to create the Multipliers in LUTs for all parts that are not done in DSPs. The name of this operands that will be used for the final addition is addOpSlice#
-	* The configuration that will be used is bestConfig
-	* @return the number of such operands that must be added in the final IntNAdder.
+	/** This function is used in order to verify if the last DSP is not to far from the rest of the DSPs. This function should be called after we are sure that the last DSP is not in right of any others DSPs
+	@return 0 - for OK ; 1 - for to far left from all -> finnish ; 2 - is not above then any so move it left with 1 ; 3 continue to move normaly the block
 	*/
 	
+	int checkFarness(DSP** config);
 
 
 };
