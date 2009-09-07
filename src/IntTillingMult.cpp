@@ -89,7 +89,7 @@ IntTilingMult:: IntTilingMult(Target* target, int wInX, int wInY,float ratio) :
 	cout<<"maxDist2Move:= "<<maxDist2Move<<endl;
 		
 		
-	//asta trebe mutata in functia run algorithm
+	//this should be moved(already done this) in the function runAlgorithm. This will be deleted from the constructor when the class is finnished
 
 	//~ int n,m;
 	//~ int count=1;
@@ -141,40 +141,40 @@ IntTilingMult:: IntTilingMult(Target* target, int wInX, int wInY,float ratio) :
 				//~ {
 					//~ for(int j=0;j<nrDSPs;j++)
 						//~ if(globalConfig[j]==globalConfig[i]->getShiftIn())
-							//~ cout<<"Exista legatura In la dspul "<<i+1<<" de la DSPul"<<j+1<<endl;
+							//~ cout<<"Exists a bind of type Out from dsp "<<i+1<<" to DSPul"<<j+1<<endl;
 				//~ }
 				//~ if(globalConfig[i]->getShiftOut()!=NULL)
 				//~ {
 					//~ for(int j=0;j<nrDSPs;j++)
 						//~ if(globalConfig[j]==globalConfig[i]->getShiftOut())
-							//~ cout<<"Exista legatura Out la dspul "<<i+1<<" catre DSPul"<<j+1<<endl;
+							//~ cout<<"Exists a bind of type Out from dsp "<<i+1<<" to DSPul"<<j+1<<endl;
 				//~ }
 			//~ }
 		//~ }
 		
 		
 		
-	runAlgorithm();
+	//runAlgorithm();
 	
 
 	//~ initTiling(bestConfig,nrDSPs);
 	
 	 //~ bestCost=367.455;
 	
-	//~ initTiling(globalConfig,nrDSPs);
+	initTiling(globalConfig,nrDSPs);
 	
-	//~ globalConfig[0]->setTopRightCorner(0,0);
-	//~ globalConfig[0]->setBottomLeftCorner(8,8);
-	//~ globalConfig[1]->setTopRightCorner(9,13);
-	//~ globalConfig[1]->setBottomLeftCorner(17,21);
-	//~ globalConfig[2]->setTopRightCorner(20,5);
-	//~ globalConfig[2]->setBottomLeftCorner(28,13);
+	globalConfig[0]->setTopRightCorner(0,0);
+	globalConfig[0]->setBottomLeftCorner(8,8);
+	globalConfig[1]->setTopRightCorner(9,13);
+	globalConfig[1]->setBottomLeftCorner(17,21);
+	globalConfig[2]->setTopRightCorner(20,2);
+	globalConfig[2]->setBottomLeftCorner(28,10);
 	
 	
-	 //~ cout<<"Initial configuration"<<endl<<endl;
-	 //~ display(globalConfig);
+	 cout<<"Initial configuration"<<endl<<endl;
+	 display(globalConfig);
 	
-	//~ cout<<endl<<checkFarness(globalConfig) <<endl;
+	cout<<endl<<checkFarness(globalConfig) <<endl;
 	
 	//~ compareCost();
 	
@@ -1512,10 +1512,11 @@ int IntTilingMult::checkFarness(DSP** config)
 		{
 			config[i]->getTopRightCorner(xtr2, ytr2);
 			config[i]->getBottomLeftCorner(xbl2, ybl2);
-			if(xtr1 >= xbl2 + maxDist2Move)
+			if(xtr1 > xbl2+1 + maxDist2Move)
 				dist++;			
 		}
-	//~ cout<<dist<<endl;
+	 if(dist == nrDSPs -1)
+		return 1;
 	
 	//cout<<"Sqr max is "<<sqrDist<<endl;
 	for (int i=0; i<nrDSPs-1; i++)
@@ -1524,19 +1525,19 @@ int IntTilingMult::checkFarness(DSP** config)
 			dist=0;
 			config[i]->getTopRightCorner(xtr2, ytr2);
 			config[i]->getBottomLeftCorner(xbl2, ybl2);
-			if(xtr1 >= xbl2)
-					dist +=(xtr1 - xbl2)*(xtr1 - xbl2);
-			//cout<<"xtr1= "<<xtr1<<" xbl2= "<<xbl2<<" Dist = "<<dist<<"  ";
-			if(ybl2 <= ytr1)
-					dist +=(ybl2-ytr1) * (ybl2-ytr1) ;
+			if(xtr1 > xbl2)
+					dist +=(xtr1 - xbl2-1)*(xtr1 - xbl2-1);
+			cout<<"xtr1= "<<xtr1<<" xbl2= "<<xbl2<<" Dist = "<<dist<<"  ";
+			if(ybl2 < ytr1)
+					dist +=(1+ybl2-ytr1) * (1+ybl2-ytr1) ;
 				else
-					if(ybl1 <= ytr2)
+					if(ybl1 < ytr2)
 					{
-						dist +=(ybl1 - ytr2) *(ybl1 - ytr2) ;
+						dist +=(1+ybl1 - ytr2) *(1+ybl1 - ytr2) ;
 						ver =true;
 					}
 			
-			//cout<<"The distance for DSP "<<i<<" is "<<dist<<endl;
+			cout<<"The distance for DSP "<<i<<" is "<<dist<<endl;
 			if(dist <= sqrDist)
 					{
 						//cout<<"Dist  was = "<<dist<<endl;
@@ -1545,8 +1546,7 @@ int IntTilingMult::checkFarness(DSP** config)
 					}			
 		}
 	
-	if(dist == nrDSPs -1)
-		return 1;
+	
 	
 	if(!ver)
 		return 2;
