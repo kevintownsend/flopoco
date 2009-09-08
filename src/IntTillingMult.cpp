@@ -393,6 +393,11 @@ bool IntTilingMult::compareOccupation(DSP** config)
 	n=vm;
 	m=vm;
 	
+	int nmew = n-getExtraWidth();
+	int ew = getExtraWidth();
+	int mmeh = m - getExtraHeight() ;
+	int eh = getExtraHeight();
+	
 	for(int ti=0;ti<nrDSPs;ti++)
 		if(config[ti]!=NULL)
 		{
@@ -412,7 +417,7 @@ bool IntTilingMult::compareOccupation(DSP** config)
 			
 			
 						
-						if( j>= n-getExtraWidth() || jj< getExtraWidth() || i >= m - getExtraHeight() || ii < getExtraHeight())
+						if( j>= nmew || jj< ew || i >= mmeh || ii < eh)
 						{
 							nj=ni=njj=nii=0;
 						}
@@ -445,6 +450,8 @@ bool IntTilingMult::compareOccupation(DSP** config)
 		//cout<<"Size config is"<<sizeConfig<<endl;
 		
 		
+		
+		
 		for(int ti=0;ti<nrDSPs;ti++)
 		if(bestConfig[ti]!=NULL)
 		{
@@ -464,7 +471,7 @@ bool IntTilingMult::compareOccupation(DSP** config)
 			
 			
 						
-						if( j>= n-getExtraWidth() || jj< getExtraWidth() || i >= m - getExtraHeight() || ii < getExtraHeight())
+						if( j>= nmew || jj< ew || i >= mmeh || ii < eh)
 						{
 							nj=ni=njj=nii=0;
 						}
@@ -529,6 +536,12 @@ void IntTilingMult::display(DSP** config)
 	cout<<"real width"<<wInX<<"real height"<<wInY<<endl;
 	cout<<"width "<<n<<"height "<<m<<endl;
 	mat = new int*[m];
+	
+	int nmew = n-getExtraWidth();
+	int ew = getExtraWidth();
+	int mmeh = m - getExtraHeight() ;
+	int eh = getExtraHeight();
+	int nj,ni,njj,nii;
 	for(int i=0;i<m;i++)
 		{
 			mat[i] = new int [n];
@@ -659,9 +672,10 @@ void IntTilingMult::display(DSP** config)
 						}
 						
 						
-						int nj,ni,njj,nii;
+					
 						
-						if( j>= n-getExtraWidth() || jj< getExtraWidth() || i >= m - getExtraHeight() || ii < getExtraHeight())
+						
+						if( j>= nmew || jj< ew || i >= mmeh || ii < eh)
 						{
 							cout<<"Partition number "<<count<<" is totally out of the real multiplication bounds. ("<<j<<" , "<<i<<" , "<<jj<<" , "<<ii<<")"<<endl;
 						}
@@ -742,8 +756,16 @@ void IntTilingMult::display(DSP** config)
 	
 	int n,m;
 	int count=1;
-	n=wInX + 2* getExtraWidth();
-	m=wInY + 2* getExtraHeight();
+	n=vn;
+	m=vm;
+	
+	int nmew = n-getExtraWidth();
+	int ew = getExtraWidth();
+	int mmeh = m - getExtraHeight() ;
+	int eh = getExtraHeight();
+	int nj,ni,njj,nii;
+	
+		
 	//~ cout<<"width "<<n<<"height "<<m<<endl;
 	
 	for(int i=0;i<m;i++)
@@ -900,30 +922,30 @@ void IntTilingMult::display(DSP** config)
 						
 						//~ cout<<count<<endl;
 						
-						int nj,ni,njj,nii;
+					
+												
 						
-						
-						if( j>=n-getExtraWidth() || jj< getExtraWidth() || i >= m - getExtraHeight() || ii < getExtraHeight())
+						if( j>=nmew || jj< ew || i >= mmeh || ii < eh)
 						{
 							
 						}
 						else
 						{
-							if( j < getExtraWidth() )
-								nj = getExtraWidth() ;
+							if( j < ew )
+								nj = ew ;
 							else
 								nj = j;
-							if( jj >= n - getExtraWidth() )
-								njj = n -getExtraWidth() -1;
+							if( jj >=nmew )
+								njj = nmew -1;
 							else
 								njj = jj;
 							
-							if( i < getExtraHeight() )
-								ni = getExtraHeight() ;
+							if( i < eh )
+								ni = eh ;
 							else
 								ni = i;
-							if( ii >= m - getExtraHeight() )
-								nii = m -getExtraHeight() -1;
+							if( ii >=mmeh)
+								nii = mmeh -1;
 							else
 								nii = ii;
 							
@@ -1123,8 +1145,8 @@ void IntTilingMult::compareCost()
 	
 	if(temp < bestCost)
 	{
-		cout<<"Costul e mai bun la cel curent!Schimba"<<endl;
-		cout<<"score temp is"<<temp<<" and current best is"<<bestCost<<endl;
+		//~ cout<<"Costul e mai bun la cel curent!Schimba"<<endl;
+		 cout<<"Shimba! Score temp is"<<temp<<" and current best is"<<bestCost<<endl;
 		//~ int c1X,c2X,c1Y,c2Y;
 		//~ int n=wInX + 2* getExtraWidth();
 		//~ tempc[0]->getTopRightCorner(c1X,c1Y);
@@ -1146,13 +1168,13 @@ void IntTilingMult::compareCost()
 	else
 		if(temp == bestCost )
 		{
-			cout<<"Cost egal!!!"<<endl;
+			//cout<<"Cost egal!!!"<<endl;
 			//cout<<"Rezult compare is"<<compareOccupation(tempc)<<endl;
 			//cout<<"score temp is"<<temp<<" and current best is"<<bestCost<<endl;
 			//display(bestConfig);
 			if(compareOccupation(tempc)==true)
 			{
-				cout<<"Schimba. Now best has cost "<<temp<<endl;
+				cout<<"Schimba la cost egal . Now best has cost "<<temp<<endl;
 				bestCost=temp;
 			
 				for(int ii=0;ii<nrDSPs;ii++)
@@ -1170,7 +1192,7 @@ void IntTilingMult::compareCost()
 }
 
 
-// de revazut costul sa fie calculat nu si pentru extensii!!!!!!!!!
+
 float IntTilingMult::computeCost(DSP** &config)
 {
 	
@@ -1351,7 +1373,7 @@ int IntTilingMult::checkFarness(DSP** config)
 			config[i]->getBottomLeftCorner(xbl2, ybl2);
 			if(xtr1 > xbl2)
 					dist +=(xtr1 - xbl2-1)*(xtr1 - xbl2-1);
-			cout<<"xtr1= "<<xtr1<<" xbl2= "<<xbl2<<" Dist = "<<dist<<"  ";
+			//cout<<"xtr1= "<<xtr1<<" xbl2= "<<xbl2<<" Dist = "<<dist<<"  ";
 			if(ybl2 < ytr1)
 					dist +=(1+ybl2-ytr1) * (1+ybl2-ytr1) ;
 				else
@@ -1361,7 +1383,7 @@ int IntTilingMult::checkFarness(DSP** config)
 						ver =true;
 					}
 			
-			cout<<"The distance for DSP "<<i<<" is "<<dist<<endl;
+			//cout<<"The distance for DSP "<<i<<" is "<<dist<<endl;
 			if(dist <= sqrDist)
 					{
 						//cout<<"Dist  was = "<<dist<<endl;
@@ -1388,6 +1410,19 @@ bool IntTilingMult::checkOverlap(DSP** config, int index)
 	
 	int dist=0;
 	
+	bool a1 ;
+	bool a2 ;
+	bool a3 ;
+	bool a4 ;
+	bool a5 ;
+	bool a6 ;
+				
+	bool b1 ;
+	bool b2 ;
+	bool b3 ;
+	bool b4 ;
+	bool b5 ;
+	bool b6 ;
 	
 	
 	if(verbose)
@@ -1406,30 +1441,7 @@ bool IntTilingMult::checkOverlap(DSP** config, int index)
 			   )
 			   return true;
 			
-			//~ dist=0;
-			//~ if(index == nrDSPs-1)  //de modificat dspul ultimul in cazul in care se incearca si cu unul mai putin
-			//~ {
-				//~ if(xtr1 > xbl2)
-					//~ dist +=(xtr1 - xbl2)*(xtr1 - xbl2);
-				//~ else
-					//~ if(xbl1 < xtr2)
-						//~ dist += (xbl1-xtr2)*(xbl1-xtr2);
-				//~ if(ybl2 < ytr1)
-					//~ dist +=(ybl2-ytr1) * (ybl2-ytr1) ;
-				//~ else
-					//~ if(ybl1 < ytr2)
-						//~ dist +=(ybl1 - ytr2) *(ybl1 - ytr2) ;
 				
-					//~ if(dist > maxDist2Move)
-					//~ {
-						//~ //cout<<"Dist  was = "<<dist<<endl;
-						//~ return true;
-					
-					//~ }
-				
-				
-			//~ }
-			
 			if(verbose)
 				cout << tab << tab << "checkOverlap: comparing with block #" << i << ". Top-right is at (" << xtr2 << ", " << ytr2 << ") and Bottom-right is at (" << xbl1 << ", " << ybl1 << ")" << endl;
 			
@@ -1448,19 +1460,19 @@ bool IntTilingMult::checkOverlap(DSP** config, int index)
 				//~ return true;
 					
 				// the optimisation of the above if
-				bool a1 = (xtr2 <= xbl1);
-				bool a2 = (xtr2 >= xtr1);
-				bool a3 = (xbl2 <= xbl1);
-				bool a4 = (xbl2 >= xtr1);
-				bool a5 = (xbl2 >= xbl1);
-				bool a6 = (xtr1 >= xtr2);
+				 a1 = (xtr2 <= xbl1);
+				 a2 = (xtr2 >= xtr1);
+				 a3 = (xbl2 <= xbl1);
+				 a4 = (xbl2 >= xtr1);
+				 a5 = (xbl2 >= xbl1);
+				 a6 = (xtr1 >= xtr2);
 				
-				bool b1 = (ytr2 <= ybl1);
-				bool b2 = (ytr2 >= ytr1);
-				bool b3 = (ybl2 <= ybl1);
-				bool b4 = (ybl2 >= ytr1);
-				bool b5 = (ytr1 >= ytr2);
-				bool b6 = (ybl1 <= ybl2);
+				 b1 = (ytr2 <= ybl1);
+				 b2 = (ytr2 >= ytr1);
+				 b3 = (ybl2 <= ybl1);
+				 b4 = (ybl2 >= ytr1);
+				 b5 = (ytr1 >= ytr2);
+				 b6 = (ybl1 <= ybl2);
 				
 				if(  (a1&&a2||a3&&a4)&&(b1&&b2||b3&&b4) || (a4&&a6||a5&&a1)&&(b6&&b1||b4&&b5) || (a5&&b3&&b2&&a6) || (a3&&b6&&b5&&a2)	)
 					return true;
@@ -1700,7 +1712,9 @@ int IntTilingMult::bindDSPs4Stratix(DSP** config)
 				
 			if (verbose)
 				cout << "bindDSP4Stratix: DSP #" << i << " has less than 3 operands. Top-right is at ( " << xtri << ", " << ytri << ") width is " << wx << endl;
-			
+			DSP** operands;
+			DSP** operandsj;
+			DSP** opsk;
 			for (int j=0; j<DSPcount; j++)
 			if (i != j)
 			{
@@ -1708,7 +1722,7 @@ int IntTilingMult::bindDSPs4Stratix(DSP** config)
 				if (nrOp == 3)
 					break;
 			
-				DSP** operands = config[i]->getAdditionOperands();
+				operands = config[i]->getAdditionOperands();
 				bound = false;
 				// check if the DSP blocks are bound
 				for (int k=0; k<nrOp; k++)
@@ -1736,7 +1750,7 @@ int IntTilingMult::bindDSPs4Stratix(DSP** config)
 					
 					if (verbose)
 						cout << "bindDSP4Stratix : DSP #" << j << " together with #" << i << " have fewer than 3 operands. We can bind them." << endl;
-					DSP** operandsj = config[j]->getAdditionOperands();
+					 operandsj = config[j]->getAdditionOperands();
 					
 					for (int k=0; k<nrOp; k++)
 					{
@@ -1744,7 +1758,7 @@ int IntTilingMult::bindDSPs4Stratix(DSP** config)
 						// each operand of congif[i] also gets bounded 
 						int opcntk = operands[k]->getNumberOfAdders();
 						operands[k]->setNumberOfAdders(nrOp+nrOpj+1);
-						DSP** opsk = operands[k]->getAdditionOperands();
+						opsk = operands[k]->getAdditionOperands();
 						for (int l=0; l < nrOpj; l++)
 							opsk[l+opcntk] = operandsj[l];
 						opsk[nrOpj+opcntk] = config[j];
@@ -1760,7 +1774,7 @@ int IntTilingMult::bindDSPs4Stratix(DSP** config)
 						// each operand of congif[j] also gets bounded 
 						int opcntk = operandsj[k]->getNumberOfAdders();
 						operandsj[k]->setNumberOfAdders(nrOp+nrOpj+1);
-						DSP** opsk = operandsj[k]->getAdditionOperands();
+						opsk = operandsj[k]->getAdditionOperands();
 						for (int l=0; l < nrOp; l++)
 							opsk[l+opcntk] = operands[l];
 						opsk[nrOp+opcntk] = config[i];
