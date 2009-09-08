@@ -81,11 +81,11 @@ IntTilingMult:: IntTilingMult(Target* target, int wInX, int wInY,float ratio) :
 		
 	vn=wInX + 2* getExtraWidth();
 	vm=wInY + 2* getExtraHeight();
-	
-	float tempDist =	 getExtraWidth() * getExtraWidth() /4.0 + getExtraHeight() * getExtraHeight() /4.0;
+	float movePercentage =0.4;
+	float tempDist =	 (movePercentage  * getExtraWidth() * getExtraWidth()) /4.0 + (movePercentage *getExtraHeight() * getExtraHeight()) /4.0;
 	maxDist2Move = (int) ( sqrt(tempDist) );
 	//~ if(maxDist2Move==0)
-		//~ maxDist2Move=1;
+		 //~ maxDist2Move=1;
 	cout<<"maxDist2Move:= "<<maxDist2Move<<endl;
 		
 	
@@ -117,17 +117,44 @@ IntTilingMult:: IntTilingMult(Target* target, int wInX, int wInY,float ratio) :
 		
 		
 		
-	runAlgorithm();
+	 runAlgorithm();
+	
+	//~ initTiling(globalConfig,nrDSPs);
+	
+	//~ globalConfig[0]->setTopRightCorner(2,0);
+	//~ globalConfig[0]->setBottomLeftCorner(18,16);
+	//~ globalConfig[1]->setTopRightCorner(1,17);
+	//~ globalConfig[1]->setBottomLeftCorner(17,33);
+	//~ globalConfig[2]->setTopRightCorner(21,-12);
+	//~ globalConfig[2]->setBottomLeftCorner(37,4);
+
+	 //~ display(globalConfig);
+	
+	//~ maxDist2Move=2;
+	
+	//~ //cout<<endl<<checkFarness(globalConfig,2) <<endl;
+	
+	//~ //cout<<move(globalConfig,2)<<endl;
+	//~ cout<<move(globalConfig,0)<<endl;
+	//~ display(globalConfig);
+	//~ replace(globalConfig,1);
+	//~ replace(globalConfig,2);
+	//~ display(globalConfig);
+	//~ cout<<move(globalConfig,2)<<endl;
+	
+	//~ display(globalConfig);
+	
 	
 
+
+
 	//~ initTiling(bestConfig,nrDSPs);
-	
 	 //~ bestCost=367.455;
 	
 	//~ initTiling(globalConfig,nrDSPs);
 	
-	//~ globalConfig[0]->setTopRightCorner(0,0);
-	//~ globalConfig[0]->setBottomLeftCorner(8,8);
+	//~ globalConfig[0]->setTopRightCorner(1,2);
+	//~ globalConfig[0]->setBottomLeftCorner(9,10);
 	//~ globalConfig[1]->setTopRightCorner(9,13);
 	//~ globalConfig[1]->setBottomLeftCorner(17,21);
 	//~ globalConfig[2]->setTopRightCorner(18,4);
@@ -137,7 +164,9 @@ IntTilingMult:: IntTilingMult(Target* target, int wInX, int wInY,float ratio) :
 	 //~ cout<<"Initial configuration"<<endl<<endl;
 	 //~ display(globalConfig);
 	
-	//~ cout<<endl<<checkFarness(globalConfig) <<endl;
+	//~ maxDist2Move=2;
+	
+	//~ cout<<endl<<checkFarness(globalConfig,1) <<endl;
 	
 	//~ compareCost();
 	
@@ -208,7 +237,7 @@ IntTilingMult::~IntTilingMult() {
 
 void IntTilingMult::runAlgorithm()
 {
-	
+	counterfirst =0 ;
 	int n,m;
 	int count=1;
 	//~ n=wInX + 2* getExtraWidth();
@@ -347,11 +376,19 @@ else
 	}
 	else
 	{	
+		//~ if(i==0)
+			//~ display(globalConfig);
 		if(move(globalConfig,i))
 		{
 			//~ cout<<" Pas 1_2 "<<i<<endl;
-			if(i==0)
-				cout<<"Primul a mai facut un pas!"<<endl;
+			if(i==0){
+				counterfirst++;
+				if(counterfirst%100==0)
+				cout<<counterfirst<<"DSP #1 has made 100 steps!"<<endl;
+				//~ display(globalConfig);
+				//~ cout<<endl<<endl<<endl;
+				
+			}
 			tilingAlgorithm(i+1,n,true);
 		}
 		else
@@ -1342,18 +1379,22 @@ void IntTilingMult::buildStandardTestCases(TestCaseList* tcl){
 }
 
 
-int IntTilingMult::checkFarness(DSP** config)
+int IntTilingMult::checkFarness(DSP** config,int index)
 {
 	int xtr1, ytr1, xbl1, ybl1, xtr2, ytr2, xbl2, ybl2;
 	//if we run the algorithm with one less DSP then we should verify against the DSP nrDSP-2
-	config[nrDSPs-1]->getTopRightCorner(xtr1, ytr1);
-	config[nrDSPs-1]->getBottomLeftCorner(xbl1, ybl1);
+	
+	if(index  < 1)
+		return 0;
+	
+	config[index]->getTopRightCorner(xtr1, ytr1);
+	config[index]->getBottomLeftCorner(xbl1, ybl1);
 	int dist=0;
 	bool ver=false;
 	int sqrDist = maxDist2Move * maxDist2Move;
 	
 	dist=0;	
-	for (int i=0; i<nrDSPs-1; i++)
+	for (int i=0; i<index; i++)
 		if ((config[i] != NULL) )
 		{
 			config[i]->getTopRightCorner(xtr2, ytr2);
@@ -1361,11 +1402,11 @@ int IntTilingMult::checkFarness(DSP** config)
 			if(xtr1 > xbl2+1 + maxDist2Move)
 				dist++;			
 		}
-	 if(dist == nrDSPs -1)
+	 if(dist == index)
 		return 1;
 	
 	//cout<<"Sqr max is "<<sqrDist<<endl;
-	for (int i=0; i<nrDSPs-1; i++)
+	for (int i=0; i<index; i++)
 		if ((config[i] != NULL) )
 		{
 			dist=0;
@@ -1373,7 +1414,7 @@ int IntTilingMult::checkFarness(DSP** config)
 			config[i]->getBottomLeftCorner(xbl2, ybl2);
 			if(xtr1 > xbl2)
 					dist +=(xtr1 - xbl2-1)*(xtr1 - xbl2-1);
-			//cout<<"xtr1= "<<xtr1<<" xbl2= "<<xbl2<<" Dist = "<<dist<<"  ";
+			//~ cout<<"xtr1= "<<xtr1<<" xbl2= "<<xbl2<<" Dist = "<<dist<<"  ";
 			if(ybl2 < ytr1)
 					dist +=(1+ybl2-ytr1) * (1+ybl2-ytr1) ;
 				else
@@ -1383,7 +1424,7 @@ int IntTilingMult::checkFarness(DSP** config)
 						ver =true;
 					}
 			
-			//cout<<"The distance for DSP "<<i<<" is "<<dist<<endl;
+			//~ cout<<"The distance for DSP "<<i<<" is "<<dist<<endl;
 			if(dist <= sqrDist)
 					{
 						//cout<<"Dist  was = "<<dist<<endl;
@@ -1428,13 +1469,13 @@ bool IntTilingMult::checkOverlap(DSP** config, int index)
 	if(verbose)
 		cout << tab << tab << "checkOverlap: ref is block #" << index << ". Top-right is at (" << xtr1 << ", " << ytr1 << ") and Bottom-right is at (" << xbl1 << ", " << ybl1 << ")" << endl;
 	
-	for (int i=0; i<nrDSPs; i++)
-		if ((config[i] != NULL) && (i != index))
+	for (int i=0; i<index; i++)
+		if (config[i] != NULL)
 		{
 			config[i]->getTopRightCorner(xtr2, ytr2);
 			config[i]->getBottomLeftCorner(xbl2, ybl2);
 			
-			if ((i < index) && 
+			if ( 
 				(((xtr2 >= xtr1) && (ytr2 > ybl1)) || 	// config[index] is above and to the right of config[i]
 				 (xbl1 < xtr2) 							// config[index] is to the right of config[i]
 				)
@@ -1508,7 +1549,7 @@ bool IntTilingMult::move(DSP** config, int index)
 	int exh = getExtraHeight();
 	
 	if ((xtr1 < 0) || (ytr1 < 0) || (xbl1 > vn-1) || (ybl1 > vm-1))
-	{// then the DSP block is placed outside the bounds 
+	{// then the DSP block is placed outside the bounds 		
 		do{
 			// move down one unit
 			ytr1++;
@@ -1524,11 +1565,11 @@ bool IntTilingMult::move(DSP** config, int index)
 				
 				if (xtr1 > gw) // the DSP block has reached the left limit of the tiling grid
 					return false;
-			}			
-			
+			}						
 			config[index]->setTopRightCorner(xtr1, ytr1);
 			config[index]->setBottomLeftCorner(xbl1, ybl1);
 		}while (checkOverlap(config, index));
+		
 	}
 	else
 	{
@@ -1557,8 +1598,7 @@ bool IntTilingMult::move(DSP** config, int index)
 	config[index]->setTopRightCorner(xtr1, ytr1);
 	config[index]->setBottomLeftCorner(xbl1, ybl1);
 	
-	int f = checkFarness(config);
-	
+	int f = checkFarness(config,index);	
 	if (f == 0)
 		return true;
 	else if (f == 1)

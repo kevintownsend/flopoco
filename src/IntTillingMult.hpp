@@ -199,7 +199,10 @@ private:
 	@return 0 - for OK ; 1 - for to far left from all -> finnish ; 2 - is not above then any so move it left with 1 ; 3 continue to move normaly the block
 	*/
 	
-	int checkFarness(DSP** config);
+	int checkFarness(DSP** config,int index);
+	
+	/** Variable which is used only through testing to count the steps of the first DSP */
+	int counterfirst;
 
 
 };
