@@ -1486,23 +1486,31 @@ bool IntTilingMult::move(DSP** config, int index)
 	
 	if(verbose)
 		cout << tab << "replace : DSP #" << index << " width is " << w << ", height is " << h << endl; 
+	/*
+	 * Initialized in the constructor:
+	 * vn = wInX+2*getExtraWidth(); width of the tiling grid including extensions
+	 * vm = wInY+2*getExtraHeight(); height of the tiling grid including extensions
+	 * */
+	int gw = wInX+getExtraWidth()-1; // the left limit of the tiling grid
+	int gh = wInY+getExtraHeight()-1; // the bottom limit of the tiling grid
+	int exh = getExtraHeight();
 	
-	if ((xtr1 < 0) || (ytr1 < 0) || (xbl1 > wInX+2*getExtraWidth()-1) || (ybl1 > wInY+2*getExtraHeight()-1))
+	if ((xtr1 < 0) || (ytr1 < 0) || (xbl1 > vn-1) || (ybl1 > vm-1))
 	{// then the DSP block is placed outside the bounds 
 		do{
 			// move down one unit
 			ytr1++;
 			ybl1++;
 			
-			if (ytr1 > wInY+getExtraHeight()-1) // the DSP block has reached the bottom limit of the tiling grid
+			if (ytr1 > gh) // the DSP block has reached the bottom limit of the tiling grid
 			{
 				// move to top of grid and one unit to the left 
 				xtr1++;
 				xbl1++;
-				ytr1 = getExtraHeight() - h+1;
+				ytr1 = exh - h+1;
 				ybl1 = ytr1 + h-1;
 				
-				if (xtr1 > wInX+getExtraWidth()-1) // the DSP block has reached the left limit of the tiling grid
+				if (xtr1 > gw) // the DSP block has reached the left limit of the tiling grid
 					return false;
 			}			
 			
@@ -1517,7 +1525,7 @@ bool IntTilingMult::move(DSP** config, int index)
 			ytr1++;
 			ybl1++;
 			
-			if (ybl1 > wInY+2*getExtraHeight()-1) // the DSP block has reached the bottom limit of the tiling grid
+			if (ybl1 > vm-1) // the DSP block has reached the bottom limit of the tiling grid
 			{
 				// move to top of grid and one unit to the left 
 				xtr1++;
@@ -1525,7 +1533,7 @@ bool IntTilingMult::move(DSP** config, int index)
 				ytr1 = 0;
 				ybl1 = h-1;
 				
-				if (xbl1 > wInX+2*getExtraWidth()-1) // the DSP block has reached the left limit of the tiling grid
+				if (xbl1 > vn-1) // the DSP block has reached the left limit of the tiling grid
 					return false;
 			}			
 			
@@ -1563,7 +1571,7 @@ void IntTilingMult::replace(DSP** config, int index)
 		
 		if(verbose)
 			cout << tab << "replace : moved DSP one unit down." << endl;
- 		if (ybl1 > wInY+2*getExtraHeight()) // the DSP block has reached the bottom limit of the tiling grid
+ 		if (ybl1 > vm) // the DSP block has reached the bottom limit of the tiling grid
 		{
 			// move to top of grid and one unit to the left 
 			xtr1++;
@@ -1580,7 +1588,7 @@ void IntTilingMult::replace(DSP** config, int index)
 			cout << tab << "replace : Top-right is at ( " << xtr1 << ", " << ytr1 << ") and Bottom-right is at (" << xbl1 << ", " << ybl1 << ")" << endl;
 	}
 	
-	if (xbl1 > wInX+2*getExtraWidth()) // it was not possible to place the DSP inside the extended grid
+	if (xbl1 > vn) // it was not possible to place the DSP inside the extended grid
 	{ // then try to place it anywhere around the tiling grid such that it covers at leat one 1x1 square
 		xtr1 = getExtraWidth() - w+1;
 		ytr1 = getExtraHeight() - h+1;
@@ -1592,6 +1600,10 @@ void IntTilingMult::replace(DSP** config, int index)
 		
 		if(verbose)
 			cout << tab << "replace : DSP width is " << w << ", height is " << h << endl; 
+			
+		int bLimit = wInY+getExtraHeight();
+		int exh = getExtraHeight();
+		
 		while (checkOverlap(config, index))
 		{
 			// move down one unit
@@ -1600,13 +1612,13 @@ void IntTilingMult::replace(DSP** config, int index)
 			
 			if(verbose)
 				cout << tab << "replace : moved DSP one unit down." << endl;
-			if (ytr1 > wInY+getExtraHeight()) // the DSP block has reached the bottom limit of the tiling grid
+			if (ytr1 > bLimit) // the DSP block has reached the bottom limit of the tiling grid
 			{
 				// move to top of grid and one unit to the left 
 				xtr1++;
 				//if (xtr1 > wInX+getExtraWidth()) // the DSP block has reached the left limit of the tiling grid
 				xbl1++;
-				ytr1 = getExtraHeight() - h+1;
+				ytr1 = exh - h+1;
 				ybl1 = ytr1 + h-1;
 				
 				if(verbose)
