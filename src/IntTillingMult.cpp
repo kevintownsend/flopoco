@@ -1544,7 +1544,32 @@ bool IntTilingMult::move(DSP** config, int index)
 	// set the current position of the DSP block within the tiling grid
 	config[index]->setTopRightCorner(xtr1, ytr1);
 	config[index]->setBottomLeftCorner(xbl1, ybl1);
-	return true;
+	
+	int f = checkFarness(config);
+	
+	if (f == 0)
+		return true;
+	else if (f == 1)
+		return false;
+	else if (f  == 2)
+	{
+		// move to top of grid and one unit to the left 
+		xtr1++;
+		xbl1++;
+		ytr1 = exh - h+1;
+		ybl1 = ytr1 + h-1;
+		
+		if (xbl1 > vn-1) // the DSP block has reached the left limit of the tiling grid
+			return false;
+		config[index]->setTopRightCorner(xtr1, ytr1);
+		config[index]->setBottomLeftCorner(xbl1, ybl1);
+		move(config, index);
+	}
+	else if (f == 3)
+	{
+		move(config, index);	
+	}
+	return false;
 }
 
 void IntTilingMult::replace(DSP** config, int index)
