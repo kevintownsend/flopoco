@@ -120,10 +120,52 @@ IntTilingMult:: IntTilingMult(Target* target, int wInX, int wInY,float ratio) :
 		
 	 runAlgorithm();
 	
+	
+	
+	//experiment pentru ./flopoco -target=Virtex5 IntTilingMult 18 34 0.35
+	//~ tempc= new DSP*[nrDSPs];
+	//~ for(int ii=0;ii<nrDSPs;ii++)
+		//~ tempc[ii]= new DSP();
+	//~ int n,m;
+	//~ int count=1;
+	
+	//~ n=vn;
+	//~ m=vm;
+	//~ mat = new int*[m];
+	//~ for(int i=0;i<m;i++)
+		//~ {
+			//~ mat[i] = new int [n];
+			//~ for(int j=0;j<n;j++)
+			//~ mat[i][j]=0;
+		//~ }
+	
+	
+	
+	//~ initTiling(bestConfig,nrDSPs);
 	//~ initTiling(globalConfig,nrDSPs);
 	
-	//~ globalConfig[0]->setTopRightCorner(2,0);
-	//~ globalConfig[0]->setBottomLeftCorner(18,16);
+	//~ globalConfig[0]->setTopRightCorner(6,4);
+	//~ globalConfig[0]->setBottomLeftCorner(22,27);
+	//~ display(globalConfig);
+	
+	//~ bestCost = 333222;
+	//~ compareCost();
+	
+	
+	
+	 //~ initTiling(globalConfig,nrDSPs);
+	
+	//~ globalConfig[0]->setTopRightCorner(4,4);
+	//~ globalConfig[0]->setBottomLeftCorner(20,27);
+	//~ display(globalConfig);
+	
+	
+	
+	 //~ compareCost();
+	 
+	 ///////////////////////////////////////////
+	
+	
 	//~ globalConfig[1]->setTopRightCorner(1,17);
 	//~ globalConfig[1]->setBottomLeftCorner(17,33);
 	//~ globalConfig[2]->setTopRightCorner(21,-12);
@@ -349,10 +391,13 @@ if(i==n)
 		{
 			if(rot[i]==false && (globalConfig[i]->getMaxMultiplierWidth() != globalConfig[i]->getMaxMultiplierHeight() ))
 			{
+				//display(globalConfig);
 				//~ cout<<" Pas 2_1 "<<i<<endl;
 				globalConfig[i]->rotate();
+				//display(globalConfig);
 				rot[i]=true;
 				replace(globalConfig,i);
+				//display(globalConfig);
 				compareCost();
 				tilingAlgorithm(i,n,repl);		//repl should be false
 			}
@@ -421,7 +466,7 @@ bool IntTilingMult::compareOccupation(DSP** config)
 	int totalSize = wInX * wInY;
 	int sizeBest = totalSize;
 	int sizeConfig = totalSize;
-	//cout<<"Total size is "<<totalSize<<endl;
+	cout<<"Total size is "<<totalSize<<endl;
 	int c1X,c2X,c1Y,c2Y;
 	int nj,ni,njj,nii;
 	int ii,jj,i,j;
@@ -486,7 +531,7 @@ bool IntTilingMult::compareOccupation(DSP** config)
 		}
 		
 		//cout<<"Size config is"<<sizeConfig<<endl;
-		
+		//display(config);
 		
 		
 		
@@ -539,7 +584,10 @@ bool IntTilingMult::compareOccupation(DSP** config)
 			
 		}
 		
+		
 		//cout<<"Size best is "<<sizeBest<<endl;
+		//display(bestConfig);
+		
 		
 		if(sizeBest >= sizeConfig)		
 			return true;
@@ -818,16 +866,18 @@ void IntTilingMult::display(DSP** config)
 			
 			config[i]->getTopRightCorner(c1X,c1Y);
 			config[i]->getBottomLeftCorner(c2X,c2Y);
-			//~ cout<<"DSP #"<<i+1<<"has toprigh ("<<c1X<<","<<c1Y<<") and botomleft ("<<c2X<<","<<c2Y<<")"<<endl;
+			 //~ cout<<"DSP #"<<i+1<<"has toprigh ("<<c1X<<","<<c1Y<<") and botomleft ("<<c2X<<","<<c2Y<<")"<<endl;
 			c1X=n-c1X-1;
 			c2X=n-c2X-1;
-			//~ cout<<"new x1 "<<c1X<<" new x2 "<<c2X<<endl;
+			 //~ cout<<"new x1 "<<c1X<<" new x2 "<<c2X<<endl;
 			
 			fillMatrix(mat,n,m,c2X,c1Y,c1X,c2Y,count);
 			count++;			
 		}
 	//partitions = count;
 	partitions = 0;
+	
+	//~ cout<<"Partea 2"<<endl;
 		
 	for(int i=0;i<m;i++)
 		{
@@ -1163,6 +1213,8 @@ int IntTilingMult::bindDSPs(DSP** &config)
 
 void IntTilingMult::compareCost()
 {
+	//~ cout<<"Inta la cost"<<endl;
+	
 	//~ DSP** tempc;
 		
 	//~ tempc= new DSP*[nrDSPs];
@@ -1176,10 +1228,11 @@ void IntTilingMult::compareCost()
 		memcpy(tempc[ii],globalConfig[ii],sizeof(DSP) );
 	
 	//display(tempc);
+	//~ cout<<"intra la display cost"<<endl;
 	
 	float temp = computeCost(tempc);
 	
-	//~ cout<<"score temp is"<<temp<<" and current best is"<<bestCost<<endl;
+	 //~ cout<<"score temp is"<<temp<<" and current best is"<<bestCost<<endl;
 	
 	if(temp < bestCost)
 	{
@@ -1532,7 +1585,9 @@ bool IntTilingMult::move(DSP** config, int index)
 {
 	int xtr1, ytr1, xbl1, ybl1;
 	int w, h;
-	target->getDSPWidths(w,h);
+	//target->getDSPWidths(w,h);
+	w= config[index]->getMaxMultiplierWidth();
+	h= config[index]->getMaxMultiplierHeight();
 	
 	
 	config[index]->getTopRightCorner(xtr1, ytr1);
@@ -1752,7 +1807,9 @@ void IntTilingMult::replace(DSP** config, int index)
 {
 	int xtr1, ytr1, xbl1, ybl1;
 	int w, h;
-	target->getDSPWidths(w,h);
+	//target->getDSPWidths(w,h);
+	w= config[index]->getMaxMultiplierWidth();
+	h= config[index]->getMaxMultiplierHeight();
 	
 	xtr1 = ytr1 = 0;
 	xbl1 = w-1;
@@ -1863,9 +1920,9 @@ void IntTilingMult::initTiling(DSP** &config, int dspCount)
 	int w,h;	
 		target->getDSPWidths(w,h);
 			
-		config[0] = target->createDSP();
-		config[0]->setTopRightCorner(getExtraWidth(), getExtraHeight());
-		config[0]->setBottomLeftCorner(getExtraWidth() +w-1 , getExtraHeight() + h-1);
+		//~ config[0] = target->createDSP();
+		//~ config[0]->setTopRightCorner(getExtraWidth(), getExtraHeight());
+		//~ config[0]->setBottomLeftCorner(getExtraWidth() +w-1 , getExtraHeight() + h-1);
 		
 	int xtr,ytr,xbl,ybl;
 	
