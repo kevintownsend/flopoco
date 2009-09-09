@@ -76,6 +76,8 @@ IntTilingMult:: IntTilingMult(Target* target, int wInX, int wInY,float ratio) :
 	cout<<"Estimated DSPs:= "<<nrDSPs <<endl;
 	int x,y;
 	target->getDSPWidths(x,y);
+		DSPw=x;
+		DSPh=y;
 	cout<<"Width of DSP is := "<<x<<" Height of DSP is:="<<y<<endl;
 	cout<<"Extra width:= "<<getExtraWidth()<<" \nExtra height:="<<getExtraHeight()<<endl;
 		
@@ -118,9 +120,86 @@ IntTilingMult:: IntTilingMult(Target* target, int wInX, int wInY,float ratio) :
 		
 		
 		
-	 runAlgorithm();
+	  runAlgorithm();
+	 
+	 
+	 
+	 
+	 
+	 //~ ///experiment(bogdan)  ./flopoco -target=Virtex5 IntTilingMult 58 58 0.44
+	 //~ tempc= new DSP*[nrDSPs];
+	//~ for(int ii=0;ii<nrDSPs;ii++)
+		//~ tempc[ii]= new DSP();
+	//~ int n,m;
+	//~ int count=1;
+	
+	//~ n=vn;
+	//~ m=vm;
+	//~ mat = new int*[m];
+	//~ for(int i=0;i<m;i++)
+		//~ {
+			//~ mat[i] = new int [n];
+			//~ for(int j=0;j<n;j++)
+			//~ mat[i][j]=0;
+		//~ }
 	
 	
+	
+	//~ initTiling(bestConfig,nrDSPs);
+	//~ initTiling(globalConfig,nrDSPs);
+	
+	//~ globalConfig[0]->setTopRightCorner(5,4);
+	//~ globalConfig[0]->setBottomLeftCorner(21,27);
+	//~ globalConfig[1]->setTopRightCorner(22,4);
+	//~ globalConfig[1]->setBottomLeftCorner(38,27);
+	//~ globalConfig[2]->setTopRightCorner(39,4);
+	//~ globalConfig[2]->setBottomLeftCorner(55,27);
+	//~ globalConfig[3]->setTopRightCorner(56,4);
+	//~ globalConfig[3]->setBottomLeftCorner(72,27);
+	//~ globalConfig[4]->setTopRightCorner(0,28);
+	//~ globalConfig[4]->setBottomLeftCorner(16,51);
+	//~ globalConfig[5]->setTopRightCorner(17,28);
+	//~ globalConfig[5]->setBottomLeftCorner(33,51);
+	//~ globalConfig[6]->setTopRightCorner(34,28);
+	//~ globalConfig[6]->setBottomLeftCorner(50,51);
+	//~ globalConfig[7]->setTopRightCorner(51,28);
+	//~ globalConfig[7]->setBottomLeftCorner(67,51);
+	
+		
+	
+	
+	//~ bestCost = 333222;
+	//~ compareCost();
+	 
+	//~ display(bestConfig);
+	
+	//~ initTiling(globalConfig,nrDSPs);
+	
+	//~ globalConfig[0]->setTopRightCorner(7,5);
+	//~ globalConfig[0]->setBottomLeftCorner(23,28);
+	//~ globalConfig[1]->setTopRightCorner(24,5);
+	//~ globalConfig[1]->setBottomLeftCorner(40,28);
+	//~ globalConfig[2]->setTopRightCorner(41,5);
+	//~ globalConfig[2]->setBottomLeftCorner(64,21);
+	//~ globalConfig[3]->setTopRightCorner(41,22);
+	//~ globalConfig[3]->setBottomLeftCorner(64,38);
+	//~ globalConfig[4]->setTopRightCorner(7,29);
+	//~ globalConfig[4]->setBottomLeftCorner(30,45);
+	//~ globalConfig[5]->setTopRightCorner(7,46);
+	//~ globalConfig[5]->setBottomLeftCorner(30,62);
+	//~ globalConfig[6]->setTopRightCorner(31,39);
+	//~ globalConfig[6]->setBottomLeftCorner(47,62);
+	//~ globalConfig[7]->setTopRightCorner(48,39);
+	//~ globalConfig[7]->setBottomLeftCorner(64,62);
+	
+	//~ display(globalConfig);
+	
+	
+	//~ cout<<checkFarness(globalConfig,2);
+	//~ move(globalConfig,1);
+	//~ display(globalConfig);
+	
+	//~ compareCost();
 	
 	//experiment pentru ./flopoco -target=Virtex5 IntTilingMult 18 34 0.35
 	//~ tempc= new DSP*[nrDSPs];
@@ -328,7 +407,7 @@ void IntTilingMult::runAlgorithm()
 	//the best configuration should be consider initially the first one. So the bestConfig parameter will be initialized with global config and hence the bestCost will be initialized with the first cost
 	
 	
-	tilingAlgorithm(nrDSPs-1,nrDSPs-1,false);
+	tilingAlgorithm(nrDSPs-1,nrDSPs-1,false,nrDSPs-1);
 	
 	display(bestConfig);
 	cout<<"Best cost is "<<bestCost<<endl;
@@ -365,7 +444,9 @@ void IntTilingMult::runAlgorithm()
 	
 }
 
-void IntTilingMult::tilingAlgorithm(int i, int n,bool repl)
+/** The movement of the DSP blocks with values belonging to their widths and heights still needs to be done. Now it only runs with one type of move on one of the directions, which is not ok for the cases when the DSPs are not squares.
+*/
+void IntTilingMult::tilingAlgorithm(int i, int n,bool repl,int lastMovedDSP)
 {
 
 if(i==n)
@@ -373,20 +454,35 @@ if(i==n)
 	if(repl==true)
 	{
 		//~ cout<<" Pas 4_1 "<<i<<endl;
-		replace(globalConfig,i);
-		compareCost();
-		rot[i]=false;
-		tilingAlgorithm(i,n,false);	
+		if(replace(globalConfig,i))
+		{
+			compareCost();
+			rot[i]=false;
+			tilingAlgorithm(i,n,false,lastMovedDSP);	
+		}
+		else
+		{
+			rot[i]=false;
+			if( lastMovedDSP>=0)
+				tilingAlgorithm(lastMovedDSP,n,false, lastMovedDSP);
+		}
 	}
 	else
 	{
 	
-		if(move(globalConfig,i))
+		if(move(globalConfig,i,DSPw,DSPh))
 		{
 			//~ cout<<" Pas 1_1 "<<i<<endl;
 			compareCost();
-			tilingAlgorithm(i,n,repl);		//repl should be false
+			tilingAlgorithm(i,n,repl,i);		//repl should be false
 		}
+		//~ else
+			//~ if(move(globalConfig,i,DSPh,DSPw))
+			//~ {
+			//~ cout<<" Pas 1_1 "<<i<<endl;
+			//~ compareCost();
+			//~ tilingAlgorithm(i,n,repl,i);		//repl should be false
+			//~ }
 		else
 		{
 			if(rot[i]==false && (globalConfig[i]->getMaxMultiplierWidth() != globalConfig[i]->getMaxMultiplierHeight() ))
@@ -396,16 +492,23 @@ if(i==n)
 				globalConfig[i]->rotate();
 				//display(globalConfig);
 				rot[i]=true;
-				replace(globalConfig,i);
-				//display(globalConfig);
-				compareCost();
-				tilingAlgorithm(i,n,repl);		//repl should be false
+				if(replace(globalConfig,i))
+				{
+					//display(globalConfig);
+					compareCost();
+					tilingAlgorithm(i,n,repl,i);		//repl should be false
+				}
+				else
+				{
+					if(i-1>=0)
+						tilingAlgorithm(i-1,n,false,i);
+				}
 			}
 			else
 			{
 				//~ cout<<" Pas 3_1 "<<i<<endl;
 				if(i-1>=0)
-				tilingAlgorithm(i-1,n,repl);		//repl should be false
+				tilingAlgorithm(i-1,n,repl,i);		//repl should be false
 			}
 		}
 	}
@@ -415,43 +518,81 @@ else
 	if(repl==true)
 	{
 		//~ cout<<" Pas 4_2 "<<i<<endl;
-		replace(globalConfig,i);
-		rot[i]=false;
-		tilingAlgorithm(i+1,n,repl);
+		if(replace(globalConfig,i))
+		{
+			rot[i]=false;
+			tilingAlgorithm(i+1,n,repl, lastMovedDSP);
+		}
+		else
+		{
+			rot[i]=false;
+			if( lastMovedDSP>=0)
+				tilingAlgorithm( lastMovedDSP,n,false, lastMovedDSP);
+		}
+			
 		
 	}
 	else
 	{	
 		//~ if(i==0)
 			//~ display(globalConfig);
-		if(move(globalConfig,i))
+		if(move(globalConfig,i,DSPw,DSPh))
 		{
-			//~ cout<<" Pas 1_2 "<<i<<endl;
+						
 			if(i==0){
 				counterfirst++;
+				
+				
+				
+				
 				if(counterfirst%100==0)
 				cout<<counterfirst<<"DSP #1 has made 100 steps!"<<endl;
 				//~ display(globalConfig);
 				//~ cout<<endl<<endl<<endl;
 				
 			}
-			tilingAlgorithm(i+1,n,true);
+			tilingAlgorithm(i+1,n,true,i);
 		}
+		//~ else
+			//~ if(move(globalConfig,i,DSPh,DSPw))
+		//~ {
+						
+			//~ if(i==0){
+				//~ counterfirst++;
+				
+				
+				
+				
+				//~ if(counterfirst%100==0)
+				//~ cout<<counterfirst<<"DSP #1 has made 100 steps!"<<endl;
+				//~ display(globalConfig);
+				//~ cout<<endl<<endl<<endl;
+				
+			//~ }
+			//~ tilingAlgorithm(i+1,n,true,i);
+		//~ }
 		else
 		{
 			if(rot[i]==false && (globalConfig[i]->getMaxMultiplierWidth() != globalConfig[i]->getMaxMultiplierHeight() ))
 			{
 				//~ cout<<" Pas 2_2 "<<i<<endl;
 				globalConfig[i]->rotate();
-				replace(globalConfig,i);
+				if(replace(globalConfig,i))
+				{
 				rot[i]=true;
-				tilingAlgorithm(i+1,n,true);
+				tilingAlgorithm(i+1,n,true,i);
+				}
+				else
+				{
+					if(i-1>=0)
+						tilingAlgorithm(i-1,n,repl,i);
+				}
 			}
 			else
 			{
 				//~ cout<<" Pas 3_2 "<<i<<endl;
 				if(i-1>=0)
-				tilingAlgorithm(i-1,n,repl);		//repl should be false
+				tilingAlgorithm(i-1,n,repl,i);		//repl should be false
 			}
 		}
 	}
@@ -466,7 +607,7 @@ bool IntTilingMult::compareOccupation(DSP** config)
 	int totalSize = wInX * wInY;
 	int sizeBest = totalSize;
 	int sizeConfig = totalSize;
-	cout<<"Total size is "<<totalSize<<endl;
+	//~ cout<<"Total size is "<<totalSize<<endl;
 	int c1X,c2X,c1Y,c2Y;
 	int nj,ni,njj,nii;
 	int ii,jj,i,j;
@@ -1237,7 +1378,7 @@ void IntTilingMult::compareCost()
 	if(temp < bestCost)
 	{
 		//~ cout<<"Costul e mai bun la cel curent!Schimba"<<endl;
-		 cout<<"Shimba! Score temp is"<<temp<<" and current best is"<<bestCost<<endl;
+		 cout<<"Interchange! Score for current is"<<temp<<" and current best is"<<bestCost<<endl;
 		//~ int c1X,c2X,c1Y,c2Y;
 		//~ int n=wInX + 2* getExtraWidth();
 		//~ tempc[0]->getTopRightCorner(c1X,c1Y);
@@ -1265,7 +1406,7 @@ void IntTilingMult::compareCost()
 			//display(bestConfig);
 			if(compareOccupation(tempc)==true)
 			{
-				cout<<"Schimba la cost egal . Now best has cost "<<temp<<endl;
+				cout<<"Interchange for equal cost. Now best has cost "<<temp<<endl;
 				bestCost=temp;
 			
 				for(int ii=0;ii<nrDSPs;ii++)
@@ -1581,13 +1722,20 @@ bool IntTilingMult::checkOverlap(DSP** config, int index)
 	return false;
 }
 
-bool IntTilingMult::move(DSP** config, int index)
+
+/**
+There is one case that is not resolved w=yet. For DSP with widths different then height the algorithm should move the dsp with both values
+*/
+
+bool IntTilingMult::move(DSP** config, int index,int w,int h)
 {
 	int xtr1, ytr1, xbl1, ybl1;
-	int w, h;
+	//~ int w, h;
 	//target->getDSPWidths(w,h);
-	w= config[index]->getMaxMultiplierWidth();
-	h= config[index]->getMaxMultiplierHeight();
+	//~ w= config[index]->getMaxMultiplierWidth();
+	//~ h= config[index]->getMaxMultiplierHeight();
+	
+	
 	
 	
 	config[index]->getTopRightCorner(xtr1, ytr1);
@@ -1794,16 +1942,16 @@ bool IntTilingMult::move(DSP** config, int index)
 			return false;
 		config[index]->setTopRightCorner(xtr1, ytr1);
 		config[index]->setBottomLeftCorner(xbl1, ybl1);
-		move(config, index);
+		move(config, index,w,h);
 	}
 	else if (f == 3)
 	{
-		move(config, index);	
+		move(config, index,w,h);	
 	}
 	return false;
 }
 
-void IntTilingMult::replace(DSP** config, int index)
+bool IntTilingMult::replace(DSP** config, int index)
 {
 	int xtr1, ytr1, xbl1, ybl1;
 	int w, h;
@@ -1846,53 +1994,58 @@ void IntTilingMult::replace(DSP** config, int index)
 			cout << tab << "replace : Top-right is at ( " << xtr1 << ", " << ytr1 << ") and Bottom-right is at (" << xbl1 << ", " << ybl1 << ")" << endl;
 	}
 	
-	if (xbl1 > vn) // it was not possible to place the DSP inside the extended grid
-	{ // then try to place it anywhere around the tiling grid such that it covers at leat one 1x1 square
-		xtr1 = getExtraWidth() - w+1;
-		ytr1 = getExtraHeight() - h+1;
-		xbl1 = xtr1 + w-1;
-		ybl1 = ytr1 + h-1;
-		
-		config[index]->setTopRightCorner(xtr1, ytr1);
-		config[index]->setBottomLeftCorner(xbl1, ybl1);
-		
-		if(verbose)
-			cout << tab << "replace : DSP width is " << w << ", height is " << h << endl; 
-			
-		int bLimit = wInY+getExtraHeight();
-		int exh = getExtraHeight();
-		
-		while (checkOverlap(config, index))
-		{
-			// move down one unit
-			ytr1++;
-			ybl1++;
-			
-			if(verbose)
-				cout << tab << "replace : moved DSP one unit down." << endl;
-			if (ytr1 > bLimit) // the DSP block has reached the bottom limit of the tiling grid
-			{
-				// move to top of grid and one unit to the left 
-				xtr1++;
-				//if (xtr1 > wInX+getExtraWidth()) // the DSP block has reached the left limit of the tiling grid
-				xbl1++;
-				ytr1 = exh - h+1;
-				ybl1 = ytr1 + h-1;
-				
-				if(verbose)
-					cout << tab << "replace : moved DSP up and one unit left." << endl;
-			}			
-			
-			config[index]->setTopRightCorner(xtr1, ytr1);
-			config[index]->setBottomLeftCorner(xbl1, ybl1);
-			if(verbose)
-				cout << tab << "replace : Top-right is at ( " << xtr1 << ", " << ytr1 << ") and Bottom-right is at (" << xbl1 << ", " << ybl1 << ")" << endl;
-		}
+	 if (xbl1 > vn)
+		 return false;
+	 
+	 return true;
 	
-	}
-	// set the current position of the DSP block within the tiling grid
-	config[index]->setTopRightCorner(xtr1, ytr1);
-	config[index]->setBottomLeftCorner(xbl1, ybl1);
+	//~ if (xbl1 > vn) // it was not possible to place the DSP inside the extended grid
+	//~ { // then try to place it anywhere around the tiling grid such that it covers at leat one 1x1 square
+		//~ xtr1 = getExtraWidth() - w+1;
+		//~ ytr1 = getExtraHeight() - h+1;
+		//~ xbl1 = xtr1 + w-1;
+		//~ ybl1 = ytr1 + h-1;
+		
+		//~ config[index]->setTopRightCorner(xtr1, ytr1);
+		//~ config[index]->setBottomLeftCorner(xbl1, ybl1);
+		
+		//~ if(verbose)
+			//~ cout << tab << "replace : DSP width is " << w << ", height is " << h << endl; 
+			
+		//~ int bLimit = wInY+getExtraHeight();
+		//~ int exh = getExtraHeight();
+		
+		//~ while (checkOverlap(config, index))
+		//~ {
+			//~ // move down one unit
+			//~ ytr1++;
+			//~ ybl1++;
+			
+			//~ if(verbose)
+				//~ cout << tab << "replace : moved DSP one unit down." << endl;
+			//~ if (ytr1 > bLimit) // the DSP block has reached the bottom limit of the tiling grid
+			//~ {
+				//~ // move to top of grid and one unit to the left 
+				//~ xtr1++;
+				//~ //if (xtr1 > wInX+getExtraWidth()) // the DSP block has reached the left limit of the tiling grid
+				//~ xbl1++;
+				//~ ytr1 = exh - h+1;
+				//~ ybl1 = ytr1 + h-1;
+				
+				//~ if(verbose)
+					//~ cout << tab << "replace : moved DSP up and one unit left." << endl;
+			//~ }			
+			
+			//~ config[index]->setTopRightCorner(xtr1, ytr1);
+			//~ config[index]->setBottomLeftCorner(xbl1, ybl1);
+			//~ if(verbose)
+				//~ cout << tab << "replace : Top-right is at ( " << xtr1 << ", " << ytr1 << ") and Bottom-right is at (" << xbl1 << ", " << ybl1 << ")" << endl;
+		//~ }
+	
+	//~ }
+	//~ // set the current position of the DSP block within the tiling grid
+	//~ config[index]->setTopRightCorner(xtr1, ytr1);
+	//~ config[index]->setBottomLeftCorner(xbl1, ybl1);
 }
 
 void IntTilingMult::initTiling(DSP** &config, int dspCount)

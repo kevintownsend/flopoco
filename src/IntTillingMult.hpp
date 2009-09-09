@@ -49,7 +49,7 @@ private:
 	 * @param index the index of the DSP object we want to move within the configuration
 	 * @return FALSE if we have reached the bottom-left most corner of the tiling
 	 */
-	bool move(DSP** config, int index);
+	bool move(DSP** config, int index,int w,int h);
 	
 	/**
 	 * Repositions the indicated DSP object within the configuration in the 
@@ -57,7 +57,7 @@ private:
 	 * @param config the tiling configuration containing DSP objects
 	 * @param index the index of the DSP object we want to move within the configuration
 	 */
-	void replace(DSP** config, int index);
+	bool replace(DSP** config, int index);
 	
 	/**
 	 * Initializes the tiling grid with the DSP-s being positioned in the right-most
@@ -138,6 +138,9 @@ private:
 	/** The maximum allow distance to move away from the others for the last block */
 	int maxDist2Move;
 	
+	int DSPw;
+	int DSPh;
+	
 
 	/** This function estimates the maximum number of DSPs that can be used with respect to the preference of the user */
 	int estimateDSPs();
@@ -153,7 +156,7 @@ private:
 	
 		/** This function is the backtracking function for finding the best configuration with respect to the user preference
 	*/
-	void tilingAlgorithm(int i, int n, bool repl);
+	void tilingAlgorithm(int i, int n, bool repl,int lastMovedDSP);
 	
 	/** This function will take a configuration and will try to maximize the multiplications that are realized in slices 
 	* It will return the number of slices that are required to ferform those multiplications, and through the parameter partitions it will return the number of such partitions
