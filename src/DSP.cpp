@@ -142,7 +142,18 @@ void DSP::setAdditionOperands(DSP** o){
 }
 
 void DSP::rotate(){
-	int tmp = multiplierHeight_;
-	multiplierHeight_ = multiplierWidth_;
-	multiplierWidth_ = tmp;
+	int tx,ty;
+	//getTopRightCorner(tx,ty);
+	//cout<<"Old dimensions were "<<maxMultiplierHeight_<<" "<<maxMultiplierWidth_<<endl;
+	int tmp = maxMultiplierHeight_;
+	maxMultiplierHeight_ = maxMultiplierWidth_;
+	maxMultiplierWidth_ = tmp;
+	//cout<<"New dimensions are "<<maxMultiplierHeight_<<" "<<maxMultiplierWidth_<<endl;
+	
+	//getBottomLeftCorner(tx,ty);
+	//cout<<"Old were "<<tx<<" "<<ty<<endl;
+	setBottomLeftCorner(tx + maxMultiplierWidth_-1 , ty + maxMultiplierHeight_-1);
+	//getBottomLeftCorner(tx,ty);
+	//cout<<"New are "<<tx<<" "<<ty<<endl;
+	
 }
