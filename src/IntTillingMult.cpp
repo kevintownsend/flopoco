@@ -82,7 +82,8 @@ IntTilingMult:: IntTilingMult(Target* target, int wInX, int wInY,float ratio) :
 	vn=wInX + 2* getExtraWidth();
 	vm=wInY + 2* getExtraHeight();
 	float movePercentage =0.4;
-	float tempDist =	 (movePercentage  * getExtraWidth() * getExtraWidth()) /4.0 + (movePercentage *getExtraHeight() * getExtraHeight()) /4.0;
+	//~ float tempDist =	 (movePercentage  * getExtraWidth() * getExtraWidth()) /4.0 + (movePercentage *getExtraHeight() * getExtraHeight()) /4.0;
+	float tempDist =	0;
 	maxDist2Move = (int) ( sqrt(tempDist) );
 	//~ if(maxDist2Move==0)
 		 //~ maxDist2Move=1;
@@ -1547,52 +1548,175 @@ bool IntTilingMult::move(DSP** config, int index)
 	int gw = wInX+getExtraWidth()-1; // the left limit of the tiling grid
 	int gh = wInY+getExtraHeight()-1; // the bottom limit of the tiling grid
 	int exh = getExtraHeight();
+	int exw = getExtraWidth();
 	
 	if ((xtr1 < 0) || (ytr1 < 0) || (xbl1 > vn-1) || (ybl1 > vm-1))
 	{// then the DSP block is placed outside the bounds 		
-		do{
-			// move down one unit
-			ytr1++;
-			ybl1++;
+	
+		if(index==0)
+		{
+			do{
+				// move down one unit
+				ytr1++;
+				ybl1++;
 			
-			if (ytr1 > gh) // the DSP block has reached the bottom limit of the tiling grid
-			{
-				// move to top of grid and one unit to the left 
-				xtr1++;
-				xbl1++;
-				ytr1 = exh - h+1;
-				ybl1 = ytr1 + h-1;
+				if (ytr1 > gh) // the DSP block has reached the bottom limit of the tiling grid
+				{
+					// move to top of grid and one unit to the left 
+					xtr1++;
+					xbl1++;
+					
+					if (strncmp(typeid(*target).name(), "7Virtex", 7) != 0) 
+					{
+					ytr1 = exh ;
+					ybl1 = ytr1 + h-1;	
+					}
+					else
+					{
+						ytr1 = exh - h+1;
+						ybl1 = ytr1 + h-1;
+					}
+					
+					if (xtr1 > gw) // the DSP block has reached the left limit of the tiling grid
+						return false;
+				}						
+				config[index]->setTopRightCorner(xtr1, ytr1);
+				config[index]->setBottomLeftCorner(xbl1, ybl1);
+			}while (checkOverlap(config, index));
+		}
+		else
+		{
+			do{
+				// move down one unit
+				if(ytr1 < exh)
+				{
+					ytr1++;
+					ybl1++;
+				}
+				else
+				{
+				ytr1 += h;
+				ybl1 += h;
+				}
+				if (ytr1 > gh) // the DSP block has reached the bottom limit of the tiling grid
+				{
+					// move to top of grid and one unit to the left 
+					if(xtr1< exw)
+					{
+						xtr1+=1;
+						xbl1+=1;
+					}
+					else
+					{
+					xtr1+=w;
+					xbl1+=w;
+					}
+					if (strncmp(typeid(*target).name(), "7Virtex", 7) != 0) 
+					{
+					ytr1 = exh ;
+					ybl1 = ytr1 + h-1;	
+					}
+					else
+					{
+						ytr1 = exh - h+1;
+						ybl1 = ytr1 + h-1;
+					}
+					
 				
-				if (xtr1 > gw) // the DSP block has reached the left limit of the tiling grid
-					return false;
-			}						
-			config[index]->setTopRightCorner(xtr1, ytr1);
-			config[index]->setBottomLeftCorner(xbl1, ybl1);
-		}while (checkOverlap(config, index));
+					if (xtr1 > gw) // the DSP block has reached the left limit of the tiling grid
+						return false;
+				}						
+				config[index]->setTopRightCorner(xtr1, ytr1);
+				config[index]->setBottomLeftCorner(xbl1, ybl1);
+			}while (checkOverlap(config, index));
+		}
 		
 	}
 	else
 	{
-		do{
-			// move down one unit
-			ytr1++;
-			ybl1++;
-			
-			if (ybl1 > vm-1) // the DSP block has reached the bottom limit of the tiling grid
-			{
-				// move to top of grid and one unit to the left 
-				xtr1++;
-				xbl1++;
-				ytr1 = 0;
-				ybl1 = h-1;
+		if(index==0)
+		{
+			do{
+				// move down one unit
 				
-				if (xbl1 > vn-1) // the DSP block has reached the left limit of the tiling grid
-					return false;
-			}			
+				ytr1++;
+				ybl1++;
 			
-			config[index]->setTopRightCorner(xtr1, ytr1);
-			config[index]->setBottomLeftCorner(xbl1, ybl1);
-		}while (checkOverlap(config, index));
+				if (ybl1 > vm-1) // the DSP block has reached the bottom limit of the tiling grid
+				{
+					// move to top of grid and one unit to the left 
+					xtr1++;
+					xbl1++;
+										
+					
+					if (strncmp(typeid(*target).name(), "7Virtex", 7) != 0) 
+					{
+					ytr1 = exh ;
+					ybl1 = ytr1 + h-1;	
+					}
+					else
+					{
+						ytr1 = 0;
+						ybl1 = h-1;
+					}
+				
+					if (xbl1 > vn-1) // the DSP block has reached the left limit of the tiling grid
+						return false;
+				}			
+			
+				config[index]->setTopRightCorner(xtr1, ytr1);
+				config[index]->setBottomLeftCorner(xbl1, ybl1);
+			}while (checkOverlap(config, index));
+		}
+		else
+		{
+				do{
+				// move down one unit
+				if(ytr1 < exh)
+				{
+					ytr1++;
+					ybl1++;
+				}
+				else
+				{
+				ytr1+=h;
+				ybl1+=h;
+				}
+				if (ybl1 > vm-1) // the DSP block has reached the bottom limit of the tiling grid
+				{
+					// move to top of grid and one unit to the left 
+					if(xtr1<exw)
+					{
+						xtr1+=1;
+						xbl1+=1;
+					}
+					else
+					{
+					xtr1+=w;
+					xbl1+=w;
+					}
+									
+					if (strncmp(typeid(*target).name(), "7Virtex", 7) != 0) 
+					{
+					ytr1 = exh ;
+					ybl1 = ytr1 + h-1;	
+					}
+					else
+					{
+						ytr1 = 0;
+						ybl1 = h-1;
+					}
+				
+					if (xbl1 > vn-1) // the DSP block has reached the left limit of the tiling grid
+						return false;
+				}			
+			
+				config[index]->setTopRightCorner(xtr1, ytr1);
+				config[index]->setBottomLeftCorner(xbl1, ybl1);
+			}while (checkOverlap(config, index));
+		}
+		
+		
 	}
 	// set the current position of the DSP block within the tiling grid
 	config[index]->setTopRightCorner(xtr1, ytr1);
@@ -1718,17 +1842,70 @@ void IntTilingMult::initTiling(DSP** &config, int dspCount)
 {
 	config = new DSP*[nrDSPs];
 	
+	
+	
 	for (int i=0; i<nrDSPs; i++)
 	{
 		config[i] = NULL;
 	}
-	
+	if (strncmp(typeid(*target).name(), "7Virtex", 7) != 0) // then the target is Virtex
+	{
 	for (int i=0; i<dspCount; i++)
 	{
 		if(verbose)
 			cout << "initTiling : iteration #" << i << endl; 
 		config[i] = target->createDSP();
 		replace(config, i);
+	}
+	}
+	else
+	{
+	int w,h;	
+		target->getDSPWidths(w,h);
+			
+		config[0] = target->createDSP();
+		config[0]->setTopRightCorner(getExtraWidth(), getExtraHeight());
+		config[0]->setBottomLeftCorner(getExtraWidth() +w-1 , getExtraHeight() + h-1);
+		
+	int xtr,ytr,xbl,ybl;
+	
+	xtr = 	getExtraWidth();
+	ytr = 	getExtraHeight();
+	xbl =	getExtraWidth() +w-1;
+	ybl = 	getExtraHeight() + h-1;
+		
+	for(int i=0;i<dspCount;i++)
+	{
+		config[i] = target->createDSP();
+		if( ytr<vm&& ybl<vm)
+		{
+			config[i]->setTopRightCorner(xtr, ytr);
+			config[i]->setBottomLeftCorner(xbl , ybl);
+			ytr = ybl+1;
+			ybl = ybl + h;
+		}
+		else
+		{
+			xtr = xbl+1;
+			xbl = xbl + w;
+			ytr = 	getExtraHeight();
+			ybl = 	getExtraHeight() + h-1;
+			config[i]->setTopRightCorner(xtr, ytr);
+			config[i]->setBottomLeftCorner(xbl , ybl);
+			ytr = ybl+1;
+			ybl = ybl + h;
+			
+		}
+		
+	}		
+		
+	//~ for (int i=0; i<dspCount; i++)
+	//~ {
+		//~ if(verbose)
+			//~ cout << "initTiling : iteration #" << i << endl; 
+		//~ config[i] = target->createDSP();
+		//~ replace(config, i);
+	//~ }	
 	}
 }
 	
