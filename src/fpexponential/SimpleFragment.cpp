@@ -119,7 +119,7 @@ void SimpleFragment::generate(std::string prefix)
 	  if (accuracy - output_bits < end)
 		  vhdl << "TODO 1" << ';' << endl;  //;part_1.getPart(start - 1) << " + " << tbl_out.getPart(start - 1) << ';' << endl << endl;
 	  else
-		  vhdl << "part_1 & " << zeroGenerator((accuracy-start) -(end-start) - tbl_out_size,0) << " & " << use("tbl_out") << ";" << endl << endl;
+		  vhdl << "part_1 & " << zg((accuracy-start) -(end-start) - tbl_out_size,0) << " & " << use("tbl_out") << ";" << endl << endl;
 
 	  vhdl << tab << declare("part2", accuracy-end) << " <= x" << range(accuracy-end-1, accuracy-accuracy) << ";" << endl;
 	  inPortMap(next_part, "x", "part2");
@@ -139,8 +139,8 @@ void SimpleFragment::generate(std::string prefix)
 				<< "expm1_part1"<< range(expm1_part1_size-1, expm1_part1_size-product_ibits1) 
 				<< "  * expm1_part2" << range(expm1_part2_size-1, expm1_part2_size-product_ibits2)<< ";" << endl;
 		 vhdl << tab << "y <= " << "( '0' & expm1_part1"
-				<< ") + (" << zeroGenerator(end-start,0) << " & expm1_part2)"
-				<< ") + (" << zeroGenerator(accuracy-start+1 - product_obits, 0) << " &  + product"<< range(product_ibits1+product_ibits2-1, product_ibits1+product_ibits2-product_obits) << ");" << endl;
+				<< ") + (" << zg(end-start,0) << " & expm1_part2)"
+				<< ") + (" << zg(accuracy-start+1 - product_obits, 0) << " &  + product"<< range(product_ibits1+product_ibits2-1, product_ibits1+product_ibits2-product_obits) << ");" << endl;
 	 }
   }
 }

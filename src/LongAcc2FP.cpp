@@ -174,7 +174,7 @@ LongAcc2FP::LongAcc2FP(Target* target, int LSBA, int MSBA, int wEOut, int wFOut)
 	oplist.push_back(b);
 	
 	inPortMap(b, "X", "notResFrac");
-	inPortMapCst(b, "Y", zeroGenerator(wFOut+1,0));
+	inPortMapCst(b, "Y", zg(wFOut+1,0));
 	inPortMap(b, "Cin", "resSign");
 	outPortMap(b, "R", "postResFrac");
 	vhdl << tab << instance(b, "carryPropagator");

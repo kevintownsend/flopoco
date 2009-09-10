@@ -57,7 +57,7 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 	
 	double delay = 0.0;
 	
-	if (target->getUseHardMultipliers())
+	if ((target->getUseHardMultipliers()) && (target->getNumberOfDSPs()>0))
 	{
 		if (verbose)
 			cout << "The target is " << typeid(*target).name() << endl;
@@ -94,11 +94,11 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 						cerr << "> IntMultiplier:  Perform swapping = " << swap << endl;
 					
 					if (swap){
-						vhdl << tab << declare("sX",x*chunksX) << " <= " << "Y" << " & " << zeroGenerator(x*chunksX-wInY,0) << ";" << endl;
-						vhdl << tab << declare("sY",y*chunksY) << " <= " << "X" << " & " << zeroGenerator(y*chunksY-wInX,0) << ";" << endl;
+						vhdl << tab << declare("sX",x*chunksX) << " <= " << "Y" << " & " << zg(x*chunksX-wInY,0) << ";" << endl;
+						vhdl << tab << declare("sY",y*chunksY) << " <= " << "X" << " & " << zg(y*chunksY-wInX,0) << ";" << endl;
 					}else{
-						vhdl << tab << declare("sX",x*chunksX) << " <= " << "X" << " & " << zeroGenerator(x*chunksX-wInX,0) << ";" << endl;
-						vhdl << tab << declare("sY",y*chunksY) << " <= " << "Y" << " & " << zeroGenerator(y*chunksY-wInY,0) << ";" << endl;
+						vhdl << tab << declare("sX",x*chunksX) << " <= " << "X" << " & " << zg(x*chunksX-wInX,0) << ";" << endl;
+						vhdl << tab << declare("sY",y*chunksY) << " <= " << "Y" << " & " << zg(y*chunksY-wInY,0) << ";" << endl;
 					}
 					////////////////////////////////////////////////////
 					//SPLITTINGS
@@ -150,10 +150,10 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 						oplist.push_back(add);
 				
 						for (int i=0; i< chunksX; i++){
-							if (i==0) vhdl << tab << declare (join("addOp",i),x*chunksX+y*chunksY+extension) << " <= " << zeroGenerator(x*chunksX+extension,0) << " & " << use(join("sum",i)) << range(y*chunksY+x-1,x) << ";" <<endl;
-							if (i==1) vhdl << tab << declare (join("addOp",i),x*chunksX+y*chunksY+extension) << " <= " << zeroGenerator(x*chunksX+extension-x,0) << " & " << use(join("sum",i)) << range(y*chunksY+x-1,0) << ";" <<endl;
+							if (i==0) vhdl << tab << declare (join("addOp",i),x*chunksX+y*chunksY+extension) << " <= " << zg(x*chunksX+extension,0) << " & " << use(join("sum",i)) << range(y*chunksY+x-1,x) << ";" <<endl;
+							if (i==1) vhdl << tab << declare (join("addOp",i),x*chunksX+y*chunksY+extension) << " <= " << zg(x*chunksX+extension-x,0) << " & " << use(join("sum",i)) << range(y*chunksY+x-1,0) << ";" <<endl;
 							if (i> 1) 
-								vhdl << tab << declare (join("addOp",i),x*chunksX+y*chunksY+extension) << " <= " << zeroGenerator(x*chunksX-x*i+extension,0) << " & " << use(join("sum",i)) << range(y*chunksY+x-1,0) << " & " << zeroGenerator(x*i-x,0) << ";" <<endl;
+								vhdl << tab << declare (join("addOp",i),x*chunksX+y*chunksY+extension) << " <= " << zg(x*chunksX-x*i+extension,0) << " & " << use(join("sum",i)) << range(y*chunksY+x-1,0) << " & " << zg(x*i-x,0) << ";" <<endl;
 						}
 						for (int i=0; i< chunksX; i++)
 							inPortMap (add, join("X",i) , join("addOp",i));
@@ -205,13 +205,13 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 					widthX = widthY;
 					widthY = tmp;
 				
-					vhdl << tab << declare("sX",chunkSize_*chunksX) << " <= " << "Y" << " & " << zeroGenerator(chunkSize_*chunksX-widthX,0) << ";" << endl;
-					vhdl << tab << declare("sY",chunkSize_*chunksY) << " <= " << "X" << " & " << zeroGenerator(chunkSize_*chunksY-widthY,0) << ";" << endl;
+					vhdl << tab << declare("sX",chunkSize_*chunksX) << " <= " << "Y" << " & " << zg(chunkSize_*chunksX-widthX,0) << ";" << endl;
+					vhdl << tab << declare("sY",chunkSize_*chunksY) << " <= " << "X" << " & " << zg(chunkSize_*chunksY-widthY,0) << ";" << endl;
 				}
 				else
 				{
-					vhdl << tab << declare("sX",chunkSize_*chunksX) << " <= " << "X" << " & " << zeroGenerator(chunkSize_*chunksX-widthX,0) << ";" << endl;
-					vhdl << tab << declare("sY",chunkSize_*chunksY) << " <= " << "Y" << " & " << zeroGenerator(chunkSize_*chunksY-widthY,0) << ";" << endl;
+					vhdl << tab << declare("sX",chunkSize_*chunksX) << " <= " << "X" << " & " << zg(chunkSize_*chunksX-widthX,0) << ";" << endl;
+					vhdl << tab << declare("sY",chunkSize_*chunksY) << " <= " << "Y" << " & " << zg(chunkSize_*chunksY-widthY,0) << ";" << endl;
 				}
 				
 				if (verbose)
@@ -260,7 +260,7 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 					vhdl << tab << declare(partialProd.str(),2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << use("x0") << " * " << use(join("y", 4*level)) << ";" << endl;
 					
 					setCycle(3);
-					operands[0] << use(partialProd.str()) << " & " << zeroGenerator(chunkSize_*4*level,0) << ";" << endl;
+					operands[0] << use(partialProd.str()) << " & " << zg(chunkSize_*4*level,0) << ";" << endl;
 					
 					
 					// top-right diagonal pair
@@ -278,8 +278,8 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 					vhdl << tab << declare(sum.str(), 2*chunkSize_+1,true,Signal::registeredWithAsyncReset) << " <= (\"0\" & " << use(partialProd.str()) << ") + (\"0\" & " << use(partialProd2.str()) << ");" << endl; 
 					
 					setCycle(3);
-					operands[1] << use(sum.str()) << range(2*chunkSize_-1,0) << " & " << zeroGenerator((4*level+1)*chunkSize_,0) << ";" << endl;
-					carrys << use(sum.str()) << range(2*chunkSize_,2*chunkSize_) << " & " << zeroGenerator((4*level+3)*chunkSize_,0) << ";" << endl;
+					operands[1] << use(sum.str()) << range(2*chunkSize_-1,0) << " & " << zg((4*level+1)*chunkSize_,0) << ";" << endl;
+					carrys << use(sum.str()) << range(2*chunkSize_,2*chunkSize_) << " & " << zg((4*level+3)*chunkSize_,0) << ";" << endl;
 					
 					
 					// top-right diagonal triplet
@@ -312,7 +312,7 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 					operands[0].seekp(ios_base::beg);
 					operands[0] << use(sum.str()) << range(2*chunkSize_-1,0) << " & " << operands[0].str();
 					carrys.seekp(ios_base::beg);
-					carrys << use(sum.str()) << range(2*chunkSize_+1, 2*chunkSize_) << " & " << zeroGenerator(chunkSize_-1,0) << " & " << carrys.str();
+					carrys << use(sum.str()) << range(2*chunkSize_+1, 2*chunkSize_) << " & " << zg(chunkSize_-1,0) << " & " << carrys.str();
 					
 						
 					//setCycle(0);
@@ -349,7 +349,7 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 						operands[i%2].seekp(ios_base::beg);
 						operands[i%2] << use(sum.str()) << range(2*chunkSize_-1,0) << " & " << operands[i%2].str();  
 						carrys.seekp(ios_base::beg);
-						carrys << use(sum.str()) << range(2*chunkSize_+1, 2*chunkSize_) << " & " << zeroGenerator(chunkSize_-2,0) << " & " << carrys.str();
+						carrys << use(sum.str()) << range(2*chunkSize_+1, 2*chunkSize_) << " & " << zg(chunkSize_-2,0) << " & " << carrys.str();
 					}
 					
 					// compute the sum of four tiles (diagonal) going down to the bottom-left corner
@@ -384,7 +384,7 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 						operands[(j+chX-1)%2].seekp(ios_base::beg);
 						operands[(j+chX-1)%2] << use(sum.str()) << range(2*chunkSize_-1,0) << " & " << operands[(j+chX-1)%2].str(); 
 						carrys.seekp(ios_base::beg);
-						carrys << use(sum.str()) << range(2*chunkSize_+1, 2*chunkSize_) << " & " << zeroGenerator(chunkSize_-2,0) << " & " << carrys.str();
+						carrys << use(sum.str()) << range(2*chunkSize_+1, 2*chunkSize_) << " & " << zg(chunkSize_-2,0) << " & " << carrys.str();
 					} 
 					
 					// bottom-left diagonal triplet
@@ -417,7 +417,7 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 					operands[(chX+chunksY-4)%2].seekp(ios_base::beg);
 					operands[(chX+chunksY-4)%2] << use(sum.str()) << range(2*chunkSize_-1,0) << " & " << operands[(chX+chunksY-4)%2].str();
 					carrys.seekp(ios_base::beg);
-					carrys << use(sum.str()) << range(2*chunkSize_+1, 2*chunkSize_) << " & " << zeroGenerator(chunkSize_-2,0) << " & " << carrys.str();
+					carrys << use(sum.str()) << range(2*chunkSize_+1, 2*chunkSize_) << " & " << zg(chunkSize_-2,0) << " & " << carrys.str();
 					
 					// bottom-left diagonal pair
 					setCycle(1);
@@ -435,9 +435,9 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 					
 					setCycle(3);
 					operands[(chX+chunksY-3)%2].seekp(ios_base::beg);
-					operands[(chX+chunksY-3)%2] << zeroGenerator((4*level+1)*chunkSize_,0) << " & " << use(sum.str()) << range(2*chunkSize_-1,0) << " & " << operands[(chX+chunksY-3)%2].str();
+					operands[(chX+chunksY-3)%2] << zg((4*level+1)*chunkSize_,0) << " & " << use(sum.str()) << range(2*chunkSize_-1,0) << " & " << operands[(chX+chunksY-3)%2].str();
 					carrys.seekp(ios_base::beg);
-					carrys << zeroGenerator((4*level+1)*chunkSize_-1,0) << " & " << use(sum.str()) << range(2*chunkSize_, 2*chunkSize_) << " & " << zeroGenerator(chunkSize_-2,0) << " & " << carrys.str();
+					carrys << zg((4*level+1)*chunkSize_-1,0) << " & " << use(sum.str()) << range(2*chunkSize_, 2*chunkSize_) << " & " << zg(chunkSize_-2,0) << " & " << carrys.str();
 					
 					// bottom-left tile
 					setCycle(1);
@@ -447,7 +447,7 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 					
 					setCycle(3);
 					operands[(chX+chunksY-2)%2].seekp(ios_base::beg);
-					operands[(chX+chunksY-2)%2] << zeroGenerator(4*level*chunkSize_,0) << " & " << use(partialProd.str()) << " & " << operands[(chX+chunksY-2)%2].str();
+					operands[(chX+chunksY-2)%2] << zg(4*level*chunkSize_,0) << " & " << use(partialProd.str()) << " & " << operands[(chX+chunksY-2)%2].str();
 					
 					// reinitialize the concatenation buffers for the next iteration of the while loop
 					for (int i=0; i<2; i++)
@@ -473,12 +473,12 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 						if (verbose)
 							cerr << ">IntMultiplier: Case 1: remaining tiles are in a single column" << endl;
 						
-						operands[i%2] << zeroGenerator(level*4*chunkSize_,0) << ";";
+						operands[i%2] << zg(level*4*chunkSize_,0) << ";";
 						if (chunksY-i > 1) // then there are more than one tiles in the column
 						{
 							if (verbose)
 								cerr << ">IntMultiplier: More than one tile in the column" << endl;
-							operands[(i+1)%2] << zeroGenerator((level*4+1)*chunkSize_,0) << ";";
+							operands[(i+1)%2] << zg((level*4+1)*chunkSize_,0) << ";";
 							oneCol = false;
 						}
 						
@@ -498,13 +498,13 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 						if (!oneCol) // then there are more than one tiles in the column
 						{
 							operands[i%2].seekp(ios_base::beg);
-							operands[i%2] << zeroGenerator((level*4+1)*chunkSize_,0) << " & " << operands[i%2].str();
+							operands[i%2] << zg((level*4+1)*chunkSize_,0) << " & " << operands[i%2].str();
 							vhdl << tab << declare(join("addOp", opCount), adderWidth) << " <= " << operands[i%2].str() << endl;
 							opCount++;
 						}
 						
 						operands[(i+1)%2].seekp(ios_base::beg);
-						operands[(i+1)%2] << zeroGenerator(level*4*chunkSize_,0) << " & " << operands[(i+1)%2].str(); 
+						operands[(i+1)%2] << zg(level*4*chunkSize_,0) << " & " << operands[(i+1)%2].str(); 
 						vhdl << tab << declare(join("addOp", opCount), adderWidth) << " <= " << operands[(i+1)%2].str() << endl;
 						opCount++;
 							
@@ -518,9 +518,9 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 						partialProd << "px0y" << i;
 						vhdl << tab << declare(partialProd.str(),2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << use("x0") << " * " << use(join("y", i)) << ";" << endl;
 						setCycle(3);
-						operands[i%2] << use(partialProd.str()) << range(2*chunkSize_-1,0) << " & " << zeroGenerator((4*level)*chunkSize_,0) << ";";
-						operands[(i+1)%2] << zeroGenerator((4*level+1)*chunkSize_,0) << ";";
-						carrys << zeroGenerator((4*level+2)*chunkSize_+1,0) << ";";
+						operands[i%2] << use(partialProd.str()) << range(2*chunkSize_-1,0) << " & " << zg((4*level)*chunkSize_,0) << ";";
+						operands[(i+1)%2] << zg((4*level+1)*chunkSize_,0) << ";";
+						carrys << zg((4*level+2)*chunkSize_+1,0) << ";";
 						 
 						while (i<chunksY-1) // diagonal pairs
 						{
@@ -539,7 +539,7 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 							operands[(i+1)%2].seekp(ios_base::beg);
 							operands[(i+1)%2] << use(sum.str()) << range(2*chunkSize_-1,0) << " & " << operands[(i+1)%2].str();
 							carrys.seekp(ios_base::beg);
-							carrys << use(sum.str()) << range(2*chunkSize_, 2*chunkSize_) << " & " << zeroGenerator(chunkSize_-1,0) << " & " << carrys.str();
+							carrys << use(sum.str()) << range(2*chunkSize_, 2*chunkSize_) << " & " << zg(chunkSize_-1,0) << " & " << carrys.str();
 					
 							i++;			
 						}
@@ -552,12 +552,12 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 						
 						setCycle(3);
 						operands[(i+1)%2].seekp(ios_base::beg);
-						operands[(i+1)%2] << zeroGenerator((4*level)*chunkSize_,0) << " & " << use(partialProd.str()) << range(2*chunkSize_-1,0) << " & " << operands[(i+1)%2].str();
+						operands[(i+1)%2] << zg((4*level)*chunkSize_,0) << " & " << use(partialProd.str()) << range(2*chunkSize_-1,0) << " & " << operands[(i+1)%2].str();
 						
 						operands[i%2].seekp(ios_base::beg);
-						operands[i%2] << zeroGenerator((4*level+1)*chunkSize_,0) << " & " << operands[i%2].str();
+						operands[i%2] << zg((4*level+1)*chunkSize_,0) << " & " << operands[i%2].str();
 						carrys.seekp(ios_base::beg);
-						carrys << zeroGenerator((4*level+1)*chunkSize_-1,0) << " & " << carrys.str();
+						carrys << zg((4*level+1)*chunkSize_-1,0) << " & " << carrys.str();
 						
 						// reinitialize the concatenation buffers for the next iteration of the while loop
 						for (int j=0; j<2; j++)
@@ -584,8 +584,8 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 								if (verbose)
 									cerr << ">IntMultiplier:" << tab << " Subcase 1: there is one row" << endl;
 							
-								operands[i%2] << zeroGenerator(level*4*chunkSize_,0) << ";";
-								operands[(i+1)%2] << zeroGenerator((level*4+1)*chunkSize_,0) << ";";
+								operands[i%2] << zg(level*4*chunkSize_,0) << ";";
+								operands[(i+1)%2] << zg((level*4+1)*chunkSize_,0) << ";";
 						
 								for (int j=0; j<3; j++) // each tile is computed and padded with zeros becoming an operand of IntNAdder
 								{
@@ -599,12 +599,12 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 								}
 								
 								operands[(3+i)%2].seekp(ios_base::beg);
-								operands[(3+i)%2] << zeroGenerator((level*4+1)*chunkSize_,0) << " & " << operands[(3+i)%2].str();
+								operands[(3+i)%2] << zg((level*4+1)*chunkSize_,0) << " & " << operands[(3+i)%2].str();
 								vhdl << tab << declare(join("addOp", opCount), adderWidth) << " <= " << operands[(3+i)%2].str() << endl;
 								opCount++;
 								
 								operands[(i+4)%2].seekp(ios_base::beg);
-								operands[(i+4)%2] << zeroGenerator(level*4*chunkSize_,0) << " & " << operands[(i+4)%2].str(); 
+								operands[(i+4)%2] << zg(level*4*chunkSize_,0) << " & " << operands[(i+4)%2].str(); 
 								vhdl << tab << declare(join("addOp", opCount), adderWidth) << " <= " << operands[(i+4)%2].str() << endl;
 								opCount++;
 								break;
@@ -612,9 +612,9 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 								if (verbose)
 									cerr << ">IntMultiplier:" << tab << " Subcase 2: there are two rows" << endl;
 								
-								operands[i%2] << zeroGenerator(level*4*chunkSize_,0) << ";";
-								operands[(i+1)%2] << zeroGenerator((level*4+1)*chunkSize_,0) << ";";
-								carrys << zeroGenerator(level*4*chunkSize_,0) << ";";
+								operands[i%2] << zg(level*4*chunkSize_,0) << ";";
+								operands[(i+1)%2] << zg((level*4+1)*chunkSize_,0) << ";";
+								carrys << zg(level*4*chunkSize_,0) << ";";
 								// top-right tile
 								setCycle(1);
 								partialProd.str("");
@@ -643,7 +643,7 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 									operands[(i+j+1)%2].seekp(ios_base::beg);
 									operands[(i+j+1)%2] << use(sum.str()) << range(2*chunkSize_-1,0) <<" & " << operands[(i+j+1)%2].str();
 									carrys.seekp(ios_base::beg);
-									carrys << use(sum.str()) << range(2*chunkSize_,2*chunkSize_) << " & " << zeroGenerator(chunkSize_,0) << "&" << carrys.str();
+									carrys << use(sum.str()) << range(2*chunkSize_,2*chunkSize_) << " & " << zg(chunkSize_,0) << "&" << carrys.str();
 								}
 								
 								// bottom-left tile
@@ -653,11 +653,11 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 								vhdl << tab << declare(partialProd.str(), 2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << use("x2") << " * " << use(join("y",i+2)) << ";" << endl;
 								setCycle(3);
 								operands[(i+4)%2].seekp(ios_base::beg);
-								operands[(i+4)%2] << zeroGenerator(level*4*chunkSize_,0) << " & " << use(partialProd.str()) << " & " << operands[(i+4)%2].str();	
+								operands[(i+4)%2] << zg(level*4*chunkSize_,0) << " & " << use(partialProd.str()) << " & " << operands[(i+4)%2].str();	
 								operands[(i+5)%2].seekp(ios_base::beg);
-								operands[(i+5)%2] << zeroGenerator((level*4+1)*chunkSize_,0) << " & " << operands[(i+5)%2].str(); 
+								operands[(i+5)%2] << zg((level*4+1)*chunkSize_,0) << " & " << operands[(i+5)%2].str(); 
 								carrys.seekp(ios_base::beg);
-								carrys << zeroGenerator((level*4+1)*chunkSize_-1,0) << " & " << carrys.str();
+								carrys << zg((level*4+1)*chunkSize_-1,0) << " & " << carrys.str();
 								// reinitialize the concatenation buffers for the next iteration of the while loop
 								for (int j=0; j<2; j++)
 								{
@@ -674,9 +674,9 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 									cerr << ">IntMultiplier:" << tab << " Subcase 3: there are more than 2 rows" << endl;
 								//delay += target->distantWireDelay((int)target->frequencyMHz());
 								
-								operands[i%2] << zeroGenerator(level*4*chunkSize_,0) << ";";
-								operands[(i+1)%2] << zeroGenerator((level*4+1)*chunkSize_,0) << ";";
-								carrys << zeroGenerator((level*4+3)*chunkSize_,0) << ";";
+								operands[i%2] << zg(level*4*chunkSize_,0) << ";";
+								operands[(i+1)%2] << zg((level*4+1)*chunkSize_,0) << ";";
+								carrys << zg((level*4+3)*chunkSize_,0) << ";";
 								
 								// top-right tile
 								setCycle(1);
@@ -737,7 +737,7 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 									operands[(i+2)%2].seekp(ios_base::beg);
 									operands[(i+2)%2] << use(sum.str()) << range(2*chunkSize_-1,0) << " & " << operands[(i+2)%2].str();
 									carrys.seekp(ios_base::beg);
-									carrys << use(sum.str()) << range(2*chunkSize_+1,2*chunkSize_) << " & " << zeroGenerator(chunkSize_-2,0) << " & " << carrys.str();
+									carrys << use(sum.str()) << range(2*chunkSize_+1,2*chunkSize_) << " & " << zg(chunkSize_-2,0) << " & " << carrys.str();
 							
 									i++;
 								}
@@ -758,9 +758,9 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 								
 								setCycle(3);
 								operands[(i+2)%2].seekp(ios_base::beg);
-								operands[(i+2)%2] << zeroGenerator((level*4+1)*chunkSize_,0) << " & " << use(sum.str()) << range(2*chunkSize_-1,0) << " & " << operands[(i+2)%2].str();
+								operands[(i+2)%2] << zg((level*4+1)*chunkSize_,0) << " & " << use(sum.str()) << range(2*chunkSize_-1,0) << " & " << operands[(i+2)%2].str();
 								carrys.seekp(ios_base::beg);
-								carrys << zeroGenerator((level*4+1)*chunkSize_-1,0) << " & " << use(sum.str()) << range(2*chunkSize_,2*chunkSize_) << " & " << zeroGenerator(chunkSize_-2,0) << " & " << carrys.str(); 
+								carrys << zg((level*4+1)*chunkSize_-1,0) << " & " << use(sum.str()) << range(2*chunkSize_,2*chunkSize_) << " & " << zg(chunkSize_-2,0) << " & " << carrys.str(); 
 								// bottom-left tile
 								setCycle(1);
 								partialProd.str("");
@@ -768,7 +768,7 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 								vhdl << tab << declare(partialProd.str(), 2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << use("x2") << " * " << use(join("y",chunksY-1)) << ";" << endl;
 								setCycle(3);
 								operands[(i+3)%2].seekp(ios_base::beg);
-								operands[(i+3)%2] << zeroGenerator((level*4)*chunkSize_,0) << " & " << use(partialProd.str()) << " & " << operands[(i+3)%2].str();
+								operands[(i+3)%2] << zg((level*4)*chunkSize_,0) << " & " << use(partialProd.str()) << " & " << operands[(i+3)%2].str();
 								
 								// create the operands for the final summation
 								for (int j=0; j<2; j++)
@@ -832,8 +832,8 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 					// COMPUTE PARTIAL PRODUCTS
 					for (i=0; i<chunksX-1; i+=2)
 					{
-						operands[0] << zeroGenerator((i+start)*chunkSize_,0) << ";";
-						operands[1] << zeroGenerator((i+2+start)*chunkSize_,0) << ";";
+						operands[0] << zg((i+start)*chunkSize_,0) << ";";
+						operands[1] << zg((i+2+start)*chunkSize_,0) << ";";
 						
 						// compute and concatenate partial products from right to left
 						for (k=0; k<chunksX-i-1; k+=2)
@@ -864,9 +864,9 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 						}
 						
 						operands[((i+j+k-2)/2)%2].seekp(ios_base::beg);
-						operands[((i+j+k-2)/2)%2] << zeroGenerator((i+2+chunksX%2)*chunkSize_,0) << " & " << operands[((i+j+k-2)/2)%2].str();	
+						operands[((i+j+k-2)/2)%2] << zg((i+2+chunksX%2)*chunkSize_,0) << " & " << operands[((i+j+k-2)/2)%2].str();	
 						operands[((i+j+k-2)/2+1)%2].seekp(ios_base::beg);
-						operands[((i+j+k-2)/2+1)%2] << zeroGenerator((i+chunksX%2)*chunkSize_,0) << " & " << operands[((i+j+k-2)/2+1)%2].str();	
+						operands[((i+j+k-2)/2+1)%2] << zg((i+chunksX%2)*chunkSize_,0) << " & " << operands[((i+j+k-2)/2+1)%2].str();	
 						
 						// reinitialize the concatenation buffers for the next iteration of the loop
 						for (k=0; k<2; k++)
@@ -878,7 +878,7 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 					}
 					
 					operands[0] << "\"\";";
-					operands[1] << zeroGenerator(chunkSize_,0) << ";";
+					operands[1] << zg(chunkSize_,0) << ";";
 					
 					bool halfPadded = false; // TRUE when there is either 
 											 //	a chunkSize width column on the left side of the tiling or 
@@ -912,9 +912,9 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 					else // padd operands with zeros
 					{
 							operands[0].seekp(ios_base::beg);
-							operands[0] << zeroGenerator((chunksX-1)*2*chunkSize_,0) << " & " << operands[0].str();
+							operands[0] << zg((chunksX-1)*2*chunkSize_,0) << " & " << operands[0].str();
 							operands[1].seekp(ios_base::beg);
-							operands[1] << zeroGenerator((chunksX-1)*2*chunkSize_,0) << " & " << operands[1].str();
+							operands[1] << zg((chunksX-1)*2*chunkSize_,0) << " & " << operands[1].str();
 					}
 					
 					if (i == chunksX-1) // then there is a chunkSize width column on the left side of the tiling
@@ -947,9 +947,9 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 					else // padd operands with zeros
 					{
 						operands[0].seekp(ios_base::beg);
-						operands[0] << zeroGenerator((chunksY-2)*2*chunkSize_,0) << " & " << operands[0].str();
+						operands[0] << zg((chunksY-2)*2*chunkSize_,0) << " & " << operands[0].str();
 						operands[1].seekp(ios_base::beg);
-						operands[1] << zeroGenerator((chunksY-2)*2*chunkSize_,0) << " & " << operands[1].str();	
+						operands[1] << zg((chunksY-2)*2*chunkSize_,0) << " & " << operands[1].str();	
 					}
 					
 					if (halfPadded) // then we add the two operands to the sum
@@ -957,12 +957,12 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 						if ((chunksX+chunksY-1)%2 == 0)
 						{
 							operands[0].seekp(ios_base::beg); 
-							operands[0] << zeroGenerator(chunkSize_,0) << " & " << operands[0].str(); 	
+							operands[0] << zg(chunkSize_,0) << " & " << operands[0].str(); 	
 						}
 						else
 						{
 							operands[1].seekp(ios_base::beg); 
-							operands[1] << zeroGenerator(chunkSize_,0) << " & " << operands[1].str(); 	
+							operands[1] << zg(chunkSize_,0) << " & " << operands[1].str(); 	
 						}
 						
 						for (k=0; k<2; k++)
@@ -1010,7 +1010,7 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 						dname << "y"<< k/2;
 						vhdl << tab << declare(dname.str(),chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << "sY" << range(chunkSize_-1,0) << ";" << endl;
 					}
-					int startX = 0; // added this variable to apply the same trick for zeroGenerators as with the start variable that adds zeros behind if chunksY is odd 
+					int startX = 0; // added this variable to apply the same trick for zgs as with the start variable that adds zeros behind if chunksY is odd 
 					bool leftColumn = false; // TRUE if there are an odd number of slices in X and there is a chunkSize width column to the left of the tiling that has no pair
 					if (chunksX % 2 == 1)
 					{
@@ -1034,7 +1034,7 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 						partialProd << "px0y" << 4*level;
 						vhdl << tab << declare(partialProd.str(),2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << use("x0") << " * " << use(join("y", 4*level)) << ";" << endl;
 						setCycle(3);
-						operands[0] << use(partialProd.str()) << " & " << zeroGenerator(chunkSize_*4*level + start*chunkSize_/2,0) << ";" << endl;
+						operands[0] << use(partialProd.str()) << " & " << zg(chunkSize_*4*level + start*chunkSize_/2,0) << ";" << endl;
 						
 						
 						// top-right diagonal pair
@@ -1050,8 +1050,8 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 						sum << "addOp" << level << "_shift_" << 4*level+1;
 						vhdl << tab << declare(sum.str(), 2*chunkSize_+1,true,Signal::registeredWithAsyncReset) << " <= (\"0\" & " << use(partialProd.str()) << ") + (\"0\" & " << use(partialProd2.str()) << ");" << endl; 
 						setCycle(3);
-						operands[1] << use(sum.str()) << range(2*chunkSize_-1,0) << " & " << zeroGenerator((4*level+1)*chunkSize_ + start*chunkSize_/2,0) << ";" << endl;
-						carrys << use(sum.str()) << range(2*chunkSize_,2*chunkSize_) << " & " << zeroGenerator((4*level+3)*chunkSize_ + start*chunkSize_/2,0) << ";" << endl;
+						operands[1] << use(sum.str()) << range(2*chunkSize_-1,0) << " & " << zg((4*level+1)*chunkSize_ + start*chunkSize_/2,0) << ";" << endl;
+						carrys << use(sum.str()) << range(2*chunkSize_,2*chunkSize_) << " & " << zg((4*level+3)*chunkSize_ + start*chunkSize_/2,0) << ";" << endl;
 						
 						
 						// top-right diagonal triplet
@@ -1083,7 +1083,7 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 						operands[0].seekp(ios_base::beg);
 						operands[0] << use(sum.str()) << range(2*chunkSize_-1,0) << " & " << operands[0].str();
 						carrys.seekp(ios_base::beg);
-						carrys << use(sum.str()) << range(2*chunkSize_+1, 2*chunkSize_) << " & " << zeroGenerator(chunkSize_-1,0) << " & " << carrys.str();
+						carrys << use(sum.str()) << range(2*chunkSize_+1, 2*chunkSize_) << " & " << zg(chunkSize_-1,0) << " & " << carrys.str();
 						
 							
 						//setCycle(0);
@@ -1119,7 +1119,7 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 							operands[i%2].seekp(ios_base::beg);
 							operands[i%2] << use(sum.str()) << range(2*chunkSize_-1,0) << " & " << operands[i%2].str();  
 							carrys.seekp(ios_base::beg);
-							carrys << use(sum.str()) << range(2*chunkSize_+1, 2*chunkSize_) << " & " << zeroGenerator(chunkSize_-2,0) << " & " << carrys.str();
+							carrys << use(sum.str()) << range(2*chunkSize_+1, 2*chunkSize_) << " & " << zg(chunkSize_-2,0) << " & " << carrys.str();
 						}
 						
 						// compute the sum of four tiles (diagonal) going down to the bottom-left corner
@@ -1153,7 +1153,7 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 							operands[(j+chX-1)%2].seekp(ios_base::beg);
 							operands[(j+chX-1)%2] << use(sum.str()) << range(2*chunkSize_-1,0) << " & " << operands[(j+chX-1)%2].str(); 
 							carrys.seekp(ios_base::beg);
-							carrys << use(sum.str()) << range(2*chunkSize_+1, 2*chunkSize_) << " & " << zeroGenerator(chunkSize_-2,0) << " & " << carrys.str();
+							carrys << use(sum.str()) << range(2*chunkSize_+1, 2*chunkSize_) << " & " << zg(chunkSize_-2,0) << " & " << carrys.str();
 						} 
 						
 						// bottom-left diagonal triplet
@@ -1185,7 +1185,7 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 						operands[(chX+chunksY-4)%2].seekp(ios_base::beg);
 						operands[(chX+chunksY-4)%2] << use(sum.str()) << range(2*chunkSize_-1,0) << " & " << operands[(chX+chunksY-4)%2].str();
 						carrys.seekp(ios_base::beg);
-						carrys << use(sum.str()) << range(2*chunkSize_+1, 2*chunkSize_) << " & " << zeroGenerator(chunkSize_-2,0) << " & " << carrys.str();
+						carrys << use(sum.str()) << range(2*chunkSize_+1, 2*chunkSize_) << " & " << zg(chunkSize_-2,0) << " & " << carrys.str();
 						
 						// bottom-left diagonal pair
 						setCycle(1);
@@ -1201,9 +1201,9 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 						vhdl << tab << declare(sum.str(), 2*chunkSize_+1,true,Signal::registeredWithAsyncReset) << " <= (\"0\" & " << use(partialProd.str()) << ") + (\"0\" & " << use(partialProd2.str()) << ");" << endl; 
 						setCycle(3);
 						operands[(chX+chunksY-3)%2].seekp(ios_base::beg);
-						operands[(chX+chunksY-3)%2] << zeroGenerator((4*level+1)*chunkSize_ + startX*chunkSize_/2,0) << " & " << use(sum.str()) << range(2*chunkSize_-1,0) << " & " << operands[(chX+chunksY-3)%2].str();
+						operands[(chX+chunksY-3)%2] << zg((4*level+1)*chunkSize_ + startX*chunkSize_/2,0) << " & " << use(sum.str()) << range(2*chunkSize_-1,0) << " & " << operands[(chX+chunksY-3)%2].str();
 						carrys.seekp(ios_base::beg);
-						carrys << zeroGenerator((4*level+1)*chunkSize_-1 + startX*chunkSize_/2,0) << " & " << use(sum.str()) << range(2*chunkSize_, 2*chunkSize_) << " & " << zeroGenerator(chunkSize_-2,0) << " & " << carrys.str();
+						carrys << zg((4*level+1)*chunkSize_-1 + startX*chunkSize_/2,0) << " & " << use(sum.str()) << range(2*chunkSize_, 2*chunkSize_) << " & " << zg(chunkSize_-2,0) << " & " << carrys.str();
 						
 						// bottom-left tile
 						setCycle(1);
@@ -1212,7 +1212,7 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 						vhdl << tab << declare(partialProd.str(),2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << use(join("x",chX-1)) << " * " << use(join("y", chunksY-1)) << ";" << endl;
 						setCycle(3);
 						operands[(chX+chunksY-2)%2].seekp(ios_base::beg);
-						operands[(chX+chunksY-2)%2] << zeroGenerator(4*level*chunkSize_ + startX*chunkSize_/2,0) << " & " << use(partialProd.str()) << " & " << operands[(chX+chunksY-2)%2].str();
+						operands[(chX+chunksY-2)%2] << zg(4*level*chunkSize_ + startX*chunkSize_/2,0) << " & " << use(partialProd.str()) << " & " << operands[(chX+chunksY-2)%2].str();
 						
 						// reinitialize the concatenation buffers for the next iteration of the while loop
 						for (int i=0; i<2; i++)
@@ -1238,12 +1238,12 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 							if (verbose)
 								cerr << ">IntMultiplier: Case 1: remaining tiles are in a single column" << endl;
 							
-							operands[i%2] << zeroGenerator(level*4*chunkSize_ + start*chunkSize_/2,0) << ";";
+							operands[i%2] << zg(level*4*chunkSize_ + start*chunkSize_/2,0) << ";";
 							if (chunksY-i > 1) // then there are more than one tiles in the column
 							{
 								if (verbose)
 									cerr << ">IntMultiplier: More than one tile in the column" << endl;
-								operands[(i+1)%2] << zeroGenerator((level*4+1)*chunkSize_ + start*chunkSize_/2,0) << ";";
+								operands[(i+1)%2] << zg((level*4+1)*chunkSize_ + start*chunkSize_/2,0) << ";";
 								oneCol = false;
 							}
 							
@@ -1263,13 +1263,13 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 							if (!oneCol) // then there are more than one tiles in the column
 							{
 								operands[i%2].seekp(ios_base::beg);
-								operands[i%2] << zeroGenerator((level*4+1)*chunkSize_ + startX*chunkSize_/2,0) << " & " << operands[i%2].str();
+								operands[i%2] << zg((level*4+1)*chunkSize_ + startX*chunkSize_/2,0) << " & " << operands[i%2].str();
 								vhdl << tab << declare(join("addOp", opCount), adderWidth) << " <= " << operands[i%2].str() << endl;
 								opCount++;
 							}
 							
 							operands[(i+1)%2].seekp(ios_base::beg);
-							operands[(i+1)%2] << zeroGenerator(level*4*chunkSize_ + startX*chunkSize_/2,0) << " & " << operands[(i+1)%2].str(); 
+							operands[(i+1)%2] << zg(level*4*chunkSize_ + startX*chunkSize_/2,0) << " & " << operands[(i+1)%2].str(); 
 							vhdl << tab << declare(join("addOp", opCount), adderWidth) << " <= " << operands[(i+1)%2].str() << endl;
 							opCount++;
 								
@@ -1283,9 +1283,9 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 							partialProd << "px0y" << i;
 							vhdl << tab << declare(partialProd.str(),2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << use("x0") << " * " << use(join("y", i)) << ";" << endl;
 							setCycle(3);
-							operands[i%2] << use(partialProd.str()) << range(2*chunkSize_-1,0) << " & " << zeroGenerator((4*level)*chunkSize_ + start*chunkSize_/2,0) << ";";
-							operands[(i+1)%2] << zeroGenerator((4*level+1)*chunkSize_ + start*chunkSize_/2,0) << ";";
-							carrys << zeroGenerator((4*level+2)*chunkSize_+1 + start*chunkSize_/2,0) << ";";
+							operands[i%2] << use(partialProd.str()) << range(2*chunkSize_-1,0) << " & " << zg((4*level)*chunkSize_ + start*chunkSize_/2,0) << ";";
+							operands[(i+1)%2] << zg((4*level+1)*chunkSize_ + start*chunkSize_/2,0) << ";";
+							carrys << zg((4*level+2)*chunkSize_+1 + start*chunkSize_/2,0) << ";";
 							 
 							while (i<chunksY-1) // diagonal pairs
 							{
@@ -1304,7 +1304,7 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 								operands[(i+1)%2].seekp(ios_base::beg);
 								operands[(i+1)%2] << use(sum.str()) << range(2*chunkSize_-1,0) << " & " << operands[(i+1)%2].str();
 								carrys.seekp(ios_base::beg);
-								carrys << use(sum.str()) << range(2*chunkSize_, 2*chunkSize_) << " & " << zeroGenerator(chunkSize_-1,0) << " & " << carrys.str();
+								carrys << use(sum.str()) << range(2*chunkSize_, 2*chunkSize_) << " & " << zg(chunkSize_-1,0) << " & " << carrys.str();
 						
 								i++;			
 							}
@@ -1317,12 +1317,12 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 							
 							setCycle(3);
 							operands[(i+1)%2].seekp(ios_base::beg);
-							operands[(i+1)%2] << zeroGenerator((4*level)*chunkSize_ + startX*chunkSize_/2,0) << " & " << use(partialProd.str()) << range(2*chunkSize_-1,0) << " & " << operands[(i+1)%2].str();
+							operands[(i+1)%2] << zg((4*level)*chunkSize_ + startX*chunkSize_/2,0) << " & " << use(partialProd.str()) << range(2*chunkSize_-1,0) << " & " << operands[(i+1)%2].str();
 							
 							operands[i%2].seekp(ios_base::beg);
-							operands[i%2] << zeroGenerator((4*level+1)*chunkSize_ + startX*chunkSize_/2,0) << " & " << operands[i%2].str();
+							operands[i%2] << zg((4*level+1)*chunkSize_ + startX*chunkSize_/2,0) << " & " << operands[i%2].str();
 							carrys.seekp(ios_base::beg);
-							carrys << zeroGenerator((4*level+1)*chunkSize_-1 + startX*chunkSize_/2,0) << " & " << carrys.str();
+							carrys << zg((4*level+1)*chunkSize_-1 + startX*chunkSize_/2,0) << " & " << carrys.str();
 						
 							// create operands for final sumation
 							for (int j=0; j<2; j++)
@@ -1347,8 +1347,8 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 									if (verbose)
 										cerr << ">IntMultiplier: " << tab << "Subcase 1: there is one row" << endl;
 								
-									operands[i%2] << zeroGenerator(level*4*chunkSize_ + start*chunkSize_/2,0) << ";";
-									operands[(i+1)%2] << zeroGenerator((level*4+1)*chunkSize_ + start*chunkSize_/2,0) << ";";
+									operands[i%2] << zg(level*4*chunkSize_ + start*chunkSize_/2,0) << ";";
+									operands[(i+1)%2] << zg((level*4+1)*chunkSize_ + start*chunkSize_/2,0) << ";";
 							
 									for (int j=0; j<3; j++) // each tile is computed and concatenated with an coresponding operand
 									{
@@ -1362,12 +1362,12 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 									}
 									
 									operands[(3+i)%2].seekp(ios_base::beg);
-									operands[(3+i)%2] << zeroGenerator((level*4+1)*chunkSize_ + startX*chunkSize_/2,0) << " & " << operands[(3+i)%2].str();
+									operands[(3+i)%2] << zg((level*4+1)*chunkSize_ + startX*chunkSize_/2,0) << " & " << operands[(3+i)%2].str();
 									vhdl << tab << declare(join("addOp", opCount), adderWidth) << " <= " << operands[(3+i)%2].str() << endl;
 									opCount++;
 									
 									operands[(i+4)%2].seekp(ios_base::beg);
-									operands[(i+4)%2] << zeroGenerator(level*4*chunkSize_ + startX*chunkSize_/2,0) << " & " << operands[(i+4)%2].str(); 
+									operands[(i+4)%2] << zg(level*4*chunkSize_ + startX*chunkSize_/2,0) << " & " << operands[(i+4)%2].str(); 
 									vhdl << tab << declare(join("addOp", opCount), adderWidth) << " <= " << operands[(i+4)%2].str() << endl;
 									opCount++;
 									break;
@@ -1375,9 +1375,9 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 									if (verbose)
 										cerr << ">IntMultiplier: " << tab << "Subcase 2: there are two rows" << endl;
 									
-									operands[i%2] << zeroGenerator(level*4*chunkSize_ + start*chunkSize_/2,0) << ";";
-									operands[(i+1)%2] << zeroGenerator((level*4+1)*chunkSize_ + start*chunkSize_/2,0) << ";";
-									carrys << zeroGenerator(level*4*chunkSize_,0) << ";";
+									operands[i%2] << zg(level*4*chunkSize_ + start*chunkSize_/2,0) << ";";
+									operands[(i+1)%2] << zg((level*4+1)*chunkSize_ + start*chunkSize_/2,0) << ";";
+									carrys << zg(level*4*chunkSize_,0) << ";";
 									// top-right tile
 									setCycle(1);
 									partialProd.str("");
@@ -1406,7 +1406,7 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 										operands[(i+j+1)%2].seekp(ios_base::beg);
 										operands[(i+j+1)%2] << use(sum.str()) << range(2*chunkSize_-1,0) <<" & " << operands[(i+j+1)%2].str();
 										carrys.seekp(ios_base::beg);
-										carrys << use(sum.str()) << range(2*chunkSize_,2*chunkSize_) << " & " << zeroGenerator(chunkSize_,0) << "&" << carrys.str();
+										carrys << use(sum.str()) << range(2*chunkSize_,2*chunkSize_) << " & " << zg(chunkSize_,0) << "&" << carrys.str();
 									}
 									
 									// bottom-left tile
@@ -1416,11 +1416,11 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 									vhdl << tab << declare(partialProd.str(), 2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << use("x2") << " * " << use(join("y",i+2)) << ";" << endl;
 									setCycle(3);
 									operands[(i+4)%2].seekp(ios_base::beg);
-									operands[(i+4)%2] << zeroGenerator(level*4*chunkSize_ + startX*chunkSize_/2,0) << " & " << use(partialProd.str()) << " & " << operands[(i+4)%2].str();	
+									operands[(i+4)%2] << zg(level*4*chunkSize_ + startX*chunkSize_/2,0) << " & " << use(partialProd.str()) << " & " << operands[(i+4)%2].str();	
 									operands[(i+5)%2].seekp(ios_base::beg);
-									operands[(i+5)%2] << zeroGenerator((level*4+1)*chunkSize_ + startX*chunkSize_/2,0) << " & " << operands[(i+5)%2].str(); 
+									operands[(i+5)%2] << zg((level*4+1)*chunkSize_ + startX*chunkSize_/2,0) << " & " << operands[(i+5)%2].str(); 
 									carrys.seekp(ios_base::beg);
-									carrys << zeroGenerator((level*4+1)*chunkSize_-1 + startX*chunkSize_/2,0) << " & " << carrys.str();
+									carrys << zg((level*4+1)*chunkSize_-1 + startX*chunkSize_/2,0) << " & " << carrys.str();
 									// create the operands for the final summation
 									for (int j=0; j<2; j++)
 									{
@@ -1434,9 +1434,9 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 									if (verbose)
 										cerr << ">IntMultiplier: " << tab << "Subcase 3: there are more than 2 rows" << endl;
 									
-									operands[i%2] << zeroGenerator(level*4*chunkSize_ + start*chunkSize_/2,0) << ";";
-									operands[(i+1)%2] << zeroGenerator((level*4+1)*chunkSize_ + start*chunkSize_/2,0) << ";";
-									carrys << zeroGenerator((level*4+3)*chunkSize_ + start*chunkSize_/2,0) << ";";
+									operands[i%2] << zg(level*4*chunkSize_ + start*chunkSize_/2,0) << ";";
+									operands[(i+1)%2] << zg((level*4+1)*chunkSize_ + start*chunkSize_/2,0) << ";";
+									carrys << zg((level*4+3)*chunkSize_ + start*chunkSize_/2,0) << ";";
 									
 									// top-right tile
 									setCycle(1);
@@ -1497,7 +1497,7 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 										operands[(i+2)%2].seekp(ios_base::beg);
 										operands[(i+2)%2] << use(sum.str()) << range(2*chunkSize_-1,0) << " & " << operands[(i+2)%2].str();
 										carrys.seekp(ios_base::beg);
-										carrys << use(sum.str()) << range(2*chunkSize_+1,2*chunkSize_) << " & " << zeroGenerator(chunkSize_-2,0) << " & " << carrys.str();
+										carrys << use(sum.str()) << range(2*chunkSize_+1,2*chunkSize_) << " & " << zg(chunkSize_-2,0) << " & " << carrys.str();
 								
 										i++;
 									}
@@ -1518,9 +1518,9 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 									
 									setCycle(3);
 									operands[(i+2)%2].seekp(ios_base::beg);
-									operands[(i+2)%2] << zeroGenerator((level*4+1)*chunkSize_ + startX*chunkSize_/2,0) << " & " << use(sum.str()) << range(2*chunkSize_-1,0) << " & " << operands[(i+2)%2].str();
+									operands[(i+2)%2] << zg((level*4+1)*chunkSize_ + startX*chunkSize_/2,0) << " & " << use(sum.str()) << range(2*chunkSize_-1,0) << " & " << operands[(i+2)%2].str();
 									carrys.seekp(ios_base::beg);
-									carrys << zeroGenerator((level*4+1)*chunkSize_-1 + startX*chunkSize_/2,0) << " & " << use(sum.str()) << range(2*chunkSize_,2*chunkSize_) << " & " << zeroGenerator(chunkSize_-2,0) << " & " << carrys.str(); 
+									carrys << zg((level*4+1)*chunkSize_-1 + startX*chunkSize_/2,0) << " & " << use(sum.str()) << range(2*chunkSize_,2*chunkSize_) << " & " << zg(chunkSize_-2,0) << " & " << carrys.str(); 
 									// bottom-left tile
 									setCycle(1);
 									partialProd.str("");
@@ -1528,7 +1528,7 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 									vhdl << tab << declare(partialProd.str(), 2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << use("x2") << " * " << use(join("y",chunksY-1)) << ";" << endl;
 									setCycle(3);
 									operands[(i+3)%2].seekp(ios_base::beg);
-									operands[(i+3)%2] << zeroGenerator((level*4)*chunkSize_ + startX*chunkSize_/2,0) << " & " << use(partialProd.str()) << " & " << operands[(i+3)%2].str();
+									operands[(i+3)%2] << zg((level*4)*chunkSize_ + startX*chunkSize_/2,0) << " & " << use(partialProd.str()) << " & " << operands[(i+3)%2].str();
 									
 									// create the operands for the final summation
 									for (int j=0; j<2; j++)
@@ -1553,7 +1553,7 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 					operands[0].str("");
 					operands[0] << "\"\";";
 					operands[1].str("");
-					operands[1] << zeroGenerator(chunkSize_,0) << ";";
+					operands[1] << zg(chunkSize_,0) << ";";
 					
 					bool halfPadded = false; // TRUE when there is either 
 											 //	a chunkSize width column on the left side of the tiling or 
@@ -1588,9 +1588,9 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 					else // padd operands with zeros
 					{
 							operands[0].seekp(ios_base::beg);
-							operands[0] << zeroGenerator((chunksX-1)*chunkSize_,0) << " & " << operands[0].str();
+							operands[0] << zg((chunksX-1)*chunkSize_,0) << " & " << operands[0].str();
 							operands[1].seekp(ios_base::beg);
-							operands[1] << zeroGenerator((chunksX-1)*chunkSize_,0) << " & " << operands[1].str();
+							operands[1] << zg((chunksX-1)*chunkSize_,0) << " & " << operands[1].str();
 					}
 					
 					if (leftColumn) // then there is a chunkSize width column on the left side of the tiling
@@ -1626,9 +1626,9 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 					else // padd operands with zeros
 					{
 						operands[0].seekp(ios_base::beg);
-						operands[0] << zeroGenerator((chunksY-1)*chunkSize_,0) << " & " << operands[0].str();
+						operands[0] << zg((chunksY-1)*chunkSize_,0) << " & " << operands[0].str();
 						operands[1].seekp(ios_base::beg);
-						operands[1] << zeroGenerator((chunksY-1)*chunkSize_,0) << " & " << operands[1].str();	
+						operands[1] << zg((chunksY-1)*chunkSize_,0) << " & " << operands[1].str();	
 					}
 					
 					//setCycle(3);
@@ -1638,12 +1638,12 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 						if ((chunksX+chunksY-1)%2 == 0)
 						{
 							operands[0].seekp(ios_base::beg); 
-							operands[0] << zeroGenerator(chunkSize_,0) << " & " << operands[0].str(); 	
+							operands[0] << zg(chunkSize_,0) << " & " << operands[0].str(); 	
 						}
 						else
 						{
 							operands[1].seekp(ios_base::beg); 
-							operands[1] << zeroGenerator(chunkSize_,0) << " & " << operands[1].str(); 	
+							operands[1] << zg(chunkSize_,0) << " & " << operands[1].str(); 	
 						}
 						
 						for (k=0; k<2; k++)
@@ -1681,113 +1681,79 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 			
 		}
 	}
-	else
+	/***************************************************************************
+	***************************************************************************/
+	else //IntMultiplier Version -- multiplication performed in LUTs
 	{
 		int chunkSize_ = target->lutInputs()/2;
+		int chunksX =  int(ceil( ( double(wInX) / (double) chunkSize_) ));
+		int chunksY =  int(ceil( ( double(wInY) / (double) chunkSize_) ));
+		
+		clog << "> IntMultiplier:  X splitted in "<< chunksX << " chunks and Y in " << chunksY << " chunks; " << endl;
+		if (chunksX + chunksY > 2) { //we need more than 1 LUT
+			int widthX = wInX_;
+			int widthY = wInY_;	
 	
-	int chunksX =  int(ceil( ( double(wInX) / (double) chunkSize_) ));
-	int chunksY =  int(ceil( ( double(wInY) / (double) chunkSize_) ));
+			if (chunksX > chunksY){ //interchange X with Y
+				int tmp = chunksX;
+				chunksX = chunksY;
+				chunksY = tmp;
+				
+				tmp = widthX;
+				widthX = widthY;
+				widthY = tmp;
 		
-	if (verbose)
-        cerr << "> IntMultiplier:  X splitted in "<< chunksX << " chunks and Y in " << chunksY << " chunks; " << endl;
-	if (chunksX + chunksY > 2) {
-	int widthX = wInX_;
-	int widthY = wInY_;	
-	
-	if (chunksX > chunksY)
-	{
-		int tmp = chunksX;
-		chunksX = chunksY;
-		chunksY = tmp;
-		
-		tmp = widthX;
-		widthX = widthY;
-		widthY = tmp;
-		
-		vhdl << tab << declare("sX",chunkSize_*chunksX) << " <= " << "Y" << " & " << zeroGenerator(chunkSize_*chunksX-widthX,0) << ";" << endl;
-		vhdl << tab << declare("sY",chunkSize_*chunksY) << " <= " << "X" << " & " << zeroGenerator(chunkSize_*chunksY-widthY,0) << ";" << endl;	
-	}
-	else
-	{
-		vhdl << tab << declare("sX",chunkSize_*chunksX) << " <= " << "X" << " & " << zeroGenerator(chunkSize_*chunksX-widthX,0) << ";" << endl;
-		vhdl << tab << declare("sY",chunkSize_*chunksY) << " <= " << "Y" << " & " << zeroGenerator(chunkSize_*chunksY-widthY,0) << ";" << endl;
-    }
-	////////////////////////////////////////////////////
-    //SPLITTINGS
-    for (int k=0; k<chunksX ; k++)
-	{
-		ostringstream dname;
-        dname << "x"<<k;
-        vhdl << tab << declare(dname.str(),chunkSize_) << " <= " << "sX" << range((k+1)*chunkSize_-1,k*chunkSize_) << ";" << endl;
-    }
-    for (int k=0; k<chunksY ; k++)
-	{
-		ostringstream dname;
-        dname << "y"<<k;
-        vhdl << tab << declare(dname.str(),chunkSize_) << " <= " << "sY" << range((k+1)*chunkSize_-1,k*chunkSize_) << ";" << endl;
-    }
+				vhdl<<tab<<declare("sX",chunkSize_*chunksX)<<" <= "<<"Y"<<" & "<<zg(chunkSize_*chunksX-widthX,0)<< ";"<<endl;
+				vhdl<<tab<<declare("sY",chunkSize_*chunksY)<<" <= "<<"X"<<" & "<<zg(chunkSize_*chunksY-widthY,0)<< ";"<<endl;	
+			}else{
+				vhdl<<tab<<declare("sX",chunkSize_*chunksX)<<" <= "<<"X"<<" & "<<zg(chunkSize_*chunksX-widthX,0)<< ";"<<endl;
+				vhdl<<tab<<declare("sY",chunkSize_*chunksY)<<" <= "<<"Y"<<" & "<<zg(chunkSize_*chunksY-widthY,0)<< ";"<<endl;
+    		}
+			//SPLITTINGS
+			for (int k=0; k<chunksX ; k++)
+				vhdl<<tab<<declare(join("x",k),chunkSize_)<<" <= "<<"sX"<<range((k+1)*chunkSize_-1,k*chunkSize_)<<";"<<endl;
+			for (int k=0; k<chunksY ; k++)
+        		vhdl<<tab<<declare(join("y",k),chunkSize_)<<" <= "<<"sY"<<range((k+1)*chunkSize_-1,k*chunkSize_)<<";"<<endl;
+    	
 
-	// COMPUTE PARTIAL PRODUCTS
-	for (int i=0; i<chunksY; i++)
-	{
-		for (int j=0; j<chunksX; j++)
-		{
-			ostringstream partialProd;
-            partialProd  << "p" << "x" << j << "y" << i;
-			vhdl << tab << declare(partialProd.str(),2*chunkSize_) << " <= " << use(join("x",j)) << " * " << use(join("y",i)) << ";" << endl;
-		}
-	}		
+			//COMPUTE PARTIAL PRODUCTS
+			for (int i=0; i<chunksY; i++)
+				for (int j=0; j<chunksX; j++)
+					vhdl<<tab<<declare(join("px",j,"y",i),2*chunkSize_)<<" <= "<< use(join("x",j))<<" * "
+					                                                           << use(join("y",i))<< ";" << endl;
 	
-	int adderWidth = (chunksX+chunksY)*chunkSize_;
-	
-	// CONCATENATE PARTIAL PRODUCTS
-	for (int i=0; i<chunkSize_; i++)
-	{
-		for (int j=0; j<chunksX; j++)
-		{
-			ostringstream concatPartialProd;
-            concatPartialProd  << "cp" << i << j;
-			vhdl << tab << declare(concatPartialProd.str(),adderWidth) << " <= ";
+			int adderWidth = (chunksX+chunksY)*chunkSize_;
+			// CONCATENATE PARTIAL PRODUCTS
+			for (int i=0; i<chunkSize_; i++){
+				for (int j=0; j<chunksX; j++){
+					vhdl << tab << declare(join("cp",i,j),adderWidth) << " <= ";
 			
-			int startIdx = chunksY-1-i;
-			int paddWidth = adderWidth - 2*chunkSize_*(startIdx/chunkSize_+1);
-			int endPaddWidth = chunkSize_*(j+startIdx%chunkSize_);
-			vhdl << zeroGenerator(paddWidth-endPaddWidth,0); 
+					int startIdx = chunksY-1-i;
+					int paddWidth = adderWidth - 2*chunkSize_*(startIdx/chunkSize_+1);
+					int endPaddWidth = chunkSize_*(j+startIdx%chunkSize_);
+					vhdl << zg(paddWidth-endPaddWidth,0); 
 			
-			for (int k=startIdx; k>=0; k-=chunkSize_)
-			{
-				ostringstream partialProd;
-				partialProd  << "p" << "x" << j << "y" << k;
-				vhdl << " & " << use(partialProd.str());
+					for (int k=startIdx; k>=0; k-=chunkSize_)
+						vhdl << " & " << use(join("px",j,"y",k));
+						
+					vhdl << " & " << zg((startIdx<0?chunkSize_:endPaddWidth),0) << ";" << endl;
+				}
 			}
+	
+			IntNAdder* add =  new IntNAdder(target, adderWidth, chunksX*chunkSize_);
+    		oplist.push_back(add);
+	
+			for (int i=0; i<chunkSize_; i++)
+				for (int j=0; j<chunksX; j++)
+					inPortMap (add, join("X",i*chunksX+j) , join("cp",i,j));
 			
-			if (startIdx < 0)
-				vhdl << " & " << zeroGenerator(chunkSize_,0) << ";" << endl;
-			else
-				vhdl << " & " << zeroGenerator(endPaddWidth,0) << ";" << endl;
+			inPortMapCst(add, "Cin", "'0'");
+			outPortMap(add, "R", "addRes");
+			vhdl << instance(add, "adder");
+			syncCycleFromSignal("addRes");
+	
+			vhdl<<tab<<"R<="<< use("addRes")<<range(adderWidth-1,adderWidth-wInX_-wInY_) << ";" << endl;		
 		}
-	}
-	
-	IntNAdder* add =  new IntNAdder(target, adderWidth, chunksX*chunkSize_);
-    oplist.push_back(add);
-	
-	for (int i=0; i<chunkSize_; i++)
-		for (int j=0; j<chunksX; j++)
-		{
-			ostringstream concatPartialProd;
-            concatPartialProd  << "cp" << i << j;
-			
-			inPortMap (add, join("X",i*chunksX+j) , concatPartialProd.str());
-		}	
-			
-	inPortMapCst(add, "Cin", "'0'");
-    outPortMap(add, "R", "addRes");
-    vhdl << instance(add, "adder");
-
-    syncCycleFromSignal("addRes");
-	
-	vhdl << tab << "R <= " << use("addRes")<<range(adderWidth-1,adderWidth-wInX_-wInY_) << ";" << endl;		
-	}
 		else 
 			vhdl << tab << "R <= X * Y ;" <<endl;
 	}

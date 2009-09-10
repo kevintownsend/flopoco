@@ -1368,7 +1368,7 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI,int wE,int wF,
 	vhdl<<tab<<"with "<<use("selectionAcc")<<" select "<<endl;
 	vhdl<<tab<<declare("value4LongAcctemp",wE+wF+3)<<" <= "<<endl;
 	vhdl<<tab<<tab<<use("value4LongAccShift")<<" when '1',"<<endl;
-	vhdl<<tab<<tab<<zeroGenerator(wE+wF+3,0)<<" when others;"<<endl;
+	vhdl<<tab<<tab<<zg(wE+wF+3,0)<<" when others;"<<endl;
 	vhdl<<endl;
 	
 	
@@ -1376,7 +1376,7 @@ CoilInductance::CoilInductance(Target* target, int LSBI, int MSBI,int wE,int wF,
 	//~ vhdl<<tab<<"with "<<use("value4LongAccShift")<<"(33 downto 32) select "<<endl;
 	//~ vhdl<<tab<<declare("value4LongAcctemp",wE+wF+3)<<" <= "<<endl;
 	//~ vhdl<<tab<<tab<<use("value4LongAccShift")<<" when \"01\","<<endl;
-	//~ vhdl<<tab<<tab<<zeroGenerator(wE+wF+3,0)<<" when others;"<<endl;
+	//~ vhdl<<tab<<tab<<zg(wE+wF+3,0)<<" when others;"<<endl;
 	//~ vhdl<<endl;
 		
 	

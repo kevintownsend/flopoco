@@ -159,12 +159,12 @@ Operator(target), wIn_(wIn), N_(N), inputDelays_(inputDelays)
 					else
 					{
 						if(low<wIn)
-							vhdl << tab << declare (name.str(),cSize[j]+1) << " <= " << zeroGenerator(cSize[j]-(wIn -low)+1,0) <<" & X"<<i<<range(wIn-1,low)<<";"<<endl;
+							vhdl << tab << declare (name.str(),cSize[j]+1) << " <= " << zg(cSize[j]-(wIn -low)+1,0) <<" & X"<<i<<range(wIn-1,low)<<";"<<endl;
 						else
 							if(low==wIn)
-								vhdl << tab << declare (name.str(),cSize[j]+1) << " <= " << zeroGenerator(cSize[j],0) <<" & X"<<i<<of(wIn-1)<<";"<<endl;
+								vhdl << tab << declare (name.str(),cSize[j]+1) << " <= " << zg(cSize[j],0) <<" & X"<<i<<of(wIn-1)<<";"<<endl;
 							else
-								vhdl << tab << declare (name.str(),cSize[j]+1) << " <= " << zeroGenerator(cSize[j]+1,0) <<";"<<endl;
+								vhdl << tab << declare (name.str(),cSize[j]+1) << " <= " << zg(cSize[j]+1,0) <<";"<<endl;
 					}
 				}
 			

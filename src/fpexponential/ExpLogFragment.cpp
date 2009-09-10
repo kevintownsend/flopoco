@@ -177,10 +177,10 @@ void ExpLogFragment::generate(std::string prefix)
 			vhdl << instance(tbl, "component1");
 			vhdl << declare("exp_part1", end - start + 1) << "  <= " 
 				  << "('0' & part_1)" 
-				  << " + " << zeroGenerator((end - exp_bits) -(start - 1)) << "exp_tbl_out"
+				  << " + " << zg((end - exp_bits) -(start - 1)) << "exp_tbl_out"
 				  << " when sign = '0' else " 
 				  << "('0' & part_1)" 
-				  << " + \"" << zeroGenerator(reallength, -2) << "1\" - (" << zeroGenerator((end - exp_bits) -(start - 1)) << " & exp_tbl_out)"
+				  << " + \"" << zg(reallength, -2) << "1\" - (" << zg((end - exp_bits) -(start - 1)) << " & exp_tbl_out)"
 				  << ';' << endl;
 		}
 		else {

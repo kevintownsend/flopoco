@@ -139,13 +139,13 @@ Operator(target), wIn_(wIn), C_(C), inputDelays_(inputDelays)
 					for (int j=addOpSize-1; j>= (constantWidth + lutWidth) + (i-1)*lutWidth ; j--) //sign extension
 						vhdl << use(join("pp",i))<<of(constantWidth + lutWidth -1) << " & ";
 					
-					vhdl << use(join("pp",i)) << range(constantWidth + lutWidth -1, (i==0?lutWidth:0)) << " & " << zeroGenerator((i-1)*lutWidth,0) << ";" << endl;
+					vhdl << use(join("pp",i)) << range(constantWidth + lutWidth -1, (i==0?lutWidth:0)) << " & " << zg((i-1)*lutWidth,0) << ";" << endl;
 				}
 				else{
 						for (int j=addOpSize-1; j>= (constantWidth + lastLutWidth)+ (i-1)*lutWidth ; j--)
 						vhdl << use(join("pp",i))<<range(constantWidth + lastLutWidth -1,constantWidth + lastLutWidth -1) << " & ";
 					
-					vhdl << use(join("pp",i))<<range(constantWidth + lastLutWidth -1, (i==0?lutWidth:0))<< " & " << zeroGenerator((i-1)*lutWidth,0) << ";" << endl;
+					vhdl << use(join("pp",i))<<range(constantWidth + lastLutWidth -1, (i==0?lutWidth:0))<< " & " << zg((i-1)*lutWidth,0) << ";" << endl;
 				}
 		}
 		
@@ -238,10 +238,10 @@ Operator(target), wIn_(wIn), C_(C), inputDelays_(inputDelays)
 				if (i!=nbOfTables-1){ //if not the last table
 					vhdl << rangeAssign(addOpSize-1, constantWidth + i*lutWidth, "'0'") << " & " 
 							  <<  use(join("pp",i)) << range(constantWidth + lutWidth -1, (i==0?lutWidth:0)) << " & " 
-							  << zeroGenerator((i-1)*lutWidth,0) << ";" << endl;
+							  << zg((i-1)*lutWidth,0) << ";" << endl;
 				}
 				else{
-					vhdl << use(join("pp",i))<<range(constantWidth + lastLutWidth -1, (i==0?lutWidth:0))<< " & " << zeroGenerator((i-1)*lutWidth,0) << ";" << endl;
+					vhdl << use(join("pp",i))<<range(constantWidth + lastLutWidth -1, (i==0?lutWidth:0))<< " & " << zg((i-1)*lutWidth,0) << ";" << endl;
 				}
 		}
 		

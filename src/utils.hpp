@@ -189,7 +189,7 @@ mpz_class getLargeRandom(int n);
  * @param[in] margins	integer argument determining the position of the quotes in the output string. The options are: -2= no quotes; -1=left quote; 0=both quotes 1=right quote
  * @return returns a string of zeros with the corresonding quotes given by margins
  **/
-string zeroGenerator(int n, int margins=0);
+string zg(int n, int margins=0);
 
 /**
  * Turns an arbitrary string (e.g. Sollya expression or FP number) to
@@ -211,6 +211,8 @@ string mpz2string(mpz_class x);
 	 Its main advantage is that join("z", i) can also be used inside 
 	 declare(),  use(), etc. */
 string join( std::string id, int n);
+
+string join( std::string id, int n1, int n2);
 
 string join( std::string id1, int n, std::string id2);
 

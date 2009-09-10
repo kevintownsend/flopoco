@@ -339,7 +339,7 @@ mpz_class getLargeRandom(int n)
 
 #endif 
 
-string zeroGenerator(int n, int margins){
+string zg(int n, int margins){
 	ostringstream left,full, right, zeros;
 	int i;
 
@@ -436,6 +436,14 @@ string join( std::string id, int n)
 	o << id << n;
 	return o.str();
 }
+
+string join( std::string id, int n1, int n2)
+{
+	ostringstream o;
+	o << id << n1 << n2;
+	return o.str();
+}
+
 
 string join( std::string id1, int n, std::string id2)
 {

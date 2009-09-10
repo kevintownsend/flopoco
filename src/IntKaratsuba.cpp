@@ -62,8 +62,8 @@ IntKaratsuba:: IntKaratsuba(Target* target, int wIn) :
 		exit ( EXIT_FAILURE );	
 	}else if (chunks == 2){
 		//pad inputs to 34 bits
-		vhdl << tab << declare ("sX", 34) << " <= " << use("X") << " & " << zeroGenerator(34-wIn, 0) << ";" << endl;
-		vhdl << tab << declare ("sY", 34) << " <= " << use("Y") << " & " << zeroGenerator(34-wIn, 0) << ";" << endl;
+		vhdl << tab << declare ("sX", 34) << " <= " << use("X") << " & " << zg(34-wIn, 0) << ";" << endl;
+		vhdl << tab << declare ("sY", 34) << " <= " << use("Y") << " & " << zg(34-wIn, 0) << ";" << endl;
 		//chunk splitting
 		vhdl << tab << declare ("x0", 18) << " <= " << " \"0\" & " << use("sX") << range(16,0)  << ";" << endl;
 		vhdl << tab << declare ("x1", 18) << " <= " << " \"0\" & " << use("sX") << range(33,17) << ";" << endl;
@@ -84,7 +84,7 @@ IntKaratsuba:: IntKaratsuba(Target* target, int wIn) :
 		vhdl << tab << declare ("t1", 36) << " <= " << use("r2") << ";" << endl;		
 		vhdl << tab << declare ("t2", 36) << " <= " << use("r2") << " - " << use("r1") << ";" << endl;		
 		vhdl << tab << declare ("a1", 51) << " <= " << use("t2")<<range(33,0) << " & " << use("t0")<<range(33,17) << ";" << endl;
-		vhdl << tab << declare ("b1", 51) << " <= " << zeroGenerator(15,0) << " & " << use("r2") << ";" << endl;
+		vhdl << tab << declare ("b1", 51) << " <= " << zg(15,0) << " & " << use("r2") << ";" << endl;
 		if (68 - 2*wIn < 17 )
 			vhdl << tab << "R <= " << "(" << use("a1") << " + " << use("b1") << ") & " << use("t0")<<range(16, (68 - 2*wIn)) << ";" << endl;
 		else{
@@ -93,8 +93,8 @@ IntKaratsuba:: IntKaratsuba(Target* target, int wIn) :
 		}
 	}else if (chunks == 3){
 		//pad inputs to 51 bits
-		vhdl << tab << declare ("sX", 51) << " <= " << use("X") << " & " << zeroGenerator(51-wIn, 0) << ";" << endl;
-		vhdl << tab << declare ("sY", 51) << " <= " << use("Y") << " & " << zeroGenerator(51-wIn, 0) << ";" << endl;
+		vhdl << tab << declare ("sX", 51) << " <= " << use("X") << " & " << zg(51-wIn, 0) << ";" << endl;
+		vhdl << tab << declare ("sY", 51) << " <= " << use("Y") << " & " << zg(51-wIn, 0) << ";" << endl;
 		//chunk splitting
 		vhdl << tab << declare ("x0", 18) << " <= " << " \"0\" & " << use("sX") << range(16,0)  << ";" << endl;
 		vhdl << tab << declare ("x1", 18) << " <= " << " \"0\" & " << use("sX") << range(33,17) << ";" << endl;
@@ -131,7 +131,7 @@ IntKaratsuba:: IntKaratsuba(Target* target, int wIn) :
 		nextCycle();////////////////////////////////////////////////////////////
 		vhdl << tab << declare("finalSumLow_1",17) << " <= " << use("s0") << range(16,0) << ";" << endl;
 		vhdl << tab << declare("l5_0",18) << " <= " << "( \"0\" & " << use("s0")<<range(33,17)<<") + (\"0\" & " << use("t2k")<<range(16,0)<<");"<<endl;
-		vhdl << tab << declare("l5_1",27) << " <= " << "( \"0\" & " << use("s1")<<range(25,0)<<") + ("<< zeroGenerator(7,0) << " & " << use("t2k")<<range(35,17)<< ") + " << use("s0") << of(34) <<";"<<endl;
+		vhdl << tab << declare("l5_1",27) << " <= " << "( \"0\" & " << use("s1")<<range(25,0)<<") + ("<< zg(7,0) << " & " << use("t2k")<<range(35,17)<< ") + " << use("s0") << of(34) <<";"<<endl;
 		vhdl << tab << declare("l5_2",25) << " <= " << use("s1") << range(50,26) << ";" << endl;
 		nextCycle();////////////////////////////////////////////////////////////
 		vhdl << tab << declare("finalSumLow_2",17) << " <= " << use("l5_0") << range(16,0) << ";" << endl;

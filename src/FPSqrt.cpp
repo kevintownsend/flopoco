@@ -150,9 +150,9 @@ FPSqrt::FPSqrt(Target* target, int wE, int wF, bool useDSP, bool correctlyRounde
 	//get a1 from memory
 	vhdl <<endl << tab << declare("a1",coeffStorageSizes[1]) << " <= " << use("data")<<range(coeffStorageSizes[0] + coeffStorageSizes[1] - 1, coeffStorageSizes[0]) << ";" <<endl;
 	//sign-extend and pad a1 for a1 - (-a2*x)
-	vhdl << tab << declare("signExtA1ZeroPad", 1 + coeffStorageSizes[1] + keepBits) << " <= " << "\"0\" & " << use("a1") << " & " << zeroGenerator(keepBits, 0) << ";" << endl;
+	vhdl << tab << declare("signExtA1ZeroPad", 1 + coeffStorageSizes[1] + keepBits) << " <= " << "\"0\" & " << use("a1") << " & " << zg(keepBits, 0) << ";" << endl;
 	//sign-extend and align the -a2*x product
-	vhdl << tab << declare("signExtAlignedProdA2X", 1 + coeffStorageSizes[1] + keepBits) << " <= " << "\"0\" & " << zeroGenerator(coeff_msb[1]-(coeff_msb[2]+msb_x),0) << " & " 
+	vhdl << tab << declare("signExtAlignedProdA2X", 1 + coeffStorageSizes[1] + keepBits) << " <= " << "\"0\" & " << zg(coeff_msb[1]-(coeff_msb[2]+msb_x),0) << " & " 
 	                  << use("prodA2X")<< range(coeffStorageSizes[2] + sizeOfX, coeffStorageSizes[2] + sizeOfX - (1 + coeffStorageSizes[1] + keepBits + coeff_msb[2]+msb_x )+1) << ";"<<endl;
 	vhdl << tab << declare("negSignExtAlignedProdA2X", 1 + coeffStorageSizes[1] + keepBits) << " <= not(" << use("signExtAlignedProdA2X") << ");"<<endl;
 	//subtract (-a2*x) from a1, => instantiate IntAdder
@@ -179,7 +179,7 @@ FPSqrt::FPSqrt(Target* target, int wE, int wF, bool useDSP, bool correctlyRounde
 		IntMultiplier * my_mul = new IntMultiplier(target, (sizeOfX+1), 34);
 		oplist.push_back(my_mul);
 		
-		vhdl << tab << declare("justASignal",34) << " <= " << zeroGenerator(15,0) << " & " << use("add1Res")<<range(coeffStorageSizes[1] + keepBits-1, keepBits - keepBits2) << ";" << endl;
+		vhdl << tab << declare("justASignal",34) << " <= " << zg(15,0) << " & " << use("add1Res")<<range(coeffStorageSizes[1] + keepBits-1, keepBits - keepBits2) << ";" << endl;
 	
 		inPortMapCst(my_mul,"X", use("lowX"));
 //		inPortMapCst(my_mul,"Y", use("add1Res")+range(coeffStorageSizes[1] + keepBits-1, keepBits - keepBits2) );
@@ -210,7 +210,7 @@ FPSqrt::FPSqrt(Target* target, int wE, int wF, bool useDSP, bool correctlyRounde
 	//fetch a0 from memory
 	vhdl << endl << tab << declare("a0",coeffStorageSizes[0]) << " <= " << use("data") << range(coeffStorageSizes[0]-1,0) << ";" << endl;
 	vhdl << tab << declare ("ovfGuardA0", 1 + coeffStorageSizes[0]) << " <= " << " \"0\" & " << use("a0")<< ";" << endl;
-	vhdl << tab << declare ("ovfGuardAlignProdXA1sumA2X", 1 + coeffStorageSizes[0]) << " <= " << " \"0\" & " << zeroGenerator((1+coeff_msb[0])+1-msb_x , 0)  << " & "
+	vhdl << tab << declare ("ovfGuardAlignProdXA1sumA2X", 1 + coeffStorageSizes[0]) << " <= " << " \"0\" & " << zg((1+coeff_msb[0])+1-msb_x , 0)  << " & "
          << use("prodXA1sumA2X")<<range((sizeOfX+1)+ coeffStorageSizes[1] -1 + keepBits2, keepBits2 + (sizeOfX+1)+ coeffStorageSizes[1] - (coeffStorageSizes[0]- (-msb_x+1+(1+ coeff_msb[0])))) << ";" <<endl; 
 	
 	IntAdder * add2 =  new IntAdder(target, 1 + coeffStorageSizes[0]);
@@ -246,7 +246,7 @@ FPSqrt::FPSqrt(Target* target, int wE, int wF, bool useDSP, bool correctlyRounde
 		vhdl << tab << declare("preSquareExp", wE) << " <= " << use("expPostBiasAddition") << range(wE,1) <<";"<<endl;
 
 
-	    vhdl << tab << declare("preSquareConcat", 1 + wE + wF+1) << " <= " << zeroGenerator(1,0) << " & " << use("preSquareExp") << " & " << use("preSquareFrac")<<range(wF,0)<<";"<<endl;;
+	    vhdl << tab << declare("preSquareConcat", 1 + wE + wF+1) << " <= " << zg(1,0) << " & " << use("preSquareExp") << " & " << use("preSquareFrac")<<range(wF,0)<<";"<<endl;;
 
 #ifndef LESS_DSPS
 		nextCycle();//////////////////	    
@@ -255,7 +255,7 @@ FPSqrt::FPSqrt(Target* target, int wE, int wF, bool useDSP, bool correctlyRounde
 	    oplist.push_back(predictAdder);
 
 	    inPortMapCst(predictAdder,"X",use("preSquareConcat"));	
-	    inPortMapCst(predictAdder,"Y",zeroGenerator(1 + wE + wF+1,0));
+	    inPortMapCst(predictAdder,"Y",zg(1 + wE + wF+1,0));
 	    inPortMapCst(predictAdder,"Cin","'1'");
 	    outPortMap(predictAdder,"R","my_predictor");
 	    vhdl << tab << instance(predictAdder, "Predictor");
@@ -263,7 +263,7 @@ FPSqrt::FPSqrt(Target* target, int wE, int wF, bool useDSP, bool correctlyRounde
 	    IntSquarer *iSquarer = new IntSquarer(target,max(wF+2,34));
 	    oplist.push_back(iSquarer);
 	    
-	    vhdl << tab << declare("op1",max(wF+2,34)) << " <= " << zeroGenerator(34-(wF+2),0) << " & " << use("preSquareFrac") << ";" << endl;
+	    vhdl << tab << declare("op1",max(wF+2,34)) << " <= " << zg(34-(wF+2),0) << " & " << use("preSquareFrac") << ";" << endl;
 	    
 	    inPortMap(iSquarer, "X", use("op1"));
 	    outPortMap(iSquarer,"R", "sqrResult");
@@ -271,9 +271,9 @@ FPSqrt::FPSqrt(Target* target, int wE, int wF, bool useDSP, bool correctlyRounde
 	    
 	    syncCycleFromSignal("sqrResult");
 	    
-	    vhdl << tab << declare("approxSqrtXSqr", 2*(wF+2) + 1) << " <= " << zeroGenerator(1,0) << " & " << use("sqrResult")<<range(2*(wF+2)-1,0)<<";"<<endl;
-	    vhdl << tab << declare("realXFrac", 2*(wF+2) + 1) << " <= " << "( \"001\" & " <<  use("fracX") << " & " << zeroGenerator(2*(wF+2) + 1-2-wF-1 ,0)<<") when " << use("OddExp") <<"='0' else "<<endl;
-	    vhdl << tab << tab << "( \"01\" & " <<  use("fracX") << " & " << zeroGenerator(2*(wF+2) + 1-2-wF,0)<<");"<<endl;
+	    vhdl << tab << declare("approxSqrtXSqr", 2*(wF+2) + 1) << " <= " << zg(1,0) << " & " << use("sqrResult")<<range(2*(wF+2)-1,0)<<";"<<endl;
+	    vhdl << tab << declare("realXFrac", 2*(wF+2) + 1) << " <= " << "( \"001\" & " <<  use("fracX") << " & " << zg(2*(wF+2) + 1-2-wF-1 ,0)<<") when " << use("OddExp") <<"='0' else "<<endl;
+	    vhdl << tab << tab << "( \"01\" & " <<  use("fracX") << " & " << zg(2*(wF+2) + 1-2-wF,0)<<");"<<endl;
 	    
 	    vhdl << tab << declare("negRealXFrac", 2*(wF+2) + 1) << " <= " << "not("<<use("realXFrac")<<");"<<endl;
 	    

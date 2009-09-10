@@ -512,8 +512,8 @@ void FPMultiplier::outputVHDL(std::ostream& o, std::string name) {
 				
 				//make the outputs
 				o<<tab<<"ResultExponent     <= exponent_post_normalization("<<wEX_ - 1<<" downto 0);"<<endl;  
-				o<<tab<<"ResultSignificand  <= significand_synch & "<<zeroGenerator(1+wFR_ - (wFX_+wFY_+2) , 0)<<" when normalization_selector='1' else"<<endl;
-				o<<tab<<"                      significand_synch("<<wFX_+wFY_<<" downto 0) & "<<zeroGenerator(1+wFR_ - (wFX_+wFY_+2) , 0)<<" & \"0\";"<<endl;
+				o<<tab<<"ResultSignificand  <= significand_synch & "<<zg(1+wFR_ - (wFX_+wFY_+2) , 0)<<" when normalization_selector='1' else"<<endl;
+				o<<tab<<"                      significand_synch("<<wFX_+wFY_<<" downto 0) & "<<zg(1+wFR_ - (wFX_+wFY_+2) , 0)<<" & \"0\";"<<endl;
 				o<<tab<<"ResultException    <= exception_post_normalization;"<<endl;
 				o<<tab<<"ResultSign         <= sign_synch;"<<endl;
 
@@ -523,11 +523,11 @@ void FPMultiplier::outputVHDL(std::ostream& o, std::string name) {
 				//check if in the middle of two FP numbers
 				//generate two xor strings
 				str1.str(""); str2.str(""); //init
-				str1<<"\"1"<< zeroGenerator( wFX_+wFY_+2 - (1+wFR_) -1, 1);
-				str2<<"\"01"<< zeroGenerator( wFX_+wFY_+2 - (1+wFR_) -1-1, 1);
+				str1<<"\"1"<< zg( wFX_+wFY_+2 - (1+wFR_) -1, 1);
+				str2<<"\"01"<< zg( wFX_+wFY_+2 - (1+wFR_) -1-1, 1);
 
 				zeros1.str("");
-				zeros1<< zeroGenerator( wFX_+wFY_+2 - (1+wFR_) , 0);
+				zeros1<< zg( wFX_+wFY_+2 - (1+wFR_) , 0);
 
 				o<<tab<<"check_string <= (significand_synch ("<< wFX_+wFY_+2 - (1+wFR_) -1<<" downto 0) xor "<<str1.str()<<") when normalization_selector='1' else"<<endl;
 				o<<tab<<"               ( (\"0\" & significand_synch ("<< wFX_+wFY_+2 - (1+wFR_) -1-1<<" downto 0)) xor "<<str2.str()<<");"<<endl;
@@ -665,10 +665,10 @@ void FPMultiplier::outputVHDL(std::ostream& o, std::string name) {
 				//check if in the middle of two FP numbers
 				//generate two xor strings
 				str1.str(""); 
-				str1<<"\"1"<< zeroGenerator( wFX_+wFY_+2 - (1+wFR_) -1, 1);
+				str1<<"\"1"<< zg( wFX_+wFY_+2 - (1+wFR_) -1, 1);
 				
 				zeros1.str("");
-				zeros1<< zeroGenerator( wFX_+wFY_+2 - (1+wFR_) , 0);
+				zeros1<< zg( wFX_+wFY_+2 - (1+wFR_) , 0);
 
 				o<<tab<<"check_string <= (significand_synch ("<< wFX_+wFY_+2 - (1+wFR_) -1<<" downto 0) xor "<<str1.str()<<"); "<<endl;
 				
@@ -793,7 +793,7 @@ void FPMultiplier::outputVHDL(std::ostream& o, std::string name) {
 				if (wFX_+wFY_+2 == wFR_+1)
 					o<<tab<<"ResultSignificand <= significand_synch;"<<endl;
 				else 	
-					o<<tab<<"ResultSignificand <= significand_synch & "<<zeroGenerator((wFR_+1) - (wFX_+wFY_+2), 0 )<<";"<<endl;
+					o<<tab<<"ResultSignificand <= significand_synch & "<<zg((wFR_+1) - (wFX_+wFY_+2), 0 )<<";"<<endl;
 					
 				o<<tab<<"with exponent_synch("<<wER_+1<<" downto "<< wER_ <<") select"<<endl;                       
 				o<<tab<<"ResultException   <= exception_synch  when \"00\","<<endl;
@@ -882,8 +882,8 @@ void FPMultiplier::outputVHDL(std::ostream& o, std::string name) {
 											
 				// Assign the architecture outputs
 				o<<tab<<"ResultExponent    <= exponent_post_normalization("<<wEX_ - 1<<" downto 0);"<<endl;  
-				o<<tab<<"ResultSignificand <= significand_product & "<< zeroGenerator(1+wFR_ - (wFX_+wFY_+2) , 0) <<" when normalization_selector='1' else"<<endl;
-				o<<tab<<"                     significand_product("<<wFX_+wFY_<<" downto 0) & "<<zeroGenerator(1+wFR_ - (wFX_+wFY_+2) , 0)<<" & \"0\";"<<endl;
+				o<<tab<<"ResultSignificand <= significand_product & "<< zg(1+wFR_ - (wFX_+wFY_+2) , 0) <<" when normalization_selector='1' else"<<endl;
+				o<<tab<<"                     significand_product("<<wFX_+wFY_<<" downto 0) & "<<zg(1+wFR_ - (wFX_+wFY_+2) , 0)<<" & \"0\";"<<endl;
 				//o<<tab<<"ResultException   <= exception_post_normalization;"<<endl;
 				o<<tab<<"ResultSign        <= X("<<wEX_ + wFX_<<") xor Y("<<wEY_ + wFY_<<");"<<endl;
 			}
@@ -893,8 +893,8 @@ void FPMultiplier::outputVHDL(std::ostream& o, std::string name) {
 
 				// generate two 1000...0000 and 0100....000 strings 
 				str1.str(""); str2.str(""); //init
-				str1<<"\"1" << zeroGenerator( wFX_+wFY_+2 - (1+wFR_) -1, 1);
-				str2<<"\"01"<< zeroGenerator( wFX_+wFY_+2 - (1+wFR_) -1 -1, 1);
+				str1<<"\"1" << zg( wFX_+wFY_+2 - (1+wFR_) -1, 1);
+				str2<<"\"01"<< zg( wFX_+wFY_+2 - (1+wFR_) -1 -1, 1);
 				
 				// the check string represent the LSBits of the significand product to the right of the rounding bit
 				o<<tab<<"check_string <= (significand_product ("<< wFX_+wFY_+2 - (1+wFR_) -1<<" downto 0) xor "<<str1.str()<<") when normalization_selector='1' else"<<endl;
@@ -903,7 +903,7 @@ void FPMultiplier::outputVHDL(std::ostream& o, std::string name) {
 				// In the middle of 2 FP numbers <=> LSBits to the right of the rounding bit are 100...00
 				o<<tab<<"process(check_string)"<<endl;
 				o<<tab<<"begin"<<endl;
-				o<<tab<<tab<<"      if ( "<< zeroGenerator( wFX_+wFY_+2 - (1+wFR_) , 0) <<" = check_string ) then"<<endl; 
+				o<<tab<<tab<<"      if ( "<< zg( wFX_+wFY_+2 - (1+wFR_) , 0) <<" = check_string ) then"<<endl; 
 				o<<tab<<tab<<"         between_fp_numbers <= '1';"<<endl;
 				o<<tab<<tab<<"      else "<<endl;
 				o<<tab<<tab<<"         between_fp_numbers <= '0';"<<endl;

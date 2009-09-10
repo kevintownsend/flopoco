@@ -77,8 +77,8 @@ FPSquarer::FPSquarer(Target* target, int wE, int wFX, int wFR) :
 	if (wFR > 2*(wFX_+1)-1){
 	//no rounding needed
 		vhdl << tab << declare("extExp",wE+2) << " <= " << use("extExpPostBiasSub") << " + " << use("sqrFrac")<<"("<<2*(wFX_+1)-1<<");" << endl;
-		vhdl << tab << declare("finalFrac",wFR) << "<= " << use("sqrFrac")<<range(2*(wFX_+1)-2,0) << " & " << zeroGenerator(wFR - (2*(wFX_+1)-1),0) << " when " <<use("sqrFrac")<<"("<<2*(wFX_+1)-1<<")='1' else "  << endl;
-	    vhdl << tab << tab << use("sqrFrac")<<range(2*(wFX_+1)-3,0) << " & " << zeroGenerator(wFR - (2*(wFX_+1)-2),0) << ";" << endl;
+		vhdl << tab << declare("finalFrac",wFR) << "<= " << use("sqrFrac")<<range(2*(wFX_+1)-2,0) << " & " << zg(wFR - (2*(wFX_+1)-1),0) << " when " <<use("sqrFrac")<<"("<<2*(wFX_+1)-1<<")='1' else "  << endl;
+	    vhdl << tab << tab << use("sqrFrac")<<range(2*(wFX_+1)-3,0) << " & " << zg(wFR - (2*(wFX_+1)-2),0) << ";" << endl;
 	    
 	    vhdl << tab << declare ("excConcat",4) << " <= " << use("exc") << " & " <<  use("extExp")<<range(wE+1,wE) << ";" <<endl;
 	    //exception bits
@@ -105,7 +105,7 @@ FPSquarer::FPSquarer(Target* target, int wE, int wFX, int wFR) :
 	    vhdl << tab << "R" << " <= " << use("excR") << " & " << " \"0\"  & " << use("extExp") <<range(wE-1, 0) << " & " << use("finalFrac") << ";" << endl;
 	}else{
 	//rounding will be needed
-		vhdl << tab << declare("sticky",1) << "<=" << "'0' when "<<use("sqrFrac")<<range( 2*(wFX+1)-(wFR+3)-1,0)<<"="<<zeroGenerator(2*(wFX+1)-(wFR+3),0) << "else '1';"<<endl;
+		vhdl << tab << declare("sticky",1) << "<=" << "'0' when "<<use("sqrFrac")<<range( 2*(wFX+1)-(wFR+3)-1,0)<<"="<<zg(2*(wFX+1)-(wFR+3),0) << "else '1';"<<endl;
 		vhdl << tab << declare("guard",1) << " <= " << use("sqrFrac")<<of(2*(wFX+1)-(wFR+3))<<" when "<<use("sqrFrac")<<of(2*(wFX+1)-1)<<"='0' else " 
 		            << use("sqrFrac")<<of(2*(wFX+1)-(wFR+3)+1) << ";"<< endl;
 		vhdl << tab << declare("fracULP",1) << "<=" << use("sqrFrac")<<of(2*(wFX+1)-(wFR+3)+1)<<" when "<<use("sqrFrac")<<of(2*(wFX+1)-1)<<"='0' else " 
@@ -124,7 +124,7 @@ FPSquarer::FPSquarer(Target* target, int wE, int wFX, int wFR) :
 		vhdl << tab << declare("addCin",1) << " <= " << "(" << use("guard") << " and " << use("sticky") << ") or (" <<use("fracULP") << " and " << use("guard") << " and " << "not(" << use("sticky")<<"));"<<endl;
 	
 		inPortMap(add,"X", use("concatExpFrac"));
-		inPortMapCst(add,"Y",zeroGenerator(wE+2 + wFR,0));
+		inPortMapCst(add,"Y",zg(wE+2 + wFR,0));
 		inPortMap(add, "Cin", use("addCin"));
 		outPortMap(add, "R", "postRound");
 		vhdl << instance (add, "Rounding_Instance");

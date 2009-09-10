@@ -54,7 +54,6 @@ Operator(target), wIn_(wIn), N_(N), inputDelays_(inputDelays)
 		addInput (name.str() , wIn_);
 	}
 
-	//addInput ("Cin", 1  );
 	addOutput("R"  , wIn_);
 
 	if (verbose){
@@ -67,20 +66,15 @@ Operator(target), wIn_(wIn), N_(N), inputDelays_(inputDelays)
 	int nbOfInputs = N_;
 	int treeLevel = 1;
 
-//	a = new int[lutSize+1];
-//	sol = new int[lutSize+1];
-
-
-	
 	IntAdder *finalAdder = new IntAdder(target, wIn_);
 	oplist.push_back(finalAdder);	
 
+	//for homogeneous signal names
 	for (int j=0; j<nbOfInputs;j++){
 		name.str("");
 		name << "level_" << treeLevel-1 << "_sum_"<<j;
 		vhdl << tab << declare(name.str(),wIn_, true) << " <= " << use(join("X",j)) << ";" << endl;
 	}
-	
 	
 	while (processing){
 		if (nbOfInputs == 2){
@@ -114,19 +108,21 @@ Operator(target), wIn_(wIn), N_(N), inputDelays_(inputDelays)
 			} 
 			a[0]=0;
 	
-			for (int i=1; i<= lutSize; i++)
-				cout << a[i] << ", "; 
-			cout << endl;
+			if (verbose){
+				for (int i=1; i<= lutSize; i++)
+					cerr << a[i] << ", "; 
+				cerr << endl;
+			}
 
 			bt(1, lutSize, nbOfInputs, sol, a, nbOfInputs, bestSol);
 	
-			cout << "BACKTRACKING FINISHED" << endl;
-			cout << endl;
-			cout << " Solution = ";
+			clog << "BACKTRACKING FINISHED" << endl;
+			clog << endl;
+			clog << " Solution = ";
 			for (int i=1; i <=lutSize; i++)
-				cout << bestSol[i] << ", ";
-			cout << " having score " << bestSol[0] << endl;
-
+				clog << bestSol[i] << ", ";
+			clog << " having score " << bestSol[0] << endl;
+			
 			int currentlyMapped = 0;
 			int currentOutput = 0;
 			int currentCompressor = 0;
@@ -143,7 +139,7 @@ Operator(target), wIn_(wIn), N_(N), inputDelays_(inputDelays)
 							for (int k=currentlyMapped; k<currentlyMapped+i; k++) {
 								name.str("");
 								name << "level_" << treeLevel-1 << "_sum_"<<k;
-								vhdl << "("	<< zeroGenerator(sumSize-1,0) << " & " << use(name.str())<<of(j)<<")";
+								vhdl << "("	<< zg(sumSize-1,0) << " & " << use(name.str())<<of(j)<<")";
 								if (k < currentlyMapped+i-1)
 									vhdl << " + ";
 								}
@@ -192,7 +188,7 @@ Operator(target), wIn_(wIn), N_(N), inputDelays_(inputDelays)
 									vhdl << " & ";
 							}
 							if (m>0)
-								vhdl << " & " <<  zeroGenerator(m,0);
+								vhdl << " & " <<  zg(m,0);
 							vhdl << ";" << endl;
 						}
 					}else{

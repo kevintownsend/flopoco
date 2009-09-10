@@ -2289,10 +2289,10 @@ int IntTilingMult::multiplicationInDSPs(DSP** config)
 				setCycle(0);
 				xname.str("");
 				xname << "x" << i << "_" << j;
-				vhdl << tab << declare(xname.str(), multW) << " <= " << zeroGenerator(fpadX,0) << " & " << "X" << range(blx1-fpadX, trx1+bpadX) << " & " << zeroGenerator(bpadX,0) << ";" << endl;
+				vhdl << tab << declare(xname.str(), multW) << " <= " << zg(fpadX,0) << " & " << "X" << range(blx1-fpadX, trx1+bpadX) << " & " << zg(bpadX,0) << ";" << endl;
 				yname.str("");
 				yname << "y" << i << "_" << j;
-				vhdl << tab << declare(yname.str(), multH) << " <= " << zeroGenerator(fpadY,0) << " & " << "Y" << range(bly1-fpadY, try1+bpadY) << " & " << zeroGenerator(bpadY,0) << ";" << endl;
+				vhdl << tab << declare(yname.str(), multH) << " <= " << zg(fpadY,0) << " & " << "Y" << range(bly1-fpadY, try1+bpadY) << " & " << zg(bpadY,0) << ";" << endl;
 				
 				if (d->getShiftIn() != NULL) // multiply accumulate
 				{
@@ -2307,7 +2307,7 @@ int IntTilingMult::multiplicationInDSPs(DSP** config)
 					{
 						setCycle(connected);
 						sname.seekp(ios_base::beg);
-						sname << zeroGenerator(wInX+wInY+extW+extH-blx1-bly1-3, 0) << " & " << use(join(mname.str(),j)) << " & " << sname.str();
+						sname << zg(wInX+wInY+extW+extH-blx1-bly1-3, 0) << " & " << use(join(mname.str(),j)) << " & " << sname.str();
 					}
 					else // concatenate only the lower portion of the partial product
 					{
@@ -2325,12 +2325,12 @@ int IntTilingMult::multiplicationInDSPs(DSP** config)
 					if (d->getShiftOut() == NULL) // concatenate the entire partial product
 					{
 						setCycle(connected);
-						sname << zeroGenerator(wInX+wInY+extW+extH-blx1-bly1-2, 0) << " & " << use(mname.str()) << range(multH+multW-1, bpadX+bpadY)<< " & " << zeroGenerator(trx1-extW,0) << " & " << zeroGenerator(try1-extH,0) <<  ";" << endl;
+						sname << zg(wInX+wInY+extW+extH-blx1-bly1-2, 0) << " & " << use(mname.str()) << range(multH+multW-1, bpadX+bpadY)<< " & " << zg(trx1-extW,0) << " & " << zg(try1-extH,0) <<  ";" << endl;
 					}
 					else // concatenate only the lower portion of the partial product
 					{
 						setCycle(connected);
-						sname << use(mname.str()) << range(d->getShiftAmount()-1, bpadX+bpadY) << " & " << zeroGenerator(trx1-extW,0) << " & " << zeroGenerator(try1-extH,0) << ";" << endl;
+						sname << use(mname.str()) << range(d->getShiftAmount()-1, bpadX+bpadY) << " & " << zg(trx1-extW,0) << " & " << zg(try1-extH,0) << ";" << endl;
 					}
 				}
 				
@@ -2388,10 +2388,10 @@ int IntTilingMult::multiplicationInDSPs(DSP** config)
 			setCycle(0);
 			xname.str("");
 			xname << "x" << i << "_0";
-			vhdl << tab << declare(xname.str(), multW, true, Signal::registeredWithAsyncReset) << " <= " << zeroGenerator(fpadX,0) << " & " << "X" << range(blx1-fpadX, trx1+bpadX) << " & " << zeroGenerator(bpadX,0) << ";" << endl;
+			vhdl << tab << declare(xname.str(), multW, true, Signal::registeredWithAsyncReset) << " <= " << zg(fpadX,0) << " & " << "X" << range(blx1-fpadX, trx1+bpadX) << " & " << zg(bpadX,0) << ";" << endl;
 			yname.str("");
 			yname << "y" << i << "_0";
-			vhdl << tab << declare(yname.str(), multH, true, Signal::registeredWithAsyncReset) << " <= " << zeroGenerator(fpadY,0) << " & " << "Y" << range(bly1-fpadY, try1+bpadY) << " & " << zeroGenerator(bpadY,0) << ";" << endl;
+			vhdl << tab << declare(yname.str(), multH, true, Signal::registeredWithAsyncReset) << " <= " << zg(fpadY,0) << " & " << "Y" << range(bly1-fpadY, try1+bpadY) << " & " << zg(bpadY,0) << ";" << endl;
 			
 			boundDSPs = tempc[i]->getNumberOfAdders();
 			int ext = 0; // the number of carry bits of the addtion
@@ -2451,10 +2451,10 @@ int IntTilingMult::multiplicationInDSPs(DSP** config)
 					setCycle(0);
 					xname.str("");
 					xname << "x" << i << "_" << j+1;
-					vhdl << tab << declare(xname.str(), multW, true, Signal::registeredWithAsyncReset) << " <= " << zeroGenerator(fpadX,0) << " & " << "X" << range(blx1-fpadX, trx1+bpadX) << " & " << zeroGenerator(bpadX,0) << ";" << endl;
+					vhdl << tab << declare(xname.str(), multW, true, Signal::registeredWithAsyncReset) << " <= " << zg(fpadX,0) << " & " << "X" << range(blx1-fpadX, trx1+bpadX) << " & " << zg(bpadX,0) << ";" << endl;
 					yname.str("");
 					yname << "y" << i << "_" << j+1;
-					vhdl << tab << declare(yname.str(), multH, true, Signal::registeredWithAsyncReset) << " <= " << zeroGenerator(fpadY,0) << " & " << "Y" << range(bly1-fpadY, try1+bpadY) << " & " << zeroGenerator(bpadY,0) << ";" << endl;
+					vhdl << tab << declare(yname.str(), multH, true, Signal::registeredWithAsyncReset) << " <= " << zg(fpadY,0) << " & " << "Y" << range(bly1-fpadY, try1+bpadY) << " & " << zg(bpadY,0) << ";" << endl;
 					
 					nextCycle();
 					mname.str("");
@@ -2471,12 +2471,12 @@ int IntTilingMult::multiplicationInDSPs(DSP** config)
 				{
 					mname.str("");
 					mname << "mult_" << i << "_" << j;
-					vhdl << "(" << zeroGenerator(ext,0) << " & " << use(mname.str()) << ") + "; 
+					vhdl << "(" << zg(ext,0) << " & " << use(mname.str()) << ") + "; 
 				}
 				
 				mname.str("");
 				mname << "mult_" << i << "_" << j;
-				vhdl << "(" << zeroGenerator(ext,0) << " & " << use(mname.str()) << ");" << endl; 
+				vhdl << "(" << zg(ext,0) << " & " << use(mname.str()) << ");" << endl; 
 				
 			} 
 			else // multiply the two terms and you're done
@@ -2484,7 +2484,7 @@ int IntTilingMult::multiplicationInDSPs(DSP** config)
 				nextCycle();
 				vhdl << tab << declare(join("addDSP", nrOp), multW+multH, true, Signal::registeredWithAsyncReset) << " <= " << use(xname.str()) << " * " << use(yname.str()) << ";" << endl;
 			}
-			vhdl << tab << declare(join("addOpDSP", nrOp), wInX+wInY) << " <= " << zeroGenerator(wInX+minPad-blx1-ext,0) << " & " << zeroGenerator(wInY-bly1,0) << " & " << use(join("addDSP", nrOp)) << range(multW+multH+ext-1, minPad) << " & " << zeroGenerator(trx1+try1+minPad-mPadX-mPadY,0) << ";" << endl;
+			vhdl << tab << declare(join("addOpDSP", nrOp), wInX+wInY) << " <= " << zg(wInX+minPad-blx1-ext,0) << " & " << zg(wInY-bly1,0) << " & " << use(join("addDSP", nrOp)) << range(multW+multH+ext-1, minPad) << " & " << zg(trx1+try1+minPad-mPadX-mPadY,0) << ";" << endl;
 			nrOp++;
 		}
 		return nrOp;

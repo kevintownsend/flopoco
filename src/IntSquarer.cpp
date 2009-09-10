@@ -64,7 +64,7 @@ Operator(target), wIn_(wIn), inputDelays_(inputDelays)
 
 			vhdl << declare("x0_16",17) << " <= "<<use("X") << range(16,0) << ";" << endl;
 			if (wIn<34)
-				vhdl << declare("x17_33",17) << " <= "<<zeroGenerator(34-wIn,0) << " & " <<  use("X") << range(wIn-1,17) << ";" << endl;
+				vhdl << declare("x17_33",17) << " <= "<<zg(34-wIn,0) << " & " <<  use("X") << range(wIn-1,17) << ";" << endl;
 			else
 				vhdl << declare("x17_33",17) << " <= "<<use("X") << range(33,17) << ";" << endl;
 						
@@ -121,7 +121,7 @@ Operator(target), wIn_(wIn), inputDelays_(inputDelays)
 			intadder = new IntAdder(target, 84);
 			oplist.push_back(intadder);
 			if (wIn<51)  
-				vhdl << declare("sigX",51) << "<= "<<zeroGenerator(51-wIn,0) <<" & X;"<<endl;
+				vhdl << declare("sigX",51) << "<= "<<zg(51-wIn,0) <<" & X;"<<endl;
 			else
 				vhdl << declare("sigX",51) << "<= X;"<<endl;
 			vhdl << declare("x0_16_sqr",34) << "<= " << use("sigX")<<range(16,0) << " * " << use("sigX")<<range(16,0)<<";"<<endl;
@@ -152,7 +152,7 @@ Operator(target), wIn_(wIn), inputDelays_(inputDelays)
 			oplist.push_back(intadder);
 
 			if (wIn<68)  
-			vhdl << declare("sigX",68) << "<= "<<zeroGenerator(68-wIn,0) <<" & X;"<<endl;
+			vhdl << declare("sigX",68) << "<= "<<zg(68-wIn,0) <<" & X;"<<endl;
 			else
 			vhdl << declare("sigX",68) << "<= X;"<<endl;
 
@@ -178,7 +178,7 @@ Operator(target), wIn_(wIn), inputDelays_(inputDelays)
 			                                << "( "<< use("sigX")<<range(33,17) << ") * (" << use("sigX")<<range(67,51)<<");"<<endl;
 			nextCycle(); ////////////////////////////////////////////////
 			vhdl << declare("op1",101) << "<= "<< use("x51_67_sqr")<<" & " <<  use("x34_50_sqr")<<range(33,0) << " & " << use("x17_33_sqr")<<range(33,1) <<  ";"<<endl;
-			vhdl << declare("op2",101) << "<="<< zeroGenerator(101-68,0)<<" & " << use("x_17_33_51_67_pshift") << " & " << use("x_0_16_51_67_pshift")<<range(16,0)<<" & " << use("x_0_16_34_50")<<range(16,0)<<";"<<endl;
+			vhdl << declare("op2",101) << "<="<< zg(101-68,0)<<" & " << use("x_17_33_51_67_pshift") << " & " << use("x_0_16_51_67_pshift")<<range(16,0)<<" & " << use("x_0_16_34_50")<<range(16,0)<<";"<<endl;
 			inPortMap(intadder, "X", "op1");
 			inPortMap(intadder, "Y", "op2");
 			inPortMapCst(intadder, "Cin", "'0'");
@@ -217,8 +217,8 @@ Operator(target), wIn_(wIn), inputDelays_(inputDelays)
 			vhdl << instance(intsquarer, "SQUARER51");
 
 
-			vhdl << declare("op1mul2",53) << "<= "<< "(\"00\" & "<< use("sigX")<<range(50,0) <<") when "<<use("sigX")<<"(51)='1' else "<<zeroGenerator(53,0) << ";"<<endl;
-			vhdl << declare("op2mul2",53) << "<= "<< "(\"0\" & "<< use("sigX")<<range(50,0) <<" & \"0\") when "<<use("sigX")<<"(52)='1' else "<<zeroGenerator(53,0) << ";"<<endl;
+			vhdl << declare("op1mul2",53) << "<= "<< "(\"00\" & "<< use("sigX")<<range(50,0) <<") when "<<use("sigX")<<"(51)='1' else "<<zg(53,0) << ";"<<endl;
+			vhdl << declare("op2mul2",53) << "<= "<< "(\"0\" & "<< use("sigX")<<range(50,0) <<" & \"0\") when "<<use("sigX")<<"(52)='1' else "<<zg(53,0) << ";"<<endl;
 
 			nextCycle(); ////////////////////////////////////////////////
 
@@ -234,7 +234,7 @@ Operator(target), wIn_(wIn), inputDelays_(inputDelays)
 			
 			nextCycle(); ////////////////////////////////////////////////
 			vhdl << declare("op1",54) << "<= "<< use("x51_52_sqr")<<" & " <<  use("out_Squarer_51")<<range(101,52) <<  ";"<<endl;
-			vhdl << declare("op2",54) << "<="<< zeroGenerator(1,0)<<" & " <<  use("x51_52_times_x_0_50") <<";"<<endl;
+			vhdl << declare("op2",54) << "<="<< zg(1,0)<<" & " <<  use("x51_52_times_x_0_50") <<";"<<endl;
 
 			inPortMap(intadder, "X", "op1");
 			inPortMap(intadder, "Y", "op2");
