@@ -38,6 +38,7 @@ class Virtex4 : public Target
 public:
 	/** The default constructor. */  
 	Virtex4() : Target()	{
+		id_             = "Virtex4";
 		sizeOfBlock_ 	= 18432;	// the size of a primitive block is 2^11 * 9
 		// all these values are set more or less randomly, to match  virtex 4 more or less
 		fastcarryDelay_ = 0.034e-9; //s   
@@ -54,7 +55,7 @@ public:
 		muxcyCINtoO_    = 0.034e-9;
 		ffd_            = 0.017e-9;
 		muxf5_          = 0.291e-9;
-		slice2sliceDelay_       = 0.436e-9;
+		slice2sliceDelay_= 0.436e-9;
 		xorcyCintoO_    = 0.273e-9;
 		
 		lutInputs_ = 4;

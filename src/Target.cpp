@@ -24,12 +24,17 @@
 
 #include <iostream>
 #include <sstream>
+#include <string>
 #include "Target.hpp"
 
 
 using namespace std;
 
 extern int verbose;
+
+string Target::getID(){
+	return id_;
+}
 
 void Target::setPipelined() {
 	pipeline_=true;

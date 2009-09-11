@@ -38,7 +38,8 @@ class Spartan3 : public Target
 public:
 	/** The default constructor. */  
 	Spartan3() : Target()	{
-		sizeOfBlock_ 	= 18432;	// the size of a primitive block is 2^11 * 9
+		id_             = "Spartan3";
+		sizeOfBlock_ 	= 18432;	// to set TODO
 		// all these values are set more or less randomly, to match  virtex 4 more or less
 		fastcarryDelay_ = 0.034e-9; //s   
 		elemWireDelay_  = 0.436e-9;

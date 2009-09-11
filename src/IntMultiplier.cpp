@@ -42,9 +42,9 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 	ostringstream name;
 
 	/* Name Setup procedure
-	 *  The name has the format: IntMultiplier_wInX__wInY_
-	 *  wInX_ = width of the X input
-	 *  wInY_ = width of the Y input
+	 *  The name has the format: IntMultiplier_wInX_wInY
+	 *  wInX = width of the X input
+	 *  wInY = width of the Y input
 	 */  
 	name <<"IntMultiplier_"<<wInX_<<"_"<<wInY_;
 	setName(name.str());
@@ -60,9 +60,9 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 	if ((target->getUseHardMultipliers()) && (target->getNumberOfDSPs()>0))
 	{
 		if (verbose)
-			cout << "The target is " << typeid(*target).name() << endl;
+			cout << "The target is " << target->getID() << endl;
 			
-		if (strncmp(typeid(*target).name(), "7Virtex", 7) == 0) // then the target is Virtex
+		if ((target->getID()=="Virtex4")||(target->getID()=="Virtex5")||(target->getID()=="Spartan3")) 
 		{
 			int chunksX, chunksY;
 			int x, y;

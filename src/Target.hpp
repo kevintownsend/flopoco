@@ -26,6 +26,9 @@
 #define TARGET_HPP
 
 #include "DSP.hpp"
+#include <string>
+
+using namespace std;
 
 /** Abstract target Class. All classes which model real chips inherit from this class */
 class Target
@@ -39,14 +42,20 @@ class Target
 		lutInputs_         = 4;
 		frequency_         = 400000000.;
 		useHardMultipliers_= true;
+		id_                = "generic";
 	}
 	
 	/** The destructor */
 	virtual ~Target() {}
 
+	/** Returns ID of instantiated target. This ID is represented by the name
+	 * @return the ID
+	 */
+	string getID();
+
 	// Architecture-related methods
-	/** Returns the number of inputs that the LUTs have on the specifi device
-	 * @return the number of inputs for the look-up tables (LUTs) of the devie
+	/** Returns the number of inputs that the LUTs have on the specific device
+	 * @return the number of inputs for the look-up tables (LUTs) of the device
 	 */
 	int lutInputs();
 	
@@ -186,18 +195,19 @@ class Target
 	virtual int getIntNAdderCost(int wIn, int n) =0;
 	
 	/** Constructs a specific DSP to each target */
-	
 	virtual DSP* createDSP() = 0;
+	
 	
 
 protected:
+	string id_;
 	int    lutInputs_;          /**< The number of inputs for the LUTs */
 	bool   pipeline_;           /**< True if the target is pipelined/ false otherwise */
 	double frequency_;          /**< The desired frequency for the operator in Hz */
 	int    multXInputs_;        /**< The size for the X dimmension of the hardware multipliers */
 	int    multYInputs_;        /**< The size for the Y dimmension of the hardware multipliers */
 	bool   useHardMultipliers_; /**< If true the operator design can use the hardware multipliers */
-	long   sizeOfBlock_;			/**< The size of a primitive memory block */
+	long   sizeOfBlock_;		/**< The size of a primitive memory block */
 	
 };
 

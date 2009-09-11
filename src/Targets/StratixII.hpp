@@ -39,6 +39,7 @@ public:
 
 	/** The default constructor. */  
 	StratixII() : Target()	{
+		id_                 = "StratixII";
 		sizeOfBlock_ 		= 4608; 	// the size of a primitive block is 2^9 * 9
 		fastcarryDelay_ 	= 3.5e-11; 	// aproximately right    
 		elemWireDelay_  	= 0.222e-11; 	// an average value over R4, R24, C4, C16 interconnects delays
