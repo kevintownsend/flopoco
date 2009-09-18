@@ -41,7 +41,7 @@ IntNAdder::IntNAdder(Target* target, int wIn, int N, map<string, double> inputDe
 Operator(target), wIn_(wIn), N_(N), inputDelays_(inputDelays) 
 {
 	ostringstream name;
-	name << "IntNAdder_" << wIn_;
+	name << "IntNAdder_" << wIn_<<"_"<<N;
 	setName(name.str());
 
 	setCopyrightString("Bogdan Pasca (2009)");

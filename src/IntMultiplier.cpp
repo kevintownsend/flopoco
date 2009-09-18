@@ -73,7 +73,8 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 			chunksY =  int(ceil( ( double(wInY) / (double) y) ));
 			
 			if (verbose)
-				cerr << "> IntMultiplier:   X splitted in "<< chunksX << " chunks of " << x << " and Y in " << chunksY << " chunks of " << y << "; " << endl;
+				cerr << "> IntMultiplier:   X splitted in "<< chunksX << " chunks of " << x 
+				                            << " and Y in "<< chunksY << " chunks of " << y << "; " << endl;
 
 				if (chunksX + chunksY > 2) { // up to 17 x 17 bit on Virtex4 can be written as an "*" @ 400++ MHz 
 				// to be general version (parametrized etc) 
