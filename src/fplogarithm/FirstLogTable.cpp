@@ -7,8 +7,8 @@
 using namespace std;
 
 
-FirstLogTable::FirstLogTable(Target *target, int wIn, int wOut, FirstInvTable* fit) : 
-	Table(target, wIn, wOut), fit(fit)
+FirstLogTable::FirstLogTable(Target *target, int wIn, int wOut, FirstInvTable* fit, FPLog* op_) : 
+	Table(target, wIn, wOut), fit(fit), op(op_)  
  {
 	 ostringstream name; 
 	 name <<"LogTable_0_"<<wIn<<"_"<<wOut;
@@ -76,26 +76,27 @@ mpz_class FirstLogTable::function(int x)
   // result = double2output(log(apprinv));
   mpfr_set_d(i, apprinv, GMP_RNDN);
   mpfr_log(l, i, GMP_RNDN);
+  mpfr_neg(l, l, GMP_RNDN);
 
-
-
-  if (x>>(wIn-1)) { // the log will be negative  -- code it in two's complement
-	  // shift left(l, wOut); 
-	 mpfr_mul_2si(l, l, wOut, GMP_RNDN);
-	 mpfr_get_z(r, l, GMP_RNDN);
-    result = mpz_class(r);
-    // code in two's complement
-    mpz_class t = mpz_class(1) << wOut;
-    result = t-result;
+  // Remove the sum of small offsets that are added to the other log tables
+  for(int j=1; j<=op->stages; j++){
+	  mpfr_set_d(i, 1.0, GMP_RNDN);
+	  int pi=op->p[j];
+	  mpfr_mul_2si(i, i, -2*pi, GMP_RNDN);
+	  mpfr_sub(l, l, i,  GMP_RNDN);
   }
-  else { // the log will be positive
-    mpfr_neg(l, l, GMP_RNDN);
-    //mpfr_shift_left(l, wOut); 
-	 mpfr_mul_2si(l, l, wOut, GMP_RNDN);
-	 mpfr_get_z(r, l, GMP_RNDN);
-    result=mpz_class(r);
-  };
 
+ 
+
+  // code the log in 2's compliment
+  mpfr_mul_2si(l, l, wOut, GMP_RNDN);
+  mpfr_get_z(r, l, GMP_RNDN);
+  result = mpz_class(r); // signed
+
+  // This is a very inefficient way of converting
+  mpz_class t = mpz_class(1) << wOut; 
+  result = t+result;
+  if(result>t) result-=t;
 
   //  cout << "x="<<x<<" apprinv="<<apprinv<<" logapprinv="<<log(apprinv)<<" result="<<result<<endl;
   mpfr_clear(i);

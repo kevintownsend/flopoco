@@ -8,7 +8,7 @@ using namespace std;
 
 
 FirstInvTable::FirstInvTable(Target* target, int wIn, int wOut) : 
-   Table(target, wIn, wOut)  
+   Table(target, wIn, wOut)
 {
 	ostringstream name; 
 	name <<"InvTable_0_"<<wIn<<"_"<<wOut;

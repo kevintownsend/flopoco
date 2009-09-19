@@ -86,10 +86,21 @@ FPLog::FPLog(Target* target, int wE, int wF, int inTableSize)
 	// How many bits have been zeroed?  a0=5 is a lucky case but it messes up the following
 	p[1] = a[0]-2; // if a0==5, would be a0-1
 
+	// The number of guard bits
+	// For each stage: 0.5 ulp for rounding the log table
+	//                 1 ulp for truncating Z
+	//                 1 ulp for truncating P
+	//                 1 ulp for truncating EiY
+	//        total 3.5 bit/stage
+	// Plus for the rest of the computation:
+	//                 1 ulp for truncating Z before input to the square
+	//                 1 ulp for truncating Z^2
+
 	i=1;
-	while(2*p[i] <= wF){ // for faithful rounding
+	gLog=max(3, intlog2(2+3.5*(i+1)));
+	while(3*p[i]+1 <= p[i]+wF+gLog){ // while the third-order term of log(1+Zi) is not negligible
 		if(i==1) { 	// stage 1 cannot be more accurate than 2p1-1
-			a[1] = p[1];   // Cheating here, I am only able to prove for   p[1]-1
+			a[1] = p[1];  
 			p[2] = 2*p[1]-1;
 		}
 		else {
@@ -97,10 +108,12 @@ FPLog::FPLog(Target* target, int wE, int wF, int inTableSize)
 			p[i+1] = p[i] + a[i] - 1; // and we zero out a[i]-1 bits
 		}
 		i++;
+		gLog=max(3, intlog2(2+3.5*(i+1)));
 	}  
 	
 	// The number of stages, not counting stage 0
 	stages = i-1;
+	gLog=max(3, intlog2(2+3.5*(stages+1)));
 	
 	if(verbose>=2) {
 		cerr << "> FPLog\t Initial parameters:" << endl;
@@ -113,13 +126,18 @@ FPLog::FPLog(Target* target, int wE, int wF, int inTableSize)
 	}
 	// Now we probably have reduced too far
 	pfinal = p[stages+1];
-	int extraBits = pfinal - (wF>>1) -1;
+	int extraBits = pfinal - ((wF+gLog-2)>>1);
 	int extraBitsperstage =  floor(((double)extraBits) / ((double)(stages+1)));
 	if(verbose)
 		cerr << "> FPLog\t before optimization:  pfinal=" << pfinal << "--- extraBits=" << extraBits << "---extraBitsperstage=" << extraBitsperstage << endl;
-	for (i=0; i<= stages; i++)
-		a[i] -= extraBitsperstage;
-	
+	if(bitsPerStage>6) {
+		for (i=0; i<= stages; i++)
+			a[i] -= extraBitsperstage;
+	}
+	else  {
+		for (i=2; i<= stages; i++)
+			a[i] -= extraBitsperstage;
+	}
 	// Recompute the pi
 	p[1] = a[0]-2;
 	
@@ -130,7 +148,7 @@ FPLog::FPLog(Target* target, int wE, int wF, int inTableSize)
 			p[i+1] = p[i] + a[i] - 1;
 	}
 	pfinal = p[stages+1];
-	extraBits = pfinal - (wF>>1) -1;
+	extraBits = pfinal -  ((wF+gLog-2)>>1);
 	if(stages>=2) { // remove extra bits from stages 2 to stages
 		extraBitsperstage =  floor(((double)extraBits) / ((double)(stages-1)));
 		int extraBitsStage2 = extraBits - (stages-1)*extraBitsperstage;
@@ -142,15 +160,16 @@ FPLog::FPLog(Target* target, int wE, int wF, int inTableSize)
 		} 
 		pfinal = p[stages+1];
 	}
-	extraBits = pfinal - (wF>>1) -1;
+
+	extraBits = pfinal -  ((wF+gLog-2)>>1);
+
 	if(verbose>=2)
 		cerr << "> FPLog\t after optimization:   pfinal=" << pfinal << "--- extraBits=" << extraBits << endl;
 	
-	// Deduce the number of guard bits
-	gLog=max(3, intlog2(3*(stages+1)));
  
 	if(verbose)
 		cerr << "> FPLog"<<tab<<"Guard bits: " << gLog << endl;
+
 
 	target_prec = wF + pfinal +gLog;
 	if(verbose==2)
@@ -166,11 +185,15 @@ FPLog::FPLog(Target* target, int wE, int wF, int inTableSize)
 	//         size of Y0          size of approx inv of A0
 
 	for(i=1; i<=stages; i++) { 
-		// size of Z before truncation; Zi = 0Bi - 0AiZi + ... ; AiZi has weight -2*p[i], and size a[i]+s[i]
-		sbt[i+1] =    s[i]      +    a[i]        +  1;
-		//         size of Zi   +   size of Ai   + the leading bit
+		// size of Z before truncation; Zi = 0Bi - 0AiZi + EiYi ; 
+		// AiZi has weight -2*p[i], and size a[i]+s[i]
+		// EiYi has weight -2*p[i]-1 and size 1+p[i]+s[i]
+		// except i=1: same weight but size may be 1+p[i]+s[i]+1
+		if(i==1)
+			sbt[i+1] =    max( a[i]+s[i]+1, 1+p[i]+s[i]+1);
+		else
+			sbt[i+1] =    max( a[i]+s[i]+1, 1+p[i]+s[i]);
 
-		//	sfullZ[i+1] =  sfullZ[i] + a[i] + p[i] + 1;
 		if(p[i+1]+sbt[i+1] <= target_prec) 
 			{ // No truncation at all
 				psize[i] = s[i];
@@ -179,7 +202,7 @@ FPLog::FPLog(Target* target, int wE, int wF, int inTableSize)
 			}
 		else
 			{ // Truncate everybody to targetprec : 
-				// we compute Z[i+1] = B[i] - A[i]Z[i] + (1+Z[i])>>eps[i]
+				// we compute Z[i+1] = B[i] - A[i]Z[i] + (1+Z[i])>>Ei[i]
 				// Product  A[i]Z[i] has MSB 2*p[i], LSB target_prec, therefore size target_prec - 2*p[i]
 				// We need only this many bits of Z[i] to compute it.
 				psize[i] = target_prec - 2*p[i];
@@ -353,68 +376,37 @@ FPLog::FPLog(Target* target, int wE, int wF, int inTableSize)
 	}
 
 
-#if 0 // Old code from the Arith paper 
-		vhdl << tab << declare(join("epsZ",i), s[i] + p[i] +2 ) << " <= " ;
-		if(i==1) { // special case for the first iteration
-			vhdl << 	rangeAssign(s[i]+p[i]+1,  0,  "'0'")  << " when  " << use("A1") << " = " << rangeAssign(a[1]-1, 0,  "'0'") << endl
-				  << tab << "    else (\"01\" & "<< rangeAssign(p[i]-1, 0, "'0'") << " & " << use(join("Z",i)) << " )"
-				  << "  when ((" << use("A1") << "("<< a[1]-1 << ")='0') and (" << use("A1") << range(a[1]-2, 0) << " /= " << rangeAssign(a[1]-2, 0, "'0'") << "))" << endl
-				  << tab << "    else " << "(\"1\" & " << rangeAssign(p[i]-1, 0, "'0'") << " & " << use(join("Z",i)) << "  & \"0\") "
-			  << ";"<<endl;
-		}
-		else {
-			vhdl << rangeAssign(s[i]+p[i]+1,  0,  "'0'") 
-				  << tab << "  when " << use(join("A",i)) << " = " << rangeAssign(a[i]-1,  0,  "'0'") << endl
-				  << tab << "  else    (\"01\" & " << rangeAssign(p[i]-1,  0,  "'0'") << " & " << use(join("Z",i)) <<");"<<endl;
-		}
-		vhdl << tab << declare(join("Z", i+1), s[i+1]) << " <=   (\"0\" & " << use(join("B",i));
-		if (s[i+1] > 1+(s[i]-a[i]))  // need to padd Bi
-			vhdl << " & " << rangeAssign(s[i+1] - 1-(s[i]-a[i]) -1,  0 , "'0'");    
-		vhdl <<")"<<endl 
-			  << tab << "      - ( " << rangeAssign(p[i]-a[i],  0,  "'0'") << " & " << use(join("P", i));
-		// either pad, or truncate P
-		if(p[i]-a[i]+1  + psize[i]+a[i]  < s[i+1]) // size of leading 0s + size of p 
-			vhdl << " & "<< rangeAssign(s[i+1] - (p[i]-a[i]+1  + psize[i]+a[i]) - 1,    0,  "'0'");  // Pad
-		if(p[i]-a[i]+1  + psize[i]+a[i]  > s[i+1]) 
-			//truncate
-			vhdl << range(psize[i]+a[i]-1,    p[i]-a[i]+1  + psize[i]+a[i] - s[i+1]);
-		vhdl << "  )"<< endl;
-		
-		vhdl << tab << "      + " << use(join("epsZ",i)) << range(s[i]+p[i]+1,  s[i]+p[i] +2 - s[i+1]) << ";"<<endl;
-		
-
-
-
-#else
 		int yisize = s[i]+p[i]+1; // +1 because implicit 1
 
 		// While the multiplication takes place, we may prepare the other term 
-		vhdl << tab << declare(join("Y",i), yisize) << " <= " 
-			  << " \"1\" & " << rangeAssign(p[i]-1,  0,  "'0'") << " & " << use(join("Z",i)) <<";"<<endl;
+		string Yi= join("Y",i);
+		string Zi= join("Z",i);
+		vhdl << tab << declare(Yi, yisize) << " <= " 
+			  << " \"1\" & " << rangeAssign(p[i]-1,  0,  "'0'") << " & " << use(Zi) <<";"<<endl;
 
-		vhdl << tab << declare(join("epsY",i), s[i+1]) << " <= " 
-			  << rangeAssign(s[i+1]-1,  0,  "'0'")  << tab << "  when " << use(join("A",i)) << " = " << rangeAssign(a[i]-1,  0,  "'0'") << endl
-			  << tab << "  else ";
-		if(2*p[i] - p[i+1] -1 > 0) 
-			vhdl << rangeAssign(2*p[i] - p[i+1] - 2,  0,  "'0'")     // 2*p[i] - p[i+1] -1 zeros to perform multiplication by 2^2*pi
-				  << " & " << use(join("Y",i)) << range(yisize-1,  yisize - s[i+1] +   2*p[i] - p[i+1] - 1 ) << ";" << endl;   
-		//else 2*p[i] - p[i+1] -1 = 0, or there is something frankly wrong
-		else
-			vhdl << use(join("Y",i)) << range (yisize-1, yisize-s[i+1]) << ";" << endl;
-
+		// We truncate EiY to a position well above target_prec
+		vhdl << tab << declare(join("EiY",i), s[i+1]) << " <= " ;
+		if(i==1) { // TODO probably broken if we implement the bit of luck of 1st iteration
+			vhdl <<  use(Yi) << "& \"0\""
+				  << "  when " << use(join("A",i)) << of(a[i]-1) << " = '1'" << endl
+				  << tab << "  else  \"0\" & " << use(Yi) 
+				  << ";" << endl ;
+		} 
+		else { // i>1, general case
+			vhdl << rangeAssign(2*p[i] -p[i+1] -2,  0,  "'0'")  << " & " << use(Yi) << range(yisize-1,  yisize - (s[i+1] - (2*p[i]-p[i+1]) )-1) << ";" << endl ;
+		}
 		nextCycle();
-		// IntAdder here?
-		vhdl << tab << declare(join("epsYPB",i), s[i+1]) << " <= " 
+		// IntAdder here? TODO
+		vhdl << tab << declare(join("EiYPB",i), s[i+1]) << " <= " 
 			  << " (\"0\" & " << use(join("B",i));
 		if (s[i+1] > 1+(s[i]-a[i]))  // need to padd Bi
 			vhdl << " & " << rangeAssign(s[i+1] - 1-(s[i]-a[i]) -1,  0 , "'0'");    
-		vhdl <<")"<<  " + " << use(join("epsY",i)) << ";" << endl; 
+		vhdl <<")"<<  " + " << use(join("EiY",i)) << ";" << endl; 
 
 		syncCycleFromSignal(join("P",i), false);
 		nextCycle();
 
 
-#if 1 // simple addition
 		vhdl << tab << declare(join("Pp", i), s[i+1])  << " <= " 
 			  << rangeAssign(p[i]-a[i],  0,  "'0'") << " & " << use(join("P", i));
 		// either pad, or truncate P
@@ -426,29 +418,8 @@ FPLog::FPLog(Target* target, int wE, int wF, int inTableSize)
 		vhdl << ";"<<endl;
 
 		vhdl << tab << declare(join("Z", i+1), s[i+1])  << " <= " 
-			  << use(join("epsYPB",i)) << " - " << use(join("Pp", i)) << ";"<<endl;
-#else
-		// THIS CODE DOESN'T WORK -- look for the bug !	
-		vhdl << tab << "--  compute epsYPBi - Pi" << endl;
-		vhdl << tab << declare(join("mP", i), s[i+1])  << " <= " 
-			  << " not (" << rangeAssign(p[i]-a[i],  0,  "'0'") << " & " << use(join("P", i));
-		// either pad, or truncate P
-		if(p[i]-a[i]+1  + psize[i]+a[i]  < s[i+1]) // size of leading 0s + size of p 
-			vhdl << " & "<< rangeAssign(s[i+1] - (p[i]-a[i]+1  + psize[i]+a[i]) - 1,    0,  "'0'");  // Pad
-		if(p[i]-a[i]+1  + psize[i]+a[i]  > s[i+1]) 
-			//truncate
-			vhdl << range(psize[i]+a[i]-1,    p[i]-a[i]+1  + psize[i]+a[i] - s[i+1]);
-		vhdl << "  );"<<endl;
-		IntAdder* ai = new IntAdder(target, s[i+1]);
-		oplist.push_back(ai);
-		inPortMap     (ai, "X", join("mP",i));
-		inPortMap     (ai, "Y", join("epsY",i));
-		inPortMapCst  (ai, "Cin", "'1'");
-		outPortMap    (ai, "R", join("Z",i+1));
-		vhdl << instance(ai, join("Z",i+1)+"adder");
-#endif
+			  << use(join("EiYPB",i)) << " - " << use(join("Pp", i)) << ";"<<endl;
 		
-#endif
 	}
 
 	vhdl << tab << declare("Zfinal", s[stages+1]) << " <= " << use(join("Z", stages+1)) << ";" << endl;  
@@ -468,8 +439,7 @@ FPLog::FPLog(Target* target, int wE, int wF, int inTableSize)
 		squarerInSize = (wF+gLog+2) - pfinal;
 	else 
 		squarerInSize = sfinal-pfinal;
-		
-		
+				
 	vhdl << tab << declare("squarerIn", squarerInSize) << " <= " 
 		  << use("Zfinal") << "(sfinal-1 downto sfinal-"<< squarerInSize << ") when " << use("doRR") << "='1'" << endl;
 	if(squarerInSize>small_absZ0_normd_size)
@@ -495,7 +465,7 @@ FPLog::FPLog(Target* target, int wE, int wF, int inTableSize)
 	setCycle(getCurrentCycle() - stages -1 , true);
 
 	vhdl << tab << "-- First log table" << endl;
-	FirstLogTable* lt0 = new FirstLogTable(target, a[0], target_prec, it0);
+	FirstLogTable* lt0 = new FirstLogTable(target, a[0], target_prec, it0, this);
 	oplist.push_back(lt0);
 	inPortMap       (lt0, "X", "A0");
 	outPortMap      (lt0, "Y", "L0");

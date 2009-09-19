@@ -35,33 +35,17 @@ double OtherLogTable::input2double(int x) {
   // computation in double is exact as long as we don't want a quad
   // operator...
 
-  // This is actually the computation of the inverse
-#if 0
-  if(x==0) 
-    d = 0.;
-  else{
-    d = (double) (-(x<<1));
-    if(which==1) {
-		 if(x>>(wIn-1)) // MSB of x
-			 d+=2.; 
-		 else 
-			 d+=1.; 
-    } 
-    else 
-		 d += 1.;
-  }
-  d = d / ((double) (((uint64_t) 1)<<(pi+wIn+1)));
-#else
-  if(x==0) 
-    d = 0.;
-  else{
+  double Ei;
+  if((which>1) || (which==1 && (1==(x>>(wIn-1)))) ) 
+	  Ei = 1.0 / ((double) (((uint64_t) 1)<<(2*pi)));
+  else
+	  Ei = 1.0 / ((double) (((uint64_t) 1)<<(2*pi+1)));
+	  
 	  d = ((double) (-x))   /   ((double) (((uint64_t) 1)<<(pi+wIn)));
-	  double Ei = 1.0 / ((double) (((uint64_t) 1)<<(2*pi)));
+
 	  //cout << endl << d << " " << Ei << "   " ;
 	  d += Ei;
 	  //cout << d;
-  }
-#endif
   return d; 
 }
 
@@ -106,8 +90,13 @@ mpz_class OtherLogTable::function(int x) {
   apprinv = input2double(x);
   mpfr_set_d(i, apprinv, GMP_RNDN);
   mpfr_log1p(l, i, GMP_RNDN);
-  // cout << "which=" << which <<  " div" << (pi+wIn+1) << "  x=" << x << "  apprinv=" << apprinv << "  l=" << mpfr_get_d(l, GMP_RNDN) << endl; 
   mpfr_neg(l, l, GMP_RNDN);
+  // cout << "which=" << which <<  " div" << (pi+wIn+1) << "  x=" << x << "  apprinv=" << apprinv << "  l=" << mpfr_get_d(l, GMP_RNDN) << endl; 
+  // Add the small offset that ensures that it never gets negative (the sum of these offsets will be subtracted to L0)
+  mpfr_set_d(i, 1.0, GMP_RNDN);
+  mpfr_mul_2si(i, i, -2*pi, GMP_RNDN);
+  mpfr_add(l, l, i,  GMP_RNDN);
+
   mpfr_mul_2si(l, l, pi+wOut, GMP_RNDN);
   mpfr_get_z(r, l, GMP_RNDN);
   result=mpz_class(r);

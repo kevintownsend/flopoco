@@ -2,11 +2,12 @@
 #define FIRSTLOGTABLE_HPP
 
 #include "FirstInvTable.hpp"
+#include "../FPLog.hpp"
 
 class FirstLogTable : public Table
 {
 public:
-	FirstLogTable(Target *target, int p1, int w1,  FirstInvTable* fit);
+	FirstLogTable(Target *target, int p1, int w1,  FirstInvTable* fit, FPLog* op_);
 	
 	~FirstLogTable();
 	
@@ -24,6 +25,8 @@ public:
 	double output2double(mpz_class x);
 	
 private:
+	
+	FPLog* op;
 	
 };
 

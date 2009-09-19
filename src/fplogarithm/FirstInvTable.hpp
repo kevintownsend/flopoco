@@ -25,9 +25,6 @@ public:
 	double maxMulOut;
 	double minMulOut;
 	
-private:
-	
-	
 };
 
 
