@@ -190,9 +190,9 @@ FPLog::FPLog(Target* target, int wE, int wF, int inTableSize)
 		// EiYi has weight -2*p[i]-1 and size 1+p[i]+s[i]
 		// except i=1: same weight but size may be 1+p[i]+s[i]+1
 		if(i==1)
-			sbt[i+1] =    max( a[i]+s[i]+1, 1+p[i]+s[i]+1);
+			sbt[i+1] =    max( a[i]+s[i]+1, 1+p[i]+sbt[i]+1);
 		else
-			sbt[i+1] =    max( a[i]+s[i]+1, 1+p[i]+s[i]);
+			sbt[i+1] =    max( a[i]+s[i]+1, 1+p[i]+sbt[i]);
 
 		if(p[i+1]+sbt[i+1] <= target_prec) 
 			{ // No truncation at all
@@ -386,11 +386,18 @@ FPLog::FPLog(Target* target, int wE, int wF, int inTableSize)
 
 		// We truncate EiY to a position well above target_prec
 		vhdl << tab << declare(join("EiY",i), s[i+1]) << " <= " ;
-		if(i==1) { // TODO probably broken if we implement the bit of luck of 1st iteration
-			vhdl <<  use(Yi) << "& \"0\""
-				  << "  when " << use(join("A",i)) << of(a[i]-1) << " = '1'" << endl
-				  << tab << "  else  \"0\" & " << use(Yi) 
-				  << ";" << endl ;
+		if(i==1) { 
+			vhdl <<  use(Yi) ;
+			// now we may need to truncate or to pad Yi
+			if(yisize > s[i+1]) // truncate Yi
+				vhdl << range(yisize-1, yisize-s[i+1]);
+			else if (yisize < s[i+1]) // pad Yi
+				vhdl << " & " << rangeAssign(s[i+1] - yisize -1, 0, "'0'");
+			vhdl  << "  when " << use(join("A",i)) << of(a[i]-1) << " = '1'" << endl
+				  << tab << "  else  \"0\" & " << use(Yi);
+			if(yisize > s[i+1]-1) // truncate Yi
+				vhdl << range(yisize-1, yisize-s[i+1]+1);
+			vhdl 	  << ";" << endl ;
 		} 
 		else { // i>1, general case
 			vhdl << rangeAssign(2*p[i] -p[i+1] -2,  0,  "'0'")  << " & " << use(Yi) << range(yisize-1,  yisize - (s[i+1] - (2*p[i]-p[i+1]) )-1) << ";" << endl ;
