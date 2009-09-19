@@ -86,18 +86,22 @@ FPLog::FPLog(Target* target, int wE, int wF, int inTableSize)
 	// How many bits have been zeroed?  a0=5 is a lucky case but it messes up the following
 	p[1] = a[0]-2; // if a0==5, would be a0-1
 
-	// The number of guard bits
+	// The number of guard bit
 	// For each stage: 0.5 ulp for rounding the log table
+	// For each stage after the first one:
 	//                 1 ulp for truncating Z
 	//                 1 ulp for truncating P
 	//                 1 ulp for truncating EiY
 	//        total 3.5 bit/stage
 	// Plus for the rest of the computation:
+	//                 1 ulp for the approximation error of neglecting the 3rd-order term
 	//                 1 ulp for truncating Z before input to the square
 	//                 1 ulp for truncating Z^2
 
+	// the iterations i=0 and i=1 lead to no truncation
+
 	i=1;
-	gLog=max(3, intlog2(2+3.5*(i+1)));
+	gLog=4;
 	while(3*p[i]+1 <= p[i]+wF+gLog){ // while the third-order term of log(1+Zi) is not negligible
 		if(i==1) { 	// stage 1 cannot be more accurate than 2p1-1
 			a[1] = p[1];  
@@ -108,12 +112,12 @@ FPLog::FPLog(Target* target, int wE, int wF, int inTableSize)
 			p[i+1] = p[i] + a[i] - 1; // and we zero out a[i]-1 bits
 		}
 		i++;
-		gLog=max(3, intlog2(2+3.5*(i+1)));
+		gLog=max(4, intlog2(3+0.5+0.5+3*i-1));
 	}  
 	
 	// The number of stages, not counting stage 0
 	stages = i-1;
-	gLog=max(3, intlog2(2+3.5*(stages+1)));
+	gLog=max(4, intlog2(3+0.5+0.5+3*stages));
 	
 	if(verbose>=2) {
 		cerr << "> FPLog\t Initial parameters:" << endl;
