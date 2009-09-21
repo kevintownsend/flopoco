@@ -73,12 +73,12 @@ bool Virtex5::suggestSubmultSize(int &x, int &y, int wInX, int wInY){
 	
 	getDSPWidths(x, y);
 	
-	//try the two possible chunk splittings
-	int score1 = int(ceil((double(wInX)/double(x)))+ceil((double(wInY)/double(y))));
-	int score2 = int(ceil((double(wInY)/double(x)))+ceil((double(wInX)/double(y))));
-	
-	if (score2 < score1)
-		getDSPWidths(y,x);		
+//	//try the two possible chunk splittings
+//	int score1 = int(ceil((double(wInX)/double(x)))+ceil((double(wInY)/double(y))));
+//	int score2 = int(ceil((double(wInY)/double(x)))+ceil((double(wInX)/double(y))));
+//	
+//	if (score2 < score1)
+//		getDSPWidths(y,x);		
 	
 	if (getUseHardMultipliers())
 	{

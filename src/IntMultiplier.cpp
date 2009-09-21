@@ -60,29 +60,52 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 	if ((target->getUseHardMultipliers()) && (target->getNumberOfDSPs()>0))
 	{
 		if (verbose)
-			cout << "The target is " << target->getID() << endl;
+			cerr << "> IntMultiplier: The target is " << target->getID() << endl;
 			
 		if ((target->getID()=="Virtex4")||(target->getID()=="Virtex5")||(target->getID()=="Spartan3")) 
 		{
 			int chunksX, chunksY;
 			int x, y;
-			target->suggestSubmultSize(x, y, wInX, wInY);
-			int extension = (y<x)?(-x):(-y); // for asymetric sized multipliers (e.g. 24x17 on Virtex5)  
-			
-			chunksX =  int(ceil( ( double(wInX) / (double) x) ));
-			chunksY =  int(ceil( ( double(wInY) / (double) y) ));
-			
-			if (verbose)
-				cerr << "> IntMultiplier:   X splitted in "<< chunksX << " chunks of " << x 
-				                            << " and Y in "<< chunksY << " chunks of " << y << "; " << endl;
+			int score1, score2;
 
+			int explicitSwap;
+			target->suggestSubmultSize(x, y, wInX, wInY);
+			
+			if (verbose) cerr << "> IntMultiplier: The suggested sub-multiplier size is " << x << " X " << y << endl;
+			if (verbose) cerr << "> IntMultiplier: First design exploration, split "<<wInX <<" into chunks of " << x 
+			                                                               <<" and "<<wInY <<" into chunks of " << y << endl;
+			score1 = int(ceil((double(wInX)/double(x)))*ceil((double(wInY)/double(y))));
+			if (verbose) cerr << "> IntMultiplier: First design score is " << score1 << endl;
+			if (verbose) cerr << "> IntMultiplier: Second design exploration, split "<<wInY <<" into chunks of " << x 
+			                                                               <<" and "<<wInX <<" into chunks of " << y << endl;
+			score2 = int(ceil((double(wInY)/double(x)))*ceil((double(wInX)/double(y))));
+			if (verbose) cerr << "> IntMultiplier: Second design score is " << score2 << endl;
+			
+			explicitSwap = false;
+			if (score1 > score2)
+				explicitSwap = true;
+			
+			if (verbose) cerr << "> IntMultiplier: Choosing " << (score1>score2?"second":"first") << " design " << endl;
+			
+			int extension = (y<x)?(-x):(-y); // for asymmetric sized multipliers (e.g. 24x17 on Virtex5)  
+			
+			if (score1 > score2){
+				chunksX =  int(ceil( ( double(wInX) / (double) x) ));
+				chunksY =  int(ceil( ( double(wInY) / (double) y) ));
+			}
+			else{
+				chunksX =  int(ceil( ( double(wInX) / (double) y) ));
+				chunksY =  int(ceil( ( double(wInY) / (double) x) ));
+			}
+
+			
 				if (chunksX + chunksY > 2) { // up to 17 x 17 bit on Virtex4 can be written as an "*" @ 400++ MHz 
 				// to be general version (parametrized etc) 
 					//TODO swap X and Y under certain conditions
 
 					//NOT TOO SMART
 					bool swap=false;
-					if ((chunksX > chunksY) && (x == y))
+					if (((chunksX > chunksY) && (x == y)) || (explicitSwap == true))
 						swap=true;
 					
 					if (swap){
@@ -92,7 +115,7 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 					}
 					
 					if (verbose)
-						cerr << "> IntMultiplier:  Perform swapping = " << swap << endl;
+						cerr << "> IntMultiplier: Perform swapping = " << (swap==1?"true":"false") << endl;
 					
 					if (swap){
 						vhdl << tab << declare("sX",x*chunksX) << " <= " << "Y" << " & " << zg(x*chunksX-wInY,0) << ";" << endl;
