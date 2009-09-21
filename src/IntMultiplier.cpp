@@ -97,7 +97,6 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 				chunksX =  int(ceil( ( double(wInX) / (double) y) ));
 				chunksY =  int(ceil( ( double(wInY) / (double) x) ));
 			}
-
 			
 				if (chunksX + chunksY > 2) { // up to 17 x 17 bit on Virtex4 can be written as an "*" @ 400++ MHz 
 				// to be general version (parametrized etc) 
@@ -126,45 +125,30 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 					}
 					////////////////////////////////////////////////////
 					//SPLITTINGS
-					for (int k=0; k<chunksX ; k++){
-						ostringstream dname;
-						dname << "x"<<k;
-						vhdl << tab << declare(dname.str(),x) << " <= " << "sX" << range((k+1)*x-1,k*x) << ";" << endl;
-					}
-					for (int k=0; k<chunksY ; k++){
-						ostringstream dname;
-						dname << "y"<<k;
-						vhdl << tab << declare(dname.str(),y) << " <= " << "sY" << range((k+1)*y-1,k*y) << ";" << endl;
-					}
+					for (int k=0; k<chunksX ; k++)
+						vhdl << tab << declare(join("x",k),x) << " <= " << "sX" << range((k+1)*x-1,k*x) << ";" << endl;
+					for (int k=0; k<chunksY ; k++)
+						vhdl << tab << declare(join("y",k),y) << " <= " << "sY" << range((k+1)*y-1,k*y) << ";" << endl;
 
 					//MULTIPLICATIONS WITH SOME ACCUMULATIONS
 					for (int i=0; i<chunksX; i++){ 
 						for (int j=0; j<chunksY; j++){ 
-							ostringstream currP; //currentProduct
-							ostringstream currPS;//currentProductSum
-							ostringstream prevPS;//previous Product/ProductSum
-							currP  << "tp" << "x" << i << "y" << j;
-							currPS <<  "p" << "x" << i << "y" << j;
-							prevPS << "p" << "x" << i << "y" << j-1;
 							if (j==0){ // @ the first the operation is only multiplication, not MAC
-								vhdl << tab << declare(currPS.str(),x+y) << " <= " << use(join("x",i)) << " * " << use(join("y",j)) << ";" << endl;
+								vhdl << tab << declare(join("px",i,"y",j),x+y) << " <= " << use(join("x",i)) << " * " << use(join("y",j)) << ";" << endl;
 							}else{
-								vhdl << tab << declare(currP.str(),x+y) << " <= " << use(join("x",i)) << " * " << use(join("y",j))  << ";" << endl; 
-								vhdl << tab << declare(currPS.str(),x+y+1) << " <= " << "( \"0\" & " << use(currP.str()) << ")" << " + " << use(prevPS.str())<<range(x+y-1,y) << ";" << endl; 
+								vhdl << tab << declare(join("tpx",i,"y",j),x+y) << " <= " << use(join("x",i)) << " * " << use(join("y",j))  << ";" << endl; 
+								vhdl << tab << declare(join("px",i,"y",j),x+y+1) << " <= " << "( \"0\" & " << use(join("tpx",i,"y",j)) << ")" << " + " << use(join("px",i,"y",j-1))<<range(x+y-1,y) << ";" << endl; 
 							}
-							nextCycle();
+							if (!((j==chunksY-1) && (i<chunksX-1))) nextCycle();
 						}
-						if (i<chunksX-1) setCycle(0);
+						if (i<chunksX-1) setCycle(0); //reset cycle
 					}
-					//FORM THE INTERMEDIARY PRODUCTS
 					
+					//FORM THE INTERMEDIARY PRODUCTS
 					for (int i=0; i<chunksX ; i++){
 						vhdl << tab << declare(join("sum",i),y*chunksY+x) << " <= "; 
-						for (int j=chunksY-1;j>=0; j--){
-							ostringstream uname;
-							uname << "px" << i << "y"<<j;
-							vhdl << use(uname.str()) << range ( (j==chunksY-1?(x+y-1):y-1) ,0) << (j==0 ? ";" : " & ");
-						}
+						for (int j=chunksY-1;j>=0; j--)
+							vhdl << use(join("px",i,"y",j)) << range ( (j==chunksY-1?(x+y-1):y-1) ,0) << (j==0 ? ";" : " & ");
 						vhdl << endl;
 					}
 					vhdl << tab << declare ("sum0Low", x) << " <= " << use("sum0")<<range(x-1,0) << ";" << endl;
