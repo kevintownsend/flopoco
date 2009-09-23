@@ -1,32 +1,24 @@
 #include <iostream>
 #include <math.h>
-#include <mpfr.h>
-#include "../utils.hpp"
+#include "math_lib.h"
 #include "signal.h"
-#include "ExpLogFragment.hpp"
-#include "ExpLogFragmentExpTable.hpp"
-#include "ExpLogFragmentLogTable.hpp"
-
-// TODO clean up
-#define USE_MPFR 1
+#include "gen_table.h"
+#include "logfragment.h"
 
 using namespace std;
 using namespace FloPoCo::import::FPExp;
-	extern vector<Operator *> oplist;
 
+/* Fonctions tabulées
+   ================== */
 
-
-#if 0
 // Table d'exponentielles arrondies
-class ExpLogFragmentTable1 : public IFunContainer
+class LogFragmentTable1 : public IFunContainer
 {
 public:
-  ExpLogFragmentTable1(int exp_accuracy) : exp_accuracy(exp_accuracy)
+  LogFragmentTable1(int exp_accuracy) : exp_accuracy(exp_accuracy)
   {
-    delta = invintpow2(exp_accuracy);
+    delta = negPowOf2(exp_accuracy);
   }
-
-	// e^x-1
   void function(double x, bool negative, mpfr_t& result)
   {
     if (negative) x -= delta;
@@ -52,15 +44,14 @@ private:
 };
 
 // Table de logarithmes
-class ExpLogFragmentTable2 : public IFunContainer
+class LogFragmentTable2 : public IFunContainer
 {
 public:
-  ExpLogFragmentTable2(int accuracy, int exp_accuracy) :
+  LogFragmentTable2(int accuracy, int exp_accuracy) :
   accuracy(accuracy), exp_accuracy(exp_accuracy)
   {
-    delta = invintpow2(exp_accuracy);
+    delta = negPowOf2(exp_accuracy);
   }
-	// x - log(e^x)
   void function(double x, bool negative, mpfr_t& result)
   {
     if (negative) x -= delta;
@@ -92,21 +83,19 @@ private:
   double delta;
 };
 
+/* Opérations préliminaires sur le morceau
+   ======================================= */
 
-#endif
-
-
-ExpLogFragment::ExpLogFragment(Target* target, int length, Fragment* next_part) :
-Fragment(target, length, next_part)
+LogFragment::LogFragment(int length, Fragment* next_part) :
+Fragment(length, next_part)
 {
-	setCopyrightString("X. Pujol (2007), C. Klein  (2008), F. de Dinechin (2009)");
-	if (next_part == 0) {
+  if (next_part == 0) {
     cerr << "Impossible d'utiliser un morceau avec une table de log pour la derniere partie" << endl;
     exit(1);
   }
 }
 
-void ExpLogFragment::evalpos(int accuracy, int start, int& overlapping, bool& is_signed)
+void LogFragment::evalpos(int accuracy, int start, int& overlapping, bool& is_signed)
 {
   double max_input, max_output, po2;
 
@@ -117,13 +106,13 @@ void ExpLogFragment::evalpos(int accuracy, int start, int& overlapping, bool& is
   end = start + reallength;
 
   // calcule le nombre de bits en sortie de la table d'exponentielles
-  max_input = invintpow2(start) - invintpow2(end);
+  max_input = negPowOf2(start) - negPowOf2(end);
   // TODO: remettre le calcul exact
   max_output = exp(max_input) - 1 - max_input;
-  /* ExpLogFragmentTable1 fc(end);
+  /* LogFragmentTable1 fc(end);
   max_output = fc.function(max_input, false); */
 
-  po2 = invintpow2(end);
+  po2 = negPowOf2(end);
   for (exp_bits = 0; max_output >= po2; exp_bits++)
     max_output /= 2;
   /* TODO: si max_input est petit, le minimum pourrait aussi
@@ -149,85 +138,8 @@ void ExpLogFragment::evalpos(int accuracy, int start, int& overlapping, bool& is
 
 // premier fichier : tout sauf les tables
 
-void ExpLogFragment::generate(std::string prefix)
+void LogFragment::write_arch(std::string prefix, ostream& o)
 {
-	if (next_part != 0) {
-	  next_part->generate(prefix);
-	  oplist.push_back(next_part);
-	}
-
-	ostringstream ooo;
-	ooo << prefix << "_exp" << accuracy - start;
-	setName(ooo.str());
-
-	addInput("x", accuracy - start);
-	addOutput("y", accuracy - start+1);
-
-	vhdl << tab << "-- Exp of the higher bits using exp/log method" <<endl;
-	vhdl << tab << declare("part1", end-start) << " <= x" << range(accuracy-start-1, accuracy-end) << ";" << endl;
-	if (exp_bits > 0) {
-			ExpLogFragmentExpTable* tbl = new ExpLogFragmentExpTable(Operator::target_, (Fragment*)this);
-			oplist.push_back(tbl);
-
-		if (is_signed) {
-			vhdl << tab  << declare("signed_input", reallength + 1) <<  " <= sign & part1" << endl;
-			vhdl << tab << "-- expm1 of this part" << endl;
-			inPortMap(tbl, "X", "signed_input");
-			outPortMap(tbl, "Y", "tbl_out");
-			vhdl << instance(tbl, "component1");
-			vhdl << declare("exp_part1", end - start + 1) << "  <= " 
-				  << "('0' & part_1)" 
-				  << " + " << zg((end - exp_bits) -(start - 1)) << "exp_tbl_out"
-				  << " when sign = '0' else " 
-				  << "('0' & part_1)" 
-				  << " + \"" << zg(reallength, -2) << "1\" - (" << zg((end - exp_bits) -(start - 1)) << " & exp_tbl_out)"
-				  << ';' << endl;
-		}
-		else {
-			vhdl << tab << "-- expm1 of this part" << endl;
-			inPortMap(tbl, "X", "part1");
-			outPortMap(tbl, "Y", "tbl_out");
-			vhdl << instance(tbl, "component1");
-
-			vhdl << declare("exp_part1", end -(start - (exp_bits > 0)));
-			//			vhdl <<         << "  exp_part1 <= " << part_1.getPart(start - 1, end) << " + " << exp_tbl_out.getPart(start - 1, end) << ';' << endl;
-		}
-  }
-
-#if 0
-  else if (is_signed) {
-    Signal sign("sign", accuracy, end - 1, end);
-    o << "  exp_part1 <= " << part_1.getPart(start - 1, end) << " - " << sign.getPart(start - 1, end) << ';' << endl;
-  }
-  else {
-    o << "  exp_part1 <= part_1;" << endl;
-  }
-
-	
-("exp_tbl_out", exp_bits)
-
-
-
-  // premier morceau de l'entrée
-  Signal part_1("part_1", accuracy, start, end);
-  // exponentielle arrondie du premier morceau moins 1 (= sortie de la table plus x) (en valeur abs)
-  Signal exp_part1("exp_part1", end, start - (exp_bits > 0));
-  /* sortie de la table x -> x - log(exp(x)_arrondi) (x : 1er morceau de l'entrée)
-     comme exp(x) est arrondi par valeur inférieur, le résultat est positif */
-  Signal remainder_1("remainder_1", accuracy, accuracy - log_bits);
-  // morceaux_suivants ou (2 ^ -end) - morceaux_suivants selon le signe de x
-  Signal remainder_2("remainder_2", accuracy, end - is_signed);
-  // somme de remainder_1 et remainder_2
-  Signal remainder("remainder", accuracy, accuracy - log_bits - 1);
-  // exponentielle du reste
-  Signal exp_rmd("exp_rmd", accuracy, next_part->getStart() - 1);
-  // produit des deux parties fractionnaires des exponentielles
-  int product_start = exp_part1.start + exp_rmd.start;
-  Signal product("product", accuracy, product_start, product_start + product_ibits1 + product_ibits2);
-  // total à ajouter ou soustraire au produit selon le signe
-  Signal signed_part("signed_part", accuracy, start - 1);
-
-
   Fragment::write_arch(prefix, o);
 
   /* Déclarations de signaux
@@ -332,19 +244,58 @@ void ExpLogFragment::generate(std::string prefix)
     o << "  y <= " << exp_rmd.getPart(start - 1) << " + signed_part;" << endl;
 
   o << "end architecture;" << endl << endl;
-#endif
+}
+
+// second fichier : tables utilisés dans le composant
+
+void LogFragment::write_tbl_declaration(std::string prefix, ostream& o)
+{
+  Fragment::write_tbl_declaration(prefix, o); // fait l'appel récursif sur les morceaux suivants
+  int input_size = accuracy - start;
+
+  // table de x -> {e ^ x - 1 - x} arrondi à la précision de l'entrée
+  if (exp_bits > 0) {
+    o << "  -- tabule e ^ x - x - 1 avec " << reallength << " bits en entree, " << exp_bits << " en sortie" << endl
+      << "  -- le dernier bit de l'entree est le " << end << "eme apres la virgule" << endl;
+    if (is_signed) o << "  -- l'entree a en plus un bit de signe" << endl;
+    o << "  component " << prefix << "_exp_tbl_" << input_size << " is\n"
+      << "    port (x : in  std_logic_vector(" << reallength - 1 + is_signed << " downto 0);" << endl
+      << "          y : out std_logic_vector(" << exp_bits - 1 << " downto 0));" << endl
+      << "  end component;" << endl;
+  }
+
+  // table de x -> x - log({e ^ x} arrondi)
+  o << "  -- tabule ln(e ^ x tronque a " << end << " bits) avec " << log_bits << " bits en sortie" << endl
+    << "  component " << prefix << "_log_tbl_" << input_size << " is\n"
+    << "    port (x : in  std_logic_vector(" << reallength - 1 + is_signed << " downto 0);" << endl
+    << "          y : out std_logic_vector(" << log_bits - 1 << " downto 0));" << endl
+    << "  end component;" << endl;
+}
+
+void LogFragment::write_tbl_arch(std::string prefix, ostream& o)
+{
+  Fragment::write_tbl_arch(prefix, o);
+  if (exp_bits > 0) {
+		LogFragmentTable1 table1(end);
+    gen_table(o, (prefix + "_exp_tbl").c_str(), accuracy - start, table1,
+    end, reallength, is_signed, end, exp_bits);
+  }
+	
+	LogFragmentTable2 table2(accuracy, end);
+  gen_table(o, (prefix + "_log_tbl").c_str(), accuracy - start, table2,
+    end, reallength, is_signed, accuracy, log_bits);
 }
 
 /* Obtention d'informations diverses
    ================================= */
 
-void ExpLogFragment::showinfo(int number)
+void LogFragment::showinfo(int number)
 {
   Fragment::showinfo(number);
   cout << ", rounded exp method and log table" << endl;
 }
 
-double ExpLogFragment::area()
+double LogFragment::area()
 {
   double result = Fragment::area();
   result += table_area(reallength, exp_bits);
@@ -353,10 +304,10 @@ double ExpLogFragment::area()
   return result;
 }
 
-double ExpLogFragment::max_error(double input_error)
+double LogFragment::max_error(double input_error)
 {
   double result = Fragment::max_error(input_error + 0.5);
-  double max_output = exp(invintpow2(start)) - 1;
+  double max_output = exp(negPowOf2(start)) - 1;
   result += 1 + max_output * result;
   return result;
 }

@@ -1,7 +1,7 @@
 #include <math.h>
-#include "Fragment.hpp"
-#include "SimpleFragment.hpp"
-#include "ExpLogFragment.hpp"
+#include "fragment.h"
+#include "stdfragment.h"
+#include "logfragment.h"
 
 struct FragDesc
 {
@@ -9,7 +9,7 @@ struct FragDesc
   double area;
 };
 
-Fragment* explore(int explore_size, Target* target)
+Fragment* explore(int explore_size)
 {
   /* "cette fonction est là car potentiellement utile, mais SANS AUCUNE GARANTIE,
      ni explicite ni implicite, y compris les garanties [...] d'adaptation dans
@@ -52,7 +52,7 @@ Fragment* explore(int explore_size, Target* target)
        qu'un seul morceau, de longueur de l'ordre de accuracy / 2 */
     {
       FragDesc min_fd;
-      min_fd.fragment = new SimpleFragment(target, min_length, 0);
+      min_fd.fragment = new StdFragment(min_length, 0);
       min_fd.fragment->prepare(min_fd.area, max_error, false, accuracy, false);
       min_max_error_idx = static_cast<int>(floor(log(max_error) / log(2.0) * 10));
       for (i = min_max_error_idx; i <= max_max_error_idx; i++)
@@ -61,7 +61,7 @@ Fragment* explore(int explore_size, Target* target)
 
     for (length = min_length + 1; length <= min_length + 8; length++) {
       FragDesc fd;
-      fd.fragment = new SimpleFragment(target, length, 0);
+      fd.fragment = new StdFragment(length, 0);
       fd.fragment->prepare(fd.area, max_error, false, accuracy, false);
       max_error_idx = static_cast<int>(floor(log(max_error) / log(2.0) * 10));
       for (i = max_error_idx; i <= max_max_error_idx; i++)
@@ -78,7 +78,7 @@ Fragment* explore(int explore_size, Target* target)
 	      FragDesc fd;
 	      // essaie avec un morceau standard
 	      if (length != accuracy - 1) {
-				fd.fragment = new SimpleFragment(target, length - length2, opt_fragment[j][length2].fragment);
+		fd.fragment = new StdFragment(length - length2, opt_fragment[j][length2].fragment);
 		fd.fragment->prepare(fd.area, max_error, false, accuracy, false);
 		max_error_idx = static_cast<int>(floor(log(max_error) / log(2.0) * 10));
 		for (k = max_error_idx; k <= max_max_error_idx &&
@@ -87,7 +87,7 @@ Fragment* explore(int explore_size, Target* target)
 		  opt_fragment[k][length] = fd;
 	      }
 	      // essaie avec un morceau avec table de log
-	      fd.fragment = new ExpLogFragment(target, length - length2, opt_fragment[j][length2].fragment);
+	      fd.fragment = new LogFragment(length - length2, opt_fragment[j][length2].fragment);
 	      fd.fragment->prepare(fd.area, max_error, length == accuracy - 1, accuracy, false);
 	      max_error_idx = static_cast<int>(floor(log(max_error) / log(2.0) * 10));
 	      for (k = max_error_idx; k <= max_max_error_idx &&

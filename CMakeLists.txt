@@ -155,13 +155,12 @@ ADD_EXECUTABLE(flopoco
  src/FPNumber
  
  
+ src/fpexponential/math_lib
  src/fpexponential/signal
- src/fpexponential/Fragment
- src/fpexponential/SimpleFragment
- src/fpexponential/ExpLogFragment
- src/fpexponential/SimpleFragmentTable
- src/fpexponential/ExpLogFragmentExpTable
- src/fpexponential/ExpLogFragmentLogTable
+ src/fpexponential/fragment
+ src/fpexponential/stdfragment
+ src/fpexponential/logfragment
+ src/fpexponential/gen_table
  src/fpexponential/explore
  src/FPExp
  
@@ -222,15 +221,16 @@ ADD_EXECUTABLE(flopoco
  src/ConstMult/CRFPConstMult 
  src/TestCase
  src/FPNumber
- src/fpexponential/signal.cpp
- src/fpexponential/Fragment
- src/fpexponential/SimpleFragment
- src/fpexponential/ExpLogFragment
- src/fpexponential/SimpleFragmentTable
- src/fpexponential/ExpLogFragmentExpTable
- src/fpexponential/ExpLogFragmentLogTable
- src/fpexponential/explore.cpp
- src/FPExp
+
+ src/fpexponential/math_lib
+ src/fpexponential/signal
+ src/fpexponential/fragment
+ src/fpexponential/stdfragment
+ src/fpexponential/logfragment
+ src/fpexponential/gen_table
+ src/fpexponential/explore
+ src/FPExp 
+
  src/fplogarithm/FirstInvTable
  src/fplogarithm/FirstLogTable
  src/fplogarithm/OtherLogTable
