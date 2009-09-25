@@ -152,7 +152,7 @@ private:
 	
 	void outputVHDL(std::ostream& o, std::string name) {
 	
-	int i,x;
+	int x;
 	mpz_class y;
 		
 	vhdl<<tab<<" process (clk)"<<endl;

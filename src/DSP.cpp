@@ -29,7 +29,7 @@ using namespace std;
 extern int verbose;
 
 DSP::DSP(int Shift,int maxMultWidth,int maxMultHeight):
-fixedShift_(Shift),maxMultiplierWidth_(maxMultWidth) , maxMultiplierHeight_(maxMultHeight) 
+maxMultiplierWidth_(maxMultWidth) , maxMultiplierHeight_(maxMultHeight), fixedShift_(Shift)
 {
 			multiplierWidth_ = 0;
 			multiplierHeight_ = 0;

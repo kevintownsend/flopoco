@@ -187,8 +187,7 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 		}
 		else // the target is a Stratix
 		{
-			double f = target->frequencyMHz();
-			bool quadMultiply = false; // TRUE if we cannot use double the chunckSize width multipliers
+				bool quadMultiply = false; // TRUE if we cannot use double the chunckSize width multipliers
 
 				int chunkSize_ = 1, x, y;
 			
@@ -985,7 +984,7 @@ IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
 					if (verbose)
 						cerr << ">IntMultiplier: Using double chunkSize_ multipliers" << endl;
 					
-					int i, j, k;	
+					int i, k;	
 					
 					////////////////////////////////////////////////////
 					//SPLITTINGS

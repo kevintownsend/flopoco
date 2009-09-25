@@ -61,8 +61,9 @@ double DualTable::output2double(mpz_class x) {
 
 DualTable::DualTable(Target* target, int _wIn, int _wOut, int _minIn, int _maxIn) : 
 	Operator(target),
-	target(target),wIn(_wIn), wOut(_wOut), minIn(_minIn), maxIn(_maxIn)
+	wIn(_wIn), wOut(_wOut), minIn(_minIn), maxIn(_maxIn),target(target)
 	{
+	
 	setCopyrightString("Radu Tudoran (2009)");
 
 	 //limitSingleMemory = intpow2(11)*9;
@@ -130,7 +131,7 @@ DualTable::DualTable(Target* target, int _wIn, int _wOut, int _minIn, int _maxIn
 
 // We have to define this method because the constructor of DualTable cannot use the (pure virtual) function()
 void DualTable::outputVHDL(std::ostream& o, std::string name) {
-	int i,x;
+	int i;
 	mpz_class y;
 	ostringstream data;
 

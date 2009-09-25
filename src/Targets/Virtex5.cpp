@@ -136,7 +136,7 @@ int Virtex5::getIntMultiplierCost(int wInX, int wInY){
 	
 	float p = (double)cy/(double)halfLut; // number of chunks concatenated per operand
 	float r = p - floor(p); // relative error; used for detecting how many operands have ceil(p) chunks concatenated
-	int chunkSize, lastChunkSize, nr, aux, srl;
+	int chunkSize, lastChunkSize, nr, aux;
 	suggestSubaddSize(chunkSize, wInX+wInY);
 	lastChunkSize = (wInX+wInY)%chunkSize;
 	nr = ceil((double) (wInX+wInY)/chunkSize);
@@ -167,7 +167,7 @@ int Virtex5::getIntMultiplierCost(int wInX, int wInY){
 			}	
 			else
 			{
-				cost = cost = ceil(p)*lutInputs_*(aux-2)*(aux-1)/2 + floor(p)*lutInputs_*((aux*cx)+(cx+aux-6)*(cx+aux-5)/2); // registered partial products without zero paddings
+				cost = ceil(p)*lutInputs_*(aux-2)*(aux-1)/2 + floor(p)*lutInputs_*((aux*cx)+(cx+aux-6)*(cx+aux-5)/2); // registered partial products without zero paddings
 				cost += (floor(p)*lutInputs_-padY) * (aux+cx-4); // SRLs for shorter concatenations
 			}
 		}
@@ -189,7 +189,7 @@ int Virtex5::getIntMultiplierCost(int wInX, int wInY){
 			}	
 			else
 			{
-				cost = cost = ceil(p)*lutInputs_*(cx-2)*(cx-1)/2 + floor(p)*lutInputs_*((aux*cx)+(cx+aux-6)*(cx+aux-5)/2); // registered partial products without zero paddings
+				cost = ceil(p)*lutInputs_*(cx-2)*(cx-1)/2 + floor(p)*lutInputs_*((aux*cx)+(cx+aux-6)*(cx+aux-5)/2); // registered partial products without zero paddings
 				cost += (floor(p)*lutInputs_-padY) * (aux+cx-4); // SRLs for shorter concatenations
 			}
 		}
