@@ -2,20 +2,22 @@
 #define CRFPCONSTMULT_HPP
 #include "../Operator.hpp"
 
-class CRFPConstMult : public FPConstMult
-{
-public:
-	CRFPConstMult(Target* target, int wE_in, int wF_in, int wE_out, int wF_out, string constant);
-	~CRFPConstMult();
+namespace flopoco{
 
-	string constant;
+	class CRFPConstMult : public FPConstMult
+	{
+	public:
+		CRFPConstMult(Target* target, int wE_in, int wF_in, int wE_out, int wF_out, string constant);
+		~CRFPConstMult();
 
-	int cst_width;
-	// No need for the other usual methods of Operators, use those of FPConstMult
+		string constant;
 
-	// except for test case generation: TODO
+		int cst_width;
+		// No need for the other usual methods of Operators, use those of FPConstMult
 
-};
+		// except for test case generation: TODO
 
+	};
 
+}
 #endif

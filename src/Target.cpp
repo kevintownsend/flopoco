@@ -20,7 +20,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
-*/
+ */
 
 #include <iostream>
 #include <sstream>
@@ -30,44 +30,48 @@
 
 using namespace std;
 
-extern int verbose;
 
-string Target::getID(){
-	return id_;
+namespace flopoco{
+
+	extern int verbose;
+
+	string Target::getID(){
+		return id_;
+	}
+
+	void Target::setPipelined() {
+		pipeline_=true;
+	}
+
+	void Target::setNotPipelined() {
+		pipeline_=false;
+	}
+
+	bool Target::isPipelined() {
+		return pipeline_;
+	}
+
+	int Target::lutInputs() {
+		return lutInputs_;
+	}
+
+	double Target::frequency(){
+		return frequency_;
+	}
+
+	double Target::frequencyMHz(){
+		return frequency_/1000000;
+	}
+
+	void Target::setFrequency(double f){
+		frequency_ = f;
+	}
+
+	void Target::setUseHardMultipliers(bool v){
+		useHardMultipliers_ = v;  
+	}
+
+	bool Target::getUseHardMultipliers(){
+		return useHardMultipliers_ ;
+	} 
 }
-
-void Target::setPipelined() {
-	pipeline_=true;
-}
-
-void Target::setNotPipelined() {
-	pipeline_=false;
-}
-
-bool Target::isPipelined() {
-	return pipeline_;
-}
-
-int Target::lutInputs() {
-	return lutInputs_;
-}
-
-double Target::frequency(){
-	return frequency_;
-}
-
-double Target::frequencyMHz(){
-	return frequency_/1000000;
-}
-
-void Target::setFrequency(double f){
-	frequency_ = f;
-}
-
-void Target::setUseHardMultipliers(bool v){
-	useHardMultipliers_ = v;  
-}
-
-bool Target::getUseHardMultipliers(){
-	return useHardMultipliers_ ;
-} 

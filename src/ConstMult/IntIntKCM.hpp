@@ -6,6 +6,9 @@
 #include <gmpxx.h>
 #include "../Operator.hpp"
 
+
+namespace flopoco{
+
 extern map<string, double> emptyDelayMap;
 /** The IntIntKCM class. 
 */
@@ -40,4 +43,6 @@ private:
 	map<string, double> inputDelays_; /**< a map between input signal names and their maximum delays */
 
 };
+
+}
 #endif

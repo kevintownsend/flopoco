@@ -3,21 +3,24 @@
 
 #include "../Table.hpp"
 
-class FirstKCMTable : public Table
-{
-public:
-	FirstKCMTable(Target* target, int wIn, int wOut, mpz_class C);
+namespace flopoco{
+
+	class FirstKCMTable : public Table
+	{
+	public:
+		FirstKCMTable(Target* target, int wIn, int wOut, mpz_class C);
 	
-	~FirstKCMTable();
+		~FirstKCMTable();
 
 
-	mpz_class function(int x);
+		mpz_class function(int x);
 
-	mpz_class C_; //the constant
+		mpz_class C_; //the constant
 
-	int wOut_; /**< the width of the output */
+		int wOut_; /**< the width of the output */
 	
-};
+	};
 
+}
 #endif //FirstKCMTable_HPP
 

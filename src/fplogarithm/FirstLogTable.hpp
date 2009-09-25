@@ -4,35 +4,40 @@
 #include "FirstInvTable.hpp"
 #include "../FPLog.hpp"
 
-class FirstLogTable : public Table
-{
-public:
-	FirstLogTable(Target *target, int p1, int w1,  FirstInvTable* fit, FPLog* op_);
+
+
+namespace flopoco{
+
+
+	class FirstLogTable : public Table
+	{
+	public:
+		FirstLogTable(Target *target, int p1, int w1,  FirstInvTable* fit, FPLog* op_);
 	
-	~FirstLogTable();
+		~FirstLogTable();
 	
 	
-	FirstInvTable* fit;
+		FirstInvTable* fit;
 	
-	mpz_class function(int x);
+		mpz_class function(int x);
 	
-	int    double2input(double x);
+		int    double2input(double x);
 	
-	double input2double(int x);
+		double input2double(int x);
 	
-	mpz_class double2output(double x);
+		mpz_class double2output(double x);
 	
-	double output2double(mpz_class x);
+		double output2double(mpz_class x);
 	
-private:
+	private:
 	
-	FPLog* op;
+		FPLog* op;
 	
-};
+	};
 
 
 
-
+}
 
 
 #endif //FIRSTLOGTABLE_HPP

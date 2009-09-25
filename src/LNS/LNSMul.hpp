@@ -3,17 +3,18 @@
 
 #include "../Operator.hpp"
 
-struct LNSMul : Operator
-{
-	LNSMul(Target * target, int wE, int wF);
-	virtual ~LNSMul();
+namespace flopoco{
+	struct LNSMul : Operator
+	{
+		LNSMul(Target * target, int wE, int wF);
+		virtual ~LNSMul();
 
-	virtual void outputVHDL(std::ostream& o, std::string name);
-	virtual void setOperatorName();	
+		virtual void outputVHDL(std::ostream& o, std::string name);
+		virtual void setOperatorName();	
 	
-private:
-	int wE;
-	int wF;
-};
-
+	private:
+		int wE;
+		int wF;
+	};
+}
 #endif

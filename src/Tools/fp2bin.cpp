@@ -32,6 +32,7 @@
 
 #include"../utils.hpp"
 using namespace std;
+using namespace flopoco;
 
 
 static void usage(char *name){

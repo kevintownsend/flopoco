@@ -26,134 +26,138 @@
 #include "DSP.hpp"
 using namespace std;
 
-extern int verbose;
 
-DSP::DSP(int Shift,int maxMultWidth,int maxMultHeight):
-maxMultiplierWidth_(maxMultWidth) , maxMultiplierHeight_(maxMultHeight), fixedShift_(Shift)
-{
-			multiplierWidth_ = 0;
-			multiplierHeight_ = 0;
-			nrAdders_ = 0;
-			multAccumulate_ = false;	
+namespace flopoco{
+
+	extern int verbose;
+
+	DSP::DSP(int Shift,int maxMultWidth,int maxMultHeight):
+		maxMultiplierWidth_(maxMultWidth) , maxMultiplierHeight_(maxMultHeight), fixedShift_(Shift)
+	{
+		multiplierWidth_ = 0;
+		multiplierHeight_ = 0;
+		nrAdders_ = 0;
+		multAccumulate_ = false;	
 			
-			DSP** ops = new DSP*[3];
+		DSP** ops = new DSP*[3];
 	
-			for (int j=0; j<3; j++)
+		for (int j=0; j<3; j++)
 			{
 				ops[j] = NULL;
 			}
 			
-			addOperands_ = ops;
-			shiftIn_ = NULL;
-			shiftOut_ = NULL;
-}
+		addOperands_ = ops;
+		shiftIn_ = NULL;
+		shiftOut_ = NULL;
+	}
 
-int DSP::getMultiplierWidth(){
-	return multiplierWidth_;
-}
+	int DSP::getMultiplierWidth(){
+		return multiplierWidth_;
+	}
 
-int DSP::getMaxMultiplierWidth(){
-	return maxMultiplierWidth_;
-}
+	int DSP::getMaxMultiplierWidth(){
+		return maxMultiplierWidth_;
+	}
 
-int DSP::getMultiplierHeight(){
-	return multiplierHeight_;
-}
+	int DSP::getMultiplierHeight(){
+		return multiplierHeight_;
+	}
 
-int DSP::getMaxMultiplierHeight(){
-	return maxMultiplierHeight_;
-}
+	int DSP::getMaxMultiplierHeight(){
+		return maxMultiplierHeight_;
+	}
 
 
-void DSP::setMultiplierWidth(int w){
-	multiplierWidth_ = w;
-}
+	void DSP::setMultiplierWidth(int w){
+		multiplierWidth_ = w;
+	}
 
-void DSP::setMultiplierHeight(int h){
-	multiplierHeight_ = h;
-}
+	void DSP::setMultiplierHeight(int h){
+		multiplierHeight_ = h;
+	}
 
-int DSP::getShiftAmount(){
-	return fixedShift_;
-}
+	int DSP::getShiftAmount(){
+		return fixedShift_;
+	}
 
-void DSP::setShiftAmount(int s){
-	fixedShift_ = s;
-}
+	void DSP::setShiftAmount(int s){
+		fixedShift_ = s;
+	}
 
-int DSP::getNumberOfAdders(){
-	return nrAdders_;
-}
+	int DSP::getNumberOfAdders(){
+		return nrAdders_;
+	}
 
-void DSP::setNumberOfAdders(int o){
-	nrAdders_ = o;
-}
+	void DSP::setNumberOfAdders(int o){
+		nrAdders_ = o;
+	}
 
-bool DSP::isMultiplyAccumulate(){
-	return multAccumulate_;
-}
+	bool DSP::isMultiplyAccumulate(){
+		return multAccumulate_;
+	}
 
-void DSP::setMultiplyAccumulate(bool m){
-	multAccumulate_ = m;
-}
+	void DSP::setMultiplyAccumulate(bool m){
+		multAccumulate_ = m;
+	}
 
-void DSP::getTopRightCorner(int &x, int &y){
-	x = positionX_[0];
-	y = positionY_[0];
-}
+	void DSP::getTopRightCorner(int &x, int &y){
+		x = positionX_[0];
+		y = positionY_[0];
+	}
 
-void DSP::setTopRightCorner(int x, int y){
-	positionX_[0] = x;
-	positionY_[0] = y;
-}
+	void DSP::setTopRightCorner(int x, int y){
+		positionX_[0] = x;
+		positionY_[0] = y;
+	}
 
-void DSP::getBottomLeftCorner(int &x, int &y){
-	x = positionX_[1];
-	y = positionY_[1];
-}
+	void DSP::getBottomLeftCorner(int &x, int &y){
+		x = positionX_[1];
+		y = positionY_[1];
+	}
 
-void DSP::setBottomLeftCorner(int x, int y){
-	positionX_[1] = x;
-	positionY_[1] = y;
-}
+	void DSP::setBottomLeftCorner(int x, int y){
+		positionX_[1] = x;
+		positionY_[1] = y;
+	}
 
-DSP* DSP::getShiftIn(){
-	return shiftIn_;
-}
+	DSP* DSP::getShiftIn(){
+		return shiftIn_;
+	}
 
-void DSP::setShiftIn(DSP* d){
-	shiftIn_ = d;
-}
+	void DSP::setShiftIn(DSP* d){
+		shiftIn_ = d;
+	}
 
-DSP* DSP::getShiftOut(){
-	return shiftOut_;
-}
+	DSP* DSP::getShiftOut(){
+		return shiftOut_;
+	}
 
-void DSP::setShiftOut(DSP* d){
-	shiftOut_ = d;
-}
+	void DSP::setShiftOut(DSP* d){
+		shiftOut_ = d;
+	}
 
-DSP** DSP::getAdditionOperands(){
-	return addOperands_;
-}
+	DSP** DSP::getAdditionOperands(){
+		return addOperands_;
+	}
 
-void DSP::setAdditionOperands(DSP** o){
-	addOperands_ = o;
-}
+	void DSP::setAdditionOperands(DSP** o){
+		addOperands_ = o;
+	}
 
-void DSP::rotate(){
-	int tx,ty;
-	getTopRightCorner(tx,ty);
-	//cout<<"Old dimensions were "<<maxMultiplierHeight_<<" "<<maxMultiplierWidth_<<endl;
-	int tmp = maxMultiplierHeight_;
-	maxMultiplierHeight_ = maxMultiplierWidth_;
-	maxMultiplierWidth_ = tmp;
-	//cout<<"New dimensions are "<<maxMultiplierHeight_<<" "<<maxMultiplierWidth_<<endl;
+	void DSP::rotate(){
+		int tx,ty;
+		getTopRightCorner(tx,ty);
+		//cout<<"Old dimensions were "<<maxMultiplierHeight_<<" "<<maxMultiplierWidth_<<endl;
+		int tmp = maxMultiplierHeight_;
+		maxMultiplierHeight_ = maxMultiplierWidth_;
+		maxMultiplierWidth_ = tmp;
+		//cout<<"New dimensions are "<<maxMultiplierHeight_<<" "<<maxMultiplierWidth_<<endl;
 	
-	//getBottomLeftCorner(tx,ty);
-	//cout<<"Old were "<<tx<<" "<<ty<<endl;
-	setBottomLeftCorner(tx + maxMultiplierWidth_-1 , ty + maxMultiplierHeight_-1);
-	//getBottomLeftCorner(tx,ty);
-	//cout<<"New are "<<tx<<" "<<ty<<endl;
+		//getBottomLeftCorner(tx,ty);
+		//cout<<"Old were "<<tx<<" "<<ty<<endl;
+		setBottomLeftCorner(tx + maxMultiplierWidth_-1 , ty + maxMultiplierHeight_-1);
+		//getBottomLeftCorner(tx,ty);
+		//cout<<"New are "<<tx<<" "<<ty<<endl;
 	
+	}
 }

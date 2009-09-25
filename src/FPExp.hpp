@@ -5,25 +5,29 @@
 
 #include "Operator.hpp"
 
+
+
 class Fragment;
 class FPNumber;
 
-class FPExp : public Operator
-{
-public:
-	FPExp(Target* target, int wE, int wF);
-	~FPExp();
+namespace flopoco{
 
-	// Overloading the virtual functions of Operator
-	void outputVHDL(std::ostream& o, std::string name);
+	class FPExp : public Operator
+	{
+	public:
+		FPExp(Target* target, int wE, int wF);
+		~FPExp();
 
-	void emulate(TestCase * tc);
+		// Overloading the virtual functions of Operator
+		void outputVHDL(std::ostream& o, std::string name);
 
-private:
-	int wE, wF;
-	Fragment *f;
-	int result_length, g;
-	double area, max_error;
-};
+		void emulate(TestCase * tc);
 
+	private:
+		int wE, wF;
+		Fragment *f;
+		int result_length, g;
+		double area, max_error;
+	};
+}
 #endif

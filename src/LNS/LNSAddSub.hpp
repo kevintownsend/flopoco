@@ -5,19 +5,21 @@
 #include "LNSAdd.hpp"
 #include "CotranHybrid.hpp"
 
-struct LNSAddSub : Operator
-{
-	LNSAddSub(Target * target, int wE, int wF);
-	virtual ~LNSAddSub();
+namespace flopoco{
 
-	virtual void outputVHDL(std::ostream& o, std::string name);
-	
-private:
-	int wE;
-	int wF;
-	int j;
-	
-	CotranHybrid * addsub;
-};
+	struct LNSAddSub : Operator
+	{
+		LNSAddSub(Target * target, int wE, int wF);
+		virtual ~LNSAddSub();
 
+		virtual void outputVHDL(std::ostream& o, std::string name);
+	
+	private:
+		int wE;
+		int wF;
+		int j;
+	
+		CotranHybrid * addsub;
+	};
+}
 #endif

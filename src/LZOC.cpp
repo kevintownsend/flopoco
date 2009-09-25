@@ -33,109 +33,113 @@
 
 using namespace std;
 
-LZOC::LZOC(Target* target, int wIn, map<string, double> inputDelays) :
-	Operator(target), wIn_(wIn) {
-	ostringstream currLevel, currDigit, nextLevel;
+
+namespace flopoco{
+
+	LZOC::LZOC(Target* target, int wIn, map<string, double> inputDelays) :
+		Operator(target), wIn_(wIn) {
+		ostringstream currLevel, currDigit, nextLevel;
 	
 	
-	// -------- Parameter set up -----------------
-	wOut_ = intlog2(wIn);
-	p2wOut_ = 1<<wOut_; // no need for GMP here
-	double period = (1.0)/target->frequency();
+		// -------- Parameter set up -----------------
+		wOut_ = intlog2(wIn);
+		p2wOut_ = 1<<wOut_; // no need for GMP here
+		double period = (1.0)/target->frequency();
 
 
-	setOperatorName();
+		setOperatorName();
 
-	addInput ("I", wIn_);
-	addInput ("OZB");  
-	addOutput("O", wOut_);
+		addInput ("I", wIn_);
+		addInput ("OZB");  
+		addOutput("O", wOut_);
 	
 	
 	
-	vhdl << tab << declare("sozb",1) <<" <= ozb;" << endl;
-	currLevel << "level"<<wOut_;
-	ostringstream padStr;
-	if (wIn_==intpow2(wOut_)) padStr<<"";
-	else padStr << "& ("<<intpow2(wOut_)-wIn_-1 << " downto 0 => not(sozb))";
+		vhdl << tab << declare("sozb",1) <<" <= ozb;" << endl;
+		currLevel << "level"<<wOut_;
+		ostringstream padStr;
+		if (wIn_==intpow2(wOut_)) padStr<<"";
+		else padStr << "& ("<<intpow2(wOut_)-wIn_-1 << " downto 0 => not(sozb))";
 		
-	vhdl << tab << declare(currLevel.str(),intpow2(wOut_)) << "<= I" << padStr.str() <<";"<<endl; //zero padding if necessary
-	//each operation is formed of a comparisson folloewd by a multiplexing
-	double delay = 0.0;
-	delay+=getMaxInputDelays(inputDelays);
-	for (int i=wOut_;i>=1;i--){
-		currDigit.str(""); currDigit << "digit" << i ;
-		currLevel.str(""); currLevel << "level" << i;
-		nextLevel.str(""); nextLevel << "level" << i-1;
-		delay += intlog(mpz_class(target->lutInputs()), intpow2(i-1)) * target->lutDelay() + intlog(mpz_class(target->lutInputs()), intpow2(i-1))* target->localWireDelay();
-		if (delay > period ) {
-			nextCycle();////////////////////////
-			delay =0.0;
-		}
-		vhdl << tab <<declare(currDigit.str(),1) << "<= '1' when " << use(currLevel.str()) << "("<<intpow2(i)-1<<" downto "<<intpow2(i-1)<<") = "
-		            <<"("<<intpow2(i)-1<<" downto "<<intpow2(i-1)<<" => "<<use("sozb") <<")"
-		            << " else '0';"<<endl;
-
-		if (i>1){
-			delay +=target->lutDelay();
+		vhdl << tab << declare(currLevel.str(),intpow2(wOut_)) << "<= I" << padStr.str() <<";"<<endl; //zero padding if necessary
+		//each operation is formed of a comparisson folloewd by a multiplexing
+		double delay = 0.0;
+		delay+=getMaxInputDelays(inputDelays);
+		for (int i=wOut_;i>=1;i--){
+			currDigit.str(""); currDigit << "digit" << i ;
+			currLevel.str(""); currLevel << "level" << i;
+			nextLevel.str(""); nextLevel << "level" << i-1;
+			delay += intlog(mpz_class(target->lutInputs()), intpow2(i-1)) * target->lutDelay() + intlog(mpz_class(target->lutInputs()), intpow2(i-1))* target->localWireDelay();
 			if (delay > period ) {
 				nextCycle();////////////////////////
 				delay =0.0;
 			}
-			vhdl << tab << declare(nextLevel.str(),intpow2(i-1)) << "<= "<<use(currLevel.str()) << "("<<intpow2(i-1)-1<<" downto 0) when " << use(currDigit.str())<<"='1' "
-		            <<"else "<<use(currLevel.str())<<"("<<intpow2(i)-1<<" downto "<<intpow2(i-1)<<");"<<endl;
+			vhdl << tab <<declare(currDigit.str(),1) << "<= '1' when " << use(currLevel.str()) << "("<<intpow2(i)-1<<" downto "<<intpow2(i-1)<<") = "
+				  <<"("<<intpow2(i)-1<<" downto "<<intpow2(i-1)<<" => "<<use("sozb") <<")"
+				  << " else '0';"<<endl;
+
+			if (i>1){
+				delay +=target->lutDelay();
+				if (delay > period ) {
+					nextCycle();////////////////////////
+					delay =0.0;
+				}
+				vhdl << tab << declare(nextLevel.str(),intpow2(i-1)) << "<= "<<use(currLevel.str()) << "("<<intpow2(i-1)-1<<" downto 0) when " << use(currDigit.str())<<"='1' "
+					  <<"else "<<use(currLevel.str())<<"("<<intpow2(i)-1<<" downto "<<intpow2(i-1)<<");"<<endl;
+			}
 		}
-	}
-	//update output slack
-	outDelayMap["O"] = period - delay;
+		//update output slack
+		outDelayMap["O"] = period - delay;
 	
-	vhdl << tab << "O <= ";
-	for (int i=wOut_;i>=1;i--){
-		currDigit.str(""); currDigit << "digit" << i ;
-		vhdl << use(currDigit.str());
-		if (i==1)
-			vhdl << ";"<<endl;
-		else
-			vhdl << " & ";
+		vhdl << tab << "O <= ";
+		for (int i=wOut_;i>=1;i--){
+			currDigit.str(""); currDigit << "digit" << i ;
+			vhdl << use(currDigit.str());
+			if (i==1)
+				vhdl << ";"<<endl;
+			else
+				vhdl << " & ";
+		}
+
 	}
 
-}
+	LZOC::~LZOC() {}
 
-LZOC::~LZOC() {}
+	void LZOC::setOperatorName(){
+		ostringstream name; 
+		name <<"LZOC_"<<wIn_<<"_"<<wOut_;
+		uniqueName_ = name.str();
+	}
 
-void LZOC::setOperatorName(){
-	ostringstream name; 
-	name <<"LZOC_"<<wIn_<<"_"<<wOut_;
-	uniqueName_ = name.str();
-}
-
-void LZOC::outputVHDL(std::ostream& o, std::string name) {
-	licence(o,"Florent de Dinechin, Bogdan Pasca (2007,2009)");
-	Operator::stdLibs(o);
-	outputVHDLEntity(o);
-	newArchitecture(o,name);
-	o << buildVHDLSignalDeclarations();
-	beginArchitecture(o);
-	o << buildVHDLRegisters();
-	o << vhdl.str();
-	endArchitecture(o);
-}
+	void LZOC::outputVHDL(std::ostream& o, std::string name) {
+		licence(o,"Florent de Dinechin, Bogdan Pasca (2007,2009)");
+		Operator::stdLibs(o);
+		outputVHDLEntity(o);
+		newArchitecture(o,name);
+		o << buildVHDLSignalDeclarations();
+		beginArchitecture(o);
+		o << buildVHDLRegisters();
+		o << vhdl.str();
+		endArchitecture(o);
+	}
 
 
-void LZOC::emulate(TestCase* tc)
-{
-	mpz_class si   = tc->getInputValue("I");
-	mpz_class sozb = tc->getInputValue("OZB");
-	mpz_class so;
-	
-	int j;
-	int bit = (sozb == 0) ? 0 : 1;
-	for (j = 0; j < wIn_; j++)
+	void LZOC::emulate(TestCase* tc)
 	{
-		if (mpz_tstbit(si.get_mpz_t(), wIn_ - j - 1) != bit)
-			break;
-	}
+		mpz_class si   = tc->getInputValue("I");
+		mpz_class sozb = tc->getInputValue("OZB");
+		mpz_class so;
 	
-	so = j;
-	tc->addExpectedOutput("O", so);
-}
+		int j;
+		int bit = (sozb == 0) ? 0 : 1;
+		for (j = 0; j < wIn_; j++)
+			{
+				if (mpz_tstbit(si.get_mpz_t(), wIn_ - j - 1) != bit)
+					break;
+			}
+	
+		so = j;
+		tc->addExpectedOutput("O", so);
+	}
 
+}

@@ -8,36 +8,41 @@
 
 #include "Operator.hpp"
 
-/** 
- * The Integer Multiplier class. Receives at input two numbers of 
- * wInX and wInY widths and outputs a result having the width wOut=wInX+wInY 
- **/
-class IntKaratsuba : public Operator
-{
-public:
+
+namespace flopoco{
+
 	/** 
-	 * The constructor of the IntKaratsuba class
-	 * @param target argument of type Target containing the data for which this operator will be optimized
-	 * @param wInX integer argument representing the width in bits of the input X 
-	 * @param wInY integer argument representing the width in bits of the input Y
+	 * The Integer Multiplier class. Receives at input two numbers of 
+	 * wInX and wInY widths and outputs a result having the width wOut=wInX+wInY 
 	 **/
-	IntKaratsuba(Target* target, int wIn);
+	class IntKaratsuba : public Operator
+	{
+	public:
+		/** 
+		 * The constructor of the IntKaratsuba class
+		 * @param target argument of type Target containing the data for which this operator will be optimized
+		 * @param wInX integer argument representing the width in bits of the input X 
+		 * @param wInY integer argument representing the width in bits of the input Y
+		 **/
+		IntKaratsuba(Target* target, int wIn);
 
-	void outputVHDL(std::ostream& o, std::string name);
-	/**
-	 * IntKaratsuba destructor
-	 */
-	~IntKaratsuba();
+		void outputVHDL(std::ostream& o, std::string name);
+		/**
+		 * IntKaratsuba destructor
+		 */
+		~IntKaratsuba();
 
-	/**
-	 * Emulates an multiplier
-	 */
-	void emulate(TestCase* tc);
-protected:	
+		/**
+		 * Emulates an multiplier
+		 */
+		void emulate(TestCase* tc);
+	protected:	
 	
-	int wIn_; /**< the width (in bits) of the input X  */
-	int wOut_; /**< the width (in bits) of the output R  */
+		int wIn_; /**< the width (in bits) of the input X  */
+		int wOut_; /**< the width (in bits) of the output R  */
 
-private:
-};
+	private:
+	};
+
+}
 #endif

@@ -3,16 +3,18 @@
 
 #include "../Operator.hpp"
 
-struct LNSDiv : Operator
-{
-	LNSDiv(Target * target, int wE, int wF);
-	virtual ~LNSDiv();
+namespace flopoco{
 
-	virtual void outputVHDL(std::ostream& o, std::string name);
+	struct LNSDiv : Operator
+	{
+		LNSDiv(Target * target, int wE, int wF);
+		virtual ~LNSDiv();
+
+		virtual void outputVHDL(std::ostream& o, std::string name);
 	
-private:
-	int wE;
-	int wF;
-};
-
+	private:
+		int wE;
+		int wF;
+	};
+}
 #endif

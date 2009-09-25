@@ -3,22 +3,26 @@
 
 #include "../Table.hpp"
 
-class LastKCMTable : public Table
-{
-public:
-	LastKCMTable(Target* target, int wIn, int wOut, mpz_class C);
+
+namespace flopoco{
+
+	class LastKCMTable : public Table
+	{
+	public:
+		LastKCMTable(Target* target, int wIn, int wOut, mpz_class C);
 	
-	~LastKCMTable();
+		~LastKCMTable();
 
 
-	mpz_class function(int x);
+		mpz_class function(int x);
 
-	mpz_class C_; //the constant
+		mpz_class C_; //the constant
 
-	int wIn_;  /**< the width of the input */
-	int wOut_; /**< the width of the output */
+		int wIn_;  /**< the width of the input */
+		int wOut_; /**< the width of the output */
 	
-};
+	};
 
+}
 #endif //LastKCMTable_HPP
 

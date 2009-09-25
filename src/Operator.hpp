@@ -11,10 +11,12 @@ using namespace std;
 
 // variables set by the command-line interface in main.cpp
 
+
+namespace flopoco {
+
+
 extern  int verbose;
 const std::string tab = "   ";
-
-
 
  /*****************************************************************************/
  /*                        SORRY FOR THE INCONVENIENCE                        */
@@ -667,4 +669,6 @@ private:
 	int                    currentCycle_;               /**< The current cycle, when building a pipeline */
 
 };
+
+} //namespace
 #endif

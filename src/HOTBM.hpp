@@ -8,32 +8,36 @@
 
 #include "Operator.hpp"
 
-class HOTBMInstance;
-class Function;
 
-/**
- * Implements an Operator around HOTBM. Acts like a wrapper around
- * HOTBM classes.
- */
-class HOTBM : public Operator
-{
-public:
-	HOTBM(Target* target, string func, string namebase, int wI, int wO, int n, double xmin = 0, double xmax = 1, double scale = 1);
-	~HOTBM();
+namespace flopoco{
 
-	// Overloading the virtual functions of Operator
-	void outputVHDL(std::ostream& o, std::string name);
+	class HOTBMInstance;
+	class Function;
 
-	void fillTestCase(mpz_class a[]);
+	/**
+	 * Implements an Operator around HOTBM. Acts like a wrapper around
+	 * HOTBM classes.
+	 */
+	class HOTBM : public Operator
+	{
+	public:
+		HOTBM(Target* target, string func, string namebase, int wI, int wO, int n, double xmin = 0, double xmax = 1, double scale = 1);
+		~HOTBM();
+
+		// Overloading the virtual functions of Operator
+		void outputVHDL(std::ostream& o, std::string name);
+
+		void fillTestCase(mpz_class a[]);
 	
-	int wIn() const { return wI; }
-	int wOut() const { return wO + 1; }
+		int wIn() const { return wI; }
+		int wOut() const { return wO + 1; }
 
-private:
-	HOTBMInstance *inst;
-	Function &f;
+	private:
+		HOTBMInstance *inst;
+		Function &f;
 
-	int wI, wO;
-};
+		int wI, wO;
+	};
 
+}
 #endif

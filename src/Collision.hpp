@@ -55,19 +55,20 @@ ulp of R2.
 #include "FPMultiplier.hpp"
 #include "FPAdder.hpp"
 
+namespace flopoco{
 
-class Collision : public Operator
-{
-public:
-	Collision(Target* target, int wE, int wF, int optimize);
-	~Collision();
+	class Collision : public Operator
+	{
+	public:
+		Collision(Target* target, int wE, int wF, int optimize);
+		~Collision();
 
-	void emulate(TestCase * tc);
+		void emulate(TestCase * tc);
 
-	void buildRandomTestCases(TestCaseList* tcl, int n);
+		void buildRandomTestCases(TestCaseList* tcl, int n);
 
-	int wE, wF;
+		int wE, wF;
 
-};
-
+	};
+}
 #endif

@@ -26,37 +26,39 @@
 */
 
 
-class IntConstMult : public Operator
-{
-public:
-	IntConstMult(Target* target, int xsize, mpz_class n);
-	~IntConstMult();
+namespace flopoco{
 
-	mpz_class n;
-	int nsize;
-	int xsize;
-	int rsize;
-	int* bits;
-	int* BoothCode;
-	int nonZeroInBoothCode;
+	class IntConstMult : public Operator
+	{
+	public:
+		IntConstMult(Target* target, int xsize, mpz_class n);
+		~IntConstMult();
 
-	ShiftAddDag* implementation;
+		mpz_class n;
+		int nsize;
+		int xsize;
+		int rsize;
+		int* bits;
+		int* BoothCode;
+		int nonZeroInBoothCode;
+
+		ShiftAddDag* implementation;
 
 
-	// Overloading the virtual functions of Operator
+		// Overloading the virtual functions of Operator
 
-	void emulate(TestCase* tc);
-	void buildStandardTestCases(TestCaseList* tcl);
+		void emulate(TestCase* tc);
+		void buildStandardTestCases(TestCaseList* tcl);
 
-private:
-	void build_pipeline(ShiftAddOp* sao, double& delay);
-	void recodeBooth();
-	void printBoothCode();
-	void buildMultBooth();
-	void buildMultBoothTree();
-	void showShiftAddDag();
-	void optimizeLefevre(const vector<mpz_class>& constants);
+	private:
+		void build_pipeline(ShiftAddOp* sao, double& delay);
+		void recodeBooth();
+		void printBoothCode();
+		void buildMultBooth();
+		void buildMultBoothTree();
+		void showShiftAddDag();
+		void optimizeLefevre(const vector<mpz_class>& constants);
 
-};
-
+	};
+}
 #endif

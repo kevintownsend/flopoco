@@ -63,7 +63,6 @@
 #include "DotProduct.hpp"
 #include "Wrapper.hpp"
 #include "TestBench.hpp"
-#include "GenericTestBench.hpp"
 
 #include "ConstMult/IntConstMult.hpp"
 #include "ConstMult/FPConstMult.hpp"
@@ -101,21 +100,23 @@
 
 
 using namespace std;
+using namespace flopoco;
 
+// Global variables, useful through most of FloPoCo, to be encapuslated in something someday
 
-// Global variables, useful through most of FloPoCo
+namespace flopoco{
 
-vector<Operator*> oplist;
+	vector<Operator*> oplist;
 
-string filename="flopoco.vhdl";
-string cl_name=""; // used for the -name option
+	string filename="flopoco.vhdl";
+	string cl_name=""; // used for the -name option
 
-int verbose=0;
-Target* target;
-int LongAccN;
+	int verbose=0;
+	Target* target;
+	int LongAccN;
 
-map<string, double> emptyDelayMap;
-
+	map<string, double> emptyDelayMap;
+}
 static void usage(char *name){
 	cerr << "\nUsage: "<<name<<" <operator specification list>\n" ;
 	cerr << "Each operator specification is one of: \n";
@@ -213,9 +214,9 @@ static void usage(char *name){
 	cerr << "    CoilInductance LSBI MSBI wEIn wFIn MaxMSBO LSBO MSBO FilePath\n";
 	cerr << "      TODO - Description here; a parameter such as FilePath should not exist !!! \n";
 	//To be removed from command line interface
-	cerr << "    CoordinatesTableX wIn LSB MSB FilePath\n";
-	cerr << "    CoordinatesTableY wIn LSB MSB FilePath\n";
-	cerr << "    CoordinatesTableZ wIn LSB MSB FilePath\n";
+	// cerr << "    CoordinatesTableX wIn LSB MSB FilePath\n";
+	// cerr << "    CoordinatesTableY wIn LSB MSB FilePath\n";
+	// cerr << "    CoordinatesTableZ wIn LSB MSB FilePath\n";
 	//=====================================================
 
 
@@ -314,7 +315,7 @@ bool parseCommandLine(int argc, char* argv[]){
 					filename=v;
 				}
 				else if (o == "verbose") {
-					verbose = atoi(v.c_str()); // there must be a more direct method of string
+					flopoco::verbose = atoi(v.c_str()); // there must be a more direct method of string
 					if (verbose<0 || verbose>3) {
 						cerr<<"ERROR: verbose should be 1, 2 or 3,    got "<<v<<"."<<endl;
 						usage(argv[0]);
@@ -682,19 +683,6 @@ bool parseCommandLine(int argc, char* argv[]){
 			}    
 		}   
 		
-		else if(opname=="GenericTestBench"){
-			int nargs = 3;
-			if (i+nargs > argc)
-				usage(argv[0]);
-			else {
-				string aName = argv[i++];
-				int depth= checkStrictyPositive(argv[i++], argv[0]);
-				int wIn = checkStrictyPositive(argv[i++], argv[0]);
-				cerr << "> GenericTestBench , entityName="<<aName<<", pipelineDepth="<<depth<<", input width="<<wIn<<"\n";
-				op = new GenericTestBench(target, aName,depth, wIn);
-				addOperator(op);
-			}
-		}
 		else if(opname=="FPAdder"){
 			int nargs = 2;
 			if (i+nargs > argc)
@@ -742,48 +730,48 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(op);
 			}
 		}
-		else if(opname=="CoordinatesTableX"){
-			int nargs = 4;
-			if (i+nargs > argc)
-				usage(argv[0]);
-			else {
-				int wIn = checkStrictyPositive(argv[i++], argv[0]);
-				int LSB = atoi(argv[i++]);
-				int MSB = atoi(argv[i++]);
-				char *pa=argv[i++];
-				cerr << "> CoordinatesTableX, wIn="<<wIn<<", LSB="<<LSB<<", MSB="<<MSB<<" \n";
-				op = new CoordinatesTableX(target, wIn,LSB, MSB,pa);
-				addOperator(op);
-			}
-		}
-		else if(opname=="CoordinatesTableZ"){
-			int nargs = 4;
-			if (i+nargs > argc)
-				usage(argv[0]);
-			else {
-				int wIn = checkStrictyPositive(argv[i++], argv[0]);
-				int LSB = atoi(argv[i++]);
-				int MSB = atoi(argv[i++]);
-				char *pa=argv[i++];
-				cerr << "> CoordinatesTableZ, wIn="<<wIn<<", LSB="<<LSB<<", MSB="<<MSB<<" \n";
-				op = new CoordinatesTableZ(target, wIn,LSB, MSB,pa);
-				addOperator(op);
-			}
-		}
-		else if(opname=="CoordinatesTableY"){
-			int nargs = 4;
-			if (i+nargs > argc)
-				usage(argv[0]);
-			else {
-				int wIn = checkStrictyPositive(argv[i++], argv[0]);
-				int LSB = atoi(argv[i++]);
-				int MSB = atoi(argv[i++]);
-				char *pa=argv[i++];
-				cerr << "> CoordinatesTableY, wIn="<<wIn<<", LSB="<<LSB<<", MSB="<<MSB<<" \n";
-				op = new CoordinatesTableY(target, wIn,LSB, MSB,pa);
-				addOperator(op);
-			}
-		}
+		// else if(opname=="CoordinatesTableX"){
+		// 	int nargs = 4;
+		// 	if (i+nargs > argc)
+		// 		usage(argv[0]);
+		// 	else {
+		// 		int wIn = checkStrictyPositive(argv[i++], argv[0]);
+		// 		int LSB = atoi(argv[i++]);
+		// 		int MSB = atoi(argv[i++]);
+		// 		char *pa=argv[i++];
+		// 		cerr << "> CoordinatesTableX, wIn="<<wIn<<", LSB="<<LSB<<", MSB="<<MSB<<" \n";
+		// 		op = new CoordinatesTableX(target, wIn,LSB, MSB,pa);
+		// 		addOperator(op);
+		// 	}
+		// }
+		// else if(opname=="CoordinatesTableZ"){
+		// 	int nargs = 4;
+		// 	if (i+nargs > argc)
+		// 		usage(argv[0]);
+		// 	else {
+		// 		int wIn = checkStrictyPositive(argv[i++], argv[0]);
+		// 		int LSB = atoi(argv[i++]);
+		// 		int MSB = atoi(argv[i++]);
+		// 		char *pa=argv[i++];
+		// 		cerr << "> CoordinatesTableZ, wIn="<<wIn<<", LSB="<<LSB<<", MSB="<<MSB<<" \n";
+		// 		op = new CoordinatesTableZ(target, wIn,LSB, MSB,pa);
+		// 		addOperator(op);
+		// 	}
+		// }
+		// else if(opname=="CoordinatesTableY"){
+		// 	int nargs = 4;
+		// 	if (i+nargs > argc)
+		// 		usage(argv[0]);
+		// 	else {
+		// 		int wIn = checkStrictyPositive(argv[i++], argv[0]);
+		// 		int LSB = atoi(argv[i++]);
+		// 		int MSB = atoi(argv[i++]);
+		// 		char *pa=argv[i++];
+		// 		cerr << "> CoordinatesTableY, wIn="<<wIn<<", LSB="<<LSB<<", MSB="<<MSB<<" \n";
+		// 		op = new CoordinatesTableY(target, wIn,LSB, MSB,pa);
+		// 		addOperator(op);
+		// 	}
+		// }
 		else if(opname=="FPMultiplier"){
 			int nargs = 2; 
 			if (i+nargs > argc)

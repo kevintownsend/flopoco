@@ -9,9 +9,10 @@
 #include "Operator.hpp"
 #include "IntAdder.hpp"
 
+namespace flopoco{
+
 /** 
- * The Integer Multiplier class. Receives at input two numbers of 
- * wInX and wInY widths and outputs a result having the width wOut=wInX+wInY 
+ * The GenericTestBench class. Produces an empty black box 
  **/
 class GenericTestBench : public Operator
 {
@@ -27,13 +28,6 @@ public:
 	/** GenericTestBench destructor */
 	~GenericTestBench();
 	
-	/**
-	 * Method belonging to the Operator class overloaded by the GenericTestBench class
-	 * @param[in,out] o     the stream where the current architecture will be outputed to
-	 * @param[in]     name  the name of the entity corresponding to the architecture generated in this method
-	 **/
-	void outputVHDL(std::ostream& o, std::string name);
-
 
 	/**
 	 * Gets the correct value associated to one or more inputs.
@@ -53,4 +47,6 @@ protected:
 	string _name;
 
 };
+
+}
 #endif

@@ -22,7 +22,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
-*/
+ */
 
 #include <iostream>
 #include <sstream>
@@ -37,24 +37,27 @@
 #include "IntSquarer.hpp"
 
 using namespace std;
-extern vector<Operator *> oplist;
 
-IntSquarer::IntSquarer(Target* target, int wIn, map<string, double> inputDelays):
-Operator(target), wIn_(wIn), inputDelays_(inputDelays)
-{
-	ostringstream name;
-	name << "IntSquarer_" << wIn_;
-	setName(name.str());
-	setCopyrightString("Bogdan Pasca (2009)");
+namespace flopoco{
 
-	// Set up the IO signals
-	addInput ("X"  , wIn_);
-	addOutput("R"  , 2*wIn_);
+	extern vector<Operator *> oplist;
+
+	IntSquarer::IntSquarer(Target* target, int wIn, map<string, double> inputDelays):
+		Operator(target), wIn_(wIn), inputDelays_(inputDelays)
+	{
+		ostringstream name;
+		name << "IntSquarer_" << wIn_;
+		setName(name.str());
+		setCopyrightString("Bogdan Pasca (2009)");
+
+		// Set up the IO signals
+		addInput ("X"  , wIn_);
+		addOutput("R"  , 2*wIn_);
 
 
-	if (verbose>=2){
-		cerr <<"> IntSquarer: delay for X is   "<< inputDelays["X"]<<endl;	
-	}
+		if (verbose>=2){
+			cerr <<"> IntSquarer: delay for X is   "<< inputDelays["X"]<<endl;	
+		}
 
 		if (wIn <= 17 ) {
 			vhdl << tab << "R <= X * X;" << endl; 
@@ -152,30 +155,30 @@ Operator(target), wIn_(wIn), inputDelays_(inputDelays)
 			oplist.push_back(intadder);
 
 			if (wIn<68)  
-			vhdl << declare("sigX",68) << "<= "<<zg(68-wIn,0) <<" & X;"<<endl;
+				vhdl << declare("sigX",68) << "<= "<<zg(68-wIn,0) <<" & X;"<<endl;
 			else
-			vhdl << declare("sigX",68) << "<= X;"<<endl;
+				vhdl << declare("sigX",68) << "<= X;"<<endl;
 
 			vhdl << declare("x0_16_x17_33",34) << "<= "<< use("sigX")<<range(16,0) << " * " << use("sigX")<<range(33,17)<<";"<<endl;
 			nextCycle(); ////////////////////////////////////////////////
 			vhdl << declare("x0_16_sqr",36) << "<= " << "(\"00\" & " << use("x0_16_x17_33")<<range(15,0)<<" & \"000000000000000000\") + " 
-			                                << "( \"0\" & "<< use("sigX")<<range(16,0) << ") * (\"0\" & " << use("sigX")<<range(16,0)<<");"<<endl;
+				  << "( \"0\" & "<< use("sigX")<<range(16,0) << ") * (\"0\" & " << use("sigX")<<range(16,0)<<");"<<endl;
 			vhdl << declare("x17_33_x34_50",34) << "<= "<< use("sigX")<<range(33,17) << " * " << use("sigX")<<range(50,34)<<";"<<endl;
 			nextCycle(); ////////////////////////////////////////////////
 			vhdl << declare("x17_33_sqr",36) << "<= " << "(\"00\" & " << use("x17_33_x34_50")<<range(15,0)<<" & "<<use("x0_16_x17_33")<<range(33,16) <<") + " << use("x0_16_sqr")<<"(34) + "
-			                                << "( \"0\" & "<< use("sigX")<<range(33,17) << ") * (\"0\" & " << use("sigX")<<range(33,17)<<");"<<endl;
+				  << "( \"0\" & "<< use("sigX")<<range(33,17) << ") * (\"0\" & " << use("sigX")<<range(33,17)<<");"<<endl;
 			vhdl << declare("x51_67_x34_50",34) << "<= "<< use("sigX")<<range(67,51) << " * " << use("sigX")<<range(50,34)<<";"<<endl;
 			vhdl << declare("x_0_16_34_50",34) << " <= " << "( "<< use("sigX")<<range(16,0) << ") * (" << use("sigX")<<range(50,34)<<");"<<endl;
 			nextCycle(); ////////////////////////////////////////////////
 			vhdl << declare("x34_50_sqr",36) << "<= " << "(\"00\" & " << use("x51_67_x34_50")<<range(15,0)<<" & "<<use("x17_33_x34_50")<<range(33,16) <<") + " << use("x17_33_sqr")<<"(34) + "
-			                                << "( \"0\" & "<< use("sigX")<<range(50,34) << ") * (\"0\" & " << use("sigX")<<range(50,34)<<");"<<endl;
+				  << "( \"0\" & "<< use("sigX")<<range(50,34) << ") * (\"0\" & " << use("sigX")<<range(50,34)<<");"<<endl;
 			vhdl << declare("x_0_16_51_67_pshift", 34) << " <= " << use("x_0_16_34_50")<<range(33,17) << " + "
-			                                << "( "<< use("sigX")<<range(16,0) << ") * (" << use("sigX")<<range(67,51)<<");"<<endl;
+				  << "( "<< use("sigX")<<range(16,0) << ") * (" << use("sigX")<<range(67,51)<<");"<<endl;
 			nextCycle(); ////////////////////////////////////////////////
 			vhdl << declare("x51_67_sqr",34) << "<= " << "( \"00000000000000\" & "<<use("x51_67_x34_50")<<range(33,16) <<") + " << use("x34_50_sqr")<<"(34) + "
-			                                << "( "<< use("sigX")<<range(67,51) << ") * (" << use("sigX")<<range(67,51)<<");"<<endl;
+				  << "( "<< use("sigX")<<range(67,51) << ") * (" << use("sigX")<<range(67,51)<<");"<<endl;
 			vhdl << declare("x_17_33_51_67_pshift", 34) << " <= " << use("x_0_16_51_67_pshift")<<range(33,17) << " + "
-			                                << "( "<< use("sigX")<<range(33,17) << ") * (" << use("sigX")<<range(67,51)<<");"<<endl;
+				  << "( "<< use("sigX")<<range(33,17) << ") * (" << use("sigX")<<range(67,51)<<");"<<endl;
 			nextCycle(); ////////////////////////////////////////////////
 			vhdl << declare("op1",101) << "<= "<< use("x51_67_sqr")<<" & " <<  use("x34_50_sqr")<<range(33,0) << " & " << use("x17_33_sqr")<<range(33,1) <<  ";"<<endl;
 			vhdl << declare("op2",101) << "<="<< zg(101-68,0)<<" & " << use("x_17_33_51_67_pshift") << " & " << use("x_0_16_51_67_pshift")<<range(16,0)<<" & " << use("x_0_16_34_50")<<range(16,0)<<";"<<endl;
@@ -250,33 +253,34 @@ Operator(target), wIn_(wIn), inputDelays_(inputDelays)
 			exit (EXIT_FAILURE);
 		}
 	
+	}
+
+	IntSquarer::~IntSquarer() {
+	}
+
+
+	//void IntSquarer::outputVHDL(std::ostream& o, std::string name) {
+	//	ostringstream signame;
+	//	licence(o,"Bogdan Pasca (2009)");
+	//	Operator::stdLibs(o);
+	//	outputVHDLEntity(o);
+	//	newArchitecture(o,name);
+	//	o << buildVHDLSignalDeclarations();
+	//	o << output
+	//	beginArchitecture(o);
+	//	o << buildVHDLRegisters();
+	//	o << vhdl.str();
+	//	endArchitecture(o);
+	//}
+
+
+
+	void IntSquarer::emulate(TestCase* tc)
+	{
+		mpz_class svX = tc->getInputValue("X");
+		mpz_class svR = svX * svX ;
+		tc->addExpectedOutput("R", svR);
+	}
+
+
 }
-
-IntSquarer::~IntSquarer() {
-}
-
-
-//void IntSquarer::outputVHDL(std::ostream& o, std::string name) {
-//	ostringstream signame;
-//	licence(o,"Bogdan Pasca (2009)");
-//	Operator::stdLibs(o);
-//	outputVHDLEntity(o);
-//	newArchitecture(o,name);
-//	o << buildVHDLSignalDeclarations();
-//	o << output
-//	beginArchitecture(o);
-//	o << buildVHDLRegisters();
-//	o << vhdl.str();
-//	endArchitecture(o);
-//}
-
-
-
-void IntSquarer::emulate(TestCase* tc)
-{
-	mpz_class svX = tc->getInputValue("X");
-	mpz_class svR = svX * svX ;
-	tc->addExpectedOutput("R", svR);
-}
-
-

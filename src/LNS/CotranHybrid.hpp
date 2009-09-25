@@ -8,38 +8,40 @@
 #include "Cotran.hpp"
 //#include <boost/shared_pointer>
 
-struct CotranHybrid : Operator
-{
-	CotranHybrid(Target * target, int wE, int wF, int j = -1, int wECotran = -1, int o = 1);
-	virtual ~CotranHybrid();
+namespace flopoco{
 
-	virtual void outputVHDL(std::ostream& o, std::string name);
+	struct CotranHybrid : Operator
+	{
+		CotranHybrid(Target * target, int wE, int wF, int j = -1, int wECotran = -1, int o = 1);
+		virtual ~CotranHybrid();
 
-	//virtual TestIOMap getTestIOMap();
-	//virtual void fillTestCase(mpz_class a[]);
+		virtual void outputVHDL(std::ostream& o, std::string name);
+
+		//virtual TestIOMap getTestIOMap();
+		//virtual void fillTestCase(mpz_class a[]);
 	
-	int getJ();
+		int getJ();
 
-private:
-	HOTBM * gen_db_table(int i, int order);
+	private:
+		HOTBM * gen_db_table(int i, int order);
 		
-	int wE;
-	int wF;
-	int j;
-	int wECotran;
+		int wE;
+		int wF;
+		int j;
+		int wECotran;
 	
-	void select_j();
+		void select_j();
 	
-	Cotran * cotran;
+		Cotran * cotran;
 	
-//	std::vector<boost::shared_pointer<HOTBM> > db_tables;
-	// argh, ownership controlled (?) by oplist
-	std::vector<HOTBM*> db_tables;
+		//	std::vector<boost::shared_pointer<HOTBM> > db_tables;
+		// argh, ownership controlled (?) by oplist
+		std::vector<HOTBM*> db_tables;
 
-	int wEssZero;
-	int DBMaxInput;
-};
+		int wEssZero;
+		int DBMaxInput;
+	};
 
-
+}
 #endif
 

@@ -35,220 +35,221 @@ using namespace std;
 
 
 
+namespace flopoco{
 
 
-
-LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut, int wCount, bool computeSticky, const int countType, map<string, double> inputDelays) :
-	Operator(target), wIn_(wIn), wOut_(wOut), wCount_(wCount), computeSticky_(computeSticky), countType_(countType) {
+	LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut, int wCount, bool computeSticky, const int countType, map<string, double> inputDelays) :
+		Operator(target), wIn_(wIn), wOut_(wOut), wCount_(wCount), computeSticky_(computeSticky), countType_(countType) {
 	
-	// -------- Parameter set up -----------------
-	setEntityType( (countType_==-1?gen:spec) );
+		// -------- Parameter set up -----------------
+		setEntityType( (countType_==-1?gen:spec) );
 
-	ostringstream name; 
-	name << "L" << (countType_<0?"ZO":((countType_>0)?"O":"Z")) << "CShifter"
-	     << (computeSticky_?"Sticky":"") << "_" << wIn_ << "_to_"<<wOut_<<"_counting_"<<(1<<wCount_);
-	setName(name.str());
+		ostringstream name; 
+		name << "L" << (countType_<0?"ZO":((countType_>0)?"O":"Z")) << "CShifter"
+			  << (computeSticky_?"Sticky":"") << "_" << wIn_ << "_to_"<<wOut_<<"_counting_"<<(1<<wCount_);
+		setName(name.str());
 
-	setCopyrightString("Florent de Dinechin, Bogdan Pasca (2007)");
-
-	
-	// -------- Parameter set up -----------------
-	setEntityType( (countType_==-1?gen:spec) );
-	
-	
-	addInput ("I", wIn_);
-	if (entityType_==gen) addInput ("OZb"); /* if we generate a generic LZOC */
-	addOutput("Count", wCount_);
-	addOutput("O", wOut_);
-	if (computeSticky_)   addOutput("Sticky"); /* if we require a sticky bit computation */
-
-	// we consider that wOut <= wIn. We fix this at the end if not the case
-	int wOut_true = wOut_;
-	wOut_ = wOut > wIn_ ? wIn_ : wOut;
+		setCopyrightString("Florent de Dinechin, Bogdan Pasca (2007)");
 
 	
-	vhdl << tab << declare(join("level",wCount_), wIn_) << " <= I ;"   <<endl; 
-	if (entityType_==gen) vhdl << tab << declare("sozb",1) << "<= OZb;"<<endl;
-	if ((computeSticky_)&&(wOut_<wIn))   vhdl << tab << declare(join("sticky",wCount_), 1  ) << " <= '0' ;"<<endl; //init sticky 
+		// -------- Parameter set up -----------------
+		setEntityType( (countType_==-1?gen:spec) );
 	
-	int currLev=wIn, prevLev=0;
-	double stageDelay = getMaxInputDelays(inputDelays); 
-	double opDelay = 0.0;
-	double period = (1.0)/target->frequency();
 	
-	for (int i=wCount_-1; i>=0; i--){
-	//int currLev = (wOut_>intpow2(i)?wOut_:intpow2(i));
-	prevLev = currLev;
-	
-	// level(k) = max ( max (2^k, wOut) + 2^k -1) , wIn)
-	currLev = (wOut_>intpow2(i)?wOut_:intpow2(i));
-	currLev += (intpow2(i)-1); 
-	currLev = (currLev > wIn_? wIn_: currLev);
-		opDelay = compDelay(intpow2(i));
-		if (stageDelay + opDelay > period){
-			nextCycle(); ///////////////////////////////////////
-			stageDelay = 0.0;
-		}
-		vhdl << tab << declare(join("count",i),1) << "<= '1' when " <<use(join("level",i+1))<<"("<<prevLev-1 <<" downto "<<prevLev - intpow2(i)<<") = "
-		     <<"("<<prevLev-1<<" downto "<<prevLev - intpow2(i)<<"=>"<< (countType_==-1? use("sozb"): countType_==0?"'0'":"'1'")<<") else '0';"<<endl;
-		stageDelay += opDelay;
-		opDelay = muxDelay();
-		if (stageDelay + opDelay > period){
-			nextCycle(); ///////////////////////////////////////
-			stageDelay = 0.0;
-		}
-		vhdl << tab << declare(join("level",i),currLev) << "<= " << use(join("level",i+1))<<"("<<prevLev-1<<" downto "<< prevLev-currLev << ")"
-		     << " when " << use(join("count",i)) << "='0' else ";
-		int l,r;
-		l = prevLev - intpow2(i) - 1;
-		r = (currLev < prevLev - intpow2(i) ? (prevLev - intpow2(i)) - currLev : 0 );
-		if (l>=r)
-		    vhdl << use(join("level",i+1)) << "("<<prevLev - intpow2(i) - 1 <<" downto "<< (currLev < prevLev - intpow2(i) ? (prevLev - intpow2(i)) - currLev : 0 ) <<")";
-		     
-	     if (prevLev - intpow2(i) < currLev )
-	     	vhdl << (l>=r?" & ":"") << rangeAssign(currLev -(prevLev - intpow2(i))-1,0,"'0'");
-	     vhdl << ";"<<endl;
-		stageDelay += opDelay;
+		addInput ("I", wIn_);
+		if (entityType_==gen) addInput ("OZb"); /* if we generate a generic LZOC */
+		addOutput("Count", wCount_);
+		addOutput("O", wOut_);
+		if (computeSticky_)   addOutput("Sticky"); /* if we require a sticky bit computation */
 
-		if ((computeSticky_)&&(wOut_<wIn)) {
-			opDelay = compDelay( max( prevLev-currLev, (currLev < prevLev - intpow2(i) ? (prevLev - int(intpow2(i)) ) - currLev : 0 ))  );
+		// we consider that wOut <= wIn. We fix this at the end if not the case
+		int wOut_true = wOut_;
+		wOut_ = wOut > wIn_ ? wIn_ : wOut;
+
+	
+		vhdl << tab << declare(join("level",wCount_), wIn_) << " <= I ;"   <<endl; 
+		if (entityType_==gen) vhdl << tab << declare("sozb",1) << "<= OZb;"<<endl;
+		if ((computeSticky_)&&(wOut_<wIn))   vhdl << tab << declare(join("sticky",wCount_), 1  ) << " <= '0' ;"<<endl; //init sticky 
+	
+		int currLev=wIn, prevLev=0;
+		double stageDelay = getMaxInputDelays(inputDelays); 
+		double opDelay = 0.0;
+		double period = (1.0)/target->frequency();
+	
+		for (int i=wCount_-1; i>=0; i--){
+			//int currLev = (wOut_>intpow2(i)?wOut_:intpow2(i));
+			prevLev = currLev;
+	
+			// level(k) = max ( max (2^k, wOut) + 2^k -1) , wIn)
+			currLev = (wOut_>intpow2(i)?wOut_:intpow2(i));
+			currLev += (intpow2(i)-1); 
+			currLev = (currLev > wIn_? wIn_: currLev);
+			opDelay = compDelay(intpow2(i));
 			if (stageDelay + opDelay > period){
 				nextCycle(); ///////////////////////////////////////
 				stageDelay = 0.0;
 			}
-
-			vhdl << tab << declare(join("sticky_high_",i),1) << "<= '0'";
-			if (prevLev-currLev > 0)
-				vhdl << "when " <<use(join("level",i+1))<<"("<<prevLev-currLev -1 <<" downto "<< 0 <<") = CONV_STD_LOGIC_VECTOR(0,"<< prevLev-currLev <<") else '1'";
-		    vhdl << ";"<<endl;
-
-   			vhdl << tab << declare(join("sticky_low_",i),1) << "<= '0'";
-			if ((currLev < prevLev - intpow2(i) ? (prevLev - intpow2(i)) - currLev : 0 ) > 0)
-				vhdl << "when " <<use(join("level",i+1))<<"("<<(currLev < prevLev - intpow2(i) ? (prevLev - intpow2(i)) - currLev : 0 ) -1 
-				     <<" downto "<< 0 <<") = CONV_STD_LOGIC_VECTOR(0,"<< (currLev < prevLev - intpow2(i) ? (prevLev - intpow2(i)) - currLev : 0 ) <<") else '1'";
-		    vhdl << ";"<<endl;
-
+			vhdl << tab << declare(join("count",i),1) << "<= '1' when " <<use(join("level",i+1))<<"("<<prevLev-1 <<" downto "<<prevLev - intpow2(i)<<") = "
+				  <<"("<<prevLev-1<<" downto "<<prevLev - intpow2(i)<<"=>"<< (countType_==-1? use("sozb"): countType_==0?"'0'":"'1'")<<") else '0';"<<endl;
 			stageDelay += opDelay;
 			opDelay = muxDelay();
 			if (stageDelay + opDelay > period){
 				nextCycle(); ///////////////////////////////////////
 				stageDelay = 0.0;
 			}
-			vhdl << tab << declare(join("sticky",i),1) << "<= " << use(join("sticky",i+1)) << " or " << use(join("sticky_high_",i)) 
-			            << " when " << use(join("count",i)) << "='0' else " << use(join("sticky",i+1)) << " or " << use(join("sticky_low_",i))<<";"<<endl;
+			vhdl << tab << declare(join("level",i),currLev) << "<= " << use(join("level",i+1))<<"("<<prevLev-1<<" downto "<< prevLev-currLev << ")"
+				  << " when " << use(join("count",i)) << "='0' else ";
+			int l,r;
+			l = prevLev - intpow2(i) - 1;
+			r = (currLev < prevLev - intpow2(i) ? (prevLev - intpow2(i)) - currLev : 0 );
+			if (l>=r)
+				vhdl << use(join("level",i+1)) << "("<<prevLev - intpow2(i) - 1 <<" downto "<< (currLev < prevLev - intpow2(i) ? (prevLev - intpow2(i)) - currLev : 0 ) <<")";
+		     
+			if (prevLev - intpow2(i) < currLev )
+				vhdl << (l>=r?" & ":"") << rangeAssign(currLev -(prevLev - intpow2(i))-1,0,"'0'");
+			vhdl << ";"<<endl;
 			stageDelay += opDelay;
-		}
+
+			if ((computeSticky_)&&(wOut_<wIn)) {
+				opDelay = compDelay( max( prevLev-currLev, (currLev < prevLev - intpow2(i) ? (prevLev - int(intpow2(i)) ) - currLev : 0 ))  );
+				if (stageDelay + opDelay > period){
+					nextCycle(); ///////////////////////////////////////
+					stageDelay = 0.0;
+				}
+
+				vhdl << tab << declare(join("sticky_high_",i),1) << "<= '0'";
+				if (prevLev-currLev > 0)
+					vhdl << "when " <<use(join("level",i+1))<<"("<<prevLev-currLev -1 <<" downto "<< 0 <<") = CONV_STD_LOGIC_VECTOR(0,"<< prevLev-currLev <<") else '1'";
+				vhdl << ";"<<endl;
+
+   			vhdl << tab << declare(join("sticky_low_",i),1) << "<= '0'";
+				if ((currLev < prevLev - intpow2(i) ? (prevLev - intpow2(i)) - currLev : 0 ) > 0)
+					vhdl << "when " <<use(join("level",i+1))<<"("<<(currLev < prevLev - intpow2(i) ? (prevLev - intpow2(i)) - currLev : 0 ) -1 
+						  <<" downto "<< 0 <<") = CONV_STD_LOGIC_VECTOR(0,"<< (currLev < prevLev - intpow2(i) ? (prevLev - intpow2(i)) - currLev : 0 ) <<") else '1'";
+				vhdl << ";"<<endl;
+
+				stageDelay += opDelay;
+				opDelay = muxDelay();
+				if (stageDelay + opDelay > period){
+					nextCycle(); ///////////////////////////////////////
+					stageDelay = 0.0;
+				}
+				vhdl << tab << declare(join("sticky",i),1) << "<= " << use(join("sticky",i+1)) << " or " << use(join("sticky_high_",i)) 
+					  << " when " << use(join("count",i)) << "='0' else " << use(join("sticky",i+1)) << " or " << use(join("sticky_low_",i))<<";"<<endl;
+				stageDelay += opDelay;
+			}
 		
-		vhdl <<endl;
-	}     
-	//assign back the value to wOut_
-	wOut_ =  wOut_true;
-	vhdl << tab << "O <= "<<use(join("level",0))
-	     << (wOut_<=wIn?"":join("&",rangeAssign(wOut_-wIn-1,0,"'0'")))<<";"<<endl;
+			vhdl <<endl;
+		}     
+		//assign back the value to wOut_
+		wOut_ =  wOut_true;
+		vhdl << tab << "O <= "<<use(join("level",0))
+			  << (wOut_<=wIn?"":join("&",rangeAssign(wOut_-wIn-1,0,"'0'")))<<";"<<endl;
 	
-	outDelayMap["O"] = period - stageDelay;
-	outDelayMap["Count"] = max(0.0, period - (stageDelay+muxDelay()));
+		outDelayMap["O"] = period - stageDelay;
+		outDelayMap["Count"] = max(0.0, period - (stageDelay+muxDelay()));
 	
-	vhdl << tab << declare("sCount",wCount_) <<" <= ";
-	for (int i=wCount_-1; i>=0; i--){
-		vhdl << use(join("count",i));
-		vhdl << (i>0?" & ":join(";","\n"));
-	} 
+		vhdl << tab << declare("sCount",wCount_) <<" <= ";
+		for (int i=wCount_-1; i>=0; i--){
+			vhdl << use(join("count",i));
+			vhdl << (i>0?" & ":join(";","\n"));
+		} 
 
-	if((1<<wCount_)-1 > wIn_) {
-		vhdl << tab << "Count <= " << "CONV_STD_LOGIC_VECTOR("<<wIn_<<","<<wCount_<<") when "<<use("sCount")<<"=CONV_STD_LOGIC_VECTOR("<<intpow2(wCount_)-1<<","<<wCount_<<")"<<endl
-			  << tab << tab << "else "<<use("sCount")<<";"<<endl;
+		if((1<<wCount_)-1 > wIn_) {
+			vhdl << tab << "Count <= " << "CONV_STD_LOGIC_VECTOR("<<wIn_<<","<<wCount_<<") when "<<use("sCount")<<"=CONV_STD_LOGIC_VECTOR("<<intpow2(wCount_)-1<<","<<wCount_<<")"<<endl
+				  << tab << tab << "else "<<use("sCount")<<";"<<endl;
+		}
+		else {
+			vhdl << tab << "Count <= " << use("sCount")<<";"<<endl;
+		}
+		if (computeSticky_){
+			outDelayMap["Sticky"] = period - stageDelay;
+			if (wOut_>=wIn)
+				vhdl << tab << "Sticky <= '0';"<<endl; 
+			else
+				vhdl << tab << "Sticky <= "<<use("sticky0")<<";"<<endl;
+		}
 	}
-	else {
-		vhdl << tab << "Count <= " << use("sCount")<<";"<<endl;
+
+	LZOCShifterSticky::~LZOCShifterSticky() {
 	}
-	if (computeSticky_){
-	outDelayMap["Sticky"] = period - stageDelay;
-		if (wOut_>=wIn)
-			vhdl << tab << "Sticky <= '0';"<<endl; 
-		else
-			vhdl << tab << "Sticky <= "<<use("sticky0")<<";"<<endl;
+
+	void LZOCShifterSticky::setEntityType(entityType_t eType){
+		entityType_ = eType; 
 	}
-}
 
-LZOCShifterSticky::~LZOCShifterSticky() {
-}
-
-void LZOCShifterSticky::setEntityType(entityType_t eType){
-	entityType_ = eType; 
-}
-
-int LZOCShifterSticky::getCountWidth() const{
-	return wCount_;
-}
+	int LZOCShifterSticky::getCountWidth() const{
+		return wCount_;
+	}
 
 
 
-void LZOCShifterSticky::emulate(TestCase* tc)
-{
-	mpz_class si   = tc->getInputValue("I");
+	void LZOCShifterSticky::emulate(TestCase* tc)
+	{
+		mpz_class si   = tc->getInputValue("I");
 	
-	mpz_class sozb = 42; //dummy value
-	if (countType_ == -1) 
-		sozb = tc->getInputValue("OZb");
+		mpz_class sozb = 42; //dummy value
+		if (countType_ == -1) 
+			sozb = tc->getInputValue("OZb");
 	
-	int sticky=0;
-	int j, icount;
+		int sticky=0;
+		int j, icount;
 	
-	/* Count the leading zero/one s */
-	mpz_class bit = (countType_ == -1) ? sozb : (countType_ == 0 ? 0 : 1); /* what are we counting in the specific case */
-	/* from the MSB towards the LSB, check if current bit of input = to the bit we test against */
-	for (j = wIn_-1; j >= 0; j--)
+		/* Count the leading zero/one s */
+		mpz_class bit = (countType_ == -1) ? sozb : (countType_ == 0 ? 0 : 1); /* what are we counting in the specific case */
+		/* from the MSB towards the LSB, check if current bit of input = to the bit we test against */
+		for (j = wIn_-1; j >= 0; j--)
 			if (mpz_tstbit(si.get_mpz_t(), j) != bit)
 				break;
 	
-	/* the number of bits is then equal to:
-	 the index of the MSB - the index where we stoped previously */
-	icount = (wIn_-1) - j;
-	tc->addExpectedOutput("Count", icount);
+		/* the number of bits is then equal to:
+			the index of the MSB - the index where we stoped previously */
+		icount = (wIn_-1) - j;
+		tc->addExpectedOutput("Count", icount);
 
-	/* compute the max value on wOut_ bits */
-	maxValue_ = mpzpow2(wOut_)-1;
-	mpz_class inputValue = si;
+		/* compute the max value on wOut_ bits */
+		maxValue_ = mpzpow2(wOut_)-1;
+		mpz_class inputValue = si;
 		
-	mpz_class stickyTest =  1 ;//(countType_==-1) ? (sozb==0?1:0) : (countType_ == 0 ? 1 : 0) ;
+		mpz_class stickyTest =  1 ;//(countType_==-1) ? (sozb==0?1:0) : (countType_ == 0 ? 1 : 0) ;
 	
-	//compute output value and sticky
-	if ((countType_==0) || (sozb==0)){
+		//compute output value and sticky
+		if ((countType_==0) || (sozb==0)){
  
-		if (inputValue > 0) 
-			while (!((inputValue <= maxValue_) && (2*inputValue > maxValue_)))
-				if (inputValue>maxValue_){
-					if(mpz_tstbit(inputValue.get_mpz_t(), 0)==stickyTest)
-						sticky=1;
-					inputValue=inputValue/2;
-				}else
-					inputValue=inputValue*2;
-		else {}
-	}
-	else /* if we are counting ones */
-	{
-		int restOfBits = wIn_ - icount;
-		if (icount>0){
-			mpz_class ones = mpzpow2(icount)-1;
-			ones *= mpzpow2(restOfBits);
+			if (inputValue > 0) 
+				while (!((inputValue <= maxValue_) && (2*inputValue > maxValue_)))
+					if (inputValue>maxValue_){
+						if(mpz_tstbit(inputValue.get_mpz_t(), 0)==stickyTest)
+							sticky=1;
+						inputValue=inputValue/2;
+					}else
+						inputValue=inputValue*2;
+			else {}
+		}
+		else /* if we are counting ones */
+			{
+				int restOfBits = wIn_ - icount;
+				if (icount>0){
+					mpz_class ones = mpzpow2(icount)-1;
+					ones *= mpzpow2(restOfBits);
 			
-			inputValue-=ones; // the input without the leading ones
-		} 
+					inputValue-=ones; // the input without the leading ones
+				} 
 
-		if ((wIn_<=wOut_) || ((wIn_>wOut_) && (restOfBits<wOut_) ))	//shift result in place	
-			inputValue *=mpzpow2(wOut_-restOfBits);
-		else
-			for (int i=1;i<=restOfBits-wOut_;i++){
-				if(mpz_tstbit(inputValue.get_mpz_t(), 0)==stickyTest) //FIXME What do we count out when we count ones, the one or the zero?
-					sticky=1;
-				inputValue=inputValue/2;
+				if ((wIn_<=wOut_) || ((wIn_>wOut_) && (restOfBits<wOut_) ))	//shift result in place	
+					inputValue *=mpzpow2(wOut_-restOfBits);
+				else
+					for (int i=1;i<=restOfBits-wOut_;i++){
+						if(mpz_tstbit(inputValue.get_mpz_t(), 0)==stickyTest) //FIXME What do we count out when we count ones, the one or the zero?
+							sticky=1;
+						inputValue=inputValue/2;
+					}
 			}
-	}
-	tc->addExpectedOutput("O",inputValue);
+		tc->addExpectedOutput("O",inputValue);
 				
-	if (computeSticky_)
-		tc->addExpectedOutput("Sticky",sticky);
+		if (computeSticky_)
+			tc->addExpectedOutput("Sticky",sticky);
+	}
+
+
 }
-
-

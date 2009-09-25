@@ -3,17 +3,20 @@
 
 #include "../Operator.hpp"
 
-struct LNSSqrt : Operator
-{
-	LNSSqrt(Target * target, int wE, int wF);
-	virtual ~LNSSqrt();
+namespace flopoco{
 
-	virtual void outputVHDL(std::ostream& o, std::string name);
-	virtual void setOperatorName();	
+	struct LNSSqrt : Operator
+	{
+		LNSSqrt(Target * target, int wE, int wF);
+		virtual ~LNSSqrt();
+
+		virtual void outputVHDL(std::ostream& o, std::string name);
+		virtual void setOperatorName();	
 	
-private:
-	int wE;
-	int wF;
-};
+	private:
+		int wE;
+		int wF;
+	};
 
+}
 #endif
