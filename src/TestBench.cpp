@@ -43,42 +43,31 @@ namespace flopoco{
 		setName("TestBench_" + op_->getName());
 		setPipelineDepth(42);	// could be any number
 
-		// declare internal registered signals
-		for(int i=0; i < op_->getIOListSize(); i++){
-			string idext = op_->getIOListSignal(i)->getName() ;
-			addSignal(idext, op_->getIOListSignal(i)->width());
-		}
-
-		/* add bogus clk and rst signal if the UUT does not have them */
-		try {
-			addSignal("clk", 1);
-			addSignal("rst", 1);
-		} catch (std::string) {
-			/* silently ignore */
-		}
 
 		// Generate the standard and random test cases for this operator
 		op-> buildStandardTestCases(&tcl_);
 		op-> buildRandomTestCases(&tcl_, n);
 	
-		// the instance
-		vhdl << tab << "uut:" << op_->getName() << "\n"
-			  << tab << tab << "port map ( ";
-		if (op_->isSequential()) 
-			vhdl <<" clk => clk, rst => rst," << endl;
-		for(int i=0; i<op_->getIOListSize(); i++) {
-			vhdl << tab << tab << "           ";
-			string idext =  op_->getIOListSignal(i)->getName() ;
-			if(op_->getIOListSignal(i)->type() == Signal::in)
-				vhdl << op_->getIOListSignal(i)->getName()  << " =>  " << idext;
-			else
-				vhdl << op_->getIOListSignal(i)->getName()  << " =>  " << idext;
-			if (i < op_->getIOListSize()-1) 
-				vhdl << "," << endl;
-		}
-		vhdl << ");" <<endl;
 
-		vhdl <<endl;
+		// The instance
+		//  portmap inputs and outputs
+		string idext;
+		for(int i=0; i < op->getIOListSize(); i++){
+			Signal* s = op->getIOListSignal(i);
+			if(s->type() == Signal::out) 
+				outPortMap (op, s->getName(), s->getName());
+			if(s->type() == Signal::in) {
+				declare(s->getName(), s->width());
+				inPortMap (op, s->getName(), s->getName());
+			}
+		}
+		// add clk and rst
+		declare("clk");
+		declare("rst");
+
+
+		// The VHDL for the instance
+		vhdl << instance(op, "test");
 
 		vhdl << tab << "-- Ticking clock signal" <<endl;
 		vhdl << tab << "process" <<endl;

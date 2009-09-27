@@ -13,7 +13,6 @@ namespace flopoco{
 		LNSAdd(Target * target, int wE, int wF, int o);
 		virtual ~LNSAdd();
 
-		virtual void outputVHDL(std::ostream& o, std::string name);
 
 		//virtual void fillTestCase(mpz_class a[]);
 

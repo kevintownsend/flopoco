@@ -78,7 +78,7 @@
 #include "IntSquarer.hpp"
 
 #ifndef _WIN32
-#include "BigTestBench.hpp"
+//#include "BigTestBench.hpp"
 #include "ConstMult/CRFPConstMult.hpp"
 
 
@@ -315,7 +315,7 @@ bool parseCommandLine(int argc, char* argv[]){
 					filename=v;
 				}
 				else if (o == "verbose") {
-					flopoco::verbose = atoi(v.c_str()); // there must be a more direct method of string
+					verbose = atoi(v.c_str()); // there must be a more direct method of string
 					if (verbose<0 || verbose>3) {
 						cerr<<"ERROR: verbose should be 1, 2 or 3,    got "<<v<<"."<<endl;
 						usage(argv[0]);

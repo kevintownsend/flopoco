@@ -187,7 +187,7 @@ ADD_EXECUTABLE(flopoco
  src/DualTable 
  src/Wrapper
  src/TestBench 
- src/BigTestBench
+ #src/BigTestBench
  src/IntAdder
  src/IntNAdder
  src/IntCompressorTree

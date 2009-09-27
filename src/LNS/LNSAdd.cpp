@@ -25,6 +25,7 @@
 #include <sstream>
 #include <vector>
 #include "../HOTBM.hpp"
+#include "../utils.hpp"
 
 using namespace std;
 
@@ -39,30 +40,53 @@ namespace flopoco{
 
 		ostringstream name;
 		name<<"LNSAdd_"<< wE <<"_"<< wF; 
-		uniqueName_ = name.str();
+		setName(name.str()); 
+
+		setCopyrightString("Sylvain Collange (2008)");		
 	
 		addInput ("x", wE + wF);
 		addOutput("r", wF, 2); // Faithful rounding;
 	
 		if(wF > 7) {
-			addSignal("out_t0", wF - 6);
-		
 			// Who is going to free this memory??
 			// T0 always order 1?...
 			t[0] = new HOTBM(target, "log2(1+2^x)", uniqueName_, wF+wE-1, wF-7, o, -(1 << wE), -8, 1 << 7);
 			oplist.push_back(t[0]);
+
+			vhdl << tab << declare("xi0", wF+wE-1) << " <= x" << range(wF+wE-2, 0) << ";" << endl;
+
+			inPortMap  (t[0], "x", "xi0");
+			outPortMap (t[0], "r","out_t0");
+			vhdl << instance(t[0], "inst_t0");
+
 		}
 
 		if(wF > 6) {
-			addSignal("out_t1", wF - 3);
 		
 			t[1] = new HOTBM(target, "log2(1+2^x)", uniqueName_, wF+2, wF-4, o, -8, -4, 1 << 4);
 			oplist.push_back(t[1]);
+			vhdl << tab << declare("xi1", wF+2) << " <= x" << range(wF+1, 0) << ";" << endl;
+
+			inPortMap  (t[1], "x", "xi1");
+			outPortMap (t[1], "r","out_t1");
+			vhdl << instance(t[1], "inst_t1");
 		}
-		addSignal("out_t2", wF + 1);
 	
 		t[2] = new HOTBM(target, "log2(1+2^x)", uniqueName_, wF+2, wF, o, -4, 0, 1);
 		oplist.push_back(t[2]);
+
+		vhdl << "  r <= ";
+	
+		if(wF > 7) {
+			vhdl << "(" << (wF-1) << " downto " << wF-6 << " => '0') & out_t0(" << (wF-7) << " downto 0)\n"
+			  << "         when x(" << (wF+wE-1) << " downto " << (wF+3) << ") /= (" << (wF+wE-1) << " downto " << (wF+3) << " => '1') else\n       ";
+		}
+
+		if(wF > 6) {
+			vhdl << "(" << (wF-1) << " downto " << (wF-3) << " => '0') & out_t1(" << (wF-4) << " downto 0)\n"
+			  << "         when x(" << (wF+2) << ") /= '1' else\n       ";
+		}
+		vhdl << "out_t2(" << (wF-1) << " downto 0);\n";
 
 	
 	}
@@ -71,71 +95,9 @@ namespace flopoco{
 	{
 	}
 
-	void LNSAdd::outputVHDL(std::ostream& o, std::string name)
-	{
-		licence(o,"Sylvain Collange (2008)");
-
-		//Operator::stdLibs(o);
-		o<<"library ieee;\nuse ieee.std_logic_1164.all;"<<endl;
-	
-		outputVHDLEntity(o);
-		newArchitecture(o,name);	
-		outputVHDLSignalDeclarations(o);	  
-
-		t[2]->outputVHDLComponent(o);
-
-		if(wF > 6) {
-			t[1]->outputVHDLComponent(o);
-		}
-
-		if(wF > 7) {
-			t[0]->outputVHDLComponent(o);
-		}
-
-		beginArchitecture(o);
-
-		if(wF > 7) {
-			o <<
-				"  inst_t0 : " << t[0]->getName() << endl <<
-				"    port map ( x => x(" << (wF+wE-2) << " downto 0),\n"
-				"               r => out_t0 );\n";
-		}
-
-		if(wF > 6) {
-			o <<
-				"\n"
-				"  inst_t1 : " << t[1]->getName() << endl <<
-				"    port map ( x => x(" << (wF+1) << " downto 0),\n"
-				"               r => out_t1 );\n";
-		}
-
-		o <<
-			"\n"
-			"  inst_t2 : " << t[2]->getName() << endl <<
-			"    port map ( x => x(" << (wF+1) << " downto 0),\n"
-			"               r => out_t2 );\n"
-			"\n";
-
-	
-		o << "  r <= ";
-	
-		if(wF > 7) {
-			o << "(" << (wF-1) << " downto " << wF-6 << " => '0') & out_t0(" << (wF-7) << " downto 0)\n"
-			  << "         when x(" << (wF+wE-1) << " downto " << (wF+3) << ") /= (" << (wF+wE-1) << " downto " << (wF+3) << " => '1') else\n       ";
-		}
 
 
-		if(wF > 6) {
-			o << "(" << (wF-1) << " downto " << (wF-3) << " => '0') & out_t1(" << (wF-4) << " downto 0)\n"
-			  << "         when x(" << (wF+2) << ") /= '1' else\n       ";
-		}
-		o << "out_t2(" << (wF-1) << " downto 0);\n";
-	
-		o<< "end architecture;" << endl << endl;
-	}
-
-
-#if 0
+#if 0 // TODO convert to emulate() 
 	void LNSAdd::fillTestCase(mpz_class a[])
 	{
 		/* Get inputs / outputs */

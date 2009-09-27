@@ -36,88 +36,78 @@ namespace flopoco{
 	Wrapper::Wrapper(Target* target, Operator *op):
 		Operator(target), op_(op)
 	{
+		setCopyrightString("Florent de Dinechin (2007)");
 		/* the name of the Wrapped operator consists of the name of the operator to be 
 			wrapped followd by _Wrapper */
 		setName(op_->getName() + "_Wrapper");
 		
-		//this operator is a sequential one	
+		//this operator is a sequential one	even if Target is unpipelined
 		setSequential();	
 	
-		// Copy the signals of the wrapped operator except clk and rst
+
+		// Copy the signals of the wrapped operator 
+		// This replaces addInputs and addOutputs
 		for(int i=0; i < op->getIOListSize(); i++)	{
-			if (( op->getIOListSignal(i)->getName()!="clk") && ( op->getIOListSignal(i)->getName()!="rst"))
-				ioList_.push_back( new Signal ( * op->getIOListSignal(i) ) );
-		}
-		
-		// declare internal registered signals
-		for(int i=0; i < op->getIOListSize(); i++){
-			string idext = "i_" + (op->getIOListSignal(i))->getName();
-			//the clock is not registred
-			if ( op->getIOListSignal(i)->getName()!="clk")
-				addDelaySignal(idext, op->getIOListSignal(i)->width(),1);
+			Signal* s = op->getIOListSignal(i);
+			if(s->type() == Signal::in) 
+				addInput(s->getName(), s->width());
+			if(s->type() == Signal::out) 
+				addOutput(s->getName(), s->width());
 		}
 
-		//set pipeline parameters
-		setPipelineDepth(2 + op->getPipelineDepth());
+		
+ 		string idext;
+
+		// copy inputs
+		for(int i=0; i < op->getIOListSize(); i++){
+			Signal* s = op->getIOListSignal(i);
+			 if(s->type() == Signal::in) {
+				 idext = "i_"+s->getName();
+				 vhdl << tab << declare(idext) << " <= " << s->getName() << ";" << endl;
+			}
+		}		
+
+		// register inputs
+		setCycle(1);
+
+		for(int i=0; i < op->getIOListSize(); i++){
+			Signal* s = op->getIOListSignal(i);
+			 if(s->type() == Signal::in) {
+				 idext = "i_"+s->getName();
+				 inPortMap (op, s->getName(), idext);
+			 }
+		}		
+
+
+		// port map the outputs
+		for(int i=0; i < op->getIOListSize(); i++){
+			Signal* s = op->getIOListSignal(i);
+			if(s->type() == Signal::out) {
+				idext = "o_" + s->getName();
+				outPortMap (op, s->getName(), idext);
+			}
+		}
+
+		// The VHDL for the instance
+		vhdl << instance(op, "test");
+
+		// Advance cycle to the cycle of the outputs
+		syncCycleFromSignal(idext, false); // this is the last output
+		nextCycle();
+
+		// copy the outputs
+		for(int i=0; i < op->getIOListSize(); i++){
+			Signal* s = op->getIOListSignal(i);
+			if(s->type() == Signal::out) {
+				string idext = "o_" + s->getName();
+				vhdl << tab << s->getName() << " <= " << use(idext) << ";" <<endl;
+			}
+		}
+		
 	}
 
 	Wrapper::~Wrapper() {
 	}
 
-
-	void Wrapper::outputVHDL(ostream& o, string name) {
-
-		licence(o,"Florent de Dinechin (2007)");
-		Operator::stdLibs(o);
-		outputVHDLEntity(o);
-		newArchitecture(o,name);
-		op_->Operator::outputVHDLComponent(o);
-		outputVHDLSignalDeclarations(o);
-		beginArchitecture(o);
-	
-		o << "--wrapper operator"<<endl;
-		// connect inputs
-		for(int i=0; i < op_->getIOListSize(); i++){
-			string idext = "i_" + op_->getIOListSignal(i)->getName() ;
-			if ((op_->getIOListSignal(i)->type() == Signal::in) && (op_->getIOListSignal(i)->getName()!="clk"))
-				o << tab << idext << " <=  " << op_->getIOListSignal(i)->getName() << ";" << endl;
-		}
-
-		// the instance
-		o << tab << "test:" << op_->getName() << "\n"
-		  << tab << tab << "port map ( ";
-		if (op_->isSequential()) {
-			o << tab << tab << "clk => clk, "<<endl
-			  << tab << tab << "rst => rst, "<<endl;
-		}
-		for(int i=0; i < op_->getIOListSize(); i++) {
-			Signal s = *op_->getIOListSignal(i);
-			if(i>0) 
-				o << tab << tab << "           ";
-			string idext = "i_" + op_->getIOListSignal(i)->getName() ;
-			if (op_->getIOListSignal(i)->type() == Signal::in)
-				if (op_->getIOListSignal(i)->getName()!="clk")
-					o << op_->getIOListSignal(i)->getName()  << " =>  " << idext << "_d";
-				else
-					o << op_->getIOListSignal(i)->getName()  << " =>  clk";
-			else
-				o << op_->getIOListSignal(i)->getName()  << " =>  " << idext;
-			if (i < op_->getIOListSize()-1) 
-				o << "," << endl;
-		}
-		o << ");" <<endl;
-
-		// the delays 
-		outputVHDLRegisters(o);
-
-		// connect outputs
-		for(int i=0; i<op_->getIOListSize(); i++){
-			string idext = "i_" + op_->getIOListSignal(i)->getName() ;
-			if(op_->getIOListSignal(i)->type() == Signal::out)
-				o << tab << op_->getIOListSignal(i)->getName() << " <=  " << idext << "_d;" << endl;
-		}
-	
-		endArchitecture(o);
-	}
 
 }

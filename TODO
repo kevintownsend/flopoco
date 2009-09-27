@@ -1,29 +1,27 @@
 svn rm GenericTestBench
+Bogdan: upgrade FPMultplier and IntDualSub to new framework
+Sylvain:LNSAdd?
 
 TODO file for FloPoCo
 
 
 Pipeline framework, Operator and Targets:
-* Clean up deprecated methods
-* finetune Altera target
+* Clean up LNS operators wrt new pipeline framework
 
 FPAdder
 * several optimization opportunities, see the TODO inside FPAdder.cpp
 * implement a single-path version
 
 FPMultiplier:
-* Cleaning up and rewriting in the new pipeline framework
-* refine the DSP model in Targets
+* refine the DSP model in Targets (endless TODO ?)
 
-FPLog:
-* better (DSP-aware) architectural exploration
 
 FPExp:
-* pipeline
+* true FloPoCoization, pipeline
 * better (DSP-aware) architectural exploration
 
 HOTBM:
-* pipeline
+* true FloPoCoization, pipeline
 * better (DSP-aware) architectural exploration
 
 ConstMult:
@@ -36,9 +34,6 @@ ConstMult:
 * Use DSP: find the most interesting constant fitting on 18 bits
 * compare with Spiral.net
 * Implement the continued fraction stuff for FPCRConstMult
-
-LongAcc
-* upgrade to new pipeline framework
 
 SumOfProducts
 * add test bench generation
