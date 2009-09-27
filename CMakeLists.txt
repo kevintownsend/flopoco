@@ -123,11 +123,11 @@ ADD_EXECUTABLE(flopoco
 # src/BigTestBench
  src/IntAdder
  src/IntNAdder
- src/IntCompressorTree
+# src/IntCompressorTree
  src/LongIntAdder
  src/IntDualSub
  src/IntMultiplier
- src/IntTillingMult
+# src/IntTillingMult
  src/IntKaratsuba
  src/LZOC src/LZOCShifterSticky
  src/Shifters
@@ -190,11 +190,11 @@ ADD_EXECUTABLE(flopoco
  #src/BigTestBench
  src/IntAdder
  src/IntNAdder
- src/IntCompressorTree
+ #src/IntCompressorTree
  src/LongIntAdder
  src/IntDualSub
  src/IntMultiplier
- src/IntTillingMult
+ #src/IntTillingMult
  src/IntKaratsuba
  src/LZOC src/LZOCShifterSticky
  src/Shifters

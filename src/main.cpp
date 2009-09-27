@@ -42,11 +42,9 @@
 #include "LZOCShifterSticky.hpp"
 #include "IntAdder.hpp"
 #include "IntNAdder.hpp"
-#include "IntCompressorTree.hpp"
 #include "LongIntAdder.hpp"
 #include "IntDualSub.hpp"
 #include "IntMultiplier.hpp"
-#include "IntTillingMult.hpp"
 #include "IntKaratsuba.hpp"
 #include "FPMultiplier.hpp"
 #include "FPSquarer.hpp"
@@ -602,19 +600,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(op);
 			}    
 		}
-		else if(opname=="IntCompressorTree"){
-			int nargs = 2;
-			if (i+nargs > argc)
-				usage(argv[0]);
-			else {
-				int wIn = checkStrictyPositive(argv[i++], argv[0]);
-				int N   = checkStrictyPositive(argv[i++], argv[0]);
-				cerr << "> IntCompressorTree, wIn="<<wIn<<" N="<<N<<endl  ;
-				op = new IntCompressorTree(target, wIn, N);
-				addOperator(op);
-			}    
-		}
-		
+
 		else if(opname=="LongIntAdder"){
 			int nargs = 1;
 			if (i+nargs > argc)
@@ -649,25 +635,6 @@ bool parseCommandLine(int argc, char* argv[]){
 				int wInY = checkStrictyPositive(argv[i++], argv[0]);
 				cerr << "> IntMultiplier , wInX="<<wInX<<", wInY="<<wInY<<"\n";
 				op = new IntMultiplier(target, wInX, wInY);
-				addOperator(op);
-			}
-		}
-		else if(opname=="IntTilingMult"){
-			int nargs = 2;
-			if (i+nargs > argc)
-				usage(argv[0]);
-			else {
-				int wInX = checkStrictyPositive(argv[i++], argv[0]);
-				int wInY = checkStrictyPositive(argv[i++], argv[0]);
-				float ratio = atof(argv[i++]);
-				if(ratio < 0 )
-				{
-				cerr<<"ERROR: got "<<argv[i++]<<", expected strictly positive number."<<endl;
-				usage(argv[0]);
-				}
-				
-				cerr << "> IntTilingMult , wInX="<<wInX<<", wInY="<<wInY<<"\n";
-				op = new IntTilingMult(target, wInX, wInY,ratio);
 				addOperator(op);
 			}
 		}
