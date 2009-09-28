@@ -42,6 +42,7 @@
 #include "LZOCShifterSticky.hpp"
 #include "IntAdder.hpp"
 #include "IntNAdder.hpp"
+#include "IntCompressorTree.hpp"
 #include "LongIntAdder.hpp"
 #include "IntDualSub.hpp"
 #include "IntMultiplier.hpp"
@@ -127,11 +128,12 @@ static void usage(char *name){
 	cerr << "    LZOCShifterSticky wIn wOut\n";
 	cerr << "    LZCShifterSticky wIn wOut\n";
 	cerr << "    LOCShifterSticky wIn wOut\n";
-//	cerr << "    LZOCShifterSticky wIn wOut computeSticky countType\n";
-//	cerr << "      computeSticky=0|1, countType=0|1|-1 (-1 adds a countWhat input)\n";
-	//	cerr << "    Mux wIn n \n"; killed by Florent
 	cerr << "    IntAdder wIn\n";
 	cerr << "      Integer adder, possibly pipelined\n";
+	cerr << "    IntNAdder wIn N\n";
+	cerr << "      Multi-operand addition, possibly pipelined\n";
+	cerr << "    IntCompressorTree wIn N\n";
+	cerr << "      Multi-operand addition using compressor trees	, possibly pipelined\n";
 	cerr << "    IntMultiplier wInX wInY \n";
 	cerr << "      Integer multiplier of two integers X and Y of sizes wInX and wInY \n";	
 	cerr << "    IntTilingMult wInX wInY \n";
@@ -597,6 +599,19 @@ bool parseCommandLine(int argc, char* argv[]){
 				int N   = checkStrictyPositive(argv[i++], argv[0]);
 				cerr << "> IntNAdder, wIn="<<wIn<<" N="<<N<<endl  ;
 				op = new IntNAdder(target,wIn,N);
+				addOperator(op);
+			}    
+		}
+
+		else if(opname=="IntCompressorTree"){
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int wIn = checkStrictyPositive(argv[i++], argv[0]);
+				int N   = checkStrictyPositive(argv[i++], argv[0]);
+				cerr << "> IntCompressorTree, wIn="<<wIn<<" N="<<N<<endl  ;
+				op = new IntCompressorTree(target,wIn,N);
 				addOperator(op);
 			}    
 		}

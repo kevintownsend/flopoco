@@ -287,6 +287,13 @@ reference.</p>
       and one usually needn't define an entity for it. However, this operator
       will be pipelined if the addition is too large to be performed at the
       target frequency. </dd>
+   <dt><code>IntNAdder wIn N</code></dt>
+    <dd>Multi-operand integer adder. (still experimental) 
+     </dd>
+   <dt><code>IntCompressorTree wIn N</code></dt>
+    <dd>Multi-operand integer adder using compressor trees. High quality operator
+    at the expense of synthesis time.
+     </dd>
   <dt><code>IntMultiplier wInX wInY</code></dt>
     <dd>Same for multiplication, although the frequency attainable will be
       limited by the DSP blocks available. wInX and wInY are the input widths
