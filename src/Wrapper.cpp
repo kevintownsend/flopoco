@@ -63,7 +63,7 @@ namespace flopoco{
 			Signal* s = op->getIOListSignal(i);
 			 if(s->type() == Signal::in) {
 				 idext = "i_"+s->getName();
-				 vhdl << tab << declare(idext) << " <= " << s->getName() << ";" << endl;
+				 vhdl << tab << declare(idext, s->width()) << " <= " << s->getName() << ";" << endl;
 			}
 		}		
 
