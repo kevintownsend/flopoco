@@ -37,6 +37,7 @@ namespace flopoco{
 
 		addOutput("nR", wE + wF + 3);
 	
+		setCombinatorial();
 		setOperatorName();
 
 	}

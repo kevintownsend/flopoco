@@ -28,6 +28,7 @@
 using namespace std;
 
 namespace flopoco{
+	setCombinatorial();	
 
 	LNSDiv::LNSDiv(Target * target, int wE, int wF) :
 		wE(wE), wF(wF)

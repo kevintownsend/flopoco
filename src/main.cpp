@@ -94,6 +94,8 @@
 #include "LNS/LNSMul.hpp"
 #include "LNS/LNSDiv.hpp"
 #include "LNS/LNSSqrt.hpp"
+#include "LNS/AtanPow.hpp"
+
 #endif
 #endif
 
@@ -203,6 +205,8 @@ static void usage(char *name){
 	cerr << "      LNS division.\n";
 	cerr << "    LNSSqrt wE wF\n";
 	cerr << "      LNS square root.\n";
+	cerr << "    AtanPow wE wF o\n";
+	cerr << "      (4/pi)*atan(2^x) function.\n";
 #endif // HAVE_LNS
 	
 	
@@ -1163,6 +1167,18 @@ bool parseCommandLine(int argc, char* argv[]){
 			cerr << "> Cotran: wE=" << wE << " wF=" << wF << " j=" << j 
 				<< " wECotran=" << wECotran << " o=" << o << endl;
 			op = new CotranHybrid(target, wE, wF, j, wECotran);
+			addOperator(op);
+		}
+		else if (opname == "AtanPow")
+		{
+			int nargs = 3;
+			if (i+nargs > argc)
+				usage(argv[0]); // and exit
+			int wE = checkStrictyPositive(argv[i++], argv[0]);
+			int wF = checkStrictyPositive(argv[i++], argv[0]);
+			int o = checkStrictyPositive(argv[i++], argv[0]);
+			cerr << "> AtanPow: wE=" << wE << " wF=" << wF << " o=" << o << endl;
+			op = new AtanPow(target, wE, wF, o);
 			addOperator(op);
 		}
 #endif

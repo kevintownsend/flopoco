@@ -103,6 +103,7 @@ IF (HOTBM_LIB)
 		src/LNS/LNSMul
 		src/LNS/LNSDiv
 		src/LNS/LNSSqrt
+		src/LNS/AtanPow
 	)
 	TARGET_LINK_LIBRARIES(lns ${HOTBM_LIB})
 	SET(LNS_LIB lns)

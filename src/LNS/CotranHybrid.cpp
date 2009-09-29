@@ -44,6 +44,7 @@ namespace flopoco{
 		ostringstream name;
 		name<<"Cotran_Hybrid_"<< wE <<"_"<< wF << "_" << j << "_" << wECotran << "_" << o;
 		uniqueName_ = name.str();
+	setCombinatorial();
 	
 	
 		//	wEssZero = min(wE, log2(wF+1)+1)+wF;

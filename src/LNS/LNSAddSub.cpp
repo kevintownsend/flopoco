@@ -30,6 +30,7 @@ using namespace std;
 namespace flopoco{
 
 	extern vector<Operator*> oplist;
+	setCombinatorial();	
 
 
 	LNSAddSub::LNSAddSub(Target * target, int wE, int wF) :
