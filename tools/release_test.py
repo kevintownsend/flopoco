@@ -39,7 +39,10 @@ def mapRandoms(paramList):
 	i=0
 	randomMapList=[]
 	while (i)<len(paramList):
-		randomMapList.append(random.randrange(paramList[i][2],paramList[i][3],1))
+		if paramList[i][2] != paramList[i][3]:
+			randomMapList.append(random.randrange(paramList[i][2],paramList[i][3],1))
+		else:
+			randomMapList.append(paramList[i][3])
 		i=i+1
 	return randomMapList
 
@@ -68,27 +71,39 @@ print "-------------------------------------------------------------------------
 print "--------------------------- FloPoCo PreRelease Tests ---------------------------"
 executable_name = "./flopoco"
 operators = [
-             ["LeftShifter",   [ ["wIn","in",4, 120] ,["MaxShift","in",2,64]]],
-             ["RightShifter",   [ ["wIn","in",4, 120] ,["MaxShift","in",2,64]]],
-             ["LZOC",          [ ["wIn","in",4, 120]]] ,
-             ["LZOCShifter",   [ ["wIn","in",4, 120], ["wOut","in",4, 120] ]],
-             ["LZCShifter",   [ ["wIn","in",4, 120], ["wOut","in",4, 120] ]],
-             ["LOCShifter",   [ ["wIn","in",4, 120], ["wOut","in",4, 120] ]] ,   
-             ["LZOCShifterSticky",   [ ["wIn","in",4, 120], ["wOut","in",4, 120] ]],
-             ["LZCShifterSticky",   [ ["wIn","in",4, 120], ["wOut","in",4, 120] ]],
-             ["LOCShifterSticky",   [ ["wIn","in",4, 120], ["wOut","in",4, 120] ]],
-			 ["FPAdder",   [ ["wE","in",4, 15], ["wF","in",8, 64] ]],
-			 ["FPMultiplier",   [ ["wE","in",4, 15], ["wF","in",8, 64] ]],
-			 ["FPDiv",   [ ["wE","in",4, 15], ["wF","in",8, 64] ]],
-			 ["FPExp",   [ ["wE","in",4, 15], ["wF","in",8, 64] ]],
-             ["FPLog",            [ ["wE", "in", 6, 11 ], ["wF","in", 8, 52]]],
-             ["IntAdder",         [ ["wIn", "in", 1, 64 ]  ]], 
-             ["IntMultiplier",     [ ["wInX","in", 1, 64 ], ["wInY","in", 1, 64] ]], 
-             ["IntKaratsuba", [ ["wIn","in", 18, 51]]] 
+             ["LeftShifter",       [ ["wIn"   ,"in",   4  , 120] ,["MaxShift"  ,"in",   2, 64 ]  ]], 
+             ["RightShifter",      [ ["wIn"   ,"in",   4  , 120] ,["MaxShift"  ,"in",   2, 64 ]  ]], 
+             ["LZOC",              [ ["wIn"   ,"in",   4  , 120]                                 ]], 
+             ["LZOCShifter",       [ ["wIn"   ,"in",   4  , 120], ["wOut"      ,"in",   4, 120]  ]], 
+             ["LZCShifter",        [ ["wIn"   ,"in",   4  , 120], ["wOut"      ,"in",   4, 120]  ]], 
+             ["LOCShifter",        [ ["wIn"   ,"in",   4  , 120], ["wOut"      ,"in",   4, 120]  ]],    
+             ["LZOCShifterSticky", [ ["wIn"   ,"in",   4  , 120], ["wOut"      ,"in",   4, 120]  ]], 
+             ["LZCShifterSticky",  [ ["wIn"   ,"in",   4  , 120], ["wOut"      ,"in",   4, 120]  ]],  
+             ["LOCShifterSticky",  [ ["wIn"   ,"in",   4  , 120], ["wOut"      ,"in",   4, 120]  ]],  
+             ["IntAdder",          [ ["wIn"   ,"in",   1  ,  64]                                 ]],   
+             ["IntNAdder",         [ ["wIn"   ,"in",   1  , 120], ["N"         ,"in",   1,  30]  ]],
+             ["IntCompressorTree", [ ["wIn"   ,"in",   1  , 120], ["N"         ,"in",   1,  30]  ]],      
+             ["IntMultiplier",     [ ["wInX"  ,"in",   1  ,  64], ["wInY"      ,"in",   1,  64]  ]],  
+             ["IntKaratsuba",      [ ["wIn"   ,"in",  18  ,  51]                                 ]], 
+             ["IntSquarer",        [ ["wIn"   ,"in",   2  ,  68]                                 ]],    
+             ["Fix2FP",            [ ["LSB"   ,"in",-100  , 100], ["MSB"       ,"in",-100, 100], ["Signed","in", 0, 1], ["wE","in",4, 15], ["wF","in",8, 64] ]], 
+			 ["FPAdder",           [ ["wE"    ,"in",   4  ,  15], ["wF"        ,"in",   8,  64]  ]],
+			 ["FPMultiplier",      [ ["wE"    ,"in",   4  ,  15], ["wF"        ,"in",   8,  64]  ]],
+			 ["FPDiv",             [ ["wE"    ,"in",   4  ,  15], ["wF"        ,"in",   8,  64]  ]],
+			 ["FPExp",             [ ["wE"    ,"in",   4  ,  15], ["wF"        ,"in",   8,  64]  ]], 
+             ["FPLog",             [ ["wE"    ,"in",   6  ,  11], ["wF"        ,"in",   8,  52]  ]], 
+             ["FPSqrt",            [ ["wE"    ,"in",   8  ,   8], ["wF"        ,"in",  23,  23], ["useDSP","in", 1, 1], ["correctlyRounded","in", 0, 1] ]],
+             ["FPSqrt",            [ ["wE"    ,"in",   4  ,  15], ["wF"        ,"in",   8,  64], ["useDSP","in", 0, 0], ["correctlyRounded","in", 1, 1] ]], 
+             ["IntConstMult",      [ ["w"     ,"in",   2  , 120], ["c"         ,"in",   0,32000] ]], 
+             ["FPConstMult",       [ ["wE_in" ,"in",   4  ,  15], ["wF_in"     ,"in",   4,  64], ["wE_out","out",4, 15], ["wF_out","out",4, 64], ["cst_sgn","in",0, 1], ["cst_exp","in",-128, 128], ["cst_int_sig","in",0, 32000] ]],
+             ["LongAcc",           [ ["wE"    ,"in",   4  ,  15], ["wF"        ,"in",   8,  64], ["MaxMSB","in", -100, 100], ["LSB","in", -100, 100], ["MSB","in", -100, 100]]],
+             ["OutputIEEE",        [ ["wE_in" ,"in"   ,4  ,  15], ["wF_in"     ,"in",   4,  64], ["wE_out","out",4, 15], ["wF_out","out",4, 64]]],
+             ["InputIEEE",         [ ["wE_in" ,"in"   ,4  ,  15], ["wF_in"     ,"in",   4,  64], ["wE_out","out",4, 15], ["wF_out","out",4, 64]] ]
+
             ] #TODO Add the rest of operators
 res = []
-input_combinations_per_operator = 10;
-test_cases_per_combination = 500;
+input_combinations_per_operator = 5;
+test_cases_per_combination = 10000;
 
 #REMOVE TEMPORARY MODELSIM FILES
 os.system("rm wlf*")
@@ -122,7 +137,7 @@ while i<len(operators):
 		if status < 0:
 			did_generate_vhdl = False
 
-		modelsim_food = modelsim_food[string.find(modelsim_food, "vdel") : string.find(modelsim_food, "Final")-2 ]
+		modelsim_food = modelsim_food[string.find(modelsim_food, "vdel") : string.find(modelsim_food, "To run the simulation using gHDL,")-1 ]
 
 		finished = False
 		pass_test = True
@@ -139,18 +154,16 @@ while i<len(operators):
 			child_stdin.write('add wave -r * \n')
 			child_stdin.write(modelsim_food[string.find(modelsim_food,"run"):]+"\n")
 			child_stdin.write('exit \n')
-		
+			#-------------------------------------------------------------------		
 			while ((not finished) and (did_compile)):
 				st = child_stdout.readline()
 				print st[:len(st)-1]
 				logfile.write(st[:len(st)-1]+"\n")
 
-
-
 				status = string.find(st, "Error:")
 				if status > 0:
-					pass_test = False
 					did_compile = False
+					pass_test = False
 
 				status = string.find(st, "Incorrect")
 				if status > 0:
@@ -164,7 +177,8 @@ while i<len(operators):
 				status = string.find(st, "Error loading design")
 				if status > 0:
 					finished = True
-		
+
+			#-------------------------------------------------------------------		
 			if did_compile:
 				child_stdin.write("exit \n")
 
@@ -183,87 +197,87 @@ while i<len(operators):
 		j = j -1
 	i = i+1
 
-#PARSE EXTERNAL TEST FILE
-print("Parsing operators from external list: \n")
-logfile.write("Parsing operators from external list: \n")
+##PARSE EXTERNAL TEST FILE
+#print("Parsing operators from external list: \n")
+#logfile.write("Parsing operators from external list: \n")
 
-fd = open ("flopoco_test.cmd")
-if fd < 0:
-	print ("Unable to open file flopoco_test.cmd")
-	logfile.write("Unable to open file flopoco_test.cmd")
-for line in fd:
-	commands.getoutput("rm vsim*")
-	commands.getoutput("killall vsimk")
-	run_cmd = line[:len(line)-1] + " TestBench " + `test_cases_per_combination`
-	print run_cmd
-	logfile.write(run_cmd+"\n")
-	modelsim_food = commands.getoutput(run_cmd)
+#fd = open ("flopoco_test.cmd")
+#if fd < 0:
+#	print ("Unable to open file flopoco_test.cmd")
+#	logfile.write("Unable to open file flopoco_test.cmd")
+#for line in fd:
+#	commands.getoutput("rm vsim*")
+#	commands.getoutput("killall vsimk")
+#	run_cmd = line[:len(line)-1] + " TestBench " + `test_cases_per_combination`
+#	print run_cmd
+#	logfile.write(run_cmd+"\n")
+#	modelsim_food = commands.getoutput(run_cmd)
 
 
-	did_generate_vhdl = True
-	status = string.find(modelsim_food, "Pipeline depth = 42")
-	if status < 0:
-		did_generate_vhdl = False
+#	did_generate_vhdl = True
+#	status = string.find(modelsim_food, "Pipeline depth = 42")
+#	if status < 0:
+#		did_generate_vhdl = False
 
-	modelsim_food = modelsim_food[string.find(modelsim_food, "vdel") : string.find(modelsim_food, "Final")-2 ]
+#	modelsim_food = modelsim_food[string.find(modelsim_food, "vdel") : string.find(modelsim_food, "To run the simulation using gHDL,")-1 ]
 
-	finished = False
-	pass_test = True
-	did_compile = True
+#	finished = False
+#	pass_test = True
+#	did_compile = True
 
-	if did_generate_vhdl:
-		#start modelsim
-		p = subprocess.Popen("vsim -c", shell=True, bufsize=1, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
-		(child_stdin, child_stdout, child_stderr) = (p.stdin, p.stdout, p.stderr)
-		child_stdin.write("vdel -all -lib work\n")
-		child_stdin.write('vlib work\n')
-		child_stdin.write('vcom flopoco.vhdl \n')
-		child_stdin.write('vcom flopoco.vhdl \n')
-		child_stdin.write( modelsim_food[string.find(modelsim_food,"vsim"):string.find(modelsim_food,"add")-1]+"\n" )
-		child_stdin.write('add wave -r * \n')
-		child_stdin.write(modelsim_food[string.find(modelsim_food,"run"):]+"\n")
-		child_stdin.write('exit \n')
-	
-		while ((not finished) and (did_compile)):
-			st = child_stdout.readline()
-			#print st[0:len(st)-2]
-			logfile.write(st[0:len(st)-2]+"\n")
-			status = string.find(st, "Error:")
-			if status > 0:
-				pass_test = False
-				did_compile = False
-		
-			status = string.find(st, "Incorrect")
-			if status > 0:
-				pass_test = False
-		
-			status = string.find(st, "Stopped")
-			if status > 0:
-				finished = True
-				did_compile = False
-		
-			status = string.find(st, "Error loading design")
-			if status > 0:
-				finished = True
-	
-		if did_compile:
-			child_stdin.write('exit \n')
+#	if did_generate_vhdl:
+#		#start modelsim
+#		p = subprocess.Popen("vsim -c", shell=True, bufsize=1, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
+#		(child_stdin, child_stdout, child_stderr) = (p.stdin, p.stdout, p.stderr)
+#		child_stdin.write("vdel -all -lib work\n")
+#		child_stdin.write('vlib work\n')
+#		child_stdin.write('vcom flopoco.vhdl \n')
+#		child_stdin.write('vcom flopoco.vhdl \n')
+#		child_stdin.write( modelsim_food[string.find(modelsim_food,"vsim"):string.find(modelsim_food,"add")-1]+"\n" )
+#		child_stdin.write('add wave -r * \n')
+#		child_stdin.write(modelsim_food[string.find(modelsim_food,"run"):]+"\n")
+#		child_stdin.write('exit \n')
+#	
+#		while ((not finished) and (did_compile)):
+#			st = child_stdout.readline()
+#			#print st[0:len(st)-2]
+#			logfile.write(st[0:len(st)-2]+"\n")
+#			status = string.find(st, "Error:")
+#			if status > 0:
+#				pass_test = False
+#				did_compile = False
+#		
+#			status = string.find(st, "Incorrect")
+#			if status > 0:
+#				pass_test = False
+#		
+#			status = string.find(st, "Stopped")
+#			if status > 0:
+#				finished = True
+#				did_compile = False
+#		
+#			status = string.find(st, "Error loading design")
+#			if status > 0:
+#				finished = True
+#	
+#		if did_compile:
+#			child_stdin.write('exit \n')
 
-		child_stdout.close()
-		child_stdin.close()
-		child_stderr.close()
-		#p.wait()
-	
-	pass_test = pass_test and did_generate_vhdl
-	res.append( [run_cmd,`pass_test`])
-	pass_all = pass_all and pass_test
-	
-	if pass_test:
-		print "Test: ", run_cmd , " has SUCCEDED "
-	else:
-		print "Test: ", run_cmd , " has FAILED "
+#		child_stdout.close()
+#		child_stdin.close()
+#		child_stderr.close()
+#		#p.wait()
+#	
+#	pass_test = pass_test and did_generate_vhdl
+#	res.append( [run_cmd,`pass_test`])
+#	pass_all = pass_all and pass_test
+#	
+#	if pass_test:
+#		print "Test: ", run_cmd , " has SUCCEDED "
+#	else:
+#		print "Test: ", run_cmd , " has FAILED "
 
-fd.close()
+#fd.close()
 
 
 printResults( res , logfile)
