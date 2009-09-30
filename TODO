@@ -1,20 +1,13 @@
-svn rm GenericTestBench
-Bogdan: upgrade FPMultplier and IntDualSub to new framework
-Sylvain:LNSAdd?
-
 TODO file for FloPoCo
 
-
 Pipeline framework, Operator and Targets:
-* Clean up LNS operators wrt new pipeline framework
+* upgrade DotProduct and IntDualSub to new framework
+* upgrade LNS operators
+* add FPU object and remove all global variables, to enable library build
 
 FPAdder
 * several optimization opportunities, see the TODO inside FPAdder.cpp
 * implement a single-path version
-
-FPMultiplier:
-* refine the DSP model in Targets (endless TODO ?)
-
 
 FPExp:
 * true FloPoCoization, pipeline
