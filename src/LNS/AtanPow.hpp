@@ -3,19 +3,23 @@
 
 #include "../Operator.hpp"
 
-struct AtanPow : Operator
-{
-	AtanPow(Target * target, int wE, int wF, int o);
-	virtual ~AtanPow();
+namespace flopoco{
 
-	virtual void outputVHDL(std::ostream& o, std::string name);
+	struct AtanPow : Operator
+	{
+		AtanPow(Target * target, int wE, int wF, int o);
+		virtual ~AtanPow();
 
-	int wE;
-	int wF;
-	int order;
-private:
+		virtual void outputVHDL(std::ostream& o, std::string name);
+
+		int wE;
+		int wF;
+		int order;
+	private:
 	
-	Operator * T[3];
-};
+		Operator * T[3];
+	};
+
+}
 
 #endif
