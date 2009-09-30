@@ -9,20 +9,20 @@ namespace flopoco{
 
 	Signal::Signal(const string name, const Signal::SignalType type, const int width, const bool isBus) : 
 		name_(name), type_(type), width_(width), numberOfPossibleValues_(1), lifeSpan_(0),  cycle_(0),	
-		isFP_(false), wE_(0), wF_(0), isSubSignal_(false), low_(0), high_(width-1), isBus_(isBus) {
+		isFP_(false), wE_(0), wF_(0),  isBus_(isBus) {
 	}
 
 	Signal::Signal(const string name, const Signal::SignalType type, const int wE, const int wF) : 
-		name_(name), type_(type), width_(wE+wF+3), numberOfPossibleValues_(1), lifeSpan_(0), cycle_(0),
-		isFP_(true), wE_(wE), wF_(wF), isSubSignal_(false),
-		low_(0), high_(width_-1), isBus_(false)
+		name_(name), type_(type), width_(wE+wF+3), numberOfPossibleValues_(1), 
+		lifeSpan_(0), cycle_(0),
+		isFP_(true), wE_(wE), wF_(wF), isBus_(false)
 	{
 	}
 
 	Signal::~Signal(){}
 
 	const string& Signal::getName() const { 
-		return id_; 
+		return name_; 
 	}
 
 

@@ -154,7 +154,6 @@ namespace flopoco{
 
 	private:
 		std::string   name_;        /**< The name of the signal */
-		std::string   id_;          /**< The id of the signal. It is the same as name_ for regular signals, and is name_(high_-1 downto low_) for subsignals */
 		SignalType    type_;        /**< The type of the signal, see SignalType */
 		int           width_;       /**< The width of the signal */
 
@@ -166,11 +165,7 @@ namespace flopoco{
 		bool          isFP_;        /**< If the signal is of floating-point type */  
 		int           wE_;          /**< The width of the exponent. Used for FP signals */
 		int           wF_;          /**< The width of the fraction. Used for FP signals */
-	
-		bool          isSubSignal_; /**< If the signal is a subsignal */
-		int           low_;         /**< The low index of the signal */
-		int           high_;        /**< The high index of the signal */
-	
+		
 		bool          isBus_;       /**< True is the signal is a bus (std_logic_vector)*/
 	};
 
