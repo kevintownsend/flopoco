@@ -55,11 +55,6 @@ namespace flopoco{
 		 */	
 		const std::string& getName() const;
 
-		/** Updates the name of the signal.
-		 * It takes into consideration the fact that we might have subsignals
-		 */	
-		void updateSignalName();
-
 
 		/** Returns the width of the signal
 		 * @return the width of the signal
@@ -107,35 +102,6 @@ namespace flopoco{
 		 * @return the VHDL for the declarations. 
 		 */	
 		std::string toVHDLDeclaration();
-
-		/** Returns a subsignal of the this signal
-		 * @param low the low index of subsignal
-		 * @param high the high index of the subsignal
-		 * @return the corresponding subsignal
-		 */	
-		Signal getSubSignal(int low, int high);
-	
-		/** Returns a subsignal containing the exception bits of this signal
-		 * @return the corresponding subsignal
-		 */	
-		Signal getException();
-
-		/** Returns a subsignal containing the sign bit of this signal
-		 * @return the corresponding subsignal
-		 */	
-		Signal getSign();
-
-		/** Returns a subsignal containing the exponent bits of this signal
-		 * @return the corresponding subsignal
-		 */	
-		Signal getExponent();
-
-
-		/** Returns a subsignal containing the fraction bits of this signal
-		 * @return the corresponding subsignal
-		 */	
-		Signal getMantissa();
-
 
 
 		/** sets the cycle at which the signal is active

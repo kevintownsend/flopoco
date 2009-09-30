@@ -10,7 +10,6 @@ namespace flopoco{
 	Signal::Signal(const string name, const Signal::SignalType type, const int width, const bool isBus) : 
 		name_(name), type_(type), width_(width), numberOfPossibleValues_(1), lifeSpan_(0),  cycle_(0),	
 		isFP_(false), wE_(0), wF_(0), isSubSignal_(false), low_(0), high_(width-1), isBus_(isBus) {
-		updateSignalName();
 	}
 
 	Signal::Signal(const string name, const Signal::SignalType type, const int wE, const int wF) : 
@@ -18,7 +17,6 @@ namespace flopoco{
 		isFP_(true), wE_(wE), wF_(wF), isSubSignal_(false),
 		low_(0), high_(width_-1), isBus_(false)
 	{
-		updateSignalName();
 	}
 
 	Signal::~Signal(){}
@@ -27,19 +25,6 @@ namespace flopoco{
 		return id_; 
 	}
 
-	void Signal::updateSignalName()	{
-		if (isSubSignal_ == false)
-			id_ = name_;
-		else
-			{
-				stringstream o;
-				if (width_ == 1)
-					o << name_ << "(" << low_ << ")";
-				else
-					o << name_ << "(" << high_ << " downto " << low_ << ")";
-				id_ = o.str();
-			}
-	}
 
 	int Signal::width() const{return width_;}
 	
@@ -115,50 +100,6 @@ namespace flopoco{
 		o << ";";
 		return o.str();
 	}
-
-	Signal Signal::getSubSignal(int low, int high)
-	{
-		if (low < low_)
-			throw string("Attempted to return subsignal with smaller low index.");
-		if (high > high_)
-			throw string("Attempted to return subsignal with bigger high index."); 
-	
-		Signal s(name_, type_, high-low+1);
-		s.low_ = low;
-		s.high_ = high;
-		s.isSubSignal_ = true;
-	
-		return s;
-	}
-	
-	Signal Signal::getException()
-	{
-		if (!isFP_)
-			throw string("Not a floating point signal.");
-		return getSubSignal(1+wE_+wF_, 2+wE_+wF_);
-	}
-
-	Signal Signal::getSign()
-	{
-		if (!isFP_)
-			throw string("Not a floating point signal.");
-		return getSubSignal(wE_+wF_, wE_+wF_);
-	}
-
-	Signal Signal::getExponent()
-	{
-		if (!isFP_)
-			throw string("Not a floating point signal.");
-		return getSubSignal(wF_, wE_+wF_-1);
-	}
-
-	Signal Signal::getMantissa()
-	{
-		if (!isFP_)
-			throw string("Not a floating point signal.");
-		return getSubSignal(0, wF_-1);
-	}
-
 
 	void Signal::setCycle(int cycle) {
 		cycle_ = cycle;
