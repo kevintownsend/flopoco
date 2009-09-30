@@ -48,8 +48,8 @@
 #include <sstream>
 #include <math.h>	// for NaN
 #include "Collision.hpp"
-#include "FPNumber.hpp"
-#include "utils.hpp"
+#include "../FPNumber.hpp"
+#include "../utils.hpp"
 
 
 using namespace std;

@@ -45,15 +45,15 @@ ulp of R2.
 #include <vector>
 #include <sstream>
 
-#include "Operator.hpp"
-#include "Shifters.hpp"
-#include "LZOC.hpp"
-#include "LZOCShifterSticky.hpp"
-#include "IntAdder.hpp"
-#include "IntMultiplier.hpp"
-#include "IntSquarer.hpp"
-#include "FPMultiplier.hpp"
-#include "FPAdder.hpp"
+#include "../Operator.hpp"
+#include "../Shifters.hpp"
+#include "../LZOC.hpp"
+#include "../LZOCShifterSticky.hpp"
+#include "../IntAdder.hpp"
+#include "../IntMultiplier.hpp"
+#include "../IntSquarer.hpp"
+#include "../FPMultiplier.hpp"
+#include "../FPAdder.hpp"
 
 namespace flopoco{
 

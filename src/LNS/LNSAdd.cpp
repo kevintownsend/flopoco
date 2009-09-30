@@ -44,7 +44,8 @@ namespace flopoco{
 		setName(name.str()); 
 
 		setCopyrightString("Sylvain Collange (2008)");		
-	
+		setCombinatorial(); // TODO this should no longer be useful in the new framework
+
 		addInput ("x", wE + wF);
 		addOutput("r", wF, 2); // Faithful rounding;
 	

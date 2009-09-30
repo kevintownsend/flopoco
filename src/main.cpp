@@ -73,7 +73,7 @@
 #include "InputIEEE.hpp"
 #include "OutputIEEE.hpp"
  
-#include "Collision.hpp"
+#include "apps/Collision.hpp"
 #include "IntSquarer.hpp"
 
 #ifndef _WIN32

@@ -172,7 +172,7 @@ ADD_EXECUTABLE(flopoco
  src/InputIEEE
  src/OutputIEEE
  
- src/Collision
+ src/apps/Collision
  src/IntSquarer
 )
 
@@ -236,7 +236,7 @@ ADD_EXECUTABLE(flopoco
  src/FPLog
  src/InputIEEE
  src/OutputIEEE
- src/Collision
+ src/apps/Collision
  src/IntSquarer
 )
 ENDIF(WIN32) 
