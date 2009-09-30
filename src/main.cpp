@@ -148,8 +148,8 @@ static void usage(char *name){
 	cerr << "      Convert a 2's compliment fixed-point number in the bit range MSB...LSB [into floating-point\n";
 	cerr << "    FPAdder wE wF\n";
 	cerr << "      Floating-point adder \n";
-	cerr << "    FPMultiplier wE wF\n";
-	cerr << "      Floating-point multiplier \n";
+	cerr << "    FPMultiplier wE wF_in wF_out\n";
+	cerr << "      Floating-point multiplier, supporting different in/out precision  \n";
 	cerr << "    FPSquarer wE wFin wFout\n";
 	cerr << "      Floating-point squarer \n";
 	cerr << "    FPDiv wE wF\n";
@@ -759,14 +759,15 @@ bool parseCommandLine(int argc, char* argv[]){
 		// 	}
 		// }
 		else if(opname=="FPMultiplier"){
-			int nargs = 2; 
+			int nargs = 3; 
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
 				int wE = checkStrictyPositive(argv[i++], argv[0]);
-				int wF = checkStrictyPositive(argv[i++], argv[0]);
-				cerr << "> FPMultiplier , wE="<<wE<<", wF="<<wF<<" \n";
-				op = new FPMultiplier(target, wE, wF, wE, wF, wE, wF, 1);
+				int wFIn = checkStrictyPositive(argv[i++], argv[0]);
+				int wFOut = checkStrictyPositive(argv[i++], argv[0]);
+				cerr << "> FPMultiplier , wE="<<wE<<", wFIn="<<wFIn<<", wFOut="<<wFOut<<" \n";
+				op = new FPMultiplier(target, wE, wFIn, wE, wFIn, wE, wFOut, 1);
 				addOperator(op);
 			}
 		} 

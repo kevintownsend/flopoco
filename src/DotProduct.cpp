@@ -69,7 +69,7 @@ namespace flopoco{
 		/* Instantiate one FPMultiplier used to multiply the two inputs fp numbers, X and Y */
 		int fpMultiplierResultExponentWidth = wE;
 		int fpMultiplierResultFractionWidth = wFX + wFY + 1;
-		int fpMultiplierResultNormalization = 1;
+		int fpMultiplierResultNormalization = 0;
 		fpMultiplier = new FPMultiplier(target, wE, wFX, wE, wFY, fpMultiplierResultExponentWidth, fpMultiplierResultFractionWidth, fpMultiplierResultNormalization);
 		oplist.push_back(fpMultiplier);
   
@@ -120,7 +120,7 @@ namespace flopoco{
 		o << tab << "fpMultiplierResult <= fpMultiplierResultException & "
 		  <<"fpMultiplierResultSign & "
 		  <<"fpMultiplierResultExponent & "
-		  <<"fpMultiplierResultSignificand("<<wFX + wFY<<" downto "<< 0 <<");"<<endl;
+		  <<"fpMultiplierResultSignificand("<<wFX + wFY+1<<" downto "<< 1 <<");"<<endl;
 
 		/* Map the signals on the long accumulator */
 		o << tab << "long_acc: " << longAcc->getName() << endl;

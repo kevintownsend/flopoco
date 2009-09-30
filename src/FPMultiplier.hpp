@@ -8,6 +8,7 @@
 
 #include "Operator.hpp"
 #include "IntMultiplier.hpp"
+#include "IntAdder.hpp"
 
 namespace flopoco{
 
@@ -34,14 +35,6 @@ namespace flopoco{
 		~FPMultiplier();
 
 		/**
-		 * Method belonging to the Operator class overloaded by the FPMultiplier class
-		 * @param[in,out] o     the stream where the current architecture will be outputed to
-		 * @param[in]     name  the name of the entity corresponding to the architecture generated in this method
-		 **/
-		void outputVHDL(std::ostream& o, std::string name);
-
-
-		/**
 		 * Emulate the operator using MPFR.
 		 * @param tc a TestCase partially filled with input values 
 		 */
@@ -57,16 +50,11 @@ namespace flopoco{
 		int  wER_;                  /**< The width of the exponent for the output R */
 		int  wFR_;                  /**< The width of the fraction for the output R */
 		bool normalized_;	       /**< Signal if the output of the operator is to be or not normalized*/
-		int  intMultPipelineDepth_; /**< The pipeline depth of the integer multiplier used to multiply significands*/
-
 
 	private:
 
 		IntMultiplier* intmult_;     /**< The integer multiplier object */
-		int reunionSignalWidth_;     /**< The width of a signal which reunites a leading 0, and a part of the significands' product */
-		int additionChunkWidth_;     /**< The width of the chunks for the addition used for rounding */
-		int reunionSignalParts_; 	 /**< The number of parts that the reunion_signal will be split in in order to breake the addition in small pieces and pipeline it */
-		int additionLastChunkWidth_; /**< The width of the last chunk of the reunion signal. This width is usually smaller than the addition chunk width*/
+		IntAdder* intadd_;           /**< The integer multiplier object */
  
 	};
 }
