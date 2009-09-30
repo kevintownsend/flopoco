@@ -30,12 +30,11 @@ using namespace std;
 namespace flopoco{
 
 	extern vector<Operator*> oplist;
-	setCombinatorial();	
-
 
 	LNSAddSub::LNSAddSub(Target * target, int wE, int wF) :
 		wE(wE), wF(wF)
 	{
+		setCombinatorial();	
 		ostringstream name;
 		/* The name has the format: LNSAddSub_wE_wF where: 
 			wE = width of the integral part of the exponent

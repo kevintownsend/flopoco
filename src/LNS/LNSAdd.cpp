@@ -30,13 +30,13 @@
 using namespace std;
 
 namespace flopoco{
-	setCombinatorial();
 	
 	extern vector<Operator*> oplist;	// ???
 
 	LNSAdd::LNSAdd(Target * target, int wE, int wF, int o) :
 		Operator(target), wE(wE), wF(wF), order(o)
 	{
+		setCombinatorial();
 		t[0] = t[1] = t[2] = 0;
 
 		ostringstream name;

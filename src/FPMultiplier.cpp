@@ -44,26 +44,14 @@ namespace flopoco{
 		Operator(target), wEX_(wEX), wFX_(wFX), wEY_(wEY), wFY_(wFY), wER_(wER), wFR_(wFR) {
 
 		ostringstream name;
-
-
-		/* The name has the format: FPMultiplier_wEX__wFX__wEY__wFY__wER__wFR_ 
-		where: wEX_ = width of X exponenet and 
-		       wFX_ = width for the fractional part of X */
-		name<<"FPMultiplier_"<<wEX_<<"_"<<wFX_<<"_"<<wEY_<<"_"<<wFY_<<"_"<<wER_<<"_"<<wFR_; 
+		name << "FPMultiplier_"<<wEX_<<"_"<<wFX_<<"_"<<wEY_<<"_"<<wFY_<<"_"<<wER_<<"_"<<wFR_; 
 		setName(name.str());
 
 		/* set if operator outputs a normalized_ result */
-		if (norm == 0) 
-			normalized_ = false;
-		else
-			normalized_ = true;
-
+		normalized_ = (norm==0?false:true);
 	
-		/* Set up the IO signals */
-		/* Inputs: 2b(Exception) + 1b(Sign) + wEX_ bits (Exponent) + wFX_ bits(Fraction) */
 		addFPInput ("X", wEX_, wFX_);
 		addFPInput ("Y", wEY_, wFY_);
-
 		if(normalized_==true) 
 			addFPOutput ("R"   , wER_, wFR    );  
 		else{
@@ -99,7 +87,6 @@ namespace flopoco{
 		inPortMap( intmult_, "Y", "sigY");
 		outPortMap(intmult_, "R", "sigProd");
 		vhdl << instance(intmult_, "SignificandMultiplication");
-
 
 		/* Exception Handling */
 		setCycle(0);
@@ -139,13 +126,14 @@ namespace flopoco{
 				vhdl << tab << "R <= " << use("finalExc") << " & " << use("sign") << " & " << use("expPostNorm") << range(wER_-1, 0) << " & " <<use("resSig") <<";"<<endl;
 			}
 			else{
-				vhdl << tab << declare("resSig", wFR_) << " <= " << use("sigProd")<<range(wFX_+wFY_, wFX_+wFY_ - wFR_+1) <<" when "<< use("norm")<< "='1' else"<<endl;
-				vhdl << tab <<"                      "           << use("sigProd")<<range(wFX_+wFY_-1, wFX_+wFY_ - wFR_) << ";"<<endl;
-				
-				vhdl << tab << declare("expSig", 2 + wER_ + wFR_) << " <= " << use("expPostNorm") << " & " << use("resSig") << ";" << endl;
+//				vhdl << tab << declare("resSig", wFR_) << " <= " << use("sigProd")<<range(wFX_+wFY_, wFX_+wFY_ - wFR_+1) <<" when "<< use("norm")<< "='1' else"<<endl;
+//				vhdl << tab <<"                      "           << use("sigProd")<<range(wFX_+wFY_-1, wFX_+wFY_ - wFR_) << ";"<<endl;
 
 				vhdl << tab << declare("sigProdExt", wFX_+wFY_+ 1 + 1) << " <= " << use("sigProd") << range(wFX_+wFY_, 0) << " & " << zg(1,0) <<" when "<< use("norm")<< "='1' else"<<endl;
 				vhdl << tab << "                      "           << use("sigProd") << range(wFX_+wFY_-1, 0) << " & " << zg(2,0) << ";"<<endl;
+							
+				vhdl << tab << declare("expSig", 2 + wER_ + wFR_) << " <= " << use("expPostNorm") << " & " << use("sigProdExt")<<range(wFX_+wFY_+ 1,wFX_+wFY_+ 2 -wFR_) << ";" << endl;
+
 		
 				vhdl << tab << declare("sticky") << " <= " << use("sigProdExt") << of(wFX_+wFY + 1 - wFR) << ";" << endl;
 				vhdl << tab << declare("guard") << " <= " << "'0' when " << use("sigProdExt") << range(wFX_+wFY + 1 - wFR - 1,0) << "=" << zg(wFX_+wFY + 1 - wFR - 1 +1,0) <<" else '1';" << endl;

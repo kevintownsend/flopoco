@@ -28,11 +28,11 @@
 using namespace std;
 
 namespace flopoco{
-	setCombinatorial();	
 
 	LNSDiv::LNSDiv(Target * target, int wE, int wF) :
 		wE(wE), wF(wF)
 	{
+		setCombinatorial();	
 		ostringstream name;
 		/* The name has the format: LNSDiv_wE_wF where: 
 			wE = width of the integral part of the exponent
