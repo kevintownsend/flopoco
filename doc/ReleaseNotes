@@ -1,10 +1,13 @@
 ======================================================================
+Version 1.15.1 
+- improves FPLog, which is now as good as we'll get for a while
+- includes several new targets at various levels of completion. 
+- introduces an integer compression tree, and improves 
+   pipelined multipliers for these targets 
 
-Version 1.15.1 has no new operator, but improves FPLog, which is now
-as good as we'll get for a while. It includes several new targets at
-various levels of completion. FloPoCo also now lives in its own
-namespace (thanks to Mariusz Grad), which should help integrating it
-in larger project. Heaps of bugfixes, too.
+FloPoCo also now lives in its own namespace (thanks to Mariusz Grad),
+which should help integrating it in larger project. 
+Heaps of bugfixes, too.
 
 ======================================================================
 Version 1.15.0 adds a Karatsuba multiplier (Virtex-only so far),
