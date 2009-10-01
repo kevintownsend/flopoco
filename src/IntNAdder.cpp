@@ -54,7 +54,7 @@ namespace flopoco{
 			addInput ( join("X",i) , wIn_, true);
 
 		addInput ("Cin", 1  );
-		addOutput("R"  , wIn_, true);
+		addOutput("R"  , wIn_, 1, true);
 
 		if (isSequential()){
 			double objectivePeriod = 1 / target->frequency();	
