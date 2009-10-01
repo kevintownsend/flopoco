@@ -27,6 +27,7 @@
 #include <iostream>
 #include <sstream>
 #include <vector>
+#include <cstdlib>
 #include <math.h>
 #include <gmp.h>
 #include <mpfr.h>
@@ -43,6 +44,12 @@ namespace flopoco{
 	IntNAdder::IntNAdder(Target* target, int wIn, int N, map<string, double> inputDelays):
 		Operator(target), wIn_(wIn), N_(N), inputDelays_(inputDelays) 
 	{
+	
+		if (wIn<2){
+			cerr << "ERROR >IntNAdder. wIn >=2. VHDL file will NOT be produced" << endl;
+			exit ( EXIT_FAILURE );	
+		}
+			
 		ostringstream name;
 		name << "IntNAdder_" << wIn_<<"_"<<N;
 		setName(name.str());
