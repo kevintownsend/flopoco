@@ -22,6 +22,8 @@ namespace flopoco{
 		 * @param[in] inputDelays the delays for each input
 		 **/
 		IntCompressorTree(Target* target, int wIn, int N, map<string, double> inputDelays = emptyDelayMap);
+
+		void outputVHDL(std::ostream& o, std::string name);
 	
 		bool solution(int k, int n, int targetSum, int * sol, int * coef);
 		void printSolution(int n, int * sol, int * coef, int *bestSol);
@@ -48,10 +50,6 @@ namespace flopoco{
 		int nbOfChunks;                   /**< the number of chunks that the addition will be split in */
 		int chunkSize_;                   /**< the suggested chunk size so that the addition can take place at the objective frequency*/
 		int *cSize;                       /**< array containing the chunk sizes for all nbOfChunks*/
-
-		//	int *a;
-		//	int *sol;
-	
 	};
 
 }
