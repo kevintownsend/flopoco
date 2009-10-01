@@ -2,6 +2,7 @@ TODO file for FloPoCo
 
 Pipeline framework, Operator and Targets:
 * upgrade DotProduct and IntDualSub to new framework
+* upgrade SRT4Step
 * upgrade LNS operators
 * add FPU object and remove all global variables, to enable library build
 
