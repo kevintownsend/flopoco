@@ -5,6 +5,9 @@ Pipeline framework, Operator and Targets:
 * upgrade LNS operators
 * add FPU object and remove all global variables, to enable library build
 
+FPMultiplier 
+* optimize frequency 
+
 FPAdder
 * several optimization opportunities, see the TODO inside FPAdder.cpp
 * implement a single-path version
