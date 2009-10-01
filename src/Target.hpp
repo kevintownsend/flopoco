@@ -25,7 +25,7 @@
 #ifndef TARGET_HPP
 #define TARGET_HPP
 
-#include "DSP.hpp"
+#include "Targets/DSP.hpp"
 #include <string>
 
 using namespace std;

@@ -113,7 +113,7 @@ IF(WIN32)
 ADD_EXECUTABLE(flopoco
  src/main
  src/utils
- src/DSP
+ src/Targets/DSP
  src/Target src/Targets/Virtex4 src/Targets/Spartan3 src/Targets/StratixII src/Targets/Virtex5 src/Targets/StratixIV
  src/Operator
  src/Signal
@@ -180,7 +180,7 @@ ELSE(WIN32)
 ADD_EXECUTABLE(flopoco
  src/main
  src/utils
- src/DSP
+ src/Targets/DSP
  src/Target src/Targets/Virtex4 src/Targets/Spartan3 src/Targets/StratixII src/Targets/Virtex5 src/Targets/StratixIV
  src/Operator
  src/Signal
