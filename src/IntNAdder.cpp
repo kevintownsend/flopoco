@@ -50,20 +50,11 @@ namespace flopoco{
 		setCopyrightString("Bogdan Pasca (2009)");
 
 		// Set up the IO signals
-		for (int i=0; i<N; i++){
-			name.str(""); //init a ostringstream variable
-			name << "X"<<i; 
-			addInput (name.str() , wIn_);
-		}
+		for (int i=0; i<N; i++)
+			addInput ( join("X",i) , wIn_, true);
 
 		addInput ("Cin", 1  );
 		addOutput("R"  , wIn_);
-
-		if (verbose){
-			cout <<"delay for X is   "<< inputDelays["X"]<<endl;	
-			cout <<"delay for Y is   "<< inputDelays["Y"]<<endl;
-			cout <<"delay for Cin is "<< inputDelays["Cin"]<<endl;
-		}
 
 		if (isSequential()){
 			double objectivePeriod = 1 / target->frequency();	
