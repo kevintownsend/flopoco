@@ -18,8 +18,8 @@ using namespace std;
 
 
 namespace flopoco{
-
-
+	
+	#define DEBUG(level,stream) {if ((level)<=(verbose)) cout << stream << endl;} 
 
 	/** Returns under the form of a string of given size, the unsigned binary representation of an integer.
 	 * @param x the number to be represented in unsigned binary
