@@ -121,6 +121,7 @@ namespace flopoco{
 		syncCycleFromSignal("resFrac");	
 		//	nextCycle();
 		//the exponent bias	
+		expBias_ =  intpow2(wEOut-1) - 1;
 		vhdl << tab << declare("expBias",wEOut_) << " <= CONV_STD_LOGIC_VECTOR("<<expBias_<<","<<wEOut_<<");"<<endl; //fixed value
 
 		// c2MnZO is  -nZO in 2'c complement with a twist. Usually for 2's complement all bits must be inverted
