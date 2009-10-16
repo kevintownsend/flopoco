@@ -28,6 +28,10 @@ namespace flopoco{
 
 		/** Destructor */
 		~LongAcc2FP();
+		
+		void buildRandomTestCases(TestCaseList* tcl, int n);
+		
+		void emulate(TestCase *tc);
 
 
 
@@ -38,6 +42,7 @@ namespace flopoco{
 		int wFOut_;   /**< the width of the output fractional part */
 
 	private:
+		Target* ownTarget_;
 		IntAdder* adder_;
 		LZOCShifterSticky* lzocShifterSticky_;   
 		int      sizeAcc_;       /**< The size of the accumulator  = MSBA-LSBA+1; */

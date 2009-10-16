@@ -48,6 +48,8 @@ namespace flopoco{
 		Operator(target), 
 		LSBA_(LSBA), MSBA_(MSBA), wEOut_(wEOut), wFOut_(wFOut)
 	{
+	
+		ownTarget_ = target;
 		ostringstream name;
 		setCopyrightString("Bogdan Pasca (2008-2009)");		
 		name <<"LongAcc2FP_"
@@ -192,4 +194,97 @@ namespace flopoco{
 	LongAcc2FP::~LongAcc2FP() {
 	}
 
+
+	void LongAcc2FP::buildRandomTestCases(TestCaseList* tcl, int n){
+
+		TestCase *tc;
+		mpz_class A,C;
+		
+		C=mpz_class(0);
+		int chunkSize, k;
+		
+		ownTarget_->suggestSubaddSize(chunkSize, MSBA_-LSBA_+1);
+		if (chunkSize>=MSBA_-LSBA_+1)
+			k=1;
+		else
+			k= int(ceil( double(MSBA_-LSBA_+1)/double(chunkSize)));
+
+		for (int i = 0; i < n; i++) {
+			C= mpz_class(0);
+			tc = new TestCase(this);
+			
+			A = getLargeRandom(MSBA_-LSBA_+1);
+
+			tc->addInput("A", A);
+			
+			if (k==1)
+				tc->addInput("C", mpz_class(0));
+			else{
+				for (int j=0;j<k-1;j++){
+					C = C + (  getLargeRandom(1)<< (chunkSize*(j+1)) );
+					tc->addInput("C", C);
+				}
+			
+			
+			}
+			tc->addInput("AccOverflow",mpz_class(0));
+			
+			/* Get correct outputs */
+			emulate(tc);
+			tcl->add(tc);
+		}
+	}
+
+
+	void LongAcc2FP::emulate(TestCase *tc)
+	{
+		/* Get I/O values */
+		mpz_class svA           = tc->getInputValue("A");
+		mpz_class svAccOverflow = tc->getInputValue("AccOverflow");
+		mpz_class svC           = tc->getInputValue("C");
+		
+	
+		mpz_class newAcc;
+		newAcc = svA + svC;
+				  	
+		mpz_class tmpSUB = (mpz_class(1) << (MSBA_ - LSBA_+1))    ;
+		mpz_class tmpCMP = (mpz_class(1) << (MSBA_ - LSBA_  )) - 1;
+
+		if (newAcc > tmpCMP)
+			newAcc = newAcc - tmpSUB;
+
+		mpfr_t x;
+		mpfr_init2(x, 10000); //init to infinite prec
+		mpfr_set_z(x, newAcc.get_mpz_t(), GMP_RNDN);
+
+		mpfr_t cst, tmp2;
+		mpfr_init2(cst, 10000); //init to infinite prec
+		mpfr_init2(tmp2, 10000); //init to infinite prec
+
+
+		mpfr_set_ui(cst, 2 , GMP_RNDN);
+		mpfr_set_si(tmp2, LSBA_ , GMP_RNDN);
+		mpfr_pow(cst, cst, tmp2, GMP_RNDN);
+
+		mpfr_mul(x, x, cst, GMP_RNDN);
+
+		mpfr_t myFP;
+		mpfr_init2(myFP, wFOut_+1);
+		
+		mpfr_set(myFP, x, GMP_RNDD);
+		FPNumber  fpr(wEOut_, wFOut_, myFP);
+		mpz_class svR = fpr.getSignalValue();
+		tc->addExpectedOutput("R", svR);
+
+		mpfr_set(myFP, x, GMP_RNDU);
+		FPNumber  fpr2(wEOut_, wFOut_, myFP);
+		mpz_class svR2 = fpr2.getSignalValue();
+		tc->addExpectedOutput("R", svR2);
+
+
+
+		// clean-up
+		mpfr_clears(x, myFP, NULL);
+	}
+	
 }

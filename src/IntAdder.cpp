@@ -37,7 +37,6 @@
 
 using namespace std;
 
-
 namespace flopoco{
 
 	IntAdder::IntAdder(Target* target, int wIn, map<string, double> inputDelays, int aType):
@@ -54,13 +53,11 @@ namespace flopoco{
 		addInput ("Cin", 1 );
 		addOutput("R"  , wIn_, 1 , true);
 
-		if (verbose) 
-			cout << printInputDelays( inputDelays );
+		DEBUG(2, printInputDelays(inputDelays));
 
 		if (isSequential()){
 			//general variables for all versions
 			double objectivePeriod = 1 / target->frequency();	
-		
 		
 			//**********************************************************************
 			//**********************************************************************
