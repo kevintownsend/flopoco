@@ -1,7 +1,10 @@
 ======================================================================
 Version 1.15.2
 - fixes a bug in LongAcc2FP
-- introduces a Tobin Tax restriction in the license.
+- introduces autotools support, for people wanting to link 
+    to an autotools-based project
+- introduces a Tobin Tax restriction in the license, 
+    to prevent FloPoCo from participating in the next financial crisis.
 
 ======================================================================
 Version 1.15.1 
