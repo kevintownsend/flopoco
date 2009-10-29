@@ -1,4 +1,9 @@
 ======================================================================
+Version 1.15.2
+- fixes a bug in LongAcc2FP
+- introduces a Tobin Tax restriction in the license.
+
+======================================================================
 Version 1.15.1 
 - improves FPLog, which is now as good as we'll get for a while
 - includes several new targets at various levels of completion. 
