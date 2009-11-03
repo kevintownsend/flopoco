@@ -586,9 +586,10 @@ bool parseCommandLine(int argc, char* argv[]){
 				int type = atoi(argv[i++]);
 				cerr << "> IntAdder, wIn="<<wIn<<endl  ;
 				switch (type) {
-					case 0: op = new IntAdder(target, wIn, emptyDelayMap, 0); break; //fast and small
-					case 1: op = new IntAdder(target, wIn, emptyDelayMap, 1); break; //fast and medium
-					default: op = new IntAdder(target,wIn, emptyDelayMap, 0); break;
+					case 1: op = new IntAdder(target, wIn, emptyDelayMap, 1); break; //CPA1
+					case 2: op = new IntAdder(target, wIn, emptyDelayMap, 2); break; //CPA2
+					case 3: op = new IntAdder(target, wIn, emptyDelayMap, 3); break; //CPA3
+					default: op = new IntAdder(target,wIn, emptyDelayMap, 1); break;
 				}
 				addOperator(op);
 			}    

@@ -1,4 +1,4 @@
-/*
+	/*
  * An integer adder for FloPoCo
  *
  * It may be pipelined to arbitrary frequency.
@@ -58,114 +58,11 @@ namespace flopoco{
 		if (isSequential()){
 			//general variables for all versions
 			double objectivePeriod = 1 / target->frequency();	
-		
+
 			//**********************************************************************
 			//**********************************************************************
-			//FASTEST AND SMALLEST PIPELINED VERSION OF CPA1
-			if ( aType == 0 ){
-
-				maxInputDelay = getMaxInputDelays (inputDelays);
-				if (verbose)
-					cout << "The maximum input delay is: " << maxInputDelay << endl;
-		
-				if ( maxInputDelay > objectivePeriod ){
-					//the maximum combinatorial delay of the input is larger than the objective period, so the requested frequency might not be reached.
-					cout << "WARNING: the combinatorial delay at the input of " << this->getName() << " is above objective period "<<endl;
-					maxInputDelay = objectivePeriod;
-				}
-
-				if ( ((objectivePeriod - maxInputDelay) - target->adderDelay(1) ) < 0 )	{
-					//if not enough slack is available for any combinatorial circuit, we register the inputs
-					nextCycle();
-					target->suggestSubaddSize(chunkSize_ ,wIn_);
-					nbOfChunks = ceil(double(wIn_)/double(chunkSize_));
-					lastChunkSize = ( wIn_ % chunkSize_ == 0 ? chunkSize_ : wIn_ % chunkSize_);
-				}
-				else{
-					int maxInAdd;
-					//explore 2 designs and chose the best				
-					target->suggestSlackSubaddSize(maxInAdd, wIn_, maxInputDelay); 
-					int nbOfChunksFirstDesign = ceil(double(wIn_)/double(maxInAdd));
-					int scoreFirstDesign = nbOfChunksFirstDesign - 1;
-					if (verbose) cout << "Exploring first design ... score is:"<< scoreFirstDesign << endl;
-				
-					target->suggestSubaddSize(maxInAdd, wIn_); 
-					int nbOfChunksSecondDesign = ceil(double(wIn_)/double(maxInAdd));
-					int scoreSecondDesign = nbOfChunksSecondDesign;
-					if (verbose) cout << "Exploring second design ... score is:"<< scoreSecondDesign << endl;
-				
-					if (scoreFirstDesign > scoreSecondDesign){
-						if (verbose) cout << "Implementation of the second design" << endl;
-						nbOfChunks = nbOfChunksSecondDesign;
-						target->suggestSubaddSize(chunkSize_, wIn_); 
-						lastChunkSize = ( wIn_ % chunkSize_ == 0 ? chunkSize_ : wIn_ % chunkSize_);
-					}else{
-						if (verbose) cout << "Implementation of the first design" << endl;
-						nbOfChunks = nbOfChunksFirstDesign;
-						target->suggestSubaddSize(chunkSize_, wIn_); 
-						lastChunkSize = ( wIn_ % chunkSize_ == 0 ? chunkSize_ : wIn_ % chunkSize_);
-					}
-				}
-				//the sizes of the chunks
-				cSize = new int[nbOfChunks+1];
-				if ( nbOfChunks > 1 ){
-					for (int i=0; i<nbOfChunks-1; i++)
-						cSize[i] = chunkSize_;
-					cSize[nbOfChunks-1] = lastChunkSize;
-				}
-				else{
-					nbOfChunks = 1;
-					cSize = new int[1];
-					cSize[0] = wIn_;
-				}
-				//the indexes in the inputs of the chunks
-				cIndex = new int[nbOfChunks];
-				cIndex[0]= cSize[0];
-				for (int i=1; i < nbOfChunks; i++)
-					cIndex[i] = cIndex[i-1] + cSize[i];
-		
-				if (verbose){
-					cout << "The chunk sizes[MSB-->LSB]: "<<endl;
-					for (int i=nbOfChunks-1;i>=0;i--)
-						cout<<cSize[i]<<" ";
-					cout<<endl; 
-					cout << "The index sizes[MSB-->LSB]: "<<endl;
-					for (int i=nbOfChunks-1;i>=0;i--)
-						cout<<cIndex[i]<<" ";
-					cout<<endl; 
-				}	
-
-				////////////////////////////////////////////////////////////////////////
-		
-				for (int i=0; i < nbOfChunks; i++){
-					vhdl << tab << declare (join("sum_l",0,"_idx",i), cSize[i]+1, true) << " <= " << "( \"0\" & " << use("X") << range(cIndex[i]-1, (i>0?cIndex[i-1]:0)) << ") + "
-						  << "( \"0\" & " << use("Y") << range(cIndex[i]-1, (i>0?cIndex[i-1]:0)) << ")" ;
-					if (i==0) vhdl << " + " << use("Cin");
-					vhdl << ";" << endl;
-				}
-		
-				for (int i=1; i <= nbOfChunks-1 ; i++){
-					nextCycle(); ///////////////////////////////////////////////////////
-					for (int j=i; j <= nbOfChunks-1; j++){
-						vhdl << tab << declare(join("sum_l",i,"_idx",j), cSize[j]+1, true) << " <= " << "( \"0\" & " << use(join("sum_l",i-1,"_idx",j))<<range(cSize[j]-1,0) << ") + "
-							  << use(join("sum_l",i-1,"_idx",j-1))<<of(cSize[j-1])<<";"<<endl;
-					}
-				}
-		
-				vhdl << tab << "R <= ";
-				for (int i=nbOfChunks-1; i >= 1; i--){
-					vhdl << use(join("sum_l",i,"_idx",i))<<range(cSize[i]-1,0)<< " & ";
-				}
-				vhdl << use("sum_l0_idx0")<<range(cSize[0]-1,0)<<";"<<endl;
-
-				outDelayMap["R"] = target->adderDelay(cSize[nbOfChunks-1]); 
-				if (verbose)
-					cout<< "Last addition size is "<<cSize[nbOfChunks-1]<< " having a delay of "<<target->adderDelay(cSize[nbOfChunks-1])<<endl;
-			}
-			//**********************************************************************
-			//**********************************************************************
-			//SECOND BEST PIPELINED VERSION OF CPA1
-			else if ( aType == 1 ){
+			// Classical implementation of pipelined addition
+			if ( aType == 1 ){
 				int selectedDesign;
 				int firstChunkSize, middleChunkSize;
 				maxInputDelay = getMaxInputDelays (inputDelays);
@@ -289,7 +186,228 @@ namespace flopoco{
 				vhdl << use("sum0")<<range(cSize[0]-1,0)<<";"<<endl;
 				outDelayMap["R"] = target->adderDelay(cSize[nbOfChunks-1]); 
 			}
-			else{}
+
+		
+			//**********************************************************************
+			//**********************************************************************
+			//SECOND VERSION: CPA2
+			else if ( aType == 2 ){
+
+				maxInputDelay = getMaxInputDelays (inputDelays);
+				if (verbose)
+					cout << "The maximum input delay is: " << maxInputDelay << endl;
+		
+				if ( maxInputDelay > objectivePeriod ){
+					//the maximum combinatorial delay of the input is larger than the objective period, so the requested frequency might not be reached.
+					cout << "WARNING: the combinatorial delay at the input of " << this->getName() << " is above objective period "<<endl;
+					maxInputDelay = objectivePeriod;
+				}
+
+				if ( ((objectivePeriod - maxInputDelay) - target->adderDelay(1) ) < 0 )	{
+					//if not enough slack is available for any combinatorial circuit, we register the inputs
+					nextCycle();
+					target->suggestSubaddSize(chunkSize_ ,wIn_);
+					nbOfChunks = ceil(double(wIn_)/double(chunkSize_));
+					lastChunkSize = ( wIn_ % chunkSize_ == 0 ? chunkSize_ : wIn_ % chunkSize_);
+				}
+				else{
+					int maxInAdd;
+					//explore 2 designs and chose the best				
+					target->suggestSlackSubaddSize(maxInAdd, wIn_, maxInputDelay); 
+					int nbOfChunksFirstDesign = ceil(double(wIn_)/double(maxInAdd));
+					int scoreFirstDesign = nbOfChunksFirstDesign - 1;
+					if (verbose) cout << "Exploring first design ... score is:"<< scoreFirstDesign << endl;
+				
+					target->suggestSubaddSize(maxInAdd, wIn_); 
+					int nbOfChunksSecondDesign = ceil(double(wIn_)/double(maxInAdd));
+					int scoreSecondDesign = nbOfChunksSecondDesign;
+					if (verbose) cout << "Exploring second design ... score is:"<< scoreSecondDesign << endl;
+				
+					if (scoreFirstDesign > scoreSecondDesign){
+						if (verbose) cout << "Implementation of the second design" << endl;
+						nbOfChunks = nbOfChunksSecondDesign;
+						target->suggestSubaddSize(chunkSize_, wIn_); 
+						lastChunkSize = ( wIn_ % chunkSize_ == 0 ? chunkSize_ : wIn_ % chunkSize_);
+					}else{
+						if (verbose) cout << "Implementation of the first design" << endl;
+						nbOfChunks = nbOfChunksFirstDesign;
+						target->suggestSubaddSize(chunkSize_, wIn_); 
+						lastChunkSize = ( wIn_ % chunkSize_ == 0 ? chunkSize_ : wIn_ % chunkSize_);
+					}
+				}
+				//the sizes of the chunks
+				cSize = new int[nbOfChunks+1];
+				if ( nbOfChunks > 1 ){
+					for (int i=0; i<nbOfChunks-1; i++)
+						cSize[i] = chunkSize_;
+					cSize[nbOfChunks-1] = lastChunkSize;
+				}
+				else{
+					nbOfChunks = 1;
+					cSize = new int[1];
+					cSize[0] = wIn_;
+				}
+				//the indexes in the inputs of the chunks
+				cIndex = new int[nbOfChunks];
+				cIndex[0]= cSize[0];
+				for (int i=1; i < nbOfChunks; i++)
+					cIndex[i] = cIndex[i-1] + cSize[i];
+		
+				if (verbose){
+					cout << "The chunk sizes[MSB-->LSB]: "<<endl;
+					for (int i=nbOfChunks-1;i>=0;i--)
+						cout<<cSize[i]<<" ";
+					cout<<endl; 
+					cout << "The index sizes[MSB-->LSB]: "<<endl;
+					for (int i=nbOfChunks-1;i>=0;i--)
+						cout<<cIndex[i]<<" ";
+					cout<<endl; 
+				}	
+
+				////////////////////////////////////////////////////////////////////////
+		
+				for (int i=0; i < nbOfChunks; i++){
+					vhdl << tab << declare (join("sum_l",0,"_idx",i), cSize[i]+1, true) << " <= " << "( \"0\" & " << use("X") << range(cIndex[i]-1, (i>0?cIndex[i-1]:0)) << ") + "
+						  << "( \"0\" & " << use("Y") << range(cIndex[i]-1, (i>0?cIndex[i-1]:0)) << ")" ;
+					if (i==0) vhdl << " + " << use("Cin");
+					vhdl << ";" << endl;
+				}
+		
+				for (int i=1; i <= nbOfChunks-1 ; i++){
+					nextCycle(); ///////////////////////////////////////////////////////
+					for (int j=i; j <= nbOfChunks-1; j++){
+						vhdl << tab << declare(join("sum_l",i,"_idx",j), cSize[j]+1, true) << " <= " << "( \"0\" & " << use(join("sum_l",i-1,"_idx",j))<<range(cSize[j]-1,0) << ") + "
+							  << use(join("sum_l",i-1,"_idx",j-1))<<of(cSize[j-1])<<";"<<endl;
+					}
+				}
+		
+				vhdl << tab << "R <= ";
+				for (int i=nbOfChunks-1; i >= 1; i--){
+					vhdl << use(join("sum_l",i,"_idx",i))<<range(cSize[i]-1,0)<< " & ";
+				}
+				vhdl << use("sum_l0_idx0")<<range(cSize[0]-1,0)<<";"<<endl;
+
+				outDelayMap["R"] = target->adderDelay(cSize[nbOfChunks-1]); 
+				if (verbose)
+					cout<< "Last addition size is "<<cSize[nbOfChunks-1]<< " having a delay of "<<target->adderDelay(cSize[nbOfChunks-1])<<endl;
+			}
+			else if (aType == 3) {
+
+//				maxInputDelay = getMaxInputDelays (inputDelays);
+//				if (verbose)
+//					cout << "The maximum input delay is: " << maxInputDelay << endl;
+//		
+//				if ( maxInputDelay > objectivePeriod ){
+//					the maximum combinatorial delay of the input is larger than the objective period, so the requested frequency might not be reached.
+//					cout << "WARNING: the combinatorial delay at the input of " << this->getName() << " is above objective period "<<endl;
+//					maxInputDelay = objectivePeriod;
+//				}
+
+//				if ( ((objectivePeriod - maxInputDelay) - target->adderDelay(1) ) < 0 )	{
+//					if not enough slack is available for any combinatorial circuit, we register the inputs
+//					nextCycle();
+//					target->suggestSubaddSize(chunkSize_ ,wIn_);
+//					nbOfChunks = ceil(double(wIn_)/double(chunkSize_));
+//					lastChunkSize = ( wIn_ % chunkSize_ == 0 ? chunkSize_ : wIn_ % chunkSize_);
+//				}
+//				else{
+//					int maxInAdd;
+//					explore 2 designs and chose the best				
+//					target->suggestSlackSubaddSize(maxInAdd, wIn_, maxInputDelay); 
+//					int nbOfChunksFirstDesign = ceil(double(wIn_)/double(maxInAdd));
+//					int scoreFirstDesign = nbOfChunksFirstDesign - 1;
+//					if (verbose) cout << "Exploring first design ... score is:"<< scoreFirstDesign << endl;
+//				
+//					target->suggestSubaddSize(maxInAdd, wIn_); 
+//					int nbOfChunksSecondDesign = ceil(double(wIn_)/double(maxInAdd));
+//					int scoreSecondDesign = nbOfChunksSecondDesign;
+//					if (verbose) cout << "Exploring second design ... score is:"<< scoreSecondDesign << endl;
+//				
+//					if (scoreFirstDesign > scoreSecondDesign){
+//						if (verbose) cout << "Implementation of the second design" << endl;
+//						nbOfChunks = nbOfChunksSecondDesign;
+//						target->suggestSubaddSize(chunkSize_, wIn_); 
+//						lastChunkSize = ( wIn_ % chunkSize_ == 0 ? chunkSize_ : wIn_ % chunkSize_);
+//					}else{
+//						if (verbose) cout << "Implementation of the first design" << endl;
+//						nbOfChunks = nbOfChunksFirstDesign;
+//						target->suggestSubaddSize(chunkSize_, wIn_); 
+//						lastChunkSize = ( wIn_ % chunkSize_ == 0 ? chunkSize_ : wIn_ % chunkSize_);
+//					}
+//				}
+				w = wIn_;
+				
+				target->suggestSubaddSize(alpha ,w);
+				k = ceil(double(w)/double(alpha));
+				beta = ( w % alpha == 0 ? alpha : w % alpha);
+				
+				//the sizes of the chunks
+				cSize = new int[k+1];
+				if ( k > 1 ){
+					for (int i=0; i<k-1; i++)
+						cSize[i] = alpha;
+					cSize[k-1] = beta;
+				}
+				else{
+					k = 1;
+					cSize = new int[1];
+					cSize[0] = w;
+				}
+				
+				//the indexes in the inputs of the chunks
+				cIndex = new int[k];
+				cIndex[0]= cSize[0];
+				for (int i=1; i < k; i++)
+					cIndex[i] = cIndex[i-1] + cSize[i];
+		
+				if (verbose){
+					cout << "The chunk sizes[MSB-->LSB]: "<<endl;
+					for (int i=k-1;i>=0;i--)
+						cout<<cSize[i]<<" ";
+					cout<<endl; 
+					cout << "The index sizes[MSB-->LSB]: "<<endl;
+					for (int i=k-1;i>=0;i--)
+						cout<<cIndex[i]<<" ";
+					cout<<endl; 
+				}	
+
+				////////////////////////////////////////////////////////////////////////
+		
+				for (int i=0; i < k; i++){
+					vhdl << tab << declare (join("s_sum_l",0,"_idx",i), cSize[i]+1, true) << " <= " << "( \"0\" & " << use("X") << range(cIndex[i]-1, (i>0?cIndex[i-1]:0)) << ") + "
+						  << "( \"0\" & " << use("Y") << range(cIndex[i]-1, (i>0?cIndex[i-1]:0)) << ")" ;
+					if (i==0) vhdl << " + " << use("Cin");
+					vhdl << ";" << endl;
+				}
+				for (int i=0; i < k; i++){
+					vhdl << tab << declare (join("sum_l",0,"_idx",i), cSize[i], true) << " <= " << use(join("s_sum_l",0,"_idx",i))<<range(cSize[i]-1,0) << ";" << endl;
+					vhdl << tab << declare (join("c_l",0,"_idx",i), 1, true) << " <= " << use(join("s_sum_l",0,"_idx",i))<<range(cSize[i],cSize[i]) << ";" << endl;
+				}			
+		
+				for (int i=1; i <= k-1 ; i++){
+					nextCycle(); ///////////////////////////////////////////////////////
+					vhdl << tab << declare(join("sum_l",i,"_idx",i), cSize[i]+1, true) << " <= " << "( \"0\" & " << use(join("sum_l",0,"_idx",i))<< ") + " // <<range(cSize[i-1]-1,0) << ") + ";
+					     << use(join("c_l",0,"_idx",i-1))<<range(0,0) ;
+					if (i>1) 
+						vhdl << " + " << use(join("sum_l",i-1,"_idx",i-1))<<of(cSize[i-1]);
+					vhdl<<";"<<endl;
+				}
+		
+				vhdl << tab << "R <= ";
+				for (int i=k-1; i >= 1; i--){
+					vhdl << use(join("sum_l",i,"_idx",i))<<range(cSize[i]-1,0)<< " & ";
+				}
+				vhdl << use("sum_l0_idx0")<<range(cSize[0]-1,0)<<";"<<endl;
+
+//				outDelayMap["R"] = target->adderDelay(cSize[nbOfChunks-1]); 
+//				if (verbose)
+//					cout<< "Last addition size is "<<cSize[nbOfChunks-1]<< " having a delay of "<<target->adderDelay(cSize[nbOfChunks-1])<<endl;
+			
+				
+			
+			}
+			else {}
+		// COMBINATORIAL VERSION	
 		}else{
 			vhdl << tab << " R <= X + Y + Cin;" << endl;
 			outDelayMap["R"] = target->adderDelay(wIn_); 

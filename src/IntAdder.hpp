@@ -54,6 +54,11 @@ namespace flopoco{
 		int lastChunkSize;
 		int *cSize;                       /**< array containing the chunk sizes for all nbOfChunks*/
 		int *cIndex;                       /**< array containing the indexes for all Chunks*/
+		// new notations
+		int alpha; /**< the chunk size */
+		int beta;  /**< the last chunk size */
+		int k;     /**< the number of chunks */
+		int w;     /**< the addition width */
 
 	};
 
