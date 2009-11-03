@@ -24,6 +24,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
  */
 
+#include <cstdlib>
 #include <iostream>
 #include <sstream>
 #include <vector>
@@ -64,6 +65,10 @@ namespace flopoco{
 		}
 
 		if (isSequential()){
+		
+		
+#ifdef TEST
+      
 			//compute the maximum input delay
 			maxInputDelay = 0;
 			map<string, double>::iterator iter;
@@ -148,6 +153,12 @@ namespace flopoco{
 					vhdl << tab << declare (name.str(),cSize[j]+1) << " <= " << " \"0\" & X"<<i<<range(high-1,low)<<";"<<endl;
 				}
 			vhdl << tab << declare("scIn",1) << " <= " << "Cin;"<<endl;
+
+			/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+			/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+			/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+			/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 			if (true){
 				int l=1;
 				for (int j=0; j<nbOfChunks; j++){
@@ -307,6 +318,170 @@ namespace flopoco{
 				}
 				vhdl << ";" <<endl;
 			}
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#else
+
+//THE new version
+			cSize = new int[200];
+			cout << "The new version" << endl;
+
+			double	objectivePeriod;
+			objectivePeriod = double(1) / target->frequency();
+		
+			DEBUG(2, "Objective period is "<< objectivePeriod <<" at an objective frequency of "<<target->frequency());
+			
+			target->suggestSubaddSize(chunkSize_ ,wIn_);
+			DEBUG(2, "ChunkSize for first two chunks is: " << chunkSize_ );
+			if (2*chunkSize_ > wIn_){
+				cout << "ERROR FOR NOW -- instantiate int adder" << endl;
+				exit(0);
+			}
+			
+			cSize[0] = chunkSize_;
+			cSize[1] = chunkSize_;
+			
+			bool finished = false;
+			int width = wIn_ - 2*chunkSize_;
+					
+			int propagationSize = 0;
+			int chunkIndex = 2;
+			while ( (not (finished)) && (width > 0 )) {
+				DEBUG(2, "The width is " << width);
+				propagationSize+=2;
+				double delay = objectivePeriod - target->adderDelay(width) - target->adderDelay(propagationSize); //- target->localWireDelay()
+				DEBUG(2, "The value of the delay at step " << chunkIndex << " is " << delay);
+				if (delay > 0){
+					DEBUG(2, "finished -> found last chunk of size: " << width);
+					cSize[chunkIndex] = width;
+					finished = true;
+				}else{
+					DEBUG(2, "found regular chunk ");
+					int cs;
+					double slack =  target->adderDelay(propagationSize); //2*target->localWireDelay() + target->lutDelay() + 
+					DEBUG(2, "slack is: " << slack);
+					DEBUG(2, "adderDelay of " << propagationSize << " is " << target->adderDelay(propagationSize) );
+					target->suggestSlackSubaddSize( cs, width, slack);
+					DEBUG(2, "size of the regular chunk is : " << cs);
+					width = width - cs;
+					cSize[chunkIndex] = cs;
+					chunkIndex++;
+					propagationSize = propagationSize + 2;
+				}
+			}
+
+			DEBUG(2, "found " << chunkIndex + 1  << " chunks ");
+			nbOfChunks = chunkIndex + 1;
+			if (verbose>=2)
+			for (int i=chunkIndex; i>=0; i--){
+				cout << cSize[i] << " ";
+			}
+			cout << endl;
+
+
+			//=================================================
+			//split the inputs ( this should be reusable )
+			vhdl << tab << "--split the inputs into chunks of bits depending on the frequency" << endl;
+			for (int i=0;i<2;i++)
+				for (int j=0; j<nbOfChunks; j++){
+					ostringstream name;
+					//the naming standard: sX j _ i _ l
+					//j=the chunk index i is the input index and l is the current level
+					name << "sX"<<j<<"_"<<i<<"_l"<<0;
+					int low=0, high=0;
+					for (int k=0;k<=j;k++)
+						high+=cSize[k];
+					for (int k=0;k<=j-1;k++)
+						low+=cSize[k];
+					vhdl << tab << declare (name.str(),cSize[j]+1) << " <= " << " \"0\" & X"<<i<<range(high-1,low)<<";"<<endl;
+				}
+			vhdl << tab << declare("scIn",1) << " <= " << "Cin;"<<endl;
+
+			int l=1;
+			for (int j=0; j<nbOfChunks; j++){
+				ostringstream dnameZero, dnameOne, uname1, uname2, dnameCin;
+				dnameZero << "sX"<<j<<"_0_l"<<l<<"_Zero";
+				dnameOne  << "sX"<<j<<"_0_l"<<l<<"_One";
+				dnameCin  << "sX"<<j<<"_0_l"<<l<<"_Cin";
+			
+				uname1 << "sX"<<j<<"_0_l"<<l-1;
+				uname2 << "sX"<<j<<"_1_l"<<l-1;
+				if (j>0){ //for all chunks greater than zero we perform this additions
+					vhdl << tab << declare(dnameZero.str(),cSize[j]+1) << " <= (\"0\" & "<< use(uname1.str())<<range(cSize[j]-1,0) <<") +  (\"0\" & "<< use(uname2.str())<<range(cSize[j]-1,0)<<");"<<endl;
+					if (j<nbOfChunks-1)
+					vhdl << tab << declare(dnameOne.str(),cSize[j]+1) << "  <= (\"0\" & "<< use(uname1.str())<<range(cSize[j]-1,0) <<") +  (\"0\" & "<< use(uname2.str())<<range(cSize[j]-1,0)<<") + '1';"<<endl;
+				}else{
+					vhdl << tab << "-- the carry resulting from the addition of the chunk + Cin is obtained directly" << endl;
+					vhdl << tab << declare(dnameCin.str(),cSize[j]+1) << "  <= (\"0\" & "<< use(uname1.str())<<range(cSize[j]-1,0) <<") +  (\"0\" & "<< use(uname2.str())<<range(cSize[j]-1,0)<<") + "<<use("scIn")<<";"<<endl;
+				}
+			}
+		
+		
+			vhdl << tab <<"--form the two carry string"<<endl;
+			vhdl << tab << declare("carryStringZero",2*(nbOfChunks-2)) << " <= "; 
+			for (int i=2*(nbOfChunks-2)-1; i>=0; i--) {
+				ostringstream dnameZero;
+				if (i%2==0){
+					dnameZero << "sX"<<(i/2)+1<<"_0_l"<<l<<"_Zero";
+					vhdl << " " << use(dnameZero.str()) <<"(" << cSize[(i/2)+1] << ")";
+				}else
+					vhdl << " \"0\" ";
+				if (i>0) vhdl << " & ";
+				else     vhdl << " ; ";
+			} vhdl << endl;
+			vhdl << tab << declare("carryStringOne",2*(nbOfChunks-2)) << "  <= "; 
+			for (int i=2*(nbOfChunks-2)-1; i>=0; i--) {
+				ostringstream dnameOne;
+				if (i%2==0){
+					dnameOne << "sX"<<(i/2)+1<<"_0_l"<<l<<"_One";
+					vhdl << " " << use(dnameOne.str()) <<"(" << cSize[(i/2)+1] << ") ";
+				}else
+					vhdl << " \"1\" ";
+				if (i>0) vhdl << " & ";
+				else     vhdl << " ; ";
+			} vhdl << endl;
+
+			nextCycle();/////////////////////
+
+			vhdl << tab << "--perform the short carry additions" << endl;
+			ostringstream unameCin;
+			unameCin  << "sX"<<0<<"_0_l"<<l<<"_Cin";
+			vhdl << tab << declare("rawCarrySum",2*(nbOfChunks-2)) << " <= " << use("carryStringOne") << " + " << use("carryStringZero") << " + " << use(unameCin.str()) << "(" << cSize[0] << ")" << " ;" << endl;
+
+			//			nextCycle();/////////////////////
+			vhdl << tab <<"--get the final pipe results"<<endl;
+			for ( int i=0; i<nbOfChunks; i++){
+				ostringstream unameZero, unameOne, unameCin;
+				unameZero << "sX"<<i<<"_0_l"<<l<<"_Zero";
+				unameOne  << "sX"<<i<<"_0_l"<<l<<"_One";
+				unameCin  << "sX"<<0<<"_0_l"<<l<<"_Cin";
+				if (i==0) vhdl << tab << declare(join("res",i),cSize[i]) << " <= " << use(unameCin.str())<< range(cSize[0]-1,0) <<  ";" << endl;
+				else {
+					if (i==1) vhdl << tab << declare(join("res",i),cSize[i]) << " <= " << use(unameZero.str()) << range(cSize[i]-1,0) << " + " << use(unameCin.str()) << "(" << cSize[0] << ")" << ";"<<endl;
+					else      vhdl << tab << declare(join("res",i),cSize[i]) << " <= " << use(unameZero.str()) << range(cSize[i]-1,0) << " + not(" << use("rawCarrySum")<<"("<<2*(i-2)+1<<"));"<<endl;
+				}
+			}
+		
+			vhdl << tab << "R <= ";
+			int k=0;
+			for (int i=nbOfChunks-1; i>=0; i--){
+				vhdl << use(join("res",i));
+				if (i > 0) vhdl << " & ";
+				k++;
+			}
+			vhdl << ";" <<endl;
+
+
+
+       
+#endif		
+	
+			
+			
 		}else
 			vhdl << tab << " R <= X0 + X1 + Cin;"<<endl;
 	}
