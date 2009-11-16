@@ -126,6 +126,7 @@ namespace flopoco{
 				vhdl << tab << "R <= " << use("finalExc") << " & " << use("sign") << " & " << use("expPostNorm") << range(wER_-1, 0) << " & " <<use("resSig") <<";"<<endl;
 			}
 			else{
+				nextCycle();////
 //				vhdl << tab << declare("resSig", wFR_) << " <= " << use("sigProd")<<range(wFX_+wFY_, wFX_+wFY_ - wFR_+1) <<" when "<< use("norm")<< "='1' else"<<endl;
 //				vhdl << tab <<"                      "           << use("sigProd")<<range(wFX_+wFY_-1, wFX_+wFY_ - wFR_) << ";"<<endl;
 
@@ -139,7 +140,8 @@ namespace flopoco{
 				vhdl << tab << declare("guard") << " <= " << "'0' when " << use("sigProdExt") << range(wFX_+wFY + 1 - wFR - 1,0) << "=" << zg(wFX_+wFY + 1 - wFR - 1 +1,0) <<" else '1';" << endl;
 				vhdl << tab << declare("round") << " <= " << use("sticky") << " and ( (" << use("guard") << " and not(" << use("sigProdExt") << of(wFX_+wFY + 1 - wFR+1) <<")) or (" 
 				                                                                         << use("sigProdExt") << of(wFX_+wFY + 1 - wFR+1) << " ))  " <<";" << endl;
-			
+				                                                                      
+				nextCycle();////			
 				intadd_ = new IntAdder(target, 2 + wER_ + wFR_);
 				oplist.push_back(intadd_);
 				
