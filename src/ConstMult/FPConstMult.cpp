@@ -22,7 +22,10 @@
  */
 
 
-// TODO  we discard the lower bits, try not to compute them in IntConstMult, or at least not to register them.
+
+// TODO Case mantissa=1, wE_out>wE_in
+// TODO standard test vectors: 1, 0, various exn, xcut borders
+
 
 #include <iostream>
 #include <sstream>
@@ -50,73 +53,78 @@ extern vector<Operator*> oplist;
 	{
 		ostringstream name;
 
-#ifdef _WIN32
 		name <<"FPConstMult_"<<(cst_sgn==0?"":"M") <<mpz2string(cst_sig)<<"b"<<(cst_exp<0?"M":"")<<abs(cst_exp)<<"_"<<wE_in<<"_"<<wF_in<<"_"<<wE_out<<"_"<<wF_out;
-#else
-		name <<"FPConstMult_"<<(cst_sgn==0?"":"M") <<cst_sig<<"b"<<(cst_exp<0?"M":"")<<abs(cst_exp)<<"_"<<wE_in<<"_"<<wF_in<<"_"<<wE_out<<"_"<<wF_out;
-#endif
 		uniqueName_=name.str();
 
-		int cst_width = intlog2(cst_sig);
-		cst_exp_when_mantissa_1_2 = cst_exp_when_mantissa_int + cst_width - 1; 
-
-		// TODO if the constant is zero or a power of two
-		// TODO normalize the constant significand
-
-		// initialize mpfr constant
-		// all this is ugly because no mpfr equivalent of mpz_class
-		mpfr_init2(mpfr_cst_sig, cst_width);
-		mpfr_set_z(mpfr_cst_sig, cst_sig.get_mpz_t(), GMP_RNDN); // exact op
-		mpfr_mul_2si(mpfr_cst_sig, mpfr_cst_sig, -(cst_width-1), GMP_RNDN);  // exact op, gets mpfr_cst_sig in 1..2
-	
-		mpfr_init(mpfr_cst);
-		mpfr_set(mpfr_cst, mpfr_cst_sig, GMP_RNDN);
-		mpfr_mul_2si(mpfr_cst, mpfr_cst, cst_exp_when_mantissa_1_2, GMP_RNDN);
-
-		if(cst_sgn==1)
-			mpfr_neg( mpfr_cst,  mpfr_cst, GMP_RNDN);
-	
-		// initialize mpfr_xcut_sig = 2/cst_sig, will be between 1 and 2
-		mpfr_init2(mpfr_xcut_sig, 4*(cst_width+wE_in+wE_out));
-		mpfr_set_d(mpfr_xcut_sig, 2.0, GMP_RNDN);               // exaxt op
-		mpfr_div(mpfr_xcut_sig, mpfr_xcut_sig, mpfr_cst_sig, GMP_RNDD);
-
-		// now  round it up to wF_in+1 bits 
-		mpfr_t xcut_wF;
-		mpfr_init2(xcut_wF, wF_in+1);
-		mpfr_set(xcut_wF, mpfr_xcut_sig, GMP_RNDD);
-		mpfr_mul_2si(xcut_wF, xcut_wF, wF_in, GMP_RNDN);
-		// It should now be an int; cast it into a mpz, then a mpz_class 
-		mpz_t zz;
-		mpz_init2(zz, wF_in+1);
-		mpfr_get_z(zz, xcut_wF, GMP_RNDN);
-		xcut_sig_rd= mpz_class(zz);
-
-#ifdef _WIN32
-		if(verbose) {
-			cout << "mpfr_cst_sig  = " << mpfr_get_d(mpfr_cst_sig, GMP_RNDN) <<endl;
-			cout << "mpfr_xcut_sig = " << mpfr_get_d(mpfr_xcut_sig, GMP_RNDN) <<endl;
-			//GMP's C++ wrapper problem
-			cout << "xcut_sig_rd   = " << mpz2string(xcut_sig_rd) << "   ";
-			printBinNumGMP(cout, xcut_sig_rd, wF_in+1);  cout << endl;
+		if(cst_sig==0) {
+			if(verbose) cerr << "FPConstMult> building a multiplier by 0, it will be easy";
+			vhdl  << tab << "r <= " << rangeAssign(wE_out+wF_out+1, 0, "'0'") << ";"<<endl;
 		}
-#else
-		if(verbose) {
-			cout << "mpfr_cst_sig  = " << mpfr_get_d(mpfr_cst_sig, GMP_RNDN) <<endl;
-			cout << "mpfr_xcut_sig = " << mpfr_get_d(mpfr_xcut_sig, GMP_RNDN) <<endl;
-			cout << "xcut_sig_rd   = " << xcut_sig_rd << "   ";
-			printBinNumGMP(cout, xcut_sig_rd, wF_in+1);  cout << endl;
+
+
+
+		else {
+			// Normalisation de la constante
+			while ((cst_sig & 1) ==0) {
+				if(verbose) cerr << "FPConstMult> Significand is even, normalising" <<endl;
+				cst_sig = cst_sig >>1;
+				cst_exp+=1;
+			}
+			mantissa_is_one = false;
+			if(cst_sig==1) {
+				if(verbose) cerr << "FPConstMult> Constant mantissa is 1, multiplying by it will be easy" << endl; 
+				mantissa_is_one = true;
+			}
+
+			int cst_width = intlog2(cst_sig);
+			cst_exp_when_mantissa_1_2 = cst_exp_when_mantissa_int + cst_width - 1; 
+
+			// initialize mpfr constant
+			mpfr_init2(mpfr_cst_sig, max(cst_width, 2));
+			mpfr_set_z(mpfr_cst_sig, cst_sig.get_mpz_t(), GMP_RNDN); // exact op
+			mpfr_mul_2si(mpfr_cst_sig, mpfr_cst_sig, -(cst_width-1), GMP_RNDN);  // exact op, gets mpfr_cst_sig in 1..2
+			
+			mpfr_init(mpfr_cst);
+			mpfr_set(mpfr_cst, mpfr_cst_sig, GMP_RNDN);
+			mpfr_mul_2si(mpfr_cst, mpfr_cst, cst_exp_when_mantissa_1_2, GMP_RNDN);
+			
+			if(cst_sgn==1)
+				mpfr_neg( mpfr_cst,  mpfr_cst, GMP_RNDN);
+	
+
+			if(!mantissa_is_one) {			
+				// initialize mpfr_xcut_sig = 2/cst_sig, will be between 1 and 2
+				mpfr_init2(mpfr_xcut_sig, 4*(cst_width+wE_in+wE_out));
+				mpfr_set_d(mpfr_xcut_sig, 2.0, GMP_RNDN);               // exaxt op
+				mpfr_div(mpfr_xcut_sig, mpfr_xcut_sig, mpfr_cst_sig, GMP_RNDD);
+
+				// now  round it up to wF_in+1 bits 
+				mpfr_t xcut_wF;
+				mpfr_init2(xcut_wF, wF_in+1);
+				mpfr_set(xcut_wF, mpfr_xcut_sig, GMP_RNDD);
+				mpfr_mul_2si(xcut_wF, xcut_wF, wF_in, GMP_RNDN);
+				// It should now be an int; cast it into a mpz, then a mpz_class 
+				mpz_t zz;
+				mpz_init2(zz, wF_in+1);
+				mpfr_get_z(zz, xcut_wF, GMP_RNDN);
+				xcut_sig_rd= mpz_class(zz);
+
+				if(verbose) {
+					cerr << "mpfr_cst_sig  = " << mpfr_get_d(mpfr_cst_sig, GMP_RNDN) <<endl;
+					cerr << "mpfr_xcut_sig = " << mpfr_get_d(mpfr_xcut_sig, GMP_RNDN) <<endl;
+					//GMP's C++ wrapper problem
+					cerr << "xcut_sig_rd   = " << mpz2string(xcut_sig_rd) << "   ";
+					printBinNumGMP(cerr, xcut_sig_rd, wF_in+1);  cerr << endl;
+				}
+				// sub component
+				icm = new IntConstMult(target, wF_in+1, cst_sig);
+				oplist.push_back(icm);
+			}
+			
+			// do all the declarations. Pushed into a method so that CRFPConstMult can inherit it
+			setup();
+
 		}
-#endif
-
-
-		// do all the declarations. Pushed into a method so that CRFPConstMult can inherit it
-		icm = new IntConstMult(target, wF_in+1, cst_sig);
-		oplist.push_back(icm);
-
-		setup();
-
-
 
 	}
 
@@ -134,8 +142,7 @@ extern vector<Operator*> oplist;
 
 		// bit width of constant exponent
 		int wE_cst=intlog2(abs(cst_exp_when_mantissa_1_2));
-		if(verbose)
-			cout << "  wE_cst="<<wE_cst<<endl;
+		if(verbose)	cout << "FPConstMult>  wE_cst="<<wE_cst<<endl;
 	
 		// We have to compute Er = E_X - bias(wE_in) + E_C + bias(wE_R)
 		// Let us pack all the constants together
@@ -153,30 +160,43 @@ extern vector<Operator*> oplist;
 			wE_sum = wE_out;
 
 
-		vhdl << tab << declare("xcut_rd", wF_in+1) << " <= \""
-			  << unsignedBinary(xcut_sig_rd, wF_in+1) << "\";"<<endl;
-	
 		vhdl << tab << declare("x_exn",2) << " <=  x("<<wE_in<<"+"<<wF_in<<"+2 downto "<<wE_in<<"+"<<wF_in<<"+1);"<<endl;
 		vhdl << tab << declare("x_sgn") << " <=  x("<<wE_in<<"+"<<wF_in<<");"<<endl;
 		vhdl << tab << declare("x_exp", wE_in) << " <=  x("<<wE_in<<"+"<<wF_in<<"-1 downto "<<wF_in<<");"<<endl;
-		vhdl << tab << declare("x_sig", wF_in+1) << " <= '1' & x("<<wF_in-1 <<" downto 0);"<<endl;
-
-		vhdl << tab << declare("gt_than_xcut") << " <= '1' when ( x_sig("<<wF_in-1<<" downto 0) > xcut_rd("<<wF_in-1<<" downto 0) ) else '0';"<<endl;
 
 
+		if(mantissa_is_one) {			
+			vhdl << tab << "-- The mantissa of the constant is  1" << endl;
+			if(wF_out == wF_in) {
+				vhdl << tab << declare("r_frac", wF_out) << " <= x("<<wF_in-1 <<" downto 0);"<<endl;
+			}
+			else if(wF_out > wF_in){
+				vhdl << tab << tab << declare("r_frac", wF_out) << " <= x("<<wF_in-1 <<" downto 0)  &  " << rangeAssign(wF_out-wF_in-1, 0, "'0'") << ";"<<endl;
+				}
+			else{ // wF_out < wF_in, this is a rounding of the mantissa TODO
+				throw string("FPConstMult: multiplication by a power of two when  wF_out < wF_in not yet implemented, please complain to the FloPoCo team if you need it");
+			}
+			vhdl << tab << declare("gt_than_xcut") << " <= '0';"<<endl;
+	
+		}
+		else{ // normal case, mantissa is not one
+			vhdl << tab << declare("x_sig", wF_in+1) << " <= '1' & x("<<wF_in-1 <<" downto 0);"<<endl;
+			vhdl << tab << declare("xcut_rd", wF_in+1) << " <= \""
+				  << unsignedBinary(xcut_sig_rd, wF_in+1) << "\";"<<endl;
+			vhdl << tab << declare("gt_than_xcut") << " <= '1' when ( x_sig("<<wF_in-1<<" downto 0) > xcut_rd("<<wF_in-1<<" downto 0) ) else '0';"<<endl;
+			inPortMap  (icm, "inX", "x_sig");
+			outPortMap (icm, "R","sig_prod");
+			vhdl << instance(icm, "sig_mult");
+			setCycleFromSignal("sig_prod"); 
+			nextCycle();
+			// Possibly shift the significand one bit left, and remove implicit 1 
+			vhdl << tab << declare("shifted_frac",    wF_out+1) << " <= " << use("sig_prod") << "("<<icm->rsize -2<<" downto "<<icm->rsize - wF_out-2 <<")  when " << use("gt_than_xcut") << " = '1'"<<endl
+				  << tab << "           else " << use("sig_prod") << "("<<icm->rsize -3<<" downto "<<icm->rsize - wF_out - 3<<");"<<endl;  
+			// add the rounding bit
+			vhdl << tab << tab << declare("rounded_frac",   wF_out+1) << " <= (("<<wF_out <<" downto 1 => '0') & '1') + " << use("shifted_frac") << ";"<<endl;
+			vhdl << tab << tab << declare("r_frac", wF_out) << " <= rounded_frac("<<wF_out <<" downto  1);"<<endl;
+		}
 
-		inPortMap  (icm, "inX", "x_sig");
-		outPortMap (icm, "R","sig_prod");
-		vhdl << instance(icm, "sig_mult");
-		setCycleFromSignal("sig_prod"); 
-		nextCycle();
-
-		// Possibly shift the significand one bit left, and remove implicit 1 
-		vhdl << tab << declare("shifted_frac",    wF_out+1) << " <= " << use("sig_prod") << "("<<icm->rsize -2<<" downto "<<icm->rsize - wF_out-2 <<")  when " << use("gt_than_xcut") << " = '1'"<<endl
-			  << tab << "           else " << use("sig_prod") << "("<<icm->rsize -3<<" downto "<<icm->rsize - wF_out - 3<<");"<<endl;  
-		// add the rounding bit
-		vhdl << tab << tab << declare("rounded_frac",   wF_out+1) << " <= (("<<wF_out <<" downto 1 => '0') & '1') + " << use("shifted_frac") << ";"<<endl;
-		vhdl << tab << tab << declare("r_frac", wF_out) << " <= rounded_frac("<<wF_out <<" downto  1);"<<endl;
 		// Handling signs is trivial
 		if(cst_sgn==0)
 			vhdl << tab << declare("r_sgn") << " <= " << use("x_sgn") << "; -- positive constant"<<endl;
@@ -231,7 +251,9 @@ extern vector<Operator*> oplist;
 	FPConstMult::~FPConstMult() {
 		// TODO but who cares really
 		// delete icm; Better not: it has been added to oplist
-		mpfr_clears(mpfr_cst, mpfr_cst_sig, mpfr_xcut_sig, NULL);
+			if(!mantissa_is_one) {			
+				mpfr_clears(mpfr_cst, mpfr_cst_sig, mpfr_xcut_sig, NULL);
+			}
 	}
 
 

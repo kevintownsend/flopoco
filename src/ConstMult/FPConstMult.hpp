@@ -32,6 +32,7 @@ namespace flopoco{
 
 		mpz_class xcut_sig_rd; // an int on wF_in+1 bits, which is mpfr_xcut_sig rounded down 
 
+		bool mantissa_is_one; /**< is the mantissa equal to 1? */
 		IntConstMult *icm;
 		int icm_depth;
 
