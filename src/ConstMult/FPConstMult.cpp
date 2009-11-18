@@ -46,14 +46,14 @@ namespace flopoco{
 extern vector<Operator*> oplist;
 
 
-	FPConstMult::FPConstMult(Target* target, int wE_in, int wF_in, int wE_out, int wF_out, int cst_sgn, int cst_exp, mpz_class cst_sig):
+	FPConstMult::FPConstMult(Target* target, int wE_in_, int wF_in_, int wE_out_, int wF_out_, int cst_sgn_, int cst_exp_, mpz_class cst_sig_):
 		Operator(target), 
-		wE_in(wE_in), wF_in(wF_in), wE_out(wE_out), wF_out(wF_out), 
-		cst_sgn(cst_sgn), cst_exp_when_mantissa_int(cst_exp), cst_sig(cst_sig)
+		wE_in(wE_in_), wF_in(wF_in_), wE_out(wE_out_), wF_out(wF_out_), 
+		cst_sgn(cst_sgn_), cst_exp_when_mantissa_int(cst_exp_), cst_sig(cst_sig_)
 	{
 		ostringstream name;
 
-		name <<"FPConstMult_"<<(cst_sgn==0?"":"M") <<mpz2string(cst_sig)<<"b"<<(cst_exp<0?"M":"")<<abs(cst_exp)<<"_"<<wE_in<<"_"<<wF_in<<"_"<<wE_out<<"_"<<wF_out;
+		name <<"FPConstMult_"<<(cst_sgn==0?"":"M") <<mpz2string(cst_sig)<<"b"<<(cst_exp_when_mantissa_int<0?"M":"")<<abs(cst_exp_when_mantissa_int)<<"_"<<wE_in<<"_"<<wF_in<<"_"<<wE_out<<"_"<<wF_out;
 		uniqueName_=name.str();
 
 		if(cst_sig==0) {
