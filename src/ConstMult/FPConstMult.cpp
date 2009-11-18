@@ -68,7 +68,7 @@ extern vector<Operator*> oplist;
 			while ((cst_sig & 1) ==0) {
 				if(verbose) cerr << "FPConstMult> Significand is even, normalising" <<endl;
 				cst_sig = cst_sig >>1;
-				cst_exp+=1;
+				cst_exp_when_mantissa_int+=1;
 			}
 			mantissa_is_one = false;
 			if(cst_sig==1) {
@@ -78,6 +78,7 @@ extern vector<Operator*> oplist;
 
 			int cst_width = intlog2(cst_sig);
 			cst_exp_when_mantissa_1_2 = cst_exp_when_mantissa_int + cst_width - 1; 
+			cout << "AAAAAAAAAAA " << 	cst_exp_when_mantissa_1_2 << endl << endl;
 
 			// initialize mpfr constant
 			mpfr_init2(mpfr_cst_sig, max(cst_width, 2));
@@ -220,7 +221,7 @@ extern vector<Operator*> oplist;
 
 		// underflow handling
 		vhdl << tab << declare("underflow") << " <= " ;
-		if (minExp(wE_in) + cst_exp_when_mantissa_1_2 > minExp(wE_out)) // no overflow can ever happen
+		if (minExp(wE_in) + cst_exp_when_mantissa_1_2 > minExp(wE_out)) // no underflow can ever happen
 			vhdl << "'0'; --  underflow never happens for this constant and these (wE_in, wE_out)" << endl;
 		else 
 			vhdl <<  "r_exp_nopb(" << wE_sum << ");" << endl;
