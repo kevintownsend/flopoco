@@ -41,6 +41,7 @@ namespace flopoco{
 		double maxInputDelay;             /**< the maximum delay between the inputs present in the map*/
 		int nbOfChunks;                   /**< the number of chunks that the addition will be split in */
 		int chunkSize_;                   /**< the suggested chunk size so that the addition can take place at the objective frequency*/
+		int lastChunkSize_;               /**< */
 		int *cSize;                       /**< array containing the chunk sizes for all nbOfChunks*/
 
 	};
