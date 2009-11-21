@@ -53,7 +53,7 @@ namespace flopoco{
 		addInput ("Cin", 1 );
 		addOutput("R"  , wIn_, 1 , true);
 
-		DEBUG(2, printInputDelays(inputDelays));
+		REPORT(2, printInputDelays(inputDelays));
 
 		if (isSequential()){
 			//general variables for all versions

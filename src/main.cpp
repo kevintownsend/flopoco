@@ -79,6 +79,7 @@
 #ifndef _WIN32
 //#include "BigTestBench.hpp"
 #include "ConstMult/CRFPConstMult.hpp"
+#include "ConstMult/FPConstMultParser.hpp"
 
 
 #ifdef HAVE_HOTBM
@@ -163,6 +164,9 @@ static void usage(char *name){
 	cerr << "      Floating-point constant multiplier\n";
 	cerr << "      The constant is provided as integral significand and integral exponent.\n";
 #ifdef HAVE_SOLLYA
+	cerr << "    FPConstMultParser  wE_in wF_in wE_out wF_out wF_C constant_expr \n";
+	cerr << "      Floating-point constant multiplier with a parser for the constant:\n";
+	cerr << "      last argument is a Sollya expression between double quotes, e.g. \"exp(pi/2)\".\n";
 	cerr << "    CRFPConstMult  wE_in wF_in  wE_out wF_out  constant_expr \n";
 	cerr << "      Correctly-rounded floating-point constant multiplier\n";
 	cerr << "      The constant is provided as a Sollya expression, between double quotes.\n";
@@ -431,6 +435,25 @@ bool parseCommandLine(int argc, char* argv[]){
 					  <<", wE_out="<<wE_out<<", wF_out="<<wF_out
 					  << ", constant="<<constant <<endl;
 				op = new CRFPConstMult(target, wE_in, wF_in, wE_out, wF_out, constant);
+				addOperator(op);
+			}        
+		} 	
+		else if(opname=="FPConstMultParser"){ 
+			int nargs = 6;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else { 
+				int wE_in = checkStrictyPositive(argv[i++], argv[0]);
+				int wF_in = checkStrictyPositive(argv[i++], argv[0]);
+				int wE_out = checkStrictyPositive(argv[i++], argv[0]);
+				int wF_out = checkStrictyPositive(argv[i++], argv[0]);
+				int wF_C = checkStrictyPositive(argv[i++], argv[0]);
+				string constant = argv[i++];
+				cerr << "> FPConstMultParser, wE_in="<<wE_in<<", wF_in="<<wF_in 
+					  <<", wE_out="<<wE_out<<", wF_out="<<wF_out 
+					  << ", wF_C=" << wF_C
+					  << ", constant="<<constant <<endl;
+				op = new FPConstMultParser(target, wE_in, wF_in, wE_out, wF_out, wF_C, constant);
 				addOperator(op);
 			}        
 		} 	

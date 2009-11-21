@@ -33,7 +33,7 @@
 #include "../utils.hpp"
 #include "../Operator.hpp"
 #include "FPConstMult.hpp"
-#include "CRFPConstMult.hpp"
+#include "FPConstMultParser.hpp"
 #include "../FPNumber.hpp"
 
 using namespace std;
@@ -44,15 +44,16 @@ namespace flopoco{
 
 
 
-	CRFPConstMult::CRFPConstMult(Target* target, int wE_in, int wF_in, int wE_out, int wF_out, string _constant):
+	FPConstMultParser::FPConstMultParser(Target* target, int wE_in, int wF_in, int wE_out, int wF_out, int wF_C, string _constant):
 		FPConstMult(target, wE_in, wF_in, wE_out, wF_out), 
+		cst_width(wF_C+1),
 		constant (_constant) 
 	{
 		sollya_node_t node;
 		mpfr_t mpR;
 		mpz_t zz;
 
-		srcFileName="CRFPConstMult";
+		srcFileName="FPConstMultParser";
 		/* Convert the input string into a sollya evaluation tree */
 		node = parseString(constant.c_str());	/* If conversion did not succeed (i.e. parse error) */
 		if (node == 0) {
@@ -64,19 +65,7 @@ namespace flopoco{
 		mpfr_inits(mpR, NULL);
 		evaluateConstantExpression(mpR, node,  getToolPrecision());
 
-
-		if(verbose){
-			double r;
-			r = mpfr_get_d(mpR, GMP_RNDN);
-			cout << "  Constant evaluates to " <<r <<endl; 
-		}
-		// compute the precision -- TODO with NWB
-
-		cst_width =  2*wF_in+4;
-		REPORT(0, "***** WARNING Taking constant with 2*wF_in+4 bits. Correct rounding is not yet guaranteed. This is being implemented." );
-
-
-		REPORT(INFO, "Required significand precision to reach correct rounding is " << cst_width  ); 
+		REPORT(DEBUG, "Constant evaluates to " << mpfr_get_d(mpR, GMP_RNDN));
 
 		evaluateConstantExpression(mpR, node,  cst_width);
 
@@ -95,10 +84,8 @@ namespace flopoco{
 		mpfr_div_2si(mpfr_cst_sig, mpR, cst_exp_when_mantissa_1_2, GMP_RNDN);
 		REPORT(INFO, "mpfr_cst_sig  = " << mpfr_get_d(mpfr_cst_sig, GMP_RNDN));
 
-
 		// Build the corresponding FPConstMult.
 
-	
 		// initialize mpfr_xcut_sig = 2/cst_sig, will be between 1 and 2
 		mpfr_init2(mpfr_xcut_sig, 32*(cst_width+wE_in+wE_out)); // should be accurate enough
 		mpfr_set_d(mpfr_xcut_sig, 2.0, GMP_RNDN);               // exaxt op
@@ -115,7 +102,6 @@ namespace flopoco{
 		mpfr_get_z(zz, xcut_wF, GMP_RNDN);
 		xcut_sig_rd = mpz_class(zz);
 		mpz_clear(zz);
-
 		REPORT(DETAILED, "mpfr_xcut_sig = " << mpfr_get_d(mpfr_xcut_sig, GMP_RNDN) );
 
 		// Now build the mpz significand
@@ -128,14 +114,12 @@ namespace flopoco{
 		mpz_clear(zz);
 		REPORT(DETAILED, "mpzclass cst_sig = " << cst_sig);
 
-
 		// build the name
 		ostringstream name; 
 		name <<"FPConstMult_"<<(cst_sgn==0?"":"M") <<cst_sig<<"b"
 			  <<(cst_exp_when_mantissa_int<0?"M":"")<<abs(cst_exp_when_mantissa_int)
 			  <<"_"<<wE_in<<"_"<<wF_in<<"_"<<wE_out<<"_"<<wF_out;
 		uniqueName_=name.str();
-
 
 		// cleaning up
 		mpfr_clears(mpR, mpfr_xcut_sig, xcut_wF, mpfr_cst_sig, NULL);
@@ -149,7 +133,7 @@ namespace flopoco{
 
 
 
-	CRFPConstMult::~CRFPConstMult() {
+	FPConstMultParser::~FPConstMultParser() {
 		// TODO but who cares really
 	}
 

@@ -14,6 +14,13 @@ using namespace std;
 
 namespace flopoco {
 
+	// Reporting levels
+#define INFO 1
+#define DETAILED 2
+#define DEBUG 3
+#define REPORT(level, stream) { if ((level)<=(verbose)) cerr << "> " << srcFileName << ": " << stream << endl;} 
+
+
 
 extern  int verbose;
 const std::string tab = "   ";
@@ -652,6 +659,7 @@ protected:
 	map<string, string> portMap_;         /**< Port map for an instance of this operator */
 	map<string, double> outDelayMap;      /**< Slack delays on the outputs */
 	ostringstream       vhdl;             /**< The internal stream to which the constructor will build the VHDL code */
+	string                 srcFileName;                /**< used to debug and report.  */
 private:
 	int                    numberOfInputs_;             /**< The number of inputs of the operator */
 	int                    numberOfOutputs_;            /**< The number of outputs of the operator */

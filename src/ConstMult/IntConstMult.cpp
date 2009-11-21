@@ -423,6 +423,7 @@ namespace flopoco{
 		Operator(_target), n(_n), xsize(_xsize){
 		ostringstream name; 
 
+		srcFileName="IntConstMult";
 		setCopyrightString("Florent de Dinechin (2007)");
 
 		//C++ wrapper for GMP does not work properly on win32, using mpz2string
@@ -437,8 +438,7 @@ namespace flopoco{
 		addOutput("R", rsize);
 
 		if((mpz_class(1) << (intlog2(n)-1)) == n) { // power of two
-			if(verbose) 
-				cout << "  Power of two" << endl;
+			REPORT(INFO, "Power of two");
 			vhdl << tab << "R <= inX & " << rangeAssign(intlog2(n)-2, 0, "'0'") << ";" << endl;
 		}
 		else {
@@ -453,26 +453,24 @@ namespace flopoco{
 				l++;
 				nn = nn>>1;
 			}
-			if(verbose) {
-				cout<<" "; 
-				for (int i=nsize-1; i>=0; i--)    cout << ((int) bits[i]);   
-				cout << endl;
+			if(verbose>=DETAILED) {
+				cerr << "> "<< srcFileName << ": constant binary is "; 
+				for (int i=nsize-1; i>=0; i--)    cerr << ((int) bits[i]);   
+				cerr << endl;
 			}
 			recodeBooth();
-			if(verbose) printBoothCode();
-			if(verbose) cout << "   Non-zero digits:" << nonZeroInBoothCode <<endl;
+
+			REPORT(DETAILED, "Booth code is "<< printBoothCode()   );
+			REPORT(DETAILED, "Non-zero digits:" << nonZeroInBoothCode);
 
 
 
 			// Build in implementation a tree constant multiplier 
 			buildMultBoothTree();
-			if(verbose) showShiftAddDag();
+			if(verbose>=3) showShiftAddDag();
 			int cost=compute_total_cost(implementation->result);
-			if(verbose) {
-				cout << "Estimated bare cost (not counting pipeline overhead) : " << cost << " FA/LUT" << endl;
-			}
+			REPORT(INFO, "Estimated bare cost (not counting pipeline overhead) : " << cost << " FA/LUT" );
 
-		
 			double delay=0.0;
 			// recursively build the pipeline in the vhdl stream
 			build_pipeline(implementation->result, delay);
@@ -555,13 +553,14 @@ namespace flopoco{
 	}
 
 
-	void IntConstMult::printBoothCode() {
+	string IntConstMult::printBoothCode() {
+		ostringstream s;
 		for (int i=nsize; i>=0; i--) {
-			if(BoothCode[i]==0)       cout << "0"; 
-			else if(BoothCode[i]==1)  cout << "+" ;
-			else if(BoothCode[i]==-1) cout << "-" ;   
+			if(BoothCode[i]==0)       s << "0"; 
+			else if(BoothCode[i]==1)  s << "+" ;
+			else if(BoothCode[i]==-1) s << "-" ;   
 		}
-		cout << endl;
+		return s.str();
 	}
 
 	void IntConstMult::recodeBooth() {
@@ -717,7 +716,7 @@ namespace flopoco{
 		delete level;
 		delete shifts;
 
-		if(verbose) cerr << "   Number of adders: "<<implementation->saolist.size() << endl;
+		REPORT(DETAILED,  "Number of adders: "<<implementation->saolist.size() );
 	}
 
 

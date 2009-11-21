@@ -53,7 +53,7 @@ namespace flopoco{
 	private:
 		void build_pipeline(ShiftAddOp* sao, double& delay);
 		void recodeBooth();
-		void printBoothCode();
+		string printBoothCode();
 		void buildMultBooth();
 		void buildMultBoothTree();
 		void showShiftAddDag();

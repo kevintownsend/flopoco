@@ -51,34 +51,33 @@ extern vector<Operator*> oplist;
 		wE_in(wE_in_), wF_in(wF_in_), wE_out(wE_out_), wF_out(wF_out_), 
 		cst_sgn(cst_sgn_), cst_exp_when_mantissa_int(cst_exp_), cst_sig(cst_sig_)
 	{
+		srcFileName="FPConstMult";
 		ostringstream name;
-
 		name <<"FPConstMult_"<<(cst_sgn==0?"":"M") <<mpz2string(cst_sig)<<"b"<<(cst_exp_when_mantissa_int<0?"M":"")<<abs(cst_exp_when_mantissa_int)<<"_"<<wE_in<<"_"<<wF_in<<"_"<<wE_out<<"_"<<wF_out;
 		uniqueName_=name.str();
 
 		if(cst_sig==0) {
-			if(verbose) cerr << "FPConstMult> building a multiplier by 0, it will be easy";
+			REPORT(INFO, "building a multiplier by 0, it will be easy");
 			vhdl  << tab << "r <= " << rangeAssign(wE_out+wF_out+1, 0, "'0'") << ";"<<endl;
 		}
 
 
 
 		else {
-			// Normalisation de la constante
+			// Constant normalization
 			while ((cst_sig & 1) ==0) {
-				if(verbose) cerr << "FPConstMult> Significand is even, normalising" <<endl;
+				REPORT(INFO, "Significand is even, normalising");
 				cst_sig = cst_sig >>1;
 				cst_exp_when_mantissa_int+=1;
 			}
 			mantissa_is_one = false;
 			if(cst_sig==1) {
-				if(verbose) cerr << "FPConstMult> Constant mantissa is 1, multiplying by it will be easy" << endl; 
+				REPORT(INFO, "Constant mantissa is 1, multiplying by it will be easy"); 
 				mantissa_is_one = true;
 			}
 
 			int cst_width = intlog2(cst_sig);
 			cst_exp_when_mantissa_1_2 = cst_exp_when_mantissa_int + cst_width - 1; 
-			cout << "AAAAAAAAAAA " << 	cst_exp_when_mantissa_1_2 << endl << endl;
 
 			// initialize mpfr constant
 			mpfr_init2(mpfr_cst_sig, max(cst_width, 2));
@@ -90,8 +89,9 @@ extern vector<Operator*> oplist;
 			mpfr_mul_2si(mpfr_cst, mpfr_cst, cst_exp_when_mantissa_1_2, GMP_RNDN);
 			
 			if(cst_sgn==1)
-				mpfr_neg( mpfr_cst,  mpfr_cst, GMP_RNDN);
-	
+				mpfr_neg(mpfr_cst,  mpfr_cst, GMP_RNDN);
+			REPORT(INFO, "mpfr_cst = " << mpfr_get_d(mpfr_cst, GMP_RNDN));
+
 
 			if(!mantissa_is_one) {			
 				// initialize mpfr_xcut_sig = 2/cst_sig, will be between 1 and 2
@@ -110,10 +110,9 @@ extern vector<Operator*> oplist;
 				mpfr_get_z(zz, xcut_wF, GMP_RNDN);
 				xcut_sig_rd= mpz_class(zz);
 
-				if(verbose) {
-					cerr << "mpfr_cst_sig  = " << mpfr_get_d(mpfr_cst_sig, GMP_RNDN) <<endl;
-					cerr << "mpfr_xcut_sig = " << mpfr_get_d(mpfr_xcut_sig, GMP_RNDN) <<endl;
-					//GMP's C++ wrapper problem
+				REPORT(DETAILED, "mpfr_cst_sig  = " << mpfr_get_d(mpfr_cst_sig, GMP_RNDN));
+				REPORT(DETAILED, "mpfr_xcut_sig = " << mpfr_get_d(mpfr_xcut_sig, GMP_RNDN)); 
+				if(verbose) { // can't use REPORT because of GMP's C++ wrapper problem under windoze
 					cerr << "xcut_sig_rd   = " << mpz2string(xcut_sig_rd) << "   ";
 					printBinNumGMP(cerr, xcut_sig_rd, wF_in+1);  cerr << endl;
 				}
@@ -143,7 +142,7 @@ extern vector<Operator*> oplist;
 
 		// bit width of constant exponent
 		int wE_cst=intlog2(abs(cst_exp_when_mantissa_1_2));
-		if(verbose)	cout << "FPConstMult>  wE_cst="<<wE_cst<<endl;
+		REPORT(DETAILED, "wE_cst = "<<wE_cst<<endl);
 	
 		// We have to compute Er = E_X - bias(wE_in) + E_C + bias(wE_R)
 		// Let us pack all the constants together

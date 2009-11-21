@@ -46,6 +46,7 @@ extern vector<Operator*> oplist;
 	LongIntAdder::LongIntAdder(Target* target, int wIn, map<string, double> inputDelays):
 		Operator(target), wIn_(wIn), inputDelays_(inputDelays) 
 	{
+		srcFileName="LongIntAdder";
 		setName(join("LongIntAdder_", wIn_));
 		int version = 1; /* this will go into the parameters */
 		
@@ -70,11 +71,11 @@ extern vector<Operator*> oplist;
 					cout << "The maximum input delay is "<<	maxInputDelay<<endl;
 
 				cSize = new int[2000];
-				DEBUG(3, "-- The new version: direct mapping without 0/1 padding, IntAdders instantiated");
+				REPORT(3, "-- The new version: direct mapping without 0/1 padding, IntAdders instantiated");
 				double	objectivePeriod = double(1) / target->frequency();
-				DEBUG(2, "Objective period is "<< objectivePeriod <<" at an objective frequency of "<<target->frequency());
+				REPORT(2, "Objective period is "<< objectivePeriod <<" at an objective frequency of "<<target->frequency());
 				target->suggestSubaddSize(chunkSize_ ,wIn_);
-				DEBUG(2, "The chunkSize for first two chunks is: " << chunkSize_ );
+				REPORT(2, "The chunkSize for first two chunks is: " << chunkSize_ );
 			
 				if (2*chunkSize_ >= wIn_){
 					cerr << "ERROR FOR NOW -- instantiate int adder, dimmension too small for LongIntAdder" << endl;
@@ -93,42 +94,42 @@ extern vector<Operator*> oplist;
 				bool invalid = false; /* the result of the first phase of the algo */
 			
 				/* FIRST PHASE */
-				DEBUG(3, "FIRST PHASE chunk splitting");
+				REPORT(3, "FIRST PHASE chunk splitting");
 				while (not (finished))	 {
-					DEBUG(2, "The width is " << width);
+					REPORT(2, "The width is " << width);
 					propagationSize+=2;
 					double delay = objectivePeriod - target->adderDelay(width)- target->adderDelay(propagationSize); //2*target->localWireDelay()  -
-					DEBUG(2, "The value of the delay at step " << chunkIndex << " is " << delay);
+					REPORT(2, "The value of the delay at step " << chunkIndex << " is " << delay);
 					if ((delay > 0) || (width < 4)) {
-						DEBUG(2, "finished -> found last chunk of size: " << width);
+						REPORT(2, "finished -> found last chunk of size: " << width);
 						cSize[chunkIndex] = width;
 						finished = true;
 					}else{
-						DEBUG(2, "Found regular chunk ");
+						REPORT(2, "Found regular chunk ");
 						int cs; 
 						double slack =  target->adderDelay(propagationSize) ; //+ 2*target->localWireDelay()
-						DEBUG(2, "slack is: " << slack);
-						DEBUG(2, "adderDelay of " << propagationSize << " is " << target->adderDelay(propagationSize) );
+						REPORT(2, "slack is: " << slack);
+						REPORT(2, "adderDelay of " << propagationSize << " is " << target->adderDelay(propagationSize) );
 						target->suggestSlackSubaddSize( cs, width, slack);
-						DEBUG(2, "size of the regular chunk is : " << cs);
+						REPORT(2, "size of the regular chunk is : " << cs);
 						width = width - cs;
 						cSize[chunkIndex] = cs;
 
 						if ( (cSize[chunkIndex-1]==cSize[chunkIndex]) && (cSize[chunkIndex-1]==2) && ( invalid == false) ){
-							DEBUG(1, "[WARNING] Register level inserted after carry-propagation chain");
+							REPORT(1, "[WARNING] Register level inserted after carry-propagation chain");
 							invalid = true; /* invalidate the current splitting */
 						}
 						chunkIndex++; /* as this is not the last pair of chunks,
 							          pass to the next pair */
 				}
 					}
-				DEBUG(2, "First phase return valid result: " << invalid);
+				REPORT(2, "First phase return valid result: " << invalid);
 			
 				/* SECOND PHASE: 
 				only if first phase is cannot return a valid chunk size
 				decomposition */
 				if (invalid){
-					DEBUG(2,"SECOND PHASE chunk splitting ...");
+					REPORT(2,"SECOND PHASE chunk splitting ...");
 					target->suggestSubaddSize(chunkSize_ ,wIn_);
 					lastChunkSize_ = (wIn_% chunkSize_ ==0 ? chunkSize_ :wIn_% chunkSize_);
 
@@ -141,7 +142,7 @@ extern vector<Operator*> oplist;
 				}
 
 				/* VERIFICATION PHASE: check if decomposition is correct */		
-				DEBUG(2, "found " << chunkIndex + 1  << " chunks ");
+				REPORT(2, "found " << chunkIndex + 1  << " chunks ");
 				nbOfChunks = chunkIndex + 1; 
 				int sum = 0;
 				ostringstream chunks;
@@ -150,8 +151,8 @@ extern vector<Operator*> oplist;
 					sum+=cSize[i];
 				}
 				chunks << endl;
-				DEBUG(2, "Chunks are: " << chunks.str());
-				DEBUG(2, "The chunk size sum is " << sum << " and initial width was " << wIn_);
+				REPORT(2, "Chunks are: " << chunks.str());
+				REPORT(2, "The chunk size sum is " << sum << " and initial width was " << wIn_);
 				if (sum != wIn_){
 					cerr << "ERROR: check the algo" << endl; /*should never get here ... */
 					exit(0);
@@ -201,12 +202,12 @@ extern vector<Operator*> oplist;
 							bool found = false;
 							for(unsigned k=0; k<oplist.size(); k++) {
 								if  ( (oplist[k]->getName()).compare(adder->getName()) ==0 ){
-									DEBUG(3, "found in opList ... not adding");
+									REPORT(3, "found in opList ... not adding");
 									found = true;
 								}
 							}
 						if (found == false)						{
-							DEBUG(3, "Not found in list, adding " << adder->getName());
+							REPORT(3, "Not found in list, adding " << adder->getName());
 							oplist.push_back(adder);
 						}
 				
@@ -309,11 +310,11 @@ extern vector<Operator*> oplist;
 
 				//THE new version that works well with VHDL (well, not that well finally )
 				cSize = new int[2000];
-				DEBUG(3, "-- The new version: direct mapping without 0/1 padding, IntAdders instantiated");
+				REPORT(3, "-- The new version: direct mapping without 0/1 padding, IntAdders instantiated");
 				double	objectivePeriod = double(1) / target->frequency();
-				DEBUG(2, "Objective period is "<< objectivePeriod <<" at an objective frequency of "<<target->frequency());
+				REPORT(2, "Objective period is "<< objectivePeriod <<" at an objective frequency of "<<target->frequency());
 				target->suggestSubaddSize(chunkSize_ ,wIn_);
-				DEBUG(2, "The chunkSize for first two chunks is: " << chunkSize_ );
+				REPORT(2, "The chunkSize for first two chunks is: " << chunkSize_ );
 			
 				if (2*chunkSize_ >= wIn_){
 					cerr << "ERROR FOR NOW -- instantiate int adder, dimmension too small for LongIntAdder" << endl;
@@ -332,42 +333,42 @@ extern vector<Operator*> oplist;
 				bool invalid = false; /* the result of the first phase of the algo */
 			
 				/* FIRST PHASE */
-				DEBUG(3, "FIRST PHASE chunk splitting");
+				REPORT(3, "FIRST PHASE chunk splitting");
 				while (not (finished))	 {
-					DEBUG(2, "The width is " << width);
+					REPORT(2, "The width is " << width);
 					propagationSize+=1;
 					double delay = objectivePeriod - target->adderDelay(width)- 2*target->localWireDelay()  - target->adderDelay(propagationSize); 
-					DEBUG(2, "The value of the delay at step " << chunkIndex << " is " << delay);
+					REPORT(2, "The value of the delay at step " << chunkIndex << " is " << delay);
 					if ((delay > 0) || (width < 4)) {
-						DEBUG(2, "finished -> found last chunk of size: " << width);
+						REPORT(2, "finished -> found last chunk of size: " << width);
 						cSize[chunkIndex] = width;
 						finished = true;
 					}else{
-						DEBUG(2, "Found regular chunk ");
+						REPORT(2, "Found regular chunk ");
 						int cs; 
 						double slack =  target->adderDelay(propagationSize);
-						DEBUG(2, "slack is: " << slack);
-						DEBUG(2, "adderDelay of " << propagationSize << " is " << target->adderDelay(propagationSize) );
+						REPORT(2, "slack is: " << slack);
+						REPORT(2, "adderDelay of " << propagationSize << " is " << target->adderDelay(propagationSize) );
 						target->suggestSlackSubaddSize( cs, width, slack);
-						DEBUG(2, "size of the regular chunk is : " << cs);
+						REPORT(2, "size of the regular chunk is : " << cs);
 						width = width - cs;
 						cSize[chunkIndex] = cs;
 
 						if ( (cSize[chunkIndex-1]==cSize[chunkIndex]) && (cSize[chunkIndex-1]==2) && ( invalid == false) ){
-							DEBUG(1, "[WARNING] Register level inserted after carry-propagation chain");
+							REPORT(1, "[WARNING] Register level inserted after carry-propagation chain");
 							invalid = true; /* invalidate the current splitting */
 						}
 						chunkIndex++; /* as this is not the last pair of chunks,
 							          pass to the next pair */
 				}
 					}
-				DEBUG(2, "First phase return valid result: " << invalid);
+				REPORT(2, "First phase return valid result: " << invalid);
 			
 				/* SECOND PHASE: 
 				only if first phase is cannot return a valid chunk size
 				decomposition */
 				if (invalid){
-					DEBUG(2,"SECOND PHASE chunk splitting ...");
+					REPORT(2,"SECOND PHASE chunk splitting ...");
 					target->suggestSubaddSize(chunkSize_ ,wIn_);
 					lastChunkSize_ = (wIn_% chunkSize_ ==0 ? chunkSize_ :wIn_% chunkSize_);
 
@@ -380,7 +381,7 @@ extern vector<Operator*> oplist;
 				}
 
 				/* VERIFICATION PHASE: check if decomposition is correct */		
-				DEBUG(2, "found " << chunkIndex + 1  << " chunks ");
+				REPORT(2, "found " << chunkIndex + 1  << " chunks ");
 				nbOfChunks = chunkIndex + 1; 
 				int sum = 0;
 				ostringstream chunks;
@@ -389,8 +390,8 @@ extern vector<Operator*> oplist;
 					sum+=cSize[i];
 				}
 				chunks << endl;
-				DEBUG(2, "Chunks are: " << chunks.str());
-				DEBUG(2, "The chunk size sum is " << sum << " and initial width was " << wIn_);
+				REPORT(2, "Chunks are: " << chunks.str());
+				REPORT(2, "The chunk size sum is " << sum << " and initial width was " << wIn_);
 				if (sum != wIn_){
 					cerr << "ERROR: check the algo" << endl; /*should never get here ... */
 					exit(0);
@@ -410,7 +411,7 @@ extern vector<Operator*> oplist;
 				vhdl << tab << declare("scIn",1) << " <= " << "Cin;"<<endl;
 
 				for (int j=0; j<nbOfChunks; j++){
-					DEBUG(3, "ITERATION " << j);
+					REPORT(3, "ITERATION " << j);
 					ostringstream dnameZero, dnameOne, uname1, uname2, dnameCin;
 					dnameZero << "sX"<<j<<"_Zero";
 					dnameOne  << "sX"<<j<<"_One";
@@ -436,12 +437,12 @@ extern vector<Operator*> oplist;
 							bool found = false;
 							for(unsigned k=0; k<oplist.size(); k++) {
 								if  ( (oplist[k]->getName()).compare(adder->getName()) ==0 ){
-									DEBUG(3, "found in opList ... not adding");
+									REPORT(3, "found in opList ... not adding");
 									found = true;
 								}
 							}
 						if (found == false)						{
-							DEBUG(3, "Not found in list, adding " << adder->getName());
+							REPORT(3, "Not found in list, adding " << adder->getName());
 							oplist.push_back(adder);
 						}
 				
@@ -490,7 +491,7 @@ extern vector<Operator*> oplist;
 					if (i>1) vhdl << " & ";
 					else     vhdl << " ; ";
 				} vhdl << endl;
-				DEBUG(3, "Created ZERO carry string");
+				REPORT(3, "Created ZERO carry string");
 				
 				vhdl << tab << declare("carryStringOne",nbOfChunks-2,true) << " <= "; 
 				for (int i=nbOfChunks-2; i>=1; i--) {
@@ -498,7 +499,7 @@ extern vector<Operator*> oplist;
 					if (i>1) vhdl << " & ";
 					else     vhdl << " ; ";
 				} vhdl << endl;
-				DEBUG(3, "Created ONE carry string");
+				REPORT(3, "Created ONE carry string");
 
 				nextCycle(); //////////////////////////////////////////////////////
 
@@ -510,7 +511,7 @@ extern vector<Operator*> oplist;
 					else
 						vhdl << use(join("s",i-2))<<"("<<1<<");"<<endl;
 				}
-				DEBUG(3, "Performed SUMs");
+				REPORT(3, "Performed SUMs");
 		
 				vhdl << tab << declare("carrySum",nbOfChunks-2,true) << " <= ";
 				for (int i=nbOfChunks-3;i>=0;i--){
