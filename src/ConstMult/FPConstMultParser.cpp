@@ -72,63 +72,84 @@ namespace flopoco{
 		// Now convert mpR into exponent + integral significand
 
 
-		// sign
-		cst_sgn = mpfr_sgn(mpR);
-		if(cst_sgn<0)
-			mpfr_neg(mpR, mpR, GMP_RNDN);
+		if(0==mpfr_get_d(mpR, GMP_RNDN)) {
+			REPORT(INFO, "building a multiplier by 0, it will be easy");
+			vhdl  << tab << "r <= " << rangeAssign(wE_out+wF_out+1, 0, "'0'") << ";"<<endl;
+		}
+		else {
+			// sign
+			if(mpfr_sgn(mpR)<0) {
+				mpfr_neg(mpR, mpR, GMP_RNDN);
+				cst_sgn=1;
+			} 
+			else {
+				cst_sgn=0;
+			}
 
-		// compute exponent and mantissa
-		cst_exp_when_mantissa_1_2 = mpfr_get_exp(mpR) - 1; //mpfr_get_exp() assumes significand in [1/2,1)  
-		cst_exp_when_mantissa_int = cst_exp_when_mantissa_1_2 - cst_width + 1; 
-		mpfr_init2(mpfr_cst_sig, cst_width);
-		mpfr_div_2si(mpfr_cst_sig, mpR, cst_exp_when_mantissa_1_2, GMP_RNDN);
-		REPORT(INFO, "mpfr_cst_sig  = " << mpfr_get_d(mpfr_cst_sig, GMP_RNDN));
+			// compute exponent and mantissa
+			cst_exp_when_mantissa_1_2 = mpfr_get_exp(mpR) - 1; //mpfr_get_exp() assumes significand in [1/2,1)  
+			cst_exp_when_mantissa_int = cst_exp_when_mantissa_1_2 - cst_width + 1; 
+			mpfr_init2(mpfr_cst_sig, cst_width);
+			mpfr_div_2si(mpfr_cst_sig, mpR, cst_exp_when_mantissa_1_2, GMP_RNDN);
+			REPORT(INFO, "mpfr_cst_sig  = " << mpfr_get_d(mpfr_cst_sig, GMP_RNDN));
 
-		// Build the corresponding FPConstMult.
+			// Build the corresponding FPConstMult.
 
-		// initialize mpfr_xcut_sig = 2/cst_sig, will be between 1 and 2
-		mpfr_init2(mpfr_xcut_sig, 32*(cst_width+wE_in+wE_out)); // should be accurate enough
-		mpfr_set_d(mpfr_xcut_sig, 2.0, GMP_RNDN);               // exaxt op
-		mpfr_div(mpfr_xcut_sig, mpfr_xcut_sig, mpfr_cst_sig, GMP_RNDD);
+			// initialize mpfr_xcut_sig = 2/cst_sig, will be between 1 and 2
+			mpfr_init2(mpfr_xcut_sig, 32*(cst_width+wE_in+wE_out)); // should be accurate enough
+			mpfr_set_d(mpfr_xcut_sig, 2.0, GMP_RNDN);               // exaxt op
+			mpfr_div(mpfr_xcut_sig, mpfr_xcut_sig, mpfr_cst_sig, GMP_RNDD);
 
-		// now  round it down to wF_in+1 bits 
-		mpfr_t xcut_wF;
-		mpfr_init2(xcut_wF, wF_in+1);
-		mpfr_set(xcut_wF, mpfr_xcut_sig, GMP_RNDD);
-		mpfr_mul_2si(xcut_wF, xcut_wF, wF_in, GMP_RNDN);
+			// now  round it down to wF_in+1 bits 
+			mpfr_t xcut_wF;
+			mpfr_init2(xcut_wF, wF_in+1);
+			mpfr_set(xcut_wF, mpfr_xcut_sig, GMP_RNDD);
+			mpfr_mul_2si(xcut_wF, xcut_wF, wF_in, GMP_RNDN);
+			
+			// It should now be an int; cast it into a mpz, then a mpz_class 
+			mpz_init2(zz, wF_in+1);
+			mpfr_get_z(zz, xcut_wF, GMP_RNDN);
+			xcut_sig_rd = mpz_class(zz);
+			mpz_clear(zz);
+			REPORT(DETAILED, "mpfr_xcut_sig = " << mpfr_get_d(mpfr_xcut_sig, GMP_RNDN) );
 
-		// It should now be an int; cast it into a mpz, then a mpz_class 
-		mpz_init2(zz, wF_in+1);
-		mpfr_get_z(zz, xcut_wF, GMP_RNDN);
-		xcut_sig_rd = mpz_class(zz);
-		mpz_clear(zz);
-		REPORT(DETAILED, "mpfr_xcut_sig = " << mpfr_get_d(mpfr_xcut_sig, GMP_RNDN) );
-
-		// Now build the mpz significand
-		mpfr_mul_2si(mpfr_cst_sig,  mpfr_cst_sig, cst_width, GMP_RNDN);
+			// Now build the mpz significand
+			mpfr_mul_2si(mpfr_cst_sig,  mpfr_cst_sig, cst_width, GMP_RNDN);
    
-		// It should now be an int; cast it into a mpz, then a mpz_class 
-		mpz_init2(zz, cst_width);
-		mpfr_get_z(zz, mpfr_cst_sig, GMP_RNDN);
-		cst_sig = mpz_class(zz);
-		mpz_clear(zz);
-		REPORT(DETAILED, "mpzclass cst_sig = " << cst_sig);
+			// It should now be an int; cast it into a mpz, then a mpz_class 
+			mpz_init2(zz, cst_width);
+			mpfr_get_z(zz, mpfr_cst_sig, GMP_RNDN);
+			cst_sig = mpz_class(zz);
+			mpz_clear(zz);
+			REPORT(DETAILED, "mpzclass cst_sig = " << cst_sig);
 
-		// build the name
-		ostringstream name; 
-		name <<"FPConstMult_"<<(cst_sgn==0?"":"M") <<cst_sig<<"b"
-			  <<(cst_exp_when_mantissa_int<0?"M":"")<<abs(cst_exp_when_mantissa_int)
-			  <<"_"<<wE_in<<"_"<<wF_in<<"_"<<wE_out<<"_"<<wF_out;
-		uniqueName_=name.str();
+			// Constant normalization
+			while ((cst_sig & 1) ==0) {
+				REPORT(INFO, "Significand is even, normalising");
+				cst_sig = cst_sig >>1;
+				cst_exp_when_mantissa_int+=1;
+			}
+			mantissa_is_one = false;
+			if(cst_sig==1) {
+				REPORT(INFO, "Constant mantissa is 1, multiplying by it will be easy"); 
+				mantissa_is_one = true;
+			}
+			
+			// build the name
+			ostringstream name; 
+			name <<"FPConstMult_"<<(cst_sgn==0?"":"M") <<cst_sig<<"b"
+				  <<(cst_exp_when_mantissa_int<0?"M":"")<<abs(cst_exp_when_mantissa_int)
+				  <<"_"<<wE_in<<"_"<<wF_in<<"_"<<wE_out<<"_"<<wF_out;
+			uniqueName_=name.str();
 
-		// cleaning up
-		mpfr_clears(mpR, mpfr_xcut_sig, xcut_wF, mpfr_cst_sig, NULL);
+			// cleaning up
+			mpfr_clears(mpR, mpfr_xcut_sig, xcut_wF, mpfr_cst_sig, NULL);
 
-		icm = new IntConstMult(target, wF_in+1, cst_sig);
-		oplist.push_back(icm);
-
-		setup();
-
+			icm = new IntConstMult(target, wF_in+1, cst_sig);
+			oplist.push_back(icm);
+			
+			setup();
+		}
 	}
 
 

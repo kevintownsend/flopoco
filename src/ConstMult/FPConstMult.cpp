@@ -116,11 +116,14 @@ extern vector<Operator*> oplist;
 					cerr << "xcut_sig_rd   = " << mpz2string(xcut_sig_rd) << "   ";
 					printBinNumGMP(cerr, xcut_sig_rd, wF_in+1);  cerr << endl;
 				}
+				mpfr_clear(xcut_wF);
+				mpz_clear(zz);
 				// sub component
 				icm = new IntConstMult(target, wF_in+1, cst_sig);
 				oplist.push_back(icm);
 			}
-			
+
+
 			// do all the declarations. Pushed into a method so that CRFPConstMult can inherit it
 			setup();
 
@@ -201,7 +204,7 @@ extern vector<Operator*> oplist;
 		if(cst_sgn==0)
 			vhdl << tab << declare("r_sgn") << " <= " << use("x_sgn") << "; -- positive constant"<<endl;
 		else
-			vhdl << tab << "r_sgn <= not " << use("x_sgn") << "; -- negative constant"<<endl;
+			vhdl << tab << declare("r_sgn") << " <= not " << use("x_sgn") << "; -- negative constant"<<endl;
 
 		// exponent handling
 		vhdl << tab << declare("abs_unbiased_cst_exp",wE_sum+1) << " <= \""
@@ -228,10 +231,10 @@ extern vector<Operator*> oplist;
 	
 		vhdl << tab << declare("r_exp", wE_out) << " <= r_exp_nopb("<<wE_out-1<<" downto 0) ;"<<endl;
 
-		vhdl << tab << declare("r_exn", 2) << " <=      \"00\" when (("<< use("x_exn")<<" = \"00\") or ("<<use("x_exn")<<" = \"01\" and underflow='1'))  -- zero"<<endl 
-			  << tab << "         else \"10\" when (("<<use("x_exn")<<" = \"10\") or ("<<use("x_exn")<<" = \"01\" and overflow='1'))   -- infinity"<<endl
-			  << tab << "         else \"11\" when  ("<<use("x_exn")<<" = \"11\")                      -- NaN"<<endl
-			  << tab << "         else \"01\";                                          -- normal number"<<endl;
+		vhdl << tab << declare("r_exn", 2) << " <=      \"00\" when ((" << use("x_exn") << " = \"00\") or (" << use("x_exn") << " = \"01\" and underflow='1'))  -- zero"<<endl 
+			  << tab << "         else \"10\" when ((" << use("x_exn") << " = \"10\") or (" << use("x_exn") << " = \"01\" and overflow='1'))   -- infinity" << endl
+			  << tab << "         else \"11\" when  (" << use("x_exn") << " = \"11\")                      -- NaN" << endl
+			  << tab << "         else \"01\";                                          -- normal number" << endl;
 
 		vhdl  << tab << "r <= " << use("r_exn") << " & " << use("r_sgn") << " & " << use("r_exp") << " & r_frac;"<<endl;
 
@@ -250,10 +253,10 @@ extern vector<Operator*> oplist;
 
 	FPConstMult::~FPConstMult() {
 		// TODO but who cares really
-		// delete icm; Better not: it has been added to oplist
-			if(!mantissa_is_one) {			
-				mpfr_clears(mpfr_cst, mpfr_cst_sig, mpfr_xcut_sig, NULL);
-			}
+		// clean up memory -- with ifs, because in some cases they have not been init'd
+		if(mpfr_cst) mpfr_clear(mpfr_cst);
+		if(mpfr_cst_sig) mpfr_clear(mpfr_cst_sig);
+		if(mpfr_xcut_sig) mpfr_clear(mpfr_xcut_sig);
 	}
 
 
