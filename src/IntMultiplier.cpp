@@ -92,7 +92,7 @@ namespace flopoco{
 			
 						int extension = (y<x)?(-x):(-y); // for asymmetric sized multipliers (e.g. 24x17 on Virtex5)  
 			
-						if (score1 > score2){
+						if (score1 <= score2){
 							chunksX =  int(ceil( ( double(wInX) / (double) x) ));
 							chunksY =  int(ceil( ( double(wInY) / (double) y) ));
 						}
@@ -118,6 +118,8 @@ namespace flopoco{
 					
 							if (verbose)
 								cerr << "> IntMultiplier: Perform swapping = " << (swap==1?"true":"false") << endl;
+								
+							REPORT(INFO, "x=" << x << " y= " << y << " chunksX="<<chunksX << " chunksY="<<chunksY);
 					
 							if (swap){
 								vhdl << tab << declare("sX",x*chunksX) << " <= " << "Y" << " & " << zg(x*chunksX-wInY,0) << ";" << endl;
