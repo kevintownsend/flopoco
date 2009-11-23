@@ -25,7 +25,7 @@ namespace flopoco{
 		 *			For now we have 2 versions available, 
 		 *			0 = fastest CPA, 1 = previous version
 		 **/
-		IntAdder(Target* target, int wIn, map<string, double> inputDelays = emptyDelayMap, int aType = 0 );
+		IntAdder(Target* target, int wIn, map<string, double> inputDelays = emptyDelayMap, int aType = 1 );
 	
 		/**
 		 *  Destructor
