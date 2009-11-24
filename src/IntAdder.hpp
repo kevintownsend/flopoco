@@ -7,8 +7,18 @@
 #include "utils.hpp"
 #include "Operator.hpp"
 
-
 namespace flopoco{
+
+#define LOGIC      0 
+#define REGISTER   1
+#define SLICE      2
+#define LATENCY    3
+
+
+#define CLASSICAL    0
+#define ALTERNATIVE  1
+#define SHORTLATENCY 2
+
 
 	extern map<string, double> emptyDelayMap;
 	/** The IntAdder class for experimenting with adders. 
@@ -21,12 +31,32 @@ namespace flopoco{
 		 * @param[in] target the target device
 		 * @param[in] wIn    the with of the inputs and output
 		 * @param[in] inputDelays the delays for each input
-		 * @param[in] aType	the type of adder we want to instantiate. 
-		 *			For now we have 2 versions available, 
-		 *			0 = fastest CPA, 1 = previous version
+		 * @param[in] the type optimization we want for our adder.
+		 *            0: optimize for logic (LUT/ALUT)
+		 *            1: optimize register count
+		 *            2: optimize slice/ALM count
 		 **/
-		IntAdder(Target* target, int wIn, map<string, double> inputDelays = emptyDelayMap, int aType = 1 );
+		IntAdder(Target* target, int wIn, map<string, double> inputDelays = emptyDelayMap, int optimizeType = SLICE );
 	
+		int implementationSelector(Target* target, int wIn, map<string, double> inputDelays, int optimizeType);
+
+		int getLutCostClassical(Target* target, int wIn, map<string, double> inputDelays);
+		int getLutCostAlternative(Target* target, int wIn, map<string, double> inputDelays);
+		int getLutCostShortLatency(Target* target, int wIn, map<string, double> inputDelays);
+	
+		int getRegCostClassical(Target* target, int wIn, map<string, double> inputDelays);
+		int getRegCostAlternative(Target* target, int wIn, map<string, double> inputDelays);
+		int getRegCostShortLatency(Target* target, int wIn, map<string, double> inputDelays);
+
+		int getSliceCostClassical(Target* target, int wIn, map<string, double> inputDelays);
+		int getSliceCostAlternative(Target* target, int wIn, map<string, double> inputDelays);
+		int getSliceCostShortLatency(Target* target, int wIn, map<string, double> inputDelays);
+
+		void updateParameters( Target* target, int &alpha, int &beta, int &k);
+		void updateParameters( Target* target, map<string, double> inputDelays, int &alpha, int &beta, int &gamma, int &k);
+		void updateParameters( Target* target, map<string, double> inputDelays, int &alpha, int &beta, int &k);
+		
+		bool tryOptimizedChunkSplittingShortLatency(Target* target, int wIn, int k);
 		/**
 		 *  Destructor
 		 */
@@ -57,9 +87,17 @@ namespace flopoco{
 		// new notations
 		int alpha; /**< the chunk size */
 		int beta;  /**< the last chunk size */
+		int gamma; /**< the first chunk size when slack is considered */
 		int k;     /**< the number of chunks */
 		int w;     /**< the addition width */
 
+		int selectedDesign;
+		
+		int classicalSlackVersion;
+		int alternativeSlackVersion;
+		
+		int shortLatencyVersion;
+		double objectivePeriod;
 	};
 
 }

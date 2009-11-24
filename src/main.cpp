@@ -608,11 +608,16 @@ bool parseCommandLine(int argc, char* argv[]){
 				int wIn = checkStrictyPositive(argv[i++], argv[0]);
 				int type = atoi(argv[i++]);
 				cerr << "> IntAdder, wIn="<<wIn<<endl  ;
+				map <string, double> delayMap;
+				
+//				delayMap["Cin"] = 2e-9;
+				
 				switch (type) {
-					case 1: op = new IntAdder(target, wIn, emptyDelayMap, 1); break; //CPA1
-					case 2: op = new IntAdder(target, wIn, emptyDelayMap, 2); break; //CPA2
-					case 3: op = new IntAdder(target, wIn, emptyDelayMap, 3); break; //CPA3
-					default: op = new IntAdder(target,wIn, emptyDelayMap, 1); break;
+					case 0: op = new IntAdder(target, wIn, delayMap, 0); break; //lut optimized
+					case 1: op = new IntAdder(target, wIn, delayMap, 1); break; //reg
+					case 2: op = new IntAdder(target, wIn, delayMap, 2); break; //slice
+					case 3: op = new IntAdder(target, wIn, delayMap, 3); break; //latency
+					default: op = new IntAdder(target,wIn, delayMap, 2); break;
 				}
 				addOperator(op);
 			}    

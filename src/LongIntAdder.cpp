@@ -37,7 +37,7 @@
 #include "LongIntAdder.hpp"
 #include "IntAdder.hpp"
 #define TEST 1
-#define XILINX_OPTIMIZATION 1
+#define XILINX_OPTIMIZATION 0
 
 using namespace std;
 namespace flopoco{
