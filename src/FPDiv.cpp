@@ -23,7 +23,6 @@
 
 
 // TODO Test even and odd significands
-// use IntAdder for normalization and SRT4Step
 
 #include <iostream>
 #include <sstream>
@@ -55,6 +54,7 @@ namespace flopoco{
 		int i;
 		ostringstream name;
 
+		srcFileName="FPDiv";
 		name<<"FPDiv_"<<wE<<"_"<<wF; 
 		uniqueName_ = name.str(); 
 
@@ -65,12 +65,7 @@ namespace flopoco{
 		addFPInput ("X", wE, wF);
 		addFPInput ("Y", wE, wF);
 		addFPOutput("R", wE, wF);
-	
-		// --------- Sub-components ------------------
-
-		srt4step = new SRT4Step(target, wF);
-		oplist.push_back(srt4step);
-	
+		
 		vhdl << tab << declare("fX",wF+1) << " <= \"1\" & X(" << wF-1 << " downto 0);" << endl;
 		vhdl << tab << declare("fY",wF+1) << " <= \"1\" & Y(" << wF-1 << " downto 0);" << endl;
 
@@ -94,27 +89,50 @@ namespace flopoco{
 		vhdl << tab << declare(wInit.str(), wF+3) <<" <=  \"00\" & fX;" << endl;
 
 		nextCycle();/////////////////////////////////////////////////////////////
+		setCriticalPath(0);
+
+		double srt4stepdelay = target->ffDelay() + 2*target->lutDelay() + 2*target->localWireDelay() + target->adderDelay(wF+4);
 
 		for(i=nDigit-1; i>=1; i--) {
-			ostringstream wi, qi, wim1, stepi;
+			nextCycleCond(srt4stepdelay);
+
+			ostringstream wi, qi, wim1, seli, qiTimesD, wipad, wim1full;
 			wi << "w" << i;
 			qi << "q" << i;
 			wim1 << "w" << i-1;
-			stepi << "step" << i; // the instance name
+			seli << "sel" << i;
+			qiTimesD << "q" << i << "D";
+			wipad << "w" << i << "pad";
+			wim1full << "w" << i-1 << "full";
 	
-	
-			inPortMap(srt4step, "x", wi.str());
-			inPortMap(srt4step, "d", "fY");
-			inPortMap(srt4step, "dtimes3", "fYTimes3");
-			outPortMap(srt4step, "q", qi.str());
-			outPortMap(srt4step, "w", wim1.str());
-			vhdl << instance(srt4step, stepi.str());
-
-			nextCycle();///////////////////////////////////////////////////////////////////////
-
+			vhdl << tab << declare(seli.str(),5) << " <= " << use(wi.str()) << "(" << wF+2 << " downto " << wF-1 << ") & " << use("fY") << "(" << wF-1 << ");" << endl; 
+			vhdl << tab << "with " << use(seli.str()) << " select" << endl;
+			vhdl << tab << declare(qi.str(),3) << " <= " << endl;
+			vhdl << tab << tab << "\"001\" when \"00010\" | \"00011\"," << endl;
+			vhdl << tab << tab << "\"010\" when \"00100\" | \"00101\" | \"00111\"," << endl;
+			vhdl << tab << tab << "\"011\" when \"00110\" | \"01000\" | \"01001\" | \"01010\" | \"01011\" | \"01101\" | \"01111\"," << endl;
+			vhdl << tab << tab << "\"101\" when \"11000\" | \"10110\" | \"10111\" | \"10100\" | \"10101\" | \"10011\" | \"10001\"," << endl;
+			vhdl << tab << tab << "\"110\" when \"11010\" | \"11011\" | \"11001\"," << endl;
+			vhdl << tab << tab << "\"111\" when \"11100\" | \"11101\"," << endl;
+			vhdl << tab << tab << "\"000\" when others;" << endl;
+			vhdl << endl;
+			vhdl << tab << "with " << use(qi.str()) << " select" << endl;
+			vhdl << tab << tab << declare(qiTimesD.str(),wF+4) << " <= "<< endl ;
+			vhdl << tab << tab << tab << "\"000\" & " << use("fY") << "            when \"001\" | \"111\"," << endl;
+			vhdl << tab << tab << tab << "\"00\" & " << use("fY") << " & \"0\"     when \"010\" | \"110\"," << endl;
+			vhdl << tab << tab << tab << "\"0\" & " << use("fYTimes3") << "             when \"011\" | \"101\"," << endl;
+			vhdl << tab << tab << tab << "(" << wF+3 << " downto 0 => '0') when others;" << endl;
+			vhdl << endl;
+			vhdl << tab << declare(wipad.str(), wF+4) << " <= " << use(wi.str()) << " & \"0\";" << endl;
+			vhdl << tab << "with " << use(qi.str()) << "(2) select" << endl;
+			vhdl << tab << declare(wim1full.str(), wF+4) << "<= " << use(wipad.str()) << " - " << use(qiTimesD.str()) << " when '0'," << endl;
+			vhdl << tab << "      " << use(wipad.str()) << " + " << use(qiTimesD.str()) << " when others;" << endl;
+			vhdl << endl;
+			vhdl << tab << declare(wim1.str(),wF+3) << " <= " << use(wim1full.str()) << "(" << wF+1 << " downto 0) & \"0\";" << endl;
 		}
  
  
+		nextCycleCond(srt4stepdelay);
 	
 		vhdl << tab << declare("q0",3) << "(2 downto 0) <= \"000\" when  " << use("w0") << " = (" << wF+2 << " downto 0 => '0')" << endl;
 		vhdl << tab << "             else " << use("w0") << "(" << wF+2 << ") & \"10\";" << endl;
@@ -190,21 +208,6 @@ namespace flopoco{
 
 	FPDiv::~FPDiv() {
 	}
-
-
-	void FPDiv::outputVHDL(std::ostream& o, std::string name) {
-		licence(o,"Jeremie Detrey, Florent de Dinechin (2008)");
-		Operator::stdLibs(o);
-		outputVHDLEntity(o);
-		newArchitecture(o,name);	
-		srt4step->outputVHDLComponent(o);
-		o << buildVHDLSignalDeclarations();
-		beginArchitecture(o);
-		o << buildVHDLRegisters();
-		o << vhdl.str();
-		endArchitecture(o);
-	}
-
 
 
 
