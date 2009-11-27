@@ -130,7 +130,6 @@ extern vector<Operator*> oplist;
 				verb << "The index sizes[MSB-->LSB]: ";
 				for (int i=k-1;i>=0;i--)
 					verb<<cIndex[i]<<" ";
-				verb<<endl; 
 				REPORT( DEBUG, verb.str());
 				
 				/* The implementation */
@@ -216,7 +215,6 @@ extern vector<Operator*> oplist;
 				verb << "The index sizes[MSB-->LSB]: ";
 				for (int i=k-1;i>=0;i--)
 					verb<<cIndex[i]<<" ";
-				verb<<endl; 
 				REPORT( DEBUG, verb.str());
 
 
@@ -440,6 +438,7 @@ extern vector<Operator*> oplist;
 			outDelayMap["R"] = target->adderDelay(wIn_); 
 		}
 	
+		REPORT(DEBUG, "OutDelay for R is " << outDelayMap["R"]);	
 	
 	}
 
