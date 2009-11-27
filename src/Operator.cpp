@@ -520,7 +520,26 @@ namespace flopoco{
 		}
 	}
 
+	double Operator::getCriticalPath() {return criticalPath_;}
 
+	void Operator::setCriticalPath(double delay) {criticalPath_=delay;}
+
+	void Operator::addToCriticalPath(double delay){
+		criticalPath_ += delay;
+	}
+
+	void Operator::nextCycleCond(double delay){
+		criticalPath_ += delay;
+		REPORT(DEBUG, "cycle " << currentCycle_ << ",  cumulated critical path would be " << criticalPath_ << "s,   target is " << 1/target_->frequency() );
+		if(criticalPath_ > 1/target_->frequency()) {
+			// insert a pipeline register and reset the cumulated delay
+			nextCycle();
+			criticalPath_= target_->ffDelay() + delay;
+			REPORT(DEBUG, "     Inserted register level, critical path reset to " << criticalPath_);
+		}
+	}
+
+	double Operator::getOutputDelay(string s) {return outDelayMap[s];}  // TODO add checks
 
 	string Operator::declare(string name, const int width, bool isbus, Signal::SignalType regType) {
 		Signal* s;

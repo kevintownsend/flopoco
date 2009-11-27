@@ -190,6 +190,23 @@ public:
 	 * @param the new value of the current cycle */
 	void nextCycle(bool report=true) ;
 
+	/** get the critical path of the current cycle so far */
+	double getCriticalPath() ;
+
+	/** Set or reset the critical path of the current cycle  */
+	void setCriticalPath(double delay) ;
+
+	/** Adds to the critical path of the current stage, and insert a pipeline stage if needed
+	 * @param the delay to add to the critical path of current pipeline stage */
+	void addToCriticalPath(double delay) ;
+
+	/** Adds to the critical path of the current stage, and insert a pipeline stage if needed
+	 * @param the delay to add to the critical path of current pipeline stage */
+	void nextCycleCond(double delay) ;
+
+	/** get the critical path delay associated to a given output of the operator
+	 * @param the name of the output */
+	double getOutputDelay(string s); 
 
 	/** Set the current cycle to that of a signal. It may increase or decrease current cycle. 
 	 * @param name is the signal name. It must have been defined before 
@@ -675,6 +692,7 @@ private:
 	string                 commentedName_;              /**< Usually is the default name of the architecture.  */
 	string                 copyrightString_;            /**< Authors and years.  */
 	int                    currentCycle_;               /**< The current cycle, when building a pipeline */
+	double                 criticalPath_;               /**< The current delay of the current pipeline stage */
 
 };
 
