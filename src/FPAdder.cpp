@@ -25,8 +25,6 @@
 //   if it becomes a part of the critical path
 // TODO remove pipeline stage after finalRoundAdd if slack allows
 
-// TODO clean up X propagation to remove warnings
-
 // TODO Single path adder
 
 #include <iostream>
@@ -58,7 +56,12 @@ namespace flopoco{
 
 		ostringstream name, synch, synch2;
 
+		srcFileName="FPAdder";
 		name<<"FPAdder_"<<wEX<<"_"<<wFX<<"_"<<wEY<<"_"<<wFY<<"_"<<wER<<"_"<<wFR; 
+		if(target->isPipelined()) 
+			name << target->frequencyMHz() ;
+		else
+			name << "comb";
 		setName(name.str()); 
 
 		setCopyrightString("Bogdan Pasca, Florent de Dinechin (2008)");		
@@ -98,17 +101,19 @@ namespace flopoco{
 		// SWAP when: [excX=excY and expY>expX] or [excY>excX]
 		vhdl<<tab<<declare("swap") << " <= (exceptionXEqualY and exponentDifferenceXY("<<wE<<")) or (not(exceptionXSuperiorY));"<<endl;
 	
-		if(0) 
-			nextCycle();
+
 		// depending on the value of swap, assign the corresponding values to the newX and newY signals 
 		vhdl<<tab<<declare("newX",wE+wF+3) << " <= " << use("inY") << " when "<< use("swap") << " = '1' else " << use("inX") << ";"<<endl;
 		vhdl<<tab<<declare("newY",wE+wF+3) << " <= " << use("inX") << " when "<< use("swap") << " = '1' else " << use("inY") << ";"<<endl;
 		vhdl<<tab<<declare("exponentDifference",wE) << " <= " << use("exponentDifferenceYX") 
 			 << " when "<< use("swap") << " = '1' else " << use("exponentDifferenceXY") << "("<<wE-1<<" downto 0);"<<endl;
 	
+		setCriticalPath(target->adderDelay(wE+1) +  target->lutDelay() + target->lutDelay());
+
 		// determine if the fractional part of Y was shifted out of the operation //
 		vhdl<<tab<<declare("shiftedOut") << " <= "; 
 		if (wE>sizeRightShift){
+			nextCycleCond(target->adderDelay(wE-sizeRightShift));
 			for (int i=wE-1;i>=sizeRightShift;i--)
 				if (i==sizeRightShift)
 					vhdl<< "exponentDifference("<<i<<")";
@@ -133,9 +138,10 @@ namespace flopoco{
 			vhdl<<tab<<"CONV_STD_LOGIC_VECTOR(0,"<<sizeRightShift-wE <<") & exponentDifference;" <<	endl;
 		}
 
-		nextCycle();////////////////////////////////////////////////////////////////////////////////////
+		// was nextCycle();////////////////////////////////////////////////////////////////////////////////////
 
 		// compute EffSub as (signA xor signB) at cycle 1
+		nextCycleCond(2 * target->lutDelay() + 2*target-> localWireDelay());
 		vhdl<<tab<<declare("EffSub") << " <= " << use("newX") << "("<<wEX+wFX<<") xor " << use("newY") << "("<<wEY+wFY<<");"<<endl;
 		
 		// compute the close/far path selection signal at cycle1 
@@ -147,14 +153,15 @@ namespace flopoco{
 		vhdl<<tab<<declare("sdExnXY",4) << " <= " << use("newX") << "("<<wE+wF+2<<" downto "<<wE+wF+1<<") "
 			 << "& " << use("newY") << "("<<wE+wF+2<<" downto "<<wE+wF+1<<");"<<endl;
 		vhdl<<tab<<declare("pipeSignY") << " <= " << use("newY") << "("<<wE+wF<<");"<<endl;
-	
+ 
+		double cp_at_end_of_init = getCriticalPath();
 	
 		//=========================================================================|
 		//                            close path                                   |
 		//=========================================================================|
+
 		
 		vhdl<< endl << "-- Close Path --" << endl;
-		// we are already at cycle 1
 	
 		// build the fraction signals
 		// padding: [sign bit][inplicit "1"][fracX][guard bit]
@@ -169,6 +176,7 @@ namespace flopoco{
 		// substract the fraction signals for the close path; 
 	
 		// instanciate the box that computes X-Y and Y-X. Note that it could take its inputs before the swap (TODO ?)
+		REPORT(DETAILED, "Building close path dual mantissa subtraction box");	
 		dualSubClose = new 	IntDualSub(target, wF + 3, 0);
 		dualSubClose->changeName(getName()+"_DualSubClose");
 		oplist.push_back(dualSubClose);
@@ -179,7 +187,7 @@ namespace flopoco{
 		outPortMap (dualSubClose, "RyMx","fracRCloseyMx");
 		vhdl << instance(dualSubClose, "DualSubO");
 	
-		syncCycleFromSignal("fracRCloseyMx");/////////////////////////////////////////////////////////////////
+		syncCycleFromSignal("fracRCloseyMx", false);/////////////////////////////////////////////////////////////////
 	
 		// register the output -- TODO merge the mux with the last stage of the adder in case of sufficient slack
 		nextCycle();////////////////////////////////////////////////////////////////////////////////////
@@ -197,6 +205,7 @@ namespace flopoco{
 			 << use("fracSignClose") << ");"<<endl;
 	
 		// LZC + Shifting. The number of leading zeros are returned together with the shifted input
+		REPORT(DETAILED, "Building close path LZC + shifter");	
 		lzocs = new LZOCShifterSticky(target, wFX+2, wFX+2, intlog2(wFX+2), false, 0);
 
 		lzocs->changeName(getName()+"_LZCShifter");
@@ -249,12 +258,14 @@ namespace flopoco{
 
 		vhdl<< endl << "-- Far Path --" << endl;
 		// get back to first cycle after exp diff/swap 
-		setCycleFromSignal("EffSub");/////////////////////////////////////////////////////////////////
+		setCycleFromSignal("EffSub", true);/////////////////////////////////////////////////////////////////
+		setCriticalPath(cp_at_end_of_init);
 	
 		//add implicit 1 for frac1. 
 		vhdl<<tab<< declare("fracNewY",wF+1) << " <= '1' & " << use("newY") << "("<<wF-1<<" downto 0);"<<endl;
 	
-		// shift right the significand of new Y with as many positions as the exponent difference suggests (alignment) //		
+		// shift right the significand of new Y with as many positions as the exponent difference suggests (alignment) 
+		REPORT(DETAILED, "Building far path right shifter");	
 		rightShifter = new Shifter(target,wFX+1,wFX+3,Right);
 		rightShifter->changeName(getName()+"_RightShifter");
 		oplist.push_back(rightShifter);
@@ -263,7 +274,7 @@ namespace flopoco{
 		outPortMap (rightShifter, "R","shiftedFracY");
 		vhdl << instance(rightShifter, "RightShifterComponent");
 
-		syncCycleFromSignal("shiftedFracY");/////////////////////////////////////////////////////////////////
+		syncCycleFromSignal("shiftedFracY", false);/////////////////////////////////////////////////////////////////
 		// register the output 
 		nextCycle();////////////////////////////////////////////////////////////////////////////////////
 			
@@ -286,6 +297,7 @@ namespace flopoco{
 		vhdl<<tab<< declare("cInAddFar") << " <= " << use("EffSub")<<" and not " << use("sticky") << ";"<< endl;
 
 		// perform carry in addition
+		REPORT(DETAILED, "Building far path adder");	
 		fracAddFar = new IntAdder(target,wF+4);
 		fracAddFar->changeName(getName()+"_fracAddFar");
 		oplist.push_back(fracAddFar);
@@ -368,29 +380,38 @@ namespace flopoco{
 		vhdl<<tab<< "         " << use("roundFar") <<"   when others;"<<endl;
  
 		vhdl<<tab<< declare("zeroFromClose") << " <= syncClose and " << use("resultCloseIsZero") << ";" <<endl;
-		
-		
-		if (wFX>20) //SP does not need this level
-			nextCycle();	
+		double muxDelay= target->lutDelay() + target->localWireDelay() + target->ffDelay(); // estimated delay so far (one mux)
+				setCriticalPath(muxDelay);
+		map<string, double> fraInputDelays;
+		fraInputDelays["X"] = muxDelay;
+		fraInputDelays["Y"] = 0;
+		fraInputDelays["Cin"] = muxDelay;
+
 		vhdl<< endl << "-- Rounding --" << endl;
-		// perform the actual rounding //
+
+		REPORT(DETAILED, "Building final round adder");	
 		// finalRoundAdd will add the mantissa concatenated with exponent, two bits reserved for possible under/overflow 
-		finalRoundAdd = new IntAdder(target, wE + wF + 2); 
+		finalRoundAdd = new IntAdder(target, wE + wF + 2, fraInputDelays); 
 		finalRoundAdd->changeName(getName()+"_finalRoundAdd");
 		oplist.push_back(finalRoundAdd);
-	
+
 		ostringstream zero;
-		zero<<"("<<1+wE+wF<<" downto 0 => '0') ";  
-	
+		zero<<"("<<1+wE+wF<<" downto 0 => '0') ";  	
 		inPortMap   (finalRoundAdd, "X", "resultBeforeRound");
 		inPortMapCst(finalRoundAdd, "Y", zero.str() );
 		inPortMap   (finalRoundAdd, "Cin", "round");
 		outPortMap  (finalRoundAdd, "R","resultRounded");
 		vhdl << instance(finalRoundAdd, "finalRoundAdder");
 
-		syncCycleFromSignal("resultRounded");
-		nextCycle();////////////////////////////////////////////////////////////////////////////////////
-		//sign bit
+		if(finalRoundAdd->getPipelineDepth() == 0) {
+			nextCycleCond(finalRoundAdd->getOutputDelay("R")); // may insert a nextCycle
+		}
+		else{
+			setCriticalPath(finalRoundAdd->getOutputDelay("R"));
+		}
+		syncCycleFromSignal("resultRounded", false);
+
+		// We neglect the delay of the rest
 		vhdl<<tab<<declare("syncEffSub") << " <= "<< use("EffSub")<<";"<<endl;
   	
 		//X
