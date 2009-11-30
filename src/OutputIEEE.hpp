@@ -1,3 +1,16 @@
+/*
+  Conversion from  FloPoCo format to IEEE-like compact floating-point format
+
+  This file is part of the FloPoCo project developed by the Arenaire
+  team at Ecole Normale Superieure de Lyon
+  
+  Author : Fabrizio Ferrandi ferrandi@elet.polimi.it
+
+  Initial software.
+  Copyright © ENS-Lyon, INRIA, CNRS, UCBL, 2009. All right reserved.
+
+*/
+
 #ifndef OUTPUTIEEE_HPP
 #define OUTPUTIEEE_HPP
 #include <vector>
@@ -31,7 +44,7 @@ namespace flopoco{
 
 
 		/**
-		 * Emulate a correctly rounded square root using MPFR.
+		 * Emulate the operator. This function overload the method from Operator.
 		 * @param tc a TestCase partially filled with input values 
 		 */
 		void emulate(TestCase * tc);
@@ -46,6 +59,10 @@ namespace flopoco{
 		int wEO; 
 		/** The width of the fraction for the output X */
 		int wFO; 
+		/** used only when wEI>wEO: minimal exponent representable in output format, biased with input bias */
+		int underflowThreshold;
+		/** used only when wEI>wEO: maximal exponent representable in output format, biased with input bias */
+		int overflowThreshold;
 	}
 		;
 }

@@ -1,26 +1,15 @@
 /*
- * Conversion from  FloPoCo format to IEEE-like compact floating-point format
- *
- * Author : 
- * Florent de Dinechin
- *
- * This file is part of the FloPoCo project developed by the Arenaire
- * team at Ecole Normale Superieure de Lyon
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or 
- * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
- */
+  Conversion from  FloPoCo format to IEEE-like compact floating-point format
+
+  This file is part of the FloPoCo project developed by the Arenaire
+  team at Ecole Normale Superieure de Lyon
+  
+  Author : Fabrizio Ferrandi ferrandi@elet.polimi.it
+
+  Initial software.
+  Copyright © ENS-Lyon, INRIA, CNRS, UCBL, 2009. All right reserved.
+
+*/
 
 
 
@@ -49,6 +38,8 @@ namespace flopoco{
 	OutputIEEE::OutputIEEE(Target* target, int wEI, int wFI, int wEO, int wFO) :
 		Operator(target), wEI(wEI), wFI(wFI), wEO(wEO), wFO(wFO) {
 
+		setCopyrightString("F. Ferrandi  (2009)");
+
 		ostringstream name;
 
 		name<<"OutputIEEE_"<<wEI<<"_"<<wFI<<"_to_"<<wEO<<"_"<<wFO;
@@ -58,10 +49,90 @@ namespace flopoco{
 		// -------- Parameter set up -----------------
 
 		addFPInput ("X", wEI, wFI);
-		addFPOutput("R", wEO, wFO);
+		addOutput("R", wEO+wFO+1);
 
+		vhdl << tab << declare("expX", wEI) << "  <= X" << range(wEI+wFI-1, wFI) << ";" << endl;
+		vhdl << tab << declare("fracX", wFI) << "  <= X" << range(wFI-1, 0) << ";" << endl;
+		vhdl << tab << declare("sX") << "  <= X(" << wEI+wFI << ");" << endl;	
+		vhdl << tab << declare("exnX",2) << "  <= X" << range(wEI+wFI+2, wEI+wFI+1) << ";" << endl;	
+		vhdl << tab << declare("expZero") << "  <= '1' when expX = " << rangeAssign(wEI-1,0, "'0'") << " else '0';" << endl;
+/*  xA <= nA(wE+wF+2 downto wE+wF+1);
+
+  with xA select
+    nR <= nA(wE+wF) & (wE+wF-1 downto 0 => '0')                                   when "00",
+          nA(wE+wF downto 0)                                                      when "01",
+          nA(wE+wF) & (wE+wF-1 downto wF => '1') & (wF-1 downto 1 => '0') & xA(0) when others;
+*/
+		if(wEI==wEO){ 
+			vhdl << tab << "-- since we have one more exponent value than IEEE (field 0...0, value emin-1)," << endl 
+				  << tab << "-- we can represent subnormal numbers whose mantissa field begins with a 1" << endl;
+
+			nextCycle();
+
+			if(wFO>=wFI){
+				vhdl << tab << declare("sfracX",wFI) << " <= " << endl
+						<< tab << tab << rangeAssign(wFI-1,0, "'0'") << " when (" << use("exnX") << " = \"00\") else" << endl
+						<< tab << tab << "'1' & fracX" << range(wFI-1,1) << " when (" << use("expZero") << " = '1' and exnX = \"01\") else" << endl
+						<< tab << tab << "fracX when (exnX = \"01\") else " << endl
+						<< tab << tab << rangeAssign(wFI-1,1, "'0'") << " & exnX(0);" << endl;
+				vhdl << tab << declare("fracR",wFO) << " <= " << use("sfracX");
+				if(wFO>wFI) // need to pad with 0s
+					vhdl << " & CONV_STD_LOGIC_VECTOR(0," << wFO-wFI <<");" << endl;
+				else 
+					vhdl << ";" << endl;
+				vhdl << tab << declare("expR",wEO) << " <=  " << endl
+						<< tab << tab << rangeAssign(wEO-1,0, "'0'") << " when (exnX = \"00\") else" << endl
+						<< tab << tab << "expX when (exnX = \"01\") else " << endl
+						<< tab << tab << rangeAssign(wEO-1,0, "'1'") << ";" << endl;
+
+			}
+			else { // wFI > wFO, wEI==wEO
+				vhdl << tab << declare("sfracX",wFI) << " <= '1' & fracX" << range(wFI-1,1) << " when (" << use("expZero") << " = '1' and " << use("exnX") << " = \"01\") else fracX;" << endl;
+				vhdl << tab << "-- wFO < wFI, need to round fraction" << endl;
+				vhdl << tab << declare("resultLSB") << " <= " << use("sfracX") << "("<< wFI-wFO <<");" << endl;
+				vhdl << tab << declare("roundBit") << " <= " << use("sfracX") << "("<< wFI-wFO-1 <<");" << endl;
+				// need to define a sticky bit
+				vhdl << tab << declare("sticky") << " <= ";
+				if(wFI-wFO>1){
+					vhdl<< " '0' when " << use("sfracX") << range(wFI-wFO-2, 0) <<" = CONV_STD_LOGIC_VECTOR(0," << wFI-wFO-2 <<") else '1';"<<endl;
+				}
+				else {
+					vhdl << "'0';" << endl; 
+				} // end of sticky computation
+				vhdl << tab << declare("round") << " <= roundBit and (sticky or resultLSB);"<<endl;
+
+				nextCycle();
+
+				vhdl << tab << "-- The following addition will not overflow since FloPoCo format has one more exponent value" <<endl; 
+				vhdl << tab << declare("expfracR0", wEO+wFO) << " <= (" << use("expX") << " & " << use("sfracX") << "" << range(wFI-1, wFI-wFO) << ")  +  (CONV_STD_LOGIC_VECTOR(0," << wEO+wFO-1 <<") & " << use("round") << ");"<<endl;
+
+				vhdl << tab << declare("fracR",wFO) << " <= " << endl
+						<< tab << tab << rangeAssign(wFO-1,0, "'0'") << " when (" << use("exnX") << " = \"00\") else" << endl
+						<< tab << tab << "expfracR0" << range(wFO-1, 0) << " when (exnX = \"01\") else " << endl
+						<< tab << tab << rangeAssign(wFO-1,1, "'0'") << " & exnX(0);" << endl;
+
+				vhdl << tab << declare("expR",wEO) << " <=  " << endl
+						<< tab << tab << rangeAssign(wEO-1,0, "'0'") << " when (exnX = \"00\") else" << endl
+						<< tab << tab << "expfracR0" << range(wFO+wEO-1, wFO) << " when (exnX = \"01\") else " << endl
+						<< tab << tab << rangeAssign(wEO-1,0, "'1'") << ";" << endl;
+			}
+
+		}
+
+
+
+		else if (wEI<wEO) { // No overflow possible. Subnormal inputs need to be normalized
+			throw  string("OutputIEEE not yet implemented for wEI<wEO, send us a mail if you need it");
+			// cout << "Warning: subnormal inputs would be representable in the destination format,\n   but will be flushed to zero anyway (TODO)" << endl;
+		}
+
+
+
+		else {
+			throw  string("OutputIEEE not yet implemented for wEI>wEO, send us a mail if you need it");
+		}
 	
-		vhdl << tab << "R <= X; " << endl; 
+		vhdl << tab << "R <= " << use("sX") << " & expR & fracR; " << endl; 
 
 	}
 

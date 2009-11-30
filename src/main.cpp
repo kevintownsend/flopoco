@@ -1,24 +1,13 @@
 /*
- * The FloPoCo command-line interface
- *
- * Author : Florent de Dinechin
- *
- * This file is part of the FloPoCo project developed by the Arenaire
- * team at Ecole Normale Superieure de Lyon
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or 
- * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
+  The FloPoCo command-line interface
+  
+  This file is part of the FloPoCo project developed by the Arenaire
+  team at Ecole Normale Superieure de Lyon
+  
+  Author : Florent de Dinechin, Florent.de.Dinechin@ens-lyon.fr
+
+  Initial software.
+  Copyright © ENS-Lyon, INRIA, CNRS, UCBL, 2008-2009. All right reserved.
 */
 
 #include <iostream>
@@ -182,8 +171,8 @@ static void usage(char *name){
 	cerr << "    FPLog wE wF InTableSize\n";
 	cerr << "      Floating-point logarithm function;\n";
 	cerr << "      InTableSize is the numbers of bits to input to the tables. O defaults to something sensible\n";
-	// cerr << "    OutputIEEE wEI wFI wEO wFO\n";
-	// cerr << "      Conversion from FloPoCo to IEEE-754-like floating-point formats\n";
+	cerr << "    OutputIEEE wEI wFI wEO wFO\n";
+	cerr << "      Conversion from FloPoCo to IEEE-754-like floating-point formats\n";
 	cerr << "    InputIEEE wEI wFI wEO wFO\n";
 	cerr << "      Conversion from IEEE-754-like to FloPoCo floating-point formats\n";
 
