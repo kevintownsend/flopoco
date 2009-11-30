@@ -56,13 +56,6 @@ namespace flopoco{
 		vhdl << tab << declare("sX") << "  <= X(" << wEI+wFI << ");" << endl;	
 		vhdl << tab << declare("exnX",2) << "  <= X" << range(wEI+wFI+2, wEI+wFI+1) << ";" << endl;	
 		vhdl << tab << declare("expZero") << "  <= '1' when expX = " << rangeAssign(wEI-1,0, "'0'") << " else '0';" << endl;
-/*  xA <= nA(wE+wF+2 downto wE+wF+1);
-
-  with xA select
-    nR <= nA(wE+wF) & (wE+wF-1 downto 0 => '0')                                   when "00",
-          nA(wE+wF downto 0)                                                      when "01",
-          nA(wE+wF) & (wE+wF-1 downto wF => '1') & (wF-1 downto 1 => '0') & xA(0) when others;
-*/
 		if(wEI==wEO){ 
 			vhdl << tab << "-- since we have one more exponent value than IEEE (field 0...0, value emin-1)," << endl 
 				  << tab << "-- we can represent subnormal numbers whose mantissa field begins with a 1" << endl;
@@ -72,17 +65,17 @@ namespace flopoco{
 			if(wFO>=wFI){
 				vhdl << tab << declare("sfracX",wFI) << " <= " << endl
 						<< tab << tab << rangeAssign(wFI-1,0, "'0'") << " when (" << use("exnX") << " = \"00\") else" << endl
-						<< tab << tab << "'1' & fracX" << range(wFI-1,1) << " when (" << use("expZero") << " = '1' and exnX = \"01\") else" << endl
-						<< tab << tab << "fracX when (exnX = \"01\") else " << endl
-						<< tab << tab << rangeAssign(wFI-1,1, "'0'") << " & exnX(0);" << endl;
+						<< tab << tab << "'1' & fracX" << range(wFI-1,1) << " when (" << use("expZero") << " = '1' and " << use("exnX") << " = \"01\") else" << endl
+						<< tab << tab << "fracX when (" << use("exnX") << " = \"01\") else " << endl
+						<< tab << tab << rangeAssign(wFI-1,1, "'0'") << " & " << use("exnX") << "(0);" << endl;
 				vhdl << tab << declare("fracR",wFO) << " <= " << use("sfracX");
 				if(wFO>wFI) // need to pad with 0s
 					vhdl << " & CONV_STD_LOGIC_VECTOR(0," << wFO-wFI <<");" << endl;
 				else 
 					vhdl << ";" << endl;
 				vhdl << tab << declare("expR",wEO) << " <=  " << endl
-						<< tab << tab << rangeAssign(wEO-1,0, "'0'") << " when (exnX = \"00\") else" << endl
-						<< tab << tab << "expX when (exnX = \"01\") else " << endl
+						<< tab << tab << rangeAssign(wEO-1,0, "'0'") << " when (" << use("exnX") << " = \"00\") else" << endl
+						<< tab << tab << "expX when (" << use("exnX") << " = \"01\") else " << endl
 						<< tab << tab << rangeAssign(wEO-1,0, "'1'") << ";" << endl;
 
 			}
@@ -108,12 +101,12 @@ namespace flopoco{
 
 				vhdl << tab << declare("fracR",wFO) << " <= " << endl
 						<< tab << tab << rangeAssign(wFO-1,0, "'0'") << " when (" << use("exnX") << " = \"00\") else" << endl
-						<< tab << tab << "expfracR0" << range(wFO-1, 0) << " when (exnX = \"01\") else " << endl
-						<< tab << tab << rangeAssign(wFO-1,1, "'0'") << " & exnX(0);" << endl;
+						<< tab << tab << "expfracR0" << range(wFO-1, 0) << " when (" << use("exnX") << " = \"01\") else " << endl
+						<< tab << tab << rangeAssign(wFO-1,1, "'0'") << " & " << use("exnX") << "(0);" << endl;
 
 				vhdl << tab << declare("expR",wEO) << " <=  " << endl
-						<< tab << tab << rangeAssign(wEO-1,0, "'0'") << " when (exnX = \"00\") else" << endl
-						<< tab << tab << "expfracR0" << range(wFO+wEO-1, wFO) << " when (exnX = \"01\") else " << endl
+						<< tab << tab << rangeAssign(wEO-1,0, "'0'") << " when (" << use("exnX") << " = \"00\") else" << endl
+						<< tab << tab << "expfracR0" << range(wFO+wEO-1, wFO) << " when (" << use("exnX") << " = \"01\") else " << endl
 						<< tab << tab << rangeAssign(wEO-1,0, "'1'") << ";" << endl;
 			}
 
