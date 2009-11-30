@@ -992,6 +992,11 @@ namespace flopoco{
 		}
 	}
 
+	map<string, double> Operator::getOutDelayMap(){
+		return outDelayMap;
+	}
+
+
 
 	void Operator::outputVHDL(std::ostream& o, std::string name) {
   

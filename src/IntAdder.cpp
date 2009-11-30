@@ -1,4 +1,4 @@
-	/*
+/*
  * An integer adder for FloPoCo
  *
  * It may be pipelined to arbitrary frequency.
@@ -42,7 +42,7 @@ namespace flopoco{
 extern vector<Operator*> oplist;
 
 	IntAdder::IntAdder(Target* target, int wIn, map<string, double> inputDelays, int optimizeType):
-		Operator(target), wIn_(wIn), inputDelays_(inputDelays)
+		Operator(target), wIn_(wIn)
 	{
 		srcFileName="IntAdder";
 		ostringstream name;
@@ -56,7 +56,7 @@ extern vector<Operator*> oplist;
 		addInput ("Cin", 1 );
 		addOutput("R"  , wIn_, 1 , true);
 
-		REPORT( DETAILED, "Printing input delays ... " << printInputDelays(inputDelays));
+		REPORT( DEBUG , "Printing input delays ... " << printInputDelays(inputDelays));
 
 		if (isSequential()){
 		
@@ -83,41 +83,37 @@ extern vector<Operator*> oplist;
 					/* the non-slack version */			
 					REPORT(DETAILED, "Building architecture for classical version: no slack");	
 					updateParameters ( target, alpha, beta, k);
-					REPORT(DETAILED, "alpha="<<alpha<<" beta="<<beta<<" k="<<k);
+					REPORT(DEBUG, "alpha="<<alpha<<" beta="<<beta<<" k="<<k);
 				}else{
 					if (classicalSlackVersion == 0){
-						REPORT(DETAILED, "Building architecture for classical version with slack version 0");
+						/* the slack version that does not buffer the inputs*/			
+						REPORT(DETAILED, "Building architecture for classical version with slack: non-buffering");
 						updateParameters ( target, inputDelays, alpha, beta, gamma, k);
-						REPORT(DETAILED, "alpha="<<alpha<<" beta="<<beta<<" gamma="<<gamma<<" k="<<k);
+						REPORT(DEBUG, "alpha="<<alpha<<" beta="<<beta<<" gamma="<<gamma<<" k="<<k);
 					}else{
-						nextCycle(); ///////////////////////////////////////////////
-						REPORT(DETAILED, "Building architecture for classical version with slack version 1");
+						nextCycle(); /* bufferning the inputs */
+						REPORT(DETAILED, "Building architecture for classical version with slack: buffering");
 						updateParameters (target, alpha, beta, k);
-						REPORT(DETAILED, "alpha="<<alpha<<" beta="<<beta<<" k="<<k);
+						REPORT(DEBUG, "alpha="<<alpha<<" beta="<<beta<<" k="<<k);
 					}
 				}
 				
-				//the sizes of the chunks
+				/* init the array with chunk sizes */
 				cSize = new int[k+1];
 				if ( k > 1 ){
-					if (selectedDesign == 1 )
-						cSize[0] = gamma;
-					else
-						cSize[0] = alpha;
-					
+					cSize[0] = (selectedDesign == 1 ? gamma: alpha);
 					for (int i=1; i<k-1; i++)
 						cSize[i] = alpha;
 					cSize[k-1] = beta;
-				}
-				else{
+				}else{
 					k = 1;
 					cSize = new int[1];
 					cSize[0] = wIn_;
 				}
 
-				//the indexes in the inputs of the chunks
+				/* the indexes of the chunks */
 				cIndex = new int[k];
-				cIndex[0]= cSize[0];
+				cIndex[0] = cSize[0];
 				for (int i=1; i < k; i++)
 					cIndex[i] = cIndex[i-1] + cSize[i];
 		
@@ -125,7 +121,7 @@ extern vector<Operator*> oplist;
 				verb << "The chunk sizes[MSB-->LSB]: ";
 				for (int i=k-1;i>=0;i--)
 					verb << cSize[i]<<" ";
-				REPORT( DETAILED, verb.str());
+				REPORT( DEBUG, verb.str());
 				verb.str("");
 				verb << "The index sizes[MSB-->LSB]: ";
 				for (int i=k-1;i>=0;i--)
@@ -154,11 +150,12 @@ extern vector<Operator*> oplist;
 				vhdl << use("sum0")<<range(cSize[0]-1,0)<<";"<<endl;
 				/* the output is asociated with the combinatorial delay caused 
 				by the most-significant bits addition */
-				outDelayMap["R"] = target->adderDelay(cSize[k-1]); 
+				outDelayMap["R"] = target->adderDelay(cSize[k-1]) + (getCurrentCycle()>0?0:getMaxInputDelays(inputDelays)); 
 			}
 			
-			////////////////////////////////////////////////////////////////////
-			////////////////////////////////////////////////////////////////////
+			//**********************************************************************
+			//**********************************************************************
+			// Alternative implementation of pipelined addition
 			else if (selectedImplementation == ALTERNATIVE) {
 
 				maxInputDelay = getMaxInputDelays (inputDelays);
@@ -251,11 +248,10 @@ extern vector<Operator*> oplist;
 				
 			
 			}
-			////////////////////////////////////////////////////////////////////
-			////////////////////////////////////////////////////////////////////
-			////////////////////////////////////////////////////////////////////
-			////////////////////////////////////////////////////////////////////
-			
+
+			//**********************************************************************
+			//**********************************************************************
+			// Alternative implementation of pipelined addition
 			else if (selectedImplementation == SHORTLATENCY) {
 				if (shortLatencyVersion == 0){
 					tryOptimizedChunkSplittingShortLatency ( target, wIn , k );
@@ -435,7 +431,7 @@ extern vector<Operator*> oplist;
 		// COMBINATORIAL VERSION	
 		}else{
 			vhdl << tab << " R <= X + Y + Cin;" << endl;
-			outDelayMap["R"] = target->adderDelay(wIn_); 
+			outDelayMap["R"] = target->adderDelay(wIn_) + getMaxInputDelays(inputDelays); 
 		}
 	
 		REPORT(DEBUG, "OutDelay for R is " << outDelayMap["R"]);	
@@ -1042,10 +1038,10 @@ extern vector<Operator*> oplist;
 	bool IntAdder::tryOptimizedChunkSplittingShortLatency(Target* target, int wIn, int k){
 		cSize = new int[2000];
 
-		REPORT(DETAILED, "Trying to optimize chunk splitting ...");
+		REPORT(DETAILED, "Trying to optimize chunk splitting for short-latency architecture ...");
 
 		target->suggestSubaddSize(chunkSize_ ,wIn_);
-		REPORT(2, "The chunkSize for first two chunks would be: " << chunkSize_ );
+		REPORT(DEBUG, "The chunkSize for first two chunks would be: " << chunkSize_ );
 	
 		if (2*chunkSize_ >= wIn_){
 			REPORT(DETAILED, "Failed ... the input size is too small to use the short latency algorithm");
@@ -1095,19 +1091,6 @@ extern vector<Operator*> oplist;
 		}
 	}
 
-//	int IntAdder::optimizedLUTCountShortLatency(Target *target, int wIn, int k){
-//		int lcount = wIn;
-//		lcount += wIn - ( cSize[0] + cSize[k-1] );
-//		lcount += 2(k-2);
-//		lcount += wIn  - cSize[0];
-//		lcount += cSize[0] + cSize[1] + cSize[k-1];
-//		 
-//		lcount =  - cSize[0]   + 2(k-2)   + cSize[1] ;
-//		lcount = 3*wIn - cSize[0] + cSize[1]  + 2*(k-2);   
-//	
-//	
-//	}
-
 
 	void IntAdder::emulate(TestCase* tc)
 	{
@@ -1125,112 +1108,4 @@ extern vector<Operator*> oplist;
 
 }
 
-
-
-
-
-//			//**********************************************************************
-//			//**********************************************************************
-//			//SECOND VERSION: CPA2
-//			else if ( aType == 2 ){
-
-//				maxInputDelay = getMaxInputDelays (inputDelays);
-//				if (verbose)
-//					cout << "The maximum input delay is: " << maxInputDelay <<
-//					endl;
-//		
-//				if ( maxInputDelay > objectivePeriod ){
-//					//the maximum combinatorial delay of the input is larger than the objective period, so the requested frequency might not be reached.
-//					cout << "WARNING: the combinatorial delay at the input of " << this->getName() << " is above objective period "<<endl;
-//					maxInputDelay = objectivePeriod;
-//				}
-
-//				if ( ((objectivePeriod - maxInputDelay) - target->adderDelay(1) ) < 0 )	{
-//					//if not enough slack is available for any combinatorial circuit, we register the inputs
-//					nextCycle();
-//					target->suggestSubaddSize(chunkSize_ ,wIn_);
-//					nbOfChunks = ceil(double(wIn_)/double(chunkSize_));
-//					lastChunkSize = ( wIn_ % chunkSize_ == 0 ? chunkSize_ : wIn_ % chunkSize_);
-//				}
-//				else{
-//					int maxInAdd;
-//					//explore 2 designs and chose the best				
-//					target->suggestSlackSubaddSize(maxInAdd, wIn_, maxInputDelay); 
-//					int nbOfChunksFirstDesign = ceil(double(wIn_)/double(maxInAdd));
-//					int scoreFirstDesign = nbOfChunksFirstDesign - 1;
-//					if (verbose) cout << "Exploring first design ... score is:"<< scoreFirstDesign << endl;
-//				
-//					target->suggestSubaddSize(maxInAdd, wIn_); 
-//					int nbOfChunksSecondDesign = ceil(double(wIn_)/double(maxInAdd));
-//					int scoreSecondDesign = nbOfChunksSecondDesign;
-//					if (verbose) cout << "Exploring second design ... score is:"<< scoreSecondDesign << endl;
-//				
-//					if (scoreFirstDesign > scoreSecondDesign){
-//						if (verbose) cout << "Implementation of the second design" << endl;
-//						nbOfChunks = nbOfChunksSecondDesign;
-//						target->suggestSubaddSize(chunkSize_, wIn_); 
-//						lastChunkSize = ( wIn_ % chunkSize_ == 0 ? chunkSize_ : wIn_ % chunkSize_);
-//					}else{
-//						if (verbose) cout << "Implementation of the first design" << endl;
-//						nbOfChunks = nbOfChunksFirstDesign;
-//						target->suggestSubaddSize(chunkSize_, wIn_); 
-//						lastChunkSize = ( wIn_ % chunkSize_ == 0 ? chunkSize_ : wIn_ % chunkSize_);
-//					}
-//				}
-//				//the sizes of the chunks
-//				cSize = new int[nbOfChunks+1];
-//				if ( nbOfChunks > 1 ){
-//					for (int i=0; i<nbOfChunks-1; i++)
-//						cSize[i] = chunkSize_;
-//					cSize[nbOfChunks-1] = lastChunkSize;
-//				}
-//				else{
-//					nbOfChunks = 1;
-//					cSize = new int[1];
-//					cSize[0] = wIn_;
-//				}
-//				//the indexes in the inputs of the chunks
-//				cIndex = new int[nbOfChunks];
-//				cIndex[0]= cSize[0];
-//				for (int i=1; i < nbOfChunks; i++)
-//					cIndex[i] = cIndex[i-1] + cSize[i];
-//		
-//				if (verbose){
-//					cout << "The chunk sizes[MSB-->LSB]: "<<endl;
-//					for (int i=nbOfChunks-1;i>=0;i--)
-//						cout<<cSize[i]<<" ";
-//					cout<<endl; 
-//					cout << "The index sizes[MSB-->LSB]: "<<endl;
-//					for (int i=nbOfChunks-1;i>=0;i--)
-//						cout<<cIndex[i]<<" ";
-//					cout<<endl; 
-//				}	
-
-//				////////////////////////////////////////////////////////////////////////
-//		
-//				for (int i=0; i < nbOfChunks; i++){
-//					vhdl << tab << declare (join("sum_l",0,"_idx",i), cSize[i]+1, true) << " <= " << "( \"0\" & " << use("X") << range(cIndex[i]-1, (i>0?cIndex[i-1]:0)) << ") + "
-//						  << "( \"0\" & " << use("Y") << range(cIndex[i]-1, (i>0?cIndex[i-1]:0)) << ")" ;
-//					if (i==0) vhdl << " + " << use("Cin");
-//					vhdl << ";" << endl;
-//				}
-//		
-//				for (int i=1; i <= nbOfChunks-1 ; i++){
-//					nextCycle(); ///////////////////////////////////////////////////////
-//					for (int j=i; j <= nbOfChunks-1; j++){
-//						vhdl << tab << declare(join("sum_l",i,"_idx",j), cSize[j]+1, true) << " <= " << "( \"0\" & " << use(join("sum_l",i-1,"_idx",j))<<range(cSize[j]-1,0) << ") + "
-//							  << use(join("sum_l",i-1,"_idx",j-1))<<of(cSize[j-1])<<";"<<endl;
-//					}
-//				}
-//		
-//				vhdl << tab << "R <= ";
-//				for (int i=nbOfChunks-1; i >= 1; i--){
-//					vhdl << use(join("sum_l",i,"_idx",i))<<range(cSize[i]-1,0)<< " & ";
-//				}
-//				vhdl << use("sum_l0_idx0")<<range(cSize[0]-1,0)<<";"<<endl;
-
-//				outDelayMap["R"] = target->adderDelay(cSize[nbOfChunks-1]); 
-//				if (verbose)
-//					cout<< "Last addition size is "<<cSize[nbOfChunks-1]<< " having a delay of "<<target->adderDelay(cSize[nbOfChunks-1])<<endl;
-//			}
 

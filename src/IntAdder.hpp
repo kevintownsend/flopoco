@@ -38,66 +38,177 @@ namespace flopoco{
 		 **/
 		IntAdder(Target* target, int wIn, map<string, double> inputDelays = emptyDelayMap, int optimizeType = SLICE );
 	
+		/**
+		* Selects one among the 3 possible implementations, taking in consideration the optimization type
+		* @param[in] target            the target device
+		* @param[in] wIn               the input width
+		* @param[in] inputDelays       the map containing the input delays
+		* @param[in] optimizeType      the optimization type; can be one of: LOGIC, REGISTERS, SLICES, LATENCY 
+		* @return                      a number between 0 and 2: CLASSICAL=0, ALTERNATIVE=1, SHORTLATENCY=2
+		*/
 		int implementationSelector(Target* target, int wIn, map<string, double> inputDelays, int optimizeType);
 
+		/**
+		* Returns the cost in LUTs of the Classical implementation
+		* @param[in] target            the target device
+		* @param[in] wIn               the input width
+		* @param[in] inputDelays       the map containing the input delays
+		* @return                      the number of LUTS
+		*/
 		int getLutCostClassical(Target* target, int wIn, map<string, double> inputDelays);
+
+		/**
+		* Returns the cost in LUTs of the Alternative implementation
+		* @param[in] target            the target device
+		* @param[in] wIn               the input width
+		* @param[in] inputDelays       the map containing the input delays
+		* @return                      the number of LUTS
+		*/
 		int getLutCostAlternative(Target* target, int wIn, map<string, double> inputDelays);
+
+		/**
+		* Returns the cost in LUTs of the Short-Latency implementation
+		* @param[in] target            the target device
+		* @param[in] wIn               the input width
+		* @param[in] inputDelays       the map containing the input delays
+		* @return                      the number of LUTS
+		*/
 		int getLutCostShortLatency(Target* target, int wIn, map<string, double> inputDelays);
 	
+		/**
+		* Returns the cost in Registers of the Classical implementation
+		* @param[in] target            the target device
+		* @param[in] wIn               the input width
+		* @param[in] inputDelays       the map containing the input delays
+		* @return                      the number of Registers
+		*/
 		int getRegCostClassical(Target* target, int wIn, map<string, double> inputDelays);
+
+		/**
+		* Returns the cost in Registers of the Alternative implementation
+		* @param[in] target            the target device
+		* @param[in] wIn               the input width
+		* @param[in] inputDelays       the map containing the input delays
+		* @return                      the number of Registers
+		*/
 		int getRegCostAlternative(Target* target, int wIn, map<string, double> inputDelays);
+
+		/**
+		* Returns the cost in Registers of the Short-Latency implementation
+		* @param[in] target            the target device
+		* @param[in] wIn               the input width
+		* @param[in] inputDelays       the map containing the input delays
+		* @return                      the number of Registers
+		*/
 		int getRegCostShortLatency(Target* target, int wIn, map<string, double> inputDelays);
 
+		/**
+		* Returns the cost in Slices of the Classical implementation
+		* @param[in] target            the target device
+		* @param[in] wIn               the input width
+		* @param[in] inputDelays       the map containing the input delays
+		* @return                      the number of Slices
+		*/
 		int getSliceCostClassical(Target* target, int wIn, map<string, double> inputDelays);
+
+		/**
+		* Returns the cost in Slices of the Alternative implementation
+		* @param[in] target            the target device
+		* @param[in] wIn               the input width
+		* @param[in] inputDelays       the map containing the input delays
+		* @return                      the number of Slices
+		*/
 		int getSliceCostAlternative(Target* target, int wIn, map<string, double> inputDelays);
+
+		/**
+		* Returns the cost in Slices of the Short-Latency implementation
+		* @param[in] target            the target device
+		* @param[in] wIn               the input width
+		* @param[in] inputDelays       the map containing the input delays
+		* @return                      the number of Slices
+		*/
 		int getSliceCostShortLatency(Target* target, int wIn, map<string, double> inputDelays);
 
+		/**
+		* Updates the parameters needed of architecture implementation: wIn is taken from class attributes 
+		* @param[in]  target            the target device
+		* @param[out] alpha             the size of the chunk (except last chunk)
+		* @param[out] beta              the size of the last chunk
+		* @param[out] k                 the number of chunks
+		*/
 		void updateParameters( Target* target, int &alpha, int &beta, int &k);
+
+		/**
+		* Updates the parameters needed of architecture implementation: wIn is taken from class attributes 
+		* @param[in]  target            the target device
+		* @param[in]  inputDelays       the map containing the input delays
+		* @param[out] alpha             the size of the chunk (except first and last chunk)
+		* @param[out] beta              the size of the last chunk
+		* @param[out] gamma             the size of the first
+		* @param[out] k                 the number of chunks
+		*/
 		void updateParameters( Target* target, map<string, double> inputDelays, int &alpha, int &beta, int &gamma, int &k);
+
+		/**
+		* Updates the parameters needed of architecture implementation: wIn is taken from class attributes 
+		* @param[in]  target            the target device
+		* @param[in]  inputDelays       the map containing the input delays
+		* @param[out] alpha             the size of the chunk (except first and last chunk)
+		* @param[out] beta              the size of the last chunk
+		* @param[out] k                 the number of chunks
+		*/
 		void updateParameters( Target* target, map<string, double> inputDelays, int &alpha, int &beta, int &k);
 		
+		/**
+		* Returns the result of the optimization algorithm for the short-latency architecture on the input data.  
+		* @param[in] target            the target device
+		* @param[in] wIn               the input width
+		* @param[in] k                 the number of chunks
+		* @return                      true, if the optimization algorithm succeeded, false otherwise  
+		*/
 		bool tryOptimizedChunkSplittingShortLatency(Target* target, int wIn, int k);
+
 		/**
 		 *  Destructor
 		 */
 		~IntAdder();
 
+//		int getLastChunkSize() {
+//			return lastChunkSize;
+//		}
+
+
+
 		/**
-			A method returning the size of last chunk. 
-			Typical use: target->adderDelay(getLastChunkSize())  provides the output slack delay
+		* The emulate function.
+		* @param[in] tc               a list of test-cases
 		*/
-		int getLastChunkSize() {
-			return lastChunkSize;
-		}
-
-
 		void emulate(TestCase* tc);
 
 	protected:
 		int wIn_;                         /**< the width for X, Y and R*/
 
 	private:
-		map<string, double> inputDelays_; /**< a map between input signal names and their maximum delays */
+//		map<string, double> inputDelays_; /**< a map between input signal names and their maximum delays */
 		double maxInputDelay;             /**< the maximum delay between the inputs present in the map*/
 		int nbOfChunks;                   /**< the number of chunks that the addition will be split in */
 		int chunkSize_;                   /**< the suggested chunk size so that the addition can take place at the objective frequency*/
 		int lastChunkSize;
 		int *cSize;                       /**< array containing the chunk sizes for all nbOfChunks*/
-		int *cIndex;                       /**< array containing the indexes for all Chunks*/
-		// new notations
-		int alpha; /**< the chunk size */
-		int beta;  /**< the last chunk size */
-		int gamma; /**< the first chunk size when slack is considered */
-		int k;     /**< the number of chunks */
-		int w;     /**< the addition width */
+		int *cIndex;                      /**< array containing the indexes for all Chunks*/
 
-		int selectedDesign;
-		
-		int classicalSlackVersion;
-		int alternativeSlackVersion;
-		
-		int shortLatencyVersion;
-		double objectivePeriod;
+		// new notations
+		int alpha;                        /**< the chunk size */
+		int beta;                         /**< the last chunk size */
+		int gamma;                        /**< the first chunk size when slack is considered */
+		int k;                            /**< the number of chunks */
+		int w;                            /**< the addition width */
+		int selectedDesign;               /**< one of the 3 possible implementations */ 
+		int classicalSlackVersion;        /**< for the slack case, two architectures are possible in the classical case. */        
+		int alternativeSlackVersion;      /**< for the slack case, two architectures are possible in the alternative case. */        
+		int shortLatencyVersion;          /**< the short-latency has two options, one optimized and one defalut. The default one is selected
+                                               if the optimization cannot take place */
+		double objectivePeriod;           /**< the inverse of the frequency */
 	};
 
 }

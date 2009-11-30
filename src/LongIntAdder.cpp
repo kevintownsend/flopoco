@@ -115,7 +115,7 @@ extern vector<Operator*> oplist;
 						width = width - cs;
 						cSize[chunkIndex] = cs;
 
-						if ( (cSize[chunkIndex-1]==cSize[chunkIndex]) && (cSize[chunkIndex-1]==2) && ( invalid == false) ){
+						if ( (cSize[chunkIndex-1]<=2) && (cSize[chunkIndex-1]<=2) && ( invalid == false) ){
 							REPORT(1, "[WARNING] Register level inserted after carry-propagation chain");
 							invalid = true; /* invalidate the current splitting */
 						}

@@ -665,6 +665,11 @@ public:
 	 */	 
 	string  delaySignal(const string name, const int delay=1);
 
+	/**
+	* @return the output map containing the signal -> delay associations 
+	*/	
+	map<string, double> getOutDelayMap();
+
 
 protected:    
 	Target*             target_;          /**< The target on which the operator will be deployed */

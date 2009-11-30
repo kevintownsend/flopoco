@@ -206,7 +206,7 @@ namespace flopoco{
 							adder->changeName(getName() + "_" + sao->name + "_adder");
 							oplist.push_back(adder);
 
-							partial_delay = target_->adderDelay(adder->getLastChunkSize());
+							partial_delay =  (adder->getOutDelayMap())["R"]; //  target_->adderDelay(adder->getLastChunkSize());
 						}
 					}
 				}
