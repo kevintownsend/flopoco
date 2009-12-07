@@ -19,6 +19,7 @@ namespace flopoco{
 #define ALTERNATIVE  1
 #define SHORTLATENCY 2
 
+#define XILINX_OPTIMIZATION 1
 
 	extern map<string, double> emptyDelayMap;
 	/** The IntAdder class for experimenting with adders. 

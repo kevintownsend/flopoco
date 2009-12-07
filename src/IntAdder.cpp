@@ -101,7 +101,7 @@ extern vector<Operator*> oplist;
 				/* init the array with chunk sizes */
 				cSize = new int[k+1];
 				if ( k > 1 ){
-					cSize[0] = (selectedDesign == 1 ? gamma: alpha);
+					cSize[0] = (classicalSlackVersion == 0 ? gamma: alpha);
 					for (int i=1; i<k-1; i++)
 						cSize[i] = alpha;
 					cSize[k-1] = beta;
@@ -321,8 +321,8 @@ extern vector<Operator*> oplist;
 			
 					if (j>0){ //for all chunks greater than zero we perform this additions
 							bool found = false;
-							for(unsigned k=0; k<oplist.size(); k++) {
-								if  ( (oplist[k]->getName()).compare(adder->getName()) ==0 ){
+							for(unsigned kk=0; kk<oplist.size(); kk++) {
+								if  ( (oplist[kk]->getName()).compare(adder->getName()) ==0 ){
 									REPORT(3, "found in opList ... not adding");
 									found = true;
 								}
