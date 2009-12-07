@@ -101,7 +101,11 @@ extern vector<Operator*> oplist;
 				/* init the array with chunk sizes */
 				cSize = new int[k+1];
 				if ( k > 1 ){
-					cSize[0] = (classicalSlackVersion == 0 ? gamma: alpha);
+					if (maxInputDelay != 0 )
+						cSize[0] = (classicalSlackVersion == 0 ? gamma: alpha);
+					else
+						cSize[0] = alpha;
+						
 					for (int i=1; i<k-1; i++)
 						cSize[i] = alpha;
 					cSize[k-1] = beta;
