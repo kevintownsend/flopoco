@@ -112,7 +112,7 @@ public:
 	void addOutput(const std::string name, const int width=1, const int numberOfPossibleOutputValues=1, const bool isBus=false);
 	
 
-	/** Adds a floating point input signal to the operator.
+	/** Adds a floating point (FloPoCo format) input signal to the operator.
 	 * Adds a signal of type Signal::in to the the I/O signal list, 
 	 * having the FP flag set on true. The total width of this signal will
 	 * be wE + wF + 3. (2 bits for exception, 1 for sign)
@@ -123,7 +123,7 @@ public:
 	void addFPInput(const std::string name, const int wE, const int wF);
 
 
-	/** Adds a floating point output signal to the operator.
+	/** Adds a floating point (FloPoCo format) output signal to the operator.
 	 * Adds a signal of type Signal::out to the the I/O signal list, 
 	 * having the FP flag set on true. The total width of this signal will
 	 * be wE + wF + 3. (2 bits for exception, 1 for sign)
@@ -133,6 +133,28 @@ public:
 	 * @param numberOfPossibleOutputValues (optional, defaults to 1) set to 2 for a faithfully rounded operator for instance
 	 */	
 	void addFPOutput(const std::string name, const int wE, const int wF, const int numberOfPossibleOutputValues=1);
+
+	/** Adds a IEEE floating point input signal to the operator.
+	 * Adds a signal of type Signal::in to the the I/O signal list, 
+	 * having the FP flag set on true. The total width of this signal will
+	 * be wE + wF + 1.  (1 bit for sign)
+	 * @param name the name of the signal
+	 * @param wE   the width of the exponent
+	 * @param wF   the withh of the fraction
+	 */
+	void addIEEEInput(const std::string name, const int wE, const int wF);
+
+
+	/** Adds a floating point output signal to the operator.
+	 * Adds a signal of type Signal::out to the the I/O signal list, 
+	 * having the FP flag set on true. The total width of this signal will
+	 * be wE + wF + 1. (1 bit for sign)
+	 * @param name the name of the signal
+	 * @param wE   the width of the exponent
+	 * @param wF   the withh of the fraction
+	 * @param numberOfPossibleOutputValues (optional, defaults to 1) set to 2 for a faithfully rounded operator for instance
+	 */	
+	void addIEEEOutput(const std::string name, const int wE, const int wF, const int numberOfPossibleOutputValues=1);
 
 	
 

@@ -44,7 +44,7 @@ namespace flopoco{
 		 * @param wE        the exponent width
 		 * @param wF        the significand width
 		 */
-		Signal(const std::string name, const SignalType type, const int wE, const int wF);
+		Signal(const std::string name, const SignalType type, const int wE, const int wF, const bool ieeeFormat=false);
 
 		/** Signal destructor.
 		 */		
@@ -72,10 +72,15 @@ namespace flopoco{
 		 */	
 		int wF() const;
 	
-		/** Reports if the signal is a floating-point signal
-		 * @return if the signal is a FP siglal
+		/** Reports if the signal is a FloPoCo floating-point signal
+		 * @return if the signal is a FP signal
 		 */	
 		bool isFP() const;
+	
+		/** Reports if the signal is an IEEE floating-point signal
+		 * @return if the signal is a FP signal
+		 */	
+		bool isIEEE() const;
 
 		/** Reports if the signal has the bus flag active
 		 * @return true if the signal is of bus type (std_logic_vector)
@@ -162,7 +167,8 @@ namespace flopoco{
 		int           lifeSpan_;    /**< The max delay that will be applied to this signal; */
 		int           cycle_;       /**<  the cycle at which this signal is active in a pipelined operator. 0 means synchronized with the inputs */
 	
-		bool          isFP_;        /**< If the signal is of floating-point type */  
+		bool          isFP_;        /**< If the signal is of the FloPoCo floating-point type */  
+		bool          isIEEE_;      /**< If the signal is of the IEEE floating-point type */  
 		int           wE_;          /**< The width of the exponent. Used for FP signals */
 		int           wF_;          /**< The width of the fraction. Used for FP signals */
 		

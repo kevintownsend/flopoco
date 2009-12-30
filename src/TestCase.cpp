@@ -58,7 +58,7 @@ namespace flopoco{
 	}
 
 
-	void TestCase::addInput(string name, FPNumber::SpecialValue v) {
+	void TestCase::addFPInput(string name, FPNumber::SpecialValue v) {
 		// get signal size
 		Signal* s = op_->getSignalByName(name);
 		if(!s->isFP()) {
@@ -72,7 +72,7 @@ namespace flopoco{
 	}
 
 
-	void TestCase::addInput(string name, double x) {
+	void TestCase::addFPInput(string name, double x) {
 		// get signal size
 		Signal* s = op_->getSignalByName(name);
 		if(!s->isFP()) {
@@ -81,6 +81,35 @@ namespace flopoco{
 		int wE=s->wE();
 		int wF=s->wF();
 		FPNumber  fpx(wE, wF);
+		fpx=x;
+		mpz_class mpx = fpx.getSignalValue();
+
+		inputs[name] = mpx;
+	}
+
+	void TestCase::addIEEEInput(string name, IEEENumber::SpecialValue v) {
+		// get signal size
+		Signal* s = op_->getSignalByName(name);
+		if(!s->isIEEE()) {
+			throw string("TestCase::addInput: Cannot convert IEEENumber::SpecialValue to non-FP signal");
+		} 
+		int wE=s->wE();
+		int wF=s->wF();
+		IEEENumber  fpx(wE, wF,v);
+		mpz_class mpx = fpx.getSignalValue();
+		inputs[name] = mpx;
+	}
+
+
+	void TestCase::addIEEEInput(string name, double x) {
+		// get signal size
+		Signal* s = op_->getSignalByName(name);
+		if(!s->isIEEE()) {
+			throw string("TestCase::addInput: Cannot convert a double into non-FP signal");
+		} 
+		int wE=s->wE();
+		int wF=s->wF();
+		IEEENumber  fpx(wE, wF);
 		fpx=x;
 		mpz_class mpx = fpx.getSignalValue();
 

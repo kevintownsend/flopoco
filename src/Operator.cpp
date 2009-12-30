@@ -89,6 +89,33 @@ namespace flopoco{
 	}
 
 
+	void Operator::addIEEEInput(const std::string name, const int wE, const int wF) {
+		if (signalMap_.find(name) != signalMap_.end()) {
+			cerr << "ERROR in addInput , signal " << name<< " seems to already exist" << endl;
+			exit(EXIT_FAILURE);
+		}
+		Signal *s = new Signal(name, Signal::in, wE, wF, true);
+		s->setCycle(0);
+		ioList_.push_back(s);
+		signalMap_[name] = s ;
+		numberOfInputs_ ++;
+	}
+
+	void Operator::addIEEEOutput(const std::string name, const int wE, const int wF, const int numberOfPossibleOutputValues) {
+		if (signalMap_.find(name) != signalMap_.end()) {
+			cerr << "ERROR in addInput , signal " << name<< " seems to already exist" << endl;
+			exit(EXIT_FAILURE);
+		}
+		Signal *s = new Signal(name, Signal::out, wE, wF, true) ;
+		s -> setNumberOfPossibleValues(numberOfPossibleOutputValues);
+		ioList_.push_back(s);
+		for(int i=0; i<numberOfPossibleOutputValues; i++) 
+			testCaseSignals_.push_back(s);
+		signalMap_[name] = s ;
+		numberOfOutputs_ ++;
+	}
+
+
 
 
 	void Operator::addSignalGeneric(const string name, const int width, const int delay, Signal::SignalType regType, bool isbus) {

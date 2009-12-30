@@ -7,6 +7,7 @@
 
 #include "Signal.hpp"
 #include "FPNumber.hpp"
+#include "IEEENumber.hpp"
 
 using namespace std;
 
@@ -43,20 +44,36 @@ namespace flopoco{
 		 * @param v The value which will be assigned to the signal
 		 */
 		void addInput(string s, mpz_class v);
+
 		/**
-		 * Adds an input for this TestCase
+		 * Adds an input in the FloPoCo FP format for this TestCase
 		 * @param s The signal which will value the given value
 		 * @param v The value which will be assigned to the signal
 		 */
-		void addInput(string s, FPNumber::SpecialValue v);
+		void addFPInput(string s, FPNumber::SpecialValue v);
 
 		/**
-		 * Adds an input for this TestCase
+		 * Adds an input in the FloPoCo FP format for this TestCase
 		 * @param s The signal which will value the given value
 		 * @param x the value which will be assigned to the signal, provided as a double.
 		 * (use this method with care) 
 		 */
-		void addInput(string s, double x);
+		void addFPInput(string s, double x);
+
+		/**
+		 * Adds an input in the IEEE FP format for this TestCase
+		 * @param s The signal which will value the given value
+		 * @param v The value which will be assigned to the signal
+		 */
+		void addIEEEInput(string s, IEEENumber::SpecialValue v);
+
+		/**
+		 * Adds an input in the IEEE FP format for this TestCase
+		 * @param s The signal which will value the given value
+		 * @param x the value which will be assigned to the signal, provided as a double.
+		 * (use this method with care) 
+		 */
+		void addIEEEInput(string s, double x);
 
 		/**
 		 * recover the mpz associated to an input

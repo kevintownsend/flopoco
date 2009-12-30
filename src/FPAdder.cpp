@@ -1,25 +1,11 @@
 /*
  * Floating Point Adder for FloPoCo
  *
- * Author : Bogdan Pasca, Florent de Dinechin
- *
- * This file is part of the FloPoCo project developed by the Arenaire
- * team at Ecole Normale Superieure de Lyon
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or 
- * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
- */
+  * Authors: Bogdan Pasca, Florent de Dinechin
+  * Copyright ENS-Lyon, INRIA, CNRS, UCBL
+  *
+  * This file is part of the FloPoCo project developed by the Arenaire team at Ecole Normale Superieure de Lyon
+  */
 
 // TODO move close path prenormalization up to the Swap Difference box
 //   if it becomes a part of the critical path
@@ -505,38 +491,38 @@ namespace flopoco{
 
 		// Regression tests 
 		tc = new TestCase(this); 
-		tc->addInput("X", 1.0);
-		tc->addInput("Y", -1.0);
+		tc->addFPInput("X", 1.0);
+		tc->addFPInput("Y", -1.0);
 		emulate(tc);
 		tcl->add(tc);
 
 		tc = new TestCase(this); 
-		tc->addInput("X", 1.0);
-		tc->addInput("Y", FPNumber::plusDirtyZero);
+		tc->addFPInput("X", 1.0);
+		tc->addFPInput("Y", FPNumber::plusDirtyZero);
 		emulate(tc);
 		tcl->add(tc);
 
 		tc = new TestCase(this); 
-		tc->addInput("X", 1.0);
-		tc->addInput("Y", FPNumber::minusDirtyZero);
+		tc->addFPInput("X", 1.0);
+		tc->addFPInput("Y", FPNumber::minusDirtyZero);
 		emulate(tc);
 		tcl->add(tc);
 
 		tc = new TestCase(this); 
-		tc->addInput("X", FPNumber::plusInfty);
-		tc->addInput("Y", FPNumber::minusInfty);
+		tc->addFPInput("X", FPNumber::plusInfty);
+		tc->addFPInput("Y", FPNumber::minusInfty);
 		emulate(tc);
 		tcl->add(tc);
 
 		tc = new TestCase(this); 
-		tc->addInput("X", FPNumber::plusInfty);
-		tc->addInput("Y", FPNumber::plusInfty);
+		tc->addFPInput("X", FPNumber::plusInfty);
+		tc->addFPInput("Y", FPNumber::plusInfty);
 		emulate(tc);
 		tcl->add(tc);
 
 		tc = new TestCase(this); 
-		tc->addInput("X", FPNumber::minusInfty);
-		tc->addInput("Y", FPNumber::minusInfty);
+		tc->addFPInput("X", FPNumber::minusInfty);
+		tc->addFPInput("Y", FPNumber::minusInfty);
 		emulate(tc);
 		tcl->add(tc);
 	

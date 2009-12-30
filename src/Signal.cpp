@@ -12,11 +12,16 @@ namespace flopoco{
 		isFP_(false), wE_(0), wF_(0),  isBus_(isBus) {
 	}
 
-	Signal::Signal(const string name, const Signal::SignalType type, const int wE, const int wF) : 
+	Signal::Signal(const string name, const Signal::SignalType type, const int wE, const int wF, const bool ieeeFormat) : 
 		name_(name), type_(type), width_(wE+wF+3), numberOfPossibleValues_(1), 
 		lifeSpan_(0), cycle_(0),
-		isFP_(true), wE_(wE), wF_(wF), isBus_(false)
+		isFP_(true), isIEEE_(false), wE_(wE), wF_(wF), isBus_(false)
 	{
+		if(ieeeFormat) { // correct some of the initializations above
+			width_=wE+wF+1;
+			isFP_=false;
+			isIEEE_=true;
+		}
 	}
 
 	Signal::~Signal(){}
@@ -33,6 +38,8 @@ namespace flopoco{
 	int Signal::wF() const {return(wF_);}
 	
 	bool Signal::isFP() const {return isFP_;}
+
+	bool Signal::isIEEE() const {return isIEEE_;}
 
 	bool Signal::isBus() const {return isBus_;}
 
