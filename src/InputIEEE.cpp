@@ -62,7 +62,7 @@ namespace flopoco{
 
 		// -------- Parameter set up -----------------
 
-		addInput ("X", wEI+wFI+1);
+		addIEEEInput ("X", wEI,wFI);
 		addFPOutput("R", wEO, wFO);
 
 		vhdl << tab << declare("expX", wEI) << "  <= X" << range(wEI+wFI-1, wFI) << ";" << endl;

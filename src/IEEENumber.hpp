@@ -56,12 +56,6 @@ namespace flopoco{
 		 */
 		mpz_class getMantissaSignalValue();
 
-		/**
-		 * Retrieves the fraction.
-		 * @return An mpz_class, representing the VHDL
-		 * signal of the mantissa, plus leading 1.
-		 */
-		mpz_class getFractionSignalValue();
 
 
 		/**

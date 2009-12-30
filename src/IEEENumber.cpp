@@ -53,7 +53,11 @@ namespace flopoco{
 			if(mantissa==0) mantissa++; // we want a NaN, not an infinity
 			break;
 		}
+		cout << "exponent=" << exponent << " mantissa=" << mantissa << endl;
 	}
+
+
+
 
 
 	mpz_class IEEENumber::getMantissaSignalValue()
@@ -70,9 +74,19 @@ namespace flopoco{
 		return exponent;
 	}
 
-	mpz_class IEEENumber::getFractionSignalValue()
+
+
+	mpz_class IEEENumber::getSignalValue()
 	{
-		return mantissa + (mpz_class(1)<<wF);
+
+		/* Sanity checks */
+		if ((sign != 0) && (sign != 1))
+			throw std::string("IEEENumber::getSignal: sign is invalid.");
+		if ((exponent < 0) || (exponent >= (1<<wE)))
+			throw std::string("IEEENumber::getSignal: exponent is invalid.");
+		if ((mantissa < 0) || (mantissa >= (mpz_class(1)<<wF)))
+			throw std::string("IEEENumber::getSignal: mantissa is invalid.");
+		return ((( sign << wE) + exponent) << wF) + mantissa;
 	}
 
 
@@ -139,10 +153,12 @@ namespace flopoco{
 				return *this;
 			}
 
+		// all the other values are signed
+		sign = mpfr_sgn(mp) > 0 ? 0 : 1;
+
 		/* Inf */
 		if (mpfr_inf_p(mp))
 			{
-				sign = mpfr_sgn(mp) > 0 ? 0 : 1;
 				exponent = (1<<wE)-1;
 				mantissa = 0;
 				return *this;
@@ -151,14 +167,12 @@ namespace flopoco{
 		/* Zero */
 		if (mpfr_zero_p(mp))
 			{
-				sign = mpfr_signbit(mp) == 0 ? 0 : 1;
 				exponent = 0;
 				mantissa = 0;
 				return *this;
 			}
 
 		/* Normal and subnormal numbers */
-		sign = mpfr_sgn(mp) > 0 ? 0 : 1;
 		mpfr_abs(mp, mp, GMP_RNDN);
 
 		/* Get exponent
@@ -211,6 +225,8 @@ namespace flopoco{
 
 		mpfr_clear(mp);
 
+
+		// cout << "exponent=" << exponent << " mantissa=" << mantissa << endl;
 		return *this;
 	}
 
@@ -226,18 +242,8 @@ namespace flopoco{
 		return *this;
 	}
 
-	mpz_class IEEENumber::getSignalValue()
-	{
 
-		/* Sanity checks */
-		if ((sign != 0) && (sign != 1))
-			throw std::string("IEEENumber::getSignal: sign is invalid.");
-		if ((exponent < 0) || (exponent >= (1<<wE)))
-			throw std::string("IEEENumber::getSignal: exponent is invalid.");
-		if ((mantissa < 0) || (mantissa >= (mpz_class(1)<<wF)))
-			throw std::string("IEEENumber::getSignal: mantissa is invalid.");
-		return ((( sign << wE) + exponent) << wF) + mantissa;
-	}
+
 
 	IEEENumber& IEEENumber::operator=(IEEENumber fp)
 	{

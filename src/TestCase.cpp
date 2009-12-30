@@ -62,7 +62,7 @@ namespace flopoco{
 		// get signal size
 		Signal* s = op_->getSignalByName(name);
 		if(!s->isFP()) {
-			throw string("TestCase::addInput: Cannot convert FPNumber::SpecialValue to non-FP signal");
+			throw string("TestCase::addFPInput: Cannot convert FPNumber::SpecialValue to non-FP signal");
 		} 
 		int wE=s->wE();
 		int wF=s->wF();
@@ -76,7 +76,7 @@ namespace flopoco{
 		// get signal size
 		Signal* s = op_->getSignalByName(name);
 		if(!s->isFP()) {
-			throw string("TestCase::addInput: Cannot convert a double into non-FP signal");
+			throw string("TestCase::addFPInput: Cannot convert a double into non-FP signal");
 		} 
 		int wE=s->wE();
 		int wF=s->wF();
@@ -91,7 +91,7 @@ namespace flopoco{
 		// get signal size
 		Signal* s = op_->getSignalByName(name);
 		if(!s->isIEEE()) {
-			throw string("TestCase::addInput: Cannot convert IEEENumber::SpecialValue to non-FP signal");
+			throw string("TestCase::addIEEEInput: Cannot convert IEEENumber::SpecialValue to non-FP signal");
 		} 
 		int wE=s->wE();
 		int wF=s->wF();
@@ -105,7 +105,7 @@ namespace flopoco{
 		// get signal size
 		Signal* s = op_->getSignalByName(name);
 		if(!s->isIEEE()) {
-			throw string("TestCase::addInput: Cannot convert a double into non-FP signal");
+			throw string("TestCase::addIEEEInput: Cannot convert a double into non-FP signal");
 		} 
 		int wE=s->wE();
 		int wF=s->wF();

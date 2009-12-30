@@ -687,7 +687,7 @@ namespace flopoco{
 
 
 		tc = new TestCase(this); 
-		tc->addInput("X", 1.0);
+		tc->addFPInput("X", 1.0);
 		tc->addComment("1.0");
 		emulate(tc);
 		tcl->add(tc);

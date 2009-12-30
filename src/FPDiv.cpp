@@ -243,14 +243,14 @@ namespace flopoco{
 
 		// Regression tests 
 		tc = new TestCase(this); 
-		tc->addInput("X", 1.0);
-		tc->addInput("Y", FPNumber::plusDirtyZero);
+		tc->addFPInput("X", 1.0);
+		tc->addFPInput("Y", FPNumber::plusDirtyZero);
 		emulate(tc);
 		tcl->add(tc);
 
 		tc = new TestCase(this); 
-		tc->addInput("X", FPNumber::minusDirtyZero);
-		tc->addInput("Y", FPNumber::plusInfty);
+		tc->addFPInput("X", FPNumber::minusDirtyZero);
+		tc->addFPInput("Y", FPNumber::plusInfty);
 		emulate(tc);
 		tcl->add(tc);
 
