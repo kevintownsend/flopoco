@@ -53,7 +53,7 @@ namespace flopoco{
 			if(mantissa==0) mantissa++; // we want a NaN, not an infinity
 			break;
 		}
-		cout << "exponent=" << exponent << " mantissa=" << mantissa << endl;
+		//		cout << "exponent=" << exponent << " mantissa=" << mantissa << endl;
 	}
 
 
@@ -110,7 +110,7 @@ namespace flopoco{
 		/* Zero and subnormal numbers */
 		if (exponent==0)	{
 			mpfr_set_z(mp, mantissa.get_mpz_t(), GMP_RNDN);
-			mpfr_div_2si(mp, mp, wF + ((1<<(wE-1))-1), GMP_RNDN);
+			mpfr_div_2si(mp, mp, wF + ((1<<(wE-1))-2), GMP_RNDN);
 			// Sign 
 			if (sign == 1)
 				mpfr_neg(mp, mp, GMP_RNDN);
@@ -177,16 +177,19 @@ namespace flopoco{
 
 		/* Get exponent
 		 * mpfr_get_exp() return exponent for significant in [1/2,1)
-		 * but we require [1,2). Hence the -1.
+		 * but we use [1,2). Hence the -1.
 		 */
 		mp_exp_t exp = mpfr_get_exp(mp)-1;
 
 
+		//cout << "exp=" << exp <<endl;
 		if(exp + ((1<<(wE-1))-1) <=0) {			// subnormal
 			exponent=0;
 			/* Extract mantissa */
-			mpfr_mul_2si(mp, mp, wF + (exp + ((1<<(wE-1))-1)), GMP_RNDN);
+			mpfr_mul_2si(mp, mp, wF-1+((1<<(wE-1))-1), GMP_RNDN);
 			mpfr_get_z(mantissa.get_mpz_t(), mp,  GMP_RNDN);
+
+			//cout << "subnormal! " << wF + (exp + ((1<<(wE-1))-1)) << " mantissa=" << mantissa << endl;
 			
 		}
 		else { // Normal number
