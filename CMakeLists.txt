@@ -152,6 +152,7 @@ ADD_EXECUTABLE(flopoco
 # src/ConstMult/CRFPConstMult 
  src/TestCase
  src/FPNumber
+ src/IEEENumber
  
  
  src/fpexponential/math_lib
@@ -219,6 +220,7 @@ ADD_EXECUTABLE(flopoco
  src/ConstMult/FPConstMultParser 
  src/TestCase
  src/FPNumber
+ src/IEEENumber
 
  src/fpexponential/math_lib
  src/fpexponential/signal
