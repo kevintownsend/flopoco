@@ -46,6 +46,7 @@
 //#include "apps/CoilInductance/CoilInductance.hpp"
 #include "FPDiv.hpp"
 #include "FPSqrt.hpp"
+#include "FPFMA.hpp"
 #include "LongAcc.hpp"
 #include "LongAcc2FP.hpp"
 #include "DotProduct.hpp"
@@ -458,7 +459,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				inputDelays["X"]=0;
 				inputDelays["S"]=0;
 				cerr << "> LeftShifter, wIn="<<wIn<<", maxShift="<<maxShift<<"\n";
-				op = new Shifter(target, wIn, maxShift, Left);
+				op = new Shifter(target, wIn, maxShift, Shifter::Left);
 				addOperator(op);
 			}    
 		}
@@ -473,7 +474,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				inputDelays["X"]=0;
 				inputDelays["S"]=0;
 				cerr << "> RightShifter, wIn="<<wIn<<", maxShift="<<maxShift<<"\n";
-				op = new Shifter(target, wIn, maxShift, Right, inputDelays);
+				op = new Shifter(target, wIn, maxShift, Shifter::Right, inputDelays);
 				addOperator(op);
 			}
 		}
@@ -835,6 +836,18 @@ bool parseCommandLine(int argc, char* argv[]){
 			int wF = checkStrictyPositive(argv[i++], argv[0]);
 			cerr << "> FPSqrt: wE=" << wE << " wF=" << wF << endl;
 			op = new FPSqrt(target, wE, wF, true, true);
+			addOperator(op);
+		}
+
+		else if (opname == "FPFMA")
+		{
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0]); // and exit
+			int wE = checkStrictyPositive(argv[i++], argv[0]);
+			int wF = checkStrictyPositive(argv[i++], argv[0]);
+			cerr << "> FPFMA: wE=" << wE << " wF=" << wF << endl;
+			op = new FPFMA(target, wE, wF, true);
 			addOperator(op);
 		}
 

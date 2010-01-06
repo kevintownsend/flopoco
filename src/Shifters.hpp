@@ -11,11 +11,6 @@
 
 namespace flopoco{
 	extern map<string, double> emptyDelayMap;
-	/** The types of shifting */
-	typedef enum {
-		Left, /**< Left Shifter */
-		Right /**< Right Shifter */
-	} ShiftDirection;
 
 	/** The Shifter class. Left and right shifters are perfectly
 		 symmetrical, so both are instances of the Shifter class. Only the
@@ -23,6 +18,13 @@ namespace flopoco{
 	class Shifter : public Operator
 	{
 	public:
+
+		/** The types of shifting */
+		typedef enum {
+			Left, /**< Left Shifter */
+			Right /**< Right Shifter */
+		} ShiftDirection;
+		
 		/**
 		 * The Shifter constructor
 		 * @param[in]		target		the target device
@@ -31,6 +33,7 @@ namespace flopoco{
 		 * @param[in]		direction	can be either Left of Right. Determines the shift direction
 		 **/
 		Shifter(Target* target, int wIn, int maxShift, ShiftDirection dir, map<string, double> inputDelays = emptyDelayMap);
+
 
 		/** Destructor */
 		~Shifter();

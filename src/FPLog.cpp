@@ -306,7 +306,7 @@ namespace flopoco{
 
 		// ao stands for "almost one"
 		vhdl << tab << "-- The left shifter for the 'small' case" <<endl; 
-		ao_lshift = new Shifter(target, wF-pfinal+2,  wF-pfinal+2, Left);   
+		ao_lshift = new Shifter(target, wF-pfinal+2,  wF-pfinal+2, Shifter::Left);   
 		oplist.push_back(ao_lshift);
 
 		inPortMap(ao_lshift, "X", "absZ0");
@@ -553,7 +553,7 @@ namespace flopoco{
 		int Z2o2_small_size=(wF+gLog+2) - pfinal; // we need   (wF+gLog+2) - pfinal bits of Z2O2
 
 		vhdl << tab << declare("Z2o2_small_bs", Z2o2_small_size)  << " <= " << use("Z2o2_full") << range(2*squarerInSize -1, 2*squarerInSize -Z2o2_small_size) << ";" << endl;
-		ao_rshift = new Shifter(target, Z2o2_small_size, sfinal-pfinal+1, Right) ;
+		ao_rshift = new Shifter(target, Z2o2_small_size, sfinal-pfinal+1, Shifter::Right) ;
 		oplist.push_back(ao_rshift);
 		inPortMap(ao_rshift, "X", "Z2o2_small_bs");
 		inPortMap(ao_rshift, "S", "shiftvalinR");

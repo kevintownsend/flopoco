@@ -176,7 +176,7 @@ namespace flopoco{
 			vhdl << tab << declare("fullShiftValB", wE) << " <=  (" << use("EA") << range(wE-2,0) << " - " << use("EB")<< range(wE-2,0) << ") & '0' ; -- positive result, no overflow " << endl;
 			vhdl << tab << declare("fullShiftValC", wE) << " <=  (" << use("EA") << range(wE-2,0) << " - " << use("EC")<< range(wE-2,0) << ") & '0' ; -- positive result, no overflow " << endl;
 	
-			Shifter* rightShifter = new Shifter(target,wF+g+2, wF+g+2,Right); 
+			Shifter* rightShifter = new Shifter(target,wF+g+2, wF+g+2, Shifter::Right); 
 			oplist.push_back(rightShifter);
 
 			int sizeRightShift = rightShifter->getShiftInWidth(); 

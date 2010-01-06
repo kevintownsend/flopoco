@@ -123,7 +123,7 @@ namespace flopoco{
 		vhdl << tab << declare("shiftVal",wEX_+1) << " <= (\"0\" & " << use("expX") << ") - CONV_STD_LOGIC_VECTOR("<< exp_offset <<","<<  wEX_+1<<");" << endl;
 
 		//input shifter mappings
-		shifter_ = new Shifter(target, wFX_+1, maxShift_, Left);
+		shifter_ = new Shifter(target, wFX_+1, maxShift_, Shifter::Left);
 		oplist.push_back(shifter_);
 
 		inPortMap   (shifter_, "X", "fracX");

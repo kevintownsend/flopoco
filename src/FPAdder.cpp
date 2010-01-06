@@ -252,7 +252,7 @@ namespace flopoco{
 	
 		// shift right the significand of new Y with as many positions as the exponent difference suggests (alignment) 
 		REPORT(DETAILED, "Building far path right shifter");	
-		rightShifter = new Shifter(target,wFX+1,wFX+3,Right);
+		rightShifter = new Shifter(target,wFX+1,wFX+3, Shifter::Right);
 		rightShifter->changeName(getName()+"_RightShifter");
 		oplist.push_back(rightShifter);
 		inPortMap  (rightShifter, "X", "fracNewY");
