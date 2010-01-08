@@ -29,106 +29,117 @@ namespace flopoco{
 	public:
 		/**
 		 * The IntAdder constructor
-		 * @param[in] target the target device
-		 * @param[in] wIn    the with of the inputs and output
-		 * @param[in] inputDelays the delays for each input
-		 * @param[in] the type optimization we want for our adder.
+		 * @param[in] target           the target device
+		 * @param[in] wIn              the with of the inputs and output
+		 * @param[in] inputDelays      the delays for each input
+		 * @param[in] optimizeType     the type optimization we want for our adder.
 		 *            0: optimize for logic (LUT/ALUT)
 		 *            1: optimize register count
 		 *            2: optimize slice/ALM count
+		 * @param[in] srl              optimize for use of shift registers
 		 **/
-		IntAdder(Target* target, int wIn, map<string, double> inputDelays = emptyDelayMap, int optimizeType = SLICE );
+		IntAdder(Target* target, int wIn, map<string, double> inputDelays = emptyDelayMap, int optimizeType = SLICE, bool srl = true );
 	
 		/**
 		* Selects one among the 3 possible implementations, taking in consideration the optimization type
 		* @param[in] target            the target device
 		* @param[in] wIn               the input width
 		* @param[in] inputDelays       the map containing the input delays
-		* @param[in] optimizeType      the optimization type; can be one of: LOGIC, REGISTERS, SLICES, LATENCY 
+		* @param[in] optimizeType      the optimization type; can be one of: LOGIC, REGISTERS, SLICES, LATENCY
+		* @param[in] srl               optimize for use of shift registers 
 		* @return                      a number between 0 and 2: CLASSICAL=0, ALTERNATIVE=1, SHORTLATENCY=2
 		*/
-		int implementationSelector(Target* target, int wIn, map<string, double> inputDelays, int optimizeType);
+		int implementationSelector(Target* target, int wIn, map<string, double> inputDelays, int optimizeType, bool srl);
 
 		/**
 		* Returns the cost in LUTs of the Classical implementation
 		* @param[in] target            the target device
 		* @param[in] wIn               the input width
 		* @param[in] inputDelays       the map containing the input delays
+		* @param[in] srl               optimize for use of shift registers 
 		* @return                      the number of LUTS
 		*/
-		int getLutCostClassical(Target* target, int wIn, map<string, double> inputDelays);
+		int getLutCostClassical(Target* target, int wIn, map<string, double> inputDelays, bool srl);
 
 		/**
 		* Returns the cost in LUTs of the Alternative implementation
 		* @param[in] target            the target device
 		* @param[in] wIn               the input width
 		* @param[in] inputDelays       the map containing the input delays
+		* @param[in] srl               optimize for use of shift registers
 		* @return                      the number of LUTS
 		*/
-		int getLutCostAlternative(Target* target, int wIn, map<string, double> inputDelays);
+		int getLutCostAlternative(Target* target, int wIn, map<string, double> inputDelays, bool srl);
 
 		/**
 		* Returns the cost in LUTs of the Short-Latency implementation
 		* @param[in] target            the target device
 		* @param[in] wIn               the input width
 		* @param[in] inputDelays       the map containing the input delays
+		* @param[in] srl               optimize for use of shift registers
 		* @return                      the number of LUTS
 		*/
-		int getLutCostShortLatency(Target* target, int wIn, map<string, double> inputDelays);
+		int getLutCostShortLatency(Target* target, int wIn, map<string, double> inputDelays, bool srl);
 	
 		/**
 		* Returns the cost in Registers of the Classical implementation
 		* @param[in] target            the target device
 		* @param[in] wIn               the input width
 		* @param[in] inputDelays       the map containing the input delays
+		* @param[in] srl               optimize for use of shift registers
 		* @return                      the number of Registers
 		*/
-		int getRegCostClassical(Target* target, int wIn, map<string, double> inputDelays);
+		int getRegCostClassical(Target* target, int wIn, map<string, double> inputDelays, bool srl);
 
 		/**
 		* Returns the cost in Registers of the Alternative implementation
 		* @param[in] target            the target device
 		* @param[in] wIn               the input width
 		* @param[in] inputDelays       the map containing the input delays
+		* @param[in] srl               optimize for use of shift registers
 		* @return                      the number of Registers
 		*/
-		int getRegCostAlternative(Target* target, int wIn, map<string, double> inputDelays);
+		int getRegCostAlternative(Target* target, int wIn, map<string, double> inputDelays, bool srl);
 
 		/**
 		* Returns the cost in Registers of the Short-Latency implementation
 		* @param[in] target            the target device
 		* @param[in] wIn               the input width
 		* @param[in] inputDelays       the map containing the input delays
+		* @param[in] srl               optimize for use of shift registers
 		* @return                      the number of Registers
 		*/
-		int getRegCostShortLatency(Target* target, int wIn, map<string, double> inputDelays);
+		int getRegCostShortLatency(Target* target, int wIn, map<string, double> inputDelays, bool srl);
 
 		/**
 		* Returns the cost in Slices of the Classical implementation
 		* @param[in] target            the target device
 		* @param[in] wIn               the input width
 		* @param[in] inputDelays       the map containing the input delays
+		* @param[in] srl               optimize for use of shift registers
 		* @return                      the number of Slices
 		*/
-		int getSliceCostClassical(Target* target, int wIn, map<string, double> inputDelays);
+		int getSliceCostClassical(Target* target, int wIn, map<string, double> inputDelays, bool srl);
 
 		/**
 		* Returns the cost in Slices of the Alternative implementation
 		* @param[in] target            the target device
 		* @param[in] wIn               the input width
 		* @param[in] inputDelays       the map containing the input delays
+		* @param[in] srl               optimize for use of shift registers
 		* @return                      the number of Slices
 		*/
-		int getSliceCostAlternative(Target* target, int wIn, map<string, double> inputDelays);
+		int getSliceCostAlternative(Target* target, int wIn, map<string, double> inputDelays, bool srl);
 
 		/**
 		* Returns the cost in Slices of the Short-Latency implementation
 		* @param[in] target            the target device
 		* @param[in] wIn               the input width
 		* @param[in] inputDelays       the map containing the input delays
+		* @param[in] srl               optimize for use of shift registers
 		* @return                      the number of Slices
 		*/
-		int getSliceCostShortLatency(Target* target, int wIn, map<string, double> inputDelays);
+		int getSliceCostShortLatency(Target* target, int wIn, map<string, double> inputDelays, bool srl);
 
 		/**
 		* Updates the parameters needed of architecture implementation: wIn is taken from class attributes 

@@ -46,7 +46,7 @@
 //#include "apps/CoilInductance/CoilInductance.hpp"
 #include "FPDiv.hpp"
 #include "FPSqrt.hpp"
-#include "FPFMA.hpp"
+//#include "FPFMA.hpp"
 #include "LongAcc.hpp"
 #include "LongAcc2FP.hpp"
 #include "DotProduct.hpp"
@@ -591,23 +591,24 @@ bool parseCommandLine(int argc, char* argv[]){
 			}    
 		}
 		else if(opname=="MyIntAdder"){
-			int nargs = 2;
+			int nargs = 3;
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
 				int wIn = checkStrictyPositive(argv[i++], argv[0]);
 				int type = atoi(argv[i++]);
+				int srl = atoi(argv[i++]);
 				cerr << "> IntAdder, wIn="<<wIn<<endl  ;
 				map <string, double> delayMap;
 				
 //				delayMap["Cin"] = 2e-9;
 				
 				switch (type) {
-					case 0: op = new IntAdder(target, wIn, delayMap, 0); break; //lut optimized
-					case 1: op = new IntAdder(target, wIn, delayMap, 1); break; //reg
-					case 2: op = new IntAdder(target, wIn, delayMap, 2); break; //slice
-					case 3: op = new IntAdder(target, wIn, delayMap, 3); break; //latency
-					default: op = new IntAdder(target,wIn, delayMap, 2); break;
+					case 0: op = new IntAdder(target, wIn, delayMap, 0, srl); break; //lut optimized
+					case 1: op = new IntAdder(target, wIn, delayMap, 1, srl); break; //reg
+					case 2: op = new IntAdder(target, wIn, delayMap, 2, srl); break; //slice
+					case 3: op = new IntAdder(target, wIn, delayMap, 3, srl); break; //latency
+					default: op = new IntAdder(target,wIn, delayMap, 2, srl); break;
 				}
 				addOperator(op);
 			}    
@@ -839,17 +840,17 @@ bool parseCommandLine(int argc, char* argv[]){
 			addOperator(op);
 		}
 
-		else if (opname == "FPFMA")
-		{
-			int nargs = 2;
-			if (i+nargs > argc)
-				usage(argv[0]); // and exit
-			int wE = checkStrictyPositive(argv[i++], argv[0]);
-			int wF = checkStrictyPositive(argv[i++], argv[0]);
-			cerr << "> FPFMA: wE=" << wE << " wF=" << wF << endl;
-			op = new FPFMA(target, wE, wF, true);
-			addOperator(op);
-		}
+//		else if (opname == "FPFMA")
+//		{
+//			int nargs = 2;
+//			if (i+nargs > argc)
+//				usage(argv[0]); // and exit
+//			int wE = checkStrictyPositive(argv[i++], argv[0]);
+//			int wF = checkStrictyPositive(argv[i++], argv[0]);
+//			cerr << "> FPFMA: wE=" << wE << " wF=" << wF << endl;
+//			op = new FPFMA(target, wE, wF, true);
+//			addOperator(op);
+//		}
 
 		else if(opname=="LongAcc"){
 			int nargs = 5;
