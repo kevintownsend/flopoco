@@ -178,7 +178,7 @@ namespace flopoco{
 		* @param[in] k                 the number of chunks
 		* @return                      true, if the optimization algorithm succeeded, false otherwise  
 		*/
-		bool tryOptimizedChunkSplittingShortLatency(Target* target, int wIn, int k);
+		bool tryOptimizedChunkSplittingShortLatency(Target* target, int wIn, int &k);
 
 		/**
 		 *  Destructor

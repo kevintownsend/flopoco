@@ -58,12 +58,14 @@ extern vector<Operator*> oplist;
 		addInput ("Cin", 1 );
 		addOutput("R"  , wIn_, 1 , true);
 
+		REPORT( DEBUG, "++++++++++++++++++++++++++++++++++++++++++++ ");
 		REPORT( INFO, "Optimization focuses on: " << (optimizeType==0? "logic (LUT/ALUT)": (optimizeType==1?" register":"slice")) << " count");
 		REPORT( DEBUG , "Printing input delays ... " << printInputDelays(inputDelays));
 
 		if (isSequential()){
 		
 			int selectedImplementation = implementationSelector( target, wIn, inputDelays, optimizeType, srl);
+//			selectedImplementation = 2;
 			REPORT( DEBUG, "=========================================== ");
 			REPORT( INFO, "The implementation is: " << (selectedImplementation==0? "Classical": (selectedImplementation==1?"Alternative":"Short-Lantency")));
 		
@@ -261,8 +263,10 @@ extern vector<Operator*> oplist;
 			//**********************************************************************
 			// Alternative implementation of pipelined addition
 			else if (selectedImplementation == SHORTLATENCY) {
+				
 				if (shortLatencyVersion == 0){
-					tryOptimizedChunkSplittingShortLatency ( target, wIn , k );
+					
+					//tryOptimizedChunkSplittingShortLatency ( target, wIn , k );
 				}else{
 					updateParameters (target, alpha, beta, k);
 					//the sizes of the chunks
@@ -289,7 +293,7 @@ extern vector<Operator*> oplist;
 				REPORT(DETAILED, verb.str());
 			
 			
-				//split the inputs 
+				//split	 the inputs 
 				for (int i=0;i<2;i++)
 					for (int j=0; j<k; j++){
 						ostringstream name;
@@ -320,7 +324,7 @@ extern vector<Operator*> oplist;
 					bool pipe = target->isPipelined();
 					target->setNotPipelined();
 
-					IntAdder *adder = new IntAdder(target, cSize[j]+1, emptyDelayMap, optimizeType);
+					IntAdder *adder = new IntAdder(target, cSize[j]+1, emptyDelayMap, optimizeType, srl);
 					ostringstream a;
 					a.str("");
 
@@ -719,7 +723,7 @@ extern vector<Operator*> oplist;
 					if (srl)
 						cost = ((4*k - 6)*alpha + 3*beta + 2*k-4);
 					else
-						cost = (3*wIn-2*alpha-beta+k-4);
+						cost = (3*wIn-2*alpha-beta+2*(k-2));
 				}else
 					cost = 16000; //+inf			
 			} else{
@@ -747,7 +751,7 @@ extern vector<Operator*> oplist;
 	}
 
 	int IntAdder::getRegCostClassical(Target* target, int wIn, map<string, double> inputDelays, bool srl){
-		
+		REPORT( DEBUG, "=========================================== ");
 		if ( getMaxInputDelays( inputDelays ) == 0 ){
 			/* no input slack problem */
 			int alpha, beta, k, cost;
@@ -826,7 +830,7 @@ extern vector<Operator*> oplist;
 	}
 
 	int IntAdder::getRegCostAlternative(Target* target, int wIn, map<string, double> inputDelays, bool srl){
-		
+		REPORT( DEBUG, "=========================================== ");
 		if ( getMaxInputDelays( inputDelays ) == 0 ){
 			/* no input slack problem */
 			int alpha, beta, k, cost;
@@ -838,7 +842,7 @@ extern vector<Operator*> oplist;
 				if (srl)
 					cost = ((2*k-3)*alpha + beta + 2*k-3);
 				else
-					cost = ((k-1)*wIn + k*k-3*k+3);
+					cost = ((k-1)*wIn + k*k-2*k+1);
 			}
 
 			REPORT( DETAILED, "Selected: Alternative with REG cost " << cost );
@@ -1023,7 +1027,7 @@ extern vector<Operator*> oplist;
 					cost = int(ceil(double((4*k-8)*alpha + 3*beta + 2*k - 5) / double(2)));
 				}
 			}else{
-				cost = int(ceil(double(2*wIn + (k*k-4*k+3)*alpha + (k-2)*beta) / double(2)));
+				cost = int(ceil(double(3*wIn + beta) / double(2)));
 			}
 			
 			REPORT( DETAILED, "Selected: Alternative with SLICE cost " << cost );
@@ -1091,13 +1095,19 @@ extern vector<Operator*> oplist;
 				int alpha, beta, k;
 				updateParameters( target, alpha, beta, k);
 				if (k>=3){
-					cost = int(ceil(double((4*k-6)*alpha + 3*beta + 2*k - 4) / double(2)));
+					if (srl)
+						cost = int(ceil(double((4*k-6)*alpha + 3*beta + 2*k - 4) / double(2)));
+					else
+						cost = int(ceil(double(4*wIn - 2*alpha - beta +5*k-9) / double(2)));
 				}else
 					cost = 16000; //TODO			
 			}else{
 				shortLatencyVersion = 0;
 				if (k>=3){
-					cost = int(ceil(double( 3*wIn - 2*cSize[0] - cSize[k-1] + 2*(k-1) + 1 ) / double(2)));
+					if (srl)
+						cost = int(ceil(double( 3*wIn - 2*cSize[0] - cSize[k-1] + 2*(k-1) + 1 ) / double(2)));
+					else
+						cost = int(ceil(double( 4*wIn - 2*cSize[0] - cSize[k-1] + 5*k -9 ) / double(2)));
 				}else
 					cost = 16000; //TODO			
 			}
@@ -1178,8 +1188,10 @@ extern vector<Operator*> oplist;
 
 	}
 
-	bool IntAdder::tryOptimizedChunkSplittingShortLatency(Target* target, int wIn, int k){
+	bool IntAdder::tryOptimizedChunkSplittingShortLatency(Target* target, int wIn, int &k){
 		cSize = new int[2000];
+		for (int u=0; u<2000; u++)
+			cSize[u] = -1;
 
 		REPORT(DETAILED, "Trying to optimize chunk splitting for short-latency architecture ...");
 
@@ -1220,8 +1232,8 @@ extern vector<Operator*> oplist;
 				}
 				chunkIndex++; /* as this is not the last pair of chunks,
 					          pass to the next pair */
-		}
 			}
+		}
 			
 		REPORT(DETAILED, "Optimized splitting algorithm result: " << (invalid?"failure":"succeeded"));
 		
@@ -1230,6 +1242,7 @@ extern vector<Operator*> oplist;
 			return false;
 		}else{
 			k=chunkIndex+1;
+			REPORT(DETAILED, "Optimized splitting algorithm result: will set k " << k );
 			return true;
 		}
 	}

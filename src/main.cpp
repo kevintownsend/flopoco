@@ -322,7 +322,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				else if (o == "target") {
 					if(v=="Virtex4") target=new Virtex4();
 					else if (v=="Virtex5") target=new Virtex5();
-					//					else if (v=="Spartan3") target=new Spartan3();
+					else if (v=="Spartan3") target=new Spartan3();
 					else if (v=="StratixII") target=new StratixII();
 					else if (v=="StratixIV") target=new StratixIV();
 					else {
