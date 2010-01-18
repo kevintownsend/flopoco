@@ -12,7 +12,7 @@ namespace flopoco{
 
 	extern map<string, double> emptyDelayMap;
 	/** The Leading zero/one counter class.  
-	 * Recursive structure with wOut stages. At most 2^wOut-1 leading zeros are counted.
+	 * Recursive structure with intlog2(wIn) stages.
 	 */
 	class LZOC : public Operator{
 
@@ -20,7 +20,6 @@ namespace flopoco{
 		/** The LZOC constructor
 		 * @param[in] target the target device for this operator
 		 * @param[in] wIn the width of the input
-		 * @param[in] wOut the width of the output 
 		 */
 		LZOC(Target* target, int wIn, map<string, double> inputDelays = emptyDelayMap);
 	
