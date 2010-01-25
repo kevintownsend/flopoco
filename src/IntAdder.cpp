@@ -42,7 +42,7 @@ namespace flopoco{
 extern vector<Operator*> oplist;
 
 	IntAdder::IntAdder(Target* target, int wIn, map<string, double> inputDelays, int optimizeType, bool srl):
-		Operator(target), wIn_(wIn)
+		Operator(target), wIn_(wIn), shortLatencyInputRegister(0)
 	{
 		srcFileName="IntAdder";
 		ostringstream name;
@@ -59,24 +59,27 @@ extern vector<Operator*> oplist;
 		addOutput("R"  , wIn_, 1 , true);
 
 		REPORT( DEBUG, "++++++++++++++++++++++++++++++++++++++++++++ ");
+		REPORT( INFO, "IntAdder wIn="<< wIn);
 		REPORT( INFO, "Optimization focuses on: " << (optimizeType==0? "logic (LUT/ALUT)": (optimizeType==1?" register":"slice")) << " count");
 		REPORT( DEBUG , "Printing input delays ... " << printInputDelays(inputDelays));
+		REPORT( DEBUG, "Frequeny set to:"<< target->frequency());
 
-		if (isSequential()){
+		if (isSequential()){	
 		
 			int selectedImplementation = implementationSelector( target, wIn, inputDelays, optimizeType, srl);
-//			selectedImplementation = 2;
+//			selectedImplementation = 2 ;
 			REPORT( DEBUG, "=========================================== ");
 			REPORT( INFO, "The implementation is: " << (selectedImplementation==0? "Classical": (selectedImplementation==1?"Alternative":"Short-Lantency")));
 		
 			/* shared variables */
-			objectivePeriod = 1 / target->frequency();	
+			objectivePeriod	 = 1 / target->frequency();	
+
 
 			//**********************************************************************
 			//**********************************************************************
 			// Classical implementation of pipelined addition
 			if ( selectedImplementation == CLASSICAL ){
-
+				setName( getName() + "_Classical");
 				maxInputDelay = getMaxInputDelays (inputDelays);
 				REPORT( DETAILED, "The maximum input delay is: " << maxInputDelay );
 		
@@ -167,6 +170,7 @@ extern vector<Operator*> oplist;
 			//**********************************************************************
 			// Alternative implementation of pipelined addition
 			else if (selectedImplementation == ALTERNATIVE) {
+				setName( getName() + "_Alternative");
 
 				maxInputDelay = getMaxInputDelays (inputDelays);
 				REPORT( DETAILED, "The maximum input delay is: " << maxInputDelay );
@@ -263,6 +267,7 @@ extern vector<Operator*> oplist;
 			//**********************************************************************
 			// Alternative implementation of pipelined addition
 			else if (selectedImplementation == SHORTLATENCY) {
+				setName( getName() + "_ShortLatency");
 				
 				if (shortLatencyVersion == 0){
 					
@@ -308,6 +313,9 @@ extern vector<Operator*> oplist;
 						vhdl << tab << declare (name.str(),cSize[j]+1) << " <= " << " \"0\" & "<<(i==0?"X":"Y")<<range(high-1,low)<<";"<<endl;
 					}
 				vhdl << tab << declare("scIn",1) << " <= " << "Cin;"<<endl;
+			
+				if (shortLatencyInputRegister ==1)
+					nextCycle();/////////////////////
 			
 				int l=1;
 				for (int j=0; j<k; j++){
@@ -361,14 +369,16 @@ extern vector<Operator*> oplist;
 							a<< "Adder" << cSize[j]+1 << "One" << j;
 							vhdl << instance( adder, a.str() );
 						}
-					if (pipe)
-						target->setPipelined();
-					else
-						target->setNotPipelined();
 					}else{
 						vhdl << tab << "-- the carry resulting from the addition of the chunk + Cin is obtained directly" << endl;
 						vhdl << tab << declare(dnameCin.str(),cSize[j]+1) << "  <= (\"0\" & "<< use(uname1.str())<<range(cSize[j]-1,0) <<") +  (\"0\" & "<< use(uname2.str())<<range(cSize[j]-1,0)<<") + "<<use("scIn")<<";"<<endl;
 					}
+					
+					if (pipe)
+						target->setPipelined();
+					else
+						target->setNotPipelined();
+
 #else					
 					if (j>0){ //for all chunks greater than zero we perform this additions
 						vhdl << tab << declare(dnameZero.str(),cSize[j]+1) << " <= (\"0\" & "<< use(uname1.str())<<range(cSize[j]-1,0) <<") +  (\"0\" & "<< use(uname2.str())<<range(cSize[j]-1,0)<<");"<<endl;
@@ -420,10 +430,10 @@ extern vector<Operator*> oplist;
 					unameZero << "sX"<<i<<"_0_l"<<l<<"_Zero";
 					unameOne  << "sX"<<i<<"_0_l"<<l<<"_One";
 					unameCin  << "sX"<<0<<"_0_l"<<l<<"_Cin";
-					if (i==0) vhdl << tab << declare(join("res",i),cSize[i]) << " <= " << use(unameCin.str())<< range(cSize[0]-1,0) <<  ";" << endl;
+					if (i==0) vhdl << tab << declare(join("res",i),cSize[i],true) << " <= " << use(unameCin.str())<< range(cSize[0]-1,0) <<  ";" << endl;
 					else {
-						if (i==1) vhdl << tab << declare(join("res",i),cSize[i]) << " <= " << use(unameZero.str()) << range(cSize[i]-1,0) << " + " << use(unameCin.str()) << "(" << cSize[0] << ")" << ";"<<endl;
-						else      vhdl << tab << declare(join("res",i),cSize[i]) << " <= " << use(unameZero.str()) << range(cSize[i]-1,0) << " + not(" << use("rawCarrySum")<<"("<<2*(i-2)+1<<"));"<<endl;
+						if (i==1) vhdl << tab << declare(join("res",i),cSize[i],true) << " <= " << use(unameZero.str()) << range(cSize[i]-1,0) << " + " << use(unameCin.str()) << "(" << cSize[0] << ")" << ";"<<endl;
+						else      vhdl << tab << declare(join("res",i),cSize[i],true) << " <= " << use(unameZero.str()) << range(cSize[i]-1,0) << " + not(" << use("rawCarrySum")<<"("<<2*(i-2)+1<<"));"<<endl;
 					}
 				}
 			
@@ -435,6 +445,7 @@ extern vector<Operator*> oplist;
 				vhdl << ";" <<endl;			
 				outDelayMap["R"] = target->adderDelay(cSize[k-1]); 			
 			
+				REPORT(DEBUG, " FINISHED SHORT-LATENCY IMPLEMENTATION" );
 			}
 			else {
 				vhdl << tab << " R <= X + Y + Cin;" << endl;
@@ -507,7 +518,7 @@ extern vector<Operator*> oplist;
 				int sliceCostAlternative   = getSliceCostAlternative(target, wIn, inputDelays, srl);
 				int sliceCostShortLantency = getSliceCostShortLatency(target, wIn, inputDelays, srl);
 				
-				REPORT( DEBUG, "=========================================== ");
+				REPORT(DEBUG   , "=========================================== ");
 				REPORT(DETAILED, "SLICE cost for the classical     mathod " << sliceCostClassical );
 				REPORT(DETAILED, "SLICE cost for the alternative   mathod " << sliceCostAlternative );
 				REPORT(DETAILED, "SLICE cost for the short-latency mathod " << sliceCostShortLantency	 );
@@ -712,6 +723,8 @@ extern vector<Operator*> oplist;
 	int IntAdder::getLutCostShortLatency(Target* target, int wIn, map<string, double> inputDelays, bool srl){
 		REPORT( DEBUG, "=========================================== ");
 		bool status = tryOptimizedChunkSplittingShortLatency ( target, wIn , k );
+		REPORT( DEBUG, "LUT, Short-Latency: status="<<(status?"true":"false")<<" k="<<k);
+		
 		int cost;
 		if ( getMaxInputDelays( inputDelays ) == 0 ){
 		/* no input slack problem */
@@ -896,7 +909,9 @@ extern vector<Operator*> oplist;
 	}
 
 	int IntAdder::getRegCostShortLatency(Target* target, int wIn, map<string, double> inputDelays, bool srl){
+		REPORT( DEBUG, "=========================================== ");
 		bool status = tryOptimizedChunkSplittingShortLatency ( target, wIn , k );
+		REPORT( DEBUG, "REG, Short-Latency: status="<<(status?"true":"false")<<" k="<<k);
 		int cost;
 		if ( getMaxInputDelays( inputDelays ) == 0 ){
 			/* no input slack problem */
@@ -934,7 +949,7 @@ extern vector<Operator*> oplist;
 	}
 
 	int IntAdder::getSliceCostClassical(Target* target, int wIn, map<string, double> inputDelays, bool srl){
-		
+		REPORT( DEBUG, "=========================================== ");		
 		if ( getMaxInputDelays( inputDelays ) == 0 ){
 			/* no input slack problem */
 			int alpha, beta, k, cost;
@@ -1012,7 +1027,7 @@ extern vector<Operator*> oplist;
 	}
 
 	int IntAdder::getSliceCostAlternative(Target* target, int wIn, map<string, double> inputDelays, bool srl){
-		
+		REPORT( DEBUG, "=========================================== ");
 		if ( getMaxInputDelays( inputDelays ) == 0 ){
 			/* no input slack problem */
 			int alpha, beta, k, cost;
@@ -1027,7 +1042,7 @@ extern vector<Operator*> oplist;
 					cost = int(ceil(double((4*k-8)*alpha + 3*beta + 2*k - 5) / double(2)));
 				}
 			}else{
-				cost = int(ceil(double(3*wIn + beta) / double(2)));
+				cost = int(ceil(double((k-1)*wIn + beta + k*k-2*k+1) / double(2)));
 			}
 			
 			REPORT( DETAILED, "Selected: Alternative with SLICE cost " << cost );
@@ -1086,7 +1101,10 @@ extern vector<Operator*> oplist;
 	}
 
 	int IntAdder::getSliceCostShortLatency(Target* target, int wIn, map<string, double> inputDelays, bool srl){
+		shortLatencyInputRegister = -1;
+		REPORT( DEBUG, "=========================================== ");
 		bool status = tryOptimizedChunkSplittingShortLatency ( target, wIn , k );
+		REPORT( DEBUG, "SLICE, Short-Latency: status="<<(status?"true":"false")<<" k="<<k);
 		int cost;
 		if ( getMaxInputDelays( inputDelays ) == 0 ){
 			/* no input slack problem */
@@ -1094,6 +1112,7 @@ extern vector<Operator*> oplist;
 				shortLatencyVersion = 1;
 				int alpha, beta, k;
 				updateParameters( target, alpha, beta, k);
+				REPORT( DEBUG, "SLICE, Short-Latency: alpha="<<alpha<<" beta="<<beta<<" k="<<k);
 				if (k>=3){
 					if (srl)
 						cost = int(ceil(double((4*k-6)*alpha + 3*beta + 2*k - 4) / double(2)));
@@ -1102,6 +1121,12 @@ extern vector<Operator*> oplist;
 				}else
 					cost = 16000; //TODO			
 			}else{
+				ostringstream tmp;
+				for (int y=k-1;y<=0;y--)
+					tmp << cSize[y] << ":";
+				
+				REPORT(DEBUG, "SLICE, Short-Latency cSize=> " << tmp.str() );
+			
 				shortLatencyVersion = 0;
 				if (k>=3){
 					if (srl)
@@ -1114,7 +1139,11 @@ extern vector<Operator*> oplist;
 			REPORT( DETAILED, "Selected: Short-Latency with SLICE cost " << cost );
 			return cost;
 		}else{
+			shortLatencyInputRegister = 1;
+			shortLatencyVersion = 1;
 			/* TODO for slack */
+			
+			
 			return 16000;
 		}
 		cerr << "Error in " <<  __FILE__ << "@" << __LINE__;

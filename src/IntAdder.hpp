@@ -220,6 +220,7 @@ namespace flopoco{
 		int alternativeSlackVersion;      /**< for the slack case, two architectures are possible in the alternative case. */        
 		int shortLatencyVersion;          /**< the short-latency has two options, one optimized and one defalut. The default one is selected
                                                if the optimization cannot take place */
+        int shortLatencyInputRegister;
 		double objectivePeriod;           /**< the inverse of the frequency */
 	};
 

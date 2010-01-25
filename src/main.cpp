@@ -598,7 +598,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				int wIn = checkStrictyPositive(argv[i++], argv[0]);
 				int type = atoi(argv[i++]);
 				int srl = atoi(argv[i++]);
-				cerr << "> IntAdder, wIn="<<wIn<<endl  ;
+				cerr << "> IntAdder, wIn="<<wIn<<", frequency="<<target->frequency()<< endl  ;
 				map <string, double> delayMap;
 				
 //				delayMap["Cin"] = 2e-9;
