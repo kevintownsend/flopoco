@@ -123,6 +123,11 @@ static void usage(char *name){
 	cerr << "    LOCShifterSticky wIn wOut\n";
 	cerr << "    IntAdder wIn\n";
 	cerr << "      Integer adder, possibly pipelined\n";
+	cerr << "    MyIntAdder wIn optimizeType srl implementation\n";
+	cerr << "      Integer adder, multple parameters, possibly pipelined\n";
+	cerr << "      optimizeType=<0,1,2,3> 0=LUT 1=REG 2=SLICE 3=LATENCY\n";
+	cerr << "      srl=<0,1> Allow SRLs\n";
+	cerr << "      implementation=<-1,0,1,2> -1=optimizeType dependent, 0=Classical, 1=Alternative, 2=Short-Latency\n";
 	cerr << "    IntNAdder wIn N\n";
 	cerr << "      Multi-operand addition, possibly pipelined\n";
 	cerr << "    IntCompressorTree wIn N\n";
@@ -591,24 +596,25 @@ bool parseCommandLine(int argc, char* argv[]){
 			}    
 		}
 		else if(opname=="MyIntAdder"){
-			int nargs = 3;
+			int nargs = 4;
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
 				int wIn = checkStrictyPositive(argv[i++], argv[0]);
 				int type = atoi(argv[i++]);
 				int srl = atoi(argv[i++]);
+				int implementation = atoi(argv[i++]);
 				cerr << "> IntAdder, wIn="<<wIn<<", frequency="<<target->frequency()<< endl  ;
 				map <string, double> delayMap;
 				
 //				delayMap["Cin"] = 2e-9;
 				
 				switch (type) {
-					case 0: op = new IntAdder(target, wIn, delayMap, 0, srl); break; //lut optimized
-					case 1: op = new IntAdder(target, wIn, delayMap, 1, srl); break; //reg
-					case 2: op = new IntAdder(target, wIn, delayMap, 2, srl); break; //slice
-					case 3: op = new IntAdder(target, wIn, delayMap, 3, srl); break; //latency
-					default: op = new IntAdder(target,wIn, delayMap, 2, srl); break;
+					case 0: op = new IntAdder(target, wIn, delayMap, 0, srl, implementation); break; //lut optimized
+					case 1: op = new IntAdder(target, wIn, delayMap, 1, srl, implementation); break; //reg
+					case 2: op = new IntAdder(target, wIn, delayMap, 2, srl, implementation); break; //slice
+					case 3: op = new IntAdder(target, wIn, delayMap, 3, srl, implementation); break; //latency
+					default: op = new IntAdder(target,wIn, delayMap, 2, srl, implementation); break;
 				}
 				addOperator(op);
 			}    

@@ -19,6 +19,7 @@ namespace flopoco{
 #define ALTERNATIVE  1
 #define SHORTLATENCY 2
 
+#define PINF 16384
 #define XILINX_OPTIMIZATION 1
 
 	extern map<string, double> emptyDelayMap;
@@ -38,7 +39,7 @@ namespace flopoco{
 		 *            2: optimize slice/ALM count
 		 * @param[in] srl              optimize for use of shift registers
 		 **/
-		IntAdder(Target* target, int wIn, map<string, double> inputDelays = emptyDelayMap, int optimizeType = SLICE, bool srl = true );
+		IntAdder(Target* target, int wIn, map<string, double> inputDelays = emptyDelayMap, int optimizeType = SLICE, bool srl = true, int implementation = -1 );
 	
 		/**
 		* Selects one among the 3 possible implementations, taking in consideration the optimization type
@@ -49,7 +50,7 @@ namespace flopoco{
 		* @param[in] srl               optimize for use of shift registers 
 		* @return                      a number between 0 and 2: CLASSICAL=0, ALTERNATIVE=1, SHORTLATENCY=2
 		*/
-		int implementationSelector(Target* target, int wIn, map<string, double> inputDelays, int optimizeType, bool srl);
+		int implementationSelector(Target* target, int wIn, map<string, double> inputDelays, int optimizeType, bool srl, int implementation);
 
 		/**
 		* Returns the cost in LUTs of the Classical implementation

@@ -1,4 +1,4 @@
-/*
+	/*
  * An integer adder for FloPoCo
  *
  * It may be pipelined to arbitrary frequency.
@@ -41,11 +41,11 @@ using namespace std;
 namespace flopoco{
 extern vector<Operator*> oplist;
 
-	IntAdder::IntAdder(Target* target, int wIn, map<string, double> inputDelays, int optimizeType, bool srl):
+	IntAdder::IntAdder(Target* target, int wIn, map<string, double> inputDelays, int optimizeType, bool srl, int implementation):
 		Operator(target), wIn_(wIn), shortLatencyInputRegister(0)
 	{
-		srcFileName="IntAdder";
 		ostringstream name;
+		srcFileName="IntAdder";
 		setCopyrightString("Bogdan Pasca, Florent de Dinechin (2008-2010)");		
 		name << "IntAdder_" << wIn_<<"_f"<<target->frequencyMHz()
 		     <<"_"<<(optimizeType==0? "logic": (optimizeType==1?"reg":"slice")) /*what the operator will be optimized for */
@@ -58,22 +58,25 @@ extern vector<Operator*> oplist;
 		addInput ("Cin", 1 );
 		addOutput("R"  , wIn_, 1 , true);
 
-		REPORT( DEBUG, "++++++++++++++++++++++++++++++++++++++++++++ ");
-		REPORT( INFO, "IntAdder wIn="<< wIn);
-		REPORT( INFO, "Optimization focuses on: " << (optimizeType==0? "logic (LUT/ALUT)": (optimizeType==1?" register":"slice")) << " count");
-		REPORT( DEBUG , "Printing input delays ... " << printInputDelays(inputDelays));
+		REPORT( INFO, "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ");
+		REPORT( INFO, "IntAdder wIn="<< wIn << " optimizeType="<<optimizeType << " srl="<< srl << " implementation="<<implementation);
+		if (implementation == -1){
+			REPORT( INFO, "Optimization focuses on: " << (optimizeType==0? "logic (LUT/ALUT)": (optimizeType==1?" register":"slice")) << " count");
+		}else{
+			REPORT( INFO, "Forcing implementation: " << (implementation==0? "Classical": (implementation==1?"Alternative":"Short-Latency")) << " Architecture");
+		}
+		
+		REPORT( DEBUG, "Printing input delays:" << printInputDelays(inputDelays));
 		REPORT( DEBUG, "Frequeny set to:"<< target->frequency());
 
 		if (isSequential()){	
 		
-			int selectedImplementation = implementationSelector( target, wIn, inputDelays, optimizeType, srl);
-//			selectedImplementation = 2 ;
-			REPORT( DEBUG, "=========================================== ");
+			int selectedImplementation = implementationSelector( target, wIn, inputDelays, optimizeType, srl, implementation);
+			REPORT( DEBUG, "................................................................................");
 			REPORT( INFO, "The implementation is: " << (selectedImplementation==0? "Classical": (selectedImplementation==1?"Alternative":"Short-Lantency")));
 		
 			/* shared variables */
 			objectivePeriod	 = 1 / target->frequency();	
-
 
 			//**********************************************************************
 			//**********************************************************************
@@ -465,84 +468,146 @@ extern vector<Operator*> oplist;
 	}
 
 
-	int IntAdder::implementationSelector(Target* target, int wIn, map<string, double> inputDelays, int optimizeType, bool srl){
+	int IntAdder::implementationSelector(Target* target, int wIn, map<string, double> inputDelays, int optimizeType, bool srl, int implementation){
 	
 		if ((target->getID()=="Virtex4")||(target->getID()=="Virtex5")||(target->getID()=="Spartan3")){
 			/* XILINX TARGETS */
-			if (optimizeType == LOGIC){
-				int lutCostClassical     = getLutCostClassical(target, wIn, inputDelays, srl);
-				int lutCostAlternative   = getLutCostAlternative(target, wIn, inputDelays, srl);
-				int lutCostShortLantency = getLutCostShortLatency(target, wIn, inputDelays, srl);
+			if (implementation == -1){
+				if (optimizeType == LOGIC){
+					int lutCostClassical     = getLutCostClassical(target, wIn, inputDelays, srl);
+					int lutCostAlternative   = getLutCostAlternative(target, wIn, inputDelays, srl);
+					int lutCostShortLantency = getLutCostShortLatency(target, wIn, inputDelays, srl);
 				
-				REPORT( DEBUG, "=========================================== ");
-				REPORT(DETAILED, "LUT cost for the classical     mathod " << lutCostClassical );
-				REPORT(DETAILED, "LUT cost for the alternative   mathod " << lutCostAlternative );
-				REPORT(DETAILED, "LUT cost for the short-latency mathod " << lutCostShortLantency	 );
+					REPORT( DEBUG, "................................................................................");
+					REPORT(DETAILED, "LUT cost for the classical     method " << lutCostClassical );
+					REPORT(DETAILED, "LUT cost for the alternative   method " << lutCostAlternative );
+					REPORT(DETAILED, "LUT cost for the short-latency method " << lutCostShortLantency	 );
 				
-				int bestScore = min( min( lutCostClassical, lutCostAlternative), lutCostShortLantency);
+					int bestScore = min( min( lutCostClassical, lutCostAlternative), lutCostShortLantency);
 				
-				if (bestScore == lutCostClassical)
-					return 0;
-				else if (bestScore == lutCostAlternative)
-					return 1;
-				else if (bestScore == lutCostShortLantency)
-					return 2;
-				else{
-					cerr << " Error in cost evaluation " << endl;
-					exit(-1);
-				}
-			} else if (optimizeType == REGISTER){
-				int regCostClassical     = getRegCostClassical(target, wIn, inputDelays, srl);
-				int regCostAlternative   = getRegCostAlternative(target, wIn, inputDelays, srl);
-				int regCostShortLantency = getRegCostShortLatency(target, wIn, inputDelays, srl);
+					if (bestScore == lutCostClassical)
+						return 0;
+					else if (bestScore == lutCostAlternative)
+						return 1;
+					else if (bestScore == lutCostShortLantency)
+						return 2;
+					else{
+						cerr << " Error in cost evaluation " << endl;
+						exit(-1);
+					}
+				} else if (optimizeType == REGISTER){
+					int regCostClassical     = getRegCostClassical(target, wIn, inputDelays, srl);
+					int regCostAlternative   = getRegCostAlternative(target, wIn, inputDelays, srl);
+					int regCostShortLantency = getRegCostShortLatency(target, wIn, inputDelays, srl);
 				
-				REPORT( DEBUG, "=========================================== ");
-				REPORT(DETAILED, "REG cost for the classical     mathod " << regCostClassical );
-				REPORT(DETAILED, "REG cost for the alternative   mathod " << regCostAlternative );
-				REPORT(DETAILED, "REG cost for the short-latency mathod " << regCostShortLantency	 );
+					REPORT( DEBUG, "................................................................................");
+					REPORT(DETAILED, "REG cost for the classical     method " << regCostClassical );
+					REPORT(DETAILED, "REG cost for the alternative   method " << regCostAlternative );
+					REPORT(DETAILED, "REG cost for the short-latency method " << regCostShortLantency	 );
 				
-				int bestScore = min( min( regCostClassical, regCostAlternative), regCostShortLantency);
+					int bestScore = min( min( regCostClassical, regCostAlternative), regCostShortLantency);
 				
-				if (bestScore == regCostClassical)
-					return 0;
-				else if (bestScore == regCostAlternative)
-					return 1;
-				else if (bestScore == regCostShortLantency)
-					return 2;
-				else{
-					cerr << " Error in cost evaluation " << endl;
-					exit(-1);
-				}
-			} else if (optimizeType == SLICE){
-				int sliceCostClassical     = getSliceCostClassical(target, wIn, inputDelays, srl);
-				int sliceCostAlternative   = getSliceCostAlternative(target, wIn, inputDelays, srl);
-				int sliceCostShortLantency = getSliceCostShortLatency(target, wIn, inputDelays, srl);
+					if (bestScore == regCostClassical)
+						return 0;
+					else if (bestScore == regCostAlternative)
+						return 1;
+					else if (bestScore == regCostShortLantency)
+						return 2;
+					else{
+						cerr << " Error in cost evaluation " << endl;
+						exit(-1);
+					}
+				} else if (optimizeType == SLICE){
+					int sliceCostClassical     = getSliceCostClassical(target, wIn, inputDelays, srl);
+					int sliceCostAlternative   = getSliceCostAlternative(target, wIn, inputDelays, srl);
+					int sliceCostShortLantency = getSliceCostShortLatency(target, wIn, inputDelays, srl);
 				
-				REPORT(DEBUG   , "=========================================== ");
-				REPORT(DETAILED, "SLICE cost for the classical     mathod " << sliceCostClassical );
-				REPORT(DETAILED, "SLICE cost for the alternative   mathod " << sliceCostAlternative );
-				REPORT(DETAILED, "SLICE cost for the short-latency mathod " << sliceCostShortLantency	 );
+					REPORT(DEBUG   , "................................................................................");
+					REPORT(DETAILED, "SLICE cost for the classical     method " << sliceCostClassical );
+					REPORT(DETAILED, "SLICE cost for the alternative   method " << sliceCostAlternative );
+					REPORT(DETAILED, "SLICE cost for the short-latency method " << sliceCostShortLantency	 );
 				
-				int bestScore = min( min( sliceCostClassical, sliceCostAlternative), sliceCostShortLantency);
+					int bestScore = min( min( sliceCostClassical, sliceCostAlternative), sliceCostShortLantency);
 				
-				if (bestScore == sliceCostClassical)
-					return CLASSICAL;
-				else if (bestScore == sliceCostAlternative)
-					return ALTERNATIVE;
-				else if (bestScore == sliceCostShortLantency)
+					if (bestScore == sliceCostClassical)
+						return CLASSICAL;
+					else if (bestScore == sliceCostAlternative)
+						return ALTERNATIVE;
+					else if (bestScore == sliceCostShortLantency)
+						return SHORTLATENCY;
+					else{
+						cerr << " Error in cost evaluation " << endl;
+						exit(-1);
+					}
+				}if (optimizeType == LATENCY){
+					//TODO
 					return SHORTLATENCY;
-				else{
-					cerr << " Error in cost evaluation " << endl;
+				}else {
+					cerr << "Error in " <<  __FILE__ << "@" << __LINE__ << ": optimization parameter must be 0, 1 or 2" <<  endl;
 					exit(-1);
 				}
-			}if (optimizeType == LATENCY){
-				//TODO
-				return SHORTLATENCY;
-			}else {
-				cerr << "Error in " <<  __FILE__ << "@" << __LINE__ << ": optimization parameter must be 0, 1 or 2" <<  endl;
-				exit(-1);
-			}
-						
+			}else if (implementation == CLASSICAL){
+				if (optimizeType == LOGIC){
+					int lutCostClassical = getLutCostClassical(target, wIn, inputDelays, srl);
+					REPORT( DEBUG, "................................................................................");
+					REPORT(DETAILED, "LUT cost for the classical     method " << lutCostClassical );
+					return CLASSICAL;				
+				} else if (optimizeType == REGISTER){
+					int regCostClassical = getRegCostClassical(target, wIn, inputDelays, srl);
+					REPORT( DEBUG, "................................................................................");
+					REPORT(DETAILED, "REG cost for the classical     method " << regCostClassical );
+					return CLASSICAL;
+				} else if (optimizeType == SLICE){
+					int sliceCostClassical = getSliceCostClassical(target, wIn, inputDelays, srl);
+					REPORT(DEBUG   , "................................................................................");
+					REPORT(DETAILED, "SLICE cost for the classical     method " << sliceCostClassical );
+					return CLASSICAL;
+				}
+			}else if (implementation == ALTERNATIVE){
+				if (optimizeType == LOGIC){
+					int lutCostAlternative   = getLutCostAlternative(target, wIn, inputDelays, srl);
+					REPORT( DEBUG, "................................................................................");
+					REPORT(DETAILED, "LUT cost for the alternative   method " << lutCostAlternative );
+					return ALTERNATIVE;
+				} else if (optimizeType == REGISTER){
+					int regCostAlternative   = getRegCostAlternative(target, wIn, inputDelays, srl);
+					REPORT( DEBUG, "................................................................................");
+					REPORT(DETAILED, "REG cost for the alternative   method " << regCostAlternative );
+					return ALTERNATIVE;
+				} else if (optimizeType == SLICE){
+					int sliceCostAlternative   = getSliceCostAlternative(target, wIn, inputDelays, srl);
+					REPORT(DEBUG   , "................................................................................");
+					REPORT(DETAILED, "SLICE cost for the alternative   method " << sliceCostAlternative );
+					return ALTERNATIVE;
+				}
+			}else if (implementation == SHORTLATENCY){
+				if (optimizeType == LOGIC){
+					int lutCostShortLantency = getLutCostShortLatency(target, wIn, inputDelays, srl);
+					REPORT( DEBUG, "................................................................................");
+					REPORT(DETAILED, "LUT cost for the short-latency method " << lutCostShortLantency );
+					if (lutCostShortLantency != PINF)
+						return SHORTLATENCY;
+					else
+						return CLASSICAL;
+				} else if (optimizeType == REGISTER){
+					int regCostShortLantency = getRegCostShortLatency(target, wIn, inputDelays, srl);
+					REPORT( DEBUG, "................................................................................");
+					REPORT(DETAILED, "REG cost for the short-latency method " << regCostShortLantency	 );
+					if (regCostShortLantency != PINF)
+						return SHORTLATENCY;
+					else
+						return ALTERNATIVE;
+					return SHORTLATENCY;
+				} else if (optimizeType == SLICE){
+					int sliceCostShortLantency = getSliceCostShortLatency(target, wIn, inputDelays, srl);
+					REPORT(DEBUG   , "................................................................................");
+					REPORT(DETAILED, "SLICE cost for the short-latency method " << sliceCostShortLantency	 );
+					if (sliceCostShortLantency != PINF)
+						return SHORTLATENCY;
+					else
+						return ALTERNATIVE;
+				}
+			}						
 		}else{
 			/* ALTERA TARGETS */
 		}
@@ -554,74 +619,72 @@ extern vector<Operator*> oplist;
 	
 	
 	int IntAdder::getLutCostClassical(Target* target, int wIn, map<string, double> inputDelays, bool srl){
-		REPORT( DEBUG, "=========================================== ");
+		REPORT( DEBUG, "................................................................................");
 		if ( getMaxInputDelays( inputDelays ) == 0 ){
 			/* no input slack problem */
 			int alpha, beta, k, cost;
 			updateParameters(target, alpha, beta, k);
-			REPORT( DEBUG, "LUT, Classical: alpha="<<alpha<<" beta="<<beta<<" k="<<k);
+			REPORT( DEBUG, "LUT, Classical, NO-SLACK: alpha="<<alpha<<" beta="<<beta<<" k="<<k);
 			
 			if (srl){
-				if (k == 1) {
+				if ((k == 1) || (k == 2)) {
 					cost = wIn;
-				}else if (k == 2){
-					cost = (alpha + beta);
 				}else{
 					/* more than two chunk splitting */
-					cost = ((4*k-9)*alpha + 3*beta);
+					cost = wIn + (k-2)*alpha;
 				}
 			}else{
 				cost = wIn;
 			}
-			
-			REPORT( DETAILED, "Selected: Classical with LUT cost " << cost );
+			REPORT( DETAILED, "Selected: Classical, NO-SLACK with LUT cost " << cost );
 			return cost;
 		}else{
 			int version0, version1;
 			int alpha, beta, gamma, k;			
+			/* Version 0 */
 			updateParameters(target, inputDelays, alpha, beta, gamma, k);
-			REPORT( DEBUG, "LUT, Classical, Version 0: alpha="<<alpha<<" beta="<<beta<<" gamma="<<gamma<<" k="<<k);
+			REPORT( DEBUG, "LUT, Classical, SLACK, Version 0: alpha="<<alpha<<" beta`="<<beta<<" gamma="<<gamma<<" k="<<k);
 			
 			if (k>0)
 				if (srl){
-					if (k==1){			
-						version0=wIn;
-					}else if (k == 2){
-						version0 = alpha + gamma;
+					if ((k==1) || (k==2)){			
+						version0 = wIn;
 					}else{
 						version0 = 4*wIn - 3*alpha - 2*gamma  - beta;
 					}
 				}else{
+					/* NO SRLs */
 					version0 = wIn;
 				}
 			else
-				version0 = 16000; //infinity
+				version0 = PINF; //infinity
 			
-			updateParameters( target, alpha, beta, k);
-			REPORT( DEBUG, "LUT, Classical, Version 1 (buffered inputs): alpha="<<alpha<<" beta="<<beta<<" k="<<k);
+			/* Version 1 */
+			updateParameters(target, alpha, beta, k);
+			REPORT( DEBUG, "LUT, Classical, SLACK, Version 1 (buffered inputs): alpha="<<alpha<<" beta="<<beta<<" k="<<k << " p="<<k+1);
 
 			if (srl){
 				if (k==1){			
-					version1=wIn;
+					version1 = wIn;
 				}else if (k == 2){
-					version1 = alpha + 3*beta;
+					version1 = w + 2*beta;
 				}else{
 					version1 = 4*wIn - 3*alpha - beta;
 				}
 			}else{
 				version1 = wIn;
 			}		
-			REPORT(DETAILED, "LUT, Classical, Version 0: " << version0);
-			REPORT(DETAILED, "LUT, Classical, Version 1 (buffered inputs) " << version1);
+			REPORT(DETAILED, "LUT, Classical, SLACK, Version 0: " << version0);
+			REPORT(DETAILED, "LUT, Classical, SLACK, Version 1 (buffered inputs) " << version1);
 			
 			if (version0 <= version1){
 				/* for equality version 0 has less pipeline levels */
 				classicalSlackVersion = 0;
-				REPORT( DETAILED, "Selected: Classical slack version is 0 with LUT cost " << version0 );
+				REPORT( DETAILED, "Selected: Classical SLACK version is 0 with LUT cost " << version0 );
 				return version0;
 			}else{
 				classicalSlackVersion = 1;
-				REPORT( DETAILED, "Selected: Classical slack version is 1 (buffered inputs) with LUT cost " << version1 );
+				REPORT( DETAILED, "Selected: Classical SLACK version is 1 (buffered inputs) with LUT cost " << version1 );
 				return version1;
 			}
 		}
@@ -632,12 +695,12 @@ extern vector<Operator*> oplist;
 	}
 
 	int IntAdder::getLutCostAlternative(Target* target, int wIn, map<string, double> inputDelays, bool srl){
-		REPORT( DEBUG, "=========================================== ");
+		REPORT( DEBUG, "................................................................................");
 		if ( getMaxInputDelays( inputDelays ) == 0 ){
 			/* no input slack problem */
 			int alpha, beta, k, cost;
 			updateParameters( target, alpha, beta, k);
-			REPORT( DEBUG, "LUT, Alternative: alpha="<<alpha<<" beta="<<beta<<" k="<<k);
+			REPORT( DEBUG, "LUT, Alternative, NO-SLACK: alpha="<<alpha<<" beta="<<beta<<" k="<<k);
 			
 			if (srl){
 				if (k == 1) {
@@ -651,14 +714,16 @@ extern vector<Operator*> oplist;
 			}else{
 				cost = (2*wIn - alpha);
 			}
-			REPORT( DETAILED, "Selected: Alternative with LUT cost " << cost );
+			REPORT( DETAILED, "Selected: Alternative, NO-SLACK with LUT cost " << cost );
 			return cost;
 		}else{
 			int version0, version1;
 			int alpha, beta, k, kVersion0, kVersion1;			
+			
+			/* Version 0 */
 			updateParameters( target, inputDelays, alpha, beta, k);
 			kVersion0 = k;
-			REPORT( DEBUG, "LUT, Alternative, Version 0: alpha="<<alpha<<" beta="<<beta<<" k="<<k);
+			REPORT( DEBUG, "LUT, Alternative, SLACK, Version 0: alpha="<<alpha<<" beta="<<beta<<" k="<<k);
 			
 			if (k>0)
 				if (srl){
@@ -673,11 +738,12 @@ extern vector<Operator*> oplist;
 					version0 = 2*wIn - alpha;
 				}
 			else
-				version0 = 16000; //infinity
-			
+				version0 = PINF; //infinity
+
+			/* Version 1 */			
 			updateParameters( target, alpha, beta, k);
 			kVersion1 = k;
-			REPORT( DEBUG, "LUT, Alternative, Version 1 (buffered inputs): alpha="<<alpha<<" beta="<<beta<<" k="<<k);
+			REPORT( DEBUG, "LUT, Alternative, SLACK, Version 1 (buffered inputs): alpha="<<alpha<<" beta="<<beta<<" k="<<k << " p="<<k+1);
 
 			if (srl){
 				if (k==1){			
@@ -691,26 +757,26 @@ extern vector<Operator*> oplist;
 				version1 = 2*wIn - alpha;
 			}			
 			
-			REPORT(DETAILED, "LUT, Alternative, Version 0: " << version0);
-			REPORT(DETAILED, "LUT, Alternative, Version 1 (buffered inputs): " << version1);
+			REPORT(DETAILED, "LUT, Alternative, SLACK, Version 0: " << version0);
+			REPORT(DETAILED, "LUT, Alternative, SLACK, Version 1 (buffered inputs): " << version1);
 			
 			if (version0 == version1){
 				if (kVersion0 <= kVersion1){
 					alternativeSlackVersion = 0;
-					REPORT( DETAILED, "Alternative slack version is 0 with LUT cost " << version0 << " and k="<<kVersion0 );
+					REPORT( DETAILED, "Alternative SLACK, version is 0 with LUT cost " << version0 << " and k="<<kVersion0 );
 					return version0;
 				}else{
 					alternativeSlackVersion = 1;
-					REPORT( DETAILED, "Alternative slack version is 1 with LUT cost " << version1 << " and k="<<kVersion1 );
+					REPORT( DETAILED, "Alternative SLACK, version is 1 with LUT cost " << version1 << " and k="<<kVersion1 );
 					return version1;
 				}
 			}else if (version0 < version1){
 				alternativeSlackVersion = 0;
-				REPORT( DETAILED, "Alternative slack version is 0 with LUT cost " << version0 );
+				REPORT( DETAILED, "Alternative SLACK version is 0 with LUT cost " << version0 );
 				return version0;
 			}else{
 				alternativeSlackVersion = 1;
-				REPORT( DETAILED, "Alternative slack version is 1 with LUT cost " << version1 );
+				REPORT( DETAILED, "Alternative SLACK version is 1 with LUT cost " << version1 );
 				return version1;
 			}
 		}
@@ -721,7 +787,7 @@ extern vector<Operator*> oplist;
 	}
 
 	int IntAdder::getLutCostShortLatency(Target* target, int wIn, map<string, double> inputDelays, bool srl){
-		REPORT( DEBUG, "=========================================== ");
+		REPORT( DEBUG, "................................................................................");
 		bool status = tryOptimizedChunkSplittingShortLatency ( target, wIn , k );
 		REPORT( DEBUG, "LUT, Short-Latency: status="<<(status?"true":"false")<<" k="<<k);
 		
@@ -738,7 +804,7 @@ extern vector<Operator*> oplist;
 					else
 						cost = (3*wIn-2*alpha-beta+2*(k-2));
 				}else
-					cost = 16000; //+inf			
+					cost = PINF; //+inf			
 			} else{
 				shortLatencyVersion = 0;
 				/* the algorithm found a good way to split inputs and save 1 pipeline level */
@@ -748,7 +814,7 @@ extern vector<Operator*> oplist;
 					else
 						cost = (3*wIn - 2*cSize[0] - cSize[k-1]  + k-4);
 				}else
-					cost = 16000; //+inf
+					cost = PINF; //+inf
 			}
 			
 			REPORT( DETAILED, "Selected: Short-Latency, "<< (shortLatencyVersion==0?"optimized splitting":"default splitting") <<" with LUT cost " << cost );
@@ -756,7 +822,7 @@ extern vector<Operator*> oplist;
 			
 		}else{
 			//TODO No implementation for now, so cost is +inf
-			return 16000;
+			return PINF;
 		}
 		cerr << "Error in " <<  __FILE__ << "@" << __LINE__;
 		exit(-1);
@@ -764,57 +830,63 @@ extern vector<Operator*> oplist;
 	}
 
 	int IntAdder::getRegCostClassical(Target* target, int wIn, map<string, double> inputDelays, bool srl){
-		REPORT( DEBUG, "=========================================== ");
+		REPORT( DEBUG, "................................................................................");
 		if ( getMaxInputDelays( inputDelays ) == 0 ){
 			/* no input slack problem */
 			int alpha, beta, k, cost;
 			updateParameters( target, alpha, beta, k);
-			
+			REPORT( DEBUG, "REG, CLASSICAL, NO-SLACK: alpha="<<alpha<<" beta="<<beta<<" k="<<k);
 			if (k == 1) {
 				cost = 0;
 			}else{
 				if (srl)
-					cost = ((3*k-5)*alpha + 2*beta + k - 1);
+					cost = w - beta;
 				else
-					cost = ( (3*k*k -7*k+4)*alpha/2 + 2*(k-1)*beta + k-1);
+					cost = ((3*k*k -7*k+4)*alpha/2 + 2*(k-1)*beta + k-1);
 			}
 			
-			REPORT( DETAILED, "Selected: Classical with REG cost " << cost );
+			REPORT( DETAILED, "Selected: Classical, NO-SLACK, with REG cost " << cost );
 			return cost;
 
 		}else{
 			int version0, version1;
 			int alpha, beta, gamma, k;			
+			
+			/* Version 0 */
 			updateParameters( target, inputDelays, alpha, beta, gamma, k);
-			REPORT( DEBUG, "REG, Classical, Version 0: alpha="<<alpha<<" beta="<<beta<<" gamma="<<gamma<<" k="<<k);
+			REPORT( DEBUG, "REG, Classical, SLACK, Version 0: alpha="<<alpha<<" beta="<<beta<<" gamma="<<gamma<<" k="<<k);
 			
-			if (k>0)
-				if (k==1){			
-					version0=0;
-				}else if (k == 2){
-					if (srl)
-						version0 = 2*alpha + gamma + 1;
+			if (k>0){
+				if (k==1)			
+					version0 = 0;
+
+				if (srl){
+					if (k == 2)
+						version0 = wIn + alpha + 1;
 					else
-						version0 = 2*alpha + gamma + 1;
-				}else{
-					if (srl)
 						version0 = 3*wIn - 2*gamma  - beta + k - 1;
-					else
+				}else{
+					if (k == 2){
+						version0 = wIn + alpha + 1;
+					}else{
 						version0 = (k-1)*gamma + 2*(k-1)*beta + 3*(k*k-3*k+2)/2;
+					}
 				}
-			else
-				version0 = 16000; //infinity
+				
+			}else
+				version0 = PINF; //infinity
 			
+			/* Version 0 */
 			updateParameters( target, alpha, beta, k);
-			REPORT( DEBUG, "REG, Classical, Version 1: alpha="<<alpha<<" beta="<<beta<<" k="<<k);
+			REPORT( DEBUG, "REG, Classical, SLACK, Version 1: alpha="<<alpha<<" beta="<<beta<<" k="<<k);
 
 			if (srl){
 				if (k==1){			
-					version1=wIn;
+					version1 = wIn;
 				}else if (k == 2){
 					version1 = 3*alpha + 2*beta + 2;
 				}else{
-					version1 = 3*wIn - beta + k;
+					version1 = 3*wIn - beta + k - 1;
 				}
 			}else{
 				if (k==1)
@@ -823,16 +895,16 @@ extern vector<Operator*> oplist;
 					version1 = wIn + ( (3*k*k -7*k+4)*alpha/2 + 2*(k-1)*beta + k-1);
 			}
 			
-			REPORT(DETAILED, "REG, Classical, Version 0: " << version0);
-			REPORT(DETAILED, "REG, Classical, Version 1 (buffered inputs): " << version1);
+			REPORT(DETAILED, "REG, Classical, SLACK, Version 0: " << version0);
+			REPORT(DETAILED, "REG, Classical, SALCK, Version 1 (buffered inputs): " << version1);
 		
 			if (version0 <= version1){
 				classicalSlackVersion = 0;
-				REPORT( DETAILED, "Selected: Classical slack version is 0 with REG cost " << version0 );
+				REPORT( DETAILED, "Selected: Classical SLACK version is 0 with REG cost " << version0 );
 				return version0;
 			}else{
 				classicalSlackVersion = 1;
-				REPORT( DETAILED, "Selected: Classical slack version is 1 with REG cost " << version1 );
+				REPORT( DETAILED, "Selected: Classical SLACK version is 1 with REG cost " << version1 );
 				return version1;
 			}
 		}
@@ -843,11 +915,12 @@ extern vector<Operator*> oplist;
 	}
 
 	int IntAdder::getRegCostAlternative(Target* target, int wIn, map<string, double> inputDelays, bool srl){
-		REPORT( DEBUG, "=========================================== ");
+		REPORT( DEBUG, "................................................................................");
 		if ( getMaxInputDelays( inputDelays ) == 0 ){
 			/* no input slack problem */
 			int alpha, beta, k, cost;
 			updateParameters( target, alpha, beta, k);
+			REPORT( DEBUG, "REG, ALTERNATIVE, NO-SLACK: alpha="<<alpha<<" beta="<<beta<<" k="<<k );
 			
 			if (k == 1) {
 				cost = 0;
@@ -858,17 +931,18 @@ extern vector<Operator*> oplist;
 					cost = ((k-1)*wIn + k*k-2*k+1);
 			}
 
-			REPORT( DETAILED, "Selected: Alternative with REG cost " << cost );
+			REPORT( DETAILED, "Selected: Alternative, NO-SLACK, with REG cost " << cost );
 			return cost;
 		}else{
 			int version0, version1;
-			int alpha, beta, k;			
+			int alpha, beta, k;	
+			/* Version 0 */		
 			updateParameters( target, inputDelays, alpha, beta, k);
-			REPORT( DEBUG, "REG, Alternative, Version 0: alpha="<<alpha<<" beta="<<beta<<" k="<<k);
+			REPORT( DEBUG, "REG, Alternative, SLACK, Version 0: alpha="<<alpha<<" beta="<<beta<<" k="<<k << " p="<<k+1);
 			
 			if (k>0)
 				if (k==1){			
-					version0=0;
+					version0 = 0;
 				}else{
 					if (srl)
 						version0 = (2*k-3)*alpha + beta + 2*k-3;
@@ -876,10 +950,11 @@ extern vector<Operator*> oplist;
 						version0 = ((k-1)*w + k*k-3*k+3);
 				}
 			else
-				version0 = 16000; //infinity
+				version0 = PINF; //infinity
 			
+			/* Version 1 */
 			updateParameters( target, alpha, beta, k);
-			REPORT( DEBUG, "REG, Alternative, Version 1: alpha="<<alpha<<" beta="<<beta<<" k="<<k);
+			REPORT( DEBUG, "REG, Alternative, SLACK, Version 1: alpha="<<alpha<<" beta="<<beta<<" k="<<k);
 
 			if (k==1){			
 				version1 = 0;
@@ -909,7 +984,7 @@ extern vector<Operator*> oplist;
 	}
 
 	int IntAdder::getRegCostShortLatency(Target* target, int wIn, map<string, double> inputDelays, bool srl){
-		REPORT( DEBUG, "=========================================== ");
+		REPORT( DEBUG, "................................................................................");
 		bool status = tryOptimizedChunkSplittingShortLatency ( target, wIn , k );
 		REPORT( DEBUG, "REG, Short-Latency: status="<<(status?"true":"false")<<" k="<<k);
 		int cost;
@@ -925,7 +1000,7 @@ extern vector<Operator*> oplist;
 					else
 						cost = (2*wIn + 3*k - 5);
 				}else
-					cost = 16000; 		
+					cost = PINF; 		
 			}else{
 				shortLatencyVersion = 0;	
 				if (k>=3){
@@ -934,14 +1009,14 @@ extern vector<Operator*> oplist;
 					else
 						cost = (2*wIn + 3*k - 5);
 				}else
-					cost = 16000; 		
+					cost = PINF; 		
 			}
 			REPORT( DETAILED, "Selected: Short-Latency with REG cost " << cost );
 			return cost;
 
 		}else{
 			/* TODO for slack */
-			return 16000;
+			return PINF;
 		}
 		cerr << "Error in " <<  __FILE__ << "@" << __LINE__;
 		exit(-1);
@@ -949,76 +1024,85 @@ extern vector<Operator*> oplist;
 	}
 
 	int IntAdder::getSliceCostClassical(Target* target, int wIn, map<string, double> inputDelays, bool srl){
-		REPORT( DEBUG, "=========================================== ");		
+		REPORT( DEBUG, "................................................................................");		
 		if ( getMaxInputDelays( inputDelays ) == 0 ){
 			/* no input slack problem */
 			int alpha, beta, k, cost;
 			updateParameters( target, alpha, beta, k);
+			REPORT( DEBUG, "SLICE, CLASSICAL, NO-SLACK: alpha="<<alpha<<" beta="<<beta<<" k="<<k );
 			
 			if (k == 1) {
 				cost = int(ceil( double(wIn) / double(2) ) );
 			}else{
 				if (srl)
-					cost = int(ceil(double((4*k-7)*alpha + 3*beta + k - 1) / double(2)));
+					cost = int(ceil(double(wIn + (k-2)*alpha  + k - 1) / double(2)));
 				else
 					cost = int(ceil(double(wIn + ((3*(k*k-3*k+2))/2)*alpha + 2*(k-1)*beta) / double(2)));
 			}
-			REPORT( DETAILED, "Selected: Classical with SLICE cost " << cost );
+			REPORT( DETAILED, "Selected: Classical NO-SLACK, with SLICE cost " << cost );
 			return cost;
 
 		}else{
 			int version0, version1;
 			int alpha, beta, gamma, k;			
+			
+			/* Version 0 */
 			updateParameters( target, inputDelays, alpha, beta, gamma, k);
-			REPORT( DEBUG, "SLICE, Classical, Version 0: alpha="<<alpha<<" beta="<<beta<<"gamma="<<gamma<< " k="<<k);
+			REPORT( DEBUG, "SLICE, Classical, SLACK, Version 0: alpha="<<alpha<<" beta="<<beta<<"gamma="<<gamma<< " k="<<k);
 			
-			if (k>0)
-				if (k==1){			
+			if (k>0){
+				if (k==1)			
 					version0= int(ceil(double(wIn)/double(2)));
-				}else if (k == 2){
-					if (srl)
+					
+				if (srl){	
+					if (k == 2){
 						version0 = int(ceil(double(3*alpha + gamma + 1)/double(2)));
-					else
-						version0 = int(ceil(double(gamma + 3*alpha + 1) / double(2)));
-				}else{
-					if (srl)
+					}else{
 						version0 = int(ceil(double(4*wIn - alpha - 2*gamma -2*beta + k - 1)/double(2)));
-					else
+					}
+				}else{
+					if (k == 2){
+						version0 = int(ceil(double(gamma + 3*alpha + 1) / double(2)));
+					}else{
 						version0 = int(ceil(double(wIn +(k-2)*gamma + 2*(k-1)*beta + alpha*(2*k*k-11*k+10)/2)/double(2)));
+					}
 				}
-			else
-				version0 = 16000; //infinity
-			
-			updateParameters( target, alpha, beta, k);
-			REPORT( DEBUG, "SLICE, Classical, Version 1: alpha="<<alpha<<" beta="<<beta<<" k="<<k);
+			}else
+				version0 = PINF; //infinity
 
-			if (k==1){			
+			/* Version 1 */			
+			updateParameters( target, alpha, beta, k);
+			REPORT( DEBUG, "SLICE, Classical, SLACK Version 1: alpha="<<alpha<<" beta="<<beta<<" k="<<k<<" p="<<k+1);
+
+			if (k==1)			
 				version1= int(ceil(double(wIn)/double(2)));
-			}else if (k == 2){
-				if (srl)
+			
+			if (srl){
+				if (k == 2){
 					version1 = int(ceil(double(3*alpha + 2*beta + 2)/double(2)));
-				else
-					version1 = int(ceil(double(2*wIn + ((3*(k*k-3*k+2))/2)*alpha + 2*(k-1)*beta) / double(2)));
-			}else{
-				if (srl)
+				}else{
 					version1= int(ceil(double(4*wIn - alpha - beta)/double(2)));
-				else
+				}
+			}else{
+				if (k == 2){
+					version1 = int(ceil(double(2*wIn + ((3*(k*k-3*k+2))/2)*alpha + 2*(k-1)*beta) / double(2)));
+				}else{
 					version1 = int(ceil(double(3*wIn + ((3*(k*k-3*k+2))/2)*alpha + 2*(k-1)*beta) / double(2)));
+				}
 			}
 			
-			REPORT(DETAILED, "SLICE, Classical, Version 0: " << version0);
-			REPORT(DETAILED, "SLICE, Classical, Version 1: " << version1);
+			REPORT(DETAILED, "SLICE, Classical, SLACK, Version 0: " << version0);
+			REPORT(DETAILED, "SLICE, Classical, SLACK, Version 1: " << version1);
 			
 			if (version0 <= version1){
 				classicalSlackVersion = 0;
-				REPORT( DETAILED, "Selected: Classical slack version is 0 with SLICE cost " << version0 );
+				REPORT( DETAILED, "Selected: Classical SLACK version is 0 with SLICE cost " << version0 );
 				return version0;
 			}else{
 				classicalSlackVersion = 1;
-				REPORT( DETAILED, "Selected: Classical slack version is 1 with SLICE cost " << version1 );
+				REPORT( DETAILED, "Selected: Classical SLACK version is 1 with SLICE cost " << version1 );
 				return version1;
 			}
-
 		}
 	
 		cerr << "Error in " <<  __FILE__ << "@" << __LINE__;
@@ -1027,12 +1111,13 @@ extern vector<Operator*> oplist;
 	}
 
 	int IntAdder::getSliceCostAlternative(Target* target, int wIn, map<string, double> inputDelays, bool srl){
-		REPORT( DEBUG, "=========================================== ");
+		REPORT( DEBUG, "................................................................................");
 		if ( getMaxInputDelays( inputDelays ) == 0 ){
 			/* no input slack problem */
 			int alpha, beta, k, cost;
 			updateParameters( target, alpha, beta, k);
-			
+			REPORT( DEBUG, "SLICE, ALTERNATIVE, NO-SLACK: alpha="<<alpha<<" beta="<<beta<<" k="<<k );			
+
 			if (k == 1) {
 				cost = int(ceil( double(wIn) / double(2) ) );
 			} else if (srl){
@@ -1045,13 +1130,13 @@ extern vector<Operator*> oplist;
 				cost = int(ceil(double((k-1)*wIn + beta + k*k-2*k+1) / double(2)));
 			}
 			
-			REPORT( DETAILED, "Selected: Alternative with SLICE cost " << cost );
+			REPORT( DETAILED, "Selected: Alternative, NO-SLACK with SLICE cost " << cost );
 			return cost;
 		}else{
 			int version0, version1;
 			int alpha, beta, k;			
 			updateParameters( target, inputDelays, alpha, beta, k);
-			REPORT( DEBUG, "SLICE, Alternative, Version 0: alpha="<<alpha<<" beta="<<beta<<" k="<<k);
+			REPORT( DEBUG, "SLICE, Alternative, NO-SLACK, Version 0: alpha="<<alpha<<" beta="<<beta<<" k="<<k);
 			
 			if (k>0){
 				if (k==1){			
@@ -1066,10 +1151,10 @@ extern vector<Operator*> oplist;
 					version0 = int(ceil(double(2*wIn + (k*k-4*k+3)*alpha + (k-2)*beta) / double(2)));
 				}
 			}else
-				version0 = 16000; //infinity
+				version0 = PINF; //infinity
 			
 			updateParameters( target, alpha, beta, k);
-			REPORT( DEBUG, "SLICE, Alternative, Version 1: alpha="<<alpha<<" beta="<<beta<<" k="<<k);
+			REPORT( DEBUG, "SLICE, Alternative, SLACK, Version 1: alpha="<<alpha<<" beta="<<beta<<" k="<<k);
 
 			if (k==1){			
 				version1 = 0;
@@ -1082,16 +1167,16 @@ extern vector<Operator*> oplist;
 			}else{
 				version1 = int(ceil(double(4*wIn + (k*k-4*k+3)*alpha + (k-2)*beta) / double(2)));
 			}	
-			REPORT(DETAILED, "SLICE, Alternative, Version 0: " << version0);
-			REPORT(DETAILED, "SLICE, Alternative, Version 1: " << version1);
+			REPORT(DETAILED, "SLICE, Alternative, SLACK, Version 0: " << version0);
+			REPORT(DETAILED, "SLICE, Alternative, SLACK, Version 1: " << version1);
 		
 			if (version0 <= version1){
 				alternativeSlackVersion = 0;
-				REPORT( DETAILED, "Alternative slack version is 0 with SLICE cost " << version0 );
+				REPORT( DETAILED, "Alternative SLACK version is 0 with SLICE cost " << version0 );
 				return version0;
 			}else{
 				alternativeSlackVersion = 1;
-				REPORT( DETAILED, "Alternative slack version is 1 with SLICE cost " << version1 );
+				REPORT( DETAILED, "Alternative SLACK version is 1 with SLICE cost " << version1 );
 				return version1;
 			}		
 		}
@@ -1102,7 +1187,7 @@ extern vector<Operator*> oplist;
 
 	int IntAdder::getSliceCostShortLatency(Target* target, int wIn, map<string, double> inputDelays, bool srl){
 		shortLatencyInputRegister = -1;
-		REPORT( DEBUG, "=========================================== ");
+		REPORT( DEBUG, "................................................................................");
 		bool status = tryOptimizedChunkSplittingShortLatency ( target, wIn , k );
 		REPORT( DEBUG, "SLICE, Short-Latency: status="<<(status?"true":"false")<<" k="<<k);
 		int cost;
@@ -1119,7 +1204,7 @@ extern vector<Operator*> oplist;
 					else
 						cost = int(ceil(double(4*wIn - 2*alpha - beta +5*k-9) / double(2)));
 				}else
-					cost = 16000; //TODO			
+					cost = PINF; //TODO			
 			}else{
 				ostringstream tmp;
 				for (int y=k-1;y<=0;y--)
@@ -1134,7 +1219,7 @@ extern vector<Operator*> oplist;
 					else
 						cost = int(ceil(double( 4*wIn - 2*cSize[0] - cSize[k-1] + 5*k -9 ) / double(2)));
 				}else
-					cost = 16000; //TODO			
+					cost = PINF; //TODO			
 			}
 			REPORT( DETAILED, "Selected: Short-Latency with SLICE cost " << cost );
 			return cost;
@@ -1144,7 +1229,7 @@ extern vector<Operator*> oplist;
 			/* TODO for slack */
 			
 			
-			return 16000;
+			return PINF;
 		}
 		cerr << "Error in " <<  __FILE__ << "@" << __LINE__;
 		exit(-1);
