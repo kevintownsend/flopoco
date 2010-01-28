@@ -607,7 +607,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				cerr << "> IntAdder, wIn="<<wIn<<", frequency="<<target->frequency()<< endl  ;
 				map <string, double> delayMap;
 				
-//				delayMap["Cin"] = 2e-9;
+//				delayMap["Cin"] = 1e-11;
 				
 				switch (type) {
 					case 0: op = new IntAdder(target, wIn, delayMap, 0, srl, implementation); break; //lut optimized

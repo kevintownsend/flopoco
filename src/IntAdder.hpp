@@ -177,9 +177,8 @@ namespace flopoco{
 		* @param[in] target            the target device
 		* @param[in] wIn               the input width
 		* @param[in] k                 the number of chunks
-		* @return                      true, if the optimization algorithm succeeded, false otherwise  
 		*/
-		bool tryOptimizedChunkSplittingShortLatency(Target* target, int wIn, int &k);
+		void tryOptimizedChunkSplittingShortLatency(Target* target, int wIn, int &k);
 
 		/**
 		 *  Destructor
@@ -219,8 +218,10 @@ namespace flopoco{
 		int selectedDesign;               /**< one of the 3 possible implementations */ 
 		int classicalSlackVersion;        /**< for the slack case, two architectures are possible in the classical case. */        
 		int alternativeSlackVersion;      /**< for the slack case, two architectures are possible in the alternative case. */        
-		int shortLatencyVersion;          /**< the short-latency has two options, one optimized and one defalut. The default one is selected
-                                               if the optimization cannot take place */
+		
+		int shortLatencyVersion;          /**< the short-latency has two options, one optimized and one defalut. The default one is selected if the optimization cannot take place */
+		int shortLatencyKValue;          /**<  */
+		
         int shortLatencyInputRegister;
 		double objectivePeriod;           /**< the inverse of the frequency */
 	};

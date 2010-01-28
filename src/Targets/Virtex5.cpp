@@ -32,6 +32,10 @@ namespace flopoco{
 		return lut2_ + muxcyStoO_ + double(size-1)*muxcyCINtoO_ + xorcyCintoO_ ; 
 	};
 
+	void Virtex5::getAdderParameters(double &k1, double &k2){
+		k1 = lut2_ + muxcyStoO_ + xorcyCintoO_;
+		k2 = muxcyCINtoO_;
+	}
 
 	double Virtex5::ffDelay() {
 		return fdCtoQ_ + ffd_; 

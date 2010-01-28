@@ -36,6 +36,12 @@ namespace flopoco{
 				  carryInToSumOut_ + ffDelay_); 
 	};
 
+	void StratixII::getAdderParameters(double &k1, double &k2){
+		//TODO
+		k1 = 0;
+		k2 = 0;
+	}
+
 	double StratixII::carryPropagateDelay() {
 		return  fastcarryDelay_; 
 	};

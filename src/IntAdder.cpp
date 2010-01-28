@@ -271,27 +271,8 @@ extern vector<Operator*> oplist;
 			// Alternative implementation of pipelined addition
 			else if (selectedImplementation == SHORTLATENCY) {
 				setName( getName() + "_ShortLatency");
-				
-				if (shortLatencyVersion == 0){
-					
-					//tryOptimizedChunkSplittingShortLatency ( target, wIn , k );
-				}else{
-					updateParameters (target, alpha, beta, k);
-					//the sizes of the chunks
-					cSize = new int[k+1];
-					if ( k > 1 ){
-						for (int i=0; i<k-1; i++)
-							cSize[i] = alpha;
-						cSize[k-1] = beta;
-					}
-					else{
-						k = 1;
-						cSize = new int[1];
-						cSize[0] = wIn_;
-					}
-				}
-
-				REPORT( DEBUG, " version " << shortLatencyVersion);
+				REPORT( DEBUG, "SHORT-LATENCY version " << shortLatencyVersion);
+				k = shortLatencyKValue;
 				
 				ostringstream verb;
 				verb << "Implementing ShortLatency with chunks: ";
@@ -300,13 +281,12 @@ extern vector<Operator*> oplist;
 			
 				REPORT(DETAILED, verb.str());
 			
-			
 				//split	 the inputs 
 				for (int i=0;i<2;i++)
-					for (int j=0; j<k; j++){
+					for (int j=0; j<k; j++){	
 						ostringstream name;
 						//the naming standard: sX j _ i _ l
-						//j=the chunk index i is the input index and l is the current level
+						//j = the chunk index i is the input index and l is the current level
 						name << "sX"<<j<<"_"<<i<<"_l"<<0;
 						int low=0, high=0;
 						for (int k=0;k<=j;k++)
@@ -317,8 +297,8 @@ extern vector<Operator*> oplist;
 					}
 				vhdl << tab << declare("scIn",1) << " <= " << "Cin;"<<endl;
 			
-				if (shortLatencyInputRegister ==1)
-					nextCycle();/////////////////////
+//				if (shortLatencyInputRegister ==1)
+//					nextCycle();///////////////////
 			
 				int l=1;
 				for (int j=0; j<k; j++){
@@ -362,7 +342,7 @@ extern vector<Operator*> oplist;
 						a<< "Adder" << cSize[j]+1 << "Zero" << j;
 						vhdl << instance( adder, a.str() );
 				
-						if (j<k-1){
+//						if (j<k-1){
 					
 							inPortMapCst(adder, "X", uname1.str()+"ext" );
 							inPortMapCst(adder, "Y", uname2.str()+"ext" );
@@ -371,7 +351,7 @@ extern vector<Operator*> oplist;
 							a.str("");
 							a<< "Adder" << cSize[j]+1 << "One" << j;
 							vhdl << instance( adder, a.str() );
-						}
+//						}
 					}else{
 						vhdl << tab << "-- the carry resulting from the addition of the chunk + Cin is obtained directly" << endl;
 						vhdl << tab << declare(dnameCin.str(),cSize[j]+1) << "  <= (\"0\" & "<< use(uname1.str())<<range(cSize[j]-1,0) <<") +  (\"0\" & "<< use(uname2.str())<<range(cSize[j]-1,0)<<") + "<<use("scIn")<<";"<<endl;
@@ -393,40 +373,44 @@ extern vector<Operator*> oplist;
 					}
 #endif
 				}
-			
-				vhdl << tab <<"--form the two carry string"<<endl;
-				vhdl << tab << declare("carryStringZero",2*(k-2)) << " <= "; 
-				for (int i=2*(k-2)-1; i>=0; i--) {
-					ostringstream dnameZero;
-					if (i%2==0){
-						dnameZero << "sX"<<(i/2)+1<<"_0_l"<<l<<"_Zero";
-						vhdl << " " << use(dnameZero.str()) <<"(" << cSize[(i/2)+1] << ")";
-					}else
-						vhdl << " \"0\" ";
-					if (i>0) vhdl << " & ";
-					else     vhdl << " ; ";
-				} vhdl << endl;
-				vhdl << tab << declare("carryStringOne",2*(k-2)) << "  <= "; 
-				for (int i=2*(k-2)-1; i>=0; i--) {
-					ostringstream dnameOne;
-					if (i%2==0){
-						dnameOne << "sX"<<(i/2)+1<<"_0_l"<<l<<"_One";
-						vhdl << " " << use(dnameOne.str()) <<"(" << cSize[(i/2)+1] << ") ";
-					}else
-						vhdl << " \"1\" ";
-					if (i>0) vhdl << " & ";
-					else     vhdl << " ; ";
-				} vhdl << endl;
 
-				nextCycle();/////////////////////
+				if (k >2){			
+					vhdl << tab <<"--form the two carry string"<<endl;
+					vhdl << tab << declare("carryStringZero",2*(k-2)) << " <= "; 
+					for (int i=2*(k-2)-1; i>=0; i--) {
+						ostringstream dnameZero;
+						if (i%2==0){
+							dnameZero << "sX"<<(i/2)+1<<"_0_l"<<l<<"_Zero";
+							vhdl << " " << use(dnameZero.str()) <<"(" << cSize[(i/2)+1] << ")";
+						}else
+							vhdl << " \"0\" ";
+						if (i>0) vhdl << " & ";
+						else     vhdl << " ; ";
+					} vhdl << endl;
+					vhdl << tab << declare("carryStringOne",2*(k-2)) << "  <= "; 
+					for (int i=2*(k-2)-1; i>=0; i--) {
+						ostringstream dnameOne;
+						if (i%2==0){
+							dnameOne << "sX"<<(i/2)+1<<"_0_l"<<l<<"_One";
+							vhdl << " " << use(dnameOne.str()) <<"(" << cSize[(i/2)+1] << ") ";
+						}else
+							vhdl << " \"1\" ";
+						if (i>0) vhdl << " & ";
+						else     vhdl << " ; ";
+					} vhdl << endl;
 
-				vhdl << tab << "--perform the short carry additions" << endl;
-				ostringstream unameCin;
-				unameCin  << "sX"<<0<<"_0_l"<<l<<"_Cin";
-				vhdl << tab << declare("rawCarrySum",2*(k-2)) << " <= " << use("carryStringOne") << " + " << use("carryStringZero") << " + " << use(unameCin.str()) << "(" << cSize[0] << ")" << " ;" << endl;
+					if (shortLatencyVersion > 1 )
+						nextCycle();/////////////////////
 
-				if (shortLatencyVersion==1)
-					nextCycle();/////////////////////
+					vhdl << tab << "--perform the short carry additions" << endl; //TODO: PIPELINE ADDITION
+					ostringstream unameCin;
+					unameCin  << "sX"<<0<<"_0_l"<<l<<"_Cin";
+					vhdl << tab << declare("rawCarrySum",2*(k-2)) << " <= " << use("carryStringOne") << " + " << use("carryStringZero") << " + " << use(unameCin.str()) << "(" << cSize[0] << ")" << " ;" << endl;
+
+					if (shortLatencyVersion > 2)
+						nextCycle();/////////////////////
+				}
+
 				vhdl << tab <<"--get the final pipe results"<<endl;
 				for ( int i=0; i<k; i++){
 					ostringstream unameZero, unameOne, unameCin;
@@ -435,8 +419,12 @@ extern vector<Operator*> oplist;
 					unameCin  << "sX"<<0<<"_0_l"<<l<<"_Cin";
 					if (i==0) vhdl << tab << declare(join("res",i),cSize[i],true) << " <= " << use(unameCin.str())<< range(cSize[0]-1,0) <<  ";" << endl;
 					else {
-						if (i==1) vhdl << tab << declare(join("res",i),cSize[i],true) << " <= " << use(unameZero.str()) << range(cSize[i]-1,0) << " + " << use(unameCin.str()) << "(" << cSize[0] << ")" << ";"<<endl;
-						else      vhdl << tab << declare(join("res",i),cSize[i],true) << " <= " << use(unameZero.str()) << range(cSize[i]-1,0) << " + not(" << use("rawCarrySum")<<"("<<2*(i-2)+1<<"));"<<endl;
+//						if (i==1) vhdl << tab << declare(join("res",i),cSize[i],true) << " <= " << use(unameZero.str()) << range(cSize[i]-1,0) << " + " << use(unameCin.str()) << "(" << cSize[0] << ")" << ";"<<endl;
+//						else      vhdl << tab << declare(join("res",i),cSize[i],true) << " <= " << use(unameZero.str()) << range(cSize[i]-1,0) << " + not(" << use("rawCarrySum")<<"("<<2*(i-2)+1<<"));"<<endl;
+						if (i==1) vhdl << tab << declare(join("res",i),cSize[i],true) << " <= " << use(unameZero.str()) << range(cSize[i]-1,0) << " when " << use(unameCin.str()) << "(" << cSize[0] << ")='0'" 
+						                                                              << " else " << use(unameOne.str()) << range(cSize[i]-1,0) << ";"<<endl;
+						else      vhdl << tab << declare(join("res",i),cSize[i],true) << " <= " << use(unameZero.str()) << range(cSize[i]-1,0) << " when " << use("rawCarrySum")<<"("<<2*(i-2)+1<<")='1'"
+						                                                              << " else " << use(unameOne.str()) << range(cSize[i]-1,0) << ";"<<endl;
 					}
 				}
 			
@@ -585,27 +573,26 @@ extern vector<Operator*> oplist;
 					int lutCostShortLantency = getLutCostShortLatency(target, wIn, inputDelays, srl);
 					REPORT( DEBUG, "................................................................................");
 					REPORT(DETAILED, "LUT cost for the short-latency method " << lutCostShortLantency );
-					if (lutCostShortLantency != PINF)
+//					if (lutCostShortLantency != PINF)
 						return SHORTLATENCY;
-					else
-						return CLASSICAL;
+//					else
+//						return CLASSICAL;
 				} else if (optimizeType == REGISTER){
 					int regCostShortLantency = getRegCostShortLatency(target, wIn, inputDelays, srl);
 					REPORT( DEBUG, "................................................................................");
 					REPORT(DETAILED, "REG cost for the short-latency method " << regCostShortLantency	 );
-					if (regCostShortLantency != PINF)
+//					if (regCostShortLantency != PINF)
 						return SHORTLATENCY;
-					else
-						return ALTERNATIVE;
-					return SHORTLATENCY;
+//					else
+//						return ALTERNATIVE;
 				} else if (optimizeType == SLICE){
 					int sliceCostShortLantency = getSliceCostShortLatency(target, wIn, inputDelays, srl);
 					REPORT(DEBUG   , "................................................................................");
 					REPORT(DETAILED, "SLICE cost for the short-latency method " << sliceCostShortLantency	 );
-					if (sliceCostShortLantency != PINF)
+//					if (sliceCostShortLantency != PINF)
 						return SHORTLATENCY;
-					else
-						return ALTERNATIVE;
+//					else
+//						return ALTERNATIVE;
 				}
 			}						
 		}else{
@@ -617,7 +604,7 @@ extern vector<Operator*> oplist;
 		return -1; 
 	}
 	
-	
+/******************************************************************************/	
 	int IntAdder::getLutCostClassical(Target* target, int wIn, map<string, double> inputDelays, bool srl){
 		REPORT( DEBUG, "................................................................................");
 		if ( getMaxInputDelays( inputDelays ) == 0 ){
@@ -694,6 +681,7 @@ extern vector<Operator*> oplist;
 		return -1; 
 	}
 
+/******************************************************************************/
 	int IntAdder::getLutCostAlternative(Target* target, int wIn, map<string, double> inputDelays, bool srl){
 		REPORT( DEBUG, "................................................................................");
 		if ( getMaxInputDelays( inputDelays ) == 0 ){
@@ -786,36 +774,32 @@ extern vector<Operator*> oplist;
 		return -1; 
 	}
 
+/******************************************************************************/
 	int IntAdder::getLutCostShortLatency(Target* target, int wIn, map<string, double> inputDelays, bool srl){
 		REPORT( DEBUG, "................................................................................");
-		bool status = tryOptimizedChunkSplittingShortLatency ( target, wIn , k );
-		REPORT( DEBUG, "LUT, Short-Latency: status="<<(status?"true":"false")<<" k="<<k);
+		tryOptimizedChunkSplittingShortLatency ( target, wIn , k );
+		REPORT( DEBUG, "LUT, Short-Latency: k="<<k);
 		
 		int cost;
 		if ( getMaxInputDelays( inputDelays ) == 0 ){
 		/* no input slack problem */
-			if (status == false){
-				shortLatencyVersion = 1;
-				int alpha, beta, k;
-				updateParameters( target, alpha, beta, k);
+			if ( shortLatencyVersion == 0){
+				cost = cSize[0] + 3*cSize[1];
+			} else if ( shortLatencyVersion == 1){
+				cost = 3*wIn - 2*cSize[0] + 2*(k-2);
+			} else if ( shortLatencyVersion == 2){
+				/* the algorithm found a good way to split inputs and save 1 pipeline level */
+				cost = (3*wIn - 2*cSize[0] - cSize[k-1]  + 2*(k-2));
+			}else if ( shortLatencyVersion == 3){
 				if (k>=3){
 					if (srl)
-						cost = ((4*k - 6)*alpha + 3*beta + 2*k-4);
+						cost = ((4*k - 6)*cSize[0] + 3*cSize[k-1] + 2*k-4);
 					else
-						cost = (3*wIn-2*alpha-beta+2*(k-2));
+						cost = (3*wIn-2*cSize[0]+2*(k-2));
 				}else
 					cost = PINF; //+inf			
-			} else{
-				shortLatencyVersion = 0;
-				/* the algorithm found a good way to split inputs and save 1 pipeline level */
-				if (k>=3){
-					if (srl)
-						cost = (3*wIn - 2*cSize[0] - cSize[k-1]  + 2*(k-2));
-					else
-						cost = (3*wIn - 2*cSize[0] - cSize[k-1]  + k-4);
-				}else
-					cost = PINF; //+inf
-			}
+			}else
+				cost = PINF; //+inf
 			
 			REPORT( DETAILED, "Selected: Short-Latency, "<< (shortLatencyVersion==0?"optimized splitting":"default splitting") <<" with LUT cost " << cost );
 			return cost;
@@ -829,6 +813,7 @@ extern vector<Operator*> oplist;
 		return -1; 
 	}
 
+/******************************************************************************/
 	int IntAdder::getRegCostClassical(Target* target, int wIn, map<string, double> inputDelays, bool srl){
 		REPORT( DEBUG, "................................................................................");
 		if ( getMaxInputDelays( inputDelays ) == 0 ){
@@ -914,6 +899,7 @@ extern vector<Operator*> oplist;
 		return -1; 
 	}
 
+/******************************************************************************/
 	int IntAdder::getRegCostAlternative(Target* target, int wIn, map<string, double> inputDelays, bool srl){
 		REPORT( DEBUG, "................................................................................");
 		if ( getMaxInputDelays( inputDelays ) == 0 ){
@@ -983,34 +969,35 @@ extern vector<Operator*> oplist;
 		return -1; 
 	}
 
+/******************************************************************************/
 	int IntAdder::getRegCostShortLatency(Target* target, int wIn, map<string, double> inputDelays, bool srl){
 		REPORT( DEBUG, "................................................................................");
-		bool status = tryOptimizedChunkSplittingShortLatency ( target, wIn , k );
-		REPORT( DEBUG, "REG, Short-Latency: status="<<(status?"true":"false")<<" k="<<k);
+		tryOptimizedChunkSplittingShortLatency ( target, wIn , k );
+		REPORT( DEBUG, "REG, Short-Latency:  k="<<k);
 		int cost;
 		if ( getMaxInputDelays( inputDelays ) == 0 ){
 			/* no input slack problem */
-			if ( status == false ){
-				shortLatencyVersion = 1;
-				int alpha, beta, k;
-				updateParameters( target, alpha, beta, k);
+			if (( shortLatencyVersion == 0 ) || ( shortLatencyVersion == 1 )){
+				cost = 0;
+			}else if ( shortLatencyVersion == 2 ){
 				if (k>=3){
 					if (srl)
-						cost = ((k - 1)*alpha + beta + 4*k-7);
+						cost = ((k - 1)*cSize[0] + cSize[k-1] + 2*k-7);
 					else
 						cost = (2*wIn + 3*k - 5);
 				}else
 					cost = PINF; 		
-			}else{
-				shortLatencyVersion = 0;	
+			}else if ( shortLatencyVersion == 3 ){
 				if (k>=3){
 					if (srl)
-						cost = ((k - 1)*alpha + beta + 2*k-7);
+						cost = ((k - 1)*cSize[0] + cSize[k-1] + 4*k-7);
 					else
 						cost = (2*wIn + 3*k - 5);
 				}else
 					cost = PINF; 		
-			}
+			} else 
+				cost = PINF;
+			
 			REPORT( DETAILED, "Selected: Short-Latency with REG cost " << cost );
 			return cost;
 
@@ -1188,31 +1175,23 @@ extern vector<Operator*> oplist;
 	int IntAdder::getSliceCostShortLatency(Target* target, int wIn, map<string, double> inputDelays, bool srl){
 		shortLatencyInputRegister = -1;
 		REPORT( DEBUG, "................................................................................");
-		bool status = tryOptimizedChunkSplittingShortLatency ( target, wIn , k );
-		REPORT( DEBUG, "SLICE, Short-Latency: status="<<(status?"true":"false")<<" k="<<k);
+		tryOptimizedChunkSplittingShortLatency ( target, wIn , k );
+		REPORT( DEBUG, "SLICE, Short-Latency:  k="<<k);
 		int cost;
 		if ( getMaxInputDelays( inputDelays ) == 0 ){
 			/* no input slack problem */
-			if ( status == false ){
-				shortLatencyVersion = 1;
-				int alpha, beta, k;
-				updateParameters( target, alpha, beta, k);
-				REPORT( DEBUG, "SLICE, Short-Latency: alpha="<<alpha<<" beta="<<beta<<" k="<<k);
-				if (k>=3){
-					if (srl)
-						cost = int(ceil(double((4*k-6)*alpha + 3*beta + 2*k - 4) / double(2)));
-					else
-						cost = int(ceil(double(4*wIn - 2*alpha - beta +5*k-9) / double(2)));
-				}else
-					cost = PINF; //TODO			
-			}else{
+			if ( shortLatencyVersion == 0){
+				cost = int(ceil(double(cSize[0] + 3*cSize[1])/double(2)));
+			} else if ( shortLatencyVersion == 1){
+				cost = int(ceil(double(3*wIn - 2*cSize[0] + 2*(k-2))/double(2)));
+			}else if ( shortLatencyVersion == 2){
 				ostringstream tmp;
 				for (int y=k-1;y<=0;y--)
 					tmp << cSize[y] << ":";
 				
 				REPORT(DEBUG, "SLICE, Short-Latency cSize=> " << tmp.str() );
 			
-				shortLatencyVersion = 0;
+//				shortLatencyVersion = 0;
 				if (k>=3){
 					if (srl)
 						cost = int(ceil(double( 3*wIn - 2*cSize[0] - cSize[k-1] + 2*(k-1) + 1 ) / double(2)));
@@ -1220,12 +1199,20 @@ extern vector<Operator*> oplist;
 						cost = int(ceil(double( 4*wIn - 2*cSize[0] - cSize[k-1] + 5*k -9 ) / double(2)));
 				}else
 					cost = PINF; //TODO			
+			}else if ( shortLatencyVersion == 3){
+				if (k>=3){
+					if (srl)
+						cost = int(ceil(double((4*k-6)*cSize[0] + 3*cSize[k-1] + 2*k - 4) / double(2)));
+					else
+						cost = int(ceil(double(4*wIn - 2*cSize[0] - cSize[k-1] +5*k-9) / double(2)));
+				}else
+					cost = PINF; //TODO			
 			}
 			REPORT( DETAILED, "Selected: Short-Latency with SLICE cost " << cost );
 			return cost;
 		}else{
 			shortLatencyInputRegister = 1;
-			shortLatencyVersion = 1;
+//			shortLatencyVersion = 1;
 			/* TODO for slack */
 			
 			
@@ -1302,63 +1289,190 @@ extern vector<Operator*> oplist;
 
 	}
 
-	bool IntAdder::tryOptimizedChunkSplittingShortLatency(Target* target, int wIn, int &k){
+	void IntAdder::tryOptimizedChunkSplittingShortLatency(Target* target, int wIn, int &k){
 		cSize = new int[2000];
 		for (int u=0; u<2000; u++)
 			cSize[u] = -1;
 
-		REPORT(DETAILED, "Trying to optimize chunk splitting for short-latency architecture ...");
+		int alpha0;
+		double tSelect = target->lutDelay() + target->localWireDelay();
 
-		target->suggestSubaddSize(chunkSize_ ,wIn_);
-		REPORT(DEBUG, "The chunkSize for first two chunks would be: " << chunkSize_ );
-	
-		if (2*chunkSize_ >= wIn_){
-			REPORT(DETAILED, "Failed ... the input size is too small to use the short latency algorithm");
-			return false;
-		}
-			
-		cSize[0] = chunkSize_;
-		cSize[1] = chunkSize_;
-	
-		bool finished = false; /* detect when finished the first the first
-			                   phase of the chunk selection algo */
-		int width = wIn - 2*chunkSize_; /* remaining size to split into chunks */
-		int propagationSize = 0; /* carry addition size */
-		int chunkIndex = 2; /* the index of the chunk for which the size is
-			                to be determined at the current step */
-		bool invalid = false; /* the result of the first phase of the algo */
-	
-		/* FIRST PHASE */
-		while (not (finished))	 {
-			propagationSize+=2;
-			double delay = objectivePeriod - target->adderDelay(width)- target->adderDelay(propagationSize); //2*target->localWireDelay()  -
-			if ((delay > 0) || (width < 4)) {
-				cSize[chunkIndex] = width;
-				finished = true;
-			}else{
-				int cs; 
-				double slack =  target->adderDelay(propagationSize) ; //+ 2*target->localWireDelay()
-				target->suggestSlackSubaddSize( cs, width, slack);
-				width = width - cs;
-				cSize[chunkIndex] = cs;
-				if ( (cSize[chunkIndex-1]==cSize[chunkIndex]) && (cSize[chunkIndex-1]==2) && ( invalid == false) ){
-					invalid = true; /* invalidate the current splitting */
-				}
-				chunkIndex++; /* as this is not the last pair of chunks,
-					          pass to the next pair */
-			}
-		}
-			
-		REPORT(DETAILED, "Optimized splitting algorithm result: " << (invalid?"failure":"succeeded"));
+		double k1,k2; 
+		target->getAdderParameters(k1,k2);
+//		alpha0 = int(floor(((1.0 / target->frequency()) - tSelect - k1) / k2));
+		target->suggestSlackSubaddSize(alpha0, wIn, tSelect);
+		int alpha;
+		target->suggestSubaddSize(alpha,wIn);
 		
-		if (invalid){
-			k = -1;
-			return false;
-		}else{
-			k=chunkIndex+1;
-			REPORT(DETAILED, "Optimized splitting algorithm result: will set k " << k );
-			return true;
+		double C =  ((1.0 / target->frequency()) - tSelect - 2*k1 + 2*k2)/k2;
+		int U = int (floor (C));
+				
+		REPORT( DEBUG, "U="<<U<<" C="<<C);
+		int maxW;
+		if (U < 0)
+			U = 0;
+		
+		if (U >= 0)
+			if (U % 2 ==0)
+				maxW = 2*alpha0 + U*(U+2)/4;
+			else
+				maxW = 2*alpha0 + (U+1)*(U+1)/4;
+		else
+			maxW = -1;
+	
+		REPORT( DEBUG, "alpha is " << alpha );
+		REPORT( DEBUG, "Max addition size for latency 0, two chunk architecture:" << 2*alpha0);	
+		REPORT( DEBUG, "Max addition size for latency 0 is:" << maxW);
+		
+		double C2 = ((1.0 / target->frequency()) - tSelect - k1 + k2)/(2*k2);
+		int U2 = int(floor(C2));
+		
+		double C3 = ((1.0 / target->frequency()) - k1 + k2)/(2*k2);
+		int U3 = int(floor(C3));
+		
+		REPORT(DEBUG, "Max addition size for latency 1 is:" << (U2+2)*alpha0 );
+		REPORT(DEBUG, "Max addition size for latency 2 is:" << (U3+2)*alpha );
+		
+		if (wIn <= 2*alpha0){
+			// TWO CHUNK ARCHITECTURE
+			cSize[0]= int(floor(wIn/2));
+			cSize[1]= wIn - cSize[0];
+			REPORT ( DEBUG, " Chunk sizes are: " << cSize[0] << " " << cSize[1]);
+			shortLatencyVersion = 0;
+			k = 2; 
+		}else if (wIn <= maxW){
+			// LATENCY 0 Architecture
+			cSize[0]=alpha0;
+			cSize[1]=alpha0;			
+			int tmpWIn = wIn - 2*alpha0;
+			int i=2;
+			while (tmpWIn > 0){
+				if (tmpWIn - ( U-2*(i-2)) >= 0){
+					cSize[i]=U-2*(i-2);
+					tmpWIn -= cSize[i];
+				}else{
+					cSize[i] = tmpWIn;
+					tmpWIn -= cSize[i];
+				}
+				i++;	
+			}
+			k=i;
+			ostringstream tmp;
+			for (int kk=i-1; kk>=0;kk--){
+				tmp <<  cSize[kk] << " ";
+			}	
+			REPORT( DEBUG, " Chunks " << k <<"  Sizes: " << tmp.str());
+			shortLatencyVersion = 1;
+		} else if (( wIn > maxW ) && ( wIn <= (U2+2)*alpha0 )){
+			//LATENCY 1 architecture
+			if ( wIn % alpha0 == 0 )
+				k = wIn / alpha0;
+			else
+				k = int(ceil (double(wIn) / double(alpha0)) );
+			
+			for (int p=0; p<k-1; p++)
+				cSize[p] = alpha0;
+			
+			cSize[k-1] = ( wIn % alpha0 == 0 ? alpha0 : wIn % alpha0);
+
+			ostringstream tmp;
+			for (int kk=k-1; kk>=0;kk--){
+				tmp <<  cSize[kk] << " ";
+			}	
+			REPORT( DEBUG, " Chunk " << k<< "  Sizes: " << tmp.str());
+			shortLatencyVersion = 2;
+		}  else if ( ( wIn > (U2+2)*alpha0 ) && (wIn <= (U3+2)*alpha)){
+			if ( wIn % alpha == 0 )
+				k = wIn / alpha;
+			else
+				k = int(ceil (double(wIn) / double(alpha)) );
+			
+			for (int p=0; p<k-1; p++)
+				cSize[p] = alpha;
+			
+			cSize[k-1] = ( wIn % alpha == 0 ? alpha : wIn % alpha);
+
+			ostringstream tmp;
+			for (int kk=k-1; kk>=0;kk--){
+				tmp <<  cSize[kk] << " ";
+			}	
+			REPORT( DEBUG, " Chunk " << k<< "  Sizes: " << tmp.str());
+			shortLatencyVersion = 3;
+		} else if  (wIn > (U3+2)*alpha){
+		 	//LATENCY 2+ architecture
+			if ( wIn % alpha == 0 )
+				k = wIn / alpha;
+			else
+				k = int(ceil (double(wIn) / double(alpha)) );
+			
+			for (int p=0; p<k-1; p++)
+				cSize[p] = alpha;
+			
+			cSize[k-1] = ( wIn % alpha == 0 ? alpha : wIn % alpha);
+
+			ostringstream tmp;
+			for (int kk=k-1; kk>=0;kk--){
+				tmp <<  cSize[kk] << " ";
+			}	
+			REPORT( DEBUG, " Chunk " << k<< "  Sizes: " << tmp.str());
+			shortLatencyVersion = 4;
 		}
+
+		REPORT( DEBUG, "Selected Short-Latency Version is " << shortLatencyVersion);
+		shortLatencyKValue = k;
+
+//		REPORT(DETAILED, "Trying to optimize chunk splitting for short-latency architecture ...");
+
+//		target->suggestSubaddSize(chunkSize_ ,wIn_);
+//		REPORT(DEBUG, "The chunkSize for first two chunks would be: " << chunkSize_ );
+//	
+//		if (2*chunkSize_ >= wIn_){
+//			REPORT(DETAILED, "Failed ... the input size is too small to use the short latency algorithm");
+//			return false;
+//		}
+//			
+//		cSize[0] = chunkSize_;
+//		cSize[1] = chunkSize_;
+//	
+//		bool finished = false; /* detect when finished the first the first
+//			                   phase of the chunk selection algo */
+//		int width = wIn - 2*chunkSize_; /* remaining size to split into chunks */
+//		int propagationSize = 0; /* carry addition size */
+//		int chunkIndex = 2; /* the index of the chunk for which the size is
+//			                to be determined at the current step */
+//		bool invalid = false; /* the result of the first phase of the algo */
+//	
+//		/* FIRST PHASE */
+//		while (not (finished))	 {
+//			propagationSize+=2;
+//			double delay = objectivePeriod - target->adderDelay(width)- target->adderDelay(propagationSize); //2*target->localWireDelay()  -
+//			if ((delay > 0) || (width < 4)) {
+//				cSize[chunkIndex] = width;
+//				finished = true;
+//			}else{
+//				int cs; 
+//				double slack =  target->adderDelay(propagationSize) ; //+ 2*target->localWireDelay()
+//				target->suggestSlackSubaddSize( cs, width, slack);
+//				width = width - cs;
+//				cSize[chunkIndex] = cs;
+//				if ( (cSize[chunkIndex-1]==cSize[chunkIndex]) && (cSize[chunkIndex-1]==2) && ( invalid == false) ){
+//					invalid = true; /* invalidate the current splitting */
+//				}
+//				chunkIndex++; /* as this is not the last pair of chunks,
+//					          pass to the next pair */
+//			}
+//		}
+//			
+//		REPORT(DETAILED, "Optimized splitting algorithm result: " << (invalid?"failure":"succeeded"));
+//		
+//		if (invalid){
+//			k = -1;
+//			return false;
+//		}else{
+//			k=chunkIndex+1;
+//			REPORT(DETAILED, "Optimized splitting algorithm result: will set k " << k );
+//			return true;
+//		}
 	}
 
 
