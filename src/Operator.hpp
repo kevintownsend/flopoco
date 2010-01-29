@@ -18,6 +18,9 @@ namespace flopoco {
 #define INFO 1
 #define DETAILED 2
 #define DEBUG 3
+#define INNER_SEPARATOR "................................................................................"
+#define DEBUG_SEPARATOR "________________________________________________________________________________"
+#define OUTER_SEPARATOR "################################################################################"
 #define REPORT(level, stream) { if ((level)<=(verbose)) cerr << "> " << srcFileName << ": " << stream << endl;} 
 
 

@@ -15,6 +15,7 @@ namespace flopoco{
 #define LATENCY    3
 
 
+#define BEST        -1
 #define CLASSICAL    0
 #define ALTERNATIVE  1
 #define SHORTLATENCY 2
