@@ -72,7 +72,7 @@ namespace flopoco{
 		 */
 		double carryPropagateDelay();
 		double adderDelay(int size);
-		void   getAdderParameters(double &k1, double &k2);
+		void   getAdderParameters(double &k1, double &k2, int size);
 		double localWireDelay();
 		double lutDelay();
 		double ffDelay();

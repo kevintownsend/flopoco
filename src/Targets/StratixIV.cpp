@@ -36,10 +36,13 @@ namespace flopoco{
 				  carryInToSumOut_ + ffDelay_); 
 	};
 
-	void StratixIV::getAdderParameters(double &k1, double &k2){
+	void StratixIV::getAdderParameters(double &k1, double &k2, int size){
 		//TODO
-		k1 = 0;
-		k2 = 0;
+		//TODO
+		k1 = fdCtoQ_ + lut2_ + muxStoO_ + carryInToSumOut_ + ffDelay_;
+		k2 = double(((size-3) * fastcarryDelay_) + 
+		     ((size/almsPerLab_) * (innerLABcarryDelay_- fastcarryDelay_)) + 
+		     ((size/(almsPerLab_*2)) * (interLABcarryDelay_ - innerLABcarryDelay_)))/double(size-1); 
 	}
 
 	double StratixIV::carryPropagateDelay() {

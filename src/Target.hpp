@@ -143,7 +143,7 @@ namespace flopoco{
 	
 		virtual void getDSPWidths(int &x, int &y) = 0;
 	
-		virtual void getAdderParameters(double &k1, double &k2) = 0;
+		virtual void getAdderParameters(double &k1, double &k2, int size) = 0;
 
 		// Methods related to target behaviour and performance
 		/** Sets the target to pipelined */

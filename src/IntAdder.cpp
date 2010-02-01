@@ -576,9 +576,35 @@ extern vector<Operator*> oplist;
 			}						
 		}else{
 			/* ALTERA TARGETS */
-			//TODO
-		}
-		
+			//TODO: make this better ;-); These decisions where taken based on experimental results
+			if (implementation == BEST){ 
+				/* based on resource estimations of the optimization metric */
+				if (optimizeType == LOGIC){
+					int lutCostClassical   = getLutCostClassical  (target, wIn, inputDelays, srl);
+					return CLASSICAL;
+				} else if (optimizeType == REGISTER){
+					tryOptimizedChunkSplittingShortLatency ( target, wIn , k );
+					return SHORTLATENCY;
+				} else if (optimizeType == SLICE){
+					tryOptimizedChunkSplittingShortLatency ( target, wIn , k );
+					return SHORTLATENCY;
+				} else if (optimizeType == LATENCY){
+					//TODO: for equal latency return lower resource usage 
+					tryOptimizedChunkSplittingShortLatency ( target, wIn , k );
+					return SHORTLATENCY;
+				}else {
+					cerr << "Error in " <<  __FILE__ << "@" << __LINE__ << ": optimization parameter must be -1, 0, 1 or 2" <<  endl;
+					exit(-1);
+				}
+				/* TO BE extended to other metrics */
+			} if (implementation == CLASSICAL){
+				return CLASSICAL;				
+			}else if (implementation == ALTERNATIVE){
+				return ALTERNATIVE;
+			}else if (implementation == SHORTLATENCY){
+				return SHORTLATENCY;
+			}
+		}								
 		cerr << "Error in " <<  __FILE__ << "@" << __LINE__;
 		exit(-1);
 		return -1; 
@@ -1256,7 +1282,7 @@ extern vector<Operator*> oplist;
 		double tSelect = target->lutDelay() + target->localWireDelay();
 
 		double k1,k2; 
-		target->getAdderParameters(k1,k2);
+		target->getAdderParameters(k1,k2,wIn);
 		target->suggestSlackSubaddSize(alpha0, wIn, tSelect);
 		int alpha;
 		target->suggestSubaddSize(alpha,wIn);
