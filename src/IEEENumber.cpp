@@ -154,7 +154,7 @@ namespace flopoco{
 			}
 
 		// all the other values are signed
-		sign = mpfr_sgn(mp) > 0 ? 0 : 1;
+		sign = mpfr_signbit(mp) == 0 ? 0 : 1;
 
 		/* Inf */
 		if (mpfr_inf_p(mp))
