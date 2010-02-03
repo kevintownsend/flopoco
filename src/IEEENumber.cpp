@@ -149,7 +149,7 @@ namespace flopoco{
 			{
 				sign = 0;
 				exponent = (1<<wE)-1;
-				mantissa = 1;
+				mantissa = (1<<wF)-1; // qNaN
 				return *this;
 			}
 
