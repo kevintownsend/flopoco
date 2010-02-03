@@ -81,6 +81,8 @@ namespace flopoco{
 		 */
 		mpz_class getInputValue(string s);
 
+		void setInputValue(string s, mpz_class v);
+
 		/**
 		 * Adds an expected output for this signal
 		 * @param s The signal for which to assign an expected output
@@ -114,6 +116,14 @@ namespace flopoco{
 		 * @return A single-line VHDL code.
 		 */
 		std::string getComment();
+
+		/**
+		 * Generate one hexadecimal line for each test case
+		 * @param prepend A string to prepend to each line.
+		 * @return A single line with all the inputs, then all the outputs.
+		 */
+		std::string getCompactHexa(std::string prepend = "");
+
 
 
 	private:

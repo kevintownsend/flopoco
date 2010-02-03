@@ -121,6 +121,10 @@ namespace flopoco{
 		return inputs[s];
 	}
 
+	void TestCase::setInputValue(string s, mpz_class v){
+		inputs[s]=v;
+	}
+
 	void TestCase::addExpectedOutput(string name, mpz_class v)
 	{
 		Signal* s = op_->getSignalByName(name);
@@ -191,6 +195,40 @@ namespace flopoco{
 
 		return o.str();
 	}
+
+	string TestCase::getCompactHexa(string prepend)
+	{
+		ostringstream o;
+
+		o << prepend;
+	
+	/* Iterate through input signals */
+		for (map<string, mpz_class>::iterator it = inputs.begin(); it != inputs.end(); it++)
+			{
+				string signame = it->first;
+				mpz_class v = it->second;
+				o << signame << "=" << std::hex << v << "  ";
+			}
+
+		/* Iterate through output signals */
+		for (map<string, vector<mpz_class> >::iterator it = outputs.begin(); it != outputs.end(); it++)
+			{
+				string signame = it->first;
+				o << signame << "=" ;
+				vector<mpz_class> vs = it->second;
+				
+				/* Iterate through possible output values */
+				for (vector<mpz_class>::iterator it = vs.begin(); it != vs.end(); it++)
+					{
+						mpz_class v = *it;
+						o << "?"  << std::hex << v;
+					}
+				o << endl;
+			}
+
+		return o.str();
+	}
+
 
 
 
