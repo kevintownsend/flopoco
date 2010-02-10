@@ -20,6 +20,8 @@
 
 
 #include "Operator.hpp"
+#include "FlopocoStream.hpp"
+
 #include "Target.hpp"
 #include "Targets/Spartan3.hpp"
 #include "Targets/Virtex4.hpp"
@@ -107,6 +109,10 @@ namespace flopoco{
 	Target* target;
 	int LongAccN;
 
+	/* flex vars */
+	int yyTheCycle;
+	vector<pair<string, int> > theUseTable;
+	
 	map<string, double> emptyDelayMap;
 }
 static void usage(char *name){
@@ -1311,7 +1317,20 @@ int main(int argc, char* argv[] )
 	
 	for(i=0; i<oplist.size(); i++) {
 		try {
-			oplist[i]->outputVHDL(file);
+//			cout << "--DECLARE LIST---------------------------------------------------" << endl;
+//			cout << printMapContent(oplist[i]->getDeclareTable());
+//			cout << "--USE LIST-------------------------------------------------------" << endl;
+			
+			oplist[i]->getFlopocoVHDLStream()->flush();
+			
+//			cout << printVectorContent(  (oplist[i]->getFlopocoVHDLStream())->getUseTable()  );
+//			cout << "--2nd PARSE-------------------------------------------------------" << endl;
+
+			oplist[i]->parse2();
+
+//			cout << "--END 2nd PARSE-------------------------------------------------------" << endl;
+
+			oplist[i]->outputVHDL(file);			
 		} catch (std::string s) {
 			cerr << "Exception while generating '" << oplist[i]->getName() << "': " << s <<endl;
 		}

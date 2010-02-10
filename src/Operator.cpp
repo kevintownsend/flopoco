@@ -45,6 +45,7 @@ namespace flopoco{
 		ioList_.push_back(s);
 		signalMap_[name] = s ;
 		numberOfInputs_ ++;
+		declareTable[name] = s->getCycle();
 	}
 
 	void Operator::addOutput(const std::string name, const int width, const int numberOfPossibleOutputValues, const bool isBus) {
@@ -60,6 +61,7 @@ namespace flopoco{
 			testCaseSignals_.push_back(s);
 		signalMap_[name] = s ;
 		numberOfOutputs_ ++;
+//		declareTable[name] = s->getCycle();
 	}
 
 	void Operator::addFPInput(const std::string name, const int wE, const int wF) {
@@ -72,6 +74,7 @@ namespace flopoco{
 		ioList_.push_back(s);
 		signalMap_[name] = s ;
 		numberOfInputs_ ++;
+		declareTable[name] = s->getCycle();
 	}
 
 	void Operator::addFPOutput(const std::string name, const int wE, const int wF, const int numberOfPossibleOutputValues) {
@@ -86,6 +89,7 @@ namespace flopoco{
 			testCaseSignals_.push_back(s);
 		signalMap_[name] = s ;
 		numberOfOutputs_ ++;
+//		declareTable[name] = s->getCycle();
 	}
 
 
@@ -99,6 +103,7 @@ namespace flopoco{
 		ioList_.push_back(s);
 		signalMap_[name] = s ;
 		numberOfInputs_ ++;
+		declareTable[name] = s->getCycle();
 	}
 
 	void Operator::addIEEEOutput(const std::string name, const int wE, const int wF, const int numberOfPossibleOutputValues) {
@@ -113,6 +118,7 @@ namespace flopoco{
 			testCaseSignals_.push_back(s);
 		signalMap_[name] = s ;
 		numberOfOutputs_ ++;
+//		declareTable[name] = s->getCycle();
 	}
 
 
@@ -152,9 +158,6 @@ namespace flopoco{
 		signalList_.push_back(s);    
 		signalMap_[o.str()] = s ;
 	}
-
-
-
 
 	void Operator::addSignal(const std::string name, const int width) {
 		addSignalGeneric(name,  width, 0, Signal::wire, //unused
@@ -461,10 +464,14 @@ namespace flopoco{
 
 
 	void Operator::setCycle(int cycle, bool report) {
+		// lexing part
+		vhdl.flush(currentCycle_);
 		if(isSequential()) {
 			currentCycle_=cycle;
-			if(report)
+			vhdl.setCycle(currentCycle_);
+			if(report){
 				vhdl << tab << "----------------Synchro barrier, entering cycle " << currentCycle_ << "----------------" << endl ;
+			}
 			// automatically update pipeline depth of the operator 
 			if (currentCycle_ > pipelineDepth_) 
 				pipelineDepth_ = currentCycle_;
@@ -476,10 +483,16 @@ namespace flopoco{
 	} 
 
 	void Operator::nextCycle(bool report) {
+		// lexing part
+		vhdl.flush(currentCycle_);
+
 		if(isSequential()) {
+
 			currentCycle_ ++; 
+			vhdl.setCycle(currentCycle_);
 			if(report)
-				vhdl << tab << "----------------Synchro barrier, entering cycle " << currentCycle_ << "----------------" << endl ;
+				vhdl << tab << "----------------Synchro barrier, entering cycle " << currentCycle_ << "----------------" << endl;
+			
 			// automatically update pipeline depth of the operator 
 			if (currentCycle_ > pipelineDepth_) 
 				pipelineDepth_ = currentCycle_;
@@ -488,6 +501,9 @@ namespace flopoco{
 
 
 	void Operator::setCycleFromSignal(string name, bool report) {
+		// lexing part
+		vhdl.flush(currentCycle_);
+
 		ostringstream e;
 		e << "ERROR in syncCycleFromSignal, "; // just in case
 
@@ -507,6 +523,8 @@ namespace flopoco{
 				throw o.str();
 			} 
 			currentCycle_ = s->getCycle();
+			vhdl.setCycle(currentCycle_);
+
 			if(report)
 				vhdl << tab << "----------------Synchro barrier, entering cycle " << currentCycle_ << "----------------" << endl ;
 			// automatically update pipeline depth of the operator 
@@ -517,6 +535,8 @@ namespace flopoco{
 
 
 	void Operator::syncCycleFromSignal(string name, bool report) {
+		// lexing part
+		vhdl.flush(currentCycle_);
 		ostringstream e;
 		e << "ERROR in syncCycleFromSignal, "; // just in case
 
@@ -536,8 +556,10 @@ namespace flopoco{
 				throw o.str();
 			} 
 			// advance cycle if needed
-			if (s->getCycle()>currentCycle_)
+			if (s->getCycle()>currentCycle_){
 				currentCycle_ = s->getCycle();
+				vhdl.setCycle(currentCycle_);
+			}
 
 			if(report)
 				vhdl << tab << "----------------Synchro barrier, entering cycle " << currentCycle_ << "----------------" << endl ;
@@ -585,10 +607,13 @@ namespace flopoco{
 		if(regType==Signal::registeredWithAsyncReset)
 			hasRegistersWithAsyncReset_ = true;
 
-	
 		// define its cycle 
 		if(isSequential())
 			s->setCycle(this->currentCycle_);
+		
+		// add this signal to the declare table
+		declareTable[name] = s->getCycle();
+		
 		// add the signal to signalMap and signalList
 		signalList_.push_back(s);    
 		signalMap_[name] = s ;
@@ -621,12 +646,35 @@ namespace flopoco{
 			} 
 			// update the lifeSpan of s
 			s->updateLifeSpan( currentCycle_ - s->getCycle() );
-			return s->delayedName( currentCycle_ - s->getCycle() );
+			//return s->delayedName( currentCycle_ - s->getCycle() );
+			return s->delayedName( 0 );
 		}
 		else
 			return name;
 	}
 
+	string Operator::use(string name, int delay) {
+	
+		ostringstream e;
+		e << "ERROR in use(), "; // just in case
+	
+		if(isSequential()) {
+			Signal *s;
+			try {
+				s=getSignalByName(name);
+			}
+			catch (string e2) {
+				e << endl << tab << e2;
+				throw e.str();
+			}
+			// update the lifeSpan of s
+			
+			s->updateLifeSpan( delay );
+			//return s->delayedName( currentCycle_ - s->getCycle() );
+			return s->delayedName( delay );
+		}else
+			return name;
+	}
 
 
 
@@ -659,6 +707,10 @@ namespace flopoco{
 		// define its cycle 
 		if(isSequential())
 			s->setCycle( this->currentCycle_ + op->getPipelineDepth() );
+
+		// add this signal to the declare table
+		declareTable[actualSignalName] = s->getCycle();
+			
 		// add the signal to signalMap and signalList
 		signalList_.push_back(s);    
 		signalMap_[actualSignalName] = s ;
@@ -1023,7 +1075,9 @@ namespace flopoco{
 		return outDelayMap;
 	}
 
-
+	map<string, int> Operator::getDeclareTable(){
+		return declareTable;
+	}
 
 	void Operator::outputVHDL(std::ostream& o, std::string name) {
   
@@ -1042,6 +1096,79 @@ namespace flopoco{
 
 	}
 
+	void Operator::parse2(){
+		vector<pair<string,int> >:: iterator iterUse;
+		map<string, int>::iterator iterDeclare;
+		
+		string name;
+		int declareCycle, useCycle;
+
+		string str (vhdl.str());
+		
+		/* parse the useTable and check that the declarations are ok */
+		for (iterUse = (vhdl.useTable).begin(); iterUse!=(vhdl.useTable).end();++iterUse){
+			name     = (*iterUse).first;
+			useCycle = (*iterUse).second;
+
+			ostringstream tSearch;
+			ostringstream tReplace;
+			string replaceString;
+
+			tSearch << "__"<<name<<"__"<<useCycle<<"__"; 
+//			cout << "----- Searching for: " << tSearch.str() << endl;
+			string searchString (tSearch.str());
+
+			iterDeclare = declareTable.find(name);
+			
+			if (iterDeclare != declareTable.end()){
+				declareCycle = iterDeclare->second;
+//				cout << "+++++ Element FOUND at level :" << declareCycle << endl;
+				
+				tReplace << use(name, useCycle - declareCycle); 
+				replaceString = tReplace.str();
+			}else{
+//				cout << "+++++ Element NOT FOUND" << endl;
+				tReplace << name;
+				replaceString = tReplace.str();
+			}
+
+			if ( searchString != replaceString ){
+//				cout << "Replacing ..." << endl;
+				string::size_type pos = 0;
+				while ( (pos = str.find(searchString, pos)) != string::npos ) {
+					str.replace( pos, searchString.size(), replaceString );
+					pos++;
+				}
+			}				
+		}
+//		cout << " ==========================================================" << endl;
+		//replace the remaining declares:
+		for (iterDeclare = declareTable.begin(); iterDeclare!=declareTable.end();++iterDeclare){
+			name = iterDeclare->first;
+			useCycle = iterDeclare->second;
+			
+			ostringstream tSearch;
+			tSearch << "__"<<name<<"__"<<useCycle<<"__"; 
+//			cout << "searching for: " << tSearch.str() << endl;
+			string searchString (tSearch.str());
+
+			ostringstream tReplace;
+			tReplace << name;
+			string replaceString(tReplace.str());
+			
+			if ( searchString != replaceString ){
+
+				string::size_type pos = 0;
+				while ( (pos = str.find(searchString, pos)) != string::npos ) {
+					str.replace( pos, searchString.size(), replaceString );
+					pos++;
+				}
+			}				
+		}
+		
+//		cout << "Finished second level parsing" << endl;
+		vhdl.setSecondLevelCode(str);
+	}
 
 
 	void Operator::emulate(TestCase * tc) {

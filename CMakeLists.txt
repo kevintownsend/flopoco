@@ -21,16 +21,15 @@ SET(CPACK_PACKAGE_VERSION_PATCH "0")
 INCLUDE(CPack)
 
 IF(WIN32)
-SET(CMAKE_BUILD_TYPE release)
-
+	SET(CMAKE_BUILD_TYPE release)
 ELSE(WIN32) 
-#Compilation flags
-#SET(CMAKE_CXX_FLAGS_DEBUG "-Wall")
-# Uncomment for profiling
-#SET(CMAKE_CXX_FLAGS_DEBUG "-g -pg -Wall")
-SET(CMAKE_CXX_FLAGS_DEBUG "-g -Wall")
-# Do you want an executable of 12MB ?
-SET(CMAKE_BUILD_TYPE Debug)
+	#Compilation flags
+	#SET(CMAKE_CXX_FLAGS_DEBUG "-Wall")
+	# Uncomment for profiling
+	#SET(CMAKE_CXX_FLAGS_DEBUG "-g -pg -Wall")
+	SET(CMAKE_CXX_FLAGS_DEBUG "-g -Wall")
+	# Do you want an executable of 12MB ?
+	SET(CMAKE_BUILD_TYPE Debug)
 #SET(CMAKE_BUILD_TYPE release)
 ENDIF(WIN32)
 
@@ -66,6 +65,66 @@ IF (MPFR_FOUND)
 ELSE (MPFR_FOUND)
     MESSAGE(FATAL_ERROR "Could not find MPFR.\nOn Debian-based systems type: 'sudo apt-get install libmpfr-dev'")
 ENDIF (MPFR_FOUND)
+
+
+# Create target for the lexer
+ ADD_CUSTOM_TARGET(VHDLLexer echo "Creating VHDLLexer.c VHDLLexer.h")
+
+# Create custom command for flex/lex (note the outputs)
+FIND_PROGRAM(FLEX_EXECUTABLE
+	NAMES flex++
+	PATHS /usr/bin
+	DOC "Flex executable")
+
+IF(FLEX_EXECUTABLE)
+	MESSAGE(STATUS "Found lex: ${FLEX_EXECUTABLE}")
+ELSE(FLEX_EXECUTABLE)
+  	MESSAGE(FATAL_ERROR "Could not find LEX.\nOn Debian-based systems install flex")
+ENDIF(FLEX_EXECUTABLE)
+
+ADD_CUSTOM_COMMAND(
+	SOURCE src/VHDLLexer.l
+	COMMAND ${FLEX_EXECUTABLE} 
+	ARGS -+ -o src/VHDLLexer.cpp --header-file=src/VHDLLexer.hpp
+    src/VHDLLexer.l
+	TARGET VHDLLexer
+	OUTPUTS src/VHDLLexer.cpp src/VHDLLexer.hpp)
+
+## Detect Lex presence
+#OPTION(CMAKE_REGENERATE_LEX
+#  "Regenerate YACC and LEXX files" ON)
+
+#MARK_AS_ADVANCED(CMAKE_REGENERATE_LEX)
+#IF(CMAKE_REGENERATE_LEX)
+#  SET(parsersLexers cmDependsFortran cmCommandArgument cmExpr)
+#  FIND_PROGRAM(FLEX_EXECUTABLE
+#    NAMES flex
+#    PATHS /usr/bin
+#    DOC "Flex executable")
+#  MARK_AS_ADVANCED(YACC_EXECUTABLE FLEX_EXECUTABLE)
+#  IF(FLEX_EXECUTABLE)
+#  	MESSAGE(STATUS "Found lex: ${FLEX_EXECUTABLE}")
+#  	SET(LEX_FOUND TRUE)
+#    SET(lex_files)
+#    FOREACH(name ${parsersLexers})
+#      SET(src "${CMAKE_CURRENT_SOURCE_DIR}/${name}Lexer.in.l")
+#      SET(dst "${CMAKE_CURRENT_BINARY_DIR}/${name}Lexer.c")
+#      SET(hdr "${CMAKE_CURRENT_BINARY_DIR}/${name}Lexer.h")
+#      ADD_CUSTOM_COMMAND(
+#        OUTPUT "${dst}"
+#        DEPENDS "${src}"
+#        COMMAND
+#        ${FLEX_EXECUTABLE}
+#        --prefix=${name}_yy --header-file=${hdr} -o${dst} ${src}
+#        )
+#      SET(lex_files ${lex_files} "${dst}")
+#    ENDFOREACH(name)
+#    ADD_CUSTOM_TARGET(RerunLex DEPENDS ${lex_files})
+#  ELSE(FLEX_EXECUTABLE)
+#  	MESSAGE(FATAL_ERROR "Could not find LEX.\nOn Debian-based systems install flex")
+#  ENDIF(FLEX_EXECUTABLE)
+#ENDIF(CMAKE_REGENERATE_LEX)
+
 
 # Build HOTBM
 IF (SOLLYA_LIB)
@@ -109,10 +168,15 @@ IF (HOTBM_LIB)
 	SET(LNS_LIB lns)
 ENDIF (HOTBM_LIB)
 
+
+ SET_SOURCE_FILES_PROPERTIES(src/VHDLLexer GENERATED) 
+
+
 IF(WIN32)
 ADD_EXECUTABLE(flopoco
  src/main
  src/utils
+ src/FlopocoStream
  src/Targets/DSP
  src/Target src/Targets/Virtex4 src/Targets/Spartan3 src/Targets/StratixII src/Targets/Virtex5 src/Targets/StratixIV
  src/Operator
@@ -180,6 +244,9 @@ ELSE(WIN32)
 ADD_EXECUTABLE(flopoco
  src/main
  src/utils
+ src/FlopocoStream
+ src/VHDLLexer
+
  src/Targets/DSP
  src/Target src/Targets/Virtex4 src/Targets/Spartan3 src/Targets/StratixII src/Targets/Virtex5 src/Targets/StratixIV
  src/Operator

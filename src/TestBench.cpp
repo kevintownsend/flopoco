@@ -41,8 +41,8 @@ namespace flopoco{
 	{
 		LongAccN = n;
 		setName("TestBench_" + op_->getName());
-		setPipelineDepth(42);	// could be any number
-
+		setPipelineDepth(0);	// could be any number
+		setCycle(0);
 
 		// Generate the standard and random test cases for this operator
 		op-> buildStandardTestCases(&tcl_);

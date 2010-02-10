@@ -433,6 +433,22 @@ namespace flopoco{
 		return o.str();
 	}
 
+	string printMapContent( map <string, int> inputDelays){
+		ostringstream o;
+		map<string, int>::iterator iter;
+		for (iter = inputDelays.begin(); iter!=inputDelays.end();++iter)
+			o << iter->first << " cycle " << iter->second << endl;			
+		return o.str();
+	}
+	
+	string printVectorContent( vector< pair<string, int> > table){
+		ostringstream o;
+		vector< pair<string, int> >::iterator iter;
+		for (iter = table.begin(); iter!=table.end();++iter)
+			o << (*iter).first << " cycle " << (*iter).second << endl;			
+		return o.str();
+	}
+
 	string join( std::string id, int n)
 	{
 		ostringstream o;

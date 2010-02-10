@@ -6,6 +6,10 @@
 #include "Target.hpp"
 #include "Signal.hpp"
 #include "TestCase.hpp"
+#include <utility>
+#include <vector>
+#include "FlopocoStream.hpp"
+
 
 using namespace std;
 
@@ -25,8 +29,14 @@ namespace flopoco {
 
 
 
-extern  int verbose;
+extern int verbose;
+
 const std::string tab = "   ";
+
+
+
+//const std::string endl = "\n"; /* nasty workaround FIXME */
+
 
  /*****************************************************************************/
  /*                        SORRY FOR THE INCONVENIENCE                        */
@@ -65,7 +75,8 @@ public:
 		hasRegistersWithAsyncReset_ = false;
 		hasRegistersWithSyncReset_  = false;
 		pipelineDepth_              = 0;
-		currentCycle_                      = 0;
+		currentCycle_               = 0;
+//		useTable.clear();
 	}
 	
 	/** Operator Constructor.
@@ -80,7 +91,9 @@ public:
 		hasRegistersWithAsyncReset_ = false;
 		hasRegistersWithSyncReset_  = false;
 		pipelineDepth_              = 0;
-		currentCycle_                      = 0;
+		currentCycle_               = 0;
+//		useTable.clear();
+
 		if (target_->isPipelined())
 			setSequential();
 		else
@@ -268,7 +281,7 @@ public:
 	 */
 	string use(string name);
 
-
+	string use(string name, int delay);
 
 
 	
@@ -694,6 +707,24 @@ public:
 	* @return the output map containing the signal -> delay associations 
 	*/	
 	map<string, double> getOutDelayMap();
+	
+	/**
+	* @return the output map containing the signal -> declaration cycle 
+	*/	
+	map<string, int> getDeclareTable();
+
+//	/**
+//	* @return the output map containing the signal -> declaration cycle 
+//	*/	
+//	vector<pair<string, int> > getUseTable(){
+//		return useTable;
+//	}
+	
+	FlopocoStream* getFlopocoVHDLStream(){
+		return &vhdl;
+	}
+
+	void parse2();
 
 
 protected:    
@@ -705,8 +736,12 @@ protected:
 	map<string, Operator*> subComponents_;/**< The list of sub-components */
 	map<string, string> portMap_;         /**< Port map for an instance of this operator */
 	map<string, double> outDelayMap;      /**< Slack delays on the outputs */
-	ostringstream       vhdl;             /**< The internal stream to which the constructor will build the VHDL code */
-	string                 srcFileName;                /**< used to debug and report.  */
+	FlopocoStream       vhdl;             /**< The internal stream to which the constructor will build the VHDL code */
+	string              srcFileName;      /**< Used to debug and report.  */
+	map<string, int>    declareTable;     /**< Table containing the name and declaration cycle of the signal */
+//	vector<pair<string, int> >    useTable;     /**< Table containing the name and declaration cycle of the signal */
+
+
 private:
 	int                    numberOfInputs_;             /**< The number of inputs of the operator */
 	int                    numberOfOutputs_;            /**< The number of outputs of the operator */
