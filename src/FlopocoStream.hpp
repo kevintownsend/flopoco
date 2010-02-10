@@ -93,6 +93,11 @@ extern vector<pair<string,int> > theUseTable;
 			output.vhdlCodeBuffer << i;
 			return output; 
 		}
+		
+		friend FlopocoStream & operator<<(FlopocoStream& output, int64_t i) {
+			output.vhdlCodeBuffer << i;
+			return output; 
+		}
 
 		friend FlopocoStream & operator<<(FlopocoStream& output, const long l) {
 			output.vhdlCodeBuffer << l;

@@ -124,7 +124,7 @@ namespace flopoco{
 			REPORT(DETAILED, "mpzclass cst_sig = " << cst_sig);
 
 			// Constant normalization
-			while ((cst_sig & 1) ==0) {
+			while ((cst_sig % 2) ==0) {
 				REPORT(INFO, "Significand is even, normalising");
 				cst_sig = cst_sig >>1;
 				cst_exp_when_mantissa_int+=1;
