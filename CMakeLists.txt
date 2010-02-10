@@ -253,6 +253,9 @@ ADD_EXECUTABLE(flopoco
  src/Signal
  src/Table 
  src/DualTable 
+
+ src/TableGenerator
+ 
  src/Wrapper
  src/TestBench 
  #src/BigTestBench

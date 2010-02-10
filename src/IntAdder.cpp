@@ -580,7 +580,7 @@ extern vector<Operator*> oplist;
 			if (implementation == BEST){ 
 				/* based on resource estimations of the optimization metric */
 				if (optimizeType == LOGIC){
-					int lutCostClassical   = getLutCostClassical  (target, wIn, inputDelays, srl);
+//					int lutCostClassical   = getLutCostClassical  (target, wIn, inputDelays, srl);
 					return CLASSICAL;
 				} else if (optimizeType == REGISTER){
 					tryOptimizedChunkSplittingShortLatency ( target, wIn , k );
