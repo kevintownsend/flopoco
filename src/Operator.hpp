@@ -30,6 +30,9 @@ namespace flopoco {
 
 
 extern int verbose;
+extern bool combinatorialOperator; //FIXME: BAD design practice working with global variables
+
+
 
 const std::string tab = "   ";
 

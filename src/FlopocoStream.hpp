@@ -15,6 +15,7 @@ namespace flopoco{
 
 extern int yyTheCycle;
 extern vector<pair<string,int> > theUseTable;
+extern bool combinatorialOperator;
 
 	/** 
 	 * The FlopocoStream class.
@@ -184,19 +185,23 @@ extern vector<pair<string,int> > theUseTable;
 			 *            from the buffer
 			 */
 			void flush(int currentCycle){
-				ostringstream bufferCode;
-				if ( vhdlCodeBuffer.str() != string("") ){
-					/* do processing if buffer is not empty */
+				if (! combinatorialOperator ){
+					ostringstream bufferCode;
+					if ( vhdlCodeBuffer.str() != string("") ){
+						/* do processing if buffer is not empty */
 					
-					/* scan buffer sequence and annotate ids */
-					bufferCode << annotateIDs( currentCycle );
+						/* scan buffer sequence and annotate ids */
+						bufferCode << annotateIDs( currentCycle );
 					
-					/* the newly processed code is appended to the existing one */
-					vhdlCode << bufferCode.str();
+						/* the newly processed code is appended to the existing one */
+						vhdlCode << bufferCode.str();
 					
-					/* reset buffer */
-					vhdlCodeBuffer.str(""); 
+					}
+				}else{
+					vhdlCode << vhdlCodeBuffer.str();				
 				}
+				/* reset buffer */
+				vhdlCodeBuffer.str(""); 
 			}
 			
 			/** 

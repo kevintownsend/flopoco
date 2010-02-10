@@ -114,6 +114,7 @@ namespace flopoco{
 	vector<pair<string, int> > theUseTable;
 	
 	map<string, double> emptyDelayMap;
+	bool combinatorialOperator;
 }
 static void usage(char *name){
 	cerr << "\nUsage: "<<name<<" <operator specification list>\n" ;
@@ -1326,7 +1327,9 @@ int main(int argc, char* argv[] )
 //			cout << printVectorContent(  (oplist[i]->getFlopocoVHDLStream())->getUseTable()  );
 //			cout << "--2nd PARSE-------------------------------------------------------" << endl;
 
-			oplist[i]->parse2();
+			/* second parse is only for sequential operators */
+			if (oplist[i]->isSequential())
+				oplist[i]->parse2();
 
 //			cout << "--END 2nd PARSE-------------------------------------------------------" << endl;
 

@@ -432,12 +432,14 @@ namespace flopoco{
 	}
 
 	void Operator::setSequential() {
+		combinatorialOperator = false;
 		isSequential_=true; 
 		//	addInput("clk");
 		// addInput("rst");
 	}
 
 	void Operator::setCombinatorial() {
+		combinatorialOperator = true;
 		isSequential_=false; 
 	}
 
