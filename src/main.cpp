@@ -1298,6 +1298,7 @@ bool parseCommandLine(int argc, char* argv[]){
 int main(int argc, char* argv[] )
 {
 	uint32_t i;
+	string srcFileName = "main.cpp";
 
 	target = new Virtex4();
 
@@ -1318,19 +1319,19 @@ int main(int argc, char* argv[] )
 	
 	for(i=0; i<oplist.size(); i++) {
 		try {
-//			cout << "--DECLARE LIST---------------------------------------------------" << endl;
-//			cout << printMapContent(oplist[i]->getDeclareTable());
-//			cout << "--USE LIST-------------------------------------------------------" << endl;
+			REPORT(DEBUG, "--DECLARE LIST---------------------------------------------------");
+			REPORT(DEBUG, printMapContent(oplist[i]->getDeclareTable()) );
+			REPORT(DEBUG, "--USE LIST-------------------------------------------------------");
 			
 			oplist[i]->getFlopocoVHDLStream()->flush();
 			
-//			cout << printVectorContent(  (oplist[i]->getFlopocoVHDLStream())->getUseTable()  );
-//			cout << "--2nd PARSE-------------------------------------------------------" << endl;
+			REPORT(DEBUG, printVectorContent(  (oplist[i]->getFlopocoVHDLStream())->getUseTable()) );
 
 			/* second parse is only for sequential operators */
-			if (oplist[i]->isSequential())
+			if (oplist[i]->isSequential()){
+				REPORT (DEBUG, "--2nd PARSE-------------------------------------------------------");
 				oplist[i]->parse2();
-
+			}
 //			cout << "--END 2nd PARSE-------------------------------------------------------" << endl;
 
 			oplist[i]->outputVHDL(file);			
