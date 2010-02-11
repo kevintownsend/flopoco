@@ -44,6 +44,7 @@ namespace flopoco{
 	FlopocoStream::FlopocoStream(){
 		vhdlCode.str("");
 		vhdlCodeBuffer.str("");
+		currentCycle_ = 0;
 	}
 
 
