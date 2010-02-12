@@ -83,10 +83,10 @@ ELSE(FLEX_EXECUTABLE)
 ENDIF(FLEX_EXECUTABLE)
 
 ADD_CUSTOM_COMMAND(
-	SOURCE src/VHDLLexer.l
+	SOURCE src/VHDLLexer.lpp
 	COMMAND ${FLEX_EXECUTABLE} 
 	ARGS -+ -o src/VHDLLexer.cpp --header-file=src/VHDLLexer.hpp
-    src/VHDLLexer.l
+    src/VHDLLexer.lpp
 	TARGET VHDLLexer
 	OUTPUTS src/VHDLLexer.cpp src/VHDLLexer.hpp)
 

@@ -5,7 +5,7 @@ all:configure.ac Makefile.am src/Makefile.am
 	@autoreconf --install
 	
 distclean: clean
-	@rm -rf configure.ac Makefile.am src/Makefile.am aclocal.m4 autom4te.cache config.guess config.h.in config.sub configure depcomp install-sh ltmain.sh m4 missing Makefile.in src/Makefile.in
+	@rm -rf ylwrap configure.ac Makefile.am src/Makefile.am aclocal.m4 autom4te.cache config.guess config.h.in config.sub configure depcomp install-sh ltmain.sh m4 missing Makefile.in src/Makefile.in
 	@rm -rf config.h config.log config.status libtool stamp-h1 Makefile src/Makefile
 	@echo "- FloPoCo: cleared configuration files -"
 

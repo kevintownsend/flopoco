@@ -5,8 +5,7 @@ FloPoCo may be compiled either using CMake or the autotools.
 The recommended way is CMake, which is available for most Unix and
 Linux distributions and for Windows. See below.
 
-If you prefer to use the autotools, uncompress autotools-files.tgz and
-read the README.autotools file it contains.
+If you prefer to use the autotools read the README.autotools file.
 
 Dependencies:
 

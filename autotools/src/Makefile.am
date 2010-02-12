@@ -2,9 +2,16 @@
 
 ACLOCAL_AMFLAGS = -I ../m4
 
+AM_LFLAGS = -+ -o lex.yy.c --header-file=VHDLLexer.hpp
+BUILT_SOURCES = VHDLLexer.hpp VHDLLexer.cpp 
+CLEANFILES = $(BUILT_SOURCES) *.output
+LEX_OUTPUT_ROOT=VHDLLexer.hpp VHDLLexer.hpp lex.yy
+
 noinst_LTLIBRARIES = libflopoco.la
 
-libflopoco_la_SOURCES = utils.cpp \
+libflopoco_la_SOURCES = VHDLLexer.lpp \
+			utils.cpp \
+			FlopocoStream.cpp \
 			Targets/DSP.cpp \
 			Target.cpp \
 			Targets/Virtex4.cpp \
@@ -16,6 +23,7 @@ libflopoco_la_SOURCES = utils.cpp \
 			Signal.cpp \
 			Table.cpp \
 			DualTable.cpp \
+			TableGenerator.cpp \
 			Wrapper.cpp \
 			TestBench.cpp \
 			IntAdder.cpp \
@@ -68,3 +76,5 @@ libflopoco_la_SOURCES = utils.cpp \
 if no_WIN32
 libflopoco_la_SOURCES += ConstMult/LastKCMTable.cpp ConstMult/CRFPConstMult.cpp 
 endif
+
+

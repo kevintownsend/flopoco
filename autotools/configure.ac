@@ -10,6 +10,12 @@ AC_PROG_CC
 AC_PROG_CPP
 AC_PROG_INSTALL
 AC_PROG_LIBTOOL
+AM_PROG_LEX
+
+#we need flex instead of lex
+if test "$LEX" != flex; then
+    AC_MSG_ERROR(flex is required)
+fi
 
 dnl Sets C++ as main language
 AC_LANG([C++])
