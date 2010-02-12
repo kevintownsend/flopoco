@@ -92,6 +92,7 @@
 #endif
 #endif
 
+#include "TableGenerator.hpp"
 
 using namespace std;
 using namespace flopoco;
@@ -1243,6 +1244,15 @@ bool parseCommandLine(int argc, char* argv[]){
 				cerr << "> Wrapper for " << toWrap->getName()<<endl;
 				op =new Wrapper(target, toWrap);
 				addOperator(op);
+			}
+		}
+		else if (opname == "TableGenerator") {
+			int nargs = 0;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				Operator* tg = new TableGenerator(target, 0 , 0 );
+				addOperator(tg);
 			}
 		}
 		else if (opname == "TestBench") {

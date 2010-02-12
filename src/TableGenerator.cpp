@@ -62,7 +62,67 @@ namespace flopoco{
 		setCombinatorial();
 	
 		/* Convert the input string into a sollya evaluation tree */
-		sollya_node_t sF = parseString("your function here ... probably passed as constructor parameter");
+		
+		sollya_node_t sF = parseString("sin(x)");
+		
+		sollya_node_t tempNode, tempNode2, tempNode3;
+  sollya_chain_t tempChain;
+  mpfr_t a;
+  mpfr_t b;
+  
+   tempNode = parseString("1/log(1 + x)");
+  tempNode2 = parseString("1");
+
+  tempChain = makeIntPtrChainFromTo(1,5);
+
+  mpfr_init2(a,12);
+  mpfr_init2(b,12);
+
+  mpfr_set_d(a,-0.25,GMP_RNDN);
+  mpfr_set_d(b,0.25,GMP_RNDN);
+
+  tempNode3 = remez(tempNode2, tempNode, tempChain, a, b, NULL, getToolPrecision());
+
+  mpfr_clear(a);
+  mpfr_clear(b);
+
+
+  printTree(tempNode3);
+  printf("\n");
+
+  free_memory(tempNode);
+  free_memory(tempNode2);
+  free_memory(tempNode3);
+
+  freeChain(tempChain,freeIntPtr);
+
+  /* Second example that calls a error recovery function */
+
+  tempNode = parseString("1/log(1 + x)");
+  tempNode2 = parseString("1");
+
+  tempChain = makeIntPtrChainFromTo(0,5);
+
+  mpfr_init2(a,12);
+  mpfr_init2(b,12);
+
+  mpfr_set_d(a,-0.25,GMP_RNDN);
+  mpfr_set_d(b,0.25,GMP_RNDN);
+
+  tempNode3 = remez(tempNode2, tempNode, tempChain, a, b, NULL, getToolPrecision());
+
+  mpfr_clear(a);
+  mpfr_clear(b);
+
+
+  printTree(tempNode3);
+  printf("\n");
+
+  free_memory(tempNode);
+  free_memory(tempNode2);
+  free_memory(tempNode3);
+
+  freeChain(tempChain,freeIntPtr);
 
 	}
 
