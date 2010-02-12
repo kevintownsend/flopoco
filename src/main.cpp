@@ -1322,7 +1322,8 @@ int main(int argc, char* argv[] )
 			REPORT(DEBUG, "--DECLARE LIST---------------------------------------------------");
 			REPORT(DEBUG, printMapContent(oplist[i]->getDeclareTable()) );
 			REPORT(DEBUG, "--USE LIST-------------------------------------------------------");
-			
+
+			combinatorialOperator = not(oplist[i]->isSequential());
 			oplist[i]->getFlopocoVHDLStream()->flush();
 			
 			REPORT(DEBUG, printVectorContent(  (oplist[i]->getFlopocoVHDLStream())->getUseTable()) );
