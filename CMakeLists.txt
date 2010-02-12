@@ -92,41 +92,6 @@ ADD_CUSTOM_COMMAND(
 
 SET_SOURCE_FILES_PROPERTIES(src/VHDLLexer GENERATED) 
 
-## Detect Lex presence
-#OPTION(CMAKE_REGENERATE_LEX
-#  "Regenerate YACC and LEXX files" ON)
-
-#MARK_AS_ADVANCED(CMAKE_REGENERATE_LEX)
-#IF(CMAKE_REGENERATE_LEX)
-#  SET(parsersLexers cmDependsFortran cmCommandArgument cmExpr)
-#  FIND_PROGRAM(FLEX_EXECUTABLE
-#    NAMES flex
-#    PATHS /usr/bin
-#    DOC "Flex executable")
-#  MARK_AS_ADVANCED(YACC_EXECUTABLE FLEX_EXECUTABLE)
-#  IF(FLEX_EXECUTABLE)
-#  	MESSAGE(STATUS "Found lex: ${FLEX_EXECUTABLE}")
-#  	SET(LEX_FOUND TRUE)
-#    SET(lex_files)
-#    FOREACH(name ${parsersLexers})
-#      SET(src "${CMAKE_CURRENT_SOURCE_DIR}/${name}Lexer.in.l")
-#      SET(dst "${CMAKE_CURRENT_BINARY_DIR}/${name}Lexer.c")
-#      SET(hdr "${CMAKE_CURRENT_BINARY_DIR}/${name}Lexer.h")
-#      ADD_CUSTOM_COMMAND(
-#        OUTPUT "${dst}"
-#        DEPENDS "${src}"
-#        COMMAND
-#        ${FLEX_EXECUTABLE}
-#        --prefix=${name}_yy --header-file=${hdr} -o${dst} ${src}
-#        )
-#      SET(lex_files ${lex_files} "${dst}")
-#    ENDFOREACH(name)
-#    ADD_CUSTOM_TARGET(RerunLex DEPENDS ${lex_files})
-#  ELSE(FLEX_EXECUTABLE)
-#  	MESSAGE(FATAL_ERROR "Could not find LEX.\nOn Debian-based systems install flex")
-#  ENDIF(FLEX_EXECUTABLE)
-#ENDIF(CMAKE_REGENERATE_LEX)
-
 
 # Build HOTBM
 IF (SOLLYA_LIB)
@@ -217,7 +182,6 @@ ADD_EXECUTABLE(flopoco
  src/TestCase
  src/FPNumber
  src/IEEENumber
- 
  
  src/fpexponential/math_lib
  src/fpexponential/signal
