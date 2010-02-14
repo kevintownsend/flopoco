@@ -152,7 +152,7 @@ MAC(Target* target): Operator(target)
  
 And that's it. \verb!MAC! inherits from \verb!Operator! the method
 \verb!outputVHDL()! that will assemble the information defined in the
-constructor into synthesizable VHDL.
+constructor into synthesizable VHDL. Note that \verb!R! is declared by \verb!addOutput!.
 
 So far we have gained little, except that is is more convenient to
 have the declaration of \verb!T! where its value is defined. Let us
@@ -168,7 +168,7 @@ Let us first insert a synchronization barrier between the result of the multipli
 (...)
    vhdl << declare("T", 64) << " <= Y * Z;" << endl;
    nextCycle();
-   vhdl << "R <= " << use("X") << " + " << use("T") << ";" << endl;
+   vhdl << "R <= X + T ;" << endl;
 (...)
 \end{verbatim}
 
@@ -196,21 +196,27 @@ How does it work?
   between them. In other words, \verb!X_d2! will hold the value of
   \verb!X! delayed by 2 cycles.
 
-\item Wrapping a signal in \verb!use()! has the following  effect. First,
-  \verb!use("X")! will compare \verb!currentCycle! and the
-  \verb!cycle! declared for \verb!X!, which we note \verb!X.cycle!. 
+\item FloPoCo scans the VHDL and looks for right-hand side occurences
+  of declared signals. For instance, in the line after the
+  \verb!nextCycle!, it finds \verb!X! and \verb!T!. For such signals, it does the following. First,
+  it compares \verb!currentCycle! and the
+  \verb!cycle! declared for \verb!X!, which we note \verb!X.cycle!.
   \begin{itemize}\item 
-    If they are equal, or if \verb!-pipeline=no!, \verb!use("X")! will
-    simply return \verb!"X"!.
-  \item If \verb!currentCycle! $<$ \verb!X.cycle!, \verb!use("X")!
-    will emit an error message complaining that \verb!X! is being
+    If they are equal, or if \verb!-pipeline=no!, \verb!X! is written to the VHDL untouched.
+  \item If \verb!currentCycle! $<$ \verb!X.cycle!, FloPoCo emits an error message complaining that \verb!X! is being
     used before the cycle at which it is defined.
-  \item If \verb!currentCycle! $>$ \verb!X.cycle!, \verb!use("X")!
-    will delay signal \verb!X! by
-    n=\verb!currentCycle!$-$\verb!X.cycle! cycles. Technically
-    \verb!use("X")! just returns \verb!"X_dn"!, and updates \verb!X.lifeSpan! to be at least equal to n.
+  \item If \verb!currentCycle! $>$ \verb!X.cycle!, FloPoCo delays
+    signal \verb!X! by n=\verb!currentCycle!$-$\verb!X.cycle!
+    cycles. Technically, it just replaces, in the output VHDL,
+    \verb!X! with \verb!X_dn!. It also updates \verb!X.lifeSpan! to be
+    at least equal to n.
   \end{itemize}
+\item All the needed signals will be declared in the output VHDL based
+  on the \verb!lifeSpan! information.
 \end{itemize}
+
+This whole scheme is actually run in two passes so that
+\verb!currentCycle! may for forth and back in the FloPoCo code, which is useful in some situations.
 
 It should be noted that this scheme gracefully degrades to a
 combinatorial operator. It also automatically adapts to random
@@ -228,14 +234,22 @@ Some more notes:
 \item The second parameter of \verb!declare()!, the signal width, is
   optional and defaults to 1 (a \verb!std_logic! signal).
 
-\item Other functions allow to manipulate \verb!currentCycle!. They
-  are \verb!setCycle(int n)!, \verb!setCycleFromSignal(string s)!
-  which sets the \verb!currentCycle! to the \verb!cycle! of the
-  signal whose name is given as an argument (going back if needed),
-  and \verb!syncCycleFromSignal(string s)! which may only advance \verb!currentCycle!. The latter allows to synchronise
-  several signals by setting \verb!currentCycle! to the max of their
-  \verb!cycle!. See \verb!FPAdder! or \verb!FPLog! for examples of
+\item Other functions allow to manipulate \verb!currentCycle!
+  \begin{itemize}
+  \item 
+    \verb!setCycle(int n)! sets \verb!currentCycle! to  $n$.  
+  \item \verb!setCycleFromSignal(string s)!  
+    sets the \verb!currentCycle! to the \verb!cycle! of the signal
+    whose name is given as an argument (going back if needed),
+  \item 
+    \verb!syncCycleFromSignal(string s)! is similar to the previous but may only advance
+    \verb!currentCycle!. It allows to synchronise several
+    signals by setting \verb!currentCycle! to the max of their
+    \verb!cycle!.
+
+See \verb!FPAdder! or \verb!FPLog! for examples of
   such synchronisations. 
+  \end{itemize}
 
 All these functions have an optional boolean
   second argument which, if true, inserts in the generated VHDL a
@@ -256,22 +270,20 @@ automatically computed from the user-supplied frequency.
 
 \begin{verbatim}
 (...)
-   // vhdl << declare("T", 64) << " <= Y * Z;" << endl;
-
+	// vhdl << declare("T", 64) << " <= Y * Z;" << endl;
 	IntMultiplier my_mult = new IntMultiplier(target, 32, 32);
 	oplist.push_back(my_mult); // some day this will be an addOperator method
 	inPortMap   (my_mult, "X", "Y"); // formal, actual
 	inPortMap   (my_mult, "Y", "Z");
 	outPortMap  (my_mult, "R","T");
 	vhdl << instance(my_mult, "my_mult"); // 2nd param is the VHDL instance name
-   // advance to the cycle of the result
+
+	// advance to the cycle of the result
 	syncCycleFromSignal("T"); 
+	// pipelined operators do not have a register on the output 
+	nextCycle();
 
-   // pipelined operators do not have a register on the output 
-   nextCycle();
-
-   // vhdl << "R <= " << use("X") << " + " << use("T") << ";" << endl;
-
+	// vhdl << "R <= X + T;" << endl;
 	IntAdder my_adder = new IntAdder(target, 64);
 	oplist.push_back(my_adder);
 	inPortMap   (my_adder, "X", "X");
@@ -279,15 +291,16 @@ automatically computed from the user-supplied frequency.
 	inPortMapCst(my_adder, "Cin", "0"); -- carry in
 	outPortMap  (my_adder, "R","RR");
 	vhdl << instance(my_adder, "my_add");
-   // advance to the cycle of the result
+
+	// advance to the cycle of the result
 	syncCycleFromSignal("RR"); 
-   vhdl << "R <= RR;" << endl; // no need for use since we are in the same cycle
+   vhdl << "R <= RR;" << endl; 
 (...)
 \end{verbatim}
 
 
 And that's it. In the code above, an \verb!inPortMap()! does the same
-job as a \verb!use()!, and an \verb!outPortMap()! does the same job as
+job as an occurence of signal on the right-hand side, and an \verb!outPortMap()! does the same job as
 a \verb!declare()!, although it doesn't need a signal width since it
 can read it from the sub-component. \verb!instance()! also has the
 effect that \verb!outputVHDL()! will declare this component in the
@@ -352,7 +365,7 @@ generation. Let us just take two examples.
   Such cases are managed by overloading the Operator method
   \texttt{\small buildRandomTestCases()}. Finally,
   \texttt{\small buildStandardTestCases()} allows to test corner cases which
-  random testing has little chance to find.
+  random testing has little chance to find. See \texttt{FPAdder.cpp} for examples.
 
 
 \end{document}
