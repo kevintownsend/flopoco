@@ -62,30 +62,27 @@ namespace flopoco{
 		setCombinatorial();
 	
 		/* Convert the input string into a sollya evaluation tree */
-		
-		sollya_node_t sF = parseString("sin(x)");
-		
-		sollya_node_t tempNode, tempNode2, tempNode3;
-  sollya_chain_t tempChain;
+  sollya_node_t tempNode = parseString("sin(x)"); //function
+  sollya_node_t tempNode2=parseString("0"); //ct part
+  sollya_chain_t tempChain = makeIntPtrChainFromTo(0,5); //monomials
+ 
+  sollya_chain_t tempChain2 = makeIntPtrChainFromTo(15,20); //precision
   mpfr_t a;
   mpfr_t b;
   
-   tempNode = parseString("1/log(1 + x)");
-  tempNode2 = parseString("1");
-
-  tempChain = makeIntPtrChainFromTo(1,5);
-
-  mpfr_init2(a,12);
-  mpfr_init2(b,12);
+  mpfr_init2(a,getToolPrecision());
+  mpfr_init2(b,getToolPrecision());
 
   mpfr_set_d(a,-0.25,GMP_RNDN);
   mpfr_set_d(b,0.25,GMP_RNDN);
-
-  tempNode3 = remez(tempNode2, tempNode, tempChain, a, b, NULL, getToolPrecision());
+  //tempNode3 = FPminimax(firstArg, tempChain, tempChain2, tempChain3, a, b, resB, resC, tempNode, tempNode2);
+  sollya_node_t tempNode3 = FPminimax(tempNode, tempChain ,tempChain2, NULL,       a, b, FIXED, ABSOLUTESYM, tempNode2,NULL);
 
   mpfr_clear(a);
   mpfr_clear(b);
 
+  printTree(tempNode);
+  printf("\n");
 
   printTree(tempNode3);
   printf("\n");
@@ -95,35 +92,9 @@ namespace flopoco{
   free_memory(tempNode3);
 
   freeChain(tempChain,freeIntPtr);
-
-  /* Second example that calls a error recovery function */
-
-  tempNode = parseString("1/log(1 + x)");
-  tempNode2 = parseString("1");
-
-  tempChain = makeIntPtrChainFromTo(0,5);
-
-  mpfr_init2(a,12);
-  mpfr_init2(b,12);
-
-  mpfr_set_d(a,-0.25,GMP_RNDN);
-  mpfr_set_d(b,0.25,GMP_RNDN);
-
-  tempNode3 = remez(tempNode2, tempNode, tempChain, a, b, NULL, getToolPrecision());
-
-  mpfr_clear(a);
-  mpfr_clear(b);
-
-
-  printTree(tempNode3);
-  printf("\n");
-
-  free_memory(tempNode);
-  free_memory(tempNode2);
-  free_memory(tempNode3);
-
-  freeChain(tempChain,freeIntPtr);
-
+  freeChain(tempChain2,freeIntPtr);
+ 
+  
 	}
 
 	TableGenerator::~TableGenerator() {
