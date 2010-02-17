@@ -956,26 +956,23 @@ bool parseCommandLine(int argc, char* argv[]){
 			}
 		}
 		else if(opname=="PolynomialEvaluator"){
-			int nargs = 0;
+			int nargs = 1;
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
-				FixedPointCoefficient* f0 = new FixedPointCoefficient( 20, -50);
-				FixedPointCoefficient* f1 = new FixedPointCoefficient( 30, -40);
-				FixedPointCoefficient* f2 = new FixedPointCoefficient( 40, -30);
-				FixedPointCoefficient* f3 = new FixedPointCoefficient( 50, -20);
-				FixedPointCoefficient* f4 = new FixedPointCoefficient( 63, -10);
+				int prec = atoi(argv[i++]); // may be negative
+				FixedPointCoefficient* f0 = new FixedPointCoefficient( 27, 0);
+				FixedPointCoefficient* f1 = new FixedPointCoefficient( 17,-1);
+				FixedPointCoefficient* f2 = new FixedPointCoefficient( 9, -3);
 
-				YVar* y = new YVar(20, -6);
+				YVar* y = new YVar(16, -6);
 				
 				vector<FixedPointCoefficient*> coef;
 				coef.push_back(f0);
 				coef.push_back(f1);
 				coef.push_back(f2);
-				coef.push_back(f3);
-				coef.push_back(f4);
 
-				op = new PolynomialEvaluator(target, coef, y);
+				op = new PolynomialEvaluator(target, coef, y, prec);
 				addOperator(op);
 			}
 		}
