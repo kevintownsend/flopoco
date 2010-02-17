@@ -236,6 +236,9 @@ namespace flopoco{
 
 	string of( int x);
 
+
+	string align( int left, string s, int right );
+
 	/**
 	 *@param[in] inputDelays	map between signal names and their respective delays
 	 *@return the maximum delay of the input map 

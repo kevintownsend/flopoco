@@ -273,6 +273,9 @@ ADD_EXECUTABLE(flopoco
  src/OutputIEEE
  src/apps/Collision
  src/IntSquarer
+
+ src/PolynomialEvaluator
+
 )
 ENDIF(WIN32) 
 

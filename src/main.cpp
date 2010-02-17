@@ -52,6 +52,10 @@
 #include "LongAcc.hpp"
 #include "LongAcc2FP.hpp"
 #include "DotProduct.hpp"
+
+#include "PolynomialEvaluator.hpp"
+
+
 #include "Wrapper.hpp"
 #include "TestBench.hpp"
 
@@ -951,6 +955,31 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(op);
 			}
 		}
+		else if(opname=="PolynomialEvaluator"){
+			int nargs = 0;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				FixedPointCoefficient* f0 = new FixedPointCoefficient( 20, -50);
+				FixedPointCoefficient* f1 = new FixedPointCoefficient( 30, -40);
+				FixedPointCoefficient* f2 = new FixedPointCoefficient( 40, -30);
+				FixedPointCoefficient* f3 = new FixedPointCoefficient( 50, -20);
+				FixedPointCoefficient* f4 = new FixedPointCoefficient( 63, -10);
+
+				YVar* y = new YVar(20, -6);
+				
+				vector<FixedPointCoefficient*> coef;
+				coef.push_back(f0);
+				coef.push_back(f1);
+				coef.push_back(f2);
+				coef.push_back(f3);
+				coef.push_back(f4);
+
+				op = new PolynomialEvaluator(target, coef, y);
+				addOperator(op);
+			}
+		}
+				
 #ifndef _WIN32
 #ifdef HAVE_HOTBM
 		else if (opname == "HOTBM") {

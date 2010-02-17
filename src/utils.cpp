@@ -491,8 +491,8 @@ namespace flopoco{
 	string range( int left, int right)
 	{
 		ostringstream o;
-		if (left>=right) o<<"("<<left<<" downto " << right << ")";
-		else             o<<"("<<left<<" to "     << right << ")";
+		if (left>=right) o<<"("<<left<<" downto " << (right>0?right:0) << ")";
+		else             o<<"("<<(left>0?left:0)<<" to "     << right << ")";
 
 		return o.str();
 	}
@@ -514,6 +514,12 @@ namespace flopoco{
 		return o.str();
 	}
 
+	string align( int left, string s, int right ){
+		ostringstream tmp;
+		
+		tmp << "(" << (left>0?zg(left,0) + " & ":"") << s << (right>0?" & " +zg(right, 0):"") << ")";
+		return tmp.str(); 
+	}
 
 
 }
