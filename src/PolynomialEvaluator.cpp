@@ -64,7 +64,7 @@ namespace flopoco{
 		/*init vectors */
 		for (uint32_t i=1; i<=unsigned(degree_)+1; i++){
 			yGuard_[i] = 0; //maxBoundY;
-//			nYGuard[i] = 0;
+			nYGuard_[i] = 0;
 		}
 		
 		for (uint32_t i=0; i<unsigned(degree_)+1; i++)
