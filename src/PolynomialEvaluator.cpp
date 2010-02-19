@@ -163,8 +163,8 @@ namespace flopoco{
 		mpfr_t maxABSy;
 		mpfr_init2 ( maxABSy, 1000);
 		mpfr_set_ui( maxABSy, 2, GMP_RNDN);
-		mpfr_pow_si( maxABSy, maxABSy, y->getSize()-1, GMP_RNDN);
-		mpfr_add_si( maxABSy, maxABSy, 1, GMP_RNDN);
+		mpfr_pow_si( maxABSy, maxABSy, y->getSize(), GMP_RNDN);
+		mpfr_add_si( maxABSy, maxABSy, -1, GMP_RNDN);
 		mpfr_set_exp( maxABSy, mpfr_get_exp(maxABSy)+y->getWeight()-y->getSize());
 		REPORT(DETAILED, "Abs max value of y is " << mpfr_get_d( maxABSy, GMP_RNDN)); 
 		
@@ -218,8 +218,8 @@ namespace flopoco{
 			ak =(mpfr_t*) malloc( sizeof( mpfr_t));
 			mpfr_init2 ( *ak, 1000);
 			mpfr_set_ui( *ak, 2, GMP_RNDN);
-			mpfr_pow_si( *ak, *ak, coef[i]->getSize()-1, GMP_RNDN);
-			mpfr_add_si( *ak, *ak , 1, GMP_RNDN);
+			mpfr_pow_si( *ak, *ak, coef[i]->getSize(), GMP_RNDN);
+			mpfr_add_si( *ak, *ak , -1, GMP_RNDN);
 			mpfr_set_exp( *ak, (mpfr_get_d(*ak, GMP_RNDZ)!=0?mpfr_get_exp(*ak):0) + coef[i]->getWeight() - coef[i]->getSize());
 			a[i]=ak;
 		}
@@ -232,8 +232,8 @@ namespace flopoco{
 		yy =(mpfr_t*) malloc( sizeof( mpfr_t));
 		mpfr_init2 ( *yy, 1000);
 		mpfr_set_ui( *yy, 2, GMP_RNDN);
-		mpfr_pow_si( *yy, *yy, y->getSize()-1, GMP_RNDN);
-		mpfr_add_si( *yy, *yy , 1, GMP_RNDN);
+		mpfr_pow_si( *yy, *yy, y->getSize(), GMP_RNDN);
+		mpfr_add_si( *yy, *yy , -1, GMP_RNDN);
 		mpfr_set_exp( *yy, ( mpfr_get_d(*yy, GMP_RNDZ)!=0?mpfr_get_exp(*yy):0) + y->getWeight() - y->getSize());
 
 		REPORT(DETAILED, "y="<< mpfr_get_exp(*yy));
@@ -274,8 +274,8 @@ namespace flopoco{
 			h = (mpfr_t *) malloc( sizeof(mpfr_t));
 			mpfr_init2(*h, 1000);
 			mpfr_set_ui( *h, 2, GMP_RNDN);
-			mpfr_pow_si( *h, *h, pikPTSize[i]-1, GMP_RNDN);
-			mpfr_add_si( *h, *h , 1, GMP_RNDN);
+			mpfr_pow_si( *h, *h, pikPTSize[i], GMP_RNDN);
+			mpfr_add_si( *h, *h , -1, GMP_RNDN);
 			mpfr_set_exp( *h, (mpfr_get_d(*h, GMP_RNDZ)!=0? mpfr_get_exp(*h):0) + pikPTWeight[i] - pikPTSize[i]);
 
 			pikPT[i] = h;
