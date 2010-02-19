@@ -36,9 +36,7 @@
 #include <gmpxx.h>
 #include "utils.hpp"
 #include "Operator.hpp"
-
 #include "TableGenerator.hpp"
-
 
 using namespace std;
 
@@ -46,8 +44,8 @@ namespace flopoco{
 
 	extern vector<Operator*> oplist;
 
-	TableGenerator::TableGenerator(Target* target, int wIn, int wOut ): // TODO extend list
-		Operator(target), wIn_(wIn), wOut_(wOut)  {
+	TableGenerator::TableGenerator(Target* target, string func, int wIn, int wOut, int n, double xmin, double xmax, double scale ): // TODO extend list
+		Operator(target), wIn_(wIn), wOut_(wOut), f(*new Function(func, xmin, xmax, scale))   {
 	
 		ostringstream name;
 		/* Set up the name of the entity */
@@ -61,45 +59,175 @@ namespace flopoco{
 		/* This operator is combinatorial (in fact is just a ROM.*/
 		setCombinatorial();
 	
-		/* Convert the input string into a sollya evaluation tree */
-  sollya_node_t tempNode = parseString("sin(x)"); //function
-  sollya_node_t tempNode2=parseString("0"); //ct part
-  sollya_chain_t tempChain = makeIntPtrChainFromTo(0,5); //monomials
- 
-  sollya_chain_t tempChain2 = makeIntPtrChainFromTo(15,20); //precision
+	/* Start initialization */
+  
+  
+  setToolPrecision(165);
+  
+  /* End of initialization */
+  int verbose=0;
+  int nrMaxIntervals=1024*1024;	
+	/* Convert the input string into a sollya evaluation tree */
+  sollya_node_t tempNode = f.getSollyaNode(); //function
+  
   mpfr_t a;
   mpfr_t b;
+  mpfr_t eps;
   
   mpfr_init2(a,getToolPrecision());
   mpfr_init2(b,getToolPrecision());
+  mpfr_init2(eps,getToolPrecision());
+  
+	/* Convert parameters to their required type */
+	mpfr_set_d(a,0.,GMP_RNDN);
+  mpfr_set_d(b,1.,GMP_RNDN);
+  mpfr_set_ui(eps, 1, GMP_RNDN);
+  mpfr_mul_2si(eps, eps, -wOut-1, GMP_RNDN); // eps< 2^{-wout-1}
+  
+  //sollya_node_t w=parseString("1"); //weight
+  
+  // sollya_range_t r;
+  
+  //r=guessDegree(tempNode, w, a, b, eps);
+  
+  
+  sollya_node_t tempNode2=parseString("0"); //ct part
+  sollya_chain_t tempChain = makeIntPtrChainFromTo(0,n); //monomials
+ 
+ 
+  //start with one interval; subdivide until the error is satisfied
+  
+  int nrIntervals = 1;
+  int precShift=0;
+  vector<sollya_node_t> polys;
+  
+  vector<mpfr_t*> errPolys;
+  
+  sollya_node_t tempNode3, nDiff;
+  sollya_chain_t tempChain2;
+  
+  mpfr_t ai;
+  mpfr_t bi;
+  mpfr_t* mpErr;
+  
 
-  mpfr_set_d(a,-0.25,GMP_RNDN);
-  mpfr_set_d(b,0.25,GMP_RNDN);
-  //tempNode3 = FPminimax(firstArg, tempChain, tempChain2, tempChain3, a, b, resB, resC, tempNode, tempNode2);
-  sollya_node_t tempNode3 = FPminimax(tempNode, tempChain ,tempChain2, NULL,       a, b, FIXED, ABSOLUTESYM, tempNode2,NULL);
-
+  mpfr_init2(ai,getToolPrecision());
+  mpfr_init2(bi,getToolPrecision());
+  
+  int k;
+  int errBoundBool =0;
+  
+  while((errBoundBool==0)&& (nrIntervals <=nrMaxIntervals)){
+    errBoundBool=1; //suppose the nr of intervals is good
+    //polys.reserve(nrIntervals);
+    //errPolys.reserve(nrIntervals);
+    cout<<"trying with "<< nrIntervals <<" intervals"<<endl;
+    for (k=0; k<nrIntervals; k++){
+      mpfr_set_ui(ai,k,GMP_RNDN);
+      mpfr_set_ui(bi,k+1,GMP_RNDN);
+      mpfr_div_ui(ai, ai, nrIntervals, GMP_RNDN);
+      mpfr_div_ui(bi, bi, nrIntervals, GMP_RNDN);    
+   
+      tempChain2 = makeIntPtrChainToFromBy(wOut+1,n+1, precShift); //precision
+    
+      //tempNode3 = FPminimax(firstArg, tempChain, tempChain2, tempChain3, a, b, resB, resC, tempNode, tempNode2);
+      tempNode3 = FPminimax(tempNode, tempChain ,tempChain2, NULL,       ai, bi, FIXED, ABSOLUTESYM, tempNode2,NULL);
+      
+      polys.push_back(tempNode3);
+      if (verbose){
+      
+       printTree(tempNode3);
+       printf("\n");
+      }
+      
+      //Compute the error 
+		  nDiff = makeSub(tempNode, tempNode3);
+		  mpErr= (mpfr_t *) safeMalloc(sizeof(mpfr_t));
+		  mpfr_init2(*mpErr,getToolPrecision());  
+			uncertifiedInfnorm(*mpErr, nDiff, ai, bi, 501/*default in sollya*/, getToolPrecision()); 
+      if (verbose){
+      cout<< "infinite norm:"<<sPrintBinary(*mpErr)<<endl;
+      }
+		  errPolys.push_back(mpErr);
+		  if (mpfr_cmp(*mpErr, eps)>0) {
+		    errBoundBool=0; //we have found an interval where the error is not good
+		    cout<< "we have found an interval where the error is not good, proceed to splitting"<<endl;
+		    //k=nrIntervals;
+		    polys.clear();
+		    errPolys.clear();
+		    nrIntervals=2 * nrIntervals;
+		    precShift=precShift+1;
+		    break;
+      }
+    }
+  } 
+  if (errBoundBool==1){
+  cout<< "we have all of them, the number of intervals is:"<< nrIntervals<<endl; 
+  cout<< "We proceed to the extraction of the coefficients:"<<endl; 
+  
+  //Extract coefficients
+		vector<MPPolynomial*> mpP;
+    k=0;
+   for (k=0;k<nrIntervals;k++){
+   		cout<<"\n----"<< k<<"th polynomial:----"<<endl;
+      
+      printTree(polys[k]);
+      //mpP.push_back(getMPPolynomial(polys[k]));
+	  }
+	
+	}
+	
+  else{
+  cout<< "something went wrong"<<endl; 
+  }
   mpfr_clear(a);
   mpfr_clear(b);
 
-  printTree(tempNode);
-  printf("\n");
-
-  printTree(tempNode3);
-  printf("\n");
-
-  free_memory(tempNode);
+  
+  //free_memory(tempNode);
   free_memory(tempNode2);
-  free_memory(tempNode3);
+  //free_memory(tempNode3);
 
   freeChain(tempChain,freeIntPtr);
   freeChain(tempChain2,freeIntPtr);
- 
+  //finishTool();
   
 	}
 
 	TableGenerator::~TableGenerator() {
 	}
 
-}
 
+MPPolynomial* TableGenerator::getMPPolynomial(sollya_node_t t){
+	  int degree=1,i;
+		sollya_node_t *nCoef;
+		mpfr_t *coef;
+		
+		printTree(t);
+		getCoefficients(&degree, &nCoef, t);
+		cout<<degree<<endl;
+		coef = (mpfr_t *) safeCalloc(degree+1,sizeof(mpfr_t));
+    
+      
+		for (i = 0; i <= degree; i++)
+			{
+				mpfr_init2(coef[i], getToolPrecision());
+				//cout<< i<<"th coeff:"<<endl;
+				//printTree(getIthCoefficient(t, i));
+				evaluateConstantExpression(coef[i], nCoef[i], getToolPrecision());
+				
+		    cout<< i<<"th coeff:"<<sPrintBinary(coef[i])<<endl;
+			}
+      MPPolynomial* mpP = new MPPolynomial(degree, coef);
+		  //Cleanup 
+	    for (i = 0; i <= degree; i++)
+			  mpfr_clear(coef[i]);
+		  delete coef;
+		  
+		  //MPPolynomial* mpP = new MPPolynomial();
+     return mpP;
+}
+}     
 #endif //HAVE_SOLLYA
+
+

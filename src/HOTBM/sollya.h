@@ -223,6 +223,11 @@ void sortChain(sollya_chain_t c,  int (*f) (void *, void *));
 sollya_chain_t makeIntPtrChainFromTo(int m, int n);
 void freeIntPtr(void *ptr);
 
+void *safeCalloc (size_t nmemb, size_t size);
+void *safeMalloc (size_t size);
+
+
+
 #ifdef __cplusplus
 }
 #endif
