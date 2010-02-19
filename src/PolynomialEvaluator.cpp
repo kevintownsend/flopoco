@@ -48,9 +48,9 @@ namespace flopoco{
 		REPORT(DETAILED, "Polynomial to evaluate: " << printPolynomial(coef, y));
 		
 		/* ================== I/O declarations ==================*/
-		addInput("X", y_->getSize());
+		addInput("Y", y_->getSize());
 		for (uint32_t i=0; i <= unsigned(degree_); i++)
-			addInput(join("C",i), coef_[i]->getSize() );
+			addInput(join("C",i), coef_[i]->getSize()+1);
 
 		/* Gappa Style */
 		
@@ -79,9 +79,9 @@ namespace flopoco{
 		mpfr_set_exp( maxABSy, mpfr_get_exp(maxABSy)+y_->getWeight()-y_->getSize());
 		REPORT(DETAILED, "Abs max value of y is " << mpfr_get_d( maxABSy, GMP_RNDN)); 
 		
-		
-	   sol = false;
-		
+
+		/* design space exploration */				
+		sol = false;
 		while (!sol){
 			while ((nextStateA()) && (!sol)){
 				while ( (nextStateY())&& (!sol) ){
@@ -99,18 +99,18 @@ namespace flopoco{
 	
 	
 	int PolynomialEvaluator::errorEstimator(vector<int> &yGuard, vector<int> &aGuard){
-//		cout << "asdasd";
-		
+		ostringstream s1, s2;		
 		
 		for (int j=0; j<=degree_; j++)
-			cout << "ga["<<j<<"]="<<aGuard[j]<<" "; 
-		cout << endl;				
+			s1 << "ga["<<j<<"]="<<aGuard[j]<<" "; 
+		s1 << endl;				
 
 		for (int j=1; j<=degree_; j++)
-			cout << "gy["<<j<<"]="<<yGuard[j]<<" "; 
-		cout << endl;	
-	
-	
+			s2 << "gy["<<j<<"]="<<yGuard[j]<<" "; 
+		s2 << endl;	
+
+		REPORT(DETAILED, s1.str() << endl << s2.str() );
+
 
 		vector<mpfr_t*> ykT_y(100); //the yk tild. The max absolute value of ykT
 		for (uint32_t i=1; i<= unsigned(degree_); i++){
