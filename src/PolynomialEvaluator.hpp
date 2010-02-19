@@ -155,10 +155,75 @@ namespace flopoco{
 			}
 
 
+			int errorEstimator(vector<int> &yGuard, vector<int> &aGuard);
+
+			bool nextStateY(){
+				if (! sol){
+					int carry = 1;
+					for (int i=1; i<=degree_+1;i++){
+						if ((nYGuard_[i] == maxBoundY) && ( carry==1)){
+							nYGuard_[i] = 0;
+							carry = 1;
+						}else{
+							nYGuard_[i]+=carry;
+							carry=0;
+						}
+					}
+				
+					for (int i=1; i<=degree_; i++)
+						yGuard_[i] = -(maxBoundY - nYGuard_[i]);
+				
+					if ( nYGuard_[degree_+1] != 0)
+						return true;
+					else
+						return false;
+				}else
+					return false;
+			}
+
+			bool nextStateA(){
+				if (! sol){
+					int carry = 1;
+					for (int i=0; i<=degree_;i++){
+						if ((aGuard_[i] == maxBoundA) && ( carry==1)){
+							aGuard_[i] = 0;
+							carry = 1;
+						}else{
+							aGuard_[i]+=carry;
+							carry=0;
+						}
+					}
+					if ( aGuard_[degree_] != 0)
+						return true;
+					else
+						return false;
+				}
+				else
+					return false;
+			}
+			
+			
+
 		protected:
 			vector<FixedPointCoefficient*> coef_;
 			YVar* y_;
 			int targetPrec_;
+			int degree_;
+			mpfr_t maxABSy;
+			
+			vector<int> yGuard_; // negative values => truncation
+			vector<int> nYGuard_; 
+
+
+			vector<int> aGuard_; // positive values refer to "real" guard bits
+
+			int maxBoundY;
+			int maxBoundA;
+			
+			int currentPrec;
+			bool sol;
+			
+
 	};
 }
 
