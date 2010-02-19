@@ -143,6 +143,18 @@ namespace flopoco{
 				return polyS.str();
 			}
 
+
+			/** the absolute error caused by a truncation where the resulting
+			    LSB is found at this index (trunkIndex)*/
+			mpfr_t* getTruncError( int trunkIndex) {
+				mpfr_t* tmp;
+				mpfr_init2 ( *tmp, 500);
+				mpfr_set_si( *tmp, 2 , GMP_RNDN);
+				mpfr_pow_si( *tmp, *tmp, trunkIndex, GMP_RNDN);
+				return tmp;				
+			}
+
+
 		protected:
 			vector<FixedPointCoefficient*> coef_;
 			YVar* y_;
