@@ -193,7 +193,18 @@ namespace flopoco{
 	{
 		mpz_class svX = tc->getInputValue("X");
 		mpz_class svY = tc->getInputValue("Y");
+		
+		mpz_class big1 = (mpz_class(1) << (wInX_));
+		mpz_class big1P = (mpz_class(1) << (wInX_-1));
+		mpz_class big2 = (mpz_class(1) << (wInY_));
+		mpz_class big2P = (mpz_class(1) << (wInY_-1));
 
+		if ( svX >= big1P)
+			svX = svX-big1;
+
+		if ( svY >= big2P)
+			svY = svY -big2;
+			
 		mpz_class svR = svX * svY;
 		if ( svR < 0){
 			mpz_class tmpSUB = (mpz_class(1) << (wOut_));
