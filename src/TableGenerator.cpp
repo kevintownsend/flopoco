@@ -188,15 +188,17 @@ namespace flopoco{
   cout<< "We proceed to the extraction of the coefficients:"<<endl; 
   
   //Extract coefficients
-		vector<MPPolynomial*> mpP;
+		vector<FixedPointCoefficient*> fpCoeffVector;
+		
     k=0;
    for (k=0;k<nrIntervals;k++){
    		cout<<"\n----"<< k<<"th polynomial:----"<<endl;
       
       printTree(polys[k]);
-      mpP.push_back(getMPPolynomial(polys[k]));
+      fpCoeffVector = getPolynomialCoefficients(polys[k], tempChain2);
+      polyCoeffVector.push_back(fpCoeffVector);
 	  }
-	
+	printPolynomialCoefficientsVector();
 	}
 	
   else{
@@ -249,6 +251,66 @@ MPPolynomial* TableGenerator::getMPPolynomial(sollya_node_t t){
 		 
      return mpPx;
 }
+
+vector<FixedPointCoefficient*> TableGenerator::getPolynomialCoefficients(sollya_node_t t, sollya_chain_t c){
+	  int degree=1,i,size, weight;
+		sollya_node_t *nCoef;
+		mpfr_t *coef;
+		sollya_chain_t cc;
+		vector<FixedPointCoefficient*> coeffVector;
+		 FixedPointCoefficient* zz;
+		 
+		printTree(t);
+		getCoefficients(&degree, &nCoef, t);
+		cout<<degree<<endl;
+		coef = (mpfr_t *) safeCalloc(degree+1,sizeof(mpfr_t));
+    cc=c;
+      
+		for (i = 0; i <= degree; i++)
+			{
+				mpfr_init2(coef[i], getToolPrecision());
+				//cout<< i<<"th coeff:"<<endl;
+				//printTree(getIthCoefficient(t, i));
+				evaluateConstantExpression(coef[i], getIthCoefficient(t, i), getToolPrecision());
+				
+		    cout<< i<<"th coeff:"<<sPrintBinary(coef[i])<<endl;
+		    
+		    size=*((int *)first(cc));
+		    cc=tail(cc);
+		    if (mpfr_sgn(coef[i])==0) weight=0;
+		    else weight=mpfr_get_exp(coef[i]);
+		    
+		    zz= new FixedPointCoefficient(size, weight, coef[i]);
+		    coeffVector.push_back(zz);
+			}
+      
+		  //Cleanup 
+	    for (i = 0; i <= degree; i++)
+			  mpfr_clear(coef[i]);
+		  free(coef);
+		  
+		 
+     return coeffVector;
+}
+
+vector<vector<FixedPointCoefficient*> > TableGenerator::getPolynomialCoefficientsVector(){
+return polyCoeffVector;
+}
+void TableGenerator::printPolynomialCoefficientsVector(){
+  int i,j,nrIntervals, degree;
+  vector<FixedPointCoefficient*> pcoeffs;
+  nrIntervals=polyCoeffVector.size();
+
+  for (i=0; i<nrIntervals; i++){  
+    pcoeffs=polyCoeffVector[i];
+    degree= pcoeffs.size();
+    cout<<"polynomial "<<i<<": "<<endl;
+    for (j=0; j<degree; j++){     
+      cout<<" "<<(*pcoeffs[j]).getSize()<< " "<<(*pcoeffs[j]).getWeight()<<endl; 
+    }
+  }
+}
+
 }     
 #endif //HAVE_SOLLYA
 

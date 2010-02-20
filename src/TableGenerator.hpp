@@ -8,6 +8,7 @@
 #include <cstdlib>
 
 #include "Operator.hpp"
+#include "PolynomialEvaluator.hpp"
 #include "HOTBM/sollya.h"	// Do NOT use libsollya from user's environment
 
 #include "HOTBM/Function.hh"
@@ -31,11 +32,14 @@ namespace flopoco{
 			~TableGenerator();
 			
 			MPPolynomial* getMPPolynomial(sollya_node_t t);
-
+			vector<FixedPointCoefficient*> getPolynomialCoefficients(sollya_node_t t, sollya_chain_t c);
+      vector<vector<FixedPointCoefficient*> > getPolynomialCoefficientsVector();
+      void printPolynomialCoefficientsVector();
 		protected:
 			int wIn_;   /**< TODO: Description*/ 
 			int wOut_;  /**< TODO: Description*/
 			Function &f;
+			vector< vector<FixedPointCoefficient*> > polyCoeffVector;
 	};
 }
 #endif
