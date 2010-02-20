@@ -223,6 +223,10 @@ namespace flopoco{
 			int currentPrec;
 			bool sol;
 			
+			
+			vector<signed> sigmakPSize,  pikPSize, pikPTSize;
+		    vector<signed> sigmakPWeight, pikPWeight, pikPTWeight;
+
 
 	};
 }

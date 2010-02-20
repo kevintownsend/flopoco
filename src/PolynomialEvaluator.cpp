@@ -50,7 +50,7 @@ namespace flopoco{
 		/* ================== I/O declarations ==================*/
 		addInput("Y", y_->getSize());
 		for (uint32_t i=0; i <= unsigned(degree_); i++)
-			addInput(join("C",i), coef_[i]->getSize()+1);
+			addInput(join("a",i), coef_[i]->getSize()+1);
 
 		/* Gappa Style */
 		
@@ -59,7 +59,7 @@ namespace flopoco{
 		nYGuard_.reserve(100);
 		
 		maxBoundY = 5;
-		maxBoundA = 10;
+		maxBoundA = 5;
 		
 		/*init vectors */
 		for (uint32_t i=1; i<=unsigned(degree_)+1; i++){
@@ -83,8 +83,8 @@ namespace flopoco{
 		/* design space exploration */				
 		sol = false;
 		while (!sol){
-			while ((nextStateA()) && (!sol)){
-				while ( (nextStateY())&& (!sol) ){
+			while (((!sol) && nextStateA()) ){
+				while ((!sol) && (nextStateY())  ){
 					currentPrec = errorEstimator(yGuard_, aGuard_);
 					if (currentPrec <= targetPrec ){
 						sol = true;
@@ -95,6 +95,32 @@ namespace flopoco{
 		
 		REPORT(DETAILED, "yuppy " << errorEstimator(yGuard_, aGuard_));
 		
+		for (uint32_t i=0; i<=unsigned(degree_); i++){
+			if (i==0)
+				vhdl << tab << declare( join("sigmaP",i), 1+coef_[degree_-i]->getSize()) << " <= a"<<degree_<<";"<<endl; 
+			else if (i<unsigned(degree_)){
+				vhdl << tab << declare( join("yT",i) , 1+y_->getSize()+yGuard_[i]) << " <= \"0\" & Y"<<range(y_->getSize()-1, -yGuard_[i]) << ";" << endl;
+				vhdl << tab << declare( join("piP",i),  pikPSize[i]+2) << " <= " << join("yT",i) << " * " << join("sigmaP",i-1) << ";" << endl;
+				vhdl << tab << declare( join("piPT",i), pikPTSize[i]+1 ) << " <= " << join("piP",i)<<range(pikPSize[i], pikPSize[i] - pikPTSize[i] ) << ";" <<endl; // coef_[i]->getSize()+1+y_->getSize()+yGuard_[i]-1, coef_[i]->getSize()+1+y_->getSize()+yGuard_[i]-1 - pikPTSize[i]) << ";" << endl;   
+				
+				vhdl << tab << declare( join("sigmaP",i), sigmakPSize[i]+1) << " <= "<< "(" << rangeAssign(sigmakPWeight[i] - coef_[degree_-i]->getWeight()-1,0, join("a",degree_-i)+of(coef_[degree_-i]->getSize()))
+				                                                                   << " & " << join("a",degree_-i) << " & "<< zg(aGuard_[degree_-i],0) << ") + "
+				                                                                   << "(" << rangeAssign(sigmakPWeight[i]-pikPTWeight[i]-1,0, join("piPT",i)+of(pikPTSize[i])) 
+				                                                                   << " & " << join("piPT",i) << range(pikPTSize[i], pikPTSize[i] - pikPTWeight[i] - (coef_[degree_-i]->getSize()-coef_[degree_-i]->getWeight() + aGuard_[degree_ -i]))
+				                                                                   << ");" << endl;
+			}else{
+				vhdl << tab << declare( join("yT",i) , 1+ y_->getSize()+yGuard_[i]) << " <= \"0\" & Y"<<range(y_->getSize()-1, -yGuard_[i]) << ";" << endl;
+				vhdl << tab << declare( join("piP",i),  pikPSize[i]+2) << " <= " << join("yT",i) << " * " << join("sigmaP",i-1) << ";" << endl;
+				vhdl << tab << declare( join("sigmaP",i), sigmakPSize[i]+1) << " <= "<< "(" << rangeAssign(sigmakPWeight[i]-coef_[degree_-i]->getWeight()-1,0, join("a",degree_-i)+of(coef_[degree_-i]->getSize()))
+				                                                                   << " & " << join("a",degree_-i) << " & "<< zg(sigmakPSize[i]-sigmakPWeight[i]-(coef[degree_-i]->getSize()-coef[degree_-i]->getWeight()) ,0) << ") + "
+				                                                                   << "(" << rangeAssign(sigmakPWeight[i]-pikPWeight[i],0, join("piP",i)+of(pikPSize[i]+1)) 
+				                                                                   << " & " << join("piP",i)<<range(pikPSize[i],0)  << ");" << endl;
+				addOutput("R", sigmakPSize[i]+1);
+				vhdl << tab << "R <= " << join("sigmaP",i) << ";" << endl;
+			}			
+		
+		}
+		
 	}
 	
 	
@@ -103,13 +129,13 @@ namespace flopoco{
 		
 		for (int j=0; j<=degree_; j++)
 			s1 << "ga["<<j<<"]="<<aGuard[j]<<" "; 
-		s1 << endl;				
 
 		for (int j=1; j<=degree_; j++)
 			s2 << "gy["<<j<<"]="<<yGuard[j]<<" "; 
-		s2 << endl;	
 
-		REPORT(DETAILED, s1.str() << endl << s2.str() );
+		REPORT(DETAILED, "-----------------------------");
+		REPORT(DETAILED, s1.str());
+		REPORT(DETAILED, s2.str());
 
 
 		vector<mpfr_t*> ykT_y(100); //the yk tild. The max absolute value of ykT
@@ -183,8 +209,20 @@ namespace flopoco{
 
 		vector<mpfr_t*> pikPT(100);
 
-		vector<unsigned> sigmakPSize(100),   pikPTSize(100);
-		vector<signed> sigmakPWeight(100), pikPTWeight(100);
+		sigmakPSize.clear();
+		pikPTSize.clear();
+		pikPSize.clear();
+		sigmakPWeight.clear();
+		pikPTWeight.clear();
+		pikPWeight.clear();
+		
+		sigmakPSize.reserve(100);
+		pikPTSize.reserve(100);
+		pikPSize.reserve(100);
+		sigmakPWeight.reserve(100);
+		pikPTWeight.reserve(100);
+		pikPWeight.reserve(100);
+
 
 		sigmakPSize[0]   = coef_[degree_]->getSize();
 		sigmakPWeight[0] = coef_[degree_]->getWeight();
@@ -196,6 +234,9 @@ namespace flopoco{
 			mpfr_mul ( *t, *ykT_y[i], *sigmakP[i-1], GMP_RNDN);
 
 			REPORT(DEBUG, "(ykT-y)sigma(k-1)P exp" << mpfr_get_exp(*t) << " double=" << mpfr_get_d(*t, GMP_RNDN)); 
+
+			pikPWeight[i]  = y_->getWeight() + sigmakPWeight[i-1]; 
+			pikPSize[i]   = (y_->getSize()+yGuard[i]) + sigmakPSize[i-1];
 
 			mpfr_t *t2;
 			t2 = (mpfr_t *) malloc (sizeof (mpfr_t));
@@ -209,8 +250,13 @@ namespace flopoco{
 
 			REPORT( DEBUG, "----->|pikP"<<i<<"-pik| exp" << mpfr_get_exp( *pikP_pik[i]) << " double="<< mpfr_get_d( *pikP_pik[i], GMP_RNDN) );
 
-			pikPTSize[i]   = (y_->getSize()+yGuard[i]) + sigmakPSize[i-1];
-			pikPTWeight[i] =  y_->getWeight() + sigmakPWeight[i-1]; 			
+			
+			pikPTWeight[i] =  y_->getWeight() + sigmakPWeight[i-1]; 
+			pikPTSize[i] =    y_->getWeight() + sigmakPWeight[i-1]  + (coef_[degree_-i]->getSize()+aGuard[i]-coef_[degree_-i]->getWeight());
+	
+	
+			REPORT( DEBUG, " pikPTSize="<< pikPTSize[i] << " pikPTWeight[i]="<<pikPTWeight[i]);
+			REPORT( DEBUG, "pikPTWeight[i]"<<pikPTWeight[i]<<" coef_[degree_-i]->getSize() "<< coef_[degree_-i]->getSize() << " coef_[degree_-i]->getWeight() "<<coef_[degree_-i]->getWeight() << " aGuard =" << aGuard[i] ); 
 
 			//compute value of pi k P T
 			mpfr_t *h;
@@ -238,17 +284,27 @@ namespace flopoco{
 
 			REPORT( DEBUG, "----->|sigmakP"<<i<<"-sigmak| exp" << mpfr_get_exp( *sigmakP_sigmak[i]) << " double=" << mpfr_get_d( *sigmakP_sigmak[i], GMP_RNDN));
 
-		
-			int maxMSB = max ( coef_[degree_-i]->getWeight(), pikPTWeight[i] ) + 1;
-			sigmakPSize[i]   = maxMSB - (coef_[degree_-i]->getWeight() - coef_[degree_-i]->getSize() - aGuard[degree_-i]) +1;
-			sigmakPWeight[i] = maxMSB + 1; 
-
+			if (i!=unsigned(degree_)){
+				int maxMSB = max ( coef_[degree_-i]->getWeight(), pikPTWeight[i]);
+				sigmakPSize[i]   = maxMSB + 1 - (coef_[degree_-i]->getWeight() - coef_[degree_-i]->getSize() - aGuard[degree_-i]);
+				sigmakPWeight[i] = maxMSB + 1;
+			
+				REPORT( DEBUG, " sigmakPSize="<< sigmakPSize[i] << " sigmakPWeight[i]="<<sigmakPWeight[i]);
+			}else{
+				int maxMSB = max ( coef_[degree_-i]->getWeight(), pikPWeight[i]);
+				int minLSB = min ( coef_[degree_-i]->getWeight()-coef_[degree_-i]->getSize(),pikPWeight[i]-pikPSize[i]); 
+				sigmakPSize[i]   = 1 + maxMSB - minLSB + 1;//maxMSB + 1 - (coef_[degree_-i]->getWeight() - coef_[degree_-i]->getSize() - aGuard[degree_-i]);
+				sigmakPWeight[i] = 1 + maxMSB;
+			
+				REPORT( DEBUG, " sigmakPSize="<< sigmakPSize[i] << " sigmakPWeight[i]="<<sigmakPWeight[i]);
+			}
 			mpfr_t *r;
 			r = (mpfr_t *) malloc( sizeof(mpfr_t));
 			mpfr_init2( *r, 1000);
 			mpfr_add ( *r, *pikPT[i], *a[degree_-i], GMP_RNDN);			
 
-			sigmakP[i] = r; 
+			sigmakP[i] = r;
+			REPORT( DEBUG, " sigmakP exp" << mpfr_get_exp(*r) << " double=" << mpfr_get_d(*r, GMP_RNDN) ); 
 		}
 		
 		REPORT( DETAILED, "Error (order) for P(y)=" << mpfr_get_exp( *sigmakP_sigmak[degree_])+1);
