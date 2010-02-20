@@ -100,9 +100,9 @@ namespace flopoco{
 								vhdl << tab << declare(join("px",i,"y",j), xS+yS) << " <= " << join("tpx",i,"y",j) << " + " 
 								                                                            << join("px",i,"y",j-1) << range(xS+yS-1,y) << ";" << endl; //sign extend TODO
 							}
-//							if (!((j==cOp2-1) && (i<cOp1-1))) nextCycle();
+							if (!((j==cOp1-1) && (i<cOp2-1))) nextCycle();
 						}
-//						if (i<cOp1-1) setCycle(0); //reset cycle
+						if (i<cOp2-1) setCycle(0); //reset cycle
 					}
 			
 					//FORM THE INTERMEDIARY PRODUCTS
