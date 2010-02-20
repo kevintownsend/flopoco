@@ -212,10 +212,15 @@ namespace flopoco{
 		return cost*5/8;
 	};
   
-	void Virtex5::getDSPWidths(int &x, int &y){
+	void Virtex5::getDSPWidths(int &x, int &y, bool sign){
 		// unsigned multiplication
-		x = multXInputs_-1;
-		y = multYInputs_-1;
+		if (! sign ){
+			x = multXInputs_-1;
+			y = multYInputs_-1;
+		}else{
+			x = multXInputs_-1;
+			y = multYInputs_-1;
+		}
 	}
 
 	int Virtex5::getEquivalenceSliceDSP(){

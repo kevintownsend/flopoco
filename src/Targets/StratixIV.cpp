@@ -290,7 +290,7 @@ namespace flopoco{
 		return cost/2;
 	}
 
-	void StratixIV::getDSPWidths(int &x, int &y){
+	void StratixIV::getDSPWidths(int &x, int &y, bool sign){
 		// set the multiplier width acording to the desired frequency
 		bool widthSet = false;
 	

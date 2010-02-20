@@ -247,9 +247,14 @@ namespace flopoco{
 		return lutCost + this->getIntNAdderCost(chunksX*chunkSize_, chunksY*chunkSize_);
 	};
   
-	void Virtex4::getDSPWidths(int &x, int &y){
-		x = 17;
-		y = 17;
+	void Virtex4::getDSPWidths(int &x, int &y, bool sign){
+		if ( sign == false ){
+			x = 17;
+			y = 17;
+		}else{
+			x = 18;
+			y = 18;
+		}
 	}
 
 	int Virtex4::getEquivalenceSliceDSP(){

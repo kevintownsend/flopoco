@@ -290,7 +290,7 @@ namespace flopoco{
 
 	}
 
-	void StratixII::getDSPWidths(int &x, int &y){
+	void StratixII::getDSPWidths(int &x, int &y, bool sign){ //TODO: give the meaning for sign
 		// set the multiplier width acording to the desired frequency
 		for (int i=0; i<3; i++)
 			if (this->frequency() < 1/multiplierDelay_[i])

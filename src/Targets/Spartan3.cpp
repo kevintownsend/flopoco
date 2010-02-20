@@ -247,9 +247,14 @@ namespace flopoco{
 		return lutCost + this->getIntNAdderCost(chunksX*chunkSize_, chunksY*chunkSize_);
 	};
   
-	void Spartan3::getDSPWidths(int &x, int &y){
-		x = 17;
-		y = 17;
+	void Spartan3::getDSPWidths(int &x, int &y, bool sign){
+		if (! sign){
+			x = 17;
+			y = 17;
+		}else{
+			x = 18;
+			y = 18;
+		}
 	}
 
 	int Spartan3::getEquivalenceSliceDSP(){

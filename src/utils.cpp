@@ -499,12 +499,12 @@ namespace flopoco{
 
 	string rangeAssign( int left, int right, std::string s)
 	{
-		ostringstream o;
-		if (left>=right) o<<"("<<left<<" downto " << right ;
-		else             o<<"("<<left<<" to "     << right ;
-	
-		o<<" => " << s << ")";
-		return o.str();
+		if (left >= right){
+			ostringstream o;
+			o<<"("<<left<<" downto " << right <<" => " << s << ")";
+			return o.str();
+		}else
+			return "";
 	}
 
 	string of( int x)

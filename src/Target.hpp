@@ -141,7 +141,7 @@ namespace flopoco{
 		 * @return widths
 		 */
 	
-		virtual void getDSPWidths(int &x, int &y) = 0;
+		virtual void getDSPWidths(int &x, int &y, bool sign = false) = 0;
 	
 		virtual void getAdderParameters(double &k1, double &k2, int size) = 0;
 

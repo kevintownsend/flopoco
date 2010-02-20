@@ -85,7 +85,7 @@ namespace flopoco{
 		DSP*   createDSP(); 
 		int    getEquivalenceSliceDSP();
 		int    getNumberOfDSPs();
-		void   getDSPWidths(int &x, int &y);
+		void   getDSPWidths(int &x, int &y, bool sign = false);
 		int    getIntNAdderCost(int wIn, int n);	
 	
 	private:
