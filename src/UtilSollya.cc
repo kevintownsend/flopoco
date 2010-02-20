@@ -5,16 +5,18 @@ sollya_chain_t makeIntPtrChainToFromBy(int m, int n, int k) {
   sollya_chain_t c;
   
   c = NULL;
-  i=m;
+  i=m-(n-1)*k;
   for(j=0;j<n;j++) {
     elem = (int *) malloc(sizeof(int));
     *elem = i;
     c = addElement(c,elem);
-    i=i-k;
+    i=i+k;
   }
 
   return c;
 }
+
+
 void removeTrailingZeros(char *outbuf, char *inbuf) {
   char *temp, *temp2, *temp3;
 

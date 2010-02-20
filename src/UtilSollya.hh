@@ -10,6 +10,7 @@
 
 #include "HOTBM/sollya.h"	// Do NOT use libsollya from user's environment
 sollya_chain_t makeIntPtrChainToFromBy(int m, int n, int k) ;
+
 char *sPrintBinary(mpfr_t x);
 
 #endif

@@ -29,6 +29,14 @@ namespace flopoco{
 				weight_  = weight;
 			}
 
+      FixedPointCoefficient(unsigned size, int weight, mpfr_t valueMpfr){
+				size_   = size;
+				weight_  = weight;
+				valueMpfr_=(mpfr_t*)malloc(sizeof(mpfr_t));
+				mpfr_init2(*valueMpfr_, mpfr_get_prec(valueMpfr));
+				mpfr_set(*valueMpfr_, valueMpfr, GMP_RNDN);
+			}
+			
 			/** Destructor */
 			~FixedPointCoefficient();
 
@@ -47,12 +55,18 @@ namespace flopoco{
 			unsigned getSize(){
 				return size_;
 			}
+			
+			mpfr_t* getValueMpfr(){
+				return valueMpfr_;
+			}
 
 
 		protected:
 			int size_;        /**< The width (in bits) of the coefficient. In theory this equals to the
 			                        minimum number of bits required to represent abs(value) */
 			int weight_;      /**< The shift value. Coefficient is represented as value * 2 (shift) */
+			
+			mpfr_t* valueMpfr_;
 	};
 
 	/**

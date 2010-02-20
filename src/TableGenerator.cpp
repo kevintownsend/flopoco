@@ -108,14 +108,20 @@ namespace flopoco{
   
   mpfr_t ai;
   mpfr_t bi;
+  mpfr_t zero;
   mpfr_t* mpErr;
   
 
   mpfr_init2(ai,getToolPrecision());
   mpfr_init2(bi,getToolPrecision());
   
+  mpfr_init2(zero,getToolPrecision());
+  
+  
+  
   int k;
   int errBoundBool =0;
+  sollya_node_t sX,sY,aiNode;
   
   while((errBoundBool==0)&& (nrIntervals <=nrMaxIntervals)){
     errBoundBool=1; //suppose the nr of intervals is good
@@ -124,14 +130,30 @@ namespace flopoco{
     cout<<"trying with "<< nrIntervals <<" intervals"<<endl;
     for (k=0; k<nrIntervals; k++){
       mpfr_set_ui(ai,k,GMP_RNDN);
-      mpfr_set_ui(bi,k+1,GMP_RNDN);
+      mpfr_set_ui(bi,1,GMP_RNDN);
       mpfr_div_ui(ai, ai, nrIntervals, GMP_RNDN);
       mpfr_div_ui(bi, bi, nrIntervals, GMP_RNDN);    
    
+      mpfr_set_ui(zero,0,GMP_RNDN);
+      
+      
+      aiNode = makeConstant(ai);
+      sX = makeAdd(makeVariable(),aiNode);
+      //sY = simplifyTreeErrorfree(substitute(tempNode, sX));
+      sY = substitute(tempNode, sX);
+      if (sY == 0)
+			cout<<"Sollya error when performing range mapping."<<endl;
+      
+      if(verbose){
+      cout<<"\n-------------"<<endl;	
+      printTree(sY);
+      cout<<"\nover: "<<sPrintBinary(zero)<<" "<< sPrintBinary(bi)<<"withprecshift:"<<precShift<<endl;	
+      }
+      
       tempChain2 = makeIntPtrChainToFromBy(wOut+1,n+1, precShift); //precision
-    
+      
       //tempNode3 = FPminimax(firstArg, tempChain, tempChain2, tempChain3, a, b, resB, resC, tempNode, tempNode2);
-      tempNode3 = FPminimax(tempNode, tempChain ,tempChain2, NULL,       ai, bi, FIXED, ABSOLUTESYM, tempNode2,NULL);
+      tempNode3 = FPminimax(sY, tempChain ,tempChain2, NULL,       zero, bi, FIXED, ABSOLUTESYM, tempNode2,NULL);
       
       polys.push_back(tempNode3);
       if (verbose){
@@ -141,10 +163,10 @@ namespace flopoco{
       }
       
       //Compute the error 
-		  nDiff = makeSub(tempNode, tempNode3);
+		  nDiff = makeSub(sY, tempNode3);
 		  mpErr= (mpfr_t *) safeMalloc(sizeof(mpfr_t));
 		  mpfr_init2(*mpErr,getToolPrecision());  
-			uncertifiedInfnorm(*mpErr, nDiff, ai, bi, 501/*default in sollya*/, getToolPrecision()); 
+			uncertifiedInfnorm(*mpErr, nDiff, zero, bi, 501/*default in sollya*/, getToolPrecision()); 
       if (verbose){
       cout<< "infinite norm:"<<sPrintBinary(*mpErr)<<endl;
       }
@@ -172,7 +194,7 @@ namespace flopoco{
    		cout<<"\n----"<< k<<"th polynomial:----"<<endl;
       
       printTree(polys[k]);
-      //mpP.push_back(getMPPolynomial(polys[k]));
+      mpP.push_back(getMPPolynomial(polys[k]));
 	  }
 	
 	}
@@ -214,18 +236,18 @@ MPPolynomial* TableGenerator::getMPPolynomial(sollya_node_t t){
 				mpfr_init2(coef[i], getToolPrecision());
 				//cout<< i<<"th coeff:"<<endl;
 				//printTree(getIthCoefficient(t, i));
-				evaluateConstantExpression(coef[i], nCoef[i], getToolPrecision());
+				evaluateConstantExpression(coef[i], getIthCoefficient(t, i), getToolPrecision());
 				
 		    cout<< i<<"th coeff:"<<sPrintBinary(coef[i])<<endl;
 			}
-      MPPolynomial* mpP = new MPPolynomial(degree, coef);
+      MPPolynomial* mpPx = new MPPolynomial(degree, coef);
 		  //Cleanup 
 	    for (i = 0; i <= degree; i++)
 			  mpfr_clear(coef[i]);
-		  delete coef;
+		  free(coef);
 		  
-		  //MPPolynomial* mpP = new MPPolynomial();
-     return mpP;
+		 
+     return mpPx;
 }
 }     
 #endif //HAVE_SOLLYA
