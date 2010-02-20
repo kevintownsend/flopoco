@@ -148,7 +148,7 @@ namespace flopoco{
 						outPortMap(add, "R", "addRes");
 						vhdl << instance(add, "adder");
 
-//						syncCycleFromSignal("addRes");
+						syncCycleFromSignal("addRes");
 
 						if ( (y*(cOp1-1)+yS + x*(cOp2-1)+xS ) - (wInX + wInY) < x )
 							vhdl << tab << "R <= addRes & sum0Low "<<range(x-1, (y*(cOp1-1)+yS + x*(cOp2-1)+xS ) - (wInX + wInY) )<< ";" << endl;
@@ -170,6 +170,24 @@ namespace flopoco{
 
 	SignedIntMultiplier::~SignedIntMultiplier() {
 	}
+	
+	void SignedIntMultiplier::outputVHDL(std::ostream& o, std::string name) {
+		licence(o);
+		o << "library ieee; " << endl;
+		o << "use ieee.std_logic_1164.all;" << endl;
+		o << "use ieee.std_logic_arith.all;" << endl;
+		o << "use ieee.std_logic_signed.all;" << endl;
+		o << "library work;" << endl;
+		outputVHDLEntity(o);
+		newArchitecture(o,name);
+		o << buildVHDLComponentDeclarations();	
+		o << buildVHDLSignalDeclarations();
+		beginArchitecture(o);		
+		o<<buildVHDLRegisters();
+		o << vhdl.str();
+		endArchitecture(o);
+	}
+	
 
 	void SignedIntMultiplier::emulate(TestCase* tc)
 	{
@@ -177,6 +195,10 @@ namespace flopoco{
 		mpz_class svY = tc->getInputValue("Y");
 
 		mpz_class svR = svX * svY;
+		if ( svR < 0){
+			mpz_class tmpSUB = (mpz_class(1) << (wOut_));
+			svR = tmpSUB + svR; 
+		}
 
 		tc->addExpectedOutput("R", svR);
 	}
