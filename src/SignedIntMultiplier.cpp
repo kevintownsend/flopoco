@@ -158,8 +158,8 @@ namespace flopoco{
 						vhdl << tab << "R <= sum0"<<range( y*(cOp1-1) + xS + yS - 1, y*(cOp1-1) + xS + yS - (wInX + wInY ) ) << ";" << endl;
 					}
 				}
-//				else 
-//					vhdl << tab << "R <= X * Y ;" <<endl;
+				else 
+					vhdl << tab << "R <= X * Y ;" <<endl;
 			}else{
 				cerr << " Sorry: only Virtex4 and Spartan3 are supported at this time. We'll be back soon" << endl;
 				throw "Error";

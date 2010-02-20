@@ -6,6 +6,8 @@
 #include <gmpxx.h>
 #include "utils.hpp"
 
+#include "SignedIntMultiplier.hpp"
+#include "IntAdder.hpp"
 #include "Operator.hpp"
 
 
