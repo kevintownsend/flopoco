@@ -128,16 +128,15 @@ namespace flopoco{
 		ostringstream s1, s2;		
 		
 		for (int j=0; j<=degree_; j++)
-			s1 << "ga["<<j<<"]="<<aGuard[j]<<" "; 
+			s1 << "aG["<<j<<"]="<<aGuard[j]<<" "; 
 
 		for (int j=1; j<=degree_; j++)
-			s2 << "gy["<<j<<"]="<<yGuard[j]<<" "; 
+			s2 << "yG["<<j<<"]="<<yGuard[j]<<" "; 
 
-		REPORT(DETAILED, "-----------------------------");
+		REPORT(DETAILED, "------------------------------------------------------------");
 		REPORT(DETAILED, s1.str());
 		REPORT(DETAILED, s2.str());
-
-
+		REPORT(DETAILED, "---------- HEADER ----------");
 		vector<mpfr_t*> ykT_y(100); //the yk tild. The max absolute value of ykT
 		for (uint32_t i=1; i<= unsigned(degree_); i++){
 			mpfr_t *cykT;
@@ -152,7 +151,7 @@ namespace flopoco{
 		}
 		
 		for (uint32_t i=1; i<= unsigned(degree_); i++)
-			REPORT(DETAILED, "|y"<<i<<"T-y|="<< mpfr_get_d(*ykT_y[i],GMP_RNDN));
+			REPORT(DETAILED, "degree of |y"<<i<<"T - y|="<< (mpfr_get_d(*ykT_y[i],GMP_RNDN)!=0?mpfr_get_exp(*ykT_y[i]):0));
 
 
 		vector<mpfr_t*> pikPT_pikP(100); //the pi k prime tild - p k prime ( trunc error)
@@ -167,7 +166,7 @@ namespace flopoco{
 		}
 		
 		for (uint32_t i=1; i< unsigned(degree_); i++)
-			REPORT(DETAILED, "|pi"<<i<<"TP - pi"<<i<<"T|="<< mpfr_get_exp(*pikPT_pikP[i]));
+			REPORT(DETAILED, "|pi"<<i<<"TP - pi"<<i<<"T|="<< (mpfr_get_d(*pikPT_pikP[i],GMP_RNDN)!=0? mpfr_get_exp(*pikPT_pikP[i]):0));
 		
 		
 		vector<mpfr_t*> sigmakP_sigmak(100);
@@ -192,8 +191,9 @@ namespace flopoco{
 			mpfr_set_exp( *ak, (mpfr_get_d(*ak, GMP_RNDZ)!=0?mpfr_get_exp(*ak):0) + coef_[i]->getWeight() - coef_[i]->getSize());
 			a[i]=ak;
 		}
+
 		for (uint32_t i=0; i<= unsigned(degree_); i++)
-			REPORT(DETAILED, "a"<<i<<"="<< mpfr_get_exp(*a[i]));
+			REPORT(DETAILED, "weight of a"<<i<<"="<< mpfr_get_exp(*a[i]));
 		
 		sigmakP[0] = a[degree_];	
 
@@ -205,7 +205,7 @@ namespace flopoco{
 		mpfr_add_si( *yy, *yy , -1, GMP_RNDN);
 		mpfr_set_exp( *yy, ( mpfr_get_d(*yy, GMP_RNDZ)!=0?mpfr_get_exp(*yy):0) + y_->getWeight() - y_->getSize());
 
-		REPORT(DETAILED, "y="<< mpfr_get_exp(*yy));
+		REPORT(DETAILED, "weight of y="<< mpfr_get_exp(*yy));
 
 		vector<mpfr_t*> pikPT(100);
 
@@ -226,14 +226,15 @@ namespace flopoco{
 
 		sigmakPSize[0]   = coef_[degree_]->getSize();
 		sigmakPWeight[0] = coef_[degree_]->getWeight();
-
+		
+		REPORT(DETAILED, "----------   END  ----------");
 		for (uint32_t i=1; i<=unsigned(degree_); i++){
 			mpfr_t *t; //the pi
 			t = (mpfr_t *) malloc( sizeof( mpfr_t ));			
 			mpfr_init2( *t, 100);
 			mpfr_mul ( *t, *ykT_y[i], *sigmakP[i-1], GMP_RNDN);
 
-			REPORT(DEBUG, "(ykT-y)sigma(k-1)P exp" << mpfr_get_exp(*t) << " double=" << mpfr_get_d(*t, GMP_RNDN)); 
+			REPORT(DETAILED, "|(y"<<i<<"T - y)*sigma"<<i-1<<"P| weight=" << (mpfr_get_d(*t,GMP_RNDN)!=0?mpfr_get_exp(*t):0));
 
 			pikPWeight[i]  = y_->getWeight() + sigmakPWeight[i-1]; 
 			pikPSize[i]   = (y_->getSize()+yGuard[i]) + sigmakPSize[i-1];
@@ -243,12 +244,12 @@ namespace flopoco{
 			mpfr_init2( *t2, 1000);
 			mpfr_mul ( *t2 , *yy , *sigmakP_sigmak[i-1], GMP_RNDN);
 
-			REPORT(DEBUG, "y(sigma(k-1)P-sigma(k-1) exp" << mpfr_get_exp(*t2) << " double=" << mpfr_get_d(*t2, GMP_RNDN)); 
+			REPORT(DETAILED, "|y*(sigma"<<i-1<<"P - sigma"<<i-1<<")| weight=" <<  (mpfr_get_d(*t2,GMP_RNDN)!=0?mpfr_get_exp(*t2):0));
 			
 			mpfr_add (*t, *t , *t2, GMP_RNDN);
 			pikP_pik[i] = t;
 
-			REPORT( DEBUG, "----->|pikP"<<i<<"-pik| exp" << mpfr_get_exp( *pikP_pik[i]) << " double="<< mpfr_get_d( *pikP_pik[i], GMP_RNDN) );
+			REPORT( DETAILED, "|pi"<<i<<"P - pi"<<i<<"| weight=" <<  (mpfr_get_d(*pikP_pik[i],GMP_RNDN)!=0?mpfr_get_exp(*pikP_pik[i]):0)); 
 
 			
 			pikPTWeight[i] =  y_->getWeight() + sigmakPWeight[i-1]; 
@@ -282,7 +283,7 @@ namespace flopoco{
 			}
 			sigmakP_sigmak[i] = t3;
 
-			REPORT( DEBUG, "----->|sigmakP"<<i<<"-sigmak| exp" << mpfr_get_exp( *sigmakP_sigmak[i]) << " double=" << mpfr_get_d( *sigmakP_sigmak[i], GMP_RNDN));
+			REPORT( DETAILED, "|sigma"<<i<<"P - sigma"<<i<<"| weight=" << (mpfr_get_d(*sigmakP_sigmak[i],GMP_RNDN)!=0?mpfr_get_exp(*sigmakP_sigmak[i]):0)); 
 
 			if (i!=unsigned(degree_)){
 				int maxMSB = max ( coef_[degree_-i]->getWeight(), pikPTWeight[i]);
@@ -304,7 +305,7 @@ namespace flopoco{
 			mpfr_add ( *r, *pikPT[i], *a[degree_-i], GMP_RNDN);			
 
 			sigmakP[i] = r;
-			REPORT( DEBUG, " sigmakP exp" << mpfr_get_exp(*r) << " double=" << mpfr_get_d(*r, GMP_RNDN) ); 
+			REPORT( DETAILED, "|sigma"<<i<<"P| weight=" << (mpfr_get_d(*r,GMP_RNDN)!=0?mpfr_get_exp(*r):0)); 
 		}
 		
 		REPORT( DETAILED, "Error (order) for P(y)=" << mpfr_get_exp( *sigmakP_sigmak[degree_])+1);
