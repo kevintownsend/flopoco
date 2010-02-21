@@ -277,6 +277,7 @@ ADD_EXECUTABLE(flopoco
  src/IntSquarer
 
  src/PolynomialEvaluator
+ src/FunctionEvaluator
  src/UtilSollya
 )
 ENDIF(WIN32) 

@@ -23,6 +23,12 @@ namespace flopoco{
 	class FixedPointCoefficient
 	{
 		public:
+		
+			FixedPointCoefficient(FixedPointCoefficient *x){
+				size_= x->getSize();
+				weight_ = x->getWeight();
+			}
+
 			/**
 			 * Constructor. Initializes the attributes.
 			 */
@@ -31,7 +37,7 @@ namespace flopoco{
 				weight_  = weight;
 			}
 
-      FixedPointCoefficient(unsigned size, int weight, mpfr_t valueMpfr){
+      		FixedPointCoefficient(unsigned size, int weight, mpfr_t valueMpfr){
 				size_   = size;
 				weight_  = weight;
 				valueMpfr_=(mpfr_t*)malloc(sizeof(mpfr_t));
@@ -57,6 +63,11 @@ namespace flopoco{
 			unsigned getSize(){
 				return size_;
 			}
+
+			void setSize(unsigned s){
+				size_ = s;
+			}
+
 			
 			mpfr_t* getValueMpfr(){
 				return valueMpfr_;
@@ -218,14 +229,24 @@ namespace flopoco{
 					return false;
 			}
 			
+			unsigned getOutputSize(){
+				return wR;
+			}
 			
+			vector<FixedPointCoefficient*> getCoeffParamVector(){
+				return coef_;
+			}
 
 		protected:
+			unsigned wR;
+			
 			vector<FixedPointCoefficient*> coef_;
 			YVar* y_;
 			int targetPrec_;
 			int degree_;
 			mpfr_t maxABSy;
+			
+			
 			
 			vector<int> yGuard_; // negative values => truncation
 			vector<int> nYGuard_; 

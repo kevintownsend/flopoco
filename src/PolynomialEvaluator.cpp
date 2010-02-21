@@ -42,8 +42,16 @@ namespace flopoco{
 	extern vector<Operator*> oplist;
 	
 		PolynomialEvaluator::PolynomialEvaluator(Target* target, vector<FixedPointCoefficient*> coef, YVar* y, int targetPrec):
-		Operator(target), coef_(coef), y_(y), targetPrec_(targetPrec){
+		Operator(target), y_(y), targetPrec_(targetPrec){
 		srcFileName = "PolynomialEvaluator";
+
+		/* tweak coef for i/o compatibility with the table generator */
+		
+		for (uint32_t i=0; i< coef.size(); i++){
+			FixedPointCoefficient *fp = new FixedPointCoefficient(coef[i]);
+			fp->setSize( coef[i]->getSize()+coef[i]->getWeight());
+			coef_.push_back(fp);
+		}
 
 		degree_ = coef.size()-1;
 		setName( join("PolynomialEvaluator_d",degree_) );
@@ -154,7 +162,7 @@ namespace flopoco{
 					vhdl << instance ( sa, join("Sum",i));
 					syncCycleFromSignal( join("sigmaP",i) );
 
-
+					wR = sigmakPSize[i]+1;
 					addOutput("R", sigmakPSize[i]+1);
 					vhdl << tab << "R <= " << join("sigmaP",i) << ";" << endl;
 				}			

@@ -98,6 +98,8 @@
 #endif
 
 #include "TableGenerator.hpp"
+#include "FunctionEvaluator.hpp"
+
 
 using namespace std;
 using namespace flopoco;
@@ -1299,14 +1301,33 @@ bool parseCommandLine(int argc, char* argv[]){
 			// xmax < xmin is a valid use case...
 			double scale = atof(argv[i++]);
 			
-			
-			
 			cerr << "> TableGenerator func='" << func << "', wI=" << wI << ", wO=" << wO      << ", xmin=" << xmin << ", xmax=" << xmax << ", scale=" << scale <<endl;	
 			
 			Operator* tg = new TableGenerator(target, func, wI, wO, n,xmin,xmax,scale );
 				addOperator(tg);
 			
 		}
+		else if (opname == "FunctionEvaluator") {
+			int nargs = 7;
+			if (i+nargs > argc)
+				usage(argv[0]); // and exit
+			string func = argv[i++];
+			int wI = checkStrictyPositive(argv[i++], argv[0]);
+			int wO = checkStrictyPositive(argv[i++], argv[0]);
+			int n  = checkStrictyPositive(argv[i++], argv[0]);
+			double xmin = atof(argv[i++]);
+			double xmax = atof(argv[i++]);
+
+			// xmax < xmin is a valid use case...
+			double scale = atof(argv[i++]);
+			
+			cerr << "> FunctionEvaluator func='" << func << "', wI=" << wI << ", wO=" << wO      << ", xmin=" << xmin << ", xmax=" << xmax << ", scale=" << scale <<endl;	
+			
+			Operator* tg = new FunctionEvaluator(target, func, wI, wO, n,xmin,xmax,scale );
+				addOperator(tg);
+			
+		}
+
 		else if (opname == "TestBench") {
 			int nargs = 1;
 			if (i+nargs > argc)
