@@ -62,6 +62,8 @@ namespace flopoco{
 		 **/
 		Table(Target* target, int _wIn, int _wOut, int _minIn=0, int _maxIn=-1);
 
+    Table(Target* target);
+     
 		virtual ~Table() {};
 
 

@@ -45,19 +45,7 @@ namespace flopoco{
 	extern vector<Operator*> oplist;
 
 	TableGenerator::TableGenerator(Target* target, string func, int wInX, int wOutX, int n, double xmin, double xmax, double scale ): // TODO extend list
-		Table(target,0,0), wInX_(wInX), wOutX_(wOutX), f(*new Function(func, xmin, xmax, scale))   {
-	
-		ostringstream name;
-		/* Set up the name of the entity */
-		name <<"TableGenerator_"<<wInX<<"_"<<wOutX;
-		setName(name.str());
-	
-		/* Set up the I/O signals of of the entity */
-		addInput("I", wInX);
-		addOutput("O", wOutX);
-
-		/* This operator is combinatorial (in fact is just a ROM.*/
-		setCombinatorial();
+	Table(target),	 wInX_(wInX), wOutX_(wOutX), f(*new Function(func, xmin, xmax, scale))   {
 	
 	/* Start initialization */
   
@@ -198,11 +186,37 @@ namespace flopoco{
       fpCoeffVector = getPolynomialCoefficients(polys[k], tempChain2);
       polyCoeffVector.push_back(fpCoeffVector);
 	  }
+	  /*****setting of Table parameters**/
+	  //int wInZ, minInZ, maxInZ, wOutZ;
+	  wIn=intlog2(nrIntervals-1);
+	  minIn=0;
+	  maxIn=nrIntervals-1;
+	  wOut=0;
+	  for(k=0; k<coeffParamVector.size();k++){
+	    wOut=wOut+(*coeffParamVector[k]).getSize()+(*coeffParamVector[k]).getWeight()+1; //a +1 is necessary for the sign
+	  }
+	  
+		ostringstream name;
+		/* Set up the name of the entity */
+		name <<"TableGenerator_"<<wIn<<"_"<<wOut;
+		setName(name.str());
+		
+		// Set up the IO signals
+		addInput ("X"  , wIn);
+		addOutput ("Y"  , wOut);
+				
+		/* This operator is combinatorial (in fact is just a ROM.*/
+		setCombinatorial();
+	
+	
+	  /**********************************/
+	  
 	 if (verbose){  
 	  printPolynomialCoefficientsVector();
 	  cout<<"Parameters for polynomial evaluator:"<<endl;
 	  printCoeffParamVector();
 	 }
+	 
 	}
 	
   else{
@@ -379,7 +393,7 @@ int TableGenerator::double2input(double x){
 	mpz_class  TableGenerator::function(int x)
 	{
 	
-    mpz_class r=0;
+    mpz_class r=0; mpfr_t *cf, c;
     int amount,j,nrIntervals, degree;
     vector<FixedPointCoefficient*> pcoeffs;
     nrIntervals=polyCoeffVector.size();
@@ -391,9 +405,13 @@ int TableGenerator::double2input(double x){
       //cout<<"polynomial "<<x<<": "<<endl;
       //r=mpz_class( 133955332 )+(mpz_class( 65664 )<< 27 )+(mpz_class( 64 )<< 44 )
       for (j=0; j<degree; j++){     
-        cout<<" "<<(*pcoeffs[j]).getSize()<< " "<<(*pcoeffs[j]).getWeight()<<endl; 
+        //cout<<" "<<(*pcoeffs[j]).getSize()<< " "<<(*pcoeffs[j]).getWeight()<<endl; 
         r=r+(mpz_class(1)<<amount);
-        amount=amount+(*pcoeffs[j]).getSize()+(*pcoeffs[j]).getWeight();
+        //cf=pcoeffs[j].getValue();
+        //mpfr_init2(c, mpfr_get_prec(*cf));
+        //mpfr_mul(c, *cf
+        //r=r+(mpfr_get_z()<<amount);
+        amount=amount+(*coeffParamVector[j]).getSize()+(*coeffParamVector[j]).getWeight()+1;
       }
     } 		
 		

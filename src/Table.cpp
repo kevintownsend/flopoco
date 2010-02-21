@@ -87,6 +87,11 @@ namespace flopoco{
 			cerr << "WARNING : FloPoCo is building a table with " << wIn << " input bits, it will be large." << endl;
 	}
 
+Table::Table(Target* target) : 
+		Operator(target)
+	{
+		setCopyrightString("Florent de Dinechin (2007)");
+	}
 
 	// We have to define this method because the constructor of Table cannot use the (pure virtual) function()
 	void Table::outputVHDL(std::ostream& o, std::string name) {
