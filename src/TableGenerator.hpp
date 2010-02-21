@@ -8,6 +8,7 @@
 #include <cstdlib>
 
 #include "Operator.hpp"
+#include "Table.hpp"
 #include "PolynomialEvaluator.hpp"
 #include "HOTBM/sollya.h"	// Do NOT use libsollya from user's environment
 
@@ -19,12 +20,12 @@
 namespace flopoco{
 
 	/** The TableGenerator class.  */
-	class TableGenerator : public Operator{
+	class TableGenerator : public Table {
 
 		public:
 
 			 /* TODO: Doxygen parameters*/ 
-			TableGenerator(Target* target, string func, int wIn, int wOut, int n,double xmin, double xmax, double scale);
+			TableGenerator(Target* target, string func, int wInX, int wOutX, int n,double xmin, double xmax, double scale);
 
 			/**
 			 * TableGenerator destructor
@@ -35,11 +36,26 @@ namespace flopoco{
 			vector<FixedPointCoefficient*> getPolynomialCoefficients(sollya_node_t t, sollya_chain_t c);
       vector<vector<FixedPointCoefficient*> > getPolynomialCoefficientsVector();
       void printPolynomialCoefficientsVector();
+      void updateMinWeightParam(int i, FixedPointCoefficient* zz);
+      vector<FixedPointCoefficient*> getCoeffParamVector();
+      void printCoeffParamVector();
+      
+      /************************************************/
+      /********Virtual methoods from class Table*******/
+      mpz_class function(int x);
+			int    double2input(double x);
+			double input2double(int x);
+			mpz_class double2output(double x);
+			double output2double(mpz_class x);
+	    /************************************************/
+      
+      
 		protected:
-			int wIn_;   /**< TODO: Description*/ 
-			int wOut_;  /**< TODO: Description*/
+			int wInX_;   /**< TODO: Description*/ 
+			int wOutX_;  /**< TODO: Description*/
 			Function &f;
 			vector< vector<FixedPointCoefficient*> > polyCoeffVector;
+			vector<FixedPointCoefficient*> coeffParamVector;
 	};
 }
 #endif

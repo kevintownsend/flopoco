@@ -44,17 +44,17 @@ namespace flopoco{
 
 	extern vector<Operator*> oplist;
 
-	TableGenerator::TableGenerator(Target* target, string func, int wIn, int wOut, int n, double xmin, double xmax, double scale ): // TODO extend list
-		Operator(target), wIn_(wIn), wOut_(wOut), f(*new Function(func, xmin, xmax, scale))   {
+	TableGenerator::TableGenerator(Target* target, string func, int wInX, int wOutX, int n, double xmin, double xmax, double scale ): // TODO extend list
+		Table(target,0,0), wInX_(wInX), wOutX_(wOutX), f(*new Function(func, xmin, xmax, scale))   {
 	
 		ostringstream name;
 		/* Set up the name of the entity */
-		name <<"TableGenerator_"<<wIn<<"_"<<wOut;
+		name <<"TableGenerator_"<<wInX<<"_"<<wOutX;
 		setName(name.str());
 	
 		/* Set up the I/O signals of of the entity */
-		addInput("I", wIn);
-		addOutput("O", wOut);
+		addInput("I", wInX);
+		addOutput("O", wOutX);
 
 		/* This operator is combinatorial (in fact is just a ROM.*/
 		setCombinatorial();
@@ -82,7 +82,7 @@ namespace flopoco{
 	mpfr_set_d(a,0.,GMP_RNDN);
   mpfr_set_d(b,1.,GMP_RNDN);
   mpfr_set_ui(eps, 1, GMP_RNDN);
-  mpfr_mul_2si(eps, eps, -wOut-1, GMP_RNDN); // eps< 2^{-wout-1}
+  mpfr_mul_2si(eps, eps, -wOutX-1, GMP_RNDN); // eps< 2^{-woutX-1}
   
   //sollya_node_t w=parseString("1"); //weight
   
@@ -150,7 +150,7 @@ namespace flopoco{
       cout<<"\nover: "<<sPrintBinary(zero)<<" "<< sPrintBinary(bi)<<"withprecshift:"<<precShift<<endl;	
       }
       
-      tempChain2 = makeIntPtrChainToFromBy(wOut+1,n+1, precShift); //precision
+      tempChain2 = makeIntPtrChainToFromBy(wOutX+1,n+1, precShift); //precision
       
       //tempNode3 = FPminimax(firstArg, tempChain, tempChain2, tempChain3, a, b, resB, resC, tempNode, tempNode2);
       tempNode3 = FPminimax(sY, tempChain ,tempChain2, NULL,       zero, bi, FIXED, ABSOLUTESYM, tempNode2,NULL);
@@ -198,7 +198,11 @@ namespace flopoco{
       fpCoeffVector = getPolynomialCoefficients(polys[k], tempChain2);
       polyCoeffVector.push_back(fpCoeffVector);
 	  }
-	printPolynomialCoefficientsVector();
+	 if (verbose){  
+	  printPolynomialCoefficientsVector();
+	  cout<<"Parameters for polynomial evaluator:"<<endl;
+	  printCoeffParamVector();
+	 }
 	}
 	
   else{
@@ -277,11 +281,14 @@ vector<FixedPointCoefficient*> TableGenerator::getPolynomialCoefficients(sollya_
 		    
 		    size=*((int *)first(cc));
 		    cc=tail(cc);
-		    if (mpfr_sgn(coef[i])==0) weight=0;
-		    else weight=mpfr_get_exp(coef[i]);
+		    //if (mpfr_sgn(coef[i])==0) weight=0;
+		    //else 
+		    
+		    weight=mpfr_get_exp(coef[i]);
 		    
 		    zz= new FixedPointCoefficient(size, weight, coef[i]);
 		    coeffVector.push_back(zz);
+		    updateMinWeightParam(i,zz);
 			}
       
 		  //Cleanup 
@@ -291,6 +298,16 @@ vector<FixedPointCoefficient*> TableGenerator::getPolynomialCoefficients(sollya_
 		  
 		 
      return coeffVector;
+}
+
+void TableGenerator::updateMinWeightParam(int i, FixedPointCoefficient* zz)
+{
+  if (coeffParamVector.size()<=(unsigned)i) {
+    coeffParamVector.push_back(zz);
+  }
+  else if ((*coeffParamVector[i]).getWeight() <(*zz).getWeight()) 
+  coeffParamVector[i]=zz;
+
 }
 
 vector<vector<FixedPointCoefficient*> > TableGenerator::getPolynomialCoefficientsVector(){
@@ -310,6 +327,82 @@ void TableGenerator::printPolynomialCoefficientsVector(){
     }
   }
 }
+
+vector<FixedPointCoefficient*> TableGenerator::getCoeffParamVector(){
+return coeffParamVector;
+}
+void TableGenerator::printCoeffParamVector(){
+  int j, degree;
+  
+    degree= coeffParamVector.size();
+    
+    for (j=0; j<degree; j++){     
+      cout<<" "<<(*coeffParamVector[j]).getSize()<< " "<<(*coeffParamVector[j]).getWeight()<<endl; 
+    }
+  
+}
+
+/****************************************************************************************/
+/************Implementation of virtual methods of Class Table***************************/
+
+int TableGenerator::double2input(double x){
+		int result;
+		cerr << "???  TableGenerator::double2input not yet implemented ";
+		exit(1);
+		return result;
+	}
+
+
+	double  TableGenerator::input2double(int x) {
+		double y;
+		cerr << "??? TableGenerator::double2input not yet implemented ";
+		exit(1);
+		return(y);
+	}
+
+	mpz_class  TableGenerator::double2output(double x){
+		cerr << "???  TableGenerator::double2input not yet implemented ";
+		exit(1);
+		return 0;
+	}
+
+	double  TableGenerator::output2double(mpz_class x) {
+		double y;
+		cerr << "???  TableGenerator::double2input not yet implemented ";
+		exit(1);
+  
+		return(y);
+	}
+
+/***************************************************************************************/
+/********************This is the implementation of the actual mapping*******************/
+	mpz_class  TableGenerator::function(int x)
+	{
+	
+    mpz_class r=0;
+    int amount,j,nrIntervals, degree;
+    vector<FixedPointCoefficient*> pcoeffs;
+    nrIntervals=polyCoeffVector.size();
+    if ((x<0) ||(x>=nrIntervals)) {}//x is not in the good range
+    else{
+      pcoeffs=polyCoeffVector[(unsigned)x];
+      degree= pcoeffs.size();
+      amount=0;
+      //cout<<"polynomial "<<x<<": "<<endl;
+      //r=mpz_class( 133955332 )+(mpz_class( 65664 )<< 27 )+(mpz_class( 64 )<< 44 )
+      for (j=0; j<degree; j++){     
+        cout<<" "<<(*pcoeffs[j]).getSize()<< " "<<(*pcoeffs[j]).getWeight()<<endl; 
+        r=r+(mpz_class(1)<<amount);
+        amount=amount+(*pcoeffs[j]).getSize()+(*pcoeffs[j]).getWeight();
+      }
+    } 		
+		
+		
+		return r;
+}	
+/***************************************************************************************/
+
+
 
 }     
 #endif //HAVE_SOLLYA
