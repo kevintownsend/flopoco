@@ -39,6 +39,7 @@ namespace flopoco{
       void updateMinWeightParam(int i, FixedPointCoefficient* zz);
       vector<FixedPointCoefficient*> getCoeffParamVector();
       void printCoeffParamVector();
+      void generateDebug();
       
       /************************************************/
       /********Virtual methoods from class Table*******/
@@ -56,6 +57,7 @@ namespace flopoco{
 			Function &f;
 			vector< vector<FixedPointCoefficient*> > polyCoeffVector;
 			vector<FixedPointCoefficient*> coeffParamVector;
+			mpfr_t *maxError;
 	};
 }
 #endif

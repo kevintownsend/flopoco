@@ -70,7 +70,7 @@ namespace flopoco{
 	mpfr_set_d(a,0.,GMP_RNDN);
   mpfr_set_d(b,1.,GMP_RNDN);
   mpfr_set_ui(eps, 1, GMP_RNDN);
-  mpfr_mul_2si(eps, eps, -wOutX-1, GMP_RNDN); // eps< 2^{-woutX-1}
+  mpfr_mul_2si(eps, eps, -wOutX-2, GMP_RNDN); // eps< 2^{-woutX-1}
   
   //sollya_node_t w=parseString("1"); //weight
   
@@ -115,7 +115,9 @@ namespace flopoco{
     errBoundBool=1; //suppose the nr of intervals is good
     //polys.reserve(nrIntervals);
     //errPolys.reserve(nrIntervals);
+    if(verbose){
     cout<<"trying with "<< nrIntervals <<" intervals"<<endl;
+    }
     for (k=0; k<nrIntervals; k++){
       mpfr_set_ui(ai,k,GMP_RNDN);
       mpfr_set_ui(bi,1,GMP_RNDN);
@@ -161,7 +163,9 @@ namespace flopoco{
 		  errPolys.push_back(mpErr);
 		  if (mpfr_cmp(*mpErr, eps)>0) {
 		    errBoundBool=0; //we have found an interval where the error is not good
-		    cout<< "we have found an interval where the error is not good, proceed to splitting"<<endl;
+		    if(verbose){
+  		    cout<< "we have found an interval where the error is not good, proceed to splitting"<<endl;
+	      }
 		    //k=nrIntervals;
 		    polys.clear();
 		    errPolys.clear();
@@ -172,17 +176,42 @@ namespace flopoco{
     }
   } 
   if (errBoundBool==1){
-  cout<< "we have all of them, the number of intervals is:"<< nrIntervals<<endl; 
-  cout<< "We proceed to the extraction of the coefficients:"<<endl; 
   
+  if(verbose){
+    cout<< "the number of intervals is:"<< nrIntervals<<endl; 
+    cout<< "We proceed to the extraction of the coefficients:"<<endl; 
+  }
+  //Get the maximum error
+  
+   mpfr_t *mpErrMax;
+   mpErrMax=(mpfr_t*) safeMalloc(sizeof(mpfr_t));
+   mpfr_init2(*mpErrMax, getToolPrecision());
+   mpfr_set(*mpErrMax,*errPolys[0], GMP_RNDN);
+   
+   for (k=1;k<errPolys.size();k++){
+    if (mpfr_cmp(*mpErrMax, *(errPolys[k]))<0)
+      mpfr_set(*mpErrMax,*(errPolys[k]), GMP_RNDN);
+   }
+   
+   maxError=(mpfr_t*) safeMalloc(sizeof(mpfr_t));
+   mpfr_init2(*maxError,getToolPrecision());
+   mpfr_set(*maxError,*mpErrMax,GMP_RNDN);
+   
+   mpfr_clear(*mpErrMax);
+   free(mpErrMax);
+   if (verbose){
+    cout<< "maximum error="<<sPrintBinary(*maxError)<<endl;
+   }
   //Extract coefficients
 		vector<FixedPointCoefficient*> fpCoeffVector;
 		
     k=0;
    for (k=0;k<nrIntervals;k++){
-   		cout<<"\n----"<< k<<"th polynomial:----"<<endl;
+      if (verbose){
+   		  cout<<"\n----"<< k<<"th polynomial:----"<<endl;
+        printTree(polys[k]);
+      }
       
-      printTree(polys[k]);
       fpCoeffVector = getPolynomialCoefficients(polys[k], tempChain2);
       polyCoeffVector.push_back(fpCoeffVector);
 	  }
@@ -245,9 +274,9 @@ MPPolynomial* TableGenerator::getMPPolynomial(sollya_node_t t){
 		sollya_node_t *nCoef;
 		mpfr_t *coef;
 		
-		printTree(t);
+		//printTree(t);
 		getCoefficients(&degree, &nCoef, t);
-		cout<<degree<<endl;
+		//cout<<degree<<endl;
 		coef = (mpfr_t *) safeCalloc(degree+1,sizeof(mpfr_t));
     
       
@@ -257,8 +286,9 @@ MPPolynomial* TableGenerator::getMPPolynomial(sollya_node_t t){
 				//cout<< i<<"th coeff:"<<endl;
 				//printTree(getIthCoefficient(t, i));
 				evaluateConstantExpression(coef[i], getIthCoefficient(t, i), getToolPrecision());
-				
+				if (verbose){
 		    cout<< i<<"th coeff:"<<sPrintBinary(coef[i])<<endl;
+		    }
 			}
       MPPolynomial* mpPx = new MPPolynomial(degree, coef);
 		  //Cleanup 
@@ -278,9 +308,9 @@ vector<FixedPointCoefficient*> TableGenerator::getPolynomialCoefficients(sollya_
 		vector<FixedPointCoefficient*> coeffVector;
 		 FixedPointCoefficient* zz;
 		 
-		printTree(t);
+		//printTree(t);
 		getCoefficients(&degree, &nCoef, t);
-		cout<<degree<<endl;
+		//cout<<degree<<endl;
 		coef = (mpfr_t *) safeCalloc(degree+1,sizeof(mpfr_t));
     cc=c;
       
@@ -290,9 +320,9 @@ vector<FixedPointCoefficient*> TableGenerator::getPolynomialCoefficients(sollya_
 				//cout<< i<<"th coeff:"<<endl;
 				//printTree(getIthCoefficient(t, i));
 				evaluateConstantExpression(coef[i], getIthCoefficient(t, i), getToolPrecision());
-				
-		    cout<< i<<"th coeff:"<<sPrintBinary(coef[i])<<endl;
-		    
+				if (verbose){
+		      cout<< i<<"th coeff:"<<sPrintBinary(coef[i])<<endl;
+		    }
 		    size=*((int *)first(cc));
 		    cc=tail(cc);
 		    //if (mpfr_sgn(coef[i])==0) weight=0;
@@ -356,6 +386,13 @@ void TableGenerator::printCoeffParamVector(){
   
 }
 
+void TableGenerator::generateDebug(){
+ // cout<<
+ // cout<< f.getSollyaNode()
+
+}
+
+
 /****************************************************************************************/
 /************Implementation of virtual methods of Class Table***************************/
 
@@ -410,9 +447,10 @@ int TableGenerator::double2input(double x){
         
         
         cf=(*pcoeffs[j]).getValueMpfr();
-        cout<< j<<"th coeff:"<<sPrintBinary(*cf)<<endl;
+        
+        //cout<< j<<"th coeff:"<<sPrintBinary(*cf)<<endl;
         z=sPrintBinaryZ(*cf);
-        cout<< j<<"th coeff:"<<z<<" "<<strlen(z)<<endl;
+        //cout<< j<<"th coeff:"<<z<<" "<<strlen(z)<<endl;
         mpz_init(c);
         if (mpfr_sgn(*cf)!=0) {
           
