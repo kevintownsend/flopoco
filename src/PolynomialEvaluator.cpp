@@ -71,6 +71,8 @@ namespace flopoco{
 		aGuard_.reserve(100);
 		nYGuard_.reserve(100);
 		
+		minBoundY.reserve(100);
+		
 
 		
 //		maxBoundY = 5;
@@ -101,16 +103,30 @@ namespace flopoco{
 		errorEstimator(yGuard_, aGuard_);
 
 		for (uint32_t i=1; i<=unsigned(degree_); i++){
-			if (i==1)
-				maxBoundY[i] = (pikPSize[i]-pikPWeight[i]-sigmakPSize[i-1])-(coef_[i]->getSize()-coef_[i]->getWeight());
-			else if ( i < degree_)
-				maxBoundY[i] = maxBoundY[1]-i+1;
-			else
+			if (i != degree_){
+				maxBoundY[i] = - signed(degree_-i)*y_->getWeight();//  (pikPSize[i]-pikPWeight[i]-sigmakPSize[i-1])-(coef_[i]->getSize()-coef_[i]->getWeight());
+			}else
 				maxBoundY[i] = 0;
 				
 			if (maxBoundY[i] <= 0)
 				maxBoundY[i] = 0;
 		}
+		
+//		for (uint32_t i=1; i<=unsigned(degree_); i++){
+//			if ( y_->getSize() >= 17){
+//				int mul1 = int(ceil(double(y_->getSize())/double(17))); 
+//				int mul2 = int(ceil(double(y_->getSize()-maxBoundY[i])/double(17)));
+//				
+//				if ( mul1 == mul2) //no sense to do optimization
+//					maxBoundY[i] = 0;
+////				else{
+////					minBoundY[i] = 
+////				
+////				}
+//						
+//			}else
+//				maxBoundY[i] = 0; 
+//		}
 
 		/*init vectors */
 		for (uint32_t i=1; i<=unsigned(degree_)+1; i++){
@@ -143,7 +159,7 @@ namespace flopoco{
 					u = (mpfr_t*)malloc(sizeof(mpfr_t));
 					mpfr_init2(*u, 1000);
 					mpfr_add( *u, *approximationError, *errorEstimator(yGuard_, aGuard_), GMP_RNDN);
-//					cerr << " =======+++++++++++++++++++ err="<< mpfr_get_exp(*u) << endl;
+					cerr << " =======+++++++++++++++++++ err="<< mpfr_get_exp(*u) << endl;
 					int errExp = (mpfr_get_d(*u, GMP_RNDZ)==0 ? 0 :mpfr_get_exp(*u));
 					if (errExp <= -targetPrec-1 ){
 						sol = true;

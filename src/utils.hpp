@@ -8,6 +8,7 @@
 #include <mpfr.h>
 #include <gmpxx.h>
 #include <map>
+#include <math.h>
 
 #ifdef _WIN32
   #include "pstdint.h"

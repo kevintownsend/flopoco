@@ -269,6 +269,8 @@ namespace flopoco{
 			vector<int> aGuard_; // positive values refer to "real" guard bits
 
 			vector<int> maxBoundY;
+			vector<int> minBoundY;
+			
 			int maxBoundA;
 			
 			int currentPrec;
