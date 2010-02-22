@@ -58,6 +58,8 @@ namespace flopoco{
 		addOutput("R", pe->getOutputSize());
 		
 		vhdl << tab << declare("addr", tg->wIn) << " <= X"<<range(wInX-1, wInX-tg->wIn)<<";"<<endl;
+
+		nextCycle();/////////////////////////////////// The Coefficent ROM has a registered iunput
 		
 		inPortMap ( tg, "X", "addr");
 		outPortMap ( tg, "Y", "Coef");
@@ -65,6 +67,7 @@ namespace flopoco{
 		vhdl << instance ( tg, "GeneratedTable" );
 		
 		syncCycleFromSignal("Coef");
+		nextCycle();/////////////////////////////////// The Coefficent ROM has a registered output
 		
 		vhdl << tab << declare ("y",y->getSize()) << " <= X"<<range(y->getSize()-1 ,0) << ";" << endl;
 		
