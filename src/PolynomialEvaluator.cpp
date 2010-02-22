@@ -101,10 +101,15 @@ namespace flopoco{
 		errorEstimator(yGuard_, aGuard_);
 
 		for (uint32_t i=1; i<=unsigned(degree_); i++){
-			maxBoundY[i] = (pikPSize[i]-pikPWeight[i]-sigmakPSize[i-1])-(coef_[i]->getSize()-coef_[i]->getWeight());
-//			cout << "maxBoundY=" << maxBoundY[i] << endl;
+			if (i==1)
+				maxBoundY[i] = (pikPSize[i]-pikPWeight[i]-sigmakPSize[i-1])-(coef_[i]->getSize()-coef_[i]->getWeight());
+			else if ( i < degree_)
+				maxBoundY[i] = maxBoundY[1]-i+1;
+			else
+				maxBoundY[i] = 0;
+				
 			if (maxBoundY[i] <= 0)
-				maxBoundY[i] = 1;
+				maxBoundY[i] = 0;
 		}
 
 		/*init vectors */
@@ -118,14 +123,22 @@ namespace flopoco{
 
 		for (int j=1; j<=degree_; j++)
 			cout << "maxY["<<j<<"]="<<maxBoundY[j]<<" "; 
+		cout << endl;
+		for (int j=0; j<=degree_; j++)
+			cout << "aGuard["<<j<<"]="<<aGuard_[j]<<" "; 
+		cout << endl;
 
+		cerr << "got here " <<endl;
 //		exit(-1);
 
 		/* design space exploration */				
+
+
 		sol = false;
 		while (!sol){
-			while (((!sol) && nextStateA()) ){
 				while ((!sol) && (nextStateY())){
+					while (((!sol) && nextStateA()) ){
+
 					mpfr_t* u;
 					u = (mpfr_t*)malloc(sizeof(mpfr_t));
 					mpfr_init2(*u, 1000);
@@ -138,7 +151,20 @@ namespace flopoco{
 				} 
 			}	
 		}		
+		ostringstream s1, s2;		
 		
+		for (int j=0; j<=degree_; j++)
+			s1 << "aG["<<j<<"]="<<aGuard_[j]<<" "; 
+
+		for (int j=1; j<=degree_; j++)
+			s2 << "yG["<<j<<"]="<<yGuard_[j]<<" "; 
+			
+		REPORT(INFO, "------------------------------------------------------------");
+		REPORT(INFO, s1.str());
+		REPORT(INFO, s2.str());
+		REPORT(INFO, "------------------------------------------------------------");
+
+
 //		REPORT(DETAILED, "yuppy " << errorEstimator(yGuard_, aGuard_));
 		
 		for (uint32_t i=0; i<=unsigned(degree_); i++){
