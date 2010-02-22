@@ -57,7 +57,9 @@ namespace flopoco{
 		addInput ("X", wInX);
 		addOutput("R", pe->getOutputSize());
 		
-		inPortMap ( tg, "X", "X");
+		vhdl << tab << declare("addr", tg->wIn) << " <= X"<<range(wInX-1, wInX-tg->wIn)<<";"<<endl;
+		
+		inPortMap ( tg, "X", "addr");
 		outPortMap ( tg, "Y", "Coef");
 		
 		vhdl << instance ( tg, "GeneratedTable" );
