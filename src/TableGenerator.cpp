@@ -53,11 +53,11 @@ namespace flopoco{
   setToolPrecision(165);
   
   /* End of initialization */
-  //int verbose=0;
+  int verbose=1;
   int nrMaxIntervals=1024*1024;	
 	/* Convert the input string into a sollya evaluation tree */
   sollya_node_t tempNode = f.getSollyaNode(); //function
-  
+  int guardBits =1;
   mpfr_t a;
   mpfr_t b;
   mpfr_t eps;
@@ -70,7 +70,7 @@ namespace flopoco{
 	mpfr_set_d(a,0.,GMP_RNDN);
   mpfr_set_d(b,1.,GMP_RNDN);
   mpfr_set_ui(eps, 1, GMP_RNDN);
-  mpfr_mul_2si(eps, eps, -wOutX-2, GMP_RNDN); // eps< 2^{-woutX-1}
+  mpfr_mul_2si(eps, eps, -wOutX-1-guardBits, GMP_RNDN); // eps< 2^{-woutX-1}
   
   //sollya_node_t w=parseString("1"); //weight
   
@@ -140,7 +140,7 @@ namespace flopoco{
       cout<<"\nover: "<<sPrintBinary(zero)<<" "<< sPrintBinary(bi)<<"withprecshift:"<<precShift<<endl;	
       }
       
-      tempChain2 = makeIntPtrChainToFromBy(wOutX+1,n+1, precShift); //precision
+      tempChain2 = makeIntPtrChainToFromBy(wOutX+1+guardBits,n+1, precShift); //precision
       
       //tempNode3 = FPminimax(firstArg, tempChain, tempChain2, tempChain3, a, b, resB, resC, tempNode, tempNode2);
       tempNode3 = FPminimax(sY, tempChain ,tempChain2, NULL,       zero, bi, FIXED, ABSOLUTESYM, tempNode2,NULL);
@@ -392,7 +392,8 @@ return maxError;
 void TableGenerator::generateDebug(){
  cout<<"f="<<endl;
  printTree(f.getSollyaNode());
- cout<<"wIn="<<wInX_<<"wOut="<<wOutX_<<endl;
+ cout<<"wIn="<<wInX_<<"wOut="<<(-1)*wOutX_<<endl;
+ cout<<"k="<<polyCoeffVector.size()<<" d="<<coeffParamVector.size();
  
 }
 
