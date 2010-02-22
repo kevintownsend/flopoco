@@ -1293,7 +1293,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				usage(argv[0]); // and exit
 			string func = argv[i++];
 			int wI = checkStrictyPositive(argv[i++], argv[0]);
-			int wO = checkStrictyPositive(argv[i++], argv[0]);
+			int wO = atoi(argv[i++]);
 			int n  = checkStrictyPositive(argv[i++], argv[0]);
 			double xmin = atof(argv[i++]);
 			double xmax = atof(argv[i++]);
@@ -1303,7 +1303,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			
 			cerr << "> TableGenerator func='" << func << "', wI=" << wI << ", wO=" << wO      << ", xmin=" << xmin << ", xmax=" << xmax << ", scale=" << scale <<endl;	
 			
-			Operator* tg = new TableGenerator(target, func, wI, wO, n,xmin,xmax,scale );
+			Operator* tg = new TableGenerator(target, func, wI, (-1)*wO, n,xmin,xmax,scale );
 				addOperator(tg);
 			
 		}
@@ -1313,7 +1313,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				usage(argv[0]); // and exit
 			string func = argv[i++];
 			int wI = checkStrictyPositive(argv[i++], argv[0]);
-			int wO = checkStrictyPositive(argv[i++], argv[0]);
+			int wO = atoi(argv[i++]);
 			int n  = checkStrictyPositive(argv[i++], argv[0]);
 			double xmin = atof(argv[i++]);
 			double xmax = atof(argv[i++]);
@@ -1323,7 +1323,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			
 			cerr << "> FunctionEvaluator func='" << func << "', wI=" << wI << ", wO=" << wO      << ", xmin=" << xmin << ", xmax=" << xmax << ", scale=" << scale <<endl;	
 			
-			Operator* tg = new FunctionEvaluator(target, func, wI, wO, n,xmin,xmax,scale );
+			Operator* tg = new FunctionEvaluator(target, func, wI, (-1)*wO, n,xmin,xmax,scale );
 				addOperator(tg);
 			
 		}

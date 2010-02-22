@@ -390,9 +390,10 @@ return maxError;
 }
 
 void TableGenerator::generateDebug(){
- // cout<<
- // cout<< f.getSollyaNode()
-
+ cout<<"f="<<endl;
+ printTree(f.getSollyaNode());
+ cout<<"wIn="<<wInX_<<"wOut="<<wOutX_<<endl;
+ 
 }
 
 
