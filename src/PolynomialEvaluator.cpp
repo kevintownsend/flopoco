@@ -135,7 +135,7 @@ namespace flopoco{
 		}
 		
 		for (uint32_t i=0; i<unsigned(degree_)+1; i++)
-			aGuard_[i] = 0;
+			aGuard_[i] = maxBoundA;
 
 		for (int j=1; j<=degree_; j++)
 			cout << "maxY["<<j<<"]="<<maxBoundY[j]<<" "; 
@@ -152,9 +152,11 @@ namespace flopoco{
 
 		sol = false;
 		while (!sol){
-				while ((!sol) && (nextStateY())){
-					while (((!sol) && nextStateA()) ){
-
+//			cout << "===============================" << endl;
+			while ((!sol) && (nextStateY())){
+//				cout << "&&&&&&&&&&&&&&&&&&&&&&&&" << endl;
+				while (((!sol) && nextStateA())){
+//					cout << "++++++++++++++++++++++++++++++++++++" << endl;
 					mpfr_t* u;
 					u = (mpfr_t*)malloc(sizeof(mpfr_t));
 					mpfr_init2(*u, 1000);
