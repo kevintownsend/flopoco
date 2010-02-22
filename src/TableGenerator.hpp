@@ -39,6 +39,7 @@ namespace flopoco{
       void updateMinWeightParam(int i, FixedPointCoefficient* zz);
       vector<FixedPointCoefficient*> getCoeffParamVector();
       void printCoeffParamVector();
+      mpfr_t *getMaxApproxError();
       void generateDebug();
       
       /************************************************/

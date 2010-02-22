@@ -53,7 +53,7 @@ namespace flopoco{
   setToolPrecision(165);
   
   /* End of initialization */
-  int verbose=0;
+  //int verbose=0;
   int nrMaxIntervals=1024*1024;	
 	/* Convert the input string into a sollya evaluation tree */
   sollya_node_t tempNode = f.getSollyaNode(); //function
@@ -384,6 +384,9 @@ void TableGenerator::printCoeffParamVector(){
       cout<<" "<<(*coeffParamVector[j]).getSize()<< " "<<(*coeffParamVector[j]).getWeight()<<endl; 
     }
   
+}
+mpfr_t * TableGenerator::getMaxApproxError(){
+return maxError;
 }
 
 void TableGenerator::generateDebug(){
