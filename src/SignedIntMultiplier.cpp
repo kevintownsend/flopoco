@@ -150,10 +150,11 @@ namespace flopoco{
 
 						syncCycleFromSignal("addRes");
 
-						if ( (y*(cOp1-1)+yS + x*(cOp2-1)+xS ) - (wInX + wInY) < x )
+						if ( (y*(cOp1-1)+yS + x*(cOp2-1)+xS ) - (wInX + wInY) < x ){
 							vhdl << tab << "R <= addRes & sum0Low "<<range(x-1, (y*(cOp1-1)+yS + x*(cOp2-1)+xS ) - (wInX + wInY) )<< ";" << endl;
-						else						
-							vhdl << tab << "R <= addRes"<<range(y*(cOp1-1)+yS +  x*(cOp2-1)+xS - x -1, (y*(cOp1-1)+yS + x*(cOp2-1)+xS ) - (wInX + wInY) + x )<< ";" << endl;
+						}else{	
+							vhdl << tab << "R <= addRes"<<range(y*(cOp1-1)+yS +  x*(cOp2-1)+xS - x -1, (y*(cOp1-1)+yS + x*(cOp2-1)+xS -x ) - (wInX + wInY)	 )<< ";" << endl;
+						}
 					}else{
 						vhdl << tab << "R <= sum0"<<range( y*(cOp1-1) + xS + yS - 1, y*(cOp1-1) + xS + yS - (wInX + wInY ) ) << ";" << endl;
 					}
