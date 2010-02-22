@@ -9,6 +9,7 @@
 #include "Operator.hpp"
 #include "TableGenerator.hpp"
 #include "FunctionEvaluator.hpp"
+#include "IntAdder.hpp"
 
 namespace flopoco{
 
@@ -25,6 +26,8 @@ namespace flopoco{
 		 * FunctionEvaluator destructor
 		 */
 		~FunctionEvaluator();
+		
+		void emulate(TestCase * tc);
 
 	private:
 		

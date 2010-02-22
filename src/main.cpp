@@ -970,27 +970,27 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(op);
 			}
 		}
-		else if(opname=="PolynomialEvaluator"){
-			int nargs = 1;
-			if (i+nargs > argc)
-				usage(argv[0]);
-			else {
-				int prec = atoi(argv[i++]); // may be negative
-				FixedPointCoefficient* f0 = new FixedPointCoefficient( 27, 0);
-				FixedPointCoefficient* f1 = new FixedPointCoefficient( 17,-1);
-				FixedPointCoefficient* f2 = new FixedPointCoefficient( 9, -3);
+//		else if(opname=="PolynomialEvaluator"){
+//			int nargs = 1;
+//			if (i+nargs > argc)
+//				usage(argv[0]);
+//			else {
+//				int prec = atoi(argv[i++]); // may be negative
+//				FixedPointCoefficient* f0 = new FixedPointCoefficient( 27, 0);
+//				FixedPointCoefficient* f1 = new FixedPointCoefficient( 17,-1);
+//				FixedPointCoefficient* f2 = new FixedPointCoefficient( 9, -3);
 
-				YVar* y = new YVar(16, -6);
-				
-				vector<FixedPointCoefficient*> coef;
-				coef.push_back(f0);
-				coef.push_back(f1);
-				coef.push_back(f2);
+//				YVar* y = new YVar(16, -6);
+//				
+//				vector<FixedPointCoefficient*> coef;
+//				coef.push_back(f0);
+//				coef.push_back(f1);
+//				coef.push_back(f2);
 
-				op = new PolynomialEvaluator(target, coef, y, prec);
-				addOperator(op);
-			}
-		}
+//				op = new PolynomialEvaluator(target, coef, y, prec);
+//				addOperator(op);
+//			}
+//		}
 				
 #ifndef _WIN32
 #ifdef HAVE_HOTBM

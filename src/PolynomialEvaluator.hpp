@@ -157,7 +157,7 @@ namespace flopoco{
 			 * The polynomial evaluator class. FIXME the parameters are subhect to change
 			 * TODO document them
 			 */
-			PolynomialEvaluator(Target* target, vector<FixedPointCoefficient*> coef, YVar* y, int targetPrec);
+			PolynomialEvaluator(Target* target, vector<FixedPointCoefficient*> coef, YVar* y, int targetPrec, mpfr_t* approxError);
 
 			/** Destructor */
 			~PolynomialEvaluator();
@@ -182,7 +182,7 @@ namespace flopoco{
 			}
 
 
-			int errorEstimator(vector<int> &yGuard, vector<int> &aGuard);
+			mpfr_t* errorEstimator(vector<int> &yGuard, vector<int> &aGuard);
 
 			bool nextStateY(){
 				if (! sol){
@@ -233,12 +233,26 @@ namespace flopoco{
 				return wR;
 			}
 			
+			int getOutputWeight(){
+				return weightR;
+			}
+
+			
 			vector<FixedPointCoefficient*> getCoeffParamVector(){
 				return coef_;
 			}
+			
+			void setApproximationError( mpfr_t *p){
+				approximationError = (mpfr_t*) malloc( sizeof(mpfr_t));
+				mpfr_init2(*approximationError, 1000);
+				mpfr_set( *approximationError, *p, GMP_RNDN);
+			}
 
 		protected:
+		
+			mpfr_t* approximationError;
 			unsigned wR;
+			int weightR;
 			
 			vector<FixedPointCoefficient*> coef_;
 			YVar* y_;

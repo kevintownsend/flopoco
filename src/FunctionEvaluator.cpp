@@ -48,14 +48,16 @@ namespace flopoco{
 		
 		YVar* y = new YVar(wInX - tg->wIn, -tg->wIn);
 		
-		pe = new PolynomialEvaluator(target, tg->getCoeffParamVector(), y, wOutX );
+		
+		pe = new PolynomialEvaluator(target, tg->getCoeffParamVector(), y, wOutX, tg->getMaxApproxError() );
+		
 		oplist.push_back(pe);
 
 		
 
 		// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 		addInput ("X", wInX);
-		addOutput("R", pe->getOutputSize());
+
 		
 		vhdl << tab << declare("addr", tg->wIn) << " <= X"<<range(wInX-1, wInX-tg->wIn)<<";"<<endl;
 
@@ -88,10 +90,66 @@ namespace flopoco{
 		vhdl << instance( pe, "PolynomialEvaluator");
 		
 		syncCycleFromSignal("Rpe");
-		vhdl << tab << "R <= Rpe;"<< endl;  
+		nextCycle();/////////////////
+		//now we round
+		vhdl << tab << declare( "op1_rnd", wOutX+1 + (pe->getOutputWeight()+1)) << " <= Rpe"<<range(pe->getOutputSize()-1, pe->getOutputSize() - (wOutX+pe->getOutputWeight()+ 2)) << ";" << endl;
+		
+		IntAdder *ia = new IntAdder(target, wOutX+1 + (pe->getOutputWeight()+1));
+		oplist.push_back(ia);
+		
+		inPortMap    (ia, "X", "op1_rnd");
+		inPortMapCst (ia, "Y", zg(wOutX+1 + (pe->getOutputWeight()+1), 0));
+		inPortMapCst (ia, "Cin", "'1'");
+		outPortMap   (ia, "R", "postRoundR");   
+
+		vhdl << instance( ia, "Final_Round");
+		syncCycleFromSignal( "postRoundR" );  
+		
+		addOutput("R", wOutX+1 + (pe->getOutputWeight()+1) - 1);
+		vhdl << tab << "R <= postRoundR"<<range(wOutX+1 + (pe->getOutputWeight()+1) - 1,1) <<";"<< endl;  
 	}
 
 	FunctionEvaluator::~FunctionEvaluator() {
 	}
-}
+	
+	void FunctionEvaluator::emulate(TestCase* tc)
+	{
+	
+		mpz_class svX = tc->getInputValue("X");
 
+		/* Get inputs / outputs */
+		mpz_class &x  = a[0];
+		mpz_class &rd = a[1]; // rounded down
+		mpz_class &ru = a[2]; // rounded up
+
+//		int outSign = 0;
+
+//		mpfr_t mpX, mpR;
+//		mpfr_inits(mpX, mpR, 0, NULL);
+
+//		/* Convert a random signal to an mpfr_t in [0,1[ */
+//		mpfr_set_z(mpX, x.get_mpz_t(), GMP_RNDN);
+//		mpfr_div_2si(mpX, mpX, wI, GMP_RNDN);
+
+//		/* Compute the function */
+//		f.eval(mpR, mpX);
+
+//		/* Compute the signal value */
+//		if (mpfr_signbit(mpR))
+//			{
+//				outSign = 1;
+//				mpfr_abs(mpR, mpR, GMP_RNDN);
+//			}
+//		mpfr_mul_2si(mpR, mpR, wO, GMP_RNDN);
+
+//		/* NOT A TYPO. HOTBM only guarantees faithful
+//		 * rounding, so we will round down here,
+//		 * add both the upper and lower neighbor.
+//		 */
+//		mpfr_get_z(rd.get_mpz_t(), mpR, GMP_RNDD);
+//		ru = rd + 1;
+	}
+
+}
+	
+	

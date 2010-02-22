@@ -41,8 +41,10 @@ namespace flopoco{
 
 	extern vector<Operator*> oplist;
 	
-		PolynomialEvaluator::PolynomialEvaluator(Target* target, vector<FixedPointCoefficient*> coef, YVar* y, int targetPrec):
+		PolynomialEvaluator::PolynomialEvaluator(Target* target, vector<FixedPointCoefficient*> coef, YVar* y, int targetPrec, mpfr_t* approxError):
 		Operator(target), y_(y), targetPrec_(targetPrec){
+		
+		setApproximationError(approxError);
 		srcFileName = "PolynomialEvaluator";
 
 		/* tweak coef for i/o compatibility with the table generator */
@@ -95,16 +97,21 @@ namespace flopoco{
 		sol = false;
 		while (!sol){
 			while (((!sol) && nextStateA()) ){
-				while ((!sol) && (nextStateY())  ){
-					currentPrec = errorEstimator(yGuard_, aGuard_);
-					if (currentPrec <= targetPrec ){
+				while ((!sol) && (nextStateY())){
+					mpfr_t* u;
+					u = (mpfr_t*)malloc(sizeof(mpfr_t));
+					mpfr_init2(*u, 1000);
+					mpfr_add( *u, *approximationError, *errorEstimator(yGuard_, aGuard_), GMP_RNDN);
+					cerr << " =======+++++++++++++++++++ err="<< mpfr_get_exp(*u) << endl;
+					int errExp = (mpfr_get_d(*u, GMP_RNDZ)==0 ? 0 :mpfr_get_exp(*u));
+					if (errExp <= -targetPrec-1 ){
 						sol = true;
 					}
 				} 
 			}	
 		}		
 		
-		REPORT(DETAILED, "yuppy " << errorEstimator(yGuard_, aGuard_));
+//		REPORT(DETAILED, "yuppy " << errorEstimator(yGuard_, aGuard_));
 		
 		for (uint32_t i=0; i<=unsigned(degree_); i++){
 			if (i==0)
@@ -163,6 +170,7 @@ namespace flopoco{
 					syncCycleFromSignal( join("sigmaP",i) );
 
 					wR = sigmakPSize[i]+1;
+					weightR = sigmakPWeight[i];
 					addOutput("R", sigmakPSize[i]+1);
 					vhdl << tab << "R <= " << join("sigmaP",i) << ";" << endl;
 				}			
@@ -171,7 +179,7 @@ namespace flopoco{
 	}
 	
 	
-	int PolynomialEvaluator::errorEstimator(vector<int> &yGuard, vector<int> &aGuard){
+	mpfr_t* PolynomialEvaluator::errorEstimator(vector<int> &yGuard, vector<int> &aGuard){
 		ostringstream s1, s2;		
 		
 		for (int j=0; j<=degree_; j++)
@@ -355,8 +363,8 @@ namespace flopoco{
 			REPORT( DETAILED, "|sigma"<<i<<"P| weight=" << (mpfr_get_d(*r,GMP_RNDN)!=0?mpfr_get_exp(*r):0)); 
 		}
 		
-		REPORT( DETAILED, "Error (order) for P(y)=" << mpfr_get_exp( *sigmakP_sigmak[degree_])+1);
-		return mpfr_get_exp( *sigmakP_sigmak[degree_])+1;
+		REPORT( DETAILED, "Error (order) for P(y)=" << mpfr_get_exp( *sigmakP_sigmak[degree_]));
+		return sigmakP_sigmak[degree_];
 	} 
 
 
