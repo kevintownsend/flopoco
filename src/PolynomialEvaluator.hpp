@@ -186,7 +186,7 @@ namespace flopoco{
 
 			bool nextStateY(){
 				if (! sol){
-					aGuard_[degree_+1] = 0 ;
+					aGuard_[degree_] = 0 ;
 					int carry = 1;
 					for (int i=degree_; i>=0;i--){
 						if ((nYGuard_[i] == maxBoundY[i]) && ( carry==1)){
@@ -216,7 +216,7 @@ namespace flopoco{
 				
 				if (! sol){
 					int carry = 1;
-					for (int i=0; i<=degree_+1;i++){
+					for (int i=1; i<=degree_;i++){
 						if ((aGuard_[i] == maxBoundA) && ( carry==1)){
 							aGuard_[i] = 0;
 							carry = 1;
@@ -225,7 +225,7 @@ namespace flopoco{
 							carry=0;
 						}
 					}
-					if ( aGuard_[degree_+1] == 0)
+					if ( aGuard_[degree_] == 0)
 						return true;
 					else
 						return false;

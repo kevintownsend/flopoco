@@ -90,23 +90,23 @@ namespace flopoco{
 		vhdl << instance( pe, "PolynomialEvaluator");
 		
 		syncCycleFromSignal("Rpe");
-		nextCycle();/////////////////
+//		nextCycle();/////////////////
 		//now we round
-		vhdl << tab << declare( "op1_rnd", wOutX+1 + (pe->getOutputWeight()+1)) << " <= Rpe"<<range(pe->getOutputSize()-1, pe->getOutputSize() - (wOutX+pe->getOutputWeight()+ 2)) << ";" << endl;
+		vhdl << tab << declare( "op", wOutX+1 + (pe->getOutputWeight())) << " <= Rpe"<<range(pe->getOutputSize()-1, pe->getOutputSize() - (wOutX+pe->getOutputWeight()+ 1)) << ";" << endl;
 		
-		IntAdder *ia = new IntAdder(target, wOutX+1 + (pe->getOutputWeight()+1));
-		oplist.push_back(ia);
-		
-		inPortMap    (ia, "X", "op1_rnd");
-		inPortMapCst (ia, "Y", zg(wOutX+1 + (pe->getOutputWeight()+1), 0));
-		inPortMapCst (ia, "Cin", "'1'");
-		outPortMap   (ia, "R", "postRoundR");   
+//		IntAdder *ia = new IntAdder(target, wOutX+1 + (pe->getOutputWeight()+1));
+//		oplist.push_back(ia);
+//		
+//		inPortMap    (ia, "X", "op1_rnd");
+//		inPortMapCst (ia, "Y", zg(wOutX+1 + (pe->getOutputWeight()+1), 0));
+//		inPortMapCst (ia, "Cin", "'1'");
+//		outPortMap   (ia, "R", "postRoundR");   
 
-		vhdl << instance( ia, "Final_Round");
-		syncCycleFromSignal( "postRoundR" );  
+//		vhdl << instance( ia, "Final_Round");
+//		syncCycleFromSignal( "postRoundR" );  
 		
-		addOutput("R", wOutX+1 + (pe->getOutputWeight()+1) - 1);
-		vhdl << tab << "R <= postRoundR"<<range(wOutX+1 + (pe->getOutputWeight()+1) - 1,1) <<";"<< endl;  
+		addOutput("R", wOutX+1 + pe->getOutputWeight());
+		vhdl << tab << "R <= op;" << endl;  
 	}
 
 	FunctionEvaluator::~FunctionEvaluator() {
