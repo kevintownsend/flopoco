@@ -110,6 +110,8 @@ namespace flopoco{
 				
 			if (maxBoundY[i] <= 0)
 				maxBoundY[i] = 0;
+
+//			maxBoundY[i] = 0;
 		}
 		
 //		for (uint32_t i=1; i<=unsigned(degree_); i++){
@@ -149,26 +151,46 @@ namespace flopoco{
 
 		/* design space exploration */				
 
+		if (degree_>1){
+			sol = false;
+			while (!sol){
+//				cout << "===============================" << endl;
+				while ((!sol) && (nextStateY())){
+//					cout << "&&&&&&&&&&&&&&&&&&&&&&&&" << endl;
+					while (((!sol) && nextStateA())){
+//						cout << "++++++++++++++++++++++++++++++++++++" << endl;
+						mpfr_t* u;
+						u = (mpfr_t*)malloc(sizeof(mpfr_t));
+						mpfr_init2(*u, 1000);
+						mpfr_add( *u, *approximationError, *errorEstimator(yGuard_, aGuard_), GMP_RNDN);
+						cerr << " =======+++++++++++++++++++ err="<< mpfr_get_exp(*u) << endl;
+						int errExp = (mpfr_get_d(*u, GMP_RNDZ)==0 ? 0 :mpfr_get_exp(*u));
+						if (errExp <= -targetPrec-1 ){
+							sol = true;
+						}
+					} 
+				}	
+			}		
+		}else{
+			sol = false;
+			while (!sol){
+//				cout << "===============================" << endl;
+				while ((!sol) && (nextStateY())){
+//						cout << "++++++++++++++++++++++++++++++++++++" << endl;
+						mpfr_t* u;
+						u = (mpfr_t*)malloc(sizeof(mpfr_t));
+						mpfr_init2(*u, 1000);
+						mpfr_add( *u, *approximationError, *errorEstimator(yGuard_, aGuard_), GMP_RNDN);
+						cerr << " =======+++++++++++++++++++ err="<< mpfr_get_exp(*u) << endl;
+						int errExp = (mpfr_get_d(*u, GMP_RNDZ)==0 ? 0 :mpfr_get_exp(*u));
+						if (errExp <= -targetPrec-1 ){
+							sol = true;
+						}
+				}	
+			}		
+		}
 
-		sol = false;
-		while (!sol){
-//			cout << "===============================" << endl;
-			while ((!sol) && (nextStateY())){
-//				cout << "&&&&&&&&&&&&&&&&&&&&&&&&" << endl;
-				while (((!sol) && nextStateA())){
-//					cout << "++++++++++++++++++++++++++++++++++++" << endl;
-					mpfr_t* u;
-					u = (mpfr_t*)malloc(sizeof(mpfr_t));
-					mpfr_init2(*u, 1000);
-					mpfr_add( *u, *approximationError, *errorEstimator(yGuard_, aGuard_), GMP_RNDN);
-					cerr << " =======+++++++++++++++++++ err="<< mpfr_get_exp(*u) << endl;
-					int errExp = (mpfr_get_d(*u, GMP_RNDZ)==0 ? 0 :mpfr_get_exp(*u));
-					if (errExp <= -targetPrec-1 ){
-						sol = true;
-					}
-				} 
-			}	
-		}		
+
 		ostringstream s1, s2;		
 		
 		for (int j=0; j<=degree_; j++)
