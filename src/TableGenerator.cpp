@@ -53,7 +53,7 @@ namespace flopoco{
   setToolPrecision(165);
   
   /* End of initialization */
-  int verbose=1;
+  //int verbose=1;
   int nrMaxIntervals=1024*1024;	
 	/* Convert the input string into a sollya evaluation tree */
   sollya_node_t tempNode = f.getSollyaNode(); //function
@@ -237,6 +237,7 @@ namespace flopoco{
 		/* This operator is combinatorial (in fact is just a ROM.*/
 		setCombinatorial();
 	
+	    generateDebug();
 	
 	  /**********************************/
 	  
@@ -390,11 +391,15 @@ return maxError;
 }
 
 void TableGenerator::generateDebug(){
- cout<<"f="<<endl;
- printTree(f.getSollyaNode());
- cout<<"wIn="<<wInX_<<"wOut="<<(-1)*wOutX_<<endl;
- cout<<"k="<<polyCoeffVector.size()<<" d="<<coeffParamVector.size();
- 
+int j;
+ cout<<"f=";
+ printTree(simplifyTreeErrorfree(f.getSollyaNode()));
+ cout<<" wIn="<<wInX_<<" wOut="<<(-1)*wOutX_<<endl;
+ cout<<"k="<<polyCoeffVector.size()<<" d="<<coeffParamVector.size()<<endl;
+ cout<<"The size of the coefficients is:"<<endl;
+ for (j=0; j<coeffParamVector.size(); j++){     
+      cout<<"c"<<j<<":"<<(*coeffParamVector[j]).getSize()-(*coeffParamVector[j]).getWeight()+1<<endl; 
+    }
 }
 
 
