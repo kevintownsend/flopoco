@@ -188,7 +188,7 @@ namespace flopoco{
 				if (! sol){
 					int carry = 1;
 					for (int i=1; i<=degree_+1;i++){
-						if ((nYGuard_[i] == maxBoundY) && ( carry==1)){
+						if ((nYGuard_[i] == maxBoundY[i]) && ( carry==1)){
 							nYGuard_[i] = 0;
 							carry = 1;
 						}else{
@@ -198,7 +198,7 @@ namespace flopoco{
 					}
 				
 					for (int i=1; i<=degree_; i++)
-						yGuard_[i] = -(maxBoundY - nYGuard_[i]);
+						yGuard_[i] = -(maxBoundY[i] - nYGuard_[i]);
 				
 					if ( nYGuard_[degree_+1] != 0)
 						return true;
@@ -268,7 +268,7 @@ namespace flopoco{
 
 			vector<int> aGuard_; // positive values refer to "real" guard bits
 
-			int maxBoundY;
+			vector<int> maxBoundY;
 			int maxBoundA;
 			
 			int currentPrec;

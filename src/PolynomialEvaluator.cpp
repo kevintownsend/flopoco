@@ -71,7 +71,9 @@ namespace flopoco{
 		aGuard_.reserve(100);
 		nYGuard_.reserve(100);
 		
-		maxBoundY = 5;
+
+		
+//		maxBoundY = 5;
 		maxBoundA = 5;
 		
 		/*init vectors */
@@ -92,6 +94,32 @@ namespace flopoco{
 		mpfr_set_exp( maxABSy, mpfr_get_exp(maxABSy)+y_->getWeight()-y_->getSize());
 		REPORT(DETAILED, "Abs max value of y is " << mpfr_get_d( maxABSy, GMP_RNDN)); 
 		
+		maxBoundY.reserve(100);
+		for (uint32_t i=1; i<=unsigned(degree_); i++){
+			maxBoundY[i] = 0;
+		}
+		errorEstimator(yGuard_, aGuard_);
+
+		for (uint32_t i=1; i<=unsigned(degree_); i++){
+			maxBoundY[i] = (pikPSize[i]-pikPWeight[i]-sigmakPSize[i-1])-(coef_[i]->getSize()-coef_[i]->getWeight());
+//			cout << "maxBoundY=" << maxBoundY[i] << endl;
+			if (maxBoundY[i] <= 0)
+				maxBoundY[i] = 1;
+		}
+
+		/*init vectors */
+		for (uint32_t i=1; i<=unsigned(degree_)+1; i++){
+			yGuard_[i] = 0; //maxBoundY;
+			nYGuard_[i] = 0;
+		}
+		
+		for (uint32_t i=0; i<unsigned(degree_)+1; i++)
+			aGuard_[i] = 0;
+
+		for (int j=1; j<=degree_; j++)
+			cout << "maxY["<<j<<"]="<<maxBoundY[j]<<" "; 
+
+//		exit(-1);
 
 		/* design space exploration */				
 		sol = false;
@@ -102,7 +130,7 @@ namespace flopoco{
 					u = (mpfr_t*)malloc(sizeof(mpfr_t));
 					mpfr_init2(*u, 1000);
 					mpfr_add( *u, *approximationError, *errorEstimator(yGuard_, aGuard_), GMP_RNDN);
-					cerr << " =======+++++++++++++++++++ err="<< mpfr_get_exp(*u) << endl;
+//					cerr << " =======+++++++++++++++++++ err="<< mpfr_get_exp(*u) << endl;
 					int errExp = (mpfr_get_d(*u, GMP_RNDZ)==0 ? 0 :mpfr_get_exp(*u));
 					if (errExp <= -targetPrec-1 ){
 						sol = true;
@@ -180,18 +208,24 @@ namespace flopoco{
 	
 	
 	mpfr_t* PolynomialEvaluator::errorEstimator(vector<int> &yGuard, vector<int> &aGuard){
-		ostringstream s1, s2;		
+		ostringstream s1, s2, s3;		
 		
 		for (int j=0; j<=degree_; j++)
 			s1 << "aG["<<j<<"]="<<aGuard[j]<<" "; 
 
 		for (int j=1; j<=degree_; j++)
 			s2 << "yG["<<j<<"]="<<yGuard[j]<<" "; 
+			
+		for (int j=1; j<=degree_; j++)
+			s3 << "maxY["<<j<<"]="<<maxBoundY[j]<<" "; 
 
 		REPORT(DETAILED, "------------------------------------------------------------");
 		REPORT(DETAILED, s1.str());
 		REPORT(DETAILED, s2.str());
+		REPORT(DETAILED, s3.str());
 		REPORT(DETAILED, "---------- HEADER ----------");
+
+		
 		vector<mpfr_t*> ykT_y(100); //the yk tild. The max absolute value of ykT
 		for (uint32_t i=1; i<= unsigned(degree_); i++){
 			mpfr_t *cykT;
