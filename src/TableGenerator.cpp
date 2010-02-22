@@ -398,7 +398,7 @@ int j;
  cout<<"k="<<polyCoeffVector.size()<<" d="<<coeffParamVector.size()<<endl;
  cout<<"The size of the coefficients is:"<<endl;
  for (j=0; j<coeffParamVector.size(); j++){     
-      cout<<"c"<<j<<":"<<(*coeffParamVector[j]).getSize()-(*coeffParamVector[j]).getWeight()+1<<endl; 
+      cout<<"c"<<j<<":"<<(*coeffParamVector[j]).getSize()+(*coeffParamVector[j]).getWeight()+1<<endl; 
     }
 }
 
