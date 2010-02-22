@@ -393,8 +393,8 @@ int TableGenerator::double2input(double x){
 	mpz_class  TableGenerator::function(int x)
 	{
 	
-    mpz_class r=0; mpfr_t *cf, c;
-    int amount,j,nrIntervals, degree;
+    mpz_class r=0; mpfr_t *cf; mpz_t c;char * z;
+    int amount,j,nrIntervals, degree,trailingZeros,numberSize;
     vector<FixedPointCoefficient*> pcoeffs;
     nrIntervals=polyCoeffVector.size();
     if ((x<0) ||(x>=nrIntervals)) {}//x is not in the good range
@@ -406,11 +406,32 @@ int TableGenerator::double2input(double x){
       //r=mpz_class( 133955332 )+(mpz_class( 65664 )<< 27 )+(mpz_class( 64 )<< 44 )
       for (j=0; j<degree; j++){     
         //cout<<" "<<(*pcoeffs[j]).getSize()<< " "<<(*pcoeffs[j]).getWeight()<<endl; 
-        r=r+(mpz_class(1)<<amount);
-        //cf=pcoeffs[j].getValue();
-        //mpfr_init2(c, mpfr_get_prec(*cf));
-        //mpfr_mul(c, *cf
-        //r=r+(mpfr_get_z()<<amount);
+        //r=r+(mpz_class(1)<<amount);
+        
+        
+        cf=(*pcoeffs[j]).getValueMpfr();
+        cout<< j<<"th coeff:"<<sPrintBinary(*cf)<<endl;
+        z=sPrintBinaryZ(*cf);
+        cout<< j<<"th coeff:"<<z<<" "<<strlen(z)<<endl;
+        mpz_init(c);
+        if (mpfr_sgn(*cf)!=0) {
+          
+         trailingZeros=(*coeffParamVector[j]).getSize()+(*pcoeffs[j]).getWeight()-strlen(z);
+         numberSize= (*coeffParamVector[j]).getSize()+(*coeffParamVector[j]).getWeight()+1 ;
+          //mpz_set_str (mpz_t rop, char *str, int base) 
+          mpz_set_str (c,z,2);
+          if (mpfr_sgn(*cf)<0) {
+            r=r+(((mpz_class(1)<<numberSize) -   (mpz_class(c)<<trailingZeros)   )<<amount);
+          }
+          else{
+             r=r+((mpz_class(c)<<trailingZeros)<<amount);
+          }
+          
+        }
+        else{
+         r=r+(mpz_class(0)<<amount);
+        } 
+        
         amount=amount+(*coeffParamVector[j]).getSize()+(*coeffParamVector[j]).getWeight()+1;
       }
     } 		
