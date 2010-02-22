@@ -114,7 +114,7 @@ namespace flopoco{
 	
 	void FunctionEvaluator::emulate(TestCase* tc)
 	{
-	
+#if 0	
 		mpz_class svX = tc->getInputValue("X");
 
 		/* Get inputs / outputs */
@@ -148,6 +148,8 @@ namespace flopoco{
 //		 */
 //		mpfr_get_z(rd.get_mpz_t(), mpR, GMP_RNDD);
 //		ru = rd + 1;
+#endif
+
 	}
 
 }
