@@ -32,6 +32,7 @@ libflopoco_la_SOURCES = VHDLLexer.lpp \
 			LongIntAdder.cpp \
 			IntDualSub.cpp \
 			IntMultiplier.cpp \
+			SignedIntMultiplier.cpp \
 			IntKaratsuba.cpp \
 			LZOC.cpp \
 			LZOCShifterSticky.cpp \
@@ -74,7 +75,10 @@ libflopoco_la_SOURCES = VHDLLexer.lpp \
 			IntSquarer.cpp
 
 if no_WIN32
-libflopoco_la_SOURCES += ConstMult/LastKCMTable.cpp ConstMult/CRFPConstMult.cpp 
+libflopoco_la_SOURCES += ConstMult/LastKCMTable.cpp ConstMult/CRFPConstMult.cpp \
+			PolynomialEvaluator.cpp \
+			FunctionEvaluator.cpp \
+			UtilSollya.cc
 endif
 
 

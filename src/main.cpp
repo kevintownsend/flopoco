@@ -1287,6 +1287,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(op);
 			}
 		}
+#ifdef HAVE_HOTBM
 		else if (opname == "TableGenerator") {
 			int nargs = 7;
 			if (i+nargs > argc)
@@ -1327,6 +1328,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(tg);
 			
 		}
+#endif
 
 		else if (opname == "TestBench") {
 			int nargs = 1;
