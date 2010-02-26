@@ -37,6 +37,7 @@
 #include "LongIntAdder.hpp"
 #include "IntDualSub.hpp"
 #include "IntMultiplier.hpp"
+#include "IntTilingMult.hpp"
 #include "SignedIntMultiplier.hpp"
 #include "IntKaratsuba.hpp"
 #include "FPMultiplier.hpp"
@@ -721,7 +722,19 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(op);
 			}    
 		}   
-		
+		else if(opname=="IntTilingMultiplier"){
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int wInX = checkStrictyPositive(argv[i++], argv[0]);
+				int wInY = checkStrictyPositive(argv[i++], argv[0]);
+				float r = atof(argv[i++]);
+				cerr << "> IntTilingMultiplier , wInX="<<wInX<<", wInY="<<wInY<<" ratio=" << r <<"\n";
+				op = new IntTilingMult(target, wInX, wInY, r);
+				addOperator(op);
+			}
+		}
 		else if(opname=="FPAdder"){
 			int nargs = 2;
 			if (i+nargs > argc)

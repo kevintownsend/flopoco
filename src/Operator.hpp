@@ -729,6 +729,9 @@ public:
 
 	void parse2();
 
+	Target* getTarget(){
+		return target_;
+	}
 
 protected:    
 	Target*             target_;          /**< The target on which the operator will be deployed */
