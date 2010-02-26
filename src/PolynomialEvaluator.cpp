@@ -56,6 +56,13 @@ namespace flopoco{
 		}
 
 		degree_ = coef.size()-1;
+		
+		/* init */
+
+		
+		
+		
+		
 		setName( join("PolynomialEvaluator_d",degree_) );
 		
 		REPORT(DETAILED, "Polynomial to evaluate: " << printPolynomial(coef, y));
@@ -67,51 +74,50 @@ namespace flopoco{
 
 		/* Gappa Style */
 		
-		yGuard_.reserve(100);
-		aGuard_.reserve(100);
-		nYGuard_.reserve(100);
-		
-		minBoundY.reserve(100);
-		
+		yGuard_.reserve(20);
+		aGuard_.reserve(20);
+		nYGuard_.reserve(20);
+		maxBoundY.reserve(20);
 
+		sigmakPSize.reserve(20);
+		pikPTSize.reserve(20);
+		pikPSize.reserve(20);
+		sigmakPWeight.reserve(20);
+		pikPTWeight.reserve(20);
+		pikPWeight.reserve(20);
 		
-//		maxBoundY = 5;
 		maxBoundA = 5;
 		
 		/*init vectors */
-		for (uint32_t i=1; i<=unsigned(degree_)+1; i++){
-			yGuard_[i] = 0; //maxBoundY;
+		for (uint32_t i=0; i<=unsigned(degree_)+1; i++){
+			yGuard_[i]  = 0; //maxBoundY;
 			nYGuard_[i] = 0;
-		}
-		
-		for (uint32_t i=0; i<unsigned(degree_)+1; i++)
 			aGuard_[i] = 0;
+			maxBoundY[i] = 0;
+		}
+
 		
 		/* the abs of the maximal value of y */
-		
-		mpfr_init2 ( maxABSy, 1000);
+		mpfr_init2 ( maxABSy, 100);
 		mpfr_set_ui( maxABSy, 2, GMP_RNDN);
 		mpfr_pow_si( maxABSy, maxABSy, y_->getSize(), GMP_RNDN);
 		mpfr_add_si( maxABSy, maxABSy, -1, GMP_RNDN);
 		mpfr_set_exp( maxABSy, mpfr_get_exp(maxABSy)+y_->getWeight()-y_->getSize());
 		REPORT(DETAILED, "Abs max value of y is " << mpfr_get_d( maxABSy, GMP_RNDN)); 
 		
-		maxBoundY.reserve(100);
-		for (uint32_t i=1; i<=unsigned(degree_); i++){
-			maxBoundY[i] = 0;
-		}
-		errorEstimator(yGuard_, aGuard_);
+		mpfr_t* tmp; 
+		tmp = errorEstimator(yGuard_, aGuard_);
+		mpfr_clear(*tmp);
+		free(tmp);
 
 		for (uint32_t i=1; i<=unsigned(degree_); i++){
 			if (i != degree_){
-				maxBoundY[i] = - signed(degree_-i)*y_->getWeight();//  (pikPSize[i]-pikPWeight[i]-sigmakPSize[i-1])-(coef_[i]->getSize()-coef_[i]->getWeight());
+				maxBoundY[i] = - signed(degree_-i)*y_->getWeight();
 			}else
 				maxBoundY[i] = 0;
 				
 			if (maxBoundY[i] <= 0)
 				maxBoundY[i] = 0;
-
-//			maxBoundY[i] = 0;
 		}
 		
 //		for (uint32_t i=1; i<=unsigned(degree_); i++){
@@ -146,27 +152,31 @@ namespace flopoco{
 			cout << "aGuard["<<j<<"]="<<aGuard_[j]<<" "; 
 		cout << endl;
 
-		cerr << "got here " <<endl;
-//		exit(-1);
+		mpfr_t u, *e;
+		mpfr_init2(u, 100);
 
+		int errExp;
 		/* design space exploration */				
-
 		if (degree_>1){
 			sol = false;
+			int i=0;
 			while (!sol){
-//				cout << "===============================" << endl;
 				while ((!sol) && (nextStateY())){
-//					cout << "&&&&&&&&&&&&&&&&&&&&&&&&" << endl;
 					while (((!sol) && nextStateA())){
-//						cout << "++++++++++++++++++++++++++++++++++++" << endl;
-						mpfr_t* u;
-						u = (mpfr_t*)malloc(sizeof(mpfr_t));
-						mpfr_init2(*u, 1000);
-						mpfr_add( *u, *approximationError, *errorEstimator(yGuard_, aGuard_), GMP_RNDN);
-						cerr << " =======+++++++++++++++++++ err="<< mpfr_get_exp(*u) << endl;
-						int errExp = (mpfr_get_d(*u, GMP_RNDZ)==0 ? 0 :mpfr_get_exp(*u));
+						i++;
+						e = errorEstimator(yGuard_, aGuard_);
+						mpfr_add( u, *approximationError, *e, GMP_RNDN);
+						if ( i%128 == 0)
+							cerr << " err = "<< mpfr_get_exp(u) << endl;
+						errExp = (mpfr_get_d(u, GMP_RNDZ)==0 ? 0 :mpfr_get_exp(u));
 						if (errExp <= -targetPrec-1 ){
 							sol = true;
+							mpfr_clear(u);
+							mpfr_clear(*e);
+							free(e);
+						}else{
+							mpfr_clear(*e);
+							free(e);
 						}
 					} 
 				}	
@@ -174,18 +184,16 @@ namespace flopoco{
 		}else{
 			sol = false;
 			while (!sol){
-//				cout << "===============================" << endl;
 				while ((!sol) && (nextStateY())){
-//						cout << "++++++++++++++++++++++++++++++++++++" << endl;
-						mpfr_t* u;
-						u = (mpfr_t*)malloc(sizeof(mpfr_t));
-						mpfr_init2(*u, 1000);
-						mpfr_add( *u, *approximationError, *errorEstimator(yGuard_, aGuard_), GMP_RNDN);
-						cerr << " =======+++++++++++++++++++ err="<< mpfr_get_exp(*u) << endl;
-						int errExp = (mpfr_get_d(*u, GMP_RNDZ)==0 ? 0 :mpfr_get_exp(*u));
-						if (errExp <= -targetPrec-1 ){
-							sol = true;
-						}
+					mpfr_t* u;
+					u = (mpfr_t*)malloc(sizeof(mpfr_t));
+					mpfr_init2(*u, 100);
+					mpfr_add( *u, *approximationError, *errorEstimator(yGuard_, aGuard_), GMP_RNDN);
+					cerr << " err = " << mpfr_get_exp(*u) << endl;
+					int errExp = (mpfr_get_d(*u, GMP_RNDZ)==0 ? 0 :mpfr_get_exp(*u));
+					if (errExp <= -targetPrec-1 ){
+						sol = true;
+					}
 				}	
 			}		
 		}
@@ -205,14 +213,15 @@ namespace flopoco{
 		REPORT(INFO, "------------------------------------------------------------");
 
 
-//		REPORT(DETAILED, "yuppy " << errorEstimator(yGuard_, aGuard_));
-		
+//		exit(-1);///////////////////////////////
 		for (uint32_t i=0; i<=unsigned(degree_); i++){
 			if (i==0)
 				vhdl << tab << declare( join("sigmaP",i), 1+coef_[degree_-i]->getSize()) << " <= a"<<degree_<<";"<<endl; 
 			else{
 				vhdl << tab << declare( join("yT",i) , 1+y_->getSize()+yGuard_[i]) << " <= \"0\" & Y"<<range(y_->getSize()-1, -yGuard_[i]) << ";" << endl;
-				SignedIntMultiplier* sm = new SignedIntMultiplier ( target,     1+y_->getSize()+yGuard_[i], sigmakPSize[i-1]+1);
+				
+//				cout << "sigmakPSize[i-1]( "<<i-1<<") is = " << sigmakPSize[i-1] << "yGuard_[i]="<<yGuard_[i]<< " y_->getSize()="<<y_->getSize()<<endl;
+				SignedIntMultiplier* sm = new SignedIntMultiplier ( target, 1+y_->getSize()+yGuard_[i], sigmakPSize[i-1]+1);
 				oplist.push_back(sm);
 				
 				inPortMap ( sm, "X", join("yT",i));
@@ -274,89 +283,91 @@ namespace flopoco{
 		}
 	}
 	
-	
+	////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////
 	mpfr_t* PolynomialEvaluator::errorEstimator(vector<int> &yGuard, vector<int> &aGuard){
 		ostringstream s1, s2, s3;		
 		
 		for (int j=0; j<=degree_; j++)
 			s1 << "aG["<<j<<"]="<<aGuard[j]<<" "; 
-
-		for (int j=1; j<=degree_; j++)
-			s2 << "yG["<<j<<"]="<<yGuard[j]<<" "; 
-			
-		for (int j=1; j<=degree_; j++)
-			s3 << "maxY["<<j<<"]="<<maxBoundY[j]<<" "; 
+		for (int j=1; j<=degree_; j++){
+			s2 << "yG["<<j<<"]=" << yGuard[j] << " "; 
+			s3 << "maxY["<<j<<"]=" << maxBoundY[j] << " "; 
+		}
 
 		REPORT(DETAILED, "------------------------------------------------------------");
 		REPORT(DETAILED, s1.str());
 		REPORT(DETAILED, s2.str());
 		REPORT(DETAILED, s3.str());
 		REPORT(DETAILED, "---------- HEADER ----------");
-
 		
-		vector<mpfr_t*> ykT_y(100); //the yk tild. The max absolute value of ykT
+		vector<mpfr_t*> ykT_y; //the yk tild. The max absolute value of ykT
+		ykT_y.push_back( NULL );
+
 		for (uint32_t i=1; i<= unsigned(degree_); i++){
 			mpfr_t *cykT;
 			cykT = (mpfr_t*) malloc(sizeof(mpfr_t));
-			mpfr_init2(*cykT, 1000);
+			mpfr_init2(*cykT, 100);
 			if ( yGuard[i] < 0){
 				mpfr_set_ui(*cykT, 2, GMP_RNDN);
 				mpfr_pow_si(*cykT, *cykT, y_->getWeight()-(signed(y_->getSize())+yGuard[i]), GMP_RNDN); 
 			}else
 				mpfr_set_si(*cykT, 0, GMP_RNDN);
-			ykT_y[i] = cykT;
+			ykT_y.push_back(cykT);
 		}
-		
+
 		for (uint32_t i=1; i<= unsigned(degree_); i++)
 			REPORT(DETAILED, "degree of |y"<<i<<"T - y|="<< (mpfr_get_d(*ykT_y[i],GMP_RNDN)!=0?mpfr_get_exp(*ykT_y[i]):0));
 
-
-		vector<mpfr_t*> pikPT_pikP(100); //the pi k prime tild - p k prime ( trunc error)
+		vector<mpfr_t*> pikPT_pikP; //the pi k prime tild - p k prime ( trunc error)
+		pikPT_pikP.push_back(NULL);
 		for (uint32_t i=1; i< unsigned(degree_); i++){ //not needed of n
 			mpfr_t *cpikPT_pikP;
 			cpikPT_pikP = (mpfr_t*) malloc(sizeof(mpfr_t));
-			mpfr_init2(*cpikPT_pikP, 1000);
-	
+			mpfr_init2(*cpikPT_pikP, 100);
+			
 			mpfr_set_ui(*cpikPT_pikP, 2, GMP_RNDN);
 			mpfr_pow_si(*cpikPT_pikP, *cpikPT_pikP, coef_[degree_-i]->getWeight()-(signed(coef_[degree_-i]->getSize())+aGuard[degree_-i]), GMP_RNDN); 
-			pikPT_pikP[i] = cpikPT_pikP; //.push_back(cpikPT_pikP);
+			pikPT_pikP.push_back(cpikPT_pikP);
 		}
+		pikPT_pikP.push_back(NULL);
 		
 		for (uint32_t i=1; i< unsigned(degree_); i++)
 			REPORT(DETAILED, "|pi"<<i<<"TP - pi"<<i<<"T|="<< (mpfr_get_d(*pikPT_pikP[i],GMP_RNDN)!=0? mpfr_get_exp(*pikPT_pikP[i]):0));
 		
 		
-		vector<mpfr_t*> sigmakP_sigmak(100);
+		vector<mpfr_t*> sigmakP_sigmak;
 		//initialize sigma0P_sigma0
 		mpfr_t *sigmanP_sigman;
 		sigmanP_sigman =(mpfr_t*) malloc( sizeof( mpfr_t));
-		mpfr_init2 ( *sigmanP_sigman, 1000);
+		mpfr_init2 ( *sigmanP_sigman, 100);
 		mpfr_set_ui( *sigmanP_sigman, 0, GMP_RNDN);
-		sigmakP_sigmak[0] = sigmanP_sigman;		
+		sigmakP_sigmak.push_back(sigmanP_sigman);	//sigmakP_sigmak[0]
 
-		vector<mpfr_t*> pikP_pik(100);
-		vector<mpfr_t*> sigmakP(100);
+		vector<mpfr_t*> pikP_pik;
+		vector<mpfr_t*> sigmakP;
 
-		vector<mpfr_t*> a(100);
+		vector<mpfr_t*> a;
+
+		mpfr_t *ak;
 		for (uint32_t i=0; i<=unsigned(degree_);i++){
-			mpfr_t *ak;
 			ak =(mpfr_t*) malloc( sizeof( mpfr_t));
-			mpfr_init2 ( *ak, 1000);
+			mpfr_init2 ( *ak, 100);
 			mpfr_set_ui( *ak, 2, GMP_RNDN);
 			mpfr_pow_si( *ak, *ak, coef_[i]->getSize(), GMP_RNDN);
 			mpfr_add_si( *ak, *ak , -1, GMP_RNDN);
 			mpfr_set_exp( *ak, (mpfr_get_d(*ak, GMP_RNDZ)!=0?mpfr_get_exp(*ak):0) + coef_[i]->getWeight() - coef_[i]->getSize());
-			a[i]=ak;
+			a.push_back(ak);
 		}
 
-		for (uint32_t i=0; i<= unsigned(degree_); i++)
+		for (uint32_t i=0; i< a.size(); i++)
 			REPORT(DETAILED, "weight of a"<<i<<"="<< mpfr_get_exp(*a[i]));
 		
-		sigmakP[0] = a[degree_];	
+		sigmakP.push_back(a[degree_]);
 
 		mpfr_t *yy;
 		yy =(mpfr_t*) malloc( sizeof( mpfr_t));
-		mpfr_init2 ( *yy, 1000);
+		mpfr_init2 ( *yy, 100);
 		mpfr_set_ui( *yy, 2, GMP_RNDN);
 		mpfr_pow_si( *yy, *yy, y_->getSize(), GMP_RNDN);
 		mpfr_add_si( *yy, *yy , -1, GMP_RNDN);
@@ -364,25 +375,13 @@ namespace flopoco{
 
 		REPORT(DETAILED, "weight of y="<< mpfr_get_exp(*yy));
 
-		vector<mpfr_t*> pikPT(100);
-
-		sigmakPSize.clear();
-		pikPTSize.clear();
-		pikPSize.clear();
-		sigmakPWeight.clear();
-		pikPTWeight.clear();
-		pikPWeight.clear();
-		
-		sigmakPSize.reserve(100);
-		pikPTSize.reserve(100);
-		pikPSize.reserve(100);
-		sigmakPWeight.reserve(100);
-		pikPTWeight.reserve(100);
-		pikPWeight.reserve(100);
-
+		vector<mpfr_t*> pikPT;
 
 		sigmakPSize[0]   = coef_[degree_]->getSize();
 		sigmakPWeight[0] = coef_[degree_]->getWeight();
+		
+		pikP_pik.push_back(NULL);
+		pikPT.push_back(NULL);
 		
 		REPORT(DETAILED, "----------   END  ----------");
 		for (uint32_t i=1; i<=unsigned(degree_); i++){
@@ -398,13 +397,15 @@ namespace flopoco{
 
 			mpfr_t *t2;
 			t2 = (mpfr_t *) malloc (sizeof (mpfr_t));
-			mpfr_init2( *t2, 1000);
+			mpfr_init2( *t2, 100);
 			mpfr_mul ( *t2 , *yy , *sigmakP_sigmak[i-1], GMP_RNDN);
-
+	
 			REPORT(DETAILED, "|y*(sigma"<<i-1<<"P - sigma"<<i-1<<")| weight=" <<  (mpfr_get_d(*t2,GMP_RNDN)!=0?mpfr_get_exp(*t2):0));
 			
 			mpfr_add (*t, *t , *t2, GMP_RNDN);
-			pikP_pik[i] = t;
+			pikP_pik.push_back(t);
+			mpfr_clear(*t2);
+			free(t2);
 
 			REPORT( DETAILED, "|pi"<<i<<"P - pi"<<i<<"| weight=" <<  (mpfr_get_d(*pikP_pik[i],GMP_RNDN)!=0?mpfr_get_exp(*pikP_pik[i]):0)); 
 
@@ -413,32 +414,35 @@ namespace flopoco{
 			pikPTSize[i] =    y_->getWeight() + sigmakPWeight[i-1]  + (coef_[degree_-i]->getSize()+aGuard[i]-coef_[degree_-i]->getWeight());
 	
 	
-			REPORT( DEBUG, " pikPTSize="<< pikPTSize[i] << " pikPTWeight[i]="<<pikPTWeight[i]);
-			REPORT( DEBUG, "pikPTWeight[i]"<<pikPTWeight[i]<<" coef_[degree_-i]->getSize() "<< coef_[degree_-i]->getSize() << " coef_[degree_-i]->getWeight() "<<coef_[degree_-i]->getWeight() << " aGuard =" << aGuard[i] ); 
+//			REPORT( DEBUG, " pikPTSize="<< pikPTSize[i] << " pikPTWeight[i]="<<pikPTWeight[i]);
+//			REPORT( DEBUG, "pikPTWeight[i]"<<pikPTWeight[i]<<" coef_[degree_-i]->getSize() "<< coef_[degree_-i]->getSize() << " coef_[degree_-i]->getWeight() "<<coef_[degree_-i]->getWeight() << " aGuard =" << aGuard[i] ); 
 
 			//compute value of pi k P T
 			mpfr_t *h;
 			h = (mpfr_t *) malloc( sizeof(mpfr_t));
-			mpfr_init2(*h, 1000);
+			mpfr_init2(*h, 100);
 			mpfr_set_ui( *h, 2, GMP_RNDN);
 			mpfr_pow_si( *h, *h, pikPTSize[i], GMP_RNDN);
 			mpfr_add_si( *h, *h , -1, GMP_RNDN);
 			mpfr_set_exp( *h, (mpfr_get_d(*h, GMP_RNDZ)!=0? mpfr_get_exp(*h):0) + pikPTWeight[i] - pikPTSize[i]);
 
-			pikPT[i] = h;
+			pikPT.push_back(h);
+//			free(h);
 			////////////////////////////////////////////////////////////////////
 
 			mpfr_t *t3; //the sigma
 			if (i < unsigned(degree_)){
 				t3 = (mpfr_t *) malloc( sizeof( mpfr_t ));
-				mpfr_init2( *t3, 1000);
+				mpfr_init2( *t3, 100);
 				mpfr_add( *t3, *pikPT_pikP[i], *pikP_pik[i],GMP_RNDN); 		   
 			}else{
 				t3 = (mpfr_t *) malloc( sizeof( mpfr_t ));
-				mpfr_init2( *t3, 1000);
+				mpfr_init2( *t3, 100);
 				mpfr_set( *t3, *pikP_pik[i], GMP_RNDN); 		   
 			}
-			sigmakP_sigmak[i] = t3;
+			
+			sigmakP_sigmak.push_back(t3);
+//			free(t3);
 
 			REPORT( DETAILED, "|sigma"<<i<<"P - sigma"<<i<<"| weight=" << (mpfr_get_d(*sigmakP_sigmak[i],GMP_RNDN)!=0?mpfr_get_exp(*sigmakP_sigmak[i]):0)); 
 
@@ -458,14 +462,83 @@ namespace flopoco{
 			}
 			mpfr_t *r;
 			r = (mpfr_t *) malloc( sizeof(mpfr_t));
-			mpfr_init2( *r, 1000);
+			mpfr_init2( *r, 100);
 			mpfr_add ( *r, *pikPT[i], *a[degree_-i], GMP_RNDN);			
 
-			sigmakP[i] = r;
+			sigmakP.push_back(r);
+//			sigmakP[i] = r;
+			
 			REPORT( DETAILED, "|sigma"<<i<<"P| weight=" << (mpfr_get_d(*r,GMP_RNDN)!=0?mpfr_get_exp(*r):0)); 
 		}
 		
 		REPORT( DETAILED, "Error (order) for P(y)=" << mpfr_get_exp( *sigmakP_sigmak[degree_]));
+		
+//		/***** Clean up *********************/
+
+		
+
+
+		for (uint32_t i=1; i<= unsigned(degree_); i++){
+			if ( pikPT_pikP[i] != NULL){
+				if ( *pikPT_pikP[i]  != ((mpfr_ptr)0))
+					mpfr_clear(*pikPT_pikP[i]);
+				free(pikPT_pikP[i]);
+			}
+			
+			if (pikP_pik[i] != NULL){
+				mpfr_clear(*pikP_pik[i]);
+				free(pikP_pik[i]);
+			}
+		}
+		
+		for (uint32_t i=0; i<= unsigned(degree_); i++){
+			if (i < unsigned(degree_)){
+				if (sigmakP_sigmak[i] != NULL){
+					if (*sigmakP_sigmak[i] != ((mpfr_ptr)0))
+					mpfr_clear(*sigmakP_sigmak[i]);
+					free(sigmakP_sigmak[i]);
+				}
+			}
+		
+			if (sigmakP[i] != NULL){
+				if ( *sigmakP[i] != ((mpfr_ptr)0))
+					mpfr_clear(*sigmakP[i]);
+					free(sigmakP[i]);
+			}
+		
+			if ( i < unsigned(degree_)){
+				if (a[i] != NULL){
+					if ( (*a[i]) != NULL)
+						mpfr_clear(*a[i]);
+					free(a[i]);
+				}
+			}
+		}
+		
+		
+		for (uint32_t i=1; i<= unsigned(degree_); i++){
+			if (ykT_y[i]!= NULL){
+				if (*ykT_y[i] != ((mpfr_ptr)0))
+					mpfr_clear(*ykT_y[i]);
+				free( ykT_y[i] );
+			}
+			
+			if (pikPT[i]!=NULL){
+				mpfr_clear(*pikPT[i]);
+				free(pikPT[i]);
+			}
+		}
+		
+		mpfr_clear(*yy);
+		free(yy);
+		
+//		free(t3);
+		
+//		cout << " +++++++++++++++" << endl;
+//		
+//		pikPT_pikP.clear();
+//		sigmakP.clear();
+			 
 		return sigmakP_sigmak[degree_];
 	} 
 

@@ -284,6 +284,13 @@ namespace flopoco{
 			
 			vector<signed> sigmakPSize,  pikPSize, pikPTSize;
 		    vector<signed> sigmakPWeight, pikPWeight, pikPTWeight;
+		    
+	private:
+	
+		/* for efficiency we move these variables here */
+		
+
+
 
 
 	};
