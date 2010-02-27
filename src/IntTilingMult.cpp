@@ -472,7 +472,7 @@ namespace flopoco{
 				else // the last DSP is being moved on the tiling board
 					{
 	
-						if(move(globalConfig,i,5,5)) // successfuly moved the last block
+						if(move(globalConfig,i)) // successfuly moved the last block
 							{
 								//~ cout<<" Pas 1_1 "<<i<<endl;
 								compareCost();
@@ -538,7 +538,7 @@ namespace flopoco{
 					{	
 						//~ if(i==0)
 						//~ display(globalConfig);
-						if(move(globalConfig,i,17,17)) // the current DSP was successfuly moved
+						if(move(globalConfig,i)) // the current DSP was successfuly moved
 							{
 						
 								if(i==0){
@@ -1652,11 +1652,8 @@ namespace flopoco{
 					config[i]->getTopRightCorner(xtr2, ytr2);
 					config[i]->getBottomLeftCorner(xbl2, ybl2);
 			
-					if ( 
-						 (((xtr2 >= xtr1) && (ytr2 > ybl1)) || 	// config[index] is above and to the right of config[i]
-						  (xbl1 < xtr2) 							// config[index] is to the right of config[i]
-						  )
-						  )
+					if (((xbl1 < xbl2) && (ytr2 > ybl1)) || 	// config[index] is above and to the right of config[i]
+						  (xbl1 < xtr2)) 							// config[index] is to the right of config[i]
 						return true;
 			
 				
@@ -1711,16 +1708,13 @@ namespace flopoco{
 		There is one case that is not resolved w=yet. For DSP with widths different then height the algorithm should move the dsp with both values
 	*/
 
-	bool IntTilingMult::move(DSP** config, int index,int w,int h)
+	bool IntTilingMult::move(DSP** config, int index)
 	{
 		int xtr1, ytr1, xbl1, ybl1;
-		//~ int w, h;
+		int w, h;
 		//target->getDSPWidths(w,h);
-		//~ w= config[index]->getMaxMultiplierWidth();
-		//~ h= config[index]->getMaxMultiplierHeight();
-	
-	
-	
+		w= config[index]->getMaxMultiplierWidth();
+		h= config[index]->getMaxMultiplierHeight();
 	
 		config[index]->getTopRightCorner(xtr1, ytr1);
 		config[index]->getBottomLeftCorner(xbl1, ybl1);
@@ -1736,11 +1730,12 @@ namespace flopoco{
 		int gh = wInY+getExtraHeight()-1; // the bottom limit of the tiling grid
 		int exh = getExtraHeight();
 		int exw = getExtraWidth();
-	
+		int pos; // index for list of positions of a DSP
+		
 		if ((xtr1 < 0) || (ytr1 < 0) || (xbl1 > vn-1) || (ybl1 > vm-1))
 			{// then the DSP block is placed outside the bounds 		
 	
-				if(index==0)
+				if(index==0) // the first DSP block can move freely on the tiling grid
 					{
 						do{
 							// move down one unit
@@ -1752,174 +1747,48 @@ namespace flopoco{
 									// move to top of grid and one unit to the left 
 									xtr1++;
 									xbl1++;
-					
-									if (!( (getTarget()->getID() == "Virtex4") ||
-										   (getTarget()->getID() == "Virtex5") ||
-										   (getTarget()->getID() == "Spartan3")) )  // then the target is NOT Xilinx FPGA 
-										{
-											ytr1 = exh ;
-											ybl1 = ytr1 + h-1;	
-										}
-									else
-										{
-											ytr1 = exh - h+1;
-											ybl1 = ytr1 + h-1;
-										}
-					
-									if (xtr1 > gw) // the DSP block has reached the left limit of the tiling grid
-										return false;
-								}						
-							config[index]->setTopRightCorner(xtr1, ytr1);
-							config[index]->setBottomLeftCorner(xbl1, ybl1);
-						}while (checkOverlap(config, index));
-					}
-				else
-					{
-						do{
-							// move down one unit
-							if(ytr1 < exh)
-								{
-									ytr1++;
-									ybl1++;
-								}
-							else
-								{
-									ytr1 += h;
-									ybl1 += h;
-								}
-							if (ytr1 > gh) // the DSP block has reached the bottom limit of the tiling grid
-								{
-									// move to top of grid and one unit to the left 
-									if(xtr1< exw)
-										{
-											xtr1+=1;
-											xbl1+=1;
-										}
-									else
-										{
-											xtr1+=w;
-											xbl1+=w;
-										}
-					
-									if (!( (getTarget()->getID() == "Virtex4") ||
-										  ( getTarget()->getID() == "Virtex5") ||
-										  ( getTarget()->getID() == "Spartan3")))  // then the target is NOT Xilinx FPGA 
-										{
-											ytr1 = exh ;
-											ybl1 = ytr1 + h-1;	
-										}
-									else
-										{
-											ytr1 = exh - h+1;
-											ybl1 = ytr1 + h-1;
-										}
-					
-				
-									if (xtr1 > gw) // the DSP block has reached the left limit of the tiling grid
-										return false;
-								}						
-							config[index]->setTopRightCorner(xtr1, ytr1);
-							config[index]->setBottomLeftCorner(xbl1, ybl1);
-						}while (checkOverlap(config, index));
-					}
-		
-			}
-		else
-			{
-				if(index==0)
-					{
-						do{
-							// move down one unit
-				
-							ytr1++;
-							ybl1++;
-			
-							if (ybl1 > vm-1) // the DSP block has reached the bottom limit of the tiling grid
-								{
-									// move to top of grid and one unit to the left 
-									xtr1++;
-									xbl1++;
-										
-					
-					
-									if (!( (getTarget()->getID() == "Virtex4") ||
-										  ( getTarget()->getID() == "Virtex5") ||
-										  ( getTarget()->getID() == "Spartan3")))  // then the target is NOT Xilinx FPGA 
-										{
-											ytr1 = exh ;
-											ybl1 = ytr1 + h-1;	
-										}
-									else
-										{
-											ytr1 = 0;
-											ybl1 = h-1;
-										}
-				
-									if (xbl1 > vn-1) // the DSP block has reached the left limit of the tiling grid
-										return false;
-								}			
-			
-							config[index]->setTopRightCorner(xtr1, ytr1);
-							config[index]->setBottomLeftCorner(xbl1, ybl1);
-						}while (checkOverlap(config, index));
-					}
-				else
-					{
-						do{
-							// move down one unit
-							if(ytr1 < exh)
-								{
-									ytr1++;
-									ybl1++;
-								}
-							else
-								{
-									ytr1+=h;
-									ybl1+=h;
-								}
-							if (ybl1 > vm-1) // the DSP block has reached the bottom limit of the tiling grid
-								{
-									// move to top of grid and one unit to the left 
-									if(xtr1<exw)
-										{
-											xtr1+=1;
-											xbl1+=1;
-										}
-									else
-										{
-											xtr1+=w;
-											xbl1+=w;
-										}
 									
-					
-									if (!( (getTarget()->getID() == "Virtex4") ||
-										  ( getTarget()->getID() == "Virtex5") ||
-										  ( getTarget()->getID() == "Spartan3")))  // then the target is NOT Xilinx FPGA 
-										{
-											ytr1 = exh ;
-											ybl1 = ytr1 + h-1;	
-										}
-									else
-										{
-											ytr1 = 0;
-											ybl1 = h-1;
-										}
-				
-									if (xbl1 > vn-1) // the DSP block has reached the left limit of the tiling grid
+									ytr1 = exh - h+1;
+									ybl1 = ytr1 + h-1;
+										
+									if (xtr1 > gw) // the DSP block has reached the left limit of the tiling grid
 										return false;
-								}			
-			
+								}						
 							config[index]->setTopRightCorner(xtr1, ytr1);
 							config[index]->setBottomLeftCorner(xbl1, ybl1);
 						}while (checkOverlap(config, index));
 					}
-		
+				else // all DSP blocks except the first one can move only in fixed positions
+					{
+						do{
+							// move to next position
+							pos = config[index]->pop();
+							if(pos >= 0)
+							{
+									ytr1 = config[index]->Ypositions[pos];
+									ybl1 = ytr1 + h-1;
+									xtr1 = config[index]->Xpositions[pos];
+									xbl1 = xtr1 + w-1;
+							}
+							else
+								break;
+								
+							if ((ytr1 > gh) && (xtr1 > gw) && (ybl1 < exh) && (xbl1 < exw)) // the DSP block is out of the tiling grid
+								continue;
+														
+							config[index]->setTopRightCorner(xtr1, ytr1);
+							config[index]->setBottomLeftCorner(xbl1, ybl1);
+						}while (checkOverlap(config, index));
+					}
 		
 			}
 		// set the current position of the DSP block within the tiling grid
 		config[index]->setTopRightCorner(xtr1, ytr1);
 		config[index]->setBottomLeftCorner(xbl1, ybl1);
-	
+		
+		if (pos < 0) // the DSP has no available positions left
+			return false;
+		/*
 		int f = checkFarness(config,index);	
 		if (f == 0)
 			return true;
@@ -1944,6 +1813,8 @@ namespace flopoco{
 				move(config, index,w,h);	
 			}
 		return false;
+		*/
+		return true;
 	}
 
 	bool IntTilingMult::replace(DSP** config, int index)
@@ -1953,7 +1824,60 @@ namespace flopoco{
 		//target->getDSPWidths(w,h);
 		w= config[index]->getMaxMultiplierWidth();
 		h= config[index]->getMaxMultiplierHeight();
-	
+		
+		if (index > 1)
+		{// take all positions from the previous DSP
+				memcpy(config[index]->Xpositions, config[index-1]->Xpositions, sizeof(int)*(index-1)*8);	
+		}
+		if (index > 0)
+		{
+			int dif = abs(h-w);
+			int maxd = h;
+			int mind = w;
+			
+			if (w > h)
+			{
+				maxd = w;
+				mind = h;
+			}
+			
+			int positionDisplacementX[] = {0, dif, mind, maxd, w, w, w, w};
+			int positionDisplacementY[] = {h, h, h, h, 0, dif, mind, maxd};
+
+			int x,y, pos;
+			config[index-1]->getTopRightCorner(x, y);
+			
+			for (int i=0; i<8; i++)
+				config[index]->push(x+positionDisplacementX[i], y+positionDisplacementY[i]);
+				
+			while (checkOverlap(config, index))
+			{// go to next position in list
+				pos = config[index]->pop();
+				if(pos >= 0)
+				{
+					ytr1 = config[index]->Ypositions[pos];
+					ybl1 = ytr1 + h-1;
+					xtr1 = config[index]->Xpositions[pos];
+					xbl1 = xtr1 + w-1;
+				}
+				else
+					break;
+					
+				//if ((ytr1 > gh) && (xtr1 > gw) && (ybl1 < exh) && (xbl1 < exw)) // the DSP block is out of the tiling grid
+				//	continue;
+											
+				config[index]->setTopRightCorner(xtr1, ytr1);
+				config[index]->setBottomLeftCorner(xbl1, ybl1);
+			}
+			
+			if (pos < 0) // the DSP has no available positions left
+				return false;
+				
+			return true;
+		}
+		else
+		{	
+		// TODO if first DSP block	
 		xtr1 = ytr1 = 0;
 		xbl1 = w-1;
 		ybl1 = h-1;
@@ -1991,7 +1915,7 @@ namespace flopoco{
 	
 		if (xbl1 > vn)
 			return false;
-	 
+		}
 		return true;
 	
 		//~ if (xbl1 > vn) // it was not possible to place the DSP inside the extended grid
@@ -2046,9 +1970,7 @@ namespace flopoco{
 	void IntTilingMult::initTiling(DSP** &config, int dspCount)
 	{
 		config = new DSP*[nrDSPs];
-	
-	
-	
+		
 		for (int i=0; i<nrDSPs; i++)
 			{
 				config[i] = NULL;
@@ -2062,6 +1984,7 @@ namespace flopoco{
 						if(verbose)
 							cout << "initTiling : iteration #" << i << endl; 
 						config[i] = getTarget()->createDSP();						
+						config[i]->allocatePositions(8*i); // each DSP offers 8 positions
 						replace(config, i);
 					}
 			}
@@ -2084,7 +2007,7 @@ namespace flopoco{
 				for(int i=0;i<dspCount;i++)
 					{
 						config[i] = getTarget()->createDSP();
-						
+						config[i]->allocatePositions(8*i); // each DSP offers 8 positions
 						if( ytr<vm&& ybl<vm)
 							{
 								config[i]->setTopRightCorner(xtr, ytr);
