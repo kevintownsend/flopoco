@@ -454,26 +454,26 @@ namespace flopoco{
 
 		if(i==n)
 			{	
-				if(repl==true)
+				if(repl==true) // if previous DSPs were moved this one needs to recompute all positions 
 					{
 						//~ cout<<" Pas 4_1 "<<i<<endl;
-						if(replace(globalConfig,i))
+						if(replace(globalConfig,i)) // repostioned the DSP
 							{
 								compareCost();
 								rot[i]=false;
 								tilingAlgorithm(i,n,false,lastMovedDSP);	
 							}
-						else
+						else // could not reposition the DSP in the bounds of the tiling board
 							{
 								rot[i]=false;
-								if( lastMovedDSP>=0)
+								if( lastMovedDSP>=0) // go one level up the backtracking stack
 									tilingAlgorithm(lastMovedDSP,n,false, lastMovedDSP);
 							}
 					}
-				else
+				else // the last DSP is being moved on the tiling board
 					{
 	
-						if(move(globalConfig,i,DSPw,DSPh))
+						if(move(globalConfig,i,DSPw,DSPh)) // successfuly moved the last block
 							{
 								//~ cout<<" Pas 1_1 "<<i<<endl;
 								compareCost();
@@ -486,28 +486,28 @@ namespace flopoco{
 						//~ compareCost();
 						//~ tilingAlgorithm(i,n,repl,i);		//repl should be false
 						//~ }
-						else
+						else // could not find a position for the last block
 							{
 								if(rot[i]==false && (globalConfig[i]->getMaxMultiplierWidth() != globalConfig[i]->getMaxMultiplierHeight() ))
-									{
+									{ // if the DSP was not rotated and is not sqare then roteate it
 										//display(globalConfig);
 										//~ cout<<" Pas 2_1 "<<i<<endl;
 										globalConfig[i]->rotate();
 										//display(globalConfig);
 										rot[i]=true;
-										if(replace(globalConfig,i))
+										if(replace(globalConfig,i)) // the DSP could be repositioned
 											{
 												//display(globalConfig);
 												compareCost();
 												tilingAlgorithm(i,n,repl,i);		//repl should be false
 											}
-										else
+										else // go to the previous block 
 											{
 												if(i-1>=0)
 													tilingAlgorithm(i-1,n,false,i);
 											}
 									}
-								else
+								else // the DSP was either rotated already or is square
 									{
 										//~ cout<<" Pas 3_1 "<<i<<endl;
 										if(i-1>=0)
@@ -516,30 +516,30 @@ namespace flopoco{
 							}
 					}
 			}
-		else
+		else // we are not at the last DSP
 			{
-				if(repl==true)
+				if(repl==true) // the previuos DSPs were successfuly repositioned
 					{
 						//~ cout<<" Pas 4_2 "<<i<<endl;
-						if(replace(globalConfig,i))
+						if(replace(globalConfig,i)) // the current DSP was successfuly repositioned
 							{
 								rot[i]=false;
 								tilingAlgorithm(i+1,n,repl, lastMovedDSP);
 							}
-						else
-							{
+						else // the current DSP could not be repositioned
+							{// go to the DSP block that was moved (not repostioned) the last time
 								rot[i]=false;
-								if( lastMovedDSP>=0)
+								if( lastMovedDSP>=0) 
 									tilingAlgorithm( lastMovedDSP,n,false, lastMovedDSP);
 							}
 			
 		
 					}
-				else
+				else // the folling DSP could not be moved or repositioned 
 					{	
 						//~ if(i==0)
 						//~ display(globalConfig);
-						if(move(globalConfig,i,DSPw,DSPh))
+						if(move(globalConfig,i,DSPw,DSPh)) // the current DSP was successfuly moved
 							{
 						
 								if(i==0){
@@ -574,24 +574,24 @@ namespace flopoco{
 						//~ }
 						//~ tilingAlgorithm(i+1,n,true,i);
 						//~ }
-						else
+						else // the current DSP was not moved successfuly
 							{
 								if(rot[i]==false && (globalConfig[i]->getMaxMultiplierWidth() != globalConfig[i]->getMaxMultiplierHeight() ))
-									{
+									{// if the DSP was not rotated and is not sqare then roteate it
 										//~ cout<<" Pas 2_2 "<<i<<endl;
 										globalConfig[i]->rotate();
-										if(replace(globalConfig,i))
+										if(replace(globalConfig,i)) // the current DSP was successfuly repositioned
 											{
 												rot[i]=true;
 												tilingAlgorithm(i+1,n,true,i);
 											}
-										else
+										else // the current DSP was not successfuly repositioned
 											{
 												if(i-1>=0)
 													tilingAlgorithm(i-1,n,repl,i);
 											}
 									}
-								else
+								else // the DSP is either square or has been already rotated
 									{
 										//~ cout<<" Pas 3_2 "<<i<<endl;
 										if(i-1>=0)
