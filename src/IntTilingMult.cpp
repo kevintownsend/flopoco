@@ -79,14 +79,13 @@ namespace flopoco{
 		cout<<"Estimated DSPs:= "<<nrDSPs <<endl;
 		int x,y;
 		target->getDSPWidths(x,y);
-		DSPw=x;
-		DSPh=y;
+		
 		cout<<"Width of DSP is := "<<x<<" Height of DSP is:="<<y<<endl;
 		cout<<"Extra width:= "<<getExtraWidth()<<" \nExtra height:="<<getExtraHeight()<<endl;
 		
 		vn=wInX + 2* getExtraWidth();
 		vm=wInY + 2* getExtraHeight();
-		float movePercentage =0.4;
+
 		//~ float tempDist =	 (movePercentage  * getExtraWidth() * getExtraWidth()) /4.0 + (movePercentage *getExtraHeight() * getExtraHeight()) /4.0;
 		float tempDist =	0;
 		maxDist2Move = (int) ( sqrt(tempDist) );
@@ -364,7 +363,7 @@ namespace flopoco{
 	{
 		counterfirst =0 ;
 		int n,m;
-		int count=1;
+
 		//~ n=wInX + 2* getExtraWidth();
 		//~ m=wInY + 2* getExtraHeight();
 
@@ -473,7 +472,7 @@ namespace flopoco{
 				else // the last DSP is being moved on the tiling board
 					{
 	
-						if(move(globalConfig,i,DSPw,DSPh)) // successfuly moved the last block
+						if(move(globalConfig,i,5,5)) // successfuly moved the last block
 							{
 								//~ cout<<" Pas 1_1 "<<i<<endl;
 								compareCost();
@@ -539,7 +538,7 @@ namespace flopoco{
 					{	
 						//~ if(i==0)
 						//~ display(globalConfig);
-						if(move(globalConfig,i,DSPw,DSPh)) // the current DSP was successfuly moved
+						if(move(globalConfig,i,17,17)) // the current DSP was successfuly moved
 							{
 						
 								if(i==0){
@@ -1627,7 +1626,7 @@ namespace flopoco{
 		config[index]->getTopRightCorner(xtr1, ytr1);
 		config[index]->getBottomLeftCorner(xbl1, ybl1);
 	
-		int dist=0;
+
 	
 		bool a1 ;
 		bool a2 ;
@@ -2062,7 +2061,7 @@ namespace flopoco{
 					{
 						if(verbose)
 							cout << "initTiling : iteration #" << i << endl; 
-						config[i] = getTarget()->createDSP();
+						config[i] = getTarget()->createDSP();						
 						replace(config, i);
 					}
 			}
@@ -2085,6 +2084,7 @@ namespace flopoco{
 				for(int i=0;i<dspCount;i++)
 					{
 						config[i] = getTarget()->createDSP();
+						
 						if( ytr<vm&& ybl<vm)
 							{
 								config[i]->setTopRightCorner(xtr, ytr);
@@ -2715,3 +2715,4 @@ namespace flopoco{
 
 
 }
+

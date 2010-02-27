@@ -162,6 +162,15 @@ namespace flopoco{
 		 * to rotate the block by 90 degrees.
 		 */
 		void rotate();
+		
+		void allocatePositions(int dimension);
+		void push(int X,int Y);
+		int pop();
+		
+		
+		int *Xpositions;
+		int *Ypositions;
+		
 	
 	protected:
 		int    multiplierWidth_;	/**< The recommended with of the multiplier used by this DSP */
@@ -185,6 +194,10 @@ namespace flopoco{
 		 */
 		void setShiftAmount(int s);
 	
+		
+	
+		int pos;
+		int max_pos;
 
 	};
 
