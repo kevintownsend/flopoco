@@ -7,6 +7,7 @@
   * This file is part of the FloPoCo project developed by the Arenaire team at Ecole Normale Superieure de Lyon
   */
 
+#ifdef HAVE_SOLLYA
 
 #include <iostream>
 #include <sstream>
@@ -154,4 +155,4 @@ namespace flopoco{
 
 }
 	
-	
+#endif //HAVE_SOLLYA	
