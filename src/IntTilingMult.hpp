@@ -34,6 +34,62 @@ namespace flopoco{
 		void buildStandardTestCases(TestCaseList* tcl);
 
 	private:
+			class TillingDSP:public DSP{
+				public:
+				
+					int *Xpositions;
+					int *Ypositions;
+				
+				
+				
+					TillingDSP()
+					{
+						pos = max_pos=0;
+					}
+					~TillingDSP()
+					{					
+					}
+				
+					void allocatePositions(int dimension)
+					{
+						max_pos=dimension;
+						pos=0;
+						Xpositions = new int[dimension];
+						Ypositions = new int[dimension];
+					}
+					
+					void push(int X,int Y)
+					{
+						if(pos<max_pos)
+						{
+							Xpositions[pos]=X;
+							Ypositions[pos++]=Y;
+						}
+					}
+					
+					int pop()
+					{
+						int temp=pos;
+						
+						if(temp<max_pos)
+						{
+							pos++;
+						}
+						else
+						{
+							temp=-1;
+						}
+						return temp;
+					}
+					
+				private:
+					
+					int pos;
+					
+					int max_pos;					
+					
+			};
+	
 		/**
 		 * Verifies that the indicated DSP block does not overlap with any 
 		 * other block in the given configuration.
