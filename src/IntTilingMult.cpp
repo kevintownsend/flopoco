@@ -1478,67 +1478,48 @@ namespace flopoco{
 	int IntTilingMult::estimateDSPs()
 	{
 		float t1,t2;
-		int Xd,Yd;
+		int Xd, Yd; //the dimension of the multiplier on X and on Y
+		int multX, multY;
+		bool fitMultiplicaication = false;
+
 		getTarget()->getDSPWidths(Xd,Yd);
-		bool ver=true;
 		int maxDSP= getTarget()->getNumberOfDSPs();
-	
-		//~ cout<<"Existing DSP on the board "<< target->getNumberOfDSPs()<<endl;
 	
 		t1= ((float) wInX) / ((float) Xd);
 		t2= ((float) wInY) / ((float) Yd);
 		
-		if(t1 - ((int)t1) >0)
-			{
-				t1++;
-			}
-		if(t2 - ((int)t2) >0)
-			{
-				t2++;
-			}
+		multX = int (ceil(t1));
+		multY = int (ceil(t2));	
 		
-		if(maxDSP> ((int)t1) * ((int)t2) )
-			{
-				ver=false;
-				maxDSP = ((int)t1) * ((int)t2);
+		if(maxDSP >= (multX * multY) ){
+			fitMultiplicaication = true;
+			maxDSP = ((int)t1) * ((int)t2); //set the maximum number of DSPs to the multiplication size
+		}
 			
+		if (ratio == 1){
+			if (! fitMultiplicaication){
+				REPORT(INFO, "Warning!!! The number of existing DSPs on this FPGA is not enough to cover the whole multiplication!");
+			}else{
+				REPORT(INFO, "Warning!!! The minimum number of DSP that is neccessary to cover the whole addition will be used!");
+			}
+			
+			return maxDSP;
+		}else{	
+			float temp = ( float(getTarget()->getIntMultiplierCost(wInX,wInY)) * ratio)  /   ((1.-ratio)*float(getTarget()->getEquivalenceSliceDSP())) ;
+			int i_tmp = int(ceil(temp));
+	
+			if(i_tmp > maxDSP){
+				if (fitMultiplicaication){
+					REPORT(INFO, "Warning!!! The number of estimated DSPs with respect with this ratio of preference is grather then the needed number of DSPs to perform this multiplication!");
+				}else{
+					REPORT(INFO, "Warning!!! The number of estimated DSPs with respect with this ratio of preference is grather then the total number of DSPs that exist on this board!");
+				}
+				i_tmp = maxDSP;
 			}
 	
-		if(1==ratio) 
-			{
-				if(ver==true)
-					cout<<"Warning!!! The number of existing DSPs on this board is not enough to cover the whole multiplication!"<<endl;
-				else
-					cout<<"Warning!!! The minimum number of DSP that is neccessary to cover the whole addition will be used!"<<endl;
-				return maxDSP;
-			}
-		else
-			{	
-				//cout<<target->multiplierLUTCost(wInX,wInY) <<"    "<<target->getEquivalenceSliceDSP()<<endl;
-				float temp = (getTarget()->getIntMultiplierCost(wInX,wInY) * ratio)  /   ((1- ratio)  *  getTarget()->getEquivalenceSliceDSP() ) ;
-				//cout<<temp<<endl;
-				if(temp - ((int)temp)  > 0 ) // if the estimated number of dsps is a number with nonzero real part than we will return the integer number grather then this computed value. eg. 2.3 -> 3
-					{
-						//cout<<"Intra"<<endl;	
-						temp++;	
-					}
-		
-				if(temp>maxDSP)
-					{
-						if(ver==false)
-							cout<<"Warning!!! The number of estimated DSPs with respect with this ratio of preference is grather then the needed number of DSPs to perform this multiplication!"<<endl;
-						else
-							cout<<"Warning!!! The number of estimated DSPs with respect with this ratio of preference is grather then the total number of DSPs that exist on this board!"<<endl;
-			
-						temp=maxDSP;
-					}
-		
-				return ((int)  temp) ;
-			}
-	
-		return 0;
+			return i_tmp ;
+		}
 	}
-
 
 	int  IntTilingMult::getExtraHeight()
 	{
