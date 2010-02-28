@@ -452,18 +452,22 @@ namespace flopoco{
 	{
 
 		if(i==n)
-			{	
+			{
+				
 				if(repl==true) // if previous DSPs were moved this one needs to recompute all positions 
 					{
-						//~ cout<<" Pas 4_1 "<<i<<endl;
+						cout<<" Pas 4_1 "<<i<<endl;
 						if(replace(globalConfig,i)) // repostioned the DSP
 							{
+								cout<<"Pas 4_0_1 "<<i<<endl;
 								compareCost();
+								display(globalConfig);
 								rot[i]=false;
 								tilingAlgorithm(i,n,false,lastMovedDSP);	
 							}
 						else // could not reposition the DSP in the bounds of the tiling board
 							{
+								cout<<"Pas 4_5_1 "<<i<<endl;
 								rot[i]=false;
 								if( lastMovedDSP>=0) // go one level up the backtracking stack
 									tilingAlgorithm(lastMovedDSP,n,false, lastMovedDSP);
@@ -471,7 +475,7 @@ namespace flopoco{
 					}
 				else // the last DSP is being moved on the tiling board
 					{
-	
+							cout<<"Pas __1 "<<i<<endl;
 						if(move(globalConfig,i)) // successfuly moved the last block
 							{
 								//~ cout<<" Pas 1_1 "<<i<<endl;
@@ -485,7 +489,7 @@ namespace flopoco{
 						//~ compareCost();
 						//~ tilingAlgorithm(i,n,repl,i);		//repl should be false
 						//~ }
-						else // could not find a position for the last block
+ 						else // could not find a position for the last block
 							{
 								if(rot[i]==false && (globalConfig[i]->getMaxMultiplierWidth() != globalConfig[i]->getMaxMultiplierHeight() ))
 									{ // if the DSP was not rotated and is not sqare then roteate it
@@ -519,7 +523,7 @@ namespace flopoco{
 			{
 				if(repl==true) // the previuos DSPs were successfuly repositioned
 					{
-						//~ cout<<" Pas 4_2 "<<i<<endl;
+						cout<<" Pas 4_2 "<<i<<endl;
 						if(replace(globalConfig,i)) // the current DSP was successfuly repositioned
 							{
 								rot[i]=false;
@@ -540,13 +544,9 @@ namespace flopoco{
 						//~ display(globalConfig);
 						if(move(globalConfig,i)) // the current DSP was successfuly moved
 							{
-						
+								cout<<"Pas 1_2 "<<i<<endl;
 								if(i==0){
 									counterfirst++;
-				
-				
-				
-				
 									if(counterfirst%100==0)
 										cout<<counterfirst<<"DSP #1 has made 100 steps!"<<endl;
 									//~ display(globalConfig);
@@ -555,16 +555,6 @@ namespace flopoco{
 								}
 								tilingAlgorithm(i+1,n,true,i);
 							}
-						//~ else
-						//~ if(move(globalConfig,i,DSPh,DSPw))
-						//~ {
-						
-						//~ if(i==0){
-						//~ counterfirst++;
-				
-				
-				
-				
 						//~ if(counterfirst%100==0)
 						//~ cout<<counterfirst<<"DSP #1 has made 100 steps!"<<endl;
 						//~ display(globalConfig);
@@ -577,7 +567,7 @@ namespace flopoco{
 							{
 								if(rot[i]==false && (globalConfig[i]->getMaxMultiplierWidth() != globalConfig[i]->getMaxMultiplierHeight() ))
 									{// if the DSP was not rotated and is not sqare then roteate it
-										//~ cout<<" Pas 2_2 "<<i<<endl;
+										cout<<" Pas 2_2 "<<i<<endl;
 										globalConfig[i]->rotate();
 										if(replace(globalConfig,i)) // the current DSP was successfuly repositioned
 											{
@@ -592,7 +582,7 @@ namespace flopoco{
 									}
 								else // the DSP is either square or has been already rotated
 									{
-										//~ cout<<" Pas 3_2 "<<i<<endl;
+										cout<<" Pas 3_2 "<<i<<endl;
 										if(i-1>=0)
 											tilingAlgorithm(i-1,n,repl,i);		//repl should be false
 									}
@@ -1379,7 +1369,7 @@ namespace flopoco{
 		if(temp < bestCost)
 			{
 				//~ cout<<"Costul e mai bun la cel curent!Schimba"<<endl;
-				cout<<"Interchange! Score for current is"<<temp<<" and current best is"<<bestCost<<endl;
+				//cout<<"Interchange! Score for current is"<<temp<<" and current best is"<<bestCost<<endl;
 				//~ int c1X,c2X,c1Y,c2Y;
 				//~ int n=wInX + 2* getExtraWidth();
 				//~ tempc[0]->getTopRightCorner(c1X,c1Y);
@@ -1407,7 +1397,7 @@ namespace flopoco{
 					//display(bestConfig);
 					if(compareOccupation(tempc)==true)
 						{
-							cout<<"Interchange for equal cost. Now best has cost "<<temp<<endl;
+							//cout<<"Interchange for equal cost. Now best has cost "<<temp<<endl;
 							bestCost=temp;
 			
 							for(int ii=0;ii<nrDSPs;ii++)
@@ -1828,6 +1818,7 @@ namespace flopoco{
 		if (index > 1)
 		{// take all positions from the previous DSP
 				memcpy(config[index]->Xpositions, config[index-1]->Xpositions, sizeof(int)*(index-1)*8);	
+				memcpy(config[index]->Ypositions, config[index-1]->Ypositions, sizeof(int)*(index-1)*8);	
 				config[index]->setPosition((index-1)*8);
 		}
 		
