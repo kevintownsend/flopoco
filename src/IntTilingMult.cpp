@@ -1732,11 +1732,12 @@ namespace flopoco{
 		int exw = getExtraWidth();
 		int pos; // index for list of positions of a DSP
 		
-		if ((xtr1 > 0) && (ytr1 > 0) && (xbl1 < vn-1) && (ybl1 < vm-1))
-			{// then the DSP block is placed outside the bounds 		
+		
+		if(index==0) // the first DSP block can move freely on the tiling grid
+		{
+			//if ((xtr1 > 0) && (ytr1 > 0) && (xbl1 < vn-1) && (ybl1 < vm-1))
+					{// then the DSP block is placed outside the bounds 		
 	
-				if(index==0) // the first DSP block can move freely on the tiling grid
-					{
 						do{
 							// move down one unit
 							ytr1++;
@@ -1758,8 +1759,9 @@ namespace flopoco{
 							config[index]->setBottomLeftCorner(xbl1, ybl1);
 						}while (checkOverlap(config, index));
 					}
-				else // all DSP blocks except the first one can move only in fixed positions
-					{
+		}
+		else // all DSP blocks except the first one can move only in fixed positions
+		{
 						do{
 							// move to next position
 							pos = config[index]->pop();
@@ -1779,9 +1781,9 @@ namespace flopoco{
 							config[index]->setTopRightCorner(xtr1, ytr1);
 							config[index]->setBottomLeftCorner(xbl1, ybl1);
 						}while (checkOverlap(config, index));
-					}
+		}
 		
-			}
+			
 		/* set the current position of the DSP block within the tiling grid
 		config[index]->setTopRightCorner(xtr1, ytr1);
 		config[index]->setBottomLeftCorner(xbl1, ybl1);
