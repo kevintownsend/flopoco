@@ -177,8 +177,13 @@ namespace flopoco{
 	
 		//~ initTiling(globalConfig,nrDSPs);
 	
-		//~ globalConfig[0]->setTopRightCorner(7,5);
-		//~ globalConfig[0]->setBottomLeftCorner(23,28);
+		 //~ globalConfig[0]->setTopRightCorner(7,5);
+		 //~ globalConfig[0]->setBottomLeftCorner(23,28);
+		 //~ replace(globalConfig,1);
+		 //~ replace(globalConfig,2);
+		 //~ replace(globalConfig,3);
+		 //~ display(globalConfig);
+		 
 		//~ globalConfig[1]->setTopRightCorner(24,5);
 		//~ globalConfig[1]->setBottomLeftCorner(40,28);
 		//~ globalConfig[2]->setTopRightCorner(41,5);
@@ -393,6 +398,16 @@ namespace flopoco{
 	
 		initTiling(globalConfig,nrDSPs);	
 			
+		//~ for(int i=1;i<nrDSPs;i++)	
+			//~ {
+				//~ globalConfig[i]->resetPosition();
+				//~ int pos = globalConfig[i]->pop();
+				//~ while(pos>=0)
+				//~ {
+						
+				//~ }
+			//~ }
+			
 		//this will initialize the bestConfig with the first configuration
 		bestCost = FLT_MAX ;
 		cout<<"Max score is"<<bestCost<<endl;
@@ -409,6 +424,7 @@ namespace flopoco{
 		//the best configuration should be consider initially the first one. So the bestConfig parameter will be initialized with global config and hence the bestCost will be initialized with the first cost
 	
 	
+		//the one
 		tilingAlgorithm(nrDSPs-1,nrDSPs-1,false,nrDSPs-1);
 	
 		display(bestConfig);
@@ -461,7 +477,7 @@ namespace flopoco{
 							{
 								cout<<"Pas 4_0_1 "<<i<<endl;
 								compareCost();
-								display(globalConfig);
+								//display(globalConfig);
 								rot[i]=false;
 								tilingAlgorithm(i,n,false,lastMovedDSP);	
 							}
@@ -1814,7 +1830,7 @@ namespace flopoco{
 		//target->getDSPWidths(w,h);
 		w= config[index]->getMaxMultiplierWidth();
 		h= config[index]->getMaxMultiplierHeight();
-		
+		config[index]->setPosition(0);
 		if (index > 1)
 		{// take all positions from the previous DSP
 				memcpy(config[index]->Xpositions, config[index-1]->Xpositions, sizeof(int)*(index-1)*8);	
@@ -1840,9 +1856,24 @@ namespace flopoco{
 			int x,y, pos;
 			config[index-1]->getTopRightCorner(x, y);
 			
-			for (int i=0; i<8; i++)
-				config[index]->push(x+positionDisplacementX[i], y+positionDisplacementY[i]);
 			
+			for (int i=0; i<8; i++)
+			{
+				config[index]->push(x+positionDisplacementX[i], y+positionDisplacementY[i]);
+				
+			}
+			
+			cout<<"index "<<index<<" ";
+			config[index]->resetPosition();
+			
+			do
+			{
+				pos = config[index]->pop();
+				if(pos>=0)
+				cout<<" ("<<config[index]->Xpositions[pos]<<" , "<<config[index]->Ypositions[pos]<<")";	
+			}while(pos>=0);
+			
+			cout<<endl;
 			config[index]->resetPosition();
 			
 			do{// go to next position in list
