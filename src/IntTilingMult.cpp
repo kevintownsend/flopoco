@@ -1946,69 +1946,14 @@ namespace flopoco{
 			{
 				config[i] = NULL;
 			}
-		if (!( ( getTarget()->getID() == "Virtex4") ||
-			   ( getTarget()->getID() == "Virtex5") ||
-			   ( getTarget()->getID() == "Spartan3")))  // then the target is NOT Xilinx FPGA 
-			{
-				for (int i=0; i<dspCount; i++)
-					{
-						if(verbose)
-							cout << "initTiling : iteration #" << i << endl; 
-						config[i] = getTarget()->createDSP();						
-						config[i]->allocatePositions(8*i); // each DSP offers 8 positions
-						replace(config, i);
-					}
-			}
-		else
-			{
-				int w,h;	
-				getTarget()->getDSPWidths(w,h);
-			
-				//~ config[0] = target->createDSP();
-				//~ config[0]->setTopRightCorner(getExtraWidth(), getExtraHeight());
-				//~ config[0]->setBottomLeftCorner(getExtraWidth() +w-1 , getExtraHeight() + h-1);
-		
-				int xtr,ytr,xbl,ybl;
-	
-				xtr = 	getExtraWidth();
-				ytr = 	getExtraHeight();
-				xbl =	getExtraWidth() +w-1;
-				ybl = 	getExtraHeight() + h-1;
-		
-				for(int i=0;i<dspCount;i++)
-					{
-						config[i] = getTarget()->createDSP();
-						config[i]->allocatePositions(8*i); // each DSP offers 8 positions
-						if( ytr<vm&& ybl<vm)
-							{
-								config[i]->setTopRightCorner(xtr, ytr);
-								config[i]->setBottomLeftCorner(xbl , ybl);
-								ytr = ybl+1;
-								ybl = ybl + h;
-							}
-						else
-							{
-								xtr = xbl+1;
-								xbl = xbl + w;
-								ytr = 	getExtraHeight();
-								ybl = 	getExtraHeight() + h-1;
-								config[i]->setTopRightCorner(xtr, ytr);
-								config[i]->setBottomLeftCorner(xbl , ybl);
-								ytr = ybl+1;
-								ybl = ybl + h;
-			
-							}
-		
-					}		
-		
-				//~ for (int i=0; i<dspCount; i++)
-				//~ {
-				//~ if(verbose)
-				//~ cout << "initTiling : iteration #" << i << endl; 
-				//~ config[i] = target->createDSP();
-				//~ replace(config, i);
-				//~ }	
-			}
+		for (int i=0; i<dspCount; i++)
+		{
+			if(verbose)
+				cout << "initTiling : iteration #" << i << endl; 
+			config[i] = getTarget()->createDSP();						
+			config[i]->allocatePositions(8*i); // each DSP offers 8 positions
+			replace(config, i);
+		}		
 	}
 	
 	int IntTilingMult::bindDSPs4Stratix(DSP** config)
