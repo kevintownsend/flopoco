@@ -53,7 +53,7 @@ namespace flopoco{
 		 * @param index the index of the DSP object we want to move within the configuration
 		 * @return FALSE if we have reached the bottom-left most corner of the tiling
 		 */
-		bool move(DSP** config, int index,int w,int h);
+		bool move(DSP** config, int index);
 	
 		/**
 		 * Repositions the indicated DSP object within the configuration in the 
