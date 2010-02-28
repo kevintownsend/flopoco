@@ -1732,7 +1732,7 @@ namespace flopoco{
 		int exw = getExtraWidth();
 		int pos; // index for list of positions of a DSP
 		
-		if ((xtr1 < 0) || (ytr1 < 0) || (xbl1 > vn-1) || (ybl1 > vm-1))
+		if ((xtr1 > 0) && (ytr1 > 0) && (xbl1 < vn-1) && (ybl1 < vm-1))
 			{// then the DSP block is placed outside the bounds 		
 	
 				if(index==0) // the first DSP block can move freely on the tiling grid
@@ -1748,7 +1748,7 @@ namespace flopoco{
 									xtr1++;
 									xbl1++;
 									
-									ytr1 = exh - h+1;
+									ytr1 = 0;//exh - h+1;
 									ybl1 = ytr1 + h-1;
 										
 									if (xtr1 > gw) // the DSP block has reached the left limit of the tiling grid
@@ -1771,10 +1771,10 @@ namespace flopoco{
 									xbl1 = xtr1 + w-1;
 							}
 							else
-								break;
+								return false;
 								
-							if ((ytr1 > gh) && (xtr1 > gw) && (ybl1 < exh) && (xbl1 < exw)) // the DSP block is out of the tiling grid
-								continue;
+							//if ((ytr1 > gh) || (xtr1 > gw) || (ybl1 < exh) || (xbl1 < exw)) // the DSP block is out of the tiling grid
+							//	continue;
 														
 							config[index]->setTopRightCorner(xtr1, ytr1);
 							config[index]->setBottomLeftCorner(xbl1, ybl1);
@@ -1782,13 +1782,11 @@ namespace flopoco{
 					}
 		
 			}
-		// set the current position of the DSP block within the tiling grid
+		/* set the current position of the DSP block within the tiling grid
 		config[index]->setTopRightCorner(xtr1, ytr1);
 		config[index]->setBottomLeftCorner(xbl1, ybl1);
 		
-		if (pos < 0) // the DSP has no available positions left
-			return false;
-		/*
+		
 		int f = checkFarness(config,index);	
 		if (f == 0)
 			return true;
@@ -1828,7 +1826,9 @@ namespace flopoco{
 		if (index > 1)
 		{// take all positions from the previous DSP
 				memcpy(config[index]->Xpositions, config[index-1]->Xpositions, sizeof(int)*(index-1)*8);	
+				config[index]->setPosition((index-1)*8);
 		}
+		
 		if (index > 0)
 		{
 			int dif = abs(h-w);
@@ -1849,9 +1849,10 @@ namespace flopoco{
 			
 			for (int i=0; i<8; i++)
 				config[index]->push(x+positionDisplacementX[i], y+positionDisplacementY[i]);
-				
-			while (checkOverlap(config, index))
-			{// go to next position in list
+			
+			config[index]->resetPosition();
+			
+			do{// go to next position in list
 				pos = config[index]->pop();
 				if(pos >= 0)
 				{
@@ -1861,17 +1862,14 @@ namespace flopoco{
 					xbl1 = xtr1 + w-1;
 				}
 				else
-					break;
+					return false;
 					
 				//if ((ytr1 > gh) && (xtr1 > gw) && (ybl1 < exh) && (xbl1 < exw)) // the DSP block is out of the tiling grid
 				//	continue;
 											
 				config[index]->setTopRightCorner(xtr1, ytr1);
 				config[index]->setBottomLeftCorner(xbl1, ybl1);
-			}
-			
-			if (pos < 0) // the DSP has no available positions left
-				return false;
+			}while (checkOverlap(config, index));
 				
 			return true;
 		}
@@ -1884,37 +1882,10 @@ namespace flopoco{
 	
 		config[index]->setTopRightCorner(xtr1, ytr1);
 		config[index]->setBottomLeftCorner(xbl1, ybl1);
-	
+		
 		if(verbose)
 			cout << tab << "replace : DSP width is " << w << ", height is " << h << endl; 
 		// try yo place the DSP block inside the extended region of the tiling grid
-		while (checkOverlap(config, index))
-			{
-				// move down one unit
-				ytr1++;
-				ybl1++;
-		
-				if(verbose)
-					cout << tab << "replace : moved DSP one unit down." << endl;
-				if (ybl1 > vm) // the DSP block has reached the bottom limit of the tiling grid
-					{
-						// move to top of grid and one unit to the left 
-						xtr1++;
-						xbl1++;
-						ytr1 = 0;
-						ybl1 = h-1;
-						if(verbose)
-							cout << tab << "replace : moved DSP up and one unit left." << endl;
-					}			
-		
-				config[index]->setTopRightCorner(xtr1, ytr1);
-				config[index]->setBottomLeftCorner(xbl1, ybl1);
-				if(verbose)
-					cout << tab << "replace : Top-right is at ( " << xtr1 << ", " << ytr1 << ") and Bottom-right is at (" << xbl1 << ", " << ybl1 << ")" << endl;
-			}
-	
-		if (xbl1 > vn)
-			return false;
 		}
 		return true;
 	

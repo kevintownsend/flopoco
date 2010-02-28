@@ -38,7 +38,7 @@ namespace flopoco{
 		multiplierHeight_ = 0;
 		nrAdders_ = 0;
 		multAccumulate_ = false;	
-		pos = max_pos=0;
+		posPop = posPush = max_pos=0;
 			
 		DSP** ops = new DSP*[3];
 	
@@ -54,26 +54,26 @@ namespace flopoco{
 
 	void DSP::allocatePositions(int dimension){
 		max_pos=dimension;
-		pos=0;
+		posPop = posPush =0;
 		Xpositions = new int[dimension];
 		Ypositions = new int[dimension];
 	}
 	
 	void DSP::push(int X,int Y)
 	{
-		if(pos<max_pos)
+		if(posPush<max_pos)
 			{
-				Xpositions[pos]=X;
-				Ypositions[pos++]=Y;
+				Xpositions[posPush]=X;
+				Ypositions[posPush++]=Y;
 			}
 	}
 	
 	int DSP::pop()
 	{
-		int temp=pos;
+		int temp=posPop;
 		if(temp<max_pos)
 			{
-				pos++;
+				posPop++;
 			}
 			else
 			{
@@ -82,6 +82,17 @@ namespace flopoco{
 		return temp;
 	}
 			
+	void DSP::setPosition(int p)
+	{
+		if (p<max_pos)
+			posPush = p;
+	}
+	
+	void DSP::resetPosition()
+	{
+		posPop = 0;
+	}
+	
 	int DSP::getMultiplierWidth(){
 		return multiplierWidth_;
 	}

@@ -142,9 +142,6 @@ namespace flopoco{
 		/** The maximum allow distance to move away from the others for the last block */
 		int maxDist2Move;
 	
-		
-	
-
 		/** This function estimates the maximum number of DSPs that can be used with respect to the preference of the user */
 		int estimateDSPs();
 
