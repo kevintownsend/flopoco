@@ -125,6 +125,7 @@ namespace flopoco{
 			vhdl << tab << declare("t2k_0",36) << " <= p11 - (dx20 * dy20);"<<endl;
 			vhdl << tab << declare("t3k_0",36) << " <= p22 - (dx21 * dy21);"<<endl;
 			nextCycle();////////////////////////////////////////////////////////////
+			nextCycle();////////////////////////////////////////////////////////////
 			vhdl << tab << declare("tk"   ,36) << " <= tk_0  + p11;" << endl;
 			vhdl << tab << declare("t2k_1",36) << " <= t2k_0 + p00;" << endl;
 			vhdl << tab << declare("t3k"  ,36) << " <= t3k_0 + p11;" << endl;
