@@ -124,9 +124,48 @@ namespace flopoco{
 		
 		runAlgorithm();
 	 
-	 
-	 
-	 
+		//~ globalConfig[0]->setTopRightCorner(19,0);
+		//~ globalConfig[0]->setBottomLeftCorner(35,16);
+		//~ replace(globalConfig,1);
+		//~ replace(globalConfig,2);
+		//~ display(globalConfig);
+		//~ move(globalConfig,1);
+		//~ replace(globalConfig,2);
+		//~ display(globalConfig);
+		
+		//~ do{
+			
+			//~ replace(globalConfig,1);
+		//~ do{
+			//~ replace(globalConfig,2);
+		//~ while(move(globalConfig,2))
+		//~ {
+			//~ compareCost();
+		//~ }
+		//~ }while(move(globalConfig,1));
+		
+		//~ display(globalConfig);
+		//~ }while(move(globalConfig,0));
+		
+		//~ display(bestConfig);
+		
+		
+		//~ move(globalConfig,0);
+		//~ replace(globalConfig,1);
+		//~ replace(globalConfig,2);
+		//~ display(globalConfig);
+		//~ move(globalConfig,1);
+		//~ move(globalConfig,1);
+		//~ replace(globalConfig,2);
+		//~ display(globalConfig);
+		//~ move(globalConfig,2);
+		//~ move(globalConfig,2);
+		//~ display(globalConfig);
+		
+		//~ while(move(globalConfig,2));
+		//~ display(globalConfig);
+		//~ move(globalConfig,2);
+		//~ display(globalConfig);
 	 
 		//~ ///experiment(bogdan)  ./flopoco -target=Virtex5 IntTilingMult 58 58 0.44
 		//~ tempc= new DSP*[nrDSPs];
@@ -450,15 +489,18 @@ namespace flopoco{
 		//~ }	
 	
 	
-		for(int ii=0;ii<m;ii++)
-			delete[](mat[ii]);
 	
-		delete[] (mat);
+		//dealocari
 	
-		for(int ii=0;ii<nrDSPs;ii++)
-			free(tempc[ii]);
+		//~ for(int ii=0;ii<m;ii++)
+			//~ delete[](mat[ii]);
 	
-		delete[] (tempc);
+		//~ delete[] (mat);
+	
+		//~ for(int ii=0;ii<nrDSPs;ii++)
+			//~ free(tempc[ii]);
+	
+		//~ delete[] (tempc);
 	
 	}
 
@@ -472,10 +514,10 @@ namespace flopoco{
 				
 				if(repl==true) // if previous DSPs were moved this one needs to recompute all positions 
 					{
-						cout<<" Pas 4_1 "<<i<<endl;
+						//cout<<" Pas 4_1 "<<i<<endl;
 						if(replace(globalConfig,i)) // repostioned the DSP
 							{
-								cout<<"Pas 4_0_1 "<<i<<endl;
+						//		cout<<"Pas 4_0_1 "<<i<<endl;
 								compareCost();
 								//display(globalConfig);
 								rot[i]=false;
@@ -483,7 +525,7 @@ namespace flopoco{
 							}
 						else // could not reposition the DSP in the bounds of the tiling board
 							{
-								cout<<"Pas 4_5_1 "<<i<<endl;
+						//		cout<<"Pas 4_5_1 "<<i<<endl;
 								rot[i]=false;
 								if( lastMovedDSP>=0) // go one level up the backtracking stack
 									tilingAlgorithm(lastMovedDSP,n,false, lastMovedDSP);
@@ -491,7 +533,7 @@ namespace flopoco{
 					}
 				else // the last DSP is being moved on the tiling board
 					{
-							cout<<"Pas __1 "<<i<<endl;
+						//	cout<<"Pas __1 "<<i<<endl;
 						if(move(globalConfig,i)) // successfuly moved the last block
 							{
 								//~ cout<<" Pas 1_1 "<<i<<endl;
@@ -539,7 +581,7 @@ namespace flopoco{
 			{
 				if(repl==true) // the previuos DSPs were successfuly repositioned
 					{
-						cout<<" Pas 4_2 "<<i<<endl;
+					//	cout<<" Pas 4_2 "<<i<<endl;
 						if(replace(globalConfig,i)) // the current DSP was successfuly repositioned
 							{
 								rot[i]=false;
@@ -560,7 +602,7 @@ namespace flopoco{
 						//~ display(globalConfig);
 						if(move(globalConfig,i)) // the current DSP was successfuly moved
 							{
-								cout<<"Pas 1_2 "<<i<<endl;
+					//			cout<<"Pas 1_2 "<<i<<endl;
 								if(i==0){
 									counterfirst++;
 									if(counterfirst%100==0)
@@ -583,7 +625,7 @@ namespace flopoco{
 							{
 								if(rot[i]==false && (globalConfig[i]->getMaxMultiplierWidth() != globalConfig[i]->getMaxMultiplierHeight() ))
 									{// if the DSP was not rotated and is not sqare then roteate it
-										cout<<" Pas 2_2 "<<i<<endl;
+					//					cout<<" Pas 2_2 "<<i<<endl;
 										globalConfig[i]->rotate();
 										if(replace(globalConfig,i)) // the current DSP was successfuly repositioned
 											{
@@ -598,7 +640,7 @@ namespace flopoco{
 									}
 								else // the DSP is either square or has been already rotated
 									{
-										cout<<" Pas 3_2 "<<i<<endl;
+					//					cout<<" Pas 3_2 "<<i<<endl;
 										if(i-1>=0)
 											tilingAlgorithm(i-1,n,repl,i);		//repl should be false
 									}
@@ -633,6 +675,8 @@ namespace flopoco{
 		for(int ti=0;ti<nrDSPs;ti++)
 			if(config[ti]!=NULL)
 				{
+			
+			
 					config[ti]->getTopRightCorner(c1X,c1Y);
 					config[ti]->getBottomLeftCorner(c2X,c2Y);
 					c1X=n-c1X-1;
@@ -1186,7 +1230,7 @@ namespace flopoco{
 							
 										partitions++;
 							
-										costSlice += getTarget()->getIntMultiplierCost(njj-nj+1,nii-ni+1);
+										costSlice += target_->getIntMultiplierCost(njj-nj+1,nii-ni+1);
 							
 							
 														
@@ -1344,9 +1388,9 @@ namespace flopoco{
 
 	int IntTilingMult::bindDSPs(DSP** &config)
 	{
-		if  ( (getTarget()->getID() == "Virtex4") ||
-		      (getTarget()->getID() == "Virtex5") ||
-		      (getTarget()->getID() == "Spartan3"))  // then the target is a Xilinx FPGA
+		if  ( (target_->getID() == "Virtex4") ||
+		      (target_->getID() == "Virtex5") ||
+		      (target_->getID() == "Spartan3"))  // then the target is a Xilinx FPGA
 			{
 				return bindDSPs4Virtex(config);
 			}
@@ -1437,7 +1481,8 @@ namespace flopoco{
 		float acc=0.0;
 		float costDSP,costLUT;
 		costDSP = ( (1.0+scale) - scale * ratio );
-		costLUT = ( (1.0+scale) - scale * (1-ratio) ) /  ((float) getTarget()->getEquivalenceSliceDSP() );
+		costLUT = ( (1.0+scale) - scale * (1-ratio) ) /  ((float) target_->getEquivalenceSliceDSP() );
+		//costLUT = ( (1.0+scale) - scale * (1-ratio) ) /  ((float)100);
 	
 		//~ cout<<"Cost of a DSP is "<<costDSP<<endl<<"Cost of a Slice is "<<costLUT<<endl;
 	
@@ -1465,7 +1510,10 @@ namespace flopoco{
 		//~ cout<<"Number of operands coming from DSPs is "<<nrOfUsedDSPs<<endl;
 		
 	
-		float LUTs4NAdder=((float)getTarget()->getIntNAdderCost(wInX + wInY,nrOfUsedDSPs+partitions) );
+		float LUTs4NAdder=((float)target_->getIntNAdderCost(wInX + wInY,nrOfUsedDSPs+partitions) );
+		//float LUTs4NAdder=((float)200);
+				
+				
 	
 		//~ cout<<"LUTs used for last "<<nrOfUsedDSPs+partitions<<" adder are"<<LUTs4NAdder<<endl;
 		
@@ -1485,8 +1533,8 @@ namespace flopoco{
 		int multX, multY;
 		bool fitMultiplicaication = false;
 
-		getTarget()->getDSPWidths(Xd,Yd);
-		int maxDSP= getTarget()->getNumberOfDSPs();
+		target_->getDSPWidths(Xd,Yd);
+		int maxDSP= target_->getNumberOfDSPs();
 	
 		t1= ((float) wInX) / ((float) Xd);
 		t2= ((float) wInY) / ((float) Yd);
@@ -1496,7 +1544,7 @@ namespace flopoco{
 		
 		if(maxDSP >= (multX * multY) ){
 			fitMultiplicaication = true;
-			maxDSP = multX * multY; //set the maximum number of DSPs to the multiplication size
+			maxDSP = ((int)t1) * ((int)t2); //set the maximum number of DSPs to the multiplication size
 		}
 			
 		if (ratio == 1){
@@ -1508,7 +1556,7 @@ namespace flopoco{
 			
 			return maxDSP;
 		}else{	
-			float temp = ( float(getTarget()->getIntMultiplierCost(wInX,wInY)) * ratio)  /   ((1.-ratio)*float(getTarget()->getEquivalenceSliceDSP())) ;
+			float temp = ( float(target_->getIntMultiplierCost(wInX,wInY)) * ratio)  /   ((1.-ratio)*float(target_->getEquivalenceSliceDSP())) ;
 			int i_tmp = int(ceil(temp));
 	
 			if(i_tmp > maxDSP){
@@ -1527,7 +1575,7 @@ namespace flopoco{
 	int  IntTilingMult::getExtraHeight()
 	{
 		int x,y;	
-		getTarget()->getDSPWidths(x,  y);
+		target_->getDSPWidths(x,  y);
 		float temp = ratio * 0.75 * ((float) y);
 		return ((int)temp);
 	}
@@ -1536,7 +1584,10 @@ namespace flopoco{
 	int  IntTilingMult::getExtraWidth()
 	{
 		int x,y;	
-		getTarget()->getDSPWidths(x,y);
+		Target *t = target_;
+		
+		t->getDSPWidths(x,y);
+
 		float temp = ratio * 0.75 * ((float) x);
 		return ((int)temp);
 	}
@@ -1831,9 +1882,9 @@ namespace flopoco{
 		config[index]->setPosition(0);
 		if (index > 1)
 		{// take all positions from the previous DSP
-				memcpy(config[index]->Xpositions, config[index-1]->Xpositions, sizeof(int)*(index-1)*8);	
-				memcpy(config[index]->Ypositions, config[index-1]->Ypositions, sizeof(int)*(index-1)*8);	
-				config[index]->setPosition((index-1)*8);
+				memcpy(config[index]->Xpositions, config[index-1]->Xpositions, sizeof(int)*(index-1)*3);	
+				memcpy(config[index]->Ypositions, config[index-1]->Ypositions, sizeof(int)*(index-1)*3);	
+				config[index]->setPosition((index-1)*3);
 		}
 		
 		if (index > 0)
@@ -1848,30 +1899,33 @@ namespace flopoco{
 				mind = h;
 			}
 			
-			int positionDisplacementX[] = {0, dif, mind, maxd, w, w, w, w};
-			int positionDisplacementY[] = {h, h, h, h, 0, dif, mind, maxd};
+			//int positionDisplacementX[] = {0, dif, mind, maxd, w, w, w, w};
+			int positionDisplacementX[] = {0,  w, w};
+			//int positionDisplacementY[] = {h, h, h, h, 0, dif, mind, maxd};
+			int positionDisplacementY[] = {h, h, 0};
 
 			int x,y, pos;
 			config[index-1]->getTopRightCorner(x, y);
 			
 			
-			for (int i=0; i<8; i++)
+			for (int i=0; i<3; i++)
 			{
 				config[index]->push(x+positionDisplacementX[i], y+positionDisplacementY[i]);
 				
 			}
 			
-			cout<<"index "<<index<<" ";
-			config[index]->resetPosition();
+			//~ cout<<"index "<<index<<" ";
+			//~ config[index]->resetPosition();
 			
-			do
-			{
-				pos = config[index]->pop();
-				if(pos>=0)
-				cout<<" ("<<config[index]->Xpositions[pos]<<" , "<<config[index]->Ypositions[pos]<<")";	
-			}while(pos>=0);
+			//~ do
+			//~ {
+				//~ pos = config[index]->pop();
+				//~ if(pos>=0)
+				//~ cout<<" ("<<config[index]->Xpositions[pos]<<" , "<<config[index]->Ypositions[pos]<<")";	
+			//~ }while(pos>=0);
 			
-			cout<<endl;
+			//~ cout<<endl;
+			
 			config[index]->resetPosition();
 			
 			do{// go to next position in list
@@ -1972,8 +2026,8 @@ namespace flopoco{
 		{
 			if(verbose)
 				cout << "initTiling : iteration #" << i << endl; 
-			config[i] = getTarget()->createDSP();						
-			config[i]->allocatePositions(8*i); // each DSP offers 8 positions
+			config[i] = target_->createDSP();						
+			config[i]->allocatePositions(3*i); // each DSP offers 8 positions
 			replace(config, i);
 		}		
 	}
@@ -1994,7 +2048,7 @@ namespace flopoco{
 					int xtri, ytri, wx, wy, nrOp;
 					bool bound;
 					config[i]->getTopRightCorner(xtri, ytri);
-					getTarget()->getDSPWidths(wx,wy);
+					target_->getDSPWidths(wx,wy);
 				
 					if (verbose)
 						cout << "bindDSP4Stratix: DSP #" << i << " has less than 3 operands. Top-right is at ( " << xtri << ", " << ytri << ") width is " << wx << endl;
@@ -2108,9 +2162,9 @@ namespace flopoco{
 			
 		memcpy(tempc, config, sizeof(DSP*) * nrDSPs );
 	
-		if ( ( getTarget()->getID() == "Virtex4") ||
-			 ( getTarget()->getID() == "Virtex5") ||
-			 ( getTarget()->getID() == "Spartan3"))  // then the target is A Xilinx FPGA 
+		if ( ( target_->getID() == "Virtex4") ||
+			 ( target_->getID() == "Virtex5") ||
+			 ( target_->getID() == "Spartan3"))  // then the target is A Xilinx FPGA 
 			{
 				for (int i=0; i<nrDSPs; i++)
 					if (tempc[i] != NULL)
@@ -2512,8 +2566,8 @@ namespace flopoco{
 										else
 											nii = ii;
 										setCycle(0);	
-										getTarget()->setUseHardMultipliers(false);
-										IntMultiplier* mult =  new IntMultiplier(getTarget(), njj-nj+1, nii-ni+1);
+										target_->setUseHardMultipliers(false);
+										IntMultiplier* mult =  new IntMultiplier(target_, njj-nj+1, nii-ni+1);
 										ostringstream cname;
 										cname << mult->getName() << "_" << partitions;
 										mult->changeName(cname.str());
