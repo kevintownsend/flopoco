@@ -633,8 +633,6 @@ namespace flopoco{
 		for(int ti=0;ti<nrDSPs;ti++)
 			if(config[ti]!=NULL)
 				{
-			
-			
 					config[ti]->getTopRightCorner(c1X,c1Y);
 					config[ti]->getBottomLeftCorner(c2X,c2Y);
 					c1X=n-c1X-1;
