@@ -72,7 +72,7 @@ namespace flopoco{
 		setCopyrightString("Sebastian Banescu , Radu Tudoran, Bogdan Pasca 2009-2010");
 	
 		addInput ("X", wInX);
-		addInput ("Y", wInY);
+		addInput ("	Y", wInY);
 		addOutput("R", wOut); /* wOut = wInX + wInY */
 		
 		nrDSPs = estimateDSPs();
@@ -121,8 +121,40 @@ namespace flopoco{
 		//~ }
 		
 		
+		//the one
+		//runAlgorithm();
 		
-		runAlgorithm();
+		//START SIMULATED ANNEALING -------------
+		counterfirst =0 ;
+		int n,m;
+
+		//~ n=wInX + 2* getExtraWidth();
+		//~ m=wInY + 2* getExtraHeight();
+
+		n=vn;
+		m=vm;
+	
+		mat = new int*[m];
+		for(int i=0;i<m;i++)
+			{
+				mat[i] = new int[n];
+				for(int j=0;j<n;j++)
+					mat[i][j]=0;
+			}
+		
+		tempc= new DSP*[nrDSPs];
+		for(int ii=0;ii<nrDSPs;ii++)
+			tempc[ii]= new DSP();
+
+		/*we will try the algorithm with 2 values of nrDSPs	
+		  One will be the estimated value(nrDSPs) and the second one will be nrDSPs-1	
+		*/
+		rot = new bool[nrDSPs];
+		for(int i =0;i<nrDSPs;i++)
+			rot[i]=false;
+	
+		simulatedAnnealing();
+		
 	 
 		//~ globalConfig[0]->setTopRightCorner(19,0);
 		//~ globalConfig[0]->setBottomLeftCorner(35,16);
@@ -1544,7 +1576,7 @@ namespace flopoco{
 		
 		if(maxDSP >= (multX * multY) ){
 			fitMultiplicaication = true;
-			maxDSP = ((int)t1) * ((int)t2); //set the maximum number of DSPs to the multiplication size
+			maxDSP = multX * multY; //set the maximum number of DSPs to the multiplication size
 		}
 			
 		if (ratio == 1){
@@ -1783,8 +1815,6 @@ namespace flopoco{
 		 * */
 		int gw = wInX+getExtraWidth()-1; // the left limit of the tiling grid
 		int gh = wInY+getExtraHeight()-1; // the bottom limit of the tiling grid
-		int exh = getExtraHeight();
-		int exw = getExtraWidth();
 		int pos; // index for list of positions of a DSP
 		
 		
@@ -2030,6 +2060,132 @@ namespace flopoco{
 			config[i]->allocatePositions(3*i); // each DSP offers 8 positions
 			replace(config, i);
 		}		
+	}
+	
+	DSP** IntTilingMult::neighbour(DSP** config)
+	{
+		DSP** returnConfig;
+		initTiling(returnConfig, nrDSPs);
+		// select random DSP to move
+		srand (time(NULL));
+		int index = rand() % nrDSPs;
+		// get multiplier width and height
+		int w, h, pos;
+		w= returnConfig[index]->getMaxMultiplierWidth();
+		h= returnConfig[index]->getMaxMultiplierHeight();
+		
+		if (index == 0) // we have a special case for the first DSP
+		{
+			returnConfig[index]->rotate();
+			index++;
+		}
+		
+		// for all DSPs except the first one
+		
+		// nr of possible positions is 3 if multiplier is sqare and 6 if it is rectangular
+		int nrPositions = 6;
+		
+		if (w == h)
+			nrPositions = 3;
+		
+		// starting from the selected DSP move all susequent DSPs to random positions
+		for (int i=index; i<nrDSPs; i++)
+		{
+			// move selected DSP in a random position
+			pos = rand() % nrPositions;
+			if (pos >= 3) // rotate the multiplier
+			{
+				config[i]->rotate();
+				pos -=3;
+			}
+			if (replace(returnConfig, i))
+			{	
+				pos--; // one position was used on replace
+				for (int j=0; j<pos; j++) // try to move DSP a number of times
+					if (!move(returnConfig, i)) 
+					{ // just replace if not posible to move	
+						replace(returnConfig, i);
+						break;
+					}
+			}
+			else // cannot replace the DSP
+				memcpy(returnConfig[i], config[i], sizeof(DSP)); // copy back the initial position
+		}
+		
+		return returnConfig;	
+	}
+	
+	float IntTilingMult::temp(float f)
+	{
+		return f;
+	}
+	
+	float IntTilingMult::probability(float e, float enew, float t)
+	{
+		if (enew < e)
+			return 1.0;
+		else
+		{
+			float dif = enew-e;
+			if (dif < 1)
+				return dif*t;
+			else
+				return dif*t/enew;
+		}
+	}
+	
+	void IntTilingMult::simulatedAnnealing()
+	{
+		// Initial state
+		initTiling(globalConfig, nrDSPs);
+		int exw = getExtraWidth();
+		int exh = getExtraHeight();
+		int h = globalConfig[0]->getMaxMultiplierHeight();
+		int w = globalConfig[0]->getMaxMultiplierWidth();
+		globalConfig[0]->setTopRightCorner(exw, exh);
+		globalConfig[0]->setBottomLeftCorner(exw+w-1, exh+h-1);
+		for (int i=1; i<nrDSPs; i++)
+			replace(globalConfig, i);
+			
+		display(globalConfig);
+		float e = computeCost(globalConfig);// Initial energy.
+		bestConfig = new DSP*[nrDSPs];// Allocate blocks
+			
+		for (int i=0; i<nrDSPs; i++)// Initial "best" solution
+		{
+			bestConfig[i] = new DSP();
+			memcpy(bestConfig[i], globalConfig[i], sizeof(DSP)); 				
+		}
+		bestCost = e;// Initial "best" cost
+		int k = 0;// Energy evaluation count.
+		int kmax = 3*nrDSPs*nrDSPs;// Arbitrary limit
+		DSP **snew;
+		while (k < kmax)// While time left & not good enough:
+		{
+			// TODO deallocate previous snew;
+			snew = neighbour(globalConfig);// Pick some neighbour.
+			float enew = computeCost(snew);// Compute its energy.
+			
+			display(snew);
+			
+			if (enew < bestCost)// Is this a new best?
+			{// Save 'new neighbour' to 'best found'.	
+				for(int i=0; i<nrDSPs; i++)
+					memcpy(bestConfig[i], snew[i], sizeof(DSP));
+				bestCost = enew;                  
+			}
+			
+			if (probability(e, enew, temp(k/kmax)) > rand())// Should we move to it?
+			{// Yes, change state.	
+				globalConfig = snew; 
+				e = enew;         
+			}                 
+			k = k + 1; // One more evaluation done
+		}
+		display(bestConfig);
+		// Return the best solution found.
+		for(int i=0; i<nrDSPs; i++)
+			memcpy(globalConfig[i], bestConfig[i], sizeof(DSP));
 	}
 	
 	int IntTilingMult::bindDSPs4Stratix(DSP** config)

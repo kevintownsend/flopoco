@@ -207,7 +207,11 @@ namespace flopoco{
 		/** Variable which is used only through testing to count the steps of the first DSP */
 		int counterfirst;
 
-	
+		/** Functions used for Simulated Annealing */
+		DSP** neighbour(DSP** config);
+		float temp(float f);
+		float probability(float e, float enew, float t);
+		void simulatedAnnealing();
 		
 	};
 }
