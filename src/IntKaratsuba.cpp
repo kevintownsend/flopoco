@@ -60,102 +60,98 @@ namespace flopoco{
 	
 		int chunks = ( wIn % 17 ==0 ? wIn/17 : ceil( double(wIn)/double(17)) );
 
-		if ((chunks == 1) || (chunks > 3) ){
-			cerr << " The TwoWayKaratsuba and the ThreeWayKaratsuba are implemented. (17 < wIn <= 51 )" << endl;
+		if (chunks > 3){
+			REPORT(INFO, " The TwoWayKaratsuba and the ThreeWayKaratsuba are implemented. wIn <= 51 "); 
 			exit ( EXIT_FAILURE );	
+		}else if (chunks == 1){
+			/* no need for karatsuba here */
+			vhdl << tab << "R <= X * Y;" << endl;
 		}else if (chunks == 2){
 			//pad inputs to 34 bits
-			vhdl << tab << declare ("sX", 34) << " <= " << use("X") << " & " << zg(34-wIn, 0) << ";" << endl;
-			vhdl << tab << declare ("sY", 34) << " <= " << use("Y") << " & " << zg(34-wIn, 0) << ";" << endl;
+			vhdl << tab << declare ("sX", 34) << " <= X & " << zg(34-wIn, 0) << ";" << endl;
+			vhdl << tab << declare ("sY", 34) << " <= Y & " << zg(34-wIn, 0) << ";" << endl;
 			//chunk splitting
-			vhdl << tab << declare ("x0", 18) << " <= " << " \"0\" & " << use("sX") << range(16,0)  << ";" << endl;
-			vhdl << tab << declare ("x1", 18) << " <= " << " \"0\" & " << use("sX") << range(33,17) << ";" << endl;
-			vhdl << tab << declare ("y0", 18) << " <= " << " \"0\" & " << use("sY") << range(16,0)  << ";" << endl;
-			vhdl << tab << declare ("y1", 18) << " <= " << " \"0\" & " << use("sY") << range(33,17) << ";" << endl;
+			vhdl << tab << declare ("x0", 18) << " <= \"0\" & sX" << range(16,0)  << ";" << endl;
+			vhdl << tab << declare ("x1", 18) << " <= \"0\" & sX" << range(33,17) << ";" << endl;
+			vhdl << tab << declare ("y0", 18) << " <= \"0\" & sY" << range(16,0)  << ";" << endl;
+			vhdl << tab << declare ("y1", 18) << " <= \"0\" & sY" << range(33,17) << ";" << endl;
 			nextCycle();////////////////////////////////////////////////////////////
 			//precomputing
-			vhdl << tab << declare ("dx", 18) << " <= " << use("x1") << " - " << use("x0") << ";" << endl;
-			vhdl << tab << declare ("dy", 18) << " <= " << use("y1") << " - " << use("y0") << ";" << endl;
+			vhdl << tab << declare ("dx", 18) << " <= x1 - x0;" << endl;
+			vhdl << tab << declare ("dy", 18) << " <= y1 - y0;" << endl;
 			//computing
-			vhdl << tab << declare ("r0", 36) << " <= " << use("x0") << " * " << use("y0") << ";" << endl;
+			vhdl << tab << declare ("r0", 36) << " <= x0 * y0;" << endl;
 			nextCycle();////////////////////////////////////////////////////////////
-			vhdl << tab << declare ("r1", 36) << " <= " << use("r0") << " - " << "(" << use("dx") << " * " << use("dy") << ");"<<endl;
+			vhdl << tab << declare ("r1", 36) << " <= r0 - (dx * dy);"<<endl;
 			nextCycle();////////////////////////////////////////////////////////////
-			vhdl << tab << declare ("r2", 36) << " <= " << use("r1") << " + " << "(" << use("x1") << " * " << use("y1") << ");"<<endl;
+			vhdl << tab << declare ("r2", 36) << " <= r1 + (x1 * y1);"<<endl;
 			nextCycle();////////////////////////////////////////////////////////////
-			vhdl << tab << declare ("t0", 36) << " <= " << use("r0") << ";" << endl;
-			vhdl << tab << declare ("t1", 36) << " <= " << use("r2") << ";" << endl;		
-			vhdl << tab << declare ("t2", 36) << " <= " << use("r2") << " - " << use("r1") << ";" << endl;		
-			vhdl << tab << declare ("a1", 51) << " <= " << use("t2")<<range(33,0) << " & " << use("t0")<<range(33,17) << ";" << endl;
-			vhdl << tab << declare ("b1", 51) << " <= " << zg(15,0) << " & " << use("r2") << ";" << endl;
+			vhdl << tab << declare ("t0", 36) << " <= r0;" << endl;
+			vhdl << tab << declare ("t1", 36) << " <= r2;" << endl;		
+			vhdl << tab << declare ("t2", 36) << " <= r2 - r1;" << endl;		
+			vhdl << tab << declare ("a1", 51) << " <= t2"<<range(33,0) << " & t0" <<range(33,17) << ";" << endl;
+			vhdl << tab << declare ("b1", 51) << " <= " << zg(15,0) << " & r2;" << endl;
 			if (68 - 2*wIn < 17 )
-				vhdl << tab << "R <= " << "(" << use("a1") << " + " << use("b1") << ") & " << use("t0")<<range(16, (68 - 2*wIn)) << ";" << endl;
+				vhdl << tab << "R <= (a1 + b1) & t0"<<range(16, (68 - 2*wIn)) << ";" << endl;
 			else{
-				vhdl << tab << declare("a1b1sum",51) <<  " <= " << use("a1") << " + " << use("b1") << ";" << endl;
-				vhdl << tab << "R <= " << use("a1b1sum") << range(50, 68-2*wIn-17) << ";" << endl;
+				vhdl << tab << declare("a1b1sum",51) <<  " <= a1 + b1;" << endl;
+				vhdl << tab << "R <= a1b1sum" << range(50, 68-2*wIn-17) << ";" << endl;
 			}
 		}else if (chunks == 3){
 			//pad inputs to 51 bits
-			vhdl << tab << declare ("sX", 51) << " <= " << use("X") << " & " << zg(51-wIn, 0) << ";" << endl;
-			vhdl << tab << declare ("sY", 51) << " <= " << use("Y") << " & " << zg(51-wIn, 0) << ";" << endl;
+			vhdl << tab << declare ("sX", 51) << " <= X & " << zg(51-wIn, 0) << ";" << endl;
+			vhdl << tab << declare ("sY", 51) << " <= Y & " << zg(51-wIn, 0) << ";" << endl;
 			//chunk splitting
-			vhdl << tab << declare ("x0", 18) << " <= " << " \"0\" & " << use("sX") << range(16,0)  << ";" << endl;
-			vhdl << tab << declare ("x1", 18) << " <= " << " \"0\" & " << use("sX") << range(33,17) << ";" << endl;
-			vhdl << tab << declare ("x2", 18) << " <= " << " \"0\" & " << use("sX") << range(50,34) << ";" << endl;
-			vhdl << tab << declare ("y0", 18) << " <= " << " \"0\" & " << use("sY") << range(16,0)  << ";" << endl;
-			vhdl << tab << declare ("y1", 18) << " <= " << " \"0\" & " << use("sY") << range(33,17) << ";" << endl;
-			vhdl << tab << declare ("y2", 18) << " <= " << " \"0\" & " << use("sY") << range(50,34) << ";" << endl;
+			vhdl << tab << declare ("x0", 18) << " <= \"0\" & sX" << range(16,0)  << ";" << endl;
+			vhdl << tab << declare ("x1", 18) << " <= \"0\" & sX" << range(33,17) << ";" << endl;
+			vhdl << tab << declare ("x2", 18) << " <= \"0\" & sX" << range(50,34) << ";" << endl;
+			vhdl << tab << declare ("y0", 18) << " <= \"0\" & sY" << range(16,0)  << ";" << endl;
+			vhdl << tab << declare ("y1", 18) << " <= \"0\" & sY" << range(33,17) << ";" << endl;
+			vhdl << tab << declare ("y2", 18) << " <= \"0\" & sY" << range(50,34) << ";" << endl;
 			nextCycle();////////////////////////////////////////////////////////////
 			//precomputing
-			vhdl << tab << declare ("dx10", 18) << " <= " << use("x1") << " - " << use("x0") << ";" << endl;
-			vhdl << tab << declare ("dx20", 18) << " <= " << use("x2") << " - " << use("x0") << ";" << endl;
-			vhdl << tab << declare ("dx21", 18) << " <= " << use("x2") << " - " << use("x1") << ";" << endl;
-			vhdl << tab << declare ("dy10", 18) << " <= " << use("y1") << " - " << use("y0") << ";" << endl;
-			vhdl << tab << declare ("dy20", 18) << " <= " << use("y2") << " - " << use("y0") << ";" << endl;
-			vhdl << tab << declare ("dy21", 18) << " <= " << use("y2") << " - " << use("y1") << ";" << endl;
+			vhdl << tab << declare ("dx10", 18) << " <= x1 - x0;" << endl;
+			vhdl << tab << declare ("dx20", 18) << " <= x2 - x0;" << endl;
+			vhdl << tab << declare ("dx21", 18) << " <= x2 - x1;" << endl;
+			vhdl << tab << declare ("dy10", 18) << " <= y1 - y0;" << endl;
+			vhdl << tab << declare ("dy20", 18) << " <= y2 - y0;" << endl;
+			vhdl << tab << declare ("dy21", 18) << " <= y2 - y1;" << endl;
 			//computing
-			vhdl << tab << declare("p00",36) << " <= " << use("x0") << " * " << use("y0") << ";" << endl;
-			vhdl << tab << declare("p11",36) << " <= " << use("x1") << " * " << use("y1")<<";"<<endl;
-			vhdl << tab << declare("p22",36) << " <= " << use("x2") << " * " << use("y2")<<";"<<endl;
+			vhdl << tab << declare("p00",36) << " <= x0 * y0;" << endl;
+			vhdl << tab << declare("p11",36) << " <= x1 * y1;" << endl;
+			vhdl << tab << declare("p22",36) << " <= x2 * y2;" << endl;
 			nextCycle();////////////////////////////////////////////////////////////
-			vhdl << tab << declare("tk_0",36) << " <= " << use("p00") << " - " << "(" << use("dx10") << " * " << use("dy10") << ");"<<endl;
-			vhdl << tab << declare("t2k_0",36) << " <= " << use("p11") << " - " << "(" << use("dx20") << " * " << use("dy20") << ");"<<endl;
-			vhdl << tab << declare("t3k_0",36) << " <= " << use("p22") << " - " << "(" << use("dx21") << " * " << use("dy21") << ");"<<endl;
+			vhdl << tab << declare("tk_0", 36) << " <= p00 - (dx10 * dy10);"<<endl;
+			vhdl << tab << declare("t2k_0",36) << " <= p11 - (dx20 * dy20);"<<endl;
+			vhdl << tab << declare("t3k_0",36) << " <= p22 - (dx21 * dy21);"<<endl;
 			nextCycle();////////////////////////////////////////////////////////////
-			vhdl << tab << declare("tk",36) << " <= " << use("tk_0") << " + " << use("p11") << ";" << endl;
-			vhdl << tab << declare("t2k_1",36) << " <= " << use("t2k_0") << " + " << use("p00") << ";" << endl;
-			vhdl << tab << declare("t3k",36) << " <= " << use("t3k_0") << " + " << use("p11") << ";" << endl;
+			vhdl << tab << declare("tk"   ,36) << " <= tk_0  + p11;" << endl;
+			vhdl << tab << declare("t2k_1",36) << " <= t2k_0 + p00;" << endl;
+			vhdl << tab << declare("t3k"  ,36) << " <= t3k_0 + p11;" << endl;
 			nextCycle();////////////////////////////////////////////////////////////
-			vhdl << tab << declare("s1_1",34) << " <= " << use("p22")<<range(33,0)<< " + (\"0\" & " << use("t3k")<<range(34,17)<<");"<<endl;
-			vhdl << tab << declare("t2k",36) << " <= " << use("t2k_1") << " + " << use("p22") << ";" << endl;
-			vhdl << tab << declare("s0",35) << " <= ( \"0\" & " << use("p00")<<range(33,17)<<") + " << use("tk")<<range(34,0) << ";" << endl;
-			vhdl << tab << declare("s1",51) << " <= " << use("s1_1") << " & " << use("t3k")<<range(16,0) << ";" << endl;
-			vhdl << tab << declare("finalSumLow_0",17) << " <= " << use("p00") << range(16,0) << ";" << endl;
+			vhdl << tab << declare("s1_1",34) << " <= p22"<<range(33,0)<< " + (\"0\" & t3k"<<range(34,17)<<");"<<endl;
+			vhdl << tab << declare("t2k" ,36) << " <= t2k_1 + p22;" << endl;
+			vhdl << tab << declare("s0"  ,35) << " <= ( \"0\" & p00"<<range(33,17)<<") + tk"<<range(34,0) << ";" << endl;
+			vhdl << tab << declare("s1"  ,51) << " <= s1_1 & t3k"<<range(16,0) << ";" << endl;
+			vhdl << tab << declare("finalSumLow_0",17) << " <= p00" << range(16,0) << ";" << endl;
 			nextCycle();////////////////////////////////////////////////////////////
-			vhdl << tab << declare("finalSumLow_1",17) << " <= " << use("s0") << range(16,0) << ";" << endl;
-			vhdl << tab << declare("l5_0",18) << " <= " << "( \"0\" & " << use("s0")<<range(33,17)<<") + (\"0\" & " << use("t2k")<<range(16,0)<<");"<<endl;
-			vhdl << tab << declare("l5_1",27) << " <= " << "( \"0\" & " << use("s1")<<range(25,0)<<") + ("<< zg(7,0) << " & " << use("t2k")<<range(35,17)<< ") + " << use("s0") << of(34) <<";"<<endl;
-			vhdl << tab << declare("l5_2",25) << " <= " << use("s1") << range(50,26) << ";" << endl;
+			vhdl << tab << declare("finalSumLow_1",17) << " <= s0" << range(16,0) << ";" << endl;
+			vhdl << tab << declare("l5_0",18) << " <= ( \"0\" & s0"<<range(33,17)<<") + (\"0\" & t2k"<<range(16,0)<<");"<<endl;
+			vhdl << tab << declare("l5_1",27) << " <= ( \"0\" & s1"<<range(25,0)<<") + ("<< zg(7,0) << " & t2k"<<range(35,17)<< ") + s0"<< of(34) <<";"<<endl;
+			vhdl << tab << declare("l5_2",25) << " <= s1" << range(50,26) << ";" << endl;
 			nextCycle();////////////////////////////////////////////////////////////
-			vhdl << tab << declare("finalSumLow_2",17) << " <= " << use("l5_0") << range(16,0) << ";" << endl;
-			vhdl << tab << declare("l6_0",27) << " <= " << use("l5_1")<< " + (\"0\" & " << use("l5_0")<<range(17,17) << ");" << endl;		
-			vhdl << tab << declare("l6_1",25) << " <= " << use("l5_2") << ";" << endl;
+			vhdl << tab << declare("finalSumLow_2",17) << " <= l5_0" << range(16,0) << ";" << endl;
+			vhdl << tab << declare("l6_0",27) << " <= l5_1 + (\"0\" & l5_0"<<range(17,17) << ");" << endl;		
+			vhdl << tab << declare("l6_1",25) << " <= l5_2;" << endl;
 			nextCycle();////////////////////////////////////////////////////////////
 				
-			vhdl << tab << declare("finalSumLow_3",26) << " <= " << use("l6_0")<<range(25,0) << ";" << endl;
-			vhdl << tab << declare("finalSumLow_4",25) << " <= " << use("l6_1") << " + " << use("l6_0")<<of(26) << ";" << endl;
+			vhdl << tab << declare("finalSumLow_3",26) << " <= l6_0"<<range(25,0) << ";" << endl;
+			vhdl << tab << declare("finalSumLow_4",25) << " <= l6_1 + l6_0"<<of(26) << ";" << endl;
 		
 			if (102-2*wIn < 17){                        
-				vhdl << tab << " R <= " << use("finalSumLow_4") << " & " 
-					  << use("finalSumLow_3") << " & " 
-					  << use("finalSumLow_2") << " & " 
-					  << use("finalSumLow_1") << " & " 
-					  << use("finalSumLow_0")<<range(16, 102-2*wIn) << ";" << endl;
+				vhdl << tab << " R <= finalSumLow_4 & finalSumLow_3 & finalSumLow_2 & finalSumLow_1 & finalSumLow_0"<<range(16, 102-2*wIn) << ";" << endl;
 			}else{
-				vhdl << tab << " R <= " << use("finalSumLow_4") << " & " 
-					  << use("finalSumLow_3") << " & " 
-					  << use("finalSumLow_2") << " & " 
-					  << use("finalSumLow_1") << range(16, 102-2*wIn-17) << ";" << endl;
+				vhdl << tab << " R <= finalSumLow_4 & finalSumLow_3 & finalSumLow_2 & finalSumLow_1" << range(16, 102-2*wIn-17) << ";" << endl;
 			}
 		}
 	}
