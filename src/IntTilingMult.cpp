@@ -1496,7 +1496,7 @@ namespace flopoco{
 		
 		if(maxDSP >= (multX * multY) ){
 			fitMultiplicaication = true;
-			maxDSP = ((int)t1) * ((int)t2); //set the maximum number of DSPs to the multiplication size
+			maxDSP = multX * multY; //set the maximum number of DSPs to the multiplication size
 		}
 			
 		if (ratio == 1){
