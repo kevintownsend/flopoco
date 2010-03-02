@@ -1,3 +1,15 @@
+/*
+  This file is part of the FloPoCo project developed by the Arenaire
+  team at Ecole Normale Superieure de Lyon
+  
+  Author : Florent de Dinechin, Florent.de.Dinechin@ens-lyon.fr
+
+  Initial software.
+  Copyright © ENS-Lyon, INRIA, CNRS, UCBL,  
+  CeCILL License, 2008-2010.
+*/
+
+
 #include <iostream>
 #include <math.h>
 #include <cstdlib>

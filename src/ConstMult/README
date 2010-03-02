@@ -6,3 +6,5 @@ The class ShiftAddOp defines such an operation.
 The class ShiftAddDag defines a directed acyclic graph (DAG) of such operations.
 The class IntConstMult builds such a DAG for integer multiplication. It inherits Operator.
 The class FPConstMult builds an FP constant multiplier using an IntConstMult for the mantissas.
+
+The *KCM* classes implement the table-based KCM method.
