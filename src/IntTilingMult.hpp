@@ -70,7 +70,7 @@ namespace flopoco{
 		 * @param dspCount the number of DSP blocks in the configuration
 		 */
 		void initTiling(DSP** &config, int dspCount);
-	
+		void initTiling2(DSP** &config, int dspCount);
 		/**
 		 * This function returns the amount of extra displacemnet on the tiling board that a dsp block can have on vertical axis
 		 * @return extra height

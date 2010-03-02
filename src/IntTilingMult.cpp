@@ -474,9 +474,8 @@ namespace flopoco{
 	
 	
 		numberDSP4Overlap=nrDSPs;
-		initTiling(globalConfig,nrDSPs);	
-		
-			
+		initTiling2(globalConfig,nrDSPs);	
+		 
 		//~ for(int i=1;i<nrDSPs;i++)	
 			//~ {
 				//~ globalConfig[i]->resetPosition();
@@ -1793,7 +1792,7 @@ namespace flopoco{
 					config[i]->getBottomLeftCorner(xbl2, ybl2);
 					//cout<<index<<" "<<i<<" "<<xbl1<<" "<<xtr2<<endl;
 					if (((xbl1 < xbl2) && (ytr2 > ybl1)) || 	// config[index] is above and to the right of config[i]
-						  (xbl1 < xtr2)) 							// config[index] is to the right of config[i]
+						  ((xbl1 < xtr2) && (ybl1 < ybl2))) 							// config[index] is to the right of config[i]
 						return true;
 			
 				
@@ -2007,15 +2006,15 @@ namespace flopoco{
 				
 			}
 			
-			//~ cout<<endl<<"index "<<index<<" ";
-			//~ config[index]->resetPosition();
-			//~ do
-			//~ {
-				//~ pos = config[index]->pop();
-				//~ if(pos>=0)
-				//~ cout<<" ("<<config[index]->Xpositions[pos]<<" , "<<config[index]->Ypositions[pos]<<")";	
-			//~ }while(pos>=0);
-			//~ cout<<endl;
+			cout<<endl<<"index "<<index<<" ";
+			config[index]->resetPosition();
+			do
+			{
+				 pos = config[index]->pop();
+				 if(pos>=0)
+				 cout<<" ("<<config[index]->Xpositions[pos]<<" , "<<config[index]->Ypositions[pos]<<")";	
+			}while(pos>=0);
+			cout<<endl;
 			
 			
 			
@@ -2128,14 +2127,15 @@ namespace flopoco{
 		nrOfShifts4Virtex=4;
 		
 		for (int i=0; i<nrDSPs; i++)
-			{
-				config[i] = NULL;
-			}
+		{
+			config[i] = NULL;
+		}
 		for (int i=0; i<dspCount; i++)
 		{
 			if(verbose)
 				cout << "initTiling : iteration #" << i << endl; 
 			config[i] = target_->createDSP();						
+			
 			
 			config[i]->allocatePositions(3*i); // each DSP offers 8 positions
 			if(!replace(config, i))
@@ -2147,6 +2147,93 @@ namespace flopoco{
 			}
 		}
 		
+	}
+	
+	void IntTilingMult::initTiling2(DSP** &config, int dspCount)
+	{
+		nrOfShifts4Virtex =2; 
+		int w, h;
+		target_->getDSPWidths(w, h);
+		int min = h;
+		
+		if(w < h)
+		{
+			min = w;
+			w = h;
+			h = min;
+		}	
+		
+		config = new DSP*[nrDSPs];
+		for (int i=0; i<nrDSPs; i++)
+		{	
+			config[i] = NULL;
+		}
+		
+		if ((vm < 2*min) || (vn < 2*min))
+		{
+			for (int i=0; i<dspCount; i++)
+			{
+				config[i] = target_->createDSP();
+				config[i]->allocatePositions(3*i); // each DSP offers 3 positions
+				if(!replace(config, i))
+				{
+					w=config[i]->getMaxMultiplierWidth();
+					h= config[i]->getMaxMultiplierHeight();
+					config[i]->setTopRightCorner(vn, vm);
+					config[i]->setBottomLeftCorner(vn+w, vm+h);
+				}
+			}
+			return;
+		}
+		
+		bool singleDSP = false;
+		if (nrDSPs % 2 == 1)
+			singleDSP = true;
+			
+		dspCount = nrDSPs = (int) ceil((double) dspCount/2);
+		
+		int shift = 0;
+		if ((target_->getID() == "Virtex4") || (target_->getID() == "Virtex5"))
+			shift = 17;
+		
+		if (singleDSP)
+		{ // allocate single DSP
+			config[0] = target_->createDSP();
+			if(!replace(config, 0))
+			{
+				int w=config[0]->getMaxMultiplierWidth();
+				int h= config[0]->getMaxMultiplierHeight();
+				config[0]->setTopRightCorner(vn, vm);
+				config[0]->setBottomLeftCorner(vn+w, vm+h);
+			}
+			
+		}
+		else
+		{ // allocate DSP pair
+			config[0] = new DSP(shift, w, h*2);
+			if(!replace(config, 0))
+			{
+				int w=config[0]->getMaxMultiplierWidth();
+				int h= config[0]->getMaxMultiplierHeight();
+				config[0]->setTopRightCorner(vn, vm);
+				config[0]->setBottomLeftCorner(vn+w, vm+h*2);
+			}
+			
+		}	
+		
+		
+		for (int i=1; i<dspCount; i++)
+		{
+			config[i] = new DSP(shift, w, h*2);	
+			config[i]->allocatePositions(3*i); // each DSP offers 3 positions
+			if(!replace(config, i))
+			{
+				int w=config[i]->getMaxMultiplierWidth();
+				int h= config[i]->getMaxMultiplierHeight();
+				config[i]->setTopRightCorner(vn, vm);
+				config[i]->setBottomLeftCorner(vn+w, vm+h*2);
+			}
+		}
 	}
 	
 	DSP** IntTilingMult::neighbour(DSP** config)
