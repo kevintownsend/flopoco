@@ -8,6 +8,8 @@
 
 #include "Operator.hpp"
 #include "IntCompressorTree.hpp"
+#include "IntNAdder.hpp"
+#include "IntAdder.hpp"
 
 
 namespace flopoco{

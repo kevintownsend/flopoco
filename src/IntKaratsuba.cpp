@@ -38,6 +38,9 @@ using namespace std;
 
 namespace flopoco{
 
+//#define OPT 0
+#define NADD
+
 	extern vector<Operator*> oplist;
 
 	IntKaratsuba:: IntKaratsuba(Target* target, int wIn) :
@@ -167,7 +170,6 @@ namespace flopoco{
 			vhdl << tab << declare ("y1", 18) << " <= \"0\" & sY" << range(33,17) << ";" << endl;
 			vhdl << tab << declare ("y2", 18) << " <= \"0\" & sY" << range(50,34) << ";" << endl;
 			vhdl << tab << declare ("y3", 18) << " <= \"0\" & sY" << range(67,51) << ";" << endl;
-			nextCycle();////////////////////////////////////////////////////////////
 			//precomputing
 			vhdl << tab << declare ("dx10", 18) << " <= x1 - x0;" << endl;
 			vhdl << tab << declare ("dx20", 18) << " <= x2 - x0;" << endl;
@@ -194,28 +196,119 @@ namespace flopoco{
 			vhdl << tab << declare("p32",36) << " <= dx32 * dy32;" << endl;
 
 			nextCycle();////////////////////////////////////////////////////////////
+//#ifdef OPT
+//			vhdl << tab << declare("np20",36) << " <= not ( p20 );"<<endl;
+//			vhdl << tab << declare("np10",36) << " <= not ( p10 );"<<endl;
+//			vhdl << tab << declare("np30",36) << " <= not ( p30 );"<<endl;
+//			vhdl << tab << declare("np31",36) << " <= not ( p31 );"<<endl;
+//			vhdl << tab << declare("np32",36) << " <= not ( p32 );"<<endl;
+//			vhdl << tab << declare("np00",36) << " <= not ( p00 );"<<endl;
+//#endif
 			vhdl << tab << declare("t1k_0",36) << " <= p00 + (x1 * y1);"<<endl;
 			vhdl << tab << declare("p30",36)   << " <= p21 + (dx30 * dy30);" << endl;
 			nextCycle();////////////////////////////////////////////////////////////
+
+//#ifdef OPT
+//			vhdl << tab << declare("nt1k_0",36) << " <= not ( t1k_0 );"<<endl;
+//#endif
+
 			vhdl << tab << declare("t2k_0",36) << " <= t1k_0 + (x2 * y2);"<<endl;
-			vhdl << tab << declare("t1k_1",36) << " <= t1k_0 - p10;"<<endl;
 			nextCycle();////////////////////////////////////////////////////////////
+
+//#ifdef OPT
+//			vhdl << tab << declare("nt2k_0",36) << " <= not ( t2k_0 );"<<endl;
+//#endif
 			vhdl << tab << declare("t3k_0",36) << " <= t2k_0 + (x3 * y3);"<<endl;
-			vhdl << tab << declare("t2k_1",36) << " <= t2k_0 - p20;"<<endl;
 			nextCycle();////////////////////////////////////////////////////////////
+
+//#ifdef OPT
+//			bool pipe = target->isPipelined();
+//			target->setNotPipelined();
+//			IntAdder *a0 = new IntAdder(target, 36);
+//			oplist.push_back(a0);
+//			
+//			if (pipe)
+//				target->setPipelined();
+//			else
+//				target->setNotPipelined();
+//			
+//			combinatorialOperator = not(target->isPipelined());	
+
+//			inPortMap( a0, "X", "t2k_0");
+//			inPortMap( a0, "Y", "np20");
+//			inPortMapCst( a0, "Cin", "'1'");
+//			outPortMap(a0, "R", "t2k_1");
+//			vhdl << instance( a0, "adder0");
+
+//			inPortMap( a0, "X", "t1k_0");
+//			inPortMap( a0, "Y", "np10");
+//			inPortMapCst( a0, "Cin", "'1'");
+//			outPortMap(a0, "R", "t1k_1");
+//			vhdl << instance( a0, "adder1");
+//#else					
+			vhdl << tab << declare("t2k_1",36) << " <= t2k_0 - p20;"<<endl;
+			vhdl << tab << declare("t1k_1",36) << " <= t1k_0 - p10;"<<endl;
+//#endif
+			nextCycle();////////////////////////////////////////////////////////////
+
+//#ifdef OPT
+//			inPortMap( a0, "X", "t3k_0");
+//			inPortMap( a0, "Y", "np30");
+//			inPortMapCst( a0, "Cin", "'1'");
+//			outPortMap(a0, "R", "t3k_1");
+//			vhdl << instance( a0, "adder2");
+
+//			inPortMap( a0, "X", "t3k_0");
+//			inPortMap( a0, "Y", "np00");
+//			inPortMapCst( a0, "Cin", "'1'");
+//			outPortMap(a0, "R", "t4k_0");
+//			vhdl << instance( a0, "adder3");
+
+//			inPortMap( a0, "X", "t3k_0");
+//			inPortMap( a0, "Y", "nt1k_0");
+//			inPortMapCst( a0, "Cin", "'1'");
+//			outPortMap(a0, "R", "t5k_0");
+//			vhdl << instance( a0, "adder4");
+
+//			inPortMap( a0, "X", "t3k_0");
+//			inPortMap( a0, "Y", "nt2k_0");
+//			inPortMapCst( a0, "Cin", "'1'");
+//			outPortMap(a0, "R", "t6k_0");
+//			vhdl << instance( a0, "adder5");
+//#else
 			vhdl << tab << declare("t3k_1",36) << " <= t3k_0 - p30;"<<endl;
 			vhdl << tab << declare("t4k_0",36) << " <= t3k_0 - p00;"<<endl;
 			vhdl << tab << declare("t5k_0",36) << " <= t3k_0 - t1k_0;"<<endl;
 			vhdl << tab << declare("t6k_0",36) << " <= t3k_0 - t2k_0;"<<endl;
+//#endif
 			nextCycle();////////////////////////////////////////////////////////////
+
+//#ifdef OPT
+//			inPortMap( a0, "X", "t4k_0");
+//			inPortMap( a0, "Y", "np31");
+//			inPortMapCst( a0, "Cin", "'1'");
+//			outPortMap(a0, "R", "t4k_1");
+//			vhdl << instance( a0, "adder6");
+
+//			inPortMap( a0, "X", "t5k_0");
+//			inPortMap( a0, "Y", "np32");
+//			inPortMapCst( a0, "Cin", "'1'");
+//			outPortMap(a0, "R", "t5k_1");
+//			vhdl << instance( a0, "adder7");
+//#else
 			vhdl << tab << declare("t4k_1",36) << " <= t4k_0 - p31;"<<endl;
 			vhdl << tab << declare("t5k_1",36) << " <= t5k_0 - p32;"<<endl;
-
+//#endif
 			nextCycle();////////////////////////////////////////////////////////////
 
+
+#ifdef NADD
+			IntNAdder* c = new IntNAdder(target, 119, 7); //68*2 - 17
+			oplist.push_back(c);
+#else
 			IntCompressorTree* c = new IntCompressorTree(target, 119, 7); //68*2 - 17
 			oplist.push_back(c);
-
+#endif
 			vhdl << tab << declare("op0", 119) << " <= " << zg(100,0) << " & p00"<<range(35, 17) << ";" << endl;
 			vhdl << tab << declare("op1", 119) << " <= " << zg(83,0) << " & t1k_1"<<range(35, 0) << ";" << endl;
 			vhdl << tab << declare("op2", 119) << " <= " << zg(66,0) << " & t2k_1"<<range(35, 0) << " & " << zg(17,0) << ";" << endl;
@@ -231,6 +324,9 @@ namespace flopoco{
 			inPortMap( c, "X4", "op4");
 			inPortMap( c, "X5", "op5");
 			inPortMap( c, "X6", "op6");
+#ifdef NADD
+			inPortMapCst(c, "Cin", "'0'");
+#endif
 			outPortMap(c, "R", "addRes");
 			
 			vhdl << instance(c, "finalAdder");
