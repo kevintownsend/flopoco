@@ -228,24 +228,44 @@ namespace flopoco{
 		//~ initTiling(bestConfig,nrDSPs);
 		//~ initTiling(globalConfig,nrDSPs);
 	
-		//~ globalConfig[0]->setTopRightCorner(5,4);
-		//~ globalConfig[0]->setBottomLeftCorner(21,27);
-		//~ globalConfig[1]->setTopRightCorner(22,4);
-		//~ globalConfig[1]->setBottomLeftCorner(38,27);
-		//~ globalConfig[2]->setTopRightCorner(39,4);
-		//~ globalConfig[2]->setBottomLeftCorner(55,27);
-		//~ globalConfig[3]->setTopRightCorner(56,4);
-		//~ globalConfig[3]->setBottomLeftCorner(72,27);
-		//~ globalConfig[4]->setTopRightCorner(0,28);
-		//~ globalConfig[4]->setBottomLeftCorner(16,51);
-		//~ globalConfig[5]->setTopRightCorner(17,28);
-		//~ globalConfig[5]->setBottomLeftCorner(33,51);
-		//~ globalConfig[6]->setTopRightCorner(34,28);
-		//~ globalConfig[6]->setBottomLeftCorner(50,51);
-		//~ globalConfig[7]->setTopRightCorner(51,28);
-		//~ globalConfig[7]->setBottomLeftCorner(67,51);
 	
+		//Test The Configuration
+		//~ globalConfig[0] = target->createDSP();
+		//~ globalConfig[0]->setTopRightCorner(2,2);
+		//~ globalConfig[0]->setBottomLeftCorner(25,18);
+		//~ globalConfig[1] = target->createDSP();
+		//~ globalConfig[1]->setTopRightCorner(2,19);
+		//~ globalConfig[1]->setBottomLeftCorner(25,35);
+		//~ globalConfig[2] = target->createDSP();
+		//~ globalConfig[2]->rotate();
+		//~ globalConfig[2]->setTopRightCorner(2,36);
+		//~ globalConfig[2]->setBottomLeftCorner(18,59);
+		//~ globalConfig[3] = target->createDSP();
+		//~ globalConfig[3]->rotate();
+		//~ globalConfig[3]->setTopRightCorner(19,36);
+		//~ globalConfig[3]->setBottomLeftCorner(35,59);
 		
+		//~ globalConfig[4] = target->createDSP();
+		//~ globalConfig[4]->rotate();
+		//~ globalConfig[4]->setTopRightCorner(26,2);
+		//~ globalConfig[4]->setBottomLeftCorner(42,25);
+		//~ globalConfig[5] = target->createDSP();
+		//~ globalConfig[5]->rotate();
+		//~ globalConfig[5]->setTopRightCorner(43,2);
+		//~ globalConfig[5]->setBottomLeftCorner(59,25);
+		//~ globalConfig[6] = target->createDSP();
+		//~ globalConfig[6]->setTopRightCorner(36,26);
+		//~ globalConfig[6]->setBottomLeftCorner(59,42);
+		//~ globalConfig[7] = target->createDSP();
+		//~ globalConfig[7]->setTopRightCorner(36,43);
+		//~ globalConfig[7]->setBottomLeftCorner(59,59);
+		
+		//~ display(globalConfig);
+		//~ cout<<endl<<"This is the target configuration"<<endl;
+		//~ compareCost();
+		//~ cout<<"The best score is "<<bestCost<<endl;
+		//~ display(bestConfig);
+	
 	
 	
 		//~ bestCost = 333222;
@@ -532,15 +552,15 @@ namespace flopoco{
 	
 		//dealocari
 	
-		for(int ii=0;ii<m;ii++)
-			delete[](mat[ii]);
+		//~ for(int ii=0;ii<m;ii++)
+			//~ delete[](mat[ii]);
 	
-		delete[] (mat);
+		//~ delete[] (mat);
 	
-		for(int ii=0;ii<nrDSPs;ii++)
-			free(tempc[ii]);
+		//~ for(int ii=0;ii<nrDSPs;ii++)
+			//~ free(tempc[ii]);
 	
-		delete[] (tempc);
+		//~ delete[] (tempc);
 	
 	}
 
@@ -1324,27 +1344,35 @@ namespace flopoco{
 	int IntTilingMult::bindDSPs4Virtex(DSP** &config)
 	{
 		int nrOfUsedDSPs=0;
-		for(int i=0;i<nrDSPs;i++)
+		
+		for(int i=0;i<nrDSPs;i++){
 			if(config[i]!=NULL)
 				{
 					nrOfUsedDSPs++;
 				}
+			//countsShift[i]=0;	
+			}
 		DSP* ref;
 	
 		sortDSPs(config);
 		
 			
 		int itx,ity,jtx,jty,ibx,iby;//,jbx,jby;
-		int count=0;
+		//int prev=0;
+			
+		//cout<<endl<<endl;	
+		int count;
 		
 		for(int i=0;i<nrDSPs;i++)
 			{
-				count =0;
+				
 				if(config[i]!=NULL)
 					{
 						ref=config[i];
+						count=0;
 						bool ver=true;
-						while(ver==true&&ref->getShiftOut()==NULL && count <nrOfShifts4Virtex)
+						//while(ver==true&&ref->getShiftOut()==NULL && countsShift[prev] <nrOfShifts4Virtex-1)
+						while(ver==true&&ref->getShiftOut()==NULL && count <nrOfShifts4Virtex-1)
 							{
 								ver=false;
 								ref->getTopRightCorner(itx,ity);
@@ -1360,12 +1388,16 @@ namespace flopoco{
 												//config[j]->getBottomLeftCorner(jbx,jby);
 												if(jtx==ibx+1&&jty==ity&&ref->getMaxMultiplierWidth()==config[j]->getShiftAmount()&&config[j]->getShiftIn()==NULL)
 													{
+														//cout<<"DSP #"<<i<<" bind with DSP# "<<j<<endl;
 														ver=true;
 														ref->setShiftOut(config[j]);
 														config[j]->setShiftIn(ref);
 														nrOfUsedDSPs--;
 														ref=config[j];
 														count++;
+														//~ countsShift[prev]++;
+														//~ countsShift[j] = countsShift[prev];
+														//~ prev = j;								
 													}
 											}
 									}
@@ -1379,12 +1411,16 @@ namespace flopoco{
 												//config[j]->getBottomLeftCorner(jbx,jby);
 												if(iby+1==jty&&itx==jtx&&ref->getMaxMultiplierHeight()==config[j]->getShiftAmount()&&config[j]->getShiftIn()==NULL)
 													{
+														//cout<<"DSP #"<<i<<" bind with DSP# "<<j<<endl;
 														ver=true;
 														ref->setShiftOut(config[j]);
 														config[j]->setShiftIn(ref);
 														nrOfUsedDSPs--;
 														ref=config[j];								
 														count++;
+														//~ countsShift[prev]++;
+														//~ countsShift[j] = countsShift[prev];
+														//~ prev = j;
 													}
 							
 											}						
@@ -2125,7 +2161,7 @@ namespace flopoco{
 		int w,h; 
 		config = new DSP*[nrDSPs];
 		nrOfShifts4Virtex=4;
-		
+		//countsShift = new int[nrDSPs];
 		for (int i=0; i<nrDSPs; i++)
 		{
 			config[i] = NULL;
@@ -2949,6 +2985,15 @@ namespace flopoco{
 		//~ }
 	
 		//~ cout<<"gata"<<endl;
+		
+		//~ for(int i=0;i<nrDSPs;i++)
+		//~ {
+			//~ if(config[i]->getShiftOut()!=NULL)
+			//~ {
+				//~ config[i]->getShiftOut()->getTopRightCorner(n,m);
+				//~ cout<<"There is a shift connection from DSP# "<<i<<" to DSP with coordinates "<<n<<","<<m<<endl;
+			//~ }
+		//~ }
 	
 		for(int ii=0;ii<m;ii++)
 			delete[](mat[ii]);
