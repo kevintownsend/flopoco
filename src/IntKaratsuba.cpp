@@ -184,121 +184,42 @@ namespace flopoco{
 			vhdl << tab << declare ("dy30", 18) << " <= y3 - y0;" << endl;
 			vhdl << tab << declare ("dy31", 18) << " <= y3 - y1;" << endl;
 			vhdl << tab << declare ("dy32", 18) << " <= y3 - y2;" << endl;
-
-			nextCycle();////////////////////////////////////////////////////////////
+			
 
 			//computing
 			vhdl << tab << declare("p00",36) << " <= x0 * y0;" << endl;
+			nextCycle();////////////////////////////////////////////////////////////
+
 			vhdl << tab << declare("p10",36) << " <= dx10 * dy10;" << endl;
 			vhdl << tab << declare("p20",36) << " <= dx20 * dy20;" << endl;
 			vhdl << tab << declare("p21",36) << " <= dx21 * dy21;" << endl;
 			vhdl << tab << declare("p31",36) << " <= dx31 * dy31;" << endl;
 			vhdl << tab << declare("p32",36) << " <= dx32 * dy32;" << endl;
+			vhdl << tab << declare("p30",36) << " <= dx30 * dy30;" << endl;
 
-			nextCycle();////////////////////////////////////////////////////////////
-//#ifdef OPT
-//			vhdl << tab << declare("np20",36) << " <= not ( p20 );"<<endl;
-//			vhdl << tab << declare("np10",36) << " <= not ( p10 );"<<endl;
-//			vhdl << tab << declare("np30",36) << " <= not ( p30 );"<<endl;
-//			vhdl << tab << declare("np31",36) << " <= not ( p31 );"<<endl;
-//			vhdl << tab << declare("np32",36) << " <= not ( p32 );"<<endl;
-//			vhdl << tab << declare("np00",36) << " <= not ( p00 );"<<endl;
-//#endif
 			vhdl << tab << declare("t1k_0",36) << " <= p00 + (x1 * y1);"<<endl;
-			vhdl << tab << declare("p30",36)   << " <= p21 + (dx30 * dy30);" << endl;
+
 			nextCycle();////////////////////////////////////////////////////////////
-
-//#ifdef OPT
-//			vhdl << tab << declare("nt1k_0",36) << " <= not ( t1k_0 );"<<endl;
-//#endif
-
 			vhdl << tab << declare("t2k_0",36) << " <= t1k_0 + (x2 * y2);"<<endl;
-			nextCycle();////////////////////////////////////////////////////////////
+//			vhdl << tab << declare("p30",36)   << " <= p21 + (dx30 * dy30);" << endl;
+			vhdl << tab << declare("t3k_x",36)   << " <= p21 + p30;" << endl;
 
-//#ifdef OPT
-//			vhdl << tab << declare("nt2k_0",36) << " <= not ( t2k_0 );"<<endl;
-//#endif
+			nextCycle();////////////////////////////////////////////////////////////
 			vhdl << tab << declare("t3k_0",36) << " <= t2k_0 + (x3 * y3);"<<endl;
 			nextCycle();////////////////////////////////////////////////////////////
+			vhdl << tab << declare("t2k_1",37) << " <= (t2k_0 & \"0\") - (p20 & \"0\");"<<endl;
+			vhdl << tab << declare("t1k_1",37) << " <= (t1k_0 & \"0\") - (p10 & \"0\");"<<endl;
 
-//#ifdef OPT
-//			bool pipe = target->isPipelined();
-//			target->setNotPipelined();
-//			IntAdder *a0 = new IntAdder(target, 36);
-//			oplist.push_back(a0);
-//			
-//			if (pipe)
-//				target->setPipelined();
-//			else
-//				target->setNotPipelined();
-//			
-//			combinatorialOperator = not(target->isPipelined());	
-
-//			inPortMap( a0, "X", "t2k_0");
-//			inPortMap( a0, "Y", "np20");
-//			inPortMapCst( a0, "Cin", "'1'");
-//			outPortMap(a0, "R", "t2k_1");
-//			vhdl << instance( a0, "adder0");
-
-//			inPortMap( a0, "X", "t1k_0");
-//			inPortMap( a0, "Y", "np10");
-//			inPortMapCst( a0, "Cin", "'1'");
-//			outPortMap(a0, "R", "t1k_1");
-//			vhdl << instance( a0, "adder1");
-//#else					
-			vhdl << tab << declare("t2k_1",36) << " <= t2k_0 - p20;"<<endl;
-			vhdl << tab << declare("t1k_1",36) << " <= t1k_0 - p10;"<<endl;
-//#endif
 			nextCycle();////////////////////////////////////////////////////////////
 
-//#ifdef OPT
-//			inPortMap( a0, "X", "t3k_0");
-//			inPortMap( a0, "Y", "np30");
-//			inPortMapCst( a0, "Cin", "'1'");
-//			outPortMap(a0, "R", "t3k_1");
-//			vhdl << instance( a0, "adder2");
-
-//			inPortMap( a0, "X", "t3k_0");
-//			inPortMap( a0, "Y", "np00");
-//			inPortMapCst( a0, "Cin", "'1'");
-//			outPortMap(a0, "R", "t4k_0");
-//			vhdl << instance( a0, "adder3");
-
-//			inPortMap( a0, "X", "t3k_0");
-//			inPortMap( a0, "Y", "nt1k_0");
-//			inPortMapCst( a0, "Cin", "'1'");
-//			outPortMap(a0, "R", "t5k_0");
-//			vhdl << instance( a0, "adder4");
-
-//			inPortMap( a0, "X", "t3k_0");
-//			inPortMap( a0, "Y", "nt2k_0");
-//			inPortMapCst( a0, "Cin", "'1'");
-//			outPortMap(a0, "R", "t6k_0");
-//			vhdl << instance( a0, "adder5");
-//#else
-			vhdl << tab << declare("t3k_1",36) << " <= t3k_0 - p30;"<<endl;
-			vhdl << tab << declare("t4k_0",36) << " <= t3k_0 - p00;"<<endl;
-			vhdl << tab << declare("t5k_0",36) << " <= t3k_0 - t1k_0;"<<endl;
-			vhdl << tab << declare("t6k_0",36) << " <= t3k_0 - t2k_0;"<<endl;
-//#endif
+			vhdl << tab << declare("t3k_1",37) << " <= (t3k_0 & \"0\") - (t3k_x & \"0\");"<<endl;
+			vhdl << tab << declare("t4k_0",37) << " <= (t3k_0 & \"0\") - (p00 & \"0\");"<<endl;
+			vhdl << tab << declare("t5k_0",37) << " <= (t3k_0 & \"0\") - (t1k_0 & \"0\");"<<endl;
+			vhdl << tab << declare("t6k_0",37) << " <= (t3k_0 & \"0\") - (t2k_0 & \"0\");"<<endl;
 			nextCycle();////////////////////////////////////////////////////////////
 
-//#ifdef OPT
-//			inPortMap( a0, "X", "t4k_0");
-//			inPortMap( a0, "Y", "np31");
-//			inPortMapCst( a0, "Cin", "'1'");
-//			outPortMap(a0, "R", "t4k_1");
-//			vhdl << instance( a0, "adder6");
-
-//			inPortMap( a0, "X", "t5k_0");
-//			inPortMap( a0, "Y", "np32");
-//			inPortMapCst( a0, "Cin", "'1'");
-//			outPortMap(a0, "R", "t5k_1");
-//			vhdl << instance( a0, "adder7");
-//#else
-			vhdl << tab << declare("t4k_1",36) << " <= t4k_0 - p31;"<<endl;
-			vhdl << tab << declare("t5k_1",36) << " <= t5k_0 - p32;"<<endl;
-//#endif
+			vhdl << tab << declare("t4k_1",37) << " <= (t4k_0(36 downto 1) & \"0\") - (p31 & \"0\");"<<endl;
+			vhdl << tab << declare("t5k_1",37) << " <= (t5k_0(36 downto 1) & \"0\") - (p32 & \"0\");"<<endl;
 			nextCycle();////////////////////////////////////////////////////////////
 
 
@@ -310,12 +231,12 @@ namespace flopoco{
 			oplist.push_back(c);
 #endif
 			vhdl << tab << declare("op0", 119) << " <= " << zg(100,0) << " & p00"<<range(35, 17) << ";" << endl;
-			vhdl << tab << declare("op1", 119) << " <= " << zg(83,0) << " & t1k_1"<<range(35, 0) << ";" << endl;
-			vhdl << tab << declare("op2", 119) << " <= " << zg(66,0) << " & t2k_1"<<range(35, 0) << " & " << zg(17,0) << ";" << endl;
-			vhdl << tab << declare("op3", 119) << " <= " << zg(49,0) << " & t3k_1"<<range(35, 0) << " & " << zg(34,0) << ";" << endl;
-			vhdl << tab << declare("op4", 119) << " <= " << zg(32,0) << " & t4k_1"<<range(35, 0) << " & " << zg(51,0) << ";" << endl;
-			vhdl << tab << declare("op5", 119) << " <= " << zg(15,0) << " & t5k_1"<<range(35, 0) << " & " << zg(68,0) << ";" << endl;
-			vhdl << tab << declare("op6", 119) << " <= " << "t6k_0"<<range(33, 0) << " & " << zg(85,0) << ";" << endl;
+			vhdl << tab << declare("op1", 119) << " <= " << zg(83,0) << " & t1k_1"<<range(36, 1) << ";" << endl;
+			vhdl << tab << declare("op2", 119) << " <= " << zg(66,0) << " & t2k_1"<<range(36, 1) << " & " << zg(17,0) << ";" << endl;
+			vhdl << tab << declare("op3", 119) << " <= " << zg(49,0) << " & t3k_1"<<range(36, 1) << " & " << zg(34,0) << ";" << endl;
+			vhdl << tab << declare("op4", 119) << " <= " << zg(32,0) << " & t4k_1"<<range(36, 1) << " & " << zg(51,0) << ";" << endl;
+			vhdl << tab << declare("op5", 119) << " <= " << zg(15,0) << " & t5k_1"<<range(36, 1) << " & " << zg(68,0) << ";" << endl;
+			vhdl << tab << declare("op6", 119) << " <= " << "t6k_0"<<range(34, 1) << " & " << zg(85,0) << ";" << endl;
 
 			inPortMap( c, "X0", "op0");
 			inPortMap( c, "X1", "op1");
