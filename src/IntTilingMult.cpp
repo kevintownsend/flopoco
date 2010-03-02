@@ -75,6 +75,7 @@ namespace flopoco{
 		addInput ("	Y", wInY);
 		addOutput("R", wOut); /* wOut = wInX + wInY */
 		
+		nrOfShifts4Virtex=4;
 		nrDSPs = estimateDSPs();
 		cout<<"Estimated DSPs:= "<<nrDSPs <<endl;
 		int x,y;
@@ -1335,14 +1336,16 @@ namespace flopoco{
 		
 			
 		int itx,ity,jtx,jty,ibx,iby;//,jbx,jby;
+		int count=0;
 		
 		for(int i=0;i<nrDSPs;i++)
 			{
+				count =0;
 				if(config[i]!=NULL)
 					{
 						ref=config[i];
 						bool ver=true;
-						while(ver==true&&ref->getShiftOut()==NULL)
+						while(ver==true&&ref->getShiftOut()==NULL && count <nrOfShifts4Virtex)
 							{
 								ver=false;
 								ref->getTopRightCorner(itx,ity);
@@ -1363,6 +1366,7 @@ namespace flopoco{
 														config[j]->setShiftIn(ref);
 														nrOfUsedDSPs--;
 														ref=config[j];
+														count++;
 													}
 											}
 									}
@@ -1381,6 +1385,7 @@ namespace flopoco{
 														config[j]->setShiftIn(ref);
 														nrOfUsedDSPs--;
 														ref=config[j];								
+														count++;
 													}
 							
 											}						
@@ -1745,7 +1750,7 @@ namespace flopoco{
 		
 		
 		
-		long area = (vn - minX) * (vm -minY) + w * (vm- y);
+		long area = (vn - minX+w-1) * (vm -minY+h-1) + w * (vm- y);
 		//cout<<" area "<<area<<" ";
 		int dsplimit = (int)ceil( ((double)area) / (w*h) );
 		//cout<<" limit "<<dsplimit<<" nrrest "<<numberDSP4Overlap<<endl;
@@ -2120,6 +2125,7 @@ namespace flopoco{
 	{
 		int w,h; 
 		config = new DSP*[nrDSPs];
+		nrOfShifts4Virtex=4;
 		
 		for (int i=0; i<nrDSPs; i++)
 			{
