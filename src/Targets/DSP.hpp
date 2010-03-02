@@ -43,7 +43,7 @@ namespace flopoco{
 			fixedShift_ = 0;
 			nrAdders_ = 1;
 			multAccumulate_ = false;
-			posPop = posPush = max_pos=0;
+			posPop = posPush = max_pos=availablepos=0;
 		}
 	
 		DSP(int Shift,int maxMultWidth,int maxMultHeight);
@@ -169,6 +169,8 @@ namespace flopoco{
 		int pop();
 		void setPosition(int p);
 		void resetPosition();
+		int getAvailablePositions();
+		int getCurrentPosition();
 		
 		int *Xpositions;
 		int *Ypositions;
@@ -201,7 +203,7 @@ namespace flopoco{
 		int posPop;
 		int posPush;
 		int max_pos;
-
+		int availablepos;
 	};
 
 }

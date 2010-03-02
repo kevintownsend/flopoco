@@ -212,7 +212,7 @@ namespace flopoco{
 		float temp(float f);
 		float probability(float e, float enew, float t);
 		void simulatedAnnealing();
-		
+		int numberDSP4Overlap;
 	};
 }
 

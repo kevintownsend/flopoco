@@ -50,10 +50,12 @@ namespace flopoco{
 		addOperands_ = ops;
 		shiftIn_ = NULL;
 		shiftOut_ = NULL;
+		posPop = posPush = max_pos=availablepos=0;
 	}
 
 	void DSP::allocatePositions(int dimension){
 		max_pos=dimension;
+		availablepos=0;
 		posPop = posPush =0;
 		Xpositions = new int[dimension];
 		Ypositions = new int[dimension];
@@ -61,17 +63,47 @@ namespace flopoco{
 	
 	void DSP::push(int X,int Y)
 	{
+		int p=availablepos,tx,ty;
+		//bool ver=true;
+		for(int i=0;i<availablepos;i++)
+		{
+			if( p==availablepos&& (Xpositions[i]>X || (Xpositions[i] == X &&  Ypositions[i]>Y) ))
+				p=i;			
+			if(X == Xpositions[i] && Y == Ypositions[i])
+				return ;
+		}	
+		
+		//cout<<p<<" "<<X<<" "<<Y<<endl;
+		
 		if(posPush<max_pos)
 			{
+				if(p<availablepos){
+				tx = Xpositions[p];
+				ty = Ypositions[p];
+				Xpositions[p]=X;
+				Ypositions[p]=Y;
+				X=tx;
+				Y=ty;
+				for(int i =p+1;i<availablepos;i++)
+				{
+				tx = Xpositions[i];
+				ty = Ypositions[i];
+				Xpositions[i]=X;
+				Ypositions[i]=Y;
+				X=tx;
+				Y=ty;
+				}
+				}
 				Xpositions[posPush]=X;
 				Ypositions[posPush++]=Y;
+				availablepos++;
 			}
 	}
 	
 	int DSP::pop()
 	{
 		int temp=posPop;
-		if(temp<max_pos)
+		if(temp<availablepos)
 			{
 				posPop++;
 			}
@@ -85,12 +117,22 @@ namespace flopoco{
 	void DSP::setPosition(int p)
 	{
 		if (p<max_pos)
+		{
 			posPush = p;
+			availablepos=p;
+		}
 	}
 	
 	void DSP::resetPosition()
 	{
 		posPop = 0;
+	}
+	
+	int DSP::getAvailablePositions(){
+		return availablepos;
+	}
+	int DSP::getCurrentPosition(){
+		return posPop;
 	}
 	
 	int DSP::getMultiplierWidth(){

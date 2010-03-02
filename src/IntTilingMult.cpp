@@ -122,38 +122,44 @@ namespace flopoco{
 		
 		
 		//the one
-		//runAlgorithm();
+		runAlgorithm();
 		
-		//START SIMULATED ANNEALING -------------
-		counterfirst =0 ;
-		int n,m;
+		//~ //START SIMULATED ANNEALING -------------
+		//~ counterfirst =0 ;
+		//~ int n,m;
 
-		//~ n=wInX + 2* getExtraWidth();
-		//~ m=wInY + 2* getExtraHeight();
-
-		n=vn;
-		m=vm;
+		//~ n=vn;
+		//~ m=vm;
 	
-		mat = new int*[m];
-		for(int i=0;i<m;i++)
-			{
-				mat[i] = new int[n];
-				for(int j=0;j<n;j++)
-					mat[i][j]=0;
-			}
+		//~ mat = new int*[m];
+		//~ for(int i=0;i<m;i++)
+			//~ {
+				//~ mat[i] = new int[n];
+				//~ for(int j=0;j<n;j++)
+					//~ mat[i][j]=0;
+			//~ }
 		
-		tempc= new DSP*[nrDSPs];
-		for(int ii=0;ii<nrDSPs;ii++)
-			tempc[ii]= new DSP();
+		//~ tempc= new DSP*[nrDSPs];
+		//~ for(int ii=0;ii<nrDSPs;ii++)
+			//~ tempc[ii]= new DSP();
 
-		/*we will try the algorithm with 2 values of nrDSPs	
-		  One will be the estimated value(nrDSPs) and the second one will be nrDSPs-1	
-		*/
-		rot = new bool[nrDSPs];
-		for(int i =0;i<nrDSPs;i++)
-			rot[i]=false;
+		//~ /*we will try the algorithm with 2 values of nrDSPs	
+		  //~ One will be the estimated value(nrDSPs) and the second one will be nrDSPs-1	
+		//~ */
+		//~ rot = new bool[nrDSPs];
+		//~ for(int i =0;i<nrDSPs;i++)
+			//~ rot[i]=false;
 	
-		simulatedAnnealing();
+		//~ simulatedAnnealing();
+		
+		
+		
+		
+		//~ move(globalConfig,1);
+		//~ replace(globalConfig,2);
+		//~ replace(globalConfig,3);
+		//~ display(globalConfig);Pas
+		
 		
 	 
 		//~ globalConfig[0]->setTopRightCorner(19,0);
@@ -466,8 +472,9 @@ namespace flopoco{
 			rot[i]=false;
 	
 	
-	
+		numberDSP4Overlap=nrDSPs;
 		initTiling(globalConfig,nrDSPs);	
+		
 			
 		//~ for(int i=1;i<nrDSPs;i++)	
 			//~ {
@@ -496,6 +503,7 @@ namespace flopoco{
 	
 	
 		//the one
+		numberDSP4Overlap=nrDSPs;
 		tilingAlgorithm(nrDSPs-1,nrDSPs-1,false,nrDSPs-1);
 	
 		display(bestConfig);
@@ -524,15 +532,15 @@ namespace flopoco{
 	
 		//dealocari
 	
-		//~ for(int ii=0;ii<m;ii++)
-			//~ delete[](mat[ii]);
+		for(int ii=0;ii<m;ii++)
+			delete[](mat[ii]);
 	
-		//~ delete[] (mat);
+		delete[] (mat);
 	
-		//~ for(int ii=0;ii<nrDSPs;ii++)
-			//~ free(tempc[ii]);
+		for(int ii=0;ii<nrDSPs;ii++)
+			free(tempc[ii]);
 	
-		//~ delete[] (tempc);
+		delete[] (tempc);
 	
 	}
 
@@ -568,7 +576,7 @@ namespace flopoco{
 						//	cout<<"Pas __1 "<<i<<endl;
 						if(move(globalConfig,i)) // successfuly moved the last block
 							{
-								//~ cout<<" Pas 1_1 "<<i<<endl;
+								//cout<<" Pas 1_1 "<<i<<endl;
 								compareCost();
 								tilingAlgorithm(i,n,repl,i);		//repl should be false
 							}
@@ -635,10 +643,10 @@ namespace flopoco{
 						if(move(globalConfig,i)) // the current DSP was successfuly moved
 							{
 					//			cout<<"Pas 1_2 "<<i<<endl;
-								if(i==0){
+								if(i==1){
 									counterfirst++;
 									if(counterfirst%100==0)
-										cout<<counterfirst<<"DSP #1 has made 100 steps!"<<endl;
+										cout<<counterfirst<<"DSP #2 has made 100 steps!"<<endl;
 									//~ display(globalConfig);
 									//~ cout<<endl<<endl<<endl;
 				
@@ -1454,12 +1462,14 @@ namespace flopoco{
 	
 		float temp = computeCost(tempc);
 	
-		//~ cout<<"score temp is"<<temp<<" and current best is"<<bestCost<<endl;
+		//cout<<"score temp is"<<temp<<" and current best is"<<bestCost<<endl;
 	
 		if(temp < bestCost)
 			{
 				//~ cout<<"Costul e mai bun la cel curent!Schimba"<<endl;
+				
 				//cout<<"Interchange! Score for current is"<<temp<<" and current best is"<<bestCost<<endl;
+				
 				//~ int c1X,c2X,c1Y,c2Y;
 				//~ int n=wInX + 2* getExtraWidth();
 				//~ tempc[0]->getTopRightCorner(c1X,c1Y);
@@ -1483,11 +1493,12 @@ namespace flopoco{
 				{
 					//cout<<"Cost egal!!!"<<endl;
 					//cout<<"Rezult compare is"<<compareOccupation(tempc)<<endl;
-					//cout<<"score temp is"<<temp<<" and current best is"<<bestCost<<endl;
+					//~ cout<<"score temp is"<<temp<<" and current best is"<<bestCost<<endl;
 					//display(bestConfig);
 					if(compareOccupation(tempc)==true)
 						{
 							//cout<<"Interchange for equal cost. Now best has cost "<<temp<<endl;
+							
 							bestCost=temp;
 			
 							for(int ii=0;ii<nrDSPs;ii++)
@@ -1606,22 +1617,24 @@ namespace flopoco{
 
 	int  IntTilingMult::getExtraHeight()
 	{
-		int x,y;	
-		target_->getDSPWidths(x,  y);
-		float temp = ratio * 0.75 * ((float) y);
-		return ((int)temp);
+		//~ int x,y;	
+		//~ target_->getDSPWidths(x,  y);
+		//~ float temp = ratio * 0.75 * ((float) y);
+		//~ return ((int)temp);
+		return 2;
 	}
 
 	
 	int  IntTilingMult::getExtraWidth()
 	{
-		int x,y;	
-		Target *t = target_;
+		//~ int x,y;	
+		//~ Target *t = target_;
 		
-		t->getDSPWidths(x,y);
+		//~ t->getDSPWidths(x,y);
 
-		float temp = ratio * 0.75 * ((float) x);
-		return ((int)temp);
+		//~ float temp = ratio * 0.75 * ((float) x);
+		//~ return ((int)temp);
+		return 2;
 	}
 
 
@@ -1708,13 +1721,48 @@ namespace flopoco{
 
 	bool IntTilingMult::checkOverlap(DSP** config, int index)
 	{	
+		
+		//return false;
+		int x,y,w,h;
+		h = config[index]->getMaxMultiplierHeight();
+		w = config[index]->getMaxMultiplierWidth();
+		int poscur = config[index]->getCurrentPosition();
+		int posav = config[index]->getAvailablePositions();
+		int minY,minX;
+		config[index]->getTopRightCorner(minX,minY);
+		minX=w;
+		for(;poscur<posav;poscur++)
+		{
+			if(minY>config[index]->Ypositions[poscur])
+			{
+				minY=config[index]->Ypositions[poscur];
+				minX=config[index]->Xpositions[poscur];
+			}
+		}
+		//cout<<index<<" "<< minX<<" "<<minY<<" ";
+		
+		config[index]->getBottomLeftCorner(x,y);
+		
+		
+		
+		long area = (vn - minX) * (vm -minY) + w * (vm- y);
+		//cout<<" area "<<area<<" ";
+		int dsplimit = (int)ceil( ((double)area) / (w*h) );
+		//cout<<" limit "<<dsplimit<<" nrrest "<<numberDSP4Overlap<<endl;
+		if( dsplimit < (numberDSP4Overlap -index-1))
+			return true;
+		
+		return false;
+		
+		//not used now
+		
 		int xtr1, ytr1, xbl1, ybl1, xtr2, ytr2, xbl2, ybl2;
 		//int nrdsp = sizeof(config)/sizeof(DSP*);
 		config[index]->getTopRightCorner(xtr1, ytr1);
 		config[index]->getBottomLeftCorner(xbl1, ybl1);
 	
 
-	
+		/*
 		bool a1 ;
 		bool a2 ;
 		bool a3 ;
@@ -1728,7 +1776,7 @@ namespace flopoco{
 		bool b4 ;
 		bool b5 ;
 		bool b6 ;
-	
+		*/
 	
 		if(verbose)
 			cout << tab << tab << "checkOverlap: ref is block #" << index << ". Top-right is at (" << xtr1 << ", " << ytr1 << ") and Bottom-right is at (" << xbl1 << ", " << ybl1 << ")" << endl;
@@ -1738,7 +1786,7 @@ namespace flopoco{
 				{
 					config[i]->getTopRightCorner(xtr2, ytr2);
 					config[i]->getBottomLeftCorner(xbl2, ybl2);
-			
+					//cout<<index<<" "<<i<<" "<<xbl1<<" "<<xtr2<<endl;
 					if (((xbl1 < xbl2) && (ytr2 > ybl1)) || 	// config[index] is above and to the right of config[i]
 						  (xbl1 < xtr2)) 							// config[index] is to the right of config[i]
 						return true;
@@ -1761,6 +1809,8 @@ namespace flopoco{
 					//~ )
 					//~ return true;
 					
+					
+					/*
 					// the optimisation of the above if
 					a1 = (xtr2 <= xbl1);
 					a2 = (xtr2 >= xtr1);
@@ -1780,7 +1830,7 @@ namespace flopoco{
 					    (((a4 && a6)||(a5 && a1)) && ((b6 && b1)||(b4 && b5))) || 
 					    (((a5 && b3) && ( b2 && a6)) || ((a3 && b6) && (b5 && a2))))
 						return true;
-				
+					*/
 				
 			
 			
@@ -1813,8 +1863,8 @@ namespace flopoco{
 		 * vn = wInX+2*getExtraWidth(); width of the tiling grid including extensions
 		 * vm = wInY+2*getExtraHeight(); height of the tiling grid including extensions
 		 * */
-		int gw = wInX+getExtraWidth()-1; // the left limit of the tiling grid
-		int gh = wInY+getExtraHeight()-1; // the bottom limit of the tiling grid
+		int exh = getExtraHeight();
+		int exw = getExtraWidth();
 		int pos; // index for list of positions of a DSP
 		
 		
@@ -1823,12 +1873,12 @@ namespace flopoco{
 			//if ((xtr1 > 0) && (ytr1 > 0) && (xbl1 < vn-1) && (ybl1 < vm-1))
 					{// then the DSP block is placed outside the bounds 		
 	
-						do{
+						//do{
 							// move down one unit
 							ytr1++;
 							ybl1++;
 			
-							if (ytr1 > gh) // the DSP block has reached the bottom limit of the tiling grid
+							if (ytr1 > exh) // the DSP block has reached the bottom limit of the tiling grid
 								{
 									// move to top of grid and one unit to the left 
 									xtr1++;
@@ -1837,12 +1887,12 @@ namespace flopoco{
 									ytr1 = 0;//exh - h+1;
 									ybl1 = ytr1 + h-1;
 										
-									if (xtr1 > gw) // the DSP block has reached the left limit of the tiling grid
+									if (xtr1 > exw) // the DSP block has reached the left limit of the tiling grid
 										return false;
 								}						
 							config[index]->setTopRightCorner(xtr1, ytr1);
 							config[index]->setBottomLeftCorner(xbl1, ybl1);
-						}while (checkOverlap(config, index));
+						//}while (checkOverlap(config, index));
 					}
 		}
 		else // all DSP blocks except the first one can move only in fixed positions
@@ -1910,51 +1960,59 @@ namespace flopoco{
 		w= config[index]->getMaxMultiplierWidth();
 		h= config[index]->getMaxMultiplierHeight();
 		config[index]->setPosition(0);
+		
 		if (index > 1)
 		{// take all positions from the previous DSP
-				memcpy(config[index]->Xpositions, config[index-1]->Xpositions, sizeof(int)*(index-1)*3);	
-				memcpy(config[index]->Ypositions, config[index-1]->Ypositions, sizeof(int)*(index-1)*3);	
-				config[index]->setPosition((index-1)*3);
+			int curpos =config[index-1]->getCurrentPosition();
+			int avpos = config[index-1]->getAvailablePositions();
+				memcpy(config[index]->Xpositions, config[index-1]->Xpositions + curpos, sizeof(int)*(avpos - curpos));	
+				memcpy(config[index]->Ypositions, config[index-1]->Ypositions + curpos, sizeof(int)*(avpos - curpos));	
+				config[index]->setPosition((avpos - curpos));
 		}
 		
 		if (index > 0)
 		{
-			int dif = abs(h-w);
-			int maxd = h;
+			//int dif = abs(h-w);
+			//int maxd = h;
 			int mind = w;
 			
 			if (w > h)
 			{
-				maxd = w;
+			//	maxd = w;
 				mind = h;
 			}
 			
 			//int positionDisplacementX[] = {0, dif, mind, maxd, w, w, w, w};
-			int positionDisplacementX[] = {0,  w, w};
+			int positionDisplacementX[] = {0,  w,mind};
 			//int positionDisplacementY[] = {h, h, h, h, 0, dif, mind, maxd};
-			int positionDisplacementY[] = {h, h, 0};
+			int positionDisplacementY[] = {h, 0,mind};
 
-			int x,y, pos;
+			int x,y,x1,y1, pos;
 			config[index-1]->getTopRightCorner(x, y);
 			
 			
 			for (int i=0; i<3; i++)
 			{
-				config[index]->push(x+positionDisplacementX[i], y+positionDisplacementY[i]);
+				x1 =x+positionDisplacementX[i];
+				y1 =y+positionDisplacementY[i];
+				//if(  (x1<vn&&y1<vm)||(x1>vn&&y1>vm)  ) //allows dsp to get out of the board in the diagonal of the bottom left corner
+				if(  (x1<vn&&y1<vm) )
+					if(  (i!=2) || (w!=h)     )
+					config[index]->push(x1, y1);
 				
 			}
 			
-			//~ cout<<"index "<<index<<" ";
+			//~ cout<<endl<<"index "<<index<<" ";
 			//~ config[index]->resetPosition();
-			
 			//~ do
 			//~ {
 				//~ pos = config[index]->pop();
 				//~ if(pos>=0)
 				//~ cout<<" ("<<config[index]->Xpositions[pos]<<" , "<<config[index]->Ypositions[pos]<<")";	
 			//~ }while(pos>=0);
-			
 			//~ cout<<endl;
+			
+			
 			
 			config[index]->resetPosition();
 			
@@ -1968,7 +2026,11 @@ namespace flopoco{
 					xbl1 = xtr1 + w-1;
 				}
 				else
+				{
+					config[index]->setTopRightCorner(vn, vm);
+					config[index]->setBottomLeftCorner(vn+w, vm+h);
 					return false;
+				}
 					
 				//if ((ytr1 > gh) && (xtr1 > gw) && (ybl1 < exh) && (xbl1 < exw)) // the DSP block is out of the tiling grid
 				//	continue;
@@ -1982,9 +2044,19 @@ namespace flopoco{
 		else
 		{	
 		// TODO if first DSP block	
-		xtr1 = ytr1 = 0;
-		xbl1 = w-1;
-		ybl1 = h-1;
+		//xtr1 = ytr1 = 0;
+		//xbl1 = w-1;
+		//ybl1 = h-1;
+		
+		//cout<<"index"<<endl;
+			
+		int exh = getExtraHeight();
+		int exw = getExtraWidth();
+		
+		xtr1 = exw -1;
+		ytr1 = exh -1;	
+		ybl1 = ytr1 + h-1;
+		xbl1 = xtr1 + w-1;
 	
 		config[index]->setTopRightCorner(xtr1, ytr1);
 		config[index]->setBottomLeftCorner(xbl1, ybl1);
@@ -2046,6 +2118,7 @@ namespace flopoco{
 
 	void IntTilingMult::initTiling(DSP** &config, int dspCount)
 	{
+		int w,h; 
 		config = new DSP*[nrDSPs];
 		
 		for (int i=0; i<nrDSPs; i++)
@@ -2057,9 +2130,17 @@ namespace flopoco{
 			if(verbose)
 				cout << "initTiling : iteration #" << i << endl; 
 			config[i] = target_->createDSP();						
+			
 			config[i]->allocatePositions(3*i); // each DSP offers 8 positions
-			replace(config, i);
-		}		
+			if(!replace(config, i))
+			{
+				w=config[i]->getMaxMultiplierWidth();
+				h= config[i]->getMaxMultiplierHeight();
+				config[i]->setTopRightCorner(vn, vm);
+				config[i]->setBottomLeftCorner(vn+w, vm+h);
+			}
+		}
+		
 	}
 	
 	DSP** IntTilingMult::neighbour(DSP** config)
