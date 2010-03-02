@@ -7,7 +7,9 @@
   Author : Florent de Dinechin, Florent.de.Dinechin@ens-lyon.fr
 
   Initial software.
-  Copyright © ENS-Lyon, INRIA, CNRS, UCBL, 2008-2009. All right reserved.
+  Copyright © ENS-Lyon, INRIA, CNRS, UCBL,  
+  CeCILL License,
+  2008-2010.
 */
 
 #include <iostream>
