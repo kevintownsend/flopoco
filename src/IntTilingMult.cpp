@@ -525,7 +525,17 @@ namespace flopoco{
 		//the one
 		numberDSP4Overlap=nrDSPs;
 		tilingAlgorithm(nrDSPs-1,nrDSPs-1,false,nrDSPs-1);
-	
+		
+		/*
+		globalConfig[2]->setTopRightCorner(2,26);
+		globalConfig[2]->setBottomLeftCorner(25,59);
+		globalConfig[1]->setTopRightCorner(36,2);
+		globalConfig[1]->setBottomLeftCorner(59,35);
+		globalConfig[3]->setTopRightCorner(26,36);
+		globalConfig[3]->setBottomLeftCorner(59,59);
+		bestCost = computeCost(globalConfig);
+		display(globalConfig);
+		*/
 		display(bestConfig);
 		cout<<"Best cost is "<<bestCost<<endl;
 	
@@ -1289,7 +1299,7 @@ namespace flopoco{
 											nii = ii;
 							
 										partitions++;
-							
+										//cout << "IntMultiplierCost ("<<nj<<", "<<njj<<") ("<<ni<<", "<<nii<<") cost="<< target_->getIntMultiplierCost(njj-nj+1,nii-ni+1) << endl;
 										costSlice += target_->getIntMultiplierCost(njj-nj+1,nii-ni+1);
 							
 							
@@ -1792,7 +1802,7 @@ namespace flopoco{
 		if( dsplimit < (numberDSP4Overlap -index-1))
 			return true;
 		
-		return false;
+		//return false;
 		
 		//not used now
 		
@@ -1802,7 +1812,7 @@ namespace flopoco{
 		config[index]->getBottomLeftCorner(xbl1, ybl1);
 	
 
-		/*
+		
 		bool a1 ;
 		bool a2 ;
 		bool a3 ;
@@ -1816,7 +1826,7 @@ namespace flopoco{
 		bool b4 ;
 		bool b5 ;
 		bool b6 ;
-		*/
+		
 	
 		if(verbose)
 			cout << tab << tab << "checkOverlap: ref is block #" << index << ". Top-right is at (" << xtr1 << ", " << ytr1 << ") and Bottom-right is at (" << xbl1 << ", " << ybl1 << ")" << endl;
@@ -1850,7 +1860,7 @@ namespace flopoco{
 					//~ return true;
 					
 					
-					/*
+					
 					// the optimisation of the above if
 					a1 = (xtr2 <= xbl1);
 					a2 = (xtr2 >= xtr1);
@@ -1870,7 +1880,7 @@ namespace flopoco{
 					    (((a4 && a6)||(a5 && a1)) && ((b6 && b1)||(b4 && b5))) || 
 					    (((a5 && b3) && ( b2 && a6)) || ((a3 && b6) && (b5 && a2))))
 						return true;
-					*/
+					
 				
 			
 			
@@ -2018,14 +2028,25 @@ namespace flopoco{
 			
 			if (w > h)
 			{
-			//	maxd = w;
 				mind = h;
 			}
+			int mindX = mind;
+			int mindY = mind;
 			
+			if (target_->getID() == "Virtex5")
+			{ // align bottom-left corner of current with X-possition of previous to catch ideal case
+				mindX = -abs(w-h);
+				mindY = h;
+			}
+			else if ((target_->getID() == "StratixIV") || (target_->getID() == "StratixIV"))
+			{ // align on diagonal
+				mindX = -w;
+				mindY = h;	
+			}
 			//int positionDisplacementX[] = {0, dif, mind, maxd, w, w, w, w};
-			int positionDisplacementX[] = {0,  w,mind};
+			int positionDisplacementX[] = {0, w, mindX};
 			//int positionDisplacementY[] = {h, h, h, h, 0, dif, mind, maxd};
-			int positionDisplacementY[] = {h, 0,mind};
+			int positionDisplacementY[] = {h, 0, mindY};
 
 			int x,y,x1,y1, pos;
 			config[index-1]->getTopRightCorner(x, y);
@@ -2036,8 +2057,8 @@ namespace flopoco{
 				x1 =x+positionDisplacementX[i];
 				y1 =y+positionDisplacementY[i];
 				//if(  (x1<vn&&y1<vm)||(x1>vn&&y1>vm)  ) //allows dsp to get out of the board in the diagonal of the bottom left corner
-				if(  (x1<vn&&y1<vm) )
-					if(  (i!=2) || (w!=h)     )
+				if (x1<vn && y1<vm && x1>0 && y1>0) 
+					if((i!=2) || ((w!=h) || ((target_->getID() == "StratixIV") || (target_->getID() == "StratixIV"))))
 					config[index]->push(x1, y1);
 				
 			}
