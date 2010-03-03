@@ -8,6 +8,10 @@ CLEANFILES = $(BUILT_SOURCES) *.output
 LEX_OUTPUT_ROOT=VHDLLexer.hpp VHDLLexer.hpp lex.yy
 
 noinst_LTLIBRARIES = libflopoco.la
+noinst_HEADERS = BigTestBench.hpp DotProduct.hpp DualTable.hpp Fix2FP.hpp FlopocoStream.hpp FPAdder.hpp FPDiv.hpp FPExp.hpp FPLog.hpp FPMultiplier.hpp FPNumber.hpp \
+	FPSqrt.hpp FPSquarer.hpp FunctionEvaluator.hpp HOTBM.hpp IEEENumber.hpp InputIEEE.hpp IntAdder.hpp IntCompressorTree.hpp IntDualSub.hpp IntKaratsuba.hpp IntMultiplier.hpp \
+	IntNAdder.hpp IntSquarer.hpp IntTilingMult.hpp LongAcc2FP.hpp LongAcc.hpp LongIntAdder.hpp LZOC.hpp LZOCShifterSticky.hpp Operator.hpp OutputIEEE.hpp PolynomialEvaluator.hpp \
+	Shifters.hpp Signal.hpp SignedIntMultiplier.hpp TableGenerator.hpp Table.hpp Target.hpp TestBench.hpp TestCase.hpp utils.hpp VHDLLexer.hpp Wrapper.hpp 
 
 libflopoco_la_SOURCES = VHDLLexer.lpp \
 			utils.cpp \
@@ -33,6 +37,7 @@ libflopoco_la_SOURCES = VHDLLexer.lpp \
 			IntDualSub.cpp \
 			IntMultiplier.cpp \
 			SignedIntMultiplier.cpp \
+			IntTilingMult.cpp \
 			IntKaratsuba.cpp \
 			LZOC.cpp \
 			LZOCShifterSticky.cpp \
