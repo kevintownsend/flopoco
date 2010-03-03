@@ -2099,6 +2099,8 @@ namespace flopoco{
 	{
 		int xtr1, ytr1, xbl1, ybl1;
 		int w, h;
+		string targetID = target_->getID();
+		
 		//target->getDSPWidths(w,h);
 		w= config[index]->getMaxMultiplierWidth();
 		h= config[index]->getMaxMultiplierHeight();
@@ -2129,12 +2131,12 @@ namespace flopoco{
 			int mindY = mind;
 			
 
-			if (target_->getID() == "Virtex5")
+			if (targetID == "Virtex5")
 			{ // align bottom-left corner of current with X-possition of previous to catch ideal case
 				mindX = abs(w-h);
 				mindY = h;
 			}
-			else if ((target_->getID() == "StratixIV") || (target_->getID() == "StratixIV"))
+			else if ((targetID == "StratixIV") || (targetID == "StratixIV"))
 			{ // align on diagonal
 				mindX = -w;
 				mindY = h;	
@@ -2147,13 +2149,15 @@ namespace flopoco{
 			int x,y,x1,y1, pos;
 			config[index-1]->getTopRightCorner(x, y);
 			
+			//* Loop unrolling
+			bool extraPosition = ((w!=h) || ((targetID == "StratixIV") || (targetID == "StratixIV")));
 			for (int i=0; i<3; i++)
 			{
 				x1 =x+positionDisplacementX[i];
 				y1 =y+positionDisplacementY[i];
 				//if(  (x1<vn&&y1<vm)||(x1>vn&&y1>vm)  ) //allows dsp to get out of the board in the diagonal of the bottom left corner
 				if (x1<vn && y1<vm && x1>0 && y1>0) 
-					if((i!=2) || ((w!=h) || ((target_->getID() == "StratixIV") || (target_->getID() == "StratixIV"))))
+					if((i!=2) || extraPosition)
 					config[index]->push(x1, y1);
 				
 			}
@@ -2224,54 +2228,6 @@ namespace flopoco{
 		// try yo place the DSP block inside the extended region of the tiling grid
 		}
 		return true;
-	
-		//~ if (xbl1 > vn) // it was not possible to place the DSP inside the extended grid
-		//~ { // then try to place it anywhere around the tiling grid such that it covers at leat one 1x1 square
-		//~ xtr1 = getExtraWidth() - w+1;
-		//~ ytr1 = getExtraHeight() - h+1;
-		//~ xbl1 = xtr1 + w-1;
-		//~ ybl1 = ytr1 + h-1;
-		
-		//~ config[index]->setTopRightCorner(xtr1, ytr1);
-		//~ config[index]->setBottomLeftCorner(xbl1, ybl1);
-		
-		//~ if(verbose)
-		//~ cout << tab << "replace : DSP width is " << w << ", height is " << h << endl; 
-			
-		//~ int bLimit = wInY+getExtraHeight();
-		//~ int exh = getExtraHeight();
-		
-		//~ while (checkOverlap(config, index))
-		//~ {
-		//~ // move down one unit
-		//~ ytr1++;
-		//~ ybl1++;
-			
-		//~ if(verbose)
-		//~ cout << tab << "replace : moved DSP one unit down." << endl;
-		//~ if (ytr1 > bLimit) // the DSP block has reached the bottom limit of the tiling grid
-		//~ {
-		//~ // move to top of grid and one unit to the left 
-		//~ xtr1++;
-		//~ //if (xtr1 > wInX+getExtraWidth()) // the DSP block has reached the left limit of the tiling grid
-		//~ xbl1++;
-		//~ ytr1 = exh - h+1;
-		//~ ybl1 = ytr1 + h-1;
-				
-		//~ if(verbose)
-		//~ cout << tab << "replace : moved DSP up and one unit left." << endl;
-		//~ }			
-			
-		//~ config[index]->setTopRightCorner(xtr1, ytr1);
-		//~ config[index]->setBottomLeftCorner(xbl1, ybl1);
-		//~ if(verbose)
-		//~ cout << tab << "replace : Top-right is at ( " << xtr1 << ", " << ytr1 << ") and Bottom-right is at (" << xbl1 << ", " << ybl1 << ")" << endl;
-		//~ }
-	
-		//~ }
-		//~ // set the current position of the DSP block within the tiling grid
-		//~ config[index]->setTopRightCorner(xtr1, ytr1);
-		//~ config[index]->setBottomLeftCorner(xbl1, ybl1);
 	}
 
 	void IntTilingMult::initTiling(DSP** &config, int dspCount)
