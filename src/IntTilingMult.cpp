@@ -1338,7 +1338,7 @@ namespace flopoco{
 							
 										partitions++;
 										//cout << "IntMultiplierCost ("<<nj<<", "<<njj<<") ("<<ni<<", "<<nii<<") cost="<< target_->getIntMultiplierCost(njj-nj+1,nii-ni+1) << endl;
-										costSlice += (njj-nj+1)*(nii-ni+1);//target_->getIntMultiplierCost(njj-nj+1,nii-ni+1);
+										costSlice += target_->getIntMultiplierCost(njj-nj+1,nii-ni+1);//(njj-nj+1)*(nii-ni+1);
 							
 							
 														
@@ -1392,9 +1392,13 @@ namespace flopoco{
 	int IntTilingMult::bindDSPs4Virtex(DSP** &config)
 	{
 		int nrOfUsedDSPs=0;
-		
+		int px,py,dx,dy;
+		px =vn - getExtraWidth();
+		py =vm - getExtraHeight();
 		for(int i=0;i<nrDSPs;i++){
-			if(config[i]!=NULL)
+			
+			config[i]->getTopRightCorner(dx,dy);
+			if(config[i]!=NULL && (dx<=px && dy<py))
 				{
 					nrOfUsedDSPs++;
 				}
@@ -1416,6 +1420,7 @@ namespace flopoco{
 				
 				if(config[i]!=NULL)
 					{
+						
 						ref=config[i];
 						count=0;
 						bool ver=true;
@@ -1432,9 +1437,12 @@ namespace flopoco{
 					
 								for(int j=0;j<nrDSPs&&ver==false;j++)
 									{
-										if(config[j]!=NULL &&j!=i)
+										if(config[j]!=NULL &&j!=i )
 											{
 												config[j]->getTopRightCorner(jtx,jty);
+												if((jtx<=px && jty<py))
+												{
+												
 												sa = config[j]->getShiftAmount();
 												//cout<<"Now considering taking(in left) dsp nr. "<<i<<" with tx:="<<itx<<" ty:="<<ity<<" bx:="<<ibx<<"by:="<<iby<<" with dsp nr. "<<j<<" with tx:="<<jtx<<" ty:="<<jty<<endl;
 												//config[j]->getBottomLeftCorner(jbx,jby);
@@ -1468,6 +1476,7 @@ namespace flopoco{
 													}
 													
 												}
+											}
 											}
 									}
 					
@@ -1517,7 +1526,7 @@ namespace flopoco{
 			
 			}
 	
-		cout<<" nr de dspuri dupa bind "<<nrOfUsedDSPs<<endl;
+		//cout<<" nr de dspuri dupa bind "<<nrOfUsedDSPs<<endl;
 		return nrOfUsedDSPs;
 	
 	}
