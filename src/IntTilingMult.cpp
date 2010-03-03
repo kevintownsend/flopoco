@@ -1406,7 +1406,7 @@ namespace flopoco{
 												sa = config[j]->getShiftAmount();
 												//cout<<"Now considering taking(in left) dsp nr. "<<i<<" with tx:="<<itx<<" ty:="<<ity<<" bx:="<<ibx<<"by:="<<iby<<" with dsp nr. "<<j<<" with tx:="<<jtx<<" ty:="<<jty<<endl;
 												//config[j]->getBottomLeftCorner(jbx,jby);
-												if(rw!=34 && rh!=34)
+												//~ if(rw!=34 && rh!=34)
 												{
 												if(jtx==ibx+1&&jty==ity&&rw==sa&&config[j]->getShiftIn()==NULL)
 													{
@@ -1422,19 +1422,19 @@ namespace flopoco{
 														//~ prev = j;								
 													}
 												}
-												else
-												{
-													if( jtx==ibx+1 && rw% sa==0 && ( (rw == 34 && jty==ity )   || ( rw=17 && jty==ity+sa)  ))
-													{
-														ver=true;
-														ref->setShiftOut(config[j]);
-														config[j]->setShiftIn(ref);
-														nrOfUsedDSPs--;
-														ref=config[j];
-														count++;
-													}
+												//~ else
+												//~ {
+													//~ if( jtx==ibx+1 && rw% sa==0 && ( (rw == 34 && jty==ity )   || ( rw=17 && jty==ity+sa)  ))
+													//~ {
+														//~ ver=true;
+														//~ ref->setShiftOut(config[j]);
+														//~ config[j]->setShiftIn(ref);
+														//~ nrOfUsedDSPs--;
+														//~ ref=config[j];
+														//~ count++;
+													//~ }
 													
-												}
+												//~ }
 											}
 									}
 					
@@ -1446,7 +1446,7 @@ namespace flopoco{
 												sa = config[j]->getShiftAmount();
 												//cout<<"Now considering taking(down) dsp nr. "<<i<<" with tx:="<<itx<<" ty:="<<ity<<" bx:="<<ibx<<"by:="<<iby<<" with dsp nr. "<<j<<" with tx:="<<jtx<<" ty:="<<jty<<endl;
 												//config[j]->getBottomLeftCorner(jbx,jby);
-												if(rw!=34 && rh!=34)
+												//~ if(rw!=34 && rh!=34)
 												{
 												if(iby+1==jty&&itx==jtx&&rh==sa&&config[j]->getShiftIn()==NULL)
 													{
@@ -1462,18 +1462,18 @@ namespace flopoco{
 														//~ prev = j;
 													}
 												}
-												else
-												{
-													if( iby+1==jty && rh% sa==0 && ( (rh == 34 && jtx==itx )   || ( rw=17 && jtx==itx+sa)  ))
-													{
-														ver=true;
-														ref->setShiftOut(config[j]);
-														config[j]->setShiftIn(ref);
-														nrOfUsedDSPs--;
-														ref=config[j];								
-														count++;
-													}
-												}
+												//~ else
+												//~ {
+													//~ if( iby+1==jty && rh% sa==0 && ( (rh == 34 && jtx==itx )   || ( rw=17 && jtx==itx+sa)  ))
+													//~ {
+														//~ ver=true;
+														//~ ref->setShiftOut(config[j]);
+														//~ config[j]->setShiftIn(ref);
+														//~ nrOfUsedDSPs--;
+														//~ ref=config[j];								
+														//~ count++;
+													//~ }
+												//~ }
 							
 											}						
 									}					
@@ -1839,7 +1839,7 @@ namespace flopoco{
 		
 		
 		
-		long area = (vn - minX+7) * (vm -minY+7) + w * (vm- y);
+		long area = (vn - minX+5) * (vm -minY+5) + w * (vm- y);
 		//cout<<" area "<<area<<" ";
 		int dsplimit = (int)ceil( ((double)area) / (w*h) );
 		//cout<<" limit "<<dsplimit<<" nrrest "<<numberDSP4Overlap<<endl;
