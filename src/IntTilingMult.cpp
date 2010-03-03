@@ -1300,7 +1300,7 @@ namespace flopoco{
 							
 										partitions++;
 										//cout << "IntMultiplierCost ("<<nj<<", "<<njj<<") ("<<ni<<", "<<nii<<") cost="<< target_->getIntMultiplierCost(njj-nj+1,nii-ni+1) << endl;
-										costSlice += target_->getIntMultiplierCost(njj-nj+1,nii-ni+1);
+										costSlice += (njj-nj+1)*(nii-ni+1);//target_->getIntMultiplierCost(njj-nj+1,nii-ni+1);
 							
 							
 														
@@ -1502,7 +1502,7 @@ namespace flopoco{
 		//~ tempc[ii]= new DSP();
 		
 		//display(globalConfig);
-	
+		//getchar();
 		//memcpy(tempc,globalConfig,sizeof(DSP*) *nrDSPs );
 		for(int ii=0;ii<nrDSPs;ii++)
 			memcpy(tempc[ii],globalConfig[ii],sizeof(DSP) );
@@ -1667,24 +1667,21 @@ namespace flopoco{
 
 	int  IntTilingMult::getExtraHeight()
 	{
-		//~ int x,y;	
-		//~ target_->getDSPWidths(x,  y);
-		//~ float temp = ratio * 0.75 * ((float) y);
-		//~ return ((int)temp);
-		return 2;
+		int x,y;	
+		target_->getDSPWidths(x,  y);
+		float temp = ratio * 0.75 * ((float) y);
+		return ((int)temp);
+		//return 4;
 	}
 
 	
 	int  IntTilingMult::getExtraWidth()
 	{
-		//~ int x,y;	
-		//~ Target *t = target_;
-		
-		//~ t->getDSPWidths(x,y);
-
-		//~ float temp = ratio * 0.75 * ((float) x);
-		//~ return ((int)temp);
-		return 2;
+		int x,y;	
+		target_->getDSPWidths(x,y);
+		float temp = ratio * 0.75 * ((float) x);
+		return ((int)temp);
+		//return 4;
 	}
 
 
@@ -2022,6 +2019,8 @@ namespace flopoco{
 		
 		if (index > 0)
 		{
+			w= config[index-1]->getMaxMultiplierWidth();
+			h= config[index-1]->getMaxMultiplierHeight();
 			//int dif = abs(h-w);
 			//int maxd = h;
 			int mind = w;
@@ -2033,9 +2032,10 @@ namespace flopoco{
 			int mindX = mind;
 			int mindY = mind;
 			
+			
 			if (target_->getID() == "Virtex5")
 			{ // align bottom-left corner of current with X-possition of previous to catch ideal case
-				mindX = -abs(w-h);
+				mindX = abs(w-h);
 				mindY = h;
 			}
 			else if ((target_->getID() == "StratixIV") || (target_->getID() == "StratixIV"))
@@ -2062,7 +2062,7 @@ namespace flopoco{
 					config[index]->push(x1, y1);
 				
 			}
-			
+			/*
 			cout<<endl<<"index "<<index<<" ";
 			config[index]->resetPosition();
 			do
@@ -2072,9 +2072,10 @@ namespace flopoco{
 				 cout<<" ("<<config[index]->Xpositions[pos]<<" , "<<config[index]->Ypositions[pos]<<")";	
 			}while(pos>=0);
 			cout<<endl;
+			*/
 			
-			
-			
+			w= config[index]->getMaxMultiplierWidth();
+			h= config[index]->getMaxMultiplierHeight();
 			config[index]->resetPosition();
 			
 			do{// go to next position in list
