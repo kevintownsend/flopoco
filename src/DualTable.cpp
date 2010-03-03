@@ -1,25 +1,18 @@
 /*
- * A generic class for DualTables of values
- *
- * Author :Radu Tudoran
- *
- * This file is part of the FloPoCo project developed by the Arenaire
- * team at Ecole Normale Superieure de Lyon
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or 
- * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
- 
+  A generic class for DualTables of values
+  This file is part of the FloPoCo project developed by the Arenaire
+  team at Ecole Normale Superieure de Lyon
+  
+  Author :Radu Tudoran
+
+  Initial software.
+  Copyright © ENS-Lyon, INRIA, CNRS, UCBL,  
+  CeCILL License, 2008-2010.
+*/
+
+
+/* 
+
  The class contains a primitive Dual Port Memory block, that is nested inside the DualTable class. This is done in order to prevent the miss used of the inner object.
  The Memories are splitied in fundamental units(blocks) that can be recognized by the simulator as dual port memories. The limit of a memory block until it is recognized as
  a dual port one is 2^11*9 bits. However this value could be moved in the target in the eventuality that some other targets would have others such limits. However, on all models
