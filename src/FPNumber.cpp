@@ -1,3 +1,17 @@
+/*
+  The floating-point numbers used in for FloPoCo
+ 
+  This file is part of the FloPoCo project
+  developed by the Arenaire team at Ecole Normale Superieure de Lyon
+  
+  Author: Cristian Klein, Florent de Dinechin
+
+  Initial software.
+  Copyright © ENS-Lyon, INRIA, CNRS, UCBL,  
+  CeCILL license, 2008-2010.
+
+ */
+
 #include "FPNumber.hpp"
 #include "utils.hpp"
 

@@ -1,10 +1,15 @@
 /*
- * Function Evaluator for FloPoCo
- *
-  * Authors: Bogdan Pasca, Mioara Joldes
-  * Copyright ENS-Lyon, INRIA, CNRS, UCBL
-  *
-  * This file is part of the FloPoCo project developed by the Arenaire team at Ecole Normale Superieure de Lyon
+  Function Evaluator for FloPoCo
+
+  Authors: Bogdan Pasca, Mioara Joldes
+
+  This file is part of the FloPoCo project
+  developed by the Arenaire team at Ecole Normale Superieure de Lyon
+  
+  Initial software.
+  Copyright © ENS-Lyon, INRIA, CNRS, UCBL,  
+  CeCILL license, 2008-2010.
+
   */
 
 #ifdef HAVE_SOLLYA
