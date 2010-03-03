@@ -270,7 +270,7 @@ namespace flopoco{
 
 	int Virtex4::getNumberOfDSPs() 
 	{
-		return 32; // XC4VLX15 has 1 column of 32 DSPs		
+		return nrDSPs_; 	
 	};
 
 	int Virtex4::getIntNAdderCost(int wIn, int n)

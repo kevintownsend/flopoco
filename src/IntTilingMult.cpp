@@ -1926,7 +1926,7 @@ namespace flopoco{
 					config[i]->getBottomLeftCorner(xbl2, ybl2);
 					//cout<<index<<" "<<i<<" "<<xbl1<<" "<<xtr2<<endl;
 					if (((xbl1 < xbl2) && (ytr2 > ybl1)) || 	// config[index] is above and to the right of config[i]
-						  ((xbl1 < xtr2) && (ybl1 < ybl2))) 							// config[index] is to the right of config[i]
+						  ((xbl1 < xtr2)))// && (ybl1 < ybl2))) 							// config[index] is to the right of config[i]
 						return true;
 			
 				
@@ -2141,7 +2141,6 @@ namespace flopoco{
 
 			int x,y,x1,y1, pos;
 			config[index-1]->getTopRightCorner(x, y);
-			
 			
 			for (int i=0; i<3; i++)
 			{

@@ -61,7 +61,7 @@ namespace flopoco{
 			slice2sliceDelay_       = 0.436e-9;
 			xorcyCintoO_    = 0.300e-9;
 			lutInputs_ 		= 6;
-			nrDSPs_ 		= 32; // XC5VLX30 has 1 column of 32 DSPs
+			nrDSPs_ 		= 160; // XC5VLX30 has 1 column of 32 DSPs
 			dspFixedShift_ 	= 17; 
 		}
 

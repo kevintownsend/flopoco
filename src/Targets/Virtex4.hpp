@@ -62,6 +62,7 @@ namespace flopoco{
 			xorcyCintoO_    = 0.273e-9;
 		
 			lutInputs_ = 4;
+			nrDSPs_ = 60; // XC4VLX15 has 1 column of 32 DSPs, 60 is for testing purposes	
 		}
 
 		/** The destructor */
@@ -104,6 +105,7 @@ namespace flopoco{
 		double muxf5_;          /**< The delay of the almighty mux F5*/
 		double slice2sliceDelay_;       /**< This is approximate. It approximates the wire delays between Slices */
 		double xorcyCintoO_;    /**< the S to O delay of the xor gate */
+		int nrDSPs_;			/**< Number of available DSP blocks on the board */
 	};
 
 }
