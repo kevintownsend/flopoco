@@ -125,6 +125,10 @@ namespace flopoco{
 		//the one
 		runAlgorithm();
 		
+		//~ globalConfig[1]->rotate();
+		//~ replace(globalConfig,1);
+		//~ display(globalConfig);
+		
 		//~ //START SIMULATED ANNEALING -------------
 		//~ counterfirst =0 ;
 		//~ int n,m;
@@ -492,7 +496,7 @@ namespace flopoco{
 		for(int i =0;i<nrDSPs;i++)
 			rot[i]=false;
 	
-	
+		//The second
 		numberDSP4Overlap=nrDSPs;
 		initTiling2(globalConfig,nrDSPs);	
 		 
@@ -525,6 +529,8 @@ namespace flopoco{
 		//the one
 		numberDSP4Overlap=nrDSPs;
 		tilingAlgorithm(nrDSPs-1,nrDSPs-1,false,nrDSPs-1);
+		
+		bindDSPs(bestConfig);
 		
 		/*
 		globalConfig[2]->setTopRightCorner(2,26);
@@ -1381,22 +1387,28 @@ namespace flopoco{
 						ref=config[i];
 						count=0;
 						bool ver=true;
+						int rw,rh;
+						int sa;
 						//while(ver==true&&ref->getShiftOut()==NULL && countsShift[prev] <nrOfShifts4Virtex-1)
 						while(ver==true&&ref->getShiftOut()==NULL && count <nrOfShifts4Virtex-1)
 							{
 								ver=false;
 								ref->getTopRightCorner(itx,ity);
 								ref->getBottomLeftCorner(ibx,iby);
-					
+								rw=ref->getMaxMultiplierWidth();
+								rh=ref->getMaxMultiplierHeight();
 					
 								for(int j=0;j<nrDSPs&&ver==false;j++)
 									{
 										if(config[j]!=NULL &&j!=i)
 											{
 												config[j]->getTopRightCorner(jtx,jty);
+												sa = config[j]->getShiftAmount();
 												//cout<<"Now considering taking(in left) dsp nr. "<<i<<" with tx:="<<itx<<" ty:="<<ity<<" bx:="<<ibx<<"by:="<<iby<<" with dsp nr. "<<j<<" with tx:="<<jtx<<" ty:="<<jty<<endl;
 												//config[j]->getBottomLeftCorner(jbx,jby);
-												if(jtx==ibx+1&&jty==ity&&ref->getMaxMultiplierWidth()==config[j]->getShiftAmount()&&config[j]->getShiftIn()==NULL)
+												if(rw!=34 && rh!=34)
+												{
+												if(jtx==ibx+1&&jty==ity&&rw==sa&&config[j]->getShiftIn()==NULL)
 													{
 														//cout<<"DSP #"<<i<<" bind with DSP# "<<j<<endl;
 														ver=true;
@@ -1409,6 +1421,20 @@ namespace flopoco{
 														//~ countsShift[j] = countsShift[prev];
 														//~ prev = j;								
 													}
+												}
+												else
+												{
+													if( jtx==ibx+1 && rw% sa==0 && ( (rw == 34 && jty==ity )   || ( rw=17 && jty==ity+sa)  ))
+													{
+														ver=true;
+														ref->setShiftOut(config[j]);
+														config[j]->setShiftIn(ref);
+														nrOfUsedDSPs--;
+														ref=config[j];
+														count++;
+													}
+													
+												}
 											}
 									}
 					
@@ -1417,9 +1443,12 @@ namespace flopoco{
 										if(config[j]!=NULL &&j!=i)
 											{
 												config[j]->getTopRightCorner(jtx,jty);
+												sa = config[j]->getShiftAmount();
 												//cout<<"Now considering taking(down) dsp nr. "<<i<<" with tx:="<<itx<<" ty:="<<ity<<" bx:="<<ibx<<"by:="<<iby<<" with dsp nr. "<<j<<" with tx:="<<jtx<<" ty:="<<jty<<endl;
 												//config[j]->getBottomLeftCorner(jbx,jby);
-												if(iby+1==jty&&itx==jtx&&ref->getMaxMultiplierHeight()==config[j]->getShiftAmount()&&config[j]->getShiftIn()==NULL)
+												if(rw!=34 && rh!=34)
+												{
+												if(iby+1==jty&&itx==jtx&&rh==sa&&config[j]->getShiftIn()==NULL)
 													{
 														//cout<<"DSP #"<<i<<" bind with DSP# "<<j<<endl;
 														ver=true;
@@ -1432,6 +1461,19 @@ namespace flopoco{
 														//~ countsShift[j] = countsShift[prev];
 														//~ prev = j;
 													}
+												}
+												else
+												{
+													if( iby+1==jty && rh% sa==0 && ( (rh == 34 && jtx==itx )   || ( rw=17 && jtx==itx+sa)  ))
+													{
+														ver=true;
+														ref->setShiftOut(config[j]);
+														config[j]->setShiftIn(ref);
+														nrOfUsedDSPs--;
+														ref=config[j];								
+														count++;
+													}
+												}
 							
 											}						
 									}					
@@ -1667,21 +1709,26 @@ namespace flopoco{
 
 	int  IntTilingMult::getExtraHeight()
 	{
+
+		
 		int x,y;	
 		target_->getDSPWidths(x,  y);
 		float temp = ratio * 0.75 * ((float) y);
 		return ((int)temp);
 		//return 4;
+
 	}
 
 	
 	int  IntTilingMult::getExtraWidth()
 	{
+
 		int x,y;	
 		target_->getDSPWidths(x,y);
 		float temp = ratio * 0.75 * ((float) x);
 		return ((int)temp);
 		//return 4;
+
 	}
 
 
@@ -1792,7 +1839,7 @@ namespace flopoco{
 		
 		
 		
-		long area = (vn - minX+w-1) * (vm -minY+h-1) + w * (vm- y);
+		long area = (vn - minX+7) * (vm -minY+7) + w * (vm- y);
 		//cout<<" area "<<area<<" ";
 		int dsplimit = (int)ceil( ((double)area) / (w*h) );
 		//cout<<" limit "<<dsplimit<<" nrrest "<<numberDSP4Overlap<<endl;
@@ -1931,7 +1978,7 @@ namespace flopoco{
 									xtr1++;
 									xbl1++;
 									
-									ytr1 = 0;//exh - h+1;
+									ytr1 = exh -1; //0
 									ybl1 = ytr1 + h-1;
 										
 									if (xtr1 > exw) // the DSP block has reached the left limit of the tiling grid
@@ -2032,7 +2079,7 @@ namespace flopoco{
 			int mindX = mind;
 			int mindY = mind;
 			
-			
+
 			if (target_->getID() == "Virtex5")
 			{ // align bottom-left corner of current with X-possition of previous to catch ideal case
 				mindX = abs(w-h);
@@ -2063,19 +2110,20 @@ namespace flopoco{
 				
 			}
 			/*
-			cout<<endl<<"index "<<index<<" ";
-			config[index]->resetPosition();
-			do
-			{
-				 pos = config[index]->pop();
-				 if(pos>=0)
-				 cout<<" ("<<config[index]->Xpositions[pos]<<" , "<<config[index]->Ypositions[pos]<<")";	
-			}while(pos>=0);
-			cout<<endl;
+			//~ cout<<endl<<"index "<<index<<" ";
+			//~ config[index]->resetPosition();
+			//~ do
+			//~ {
+				 //~ pos = config[index]->pop();
+				 //~ if(pos>=0)
+				 //~ cout<<" ("<<config[index]->Xpositions[pos]<<" , "<<config[index]->Ypositions[pos]<<")";	
+			//~ }while(pos>=0);
+			//~ cout<<endl;
 			*/
 			
 			w= config[index]->getMaxMultiplierWidth();
 			h= config[index]->getMaxMultiplierHeight();
+
 			config[index]->resetPosition();
 			
 			do{// go to next position in list
@@ -2116,7 +2164,7 @@ namespace flopoco{
 		int exw = getExtraWidth();
 		
 		xtr1 = exw -1;
-		ytr1 = exh -1;	
+		ytr1 = exh ;	
 		ybl1 = ytr1 + h-1;
 		xbl1 = xtr1 + w-1;
 	
