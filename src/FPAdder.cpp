@@ -1,10 +1,15 @@
 /*
- * Floating Point Adder for FloPoCo
- *
-  * Authors: Bogdan Pasca, Florent de Dinechin
-  * Copyright ENS-Lyon, INRIA, CNRS, UCBL
-  *
-  * This file is part of the FloPoCo project developed by the Arenaire team at Ecole Normale Superieure de Lyon
+  Floating Point Adder for FloPoCo
+ 
+  This file is part of the FloPoCo project 
+  developed by the Arenaire team at Ecole Normale Superieure de Lyon
+  
+  Authors:   Bogdan Pasca, Florent de Dinechin
+
+  Initial software.
+  Copyright © ENS-Lyon, INRIA, CNRS, UCBL,  
+  CeCILL license, 2008-2010.
+
   */
 
 // TODO move close path prenormalization up to the Swap Difference box
