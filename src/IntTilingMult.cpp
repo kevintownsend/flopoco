@@ -125,6 +125,34 @@ namespace flopoco{
 		//the one
 		runAlgorithm();
 		
+		//~ //globalConfig[0] = target->createDSP();
+		//~ globalConfig[0]->setTopRightCorner(9,6);
+		//~ globalConfig[0]->setBottomLeftCorner(32,39);
+		
+		//~ //globalConfig[1] = target->createDSP();
+		//~ globalConfig[1]->rotate();
+		//~ globalConfig[1]->setTopRightCorner(33,6);
+		//~ globalConfig[1]->setBottomLeftCorner(66,29);
+		
+		//~ //globalConfig[2] = target->createDSP();
+		
+		//~ globalConfig[2]->setTopRightCorner(43,30);
+		//~ globalConfig[2]->setBottomLeftCorner(66,63);
+		
+		//~ //globalConfig[3] = target->createDSP();
+		//~ globalConfig[3]->rotate();
+		//~ globalConfig[3]->setTopRightCorner(9,40);
+		//~ globalConfig[3]->setBottomLeftCorner(42,63);
+		
+		
+		//~ display(globalConfig);
+		
+		//~ compareCost();
+		
+		//~ display(bestConfig);
+		
+		//~ cout<<"Best cost is "<<bestCost<<endl;
+		
 		//~ globalConfig[1]->rotate();
 		//~ replace(globalConfig,1);
 		//~ display(globalConfig);
@@ -532,6 +560,11 @@ namespace flopoco{
 		
 		bindDSPs(bestConfig);
 		
+		
+		display(bestConfig);
+		cout<<"Best cost is "<<bestCost<<endl;
+		
+		
 		/*
 		globalConfig[2]->setTopRightCorner(2,26);
 		globalConfig[2]->setBottomLeftCorner(25,59);
@@ -542,8 +575,7 @@ namespace flopoco{
 		bestCost = computeCost(globalConfig);
 		display(globalConfig);
 		*/
-		display(bestConfig);
-		cout<<"Best cost is "<<bestCost<<endl;
+		
 	
 	
 	
@@ -1406,7 +1438,7 @@ namespace flopoco{
 												sa = config[j]->getShiftAmount();
 												//cout<<"Now considering taking(in left) dsp nr. "<<i<<" with tx:="<<itx<<" ty:="<<ity<<" bx:="<<ibx<<"by:="<<iby<<" with dsp nr. "<<j<<" with tx:="<<jtx<<" ty:="<<jty<<endl;
 												//config[j]->getBottomLeftCorner(jbx,jby);
-												//~ if(rw!=34 && rh!=34)
+												if(rw!=34 && rh!=34)
 												{
 												if(jtx==ibx+1&&jty==ity&&rw==sa&&config[j]->getShiftIn()==NULL)
 													{
@@ -1422,19 +1454,20 @@ namespace flopoco{
 														//~ prev = j;								
 													}
 												}
-												//~ else
-												//~ {
-													//~ if( jtx==ibx+1 && rw% sa==0 && ( (rw == 34 && jty==ity )   || ( rw=17 && jty==ity+sa)  ))
-													//~ {
-														//~ ver=true;
-														//~ ref->setShiftOut(config[j]);
-														//~ config[j]->setShiftIn(ref);
-														//~ nrOfUsedDSPs--;
-														//~ ref=config[j];
-														//~ count++;
-													//~ }
+												else
+												{
+													if( jtx==ibx+1 && rw% sa==0 && ( (rw == 34 && jty==ity )   || ( rw=17 && jty==ity+sa)  ))
+													{
+														//cout<<" case 1_2 DSP #"<<i<<" bind with DSP# "<<j<<endl;
+														ver=true;
+														ref->setShiftOut(config[j]);
+														config[j]->setShiftIn(ref);
+														nrOfUsedDSPs--;
+														ref=config[j];
+														count++;
+													}
 													
-												//~ }
+												}
 											}
 									}
 					
@@ -1446,7 +1479,7 @@ namespace flopoco{
 												sa = config[j]->getShiftAmount();
 												//cout<<"Now considering taking(down) dsp nr. "<<i<<" with tx:="<<itx<<" ty:="<<ity<<" bx:="<<ibx<<"by:="<<iby<<" with dsp nr. "<<j<<" with tx:="<<jtx<<" ty:="<<jty<<endl;
 												//config[j]->getBottomLeftCorner(jbx,jby);
-												//~ if(rw!=34 && rh!=34)
+												if(rw!=34 && rh!=34)
 												{
 												if(iby+1==jty&&itx==jtx&&rh==sa&&config[j]->getShiftIn()==NULL)
 													{
@@ -1462,18 +1495,19 @@ namespace flopoco{
 														//~ prev = j;
 													}
 												}
-												//~ else
-												//~ {
-													//~ if( iby+1==jty && rh% sa==0 && ( (rh == 34 && jtx==itx )   || ( rw=17 && jtx==itx+sa)  ))
-													//~ {
-														//~ ver=true;
-														//~ ref->setShiftOut(config[j]);
-														//~ config[j]->setShiftIn(ref);
-														//~ nrOfUsedDSPs--;
-														//~ ref=config[j];								
-														//~ count++;
-													//~ }
-												//~ }
+												else
+												{
+													if( iby+1==jty && rh% sa==0 && ( (rh == 34 && jtx==itx )   || ( rw=17 && jtx==itx+sa)  ))
+													{
+														//cout<<"case 2_2 DSP #"<<i<<" bind with DSP# "<<j<<endl;
+														ver=true;
+														ref->setShiftOut(config[j]);
+														config[j]->setShiftIn(ref);
+														nrOfUsedDSPs--;
+														ref=config[j];								
+														count++;
+													}
+												}
 							
 											}						
 									}					
@@ -1483,6 +1517,7 @@ namespace flopoco{
 			
 			}
 	
+		cout<<" nr de dspuri dupa bind "<<nrOfUsedDSPs<<endl;
 		return nrOfUsedDSPs;
 	
 	}
