@@ -122,7 +122,12 @@ namespace flopoco{
 		DSP** bestConfig;
 		/** The target */
 //		Target * target; //FIXME Killed by Bogdan. Operator Class contains a pointer to this target, so a second one is useless 
+		/** This will be used for computing the cost for each configuration */
+		float costDSP,costLUT;
 	
+		/**Size of board minus extra bits*/
+		int vnme,vmme;
+		
 		/** Used for partitioning the grid in smaller multiplications */
 		int **mat;
 	

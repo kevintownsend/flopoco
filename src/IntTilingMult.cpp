@@ -86,6 +86,8 @@ namespace flopoco{
 		
 		vn=wInX + 2* getExtraWidth();
 		vm=wInY + 2* getExtraHeight();
+		vnme = vn-getExtraWidth();		
+		vmme = vm - getExtraHeight() ;
 
 		//~ float tempDist =	 (movePercentage  * getExtraWidth() * getExtraWidth()) /4.0 + (movePercentage *getExtraHeight() * getExtraHeight()) /4.0;
 		float tempDist =	0;
@@ -95,6 +97,11 @@ namespace flopoco{
 		cout<<"maxDist2Move:= "<<maxDist2Move<<endl;
 		
 	
+		
+		float const scale=100.0;
+		costDSP = ( (1.0+scale) - scale * ratio );
+		costLUT = ( (1.0+scale) - scale * (1-ratio) ) /  ((float) target_->getEquivalenceSliceDSP() );
+		
 		
 		
 		
@@ -1144,22 +1151,22 @@ namespace flopoco{
 		n=vn;
 		m=vm;
 	
-		int nmew = n-getExtraWidth();
+		int nmew = vnme;
 		int ew = getExtraWidth();
-		int mmeh = m - getExtraHeight() ;
+		int mmeh = vmme;
 		int eh = getExtraHeight();
 		int nj,ni,njj,nii;
-	
+		int i;
 		
 		//~ cout<<"width "<<n<<"height "<<m<<endl;
 	
-		for(int i=0;i<m;i++)
+		for( i=0;i<m;i++)
 			{
 			
 				for(int j=0;j<n;j++)
 					mat[i][j]=0;
 			}
-		for(int i=0;i<nrDSPs;i++)
+		for( i=0;i<nrDSPs;i++)
 			{
 				int c1X,c2X,c1Y,c2Y;
 			
@@ -1178,7 +1185,7 @@ namespace flopoco{
 	
 		//~ cout<<"Partea 2"<<endl;
 		
-		for(int i=0;i<m;i++)
+		for( i=0;i<m;i++)
 			{
 				for(int j=0;j<n;j++)
 					{
@@ -1656,11 +1663,9 @@ namespace flopoco{
 	float IntTilingMult::computeCost(DSP** &config)
 	{
 	
-		float const scale=100.0;
+		
 		float acc=0.0;
-		float costDSP,costLUT;
-		costDSP = ( (1.0+scale) - scale * ratio );
-		costLUT = ( (1.0+scale) - scale * (1-ratio) ) /  ((float) target_->getEquivalenceSliceDSP() );
+		
 		//costLUT = ( (1.0+scale) - scale * (1-ratio) ) /  ((float)100);
 	
 		//~ cout<<"Cost of a DSP is "<<costDSP<<endl<<"Cost of a Slice is "<<costLUT<<endl;
