@@ -221,6 +221,7 @@ namespace flopoco{
 		//to be set in the InitTiling() with the appropriate value
 		int nrOfShifts4Virtex;
 		//int *countsShift;
+		int dsplimit;
 	};
 }
 

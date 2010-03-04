@@ -2238,6 +2238,8 @@ namespace flopoco{
 	void IntTilingMult::initTiling(DSP** &config, int dspCount)
 	{
 		int w,h; 
+		target_->getDSPWidths(w, h);
+		dsplimit = w*h;
 		config = new DSP*[nrDSPs];
 		nrOfShifts4Virtex=4;
 		//countsShift = new int[nrDSPs];
@@ -2278,12 +2280,16 @@ namespace flopoco{
 			h = min;
 		}	
 		
+		// allocate the maximum number of DSP objects
 		config = new DSP*[nrDSPs];
 		for (int i=0; i<nrDSPs; i++)
 		{	
 			config[i] = NULL;
 		}
 		
+		/* NOTE: In case the multiplication is narrower than twice the minimum dimension of a DSP 
+		 * then we do not form paris of multipliers
+		 */
 		if ((vm < 2*min) || (vn < 2*min))
 		{
 			for (int i=0; i<dspCount; i++)
@@ -2298,46 +2304,79 @@ namespace flopoco{
 					config[i]->setBottomLeftCorner(vn+w, vm+h);
 				}
 			}
-			return;
+			dsplimit = w*h;
+			return; // force exit
 		}
-		
+		dsplimit = w*h*2;
+		// else form paris
+		// verify if we have an even or odd nr of DSPs
 		bool singleDSP = false;
 		if (nrDSPs % 2 == 1)
 			singleDSP = true;
 			
+		// compute new number of DSPs
 		dspCount = nrDSPs = (int) ceil((double) dspCount/2);
 		
+		// set shift amount according to target
 		int shift = 0;
 		if ((target_->getID() == "Virtex4") || (target_->getID() == "Virtex5"))
 			shift = 17;
 		
-		if (singleDSP)
-		{ // allocate single DSP
-			config[0] = target_->createDSP();
-			if(!replace(config, 0))
+		int start = 0; // starting position
+		
+		
+		if (dspCount >= 16) 
+		{ // we have more than 16 paris of multipliers we can group 4 such pairs into a super-block
+			config[start] = new DSP(0, w*2, h*4);	
+			config[start]->allocatePositions(3*start); // each DSP offers 3 positions
+			if(!replace(config, start))
 			{
-				int w=config[0]->getMaxMultiplierWidth();
-				int h= config[0]->getMaxMultiplierHeight();
-				config[0]->setTopRightCorner(vn, vm);
-				config[0]->setBottomLeftCorner(vn+w, vm+h);
+				int w=config[start]->getMaxMultiplierWidth();
+				int h= config[start]->getMaxMultiplierHeight();
+				config[start]->setTopRightCorner(vn, vm);
+				config[start]->setBottomLeftCorner(vn+w, vm+h);
 			}
+			start++;
+			dspCount -= 3;
+			nrDSPs = dspCount;
 			
+			int i;
+			for (i=start; i<3; i++)
+			{
+				config[i] = new DSP(shift, w, h*2);	
+				config[i]->allocatePositions(3*i); // each DSP offers 3 positions
+				if(!replace(config, i))
+				{
+					int w=config[i]->getMaxMultiplierWidth();
+					int h= config[i]->getMaxMultiplierHeight();
+					config[i]->setTopRightCorner(vn, vm);
+					config[i]->setBottomLeftCorner(vn+w, vm+h*2);
+				}
+			}
+			start += i;	
 		}
-		else
-		{ // allocate DSP pair
-			config[0] = new DSP(shift, w, h*2);
-			if(!replace(config, 0))
+
+		/*NOTE: if the program entered the previous if clause it will also enter the following 
+		 * 	if clause. This is the effect we want to obtain */
+		if (dspCount >= 10)
+		{ // we have more than 10 paris of multipliers we can group 4 such pairs into a super-block
+			config[start] = new DSP(0, w*2, h*4);	
+			config[start]->allocatePositions(3*start); // each DSP offers 3 positions
+			if(!replace(config, start))
 			{
-				int w=config[0]->getMaxMultiplierWidth();
-				int h= config[0]->getMaxMultiplierHeight();
-				config[0]->setTopRightCorner(vn, vm);
-				config[0]->setBottomLeftCorner(vn+w, vm+h*2);
+				int w=config[start]->getMaxMultiplierWidth();
+				int h= config[start]->getMaxMultiplierHeight();
+				config[start]->setTopRightCorner(vn, vm);
+				config[start]->setBottomLeftCorner(vn+w, vm+h);
 			}
-			
-		}	
+			start++;
+			dspCount -= 3;
+			nrDSPs = dspCount;
+		}
 		
-		
-		for (int i=1; i<dspCount; i++)
+		// initialize all DSP paris except first one
+		dspCount--;
+		for (int i=start; i<dspCount; i++)
 		{
 			config[i] = new DSP(shift, w, h*2);	
 			config[i]->allocatePositions(3*i); // each DSP offers 3 positions
@@ -2349,6 +2388,35 @@ namespace flopoco{
 				config[i]->setBottomLeftCorner(vn+w, vm+h*2);
 			}
 		}
+		
+		//initializa last DSP or DSP pair
+		if (singleDSP) // then the last position is a single DSP 
+		{ // allocate single DSP
+			config[dspCount] = target_->createDSP();
+			config[dspCount]->allocatePositions(3*dspCount); // each DSP offers 3 positions
+			if(!replace(config, dspCount))
+			{
+				int w=config[dspCount]->getMaxMultiplierWidth();
+				int h= config[dspCount]->getMaxMultiplierHeight();
+				config[dspCount]->setTopRightCorner(vn, vm);
+				config[dspCount]->setBottomLeftCorner(vn+w, vm+h);
+			}
+			
+		}
+		else // then the last position is a DSP pair
+		{ // allocate DSP pair
+			config[dspCount] = new DSP(shift, w, h*2);
+			config[dspCount]->allocatePositions(3*dspCount); // each DSP offers 3 positions
+			if(!replace(config, dspCount))
+			{
+				int w=config[dspCount]->getMaxMultiplierWidth();
+				int h= config[dspCount]->getMaxMultiplierHeight();
+				config[dspCount]->setTopRightCorner(vn, vm);
+				config[dspCount]->setBottomLeftCorner(vn+w, vm+h*2);
+			}
+			
+		}	
+		
 	}
 	
 	DSP** IntTilingMult::neighbour(DSP** config)
