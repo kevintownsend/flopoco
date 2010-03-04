@@ -534,6 +534,7 @@ namespace flopoco{
 		//The second
 		numberDSP4Overlap=nrDSPs;
 		initTiling2(globalConfig,nrDSPs);	
+		
 		 
 		//~ for(int i=1;i<nrDSPs;i++)	
 			//~ {
@@ -564,7 +565,6 @@ namespace flopoco{
 		//the one
 		numberDSP4Overlap=nrDSPs;
 		tilingAlgorithm(nrDSPs-1,nrDSPs-1,false,nrDSPs-1);
-		
 		bindDSPs(bestConfig);
 		
 		
@@ -1473,7 +1473,9 @@ namespace flopoco{
 												{
 													//~ cout<<config[i]->getMaxMultiplierHeight()<<" "<<rh<<" ";
 													//~ cout<<(config[i]->getMaxMultiplierHeight()% rh)<<endl;
+
 													if( jtx==ibx+1 && sa!=0 && rw%sa==0 && ( (rw == 34 && jty==ity)   || ( rw==17 && jty==ity+sa   )  ))
+
 													{
 														//cout<<" case 1_2 DSP #"<<i<<" bind with DSP# "<<j<<endl;
 														ver=true;
@@ -1517,7 +1519,10 @@ namespace flopoco{
 												{
 													//~ cout<<config[i]->getMaxMultiplierWidth()<<" "<<rw<<endl;
 													//~ cout<<(config[i]->getMaxMultiplierWidth()% rw)<<endl;
-													if( iby+1==jty && sa != 0 && rh%sa==0 && ( (rh == 34 && jtx==itx)   || ( rw==17 && jtx==itx+sa)  ))
+
+													//&&  (config[j]->getMaxMultiplierWidth()% rw==0)
+													if( iby+1==jty &&sa!=0&& rh% sa==0 && ( (rh == 34 && jtx==itx   )   || ( rw==17 && jtx==itx+sa)  ))
+
 													{
 														//cout<<"case 2_2 DSP #"<<i<<" bind with DSP# "<<j<<endl;
 														ver=true;
@@ -1878,7 +1883,8 @@ namespace flopoco{
 		int posav = config[index]->getAvailablePositions();
 		int minY,minX;
 		config[index]->getTopRightCorner(minX,minY);
-		minX=w;
+		//~ cout<<index<<" "<< minX<<" "<<minY<<" "<<poscur<<" "<<posav<<" ";
+		minX+=w; 
 		for(;poscur<posav;poscur++)
 		{
 			if(minY>config[index]->Ypositions[poscur])
@@ -1887,17 +1893,20 @@ namespace flopoco{
 				minX=config[index]->Xpositions[poscur];
 			}
 		}
-		//cout<<index<<" "<< minX<<" "<<minY<<" ";
+		//~ cout<<index<<" "<< minX<<" "<<minY<<" ";
 		
 		config[index]->getBottomLeftCorner(x,y);
 		
 		
 		
-		long area = (vn - minX+5) * (vm -minY+5) + w * (vm- y);
-		//cout<<" area "<<area<<" ";
+		long area = (vn - minX+6) * (vm -minY+6) + w * (vm- y);
+
+		//~ cout<<" area "<<area<<" dspArea "<<dsplimit<<" ";
 		int dsplimittemp = (int)ceil( ((double)area) / dsplimit );
-		//cout<<" limit "<<dsplimit<<" nrrest "<<numberDSP4Overlap<<endl;
-		if( dsplimittemp < (numberDSP4Overlap -index-1))
+		//~ cout<<" limit "<<dsplimittemp<<" nrrest "<<(numberDSP4Overlap -index-1)<<endl;
+		//I have added +1 to the number of dsps that could be place because when we work with combined dsps there exists the case when an are of a dsp is not added
+		if( dsplimittemp+1 < (numberDSP4Overlap -index-1))
+
 			return true;
 		
 		//return false;
@@ -2102,6 +2111,7 @@ namespace flopoco{
 
 	bool IntTilingMult::replace(DSP** config, int index)
 	{
+		//~ cout<<"DSP nr "<<index<<endl;
 		int xtr1, ytr1, xbl1, ybl1;
 		int w, h;
 		string targetID = target_->getID();
@@ -2166,7 +2176,7 @@ namespace flopoco{
 					config[index]->push(x1, y1);
 				
 			}
-			/*
+			
 			//~ cout<<endl<<"index "<<index<<" ";
 			//~ config[index]->resetPosition();
 			//~ do
@@ -2176,7 +2186,7 @@ namespace flopoco{
 				 //~ cout<<" ("<<config[index]->Xpositions[pos]<<" , "<<config[index]->Ypositions[pos]<<")";	
 			//~ }while(pos>=0);
 			//~ cout<<endl;
-			*/
+			
 			
 			w= config[index]->getMaxMultiplierWidth();
 			h= config[index]->getMaxMultiplierHeight();
@@ -2198,6 +2208,8 @@ namespace flopoco{
 					config[index]->setBottomLeftCorner(vn+w, vm+h);
 					return false;
 				}
+				
+				//~ cout<<index<<" (X,Y)="<<xtr1<<" "<<ytr1<<endl;
 					
 				//if ((ytr1 > gh) && (xtr1 > gw) && (ybl1 < exh) && (xbl1 < exw)) // the DSP block is out of the tiling grid
 				//	continue;
@@ -2315,7 +2327,9 @@ namespace flopoco{
 			singleDSP = true;
 			
 		// compute new number of DSPs
+
 		numberDSP4Overlap = dspCount = nrDSPs = (int) ceil((double) dspCount/2);
+
 		
 		// set shift amount according to target
 		int shift = 0;
@@ -2327,6 +2341,7 @@ namespace flopoco{
 		
 		if (dspCount >= 16) 
 		{ // we have more than 16 paris of multipliers we can group 4 such pairs into a super-block
+			cout<<"A super DSP was created"<<endl;
 			config[start] = new DSP(0, w*2, h*4);	
 			config[start]->allocatePositions(3*start); // each DSP offers 3 positions
 			if(!replace(config, start))
@@ -2338,7 +2353,9 @@ namespace flopoco{
 			}
 			start++;
 			dspCount -= 3;
+
 			numberDSP4Overlap = nrDSPs = dspCount;
+
 			
 			int i;
 			for (i=start; i<3; i++)
@@ -2360,6 +2377,7 @@ namespace flopoco{
 		 * 	if clause. This is the effect we want to obtain */
 		if (dspCount >= 10)
 		{ // we have more than 10 paris of multipliers we can group 4 such pairs into a super-block
+			cout<<"A super DSP was created"<<endl;
 			config[start] = new DSP(0, w*2, h*4);	
 			config[start]->allocatePositions(3*start); // each DSP offers 3 positions
 			dspCount -= 3;
@@ -2372,6 +2390,7 @@ namespace flopoco{
 				config[start]->setBottomLeftCorner(vn+w, vm+h);
 			}
 			start++;
+
 		}
 		
 		// initialize all DSP paris except first one
