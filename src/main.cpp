@@ -33,6 +33,7 @@
 #include "Shifters.hpp"
 #include "LZOC.hpp"
 #include "LZOCShifterSticky.hpp"
+#include "UserDefinedOperator.hpp"
 #include "IntAdder.hpp"
 #include "IntNAdder.hpp"
 #include "IntCompressorTree.hpp"
@@ -130,6 +131,7 @@ namespace flopoco{
 static void usage(char *name){
 	cerr << "\nUsage: "<<name<<" <operator specification list>\n" ;
 	cerr << "Each operator specification is one of: \n";
+        cerr << "    UserDefinedOperator param0 param1\n";
 	cerr << "    LeftShifter  wIn  MaxShift\n";
 	cerr << "    RightShifter wIn  MaxShift\n";
 	cerr << "    LZOC wIn\n";
@@ -601,6 +603,21 @@ bool parseCommandLine(int argc, char* argv[]){
 				}else
 					cerr << "wIn must be > 1"<<endl;
 			}
+		}
+		else if(opname=="UserDefinedOperator"){
+                        // the UserDefinedOperator expects 2 parameters
+			int nargs = 2;
+			if (i+nargs > argc)
+                            /* if there is less than 2 parameters, we output 
+                              the help information for Flopoco */
+				usage(argv[0]);
+			else {
+				int param0 = checkStrictyPositive(argv[i++], argv[0]);
+				int param1 = checkStrictyPositive(argv[i++], argv[0]);
+				cerr << "> UserDefinedOperator, param0="<<param0<<", param1=" << param1 << endl  ;
+                                op = new UserDefinedOperator(target,param0,param1);
+                                addOperator(op);
+			}    
 		}
 		else if(opname=="IntAdder"){
 			int nargs = 1;

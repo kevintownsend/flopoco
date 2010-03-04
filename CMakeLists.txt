@@ -151,6 +151,7 @@ ADD_EXECUTABLE(flopoco
  src/Wrapper
  src/TestBench 
 # src/BigTestBench
+ src/UserDefinedOperator
  src/IntAdder
  src/IntNAdder
  src/IntCompressorTree
@@ -224,6 +225,7 @@ ADD_EXECUTABLE(flopoco
  src/Wrapper
  src/TestBench 
  #src/BigTestBench
+ src/UserDefinedOperator
  src/IntAdder
  src/IntNAdder
  src/IntCompressorTree
