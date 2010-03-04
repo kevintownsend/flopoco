@@ -1156,17 +1156,17 @@ namespace flopoco{
 		int mmeh = vmme;
 		int eh = getExtraHeight();
 		int nj,ni,njj,nii;
-		int i;
+		
 		
 		//~ cout<<"width "<<n<<"height "<<m<<endl;
 	
-		for( i=0;i<m;i++)
+		for(int i=0;i<m;i++)
 			{
 			
 				for(int j=0;j<n;j++)
 					mat[i][j]=0;
 			}
-		for( i=0;i<nrDSPs;i++)
+		for(int i=0;i<nrDSPs;i++)
 			{
 				int c1X,c2X,c1Y,c2Y;
 			
@@ -1185,7 +1185,7 @@ namespace flopoco{
 	
 		//~ cout<<"Partea 2"<<endl;
 		
-		for( i=0;i<m;i++)
+		for(int i=0;i<m;i++)
 			{
 				for(int j=0;j<n;j++)
 					{
@@ -1471,7 +1471,9 @@ namespace flopoco{
 												}
 												else
 												{
-													if( jtx==ibx+1 && rw% sa==0 && ( (rw == 34 && jty==ity )   || ( rw=17 && jty==ity+sa)  ))
+													//~ cout<<config[i]->getMaxMultiplierHeight()<<" "<<rh<<" ";
+													//~ cout<<(config[i]->getMaxMultiplierHeight()% rh)<<endl;
+													if( jtx==ibx+1 && rw% sa==0 && ( (rw == 34 && jty==ity  && (config[j]->getMaxMultiplierHeight()% rh==0)  )   || ( rw==17 && jty==ity+sa   )  ))
 													{
 														//cout<<" case 1_2 DSP #"<<i<<" bind with DSP# "<<j<<endl;
 														ver=true;
@@ -1513,7 +1515,9 @@ namespace flopoco{
 												}
 												else
 												{
-													if( iby+1==jty && rh% sa==0 && ( (rh == 34 && jtx==itx )   || ( rw=17 && jtx==itx+sa)  ))
+													//~ cout<<config[i]->getMaxMultiplierWidth()<<" "<<rw<<endl;
+													//~ cout<<(config[i]->getMaxMultiplierWidth()% rw)<<endl;
+													if( iby+1==jty && rh% sa==0 && ( (rh == 34 && jtx==itx &&  (config[j]->getMaxMultiplierWidth()% rw==0)  )   || ( rw==17 && jtx==itx+sa)  ))
 													{
 														//cout<<"case 2_2 DSP #"<<i<<" bind with DSP# "<<j<<endl;
 														ver=true;
@@ -1702,6 +1706,7 @@ namespace flopoco{
 		//~ cout<<"LUTs used for last "<<nrOfUsedDSPs+partitions<<" adder are"<<LUTs4NAdder<<endl;
 		
 		acc +=  LUTs4NAdder* costLUT;	
+		
 		
 		//~ Substracting the cost of different additions that can be done in DSPs(Virtex) or the cost of a DSP if they can be combined(Altera)
 		
