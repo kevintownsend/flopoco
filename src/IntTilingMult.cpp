@@ -1473,7 +1473,7 @@ namespace flopoco{
 												{
 													//~ cout<<config[i]->getMaxMultiplierHeight()<<" "<<rh<<" ";
 													//~ cout<<(config[i]->getMaxMultiplierHeight()% rh)<<endl;
-													if( jtx==ibx+1 && rw% sa==0 && ( (rw == 34 && jty==ity  && (config[j]->getMaxMultiplierHeight()% rh==0)  )   || ( rw==17 && jty==ity+sa   )  ))
+													if( jtx==ibx+1 && sa!=0 && rw%sa==0 && ( (rw == 34 && jty==ity)   || ( rw==17 && jty==ity+sa   )  ))
 													{
 														//cout<<" case 1_2 DSP #"<<i<<" bind with DSP# "<<j<<endl;
 														ver=true;
@@ -1517,7 +1517,7 @@ namespace flopoco{
 												{
 													//~ cout<<config[i]->getMaxMultiplierWidth()<<" "<<rw<<endl;
 													//~ cout<<(config[i]->getMaxMultiplierWidth()% rw)<<endl;
-													if( iby+1==jty && rh% sa==0 && ( (rh == 34 && jtx==itx &&  (config[j]->getMaxMultiplierWidth()% rw==0)  )   || ( rw==17 && jtx==itx+sa)  ))
+													if( iby+1==jty && sa != 0 && rh%sa==0 && ( (rh == 34 && jtx==itx)   || ( rw==17 && jtx==itx+sa)  ))
 													{
 														//cout<<"case 2_2 DSP #"<<i<<" bind with DSP# "<<j<<endl;
 														ver=true;
@@ -1895,9 +1895,9 @@ namespace flopoco{
 		
 		long area = (vn - minX+5) * (vm -minY+5) + w * (vm- y);
 		//cout<<" area "<<area<<" ";
-		int dsplimit = (int)ceil( ((double)area) / (w*h) );
+		int dsplimittemp = (int)ceil( ((double)area) / dsplimit );
 		//cout<<" limit "<<dsplimit<<" nrrest "<<numberDSP4Overlap<<endl;
-		if( dsplimit < (numberDSP4Overlap -index-1))
+		if( dsplimittemp < (numberDSP4Overlap -index-1))
 			return true;
 		
 		//return false;
@@ -2315,7 +2315,7 @@ namespace flopoco{
 			singleDSP = true;
 			
 		// compute new number of DSPs
-		dspCount = nrDSPs = (int) ceil((double) dspCount/2);
+		numberDSP4Overlap = dspCount = nrDSPs = (int) ceil((double) dspCount/2);
 		
 		// set shift amount according to target
 		int shift = 0;
@@ -2338,7 +2338,7 @@ namespace flopoco{
 			}
 			start++;
 			dspCount -= 3;
-			nrDSPs = dspCount;
+			numberDSP4Overlap = nrDSPs = dspCount;
 			
 			int i;
 			for (i=start; i<3; i++)
@@ -2353,7 +2353,7 @@ namespace flopoco{
 					config[i]->setBottomLeftCorner(vn+w, vm+h*2);
 				}
 			}
-			start += i;	
+			start = i;	
 		}
 
 		/*NOTE: if the program entered the previous if clause it will also enter the following 
@@ -2362,6 +2362,8 @@ namespace flopoco{
 		{ // we have more than 10 paris of multipliers we can group 4 such pairs into a super-block
 			config[start] = new DSP(0, w*2, h*4);	
 			config[start]->allocatePositions(3*start); // each DSP offers 3 positions
+			dspCount -= 3;
+			numberDSP4Overlap = nrDSPs = dspCount;
 			if(!replace(config, start))
 			{
 				int w=config[start]->getMaxMultiplierWidth();
@@ -2370,8 +2372,6 @@ namespace flopoco{
 				config[start]->setBottomLeftCorner(vn+w, vm+h);
 			}
 			start++;
-			dspCount -= 3;
-			nrDSPs = dspCount;
 		}
 		
 		// initialize all DSP paris except first one
