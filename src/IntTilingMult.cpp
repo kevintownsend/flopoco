@@ -1722,23 +1722,30 @@ namespace flopoco{
 
 	int IntTilingMult::estimateDSPs()
 	{
+		if (ratio>1)
+			ratio =1;
 		float t1,t2;
 		int Xd, Yd; //the dimension of the multiplier on X and on Y
-		int multX, multY;
+		//int multX, multY;
 		bool fitMultiplicaication = false;
-
+		int tempDSP;
 		target_->getDSPWidths(Xd,Yd);
 		int maxDSP= target_->getNumberOfDSPs();
 	
-		t1= ((float) wInX) / ((float) Xd);
-		t2= ((float) wInY) / ((float) Yd);
+		t1 = wInX*wInY;
+		t2 = Xd*Yd; 
+		tempDSP =    int(ceil(   ((float) t1) / ((float) t2) ));
+		//~ t1= ((float) wInX) / ((float) Xd);
+		//~ t2= ((float) wInY) / ((float) Yd);
 		
-		multX = int (ceil(t1));
-		multY = int (ceil(t2));	
+		//~ multX = int (ceil(t1));
+		//~ multY = int (ceil(t2));	
 		
-		if(maxDSP >= (multX * multY) ){
+		
+		if(maxDSP > tempDSP ){
 			fitMultiplicaication = true;
-			maxDSP = multX * multY; //set the maximum number of DSPs to the multiplication size
+			maxDSP = tempDSP;
+			//maxDSP = multX * multY; //set the maximum number of DSPs to the multiplication size
 		}
 			
 		if (ratio == 1){
@@ -1750,8 +1757,13 @@ namespace flopoco{
 			
 			return maxDSP;
 		}else{	
-			float temp = ( float(target_->getIntMultiplierCost(wInX,wInY)) * ratio)  /   ((1.-ratio)*float(target_->getEquivalenceSliceDSP())) ;
+			//cout<<" Eq Slice DSP "<<target_->getEquivalenceSliceDSP()<<endl;
+			//cout<<" IntM cost "<<target_->getIntMultiplierCost(wInX,wInY)<<endl;
+			//float temp = ( float(target_->getIntMultiplierCost(wInX,wInY)) * ratio)  /   ((1.-ratio)*float(target_->getEquivalenceSliceDSP())) ;
+			float temp = ( float(target_->getIntMultiplierCost(wInX,wInY)) * ratio)  /   (float(target_->getEquivalenceSliceDSP())) ;
+			//cout<<"val calc "<<temp<<" ";
 			int i_tmp = int(ceil(temp));
+			//cout<<" rounded "<<i_tmp<<endl;
 	
 			if(i_tmp > maxDSP){
 				if (fitMultiplicaication){
@@ -1759,7 +1771,9 @@ namespace flopoco{
 				}else{
 					REPORT(INFO, "Warning!!! The number of estimated DSPs with respect with this ratio of preference is grather then the total number of DSPs that exist on this board!");
 				}
+				
 				i_tmp = maxDSP;
+				//cout<<" final val is(the max dsps) "<<i_tmp<<endl;
 			}
 	
 			return i_tmp ;
