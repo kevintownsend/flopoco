@@ -1402,7 +1402,7 @@ namespace flopoco{
 		for(int i=0;i<nrDSPs;i++){
 			
 			config[i]->getTopRightCorner(dx,dy);
-			if(config[i]!=NULL )  // && (dx<=vnme && dy<vmme)
+			if(config[i]!=NULL )  // && (dx<=vnme && dy<vmme)  // with this condition in this if the algorithm will be encorege to try to compute with less dsps that the user has given
 				{
 					nrOfUsedDSPs++;
 				}
@@ -1734,8 +1734,10 @@ namespace flopoco{
 		t1 = wInX*wInY;
 		t2 = Xd*Yd; 
 		tempDSP =    int(ceil(   ((float) t1) / ((float) t2) ));
+		
 		//~ t1= ((float) wInX) / ((float) Xd);
 		//~ t2= ((float) wInY) / ((float) Yd);
+		//~ tempDSP =    int(ceil( t1) * ceil(t2) );
 		
 		//~ multX = int (ceil(t1));
 		//~ multY = int (ceil(t2));	
