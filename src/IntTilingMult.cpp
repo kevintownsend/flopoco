@@ -718,10 +718,8 @@ namespace flopoco{
 						if(move(globalConfig,i)) // the current DSP was successfuly moved
 							{
 					//			cout<<"Pas 1_2 "<<i<<endl;
-								if(i==1){
-									counterfirst++;
-									if(counterfirst%100==0)
-										cout<<counterfirst<<"DSP #2 has made 100 steps!"<<endl;
+								if(i==0){
+									cout<<"DSP #1 has made another step!"<<endl;
 									//~ display(globalConfig);
 									//~ cout<<endl<<endl<<endl;
 				
@@ -1399,13 +1397,12 @@ namespace flopoco{
 	int IntTilingMult::bindDSPs4Virtex(DSP** &config)
 	{
 		int nrOfUsedDSPs=0;
-		int px,py,dx,dy;
-		px =vn - getExtraWidth();
-		py =vm - getExtraHeight();
+		int dx,dy;
+		
 		for(int i=0;i<nrDSPs;i++){
 			
 			config[i]->getTopRightCorner(dx,dy);
-			if(config[i]!=NULL && (dx<=px && dy<py))
+			if(config[i]!=NULL )  // && (dx<=vnme && dy<vmme)
 				{
 					nrOfUsedDSPs++;
 				}
@@ -1447,7 +1444,7 @@ namespace flopoco{
 										if(config[j]!=NULL &&j!=i )
 											{
 												config[j]->getTopRightCorner(jtx,jty);
-												if((jtx<=px && jty<py))
+												if((jtx<=vnme && jty<vmme))
 												{
 												
 												sa = config[j]->getShiftAmount();
@@ -1496,6 +1493,8 @@ namespace flopoco{
 										if(config[j]!=NULL &&j!=i)
 											{
 												config[j]->getTopRightCorner(jtx,jty);
+												if((jtx<=vnme && jty<vmme))
+												{
 												sa = config[j]->getShiftAmount();
 												//cout<<"Now considering taking(down) dsp nr. "<<i<<" with tx:="<<itx<<" ty:="<<ity<<" bx:="<<ibx<<"by:="<<iby<<" with dsp nr. "<<j<<" with tx:="<<jtx<<" ty:="<<jty<<endl;
 												//config[j]->getBottomLeftCorner(jbx,jby);
@@ -1533,7 +1532,7 @@ namespace flopoco{
 														count++;
 													}
 												}
-							
+											}
 											}						
 									}					
 							}
