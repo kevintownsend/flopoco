@@ -100,8 +100,9 @@ namespace flopoco{
 		
 		float const scale=100.0;
 		costDSP = ( (1.0+scale) - scale * ratio );
+		//~ cout<<"Cost DSP is "<<costDSP<<endl;
 		costLUT = ( (1.0+scale) - scale * (1-ratio) ) /  ((float) target_->getEquivalenceSliceDSP() );
-		
+		//~ cout<<"Cost LUT is "<<costLUT<<endl;
 		
 		
 		
@@ -522,31 +523,26 @@ namespace flopoco{
 					mat[i][j]=0;
 			}
 		
-		tempc= new DSP*[nrDSPs];
-		for(int ii=0;ii<nrDSPs;ii++)
-			tempc[ii]= new DSP();
-
-		/*we will try the algorithm with 2 values of nrDSPs	
-		  One will be the estimated value(nrDSPs) and the second one will be nrDSPs-1	
-		*/
-		rot = new bool[nrDSPs];
-		for(int i =0;i<nrDSPs;i++)
-			rot[i]=false;
-	
-		//The second
-		numberDSP4Overlap=nrDSPs;
-		initTiling2(globalConfig,nrDSPs);	
+		//if the estimated number of DSPs is grather then 0 then we should run the algorithm
+		if(nrDSPs>0){
+			tempc= new DSP*[nrDSPs];
+			for(int ii=0;ii<nrDSPs;ii++)
+				tempc[ii]= new DSP();
+			/*we will try the algorithm with 2 values of nrDSPs	
+			One will be the estimated value(nrDSPs) and the second one will be nrDSPs-1	
+			*/
+			rot = new bool[nrDSPs];
+			for(int i =0;i<nrDSPs;i++)
+				rot[i]=false;
 		
-		 
-		//~ for(int i=1;i<nrDSPs;i++)	
-			//~ {
-				//~ globalConfig[i]->resetPosition();
-				//~ int pos = globalConfig[i]->pop();
-				//~ while(pos>=0)
-				//~ {
-						
-				//~ }
-			//~ }
+				//The second
+				numberDSP4Overlap=nrDSPs;
+				initTiling2(globalConfig,nrDSPs);
+		
+		
+	
+			
+		
 			
 		//this will initialize the bestConfig with the first configuration
 		bestCost = FLT_MAX ;
@@ -607,6 +603,7 @@ namespace flopoco{
 	
 	
 	
+	
 		//dealocari
 	
 		//~ for(int ii=0;ii<m;ii++)
@@ -618,6 +615,31 @@ namespace flopoco{
 			//~ free(tempc[ii]);
 	
 		//~ delete[] (tempc);
+		
+		}
+		else
+		{
+			n=vn;
+			m=vm;
+	
+			mat = new int*[m];
+			for(int i=0;i<m;i++)
+			{
+				mat[i] = new int [n];
+				for(int j=0;j<n;j++)
+					mat[i][j]=0;
+			}
+			tempc= new DSP*[0];
+			bestConfig = new DSP*[1];
+			globalConfig = new DSP*[1];
+			tempc[0]=bestConfig[0]=globalConfig[0]=NULL;
+			
+			bestCost = FLT_MAX ;
+			cout<<"Max score is"<<bestCost<<endl;
+			compareCost();
+			cout<<"New best score is"<<bestCost<<endl;
+			display(bestConfig);
+		}
 	
 	}
 
@@ -1807,10 +1829,14 @@ namespace flopoco{
 			//cout<<" Eq Slice DSP "<<target_->getEquivalenceSliceDSP()<<endl;
 			//cout<<" IntM cost "<<target_->getIntMultiplierCost(wInX,wInY)<<endl;
 			//float temp = ( float(target_->getIntMultiplierCost(wInX,wInY)) * ratio)  /   ((1.-ratio)*float(target_->getEquivalenceSliceDSP())) ;
-			float temp = ( float(target_->getIntMultiplierCost(wInX,wInY)) * ratio)  /   (float(target_->getEquivalenceSliceDSP())) ;
-			//cout<<"val calc "<<temp<<" ";
+			float scaleDSPs=1.0;
+			if(maxDSP>4)
+				scaleDSPs= ((float)maxDSP) / ((float)maxDSP-2);
+			float temp = ( float(target_->getIntMultiplierCost(wInX,wInY)) * ratio* scaleDSPs)  /   (float(target_->getEquivalenceSliceDSP())) ;
+			//float temp = ( float(target_->getIntMultiplierCost(wInX,wInY)) )  /   ((1.-ratio)*float(target_->getEquivalenceSliceDSP())) ;
+			cout<<"val calc "<<temp<<endl;
 			int i_tmp = int(ceil(temp));
-			//cout<<" rounded "<<i_tmp<<endl;
+			cout<<" rounded "<<i_tmp<<endl;
 	
 			if(i_tmp > maxDSP){
 				if (fitMultiplicaication){
@@ -2837,7 +2863,7 @@ namespace flopoco{
 				for (int i=0; i<nrDSPs; i++)
 					if (tempc[i] != NULL)
 						{
-							cout << "At DSP#"<< i+1 << " tempc["<<i<<"]" << endl; 
+							//~ cout << "At DSP#"<< i+1 << " tempc["<<i<<"]" << endl; 
 							DSP* d = tempc[i];
 							int j=0;
 							int connected = 0;
@@ -2858,11 +2884,11 @@ namespace flopoco{
 									extH = getExtraHeight();
 									
 									fpadX = blx1-wInX-extW+1;
-									cout << "fpadX = " << fpadX << endl;
+									//~ cout << "fpadX = " << fpadX << endl;
 									fpadX = (fpadX<0)?0:fpadX;
 									
 									fpadY = bly1-wInY-extH+1;
-									cout << "fpadY = " << fpadY << endl;
+									//~ cout << "fpadY = " << fpadY << endl;
 									fpadY = (fpadY<0)?0:fpadY;
 									
 									bpadX = extW-trx1;
@@ -2929,7 +2955,7 @@ namespace flopoco{
 										{
 											if ((tempc[k] != NULL) && (tempc[k] == d))
 												{
-													cout << "tempc[" << k << "] deleted" << endl;
+													//~ cout << "tempc[" << k << "] deleted" << endl;
 													tempc[k] = NULL;
 													break;
 												}
