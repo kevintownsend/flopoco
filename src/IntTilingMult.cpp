@@ -491,7 +491,9 @@ namespace flopoco{
 		  cout << "and bottom-left: (" << x << ", " << y << ")" << endl;
 		  }
 		*/        
-
+		bestConfig = splitLargeBlocks(bestConfig, nrDSPs);
+		multiplicationInDSPs(bestConfig);
+		//multiplicationInSlices(bestConfig);
 	
 	}
 	
@@ -2741,6 +2743,81 @@ namespace flopoco{
 		return (DSPcount - pair[0]/2 - pair[1]*2/3 - pair[2]*3/4);
 	}
 
+	DSP** IntTilingMult::splitLargeBlocks(DSP** config, int &numberOfDSPs)
+	{
+		int h, w, dspH, dspW, tmp, nrDSPonHeight, nrDSPonWidth, shiftAmount, newNrDSPs=0;
+		getTarget()->getDSPWidths(dspW, dspH);
+		
+		// count total number of DSPs
+		for (int i=0; i<numberOfDSPs; i++)
+		{
+			h = config[i]->getMaxMultiplierHeight();
+			w = config[i]->getMaxMultiplierWidth();
+			
+			if ((h % dspH) != 0) // match width and height
+			{
+				tmp = dspH;
+				dspH = dspW;
+				dspW = tmp;
+			}
+			
+			nrDSPonHeight = h/dspH;
+			nrDSPonWidth = w/dspW;
+			
+			newNrDSPs += (nrDSPonHeight*nrDSPonWidth);
+		}
+		
+		DSP** returnConfig = new DSP*[newNrDSPs];
+		int index = 0;
+		int xtr, xbl, ytr, ybl;
+		for (int i=0; i<numberOfDSPs; i++)
+		{
+			h = config[i]->getMaxMultiplierHeight();
+			w = config[i]->getMaxMultiplierWidth();
+			shiftAmount = config[i]->getShiftAmount();
+			config[i]->getTopRightCorner(xtr, ytr);
+			config[i]->getBottomLeftCorner(xbl, ybl);
+			
+			if ((h % dspH) != 0) // match width and height
+			{
+				tmp = dspH;
+				dspH = dspW;
+				dspW = tmp;
+			}
+			
+			nrDSPonHeight = h/dspH;
+			nrDSPonWidth = w/dspW;
+			// create DSP blocks
+			for (int j=0; j<nrDSPonHeight; j++)
+				for (int k=0; k<nrDSPonWidth; k++)
+				{
+					returnConfig[index] = getTarget()->createDSP();
+					returnConfig[index]->setTopRightCorner(xtr+k*dspW, ytr+j*dspH);
+					returnConfig[index]->setBottomLeftCorner(xtr+(k+1)*dspW-1, ytr+(j+1)*dspH-1);
+					// take care of shiftings between DSPs
+					if (shiftAmount == dspH)
+					{
+						if (j > 0) 
+						{
+							returnConfig[index]->setShiftIn(returnConfig[index-(j*nrDSPonWidth)]);
+							returnConfig[index-(j*nrDSPonWidth)]->setShiftOut(returnConfig[index]);	
+						}
+					}
+					else if (shiftAmount == dspW)
+					{
+						if (k > 0)
+						{
+							returnConfig[index]->setShiftIn(returnConfig[index-1]);
+							returnConfig[index-1]->setShiftOut(returnConfig[index]);
+						}
+					}
+					index++;
+				}
+		}
+		numberOfDSPs = newNrDSPs;
+		return returnConfig;
+	}
+
 	int IntTilingMult::multiplicationInDSPs(DSP** config)
 	{
 		int nrOp = 1;		 			// number of resulting adder operands
@@ -2779,28 +2856,35 @@ namespace flopoco{
 									d->getBottomLeftCorner(blx1, bly1);
 									extW = getExtraWidth();
 									extH = getExtraHeight();
+									
 									fpadX = blx1-wInX-extW+1;
-									fpadX = (fpadX<0)?0:fpadX;
 									cout << "fpadX = " << fpadX << endl;
+									fpadX = (fpadX<0)?0:fpadX;
+									
 									fpadY = bly1-wInY-extH+1;
 									cout << "fpadY = " << fpadY << endl;
 									fpadY = (fpadY<0)?0:fpadY;
+									
 									bpadX = extW-trx1;
 									bpadX = (bpadX<0)?0:bpadX;
+									
 									bpadY = extH-try1;
 									bpadY = (bpadY<0)?0:bpadY;
+									
 									multW = d->getMaxMultiplierWidth();
 									multH = d->getMaxMultiplierHeight();
 			
 									setCycle(0);
+									
 									xname.str("");
 									xname << "x" << i << "_" << j;
-									vhdl << tab << declare(xname.str(), multW) << " <= " << zg(fpadX,0) << " & " << "X" << range(blx1-fpadX, trx1+bpadX) << " & " << zg(bpadX,0) << ";" << endl;
+									vhdl << tab << declare(xname.str(), multW) << " <= " << zg(fpadX,0) << " & " << "X" << range(blx1-fpadX-extW, trx1+bpadX-extW) << " & " << zg(bpadX,0) << ";" << endl;
+									
 									yname.str("");
 									yname << "y" << i << "_" << j;
-									vhdl << tab << declare(yname.str(), multH) << " <= " << zg(fpadY,0) << " & " << "Y" << range(bly1-fpadY, try1+bpadY) << " & " << zg(bpadY,0) << ";" << endl;
+									vhdl << tab << declare(yname.str(), multH) << " <= " << zg(fpadY,0) << " & " << "Y" << range(bly1-fpadY-extH, try1+bpadY-extH) << " & " << zg(bpadY,0) << ";" << endl;
 				
-									if (d->getShiftIn() != NULL) // multiply accumulate
+									if ((d->getShiftIn() != NULL) && (j>0)) // multiply accumulate
 										{
 											mname.str("");
 											mname << "pxy" << i;

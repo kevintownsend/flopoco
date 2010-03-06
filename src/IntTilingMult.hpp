@@ -208,7 +208,15 @@ namespace flopoco{
 		*/
 	
 		int checkFarness(DSP** config,int index);
-	
+		
+		
+		/** This functions splits large DSP super-blocks or paris of blocks into unit DSP blocks found on the target
+		 * @param config - the configuration to be split
+		 * @param numberOfDSPs - in-out parameter that holds the inital and final number of DSP blocks
+		 * @return the split configuration
+		 */
+		DSP** splitLargeBlocks(DSP** config, int &numberOfDSPs);
+		
 		/** Variable which is used only through testing to count the steps of the first DSP */
 		int counterfirst;
 
