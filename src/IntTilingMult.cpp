@@ -1723,30 +1723,74 @@ namespace flopoco{
 	{
 		if (ratio>1)
 			ratio =1;
-		float t1,t2;
+		float t1,t2, t3, t4;
 		int Xd, Yd; //the dimension of the multiplier on X and on Y
-		//int multX, multY;
+		//int multX1, multY1, mult1, multX2, multY2, mult2;
 		bool fitMultiplicaication = false;
-		int tempDSP;
+		//int tempDSP;
 		target_->getDSPWidths(Xd,Yd);
-		int maxDSP= target_->getNumberOfDSPs();
-	
-		t1 = wInX*wInY;
-		t2 = Xd*Yd; 
-		tempDSP =    int(ceil(   ((float) t1) / ((float) t2) ));
-		
-		//~ t1= ((float) wInX) / ((float) Xd);
-		//~ t2= ((float) wInY) / ((float) Yd);
+
+		int maxDSP, mDSP = target_->getNumberOfDSPs();
+		int wInXt = wInX;
+		int wInYt = wInY;
+		if (wInY > wInX)
+		{
+			wInYt = wInX;
+			wInXt = wInY;
+		}
 		//~ tempDSP =    int(ceil( t1) * ceil(t2) );
 		
-		//~ multX = int (ceil(t1));
-		//~ multY = int (ceil(t2));	
+		//t1 = wInX*wInY;
+		//t2 = Xd*Yd; 
+		//tempDSP =    int(ceil(   ((float) t1) / ((float) t2) ));
+		t1 = ((float) wInXt) / ((float) Xd);
+		t2 = ((float) wInYt) / ((float) Yd);
+		t3 = ((float) wInXt) / ((float) Yd);
+		t4 = ((float) wInYt) / ((float) Xd);
+		if (t1 < 1) // DSP width > multiplication width
+		{
+			if (t3 < 1) // DSP height > multiplication width
+				maxDSP = int (ceil(t4));
+			else
+				maxDSP = int (ceil(t2));
+		}
+		else
+		{
+			if (t2 < 1) // DSP height > multiplication height
+				maxDSP = int (ceil(t1));
+			else if (t4 < 1) // DSP width > multiplication height
+				maxDSP = int (ceil(t3));
+			else // none of the above
+			{
+				int rw = wInXt % Xd;
+				int rh = wInXt % Yd;
+				
+				if ((rw == 0) || (rh == 0))// divide by width or height
+					maxDSP = int (ceil(t1)*ceil(t2));
+				else if ((rh-Xd) <= 0) // can pad with width
+				{
+					if ((rw-Yd) <= 0) // can pad with height
+					{	
+						if ((rw-Yd) >= (rh-Xd)) // pad with height
+							maxDSP = int (floor(t1)*ceil(t2)+ceil(t4));
+						else // pad with width
+							maxDSP = int (floor(t3)*ceil(t4)+ceil(t2));
+					}
+					else // can't pad with height
+						maxDSP = int (floor(t3)*ceil(t4)+ceil(t2));
+				}
+				else if ((rw-Yd) <= 0) // can pad with height
+					maxDSP = int (floor(t1)*ceil(t2)+ceil(t4));
+				else
+					maxDSP = int (ceil(t1)*ceil(t2));
+			}
+		}
 		
-		
-		if(maxDSP > tempDSP ){
+		if(maxDSP > mDSP)
+		{
 			fitMultiplicaication = true;
-			maxDSP = tempDSP;
-			//maxDSP = multX * multY; //set the maximum number of DSPs to the multiplication size
+			//maxDSP = tempDSP;
+			maxDSP = mDSP; //set the maximum number of DSPs to the multiplication size
 		}
 			
 		if (ratio == 1){
