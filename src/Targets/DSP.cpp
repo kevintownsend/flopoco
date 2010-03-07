@@ -51,6 +51,15 @@ namespace flopoco{
 		shiftIn_ = NULL;
 		shiftOut_ = NULL;
 		posPop = posPush = max_pos=availablepos=0;
+		nrOfPrimitiveDSPs=1;
+	}
+	
+	int DSP::getNrOfPrimitiveDSPs(){
+	return 	nrOfPrimitiveDSPs;
+	}
+	
+	void DSP::setNrOfPrimitiveDSPs(int nr){
+		nrOfPrimitiveDSPs=nr;
 	}
 
 	void DSP::allocatePositions(int dimension){

@@ -1450,12 +1450,12 @@ namespace flopoco{
 					{
 						
 						ref=config[i];
-						count=0;
+						count=ref->getNrOfPrimitiveDSPs();
 						bool ver=true;
 						int rw,rh;
 						int sa;
 						//while(ver==true&&ref->getShiftOut()==NULL && countsShift[prev] <nrOfShifts4Virtex-1)
-						while(ver==true&&ref->getShiftOut()==NULL && count <nrOfShifts4Virtex-1)
+						while(ver==true&&ref->getShiftOut()==NULL && count <nrOfShifts4Virtex)
 							{
 								ver=false;
 								ref->getTopRightCorner(itx,ity);
@@ -1465,7 +1465,7 @@ namespace flopoco{
 					
 								for(int j=0;j<nrDSPs&&ver==false;j++)
 									{
-										if(config[j]!=NULL &&j!=i )
+										if(config[j]!=NULL &&j!=i && count+ config[j]->getNrOfPrimitiveDSPs()<=nrOfShifts4Virtex)
 											{
 												config[j]->getTopRightCorner(jtx,jty);
 												if((jtx<=vnme && jty<vmme))
@@ -1484,7 +1484,7 @@ namespace flopoco{
 														config[j]->setShiftIn(ref);
 														nrOfUsedDSPs--;
 														ref=config[j];
-														count++;
+														count+=ref->getNrOfPrimitiveDSPs();
 														//~ countsShift[prev]++;
 														//~ countsShift[j] = countsShift[prev];
 														//~ prev = j;								
@@ -1504,7 +1504,7 @@ namespace flopoco{
 														config[j]->setShiftIn(ref);
 														nrOfUsedDSPs--;
 														ref=config[j];
-														count++;
+														count+=ref->getNrOfPrimitiveDSPs();
 													}
 													
 												}
@@ -1514,7 +1514,7 @@ namespace flopoco{
 					
 								for(int j=0;j<nrDSPs&&ver==false;j++)
 									{
-										if(config[j]!=NULL &&j!=i)
+										if(config[j]!=NULL &&j!=i&& count+ config[j]->getNrOfPrimitiveDSPs()<=nrOfShifts4Virtex)
 											{
 												config[j]->getTopRightCorner(jtx,jty);
 												if((jtx<=vnme && jty<vmme))
@@ -1532,7 +1532,7 @@ namespace flopoco{
 														config[j]->setShiftIn(ref);
 														nrOfUsedDSPs--;
 														ref=config[j];								
-														count++;
+														count+=ref->getNrOfPrimitiveDSPs();
 														//~ countsShift[prev]++;
 														//~ countsShift[j] = countsShift[prev];
 														//~ prev = j;
@@ -1553,7 +1553,7 @@ namespace flopoco{
 														config[j]->setShiftIn(ref);
 														nrOfUsedDSPs--;
 														ref=config[j];								
-														count++;
+														count+=ref->getNrOfPrimitiveDSPs();
 													}
 												}
 											}
@@ -2340,7 +2340,7 @@ namespace flopoco{
 		target_->getDSPWidths(w, h);
 		dsplimit = w*h;
 		config = new DSP*[nrDSPs];
-		nrOfShifts4Virtex=4;
+		//nrOfShifts4Virtex=4;
 		//countsShift = new int[nrDSPs];
 		for (int i=0; i<nrDSPs; i++)
 		{
@@ -2351,7 +2351,7 @@ namespace flopoco{
 			if(verbose)
 				cout << "initTiling : iteration #" << i << endl; 
 			config[i] = target_->createDSP();						
-			
+			config[i]->setNrOfPrimitiveDSPs(1);
 			
 			config[i]->allocatePositions(3*i); // each DSP offers 8 positions
 			if(!replace(config, i))
@@ -2367,7 +2367,7 @@ namespace flopoco{
 	
 	void IntTilingMult::initTiling2(DSP** &config, int dspCount)
 	{
-		nrOfShifts4Virtex =2; 
+		//nrOfShifts4Virtex =2; 
 		int w, h;
 		target_->getDSPWidths(w, h);
 		int min = h;
@@ -2394,6 +2394,7 @@ namespace flopoco{
 			for (int i=0; i<dspCount; i++)
 			{
 				config[i] = target_->createDSP();
+				config[i]->setNrOfPrimitiveDSPs(1);
 				config[i]->allocatePositions(3*i); // each DSP offers 3 positions
 				if(!replace(config, i))
 				{
@@ -2429,7 +2430,8 @@ namespace flopoco{
 		if (dspCount >= 16) 
 		{ // we have more than 16 paris of multipliers we can group 4 such pairs into a super-block
 			cout<<"A super DSP was created"<<endl;
-			config[start] = new DSP(0, w*2, h*4);	
+			config[start] = new DSP(0, w*2, h*4);
+			config[start]->setNrOfPrimitiveDSPs(4);
 			config[start]->allocatePositions(3*start); // each DSP offers 3 positions
 			if(!replace(config, start))
 			{
@@ -2448,6 +2450,7 @@ namespace flopoco{
 			for (i=start; i<3; i++)
 			{
 				config[i] = new DSP(shift, w, h*2);	
+				config[i]->setNrOfPrimitiveDSPs(2);
 				config[i]->allocatePositions(3*i); // each DSP offers 3 positions
 				if(!replace(config, i))
 				{
@@ -2465,7 +2468,8 @@ namespace flopoco{
 		if (dspCount >= 10)
 		{ // we have more than 10 paris of multipliers we can group 4 such pairs into a super-block
 			cout<<"A super DSP was created"<<endl;
-			config[start] = new DSP(0, w*2, h*4);	
+			config[start] = new DSP(0, w*2, h*4);
+			config[start]->setNrOfPrimitiveDSPs(4);
 			config[start]->allocatePositions(3*start); // each DSP offers 3 positions
 			dspCount -= 3;
 			numberDSP4Overlap = nrDSPs = dspCount;
@@ -2485,6 +2489,7 @@ namespace flopoco{
 		for (int i=start; i<dspCount; i++)
 		{
 			config[i] = new DSP(shift, w, h*2);	
+			config[i]->setNrOfPrimitiveDSPs(2);
 			config[i]->allocatePositions(3*i); // each DSP offers 3 positions
 			if(!replace(config, i))
 			{
@@ -2499,6 +2504,7 @@ namespace flopoco{
 		if (singleDSP) // then the last position is a single DSP 
 		{ // allocate single DSP
 			config[dspCount] = target_->createDSP();
+			config[dspCount]->setNrOfPrimitiveDSPs(1);
 			config[dspCount]->allocatePositions(3*dspCount); // each DSP offers 3 positions
 			if(!replace(config, dspCount))
 			{
@@ -2512,6 +2518,7 @@ namespace flopoco{
 		else // then the last position is a DSP pair
 		{ // allocate DSP pair
 			config[dspCount] = new DSP(shift, w, h*2);
+			config[dspCount]->setNrOfPrimitiveDSPs(2);
 			config[dspCount]->allocatePositions(3*dspCount); // each DSP offers 3 positions
 			if(!replace(config, dspCount))
 			{

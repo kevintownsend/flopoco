@@ -44,6 +44,7 @@ namespace flopoco{
 			nrAdders_ = 1;
 			multAccumulate_ = false;
 			posPop = posPush = max_pos=availablepos=0;
+			nrOfPrimitiveDSPs=1;
 		}
 	
 		DSP(int Shift,int maxMultWidth,int maxMultHeight);
@@ -175,8 +176,12 @@ namespace flopoco{
 		int *Xpositions;
 		int *Ypositions;
 		
+		int getNrOfPrimitiveDSPs();
+		void setNrOfPrimitiveDSPs(int nr);
+		
 	
 	protected:
+		int nrOfPrimitiveDSPs;
 		int    multiplierWidth_;	/**< The recommended with of the multiplier used by this DSP */
 		int    maxMultiplierWidth_;	/**< The recommended with of the multiplier used by this DSP */
 		int    multiplierHeight_;	/**< The recommended with of the multiplier used by this DSP */
