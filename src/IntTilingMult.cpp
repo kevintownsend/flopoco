@@ -2415,6 +2415,8 @@ namespace flopoco{
 		bool singleDSP = false;
 		if (nrDSPs % 2 == 1)
 			singleDSP = true;
+		
+		int nrDSPsprim = nrDSPs;
 			
 		// compute new number of DSPs
 
@@ -2428,14 +2430,20 @@ namespace flopoco{
 		
 		int start = 0; // starting position
 		
-		//~ cout<< "mw "<<mw<<" mh "<<mh<<" w "<<w<<" h "<<h<<endl;
+		
+		//~ cout<< "mw "<<mw<<" mh "<<mh<<" w "<<w<<" h "<<h<<"estimate dsps "<<nrDSPsprim<<endl;
 		//~ cout<<"h*0.9 + h*4="<<h*0.9 + h*4<<endl;
 		//~ cout<<"cond "<<(mw == h*4 || mh ==h*4)<<" tout "<<((mw == h*4 || mh ==h*4) ||(  (h*0.9 + h*4 <=mw) &&  mh>=2*w  ) || (   (h*0.9 + h*4 <=mh) &&  mw>=2*w  ))<<endl;
+		//~ cout<<" area= "<<mw*mh<<" area covered by DSPs= "<<h*w*nrDSPsprim<<" condition "<<( mw*mh*0.8>= h*w*nrDSPsprim )<<endl;
+		
+		
+		
 		
 		if (dspCount >= 16 &&
 			((mw == h*4 || mh ==h*4) ||
 			(  (h*0.9 + h*4 <=mw) &&  mh>=2*w  ) ||
-			(   (h*0.9 + h*4 <=mh) &&  mw>=2*w  )
+			(   (h*0.9 + h*4 <=mh) &&  mw>=2*w  ) ||
+			( mw*mh>= h*w*nrDSPsprim )
 			)) 
 		{ // we have more than 16 paris of multipliers we can group 4 such pairs into a super-block
 			cout<<"A super DSP was created"<<endl;
@@ -2477,7 +2485,8 @@ namespace flopoco{
 		if (dspCount >= 10 		&&
 			((mw == h*4 || mh ==h*4) ||
 			(  (h*0.9 + h*4 <=mw) &&  mh>=2*w  ) ||
-			(   (h*0.9 + h*4 <=mh) &&  mw>=2*w  )
+			(   (h*0.9 + h*4 <=mh) &&  mw>=2*w  ) ||
+			( mw*mh>= h*w*nrDSPsprim )
 			)	
 		)
 		{ // we have more than 10 paris of multipliers we can group 4 such pairs into a super-block
