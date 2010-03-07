@@ -2371,7 +2371,9 @@ namespace flopoco{
 		int w, h;
 		target_->getDSPWidths(w, h);
 		int min = h;
-		
+		int mw,mh;
+		mw = vn - 2*getExtraWidth();
+		mh = vm - 2*getExtraHeight();
 		if(w < h)
 		{
 			min = w;
@@ -2426,8 +2428,15 @@ namespace flopoco{
 		
 		int start = 0; // starting position
 		
+		//~ cout<< "mw "<<mw<<" mh "<<mh<<" w "<<w<<" h "<<h<<endl;
+		//~ cout<<"h*0.9 + h*4="<<h*0.9 + h*4<<endl;
+		//~ cout<<"cond "<<(mw == h*4 || mh ==h*4)<<" tout "<<((mw == h*4 || mh ==h*4) ||(  (h*0.9 + h*4 <=mw) &&  mh>=2*w  ) || (   (h*0.9 + h*4 <=mh) &&  mw>=2*w  ))<<endl;
 		
-		if (dspCount >= 16) 
+		if (dspCount >= 16 &&
+			((mw == h*4 || mh ==h*4) ||
+			(  (h*0.9 + h*4 <=mw) &&  mh>=2*w  ) ||
+			(   (h*0.9 + h*4 <=mh) &&  mw>=2*w  )
+			)) 
 		{ // we have more than 16 paris of multipliers we can group 4 such pairs into a super-block
 			cout<<"A super DSP was created"<<endl;
 			config[start] = new DSP(0, w*2, h*4);
@@ -2465,7 +2474,12 @@ namespace flopoco{
 
 		/*NOTE: if the program entered the previous if clause it will also enter the following 
 		 * 	if clause. This is the effect we want to obtain */
-		if (dspCount >= 10)
+		if (dspCount >= 10 		&&
+			((mw == h*4 || mh ==h*4) ||
+			(  (h*0.9 + h*4 <=mw) &&  mh>=2*w  ) ||
+			(   (h*0.9 + h*4 <=mh) &&  mw>=2*w  )
+			)	
+		)
 		{ // we have more than 10 paris of multipliers we can group 4 such pairs into a super-block
 			cout<<"A super DSP was created"<<endl;
 			config[start] = new DSP(0, w*2, h*4);
