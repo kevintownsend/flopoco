@@ -493,9 +493,38 @@ namespace flopoco{
 		  }
 		*/        
 		bestConfig = splitLargeBlocks(bestConfig, nrDSPs);
-		multiplicationInDSPs(bestConfig);
-		multiplicationInSlices(bestConfig);
+		int nrDSPOperands = multiplicationInDSPs(bestConfig);
+		int nrSliceOperands = multiplicationInSlices(bestConfig);
+		map<string, double> inMap;
+		
+		IntNAdder* add =  new IntNAdder(getTarget(), wInX+wInY, nrDSPOperands+nrSliceOperands, inMap);
+		//IntCompressorTree* add =  new IntCompressorTree(target, adderWidth, opCount);
+		oplist.push_back(add);
+
+		for (int j=0; j<nrDSPOperands; j++)
+			{
+				ostringstream concatPartialProd;
+				concatPartialProd  << "addOpDSP" << j;
+
+				inPortMap (add, join("X",j) , concatPartialProd.str());
+			}	
+			
+		for (int j=0; j<nrSliceOperands; j++)
+			{
+				ostringstream concatPartialProd;
+				concatPartialProd  << "addOpSlice" << j;
+
+				inPortMap (add, join("X",j+nrDSPOperands) , concatPartialProd.str());
+			}	
 	
+		inPortMapCst(add, "Cin", "'0'");
+		outPortMap(add, "R", "addRes");
+		vhdl << instance(add, "adder");
+
+		syncCycleFromSignal("addRes");
+
+		vhdl << tab << "R <= " << "addRes" << ";" << endl;	
+
 	}
 	
 	IntTilingMult::~IntTilingMult() {
@@ -2878,7 +2907,7 @@ namespace flopoco{
 
 	int IntTilingMult::multiplicationInDSPs(DSP** config)
 	{
-		int nrOp = 1;		 			// number of resulting adder operands
+		int nrOp = 0;		 			// number of resulting adder operands
 		int trx1, try1, blx1, bly1; 	// coordinates of the two corners of a DSP block 
 		int fpadX, fpadY, bpadX, bpadY;	// zero padding on both axis
 		int extW, extH;					// extra width and height of the tiling grid
@@ -3308,16 +3337,18 @@ namespace flopoco{
 										mult->changeName(cname.str());
 										oplist.push_back(mult);
 										// TODO: compute width of x and y + corretc range for X and Y
-										vhdl << tab << declare(join("x_",partitions)) << " <= " << "X" << range(wInX-nj-1+extW, wInX-njj-1+extW) << ";" << endl;
+										vhdl << tab << declare(join("x_",partitions), njj-nj+1) << " <= " << "X" << range(wInX-nj-1+extW, wInX-njj-1+extW) << ";" << endl;
 										inPortMap(mult, "X", join("x_",partitions));
-										vhdl << tab << declare(join("y_",partitions)) << " <= " << "Y" << range(nii, ni) << ";" << endl;
+										vhdl << tab << declare(join("y_",partitions), nii-ni+1) << " <= " << "Y" << range(nii-extH, ni-extH) << ";" << endl;
 										inPortMap(mult, "Y", join("y_",partitions));
 					
-										outPortMap(mult, "R", join("addOpSlice", partitions));
+										outPortMap(mult, "R", join("result", partitions));
 					
 										vhdl << instance(mult, join("Mult", partitions));
 
-										syncCycleFromSignal(join("addOpSlice", partitions));
+										syncCycleFromSignal(join("result", partitions));
+										
+										vhdl << tab << declare(join("addOpSlice", partitions), wInX+wInY) << " <= " << zg(wInX+wInY-(wInX-nj-1+extW+nii-extH)-2, 0) << " & " << join("result", partitions) << " & " << zg(wInX-njj-1+extW+ni-extH, 0) << ";" << endl;
 										cout<<"Partition number "<<count<<" with bounds. ("<<j<<" , "<<i<<" , "<<jj<<" , "<<ii<<")"<<" has now bounds ("<<nj<<" , "<<ni<<" , "<<njj<<" , "<<nii<<")"<<endl;
 										partitions++;
 									}
