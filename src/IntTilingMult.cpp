@@ -494,7 +494,7 @@ namespace flopoco{
 		*/        
 		bestConfig = splitLargeBlocks(bestConfig, nrDSPs);
 		multiplicationInDSPs(bestConfig);
-		//multiplicationInSlices(bestConfig);
+		multiplicationInSlices(bestConfig);
 	
 	}
 	
@@ -2827,6 +2827,8 @@ namespace flopoco{
 					returnConfig[index] = getTarget()->createDSP();
 					returnConfig[index]->setTopRightCorner(xtr+k*dspW, ytr+j*dspH);
 					returnConfig[index]->setBottomLeftCorner(xtr+(k+1)*dspW-1, ytr+(j+1)*dspH-1);
+					returnConfig[index]->setMultiplierHeight(dspH);
+					returnConfig[index]->setMultiplierWidth(dspW);
 					// take care of shiftings between DSPs
 					if (shiftAmount == dspH)
 					{
@@ -2904,8 +2906,8 @@ namespace flopoco{
 									bpadY = extH-try1;
 									bpadY = (bpadY<0)?0:bpadY;
 									
-									multW = d->getMaxMultiplierWidth();
-									multH = d->getMaxMultiplierHeight();
+									multW = d->getMultiplierWidth();
+									multH = d->getMultiplierHeight();
 			
 									setCycle(0);
 									
@@ -2930,7 +2932,8 @@ namespace flopoco{
 												{
 													setCycle(connected);
 													sname.seekp(ios_base::beg);
-													sname << zg(wInX+wInY+extW+extH-blx1-bly1-3, 0) << " & " << use(join(mname.str(),j)) << " & " << sname.str();
+													//sname << zg(wInX+wInY+extW+extH-blx1-bly1-3, 0) << " & " << use(join(mname.str(),j)) << range(multW-fpadX + multH-fpadY-1, 0) << " & " << sname.str();
+													sname << zg(wInX-(blx1-fpadX-extW)+wInY-(bly1-fpadY-extH)-2, 0) << " & " << use(join(mname.str(),j)) << range(multW-fpadX + multH-fpadY-1, 0) << " & " << sname.str();
 												}
 											else // concatenate only the lower portion of the partial product
 												{
@@ -2948,7 +2951,8 @@ namespace flopoco{
 											if (d->getShiftOut() == NULL) // concatenate the entire partial product
 												{
 													setCycle(connected);
-													sname << zg(wInX+wInY+extW+extH-blx1-bly1-2, 0) << " & " << use(mname.str()) << range(multH+multW-1, bpadX+bpadY)<< " & " << zg(trx1-extW,0) << " & " << zg(try1-extH,0) <<  ";" << endl;
+													//sname << zg(wInX+wInY+extW+extH-blx1-bly1-2, 0) << " & " << use(mname.str()) << range(multH+multW-1, bpadX+bpadY)<< " & " << zg(trx1-extW,0) << " & " << zg(try1-extH,0) <<  ";" << endl;
+													sname << zg(wInX-(blx1-fpadX-extW)+wInY-(bly1-fpadY-extH)-2, 0) << " & " << use(mname.str()) << range(multH-fpadY+multW-fpadX-1, bpadX+bpadY)<< " & " << zg(trx1-extW,0) << " & " << zg(try1-extH,0) <<  ";" << endl;
 												}
 											else // concatenate only the lower portion of the partial product
 												{
@@ -3280,10 +3284,10 @@ namespace flopoco{
 										cname << mult->getName() << "_" << partitions;
 										mult->changeName(cname.str());
 										oplist.push_back(mult);
-					
-										vhdl << tab << declare(join("x_",partitions)) << " <= " << use("X") << range(wInX-nj-1+extW, wInX-njj-1+extW) << ";" << endl;
+										// TODO: compute width of x and y + corretc range for X and Y
+										vhdl << tab << declare(join("x_",partitions)) << " <= " << "X" << range(wInX-nj-1+extW, wInX-njj-1+extW) << ";" << endl;
 										inPortMap(mult, "X", join("x_",partitions));
-										vhdl << tab << declare(join("y_",partitions)) << " <= " << use("Y") << range(nii, ni) << ";" << endl;
+										vhdl << tab << declare(join("y_",partitions)) << " <= " << "Y" << range(nii, ni) << ";" << endl;
 										inPortMap(mult, "Y", join("y_",partitions));
 					
 										outPortMap(mult, "R", join("addOpSlice", partitions));
