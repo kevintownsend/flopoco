@@ -513,7 +513,7 @@ namespace flopoco{
 			{
 				ostringstream concatPartialProd;
 				concatPartialProd  << "addOpSlice" << j;
-
+				cout << "@ In Port Map Current Cycle is " << getCurrentCycle() << endl;
 				inPortMap (add, join("X",j+nrDSPOperands) , concatPartialProd.str());
 			}	
 	
@@ -3350,6 +3350,8 @@ namespace flopoco{
 										
 										vhdl << tab << declare(join("addOpSlice", partitions), wInX+wInY) << " <= " << zg(wInX+wInY-(wInX-nj-1+extW+nii-extH)-2, 0) << " & " << join("result", partitions) << " & " << zg(wInX-njj-1+extW+ni-extH, 0) << ";" << endl;
 										cout<<"Partition number "<<count<<" with bounds. ("<<j<<" , "<<i<<" , "<<jj<<" , "<<ii<<")"<<" has now bounds ("<<nj<<" , "<<ni<<" , "<<njj<<" , "<<nii<<")"<<endl;
+										cout<<"partitions " << partitions << " @ cycle " << getCurrentCycle() << endl;
+										
 										partitions++;
 									}
 				
