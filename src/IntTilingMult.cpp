@@ -491,11 +491,26 @@ namespace flopoco{
 		  globalConfig[i]->getBottomLeftCorner(x,y);
 		  cout << "and bottom-left: (" << x << ", " << y << ")" << endl;
 		  }
-		*/        
+		*/  
+		bindDSPs(bestConfig);      
 		bestConfig = splitLargeBlocks(bestConfig, nrDSPs);
 		int nrDSPOperands = multiplicationInDSPs(bestConfig);
 		int nrSliceOperands = multiplicationInSlices(bestConfig);
 		map<string, double> inMap;
+		
+		for (int j=0; j<nrDSPOperands; j++)
+			{
+				ostringstream concatPartialProd;
+				concatPartialProd  << "addOpDSP" << j;
+				syncCycleFromSignal(concatPartialProd.str());
+			}	
+			
+		for (int j=0; j<nrSliceOperands; j++)
+			{
+				ostringstream concatPartialProd;
+				concatPartialProd  << "addOpSlice" << j;
+				syncCycleFromSignal(concatPartialProd.str());
+			}	
 		
 		IntNAdder* add =  new IntNAdder(getTarget(), wInX+wInY, nrDSPOperands+nrSliceOperands, inMap);
 		//IntCompressorTree* add =  new IntCompressorTree(target, adderWidth, opCount);
