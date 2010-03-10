@@ -154,8 +154,10 @@ static void usage(char *name){
 	cerr << "      Multi-operand addition using compressor trees	, possibly pipelined\n";
 	cerr << "    IntMultiplier wInX wInY \n";
 	cerr << "      Integer multiplier of two integers X and Y of sizes wInX and wInY \n";	
-	cerr << "    IntTilingMult wInX wInY \n";
-	cerr << "      Integer multiplier of two integers X and Y of sizes wInX and wInY \n";	
+	cerr << "    IntTilingMult wInX wInY ratio truncationOffset\n";
+	cerr << "      Integer multiplier of two integers X and Y of sizes wInX and wInY with a possible truncation offset\n";	
+	cerr << "    IntTilingSquarer wInX wInY ratio truncationOffset\n";
+	cerr << "      Integer squarer of integer X of sizes wInX with a possible truncation offset\n";	
 	cerr << "    IntKaratsuba wIn \n";
 	cerr << "      integer multiplier of two integers X and Y of sizes wIn. 17 < wIn <= 51 (for now) \n";	
 	cerr << "    IntSquarer wIn \n";
@@ -749,11 +751,25 @@ bool parseCommandLine(int argc, char* argv[]){
 				int wInX = checkStrictyPositive(argv[i++], argv[0]);
 				int wInY = checkStrictyPositive(argv[i++], argv[0]);
 				float r = atof(argv[i++]);
-				cerr << "> IntTilingMultiplier , wInX="<<wInX<<", wInY="<<wInY<<" ratio=" << r <<"\n";
-				op = new IntTilingMult(target, wInX, wInY, r);
+				int truncationOffset = atoi(argv[i++]);
+				cerr << "> IntTilingMultiplier , wInX="<<wInX<<", wInY="<<wInY<<" ratio=" << r <<" truncationOffset="<< truncationOffset<< "\n";
+				op = new IntTilingMult(target, wInX, wInY, r,truncationOffset);
 				addOperator(op);
 			}
 		}
+		else if(opname=="IntTilingSquarer"){
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int wInX = checkStrictyPositive(argv[i++], argv[0]);
+				float r = atof(argv[i++]);
+				int truncationOffset = atoi(argv[i++]);
+				cerr << "> IntTilingSquarer , wInX="<<wInX<<" ratio=" << r <<" truncationOffset="<< truncationOffset<< "\n";
+				op = new IntTilingMult(target, wInX, r,truncationOffset);
+				addOperator(op);
+			}
+		}		
 		else if(opname=="FPAdder"){
 			int nargs = 2;
 			if (i+nargs > argc)

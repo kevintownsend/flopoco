@@ -22,7 +22,9 @@ namespace flopoco{
 		 * @param[in]		wER			the with of the exponent for the convertion result
 		 * @param[in]		wFR			the with of the fraction for the convertion result
 		 */
-		IntTilingMult(Target* target, int wInX, int wInY,float ratio);
+		IntTilingMult(Target* target, int wInX, int wInY,float ratio,int truncationOffset);
+	
+		IntTilingMult(Target* target, int wInX,float ratio,int truncationOffset);
 
 		/**
 		 * IntTilingMult destructor
@@ -35,6 +37,7 @@ namespace flopoco{
 
 	private:
 			
+		void generateVHDLCode4CompleteTilling();
 	
 		/**
 		 * Verifies that the indicated DSP block does not overlap with any 
@@ -114,6 +117,8 @@ namespace flopoco{
 		int wOut;
 		/** The ratio between the number of DSPs and slices */
 		float ratio;
+		/** The truncation offset for the multiplication that are not completed. 0 value means that we perform a normal multiplication*/
+		int truncationOffset;
 		/** The working configuration of the tiling algorithm on DSPs */
 		DSP** globalConfig;
 		/** The best cost obtained so far*/
@@ -147,6 +152,18 @@ namespace flopoco{
 		/** The maximum allow distance to move away from the others for the last block */
 		int maxDist2Move;
 	
+		/** The matrix will be used to represent the truncated multiplication */
+		int **truncatedMultiplication;
+		/** will be used to mark each partition for the truncated multiplications*/
+		int counterPartitionsTruncated;
+		
+		/** The function will display a truncated multiplication */
+		void displayTruncated(DSP** config,int **partMatrix);
+		
+		void runAlgorithmTrunc(bool isSquarer);		
+		
+		void partitionTruncatedMultiplication(int **&partMatrix);
+		
 		/** This function estimates the maximum number of DSPs that can be used with respect to the preference of the user */
 		int estimateDSPs();
 

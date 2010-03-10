@@ -61,77 +61,148 @@ namespace flopoco{
 
 #define DEBUGVHDL 0
 
-	IntTilingMult:: IntTilingMult(Target* target, int wInX, int wInY, float ratio) :
-		Operator(target), wInX(wInX), wInY(wInY), wOut(wInX + wInY),ratio(ratio){
+	IntTilingMult:: IntTilingMult(Target* target, int wInX, float ratio, int truncationOffset) :
+		Operator(target), wInX(wInX), wInY(wInX), wOut(wInX + wInX-truncationOffset),ratio(ratio),truncationOffset(truncationOffset){
+			
+			ostringstream name;
+			
+			if(wOut>0&&(truncationOffset>=0))
+			{
+			
+				name <<"IntTruncatedSquarer_"<<wInX<<"_"<<wInY<<"_"<<truncationOffset;
+				setName(name.str());
+		
+				setCopyrightString("Sebastian Banescu , Radu Tudoran, Bogdan Pasca 2009-2010");
+	
+				addInput ("X", wInX);
+				addOutput("R", wOut); /* wOut = wInX + wInY */
+			
+				nrOfShifts4Virtex=4;
+				//we should take into consideration when we chose the number of DSPs that we need to cover just half of the area 
+				//we should consider the area that is ignored, not to be covered by DSPs
+				nrDSPs = estimateDSPs();
+				cout<<"Estimated DSPs:= "<<nrDSPs <<endl;
+						
+				runAlgorithmTrunc(true);
+				displayTruncated(globalConfig,truncatedMultiplication);
+				
+				cout<<"Try to make partition #"<<counterPartitionsTruncated<<endl;
+				partitionTruncatedMultiplication(truncatedMultiplication);
+				displayTruncated(globalConfig,truncatedMultiplication);
+				
+				cout<<"Try to make partition #"<<counterPartitionsTruncated<<endl;
+				partitionTruncatedMultiplication(truncatedMultiplication);
+				displayTruncated(globalConfig,truncatedMultiplication);
+				
+				cout<<"Try to make partition #"<<counterPartitionsTruncated<<endl;
+				partitionTruncatedMultiplication(truncatedMultiplication);
+				displayTruncated(globalConfig,truncatedMultiplication);
+			
+			}
+			else
+			{
+				cerr<<"The truncated part is greater then the size of multiplication!"<<endl;
+			}
+			
+		}
+	
+	IntTilingMult:: IntTilingMult(Target* target, int wInX, int wInY, float ratio, int truncationOffset) :
+		Operator(target), wInX(wInX), wInY(wInY), wOut(wInX + wInY-truncationOffset),ratio(ratio),truncationOffset(truncationOffset){
  
 		ostringstream name;
-
-		name <<"IntMultiplier_"<<wInX<<"_"<<wInY;
-		setName(name.str());
+		if(truncationOffset==0)
+		{	
+			name <<"IntMultiplier_"<<wInX<<"_"<<wInY;
+			setName(name.str());
 		
-		setCopyrightString("Sebastian Banescu , Radu Tudoran, Bogdan Pasca 2009-2010");
+			setCopyrightString("Sebastian Banescu , Radu Tudoran, Bogdan Pasca 2009-2010");
 	
-		addInput ("X", wInX);
-		addInput ("	Y", wInY);
-		addOutput("R", wOut); /* wOut = wInX + wInY */
+			addInput ("X", wInX);
+			addInput ("	Y", wInY);
+			addOutput("R", wOut); /* wOut = wInX + wInY */
 		
-		nrOfShifts4Virtex=4;
-		nrDSPs = estimateDSPs();
-		cout<<"Estimated DSPs:= "<<nrDSPs <<endl;
-		int x,y;
-		target->getDSPWidths(x,y);
+			nrOfShifts4Virtex=4;
+			nrDSPs = estimateDSPs();
+			cout<<"Estimated DSPs:= "<<nrDSPs <<endl;
+			int x,y;
+			target->getDSPWidths(x,y);
 		
-		cout<<"Width of DSP is := "<<x<<" Height of DSP is:="<<y<<endl;
-		cout<<"Extra width:= "<<getExtraWidth()<<" \nExtra height:="<<getExtraHeight()<<endl;
+			cout<<"Width of DSP is := "<<x<<" Height of DSP is:="<<y<<endl;
+			cout<<"Extra width:= "<<getExtraWidth()<<" \nExtra height:="<<getExtraHeight()<<endl;
 		
-		vn=wInX + 2* getExtraWidth();
-		vm=wInY + 2* getExtraHeight();
-		vnme = vn-getExtraWidth();		
-		vmme = vm - getExtraHeight() ;
+			vn=wInX + 2* getExtraWidth();
+			vm=wInY + 2* getExtraHeight();
+			vnme = vn-getExtraWidth();		
+			vmme = vm - getExtraHeight() ;
 
-		//~ float tempDist =	 (movePercentage  * getExtraWidth() * getExtraWidth()) /4.0 + (movePercentage *getExtraHeight() * getExtraHeight()) /4.0;
-		float tempDist =	0;
-		maxDist2Move = (int) ( sqrt(tempDist) );
-		//~ if(maxDist2Move==0)
-		//~ maxDist2Move=1;
-		cout<<"maxDist2Move:= "<<maxDist2Move<<endl;
+			//~ float tempDist =	 (movePercentage  * getExtraWidth() * getExtraWidth()) /4.0 + (movePercentage *getExtraHeight() * getExtraHeight()) /4.0;
+			float tempDist =	0;
+			maxDist2Move = (int) ( sqrt(tempDist) );
+			cout<<"maxDist2Move:= "<<maxDist2Move<<endl;
 		
 	
 		
-		float const scale=100.0;
-		costDSP = ( (1.0+scale) - scale * ratio );
-		//~ cout<<"Cost DSP is "<<costDSP<<endl;
-		costLUT = ( (1.0+scale) - scale * (1-ratio) ) /  ((float) target_->getEquivalenceSliceDSP() );
-		//~ cout<<"Cost LUT is "<<costLUT<<endl;
+			float const scale=100.0;
+			costDSP = ( (1.0+scale) - scale * ratio );
+			//~ cout<<"Cost DSP is "<<costDSP<<endl;
+			costLUT = ( (1.0+scale) - scale * (1-ratio) ) /  ((float) target_->getEquivalenceSliceDSP() );
+			//~ cout<<"Cost LUT is "<<costLUT<<endl;
 		
 		
+			//the one
+			runAlgorithm();
 		
 		
+			cout<<"Estimated DSPs:= "<<nrDSPs <<endl;
+			target->getDSPWidths(x,y);
+			cout<<"Width of DSP is := "<<x<<" Height of DSP is:="<<y<<endl;
+			cout<<"Extra width:= "<<getExtraWidth()<<" \nExtra height:="<<getExtraHeight()<<endl;
+			cout<<"maxDist2Move:= "<<maxDist2Move<<endl;
+	
+		
+			generateVHDLCode4CompleteTilling();
 		
 		
+		}
+		else
+			if(wOut>0&&(truncationOffset>=0))
+			{
+			
+				name <<"IntTruncatedMultiplier_"<<wInX<<"_"<<wInY<<"_"<<truncationOffset;
+				setName(name.str());
 		
-		//~ for(int i=0;i<nrDSPs;i++)
-		//~ {
-		//~ if(globalConfig[i]!=NULL)
-		//~ {
-		//~ if(globalConfig[i]->getShiftIn()!=NULL)
-		//~ {
-		//~ for(int j=0;j<nrDSPs;j++)
-		//~ if(globalConfig[j]==globalConfig[i]->getShiftIn())
-		//~ cout<<"Exists a bind of type Out from dsp "<<i+1<<" to DSPul"<<j+1<<endl;
-		//~ }
-		//~ if(globalConfig[i]->getShiftOut()!=NULL)
-		//~ {
-		//~ for(int j=0;j<nrDSPs;j++)
-		//~ if(globalConfig[j]==globalConfig[i]->getShiftOut())
-		//~ cout<<"Exists a bind of type Out from dsp "<<i+1<<" to DSPul"<<j+1<<endl;
-		//~ }
-		//~ }
-		//~ }
+				setCopyrightString("Sebastian Banescu , Radu Tudoran, Bogdan Pasca 2009-2010");
+	
+				addInput ("X", wInX);
+				addInput ("	Y", wInY);
+				addOutput("R", wOut); /* wOut = wInX + wInY */
+			
+				nrOfShifts4Virtex=4;
+				//we should consider the area that is ignored, not to be covered by DSPs
+				nrDSPs = estimateDSPs();
+				cout<<"Estimated DSPs:= "<<nrDSPs <<endl;
+						
+				runAlgorithmTrunc(false);
+				displayTruncated(globalConfig,truncatedMultiplication);
+				
+				cout<<"Try to make partition #"<<counterPartitionsTruncated<<endl;
+				partitionTruncatedMultiplication(truncatedMultiplication);
+				displayTruncated(globalConfig,truncatedMultiplication);
+				
+				cout<<"Try to make partition #"<<counterPartitionsTruncated<<endl;
+				partitionTruncatedMultiplication(truncatedMultiplication);
+				displayTruncated(globalConfig,truncatedMultiplication);
+				
+				cout<<"Try to make partition #"<<counterPartitionsTruncated<<endl;
+				partitionTruncatedMultiplication(truncatedMultiplication);
+				displayTruncated(globalConfig,truncatedMultiplication);
+			
+			}
+			else
+			{
+				cerr<<"The truncated part is greater then the size of multiplication!"<<endl;
+			}
 		
-		
-		//the one
-		runAlgorithm();
 		
 		//~ //globalConfig[0] = target->createDSP();
 		//~ globalConfig[0]->setTopRightCorner(9,6);
@@ -440,12 +511,7 @@ namespace flopoco{
 	
 		
 	
-		cout<<"Estimated DSPs:= "<<nrDSPs <<endl;
-		target->getDSPWidths(x,y);
-		cout<<"Width of DSP is := "<<x<<" Height of DSP is:="<<y<<endl;
-		cout<<"Extra width:= "<<getExtraWidth()<<" \nExtra height:="<<getExtraHeight()<<endl;
-		cout<<"maxDist2Move:= "<<maxDist2Move<<endl;
-	
+		
 		//~ initTiling(globalConfig,nrDSPs);
 	
 		//~ globalConfig[0]->setTopRightCorner(2,15);
@@ -491,7 +557,18 @@ namespace flopoco{
 		  globalConfig[i]->getBottomLeftCorner(x,y);
 		  cout << "and bottom-left: (" << x << ", " << y << ")" << endl;
 		  }
-		*/  
+		*/  	
+
+	}
+	
+	IntTilingMult::~IntTilingMult() {
+	}
+
+
+
+	
+	void IntTilingMult::generateVHDLCode4CompleteTilling(){
+		
 		bindDSPs(bestConfig);      
 		bestConfig = splitLargeBlocks(bestConfig, nrDSPs);
 		int nrDSPOperands = multiplicationInDSPs(bestConfig);
@@ -538,15 +615,58 @@ namespace flopoco{
 
 		syncCycleFromSignal("addRes");
 
-		vhdl << tab << "R <= " << "addRes" << ";" << endl;	
-
+		vhdl << tab << "R <= " << "addRes" << ";" << endl;
 	}
 	
-	IntTilingMult::~IntTilingMult() {
+	
+	void IntTilingMult::runAlgorithmTrunc(bool isSquarer){
+		
+		counterPartitionsTruncated=0;
+		truncatedMultiplication =  new int* [wInX];		
+		for(int i=0;i<wInX;i++)
+			{
+				truncatedMultiplication[i]= new int[wInY] ;
+				for(int j=0;j<wInY;j++)
+					truncatedMultiplication[i][j]=counterPartitionsTruncated;
+			}
+		counterPartitionsTruncated++;	
+		if(isSquarer)	
+		{
+			for(int i=0;i<wInX;i++)
+			{
+				for(int j=0;j<wInY-i;j++)	
+					{
+						truncatedMultiplication[i][j]=counterPartitionsTruncated;
+					}
+			}
+		counterPartitionsTruncated++;	
+		}
+			
+		
+		for(int i=0,j=(wInY-truncationOffset);i<wInX&&j<wInY&&i<truncationOffset;i++,j++)	
+			{
+				for(int k=j;k<wInY;k++)
+					if(k>=0&&truncatedMultiplication[i][k]==0)
+					truncatedMultiplication[i][k]=counterPartitionsTruncated;
+			}
+		counterPartitionsTruncated++;	
+			
+			if(nrDSPs>0)
+			{
+				rot = new bool[nrDSPs];
+				for(int i =0;i<nrDSPs;i++)
+					rot[i]=false;
+			}
+			else
+			{
+				
+				globalConfig = new DSP*[1];
+				globalConfig[0]=NULL;
+			}
+			
+		
+		
 	}
-
-
-
 
 	void IntTilingMult::runAlgorithm()
 	{
@@ -687,6 +807,53 @@ namespace flopoco{
 	
 	}
 
+	void IntTilingMult::partitionTruncatedMultiplication(int **&partMatrix)
+	{
+		
+		
+		int max=0,maxi,maxj,disti,distj;
+		for(int i=0;i<wInX;i++)
+		{
+			for(int j=0;j<wInX;j++)
+			{
+				int countX=0,countY=0;
+				for(int k=j;k<wInY&&partMatrix[i][k]==0;k++)
+				{
+					countY++;					
+				}
+				for(int k=i;k<wInX&&partMatrix[k][j]==0;k++)
+				{
+					countX++;					
+				}
+				if(max<countX*countY)
+				{
+					//~ cout<<"i="<<i<<" j="<<j<<" countX="<<countX<<" countY"<<countY<<endl;
+					maxi=i;
+					maxj=j;
+					disti=i+countX;
+					distj=j+countY;
+					max=countX*countY;
+				}
+				
+			}
+		}
+		
+		
+		cout<<"Maximum area that can be process is "<<max<<endl;
+		cout<<"i="<<maxi<<" j="<<maxj<<" countX="<<disti<<" countY"<<distj<<endl;
+		
+		for(int i=maxi;i<disti;i++)
+		{
+			for(int j=maxj;j<distj;j++)
+			{
+				partMatrix[i][j] =counterPartitionsTruncated; 	
+			}
+			
+		}
+		
+		counterPartitionsTruncated++;
+	}
+	
 	/** The movement of the DSP blocks with values belonging to their widths and heights still needs to be done. Now it only runs with one type of move on one of the directions, which is not ok for the cases when the DSPs are not squares.
 	 */
 	void IntTilingMult::tilingAlgorithm(int i, int n,bool repl,int lastMovedDSP)
@@ -3420,6 +3587,28 @@ namespace flopoco{
 		return partitions;
 	}	
 
+	
+	void IntTilingMult::displayTruncated(DSP** config,int **partMatrix)
+	{
+		
+		for(int i=0;i<nrDSPs;i++)
+		{
+			//mark the ocupation produced by each DSP
+		}
+		
+		
+		
+		for(int i=0;i<wInX;i++)
+		{
+			for(int j=0;j<wInY;j++)
+			{
+				cout<<truncatedMultiplication[i][j];
+			}
+			cout<<endl;
+			
+		}
+		
+	}
 
 }
 
