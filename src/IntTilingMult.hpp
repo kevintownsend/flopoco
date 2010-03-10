@@ -144,7 +144,9 @@ namespace flopoco{
 
 		/** The number of estimated DSPs that will be used according to this parameter */
 		int nrDSPs;
-	
+		
+		/** TRUE if we are generating a squarer, FALSE if it is a simple multiplication */
+		bool isSquarer;
 		/** The width of the virtual board */
 		int vn;
 		/** The height of the virtual board */

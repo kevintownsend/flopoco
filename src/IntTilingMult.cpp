@@ -65,6 +65,7 @@ namespace flopoco{
 		Operator(target), wInX(wInX), wInY(wInX), wOut(wInX + wInX-truncationOffset),ratio(ratio),truncationOffset(truncationOffset){
 			
 			ostringstream name;
+			isSquarer = true;
 			
 			if(wOut>0&&(truncationOffset>=0))
 			{
@@ -77,6 +78,11 @@ namespace flopoco{
 				addInput ("X", wInX);
 				addOutput("R", wOut); /* wOut = wInX + wInY */
 			
+				vn=wInX + 2* getExtraWidth();	
+				vm=wInX + 2* getExtraHeight();
+				vnme = vn-getExtraWidth();		
+				vmme = vm - getExtraHeight();
+				
 				nrOfShifts4Virtex=4;
 				//we should take into consideration when we chose the number of DSPs that we need to cover just half of the area 
 				//we should consider the area that is ignored, not to be covered by DSPs
@@ -124,6 +130,8 @@ namespace flopoco{
 		Operator(target), wInX(wInX), wInY(wInY), wOut(wInX + wInY-truncationOffset),ratio(ratio),truncationOffset(truncationOffset){
  
 		ostringstream name;
+		isSquarer = false;
+		
 		if(truncationOffset==0)
 		{	
 			name <<"IntMultiplier_"<<wInX<<"_"<<wInY;
@@ -135,6 +143,11 @@ namespace flopoco{
 			addInput ("	Y", wInY);
 			addOutput("R", wOut); /* wOut = wInX + wInY */
 		
+			vn=wInX + 2* getExtraWidth();
+			vm=wInY + 2* getExtraHeight();
+			vnme = vn-getExtraWidth();		
+			vmme = vm - getExtraHeight();
+			
 			nrOfShifts4Virtex=4;
 			nrDSPs = estimateDSPs();
 			cout<<"Estimated DSPs:= "<<nrDSPs <<endl;
@@ -143,11 +156,6 @@ namespace flopoco{
 		
 			cout<<"Width of DSP is := "<<x<<" Height of DSP is:="<<y<<endl;
 			cout<<"Extra width:= "<<getExtraWidth()<<" \nExtra height:="<<getExtraHeight()<<endl;
-		
-			vn=wInX + 2* getExtraWidth();
-			vm=wInY + 2* getExtraHeight();
-			vnme = vn-getExtraWidth();		
-			vmme = vm - getExtraHeight() ;
 
 			//~ float tempDist =	 (movePercentage  * getExtraWidth() * getExtraWidth()) /4.0 + (movePercentage *getExtraHeight() * getExtraHeight()) /4.0;
 			float tempDist =	0;
@@ -190,7 +198,12 @@ namespace flopoco{
 				addInput ("X", wInX);
 				addInput ("	Y", wInY);
 				addOutput("R", wOut); /* wOut = wInX + wInY */
-			
+				
+				vn=wInX + 2* getExtraWidth();
+				vm=wInY + 2* getExtraHeight();
+				vnme = vn-getExtraWidth();		
+				vmme = vm - getExtraHeight();
+					
 				nrOfShifts4Virtex=4;
 				//we should consider the area that is ignored, not to be covered by DSPs
 				nrDSPs = estimateDSPs();
@@ -701,7 +714,6 @@ namespace flopoco{
 			}
 			else
 			{
-				
 				globalConfig = new DSP*[1];
 				tempc = new DSP*[1];
 				tempc[0]=globalConfig[0]=NULL;
@@ -2007,7 +2019,8 @@ namespace flopoco{
 		bool fitMultiplicaication = false;
 		//int tempDSP;
 		target_->getDSPWidths(Xd,Yd);
-
+		int wInX = vnme-getExtraWidth();
+		int wInY = vmme-getExtraHeight();
 		int maxDSP, mDSP = target_->getNumberOfDSPs();
 		int wInXt = wInX;
 		int wInYt = wInY;
@@ -2063,6 +2076,39 @@ namespace flopoco{
 					maxDSP = int (ceil(t1)*ceil(t2));
 			}
 		}
+		int limitDSP = maxDSP;
+		/* After estimating the maximal number of DSPs for the entire 
+		 * board subtract the number of DSPs not needed to cover the 
+		 * part of the tiling board that is of no interest */
+		int areaTrunc = 0;
+		int areaCommon = 0;
+		int areaSq = 0;
+		
+		// Compute area not needed after truncation
+		for(int i=0,j=(wInY-truncationOffset);i<wInX&&j<wInY&&i<truncationOffset;i++,j++)	
+			{
+				for(int k=j;k<wInY;k++)
+				{
+					if(k>=0)
+						areaTrunc++;
+					if(k>(wInX-i))
+						areaCommon++;
+				}
+			}
+			
+		if(isSquarer)	
+		{
+			// Area above second diagonal minus max surface of standing out ridges
+			areaSq = wInX*wInY/2 - (wInXt/Xd+1)*(Xd*Yd/2);
+			maxDSP -= floor((double)areaSq/(Xd*Yd));
+			areaTrunc -= areaCommon;
+		}
+		// (truncationOffset/Xd)*(Xd*Yd/2)
+		areaTrunc -= (truncationOffset*Yd/2);
+		if (areaTrunc < 0)
+			areaTrunc = 0;
+			
+		maxDSP -= floor((double)areaTrunc/(Xd*Yd));
 		
 		if(maxDSP > mDSP)
 		{
@@ -2084,11 +2130,20 @@ namespace flopoco{
 			//cout<<" IntM cost "<<target_->getIntMultiplierCost(wInX,wInY)<<endl;
 			//float temp = ( float(target_->getIntMultiplierCost(wInX,wInY)) * ratio)  /   ((1.-ratio)*float(target_->getEquivalenceSliceDSP())) ;
 			float scaleDSPs=1.0;
-			if(maxDSP>4)
-				scaleDSPs= ((float)maxDSP) / ((float)maxDSP-2);
-			float temp = ( float(target_->getIntMultiplierCost(wInX,wInY)) * ratio* scaleDSPs)  /   (float(target_->getEquivalenceSliceDSP())) ;
-			//float temp = ( float(target_->getIntMultiplierCost(wInX,wInY)) )  /   ((1.-ratio)*float(target_->getEquivalenceSliceDSP())) ;
-			cout<<"val calc "<<temp<<endl;
+			float temp;
+			if(isSquarer || (truncationOffset>0))
+			{
+				temp = ( float(target_->getIntMultiplierCost(wInX,wInY)) * ratio * maxDSP)  /   (float(target_->getEquivalenceSliceDSP()*limitDSP)) ;
+				cout<<"temp= "<<temp<<endl;
+			}
+			else
+			{
+				if(maxDSP>4)
+					scaleDSPs= ((float)maxDSP) / ((float)maxDSP-2);
+				temp = ( float(target_->getIntMultiplierCost(wInX,wInY)) * ratio* scaleDSPs)  /   (float(target_->getEquivalenceSliceDSP())) ;
+				//float temp = ( float(target_->getIntMultiplierCost(wInX,wInY)) )  /   ((1.-ratio)*float(target_->getEquivalenceSliceDSP())) ;
+				cout<<"val calc "<<temp<<endl;
+			}
 			int i_tmp = int(ceil(temp));
 			cout<<" rounded "<<i_tmp<<endl;
 	
