@@ -234,9 +234,7 @@ namespace flopoco{
 		 */
 		DSP** splitLargeBlocks(DSP** config, int &numberOfDSPs);
 		
-		/** Variable which is used only through testing to count the steps of the first DSP */
-		int counterfirst;
-
+		
 		/** Functions used for Simulated Annealing */
 		DSP** neighbour(DSP** config);
 		float temp(float f);

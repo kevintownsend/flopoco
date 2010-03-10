@@ -86,6 +86,20 @@ namespace flopoco{
 				runAlgorithmTrunc(true);
 				displayTruncated(globalConfig,truncatedMultiplication);
 				
+				//to use
+				vn=wInX + 2* getExtraWidth();
+				vm=wInY + 2* getExtraHeight();
+				vnme = vn-getExtraWidth();		
+				vmme = vm - getExtraHeight() ;
+				
+				float const scale=100.0;
+				costDSP = ( (1.0+scale) - scale * ratio );			
+				costLUT = ( (1.0+scale) - scale * (1-ratio) ) /  ((float) target_->getEquivalenceSliceDSP() );
+				//~ float tempDist =	 (movePercentage  * getExtraWidth() * getExtraWidth()) /4.0 + (movePercentage *getExtraHeight() * getExtraHeight()) /4.0;
+				float tempDist =	0;
+				maxDist2Move = (int) ( sqrt(tempDist) );
+				
+				
 				cout<<"Try to make partition #"<<counterPartitionsTruncated<<endl;
 				partitionTruncatedMultiplication(truncatedMultiplication);
 				displayTruncated(globalConfig,truncatedMultiplication);
@@ -621,6 +635,19 @@ namespace flopoco{
 	
 	void IntTilingMult::runAlgorithmTrunc(bool isSquarer){
 		
+		int n,m;
+
+		n=vn;
+		m=vm;
+		mat = new int*[m];
+		for(int i=0;i<m;i++)
+			{
+				mat[i] = new int [n];
+				for(int j=0;j<n;j++)
+					mat[i][j]=0;
+			}
+			
+		
 		counterPartitionsTruncated=0;
 		truncatedMultiplication =  new int* [wInX];		
 		for(int i=0;i<wInX;i++)
@@ -656,12 +683,28 @@ namespace flopoco{
 				rot = new bool[nrDSPs];
 				for(int i =0;i<nrDSPs;i++)
 					rot[i]=false;
+				tempc= new DSP*[nrDSPs];
+				for(int ii=0;ii<nrDSPs;ii++)
+					tempc[ii]= new DSP();
+				
+				//The second
+				numberDSP4Overlap=nrDSPs;
+				//~ initTiling2(globalConfig,nrDSPs);				
+				
+				//~ bestCost = FLT_MAX ;
+				//~ bestConfig = new DSP*[nrDSPs];
+				//~ for(int i=0;i<nrDSPs;i++)
+				//~ bestConfig[i]= new DSP();
+				//~ compareCost();
+				//~ cout<<"New best score is"<<bestCost<<endl;
+				
 			}
 			else
 			{
 				
 				globalConfig = new DSP*[1];
-				globalConfig[0]=NULL;
+				tempc = new DSP*[1];
+				tempc[0]=globalConfig[0]=NULL;
 			}
 			
 		
@@ -670,7 +713,7 @@ namespace flopoco{
 
 	void IntTilingMult::runAlgorithm()
 	{
-		counterfirst =0 ;
+		
 		int n,m;
 
 		//~ n=wInX + 2* getExtraWidth();
@@ -1002,7 +1045,7 @@ namespace flopoco{
 
 	bool IntTilingMult::compareOccupation(DSP** config)
 	{
-		int totalSize = wInX * wInY;
+		int totalSize = (vnme-getExtraWidth()) *(vmme-getExtraHeight());
 		int sizeBest = totalSize;
 		int sizeConfig = totalSize;
 		//~ cout<<"Total size is "<<totalSize<<endl;
@@ -1015,9 +1058,9 @@ namespace flopoco{
 		n=vm;
 		m=vm;
 	
-		int nmew = n-getExtraWidth();
+		int nmew = vnme;
 		int ew = getExtraWidth();
-		int mmeh = m - getExtraHeight() ;
+		int mmeh = vmme;
 		int eh = getExtraHeight();
 	
 		for(int ti=0;ti<nrDSPs;ti++)
@@ -1162,9 +1205,9 @@ namespace flopoco{
 		cout<<"width "<<n<<"height "<<m<<endl;
 		mat = new int*[m];
 	
-		int nmew = n-getExtraWidth();
+		int nmew = vnme;
 		int ew = getExtraWidth();
-		int mmeh = m - getExtraHeight() ;
+		int mmeh = vmme;
 		int eh = getExtraHeight();
 		int nj,ni,njj,nii;
 		for(int i=0;i<m;i++)
@@ -2318,13 +2361,15 @@ namespace flopoco{
 		 * vn = wInX+2*getExtraWidth(); width of the tiling grid including extensions
 		 * vm = wInY+2*getExtraHeight(); height of the tiling grid including extensions
 		 * */
-		int exh = getExtraHeight();
-		int exw = getExtraWidth();
+		//~ int exh = getExtraHeight();
+		//~ int exw = getExtraWidth();
 		int pos; // index for list of positions of a DSP
 		
 		
 		if(index==0) // the first DSP block can move freely on the tiling grid
 		{
+			return false;
+			/*
 			//if ((xtr1 > 0) && (ytr1 > 0) && (xbl1 < vn-1) && (ybl1 < vm-1))
 					{// then the DSP block is placed outside the bounds 		
 	
@@ -2349,6 +2394,7 @@ namespace flopoco{
 							config[index]->setBottomLeftCorner(xbl1, ybl1);
 						//}while (checkOverlap(config, index));
 					}
+					*/
 		}
 		else // all DSP blocks except the first one can move only in fixed positions
 		{
@@ -2530,11 +2576,15 @@ namespace flopoco{
 		int exh = getExtraHeight();
 		int exw = getExtraWidth();
 		
-		xtr1 = exw -1;
+		//~ xtr1 = exw -1;
+		//~ ytr1 = exh ;	
+		//~ ybl1 = ytr1 + h-1;
+		//~ xbl1 = xtr1 + w-1;
+		xtr1 = exw ;
 		ytr1 = exh ;	
 		ybl1 = ytr1 + h-1;
 		xbl1 = xtr1 + w-1;
-	
+			
 		config[index]->setTopRightCorner(xtr1, ytr1);
 		config[index]->setBottomLeftCorner(xbl1, ybl1);
 		
