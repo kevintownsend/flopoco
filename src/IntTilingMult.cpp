@@ -88,7 +88,20 @@ namespace flopoco{
 				//we should consider the area that is ignored, not to be covered by DSPs
 				nrDSPs = estimateDSPs();
 				cout<<"Estimated DSPs:= "<<nrDSPs <<endl;
-						
+				
+				float const scale=100.0;
+				costDSP = ( (1.0+scale) - scale * ratio );			
+				costLUT = ( (1.0+scale) - scale * (1-ratio) ) /  ((float) target_->getEquivalenceSliceDSP() );
+				//~ float tempDist =	 (movePercentage  * getExtraWidth() * getExtraWidth()) /4.0 + (movePercentage *getExtraHeight() * getExtraHeight()) /4.0;
+				float tempDist =	0;
+				maxDist2Move = (int) ( sqrt(tempDist) );
+				
+				int x,y;
+				target->getDSPWidths(x,y);
+		
+				cout<<"Width of DSP is := "<<x<<" Height of DSP is:="<<y<<endl;
+				cout<<"Extra width:= "<<getExtraWidth()<<" \nExtra height:="<<getExtraHeight()<<endl;
+				
 				runAlgorithmTrunc(true);
 				displayTruncated(globalConfig,truncatedMultiplication);
 				
@@ -98,25 +111,19 @@ namespace flopoco{
 				vnme = vn-getExtraWidth();		
 				vmme = vm - getExtraHeight() ;
 				
-				float const scale=100.0;
-				costDSP = ( (1.0+scale) - scale * ratio );			
-				costLUT = ( (1.0+scale) - scale * (1-ratio) ) /  ((float) target_->getEquivalenceSliceDSP() );
-				//~ float tempDist =	 (movePercentage  * getExtraWidth() * getExtraWidth()) /4.0 + (movePercentage *getExtraHeight() * getExtraHeight()) /4.0;
-				float tempDist =	0;
-				maxDist2Move = (int) ( sqrt(tempDist) );
 				
 				
-				cout<<"Try to make partition #"<<counterPartitionsTruncated<<endl;
-				partitionTruncatedMultiplication(truncatedMultiplication);
-				displayTruncated(globalConfig,truncatedMultiplication);
+				//~ cout<<"Try to make partition #"<<counterPartitionsTruncated<<endl;
+				//~ partitionTruncatedMultiplication(truncatedMultiplication);
+				//~ displayTruncated(globalConfig,truncatedMultiplication);
 				
-				cout<<"Try to make partition #"<<counterPartitionsTruncated<<endl;
-				partitionTruncatedMultiplication(truncatedMultiplication);
-				displayTruncated(globalConfig,truncatedMultiplication);
+				//~ cout<<"Try to make partition #"<<counterPartitionsTruncated<<endl;
+				//~ partitionTruncatedMultiplication(truncatedMultiplication);
+				//~ displayTruncated(globalConfig,truncatedMultiplication);
 				
-				cout<<"Try to make partition #"<<counterPartitionsTruncated<<endl;
-				partitionTruncatedMultiplication(truncatedMultiplication);
-				displayTruncated(globalConfig,truncatedMultiplication);
+				//~ cout<<"Try to make partition #"<<counterPartitionsTruncated<<endl;
+				//~ partitionTruncatedMultiplication(truncatedMultiplication);
+				//~ displayTruncated(globalConfig,truncatedMultiplication);
 			
 			}
 			else
@@ -208,21 +215,34 @@ namespace flopoco{
 				//we should consider the area that is ignored, not to be covered by DSPs
 				nrDSPs = estimateDSPs();
 				cout<<"Estimated DSPs:= "<<nrDSPs <<endl;
-						
+				
+				float const scale=100.0;
+				costDSP = ( (1.0+scale) - scale * ratio );			
+				costLUT = ( (1.0+scale) - scale * (1-ratio) ) /  ((float) target_->getEquivalenceSliceDSP() );
+				//~ float tempDist =	 (movePercentage  * getExtraWidth() * getExtraWidth()) /4.0 + (movePercentage *getExtraHeight() * getExtraHeight()) /4.0;
+				float tempDist =	0;
+				maxDist2Move = (int) ( sqrt(tempDist) );
+				
+				int x,y;
+				target->getDSPWidths(x,y);
+		
+				cout<<"Width of DSP is := "<<x<<" Height of DSP is:="<<y<<endl;
+				cout<<"Extra width:= "<<getExtraWidth()<<" \nExtra height:="<<getExtraHeight()<<endl;
+				
 				runAlgorithmTrunc(false);
 				displayTruncated(globalConfig,truncatedMultiplication);
 				
-				cout<<"Try to make partition #"<<counterPartitionsTruncated<<endl;
-				partitionTruncatedMultiplication(truncatedMultiplication);
-				displayTruncated(globalConfig,truncatedMultiplication);
+				//~ cout<<"Try to make partition #"<<counterPartitionsTruncated<<endl;
+				//~ partitionTruncatedMultiplication(truncatedMultiplication);
+				//~ displayTruncated(globalConfig,truncatedMultiplication);
 				
-				cout<<"Try to make partition #"<<counterPartitionsTruncated<<endl;
-				partitionTruncatedMultiplication(truncatedMultiplication);
-				displayTruncated(globalConfig,truncatedMultiplication);
+				//~ cout<<"Try to make partition #"<<counterPartitionsTruncated<<endl;
+				//~ partitionTruncatedMultiplication(truncatedMultiplication);
+				//~ displayTruncated(globalConfig,truncatedMultiplication);
 				
-				cout<<"Try to make partition #"<<counterPartitionsTruncated<<endl;
-				partitionTruncatedMultiplication(truncatedMultiplication);
-				displayTruncated(globalConfig,truncatedMultiplication);
+				//~ cout<<"Try to make partition #"<<counterPartitionsTruncated<<endl;
+				//~ partitionTruncatedMultiplication(truncatedMultiplication);
+				//~ displayTruncated(globalConfig,truncatedMultiplication);
 			
 			}
 			else
@@ -700,16 +720,39 @@ namespace flopoco{
 				for(int ii=0;ii<nrDSPs;ii++)
 					tempc[ii]= new DSP();
 				
-				//The second
-				numberDSP4Overlap=nrDSPs;
-				//~ initTiling2(globalConfig,nrDSPs);				
 				
-				//~ bestCost = FLT_MAX ;
-				//~ bestConfig = new DSP*[nrDSPs];
-				//~ for(int i=0;i<nrDSPs;i++)
-				//~ bestConfig[i]= new DSP();
-				//~ compareCost();
-				//~ cout<<"New best score is"<<bestCost<<endl;
+				for(int q=0;q<3;q++)
+				{
+					cout<<"Try to make partition #"<<counterPartitionsTruncated<<endl;
+					partitionTruncatedMultiplication(truncatedMultiplication);
+					cout<<"Size with extra X "<<vn<<" Y "<<vm<<" without extra X "<<vnme-getExtraWidth()<<" Y "<<vmme-getExtraHeight()<<endl;
+					displayTruncated(globalConfig,truncatedMultiplication);
+					
+					
+					
+					//need to select the number of DSPs to use for this target
+				
+					//The second				
+					//~ numberDSP4Overlap=nrDSPs;
+					//~ initTiling2(globalConfig,nrDSPs);				
+				
+					//~ bestCost = FLT_MAX ;
+					//~ bestConfig = new DSP*[nrDSPs];
+					//~ for(int i=0;i<nrDSPs;i++)
+					//~ bestConfig[i]= new DSP();
+					//~ compareCost();
+					//~ cout<<"New best score is"<<bestCost<<endl;
+					
+					//the one
+					//~ numberDSP4Overlap=nrDSPs;
+					//~ tilingAlgorithm(nrDSPs-1,nrDSPs-1,false,nrDSPs-1);
+					//~ bindDSPs(bestConfig);
+		
+		
+					//~ display(bestConfig);
+					//~ cout<<"Best cost is "<<bestCost<<endl;
+					
+				}
 				
 			}
 			else
@@ -867,11 +910,12 @@ namespace flopoco{
 		
 		
 		int max=0,maxi,maxj,disti,distj;
+		int countX=0,countY=0;
 		for(int i=0;i<wInX;i++)
 		{
 			for(int j=0;j<wInX;j++)
 			{
-				int countX=0,countY=0;
+				countX=0,countY=0;
 				for(int k=j;k<wInY&&partMatrix[i][k]==0;k++)
 				{
 					countY++;					
@@ -896,6 +940,16 @@ namespace flopoco{
 		
 		cout<<"Maximum area that can be process is "<<max<<endl;
 		cout<<"i="<<maxi<<" j="<<maxj<<" countX="<<disti<<" countY"<<distj<<endl;
+		
+		//initialize the new board
+		posRectTopLeftX=maxj;
+		posRectTopLeftY=maxi;
+		posRectBottomRightX=distj;
+		posRectBottomRightY=disti;
+		vn=distj-maxj+2*getExtraWidth();
+		vm=disti-maxi+2*getExtraHeight();
+		vnme=vn -getExtraWidth();
+		vmme=vm -getExtraHeight();
 		
 		for(int i=maxi;i<disti;i++)
 		{
@@ -1211,9 +1265,11 @@ namespace flopoco{
 		int **mat;
 		int n,m;
 		int count=1;
-		n=wInX + 2* getExtraWidth();
-		m=wInY + 2* getExtraHeight();
-		cout<<"real width"<<wInX<<"real height"<<wInY<<endl;
+		//~ n=wInX + 2* getExtraWidth();
+		//~ m=wInY + 2* getExtraHeight();
+		n = vn;
+		m= vm;
+		cout<<"real width"<<vn - 2* getExtraWidth()<<"real height"<<vm - 2* getExtraHeight()<<endl;
 		cout<<"width "<<n<<"height "<<m<<endl;
 		mat = new int*[m];
 	

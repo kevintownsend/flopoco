@@ -159,6 +159,10 @@ namespace flopoco{
 		/** will be used to mark each partition for the truncated multiplications*/
 		int counterPartitionsTruncated;
 		
+		int posRectTopLeftX,posRectTopLeftY,posRectBottomRightX,posRectBottomRightY;
+		
+		
+		
 		/** The function will display a truncated multiplication */
 		void displayTruncated(DSP** config,int **partMatrix);
 		
