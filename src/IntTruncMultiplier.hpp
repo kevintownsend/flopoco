@@ -40,7 +40,11 @@ namespace flopoco{
 	class IntTruncMultiplier : public Operator
 	{
 	public:
+		
 		IntTruncMultiplier(Target* target, DSP** configuration, vector<SoftDSP*> softDSPs, int wX, int wY, int k);
+
+		IntTruncMultiplier(Target* target,int wX, int wY,float ratio, int k);
+		IntTruncMultiplier(Target* target,int wX,float ratio, int k);
 	
 		/** IntTruncMultiplier destructor */
 		~IntTruncMultiplier();
@@ -50,6 +54,7 @@ namespace flopoco{
 		int wX; /**< the width (in bits) of the input  X  */
 		int wY; /**< the width (in bits) of the input  Y  */
 		int wt; /**< the width (in bits) of the output R  */
+		float ratio; /**<the ratio between slice and dsp */
 
 
 		void printConfiguration(DSP** configuration, vector<SoftDSP*> softDSPs);

@@ -39,7 +39,19 @@ namespace flopoco{
 
 	extern vector<Operator*> oplist;
 
+
+	IntTruncMultiplier::IntTruncMultiplier(Target* target, int wX,float ratio, int k):
+		Operator(target), wX(wX), wY(wX),ratio(ratio){
+			
+		}
+		
+	IntTruncMultiplier::IntTruncMultiplier(Target* target, int wX, int wY,float ratio, int k):
+		Operator(target), wX(wX), wY(wY), ratio(ratio){
+			
+		}
+		
 	IntTruncMultiplier::IntTruncMultiplier(Target* target, DSP** configuration, vector<SoftDSP*> softDSPs, int wX, int wY, int k):
+
 		Operator(target), wX(wX), wY(wY){
  
 		ostringstream name;

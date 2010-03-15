@@ -159,10 +159,12 @@ static void usage(char *name){
 	cerr << "      Multi-operand addition using compressor trees	, possibly pipelined\n";
 	cerr << "    IntMultiplier wInX wInY \n";
 	cerr << "      Integer multiplier of two integers X and Y of sizes wInX and wInY \n";	
-	cerr << "    IntTilingMult wInX wInY ratio truncationOffset\n";
-	cerr << "      Integer multiplier of two integers X and Y of sizes wInX and wInY with a possible truncation offset\n";	
-	cerr << "    IntTilingSquarer wInX wInY ratio truncationOffset\n";
-	cerr << "      Integer squarer of integer X of sizes wInX with a possible truncation offset\n";	
+	cerr << "    IntTilingMultiplier wInX wInY ratio \n";
+	cerr << "      Integer multiplier of two integers X and Y of sizes wInX and wInY\n";	
+	cerr << "    IntTruncSquarer wInX ratio error\n";
+	cerr << "      Integer squarer of integer X of size wInX with a given order of error \n";	
+	cerr << "    IntTruncMult wInX  wInY ratio error\n";
+	cerr << "      Integer multiplier of two integers X and Y of sizes wInX and wInY with a given order of error\n";	
 	cerr << "    IntKaratsuba wIn \n";
 	cerr << "      integer multiplier of two integers X and Y of sizes wIn. 17 < wIn <= 51 (for now) \n";	
 	cerr << "    IntSquarer wIn \n";
@@ -734,6 +736,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				int wInX = 30;
 				int wInY = 30;
 				int k    = 20;
+			
 				cerr << "> IntTruncMultiplier , wInX="<<wInX<<", wInY="<<wInY<<"\n";
 				
 				DSP** configuration;
@@ -748,8 +751,9 @@ bool parseCommandLine(int argc, char* argv[]){
 				SoftDSP* d1 = new SoftDSP(0,0, 10, 10);
 				softDSPs.push_back(d1);
 
-//				op = new SignedIntMultiplier(target, wInX, wInY);
+				//op = new SignedIntMultiplier(target, wInX, wInY);
 				op = new IntTruncMultiplier(target, configuration, softDSPs, wInX, wInY, k);
+
 				addOperator(op);
 			}
 		}
@@ -786,22 +790,35 @@ bool parseCommandLine(int argc, char* argv[]){
 				int wInX = checkStrictyPositive(argv[i++], argv[0]);
 				int wInY = checkStrictyPositive(argv[i++], argv[0]);
 				float r = atof(argv[i++]);
-				int truncationOffset = atoi(argv[i++]);
-				cerr << "> IntTilingMultiplier , wInX="<<wInX<<", wInY="<<wInY<<" ratio=" << r <<" truncationOffset="<< truncationOffset<< "\n";
-				op = new IntTilingMult(target, wInX, wInY, r,truncationOffset);
+				cerr << "> IntTilingMultiplier , wInX="<<wInX<<", wInY="<<wInY<<" ratio=" << r << "\n";
+				op = new IntTilingMult(target, wInX, wInY, r);
 				addOperator(op);
 			}
 		}
-		else if(opname=="IntTilingSquarer"){
+		else if(opname=="IntTruncSquarer"){
 			int nargs = 2;
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
 				int wInX = checkStrictyPositive(argv[i++], argv[0]);
 				float r = atof(argv[i++]);
-				int truncationOffset = atoi(argv[i++]);
-				cerr << "> IntTilingSquarer , wInX="<<wInX<<" ratio=" << r <<" truncationOffset="<< truncationOffset<< "\n";
-				op = new IntTilingMult(target, wInX, r,truncationOffset);
+				int ordError = atoi(argv[i++]);
+				cerr << "> IntTruncSquarer , wInX="<<wInX<<" ratio=" << r <<" relativeError="<< ordError<< "\n";
+				op = new IntTruncMultiplier(target, wInX, r,ordError);
+				addOperator(op);
+			}
+		}		
+		else if(opname=="IntTruncMult"){
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int wInX = checkStrictyPositive(argv[i++], argv[0]);
+				int wInY = checkStrictyPositive(argv[i++], argv[0]);
+				float r = atof(argv[i++]);
+				int ordError = atoi(argv[i++]);
+				cerr << "> IntTruncMult , wInX="<<wInX<<", wInY="<<wInY<<" ratio=" << r <<" error order= "<<ordError<<"\n";
+				op = new IntTruncMultiplier(target, wInX, wInY, r,ordError);
 				addOperator(op);
 			}
 		}		

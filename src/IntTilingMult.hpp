@@ -22,9 +22,9 @@ namespace flopoco{
 		 * @param[in]		wER			the with of the exponent for the convertion result
 		 * @param[in]		wFR			the with of the fraction for the convertion result
 		 */
-		IntTilingMult(Target* target, int wInX, int wInY,float ratio,int truncationOffset);
+		IntTilingMult(Target* target, int wInX, int wInY,float ratio);
 	
-		IntTilingMult(Target* target, int wInX,float ratio,int truncationOffset);
+		
 
 		/**
 		 * IntTilingMult destructor
@@ -154,21 +154,17 @@ namespace flopoco{
 		/** The maximum allow distance to move away from the others for the last block */
 		int maxDist2Move;
 	
-		/** The matrix will be used to represent the truncated multiplication */
-		int **truncatedMultiplication;
-		/** will be used to mark each partition for the truncated multiplications*/
-		int counterPartitionsTruncated;
-		
-		int posRectTopLeftX,posRectTopLeftY,posRectBottomRightX,posRectBottomRightY;
 		
 		
 		
-		/** The function will display a truncated multiplication */
-		void displayTruncated(DSP** config,int **partMatrix);
 		
-		void runAlgorithmTrunc(bool isSquarer);		
 		
-		void partitionTruncatedMultiplication(int **&partMatrix);
+		
+		
+		
+		
+		
+		
 		
 		/** This function estimates the maximum number of DSPs that can be used with respect to the preference of the user */
 		int estimateDSPs();

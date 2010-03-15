@@ -61,86 +61,14 @@ namespace flopoco{
 
 #define DEBUGVHDL 0
 
-	IntTilingMult:: IntTilingMult(Target* target, int wInX, float ratio, int truncationOffset) :
-		Operator(target), wInX(wInX), wInY(wInX), wOut(wInX + wInX-truncationOffset),ratio(ratio),truncationOffset(truncationOffset){
-			
-			ostringstream name;
-			isSquarer = true;
-			
-			if(wOut>0&&(truncationOffset>=0))
-			{
-			
-				name <<"IntTruncatedSquarer_"<<wInX<<"_"<<wInY<<"_"<<truncationOffset;
-				setName(name.str());
-		
-				setCopyrightString("Sebastian Banescu , Radu Tudoran, Bogdan Pasca 2009-2010");
 	
-				addInput ("X", wInX);
-				addOutput("R", wOut); /* wOut = wInX + wInY */
-			
-				vn=wInX + 2* getExtraWidth();	
-				vm=wInX + 2* getExtraHeight();
-				vnme = vn-getExtraWidth();		
-				vmme = vm - getExtraHeight();
-				
-				nrOfShifts4Virtex=4;
-				//we should take into consideration when we chose the number of DSPs that we need to cover just half of the area 
-				//we should consider the area that is ignored, not to be covered by DSPs
-				nrDSPs = estimateDSPs();
-				cout<<"Estimated DSPs:= "<<nrDSPs <<endl;
-				
-				float const scale=100.0;
-				costDSP = ( (1.0+scale) - scale * ratio );			
-				costLUT = ( (1.0+scale) - scale * (1-ratio) ) /  ((float) target_->getEquivalenceSliceDSP() );
-				//~ float tempDist =	 (movePercentage  * getExtraWidth() * getExtraWidth()) /4.0 + (movePercentage *getExtraHeight() * getExtraHeight()) /4.0;
-				float tempDist =	0;
-				maxDist2Move = (int) ( sqrt(tempDist) );
-				
-				int x,y;
-				target->getDSPWidths(x,y);
-		
-				cout<<"Width of DSP is := "<<x<<" Height of DSP is:="<<y<<endl;
-				cout<<"Extra width:= "<<getExtraWidth()<<" \nExtra height:="<<getExtraHeight()<<endl;
-				
-				runAlgorithmTrunc(true);
-				displayTruncated(globalConfig,truncatedMultiplication);
-				
-				//to use
-				vn=wInX + 2* getExtraWidth();
-				vm=wInY + 2* getExtraHeight();
-				vnme = vn-getExtraWidth();		
-				vmme = vm - getExtraHeight() ;
-				
-				
-				
-				//~ cout<<"Try to make partition #"<<counterPartitionsTruncated<<endl;
-				//~ partitionTruncatedMultiplication(truncatedMultiplication);
-				//~ displayTruncated(globalConfig,truncatedMultiplication);
-				
-				//~ cout<<"Try to make partition #"<<counterPartitionsTruncated<<endl;
-				//~ partitionTruncatedMultiplication(truncatedMultiplication);
-				//~ displayTruncated(globalConfig,truncatedMultiplication);
-				
-				//~ cout<<"Try to make partition #"<<counterPartitionsTruncated<<endl;
-				//~ partitionTruncatedMultiplication(truncatedMultiplication);
-				//~ displayTruncated(globalConfig,truncatedMultiplication);
-			
-			}
-			else
-			{
-				cerr<<"The truncated part is greater then the size of multiplication!"<<endl;
-			}
-			
-		}
-	
-	IntTilingMult:: IntTilingMult(Target* target, int wInX, int wInY, float ratio, int truncationOffset) :
-		Operator(target), wInX(wInX), wInY(wInY), wOut(wInX + wInY-truncationOffset),ratio(ratio),truncationOffset(truncationOffset){
+	IntTilingMult:: IntTilingMult(Target* target, int wInX, int wInY, float ratio) :
+		Operator(target), wInX(wInX), wInY(wInY), wOut(wInX + wInY),ratio(ratio){
  
 		ostringstream name;
-		isSquarer = false;
 		
-		if(truncationOffset==0)
-		{	
+		
+			
 			name <<"IntMultiplier_"<<wInX<<"_"<<wInY;
 			setName(name.str());
 		
@@ -192,63 +120,6 @@ namespace flopoco{
 			generateVHDLCode4CompleteTilling();
 		
 		
-		}
-		else
-			if(wOut>0&&(truncationOffset>=0))
-			{
-			
-				name <<"IntTruncatedMultiplier_"<<wInX<<"_"<<wInY<<"_"<<truncationOffset;
-				setName(name.str());
-		
-				setCopyrightString("Sebastian Banescu , Radu Tudoran, Bogdan Pasca 2009-2010");
-	
-				addInput ("X", wInX);
-				addInput ("	Y", wInY);
-				addOutput("R", wOut); /* wOut = wInX + wInY */
-				
-				vn=wInX + 2* getExtraWidth();
-				vm=wInY + 2* getExtraHeight();
-				vnme = vn-getExtraWidth();		
-				vmme = vm - getExtraHeight();
-					
-				nrOfShifts4Virtex=4;
-				//we should consider the area that is ignored, not to be covered by DSPs
-				nrDSPs = estimateDSPs();
-				cout<<"Estimated DSPs:= "<<nrDSPs <<endl;
-				
-				float const scale=100.0;
-				costDSP = ( (1.0+scale) - scale * ratio );			
-				costLUT = ( (1.0+scale) - scale * (1-ratio) ) /  ((float) target_->getEquivalenceSliceDSP() );
-				//~ float tempDist =	 (movePercentage  * getExtraWidth() * getExtraWidth()) /4.0 + (movePercentage *getExtraHeight() * getExtraHeight()) /4.0;
-				float tempDist =	0;
-				maxDist2Move = (int) ( sqrt(tempDist) );
-				
-				int x,y;
-				target->getDSPWidths(x,y);
-		
-				cout<<"Width of DSP is := "<<x<<" Height of DSP is:="<<y<<endl;
-				cout<<"Extra width:= "<<getExtraWidth()<<" \nExtra height:="<<getExtraHeight()<<endl;
-				
-				runAlgorithmTrunc(false);
-				displayTruncated(globalConfig,truncatedMultiplication);
-				
-				//~ cout<<"Try to make partition #"<<counterPartitionsTruncated<<endl;
-				//~ partitionTruncatedMultiplication(truncatedMultiplication);
-				//~ displayTruncated(globalConfig,truncatedMultiplication);
-				
-				//~ cout<<"Try to make partition #"<<counterPartitionsTruncated<<endl;
-				//~ partitionTruncatedMultiplication(truncatedMultiplication);
-				//~ displayTruncated(globalConfig,truncatedMultiplication);
-				
-				//~ cout<<"Try to make partition #"<<counterPartitionsTruncated<<endl;
-				//~ partitionTruncatedMultiplication(truncatedMultiplication);
-				//~ displayTruncated(globalConfig,truncatedMultiplication);
-			
-			}
-			else
-			{
-				cerr<<"The truncated part is greater then the size of multiplication!"<<endl;
-			}
 		
 		
 		//~ //globalConfig[0] = target->createDSP();
@@ -666,105 +537,7 @@ namespace flopoco{
 	}
 	
 	
-	void IntTilingMult::runAlgorithmTrunc(bool isSquarer){
-		
-		int n,m;
-
-		n=vn;
-		m=vm;
-		mat = new int*[m];
-		for(int i=0;i<m;i++)
-			{
-				mat[i] = new int [n];
-				for(int j=0;j<n;j++)
-					mat[i][j]=0;
-			}
-			
-		
-		counterPartitionsTruncated=0;
-		truncatedMultiplication =  new int* [wInX];		
-		for(int i=0;i<wInX;i++)
-			{
-				truncatedMultiplication[i]= new int[wInY] ;
-				for(int j=0;j<wInY;j++)
-					truncatedMultiplication[i][j]=counterPartitionsTruncated;
-			}
-		counterPartitionsTruncated++;	
-		if(isSquarer)	
-		{
-			for(int i=0;i<wInX;i++)
-			{
-				for(int j=0;j<wInY-i;j++)	
-					{
-						truncatedMultiplication[i][j]=counterPartitionsTruncated;
-					}
-			}
-		counterPartitionsTruncated++;	
-		}
-			
-		
-		for(int i=0,j=(wInY-truncationOffset);i<wInX&&j<wInY&&i<truncationOffset;i++,j++)	
-			{
-				for(int k=j;k<wInY;k++)
-					if(k>=0&&truncatedMultiplication[i][k]==0)
-					truncatedMultiplication[i][k]=counterPartitionsTruncated;
-			}
-		counterPartitionsTruncated++;	
-			
-			if(nrDSPs>0)
-			{
-				rot = new bool[nrDSPs];
-				for(int i =0;i<nrDSPs;i++)
-					rot[i]=false;
-				tempc= new DSP*[nrDSPs];
-				for(int ii=0;ii<nrDSPs;ii++)
-					tempc[ii]= new DSP();
-				
-				
-				for(int q=0;q<3;q++)
-				{
-					cout<<"Try to make partition #"<<counterPartitionsTruncated<<endl;
-					partitionTruncatedMultiplication(truncatedMultiplication);
-					cout<<"Size with extra X "<<vn<<" Y "<<vm<<" without extra X "<<vnme-getExtraWidth()<<" Y "<<vmme-getExtraHeight()<<endl;
-					displayTruncated(globalConfig,truncatedMultiplication);
-					
-					
-					
-					//need to select the number of DSPs to use for this target
-				
-					//The second				
-					//~ numberDSP4Overlap=nrDSPs;
-					//~ initTiling2(globalConfig,nrDSPs);				
-				
-					//~ bestCost = FLT_MAX ;
-					//~ bestConfig = new DSP*[nrDSPs];
-					//~ for(int i=0;i<nrDSPs;i++)
-					//~ bestConfig[i]= new DSP();
-					//~ compareCost();
-					//~ cout<<"New best score is"<<bestCost<<endl;
-					
-					//the one
-					//~ numberDSP4Overlap=nrDSPs;
-					//~ tilingAlgorithm(nrDSPs-1,nrDSPs-1,false,nrDSPs-1);
-					//~ bindDSPs(bestConfig);
-		
-		
-					//~ display(bestConfig);
-					//~ cout<<"Best cost is "<<bestCost<<endl;
-					
-				}
-				
-			}
-			else
-			{
-				globalConfig = new DSP*[1];
-				tempc = new DSP*[1];
-				tempc[0]=globalConfig[0]=NULL;
-			}
-			
-		
-		
-	}
+	
 
 	void IntTilingMult::runAlgorithm()
 	{
@@ -905,63 +678,6 @@ namespace flopoco{
 	
 	}
 
-	void IntTilingMult::partitionTruncatedMultiplication(int **&partMatrix)
-	{
-		
-		
-		int max=0,maxi,maxj,disti,distj;
-		int countX=0,countY=0;
-		for(int i=0;i<wInX;i++)
-		{
-			for(int j=0;j<wInX;j++)
-			{
-				countX=0,countY=0;
-				for(int k=j;k<wInY&&partMatrix[i][k]==0;k++)
-				{
-					countY++;					
-				}
-				for(int k=i;k<wInX&&partMatrix[k][j]==0;k++)
-				{
-					countX++;					
-				}
-				if(max<countX*countY)
-				{
-					//~ cout<<"i="<<i<<" j="<<j<<" countX="<<countX<<" countY"<<countY<<endl;
-					maxi=i;
-					maxj=j;
-					disti=i+countX;
-					distj=j+countY;
-					max=countX*countY;
-				}
-				
-			}
-		}
-		
-		
-		cout<<"Maximum area that can be process is "<<max<<endl;
-		cout<<"i="<<maxi<<" j="<<maxj<<" countX="<<disti<<" countY"<<distj<<endl;
-		
-		//initialize the new board
-		posRectTopLeftX=maxj;
-		posRectTopLeftY=maxi;
-		posRectBottomRightX=distj;
-		posRectBottomRightY=disti;
-		vn=distj-maxj+2*getExtraWidth();
-		vm=disti-maxi+2*getExtraHeight();
-		vnme=vn -getExtraWidth();
-		vmme=vm -getExtraHeight();
-		
-		for(int i=maxi;i<disti;i++)
-		{
-			for(int j=maxj;j<distj;j++)
-			{
-				partMatrix[i][j] =counterPartitionsTruncated; 	
-			}
-			
-		}
-		
-		counterPartitionsTruncated++;
-	}
 	
 	/** The movement of the DSP blocks with values belonging to their widths and heights still needs to be done. Now it only runs with one type of move on one of the directions, which is not ok for the cases when the DSPs are not squares.
 	 */
@@ -2065,6 +1781,8 @@ namespace flopoco{
 			
 	}
 
+	
+	
 	int IntTilingMult::estimateDSPs()
 	{
 		if (ratio>1)
@@ -2075,8 +1793,7 @@ namespace flopoco{
 		bool fitMultiplicaication = false;
 		//int tempDSP;
 		target_->getDSPWidths(Xd,Yd);
-		int wInX = vnme-getExtraWidth();
-		int wInY = vmme-getExtraHeight();
+
 		int maxDSP, mDSP = target_->getNumberOfDSPs();
 		int wInXt = wInX;
 		int wInYt = wInY;
@@ -2132,39 +1849,6 @@ namespace flopoco{
 					maxDSP = int (ceil(t1)*ceil(t2));
 			}
 		}
-		int limitDSP = maxDSP;
-		/* After estimating the maximal number of DSPs for the entire 
-		 * board subtract the number of DSPs not needed to cover the 
-		 * part of the tiling board that is of no interest */
-		int areaTrunc = 0;
-		int areaCommon = 0;
-		int areaSq = 0;
-		
-		// Compute area not needed after truncation
-		for(int i=0,j=(wInY-truncationOffset);i<wInX&&j<wInY&&i<truncationOffset;i++,j++)	
-			{
-				for(int k=j;k<wInY;k++)
-				{
-					if(k>=0)
-						areaTrunc++;
-					if(k>(wInX-i))
-						areaCommon++;
-				}
-			}
-			
-		if(isSquarer)	
-		{
-			// Area above second diagonal minus max surface of standing out ridges
-			areaSq = wInX*wInY/2 - (wInXt/Xd+1)*(Xd*Yd/2);
-			maxDSP -= floor((double)areaSq/(Xd*Yd));
-			areaTrunc -= areaCommon;
-		}
-		// (truncationOffset/Xd)*(Xd*Yd/2)
-		areaTrunc -= (truncationOffset*Yd/2);
-		if (areaTrunc < 0)
-			areaTrunc = 0;
-			
-		maxDSP -= floor((double)areaTrunc/(Xd*Yd));
 		
 		if(maxDSP > mDSP)
 		{
@@ -2186,20 +1870,11 @@ namespace flopoco{
 			//cout<<" IntM cost "<<target_->getIntMultiplierCost(wInX,wInY)<<endl;
 			//float temp = ( float(target_->getIntMultiplierCost(wInX,wInY)) * ratio)  /   ((1.-ratio)*float(target_->getEquivalenceSliceDSP())) ;
 			float scaleDSPs=1.0;
-			float temp;
-			if(isSquarer || (truncationOffset>0))
-			{
-				temp = ( float(target_->getIntMultiplierCost(wInX,wInY)) * ratio * maxDSP)  /   (float(target_->getEquivalenceSliceDSP()*limitDSP)) ;
-				cout<<"temp= "<<temp<<endl;
-			}
-			else
-			{
-				if(maxDSP>4)
-					scaleDSPs= ((float)maxDSP) / ((float)maxDSP-2);
-				temp = ( float(target_->getIntMultiplierCost(wInX,wInY)) * ratio* scaleDSPs)  /   (float(target_->getEquivalenceSliceDSP())) ;
-				//float temp = ( float(target_->getIntMultiplierCost(wInX,wInY)) )  /   ((1.-ratio)*float(target_->getEquivalenceSliceDSP())) ;
-				cout<<"val calc "<<temp<<endl;
-			}
+			if(maxDSP>4)
+				scaleDSPs= ((float)maxDSP) / ((float)maxDSP-2);
+			float temp = ( float(target_->getIntMultiplierCost(wInX,wInY)) * ratio* scaleDSPs)  /   (float(target_->getEquivalenceSliceDSP())) ;
+			//float temp = ( float(target_->getIntMultiplierCost(wInX,wInY)) )  /   ((1.-ratio)*float(target_->getEquivalenceSliceDSP())) ;
+			cout<<"val calc "<<temp<<endl;
 			int i_tmp = int(ceil(temp));
 			cout<<" rounded "<<i_tmp<<endl;
 	
@@ -2217,7 +1892,10 @@ namespace flopoco{
 			return i_tmp ;
 		}
 	}
-
+	
+	
+	
+	
 	int  IntTilingMult::getExtraHeight()
 	{
 
@@ -3749,27 +3427,7 @@ namespace flopoco{
 	}	
 
 	
-	void IntTilingMult::displayTruncated(DSP** config,int **partMatrix)
-	{
-		
-		for(int i=0;i<nrDSPs;i++)
-		{
-			//mark the ocupation produced by each DSP
-		}
-		
-		
-		
-		for(int i=0;i<wInX;i++)
-		{
-			for(int j=0;j<wInY;j++)
-			{
-				cout<<truncatedMultiplication[i][j];
-			}
-			cout<<endl;
-			
-		}
-		
-	}
+	
 
 }
 
