@@ -1459,17 +1459,19 @@ namespace flopoco{
 	int IntTilingMult::bindDSPs4Virtex(DSP** &config)
 	{
 		int nrOfUsedDSPs=0;
-		int dx,dy;
+		//~ int dx,dy;
 		
-		for(int i=0;i<nrDSPs;i++){
+		//~ for(int i=0;i<nrDSPs;i++){
 			
-			config[i]->getTopRightCorner(dx,dy);
-			if(config[i]!=NULL )  // && (dx<=vnme && dy<vmme)  // with this condition in this if the algorithm will be encorege to try to compute with less dsps that the user has given
-				{
-					nrOfUsedDSPs++;
-				}
-			//countsShift[i]=0;	
-			}
+			//~ config[i]->getTopRightCorner(dx,dy);
+			//~ if(config[i]!=NULL )  // && (dx<=vnme && dy<vmme)  // with this condition in this if the algorithm will be encorege to try to compute with less dsps that the user has given
+				//~ {
+					//~ nrOfUsedDSPs++;
+				//~ }
+			//~ //countsShift[i]=0;	
+			//~ }
+		nrOfUsedDSPs = nrDSPs;	
+			
 		DSP* ref;
 	
 		sortDSPs(config);
@@ -1740,14 +1742,17 @@ namespace flopoco{
 	
 		//~ cout<<"Cost of a DSP is "<<costDSP<<endl<<"Cost of a Slice is "<<costLUT<<endl;
 	
-		int nrOfUsedDSPs=0;
+		//~ int nrOfUsedDSPs=0;
 	
-		for(int i=0;i<nrDSPs;i++)
-			if(config[i]!=NULL)
-				{
-					acc+=costDSP;
-					nrOfUsedDSPs++;
-				}
+		//~ for(int i=0;i<nrDSPs;i++)
+			//~ if(config[i]!=NULL)
+				//~ {
+					//~ acc+=costDSP;
+					//~ nrOfUsedDSPs++;
+				//~ }
+		
+		int nrOfUsedDSPs=nrDSPs;
+		acc = ((float)nrDSPs)*costDSP;
 	
 		
 		//~ cout<<"Number of used DSP blocks is "<<nrOfUsedDSPs<<endl;
