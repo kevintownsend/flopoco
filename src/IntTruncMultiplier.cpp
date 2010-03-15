@@ -42,20 +42,14 @@ namespace flopoco{
 	extern vector<Operator*> oplist;
 
 
-	IntTruncMultiplier::IntTruncMultiplier(Target* target, int wX,float ratio, int k):
+	IntTruncMultiplier::IntTruncMultiplier(Target* target, int wX, float ratio, int k):
 		Operator(target), wX(wX), wY(wX),ratio(ratio){
 			
 		}
 		
-	IntTruncMultiplier::IntTruncMultiplier(Target* target, int wX, int wY,float ratio, int k):
+	IntTruncMultiplier::IntTruncMultiplier(Target* target, int wX, int wY, float ratio, int k):
 		Operator(target), wX(wX), wY(wY), ratio(ratio){
 			
-		}
-		
-	IntTruncMultiplier::IntTruncMultiplier(Target* target, DSP** configuration, vector<SoftDSP*> softDSPs, int wX, int wY, int k):
-
-		Operator(target), wX(wX), wY(wY){
- 
 		ostringstream name;
 		name <<"IntTruncMultiplier_"<<wX<<"_"<<wY;
 		setName(name.str());
@@ -66,6 +60,20 @@ namespace flopoco{
 		addInput ("Y", wY);
 		addOutput("R", wX + wY- k); 
 	
+
+		DSP** configuration;
+		configuration = (DSP**) malloc(sizeof(DSP*));
+		configuration[0] = (DSP*)malloc(sizeof(DSP));
+		
+		configuration[0] = target->createDSP();
+		configuration[0]->setTopRightCorner(0,0);
+		configuration[0]->setBottomLeftCorner(23,16);
+
+		vector<SoftDSP*> softDSPs;
+		SoftDSP* d1 = new SoftDSP(0,0, 10, 10);
+		softDSPs.push_back(d1);
+
+		printConfiguration(configuration, softDSPs);
 		
 		mpfr_t targetError;
 		mpfr_init2(targetError,1000);
@@ -1449,7 +1457,10 @@ namespace flopoco{
 			float temp;
 			if(isSquarer || (truncationOffset>0))
 			{
-				temp = ( float(target_->getIntMultiplierCost(wInX,wInY)) * ratio * maxDSP)  /   (float(target_->getEquivalenceSliceDSP()*limitDSP)) ;
+				int trCornerMultX = truncationOffset/2;
+				int trCornerMultY = truncationOffset - trCornerMultX;
+				float intMultCost = float(target_->getIntMultiplierCost(wInX,wInY)-target_->getIntMultiplierCost(trCornerMultX, trCornerMultY));
+				temp = (intMultCost * ratio * maxDSP)  /   (float(target_->getEquivalenceSliceDSP()*limitDSP)) ;
 				cout<<"temp= "<<temp<<endl;
 			}
 			else
@@ -1499,6 +1510,20 @@ namespace flopoco{
 		return ((int)temp);
 		//return 4;
 
+	}
+	
+	bool IntTruncMultiplier::isValidPosition(int x, int y)
+	{
+		if (x>vn && y>vm && x<0 && y<0) // then not in tiling grid bounds
+			return false;
+			
+		if (isSquarer && ((wInX-x) > y)) // then the position is above the secondary diagonal
+			return false;
+			
+		if ((truncationOffset>0) && ((x-truncationOffset) > y)) // then the position is above the truncation boundary
+			return false;
+			
+		return true;
 	}
 
 	bool IntTruncMultiplier::checkOverlap(DSP** config, int index)
@@ -1701,37 +1726,7 @@ namespace flopoco{
 							config[index]->setTopRightCorner(xtr1, ytr1);
 							config[index]->setBottomLeftCorner(xbl1, ybl1);
 						}while (checkOverlap(config, index));
-		}		
-		/* set the current position of the DSP block within the tiling grid
-		config[index]->setTopRightCorner(xtr1, ytr1);
-		config[index]->setBottomLeftCorner(xbl1, ybl1);
-		
-		
-		int f = checkFarness(config,index);	
-		if (f == 0)
-			return true;
-		else if (f == 1)
-			return false;
-		else if (f  == 2)
-			{
-				// move to top of grid and one unit to the left 
-				xtr1++;
-				xbl1++;
-				ytr1 = exh - h+1;
-				ybl1 = ytr1 + h-1;
-		
-				if (xbl1 > vn-1) // the DSP block has reached the left limit of the tiling grid
-					return false;
-				config[index]->setTopRightCorner(xtr1, ytr1);
-				config[index]->setBottomLeftCorner(xbl1, ybl1);
-				move(config, index,w,h);
-			}
-		else if (f == 3)
-			{
-				move(config, index,w,h);	
-			}
-		return false;
-		*/
+		}
 		return true;
 	}
 
@@ -1797,7 +1792,7 @@ namespace flopoco{
 				x1 =x+positionDisplacementX[i];
 				y1 =y+positionDisplacementY[i];
 				//if(  (x1<vn&&y1<vm)||(x1>vn&&y1>vm)  ) //allows dsp to get out of the board in the diagonal of the bottom left corner
-				if (x1<vn && y1<vm && x1>0 && y1>0) 
+				if (isValidPosition(x1, y1)) 
 					if((i!=2) || extraPosition)
 					config[index]->push(x1, y1);
 				

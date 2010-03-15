@@ -163,7 +163,7 @@ static void usage(char *name){
 	cerr << "      Integer multiplier of two integers X and Y of sizes wInX and wInY\n";	
 	cerr << "    IntTruncSquarer wInX ratio error\n";
 	cerr << "      Integer squarer of integer X of size wInX with a given order of error \n";	
-	cerr << "    IntTruncMult wInX  wInY ratio error\n";
+	cerr << "    IntTruncMultiplier wInX  wInY ratio error\n";
 	cerr << "      Integer multiplier of two integers X and Y of sizes wInX and wInY with a given order of error\n";	
 	cerr << "    IntKaratsuba wIn \n";
 	cerr << "      integer multiplier of two integers X and Y of sizes wIn. 17 < wIn <= 51 (for now) \n";	
@@ -733,27 +733,14 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
-				int wInX = 20;
-				int wInY = 24;
-				int k    = 6;
-			
+				int wInX = checkStrictyPositive(argv[i++], argv[0]);
+				int wInY = checkStrictyPositive(argv[i++], argv[0]);
+				float ratio = atof(argv[i++]);
+				int k    = atoi(argv[i++]);
+				
 				cerr << "> IntTruncMultiplier , wInX="<<wInX<<", wInY="<<wInY<<"\n";
 				
-				DSP** configuration;
-				configuration = (DSP**) malloc(sizeof(DSP*));
-				configuration[0] = (DSP*)malloc(sizeof(DSP));
-				
-				configuration[0] = target->createDSP();
-				configuration[0]->setTopRightCorner(3,0);
-				configuration[0]->setBottomLeftCorner(19,23);
-
-				vector<SoftDSP*> softDSPs;
-				SoftDSP* d1 = new SoftDSP(0,3, 2, 23);
-				softDSPs.push_back(d1);
-
-				//op = new SignedIntMultiplier(target, wInX, wInY);
-				op = new IntTruncMultiplier(target, configuration, softDSPs, wInX, wInY, k);
-
+				op = new IntTruncMultiplier(target, wInX, wInY, ratio, k);
 				addOperator(op);
 			}
 		}

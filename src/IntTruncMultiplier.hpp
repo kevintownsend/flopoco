@@ -59,10 +59,9 @@ namespace flopoco{
 	{
 	public:
 		
-		IntTruncMultiplier(Target* target, DSP** configuration, vector<SoftDSP*> softDSPs, int wX, int wY, int k);
+		IntTruncMultiplier(Target* target, int wX, float ratio, int k);
 
-		IntTruncMultiplier(Target* target,int wX, int wY,float ratio, int k);
-		IntTruncMultiplier(Target* target,int wX,float ratio, int k);
+		IntTruncMultiplier(Target* target, int wX, int wY, float ratio, int k);
 	
 		/** IntTruncMultiplier destructor */
 		~IntTruncMultiplier();
@@ -80,6 +79,14 @@ namespace flopoco{
 
 		void printConfiguration(DSP** configuration, vector<SoftDSP*> softDSPs);
 	private:
+		/**
+		 * Verifies if the coordinates are inside the area of interest.
+		 * @param x coordinate
+		 * @param y coordinate
+		 * @return TRUE if position is in area of interest, FALSE otherwise
+		 */
+		bool isValidPosition(int x, int y);
+		
 		/**
 		 * Verifies that the indicated DSP block does not overlap with any 
 		 * other block in the given configuration.
