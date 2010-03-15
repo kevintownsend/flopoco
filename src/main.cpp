@@ -735,7 +735,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			else {
 				int wInX = 20;
 				int wInY = 24;
-				int k    = 20;
+				int k    = 6;
 			
 				cerr << "> IntTruncMultiplier , wInX="<<wInX<<", wInY="<<wInY<<"\n";
 				

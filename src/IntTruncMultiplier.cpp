@@ -60,16 +60,69 @@ namespace flopoco{
 		name <<"IntTruncMultiplier_"<<wX<<"_"<<wY;
 		setName(name.str());
 	
-		setCopyrightString("Bogdan Pasca 2010");
+		setCopyrightString("Sebastian Banescu, Bogdan Pasca, Radu Tudoran 2010");
 	
 		addInput ("X", wX);
 		addInput ("Y", wY);
 		addOutput("R", wX + wY- k); 
 	
-		mpfr_t *error;
-		error = evalTruncTilingError(configuration, softDSPs);
 		
-		cout << "The trunc error is : " << mpfr_get_d(*error, GMP_RNDN) << endl;
+		mpfr_t targetError;
+		mpfr_init2(targetError,1000);
+		mpfr_set_ui(targetError, 2, GMP_RNDN);
+		mpfr_pow_si(targetError, targetError, k, GMP_RNDN);
+
+		mpfr_t roundingError;
+		mpfr_init2(roundingError,1000);
+		mpfr_set_ui(roundingError, 2, GMP_RNDN);
+		mpfr_pow_si(roundingError, roundingError, k-1, GMP_RNDN);
+				
+		
+		cout << "The TargetError is : " << mpfr_get_d(targetError, GMP_RNDN) << endl;
+
+
+		mpfr_t *approxError;
+		approxError = evalTruncTilingError(configuration, softDSPs);
+		cout << "The trunc error is : " << mpfr_get_d(*approxError, GMP_RNDN) << endl;
+		
+		/* error after compensation */
+		mpfr_t t;
+		mpfr_init2(t, 1000);
+		mpfr_t t2;
+		mpfr_init2(t2, 1000);
+		
+		bool found = false;
+		int i=0;
+		do{
+			mpfr_set_ui( t, 2, GMP_RNDN);
+			mpfr_pow_si(  t, t, i, GMP_RNDN); 
+			mpfr_mul_ui( t2, t, 2, GMP_RNDN);
+		
+			if  ((mpfr_cmp(t, *approxError) <= 0) && (mpfr_cmp(*approxError, t2) <= 0)){
+				found = true;
+				mpfr_set(*approxError, t, GMP_RNDN);		
+			}else{
+				i++;
+			} 
+		
+		}while(! found);
+
+		cout << "The trunc after compensation : " << mpfr_get_d(*approxError, GMP_RNDN) << endl;
+		cout << "Rounding error is : " << mpfr_get_d(roundingError, GMP_RNDN) << endl;
+
+
+		mpfr_t errorSum;
+		mpfr_init2(errorSum, 1000);
+		mpfr_add( errorSum, roundingError, *approxError, GMP_RNDN);
+		
+		cout << "The total error is : " << mpfr_get_d(errorSum, GMP_RNDN) << endl;
+		
+		if ( mpfr_cmp( errorSum, targetError) <= 0){
+			cerr << "This is a good tiling" << endl;
+		}else{
+			cerr << "This is NOT a good tiling. Redo tiling " << endl;
+		}
+		
 	}
 
 	IntTruncMultiplier::~IntTruncMultiplier() {
@@ -100,9 +153,9 @@ namespace flopoco{
 	mpfr_t *IntTruncMultiplier::evalTruncTilingError(DSP** configuration, vector<SoftDSP*> softDSPs){
 		/* fist we get the maximal sum */
 		mpfr_t *fullSum;
-		cout << "wX wY are " << wX << "    " << wY << endl;
+//		cout << "wX wY are " << wX << "    " << wY << endl;
 		fullSum = evalMaxValue(wX, wY);
-		cout << "Full Sum is :" << mpfr_get_d(*fullSum, GMP_RNDN) << endl;
+//		cout << "Full Sum is :" << mpfr_get_d(*fullSum, GMP_RNDN) << endl;
 		
 		if (configuration!=NULL){
 			int i=0;
@@ -119,8 +172,8 @@ namespace flopoco{
 				mpfr_pow_si( s, s, power, GMP_RNDN);
 				mpfr_mul( *currentSum, *currentSum, s, GMP_RNDN);
 				mpfr_sub( *fullSum, *fullSum, *currentSum, GMP_RNDN);
-				cout << "HARD DSP Top right = " << xT << ", " << yT << " and bottom left = " << xB << ", " <<yB << endl;
-				cout << "This one is :" << mpfr_get_d(*currentSum, GMP_RNDN) << endl;
+//				cout << "HARD DSP Top right = " << xT << ", " << yT << " and bottom left = " << xB << ", " <<yB << endl;
+//				cout << "This one is :" << mpfr_get_d(*currentSum, GMP_RNDN) << endl;
 				i++;
 			}
 		}
@@ -147,8 +200,8 @@ namespace flopoco{
 			mpfr_pow_si( s, s, power, GMP_RNDN);
 			mpfr_mul( *currentSum, *currentSum, s, GMP_RNDN);
 			mpfr_sub( *fullSum, *fullSum, *currentSum, GMP_RNDN);
-			cout << "SOFT DSP Top right = " << xT << ", " << yT << " and bottom left = " << xB << ", " <<yB << endl;
-			cout << "This one is :" << mpfr_get_d(*currentSum, GMP_RNDN) << endl;
+//			cout << "SOFT DSP Top right = " << xT << ", " << yT << " and bottom left = " << xB << ", " <<yB << endl;
+//			cout << "This one is :" << mpfr_get_d(*currentSum, GMP_RNDN) << endl;
 		}
 		return fullSum;
 	}
