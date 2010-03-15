@@ -158,6 +158,7 @@ ADD_EXECUTABLE(flopoco
  src/LongIntAdder
  src/IntDualSub
  src/IntMultiplier
+ src/IntTruncMultiplier
  src/SignedIntMultiplier
  src/IntTilingMult
  src/IntKaratsuba
@@ -232,7 +233,9 @@ ADD_EXECUTABLE(flopoco
  src/LongIntAdder
  src/IntDualSub
  src/IntMultiplier
+ src/IntTruncMultiplier
  src/SignedIntMultiplier
+ 
  src/IntTilingMult
  src/IntKaratsuba
  src/LZOC src/LZOCShifterSticky

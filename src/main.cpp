@@ -39,10 +39,15 @@
 #include "IntCompressorTree.hpp"
 #include "LongIntAdder.hpp"
 #include "IntDualSub.hpp"
+
 #include "IntMultiplier.hpp"
 #include "IntTilingMult.hpp"
+#include "Targets/DSP.hpp"
+
 #include "SignedIntMultiplier.hpp"
+#include "IntTruncMultiplier.hpp"
 #include "IntKaratsuba.hpp"
+
 #include "FPMultiplier.hpp"
 #include "FPSquarer.hpp"
 #include "FPAdder.hpp"
@@ -720,6 +725,31 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(op);
 			}
 		}
+
+		else if(opname=="IntTruncMultiplier"){
+			int nargs = 0;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int wInX = 30;
+				int wInY = 30;
+				int k    = 20;
+				cerr << "> IntTruncMultiplier , wInX="<<wInX<<", wInY="<<wInY<<"\n";
+				
+				DSP** configuration;
+				configuration = (DSP**) malloc(sizeof(DSP*));
+				configuration[0] = (DSP*)malloc(sizeof(DSP));
+				
+				configuration[0] = target->createDSP();
+				configuration[0]->setTopRightCorner(0,0);
+				configuration[0]->setBottomLeftCorner(23,16);
+//				op = new SignedIntMultiplier(target, wInX, wInY);
+				op = new IntTruncMultiplier(target, configuration, wInX, wInY, k);
+				addOperator(op);
+			}
+		}
+
+
 		else if(opname=="SignedIntMultiplier"){
 			int nargs = 2;
 			if (i+nargs > argc)
