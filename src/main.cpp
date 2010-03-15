@@ -733,8 +733,8 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
-				int wInX = 30;
-				int wInY = 30;
+				int wInX = 20;
+				int wInY = 24;
 				int k    = 20;
 			
 				cerr << "> IntTruncMultiplier , wInX="<<wInX<<", wInY="<<wInY<<"\n";
@@ -744,11 +744,11 @@ bool parseCommandLine(int argc, char* argv[]){
 				configuration[0] = (DSP*)malloc(sizeof(DSP));
 				
 				configuration[0] = target->createDSP();
-				configuration[0]->setTopRightCorner(0,0);
-				configuration[0]->setBottomLeftCorner(23,16);
+				configuration[0]->setTopRightCorner(3,0);
+				configuration[0]->setBottomLeftCorner(19,23);
 
 				vector<SoftDSP*> softDSPs;
-				SoftDSP* d1 = new SoftDSP(0,0, 10, 10);
+				SoftDSP* d1 = new SoftDSP(0,3, 2, 23);
 				softDSPs.push_back(d1);
 
 				//op = new SignedIntMultiplier(target, wInX, wInY);

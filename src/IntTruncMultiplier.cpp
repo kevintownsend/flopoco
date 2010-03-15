@@ -66,8 +66,10 @@ namespace flopoco{
 		addInput ("Y", wY);
 		addOutput("R", wX + wY- k); 
 	
-		printConfiguration(configuration, softDSPs);
+		mpfr_t *error;
+		error = evalTruncTilingError(configuration, softDSPs);
 		
+		cout << "The trunc error is : " << mpfr_get_d(*error, GMP_RNDN) << endl;
 	}
 
 	IntTruncMultiplier::~IntTruncMultiplier() {
@@ -87,12 +89,87 @@ namespace flopoco{
 		}
 
 		int xB,xT,yB,yT;
-		for (int k=0; k < softDSPs.size(); k++){
+		for (unsigned k=0; k < softDSPs.size(); k++){
+			softDSPs[k]->trim(wX, wY);
 			softDSPs[k]->getTopRightCorner(xT,yT);
 			softDSPs[k]->getBottomLeftCorner(xB,yB);
 			cout << "SOFT DSP Top right = " << xT << ", " << yT << " and bottom left = " << xB << ", " <<yB << endl;
-		} 
+		}
 	}
+	
+	mpfr_t *IntTruncMultiplier::evalTruncTilingError(DSP** configuration, vector<SoftDSP*> softDSPs){
+		/* fist we get the maximal sum */
+		mpfr_t *fullSum;
+		cout << "wX wY are " << wX << "    " << wY << endl;
+		fullSum = evalMaxValue(wX, wY);
+		cout << "Full Sum is :" << mpfr_get_d(*fullSum, GMP_RNDN) << endl;
+		
+		if (configuration!=NULL){
+			int i=0;
+			int xB,xT,yB,yT;
+			while(configuration[i]!=NULL){
+				configuration[i]->getTopRightCorner(xT,yT);
+				configuration[i]->getBottomLeftCorner(xB,yB);
+				int power = xT + yT;
+				mpfr_t* currentSum;
+				currentSum = evalMaxValue(min(xB,wX) - xT + 1, min(yB,wY) - yT +1);
+				mpfr_t s;
+				mpfr_init2(s, 1000);
+				mpfr_set_ui( s, 2, GMP_RNDN);
+				mpfr_pow_si( s, s, power, GMP_RNDN);
+				mpfr_mul( *currentSum, *currentSum, s, GMP_RNDN);
+				mpfr_sub( *fullSum, *fullSum, *currentSum, GMP_RNDN);
+				cout << "HARD DSP Top right = " << xT << ", " << yT << " and bottom left = " << xB << ", " <<yB << endl;
+				cout << "This one is :" << mpfr_get_d(*currentSum, GMP_RNDN) << endl;
+				i++;
+			}
+		}
+		
+		int xB,xT,yB,yT;
+		for (unsigned k=0; k < softDSPs.size(); k++){
+			softDSPs[k]->trim(wX, wY);
+			softDSPs[k]->getTopRightCorner(xT,yT);
+			softDSPs[k]->getBottomLeftCorner(xB,yB);
+			int power = xT + yT;
+			mpfr_t* currentSum;
+			if ((xB>xT) && (yB > yT))
+				currentSum = evalMaxValue(xB - xT + 1, yB - yT + 1);
+			else{
+				currentSum = (mpfr_t *) malloc( sizeof( mpfr_t));
+				mpfr_init2( *currentSum, 1000);
+				mpfr_set_si( *currentSum, 0, GMP_RNDN); 
+			}
+			
+			
+			mpfr_t s;
+			mpfr_init2(s, 1000);
+			mpfr_set_ui( s, 2, GMP_RNDN);
+			mpfr_pow_si( s, s, power, GMP_RNDN);
+			mpfr_mul( *currentSum, *currentSum, s, GMP_RNDN);
+			mpfr_sub( *fullSum, *fullSum, *currentSum, GMP_RNDN);
+			cout << "SOFT DSP Top right = " << xT << ", " << yT << " and bottom left = " << xB << ", " <<yB << endl;
+			cout << "This one is :" << mpfr_get_d(*currentSum, GMP_RNDN) << endl;
+		}
+		return fullSum;
+	}
+	
+	
+	
+	mpfr_t* IntTruncMultiplier::evalMaxValue(int w, int h){
+		mpfr_t *l, *r;
+		l = (mpfr_t *) malloc( sizeof( mpfr_t) );
+		r = (mpfr_t *) malloc( sizeof( mpfr_t) );
+		mpfr_init2( *l, 1000);
+		mpfr_set_ui( *l, 2, GMP_RNDN);
+		mpfr_pow_ui( *l, *l, w, GMP_RNDN);
+		mpfr_add_si( *l, *l, -1, GMP_RNDN);
+		mpfr_init2( *r, 1000);
+		mpfr_set_ui( *r, 2, GMP_RNDN);
+		mpfr_pow_ui( *r, *r, h, GMP_RNDN);
+		mpfr_add_si( *r, *r, -1, GMP_RNDN);
+		mpfr_mul( *l, *l, *r, GMP_RNDN);
+		return l; 
+	}		
 
 //	void IntTruncMultiplier::emulate(TestCase* tc)
 //	{

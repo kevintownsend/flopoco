@@ -32,8 +32,26 @@ namespace flopoco{
 			xB = bottomX;
 			yB = bottomY;
 		}
+
+		void setTopRightCorner(int xT, int yT){
+			topX = xT;
+			topY = yT;
+		}
+		
+		void setBottomLeftCorner(int xB, int yB){
+			bottomX = xB;
+			bottomY = yB;
+		}
+		
+		void trim(int wX, int wY){
+			if (bottomX > wX)
+				bottomX = wX;
+			if (bottomY > wY)
+				bottomY = wY;
+		}
+		
 	
-	int topX, topY, bottomX, bottomY;
+		int topX, topY, bottomX, bottomY;
 	};
 
 
@@ -48,6 +66,9 @@ namespace flopoco{
 	
 		/** IntTruncMultiplier destructor */
 		~IntTruncMultiplier();
+
+		mpfr_t* evalMaxValue(int w, int h);
+		mpfr_t* evalTruncTilingError(DSP** configuration, vector<SoftDSP*> softDSPs);
 
 	protected:
 
