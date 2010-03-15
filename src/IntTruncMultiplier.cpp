@@ -39,7 +39,7 @@ namespace flopoco{
 
 	extern vector<Operator*> oplist;
 
-	IntTruncMultiplier::IntTruncMultiplier(Target* target, DSP** configuration, int wX, int wY, int k):
+	IntTruncMultiplier::IntTruncMultiplier(Target* target, DSP** configuration, vector<SoftDSP*> softDSPs, int wX, int wY, int k):
 		Operator(target), wX(wX), wY(wY){
  
 		ostringstream name;
@@ -52,7 +52,7 @@ namespace flopoco{
 		addInput ("Y", wY);
 		addOutput("R", wX + wY- k); 
 	
-		printConfiguration(configuration);
+		printConfiguration(configuration, softDSPs);
 		
 	}
 
@@ -60,17 +60,24 @@ namespace flopoco{
 	}
 	
 	
-	void IntTruncMultiplier::printConfiguration(DSP** configuration){
+	void IntTruncMultiplier::printConfiguration(DSP** configuration, vector<SoftDSP*> softDSPs){
 		if (configuration!=NULL){
 			int i=0;
 			int xB,xT,yB,yT;
 			while(configuration[i]!=NULL){
 				configuration[i]->getTopRightCorner(xT,yT);
 				configuration[i]->getBottomLeftCorner(xB,yB);
-				cout << "Top right = " << xT << ", " << yT << " and bottom left = " << xB << ", " <<yB << endl;
+				cout << "HARD DSP Top right = " << xT << ", " << yT << " and bottom left = " << xB << ", " <<yB << endl;
 				i++;
 			}
 		}
+
+		int xB,xT,yB,yT;
+		for (int k=0; k < softDSPs.size(); k++){
+			softDSPs[k]->getTopRightCorner(xT,yT);
+			softDSPs[k]->getBottomLeftCorner(xB,yB);
+			cout << "SOFT DSP Top right = " << xT << ", " << yT << " and bottom left = " << xB << ", " <<yB << endl;
+		} 
 	}
 
 //	void IntTruncMultiplier::emulate(TestCase* tc)

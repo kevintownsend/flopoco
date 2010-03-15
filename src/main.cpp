@@ -743,8 +743,13 @@ bool parseCommandLine(int argc, char* argv[]){
 				configuration[0] = target->createDSP();
 				configuration[0]->setTopRightCorner(0,0);
 				configuration[0]->setBottomLeftCorner(23,16);
+
+				vector<SoftDSP*> softDSPs;
+				SoftDSP* d1 = new SoftDSP(0,0, 10, 10);
+				softDSPs.push_back(d1);
+
 //				op = new SignedIntMultiplier(target, wInX, wInY);
-				op = new IntTruncMultiplier(target, configuration, wInX, wInY, k);
+				op = new IntTruncMultiplier(target, configuration, softDSPs, wInX, wInY, k);
 				addOperator(op);
 			}
 		}
