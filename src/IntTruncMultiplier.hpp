@@ -141,7 +141,7 @@ namespace flopoco{
 		 *            with their corresponding positioning 
 		 * @return the approximation error
 		 */ 
-		mpfr_t* evalTruncTilingError(DSP** configuration, vector<SoftDSP*> softDSPs);
+		mpfr_t* evalTruncTilingError(DSP** configuration, SoftDSP** softDSPs);
 
 	protected:
 
@@ -151,7 +151,7 @@ namespace flopoco{
 		float ratio; /**<the ratio between slice and dsp */
 
 		/* RIP */
-		void printConfiguration(DSP** configuration, vector<SoftDSP*> softDSPs);
+		void printConfiguration(DSP** configuration, SoftDSP** softDSPs);
 	private:
 		/**
 		 * Verifies if the coordinates are inside the area of interest.
@@ -160,6 +160,15 @@ namespace flopoco{
 		 * @return TRUE if position is in area of interest, FALSE otherwise
 		 */
 		bool isValidPosition(int x, int y);
+		
+		/**
+		 * Validates the tiling configuration in terms of error produced
+		 * @param configuration the DSP multiplier configuration
+		 * @param softDSPs the IntMultiplier configuration
+		 * @param k the target precision
+		 * @return TRUE if tiling is valid, FALSE otherwise
+		 */
+		bool isTilingValid(DSP** configuration, SoftDSP** softDSPs, int k);
 		
 		/**
 		 * Verifies that the indicated DSP block does not overlap with any 
@@ -223,14 +232,20 @@ namespace flopoco{
 		 */
 		int multiplicationInDSPs(DSP** config);
 	 
-	 
 		/**
 		 * This function generates the vhdl code for multiplication using only Slices.
 		 * @param the configuration of the tiling grid
 		 * @return the number of addition operands that use only Slices for multiplications
 		 */
 		int multiplicationInSlices(DSP** config);
-	 
+		
+		/**
+		 * This function approximates the number of discarded columns given a target error
+		 * @param k target precision
+		 * @return the number of discarded columns
+		 */
+		int estimateNrOfDiscardedCols(int k);
+		
 		/** The width of first input*/
 		int wInX; 
 		/** The width of second input*/
@@ -265,6 +280,9 @@ namespace flopoco{
 		/** The number of estimated DSPs that will be used according to this parameter */
 		int nrDSPs;
 		
+		/** The number of Soft DSPs in the current configuration */
+		int nrSoftDSPs;
+		
 		/** TRUE if we are generating a squarer, FALSE if it is a simple multiplication */
 		bool isSquarer;
 		/** The width of the virtual board */
@@ -278,13 +296,6 @@ namespace flopoco{
 		int **truncatedMultiplication;
 		/** will be used to mark each partition for the truncated multiplications*/
 		int counterPartitionsTruncated;
-		
-		/** The function will display a truncated multiplication */
-		void displayTruncated(DSP** config,int **partMatrix);
-		
-		void runAlgorithmTrunc(bool isSquarer);		
-		
-		void partitionTruncatedMultiplication(int **&partMatrix);
 		
 		/** This function estimates the maximum number of DSPs that can be used with respect to the preference of the user */
 		int estimateDSPs();
@@ -331,6 +342,9 @@ namespace flopoco{
 	
 		void display(DSP** config);
 	
+		/** Same as the above function except it also prints SoftDSPs */
+		void displayAll(DSP** config, SoftDSP ** softConfig);
+		
 		/** This function will be used to run the algorithm. the result of the algorithm (i..e. the best configuration) will be located in the member variable bestConfig */
 	
 		void runAlgorithm();

@@ -52,7 +52,7 @@ namespace flopoco{
 		vmme = vm - getExtraHeight() ;
 		
 		nrDSPs = estimateDSPs();
-		
+		nrSoftDSPs = 0;
 		}
 		
 	IntTruncMultiplier::IntTruncMultiplier(Target* target, int wX, int wY, float ratio, int k):
@@ -76,8 +76,10 @@ namespace flopoco{
 		vnme = vn-getExtraWidth();		
 		vmme = vm - getExtraHeight() ;
 		nrDSPs = estimateDSPs();
+		nrSoftDSPs = 0;
 		cout << "Nr of estimated DSP blocks " << nrDSPs << endl;
-
+		
+		/*
 		DSP** configuration;
 		configuration = (DSP**) malloc(sizeof(DSP*));
 		configuration[0] = (DSP*)malloc(sizeof(DSP));
@@ -86,78 +88,24 @@ namespace flopoco{
 		configuration[0]->setTopRightCorner(12,6);
 		configuration[0]->setBottomLeftCorner(28,29);
 		nrDSPs = 1;
-
-		display(configuration);
 		
-		vector<SoftDSP*> softDSPs;
+		SoftDSP** softDSPs = new SoftDSP*[1];
 		SoftDSP* d1 = new SoftDSP(9, 9, 11, 29);
-		softDSPs.push_back(d1);
-
+		softDSPs[0] = d1;
+		nrSoftDSPs++;
+		
+		displayAll(configuration, softDSPs);
 		printConfiguration(configuration, softDSPs);
 		
+		runAlgorithm();
+		
 		// FOLLOWING CODE VALIDATES THE FINAL TILING CONFIGURATION
-		mpfr_t targetError;
-		mpfr_init2(targetError,1000);
-		mpfr_set_ui(targetError, 2, GMP_RNDN);
-		mpfr_pow_si(targetError, targetError, k, GMP_RNDN);
-
-		mpfr_t roundingError;
-		mpfr_init2(roundingError,1000);
-		mpfr_set_ui(roundingError, 2, GMP_RNDN);
-		mpfr_pow_si(roundingError, roundingError, k-1, GMP_RNDN);
-				
-		
-		cout << "The TargetError is : " << mpfr_get_d(targetError, GMP_RNDN) << endl;
-
-
-		mpfr_t *approxError;
-		approxError = evalTruncTilingError(configuration, softDSPs);
-		double apxError = mpfr_get_d(*approxError, GMP_RNDN);
-		cout << "The trunc error is : " << apxError << endl;
-		
-		if (apxError < 0) // then next loop will never finish (REASON: some multipliers overlap)
-		{
-			cout << "Unexpected value for trunc error. Execution stopped." << endl;
-			return;
-		}
-		/* error after compensation */
-		mpfr_t t;
-		mpfr_init2(t, 1000);
-		mpfr_t t2;
-		mpfr_init2(t2, 1000);
-		
-		bool found = false;
-		int i=0;
-		do{
-			mpfr_set_ui( t, 2, GMP_RNDN);
-			mpfr_pow_si(  t, t, i, GMP_RNDN); 
-			mpfr_mul_ui( t2, t, 2, GMP_RNDN);
-		
-			if  ((mpfr_cmp(t, *approxError) <= 0) && (mpfr_cmp(*approxError, t2) <= 0)){
-				found = true;
-				mpfr_set(*approxError, t, GMP_RNDN);		
-			}else{
-				i++;
-			} 
-		
-		}while(! found);
-
-		cout << "The trunc after compensation : " << mpfr_get_d(*approxError, GMP_RNDN) << endl;
-		cout << "Rounding error is : " << mpfr_get_d(roundingError, GMP_RNDN) << endl;
-
-
-		mpfr_t errorSum;
-		mpfr_init2(errorSum, 1000);
-		mpfr_add( errorSum, roundingError, *approxError, GMP_RNDN);
-		
-		cout << "The total error is : " << mpfr_get_d(errorSum, GMP_RNDN) << endl;
-		
-		if ( mpfr_cmp( errorSum, targetError) <= 0){
+		if (isTilingValid(configuration, softDSPs, k)){
 			cerr << "This is a good tiling" << endl;
 		}else{
 			cerr << "This is NOT a good tiling. Redo tiling " << endl;
 		}
-		
+		*/
 		
 		
 		/*
@@ -278,14 +226,78 @@ namespace flopoco{
 			
 			//~ bindDSPs(globalConfig);
 		
-		
+		truncationOffset = estimateNrOfDiscardedCols(k);
+		runAlgorithm();
 	}
 
 	IntTruncMultiplier::~IntTruncMultiplier() {
 	}
 	
+	bool IntTruncMultiplier::isTilingValid(DSP** configuration, SoftDSP** softDSPs, int k){
+		mpfr_t targetError;
+		mpfr_init2(targetError,1000);
+		mpfr_set_ui(targetError, 2, GMP_RNDN);
+		mpfr_pow_si(targetError, targetError, k, GMP_RNDN);
+
+		mpfr_t roundingError;
+		mpfr_init2(roundingError,1000);
+		mpfr_set_ui(roundingError, 2, GMP_RNDN);
+		mpfr_pow_si(roundingError, roundingError, k-1, GMP_RNDN);
+				
+		
+		cout << "The TargetError is : " << mpfr_get_d(targetError, GMP_RNDN) << endl;
+
+
+		mpfr_t *approxError;
+		approxError = evalTruncTilingError(configuration, softDSPs);
+		double apxError = mpfr_get_d(*approxError, GMP_RNDN);
+		cout << "The trunc error is : " << apxError << endl;
+		
+		if (apxError < 0) // then next loop will never finish (REASON: some multipliers overlap)
+		{
+			cout << "Unexpected value for trunc error. Execution stopped." << endl;
+			return false;
+		}
+		/* error after compensation */
+		mpfr_t t;
+		mpfr_init2(t, 1000);
+		mpfr_t t2;
+		mpfr_init2(t2, 1000);
+		
+		bool found = false;
+		int i=0;
+		do{
+			mpfr_set_ui( t, 2, GMP_RNDN);
+			mpfr_pow_si(  t, t, i, GMP_RNDN); 
+			mpfr_mul_ui( t2, t, 2, GMP_RNDN);
+		
+			if  ((mpfr_cmp(t, *approxError) <= 0) && (mpfr_cmp(*approxError, t2) <= 0)){
+				found = true;
+				mpfr_set(*approxError, t, GMP_RNDN);		
+			}else{
+				i++;
+			} 
+		
+		}while(! found);
+
+		cout << "The trunc after compensation : " << mpfr_get_d(*approxError, GMP_RNDN) << endl;
+		cout << "Rounding error is : " << mpfr_get_d(roundingError, GMP_RNDN) << endl;
+
+
+		mpfr_t errorSum;
+		mpfr_init2(errorSum, 1000);
+		mpfr_add( errorSum, roundingError, *approxError, GMP_RNDN);
+		
+		cout << "The total error is : " << mpfr_get_d(errorSum, GMP_RNDN) << endl;
+		
+		if ( mpfr_cmp( errorSum, targetError) <= 0){
+			return true;
+		}else{
+			return false;
+		}
+	}
 	
-	void IntTruncMultiplier::printConfiguration(DSP** configuration, vector<SoftDSP*> softDSPs){
+	void IntTruncMultiplier::printConfiguration(DSP** configuration, SoftDSP** softDSPs){
 		if (configuration!=NULL){
 			int i=0;
 			int xB,xT,yB,yT;
@@ -298,7 +310,7 @@ namespace flopoco{
 		}
 
 		int xB,xT,yB,yT;
-		for (unsigned k=0; k < softDSPs.size(); k++){
+		for (int k=0; k < nrSoftDSPs; k++){
 			softDSPs[k]->trim(wX, wY);
 			softDSPs[k]->getTopRightCorner(xT,yT);
 			softDSPs[k]->getBottomLeftCorner(xB,yB);
@@ -306,7 +318,7 @@ namespace flopoco{
 		}
 	}
 	
-	mpfr_t *IntTruncMultiplier::evalTruncTilingError(DSP** configuration, vector<SoftDSP*> softDSPs){
+	mpfr_t *IntTruncMultiplier::evalTruncTilingError(DSP** configuration, SoftDSP** softDSPs){
 		/* fist we get the maximal sum */
 		mpfr_t *fullSum;
 //		cout << "wX wY are " << wX << "    " << wY << endl;
@@ -342,7 +354,7 @@ namespace flopoco{
 		}
 		
 		int xB,xT,yB,yT;
-		for (unsigned k=0; k < softDSPs.size(); k++){
+		for (int k=0; k < nrSoftDSPs; k++){
 			softDSPs[k]->trim(wX, wY);
 			softDSPs[k]->getTopRightCorner(xT,yT);
 			softDSPs[k]->getBottomLeftCorner(xB,yB);
@@ -373,8 +385,6 @@ namespace flopoco{
 		return fullSum;
 	}
 	
-	
-	
 	mpfr_t* IntTruncMultiplier::evalMaxValue(int w, int h){
 		mpfr_t *l, *r;
 		l = (mpfr_t *) malloc( sizeof( mpfr_t) );
@@ -400,6 +410,22 @@ namespace flopoco{
 
 //		tc->addExpectedOutput("R", svR);
 //	}
+
+	int IntTruncMultiplier::estimateNrOfDiscardedCols(int k){
+		int d = k+1;
+		double limit = k;
+		double apxError;
+		double aux;
+		do{
+			d--;
+			aux = pow(2.0, (double)d);
+			aux *= (d-1);
+			aux += 2.0;
+			aux = log2(aux);
+			apxError = ceil(aux);
+		}while (limit < apxError);
+		return d;
+	}
 
 	/** The movement of the DSP blocks with values belonging to their widths and heights still needs to be done. Now it only runs with one type of move on one of the directions, which is not ok for the cases when the DSPs are not squares.
 	 */
@@ -546,6 +572,93 @@ namespace flopoco{
 	
 	}
 
+	void IntTruncMultiplier::runAlgorithm()
+	{	
+		int n=vn;
+		int m=vm;
+
+		mat = new int*[m];
+		for(int i=0;i<m;i++)
+			{
+				mat[i] = new int [n];
+				for(int j=0;j<n;j++)
+					mat[i][j]=0;
+			}
+		
+		//if the estimated number of DSPs is grather then 0 then we should run the algorithm
+		if(nrDSPs>0){
+			tempc= new DSP*[nrDSPs];
+			for(int ii=0;ii<nrDSPs;ii++)
+				tempc[ii]= new DSP();
+			/*we will try the algorithm with 2 values of nrDSPs	
+			One will be the estimated value(nrDSPs) and the second one will be nrDSPs-1	
+			*/
+			rot = new bool[nrDSPs];
+			for(int i =0;i<nrDSPs;i++)
+				rot[i]=false;
+		
+			//The second
+			numberDSP4Overlap=nrDSPs;
+			initTiling2(globalConfig,nrDSPs);
+			
+			//this will initialize the bestConfig with the first configuration
+			bestCost = FLT_MAX ;
+			cout<<"Max score is"<<bestCost<<endl;
+			//bestConfig = (DSP**)malloc(nrDSPs * sizeof(DSP*));
+			bestConfig = new DSP*[nrDSPs];
+			for(int i=0;i<nrDSPs;i++)
+				bestConfig[i]= new DSP();
+			compareCost();
+			cout<<"New best score is"<<bestCost<<endl;
+			//display(bestConfig);
+			//the best configuration should be consider initially the first one. So the bestConfig parameter will be initialized with global config and hence the bestCost will be initialized with the first cost
+		
+			//the one
+			numberDSP4Overlap=nrDSPs;
+			tilingAlgorithm(nrDSPs-1,nrDSPs-1,false,nrDSPs-1);
+			bindDSPs(bestConfig);
+			display(bestConfig);
+			cout<<"Best cost is "<<bestCost<<endl;
+			
+			/*
+			globalConfig[2]->setTopRightCorner(2,26);
+			globalConfig[2]->setBottomLeftCorner(25,59);
+			globalConfig[1]->setTopRightCorner(36,2);
+			globalConfig[1]->setBottomLeftCorner(59,35);
+			globalConfig[3]->setTopRightCorner(26,36);
+			globalConfig[3]->setBottomLeftCorner(59,59);
+			bestCost = computeCost(globalConfig);
+			display(globalConfig);
+			*/
+			// After all configurations with the nrDSPs number of DSPs were evaluated then a new search is carryed with one DSP less
+			// After the initialization of the new configuration with nrDSPs-1, the cost must be evaluated and confrunted with the best score obtained so far.
+		}
+		else
+		{
+			n=vn;
+			m=vm;
+	
+			mat = new int*[m];
+			for(int i=0;i<m;i++)
+			{
+				mat[i] = new int [n];
+				for(int j=0;j<n;j++)
+					mat[i][j]=0;
+			}
+			tempc= new DSP*[0];
+			bestConfig = new DSP*[1];
+			globalConfig = new DSP*[1];
+			tempc[0]=bestConfig[0]=globalConfig[0]=NULL;
+			
+			bestCost = FLT_MAX ;
+			cout<<"Max score is"<<bestCost<<endl;
+			compareCost();
+			cout<<"New best score is"<<bestCost<<endl;
+			display(bestConfig);
+		}
+	
+	}
+	
 	bool IntTruncMultiplier::compareOccupation(DSP** config)
 	{
 		int totalSize = wInX * wInY;
@@ -732,6 +845,244 @@ namespace flopoco{
 				count++;			
 			}
 	
+		count++;
+		for(int i=0;i<m;i++)
+			{
+				for(int j=0;j<n;j++)
+					{
+						if(mat[i][j]==0)
+							{
+								int ver =0;
+								int ii=i,jj=j;
+								while(ver<6&&(ii<m-1||jj<n-1))
+									{
+							
+							
+										if(ver<3)
+											{
+								
+												if(ver==0||ver==1)
+													ii++;
+												if(ii>m-1)
+													{
+														ii=m-1;
+														ver=2;							
+													}
+							
+												if(ver==0||ver==2)
+													jj++;
+							
+												if(jj>n-1)
+													{
+														jj=n-1;
+														ver=1;
+													}
+								
+								
+							
+												for(int k=ii,q=jj;k>i-1&&(ver==0||ver==2);k--)
+													if(mat[k][q]!=0)
+														{
+															if(ver==0)
+																ver=1;
+															else
+																ver=3;
+															jj--;
+														}
+									
+												for(int k=ii,q=jj;q>j-1&&(ver==0||ver==1);q--)
+													if(mat[k][q]!=0)
+														{
+															if(ver==0)
+																ver=2;
+															else
+																ver=3;
+															ii--;
+														}
+								
+							
+											}
+										else
+											{
+												if(ver==3||ver==5)
+													jj++;
+							
+												if(jj>n-1)
+													{
+														jj=n-1;
+														ver=4;
+													}
+								
+								
+												if(ver==3||ver==4)
+													ii++;
+												if(ii>m-1)
+													{
+														ii=m-1;
+														ver=5;							
+													}
+							
+								
+															
+												for(int k=ii,q=jj;q>j-1&&(ver==3||ver==4);q--)
+													if(mat[k][q]!=0)
+														{
+															if(ver==3)
+																ver=5;
+															else
+																ver=6;
+															ii--;
+														}
+								
+												for(int k=ii,q=jj;k>i-1&&(ver==3||ver==5);k--)
+													if(mat[k][q]!=0)
+														{
+															if(ver==3)
+																ver=4;
+															else
+																ver=6;
+															jj--;
+														}
+												if(ver==5&&jj==n-1)
+													ver=6;
+												if(ver==4&&ii==m-1)
+													ver=6;
+										
+															
+								
+											}
+									}
+						
+						
+					
+						
+						
+								if( j>= nmew || jj< ew || i >= mmeh || ii < eh)
+									{
+										cout<<"Partition number "<<count<<" is totally out of the real multiplication bounds. ("<<j<<" , "<<i<<" , "<<jj<<" , "<<ii<<")"<<endl;
+									}
+								else
+									{
+										if( j < getExtraWidth() )
+											nj = getExtraWidth() ;
+										else
+											nj = j;
+										if( jj >= n - getExtraWidth() )
+											njj = n -getExtraWidth() -1;
+										else
+											njj = jj;
+							
+										if( i < getExtraHeight() )
+											ni = getExtraHeight() ;
+										else
+											ni = i;
+										if( ii >= m - getExtraHeight() )
+											nii = m -getExtraHeight() -1;
+										else
+											nii = ii;
+										cout<<"Partition number "<<count<<" with bounds. ("<<j<<" , "<<i<<" , "<<jj<<" , "<<ii<<")"<<" has now bounds ("<<nj<<" , "<<ni<<" , "<<njj<<" , "<<nii<<")"<<endl;
+									}
+						
+								cout<<j<<" "<<i<<" "<<jj<<" "<<ii<<endl;
+								fillMatrix(mat,n,m,j,i,jj,ii,count);
+								count++;
+						
+							}
+					}
+			
+			}
+		
+		
+		
+		char af;
+		int afi;
+		for(int i=0;i<m;i++)
+			{
+				if(i==getExtraHeight())
+					cout<<endl;
+			
+				for(int j=0;j<n;j++)
+					{
+						if(j==getExtraWidth())
+							cout<<" ";
+						if(j==n-getExtraWidth())
+							cout<<" ";
+				
+						if(mat[i][j]<10)
+							afi=mat[i][j];
+						else
+							afi=mat[i][j]+7;
+						af=(int)afi+48;
+						cout<<af;
+					}
+				cout<<endl;
+				if(i==m-getExtraHeight()-1)
+					cout<<endl;
+			}
+		
+		for(int ii=0;ii<m;ii++)
+		   delete [] (mat[ii]);
+	
+		delete[] (mat);
+		
+		
+	
+	}
+
+	void IntTruncMultiplier::displayAll(DSP** config, SoftDSP ** softConfig)
+	{
+	
+	
+		int **mat;
+		int n,m;
+		int count=1;
+		n=wInX + 2* getExtraWidth();
+		m=wInY + 2* getExtraHeight();
+		cout<<"real width"<<wInX<<"real height"<<wInY<<endl;
+		cout<<"width "<<n<<"height "<<m<<endl;
+		mat = new int*[m];
+	
+		int nmew = n-getExtraWidth();
+		int ew = getExtraWidth();
+		int mmeh = m - getExtraHeight() ;
+		int eh = getExtraHeight();
+		int nj,ni,njj,nii;
+		for(int i=0;i<m;i++)
+			{
+				mat[i] = new int [n];
+				for(int j=0;j<n;j++)
+					mat[i][j]=0;
+			}
+		for(int i=0;i<nrDSPs;i++)
+			{
+				int c1X,c2X,c1Y,c2Y;
+			
+				config[i]->getTopRightCorner(c1X,c1Y);
+				config[i]->getBottomLeftCorner(c2X,c2Y);
+				cout<<"DSP #"<<i+1<<"has toprigh ("<<c1X<<","<<c1Y<<") and botomleft ("<<c2X<<","<<c2Y<<")"<<endl;
+				c1X=n-c1X-1;
+				c2X=n-c2X-1;
+				//~ cout<<"new x1 "<<c1X<<" new x2 "<<c2X<<endl;
+			
+				fillMatrix(mat,n,m,c2X,c1Y,c1X,c2Y,count);
+				count++;			
+			}
+			
+		for(int i=0;i<nrSoftDSPs;i++)
+			{
+				int c1X,c2X,c1Y,c2Y;
+			
+				softConfig[i]->getTopRightCorner(c1X,c1Y);
+				softConfig[i]->getBottomLeftCorner(c2X,c2Y);
+				cout<<"DSP #"<<i+1<<"has toprigh ("<<c1X<<","<<c1Y<<") and botomleft ("<<c2X<<","<<c2Y<<")"<<endl;
+				c1X=n-c1X-1;
+				c2X=n-c2X-1;
+				//~ cout<<"new x1 "<<c1X<<" new x2 "<<c2X<<endl;
+			
+				fillMatrix(mat,n,m,c2X,c1Y,c1X,c2Y,count);
+				count++;			
+			}
+			
 		count++;
 		for(int i=0;i<m;i++)
 			{
