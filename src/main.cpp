@@ -728,22 +728,22 @@ bool parseCommandLine(int argc, char* argv[]){
 			}
 		}
 
-		else if(opname=="IntTruncMultiplier"){
-			int nargs = 0;
-			if (i+nargs > argc)
-				usage(argv[0]);
-			else {
-				int wInX = checkStrictyPositive(argv[i++], argv[0]);
-				int wInY = checkStrictyPositive(argv[i++], argv[0]);
-				float ratio = atof(argv[i++]);
-				int k    = atoi(argv[i++]);
-				
-				cerr << "> IntTruncMultiplier , wInX="<<wInX<<", wInY="<<wInY<<"\n";
-				
-				op = new IntTruncMultiplier(target, wInX, wInY, ratio, k);
-				addOperator(op);
-			}
-		}
+//		else if(opname=="IntTruncMultiplier"){
+//			int nargs = 4;
+//			if (i+nargs > argc)
+//				usage(argv[0]);
+//			else {
+//				int wInX = checkStrictyPositive(argv[i++], argv[0]);
+//				int wInY = checkStrictyPositive(argv[i++], argv[0]);
+//				float ratio = atof(argv[i++]);
+//				int k    = atoi(argv[i++]);
+//				
+//				cerr << "> IntTruncMultiplier , wInX="<<wInX<<", wInY="<<wInY<<"\n";
+//				
+//				op = new IntTruncMultiplier(target, wInX, wInY, ratio, k);
+//				addOperator(op);
+//			}
+//		}
 
 
 		else if(opname=="SignedIntMultiplier"){
@@ -783,7 +783,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			}
 		}
 		else if(opname=="IntTruncSquarer"){
-			int nargs = 2;
+			int nargs = 3;
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
@@ -796,7 +796,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			}
 		}		
 		else if(opname=="IntTruncMult"){
-			int nargs = 2;
+			int nargs = 4;
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
