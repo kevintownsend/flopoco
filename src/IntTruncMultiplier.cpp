@@ -57,6 +57,7 @@ namespace flopoco{
 		
 	IntTruncMultiplier::IntTruncMultiplier(Target* target, int wX, int wY, float ratio, int k):
 		Operator(target), wX(wX), wY(wY), ratio(ratio){
+		
 		isSquarer = false;	
 		ostringstream name;
 		name <<"IntTruncMultiplier_"<<wX<<"_"<<wY;
@@ -156,6 +157,127 @@ namespace flopoco{
 		}else{
 			cerr << "This is NOT a good tiling. Redo tiling " << endl;
 		}
+		
+		
+		
+		/*
+		//test radu
+			
+			wInX=wX;
+			wInY=wY;
+			vn=wX + 2* getExtraWidth();
+			vm=wY + 2* getExtraHeight();
+			vnme = vn-getExtraWidth();		
+			vmme = vm - getExtraHeight();
+			nrOfShifts4Virtex=4;
+			
+			int n=vn;
+			int m=vm;
+			int exw=getExtraWidth();
+			int exh=getExtraHeight();
+	
+			mat = new int*[m];
+			for(int i=0;i<m;i++)
+			{
+				mat[i] = new int [n];
+				for(int j=0;j<n;j++)
+					mat[i][j]=0;
+			}
+			
+			nrDSPs=4;
+			globalConfig = new DSP*[nrDSPs];
+			int w, h;
+			target->getDSPWidths(w, h);
+			
+			cout<<w<<" "<<h<<endl;
+			int shift = 17;
+			*/
+			
+				//test for -- configurations
+			//~ globalConfig[0] = new DSP(shift, w, h*2);	
+			//~ globalConfig[0]->setNrOfPrimitiveDSPs(2);
+			//~ globalConfig[0]->setTopRightCorner(exw, exh);
+			//~ globalConfig[0]->setBottomLeftCorner(exw+w-1, exh+h*2-1);
+			
+			//~ globalConfig[1] = new DSP(shift, w, h*2);	
+			//~ globalConfig[1]->setNrOfPrimitiveDSPs(2);
+			//~ globalConfig[1]->setTopRightCorner(exw , exh +2*h );
+			//~ globalConfig[1]->setBottomLeftCorner(exw +w-1, exh + 4*h-1);
+			
+			
+			
+			//~ globalConfig[2] = new DSP(shift, w, h*2);	
+			//~ globalConfig[2]->setNrOfPrimitiveDSPs(2);
+			//~ globalConfig[2]->rotate();
+			//~ globalConfig[2]->setTopRightCorner(vnme - h*4, exh  );
+			//~ globalConfig[2]->setBottomLeftCorner(vnme -2*h-1 , exh +w-1);
+			
+			
+			//~ globalConfig[3] = new DSP(shift, w, h*2);	
+			//~ globalConfig[3]->setNrOfPrimitiveDSPs(2);
+			//~ globalConfig[3]->rotate();
+			//~ globalConfig[3]->setTopRightCorner(vnme - h*2, exh );
+			//~ globalConfig[3]->setBottomLeftCorner(vnme-1, exh +w-1);
+			
+			
+					//test for Z configurations
+			//~ globalConfig[0] = new DSP(shift, w, h*2);	
+			//~ globalConfig[0]->setNrOfPrimitiveDSPs(2);
+			//~ globalConfig[0]->setTopRightCorner(exw, exh);
+			//~ globalConfig[0]->setBottomLeftCorner(exw+w-1, exh+h*2-1);
+			
+			//~ globalConfig[1] = new DSP(shift, w, h*2);	
+			//~ globalConfig[1]->setNrOfPrimitiveDSPs(2);
+			//~ globalConfig[1]->setTopRightCorner(exw +w, exh +h );
+			//~ globalConfig[1]->setBottomLeftCorner(exw +w+ w-1, exh + h+2*h-1);
+			
+			
+			
+			//~ globalConfig[2] = new DSP(shift, w, h*2);	
+			//~ globalConfig[2]->setNrOfPrimitiveDSPs(2);
+			//~ globalConfig[2]->rotate();
+			//~ globalConfig[2]->setTopRightCorner(vnme - h*3, exh  );
+			//~ globalConfig[2]->setBottomLeftCorner(vnme -h-1 , exh +w-1);
+			
+			
+			//~ globalConfig[3] = new DSP(shift, w, h*2);	
+			//~ globalConfig[3]->setNrOfPrimitiveDSPs(2);
+			//~ globalConfig[3]->rotate();
+			//~ globalConfig[3]->setTopRightCorner(vnme - h*2, exh +w);
+			//~ globalConfig[3]->setBottomLeftCorner(vnme-1, exh +w+w-1);
+						
+						
+						//test for L configurations
+			//~ globalConfig[0] = new DSP(shift, w, h*2);	
+			//~ globalConfig[0]->setNrOfPrimitiveDSPs(2);
+			//~ globalConfig[0]->setTopRightCorner(exw, exh);
+			//~ globalConfig[0]->setBottomLeftCorner(exw+w-1, exh+h*2-1);
+			
+			//~ globalConfig[1] = new DSP(shift, w, h*2);	
+			//~ globalConfig[1]->setNrOfPrimitiveDSPs(2);
+			//~ globalConfig[1]->rotate();
+			//~ globalConfig[1]->setTopRightCorner(exw, exh +h*2 );
+			//~ globalConfig[1]->setBottomLeftCorner(exw + h*2-1, exh + h*2+w-1);
+			
+			
+			
+			//~ globalConfig[2] = new DSP(shift, w, h*2);	
+			//~ globalConfig[2]->setNrOfPrimitiveDSPs(2);
+			//~ globalConfig[2]->rotate();
+			//~ globalConfig[2]->setTopRightCorner(vnme - h*2, exh  );
+			//~ globalConfig[2]->setBottomLeftCorner(vnme -1 , exh +w-1);
+			
+			
+			//~ globalConfig[3] = new DSP(shift, w, h*2);	
+			//~ globalConfig[3]->setNrOfPrimitiveDSPs(2);
+			//~ globalConfig[3]->setTopRightCorner(vnme - w, exh +w);
+			//~ globalConfig[3]->setBottomLeftCorner(vnme-1, exh +w+h*2-1);
+			
+						
+			//~ //display(globalConfig);
+			
+			//~ bindDSPs(globalConfig);
+		
 		
 	}
 
@@ -1047,6 +1169,8 @@ namespace flopoco{
 		return costSlice;
 	}	
 
+	
+	
 	int IntTruncMultiplier::bindDSPs4Virtex(DSP** &config)
 	{
 		int nrOfUsedDSPs=0;
@@ -1061,12 +1185,15 @@ namespace flopoco{
 				}
 			//countsShift[i]=0;	
 			}
+			
+			
 		DSP* ref;
 	
 		sortDSPs(config);
 		
+		//display(config);
 			
-		int itx,ity,jtx,jty,ibx,iby;//,jbx,jby;
+		int itx,ity,jtx,jty,ibx,iby,jbx,jby;
 		//int prev=0;
 			
 		//cout<<endl<<endl;	
@@ -1094,20 +1221,22 @@ namespace flopoco{
 					
 								for(int j=0;j<nrDSPs&&ver==false;j++)
 									{
-										if(config[j]!=NULL &&j!=i && count+ config[j]->getNrOfPrimitiveDSPs()<=nrOfShifts4Virtex)
+										
+										if(config[j]!=NULL &&j!=i && (count+ config[j]->getNrOfPrimitiveDSPs()<=nrOfShifts4Virtex))
 											{
 												config[j]->getTopRightCorner(jtx,jty);
 												if((jtx<=vnme && jty<vmme))
 												{
 												
 												sa = config[j]->getShiftAmount();
-												//cout<<"Now considering taking(in left) dsp nr. "<<i<<" with tx:="<<itx<<" ty:="<<ity<<" bx:="<<ibx<<"by:="<<iby<<" with dsp nr. "<<j<<" with tx:="<<jtx<<" ty:="<<jty<<endl;
+												//~ cout<<"Now considering taking(in left) dsp nr. "<<i<<" with tx:="<<itx<<" ty:="<<ity<<" bx:="<<ibx<<"by:="<<iby<<" with dsp nr. "<<j<<" with tx:="<<jtx<<" ty:="<<jty<<endl;
 												//config[j]->getBottomLeftCorner(jbx,jby);
+												
 												if(rw!=34 && rh!=34)
 												{
 												if(jtx==ibx+1&&jty==ity&&rw==sa&&config[j]->getShiftIn()==NULL)
 													{
-														//cout<<"DSP #"<<i<<" bind with DSP# "<<j<<endl;
+														//~ cout<<"DSP #"<<i<<" bind with DSP# "<<j<<endl;
 														ver=true;
 														ref->setShiftOut(config[j]);
 														config[j]->setShiftIn(ref);
@@ -1121,13 +1250,17 @@ namespace flopoco{
 												}
 												else
 												{
+													config[j]->getBottomLeftCorner(jbx,jby);
 													//~ cout<<config[i]->getMaxMultiplierHeight()<<" "<<rh<<" ";
 													//~ cout<<(config[i]->getMaxMultiplierHeight()% rh)<<endl;
 
-													if( jtx==ibx+1 && sa!=0 && rw%sa==0 && ( (rw == 34 && jty==ity)   || ( rw==17 && jty==ity+sa   )  ))
-
+													//if( jtx==ibx+1 && sa!=0 &&   config[j]->getMaxMultiplierWidth() %sa==0 && ( (config[j]->getMaxMultiplierWidth() == 34 && jty==ity)   || ( config[j]->getMaxMultiplierWidth()==17 && jty==ity+sa   )  ))
+					
+													
+													
+													if( (jtx==ibx+1) && sa!=0 && ( (config[j]->getMaxMultiplierWidth() == 34 && jby ==iby ) || (config[j]->getMaxMultiplierWidth() == 17  && (iby + sa == jby)) ) )
 													{
-														//cout<<" case 1_2 DSP #"<<i<<" bind with DSP# "<<j<<endl;
+														//~ cout<<" case 1_2 DSP #"<<i<<" bind with DSP# "<<j<<endl;
 														ver=true;
 														ref->setShiftOut(config[j]);
 														config[j]->setShiftIn(ref);
@@ -1149,13 +1282,13 @@ namespace flopoco{
 												if((jtx<=vnme && jty<vmme))
 												{
 												sa = config[j]->getShiftAmount();
-												//cout<<"Now considering taking(down) dsp nr. "<<i<<" with tx:="<<itx<<" ty:="<<ity<<" bx:="<<ibx<<"by:="<<iby<<" with dsp nr. "<<j<<" with tx:="<<jtx<<" ty:="<<jty<<endl;
+												//~ cout<<"Now considering taking(down) dsp nr. "<<i<<" with tx:="<<itx<<" ty:="<<ity<<" bx:="<<ibx<<"by:="<<iby<<" with dsp nr. "<<j<<" with tx:="<<jtx<<" ty:="<<jty<<endl;
 												//config[j]->getBottomLeftCorner(jbx,jby);
 												if(rw!=34 && rh!=34)
 												{
 												if(iby+1==jty&&itx==jtx&&rh==sa&&config[j]->getShiftIn()==NULL)
 													{
-														//cout<<"DSP #"<<i<<" bind with DSP# "<<j<<endl;
+														//~ cout<<"DSP #"<<i<<" bind with DSP# "<<j<<endl;
 														ver=true;
 														ref->setShiftOut(config[j]);
 														config[j]->setShiftIn(ref);
@@ -1173,10 +1306,14 @@ namespace flopoco{
 													//~ cout<<(config[i]->getMaxMultiplierWidth()% rw)<<endl;
 
 													//&&  (config[j]->getMaxMultiplierWidth()% rw==0)
-													if( iby+1==jty &&sa!=0&& rh% sa==0 && ( (rh == 34 && jtx==itx   )   || ( rw==17 && jtx==itx+sa)  ))
-
+													config[j]->getTopRightCorner(jtx,jty);
+													config[j]->getBottomLeftCorner(jbx,jby);
+													//if( iby+1==jty &&sa!=0&& config[j]->getMaxMultiplierHeight()% sa==0 && ( (config[j]->getMaxMultiplierHeight() == 34 && jtx==itx      )   || ( config[j]->getMaxMultiplierHeight()==17 && jtx==itx+sa)  ))
+													
+													if(   iby+1==jty &&sa!=0&& (  ((config[j]->getMaxMultiplierHeight() == 34  &&  jbx ==ibx) ||  (config[j]->getMaxMultiplierHeight() == 17  &&  (jbx ==ibx+sa  )))     ) )
+													
 													{
-														//cout<<"case 2_2 DSP #"<<i<<" bind with DSP# "<<j<<endl;
+														//~ cout<<"case 2_2 DSP #"<<i<<" bind with DSP# "<<j<<endl;
 														ver=true;
 														ref->setShiftOut(config[j]);
 														config[j]->setShiftIn(ref);
@@ -1194,10 +1331,13 @@ namespace flopoco{
 			
 			}
 	
-		//cout<<" nr de dspuri dupa bind "<<nrOfUsedDSPs<<endl;
+		//~ cout<<" nr of dsps after bind "<<nrOfUsedDSPs<<endl;
 		return nrOfUsedDSPs;
 	
 	}
+	
+	
+	
 
 	void IntTruncMultiplier::sortDSPs(DSP** &config)
 	{
