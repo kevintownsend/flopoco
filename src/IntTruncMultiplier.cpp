@@ -34,12 +34,30 @@ namespace flopoco{
 
 	IntTruncMultiplier::IntTruncMultiplier(Target* target, int wX, float ratio, int k):
 		Operator(target), wX(wX), wY(wX),ratio(ratio){
-			
+		isSquarer = true;
+		ostringstream name;
+		name <<"IntTruncSquarer_"<<wX;
+		setName(name.str());
+	
+		setCopyrightString("Sebastian Banescu, Bogdan Pasca, Radu Tudoran 2010");
+	
+		addInput ("X", wX);
+		addOutput("R", wX + wX- k); 
+		
+		wInX = wX;
+		wInY = wX;
+		vn=wInX + 2* getExtraWidth();
+		vm=wInY + 2* getExtraHeight();
+		vnme = vn-getExtraWidth();		
+		vmme = vm - getExtraHeight() ;
+		
+		nrDSPs = estimateDSPs();
+		
 		}
 		
 	IntTruncMultiplier::IntTruncMultiplier(Target* target, int wX, int wY, float ratio, int k):
 		Operator(target), wX(wX), wY(wY), ratio(ratio){
-			
+		isSquarer = false;	
 		ostringstream name;
 		name <<"IntTruncMultiplier_"<<wX<<"_"<<wY;
 		setName(name.str());
@@ -50,21 +68,33 @@ namespace flopoco{
 		addInput ("Y", wY);
 		addOutput("R", wX + wY- k); 
 	
+		wInX = wX;
+		wInY = wY;
+		vn=wInX + 2* getExtraWidth();
+		vm=wInY + 2* getExtraHeight();
+		vnme = vn-getExtraWidth();		
+		vmme = vm - getExtraHeight() ;
+		nrDSPs = estimateDSPs();
+		cout << "Nr of estimated DSP blocks " << nrDSPs << endl;
 
 		DSP** configuration;
 		configuration = (DSP**) malloc(sizeof(DSP*));
 		configuration[0] = (DSP*)malloc(sizeof(DSP));
 		
 		configuration[0] = target->createDSP();
-		configuration[0]->setTopRightCorner(0,0);
-		configuration[0]->setBottomLeftCorner(23,16);
+		configuration[0]->setTopRightCorner(12,6);
+		configuration[0]->setBottomLeftCorner(28,29);
+		nrDSPs = 1;
 
+		display(configuration);
+		
 		vector<SoftDSP*> softDSPs;
-		SoftDSP* d1 = new SoftDSP(0,0, 10, 10);
+		SoftDSP* d1 = new SoftDSP(9, 9, 11, 29);
 		softDSPs.push_back(d1);
 
 		printConfiguration(configuration, softDSPs);
 		
+		// FOLLOWING CODE VALIDATES THE FINAL TILING CONFIGURATION
 		mpfr_t targetError;
 		mpfr_init2(targetError,1000);
 		mpfr_set_ui(targetError, 2, GMP_RNDN);
@@ -81,8 +111,14 @@ namespace flopoco{
 
 		mpfr_t *approxError;
 		approxError = evalTruncTilingError(configuration, softDSPs);
-		cout << "The trunc error is : " << mpfr_get_d(*approxError, GMP_RNDN) << endl;
+		double apxError = mpfr_get_d(*approxError, GMP_RNDN);
+		cout << "The trunc error is : " << apxError << endl;
 		
+		if (apxError < 0) // then next loop will never finish (REASON: some multipliers overlap)
+		{
+			cout << "Unexpected value for trunc error. Execution stopped." << endl;
+			return;
+		}
 		/* error after compensation */
 		mpfr_t t;
 		mpfr_init2(t, 1000);
@@ -154,13 +190,20 @@ namespace flopoco{
 //		cout << "wX wY are " << wX << "    " << wY << endl;
 		fullSum = evalMaxValue(wX, wY);
 //		cout << "Full Sum is :" << mpfr_get_d(*fullSum, GMP_RNDN) << endl;
+		int extW = getExtraWidth();
+		int extH = getExtraHeight(); 
 		
 		if (configuration!=NULL){
 			int i=0;
 			int xB,xT,yB,yT;
+			
 			while(configuration[i]!=NULL){
 				configuration[i]->getTopRightCorner(xT,yT);
 				configuration[i]->getBottomLeftCorner(xB,yB);
+				xT -= extW;
+				xB -= extW;
+				yT -= extH;
+				yB -= extH;
 				int power = xT + yT;
 				mpfr_t* currentSum;
 				currentSum = evalMaxValue(min(xB,wX) - xT + 1, min(yB,wY) - yT +1);
@@ -181,6 +224,10 @@ namespace flopoco{
 			softDSPs[k]->trim(wX, wY);
 			softDSPs[k]->getTopRightCorner(xT,yT);
 			softDSPs[k]->getBottomLeftCorner(xB,yB);
+			xT -= extW;
+			xB -= extW;
+			yT -= extH;
+			yB -= extH;
 			int power = xT + yT;
 			mpfr_t* currentSum;
 			if ((xB>xT) && (yB > yT))
@@ -522,7 +569,6 @@ namespace flopoco{
 							matrix[i][j]=value;
 					}
 			}
-	
 	}
 
 	void IntTruncMultiplier::display(DSP** config)
