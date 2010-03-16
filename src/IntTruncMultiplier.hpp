@@ -13,36 +13,89 @@
 
 namespace flopoco{
 
+
+	/** 
+	 * The SoftDSP class.
+	 * Its main purpose is to store the coordinates of non hardware multipliers
+	 * on in a tiling configuration. Such a configuration is composed of two
+	 * lists. One one hand list of DSP objects (hardware DSP) store the 
+	 * corresponding locations and possible associations of target DSP blocks.
+	 * On the other hand the list of SoftDSP s will store all the informations
+	 * about the soft (logic implemented) multiplier tiles.  
+	 */
 	class SoftDSP{
 	public:
+
+		/** Constructor 
+		 * Takes as arguments the coordinates of the top right and bottom left
+		 * corners of the rectangular softcore multiplier tile
+		 */
 		SoftDSP(int topX, int topY, int bottomX, int bottomY):
 			topX(topX), topY(topY), bottomX(bottomX), bottomY(bottomY){
 			/*constructor*/
 			
 		}	
-		
+		/**
+		 * Destructor. Empty for now
+		 */ 
 		~SoftDSP(){}
 		
+		/** Fetches the coordinates of the top right corner
+		 * @param[in/out] xT the top coordinate in X dimension 
+		 * @param[in/out] yT the top coordinate in Y dimension 
+		 */
 		void getTopRightCorner(int &xT, int &yT){
 			xT = topX;
 			yT = topY;
 		}
 		
+		/** Fetches the coordinates of the bottom right corner
+		 * @param[in/out] xB the top coordinate in X dimension 
+		 * @param[in/out] yB the top coordinate in Y dimension 
+		 */
 		void getBottomLeftCorner(int &xB, int &yB){
 			xB = bottomX;
 			yB = bottomY;
 		}
 
+		/** Fetches ALL coordinates of the soft DSP 
+		 * @param[in/out] xT the top coordinate in X dimension 
+		 * @param[in/out] yT the top coordinate in Y dimension 
+		 * @param[in/out] xB the top coordinate in X dimension 
+		 * @param[in/out] yB the top coordinate in Y dimension 
+		 */
+		void getCoordinates(int &xT, int &yT, int &xB, int &yB){
+			xT = topX;
+			yT = topY;
+			xB = bottomX;
+			yB = bottomY;
+		} 
+
+		/** allows updating the coordinates of  the top right corner 
+		 * @param[in/out] xT the top coordinate in X dimension 
+		 * @param[in/out] yT the top coordinate in Y dimension 
+		 */
 		void setTopRightCorner(int xT, int yT){
 			topX = xT;
 			topY = yT;
 		}
-		
+
+		/** allows updating the coordinates of  the top right corner 
+		 * @param[in/out] xB the top coordinate in X dimension 
+		 * @param[in/out] yB the top coordinate in Y dimension 
+		 */
 		void setBottomLeftCorner(int xB, int yB){
 			bottomX = xB;
 			bottomY = yB;
 		}
-		
+
+		/** trims the tile coordinates to a certain board size. That is,
+		 * if the board to be tiled has a dimension of 20 x 20 and the bottom
+		 * left corner exceeds the board limits, this corner will be trimmed 
+		 * to the board dimensions 
+		 * @param[in] wX the X dimension of the board to trim to 
+		 * @param[in] wY the Y dimension of the board to trim to 
+		 */
 		void trim(int wX, int wY){
 			if (bottomX > wX)
 				bottomX = wX;
@@ -50,11 +103,17 @@ namespace flopoco{
 				bottomY = wY;
 		}
 		
-	
-		int topX, topY, bottomX, bottomY;
+	protected:
+		int topX, topY, bottomX, bottomY; /**< the coordinates of the tile (top right and bottom left corners */
 	};
 
 
+
+	/** 
+	 * The Truncated Multiplier class.
+	 * For experimenting with truncated multipliers. 
+	 * TODO Not Yet Fully Documented
+	 */
 	class IntTruncMultiplier : public Operator
 	{
 	public:
@@ -66,17 +125,32 @@ namespace flopoco{
 		/** IntTruncMultiplier destructor */
 		~IntTruncMultiplier();
 
+		/** Computes the max value of a w x h bit multiplication 
+		 * @param[in] w the size of the first operand
+		 * @param[in] h the size of the second operand
+		 * @return (2^w-1)(2^h-1)
+		 */ 
 		mpfr_t* evalMaxValue(int w, int h);
+		
+		
+		/** Evaluates the Approximation error introduced by truncating 
+		 * the multiplication. 
+		 * @param[in] configuration The list of hard DSPs used in the multiplication
+		 *            and their positioning on the board
+		 * @param[in] softDSPs The list of soft multipliers (logic implemented) 
+		 *            with their corresponding positioning 
+		 * @return the approximation error
+		 */ 
 		mpfr_t* evalTruncTilingError(DSP** configuration, vector<SoftDSP*> softDSPs);
 
 	protected:
 
-		int wX; /**< the width (in bits) of the input  X  */
-		int wY; /**< the width (in bits) of the input  Y  */
-		int wt; /**< the width (in bits) of the output R  */
+		int wX;      /**< the width (in bits) of the input  X  */
+		int wY;      /**< the width (in bits) of the input  Y  */
+		int wt;      /**< the width (in bits) of the output R TODO */
 		float ratio; /**<the ratio between slice and dsp */
 
-
+		/* RIP */
 		void printConfiguration(DSP** configuration, vector<SoftDSP*> softDSPs);
 	private:
 		/**
