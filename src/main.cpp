@@ -1411,7 +1411,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			
 			cerr << "> FunctionEvaluator func='" << func << "', wI=" << wI << ", wO=" << wO      << ", xmin=" << xmin << ", xmax=" << xmax << ", scale=" << scale <<endl;	
 			
-			Operator* tg = new FunctionEvaluator(target, func, wI, (-1)*wO, n,xmin,xmax,scale );
+			Operator* tg = new FunctionEvaluator(target, func, wI, wO, n,xmin,xmax,scale );
 				addOperator(tg);
 			
 		}
