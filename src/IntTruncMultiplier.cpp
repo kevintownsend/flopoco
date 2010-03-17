@@ -89,7 +89,7 @@ namespace flopoco{
 		configuration[0]->setTopRightCorner(9,6);
 		configuration[0]->setBottomLeftCorner(25,29);
 		nrDSPs = 1;
-		
+		/*
 		SoftDSP** softDSPs = multiplicationInSlices(configuration);
 		displayAll(configuration, softDSPs);
 		
@@ -99,6 +99,7 @@ namespace flopoco{
 		}else{
 			cerr << "This is NOT a good tiling. Redo tiling " << endl;
 		}
+		*/ 
 		//SoftDSP** softDSPs = new SoftDSP*[100];
 		//SoftDSP* d1 = new SoftDSP(9, 9, 11, 29);
 		//softDSPs[0] = d1;
@@ -236,7 +237,7 @@ namespace flopoco{
 	IntTruncMultiplier::~IntTruncMultiplier() {
 	}
 	
-	bool IntTruncMultiplier::isTilingValid(DSP** configuration, SoftDSP** softDSPs, int k){
+	bool IntTruncMultiplier::isTilingValid(DSP** configuration, vector<SoftDSP*> softDSPs, int k){
 		mpfr_t targetError;
 		mpfr_init2(targetError,1000);
 		mpfr_set_ui(targetError, 2, GMP_RNDN);
@@ -396,7 +397,7 @@ namespace flopoco{
 		return fullSum;
 	}
 	
-	mpfr_t *IntTruncMultiplier::evalTruncTilingErrorInverted(DSP** configuration, SoftDSP** softDSPs){
+	mpfr_t *IntTruncMultiplier::evalTruncTilingErrorInverted(DSP** configuration, vector<SoftDSP*> softDSPs){
 		/* fist we get the maximal sum */
 		mpfr_t *fullSum;
 		cout << "wX wY are " << wX << "    " << wY << endl;
@@ -433,7 +434,7 @@ namespace flopoco{
 		}
 		
 		int xB,xT,yB,yT;
-		for (int k=0; k < nrSoftDSPs; k++){
+		for (unsigned k=0; k < softDSPs.size(); k++){
 			softDSPs[k]->trim(vnme, vmme);
 			softDSPs[k]->getTopRightCorner(xT,yT);
 			softDSPs[k]->getBottomLeftCorner(xB,yB);
@@ -1109,7 +1110,7 @@ namespace flopoco{
 	
 	}
 
-	void IntTruncMultiplier::displayAll(DSP** config, SoftDSP ** softConfig)
+	void IntTruncMultiplier::displayAll(DSP** config, vector<SoftDSP*> softConfig)
 	{
 	
 	
@@ -1148,7 +1149,7 @@ namespace flopoco{
 				count++;			
 			}
 			
-		for(int i=0;i<nrSoftDSPs;i++)
+		for(unsigned i=0;i<softConfig.size();i++)
 			{
 				int c1X,c2X,c1Y,c2Y;
 			
@@ -1599,8 +1600,6 @@ namespace flopoco{
 	
 		return costSlice;
 	}	
-
-	
 	
 	int IntTruncMultiplier::bindDSPs4Virtex(DSP** &config)
 	{
@@ -1767,9 +1766,6 @@ namespace flopoco{
 	
 	}
 	
-	
-	
-
 	void IntTruncMultiplier::sortDSPs(DSP** &config)
 	{
 		int ix,iy,jx,jy;
@@ -2097,9 +2093,7 @@ namespace flopoco{
 	}
 
 	int  IntTruncMultiplier::getExtraHeight()
-	{
-
-		
+	{	
 		int x,y;	
 		target_->getDSPWidths(x,  y);
 		float temp = ratio * 0.75 * ((float) y);
@@ -2110,7 +2104,6 @@ namespace flopoco{
 	
 	int  IntTruncMultiplier::getExtraWidth()
 	{
-
 		int x,y;	
 		target_->getDSPWidths(x,y);
 		float temp = ratio * 0.75 * ((float) x);
@@ -2124,7 +2117,7 @@ namespace flopoco{
 		if (x>vn && y>vm && x<0 && y<0) // then not in tiling grid bounds
 			return false;
 			
-		if (isSquarer && ((wInX-x) > y)) // then the position is above the secondary diagonal
+		if (isSquarer && ((vnme-x) >= y)) // then the position is above the secondary diagonal
 			return false;
 			
 		if ((truncationOffset>0) && ((x-truncationOffset) > y)) // then the position is above the truncation boundary
@@ -2134,9 +2127,7 @@ namespace flopoco{
 	}
 
 	bool IntTruncMultiplier::checkOverlap(DSP** config, int index)
-	{	
-		
-		//return false;
+	{			
 		int x,y,w,h;
 		h = config[index]->getMaxMultiplierHeight();
 		w = config[index]->getMaxMultiplierWidth();
@@ -3157,7 +3148,7 @@ namespace flopoco{
 
 	}
 
-	SoftDSP** IntTruncMultiplier::multiplicationInSlices(DSP** config)
+	int IntTruncMultiplier::multiplicationInSlices(DSP** config)
 	{
 		//~ cout<<"Incepe"<<endl;
 		int partitions=0;
@@ -3319,10 +3310,7 @@ namespace flopoco{
 										else
 											nii = ii;
 										
-										SoftDSP *sd = new SoftDSP(vnme-(njj-extW)-1, vmme-(nii-extH)-1, vnme-(nj-extW)-1, vmme-(ni-extH)-1);
-										sDSPvector.push_back(sd);
-										nrSoftDSPs++;
-										/* CODE GENERATING VHDL CODE
+										// CODE GENERATING VHDL CODE
 										setCycle(0);	
 										target_->setUseHardMultipliers(false);
 										IntMultiplier* mult =  new IntMultiplier(target_, njj-nj+1, nii-ni+1);
@@ -3345,7 +3333,7 @@ namespace flopoco{
 										vhdl << tab << declare(join("addOpSlice", partitions), wInX+wInY) << " <= " << zg(wInX+wInY-(wInX-nj-1+extW+nii-extH)-2, 0) << " & " << join("result", partitions) << " & " << zg(wInX-njj-1+extW+ni-extH, 0) << ";" << endl;
 										cout<<"Partition number "<<count<<" with bounds. ("<<j<<" , "<<i<<" , "<<jj<<" , "<<ii<<")"<<" has now bounds ("<<nj<<" , "<<ni<<" , "<<njj<<" , "<<nii<<")"<<endl;
 										cout<<"partitions " << partitions << " @ cycle " << getCurrentCycle() << endl;
-										*/
+										
 										partitions++;
 									}
 				
@@ -3396,16 +3384,7 @@ namespace flopoco{
 	
 		delete[] (mat);
 	
-		//return partitions;
-		SoftDSP** sDSPlist = new SoftDSP*[nrSoftDSPs];
-		for (int i=0; i<nrSoftDSPs; i++)
-		{
-			int tx, ty, bx, by;
-			sDSPvector[i]->getCoordinates(tx, ty, bx, by);
-			sDSPlist[i] = new SoftDSP(tx, ty, bx, by);
-		}
-		
-		return sDSPlist;
+		return partitions;
 	}	
 
 }

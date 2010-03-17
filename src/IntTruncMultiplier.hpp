@@ -142,7 +142,7 @@ namespace flopoco{
 		 * @return the approximation error
 		 */ 
 		mpfr_t* evalTruncTilingError(DSP** configuration, SoftDSP** softDSPs);
-		mpfr_t* evalTruncTilingErrorInverted(DSP** configuration, SoftDSP** softDSPs);
+		mpfr_t* evalTruncTilingErrorInverted(DSP** configuration, vector<SoftDSP*> softDSPs);
 
 	protected:
 
@@ -169,8 +169,8 @@ namespace flopoco{
 		 * @param k the target precision
 		 * @return TRUE if tiling is valid, FALSE otherwise
 		 */
-		bool isTilingValid(DSP** configuration, SoftDSP** softDSPs, int k);
-		
+		//bool isTilingValid(DSP** configuration, SoftDSP** softDSPs, int k);
+		bool isTilingValid(DSP** configuration, vector<SoftDSP*> softDSPs, int k);
 		/**
 		 * Verifies that the indicated DSP block does not overlap with any 
 		 * other block in the given configuration.
@@ -344,7 +344,7 @@ namespace flopoco{
 		void display(DSP** config);
 	
 		/** Same as the above function except it also prints SoftDSPs */
-		void displayAll(DSP** config, SoftDSP ** softConfig);
+		void displayAll(DSP** config, vector<SoftDSP*> softConfig);
 		
 		/** This function will be used to run the algorithm. the result of the algorithm (i..e. the best configuration) will be located in the member variable bestConfig */
 	
