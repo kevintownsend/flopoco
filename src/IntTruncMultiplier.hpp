@@ -142,6 +142,7 @@ namespace flopoco{
 		 * @return the approximation error
 		 */ 
 		mpfr_t* evalTruncTilingError(DSP** configuration, SoftDSP** softDSPs);
+		mpfr_t* evalTruncTilingErrorInverted(DSP** configuration, SoftDSP** softDSPs);
 
 	protected:
 
@@ -235,9 +236,9 @@ namespace flopoco{
 		/**
 		 * This function generates the vhdl code for multiplication using only Slices.
 		 * @param the configuration of the tiling grid
-		 * @return the number of addition operands that use only Slices for multiplications
+		 * @return list of IntMultipliers in the configuration
 		 */
-		int multiplicationInSlices(DSP** config);
+		SoftDSP** multiplicationInSlices(DSP** config);
 		
 		/**
 		 * This function approximates the number of discarded columns given a target error
