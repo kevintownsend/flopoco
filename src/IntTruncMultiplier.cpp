@@ -99,7 +99,23 @@ namespace flopoco{
 		}else{
 			cerr << "This is NOT a good tiling. Redo tiling " << endl;
 		}
-		*/ 
+		*/
+		
+		
+		//from here it will start the algorithm
+		nrOfShifts4Virtex=4;
+		int n=vn;
+		int m=vm;
+		mat = new int*[m];
+			for(int i=0;i<m;i++)
+			{
+				mat[i] = new int [n];
+				for(int j=0;j<n;j++)
+					mat[i][j]=0;
+			}
+			
+			
+		 
 		//SoftDSP** softDSPs = new SoftDSP*[100];
 		//SoftDSP* d1 = new SoftDSP(9, 9, 11, 29);
 		//softDSPs[0] = d1;
@@ -232,6 +248,43 @@ namespace flopoco{
 			//~ //display(globalConfig);
 			
 			//~ bindDSPs(globalConfig);
+			
+			
+			//test for insertSoftDSPs 
+			//~ int w, h;
+			//~ target->getDSPWidths(w, h);
+			
+			//~ cout<<w<<" "<<h<<endl;
+			//~ int shift = 17;
+			//~ int exw=getExtraWidth();
+			//~ int exh=getExtraHeight();
+			
+			//~ cout<<"ExtraWidth="<<exw<<" ExtraHeight="<<exh<<endl;
+			
+			//~ nrDSPs=2;
+			//~ globalConfig = new DSP*[nrDSPs];
+			//~ globalConfig[0] = new DSP(shift, w, h*2);	
+			//~ globalConfig[0]->setNrOfPrimitiveDSPs(2);
+			//~ globalConfig[0]->setTopRightCorner(exw, exh);
+			//~ globalConfig[0]->setBottomLeftCorner(exw+w-1, exh+h*2-1);
+			
+			/*
+			globalConfig[1] = new DSP(shift, w, h*2);	
+			globalConfig[1]->setNrOfPrimitiveDSPs(2);
+			globalConfig[1]->rotate();
+			globalConfig[1]->setTopRightCorner(exw , exh +2*h  );
+			globalConfig[1]->setBottomLeftCorner(exw + h*2-1, exh +2*h+ w-1);
+			*/
+			//~ globalConfig[1] = new DSP(shift, w, h*2);	
+			//~ globalConfig[1]->setNrOfPrimitiveDSPs(2);
+			//~ globalConfig[1]->rotate();
+			//~ globalConfig[1]->setTopRightCorner(exw +w, exh   );
+			//~ globalConfig[1]->setBottomLeftCorner(exw +w+ h*2-1, exh + w-1);
+			
+			
+			//~ int test;
+			//~ insertSoftDSPs(globalConfig,test);
+			//~ cout<<"Nr of part "<<test<<endl;
 	}
 
 	IntTruncMultiplier::~IntTruncMultiplier() {
@@ -3184,4 +3237,159 @@ namespace flopoco{
 		return (int)partitions;
 	}	
 
+	void IntTruncMultiplier::insertSoftDSPs(DSP** config,int &partitions)
+	{
+		
+		//int costSlice=0;
+	
+		int n,m;
+		int count=1;
+		n=vn;
+		m=vm;
+	
+		//int nmew = vnme;
+		int ew = getExtraWidth();
+		//int mmeh = vmme;
+		int eh = getExtraHeight();
+		//int nj,ni,njj,nii;
+		
+		
+		//~ cout<<"width "<<n<<"height "<<m<<endl;
+	
+		for(int i=0;i<m;i++)
+			{
+			
+				for(int j=0;j<n;j++)
+					mat[i][j]=0;
+			}
+		for(int i=0;i<nrDSPs;i++)
+			{
+				int c1X,c2X,c1Y,c2Y;
+			
+				config[i]->getTopRightCorner(c1X,c1Y);
+				config[i]->getBottomLeftCorner(c2X,c2Y);
+				//~ cout<<"DSP #"<<i+1<<"has toprigh ("<<c1X<<","<<c1Y<<") and botomleft ("<<c2X<<","<<c2Y<<")"<<endl;
+				c1X=n-c1X-1;
+				c2X=n-c2X-1;
+				//~ cout<<"new x1 "<<c1X<<" new x2 "<<c2X<<endl;
+			
+				fillMatrix(mat,n,m,c2X,c1Y,c1X,c2Y,count);
+				count++;			
+			}
+		//partitions = count;
+		partitions = 0;
+		
+		
+		
+		int deepX=vn,deepY=vm,rdeepX=vm;
+			int ti;
+		
+		//~ for(int i=40;i<vmme;i++)
+			//~ mat[i][vnme-1]=nrDSPs+1;
+		//mat[vmme-1][vnme-2]=4;	
+		
+		//~ for(int i=35;i<vnme - 24;i++)
+			//~ mat[eh][i]=nrDSPs+1;
+		//mat[eh+1][35]=4;
+		
+		//mat[40][vnme-1]=nrDSPs+1;
+			
+		//search the deapest position
+		for(int i=ew+1;i<vnme;i++)	
+		{
+			ti = vn-i;
+			for(int j=eh;j<vmme-1;j++)
+			{
+				if(mat[j][ti]==0&&((deepX+deepY)>(i+j))  )
+				{
+					deepX=i;
+					rdeepX=ti;
+					deepY=j;					
+				}				
+			}			
+		}	
+		
+		
+			
+		cout<<"Deepest position is X="<<deepX<<" Y="<<deepY<<" realX"<<rdeepX<<endl;
+		mat[deepY][rdeepX]=9;
+		
+		//small display
+		//~ for(int i=0;i<vm;i++)	
+		//~ {
+			//~ for(int j=0;j<vn;j++)
+			//~ {
+				//~ cout<<mat[i][j];
+			//~ }
+			//~ cout<<endl;
+		//~ }
+		
+				
+		//puts the current 1x1 multiplication on the board and will try to combine and extend the neighbours
+		//bool isextentionok=false;
+		int ref;
+		//try in right
+		if(mat[deepY][rdeepX+1]>nrDSPs && mat[deepY-1][rdeepX+1]!=mat[deepY] [rdeepX+1])
+		{
+			cout<<"Has neighbor in left of it"<<endl;
+			ref = mat[deepY] [rdeepX+1];
+			int i;
+			for(i=deepY+1; mat[i][rdeepX]==0 && mat[i][rdeepX+1]==ref;i++ )
+			{
+				mat[i][rdeepX]=ref;
+			}
+			if(  mat[i][rdeepX+1]==ref  )
+			{
+				//new multiplier should be created
+				for(i=deepY+1;mat[i][rdeepX]==ref;i++)
+					mat[i][rdeepX]=0;
+			}
+			else
+			{
+				//the previous multiplier was extended
+				mat[deepY][rdeepX]=ref;
+			}			
+		}
+		else
+		{
+			//try top
+			if(  mat[deepY-1][rdeepX]>nrDSPs &&  mat[deepY-1][rdeepX+1]!=mat[deepY-1][rdeepX])
+			{
+				cout<<"Has neighbor in top of it"<<endl;
+				ref = mat[deepY-1] [rdeepX];
+				int i;
+				for(i=rdeepX-1;mat[deepY][i]==0 && mat[deepY-1][i]==ref;i--)
+				{
+					mat[deepY][i]=ref;
+				}
+				if(mat[deepY-1][i]==ref)
+				{
+					//new multiplier should be created
+					for(i=rdeepX-1;mat[deepY][i]==ref;i--)
+						mat[deepY][i]=0;
+				}
+				else
+				{
+					//the previous multiplier was extended
+					mat[deepY][rdeepX]=ref;
+				}				
+				
+			}
+		}
+		
+		
+		//small display
+		//~ for(int i=0;i<vm;i++)	
+		//~ {
+			//~ for(int j=0;j<vn;j++)
+			//~ {
+				//~ cout<<mat[i][j];
+			//~ }
+			//~ cout<<endl;
+		//~ }
+		
+		
+			
+	}
+	
 }

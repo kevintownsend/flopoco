@@ -313,6 +313,9 @@ namespace flopoco{
 		/** This function is the backtracking function for finding the best configuration with respect to the user preference
 		 */
 		void tilingAlgorithm(int i, int n, bool repl,int lastMovedDSP);
+		
+		/**The function will fill the matrix with softdsp until the error is ensured*/
+		void insertSoftDSPs(DSP** config,int &partitions);
 	
 		/** This function will take a configuration and will try to maximize the multiplications that are realized in slices 
 		 * It will return the number of slices that are required to ferform those multiplications, and through the parameter partitions it will return the number of such partitions
