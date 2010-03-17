@@ -3148,243 +3148,40 @@ namespace flopoco{
 
 	}
 
-	int IntTruncMultiplier::multiplicationInSlices(DSP** config)
+	int IntTruncMultiplier::multiplicationInSlices(vector<SoftDSP*> config)
 	{
-		//~ cout<<"Incepe"<<endl;
-		int partitions=0;
-		int **mat;
-		int n,m;
-		int count=1;
-		//~ n=wInX + 2* getExtraWidth();
-		//~ m=wInY + 2* getExtraHeight();
-		n=vn;
-		m=vm;
-		//~ cout<<"width "<<n<<"height "<<m<<endl;
-		mat = new int*[m];
-		for(int i=0;i<m;i++)
-			{
-				mat[i] = new int [n];
-				for(int j=0;j<n;j++)
-					mat[i][j]=0;
-			}
-		for(int i=0;i<nrDSPs;i++)
-			{
-				int c1X,c2X,c1Y,c2Y;
+		unsigned partitions;
+		int extH = getExtraHeight();
+		int extW = getExtraWidth();
+		for (partitions=0; partitions<config.size(); partitions++)
+		{	
+			int njj, nj, ni, nii;
+			config[partitions]->getCoordinates(nj, ni, njj, nii);
+			// CODE GENERATING VHDL 
+			setCycle(0);	
+			target_->setUseHardMultipliers(false);
+			IntMultiplier* mult =  new IntMultiplier(target_, njj-nj+1, nii-ni+1);
+			ostringstream cname;
+			cname << mult->getName() << "_" << partitions;
+			mult->changeName(cname.str());
+			oplist.push_back(mult);
+			// TODO: compute width of x and y + corretc range for X and Y
+			vhdl << tab << declare(join("x_",partitions), njj-nj+1) << " <= " << "X" << range(wInX-nj-1+extW, wInX-njj-1+extW) << ";" << endl;
+			inPortMap(mult, "X", join("x_",partitions));
+			vhdl << tab << declare(join("y_",partitions), nii-ni+1) << " <= " << "Y" << range(nii-extH, ni-extH) << ";" << endl;
+			inPortMap(mult, "Y", join("y_",partitions));
 		
-				config[i]->getTopRightCorner(c1X,c1Y);
-				config[i]->getBottomLeftCorner(c2X,c2Y);
-				//~ cout<<"DSP #"<<i+1<<"has toprigh ("<<c1X<<","<<c1Y<<") and botomleft ("<<c2X<<","<<c2Y<<")"<<endl;
-				c1X=n-c1X-1;
-				c2X=n-c2X-1;
-				//~ cout<<"new x1 "<<c1X<<" new x2 "<<c2X<<endl;
+			outPortMap(mult, "R", join("result", partitions));
 		
-				fillMatrix(mat,n,m,c2X,c1Y,c1X,c2Y,count);
-				count++;			
-			}
-		partitions=0;
+			vhdl << instance(mult, join("Mult", partitions));
 		
-		vector<SoftDSP*> sDSPvector;
-		sDSPvector.clear();
-		
-		for(int i=0;i<m;i++)
-			{
-				for(int j=0;j<n;j++)
-					{
-						if(mat[i][j]==0)
-							{
-								int ver =0;
-								int ii=i,jj=j;
-								while(ver<6&&(ii<m-1||jj<n-1))
-									{
-										if(ver<3)
-											{
-												if(ver==0||ver==1)
-													ii++;
-												if(ii>m-1)
-													{
-														ii=m-1;
-														ver=2;							
-													}
-					
-												if(ver==0||ver==2)
-													jj++;
-					
-												if(jj>n-1)
-													{
-														jj=n-1;
-														ver=1;
-													}
-					
-												for(int k=ii,q=jj;k>i-1&&(ver==0||ver==2);k--)
-													if(mat[k][q]!=0)
-														{
-															if(ver==0)
-																ver=1;
-															else
-																ver=3;
-															jj--;
-														}
-						
-												for(int k=ii,q=jj;q>j-1&&(ver==0||ver==1);q--)
-													if(mat[k][q]!=0)
-														{
-															if (ver==0)
-																ver=2;
-															else
-																ver=3;
-															ii--;
-														}
-											}
-										else
-											{
-												if(ver==3||ver==5)
-													jj++;
-					
-												if(jj>n-1)
-													{
-														jj=n-1;
-														ver=4;
-													}
-						
-												if(ver==3||ver==4)
-													ii++;
-												if(ii>m-1)
-													{
-														ii=m-1;
-														ver=5;							
-													}
-					
-												for(int k=ii,q=jj;q>j-1&&(ver==3||ver==4);q--)
-													if(mat[k][q]!=0)
-														{
-															if(ver==3)
-																ver=5;
-															else
-																ver=6;
-															ii--;
-														}
-						
-												for(int k=ii,q=jj;k>i-1&&(ver==3||ver==5);k--)
-													if(mat[k][q]!=0)
-														{
-															if(ver==3)
-																ver=4;
-															else
-																ver=6;
-															jj--;
-														}
-						
-												if(ver==5&&jj==n-1)
-													ver=6;
-												if(ver==4&&ii==m-1)
-													ver=6;
-											}
-									}
+			syncCycleFromSignal(join("result", partitions));
+			
+			vhdl << tab << declare(join("addOpSlice", partitions), wInX+wInY) << " <= " << zg(wInX+wInY-(wInX-nj-1+extW+nii-extH)-2, 0) << " & " << join("result", partitions) << " & " << zg(wInX-njj-1+extW+ni-extH, 0) << ";" << endl;
+			cout<<"partitions " << partitions << " @ cycle " << getCurrentCycle() << endl;
+		}
 				
-								int nj,ni,njj,nii;
-								int extH = getExtraHeight();
-								int extW = getExtraWidth();
-				
-				
-								if( j >= n-extW || jj < extW || i >= m-extH || ii < extH)
-									{
-										cout<<"Partition number "<<count<<" is totally out of the real multiplication bounds. ("<<j<<" , "<<i<<" , "<<jj<<" , "<<ii<<")"<<endl;
-									}
-								else
-									{
-										if( j < extW )
-											nj = extW ;
-										else
-											nj = j;
-										if( jj >= n-extW )
-											njj = n-extW -1;
-										else
-											njj = jj;
-					
-										if( i < extH )
-											ni = extH;
-										else
-											ni = i;
-										if( ii >= m-extH )
-											nii = m-extH-1;
-										else
-											nii = ii;
-										
-										// CODE GENERATING VHDL CODE
-										setCycle(0);	
-										target_->setUseHardMultipliers(false);
-										IntMultiplier* mult =  new IntMultiplier(target_, njj-nj+1, nii-ni+1);
-										ostringstream cname;
-										cname << mult->getName() << "_" << partitions;
-										mult->changeName(cname.str());
-										oplist.push_back(mult);
-										// TODO: compute width of x and y + corretc range for X and Y
-										vhdl << tab << declare(join("x_",partitions), njj-nj+1) << " <= " << "X" << range(wInX-nj-1+extW, wInX-njj-1+extW) << ";" << endl;
-										inPortMap(mult, "X", join("x_",partitions));
-										vhdl << tab << declare(join("y_",partitions), nii-ni+1) << " <= " << "Y" << range(nii-extH, ni-extH) << ";" << endl;
-										inPortMap(mult, "Y", join("y_",partitions));
-					
-										outPortMap(mult, "R", join("result", partitions));
-					
-										vhdl << instance(mult, join("Mult", partitions));
-
-										syncCycleFromSignal(join("result", partitions));
-										
-										vhdl << tab << declare(join("addOpSlice", partitions), wInX+wInY) << " <= " << zg(wInX+wInY-(wInX-nj-1+extW+nii-extH)-2, 0) << " & " << join("result", partitions) << " & " << zg(wInX-njj-1+extW+ni-extH, 0) << ";" << endl;
-										cout<<"Partition number "<<count<<" with bounds. ("<<j<<" , "<<i<<" , "<<jj<<" , "<<ii<<")"<<" has now bounds ("<<nj<<" , "<<ni<<" , "<<njj<<" , "<<nii<<")"<<endl;
-										cout<<"partitions " << partitions << " @ cycle " << getCurrentCycle() << endl;
-										
-										partitions++;
-									}
-				
-								fillMatrix(mat,n,m,j,i,jj,ii,count);
-								count++;
-				
-							}
-					}
-	
-			}
-	
-		//de verificat
-		
-		//cout<<"Count "<<count<<" Partitions "<<partitions<<endl;
-		
-		//partitions =count -partitions;
-		 
-		
-		//~ char af;
-		//~ int afi;
-		//~ for(int i=0;i<m;i++)
-		//~ {
-		//~ for(int j=0;j<n;j++)
-		//~ {
-		//~ if(mat[i][j]<10)
-		//~ afi=mat[i][j];
-		//~ else
-		//~ afi=mat[i][j]+7;
-		//~ af=(int)afi+48;
-		//~ cout<<af;
-		//~ }
-		//~ cout<<endl;
-		//~ }
-	
-		//~ cout<<"gata"<<endl;
-		
-		//~ for(int i=0;i<nrDSPs;i++)
-		//~ {
-			//~ if(config[i]->getShiftOut()!=NULL)
-			//~ {
-				//~ config[i]->getShiftOut()->getTopRightCorner(n,m);
-				//~ cout<<"There is a shift connection from DSP# "<<i<<" to DSP with coordinates "<<n<<","<<m<<endl;
-			//~ }
-		//~ }
-	
-		for(int ii=0;ii<m;ii++)
-			delete[](mat[ii]);
-	
-		delete[] (mat);
-	
-		return partitions;
+		return (int)partitions;
 	}	
 
 }

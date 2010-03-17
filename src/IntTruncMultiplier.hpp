@@ -236,9 +236,9 @@ namespace flopoco{
 		/**
 		 * This function generates the vhdl code for multiplication using only Slices.
 		 * @param the configuration of the tiling grid
-		 * @return list of IntMultipliers in the configuration
+		 * @return number of IntMultipliers
 		 */
-		SoftDSP** multiplicationInSlices(DSP** config);
+		int multiplicationInSlices(vector<SoftDSP*> config);
 		
 		/**
 		 * This function approximates the number of discarded columns given a target error
