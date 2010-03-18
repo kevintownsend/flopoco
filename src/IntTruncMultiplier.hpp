@@ -153,7 +153,7 @@ namespace flopoco{
 		int targetPrecision;
 	
 		/* RIP */
-		void printConfiguration(DSP** configuration, SoftDSP** softDSPs);
+		void printConfiguration(DSP** configuration, vector<SoftDSP*> softDSPs);
 	private:
 		/**
 		 * Verifies if the coordinates are inside the area of interest.
@@ -242,6 +242,13 @@ namespace flopoco{
 		int multiplicationInSlices(vector<SoftDSP*> config);
 		
 		/**
+		 * Generates VHDL code for the given configuration
+		 * @param config hard DSP configuration
+		 * @param softConfig soft DSP configuration
+		 */
+		void generateVHDLCode(DSP** config, vector<SoftDSP*> softConfig);
+		
+		/**
 		 * This function approximates the number of discarded columns given a target error
 		 * @param k target precision
 		 * @return the number of discarded columns
@@ -316,7 +323,7 @@ namespace flopoco{
 		void tilingAlgorithm(int i, int n, bool repl,int lastMovedDSP);
 		
 		/**The function will fill the matrix with softdsp until the error is ensured*/
-		void insertSoftDSPs(DSP** config,int &partitions);
+		vector<SoftDSP*> insertSoftDSPs(DSP** config);
 	
 		/** This function will take a configuration and will try to maximize the multiplications that are realized in slices 
 		 * It will return the number of slices that are required to ferform those multiplications, and through the parameter partitions it will return the number of such partitions
@@ -367,6 +374,13 @@ namespace flopoco{
 	
 		int checkFarness(DSP** config,int index);
 		
+		/**
+		 * @param tx top-right x coordinate
+		 * @param ty top-right y coordinate
+		 * @param bx bottom-left x coordinate
+		 * @param by bottom-left y coordinate
+		 */
+		void convertCoordinates(int &tx, int &ty, int &bx, int &by);
 		
 		/** This functions splits large DSP super-blocks or paris of blocks into unit DSP blocks found on the target
 		 * @param config - the configuration to be split

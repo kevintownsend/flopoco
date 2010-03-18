@@ -73,24 +73,42 @@ namespace flopoco{
 		wInY = wY;
 		vn=wInX + 2* getExtraWidth();
 		vm=wInY + 2* getExtraHeight();
-		vnme = vn-getExtraWidth();		
+		vnme = vn - getExtraWidth();		
 		vmme = vm - getExtraHeight() ;
 		nrDSPs = estimateDSPs();
 		nrSoftDSPs = 0;
 		cout << "Nr of estimated DSP blocks " << nrDSPs << endl;
 		truncationOffset = estimateNrOfDiscardedCols(k);
 		cout << "Nr of discarded cols " << truncationOffset << endl;
+		nrOfShifts4Virtex=4;
+		float const scale=100.0;
+		costDSP = ( (1.0+scale) - scale * ratio );
+		//~ cout<<"Cost DSP is "<<costDSP<<endl;
+		costLUT = ( (1.0+scale) - scale * (1-ratio) ) /  ((float) target_->getEquivalenceSliceDSP() );
 		
+		runAlgorithm();
+		/*
 		DSP** configuration;
-		configuration = (DSP**) malloc(sizeof(DSP*));
-		configuration[0] = (DSP*)malloc(sizeof(DSP));
+		//configuration = (DSP**) malloc(sizeof(DSP*));
+		//configuration[0] = (DSP*)malloc(sizeof(DSP));
+		configuration = new DSP*[2];
 		
 		configuration[0] = target->createDSP();
 		configuration[0]->setTopRightCorner(9,6);
-		configuration[0]->setBottomLeftCorner(25,29);
-		nrDSPs = 1;
-		/*
-		SoftDSP** softDSPs = multiplicationInSlices(configuration);
+		configuration[0]->setBottomLeftCorner(32,22);
+		
+		configuration[1] = target->createDSP();
+		configuration[1]->setTopRightCorner(9,23);
+		configuration[1]->setBottomLeftCorner(32,39);
+		configuration[1]->setShiftIn(configuration[0]);
+		configuration[0]->setShiftOut(configuration[1]);
+		
+		nrDSPs = 2;
+		multiplicationInDSPs(configuration);
+		vector<SoftDSP*> softDSPs;
+		SoftDSP* sd = new SoftDSP(39, 15, 41, 20);
+		softDSPs.push_back(sd);
+		multiplicationInSlices(softDSPs);
 		displayAll(configuration, softDSPs);
 		
 		// FOLLOWING CODE VALIDATES THE FINAL TILING CONFIGURATION
@@ -99,7 +117,6 @@ namespace flopoco{
 		}else{
 			cerr << "This is NOT a good tiling. Redo tiling " << endl;
 		}
-		*/
 		
 		
 		//from here it will start the algorithm
@@ -116,6 +133,7 @@ namespace flopoco{
 			
 			
 		 
+
 		//SoftDSP** softDSPs = new SoftDSP*[100];
 		//SoftDSP* d1 = new SoftDSP(9, 9, 11, 29);
 		//softDSPs[0] = d1;
@@ -123,7 +141,7 @@ namespace flopoco{
 		
 		
 		//runAlgorithm();
-		
+		*/
 		/* FOLLOWING CODE VALIDATES THE FINAL TILING CONFIGURATION
 		if (isTilingValid(configuration, softDSPs, k)){
 			cerr << "This is a good tiling" << endl;
@@ -362,20 +380,19 @@ namespace flopoco{
 		}
 	}
 	
-	void IntTruncMultiplier::printConfiguration(DSP** configuration, SoftDSP** softDSPs){
+	void IntTruncMultiplier::printConfiguration(DSP** configuration, vector<SoftDSP*> softDSPs){
 		if (configuration!=NULL){
 			int i=0;
 			int xB,xT,yB,yT;
-			while(configuration[i]!=NULL){
+			for(i=0; i<nrDSPs; i++){
 				configuration[i]->getTopRightCorner(xT,yT);
 				configuration[i]->getBottomLeftCorner(xB,yB);
 				cout << "HARD DSP Top right = " << xT << ", " << yT << " and bottom left = " << xB << ", " <<yB << endl;
-				i++;
 			}
 		}
 
 		int xB,xT,yB,yT;
-		for (int k=0; k < nrSoftDSPs; k++){
+		for (unsigned k=0; k < softDSPs.size(); k++){
 			softDSPs[k]->trim(vnme, vmme);
 			softDSPs[k]->getTopRightCorner(xT,yT);
 			softDSPs[k]->getBottomLeftCorner(xB,yB);
@@ -396,7 +413,7 @@ namespace flopoco{
 			int i=0;
 			int xB,xT,yB,yT;
 			
-			while(configuration[i]!=NULL){
+			for (i=0; i<nrDSPs; i++){
 				configuration[i]->getTopRightCorner(xT,yT);
 				configuration[i]->getBottomLeftCorner(xB,yB);
 				xT -= extW;
@@ -453,9 +470,9 @@ namespace flopoco{
 	mpfr_t *IntTruncMultiplier::evalTruncTilingErrorInverted(DSP** configuration, vector<SoftDSP*> softDSPs){
 		/* fist we get the maximal sum */
 		mpfr_t *fullSum;
-		cout << "wX wY are " << wX << "    " << wY << endl;
+		//cout << "wX wY are " << wX << "    " << wY << endl;
 		fullSum = evalMaxValue(wX, wY);
-		cout << "Full Sum is :" << mpfr_get_d(*fullSum, GMP_RNDN) << endl;
+		//cout << "Full Sum is :" << mpfr_get_d(*fullSum, GMP_RNDN) << endl;
 		int extW = getExtraWidth();
 		int extH = getExtraHeight(); 
 		
@@ -463,15 +480,20 @@ namespace flopoco{
 			int i=0;
 			int xB,xT,yB,yT;
 			
-			while(configuration[i]!=NULL){
+			for(i=0; i<nrDSPs; i++){
 				configuration[i]->getTopRightCorner(xT,yT);
 				configuration[i]->getBottomLeftCorner(xB,yB);
 				xT -= extW;
 				xB -= extW;
 				yT -= extH;
 				yB -= extH;
+				xB = min(xB,wX); 
+				xT = max(xT,0);
+				yB = min(yB,wY);
+				yT = max(yT,0);
 				//int power = xT + yT;
 				int power = (wX - xB-1) + (wY - yB-1);
+				//cout << "Power " << power << endl; 
 				mpfr_t* currentSum;
 				currentSum = evalMaxValue(min(xB,wX) - max(xT,0) + 1, min(yB,wY) - max(yT,0) +1);
 				mpfr_t s;
@@ -480,8 +502,8 @@ namespace flopoco{
 				mpfr_pow_si( s, s, power, GMP_RNDN);
 				mpfr_mul( *currentSum, *currentSum, s, GMP_RNDN);
 				mpfr_sub( *fullSum, *fullSum, *currentSum, GMP_RNDN);
-				cout << "HARD DSP Top right = " << xT << ", " << yT << " and bottom left = " << xB << ", " <<yB << endl;
-				cout << "This one is :" << mpfr_get_d(*currentSum, GMP_RNDN) << endl;
+				//cout << "HARD DSP Top right = " << xT << ", " << yT << " and bottom left = " << xB << ", " <<yB << endl;
+				//cout << "This one is :" << mpfr_get_d(*currentSum, GMP_RNDN) << endl;
 				i++;
 			}
 		}
@@ -513,8 +535,8 @@ namespace flopoco{
 			mpfr_pow_si( s, s, power, GMP_RNDN);
 			mpfr_mul( *currentSum, *currentSum, s, GMP_RNDN);
 			mpfr_sub( *fullSum, *fullSum, *currentSum, GMP_RNDN);
-			cout << "SOFT DSP Top right = " << xT << ", " << yT << " and bottom left = " << xB << ", " <<yB << endl;
-			cout << "This one is :" << mpfr_get_d(*currentSum, GMP_RNDN) << endl;
+			//cout << "SOFT DSP Top right = " << xT << ", " << yT << " and bottom left = " << xB << ", " <<yB << endl;
+			//cout << "This one is :" << mpfr_get_d(*currentSum, GMP_RNDN) << endl;
 		}
 		return fullSum;
 	}
@@ -734,7 +756,7 @@ namespace flopoco{
 			//The second
 			numberDSP4Overlap=nrDSPs;
 			initTiling2(globalConfig,nrDSPs);
-			
+			cout << "NRDSPs = " << nrDSPs << endl;
 			//this will initialize the bestConfig with the first configuration
 			bestCost = FLT_MAX ;
 			cout<<"Max score is"<<bestCost<<endl;
@@ -744,6 +766,7 @@ namespace flopoco{
 				bestConfig[i]= new DSP();
 			compareCost();
 			cout<<"New best score is"<<bestCost<<endl;
+			//getchar();
 			//display(bestConfig);
 			//the best configuration should be consider initially the first one. So the bestConfig parameter will be initialized with global config and hence the bestCost will be initialized with the first cost
 		
@@ -751,9 +774,11 @@ namespace flopoco{
 			numberDSP4Overlap=nrDSPs;
 			tilingAlgorithm(nrDSPs-1,nrDSPs-1,false,nrDSPs-1);
 			bindDSPs(bestConfig);
-			display(bestConfig);
+			vector<SoftDSP*> configSoft = insertSoftDSPs(bestConfig);
+			displayAll(bestConfig, configSoft);
+			printConfiguration(bestConfig, configSoft);
 			cout<<"Best cost is "<<bestCost<<endl;
-			
+			generateVHDLCode(bestConfig, configSoft);
 			/*
 			globalConfig[2]->setTopRightCorner(2,26);
 			globalConfig[2]->setBottomLeftCorner(25,59);
@@ -1889,10 +1914,10 @@ namespace flopoco{
 	
 		if(temp < bestCost)
 			{
-				//~ cout<<"Costul e mai bun la cel curent!Schimba"<<endl;
+				//cout<<"Costul e mai bun la cel curent!Schimba"<<endl;
 				
 				//cout<<"Interchange! Score for current is"<<temp<<" and current best is"<<bestCost<<endl;
-				
+				//getchar();
 				//~ int c1X,c2X,c1Y,c2Y;
 				//~ int n=wInX + 2* getExtraWidth();
 				//~ tempc[0]->getTopRightCorner(c1X,c1Y);
@@ -1946,27 +1971,37 @@ namespace flopoco{
 		
 		//costLUT = ( (1.0+scale) - scale * (1-ratio) ) /  ((float)100);
 	
-		//~ cout<<"Cost of a DSP is "<<costDSP<<endl<<"Cost of a Slice is "<<costLUT<<endl;
+		//cout<<"Cost of a DSP is "<<costDSP<<endl<<"Cost of a Slice is "<<costLUT<<endl;
 	
 		int nrOfUsedDSPs=0;
-	
+		
 		for(int i=0;i<nrDSPs;i++)
 			if(config[i]!=NULL)
 				{
-					acc+=costDSP;
-					nrOfUsedDSPs++;
+					int nrPrimitiveDSPs = config[i]->getNrOfPrimitiveDSPs();
+					//acc += (costDSP*float(nrPrimitiveDSPs));
+					nrOfUsedDSPs += nrPrimitiveDSPs;
 				}
-	
 		
-		//~ cout<<"Number of used DSP blocks is "<<nrOfUsedDSPs<<endl;
+		//cout<<"Number of used DSP blocks is "<<nrOfUsedDSPs<<endl;
+		vector<SoftDSP*> configSoft = insertSoftDSPs(config);
 		
-		int partitions;
-		float LUTs4Multiplication =  partitionOfGridSlices(config,partitions);
-	
-		//~ cout<<"Number of slices 4 multiplication of the rest is "<<LUTs4Multiplication<<endl;
+		int partitions = (int)configSoft.size();
+		float LUTs4Multiplication =  0;
+		int stx, sty, sbx, sby;
+		
+		for (int i=0; i<partitions; i++)
+		{
+			configSoft[i]->getTopRightCorner(stx,sty);
+			configSoft[i]->getBottomLeftCorner(sbx,sby); 
+			LUTs4Multiplication += target_->getIntMultiplierCost(sbx-stx+1, sby-sty+1);
+		}
+		
+		//cout<<"Number of slices 4 multiplication of the rest is "<<LUTs4Multiplication<<endl;
 		
 		acc =((float)nrOfUsedDSPs)*costDSP + costLUT * LUTs4Multiplication;
 		
+		//cout << "Accum = " << acc << endl;
 		//~ cout<<"Number of partitions for LUTs is "<<partitions<<endl;
 		nrOfUsedDSPs = bindDSPs(config);
 		//~ cout<<"Number of operands coming from DSPs is "<<nrOfUsedDSPs<<endl;
@@ -1980,7 +2015,7 @@ namespace flopoco{
 		//~ cout<<"LUTs used for last "<<nrOfUsedDSPs+partitions<<" adder are"<<LUTs4NAdder<<endl;
 		
 		acc +=  LUTs4NAdder* costLUT;	
-		
+		//cout << "Accum = " << acc << endl;
 		
 		//~ Substracting the cost of different additions that can be done in DSPs(Virtex) or the cost of a DSP if they can be combined(Altera)
 		
@@ -2167,7 +2202,7 @@ namespace flopoco{
 	
 	bool IntTruncMultiplier::isValidPosition(int x, int y)
 	{
-		if (x>vn && y>vm && x<0 && y<0) // then not in tiling grid bounds
+		if (x>=vn || y>=vm || x<0 || y<0) // then not in tiling grid bounds
 			return false;
 			
 		if (isSquarer && ((vnme-x) >= y)) // then the position is above the secondary diagonal
@@ -2324,18 +2359,20 @@ namespace flopoco{
 		 * vn = wInX+2*getExtraWidth(); width of the tiling grid including extensions
 		 * vm = wInY+2*getExtraHeight(); height of the tiling grid including extensions
 		 * */
-		int exh = getExtraHeight();
-		int exw = getExtraWidth();
+		//int exh = getExtraHeight();
+		//int exw = getExtraWidth();
 		int pos; // index for list of positions of a DSP
 		
 		
 		if(index==0) // the first DSP block can move freely on the tiling grid
 		{
+			return false;
 			//if ((xtr1 > 0) && (ytr1 > 0) && (xbl1 < vn-1) && (ybl1 < vm-1))
 					{// then the DSP block is placed outside the bounds 		
 	
 						//do{
 							// move down one unit
+							/*
 							ytr1++;
 							ybl1++;
 			
@@ -2353,6 +2390,7 @@ namespace flopoco{
 								}						
 							config[index]->setTopRightCorner(xtr1, ytr1);
 							config[index]->setBottomLeftCorner(xbl1, ybl1);
+							*/ 
 						//}while (checkOverlap(config, index));
 					}
 		}
@@ -2504,8 +2542,8 @@ namespace flopoco{
 		int exh = getExtraHeight();
 		int exw = getExtraWidth();
 		
-		xtr1 = exw -1;
-		ytr1 = exh ;	
+		xtr1 = exw;
+		ytr1 = exh;	
 		ybl1 = ytr1 + h-1;
 		xbl1 = xtr1 + w-1;
 	
@@ -2934,19 +2972,36 @@ namespace flopoco{
 		numberOfDSPs = newNrDSPs;
 		return returnConfig;
 	}
+	
+	void IntTruncMultiplier::convertCoordinates(int &tx, int &ty, int &bx, int &by)
+	{
+		int ax = bx;
+		int ay = by;
+		bx = vnme - tx-1;
+		by = vmme - ty-1;
+		tx = vnme - ax-1;
+		ty = vmme - ay-1;	
+	}
 
 	int IntTruncMultiplier::multiplicationInDSPs(DSP** config)
 	{
 		int nrOp = 0;		 			// number of resulting adder operands
 		int trx1, try1, blx1, bly1; 	// coordinates of the two corners of a DSP block 
 		int fpadX, fpadY, bpadX, bpadY;	// zero padding on both axis
-		int extW, extH;					// extra width and height of the tiling grid
 		int multW, multH; 				// width and height of the multiplier the DSP block is using
 		ostringstream xname, yname, mname, cname, sname;
 		DSP** tempc = new DSP*[nrDSPs];	// buffer that with hold a copy of the global configuration
 			
-		memcpy(tempc, config, sizeof(DSP*) * nrDSPs );
-	
+		//memcpy(tempc, config, sizeof(DSP*) * nrDSPs );
+		for (int i=0; i<nrDSPs; i++)
+		{
+			tempc[i] = config[nrDSPs-i-1];
+			DSP* si = tempc[i]->getShiftIn();
+			DSP* so = tempc[i]->getShiftOut();
+			tempc[i]->setShiftIn(so);
+			tempc[i]->setShiftOut(si);
+		}
+		
 		if ( ( target_->getID() == "Virtex4") ||
 			 ( target_->getID() == "Virtex5") ||
 			 ( target_->getID() == "Spartan3"))  // then the target is A Xilinx FPGA 
@@ -2971,35 +3026,34 @@ namespace flopoco{
 								{
 									d->getTopRightCorner(trx1, try1);
 									d->getBottomLeftCorner(blx1, bly1);
-									extW = getExtraWidth();
-									extH = getExtraHeight();
+									convertCoordinates(trx1, try1, blx1, bly1);
 									
-									fpadX = blx1-wInX-extW+1;
+									fpadX = wInX-blx1-1;
 									//~ cout << "fpadX = " << fpadX << endl;
 									fpadX = (fpadX<0)?0:fpadX;
 									
-									fpadY = bly1-wInY-extH+1;
+									fpadY = wInY-bly1-1;
 									//~ cout << "fpadY = " << fpadY << endl;
 									fpadY = (fpadY<0)?0:fpadY;
 									
-									bpadX = extW-trx1;
+									bpadX = trx1;
 									bpadX = (bpadX<0)?0:bpadX;
 									
-									bpadY = extH-try1;
+									bpadY = try1;
 									bpadY = (bpadY<0)?0:bpadY;
 									
-									multW = d->getMultiplierWidth();
-									multH = d->getMultiplierHeight();
+									multW = blx1-trx1+1;
+									multH = bly1-try1+1;
 			
 									setCycle(0);
 									
 									xname.str("");
 									xname << "x" << i << "_" << j;
-									vhdl << tab << declare(xname.str(), multW) << " <= " << zg(fpadX,0) << " & " << "X" << range(blx1-fpadX-extW, trx1+bpadX-extW) << " & " << zg(bpadX,0) << ";" << endl;
+									vhdl << tab << declare(xname.str(), multW) << " <= X" << range(blx1, trx1) << ";" << endl;
 									
 									yname.str("");
 									yname << "y" << i << "_" << j;
-									vhdl << tab << declare(yname.str(), multH) << " <= " << zg(fpadY,0) << " & " << "Y" << range(bly1-fpadY-extH, try1+bpadY-extH) << " & " << zg(bpadY,0) << ";" << endl;
+									vhdl << tab << declare(yname.str(), multH) << " <= Y" << range(bly1, try1) << ";" << endl;
 				
 									if ((d->getShiftIn() != NULL) && (j>0)) // multiply accumulate
 										{
@@ -3015,7 +3069,7 @@ namespace flopoco{
 													setCycle(connected);
 													sname.seekp(ios_base::beg);
 													//sname << zg(wInX+wInY+extW+extH-blx1-bly1-3, 0) << " & " << use(join(mname.str(),j)) << range(multW-fpadX + multH-fpadY-1, 0) << " & " << sname.str();
-													sname << zg(wInX-(blx1-fpadX-extW)+wInY-(bly1-fpadY-extH)-2, 0) << " & " << use(join(mname.str(),j)) << range(multW-fpadX + multH-fpadY-1, 0) << " & " << sname.str();
+													sname << zg(fpadX+fpadY-1, 0) << " & " << use(join(mname.str(),j)) << range(multW+multH, d->getShiftAmount()) << " & " << sname.str();
 												}
 											else // concatenate only the lower portion of the partial product
 												{
@@ -3034,12 +3088,12 @@ namespace flopoco{
 												{
 													setCycle(connected);
 													//sname << zg(wInX+wInY+extW+extH-blx1-bly1-2, 0) << " & " << use(mname.str()) << range(multH+multW-1, bpadX+bpadY)<< " & " << zg(trx1-extW,0) << " & " << zg(try1-extH,0) <<  ";" << endl;
-													sname << zg(wInX-(blx1-fpadX-extW)+wInY-(bly1-fpadY-extH)-2, 0) << " & " << use(mname.str()) << range(multH-fpadY+multW-fpadX-1, bpadX+bpadY)<< " & " << zg(trx1-extW,0) << " & " << zg(try1-extH,0) <<  ";" << endl;
+													sname << zg(fpadX+fpadY, 0) << " & " << use(mname.str()) << " & " << zg(trx1,0) << " & " << zg(try1,0) <<  ";" << endl;
 												}
 											else // concatenate only the lower portion of the partial product
 												{
 													setCycle(connected);
-													sname << use(mname.str()) << range(d->getShiftAmount()-1, bpadX+bpadY) << " & " << zg(trx1-extW,0) << " & " << zg(try1-extH,0) << ";" << endl;
+													sname << use(mname.str()) << range(d->getShiftAmount()-1, 0) << " & " << zg(trx1,0) << " & " << zg(try1,0) << ";" << endl;
 												}
 										}
 				
@@ -3080,6 +3134,7 @@ namespace flopoco{
 							cout << "At DSP#"<< i+1 << " tempc["<<i<<"]" << endl; 
 							tempc[i]->getTopRightCorner(trx1, try1);
 							tempc[i]->getBottomLeftCorner(blx1, bly1);
+							convertCoordinates(trx1, try1, blx1, bly1);
 							fpadX = blx1-wInX-getExtraWidth()+1;
 							fpadX = (fpadX<0)?0:fpadX;
 							fpadY = bly1-wInY-getExtraHeight()+1;
@@ -3204,12 +3259,11 @@ namespace flopoco{
 	int IntTruncMultiplier::multiplicationInSlices(vector<SoftDSP*> config)
 	{
 		unsigned partitions;
-		int extH = getExtraHeight();
-		int extW = getExtraWidth();
 		for (partitions=0; partitions<config.size(); partitions++)
 		{	
 			int njj, nj, ni, nii;
 			config[partitions]->getCoordinates(nj, ni, njj, nii);
+			convertCoordinates(nj, ni, njj, nii);
 			// CODE GENERATING VHDL 
 			setCycle(0);	
 			target_->setUseHardMultipliers(false);
@@ -3219,9 +3273,9 @@ namespace flopoco{
 			mult->changeName(cname.str());
 			oplist.push_back(mult);
 			// TODO: compute width of x and y + corretc range for X and Y
-			vhdl << tab << declare(join("x_",partitions), njj-nj+1) << " <= " << "X" << range(wInX-nj-1+extW, wInX-njj-1+extW) << ";" << endl;
+			vhdl << tab << declare(join("x_",partitions), njj-nj+1) << " <= " << "X" << range(njj, nj) << ";" << endl;
 			inPortMap(mult, "X", join("x_",partitions));
-			vhdl << tab << declare(join("y_",partitions), nii-ni+1) << " <= " << "Y" << range(nii-extH, ni-extH) << ";" << endl;
+			vhdl << tab << declare(join("y_",partitions), nii-ni+1) << " <= " << "Y" << range(nii, ni) << ";" << endl;
 			inPortMap(mult, "Y", join("y_",partitions));
 		
 			outPortMap(mult, "R", join("result", partitions));
@@ -3230,14 +3284,66 @@ namespace flopoco{
 		
 			syncCycleFromSignal(join("result", partitions));
 			
-			vhdl << tab << declare(join("addOpSlice", partitions), wInX+wInY) << " <= " << zg(wInX+wInY-(wInX-nj-1+extW+nii-extH)-2, 0) << " & " << join("result", partitions) << " & " << zg(wInX-njj-1+extW+ni-extH, 0) << ";" << endl;
+			vhdl << tab << declare(join("addOpSlice", partitions), wInX+wInY) << " <= " << zg(wInX-njj-1+wInY-nii-1, 0) << " & " << join("result", partitions) << " & " << zg(wInX-nj-1+wInY-ni-1, 0) << ";" << endl;
 			cout<<"partitions " << partitions << " @ cycle " << getCurrentCycle() << endl;
 		}
 				
 		return (int)partitions;
 	}	
 
-	void IntTruncMultiplier::insertSoftDSPs(DSP** config,int &partitions)
+	void IntTruncMultiplier::generateVHDLCode(DSP** config, vector<SoftDSP*> softConfig){
+		
+		DSP** bestConfig = config;
+		bindDSPs(bestConfig);      
+		bestConfig = splitLargeBlocks(bestConfig, nrDSPs);
+		int nrDSPOperands = multiplicationInDSPs(bestConfig);
+		int nrSliceOperands = multiplicationInSlices(softConfig);
+		map<string, double> inMap;
+		
+		for (int j=0; j<nrDSPOperands; j++)
+			{
+				ostringstream concatPartialProd;
+				concatPartialProd  << "addOpDSP" << j;
+				syncCycleFromSignal(concatPartialProd.str());
+			}	
+			
+		for (int j=0; j<nrSliceOperands; j++)
+			{
+				ostringstream concatPartialProd;
+				concatPartialProd  << "addOpSlice" << j;
+				syncCycleFromSignal(concatPartialProd.str());
+			}	
+		
+		IntNAdder* add =  new IntNAdder(getTarget(), wInX+wInY, nrDSPOperands+nrSliceOperands, inMap);
+		//IntCompressorTree* add =  new IntCompressorTree(target, adderWidth, opCount);
+		oplist.push_back(add);
+
+		for (int j=0; j<nrDSPOperands; j++)
+			{
+				ostringstream concatPartialProd;
+				concatPartialProd  << "addOpDSP" << j;
+
+				inPortMap (add, join("X",j) , concatPartialProd.str());
+			}	
+			
+		for (int j=0; j<nrSliceOperands; j++)
+			{
+				ostringstream concatPartialProd;
+				concatPartialProd  << "addOpSlice" << j;
+				cout << "@ In Port Map Current Cycle is " << getCurrentCycle() << endl;
+				inPortMap (add, join("X",j+nrDSPOperands) , concatPartialProd.str());
+			}	
+	
+		inPortMapCst(add, "Cin", "'0'");
+		outPortMap(add, "R", "addRes");
+		vhdl << instance(add, "adder");
+
+		syncCycleFromSignal("addRes");
+
+		vhdl << tab << "R <= " << "addRes" << ";" << endl;
+	}
+	
+	vector<SoftDSP*> IntTruncMultiplier::insertSoftDSPs(DSP** config)
 	{
 		
 		//int costSlice=0;
@@ -3253,6 +3359,7 @@ namespace flopoco{
 		int eh = getExtraHeight();
 		//int nj,ni,njj,nii;
 		vector<SoftDSP*> configSoft;
+		configSoft.clear();
 		SoftDSP *tempSoft;
 		//configSoft.push_back(temp);
 		//configSoft[1];
@@ -3282,12 +3389,6 @@ namespace flopoco{
 				fillMatrix(mat,n,m,c2X,c1Y,c1X,c2Y,count);
 				count++;			
 			}
-			
-			
-			
-		//partitions = count;
-		partitions = 0;
-		
 		
 		
 		int deepX=vn,deepY=vm,rdeepX=vm;
@@ -3307,6 +3408,7 @@ namespace flopoco{
 		while(!isTilingValid(config,configSoft,targetPrecision) )
 		{
 		deepX=vn,deepY=vm,rdeepX=vm;
+		bool found = false;
 		//search the deapest position
 		for(int i=ew+1;i<vnme;i++)	
 		{
@@ -3315,6 +3417,7 @@ namespace flopoco{
 			{
 				if(mat[j][ti]==0&&((deepX+deepY)>(i+j))  )
 				{
+					found = true;
 					deepX=i;
 					rdeepX=ti;
 					deepY=j;					
@@ -3323,8 +3426,10 @@ namespace flopoco{
 		}	
 		
 		
+		if (!found)
+			return configSoft;
 			
-		//cout<<"Deepest position is X="<<deepX<<" Y="<<deepY<<" realX"<<rdeepX<<endl;
+		cout<<"Deepest position is X="<<deepX<<" Y="<<deepY<<" realX"<<rdeepX<<endl;
 		mat[deepY][rdeepX]=count++;
 		
 		//small display
@@ -3437,7 +3542,8 @@ namespace flopoco{
 			//~ cout<<"DSP# "<<i+nrDSPs+1<<"has top-right corner X="<<stx<<" and Y= "<<sty<<" and bottom-left corner X"<<sbx<<" and Y="<<sby<<endl;
 		//~ }
 		//~ cout<<targetPrecision<<endl;
-			
+	
+		return configSoft;
 	}
 	
 }
