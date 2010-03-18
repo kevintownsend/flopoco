@@ -33,7 +33,7 @@ namespace flopoco{
 
 
 	IntTruncMultiplier::IntTruncMultiplier(Target* target, int wX, float ratio, int k):
-		Operator(target), wX(wX), wY(wX),ratio(ratio){
+		Operator(target), wX(wX), wY(wX),ratio(ratio),targetPrecision(k){
 		isSquarer = true;
 		ostringstream name;
 		name <<"IntTruncSquarer_"<<wX;
@@ -56,7 +56,7 @@ namespace flopoco{
 		}
 		
 	IntTruncMultiplier::IntTruncMultiplier(Target* target, int wX, int wY, float ratio, int k):
-		Operator(target), wX(wX), wY(wY), ratio(ratio){
+		Operator(target), wX(wX), wY(wY), ratio(ratio),targetPrecision(k){
 		
 		isSquarer = false;	
 		ostringstream name;
@@ -250,7 +250,7 @@ namespace flopoco{
 			//~ bindDSPs(globalConfig);
 			
 			
-			//test for insertSoftDSPs 
+			//~ //test for insertSoftDSPs 
 			//~ int w, h;
 			//~ target->getDSPWidths(w, h);
 			
@@ -3252,6 +3252,12 @@ namespace flopoco{
 		//int mmeh = vmme;
 		int eh = getExtraHeight();
 		//int nj,ni,njj,nii;
+		vector<SoftDSP*> configSoft;
+		SoftDSP *tempSoft;
+		//configSoft.push_back(temp);
+		//configSoft[1];
+		//configSoft.size();
+		
 		
 		
 		//~ cout<<"width "<<n<<"height "<<m<<endl;
@@ -3276,6 +3282,9 @@ namespace flopoco{
 				fillMatrix(mat,n,m,c2X,c1Y,c1X,c2Y,count);
 				count++;			
 			}
+			
+			
+			
 		//partitions = count;
 		partitions = 0;
 		
@@ -3283,22 +3292,26 @@ namespace flopoco{
 		
 		int deepX=vn,deepY=vm,rdeepX=vm;
 			int ti;
-		
+		int sbx,sby;
 		//~ for(int i=40;i<vmme;i++)
 			//~ mat[i][vnme-1]=nrDSPs+1;
 		//mat[vmme-1][vnme-2]=4;	
 		
 		//~ for(int i=35;i<vnme - 24;i++)
 			//~ mat[eh][i]=nrDSPs+1;
-		//mat[eh+1][35]=4;
+		//~ mat[eh+1][35]=4;
 		
 		//mat[40][vnme-1]=nrDSPs+1;
 			
+			
+		while(!isTilingValid(config,configSoft,targetPrecision) )
+		{
+		deepX=vn,deepY=vm,rdeepX=vm;
 		//search the deapest position
 		for(int i=ew+1;i<vnme;i++)	
 		{
 			ti = vn-i;
-			for(int j=eh;j<vmme-1;j++)
+			for(int j=eh;j<vmme;j++)
 			{
 				if(mat[j][ti]==0&&((deepX+deepY)>(i+j))  )
 				{
@@ -3311,8 +3324,8 @@ namespace flopoco{
 		
 		
 			
-		cout<<"Deepest position is X="<<deepX<<" Y="<<deepY<<" realX"<<rdeepX<<endl;
-		mat[deepY][rdeepX]=9;
+		//cout<<"Deepest position is X="<<deepX<<" Y="<<deepY<<" realX"<<rdeepX<<endl;
+		mat[deepY][rdeepX]=count++;
 		
 		//small display
 		//~ for(int i=0;i<vm;i++)	
@@ -3331,7 +3344,7 @@ namespace flopoco{
 		//try in right
 		if(mat[deepY][rdeepX+1]>nrDSPs && mat[deepY-1][rdeepX+1]!=mat[deepY] [rdeepX+1])
 		{
-			cout<<"Has neighbor in left of it"<<endl;
+			//cout<<"Has neighbor in left of it"<<endl;
 			ref = mat[deepY] [rdeepX+1];
 			int i;
 			for(i=deepY+1; mat[i][rdeepX]==0 && mat[i][rdeepX+1]==ref;i++ )
@@ -3343,11 +3356,19 @@ namespace flopoco{
 				//new multiplier should be created
 				for(i=deepY+1;mat[i][rdeepX]==ref;i++)
 					mat[i][rdeepX]=0;
+				//cout<<"New SoftDSP was created"<<endl;
+				tempSoft =  new SoftDSP(deepX-1,deepY,deepX,deepY);
+				configSoft.push_back(tempSoft);
 			}
 			else
 			{
 				//the previous multiplier was extended
 				mat[deepY][rdeepX]=ref;
+				count--;		
+				configSoft[(ref-nrDSPs-1)]->getBottomLeftCorner(sbx,sby);
+				sbx++;
+				configSoft[(ref-nrDSPs-1)]->setBottomLeftCorner(sbx,sby);
+				
 			}			
 		}
 		else
@@ -3355,7 +3376,7 @@ namespace flopoco{
 			//try top
 			if(  mat[deepY-1][rdeepX]>nrDSPs &&  mat[deepY-1][rdeepX+1]!=mat[deepY-1][rdeepX])
 			{
-				cout<<"Has neighbor in top of it"<<endl;
+				//cout<<"Has neighbor in top of it"<<endl;
 				ref = mat[deepY-1] [rdeepX];
 				int i;
 				for(i=rdeepX-1;mat[deepY][i]==0 && mat[deepY-1][i]==ref;i--)
@@ -3367,16 +3388,33 @@ namespace flopoco{
 					//new multiplier should be created
 					for(i=rdeepX-1;mat[deepY][i]==ref;i--)
 						mat[deepY][i]=0;
+					//cout<<"New SoftDSP was created"<<endl;
+					tempSoft =  new SoftDSP(deepX-1,deepY,deepX,deepY);
+					configSoft.push_back(tempSoft);
 				}
 				else
 				{
 					//the previous multiplier was extended
 					mat[deepY][rdeepX]=ref;
+					count--;
+					configSoft[(ref-nrDSPs-1)]->getBottomLeftCorner(sbx,sby);
+					sby++;
+					configSoft[(ref-nrDSPs-1)]->setBottomLeftCorner(sbx,sby);
 				}				
+				
+			}
+			else
+			{
+				//no SoftDSP exists in the neighbourhood
+				//cout<<"New SoftDSP was created"<<endl;
+				tempSoft =  new SoftDSP(deepX-1,deepY,deepX,deepY);
+				configSoft.push_back(tempSoft);
 				
 			}
 		}
 		
+		
+		//displayAll(config,configSoft);
 		
 		//small display
 		//~ for(int i=0;i<vm;i++)	
@@ -3388,7 +3426,17 @@ namespace flopoco{
 			//~ cout<<endl;
 		//~ }
 		
+		}
 		
+		//~ int stx,sty,
+		//~ cout<<"Number of SoftDSPs created is "<<configSoft.size()<<endl;
+		//~ for(int i=0;i<configSoft.size();i++)
+		//~ {
+			//~ configSoft[i]->getTopRightCorner(stx,sty);
+			//~ configSoft[i]->getBottomLeftCorner(sbx,sby);
+			//~ cout<<"DSP# "<<i+nrDSPs+1<<"has top-right corner X="<<stx<<" and Y= "<<sty<<" and bottom-left corner X"<<sbx<<" and Y="<<sby<<endl;
+		//~ }
+		//~ cout<<targetPrecision<<endl;
 			
 	}
 	
