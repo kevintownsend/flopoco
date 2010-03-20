@@ -309,7 +309,7 @@ namespace flopoco{
 	}
 	
 	bool IntTruncMultiplier::isTilingValid(DSP** configuration, vector<SoftDSP*> softDSPs, int k){
-		mpfr_t targetError;
+		//mpfr_t targetError;
 		mpfr_init2(targetError,1000);
 		mpfr_set_ui(targetError, 2, GMP_RNDN);
 		mpfr_pow_si(targetError, targetError, k, GMP_RNDN);
@@ -320,13 +320,13 @@ namespace flopoco{
 		mpfr_pow_si(roundingError, roundingError, k-1, GMP_RNDN);
 				
 		
-		cout << "The TargetError is : " << mpfr_get_d(targetError, GMP_RNDN) << endl;
+		//cout << "The TargetError is : " << mpfr_get_d(targetError, GMP_RNDN) << endl;
 
 
 		mpfr_t *approxError;
 		approxError = evalTruncTilingErrorInverted(configuration, softDSPs);
 		double apxError = mpfr_get_d(*approxError, GMP_RNDN);
-		cout << "The trunc error is : " << apxError << endl;
+		//cout << "The trunc error is : " << apxError << endl;
 		
 		if (apxError < 0) // then next loop will never finish (REASON: some multipliers overlap)
 		{
@@ -363,15 +363,16 @@ namespace flopoco{
 		
 		}while(! found);
 
-		cout << "The trunc after compensation : " << mpfr_get_d(*approxError, GMP_RNDN) << endl;
-		cout << "Rounding error is : " << mpfr_get_d(roundingError, GMP_RNDN) << endl;
+		//cout << "The trunc after compensation : " << mpfr_get_d(*approxError, GMP_RNDN) << endl;
+		//cout << "Rounding error is : " << mpfr_get_d(roundingError, GMP_RNDN) << endl;
 
 
-		mpfr_t errorSum;
+		//mpfr_t errorSum;
 		mpfr_init2(errorSum, 1000);
 		mpfr_add( errorSum, roundingError, *approxError, GMP_RNDN);
 		
-		cout << "The total error is : " << mpfr_get_d(errorSum, GMP_RNDN) << endl;
+		
+		//cout << "The total error is : " << mpfr_get_d(errorSum, GMP_RNDN) << endl;
 		
 		if ( mpfr_cmp( errorSum, targetError) <= 0){
 			return true;
@@ -470,7 +471,7 @@ namespace flopoco{
 	mpfr_t *IntTruncMultiplier::evalTruncTilingErrorInverted(DSP** configuration, vector<SoftDSP*> softDSPs){
 		/* fist we get the maximal sum */
 		mpfr_t *fullSum;
-		//cout << "wX wY are " << wX << "    " << wY << endl;
+		//cout << endl << endl << "wX wY are " << wX << "    " << wY << endl;
 		fullSum = evalMaxValue(wX, wY);
 		//cout << "Full Sum is :" << mpfr_get_d(*fullSum, GMP_RNDN) << endl;
 		int extW = getExtraWidth();
@@ -479,7 +480,6 @@ namespace flopoco{
 		if (configuration!=NULL){
 			int i=0;
 			int xB,xT,yB,yT;
-			
 			for(i=0; i<nrDSPs; i++){
 				configuration[i]->getTopRightCorner(xT,yT);
 				configuration[i]->getBottomLeftCorner(xB,yB);
@@ -487,15 +487,15 @@ namespace flopoco{
 				xB -= extW;
 				yT -= extH;
 				yB -= extH;
-				xB = min(xB,wX); 
+				xB = min(xB,wX-1); 
 				xT = max(xT,0);
-				yB = min(yB,wY);
+				yB = min(yB,wY-1);
 				yT = max(yT,0);
 				//int power = xT + yT;
 				int power = (wX - xB-1) + (wY - yB-1);
 				//cout << "Power " << power << endl; 
 				mpfr_t* currentSum;
-				currentSum = evalMaxValue(min(xB,wX) - max(xT,0) + 1, min(yB,wY) - max(yT,0) +1);
+				currentSum = evalMaxValue(min(xB,wX-1) - max(xT,0) + 1, min(yB,wY-1) - max(yT,0) +1);
 				mpfr_t s;
 				mpfr_init2(s, 1000);
 				mpfr_set_ui( s, 2, GMP_RNDN);
@@ -504,7 +504,6 @@ namespace flopoco{
 				mpfr_sub( *fullSum, *fullSum, *currentSum, GMP_RNDN);
 				//cout << "HARD DSP Top right = " << xT << ", " << yT << " and bottom left = " << xB << ", " <<yB << endl;
 				//cout << "This one is :" << mpfr_get_d(*currentSum, GMP_RNDN) << endl;
-				i++;
 			}
 		}
 		
@@ -517,10 +516,15 @@ namespace flopoco{
 			xB -= extW;
 			yT -= extH;
 			yB -= extH;
+			xB = min(xB,wX-1); 
+			xT = max(xT,0);
+			yB = min(yB,wY-1);
+			yT = max(yT,0);
 			//int power = xT + yT;
 			int power = (wX - xB-1) + (wY - yB-1);
+			//cout << "Power " << power << endl; 
 			mpfr_t* currentSum;
-			if ((xB>xT) && (yB > yT))
+			if ((xB>=xT) && (yB >=yT))
 				currentSum = evalMaxValue(xB - xT + 1, yB - yT + 1);
 			else{
 				currentSum = (mpfr_t *) malloc( sizeof( mpfr_t));
@@ -3403,7 +3407,8 @@ namespace flopoco{
 		//~ mat[eh+1][35]=4;
 		
 		//mat[40][vnme-1]=nrDSPs+1;
-			
+		int lastModifiedIndex = -1;
+		int lastDeepX, lastDeepY;	
 			
 		while(!isTilingValid(config,configSoft,targetPrecision) )
 		{
@@ -3429,7 +3434,7 @@ namespace flopoco{
 		if (!found)
 			return configSoft;
 			
-		cout<<"Deepest position is X="<<deepX<<" Y="<<deepY<<" realX"<<rdeepX<<endl;
+		//cout<<"Deepest position is X="<<deepX<<" Y="<<deepY<<" realX"<<rdeepX<<endl;
 		mat[deepY][rdeepX]=count++;
 		
 		//small display
@@ -3462,11 +3467,17 @@ namespace flopoco{
 				for(i=deepY+1;mat[i][rdeepX]==ref;i++)
 					mat[i][rdeepX]=0;
 				//cout<<"New SoftDSP was created"<<endl;
+				lastModifiedIndex = ref-nrDSPs-1;
+				lastDeepX = 0;
+				lastDeepY = 0;
 				tempSoft =  new SoftDSP(deepX-1,deepY,deepX,deepY);
 				configSoft.push_back(tempSoft);
 			}
 			else
 			{
+				lastModifiedIndex = ref-nrDSPs-1;
+				lastDeepX = 1;
+				lastDeepY = 0;
 				//the previous multiplier was extended
 				mat[deepY][rdeepX]=ref;
 				count--;		
@@ -3474,6 +3485,7 @@ namespace flopoco{
 				sbx++;
 				configSoft[(ref-nrDSPs-1)]->setBottomLeftCorner(sbx,sby);
 				
+						
 			}			
 		}
 		else
@@ -3494,11 +3506,17 @@ namespace flopoco{
 					for(i=rdeepX-1;mat[deepY][i]==ref;i--)
 						mat[deepY][i]=0;
 					//cout<<"New SoftDSP was created"<<endl;
+					lastModifiedIndex = ref-nrDSPs-1;
+					lastDeepX = 0;
+					lastDeepY = 0;
 					tempSoft =  new SoftDSP(deepX-1,deepY,deepX,deepY);
 					configSoft.push_back(tempSoft);
 				}
 				else
 				{
+					lastModifiedIndex = ref-nrDSPs-1;
+					lastDeepX = 0;
+					lastDeepY = 1;
 					//the previous multiplier was extended
 					mat[deepY][rdeepX]=ref;
 					count--;
@@ -3510,6 +3528,9 @@ namespace flopoco{
 			}
 			else
 			{
+				lastModifiedIndex = ref-nrDSPs-1;
+				lastDeepX = 0;
+				lastDeepY = 0;
 				//no SoftDSP exists in the neighbourhood
 				//cout<<"New SoftDSP was created"<<endl;
 				tempSoft =  new SoftDSP(deepX-1,deepY,deepX,deepY);
@@ -3533,6 +3554,30 @@ namespace flopoco{
 		
 		}
 		
+		if  ((mpfr_cmp(errorSum, targetError) < 0) && (lastDeepX != lastDeepY))
+		{
+			configSoft[lastModifiedIndex]->getBottomLeftCorner(sbx, sby);
+			configSoft[lastModifiedIndex]->setBottomLeftCorner(sbx-lastDeepX, sby-lastDeepY);
+			
+			int stx, sty;
+			configSoft[lastModifiedIndex]->getTopRightCorner(stx, sty);
+			sbx = stx = sbx*lastDeepX + stx*((lastDeepX==1)?0:1);
+			sby = sty = sby*lastDeepY + sty*((lastDeepY==1)?0:1);
+			
+			lastDeepX = ((lastDeepX==1)?0:1);
+			lastDeepY = ((lastDeepY==1)?0:1);
+			tempSoft =  new SoftDSP(stx, sty, sbx, sby);
+			configSoft.push_back(tempSoft);
+			int idx = configSoft.size()-1;
+			
+			while (!isTilingValid(config,configSoft,targetPrecision))
+			{
+				sbx += lastDeepX;
+				sby += lastDeepY;
+				configSoft[idx]->setBottomLeftCorner(sbx, sby);
+			}	
+		}
+		 
 		//~ int stx,sty,
 		//~ cout<<"Number of SoftDSPs created is "<<configSoft.size()<<endl;
 		//~ for(int i=0;i<configSoft.size();i++)

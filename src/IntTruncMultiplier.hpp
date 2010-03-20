@@ -151,7 +151,8 @@ namespace flopoco{
 		int wt;      /**< the width (in bits) of the output R TODO */
 		float ratio; /**<the ratio between slice and dsp */
 		int targetPrecision;
-	
+		mpfr_t errorSum;
+		mpfr_t targetError;
 		/* RIP */
 		void printConfiguration(DSP** configuration, vector<SoftDSP*> softDSPs);
 	private:
