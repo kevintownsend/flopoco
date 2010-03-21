@@ -161,10 +161,10 @@ static void usage(char *name){
 	cerr << "      Integer multiplier of two integers X and Y of sizes wInX and wInY \n";	
 	cerr << "    IntTilingMultiplier wInX wInY ratio \n";
 	cerr << "      Integer multiplier of two integers X and Y of sizes wInX and wInY\n";	
-	cerr << "    IntTruncSquarer wInX ratio error\n";
-	cerr << "      Integer squarer of integer X of size wInX with a given order of error \n";	
-	cerr << "    IntTruncMultiplier wInX  wInY ratio error\n";
-	cerr << "      Integer multiplier of two integers X and Y of sizes wInX and wInY with a given order of error\n";	
+	cerr << "    IntTruncSquarer wInX ratio error useLimits\n";
+	cerr << "      Integer squarer of integer X of size wInX with a given order of error and which selects if the softdsps will be limited\n";	
+	cerr << "    IntTruncMult wInX  wInY ratio error useLimits\n";
+	cerr << "      Integer multiplier of two integers X and Y of sizes wInX and wInY with a given order of error and which selects if the softdsps will be limited\n";	
 	cerr << "    IntKaratsuba wIn \n";
 	cerr << "      integer multiplier of two integers X and Y of sizes wIn. 17 < wIn <= 51 (for now) \n";	
 	cerr << "    IntSquarer wIn \n";
@@ -783,20 +783,21 @@ bool parseCommandLine(int argc, char* argv[]){
 			}
 		}
 		else if(opname=="IntTruncSquarer"){
-			int nargs = 3;
+			int nargs = 4;
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
 				int wInX = checkStrictyPositive(argv[i++], argv[0]);
 				float r = atof(argv[i++]);
 				int ordError = atoi(argv[i++]);
+				int useLimits = atoi(argv[i++]);
 				cerr << "> IntTruncSquarer , wInX="<<wInX<<" ratio=" << r <<" relativeError="<< ordError<< "\n";
-				op = new IntTruncMultiplier(target, wInX, r,ordError);
+				op = new IntTruncMultiplier(target, wInX, r,ordError,useLimits);
 				addOperator(op);
 			}
 		}		
 		else if(opname=="IntTruncMult"){
-			int nargs = 4;
+			int nargs = 5;
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
@@ -804,8 +805,9 @@ bool parseCommandLine(int argc, char* argv[]){
 				int wInY = checkStrictyPositive(argv[i++], argv[0]);
 				float r = atof(argv[i++]);
 				int ordError = atoi(argv[i++]);
+				int useLimits = atoi(argv[i++]);
 				cerr << "> IntTruncMult , wInX="<<wInX<<", wInY="<<wInY<<" ratio=" << r <<" error order= "<<ordError<<"\n";
-				op = new IntTruncMultiplier(target, wInX, wInY, r,ordError);
+				op = new IntTruncMultiplier(target, wInX, wInY, r,ordError,useLimits);
 				addOperator(op);
 			}
 		}		

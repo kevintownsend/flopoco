@@ -118,9 +118,9 @@ namespace flopoco{
 	{
 	public:
 		
-		IntTruncMultiplier(Target* target, int wX, float ratio, int k);
+		IntTruncMultiplier(Target* target, int wX, float ratio, int k,int uL);
 
-		IntTruncMultiplier(Target* target, int wX, int wY, float ratio, int k);
+		IntTruncMultiplier(Target* target, int wX, int wY, float ratio, int k,int uL);
 	
 		/** IntTruncMultiplier destructor */
 		~IntTruncMultiplier();
@@ -151,6 +151,7 @@ namespace flopoco{
 		int wt;      /**< the width (in bits) of the output R TODO */
 		float ratio; /**<the ratio between slice and dsp */
 		int targetPrecision;
+		int useLimits;
 		mpfr_t errorSum;
 		mpfr_t targetError;
 		/* RIP */
@@ -326,6 +327,10 @@ namespace flopoco{
 		/**The function will fill the matrix with softdsp until the error is ensured*/
 		vector<SoftDSP*> insertSoftDSPs(DSP** config);
 	
+		/**The function will fill the matrix with softdsp until the error is ensured but limiting the size of a soft dsp to the size of a dsp*/
+		vector<SoftDSP*> insertSoftDSPswithLimits(DSP** config);
+		
+	
 		/** This function will take a configuration and will try to maximize the multiplications that are realized in slices 
 		 * It will return the number of slices that are required to ferform those multiplications, and through the parameter partitions it will return the number of such partitions
 		 */
@@ -397,6 +402,8 @@ namespace flopoco{
 		int nrOfShifts4Virtex;
 		//int *countsShift;
 		int dsplimit;
+		
+		int dspWidth,dspHeight;
 	};
 
 }
