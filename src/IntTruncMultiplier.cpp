@@ -3073,7 +3073,7 @@ namespace flopoco{
 													setCycle(connected);
 													sname.seekp(ios_base::beg);
 													//sname << zg(wInX+wInY+extW+extH-blx1-bly1-3, 0) << " & " << use(join(mname.str(),j)) << range(multW-fpadX + multH-fpadY-1, 0) << " & " << sname.str();
-													sname << zg(fpadX+fpadY-1, 0) << " & " << use(join(mname.str(),j)) << range(multW+multH, d->getShiftAmount()) << " & " << sname.str();
+													sname << zg(fpadX+fpadY-1, 0) << " & " << use(join(mname.str(),j)) << range(multW+multH, 0) << " & " << sname.str();
 												}
 											else // concatenate only the lower portion of the partial product
 												{
@@ -3288,7 +3288,7 @@ namespace flopoco{
 		
 			syncCycleFromSignal(join("result", partitions));
 			
-			vhdl << tab << declare(join("addOpSlice", partitions), wInX+wInY) << " <= " << zg(wInX-njj-1+wInY-nii-1, 0) << " & " << join("result", partitions) << " & " << zg(wInX-nj-1+wInY-ni-1, 0) << ";" << endl;
+			vhdl << tab << declare(join("addOpSlice", partitions), wInX+wInY) << " <= " << zg(wInX-njj-1+wInY-nii-1, 0) << " & " << join("result", partitions) << " & " << zg(nj+ni, 0) << ";" << endl;
 			cout<<"partitions " << partitions << " @ cycle " << getCurrentCycle() << endl;
 		}
 				
@@ -3344,7 +3344,7 @@ namespace flopoco{
 
 		syncCycleFromSignal("addRes");
 
-		vhdl << tab << "R <= " << "addRes" << ";" << endl;
+		vhdl << tab << "R <= " << "addRes" << range(wX+wY-1, targetPrecision) << ";" << endl;
 	}
 	
 	vector<SoftDSP*> IntTruncMultiplier::insertSoftDSPs(DSP** config)
