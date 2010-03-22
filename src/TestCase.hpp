@@ -4,6 +4,9 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <list>
+#include <ostream>
+#include <sstream>
 
 #include "Signal.hpp"
 #include "FPNumber.hpp"
@@ -75,6 +78,8 @@ namespace flopoco{
 		 */
 		void addIEEEInput(string s, double x);
 
+		void addIEEEInput(string s, IEEENumber ieeeNumber);
+
 		/**
 		 * recover the mpz associated to an input
 		 * @param s The name of the input
@@ -125,6 +130,21 @@ namespace flopoco{
 		std::string getCompactHexa(std::string prepend = "");
 
 
+                /**
+                 * generate a string with each inputs, one by line, and each
+                 * expected outputs, one by line too.
+                 * and the order for outputing these IO is given by IOorder
+                 */
+                std::string generateInputString(list<string> IOorderInput, list<string> IOorderOutput);
+
+                /**
+                 *    Define the test case integer identifiant
+                 */
+                void setId(int id);
+
+                int getId();
+
+                string getDescription();
 
 	private:
 		Operator *op_;                       /**< The operator for which this test case is being built */
@@ -133,6 +153,7 @@ namespace flopoco{
 		map<string, vector<mpz_class> >   outputs;
 
 		string comment;
+                int intId;                      /* integer identifiant of the test case */ 
 
 	};
 
@@ -174,6 +195,8 @@ namespace flopoco{
 	private:
 		/** Stores the TestCase-es */
 		vector<TestCase*>  v;
+                map<int,TestCase*> mapCase;
+                /* id given to the last registered test case*/
 
 	};
 

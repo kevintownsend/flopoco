@@ -11,6 +11,7 @@ namespace flopoco{
 
 	void TestCaseList::add(TestCase* tc){
 		v.push_back(tc);
+                tc->setId(v.size()-1); // on enregistre comme identifiant la position du TestCase
 	}
 
 	int TestCaseList::getNumberOfTestCases(){
@@ -117,6 +118,17 @@ namespace flopoco{
 	}
 
 
+	void TestCase::addIEEEInput(string name, IEEENumber in) {
+		// get signal size
+		Signal* s = op_->getSignalByName(name);
+		if(!s->isIEEE()) {
+			throw string("TestCase::addIEEEInput: Cannot convert a double into non-FP signal");
+		} 
+		mpz_class mpx = in.getSignalValue();
+		inputs[name] = mpx;
+	}
+
+
 	mpz_class TestCase::getInputValue(string s){
 		return inputs[s];
 	}
@@ -130,6 +142,7 @@ namespace flopoco{
 		Signal* s = op_->getSignalByName(name);
 	
 		//TODO Check if we have already too many values for this output
+                  //std::cout << "signal width : " << s->width() << std::endl;
 		if (v >= (mpz_class(1) << s->width())) 
 			throw string("ERROR in TestCase::addExpectedOutput, signal value out of range");
 		if (v<0) {
@@ -184,17 +197,20 @@ namespace flopoco{
 						o << " or ";
 						if (s->isFP())
 							o << "fp_equal(" << s->getName() << ",fp" << s->width() << "'("<< s->valueToVHDL(v) << "))";
+						else if (s->isIEEE())
+							o << "fp_equal_ieee_"<< s->width()<<"(" << s->getName() << ", "<< s->valueToVHDL(v) << ", " << s->wE()  << ", " << s->wF() << ")";
 						else
 							o << s->getName() << "=" << s->valueToVHDL(v);
 						expected += " " + s->valueToVHDL(v,false);
 					}
 
-				o << " report \"Incorrect output value for " << s->getName() << ", expected" << expected << "\" severity ERROR; ";
+				o << " report \"Incorrect output value for " << s->getName() << ", expected" << expected << " | Test Number : " << getId() << "  \" severity ERROR; ";
 				o << endl;
 			}
 
 		return o.str();
 	}
+
 
 	string TestCase::getCompactHexa(string prepend)
 	{
@@ -229,6 +245,55 @@ namespace flopoco{
 		return o.str();
 	}
 
+        std::string TestCase::generateInputString(list<string> IOorderInput, list<string> IOorderOutput) {
+                ostringstream o;
+                /* iterate trough input signals */
+                for (list<string>::iterator it = IOorderInput.begin(); it != IOorderInput.end(); it++) {
+			  Signal* s = op_->getSignalByName(*it);
+			  mpz_class v = inputs[*it];
+			  o << s->valueToVHDL(v,false) << " ";
+                }
+                o << "? ";
+                for (list<string>::iterator it = IOorderOutput.begin();it != IOorderOutput.end(); it++) {
+			Signal* s = op_->getSignalByName(*it);
+			vector<mpz_class> vs = outputs[*it];
+			
+			/* Iterate through possible output values */
+			for (vector<mpz_class>::iterator it = vs.begin(); it != vs.end(); it++)
+			{
+				mpz_class v = *it;
+				o << s->valueToVHDL(v,false) << " ";
+			}
+                }
+                o << endl;
+                // TO BE DELETED AFTER TEST
+		/*for (map<string, mpz_class>::iterator it = inputs.begin(); it != inputs.end(); it++)
+			{
+				string signame = it->first;
+				Signal* s = op_->getSignalByName(signame);
+				mpz_class v = it->second;
+				o << s->valueToVHDL(v,false) << endl;
+			}*/
+		/* Iterate through output signals */
+		/*for (map<string, vector<mpz_class> >::iterator it = outputs.begin(); it != outputs.end(); it++)
+			{
+				string signame = it->first;
+				Signal* s = op_->getSignalByName(signame);
+				vector<mpz_class> vs = it->second;
+				
+				// Iterate through possible output values 
+				for (vector<mpz_class>::iterator it = vs.begin(); it != vs.end(); it++)
+					{
+						mpz_class v = *it;
+						o << s->valueToVHDL(v,false) << endl;
+					}
+				//o << endl;
+			}
+                */
+		return o.str();
+
+
+        }
 
 
 
@@ -240,6 +305,20 @@ namespace flopoco{
 		return comment;
 	}
 
+        void TestCase::setId(int id) { 
+                intId = id;
+        }
 
+        int TestCase::getId() { 
+                return intId;
+        }
+
+      string TestCase::getDescription() {
+        ostringstream msg;
+        msg << "Test Case number : " << getId() << std::endl;
+        msg << getComment();
+        msg << std::endl;
+        return msg.str();
+      }
 }
-
+        

@@ -79,6 +79,7 @@ public:
 		hasRegistersWithSyncReset_  = false;
 		pipelineDepth_              = 0;
 		currentCycle_               = 0;
+                needRecirculationSignal_    = false;
 //		useTable.clear();
 	}
 	
@@ -95,6 +96,7 @@ public:
 		hasRegistersWithSyncReset_  = false;
 		pipelineDepth_              = 0;
 		currentCycle_               = 0;
+                needRecirculationSignal_    = false;
 //		useTable.clear();
 
 		if (target_->isPipelined())
@@ -287,7 +289,6 @@ public:
 	string use(string name, int delay);
 
 
-	
 	/** Declare an output mapping for an instance of a sub-component
 	 * Also declares the local signal implicitely, with width taken from the component 	
 	 * @param op is a pointer to the subcomponent
@@ -446,6 +447,12 @@ public:
 	 * It will also get a rst but doesn't need to use it.
 	 */	
 	bool isSequential();  
+
+
+        /** True if the operator need a recirculation signal 
+         *  TODO : change name
+         */
+        bool isRecirculatory();
 	
 	/** Set the operator to sequential.
 		 You shouldn't need to use this method for standard operators 
@@ -458,6 +465,13 @@ public:
 		 (Operator::Operator()  calls it according to Target)
 	 */	
 	void setCombinatorial();
+
+
+
+        /** Set the operator to need a recirculation signal in order to 
+                  trigger the pipeline work
+         */
+        void setRecirculationSignal();
 	
 
 
@@ -537,7 +551,9 @@ public:
 		o<<"library ieee;\nuse ieee.std_logic_1164.all;"<<endl 
 		 <<"use ieee.std_logic_arith.all;"<<endl
 		 <<"use ieee.std_logic_unsigned.all;"<<endl 
-		 <<"library work;"<<endl<<endl;
+		 <<"library std;" << endl
+		 <<"use std.textio.all;"<< endl 
+		 <<"library work;"<<endl<< endl;
 	};
 		
 	/** DEPRECATED  Output the VHDL entity of the current operator.
@@ -764,6 +780,7 @@ private:
 	string                 copyrightString_;            /**< Authors and years.  */
 	int                    currentCycle_;               /**< The current cycle, when building a pipeline */
 	double                 criticalPath_;               /**< The current delay of the current pipeline stage */
+        bool                   needRecirculationSignal_;    /**< True if the operator has registers having a recirculation signal  */
 
 };
 

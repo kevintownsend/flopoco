@@ -22,6 +22,7 @@
  */
 
 #include <iostream>
+#include <fstream>
 #include <sstream>
 #include <vector>
 #include <set>
@@ -32,11 +33,13 @@
 #include "Operator.hpp"
 #include "TestBench.hpp"
 
+using namespace std;
+
 namespace flopoco{
 
 
 	extern int LongAccN;
-	TestBench::TestBench(Target* target, Operator* op, int n):
+	TestBench::TestBench(Target* target, Operator* op, int n, bool fromFile):
 		Operator(target), op_(op), n_(n)
 	{
 		LongAccN = n;
@@ -45,6 +48,7 @@ namespace flopoco{
 		setCombinatorial(); // this is a combinatorial operator
 		setPipelineDepth(0);	// could be any number
 		setCycle(0);
+
 
 		// Generate the standard and random test cases for this operator
 		op-> buildStandardTestCases(&tcl_);
@@ -66,10 +70,14 @@ namespace flopoco{
 		// add clk and rst
 		declare("clk");
 		declare("rst");
-
-
+                // declaration and assignation of the recirculation signal
+                if (op_->isRecirculatory()) {
+                  declare("stall_s");
+                  vhdl << tab << "stall_s <= '0';" << endl;
+                }
 		// The VHDL for the instance
 		vhdl << instance(op, "test");
+
 
 		vhdl << tab << "-- Ticking clock signal" <<endl;
 		vhdl << tab << "process" <<endl;
@@ -79,8 +87,164 @@ namespace flopoco{
 		vhdl << tab << tab << "clk <= '1';" <<endl;
 		vhdl << tab << tab << "wait for 5 ns;" <<endl;
 		vhdl << tab << "end process;" <<endl;
-		vhdl <<endl;
+		vhdl << endl;
 
+
+                if (fromFile) generateTestFromFile();
+                else generateTestInVhdl();
+        }
+
+
+
+
+
+
+
+
+        /* Generating the tests using a file to store the IO, allow to have a lot of IOs without
+         * increasing the VHDL compilation time
+         */ 
+        void TestBench::generateTestFromFile() {
+                // we reordonate the Signal in order to put all the output 
+                // TODO :could be clean by using two list, directly retrieved from the operator
+                vector<Signal*> inputSignalVector;
+                vector<Signal*> outputSignalVector;
+		for(int i=0; i < op_->getIOListSize(); i++){
+			Signal* s = op_->getIOListSignal(i);
+                        if (s->type() == Signal::out) outputSignalVector.push_back(s);
+                        else if (s->type() == Signal::in) inputSignalVector.push_back(s);
+                };
+
+                // decleration of test time
+		int currentOutputTime = 0;
+
+                // In order to generate the file containing inputs and expected output in a correct order
+                // we will store the use order for file decompression
+                list<string> IOorderInput;
+                list<string> IOorderOutput;
+
+
+                vhdl << tab << "-- Reading the input from a file " << endl;
+		vhdl << tab << "process" <<endl;
+
+
+                /* Variable declaration */
+                vhdl << tab << tab << "variable inline : line; " << endl;                    // variable to read a line
+                vhdl << tab << tab << "variable counter : integer := 1;" << endl;
+                vhdl << tab << tab << "variable tmpChar : character;" << endl;                        // variable to store a character (escape between inputs)
+                vhdl << tab << tab << "file inputsFile : text is \"essai.input\"; " << endl; // declaration of the input file
+
+
+                /* Variable to store value for inputs and expected outputs*/
+		for(int i=0; i < op_->getIOListSize(); i++){
+			Signal* s = op_->getIOListSignal(i);
+			vhdl << tab << tab << "variable V_" << s->getName(); 
+                                      vhdl << " : bit_vector("<< s->width() - 1 << " downto 0);" << endl;
+		}
+
+                /* Process Beginning */
+                vhdl << tab << "begin" << endl;
+
+                /* Reset Sending */
+		vhdl << tab << tab << "-- Send reset" <<endl;
+		vhdl << tab << tab << "rst <= '1';" << endl;
+		vhdl << tab << tab << "wait for 10 ns;" << endl;
+		vhdl << tab << tab << "rst <= '0';" << endl;
+                currentOutputTime += 10;
+
+                /* File Reading */
+                vhdl << tab << tab << "while not endfile(inputsFile) loop" << endl;
+                vhdl << tab << tab << tab << " -- positionning inputs" << endl;
+
+                /* All inputs and the corresponding expected outputs will be on the same line
+                 * so we begin by reading this line, once and for all (once by test) */
+                vhdl << tab << tab << tab << "readline(inputsFile,inline);" << endl;
+
+                // input reading and forwarding to the operator
+		for(unsigned int i=0; i < inputSignalVector.size(); i++){
+			Signal* s = inputSignalVector[i];
+                        vhdl << tab << tab << tab << "read(inline ,V_"<< s->getName() << ");" << endl;
+                        vhdl << tab << tab << tab << "read(inline,tmpChar);" << endl; // we consume the character between each inputs
+			if (s->width() > 1) vhdl << tab << tab << tab << s->getName() << " <= " << "to_stdlogicvector(V_" << s->getName() << ");" << endl;
+			else vhdl << tab << tab << tab << s->getName() << " <= " << "to_stdlogicvector(V_" << s->getName() << ")(0);" << endl;
+                        // adding the IO to IOorder
+                        IOorderInput.push_back(s->getName());
+		}
+
+                /**
+                 * Declaration of a waiting time between sending the input and comparing
+                 * the result with the output
+                 * in case of a pipelined operator we have to wait the complete latency of all the operator
+                 * that means all the pipeline stages each step
+                 * TODO : entrelaced the inputs / outputs in order to avoid this wait
+                 */
+                vhdl << tab << tab << tab << " -- verifying the corresponding output" << endl;
+                vhdl << tab << tab << tab << " wait for 5 ns;" << endl;
+                currentOutputTime += 5 * tcl_.getNumberOfTestCases();
+		vhdl << tab << tab << tab << "wait for "<< op_->getPipelineDepth()*10 <<" ns; -- wait for pipeline to flush" <<endl;
+		currentOutputTime += op_->getPipelineDepth()*10* tcl_.getNumberOfTestCases();
+
+                // consume the "? "
+                vhdl << tab << tab << tab << "read(inline,tmpChar);" << endl; // we consume the character between each inputs
+                vhdl << tab << tab << tab << "read(inline,tmpChar);" << endl; // we consume the character between each inputs
+
+
+
+		for(unsigned int i=0; i < outputSignalVector.size(); i++){
+			Signal* s = outputSignalVector[i];
+                        vhdl << tab << tab << tab << "read(inline ,V_"<< s->getName() << ");" << endl;
+                        vhdl << tab << tab << tab << "read(inline,tmpChar);" << endl; // we consume the character between each inputs
+                        if (s->isFP()) //cerr << "managing fp equality is not implemented yet, see line ~ 197 TestBench.cpp  . "<< endl;
+                        vhdl << tab << tab << tab << "assert false or fp_equal(fp"<< s->width() << "'(" << s->getName() << ") ,to_stdlogicvector(V_" <<  s->getName() << ")) report(\"Incorrect output for R, expected \" & str(to_stdlogicvector(V_R)) & \" and it outputs \" & str(R)) &  \"|| line : \" & integer'image(counter) & \" of input file \" ;"<< endl;
+			else if (s->isIEEE()) vhdl << tab << tab << tab << "assert false or fp_equal_ieee(" << s->getName() << " ,to_stdlogicvector(V_" <<  s->getName() << "),"<<s->wE()<<" , "<<s->wF()<<") report(\"Incorrect output for R, expected \" & str(to_stdlogicvector(V_R)) & \" and it outputs \" & str(R)) &  \"|| line : \" & integer'image(counter) & \" of input file \" ;"<< endl;
+                        else vhdl << tab << tab << tab << "assert false or (" << s->getName() << "= to_stdlogicvector(V_" << s->getName() << "))" << "report(\"Incorrect output for R, expected \" & str(to_stdlogicvector(V_" << s->getName() << ")) & \" and it outputs \" & str(" << s->getName() <<")) &  \"|| line : \" & integer'image(counter) & \" of input file \" ;"<< endl;
+                        //else cerr << " Le test à partir d'un fichier n'est pas encore implémenté pour les vecteurs non IEEE" << endl;
+
+                        /* adding the IO to the IOorder list */
+                        IOorderOutput.push_back(s->getName());
+                };
+                vhdl << tab << tab << tab << " wait for 5 ns; -- wait for pipeline to flush" << endl;
+                vhdl << tab << tab << tab << "counter := counter + 1;" << endl;
+                currentOutputTime += 5 * tcl_.getNumberOfTestCases();
+                vhdl << tab << tab << "end loop;" << endl;
+
+		vhdl << tab << tab << "assert false report \"End of simulation\" severity failure;" <<endl;
+		vhdl << tab << "end process;" <<endl;
+
+                /* Setting the computed simulation Time */	
+		simulationTime=currentOutputTime;
+
+	        /* Generating a file of inputs */ 
+                // opening a file to write down the output (for text-file based test)
+                // if n < 0 we do not generate a file
+                if (n_ >= 0) {
+                  string inputFileName = "essai.input";
+                  ofstream fileOut(inputFileName.c_str(),ios::out);
+                  // if error at opening, let's mention it !
+                  if (!fileOut) cerr << "FloPoCo was not abe to open " << inputFileName << " in order to write down inputs. " << endl;
+	        	for (int i = 0; i < tcl_.getNumberOfTestCases(); i++)	{
+		        	TestCase* tc = tcl_.getTestCase(i);
+                                if (fileOut) fileOut << tc->generateInputString(IOorderInput,IOorderOutput);
+                      } 
+
+                      // closing input file
+                      fileOut.close();
+                };
+          }
+
+
+
+
+
+
+
+
+
+
+
+
+
+          void TestBench::generateTestInVhdl() {
 		vhdl << tab << "-- Setting the inputs" <<endl;
 		vhdl << tab << "process" <<endl;
 		vhdl << tab << "begin" <<endl;
@@ -111,20 +275,22 @@ namespace flopoco{
 			vhdl << tab << tab << "wait for "<< 2 <<" ns; -- wait for pipeline to flush" <<endl;
 			currentOutputTime += 2;
 		}
-	
 		for (int i = 0; i < tcl_.getNumberOfTestCases(); i++)
 			{
 				//		vhdl << tab << tab << "wait for 5 ns;" <<endl;
 				//		currentOutputTime += 5;
-				vhdl << tab << tab << "-- " << "current time: " << currentOutputTime <<endl;
+				vhdl << tab << tab << "-- current time: " << currentOutputTime <<endl;
 				TestCase* tc = tcl_.getTestCase(i);
 				if (tc->getComment() != "")
 					vhdl << tab <<  "-- " << tc->getComment() << endl;
 				vhdl << tc->getInputVHDL(tab + tab + "-- input: ");
+                                // if a file is open for output we generated them
+                                //if (fileOut) fileOut << tc->generateInputString();
 				vhdl << tc->getExpectedOutputVHDL(tab + tab);
 				vhdl << tab << tab << "wait for 10 ns;" <<endl;
 				currentOutputTime += 10;
-			} 
+			}
+                 
 		vhdl << tab << tab << "assert false report \"End of simulation\" severity failure;" <<endl;
 		vhdl << tab << "end process;" <<endl;
 	
@@ -159,6 +325,118 @@ namespace flopoco{
 			tab << tab << tab << "return a(a'high downto a'high-2) = b(b'high downto b'high-2);\n" <<
 			tab << tab << "end if;\n" <<
 			tab << "end;\n";
+
+
+                o << endl << endl << endl;
+
+                o << " -- converts std_logic into a character" << endl;
+
+o << "   function chr(sl: std_logic) return character is" << endl <<
+ "    variable c: character;" << endl <<
+ "    begin" << endl << 
+ "      case sl is" << endl << 
+ "         when 'U' => c:= 'U';" << endl <<
+ "         when 'X' => c:= 'X';" << endl << 
+ "         when '0' => c:= '0';" << endl << 
+  "        when '1' => c:= '1';" << endl << 
+  "        when 'Z' => c:= 'Z';" << endl << 
+  "        when 'W' => c:= 'W';" << endl << 
+  "        when 'L' => c:= 'L';" << endl << 
+  "        when 'H' => c:= 'H';" << endl << 
+  "         when '-' => c:= '-';" << endl << 
+ "             end case;" << endl << 
+ "           return c;" << endl << 
+ "          end chr;" << endl << 
+
+
+
+ "          -- converts std_logic into a string (1 to 1)" << endl << 
+
+ "          function str(sl: std_logic) return string is" << endl << 
+ "           variable s: string(1 to 1);" << endl << 
+ "           begin" << endl << 
+ "               s(1) := chr(sl);" << endl << 
+ "               return s;" << endl << 
+ "          end str;" << endl << 
+     
+
+
+  "        -- converts std_logic_vector into a string (binary base)" << endl << 
+  "        -- (this also takes care of the fact that the range of" << endl << 
+  "        --  a string is natural while a std_logic_vector may" << endl << 
+  "        --  have an integer range)" << endl << 
+
+  "        function str(slv: std_logic_vector) return string is" << endl << 
+  "          variable result : string (1 to slv'length);" << endl << 
+  "          variable r : integer;" << endl << 
+  "        begin" << endl << 
+  "          r := 1;" << endl << 
+  "          for i in slv'range loop" << endl << 
+  "             result(r) := chr(slv(i));" << endl << 
+  "             r := r + 1;" << endl << 
+  "          end loop;" << endl << 
+  "          return result;" << endl << 
+  "        end str;" << endl; 
+
+
+
+              o << endl << endl << endl;
+
+                /* If op_ is an IEEE operator (IEEE input and output, we define) the function
+                 * fp_equal for the considered precision in the ieee case
+                 */
+                /* TODO : This function has to be parametrized or the state of the Operator output has to be studied
+                 * Indeed, if not parametrized this function should be defined for each IEEE precision used in output
+                 * by the operator.
+                 */
+                int wE = 11;
+                int wF = 52;
+                int length = wE + wF + 1;
+		o << endl <<  // Fixed by Nicolas
+			tab << "-- test isZero\n" <<
+			tab << "function iszero(a : std_logic_vector) return boolean is\n" <<
+			tab << "begin\n" <<
+			tab << tab << "return  a = (a'high downto 0 => '0');\n" <<        // test if exponent = "0000---000"
+			tab << "end;\n\n\n" <<
+                        
+			tab << "-- FP IEEE compare function (found vs. real)\n" <<
+			tab << "function fp_equal_ieee" << "(a : std_logic_vector;" <<
+                                                                      " b : std_logic_vector;" <<
+                                                                      " we : integer;" << 
+                                                                      " wf : integer) return boolean is\n" <<
+			/*tab << "function fp_equal_ieee_" << length << "(a : std_logic_vector(" << (length - 1) << " downto 0);" <<
+                                                                      " b : std_logic_vector(" << (length - 1) << " downto 0);" <<
+                                                                      " we : integer;" << 
+                                                                      " wf : integer) return boolean is\n" <<*/
+			tab << "begin\n" <<
+			tab << tab << "if b(we+wf-1 downto wf) = (we downto 1 => '1') then\n" <<        // test if exponent = "1111---111"
+			tab << tab << tab << "if iszero(b(wf-1 downto 0)) then return iszero(a(wf-1 downto 0));\n" <<               // +/- infinity cases
+                        tab << tab << tab << "else return not iszero(a(wf - 1 downto 0));\n" <<         
+                        tab << tab << tab << "end if;\n" <<         
+			tab << tab << "else\n" <<
+			tab << tab << tab << "return a = b;\n" <<
+			tab << tab << "end if;\n" <<
+			tab << "end;\n";
+                /*wE = 8;
+                wF = 23;
+                length = wE + wF + 1;
+		o << endl <<  // Fixed by Nicolas
+                        
+			tab << "-- FP IEEE compare function (found vs. real)\n" <<
+			tab << "function fp_equal_ieee_" << length << "(a : std_logic_vector(" << (length - 1) << " downto 0);" <<
+                                                                      " b : std_logic_vector(" << (length - 1) << " downto 0);" <<
+                                                                      " we : integer;" << 
+                                                                      " wf : integer) return boolean is\n" <<
+			tab << "begin\n" <<
+			tab << tab << "if b(we+wf-1 downto wf) = (we downto 1 => '1') then\n" <<        // test if exponent = "1111---111"
+			tab << tab << tab << "if iszero(b(wf-1 downto 0)) then return iszero(a(wf-1 downto 0));\n" <<               // +/- infinity cases
+                        tab << tab << tab << "else return not iszero(a(wf - 1 downto 0));\n" <<         
+                        tab << tab << tab << "end if;\n" <<         
+			tab << tab << "else\n" <<
+			tab << tab << tab << "return a = b;\n" <<
+			tab << tab << "end if;\n" <<
+			tab << "end;\n";*/
+                
 
 		/* In VHDL, literals may be incorrectly converted to „std_logic_vector(... to ...)” instead
 		 * of „downto”. So, for each FP output width, create a subtype used for casting.

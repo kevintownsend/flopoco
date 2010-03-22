@@ -19,6 +19,8 @@ class UserDefinedOperator : public Operator {
     /* operatorInfo is a user defined parameter (not a part of Operator class) for
       stocking information about the operator. The user is able to defined any number of parameter in this class, as soon as it does not affect Operator parameters undeliberatly*/
     static string operatorInfo;
+    int param0; 
+    int param1;
 
 
   public:
@@ -42,5 +44,4 @@ class UserDefinedOperator : public Operator {
     /* function used to generate n random test, where n is an argument of
       the function */
     void buildRandomTestCases(TestCaseList* tcl, int n);
-
 };

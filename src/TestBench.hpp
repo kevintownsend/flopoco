@@ -17,7 +17,7 @@ namespace flopoco{
 		 * @param op The operator which is the UUT
 		 * @param n Number of tests
 		 */
-		TestBench(Target *target, Operator *op, int n);
+		TestBench(Target *target, Operator *op, int n, bool fromFile = false);
 	
 		/** Destructor */
 		~TestBench();
@@ -27,6 +27,17 @@ namespace flopoco{
 		 * @param[in]     name  the name of the entity corresponding to the architecture generated in this method
 		 **/
 		void outputVHDL(ostream& o, string name);
+
+                /* Generating the tests using a file to store the IO, allow to have a lot of IOs without
+                 * increasing the VHDL compilation time
+                 */
+                void generateTestFromFile();
+
+
+                /* Generating the tests using a the vhdl code to store the IO, 
+                 * Strongly increasing the VHDL compilation time with the numbers of IO
+                 */
+                void generateTestInVhdl();
 
 		/** Return the total simulation time*/
 		int getSimulationTime(){

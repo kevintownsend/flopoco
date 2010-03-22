@@ -255,6 +255,12 @@ static void usage(char *name){
 	cerr << "    TestBench n\n";
 	cerr << "       Behavorial test bench for the preceding operator\n";
 	cerr << "       This test bench will include standard tests, plus n random tests.\n";
+	cerr << "    TestBenchFile n\n";
+	cerr << "       Behavorial test bench for the preceding operator\n";
+	cerr << "       This test bench will include standard tests, plus n random tests.\n";
+	cerr << "       This test bench will generate a file (by default essai.input) to .\n";
+	cerr << "       store the IO while TestBench generate VHDL, It is not implemeted.\n";
+	cerr << "       for all operators but it is much more efficient for large test.\n";
 	//	cerr << "    BigTestBench n\n";
 	//	cerr << "       Same as above, more VHDL efficient, less practical for debugging.\n";
 	cerr << "    Wrapper\n";
@@ -1438,7 +1444,35 @@ bool parseCommandLine(int argc, char* argv[]){
 			cerr << tab << "vcom " << filename <<endl;
 			cerr << tab << "vsim " << op->getName() <<endl;
 			cerr << tab << "add wave -r *" <<endl;
-			cerr << tab << "run " << ((TestBench*)op)->getSimulationTime() << endl;
+			cerr << tab << "run " << ((TestBench*)op)->getSimulationTime() <<"ns" << endl;
+			cerr << "To run the simulation using gHDL, type the following in a shell prompt:" <<endl;
+			cerr << tab << "ghdl -a --ieee=synopsys -fexplicit "<< filename <<endl;
+			cerr << tab << "ghdl -e --ieee=synopsys -fexplicit " << op->getName() <<endl;
+			cerr << tab << "ghdl -r --ieee=synopsys " << op->getName() << " --vcd=" << op->getName() << ".vcd" <<endl;
+			cerr << tab << "gtkwave " << op->getName() << ".vcd" << endl;
+		}
+		
+		else if (opname == "TestBenchFile") {
+			/* Using a file to store IO */
+			int nargs = 1;
+			if (i+nargs > argc)
+				usage(argv[0]); // and exit
+			if(oplist.empty()){
+				cerr<<"ERROR: TestBench has no operator to wrap (it should come after the operator it wraps)"<<endl;
+				usage(argv[0]); // and exit
+			}
+			int n = atoi(argv[i++]);//checkPositiveOrNull(argv[i++], argv[0]);
+			Operator* toWrap = oplist.back();
+			Operator* op = new TestBench(target, toWrap, n, true);
+			cerr << "> TestBench for " << toWrap->getName()<<endl;
+			addOperator(op);
+			cerr << "To run the simulation using ModelSim, type the following in 'vsim -c':" <<endl;
+			cerr << tab << "vdel -all -lib work" <<endl;
+			cerr << tab << "vlib work" <<endl;
+			cerr << tab << "vcom " << filename <<endl;
+			cerr << tab << "vsim " << op->getName() <<endl;
+			cerr << tab << "add wave -r *" <<endl;
+			cerr << tab << "run " << ((TestBench*)op)->getSimulationTime() << "ns" << endl;
 			cerr << "To run the simulation using gHDL, type the following in a shell prompt:" <<endl;
 			cerr << tab << "ghdl -a --ieee=synopsys -fexplicit "<< filename <<endl;
 			cerr << tab << "ghdl -e --ieee=synopsys -fexplicit " << op->getName() <<endl;
