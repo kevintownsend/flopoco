@@ -109,7 +109,7 @@
 #include "TableGenerator.hpp"
 #include "FunctionEvaluator.hpp"
 
-
+#include "PWTableGenerator.hpp"
 using namespace std;
 using namespace flopoco;
 
@@ -1389,26 +1389,23 @@ bool parseCommandLine(int argc, char* argv[]){
 		}
 #ifdef HAVE_HOTBM
 		else if (opname == "TableGenerator") {
-			int nargs = 7;
+			int nargs = 4;
 			if (i+nargs > argc)
 				usage(argv[0]); // and exit
 			string func = argv[i++];
 			int wI = checkStrictyPositive(argv[i++], argv[0]);
 			int wO = atoi(argv[i++]);
 			int n  = checkStrictyPositive(argv[i++], argv[0]);
-			double xmin = atof(argv[i++]);
-			double xmax = atof(argv[i++]);
-
-			// xmax < xmin is a valid use case...
-			double scale = atof(argv[i++]);
 			
-			cerr << "> TableGenerator func='" << func << "', wI=" << wI << ", wO=" << wO      << ", xmin=" << xmin << ", xmax=" << xmax << ", scale=" << scale <<endl;	
 			
-			Operator* tg = new TableGenerator(target, func, wI, (-1)*wO, n,xmin,xmax,scale );
+			cerr << "> TableGenerator func='" << func << "', wI=" << wI << ", wO=" << wO <<endl;	
+			
+			Operator* tg = new TableGenerator(target, func, wI, wO, n);
 				addOperator(tg);
 			
 		}
-		else if (opname == "FunctionEvaluator") {
+		
+		/*else if (opname == "FunctionEvaluator") {
 			int nargs = 7;
 			if (i+nargs > argc)
 				usage(argv[0]); // and exit
@@ -1427,7 +1424,25 @@ bool parseCommandLine(int argc, char* argv[]){
 			Operator* tg = new FunctionEvaluator(target, func, wI, wO, n,xmin,xmax,scale );
 				addOperator(tg);
 			
+		}*/
+		else if (opname == "FunctionEvaluator") {
+			int nargs = 4;
+			if (i+nargs > argc)
+				usage(argv[0]); // and exit
+			string func = argv[i++];
+			int wI = checkStrictyPositive(argv[i++], argv[0]);
+			int wO = atoi(argv[i++]);
+			int n  = checkStrictyPositive(argv[i++], argv[0]);
+			
+			
+			cerr << "> TableGenerator func='" << func << "', wI=" << wI << ", wO=" << wO <<endl;	
+			
+			Operator* tg = new FunctionEvaluator(target, func, wI, wO, n);
+				addOperator(tg);
+
+			
 		}
+
 #endif
 
 		else if (opname == "TestBench") {

@@ -16,6 +16,22 @@ sollya_chain_t makeIntPtrChainToFromBy(int m, int n, int k) {
   return c;
 }
 
+sollya_chain_t makeIntPtrChainFromArray(int m, int *a) {
+  int j;
+  int *elem;
+  sollya_chain_t c;
+  
+  c = NULL;
+  
+  for(j=0;j<m;j++) {
+    elem = (int *) malloc(sizeof(int));
+    *elem = a[j];
+    c = addElement(c,elem);
+   
+  }
+
+  return c;
+}
 
 void removeTrailingZeros(char *outbuf, char *inbuf) {
   char *temp, *temp2, *temp3;

@@ -38,7 +38,7 @@ namespace flopoco{
 #define DEBUGVHDL 0
 
 
-	FunctionEvaluator::FunctionEvaluator(Target* target, string func, int wInX, int wOutX, int n,double xmin, double xmax, double scale):
+	FunctionEvaluator::FunctionEvaluator(Target* target, string func, int wInX, int wOutX, int n):
 		Operator(target){
 
 		ostringstream name;
@@ -49,7 +49,7 @@ namespace flopoco{
 
 		setCopyrightString("Bogdan Pasca, Mioara Joldes (2010)");		
 
-		tg = new TableGenerator(target, func, wInX, wOutX, n, xmin, xmax, scale);
+		tg = new TableGenerator(target, func, wInX, wOutX, n);
 		oplist.push_back(tg);
 		
 		YVar* y = new YVar(wInX - tg->wIn, -tg->wIn);

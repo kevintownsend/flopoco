@@ -15,7 +15,7 @@
 #include "HOTBM/Function.hh"
 #include "HOTBM/MPPolynomial.hh"
 #include "UtilSollya.hh"
-
+#include "PiecewiseFunction.hh"
 
 namespace flopoco{
 
@@ -23,7 +23,7 @@ namespace flopoco{
 	class TableGenerator : public Table {
 
 		public:
-
+       TableGenerator(Target* target, string func, int wInX, int wOutX, int n);
 			 /* TODO: Doxygen parameters*/ 
 			TableGenerator(Target* target, string func, int wInX, int wOutX, int n,double xmin, double xmax, double scale);
 
@@ -41,7 +41,7 @@ namespace flopoco{
       void printCoeffParamVector();
       mpfr_t *getMaxApproxError();
       void generateDebug();
-      
+      void generateDebugPwf();
       /************************************************/
       /********Virtual methoods from class Table*******/
       mpz_class function(int x);
@@ -55,10 +55,11 @@ namespace flopoco{
 		protected:
 			int wInX_;   /**< TODO: Description*/ 
 			int wOutX_;  /**< TODO: Description*/
-			Function &f;
+			Function *f;
 			vector< vector<FixedPointCoefficient*> > polyCoeffVector;
 			vector<FixedPointCoefficient*> coeffParamVector;
 			mpfr_t *maxError;
+      PiecewiseFunction *pwf;
 	};
 }
 #endif

@@ -20,7 +20,7 @@ namespace flopoco{
 		/**
 		 * The FunctionEvaluator constructor
 		 */
-		FunctionEvaluator(Target* target, string func, int wInX, int wOutX, int n,double xmin, double xmax, double scale);
+		FunctionEvaluator(Target* target, string func, int wInX, int wOutX, int n);
 
 		/**
 		 * FunctionEvaluator destructor
