@@ -389,9 +389,9 @@ o << "   function chr(sl: std_logic) return character is" << endl <<
                  * Indeed, if not parametrized this function should be defined for each IEEE precision used in output
                  * by the operator.
                  */
-                int wE = 11;
-                int wF = 52;
-                int length = wE + wF + 1;
+                //int wE = 11;
+                //int wF = 52;
+                //int length = wE + wF + 1;
 		o << endl <<  // Fixed by Nicolas
 			tab << "-- test isZero\n" <<
 			tab << "function iszero(a : std_logic_vector) return boolean is\n" <<
@@ -410,7 +410,7 @@ o << "   function chr(sl: std_logic) return character is" << endl <<
                                                                       " wf : integer) return boolean is\n" <<*/
 			tab << "begin\n" <<
 			tab << tab << "if b(we+wf-1 downto wf) = (we downto 1 => '1') then\n" <<        // test if exponent = "1111---111"
-			tab << tab << tab << "if iszero(b(wf-1 downto 0)) then return iszero(a(wf-1 downto 0));\n" <<               // +/- infinity cases
+			tab << tab << tab << "if iszero(b(wf-1 downto 0)) then return a(wf+we downto wf) = b(wf+we downto 0) and iszero(a(wf-1 downto 0));\n" <<               // +/- infinity cases
                         tab << tab << tab << "else return not iszero(a(wf - 1 downto 0));\n" <<         
                         tab << tab << tab << "end if;\n" <<         
 			tab << tab << "else\n" <<
