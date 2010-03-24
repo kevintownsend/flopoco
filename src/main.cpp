@@ -148,11 +148,12 @@ static void usage(char *name){
 	cerr << "    LOCShifterSticky wIn wOut\n";
 	cerr << "    IntAdder wIn\n";
 	cerr << "      Integer adder, possibly pipelined\n";
-	cerr << "    MyIntAdder wIn optimizeType srl implementation\n";
+	cerr << "    MyIntAdder wIn optimizeType srl implementation bufferedInputs\n";
 	cerr << "      Integer adder, multple parameters, possibly pipelined\n";
 	cerr << "      optimizeType=<0,1,2,3> 0=LUT 1=REG 2=SLICE 3=LATENCY\n";
 	cerr << "      srl=<0,1> Allow SRLs\n";
 	cerr << "      implementation=<-1,0,1,2> -1=optimizeType dependent, 0=Classical, 1=Alternative, 2=Short-Latency\n";
+	cerr << "      bufferedInputs=<0,1>\n";
 	cerr << "    IntNAdder wIn N\n";
 	cerr << "      Multi-operand addition, possibly pipelined\n";
 	cerr << "    IntCompressorTree wIn N\n";
@@ -646,7 +647,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			}    
 		}
 		else if(opname=="MyIntAdder"){
-			int nargs = 4;
+			int nargs = 5;
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
@@ -654,10 +655,14 @@ bool parseCommandLine(int argc, char* argv[]){
 				int type = atoi(argv[i++]);
 				int srl = atoi(argv[i++]);
 				int implementation = atoi(argv[i++]);
+				int bufferedIn = atoi(argv[i++]);
 				cerr << "> IntAdder, wIn="<<wIn<<", frequency="<<target->frequency()<< endl  ;
+
 				map <string, double> delayMap;
-				
-//				delayMap["Cin"] = 1e-11;
+
+				if (!bufferedIn){
+					delayMap["X"] = 1e-25;
+				}
 				
 				switch (type) {
 					case 0: op = new IntAdder(target, wIn, delayMap, 0, srl, implementation); break; //lut optimized
@@ -1527,14 +1532,14 @@ int main(int argc, char* argv[] )
 	
 	for(i=0; i<oplist.size(); i++) {
 		try {
-			REPORT(DEBUG, "--DECLARE LIST---------------------------------------------------");
-			REPORT(DEBUG, printMapContent(oplist[i]->getDeclareTable()) );
-			REPORT(DEBUG, "--USE LIST-------------------------------------------------------");
+			REPORT(FULL, "--DECLARE LIST---------------------------------------------------");
+			REPORT(FULL, printMapContent(oplist[i]->getDeclareTable()) );
+			REPORT(FULL, "--USE LIST-------------------------------------------------------");
 
 			combinatorialOperator = not(oplist[i]->isSequential());
 			oplist[i]->getFlopocoVHDLStream()->flush();
 			
-			REPORT(DEBUG, printVectorContent(  (oplist[i]->getFlopocoVHDLStream())->getUseTable()) );
+			REPORT(FULL, printVectorContent(  (oplist[i]->getFlopocoVHDLStream())->getUseTable()) );
 
 			/* second parse is only for sequential operators */
 			if (oplist[i]->isSequential()){

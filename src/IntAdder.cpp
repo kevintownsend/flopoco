@@ -49,7 +49,8 @@ extern vector<Operator*> oplist;
 		setCopyrightString("Bogdan Pasca, Florent de Dinechin (2008-2010)");		
 		name << "IntAdder_" << wIn_<<"_f"<<target->frequencyMHz()
 		     <<"_"<<(optimizeType==0? "logic": (optimizeType==1?"reg":"slice")) /*what the operator will be optimized for */
-		     <<(srl? "_SRL": "_noSRL"); /* if architecture will be optimized for Shirt Registers */
+		     <<"_"<<(srl? "SRL": "noSRL")  /* if architecture will be optimized for Shirt Registers */
+		     <<"_"<<(getMaxInputDelays(inputDelays)==0? "BUFFER": "noBUFFER");
 		setName(name.str());
 
 		// Set up the IO signals
