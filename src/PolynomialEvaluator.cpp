@@ -111,7 +111,7 @@ namespace flopoco{
 		free(tmp);
 
 		for (uint32_t i=1; i<=unsigned(degree_); i++){
-			if (i != degree_){
+			if (i != unsigned(degree_)){
 				maxBoundY[i] = - signed(degree_-i)*y_->getWeight();
 			}else
 				maxBoundY[i] = 0;
