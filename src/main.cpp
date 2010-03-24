@@ -109,7 +109,6 @@
 #include "TableGenerator.hpp"
 #include "FunctionEvaluator.hpp"
 
-#include "PWTableGenerator.hpp"
 using namespace std;
 using namespace flopoco;
 
