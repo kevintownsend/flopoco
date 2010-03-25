@@ -555,9 +555,11 @@ vector<FixedPointCoefficient*> TableGenerator::getPolynomialCoefficients(sollya_
 		    }
 		    size=*((int *)first(cc));
 		    cc=tail(cc);
-		    //if (mpfr_sgn(coef[i])==0) weight=0;
-		    //else 
-		    
+		    if (mpfr_sgn(coef[i])==0){
+		      weight=0;
+          size=1;
+        } 
+		    else 
 		    weight=mpfr_get_exp(coef[i]);
 		    
 		    zz= new FixedPointCoefficient(size, weight, coef[i]);
@@ -579,7 +581,8 @@ void TableGenerator::updateMinWeightParam(int i, FixedPointCoefficient* zz)
   if (coeffParamVector.size()<=(unsigned)i) {
     coeffParamVector.push_back(zz);
   }
-  else if ((*coeffParamVector[i]).getWeight() <(*zz).getWeight()) 
+  else if (mpfr_sgn((*(*coeffParamVector[i]).getValueMpfr()))==0) coeffParamVector[i]=zz;
+  else if ( ((*coeffParamVector[i]).getWeight() <(*zz).getWeight()) && (mpfr_sgn(*((*zz).getValueMpfr()))!=0) )
   coeffParamVector[i]=zz;
 
 }
