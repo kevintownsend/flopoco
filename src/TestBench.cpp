@@ -328,70 +328,59 @@ namespace flopoco{
 
 
                 o << endl << endl << endl;
+                /* Generation of Vhdl function to parse file into std_logic_vector */
+
 
                 o << " -- converts std_logic into a character" << endl;
-
-o << "   function chr(sl: std_logic) return character is" << endl <<
- "    variable c: character;" << endl <<
- "    begin" << endl << 
- "      case sl is" << endl << 
- "         when 'U' => c:= 'U';" << endl <<
- "         when 'X' => c:= 'X';" << endl << 
- "         when '0' => c:= '0';" << endl << 
-  "        when '1' => c:= '1';" << endl << 
-  "        when 'Z' => c:= 'Z';" << endl << 
-  "        when 'W' => c:= 'W';" << endl << 
-  "        when 'L' => c:= 'L';" << endl << 
-  "        when 'H' => c:= 'H';" << endl << 
-  "         when '-' => c:= '-';" << endl << 
- "             end case;" << endl << 
- "           return c;" << endl << 
- "          end chr;" << endl << 
-
+                o << tab << "function chr(sl: std_logic) return character is" << endl
+                  << tab << tab << "variable c: character;" << endl
+                  << tab << "begin" << endl 
+                  << tab << tab << "case sl is" << endl 
+                  << tab << tab << tab << "when 'U' => c:= 'U';" << endl
+                  << tab << tab << tab << "when 'X' => c:= 'X';" << endl  
+                  << tab << tab << tab << "when '0' => c:= '0';" << endl  
+                  << tab << tab << tab << "when '1' => c:= '1';" << endl
+                  << tab << tab << tab << "when 'Z' => c:= 'Z';" << endl  
+                  << tab << tab << tab << "when 'W' => c:= 'W';" << endl  
+                  << tab << tab << tab << "when 'L' => c:= 'L';" << endl  
+                  << tab << tab << tab << "when 'H' => c:= 'H';" << endl  
+                  << tab << tab << tab << "when '-' => c:= '-';" << endl  
+                  << tab << tab << "end case;" << endl 
+                  << tab << tab << "return c;" << endl 
+                  << tab <<  "end chr;" << endl; 
 
 
- "          -- converts std_logic into a string (1 to 1)" << endl << 
-
- "          function str(sl: std_logic) return string is" << endl << 
- "           variable s: string(1 to 1);" << endl << 
- "           begin" << endl << 
- "               s(1) := chr(sl);" << endl << 
- "               return s;" << endl << 
- "          end str;" << endl << 
+                o << tab << "-- converts std_logic into a string (1 to 1)" << endl  
+                  << tab << "function str(sl: std_logic) return string is" << endl  
+                  << tab << " variable s: string(1 to 1);" << endl  
+                  << tab << " begin" << endl  
+                  << tab << tab << "s(1) := chr(sl);" << endl  
+                  << tab << tab << "return s;" << endl 
+                  << tab << "end str;" << endl;  
      
 
 
-  "        -- converts std_logic_vector into a string (binary base)" << endl << 
-  "        -- (this also takes care of the fact that the range of" << endl << 
-  "        --  a string is natural while a std_logic_vector may" << endl << 
-  "        --  have an integer range)" << endl << 
-
-  "        function str(slv: std_logic_vector) return string is" << endl << 
-  "          variable result : string (1 to slv'length);" << endl << 
-  "          variable r : integer;" << endl << 
-  "        begin" << endl << 
-  "          r := 1;" << endl << 
-  "          for i in slv'range loop" << endl << 
-  "             result(r) := chr(slv(i));" << endl << 
-  "             r := r + 1;" << endl << 
-  "          end loop;" << endl << 
-  "          return result;" << endl << 
-  "        end str;" << endl; 
-
-
+                o << tab << "-- converts std_logic_vector into a string (binary base)" << endl  
+                  << tab << "-- (this also takes care of the fact that the range of" << endl  
+                  << tab << "--  a string is natural while a std_logic_vector may" << endl  
+                  << tab << "--  have an integer range)" << endl  
+                  << tab << "function str(slv: std_logic_vector) return string is" << endl  
+                  << tab << tab << "variable result : string (1 to slv'length);" << endl  
+                  << tab << tab << "variable r : integer;" << endl  
+                  << tab << "begin" << endl  
+                  << tab << tab << "r := 1;" << endl  
+                  << tab << tab << "for i in slv'range loop" << endl  
+                  << tab << tab << tab << "result(r) := chr(slv(i));" << endl  
+                  << tab << tab << tab << "r := r + 1;" << endl  
+                  << tab << tab << "end loop;" << endl  
+                  << tab << tab << "return result;" << endl  
+                  << tab << "end str;" << endl; 
 
               o << endl << endl << endl;
 
                 /* If op_ is an IEEE operator (IEEE input and output, we define) the function
                  * fp_equal for the considered precision in the ieee case
                  */
-                /* TODO : This function has to be parametrized or the state of the Operator output has to be studied
-                 * Indeed, if not parametrized this function should be defined for each IEEE precision used in output
-                 * by the operator.
-                 */
-                //int wE = 11;
-                //int wF = 52;
-                //int length = wE + wF + 1;
 		o << endl <<  // Fixed by Nicolas
 			tab << "-- test isZero\n" <<
 			tab << "function iszero(a : std_logic_vector) return boolean is\n" <<
@@ -400,42 +389,19 @@ o << "   function chr(sl: std_logic) return character is" << endl <<
 			tab << "end;\n\n\n" <<
                         
 			tab << "-- FP IEEE compare function (found vs. real)\n" <<
-			tab << "function fp_equal_ieee" << "(a : std_logic_vector;" <<
-                                                                      " b : std_logic_vector;" <<
-                                                                      " we : integer;" << 
-                                                                      " wf : integer) return boolean is\n" <<
-			/*tab << "function fp_equal_ieee_" << length << "(a : std_logic_vector(" << (length - 1) << " downto 0);" <<
-                                                                      " b : std_logic_vector(" << (length - 1) << " downto 0);" <<
-                                                                      " we : integer;" << 
-                                                                      " wf : integer) return boolean is\n" <<*/
-			tab << "begin\n" <<
-			tab << tab << "if b(we+wf-1 downto wf) = (we downto 1 => '1') then\n" <<        // test if exponent = "1111---111"
-			tab << tab << tab << "if iszero(b(wf-1 downto 0)) then return a(wf+we downto wf) = b(wf+we downto 0) and iszero(a(wf-1 downto 0));\n" <<               // +/- infinity cases
+			tab << "function fp_equal_ieee" << "(a : std_logic_vector;" 
+                                                        << " b : std_logic_vector;" 
+                                                        << " we : integer;"  
+                                                        << " wf : integer) return boolean is\n" 
+		     <<	tab << "begin\n" <<
+			tab << tab << "if a(wf+we downto wf) = b(wf+we downto 0) and b(we+wf-1 downto wf) = (we downto 1 => '1') then\n" <<        // test if exponent = "1111---111"
+			tab << tab << tab << "if iszero(b(wf-1 downto 0)) then return  iszero(a(wf-1 downto 0));\n" <<               // +/- infinity cases
                         tab << tab << tab << "else return not iszero(a(wf - 1 downto 0));\n" <<         
                         tab << tab << tab << "end if;\n" <<         
 			tab << tab << "else\n" <<
 			tab << tab << tab << "return a = b;\n" <<
 			tab << tab << "end if;\n" <<
 			tab << "end;\n";
-                /*wE = 8;
-                wF = 23;
-                length = wE + wF + 1;
-		o << endl <<  // Fixed by Nicolas
-                        
-			tab << "-- FP IEEE compare function (found vs. real)\n" <<
-			tab << "function fp_equal_ieee_" << length << "(a : std_logic_vector(" << (length - 1) << " downto 0);" <<
-                                                                      " b : std_logic_vector(" << (length - 1) << " downto 0);" <<
-                                                                      " we : integer;" << 
-                                                                      " wf : integer) return boolean is\n" <<
-			tab << "begin\n" <<
-			tab << tab << "if b(we+wf-1 downto wf) = (we downto 1 => '1') then\n" <<        // test if exponent = "1111---111"
-			tab << tab << tab << "if iszero(b(wf-1 downto 0)) then return iszero(a(wf-1 downto 0));\n" <<               // +/- infinity cases
-                        tab << tab << tab << "else return not iszero(a(wf - 1 downto 0));\n" <<         
-                        tab << tab << tab << "end if;\n" <<         
-			tab << tab << "else\n" <<
-			tab << tab << tab << "return a = b;\n" <<
-			tab << tab << "end if;\n" <<
-			tab << "end;\n";*/
                 
 
 		/* In VHDL, literals may be incorrectly converted to „std_logic_vector(... to ...)” instead
