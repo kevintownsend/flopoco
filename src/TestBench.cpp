@@ -394,7 +394,7 @@ namespace flopoco{
                                                         << " we : integer;"  
                                                         << " wf : integer) return boolean is\n" 
 		     <<	tab << "begin\n" <<
-			tab << tab << "if a(wf+we downto wf) = b(wf+we downto 0) and b(we+wf-1 downto wf) = (we downto 1 => '1') then\n" <<        // test if exponent = "1111---111"
+			tab << tab << "if a(wf+we downto wf) = b(wf+we downto wf) and b(we+wf-1 downto wf) = (we downto 1 => '1') then\n" <<        // test if exponent = "1111---111"
 			tab << tab << tab << "if iszero(b(wf-1 downto 0)) then return  iszero(a(wf-1 downto 0));\n" <<               // +/- infinity cases
                         tab << tab << tab << "else return not iszero(a(wf - 1 downto 0));\n" <<         
                         tab << tab << tab << "end if;\n" <<         
