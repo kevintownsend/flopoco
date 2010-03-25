@@ -426,9 +426,11 @@ namespace flopoco{
 			o<<"--"; for(i=0; i<s; i++) o<<" "; o << "(" << commentedName_ << ")" << endl; 
 		}
 
-		o<<"-- copyright (C) Kalray, all rights reserved"<<endl
+		o<<"-- This operator is part of the Infinite Virtual Library FloPoCoLib"<<endl
+		 <<"-- and is distributed under the terms of the GNU Lesser General Public Licence."<<endl
 		 <<"-- Authors: " << authorsyears <<endl
 		 <<"--------------------------------------------------------------------------------"<<endl;
+
 	}
 
 	void Operator::outputVHDL(std::ostream& o) {
