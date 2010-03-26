@@ -45,9 +45,10 @@ namespace flopoco{
 	extern vector<Operator*> oplist;
 
 	TableGenerator::TableGenerator(Target* target, string func, int wInX, int wOutX, int n): // TODO extend list
-	Table(target),	 wInX_(wInX), wOutX_(wOutX)
-	
-	 {
+		Table(target),	 wInX_(wInX), wOutX_(wOutX){
+	 	
+	 	setCopyrightString("Mioara Joldes (2010)");		
+
 	
 	/* Start initialization */
   //int verbose=1;

@@ -43,6 +43,7 @@ namespace flopoco{
 	
 		PolynomialEvaluator::PolynomialEvaluator(Target* target, vector<FixedPointCoefficient*> coef, YVar* y, int targetPrec, mpfr_t* approxError):
 		Operator(target), y_(y), targetPrec_(targetPrec){
+		setCopyrightString("Bogdan Pasca (2010)");
 		
 		setApproximationError(approxError);
 		srcFileName = "PolynomialEvaluator";
@@ -58,10 +59,6 @@ namespace flopoco{
 		degree_ = coef.size()-1;
 		
 		/* init */
-
-		
-		
-		
 		
 		setName( join("PolynomialEvaluator_d",degree_) );
 		
