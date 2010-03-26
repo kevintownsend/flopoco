@@ -1,3 +1,5 @@
+#ifdef HAVE_SOLLYA
+
 #include "UtilSollya.hh"
 sollya_chain_t makeIntPtrChainToFromBy(int m, int n, int k) {
   int i,j;
@@ -194,5 +196,5 @@ char *sPrintBinaryZ(mpfr_t x) {
   free(temp3);
   return resultStr;
 }
-
+#endif //HAVE_SOLLYA
 

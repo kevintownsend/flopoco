@@ -1,3 +1,5 @@
+#ifdef HAVE_SOLLYA
+
 #include "PiecewiseFunction.hh"
 #include <sstream>
 
@@ -67,7 +69,6 @@ namespace flopoco{
 		return fArray[i];
     else return NULL;
 	}
-
-	
-
 }
+
+#endif //HAVE_SOLLYA
