@@ -180,6 +180,7 @@ namespace flopoco{
 		* @param[in] k                 the number of chunks
 		*/
 		void tryOptimizedChunkSplittingShortLatency(Target* target, int wIn, int &k);
+		void tryOptimizedChunkSplittingShortLatency(Target* target, map<string, double> inputDelays, int wIn, int &k);
 
 		/**
 		 *  Destructor
