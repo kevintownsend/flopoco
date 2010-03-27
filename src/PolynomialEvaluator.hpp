@@ -252,6 +252,15 @@ namespace flopoco{
 				mpfr_init2(*approximationError, 1000);
 				mpfr_set( *approximationError, *p, GMP_RNDN);
 			}
+			
+			
+			int getRWidth(){
+				return wR;
+			}
+			
+			int getRWeight(){
+				return weightR;
+			}
 
 		protected:
 		

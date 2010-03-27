@@ -58,8 +58,9 @@ namespace flopoco{
 		pe = new PolynomialEvaluator(target, tg->getCoeffParamVector(), y, wOutX, tg->getMaxApproxError() );
 		
 		oplist.push_back(pe);
+		wR = pe->getRWidth();
+		weightR = pe->getRWeight();
 
-		
 
 		// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 		addInput ("X", wInX);
@@ -98,7 +99,7 @@ namespace flopoco{
 		syncCycleFromSignal("Rpe");
 //		nextCycle();/////////////////
 		//now we round
-		vhdl << tab << declare( "op", wOutX+1 + (pe->getOutputWeight())) << " <= Rpe"<<range(pe->getOutputSize()-1, pe->getOutputSize() - (wOutX+pe->getOutputWeight()+ 1)) << ";" << endl;
+//		vhdl << tab << declare( "op", wOutX+1 + (pe->getOutputWeight())) << " <= Rpe"<<range(pe->getOutputSize()-1, pe->getOutputSize() - (wOutX+pe->getOutputWeight()+ 1)) << ";" << endl;
 		
 //		IntAdder *ia = new IntAdder(target, wOutX+1 + (pe->getOutputWeight()+1));
 //		oplist.push_back(ia);
@@ -111,8 +112,8 @@ namespace flopoco{
 //		vhdl << instance( ia, "Final_Round");
 //		syncCycleFromSignal( "postRoundR" );  
 		
-		addOutput("R", wOutX+1 + pe->getOutputWeight());
-		vhdl << tab << "R <= op;" << endl;  
+		addOutput("R", pe->getRWidth());
+		vhdl << tab << "R <= Rpe;" << endl;  
 	}
 
 	FunctionEvaluator::~FunctionEvaluator() {

@@ -29,10 +29,23 @@ namespace flopoco{
 		
 		void emulate(TestCase * tc);
 
-	private:
 		
 		TableGenerator *tg;
 		PolynomialEvaluator *pe;
+		
+		int getRWidth(){
+			return wR;
+		}
+			
+		int getRWeight(){
+			return weightR;
+		}
+
+		protected:
+		
+		unsigned wR;
+		int weightR;
+
 		
 	};
 

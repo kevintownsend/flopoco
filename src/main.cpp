@@ -58,6 +58,8 @@
 //#include "apps/CoilInductance/CoilInductance.hpp"
 #include "FPDiv.hpp"
 #include "FPSqrt.hpp"
+#include "FPSqrtPoly.hpp"
+
 //#include "FPFMA.hpp"
 #include "LongAcc.hpp"
 #include "LongAcc2FP.hpp"
@@ -135,7 +137,8 @@ namespace flopoco{
 static void usage(char *name){
 	cerr << "\nUsage: "<<name<<" <operator specification list>\n" ;
 	cerr << "Each operator specification is one of: \n";
-        cerr << "    UserDefinedOperator param0 param1\n";
+    cerr << "    UserDefinedOperator param0 param1\n";
+	cerr << "    _______________________________________________________________\n";
 	cerr << "    LeftShifter  wIn  MaxShift\n";
 	cerr << "    RightShifter wIn  MaxShift\n";
 	cerr << "    LZOC wIn\n";
@@ -145,6 +148,7 @@ static void usage(char *name){
 	cerr << "    LZOCShifterSticky wIn wOut\n";
 	cerr << "    LZCShifterSticky wIn wOut\n";
 	cerr << "    LOCShifterSticky wIn wOut\n";
+	cerr << "    _______________________________________________________________\n";
 	cerr << "    IntAdder wIn\n";
 	cerr << "      Integer adder, possibly pipelined\n";
 	cerr << "    MyIntAdder wIn optimizeType srl implementation bufferedInputs\n";
@@ -153,12 +157,16 @@ static void usage(char *name){
 	cerr << "      srl=<0,1> Allow SRLs\n";
 	cerr << "      implementation=<-1,0,1,2> -1=optimizeType dependent, 0=Classical, 1=Alternative, 2=Short-Latency\n";
 	cerr << "      bufferedInputs=<0,1>\n";
+	cerr << "    _______________________________________________________________\n";
 	cerr << "    IntNAdder wIn N\n";
 	cerr << "      Multi-operand addition, possibly pipelined\n";
 	cerr << "    IntCompressorTree wIn N\n";
-	cerr << "      Multi-operand addition using compressor trees	, possibly pipelined\n";
+	cerr << "      Multi-operand addition using compressor trees, possibly pipelined\n";
+	cerr << "    _______________________________________________________________\n";
 	cerr << "    IntMultiplier wInX wInY \n";
 	cerr << "      Integer multiplier of two integers X and Y of sizes wInX and wInY \n";	
+	cerr << "    SignedIntMultiplier wInX wInY \n";
+	cerr << "      Signed integer multiplier of two integers X and Y of sizes wInX and wInY (including the sign)\n";	
 	cerr << "    IntTilingMultiplier wInX wInY ratio \n";
 	cerr << "      Integer multiplier of two integers X and Y of sizes wInX and wInY\n";	
 	cerr << "    IntTruncSquarer wInX ratio error useLimits\n";
@@ -169,6 +177,7 @@ static void usage(char *name){
 	cerr << "      integer multiplier of two integers X and Y of sizes wIn. 17 < wIn <= 51 (for now) \n";	
 	cerr << "    IntSquarer wIn \n";
 	cerr << "      integer squarer. For now wIn <=68 \n";	
+	cerr << "    _______________________________________________________________\n";
 	cerr << "    Fix2FP LSB MSB Signed wE wF\n";
 	cerr << "      Convert a 2's compliment fixed-point number in the bit range MSB...LSB [into floating-point\n";
 	cerr << "    FPAdder wE wF\n";
@@ -212,6 +221,14 @@ static void usage(char *name){
 	cerr << "      Conversion from IEEE-754-like to FloPoCo floating-point formats\n";
 
 #ifdef HAVE_HOTBM
+	cerr << "    _______________________________________________________________\n";
+	cerr << "    FunctionEvaluator function wI wO degree\n";
+	cerr << "      Polynomial based method for fixed-point functions\n";
+	cerr << "      wI - input width, wO - the number of bits at the right of the dot, degree - degree of polynomial approx\n";
+	cerr << "      function - sollya-syntaxed function to implement, between double quotes\n";
+	cerr << "                 \"function,xMin,xMax,Scale\"\n";
+	cerr << "      function example: sqrt(1+x),0,1,1;sqrt(2+x),0,1,1\n";
+	cerr << "    _______________________________________________________________\n";
 	cerr << "    HOTBM function wI wO degree\n";
 	cerr << "      High-Order Table-Based Method for fixed-point functions (NPY)\n";
 	cerr << "      wI - input width, wO - output width, degree - degree of polynomial approx\n";
@@ -225,6 +242,7 @@ static void usage(char *name){
 	cerr << "      scale - scaling factor to apply to the function output\n";
 #endif // HAVE_HOTBM
 #ifdef HAVE_LNS
+	cerr << "    _______________________________________________________________\n";
 	cerr << "    LNSAddSub wE wF\n";
 	cerr << "      Addition in Logarithmic Number System.\n";
 	cerr << "    LNSMul wE wF\n";
@@ -236,8 +254,7 @@ static void usage(char *name){
 	cerr << "    AtanPow wE wF o\n";
 	cerr << "      (4/pi)*atan(2^x) function.\n";
 #endif // HAVE_LNS
-	
-	
+	cerr << "    _______________________________________________________________\n";
 	cerr << "    Collision wE wF opt n\n";
 	cerr << "       A collision detection operator, computes the predicate X²+Y²+Z²<R2\n";
 	cerr << "       opt: assemble FP operators if 0, optimized architecture if 1 \n";
@@ -251,7 +268,7 @@ static void usage(char *name){
 	// cerr << "    CoordinatesTableZ wIn LSB MSB FilePath\n";
 	//=====================================================
 
-
+	cerr << "    _______________________________________________________________\n";
 	cerr << "    TestBench n\n";
 	cerr << "       Behavorial test bench for the preceding operator\n";
 	cerr << "       This test bench will include standard tests, plus n random tests.\n";
@@ -263,8 +280,11 @@ static void usage(char *name){
 	cerr << "       for all operators but it is much more efficient for large test.\n";
 	//	cerr << "    BigTestBench n\n";
 	//	cerr << "       Same as above, more VHDL efficient, less practical for debugging.\n";
+	cerr << "    _______________________________________________________________\n";
 	cerr << "    Wrapper\n";
 	cerr << "       Wraps the preceding operator between registers\n";
+	cerr << "    _______________________________________________________________\n";
+	cerr << "    _______________________________________________________________\n";
 	cerr << "(NPY) Not pipelined yet\n";
 	cerr << "General options, affecting the operators that follow them:\n";
 	cerr << "   -outputfile=<output file name>           (default=flopoco.vhdl)\n";
@@ -754,8 +774,6 @@ bool parseCommandLine(int argc, char* argv[]){
 //				addOperator(op);
 //			}
 //		}
-
-
 		else if(opname=="SignedIntMultiplier"){
 			int nargs = 2;
 			if (i+nargs > argc)
@@ -971,7 +989,18 @@ bool parseCommandLine(int argc, char* argv[]){
 			op = new FPSqrt(target, wE, wF, true, true);
 			addOperator(op);
 		}
-
+		else if (opname == "FPSqrtPoly")
+		{
+			int nargs = 3;
+			if (i+nargs > argc)
+				usage(argv[0]); // and exit
+			int wE = checkStrictyPositive(argv[i++], argv[0]);
+			int wF = checkStrictyPositive(argv[i++], argv[0]);
+			int correctlyRounded = checkBoolean(argv[i++], argv[0]);
+			cerr << "> FPSqrtPoly: wE=" << wE << " wF=" << wF << " correctlyRounded="<< correctlyRounded << endl;
+			op = new FPSqrtPoly(target, wE, wF, correctlyRounded);
+			addOperator(op);
+		}
 //		else if (opname == "FPFMA")
 //		{
 //			int nargs = 2;

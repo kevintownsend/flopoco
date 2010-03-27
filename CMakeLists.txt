@@ -174,6 +174,7 @@ ADD_EXECUTABLE(flopoco
  src/FPSquarer
  src/FPDiv
  src/FPSqrt
+ src/FPSqrtPoly
  src/squareroot/PolynomialTable src/squareroot/PolynomialTableCorrectRounded
  src/LongAcc
  src/LongAcc2FP
@@ -251,6 +252,7 @@ ADD_EXECUTABLE(flopoco
  src/FPSquarer
  src/FPDiv
  src/FPSqrt
+ src/FPSqrtPoly
  src/squareroot/PolynomialTable src/squareroot/PolynomialTableCorrectRounded
  src/LongAcc
  src/LongAcc2FP
