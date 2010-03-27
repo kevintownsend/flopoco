@@ -1123,7 +1123,7 @@ extern vector<Operator*> oplist;
 			int version0, version1;
 			int alpha, beta, k;			
 			updateParameters( target, inputDelays, alpha, beta, k);
-			REPORT( DEBUG, "SLICE, Alternative, NO-SLACK, Version 0: alpha="<<alpha<<" beta="<<beta<<" k="<<k);
+			REPORT( DEBUG, "SLICE, Alternative, SLACK, Version 0: alpha="<<alpha<<" beta="<<beta<<" k="<<k);
 			
 			if (k>0){
 				if (k==1){			
@@ -1176,10 +1176,10 @@ extern vector<Operator*> oplist;
 	int IntAdder::getSliceCostShortLatency(Target* target, int wIn, map<string, double> inputDelays, bool srl){
 		shortLatencyInputRegister = -1;
 		REPORT( DEBUG, DEBUG_SEPARATOR);
-		tryOptimizedChunkSplittingShortLatency ( target, wIn , k );
-		REPORT( DEBUG, "SLICE, Short-Latency:  k="<<k);
 		int cost;
 		if ( getMaxInputDelays( inputDelays ) == 0 ){  /* no input slack problem */
+			tryOptimizedChunkSplittingShortLatency ( target, wIn , k );
+			REPORT( DEBUG, "SLICE, Short-Latency:  k="<<k);
 
 			switch ( shortLatencyVersion ){
 				case  0: cost = int(ceil(double(cSize[0] + 3*cSize[1])/double(2))); 
@@ -1195,9 +1195,24 @@ extern vector<Operator*> oplist;
 			REPORT( DETAILED, "Selected: Short-Latency with SLICE cost " << cost );
 			return cost;
 		}else{
-			shortLatencyInputRegister = 1;
+			tryOptimizedChunkSplittingShortLatency ( target, inputDelays, wIn , k );
+			REPORT( DEBUG, "SLICE, Short-Latency:  k="<<k);
+
+			switch ( shortLatencyVersion ){
+				case  0: cost = int(ceil(double(cSize[0] + 3*cSize[1])/double(2))); 
+				         break;
+				case  1: cost = int(ceil(double(3*wIn - 2*cSize[0] + 2*(k-2))/double(2)));
+						 break;
+				case  2: cost = int(ceil(double(3*wIn - 2*cSize[0] + 4*(k-2) + 1)/double(2)));
+						 break;
+				case  3: cost = int(ceil(double(5*wIn - 3*cSize[0] + 5*(k-2) + 1) / double(2)));		
+						 break;
+				default: cost = PINF;
+			}
+//			shortLatencyInputRegister = 1;
 			/* TODO */
-			return PINF;
+//			return PINF;
+			return cost;
 		}
 		cerr << "Error in " <<  __FILE__ << "@" << __LINE__;
 		exit(-1);
@@ -1405,6 +1420,145 @@ extern vector<Operator*> oplist;
 		REPORT( DEBUG, "Selected Short-Latency Version is " << shortLatencyVersion);
 		shortLatencyKValue = k;
 	}
+
+	/**************************************************************************/
+	void IntAdder::tryOptimizedChunkSplittingShortLatency(Target* target, map<string, double> inputDelays, int wIn, int &k){
+		cSize = new int[2000];
+		for (int u=0; u<2000; u++)
+			cSize[u] = -1;
+
+		int alpha0;
+		double tSelect = target->lutDelay() + target->localWireDelay();
+
+		double T0 = (1.0 / target->frequency()) - getMaxInputDelays(inputDelays);
+//		double Tf = (1.0 / target->frequency());
+
+		double k1,k2; 
+		target->getAdderParameters(k1,k2,wIn); /* adder delay is modeled as d = k1 + (w-1)k2 */
+		target->suggestSlackSubaddSize(alpha0, wIn, tSelect + getMaxInputDelays(inputDelays));
+
+		int alpha;
+		target->suggestSubaddSize(alpha,wIn);
+		
+		double C =  (T0 - tSelect - 2*k1 + 2*k2)/k2;
+		int U = int (floor (C));
+				
+		REPORT( DEBUG, "U="<<U<<" C="<<C);
+		int maxW;
+		if (U < 0)
+			U = 0;
+		
+		if (U >= 0)
+			if (U % 2 ==0)
+				maxW = 2*alpha0 + U*(U+2)/4;
+			else
+				maxW = 2*alpha0 + (U+1)*(U+1)/4;
+		else
+			maxW = -1;
+	
+		REPORT( DEBUG, "alpha is " << alpha );
+		REPORT( DEBUG, "Max addition size for latency 0, two chunk architecture:" << 2*alpha0);	
+		REPORT( DEBUG, "Max addition size for latency 0 is:" << maxW);
+		
+		double C2 = ((1.0 / target->frequency()) - tSelect - k1 + k2)/(2*k2);
+		int U2 = int(floor(C2));
+		
+		double C3 = ((1.0 / target->frequency()) - k1 + k2)/(2*k2);
+		int U3 = int(floor(C3));
+		
+		REPORT(DEBUG, "Max addition size for latency 1 is:" << (U2+2)*alpha0 );
+		REPORT(DEBUG, "Max addition size for latency 2 is:" << (U3+2)*alpha );
+		
+		if (wIn <= 2*alpha0){
+			// TWO CHUNK ARCHITECTURE
+			cSize[0]= int(floor(wIn/2));
+			cSize[1]= wIn - cSize[0];
+			REPORT ( DEBUG, " Chunk sizes are: " << cSize[0] << " " << cSize[1]);
+			shortLatencyVersion = 0;
+			k = 2; 
+		}else if (wIn <= maxW){
+			// LATENCY 0 Architecture
+			cSize[0]=alpha0;
+			cSize[1]=alpha0;			
+			int tmpWIn = wIn - 2*alpha0;
+			int i=2;
+			while (tmpWIn > 0){
+				if (tmpWIn - ( U-2*(i-2)) >= 0){
+					cSize[i]=U-2*(i-2);
+					tmpWIn -= cSize[i];
+				}else{
+					cSize[i] = tmpWIn;
+					tmpWIn -= cSize[i];
+				}
+				i++;	
+			}
+			k=i;
+			ostringstream tmp;
+			for (int kk=i-1; kk>=0;kk--){
+				tmp <<  cSize[kk] << " ";
+			}	
+			REPORT( DEBUG, " Chunks " << k <<"  Sizes: " << tmp.str());
+			shortLatencyVersion = 1;
+		} else if (( wIn > maxW ) && ( wIn <= (U2+2)*alpha0 )){
+			//LATENCY 1 architecture
+			if ( wIn % alpha0 == 0 )
+				k = wIn / alpha0;
+			else
+				k = int(ceil (double(wIn) / double(alpha0)) );
+			
+			for (int p=0; p<k-1; p++)
+				cSize[p] = alpha0;
+			
+			cSize[k-1] = ( wIn % alpha0 == 0 ? alpha0 : wIn % alpha0);
+
+			ostringstream tmp;
+			for (int kk=k-1; kk>=0;kk--){
+				tmp <<  cSize[kk] << " ";
+			}	
+			REPORT( DEBUG, " Chunk " << k<< "  Sizes: " << tmp.str());
+			shortLatencyVersion = 2;
+		}  else if ( ( wIn > (U2+2)*alpha0 ) && (wIn <= (U3+2)*alpha)){
+			if ( wIn % alpha == 0 )
+				k = wIn / alpha;
+			else
+				k = int(ceil (double(wIn) / double(alpha)) );
+			
+			for (int p=0; p<k-1; p++)
+				cSize[p] = alpha;
+			
+			cSize[k-1] = ( wIn % alpha == 0 ? alpha : wIn % alpha);
+
+			ostringstream tmp;
+			for (int kk=k-1; kk>=0;kk--){
+				tmp <<  cSize[kk] << " ";
+			}	
+			REPORT( DEBUG, " Chunk " << k<< "  Sizes: " << tmp.str());
+			shortLatencyVersion = 3;
+		} else if  (wIn > (U3+2)*alpha){
+		 	//LATENCY 2+ architecture
+			if ( wIn % alpha == 0 )
+				k = wIn / alpha;
+			else
+				k = int(ceil (double(wIn) / double(alpha)) );
+			
+			for (int p=0; p<k-1; p++)
+				cSize[p] = alpha;
+			
+			cSize[k-1] = ( wIn % alpha == 0 ? alpha : wIn % alpha);
+
+			ostringstream tmp;
+			for (int kk=k-1; kk>=0;kk--){
+				tmp <<  cSize[kk] << " ";
+			}	
+			REPORT( DEBUG, " Chunk " << k<< "  Sizes: " << tmp.str());
+			shortLatencyVersion = 4;
+		}
+
+		REPORT( DEBUG, "Selected Short-Latency Version is " << shortLatencyVersion);
+		shortLatencyKValue = k;
+	}
+
+
 
 /******************************************************************************/
 	void IntAdder::emulate(TestCase* tc)
