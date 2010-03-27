@@ -57,8 +57,7 @@ namespace flopoco{
 		if ((target->getUseHardMultipliers()) && (target->getNumberOfDSPs()>0))
 		{
 			REPORT(DETAILED, "The target is: " << target->getID());
-			if ((target->getID()=="Virtex4")||(target->getID()=="Spartan3")) 
-			{
+			if ((target->getID()=="Virtex4")||(target->getID()=="Spartan3")){
 				int x, y, xS, yS, cOp1, cOp2;
 
 				string op1("Y"), op2("X");
@@ -158,14 +157,167 @@ namespace flopoco{
 					}else{
 						vhdl << tab << "R <= sum0"<<range( y*(cOp1-1) + xS + yS - 1, y*(cOp1-1) + xS + yS - (wInX + wInY ) ) << ";" << endl;
 					}
-				}
-				else 
+				}else{ 
 					vhdl << tab << "R <= X * Y ;" <<endl;
+				}
+			}else if ((target->getID()=="Virtex5") || (target->getID()=="Virtex6")){
+				//multiplier block size is 25x18 signed, 24x17 unsigned
+				//check best splitting
+				
+				int l18[5],l25[5];
+				l18[0]=18; 
+				l18[1]=35;
+				l18[2]=52;
+				l18[3]=69;
+				l18[4]=86;
+				
+				l25[0]=25;
+				l25[1]=49;
+				l25[2]=73;
+				l25[3]=97;
+				l25[4]=121;
+				
+				int k1_0=0, k2_0=0;
+				while (l18[k1_0] < wInX)
+					k1_0++;
+				while (l25[k2_0] < wInY)
+					k2_0++;
+				
+				int k1_1=0, k2_1=0;
+				while (l18[k1_1] < wInY)
+					k1_1++;
+				while (l25[k2_1] < wInX)
+					k2_1++;
+				
+				int cost0, cost1;
+				cost0 = (k1_0+1)*(k2_0+1);
+				cost1 = (k1_1+1)*(k2_1+1);
+					
+				REPORT(DEBUG, "First score is ="<<cost0);
+				REPORT(DEBUG, "First score is ="<<cost1);
+				
+				string op1 = "X";
+				string op2 = "Y";
+				
+				int wOp1, wOp2;
+				int yS, xS;
+				int cOp1, cOp2;
+
+				/* we multiply A * B, a has to be split into chunks of 17 in order to use the internal adders */
+				if (cost0 < cost1){
+					//already in best configuration: nothing to do
+					wOp1 = wInX; 
+					wOp2 = wInY;
+					xS = l18[k1_0];
+					yS = l25[k2_0];
+					cOp1 = k1_0 + 1;
+					cOp2 = k2_0 + 1;
+				}else{
+					op1 = "Y";
+					op2 = "X";
+					wOp1 = wInY; 
+					wOp2 = wInX;
+					xS = l18[k1_1];
+					yS = l25[k2_1];
+					cOp1 = k1_1 + 1;
+					cOp2 = k2_1 + 1;
+				}
+				
+				/* pad the two inputs up to size */
+				if (cost0 < cost1){
+					vhdl << tab << declare("sX", l18[k1_0]) << " <= " << op1 << " & " << zg(l18[k1_0] - wOp1,0) << ";" << endl;
+					vhdl << tab << declare("sY", l25[k2_0]) << " <= " << op2 << " & " << zg(l25[k2_0] - wOp2,0) << ";" << endl; //pad to the right with 0 (xst)
+				}else{
+					vhdl << tab << declare("sX", l18[k1_1]) << " <= " << op1 << " & " << zg(l18[k1_1] -wOp1,0) << ";" << endl; //pad to the right with 0 (xst)
+					vhdl << tab << declare("sY", l25[k2_1]) << " <= " << op2 << " & " << zg(l25[k2_1] -wOp2,0) << ";" << endl;
+				}
+				int x = 17;
+				int y = 24;
+				
+				REPORT(DEBUG, "number of chunks for first  operand = " << cOp1);
+				REPORT(DEBUG, "number of chunks for second operand = " << cOp2);
+				
+				/* chunk splitting the first operand into chunks of 17 and 24 bits*/
+				for (int k=0; k < cOp1 ; k++)
+					vhdl << tab << declare(join("x",k), x+1) << " <= " << (k<cOp1-1?"\"0\" & ":"") << "sX" << range((k<cOp1-1?(k+1)*x:xS)-1,k*x) << ";" << endl;
+				for (int k=0; k < cOp2 ; k++)
+					vhdl << tab << declare(join("y",k), y+1) << " <= " << (k<cOp2-1?"\"0\" & ":"") << "sY" << range((k<cOp2-1?(k+1)*y:yS)-1,k*y) << ";" << endl;
+	
+				//MULTIPLICATIONS WITH SOME ACCUMULATIONS
+				for (int i=0; i < cOp2; i++){ 
+					for (int j=0; j < cOp1; j++){ 
+						if (j==0){ // @ the first the operation is only multiplication, not MAC
+							vhdl << tab << declare(join("px",j,"y",i), x+y+2) << " <= " << join("x",j) << " * " << join("y",i) << ";" << endl;
+						}else{
+							vhdl << tab << declare(join("tpx",j,"y",i),x+y+2) << " <= " << join("x",j) << " * " << join("y",i) << ";" << endl; 
+							vhdl << tab << declare(join("px",j,"y",i), x+y+2) << " <= " << join("tpx",j,"y",i) << " + " 
+							                                                            << join("px",j-1,"y",i) << range(x+y+1,x) << ";" << endl; 
+						}
+						if (!((j==cOp1-1) && (i<cOp2-1))) nextCycle();
+					}
+					if (i<cOp2-1) setCycle(0); //reset cycle
+				}
+
+				//FORM THE INTERMEDIARY PRODUCTS
+				for (int i=0; i < cOp2 ; i++){
+					vhdl << tab << declare(join("sum",i), x*cOp1 + y + 2) << " <= "; 
+					for (int j=cOp1-1;j>=0; j--)
+						vhdl << join("px",j,"y",i) << (j<cOp1-1?range(x-1,0):"") << (j==0 ? ";" : " & ");
+					vhdl << endl;
+				}
+				
+				if (cOp1 > 1){
+					/* more than one operand in the final adder */
+					vhdl << tab << declare ("sum0Low", y) << " <= " << use("sum0")<<range(y-1,0) << ";" << endl;
+
+					IntNAdder* add =  new IntNAdder(target, (xS + y + 1) + (cOp2-1)*y - y, cOp2);
+					oplist.push_back(add);
+	
+					/* prepare operands */
+					for (int i=0; i < cOp2; i++){
+						if (i==0){ 
+							vhdl << tab << declare (join("addOp",i), (xS + y + 1) + (cOp2-1)*y - y) << " <= "
+							            << rangeAssign( (cOp2-1-i)*y-1, 0, join("sum",i)+of(xS+y+1-1))  << " & " 
+							            << join("sum",i) << range(xS+y+1-1,y) << ";" <<endl;
+						}else if ((i==1) && (i!=cOp1-1))  { 
+							vhdl << tab << declare (join("addOp",i), (xS + y + 1) + (cOp2-1)*y - y) << " <= " 
+							            << rangeAssign( (cOp2-1-i)*y-1, 0, join("sum",i)+of(xS+y+1-1))  << ((cOp2-1-i)*x - 1>=0?" & ":"") 
+							            << join("sum",i) << ";" <<endl;
+						}else if ((i > 1) && ( i!= cOp2-1)){ 
+							vhdl << tab << declare (join("addOp",i), (xS + y + 1) + (cOp2-1)*y - y) << " <= " 
+							            << rangeAssign( (cOp2-1-i)*y-1, 0, join("sum",i)+of(xS+y+1-1))  << ((cOp2-1-i)*x - 1>=0?" & ":"") 
+							            << join("sum",i) << " & "
+							            << zg( (i-1)*y, 0) << ";" <<endl;
+						}else if (i == cOp2-1){
+							vhdl << tab << declare (join("addOp",i), (xS + y + 1) + (cOp2-1)*y - y) << " <= " 
+							            << join("sum",i)  << " & "
+							            << zg( (i-1)*x, 0) << ";" <<endl;
+						}
+					}//TODO compact ifs
+
+					for (int i=0; i< cOp2; i++)
+						inPortMap (add, join("X",i) , join("addOp",i));
+	
+					inPortMapCst(add, "Cin", "'0'");
+					outPortMap(add, "R", "addRes");
+					vhdl << instance(add, "adder");
+
+					syncCycleFromSignal("addRes");
+
+					if ( ( xS+ yS ) - (wInX + wInY) < y ){
+						vhdl << tab << "R <= addRes & sum0Low "<<range(y-1, xS + yS - (wInX + wInY) )<< ";" << endl;
+					}else{	
+						vhdl << tab << "R <= addRes"<<range(xS + (cOp2-1)*y + 1 - y -1, (xS + (cOp2-1)*y + 1 - y) - (wInX + wInY))<< ";" << endl;
+					}
+				}else{
+					vhdl << tab << "R <= sum0"<<range(xS+yS-1, xS+yS - (wInX + wInY)) << ";" << endl;
+				}
 			}else{
-				cerr << " Sorry: only Virtex4 and Spartan3 are supported at this time. We'll be back soon" << endl;
-				throw "Error";
+				cerr << " Only implemented for Xilinx Targets for now" << endl;
+				throw "Sorry Not yet implemented";
 			}
-		}else
+		}
+		else
 			vhdl << tab << "R <= X * Y ;" <<endl;
 	}
 
