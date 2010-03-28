@@ -191,6 +191,10 @@ static void usage(char *name){
 	cerr << "    FPSqrt wE wF useDSP correctlyRounded\n";
 	cerr << "      Floating-point square root\n";
 	cerr << "      useDSP (O or 1) selects between two possible algorithms. correctlyRounded (0 or 1) selects between faithful and correct rounding\n";
+	cerr << "    FPSqrtPoly wE wF correctlyRounded degree\n";
+	cerr << "      Floating-point square root\n";
+	cerr << "      correctlyRounded (0 or 1) selects between faithful and correct rounding (NYImplemented)\n";
+	cerr << "      degree (1,...k) polynomial degree. Higher degree => more DSP less BRAM\n";
 	cerr << "    IntConstMult w c\n";
 	cerr << "      Integer constant multiplier: w - input size, c - the constant\n";
 	cerr << "    FPConstMult wE_in wF_in wE_out wF_out cst_sgn cst_exp cst_int_sig\n";
