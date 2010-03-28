@@ -49,15 +49,15 @@ namespace flopoco{
 		vhdl << tab << declare("sX",1) << "  <= X"<<of(wE+wF)<<";"<<endl;
 		vhdl << tab << declare("expX",wE) << " <= X"<<range(wE+wF-1,wF)<<";"<<endl;
 		vhdl << tab << declare("fX",wF+1) << " <= \"1\" & X"<<range(wF-1,0 )<<";"<<endl;
-		vhdl << tab << declare("fXm1",wF+1) << " <= \"0\" & X"<<range(wF-1,0 )<<";"<<endl;
 
 
 		vhdl << "--If the real exponent is odd"<<endl;
 		vhdl << tab << declare("OddExp")   << " <= not(expX(0));"  << endl;  
+		vhdl << tab << declare("addr",wF+1) << " <= OddExp & X"<<range(wF-1,0 )<<";"<<endl;
 
 		//first estimation of the exponent
 		vhdl << tab << declare("expBiasPostDecrement", wE+1) << " <= " << "CONV_STD_LOGIC_VECTOR("<< (1<<(wE-1))-2 <<","<<wE+1<<")"<<";"<<endl;
-		vhdl << tab << declare("expPostBiasAddition", wE+1) << " <= " << "( \"0\" & " << use("expX") << ") + "<<use("expBiasPostDecrement") << " + not(" << use("OddExp") << ");"<<endl;
+		vhdl << tab << declare("expPostBiasAddition", wE+1) << " <= " << "( \"0\" & expX) + expBiasPostDecrement + not(OddExp);"<<endl;
 
 		
 //		vhdl << tab << declare("eOp2",wE+1) << "<=" << rangeAssign(wE,0, "fX"+of(wF-1)) <<";"<<endl;
@@ -76,7 +76,7 @@ namespace flopoco{
 		oplist.push_back(fixpsqrt);
 
 
-		inPortMap(fixpsqrt,  "X", "fXm1");
+		inPortMap(fixpsqrt,  "X", "addr");
 		outPortMap(fixpsqrt, "R", "rfx");
 		vhdl << instance(fixpsqrt, "FixPointSQRT");
 		
