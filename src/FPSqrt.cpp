@@ -109,14 +109,14 @@ namespace flopoco{
 	
 			//first estimation of the exponent
 			vhdl << tab << declare("expBiasPostDecrement", wE+1) << " <= " << "CONV_STD_LOGIC_VECTOR("<< (1<<(wE-1))-2 <<","<<wE+1<<")"<<";"<<endl;
-			vhdl << tab << declare("expPostBiasAddition", wE+1) << " <= " << "( \"0\" & " << use("expX") << ") + "<<use("expBiasPostDecrement") << " + not(" << use("OddExp") << ");"<<endl;
+			vhdl << tab << declare("expPostBiasAddition", wE+1) << " <= " << "( \"0\" & expX) + expBiasPostDecrement + not(OddExp);"<<endl;
 	
 			//the addres bits for the coefficient ROM
-			vhdl << tab << declare("address", tableAddressWidth) << " <= "<< use("OddExp") << " & X" << range(wF-1, wF-tableAddressWidth+1) << ";"  << endl; //the MSB of address is the LSB of the exponent
+			vhdl << tab << declare("address", tableAddressWidth) << " <= OddExp & X" << range(wF-1, wF-tableAddressWidth+1) << ";"  << endl; //the MSB of address is the LSB of the exponent
 
 			//get the correct size of x for the multiplication
-			vhdl << tab << declare("lowX", sizeOfX + 1) << " <= " << "(\"0\" & " << use("X")<<range(sizeOfX-1,0) << ") when " << use("OddExp")<<"='0' else "
-				  << "(" << use("X")<<range(sizeOfX-1,0) << " & \"0\") ;"<<endl<<endl;
+			vhdl << tab << declare("lowX", sizeOfX + 1) << " <= " << "(\"0\" & X"<<range(sizeOfX-1,0) << ") when OddExp='0' else "
+				  << "(X"<<range(sizeOfX-1,0) << " & \"0\");"<<endl<<endl;
 			//instantiate the coefficient table
 			Table* t;
 			if (correctRounding)
@@ -124,10 +124,11 @@ namespace flopoco{
 			else
 				t = new PolynomialTable(target, tableAddressWidth, coeffTableWidth);
 			oplist.push_back(t);
+			combinatorialOperator = false;
 	
 			nextCycle();//// this pipeline level is needed in order to infer a BRAM here
 	
-			inPortMapCst (t, "X", use("address"));
+			inPortMap    (t, "X", "address");
 			outPortMap   (t, "Y", "data");
 			vhdl << instance(t, "SQRT_Coeffs_Table");
 
@@ -136,20 +137,20 @@ namespace flopoco{
 			nextCycle();/////////////////////////////////// The Coefficent ROM has a registered output
                                       
 			//get a2 from memory
-			vhdl <<endl << tab << declare("a2", coeffStorageSizes[2]) << "<=" << use("data")<<range(coeffTableWidth-1, coeffTableWidth-coeffStorageSizes[2]) <<";"<<endl;
+			vhdl <<endl << tab << declare("a2", coeffStorageSizes[2]) << "<= data"<<range(coeffTableWidth-1, coeffTableWidth-coeffStorageSizes[2]) <<";"<<endl;
 			//perform (-a2)*x, each term is <= than 17 bits so * will be mapped into one DSP block
-			vhdl << tab << declare("prodA2X",coeffStorageSizes[2] + sizeOfX + 1) << " <= " << use("lowX") << " * " << use("a2") << ";" << endl;
+			vhdl << tab << declare("prodA2X",coeffStorageSizes[2] + sizeOfX + 1) << " <= lowX  * a2 ;" << endl;
 
 			nextCycle();/////////////////////////////////// Will be absorbed by the DSP macro
 	
 			//get a1 from memory
-			vhdl <<endl << tab << declare("a1",coeffStorageSizes[1]) << " <= " << use("data")<<range(coeffStorageSizes[0] + coeffStorageSizes[1] - 1, coeffStorageSizes[0]) << ";" <<endl;
+			vhdl <<endl << tab << declare("a1",coeffStorageSizes[1]) << " <= data"<<range(coeffStorageSizes[0] + coeffStorageSizes[1] - 1, coeffStorageSizes[0]) << ";" <<endl;
 			//sign-extend and pad a1 for a1 - (-a2*x)
-			vhdl << tab << declare("signExtA1ZeroPad", 1 + coeffStorageSizes[1] + keepBits) << " <= " << "\"0\" & " << use("a1") << " & " << zg(keepBits, 0) << ";" << endl;
+			vhdl << tab << declare("signExtA1ZeroPad", 1 + coeffStorageSizes[1] + keepBits) << " <= " << "\"0\" & a1" << " & " << zg(keepBits, 0) << ";" << endl;
 			//sign-extend and align the -a2*x product
 			vhdl << tab << declare("signExtAlignedProdA2X", 1 + coeffStorageSizes[1] + keepBits) << " <= " << "\"0\" & " << zg(coeff_msb[1]-(coeff_msb[2]+msb_x),0) << " & " 
-				  << use("prodA2X")<< range(coeffStorageSizes[2] + sizeOfX, coeffStorageSizes[2] + sizeOfX - (1 + coeffStorageSizes[1] + keepBits + coeff_msb[2]+msb_x )+1) << ";"<<endl;
-			vhdl << tab << declare("negSignExtAlignedProdA2X", 1 + coeffStorageSizes[1] + keepBits) << " <= not(" << use("signExtAlignedProdA2X") << ");"<<endl;
+				  << "prodA2X"<< range(coeffStorageSizes[2] + sizeOfX, coeffStorageSizes[2] + sizeOfX - (1 + coeffStorageSizes[1] + keepBits + coeff_msb[2]+msb_x )+1) << ";"<<endl;
+			vhdl << tab << declare("negSignExtAlignedProdA2X", 1 + coeffStorageSizes[1] + keepBits) << " <= not(signExtAlignedProdA2X);"<<endl;
 			//subtract (-a2*x) from a1, => instantiate IntAdder
 			IntAdder* add1 = new IntAdder(target, 1 + coeffStorageSizes[1] + keepBits);
 			oplist.push_back(add1);
@@ -174,23 +175,23 @@ namespace flopoco{
 					IntMultiplier * my_mul = new IntMultiplier(target, (sizeOfX+1), 34);
 					oplist.push_back(my_mul);
 		
-					vhdl << tab << declare("justASignal",34) << " <= " << zg(15,0) << " & " << use("add1Res")<<range(coeffStorageSizes[1] + keepBits-1, keepBits - keepBits2) << ";" << endl;
+					vhdl << tab << declare("justASignal",34) << " <= " << zg(15,0) << " & add1Res"<<range(coeffStorageSizes[1] + keepBits-1, keepBits - keepBits2) << ";" << endl;
 	
-					inPortMapCst(my_mul,"X", use("lowX"));
+					inPortMap(my_mul,"X", "lowX");
 					//		inPortMapCst(my_mul,"Y", use("add1Res")+range(coeffStorageSizes[1] + keepBits-1, keepBits - keepBits2) );
-					inPortMapCst(my_mul,"Y", use("justASignal"));
+					inPortMap(my_mul,"Y", "justASignal");
 					//		outPortMap(my_mul, "R", "prodXA1sumA2X");
 					outPortMap(my_mul, "R", "prodXA1sumA2X_large");
 					vhdl << tab << instance(my_mul,"SecondMultiplier");
 	
 					syncCycleFromSignal("prodXA1sumA2X_large"); 
 		
-					vhdl << tab << declare("prodXA1sumA2X",36) << " <= " << use("prodXA1sumA2X_large")<<range(35,0) << ";" << endl;
+					vhdl << tab << declare("prodXA1sumA2X",36) << " <= prodXA1sumA2X_large"<<range(35,0) << ";" << endl;
 				}else{
 					IntMultiplier * my_mul = new IntMultiplier(target, (sizeOfX+1), coeffStorageSizes[1] + keepBits2);
 					oplist.push_back(my_mul);
-					inPortMapCst(my_mul,"X", use("lowX"));
-					inPortMapCst(my_mul,"Y", use("add1Res")+range(coeffStorageSizes[1] + keepBits-1, keepBits - keepBits2) );
+					inPortMap(my_mul,"X", "lowX");
+					inPortMapCst(my_mul,"Y", "add1Res"+range(coeffStorageSizes[1] + keepBits-1, keepBits - keepBits2) );
 					outPortMap(my_mul, "R", "prodXA1sumA2X");
 					vhdl << tab << instance(my_mul,"SecondMultiplier");
 	
@@ -203,10 +204,10 @@ namespace flopoco{
 #endif
 				//compose the operands for the addition a0 + [ prev_computation ]
 				//fetch a0 from memory
-				vhdl << endl << tab << declare("a0",coeffStorageSizes[0]) << " <= " << use("data") << range(coeffStorageSizes[0]-1,0) << ";" << endl;
-				vhdl << tab << declare ("ovfGuardA0", 1 + coeffStorageSizes[0]) << " <= " << " \"0\" & " << use("a0")<< ";" << endl;
+				vhdl << endl << tab << declare("a0",coeffStorageSizes[0]) << " <= data" << range(coeffStorageSizes[0]-1,0) << ";" << endl;
+				vhdl << tab << declare ("ovfGuardA0", 1 + coeffStorageSizes[0]) << " <= " << " \"0\" & a0"<< ";" << endl;
 				vhdl << tab << declare ("ovfGuardAlignProdXA1sumA2X", 1 + coeffStorageSizes[0]) << " <= " << " \"0\" & " << zg((1+coeff_msb[0])+1-msb_x , 0)  << " & "
-					  << use("prodXA1sumA2X")<<range((sizeOfX+1)+ coeffStorageSizes[1] -1 + keepBits2, keepBits2 + (sizeOfX+1)+ coeffStorageSizes[1] - (coeffStorageSizes[0]- (-msb_x+1+(1+ coeff_msb[0])))) << ";" <<endl; 
+					  << "prodXA1sumA2X"<<range((sizeOfX+1)+ coeffStorageSizes[1] -1 + keepBits2, keepBits2 + (sizeOfX+1)+ coeffStorageSizes[1] - (coeffStorageSizes[0]- (-msb_x+1+(1+ coeff_msb[0])))) << ";" <<endl; 
 	
 				IntAdder * add2 =  new IntAdder(target, 1 + coeffStorageSizes[0]);
 				oplist.push_back(add2);
@@ -220,16 +221,16 @@ namespace flopoco{
 		
 				if (!correctlyRounded){
 	
-					vhdl << tab << declare("finalFrac", wF) << " <= " << use("sumA0ProdXA1sumA2X") << range(coeffStorageSizes[0]-2, coeffStorageSizes[0]-wF-1) << ";" << endl;
-					vhdl << tab << declare("finalExp", wE) << " <= " << use("expPostBiasAddition") << range(wE,1) <<";"<<endl;
+					vhdl << tab << declare("finalFrac", wF) << " <= sumA0ProdXA1sumA2X" << range(coeffStorageSizes[0]-2, coeffStorageSizes[0]-wF-1) << ";" << endl;
+					vhdl << tab << declare("finalExp", wE) << " <= expPostBiasAddition" << range(wE,1) <<";"<<endl;
 
 					vhdl << tab << "-- sign/exception handling" << endl;
-					vhdl << tab << "with " << use("excsX") << " select" <<endl
+					vhdl << tab << "with excsX select" <<endl
 						  << tab << tab <<  declare("exnR", 2) << " <= " << "\"01\" when \"010\", -- positive, normal number" << endl
-						  << tab << tab << use("excsX") << range(2, 1) << " when \"001\" | \"000\" | \"100\", " << endl
+						  << tab << tab << "excsX" << range(2, 1) << " when \"001\" | \"000\" | \"100\", " << endl
 						  << tab << tab << "\"11\" when others;"  << endl;
 
-					vhdl << tab << "R <= "<<use("exnR")<<" & "<< use("excsX") <<"(0) & " << use("finalExp") << " & " << use("finalFrac")<< ";" << endl; 
+					vhdl << tab << "R <= exnR & excsX(0) & finalExp & finalFrac;" << endl; 
 				}else{
 					//		vhdl << tab << declare("normalizeBit",1) << " <= " << use("sumA0ProdXA1sumA2X") << "(" << coeffStorageSizes[0] << ")"<<";"<<endl;
 					//		nextCycle();/////////////////////////
@@ -237,11 +238,11 @@ namespace flopoco{
 					//			                                           << use("sumA0ProdXA1sumA2X") << range(coeffStorageSizes[0]-1, coeffStorageSizes[0]-wF-2) << ";" << endl;
 					//		vhdl << tab << declare("preSquareExp", wE) << " <= " << use("expPostBiasAddition") << range(wE,1) << " + " << use("normalizeBit")<<";"<<endl;
 
-					vhdl << tab << declare("preSquareFrac", wF+2) << " <= " << use("sumA0ProdXA1sumA2X") << range(coeffStorageSizes[0]-1, coeffStorageSizes[0]-wF-2) << ";" << endl;
-					vhdl << tab << declare("preSquareExp", wE) << " <= " << use("expPostBiasAddition") << range(wE,1) <<";"<<endl;
+					vhdl << tab << declare("preSquareFrac", wF+2) << " <= sumA0ProdXA1sumA2X" << range(coeffStorageSizes[0]-1, coeffStorageSizes[0]-wF-2) << ";" << endl;
+					vhdl << tab << declare("preSquareExp", wE) << " <= expPostBiasAddition" << range(wE,1) <<";"<<endl;
 
 
-					vhdl << tab << declare("preSquareConcat", 1 + wE + wF+1) << " <= " << zg(1,0) << " & " << use("preSquareExp") << " & " << use("preSquareFrac")<<range(wF,0)<<";"<<endl;;
+					vhdl << tab << declare("preSquareConcat", 1 + wE + wF+1) << " <= " << zg(1,0) << " & preSquareExp & preSquareFrac"<<range(wF,0)<<";"<<endl;;
 
 #ifndef LESS_DSPS
 					nextCycle();//////////////////	    
@@ -249,7 +250,7 @@ namespace flopoco{
 					IntAdder *predictAdder = new IntAdder(target, 1 + wE + wF+1);
 					oplist.push_back(predictAdder);
 
-					inPortMapCst(predictAdder,"X",use("preSquareConcat"));	
+					inPortMap(predictAdder,"X","preSquareConcat");	
 					inPortMapCst(predictAdder,"Y",zg(1 + wE + wF+1,0));
 					inPortMapCst(predictAdder,"Cin","'1'");
 					outPortMap(predictAdder,"R","my_predictor");
@@ -258,48 +259,44 @@ namespace flopoco{
 					IntSquarer *iSquarer = new IntSquarer(target,max(wF+2,34));
 					oplist.push_back(iSquarer);
 	    
-					vhdl << tab << declare("op1",max(wF+2,34)) << " <= " << zg(34-(wF+2),0) << " & " << use("preSquareFrac") << ";" << endl;
+					vhdl << tab << declare("op1",max(wF+2,34)) << " <= " << zg(34-(wF+2),0) << " & preSquareFrac;" << endl;
 	    
-					inPortMap(iSquarer, "X", use("op1"));
+					inPortMap(iSquarer, "X", "op1");
 					outPortMap(iSquarer,"R", "sqrResult");
 					vhdl << instance(iSquarer,"FractionSquarer");
 	    
 					syncCycleFromSignal("sqrResult");
 	    
-					vhdl << tab << declare("approxSqrtXSqr", 2*(wF+2) + 1) << " <= " << zg(1,0) << " & " << use("sqrResult")<<range(2*(wF+2)-1,0)<<";"<<endl;
-					vhdl << tab << declare("realXFrac", 2*(wF+2) + 1) << " <= " << "( \"001\" & " <<  use("fracX") << " & " << zg(2*(wF+2) + 1-2-wF-1 ,0)<<") when " << use("OddExp") <<"='0' else "<<endl;
-					vhdl << tab << tab << "( \"01\" & " <<  use("fracX") << " & " << zg(2*(wF+2) + 1-2-wF,0)<<");"<<endl;
+					vhdl << tab << declare("approxSqrtXSqr", 2*(wF+2) + 1) << " <= " << zg(1,0) << " & sqrResult"<<range(2*(wF+2)-1,0)<<";"<<endl;
+					vhdl << tab << declare("realXFrac", 2*(wF+2) + 1) << " <= " << "( \"001\" & fracX & " << zg(2*(wF+2) + 1-2-wF-1 ,0)<<") when OddExp='0' else "<<endl;
+					vhdl << tab << tab << "( \"01\" & fracX & " << zg(2*(wF+2) + 1-2-wF,0)<<");"<<endl;
 	    
-					vhdl << tab << declare("negRealXFrac", 2*(wF+2) + 1) << " <= " << "not("<<use("realXFrac")<<");"<<endl;
+					vhdl << tab << declare("negRealXFrac", 2*(wF+2) + 1) << " <= " << "not(realXFrac);"<<endl;
 	    
 					IntAdder *myIntAdd = new IntAdder(target, 2*(wF+2) + 1);
 					oplist.push_back(myIntAdd);
 	    
-					inPortMap(myIntAdd,"X",use("approxSqrtXSqr"));	
-					inPortMap(myIntAdd,"Y",use("negRealXFrac"));
-					inPortMapCst(myIntAdd,"Cin","'1'");
+					inPortMap(myIntAdd,"X","approxSqrtXSqr");	
+					inPortMap(myIntAdd,"Y","negRealXFrac");
+					inPortMap(myIntAdd,"Cin","'1'");
 					outPortMap(myIntAdd,"R","my_add_result");
 					vhdl << tab << instance(myIntAdd, "Comparator");
 
 					syncCycleFromSignal("my_add_result");
-					vhdl << tab << declare("greater",1) << " <= " << use("my_add_result")<<of(2*(wF+2))<<";"<<endl;
+					vhdl << tab << declare("greater",1) << " <= my_add_result"<<of(2*(wF+2))<<";"<<endl;
 
 					syncCycleFromSignal("my_predictor");    
 
 					vhdl << tab << "-- sign/exception handling" << endl;
-					vhdl << tab << "with " << use("excsX") << " select" <<endl
+					vhdl << tab << "with excsX select" <<endl
 						  << tab << tab <<  declare("exnR", 2) << " <= " << "\"01\" when \"010\", -- positive, normal number" << endl
-						  << tab << tab << use("excsX") << range(2, 1) << " when \"001\" | \"000\" | \"100\", " << endl
+						  << tab << tab << "excsX" << range(2, 1) << " when \"001\" | \"000\" | \"100\", " << endl
 						  << tab << tab << "\"11\" when others;"  << endl;
 
-					vhdl << tab << "R <= (" << use("exnR") << " & " << use("excsX") <<"(0) & " << use("preSquareConcat")<<range(wE + wF,1) << ") when " << use("greater")<<"='0' else "<<endl;;
-					vhdl << tab << tab << "(" << use("exnR") << " & " << use("excsX") <<"(0) & " << use("my_predictor")<<range(wE + wF,1) << ");"<<endl;
+					vhdl << tab << "R <= (exnR & excsX(0) & preSquareConcat"<<range(wE + wF,1) << ") when greater='0' else "<<endl;;
+					vhdl << tab << tab << "(exnR & excsX(0) & my_predictor"<<range(wE + wF,1) << ");"<<endl;
 	    
 				}
-	
-
-
-
 			}
 			////////////////////////////////////////////////////////////////////////////////////
 			else {
