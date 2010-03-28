@@ -9,7 +9,7 @@
 #include "Operator.hpp"
 #include "FPNumber.hpp"
 #include "TableGenerator.hpp"
-#include "FunctionEvaluator.hpp"
+#include "PolynomialEvaluator.hpp"
 
 namespace flopoco{
 	/** The FPSqrtPoly class */
