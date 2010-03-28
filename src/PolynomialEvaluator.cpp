@@ -53,6 +53,7 @@ namespace flopoco{
 		for (uint32_t i=0; i< coef.size(); i++){
 			FixedPointCoefficient *fp = new FixedPointCoefficient(coef[i]);
 			fp->setSize( coef[i]->getSize()+coef[i]->getWeight());
+			fp->setWeight(fp->getWeight()); 
 			coef_.push_back(fp);
 		}
 
@@ -60,15 +61,17 @@ namespace flopoco{
 		
 		/* init */
 		
-		setName( join("PolynomialEvaluator_d",degree_) );
-		
+		setName( join("PolynomialEvaluator_d",degree_));
 		REPORT(DETAILED, "Polynomial to evaluate: " << printPolynomial(coef, y));
+		
 		
 		/* ================== I/O declarations ==================*/
 		addInput("Y", y_->getSize());
-		for (uint32_t i=0; i <= unsigned(degree_); i++)
+		for (uint32_t i=0; i <= unsigned(degree_); i++){
 			addInput(join("a",i), coef_[i]->getSize()+1);
-
+			REPORT(DEBUG, "Coefficient a"<<i<<" size=" << coef_[i]->getSize() << " weight=" << coef_[i]->getWeight());
+		}
+			REPORT(DEBUG, "y size=" << y_->getSize() << " weight=" << y_->getWeight());
 		/* Gappa Style */
 		
 		yGuard_.reserve(20);
@@ -134,66 +137,66 @@ namespace flopoco{
 //		}
 
 		/*init vectors */
-		for (uint32_t i=1; i<=unsigned(degree_)+1; i++){
-			yGuard_[i] = 0; //maxBoundY;
-			nYGuard_[i] = 0;
-		}
-		
-		for (uint32_t i=0; i<unsigned(degree_)+1; i++)
-			aGuard_[i] = maxBoundA;
+//		for (uint32_t i=1; i<=unsigned(degree_)+1; i++){
+//			yGuard_[i] = 0; //maxBoundY;
+//			nYGuard_[i] = 0;
+//		}
+//		
+//		for (uint32_t i=0; i<unsigned(degree_)+1; i++)
+//			aGuard_[i] = maxBoundA;
 
-		for (int j=1; j<=degree_; j++)
-			cout << "maxY["<<j<<"]="<<maxBoundY[j]<<" "; 
-		cout << endl;
-		for (int j=0; j<=degree_; j++)
-			cout << "aGuard["<<j<<"]="<<aGuard_[j]<<" "; 
-		cout << endl;
+//		for (int j=1; j<=degree_; j++)
+//			cout << "maxY["<<j<<"]="<<maxBoundY[j]<<" "; 
+//		cout << endl;
+//		for (int j=0; j<=degree_; j++)
+//			cout << "aGuard["<<j<<"]="<<aGuard_[j]<<" "; 
+//		cout << endl;
 
-		mpfr_t u, *e;
-		mpfr_init2(u, 100);
+//		mpfr_t u, *e;
+//		mpfr_init2(u, 100);
 
-		int errExp;
-		/* design space exploration */				
-		if (degree_>1){
-			sol = false;
-			int i=0;
-			while (!sol){
-				while ((!sol) && (nextStateY())){
-					while (((!sol) && nextStateA())){
-						i++;
-						e = errorEstimator(yGuard_, aGuard_);
-						mpfr_add( u, *approximationError, *e, GMP_RNDN);
-						if ( i%128 == 0)
-							cerr << " err = "<< mpfr_get_exp(u) << endl;
-						errExp = (mpfr_get_d(u, GMP_RNDZ)==0 ? 0 :mpfr_get_exp(u));
-						if (errExp <= -targetPrec-1 ){
-							sol = true;
-							mpfr_clear(u);
-							mpfr_clear(*e);
-							free(e);
-						}else{
-							mpfr_clear(*e);
-							free(e);
-						}
-					} 
-				}	
-			}		
-		}else{
-			sol = false;
-			while (!sol){
-				while ((!sol) && (nextStateY())){
-					mpfr_t* u;
-					u = (mpfr_t*)malloc(sizeof(mpfr_t));
-					mpfr_init2(*u, 100);
-					mpfr_add( *u, *approximationError, *errorEstimator(yGuard_, aGuard_), GMP_RNDN);
-					cerr << " err = " << mpfr_get_exp(*u) << endl;
-					int errExp = (mpfr_get_d(*u, GMP_RNDZ)==0 ? 0 :mpfr_get_exp(*u));
-					if (errExp <= -targetPrec-1 ){
-						sol = true;
-					}
-				}	
-			}		
-		}
+//		int errExp;
+//		/* design space exploration */				
+//		if (degree_>1){
+//			sol = false;
+//			int i=0;
+//			while (!sol){
+//				while ((!sol) && (nextStateY())){
+//					while (((!sol) && nextStateA())){
+//						i++;
+//						e = errorEstimator(yGuard_, aGuard_);
+//						mpfr_add( u, *approximationError, *e, GMP_RNDN);
+//						if ( i%128 == 0)
+//							cerr << " err = "<< mpfr_get_exp(u) << endl;
+//						errExp = (mpfr_get_d(u, GMP_RNDZ)==0 ? 0 :mpfr_get_exp(u));
+//						if (errExp <= -targetPrec-1 ){
+//							sol = true;
+//							mpfr_clear(u);
+//							mpfr_clear(*e);
+//							free(e);
+//						}else{
+//							mpfr_clear(*e);
+//							free(e);
+//						}
+//					} 
+//				}	
+//			}		
+//		}else{
+//			sol = false;
+//			while (!sol){
+//				while ((!sol) && (nextStateY())){
+//					mpfr_t* u;
+//					u = (mpfr_t*)malloc(sizeof(mpfr_t));
+//					mpfr_init2(*u, 100);
+//					mpfr_add( *u, *approximationError, *errorEstimator(yGuard_, aGuard_), GMP_RNDN);
+//					cerr << " err = " << mpfr_get_exp(*u) << endl;
+//					int errExp = (mpfr_get_d(*u, GMP_RNDZ)==0 ? 0 :mpfr_get_exp(*u));
+//					if (errExp <= -targetPrec-1 ){
+//						sol = true;
+//					}
+//				}	
+//			}		
+//		}
 
 
 		ostringstream s1, s2;		
@@ -212,12 +215,17 @@ namespace flopoco{
 
 //		exit(-1);///////////////////////////////
 		for (uint32_t i=0; i<=unsigned(degree_); i++){
-			if (i==0)
+			if (i==0){
+				vhdl << tab << "-- weight of sigmaP"<<i<<" is="<<coef_[degree_-i]->getWeight()<<" size="<<1+coef_[degree_-i]->getSize()<<endl;
 				vhdl << tab << declare( join("sigmaP",i), 1+coef_[degree_-i]->getSize()) << " <= a"<<degree_<<";"<<endl; 
-			else{
+			}else{
+				vhdl << tab << "-- weight of yT"<<i<<" is="<<y_->getWeight()<<" size="<<1+y_->getSize()+yGuard_[i]<<endl;
 				vhdl << tab << declare( join("yT",i) , 1+y_->getSize()+yGuard_[i]) << " <= \"0\" & Y"<<range(y_->getSize()-1, -yGuard_[i]) << ";" << endl;
+
 				
 //				cout << "sigmakPSize[i-1]( "<<i-1<<") is = " << sigmakPSize[i-1] << "yGuard_[i]="<<yGuard_[i]<< " y_->getSize()="<<y_->getSize()<<endl;
+				vhdl << tab << "-- weight of piP"<<i<<" is="<<pikPWeight[i]<<" size="<<pikPSize[i]+2<<endl;
+
 				SignedIntMultiplier* sm = new SignedIntMultiplier ( target, 1+y_->getSize()+yGuard_[i], sigmakPSize[i-1]+1);
 				oplist.push_back(sm);
 				
@@ -230,6 +238,7 @@ namespace flopoco{
 				nextCycle();///////////////////////////////////////////////////
 				
 				if (i<unsigned(degree_)){
+					vhdl << tab << "-- weight of piPT"<<i<<" is="<<pikPTWeight[i]<<" size="<<pikPTSize[i]+1<<endl;
 					vhdl << tab << declare( join("piPT",i), pikPTSize[i]+1 ) << " <= " << join("piP",i)<<range(pikPSize[i], pikPSize[i] - pikPTSize[i] ) << ";" <<endl; // coef_[i]->getSize()+1+y_->getSize()+yGuard_[i]-1, coef_[i]->getSize()+1+y_->getSize()+yGuard_[i]-1 - pikPTSize[i]) << ";" << endl;   
 					IntAdder* sa = new IntAdder (target, sigmakPSize[i]+1);
 					oplist.push_back(sa);

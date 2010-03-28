@@ -991,14 +991,15 @@ bool parseCommandLine(int argc, char* argv[]){
 		}
 		else if (opname == "FPSqrtPoly")
 		{
-			int nargs = 3;
+			int nargs = 4;
 			if (i+nargs > argc)
 				usage(argv[0]); // and exit
 			int wE = checkStrictyPositive(argv[i++], argv[0]);
 			int wF = checkStrictyPositive(argv[i++], argv[0]);
 			int correctlyRounded = checkBoolean(argv[i++], argv[0]);
-			cerr << "> FPSqrtPoly: wE=" << wE << " wF=" << wF << " correctlyRounded="<< correctlyRounded << endl;
-			op = new FPSqrtPoly(target, wE, wF, correctlyRounded);
+			int degree = checkStrictyPositive(argv[i++], argv[0]);
+			cerr << "> FPSqrtPoly: wE=" << wE << " wF=" << wF << " correctlyRounded="<< correctlyRounded << " degree =" << degree << endl;
+			op = new FPSqrtPoly(target, wE, wF, correctlyRounded, degree);
 			addOperator(op);
 		}
 //		else if (opname == "FPFMA")

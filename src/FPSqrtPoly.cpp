@@ -33,7 +33,7 @@ using namespace std;
 namespace flopoco{
 	extern vector<Operator*> oplist;
 
-	FPSqrtPoly::FPSqrtPoly(Target* target, int wE, int wF, bool correctlyRounded):
+	FPSqrtPoly::FPSqrtPoly(Target* target, int wE, int wF, bool correctlyRounded, int degree):
 		Operator(target), wE(wE), wF(wF), correctRounding(correctlyRounded) {
 
 		ostringstream name;
@@ -52,7 +52,7 @@ namespace flopoco{
 
 
 		vhdl << "--If the real exponent is odd"<<endl;
-		vhdl << tab << declare("OddExp")   << " <= not(expX(0));"  << endl;  
+		vhdl << tab << declare("OddExp")    << " <= not(expX(0));"  << endl;  
 		vhdl << tab << declare("addr",wF+1) << " <= OddExp & X"<<range(wF-1,0 )<<";"<<endl;
 
 		//first estimation of the exponent
@@ -65,14 +65,15 @@ namespace flopoco{
 		
 		
 		vhdl << tab << "-- sign/exception handling" << endl;
-		vhdl << tab << "with " << use("excsX") << " select" <<endl
+		vhdl << tab << "with excsX select" <<endl
 			  << tab << tab <<  declare("exnR", 2) << " <= " << "\"01\" when \"010\", -- positive, normal number" << endl
-			  << tab << tab << use("excsX") << range(2, 1) << " when \"001\" | \"000\" | \"100\", " << endl
+			  << tab << tab << "excsX" << range(2, 1) << " when \"001\" | \"000\" | \"100\", " << endl
 			  << tab << tab << "\"11\" when others;"  << endl;
 
 		
 		
-		FunctionEvaluator *fixpsqrt = new FunctionEvaluator(target, "sqrt(1+x),0,1,1;sqrt(2+x),0,1,1;sqrt(3+x),0,1,1", wF+1, wF, 2); //TODO
+		FunctionEvaluator *fixpsqrt = new FunctionEvaluator(target, "sqrt(1+x),0,1,1;sqrt(2+2*x),0,1,1", wF+1, wF, degree); //TODO
+//		FunctionEvaluator *fixpsqrt = new FunctionEvaluator(target, "sqrt(1+x),0,1,1", wF+1, wF, 2); //TODO
 		oplist.push_back(fixpsqrt);
 
 

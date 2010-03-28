@@ -23,7 +23,7 @@ namespace flopoco{
 		 * @param[in]		wF			the the with of the fraction for the f-p number X
 		 * @param[in]  correctlyRounded if the result will be correctly rounded or not
 		 */
-		FPSqrtPoly(Target* target, int wE, int wF, bool correctlyRounded = false);
+		FPSqrtPoly(Target* target, int wE, int wF, bool correctlyRounded = false, int degree = 2);
 
 		/**
 		 * FPSqrtPoly destructor

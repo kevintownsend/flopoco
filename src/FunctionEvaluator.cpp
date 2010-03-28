@@ -49,14 +49,14 @@ namespace flopoco{
 
 		setCopyrightString("Bogdan Pasca, Mioara Joldes (2010)");		
 
-		tg = new TableGenerator(target, func, wInX, wOutX, n);
+		tg = new TableGenerator(target, func, wInX, wOutX+1, n);
 		oplist.push_back(tg);
 		combinatorialOperator = false;
 		
-		YVar* y = new YVar(wInX - tg->wIn, -tg->wIn);
+		YVar* y = new YVar(wInX - tg->wIn, -tg->wIn+1);
 		
 		
-		pe = new PolynomialEvaluator(target, tg->getCoeffParamVector(), y, wOutX, tg->getMaxApproxError() );
+		pe = new PolynomialEvaluator(target, tg->getCoeffParamVector(), y, wOutX+1, tg->getMaxApproxError() );
 		
 		oplist.push_back(pe);
 		wR = pe->getRWidth();

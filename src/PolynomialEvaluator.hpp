@@ -57,6 +57,14 @@ namespace flopoco{
 			} 
 
 			/** 
+			 * Set the weight of the MSB
+			 */
+			void setWeight(int w){
+				weight_=w;
+			} 
+
+
+			/** 
 			 * Fetch the size (width) of the coefficient
 			 * @return coefficient width
 			 */
