@@ -47,11 +47,20 @@ namespace flopoco{
 
 		vhdl << tab << declare("excsX",3) << " <= X"<<range(wE+wF+2,wE+wF)<<";"<<endl;
 		vhdl << tab << declare("sX",1) << "  <= X"<<of(wE+wF)<<";"<<endl;
-		vhdl << tab << declare("eX",wE) << " <= X"<<range(wE+wF-1,wF)<<";"<<endl;
+		vhdl << tab << declare("expX",wE) << " <= X"<<range(wE+wF-1,wF)<<";"<<endl;
 		vhdl << tab << declare("fX",wF+1) << " <= \"1\" & X"<<range(wF-1,0 )<<";"<<endl;
+
+
+		vhdl << "--If the real exponent is odd"<<endl;
+		vhdl << tab << declare("OddExp")   << " <= not(expX(0));"  << endl;  
+
+		//first estimation of the exponent
+		vhdl << tab << declare("expBiasPostDecrement", wE+1) << " <= " << "CONV_STD_LOGIC_VECTOR("<< (1<<(wE-1))-2 <<","<<wE+1<<")"<<";"<<endl;
+		vhdl << tab << declare("expPostBiasAddition", wE+1) << " <= " << "( \"0\" & " << use("expX") << ") + "<<use("expBiasPostDecrement") << " + not(" << use("OddExp") << ");"<<endl;
+
 		
-		vhdl << tab << declare("eOp2",wE+1) << "<=" << rangeAssign(wE,0, "fX"+of(wF-1)) <<";"<<endl;
-		vhdl << tab << declare("expPostDec",wE+1) << " <= (\"0\" & eX) + eOp2;"<<endl;
+//		vhdl << tab << declare("eOp2",wE+1) << "<=" << rangeAssign(wE,0, "fX"+of(wF-1)) <<";"<<endl;
+//		vhdl << tab << declare("expPostDec",wE+1) << " <= (\"0\" & eX) + eOp2;"<<endl;
 		
 		
 		vhdl << tab << "-- sign/exception handling" << endl;
@@ -93,9 +102,11 @@ namespace flopoco{
 
 		syncCycleFromSignal("fPostRound");
 		
+
+		addOutput("RFull", fixpsqrt->getRWidth());
+		vhdl << tab << " RFull <= rfx;" << endl; 
 		
-		
-		vhdl << tab << " R <= exnR & \"0\" & expPostDec"<<range(wE,1)<<" & fPostRound"<<range(1 + wF, 2)<<";"<<endl;
+		vhdl << tab << " R <= exnR & \"0\" & expPostBiasAddition"<<range(wE,1)<<" & fPostRound"<<range(1 + wF, 2)<<";"<<endl;
 		
 		
 //		cout << "The result number of bits is " << 	fixpsqrt->getRWidth();
