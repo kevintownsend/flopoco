@@ -51,6 +51,7 @@ namespace flopoco{
 
 		tg = new TableGenerator(target, func, wInX, wOutX, n);
 		oplist.push_back(tg);
+		combinatorialOperator = false;
 		
 		YVar* y = new YVar(wInX - tg->wIn, -tg->wIn);
 		
