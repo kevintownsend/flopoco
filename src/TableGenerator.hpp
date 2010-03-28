@@ -34,6 +34,7 @@ namespace flopoco{
 			
 			MPPolynomial* getMPPolynomial(sollya_node_t t);
 			vector<FixedPointCoefficient*> getPolynomialCoefficients(sollya_node_t t, sollya_chain_t c);
+			vector<FixedPointCoefficient*> getPolynomialCoefficients(sollya_node_t t, int* sizeList);
       vector<vector<FixedPointCoefficient*> > getPolynomialCoefficientsVector();
       void printPolynomialCoefficientsVector();
       void updateMinWeightParam(int i, FixedPointCoefficient* zz);
@@ -42,6 +43,7 @@ namespace flopoco{
       mpfr_t *getMaxApproxError();
       void generateDebug();
       void generateDebugPwf();
+      sollya_chain_t makeIntPtrChainCustomized(int m, int n, int precshift, int msize);
       /************************************************/
       /********Virtual methoods from class Table*******/
       mpz_class function(int x);

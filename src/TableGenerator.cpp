@@ -59,7 +59,8 @@ namespace flopoco{
   int  nrFunctions=(pwf->getPiecewiseFunctionArray()).size();
   int  iter;
   int guardBits =1;
-  
+  //this is the size of the multipliers to be prefered
+  int msize =1;
   mpfr_t a;
   mpfr_t b;
   mpfr_t eps;
@@ -90,6 +91,10 @@ namespace flopoco{
   int k, errBoundBool;
   sollya_node_t tempNode2=parseString("0"); //ct part
   sollya_chain_t tempChain = makeIntPtrChainFromTo(0,n); //monomials
+ 
+  int sizeList[n+1];
+  for (k=0;k<=n;k++)   sizeList[k]=0;
+  
   
   for (iter=0; iter<nrFunctions;iter++){
     Function *fi;
@@ -135,7 +140,9 @@ namespace flopoco{
           printTree(sY);
           cout<<"\nover: "<<sPrintBinary(zero)<<" "<< sPrintBinary(bi)<<"withprecshift:"<<precShift<<endl;	
         }
-        tempChain2 = makeIntPtrChainToFromBy(wOutX+1+guardBits,n+1, precShift); //precision
+        //tempChain2 = makeIntPtrChainToFromBy(wOutX+1+guardBits,n+1, precshift); //precision
+        tempChain2 = makeIntPtrChainCustomized(wOutX+1+guardBits,n+1, precShift,msize ); //precision
+        
         tempNode3 = FPminimax(sY, tempChain ,tempChain2, NULL,       zero, bi, FIXED, ABSOLUTESYM, tempNode2,NULL);
         polys.push_back(tempNode3);
         
@@ -173,6 +180,16 @@ namespace flopoco{
         cout<< "the number of intervals is:"<< nrIntervals<<endl; 
         cout<< "We proceed to the next function"<<endl; 
       }
+    //we have to update the total size of the coefficients
+    int ii=0;
+    while (tempChain2!=NULL){
+       int sizeNew=*((int *)first(tempChain2));
+       tempChain2=tail(tempChain2);
+       if (sizeNew>sizeList[ii] )sizeList[ii]= sizeNew;
+       ii++;
+      }
+    
+    
     nrIntCompleted=nrIntCompleted+nrIntervals;  
     }   
   }    
@@ -214,7 +231,7 @@ namespace flopoco{
         printTree(polys[k]);
       }
       
-      fpCoeffVector = getPolynomialCoefficients(polys[k], tempChain2);
+      fpCoeffVector = getPolynomialCoefficients(polys[k], sizeList);
       polyCoeffVector.push_back(fpCoeffVector);
 	  }
 	  //setting of Table parameters
@@ -577,6 +594,55 @@ vector<FixedPointCoefficient*> TableGenerator::getPolynomialCoefficients(sollya_
      return coeffVector;
 }
 
+
+vector<FixedPointCoefficient*> TableGenerator::getPolynomialCoefficients(sollya_node_t t, int* sizeList){
+	  int degree=1,i,size, weight;
+		sollya_node_t *nCoef;
+		mpfr_t *coef;
+		
+		vector<FixedPointCoefficient*> coeffVector;
+		 FixedPointCoefficient* zz;
+		 
+		//printTree(t);
+		getCoefficients(&degree, &nCoef, t);
+		//cout<<degree<<endl;
+		coef = (mpfr_t *) safeCalloc(degree+1,sizeof(mpfr_t));
+    
+      
+		for (i = 0; i <= degree; i++)
+			{
+				mpfr_init2(coef[i], getToolPrecision());
+				//cout<< i<<"th coeff:"<<endl;
+				//printTree(getIthCoefficient(t, i));
+				evaluateConstantExpression(coef[i], getIthCoefficient(t, i), getToolPrecision());
+				if (verbose){
+		      cout<< i<<"th coeff:"<<sPrintBinary(coef[i])<<endl;
+		    }
+		    size=sizeList[i];
+		    
+		    if (mpfr_sgn(coef[i])==0){
+		      weight=0;
+          size=1;
+        } 
+		    else 
+		    weight=mpfr_get_exp(coef[i]);
+		    
+		    zz= new FixedPointCoefficient(size, weight, coef[i]);
+		    coeffVector.push_back(zz);
+		    updateMinWeightParam(i,zz);
+			}
+      
+		  //Cleanup 
+	    for (i = 0; i <= degree; i++)
+			  mpfr_clear(coef[i]);
+		  free(coef);
+		  
+		 
+     return coeffVector;
+}
+
+
+
 void TableGenerator::updateMinWeightParam(int i, FixedPointCoefficient* zz)
 {
   if (coeffParamVector.size()<=(unsigned)i) {
@@ -646,6 +712,30 @@ int j;
     }
 }
 
+sollya_chain_t TableGenerator::makeIntPtrChainCustomized(int m, int n, int precshift, int msize) {
+  int i,j, temp;
+  int *elem;
+  sollya_chain_t c;
+  int tempTable[n+1];
+  tempTable[0]=m;
+  for (i=1; i<n; i++){
+    temp=(tempTable[i-1]-precshift)/msize;
+    if (temp!=0)
+    tempTable[i]=temp*msize;
+    else  tempTable[i]=(tempTable[i-1]-precshift);
+  }
+  
+  c = NULL;
+ 
+  for(j=n-1;j>=0;j--) {
+    elem = (int *) malloc(sizeof(int));
+    *elem = tempTable[j];
+    c = addElement(c,elem);
+  }
+
+  return c;
+}
+
 
 /****************************************************************************************/
 /************Implementation of virtual methods of Class Table***************************/
@@ -693,25 +783,25 @@ int TableGenerator::double2input(double x){
       pcoeffs=polyCoeffVector[(unsigned)x];
       degree= pcoeffs.size();
       amount=0;
-      //cout<<"polynomial "<<x<<": "<<endl;
+      cout<<"polynomial "<<x<<": "<<endl;
       //r=mpz_class( 133955332 )+(mpz_class( 65664 )<< 27 )+(mpz_class( 64 )<< 44 )
       for (j=0; j<degree; j++){     
-        //cout<<" "<<(*pcoeffs[j]).getSize()<< " "<<(*pcoeffs[j]).getWeight()<<endl; 
-        //r=r+(mpz_class(1)<<amount);
+        cout<<" "<<(*pcoeffs[j]).getSize()<< " "<<(*pcoeffs[j]).getWeight()<<endl; 
+        r=r+(mpz_class(1)<<amount);
         
         
         cf=(*pcoeffs[j]).getValueMpfr();
         
-        //cout<< j<<"th coeff:"<<sPrintBinary(*cf)<<endl;
+        cout<< j<<"th coeff:"<<sPrintBinary(*cf)<<endl;
         z=sPrintBinaryZ(*cf);
-        //cout<< j<<"th coeff:"<<z<<" "<<strlen(z)<<endl;
-        mpz_init(c);
+        cout<< j<<"th coeff:"<<z<<" "<<strlen(z)<<endl;
+        //mpz_init(c);
         if (mpfr_sgn(*cf)!=0) {
           
          trailingZeros=(*coeffParamVector[j]).getSize()+(*pcoeffs[j]).getWeight()-strlen(z);
          numberSize= (*coeffParamVector[j]).getSize()+(*coeffParamVector[j]).getWeight()+1 ;
           //mpz_set_str (mpz_t rop, char *str, int base) 
-          mpz_set_str (c,z,2);
+          mpz_init_set_str (c,z,2);
           if (mpfr_sgn(*cf)<0) {
             r=r+(((mpz_class(1)<<numberSize) -   (mpz_class(c)<<trailingZeros)   )<<amount);
           }

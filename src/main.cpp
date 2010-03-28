@@ -1430,7 +1430,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			int wO = atoi(argv[i++]);
 			int n  = checkStrictyPositive(argv[i++], argv[0]);
 			
-			
+						
 			cerr << "> TableGenerator func='" << func << "', wI=" << wI << ", wO=" << wO <<endl;	
 			
 			Operator* tg = new TableGenerator(target, func, wI, wO, n);
@@ -1467,7 +1467,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			int wO = atoi(argv[i++]);
 			int n  = checkStrictyPositive(argv[i++], argv[0]);
 			
-			
+				
 			cerr << "> TableGenerator func='" << func << "', wI=" << wI << ", wO=" << wO <<endl;	
 			
 			Operator* tg = new FunctionEvaluator(target, func, wI, wO, n);
