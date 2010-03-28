@@ -137,66 +137,66 @@ namespace flopoco{
 //		}
 
 		/*init vectors */
-//		for (uint32_t i=1; i<=unsigned(degree_)+1; i++){
-//			yGuard_[i] = 0; //maxBoundY;
-//			nYGuard_[i] = 0;
-//		}
-//		
-//		for (uint32_t i=0; i<unsigned(degree_)+1; i++)
-//			aGuard_[i] = maxBoundA;
+		for (uint32_t i=1; i<=unsigned(degree_)+1; i++){
+			yGuard_[i] = 0; //maxBoundY;
+			nYGuard_[i] = 0;
+		}
+		
+		for (uint32_t i=0; i<unsigned(degree_)+1; i++)
+			aGuard_[i] = maxBoundA;
 
-//		for (int j=1; j<=degree_; j++)
-//			cout << "maxY["<<j<<"]="<<maxBoundY[j]<<" "; 
-//		cout << endl;
-//		for (int j=0; j<=degree_; j++)
-//			cout << "aGuard["<<j<<"]="<<aGuard_[j]<<" "; 
-//		cout << endl;
+		for (int j=1; j<=degree_; j++)
+			cout << "maxY["<<j<<"]="<<maxBoundY[j]<<" "; 
+		cout << endl;
+		for (int j=0; j<=degree_; j++)
+			cout << "aGuard["<<j<<"]="<<aGuard_[j]<<" "; 
+		cout << endl;
 
-//		mpfr_t u, *e;
-//		mpfr_init2(u, 100);
+		mpfr_t u, *e;
+		mpfr_init2(u, 100);
 
-//		int errExp;
-//		/* design space exploration */				
-//		if (degree_>1){
-//			sol = false;
-//			int i=0;
-//			while (!sol){
-//				while ((!sol) && (nextStateY())){
-//					while (((!sol) && nextStateA())){
-//						i++;
-//						e = errorEstimator(yGuard_, aGuard_);
-//						mpfr_add( u, *approximationError, *e, GMP_RNDN);
-//						if ( i%128 == 0)
-//							cerr << " err = "<< mpfr_get_exp(u) << endl;
-//						errExp = (mpfr_get_d(u, GMP_RNDZ)==0 ? 0 :mpfr_get_exp(u));
-//						if (errExp <= -targetPrec-1 ){
-//							sol = true;
-//							mpfr_clear(u);
-//							mpfr_clear(*e);
-//							free(e);
-//						}else{
-//							mpfr_clear(*e);
-//							free(e);
-//						}
-//					} 
-//				}	
-//			}		
-//		}else{
-//			sol = false;
-//			while (!sol){
-//				while ((!sol) && (nextStateY())){
-//					mpfr_t* u;
-//					u = (mpfr_t*)malloc(sizeof(mpfr_t));
-//					mpfr_init2(*u, 100);
-//					mpfr_add( *u, *approximationError, *errorEstimator(yGuard_, aGuard_), GMP_RNDN);
-//					cerr << " err = " << mpfr_get_exp(*u) << endl;
-//					int errExp = (mpfr_get_d(*u, GMP_RNDZ)==0 ? 0 :mpfr_get_exp(*u));
-//					if (errExp <= -targetPrec-1 ){
-//						sol = true;
-//					}
-//				}	
-//			}		
-//		}
+		int errExp;
+		/* design space exploration */				
+		if (degree_>1){
+			sol = false;
+			int i=0;
+			while (!sol){
+				while ((!sol) && (nextStateY())){
+					while (((!sol) && nextStateA())){
+						i++;
+						e = errorEstimator(yGuard_, aGuard_);
+						mpfr_add( u, *approximationError, *e, GMP_RNDN);
+						if ( i%128 == 0)
+							cerr << " err = "<< mpfr_get_exp(u) << endl;
+						errExp = (mpfr_get_d(u, GMP_RNDZ)==0 ? 0 :mpfr_get_exp(u));
+						if (errExp <= -targetPrec-1 ){
+							sol = true;
+							mpfr_clear(u);
+							mpfr_clear(*e);
+							free(e);
+						}else{
+							mpfr_clear(*e);
+							free(e);
+						}
+					} 
+				}	
+			}		
+		}else{
+			sol = false;
+			while (!sol){
+				while ((!sol) && (nextStateY())){
+					mpfr_t* u;
+					u = (mpfr_t*)malloc(sizeof(mpfr_t));
+					mpfr_init2(*u, 100);
+					mpfr_add( *u, *approximationError, *errorEstimator(yGuard_, aGuard_), GMP_RNDN);
+					cerr << " err = " << mpfr_get_exp(*u) << endl;
+					int errExp = (mpfr_get_d(*u, GMP_RNDZ)==0 ? 0 :mpfr_get_exp(*u));
+					if (errExp <= -targetPrec-1 ){
+						sol = true;
+					}
+				}	
+			}		
+		}
 
 
 		ostringstream s1, s2;		
@@ -247,9 +247,9 @@ namespace flopoco{
 					vhdl << tab << declare( join("op1_",i), sigmakPSize[i]+1 ) << " <= " << "(" << rangeAssign(sigmakPWeight[i] - coef_[degree_-i]->getWeight()-1,0, join("a",degree_-i)+of(coef_[degree_-i]->getSize()))
 						                                                               << " & " << join("a",degree_-i) << " & "<< zg(aGuard_[degree_-i],0) << ");"<<endl;
 						                                                               
-					vhdl << tab << declare( join("op2_",i), sigmakPSize[i]+1 ) << " <= " << "(" << rangeAssign(sigmakPWeight[i]-pikPTWeight[i]-1,0, join("piPT",i)+of(pikPTSize[i])) 
+					vhdl << tab << declare( join("op2_",i), sigmakPSize[i]+1 ) << " <= " << "(" << rangeAssign(sigmakPWeight[i]-pikPTWeight[i]-1-1,0, join("piPT",i)+of(pikPTSize[i])) 
 						                                                               << " & " << join("piPT",i) << range(pikPTSize[i], pikPTSize[i] - pikPTWeight[i] - (coef_[degree_-i]->getSize()-coef_[degree_-i]->getWeight() + aGuard_[degree_ -i]))
-						                                                               << " & "<< zg( - (pikPTSize[i] - pikPTWeight[i] - (coef_[degree_-i]->getSize()-coef_[degree_-i]->getWeight() + aGuard_[degree_ -i])) ,0)
+						                                                               << " & "<< zg( - (pikPTSize[i] - pikPTWeight[i] - (coef_[degree_-i]->getSize()-coef_[degree_-i]->getWeight() + aGuard_[degree_ -i])) +1 ,0)
 						                                                               
 						                                                               << ");" << endl;
 
