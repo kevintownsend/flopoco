@@ -44,6 +44,7 @@ namespace flopoco{
       void generateDebug();
       void generateDebugPwf();
       sollya_chain_t makeIntPtrChainCustomized(int m, int n, int precshift, int msize);
+      vector<int> getNrIntArray();
       /************************************************/
       /********Virtual methoods from class Table*******/
       mpz_class function(int x);
@@ -62,6 +63,7 @@ namespace flopoco{
 			vector<FixedPointCoefficient*> coeffParamVector;
 			mpfr_t *maxError;
       PiecewiseFunction *pwf;
+      vector <int> nrIntArray;
 	};
 }
 #endif

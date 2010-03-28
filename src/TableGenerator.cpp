@@ -96,6 +96,7 @@ namespace flopoco{
   for (k=0;k<=n;k++)   sizeList[k]=0;
   
   
+  
   for (iter=0; iter<nrFunctions;iter++){
     Function *fi;
     fi=(pwf->getPiecewiseFunctionArray(iter));
@@ -191,6 +192,8 @@ namespace flopoco{
     
     
     nrIntCompleted=nrIntCompleted+nrIntervals;  
+    nrIntArray.push_back(intlog2(nrIntervals-1));
+    
     }   
   }    
     
@@ -700,12 +703,25 @@ int j;
       cout<<"c"<<j<<":"<<(*coeffParamVector[j]).getSize()+(*coeffParamVector[j]).getWeight()+1<<endl; 
     }
 }
+
+vector<int> TableGenerator::getNrIntArray(){
+return nrIntArray;
+}
+
+  
+
+
 void TableGenerator::generateDebugPwf(){
 int j;
  cout<<"pwf=";
  cout<<pwf->getName()<<endl;
  cout<<" wIn="<<wInX_<<" wOut="<<(-1)*wOutX_<<endl;
  cout<<"k="<<polyCoeffVector.size()<<" d="<<coeffParamVector.size()<<endl;
+ cout<<"The size of the branch is:"<<endl;
+ for (j=0; (unsigned)j<getNrIntArray().size(); j++){
+ cout<<j<<":"<<(getNrIntArray())[j]<<endl;
+ }
+ 
  cout<<"The size of the coefficients is:"<<endl;
  for (j=0; (unsigned)j<coeffParamVector.size(); j++){     
       cout<<"c"<<j<<":"<<(*coeffParamVector[j]).getSize()+(*coeffParamVector[j]).getWeight()+1<<endl; 
@@ -783,18 +799,18 @@ int TableGenerator::double2input(double x){
       pcoeffs=polyCoeffVector[(unsigned)x];
       degree= pcoeffs.size();
       amount=0;
-      cout<<"polynomial "<<x<<": "<<endl;
+      //cout<<"polynomial "<<x<<": "<<endl;
       //r=mpz_class( 133955332 )+(mpz_class( 65664 )<< 27 )+(mpz_class( 64 )<< 44 )
       for (j=0; j<degree; j++){     
-        cout<<" "<<(*pcoeffs[j]).getSize()<< " "<<(*pcoeffs[j]).getWeight()<<endl; 
+        //cout<<" "<<(*pcoeffs[j]).getSize()<< " "<<(*pcoeffs[j]).getWeight()<<endl; 
         r=r+(mpz_class(1)<<amount);
         
         
         cf=(*pcoeffs[j]).getValueMpfr();
         
-        cout<< j<<"th coeff:"<<sPrintBinary(*cf)<<endl;
+        //cout<< j<<"th coeff:"<<sPrintBinary(*cf)<<endl;
         z=sPrintBinaryZ(*cf);
-        cout<< j<<"th coeff:"<<z<<" "<<strlen(z)<<endl;
+        //cout<< j<<"th coeff:"<<z<<" "<<strlen(z)<<endl;
         //mpz_init(c);
         if (mpfr_sgn(*cf)!=0) {
           
