@@ -803,7 +803,7 @@ int TableGenerator::double2input(double x){
       //r=mpz_class( 133955332 )+(mpz_class( 65664 )<< 27 )+(mpz_class( 64 )<< 44 )
       for (j=0; j<degree; j++){     
         //cout<<" "<<(*pcoeffs[j]).getSize()<< " "<<(*pcoeffs[j]).getWeight()<<endl; 
-        r=r+(mpz_class(1)<<amount);
+        r=r+(mpz_class(0)<<amount);
         
         
         cf=(*pcoeffs[j]).getValueMpfr();
@@ -811,13 +811,14 @@ int TableGenerator::double2input(double x){
         //cout<< j<<"th coeff:"<<sPrintBinary(*cf)<<endl;
         z=sPrintBinaryZ(*cf);
         //cout<< j<<"th coeff:"<<z<<" "<<strlen(z)<<endl;
-        //mpz_init(c);
+        mpz_init(c);
         if (mpfr_sgn(*cf)!=0) {
           
          trailingZeros=(*coeffParamVector[j]).getSize()+(*pcoeffs[j]).getWeight()-strlen(z);
+         //cout<<"Trailing zeros="<< trailingZeros<<endl;
          numberSize= (*coeffParamVector[j]).getSize()+(*coeffParamVector[j]).getWeight()+1 ;
           //mpz_set_str (mpz_t rop, char *str, int base) 
-          mpz_init_set_str (c,z,2);
+          mpz_set_str (c,z,2);
           if (mpfr_sgn(*cf)<0) {
             r=r+(((mpz_class(1)<<numberSize) -   (mpz_class(c)<<trailingZeros)   )<<amount);
           }
