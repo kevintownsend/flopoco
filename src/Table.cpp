@@ -70,6 +70,7 @@ namespace flopoco{
 		// Set up the IO signals
 		addInput ("X"  , wIn);
 		addOutput ("Y"  , wOut);
+		setCombinatorial();
 		if(maxIn==-1) maxIn=(1<<wIn)-1;
 		if(minIn<0) {
 			cerr<<"ERROR in Table::Table, minIn<0\n";
