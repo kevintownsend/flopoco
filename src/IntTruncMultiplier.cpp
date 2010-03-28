@@ -2314,7 +2314,7 @@ namespace flopoco{
 	{	
 		int x,y;	
 		target_->getDSPWidths(x,  y);
-		float temp = ratio * 0.75 * ((float) y);
+		float temp = ratio * 0.75 * ((float) max(x,y));
 		return ((int)temp);
 		//return 4;
 
@@ -2324,7 +2324,7 @@ namespace flopoco{
 	{
 		int x,y;	
 		target_->getDSPWidths(x,y);
-		float temp = ratio * 0.75 * ((float) x);
+		float temp = ratio * 0.75 * ((float) max(x,y));
 		return ((int)temp);
 		//return 4;
 
@@ -3195,7 +3195,7 @@ namespace flopoco{
 									
 									yname.str("");
 									yname << "y" << i << "_" << j;
-									vhdl << tab << declare(yname.str(), multH) << " <= Y" << range(bly1, try1) << ";" << endl;
+									vhdl << tab << declare(yname.str(), multH) << ((isSquarer)?" <= X":" <= Y") << range(bly1, try1) << ";" << endl;
 				
 									if ((d->getShiftIn() != NULL) && (j>0)) // multiply accumulate
 										{
@@ -3420,7 +3420,7 @@ namespace flopoco{
 			// TODO: compute width of x and y + corretc range for X and Y
 			vhdl << tab << declare(join("x_",partitions), njj-nj+1) << " <= " << "X" << range(njj, nj) << ";" << endl;
 			inPortMap(mult, "X", join("x_",partitions));
-			vhdl << tab << declare(join("y_",partitions), nii-ni+1) << " <= " << "Y" << range(nii, ni) << ";" << endl;
+			vhdl << tab << declare(join("y_",partitions), nii-ni+1) << " <= " << ((isSquarer)?"X":"Y") << range(nii, ni) << ";" << endl;
 			inPortMap(mult, "Y", join("y_",partitions));
 		
 			outPortMap(mult, "R", join("result", partitions));
@@ -3746,6 +3746,7 @@ namespace flopoco{
 		
 		if (isSquarer)
 		{
+			//cout << "m=" << m << " n=" << n << endl;
 			for (int i=m-1; i>=0; i--)
 			{
 				if ((mat[i][n-i-1] > nrDSPs) && (mat[i][n-i-1] != 1369) && (mat[i-1][n-i-1] == 1369) && (mat[i][n-i-2] == 1369))
@@ -3776,8 +3777,12 @@ namespace flopoco{
 			modified = false;
 			for (int j=0; j<n; j++)
 			{
-				for (int i=m-j-1; i<(m-1); i++)
+				int start = m-j-1;
+				if (start<0)
+					start = 0;
+				for (int i=start; i<(m-1); i++)
 				{
+					//cout << "sus i="<<i<<" j="<<j<< endl;
 					if ((mat[i][j] > nrDSPs) && (mat[i][j] != 1369) && (mat[i][j-1] == 1369) && (mat[i+1][j] == 1369) && (j!=n-i-1)) //&& (mat[i-1][j-1] == 1369))
 					{
 						mat[i][j] = -1;//int ref = mat[i][j];
@@ -3810,12 +3815,18 @@ namespace flopoco{
 								mat[k][j] = -1;//ref;
 						}
 						
+						int tx1, ty1, bx1, by1;
+						tx1 = m-j-1;
+						ty1 = oldi;
+						bx1 = n-oldj-1;
+						by1 = i;
+						if (tx1 )
 						tempSoft = new SoftDSP(m-j-1, oldi, n-oldj-1, i);
 						newSoft.push_back(tempSoft);
 						modified = true;
 					}
 					
-					cout << "i="<<i<<" j="<<j<< endl;
+					//cout << "i="<<i<<" j="<<j<< endl;
 					if ((mat[i][j] > nrDSPs) && (mat[i][j] != 1369))
 					{
 						int ref = mat[i][j];
@@ -3825,7 +3836,7 @@ namespace flopoco{
 						int oldi = i;
 						int oldj = j;
 						// go down
-						while ((i<m) && (mat[i+1][j] > nrDSPs))
+						while ((i<(m-1)) && (mat[i+1][j] > nrDSPs))
 						{
 							i++;	
 							mat[i][j] = -1;
