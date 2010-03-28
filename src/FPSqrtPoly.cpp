@@ -87,7 +87,7 @@ namespace flopoco{
 		
 		REPORT(DEBUG, "k1="<<k1<<" k2="<<k2);
 		
-		YVar* y = new YVar(wF-k2, -k2);
+		YVar* y = new YVar(wF-k2, -k2-1);
 		
 		PolynomialEvaluator *pe = new PolynomialEvaluator(target, tg->getCoeffParamVector(), y, wF+1, tg->getMaxApproxError() );
 		oplist.push_back(pe);

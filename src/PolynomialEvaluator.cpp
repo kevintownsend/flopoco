@@ -263,14 +263,14 @@ namespace flopoco{
 					nextCycle();///////////////////////////////////////////////////                                                                   
 				                                                                   
 				}else{
-					IntAdder* sa = new IntAdder (target, sigmakPSize[i]+1);
+					IntAdder* sa = new IntAdder (target, sigmakPSize[i]+1 -2);
 					oplist.push_back(sa);
 
-					vhdl << tab << declare( join("op1_",i), sigmakPSize[i]+1 ) << " <= "<< "(" << rangeAssign(sigmakPWeight[i]-pikPWeight[i],0, join("piP",i)+of(pikPSize[i]+1)) 
+					vhdl << tab << declare( join("op1_",i), sigmakPSize[i]+1 -2 ) << " <= "<< "(" << rangeAssign(sigmakPWeight[i]-pikPWeight[i]-2,0, join("piP",i)+of(pikPSize[i]+1)) 
 						                                                               << " & " << join("piP",i)<<range(pikPSize[i],0)  << ");" << endl;
 
-					vhdl << tab << declare( join("op2_",i), sigmakPSize[i]+1 ) << " <= " << "(" << rangeAssign(sigmakPWeight[i]-coef_[degree_-i]->getWeight()-1,0, join("a",degree_-i)+of(coef_[degree_-i]->getSize()))
-						                                                               << " & " << join("a",degree_-i) << " & "<< zg(sigmakPSize[i]-sigmakPWeight[i]-(coef[degree_-i]->getSize()-coef[degree_-i]->getWeight())-1 ,0) << ");"<<endl;
+					vhdl << tab << declare( join("op2_",i), sigmakPSize[i]+1 -2 ) << " <= " << "(" << rangeAssign(sigmakPWeight[i]-coef_[degree_-i]->getWeight()-1,0, join("a",degree_-i)+of(coef_[degree_-i]->getSize()))
+						                                                               << " & " << join("a",degree_-i) << " & "<< zg(sigmakPSize[i]-sigmakPWeight[i]-(coef[degree_-i]->getSize()-coef[degree_-i]->getWeight())-1-2 ,0) << ");"<<endl;
 				
 					inPortMap ( sa, "X", join("op1_",i) );
 					inPortMap ( sa, "Y", join("op2_",i) );
@@ -280,9 +280,9 @@ namespace flopoco{
 					vhdl << instance ( sa, join("Sum",i));
 					syncCycleFromSignal( join("sigmaP",i) );
 
-					wR = sigmakPSize[i]+1;
+					wR = sigmakPSize[i]+1-2;
 					weightR = sigmakPWeight[i];
-					addOutput("R", sigmakPSize[i]+1);
+					addOutput("R", sigmakPSize[i]+1-2);
 					vhdl << tab << "R <= " << join("sigmaP",i) << ";" << endl;
 				}			
 			}		
