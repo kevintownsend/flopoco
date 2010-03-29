@@ -247,10 +247,9 @@ namespace flopoco{
 					vhdl << tab << declare( join("op1_",i), sigmakPSize[i]+1 ) << " <= " << "(" << rangeAssign(sigmakPWeight[i] - coef_[degree_-i]->getWeight()-1,0, join("a",degree_-i)+of(coef_[degree_-i]->getSize()))
 						                                                               << " & " << join("a",degree_-i) << " & "<< zg(aGuard_[degree_-i],0) << ");"<<endl;
 						                                                               
-					vhdl << tab << declare( join("op2_",i), sigmakPSize[i]+1 ) << " <= " << "(" << rangeAssign(sigmakPWeight[i]-pikPTWeight[i]-1-1,0, join("piPT",i)+of(pikPTSize[i])) 
+					vhdl << tab << declare( join("op2_",i), sigmakPSize[i]+1 ) << " <= " << "(" << rangeAssign(sigmakPWeight[i]-pikPTWeight[i]-1,0, join("piPT",i)+of(pikPTSize[i])) 
 						                                                               << " & " << join("piPT",i) << range(pikPTSize[i], pikPTSize[i] - pikPTWeight[i] - (coef_[degree_-i]->getSize()-coef_[degree_-i]->getWeight() + aGuard_[degree_ -i]))
-						                                                               << " & "<< zg( - (pikPTSize[i] - pikPTWeight[i] - (coef_[degree_-i]->getSize()-coef_[degree_-i]->getWeight() + aGuard_[degree_ -i])) +1 ,0)
-						                                                               
+						                                                               << " & "<< zg( - (pikPTSize[i] - pikPTWeight[i] - (coef_[degree_-i]->getSize()-coef_[degree_-i]->getWeight() + aGuard_[degree_ -i])) ,0)
 						                                                               << ");" << endl;
 
 					inPortMap ( sa, "X", join("op1_",i) );
@@ -263,14 +262,14 @@ namespace flopoco{
 					nextCycle();///////////////////////////////////////////////////                                                                   
 				                                                                   
 				}else{
-					IntAdder* sa = new IntAdder (target, sigmakPSize[i]+1 -2);
+					IntAdder* sa = new IntAdder (target, sigmakPSize[i]+1);
 					oplist.push_back(sa);
 
-					vhdl << tab << declare( join("op1_",i), sigmakPSize[i]+1 -2 ) << " <= "<< "(" << rangeAssign(sigmakPWeight[i]-pikPWeight[i]-2,0, join("piP",i)+of(pikPSize[i]+1)) 
+					vhdl << tab << declare( join("op1_",i), sigmakPSize[i]+1 ) << " <= "<< "(" << rangeAssign(sigmakPWeight[i]-pikPWeight[i],0, join("piP",i)+of(pikPSize[i]+1)) 
 						                                                               << " & " << join("piP",i)<<range(pikPSize[i],0)  << ");" << endl;
 
-					vhdl << tab << declare( join("op2_",i), sigmakPSize[i]+1 -2 ) << " <= " << "(" << rangeAssign(sigmakPWeight[i]-coef_[degree_-i]->getWeight()-1,0, join("a",degree_-i)+of(coef_[degree_-i]->getSize()))
-						                                                               << " & " << join("a",degree_-i) << " & "<< zg(sigmakPSize[i]-sigmakPWeight[i]-(coef[degree_-i]->getSize()-coef[degree_-i]->getWeight())-1-2 ,0) << ");"<<endl;
+					vhdl << tab << declare( join("op2_",i), sigmakPSize[i]+1 ) << " <= " << "(" << rangeAssign(sigmakPWeight[i]-coef_[degree_-i]->getWeight()-1,0, join("a",degree_-i)+of(coef_[degree_-i]->getSize()))
+						                                                               << " & " << join("a",degree_-i) << " & "<< zg(sigmakPSize[i]-sigmakPWeight[i]-(coef[degree_-i]->getSize()-coef[degree_-i]->getWeight())-1 ,0) << ");"<<endl;
 				
 					inPortMap ( sa, "X", join("op1_",i) );
 					inPortMap ( sa, "Y", join("op2_",i) );
@@ -280,9 +279,9 @@ namespace flopoco{
 					vhdl << instance ( sa, join("Sum",i));
 					syncCycleFromSignal( join("sigmaP",i) );
 
-					wR = sigmakPSize[i]+1-2;
+					wR = sigmakPSize[i]+1;
 					weightR = sigmakPWeight[i];
-					addOutput("R", sigmakPSize[i]+1-2);
+					addOutput("R", sigmakPSize[i]+1);
 					vhdl << tab << "R <= " << join("sigmaP",i) << ";" << endl;
 				}			
 			}		
