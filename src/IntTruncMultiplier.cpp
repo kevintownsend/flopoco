@@ -460,13 +460,24 @@ namespace flopoco{
 		//mpfr_t errorSum;
 		mpfr_init2(errorSum, 1000);
 		mpfr_add( errorSum, roundingError, *approxError, GMP_RNDN);
-		
+		mpfr_clear(*approxError);
+		free(approxError);
 		
 		//cout << "The total error is : " << mpfr_get_d(errorSum, GMP_RNDN) << endl;
 		
 		if ( mpfr_cmp( errorSum, targetError) <= 0){
+			mpfr_clear(targetError);
+			mpfr_clear(roundingError);
+			mpfr_clear(errorSum);
+			mpfr_clear(t);
+			mpfr_clear(t2);
 			return true;
 		}else{
+			mpfr_clear(targetError);
+			mpfr_clear(roundingError);
+			mpfr_clear(errorSum);
+			mpfr_clear(t);
+			mpfr_clear(t2);
 			return false;
 		}
 	}
@@ -522,6 +533,7 @@ namespace flopoco{
 				mpfr_sub( *fullSum, *fullSum, *currentSum, GMP_RNDN);
 				cout << "HARD DSP Top right = " << xT << ", " << yT << " and bottom left = " << xB << ", " <<yB << endl;
 				cout << "This one is :" << mpfr_get_d(*currentSum, GMP_RNDN) << endl;
+				mpfr_clear(*currentSum);
 				i++;
 			}
 		}
@@ -554,6 +566,7 @@ namespace flopoco{
 			mpfr_sub( *fullSum, *fullSum, *currentSum, GMP_RNDN);
 			cout << "SOFT DSP Top right = " << xT << ", " << yT << " and bottom left = " << xB << ", " <<yB << endl;
 			cout << "This one is :" << mpfr_get_d(*currentSum, GMP_RNDN) << endl;
+			mpfr_clear(*currentSum);
 		}
 		return fullSum;
 	}
@@ -561,7 +574,7 @@ namespace flopoco{
 	mpfr_t *IntTruncMultiplier::evalTruncTilingErrorInverted(DSP** configuration, vector<SoftDSP*> softDSPs){
 		/* fist we get the maximal sum */
 		mpfr_t *fullSum;
-		cout << endl << endl << "wX wY are " << wX << "    " << wY << endl;
+		//cout << endl << endl << "wX wY are " << wX << "    " << wY << endl;
 		fullSum = evalMaxValue(wX, wY);
 		if (isSquarer) // only half of tiling grid
 			mpfr_div_si(*fullSum, *fullSum, 2, GMP_RNDU);
@@ -584,7 +597,7 @@ namespace flopoco{
 				yT = max(yT,0);
 				//int power = xT + yT;
 				int power = (wX - xB-1) + (wY - yB-1);
-				cout << "Power " << power << endl; 
+				//cout << "Power " << power << endl; 
 				mpfr_t* currentSum;
 				currentSum = evalMaxValue(min(xB,wX-1) - max(xT,0) + 1, min(yB,wY-1) - max(yT,0) +1);
 				double area=0.0;
@@ -605,8 +618,11 @@ namespace flopoco{
 				mpfr_mul( *currentSum, *currentSum, s, GMP_RNDN);
 				mpfr_sub_d( *currentSum, *currentSum, area, GMP_RNDN);
 				mpfr_sub( *fullSum, *fullSum, *currentSum, GMP_RNDN);
-				cout << "HARD DSP Top right = " << xT << ", " << yT << " and bottom left = " << xB << ", " <<yB << endl;
-				cout << "This one is :" << mpfr_get_d(*currentSum, GMP_RNDN) << endl;
+				mpfr_clear(*currentSum);
+				free(currentSum);
+				mpfr_clear(s);
+				//cout << "HARD DSP Top right = " << xT << ", " << yT << " and bottom left = " << xB << ", " <<yB << endl;
+				//cout << "This one is :" << mpfr_get_d(*currentSum, GMP_RNDN) << endl;
 			}
 		}
 		
@@ -651,8 +667,11 @@ namespace flopoco{
 			mpfr_mul( *currentSum, *currentSum, s, GMP_RNDN);
 			mpfr_sub_d( *currentSum, *currentSum, area, GMP_RNDN);
 			mpfr_sub( *fullSum, *fullSum, *currentSum, GMP_RNDN);
-			cout << "SOFT DSP Top right = " << xT << ", " << yT << " and bottom left = " << xB << ", " <<yB << endl;
-			cout << "This one is :" << mpfr_get_d(*currentSum, GMP_RNDN) << endl;
+			mpfr_clear(*currentSum);
+			free(currentSum);
+			mpfr_clear(s);
+			//cout << "SOFT DSP Top right = " << xT << ", " << yT << " and bottom left = " << xB << ", " <<yB << endl;
+			//cout << "This one is :" << mpfr_get_d(*currentSum, GMP_RNDN) << endl;
 		}
 		return fullSum;
 	}
@@ -670,6 +689,8 @@ namespace flopoco{
 		mpfr_pow_ui( *r, *r, h, GMP_RNDN);
 		mpfr_add_si( *r, *r, -1, GMP_RNDN);
 		mpfr_mul( *l, *l, *r, GMP_RNDN);
+		mpfr_clear(*r);
+		free(r);
 		return l; 
 	}		
 
@@ -874,7 +895,7 @@ namespace flopoco{
 		
 			//The second
 			numberDSP4Overlap=nrDSPs;
-			initTiling(globalConfig,nrDSPs);
+			initTiling2(globalConfig,nrDSPs);
 			cout << "NRDSPs = " << nrDSPs << endl;
 			//this will initialize the bestConfig with the first configuration
 			bestCost = FLT_MAX ;
@@ -2127,6 +2148,11 @@ namespace flopoco{
 			LUTs4Multiplication += target_->getIntMultiplierCost(sbx-stx+1, sby-sty+1);
 		}
 		
+		// empty old configuration
+		int configSize = configSoft.size();
+		for (int i=0; i<configSize; i++)
+			delete configSoft[i];
+		configSoft.clear();
 		//cout<<"Number of slices 4 multiplication of the rest is "<<LUTs4Multiplication<<endl;
 		
 		acc =((float)nrOfUsedDSPs)*costDSP + costLUT * LUTs4Multiplication;
@@ -3211,7 +3237,11 @@ namespace flopoco{
 													setCycle(connected);
 													sname.seekp(ios_base::beg);
 													//sname << zg(wInX+wInY+extW+extH-blx1-bly1-3, 0) << " & " << use(join(mname.str(),j)) << range(multW-fpadX + multH-fpadY-1, 0) << " & " << sname.str();
-													sname << zg(fpadX+fpadY-1-sh, 0) << " & " << use(join(mname.str(),j)) << range(multW+multH, 0) << " & " << sname.str();
+													int beginZeros = fpadX+fpadY-1-sh;
+													int endZeros = multW+multH;
+													if (beginZeros < 0) // in case the multiplication by 2 is out of bounds cut the first zero
+														endZeros += beginZeros;
+													sname << zg(beginZeros, 0) << " & " << use(join(mname.str(),j)) << range(endZeros, 0) << " & " << sname.str();
 												}
 											else // concatenate only the lower portion of the partial product
 												{
@@ -3430,7 +3460,7 @@ namespace flopoco{
 			syncCycleFromSignal(join("result", partitions));
 			
 			vhdl << tab << declare(join("addOpSlice", partitions), wInX+wInY) << " <= " << zg(wInX-njj-1+wInY-nii-1-sh, 0) << " & " << join("result", partitions) << " & " << zg(nj+ni+sh, 0) << ";" << endl;
-			cout<<"partitions " << partitions << " @ cycle " << getCurrentCycle() << endl;
+			//cout<<"partitions " << partitions << " @ cycle " << getCurrentCycle() << endl;
 		}
 				
 		return (int)partitions;
@@ -3475,7 +3505,7 @@ namespace flopoco{
 			{
 				ostringstream concatPartialProd;
 				concatPartialProd  << "addOpSlice" << j;
-				cout << "@ In Port Map Current Cycle is " << getCurrentCycle() << endl;
+				//cout << "@ In Port Map Current Cycle is " << getCurrentCycle() << endl;
 				inPortMap (add, join("X",j+nrDSPOperands) , concatPartialProd.str());
 			}	
 	
@@ -3533,13 +3563,15 @@ namespace flopoco{
 				for (int j=m-truncationOffset+i-eh; j<m; j++)
 					mat[j][i] = 1369;
 		}			
-			
+		
+		/*	
 		for(int i=0;i<m;i++)
 			{
 				for(int j=0;j<n;j++)
 					printf("%5d",mat[i][j]);
 				printf("\n");
 			}	
+		*/
 			
 		for(int i=0;i<nrDSPs;i++)
 			{
@@ -3829,10 +3861,10 @@ namespace flopoco{
 					//cout << "i="<<i<<" j="<<j<< endl;
 					if ((mat[i][j] > nrDSPs) && (mat[i][j] != 1369))
 					{
-						int ref = mat[i][j];
+						//int ref = mat[i][j];
 						mat[i][j] = -1;
 						// expand ref
-						cout << "ref=" << ref <<" i="<<i<<" j="<<j<< endl;	
+						//cout << "ref=" << ref <<" i="<<i<<" j="<<j<< endl;	
 						int oldi = i;
 						int oldj = j;
 						// go down
@@ -3858,50 +3890,22 @@ namespace flopoco{
 				}
 			}
 			}while(modified); 
+			
+			// empty old configuration
+			int configSize = configSoft.size();
+			for (int i=0; i<configSize; i++)
+				delete configSoft[i];
+			configSoft.clear();
 			configSoft = newSoft;
 		}
 		
+		/*
 		for(int i=0;i<m;i++)
 			{
 				for(int j=0;j<n;j++)
 					printf("%5d",mat[i][j]);
 				printf("\n");
 			}	
-			
-		/* 
-		
-		 
-		if (isSquarer)
-		{
-			int tx1, ty1, bx1, by1, tx2, ty2, bx2, by2;
-			for (int i=(configSoft.size()-1); i>=0; i--)
-			{
-				configSoft[i]->getTopRightCorner(tx2, ty2);
-				configSoft[i]->getBottomLeftCorner(bx2, by2);
-				
-				if ((tx2==bx2) && (ty2==by2) && (tx2==ty2)) // single 1x1 on the secondary diagonal
-				{
-					tx1 = tx2;
-					ty1 = ty2;
-					bx1 = bx2;
-					by1 = by2;
-					tempSoft = new SoftDSP(tx2, ty2, bx2, by2);
-					newSoft.push_back(tempSoft);
-				}
-				else if ((by1 == by2) && ((tx1-1)==tx2)) // expand previously found multiplier
-				{
-					tx1 = tx2;
-					tempSoft->setTopRightCorner(tx2, ty2);	
-				}
-				else
-				{
-					tempSoft = new SoftDSP(tx2, ty2, bx2, by2);
-					newSoft.push_back(tempSoft);
-				}
-			}
-			
-			configSoft = newSoft;
-		}
 		*/
 
 		//~ int stx,sty,
