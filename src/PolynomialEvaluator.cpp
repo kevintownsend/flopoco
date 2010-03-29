@@ -265,8 +265,8 @@ namespace flopoco{
 					IntAdder* sa = new IntAdder (target, sigmakPSize[i]+1);
 					oplist.push_back(sa);
 
-					vhdl << tab << declare( join("op1_",i), sigmakPSize[i]+1 ) << " <= "<< "(" << rangeAssign(sigmakPWeight[i]-pikPWeight[i],0, join("piP",i)+of(pikPSize[i]+1)) 
-						                                                               << " & " << join("piP",i)<<range(pikPSize[i],0)  << ");" << endl;
+					vhdl << tab << declare( join("op1_",i), sigmakPSize[i]+1 ) << " <= "<< "(" << rangeAssign(sigmakPWeight[i]-pikPWeight[i]-1,0, join("piP",i)+of(pikPSize[i]+1)) 
+						                                                               << " & " << join("piP",i)<<range(pikPSize[i],0)  << " & \"0\");" << endl;
 
 					vhdl << tab << declare( join("op2_",i), sigmakPSize[i]+1 ) << " <= " << "(" << rangeAssign(sigmakPWeight[i]-coef_[degree_-i]->getWeight()-1,0, join("a",degree_-i)+of(coef_[degree_-i]->getSize()))
 						                                                               << " & " << join("a",degree_-i) << " & "<< zg(sigmakPSize[i]-sigmakPWeight[i]-(coef[degree_-i]->getSize()-coef[degree_-i]->getWeight())-1 ,0) << ");"<<endl;
@@ -417,7 +417,7 @@ namespace flopoco{
 			
 			pikPTWeight[i] =  y_->getWeight() + sigmakPWeight[i-1]; 
 			pikPTSize[i] =    y_->getWeight() + sigmakPWeight[i-1]  + (coef_[degree_-i]->getSize()+aGuard[i]-coef_[degree_-i]->getWeight());
-	
+			cerr << " +++ " << " pikpt"<<i<< " size="<<  pikPTSize[i] << " weight = " << pikPTWeight[i] << endl;
 	
 //			REPORT( DEBUG, " pikPTSize="<< pikPTSize[i] << " pikPTWeight[i]="<<pikPTWeight[i]);
 //			REPORT( DEBUG, "pikPTWeight[i]"<<pikPTWeight[i]<<" coef_[degree_-i]->getSize() "<< coef_[degree_-i]->getSize() << " coef_[degree_-i]->getWeight() "<<coef_[degree_-i]->getWeight() << " aGuard =" << aGuard[i] ); 
@@ -465,6 +465,10 @@ namespace flopoco{
 			
 				REPORT( DEBUG, " sigmakPSize="<< sigmakPSize[i] << " sigmakPWeight[i]="<<sigmakPWeight[i]);
 			}
+			
+			//cerr << " +++ " << " pikpt"<<i<< " size="<<  pikPTSize[i] << " weight = " << pikPTWeight[i] << endl;
+			
+			
 			mpfr_t *r;
 			r = (mpfr_t *) malloc( sizeof(mpfr_t));
 			mpfr_init2( *r, 100);
