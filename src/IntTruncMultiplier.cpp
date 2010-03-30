@@ -3139,12 +3139,12 @@ namespace flopoco{
 	
 	void IntTruncMultiplier::convertCoordinates(int &tx, int &ty, int &bx, int &by)
 	{
-		int ax = bx;
-		int ay = by;
-		bx = vnme - tx-1;
-		by = vmme - ty-1;
-		tx = vnme - ax-1;
-		ty = vmme - ay-1;	
+		int ax = by;
+		int ay = bx;
+		bx = vmme - ty-1;
+		by = vnme - tx-1;
+		tx = vmme - ax-1;
+		ty = vnme - ay-1;	
 	}
 
 	int IntTruncMultiplier::multiplicationInDSPs(DSP** config)
@@ -3155,6 +3155,7 @@ namespace flopoco{
 		int multW, multH; 				// width and height of the multiplier the DSP block is using
 		ostringstream xname, yname, mname, cname, sname;
 		DSP** tempc = new DSP*[nrDSPs];	// buffer that with hold a copy of the global configuration
+		int partitions = 0; 			// subtracted operand count	
 			
 		//memcpy(tempc, config, sizeof(DSP*) * nrDSPs );
 		for (int i=0; i<nrDSPs; i++)
@@ -3193,9 +3194,37 @@ namespace flopoco{
 									convertCoordinates(trx1, try1, blx1, bly1);
 									int sh = 0;
 									
-									if (blx1 < try1)
-										sh = 1;
+									if (isSquarer)
+									{
+										if (blx1 < try1) // the block is under the secondary diagonal result is multiplied by 2
+											sh = 1;
+										else // the block is partially over the secondary diagonal => subtract part of it
+										{
+											int wh = blx1-try1+1;
+											setCycle(0);	
+											target_->setUseHardMultipliers(false);
+											IntMultiplier* mult =  new IntMultiplier(target_, wh, wh);
+											ostringstream cname;
+											cname << mult->getName() << "_sub" << partitions;
+											mult->changeName(cname.str());
+											oplist.push_back(mult);
+											
+											vhdl << tab << declare(join("x_sub",partitions), wh) << " <= " << "X" << range(blx1, try1) << ";" << endl;
+											inPortMap(mult, "X", join("x_sub",partitions));
+											vhdl << tab << declare(join("y_sub",partitions), wh) << " <= " << "X" << range(blx1, try1) << ";" << endl;
+											inPortMap(mult, "Y", join("y_sub",partitions));
 										
+											outPortMap(mult, "R", join("result_sub", partitions));
+										
+											vhdl << instance(mult, join("Mult_sub", partitions));
+										
+											syncCycleFromSignal(join("result_sub", partitions));
+											
+											vhdl << tab << declare(join("addOpSlice_sub", partitions), 2*wh) << " <= not(" << zg(wInX-blx1-1+wInY-blx1-1, 0) << " & " << join("result_sub", partitions) << " & " << zg(2*try1, 0) << ") + 1;" << endl;
+											partitions++;
+										}
+									}	
+									
 									fpadX = wInX-blx1-1;
 									//~ cout << "fpadX = " << fpadX << endl;
 									fpadX = (fpadX<0)?0:fpadX;
@@ -3260,7 +3289,7 @@ namespace flopoco{
 												{
 													setCycle(connected);
 													//sname << zg(wInX+wInY+extW+extH-blx1-bly1-2, 0) << " & " << use(mname.str()) << range(multH+multW-1, bpadX+bpadY)<< " & " << zg(trx1-extW,0) << " & " << zg(try1-extH,0) <<  ";" << endl;
-													sname << zg(fpadX+fpadY, 0) << " & " << use(mname.str()) << " & " << zg(trx1,0) << " & " << zg(try1+sh,0) <<  ";" << endl;
+													sname << zg(fpadX+fpadY-sh, 0) << " & " << use(mname.str()) << " & " << zg(trx1,0) << " & " << zg(try1+sh,0) <<  ";" << endl;
 												}
 											else // concatenate only the lower portion of the partial product
 												{
@@ -3437,7 +3466,7 @@ namespace flopoco{
 			config[partitions]->getCoordinates(nj, ni, njj, nii);
 			convertCoordinates(nj, ni, njj, nii);
 			int sh = 0;
-			if (ni < njj)
+			if ((isSquarer) && (ni > njj))
 				sh = 1;
 			// CODE GENERATING VHDL 
 			setCycle(0);	
