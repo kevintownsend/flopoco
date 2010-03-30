@@ -144,7 +144,8 @@ namespace flopoco{
 		
 		vhdl << tab << declare("extentedf", 1 + wF + 2) << " <= rfx"<<range(pe->getRWidth()-pe->getRWeight(), pe->getRWidth()-(pe->getRWeight()+wF)-1) 
 		                                                << " & sticky;"<<endl;
-		                                                
+		                  
+		nextCycle();                              
 		IntAdder *a = new IntAdder(target, 1 + wF + 2);
 		oplist.push_back(a);
 		
