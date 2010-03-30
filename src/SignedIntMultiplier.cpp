@@ -309,7 +309,7 @@ namespace flopoco{
 						if ( ( xS+ yS ) - (wInX + wInY) < y ){
 							vhdl << tab << "R <= addRes & sum0Low "<<range(y-1, xS + yS - (wInX + wInY) )<< ";" << endl;
 						}else{	
-							vhdl << tab << "R <= addRes"<<range(xS + (cOp2-1)*y + 1 - y -1, (xS + (cOp2-1)*y + 1 - y) - (wInX + wInY))<< ";" << endl;
+							vhdl << tab << "R <= addRes"<<range((xS + y + 1) + (cOp2-1)*y - y -1 , (xS + y + 1) + (cOp2-1)*y - y - (wInX + wInY))<< ";" << endl;
 						}
 					}else{
 						vhdl << tab << "R <= sum0"<<range(xS+yS-1, xS+yS - (wInX + wInY)) << ";" << endl;
