@@ -10,6 +10,8 @@
   Copyright © ENS-Lyon, INRIA, CNRS, UCBL,  
   CeCILL license, 2008-2010.
 */
+
+#ifdef HAVE_SOLLYA
  
 #include <iostream>
 #include <sstream>
@@ -238,3 +240,6 @@ namespace flopoco{
 		}
 	}
 }
+
+#endif //HAVE_SOLLYA
+
