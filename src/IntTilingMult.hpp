@@ -5,6 +5,7 @@
 #include <gmp.h>
 #include <mpfr.h>
 #include <gmpxx.h>
+#include <time.h>
 
 #include "Operator.hpp"
 
@@ -22,7 +23,7 @@ namespace flopoco{
 		 * @param[in]		wER			the with of the exponent for the convertion result
 		 * @param[in]		wFR			the with of the fraction for the convertion result
 		 */
-		IntTilingMult(Target* target, int wInX, int wInY,float ratio);
+		IntTilingMult(Target* target, int wInX, int wInY,float ratio, int maxTimeInMinutes);
 	
 		
 
@@ -247,6 +248,9 @@ namespace flopoco{
 		int nrOfShifts4Virtex;
 		//int *countsShift;
 		int dsplimit;
+		int maxTimeInMinutes;
+		clock_t start;
+		clock_t finish;
 	};
 }
 

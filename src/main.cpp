@@ -167,7 +167,7 @@ static void usage(char *name){
 	cerr << "      Integer multiplier of two integers X and Y of sizes wInX and wInY \n";	
 	cerr << "    SignedIntMultiplier wInX wInY \n";
 	cerr << "      Signed integer multiplier of two integers X and Y of sizes wInX and wInY (including the sign)\n";	
-	cerr << "    IntTilingMultiplier wInX wInY ratio \n";
+	cerr << "    IntTilingMultiplier wInX wInY ratio maxTimeInMinutes\n";
 	cerr << "      Integer multiplier of two integers X and Y of sizes wInX and wInY\n";	
 	cerr << "    IntTruncSquarer wInX ratio error useLimits\n";
 	cerr << "      Integer squarer of integer X of size wInX with a given order of error and which selects if the softdsps will be limited\n";	
@@ -809,8 +809,9 @@ bool parseCommandLine(int argc, char* argv[]){
 				int wInX = checkStrictyPositive(argv[i++], argv[0]);
 				int wInY = checkStrictyPositive(argv[i++], argv[0]);
 				float r = atof(argv[i++]);
+				int maxTimeInMinutes = atoi(argv[i++]);
 				cerr << "> IntTilingMultiplier , wInX="<<wInX<<", wInY="<<wInY<<" ratio=" << r << "\n";
-				op = new IntTilingMult(target, wInX, wInY, r);
+				op = new IntTilingMult(target, wInX, wInY, r, maxTimeInMinutes);
 				addOperator(op);
 			}
 		}

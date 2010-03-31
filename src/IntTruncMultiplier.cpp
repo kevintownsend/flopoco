@@ -1330,7 +1330,6 @@ namespace flopoco{
 	
 		delete[] (mat);
 		
-		
 	
 	}
 
@@ -2051,14 +2050,16 @@ namespace flopoco{
 		for(int ii=0;ii<nrDSPs;ii++)
 			memcpy(tempc[ii],globalConfig[ii],sizeof(DSP) );
 	
-		//display(tempc);
-		//getchar();
 		//~ cout<<"intra la display cost"<<endl;
 	
 		float temp = computeCost(tempc);
 	
-		//cout<<"score temp is"<<temp<<" and current best is"<<bestCost<<endl;
-	
+		/*
+		display(tempc);
+		cout<<"score temp is"<<temp<<" and current best is"<<bestCost<<endl;
+		getchar();
+		*/
+		
 		if(temp < bestCost)
 			{
 				//cout<<"Costul e mai bun la cel curent!Schimba"<<endl;
@@ -2143,7 +2144,8 @@ namespace flopoco{
 					nrOfUsedDSPs += nrPrimitiveDSPs;
 				}
 		
-		//cout<<"Number of used DSP blocks is "<<nrOfUsedDSPs<<endl;
+		cout<<"Number of used DSP blocks is "<<nrOfUsedDSPs<<endl;
+		cout<<"IntMultiplierCost for subtraction = "<< acc << endl;
 		vector<SoftDSP*> configSoft;
 		if(useLimits==0)
 			configSoft = insertSoftDSPs(config);
@@ -2166,14 +2168,14 @@ namespace flopoco{
 		for (int i=0; i<configSize; i++)
 			delete configSoft[i];
 		configSoft.clear();
-		//cout<<"Number of slices 4 multiplication of the rest is "<<LUTs4Multiplication<<endl;
+		cout<<"Number of slices 4 multiplication of the rest is "<<LUTs4Multiplication<<endl;
 		
 		acc +=((float)nrOfUsedDSPs)*costDSP + costLUT * LUTs4Multiplication;
 		
-		//cout << "Accum = " << acc << endl;
-		//~ cout<<"Number of partitions for LUTs is "<<partitions<<endl;
+		cout << "Accum = " << acc << endl;
+		cout<<"Number of partitions for LUTs is "<<partitions<<endl;
 		nrOfUsedDSPs = bindDSPs(config);
-		//~ cout<<"Number of operands coming from DSPs is "<<nrOfUsedDSPs<<endl;
+		cout<<"Number of operands coming from DSPs is "<<nrOfUsedDSPs<<endl;
 		
 	
 		float LUTs4NAdder=((float)target_->getIntNAdderCost(wInX + wInY,nrOfUsedDSPs+partitions) );
@@ -2181,10 +2183,10 @@ namespace flopoco{
 				
 				
 	
-		//~ cout<<"LUTs used for last "<<nrOfUsedDSPs+partitions<<" adder are"<<LUTs4NAdder<<endl;
+		cout<<"LUTs used for last "<<nrOfUsedDSPs+partitions<<" adder are"<<LUTs4NAdder<<endl;
 		
 		acc +=  LUTs4NAdder* costLUT;	
-		//cout << "Accum = " << acc << endl;
+		cout << "Accum = " << acc << endl;
 		
 		//~ Substracting the cost of different additions that can be done in DSPs(Virtex) or the cost of a DSP if they can be combined(Altera)
 		
@@ -3203,6 +3205,13 @@ namespace flopoco{
 								}
 			
 							d = tempc[i];
+							d->getTopRightCorner(trx1, try1);
+							d->getBottomLeftCorner(blx1, bly1);
+							convertCoordinates(trx1, try1, blx1, bly1);
+							if ((blx1 < 0) || (bly1 < 0) || (trx1 >= wInX) || (try1 >= wInY)) 
+							{ // the multiplication is outside the bounds of the tiling grid
+								continue;
+							}
 			
 							while (d != NULL)
 								{
