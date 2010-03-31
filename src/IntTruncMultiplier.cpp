@@ -2126,6 +2126,19 @@ namespace flopoco{
 			if(config[i]!=NULL)
 				{
 					int nrPrimitiveDSPs = config[i]->getNrOfPrimitiveDSPs();
+					if (isSquarer)
+					{
+						int trx1, try1, blx1, bly1; 
+						config[i]->getTopRightCorner(trx1, try1);
+						config[i]->getBottomLeftCorner(blx1, bly1);
+						convertCoordinates(trx1, try1, blx1, bly1);
+					
+						if (blx1 >= try1)
+						{ // the block is under the secondary diagonal result is multiplied by 2
+							int wh = blx1-try1+1;
+							acc += target_->getIntMultiplierCost(wh, wh);
+						}
+					}
 					//acc += (costDSP*float(nrPrimitiveDSPs));
 					nrOfUsedDSPs += nrPrimitiveDSPs;
 				}
@@ -2155,7 +2168,7 @@ namespace flopoco{
 		configSoft.clear();
 		//cout<<"Number of slices 4 multiplication of the rest is "<<LUTs4Multiplication<<endl;
 		
-		acc =((float)nrOfUsedDSPs)*costDSP + costLUT * LUTs4Multiplication;
+		acc +=((float)nrOfUsedDSPs)*costDSP + costLUT * LUTs4Multiplication;
 		
 		//cout << "Accum = " << acc << endl;
 		//~ cout<<"Number of partitions for LUTs is "<<partitions<<endl;
@@ -3142,9 +3155,13 @@ namespace flopoco{
 		int ax = by;
 		int ay = bx;
 		bx = vmme - ty-1;
+		if (bx >= wInX) bx = wInX-1;
 		by = vnme - tx-1;
+		if (by >= wInY) by = wInY-1;
 		tx = vmme - ax-1;
+		if (tx < 0) tx = 0;
 		ty = vnme - ay-1;	
+		if (ty < 0) ty = 0;
 	}
 
 	int IntTruncMultiplier::multiplicationInDSPs(DSP** config)
@@ -3336,27 +3353,42 @@ namespace flopoco{
 							tempc[i]->getTopRightCorner(trx1, try1);
 							tempc[i]->getBottomLeftCorner(blx1, bly1);
 							convertCoordinates(trx1, try1, blx1, bly1);
-							fpadX = blx1-wInX-getExtraWidth()+1;
+							
+							if ((blx1 < 0) || (bly1 < 0) || (trx1 >= wInX) || (try1 >= wInY)) 
+							{ // the multiplication is outside the bounds of the tiling grid
+								continue;
+							}
+							
+							fpadX = wInX-blx1-1;
+							//~ cout << "fpadX = " << fpadX << endl;
 							fpadX = (fpadX<0)?0:fpadX;
-							fpadY = bly1-wInY-getExtraHeight()+1;
+							
+							fpadY = wInY-bly1-1;
+							//~ cout << "fpadY = " << fpadY << endl;
 							fpadY = (fpadY<0)?0:fpadY;
-							bpadX = getExtraWidth()-trx1;
+							
+							bpadX = trx1;
 							bpadX = (bpadX<0)?0:bpadX;
+							
 							mPadX = (bpadX>mPadX)?bpadX:mPadX;
-							bpadY = getExtraHeight()-try1;
+							
+							bpadY = try1;
 							bpadY = (bpadY<0)?0:bpadY;
+							
 							mPadY = (bpadY>mPadY)?bpadY:mPadY;
+							
 							minPad = bpadY+bpadX;
+							
 							multW = tempc[i]->getMaxMultiplierWidth();
 							multH = tempc[i]->getMaxMultiplierHeight();
 			
 							setCycle(0);
 							xname.str("");
 							xname << "x" << i << "_0";
-							vhdl << tab << declare(xname.str(), multW, true, Signal::registeredWithAsyncReset) << " <= " << zg(fpadX,0) << " & " << "X" << range(blx1-fpadX, trx1+bpadX) << " & " << zg(bpadX,0) << ";" << endl;
+							vhdl << tab << declare(xname.str(), multW, true, Signal::registeredWithAsyncReset) << " <= " << zg(multW-(blx1-trx1+1),0) << " & " << "X" << range(blx1, trx1) << ";" << endl;
 							yname.str("");
 							yname << "y" << i << "_0";
-							vhdl << tab << declare(yname.str(), multH, true, Signal::registeredWithAsyncReset) << " <= " << zg(fpadY,0) << " & " << "Y" << range(bly1-fpadY, try1+bpadY) << " & " << zg(bpadY,0) << ";" << endl;
+							vhdl << tab << declare(yname.str(), multH, true, Signal::registeredWithAsyncReset) << " <= " << zg(multH-(bly1-try1+1),0) << " & " << "Y" << range(bly1, try1) << ";" << endl;
 			
 							boundDSPs = tempc[i]->getNumberOfAdders();
 							int ext = 0; // the number of carry bits of the addtion
