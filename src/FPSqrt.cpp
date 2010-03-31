@@ -278,7 +278,7 @@ namespace flopoco{
 	    
 					inPortMap(myIntAdd,"X","approxSqrtXSqr");	
 					inPortMap(myIntAdd,"Y","negRealXFrac");
-					inPortMap(myIntAdd,"Cin","'1'");
+					inPortMapCst(myIntAdd,"Cin","'1'");
 					outPortMap(myIntAdd,"R","my_add_result");
 					vhdl << tab << instance(myIntAdd, "Comparator");
 
