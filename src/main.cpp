@@ -191,10 +191,12 @@ static void usage(char *name){
 	cerr << "    FPSqrt wE wF useDSP correctlyRounded\n";
 	cerr << "      Floating-point square root\n";
 	cerr << "      useDSP (O or 1) selects between two possible algorithms. correctlyRounded (0 or 1) selects between faithful and correct rounding\n";
+#ifdef HAVE_SOLLYA
 	cerr << "    FPSqrtPoly wE wF correctlyRounded degree\n";
 	cerr << "      Floating-point square root\n";
 	cerr << "      correctlyRounded (0 or 1) selects between faithful and correct rounding (NYImplemented)\n";
 	cerr << "      degree (1,...k) polynomial degree. Higher degree => more DSP less BRAM\n";
+#endif // HAVE_SOLLYA
 	cerr << "    IntConstMult w c\n";
 	cerr << "      Integer constant multiplier: w - input size, c - the constant\n";
 	cerr << "    FPConstMult wE_in wF_in wE_out wF_out cst_sgn cst_exp cst_int_sig\n";
@@ -994,6 +996,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			op = new FPSqrt(target, wE, wF, true, true);
 			addOperator(op);
 		}
+#ifdef HAVE_SOLLYA
 		else if (opname == "FPSqrtPoly")
 		{
 			int nargs = 4;
@@ -1007,6 +1010,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			op = new FPSqrtPoly(target, wE, wF, correctlyRounded, degree);
 			addOperator(op);
 		}
+#endif // HAVE_SOLLYA
 //		else if (opname == "FPFMA")
 //		{
 //			int nargs = 2;
