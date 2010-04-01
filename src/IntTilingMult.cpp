@@ -1541,7 +1541,7 @@ namespace flopoco{
 		for(int i=0;i<nrDSPs;i++)
 			{
 				
-				if(config[i]!=NULL)
+				if ((config[i]!=NULL) && (config[i]->getShiftIn()==NULL))
 					{
 						
 						ref=config[i];
@@ -1560,7 +1560,7 @@ namespace flopoco{
 					
 								for(int j=0;j<nrDSPs&&ver==false;j++)
 									{
-										if(config[j]!=NULL &&j!=i && count+ config[j]->getNrOfPrimitiveDSPs()<=nrOfShifts4Virtex)
+										if(config[j]!=NULL &&j!=i && ((count+ config[j]->getNrOfPrimitiveDSPs())<=nrOfShifts4Virtex))
 											{
 												config[j]->getTopRightCorner(jtx,jty);
 												if((jtx<=vnme && jty<vmme))
@@ -1821,7 +1821,7 @@ namespace flopoco{
 		acc =((float)nrOfUsedDSPs)*costDSP + costLUT * LUTs4Multiplication;
 		
 		//~ cout<<"Number of partitions for LUTs is "<<partitions<<endl;
-		//nrOfUsedDSPs = bindDSPs(config);
+		nrOfUsedDSPs = bindDSPs(config);
 		//~ cout<<"Number of operands coming from DSPs is "<<nrOfUsedDSPs<<endl;
 		
 	
@@ -3079,8 +3079,13 @@ namespace flopoco{
 												{
 													setCycle(connected);
 													sname.seekp(ios_base::beg);
-													//sname << zg(wInX+wInY+extW+extH-blx1-bly1-3, 0) << " & " << use(join(mname.str(),j)) << range(multW-fpadX + multH-fpadY-1, 0) << " & " << sname.str();
-													sname << zg(wInX-(blx1-fpadX-extW)+wInY-(bly1-fpadY-extH)-2, 0) << " & " << use(join(mname.str(),j)) << range(multW-fpadX + multH-fpadY-1, 0) << " & " << sname.str();
+													//sname << zg(wInX-(blx1-fpadX-extW)+wInY-(bly1-fpadY-extH)-2, 0) << " & " << use(join(mname.str(),j)) << range(multW-fpadX + multH-fpadY-1, 0) << " & " << sname.str();
+													int nrZeros = wInX-(blx1-extW)-fpadX + wInY-(bly1-extH)-fpadY-3;
+													if (nrZeros < 0)
+														sname << zg(wInX-(blx1-fpadX-extW)+wInY-(bly1-fpadY-extH)-2, 0) << " & " << use(join(mname.str(),j)) << range(multW-fpadX + multH-fpadY-1, 0) << " & " << sname.str();
+													else
+														sname << zg(wInX-(blx1-extW) + wInY-(bly1-extH)-3, 0) << " & " << use(join(mname.str(),j)) << range(multW + multH, 0) << " & " << sname.str();
+	
 												}
 											else // concatenate only the lower portion of the partial product
 												{
@@ -3098,8 +3103,13 @@ namespace flopoco{
 											if (d->getShiftOut() == NULL) // concatenate the entire partial product
 												{
 													setCycle(connected);
-													//sname << zg(wInX+wInY+extW+extH-blx1-bly1-2, 0) << " & " << use(mname.str()) << range(multH+multW-1, bpadX+bpadY)<< " & " << zg(trx1-extW,0) << " & " << zg(try1-extH,0) <<  ";" << endl;
-													sname << zg(wInX-(blx1-fpadX-extW)+wInY-(bly1-fpadY-extH)-2, 0) << " & " << use(mname.str()) << range(multH-fpadY+multW-fpadX-1, bpadX+bpadY)<< " & " << zg(trx1-extW,0) << " & " << zg(try1-extH,0) <<  ";" << endl;
+													//sname << zg(wInX-(blx1-fpadX-extW)+wInY-(bly1-fpadY-extH)-2, 0) << " & " << use(mname.str()) << range(multH-fpadY+multW-fpadX-1, bpadX+bpadY)<< " & " << zg(trx1-extW,0) << " & " << zg(try1-extH,0) <<  ";" << endl;
+													int nrZeros = wInX-(blx1-extW)-fpadX + wInY-(bly1-extH)-fpadY-2;
+													if (nrZeros < 0)
+														sname << zg(wInX-(blx1-fpadX-extW)+wInY-(bly1-fpadY-extH)-2, 0) << " & " << use(mname.str()) << range(multH-fpadY+multW-fpadX-1, 0)<< " & " << zg(trx1-extW-bpadX,0) << " & " << zg(try1-extH-bpadY,0) <<  ";" << endl;
+													else
+														sname << zg(wInX-(blx1-extW) + wInY-(bly1-extH)-2, 0) << " & " << use(mname.str()) << range(multW + multH-1, 0) << " & " << zg(trx1-extW-bpadX,0) << " & " << zg(try1-extH-bpadY,0) <<  ";" << endl;
+	
 												}
 											else // concatenate only the lower portion of the partial product
 												{

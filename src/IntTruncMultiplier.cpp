@@ -1875,7 +1875,7 @@ namespace flopoco{
 								for(int j=0;j<nrDSPs&&ver==false;j++)
 									{
 										
-										if(config[j]!=NULL &&j!=i && (count+ config[j]->getNrOfPrimitiveDSPs()<=nrOfShifts4Virtex))
+										if(config[j]!=NULL &&j!=i && count+ config[j]->getNrOfPrimitiveDSPs()<=nrOfShifts4Virtex)
 											{
 												config[j]->getTopRightCorner(jtx,jty);
 												if((jtx<=vnme && jty<vmme))
