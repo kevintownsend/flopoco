@@ -487,8 +487,8 @@ namespace flopoco{
 	
 	void IntTilingMult::generateVHDLCode4CompleteTilling(){
 		
-		bindDSPs(bestConfig);      
 		bestConfig = splitLargeBlocks(bestConfig, nrDSPs);
+		bindDSPs(bestConfig);      
 		int nrDSPOperands = multiplicationInDSPs(bestConfig);
 		int nrSliceOperands = multiplicationInSlices(bestConfig);
 		map<string, double> inMap;
@@ -572,7 +572,7 @@ namespace flopoco{
 		
 				//The second
 				numberDSP4Overlap=nrDSPs;
-				initTiling2(globalConfig,nrDSPs);
+				initTiling(globalConfig,nrDSPs);
 		
 		
 	
@@ -1721,8 +1721,6 @@ namespace flopoco{
 		//~ for(int ii=0;ii<nrDSPs;ii++)
 		//~ tempc[ii]= new DSP();
 		
-		//display(globalConfig);
-		//getchar();
 		//memcpy(tempc,globalConfig,sizeof(DSP*) *nrDSPs );
 		for(int ii=0;ii<nrDSPs;ii++)
 			memcpy(tempc[ii],globalConfig[ii],sizeof(DSP) );
@@ -1731,9 +1729,12 @@ namespace flopoco{
 		//~ cout<<"intra la display cost"<<endl;
 	
 		float temp = computeCost(tempc);
-	
-		//cout<<"score temp is"<<temp<<" and current best is"<<bestCost<<endl;
-	
+		
+		/*
+		display(globalConfig);
+		cout<<"score temp is"<<temp<<" and current best is"<<bestCost<<endl;
+		getchar();
+		*/
 		if(temp < bestCost)
 			{
 				//~ cout<<"Costul e mai bun la cel curent!Schimba"<<endl;
@@ -1820,7 +1821,7 @@ namespace flopoco{
 		acc =((float)nrOfUsedDSPs)*costDSP + costLUT * LUTs4Multiplication;
 		
 		//~ cout<<"Number of partitions for LUTs is "<<partitions<<endl;
-		nrOfUsedDSPs = bindDSPs(config);
+		//nrOfUsedDSPs = bindDSPs(config);
 		//~ cout<<"Number of operands coming from DSPs is "<<nrOfUsedDSPs<<endl;
 		
 	
@@ -2364,22 +2365,23 @@ namespace flopoco{
 				x1 =x+positionDisplacementX[i];
 				y1 =y+positionDisplacementY[i];
 				//if(  (x1<vn&&y1<vm)||(x1>vn&&y1>vm)  ) //allows dsp to get out of the board in the diagonal of the bottom left corner
-				if (x1<vn && y1<vm && x1>0 && y1>0) 
+				if (x1<vnme && y1<vmme && x1>0 && y1>0) 
 					if((i!=2) || extraPosition)
 					config[index]->push(x1, y1);
 				
 			}
 			
-			//~ cout<<endl<<"index "<<index<<" ";
-			//~ config[index]->resetPosition();
-			//~ do
-			//~ {
-				 //~ pos = config[index]->pop();
-				 //~ if(pos>=0)
-				 //~ cout<<" ("<<config[index]->Xpositions[pos]<<" , "<<config[index]->Ypositions[pos]<<")";	
-			//~ }while(pos>=0);
-			//~ cout<<endl;
-			
+			/*
+			cout<<endl<<"index "<<index<<" ";
+			config[index]->resetPosition();
+			do
+			{
+				pos = config[index]->pop();
+				if(pos>=0)
+					cout<<" ("<<config[index]->Xpositions[pos]<<" , "<<config[index]->Ypositions[pos]<<")";	
+			}while(pos>=0);
+			cout<<endl;
+			*/
 			
 			w= config[index]->getMaxMultiplierWidth();
 			h= config[index]->getMaxMultiplierHeight();
