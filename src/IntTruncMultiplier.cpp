@@ -3229,7 +3229,7 @@ namespace flopoco{
 									{
 										if (blx1 < try1) // the block is under the secondary diagonal result is multiplied by 2
 											sh = 1;
-										else if ((blx1 != bly1) && (trx1 != try1))// the block is partially over the secondary diagonal => subtract part of it
+										else if ((blx1 != bly1) || (trx1 != try1))// the block is partially over the secondary diagonal => subtract part of it
 										{
 											int wh = blx1-try1+1;
 											setCycle(0);	
