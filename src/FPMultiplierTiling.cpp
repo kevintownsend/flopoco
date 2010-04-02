@@ -22,7 +22,7 @@
 #include <gmpxx.h>
 #include "utils.hpp"
 #include "Operator.hpp"
-#include "FPMultiplier.hpp"
+#include "FPMultiplierTiling.hpp"
 #include "FPNumber.hpp"
 
 using namespace std;
@@ -31,12 +31,18 @@ namespace flopoco{
 
 	extern vector<Operator*> oplist;
 
-	FPMultiplier::FPMultiplier(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, int wFR, int norm) :
+	FPMultiplierTiling::FPMultiplierTiling(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, int wFR, int norm,float ratio, int maxTimeInMinutes) :
 		Operator(target), wEX_(wEX), wFX_(wFX), wEY_(wEY), wFY_(wFY), wER_(wER), wFR_(wFR) {
 
 		ostringstream name;
-		name << "FPMultiplier_"<<wEX_<<"_"<<wFX_<<"_"<<wEY_<<"_"<<wFY_<<"_"<<wER_<<"_"<<wFR_; 
+		name << "FPMultiplierTiling_"<<wEX_<<"_"<<wFX_<<"_"<<wEY_<<"_"<<wFY_<<"_"<<wER_<<"_"<<wFR_; 
 		setName(name.str());
+
+		if (wFX!=wFY){
+			cerr << "karatsuba, equal sizes for inputs pls";
+			throw "karatsuba, equal sizes for inputs pls";
+		}
+
 
 		/* set if operator outputs a normalized_ result */
 		normalized_ = (norm==0?false:true);
@@ -71,7 +77,7 @@ namespace flopoco{
 		vhdl << tab << declare("sigX",1 + wFX_) << " <= \"1\" & X" << range(wFX_-1,0) << ";" << endl;
 		vhdl << tab << declare("sigY",1 + wFY_) << " <= \"1\" & Y" << range(wFY_-1,0) << ";" << endl;
 
-		intmult_ = new IntMultiplier(target, wFX_+1, wFY_+1);
+		intmult_ = new IntTilingMult(target, wFX_+1, wFY_+1, ratio, maxTimeInMinutes);
 		oplist.push_back(intmult_);
 
 		inPortMap( intmult_, "X", "sigX");
@@ -91,8 +97,8 @@ namespace flopoco{
 
 		//syncronization
 		syncCycleFromSignal("sigProd");
-		syncCycleFromSignal("expSum");	
-		nextCycle();
+		syncCycleFromSignal("expSum");
+		nextCycle();///////////////////////////////	
 		
 		if (normalized_==true){
 		/******************************************************************/
@@ -145,7 +151,6 @@ namespace flopoco{
 				vhdl << tab << instance( intadd_, "RoundingAdder");
 				syncCycleFromSignal("expSigPostRound");
 				nextCycle();
-				
 				vhdl << tab <<"with "<<use("expSigPostRound")<< range(wER_+wFR_+1, wER_+wFR_) << " select"<<endl;		
 				vhdl << tab << declare("excPostNorm",2) << " <=  \"01\" " << " when  \"00\","<<endl;
 				vhdl << tab <<"                            \"10\"             when \"01\", "<<endl;
@@ -177,12 +182,12 @@ namespace flopoco{
 		}
 	} // end constructor
 
-	FPMultiplier::~FPMultiplier() {
+	FPMultiplierTiling::~FPMultiplierTiling() {
 	}
 
 	// FIXME: the following is only functional for a correctly rounded multiplier.
 	// The old code for the non-normalized case is commented out below, just in case.
-	void FPMultiplier::emulate(TestCase * tc)
+	void FPMultiplierTiling::emulate(TestCase * tc)
 	{
 		/* Get I/O values */
 		mpz_class svX = tc->getInputValue("X");

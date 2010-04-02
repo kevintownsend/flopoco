@@ -1,5 +1,5 @@
 #ifndef IntTillingMult_HPP
-#define InTtillingMult_HPP
+#define IntTillingMult_HPP
 #include <vector>
 #include <sstream>
 #include <gmp.h>

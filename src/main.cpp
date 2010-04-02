@@ -49,6 +49,9 @@
 #include "IntKaratsuba.hpp"
 
 #include "FPMultiplier.hpp"
+#include "FPMultiplierKaratsuba.hpp"
+#include "FPMultiplierTiling.hpp"
+
 #include "FPSquarer.hpp"
 #include "FPAdder.hpp"
 #include "Fix2FP.hpp"
@@ -184,6 +187,10 @@ static void usage(char *name){
 	cerr << "      Floating-point adder \n";
 	cerr << "    FPMultiplier wE wF_in wF_out\n";
 	cerr << "      Floating-point multiplier, supporting different in/out precision  \n";
+	cerr << "    FPMultiplierKaratsuba wE wF_in wF_out\n";
+	cerr << "      Floating-point multiplier, supporting different in/out precision. Mantissa multiplier uses Karatsuba  \n";
+	cerr << "    FPMultiplierTiling wE wF_in wF_out ratio timeInMinutes\n";
+	cerr << "      Floating-point multiplier, supporting different in/out precision. Mantissa multiplier uses Tiling Algorithm  \n";
 	cerr << "    FPSquarer wE wFin wFout\n";
 	cerr << "      Floating-point squarer \n";
 	cerr << "    FPDiv wE wF\n";
@@ -947,7 +954,36 @@ bool parseCommandLine(int argc, char* argv[]){
 				op = new FPMultiplier(target, wE, wFIn, wE, wFIn, wE, wFOut, 1);
 				addOperator(op);
 			}
-		} 
+		}
+		else if(opname=="FPMultiplierKaratsuba"){
+			int nargs = 3; 
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int wE = checkStrictyPositive(argv[i++], argv[0]);
+				int wFIn = checkStrictyPositive(argv[i++], argv[0]);
+				int wFOut = checkStrictyPositive(argv[i++], argv[0]);
+				cerr << "> FPMultiplierKaratsuba , wE="<<wE<<", wFIn="<<wFIn<<", wFOut="<<wFOut<<" \n";
+				op = new FPMultiplierKaratsuba(target, wE, wFIn, wE, wFIn, wE, wFOut, 1);
+				addOperator(op);
+			}
+		}  
+		else if(opname=="FPMultiplierTiling"){
+			int nargs = 5; 
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int wE = checkStrictyPositive(argv[i++], argv[0]);
+				int wFIn = checkStrictyPositive(argv[i++], argv[0]);
+				int wFOut = checkStrictyPositive(argv[i++], argv[0]);
+				float r = atof(argv[i++]);
+				int maxTimeInMinutes = atoi(argv[i++]);
+
+				cerr << "> FPMultiplierTiling , wE="<<wE<<", wFIn="<<wFIn<<", wFOut="<<wFOut<<" ratio="<<r<<" maxTime="<<maxTimeInMinutes<<" \n";
+				op = new FPMultiplierTiling(target, wE, wFIn, wE, wFIn, wE, wFOut, 1, r, maxTimeInMinutes);
+				addOperator(op);
+			}
+		}  
 		else if(opname=="FPSquarer"){
 			int nargs = 3; 
 			if (i+nargs > argc)

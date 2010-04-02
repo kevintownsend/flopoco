@@ -171,6 +171,8 @@ ADD_EXECUTABLE(flopoco
 # src/apps/CoilInductance/CoordinatesTableZ
 # src/apps/CoilInductance/CoordinatesTableY
  src/FPMultiplier
+ src/FPMultiplierKaratsuba
+ src/FPMultiplierTiling
  src/FPSquarer
  src/FPDiv
  src/FPSqrt
@@ -249,6 +251,8 @@ ADD_EXECUTABLE(flopoco
 # src/apps/CoilInductance/CoordinatesTableZ
 # src/apps/CoilInductance/CoordinatesTableY
  src/FPMultiplier
+ src/FPMultiplierKaratsuba
+ src/FPMultiplierTiling
  src/FPSquarer
  src/FPDiv
  src/FPSqrt
