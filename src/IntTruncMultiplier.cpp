@@ -895,7 +895,7 @@ namespace flopoco{
 		
 			//The second
 			numberDSP4Overlap=nrDSPs;
-			initTiling2(globalConfig,nrDSPs);
+			initTiling(globalConfig,nrDSPs);
 			cout << "NRDSPs = " << nrDSPs << endl;
 			//this will initialize the bestConfig with the first configuration
 			bestCost = FLT_MAX ;
@@ -2052,13 +2052,15 @@ namespace flopoco{
 	
 		//~ cout<<"intra la display cost"<<endl;
 	
+		//display(tempc);
+		
 		float temp = computeCost(tempc);
-	
-		/*
-		display(tempc);
-		cout<<"score temp is"<<temp<<" and current best is"<<bestCost<<endl;
-		getchar();
-		*/
+		
+		//cout<<"score temp is"<<temp<<" and current best is"<<bestCost<<endl;
+		//getchar();
+		
+		
+		
 		
 		if(temp < bestCost)
 			{
@@ -2119,7 +2121,7 @@ namespace flopoco{
 		
 		//costLUT = ( (1.0+scale) - scale * (1-ratio) ) /  ((float)100);
 	
-		//cout<<"Cost of a DSP is "<<costDSP<<endl<<"Cost of a Slice is "<<costLUT<<endl;
+		cout<<"Cost of a DSP is "<<costDSP<<endl<<"Cost of a Slice is "<<costLUT<<endl;
 	
 		int nrOfUsedDSPs=0;
 		
@@ -2133,10 +2135,13 @@ namespace flopoco{
 						config[i]->getTopRightCorner(trx1, try1);
 						config[i]->getBottomLeftCorner(blx1, bly1);
 						convertCoordinates(trx1, try1, blx1, bly1);
-					
-						if (blx1 >= try1)
-						{ // the block is under the secondary diagonal result is multiplied by 2
-							int wh = blx1-try1+1;
+						int wh = blx1-try1+1;
+						int width = blx1-trx1;
+						int height = bly1-try1;
+						
+						if ((blx1 >= try1) && (((try1-trx1)!=0) || ((blx1-bly1)!=0) || (width != height)))
+						{ // the block is over the secondary diagonal result is multiplied by 2
+							
 							acc += target_->getIntMultiplierCost(wh, wh);
 						}
 					}
@@ -2168,7 +2173,7 @@ namespace flopoco{
 		for (int i=0; i<configSize; i++)
 			delete configSoft[i];
 		configSoft.clear();
-		cout<<"Number of slices 4 multiplication of the rest is "<<LUTs4Multiplication<<endl;
+		//cout<<"Number of slices 4 multiplication of the rest is "<<LUTs4Multiplication<<endl;
 		
 		acc +=((float)nrOfUsedDSPs)*costDSP + costLUT * LUTs4Multiplication;
 		
@@ -3224,7 +3229,7 @@ namespace flopoco{
 									{
 										if (blx1 < try1) // the block is under the secondary diagonal result is multiplied by 2
 											sh = 1;
-										else // the block is partially over the secondary diagonal => subtract part of it
+										else if ((blx1 != bly1) && (trx1 != try1))// the block is partially over the secondary diagonal => subtract part of it
 										{
 											int wh = blx1-try1+1;
 											setCycle(0);	

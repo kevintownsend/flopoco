@@ -3157,9 +3157,11 @@ namespace flopoco{
 							cout << "At DSP#"<< i+1 << " tempc["<<i<<"]" << endl; 
 							tempc[i]->getTopRightCorner(trx1, try1);
 							tempc[i]->getBottomLeftCorner(blx1, bly1);
-							fpadX = blx1-wInX-getExtraWidth()+1;
+							int ew = getExtraWidth();
+							int eh = getExtraHeight();
+							fpadX = blx1-wInX-ew+1;
 							fpadX = (fpadX<0)?0:fpadX;
-							fpadY = bly1-wInY-getExtraHeight()+1;
+							fpadY = bly1-wInY-eh+1;
 							fpadY = (fpadY<0)?0:fpadY;
 							bpadX = getExtraWidth()-trx1;
 							bpadX = (bpadX<0)?0:bpadX;
@@ -3174,10 +3176,10 @@ namespace flopoco{
 							setCycle(0);
 							xname.str("");
 							xname << "x" << i << "_0";
-							vhdl << tab << declare(xname.str(), multW, true, Signal::registeredWithAsyncReset) << " <= " << zg(fpadX,0) << " & " << "X" << range(blx1-fpadX, trx1+bpadX) << " & " << zg(bpadX,0) << ";" << endl;
+							vhdl << tab << declare(xname.str(), multW, true, Signal::registeredWithAsyncReset) << " <= " << zg(fpadX-ew,0) << " & " << "X" << range(blx1-fpadX-ew, trx1+bpadX-ew) << " & " << zg(bpadX-ew,0) << ";" << endl;
 							yname.str("");
 							yname << "y" << i << "_0";
-							vhdl << tab << declare(yname.str(), multH, true, Signal::registeredWithAsyncReset) << " <= " << zg(fpadY,0) << " & " << "Y" << range(bly1-fpadY, try1+bpadY) << " & " << zg(bpadY,0) << ";" << endl;
+							vhdl << tab << declare(yname.str(), multH, true, Signal::registeredWithAsyncReset) << " <= " << zg(fpadY-ew,0) << " & " << "Y" << range(bly1-fpadY-eh, try1+bpadY-eh) << " & " << zg(bpadY-ew,0) << ";" << endl;
 			
 							boundDSPs = tempc[i]->getNumberOfAdders();
 							int ext = 0; // the number of carry bits of the addtion
@@ -3220,14 +3222,16 @@ namespace flopoco{
 					
 											addOps[j]->getTopRightCorner(trx1, try1);
 											addOps[j]->getBottomLeftCorner(blx1, bly1);
-											fpadX = blx1-wInX-getExtraWidth()+1;
+											int ew = getExtraWidth();
+											int eh = getExtraHeight();
+											fpadX = blx1-wInX-ew+1;
 											fpadX = (fpadX<0)?0:fpadX;
-											fpadY = bly1-wInY-getExtraHeight()+1;
+											fpadY = bly1-wInY-eh+1;
 											fpadY = (fpadY<0)?0:fpadY;
-											bpadX = getExtraWidth()-trx1;
+											bpadX = ew-trx1;
 											bpadX = (bpadX<0)?0:bpadX;
 											mPadX = (bpadX>mPadX)?bpadX:mPadX;
-											bpadY = getExtraHeight()-try1;
+											bpadY = eh-try1;
 											bpadY = (bpadY<0)?0:bpadY;
 											mPadY = (bpadY>mPadY)?bpadY:mPadY;
 											minPad = (minPad<(bpadY+bpadX))?minPad:(bpadY+bpadX);
@@ -3237,10 +3241,10 @@ namespace flopoco{
 											setCycle(0);
 											xname.str("");
 											xname << "x" << i << "_" << j+1;
-											vhdl << tab << declare(xname.str(), multW, true, Signal::registeredWithAsyncReset) << " <= " << zg(fpadX,0) << " & " << "X" << range(blx1-fpadX, trx1+bpadX) << " & " << zg(bpadX,0) << ";" << endl;
+											vhdl << tab << declare(xname.str(), multW, true, Signal::registeredWithAsyncReset) << " <= " << zg(fpadX,0) << " & " << "X" << range(blx1-fpadX-ew, trx1+bpadX-ew) << " & " << zg(bpadX,0) << ";" << endl;
 											yname.str("");
 											yname << "y" << i << "_" << j+1;
-											vhdl << tab << declare(yname.str(), multH, true, Signal::registeredWithAsyncReset) << " <= " << zg(fpadY,0) << " & " << "Y" << range(bly1-fpadY, try1+bpadY) << " & " << zg(bpadY,0) << ";" << endl;
+											vhdl << tab << declare(yname.str(), multH, true, Signal::registeredWithAsyncReset) << " <= " << zg(fpadY,0) << " & " << "Y" << range(bly1-fpadY-eh, try1+bpadY-eh) << " & " << zg(bpadY,0) << ";" << endl;
 					
 											nextCycle();
 											mname.str("");
