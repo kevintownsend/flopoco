@@ -53,6 +53,7 @@ namespace flopoco{
 		
 		nrDSPs = estimateDSPs();
 		nrSoftDSPs = 0;
+		subCount=0;
 		cout << "Nr of estimated DSP blocks " << nrDSPs << endl;
 		truncationOffset = estimateNrOfDiscardedCols(k);
 		cout << "Nr of discarded cols " << truncationOffset << endl;
@@ -3251,7 +3252,7 @@ namespace flopoco{
 										
 											syncCycleFromSignal(join("result_sub", partitions));
 											
-											vhdl << tab << declare(join("addOpSlice_sub", partitions), 2*wh) << " <= not(" << zg(wInX-blx1-1+wInY-blx1-1, 0) << " & " << join("result_sub", partitions) << " & " << zg(2*try1, 0) << ") + 1;" << endl;
+											vhdl << tab << declare(join("addOpSlice_sub", partitions), wInX*2) << " <= not(" << zg(wInX-blx1-1+wInY-blx1-1, 0) << " & " << join("result_sub", partitions) << " & " << zg(2*try1, 0) << ") + 1;" << endl;
 											partitions++;
 										}
 									}	
@@ -3349,7 +3350,7 @@ namespace flopoco{
 							vhdl << sname.str();
 							nrOp++;		
 						}
-		
+				subCount = partitions;
 				return nrOp;
 			}
 		else // the target is Stratix
@@ -3563,8 +3564,15 @@ namespace flopoco{
 				concatPartialProd  << "addOpSlice" << j;
 				syncCycleFromSignal(concatPartialProd.str());
 			}	
+			
+		for (int j=0; j<subCount; j++)
+			{
+				ostringstream concatPartialProd;
+				concatPartialProd  << "addOpSlice_sub" << j;
+				syncCycleFromSignal(concatPartialProd.str());
+			}		
 		
-		IntNAdder* add =  new IntNAdder(getTarget(), wInX+wInY, nrDSPOperands+nrSliceOperands, inMap);
+		IntNAdder* add =  new IntNAdder(getTarget(), wInX+wInY, nrDSPOperands+nrSliceOperands+subCount, inMap);
 		//IntCompressorTree* add =  new IntCompressorTree(target, adderWidth, opCount);
 		oplist.push_back(add);
 
@@ -3582,6 +3590,13 @@ namespace flopoco{
 				concatPartialProd  << "addOpSlice" << j;
 				//cout << "@ In Port Map Current Cycle is " << getCurrentCycle() << endl;
 				inPortMap (add, join("X",j+nrDSPOperands) , concatPartialProd.str());
+			}	
+			
+		for (int j=0; j<subCount; j++)
+			{
+				ostringstream concatPartialProd;
+				concatPartialProd  << "addOpSlice_sub" << j;
+				inPortMap (add, join("X", j+nrDSPOperands+nrSliceOperands), concatPartialProd.str());
 			}	
 	
 		inPortMapCst(add, "Cin", "'0'");

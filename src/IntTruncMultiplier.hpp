@@ -402,7 +402,7 @@ namespace flopoco{
 		int nrOfShifts4Virtex;
 		//int *countsShift;
 		int dsplimit;
-		
+		int subCount;
 		int dspWidth,dspHeight;
 	};
 
