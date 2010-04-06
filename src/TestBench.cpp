@@ -89,7 +89,6 @@ namespace flopoco{
 		vhdl << tab << "end process;" <<endl;
 		vhdl << endl;
 
-
                 if (fromFile) generateTestFromFile();
                 else generateTestInVhdl();
         }
@@ -230,6 +229,68 @@ namespace flopoco{
                       // closing input file
                       fileOut.close();
                 };
+
+
+                // exhaustive test IO generation 
+                if(n_ == -2) {
+                  string inputFileName = "essai.input";
+                  ofstream fileOut(inputFileName.c_str(),ios::out);
+                  // if error at opening, let's mention it !
+                  if (!fileOut) cerr << "FloPoCo was not abe to open " << inputFileName << " in order to write down inputs. " << endl;
+
+
+
+                  // exhaustive test
+                  int length = inputSignalVector.size();
+                  int* IOwidth = new int[length]; 
+                  // getting signal width
+                  for (int i = 0; i < length; i++) IOwidth[i] = inputSignalVector[i]->width(); 
+                  mpz_class* bound = new mpz_class[length];
+                  mpz_class* counters = new mpz_class[length];
+                  int number = 1; 
+                  for (int i = 0; i < length; i++) {
+                    bound[i] = (mpz_class(1) << IOwidth[i]);// * tmp;
+                    counters[i] = 0;
+                    number *= pow(2,IOwidth[i]);
+                  }
+                  // getting signal name
+                  string* IOname = new string[length];
+                  for (int i = 0; i < length; i++) IOname[i] = inputSignalVector[i]->getName();
+                  TestCase* tc;
+
+                  // simulation time computation
+                  currentOutputTime = 0;
+                  // init
+                  currentOutputTime += 10;
+                  currentOutputTime += 5 * number;
+                  currentOutputTime += op_->getPipelineDepth()*10* number;
+                  currentOutputTime += 5 * number;
+                  simulationTime=currentOutputTime;
+
+                    
+
+                  while (true) {
+                    for (int i = 0; i < length-1; i++) {
+                      if (counters[i] >= bound[i]) { 
+                        counters[i] = 0;
+                        counters[i+1] += 1;
+                      } 
+                    }
+                    // if the max counter overflows, break
+                    if (counters[length-1] >= bound[length-1]) break;
+                    // Test Case inputs
+                    tc = new TestCase(op_);
+                    for (int i = 0; i < length; i++) {
+                      tc->addInput(IOname[i],counters[i]);
+                    }
+                    op_->emulate(tc); 
+                    if (fileOut) fileOut << tc->generateInputString(IOorderInput,IOorderOutput);                  
+                  // incrementation
+                  counters[0]++;
+                  }
+                fileOut.close();
+
+                }
           }
 
 
