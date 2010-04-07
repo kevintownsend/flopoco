@@ -82,14 +82,16 @@ namespace flopoco{
 		int getExtraHeight();
 
 		/**
-		 * This function returns the amount of extra displacemnet on the tiling board that a dsp block can have on horizonta axis
+		 * This function returns the amount of extra displacemnet on the tiling
+		 * board that a dsp block can have on horizonta axis
 		 * @return extra width
 		 */
 		int getExtraWidth();
 	
 		/**
-		 * This function tries to bind together as many multiplier blocks as possible into the same DSP block of the StratixII 
-		 * architecture which has up to 3 adders
+		 * This function tries to bind together as many multiplier blocks as
+		 * possible into the same DSP block of the StratixII * architecture which has up to
+		 * 3 adders
 		 * @param the configuration of the tiling grid
 		 * @return the number of operands for the final adder, which has been reduced from individual DSP count to sums of DSPs
 		 */
@@ -167,7 +169,8 @@ namespace flopoco{
 		
 		
 		
-		/** This function estimates the maximum number of DSPs that can be used with respect to the preference of the user */
+		/** This function estimates the maximum number of DSPs that can be used
+		with respect to the preference of the user */
 		int estimateDSPs();
 
 		/** This function computes the cost of the configuration received as input parameter */

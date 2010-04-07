@@ -23,6 +23,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <fstream>
 #include <vector>
 #include <typeinfo>
 #include <math.h>
@@ -66,38 +67,54 @@ namespace flopoco{
 		Operator(target), wInX(wInX), wInY(wInY), wOut(wInX + wInY),ratio(ratio), maxTimeInMinutes(maxTimeInMinutes-1){
  
 		ostringstream name;
+			srcFileName="IntTilingMultiplier";
 			
-			start = clock();
+			start = clock(); /* time management */
 			
 			name <<"IntMultiplier_"<<wInX<<"_"<<wInY;
 			setName(name.str());
 		
-			setCopyrightString("Sebastian Banescu , Radu Tudoran, Bogdan Pasca 2009-2010");
+			setCopyrightString("Sebastian Banescu, Radu Tudoran, Bogdan Pasca 2009-2010");
 	
 			addInput ("X", wInX);
-			addInput ("	Y", wInY);
+			addInput ("Y", wInY);
 			addOutput("R", wOut); /* wOut = wInX + wInY */
 		
-			vn=wInX + 2* getExtraWidth();
-			vm=wInY + 2* getExtraHeight();
-			vnme = vn-getExtraWidth();		
+			/* the board is extended horizontally and vertically. This is done
+			in order to fit DSPs on the edges. */
+			vn = wInX + 2*getExtraWidth(); 
+			vm = wInY + 2*getExtraHeight();
+			
+			/* one of the important optimizations consist in removing the extra
+			stripes on on top and on the bottom */	
+			vnme = vn - getExtraWidth();		
 			vmme = vm - getExtraHeight();
 			
+			/* the maximum number of DSPs that can be chained on Virtex devices.
+			The number is related with the number of register levels inside the
+			DSPs. */
 			nrOfShifts4Virtex=4;
-			nrDSPs = estimateDSPs();
-			cout<<"Estimated DSPs:= "<<nrDSPs <<endl;
+			
+			REPORT( DETAILED, "Input board size is width="<<wInX<<" height="<<wInY);
+			REPORT( DETAILED, "Extra width:="<<getExtraWidth()<<" extra height:="<<getExtraHeight());
+			REPORT( DETAILED, "Extended board width="<<vnme<<" height="<<vmme);
+
+			/* detailed info about the abstracted DSP block */
 			int x,y;
 			target->getDSPWidths(x,y);
-		
-			cout<<"Width of DSP is := "<<x<<" Height of DSP is:="<<y<<endl;
-			cout<<"Extra width:= "<<getExtraWidth()<<" \nExtra height:="<<getExtraHeight()<<endl;
+			REPORT( DETAILED, "DSP block: width= "<< x <<" height=" << y);
+
+			/* get an estimated number of DSPs needed to tile the board with */
+			nrDSPs = estimateDSPs();
+			REPORT( DETAILED, "Estimated DSPs = " <<nrDSPs);
+			
 
 			//~ float tempDist =	 (movePercentage  * getExtraWidth() * getExtraWidth()) /4.0 + (movePercentage *getExtraHeight() * getExtraHeight()) /4.0;
+			/* each time a tile is placed maxDist2Move is the maximum distance
+			it may be placed from the already placed blocks */
 			float tempDist =	0;
 			maxDist2Move = (int) ( sqrt(tempDist) );
-			cout<<"maxDist2Move:= "<<maxDist2Move<<endl;
-		
-	
+			REPORT( DETAILED, "maxDist2Move = "<<maxDist2Move);
 		
 			float const scale=100.0;
 			costDSP = ( (1.0+scale) - scale * ratio );
@@ -1031,6 +1048,17 @@ namespace flopoco{
 
 	void IntTilingMult::display(DSP** config)
 	{
+		ofstream fig;
+		fig.open ("tiling.fig", ios::trunc);
+		fig << "#FIG 3.2  Produced by xfig version 3.2.5a" << endl;
+		fig << "Landscape" << endl;
+		fig << "Center" << endl;
+		fig << "Metric" << endl;
+		fig << "A4      " << endl;
+		fig << "100.00" << endl;
+		fig << "Single" << endl;
+		fig << "-2" << endl;
+		fig << "1200 2" << endl;
 	
 	
 		int **mat;
@@ -1062,6 +1090,13 @@ namespace flopoco{
 				config[i]->getTopRightCorner(c1X,c1Y);
 				config[i]->getBottomLeftCorner(c2X,c2Y);
 				cout<<"DSP #"<<i+1<<"has toprigh ("<<c1X<<","<<c1Y<<") and botomleft ("<<c2X<<","<<c2Y<<")"<<endl;
+				fig << " 2 2 0 1 0 7 50 -1 -1 0.000 0 0 -1 0 0 5 " << endl;
+				fig << "	  " << (-c2X+getExtraWidth()-1)*45 << " " << (c1Y-getExtraHeight())*45 
+				         << " " << (-c1X+getExtraWidth())*45 << " " << (c1Y-getExtraHeight())*45 
+				         << " " << (-c1X+getExtraWidth())*45 << " " << (c2Y-getExtraHeight()+1)*45 
+				         << " " << (-c2X+getExtraWidth()-1)*45 << " " << (c2Y-getExtraHeight()+1)*45 
+				         << " " << (-c2X+getExtraWidth()-1)*45 << " " << (c1Y-getExtraHeight())*45 << endl;
+				
 				c1X=n-c1X-1;
 				c2X=n-c2X-1;
 				//~ cout<<"new x1 "<<c1X<<" new x2 "<<c2X<<endl;
@@ -1251,7 +1286,16 @@ namespace flopoco{
 		delete[] (mat);
 		
 		
-	
+
+		fig << "		2 2 1 1 0 7 50 -1 -1 4.000 0 0 -1 0 0 5" << endl;
+		fig << "	  " << (-wInX)*45 << " " << 0 
+         << " " << 0 << " " << 0  
+         << " " << 0 << " " << (wInY)*45 
+         << " " << (-wInX)*45 << " " << (wInY)*45 
+         << " " << (-wInX)*45 << " " << 0 << endl;
+
+		
+		fig.close();
 	}
 
 
@@ -1846,111 +1890,68 @@ namespace flopoco{
 	
 	int IntTilingMult::estimateDSPs()
 	{
-		if (ratio>1)
-			ratio =1;
-		float t1,t2, t3, t4;
-		int Xd, Yd; //the dimension of the multiplier on X and on Y
-		//int multX1, multY1, mult1, multX2, multY2, mult2;
-		bool fitMultiplicaication = false;
-		//int tempDSP;
+		if (ratio > 1){
+			REPORT(INFO, "Ratio is " << ratio << " and should be in [0,1]. Will saturate to 1");
+			ratio = 1;
+		}
+			
+		float t1,t2,t3,t4; /* meaningful vars ;) */
+		int Xd, Yd;  /* the dimension of the multiplier on X and on Y */
 		target_->getDSPWidths(Xd,Yd);
+		bool fitMultiplicaication = false;
 
 		int maxDSP, mDSP = target_->getNumberOfDSPs();
 		int wInXt = wInX;
 		int wInYt = wInY;
-		if (wInY > wInX)
-		{
+		if (wInY > wInX){
 			wInYt = wInX;
 			wInXt = wInY;
 		}
-		//~ tempDSP =    int(ceil( t1) * ceil(t2) );
-		
-		//t1 = wInX*wInY;
-		//t2 = Xd*Yd; 
-		//tempDSP =    int(ceil(   ((float) t1) / ((float) t2) ));
+
+		/* all trivial tiling possibilities */
 		t1 = ((float) wInXt) / ((float) Xd);
 		t2 = ((float) wInYt) / ((float) Yd);
 		t3 = ((float) wInXt) / ((float) Yd);
 		t4 = ((float) wInYt) / ((float) Xd);
-		if (t1 < 1) // DSP width > multiplication width
-		{
-			if (t3 < 1) // DSP height > multiplication width
-				maxDSP = int (ceil(t4));
-			else
-				maxDSP = int (ceil(t2));
-		}
-		else
-		{
-			if (t2 < 1) // DSP height > multiplication height
-				maxDSP = int (ceil(t1));
-			else if (t4 < 1) // DSP width > multiplication height
-				maxDSP = int (ceil(t3));
-			else // none of the above
-			{
-				int rw = wInXt % Xd;
-				int rh = wInXt % Yd;
-				
-				if ((rw == 0) || (rh == 0))// divide by width or height
-					maxDSP = int (ceil(t1)*ceil(t2));
-				else if ((rh-Xd) <= 0) // can pad with width
-				{
-					if ((rw-Yd) <= 0) // can pad with height
-					{	
-						if ((rw-Yd) >= (rh-Xd)) // pad with height
-							maxDSP = int (floor(t1)*ceil(t2)+ceil(t4));
-						else // pad with width
-							maxDSP = int (floor(t3)*ceil(t4)+ceil(t2));
-					}
-					else // can't pad with height
-						maxDSP = int (floor(t3)*ceil(t4)+ceil(t2));
-				}
-				else if ((rw-Yd) <= 0) // can pad with height
-					maxDSP = int (floor(t1)*ceil(t2)+ceil(t4));
-				else
-					maxDSP = int (ceil(t1)*ceil(t2));
-			}
-		}
 		
-		if(maxDSP > mDSP)
-		{
+		maxDSP = int ( max( ceil(t1)*ceil(t2), ceil(t3)*ceil(t4)) );
+	
+		if(maxDSP > mDSP){
 			fitMultiplicaication = true;
-			//maxDSP = tempDSP;
 			maxDSP = mDSP; //set the maximum number of DSPs to the multiplication size
 		}
 			
 		if (ratio == 1){
-			if (! fitMultiplicaication){
+			if (fitMultiplicaication){
 				REPORT(INFO, "Warning!!! The number of existing DSPs on this FPGA is not enough to cover the whole multiplication!");
 			}else{
 				REPORT(INFO, "Warning!!! The minimum number of DSP that is neccessary to cover the whole addition will be used!");
 			}
-			
 			return maxDSP;
 		}else{	
-			//cout<<" Eq Slice DSP "<<target_->getEquivalenceSliceDSP()<<endl;
-			//cout<<" IntM cost "<<target_->getIntMultiplierCost(wInX,wInY)<<endl;
-			//float temp = ( float(target_->getIntMultiplierCost(wInX,wInY)) * ratio)  /   ((1.-ratio)*float(target_->getEquivalenceSliceDSP())) ;
-			float scaleDSPs=1.0;
-			if(maxDSP>4)
-				scaleDSPs= ((float)maxDSP) / ((float)maxDSP-2);
-			float temp = ( float(target_->getIntMultiplierCost(wInX,wInY)) * ratio* scaleDSPs)  /   (float(target_->getEquivalenceSliceDSP())) ;
-			//float temp = ( float(target_->getIntMultiplierCost(wInX,wInY)) )  /   ((1.-ratio)*float(target_->getEquivalenceSliceDSP())) ;
-			cout<<"val calc "<<temp<<endl;
-			int i_tmp = int(ceil(temp));
-			cout<<" rounded "<<i_tmp<<endl;
-	
-			if(i_tmp > maxDSP){
-				if (fitMultiplicaication){
-					REPORT(INFO, "Warning!!! The number of estimated DSPs with respect with this ratio of preference is grather then the needed number of DSPs to perform this multiplication!");
-				}else{
-					REPORT(INFO, "Warning!!! The number of estimated DSPs with respect with this ratio of preference is grather then the total number of DSPs that exist on this board!");
-				}
-				
-				i_tmp = maxDSP;
-				//cout<<" final val is(the max dsps) "<<i_tmp<<endl;
-			}
-	
-			return i_tmp ;
+						
+//			float scaleDSPs = 1.0;
+//			if(maxDSP>4)
+//				scaleDSPs= ((float)maxDSP) / ((float)maxDSP-2);
+//			float temp = ( float(target_->getIntMultiplierCost(wInX,wInY)) * ratio* scaleDSPs)  /   (float(target_->getEquivalenceSliceDSP())) ;
+//			//float temp = ( float(target_->getIntMultiplierCost(wInX,wInY)) )  /   ((1.-ratio)*float(target_->getEquivalenceSliceDSP())) ;
+//			cout<<"val calc "<<temp<<endl;
+//			int i_tmp = int(ceil(temp));
+//			cout<<" rounded "<<i_tmp<<endl;
+//	
+//			if(i_tmp > maxDSP){
+//				if (fitMultiplicaication){
+//					REPORT(INFO, "Warning!!! The number of estimated DSPs with respect with this ratio of preference is grather then the needed number of DSPs to perform this multiplication!");
+//				}else{
+//					REPORT(INFO, "Warning!!! The number of estimated DSPs with respect with this ratio of preference is grather then the total number of DSPs that exist on this board!");
+//				}
+//				
+//				i_tmp = maxDSP;
+//				//cout<<" final val is(the max dsps) "<<i_tmp<<endl;
+//			}
+//			return i_tmp ;
+
+			return int(ceil((float)maxDSP * ratio));
 		}
 	}
 	
