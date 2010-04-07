@@ -20,6 +20,7 @@ using namespace std;
 namespace flopoco {
 
 	// Reporting levels
+#define LIST 0
 #define INFO 1
 #define DETAILED 2
 #define DEBUG 3

@@ -95,18 +95,18 @@ namespace flopoco{
 			DSPs. */
 			nrOfShifts4Virtex=4;
 			
-			REPORT( DETAILED, "Input board size is width="<<wInX<<" height="<<wInY);
-			REPORT( DETAILED, "Extra width:="<<getExtraWidth()<<" extra height:="<<getExtraHeight());
-			REPORT( DETAILED, "Extended board width="<<vnme<<" height="<<vmme);
+			REPORT( LIST, "Input board size is width="<<wInX<<" height="<<wInY);
+			REPORT( LIST, "Extra width:="<<getExtraWidth()<<" extra height:="<<getExtraHeight());
+			REPORT( LIST, "Extended board width="<<vnme<<" height="<<vmme);
 
 			/* detailed info about the abstracted DSP block */
 			int x,y;
 			target->getDSPWidths(x,y);
-			REPORT( DETAILED, "DSP block: width= "<< x <<" height=" << y);
+			REPORT( LIST, "DSP block: width= "<< x <<" height=" << y);
 
 			/* get an estimated number of DSPs needed to tile the board with */
 			nrDSPs = estimateDSPs();
-			REPORT( DETAILED, "Estimated DSPs = " <<nrDSPs);
+			REPORT( LIST, "Estimated DSPs = " <<nrDSPs);
 			
 
 			//~ float tempDist =	 (movePercentage  * getExtraWidth() * getExtraWidth()) /4.0 + (movePercentage *getExtraHeight() * getExtraHeight()) /4.0;
@@ -114,7 +114,7 @@ namespace flopoco{
 			it may be placed from the already placed blocks */
 			float tempDist =	0;
 			maxDist2Move = (int) ( sqrt(tempDist) );
-			REPORT( DETAILED, "maxDist2Move = "<<maxDist2Move);
+			REPORT( LIST, "maxDist2Move = "<<maxDist2Move);
 		
 			float const scale=100.0;
 			costDSP = ( (1.0+scale) - scale * ratio );
@@ -124,6 +124,13 @@ namespace flopoco{
 		
 		
 			//the one
+			
+			cout << " DO you want to run the algorithm? (y/n)" << endl;
+			string myc;
+			cin >> myc;
+			if ( myc.compare("y")!=0)
+				exit(-1);
+						
 			runAlgorithm();
 		
 		
@@ -522,7 +529,8 @@ namespace flopoco{
 				ostringstream concatPartialProd;
 				concatPartialProd  << "addOpSlice" << j;
 				syncCycleFromSignal(concatPartialProd.str());
-			}	
+			}
+		nextCycle();/////////////////////////////////////////////////////////	
 		
 		IntNAdder* add =  new IntNAdder(getTarget(), wInX+wInY, nrDSPOperands+nrSliceOperands, inMap);
 		//IntCompressorTree* add =  new IntCompressorTree(target, adderWidth, opCount);
