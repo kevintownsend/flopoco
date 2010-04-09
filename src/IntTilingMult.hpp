@@ -241,6 +241,9 @@ namespace flopoco{
 		DSP** splitLargeBlocks(DSP** config, int &numberOfDSPs);
 		
 		
+		void outputVHDL(std::ostream& o, std::string name);
+		
+		
 		/** Functions used for Simulated Annealing */
 		DSP** neighbour(DSP** config);
 		float temp(float f);

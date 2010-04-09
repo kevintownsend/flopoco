@@ -3525,6 +3525,22 @@ namespace flopoco{
 		return partitions;
 	}	
 
+		void IntTilingMult::outputVHDL(std::ostream& o, std::string name) {
+		licence(o);
+		o << "library ieee; " << endl;
+		o << "use ieee.std_logic_1164.all;" << endl;
+		o << "use ieee.std_logic_arith.all;" << endl;
+		o << "use ieee.std_logic_signed.all;" << endl;
+		o << "library work;" << endl;
+		outputVHDLEntity(o);
+		newArchitecture(o,name);
+		o << buildVHDLComponentDeclarations();	
+		o << buildVHDLSignalDeclarations();
+		beginArchitecture(o);		
+		o<<buildVHDLRegisters();
+		o << vhdl.str();
+		endArchitecture(o);
+	}
 	
 	
 
