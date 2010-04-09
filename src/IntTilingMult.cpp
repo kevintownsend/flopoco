@@ -3069,11 +3069,11 @@ namespace flopoco{
 									
 									xname.str("");
 									xname << "x" << i << "_" << j;
-									vhdl << tab << declare(xname.str(), multW) << " <= " << zg(fpadX,0) << " & " << "X" << range(startX, endX) << " & " << zg(bpadX,0) << ";" << endl;
+									vhdl << tab << declare(xname.str(), multW+1) << " <= \"1\" & " << zg(fpadX,0) << " & " << "X" << range(startX, endX) << " & " << zg(bpadX,0) << ";" << endl;
 									
 									yname.str("");
 									yname << "y" << i << "_" << j;
-									vhdl << tab << declare(yname.str(), multH) << " <= " << zg(fpadY,0) << " & " << "Y" << range(startY, endY) << " & " << zg(bpadY,0) << ";" << endl;
+									vhdl << tab << declare(yname.str(), multH+1) << " <= \"1\" & " << zg(fpadY,0) << " & " << "Y" << range(startY, endY) << " & " << zg(bpadY,0) << ";" << endl;
 				
 									if ((d->getShiftIn() != NULL) && (j>0)) // multiply accumulate
 										{
@@ -3082,8 +3082,8 @@ namespace flopoco{
 											cname.str("");
 											cname << "txy" << i << j;
 											setCycle(j);
-											vhdl << tab << declare(cname.str(), multW+multH) << " <= " << use(xname.str()) << " * " << use(yname.str()) << ";" << endl;
-											vhdl << tab << declare(join(mname.str(),j), multW+multH+1) << " <= (\"0\" & " << use(cname.str()) << ") + " << use(join(mname.str(), j-1)) << range(multW+multH-1, d->getShiftAmount()) << ";" << endl;	
+											vhdl << tab << declare(cname.str(), multW+multH+2) << " <= " << use(xname.str()) << " * " << use(yname.str()) << ";" << endl;
+											vhdl << tab << declare(join(mname.str(),j), multW+multH+2) << " <= (" << use(cname.str())<<range(multW+multH+1,0) << ") + (" <<zg(d->getShiftAmount()-1,0)<< " &" << use(join(mname.str(), j-1)) << range(multW+multH+1, d->getShiftAmount()) << ");" << endl;	
 											if (d->getShiftOut() == NULL) // concatenate the entire partial product
 												{
 													setCycle(connected);
@@ -3107,7 +3107,7 @@ namespace flopoco{
 										{
 											mname.str("");
 											mname << "pxy" << i << j;
-											vhdl << tab << declare(mname.str(), multW+multH) << " <= " << use(xname.str()) << " * " << use(yname.str()) << ";" << endl;
+											vhdl << tab << declare(mname.str(), multW+multH+2) << " <= " << use(xname.str()) << " * " << use(yname.str()) << ";" << endl;
 											sname.str("");
 											if (d->getShiftOut() == NULL) // concatenate the entire partial product
 												{
