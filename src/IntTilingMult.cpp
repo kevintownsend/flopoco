@@ -125,19 +125,35 @@ namespace flopoco{
 		
 			//the one
 			
-			//~ cout << " DO you want to run the algorithm? (y/n)" << endl;
-			//~ string myc;
-			//~ cin >> myc;
-			//~ if ( myc.compare("y")!=0)
-				//~ exit(-1);
+			cout << " DO you want to run the algorithm? (y/n)" << endl;
+			string myc;
+			cin >> myc;
+			if ( myc.compare("y")!=0)
+				exit(-1);
 						
-			//~ runAlgorithm();
+			runAlgorithm();		
+			
+			
+			
+			
+			
+			
 		
-			
-			
-			
-			
-			int n=vn;
+			cout<<"Estimated DSPs:= "<<nrDSPs <<endl;
+			target->getDSPWidths(x,y);
+			cout<<"Width of DSP is := "<<x<<" Height of DSP is:="<<y<<endl;
+			cout<<"Extra width:= "<<getExtraWidth()<<" \nExtra height:="<<getExtraHeight()<<endl;
+			cout<<"maxDist2Move:= "<<maxDist2Move<<endl;
+	
+		
+			generateVHDLCode4CompleteTilling();
+		
+		
+		
+		
+		
+		/*
+		int n=vn;
 			int m=vm;
 			int exw=getExtraWidth();
 			int exh=getExtraHeight();
@@ -162,31 +178,20 @@ namespace flopoco{
 			globalConfig = new DSP*[nrDSPs];
 			globalConfig[0] = new DSP(shift, w, h);	
 			globalConfig[0]->setNrOfPrimitiveDSPs(1);
+			globalConfig[0]->rotate();
 			globalConfig[0]->setTopRightCorner(exw, exh);
-			globalConfig[0]->setBottomLeftCorner(exw+w-1, exh+h-1);
+			globalConfig[0]->setBottomLeftCorner(exw+h-1, exh+w-1);
 			
 			
 			globalConfig[1] = new DSP(shift, w, h);	
 			globalConfig[1]->setNrOfPrimitiveDSPs(1);			
-			globalConfig[1]->setTopRightCorner(exw +w, exh   );
-			globalConfig[1]->setBottomLeftCorner(exw + w*2-1, exh +h-1);
+			//globalConfig[1]->rotate();
+			globalConfig[1]->setTopRightCorner(exw , exh +h   );
+			globalConfig[1]->setBottomLeftCorner(exw + w-1, exh +2*h-1);
 			
 			display(globalConfig);
 			bindDSPs(globalConfig);
-			
-		
-			//~ cout<<"Estimated DSPs:= "<<nrDSPs <<endl;
-			//~ target->getDSPWidths(x,y);
-			//~ cout<<"Width of DSP is := "<<x<<" Height of DSP is:="<<y<<endl;
-			//~ cout<<"Extra width:= "<<getExtraWidth()<<" \nExtra height:="<<getExtraHeight()<<endl;
-			//~ cout<<"maxDist2Move:= "<<maxDist2Move<<endl;
-	
-		
-			//~ generateVHDLCode4CompleteTilling();
-		
-		
-		
-		
+			*/
 		
 		
 		//~ //globalConfig[0] = target->createDSP();
@@ -1662,13 +1667,13 @@ namespace flopoco{
 												{
 												
 												sa = config[j]->getShiftAmount();
-												cout<<"Now considering taking(in left) dsp nr. "<<i<<" with tx:="<<itx<<" ty:="<<ity<<" bx:="<<ibx<<"by:="<<iby<<" with dsp nr. "<<j<<" with tx:="<<jtx<<" ty:="<<jty<<endl;
+												//cout<<"Now considering taking(in left) dsp nr. "<<i<<" with tx:="<<itx<<" ty:="<<ity<<" bx:="<<ibx<<"by:="<<iby<<" with dsp nr. "<<j<<" with tx:="<<jtx<<" ty:="<<jty<<endl;
 												//config[j]->getBottomLeftCorner(jbx,jby);
 												if(rw!=34 && rh!=34)
 												{
 												if(jtx==ibx+1&&jty==ity&&rw==sa&&config[j]->getShiftIn()==NULL)
 													{
-														cout<<"DSP #"<<i<<" bind with DSP# "<<j<<endl;
+														//cout<<"DSP #"<<i<<" bind with DSP# "<<j<<endl;
 														ver=true;
 														ref->setShiftOut(config[j]);
 														config[j]->setShiftIn(ref);
@@ -1688,7 +1693,7 @@ namespace flopoco{
 													if( jtx==ibx+1 && sa!=0 && rw%sa==0 && ( (rw == 34 && jty==ity)   || ( rw==17 && jty==ity+sa   )  ))
 
 													{
-														cout<<" case 1_2 DSP #"<<i<<" bind with DSP# "<<j<<endl;
+														//cout<<" case 1_2 DSP #"<<i<<" bind with DSP# "<<j<<endl;
 														ver=true;
 														ref->setShiftOut(config[j]);
 														config[j]->setShiftIn(ref);
@@ -1710,13 +1715,13 @@ namespace flopoco{
 												if((jtx<=vnme && jty<vmme))
 												{
 												sa = config[j]->getShiftAmount();
-												cout<<"Now considering taking(down) dsp nr. "<<i<<" with tx:="<<itx<<" ty:="<<ity<<" bx:="<<ibx<<"by:="<<iby<<" with dsp nr. "<<j<<" with tx:="<<jtx<<" ty:="<<jty<<endl;
+												//cout<<"Now considering taking(down) dsp nr. "<<i<<" with tx:="<<itx<<" ty:="<<ity<<" bx:="<<ibx<<"by:="<<iby<<" with dsp nr. "<<j<<" with tx:="<<jtx<<" ty:="<<jty<<endl;
 												//config[j]->getBottomLeftCorner(jbx,jby);
 												if(rw!=34 && rh!=34)
 												{
 												if(iby+1==jty&&itx==jtx&&rh==sa&&config[j]->getShiftIn()==NULL)
 													{
-														cout<<"DSP #"<<i<<" bind with DSP# "<<j<<endl;
+														//cout<<"DSP #"<<i<<" bind with DSP# "<<j<<endl;
 														ver=true;
 														ref->setShiftOut(config[j]);
 														config[j]->setShiftIn(ref);
@@ -1737,7 +1742,7 @@ namespace flopoco{
 													if( iby+1==jty &&sa!=0&& rh% sa==0 && ( (rh == 34 && jtx==itx   )   || ( rw==17 && jtx==itx+sa)  ))
 
 													{
-														cout<<"case 2_2 DSP #"<<i<<" bind with DSP# "<<j<<endl;
+														//cout<<"case 2_2 DSP #"<<i<<" bind with DSP# "<<j<<endl;
 														ver=true;
 														ref->setShiftOut(config[j]);
 														config[j]->setShiftIn(ref);
@@ -1755,7 +1760,7 @@ namespace flopoco{
 			
 			}
 	
-		cout<<" nr de dspuri dupa bind "<<nrOfUsedDSPs<<endl;
+		//cout<<" nr de dspuri dupa bind "<<nrOfUsedDSPs<<endl;
 		return nrOfUsedDSPs;
 	
 	}
