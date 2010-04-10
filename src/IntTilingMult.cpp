@@ -559,7 +559,7 @@ namespace flopoco{
 	
 	void IntTilingMult::generateVHDLCode4CompleteTilling(){
 		
-		bestConfig = splitLargeBlocks(bestConfig, nrDSPs);
+		//bestConfig = splitLargeBlocks(bestConfig, nrDSPs);
 		bindDSPs(bestConfig);      
 		int nrDSPOperands = multiplicationInDSPs(bestConfig);
 		int nrSliceOperands = multiplicationInSlices(bestConfig);
@@ -671,7 +671,7 @@ namespace flopoco{
 		//the one
 		numberDSP4Overlap=nrDSPs;
 		tilingAlgorithm(nrDSPs-1,nrDSPs-1,false,nrDSPs-1);
-		bindDSPs(bestConfig);
+		//bindDSPs(bestConfig);
 		
 		
 		display(bestConfig);
@@ -1827,7 +1827,7 @@ namespace flopoco{
 	
 		//display(tempc);
 		//~ cout<<"intra la display cost"<<endl;
-	
+		
 		float temp = computeCost(tempc);
 		
 		/*
@@ -1856,7 +1856,7 @@ namespace flopoco{
 				bestCost=temp;
 				//memcpy(bestConfig,tempc,sizeof(DSP*) *nrDSPs );	
 				for(int ii=0;ii<nrDSPs;ii++)
-					memcpy(bestConfig[ii],tempc[ii],sizeof(DSP) );
+					memcpy(bestConfig[ii],globalConfig[ii],sizeof(DSP) );
 				//display(bestConfig);
 			}
 		else
@@ -1873,7 +1873,7 @@ namespace flopoco{
 							bestCost=temp;
 			
 							for(int ii=0;ii<nrDSPs;ii++)
-								memcpy(bestConfig[ii],tempc[ii],sizeof(DSP) );
+								memcpy(bestConfig[ii],globalConfig[ii],sizeof(DSP) );
 							//	display(bestConfig);
 						}
 				}
@@ -3075,9 +3075,10 @@ namespace flopoco{
 									connected++;
 									d = d->getShiftOut();
 								}
-			
+							cout << "CONNECTED ================ " <<connected << endl;
 							d = tempc[i];
-			
+							
+							
 							while (d != NULL)
 								{
 									d->getTopRightCorner(trx1, try1);
