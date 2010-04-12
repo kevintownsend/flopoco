@@ -13,6 +13,7 @@
 
 #include <typeinfo>
 #include <iostream>
+#include <fstream>
 #include <sstream>
 #include <vector>
 #include <math.h>
@@ -484,6 +485,18 @@ namespace flopoco{
 	}
 	
 	void IntTruncMultiplier::printConfiguration(DSP** configuration, vector<SoftDSP*> softDSPs){
+		ofstream fig;
+		fig.open ("tiling_trunc.fig", ios::trunc);
+		fig << "#FIG 3.2  Produced by xfig version 3.2.5a" << endl;
+		fig << "Landscape" << endl;
+		fig << "Center" << endl;
+		fig << "Metric" << endl;
+		fig << "A4      " << endl;
+		fig << "100.00" << endl;
+		fig << "Single" << endl;
+		fig << "-2" << endl;
+		fig << "1200 2" << endl;
+	
 		if (configuration!=NULL){
 			int i=0;
 			int xB,xT,yB,yT;
@@ -491,6 +504,12 @@ namespace flopoco{
 				configuration[i]->getTopRightCorner(xT,yT);
 				configuration[i]->getBottomLeftCorner(xB,yB);
 				cout << "HARD DSP Top right = " << xT << ", " << yT << " and bottom left = " << xB << ", " <<yB << endl;
+				fig << " 2 2 0 1 0 7 50 -1 -1 0.000 0 0 -1 0 0 5 " << endl;
+				fig << "	  " << (-xB+getExtraWidth()-1)*45 << " " << (yT-getExtraHeight())*45 
+				         << " " << (-xT+getExtraWidth())*45 << " " << (yT-getExtraHeight())*45 
+				         << " " << (-xT+getExtraWidth())*45 << " " << (yB-getExtraHeight()+1)*45 
+				         << " " << (-xB+getExtraWidth()-1)*45 << " " << (yB-getExtraHeight()+1)*45 
+				         << " " << (-xB+getExtraWidth()-1)*45 << " " << (yT-getExtraHeight())*45 << endl;
 			}
 		}
 
@@ -500,7 +519,25 @@ namespace flopoco{
 			softDSPs[k]->getTopRightCorner(xT,yT);
 			softDSPs[k]->getBottomLeftCorner(xB,yB);
 			cout << "SOFT DSP Top right = " << xT << ", " << yT << " and bottom left = " << xB << ", " <<yB << endl;
+				fig << " 2 2 0 1 0 7 50 -1 19 0.000 0 0 -1 0 0 5 " << endl;
+				fig << "	  " << (-xB+getExtraWidth()-1)*45 << " " << (yT-getExtraHeight())*45 
+				         << " " << (-xT+getExtraWidth())*45 << " " << (yT-getExtraHeight())*45 
+				         << " " << (-xT+getExtraWidth())*45 << " " << (yB-getExtraHeight()+1)*45 
+				         << " " << (-xB+getExtraWidth()-1)*45 << " " << (yB-getExtraHeight()+1)*45 
+				         << " " << (-xB+getExtraWidth()-1)*45 << " " << (yT-getExtraHeight())*45 << endl;
+			
+
 		}
+		
+		fig << "		2 2 1 1 0 7 50 -1 -1 4.000 0 0 -1 0 0 5" << endl;
+		fig << "	  " << (-wInX)*45 << " " << 0 
+         << " " << 0 << " " << 0  
+         << " " << 0 << " " << (wInY)*45 
+         << " " << (-wInX)*45 << " " << (wInY)*45 
+         << " " << (-wInX)*45 << " " << 0 << endl;
+
+		
+		fig.close();
 	}
 	
 	mpfr_t *IntTruncMultiplier::evalTruncTilingError(DSP** configuration, SoftDSP** softDSPs){
@@ -1115,6 +1152,7 @@ namespace flopoco{
 	void IntTruncMultiplier::display(DSP** config)
 	{
 	
+
 	
 		int **mat;
 		int n,m;
@@ -1331,7 +1369,7 @@ namespace flopoco{
 	
 		delete[] (mat);
 		
-	
+
 	}
 
 	void IntTruncMultiplier::displayAll(DSP** config, vector<SoftDSP*> softConfig)
