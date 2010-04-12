@@ -144,6 +144,8 @@ namespace flopoco{
 		mpfr_t* evalTruncTilingError(DSP** configuration, SoftDSP** softDSPs);
 		mpfr_t* evalTruncTilingErrorInverted(DSP** configuration, vector<SoftDSP*> softDSPs);
 
+
+			void emulate(TestCase * tc);
 	protected:
 
 		int wX;      /**< the width (in bits) of the input  X  */

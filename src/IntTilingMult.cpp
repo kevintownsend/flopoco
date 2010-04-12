@@ -3676,6 +3676,48 @@ namespace flopoco{
 
 		
 		fig.close();
+		int hh,ww,aa;
+		getTarget()->getDSPWidths(hh,ww);
+		aa = hh * ww;
+		cout << " DSP area is: " << aa << endl;
+		
+		
+		if (configuration!=NULL){
+			int i=0;
+			int xB,xT,yB,yT;
+			int underutilized = 0;
+			int sunderutilized = 0;
+
+			
+			for(i=0; i<nrDSPs; i++){
+				configuration[i]->getTopRightCorner(xT,yT);
+				configuration[i]->getBottomLeftCorner(xB,yB);
+				
+				yT=yT-getExtraHeight();
+				yB=yB-getExtraHeight();
+				xT=xT-getExtraWidth();
+				xB=xB-getExtraWidth();
+
+				xB = min(xB, wInX-1);
+				yB = min(yB, wInY-1);
+				
+				if ( float((xB-xT+1)*(yB-yT+1))< float(aa)) {
+					if ( float((xB-xT+1)*(yB-yT+1))/float(aa) < 0.5 ){
+						cout << "HARD DSP is SEVERELY under-utilized, just " << float((xB-xT+1)*(yB-yT+1))/float(aa) << "%" << endl;
+						sunderutilized++;
+					}else{
+						cout << "HARD DSP utilized " << float((xB-xT+1)*(yB-yT+1))/float(aa) << "%" << endl;
+						underutilized++;
+					}
+				}
+			}
+			cout << "********************************************************************************"<<endl;
+			cout << "*      underutilized = " << underutilized  + sunderutilized << endl;
+			cout << "*      suggested ratio = " << (float(nrDSPs)*ratio - float(sunderutilized)) / float(nrDSPs) << endl;
+			cout << "********************************************************************************"<<endl;
+		}
+		
+		
 	}
 
 }

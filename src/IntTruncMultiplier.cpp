@@ -4379,4 +4379,13 @@ namespace flopoco{
 	}
 	
 	
+		void IntTruncMultiplier::emulate(TestCase* tc)
+	{
+
+		mpz_class svX = tc->getInputValue("X");
+		mpz_class svR = svX * svX;
+
+		tc->addExpectedOutput("R", svR);
+	}
+	
 }
