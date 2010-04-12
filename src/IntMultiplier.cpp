@@ -1736,26 +1736,26 @@ namespace flopoco{
 	
 					int adderWidth = (chunksX+chunksY)*chunkSize_;
 					// CONCATENATE PARTIAL PRODUCTS
-					for (int i=0; i<chunkSize_; i++){
+					for (int i=0; i<2; i++){
 						for (int j=0; j<chunksX; j++){
 							vhdl << tab << declare(join("cp",i,j),adderWidth) << " <= ";
 			
 							int startIdx = chunksY-1-i;
-							int paddWidth = adderWidth - 2*chunkSize_*(startIdx/chunkSize_+1);
-							int endPaddWidth = chunkSize_*(j+startIdx%chunkSize_);
+							int paddWidth = adderWidth - chunkSize_*2*(startIdx/2+1);
+							int endPaddWidth = chunkSize_*(j+startIdx%2);
 							vhdl << zg(paddWidth-endPaddWidth,0); 
 			
-							for (int k=startIdx; k>=0; k-=chunkSize_)
+							for (int k=startIdx; k>=0; k-=2)
 								vhdl << " & " << use(join("px",j,"y",k));
 						
-							vhdl << " & " << zg((startIdx<0?chunkSize_:endPaddWidth),0) << ";" << endl;
+							vhdl << " & " << zg((startIdx<0?2:endPaddWidth),0) << ";" << endl;
 						}
 					}
 	
-					IntNAdder* add =  new IntNAdder(target, adderWidth, chunksX*chunkSize_);
+					IntNAdder* add =  new IntNAdder(target, adderWidth, 2*chunksX);
 					oplist.push_back(add);
 	
-					for (int i=0; i<chunkSize_; i++)
+					for (int i=0; i<2; i++)
 						for (int j=0; j<chunksX; j++)
 							inPortMap (add, join("X",i*chunksX+j) , join("cp",i,j));
 			
