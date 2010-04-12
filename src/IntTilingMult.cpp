@@ -559,7 +559,7 @@ namespace flopoco{
 	
 	void IntTilingMult::generateVHDLCode4CompleteTilling(){
 		
-		//bestConfig = splitLargeBlocks(bestConfig, nrDSPs);
+//		bestConfig = splitLargeBlocks(bestConfig, nrDSPs);
 		bindDSPs(bestConfig);      
 		int nrDSPOperands = multiplicationInDSPs(bestConfig);
 		int nrSliceOperands = multiplicationInSlices(bestConfig);
@@ -671,7 +671,7 @@ namespace flopoco{
 		//the one
 		numberDSP4Overlap=nrDSPs;
 		tilingAlgorithm(nrDSPs-1,nrDSPs-1,false,nrDSPs-1);
-		//bindDSPs(bestConfig);
+		bindDSPs(bestConfig);
 		
 		
 		display(bestConfig);
@@ -3100,8 +3100,11 @@ namespace flopoco{
 									bpadY = extH-try1;
 									bpadY = (bpadY<0)?0:bpadY;
 									
-									multW = d->getMultiplierWidth();
-									multH = d->getMultiplierHeight();
+									multW = blx1 - trx1 + 1;
+									multH = bly1 - try1 + 1;
+
+//									multW = d->getMultiplierWidth();
+//									multH = d->getMultiplierHeight();
 									
 									int startX = blx1-fpadX-extW;
 									int endX = trx1+bpadX-extW;
