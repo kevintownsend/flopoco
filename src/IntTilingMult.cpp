@@ -3144,6 +3144,8 @@ namespace flopoco{
 													int nrZeros = wInX-(blx1-extW)-fpadX + wInY-(bly1-extH)-fpadY-3;
 													if (nrZeros < 0)
 														sname << zg(wInX-(blx1-fpadX-extW)+wInY-(bly1-fpadY-extH)-2, 0) << " & " << use(join(mname.str(),j)) << range(multW-fpadX + multH-fpadY-1, 0) << " & " << sname.str();
+//														sname << use(join(mname.str(),j)) << range(multW-fpadX + multH-fpadY-1, 0) << " & " << sname.str();
+
 													else
 														sname << zg(wInX-(blx1-extW) + wInY-(bly1-extH)-3, 0) << " & " << use(join(mname.str(),j)) << range(multW + multH, 0) << " & " << sname.str();
 	
@@ -3163,7 +3165,7 @@ namespace flopoco{
 											sname.str("");
 											if (d->getShiftOut() == NULL) // concatenate the entire partial product
 												{
-													setCycle(connected);
+//													setCycle(connected);
 													//sname << zg(wInX-(blx1-fpadX-extW)+wInY-(bly1-fpadY-extH)-2, 0) << " & " << use(mname.str()) << range(multH-fpadY+multW-fpadX-1, bpadX+bpadY)<< " & " << zg(trx1-extW,0) << " & " << zg(try1-extH,0) <<  ";" << endl;
 													int nrZeros = wInX-(blx1-extW)-fpadX + wInY-(bly1-extH)-fpadY-2;
 													if (nrZeros < 0)
@@ -3174,7 +3176,7 @@ namespace flopoco{
 												}
 											else // concatenate only the lower portion of the partial product
 												{
-													setCycle(connected);
+//													setCycle(connected);
 													sname << use(mname.str()) << range(d->getShiftAmount()-1, bpadX+bpadY) << " & " << zg(trx1-extW,0) << " & " << zg(try1-extH,0) << ";" << endl;
 												}
 										}
