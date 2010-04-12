@@ -9,6 +9,7 @@
 
 #include "Operator.hpp"
 #include "IntCompressorTree.hpp"
+#include "IntTruncMultiplier.hpp"
 
 
 namespace flopoco{
@@ -244,7 +245,7 @@ namespace flopoco{
 		
 		void outputVHDL(std::ostream& o, std::string name);
 		
-		
+		void printConfiguration(DSP** configuration, vector<SoftDSP*> softDSPs);
 		/** Functions used for Simulated Annealing */
 		DSP** neighbour(DSP** config);
 		float temp(float f);

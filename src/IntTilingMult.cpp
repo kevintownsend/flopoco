@@ -3365,6 +3365,7 @@ namespace flopoco{
 		int **mat;
 		int n,m;
 		int count=1;
+		vector<SoftDSP*> softConfig;
 		//~ n=wInX + 2* getExtraWidth();
 		//~ m=wInY + 2* getExtraHeight();
 		n=vn;
@@ -3516,7 +3517,10 @@ namespace flopoco{
 											nii = m-extH-1;
 										else
 											nii = ii;
-										setCycle(0);	
+										
+										setCycle(0);
+										SoftDSP *sdsp = new SoftDSP(wInX-nj+2*extW, nii+1, wInX-njj-2+2*extW, ni-1);
+										softConfig.push_back(sdsp);
 										target_->setUseHardMultipliers(false);
 										IntMultiplier* mult =  new IntMultiplier(target_, njj-nj+1, nii-ni+1);
 										ostringstream cname;
@@ -3550,6 +3554,7 @@ namespace flopoco{
 	
 			}
 	
+		printConfiguration(bestConfig, softConfig);
 		//de verificat
 		
 		//cout<<"Count "<<count<<" Partitions "<<partitions<<endl;
@@ -3617,7 +3622,61 @@ namespace flopoco{
 		endArchitecture(o);
 	}
 	
+	void IntTilingMult::printConfiguration(DSP** configuration, vector<SoftDSP*> softDSPs){
+		ofstream fig;
+		fig.open ("tiling.fig", ios::trunc);
+		fig << "#FIG 3.2  Produced by xfig version 3.2.5a" << endl;
+		fig << "Landscape" << endl;
+		fig << "Center" << endl;
+		fig << "Metric" << endl;
+		fig << "A4      " << endl;
+		fig << "100.00" << endl;
+		fig << "Single" << endl;
+		fig << "-2" << endl;
+		fig << "1200 2" << endl;
 	
+		if (configuration!=NULL){
+			int i=0;
+			int xB,xT,yB,yT;
+			for(i=0; i<nrDSPs; i++){
+				configuration[i]->getTopRightCorner(xT,yT);
+				configuration[i]->getBottomLeftCorner(xB,yB);
+				cout << "HARD DSP Top right = " << xT << ", " << yT << " and bottom left = " << xB << ", " <<yB << endl;
+				fig << " 2 2 0 1 0 7 50 -1 -1 0.000 0 0 -1 0 0 5 " << endl;
+				fig << "	  " << (-xB+getExtraWidth()-1)*45 << " " << (yT-getExtraHeight())*45 
+				         << " " << (-xT+getExtraWidth())*45 << " " << (yT-getExtraHeight())*45 
+				         << " " << (-xT+getExtraWidth())*45 << " " << (yB-getExtraHeight()+1)*45 
+				         << " " << (-xB+getExtraWidth()-1)*45 << " " << (yB-getExtraHeight()+1)*45 
+				         << " " << (-xB+getExtraWidth()-1)*45 << " " << (yT-getExtraHeight())*45 << endl;
+			}
+		}
+
+		int xB,xT,yB,yT;
+		for (unsigned k=0; k < softDSPs.size(); k++){
+			softDSPs[k]->trim(vnme, vmme);
+			softDSPs[k]->getTopRightCorner(xT,yT);
+			softDSPs[k]->getBottomLeftCorner(xB,yB);
+			cout << "SOFT DSP Top right = " << xT << ", " << yT << " and bottom left = " << xB << ", " <<yB << endl;
+				fig << " 2 2 0 1 0 7 50 -1 19 0.000 0 0 -1 0 0 5 " << endl;
+				fig << "	  " << (-xB+getExtraWidth()-1)*45 << " " << (yT-getExtraHeight())*45 
+				         << " " << (-xT+getExtraWidth())*45 << " " << (yT-getExtraHeight())*45 
+				         << " " << (-xT+getExtraWidth())*45 << " " << (yB-getExtraHeight()+1)*45 
+				         << " " << (-xB+getExtraWidth()-1)*45 << " " << (yB-getExtraHeight()+1)*45 
+				         << " " << (-xB+getExtraWidth()-1)*45 << " " << (yT-getExtraHeight())*45 << endl;
+			
+
+		}
+		
+		fig << "		2 2 1 1 0 7 50 -1 -1 4.000 0 0 -1 0 0 5" << endl;
+		fig << "	  " << (-wInX)*45 << " " << 0 
+         << " " << 0 << " " << 0  
+         << " " << 0 << " " << (wInY)*45 
+         << " " << (-wInX)*45 << " " << (wInY)*45 
+         << " " << (-wInX)*45 << " " << 0 << endl;
+
+		
+		fig.close();
+	}
 
 }
 

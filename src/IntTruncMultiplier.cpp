@@ -143,6 +143,7 @@ namespace flopoco{
 		vmme = vm - getExtraHeight() ;
 		nrDSPs = estimateDSPs();
 		nrSoftDSPs = 0;
+		subCount = 0;
 		cout << "Nr of estimated DSP blocks " << nrDSPs << endl;
 		truncationOffset = estimateNrOfDiscardedCols(k);
 		cout << "Nr of discarded cols " << truncationOffset << endl;
@@ -951,7 +952,7 @@ namespace flopoco{
 			//the one
 			numberDSP4Overlap=nrDSPs;
 			tilingAlgorithm(nrDSPs-1,nrDSPs-1,false,nrDSPs-1);
-			bindDSPs(bestConfig);
+			//bindDSPs(bestConfig);
 			vector<SoftDSP*> configSoft;
 			if(useLimits==0)
 				configSoft = insertSoftDSPs(bestConfig);
@@ -1894,7 +1895,7 @@ namespace flopoco{
 		for(int i=0;i<nrDSPs;i++)
 			{
 				
-				if(config[i]!=NULL)
+				if((config[i]!=NULL) && (config[i]->getShiftIn()==NULL))
 					{
 						
 						ref=config[i];
@@ -3583,8 +3584,8 @@ namespace flopoco{
 	void IntTruncMultiplier::generateVHDLCode(DSP** config, vector<SoftDSP*> softConfig){
 		
 		DSP** bestConfig = config;
-		bindDSPs(bestConfig);      
-		bestConfig = splitLargeBlocks(bestConfig, nrDSPs);
+		//bindDSPs(bestConfig);      
+		//bestConfig = splitLargeBlocks(bestConfig, nrDSPs);
 		int nrDSPOperands = multiplicationInDSPs(bestConfig);
 		int nrSliceOperands = multiplicationInSlices(softConfig);
 		map<string, double> inMap;
