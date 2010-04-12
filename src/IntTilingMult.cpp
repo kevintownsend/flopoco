@@ -672,7 +672,7 @@ namespace flopoco{
 		for(int i=0;i<nrDSPs;i++)
 			bestConfig[i]= new DSP();
 		compareCost();
-		cout<<"New best score is"<<bestCost<<endl;
+		//cout<<"New best score is: " << bestCost << endl;
 	
 		//display(bestConfig);
 	
@@ -1866,6 +1866,7 @@ namespace flopoco{
 		
 		
 				bestCost=temp;
+				cout<<"New best score is: " << bestCost << endl;
 				//memcpy(bestConfig,tempc,sizeof(DSP*) *nrDSPs );	
 				for(int ii=0;ii<nrDSPs;ii++)
 					memcpy(bestConfig[ii],globalConfig[ii],sizeof(DSP) );
@@ -1880,7 +1881,7 @@ namespace flopoco{
 					//display(bestConfig);
 					if(compareOccupation(tempc)==true)
 						{
-							//cout<<"Interchange for equal cost. Now best has cost "<<temp<<endl;
+							cout<<"Interchange for equal cost. Now best has cost "<<temp<<endl;
 							
 							bestCost=temp;
 			
