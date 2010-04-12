@@ -90,10 +90,7 @@ namespace flopoco{
 			vnme = vn - getExtraWidth();		
 			vmme = vm - getExtraHeight();
 			
-			/* the maximum number of DSPs that can be chained on Virtex devices.
-			The number is related with the number of register levels inside the
-			DSPs. */
-			nrOfShifts4Virtex=4;
+
 			
 			REPORT( LIST, "Input board size is width="<<wInX<<" height="<<wInY);
 			REPORT( LIST, "Extra width:="<<getExtraWidth()<<" extra height:="<<getExtraHeight());
@@ -107,8 +104,16 @@ namespace flopoco{
 			/* get an estimated number of DSPs needed to tile the board with */
 			nrDSPs = estimateDSPs();
 			REPORT( LIST, "Estimated DSPs = " <<nrDSPs);
-			
 
+			/* the maximum number of DSPs that can be chained on Virtex devices.
+			The number is related with the number of register levels inside the
+			DSPs. */
+			if ( ( target_->getID() == "Virtex4") ||
+			 ( target_->getID() == "Spartan3"))  // then the target is A Xilinx FPGA 
+				nrOfShifts4Virtex=int(sqrt(nrDSPs));			
+			else
+				nrOfShifts4Virtex=20;
+			
 			//~ float tempDist =	 (movePercentage  * getExtraWidth() * getExtraWidth()) /4.0 + (movePercentage *getExtraHeight() * getExtraHeight()) /4.0;
 			/* each time a tile is placed maxDist2Move is the maximum distance
 			it may be placed from the already placed blocks */
@@ -579,9 +584,14 @@ namespace flopoco{
 				syncCycleFromSignal(concatPartialProd.str());
 			}
 		nextCycle();/////////////////////////////////////////////////////////	
+
+		Operator* add;
+		if ( ( target_->getID() == "Virtex4") ||
+			 ( target_->getID() == "Spartan3"))  // then the target is A Xilinx FPGA 
+			add =  new IntNAdder(getTarget(), wInX+wInY, nrDSPOperands+nrSliceOperands, inMap);
+		else
+			add =  new IntCompressorTree(getTarget(), wInX+wInY, nrDSPOperands+nrSliceOperands,inMap);
 		
-		IntNAdder* add =  new IntNAdder(getTarget(), wInX+wInY, nrDSPOperands+nrSliceOperands, inMap);
-		//IntCompressorTree* add =  new IntCompressorTree(target, adderWidth, opCount);
 		oplist.push_back(add);
 
 		for (int j=0; j<nrDSPOperands; j++)
@@ -599,8 +609,10 @@ namespace flopoco{
 				cout << "@ In Port Map Current Cycle is " << getCurrentCycle() << endl;
 				inPortMap (add, join("X",j+nrDSPOperands) , concatPartialProd.str());
 			}	
-	
-		inPortMapCst(add, "Cin", "'0'");
+
+		if ( ( target_->getID() == "Virtex4") ||
+			 ( target_->getID() == "Spartan3"))  // then the target is A Xilinx FPGA 
+			inPortMapCst(add, "Cin", "'0'");
 		outPortMap(add, "R", "addRes");
 		vhdl << instance(add, "adder");
 

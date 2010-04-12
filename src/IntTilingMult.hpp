@@ -8,6 +8,7 @@
 #include <time.h>
 
 #include "Operator.hpp"
+#include "IntCompressorTree.hpp"
 
 
 namespace flopoco{
