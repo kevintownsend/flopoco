@@ -3597,7 +3597,15 @@ namespace flopoco{
 		o << "library ieee; " << endl;
 		o << "use ieee.std_logic_1164.all;" << endl;
 		o << "use ieee.std_logic_arith.all;" << endl;
+		if  ( (target_->getID() == "Virtex4") ||
+		      (target_->getID() == "Virtex5") ||
+		      (target_->getID() == "Spartan3"))  // then the target is a Xilinx FPGA
+			{
 		o << "use ieee.std_logic_signed.all;" << endl;
+		}else{
+		o << "use ieee.std_logic_unsigned.all;" << endl;
+		}
+		
 		o << "library work;" << endl;
 		outputVHDLEntity(o);
 		newArchitecture(o,name);

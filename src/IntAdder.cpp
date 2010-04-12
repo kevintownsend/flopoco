@@ -587,8 +587,9 @@ extern vector<Operator*> oplist;
 					tryOptimizedChunkSplittingShortLatency ( target, wIn , k );
 					return SHORTLATENCY;
 				} else if (optimizeType == SLICE){
-					tryOptimizedChunkSplittingShortLatency ( target, wIn , k );
-					return SHORTLATENCY;
+//					tryOptimizedChunkSplittingShortLatency ( target, wIn , k );
+//					return SHORTLATENCY;
+					return CLASSICAL;
 				} else if (optimizeType == LATENCY){
 					//TODO: for equal latency return lower resource usage 
 					tryOptimizedChunkSplittingShortLatency ( target, wIn , k );
