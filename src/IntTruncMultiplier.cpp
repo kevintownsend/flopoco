@@ -1857,8 +1857,13 @@ namespace flopoco{
 						while(ver==true&&ref->getShiftOut()==NULL && count <nrOfShifts4Virtex)
 							{
 								ver=false;
-								ref->getTopRightCorner(itx,ity);
-								ref->getBottomLeftCorner(ibx,iby);
+								ref->getTopRightCorner(ibx,iby);
+								ibx = vnme-ibx;
+								iby = vmme-iby;
+								ref->getBottomLeftCorner(itx,ity);
+								itx = vnme-itx;
+								ity = vmme-ity;
+								
 								rw=ref->getMaxMultiplierWidth();
 								rh=ref->getMaxMultiplierHeight();
 					
@@ -1867,7 +1872,9 @@ namespace flopoco{
 										
 										if(config[j]!=NULL &&j!=i && count+ config[j]->getNrOfPrimitiveDSPs()<=nrOfShifts4Virtex)
 											{
-												config[j]->getTopRightCorner(jtx,jty);
+												config[j]->getBottomLeftCorner(jtx,jty);
+												jtx = vnme-jtx;
+												jty = vmme-jty;
 												if((jtx<=vnme && jty<vmme))
 												{
 												
@@ -1893,7 +1900,9 @@ namespace flopoco{
 												}
 												else
 												{
-													config[j]->getBottomLeftCorner(jbx,jby);
+													config[j]->getTopRightCorner(jbx,jby);
+													jbx = vnme-jbx;
+													jby = vmme-jby;
 													//~ cout<<config[i]->getMaxMultiplierHeight()<<" "<<rh<<" ";
 													//~ cout<<(config[i]->getMaxMultiplierHeight()% rh)<<endl;
 
@@ -1921,7 +1930,10 @@ namespace flopoco{
 									{
 										if(config[j]!=NULL &&j!=i&& count+ config[j]->getNrOfPrimitiveDSPs()<=nrOfShifts4Virtex)
 											{
-												config[j]->getTopRightCorner(jtx,jty);
+												config[j]->getBottomLeftCorner(jtx,jty);
+												jtx = vnme-jtx;
+												jty = vmme-jty;
+												
 												if((jtx<=vnme && jty<vmme))
 												{
 												sa = config[j]->getShiftAmount();
@@ -1949,8 +1961,12 @@ namespace flopoco{
 													//~ cout<<(config[i]->getMaxMultiplierWidth()% rw)<<endl;
 
 													//&&  (config[j]->getMaxMultiplierWidth()% rw==0)
-													config[j]->getTopRightCorner(jtx,jty);
-													config[j]->getBottomLeftCorner(jbx,jby);
+													config[j]->getTopRightCorner(jbx,jby);
+													jbx = vnme-jbx;
+													jby = vmme-jby;
+													config[j]->getBottomLeftCorner(jtx,jty);
+													jtx = vnme-jtx;
+													jty = vmme-jty;
 													//if( iby+1==jty &&sa!=0&& config[j]->getMaxMultiplierHeight()% sa==0 && ( (config[j]->getMaxMultiplierHeight() == 34 && jtx==itx      )   || ( config[j]->getMaxMultiplierHeight()==17 && jtx==itx+sa)  ))
 													
 													if(   iby+1==jty &&sa!=0&& (  ((config[j]->getMaxMultiplierHeight() == 34  &&  jbx ==ibx) ||  (config[j]->getMaxMultiplierHeight() == 17  &&  (jbx ==ibx+sa  )))     ) )
@@ -1989,7 +2005,7 @@ namespace flopoco{
 					{
 						config[i]->getTopRightCorner(ix,iy);
 						config[j]->getTopRightCorner(jx,jy);
-						if(iy>jy)
+						if(iy<jy)
 							{
 								temp=config[i];
 								config[i]=config[j];
@@ -1998,7 +2014,7 @@ namespace flopoco{
 						else
 							if(iy==jy)
 								{
-									if(ix>jx)
+									if(ix<jx)
 										{
 											temp=config[i];
 											config[i]=config[j];
@@ -2073,7 +2089,7 @@ namespace flopoco{
 				bestCost=temp;
 				//memcpy(bestConfig,tempc,sizeof(DSP*) *nrDSPs );	
 				for(int ii=0;ii<nrDSPs;ii++)
-					memcpy(bestConfig[ii],tempc[ii],sizeof(DSP) );
+					memcpy(bestConfig[ii],globalConfig[ii],sizeof(DSP) );
 				//display(bestConfig);
 			}
 		else
@@ -2090,7 +2106,7 @@ namespace flopoco{
 							bestCost=temp;
 			
 							for(int ii=0;ii<nrDSPs;ii++)
-								memcpy(bestConfig[ii],tempc[ii],sizeof(DSP) );
+								memcpy(bestConfig[ii],globalConfig[ii],sizeof(DSP) );
 							//	display(bestConfig);
 						}
 				}
@@ -3179,7 +3195,7 @@ namespace flopoco{
 									connected++;
 									d = d->getShiftOut();
 								}
-			
+							cout << "CONNECTED =================> " << connected << endl;
 							d = tempc[i];
 							d->getTopRightCorner(trx1, try1);
 							d->getBottomLeftCorner(blx1, bly1);
@@ -3515,7 +3531,7 @@ namespace flopoco{
 	void IntTruncMultiplier::generateVHDLCode(DSP** config, vector<SoftDSP*> softConfig){
 		
 		DSP** bestConfig = config;
-		//bindDSPs(bestConfig);      
+		bindDSPs(bestConfig);      
 		//bestConfig = splitLargeBlocks(bestConfig, nrDSPs);
 		int nrDSPOperands = multiplicationInDSPs(bestConfig);
 		int nrSliceOperands = multiplicationInSlices(softConfig);
