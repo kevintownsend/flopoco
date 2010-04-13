@@ -3808,7 +3808,7 @@ namespace flopoco{
 		
 		}
 		
-		// cut last expanded multiplier and fit to reduce resource use
+		/* cut last expanded multiplier and fit to reduce resource use
 		if  ((mpfr_cmp(errorSum, targetError) < 0) && (lastDeepX != lastDeepY))
 		{
 			configSoft[lastModifiedIndex]->getBottomLeftCorner(sbx, sby);
@@ -3831,7 +3831,7 @@ namespace flopoco{
 				sby += lastDeepY;
 				configSoft[idx]->setBottomLeftCorner(sbx, sby);
 			}	
-		}
+		} */
 		
 		vector<SoftDSP*> newSoft;
 		newSoft.clear();
@@ -4255,7 +4255,7 @@ namespace flopoco{
 		}
 		
 		
-		
+		/*
 		if  ((mpfr_cmp(errorSum, targetError) < 0) && (lastDeepX != lastDeepY))
 		{
 			configSoft[lastModifiedIndex]->getBottomLeftCorner(sbx, sby);
@@ -4278,7 +4278,7 @@ namespace flopoco{
 				sby += lastDeepY;
 				configSoft[idx]->setBottomLeftCorner(sbx, sby);
 			}	
-		}
+		}*/
 		 
 		//~ int stx,sty,
 		//~ cout<<"Number of SoftDSPs created is "<<configSoft.size()<<endl;
