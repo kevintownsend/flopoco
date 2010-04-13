@@ -99,6 +99,7 @@ namespace flopoco{
 		REPORT(INFO, "Number of estimated DSP blocks = " << nrDSPs);
 		truncationOffset = estimateNrOfDiscardedCols(k);
 		REPORT(INFO, "Number of discarded cols =" << truncationOffset);
+		REPORT(INFO, "board padding padx="<<getExtraWidth()<<" y="<<getExtraHeight());
 		
 		nrOfShifts4Virtex=6;
 		
