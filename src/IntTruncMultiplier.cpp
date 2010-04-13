@@ -2136,6 +2136,7 @@ namespace flopoco{
 		
 		
 				bestCost=temp;
+				REPORT(INFO,"New best score is"<<bestCost);
 				//memcpy(bestConfig,tempc,sizeof(DSP*) *nrDSPs );	
 				for(int ii=0;ii<nrDSPs;ii++)
 					memcpy(bestConfig[ii],globalConfig[ii],sizeof(DSP) );
@@ -2153,7 +2154,7 @@ namespace flopoco{
 							//cout<<"Interchange for equal cost. Now best has cost "<<temp<<endl;
 							
 							bestCost=temp;
-			
+							REPORT(INFO,"Interchange for same cost. New best score is"<<bestCost);
 							for(int ii=0;ii<nrDSPs;ii++)
 								memcpy(bestConfig[ii],globalConfig[ii],sizeof(DSP) );
 							//	display(bestConfig);
@@ -3218,6 +3219,7 @@ namespace flopoco{
 		int partitions = 0; 			// subtracted operand count	
 			
 		//memcpy(tempc, config, sizeof(DSP*) * nrDSPs );
+		
 		for (int i=0; i<nrDSPs; i++)
 		{
 			tempc[i] = config[nrDSPs-i-1];
@@ -3226,6 +3228,7 @@ namespace flopoco{
 			tempc[i]->setShiftIn(so);
 			tempc[i]->setShiftOut(si);
 		}
+		
 		
 		if ( ( target_->getID() == "Virtex4") ||
 			 ( target_->getID() == "Virtex5") ||
