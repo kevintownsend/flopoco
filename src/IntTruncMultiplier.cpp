@@ -2429,7 +2429,7 @@ namespace flopoco{
 	
 	bool IntTruncMultiplier::isValidPosition(int x, int y)
 	{
-		if (x>=vn || y>=vm || x<0 || y<0) // then not in tiling grid bounds
+		if (x>=vnme || y>=vmme || x<0 || y<0) // then not in tiling grid bounds
 		{
 			REPORT(DEBUG, "then not in tiling grid bounds" );
 			return false;
@@ -3224,10 +3224,12 @@ namespace flopoco{
 		for (int i=0; i<nrDSPs; i++)
 		{
 			tempc[i] = config[nrDSPs-i-1];
+			/*
 			DSP* si = tempc[i]->getShiftIn();
 			DSP* so = tempc[i]->getShiftOut();
 			tempc[i]->setShiftIn(so);
 			tempc[i]->setShiftOut(si);
+			*/
 		}
 		
 		
@@ -3246,7 +3248,7 @@ namespace flopoco{
 							while (d != NULL)
 								{
 									connected++;
-									d = d->getShiftOut();
+									d = d->getShiftIn();
 								}
 							cout << "CONNECTED =================> " << connected << endl;
 							d = tempc[i];
@@ -3381,7 +3383,7 @@ namespace flopoco{
 										}
 				
 				
-									d = d->getShiftOut();
+									d = d->getShiftIn();
 									j++;
 								}	
 							sname.seekp(ios_base::beg);
