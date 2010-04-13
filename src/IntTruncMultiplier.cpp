@@ -33,9 +33,9 @@ namespace flopoco{
 	extern vector<Operator*> oplist;
 
 
-	IntTruncMultiplier::IntTruncMultiplier(Target* target, int wX, float ratio, int k,int uL):
-		Operator(target), wX(wX), wY(wX),ratio(ratio),targetPrecision(k),useLimits(uL){
-
+	IntTruncMultiplier::IntTruncMultiplier(Target* target, int wX, float ratio, int k,int uL, int maxTimeInMinutes):
+		Operator(target), wX(wX), wY(wX),ratio(ratio),targetPrecision(k),useLimits(uL), maxTimeInMinutes(maxTimeInMinutes-1){
+		start = clock(); /* time management */
 		srcFileName="IntTruncSquarer";
 		isSquarer = true;
 		ostringstream name;
@@ -71,8 +71,9 @@ namespace flopoco{
 	}
 	
 		
-	IntTruncMultiplier::IntTruncMultiplier(Target* target, int wX, int wY, float ratio, int k, int uL):
-		Operator(target), wX(wX), wY(wY), ratio(ratio),targetPrecision(k),useLimits(uL){
+	IntTruncMultiplier::IntTruncMultiplier(Target* target, int wX, int wY, float ratio, int k, int uL, int maxTimeInMinutes):
+		Operator(target), wX(wX), wY(wY), ratio(ratio),targetPrecision(k),useLimits(uL), maxTimeInMinutes(maxTimeInMinutes-1){
+		start = clock(); /* time management */
 		srcFileName="IntTruncMultiplier";
 		isSquarer = false;	
 		ostringstream name;
@@ -732,6 +733,9 @@ namespace flopoco{
 						//		cout<<"Pas 4_0_1 "<<i<<endl;
 								compareCost();
 								//display(globalConfig);
+								finish = (clock() - start)/(CLOCKS_PER_SEC*60);
+								if (finish > maxTimeInMinutes)
+									return;
 								rot[i]=false;
 								tilingAlgorithm(i,n,false,lastMovedDSP);	
 							}
@@ -740,7 +744,12 @@ namespace flopoco{
 						//		cout<<"Pas 4_5_1 "<<i<<endl;
 								rot[i]=false;
 								if( lastMovedDSP>=0) // go one level up the backtracking stack
+								{
+									finish = (clock() - start)/(CLOCKS_PER_SEC*60);
+									if (finish > maxTimeInMinutes)
+										return;
 									tilingAlgorithm(lastMovedDSP,n,false, lastMovedDSP);
+								}
 							}
 					}
 				else // the last DSP is being moved on the tiling board
@@ -750,6 +759,9 @@ namespace flopoco{
 							{
 								//cout<<" Pas 1_1 "<<i<<endl;
 								compareCost();
+								finish = (clock() - start)/(CLOCKS_PER_SEC*60);
+								if (finish > maxTimeInMinutes)
+									return;
 								tilingAlgorithm(i,n,repl,i);		//repl should be false
 							}
 						//~ else
@@ -772,19 +784,32 @@ namespace flopoco{
 											{
 												//display(globalConfig);
 												compareCost();
+												finish = (clock() - start)/(CLOCKS_PER_SEC*60);
+												if (finish > maxTimeInMinutes)
+													return;
 												tilingAlgorithm(i,n,repl,i);		//repl should be false
 											}
 										else // go to the previous block 
 											{
 												if(i-1>=0)
+												{	
+													finish = (clock() - start)/(CLOCKS_PER_SEC*60);
+													if (finish > maxTimeInMinutes)
+														return;
 													tilingAlgorithm(i-1,n,false,i);
+												}
 											}
 									}
 								else // the DSP was either rotated already or is square
 									{
 										//~ cout<<" Pas 3_1 "<<i<<endl;
 										if(i-1>=0)
+										{	
+											finish = (clock() - start)/(CLOCKS_PER_SEC*60);
+											if (finish > maxTimeInMinutes)
+												return;
 											tilingAlgorithm(i-1,n,repl,i);		//repl should be false
+										}
 									}
 							}
 					}
@@ -797,13 +822,21 @@ namespace flopoco{
 						if(replace(globalConfig,i)) // the current DSP was successfuly repositioned
 							{
 								rot[i]=false;
+								finish = (clock() - start)/(CLOCKS_PER_SEC*60);
+								if (finish > maxTimeInMinutes)
+										return;
 								tilingAlgorithm(i+1,n,repl, lastMovedDSP);
 							}
 						else // the current DSP could not be repositioned
 							{// go to the DSP block that was moved (not repostioned) the last time
 								rot[i]=false;
 								if( lastMovedDSP>=0) 
+								{
+									finish = (clock() - start)/(CLOCKS_PER_SEC*60);
+									if (finish > maxTimeInMinutes)
+										return;
 									tilingAlgorithm( lastMovedDSP,n,false, lastMovedDSP);
+								}
 							}
 			
 		
@@ -821,6 +854,9 @@ namespace flopoco{
 									//~ cout<<endl<<endl<<endl;
 				
 								}
+								finish = (clock() - start)/(CLOCKS_PER_SEC*60);
+								if (finish > maxTimeInMinutes)
+										return;
 								tilingAlgorithm(i+1,n,true,i);
 							}
 						//~ if(counterfirst%100==0)
@@ -839,20 +875,33 @@ namespace flopoco{
 										globalConfig[i]->rotate();
 										if(replace(globalConfig,i)) // the current DSP was successfuly repositioned
 											{
+												finish = (clock() - start)/(CLOCKS_PER_SEC*60);
+												if (finish > maxTimeInMinutes)
+													return;
 												rot[i]=true;
 												tilingAlgorithm(i+1,n,true,i);
 											}
 										else // the current DSP was not successfuly repositioned
 											{
 												if(i-1>=0)
+												{
+													finish = (clock() - start)/(CLOCKS_PER_SEC*60);
+													if (finish > maxTimeInMinutes)
+														return;
 													tilingAlgorithm(i-1,n,repl,i);
+												}
 											}
 									}
 								else // the DSP is either square or has been already rotated
 									{
 					//					cout<<" Pas 3_2 "<<i<<endl;
 										if(i-1>=0)
+										{
+											finish = (clock() - start)/(CLOCKS_PER_SEC*60);
+											if (finish > maxTimeInMinutes)
+												return;
 											tilingAlgorithm(i-1,n,repl,i);		//repl should be false
+										}
 									}
 							}
 					}

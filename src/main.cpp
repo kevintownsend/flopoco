@@ -833,8 +833,9 @@ bool parseCommandLine(int argc, char* argv[]){
 				float r = atof(argv[i++]);
 				int ordError = atoi(argv[i++]);
 				int useLimits = atoi(argv[i++]);
+				int maxTimeInMinutes = atoi(argv[i++]);
 				cerr << "> IntTruncSquarer , wInX="<<wInX<<" ratio=" << r <<" relativeError="<< ordError<< "\n";
-				op = new IntTruncMultiplier(target, wInX, r,ordError,useLimits);
+				op = new IntTruncMultiplier(target, wInX, r,ordError,useLimits, maxTimeInMinutes);
 				addOperator(op);
 			}
 		}		
@@ -848,8 +849,9 @@ bool parseCommandLine(int argc, char* argv[]){
 				float r = atof(argv[i++]);
 				int ordError = atoi(argv[i++]);
 				int useLimits = atoi(argv[i++]);
+				int maxTimeInMinutes = atoi(argv[i++]);
 				cerr << "> IntTruncMult , wInX="<<wInX<<", wInY="<<wInY<<" ratio=" << r <<" error order= "<<ordError<<"\n";
-				op = new IntTruncMultiplier(target, wInX, wInY, r,ordError,useLimits);
+				op = new IntTruncMultiplier(target, wInX, wInY, r,ordError,useLimits, maxTimeInMinutes);
 				addOperator(op);
 			}
 		}		

@@ -118,9 +118,9 @@ namespace flopoco{
 	{
 	public:
 		
-		IntTruncMultiplier(Target* target, int wX, float ratio, int k,int uL);
+		IntTruncMultiplier(Target* target, int wX, float ratio, int k,int uL, int maxTimeInMinutes);
 
-		IntTruncMultiplier(Target* target, int wX, int wY, float ratio, int k,int uL);
+		IntTruncMultiplier(Target* target, int wX, int wY, float ratio, int k,int uL, int maxTimeInMinutes);
 	
 		/** IntTruncMultiplier destructor */
 		~IntTruncMultiplier();
@@ -404,6 +404,9 @@ namespace flopoco{
 		int nrOfShifts4Virtex;
 		//int *countsShift;
 		int dsplimit;
+		int maxTimeInMinutes;
+		clock_t start;
+		clock_t finish;
 		int subCount;
 		int dspWidth,dspHeight;
 	};
