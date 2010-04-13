@@ -3648,6 +3648,27 @@ namespace flopoco{
 				         << " " << (-xT+getExtraWidth())*45 << " " << (yB-getExtraHeight()+1)*45 
 				         << " " << (-xB+getExtraWidth()-1)*45 << " " << (yB-getExtraHeight()+1)*45 
 				         << " " << (-xB+getExtraWidth()-1)*45 << " " << (yT-getExtraHeight())*45 << endl;
+				
+				int dpx = (-(xT+xB)/2+getExtraWidth()-1)*45;
+				int dpy = ((yB+yT)/2-getExtraHeight())*45;         
+				cout << "x="<<dpx<<" y="<<dpy<<endl;
+				fig << " 4 1 0 50 -1 0 12 0.0000 4 195 630 "<<dpx<<" "<<dpy<<" DSP"<<i<<"\\001" << endl;
+
+				//annotations
+				fig << " 4 1 0 50 -1 0 7 0.0000 4 195 630 "<<(-xB+getExtraWidth())*45<<" "<<-45<<" "<<xB-getExtraWidth()<<"\\001" << endl;
+				fig << " 4 1 0 50 -1 0 7 0.0000 4 195 630 "<<(-xT+getExtraWidth()-1)*45<<" "<<-45<<" "<<xT-getExtraWidth()<<"\\001" << endl;
+				fig << " 4 0 0 50 -1 0 7 0.0000 4 195 630 "<<45<<" "<<(yT-getExtraHeight()+2)*45<<" "<<yT-getExtraHeight()<<"\\001" << endl;
+				fig << " 4 0 0 50 -1 0 7 0.0000 4 195 630 "<<45<<" "<<(yB-getExtraHeight()+1)*45<<" "<<yB-getExtraHeight()<<"\\001" << endl;
+
+
+//				fig << "	  " << (-xB+getExtraWidth()-1)*45 << " " << (yT-getExtraHeight())*45 
+//		         << " " << (-xT+getExtraWidth())*45 << " " << (yT-getExtraHeight())*45 
+//		         << " " << (-xT+getExtraWidth())*45 << " " << (yB-getExtraHeight()+1)*45 
+//		         << " " << (-xB+getExtraWidth()-1)*45 << " " << (yB-getExtraHeight()+1)*45 
+
+
+
+
 			}
 		}
 
@@ -3656,6 +3677,8 @@ namespace flopoco{
 			softDSPs[k]->trim(vnme, vmme);
 			softDSPs[k]->getTopRightCorner(xT,yT);
 			softDSPs[k]->getBottomLeftCorner(xB,yB);
+
+			
 			cout << "SOFT DSP Top right = " << xT << ", " << yT << " and bottom left = " << xB << ", " <<yB << endl;
 				fig << " 2 2 0 1 0 7 50 -1 19 0.000 0 0 -1 0 0 5 " << endl;
 				fig << "	  " << (-xB+getExtraWidth()-1)*45 << " " << (yT-getExtraHeight())*45 
@@ -3663,7 +3686,28 @@ namespace flopoco{
 				         << " " << (-xT+getExtraWidth())*45 << " " << (yB-getExtraHeight()+1)*45 
 				         << " " << (-xB+getExtraWidth()-1)*45 << " " << (yB-getExtraHeight()+1)*45 
 				         << " " << (-xB+getExtraWidth()-1)*45 << " " << (yT-getExtraHeight())*45 << endl;
-			
+				int dpx = (-(xT+xB)/2+getExtraWidth()-1)*45;
+				int dpy = ((yB+yT)/2-getExtraHeight())*45;         
+				cout << "x="<<dpx<<" y="<<dpy<<endl;
+				fig << " 4 1 0 50 -1 0 12 0.0000 4 195 630 "<<dpx<<" "<<dpy<<" M"<<k<<"\\001" << endl;
+				
+				xT++;
+				yT++;
+				xB++;
+				yB++;
+				int tmp;
+				tmp=xT;
+				xT=xB;
+				xB=tmp;
+				tmp=yT;
+				yT=yB;
+				yB=tmp;
+				
+				//annotations
+				fig << " 4 1 0 50 -1 0 7 0.0000 4 195 630 "<<(-xB+getExtraWidth())*45<<" "<<-45<<" "<<xB-getExtraWidth()<<"\\001" << endl;
+				fig << " 4 1 0 50 -1 0 7 0.0000 4 195 630 "<<(-xT+getExtraWidth()-1)*45<<" "<<-45<<" "<<xT-getExtraWidth()<<"\\001" << endl;
+				fig << " 4 0 0 50 -1 0 7 0.0000 4 195 630 "<<45<<" "<<(yT-getExtraHeight()+2)*45<<" "<<yT-getExtraHeight()<<"\\001" << endl;
+				fig << " 4 0 0 50 -1 0 7 0.0000 4 195 630 "<<45<<" "<<(yB-getExtraHeight()+1)*45<<" "<<yB-getExtraHeight()<<"\\001" << endl;
 
 		}
 		
@@ -3673,6 +3717,10 @@ namespace flopoco{
          << " " << 0 << " " << (wInY)*45 
          << " " << (-wInX)*45 << " " << (wInY)*45 
          << " " << (-wInX)*45 << " " << 0 << endl;
+
+		//big X and Y
+		fig << " 4 1 0 50 -1 0 16 0.0000 4 195 630 "<<-wInX/2*45<<" "<<-3*45<<" X\\001" << endl;
+		fig << " 4 0 0 50 -1 0 16 0.0000 4 195 630 "<<3*45<<" "<<wInY/2*45<<" Y\\001" << endl;
 
 		
 		fig.close();
