@@ -35,6 +35,7 @@ namespace flopoco{
 
 	IntTruncMultiplier::IntTruncMultiplier(Target* target, int wX, float ratio, int k,int uL):
 		Operator(target), wX(wX), wY(wX),ratio(ratio),targetPrecision(k),useLimits(uL){
+
 		srcFileName="IntTruncSquarer";
 		isSquarer = true;
 		ostringstream name;
@@ -46,84 +47,29 @@ namespace flopoco{
 		addInput ("X", wX);
 		addOutput("R", wX + wX- k); 
 		
-		
-		wInX = wX;
-		wInY = wX;
-		vn=wInX + 2* getExtraWidth();
-		vm=wInY + 2* getExtraHeight();
-		vnme = vn-getExtraWidth();		
-		vmme = vm - getExtraHeight() ;
-		
-		
+		wInX              = wX;
+		wInY              = wX;
+		vn                = wInX + 2* getExtraWidth();
+		vm                = wInY + 2* getExtraHeight();
+		vnme              = vn - getExtraWidth();
+		vmme              = vm - getExtraHeight() ;
+		nrDSPs            = estimateDSPs();
+		nrSoftDSPs        = 0;
+		subCount          = 0;
+		truncationOffset  = estimateNrOfDiscardedCols(k);
+		nrOfShifts4Virtex = 4;
 
-		nrDSPs = estimateDSPs();
-		nrSoftDSPs = 0;
-		subCount=0;
-		cout << "Nr of estimated DSP blocks " << nrDSPs << endl;
-		truncationOffset = estimateNrOfDiscardedCols(k);
-		cout << "Nr of discarded cols " << truncationOffset << endl;
-		nrOfShifts4Virtex=4;
+		REPORT(INFO, "Number of estimated DSP blocks "<< nrDSPs);
+		REPORT(INFO, "Number of discarded columns " << truncationOffset);
+
+
 		float const scale=100.0;
 		costDSP = ( (1.0+scale) - scale * ratio );
-		//~ cout<<"Cost DSP is "<<costDSP<<endl;
 		costLUT = ( (1.0+scale) - scale * (1-ratio) ) /  ((float) target_->getEquivalenceSliceDSP() );
 	
 		runAlgorithm();
-		//test for insertSoftDSPs 		
-			
-			//~ int n=vn;
-			//~ int m=vm;
-			//~ int exw=getExtraWidth();
-			//~ int exh=getExtraHeight();
+	}
 	
-			//~ mat = new int*[m];
-			//~ for(int i=0;i<m;i++)
-			//~ {
-				//~ mat[i] = new int [n];
-				//~ for(int j=0;j<n;j++)
-					//~ mat[i][j]=0;
-			//~ }
-			
-			
-			//~ int w, h;
-			//~ target->getDSPWidths(w, h);
-			
-			//~ cout<<w<<" "<<h<<endl;
-			//~ int shift = 17;
-			
-			
-			//~ cout<<"ExtraWidth="<<exw<<" ExtraHeight="<<exh<<endl;
-			
-			//~ nrDSPs=2;
-			//~ globalConfig = new DSP*[nrDSPs];
-			//~ globalConfig[0] = new DSP(shift, w, h*2);	
-			//~ globalConfig[0]->setNrOfPrimitiveDSPs(2);
-			//~ globalConfig[0]->setTopRightCorner(exw, exh);
-			//~ globalConfig[0]->setBottomLeftCorner(exw+w-1, exh+h*2-1);
-			
-			/*
-			globalConfig[1] = new DSP(shift, w, h*2);	
-			globalConfig[1]->setNrOfPrimitiveDSPs(2);
-			globalConfig[1]->rotate();
-			globalConfig[1]->setTopRightCorner(exw , exh +2*h  );
-			globalConfig[1]->setBottomLeftCorner(exw + h*2-1, exh +2*h+ w-1);
-			*/
-			//~ globalConfig[1] = new DSP(shift, w, h*2);	
-			//~ globalConfig[1]->setNrOfPrimitiveDSPs(2);
-			//~ globalConfig[1]->rotate();
-			//~ globalConfig[1]->setTopRightCorner(exw +w, exh   );
-			//~ globalConfig[1]->setBottomLeftCorner(exw +w+ h*2-1, exh + w-1);
-			
-			
-			//~ target_->getDSPWidths(dspWidth,dspHeight);
-						
-			
-			//~ int test;
-			//~ insertSoftDSPswithLimits(globalConfig);
-			//~ cout<<"Nr of part "<<test<<endl;
-			
-			
-		}
 		
 	IntTruncMultiplier::IntTruncMultiplier(Target* target, int wX, int wY, float ratio, int k, int uL):
 		Operator(target), wX(wX), wY(wY), ratio(ratio),targetPrecision(k),useLimits(uL){
@@ -513,13 +459,13 @@ namespace flopoco{
 			for(i=0; i<nrDSPs; i++){
 				configuration[i]->getTopRightCorner(xT,yT);
 				configuration[i]->getBottomLeftCorner(xB,yB);
-				cout << "HARD DSP Top right = " << xT << ", " << yT << " and bottom left = " << xB << ", " <<yB << endl;
+				cout << "HARD DSP Top right = " << xT-getExtraWidth() << ", " << yT << " and bottom left = " << xB-getExtraHeight() << ", " <<yB << endl;
 				fig << " 2 2 0 1 0 7 50 -1 -1 0.000 0 0 -1 0 0 5 " << endl;
-				fig << "	  " << (-xB+getExtraWidth()-1)*45 << " " << (yT-getExtraHeight())*45 
-				         << " " << (-xT+getExtraWidth())*45 << " " << (yT-getExtraHeight())*45 
-				         << " " << (-xT+getExtraWidth())*45 << " " << (yB-getExtraHeight()+1)*45 
-				         << " " << (-xB+getExtraWidth()-1)*45 << " " << (yB-getExtraHeight()+1)*45 
-				         << " " << (-xB+getExtraWidth()-1)*45 << " " << (yT-getExtraHeight())*45 << endl;
+				fig << " " << (-xB+getExtraWidth()-1) * 45 << " " << (yT-getExtraHeight())     * 45
+				    << " " << (-xT+getExtraWidth())   * 45 << " " << (yT-getExtraHeight())     * 45
+				    << " " << (-xT+getExtraWidth())   * 45 << " " << (yB-getExtraHeight()+1)   * 45
+				    << " " << (-xB+getExtraWidth()-1) * 45 << " " << (yB-getExtraHeight()+1)   * 45
+				    << " " << (-xB+getExtraWidth()-1) * 45 << " " << (yT-getExtraHeight())     * 45   << endl;
 			}
 		}
 
