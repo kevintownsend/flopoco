@@ -174,7 +174,7 @@ static void usage(char *name){
 	cerr << "      Integer multiplier of two integers X and Y of sizes wInX and wInY\n";	
 	cerr << "    IntTruncSquarer wInX ratio error useLimits\n";
 	cerr << "      Integer squarer of integer X of size wInX with a given order of error and which selects if the softdsps will be limited\n";	
-	cerr << "    IntTruncMult wInX  wInY ratio error useLimits\n";
+	cerr << "    IntTruncMultiplier wInX  wInY ratio error useLimits\n";
 	cerr << "      Integer multiplier of two integers X and Y of sizes wInX and wInY with a given order of error and which selects if the softdsps will be limited\n";	
 	cerr << "    IntKaratsuba wIn \n";
 	cerr << "      integer multiplier of two integers X and Y of sizes wIn. 17 < wIn <= 51 (for now) \n";	
@@ -838,7 +838,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(op);
 			}
 		}		
-		else if(opname=="IntTruncMult"){
+		else if(opname=="IntTruncMultiplier"){
 			int nargs = 5;
 			if (i+nargs > argc)
 				usage(argv[0]);

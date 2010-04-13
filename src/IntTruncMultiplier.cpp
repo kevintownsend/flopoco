@@ -35,6 +35,7 @@ namespace flopoco{
 
 	IntTruncMultiplier::IntTruncMultiplier(Target* target, int wX, float ratio, int k,int uL):
 		Operator(target), wX(wX), wY(wX),ratio(ratio),targetPrecision(k),useLimits(uL){
+		srcFileName="IntTruncSquarer";
 		isSquarer = true;
 		ostringstream name;
 		name <<"IntTruncSquarer_"<<wX;
@@ -45,6 +46,7 @@ namespace flopoco{
 		addInput ("X", wX);
 		addOutput("R", wX + wX- k); 
 		
+		
 		wInX = wX;
 		wInY = wX;
 		vn=wInX + 2* getExtraWidth();
@@ -52,6 +54,8 @@ namespace flopoco{
 		vnme = vn-getExtraWidth();		
 		vmme = vm - getExtraHeight() ;
 		
+		
+
 		nrDSPs = estimateDSPs();
 		nrSoftDSPs = 0;
 		subCount=0;
@@ -121,9 +125,9 @@ namespace flopoco{
 			
 		}
 		
-	IntTruncMultiplier::IntTruncMultiplier(Target* target, int wX, int wY, float ratio, int k,int uL):
+	IntTruncMultiplier::IntTruncMultiplier(Target* target, int wX, int wY, float ratio, int k, int uL):
 		Operator(target), wX(wX), wY(wY), ratio(ratio),targetPrecision(k),useLimits(uL){
-		
+		srcFileName="IntTruncMultiplier";
 		isSquarer = false;	
 		ostringstream name;
 		name <<"IntTruncMultiplier_"<<wX<<"_"<<wY;
@@ -133,25 +137,30 @@ namespace flopoco{
 	
 		addInput ("X", wX);
 		addInput ("Y", wY);
-		addOutput("R", wX + wY- k); 
+		addOutput("R", wX + wY - k); 
 	
-		wInX = wX;
-		wInY = wY;
-		vn=wInX + 2* getExtraWidth();
-		vm=wInY + 2* getExtraHeight();
-		vnme = vn - getExtraWidth();		
-		vmme = vm - getExtraHeight() ;
-		nrDSPs = estimateDSPs();
+		wInX       = wX;
+		wInY       = wY;
+		vn         = wInX + 2* getExtraWidth();
+		vm         = wInY + 2* getExtraHeight();
+		vnme       = vn - getExtraWidth();
+		vmme       = vm - getExtraHeight();
+		nrDSPs     = estimateDSPs();
 		nrSoftDSPs = 0;
-		subCount = 0;
-		cout << "Nr of estimated DSP blocks " << nrDSPs << endl;
+		subCount   = 0;
+		
+		REPORT(INFO, "Number of estimated DSP blocks = " << nrDSPs);
 		truncationOffset = estimateNrOfDiscardedCols(k);
-		cout << "Nr of discarded cols " << truncationOffset << endl;
-		nrOfShifts4Virtex=4;
+		REPORT(INFO, "Number of discarded cols =" << truncationOffset);
+		
+		nrOfShifts4Virtex=6;
+		
+		/* paranormal activity; FIXME COMMENT OR WILL GET KILLED*/
 		float const scale=100.0;
 		costDSP = ( (1.0+scale) - scale * ratio );
 		//~ cout<<"Cost DSP is "<<costDSP<<endl;
 		costLUT = ( (1.0+scale) - scale * (1-ratio) ) /  ((float) target_->getEquivalenceSliceDSP() );
+		/* ---------------------------------------- */
 		
 		runAlgorithm();
 		
@@ -423,7 +432,7 @@ namespace flopoco{
 		
 		if (apxError < 0) // then next loop will never finish (REASON: some multipliers overlap)
 		{
-			cout << "Unexpected value for trunc error. Execution stopped." << endl;
+			REPORT(DEBUG,"Unexpected value for trunc error. Execution stopped.");
 			return false;
 		}
 		/* error after compensation */
@@ -544,9 +553,9 @@ namespace flopoco{
 	mpfr_t *IntTruncMultiplier::evalTruncTilingError(DSP** configuration, SoftDSP** softDSPs){
 		/* fist we get the maximal sum */
 		mpfr_t *fullSum;
-		cout << "wX wY are " << wX << "    " << wY << endl;
+		REPORT(DEBUG, "wX wY are " << wX << "    " << wY);
 		fullSum = evalMaxValue(wX, wY);
-		cout << "Full Sum is :" << mpfr_get_d(*fullSum, GMP_RNDN) << endl;
+		REPORT(DEBUG,"Full Sum is :" << mpfr_get_d(*fullSum, GMP_RNDN));
 		int extW = getExtraWidth();
 		int extH = getExtraHeight(); 
 		
@@ -570,8 +579,8 @@ namespace flopoco{
 				mpfr_pow_si( s, s, power, GMP_RNDN);
 				mpfr_mul( *currentSum, *currentSum, s, GMP_RNDN);
 				mpfr_sub( *fullSum, *fullSum, *currentSum, GMP_RNDN);
-				cout << "HARD DSP Top right = " << xT << ", " << yT << " and bottom left = " << xB << ", " <<yB << endl;
-				cout << "This one is :" << mpfr_get_d(*currentSum, GMP_RNDN) << endl;
+				REPORT(DEBUG, "HARD DSP Top right = " << xT << ", " << yT << " and bottom left = " << xB << ", " <<yB);
+				REPORT(DEBUG, "This one is :" << mpfr_get_d(*currentSum, GMP_RNDN));
 				mpfr_clear(*currentSum);
 				i++;
 			}
@@ -603,8 +612,8 @@ namespace flopoco{
 			mpfr_pow_si( s, s, power, GMP_RNDN);
 			mpfr_mul( *currentSum, *currentSum, s, GMP_RNDN);
 			mpfr_sub( *fullSum, *fullSum, *currentSum, GMP_RNDN);
-			cout << "SOFT DSP Top right = " << xT << ", " << yT << " and bottom left = " << xB << ", " <<yB << endl;
-			cout << "This one is :" << mpfr_get_d(*currentSum, GMP_RNDN) << endl;
+			REPORT(DEBUG, "SOFT DSP Top right = " << xT << ", " << yT << " and bottom left = " << xB << ", " <<yB );
+			REPORT(DEBUG,"This one is :" << mpfr_get_d(*currentSum, GMP_RNDN) );
 			mpfr_clear(*currentSum);
 		}
 		return fullSum;
@@ -759,8 +768,10 @@ namespace flopoco{
 		return d;
 	}
 
-	/** The movement of the DSP blocks with values belonging to their widths and heights still needs to be done. Now it only runs with one type of move on one of the directions, which is not ok for the cases when the DSPs are not squares.
-	 */
+	/** The movement of the DSP blocks with values belonging to their widths and
+	heights still needs to be done. Now it only runs with one type of move on
+	one of the directions, which is not ok for the cases when the DSPs are not
+	squares. */
 	void IntTruncMultiplier::tilingAlgorithm(int i, int n,bool repl,int lastMovedDSP)
 	{
 
@@ -935,47 +946,41 @@ namespace flopoco{
 			//The second
 			numberDSP4Overlap=nrDSPs;
 			initTiling(globalConfig,nrDSPs);
-			cout << "NRDSPs = " << nrDSPs << endl;
+			REPORT(DEBUG, "NRDSPs = " << nrDSPs);
 			//this will initialize the bestConfig with the first configuration
 			bestCost = FLT_MAX ;
-			cout<<"Max score is"<<bestCost<<endl;
+			REPORT(INFO, "Max score is" << bestCost);
 			//bestConfig = (DSP**)malloc(nrDSPs * sizeof(DSP*));
 			bestConfig = new DSP*[nrDSPs];
 			for(int i=0;i<nrDSPs;i++)
 				bestConfig[i]= new DSP();
 			compareCost();
-			cout<<"New best score is"<<bestCost<<endl;
-			//getchar();
-			//display(bestConfig);
-			//the best configuration should be consider initially the first one. So the bestConfig parameter will be initialized with global config and hence the bestCost will be initialized with the first cost
+			REPORT(INFO,"New best score is"<<bestCost);
+			/* the best configuration should be considered initially the first
+			one. So the bestConfig parameter will be initialized with global
+			config and hence the bestCost will be initialized with the first
+			cost */
 		
 			//the one
-			numberDSP4Overlap=nrDSPs;
+			numberDSP4Overlap = nrDSPs;
 			tilingAlgorithm(nrDSPs-1,nrDSPs-1,false,nrDSPs-1);
 			//bindDSPs(bestConfig);
 			vector<SoftDSP*> configSoft;
-			if(useLimits==0)
+			if (useLimits == 0)
 				configSoft = insertSoftDSPs(bestConfig);
 			else
 				configSoft = insertSoftDSPswithLimits(bestConfig);
 			
-			
 			displayAll(bestConfig, configSoft);
 			printConfiguration(bestConfig, configSoft);
-			cout<<"Best cost is "<<bestCost<<endl;
+			REPORT(INFO, "Best cost is "<<bestCost);
 			generateVHDLCode(bestConfig, configSoft);
-			/*
-			globalConfig[2]->setTopRightCorner(2,26);
-			globalConfig[2]->setBottomLeftCorner(25,59);
-			globalConfig[1]->setTopRightCorner(36,2);
-			globalConfig[1]->setBottomLeftCorner(59,35);
-			globalConfig[3]->setTopRightCorner(26,36);
-			globalConfig[3]->setBottomLeftCorner(59,59);
-			bestCost = computeCost(globalConfig);
-			display(globalConfig);
-			*/
-			// After all configurations with the nrDSPs number of DSPs were evaluated then a new search is carryed with one DSP less
-			// After the initialization of the new configuration with nrDSPs-1, the cost must be evaluated and confrunted with the best score obtained so far.
+			
+			/* After all configurations with the nrDSPs number of DSPs were
+			evaluated then a new search is carryed with one DSP less */
+			/* After the initialization of the new configuration with nrDSPs-1,
+			the cost must be evaluated and confrunted with the best score
+			obtained so far. */
 		}
 		else
 		{
@@ -995,9 +1000,9 @@ namespace flopoco{
 			tempc[0]=bestConfig[0]=globalConfig[0]=NULL;
 			
 			bestCost = FLT_MAX ;
-			cout<<"Max score is"<<bestCost<<endl;
+			REPORT(DEBUG, "Max score is"<<bestCost);
 			compareCost();
-			cout<<"New best score is"<<bestCost<<endl;
+			REPORT(DEBUG, "New best score is" <<bestCost);
 			display(bestConfig);
 		}
 	
@@ -1131,11 +1136,12 @@ namespace flopoco{
 		//display(bestConfig);
 		
 		
-		if(sizeBest >= sizeConfig)		
+		if(sizeBest >= sizeConfig){
 			return true;
-		else
+		}else{
+			REPORT( INFO, "New best configuration found");
 			return false;
-	
+		}
 	}
 
 	void IntTruncMultiplier::fillMatrix(int **&matrix,int lw,int lh,int topleftX,int topleftY,int botomrightX,int botomrightY,int value)
@@ -1160,8 +1166,8 @@ namespace flopoco{
 		int count=1;
 		n=wInX + 2* getExtraWidth();
 		m=wInY + 2* getExtraHeight();
-		cout<<"real width"<<wInX<<"real height"<<wInY<<endl;
-		cout<<"width "<<n<<"height "<<m<<endl;
+		REPORT(DETAILED, "real width"<<wInX<<"real height"<<wInY);
+		REPORT(DETAILED, "width "<<n<<"height "<<m);
 		mat = new int*[m];
 	
 		int nmew = n-getExtraWidth();
@@ -1181,11 +1187,9 @@ namespace flopoco{
 			
 				config[i]->getTopRightCorner(c1X,c1Y);
 				config[i]->getBottomLeftCorner(c2X,c2Y);
-				cout<<"DSP #"<<i+1<<"has toprigh ("<<c1X<<","<<c1Y<<") and botomleft ("<<c2X<<","<<c2Y<<")"<<endl;
+				REPORT(DETAILED, "DSP #"<<i+1<<"has toprigh ("<<c1X<<","<<c1Y<<") and botomleft ("<<c2X<<","<<c2Y<<")");
 				c1X=n-c1X-1;
 				c2X=n-c2X-1;
-				//~ cout<<"new x1 "<<c1X<<" new x2 "<<c2X<<endl;
-			
 				fillMatrix(mat,n,m,c2X,c1Y,c1X,c2Y,count);
 				count++;			
 			}
@@ -1304,7 +1308,7 @@ namespace flopoco{
 						
 								if( j>= nmew || jj< ew || i >= mmeh || ii < eh)
 									{
-										cout<<"Partition number "<<count<<" is totally out of the real multiplication bounds. ("<<j<<" , "<<i<<" , "<<jj<<" , "<<ii<<")"<<endl;
+										REPORT(DETAILED, "Partition number "<<count<<" is totally out of the real multiplication bounds. ("<<j<<" , "<<i<<" , "<<jj<<" , "<<ii<<")");
 									}
 								else
 									{
@@ -1325,10 +1329,10 @@ namespace flopoco{
 											nii = m -getExtraHeight() -1;
 										else
 											nii = ii;
-										cout<<"Partition number "<<count<<" with bounds. ("<<j<<" , "<<i<<" , "<<jj<<" , "<<ii<<")"<<" has now bounds ("<<nj<<" , "<<ni<<" , "<<njj<<" , "<<nii<<")"<<endl;
+										REPORT(DETAILED, "Partition number "<<count<<" with bounds. ("<<j<<" , "<<i<<" , "<<jj<<" , "<<ii<<")"<<" has now bounds ("<<nj<<" , "<<ni<<" , "<<njj<<" , "<<nii<<")");
 									}
 						
-								cout<<j<<" "<<i<<" "<<jj<<" "<<ii<<endl;
+								REPORT(DETAILED, j<<" "<<i<<" "<<jj<<" "<<ii);
 								fillMatrix(mat,n,m,j,i,jj,ii,count);
 								count++;
 						
@@ -1382,8 +1386,8 @@ namespace flopoco{
 		int count=1;
 		n=wInX + 2* getExtraWidth();
 		m=wInY + 2* getExtraHeight();
-		cout<<"real width"<<wInX<<"real height"<<wInY<<endl;
-		cout<<"width "<<n<<"height "<<m<<endl;
+		REPORT(DETAILED, "real width"<<wInX<<"real height"<<wInY);
+		REPORT(DETAILED,"width "<<n<<"height "<<m);
 		mat = new int*[m];
 	
 		int nmew = n-getExtraWidth();
@@ -1403,7 +1407,7 @@ namespace flopoco{
 			
 				config[i]->getTopRightCorner(c1X,c1Y);
 				config[i]->getBottomLeftCorner(c2X,c2Y);
-				cout<<"DSP #"<<i+1<<"has toprigh ("<<c1X<<","<<c1Y<<") and botomleft ("<<c2X<<","<<c2Y<<")"<<endl;
+				REPORT(DETAILED,"DSP #"<<i+1<<"has toprigh ("<<c1X<<","<<c1Y<<") and botomleft ("<<c2X<<","<<c2Y<<")");
 				c1X=n-c1X-1;
 				c2X=n-c2X-1;
 				//~ cout<<"new x1 "<<c1X<<" new x2 "<<c2X<<endl;
@@ -1418,7 +1422,7 @@ namespace flopoco{
 			
 				softConfig[i]->getTopRightCorner(c1X,c1Y);
 				softConfig[i]->getBottomLeftCorner(c2X,c2Y);
-				cout<<"DSP #"<<i+1<<"has toprigh ("<<c1X<<","<<c1Y<<") and botomleft ("<<c2X<<","<<c2Y<<")"<<endl;
+				REPORT(DETAILED,"DSP #"<<i+1<<"has toprigh ("<<c1X<<","<<c1Y<<") and botomleft ("<<c2X<<","<<c2Y<<")");
 				c1X=n-c1X-1;
 				c2X=n-c2X-1;
 				//~ cout<<"new x1 "<<c1X<<" new x2 "<<c2X<<endl;
@@ -1541,7 +1545,7 @@ namespace flopoco{
 						
 								if( j>= nmew || jj< ew || i >= mmeh || ii < eh)
 									{
-										cout<<"Partition number "<<count<<" is totally out of the real multiplication bounds. ("<<j<<" , "<<i<<" , "<<jj<<" , "<<ii<<")"<<endl;
+										REPORT(DETAILED,"Partition number "<<count<<" is totally out of the real multiplication bounds. ("<<j<<" , "<<i<<" , "<<jj<<" , "<<ii<<")");
 									}
 								else
 									{
@@ -1562,10 +1566,10 @@ namespace flopoco{
 											nii = m -getExtraHeight() -1;
 										else
 											nii = ii;
-										cout<<"Partition number "<<count<<" with bounds. ("<<j<<" , "<<i<<" , "<<jj<<" , "<<ii<<")"<<" has now bounds ("<<nj<<" , "<<ni<<" , "<<njj<<" , "<<nii<<")"<<endl;
+										REPORT(DETAILED, "Partition number "<<count<<" with bounds. ("<<j<<" , "<<i<<" , "<<jj<<" , "<<ii<<")"<<" has now bounds ("<<nj<<" , "<<ni<<" , "<<njj<<" , "<<nii<<")");
 									}
 						
-								cout<<j<<" "<<i<<" "<<jj<<" "<<ii<<endl;
+								REPORT(DETAILED, j<<" "<<i<<" "<<jj<<" "<<ii);
 								fillMatrix(mat,n,m,j,i,jj,ii,count);
 								count++;
 						
@@ -2161,7 +2165,7 @@ namespace flopoco{
 		
 		//costLUT = ( (1.0+scale) - scale * (1-ratio) ) /  ((float)100);
 	
-		cout<<"Cost of a DSP is "<<costDSP<<endl<<"Cost of a Slice is "<<costLUT<<endl;
+		REPORT(DETAILED,"Cost of a DSP is "<<costDSP<<endl<<"Cost of a Slice is "<<costLUT);
 	
 		int nrOfUsedDSPs=0;
 		
@@ -2189,8 +2193,8 @@ namespace flopoco{
 					nrOfUsedDSPs += nrPrimitiveDSPs;
 				}
 		
-		cout<<"Number of used DSP blocks is "<<nrOfUsedDSPs<<endl;
-		cout<<"IntMultiplierCost for subtraction = "<< acc << endl;
+		REPORT(DETAILED, "Number of used DSP blocks is "<<nrOfUsedDSPs);
+		REPORT(DETAILED, "IntMultiplierCost for subtraction = "<< acc);
 		vector<SoftDSP*> configSoft;
 		if(useLimits==0)
 			configSoft = insertSoftDSPs(config);
@@ -2217,10 +2221,10 @@ namespace flopoco{
 		
 		acc +=((float)nrOfUsedDSPs)*costDSP + costLUT * LUTs4Multiplication;
 		
-		cout << "Accum = " << acc << endl;
-		cout<<"Number of partitions for LUTs is "<<partitions<<endl;
+		REPORT(DEBUG, "Accum = " << acc);
+		REPORT(DEBUG, "Number of partitions for LUTs is "<<partitions);
 		nrOfUsedDSPs = bindDSPs(config);
-		cout<<"Number of operands coming from DSPs is "<<nrOfUsedDSPs<<endl;
+		REPORT(DEBUG, "Number of operands coming from DSPs is "<<nrOfUsedDSPs);
 		
 	
 		float LUTs4NAdder=((float)target_->getIntNAdderCost(wInX + wInY,nrOfUsedDSPs+partitions) );
@@ -2228,10 +2232,10 @@ namespace flopoco{
 				
 				
 	
-		cout<<"LUTs used for last "<<nrOfUsedDSPs+partitions<<" adder are"<<LUTs4NAdder<<endl;
+		REPORT(DEBUG, "LUTs used for last "<<nrOfUsedDSPs+partitions<<" adder are"<<LUTs4NAdder);
 		
 		acc +=  LUTs4NAdder* costLUT;	
-		cout << "Accum = " << acc << endl;
+		REPORT(DEBUG, "Accum = " << acc );
 		
 		//~ Substracting the cost of different additions that can be done in DSPs(Virtex) or the cost of a DSP if they can be combined(Altera)
 		
@@ -2242,13 +2246,10 @@ namespace flopoco{
 
 	int IntTruncMultiplier::estimateDSPs()
 	{
-		if (ratio>1)
-			ratio =1;
+		ratio=((ratio>1)?1:ratio);
 		float t1,t2, t3, t4;
 		int Xd, Yd; //the dimension of the multiplier on X and on Y
-		//int multX1, multY1, mult1, multX2, multY2, mult2;
-		bool fitMultiplicaication = false;
-		//int tempDSP;
+		bool fitMultiplicaication = true;
 		target_->getDSPWidths(Xd,Yd);
 		int wInX = vnme-getExtraWidth();
 		int wInY = vmme-getExtraHeight();
@@ -2343,7 +2344,7 @@ namespace flopoco{
 		
 		if(maxDSP > mDSP)
 		{
-			fitMultiplicaication = true;
+			fitMultiplicaication = false;
 			//maxDSP = tempDSP;
 			maxDSP = mDSP; //set the maximum number of DSPs to the multiplication size
 		}
@@ -2351,10 +2352,7 @@ namespace flopoco{
 		if (ratio == 1){
 			if (! fitMultiplicaication){
 				REPORT(INFO, "Warning!!! The number of existing DSPs on this FPGA is not enough to cover the whole multiplication!");
-			}else{
-				REPORT(INFO, "Warning!!! The minimum number of DSP that is neccessary to cover the whole addition will be used!");
 			}
-			
 			return maxDSP;
 		}else{	
 			//cout<<" Eq Slice DSP "<<target_->getEquivalenceSliceDSP()<<endl;
@@ -2420,18 +2418,18 @@ namespace flopoco{
 	{
 		if (x>=vn || y>=vm || x<0 || y<0) // then not in tiling grid bounds
 		{
-			cout << "then not in tiling grid bounds" << endl;
+			REPORT(DEBUG, "then not in tiling grid bounds" );
 			return false;
 		}
 			
 		if (isSquarer && (x > y)) // then the position is above the secondary diagonal
 		{
-			cout << "then the position: ("<<x<<", "<<y<<") is above the secondary diagonal" << endl;
+			REPORT(DEBUG, "then the position: ("<<x<<", "<<y<<") is above the secondary diagonal");
 			return false;
 		}	
 		if ((truncationOffset>0) && ((x-truncationOffset) > y)) // then the position is above the truncation boundary
 		{
-			cout << "then the position is above the truncation boundary" << endl;
+			REPORT(DEBUG, "then the position is above the truncation boundary");
 			return false;
 		}
 			
@@ -2499,8 +2497,7 @@ namespace flopoco{
 		bool b6 ;
 		
 	
-		if(verbose)
-			cout << tab << tab << "checkOverlap: ref is block #" << index << ". Top-right is at (" << xtr1 << ", " << ytr1 << ") and Bottom-right is at (" << xbl1 << ", " << ybl1 << ")" << endl;
+		REPORT(DEBUG, tab<<tab<<"checkOverlap: ref is block #" << index << ". Top-right is at (" << xtr1 << ", " << ytr1 << ") and Bottom-right is at (" << xbl1 << ", " << ybl1 << ")");
 	
 		for (int i=0; i<index; i++)
 			if (config[i] != NULL)
@@ -2513,8 +2510,7 @@ namespace flopoco{
 						return true;
 			
 				
-					if(verbose)
-						cout << tab << tab << "checkOverlap: comparing with block #" << i << ". Top-right is at (" << xtr2 << ", " << ytr2 << ") and Bottom-right is at (" << xbl1 << ", " << ybl1 << ")" << endl;
+					REPORT(DEBUG, tab << tab << "checkOverlap: comparing with block #" << i << ". Top-right is at (" << xtr2 << ", " << ytr2 << ") and Bottom-right is at (" << xbl1 << ", " << ybl1 << ")");
 			
 					//~ if (((xtr2 <= xbl1) && (ytr2 <= ybl1) && (xtr2 >= xtr1) && (ytr2 >= ytr1)) || // config[index] overlaps the upper and/or right part(s) of config[i]
 					//~ ((xbl2 <= xbl1) && (ybl2 <= ybl1) && (xbl2 >= xtr1) && (ybl2 >= ytr1)) || // config[index] overlaps the bottom and/or left part(s) of config[i]
@@ -2556,8 +2552,7 @@ namespace flopoco{
 			
 			
 				}	
-		if(verbose)
-			cout << tab << tab << "checkOverlap: return false" << endl;	
+		REPORT(DEBUG, tab << tab << "checkOverlap: return false");	
 		return false;
 	}
 
@@ -2576,8 +2571,7 @@ namespace flopoco{
 		config[index]->getTopRightCorner(xtr1, ytr1);
 		config[index]->getBottomLeftCorner(xbl1, ybl1);
 	
-		if(verbose)
-			cout << tab << "replace : DSP #" << index << " width is " << w << ", height is " << h << endl; 
+		REPORT(DEBUG, tab << "replace : DSP #" << index << " width is " << w << ", height is " << h );
 		/*
 		 * Initialized in the constructor:
 		 * vn = wInX+2*getExtraWidth(); width of the tiling grid including extensions
@@ -2774,8 +2768,7 @@ namespace flopoco{
 		config[index]->setTopRightCorner(xtr1, ytr1);
 		config[index]->setBottomLeftCorner(xbl1, ybl1);
 		
-		if(verbose)
-			cout << tab << "replace : DSP width is " << w << ", height is " << h << endl; 
+		REPORT(DEBUG, tab << "replace : DSP width is " << w << ", height is " << h ); 
 		// try yo place the DSP block inside the extended region of the tiling grid
 		}
 		return true;
@@ -2795,8 +2788,7 @@ namespace flopoco{
 		}
 		for (int i=0; i<dspCount; i++)
 		{
-			if(verbose)
-				cout << "initTiling : iteration #" << i << endl; 
+			REPORT(DETAILED, "initTiling : iteration #" << i );
 			config[i] = target_->createDSP();						
 			config[i]->setNrOfPrimitiveDSPs(1);
 			
@@ -2893,7 +2885,7 @@ namespace flopoco{
 			( mw*mh>= h*w*nrDSPsprim )
 			)) 
 		{ // we have more than 16 paris of multipliers we can group 4 such pairs into a super-block
-			cout<<"A super DSP was created"<<endl;
+			REPORT(DEBUG, "A super DSP was created");
 			config[start] = new DSP(0, w*2, h*4);
 			config[start]->setNrOfPrimitiveDSPs(4);
 			config[start]->allocatePositions(3*start); // each DSP offers 3 positions
@@ -2937,7 +2929,7 @@ namespace flopoco{
 			)	
 		)
 		{ // we have more than 10 paris of multipliers we can group 4 such pairs into a super-block
-			cout<<"A super DSP was created"<<endl;
+			REPORT(DEBUG,"A super DSP was created");
 			config[start] = new DSP(0, w*2, h*4);
 			config[start]->setNrOfPrimitiveDSPs(4);
 			config[start]->allocatePositions(3*start); // each DSP offers 3 positions
@@ -3020,8 +3012,7 @@ namespace flopoco{
 					config[i]->getTopRightCorner(xtri, ytri);
 					target_->getDSPWidths(wx,wy);
 				
-					if (verbose)
-						cout << "bindDSP4Stratix: DSP #" << i << " has less than 3 operands. Top-right is at ( " << xtri << ", " << ytri << ") width is " << wx << endl;
+					REPORT(DEBUG, "bindDSP4Stratix: DSP #" << i << " has less than 3 operands. Top-right is at ( " << xtri << ", " << ytri << ") width is " << wx );
 					DSP** operands;
 					DSP** operandsj;
 					DSP** opsk;
@@ -3038,8 +3029,7 @@ namespace flopoco{
 								for (int k=0; k<nrOp; k++)
 									if (operands[k] == config[j]) // the DSPs are allready bound
 										{
-											if (verbose)
-												cout << "bindDSP4Stratix: DSP #" << j << " has #" << i << " as one of its operands allready." << endl;
+											REPORT(DEBUG, "bindDSP4Stratix: DSP #" << j << " has #" << i << " as one of its operands allready." );
 											bound = true;
 											break;
 										}
@@ -3051,15 +3041,13 @@ namespace flopoco{
 								config[j]->getTopRightCorner(xtrj, ytrj);
 								nrOpj = config[j]->getNumberOfAdders();
 				
-								if (verbose)
-									cout << "bindDSP4Stratix:" << tab << " Checking against DSP #" << j << " Top-right is at ( " << xtrj << ", " << ytrj << ") width is " << wx << endl;
+								REPORT(DEBUG,"bindDSP4Stratix:" << tab << " Checking against DSP #" << j << " Top-right is at ( " << xtrj << ", " << ytrj << ") width is " << wx);
 			
 								if ((((xtrj-xtri == -wx) && (ytrj-ytri == wy)) || ((xtrj-xtri == wx) && (ytrj-ytri == -wy))) && // if they have the same alignment
 									 (nrOpj + nrOp < 3)) // if the DSPs we want to bind have less than 3 other DSPs to add together
 									{ // copy the operands from one another and bind them 
 					
-										if (verbose)
-											cout << "bindDSP4Stratix : DSP #" << j << " together with #" << i << " have fewer than 3 operands. We can bind them." << endl;
+										REPORT(DEBUG, "bindDSP4Stratix : DSP #" << j << " together with #" << i << " have fewer than 3 operands. We can bind them.");
 										operandsj = config[j]->getAdditionOperands();
 					
 										for (int k=0; k<nrOp; k++)
@@ -3107,16 +3095,13 @@ namespace flopoco{
 	
 		for (int i=0; i<DSPcount; i++)
 			{
-				if (verbose)
-					cout << "bindDSP4Stratix : DSP #" << i << " has " << config[i]->getNumberOfAdders() << " adders" << endl;
+				REPORT(DEBUG, "bindDSP4Stratix : DSP #" << i << " has " << config[i]->getNumberOfAdders() << " adders" );
 				pair[config[i]->getNumberOfAdders()-1]++;
 			}
-		if (verbose)
-			{
-				cout << "bindDSP4Stratix : one " << pair[0] << endl;
-				cout << "bindDSP4Stratix : two " << pair[1] << endl;
-				cout << "bindDSP4Stratix : three " << pair[2] << endl;
-			}
+			REPORT(DEBUG, "bindDSP4Stratix : one " << pair[0]); 
+			REPORT(DEBUG, "bindDSP4Stratix : two " << pair[1]); 
+			REPORT(DEBUG, "bindDSP4Stratix : three " << pair[2]);
+			
 		return (DSPcount - pair[0]/2 - pair[1]*2/3 - pair[2]*3/4);
 	}
 

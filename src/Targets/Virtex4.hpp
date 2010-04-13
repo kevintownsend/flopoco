@@ -62,7 +62,7 @@ namespace flopoco{
 			xorcyCintoO_    = 0.273e-9;
 		
 			lutInputs_ = 4;
-			nrDSPs_ = 60; // XC4VLX15 has 1 column of 32 DSPs, 60 is for testing purposes	
+			nrDSPs_ = 220; // XC4VLX15 has 1 column of 32 DSPs, 60 is for testing purposes	
 		}
 
 		/** The destructor */
