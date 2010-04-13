@@ -568,6 +568,8 @@ namespace flopoco{
 		bindDSPs(bestConfig);      
 		int nrDSPOperands = multiplicationInDSPs(bestConfig);
 		int nrSliceOperands = multiplicationInSlices(bestConfig);
+		cout << "nr of DSP operands="<<nrDSPOperands<<endl;
+		cout << "nr of softDSP operands="<<nrSliceOperands<<endl;
 		map<string, double> inMap;
 		
 		for (int j=0; j<nrDSPOperands; j++)
@@ -585,40 +587,52 @@ namespace flopoco{
 			}
 		nextCycle();/////////////////////////////////////////////////////////	
 
-		Operator* add;
-		if ( ( target_->getID() == "Virtex4") ||
-			 ( target_->getID() == "Spartan3"))  // then the target is A Xilinx FPGA 
-			add =  new IntNAdder(getTarget(), wInX+wInY, nrDSPOperands+nrSliceOperands, inMap);
-		else
-			add =  new IntCompressorTree(getTarget(), wInX+wInY, nrDSPOperands+nrSliceOperands,inMap);
+		if (nrDSPOperands+nrSliceOperands>1){
+			Operator* add;
+			if ( ( target_->getID() == "Virtex4") ||
+				 ( target_->getID() == "Spartan3"))  // then the target is A Xilinx FPGA 
+				add =  new IntNAdder(getTarget(), wInX+wInY, nrDSPOperands+nrSliceOperands, inMap);
+			else
+				add =  new IntCompressorTree(getTarget(), wInX+wInY, nrDSPOperands+nrSliceOperands,inMap);
 		
-		oplist.push_back(add);
+			oplist.push_back(add);
 
-		for (int j=0; j<nrDSPOperands; j++)
-			{
-				ostringstream concatPartialProd;
-				concatPartialProd  << "addOpDSP" << j;
 
-				inPortMap (add, join("X",j) , concatPartialProd.str());
-			}	
+			for (int j=0; j<nrDSPOperands; j++)
+				{
+					ostringstream concatPartialProd;
+					concatPartialProd  << "addOpDSP" << j;
+
+					inPortMap (add, join("X",j) , concatPartialProd.str());
+				}	
 			
-		for (int j=0; j<nrSliceOperands; j++)
-			{
-				ostringstream concatPartialProd;
-				concatPartialProd  << "addOpSlice" << j;
-				cout << "@ In Port Map Current Cycle is " << getCurrentCycle() << endl;
-				inPortMap (add, join("X",j+nrDSPOperands) , concatPartialProd.str());
-			}	
+			for (int j=0; j<nrSliceOperands; j++)
+				{
+					ostringstream concatPartialProd;
+					concatPartialProd  << "addOpSlice" << j;
+					cout << "@ In Port Map Current Cycle is " << getCurrentCycle() << endl;
+					inPortMap (add, join("X",j+nrDSPOperands) , concatPartialProd.str());
+				}	
 
-		if ( ( target_->getID() == "Virtex4") ||
-			 ( target_->getID() == "Spartan3"))  // then the target is A Xilinx FPGA 
-			inPortMapCst(add, "Cin", "'0'");
-		outPortMap(add, "R", "addRes");
-		vhdl << instance(add, "adder");
+			if ( ( target_->getID() == "Virtex4") ||
+				 ( target_->getID() == "Spartan3"))  // then the target is A Xilinx FPGA 
+				inPortMapCst(add, "Cin", "'0'");
+			outPortMap(add, "R", "addRes");
+			vhdl << instance(add, "adder");
 
-		syncCycleFromSignal("addRes");
-
-		vhdl << tab << "R <= " << "addRes" << ";" << endl;
+			syncCycleFromSignal("addRes");
+		
+			vhdl << tab << "R <= " << "addRes" << ";" << endl;
+		}else{
+			if (nrDSPOperands==1){
+				syncCycleFromSignal("addOpDSP0");
+				vhdl << tab << "R <= " << "addOpDSP0" << ";" << endl;
+			}else{
+				syncCycleFromSignal("addOpSlice0");
+				vhdl << tab << "R <= " << "addOpSlice0" << ";" << endl;
+			}
+		}
+			
 	}
 	
 	
@@ -3593,7 +3607,7 @@ namespace flopoco{
 			delete[](mat[ii]);
 	
 		delete[] (mat);
-	
+		
 		return partitions;
 	}	
 
