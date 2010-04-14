@@ -51,7 +51,7 @@ namespace flopoco{
 	void Operator::addOutput(const std::string name, const int width, const int numberOfPossibleOutputValues, const bool isBus) {
 		if (signalMap_.find(name) != signalMap_.end()) {
 			std::ostringstream o;
-			o << "ERROR in addInput, signal " << name << " seems to already exist";
+			o << "ERROR in addOutput, signal " << name << " seems to already exist";
 			throw o.str();
 		}
 		Signal *s = new Signal(name, Signal::out, width, isBus) ;
@@ -66,7 +66,7 @@ namespace flopoco{
 
 	void Operator::addFPInput(const std::string name, const int wE, const int wF) {
 		if (signalMap_.find(name) != signalMap_.end()) {
-			cerr << "ERROR in addInput , signal " << name<< " seems to already exist" << endl;
+			cerr << "ERROR in addFPInput , signal " << name<< " seems to already exist" << endl;
 			exit(EXIT_FAILURE);
 		}
 		Signal *s = new Signal(name, Signal::in, wE, wF);
@@ -79,7 +79,7 @@ namespace flopoco{
 
 	void Operator::addFPOutput(const std::string name, const int wE, const int wF, const int numberOfPossibleOutputValues) {
 		if (signalMap_.find(name) != signalMap_.end()) {
-			cerr << "ERROR in addInput , signal " << name<< " seems to already exist" << endl;
+			cerr << "ERROR in addFPOutput , signal " << name<< " seems to already exist" << endl;
 			exit(EXIT_FAILURE);
 		}
 		Signal *s = new Signal(name, Signal::out, wE, wF) ;
@@ -95,7 +95,7 @@ namespace flopoco{
 
 	void Operator::addIEEEInput(const std::string name, const int wE, const int wF) {
 		if (signalMap_.find(name) != signalMap_.end()) {
-			cerr << "ERROR in addInput , signal " << name<< " seems to already exist" << endl;
+			cerr << "ERROR in addIEEEInput , signal " << name<< " seems to already exist" << endl;
 			exit(EXIT_FAILURE);
 		}
 		Signal *s = new Signal(name, Signal::in, wE, wF, true);
@@ -108,7 +108,7 @@ namespace flopoco{
 
 	void Operator::addIEEEOutput(const std::string name, const int wE, const int wF, const int numberOfPossibleOutputValues) {
 		if (signalMap_.find(name) != signalMap_.end()) {
-			cerr << "ERROR in addInput , signal " << name<< " seems to already exist" << endl;
+			cerr << "ERROR in addIEEEOutput , signal " << name<< " seems to already exist" << endl;
 			exit(EXIT_FAILURE);
 		}
 		Signal *s = new Signal(name, Signal::out, wE, wF, true) ;
