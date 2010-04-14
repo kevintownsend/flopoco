@@ -88,18 +88,19 @@ namespace flopoco{
 	
 		warningInfo();
 	
-		wInX       = wX;
-		wInY       = wY;
-		vn         = wInX + 2* getExtraWidth();
-		vm         = wInY + 2* getExtraHeight();
-		vnme       = vn - getExtraWidth();
-		vmme       = vm - getExtraHeight();
-		nrDSPs     = estimateDSPs();
-		nrSoftDSPs = 0;
-		subCount   = 0;
-		
-		REPORT(INFO, "Number of estimated DSP blocks = " << nrDSPs);
+		wInX             = wX;
+		wInY             = wY;
+		vn               = wInX + 2* getExtraWidth();
+		vm               = wInY + 2* getExtraHeight();
+		vnme             = vn - getExtraWidth();
+		vmme             = vm - getExtraHeight();
 		truncationOffset = estimateNrOfDiscardedCols(k);
+		nrDSPs           = estimateDSPsv2();
+		nrSoftDSPs       = 0;
+		subCount         = 0;
+		
+		REPORT(INFO, "Estimated number of DSP blocks = " << nrDSPs);
+
 		REPORT(INFO, "Approx. number of discarded columns =" << truncationOffset);
 		REPORT(DEBUG, "board padding padx="<<getExtraWidth()<<" y="<<getExtraHeight());
 		
