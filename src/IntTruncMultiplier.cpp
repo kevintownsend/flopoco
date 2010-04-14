@@ -3442,7 +3442,8 @@ namespace flopoco{
 												{
 													setCycle(connected);
 													sname.seekp(ios_base::beg);
-													sname << use(join(mname.str(),j)) << range(d->getShiftAmount()- (try1-try2 + bly1-bly2) - (trx1-trx2 + blx1-blx2) -1, 0) << " & " << sname.str();
+//													sname << use(join(mname.str(),j)) << range(d->getShiftAmount()- (try1-try2 + bly1-bly2) - (trx1-trx2 + blx1-blx2) -1, 0) << " & " << sname.str();
+													sname << use(join(mname.str(),j)) << range(d->getShiftAmount() -1, 0) << " & " << sname.str();
 												}
 										}
 									else // only multiplication
@@ -3729,10 +3730,17 @@ namespace flopoco{
 				concatPartialProd  << "addOpSlice_sub" << j;
 				syncCycleFromSignal(concatPartialProd.str());
 			}		
+		Operator *add;
 		
-		IntNAdder* add =  new IntNAdder(getTarget(), wInX+wInY-minShift, nrDSPOperands+nrSliceOperands+subCount, inMap);
+		if   (target_->getID() != "Virtex5"){
+			add =  new IntNAdder(getTarget(), wInX+wInY-minShift, nrDSPOperands+nrSliceOperands+subCount, inMap);
+		} else{
+			add =  new IntCompressorTree(getTarget(), wInX+wInY-minShift, nrDSPOperands+nrSliceOperands+subCount, inMap);
+		}
+		
 		//IntCompressorTree* add =  new IntCompressorTree(target, adderWidth, opCount);
 		oplist.push_back(add);
+		nextCycle();
 
 		for (int j=0; j<nrDSPOperands; j++)
 			{
@@ -3756,8 +3764,8 @@ namespace flopoco{
 				concatPartialProd  << "addOpSlice_sub" << j;
 				inPortMap (add, join("X", j+nrDSPOperands+nrSliceOperands), concatPartialProd.str());
 			}	
-	
-		inPortMapCst(add, "Cin", "'0'");
+		if   (target_->getID() != "Virtex5")
+			inPortMapCst(add, "Cin", "'0'");
 		outPortMap(add, "R", "addRes");
 		vhdl << instance(add, "adder");
 
