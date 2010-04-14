@@ -101,7 +101,7 @@ namespace flopoco{
 		REPORT(INFO, "Number of discarded cols =" << truncationOffset);
 		REPORT(INFO, "board padding padx="<<getExtraWidth()<<" y="<<getExtraHeight());
 		
-		nrOfShifts4Virtex=6;
+		nrOfShifts4Virtex=20;
 		
 		/* paranormal activity; FIXME COMMENT OR WILL GET KILLED*/
 		float const scale=100.0;
@@ -376,7 +376,7 @@ namespace flopoco{
 		mpfr_t *approxError;
 		approxError = evalTruncTilingErrorInverted(configuration, softDSPs);
 		double apxError = mpfr_get_d(*approxError, GMP_RNDN);
-		//cout << "The trunc error is : " << apxError << endl;
+//		cout << "The trunc error order is : " << mpfr_get_exp(*approxError) << endl;
 		
 		if (apxError < 0) // then next loop will never finish (REASON: some multipliers overlap)
 		{
@@ -518,6 +518,8 @@ namespace flopoco{
 				xB -= extW;
 				yT -= extH;
 				yB -= extH;
+
+				
 				int power = xT + yT;
 				mpfr_t* currentSum;
 				currentSum = evalMaxValue(min(xB,wX) - xT + 1, min(yB,wY) - yT +1);
@@ -543,6 +545,8 @@ namespace flopoco{
 			yT -= extH;
 			yB -= extH;
 			softDSPs[k]->trim(vnme, vmme);
+
+			
 			int power = xT + yT;
 			mpfr_t* currentSum;
 			if ((xB>xT) && (yB > yT))
@@ -572,6 +576,8 @@ namespace flopoco{
 		mpfr_t *fullSum;
 		//cout << endl << endl << "wX wY are " << wX << "    " << wY << endl;
 		fullSum = evalMaxValue(wX, wY);
+//		cout << "The evaluated max value is:" << mpfr_get_d(*fullSum, GMP_RNDN)<<endl;
+		
 		if (isSquarer) // only half of tiling grid
 			mpfr_div_si(*fullSum, *fullSum, 2, GMP_RNDU);
 		int extW = getExtraWidth();
@@ -587,15 +593,33 @@ namespace flopoco{
 				xB -= extW;
 				yT -= extH;
 				yB -= extH;
-				xB = min(xB,wX-1); 
-				xT = max(xT,0);
-				yB = min(yB,wY-1);
-				yT = max(yT,0);
-				//int power = xT + yT;
-				int power = (wX - xB-1) + (wY - yB-1);
+				
+				//the conf is rotated
+				xT = wX-1 - xT;
+				yT = wY-1 - yT;
+				xB = wX-1 - xB;
+				yB = wY-1 - yB;
+				int tmp = xT;
+				xT=xB;
+				xB=tmp;
+				tmp = yT;
+				yT=yB;
+				yB=tmp;
+				
+//				cout << "xT="<<xT<<" yT="<<yT<<" xB="<<xB<<" yB="<<yB<<endl;
+				
+//				xB = min(xB,wX-1); 
+//				xT = max(xT,0);
+//				yB = min(yB,wY-1);
+//				yT = max(yT,0);
+
+				int power = xT + yT;
+//				int power = (wX - xB-1) + (wY - yB-1);
 				//cout << "Power " << power << endl; 
 				mpfr_t* currentSum;
-				currentSum = evalMaxValue(min(xB,wX-1) - max(xT,0) + 1, min(yB,wY-1) - max(yT,0) +1);
+//				currentSum = evalMaxValue(min(xB,wX-1) - max(xT,0) + 1, min(yB,wY-1) - max(yT,0) +1);
+				currentSum = evalMaxValue(min(xB,wX) - xT + 1, min(yB,wY) - yT +1);
+//				cout << "DSP contribution " << mpfr_get_d(*currentSum,GMP_RNDN) << endl;
 				double area=0.0;
 				
 				if (isSquarer) // subtract parts that are out of triangle
@@ -612,7 +636,8 @@ namespace flopoco{
 				mpfr_set_ui( s, 2, GMP_RNDN);
 				mpfr_pow_si( s, s, power, GMP_RNDN);
 				mpfr_mul( *currentSum, *currentSum, s, GMP_RNDN);
-				mpfr_sub_d( *currentSum, *currentSum, area, GMP_RNDN);
+//				cout << "DSP weighted contribution " << mpfr_get_exp(*currentSum) << endl;
+//				mpfr_sub_d( *currentSum, *currentSum, area, GMP_RNDN);
 				mpfr_sub( *fullSum, *fullSum, *currentSum, GMP_RNDN);
 				mpfr_clear(*currentSum);
 				free(currentSum);
@@ -621,6 +646,7 @@ namespace flopoco{
 				//cout << "This one is :" << mpfr_get_d(*currentSum, GMP_RNDN) << endl;
 			}
 		}
+//		cout << "The evaluated m DSPs:" << mpfr_get_d(*fullSum, GMP_RNDN)<<endl;
 		
 		int xB,xT,yB,yT;
 		for (unsigned k=0; k < softDSPs.size(); k++){
@@ -631,12 +657,25 @@ namespace flopoco{
 			xB -= extW;
 			yT -= extH;
 			yB -= extH;
-			xB = min(xB,wX-1); 
-			xT = max(xT,0);
-			yB = min(yB,wY-1);
-			yT = max(yT,0);
-			//int power = xT + yT;
-			int power = (wX - xB-1) + (wY - yB-1);
+			softDSPs[k]->trim(vnme, vmme);
+			//the conf is rotated
+			xT = wX-1 - xT;
+			yT = wY-1 - yT;
+			xB = wX-1 - xB;
+			yB = wY-1 - yB;
+			int tmp = xT;
+			xT=xB;
+			xB=tmp;
+			tmp = yT;
+			yT=yB;
+			yB=tmp;
+			
+//			xB = min(xB,wX-1); 
+//			xT = max(xT,0);
+//			yB = min(yB,wY-1);
+//			yT = max(yT,0);
+			int power = xT + yT;
+//			int power = (wX - xB-1) + (wY - yB-1);
 			//cout << "Power " << power << endl; 
 			mpfr_t* currentSum;
 			if ((xB>=xT) && (yB >=yT))
