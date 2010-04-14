@@ -1,3 +1,16 @@
+/*
+  Higher-Order Table-Based Method in FloPoCo
+
+  Authors: J. Detrey, F. de Dinechin, C. Klein
+
+  This file is part of the FloPoCo project
+  developed by the Arenaire team at Ecole Normale Superieure de Lyon
+  
+  Initial software.
+  Copyright © ENS-Lyon, INRIA, CNRS, UCBL,  
+  CeCILL license, 2008-2010.
+
+  */
 #include "HOTBM.hpp"
 #include "HOTBM/Function.hh"
 #include "HOTBM/Param.hh"
