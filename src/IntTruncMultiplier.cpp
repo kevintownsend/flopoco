@@ -3455,12 +3455,12 @@ namespace flopoco{
 												{
 													setCycle(connected);
 													//sname << zg(wInX+wInY+extW+extH-blx1-bly1-2, 0) << " & " << use(mname.str()) << range(multH+multW-1, bpadX+bpadY)<< " & " << zg(trx1-extW,0) << " & " << zg(try1-extH,0) <<  ";" << endl;
-													sname << zg(fpadX+fpadY-sh, 0) << " & " << use(mname.str()) << " & " << zg(trx1,0) << " & " << zg(try1+sh,0) <<  ";" << endl;
+													sname << zg(fpadX+fpadY-sh, 0) << " & " << use(mname.str()) << " & " << zg(try1+trx1+sh - minShift,0) <<  ";" << endl;
 												}
 											else // concatenate only the lower portion of the partial product
 												{
 													setCycle(connected);
-													sname << use(mname.str()) << range(d->getShiftAmount()- (try1-try2 + bly1-bly2) - (trx1-trx2 + blx1-blx2) -1, 0) << " & " << zg(trx1,0) << " & " << zg(try1+sh,0) << ";" << endl;
+													sname << use(mname.str()) << range(d->getShiftAmount()- (try1-try2 + bly1-bly2) - (trx1-trx2 + blx1-blx2) -1, 0) << " & " << zg(try1+trx1+sh-minShift,0) << ";" << endl;
 												}
 										}
 				
@@ -3480,7 +3480,7 @@ namespace flopoco{
 									j++;
 								}	
 							sname.seekp(ios_base::beg);
-							sname << tab << declare(join("addOpDSP", nrOp),wInX+wInY) << " <= " << sname.str();
+							sname << tab << declare(join("addOpDSP", nrOp),wInX+wInY-minShift) << " <= " << sname.str();
 							vhdl << sname.str();
 							nrOp++;		
 						}
@@ -3671,7 +3671,7 @@ namespace flopoco{
 		
 			syncCycleFromSignal(join("result", partitions));
 			
-			vhdl << tab << declare(join("addOpSlice", partitions), wInX+wInY) << " <= " << zg(wInX-njj-1+wInY-nii-1-sh, 0) << " & " << join("result", partitions) << " & " << zg(nj+ni+sh, 0) << ";" << endl;
+			vhdl << tab << declare(join("addOpSlice", partitions), wInX+wInY-minShift) << " <= " << zg(wInX-njj-1+wInY-nii-1-sh, 0) << " & " << join("result", partitions) << " & " << zg(nj+ni+sh-minShift, 0) << ";" << endl;
 			//cout<<"partitions " << partitions << " @ cycle " << getCurrentCycle() << endl;
 		}
 				
@@ -3680,8 +3680,30 @@ namespace flopoco{
 
 	void IntTruncMultiplier::generateVHDLCode(DSP** config, vector<SoftDSP*> softConfig){
 		
+		int trx1, try1, blx1, bly1; 	// coordinates of the two corners of a DSP block 
 		DSP** bestConfig = config;
-		bindDSPs(bestConfig);      
+		bindDSPs(bestConfig); 
+		
+		minShift = wX + wY - 2;
+		for (int i=0; i<nrDSPs; i++){
+			if (bestConfig[i] != NULL){
+				DSP* d = bestConfig[i];
+				d->getTopRightCorner(trx1, try1);
+				d->getBottomLeftCorner(blx1, bly1);
+				convertCoordinates(trx1, try1, blx1, bly1);
+				minShift = min (minShift, trx1+try1);
+			}
+		}
+
+		for (uint32_t partitions=0; partitions<softConfig.size(); partitions++)
+		{	
+			int njj, nj, ni, nii;
+			softConfig[partitions]->getCoordinates(nj, ni, njj, nii);
+			convertCoordinates(nj, ni, njj, nii);
+			minShift = min (minShift, nj+ni);
+		}
+		REPORT(INFO, "The minimal shift is:" << minShift);
+		     
 		//bestConfig = splitLargeBlocks(bestConfig, nrDSPs);
 		int nrDSPOperands = multiplicationInDSPs(bestConfig);
 		int nrSliceOperands = multiplicationInSlices(softConfig);
@@ -3708,7 +3730,7 @@ namespace flopoco{
 				syncCycleFromSignal(concatPartialProd.str());
 			}		
 		
-		IntNAdder* add =  new IntNAdder(getTarget(), wInX+wInY, nrDSPOperands+nrSliceOperands+subCount, inMap);
+		IntNAdder* add =  new IntNAdder(getTarget(), wInX+wInY-minShift, nrDSPOperands+nrSliceOperands+subCount, inMap);
 		//IntCompressorTree* add =  new IntCompressorTree(target, adderWidth, opCount);
 		oplist.push_back(add);
 
@@ -3741,7 +3763,7 @@ namespace flopoco{
 
 		syncCycleFromSignal("addRes");
 
-		vhdl << tab << "R <= " << "addRes" << range(wX+wY-1, targetPrecision) << ";" << endl;
+		vhdl << tab << "R <= " << "addRes" << range(wX+wY-1-minShift, targetPrecision-minShift) << ";" << endl;
 	}
 	
 	vector<SoftDSP*> IntTruncMultiplier::insertSoftDSPs(DSP** config)

@@ -440,6 +440,7 @@ namespace flopoco{
 		clock_t finish;
 		int subCount;
 		int dspWidth,dspHeight;
+		int minShift;
 	};
 
 }
