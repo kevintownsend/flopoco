@@ -86,6 +86,8 @@ namespace flopoco{
 		addInput ("Y", wY);
 		addOutput("R", wX + wY - k); 
 	
+		warningInfo();
+	
 		wInX       = wX;
 		wInY       = wY;
 		vn         = wInX + 2* getExtraWidth();
@@ -98,8 +100,8 @@ namespace flopoco{
 		
 		REPORT(INFO, "Number of estimated DSP blocks = " << nrDSPs);
 		truncationOffset = estimateNrOfDiscardedCols(k);
-		REPORT(INFO, "Number of discarded cols =" << truncationOffset);
-		REPORT(INFO, "board padding padx="<<getExtraWidth()<<" y="<<getExtraHeight());
+		REPORT(INFO, "Approx. number of discarded columns =" << truncationOffset);
+		REPORT(DEBUG, "board padding padx="<<getExtraWidth()<<" y="<<getExtraHeight());
 		
 		nrOfShifts4Virtex=20;
 		
@@ -110,6 +112,12 @@ namespace flopoco{
 		costLUT = ( (1.0+scale) - scale * (1-ratio) ) /  ((float) target_->getEquivalenceSliceDSP() );
 		/* ---------------------------------------- */
 		
+		
+		cout << " DO you want to run the algorithm? (y/n)" << endl;
+		string myc;
+		cin >> myc;
+		if ( myc.compare("y")!=0)
+			exit(-1);
 		runAlgorithm();
 		
 		/*
@@ -2418,7 +2426,7 @@ namespace flopoco{
 				int trCornerMultY = truncationOffset - trCornerMultX;
 				float intMultCost = float(target_->getIntMultiplierCost(wInX,wInY)-target_->getIntMultiplierCost(trCornerMultX, trCornerMultY));
 				temp = (intMultCost * ratio * maxDSP)  /   (float(target_->getEquivalenceSliceDSP()*limitDSP)) ;
-				cout<<"temp= "<<temp<<endl;
+				REPORT(DETAILED,"temp= "<<temp);
 			}
 			else
 			{
@@ -2426,10 +2434,10 @@ namespace flopoco{
 					scaleDSPs= ((float)maxDSP) / ((float)maxDSP-2);
 				temp = ( float(target_->getIntMultiplierCost(wInX,wInY)) * ratio* scaleDSPs)  /   (float(target_->getEquivalenceSliceDSP())) ;
 				//float temp = ( float(target_->getIntMultiplierCost(wInX,wInY)) )  /   ((1.-ratio)*float(target_->getEquivalenceSliceDSP())) ;
-				cout<<"val calc "<<temp<<endl;
+				REPORT(DETAILED,"val calc "<<temp);
 			}
 			int i_tmp = int(ceil(temp));
-			cout<<" rounded "<<i_tmp<<endl;
+			REPORT(DETAILED, " rounded "<<i_tmp);
 	
 			if(i_tmp > maxDSP){
 				if (fitMultiplicaication){

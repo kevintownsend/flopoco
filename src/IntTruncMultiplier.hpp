@@ -158,6 +158,15 @@ namespace flopoco{
 		mpfr_t targetError;
 		/* RIP */
 		void printConfiguration(DSP** configuration, vector<SoftDSP*> softDSPs);
+		
+		void warningInfo(){
+			cout << "********************************************************************************"<<endl;
+			cout << "*      The generation of this operator makes extensive use of the stack !      *"<<endl;
+			cout << "*      If operator generation is not successful, increase stack limit          *"<<endl;
+			cout << "*                    ulimit -s 5120000000                                      *"<<endl;
+			cout << "********************************************************************************"<<endl;
+		}
+		
 	private:
 		/**
 		 * Verifies if the coordinates are inside the area of interest.

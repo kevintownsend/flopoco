@@ -80,6 +80,8 @@ namespace flopoco{
 			addInput ("Y", wInY);
 			addOutput("R", wOut); /* wOut = wInX + wInY */
 		
+			warningInfo();
+		
 			/* the board is extended horizontally and vertically. This is done
 			in order to fit DSPs on the edges. */
 			vn = wInX + 2*getExtraWidth(); 
