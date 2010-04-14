@@ -1,3 +1,17 @@
+/*
+  IEEE-compatible floating-point numbers for FloPoCo
+
+  Author: F. de Dinechin
+
+  This file is part of the FloPoCo project
+  developed by the Arenaire team at Ecole Normale Superieure de Lyon
+  
+  Initial software.
+  Copyright © ENS-Lyon, INRIA, CNRS, UCBL,  
+  CeCILL license, 2008-2010.
+
+  */
+
 #include "IEEENumber.hpp"
 #include "utils.hpp"
 
