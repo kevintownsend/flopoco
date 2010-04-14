@@ -3257,10 +3257,27 @@ namespace flopoco{
 		if (ty < 0) ty = 0;
 	}
 
+	void IntTruncMultiplier::convertCoordinatesKeepNeg(int &tx, int &ty, int &bx, int &by)
+	{
+		int ax = by;
+		int ay = bx;
+		bx = vmme - ty-1;
+//		if (bx >= wInX) bx = wInX-1;
+		by = vnme - tx-1;
+//		if (by >= wInY) by = wInY-1;
+		tx = vmme - ax-1;
+//		if (tx < 0) tx = 0;
+		ty = vnme - ay-1;	
+//		if (ty < 0) ty = 0;
+	}
+
+
 	int IntTruncMultiplier::multiplicationInDSPs(DSP** config)
 	{
 		int nrOp = 0;		 			// number of resulting adder operands
 		int trx1, try1, blx1, bly1; 	// coordinates of the two corners of a DSP block 
+		int trx2, try2, blx2, bly2; 	// coordinates of the two corners of a DSP block 
+
 		int fpadX, fpadY, bpadX, bpadY;	// zero padding on both axis
 		int multW, multH; 				// width and height of the multiplier the DSP block is using
 		ostringstream xname, yname, mname, cname, sname;
@@ -3269,16 +3286,30 @@ namespace flopoco{
 			
 		//memcpy(tempc, config, sizeof(DSP*) * nrDSPs );
 		
-		for (int i=0; i<nrDSPs; i++)
-		{
-			tempc[i] = config[nrDSPs-i-1];
-			/*
-			DSP* si = tempc[i]->getShiftIn();
-			DSP* so = tempc[i]->getShiftOut();
-			tempc[i]->setShiftIn(so);
-			tempc[i]->setShiftOut(si);
-			*/
-		}
+		memcpy(tempc, config, sizeof(DSP*) * nrDSPs );
+        /*
+        for (int i=0; i<nrDSPs; i++)
+        {
+            tempc[i] = config[nrDSPs-i-1];
+            DSP* si = tempc[i]->getShiftIn();
+            DSP* so = tempc[i]->getShiftOut();
+            tempc[i]->setShiftIn(so);
+            tempc[i]->setShiftOut(si);
+            
+        }
+        */
+		
+		
+//		for (int i=0; i<nrDSPs; i++)
+//		{
+//			tempc[i] = config[nrDSPs-i-1];
+//			/*
+//			DSP* si = tempc[i]->getShiftIn();
+//			DSP* so = tempc[i]->getShiftOut();
+//			tempc[i]->setShiftIn(so);
+//			tempc[i]->setShiftOut(si);
+//			*/
+//		}
 		
 		
 		if ( ( target_->getID() == "Virtex4") ||
@@ -3296,23 +3327,37 @@ namespace flopoco{
 							while (d != NULL)
 								{
 									connected++;
-									d = d->getShiftIn();
+									d = d->getShiftOut();
 								}
 							cout << "CONNECTED =================> " << connected << endl;
 							d = tempc[i];
-							d->getTopRightCorner(trx1, try1);
-							d->getBottomLeftCorner(blx1, bly1);
-							convertCoordinates(trx1, try1, blx1, bly1);
-							if ((blx1 < 0) || (bly1 < 0) || (trx1 >= wInX) || (try1 >= wInY)) 
-							{ // the multiplication is outside the bounds of the tiling grid
-								continue;
-							}
+
+
+//							if ((blx1 < 0) || (bly1 < 0) || (trx1 >= wInX) || (try1 >= wInY)) 
+//							{ // the multiplication is outside the bounds of the tiling grid
+//								continue;
+//							}
 			
 							while (d != NULL)
 								{
+//									d->getTopRightCorner(trx1, try1);
+//									d->getBottomLeftCorner(blx1, bly1);
+//									convertCoordinates(trx1, try1, blx1, bly1);
+									
 									d->getTopRightCorner(trx1, try1);
 									d->getBottomLeftCorner(blx1, bly1);
+									d->getTopRightCorner(trx2, try2);
+									d->getBottomLeftCorner(blx2, bly2);
+
+									cout << "coordinates before trx"<<trx1<<" try="<<try1<<" blx"<<blx1<<" bly="<<bly1<<endl;
 									convertCoordinates(trx1, try1, blx1, bly1);
+									convertCoordinatesKeepNeg(trx2, try2, blx2, bly2); /*REAL dsp coord. Chaning is done with respect to these ones */
+
+									cout << "coordinates after(1) trx"<<trx1<<" try="<<try1<<" blx"<<blx1<<" bly="<<bly1<<endl;
+									cout << "coordinates after(2) trx"<<trx2<<" try="<<try2<<" blx"<<blx2<<" bly="<<bly2<<endl;
+
+									
+									
 									int sh = 0;
 									
 									if (isSquarer)
@@ -3360,18 +3405,18 @@ namespace flopoco{
 									bpadY = try1;
 									bpadY = (bpadY<0)?0:bpadY;
 									
-									multW = blx1-trx1+1;
-									multH = bly1-try1+1;
+									multW = blx2-trx2+1;
+									multH = bly2-try2+1;
 			
 									setCycle(0);
 									
 									xname.str("");
 									xname << "x" << i << "_" << j;
-									vhdl << tab << declare(xname.str(), multW) << " <= X" << range(blx1, trx1) << ";" << endl;
+									vhdl << tab << declare(xname.str(), multW) << " <= X" << range(blx1, trx1) << " & " << zg(trx1-trx2 + blx1-blx2) << ";" << endl;
 									
 									yname.str("");
 									yname << "y" << i << "_" << j;
-									vhdl << tab << declare(yname.str(), multH) << ((isSquarer)?" <= X":" <= Y") << range(bly1, try1) << ";" << endl;
+									vhdl << tab << declare(yname.str(), multH) << ((isSquarer)?" <= X":" <= Y") << range(bly1, try1)<< " & " << zg(try1-try2 + bly1-bly2) << ";" << endl;
 				
 									if ((d->getShiftIn() != NULL) && (j>0)) // multiply accumulate
 										{
@@ -3397,7 +3442,7 @@ namespace flopoco{
 												{
 													setCycle(connected);
 													sname.seekp(ios_base::beg);
-													sname << use(join(mname.str(),j)) << range(d->getShiftAmount()-1, 0) << " & " << sname.str();
+													sname << use(join(mname.str(),j)) << range(d->getShiftAmount()- (try1-try2 + bly1-bly2) - (trx1-trx2 + blx1-blx2) -1, 0) << " & " << sname.str();
 												}
 										}
 									else // only multiplication
@@ -3415,7 +3460,7 @@ namespace flopoco{
 											else // concatenate only the lower portion of the partial product
 												{
 													setCycle(connected);
-													sname << use(mname.str()) << range(d->getShiftAmount()-1, 0) << " & " << zg(trx1,0) << " & " << zg(try1+sh,0) << ";" << endl;
+													sname << use(mname.str()) << range(d->getShiftAmount()- (try1-try2 + bly1-bly2) - (trx1-trx2 + blx1-blx2) -1, 0) << " & " << zg(trx1,0) << " & " << zg(try1+sh,0) << ";" << endl;
 												}
 										}
 				
@@ -3431,7 +3476,7 @@ namespace flopoco{
 										}
 				
 				
-									d = d->getShiftIn();
+									d = d->getShiftOut();
 									j++;
 								}	
 							sname.seekp(ios_base::beg);
@@ -3457,11 +3502,13 @@ namespace flopoco{
 							tempc[i]->getTopRightCorner(trx1, try1);
 							tempc[i]->getBottomLeftCorner(blx1, bly1);
 							convertCoordinates(trx1, try1, blx1, bly1);
+
+
 							
-							if ((blx1 < 0) || (bly1 < 0) || (trx1 >= wInX) || (try1 >= wInY)) 
-							{ // the multiplication is outside the bounds of the tiling grid
-								continue;
-							}
+//							if ((blx1 < 0) || (bly1 < 0) || (trx1 >= wInX) || (try1 >= wInY)) 
+//							{ // the multiplication is outside the bounds of the tiling grid
+//								continue;
+//							}
 							
 							fpadX = wInX-blx1-1;
 							//~ cout << "fpadX = " << fpadX << endl;

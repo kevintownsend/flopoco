@@ -417,6 +417,9 @@ namespace flopoco{
 		 * @param by bottom-left y coordinate
 		 */
 		void convertCoordinates(int &tx, int &ty, int &bx, int &by);
+
+		void convertCoordinatesKeepNeg(int &tx, int &ty, int &bx, int &by);
+
 		
 		/** This functions splits large DSP super-blocks or paris of blocks into unit DSP blocks found on the target
 		 * @param config - the configuration to be split
