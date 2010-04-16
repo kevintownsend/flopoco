@@ -112,7 +112,8 @@ namespace flopoco{
 		//~ cout<<"Cost DSP is "<<costDSP<<endl;
 		costLUT = ( (1.0+scale) - scale * (1-ratio) ) /  ((float) target_->getEquivalenceSliceDSP() );
 		/* ---------------------------------------- */
-		
+		costDSP = 0.1;
+		costLUT = 0.3;
 		
 		cout << " DO you want to run the algorithm? (y/n)" << endl;
 		string myc;
@@ -2477,11 +2478,18 @@ namespace flopoco{
 	
 	bool IntTruncMultiplier::isValidPosition(int x, int y)
 	{
-		if (x>=vnme || y>=vmme || x<0 || y<0) // then not in tiling grid bounds
+		if (x>=vnme - getExtraWidth() || y>=vmme - getExtraHeight() || x<0 || y<0) // then not in tiling grid bounds
 		{
 			REPORT(DEBUG, "then not in tiling grid bounds" );
 			return false;
 		}
+
+//		if (x>=vnme || y>=vmme || x<0 || y<0) // then not in tiling grid bounds
+//		{
+//			REPORT(DEBUG, "then not in tiling grid bounds" );
+//			return false;
+//		}
+
 			
 		if (isSquarer && (x > y)) // then the position is above the secondary diagonal
 		{
