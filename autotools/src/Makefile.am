@@ -46,6 +46,8 @@ libflopoco_la_SOURCES = VHDLLexer.lpp \
 			FPAdder.cpp \
 			Fix2FP.cpp \
 			FPMultiplier.cpp \
+			FPMultiplierKaratsuba.cpp \
+			FPMultiplierTiling.cpp \
 			FPSquarer.cpp \
 			FPDiv.cpp \
 			FPSqrt.cpp \
