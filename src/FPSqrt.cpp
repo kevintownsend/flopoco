@@ -108,14 +108,14 @@ namespace flopoco{
 			vhdl << tab << declare("OddExp")   << " <= not(expX(0));"  << endl;  
 	
 			//first estimation of the exponent
-			vhdl << tab << declare("expBiasPostDecrement", wE+1) << " <= " << "CONV_STD_LOGIC_VECTOR("<< (1<<(wE-1))-2 <<","<<wE+1<<")"<<";"<<endl;
-			vhdl << tab << declare("expPostBiasAddition", wE+1) << " <= " << "( \"0\" & expX) + expBiasPostDecrement + not(OddExp);"<<endl;
+			vhdl << tab << declare("expBiasPostDecrement", wE+1) << " <= CONV_STD_LOGIC_VECTOR("<< (1<<(wE-1))-2 <<","<<wE+1<<");"<<endl;
+			vhdl << tab << declare("expPostBiasAddition", wE+1) << " <= ( \"0\" & expX) + expBiasPostDecrement + not(OddExp);"<<endl;
 	
 			//the addres bits for the coefficient ROM
 			vhdl << tab << declare("address", tableAddressWidth) << " <= OddExp & X" << range(wF-1, wF-tableAddressWidth+1) << ";"  << endl; //the MSB of address is the LSB of the exponent
 
 			//get the correct size of x for the multiplication
-			vhdl << tab << declare("lowX", sizeOfX + 1) << " <= " << "(\"0\" & X"<<range(sizeOfX-1,0) << ") when OddExp='0' else "
+			vhdl << tab << declare("lowX", sizeOfX + 1) << " <= (\"0\" & X"<<range(sizeOfX-1,0) << ") when OddExp='0' else "
 				  << "(X"<<range(sizeOfX-1,0) << " & \"0\");"<<endl<<endl;
 			//instantiate the coefficient table
 			Table* t;
@@ -146,9 +146,9 @@ namespace flopoco{
 			//get a1 from memory
 			vhdl <<endl << tab << declare("a1",coeffStorageSizes[1]) << " <= data"<<range(coeffStorageSizes[0] + coeffStorageSizes[1] - 1, coeffStorageSizes[0]) << ";" <<endl;
 			//sign-extend and pad a1 for a1 - (-a2*x)
-			vhdl << tab << declare("signExtA1ZeroPad", 1 + coeffStorageSizes[1] + keepBits) << " <= " << "\"0\" & a1" << " & " << zg(keepBits, 0) << ";" << endl;
+			vhdl << tab << declare("signExtA1ZeroPad", 1 + coeffStorageSizes[1] + keepBits) << " <= \"0\" & a1 & " << zg(keepBits, 0) << ";" << endl;
 			//sign-extend and align the -a2*x product
-			vhdl << tab << declare("signExtAlignedProdA2X", 1 + coeffStorageSizes[1] + keepBits) << " <= " << "\"0\" & " << zg(coeff_msb[1]-(coeff_msb[2]+msb_x),0) << " & " 
+			vhdl << tab << declare("signExtAlignedProdA2X", 1 + coeffStorageSizes[1] + keepBits) << " <= \"0\" & " << zg(coeff_msb[1]-(coeff_msb[2]+msb_x),0) << " & " 
 				  << "prodA2X"<< range(coeffStorageSizes[2] + sizeOfX, coeffStorageSizes[2] + sizeOfX - (1 + coeffStorageSizes[1] + keepBits + coeff_msb[2]+msb_x )+1) << ";"<<endl;
 			vhdl << tab << declare("negSignExtAlignedProdA2X", 1 + coeffStorageSizes[1] + keepBits) << " <= not(signExtAlignedProdA2X);"<<endl;
 			//subtract (-a2*x) from a1, => instantiate IntAdder
@@ -197,16 +197,16 @@ namespace flopoco{
 	
 					syncCycleFromSignal("prodXA1sumA2X"); 
 				}
-				//vhdl << tab << declare("prodXA1sumA2X", (sizeOfX+1)+ coeffStorageSizes[1] + keepBits2 ) << " <= " << use("lowX") << " * " 
-				//                                                                                    << use("add1Res")<<range( coeffStorageSizes[1] + keepBits-1, keepBits - keepBits2)<<";" <<endl;
+				//vhdl << tab << declare("prodXA1sumA2X", (sizeOfX+1)+ coeffStorageSizes[1] + keepBits2 ) << " <= lowX * " 
+				// << "add1Res" << range( coeffStorageSizes[1] + keepBits-1, keepBits - keepBits2)<<";" <<endl;
 #ifndef LESS_DSPS    
 				nextCycle();/////////////////                                                                               
 #endif
 				//compose the operands for the addition a0 + [ prev_computation ]
 				//fetch a0 from memory
 				vhdl << endl << tab << declare("a0",coeffStorageSizes[0]) << " <= data" << range(coeffStorageSizes[0]-1,0) << ";" << endl;
-				vhdl << tab << declare ("ovfGuardA0", 1 + coeffStorageSizes[0]) << " <= " << " \"0\" & a0"<< ";" << endl;
-				vhdl << tab << declare ("ovfGuardAlignProdXA1sumA2X", 1 + coeffStorageSizes[0]) << " <= " << " \"0\" & " << zg((1+coeff_msb[0])+1-msb_x , 0)  << " & "
+				vhdl << tab << declare ("ovfGuardA0", 1 + coeffStorageSizes[0]) << " <=  \"0\" & a0;" << endl;
+				vhdl << tab << declare ("ovfGuardAlignProdXA1sumA2X", 1 + coeffStorageSizes[0]) << " <=  \"0\" & " << zg((1+coeff_msb[0])+1-msb_x , 0)  << " & "
 					  << "prodXA1sumA2X"<<range((sizeOfX+1)+ coeffStorageSizes[1] -1 + keepBits2, keepBits2 + (sizeOfX+1)+ coeffStorageSizes[1] - (coeffStorageSizes[0]- (-msb_x+1+(1+ coeff_msb[0])))) << ";" <<endl; 
 	
 				IntAdder * add2 =  new IntAdder(target, 1 + coeffStorageSizes[0]);
@@ -226,17 +226,17 @@ namespace flopoco{
 
 					vhdl << tab << "-- sign/exception handling" << endl;
 					vhdl << tab << "with excsX select" <<endl
-						  << tab << tab <<  declare("exnR", 2) << " <= " << "\"01\" when \"010\", -- positive, normal number" << endl
+						  << tab << tab <<  declare("exnR", 2) << " <= \"01\" when \"010\", -- positive, normal number" << endl
 						  << tab << tab << "excsX" << range(2, 1) << " when \"001\" | \"000\" | \"100\", " << endl
 						  << tab << tab << "\"11\" when others;"  << endl;
 
 					vhdl << tab << "R <= exnR & excsX(0) & finalExp & finalFrac;" << endl; 
 				}else{
-					//		vhdl << tab << declare("normalizeBit",1) << " <= " << use("sumA0ProdXA1sumA2X") << "(" << coeffStorageSizes[0] << ")"<<";"<<endl;
+					//		vhdl << tab << declare("normalizeBit",1) << " <= sumA0ProdXA1sumA2X(" << coeffStorageSizes[0] << ");"<<endl;
 					//		nextCycle();/////////////////////////
-					//		vhdl << tab << declare("preSquareFrac", wF+2) << " <= " << use("sumA0ProdXA1sumA2X") << range(coeffStorageSizes[0], coeffStorageSizes[0]-wF-1) << " when " << use("normalizeBit") <<"='1' else "
-					//			                                           << use("sumA0ProdXA1sumA2X") << range(coeffStorageSizes[0]-1, coeffStorageSizes[0]-wF-2) << ";" << endl;
-					//		vhdl << tab << declare("preSquareExp", wE) << " <= " << use("expPostBiasAddition") << range(wE,1) << " + " << use("normalizeBit")<<";"<<endl;
+					//		vhdl << tab << declare("preSquareFrac", wF+2) << " <= sumA0ProdXA1sumA2X" << range(coeffStorageSizes[0], coeffStorageSizes[0]-wF-1) << " when normalizeBit='1' else "
+					//			 << "sumA0ProdXA1sumA2X" << range(coeffStorageSizes[0]-1, coeffStorageSizes[0]-wF-2) << ";" << endl;
+					//		vhdl << tab << declare("preSquareExp", wE) << " <= expPostBiasAddition" << range(wE,1) << " + normalizeBit;"<<endl;
 
 					vhdl << tab << declare("preSquareFrac", wF+2) << " <= sumA0ProdXA1sumA2X" << range(coeffStorageSizes[0]-1, coeffStorageSizes[0]-wF-2) << ";" << endl;
 					vhdl << tab << declare("preSquareExp", wE) << " <= expPostBiasAddition" << range(wE,1) <<";"<<endl;
@@ -268,10 +268,10 @@ namespace flopoco{
 					syncCycleFromSignal("sqrResult");
 	    
 					vhdl << tab << declare("approxSqrtXSqr", 2*(wF+2) + 1) << " <= " << zg(1,0) << " & sqrResult"<<range(2*(wF+2)-1,0)<<";"<<endl;
-					vhdl << tab << declare("realXFrac", 2*(wF+2) + 1) << " <= " << "( \"001\" & fracX & " << zg(2*(wF+2) + 1-2-wF-1 ,0)<<") when OddExp='0' else "<<endl;
+					vhdl << tab << declare("realXFrac", 2*(wF+2) + 1) << " <= ( \"001\" & fracX & " << zg(2*(wF+2) + 1-2-wF-1 ,0)<<") when OddExp='0' else "<<endl;
 					vhdl << tab << tab << "( \"01\" & fracX & " << zg(2*(wF+2) + 1-2-wF,0)<<");"<<endl;
 	    
-					vhdl << tab << declare("negRealXFrac", 2*(wF+2) + 1) << " <= " << "not(realXFrac);"<<endl;
+					vhdl << tab << declare("negRealXFrac", 2*(wF+2) + 1) << " <= not(realXFrac);"<<endl;
 	    
 					IntAdder *myIntAdd = new IntAdder(target, 2*(wF+2) + 1);
 					oplist.push_back(myIntAdd);
@@ -289,7 +289,7 @@ namespace flopoco{
 
 					vhdl << tab << "-- sign/exception handling" << endl;
 					vhdl << tab << "with excsX select" <<endl
-						  << tab << tab <<  declare("exnR", 2) << " <= " << "\"01\" when \"010\", -- positive, normal number" << endl
+						  << tab << tab <<  declare("exnR", 2) << " <= \"01\" when \"010\", -- positive, normal number" << endl
 						  << tab << tab << "excsX" << range(2, 1) << " when \"001\" | \"000\" | \"100\", " << endl
 						  << tab << tab << "\"11\" when others;"  << endl;
 
@@ -364,8 +364,8 @@ namespace flopoco{
 							cout << "----inserted a register level" << endl;
 					}
 				}
-				vhdl << tab << declare("d0") << " <= " << use("w1") << "(" << wF+3 << ") ;" << endl;
-				vhdl << tab << declare("fR", wF+4) << " <= " << use("s1") << " & not d0 & '1';" << endl;
+				vhdl << tab << declare("d0") << " <= w1(" << wF+3 << ") ;" << endl;
+				vhdl << tab << declare("fR", wF+4) << " <= s1 & not d0 & '1';" << endl;
 
 				// end of component FPSqrt_Sqrt in fplibrary
 				vhdl << tab << "-- normalisation of the result, removing leading 1" << endl;
@@ -376,11 +376,11 @@ namespace flopoco{
 
 				nextCycle();
 		
-				vhdl << tab << declare("fRn2", wF) << " <= " <<  use("fRn1") << range(wF+1, 2) <<" + (" << rangeAssign(wF-1, 1, "'0'") << " & " << use("round")  << "); -- rounding sqrt never changes exponents " << endl;
-				vhdl << tab << declare("Rn2", wE+wF) << " <= " << use("eRn1") << " & " << use("fRn2") << ";" << endl;
+				vhdl << tab << declare("fRn2", wF) << " <= fRn1" << range(wF+1, 2) <<" + (" << rangeAssign(wF-1, 1, "'0'") << " & round); -- rounding sqrt never changes exponents " << endl;
+				vhdl << tab << declare("Rn2", wE+wF) << " <= eRn1 & fRn2;" << endl;
 		
 				vhdl << tab << "-- sign and exception processing" << endl;
-				vhdl << tab <<  "with " << use("xsX") << " select" << endl
+				vhdl << tab <<  "with xsX select" << endl
 					  << tab << tab << declare("xsR", 3) << " <= \"010\"  when \"010\",  -- normal case" << endl
 					  << tab << tab <<  "       \"100\"  when \"100\",  -- +infty" << endl
 					  << tab << tab <<  "       \"000\"  when \"000\",  -- +0" << endl

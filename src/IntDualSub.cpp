@@ -200,7 +200,7 @@ namespace flopoco{
 				o << tab << "sX"<<i<<" <= " << delaySignal(xi.str(), bufferedInputs) << ";" << endl;
 				o << tab << "sY"<<i<<" <= " << delaySignal(yi.str(), bufferedInputs)<<";"<<endl;
 				if (i==0)
-					o << tab << "cin0 <= "<<"'"<< !(opType_) <<"';"<<endl;
+					o << tab << "cin0 <= '"<< !(opType_) <<"';"<<endl;
 			}
 
 			//additions	for x - y	

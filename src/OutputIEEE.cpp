@@ -64,30 +64,30 @@ namespace flopoco{
 
 			if(wFO>=wFI){
 				vhdl << tab << declare("sfracX",wFI) << " <= " << endl
-						<< tab << tab << rangeAssign(wFI-1,0, "'0'") << " when (" << use("exnX") << " = \"00\") else" << endl
-						<< tab << tab << "'1' & fracX" << range(wFI-1,1) << " when (" << use("expZero") << " = '1' and " << use("exnX") << " = \"01\") else" << endl
-						<< tab << tab << "fracX when (" << use("exnX") << " = \"01\") else " << endl
-						<< tab << tab << rangeAssign(wFI-1,1, "'0'") << " & " << use("exnX") << "(0);" << endl;
+						<< tab << tab << rangeAssign(wFI-1,0, "'0'") << " when (exnX = \"00\") else" << endl
+						<< tab << tab << "'1' & fracX" << range(wFI-1,1) << " when (expZero = '1' and exnX = \"01\") else" << endl
+						<< tab << tab << "fracX when (exnX = \"01\") else " << endl
+						<< tab << tab << rangeAssign(wFI-1,1, "'0'") << " & exnX(0);" << endl;
 				vhdl << tab << declare("fracR",wFO) << " <= " << use("sfracX");
 				if(wFO>wFI) // need to pad with 0s
 					vhdl << " & CONV_STD_LOGIC_VECTOR(0," << wFO-wFI <<");" << endl;
 				else 
 					vhdl << ";" << endl;
 				vhdl << tab << declare("expR",wEO) << " <=  " << endl
-						<< tab << tab << rangeAssign(wEO-1,0, "'0'") << " when (" << use("exnX") << " = \"00\") else" << endl
-						<< tab << tab << "expX when (" << use("exnX") << " = \"01\") else " << endl
+						<< tab << tab << rangeAssign(wEO-1,0, "'0'") << " when (exnX = \"00\") else" << endl
+						<< tab << tab << "expX when (exnX = \"01\") else " << endl
 						<< tab << tab << rangeAssign(wEO-1,0, "'1'") << ";" << endl;
 
 			}
 			else { // wFI > wFO, wEI==wEO
-				vhdl << tab << declare("sfracX",wFI) << " <= '1' & fracX" << range(wFI-1,1) << " when (" << use("expZero") << " = '1' and " << use("exnX") << " = \"01\") else fracX;" << endl;
+				vhdl << tab << declare("sfracX",wFI) << " <= '1' & fracX" << range(wFI-1,1) << " when (expZero = '1' and exnX = \"01\") else fracX;" << endl;
 				vhdl << tab << "-- wFO < wFI, need to round fraction" << endl;
-				vhdl << tab << declare("resultLSB") << " <= " << use("sfracX") << "("<< wFI-wFO <<");" << endl;
-				vhdl << tab << declare("roundBit") << " <= " << use("sfracX") << "("<< wFI-wFO-1 <<");" << endl;
+				vhdl << tab << declare("resultLSB") << " <= sfracX("<< wFI-wFO <<");" << endl;
+				vhdl << tab << declare("roundBit") << " <= sfracX("<< wFI-wFO-1 <<");" << endl;
 				// need to define a sticky bit
 				vhdl << tab << declare("sticky") << " <= ";
 				if(wFI-wFO>1){
-					vhdl<< " '0' when " << use("sfracX") << range(wFI-wFO-2, 0) <<" = CONV_STD_LOGIC_VECTOR(0," << wFI-wFO-2 <<") else '1';"<<endl;
+					vhdl<< " '0' when sfracX" << range(wFI-wFO-2, 0) <<" = CONV_STD_LOGIC_VECTOR(0," << wFI-wFO-2 <<") else '1';"<<endl;
 				}
 				else {
 					vhdl << "'0';" << endl; 
@@ -97,16 +97,16 @@ namespace flopoco{
 				nextCycle();
 
 				vhdl << tab << "-- The following addition will not overflow since FloPoCo format has one more exponent value" <<endl; 
-				vhdl << tab << declare("expfracR0", wEO+wFO) << " <= (" << use("expX") << " & " << use("sfracX") << "" << range(wFI-1, wFI-wFO) << ")  +  (CONV_STD_LOGIC_VECTOR(0," << wEO+wFO-1 <<") & " << use("round") << ");"<<endl;
+				vhdl << tab << declare("expfracR0", wEO+wFO) << " <= (expX & sfracX" << range(wFI-1, wFI-wFO) << ")  +  (CONV_STD_LOGIC_VECTOR(0," << wEO+wFO-1 <<") & round);"<<endl;
 
 				vhdl << tab << declare("fracR",wFO) << " <= " << endl
-						<< tab << tab << rangeAssign(wFO-1,0, "'0'") << " when (" << use("exnX") << " = \"00\") else" << endl
-						<< tab << tab << "expfracR0" << range(wFO-1, 0) << " when (" << use("exnX") << " = \"01\") else " << endl
-						<< tab << tab << rangeAssign(wFO-1,1, "'0'") << " & " << use("exnX") << "(0);" << endl;
+						<< tab << tab << rangeAssign(wFO-1,0, "'0'") << " when (exnX = \"00\") else" << endl
+						<< tab << tab << "expfracR0" << range(wFO-1, 0) << " when (exnX = \"01\") else " << endl
+						<< tab << tab << rangeAssign(wFO-1,1, "'0'") << " & exnX(0);" << endl;
 
 				vhdl << tab << declare("expR",wEO) << " <=  " << endl
-						<< tab << tab << rangeAssign(wEO-1,0, "'0'") << " when (" << use("exnX") << " = \"00\") else" << endl
-						<< tab << tab << "expfracR0" << range(wFO+wEO-1, wFO) << " when (" << use("exnX") << " = \"01\") else " << endl
+						<< tab << tab << rangeAssign(wEO-1,0, "'0'") << " when (exnX = \"00\") else" << endl
+						<< tab << tab << "expfracR0" << range(wFO+wEO-1, wFO) << " when (exnX = \"01\") else " << endl
 						<< tab << tab << rangeAssign(wEO-1,0, "'1'") << ";" << endl;
 			}
 
@@ -125,7 +125,7 @@ namespace flopoco{
 			throw  string("OutputIEEE not yet implemented for wEI>wEO, send us a mail if you need it");
 		}
 	
-		vhdl << tab << "R <= " << use("sX") << " & expR & fracR; " << endl; 
+		vhdl << tab << "R <= sX & expR & fracR; " << endl; 
 
 	}
 

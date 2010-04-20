@@ -1374,7 +1374,7 @@ namespace flopoco{
 											nii = m -getExtraHeight() -1;
 										else
 											nii = ii;
-										REPORT(DETAILED, "Partition number "<<count<<" with bounds. ("<<j<<" , "<<i<<" , "<<jj<<" , "<<ii<<")"<<" has now bounds ("<<nj<<" , "<<ni<<" , "<<njj<<" , "<<nii<<")");
+										REPORT(DETAILED, "Partition number "<<count<<" with bounds. ("<<j<<" , "<<i<<" , "<<jj<<" , "<<ii<<") has now bounds ("<<nj<<" , "<<ni<<" , "<<njj<<" , "<<nii<<")");
 									}
 						
 								REPORT(DETAILED, j<<" "<<i<<" "<<jj<<" "<<ii);
@@ -1611,7 +1611,7 @@ namespace flopoco{
 											nii = m -getExtraHeight() -1;
 										else
 											nii = ii;
-										REPORT(DETAILED, "Partition number "<<count<<" with bounds. ("<<j<<" , "<<i<<" , "<<jj<<" , "<<ii<<")"<<" has now bounds ("<<nj<<" , "<<ni<<" , "<<njj<<" , "<<nii<<")");
+										REPORT(DETAILED, "Partition number "<<count<<" with bounds. ("<<j<<" , "<<i<<" , "<<jj<<" , "<<ii<<") has now bounds ("<<nj<<" , "<<ni<<" , "<<njj<<" , "<<nii<<")");
 									}
 						
 								REPORT(DETAILED, j<<" "<<i<<" "<<jj<<" "<<ii);
@@ -3383,9 +3383,9 @@ namespace flopoco{
 											mult->changeName(cname.str());
 											oplist.push_back(mult);
 											
-											vhdl << tab << declare(join("x_sub",partitions), wh) << " <= " << "X" << range(blx1, try1) << ";" << endl;
+											vhdl << tab << declare(join("x_sub",partitions), wh) << " <= X" << range(blx1, try1) << ";" << endl;
 											inPortMap(mult, "X", join("x_sub",partitions));
-											vhdl << tab << declare(join("y_sub",partitions), wh) << " <= " << "X" << range(blx1, try1) << ";" << endl;
+											vhdl << tab << declare(join("y_sub",partitions), wh) << " <= X" << range(blx1, try1) << ";" << endl;
 											inPortMap(mult, "Y", join("y_sub",partitions));
 										
 											outPortMap(mult, "R", join("result_sub", partitions));
@@ -3420,11 +3420,11 @@ namespace flopoco{
 									
 									xname.str("");
 									xname << "x" << i << "_" << j;
-									vhdl << tab << declare(xname.str(), multW) << " <= X" << range(blx1, trx1) << " & " << zg(trx1-trx2 + blx1-blx2) << ";" << endl;
+									vhdl << tab << declare(xname.str(), multW,true) << " <= X" << range(blx1, trx1) << " & " << zg(trx1-trx2 + blx1-blx2) << ";" << endl;
 									
 									yname.str("");
 									yname << "y" << i << "_" << j;
-									vhdl << tab << declare(yname.str(), multH) << ((isSquarer)?" <= X":" <= Y") << range(bly1, try1)<< " & " << zg(try1-try2 + bly1-bly2) << ";" << endl;
+									vhdl << tab << declare(yname.str(), multH,true) << ((isSquarer)?" <= X":" <= Y") << range(bly1, try1)<< " & " << zg(try1-try2 + bly1-bly2) << ";" << endl;
 				
 									if ((d->getShiftIn() != NULL) && (j>0)) // multiply accumulate
 										{
@@ -3545,10 +3545,10 @@ namespace flopoco{
 							setCycle(0);
 							xname.str("");
 							xname << "x" << i << "_0";
-							vhdl << tab << declare(xname.str(), multW, true, Signal::registeredWithAsyncReset) << " <= " << zg(multW-(blx1-trx1+1),0) << " & " << "X" << range(blx1, trx1) << ";" << endl;
+							vhdl << tab << declare(xname.str(), multW, true, Signal::registeredWithAsyncReset) << " <= " << zg(multW-(blx1-trx1+1),0) << " & X" << range(blx1, trx1) << ";" << endl;
 							yname.str("");
 							yname << "y" << i << "_0";
-							vhdl << tab << declare(yname.str(), multH, true, Signal::registeredWithAsyncReset) << " <= " << zg(multH-(bly1-try1+1),0) << " & " << "Y" << range(bly1, try1) << ";" << endl;
+							vhdl << tab << declare(yname.str(), multH, true, Signal::registeredWithAsyncReset) << " <= " << zg(multH-(bly1-try1+1),0) << " & Y" << range(bly1, try1) << ";" << endl;
 			
 							boundDSPs = tempc[i]->getNumberOfAdders();
 							int ext = 0; // the number of carry bits of the addtion
@@ -3608,10 +3608,10 @@ namespace flopoco{
 											setCycle(0);
 											xname.str("");
 											xname << "x" << i << "_" << j+1;
-											vhdl << tab << declare(xname.str(), multW, true, Signal::registeredWithAsyncReset) << " <= " << zg(fpadX,0) << " & " << "X" << range(blx1-fpadX, trx1+bpadX) << " & " << zg(bpadX,0) << ";" << endl;
+											vhdl << tab << declare(xname.str(), multW, true, Signal::registeredWithAsyncReset) << " <= " << zg(fpadX,0) << " & X" << range(blx1-fpadX, trx1+bpadX) << " & " << zg(bpadX,0) << ";" << endl;
 											yname.str("");
 											yname << "y" << i << "_" << j+1;
-											vhdl << tab << declare(yname.str(), multH, true, Signal::registeredWithAsyncReset) << " <= " << zg(fpadY,0) << " & " << "Y" << range(bly1-fpadY, try1+bpadY) << " & " << zg(bpadY,0) << ";" << endl;
+											vhdl << tab << declare(yname.str(), multH, true, Signal::registeredWithAsyncReset) << " <= " << zg(fpadY,0) << " & Y" << range(bly1-fpadY, try1+bpadY) << " & " << zg(bpadY,0) << ";" << endl;
 					
 											nextCycle();
 											mname.str("");
@@ -3669,7 +3669,7 @@ namespace flopoco{
 			mult->changeName(cname.str());
 			oplist.push_back(mult);
 			// TODO: compute width of x and y + corretc range for X and Y
-			vhdl << tab << declare(join("x_",partitions), njj-nj+1) << " <= " << "X" << range(njj, nj) << ";" << endl;
+			vhdl << tab << declare(join("x_",partitions), njj-nj+1) << " <= X" << range(njj, nj) << ";" << endl;
 			inPortMap(mult, "X", join("x_",partitions));
 			vhdl << tab << declare(join("y_",partitions), nii-ni+1) << " <= " << ((isSquarer)?"X":"Y") << range(nii, ni) << ";" << endl;
 			inPortMap(mult, "Y", join("y_",partitions));
@@ -3740,7 +3740,7 @@ namespace flopoco{
 			}		
 		Operator *add;
 		
-		if   (target_->getID() != "Virtex5"){
+		if   (target_->getID() == "Virtex5"){
 			add =  new IntNAdder(getTarget(), wInX+wInY-minShift, nrDSPOperands+nrSliceOperands+subCount, inMap);
 		} else{
 			add =  new IntCompressorTree(getTarget(), wInX+wInY-minShift, nrDSPOperands+nrSliceOperands+subCount, inMap);
@@ -3779,7 +3779,7 @@ namespace flopoco{
 
 		syncCycleFromSignal("addRes");
 
-		vhdl << tab << "R <= " << "addRes" << range(wX+wY-1-minShift, targetPrecision-minShift) << ";" << endl;
+		vhdl << tab << "R <= addRes" << range(wX+wY-1-minShift, targetPrecision-minShift) << ";" << endl;
 	}
 	
 	vector<SoftDSP*> IntTruncMultiplier::insertSoftDSPs(DSP** config)

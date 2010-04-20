@@ -75,7 +75,7 @@ namespace flopoco{
 				delay =0.0;
 			}
 			vhdl << tab <<declare(currDigit.str(),1) << "<= '1' when " << use(currLevel.str()) << "("<<intpow2(i)-1<<" downto "<<intpow2(i-1)<<") = "
-				  <<"("<<intpow2(i)-1<<" downto "<<intpow2(i-1)<<" => "<<use("sozb") <<")"
+				  <<"("<<intpow2(i)-1<<" downto "<<intpow2(i-1)<<" => sozb)"
 				  << " else '0';"<<endl;
 
 			if (i>1){

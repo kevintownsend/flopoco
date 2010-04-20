@@ -227,7 +227,7 @@ namespace flopoco{
 			vhdl << tab << declare("op3", 119) << " <= " << zg(49,0) << " & t3k_1"<<range(36, 1) << " & " << zg(34,0) << ";" << endl;
 			vhdl << tab << declare("op4", 119) << " <= " << zg(32,0) << " & t4k_1"<<range(36, 1) << " & " << zg(51,0) << ";" << endl;
 			vhdl << tab << declare("op5", 119) << " <= " << zg(15,0) << " & t5k_1"<<range(36, 1) << " & " << zg(68,0) << ";" << endl;
-			vhdl << tab << declare("op6", 119) << " <= " << "t6k_0"<<range(34, 1) << " & " << zg(85,0) << ";" << endl;
+			vhdl << tab << declare("op6", 119) << " <= t6k_0"<<range(34, 1) << " & " << zg(85,0) << ";" << endl;
 
 			inPortMap( c, "X0", "op0");
 			inPortMap( c, "X1", "op1");

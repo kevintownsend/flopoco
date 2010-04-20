@@ -54,17 +54,17 @@ namespace flopoco{
 		}
 
 		/* Sing Handling */
-		vhdl << tab << declare("sign") << " <= " << "X" << of(wEX_+wFX) << " xor " << "Y" << of(wEY_+wFY) << ";" << endl;
+		vhdl << tab << declare("sign") << " <= X" << of(wEX_+wFX) << " xor Y" << of(wEY_+wFY) << ";" << endl;
 
 		/* Exponent Handling */
-		vhdl << tab << declare("expX", wEX_) << " <= " << "X"<< range(wEX_ + wFX_ -1, wFX_) << ";" << endl; 
-		vhdl << tab << declare("expY", wEY_) << " <= " << "Y"<< range(wEY_ + wFY_ -1, wFX_) << ";" << endl; 
+		vhdl << tab << declare("expX", wEX_) << " <= X"<< range(wEX_ + wFX_ -1, wFX_) << ";" << endl; 
+		vhdl << tab << declare("expY", wEY_) << " <= Y"<< range(wEY_ + wFY_ -1, wFX_) << ";" << endl; 
 
 		//Add exponents and substract bias
-		vhdl << tab << declare("expSumPreSub", wEX_+2) << " <= " << "(\"00\" & expX) + (\"00\" & expY);" << endl; 
+		vhdl << tab << declare("expSumPreSub", wEX_+2) << " <= (\"00\" & expX) + (\"00\" & expY);" << endl; 
 		nextCycle(); ///////////////////////////////////////////////////////
-		vhdl << tab << declare("bias", wEX_+2) << " <= " << "CONV_STD_LOGIC_VECTOR(" << intpow2(wER-1)-1 << ","<<wEX_+2<<");"<< endl; 
-		vhdl << tab << declare("expSum",wEX+2) << " <= " << use("expSumPreSub") << " - " << use("bias") << ";" << endl;   
+		vhdl << tab << declare("bias", wEX_+2) << " <= CONV_STD_LOGIC_VECTOR(" << intpow2(wER-1)-1 << ","<<wEX_+2<<");"<< endl; 
+		vhdl << tab << declare("expSum",wEX+2) << " <= expSumPreSub - bias;" << endl;   
 	
 		/* Significand Handling */
 		setCycle(0); 
@@ -81,9 +81,9 @@ namespace flopoco{
 
 		/* Exception Handling */
 		setCycle(0);
-		vhdl << tab << declare("excSel",4) <<" <= X"<<range(wEX_ + wFX_ +2, wEX_ + wFX_ + 1) << " & " << "Y"<<range(wEY_ + wFY_ +2, wEY_ + wFY_ +1) << ";" << endl;
+		vhdl << tab << declare("excSel",4) <<" <= X"<<range(wEX_ + wFX_ +2, wEX_ + wFX_ + 1) << " & Y"<<range(wEY_ + wFY_ +2, wEY_ + wFY_ +1) << ";" << endl;
 		
-		vhdl << tab << "with " << use("excSel") << " select " << endl;
+		vhdl << tab << "with excSel select " << endl;
 		vhdl << tab << declare("exc",2) << " <= \"00\" when  \"0000\" | \"0001\" | \"0100\", " << endl;
 		vhdl << tab << "       \"01\" when \"0101\","<<endl;
 		vhdl << tab << "       \"10\" when \"0110\" | \"1001\" | \"1010\" ,"<<endl;		
@@ -97,41 +97,41 @@ namespace flopoco{
 		if (normalized_==true){
 		/******************************************************************/
 				
-			vhdl << tab<< declare("norm") << " <= " << use("sigProd") << of(wFX_+wFY_+1) << ";"<<endl;
-			vhdl << tab<< declare("expPostNorm", wEX_+2) << " <= " << use("expSum") << " + (" << zg(wEX_+1,0) << " & " << use("norm") << ");"<<endl;
+			vhdl << tab<< declare("norm") << " <= sigProd" << of(wFX_+wFY_+1) << ";"<<endl;
+			vhdl << tab<< declare("expPostNorm", wEX_+2) << " <= expSum + (" << zg(wEX_+1,0) << " & norm);"<<endl;
 
 			//check is rounding is needed
 			if (1+wFR_ >= wFX_+wFY_+2) {  /* => no rounding needed - possible padding */
-				vhdl << tab << declare("resSig", wFR_) << " <= " << use("sigProd")<<range(wFX_+wFY_,0) << " & " <<   zg(1+wFR_ - (wFX_+wFY_+2) , 0)<<" when "<< use("norm")<< "='1' else"<<endl;
-				vhdl << tab <<"                      "           << use("sigProd")<<range(wFX_+wFY_-1,0) << " & " << zg(1+wFR_ - (wFX_+wFY_+2) + 1 , 0) << ";"<<endl;
+				vhdl << tab << declare("resSig", wFR_) << " <= sigProd" << range(wFX_+wFY_,0) << " & " <<   zg(1+wFR_ - (wFX_+wFY_+2) , 0)<<" when norm='1' else"<<endl;
+				vhdl << tab <<"                      sigProd" << range(wFX_+wFY_-1,0) << " & " << zg(1+wFR_ - (wFX_+wFY_+2) + 1 , 0) << ";"<<endl;
 
-				vhdl << tab <<"with "<<use("expPostNorm")<< range(wER_+1, wER_) << " select"<<endl;		
-				vhdl << tab << declare("excPostNorm",2) << " <=  \"01\" " << " when  \"00\","<<endl;
+				vhdl << tab <<"with expPostNorm" << range(wER_+1, wER_) << " select"<<endl;		
+				vhdl << tab << declare("excPostNorm",2) << " <=  \"01\"  when  \"00\","<<endl;
 				vhdl << tab <<"                            \"10\"             when \"01\", "<<endl;
 				vhdl << tab <<"                            \"00\"             when \"11\"|\"10\","<<endl;
 				vhdl << tab <<"                            \"11\"             when others;"<<endl;						
 				
-				vhdl << tab << "with " << use("exc") << " select " << endl;
-				vhdl << tab << declare("finalExc",2) << " <= " << use("exc") << " when " << " \"11\"|\"10\"|\"00\"," <<endl;
-				vhdl << tab << "                    " << use("excPostNorm") << " when others; " << endl;
+				vhdl << tab << "with exc select " << endl;
+				vhdl << tab << declare("finalExc",2) << " <= exc when  \"11\"|\"10\"|\"00\"," <<endl;
+				vhdl << tab << "                    excPostNorm when others; " << endl;
 		
-				vhdl << tab << "R <= " << use("finalExc") << " & " << use("sign") << " & " << use("expPostNorm") << range(wER_-1, 0) << " & " <<use("resSig") <<";"<<endl;
+				vhdl << tab << "R <= finalExc & sign & expPostNorm" << range(wER_-1, 0) << " & resSig;"<<endl;
 			}
 			else{
 				nextCycle();////
-//				vhdl << tab << declare("resSig", wFR_) << " <= " << use("sigProd")<<range(wFX_+wFY_, wFX_+wFY_ - wFR_+1) <<" when "<< use("norm")<< "='1' else"<<endl;
-//				vhdl << tab <<"                      "           << use("sigProd")<<range(wFX_+wFY_-1, wFX_+wFY_ - wFR_) << ";"<<endl;
+//				vhdl << tab << declare("resSig", wFR_) << " <= sigProd" << range(wFX_+wFY_, wFX_+wFY_ - wFR_+1) <<" when norm='1' else"<<endl;
+//				vhdl << tab <<"                      sigProd" << range(wFX_+wFY_-1, wFX_+wFY_ - wFR_) << ";"<<endl;
 
-				vhdl << tab << declare("sigProdExt", wFX_+wFY_+ 1 + 1) << " <= " << use("sigProd") << range(wFX_+wFY_, 0) << " & " << zg(1,0) <<" when "<< use("norm")<< "='1' else"<<endl;
-				vhdl << tab << "                      "           << use("sigProd") << range(wFX_+wFY_-1, 0) << " & " << zg(2,0) << ";"<<endl;
+				vhdl << tab << declare("sigProdExt", wFX_+wFY_+ 1 + 1) << " <= sigProd" << range(wFX_+wFY_, 0) << " & " << zg(1,0) <<" when norm='1' else"<<endl;
+				vhdl << tab << "                      sigProd" << range(wFX_+wFY_-1, 0) << " & " << zg(2,0) << ";"<<endl;
 							
-				vhdl << tab << declare("expSig", 2 + wER_ + wFR_) << " <= " << use("expPostNorm") << " & " << use("sigProdExt")<<range(wFX_+wFY_+ 1,wFX_+wFY_+ 2 -wFR_) << ";" << endl;
+				vhdl << tab << declare("expSig", 2 + wER_ + wFR_) << " <= expPostNorm & sigProdExt" << range(wFX_+wFY_+ 1,wFX_+wFY_+ 2 -wFR_) << ";" << endl;
 
 		
-				vhdl << tab << declare("sticky") << " <= " << use("sigProdExt") << of(wFX_+wFY + 1 - wFR) << ";" << endl;
-				vhdl << tab << declare("guard") << " <= " << "'0' when " << use("sigProdExt") << range(wFX_+wFY + 1 - wFR - 1,0) << "=" << zg(wFX_+wFY + 1 - wFR - 1 +1,0) <<" else '1';" << endl;
-				vhdl << tab << declare("round") << " <= " << use("sticky") << " and ( (" << use("guard") << " and not(" << use("sigProdExt") << of(wFX_+wFY + 1 - wFR+1) <<")) or (" 
-				                                                                         << use("sigProdExt") << of(wFX_+wFY + 1 - wFR+1) << " ))  " <<";" << endl;
+				vhdl << tab << declare("sticky") << " <= sigProdExt" << of(wFX_+wFY + 1 - wFR) << ";" << endl;
+				vhdl << tab << declare("guard") << " <= '0' when sigProdExt" << range(wFX_+wFY + 1 - wFR - 1,0) << "=" << zg(wFX_+wFY + 1 - wFR - 1 +1,0) <<" else '1';" << endl;
+				vhdl << tab << declare("round") << " <= sticky and ( (guard and not(sigProdExt" << of(wFX_+wFY + 1 - wFR+1) <<")) or (" 
+				 << "sigProdExt" << of(wFX_+wFY + 1 - wFR+1) << " ))  ;" << endl;
 				                                                                      
 				nextCycle();////			
 				intadd_ = new IntAdder(target, 2 + wER_ + wFR_);
@@ -146,34 +146,34 @@ namespace flopoco{
 				syncCycleFromSignal("expSigPostRound");
 				nextCycle();
 				
-				vhdl << tab <<"with "<<use("expSigPostRound")<< range(wER_+wFR_+1, wER_+wFR_) << " select"<<endl;		
-				vhdl << tab << declare("excPostNorm",2) << " <=  \"01\" " << " when  \"00\","<<endl;
+				vhdl << tab <<"with expSigPostRound" << range(wER_+wFR_+1, wER_+wFR_) << " select"<<endl;		
+				vhdl << tab << declare("excPostNorm",2) << " <=  \"01\"  when  \"00\","<<endl;
 				vhdl << tab <<"                            \"10\"             when \"01\", "<<endl;
 				vhdl << tab <<"                            \"00\"             when \"11\"|\"10\","<<endl;
 				vhdl << tab <<"                            \"11\"             when others;"<<endl;						
 			
-				vhdl << tab << "with " << use("exc") << " select " << endl;
-				vhdl << tab << declare("finalExc",2) << " <= " << use("exc") << " when " << " \"11\"|\"10\"|\"00\"," <<endl;
-				vhdl << tab << "                    " << use("excPostNorm") << " when others; " << endl;
+				vhdl << tab << "with exc select " << endl;
+				vhdl << tab << declare("finalExc",2) << " <= exc when  \"11\"|\"10\"|\"00\"," <<endl;
+				vhdl << tab << "                    excPostNorm when others; " << endl;
 	
-				vhdl << tab << "R <= " << use("finalExc") << " & " << use("sign") << " & " << use("expSigPostRound") << range(wER_+wFR_-1, 0)<<";"<<endl;
+				vhdl << tab << "R <= finalExc & sign & expSigPostRound" << range(wER_+wFR_-1, 0)<<";"<<endl;
 			
 			}
 		}else{ //the non-normalized version for DotProduct
-				vhdl << tab <<"with "<<use("expSum")<< range(wER_+1, wER_) << " select"<<endl;		
-				vhdl << tab << declare("excPostProc",2) << " <=  \"01\" " << " when  \"00\","<<endl;
+				vhdl << tab <<"with expSum" << range(wER_+1, wER_) << " select"<<endl;		
+				vhdl << tab << declare("excPostProc",2) << " <=  \"01\"  when  \"00\","<<endl;
 				vhdl << tab <<"                            \"10\"             when \"01\", "<<endl;
 				vhdl << tab <<"                            \"00\"             when \"11\"|\"10\","<<endl;
 				vhdl << tab <<"                            \"11\"             when others;"<<endl;						
 				
-				vhdl << tab << "with " << use("exc") << " select " << endl;
-				vhdl << tab << declare("finalExc",2) << " <= " << use("exc") << " when " << " \"11\"|\"10\"|\"00\"," <<endl;
-				vhdl << tab << "                    " << use("excPostProc") << " when others; " << endl;
+				vhdl << tab << "with exc select " << endl;
+				vhdl << tab << declare("finalExc",2) << " <= exc when  \"11\"|\"10\"|\"00\"," <<endl;
+				vhdl << tab << "                    excPostProc when others; " << endl;
 				
-				vhdl << tab << "ResultExponent <= " << use("expSum") << range(wER_-1, 0) << ";" << endl;
-				vhdl << tab << "ResultSignificand <= " << use("sigProd") << ";" << endl;
-				vhdl << tab << "ResultException <= " << use("finalExc") << ";" << endl;
-				vhdl << tab << "ResultSign <= " << use("sign") << ";" << endl;
+				vhdl << tab << "ResultExponent <= expSum" << range(wER_-1, 0) << ";" << endl;
+				vhdl << tab << "ResultSignificand <= sigProd;" << endl;
+				vhdl << tab << "ResultException <= finalExc;" << endl;
+				vhdl << tab << "ResultSign <= sign;" << endl;
 		}
 	} // end constructor
 

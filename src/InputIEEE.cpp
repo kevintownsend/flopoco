@@ -97,16 +97,16 @@ namespace flopoco{
 				else 
 					vhdl << ";" << endl;
 				vhdl << tab << "-- copy exponent. This will be OK even for subnormals, zero and infty since in such cases the exn bits will prevail" << endl;
-				vhdl << tab << declare("expR", wEO) << " <= " << use("expX") << ";" << endl;
+				vhdl << tab << declare("expR", wEO) << " <= expX;" << endl;
 			}
 			else { // wFI > wFO, wEI==wEO
 				vhdl << tab << "-- wFO < wFI, need to round fraction" << endl;
-				vhdl << tab << declare("resultLSB") << " <= " << use("sfracX") << "("<< wFI-wFO <<");" << endl;
-				vhdl << tab << declare("roundBit") << " <= " << use("sfracX") << "("<< wFI-wFO-1 <<");" << endl;
+				vhdl << tab << declare("resultLSB") << " <= sfracX("<< wFI-wFO <<");" << endl;
+				vhdl << tab << declare("roundBit") << " <= sfracX("<< wFI-wFO-1 <<");" << endl;
 				// need to define a sticky bit
 				vhdl << tab << declare("sticky") << " <= ";
 				if(wFI-wFO>1){
-					vhdl<< " '0' when " << use("sfracX") << range(wFI-wFO-2, 0) <<" = CONV_STD_LOGIC_VECTOR(0," << wFI-wFO-2 <<")   else '1';"<<endl;
+					vhdl<< " '0' when sfracX" << range(wFI-wFO-2, 0) <<" = CONV_STD_LOGIC_VECTOR(0," << wFI-wFO-2 <<")   else '1';"<<endl;
 				}
 				else {
 					vhdl << "'0';" << endl; 
@@ -116,14 +116,14 @@ namespace flopoco{
 				nextCycle();
 
 				vhdl << tab << "-- The following addition will not overflow since FloPoCo format has one more exponent value" <<endl; 
-				vhdl << tab << declare("expfracR0", wEO+wFO) << " <= (" << use("expX") << " & " << use("sfracX") << "" << range(wFI-1, wFI-wFO) << ")  +  (CONV_STD_LOGIC_VECTOR(0," << wEO+wFO-1 <<") & " << use("round") << ");"<<endl;
+				vhdl << tab << declare("expfracR0", wEO+wFO) << " <= (expX & sfracX" << range(wFI-1, wFI-wFO) << ")  +  (CONV_STD_LOGIC_VECTOR(0," << wEO+wFO-1 <<") & round);"<<endl;
 				vhdl << tab << declare("fracR",wFO) << " <= expfracR0" << range(wFO-1, 0) << ";" << endl;
 				vhdl << tab << declare("expR",wEO) << " <= expfracR0" << range(wFO+wEO-1, wFO) << ";" << endl;
 			}
 
-			vhdl << tab << declare("infinity") << " <= " << use("expInfty") << " and " << use("fracZero") << ";" << endl;
-			vhdl << tab << declare("zero")     << " <= " << use("expZero") << " and not " << use("reprSubNormal") << ";" << endl;
-			vhdl << tab << declare("NaN")      << " <= " << use("expInfty") << " and not " << use("fracZero") << ";" << endl;
+			vhdl << tab << declare("infinity") << " <= expInfty and fracZero;" << endl;
+			vhdl << tab << declare("zero")     << " <= expZero and not reprSubNormal;" << endl;
+			vhdl << tab << declare("NaN")      << " <= expInfty and not fracZero;" << endl;
 
 			vhdl << tab << declare("exnR",2) << " <= " << endl
 				  << tab << tab << "     \"00\" when zero='1' " << endl
@@ -159,7 +159,7 @@ namespace flopoco{
 			// have to compute expR = ((expX-biasI) + biasO) (wEO-1 downto 0)
 			// but the wEO-1 LSB bits of both biases are identical, therefore simply copy 
 			// and the remaining MSB are 1 for input and 0 for output, therefore subtract the leading 1 by inverting it
-			vhdl << tab << declare("expXO", wEO) << " <= (not " <<  use("expX") << "(" << wEO-1 << ")" << ") & " <<  use("expX") << range(wEO-2, 0) << ";" << endl;
+			vhdl << tab << declare("expXO", wEO) << " <= (not expX(" << wEO-1 << ")) & expX" << range(wEO-2, 0) << ";" << endl;
 
 			if(wFO>=wFI){ // no rounding needed
 				vhdl << tab << declare("fracR",wFO) << " <= " << use("fracX");
@@ -167,19 +167,19 @@ namespace flopoco{
 					vhdl << " & CONV_STD_LOGIC_VECTOR(0," << wFO-wFI <<");" << endl;
 				else 
 					vhdl << ";" << endl;
-				vhdl << tab << declare("expR",wEO) << " <= " << use("expXO") << ";" << endl;
+				vhdl << tab << declare("expR",wEO) << " <= expXO;" << endl;
 				vhdl << tab << declare("roundOverflow") << " <= '0';" << endl;
 			}
 			else { // wFI > wFO, wEI>wEO
 
 				nextCycle();
 				vhdl << tab << "-- wFO < wFI, need to round fraction" << endl;
-				vhdl << tab << declare("resultLSB") << " <= " << use("fracX") << "("<< wFI-wFO <<");" << endl;
-				vhdl << tab << declare("roundBit") << " <= " << use("fracX") << "("<< wFI-wFO-1 <<");" << endl;
+				vhdl << tab << declare("resultLSB") << " <= fracX("<< wFI-wFO <<");" << endl;
+				vhdl << tab << declare("roundBit") << " <= fracX("<< wFI-wFO-1 <<");" << endl;
 				// need to define a sticky bit
 				vhdl << tab << declare("sticky") << " <= ";
 				if(wFI-wFO>1)
-					vhdl<< " '0' when " << use("fracX") << range(wFI-wFO-2, 0) <<" = CONV_STD_LOGIC_VECTOR(0," << wFI-wFO-2 <<")   else '1';"<<endl;
+					vhdl<< " '0' when fracX" << range(wFI-wFO-2, 0) <<" = CONV_STD_LOGIC_VECTOR(0," << wFI-wFO-2 <<")   else '1';"<<endl;
 				else 
 					vhdl << "'0';" << endl; 
 				vhdl << tab << declare("round") << " <= roundBit and (sticky or resultLSB);"<<endl;
@@ -187,16 +187,16 @@ namespace flopoco{
 				nextCycle();
 
 				vhdl << tab << "-- The following addition may overflow" <<endl; 
-				vhdl << tab << declare("expfracR0", wEO+wFO+1) << " <= ('0' & " << use("expXO") << " & " << use("fracX") << "" << range(wFI-1, wFI-wFO) << ")  +  (CONV_STD_LOGIC_VECTOR(0," << wEO+wFO <<") & " << use("round") << ");"<<endl;
+				vhdl << tab << declare("expfracR0", wEO+wFO+1) << " <= ('0' & expXO & fracX" << range(wFI-1, wFI-wFO) << ")  +  (CONV_STD_LOGIC_VECTOR(0," << wEO+wFO <<") & round);"<<endl;
 				vhdl << tab << declare("roundOverflow") << " <= expfracR0(" << wEO+wFO << ");" << endl;
 
 				vhdl << tab << declare("fracR",wFO) << " <= expfracR0" << range(wFO-1, 0) << ";" << endl;
 				vhdl << tab << declare("expR",wEO) << " <= expfracR0" << range(wFO+wEO-1, wFO) << ";" << endl;
 			}
 
-			vhdl << tab << declare("NaN") << " <= " << use("expInfty") << " and not " << use("fracZero") << ";" << endl;
-			vhdl << tab << declare("infinity") << " <= (" << use("expInfty") << " and " << use("fracZero") << ") or (not NaN and (" << use("overflow") << " or " << use("roundOverflow") << "));" << endl;
-			vhdl << tab << declare("zero") << " <= " << use("expZero") << " or " << use("underflow") << ";" << endl ;
+			vhdl << tab << declare("NaN") << " <= expInfty and not fracZero;" << endl;
+			vhdl << tab << declare("infinity") << " <= (expInfty and fracZero) or (not NaN and (overflow or roundOverflow));" << endl;
+			vhdl << tab << declare("zero") << " <= expZero or underflow;" << endl ;
 
 			vhdl << tab << declare("exnR",2) << " <= " << endl
 				  << tab << tab << "     \"11\" when NaN='1' " << endl
@@ -205,7 +205,7 @@ namespace flopoco{
 				  << tab << tab << "else \"01\" ;  -- normal number" << endl;
 		}
 
-		vhdl << tab << "R <= exnR & " << use("sX") << " & expR & fracR; " << endl; 
+		vhdl << tab << "R <= exnR & sX & expR & fracR; " << endl; 
 
 	}
 

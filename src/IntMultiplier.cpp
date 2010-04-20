@@ -113,18 +113,18 @@ namespace flopoco{
 							REPORT(INFO, "x=" << x << " y= " << y << " chunksX="<<chunksX << " chunksY="<<chunksY);
 					
 							if (swap){
-								vhdl << tab << declare("sX",x*chunksX) << " <= " << "Y" << " & " << zg(x*chunksX-wInY,0) << ";" << endl;
-								vhdl << tab << declare("sY",y*chunksY) << " <= " << "X" << " & " << zg(y*chunksY-wInX,0) << ";" << endl;
+								vhdl << tab << declare("sX",x*chunksX) << " <= Y & " << zg(x*chunksX-wInY,0) << ";" << endl;
+								vhdl << tab << declare("sY",y*chunksY) << " <= X & " << zg(y*chunksY-wInX,0) << ";" << endl;
 							}else{
-								vhdl << tab << declare("sX",x*chunksX) << " <= " << "X" << " & " << zg(x*chunksX-wInX,0) << ";" << endl;
-								vhdl << tab << declare("sY",y*chunksY) << " <= " << "Y" << " & " << zg(y*chunksY-wInY,0) << ";" << endl;
+								vhdl << tab << declare("sX",x*chunksX) << " <= X & " << zg(x*chunksX-wInX,0) << ";" << endl;
+								vhdl << tab << declare("sY",y*chunksY) << " <= Y & " << zg(y*chunksY-wInY,0) << ";" << endl;
 							}
 							////////////////////////////////////////////////////
 							//SPLITTINGS
 							for (int k=0; k<chunksX ; k++)
-								vhdl << tab << declare(join("x",k),x) << " <= " << "sX" << range((k+1)*x-1,k*x) << ";" << endl;
+								vhdl << tab << declare(join("x",k),x) << " <= sX" << range((k+1)*x-1,k*x) << ";" << endl;
 							for (int k=0; k<chunksY ; k++)
-								vhdl << tab << declare(join("y",k),y) << " <= " << "sY" << range((k+1)*y-1,k*y) << ";" << endl;
+								vhdl << tab << declare(join("y",k),y) << " <= sY" << range((k+1)*y-1,k*y) << ";" << endl;
 
 							//MULTIPLICATIONS WITH SOME ACCUMULATIONS
 							for (int i=0; i<chunksX; i++){ 
@@ -133,7 +133,7 @@ namespace flopoco{
 										vhdl << tab << declare(join("px",i,"y",j),x+y) << " <= " << use(join("x",i)) << " * " << use(join("y",j)) << ";" << endl;
 									}else{
 										vhdl << tab << declare(join("tpx",i,"y",j),x+y) << " <= " << use(join("x",i)) << " * " << use(join("y",j))  << ";" << endl; 
-										vhdl << tab << declare(join("px",i,"y",j),x+y+1) << " <= " << "( \"0\" & " << use(join("tpx",i,"y",j)) << ")" << " + " << use(join("px",i,"y",j-1))<<range(x+y-1,y) << ";" << endl; 
+										vhdl << tab << declare(join("px",i,"y",j),x+y+1) << " <= ( \"0\" & " << use(join("tpx",i,"y",j)) << ") + " << use(join("px",i,"y",j-1))<<range(x+y-1,y) << ";" << endl; 
 									}
 									if (!((j==chunksY-1) && (i<chunksX-1))) nextCycle();
 								}
@@ -147,7 +147,7 @@ namespace flopoco{
 									vhdl << use(join("px",i,"y",j)) << range ( (j==chunksY-1?(x+y-1):y-1) ,0) << (j==0 ? ";" : " & ");
 								vhdl << endl;
 							}
-							vhdl << tab << declare ("sum0Low", x) << " <= " << use("sum0")<<range(x-1,0) << ";" << endl;
+							vhdl << tab << declare ("sum0Low", x) << " <= sum0" << range(x-1,0) << ";" << endl;
 					
 							if (chunksX>1){
 								IntNAdder* add =  new IntNAdder(target, x*chunksX+y*chunksY+extension, chunksX);
@@ -169,9 +169,9 @@ namespace flopoco{
 								syncCycleFromSignal("addRes");
 				
 								if ((x*chunksX+y*chunksY) - wInX - wInY < -extension){
-									vhdl << tab << "R <= " << use("addRes")<<range((x*chunksX+y*chunksY+extension)-1,0) << " & " <<  use("sum0Low")<<range(x-1, x-1 + ((x*chunksX+y*chunksY+extension) - wInX - wInY)+1) << ";" << endl;
+									vhdl << tab << "R <= addRes" << range((x*chunksX+y*chunksY+extension)-1,0) << " & sum0Low" << range(x-1, x-1 + ((x*chunksX+y*chunksY+extension) - wInX - wInY)+1) << ";" << endl;
 								}else{
-									vhdl << tab << "R <= " << use("addRes")<<range((x*chunksX+y*chunksY+extension)-1, ((x*chunksX+y*chunksY+extension) - wInX - wInY)) << ";" << endl;
+									vhdl << tab << "R <= addRes" << range((x*chunksX+y*chunksY+extension)-1, ((x*chunksX+y*chunksY+extension) - wInX - wInY)) << ";" << endl;
 						
 								}
 							}else{
@@ -208,13 +208,13 @@ namespace flopoco{
 								widthX = widthY;
 								widthY = tmp;
 				
-								vhdl << tab << declare("sX",chunkSize_*chunksX) << " <= " << "Y" << " & " << zg(chunkSize_*chunksX-widthX,0) << ";" << endl;
-								vhdl << tab << declare("sY",chunkSize_*chunksY) << " <= " << "X" << " & " << zg(chunkSize_*chunksY-widthY,0) << ";" << endl;
+								vhdl << tab << declare("sX",chunkSize_*chunksX) << " <= Y & " << zg(chunkSize_*chunksX-widthX,0) << ";" << endl;
+								vhdl << tab << declare("sY",chunkSize_*chunksY) << " <= X & " << zg(chunkSize_*chunksY-widthY,0) << ";" << endl;
 							}
 						else
 							{
-								vhdl << tab << declare("sX",chunkSize_*chunksX) << " <= " << "X" << " & " << zg(chunkSize_*chunksX-widthX,0) << ";" << endl;
-								vhdl << tab << declare("sY",chunkSize_*chunksY) << " <= " << "Y" << " & " << zg(chunkSize_*chunksY-widthY,0) << ";" << endl;
+								vhdl << tab << declare("sX",chunkSize_*chunksX) << " <= X & " << zg(chunkSize_*chunksX-widthX,0) << ";" << endl;
+								vhdl << tab << declare("sY",chunkSize_*chunksY) << " <= Y & " << zg(chunkSize_*chunksY-widthY,0) << ";" << endl;
 							}
 				
 						if (verbose)
@@ -242,13 +242,13 @@ namespace flopoco{
 									{
 										ostringstream dname;
 										dname << "x"<<k;
-										vhdl << tab << declare(dname.str(),chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << "sX" << range((k+1)*chunkSize_-1,k*chunkSize_) << ";" << endl;
+										vhdl << tab << declare(dname.str(),chunkSize_,true,Signal::registeredWithAsyncReset) << " <= sX" << range((k+1)*chunkSize_-1,k*chunkSize_) << ";" << endl;
 									}
 								for (int k=0; k<chunksY ; k++)
 									{
 										ostringstream dname;
 										dname << "y"<<k;
-										vhdl << tab << declare(dname.str(),chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << "sY" << range((k+1)*chunkSize_-1,k*chunkSize_) << ";" << endl;
+										vhdl << tab << declare(dname.str(),chunkSize_,true,Signal::registeredWithAsyncReset) << " <= sY" << range((k+1)*chunkSize_-1,k*chunkSize_) << ";" << endl;
 									}
 				
 								if (verbose)	
@@ -260,7 +260,7 @@ namespace flopoco{
 										setCycle(1);
 										partialProd.str("");
 										partialProd << "px0y" << 4*level;
-										vhdl << tab << declare(partialProd.str(),2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << use("x0") << " * " << use(join("y", 4*level)) << ";" << endl;
+										vhdl << tab << declare(partialProd.str(),2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= x0 * " << use(join("y", 4*level)) << ";" << endl;
 					
 										setCycle(3);
 										operands[0] << use(partialProd.str()) << " & " << zg(chunkSize_*4*level,0) << ";" << endl;
@@ -270,10 +270,10 @@ namespace flopoco{
 										setCycle(1);
 										partialProd2.str("");
 										partialProd2 << "px0y" << 4*level+1;
-										vhdl << tab << declare(partialProd2.str(),2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << use("x0") << " * " << use(join("y",4*level+1)) << ";" << endl;
+										vhdl << tab << declare(partialProd2.str(),2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= x0 * " << use(join("y",4*level+1)) << ";" << endl;
 										partialProd.str("");
 										partialProd << "px1y" << 4*level;
-										vhdl << tab << declare(partialProd.str(),2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << use("x1") << " * " << use(join("y",4*level)) << ";" << endl;
+										vhdl << tab << declare(partialProd.str(),2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= x1 * " << use(join("y",4*level)) << ";" << endl;
 					
 										setCycle(2);
 										sum.str("");
@@ -490,7 +490,7 @@ namespace flopoco{
 												setCycle(1);
 												partialProd.str("");
 												partialProd << "px0y" << i;
-												vhdl << tab << declare(partialProd.str(),2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << use("x0") << " * " << use(join("y",i)) << ";" << endl;
+												vhdl << tab << declare(partialProd.str(),2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= x0 * " << use(join("y",i)) << ";" << endl;
 							
 												setCycle(3);
 												operands[i%2].seekp(ios_base::beg);
@@ -519,7 +519,7 @@ namespace flopoco{
 										// top right tile
 										partialProd.str("");
 										partialProd << "px0y" << i;
-										vhdl << tab << declare(partialProd.str(),2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << use("x0") << " * " << use(join("y", i)) << ";" << endl;
+										vhdl << tab << declare(partialProd.str(),2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= x0 * " << use(join("y", i)) << ";" << endl;
 										setCycle(3);
 										operands[i%2] << use(partialProd.str()) << range(2*chunkSize_-1,0) << " & " << zg((4*level)*chunkSize_,0) << ";";
 										operands[(i+1)%2] << zg((4*level+1)*chunkSize_,0) << ";";
@@ -530,10 +530,10 @@ namespace flopoco{
 												setCycle(1);
 												partialProd2.str("");
 												partialProd2 << "px0y" << (i+1);
-												vhdl << tab << declare(partialProd2.str(),2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << use("x0") << " * " << use(join("y", i+1)) << ";" << endl;
+												vhdl << tab << declare(partialProd2.str(),2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= x0 * " << use(join("y", i+1)) << ";" << endl;
 												partialProd.str("");
 												partialProd << "px1y" << i;
-												vhdl << tab << declare(partialProd.str(),2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << use("x1") << " * " << use(join("y", i)) << ";" << endl;
+												vhdl << tab << declare(partialProd.str(),2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= x1 * " << use(join("y", i)) << ";" << endl;
 												setCycle(2);
 												sum.str("");
 												sum << "addOp" << level << "_shift_" << (i+1);
@@ -551,7 +551,7 @@ namespace flopoco{
 										setCycle(1);
 										partialProd.str("");
 										partialProd << "px1y" << i;
-										vhdl << tab << declare(partialProd.str(),2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << use("x1") << " * " << use(join("y", i)) << ";" << endl;
+										vhdl << tab << declare(partialProd.str(),2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= x1 * " << use(join("y", i)) << ";" << endl;
 						
 										setCycle(3);
 										operands[(i+1)%2].seekp(ios_base::beg);
@@ -622,7 +622,7 @@ namespace flopoco{
 												setCycle(1);
 												partialProd.str("");
 												partialProd << "px0y" << i;
-												vhdl << tab << declare(partialProd.str(), 2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << use("x0") << " * " << use(join("y",i)) << ";" << endl;
+												vhdl << tab << declare(partialProd.str(), 2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= x0 * " << use(join("y",i)) << ";" << endl;
 												operands[i%2].seekp(ios_base::beg);
 												operands[i%2] << use(partialProd.str()) << " & " << operands[i%2].str();
 								
@@ -653,7 +653,7 @@ namespace flopoco{
 												setCycle(1);
 												partialProd.str("");
 												partialProd << "px2y" << i+2;
-												vhdl << tab << declare(partialProd.str(), 2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << use("x2") << " * " << use(join("y",i+2)) << ";" << endl;
+												vhdl << tab << declare(partialProd.str(), 2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= x2 * " << use(join("y",i+2)) << ";" << endl;
 												setCycle(3);
 												operands[(i+4)%2].seekp(ios_base::beg);
 												operands[(i+4)%2] << zg(level*4*chunkSize_,0) << " & " << use(partialProd.str()) << " & " << operands[(i+4)%2].str();	
@@ -685,7 +685,7 @@ namespace flopoco{
 												setCycle(1);
 												partialProd.str("");
 												partialProd << "px0y" << i;
-												vhdl << tab << declare(partialProd.str(), 2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << use("x0") << " * " << use(join("y",i)) << ";" << endl;
+												vhdl << tab << declare(partialProd.str(), 2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= x0 * " << use(join("y",i)) << ";" << endl;
 												setCycle(3);
 												operands[i%2].seekp(ios_base::beg);
 												operands[i%2] << use(partialProd.str()) << " & " << operands[i%2].str();
@@ -694,10 +694,10 @@ namespace flopoco{
 												setCycle(1);
 												partialProd.str("");
 												partialProd << "px1y" << i;
-												vhdl << tab << declare(partialProd.str(), 2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << use("x1") << " * " << use(join("y",i)) << ";" << endl;
+												vhdl << tab << declare(partialProd.str(), 2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= x1 * " << use(join("y",i)) << ";" << endl;
 												partialProd2.str("");
 												partialProd2 << "px0y" << i+1;
-												vhdl << tab << declare(partialProd2.str(), 2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << use("x0") << " * " << use(join("y",i+1)) << ";" << endl;
+												vhdl << tab << declare(partialProd2.str(), 2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= x0 * " << use(join("y",i+1)) << ";" << endl;
 								
 												setCycle(2);
 												sum.str("");
@@ -749,10 +749,10 @@ namespace flopoco{
 												setCycle(1);
 												partialProd.str("");
 												partialProd << "px2y" << chunksY-2;
-												vhdl << tab << declare(partialProd.str(), 2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << use("x2") << " * " << use(join("y",chunksY-2)) << ";" << endl;
+												vhdl << tab << declare(partialProd.str(), 2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= x2 * " << use(join("y",chunksY-2)) << ";" << endl;
 												partialProd2.str("");
 												partialProd2 << "px1y" << chunksY-1;
-												vhdl << tab << declare(partialProd2.str(), 2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << use("x1") << " * " << use(join("y",chunksY-1)) << ";" << endl;
+												vhdl << tab << declare(partialProd2.str(), 2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= x1 * " << use(join("y",chunksY-1)) << ";" << endl;
 								
 												setCycle(2);
 												sum.str("");
@@ -768,7 +768,7 @@ namespace flopoco{
 												setCycle(1);
 												partialProd.str("");
 												partialProd << "px2y" << chunksY-1;
-												vhdl << tab << declare(partialProd.str(), 2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << use("x2") << " * " << use(join("y",chunksY-1)) << ";" << endl;
+												vhdl << tab << declare(partialProd.str(), 2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= x2 * " << use(join("y",chunksY-1)) << ";" << endl;
 												setCycle(3);
 												operands[(i+3)%2].seekp(ios_base::beg);
 												operands[(i+3)%2] << zg((level*4)*chunkSize_,0) << " & " << use(partialProd.str()) << " & " << operands[(i+3)%2].str();
@@ -804,7 +804,7 @@ namespace flopoco{
 											{
 												ostringstream dname;
 												dname << "x"<< k;
-												vhdl << tab << declare(dname.str(),2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << "sX" << range((k+2)*chunkSize_-1,k*chunkSize_) << ";" << endl;
+												vhdl << tab << declare(dname.str(),2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= sX" << range((k+2)*chunkSize_-1,k*chunkSize_) << ";" << endl;
 											}
 					
 										// * The following splitting for y uses a small trick, i.e. if we have an even number of chunks for y
@@ -820,14 +820,14 @@ namespace flopoco{
 											{
 												ostringstream dname;
 												dname << "y"<< k;
-												vhdl << tab << declare(dname.str(),2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << "sY" << range((k+2+start)*chunkSize_-1,(k+start)*chunkSize_) << ";" << endl;
+												vhdl << tab << declare(dname.str(),2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= sY" << range((k+2+start)*chunkSize_-1,(k+start)*chunkSize_) << ";" << endl;
 											}
 					
 										if (start == 1)
 											{
 												ostringstream dname;
 												dname << "y"<< chunksY-1;
-												vhdl << tab << declare(dname.str(),chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << "sY" << range(chunkSize_-1,0) << ";" << endl;
+												vhdl << tab << declare(dname.str(),chunkSize_,true,Signal::registeredWithAsyncReset) << " <= sY" << range(chunkSize_-1,0) << ";" << endl;
 											}
 					
 										nextCycle();
@@ -844,7 +844,7 @@ namespace flopoco{
 														setCycleFromSignal(join("x",k));
 														nextCycle();
 														ostringstream partialProd;
-														partialProd  << "p" << "x" << k << "y" << i;
+														partialProd  << "px" << k << "y" << i;
 														vhdl << tab << declare(partialProd.str(),4*chunkSize_) << " <= " << use(join("x",k)) << " * " << use(join("y",i)) << ";" << endl;
 							
 														nextCycle();
@@ -858,7 +858,7 @@ namespace flopoco{
 														setCycleFromSignal(join("x",k-2));
 														nextCycle();
 														ostringstream partialProd;
-														partialProd  << "p" << "x" << k-2 << "y" << j;
+														partialProd  << "px" << k-2 << "y" << j;
 														vhdl << tab << declare(partialProd.str(),4*chunkSize_) << " <= " << use(join("x",k-2)) << " * " << use(join("y",j)) << ";" << endl;
 						
 														nextCycle();
@@ -898,12 +898,12 @@ namespace flopoco{
 							
 														ostringstream dname;
 														dname << "xx" << k;
-														vhdl << tab << declare(dname.str(),chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << "sX" << range((k+1)*chunkSize_-1, k*chunkSize_) << ";" << endl;
+														vhdl << tab << declare(dname.str(),chunkSize_,true,Signal::registeredWithAsyncReset) << " <= sX" << range((k+1)*chunkSize_-1, k*chunkSize_) << ";" << endl;
 							
 														nextCycle();
 							
 														ostringstream partialProd;
-														partialProd  << "p" << "xx" << k << "y" << chunksY-1;
+														partialProd  << "pxx" << k << "y" << chunksY-1;
 														vhdl << tab << declare(partialProd.str(),2*chunkSize_) << " <= " << use(join("xx",k)) << " * " << use(join("y",chunksY-1)) << ";" << endl;
 							
 														nextCycle();
@@ -927,18 +927,18 @@ namespace flopoco{
 						
 												ostringstream dname;
 												dname << "x" << chunksX-1;
-												vhdl << tab << declare(dname.str(),chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << "sX" << range(chunksX*chunkSize_-1,(chunksX-1)*chunkSize_) << ";" << endl;
+												vhdl << tab << declare(dname.str(),chunkSize_,true,Signal::registeredWithAsyncReset) << " <= sX" << range(chunksX*chunkSize_-1,(chunksX-1)*chunkSize_) << ";" << endl;
 						
 												for (k=start; k<chunksY; k++)
 													{
 														setCycleFromSignal("sY");
 														dname.str("");
 														dname << "yy" << k;
-														vhdl << tab << declare(dname.str(),chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << "sY" << range((k+1)*chunkSize_-1, k*chunkSize_) << ";" << endl;
+														vhdl << tab << declare(dname.str(),chunkSize_,true,Signal::registeredWithAsyncReset) << " <= sY" << range((k+1)*chunkSize_-1, k*chunkSize_) << ";" << endl;
 						
 														nextCycle();
 														ostringstream partialProd;
-														partialProd  << "p" << "x" << chunksX-1 << "yy" << k;
+														partialProd  << "px" << chunksX-1 << "yy" << k;
 														vhdl << tab << declare(partialProd.str(),2*chunkSize_) << " <= " << use(join("x",chunksX-1)) << " * " << use(join("yy",k)) << ";" << endl;
 						
 														nextCycle();
@@ -988,7 +988,7 @@ namespace flopoco{
 											{
 												ostringstream dname;
 												dname << "x"<< k/2;
-												vhdl << tab << declare(dname.str(),2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << "sX" << range((k+2)*chunkSize_-1,k*chunkSize_) << ";" << endl;
+												vhdl << tab << declare(dname.str(),2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= sX" << range((k+2)*chunkSize_-1,k*chunkSize_) << ";" << endl;
 											}
 					
 										//* The following splitting for y uses a small trick, i.e. if we have an even number of chunks for y
@@ -1004,14 +1004,14 @@ namespace flopoco{
 											{
 												ostringstream dname;
 												dname << "y"<< k/2;
-												vhdl << tab << declare(dname.str(),2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << "sY" << range((k+2+start)*chunkSize_-1,(k+start)*chunkSize_) << ";" << endl;
+												vhdl << tab << declare(dname.str(),2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= sY" << range((k+2+start)*chunkSize_-1,(k+start)*chunkSize_) << ";" << endl;
 											}
 					
 										if (start == 1)
 											{
 												ostringstream dname;
 												dname << "y"<< k/2;
-												vhdl << tab << declare(dname.str(),chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << "sY" << range(chunkSize_-1,0) << ";" << endl;
+												vhdl << tab << declare(dname.str(),chunkSize_,true,Signal::registeredWithAsyncReset) << " <= sY" << range(chunkSize_-1,0) << ";" << endl;
 											}
 										int startX = 0; // added this variable to apply the same trick for zgs as with the start variable that adds zeros behind if chunksY is odd 
 										bool leftColumn = false; // TRUE if there are an odd number of slices in X and there is a chunkSize width column to the left of the tiling that has no pair
@@ -1035,7 +1035,7 @@ namespace flopoco{
 												setCycle(1);
 												partialProd.str("");
 												partialProd << "px0y" << 4*level;
-												vhdl << tab << declare(partialProd.str(),2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << use("x0") << " * " << use(join("y", 4*level)) << ";" << endl;
+												vhdl << tab << declare(partialProd.str(),2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= x0 * " << use(join("y", 4*level)) << ";" << endl;
 												setCycle(3);
 												operands[0] << use(partialProd.str()) << " & " << zg(chunkSize_*4*level + start*chunkSize_/2,0) << ";" << endl;
 						
@@ -1044,10 +1044,10 @@ namespace flopoco{
 												setCycle(1);
 												partialProd2.str("");
 												partialProd2 << "px0y" << 4*level+1;
-												vhdl << tab << declare(partialProd2.str(),2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << use("x0") << " * " << use(join("y",4*level+1)) << ";" << endl;
+												vhdl << tab << declare(partialProd2.str(),2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= x0 * " << use(join("y",4*level+1)) << ";" << endl;
 												partialProd.str("");
 												partialProd << "px1y" << 4*level;
-												vhdl << tab << declare(partialProd.str(),2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << use("x1") << " * " << use(join("y",4*level)) << ";" << endl;
+												vhdl << tab << declare(partialProd.str(),2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= x1 * " << use(join("y",4*level)) << ";" << endl;
 												setCycle(2);
 												sum.str("");
 												sum << "addOp" << level << "_shift_" << 4*level+1;
@@ -1255,7 +1255,7 @@ namespace flopoco{
 														setCycle(1);
 														partialProd.str("");
 														partialProd << "px0y" << i;
-														vhdl << tab << declare(partialProd.str(),2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << use("x0") << " * " << use(join("y",i)) << ";" << endl;
+														vhdl << tab << declare(partialProd.str(),2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= x0 * " << use(join("y",i)) << ";" << endl;
 								
 														setCycle(3);
 														operands[i%2].seekp(ios_base::beg);
@@ -1284,7 +1284,7 @@ namespace flopoco{
 												// top right tile
 												partialProd.str("");
 												partialProd << "px0y" << i;
-												vhdl << tab << declare(partialProd.str(),2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << use("x0") << " * " << use(join("y", i)) << ";" << endl;
+												vhdl << tab << declare(partialProd.str(),2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= x0 * " << use(join("y", i)) << ";" << endl;
 												setCycle(3);
 												operands[i%2] << use(partialProd.str()) << range(2*chunkSize_-1,0) << " & " << zg((4*level)*chunkSize_ + start*chunkSize_/2,0) << ";";
 												operands[(i+1)%2] << zg((4*level+1)*chunkSize_ + start*chunkSize_/2,0) << ";";
@@ -1295,10 +1295,10 @@ namespace flopoco{
 														setCycle(1);
 														partialProd2.str("");
 														partialProd2 << "px0y" << (i+1);
-														vhdl << tab << declare(partialProd2.str(),2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << use("x0") << " * " << use(join("y", i+1)) << ";" << endl;
+														vhdl << tab << declare(partialProd2.str(),2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= x0 * " << use(join("y", i+1)) << ";" << endl;
 														partialProd.str("");
 														partialProd << "px1y" << i;
-														vhdl << tab << declare(partialProd.str(),2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << use("x1") << " * " << use(join("y", i)) << ";" << endl;
+														vhdl << tab << declare(partialProd.str(),2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= x1 * " << use(join("y", i)) << ";" << endl;
 														setCycle(2);
 														sum.str("");
 														sum << "addOp" << level << "_shift_" << (i+1);
@@ -1316,7 +1316,7 @@ namespace flopoco{
 												setCycle(1);
 												partialProd.str("");
 												partialProd << "px1y" << i;
-												vhdl << tab << declare(partialProd.str(),2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << use("x1") << " * " << use(join("y", i)) << ";" << endl;
+												vhdl << tab << declare(partialProd.str(),2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= x1 * " << use(join("y", i)) << ";" << endl;
 							
 												setCycle(3);
 												operands[(i+1)%2].seekp(ios_base::beg);
@@ -1385,7 +1385,7 @@ namespace flopoco{
 														setCycle(1);
 														partialProd.str("");
 														partialProd << "px0y" << i;
-														vhdl << tab << declare(partialProd.str(), 2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << use("x0") << " * " << use(join("y",i)) << ";" << endl;
+														vhdl << tab << declare(partialProd.str(), 2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= x0 * " << use(join("y",i)) << ";" << endl;
 														operands[i%2].seekp(ios_base::beg);
 														operands[i%2] << use(partialProd.str()) << " & " << operands[i%2].str();
 									
@@ -1416,7 +1416,7 @@ namespace flopoco{
 														setCycle(1);
 														partialProd.str("");
 														partialProd << "px2y" << i+2;
-														vhdl << tab << declare(partialProd.str(), 2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << use("x2") << " * " << use(join("y",i+2)) << ";" << endl;
+														vhdl << tab << declare(partialProd.str(), 2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= x2 * " << use(join("y",i+2)) << ";" << endl;
 														setCycle(3);
 														operands[(i+4)%2].seekp(ios_base::beg);
 														operands[(i+4)%2] << zg(level*4*chunkSize_ + startX*chunkSize_/2,0) << " & " << use(partialProd.str()) << " & " << operands[(i+4)%2].str();	
@@ -1445,7 +1445,7 @@ namespace flopoco{
 														setCycle(1);
 														partialProd.str("");
 														partialProd << "px0y" << i;
-														vhdl << tab << declare(partialProd.str(), 2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << use("x0") << " * " << use(join("y",i)) << ";" << endl;
+														vhdl << tab << declare(partialProd.str(), 2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= x0 * " << use(join("y",i)) << ";" << endl;
 														setCycle(3);
 														operands[i%2].seekp(ios_base::beg);
 														operands[i%2] << use(partialProd.str()) << " & " << operands[i%2].str();
@@ -1454,10 +1454,10 @@ namespace flopoco{
 														setCycle(1);
 														partialProd.str("");
 														partialProd << "px1y" << i;
-														vhdl << tab << declare(partialProd.str(), 2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << use("x1") << " * " << use(join("y",i)) << ";" << endl;
+														vhdl << tab << declare(partialProd.str(), 2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= x1 * " << use(join("y",i)) << ";" << endl;
 														partialProd2.str("");
 														partialProd2 << "px0y" << i+1;
-														vhdl << tab << declare(partialProd2.str(), 2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << use("x0") << " * " << use(join("y",i+1)) << ";" << endl;
+														vhdl << tab << declare(partialProd2.str(), 2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= x0 * " << use(join("y",i+1)) << ";" << endl;
 									
 														setCycle(2);
 														sum.str("");
@@ -1509,10 +1509,10 @@ namespace flopoco{
 														setCycle(1);
 														partialProd.str("");
 														partialProd << "px2y" << chunksY-2;
-														vhdl << tab << declare(partialProd.str(), 2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << use("x2") << " * " << use(join("y",chunksY-2)) << ";" << endl;
+														vhdl << tab << declare(partialProd.str(), 2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= x2 * " << use(join("y",chunksY-2)) << ";" << endl;
 														partialProd2.str("");
 														partialProd2 << "px1y" << chunksY-1;
-														vhdl << tab << declare(partialProd2.str(), 2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << use("x1") << " * " << use(join("y",chunksY-1)) << ";" << endl;
+														vhdl << tab << declare(partialProd2.str(), 2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= x1 * " << use(join("y",chunksY-1)) << ";" << endl;
 									
 														setCycle(2);
 														sum.str("");
@@ -1528,7 +1528,7 @@ namespace flopoco{
 														setCycle(1);
 														partialProd.str("");
 														partialProd << "px2y" << chunksY-1;
-														vhdl << tab << declare(partialProd.str(), 2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << use("x2") << " * " << use(join("y",chunksY-1)) << ";" << endl;
+														vhdl << tab << declare(partialProd.str(), 2*chunkSize_,true,Signal::registeredWithAsyncReset) << " <= x2 * " << use(join("y",chunksY-1)) << ";" << endl;
 														setCycle(3);
 														operands[(i+3)%2].seekp(ios_base::beg);
 														operands[(i+3)%2] << zg((level*4)*chunkSize_ + startX*chunkSize_/2,0) << " & " << use(partialProd.str()) << " & " << operands[(i+3)%2].str();
@@ -1573,12 +1573,12 @@ namespace flopoco{
 														setCycle(0);
 														ostringstream dname;
 														dname << "xx" << k;
-														vhdl << tab << declare(dname.str(),chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << "sX" << range((k+1)*chunkSize_-1, k*chunkSize_) << ";" << endl;
+														vhdl << tab << declare(dname.str(),chunkSize_,true,Signal::registeredWithAsyncReset) << " <= sX" << range((k+1)*chunkSize_-1, k*chunkSize_) << ";" << endl;
 							
 														//nextCycle();
 														setCycle(1);
 														ostringstream partialProd;
-														partialProd  << "p" << "xx" << k << "y" << chunksY/2;
+														partialProd  << "pxx" << k << "y" << chunksY/2;
 														vhdl << tab << declare(partialProd.str(),2*chunkSize_) << " <= " << use(join("xx",k)) << " * " << use(join("y",chunksY/2)) << ";" << endl;
 							
 														//nextCycle();
@@ -1603,7 +1603,7 @@ namespace flopoco{
 												setCycle(0);
 												ostringstream dname;
 												dname << "x" << chunksX-1;
-												vhdl << tab << declare(dname.str(),chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << "sX" << range(chunksX*chunkSize_-1,(chunksX-1)*chunkSize_) << ";" << endl;
+												vhdl << tab << declare(dname.str(),chunkSize_,true,Signal::registeredWithAsyncReset) << " <= sX" << range(chunksX*chunkSize_-1,(chunksX-1)*chunkSize_) << ";" << endl;
 						
 												for (k=start; k<chunksY; k++)
 													{
@@ -1611,12 +1611,12 @@ namespace flopoco{
 														setCycle(0);
 														dname.str("");
 														dname << "yy" << k;
-														vhdl << tab << declare(dname.str(),chunkSize_,true,Signal::registeredWithAsyncReset) << " <= " << "sY" << range((k+1)*chunkSize_-1, k*chunkSize_) << ";" << endl;
+														vhdl << tab << declare(dname.str(),chunkSize_,true,Signal::registeredWithAsyncReset) << " <= sY" << range((k+1)*chunkSize_-1, k*chunkSize_) << ";" << endl;
 						
 														//nextCycle();
 														setCycle(1);
 														ostringstream partialProd;
-														partialProd  << "p" << "x" << chunksX-1 << "yy" << k;
+														partialProd  << "px" << chunksX-1 << "yy" << k;
 														vhdl << tab << declare(partialProd.str(),2*chunkSize_) << " <= " << use(join("x",chunksX-1)) << " * " << use(join("yy",k)) << ";" << endl;
 						
 														//nextCycle();
@@ -1680,7 +1680,7 @@ namespace flopoco{
 
 						syncCycleFromSignal("addRes");
 			
-						vhdl << tab << "R <= " << use("addRes")<<range(adderWidth-1,adderWidth-wInX_-wInY_) << ";" << endl;	
+						vhdl << tab << "R <= addRes" << range(adderWidth-1,adderWidth-wInX_-wInY_) << ";" << endl;	
 			
 					}
 			}
@@ -1706,17 +1706,17 @@ namespace flopoco{
 						widthX = widthY;
 						widthY = tmp;
 		
-						vhdl<<tab<<declare("sX",chunkSize_*chunksX)<<" <= "<<"Y"<<" & "<<zg(chunkSize_*chunksX-widthX,0)<< ";"<<endl;
-						vhdl<<tab<<declare("sY",chunkSize_*chunksY)<<" <= "<<"X"<<" & "<<zg(chunkSize_*chunksY-widthY,0)<< ";"<<endl;	
+						vhdl<<tab<<declare("sX",chunkSize_*chunksX)<<" <= Y & "<<zg(chunkSize_*chunksX-widthX,0)<< ";"<<endl;
+						vhdl<<tab<<declare("sY",chunkSize_*chunksY)<<" <= X & "<<zg(chunkSize_*chunksY-widthY,0)<< ";"<<endl;	
 					}else{
-						vhdl<<tab<<declare("sX",chunkSize_*chunksX)<<" <= "<<"X"<<" & "<<zg(chunkSize_*chunksX-widthX,0)<< ";"<<endl;
-						vhdl<<tab<<declare("sY",chunkSize_*chunksY)<<" <= "<<"Y"<<" & "<<zg(chunkSize_*chunksY-widthY,0)<< ";"<<endl;
+						vhdl<<tab<<declare("sX",chunkSize_*chunksX)<<" <= X & "<<zg(chunkSize_*chunksX-widthX,0)<< ";"<<endl;
+						vhdl<<tab<<declare("sY",chunkSize_*chunksY)<<" <= Y & "<<zg(chunkSize_*chunksY-widthY,0)<< ";"<<endl;
 					}
 					//SPLITTINGS
 					for (int k=0; k<chunksX ; k++)
-						vhdl<<tab<<declare(join("x",k),chunkSize_)<<" <= "<<"sX"<<range((k+1)*chunkSize_-1,k*chunkSize_)<<";"<<endl;
+						vhdl<<tab<<declare(join("x",k),chunkSize_)<<" <= sX"<<range((k+1)*chunkSize_-1,k*chunkSize_)<<";"<<endl;
 					for (int k=0; k<chunksY ; k++)
-						vhdl<<tab<<declare(join("y",k),chunkSize_)<<" <= "<<"sY"<<range((k+1)*chunkSize_-1,k*chunkSize_)<<";"<<endl;
+						vhdl<<tab<<declare(join("y",k),chunkSize_)<<" <= sY"<<range((k+1)*chunkSize_-1,k*chunkSize_)<<";"<<endl;
     	
 
 					//COMPUTE PARTIAL PRODUCTS
@@ -1755,7 +1755,7 @@ namespace flopoco{
 					vhdl << instance(add, "adder");
 					syncCycleFromSignal("addRes");
 	
-					vhdl<<tab<<"R<="<< use("addRes")<<range(adderWidth-1,adderWidth-wInX_-wInY_) << ";" << endl;		
+					vhdl<<tab<<"R<=addRes" << range(adderWidth-1,adderWidth-wInX_-wInY_) << ";" << endl;		
 				}
 				else 
 					vhdl << tab << "R <= X * Y ;" <<endl;

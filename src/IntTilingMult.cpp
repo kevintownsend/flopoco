@@ -615,14 +615,14 @@ namespace flopoco{
 
 			syncCycleFromSignal("addRes");
 		
-			vhdl << tab << "R <= " << "addRes" << ";" << endl;
+			vhdl << tab << "R <= addRes;" << endl;
 		}else{
 			if (nrDSPOperands==1){
 				syncCycleFromSignal("addOpDSP0");
-				vhdl << tab << "R <= " << "addOpDSP0" << ";" << endl;
+				vhdl << tab << "R <= addOpDSP0;" << endl;
 			}else{
 				syncCycleFromSignal("addOpSlice0");
-				vhdl << tab << "R <= " << "addOpSlice0" << ";" << endl;
+				vhdl << tab << "R <= addOpSlice0;" << endl;
 			}
 		}
 			
@@ -1315,7 +1315,7 @@ namespace flopoco{
 											nii = m -getExtraHeight() -1;
 										else
 											nii = ii;
-										cout<<"Partition number "<<count<<" with bounds. ("<<j<<" , "<<i<<" , "<<jj<<" , "<<ii<<")"<<" has now bounds ("<<nj<<" , "<<ni<<" , "<<njj<<" , "<<nii<<")"<<endl;
+										cout<<"Partition number "<<count<<" with bounds. ("<<j<<" , "<<i<<" , "<<jj<<" , "<<ii<<") has now bounds ("<<nj<<" , "<<ni<<" , "<<njj<<" , "<<nii<<")"<<endl;
 									}
 						
 								cout<<j<<" "<<i<<" "<<jj<<" "<<ii<<endl;
@@ -3141,11 +3141,11 @@ namespace flopoco{
 									
 									xname.str("");
 									xname << "x" << i << "_" << j;
-									vhdl << tab << declare(xname.str(), multW+2) << " <= \"10\" & " << zg(fpadX,0) << " & " << "X" << range(startX, endX) << " & " << zg(bpadX,0) << ";" << endl;
+									vhdl << tab << declare(xname.str(), multW+2) << " <= \"10\" & " << zg(fpadX,0) << " & X" << range(startX, endX) << " & " << zg(bpadX,0) << ";" << endl;
 									
 									yname.str("");
 									yname << "y" << i << "_" << j;
-									vhdl << tab << declare(yname.str(), multH+2) << " <= \"10\" & " << zg(fpadY,0) << " & " << "Y" << range(startY, endY) << " & " << zg(bpadY,0) << ";" << endl;
+									vhdl << tab << declare(yname.str(), multH+2) << " <= \"10\" & " << zg(fpadY,0) << " & Y" << range(startY, endY) << " & " << zg(bpadY,0) << ";" << endl;
 				
 									if ((d->getShiftIn() != NULL) && (j>0)) // multiply accumulate
 										{
@@ -3259,10 +3259,10 @@ namespace flopoco{
 							setCycle(0);
 							xname.str("");
 							xname << "x" << i << "_0";
-							vhdl << tab << declare(xname.str(), multW, true, Signal::registeredWithAsyncReset) << " <= " << zg(fpadX-ew,0) << " & " << "X" << range(blx1-fpadX-ew, trx1+bpadX-ew) << " & " << zg(bpadX-ew,0) << ";" << endl;
+							vhdl << tab << declare(xname.str(), multW, true, Signal::registeredWithAsyncReset) << " <= " << zg(fpadX-ew,0) << " & X" << range(blx1-fpadX-ew, trx1+bpadX-ew) << " & " << zg(bpadX-ew,0) << ";" << endl;
 							yname.str("");
 							yname << "y" << i << "_0";
-							vhdl << tab << declare(yname.str(), multH, true, Signal::registeredWithAsyncReset) << " <= " << zg(fpadY-ew,0) << " & " << "Y" << range(bly1-fpadY-eh, try1+bpadY-eh) << " & " << zg(bpadY-ew,0) << ";" << endl;
+							vhdl << tab << declare(yname.str(), multH, true, Signal::registeredWithAsyncReset) << " <= " << zg(fpadY-ew,0) << " & Y" << range(bly1-fpadY-eh, try1+bpadY-eh) << " & " << zg(bpadY-ew,0) << ";" << endl;
 			
 							boundDSPs = tempc[i]->getNumberOfAdders();
 							int ext = 0; // the number of carry bits of the addtion
@@ -3324,10 +3324,10 @@ namespace flopoco{
 											setCycle(0);
 											xname.str("");
 											xname << "x" << i << "_" << j+1;
-											vhdl << tab << declare(xname.str(), multW, true, Signal::registeredWithAsyncReset) << " <= " << zg(fpadX,0) << " & " << "X" << range(blx1-fpadX-ew, trx1+bpadX-ew) << " & " << zg(bpadX,0) << ";" << endl;
+											vhdl << tab << declare(xname.str(), multW, true, Signal::registeredWithAsyncReset) << " <= " << zg(fpadX,0) << " & X" << range(blx1-fpadX-ew, trx1+bpadX-ew) << " & " << zg(bpadX,0) << ";" << endl;
 											yname.str("");
 											yname << "y" << i << "_" << j+1;
-											vhdl << tab << declare(yname.str(), multH, true, Signal::registeredWithAsyncReset) << " <= " << zg(fpadY,0) << " & " << "Y" << range(bly1-fpadY-eh, try1+bpadY-eh) << " & " << zg(bpadY,0) << ";" << endl;
+											vhdl << tab << declare(yname.str(), multH, true, Signal::registeredWithAsyncReset) << " <= " << zg(fpadY,0) << " & Y" << range(bly1-fpadY-eh, try1+bpadY-eh) << " & " << zg(bpadY,0) << ";" << endl;
 					
 											nextCycle();
 											mname.str("");
@@ -3535,9 +3535,9 @@ namespace flopoco{
 										mult->changeName(cname.str());
 										oplist.push_back(mult);
 										// TODO: compute width of x and y + corretc range for X and Y
-										vhdl << tab << declare(join("x_",partitions), njj-nj+1) << " <= " << "X" << range(wInX-nj-1+extW, wInX-njj-1+extW) << ";" << endl;
+										vhdl << tab << declare(join("x_",partitions), njj-nj+1) << " <= X" << range(wInX-nj-1+extW, wInX-njj-1+extW) << ";" << endl;
 										inPortMap(mult, "X", join("x_",partitions));
-										vhdl << tab << declare(join("y_",partitions), nii-ni+1) << " <= " << "Y" << range(nii-extH, ni-extH) << ";" << endl;
+										vhdl << tab << declare(join("y_",partitions), nii-ni+1) << " <= Y" << range(nii-extH, ni-extH) << ";" << endl;
 										inPortMap(mult, "Y", join("y_",partitions));
 					
 										outPortMap(mult, "R", join("result", partitions));
@@ -3547,7 +3547,7 @@ namespace flopoco{
 										syncCycleFromSignal(join("result", partitions));
 										
 										vhdl << tab << declare(join("addOpSlice", partitions), wInX+wInY) << " <= " << zg(wInX+wInY-(wInX-nj-1+extW+nii-extH)-2, 0) << " & " << join("result", partitions) << " & " << zg(wInX-njj-1+extW+ni-extH, 0) << ";" << endl;
-										cout<<"Partition number "<<count<<" with bounds. ("<<j<<" , "<<i<<" , "<<jj<<" , "<<ii<<")"<<" has now bounds ("<<nj<<" , "<<ni<<" , "<<njj<<" , "<<nii<<")"<<endl;
+										cout<<"Partition number "<<count<<" with bounds. ("<<j<<" , "<<i<<" , "<<jj<<" , "<<ii<<") has now bounds ("<<nj<<" , "<<ni<<" , "<<njj<<" , "<<nii<<")"<<endl;
 										cout<<"partitions " << partitions << " @ cycle " << getCurrentCycle() << endl;
 										
 										partitions++;

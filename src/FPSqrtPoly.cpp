@@ -56,12 +56,12 @@ namespace flopoco{
 		vhdl << tab << declare("OddExp")    << " <= not(expX(0));"  << endl;  
 
 		//first estimation of the exponent
-		vhdl << tab << declare("expBiasPostDecrement", wE+1) << " <= " << "CONV_STD_LOGIC_VECTOR("<< (1<<(wE-1))-2 <<","<<wE+1<<")"<<";"<<endl;
-		vhdl << tab << declare("expPostBiasAddition", wE+1) << " <= " << "( \"0\" & expX) + expBiasPostDecrement + not(OddExp);"<<endl;
+		vhdl << tab << declare("expBiasPostDecrement", wE+1) << " <= CONV_STD_LOGIC_VECTOR("<< (1<<(wE-1))-2 <<","<<wE+1<<");"<<endl;
+		vhdl << tab << declare("expPostBiasAddition", wE+1) << " <= ( \"0\" & expX) + expBiasPostDecrement + not(OddExp);"<<endl;
 	
 		vhdl << tab << "-- sign/exception handling" << endl;
 		vhdl << tab << "with excsX select" <<endl
-			  << tab << tab <<  declare("exnR", 2) << " <= " << "\"01\" when \"010\", -- positive, normal number" << endl
+			  << tab << tab <<  declare("exnR", 2) << " <= \"01\" when \"010\", -- positive, normal number" << endl
 			  << tab << tab << "excsX" << range(2, 1) << " when \"001\" | \"000\" | \"100\", " << endl
 			  << tab << tab << "\"11\" when others;"  << endl;
 

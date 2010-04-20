@@ -113,7 +113,7 @@ namespace flopoco{
 					}
 
 					if (cOp2 > 1){
-						vhdl << tab << declare ("sum0Low", x) << " <= " << use("sum0")<<range(x-1,0) << ";" << endl;
+						vhdl << tab << declare ("sum0Low", x) << " <= sum0" << range(x-1,0) << ";" << endl;
 
 						IntNAdder* add =  new IntNAdder(target, y*(cOp1-1)+yS +  x*(cOp2-1)+xS - x, cOp2);
 						oplist.push_back(add);
@@ -270,7 +270,7 @@ namespace flopoco{
 				
 					if (cOp2 > 1){
 						/* more than one operand in the final adder */
-						vhdl << tab << declare ("sum0Low", y) << " <= " << use("sum0")<<range(y-1,0) << ";" << endl;
+						vhdl << tab << declare ("sum0Low", y) << " <= sum0" << range(y-1,0) << ";" << endl;
 
 						IntNAdder* add =  new IntNAdder(target, (xS + y + 1) + (cOp2-1)*y - y, cOp2);
 						oplist.push_back(add);

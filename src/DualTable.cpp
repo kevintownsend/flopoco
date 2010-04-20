@@ -153,8 +153,8 @@ namespace flopoco{
 				outPortMap (primitiveBlock  , "Y2","data2");
 				vhdl << instance(primitiveBlock  ,"primitiveBlock");
 		
-				vhdl<<tab<<"Y1 <="<<use("data1")<<";"<<endl;
-				vhdl<<tab<<"Y2 <="<<use("data2")<<";"<<endl;
+				vhdl<<tab<<"Y1 <=data1;"<<endl;
+				vhdl<<tab<<"Y2 <=data2;"<<endl;
 		
 			}
 		else
@@ -204,7 +204,7 @@ namespace flopoco{
 					}
 	
 				vhdl<<endl;
-				vhdl <<tab<< "  with "<<use("address1H")<<" select  Y1 <= " << endl;
+				vhdl <<tab<< "  with address1H select  Y1 <= " << endl;
 				for (int c1 = 0; c1 < nrOfMemBlocks; c1++) {
 					name2.str("");
 					name2<<"data1FromM_"<<c1;
@@ -216,7 +216,7 @@ namespace flopoco{
 				vhdl <<  "\" when others;" << endl;
 	
 				vhdl<<endl;
-				vhdl <<tab<< "  with "<<use("address2H")<<" select  Y2 <= " << endl;
+				vhdl <<tab<< "  with address2H select  Y2 <= " << endl;
 				for (int c1 = 0; c1 < nrOfMemBlocks; c1++) {
 					name3.str("");
 					name3<<"data2FromM_"<<c1;

@@ -172,9 +172,9 @@ extern vector<Operator*> oplist;
 							high+=cSize[k];
 						for (int k=0;k<=j-1;k++)
 							low+=cSize[k];
-						vhdl << tab << declare (name.str(),cSize[j]+1) << " <= " << " \"0\" & X"<<i<<range(high-1,low)<<";"<<endl;
+						vhdl << tab << declare (name.str(),cSize[j]+1) << " <=  \"0\" & X"<<i<<range(high-1,low)<<";"<<endl;
 					}
-				vhdl << tab << declare("scIn",1) << " <= " << "Cin;"<<endl;
+				vhdl << tab << declare("scIn",1) << " <= Cin;"<<endl;
 			
 				int l=1;
 				for (int j=0; j<nbOfChunks; j++){
@@ -195,8 +195,8 @@ extern vector<Operator*> oplist;
 					ostringstream a;
 					a.str("");
 
-					vhdl << tab << declare( uname1.str()+"ext", cSize[j]+1 ) << " <= " <<  "\"0\" & "  <<  use(uname1.str()) << range(cSize[j]-1,0) << ";" << endl;
-					vhdl << tab << declare( uname2.str()+"ext", cSize[j]+1 ) << " <= " <<  "\"0\" & "  <<  use(uname2.str()) << range(cSize[j]-1,0) << ";" << endl;
+					vhdl << tab << declare( uname1.str()+"ext", cSize[j]+1 ) << " <= \"0\" & "  <<  use(uname1.str()) << range(cSize[j]-1,0) << ";" << endl;
+					vhdl << tab << declare( uname2.str()+"ext", cSize[j]+1 ) << " <= \"0\" & "  <<  use(uname2.str()) << range(cSize[j]-1,0) << ";" << endl;
 			
 					if (j>0){ //for all chunks greater than zero we perform this additions
 							bool found = false;
@@ -234,7 +234,7 @@ extern vector<Operator*> oplist;
 						target->setNotPipelined();
 					}else{
 						vhdl << tab << "-- the carry resulting from the addition of the chunk + Cin is obtained directly" << endl;
-						vhdl << tab << declare(dnameCin.str(),cSize[j]+1) << "  <= (\"0\" & "<< use(uname1.str())<<range(cSize[j]-1,0) <<") +  (\"0\" & "<< use(uname2.str())<<range(cSize[j]-1,0)<<") + "<<use("scIn")<<";"<<endl;
+						vhdl << tab << declare(dnameCin.str(),cSize[j]+1) << "  <= (\"0\" & "<< use(uname1.str())<<range(cSize[j]-1,0) <<") +  (\"0\" & "<< use(uname2.str())<<range(cSize[j]-1,0)<<") + scIn;"<<endl;
 					}
 #else					
 					if (j>0){ //for all chunks greater than zero we perform this additions
@@ -243,7 +243,7 @@ extern vector<Operator*> oplist;
 						vhdl << tab << declare(dnameOne.str(),cSize[j]+1) << "  <= (\"0\" & "<< use(uname1.str())<<range(cSize[j]-1,0) <<") +  (\"0\" & "<< use(uname2.str())<<range(cSize[j]-1,0)<<") + '1';"<<endl;
 					}else{
 						vhdl << tab << "-- the carry resulting from the addition of the chunk + Cin is obtained directly" << endl;
-						vhdl << tab << declare(dnameCin.str(),cSize[j]+1) << "  <= (\"0\" & "<< use(uname1.str())<<range(cSize[j]-1,0) <<") +  (\"0\" & "<< use(uname2.str())<<range(cSize[j]-1,0)<<") + "<<use("scIn")<<";"<<endl;
+						vhdl << tab << declare(dnameCin.str(),cSize[j]+1) << "  <= (\"0\" & "<< use(uname1.str())<<range(cSize[j]-1,0) <<") +  (\"0\" & "<< use(uname2.str())<<range(cSize[j]-1,0)<<") + scIn;"<<endl;
 					}
 #endif
 				}
@@ -277,7 +277,7 @@ extern vector<Operator*> oplist;
 				vhdl << tab << "--perform the short carry additions" << endl;
 				ostringstream unameCin;
 				unameCin  << "sX"<<0<<"_0_l"<<l<<"_Cin";
-				vhdl << tab << declare("rawCarrySum",2*(nbOfChunks-2)) << " <= " << use("carryStringOne") << " + " << use("carryStringZero") << " + " << use(unameCin.str()) << "(" << cSize[0] << ")" << " ;" << endl;
+				vhdl << tab << declare("rawCarrySum",2*(nbOfChunks-2)) << " <= carryStringOne + carryStringZero + " << use(unameCin.str()) << "(" << cSize[0] << ") ;" << endl;
 
 				if (invalid)
 					nextCycle();/////////////////////
@@ -289,8 +289,8 @@ extern vector<Operator*> oplist;
 					unameCin  << "sX"<<0<<"_0_l"<<l<<"_Cin";
 					if (i==0) vhdl << tab << declare(join("res",i),cSize[i]) << " <= " << use(unameCin.str())<< range(cSize[0]-1,0) <<  ";" << endl;
 					else {
-						if (i==1) vhdl << tab << declare(join("res",i),cSize[i]) << " <= " << use(unameZero.str()) << range(cSize[i]-1,0) << " + " << use(unameCin.str()) << "(" << cSize[0] << ")" << ";"<<endl;
-						else      vhdl << tab << declare(join("res",i),cSize[i]) << " <= " << use(unameZero.str()) << range(cSize[i]-1,0) << " + not(" << use("rawCarrySum")<<"("<<2*(i-2)+1<<"));"<<endl;
+						if (i==1) vhdl << tab << declare(join("res",i),cSize[i]) << " <= " << use(unameZero.str()) << range(cSize[i]-1,0) << " + " << use(unameCin.str()) << "(" << cSize[0] << ");"<<endl;
+						else      vhdl << tab << declare(join("res",i),cSize[i]) << " <= " << use(unameZero.str()) << range(cSize[i]-1,0) << " + not(rawCarrySum("<<2*(i-2)+1<<"));"<<endl;
 					}
 				}
 			
@@ -406,9 +406,9 @@ extern vector<Operator*> oplist;
 							high+=cSize[k];
 						for (int k=0;k<=j-1;k++)
 							low+=cSize[k];
-						vhdl << tab << declare (join("sX",j,"_",i),cSize[j]+1) << " <= " << " \"0\" & X"<<i<<range(high-1,low)<<";"<<endl;
+						vhdl << tab << declare (join("sX",j,"_",i),cSize[j]+1) << " <=  \"0\" & X"<<i<<range(high-1,low)<<";"<<endl;
 					}
-				vhdl << tab << declare("scIn",1) << " <= " << "Cin;"<<endl;
+				vhdl << tab << declare("scIn",1) << " <= Cin;"<<endl;
 
 				for (int j=0; j<nbOfChunks; j++){
 					REPORT(3, "ITERATION " << j);
@@ -430,8 +430,8 @@ extern vector<Operator*> oplist;
 					ostringstream a;
 					a.str("");
 
-					vhdl << tab << declare( uname1.str()+"ext", cSize[j]+1 ) << " <= " <<  "\"0\" & "  <<  use(uname1.str()) << range(cSize[j]-1,0) << ";" << endl;
-					vhdl << tab << declare( uname2.str()+"ext", cSize[j]+1 ) << " <= " <<  "\"0\" & "  <<  use(uname2.str()) << range(cSize[j]-1,0) << ";" << endl;
+					vhdl << tab << declare( uname1.str()+"ext", cSize[j]+1 ) << " <= \"0\" & "  <<  use(uname1.str()) << range(cSize[j]-1,0) << ";" << endl;
+					vhdl << tab << declare( uname2.str()+"ext", cSize[j]+1 ) << " <= \"0\" & "  <<  use(uname2.str()) << range(cSize[j]-1,0) << ";" << endl;
 			
 					if (j>0){ //for all chunks greater than zero we perform this additions
 							bool found = false;
@@ -469,7 +469,7 @@ extern vector<Operator*> oplist;
 						target->setNotPipelined();
 					}else{
 						vhdl << tab << "-- the carry resulting from the addition of the chunk + Cin is obtained directly" << endl;
-						vhdl << tab << declare(dnameCin.str(),cSize[j]+1) << "  <= (\"0\" & "<< use(uname1.str())<<range(cSize[j]-1,0) <<") +  (\"0\" & "<< use(uname2.str())<<range(cSize[j]-1,0)<<") + "<<use("scIn")<<";"<<endl;
+						vhdl << tab << declare(dnameCin.str(),cSize[j]+1) << "  <= (\"0\" & "<< use(uname1.str())<<range(cSize[j]-1,0) <<") +  (\"0\" & "<< use(uname2.str())<<range(cSize[j]-1,0)<<") + scIn;"<<endl;
 					}
 #else
 /* this is the same, but no combinatorial IntAdders are defined for the additions*/		
@@ -479,7 +479,7 @@ extern vector<Operator*> oplist;
 						vhdl << tab << declare(dnameOne.str(),cSize[j]+1) << "  <= (\"0\" & "<< use(uname1.str())<<range(cSize[j]-1,0) <<") +  (\"0\" & "<< use(uname2.str())<<range(cSize[j]-1,0)<<") + '1';"<<endl;
 					}else{
 						vhdl << tab << "-- the carry resulting from the addition of the chunk + Cin is obtained directly" << endl;
-						vhdl << tab << declare(dnameCin.str(),cSize[j]+1) << "  <= (\"0\" & "<< use(uname1.str())<<range(cSize[j]-1,0) <<") +  (\"0\" & "<< use(uname2.str())<<range(cSize[j]-1,0)<<") + "<<use("scIn")<<";"<<endl;
+						vhdl << tab << declare(dnameCin.str(),cSize[j]+1) << "  <= (\"0\" & "<< use(uname1.str())<<range(cSize[j]-1,0) <<") +  (\"0\" & "<< use(uname2.str())<<range(cSize[j]-1,0)<<") + scIn;"<<endl;
 					}
 
 #endif
@@ -504,10 +504,10 @@ extern vector<Operator*> oplist;
 				nextCycle(); //////////////////////////////////////////////////////
 
 				for (int i=1; i<=nbOfChunks-2; i++){
-					vhdl << tab << declare(join("s",i-1),2) << " <= " << " (\"0\" & "<<use("carryStringZero") << range(i-1,i-1) << ") + " 
-						  << " (\"0\" & "<<use("carryStringOne")  << range(i-1,i-1) << ") + ";
+					vhdl << tab << declare(join("s",i-1),2) << " <=  (\"0\" & carryStringZero" << range(i-1,i-1) << ") + " 
+						  << " (\"0\" & carryStringOne" << range(i-1,i-1) << ") + ";
 					if (i==1)
-						vhdl << use("sX0_Cin")<<of(cSize[0])<<";"<<endl;
+						vhdl << "sX0_Cin" << of(cSize[0])<<";"<<endl;
 					else
 						vhdl << use(join("s",i-2))<<"("<<1<<");"<<endl;
 				}
@@ -525,10 +525,10 @@ extern vector<Operator*> oplist;
 					for ( int i=1; i< nbOfChunks; i++){
 						if (i==1) 
 							vhdl << tab << declare(join("res",i),cSize[i],true) << " <= " << use(join("sX",i,"_Zero")) << range(cSize[i]-1,0) << " + " 
-									                                                 << use("sX0_Cin")<<of(cSize[0]) << ";" << endl;
+									 << "sX0_Cin" << of(cSize[0]) << ";" << endl;
 						else 
 							vhdl << tab << declare(join("res",i),cSize[i],true) << " <= " << use(join("sX",i,"_Zero")) << range(cSize[i]-1,0) << " + " 
-									                                                 << use("carrySum")<<of(i-2)<<";"<<endl;
+									 << "carrySum" << of(i-2)<<";"<<endl;
 					}
 	
 					vhdl << tab << "R <= ";
@@ -537,7 +537,7 @@ extern vector<Operator*> oplist;
 						if (i > 0) vhdl << " & ";
 					}
 			
-					vhdl << use("sX0_Cin")<<range(cSize[0]-1,0)<< ";" <<endl;
+					vhdl << "sX0_Cin" << range(cSize[0]-1,0)<< ";" <<endl;
 			}
 		}else
 			vhdl << tab << " R <= X0 + X1 + Cin;"<<endl;

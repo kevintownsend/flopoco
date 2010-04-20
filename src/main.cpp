@@ -897,7 +897,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		// 		int LSBO = atoi(argv[i++]);
 		// 		int MSBO = atoi(argv[i++]);
 		// 		char *pa=argv[i++];
-		// 		cerr << "> CoilInductance "<<" LSBI="<<LSBI<<", MSBI="<<MSBI<<",wEIn="<<wE<<",wFIn"<<wF<<", MaxMSBO="<<MaxMSBO<<", LSBO="<<LSBO<<", MSBO="<<MSBO<<" \n";
+		// 		cerr << "> CoilInductance  LSBI="<<LSBI<<", MSBI="<<MSBI<<",wEIn="<<wE<<",wFIn"<<wF<<", MaxMSBO="<<MaxMSBO<<", LSBO="<<LSBO<<", MSBO="<<MSBO<<" \n";
 		// 		op = new CoilInductance(target, LSBI, MSBI,wE,wF,MaxMSBO,LSBO,MSBO,pa);
 		// 		addOperator(op);
 		// 	}

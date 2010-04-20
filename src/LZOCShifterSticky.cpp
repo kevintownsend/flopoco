@@ -156,18 +156,18 @@ namespace flopoco{
 		} 
 
 		if((1<<wCount_)-1 > wIn_) {
-			vhdl << tab << "Count <= " << "CONV_STD_LOGIC_VECTOR("<<wIn_<<","<<wCount_<<") when "<<use("sCount")<<"=CONV_STD_LOGIC_VECTOR("<<intpow2(wCount_)-1<<","<<wCount_<<")"<<endl
-				  << tab << tab << "else "<<use("sCount")<<";"<<endl;
+			vhdl << tab << "Count <= CONV_STD_LOGIC_VECTOR("<<wIn_<<","<<wCount_<<") when sCount=CONV_STD_LOGIC_VECTOR("<<intpow2(wCount_)-1<<","<<wCount_<<")"<<endl
+				  << tab << tab << "else sCount;"<<endl;
 		}
 		else {
-			vhdl << tab << "Count <= " << use("sCount")<<";"<<endl;
+			vhdl << tab << "Count <= sCount;"<<endl;
 		}
 		if (computeSticky_){
 			outDelayMap["Sticky"] = period - stageDelay;
 			if (wOut_>=wIn)
 				vhdl << tab << "Sticky <= '0';"<<endl; 
 			else
-				vhdl << tab << "Sticky <= "<<use("sticky0")<<";"<<endl;
+				vhdl << tab << "Sticky <= sticky0;"<<endl;
 		}
 	}
 

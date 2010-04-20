@@ -75,9 +75,9 @@ namespace flopoco{
 		// Set up various architectural parameters
 		sizeAcc_ = MSBA_-LSBA_+1;	
 
-		vhdl << tab <<declare("signA") << " <= " << use("A")<<of(sizeAcc_-1)<<";"<<endl;
-		vhdl << tab <<declare("signC") << " <= " << use("C")<<of(sizeAcc_-1)<<";"<<endl;
-		vhdl << tab <<declare("AccOverflowFlag") << " <= " << use("AccOverflow")<<";"<<endl;	
+		vhdl << tab <<declare("signA") << " <= A" << of(sizeAcc_-1)<<";"<<endl;
+		vhdl << tab <<declare("signC") << " <= C" << of(sizeAcc_-1)<<";"<<endl;
+		vhdl << tab <<declare("AccOverflowFlag") << " <= AccOverflow;"<<endl;	
 
 		IntAdder *a = new IntAdder(target, sizeAcc_);
 		oplist.push_back(a);
@@ -90,11 +90,11 @@ namespace flopoco{
 	
 		syncCycleFromSignal("cpR");
 		nextCycle();
-		vhdl << tab << declare("resSign") << " <= " << use("cpR")<<of(sizeAcc_-1) << ";" << endl;
+		vhdl << tab << declare("resSign") << " <= cpR" << of(sizeAcc_-1) << ";" << endl;
 	
 		//detect Addition overflow
-		vhdl << tab << declare("signConcat",3) << " <= " << use("signA") << " & " << use("signC") << " & " << use("resSign") << ";" << endl;
-		vhdl << tab << "with " << use("signConcat") << " select " << endl;
+		vhdl << tab << declare("signConcat",3) << " <= signA & signC & resSign;" << endl;
+		vhdl << tab << "with signConcat select " << endl;
 		vhdl << tab << declare("ovf") << " <= '0' when \"000\", "<<endl;
 		vhdl << tab << "       '1' when \"001\","<<endl;
 		vhdl << tab << "       '0' when \"010\","<<endl;
@@ -105,7 +105,7 @@ namespace flopoco{
 		vhdl << tab << "       '0' when \"111\","<<endl;
 		vhdl << tab << "       '0' when others;"<<endl;
 	
-		vhdl << tab << declare("ovf_updated") << " <= " << use("ovf") << " or " << use("AccOverflow") << ";" << endl;
+		vhdl << tab << declare("ovf_updated") << " <= ovf or AccOverflow;" << endl;
 		
 		//count the number of zeros/ones in order to determine the value of the exponent
 		//Leading Zero/One counter 
@@ -137,42 +137,42 @@ namespace flopoco{
 		if (countWidth_+1 < wEOut_){
 			// this case is encountered most often.
 			// by adding expBias to expAdj, we always get a positive quantity, so no need to converte back to SM
-			vhdl << tab <<declare("expRAdjusted",wEOut_) << " <= "<< use("expBias") <<" + "<< // + sign extended expAdj
-				"(" << rangeAssign(wEOut_-1,countWidth_+1, use("expAdj")+of(countWidth_)) << " & " << use("expAdj")<<");"<<endl;
+			vhdl << tab <<declare("expRAdjusted",wEOut_) << " <= expBias + "<< // + sign extended expAdj
+				"(" << rangeAssign(wEOut_-1,countWidth_+1, use("expAdj")+of(countWidth_)) << " & expAdj);"<<endl;
 			vhdl << tab <<declare("excBits",2) << " <=\"01\";"<<endl;
 		}
 		else
 			if (countWidth_+1 == wEOut_){
-				vhdl << tab <<declare("expRAdjusted",wEOut_) <<" <= " << use("expBias") << " + " << use("expAdj") << ";"<<endl;
+				vhdl << tab <<declare("expRAdjusted",wEOut_) <<" <= expBias + expAdj;"<<endl;
 				vhdl << tab <<declare("excBits",2) << " <=\"01\";"<<endl;
 			}	
 			else
 				{
 					// case encountered when we wish to put the contents of the accumulator in a floating point number 
 					// with a very small exponent
-					vhdl << tab <<declare("expAdjustedExt",countWidth_+1)<<" <= " << "(" << rangeAssign(countWidth_, wEOut_, "'0'") << " & " << use("expBias") << ") + "<<use("expAdj")<<";"<<endl;
+					vhdl << tab <<declare("expAdjustedExt",countWidth_+1)<<" <= (" << rangeAssign(countWidth_, wEOut_, "'0'") << " & expBias) + expAdj;"<<endl;
 			
-					vhdl << tab <<declare("signExpAdjustedExt") << " <= "<< use("expAdjustedExt")<<of(countWidth_)<<";"<<endl;
-					vhdl << tab <<declare("modulusExpAdjusted",countWidth_) << "<= ("<<rangeAssign(countWidth_-1,0, use("signExpAdjustedExt"))<<" xor "<<use("expAdjustedExt")<<range(countWidth_-1,0)<<") + "<<
+					vhdl << tab <<declare("signExpAdjustedExt") << " <= expAdjustedExt" << of(countWidth_)<<";"<<endl;
+					vhdl << tab <<declare("modulusExpAdjusted",countWidth_) << "<= ("<<rangeAssign(countWidth_-1,0, use("signExpAdjustedExt"))<<" xor expAdjustedExt" << range(countWidth_-1,0)<<") + "<<
 						use("signExpAdjustedExt")<<";"<<endl;
 				
 					vhdl << tab <<declare("maxExponent",countWidth_)<<" <= CONV_STD_LOGIC_VECTOR("<<(mpz_class(1)<<wEOut_)-1<<" , "<<countWidth_<<");"<<endl;
 			
-					vhdl << tab <<declare("expOverflow")<<" <= '1' when (("<<use("modulusExpAdjusted")<< " > " << use("maxExponent") << ") and ("<<use("signExpAdjustedExt")<<"='0')) else '0';"<<endl;
-					vhdl << tab <<declare("expUnderflow")<<" <= '1' when (("<<use("modulusExpAdjusted")<< " > " << use("maxExponent") << ") and ("<<use("signExpAdjustedExt")<<"='1')) else '0';"<<endl;
+					vhdl << tab <<declare("expOverflow")<<" <= '1' when ((modulusExpAdjusted > maxExponent) and (signExpAdjustedExt='0')) else '0';"<<endl;
+					vhdl << tab <<declare("expUnderflow")<<" <= '1' when ((modulusExpAdjusted > maxExponent) and (signExpAdjustedExt='1')) else '0';"<<endl;
 			
 					declare("excBits",2);
-					vhdl << tab <<"excBits(1) <= " << use("expOverflow") << " and  not(" << use("expUnderflow")<<");"<<endl;
-					vhdl << tab <<"excBits(0) <= not("<<use("expOverflow")<<") and not("<<use("expUnderflow")<<");"<<endl;
+					vhdl << tab <<"excBits(1) <= expOverflow and  not(expUnderflow);"<<endl;
+					vhdl << tab <<"excBits(0) <= not(expOverflow) and not(expUnderflow);"<<endl;
 					
-					vhdl << tab <<declare("expRAdjusted",wEOut_) << " <= " << use("expAdjustedExt")<< range(wEOut_-1,0)<<";"<<endl;
+					vhdl << tab <<declare("expRAdjusted",wEOut_) << " <= expAdjustedExt" << range(wEOut_-1,0)<<";"<<endl;
 				}			
 	
-		vhdl << tab <<declare("excRes",2) << " <= " << use("excBits") << " when " << use("ovf_updated")<<"='0' else \"10\";"<<endl;
+		vhdl << tab <<declare("excRes",2) << " <= excBits when ovf_updated='0' else \"10\";"<<endl;
 
 		//c2 of the fraction
 		//	nextCycle();
-		vhdl << tab << declare("notResFrac",wFOut_+1) << " <= not("<<use("resFrac")<<");"<<endl;
+		vhdl << tab << declare("notResFrac",wFOut_+1) << " <= not(resFrac);"<<endl;
 
 		//a possible carry propagation
 		IntAdder *b = new IntAdder(target,wFOut_ + 1);
@@ -186,9 +186,9 @@ namespace flopoco{
 	
 		syncCycleFromSignal("postResFrac");		
 	
-		vhdl << tab << declare("resultFraction",wFOut_+1) << " <= "<<use("resFrac") << " when ("<<use("resSign")<<"='0') else "<<use("postResFrac")<<";"<<endl;
+		vhdl << tab << declare("resultFraction",wFOut_+1) << " <= resFrac when (resSign='0') else postResFrac;"<<endl;
 	
-		vhdl << tab << "R <= "<<use("excRes") << " & " <<use("resSign")<<" & "<< use("expRAdjusted")<<range(wEOut_-1,0)<<" & "<<use("resultFraction") <<range(wFOut_-1,0) <<";"<<endl;
+		vhdl << tab << "R <= excRes & resSign & expRAdjusted" << range(wEOut_-1,0)<<" & resultFraction" << range(wFOut_-1,0) <<";"<<endl;
 	}
 
 	LongAcc2FP::~LongAcc2FP() {

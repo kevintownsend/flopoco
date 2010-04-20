@@ -63,7 +63,7 @@ namespace flopoco{
 			if(s->type() == Signal::out) 
 				outPortMap (op, s->getName(), s->getName());
 			if(s->type() == Signal::in) {
-				declare(s->getName(), s->width());
+				declare(s->getName(), s->width(), s->isBus());
 				inPortMap (op, s->getName(), s->getName());
 			}
 		}
@@ -164,8 +164,8 @@ namespace flopoco{
 			Signal* s = inputSignalVector[i];
                         vhdl << tab << tab << tab << "read(inline ,V_"<< s->getName() << ");" << endl;
                         vhdl << tab << tab << tab << "read(inline,tmpChar);" << endl; // we consume the character between each inputs
-			if (s->width() > 1) vhdl << tab << tab << tab << s->getName() << " <= " << "to_stdlogicvector(V_" << s->getName() << ");" << endl;
-			else vhdl << tab << tab << tab << s->getName() << " <= " << "to_stdlogicvector(V_" << s->getName() << ")(0);" << endl;
+			if (s->width() > 1) vhdl << tab << tab << tab << s->getName() << " <= to_stdlogicvector(V_" << s->getName() << ");" << endl;
+			else vhdl << tab << tab << tab << s->getName() << " <= to_stdlogicvector(V_" << s->getName() << ")(0);" << endl;
                         // adding the IO to IOorder
                         IOorderInput.push_back(s->getName());
 		}
@@ -196,7 +196,7 @@ namespace flopoco{
                         if (s->isFP()) //cerr << "managing fp equality is not implemented yet, see line ~ 197 TestBench.cpp  . "<< endl;
                         vhdl << tab << tab << tab << "assert false or fp_equal(fp"<< s->width() << "'(" << s->getName() << ") ,to_stdlogicvector(V_" <<  s->getName() << ")) report(\"Incorrect output for R, expected \" & str(to_stdlogicvector(V_R)) & \" and it outputs \" & str(R)) &  \"|| line : \" & integer'image(counter) & \" of input file \" ;"<< endl;
 			else if (s->isIEEE()) vhdl << tab << tab << tab << "assert false or fp_equal_ieee(" << s->getName() << " ,to_stdlogicvector(V_" <<  s->getName() << "),"<<s->wE()<<" , "<<s->wF()<<") report(\"Incorrect output for R, expected \" & str(to_stdlogicvector(V_R)) & \" and it outputs \" & str(R)) &  \"|| line : \" & integer'image(counter) & \" of input file \" ;"<< endl;
-                        else vhdl << tab << tab << tab << "assert false or (" << s->getName() << "= to_stdlogicvector(V_" << s->getName() << "))" << "report(\"Incorrect output for R, expected \" & str(to_stdlogicvector(V_" << s->getName() << ")) & \" and it outputs \" & str(" << s->getName() <<")) &  \"|| line : \" & integer'image(counter) & \" of input file \" ;"<< endl;
+                        else vhdl << tab << tab << tab << "assert false or (" << s->getName() << "= to_stdlogicvector(V_" << s->getName() << "))report(\"Incorrect output for R, expected \" & str(to_stdlogicvector(V_" << s->getName() << ")) & \" and it outputs \" & str(" << s->getName() <<")) &  \"|| line : \" & integer'image(counter) & \" of input file \" ;"<< endl;
                         //else cerr << " Le test à partir d'un fichier n'est pas encore implémenté pour les vecteurs non IEEE" << endl;
 
                         /* adding the IO to the IOorder list */
@@ -450,7 +450,7 @@ namespace flopoco{
 			tab << "end;\n\n\n" <<
                         
 			tab << "-- FP IEEE compare function (found vs. real)\n" <<
-			tab << "function fp_equal_ieee" << "(a : std_logic_vector;" 
+			tab << "function fp_equal_ieee(a : std_logic_vector;" 
                                                         << " b : std_logic_vector;" 
                                                         << " we : integer;"  
                                                         << " wf : integer) return boolean is\n" 

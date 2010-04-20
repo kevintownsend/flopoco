@@ -142,14 +142,14 @@ namespace flopoco{
 	
 			//Code for creating the exponent
 			if(Signed!=0)
-				vhdl << tab << declare("MSB2Signal",wE)<<"<="<<"CONV_STD_LOGIC_VECTOR("<<MSB-2<<","<<wE<<");"<<endl;
+				vhdl << tab << declare("MSB2Signal",wE)<<"<=CONV_STD_LOGIC_VECTOR("<<MSB-2<<","<<wE<<");"<<endl;
 			else
-				vhdl << tab << declare("MSB2Signal",wE)<<"<="<<"CONV_STD_LOGIC_VECTOR("<<MSB-1<<","<<wE<<");"<<endl;
+				vhdl << tab << declare("MSB2Signal",wE)<<"<=CONV_STD_LOGIC_VECTOR("<<MSB-1<<","<<wE<<");"<<endl;
 	
 			if(Signed!=0)
-				vhdl << tab << declare("zeroPadding4Exponent",wE- intlog2(inputWidth-1),true)<<"<="<<"CONV_STD_LOGIC_VECTOR(0,"<<wE- intlog2(inputWidth-1)<<");"<<endl;
+				vhdl << tab << declare("zeroPadding4Exponent",wE- intlog2(inputWidth-1),true)<<"<=CONV_STD_LOGIC_VECTOR(0,"<<wE- intlog2(inputWidth-1)<<");"<<endl;
 			else
-				vhdl << tab << declare("zeroPadding4Exponent",wE- intlog2(inputWidth),true)<<"<="<<"CONV_STD_LOGIC_VECTOR(0,"<<wE- intlog2(inputWidth)<<");"<<endl;
+				vhdl << tab << declare("zeroPadding4Exponent",wE- intlog2(inputWidth),true)<<"<=CONV_STD_LOGIC_VECTOR(0,"<<wE- intlog2(inputWidth)<<");"<<endl;
 	
 			vhdl << tab << declare("valueExponent",wE)<<"<= not (zeroPadding4Exponent & temporalExponent );"<<endl;
 	
@@ -165,8 +165,8 @@ namespace flopoco{
 			syncCycleFromSignal("partialConvertedExponent");
 	
 			vhdl << tab << declare("biassOfOnes",wE-1)<<"<=CONV_STD_LOGIC_VECTOR("<<pow(double(2),wE)-1<<","<<wE-1<<");"<<endl;
-			vhdl << tab << declare("biassSignal",wE)<<"<="<<"'0' & biassOfOnes;"<<endl;
-			vhdl << tab << declare("biassSignalBit",wE+1)<<"<="<<"'0' & biassSignal;"<<endl;
+			vhdl << tab << declare("biassSignal",wE)<<"<='0' & biassOfOnes;"<<endl;
+			vhdl << tab << declare("biassSignalBit",wE+1)<<"<='0' & biassSignal;"<<endl;
 			vhdl << tab << declare("partialConvertedExponentBit",wE+1)<<"<= '0' & partialConvertedExponent;"<<endl;
 			vhdl << tab << declare("sign4OU",1)<<"<=partialConvertedExponent"<<of(wE-1)<<";"<<endl;
 	
@@ -191,7 +191,7 @@ namespace flopoco{
 			setCycleFromSignal("passedInput");
 	
 			if(Signed!=0){
-				vhdl << tab << declare("minusOne4ZD",MSB -LSB)<<"<="<<"CONV_STD_LOGIC_VECTOR("<<-1<<","<<MSB-LSB<<");"<<endl;
+				vhdl << tab << declare("minusOne4ZD",MSB -LSB)<<"<=CONV_STD_LOGIC_VECTOR("<<-1<<","<<MSB-LSB<<");"<<endl;
 	
 				zeroD = new IntAdder(target, MSB-LSB );
 				zeroD->changeName(getName()+"zeroD");
@@ -207,7 +207,7 @@ namespace flopoco{
 				vhdl << tab << declare("zeroInput",1)<<"<= zeroDS"<<of(MSB-LSB-1)<<" and not(signSignal);"<<endl;
 			}else{
 
-				vhdl << tab << declare("minusOne4ZD",MSB -LSB+1)<<"<="<<"CONV_STD_LOGIC_VECTOR("<<-1<<","<<MSB-LSB+1<<");"<<endl;
+				vhdl << tab << declare("minusOne4ZD",MSB -LSB+1)<<"<=CONV_STD_LOGIC_VECTOR("<<-1<<","<<MSB-LSB+1<<");"<<endl;
 				vhdl << tab << declare("passedInputBit",MSB-LSB+1)<<"<= '0' & passedInput;"<<endl;
 				zeroD = new IntAdder(target, MSB-LSB +1);
 				zeroD->changeName(getName()+"zeroD");
@@ -262,7 +262,7 @@ namespace flopoco{
 			int sizeOfRemainder=maximalOutputValue-sizeFractionPlusOne-1;
 	
 			setCycleFromSignal("tempFractionResult");
-			vhdl << tab << declare("minusOne",sizeOfRemainder)<<"<="<<"CONV_STD_LOGIC_VECTOR("<<-1<<","<<sizeOfRemainder<<");"<<endl;
+			vhdl << tab << declare("minusOne",sizeOfRemainder)<<"<=CONV_STD_LOGIC_VECTOR("<<-1<<","<<sizeOfRemainder<<");"<<endl;
 			vhdl << tab << declare("fractionRemainder",sizeOfRemainder)<<"<= tempFractionResult"<<range(sizeOfRemainder-1,0)<<";"<<endl;
 			oneSubstracter = new IntAdder(target,sizeOfRemainder);
 			oneSubstracter->changeName(getName()+"_oneSubstracter");
@@ -275,7 +275,7 @@ namespace flopoco{
 	
 			syncCycleFromSignal("zeroFractionResult");
 	
-			vhdl << tab << declare("zeroRemainder",1)<<"<= not( "<<"not (tempFractionResult"<<of(sizeOfRemainder-1)<<") and zeroFractionResult"<<of(sizeOfRemainder-1)<<");"<<endl;
+			vhdl << tab << declare("zeroRemainder",1)<<"<= not( not (tempFractionResult"<<of(sizeOfRemainder-1)<<") and zeroFractionResult"<<of(sizeOfRemainder-1)<<");"<<endl;
 	
 			// signals for Muxes
 	
@@ -288,7 +288,7 @@ namespace flopoco{
 			     << tab << declare("outputOfMux2",1)<<" <= outputOfMux3 when '0', '1' when others;"<<endl;
 			vhdl << tab << "with firstBitofRest select "<<endl
 			     << tab << declare("outputOfMux1",1)<<" <= outputOfMux2 when '1', '0' when others;"<<endl;
-			vhdl << tab << declare("possibleCorrector4Rounding",wF+wE+1)<<"<="<<"CONV_STD_LOGIC_VECTOR(0,"<<wE<<") & correctingExponent & CONV_STD_LOGIC_VECTOR(0,"<<wF<<");"<<endl;
+			vhdl << tab << declare("possibleCorrector4Rounding",wF+wE+1)<<"<=CONV_STD_LOGIC_VECTOR(0,"<<wE<<") & correctingExponent & CONV_STD_LOGIC_VECTOR(0,"<<wF<<");"<<endl;
 			vhdl << tab << declare("concatenationForRounding",wE+wF+1)<<"<= '0' & convertedExponent & fractionConverted;"<<endl;
 	
 			vhdl << tab << declare("testC",wE+wF+1)<<"<= concatenationForRounding;"<<endl;
@@ -330,7 +330,7 @@ namespace flopoco{
 				//code for zero detector of the input
 
 				if(Signed!=0){
-					vhdl << tab << declare("minusOne4ZD",MSB -LSB)<<"<="<<"CONV_STD_LOGIC_VECTOR("<<-1<<","<<MSB-LSB<<");"<<endl;
+					vhdl << tab << declare("minusOne4ZD",MSB -LSB)<<"<=CONV_STD_LOGIC_VECTOR("<<-1<<","<<MSB-LSB<<");"<<endl;
 	
 					zeroD = new IntAdder(target, MSB-LSB );
 					zeroD->changeName(getName()+"zeroD");
@@ -345,7 +345,7 @@ namespace flopoco{
 	
 					vhdl << tab << declare("zeroInput",1)<<"<= zeroDS"<<of(MSB-LSB-1)<<" and not (signSignal);"<<endl;
 				}else{
-					vhdl << tab << declare("minusOne4ZD",MSB -LSB+1)<<"<="<<"CONV_STD_LOGIC_VECTOR("<<-1<<","<<MSB-LSB+1<<");"<<endl;
+					vhdl << tab << declare("minusOne4ZD",MSB -LSB+1)<<"<=CONV_STD_LOGIC_VECTOR("<<-1<<","<<MSB-LSB+1<<");"<<endl;
 					vhdl << tab << declare("passedInputBit",MSB-LSB+1)<<"<= '0' & passedInput;"<<endl;
 					zeroD = new IntAdder(target, MSB-LSB +1);
 					zeroD->changeName(getName()+"zeroD");
@@ -398,7 +398,7 @@ namespace flopoco{
 				if(Signed!=0){
 					vhdl << tab << declare("tfr",sizeFractionPlusOne) <<"<= temporalFraction"<<range(maximalOutputValue-1,maximalOutputValue-sizeFractionPlusOne)<<";"<<endl;
 		
-					vhdl << tab << declare("sign2vector",sizeFractionPlusOne)<<"<="<<"(others=>signSignal);"<<endl;
+					vhdl << tab << declare("sign2vector",sizeFractionPlusOne)<<"<=(others=>signSignal);"<<endl;
 					vhdl << tab << declare("tempConvert",sizeFractionPlusOne)<<"<=sign2vector xor tfr;"<<endl;
 					vhdl << tab << declare("tempPaddingAddSign",sizeFractionPlusOne)<<"<=(others=>'0');"<<endl;
 					vhdl << tab << declare("tempAddSign",sizeFractionPlusOne+1)<<"<=tempPaddingAddSign & signSignal;"<<endl;
@@ -449,7 +449,7 @@ namespace flopoco{
 				syncCycleFromSignal("partialConvertedExponent");
 	
 				vhdl << tab << declare("biassOfOnes",wE-1)<<"<=CONV_STD_LOGIC_VECTOR("<<pow(double(2),wE)-1<<","<<wE-1<<");"<<endl;
-				vhdl << tab << declare("biassSignal",wE)<<"<="<<"'0' & biassOfOnes;"<<endl;
+				vhdl << tab << declare("biassSignal",wE)<<"<='0' & biassOfOnes;"<<endl;
 				vhdl << tab << declare("biassSignalBit",wE+1)<<"<='0' & biassSignal;"<<endl;
 				vhdl << tab << declare("zeroBitExponent",1)<<"<='0';"<<endl;
 				vhdl << tab << declare("partialConvertedExponentBit",wE+1)<<"<= '0' & partialConvertedExponent;"<<endl;

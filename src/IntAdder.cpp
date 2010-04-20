@@ -153,14 +153,14 @@ extern vector<Operator*> oplist;
 				
 				/* The implementation */
 				for (int i=0; i < k; i++){
-					vhdl << tab << declare( join("x",i), cSize[i],true) << " <= " << use("X") << range(cIndex[i]-1,(i>0?cIndex[i-1]:0)) << ";" << endl;
-					vhdl << tab << declare( join("y",i), cSize[i],true) << " <= " << use("Y") << range(cIndex[i]-1,(i>0?cIndex[i-1]:0)) << ";" << endl;
+					vhdl << tab << declare( join("x",i), cSize[i],true) << " <= X" << range(cIndex[i]-1,(i>0?cIndex[i-1]:0)) << ";" << endl;
+					vhdl << tab << declare( join("y",i), cSize[i],true) << " <= Y" << range(cIndex[i]-1,(i>0?cIndex[i-1]:0)) << ";" << endl;
 				}
 			
 				for (int i=0; i < k; i++){
-					vhdl << tab << declare(join("sum",i),cSize[i]+1,true) << " <= " << "( \"0\" & "<< use(join("x",i)) << ") + " << "( \"0\" & "<< use(join("y",i)) << ")  + ";
-					if (i==0) vhdl << use("Cin");
-					else      vhdl << use(join("sum",i-1))<<of(cSize[i-1]);
+					vhdl << tab << declare(join("sum",i),cSize[i]+1,true) << " <= ( \"0\" & "<< join("x",i) << ") + ( \"0\" & "<< join("y",i) << ")  + ";
+					if (i==0) vhdl << "Cin";
+					else      vhdl << join("sum",i-1)<<of(cSize[i-1]);
 					vhdl << ";"	<< endl;
 					if (i < k-1)
 						nextCycle(); //////////////////////////////////////////
@@ -168,9 +168,9 @@ extern vector<Operator*> oplist;
 	
 				vhdl << tab << "R <= ";
 				for (int i=k-1; i >= 1; i--){
-					vhdl << use(join("sum",i))<<range(cSize[i]-1,0)<< " & ";
+					vhdl << join("sum",i)<<range(cSize[i]-1,0)<< " & ";
 				}
-				vhdl << use("sum0")<<range(cSize[0]-1,0)<<";"<<endl;
+				vhdl << "sum0" << range(cSize[0]-1,0)<<";"<<endl;
 				/* the output is asociated with the combinatorial delay caused 
 				by the most-significant bits addition */
 				outDelayMap["R"] = target->adderDelay(cSize[k-1]) + (getCurrentCycle()>0?0:getMaxInputDelays(inputDelays)); 
@@ -242,30 +242,30 @@ extern vector<Operator*> oplist;
 				////////////////////////////////////////////////////////////////////////
 		
 				for (int i=0; i < k; i++){
-					vhdl << tab << declare (join("s_sum_l",0,"_idx",i), cSize[i]+1, true) << " <= " << "( \"0\" & " << use("X") << range(cIndex[i]-1, (i>0?cIndex[i-1]:0)) << ") + "
-						  << "( \"0\" & " << use("Y") << range(cIndex[i]-1, (i>0?cIndex[i-1]:0)) << ")" ;
-					if (i==0) vhdl << " + " << use("Cin");
+					vhdl << tab << declare (join("s_sum_l",0,"_idx",i), cSize[i]+1, true) << " <= ( \"0\" & X" << range(cIndex[i]-1, (i>0?cIndex[i-1]:0)) << ") + "
+						  << "( \"0\" & Y" << range(cIndex[i]-1, (i>0?cIndex[i-1]:0)) << ")" ;
+					if (i==0) vhdl << " + Cin";
 					vhdl << ";" << endl;
 				}
 				for (int i=0; i < k; i++){
-					vhdl << tab << declare (join("sum_l",0,"_idx",i), cSize[i], true) << " <= " << use(join("s_sum_l",0,"_idx",i))<<range(cSize[i]-1,0) << ";" << endl;
-					vhdl << tab << declare (join("c_l",0,"_idx",i), 1, true) << " <= " << use(join("s_sum_l",0,"_idx",i))<<range(cSize[i],cSize[i]) << ";" << endl;
+					vhdl << tab << declare (join("sum_l",0,"_idx",i), cSize[i], true) << " <= " << join("s_sum_l",0,"_idx",i)<<range(cSize[i]-1,0) << ";" << endl;
+					vhdl << tab << declare (join("c_l",0,"_idx",i), 1, true) << " <= " << join("s_sum_l",0,"_idx",i)<<range(cSize[i],cSize[i]) << ";" << endl;
 				}			
 		
 				for (int i=1; i <= k-1 ; i++){
 					nextCycle(); ///////////////////////////////////////////////////////
-					vhdl << tab << declare(join("sum_l",i,"_idx",i), cSize[i]+1, true) << " <= " << "( \"0\" & " << use(join("sum_l",0,"_idx",i))<< ") + " 
-					                                                                             << use(join("c_l",0,"_idx",i-1))<<range(0,0) ;
+					vhdl << tab << declare(join("sum_l",i,"_idx",i), cSize[i]+1, true) << " <= ( \"0\" & " << join("sum_l",0,"_idx",i)<< ") + " 
+					                                                                             << join("c_l",0,"_idx",i-1)<<range(0,0) ;
 					if (i>1) 
-						vhdl << " + " << use(join("sum_l",i-1,"_idx",i-1))<<of(cSize[i-1]);
+						vhdl << " + " << join("sum_l",i-1,"_idx",i-1)<<of(cSize[i-1]);
 					vhdl<<";"<<endl;
 				}
 		
 				vhdl << tab << "R <= ";
 				for (int i=k-1; i >= 1; i--){
-					vhdl << use(join("sum_l",i,"_idx",i))<<range(cSize[i]-1,0)<< " & ";
+					vhdl << join("sum_l",i,"_idx",i)<<range(cSize[i]-1,0)<< " & ";
 				}
-				vhdl << use("sum_l0_idx0")<<range(cSize[0]-1,0)<<";"<<endl;
+				vhdl << "sum_l0_idx0" << range(cSize[0]-1,0)<<";"<<endl;
 
 				outDelayMap["R"] = target->adderDelay(cSize[k-1]); 
 			
@@ -300,9 +300,9 @@ extern vector<Operator*> oplist;
 							high+=cSize[k];
 						for (int k=0;k<=j-1;k++)
 							low+=cSize[k];
-						vhdl << tab << declare (name.str(),cSize[j]+1) << " <= " << " \"0\" & "<<(i==0?"X":"Y")<<range(high-1,low)<<";"<<endl;
+						vhdl << tab << declare (name.str(),cSize[j]+1) << " <=  \"0\" & "<<(i==0?"X":"Y")<<range(high-1,low)<<";"<<endl;
 					}
-				vhdl << tab << declare("scIn",1) << " <= " << "Cin;"<<endl;
+				vhdl << tab << declare("scIn",1) << " <= Cin;"<<endl;
 			
 //				if (shortLatencyInputRegister ==1)
 //					nextCycle();///////////////////
@@ -326,8 +326,8 @@ extern vector<Operator*> oplist;
 					ostringstream a;
 					a.str("");
 
-					vhdl << tab << declare( uname1.str()+"ext", cSize[j]+1 ) << " <= " <<  "\"0\" & "  <<  use(uname1.str()) << range(cSize[j]-1,0) << ";" << endl;
-					vhdl << tab << declare( uname2.str()+"ext", cSize[j]+1 ) << " <= " <<  "\"0\" & "  <<  use(uname2.str()) << range(cSize[j]-1,0) << ";" << endl;
+					vhdl << tab << declare( uname1.str()+"ext", cSize[j]+1 ) << " <= \"0\" & "  <<  uname1.str() << range(cSize[j]-1,0) << ";" << endl;
+					vhdl << tab << declare( uname2.str()+"ext", cSize[j]+1 ) << " <= \"0\" & "  <<  uname2.str() << range(cSize[j]-1,0) << ";" << endl;
 			
 					if (j>0){ //for all chunks greater than zero we perform this additions
 							bool found = false;
@@ -361,7 +361,7 @@ extern vector<Operator*> oplist;
 //						}
 					}else{
 						vhdl << tab << "-- the carry resulting from the addition of the chunk + Cin is obtained directly" << endl;
-						vhdl << tab << declare(dnameCin.str(),cSize[j]+1) << "  <= (\"0\" & "<< use(uname1.str())<<range(cSize[j]-1,0) <<") +  (\"0\" & "<< use(uname2.str())<<range(cSize[j]-1,0)<<") + "<<use("scIn")<<";"<<endl;
+						vhdl << tab << declare(dnameCin.str(),cSize[j]+1) << "  <= (\"0\" & "<< uname1.str()<<range(cSize[j]-1,0) <<") +  (\"0\" & "<< uname2.str()<<range(cSize[j]-1,0)<<") + scIn;"<<endl;
 					}
 					
 					if (pipe)
@@ -371,12 +371,12 @@ extern vector<Operator*> oplist;
 
 #else					
 					if (j>0){ //for all chunks greater than zero we perform this additions
-						vhdl << tab << declare(dnameZero.str(),cSize[j]+1) << " <= (\"0\" & "<< use(uname1.str())<<range(cSize[j]-1,0) <<") +  (\"0\" & "<< use(uname2.str())<<range(cSize[j]-1,0)<<");"<<endl;
+						vhdl << tab << declare(dnameZero.str(),cSize[j]+1) << " <= (\"0\" & "<< uname1.str()<<range(cSize[j]-1,0) <<") +  (\"0\" & "<< uname2.str()<<range(cSize[j]-1,0)<<");"<<endl;
 						if (j<k-1)
-						vhdl << tab << declare(dnameOne.str(),cSize[j]+1) << "  <= (\"0\" & "<< use(uname1.str())<<range(cSize[j]-1,0) <<") +  (\"0\" & "<< use(uname2.str())<<range(cSize[j]-1,0)<<") + '1';"<<endl;
+						vhdl << tab << declare(dnameOne.str(),cSize[j]+1) << "  <= (\"0\" & "<< uname1.str()<<range(cSize[j]-1,0) <<") +  (\"0\" & "<< uname2.str()<<range(cSize[j]-1,0)<<") + '1';"<<endl;
 					}else{
 						vhdl << tab << "-- the carry resulting from the addition of the chunk + Cin is obtained directly" << endl;
-						vhdl << tab << declare(dnameCin.str(),cSize[j]+1) << "  <= (\"0\" & "<< use(uname1.str())<<range(cSize[j]-1,0) <<") +  (\"0\" & "<< use(uname2.str())<<range(cSize[j]-1,0)<<") + "<<use("scIn")<<";"<<endl;
+						vhdl << tab << declare(dnameCin.str(),cSize[j]+1) << "  <= (\"0\" & "<< uname1.str()<<range(cSize[j]-1,0) <<") +  (\"0\" & "<< uname2.str()<<range(cSize[j]-1,0)<<") + scIn;"<<endl;
 					}
 #endif
 				}
@@ -388,7 +388,7 @@ extern vector<Operator*> oplist;
 						ostringstream dnameZero;
 						if (i%2==0){
 							dnameZero << "sX"<<(i/2)+1<<"_0_l"<<l<<"_Zero";
-							vhdl << " " << use(dnameZero.str()) <<"(" << cSize[(i/2)+1] << ")";
+							vhdl << " " << dnameZero.str() <<"(" << cSize[(i/2)+1] << ")";
 						}else
 							vhdl << " \"0\" ";
 						if (i>0) vhdl << " & ";
@@ -399,7 +399,7 @@ extern vector<Operator*> oplist;
 						ostringstream dnameOne;
 						if (i%2==0){
 							dnameOne << "sX"<<(i/2)+1<<"_0_l"<<l<<"_One";
-							vhdl << " " << use(dnameOne.str()) <<"(" << cSize[(i/2)+1] << ") ";
+							vhdl << " " << dnameOne.str() <<"(" << cSize[(i/2)+1] << ") ";
 						}else
 							vhdl << " \"1\" ";
 						if (i>0) vhdl << " & ";
@@ -412,7 +412,7 @@ extern vector<Operator*> oplist;
 					vhdl << tab << "--perform the short carry additions" << endl; //TODO: PIPELINE ADDITION
 					ostringstream unameCin;
 					unameCin  << "sX"<<0<<"_0_l"<<l<<"_Cin";
-					vhdl << tab << declare("rawCarrySum",2*(k-2)) << " <= " << use("carryStringOne") << " + " << use("carryStringZero") << " + " << use(unameCin.str()) << "(" << cSize[0] << ")" << " ;" << endl;
+					vhdl << tab << declare("rawCarrySum",2*(k-2)) << " <= carryStringOne + carryStringZero + " << unameCin.str() << "(" << cSize[0] << ") ;" << endl;
 
 					if (shortLatencyVersion > 2)
 						nextCycle();/////////////////////
@@ -424,20 +424,20 @@ extern vector<Operator*> oplist;
 					unameZero << "sX"<<i<<"_0_l"<<l<<"_Zero";
 					unameOne  << "sX"<<i<<"_0_l"<<l<<"_One";
 					unameCin  << "sX"<<0<<"_0_l"<<l<<"_Cin";
-					if (i==0) vhdl << tab << declare(join("res",i),cSize[i],true) << " <= " << use(unameCin.str())<< range(cSize[0]-1,0) <<  ";" << endl;
+					if (i==0) vhdl << tab << declare(join("res",i),cSize[i],true) << " <= " << unameCin.str()<< range(cSize[0]-1,0) <<  ";" << endl;
 					else {
-//						if (i==1) vhdl << tab << declare(join("res",i),cSize[i],true) << " <= " << use(unameZero.str()) << range(cSize[i]-1,0) << " + " << use(unameCin.str()) << "(" << cSize[0] << ")" << ";"<<endl;
-//						else      vhdl << tab << declare(join("res",i),cSize[i],true) << " <= " << use(unameZero.str()) << range(cSize[i]-1,0) << " + not(" << use("rawCarrySum")<<"("<<2*(i-2)+1<<"));"<<endl;
-						if (i==1) vhdl << tab << declare(join("res",i),cSize[i],true) << " <= " << use(unameZero.str()) << range(cSize[i]-1,0) << " when " << use(unameCin.str()) << "(" << cSize[0] << ")='0'" 
-						                                                              << " else " << use(unameOne.str()) << range(cSize[i]-1,0) << ";"<<endl;
-						else      vhdl << tab << declare(join("res",i),cSize[i],true) << " <= " << use(unameZero.str()) << range(cSize[i]-1,0) << " when " << use("rawCarrySum")<<"("<<2*(i-2)+1<<")='1'"
-						                                                              << " else " << use(unameOne.str()) << range(cSize[i]-1,0) << ";"<<endl;
+//						if (i==1) vhdl << tab << declare(join("res",i),cSize[i],true) << " <= " << unameZero.str() << range(cSize[i]-1,0) << " + " << unameCin.str() << "(" << cSize[0] << ");"<<endl;
+//						else      vhdl << tab << declare(join("res",i),cSize[i],true) << " <= " << unameZero.str() << range(cSize[i]-1,0) << " + not(rawCarrySum("<<2*(i-2)+1<<"));"<<endl;
+						if (i==1) vhdl << tab << declare(join("res",i),cSize[i],true) << " <= " << unameZero.str() << range(cSize[i]-1,0) << " when " << unameCin.str() << "(" << cSize[0] << ")='0'" 
+						                                                              << " else " << unameOne.str() << range(cSize[i]-1,0) << ";"<<endl;
+						else      vhdl << tab << declare(join("res",i),cSize[i],true) << " <= " << unameZero.str() << range(cSize[i]-1,0) << " when rawCarrySum("<<2*(i-2)+1<<")='1'"
+						                                                              << " else " << unameOne.str() << range(cSize[i]-1,0) << ";"<<endl;
 					}
 				}
 			
 				vhdl << tab << "R <= ";
 				for (int i=k-1; i>=0; i--){
-					vhdl << use(join("res",i));
+					vhdl << join("res",i);
 					if (i > 0) vhdl << " & ";
 				}
 				vhdl << ";" <<endl;			

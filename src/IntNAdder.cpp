@@ -144,7 +144,7 @@ namespace flopoco{
 						for (int k=0;k<=j-1;k++)
 							low+=cSize[k];
 						if(high-1<=wIn)
-							vhdl << tab << declare (name.str(),cSize[j]+1) << " <= " << " \"0\" & X"<<i<<range(high-1,low)<<";"<<endl;
+							vhdl << tab << declare (name.str(),cSize[j]+1) << " <=  \"0\" & X"<<i<<range(high-1,low)<<";"<<endl;
 						else
 							{
 								if(low<wIn)
@@ -206,7 +206,7 @@ namespace flopoco{
 						dname << "sX"<<j<<"_0_l"<<currentLevel;
 						uname1 << "sX"<<j<<"_0_l"<<currentLevel-1;
 						uname2 << "sX"<<j-1<<"_0_l"<<currentLevel-1;
-						vhdl << tab << declare(dname.str(), cSize[j]+1) << " <= ( \"0\" & " << use(uname1.str())<<range(cSize[j]-1,0) << ") + " << use(uname2.str()) << "(" << cSize[j-1] << ")" << ";" <<endl;
+						vhdl << tab << declare(dname.str(), cSize[j]+1) << " <= ( \"0\" & " << use(uname1.str())<<range(cSize[j]-1,0) << ") + " << use(uname2.str()) << "(" << cSize[j-1] << ");" <<endl;
 					}
 					currentLevel++;
 					if (i<nbOfChunks) nextCycle();
@@ -243,7 +243,7 @@ namespace flopoco{
 								high+=cSize[k];
 							for (int k=0;k<=j-1;k++)
 								low+=cSize[k];
-							vhdl << tab << declare (name.str(),cSize[j]+1) << " <= " << " \"0\" & X"<<i<<range(high-1,low)<<";"<<endl;
+							vhdl << tab << declare (name.str(),cSize[j]+1) << " <=  \"0\" & X"<<i<<range(high-1,low)<<";"<<endl;
 						}
 	
 					////////////////////////////////////////////////
@@ -255,7 +255,7 @@ namespace flopoco{
 							uname1 << "sX"<<j<<"_0_l"<<currentLevel-1;
 							uname2 << "sX"<<j-1<<"_0_l"<<currentLevel-1;
 							if (j>0)
-								vhdl << tab << declare(dname.str(), cSize[j]+1) << " <= ( \"0\" & " << use(uname1.str())<<range(cSize[j]-1,0) << ") + " << use(uname2.str()) << "(" << cSize[j-1] << ")" << ";" <<endl;
+								vhdl << tab << declare(dname.str(), cSize[j]+1) << " <= ( \"0\" & " << use(uname1.str())<<range(cSize[j]-1,0) << ") + " << use(uname2.str()) << "(" << cSize[j-1] << ");" <<endl;
 							else
 								vhdl << tab << declare(dname.str(), cSize[j]+1) << " <= ( \"0\" & " << use(uname1.str())<<range(cSize[j]-1,0) << ") + Cin ;" <<endl;
 						}

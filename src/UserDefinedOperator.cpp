@@ -93,9 +93,9 @@ UserDefinedOperator::UserDefinedOperator(Target* target, int param0_, int param1
   /* the use(variable) is a deprecated function, that can still be encoutered 
   in old Flopoco's operator, simply use vhdl << "S" (flopoco will generate the correct delayed value as soon as a previous declare("S") exists */
   // we first put the most significant bit of the result into R
-  vhdl << "S <= "<< "(R" << of(param0 +1) << " & ";
+  vhdl << "S <= (R" << of(param0 +1) << " & ";
   // and then we place the last param1 bits
-  vhdl << use("R") << range(param1 - 1,0) << ");" << endl;
+  vhdl << "R" << range(param1 - 1,0) << ");" << endl;
 };
 
 

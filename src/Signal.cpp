@@ -156,7 +156,7 @@ namespace flopoco{
 
 		/* Put apostrophe / quot */
 		if (!quot) return r;
-		if (width() > 1)
+		if ((width() > 1) || ( isBus() ))
 			return "\"" + r + "\"";
 		else
 			return "'" + r + "'";

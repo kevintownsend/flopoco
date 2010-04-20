@@ -83,7 +83,7 @@ namespace flopoco{
 			
 				syncCycleFromSignal("myR");
 			
-				vhdl << tab << "R <= " << use("myR") << ";" << endl;
+				vhdl << tab << "R <= myR;" << endl;
 				processing = false;
 			}else{
 				int a[16];    //possibly in the future LUTS may have up to 16 inputs
