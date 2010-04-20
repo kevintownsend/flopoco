@@ -89,18 +89,18 @@ namespace flopoco{
 			nextLevelName << "level"<<currentLevel+1;
 			if (direction==Right){
 				vhdl << tab << declare(nextLevelName.str(),wIn+intpow2(currentLevel+1)-1 ) 
-					  <<"<=  ("<<intpow2(currentLevel)-1 <<" downto 0 => '0') & "<<use(currentLevelName.str())<<" when "<<use("ps");
+					  <<"<=  ("<<intpow2(currentLevel)-1 <<" downto 0 => '0') & "<<currentLevelName.str()<<" when ps";
 				if (wShiftIn_ > 1) 
 					vhdl << "(" << currentLevel << ")";
 				vhdl << " = '1' else "
-					  << tab << use(currentLevelName.str()) <<" & ("<<intpow2(currentLevel)-1<<" downto 0 => '0');"<<endl;
+					  << tab << currentLevelName.str() <<" & ("<<intpow2(currentLevel)-1<<" downto 0 => '0');"<<endl;
 			}else{
 				vhdl << tab << declare(nextLevelName.str(),wIn+intpow2(currentLevel+1)-1 )
-					  << "<= " << use(currentLevelName.str()) << " & ("<<intpow2(currentLevel)-1 <<" downto 0 => '0') when "<<use("ps");
+					  << "<= " << currentLevelName.str() << " & ("<<intpow2(currentLevel)-1 <<" downto 0 => '0') when ps";
 				if (wShiftIn_>1) 
 					vhdl << "(" << currentLevel<< ")";
 				vhdl << "= '1' else "
-					  << tab <<" ("<<intpow2(currentLevel)-1<<" downto 0 => '0') & "<< use(currentLevelName.str()) <<";"<<endl;
+					  << tab <<" ("<<intpow2(currentLevel)-1<<" downto 0 => '0') & "<< currentLevelName.str() <<";"<<endl;
 			}
 			
 		}
@@ -110,9 +110,9 @@ namespace flopoco{
 		ostringstream lastLevelName;
 		lastLevelName << "level"<<wShiftIn_;
 		if (direction==Right)
-			vhdl << tab << "R <= "<<use(lastLevelName.str())<<"("<< wIn + intpow2(wShiftIn_)-1-1 << " downto " << wIn_ + intpow2(wShiftIn_)-1 - wOut_ <<");"<<endl;
+			vhdl << tab << "R <= "<<lastLevelName.str()<<"("<< wIn + intpow2(wShiftIn_)-1-1 << " downto " << wIn_ + intpow2(wShiftIn_)-1 - wOut_ <<");"<<endl;
 		else
-			vhdl << tab << "R <= "<<use(lastLevelName.str())<<"("<< wOut_-1 << " downto 0);"<<endl;
+			vhdl << tab << "R <= "<<lastLevelName.str()<<"("<< wOut_-1 << " downto 0);"<<endl;
 
 
 	}

@@ -74,7 +74,7 @@ namespace flopoco{
 				nextCycle();////////////////////////
 				delay =0.0;
 			}
-			vhdl << tab <<declare(currDigit.str(),1) << "<= '1' when " << use(currLevel.str()) << "("<<intpow2(i)-1<<" downto "<<intpow2(i-1)<<") = "
+			vhdl << tab <<declare(currDigit.str(),1) << "<= '1' when " << currLevel.str() << "("<<intpow2(i)-1<<" downto "<<intpow2(i-1)<<") = "
 				  <<"("<<intpow2(i)-1<<" downto "<<intpow2(i-1)<<" => sozb)"
 				  << " else '0';"<<endl;
 
@@ -84,8 +84,8 @@ namespace flopoco{
 					nextCycle();////////////////////////
 					delay =0.0;
 				}
-				vhdl << tab << declare(nextLevel.str(),intpow2(i-1)) << "<= "<<use(currLevel.str()) << "("<<intpow2(i-1)-1<<" downto 0) when " << use(currDigit.str())<<"='1' "
-					  <<"else "<<use(currLevel.str())<<"("<<intpow2(i)-1<<" downto "<<intpow2(i-1)<<");"<<endl;
+				vhdl << tab << declare(nextLevel.str(),intpow2(i-1)) << "<= "<<currLevel.str() << "("<<intpow2(i-1)-1<<" downto 0) when " << currDigit.str()<<"='1' "
+					  <<"else "<<currLevel.str()<<"("<<intpow2(i)-1<<" downto "<<intpow2(i-1)<<");"<<endl;
 			}
 		}
 		//update output slack
@@ -94,7 +94,7 @@ namespace flopoco{
 		vhdl << tab << "O <= ";
 		for (int i=wOut_;i>=1;i--){
 			currDigit.str(""); currDigit << "digit" << i ;
-			vhdl << use(currDigit.str());
+			vhdl << currDigit.str();
 			if (i==1)
 				vhdl << ";"<<endl;
 			else
