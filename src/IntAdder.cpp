@@ -69,6 +69,7 @@ extern vector<Operator*> oplist;
 			case CLASSICAL    : info << "CLASSICAL"    ; break;
 			case ALTERNATIVE  : info << "ALTERNATIVE"  ; break;
 			case SHORTLATENCY : info << "SHORT-LATENCY"; break;
+			case 3            : info << "SL"; break;
 			default           : info << "ERROR";
 		}
 
@@ -528,6 +529,8 @@ extern vector<Operator*> oplist;
 					exit(-1);
 				}if (optimizeType == LATENCY){
 					//TODO: for equal latency return lower resource usage 
+					int sliceCostShortLantency = getSliceCostShortLatency(target, wIn, inputDelays, srl);
+					REPORT(DETAILED, "SLICE cost for the short-latency method " << sliceCostShortLantency	 );
 					return SHORTLATENCY;
 				}else {
 					cerr << "Error in " <<  __FILE__ << "@" << __LINE__ << ": optimization parameter must be -1, 0, 1 or 2" <<  endl;
