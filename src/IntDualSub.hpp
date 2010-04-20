@@ -10,7 +10,7 @@
 namespace flopoco{
 
 	extern map<string, double> emptyDelayMap;
-	/** The IntDualSub class for experimenting with adders. 
+	/** The IntDualSub class computes both X-Y and Y-X, or both X-Y and X+Y 
 	 */
 	class IntDualSub : public Operator
 	{
@@ -19,7 +19,7 @@ namespace flopoco{
 		 * The IntDualSub constructor
 		 * @param[in] target the target device
 		 * @param[in] wIn    the with of the inputs and output
-		 * @param[in] opType:  if 1, compute x-y and x+y; if 0, compute x-y and y-x
+		 * @param[in] opType:  if 1, compute X-Y and X+Y; if 0, compute X-Y and Y-X
 		 * @param[in] inputDelays the delays for each input
 		 **/
 		IntDualSub(Target* target, int wIn, int opType, map<string, double> inputDelays = emptyDelayMap);
@@ -31,14 +31,6 @@ namespace flopoco{
 		 */
 		~IntDualSub();
 
-		/**
-		 * Method belonging to the Operator class overloaded by the IntDualSub class
-		 * @param[in,out] o     the stream where the current architecture will be outputed to
-		 * @param[in]     name  the name of the entity corresponding to the architecture generated in this method
-		 **/
-		void outputVHDL(std::ostream& o, std::string name);
-
-	
 		void emulate(TestCase* tc);
 		void buildStandardTestCases(TestCaseList* tcl);
 
