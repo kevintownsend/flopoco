@@ -8,8 +8,6 @@
 
 #include "Operator.hpp"
 #include "FPNumber.hpp"
-#include "squareroot/PolynomialTable.hpp"
-#include "squareroot/PolynomialTableCorrectRounded.hpp"
 
 namespace flopoco{
 	/** The FPSqrt class */
@@ -22,7 +20,7 @@ namespace flopoco{
 		 * @param[in]		wE			the the with of the exponent for the f-p number X
 		 * @param[in]		wF			the the with of the fraction for the f-p number X
 		 */
-		FPSqrt(Target* target, int wE, int wF, bool useDSP, bool correctlyRounded = false);
+		FPSqrt(Target* target, int wE, int wF);
 
 		/**
 		 * FPSqrt destructor

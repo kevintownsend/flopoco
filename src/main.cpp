@@ -195,12 +195,11 @@ static void usage(char *name){
 	cerr << "      Floating-point squarer \n";
 	cerr << "    FPDiv wE wF\n";
 	cerr << "      Floating-point divider \n";
-	cerr << "    FPSqrt wE wF useDSP correctlyRounded\n";
-	cerr << "      Floating-point square root\n";
-	cerr << "      useDSP (O or 1) selects between two possible algorithms. correctlyRounded (0 or 1) selects between faithful and correct rounding\n";
+	cerr << "    FPSqrt wE wF\n";
+	cerr << "      Floating-point square root, implemented using digit recurrence (no DSP, long latency)\n";
 #ifdef HAVE_SOLLYA
 	cerr << "    FPSqrtPoly wE wF correctlyRounded degree\n";
-	cerr << "      Floating-point square root\n";
+	cerr << "      Floating-point square root, using polynomial approximation (DSP-based, shorter latency and higher frequency for large wF)\n";
 	cerr << "      correctlyRounded (0 or 1) selects between faithful and correct rounding (NYImplemented)\n";
 	cerr << "      degree (1,...k) polynomial degree. Higher degree => more DSP less BRAM\n";
 #endif // HAVE_SOLLYA
@@ -1012,26 +1011,13 @@ bool parseCommandLine(int argc, char* argv[]){
 		}
 		else if (opname == "FPSqrt")
 		{
-			int nargs = 4;
-			if (i+nargs > argc)
-				usage(argv[0]); // and exit
-			int wE = checkStrictyPositive(argv[i++], argv[0]);
-			int wF = checkStrictyPositive(argv[i++], argv[0]);
-			int useDSP = checkBoolean(argv[i++], argv[0]);
-			int correctlyRounded = checkBoolean(argv[i++], argv[0]);
-			cerr << "> FPSqrt: wE=" << wE << " wF=" << wF << " useDSP="<<useDSP<<" correctlyRounded="<< correctlyRounded << endl;
-			op = new FPSqrt(target, wE, wF, useDSP, correctlyRounded);
-			addOperator(op);
-		}
-		else if (opname == "CRFPSqrt")
-		{
 			int nargs = 2;
 			if (i+nargs > argc)
 				usage(argv[0]); // and exit
 			int wE = checkStrictyPositive(argv[i++], argv[0]);
 			int wF = checkStrictyPositive(argv[i++], argv[0]);
-			cerr << "> FPSqrt: wE=" << wE << " wF=" << wF << endl;
-			op = new FPSqrt(target, wE, wF, true, true);
+			cerr << "> FPSqrt: wE=" << wE << " wF=" << wF  << endl;
+			op = new FPSqrt(target, wE, wF);
 			addOperator(op);
 		}
 #ifdef HAVE_SOLLYA
