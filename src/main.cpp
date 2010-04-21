@@ -160,6 +160,9 @@ static void usage(char *name){
 	cerr << "      srl=<0,1> Allow SRLs\n";
 	cerr << "      implementation=<-1,0,1,2> -1=optimizeType dependent, 0=Classical, 1=Alternative, 2=Short-Latency\n";
 	cerr << "      bufferedInputs=<0,1>\n";
+	cerr << "    IntDualSub wIn opType\n";
+	cerr << "      Integer adder/subtracter/both, possibly pipelined\n";
+	cerr << "      opType: if 1, compute X-Y and X+Y; if 0, compute X-Y and Y-X \n";
 	cerr << "    _______________________________________________________________\n";
 	cerr << "    IntNAdder wIn N\n";
 	cerr << "      Multi-operand addition, possibly pipelined\n";

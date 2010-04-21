@@ -1,7 +1,7 @@
 /*
   An operator which performes x-y and y-x in parallel for FloPoCo
 
-  Author : Bogdan Pasca
+  Author : Bogdan Pasca, Florent de Dinechin
 
   This file is part of the FloPoCo project
   developed by the Arenaire team at Ecole Normale Superieure de Lyon
@@ -45,17 +45,17 @@ namespace flopoco{
 		}
 		name << wIn;
 		if(target->isPipelined()) 
-			name << target->frequencyMHz() ;
+			name << "_"<<target->frequencyMHz() ;
 		else
 			name << "comb";
 		setName(name.str());
 
 	
 		// Set up the IO signals
-		addInput ("X"  , wIn_);
-		addInput ("Y"  , wIn_);
-		addOutput("RxMy", wIn_);
-		addOutput("R"+son_, wIn_);
+		addInput ("X"  , wIn_, true);
+		addInput ("Y"  , wIn_, true);
+		addOutput("RxMy", wIn_, 1, true);
+		addOutput("R"+son_, wIn_, 1, true);
 	
 		REPORT(DETAILED, "delay for X is   "<< inputDelays["X"]);	
 		REPORT(DETAILED, "delay for Y is   "<< inputDelays["Y"]);
@@ -121,8 +121,8 @@ namespace flopoco{
 			}
 		
 			REPORT(DETAILED, "Buffered Inputs "<<(bufferedInputs?"yes":"no"));
-		       	for (int i=nbOfChunks-1;i>=0;i--)
-			  REPORT(DETAILED, "chunk size[" <<i<<"]="<<cSize[i]);
+			for (int i=nbOfChunks-1;i>=0;i--)
+				REPORT(DETAILED, "chunk size[" <<i<<"]="<<cSize[i]);
 		
 
 			outDelayMap["RxMy"] = target->adderDelay(cSize[nbOfChunks-1]);
@@ -132,78 +132,66 @@ namespace flopoco{
 			//VHDL generation
 
 			if(bufferedInputs)
-			  nextCycle();
+				nextCycle();
 
 			for (int i=0;i<nbOfChunks;i++){
 				int sum=0;
 				for (int j=0;j<=i;j++) sum+=cSize[j];
-				vhdl << tab << declare(join("sX",i), cSize[i] ) << " <= X" << range(sum-1, sum-cSize[i]) << ";" << endl;
-				vhdl << tab << declare(join("sY",i), cSize[i] ) << " <= Y" << range(sum-1, sum-cSize[i]) << ";" << endl;
+				vhdl << tab << declare(join("sX",i), cSize[i], true ) << " <= X" << range(sum-1, sum-cSize[i]) << ";" << endl;
+				vhdl << tab << declare(join("sY",i), cSize[i], true ) << " <= Y" << range(sum-1, sum-cSize[i]) << ";" << endl;
 			}
-
 			for (int i=0;i<nbOfChunks; i++){
-			    // subtraction
-			  vhdl << tab << declare(join("xMy",i), cSize[i]+1) <<"  <= (\"0\" & sX"<<i<<") + (\"0\" & not(sY"<<i<<")) ";
-			  if(i==0) // carry
-			    vhdl << "+ '1';"<<endl;
-			  else
-			    vhdl << "+ " << join("xMy", i-1) << of(cSize[i-1]) << ";"<<endl;
-			  // addition or subtraction depending on opType
-			  if(opType){ //addition
-			    vhdl << tab << declare(join("xPy",i), cSize[i]+1) << " <= (\"0\" & sY"<<i<<") + (\"0\" & sX"<<i<<");"<<endl;
-			    if(i>0)
- 			      vhdl << "+ " << join("xPy", i-1) << of(cSize[i-1]) << ";"<<endl;
-			  }
-			  else { // reverse subtraction
-			    vhdl << tab << declare(join("yMx",i), cSize[i]+1) <<" <= (\"0\" & sY"<<i<<") + (\"0\" & not(sX"<<i<<"))";
-			    if(i==0) // carry
-			      vhdl << "+ '1';"<<endl;
-			    else
-			      vhdl << "+ " << join("yMx", i-1) << of(cSize[i-1]) << ";"<<endl;
-			  }
-			  if (i<nbOfChunks-1)
-			    nextCycle();
+				// subtraction
+				vhdl << tab << declare(join("xMy",i), cSize[i]+1, true) <<"  <= (\"0\" & sX"<<i<<") + (\"0\" & not(sY"<<i<<")) ";
+				if(i==0) // carry
+					vhdl << "+ '1';"<<endl;
+				else
+					vhdl << "+ " << join("xMy", i-1) << of(cSize[i-1]) << ";"<<endl;
+				// addition or subtraction depending on opType
+				if(opType){ //addition
+					vhdl << tab << declare(join("xPy",i), cSize[i]+1, true) << " <= (\"0\" & sY"<<i<<") + (\"0\" & sX"<<i<<")";
+					if(i>0)
+						vhdl << "+ " << join("xPy", i-1) << of(cSize[i-1]) << ";"<<endl;
+					else
+						vhdl << ";" <<endl;
+				}else{ // reverse subtraction
+					vhdl << tab << declare(join("yMx",i), cSize[i]+1, true) <<" <= (\"0\" & sY"<<i<<") + (\"0\" & not(sX"<<i<<"))";
+					if(i==0) // carry
+						vhdl << "+ '1';"<<endl;
+					else
+						vhdl << "+ " << join("yMx", i-1) << of(cSize[i-1]) << ";"<<endl;
+				}
+				if (i<nbOfChunks-1)
+					nextCycle();
 			}
 
 			//assign output by composing the result for x - y
 			vhdl << tab << "RxMy <= ";
 			for (int i=nbOfChunks-1;i>=0;i--){
-			  vhdl << "xMy" << i << range(cSize[i]-1,0);
-			  if (i==0)
-			    vhdl << ";" << endl;
-			  else
-			    vhdl << " & ";			
-			} 
+				vhdl << "xMy" << i << range(cSize[i]-1,0);
+				if (i==0)
+					vhdl << ";" << endl;
+				else
+					vhdl << " & ";
+			}
 
 			//assign output by composing the result for y - x or x + y
 			vhdl << tab << "R" << son_ << " <= ";
 			for (int i=nbOfChunks-1;i>=0;i--){
-			  vhdl << son_ << i << range(cSize[i]-1,0);
-			  if (i==0)
-			    vhdl << ";" << endl;
-			  else
-			    vhdl << " & ";			
+				vhdl << son_ << i << range(cSize[i]-1,0);
+				if (i==0)
+					vhdl << ";" << endl;
+				else
+					vhdl << " & ";			
 			} 
-
-
-		}
-		else{
+		}else{
 			vhdl << tab << "RxMy <= X + not(Y) + '1';" <<endl;
-			vhdl << tab << "R"<<son_<<" <= "<< (opType_==0?"not(X)":"X")<<" + Y + '1';" <<endl;
+			vhdl << tab << "R"<<son_<<" <= "<< (opType_==0?"not(X)":"X")<<" + Y + "<<(opType_==0?"":"'1'")<<";"<<endl;
 		}
-
-
-	
 	}
 
 	IntDualSub::~IntDualSub() {
 	}
-
-
-
-
-
-
 
 	void IntDualSub::emulate(TestCase* tc)
 	{
@@ -242,38 +230,4 @@ namespace flopoco{
 
 	
 	}
-
-
-
-
-
-
-#if 0 // to keep the FIXME below
-
-	// FIXME doesn't work for:    flopoco  -frequency=500 IntDualSub 26 0 TestBench 10000
-	void IntDualSub::fillTestCase(mpz_class a[])
-	{
-		mpz_class& svX = a[0];
-		mpz_class& svY = a[1];
-		mpz_class& svR1 = a[2];
-		mpz_class& svR2 = a[3];
-
-		svX = getLargeRandom(wIn_-1);	
-		svY = getLargeRandom(wIn_-1);
-
-		svR1 = svX - svY;
-		svR2 = svY - svX;
-#ifndef _WIN32
-		if(verbose)
-			cout<<endl<< "x is "<< svX <<" y is "<<svY << " x-y is "<<	svR1 << " y-x is "<<svR2<<endl;
-#endif
-		// Don't allow overflow
-		mpz_clrbit(svR1.get_mpz_t(),wIn_);
-		mpz_clrbit(svR2.get_mpz_t(),wIn_);  
-	}
-#endif
-
-
-
-
 }

@@ -88,5 +88,17 @@ flopoco -target=Virtex4 -frequency=400 MyIntAdder 128 1 1 2 1
 flopoco -target=Virtex4 -frequency=400 MyIntAdder 128 2 1 2 1
 flopoco -target=Virtex4 -frequency=400 MyIntAdder 128 3 1 2 1
 
+#intDualSub
+
+flopoco -frequency=500 IntDualSub 26 0
+flopoco -frequency=500 IntDualSub 26 1
+flopoco -frequency=500 IntDualSub 216 0
+flopoco -frequency=500 IntDualSub 216 1
+flopoco -frequency=500 IntDualSub 1 0
+flopoco -frequency=500 IntDualSub 1 1
+
+
+
+
 
 
