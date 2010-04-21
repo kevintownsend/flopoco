@@ -46,7 +46,6 @@ namespace flopoco{
 		setName("TestBench_" + op_->getName());
 		
 		setCombinatorial(); // this is a combinatorial operator
-		setPipelineDepth(0);	// could be any number
 		setCycle(0);
 
 

@@ -39,44 +39,54 @@ namespace flopoco{
 		Operator(target), wE(wE), wFX(wFX), wFY(wFY), MaxMSBX(MaxMSBX), LSBA(LSBA), MSBA(MSBA)  {
 	
 		ostringstream name;
-		/* Set up the name of the entity */
+
+		srcFileName="DotProduct1";
 		name <<"DotProduct_"<<wE<<"_"<<wFX<<"_"<<wFY<<"_"
 			  <<(MaxMSBX>=0?"":"M")<<abs(MaxMSBX)<<"_"
 			  <<(LSBA>=0?"":"M")<<abs(LSBA)<<"_"
 			  <<(MSBA>=0?"":"M")<<abs(MSBA) ;
 
-		setName(name.str());
+		if(target->isPipelined()) 
+			name << target->frequencyMHz() ;
+		else
+			name << "comb";
+		setName(name.str()); 
+
+		setCopyrightString("Bogdan Pasca, Florent de Dinechin (2008)");		
+
 	
 		/* Set up the I/O signals of of the entity */
-		addInput("X", 2 + 1 + wE + wFX);
-		addInput("Y", 2 + 1 + wE + wFY);
+		addFPInput ("X", wE, wFX);
+		addFPInput ("Y", wE, wFY);
 		addOutput("A", MSBA-LSBA+1); //the width of the output represents the accumulator size
-
-
-		/* This operator is sequential.*/
-		setSequential();
  
 		sizeAcc_ = MSBA-LSBA+1;
 		/* Instantiate one FPMultiplier used to multiply the two inputs fp numbers, X and Y */
-		int fpMultiplierResultExponentWidth = wE;
-		int fpMultiplierResultFractionWidth = wFX + wFY + 1;
-		int fpMultiplierResultNormalization = 0;
-		fpMultiplier = new FPMultiplier(target, wE, wFX, wE, wFY, fpMultiplierResultExponentWidth, fpMultiplierResultFractionWidth, fpMultiplierResultNormalization);
+		int wFR_full = wFX + wFY + 1;
+		fpMultiplier = new FPMultiplier(target, wE, wFX, wE, wFY, wE, wFR_full, 1);
 		oplist.push_back(fpMultiplier);
   
-		/* Instantiate one LongAcc used accumulate the products produced by fpMultiplier */
-		longAcc = new LongAcc(target, wE, fpMultiplierResultFractionWidth, MaxMSBX, LSBA, MSBA);
-		oplist.push_back(longAcc);
-  
-		/* Signal declaration */
+		/* Signal declaration 
 		addSignal("fpMultiplierResultExponent",wE);
-		addSignal("fpMultiplierResultSignificand", fpMultiplierResultFractionWidth + 1);
+		addSignal("fpMultiplierResultSignificand", wFR_full + 1);
 		addSignal("fpMultiplierResultException", 2);
 		addSignal("fpMultiplierResultSign",1);
-		addSignal("fpMultiplierResult",2 + 1 + wE + fpMultiplierResultFractionWidth);
-   
-		/* Set the pipeline depth of this operator */
-		setPipelineDepth(fpMultiplier->getPipelineDepth() + longAcc->getPipelineDepth() );
+		addSignal("fpMultiplierResult",2 + 1 + wE + wFR_full);
+		*/
+
+		/* Map the signals on the fp multiplier */
+		inPortMap  (fpMultiplier, "X", "X");
+		inPortMap  (fpMultiplier, "Y", "Y");
+		outPortMap  (fpMultiplier, "R", "fpmR");
+
+
+		/* Instantiate one LongAcc used accumulate the products produced by fpMultiplier */
+		longAcc = new LongAcc(target, wE, wFR_full, MaxMSBX, LSBA, MSBA);
+		oplist.push_back(longAcc);
+		inPortMap  (longAcc, "X", "fpmR");
+		outPortMap  (longAcc, "A", "accR");
+
+		vhdl << tab << "R <= A;" << endl;
 	}
 
 	DotProduct::~DotProduct() {
@@ -84,46 +94,6 @@ namespace flopoco{
 
 
 
-	void DotProduct::outputVHDL(std::ostream& o, std::string name) {
-		licence(o,"Bogdan Pasca (2008)");
-		Operator::stdLibs(o);
-		outputVHDLEntity(o);
-		newArchitecture(o, name);
-		fpMultiplier->outputVHDLComponent(o); //output the code of the fpMultiplier component
-		longAcc->outputVHDLComponent(o);      //output the code of the longAcc component
-		outputVHDLSignalDeclarations(o);
-		beginArchitecture(o);
-
-		/* Map the signals on the fp multiplier */
-		o << tab << "fp_multiplier: " << fpMultiplier->getName() << endl;
-		o << tab << "    port map ( X => X, " << endl;
-		o << tab << "               Y => Y, " << endl;
-		o << tab << "               ResultExponent => fpMultiplierResultExponent, " << endl;
-		o << tab << "               ResultSignificand => fpMultiplierResultSignificand, " << endl;
-		o << tab << "               ResultException => fpMultiplierResultException, " << endl;
-		o << tab << "               ResultSign => fpMultiplierResultSign, " << endl;
-		o << tab << "               clk => clk," << endl;
-		o << tab << "               rst => rst " << endl;
-		o << tab << "                         );" << endl; 
-		o << endl;
-
-		/*rebuild the output under the form of a fp number */
-		o << tab << "fpMultiplierResult <= fpMultiplierResultException & "
-		  <<"fpMultiplierResultSign & "
-		  <<"fpMultiplierResultExponent & "
-		  <<"fpMultiplierResultSignificand("<<wFX + wFY+1<<" downto "<< 1 <<");"<<endl;
-
-		/* Map the signals on the long accumulator */
-		o << tab << "long_acc: " << longAcc->getName() << endl;
-		o << tab << "    port map ( X => fpMultiplierResult, " << endl;
-		o << tab << "               A => A, " << endl;
-		o << tab << "               clk => clk," << endl;
-		o << tab << "               rst => rst " << endl;
-		o << tab << "                         );" << endl; 
-		o << endl;
-
-		endArchitecture(o);
-	} 
 
 	void DotProduct::test_precision(int n) {
 		mpfr_t ref_acc, long_acc, fp_acc, x, y, r, d, one, two, msb;

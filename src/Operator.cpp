@@ -123,95 +123,6 @@ namespace flopoco{
 
 
 
-
-	void Operator::addSignalGeneric(const string name, const int width, const int delay, Signal::SignalType regType, bool isbus) {
-		ostringstream o;
-		Signal *s;
-
-		o << name;
-		if (isSequential() && delay > 0) { 	// if delay<=0,  it is equivalent to addSignal
-			for (int i=0; i<delay; i++){
-				if(signalMap_.find(o.str()) != signalMap_.end()) {
-					std::ostringstream o;
-					o << "ERROR in addSignalGeneric, signal " << name<< " seems to already exist";
-					throw o.str();
-				}
-				s = new Signal(o.str(), regType, width, isbus);
-				signalList_.push_back(s);    
-				signalMap_[o.str()] = s ;
-				o  << "_d";
-			}
-			if(regType==Signal::registeredWithoutReset)
-				hasRegistersWithoutReset_ = true;
-			if(regType==Signal::registeredWithSyncReset)
-				hasRegistersWithSyncReset_ = true;
-			if(regType==Signal::registeredWithAsyncReset)
-				hasRegistersWithAsyncReset_ = true;
-		}
-
-		if (signalMap_.find(o.str()) != signalMap_.end()) {
-			std::ostringstream o;
-			o << "ERROR in addSignalGeneric, signal " << name<< " seems to already exist";
-			throw o.str();
-		}
-		s = new Signal(o.str(), Signal::wire, width, isbus);
-		signalList_.push_back(s);    
-		signalMap_[o.str()] = s ;
-	}
-
-	void Operator::addSignal(const std::string name, const int width) {
-		addSignalGeneric(name,  width, 0, Signal::wire, //unused
-							  false);
-	}
-
-
-
-	void Operator::addSignalBus(const std::string name, const int width) {
-		addSignalGeneric(name,  width, 0, Signal::wire, //unused
-							  true);
-	}
-
-	void Operator::addDelaySignal(const string name, const int width, const int delay) {
-		addSignalGeneric(name,  width, delay, Signal::registeredWithoutReset, false);
-	}
-
-	void Operator::addDelaySignalBus(const string name, const int width, const int delay) {
-		addSignalGeneric(name,  width, delay, Signal::registeredWithoutReset, true);
-	}
-
-	void Operator::addDelaySignalSyncReset(const string name, const int width, const int delay) {	
-		addSignalGeneric(name,  width, delay, Signal::registeredWithSyncReset, false);
-	}
-
-	void Operator::addDelaySignalBusSyncReset(const string name, const int width, const int delay) {
-		addSignalGeneric(name,  width, delay, Signal::registeredWithSyncReset, true);
-	}
-
-
-	string Operator::delaySignal(const string name, const int delay) {
-		ostringstream o;
-		Signal* s;
-		bool isDeclared=true;
-	
-		if(signalMap_.find(name) ==  signalMap_.end()) {
-			cerr << "WARNING in delaySignal, signal " << name << " not declared through addSignal" << endl;
-			isDeclared=false;
-		}
-
-		if (delay<=0 || isSequential()==false)
-			return name;
-		else {
-			if(isDeclared) {
-				s=getSignalByName(name);
-			}
-			o << name;
-			for (int i=0; i<delay; i++){
-				o  << "_d";
-			}
-			return o.str();
-		}
-	}
-
 	Signal * Operator::getSignalByName(string name) {
 		ostringstream e;
 		if(signalMap_.find(name) ==  signalMap_.end()) {
@@ -464,14 +375,6 @@ namespace flopoco{
 
 	int Operator::getPipelineDepth() {
 		return pipelineDepth_; 
-	}
-
-	void Operator::incrementPipelineDepth() {
-		pipelineDepth_++; 
-	}
-
-	void Operator::setPipelineDepth(int d) {
-		pipelineDepth_=d; 
 	}
 
 	void Operator::outputFinalReport() {
