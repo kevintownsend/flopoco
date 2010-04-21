@@ -116,18 +116,9 @@
 
 #define BRIGHT 1
 #define RED 31
-#define OP 32
+#define OPER 32
 #define PARAM 34
-
-#define OP0(op)                {printf("%c[%d;%dm",27,1,OP); cerr << "    " << op << " "; printf("%c[%dm\n",27,0); } 
-#define OP1(op,p1)             {printf("%c[%d;%dm",27,1,OP); cerr << "    " << op << " "; printf("%c[%d;%dm",27,1,PARAM); cerr << p1; printf("%c[%dm\n",27,0); } 
-#define OP2(op,p1,p2)          {printf("%c[%d;%dm",27,1,OP); cerr << "    " << op << " "; printf("%c[%d;%dm",27,1,PARAM); cerr << p1 << " " << p2; printf("%c[%dm\n",27,0); } 
-#define OP3(op,p1,p2,p3)       {printf("%c[%d;%dm",27,1,OP); cerr << "    " << op << " "; printf("%c[%d;%dm",27,1,PARAM); cerr << p1 << " " << p2 << " " << p3; printf("%c[%dm\n",27,0); } 
-#define OP4(op,p1,p2,p3,p4)    {printf("%c[%d;%dm",27,1,OP); cerr << "    " << op << " "; printf("%c[%d;%dm",27,1,PARAM); cerr << p1 << " " << p2  << " " << p3 << " " << p4; printf("%c[%dm\n",27,0); } 
-#define OP5(op,p1,p2,p3,p4,p5) {printf("%c[%d;%dm",27,1,OP); cerr << "    " << op << " "; printf("%c[%d;%dm",27,1,PARAM); cerr << p1 << " " << p2 << " " << p3 << " " << p4 << " " << p5; printf("%c[%dm\n",27,0); } 
-#define OP6(op,p1,p2,p3,p4,p5,p6) {printf("%c[%d;%dm",27,1,OP); cerr << "    " << op << " "; printf("%c[%d;%dm",27,1,PARAM); cerr << p1 << " " << p2 << " " << p3 << " " << p4 << " " << p5 << " " << p6; printf("%c[%dm\n",27,0); } 
-#define OP7(op,p1,p2,p3,p4,p5,p6,p7) {printf("%c[%d;%dm",27,1,OP); cerr << "    " << op << " "; printf("%c[%d;%dm",27,1,PARAM); cerr << p1 << " " << p2 << " " << p3 << " " << p4 << " " << p5 << " " << p6 << " " <<p7; printf("%c[%dm\n",27,0); } 
-
+#define OP(op,paramList)             {cerr << "    "; printf("%c[%d;%dm",27,1,OPER); cerr <<  op; printf("%c[%dm",27,0); cerr<< " "; printf("%c[%d;%dm",27,1,PARAM); cerr << paramList; printf("%c[%dm\n",27,0); } 
 
 using namespace std;
 using namespace flopoco;
@@ -155,81 +146,81 @@ namespace flopoco{
 static void usage(char *name){
 	cerr << "\nUsage: "<<name<<" <operator specification list>\n" ;
 	cerr << "Each operator specification is one of: \n";
-    OP2( "UserDefinedOperator","param0","param1");
+    OP( "UserDefinedOperator","param0 param1");
 	cerr << "    ____________ SHIFTERS/LZOC _________________________________________________\n";
-	OP2 ("LeftShifter","wIn","MaxShift");
-	OP2 ("RightShifter","wIn","MaxShift");
-	OP1 ("LZOC","wIn");
-	OP2 ("LZOCShifter","wIn","wOut");
-	OP2 ("LZCShifter","wIn","wOut");
-	OP2 ("LOCShifter","wIn","wOut");
-	OP2 ("LZOCShifterSticky","wIn","wOut");
-	OP2 ("LZCShifterSticky","wIn","wOut");
-	OP2 ("LOCShifterSticky","wIn","wOut");
+	OP("LeftShifter","wIn MaxShift");
+	OP("RightShifter","wIn MaxShift");
+	OP("LZOC","wIn");
+	OP("LZOCShifter","wIn wOut");
+	OP("LZCShifter","wIn wOut");
+	OP("LOCShifter","wIn wOut");
+	OP("LZOCShifterSticky","wIn wOut");
+	OP("LZCShifterSticky","wIn wOut");
+	OP("LOCShifterSticky","wIn wOut");
 	cerr << "    ____________ ADDER/SUBTRACTER ______________________________________________\n";
-	OP1 ("IntAdder","wIn");
+	OP("IntAdder","wIn");
 	cerr << "      Integer adder, possibly pipelined\n";
-	OP5("MyIntAdder","wIn","optimizeType","srl","implementation","bufferedInputs");
+	OP("MyIntAdder","wIn optimizeType srl implementation bufferedInputs");
 	cerr << "      Integer adder, multple parameters, possibly pipelined\n";
 	cerr << "      optimizeType=<0,1,2,3> 0=LUT 1=REG 2=SLICE 3=LATENCY\n";
 	cerr << "      srl=<0,1> Allow SRLs\n";
 	cerr << "      implementation=<-1,0,1,2> -1=optimizeType dependent,\n";  
 	cerr << "                                 0=Classical, 1=Alternative, 2=Short-Latency\n";
 	cerr << "      bufferedInputs=<0,1>\n";
-	OP2 ("IntDualSub","wIn","opType");
+	OP("IntDualSub","wIn opType");
 	cerr << "      Integer adder/subtracter or dual subtracter, possibly pipelined\n";
 	cerr << "      opType: if 1, compute X-Y and X+Y; if 0, compute X-Y and Y-X \n";
 	cerr << "    ____________ MULTIOPERAND ADDER ____________________________________________\n";
-	OP2 ("IntNAdder","wIn","N");
+	OP("IntNAdder","wIn N");
 	cerr << "      Multi-operand addition, possibly pipelined\n";
-	OP2 ("IntCompressorTree","wIn","N");
+	OP("IntCompressorTree","wIn N");
 	cerr << "      Multi-operand addition using compressor trees, possibly pipelined\n";
 	cerr << "    ____________ INTEGER MULTIPLIERS/SQUARER/KARATSUBA _________________________\n";
-	OP2 ("IntMultiplier","wInX","wInY");
+	OP("IntMultiplier","wInX wInY");
 	cerr << "      Integer multiplier of two integers X and Y of sizes wInX and wInY \n";	
-	OP2 ("SignedIntMultiplier","wInX","wInY");
+	OP("SignedIntMultiplier","wInX wInY");
 	cerr << "      Signed integer multiplier. wInX and wInY include the sign\n";	
-	OP4 ("IntTilingMultiplier","wInX","wInY","ratio","maxTimeInMinutes");
+	OP("IntTilingMultiplier","wInX wInY ratio maxTimeInMinutes");
 	cerr << "      Integer multiplier of two integers X and Y of sizes wInX and wInY\n";
 	cerr << "      0 <= ratio <= 1; larger ratio => DSP dominant architectures\n";
 	cerr << "      maxTimeInMinutes 0..; 0=find optimal solution (no time limit)\n"; 	
 // HIDDEN for now
 //	cerr << "    IntTruncSquarer wInX ratio error useLimits\n";
 //	cerr << "      Integer squarer of integer X of size wInX with a given order of error and which selects if the softdsps will be limited\n";	
-	OP5 ("IntTruncMultiplier","wInX","wInY","ratio","error","useLimits");
+	OP("IntTruncMultiplier","wInX wInY ratio error useLimits");
 	cerr << "      Integer multiplier of two integers X and Y of sizes wInX and wInY \n"; 
 	cerr << "      with a given error order.\n";	
 	cerr << "      0 <= ratio <= 1; larger ratio => DSP dominant architectures\n";
 	cerr << "      wInX+wInY<error<=0. The order of the error.\n";
 	cerr << "      useLimits. Soft-core multipliers are size-limited\n";
-	OP1 ("IntKaratsuba","wIn");
+	OP ("IntKaratsuba","wIn");
 	cerr << "      integer multiplier of two integers X and Y of sizes wIn. 17 < wIn <= 68\n";	
-	OP1 ("IntSquarer","wIn");
+	OP ("IntSquarer","wIn");
 	cerr << "      integer squarer. For now wIn <=68 \n";	
 	cerr << "    ____________ FLOATING-POINT OPERATORS ______________________________________\n";
-	OP5 ("Fix2FP","LSB","MSB","Signed","wE","wF");
+	OP("Fix2FP","LSB MSB Signed wE wF");
 	cerr << "      Convert a 2's compliment fixed-point number in the bit range MSB...LSB \n";
 	cerr << "      into floating-point\n";
-	OP2( "FPAdder","wE","wF");
+	OP( "FPAdder","wE wF");
 	cerr << "      Floating-point adder \n";
-	OP3( "FPMultiplier","wE","wF_in","wF_out");
+	OP( "FPMultiplier","wE wF_in wF_out");
 	cerr << "      Floating-point multiplier, supporting different in/out precision  \n";
-	OP3( "FPMultiplierKaratsuba","wE","wF_in","wF_out");
+	OP( "FPMultiplierKaratsuba","wE wF_in wF_out");
 	cerr << "      Floating-point multiplier, supporting different in/out precision. \n";
 	cerr << "      Mantissa multiplier uses Karatsuba\n";
-	OP5( "FPMultiplierTiling","wE","wF_in","wF_out","ratio","timeInMinutes");
+	OP( "FPMultiplierTiling","wE wF_in wF_out ratio timeInMinutes");
 	cerr << "      Floating-point multiplier, supporting different in/out precision. \n";
 	cerr << "      Mantissa multiplier uses Tiling Algorithm  \n";
-	OP3( "FPSquarer","wE","wFin","wFout");
+	OP( "FPSquarer","wE wFin wFout");
 	cerr << "      Floating-point squarer \n";
-	OP2( "FPDiv","wE","wF");
+	OP( "FPDiv","wE wF");
 	cerr << "      Floating-point divider \n";
-	OP2("FPSqrt","wE","wF");
+	OP("FPSqrt","wE wF");
 	cerr << "      Floating-point square root, implemented using digit recurrence\n";
 	cerr << "      (no DSP, long latency)\n";
 #ifdef HAVE_SOLLYA
 //	cerr << "    FPSqrtPoly wE wF correctlyRounded degree\n";
-	OP3( "FPSqrtPoly","wE","wF","degree");
+	OP( "FPSqrtPoly","wE wF degree");
 	cerr << "      Floating-point square root, using polynomial approximation \n";
 	cerr << "      (DSP-based, shorter latency and higher frequency for large wF)\n";
 	cerr << "      faithful rounding\n";
@@ -237,38 +228,38 @@ static void usage(char *name){
 //	cerr << "      correctlyRounded (0) selects faithful and correct rounding (NYImplemented)\n";
 	cerr << "      degree (1,...k) polynomial degree. Higher degree => more DSP less BRAM\n";
 #endif // HAVE_SOLLYA
-	OP2( "IntConstMult","w","c");
+	OP( "IntConstMult","w c");
 	cerr << "      Integer constant multiplier: w - input size, c - the constant\n";
-	OP7 ("FPConstMult","wE_in","wF_in","wE_out","wF_out","cst_sgn","cst_exp","cst_int_sig");
+	OP("FPConstMult","wE_in wF_in wE_out wF_out cst_sgn cst_exp cst_int_sig");
 	cerr << "      Floating-point constant multiplier\n";
 	cerr << "      The constant is provided as integral significand and integral exponent.\n";
 #ifdef HAVE_SOLLYA
-	OP6( "FPConstMultParser","wE_in","wF_in","wE_out","wF_out","wF_C","constant_expr");
+	OP( "FPConstMultParser","wE_in wF_in wE_out wF_out wF_C constant_expr");
 	cerr << "      Floating-point constant multiplier with a parser for the constant:\n";
 	cerr << "      last argument is a Sollya expression between double quotes,e.g.\"exp(pi/2)\".\n";
-	OP5( "CRFPConstMult","wE_in","wF_in","wE_out","wF_out","constant_expr");
+	OP( "CRFPConstMult","wE_in wF_in wE_out wF_out constant_expr");
 	cerr << "      Correctly-rounded floating-point constant multiplier\n";
 	cerr << "      The constant is provided as a Sollya expression, between double quotes.\n";
 #endif // HAVE_SOLLYA
-	OP5( "LongAcc","wE_in","wF_in","MaxMSB_in","LSB_acc","MSB_acc");
+	OP( "LongAcc","wE_in wF_in MaxMSB_in LSB_acc MSB_acc");
 	cerr << "      Long fixed-point accumulator\n";
-	OP4( "LongAcc2FP","LSB_acc","MSB_acc","wE_out","wF_out");
+	OP( "LongAcc2FP","LSB_acc MSB_acc wE_out wF_out");
 	cerr << "      Post-normalisation unit for LongAcc \n";
-	OP6( "DotProduct","wE","wFX","wFY","MaxMSB_in","LSB_acc","MSB_acc");
+	OP( "DotProduct","wE wFX wFY MaxMSB_in LSB_acc MSB_acc");
 	cerr << "      Floating-point dot product unit \n";
-	OP2( "FPExp","wE","wF");
+	OP( "FPExp","wE wF");
 	cerr << "      Floating-point exponential function (NPY)\n";
-	OP3( "FPLog","wE","wF","InTableSize");
+	OP( "FPLog","wE wF InTableSize");
 	cerr << "      Floating-point logarithm function;\n";
 	cerr << "      InTableSize is the numbers of bits to input to the tables. \n";
 	cerr << "      O defaults to something sensible\n";
-	OP4( "OutputIEEE","wEI","wFI","wEO","wFO");
+	OP( "OutputIEEE","wEI wFI wEO wFO");
 	cerr << "      Conversion from FloPoCo to IEEE-754-like floating-point formats\n";
-	OP4( "InputIEEE","wEI","wFI","wEO","wFO");
+	OP( "InputIEEE","wEI wFI wEO wFO");
 	cerr << "      Conversion from IEEE-754-like to FloPoCo floating-point formats\n";
 #ifdef HAVE_HOTBM
 	cerr << "    ____________ GENERIC FUNCTION EVALUATOR ____________________________________\n";
-	OP4( "FunctionEvaluator","function","wI","wO","degree");
+	OP( "FunctionEvaluator","function wI wO degree");
 	cerr << "      Polynomial based method for fixed-point functions\n";
 	cerr << "      wI - input width, wO - the number of bits at the right of the dot, \n";
 	cerr << "      degree - degree of polynomial approx\n";
@@ -276,27 +267,27 @@ static void usage(char *name){
 	cerr << "                 \"function,xMin,xMax,Scale\"\n";
 	cerr << "      function example: sqrt(1+x),0,1,1;sqrt(2+x),0,1,1\n";
 	cerr << "    ____________ HIGH-ORDER TABLE BASED METHOD EVALUATOR _______________________\n";
-	OP4( "HOTBM","function","wI","wO","degree");
+	OP( "HOTBM","function wI wO degree");
 	cerr << "      High-Order Table-Based Method for fixed-point functions (NPY)\n";
 	cerr << "      wI - input width, wO - output width, degree - degree of polynomial approx\n";
 	cerr << "      function - sollya-syntaxed function to implement, between double quotes\n";
-	OP6( "HOTBMFX","function","wE_in","wF_in","wE_out","wF_out","degree");
+	OP( "HOTBMFX","function wE_in wF_in wE_out wF_out degree");
 	cerr << "      Same as HOTBM, with explicit fixed-point formats (NPY)\n";
 	cerr << "      Note: input is unsigned, output is signed.\n";
-	OP7( "HOTBMRange","function","wI","wO","degree","xmin","xmax","scale");
+	OP( "HOTBMRange","function wI wO degree xmin xmax scale");
 	cerr << "      Same as HOTBM, with explicit range and scale (NPY)\n";
 	cerr << "      xmin xmax - bounds of the input range, mapped to [0,1[\n";
 	cerr << "      scale - scaling factor to apply to the function output\n";
 #endif // HAVE_HOTBM
 #ifdef HAVE_LNS
 	cerr << "    ____________ LNS OPERATORS _________________________________________________\n";
-	OP2( "LNSAddSub","wE","wF");
+	OP( "LNSAddSub","wE wF");
 	cerr << "      Addition in Logarithmic Number System.\n";
-	OP2( "LNSMul","wE","wF");
+	OP( "LNSMul","wE wF");
 	cerr << "      LNS multiplication.\n";
-	OP2( "LNSDiv","wE","wF");
+	OP( "LNSDiv","wE wF");
 	cerr << "      LNS division.\n";
-	OP2( "LNSSqrt","wE","wF");
+	OP( "LNSSqrt","wE wF");
 	cerr << "      LNS square root.\n";
 #if 0 // Currently broken, most of its code was commented out for using deprecated methods. TODO
 	cerr << "    AtanPow wE wF o\n";
@@ -304,7 +295,7 @@ static void usage(char *name){
 #endif
 #endif // HAVE_LNS
 	cerr << "    ____________ APPLICATIONS __________________________________________________\n";
-	OP4 ("Collision","wE","wF","opt","n");;
+	OP("Collision","wE wF opt n");;
 	cerr << "       A collision detection operator, computes the predicate X²+Y²+Z²<R2\n";
 	cerr << "       opt: assemble FP operators if 0, optimized architecture if 1 \n";
 
@@ -318,10 +309,10 @@ static void usage(char *name){
 	//=====================================================
 
 	cerr << "    ____________ TEST-BENCH ____________________________________________________\n";
-	OP1 ("TestBench","n");
+	OP ("TestBench","n");
 	cerr << "       Behavorial test bench for the preceding operator\n";
 	cerr << "       This test bench will include standard tests, plus n random tests.\n";
-	OP1( "TestBenchFile","n");
+	OP( "TestBenchFile","n");
 	cerr << "       Behavorial test bench for the preceding operator\n";
 	cerr << "       This test bench will include standard tests, plus n random tests.\n";
 	cerr << "       This test bench will generate a file (by default essai.input) to .\n";
@@ -330,7 +321,7 @@ static void usage(char *name){
 	//	cerr << "    BigTestBench n\n";
 	//	cerr << "       Same as above, more VHDL efficient, less practical for debugging.\n";
 	cerr << "    ____________ WRAPPER _______________________________________________________\n";
-	OP0 ("Wrapper");
+	OP ("Wrapper","");
 	cerr << "       Wraps the preceding operator between registers\n";
 	cerr << "________________________________________________________________________________\n";
 	cerr << "________________ OPTIONS________________________________________________________\n";
