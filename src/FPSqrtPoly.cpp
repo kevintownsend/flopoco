@@ -30,12 +30,6 @@
 #include "IntSquarer.hpp"
 #include "FPSqrtPoly.hpp"
 
-#define KEEP_HANDCRAFTED_VERSION 0
-#if KEEP_HANDCRAFTED_VERSION
-#include "squareroot/PolynomialTable.hpp"
-#include "squareroot/PolynomialTableCorrectRounded.hpp"
-#endif
-
 using namespace std;
 
 namespace flopoco{
@@ -51,6 +45,9 @@ namespace flopoco{
 		// -------- Parameter set up -----------------
 		addFPInput ("X", wE, wF);
 		addFPOutput("R", wE, wF);
+
+
+
 
 
 
@@ -235,77 +232,6 @@ namespace flopoco{
 #endif // KEEP_HANDCRAFTER_VERSION
 
 
-					//		vhdl << tab << declare("normalizeBit",1) << " <= sumA0ProdXA1sumA2X(" << coeffStorageSizes[0] << ");"<<endl;
-					//		nextCycle();/////////////////////////
-					//		vhdl << tab << declare("preSquareFrac", wF+2) << " <= sumA0ProdXA1sumA2X" << range(coeffStorageSizes[0], coeffStorageSizes[0]-wF-1) << " when normalizeBit='1' else "
-					//			 << "sumA0ProdXA1sumA2X" << range(coeffStorageSizes[0]-1, coeffStorageSizes[0]-wF-2) << ";" << endl;
-					//		vhdl << tab << declare("preSquareExp", wE) << " <= expPostBiasAddition" << range(wE,1) << " + normalizeBit;"<<endl;
-
-					vhdl << tab << declare("preSquareFrac", wF+2) << " <= sumA0ProdXA1sumA2X" << range(coeffStorageSizes[0]-1, coeffStorageSizes[0]-wF-2) << ";" << endl;
-					vhdl << tab << declare("preSquareExp", wE) << " <= expPostBiasAddition" << range(wE,1) <<";"<<endl;
-
-
-					vhdl << tab << declare("preSquareConcat", 1 + wE + wF+1) << " <= " << zg(1,0) << " & preSquareExp & preSquareFrac"<<range(wF,0)<<";"<<endl;;
-
-#ifndef LESS_DSPS
-					nextCycle();//////////////////	    
-#endif
-					IntAdder *predictAdder = new IntAdder(target, 1 + wE + wF+1);
-					oplist.push_back(predictAdder);
-
-					inPortMap(predictAdder,"X","preSquareConcat");	
-					inPortMapCst(predictAdder,"Y",zg(1 + wE + wF+1,0));
-					inPortMapCst(predictAdder,"Cin","'1'");
-					outPortMap(predictAdder,"R","my_predictor");
-					vhdl << tab << instance(predictAdder, "Predictor");
-	    	    
-					IntSquarer *iSquarer = new IntSquarer(target,max(wF+2,34));
-					oplist.push_back(iSquarer);
-	    
-					vhdl << tab << declare("op1",max(wF+2,34)) << " <= " << zg(34-(wF+2),0) << " & preSquareFrac;" << endl;
-	    
-					inPortMap(iSquarer, "X", "op1");
-					outPortMap(iSquarer,"R", "sqrResult");
-					vhdl << instance(iSquarer,"FractionSquarer");
-	    
-					syncCycleFromSignal("sqrResult");
-	    
-					vhdl << tab << declare("approxSqrtXSqr", 2*(wF+2) + 1) << " <= " << zg(1,0) << " & sqrResult"<<range(2*(wF+2)-1,0)<<";"<<endl;
-					vhdl << tab << declare("realXFrac", 2*(wF+2) + 1) << " <= ( \"001\" & fracX & " << zg(2*(wF+2) + 1-2-wF-1 ,0)<<") when OddExp='0' else "<<endl;
-					vhdl << tab << tab << "( \"01\" & fracX & " << zg(2*(wF+2) + 1-2-wF,0)<<");"<<endl;
-	    
-					vhdl << tab << declare("negRealXFrac", 2*(wF+2) + 1) << " <= not(realXFrac);"<<endl;
-	    
-					IntAdder *myIntAdd = new IntAdder(target, 2*(wF+2) + 1);
-					oplist.push_back(myIntAdd);
-	    
-					inPortMap(myIntAdd,"X","approxSqrtXSqr");	
-					inPortMap(myIntAdd,"Y","negRealXFrac");
-					inPortMapCst(myIntAdd,"Cin","'1'");
-					outPortMap(myIntAdd,"R","my_add_result");
-					vhdl << tab << instance(myIntAdd, "Comparator");
-
-					syncCycleFromSignal("my_add_result");
-					vhdl << tab << declare("greater",1) << " <= my_add_result"<<of(2*(wF+2))<<";"<<endl;
-
-					syncCycleFromSignal("my_predictor");    
-
-					vhdl << tab << "-- sign/exception handling" << endl;
-					vhdl << tab << "with excsX select" <<endl
-						  << tab << tab <<  declare("exnR", 2) << " <= \"01\" when \"010\", -- positive, normal number" << endl
-						  << tab << tab << "excsX" << range(2, 1) << " when \"001\" | \"000\" | \"100\", " << endl
-						  << tab << tab << "\"11\" when others;"  << endl;
-
-					vhdl << tab << "R <= (exnR & excsX(0) & preSquareConcat"<<range(wE + wF,1) << ") when greater='0' else "<<endl;;
-					vhdl << tab << tab << "(exnR & excsX(0) & my_predictor"<<range(wE + wF,1) << ");"<<endl;
-	    
-				}
-			}
-
-
-
-
-
 
 		vhdl << tab << declare("excsX",3) << " <= X"<<range(wE+wF+2,wE+wF)<<";"<<endl;
 		vhdl << tab << declare("sX",1) << "  <= X"<<of(wE+wF)<<";"<<endl;
@@ -428,8 +354,7 @@ namespace flopoco{
 		
 //		cout << "The result number of bits is " << 	pe->getRWidth();
 //		cout << "The result weight is " << 	        pe->getRWeight();
-
-
+			
 #if KEEP_HANDCRAFTED_VERSION
 		}
 #endif			
