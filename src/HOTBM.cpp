@@ -47,7 +47,6 @@ namespace flopoco{
 			uniqueName_ = o.str();
 		}
 		setCombinatorial();
-		setPipelineDepth(0);
 		addInput("x", wI);
 		addOutput("r", wO+1, 2);  // faithful rounding
 	}

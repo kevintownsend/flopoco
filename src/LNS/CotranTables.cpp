@@ -73,7 +73,6 @@ namespace flopoco{
 
 
 		setCombinatorial();	
-		setPipelineDepth(0);
 
 		dh = 1. / (1 << (wF - j));
 	}
@@ -117,7 +116,6 @@ namespace flopoco{
 		uniqueName_ = name.str();
 
 		setCombinatorial();	
-		setPipelineDepth(0);
  
 		dh = 1. / (1 << (wF - j));
 	}
@@ -185,7 +183,6 @@ namespace flopoco{
 		dh = 1. / (1 << (wF - j));
 
 		setCombinatorial();	
-		setPipelineDepth(0);
 	
 	}
 

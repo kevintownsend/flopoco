@@ -1,15 +1,15 @@
 /*
   The FloPoCo command-line interface
   
-  This file is part of the FloPoCo project developed by the Arenaire
-  team at Ecole Normale Superieure de Lyon
+  This file is part of the FloPoCo project
+  developed by the Arenaire team at Ecole Normale Superieure de Lyon
   
   Author : Florent de Dinechin, Florent.de.Dinechin@ens-lyon.fr
 
   Initial software.
   Copyright © ENS-Lyon, INRIA, CNRS, UCBL,  
-  CeCILL License,
-  2008-2010.
+  CeCILL license, 2008-2010.
+
 */
 
 #include <iostream>
@@ -263,8 +263,10 @@ static void usage(char *name){
 	cerr << "      LNS division.\n";
 	cerr << "    LNSSqrt wE wF\n";
 	cerr << "      LNS square root.\n";
+#if 0 // Currently broken, most of its code was commented out for using deprecated methods. TODO
 	cerr << "    AtanPow wE wF o\n";
 	cerr << "      (4/pi)*atan(2^x) function.\n";
+#endif
 #endif // HAVE_LNS
 	cerr << "    _______________________________________________________________\n";
 	cerr << "    Collision wE wF opt n\n";

@@ -34,6 +34,7 @@ namespace flopoco{
 	AtanPow::AtanPow(Target * target, int wE, int wF, int o) :
 		Operator(target), wE(wE), wF(wF), order(o)
 	{
+#if 0	
 		T[0] = T[1] = T[2] = 0;
 		char const * my_func = "4/Pi * atan(2^(x))";
 
@@ -41,7 +42,6 @@ namespace flopoco{
 		name<<"AtanPow_"<< wE <<"_"<< wF << "_" << o; 
 		uniqueName_ = name.str();
 		setCombinatorial();
-	
 		addInput ("x", wE + wF);
 		addOutput("r", wF);
 	
@@ -63,7 +63,9 @@ namespace flopoco{
 	
 		T[2] = new HOTBM(target, my_func, uniqueName_, wF+2, wF, o, -4, 0, 1);
 		oplist.push_back(T[2]);
-
+#else
+		throw string("SORRY FOR THE INCONVENIENCE\n  This operator has been disabled because it was using deprecated methods which we really needed to clean up. \n It will take only a few hours to fix, so if you need it please please send a mail to Florent.de.Dinechin@ens-lyon.fr and Sylvain.Collange@univ-perp.fr\n");		
+#endif
 	
 	}
 
@@ -73,6 +75,7 @@ namespace flopoco{
 
 	void AtanPow::outputVHDL(std::ostream& o, std::string name)
 	{
+#if 0 // commented out for use of deprecated methods
 		licence(o,"Sylvain Collange (2008)");
 
 		Operator::stdLibs(o);
@@ -130,5 +133,6 @@ namespace flopoco{
 		o << "out_t2(" << (wF-1) << " downto 0);\n";
 	
 		o<< "end architecture;" << endl << endl;
+#endif
 	}
 }

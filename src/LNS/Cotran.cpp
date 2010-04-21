@@ -45,7 +45,6 @@ namespace flopoco{
 		uniqueName_ = name.str();
 
 		setCombinatorial();	
-		setPipelineDepth(0);
 	
 	
 		//	wEssZero = min(wE, log2(wF+1)+1)+wF;
