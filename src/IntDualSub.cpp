@@ -168,7 +168,7 @@ namespace flopoco{
 			//assign output by composing the result for x - y
 			vhdl << tab << "RxMy <= ";
 			for (int i=nbOfChunks-1;i>=0;i--){
-			  vhdl << "xMyr"<<i;
+			  vhdl << "xMy" << i << range(cSize[i]-1,0);
 			  if (i==0)
 			    vhdl << ";" << endl;
 			  else
@@ -178,7 +178,7 @@ namespace flopoco{
 			//assign output by composing the result for y - x or x + y
 			vhdl << tab << "R" << son_ << " <= ";
 			for (int i=nbOfChunks-1;i>=0;i--){
-			  vhdl << son_ <<i;
+			  vhdl << son_ << i << range(cSize[i]-1,0);
 			  if (i==0)
 			    vhdl << ";" << endl;
 			  else
