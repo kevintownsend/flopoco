@@ -326,8 +326,10 @@ are flushed to zero.
     <dd>A floating-point adder.</dd>
   <dt><code>FPDiv wE wF</code></dt>
     <dd>A floating-point divider.</dd>
-  <dt><code>FPSqrt wE wF useDSP correctRounding</code></dt>
-    <dd>A floating-point square root. useDSP (0/1) is a boolean selecting between the classical digit-recurrence algorithm and a polynomial-based algorithm. The latter is currently only available for single precision (8,23). correctRounding (0/1) is a boolean selecting the rounding mode for the polynomial approach. If set to 0, the operator will be faithful (last-bit accurate, but not necessarily correctly rounded). This boolean is ignored if useDSP=0: the digit-recurrence algorithm always returns correctly rounded results.</dd>
+  <dt><code>FPSqrt wE wF</code></dt>
+    <dd>A floating-point square root using the classical digit-recurrence algorithm. This implementation returns a correctly rounded result, uses no DSP nor RAM blocks and has low LUT usage. However, the latency can be as high as wF for high frequencies, and the frequency is limited for large wF. An alternative is FPSqrtPoly below.</dd>
+  <dt><code>FPSqrtPoly wE wF  CorrectlyRounded Degree</code></dt>
+    <dd>A floating-point square root using a polynomial approximation. It consumes DSP and RAM blocks, but can reach higher frequencies than FPSqrt, and has lower latency. CorrectlyRounded (0/1) is a boolean selecting the rounding mode. If set to 0, the operator will only be faithful (last-bit accurate, but not necessarily correctly rounded). This saves a lot of resources. Degree is an integer (typically between 2 and 5) that defines the degree of the polynomial approximation, and allows the user to trade-off between DSP usage, latency and memory consumption. Lower degree means lower latency and DSP count, but larger consumption of embedded memory. </dd>
   <dt><code>FPSquarer wE wF</code></dt>
     <dd>A floating-point squarer, using IntSquarer for the mantissa.</dd>
 </dl>
