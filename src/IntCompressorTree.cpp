@@ -44,14 +44,14 @@ namespace flopoco{
 		for (int i=0; i<N; i++){
 			name.str(""); //init a ostringstream variable
 			name << "X"<<i; 
-			addInput (name.str() , wIn_);
+			addInput (name.str() , wIn_, true);
 		}
 
-		addOutput("R"  , wIn_);
+		addOutput("R"  , wIn_, 1, true);
 
 		if (verbose){
 			cout <<"delay for X is   "<< inputDelays["X"]<<endl;	
-			cout <<"delay for Y is   "<< inputDelays["Y"]<<endl;
+////			cout <<"delay for Y is   "<< inputDelays["Y"]<<endl;
 		}
 
 		int lutSize = target->lutInputs();
@@ -70,7 +70,16 @@ namespace flopoco{
 		}
 	
 		while (processing){
-			if (nbOfInputs == 2){
+			if ((nbOfInputs == 1) || (wIn == 1)){
+				vhdl << tab << "R <= ";
+				for (int i=N-1; i>=0; i--){
+					if (i>0)
+						vhdl << "X"<<i<< " + ";
+					else
+						vhdl << "X"<<i<< ";"<<endl;
+				} 
+				processing = false;
+			}else if (nbOfInputs == 2){
 				name.str("");
 				name << "level_" << treeLevel-1 << "_sum_";			
 				vhdl << endl;

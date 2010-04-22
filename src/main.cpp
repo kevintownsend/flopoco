@@ -120,6 +120,8 @@
 #define PARAM 34
 #define OP(op,paramList)             {cerr << "    "; printf("%c[%d;%dm",27,1,OPER); cerr <<  op; printf("%c[%dm",27,0); cerr<< " "; printf("%c[%d;%dm",27,1,PARAM); cerr << paramList; printf("%c[%dm\n",27,0); } 
 
+
+
 using namespace std;
 using namespace flopoco;
 
@@ -143,6 +145,7 @@ namespace flopoco{
 	map<string, double> emptyDelayMap;
 	bool combinatorialOperator;
 }
+
 static void usage(char *name){
 	cerr << "\nUsage: "<<name<<" <operator specification list>\n" ;
 	cerr << "Each operator specification is one of: \n";
