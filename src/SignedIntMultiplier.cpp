@@ -293,7 +293,7 @@ namespace flopoco{
 							}else if (i == cOp2-1){
 								vhdl << tab << declare (join("addOp",i), (xS + y + 1) + (cOp2-1)*y - y) << " <= " 
 									        << join("sum",i)  << " & "
-									        << zg( (i-1)*x, 0) << ";" <<endl;
+									        << zg( (i-1)*y, 0) << ";" <<endl;
 							}
 						}//TODO compact ifs
 
