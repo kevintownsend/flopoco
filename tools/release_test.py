@@ -250,7 +250,7 @@ for line in fd:
 				status = string.find(st, "Error:")
 				if status > 0:
 					pass_test = False
-					did_compile = False
+#					did_compile = False
 		
 				status = string.find(st, "Incorrect")
 				if status > 0:
@@ -259,10 +259,11 @@ for line in fd:
 				status = string.find(st, "Stopped")
 				if status > 0:
 					finished = True
-					did_compile = False
+#					did_compile = False
 		
 				status = string.find(st, "Error loading design")
 				if status > 0:
+					did_compile = False
 					finished = True
 	
 			if did_compile:
@@ -272,7 +273,7 @@ for line in fd:
 			child_stdin.close()
 			child_stderr.close()
 			#p.wait()
-		did_compile = not did_compile
+#		did_compile = not did_compile
 		pass_test = pass_test and did_generate_vhdl
 		res.append( [run_cmd, `did_generate_vhdl`, `did_compile`, `pass_test`])
 		pass_all = pass_all and pass_test
