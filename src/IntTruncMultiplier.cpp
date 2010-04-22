@@ -82,9 +82,9 @@ namespace flopoco{
 	
 		setCopyrightString("Sebastian Banescu, Bogdan Pasca, Radu Tudoran 2010");
 	
-		addInput ("X", wX);
-		addInput ("Y", wY);
-		addOutput("R", wX + wY - k); 
+		addInput ("X", wX, true);
+		addInput ("Y", wY, true);
+		addOutput("R", wX + wY - k, 2, true); 
 	
 		warningInfo();
 	
@@ -3740,7 +3740,7 @@ namespace flopoco{
 			}		
 		Operator *add;
 		
-		if   (target_->getID() == "Virtex5"){
+		if   (target_->getID() != "Virtex5"){
 			add =  new IntNAdder(getTarget(), wInX+wInY-minShift, nrDSPOperands+nrSliceOperands+subCount, inMap);
 		} else{
 			add =  new IntCompressorTree(getTarget(), wInX+wInY-minShift, nrDSPOperands+nrSliceOperands+subCount, inMap);
@@ -3778,8 +3778,53 @@ namespace flopoco{
 		vhdl << instance(add, "adder");
 
 		syncCycleFromSignal("addRes");
+		
+		/* rounding and compensation needed only if k>0*/
+		if (targetPrecision==0)
+			vhdl << tab << "R <= addRes" << range(wX+wY-1-minShift, targetPrecision-minShift) << ";" << endl;
+		else{
+			/*value of the add bit */
+			if (targetPrecision==1){
+				/* just need to add the compensation '1' and truncate */
+				nextCycle();
+				IntAdder *af = new IntAdder(getTarget(), wX+wY);
+				oplist.push_back(af);
+				
+				
+				inPortMap(af, "X", "addRes");
+				inPortMapCst(af, "Y", join("CONV_STD_LOGIC_VECTOR(1,",wInX+wInY,")") );
+				inPortMapCst(af, "Cin", "'0'");
+				outPortMap(af, "R", "roundCompRes");
+				vhdl << instance(af, "RoundCompensate");
+				
+				syncCycleFromSignal("roundCompRes");
+				vhdl << tab << "R <= roundCompRes" << range(wX+wY-1-minShift, targetPrecision-minShift) << ";" << endl;
+			}else{
+				/* target precision > 1 */
+				nextCycle();
+				/* compute sticky bit */
+				vhdl << tab << declare("sticky",1,false) << "<= '1' when addRes"<<range(targetPrecision-minShift-2,0)<<">0 else '0';"<<endl;				
+				IntAdder *af = new IntAdder(getTarget(), wX+wY-1-minShift - (targetPrecision-minShift) + 1 + 1);
+				oplist.push_back(af);
+				nextCycle();
 
-		vhdl << tab << "R <= addRes" << range(wX+wY-1-minShift, targetPrecision-minShift) << ";" << endl;
+				inPortMapCst(af, "X", "addRes"+range(wX+wY-1-minShift, targetPrecision-minShift-1));
+				inPortMapCst(af, "Y", join("CONV_STD_LOGIC_VECTOR(1,",wX+wY-1-minShift - (targetPrecision-minShift) + 1 + 1,")") );
+				inPortMapCst(af, "Cin", "sticky");
+				outPortMap(af, "R", "roundCompRes");
+				vhdl << instance(af, "RoundCompensate");
+				
+				syncCycleFromSignal("roundCompRes");
+				vhdl << tab << "R <= roundCompRes" << range(wX+wY - targetPrecision,1) << ";" << endl;
+			
+			
+			
+			
+			
+			}
+		
+		
+		}
 	}
 	
 	vector<SoftDSP*> IntTruncMultiplier::insertSoftDSPs(DSP** config)
@@ -4518,8 +4563,16 @@ namespace flopoco{
 	{
 
 		mpz_class svX = tc->getInputValue("X");
-		mpz_class svR = svX * svX;
-
+		mpz_class svY = tc->getInputValue("Y");
+		
+		mpz_class svR = svX * svY;
+//		cout << "before svr=" << svR << endl; 
+		svR = (svR >> int(targetPrecision));
+//		cout << "after  svr=" << svR << endl; 
+		
+		
+		tc->addExpectedOutput("R", svR);
+		svR = svR + mpz_class(1);
 		tc->addExpectedOutput("R", svR);
 	}
 	
