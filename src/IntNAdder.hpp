@@ -21,8 +21,6 @@ namespace flopoco{
 		 * @param[in] inputDelays the delays for each input
 		 **/
 		IntNAdder(Target* target, int wIn, int N, map<string, double> inputDelays = emptyDelayMap);
-		/*IntNAdder(Target* target, int wIn);
-		  void cmn(Target* target, int wIn, map<string, double> inputDelays);*/
 	
 		/**
 		 *  Destructor
