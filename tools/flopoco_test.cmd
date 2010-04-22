@@ -133,6 +133,13 @@ flopoco -frequency=400 -target=Virtex5 SignedIntMultiplier 60 60
 flopoco -frequency=400 -target=Virtex5 SignedIntMultiplier 10 70
 flopoco -frequency=400 -target=Virtex5 SignedIntMultiplier 40 100
 
+#    IntTilingMultiplier wInX wInY ratio maxTimeInMinutes
+
+yes | flopoco	-frequency=400 -target=Virtex4 IntTilingMultiplier 40 40 0.9 2
+yes | flopoco	-frequency=400 -target=Virtex4 IntTilingMultiplier 80 40 0.95 2
+yes | flopoco	-frequency=400 -target=Virtex5 IntTilingMultiplier 80 40 0.95 2
+yes | flopoco	-frequency=400 -target=Virtex5 IntTilingMultiplier 80 40 0.95 2
+
 
 
 

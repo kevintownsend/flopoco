@@ -214,7 +214,6 @@ for line in fd:
 		print run_cmd
 		logfile.write(run_cmd+"\n")
 		modelsim_food = commands.getoutput(run_cmd)
-
 		did_generate_vhdl = True
 		status = string.find(modelsim_food, "Output file: flopoco.vhdl")
 		if status < 0:
@@ -224,7 +223,7 @@ for line in fd:
 		modelsim_food = modelsim_food[string.find(modelsim_food, "vdel") : string.find(modelsim_food, "To run the simulation using gHDL,")-1 ]
 
 		print("The modelsim food is:\n"+modelsim_food);
-
+	
 		finished = False
 		pass_test = True
 		did_compile = True
