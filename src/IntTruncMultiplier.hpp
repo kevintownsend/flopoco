@@ -119,8 +119,6 @@ namespace flopoco{
 	{
 	public:
 		
-		IntTruncMultiplier(Target* target, int wX, float ratio, int k,int uL, int maxTimeInMinutes);
-
 		IntTruncMultiplier(Target* target, int wX, int wY, float ratio, int k,int uL, int maxTimeInMinutes);
 	
 		/** IntTruncMultiplier destructor */
@@ -142,7 +140,6 @@ namespace flopoco{
 		 *            with their corresponding positioning 
 		 * @return the approximation error
 		 */ 
-		mpfr_t* evalTruncTilingError(DSP** configuration, SoftDSP** softDSPs);
 		mpfr_t* evalTruncTilingErrorInverted(DSP** configuration, vector<SoftDSP*> softDSPs);
 
 
@@ -326,7 +323,7 @@ namespace flopoco{
 		int estimateDSPsv2(){
 			/* get the are of the board to be tilled */
 			float boardArea; 
-		    boardArea = (float(truncationOffset*truncationOffset)/2) + (wX-truncationOffset)*wY + (wY-truncationOffset)*wX;
+		    boardArea = (float(truncationOffset*truncationOffset)/2) + (wX-truncationOffset)*wY + (wY-truncationOffset)*wX - (wX-truncationOffset)*(wY-truncationOffset);
 		    /* get the tile area */
 		    int dx, dy;
 		    target_->getDSPWidths(dx,dy);
