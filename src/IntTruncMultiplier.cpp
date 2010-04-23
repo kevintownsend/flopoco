@@ -194,11 +194,11 @@ namespace flopoco{
 				configuration[i]->getBottomLeftCorner(xB,yB);
 				cout << "HARD DSP Top right = " << xT-getExtraWidth() << ", " << yT << " and bottom left = " << xB-getExtraHeight() << ", " <<yB << endl;
 				fig << " 2 2 0 1 0 7 50 -1 -1 0.000 0 0 -1 0 0 5 " << endl;
-				fig << " " << (-xB+getExtraWidth()-1) * 45 << " " << (yT-getExtraHeight())     * 45
-				    << " " << (-xT+getExtraWidth())   * 45 << " " << (yT-getExtraHeight())     * 45
-				    << " " << (-xT+getExtraWidth())   * 45 << " " << (yB-getExtraHeight()+1)   * 45
-				    << " " << (-xB+getExtraWidth()-1) * 45 << " " << (yB-getExtraHeight()+1)   * 45
-				    << " " << (-xB+getExtraWidth()-1) * 45 << " " << (yT-getExtraHeight())     * 45   << endl;
+				fig << " " <<- (-xB+getExtraWidth()-1) * 45 << " " <<- (yT-getExtraHeight())     * 45
+				    << " " <<- (-xT+getExtraWidth())   * 45 << " " <<- (yT-getExtraHeight())     * 45
+				    << " " <<- (-xT+getExtraWidth())   * 45 << " " <<- (yB-getExtraHeight()+1)   * 45
+				    << " " <<- (-xB+getExtraWidth()-1) * 45 << " " <<- (yB-getExtraHeight()+1)   * 45
+				    << " " <<- (-xB+getExtraWidth()-1) * 45 << " " <<- (yT-getExtraHeight())     * 45   << endl;
 			}
 		}
 
@@ -209,21 +209,21 @@ namespace flopoco{
 			softDSPs[k]->getBottomLeftCorner(xB,yB);
 			cout << "SOFT DSP Top right = " << xT << ", " << yT << " and bottom left = " << xB << ", " <<yB << endl;
 				fig << " 2 2 0 1 0 7 50 -1 19 0.000 0 0 -1 0 0 5 " << endl;
-				fig << "	  " << (-xB+getExtraWidth()-1)*45 << " " << (yT-getExtraHeight())*45 
-				         << " " << (-xT+getExtraWidth())*45 << " " << (yT-getExtraHeight())*45 
-				         << " " << (-xT+getExtraWidth())*45 << " " << (yB-getExtraHeight()+1)*45 
-				         << " " << (-xB+getExtraWidth()-1)*45 << " " << (yB-getExtraHeight()+1)*45 
-				         << " " << (-xB+getExtraWidth()-1)*45 << " " << (yT-getExtraHeight())*45 << endl;
+				fig << "	  " <<- (-xB+getExtraWidth()-1)*45 << " " <<- (yT-getExtraHeight())*45 
+				         << " " <<- (-xT+getExtraWidth())*45 << " " <<- (yT-getExtraHeight())*45 
+				         << " " <<- (-xT+getExtraWidth())*45 << " " <<- (yB-getExtraHeight()+1)*45 
+				         << " " <<- (-xB+getExtraWidth()-1)*45 << " " <<- (yB-getExtraHeight()+1)*45 
+				         << " " << -(-xB+getExtraWidth()-1)*45 << " " <<- (yT-getExtraHeight())*45 << endl;
 			
 
 		}
 		
 		fig << "		2 2 1 1 0 7 50 -1 -1 4.000 0 0 -1 0 0 5" << endl;
-		fig << "	  " << (-wInX)*45 << " " << 0 
-		<< " " << 0 << " " << 0  
-		<< " " << 0 << " " << (wInY)*45 
-		<< " " << (-wInX)*45 << " " << (wInY)*45 
-		<< " " << (-wInX)*45 << " " << 0 << endl;
+		fig << "	  " <<- (-wInX)*45 << " " << 0 
+		<< " " <<- 0 << " " <<- 0  
+		<< " " <<- 0 << " " <<- (wInY)*45 
+		<< " " <<- (-wInX)*45 << " " <<- (wInY)*45 
+		<< " " <<- (-wInX)*45 << " " <<- 0 << endl;
 		fig.close();
 	}
 	
