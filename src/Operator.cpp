@@ -368,9 +368,9 @@ namespace flopoco{
 		isSequential_=false; 
 	}
 
-        void Operator::setRecirculationSignal() {
-                needRecirculationSignal_ = true;
-        }
+	void Operator::setRecirculationSignal() {
+		needRecirculationSignal_ = true;
+	}
 
 
 	int Operator::getPipelineDepth() {
