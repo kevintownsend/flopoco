@@ -130,7 +130,7 @@ namespace flopoco{
                 vhdl << tab << tab << "variable inline : line; " << endl;                    // variable to read a line
                 vhdl << tab << tab << "variable counter : integer := 1;" << endl;
                 vhdl << tab << tab << "variable tmpChar : character;" << endl;                        // variable to store a character (escape between inputs)
-                vhdl << tab << tab << "file inputsFile : text is \"essai.input\"; " << endl; // declaration of the input file
+                vhdl << tab << tab << "file inputsFile : text is \"test.input\"; " << endl; // declaration of the input file
 
 
                 /* Variable to store value for inputs and expected outputs*/
@@ -216,7 +216,7 @@ namespace flopoco{
                 // opening a file to write down the output (for text-file based test)
                 // if n < 0 we do not generate a file
                 if (n_ >= 0) {
-                  string inputFileName = "essai.input";
+                  string inputFileName = "test.input";
                   ofstream fileOut(inputFileName.c_str(),ios::out);
                   // if error at opening, let's mention it !
                   if (!fileOut) cerr << "FloPoCo was not abe to open " << inputFileName << " in order to write down inputs. " << endl;
@@ -232,7 +232,7 @@ namespace flopoco{
 
                 // exhaustive test IO generation 
                 if(n_ == -2) {
-                  string inputFileName = "essai.input";
+                  string inputFileName = "test.input";
                   ofstream fileOut(inputFileName.c_str(),ios::out);
                   // if error at opening, let's mention it !
                   if (!fileOut) cerr << "FloPoCo was not abe to open " << inputFileName << " in order to write down inputs. " << endl;

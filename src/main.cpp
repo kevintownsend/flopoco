@@ -316,11 +316,8 @@ static void usage(char *name){
 	OP( "TestBenchFile","n");
 	cerr << "       Behavorial test bench for the preceding operator\n";
 	cerr << "       This test bench will include standard tests, plus n random tests.\n";
-	cerr << "       This test bench will generate a file (by default essai.input) to .\n";
-	cerr << "       store the IO while TestBench generate VHDL, It is not implemeted.\n";
-	cerr << "       for all operators but it is much more efficient for large test.\n";
-	//	cerr << "    BigTestBench n\n";
-	//	cerr << "       Same as above, more VHDL efficient, less practical for debugging.\n";
+	cerr << "       It uses a file (test.input) containing inputs and expected outputs.\n";
+	cerr << "       This reduces VHDL compilation time and is thus more efficient for large tests.\n";
 	cerr << "    ____________ WRAPPER _______________________________________________________\n";
 	OP ("Wrapper","");
 	cerr << "       Wraps the preceding operator between registers\n";
