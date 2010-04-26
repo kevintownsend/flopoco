@@ -213,12 +213,12 @@ namespace flopoco{
 					vhdl << tab << declare(isignal, size) << " <= ";
 					if(size>isize+1) // need to sign-extend x
 						vhdl <<"(" << size-1 << " downto " << isize <<" => '" << (sao->i->n >= 0 ? "0" : "1" ) << "') & ";
-					vhdl << use(iname) << ";" << endl;
+					vhdl << iname << ";" << endl;
 					// the y part
 					vhdl << tab << declare(jsignal, size) << " <= ";
 					if(size>jsize) // need to sign-extend y
 						vhdl << "(" << size-1 <<" downto " << jsize <<" => '" << (sao->j->n >= 0 ? "0" : "1" ) << "') & ";
-					vhdl << use(jname) << ";" << endl;
+					vhdl << jname << ";" << endl;
 
 					if(use_pipelined_adder) { // Need to use an IntAdder subcomponent
 						inPortMap  (adder, "X", isignal);
@@ -228,7 +228,7 @@ namespace flopoco{
 						vhdl << instance(adder, sao->name + "_adder");
 					}
 					else
-						vhdl << tab << declare(sao->name, size) << " <= " << use(isignal) << " + " << use(jsignal) << ";" << endl;
+						vhdl << tab << declare(sao->name, size) << " <= " << isignal << " + " << jsignal << ";" << endl;
 				}
 
 
@@ -243,16 +243,16 @@ namespace flopoco{
 							if(shift>jsize) {
 								vhdl << "(" <<  shift-1 <<" downto " << jsize << " => ";
 								if(sao->j->n >= 0)  vhdl << "'0'"; // pad with 0s 
-								else                vhdl << use(jname) << "(" << jsize-1 << ")";// sign extend
+								else                vhdl << jname << "(" << jsize-1 << ")";// sign extend
 								vhdl << ") & ";
 							}
-							vhdl << use(jname) << ";   -- lower bits untouched"<<endl;
+							vhdl << jname << ";   -- lower bits untouched"<<endl;
 
 							if(op == Add) {
 								// The higher bits (size-1 downto s) of the result are those of x, possibly plus 11...1 if y was negative
-								vhdl << tab << sao->name << "("<<sao->size-1<<" downto "<< shift<<") <= " << use(iname) ;
+								vhdl << tab << sao->name << "("<<sao->size-1<<" downto "<< shift<<") <= " << iname ;
 								if(sao->j->n < 0) { 
-									vhdl <<" + (" << sao->size-1 <<" downto " <<  shift <<" => " << use(jname) << "(" << jsize-1 << ")) "
+									vhdl <<" + (" << sao->size-1 <<" downto " <<  shift <<" => " << jname << "(" << jsize-1 << ")) "
 										  << ";   -- sum of higher bits"<<endl;
 								}
 								else 
@@ -262,10 +262,10 @@ namespace flopoco{
 								// The higher bits (size-1 downto s) of the result are those of -x, possibly plus 11...1 if y was negative
 								vhdl << tab << sao->name << "("<<sao->size-1<<" downto "<< shift<<") <= " ;
 								if(sao->j->n < 0) 
-									vhdl <<"(" << sao->size-1 << " downto " <<  shift <<" => " << use(jname) << "(" << jsize-1 << ")) ";
+									vhdl <<"(" << sao->size-1 << " downto " <<  shift <<" => " << jname << "(" << jsize-1 << ")) ";
 								else
-									vhdl <<"(" << sao->size-1 << " downto " <<  shift <<" => " << "'0') ";
-								vhdl << " - " << use(iname) << ";   -- sum of higher bits"<<endl;
+									vhdl <<"(" << sao->size-1 << " downto " <<  shift <<" => '0') ";
+								vhdl << " - " << iname << ";   -- sum of higher bits"<<endl;
 							}
 						} // end if (shift >= jsize)
 						else{ 
@@ -280,19 +280,19 @@ namespace flopoco{
 							if(size >= isize +  shift +1) { // need to sign-extend vx. If the constant is positive, padding with 0s is enough
 								vhdl <<" (" << size-1 << " downto " << isize +  shift <<" => ";
 								if(sao->i->n >= 0)   vhdl << "'0'";// pad with 0s 
-								else                 vhdl << use(iname) << "(" << isize-1 << ")"; // sign extend
+								else                 vhdl << iname << "(" << isize-1 << ")"; // sign extend
 								vhdl << ") & ";
 							}
-							vhdl << use(iname) << "("<< isize -1 <<" downto 0) ;" << endl;
+							vhdl << iname << "("<< isize -1 <<" downto 0) ;" << endl;
 							// the y part
 							vhdl << tab << declare(jsignal,  size - shift) << " <= ";
 							if(size >= jsize+1) {// need to sign-extend vy. If the constant is positive padding with 0s is enough
 								vhdl <<" (" << size-1 << " downto " << jsize <<" => ";
 								if(sao->j->n >= 0)  vhdl << "'0'"; // pad with 0s 
-								else                vhdl << use(jname) << "(" << jsize-1 << ")";// sign extend
+								else                vhdl << jname << "(" << jsize-1 << ")";// sign extend
 								vhdl << ") & ";
 							}
-							vhdl << use(jname) << "("<< jsize -1 <<" downto " <<  shift << "); " << endl;
+							vhdl << jname << "("<< jsize -1 <<" downto " <<  shift << "); " << endl;
 					
 							// do the sum
 							if(use_pipelined_adder) {
@@ -303,7 +303,7 @@ namespace flopoco{
 								} 
 								else { // RSub
 									string isignalneg = isignal+"_neg"; 
-									vhdl << declare(isignalneg, size - shift) << " <= not " << use(isignal);
+									vhdl << declare(isignalneg, size - shift) << " <= not " << isignal;
 									inPortMap  (adder, "Y", isignal);
 									inPortMapCst  (adder, "Cin", "'1'");
 								}
@@ -313,14 +313,14 @@ namespace flopoco{
 
 								syncCycleFromSignal(resname, false);
 								//nextCycle();
-								vhdl << tab << declare(sao->name, sao->size) << "("<<size-1<<" downto " <<  shift << ") <= " << use(resname) + ";" << endl;
+								vhdl << tab << declare(sao->name, sao->size) << "("<<size-1<<" downto " <<  shift << ") <= " << resname + ";" << endl;
 							}
 							else
 								vhdl << tab << declare(sao->name, sao->size) << "("<<size-1<<" downto " <<  shift << ") <= " // vz (size-1 downto s)
-									  << use(jsignal) << (op==Add ? " + " : "-") << use(isignal) << ";   -- sum of higher bits" << endl; 
+									  << jsignal << (op==Add ? " + " : "-") << isignal << ";   -- sum of higher bits" << endl; 
 			
 							// In both cases the lower bits of the result (s-1 downto 0) are untouched
-							vhdl << tab << sao->name << "("<<shift-1<<" downto 0) <= " << use(jname) <<"("<< shift-1<<" downto 0);   -- lower bits untouched"<<endl;
+							vhdl << tab << sao->name << "("<<shift-1<<" downto 0) <= " << jname <<"("<< shift-1<<" downto 0);   -- lower bits untouched"<<endl;
 
 						} // end if (shift >= jsize) else
 					} // end if(op == Add || op == RSub) 
@@ -332,22 +332,22 @@ namespace flopoco{
 						if(size > isize+shift) {// need to sign-extend vx. If the constant is positive padding with 0s is enough
 							vhdl <<" (" << size-1 << " downto " << isize+shift <<" => ";
 							if(sao->i->n >= 0)   vhdl << "'0'";// pad with 0s 
-							else                 vhdl << use(iname) << "(" << isize-1 << ")";// sign extend
+							else                 vhdl << iname << "(" << isize-1 << ")";// sign extend
 							vhdl << ") & ";
 						}
-						vhdl << use(iname) << " & (" << shift-1 << " downto 0 => '0')" << ";" << endl;
+						vhdl << iname << " & (" << shift-1 << " downto 0 => '0');" << endl;
 
 						vhdl << tab << declare(jsignal,  size) << " <= ";
 						vhdl <<" (" << size-1 << " downto " << jsize <<" => ";
 						if(sao->j->n >= 0)   vhdl << "'0'";// pad with 0s 
-						else                 vhdl << use(jname) << "(" << jsize-1 << ")";// sign extend
+						else                 vhdl << jname << "(" << jsize-1 << ")";// sign extend
 						vhdl << ") & ";
-						vhdl << use(jname) << ";" << endl;
+						vhdl << jname << ";" << endl;
 					
 						// do the subtraction
 						if(use_pipelined_adder) {
 							string jsignalneg = jsignal+"_neg"; 
-							vhdl << declare(jsignalneg, size) << " <= not " << use(jsignal);
+							vhdl << declare(jsignalneg, size) << " <= not " << jsignal;
 							inPortMap  (adder, "X", isignal);
 							inPortMap  (adder, "Y", jsignalneg);
 							inPortMapCst  (adder, "Cin", "'1'");
@@ -357,7 +357,7 @@ namespace flopoco{
 
 							syncCycleFromSignal(resname, false);
 							//nextCycle();
-							vhdl << tab << declare(sao->name, size) << " <=  " << use(resname) + ";" << endl;
+							vhdl << tab << declare(sao->name, size) << " <=  " << resname + ";" << endl;
 						
 						}
 					}
@@ -395,12 +395,12 @@ namespace flopoco{
 				vhdl << tab << declare(sao->name, size) << " <= " ;
 				// TODO use a pipelined IntAdder when necessary
 				if(op == Neg)   
-					vhdl << "("<< size -1 <<" downto 0 => '0') - " << use(iname) <<";"<<endl; 
+					vhdl << "("<< size -1 <<" downto 0 => '0') - " << iname <<";"<<endl; 
 				else { // Shift
 					if (shift == 0) 
-						vhdl << use(iname) <<";"<<endl; 
+						vhdl << iname <<";"<<endl; 
 					else
-						vhdl << use(iname) <<" & ("<< shift - 1 <<" downto 0 => '0');"<<endl;
+						vhdl << iname <<" & ("<< shift - 1 <<" downto 0 => '0');"<<endl;
 				}
 				break;
 

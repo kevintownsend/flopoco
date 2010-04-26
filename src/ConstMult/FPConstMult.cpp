@@ -182,26 +182,26 @@ extern vector<Operator*> oplist;
 			setCycleFromSignal("sig_prod"); 
 			nextCycle();
 			// Possibly shift the significand one bit left, and remove implicit 1 
-			vhdl << tab << declare("shifted_frac",    wF_out+1) << " <= " << use("sig_prod") << "("<<icm->rsize -2<<" downto "<<icm->rsize - wF_out-2 <<")  when " << use("gt_than_xcut") << " = '1'"<<endl
-				  << tab << "           else " << use("sig_prod") << "("<<icm->rsize -3<<" downto "<<icm->rsize - wF_out - 3<<");"<<endl;  
+			vhdl << tab << declare("shifted_frac",    wF_out+1) << " <= sig_prod("<<icm->rsize -2<<" downto "<<icm->rsize - wF_out-2 <<")  when gt_than_xcut = '1'"<<endl
+				  << tab << "           else sig_prod("<<icm->rsize -3<<" downto "<<icm->rsize - wF_out - 3<<");"<<endl;  
 			// add the rounding bit
-			vhdl << tab << tab << declare("rounded_frac",   wF_out+1) << " <= (("<<wF_out <<" downto 1 => '0') & '1') + " << use("shifted_frac") << ";"<<endl;
+			vhdl << tab << tab << declare("rounded_frac",   wF_out+1) << " <= (("<<wF_out <<" downto 1 => '0') & '1') + shifted_frac;"<<endl;
 			vhdl << tab << tab << declare("r_frac", wF_out) << " <= rounded_frac("<<wF_out <<" downto  1);"<<endl;
 		}
 
 		// Handling signs is trivial
 		if(cst_sgn==0)
-			vhdl << tab << declare("r_sgn") << " <= " << use("x_sgn") << "; -- positive constant"<<endl;
+			vhdl << tab << declare("r_sgn") << " <= x_sgn; -- positive constant"<<endl;
 		else
-			vhdl << tab << declare("r_sgn") << " <= not " << use("x_sgn") << "; -- negative constant"<<endl;
+			vhdl << tab << declare("r_sgn") << " <= not x_sgn; -- negative constant"<<endl;
 
 		// exponent handling
 		vhdl << tab << declare("abs_unbiased_cst_exp",wE_sum+1) << " <= \""
 			  << unsignedBinary(expAddend, wE_sum+1) << "\";" << endl;
 		vhdl << tab << declare("r_exp_nopb",    wE_out+1) << " <= "
-			  << "((" << wE_sum << " downto " << wE_in << " => '0')  & " << use("x_exp") << ")  "
+			  << "((" << wE_sum << " downto " << wE_in << " => '0')  & x_exp)  "
 			  << (expAddendSign==0 ? "+" : "-" ) << "  abs_unbiased_cst_exp"
-			  << "  +  (("<<wE_sum<<" downto 1 => '0') & " <<  use("gt_than_xcut") << ");"<<endl;
+			  << "  +  (("<<wE_sum<<" downto 1 => '0') & gt_than_xcut);"<<endl;
 
 		// overflow handling
 		vhdl << tab << declare("overflow") << " <= " ;
@@ -220,12 +220,12 @@ extern vector<Operator*> oplist;
 	
 		vhdl << tab << declare("r_exp", wE_out) << " <= r_exp_nopb("<<wE_out-1<<" downto 0) ;"<<endl;
 
-		vhdl << tab << declare("r_exn", 2) << " <=      \"00\" when ((" << use("x_exn") << " = \"00\") or (" << use("x_exn") << " = \"01\" and underflow='1'))  -- zero"<<endl 
-			  << tab << "         else \"10\" when ((" << use("x_exn") << " = \"10\") or (" << use("x_exn") << " = \"01\" and overflow='1'))   -- infinity" << endl
-			  << tab << "         else \"11\" when  (" << use("x_exn") << " = \"11\")                      -- NaN" << endl
+		vhdl << tab << declare("r_exn", 2) << " <=      \"00\" when ((x_exn = \"00\") or (x_exn = \"01\" and underflow='1'))  -- zero"<<endl 
+			  << tab << "         else \"10\" when ((x_exn = \"10\") or (x_exn = \"01\" and overflow='1'))   -- infinity" << endl
+			  << tab << "         else \"11\" when  (x_exn = \"11\")                      -- NaN" << endl
 			  << tab << "         else \"01\";                                          -- normal number" << endl;
 
-		vhdl  << tab << "r <= " << use("r_exn") << " & " << use("r_sgn") << " & " << use("r_exp") << " & r_frac;"<<endl;
+		vhdl  << tab << "r <= r_exn & r_sgn & r_exp & r_frac;"<<endl;
 
 
 	}

@@ -95,9 +95,9 @@ namespace flopoco{
 			//first split the input X into digits having lutWidth bits -> this is as generic as it gets :)
 			for (int i=0; i<nbOfTables; i++)
 				if (i < nbOfTables-1)
-					vhdl << tab << declare( join("d",i), lutWidth ) << " <= " << use("X") << range(lutWidth*(i+1)-1, lutWidth*i ) << ";" <<endl;
+					vhdl << tab << declare( join("d",i), lutWidth ) << " <= X" << range(lutWidth*(i+1)-1, lutWidth*i ) << ";" <<endl;
 				else
-					vhdl << tab << declare( join("d",i), wIn -  lutWidth*i ) << " <= " << use("X") << range( wIn-1 , lutWidth*i ) << ";" <<endl;
+					vhdl << tab << declare( join("d",i), wIn -  lutWidth*i ) << " <= X" << range( wIn-1 , lutWidth*i ) << ";" <<endl;
 	
 			cout << "Generating the maps on the tables ... "<<endl;
 			//perform nbOfTables multiplications
@@ -128,15 +128,15 @@ namespace flopoco{
 				vhdl << tab << declare( join("addOp",i), addOpSize ) << " <= ";
 				if (i!=nbOfTables-1){ //if not the last table
 					for (int j=addOpSize-1; j>= (constantWidth + lutWidth) + (i-1)*lutWidth ; j--) //sign extension
-						vhdl << use(join("pp",i))<<of(constantWidth + lutWidth -1) << " & ";
+						vhdl << join("pp",i)<<of(constantWidth + lutWidth -1) << " & ";
 					
-					vhdl << use(join("pp",i)) << range(constantWidth + lutWidth -1, (i==0?lutWidth:0)) << " & " << zg((i-1)*lutWidth,0) << ";" << endl;
+					vhdl << join("pp",i) << range(constantWidth + lutWidth -1, (i==0?lutWidth:0)) << " & " << zg((i-1)*lutWidth,0) << ";" << endl;
 				}
 				else{
 					for (int j=addOpSize-1; j>= (constantWidth + lastLutWidth)+ (i-1)*lutWidth ; j--)
-						vhdl << use(join("pp",i))<<range(constantWidth + lastLutWidth -1,constantWidth + lastLutWidth -1) << " & ";
+						vhdl << join("pp",i)<<range(constantWidth + lastLutWidth -1,constantWidth + lastLutWidth -1) << " & ";
 					
-					vhdl << use(join("pp",i))<<range(constantWidth + lastLutWidth -1, (i==0?lutWidth:0))<< " & " << zg((i-1)*lutWidth,0) << ";" << endl;
+					vhdl << join("pp",i)<<range(constantWidth + lastLutWidth -1, (i==0?lutWidth:0))<< " & " << zg((i-1)*lutWidth,0) << ";" << endl;
 				}
 			}
 		
@@ -154,7 +154,7 @@ namespace flopoco{
 		
 			syncCycleFromSignal("OutRes");
 		
-			vhdl << tab << "R <= " << use("OutRes") << " & " << use( "pp0")<<range(lutWidth-1,0) << ";" <<endl;
+			vhdl << tab << "R <= OutRes & pp0"<<range(lutWidth-1,0) << ";" <<endl;
 		}
 
 
@@ -203,12 +203,12 @@ namespace flopoco{
 			//first split the input X into digits having lutWidth bits -> this is as generic as it gets :)
 			for (int i=0; i<nbOfTables; i++)
 				if (i < nbOfTables-1)
-					vhdl << tab << declare( join("d",i), lutWidth ) << " <= " << use("X") << range(lutWidth*(i+1)-1, lutWidth*i ) << ";" <<endl;
+					vhdl << tab << declare( join("d",i), lutWidth ) << " <= X" << range(lutWidth*(i+1)-1, lutWidth*i ) << ";" <<endl;
 				else {
 					vhdl << tab << declare( join("d",i), lutWidth ) << " <= " ;
 					if(lutWidth*(i+1)>wIn)	
 						vhdl << rangeAssign(lutWidth*(i+1)-1, wIn, "'0'") << " & ";
-					vhdl << use("X") << range( wIn-1 , lutWidth*i ) << ";" <<endl;
+					vhdl << "X" << range( wIn-1 , lutWidth*i ) << ";" <<endl;
 				}
 			//perform nbOfTables multiplications
 			for ( int i=nbOfTables-1; i >= 0; i--){
@@ -228,11 +228,11 @@ namespace flopoco{
 				vhdl << tab << declare( join("addOp",i), addOpSize ) << " <= ";
 				if (i!=nbOfTables-1){ //if not the last table
 					vhdl << rangeAssign(addOpSize-1, constantWidth + i*lutWidth, "'0'") << " & " 
-						  <<  use(join("pp",i)) << range(constantWidth + lutWidth -1, (i==0?lutWidth:0)) << " & " 
+						  <<  join("pp",i) << range(constantWidth + lutWidth -1, (i==0?lutWidth:0)) << " & " 
 						  << zg((i-1)*lutWidth,0) << ";" << endl;
 				}
 				else{
-					vhdl << use(join("pp",i))<<range(constantWidth + lastLutWidth -1, (i==0?lutWidth:0))<< " & " << zg((i-1)*lutWidth,0) << ";" << endl;
+					vhdl << join("pp",i)<<range(constantWidth + lastLutWidth -1, (i==0?lutWidth:0))<< " & " << zg((i-1)*lutWidth,0) << ";" << endl;
 				}
 			}
 		
@@ -250,7 +250,7 @@ namespace flopoco{
 		
 			syncCycleFromSignal("OutRes");
 		
-			vhdl << tab << "R <= " << use("OutRes") << " & " << use( "pp0")<<range(lutWidth-1,0) << ";" <<endl;
+			vhdl << tab << "R <= OutRes & pp0" << range(lutWidth-1,0) << ";" <<endl;
 		}
 	}
 
