@@ -35,7 +35,15 @@ using namespace std;
 
 
 namespace flopoco{
+        /** Initialization of FloPoCoRandomState state */
+        gmp_randstate_t FloPoCoRandomState::m_state;
 
+        void FloPoCoRandomState::init(int n) {
+          gmp_randinit_mt(m_state);
+          gmp_randseed_ui(m_state,n);
+        };
+
+        //gmp_randstate_t* FloPoCoRandomState::getState() { return m_state;};
 	/** return a string representation of an mpz_class on a given number of bits */
 	string unsignedBinary(mpz_class x, int size){
 		string s;
@@ -328,15 +336,8 @@ namespace flopoco{
 #else
 	mpz_class getLargeRandom(int n)
 	{
-		static gmp_randstate_t state;
-		static bool init = false;
-		if (init == false)
-			{
-				init = true;
-				gmp_randinit_default(state);
-			}
 		mpz_class o;
-		mpz_urandomb(o.get_mpz_t(), state, n);
+		mpz_urandomb(o.get_mpz_t(), FloPoCoRandomState::m_state, n);
 		return o;
 	}
 

@@ -22,6 +22,25 @@ using namespace std;
 
 namespace flopoco{
 
+        /** This class contains all information about a random state
+         * it has to be used has a singleton to initialize and share a random state
+         * between calls to getLargeRandom function
+         */
+        class FloPoCoRandomState {
+          public:
+            /**
+             * public value to store currend gmp random state
+             */
+            static gmp_randstate_t m_state;
+
+            /**
+             * static public function to initialize random generator
+             * with a seed base on the integer n
+             * @param n the integer used to generate the seed
+             */
+            static void init(int n);
+        };
+
 	/** Returns under the form of a string of given size, the unsigned binary representation of an integer.
 	 * @param x the number to be represented in unsigned binary
 	 * @param size the size of the output string

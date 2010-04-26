@@ -1,7 +1,7 @@
 /*
  * A test bench generator for FloPoCo. 
  *
- * Author : Cristian Klein, Florent de Dinechin
+ * Author : Cristian Klein, Florent de Dinechin, Nicolas Brunie
  *
  * This file is part of the FloPoCo project developed by the Arenaire
  * team at Ecole Normale Superieure de Lyon
@@ -49,8 +49,11 @@ namespace flopoco{
 		setCycle(0);
 
 
+                FloPoCoRandomState::init(n);
 		// Generate the standard and random test cases for this operator
 		op-> buildStandardTestCases(&tcl_);
+                // initialization of randomstate generator with the seed base on the number of
+                // randomtestcase to be generated
 		op-> buildRandomTestCases(&tcl_, n);
 	
 
@@ -163,8 +166,8 @@ namespace flopoco{
 			Signal* s = inputSignalVector[i];
                         vhdl << tab << tab << tab << "read(inline ,V_"<< s->getName() << ");" << endl;
                         vhdl << tab << tab << tab << "read(inline,tmpChar);" << endl; // we consume the character between each inputs
-			if (s->width() > 1) vhdl << tab << tab << tab << s->getName() << " <= to_stdlogicvector(V_" << s->getName() << ");" << endl;
-			else vhdl << tab << tab << tab << s->getName() << " <= to_stdlogicvector(V_" << s->getName() << ")(0);" << endl;
+			if (s->width() == 1 and !s->isBus()) vhdl << tab << tab << tab << s->getName() << " <= to_stdlogicvector(V_" << s->getName() << ")(0);" << endl;
+			else vhdl << tab << tab << tab << s->getName() << " <= to_stdlogicvector(V_" << s->getName() << ");" << endl;
                         // adding the IO to IOorder
                         IOorderInput.push_back(s->getName());
 		}
@@ -193,8 +196,8 @@ namespace flopoco{
                         vhdl << tab << tab << tab << "read(inline ,V_"<< s->getName() << ");" << endl;
                         vhdl << tab << tab << tab << "read(inline,tmpChar);" << endl; // we consume the character between each inputs
                         if (s->isFP()) //cerr << "managing fp equality is not implemented yet, see line ~ 197 TestBench.cpp  . "<< endl;
-                        vhdl << tab << tab << tab << "assert false or fp_equal(fp"<< s->width() << "'(" << s->getName() << ") ,to_stdlogicvector(V_" <<  s->getName() << ")) report(\"Incorrect output for R, expected \" & str(to_stdlogicvector(V_R)) & \" and it outputs \" & str(R)) &  \"|| line : \" & integer'image(counter) & \" of input file \" ;"<< endl;
-			else if (s->isIEEE()) vhdl << tab << tab << tab << "assert false or fp_equal_ieee(" << s->getName() << " ,to_stdlogicvector(V_" <<  s->getName() << "),"<<s->wE()<<" , "<<s->wF()<<") report(\"Incorrect output for R, expected \" & str(to_stdlogicvector(V_R)) & \" and it outputs \" & str(R)) &  \"|| line : \" & integer'image(counter) & \" of input file \" ;"<< endl;
+                        vhdl << tab << tab << tab << "assert false or fp_equal(fp"<< s->width() << "'(" << s->getName() << ") ,to_stdlogicvector(V_" <<  s->getName() << ")) report(\"Incorrect output for " << s->getName() << ", expected \" & str(to_stdlogicvector(V_" << s->getName() << ")) & \" and it outputs \" & str(" << s->getName() << ")) &  \"|| line : \" & integer'image(counter) & \" of input file \" ;"<< endl;
+			else if (s->isIEEE()) vhdl << tab << tab << tab << "assert false or fp_equal_ieee(" << s->getName() << " ,to_stdlogicvector(V_" <<  s->getName() << "),"<<s->wE()<<" , "<<s->wF()<<") report(\"Incorrect output for " << s->getName() << ", expected \" & str(to_stdlogicvector(V_" << s->getName() << ")) & \" and it outputs \" & str( " << s->getName() << ")) &  \"|| line : \" & integer'image(counter) & \" of input file \" ;"<< endl;
                         else vhdl << tab << tab << tab << "assert false or (" << s->getName() << "= to_stdlogicvector(V_" << s->getName() << "))report(\"Incorrect output for R, expected \" & str(to_stdlogicvector(V_" << s->getName() << ")) & \" and it outputs \" & str(" << s->getName() <<")) &  \"|| line : \" & integer'image(counter) & \" of input file \" ;"<< endl;
                         //else cerr << " Le test à partir d'un fichier n'est pas encore implémenté pour les vecteurs non IEEE" << endl;
 
