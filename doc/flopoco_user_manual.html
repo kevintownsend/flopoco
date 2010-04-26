@@ -516,44 +516,43 @@ or square roots.</p>
 
 <h3>Test Benches</h3>
 
-The <code>TestBench</code> operator will generate a test bench for
-the operator which precedes it in the command line (also called
-unit under test, UUT).
 
-Test cases are highly UUT specific. They include both standard tests
-and random tests. The single parameter of the <code>TestBench</code>
-specifies the number of random tests to generate. Random tests
-use a pseudo-random number generator
-initialised with the same seed, so that the test bench will be
-deterministic.
+<p>The <code>TestBench</code> and <code>TestBenchfile</code> operators generate a test bench for
+the operator which precedes it in the command line. The test vectors are generated from the specification of the operator (see the developer documentation of the <code>Operator::emulate()</code> method).</p>
 
+<p>Test cases include both standard tests and random tests. The single parameter <code>n</code> specifies the number of random tests to generate. The pseudo-random number generator is initialised with <code>n</code> as the seed, so that the test bench will be deterministic for a given <code>n</code>. </p>
 
+<p>We strongly advise that you test operators before using them, and we await your bug reports.</p>
+
+<p>
+<dl>
+	<dt><code>TestBench n</code></dt>
+	<dd>
+The test vectors are coded in the VHDL of the test bench, and can therefore be easily accessed and modified. In addition, they may include comments. However, this means that the compilation time of the test vectors is large, and this is not convenient beyond a few thousand tests.
 <p>Example:<br/>
 <code>flopoco HOTBM "sin(x*Pi/2)" 16 16 3 TestBench 1000</code>
 </p>
-
-
-<!--
-<code>BigTestBench</code> is similar to <code>TestBench</code> but is
-optimized for large tests (up to 1 million). It generates a very short VHDL code, which
-reads test vectors from a predetermined file (the filename is
-<code>operator_unique_name.test</code>). However, <code>BigTestBench</code> has the
-disadvantage that the test file looks like a big blob and it is very hard to debug
-problems, especially for pipelined designs. Therefore, it is recommended to use this
-operator only when <code>TestBench</code> is successful, and one wants to be really
-sure that the UUT is working perfectly.
+	</dd>
+	<dt><code>TestBenchFile n</code></dt>
+	<dd>
+<code>TestBenchFile</code> is similar to <code>TestBench</code> but moves the test vectors to a separate file called  <code>test.input</code>. Thus the VHDL itself is very short, as is the compilation time. The simulation time is proportional to the number of tests. This scales to millions of test vectors, but is slightly less convenient in the debugging phase.</p>
 
 <p>Example:<br/>
-<code>flopoco FPExp 8 16 BigTestBench 200000</code>
+<code>flopoco FPAdder 8 16  TestBenchFile 20000</code>
 </p>
--->
+	</dd>
+</dl>
+</p>
+
+
+
+
 
 <h3>Miscellanous</h3>
 <dl>
   <dt><code>Wrapper</code></dt>
     <dd>Produce a wrapper for the preceding operator: this operator simply adds registers before and after the preceding operator.
-      It is useful in some cases to get synthesis results without having the operator optimised
-      out, or to get critical path information  including the delay of the first and last stages connected to registers, not to I/O.
+      It is useful in some cases, e.g. to get critical path information  including the delay of the first and last stages connected to registers, not to I/O.
 	 </dd>
 </dl>
 </body>
