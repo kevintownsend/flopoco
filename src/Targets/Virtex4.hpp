@@ -42,6 +42,7 @@ namespace flopoco{
 		/** The default constructor. */  
 		Virtex4() : Target()	{
 			id_             = "Virtex4";
+			vendor_         = "Xilinx";
 			sizeOfBlock_ 	= 18432;	// the size of a primitive block is 2^11 * 9
 			// all these values are set more or less randomly, to match  virtex 4 more or less
 			fastcarryDelay_ = 0.034e-9; //s   

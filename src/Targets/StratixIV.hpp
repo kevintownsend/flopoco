@@ -43,6 +43,7 @@ namespace flopoco{
 		/** The default constructor. */  
 		StratixIV() : Target()	{
 			id_                 = "StratixIV";
+			vendor_           = "Altera";
 			sizeOfBlock_ 		= 4608; 	// the size of a primitive block is 2^9 * 9
 			fastcarryDelay_ 	= 0.9e-11; 	// *aproximately right    
 			elemWireDelay_  	= 0.105e-11;	// *obtained from Quartus 2 Chip Planner

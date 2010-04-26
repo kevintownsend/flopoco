@@ -193,11 +193,12 @@ namespace flopoco{
 			FirstKCMTable* t1; 
 			t1 = new FirstKCMTable(target, lutWidth, constantWidth + lutWidth, C);
 			oplist.push_back(t1);
-			if (strncmp(typeid(*target).name(), "7Virtex", 7) == 0) // then the target is Virtex
+			if (target->getVendor() == "Xilinx") 
 				{
 					addAttribute("rom_extract", "string", t1->getName()+": component", "yes");
 					addAttribute("rom_style", "string", t1->getName()+": component", "distributed");
-				}else
+				}
+			if (target->getVendor() == "Altera") 
 				addAttribute("altera_attribute", "string", t1->getName()+": component", "-name ALLOW_ANY_ROM_SIZE_FOR_RECOGNITION ON");
 
 			//first split the input X into digits having lutWidth bits -> this is as generic as it gets :)

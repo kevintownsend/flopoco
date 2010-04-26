@@ -56,6 +56,13 @@ namespace flopoco{
 		 */
 		string getID();
 
+		/** Returns ID of the vendor, currently "Altera" or "Xilinx". 
+		 * @return the ID
+		 */
+		string getVendor(){
+			return vendor_;
+		}
+
 		// Architecture-related methods
 		/** Returns the number of inputs that the LUTs have on the specific device
 		 * @return the number of inputs for the look-up tables (LUTs) of the device
@@ -205,6 +212,7 @@ namespace flopoco{
 
 	protected:
 		string id_;
+		string vendor_;
 		int    lutInputs_;          /**< The number of inputs for the LUTs */
 		bool   pipeline_;           /**< True if the target is pipelined/ false otherwise */
 		double frequency_;          /**< The desired frequency for the operator in Hz */
