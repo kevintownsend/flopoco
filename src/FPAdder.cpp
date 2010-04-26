@@ -96,7 +96,7 @@ namespace flopoco{
 		// depending on the value of swap, assign the corresponding values to the newX and newY signals 
 		vhdl<<tab<<declare("newX",wE+wF+3) << " <= inY when swap = '1' else inX;"<<endl;
 		vhdl<<tab<<declare("newY",wE+wF+3) << " <= inX when swap = '1' else inY;"<<endl;
-		vhdl<<tab<<declare("exponentDifference",wE) << " <= " << use("exponentDifferenceYX") 
+		vhdl<<tab<<declare("exponentDifference",wE) << " <= " << "exponentDifferenceYX" 
 			 << " when swap = '1' else exponentDifferenceXY("<<wE-1<<" downto 0);"<<endl;
 	
 		setCriticalPath(target->adderDelay(wE+1) +  target->lutDelay() + target->lutDelay());
@@ -218,8 +218,7 @@ namespace flopoco{
 		// the rounding bit is computed:
 		vhdl<<tab<< declare("roundClose0") << " <= shiftedFrac(0) and shiftedFrac(1);"<<endl;
 		// Is the result zero? 
-		vhdl<<tab<< declare("resultCloseIsZero0") << " <= '1' when " 
-			 << use("nZerosNew") 
+		vhdl<<tab<< declare("resultCloseIsZero0") << " <= '1' when nZerosNew" 
 			 << " = CONV_STD_LOGIC_VECTOR(" << wF+2 << ", " << lzocs->getCountWidth() 
 			 << ") else '0';" << endl;
 
@@ -415,8 +414,7 @@ namespace flopoco{
 		vhdl<<tab<<declare("syncResSign") << " <= resSign;"<<endl;
 
 		// compute the exception bits of the result considering the possible underflow and overflow 
-		vhdl<<tab<< declare("UnderflowOverflow",2) << " <= " << use("resultRounded") 
-			 << "("<<wE+1+wF<<" downto "<<wE+wF<<");"<<endl;
+		vhdl<<tab<< declare("UnderflowOverflow",2) << " <= resultRounded"<<range( wE+1+wF, wE+wF)<<";"<<endl;
 
 		vhdl<<tab<< "with UnderflowOverflow select"<<endl;
 		vhdl<<tab<< declare("resultNoExn",wE+wF+3) << "("<<wE+wF+2<<" downto "<<wE+wF+1<<") <=   (not zeroFromClose) & \"0\" when \"01\", -- overflow"<<endl;

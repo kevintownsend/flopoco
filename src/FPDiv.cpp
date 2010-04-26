@@ -97,8 +97,8 @@ namespace flopoco{
 			wipad << "w" << i << "pad";
 			wim1full << "w" << i-1 << "full";
 	
-			vhdl << tab << declare(seli.str(),5) << " <= " << use(wi.str()) << "(" << wF+2 << " downto " << wF-1 << ") & fY(" << wF-1 << ");" << endl; 
-			vhdl << tab << "with " << use(seli.str()) << " select" << endl;
+			vhdl << tab << declare(seli.str(),5) << " <= " << wi.str() << range( wF+2, wF-1)<<" & fY"<<of(wF-1)<<";" << endl; 
+			vhdl << tab << "with " << seli.str() << " select" << endl;
 			vhdl << tab << declare(qi.str(),3) << " <= " << endl;
 			vhdl << tab << tab << "\"001\" when \"00010\" | \"00011\"," << endl;
 			vhdl << tab << tab << "\"010\" when \"00100\" | \"00101\" | \"00111\"," << endl;
@@ -108,19 +108,19 @@ namespace flopoco{
 			vhdl << tab << tab << "\"111\" when \"11100\" | \"11101\"," << endl;
 			vhdl << tab << tab << "\"000\" when others;" << endl;
 			vhdl << endl;
-			vhdl << tab << "with " << use(qi.str()) << " select" << endl;
+			vhdl << tab << "with " << qi.str() << " select" << endl;
 			vhdl << tab << tab << declare(qiTimesD.str(),wF+4) << " <= "<< endl ;
 			vhdl << tab << tab << tab << "\"000\" & fY            when \"001\" | \"111\"," << endl;
 			vhdl << tab << tab << tab << "\"00\" & fY & \"0\"     when \"010\" | \"110\"," << endl;
 			vhdl << tab << tab << tab << "\"0\" & fYTimes3             when \"011\" | \"101\"," << endl;
 			vhdl << tab << tab << tab << "(" << wF+3 << " downto 0 => '0') when others;" << endl;
 			vhdl << endl;
-			vhdl << tab << declare(wipad.str(), wF+4) << " <= " << use(wi.str()) << " & \"0\";" << endl;
-			vhdl << tab << "with " << use(qi.str()) << "(2) select" << endl;
-			vhdl << tab << declare(wim1full.str(), wF+4) << "<= " << use(wipad.str()) << " - " << use(qiTimesD.str()) << " when '0'," << endl;
-			vhdl << tab << "      " << use(wipad.str()) << " + " << use(qiTimesD.str()) << " when others;" << endl;
+			vhdl << tab << declare(wipad.str(), wF+4) << " <= " << wi.str() << " & \"0\";" << endl;
+			vhdl << tab << "with " << qi.str() << "(2) select" << endl;
+			vhdl << tab << declare(wim1full.str(), wF+4) << "<= " << wipad.str() << " - " << qiTimesD.str() << " when '0'," << endl;
+			vhdl << tab << "      " << wipad.str() << " + " << qiTimesD.str() << " when others;" << endl;
 			vhdl << endl;
-			vhdl << tab << declare(wim1.str(),wF+3) << " <= " << use(wim1full.str()) << "(" << wF+1 << " downto 0) & \"0\";" << endl;
+			vhdl << tab << declare(wim1.str(),wF+3) << " <= " << wim1full.str()<<range(wF+1,0)<<" & \"0\";" << endl;
 		}
  
  
@@ -134,8 +134,8 @@ namespace flopoco{
 			qi << "q" << i;
 			qPi << "qP" << i;
 			qMi << "qM" << i;
-			vhdl << tab << declare(qPi.str(), 2) <<" <=      " << use(qi.str()) << "(1 downto 0);" << endl;
-			vhdl << tab << declare(qMi.str(), 2)<<" <=      " << use(qi.str()) << "(2) & \"0\";" << endl;
+			vhdl << tab << declare(qPi.str(), 2) <<" <=      " << qi.str() << "(1 downto 0);" << endl;
+			vhdl << tab << declare(qMi.str(), 2)<<" <=      " << qi.str() << "(2) & \"0\";" << endl;
 		}
 
 		vhdl << tab << declare("qP0", 2) << " <= q0(1 downto 0);" << endl;
@@ -171,7 +171,7 @@ namespace flopoco{
 		vhdl << tab << tab << declare("fRn1", wF+2) << " <= fR(" << wF+2 << " downto 2) & (fR(1) or fR(0)) when '1'," << endl;
 		vhdl << tab << tab << "        fR(" << wF+1 << " downto 0)                    when others;" << endl;
 
-		vhdl << tab << declare("expR1", wE+2) << " <= "<< use("expR0") 
+		vhdl << tab << declare("expR1", wE+2) << " <= expR0" 
 			  << " + (\"000\" & (" << wE-2 << " downto 1 => '1') & fR(" << wF+3 << ")); -- add back bias" << endl;
 
 
