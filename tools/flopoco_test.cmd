@@ -108,46 +108,87 @@
 
 #IntCompressorTree
 
-flopoco -frequency=500 IntCompressorTree 1 1
-flopoco -frequency=500 IntCompressorTree 1 2
-flopoco -frequency=500 IntCompressorTree 10 1
-flopoco -frequency=500 IntCompressorTree 100 1
-flopoco -frequency=500 IntCompressorTree 100 2
-flopoco -frequency=500 IntCompressorTree 100 10
+#flopoco -frequency=500 IntCompressorTree 1 1
+#flopoco -frequency=500 IntCompressorTree 1 2
+#flopoco -frequency=500 IntCompressorTree 10 1
+#flopoco -frequency=500 IntCompressorTree 100 1
+#flopoco -frequency=500 IntCompressorTree 100 2
+#flopoco -frequency=500 IntCompressorTree 100 10
 
 #IntMultiplier
 
-flopoco -frequency=400 -target=Virtex4 IntMultiplier 10 10
-flopoco -frequency=400 -target=Virtex4 IntMultiplier 60 60
-flopoco -frequency=400 -target=Virtex5 IntMultiplier 10 10
-flopoco -frequency=400 -target=Virtex5 IntMultiplier 60 60
-flopoco -frequency=400 -target=Virtex5 IntMultiplier 10 70
-flopoco -frequency=400 -target=Virtex5 IntMultiplier 40 100
+#flopoco -frequency=400 -target=Virtex4 IntMultiplier 10 10
+#flopoco -frequency=400 -target=Virtex4 IntMultiplier 60 60
+#flopoco -frequency=400 -target=Virtex5 IntMultiplier 10 10
+#flopoco -frequency=400 -target=Virtex5 IntMultiplier 60 60
+#flopoco -frequency=400 -target=Virtex5 IntMultiplier 10 70
+#flopoco -frequency=400 -target=Virtex5 IntMultiplier 40 100
 
 #SignedIntMultiplier
 
-flopoco -frequency=400 -target=Virtex4 SignedIntMultiplier 10 10
-flopoco -frequency=400 -target=Virtex4 SignedIntMultiplier 60 60
-flopoco -frequency=400 -target=Virtex5 SignedIntMultiplier 10 10
-flopoco -frequency=400 -target=Virtex5 SignedIntMultiplier 60 60
-flopoco -frequency=400 -target=Virtex5 SignedIntMultiplier 10 70
-flopoco -frequency=400 -target=Virtex5 SignedIntMultiplier 40 100
+#flopoco -frequency=400 -target=Virtex4 SignedIntMultiplier 10 10
+#flopoco -frequency=400 -target=Virtex4 SignedIntMultiplier 60 60
+#flopoco -frequency=400 -target=Virtex5 SignedIntMultiplier 10 10
+#flopoco -frequency=400 -target=Virtex5 SignedIntMultiplier 60 60
+#flopoco -frequency=400 -target=Virtex5 SignedIntMultiplier 10 70
+#flopoco -frequency=400 -target=Virtex5 SignedIntMultiplier 40 100
 
 #    IntTilingMultiplier wInX wInY ratio maxTimeInMinutes
 
-yes | flopoco	-frequency=400 -target=Virtex4 IntTilingMultiplier 40 40 0.9 2
-yes | flopoco	-frequency=400 -target=Virtex4 IntTilingMultiplier 80 40 0.95 2
-yes | flopoco	-frequency=400 -target=Virtex5 IntTilingMultiplier 80 40 0.95 2
-yes | flopoco	-frequency=400 -target=Virtex5 IntTilingMultiplier 80 40 0.95 2
+#yes | flopoco	-frequency=400 -target=Virtex4 IntTilingMultiplier 40 40 0.9 2
+#yes | flopoco	-frequency=400 -target=Virtex4 IntTilingMultiplier 80 40 0.95 2
+#yes | flopoco	-frequency=400 -target=Virtex5 IntTilingMultiplier 80 40 0.95 2
+#yes | flopoco	-frequency=400 -target=Virtex5 IntTilingMultiplier 80 40 0.95 2
 
 
 #    IntTruncMultiplier wInX wInY ratio errorOrder limit maxTimeInMinutes
 
-yes | flopoco	-frequency=400 -target=Virtex4 IntTruncMultiplier 40 40 0.9  40 1 2
-yes | flopoco	-frequency=400 -target=Virtex4 IntTruncMultiplier 80 40 0.95 30 1 2
-yes | flopoco	-frequency=400 -target=Virtex5 IntTruncMultiplier 80 40 0.95 60 1 2
-yes | flopoco	-frequency=400 -target=Virtex5 IntTruncMultiplier 80 40 0.95 60 1 2
+#yes | flopoco	-frequency=400 -target=Virtex4 IntTruncMultiplier 40 40 0.9  40 1 2
+#yes | flopoco	-frequency=400 -target=Virtex4 IntTruncMultiplier 80 40 0.95 30 1 2
+#yes | flopoco	-frequency=400 -target=Virtex5 IntTruncMultiplier 80 40 0.95 60 1 2
+#yes | flopoco	-frequency=400 -target=Virtex5 IntTruncMultiplier 80 40 0.95 60 1 2
 
 
+#     Fix2FP LSB MSB Signed wE wF
+
+flopoco Fix2FP -30 50 0 8 23
+flopoco Fix2FP -30 50 1 8 23
+flopoco Fix2FP -120 120 0 11 52
+
+
+#         FPAdder wE wF
+
+flopoco FPAdder 8 23
+flopoco FPAdder 11 52
+flopoco FPAdder 15 112
+
+
+#         FPMultiplier wE wF_in wF_out
+
+flopoco FPMultiplier 8 23 23
+flopoco FPMultiplier 8 23 52
+flopoco FPMultiplier 11 52 23
+
+
+#          FPMultiplierKaratsuba
+
+flopoco FPMultiplierKaratsuba 8 23 23
+flopoco FPMultiplierKaratsuba 8 23 52
+flopoco FPMultiplierKaratsuba 11 52 23
+
+
+# FPMultiplierTiling wE wF_in wF_out ratio timeInMinutes
+
+
+# FPSquarer wE wFin wFout
+
+flopoco FPSquarer 8 23 23
+flopoco FPSquarer 11 52 52
+
+
+#   FPDiv wE wF
+
+flopoco FPDiv 11 52
+flopoco FPDiv 8  23
 
 

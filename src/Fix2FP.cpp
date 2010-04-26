@@ -312,7 +312,7 @@ namespace flopoco{
 			vhdl << tab << declare("convertedFractionAfterRounding",wF)<<"<= roundedResult"<<range(wF-1,0)<<";"<<endl;
 	
 			vhdl << tab << declare("MSBSelection",1)<<"<= overflowSignal or roundedResult"<<of(wF+wE)<<";"<<endl;
-			vhdl << tab << declare("LSBSelection",1)<<"<= not(underflowSignal and not(zeroInpu));"<<endl;
+			vhdl << tab << declare("LSBSelection",1)<<"<= not(underflowSignal and not(zeroInput));"<<endl;
 			vhdl << tab << declare("Selection",2)<<"<= MSBSelection & LSBSelection when zeroInput='0' else \"00\";"<<endl;
 			vhdl << tab << declare("specialBits",2)<<" <= Selection;"<<endl;
 	

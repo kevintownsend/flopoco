@@ -102,7 +102,7 @@ operators = [
             ] #TODO Add the rest of operators
 res = []
 input_combinations_per_operator = 1;
-test_cases_per_combination = 10000;
+test_cases_per_combination = 1000;
 
 #REMOVE TEMPORARY MODELSIM FILES
 os.system("rm -f wlf*")
@@ -210,7 +210,7 @@ for line in fd:
 	if ((line[0]!='#') and (len(line)>1)):
 		commands.getoutput("rm -f vsim*")
 		commands.getoutput("killall -9 vsimk")
-		run_cmd = line[:len(line)-1] + " TestBenchFile " + `test_cases_per_combination`
+		run_cmd = line[:len(line)-1] + " TestBench " + `test_cases_per_combination`
 		print run_cmd
 		logfile.write(run_cmd+"\n")
 		modelsim_food = commands.getoutput(run_cmd)

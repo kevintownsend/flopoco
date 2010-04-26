@@ -1621,7 +1621,10 @@ int main(int argc, char* argv[] )
 
 	try {
 		parseCommandLine(argc, argv);
-	} catch (std::string s) {
+	} catch (char const * s) {
+		cerr << "Exception while parsing command line: " << s << endl;
+		return 1;
+	} catch (std::string s){
 		cerr << "Exception while parsing command line: " << s << endl;
 		return 1;
 	}

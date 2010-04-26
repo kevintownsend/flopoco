@@ -39,7 +39,7 @@ namespace flopoco{
 
 		ostringstream name;
 		name << "IntKaratsuba_" << wIn_<<"_f"<<target->frequencyMHz();
-		setCopyrightString("Bogdan Pasca (2008-2009)");
+		setCopyrightString("Bogdan Pasca (2008-2010)");
 		setName(name.str());
 	
 		/* Set up the IO signals
@@ -55,8 +55,7 @@ namespace flopoco{
 		int chunks = ( wIn % 17 ==0 ? wIn/17 : ceil( double(wIn)/double(17)) );
 
 		if (chunks > 4){
-			REPORT(INFO, " The TwoWayKaratsuba and the ThreeWayKaratsuba are implemented. wIn <= 68 "); 
-			exit ( EXIT_FAILURE );	
+			throw("The TwoWayKaratsuba and the ThreeWayKaratsuba are implemented. wIn <= 68"); 
 		}else if (chunks == 1){
 			/* no need for karatsuba here */
 			vhdl << tab << "R <= X * Y;" << endl;
