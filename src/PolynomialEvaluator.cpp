@@ -166,8 +166,11 @@ namespace flopoco{
 						i++;
 						e = errorEstimator(yGuard_, aGuard_);
 						mpfr_add( u, *approximationError, *e, GMP_RNDN);
-						if ( i%128 == 0)
-							cerr << " err = "<< mpfr_get_exp(u) << endl;
+						if ( i%128 == 0){
+							ostringstream o;
+							o << " err = "<< mpfr_get_exp(u);
+							REPORT(INFO, o.str());
+						}
 						errExp = (mpfr_get_d(u, GMP_RNDZ)==0 ? 0 :mpfr_get_exp(u));
 						if (errExp <= -targetPrec-1 ){
 							sol = true;
@@ -417,7 +420,7 @@ namespace flopoco{
 			
 			pikPTWeight[i] =  y_->getWeight() + sigmakPWeight[i-1]; 
 			pikPTSize[i] =    y_->getWeight() + sigmakPWeight[i-1]  + (coef_[degree_-i]->getSize()+aGuard[i]-coef_[degree_-i]->getWeight());
-			cerr << " +++  pikpt"<<i<< " size="<<  pikPTSize[i] << " weight = " << pikPTWeight[i] << endl;
+//			cerr << " +++  pikpt"<<i<< " size="<<  pikPTSize[i] << " weight = " << pikPTWeight[i] << endl;
 	
 //			REPORT( DEBUG, " pikPTSize="<< pikPTSize[i] << " pikPTWeight[i]="<<pikPTWeight[i]);
 //			REPORT( DEBUG, "pikPTWeight[i]"<<pikPTWeight[i]<<" coef_[degree_-i]->getSize() "<< coef_[degree_-i]->getSize() << " coef_[degree_-i]->getWeight() "<<coef_[degree_-i]->getWeight() << " aGuard =" << aGuard[i] ); 

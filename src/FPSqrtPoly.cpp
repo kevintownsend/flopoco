@@ -30,6 +30,8 @@
 #include "IntSquarer.hpp"
 #include "FPSqrtPoly.hpp"
 
+#define KEEP_HANDCRAFTED_VERSION 1
+
 using namespace std;
 
 namespace flopoco{
@@ -45,9 +47,6 @@ namespace flopoco{
 		// -------- Parameter set up -----------------
 		addFPInput ("X", wE, wF);
 		addFPOutput("R", wE, wF);
-
-
-
 
 
 
@@ -228,7 +227,7 @@ namespace flopoco{
 
 
 
-				else{
+				}else{
 #endif // KEEP_HANDCRAFTER_VERSION
 
 
@@ -327,11 +326,11 @@ namespace flopoco{
 //		vhdl << tab << declare("sticky",1) << " <=  rfx"<<of(pe->getRWidth()-(pe->getRWeight()+wF)-1)<<";"<<endl;
 		
 		
-		vhdl << tab << declare("sticky",1) << " <= '0' when rfx"<<range(pe->getRWidth()-(pe->getRWeight()+wF)-2,0) <<" = " 
-		                                                        << zg(pe->getRWidth()-(pe->getRWeight()+wF)-1,0) << " else '1';"<<endl;
+		vhdl << tab << declare("sticky",1) << " <= '0' when rfx"<<range(pe->getRWidth()-(pe->getRWeight()+wF)-3,0) <<" = " 
+		                                                        <<   zg(pe->getRWidth()-(pe->getRWeight()+wF)-2,0) << " else '1';"<<endl;
 		
-		vhdl << tab << declare("extentedf", 1 + wF + 2) << " <= rfx"<<range(pe->getRWidth()-pe->getRWeight(), pe->getRWidth()-(pe->getRWeight()+wF)-1) 
-		                                                << " & sticky;"<<endl;
+		vhdl << tab << declare("extentedf", 1 + wF + 2) << " <= rfx"<<range(pe->getRWidth()-pe->getRWeight(), pe->getRWidth()-(pe->getRWeight()+wF)-2)<<";"<<endl; 
+//		                                                << " & sticky;"<<endl;
 		                  
 		nextCycle();                              
 		IntAdder *a = new IntAdder(target, 1 + wF + 2);
@@ -339,7 +338,7 @@ namespace flopoco{
 		
 		inPortMap(a, "X", "extentedf");
 		inPortMapCst(a, "Y", zg(1 + wF + 2,0) );
-		inPortMapCst(a, "Cin", "'1'");
+		inPortMapCst(a, "Cin", "sticky");
 		outPortMap(a, "R", "fPostRound");
 		vhdl << instance(a, "Rounding_Adder");
 
@@ -349,7 +348,7 @@ namespace flopoco{
 		addOutput("RFull", pe->getRWidth());
 		vhdl << tab << " RFull <= rfx;" << endl; 
 		
-		vhdl << tab << " R <= exnR & \"0\" & expPostBiasAddition"<<range(wE,1)<<" & fPostRound"<<range(wF, 1)<<";"<<endl;
+		vhdl << tab << " R <= exnR & sX & expPostBiasAddition"<<range(wE,1)<<" & fPostRound"<<range(wF, 1)<<";"<<endl;
 		
 		
 //		cout << "The result number of bits is " << 	pe->getRWidth();

@@ -191,4 +191,49 @@ flopoco FPSquarer 11 52 52
 flopoco FPDiv 11 52
 flopoco FPDiv 8  23
 
+#   FPSqrt wE wF
+flopoco FPSqrt 8 23
+flopoco FPSqrt 11 52
+
+#    FPSqrtPoly wE wF degree
+
+flopoco FPSqrtPoly 8 23 2
+flopoco FPSqrtPoly 11 52 5
+
+#    IntConstMult w c
+#TODO
+
+#    FPConstMult wE_in wF_in wE_out wF_out cst_sgn cst_exp cst_int_sig
+#TODO
+
+#    FPConstMultParser wE_in wF_in wE_out wF_out wF_C constant_expr
+#TODO
+
+#    CRFPConstMult wE_in wF_in wE_out wF_out constant_expr
+#TODO
+
+#    LongAcc wE_in wF_in MaxMSB_in LSB_acc MSB_acc
+flopoco LongAcc 8 23 30 -30 50
+flopoco LongAcc 11 52 50 -50 60
+
+#    LongAcc2FP LSB_acc MSB_acc wE_out wF_out
+#TODO
+
+
+#   DotProduct wE wFX wFY MaxMSB_in LSB_acc MSB_acc
+#TODO
+
+#   FPExp wE wF
+#    FPLog wE wF InTableSize
+#      Floating-point logarithm function;
+#      InTableSize is the numbers of bits to input to the tables. 
+#      O defaults to something sensible
+#    OutputIEEE wEI wFI wEO wFO
+#      Conversion from FloPoCo to IEEE-754-like floating-point formats
+#    InputIEEE wEI wFI wEO wFO
+#      Conversion from IEEE-754-like to FloPoCo floating-point formats
+
+
+
+
 

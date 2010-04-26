@@ -10,6 +10,8 @@
 #include "FPNumber.hpp"
 #include "TableGenerator.hpp"
 #include "PolynomialEvaluator.hpp"
+#include "squareroot/PolynomialTableCorrectRounded.hpp"
+#include "squareroot/PolynomialTable.hpp"
 
 namespace flopoco{
 	/** The FPSqrtPoly class */
