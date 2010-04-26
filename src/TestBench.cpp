@@ -197,7 +197,7 @@ namespace flopoco{
                         vhdl << tab << tab << tab << "read(inline, possibilityNumber);" << endl;
                         vhdl << tab << tab << tab << "localErrorCounter := 0;" << endl;
                         vhdl << tab << tab << tab << "read(inline,tmpChar);" << endl; // we consume the character after output list
-                        vhdl << tab << tab << tab << "boucle_test : for i in possibilityNumber downto 1 loop " << endl;
+                        vhdl << tab << tab << tab << "for i in possibilityNumber downto 1 loop " << endl;
 			Signal* s = outputSignalVector[i];
                         vhdl << tab << tab << tab << "read(inline ,V_"<< s->getName() << ");" << endl;
                         vhdl << tab << tab << tab << "read(inline,tmpChar);" << endl; // we consume the character between each outputs
