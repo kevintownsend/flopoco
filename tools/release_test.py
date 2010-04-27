@@ -48,7 +48,7 @@ print("Parsing operators from external list: \n")
 logfile.write("Parsing operators from external list: \n")
 
 for filename in os.listdir("tests/"):
-	if (filename[len(filename)-1]!='~'):
+	if ((filename[len(filename)-1]!='~') and (filename[0]!='.')):
 		print "processing " + filename + " ... "
 		
 		fd = open ("tests/"+filename)
