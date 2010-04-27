@@ -510,14 +510,13 @@ namespace flopoco{
 				for(int j=0;j<n;j++)
 					mat[i][j]=0;
 			}
+		target_->getDSPWidths(dspWidth,dspHeight);
 		
 		//if the estimated number of DSPs is grather then 0 then we should run the algorithm
 		if(nrDSPs>0){
 			tempc= new DSP*[nrDSPs];
 			for(int ii=0;ii<nrDSPs;ii++)
 				tempc[ii]= new DSP();
-			
-			target_->getDSPWidths(dspWidth,dspHeight);
 			
 			/*we will try the algorithm with 2 values of nrDSPs	
 			One will be the estimated value(nrDSPs) and the second one will be nrDSPs-1	
@@ -586,7 +585,14 @@ namespace flopoco{
 			REPORT(DEBUG, "Max score is"<<bestCost);
 			compareCost();
 			REPORT(DEBUG, "New best score is" <<bestCost);
-//			displayAll(bestConfig);
+			vector<SoftDSP*> configSoft;
+			if (useLimits == 0)
+				configSoft = insertSoftDSPs(bestConfig);
+			else
+				configSoft = insertSoftDSPswithLimits(bestConfig);
+			
+			generateVHDLCode(bestConfig, configSoft);
+			displayAll(bestConfig, configSoft);
 		}
 	
 	}
@@ -2931,6 +2937,7 @@ namespace flopoco{
 			
 		while(!isTilingValid(config,configSoft,targetPrecision) )
 		{
+			//displayAll(bestConfig, configSoft);
 		deepX=vn,deepY=vm,rdeepX=vm;
 		bool found = false;
 		//search the deapest position
@@ -2956,20 +2963,23 @@ namespace flopoco{
 		
 		//puts the current 1x1 multiplication on the board and will try to combine and extend the neighbours
 		//bool isextentionok=false;
-		int ref;
+		int ref=1;
 		//try in right
-		if(  mat[deepY][rdeepX+1]!=1369 && mat[deepY][rdeepX+1]>nrDSPs && mat[deepY-1][rdeepX+1]!=mat[deepY][rdeepX+1])
+		if(  mat[deepY][rdeepX+1]!=1369 && mat[deepY][rdeepX+1]>nrDSPs && (deepY==0 || mat[deepY-1][rdeepX+1]!=mat[deepY][rdeepX+1]))
 		{
 			ref = mat[deepY][rdeepX+1];
 			int i;
-			for(i=deepY+1; mat[i][rdeepX]==0 && mat[i][rdeepX+1]==ref;i++ )
+			for(i=deepY+1; i<vmme && mat[i][rdeepX]==0 && mat[i][rdeepX+1]==ref;i++ )
 			{
 				mat[i][rdeepX]=ref;
 			}
+			if (i == vmme)
+				i--; 
+				
 			if(  mat[i][rdeepX+1]==ref  )
 			{
 				//new multiplier should be created
-				for(i=deepY+1;mat[i][rdeepX]==ref;i++)
+				for(i=deepY+1; i<vmme && mat[i][rdeepX]==ref;i++)
 					mat[i][rdeepX]=0;
 				lastModifiedIndex = ref-nrDSPs-1;
 				lastDeepX = 0;
@@ -2993,7 +3003,7 @@ namespace flopoco{
 		else
 		{
 			//try top
-			if(  mat[deepY-1][rdeepX]!=1369 && mat[deepY-1][rdeepX]>nrDSPs &&  mat[deepY-1][rdeepX+1]!=mat[deepY-1][rdeepX])
+			if( deepY>0 && mat[deepY-1][rdeepX]!=1369 && mat[deepY-1][rdeepX]>nrDSPs &&  mat[deepY-1][rdeepX+1]!=mat[deepY-1][rdeepX])
 			{
 				ref = mat[deepY-1] [rdeepX];
 				int i;
@@ -3204,6 +3214,7 @@ namespace flopoco{
 			
 		while(!isTilingValid(config,configSoft,targetPrecision) )
 		{
+			//displayAll(bestConfig, configSoft);
 		deepX=vn,deepY=vm,rdeepX=vm;
 		bool found = false;
 		//search the deapest position
@@ -3230,10 +3241,10 @@ namespace flopoco{
 				
 		//puts the current 1x1 multiplication on the board and will try to combine and extend the neighbours
 		//bool isextentionok=false;
-		int ref;
+		int ref=1;
 		int sdspw,sdsph;
 		//try in right
-		if(   mat[deepY][rdeepX+1]!=1369 &&   mat[deepY][rdeepX+1]>nrDSPs && mat[deepY-1][rdeepX+1]!=mat[deepY] [rdeepX+1])
+		if(   mat[deepY][rdeepX+1]!=1369 &&   mat[deepY][rdeepX+1]>nrDSPs && (deepY==0 || mat[deepY-1][rdeepX+1]!=mat[deepY] [rdeepX+1]))
 		{
 			ref = mat[deepY] [rdeepX+1];
 			int i;
@@ -3250,12 +3261,16 @@ namespace flopoco{
 				tempSoft =  new SoftDSP(deepX-1,deepY,deepX-1,deepY);
 				configSoft.push_back(tempSoft);
 			}else{
-				for(i=deepY+1; mat[i][rdeepX]==0 && mat[i][rdeepX+1]==ref;i++ ){
+				for(i=deepY+1; i<vmme && mat[i][rdeepX]==0 && mat[i][rdeepX+1]==ref;i++ ){
 					mat[i][rdeepX]=ref;
 				}
+				
+				if (i==vmme)
+					i--;
+					
 				if(  mat[i][rdeepX+1]==ref)	{
 					//new multiplier should be created
-					for(i=deepY+1;mat[i][rdeepX]==ref;i++)
+					for(i=deepY+1; i<vmme && mat[i][rdeepX]==ref;i++)
 						mat[i][rdeepX]=0;
 					lastModifiedIndex = ref-nrDSPs-1;
 					lastDeepX = 0;
@@ -3278,7 +3293,7 @@ namespace flopoco{
 		else
 		{
 			//try top
-			if(   mat[deepY-1][rdeepX]!=1369 && mat[deepY-1][rdeepX]>nrDSPs &&  mat[deepY-1][rdeepX+1]!=mat[deepY-1][rdeepX])
+			if(  deepY>0 && mat[deepY-1][rdeepX]!=1369 && mat[deepY-1][rdeepX]>nrDSPs &&  mat[deepY-1][rdeepX+1]!=mat[deepY-1][rdeepX])
 			{
 				ref = mat[deepY-1] [rdeepX];
 				int i;
