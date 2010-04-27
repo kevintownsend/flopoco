@@ -35,7 +35,7 @@ namespace flopoco {
 
 
 extern int verbose;
-extern bool combinatorialOperator; //FIXME: BAD design practice working with global variables
+//extern bool combinatorialOperator; //FIXME: BAD design practice working with global variables
 
 
 
@@ -53,6 +53,7 @@ const std::string tab = "   ";
 class Operator
 {
 public:
+
 	/** Operator Constructor.
 	 * Creates an operator instance with an instantiated target for deployment.
 	 * @param target_ The deployment target of the operator.
@@ -66,13 +67,14 @@ public:
 		hasRegistersWithSyncReset_  = false;
 		pipelineDepth_              = 0;
 		currentCycle_               = 0;
-                needRecirculationSignal_    = false;
-//		useTable.clear();
+		needRecirculationSignal_    = false;
 
 		if (target_->isPipelined())
 			setSequential();
 		else
 			setCombinatorial();	
+			
+		vhdl.disableParsing(!target_->isPipelined());	
 	}
 
 	/** Operator Destructor.
@@ -609,7 +611,6 @@ protected:
 	FlopocoStream       vhdl;             /**< The internal stream to which the constructor will build the VHDL code */
 	string              srcFileName;      /**< Used to debug and report.  */
 	map<string, int>    declareTable;     /**< Table containing the name and declaration cycle of the signal */
-//	vector<pair<string, int> >    useTable;     /**< Table containing the name and declaration cycle of the signal */
 
 
 private:
@@ -628,7 +629,7 @@ private:
 	string                 copyrightString_;            /**< Authors and years.  */
 	int                    currentCycle_;               /**< The current cycle, when building a pipeline */
 	double                 criticalPath_;               /**< The current delay of the current pipeline stage */
-        bool                   needRecirculationSignal_;    /**< True if the operator has registers having a recirculation signal  */
+	bool                   needRecirculationSignal_;    /**< True if the operator has registers having a recirculation signal  */
 
 };
 

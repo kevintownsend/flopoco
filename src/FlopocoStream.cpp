@@ -37,7 +37,7 @@ namespace flopoco{
 		vhdlCodeBuffer.str("");
 		currentCycle_ = 0;
 	}
-
+	
 
 	FlopocoStream::~FlopocoStream(){
 	}

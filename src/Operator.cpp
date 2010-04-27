@@ -359,13 +359,13 @@ namespace flopoco{
 	void Operator::setSequential() {
 		combinatorialOperator = false;
 		isSequential_=true; 
-		//	addInput("clk");
-		// addInput("rst");
+		vhdl.disableParsing(false); 
 	}
 
 	void Operator::setCombinatorial() {
 		combinatorialOperator = true;
-		isSequential_=false; 
+		isSequential_=false;
+		vhdl.disableParsing(true); 
 	}
 
 	void Operator::setRecirculationSignal() {

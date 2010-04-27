@@ -1643,7 +1643,7 @@ int main(int argc, char* argv[] )
 			REPORT(FULL, printMapContent(oplist[i]->getDeclareTable()) );
 			REPORT(FULL, "--USE LIST-------------------------------------------------------");
 
-			combinatorialOperator = not(oplist[i]->isSequential());
+//			combinatorialOperator = not(oplist[i]->isSequential());
 			oplist[i]->getFlopocoVHDLStream()->flush();
 			
 			REPORT(FULL, printVectorContent(  (oplist[i]->getFlopocoVHDLStream())->getUseTable()) );
@@ -1653,7 +1653,6 @@ int main(int argc, char* argv[] )
 				REPORT (DEBUG, "--2nd PARSE-------------------------------------------------------");
 				oplist[i]->parse2();
 			}
-//			cout << "--END 2nd PARSE-------------------------------------------------------" << endl;
 
 			oplist[i]->outputVHDL(file);			
 		} catch (std::string s) {

@@ -100,11 +100,6 @@ extern bool combinatorialOperator;
 			return output; 
 		}
 
-//		friend FlopocoStream & operator<<(FlopocoStream& output, const long l) {
-//			output.vhdlCodeBuffer << l;
-//			return output; 
-//		}
-		
 		friend FlopocoStream & operator<<(FlopocoStream& output, const unsigned long l) {
 			output.vhdlCodeBuffer << l;
 			return output; 
@@ -147,7 +142,7 @@ extern bool combinatorialOperator;
 			 * Initializes the two streams: vhdlCode and vhdlCodeBuffer
 			 */
 			FlopocoStream();
-
+			
 			/**
 			 * FlopocoStream destructor
 			 */
@@ -185,7 +180,7 @@ extern bool combinatorialOperator;
 			 *            from the buffer
 			 */
 			void flush(int currentCycle){
-				if (! combinatorialOperator ){
+				if (! disabledParsing ){
 					ostringstream bufferCode;
 					if ( vhdlCodeBuffer.str() != string("") ){
 						/* do processing if buffer is not empty */
@@ -287,13 +282,17 @@ extern bool combinatorialOperator;
 
 			vector<pair<string, int> > useTable; /**< table contating <id, cycle> info */
 
-
+			void disableParsing(bool s){
+				disabledParsing = s;
+			}
+			
 		protected:
 			
 			ostringstream vhdlCode;              /**< the vhdl code afte */
 			ostringstream vhdlCodeBuffer;        /**< the vhdl code buffer */
 		
 			int currentCycle_;                   /**< the current cycle is used in the picewise code scanning */
+			bool disabledParsing;
 	};
 }
 #endif

@@ -214,7 +214,7 @@ if fd < 0:
 	logfile.write("Unable to open file flopoco_test.cmd")
 for line in fd:
 	if ((line[0]!='#') and (len(line)>1)):
-		run_cmd = line[:len(line)-1] + " TestBench " + `test_cases_per_combination`
+		run_cmd = line[:len(line)-1] + " TestBenchFile " + `test_cases_per_combination`
 		print run_cmd
 		logfile.write(run_cmd+"\n")
 		modelsim_food = commands.getoutput(run_cmd)

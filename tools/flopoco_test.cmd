@@ -213,8 +213,9 @@ flopoco FPSqrtPoly 11 52 5
 #TODO
 
 #    LongAcc wE_in wF_in MaxMSB_in LSB_acc MSB_acc
-flopoco LongAcc 8 23 30 -30 50
-flopoco LongAcc 11 52 50 -50 60
+#TODO, no EMULATE YET
+#flopoco LongAcc 8 23 30 -30 50
+#flopoco LongAcc 11 52 50 -50 60
 
 #    LongAcc2FP LSB_acc MSB_acc wE_out wF_out
 #TODO
@@ -224,10 +225,9 @@ flopoco LongAcc 11 52 50 -50 60
 #TODO
 
 #   FPExp wE wF
-#    FPLog wE wF InTableSize
-#      Floating-point logarithm function;
-#      InTableSize is the numbers of bits to input to the tables. 
-#      O defaults to something sensible
+flopoco FPExp 8 23
+flopoco FPExp 11 52
+
 #    OutputIEEE wEI wFI wEO wFO
 #      Conversion from FloPoCo to IEEE-754-like floating-point formats
 #    InputIEEE wEI wFI wEO wFO
