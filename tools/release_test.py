@@ -9,9 +9,9 @@ import time
 
 
 
-input_combinations_per_operator = 1
-test_cases_per_combination = 100
+test_cases_per_combination = 10
 useModelSim=True # if True, use modelsim; if False, use ghdl
+testBench = "TestBench"   #one of TestBench or TestBenchFile
 
 
 #-------------------------------------------------------------------------------
@@ -63,7 +63,7 @@ for filename in os.listdir("tests/"):
 				print "Skipping the rest of the file "+filename+"; ! encountered"
 				
 			if ((line[0]!='#') and (len(line)>1) and (skipfile == False)):
-				run_cmd = line[:len(line)-1] + " TestBench " + `test_cases_per_combination`
+				run_cmd = line[:len(line)-1] + " " + testBench + " " + `test_cases_per_combination`
 				print run_cmd
 				logfile.write(run_cmd+"\n")
 				modelsim_food = commands.getoutput(run_cmd)
@@ -164,7 +164,6 @@ for filename in os.listdir("tests/"):
 							pass_test=False
 						commands.getoutput("rm *.vcd e~testbench* testbench*")
 
-		#		did_compile = not did_compile
 				pass_test = pass_test and did_generate_vhdl
 				res.append( [run_cmd, `did_generate_vhdl`, `did_compile`, `pass_test`])
 				pass_all = pass_all and pass_test

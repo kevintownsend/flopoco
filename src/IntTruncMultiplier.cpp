@@ -3185,9 +3185,8 @@ namespace flopoco{
 		int count = 1;
 		int ew    = getExtraWidth();
 		int eh    = getExtraHeight();
-
-		n = vn;
-		m = vm;
+		n         = vn;
+		m         = vm;
 	
 		for(int i=0;i<m;i++){
 			for(int j=0;j<n;j++)
