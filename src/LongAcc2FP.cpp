@@ -234,6 +234,43 @@ namespace flopoco{
 			tcl->add(tc);
 		}
 	}
+	TestCase* LongAcc2FP::buildRandomTestCases(int i){
+
+		TestCase *tc;
+		mpz_class A,C;
+		
+		C=mpz_class(0);
+		int chunkSize, k;
+		
+		ownTarget_->suggestSubaddSize(chunkSize, MSBA_-LSBA_+1);
+		if (chunkSize>=MSBA_-LSBA_+1)
+			k=1;
+		else
+			k= int(ceil( double(MSBA_-LSBA_+1)/double(chunkSize)));
+
+		C= mpz_class(0);
+		tc = new TestCase(this);
+		
+		A = getLargeRandom(MSBA_-LSBA_+1);
+
+		tc->addInput("A", A);
+		
+		if (k==1)
+			tc->addInput("C", mpz_class(0));
+		else{
+			for (int j=0;j<k-1;j++){
+				C = C + (  getLargeRandom(1)<< (chunkSize*(j+1)) );
+				tc->addInput("C", C);
+			}
+		
+		
+		}
+		tc->addInput("AccOverflow",mpz_class(0));
+		
+		/* Get correct outputs */
+		emulate(tc);
+		return tc;	
+	}
 
 
 	void LongAcc2FP::emulate(TestCase *tc)

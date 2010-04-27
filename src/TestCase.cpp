@@ -253,7 +253,6 @@ namespace flopoco{
 			  mpz_class v = inputs[*it];
 			  o << s->valueToVHDL(v,false) << " ";
                 }
-                //o << "? ";
                 for (list<string>::iterator it = IOorderOutput.begin();it != IOorderOutput.end(); it++) {
 			Signal* s = op_->getSignalByName(*it);
 			vector<mpz_class> vs = outputs[*it];
@@ -267,30 +266,6 @@ namespace flopoco{
 			}
                 }
                 o << endl;
-                // TO BE DELETED AFTER TEST
-		/*for (map<string, mpz_class>::iterator it = inputs.begin(); it != inputs.end(); it++)
-			{
-				string signame = it->first;
-				Signal* s = op_->getSignalByName(signame);
-				mpz_class v = it->second;
-				o << s->valueToVHDL(v,false) << endl;
-			}*/
-		/* Iterate through output signals */
-		/*for (map<string, vector<mpz_class> >::iterator it = outputs.begin(); it != outputs.end(); it++)
-			{
-				string signame = it->first;
-				Signal* s = op_->getSignalByName(signame);
-				vector<mpz_class> vs = it->second;
-				
-				// Iterate through possible output values 
-				for (vector<mpz_class>::iterator it = vs.begin(); it != vs.end(); it++)
-					{
-						mpz_class v = *it;
-						o << s->valueToVHDL(v,false) << endl;
-					}
-				//o << endl;
-			}
-                */
 		return o.str();
 
 

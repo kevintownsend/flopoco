@@ -359,6 +359,20 @@ public:
 	 */
 	virtual void buildRandomTestCases(TestCaseList* tcl, int n);
 
+	/**
+	 * Generate Random Test case identified by an integer . There is a default
+	 * implementation using a uniform random generator, but most
+	 * operators are not exercised efficiently using such a
+	 * generator. For instance, in FPAdder, the random number generator
+	 * should be biased to favor exponents which are relatively close
+	 * so that an effective addition takes place.
+	 * This function create a new TestCase (to be free after use)
+	 * @param i the identifier of the test case to be generated
+	 * @return TestCase*
+	 */
+	virtual TestCase* buildRandomTestCases(int n);
+
+
 
 	Target* target() {
 		return target_;

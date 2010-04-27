@@ -30,6 +30,7 @@ namespace flopoco{
 		~LongAcc2FP();
 		
 		void buildRandomTestCases(TestCaseList* tcl, int n);
+		TestCase* buildRandomTestCases(int n);
 		
 		void emulate(TestCase *tc);
 

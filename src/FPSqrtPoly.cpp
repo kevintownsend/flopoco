@@ -427,6 +427,24 @@ namespace flopoco{
 			tcl->add(tc);
 		}
 	}
+	TestCase* FPSqrtPoly::buildRandomTestCases(int i){
+
+		TestCase *tc;
+		mpz_class a;
+
+		tc = new TestCase(this); 
+		/* Fill inputs */
+		if ((i & 3) == 0)
+			a = getLargeRandom(wE+wF+3);
+		else
+			a  = getLargeRandom(wE+wF) + (mpz_class(1)<<(wE+wF+1)); // 010xxxxxx
+		tc->addInput("X", a);
+
+		/* Get correct outputs */
+		emulate(tc);
+
+		return tc;
+	}
 }
 
 #endif //HAVE_SOLLYA

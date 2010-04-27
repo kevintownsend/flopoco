@@ -1003,6 +1003,29 @@ namespace flopoco{
 		}
 	}
 
+	TestCase* Operator::buildRandomTestCases(int i){
+		TestCase *tc = new TestCase(this);
+		/* Generate test cases using random input numbers */
+		// TODO free all this memory when exiting TestBench
+		/* Fill inputs */
+		for (unsigned int j = 0; j < ioList_.size(); j++) {
+			Signal* s = ioList_[j]; 
+			if (s->type() == Signal::in) {
+				mpz_class a = getLargeRandom(s->width());
+				tc->addInput(s->getName(), a);
+			}
+		}
+		/* Get correct outputs */
+		emulate(tc);
+
+		//		cout << tc->getInputVHDL();
+		//    cout << tc->getExpectedOutputVHDL();
+
+
+		// add to the test case list
+		return tc;
+	}
+
 	map<string, double> Operator::getOutDelayMap(){
 		return outDelayMap;
 	}

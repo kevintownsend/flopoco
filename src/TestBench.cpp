@@ -48,13 +48,15 @@ namespace flopoco{
 		setCombinatorial(); // this is a combinatorial operator
 		setCycle(0);
 
-
+		// initialization of flopoco random generator
+		// TODO : has to be initialized before any use of getLargeRandom or getRandomIEEE...
+		//        maybe best to be placed in main.cpp ?
                 FloPoCoRandomState::init(n);
 		// Generate the standard and random test cases for this operator
 		op-> buildStandardTestCases(&tcl_);
                 // initialization of randomstate generator with the seed base on the number of
                 // randomtestcase to be generated
-		op-> buildRandomTestCases(&tcl_, n);
+		if (!fromFile) op-> buildRandomTestCases(&tcl_, n);
 	
 
 		// The instance
@@ -132,6 +134,7 @@ namespace flopoco{
                 /* Variable declaration */
                 vhdl << tab << tab << "variable inline : line; " << endl;                    // variable to read a line
                 vhdl << tab << tab << "variable counter : integer := 1;" << endl;
+                vhdl << tab << tab << "variable errorCounter : integer := 0;" << endl;
                 vhdl << tab << tab << "variable possibilityNumber : integer := 0;" << endl;
                 vhdl << tab << tab << "variable localErrorCounter : integer := 0;" << endl;
                 vhdl << tab << tab << "variable tmpChar : character;" << endl;                        // variable to store a character (escape between inputs)
@@ -173,6 +176,11 @@ namespace flopoco{
                         // adding the IO to IOorder
                         IOorderInput.push_back(s->getName());
 		}
+                vhdl << tab << tab << tab << "readline(inputsFile,inline);" << endl;  // it consume output line
+		vhdl << tab << tab << tab << "wait for 10 ns;" << endl; // let 10 ns between each input
+		vhdl << tab << tab << "end loop;" << endl;
+		vhdl << tab << tab << "wait for 10000 ns; -- wait for simulation to finish" << endl; // TODO : tune correctly with pipeline depth
+		vhdl << tab << "end process;" << endl;
 
                 /**
                  * Declaration of a waiting time between sending the input and comparing
@@ -182,23 +190,61 @@ namespace flopoco{
                  * TODO : entrelaced the inputs / outputs in order to avoid this wait
                  */
                 vhdl << tab << tab << tab << " -- verifying the corresponding output" << endl;
-                vhdl << tab << tab << tab << " wait for 5 ns;" << endl;
-                currentOutputTime += 5 * tcl_.getNumberOfTestCases();
-		vhdl << tab << tab << tab << "wait for "<< op_->getPipelineDepth()*10 <<" ns; -- wait for pipeline to flush" <<endl;
-		currentOutputTime += op_->getPipelineDepth()*10* tcl_.getNumberOfTestCases();
+		vhdl << tab << tab << tab << "process" << endl;
+                /* Variable declaration */
+                vhdl << tab << tab << "variable inline : line; " << endl;                    // variable to read a line
+                vhdl << tab << tab << "variable inline0 : line; " << endl;                    // variable to read a line
+                vhdl << tab << tab << "variable counter : integer := 1;" << endl;
+                vhdl << tab << tab << "variable errorCounter : integer := 0;" << endl;
+                vhdl << tab << tab << "variable possibilityNumber : integer := 0;" << endl;
+                vhdl << tab << tab << "variable localErrorCounter : integer := 0;" << endl;
+                vhdl << tab << tab << "variable tmpChar : character;" << endl;                        // variable to store a character (escape between inputs)
+                vhdl << tab << tab << "file inputsFile : text is \"test.input\"; " << endl; // declaration of the input file
 
-                // consume the "? "
-//                vhdl << tab << tab << tab << "read(inline,tmpChar);" << endl; // we consume the character between each inputs
-//                vhdl << tab << tab << tab << "read(inline,tmpChar);" << endl; // we consume the character between each inputs
+
+                /* Variable to store value for inputs and expected outputs*/
+                for(int i=0; i < op_->getIOListSize(); i++){
+                        Signal* s = op_->getIOListSignal(i);
+                        vhdl << tab << tab << "variable V_" << s->getName();
+                                      vhdl << " : bit_vector("<< s->width() - 1 << " downto 0);" << endl;
+                }
+
+                /* Process Beginning */
+                vhdl << tab << "begin" << endl;
+
+                vhdl << tab << tab << tab << " wait for 10 ns;" << endl; // wait for reset signal to finish
+                currentOutputTime += 5 * (tcl_.getNumberOfTestCases()+n_);
+		currentOutputTime += op_->getPipelineDepth()*10* (tcl_.getNumberOfTestCases() + n_);
+		vhdl << tab << tab << "wait for " << (op_->getPipelineDepth()) * 10 << " ns; -- pipeline flush time " << endl; 
+
+                /* File Reading */
+                vhdl << tab << tab << "while not endfile(inputsFile) loop" << endl;
+                vhdl << tab << tab << tab << " -- positionning inputs" << endl;
+
+                /* All inputs and the corresponding expected outputs will be on the same line
+                 * so we begin by reading this line, once and for all (once by test) */
+                vhdl << tab << tab << tab << "readline(inputsFile,inline0);" << endl; // it consumes input line
+                vhdl << tab << tab << tab << "readline(inputsFile,inline);" << endl;
 
 
-
+		//Vyvhdl << tab << tab << tab << "wait for "<< op_->getPipelineDepth()*10 <<" ns; -- wait for pipeline to flush" <<endl;
 		for(unsigned int i=0; i < outputSignalVector.size(); i++){
+			Signal* s = outputSignalVector[i];
                         vhdl << tab << tab << tab << "read(inline, possibilityNumber);" << endl;
                         vhdl << tab << tab << tab << "localErrorCounter := 0;" << endl;
                         vhdl << tab << tab << tab << "read(inline,tmpChar);" << endl; // we consume the character after output list
+			vhdl << tab << tab << tab << "if possibilityNumber = 1 then " << endl;
+                        vhdl << tab << tab << tab << "read(inline ,V_"<< s->getName() << ");" << endl;
+			 if (s->isFP()) 
+                        vhdl << tab << tab << tab << "assert false or fp_equal(fp"<< s->width() << "'(" << s->getName() << ") ,to_stdlogicvector(V_" <<  s->getName() << ")) report(\"Incorrect output for " << s->getName() << ", expected \" & str(to_stdlogicvector(V_" << s->getName() << ")) & \" and it outputs \" & str(" << s->getName() << ")) &  \"|| line : \" & integer'image(counter) & \" of input file \" ;"<< endl;                        
+                        else if (s->isIEEE()) {                                                                                                                                               
+                          vhdl << tab << tab << tab << "if not fp_equal_ieee(" << s->getName() << " ,to_stdlogicvector(V_" <<  s->getName() << "),"<<s->wE()<<" , "<<s->wF()<<") then report(\"Incorrect output for " << s->getName() << ", expected \" & str(to_stdlogicvector(V_" << s-> getName() << ")) & \" and it outputs \" & str(" << s->getName()  << ")) &  \"|| line : \" & integer'image(counter) & \" of input file \" ;"<< endl;               
+                          vhdl << tab << tab << tab << tab << " errorCounter := errorCounter + 1; end if;" << endl;                                                                           
+                        } else vhdl << tab << tab << tab << "assert false or (" << s->getName() << "= to_stdlogicvector(V_" << s->getName() << "))" << "report(\"Incorrect output for R, expected \" & str(to_stdlogicvector(V_" << s->getName() << ")) & \" and it outputs \" & str(" << s->getName() <<")) &  \"|| line : \" & integer'image(counter) & \" of input file \" ;"<< endl;  
+
+
+			vhdl << tab << tab << tab << "else" << endl; 
                         vhdl << tab << tab << tab << "for i in possibilityNumber downto 1 loop " << endl;
-			Signal* s = outputSignalVector[i];
                         vhdl << tab << tab << tab << "read(inline ,V_"<< s->getName() << ");" << endl;
                         vhdl << tab << tab << tab << "read(inline,tmpChar);" << endl; // we consume the character between each outputs
                         if (s->isFP()) {  
@@ -211,22 +257,18 @@ namespace flopoco{
                            vhdl << tab << tab << tab << "if (" << s->getName() << "= to_stdlogicvector(V_" << s->getName() << ")) " 
                                                      << " then localErrorCounter := 1; end if;" << endl;
                         }
-                        /*if (s->isFP()) //cerr << "managing fp equality is not implemented yet, see line ~ 197 TestBench.cpp  . "<< endl;
-                        vhdl << tab << tab << tab << "assert false or fp_equal(fp"<< s->width() << "'(" << s->getName() << ") ,to_stdlogicvector(V_" <<  s->getName() << ")) report(\"Incorrect output for " << s->getName() << ", expected \" & str(to_stdlogicvector(V_" << s->getName() << ")) & \" and it outputs \" & str(" << s->getName() << ")) &  \"|| line : \" & integer'image(counter) & \" of input file \" ;"<< endl;
-			else if (s->isIEEE()) vhdl << tab << tab << tab << "assert false or fp_equal_ieee(" << s->getName() << " ,to_stdlogicvector(V_" <<  s->getName() << "),"<<s->wE()<<" , "<<s->wF()<<") report(\"Incorrect output for " << s->getName() << ", expected \" & str(to_stdlogicvector(V_" << s->getName() << ")) & \" and it outputs \" & str( " << s->getName() << ")) &  \"|| line : \" & integer'image(counter) & \" of input file \" ;"<< endl;
-                        else vhdl << tab << tab << tab << "assert false or (" << s->getName() << "= to_stdlogicvector(V_" << s->getName() << "))report(\"Incorrect output for R, expected \" & str(to_stdlogicvector(V_" << s->getName() << ")) & \" and it outputs \" & str(" << s->getName() <<")) &  \"|| line : \" & integer'image(counter) & \" of input file \" ;"<< endl;*/
-                        //else cerr << " Le test à partir d'un fichier n'est pas encore implémenté pour les vecteurs non IEEE" << endl;
-
-                        /* adding the IO to the IOorder list */
                         vhdl << tab << tab << tab << "end loop;" << endl;
                         vhdl << tab << tab << tab << " assert false or (localErrorCounter = 1) report \"erreur\";" << endl;
+			vhdl << tab << tab << tab << "end if;" << endl;
+			// TODO add test to increment global error counter
+                        /* adding the IO to the IOorder list */
                         IOorderOutput.push_back(s->getName());
                 };
-                vhdl << tab << tab << tab << " wait for 5 ns; -- wait for pipeline to flush" << endl;
+                vhdl << tab << tab << tab << " wait for 10 ns; -- wait for pipeline to flush" << endl;
                 vhdl << tab << tab << tab << "counter := counter + 1;" << endl;
-                currentOutputTime += 5 * tcl_.getNumberOfTestCases();
+                currentOutputTime += 5 * (tcl_.getNumberOfTestCases() + n_);
                 vhdl << tab << tab << "end loop;" << endl;
-
+                vhdl << tab << tab << "report (integer'image(errorCounter) & \" error(s) encoutered.\");" << endl;
 		vhdl << tab << tab << "assert false report \"End of simulation\" severity failure;" <<endl;
 		vhdl << tab << "end process;" <<endl;
 
@@ -245,6 +287,12 @@ namespace flopoco{
 		        	TestCase* tc = tcl_.getTestCase(i);
                                 if (fileOut) fileOut << tc->generateInputString(IOorderInput,IOorderOutput);
                       } 
+                      // generation on the fly of random test case (VALID only for FPFMA)
+                      for (int i = 0; i < n_; i++) {
+                              TestCase* tc = op_->buildRandomTestCases(i);
+                                if (fileOut) fileOut << tc->generateInputString(IOorderInput,IOorderOutput);
+                              delete tc; 
+                      }; 
 
                       // closing input file
                       fileOut.close();
@@ -307,22 +355,12 @@ namespace flopoco{
                     if (fileOut) fileOut << tc->generateInputString(IOorderInput,IOorderOutput);                  
                   // incrementation
                   counters[0]++;
+		  delete tc;
                   }
                 fileOut.close();
 
                 }
           }
-
-
-
-
-
-
-
-
-
-
-
 
 
           void TestBench::generateTestInVhdl() {
@@ -333,11 +371,18 @@ namespace flopoco{
 		vhdl << tab << tab << "rst <= '1';" << endl;
 		vhdl << tab << tab << "wait for 10 ns;" << endl;
 		vhdl << tab << tab << "rst <= '0';" << endl;
-		for (int i = 0; i < tcl_.getNumberOfTestCases(); i++)
-			{
-				vhdl << tcl_.getTestCase(i)->getInputVHDL(tab + tab);
-				vhdl << tab << tab << "wait for 10 ns;" <<endl;
-			} 
+		for (int i = 0; i < tcl_.getNumberOfTestCases(); i++){
+			vhdl << tcl_.getTestCase(i)->getInputVHDL(tab + tab);
+			vhdl << tab << tab << "wait for 10 ns;" <<endl;
+		}
+		/* COULD NOT BE USED BECAUSE IT HAS TO BE THE SAME TESTCASE FOR INPUT AND OUTPUT GENERATION 
+                // generation on the fly of random test case (VALID only for FPFMA)
+                for (int i = 0; i < n_; i++) {
+                        TestCase* tc = op_->buildRandomTestCases(i);
+			vhdl << tc->getInputVHDL(tab + tab);
+			vhdl << tab << tab << "wait for 10ns;" << endl;
+                        delete tc; 
+                };*/ 
 		vhdl << tab << tab << "wait for 100000 ns; -- allow simulation to finish" << endl;
 		vhdl << tab << "end process;" <<endl;
 		vhdl <<endl;
@@ -356,22 +401,29 @@ namespace flopoco{
 			vhdl << tab << tab << "wait for "<< 2 <<" ns; -- wait for pipeline to flush" <<endl;
 			currentOutputTime += 2;
 		}
-		for (int i = 0; i < tcl_.getNumberOfTestCases(); i++)
-			{
-				//		vhdl << tab << tab << "wait for 5 ns;" <<endl;
-				//		currentOutputTime += 5;
-				vhdl << tab << tab << "-- current time: " << currentOutputTime <<endl;
-				TestCase* tc = tcl_.getTestCase(i);
-				if (tc->getComment() != "")
-					vhdl << tab <<  "-- " << tc->getComment() << endl;
-				vhdl << tc->getInputVHDL(tab + tab + "-- input: ");
-                                // if a file is open for output we generated them
-                                //if (fileOut) fileOut << tc->generateInputString();
-				vhdl << tc->getExpectedOutputVHDL(tab + tab);
-				vhdl << tab << tab << "wait for 10 ns;" <<endl;
-				currentOutputTime += 10;
-			}
-                 
+		for (int i = 0; i < tcl_.getNumberOfTestCases(); i++) {
+			vhdl << tab << tab << "-- current time: " << currentOutputTime <<endl;
+			TestCase* tc = tcl_.getTestCase(i);
+			if (tc->getComment() != "")
+				vhdl << tab <<  "-- " << tc->getComment() << endl;
+			vhdl << tc->getInputVHDL(tab + tab + "-- input: ");
+			vhdl << tc->getExpectedOutputVHDL(tab + tab);
+			vhdl << tab << tab << "wait for 10 ns;" <<endl;
+			currentOutputTime += 10;
+		}
+		/* SEE REMARK FOR ON THE FLY INPUT GENERATION
+                // generation on the fly of random test case (VALID only for FPFMA)
+                for (int i = 0; i < n_; i++) {
+                        TestCase* tc = op_->buildRandomTestCases(i);
+			if (tc->getComment() != "")
+				vhdl << tab <<  "-- " << tc->getComment() << endl;
+			vhdl << tc->getInputVHDL(tab + tab + "-- input: ");
+			vhdl << tc->getExpectedOutputVHDL(tab + tab);
+			vhdl << tab << tab << "wait for 10 ns;" <<endl;
+			currentOutputTime += 10;
+                        delete tc; 
+                };*/ 
+                
 		vhdl << tab << tab << "assert false report \"End of simulation\" severity failure;" <<endl;
 		vhdl << tab << "end process;" <<endl;
 	
@@ -459,6 +511,7 @@ namespace flopoco{
 
               o << endl << endl << endl;
 
+
                 /* If op_ is an IEEE operator (IEEE input and output, we define) the function
                  * fp_equal for the considered precision in the ieee case
                  */
@@ -480,7 +533,7 @@ namespace flopoco{
                         tab << tab << tab << "else return not iszero(a(wf - 1 downto 0));\n" <<         
                         tab << tab << tab << "end if;\n" <<         
 			tab << tab << "else\n" <<
-			tab << tab << tab << "return a = b;\n" <<
+			tab << tab << tab << "return a(a'high downto 0) = b(b'high downto 0);\n" <<
 			tab << tab << "end if;\n" <<
 			tab << "end;\n";
                 
@@ -494,7 +547,7 @@ namespace flopoco{
 				Signal* s = op_->getIOListSignal(i);
 			
 				if (s->type() != Signal::out) continue;
-				if (s->isFP() != true) continue;
+				if (s->isFP() != true and s->isIEEE() != true) continue;
 				widths.insert(s->width());
 			}
 

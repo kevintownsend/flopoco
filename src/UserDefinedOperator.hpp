@@ -42,6 +42,8 @@ class UserDefinedOperator : public Operator {
     void buildStandardTestCases(TestCaseList* tcl);
 
     /* function used to generate n random test, where n is an argument of
-      the function */
+      the function , this function is DEPRECATED, use the new function below*/
     void buildRandomTestCases(TestCaseList* tcl, int n);
+
+    TestCase* buildRandomTestCases(int i);
 };

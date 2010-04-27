@@ -46,6 +46,7 @@ namespace flopoco{
 		void buildStandardTestCases(TestCaseList* tcl);
 		/**Overloading the function of Operator with a function that tests only positive FP numbers (full range)*/
 		void buildRandomTestCases(TestCaseList* tcl, int n); 
+		TestCase* buildRandomTestCases(int i); 
 
 		int wE, wF;
 
