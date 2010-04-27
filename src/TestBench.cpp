@@ -156,7 +156,6 @@ namespace flopoco{
 		vhdl << tab << tab << "rst <= '1';" << endl;
 		vhdl << tab << tab << "wait for 10 ns;" << endl;
 		vhdl << tab << tab << "rst <= '0';" << endl;
-                currentOutputTime += 10;
 
                 /* File Reading */
                 vhdl << tab << tab << "while not endfile(inputsFile) loop" << endl;
@@ -213,8 +212,8 @@ namespace flopoco{
                 vhdl << tab << "begin" << endl;
 
                 vhdl << tab << tab << tab << " wait for 10 ns;" << endl; // wait for reset signal to finish
-                currentOutputTime += 5 * (tcl_.getNumberOfTestCases()+n_);
-		currentOutputTime += op_->getPipelineDepth()*10* (tcl_.getNumberOfTestCases() + n_);
+                currentOutputTime += 10;
+		currentOutputTime += op_->getPipelineDepth()*10; // adding flushing time wait
 		vhdl << tab << tab << "wait for " << (op_->getPipelineDepth()) * 10 << " ns; -- pipeline flush time " << endl; 
 
                 /* File Reading */
@@ -265,8 +264,8 @@ namespace flopoco{
                         IOorderOutput.push_back(s->getName());
                 };
                 vhdl << tab << tab << tab << " wait for 10 ns; -- wait for pipeline to flush" << endl;
+                currentOutputTime += 10 * (tcl_.getNumberOfTestCases()+n_); // time for simulation
                 vhdl << tab << tab << tab << "counter := counter + 1;" << endl;
-                currentOutputTime += 5 * (tcl_.getNumberOfTestCases() + n_);
                 vhdl << tab << tab << "end loop;" << endl;
                 vhdl << tab << tab << "report (integer'image(errorCounter) & \" error(s) encoutered.\");" << endl;
 		vhdl << tab << tab << "assert false report \"End of simulation\" severity failure;" <<endl;

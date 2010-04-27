@@ -253,6 +253,7 @@ namespace flopoco{
 			  mpz_class v = inputs[*it];
 			  o << s->valueToVHDL(v,false) << " ";
                 }
+		o << "\n";
                 for (list<string>::iterator it = IOorderOutput.begin();it != IOorderOutput.end(); it++) {
 			Signal* s = op_->getSignalByName(*it);
 			vector<mpz_class> vs = outputs[*it];
