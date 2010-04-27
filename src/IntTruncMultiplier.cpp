@@ -591,6 +591,7 @@ namespace flopoco{
 			else
 				configSoft = insertSoftDSPswithLimits(bestConfig);
 			
+			printConfiguration(bestConfig, configSoft);
 			generateVHDLCode(bestConfig, configSoft);
 			displayAll(bestConfig, configSoft);
 		}
@@ -2747,9 +2748,9 @@ namespace flopoco{
 			mult->changeName(cname.str());
 			oplist.push_back(mult);
 			// TODO: compute width of x and y + corretc range for X and Y
-			vhdl << tab << declare(join("x_",partitions), njj-nj+1) << " <= X" << range(njj, nj) << ";" << endl;
+			vhdl << tab << declare(join("x_",partitions), njj-nj+1, true) << " <= X" << range(njj, nj) << ";" << endl;
 			inPortMap(mult, "X", join("x_",partitions));
-			vhdl << tab << declare(join("y_",partitions), nii-ni+1) << " <= " << ((isSquarer)?"X":"Y") << range(nii, ni) << ";" << endl;
+			vhdl << tab << declare(join("y_",partitions), nii-ni+1, true ) << " <= " << ((isSquarer)?"X":"Y") << range(nii, ni) << ";" << endl;
 			inPortMap(mult, "Y", join("y_",partitions));
 		
 			outPortMap(mult, "R", join("result", partitions));

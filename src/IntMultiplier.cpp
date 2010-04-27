@@ -45,9 +45,9 @@ namespace flopoco{
 	
 		setCopyrightString("Bogdan Pasca, Sebastian Banescu (2008-2009)");
 	
-		addInput ("X", wInX_);
-		addInput ("Y", wInY_);
-		addOutput("R", wOut_); /* wOut_ = wInX_ + wInY_ */
+		addInput ("X", wInX_,true);
+		addInput ("Y", wInY_,true);
+		addOutput("R", wOut_,1, true); /* wOut_ = wInX_ + wInY_ */
 	
 		double delay = 0.0;
 	
