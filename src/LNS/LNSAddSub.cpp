@@ -32,7 +32,7 @@ namespace flopoco{
 	extern vector<Operator*> oplist;
 
 	LNSAddSub::LNSAddSub(Target * target, int wE, int wF) :
-		wE(wE), wF(wF)
+		Operator(target), wE(wE), wF(wF)
 	{
 		setCombinatorial();	
 		ostringstream name;

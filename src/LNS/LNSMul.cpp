@@ -30,7 +30,7 @@ using namespace std;
 namespace flopoco{
 
 	LNSMul::LNSMul(Target * target, int wE, int wF) :
-		wE(wE), wF(wF)
+		Operator(target), wE(wE), wF(wF)
 	{
 		addInput ("nA", wE + wF + 3);
 		addInput ("nB", wE + wF + 3);

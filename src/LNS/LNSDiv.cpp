@@ -30,7 +30,7 @@ using namespace std;
 namespace flopoco{
 
 	LNSDiv::LNSDiv(Target * target, int wE, int wF) :
-		wE(wE), wF(wF)
+		Operator(target), wE(wE), wF(wF)
 	{
 		setCombinatorial();	
 		ostringstream name;

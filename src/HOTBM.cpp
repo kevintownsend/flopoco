@@ -22,7 +22,7 @@
 namespace flopoco{
 
 	HOTBM::HOTBM(Target* target, string func, string namebase, int wI, int wO, int n, double xmin, double xmax, double scale)
-		: inst(0), f(*new Function(func, xmin, xmax, scale)), wI(wI), wO(wO)
+		: Operator(target), inst(0), f(*new Function(func, xmin, xmax, scale)), wI(wI), wO(wO)
 	{
 		try {
 			Param p(wI, wO, n);

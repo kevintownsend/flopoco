@@ -53,21 +53,6 @@ const std::string tab = "   ";
 class Operator
 {
 public:
-	/** Default constructor.
-	 * Creates a default operator instance. No parameters are passed to this constructor.
-	 */
-	Operator(){
-		numberOfInputs_             = 0;
-		numberOfOutputs_            = 0;
-		hasRegistersWithoutReset_   = false;
-		hasRegistersWithAsyncReset_ = false;
-		hasRegistersWithSyncReset_  = false;
-		pipelineDepth_              = 0;
-		currentCycle_               = 0;
-                needRecirculationSignal_    = false;
-//		useTable.clear();
-	}
-	
 	/** Operator Constructor.
 	 * Creates an operator instance with an instantiated target for deployment.
 	 * @param target_ The deployment target of the operator.

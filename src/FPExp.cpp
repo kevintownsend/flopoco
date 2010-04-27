@@ -27,8 +27,8 @@ using namespace std;
 
 namespace flopoco{
 
-	FPExp::FPExp(Target* target, int wE, int wF)
-		: wE(wE), wF(wF)
+	FPExp::FPExp(Target* target, int wE, int wF) :
+		Operator(target),  wE(wE), wF(wF)
 	{
 		/* Generate unique name */
 		{
