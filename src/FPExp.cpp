@@ -36,6 +36,8 @@ namespace flopoco{
 			o << "FPExp_" << wE << "_" << wF;
 			uniqueName_ = o.str();
 		}
+		
+		setCombinatorial();
 
 		addFPInput("X", wE, wF);
 		addFPOutput("R", wE, wF, 2);  // 2 because faithfully rounded
