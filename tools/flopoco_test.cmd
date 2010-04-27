@@ -233,6 +233,8 @@ flopoco FPExp 11 52
 #    InputIEEE wEI wFI wEO wFO
 #      Conversion from IEEE-754-like to FloPoCo floating-point formats
 
+flopoco FPLog 8 23
+flopoco FPLog 11 28
 
 
 

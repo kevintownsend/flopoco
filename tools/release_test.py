@@ -11,7 +11,7 @@ import time
 
 input_combinations_per_operator = 1
 test_cases_per_combination = 100
-useModelSim=False # if True, use modelsim; if False, use ghdl
+useModelSim=True # if True, use modelsim; if False, use ghdl
 
 
 #-------------------------------------------------------------------------------
@@ -212,14 +212,16 @@ fd = open ("flopoco_test.cmd")
 if fd < 0:
 	print ("Unable to open file flopoco_test.cmd")
 	logfile.write("Unable to open file flopoco_test.cmd")
+
 for line in fd:
 	if ((line[0]!='#') and (len(line)>1)):
-		run_cmd = line[:len(line)-1] + " TestBenchFile " + `test_cases_per_combination`
+		run_cmd = line[:len(line)-1] + " TestBench " + `test_cases_per_combination`
 		print run_cmd
 		logfile.write(run_cmd+"\n")
 		modelsim_food = commands.getoutput(run_cmd)
 		did_generate_vhdl = True
 		status = string.find(modelsim_food, "Output file: flopoco.vhdl")
+
 		if status < 0:
 			did_generate_vhdl = False
 			print("Did not generate VHDL");
@@ -228,10 +230,8 @@ for line in fd:
 			commands.getoutput("rm -f vsim*")
 			commands.getoutput("killall -9 vsimk")
 			modelsim_food = modelsim_food[string.find(modelsim_food, "vdel") : string.find(modelsim_food, "To run the simulation using gHDL,")-1 ]
-			#print("The modelsim food is:\n"+modelsim_food);
 		else:
 			ghdl_food = modelsim_food[string.find(modelsim_food, "   ghdl") : string.find(modelsim_food, "Final")-1 ]
-			#print("The ghdl food is:\n"+ghdl_food);
 	
 		finished = False
 		pass_test = True
@@ -254,7 +254,7 @@ for line in fd:
 				child_stdin.write('exit \n')
 				while ((not finished) and (did_compile)):
 					st = child_stdout.readline()
-				#print st[0:len(st)-2]
+					#print st[0:len(st)-2]
 					logfile.write(st[0:len(st)-2]+"\n")
 					status = string.find(st, "Error:")
 					if status > 0:
@@ -275,15 +275,13 @@ for line in fd:
 							did_compile = False
 							finished = True
 
-					if did_compile:
-						child_stdin.write('exit \n')
+				if did_compile:
+					child_stdin.write('exit \n')
 					child_stdout.close()
 					child_stdin.close()
 					child_stderr.close()
 
 			else: # use ghdl
- 				#status=commands.getoutput("mv flopoco.vhdl /tmp")
- 				#status=commands.getoutput("mv flopocobug.vhdl flopoco.vhdl")
 
 				cmd=ghdl_food[string.find(ghdl_food,"ghdl -a"):string.find(ghdl_food,".vhdl")+5]
 				logfile.write(cmd+"\n")
@@ -318,17 +316,16 @@ for line in fd:
 					pass_test=False
 				commands.getoutput("rm *.vcd e~testbench* testbench*")
 
-			#p.wait()
 #		did_compile = not did_compile
 		pass_test = pass_test and did_generate_vhdl
 		res.append( [run_cmd, `did_generate_vhdl`, `did_compile`, `pass_test`])
 		pass_all = pass_all and pass_test
-	
 		
 		if pass_test:
 			print "Test: ", run_cmd , " has SUCCEDED "
 		else:
 			print "Test: ", run_cmd , " has FAILED "
+
 fd.close()
 
 
