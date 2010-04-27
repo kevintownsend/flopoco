@@ -213,8 +213,15 @@ namespace flopoco{
 
                 vhdl << tab << tab << tab << " wait for 10 ns;" << endl; // wait for reset signal to finish
                 currentOutputTime += 10;
-		currentOutputTime += op_->getPipelineDepth()*10; // adding flushing time wait
-		vhdl << tab << tab << "wait for " << (op_->getPipelineDepth()) * 10 << " ns; -- pipeline flush time " << endl; 
+		if (op_->getPipelineDepth() > 0){
+                        vhdl << tab << tab << "wait for "<< op_->getPipelineDepth()*10 <<" ns; -- wait for pipeline to flush" <<endl;
+                        currentOutputTime += op_->getPipelineDepth()*10;
+                }
+                else{
+                        vhdl << tab << tab << "wait for "<< 2 <<" ns; -- wait for pipeline to flush" <<endl;
+                        currentOutputTime += 2;
+                }
+
 
                 /* File Reading */
                 vhdl << tab << tab << "while not endfile(inputsFile) loop" << endl;
@@ -232,32 +239,34 @@ namespace flopoco{
                         vhdl << tab << tab << tab << "read(inline, possibilityNumber);" << endl;
                         vhdl << tab << tab << tab << "localErrorCounter := 0;" << endl;
                         vhdl << tab << tab << tab << "read(inline,tmpChar);" << endl; // we consume the character after output list
-			vhdl << tab << tab << tab << "if possibilityNumber = 1 then " << endl;
-                        vhdl << tab << tab << tab << "read(inline ,V_"<< s->getName() << ");" << endl;
+		      vhdl << tab << tab << tab << "if possibilityNumber = 0 then" << endl; 
+                        vhdl << tab << tab << tab << tab << "localErrorCounter := 0;" << endl;//read(inline,tmpChar);" << endl; // we consume the character between each outputs
+			vhdl << tab << tab << tab << "elsif possibilityNumber = 1 then " << endl;
+                        vhdl << tab << tab << tab << tab << "read(inline ,V_"<< s->getName() << ");" << endl;
 			 if (s->isFP()) 
-                        vhdl << tab << tab << tab << "assert false or fp_equal(fp"<< s->width() << "'(" << s->getName() << ") ,to_stdlogicvector(V_" <<  s->getName() << ")) report(\"Incorrect output for " << s->getName() << ", expected \" & str(to_stdlogicvector(V_" << s->getName() << ")) & \" and it outputs \" & str(" << s->getName() << ")) &  \"|| line : \" & integer'image(counter) & \" of input file \" ;"<< endl;                        
+                        vhdl << tab << tab << tab << tab << "assert false or fp_equal(fp"<< s->width() << "'(" << s->getName() << ") ,to_stdlogicvector(V_" <<  s->getName() << ")) report(\"Incorrect output for " << s->getName() << ", expected \" & str(to_stdlogicvector(V_" << s->getName() << ")) & \" and it outputs \" & str(" << s->getName() << ")) &  \"|| line : \" & integer'image(counter) & \" of input file \" ;"<< endl;                        
                         else if (s->isIEEE()) {                                                                                                                                               
-                          vhdl << tab << tab << tab << "if not fp_equal_ieee(" << s->getName() << " ,to_stdlogicvector(V_" <<  s->getName() << "),"<<s->wE()<<" , "<<s->wF()<<") then report(\"Incorrect output for " << s->getName() << ", expected \" & str(to_stdlogicvector(V_" << s-> getName() << ")) & \" and it outputs \" & str(" << s->getName()  << ")) &  \"|| line : \" & integer'image(counter) & \" of input file \" ;"<< endl;               
-                          vhdl << tab << tab << tab << tab << " errorCounter := errorCounter + 1; end if;" << endl;                                                                           
-                        } else vhdl << tab << tab << tab << "assert false or (" << s->getName() << "= to_stdlogicvector(V_" << s->getName() << "))" << "report(\"Incorrect output for R, expected \" & str(to_stdlogicvector(V_" << s->getName() << ")) & \" and it outputs \" & str(" << s->getName() <<")) &  \"|| line : \" & integer'image(counter) & \" of input file \" ;"<< endl;  
+                          vhdl << tab << tab << tab << tab << "if not fp_equal_ieee(" << s->getName() << " ,to_stdlogicvector(V_" <<  s->getName() << "),"<<s->wE()<<" , "<<s->wF()<<") then report(\"Incorrect output for " << s->getName() << ", expected \" & str(to_stdlogicvector(V_" << s-> getName() << ")) & \" and it outputs \" & str(" << s->getName()  << ")) &  \"|| line : \" & integer'image(counter) & \" of input file \" ;"<< endl;               
+                          vhdl << tab << tab << tab << tab << tab << " errorCounter := errorCounter + 1; end if;" << endl;                                                                           
+                        } else vhdl << tab << tab << tab << tab << "assert false or (" << s->getName() << "= to_stdlogicvector(V_" << s->getName() << "))" << "report(\"Incorrect output for " << s->getName() << ", expected \" & str(to_stdlogicvector(V_" << s->getName() << ")) & \" and it outputs \" & str(" << s->getName() <<")) &  \"|| line : \" & integer'image(counter) & \" of input file \" ;"<< endl;  
 
 
 			vhdl << tab << tab << tab << "else" << endl; 
-                        vhdl << tab << tab << tab << "for i in possibilityNumber downto 1 loop " << endl;
-                        vhdl << tab << tab << tab << "read(inline ,V_"<< s->getName() << ");" << endl;
-                        vhdl << tab << tab << tab << "read(inline,tmpChar);" << endl; // we consume the character between each outputs
+                        vhdl << tab << tab << tab << tab << "for i in possibilityNumber downto 1 loop " << endl;
+                        vhdl << tab << tab << tab << tab << tab << "read(inline ,V_"<< s->getName() << ");" << endl;
+                        vhdl << tab << tab << tab << tab << tab << "read(inline,tmpChar);" << endl; // we consume the character between each outputs
                         if (s->isFP()) {  
-                          vhdl << tab << tab << tab << "if fp_equal(fp"<< s->width() << "'(" << s->getName() << ") ,to_stdlogicvector(V_" <<  s->getName() << ")) " 
-                                                    << "  then localErrorCounter := 1; end if; " << endl;
+                          vhdl << tab << tab << tab << tab << tab << "if fp_equal(fp"<< s->width() << "'(" << s->getName() << ") ,to_stdlogicvector(V_" <<  s->getName() << ")) " 
+						  << "  then localErrorCounter := 1; end if; " << endl;
                         } else if (s->isIEEE()) {
-			  vhdl << tab << tab << tab << "if fp_equal_ieee(" << s->getName() << " ,to_stdlogicvector(V_" <<  s->getName() << "),"<<s->wE()<<" , "<<s->wF()<<")"
+			  vhdl << tab << tab << tab << tab << tab << "if fp_equal_ieee(" << s->getName() << " ,to_stdlogicvector(V_" <<  s->getName() << "),"<<s->wE()<<" , "<<s->wF()<<")"
                                                     << " then localErrorCounter := 1; end if;" << endl;                                    
                         } else {
-                           vhdl << tab << tab << tab << "if (" << s->getName() << "= to_stdlogicvector(V_" << s->getName() << ")) " 
+                           vhdl << tab << tab << tab << tab << tab << "if (" << s->getName() << "= to_stdlogicvector(V_" << s->getName() << ")) " 
                                                      << " then localErrorCounter := 1; end if;" << endl;
                         }
-                        vhdl << tab << tab << tab << "end loop;" << endl;
-                        vhdl << tab << tab << tab << " assert false or (localErrorCounter = 1) report \"erreur\";" << endl;
+                        vhdl << tab << tab << tab << tab << "end loop;" << endl;
+                        vhdl << tab << tab << tab << tab << " assert false or (localErrorCounter = 1) report \"erreur\";" << endl;
 			vhdl << tab << tab << tab << "end if;" << endl;
 			// TODO add test to increment global error counter
                         /* adding the IO to the IOorder list */
