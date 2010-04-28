@@ -2906,16 +2906,22 @@ namespace flopoco{
 		//bool isextentionok=false;
 		int ref=1;
 		//try in right
-		if(  mat[deepY][rdeepX+1]!=1369 && mat[deepY][rdeepX+1]>nrDSPs && (deepY==0 || mat[deepY-1][rdeepX+1]!=mat[deepY][rdeepX+1]))
+		if( (rdeepX+1)<vn && mat[deepY][rdeepX+1]!=1369 && mat[deepY][rdeepX+1]>nrDSPs && (deepY==0 || mat[deepY-1][rdeepX+1]!=mat[deepY][rdeepX+1]))
 		{
-			ref = mat[deepY][rdeepX+1];
+			if (deepX > 0)
+				ref = mat[deepY][rdeepX+1];
 			int i;
 			for(i=deepY+1; i<vmme && mat[i][rdeepX]==0 && mat[i][rdeepX+1]==ref;i++ )
 			{
 				mat[i][rdeepX]=ref;
 			}
-			if (i == vmme)
-				i--; 
+			
+			bool tooHigh = false;
+			if (i==vmme)
+			{
+				i--;
+				tooHigh = true;
+			}	
 				
 			if(  mat[i][rdeepX+1]==ref  )
 			{
@@ -3154,7 +3160,7 @@ namespace flopoco{
 			
 		while(!isTilingValid(config,configSoft,targetPrecision) )
 		{
-			//displayAll(bestConfig, configSoft);
+			displayAll(bestConfig, configSoft);
 		deepX=vn,deepY=vm,rdeepX=vm;
 		bool found = false;
 		//search the deapest position
@@ -3173,7 +3179,14 @@ namespace flopoco{
 			}			
 		}	
 		
-		
+		/*
+		for(int i=0;i<m;i++){
+			for(int j=0;j<n;j++)
+				cout << mat[i][j];
+			cout << endl;
+		}
+		cout << endl;
+		*/
 		if (!found)
 			return configSoft;
 			
@@ -3184,9 +3197,10 @@ namespace flopoco{
 		int ref=1;
 		int sdspw,sdsph;
 		//try in right
-		if(   mat[deepY][rdeepX+1]!=1369 &&   mat[deepY][rdeepX+1]>nrDSPs && (deepY==0 || mat[deepY-1][rdeepX+1]!=mat[deepY] [rdeepX+1]))
+		if( (rdeepX+1)<vn && mat[deepY][rdeepX+1]!=1369 &&   mat[deepY][rdeepX+1]>nrDSPs && (deepY==0 || mat[deepY-1][rdeepX+1]!=mat[deepY] [rdeepX+1]))
 		{
-			ref = mat[deepY] [rdeepX+1];
+			if (deepX > 0)
+				ref = mat[deepY] [rdeepX+1];
 			int i;
 			
 			configSoft[(ref-nrDSPs-1)]->getCoordinates(stx,sty,sbx,sby);
@@ -3205,10 +3219,14 @@ namespace flopoco{
 					mat[i][rdeepX]=ref;
 				}
 				
+				bool tooHigh = false;
 				if (i==vmme)
+				{
 					i--;
-					
-				if(  mat[i][rdeepX+1]==ref)	{
+					tooHigh = true;
+				}	
+				
+				if( !tooHigh && mat[i][rdeepX+1]==ref)	{
 					//new multiplier should be created
 					for(i=deepY+1; i<vmme && mat[i][rdeepX]==ref;i++)
 						mat[i][rdeepX]=0;
@@ -3233,7 +3251,7 @@ namespace flopoco{
 		else
 		{
 			//try top
-			if(  deepY>0 && mat[deepY-1][rdeepX]!=1369 && mat[deepY-1][rdeepX]>nrDSPs &&  mat[deepY-1][rdeepX+1]!=mat[deepY-1][rdeepX])
+			if( deepY>0 && mat[deepY-1][rdeepX]!=1369 && mat[deepY-1][rdeepX]>nrDSPs &&  mat[deepY-1][rdeepX+1]!=mat[deepY-1][rdeepX])
 			{
 				ref = mat[deepY-1] [rdeepX];
 				int i;
