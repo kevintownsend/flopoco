@@ -550,6 +550,25 @@ namespace flopoco{
 			//the one
 			numberDSP4Overlap = nrDSPs;
 			tilingAlgorithm(nrDSPs-1,nrDSPs-1,false,nrDSPs-1);
+			
+			// remove DSP blocks that are outside the tiling grid
+			DSP** tempc = new DSP*[nrDSPs];
+			memcpy(tempc, bestConfig, nrDSPs*sizeof(DSP*));
+			int newNrDSPs=0;
+			for (int i=0; i<nrDSPs; i++)
+			{
+				int trx1, try1, blx1, bly1; 	// coordinates of the two corners of a DSP block 
+				tempc[i]->getTopRightCorner(trx1, try1);
+				tempc[i]->getBottomLeftCorner(blx1, bly1);
+				if (trx1 < vnme && try1 < vmme)
+				{
+					bestConfig[newNrDSPs] = tempc[i];
+					newNrDSPs++;
+				}
+			}
+			
+			nrDSPs = newNrDSPs;
+			
 			//bindDSPs(bestConfig);
 			vector<SoftDSP*> configSoft;
 			if (useLimits == 0)
