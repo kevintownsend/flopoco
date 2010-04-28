@@ -50,7 +50,8 @@ namespace flopoco{
 		setCopyrightString("Bogdan Pasca, Mioara Joldes (2010)");		
 
     pf=new  PiecewiseFunction(func);
-		tg = new TableGenerator(target, pf, wInX, wOutX+1, n);
+    
+    tg = new TableGenerator(target, pf, wInX, wOutX+1, n);
 		oplist.push_back(tg);
 		combinatorialOperator = false;
 		
@@ -123,10 +124,10 @@ namespace flopoco{
 	
 	void FunctionEvaluator::emulate(TestCase* tc)
 	{
-		
+		 setToolPrecision(165);
     int  nrFunctions=(pf->getPiecewiseFunctionArray()).size();
 
-      Function *f=pf->getPiecewiseFunctionArray(0);
+     Function *f = pf->getPiecewiseFunctionArray(0);
     
     if (nrFunctions !=1) {
       cout<<"Warning: we are dealing with a piecewise function; only the first branch will be evaluated"<<endl;    
@@ -142,10 +143,13 @@ namespace flopoco{
     /* Convert a random signal to an mpfr_t in [0,1[ */
 		mpfr_set_z(mpX, svX.get_mpz_t(), GMP_RNDN);
 		mpfr_div_2si(mpX, mpX, wInX_, GMP_RNDN);
-
+    
 		/* Compute the function */
 		f->eval(mpR, mpX);
-
+		if (verbose){
+      cout<<"Input is:"<<sPrintBinary(mpX)<<endl;
+      cout<<"Output is:"<<sPrintBinary(mpR)<<endl;
+		}
 		/* Compute the signal value */
 		if (mpfr_signbit(mpR))
 			{
@@ -161,8 +165,8 @@ namespace flopoco{
 		mpfr_get_z(rd.get_mpz_t(), mpR, GMP_RNDD);
 		ru = rd + 1;
   
-    tc->addExpectedOutput("RD", rd);
-    tc->addExpectedOutput("RU", ru);
+    tc->addExpectedOutput("R", rd);
+    tc->addExpectedOutput("R", ru);
     mpfr_clear(mpX);
     mpfr_clear(mpR);
 	}

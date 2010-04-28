@@ -54,8 +54,7 @@ namespace flopoco{
   
     setToolPrecision(165);
     int nrMaxIntervals=1024*1024;	
-    
-    
+        
     int  nrFunctions=(pwf->getPiecewiseFunctionArray()).size();
     int  iter;
     int guardBits =1;
@@ -113,7 +112,7 @@ namespace flopoco{
       errBoundBool =0;   
     
 	    /*Convert the input string into a sollya evaluation tree*/ 
-      tempNode = fi->getSollyaNode();
+      tempNode = copyTree(fi->getSollyaNode());
     
       while((errBoundBool==0)&& (nrIntervals <=nrMaxIntervals)){
         errBoundBool=1; 
