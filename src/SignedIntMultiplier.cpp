@@ -318,12 +318,12 @@ namespace flopoco{
 					vhdl << tab << "R <= X * Y ;" <<endl;
 				}
 			}else{
-				cerr << " Only implemented for Xilinx Targets for now" << endl;
-				throw "Sorry Not yet implemented";
+				REPORT(0, "WARNINNG: Only implemented for Xilinx Targets for now");
+				vhdl << tab << "R <= X * Y;"<<endl;
 			}
 		}
 		else
-			vhdl << tab << "R <= X * Y ;" <<endl;
+			vhdl << tab << "R <= X * Y;" <<endl;
 	}
 
 	SignedIntMultiplier::~SignedIntMultiplier() {
