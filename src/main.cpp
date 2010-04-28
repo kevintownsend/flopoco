@@ -836,46 +836,40 @@ bool parseCommandLine(int argc, char* argv[]){
 			}    
 		}   
 		else if(opname=="IntTilingMultiplier"){
-			int nargs = 2;
+			int nargs = 4;
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
 				int wInX = checkStrictyPositive(argv[i++], argv[0]);
 				int wInY = checkStrictyPositive(argv[i++], argv[0]);
 				float r = atof(argv[i++]);
+				if (r<0)
+					throw "Ratio > 0";
 				int maxTimeInMinutes = atoi(argv[i++]);
-				cerr << "> IntTilingMultiplier , wInX="<<wInX<<", wInY="<<wInY<<" ratio=" << r << "\n";
+				
+				cerr << "> IntTilingMultiplier , wInX="<<wInX<<", wInY="<<wInY<<" ratio=" << r << " maxTimeInMinutes= "<< maxTimeInMinutes << "\n";
 				op = new IntTilingMult(target, wInX, wInY, r, maxTimeInMinutes);
 				addOperator(op);
 			}
 		}
-//		else if(opname=="IntTruncSquarer"){
-//			int nargs = 4;
-//			if (i+nargs > argc)
-//				usage(argv[0]);
-//			else {
-//				int wInX = checkStrictyPositive(argv[i++], argv[0]);
-//				float r = atof(argv[i++]);
-//				int ordError = atoi(argv[i++]);
-//				int useLimits = atoi(argv[i++]);
-//				int maxTimeInMinutes = atoi(argv[i++]);
-//				cerr << "> IntTruncSquarer , wInX="<<wInX<<" ratio=" << r <<" relativeError="<< ordError<< "\n";
-//				op = new IntTruncMultiplier(target, wInX, r,ordError,useLimits, maxTimeInMinutes);
-//				addOperator(op);
-//			}
-//		}		
 		else if(opname=="IntTruncMultiplier"){
-			int nargs = 5;
+			int nargs = 6;
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
 				int wInX = checkStrictyPositive(argv[i++], argv[0]);
 				int wInY = checkStrictyPositive(argv[i++], argv[0]);
 				float r = atof(argv[i++]);
+				if (r<0)
+					throw "Ratio > 0";
 				int ordError = atoi(argv[i++]);
+				if (ordError<0)
+					throw "error order is >= 0";
 				int useLimits = atoi(argv[i++]);
+				if (!((useLimits==0)||(useLimits==1)))
+					throw "useLimits is 0 or 1";				
 				int maxTimeInMinutes = atoi(argv[i++]);
-				cerr << "> IntTruncMult , wInX="<<wInX<<", wInY="<<wInY<<" ratio=" << r <<" error order= "<<ordError<<"\n";
+				cerr << "> IntTruncMult , wInX="<<wInX<<", wInY="<<wInY<<" ratio=" << r <<" error order= "<<ordError<< " useLimits="<<useLimits<<" maxTimeInMinutes="<<maxTimeInMinutes<<"\n";
 				op = new IntTruncMultiplier(target, wInX, wInY, r,ordError,useLimits, maxTimeInMinutes, true);
 				addOperator(op);
 			}

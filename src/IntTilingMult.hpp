@@ -114,6 +114,15 @@ namespace flopoco{
 		 */
 		int multiplicationInDSPs(DSP** config);
 	 
+	 	/**
+		 * @param tx top-right x coordinate
+		 * @param ty top-right y coordinate
+		 * @param bx bottom-left x coordinate
+		 * @param by bottom-left y coordinate
+		 */
+		void convertCoordinates(int &tx, int &ty, int &bx, int &by);
+
+		void convertCoordinatesKeepNeg(int &tx, int &ty, int &bx, int &by);
 	 
 		/**
 		 * This function generates the vhdl code for multiplication using only Slices.
