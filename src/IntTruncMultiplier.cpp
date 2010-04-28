@@ -235,8 +235,6 @@ namespace flopoco{
 	mpfr_t *IntTruncMultiplier::evalTruncTilingErrorInverted(DSP** configuration, vector<SoftDSP*> softDSPs){
 		mpfr_t *fullSum;
 		int xB,xT,yB,yT;
-		int extW = getExtraWidth();
-		int extH = getExtraHeight(); 
 
 		/* fist we get the maximal sum */
 		fullSum = evalMaxValue(wX, wY);
@@ -247,26 +245,11 @@ namespace flopoco{
 			for(i=0; i<nrDSPs; i++){
 				configuration[i]->getTopRightCorner(xT,yT);
 				configuration[i]->getBottomLeftCorner(xB,yB);
-				xT -= extW;
-				xB -= extW;
-				yT -= extH;
-				yB -= extH;
-				
-				//the conf is rotated
-				xT = wX-1 - xT;
-				yT = wY-1 - yT;
-				xB = wX-1 - xB;
-				yB = wY-1 - yB;
-				int tmp = xT;
-				xT=xB;
-				xB=tmp;
-				tmp = yT;
-				yT=yB;
-				yB=tmp;
+				convertCoordinates(xT,yT,xB,yB);
 
 				int power = xT + yT;
 				mpfr_t* currentSum;
-				currentSum = evalMaxValue(min(xB,wX) - xT + 1, min(yB,wY) - yT +1);
+				currentSum = evalMaxValue(xB - xT + 1, yB - yT + 1);
 				
 				mpfr_t s;
 				mpfr_init2(s, 1000);
@@ -285,22 +268,7 @@ namespace flopoco{
 			softDSPs[k]->trim(vnme, vmme);
 			softDSPs[k]->getTopRightCorner(xT,yT);
 			softDSPs[k]->getBottomLeftCorner(xB,yB);
-			xT -= extW;
-			xB -= extW;
-			yT -= extH;
-			yB -= extH;
-			softDSPs[k]->trim(vnme, vmme);
-			//the conf is rotated
-			xT = wX-1 - xT;
-			yT = wY-1 - yT;
-			xB = wX-1 - xB;
-			yB = wY-1 - yB;
-			int tmp = xT;
-			xT=xB;
-			xB=tmp;
-			tmp = yT;
-			yT=yB;
-			yB=tmp;
+			convertCoordinates(xT,yT,xB,yB);
 			
 			int power = xT + yT;
 			mpfr_t* currentSum;
