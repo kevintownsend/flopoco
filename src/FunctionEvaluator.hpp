@@ -29,7 +29,7 @@ namespace flopoco{
 		
 		void emulate(TestCase * tc);
 
-		
+		PiecewiseFunction *pf;
 		TableGenerator *tg;
 		PolynomialEvaluator *pe;
 		
@@ -46,6 +46,8 @@ namespace flopoco{
 		unsigned wR;
 		int weightR;
 
+    int wInX_;   
+		int wOutX_;
 		
 	};
 

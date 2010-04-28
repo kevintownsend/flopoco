@@ -44,19 +44,18 @@ namespace flopoco{
 
 	extern vector<Operator*> oplist;
 
-	TableGenerator::TableGenerator(Target* target, string func, int wInX, int wOutX, int n): 
-		Table(target),	 wInX_(wInX), wOutX_(wOutX){
+  
+	TableGenerator::TableGenerator(Target* target, PiecewiseFunction* pf, int wInX, int wOutX, int n): 
+		Table(target),	 wInX_(wInX), wOutX_(wOutX), pwf(pf){
 	 	
 	 	setCopyrightString("Mioara Joldes (2010)");		
 
-	
 	  /* Start initialization */
   
     setToolPrecision(165);
     int nrMaxIntervals=1024*1024;	
     
-    /*parse the string, create a list of functions, create an array of f's, compute an approximation on each interval*/
-    pwf=new PiecewiseFunction(func);
+    
     int  nrFunctions=(pwf->getPiecewiseFunctionArray()).size();
     int  iter;
     int guardBits =1;
@@ -270,8 +269,8 @@ namespace flopoco{
   }
 	
   else{
-  /*if we didn't manage to have the good polynomials for all the piecewise functions*/
-  cout<< "TableGenerator error: Could not approximate the given function(s)"<<endl; 
+    /*if we didn't manage to have the good polynomials for all the piecewise functions*/
+    cout<< "TableGenerator error: Could not approximate the given function(s)"<<endl; 
   }
   mpfr_clear(a);
   mpfr_clear(b);
@@ -284,6 +283,23 @@ namespace flopoco{
   freeChain(tempChain2,freeIntPtr);
   
 	}
+
+
+  /*This constructor receives the function to be approximated as a string
+  Look above to find one that receives the function as a Piecewise function already parsed*/
+	TableGenerator::TableGenerator(Target* target, string func, int wInX, int wOutX, int n):
+  Table(target) {
+	 	
+	 	setCopyrightString("Mioara Joldes (2010)");		
+
+	  /*parse the string, create a list of functions, create an array of f's, compute an approximation on each interval*/
+    PiecewiseFunction *pf=new PiecewiseFunction(func);
+    
+    TableGenerator(target, pf, wInX, wOutX, n);
+	}
+
+
+
 
 
 

@@ -39,7 +39,7 @@ namespace flopoco{
 
 
 	FunctionEvaluator::FunctionEvaluator(Target* target, string func, int wInX, int wOutX, int n):
-		Operator(target){
+		Operator(target), wInX_(wInX), wOutX_(wOutX){
 
 		ostringstream name;
 		srcFileName="FunctionEvaluator";
@@ -49,7 +49,8 @@ namespace flopoco{
 
 		setCopyrightString("Bogdan Pasca, Mioara Joldes (2010)");		
 
-		tg = new TableGenerator(target, func, wInX, wOutX+1, n);
+    pf=new  PiecewiseFunction(func);
+		tg = new TableGenerator(target, pf, wInX, wOutX+1, n);
 		oplist.push_back(tg);
 		combinatorialOperator = false;
 		
@@ -122,42 +123,48 @@ namespace flopoco{
 	
 	void FunctionEvaluator::emulate(TestCase* tc)
 	{
-#if 0	
-		mpz_class svX = tc->getInputValue("X");
+		
+    int  nrFunctions=(pf->getPiecewiseFunctionArray()).size();
 
-		/* Get inputs / outputs */
-		mpz_class &x  = a[0];
-		mpz_class &rd = a[1]; // rounded down
-		mpz_class &ru = a[2]; // rounded up
+      Function *f=pf->getPiecewiseFunctionArray(0);
+    
+    if (nrFunctions !=1) {
+      cout<<"Warning: we are dealing with a piecewise function; only the first branch will be evaluated"<<endl;    
+    }
+    mpz_class rd; // rounded down
+		mpz_class ru;
+		 
+    mpz_class svX = tc->getInputValue("X");
+    mpfr_t mpX, mpR;
+  	mpfr_init2(mpX,165);
+    mpfr_init2(mpR,165);
+    int outSign = 0;
+    /* Convert a random signal to an mpfr_t in [0,1[ */
+		mpfr_set_z(mpX, svX.get_mpz_t(), GMP_RNDN);
+		mpfr_div_2si(mpX, mpX, wInX_, GMP_RNDN);
 
-//		int outSign = 0;
+		/* Compute the function */
+		f->eval(mpR, mpX);
 
-//		mpfr_t mpX, mpR;
-//		mpfr_inits(mpX, mpR, 0, NULL);
+		/* Compute the signal value */
+		if (mpfr_signbit(mpR))
+			{
+				outSign = 1;
+				mpfr_abs(mpR, mpR, GMP_RNDN);
+			}
+		mpfr_mul_2si(mpR, mpR, wOutX_, GMP_RNDN);
 
-//		/* Convert a random signal to an mpfr_t in [0,1[ */
-//		mpfr_set_z(mpX, x.get_mpz_t(), GMP_RNDN);
-//		mpfr_div_2si(mpX, mpX, wI, GMP_RNDN);
-
-//		/* Compute the function */
-//		f.eval(mpR, mpX);
-
-//		/* Compute the signal value */
-//		if (mpfr_signbit(mpR))
-//			{
-//				outSign = 1;
-//				mpfr_abs(mpR, mpR, GMP_RNDN);
-//			}
-//		mpfr_mul_2si(mpR, mpR, wO, GMP_RNDN);
-
-//		/* NOT A TYPO. HOTBM only guarantees faithful
-//		 * rounding, so we will round down here,
-//		 * add both the upper and lower neighbor.
-//		 */
-//		mpfr_get_z(rd.get_mpz_t(), mpR, GMP_RNDD);
-//		ru = rd + 1;
-#endif
-
+		/* NOT A TYPO. Function Evaluator only guarantees faithful
+		 * rounding, so we will round down here,
+		 * add both the upper and lower neighbor.
+		 */
+		mpfr_get_z(rd.get_mpz_t(), mpR, GMP_RNDD);
+		ru = rd + 1;
+  
+    tc->addExpectedOutput("RD", rd);
+    tc->addExpectedOutput("RU", ru);
+    mpfr_clear(mpX);
+    mpfr_clear(mpR);
 	}
 
 }
