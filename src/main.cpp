@@ -876,7 +876,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				int useLimits = atoi(argv[i++]);
 				int maxTimeInMinutes = atoi(argv[i++]);
 				cerr << "> IntTruncMult , wInX="<<wInX<<", wInY="<<wInY<<" ratio=" << r <<" error order= "<<ordError<<"\n";
-				op = new IntTruncMultiplier(target, wInX, wInY, r,ordError,useLimits, maxTimeInMinutes);
+				op = new IntTruncMultiplier(target, wInX, wInY, r,ordError,useLimits, maxTimeInMinutes, true);
 				addOperator(op);
 			}
 		}		

@@ -33,7 +33,7 @@ namespace flopoco{
 	extern vector<Operator*> oplist;
 
 
-	IntTruncMultiplier::IntTruncMultiplier(Target* target, int wX, int wY, float ratio, int k, int uL, int maxTimeInMinutes):
+	IntTruncMultiplier::IntTruncMultiplier(Target* target, int wX, int wY, float ratio, int k, int uL, int maxTimeInMinutes, bool interactive):
 		Operator(target), wX(wX), wY(wY), ratio(ratio),targetPrecision(k),useLimits(uL), maxTimeInMinutes(maxTimeInMinutes-1){
 		start = clock(); /* time management */
 		srcFileName="IntTruncMultiplier";
@@ -61,12 +61,14 @@ namespace flopoco{
 		nrSoftDSPs       = 0;
 		subCount         = 0;
 		
-		REPORT(INFO, "Estimated number of DSP blocks = " << nrDSPs);
-
+		REPORT(INFO, "Estimated number of DSP blocks = "     << nrDSPs);
 		REPORT(INFO, "Approx. number of discarded columns =" << truncationOffset);
 		REPORT(DETAILED, "board padding padx="<<getExtraWidth()<<" y="<<getExtraHeight());
 		
-		nrOfShifts4Virtex=20;
+		/* the number of DSPs that could be cascaded on Xilinx FPGAs. Initially this was 4 
+		but existance of SRLs made us increase the number. Nevertheless, in order to obtain
+		balanced binindg this number should be function of input width and height TODO*/
+		nrOfShifts4Virtex=20; 
 		
 		/* paranormal activity; FIXME COMMENT OR WILL GET KILLED*/
 		float const scale=100.0;
@@ -74,16 +76,18 @@ namespace flopoco{
 		//~ cout<<"Cost DSP is "<<costDSP<<endl;
 		costLUT = ( (1.0+scale) - scale * (1-ratio) ) /  ((float) target_->getEquivalenceSliceDSP() );
 		/* ---------------------------------------- */
-//		costDSP = 0.1;
-//		costLUT = 0.3;
 		
-		cout << " DO you want to run the algorithm? (y/n)" << endl;
-		string myc;
-		cin >> myc;
-		if ( myc.compare("y")!=0)
-			exit(-1);
+		/* command-line interactivity. This is disabled for library mode */ 
+		if (interactive){
+			cout << "Do you want to run the algorithm? (y/n)" << endl;
+			string myc;
+			cin >> myc;
+			if ( myc.compare("y")!=0)
+				exit(-1);
+		}
 		runAlgorithm();
 	}
+
 
 	IntTruncMultiplier::~IntTruncMultiplier() {
 	}
@@ -1450,16 +1454,14 @@ namespace flopoco{
 
 	int IntTruncMultiplier::bindDSPs(DSP** &config)
 	{
-		if  ( (target_->getID() == "Virtex4") ||
-		      (target_->getID() == "Virtex5") ||
-		      (target_->getID() == "Spartan3"))  // then the target is a Xilinx FPGA
-			{
+		if       (target_->getVendor()=="Xilinx"){
 				return bindDSPs4Virtex(config);
-			}
-		else // the target is Stratix
-			{
+		}else if (target_->getVendor()=="Altera"){
 				return bindDSPs4Stratix(config);
-			}
+		}else{
+			/* just Xilinx and Altera FPGAs are supproted for the moment */
+			throw("just Xilinx and Altera FPGAs are supproted for the moment");
+		}
 	}
 
 	void IntTruncMultiplier::compareCost()
@@ -2586,148 +2588,86 @@ namespace flopoco{
 						}
 				subCount = partitions;
 				return nrOp;
-			}
+		}
 		else // the target is Stratix
-			{
+		{
 				int boundDSPs;  				// number of bound DSPs in a group
 				DSP** addOps;					// addition operands bound to a certain DSP
-				int mPadX, mPadY, minPad;		// minimum padding of addition operands
 	
 				for (int i=0; i<nrDSPs; i++)
-					if (tempc[i] != NULL)
-						{
-							mPadX = INT_MIN;
-							mPadY = INT_MIN;
+					if (tempc[i] != NULL){
 							cout << "At DSP#"<< i+1 << " tempc["<<i<<"]" << endl; 
 							tempc[i]->getTopRightCorner(trx1, try1);
 							tempc[i]->getBottomLeftCorner(blx1, bly1);
 							convertCoordinates(trx1, try1, blx1, bly1);
 
-							fpadX = wInX-blx1-1;
-							//~ cout << "fpadX = " << fpadX << endl;
-							fpadX = (fpadX<0)?0:fpadX;
-							
-							fpadY = wInY-bly1-1;
-							//~ cout << "fpadY = " << fpadY << endl;
-							fpadY = (fpadY<0)?0:fpadY;
-							
-							bpadX = trx1;
-							bpadX = (bpadX<0)?0:bpadX;
-							
-							mPadX = (bpadX>mPadX)?bpadX:mPadX;
-							
-							bpadY = try1;
-							bpadY = (bpadY<0)?0:bpadY;
-							
-							mPadY = (bpadY>mPadY)?bpadY:mPadY;
-							
-							minPad = bpadY+bpadX;
-							
 							multW = tempc[i]->getMaxMultiplierWidth();
 							multH = tempc[i]->getMaxMultiplierHeight();
 			
 							setCycle(0);
-							xname.str("");
-							xname << "x" << i << "_0";
-							vhdl << tab << declare(xname.str(), multW, true, Signal::registeredWithAsyncReset) << " <= " << zg(multW-(blx1-trx1+1),0) << " & X" << range(blx1, trx1) << ";" << endl;
-							yname.str("");
-							yname << "y" << i << "_0";
-							vhdl << tab << declare(yname.str(), multH, true, Signal::registeredWithAsyncReset) << " <= " << zg(multH-(bly1-try1+1),0) << " & Y" << range(bly1, try1) << ";" << endl;
+							vhdl << tab << declare(join("x",i,"_0"), multW, true) << " <= " << zg(multW-(blx1-trx1+1),0) << " & X" << range(blx1, trx1) << ";" << endl;
+							vhdl << tab << declare(join("y",i,"_0"), multH, true) << " <= " << zg(multH-(bly1-try1+1),0) << " & Y" << range(bly1, try1) << ";" << endl;
 			
 							boundDSPs = tempc[i]->getNumberOfAdders();
-							int ext = 0; // the number of carry bits of the addtion
-							if (boundDSPs > 0) // need to traverse the addition operands list and perform addtion
-								{
-									ext = (boundDSPs>1)?2:1;
-									cout << "boundDSPs = " << boundDSPs << endl;
-									nextCycle();
-									mname.str("");
-									mname << "mult_" << i << "_0";
-									vhdl << tab << declare(mname.str(), multW+multH, true, Signal::registeredWithAsyncReset) << " <= " << use(xname.str()) << " * " << use(yname.str()) << ";" << endl;
-				
-									addOps = tempc[i]->getAdditionOperands();
-				
-									//
-									for (int j=0; j<3; j++)
-										if (addOps[j] == NULL)
-											cout << "addOps["<< j << "]=NULL" << endl;
-										else
-											cout << "addOps["<< j << "]=not null" << endl;
-				
-									for (int j=0; j<boundDSPs; j++)
-										{
-											cout << "j = " << j << endl;
-											// erase addOps[j] from the tempc buffer to avoid handleing it twice
-											for (int k=i+1; k<nrDSPs; k++)
-												{
-													if ((tempc[k] != NULL) && (tempc[k] == addOps[j]))
-														{
-															cout << "tempc[" << k << "] deleted" << endl;
-															tempc[k] = NULL;
-															break;
-														}
-												}
-					
-											addOps[j]->getTopRightCorner(trx1, try1);
-											addOps[j]->getBottomLeftCorner(blx1, bly1);
-											fpadX = blx1-wInX-getExtraWidth()+1;
-											fpadX = (fpadX<0)?0:fpadX;
-											fpadY = bly1-wInY-getExtraHeight()+1;
-											fpadY = (fpadY<0)?0:fpadY;
-											bpadX = getExtraWidth()-trx1;
-											bpadX = (bpadX<0)?0:bpadX;
-											mPadX = (bpadX>mPadX)?bpadX:mPadX;
-											bpadY = getExtraHeight()-try1;
-											bpadY = (bpadY<0)?0:bpadY;
-											mPadY = (bpadY>mPadY)?bpadY:mPadY;
-											minPad = (minPad<(bpadY+bpadX))?minPad:(bpadY+bpadX);
-											multW = addOps[j]->getMaxMultiplierWidth();
-											multH = addOps[j]->getMaxMultiplierHeight();
-					
-											setCycle(0);
-											xname.str("");
-											xname << "x" << i << "_" << j+1;
-											vhdl << tab << declare(xname.str(), multW, true, Signal::registeredWithAsyncReset) << " <= " << zg(fpadX,0) << " & X" << range(blx1-fpadX, trx1+bpadX) << " & " << zg(bpadX,0) << ";" << endl;
-											yname.str("");
-											yname << "y" << i << "_" << j+1;
-											vhdl << tab << declare(yname.str(), multH, true, Signal::registeredWithAsyncReset) << " <= " << zg(fpadY,0) << " & Y" << range(bly1-fpadY, try1+bpadY) << " & " << zg(bpadY,0) << ";" << endl;
-					
-											nextCycle();
-											mname.str("");
-											mname << "mult_" << i << "_" << j+1;
-											vhdl << tab << declare(mname.str(), multW+multH, true, Signal::registeredWithAsyncReset) << " <= " << use(xname.str()) << " * " << use(yname.str()) << ";" << endl;
+							int ext = 0;        // the number of carry bits of the addtion accumulation. 
+							if (boundDSPs > 0){ // need to traverse the addition operands list and perform addtion
+								ext = (boundDSPs>1)?2:1;
+								REPORT(INFO, "boundDSPs = " << boundDSPs);
+								nextCycle();
+								mname.str("");
+								mname << "mult_" << i << "_0";
+								vhdl << tab << declare(mname.str(), multW+multH, true, Signal::registeredWithAsyncReset) << " <= " << join("x",i,"_0") << " * " << join("y",i,"_0") << ";" << endl;
+								addOps = tempc[i]->getAdditionOperands();
+			
+								/* At most 4 operands */
+								for (int j=0; j<3; j++)
+									if (addOps[j] == NULL)
+										cout << "addOps["<< j << "]=NULL" << endl;
+									else
+										cout << "addOps["<< j << "]=not null" << endl;
+			
+								for (int j=0; j<boundDSPs; j++){
+										cout << "j = " << j << endl;
+										// erase addOps[j] from the tempc buffer to avoid handleing it twice
+										for (int k=i+1; k<nrDSPs; k++){
+											if ((tempc[k] != NULL) && (tempc[k] == addOps[j])){
+												REPORT( DETAILED, "tempc[" << k << "] deleted");
+												tempc[k] = NULL;
+												break;
+											}
 										}
 				
-									nextCycle();
-									vhdl << tab << declare(join("addDSP", nrOp), multW+multH+ext, true, Signal::registeredWithAsyncReset) << " <= ";
+										addOps[j]->getTopRightCorner(trx1, try1);
+										addOps[j]->getBottomLeftCorner(blx1, bly1);
+										convertCoordinates(trx1, try1, blx1, bly1);
+										multW = addOps[j]->getMaxMultiplierWidth();
+										multH = addOps[j]->getMaxMultiplierHeight();
 				
-									int j=0;
-				
-									for (j=0; j<boundDSPs; j++)
-										{
-											mname.str("");
-											mname << "mult_" << i << "_" << j;
-											vhdl << "(" << zg(ext,0) << " & " << use(mname.str()) << ") + "; 
-										}
-				
-									mname.str("");
-									mname << "mult_" << i << "_" << j;
-									vhdl << "(" << zg(ext,0) << " & " << use(mname.str()) << ");" << endl; 
-				
-								} 
-							else // multiply the two terms and you're done
-								{
-									nextCycle();
-									vhdl << tab << declare(join("addDSP", nrOp), multW+multH, true, Signal::registeredWithAsyncReset) << " <= " << use(xname.str()) << " * " << use(yname.str()) << ";" << endl;
+										setCycle(0); ////////////////////////////////////
+										vhdl << tab << declare(join("x",i,"_",j+1), multW, true) << " <= " << zg(multW-(blx1-trx1+1),0) << " & X" << range(blx1, trx1) << ";" << endl;
+										vhdl << tab << declare(join("y",i,"_",j+1), multH, true) << " <= " << zg(multH-(bly1-try1+1),0) << " & Y" << range(bly1, try1) << ";" << endl;
+										nextCycle(); ////////////////////////////////////
+										vhdl << tab << declare(join("mult_",i,"_",j+1), multW+multH, true) << " <= " << join("x",i,"_",j+1) << " * " << join("y",i,"_",j+1) << ";" << endl;
 								}
-							vhdl << tab << declare(join("addOpDSP", nrOp), wInX+wInY) << " <= " << zg(wInX+minPad-blx1-ext,0) << " & " << zg(wInY-bly1,0) << " & " << use(join("addDSP", nrOp)) << range(multW+multH+ext-1, minPad) << " & " << zg(trx1+try1+minPad-mPadX-mPadY,0) << ";" << endl;
+			
+								nextCycle();
+								vhdl << tab << declare(join("addDSP", nrOp), multW+multH+ext, true) << " <= ";
+			
+								for (int j=0; j<boundDSPs; j++){
+									vhdl << "(" << zg(ext,0) << " & " << join("mult_",i,"_",j) << ") + "; 
+								}
+								vhdl << "(" << zg(ext,0) << " & " << join("mult_",i,"_",boundDSPs) << ");" << endl; 
+							}else{ // multiply the two terms and you're done
+								nextCycle();
+								vhdl << tab << declare(join("addDSP", nrOp), multW+multH, true) << " <= " << join("x",i,"_0") << " * " << join("y",i,"_0") << ";" << endl;
+							}
+							vhdl << tab << declare(join("addOpDSP", nrOp), wInX+wInY-minShift) << " <= " << zg(wX+wY-(trx1+try1+ext+multW+multH),0) << " & " << join("addDSP", nrOp) << " & " << zg(trx1+try1-minShift,0) << ";" << endl;
 							nrOp++;
-						}
+					}
 				return nrOp;
-			}
+		}
 
 	}
-
 	int IntTruncMultiplier::multiplicationInSlices(vector<SoftDSP*> config)
 	{
 		unsigned partitions;

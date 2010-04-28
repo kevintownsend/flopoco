@@ -119,7 +119,7 @@ namespace flopoco{
 	{
 	public:
 		
-		IntTruncMultiplier(Target* target, int wX, int wY, float ratio, int k,int uL, int maxTimeInMinutes);
+		IntTruncMultiplier(Target* target, int wX, int wY, float ratio, int k,int uL, int maxTimeInMinutes, bool interactive = true);
 	
 		/** IntTruncMultiplier destructor */
 		~IntTruncMultiplier();
@@ -142,8 +142,10 @@ namespace flopoco{
 		 */ 
 		mpfr_t* evalTruncTilingErrorInverted(DSP** configuration, vector<SoftDSP*> softDSPs);
 
-
-			void emulate(TestCase * tc);
+		
+		/** Emulate the circuit using MPFR */
+		void emulate(TestCase * tc);
+	
 	protected:
 
 		int wX;      /**< the width (in bits) of the input  X  */
@@ -266,52 +268,33 @@ namespace flopoco{
 		 */
 		int estimateNrOfDiscardedCols(int k);
 		
-		/** The width of first input*/
-		int wInX; 
-		/** The width of second input*/
-		int wInY; 
-		/** The width of output */
-		int wOut;
-		/** The truncation offset for the multiplication that are not completed. 0 value means that we perform a normal multiplication*/
-		int truncationOffset;
-		/** The working configuration of the tiling algorithm on DSPs */
-		DSP** globalConfig;
-		/** The best cost obtained so far*/
-		float bestCost;
-		/** The best configuration of the after tiling DSPs */
-		DSP** bestConfig;
-		/** The target */
-//		Target * target; //FIXME Killed by Bogdan. Operator Class contains a pointer to this target, so a second one is useless 
-		/** This will be used for computing the cost for each configuration */
-		float costDSP,costLUT;
-	
-		/**Size of board minus extra bits*/
-		int vnme,vmme;
 		
-		/** Used for partitioning the grid in smaller multiplications */
-		int **mat;
-	
-		/**Used for creating a temporary storage of the current configuration in order to create binds between different DSPs */
-		DSP** tempc;
-	
-		/** The vector which will mark if a dsp in the tiling algorithm was or not rotated */
-		bool* rot;
+		
+		int wInX;             /**<The width of first input*/
+		int wInY;             /**<The width of second input*/
+		int wOut;             /**<The width of output */
+		int truncationOffset; /** The truncation offset for the multiplication that are not completed. 0 value means that we perform a normal multiplication*/
+		DSP** globalConfig;   /**<The working configuration of the tiling algorithm on DSPs */
+		float bestCost;       /**<The best cost obtained so far*/
+		DSP** bestConfig;     /**<The best configuration of the after tiling DSPs */
+		float costDSP,costLUT;/**<This will be used for computing the cost for each configuration */
+		int vnme,vmme;        /**<Size of board minus extra bits*/
+		int **mat;            /**<Used for partitioning the grid in smaller multiplications */
+		DSP** tempc;          /**<Used for creating a temporary storage of the current configuration in order to create binds between different DSPs */
+		bool* rot;            /**<The vector which will mark if a dsp in the tiling algorithm was or not rotated */
+		int nrDSPs;           /**<The number of estimated DSPs that will be used according to this parameter */
+		int nrSoftDSPs;       /**<The number of Soft DSPs in the current configuration */
+		
 
-		/** The number of estimated DSPs that will be used according to this parameter */
-		int nrDSPs;
-		
-		/** The number of Soft DSPs in the current configuration */
-		int nrSoftDSPs;
-		
-		/** TRUE if we are generating a squarer, FALSE if it is a simple multiplication */
+		/**FIXME TO BE KILLED TRUE if we are generating a squarer, FALSE if it is a simple multiplication */
 		bool isSquarer;
-		/** The width of the virtual board */
-		int vn;
-		/** The height of the virtual board */
-		int vm;
-		/** The maximum allow distance to move away from the others for the last block */
-		int maxDist2Move;
-	
+		
+		int vn;               /**<The width of the virtual board */
+		int vm;               /**<The height of the virtual board */
+
+		int maxDist2Move; 		/**< The maximum allow distance to move away from the others for the last block */
+
+ 	
 		/** The matrix will be used to represent the truncated multiplication */
 		int **truncatedMultiplication;
 		/** will be used to mark each partition for the truncated multiplications*/
