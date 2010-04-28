@@ -2592,18 +2592,10 @@ namespace flopoco{
 							tempc[i]->getTopRightCorner(trx2, try2);
 							tempc[i]->getBottomLeftCorner(blx2, bly2);
 							convertCoordinatesKeepNeg(trx2, try2, blx2, bly2);
-
-//							multW = tempc[i]->getMaxMultiplierWidth();
-//							multH = tempc[i]->getMaxMultiplierHeight();
-							
 							multW = blx2-trx2+1;
 							multH = bly2-try2+1;
 			
 							setCycle(0);
-							
-//							vhdl << tab << declare(join("x",i,"_0"), multW, true) << " <= " << zg(multW-(blx1-trx1+1),0) << " & X" << range(blx1, trx1) << ";" << endl;
-//							vhdl << tab << declare(join("y",i,"_0"), multH, true) << " <= " << zg(multH-(bly1-try1+1),0) << " & Y" << range(bly1, try1) << ";" << endl;
-							
 							vhdl << tab << declare(join("x",i,"_0"), multW, true) << " <= X" << range(blx1, trx1) << " & " << zg(trx1-trx2 + blx1-blx2) << ";" << endl;
 							vhdl << tab << declare(join("y",i,"_0"), multH, true) << " <= Y" << range(bly1, try1) << " & " << zg(try1-try2 + bly1-bly2) << ";" << endl;
 
@@ -2646,20 +2638,10 @@ namespace flopoco{
 										addOps[j]->getBottomLeftCorner(blx2, bly2);
 										convertCoordinatesKeepNeg(trx2, try2, blx2, bly2);
 
-//										multW = tempc[i]->getMaxMultiplierWidth();
-//										multH = tempc[i]->getMaxMultiplierHeight();
-							
 										multW = blx2-trx2+1;
 										multH = bly2-try2+1;
 										
-										
-				
 										setCycle(0); ////////////////////////////////////
-
-//										vhdl << tab << declare(join("x",i,"_",j+1), multW, true) << " <= " << zg(multW-(blx1-trx1+1),0) << " & X" << range(blx1, trx1) << ";" << endl;
-//										vhdl << tab << declare(join("y",i,"_",j+1), multH, true) << " <= " << zg(multH-(bly1-try1+1),0) << " & Y" << range(bly1, try1) << ";" << endl;
-
-
 										vhdl << tab << declare(join("x",i,"_",j+1), multW, true) << " <= X" << range(blx1, trx1) << " & " << zg(trx1-trx2 + blx1-blx2) << ";" << endl;
 										vhdl << tab << declare(join("y",i,"_",j+1), multH, true) << " <= Y" << range(bly1, try1) << " & " << zg(try1-try2 + bly1-bly2) << ";" << endl;
 
