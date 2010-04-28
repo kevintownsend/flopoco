@@ -282,32 +282,73 @@ reference.</p>
 
 <h3>Pipelined integer standard operators</h3>
 <dl>
+  <h4><i> Adders </i></h4>
   <dt><code>IntAdder wIn</code></dt>
     <dd>Integer adder. In modern VHDL, integer addition is expressed by a +
       and one usually needn't define an entity for it. However, this operator
       will be pipelined if the addition is too large to be performed at the
       target frequency. </dd>
+  <dt><code>MyIntAdder wIn optimizeType srl implementation bufferedInputs</code></dt>    
+      <dd> IntAdder in manual mode. The option <code>optimizeType=<0,1,2,3></code> 
+      where <code>0=LUT 1=REG 2=SLICE 3=LATENCY</code> allows selecting the different 
+      optimization criteria. <code>srl=<0,1></code> allows generating architectures optimized
+      for the use of hardware shift registers. The architecture can also adapt if inputs of the 
+      adder are already buffered or not using the option <code>bufferedInputs=<0,1></code>.
+      Automatic design space exploration is performed by setting <code>implementation=-1</code>.
+      Forcing architecture selection can be done by setting <code>implementation=<0,1,2></code>
+      where <code>0=Classical, 1=Alternative, 2=Short-Latency</code>. Please check out this
+      <a href="http://prunel.ccsd.cnrs.fr/docs/00/47/57/80/PDF/RR-LIP-2010-16.pdf">article</a>
+      for more details.
+</dl>
+   <h4><i> Multi-operand Adders </i></h4>   
+<dl>
    <dt><code>IntNAdder wIn N</code></dt>
-    <dd>Multi-operand integer adder. (still experimental) 
+    <dd>Multi-operand integer adder using the hardware shift-registers (SRLs for Xilinx)
+        available in current FPGAs. 
      </dd>
    <dt><code>IntCompressorTree wIn N</code></dt>
     <dd>Multi-operand integer adder using compressor trees. High quality operator
     at the expense of synthesis time.
      </dd>
+</dl>
+   <h4><i> Multipliers </i></h4>   
+<dl>     
   <dt><code>IntMultiplier wInX wInY</code></dt>
     <dd>Same for multiplication, although the frequency attainable will be
       limited by the DSP blocks available. wInX and wInY are the input widths
-      of both operands. This is an unsigned operation.</dd>
+      of both operands. This operator fully supports the <code>-DSP_blocks=no</code> option.
+      This is an unsigned operation</dd>
     <dd></dd>
+  <dt><code>SignedIntMultiplier wInX wInY</code></dt>
+     <dd>Same as above but signed and no real support for Altera targets.</dd>
   <dt><code>IntSquarer wInX wInY</code></dt>
     <dd>Same for squaring. For large multiplications on some FPGAs, it
     saves DSP blocks (your mileage may vary).</dd>
     <dd></dd>
   <dt><code>IntKaratsuba wIn</code></dt>
     <dd> Multiplier that saves multiplications by trading them for additions.
-    The TwoWaySplitting and ThreeWaySplitting Karatsuba-Ofman algorithms are
-    implemented.</dd>
+    The TwoWaySplitting, ThreeWaySplitting and FourWaySplitting Karatsuba-Ofman algorithms are
+    implemented. See this <a href="http://prunel.ccsd.cnrs.fr/docs/00/35/64/21/PDF/RR2009-03.pdf">article</a> for more details.</dd>
     <dd></dd>
+  <dt><code>IntTilingMultiplier wInX wInY ratio maxTimeInMinutes</code>
+  <dd> Integer multiplier of two integers X and Y of sizes wInX and wInY
+      using the tiling technique presented in this <a href="http://prunel.ccsd.cnrs.fr/docs/00/47/57/81/PDF/RR-LIP-2010-15.pdf">article</a>
+      The <code>ratio</code> is a number in [0,1] and selects between DSP dominant architectures
+      (<code>ratio</code> closer to 1) and logic dominant architectures for <code>ratio</code> closer to 0.  
+      The algorithm uses an optimized backtracking approach in exploring the design space and 
+      could therefore take a long time to get an optimal solution. The option <code>maxTimeInMinutes</code>
+      is used to restrict the maximum amount of time that the algorithm can search for a solution. A value
+      of <code>-1</code> for this parameter will find the best solution.</dd>
+ 	<dd></dd>
+  <dt><code>IntTruncMultiplier wInX wInY ratio error useLimits maxTimeInMinutes</code>
+  <dd> Truncated integer multiplier of two integers X and Y of sizes wInX and wInY
+      using the tiling technique and the specific truncation theory presented in this <a href="http://prunel.ccsd.cnrs.fr/docs/00/47/57/81/PDF/RR-LIP-2010-15.pdf">article</a>
+      <code>error</code> gives the maximal allowed error produced by this operator. 
+      Two different soft-multiplier expansion techniques can be selected using the
+      <code>use limits</code> option but the recommended value is 1.
+      </dd>
+ 	<dd></dd>
+
 
 </dl>
 
