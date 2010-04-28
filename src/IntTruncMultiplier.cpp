@@ -3160,7 +3160,7 @@ namespace flopoco{
 			
 		while(!isTilingValid(config,configSoft,targetPrecision) )
 		{
-			displayAll(bestConfig, configSoft);
+			//displayAll(bestConfig, configSoft);
 		deepX=vn,deepY=vm,rdeepX=vm;
 		bool found = false;
 		//search the deapest position
