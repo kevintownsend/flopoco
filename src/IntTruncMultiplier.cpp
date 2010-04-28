@@ -2601,13 +2601,25 @@ namespace flopoco{
 							tempc[i]->getBottomLeftCorner(blx1, bly1);
 							convertCoordinates(trx1, try1, blx1, bly1);
 
-							multW = tempc[i]->getMaxMultiplierWidth();
-							multH = tempc[i]->getMaxMultiplierHeight();
+							int trx2,try2,blx2,bly2;
+							tempc[i]->getTopRightCorner(trx2, try2);
+							tempc[i]->getBottomLeftCorner(blx2, bly2);
+							convertCoordinatesKeepNeg(trx2, try2, blx2, bly2);
+
+//							multW = tempc[i]->getMaxMultiplierWidth();
+//							multH = tempc[i]->getMaxMultiplierHeight();
+							
+							multW = blx2-trx2+1;
+							multH = bly2-try2+1;
 			
 							setCycle(0);
-							vhdl << tab << declare(join("x",i,"_0"), multW, true) << " <= " << zg(multW-(blx1-trx1+1),0) << " & X" << range(blx1, trx1) << ";" << endl;
-							vhdl << tab << declare(join("y",i,"_0"), multH, true) << " <= " << zg(multH-(bly1-try1+1),0) << " & Y" << range(bly1, try1) << ";" << endl;
-			
+							
+//							vhdl << tab << declare(join("x",i,"_0"), multW, true) << " <= " << zg(multW-(blx1-trx1+1),0) << " & X" << range(blx1, trx1) << ";" << endl;
+//							vhdl << tab << declare(join("y",i,"_0"), multH, true) << " <= " << zg(multH-(bly1-try1+1),0) << " & Y" << range(bly1, try1) << ";" << endl;
+							
+							vhdl << tab << declare(join("x",i,"_0"), multW, true) << " <= X" << range(blx1, trx1) << " & " << zg(trx1-trx2 + blx1-blx2) << ";" << endl;
+							vhdl << tab << declare(join("y",i,"_0"), multH, true) << " <= Y" << range(bly1, try1) << " & " << zg(try1-try2 + bly1-bly2) << ";" << endl;
+
 							boundDSPs = tempc[i]->getNumberOfAdders();
 							int ext = 0;        // the number of carry bits of the addtion accumulation. 
 							if (boundDSPs > 0){ // need to traverse the addition operands list and perform addtion
@@ -2642,10 +2654,29 @@ namespace flopoco{
 										convertCoordinates(trx1, try1, blx1, bly1);
 										multW = addOps[j]->getMaxMultiplierWidth();
 										multH = addOps[j]->getMaxMultiplierHeight();
+										
+										addOps[j]->getTopRightCorner(trx2, try2);
+										addOps[j]->getBottomLeftCorner(blx2, bly2);
+										convertCoordinatesKeepNeg(trx2, try2, blx2, bly2);
+
+//										multW = tempc[i]->getMaxMultiplierWidth();
+//										multH = tempc[i]->getMaxMultiplierHeight();
+							
+										multW = blx2-trx2+1;
+										multH = bly2-try2+1;
+										
+										
 				
 										setCycle(0); ////////////////////////////////////
-										vhdl << tab << declare(join("x",i,"_",j+1), multW, true) << " <= " << zg(multW-(blx1-trx1+1),0) << " & X" << range(blx1, trx1) << ";" << endl;
-										vhdl << tab << declare(join("y",i,"_",j+1), multH, true) << " <= " << zg(multH-(bly1-try1+1),0) << " & Y" << range(bly1, try1) << ";" << endl;
+
+//										vhdl << tab << declare(join("x",i,"_",j+1), multW, true) << " <= " << zg(multW-(blx1-trx1+1),0) << " & X" << range(blx1, trx1) << ";" << endl;
+//										vhdl << tab << declare(join("y",i,"_",j+1), multH, true) << " <= " << zg(multH-(bly1-try1+1),0) << " & Y" << range(bly1, try1) << ";" << endl;
+
+
+										vhdl << tab << declare(join("x",i,"_",j+1), multW, true) << " <= X" << range(blx1, trx1) << " & " << zg(trx1-trx2 + blx1-blx2) << ";" << endl;
+										vhdl << tab << declare(join("y",i,"_",j+1), multH, true) << " <= Y" << range(bly1, try1) << " & " << zg(try1-try2 + bly1-bly2) << ";" << endl;
+
+
 										nextCycle(); ////////////////////////////////////
 										vhdl << tab << declare(join("mult_",i,"_",j+1), multW+multH, true) << " <= " << join("x",i,"_",j+1) << " * " << join("y",i,"_",j+1) << ";" << endl;
 								}
@@ -2661,7 +2692,7 @@ namespace flopoco{
 								nextCycle();
 								vhdl << tab << declare(join("addDSP", nrOp), multW+multH, true) << " <= " << join("x",i,"_0") << " * " << join("y",i,"_0") << ";" << endl;
 							}
-							vhdl << tab << declare(join("addOpDSP", nrOp), wInX+wInY-minShift) << " <= " << zg(wX+wY-(trx1+try1+ext+multW+multH),0) << " & " << join("addDSP", nrOp) << " & " << zg(trx1+try1-minShift,0) << ";" << endl;
+							vhdl << tab << declare(join("addOpDSP", nrOp), wInX+wInY-minShift) << " <= " << zg(wX+wY-(trx2+try2+ext+multW+multH),0) << " & " << join("addDSP", nrOp) << " & " << zg(trx2+try2-minShift,0) << ";" << endl;
 							nrOp++;
 					}
 				return nrOp;
