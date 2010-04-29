@@ -272,8 +272,8 @@ namespace flopoco{
 						                                                               << " & " << join("piP",i)<<range(pikPSize[i],0)  << " & \"0\");" << endl;
 
 					vhdl << tab << declare( join("op2_",i), sigmakPSize[i]+1 ) << " <= (" << rangeAssign(sigmakPWeight[i]-coef_[degree_-i]->getWeight()-1,0, join("a",degree_-i)+of(coef_[degree_-i]->getSize()))
-						                                                               << " & " << join("a",degree_-i) << " & "<< zg(sigmakPSize[i]-sigmakPWeight[i]-(coef[degree_-i]->getSize()-coef[degree_-i]->getWeight())-1 ,0) << ");"<<endl;
-				
+//						                                                               << " & " << join("a",degree_-i) << " & "<< zg(sigmakPSize[i]-sigmakPWeight[i]-(coef[degree_-i]->getSize()-coef[degree_-i]->getWeight())-1 ,0) << ");"<<endl;
+					                                                                      << " & " << join("a",degree_-i) << " & "<< zg(sigmakPSize[i]+1 - (sigmakPWeight[i]-coef_[degree_-i]->getWeight()) - (coef_[degree_-i]->getSize()+1),0) << ");"<<endl;
 					inPortMap ( sa, "X", join("op1_",i) );
 					inPortMap ( sa, "Y", join("op2_",i) );
 					inPortMapCst ( sa, "Cin", "'0'");
