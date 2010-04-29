@@ -278,7 +278,7 @@ namespace flopoco{
                         vhdl << tab << tab << tab << tab << "end loop;" << endl;
                         vhdl << tab << tab << tab << tab << " if (localErrorCounter = 0) then " << endl;
 			vhdl << tab << tab << tab << tab << tab << "errorCounter := errorCounter + 1; -- incrementing global error counter" << endl;
-                        vhdl << tab << tab << tab << tab << tab << "assert false report(\"Incorrect output for " << s->getName() << ", expected value : \" & str(to_stdlogicvector(V_" << s->getName() << ")) ... (other values line \" & integer'image(counter) & \" of test.input) , result :  \" & str(" << s->getName() <<") &  \"|| line : \" & integer'image(counter) & \" of input file \") ;"<< endl;  
+                        vhdl << tab << tab << tab << tab << tab << "assert false report(\"Incorrect output for " << s->getName() << ", expected value : \" & str(to_stdlogicvector(V_" << s->getName() << ")) & \"... (other values line \" & integer'image(counter) & \" of test.input) , result :  \" & str(" << s->getName() <<") &  \"|| line : \" & integer'image(counter) & \" of input file \") ;"<< endl;  
 			vhdl << tab << tab << tab << tab << "end if;" << endl;
 			vhdl << tab << tab << tab << "end if;" << endl;
 			// TODO add test to increment global error counter
