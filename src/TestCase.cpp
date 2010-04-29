@@ -198,7 +198,7 @@ namespace flopoco{
 						if (s->isFP())
 							o << "fp_equal(" << s->getName() << ",fp" << s->width() << "'("<< s->valueToVHDL(v) << "))";
 						else if (s->isIEEE())
-							o << "fp_equal_ieee"<< "(" << s->getName() << ", "<< s->valueToVHDL(v) << ", " << s->wE()  << ", " << s->wF() << ")";
+							o << "fp_equal_ieee"<< "(" << s->getName() << ", fp" << s->width() << "'("<< s->valueToVHDL(v) << "), " << s->wE()  << ", " << s->wF() << ")";
 						else
 							o << s->getName() << "=" << s->valueToVHDL(v);
 						expected += " " + s->valueToVHDL(v,false);
