@@ -20,7 +20,7 @@ namespace flopoco{
 		/**
 		 * The FunctionEvaluator constructor
 		 */
-		FunctionEvaluator(Target* target, string func, int wInX, int wOutX, int n);
+		FunctionEvaluator(Target* target, string func, int wInX, int wOutX, int n, bool finalRounding = true);
 
 		/**
 		 * FunctionEvaluator destructor
@@ -46,8 +46,9 @@ namespace flopoco{
 		unsigned wR;
 		int weightR;
 
-    int wInX_;   
+		int wInX_;   
 		int wOutX_;
+		bool finalRounding_;
 		
 	};
 

@@ -38,8 +38,8 @@ namespace flopoco{
 #define DEBUGVHDL 0
 
 
-	FunctionEvaluator::FunctionEvaluator(Target* target, string func, int wInX, int wOutX, int n):
-		Operator(target), wInX_(wInX), wOutX_(wOutX){
+	FunctionEvaluator::FunctionEvaluator(Target* target, string func, int wInX, int wOutX, int n, bool finalRounding):
+		Operator(target), wInX_(wInX), wOutX_(wOutX), finalRounding_(finalRounding){
 
 		ostringstream name;
 		srcFileName="FunctionEvaluator";
@@ -110,59 +110,68 @@ namespace flopoco{
 		
 		outPortMap( pe, "R", "Rpe");
 		vhdl << instance( pe, "PolynomialEvaluator");
-		
-		syncCycleFromSignal("Rpe");
-//		nextCycle();/////////////////
-		//now we round
-//		vhdl << tab << declare( "op", wOutX+1 + (pe->getOutputWeight())) << " <= Rpe"<<range(pe->getOutputSize()-1, pe->getOutputSize() - (wOutX+pe->getOutputWeight()+ 1)) << ";" << endl;
-		
-//		IntAdder *ia = new IntAdder(target, wOutX+1 + (pe->getOutputWeight()+1));
-//		oplist.push_back(ia);
-//		
-//		inPortMap    (ia, "X", "op1_rnd");
-//		inPortMapCst (ia, "Y", zg(wOutX+1 + (pe->getOutputWeight()+1), 0));
-//		inPortMapCst (ia, "Cin", "'1'");
-//		outPortMap   (ia, "R", "postRoundR");   
 
-//		vhdl << instance( ia, "Final_Round");
-//		syncCycleFromSignal( "postRoundR" );  
+		syncCycleFromSignal("Rpe");
+		if (finalRounding_){
+			/* number of bits to recover is */
+			int recover = weightR + wOutX;
+			vhdl << tab << declare("sticky",1) << " <= '0' when Rpe"<<range(pe->getRWidth()-(pe->getRWeight()+recover)-3,0) <<" = " 
+		                                                        <<   zg(pe->getRWidth()-(pe->getRWeight()+recover)-2,0) << " else '1';"<<endl;
+			vhdl << tab << declare("extentedf", 1 + recover + 2) << " <= Rpe"<<range(pe->getRWidth()-pe->getRWeight(), pe->getRWidth()-(pe->getRWeight()+recover)-2)<<";"<<endl; 
+		                  
+			nextCycle();                              
+			IntAdder *a = new IntAdder(target, 1 + recover + 2);
+			oplist.push_back(a);
+	
+			inPortMap(a, "X", "extentedf");
+			inPortMapCst(a, "Y", zg(1 + recover + 2,0) );
+			inPortMapCst(a, "Cin", "sticky");
+			outPortMap(a, "R", "fPostRound");
+			vhdl << instance(a, "Rounding_Adder");
+
+			syncCycleFromSignal("fPostRound");
 		
-		addOutput("R", pe->getRWidth());
-		vhdl << tab << "R <= Rpe;" << endl;  
+			addOutput("R", 1 + recover + 1);
+			vhdl << tab << " R <= fPostRound"<<range(recover+2, 1)<<";"<<endl;
+		}else{
+			addOutput("R", pe->getRWidth());
+			vhdl << tab << "R <= Rpe;" << endl;  
+		}
+		
 	}
 
 	FunctionEvaluator::~FunctionEvaluator() {
 	}
 	
-	void FunctionEvaluator::emulate(TestCase* tc)
-	{
-		 setToolPrecision(165);
-    int  nrFunctions=(pf->getPiecewiseFunctionArray()).size();
+	
+	void FunctionEvaluator::emulate(TestCase* tc){
+		setToolPrecision(165);
+		int  nrFunctions=(pf->getPiecewiseFunctionArray()).size();
+		
+		Function *f = pf->getPiecewiseFunctionArray(0);
 
-     Function *f = pf->getPiecewiseFunctionArray(0);
-    
-    if (nrFunctions !=1) {
-      cout<<"Warning: we are dealing with a piecewise function; only the first branch will be evaluated"<<endl;    
-    }
-    mpz_class rd; // rounded down
-		mpz_class ru;
-		 
-    mpz_class svX = tc->getInputValue("X");
-    mpfr_t mpX, mpR;
-  	mpfr_init2(mpX,165);
-    mpfr_init2(mpR,165);
-    int outSign = 0;
-    /* Convert a random signal to an mpfr_t in [0,1[ */
+		if (nrFunctions !=1) {
+			cerr<<"Warning: we are dealing with a piecewise function; only the first branch will be evaluated"<<endl;    
+		}
+
+		mpz_class rd, ru; // rounded down
+
+		mpz_class svX = tc->getInputValue("X");
+		mpfr_t mpX, mpR;
+		mpfr_init2(mpX,165);
+		mpfr_init2(mpR,165);
+		int outSign = 0;
+		/* Convert a random signal to an mpfr_t in [0,1[ */
 		mpfr_set_z(mpX, svX.get_mpz_t(), GMP_RNDN);
 		mpfr_div_2si(mpX, mpX, wInX_, GMP_RNDN);
-    
+	
 		/* Compute the function */
 		f->eval(mpR, mpX);
 		if (verbose){
-      if (verbose==3){
-		  cout<<"Input is:"<<sPrintBinary(mpX)<<endl;
-		  cout<<"Output is:"<<sPrintBinary(mpR)<<endl;
-	 }
+		if (verbose==3){
+		cout<<"Input is:"<<sPrintBinary(mpX)<<endl;
+		cout<<"Output is:"<<sPrintBinary(mpR)<<endl;
+	}
 		}
 		/* Compute the signal value */
 		if (mpfr_signbit(mpR))
@@ -178,11 +187,11 @@ namespace flopoco{
 		 */
 		mpfr_get_z(rd.get_mpz_t(), mpR, GMP_RNDD);
 		ru = rd + 1;
-  
-    tc->addExpectedOutput("R", rd);
-    tc->addExpectedOutput("R", ru);
-    mpfr_clear(mpX);
-    mpfr_clear(mpR);
+
+		tc->addExpectedOutput("R", rd);
+		tc->addExpectedOutput("R", ru);
+		mpfr_clear(mpX);
+		mpfr_clear(mpR);
 	}
 
 }
