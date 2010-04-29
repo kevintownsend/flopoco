@@ -247,16 +247,16 @@ namespace flopoco{
 			if (s->isFP()) { 
 			    vhdl << tab << tab << tab << tab << "if not fp_equal(fp"<< s->width() << "'(" << s->getName() << ") ,to_stdlogicvector(V_" <<  s->getName() << ")) then " << endl;
 			    vhdl << tab << tab << tab << tab << tab << " errorCounter := errorCounter + 1;" << endl;
-			    vhdl << tab << tab << tab << tab << tab << "assert false report(\"Incorrect output for " << s->getName() << ", expected \" & str(to_stdlogicvector(V_" << s->getName() << ")) & \" and it outputs \" & str(" << s->getName() << ")) &  \"|| line : \" & integer'image(counter) & \" of input file \" ;"<< endl;                        
+			    vhdl << tab << tab << tab << tab << tab << "assert false report(\"Incorrect output for " << s->getName() << ", expected value : \" & str(to_stdlogicvector(V_" << s->getName() << ")) & \" , result :  \" & str(" << s->getName() << ")) &  \"|| line : \" & integer'image(counter) & \" of input file \" ;"<< endl;                        
 			    vhdl << tab << tab << tab << tab << "end if;" << endl;
                         } else if (s->isIEEE()) {                                                                                                                                             
 			    vhdl << tab << tab << tab << tab << "if not fp_equal_ieee(" << s->getName() << " ,to_stdlogicvector(V_" <<  s->getName() << "),"<<s->wE()<<" , "<<s->wF()<<") then " << endl;
-			    vhdl << tab << tab << tab << tab << tab << "assert false report(\"Incorrect output for " << s->getName() << ", expected \" & str(to_stdlogicvector(V_" << s-> getName() << ")) & \" and it outputs \" & str(" << s->getName()  << ")) &  \"|| line : \" & integer'image(counter) & \" of input file \" ;"<< endl;               
+			    vhdl << tab << tab << tab << tab << tab << "assert false report(\"Incorrect output for " << s->getName() << ", expected value : \" & str(to_stdlogicvector(V_" << s-> getName() << ")) & \" , result :  \" & str(" << s->getName()  << ")) &  \"|| line : \" & integer'image(counter) & \" of input file \" ;"<< endl;               
 			    vhdl << tab << tab << tab << tab << tab << " errorCounter := errorCounter + 1; end if;" << endl;                                                                 
 			    vhdl << tab << tab << tab << tab << "end if;" << endl;
                         } else { 
 			    vhdl << tab << tab << tab << tab << "if not (" << s->getName() << "= to_stdlogicvector(V_" << s->getName() << ")) then " << endl;
-			    vhdl << tab << tab << tab << tab << tab << "assert false report(\"Incorrect output for " << s->getName() << ", expected \" & str(to_stdlogicvector(V_" << s->getName() << ")) & \" and it outputs \" & str(" << s->getName() <<")) &  \"|| line : \" & integer'image(counter) & \" of input file \" ;"<< endl;  
+			    vhdl << tab << tab << tab << tab << tab << "assert false report(\"Incorrect output for " << s->getName() << ", expected value : \" & str(to_stdlogicvector(V_" << s->getName() << ")) & \" , result : \" & str(" << s->getName() <<")) &  \"|| line : \" & integer'image(counter) & \" of input file \" ;"<< endl;  
 			    vhdl << tab << tab << tab << tab << tab << " errorCounter := errorCounter + 1; end if;" << endl;                                                                 
 			    vhdl << tab << tab << tab << tab << "end if;" << endl;
 			};
@@ -278,7 +278,7 @@ namespace flopoco{
                         vhdl << tab << tab << tab << tab << "end loop;" << endl;
                         vhdl << tab << tab << tab << tab << " if (localErrorCounter = 0) then " << endl;
 			vhdl << tab << tab << tab << tab << tab << "errorCounter := errorCounter + 1; -- incrementing global error counter" << endl;
-                        vhdl << tab << tab << tab << tab << tab << "assert false report(\"Incorrect output for " << s->getName() << ", expected value in \" & str(to_stdlogicvector(V_" << s->getName() << ")) & \" and it outputs \" & str(" << s->getName() <<") &  \"|| line : \" & integer'image(counter) & \" of input file \") ;"<< endl;  
+                        vhdl << tab << tab << tab << tab << tab << "assert false report(\"Incorrect output for " << s->getName() << ", expected value : \" & str(to_stdlogicvector(V_" << s->getName() << ")) ... (other values line \" & integer'image(counter) & \" of test.input) , result :  \" & str(" << s->getName() <<") &  \"|| line : \" & integer'image(counter) & \" of input file \") ;"<< endl;  
 			vhdl << tab << tab << tab << tab << "end if;" << endl;
 			vhdl << tab << tab << tab << "end if;" << endl;
 			// TODO add test to increment global error counter
@@ -287,7 +287,7 @@ namespace flopoco{
                 };
                 vhdl << tab << tab << tab << " wait for 10 ns; -- wait for pipeline to flush" << endl;
                 currentOutputTime += 10 * (tcl_.getNumberOfTestCases()+n_); // time for simulation
-                vhdl << tab << tab << tab << "counter := counter + 2;" << endl;
+                vhdl << tab << tab << tab << "counter := counter + 2;" << endl; // incrementing by 2 because a testcase takes two lines (one for input, one for output)
                 vhdl << tab << tab << "end loop;" << endl;
                 vhdl << tab << tab << "report (integer'image(errorCounter) & \" error(s) encoutered.\");" << endl;
 		vhdl << tab << tab << "assert false report \"End of simulation\" severity failure;" <<endl;
