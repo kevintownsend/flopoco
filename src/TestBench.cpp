@@ -198,6 +198,7 @@ namespace flopoco{
                 vhdl << tab << tab << "variable possibilityNumber : integer := 0;" << endl;
                 vhdl << tab << tab << "variable localErrorCounter : integer := 0;" << endl;
                 vhdl << tab << tab << "variable tmpChar : character;" << endl;                        // variable to store a character (escape between inputs)
+		//vhdl << tab << tab << "variable tmpString : string;" << endl;
                 vhdl << tab << tab << "file inputsFile : text is \"test.input\"; " << endl; // declaration of the input file
 
 
@@ -243,13 +244,22 @@ namespace flopoco{
                         vhdl << tab << tab << tab << tab << "localErrorCounter := 0;" << endl;//read(inline,tmpChar);" << endl; // we consume the character between each outputs
 			vhdl << tab << tab << tab << "elsif possibilityNumber = 1 then " << endl;
                         vhdl << tab << tab << tab << tab << "read(inline ,V_"<< s->getName() << ");" << endl;
-			 if (s->isFP()) 
-                        vhdl << tab << tab << tab << tab << "assert false or fp_equal(fp"<< s->width() << "'(" << s->getName() << ") ,to_stdlogicvector(V_" <<  s->getName() << ")) report(\"Incorrect output for " << s->getName() << ", expected \" & str(to_stdlogicvector(V_" << s->getName() << ")) & \" and it outputs \" & str(" << s->getName() << ")) &  \"|| line : \" & integer'image(counter) & \" of input file \" ;"<< endl;                        
-                        else if (s->isIEEE()) {                                                                                                                                               
-                          vhdl << tab << tab << tab << tab << "if not fp_equal_ieee(" << s->getName() << " ,to_stdlogicvector(V_" <<  s->getName() << "),"<<s->wE()<<" , "<<s->wF()<<") then report(\"Incorrect output for " << s->getName() << ", expected \" & str(to_stdlogicvector(V_" << s-> getName() << ")) & \" and it outputs \" & str(" << s->getName()  << ")) &  \"|| line : \" & integer'image(counter) & \" of input file \" ;"<< endl;               
-                          vhdl << tab << tab << tab << tab << tab << " errorCounter := errorCounter + 1; end if;" << endl;                                                                           
-                        } else vhdl << tab << tab << tab << tab << "assert false or (" << s->getName() << "= to_stdlogicvector(V_" << s->getName() << "))" << "report(\"Incorrect output for " << s->getName() << ", expected \" & str(to_stdlogicvector(V_" << s->getName() << ")) & \" and it outputs \" & str(" << s->getName() <<")) &  \"|| line : \" & integer'image(counter) & \" of input file \" ;"<< endl;  
-
+			if (s->isFP()) { 
+			    vhdl << tab << tab << tab << tab << "if not fp_equal(fp"<< s->width() << "'(" << s->getName() << ") ,to_stdlogicvector(V_" <<  s->getName() << ")) then " << endl;
+			    vhdl << tab << tab << tab << tab << tab << " errorCounter := errorCounter + 1;" << endl;
+			    vhdl << tab << tab << tab << tab << tab << "assert false report(\"Incorrect output for " << s->getName() << ", expected \" & str(to_stdlogicvector(V_" << s->getName() << ")) & \" and it outputs \" & str(" << s->getName() << ")) &  \"|| line : \" & integer'image(counter) & \" of input file \" ;"<< endl;                        
+			    vhdl << tab << tab << tab << tab << "end if;" << endl;
+                        } else if (s->isIEEE()) {                                                                                                                                             
+			    vhdl << tab << tab << tab << tab << "if not fp_equal_ieee(" << s->getName() << " ,to_stdlogicvector(V_" <<  s->getName() << "),"<<s->wE()<<" , "<<s->wF()<<") then " << endl;
+			    vhdl << tab << tab << tab << tab << tab << "assert false report(\"Incorrect output for " << s->getName() << ", expected \" & str(to_stdlogicvector(V_" << s-> getName() << ")) & \" and it outputs \" & str(" << s->getName()  << ")) &  \"|| line : \" & integer'image(counter) & \" of input file \" ;"<< endl;               
+			    vhdl << tab << tab << tab << tab << tab << " errorCounter := errorCounter + 1; end if;" << endl;                                                                 
+			    vhdl << tab << tab << tab << tab << "end if;" << endl;
+                        } else { 
+			    vhdl << tab << tab << tab << tab << "if not (" << s->getName() << "= to_stdlogicvector(V_" << s->getName() << ")) then " << endl;
+			    vhdl << tab << tab << tab << tab << tab << "assert false report(\"Incorrect output for " << s->getName() << ", expected \" & str(to_stdlogicvector(V_" << s->getName() << ")) & \" and it outputs \" & str(" << s->getName() <<")) &  \"|| line : \" & integer'image(counter) & \" of input file \" ;"<< endl;  
+			    vhdl << tab << tab << tab << tab << tab << " errorCounter := errorCounter + 1; end if;" << endl;                                                                 
+			    vhdl << tab << tab << tab << tab << "end if;" << endl;
+			};
 
 			vhdl << tab << tab << tab << "else" << endl; 
                         vhdl << tab << tab << tab << tab << "for i in possibilityNumber downto 1 loop " << endl;
@@ -266,7 +276,10 @@ namespace flopoco{
                                                      << " then localErrorCounter := 1; end if;" << endl;
                         }
                         vhdl << tab << tab << tab << tab << "end loop;" << endl;
-                        vhdl << tab << tab << tab << tab << " assert false or (localErrorCounter = 1) report \"erreur\";" << endl;
+                        vhdl << tab << tab << tab << tab << " if (localErrorCounter = 0) then " << endl;
+			vhdl << tab << tab << tab << tab << tab << "errorCounter := errorCounter + 1; -- incrementing global error counter" << endl;
+                        vhdl << tab << tab << tab << tab << tab << "assert false report(\"Incorrect output for " << s->getName() << ", expected value in \" & str(to_stdlogicvector(V_" << s->getName() << ")) & \" and it outputs \" & str(" << s->getName() <<") &  \"|| line : \" & integer'image(counter) & \" of input file \") ;"<< endl;  
+			vhdl << tab << tab << tab << tab << "end if;" << endl;
 			vhdl << tab << tab << tab << "end if;" << endl;
 			// TODO add test to increment global error counter
                         /* adding the IO to the IOorder list */
@@ -274,7 +287,7 @@ namespace flopoco{
                 };
                 vhdl << tab << tab << tab << " wait for 10 ns; -- wait for pipeline to flush" << endl;
                 currentOutputTime += 10 * (tcl_.getNumberOfTestCases()+n_); // time for simulation
-                vhdl << tab << tab << tab << "counter := counter + 1;" << endl;
+                vhdl << tab << tab << tab << "counter := counter + 2;" << endl;
                 vhdl << tab << tab << "end loop;" << endl;
                 vhdl << tab << tab << "report (integer'image(errorCounter) & \" error(s) encoutered.\");" << endl;
 		vhdl << tab << tab << "assert false report \"End of simulation\" severity failure;" <<endl;
