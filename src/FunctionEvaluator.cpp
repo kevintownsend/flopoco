@@ -47,41 +47,52 @@ namespace flopoco{
 		name<<"FunctionEvaluator"; 
 		setName(name.str()); 
 
-		setCopyrightString("Bogdan Pasca, Mioara Joldes (2010)");		
-
-    pf=new  PiecewiseFunction(func);
-    
-    tg = new TableGenerator(target, pf, wInX, wOutX+1, n);
+		setCopyrightString("Bogdan Pasca, Mioara Joldes (2010)");
+		
+		REPORT(INFO, "Will try to implement the function: " << func );
+		REPORT(INFO, "The input precision of x is: " << wInX << " with x in [0,1[");
+		REPORT(INFO, "The required number fractional bits of the output is: "<<wOutX);
+		REPORT(INFO, "The degree of the polynomial used to aproximate this function is: " << n );
+		
+		pf = new PiecewiseFunction(func);
+		tg = new TableGenerator(target, pf, wInX, wOutX+1, n);
 		oplist.push_back(tg);
-		combinatorialOperator = false;
 		
-		YVar* y = new YVar(wInX - tg->wIn, -tg->wIn+1);
+		REPORT(INFO, "The number of intervals of the function: "<< intpow2(tg->wIn));
+		REPORT(INFO, "The number of bits used for y: "<< wInX-tg->wIn << " and its weight is: " << -tg->wIn);
 		
 		
+		/* the nmber of bits of the address */
+		int addrSize = tg->wIn;
+		/* the number of bits of y is */
+		int ySize = wInX - tg->wIn;
+		/* the weight of y considering that y is in 1.XXXX */
+		int yWeight = -tg->wIn;
+		
+		YVar* y = new YVar(ySize, yWeight);
 		pe = new PolynomialEvaluator(target, tg->getCoeffParamVector(), y, wOutX+1, tg->getMaxApproxError() );
-		
 		oplist.push_back(pe);
+
 		wR = pe->getRWidth();
-		weightR = pe->getRWeight();
+		weightR = pe->getRWeight()+1;
+		
+		REPORT(INFO, "The width of the polynomial evaluator output is: "<< wR);
+		/* number of digits to the left of the . */
+		REPORT(INFO, "The weight of the PE output is: "<<weightR);
 
 
-		// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 		addInput ("X", wInX);
+		vhdl << tab << declare("addr", addrSize) << " <= X"<<range(wInX-1, wInX-addrSize)<<";"<<endl;
 
-		
-		vhdl << tab << declare("addr", tg->wIn) << " <= X"<<range(wInX-1, wInX-tg->wIn)<<";"<<endl;
-
+		/* Instantiate the table generator */
 		nextCycle();/////////////////////////////////// The Coefficent ROM has a registered iunput
-		
 		inPortMap ( tg, "X", "addr");
 		outPortMap ( tg, "Y", "Coef");
-		
 		vhdl << instance ( tg, "GeneratedTable" );
-		
 		syncCycleFromSignal("Coef");
 		nextCycle();/////////////////////////////////// The Coefficent ROM has a registered output
 		
-		vhdl << tab << declare ("y",y->getSize()) << " <= X"<<range(y->getSize()-1 ,0) << ";" << endl;
+		vhdl << tab << declare ("y",ySize) << " <= X"<<range(ySize-1 ,0) << ";" << endl;
 		
 		/* get the coefficients */
 		int lsb = 0, sizeS = 0;
@@ -91,6 +102,7 @@ namespace flopoco{
 			vhdl << tab << declare(join("a",i), sizeS ) << "<= Coef"<< range (lsb+sizeS-1, lsb) << ";" << endl;
 		}
 		
+		/* Instantiate the polynomial evaluator generator*/
 		inPortMap( pe, "Y", "y");
 		for (uint32_t i=0; i< pe->getCoeffParamVector().size(); i++){
 			inPortMap(pe,  join("a",i), join("a",i));
@@ -147,8 +159,10 @@ namespace flopoco{
 		/* Compute the function */
 		f->eval(mpR, mpX);
 		if (verbose){
-      cout<<"Input is:"<<sPrintBinary(mpX)<<endl;
-      cout<<"Output is:"<<sPrintBinary(mpR)<<endl;
+      if (verbose==3){
+		  cout<<"Input is:"<<sPrintBinary(mpX)<<endl;
+		  cout<<"Output is:"<<sPrintBinary(mpR)<<endl;
+	 }
 		}
 		/* Compute the signal value */
 		if (mpfr_signbit(mpR))

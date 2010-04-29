@@ -131,7 +131,7 @@ namespace flopoco{
           sY = substitute(tempNode, sX);
           if (sY == 0)
 			      cout<<"Sollya error when performing range mapping."<<endl;
-          if(verbose){
+          if(verbose==2){
             cout<<"\n-------------"<<endl;	
             printTree(sY);
             cout<<"\nover: "<<sPrintBinary(zero)<<" "<< sPrintBinary(bi)<<"withprecshift:"<<precShift<<endl;	
@@ -141,7 +141,7 @@ namespace flopoco{
           tempNode3 = FPminimax(sY, tempChain ,tempChain2, NULL,       zero, bi, FIXED, ABSOLUTESYM, tempNode2,NULL);
           polys.push_back(tempNode3);
         
-          if (verbose){
+          if (verbose==2){
             printTree(tempNode3);
             printf("\n");
           }
@@ -150,7 +150,7 @@ namespace flopoco{
 		      mpErr= (mpfr_t *) safeMalloc(sizeof(mpfr_t));
 		      mpfr_init2(*mpErr,getToolPrecision());  
 			    uncertifiedInfnorm(*mpErr, nDiff, zero, bi, 501, getToolPrecision()); 
-          if (verbose){
+          if (verbose==2){
             cout<< "infinite norm:"<<sPrintBinary(*mpErr)<<endl;
             cout<< "eps:"<<sPrintBinary(eps)<<endl;
           }
@@ -218,7 +218,7 @@ namespace flopoco{
    
     mpfr_clear(*mpErrMax);
     free(mpErrMax);
-    if (verbose){
+    if (verbose==2){
       cout<< "maximum error="<<sPrintBinary(*maxError)<<endl;
     }
     /*Extract coefficients*/
@@ -226,7 +226,7 @@ namespace flopoco{
 		
     k=0;
     for (k=0;(unsigned)k<polys.size();k++){
-      if (verbose){
+      if (verbose==2){
    		  cout<<"\n----"<< k<<"th polynomial:----"<<endl;
         printTree(polys[k]);
       }
@@ -259,7 +259,7 @@ namespace flopoco{
 	
 	
 	  
-	  if (verbose){  
+	  if (verbose==1){  
 	    printPolynomialCoefficientsVector();
 	    cout<<"Parameters for polynomial evaluator:"<<endl;
 	    printCoeffParamVector();
@@ -374,7 +374,7 @@ namespace flopoco{
     errBoundBool=1; //suppose the nr of intervals is good
     //polys.reserve(nrIntervals);
     //errPolys.reserve(nrIntervals);
-    if(verbose){
+    if (verbose==2){
     cout<<"trying with "<< nrIntervals <<" intervals"<<endl;
     }
     for (k=0; k<nrIntervals; k++){
@@ -393,7 +393,7 @@ namespace flopoco{
       if (sY == 0)
 			cout<<"Sollya error when performing range mapping."<<endl;
       
-      if(verbose){
+      if (verbose==2){
       cout<<"\n-------------"<<endl;	
       printTree(sY);
       cout<<"\nover: "<<sPrintBinary(zero)<<" "<< sPrintBinary(bi)<<"withprecshift:"<<precShift<<endl;	
@@ -405,7 +405,7 @@ namespace flopoco{
       tempNode3 = FPminimax(sY, tempChain ,tempChain2, NULL,       zero, bi, FIXED, ABSOLUTESYM, tempNode2,NULL);
       
       polys.push_back(tempNode3);
-      if (verbose){
+      if (verbose==2){
       
        printTree(tempNode3);
        printf("\n");
@@ -416,14 +416,14 @@ namespace flopoco{
 		  mpErr= (mpfr_t *) safeMalloc(sizeof(mpfr_t));
 		  mpfr_init2(*mpErr,getToolPrecision());  
 			uncertifiedInfnorm(*mpErr, nDiff, zero, bi, 501/*default in sollya*/, getToolPrecision()); 
-      if (verbose){
+      if (verbose==2){
       cout<< "infinite norm:"<<sPrintBinary(*mpErr)<<endl;
       cout<< "eps:"<<sPrintBinary(eps)<<endl;
       }
 		  errPolys.push_back(mpErr);
 		  if (mpfr_cmp(*mpErr, eps)>0) {
 		    errBoundBool=0; //we have found an interval where the error is not good
-		    if(verbose){
+		    if(verbose==2){
   		    cout<< "we have found an interval where the error is not good, proceed to splitting"<<endl;
 	      }
 		    //k=nrIntervals;
@@ -437,7 +437,7 @@ namespace flopoco{
   } 
   if (errBoundBool==1){
   
-  if(verbose){
+  if(verbose==1){
     cout<< "the number of intervals is:"<< nrIntervals<<endl; 
     cout<< "We proceed to the extraction of the coefficients:"<<endl; 
   }
@@ -459,7 +459,7 @@ namespace flopoco{
    
    mpfr_clear(*mpErrMax);
    free(mpErrMax);
-   if (verbose){
+   if (verbose==2){
     cout<< "maximum error="<<sPrintBinary(*maxError)<<endl;
    }
   //Extract coefficients
@@ -467,7 +467,7 @@ namespace flopoco{
 		
     k=0;
    for (k=0;k<nrIntervals;k++){
-      if (verbose){
+      if (verbose==2){
    		  cout<<"\n----"<< k<<"th polynomial:----"<<endl;
         printTree(polys[k]);
       }
@@ -501,7 +501,7 @@ namespace flopoco{
 	
 	  /**********************************/
 	  
-	 if (verbose){  
+	 if (verbose==2){  
 	  printPolynomialCoefficientsVector();
 	  cout<<"Parameters for polynomial evaluator:"<<endl;
 	  printCoeffParamVector();
@@ -547,7 +547,7 @@ MPPolynomial* TableGenerator::getMPPolynomial(sollya_node_t t){
 				//cout<< i<<"th coeff:"<<endl;
 				//printTree(getIthCoefficient(t, i));
 				evaluateConstantExpression(coef[i], getIthCoefficient(t, i), getToolPrecision());
-				if (verbose){
+				if (verbose==2){
 		    cout<< i<<"th coeff:"<<sPrintBinary(coef[i])<<endl;
 		    }
 			}
@@ -581,7 +581,7 @@ vector<FixedPointCoefficient*> TableGenerator::getPolynomialCoefficients(sollya_
 				//cout<< i<<"th coeff:"<<endl;
 				//printTree(getIthCoefficient(t, i));
 				evaluateConstantExpression(coef[i], getIthCoefficient(t, i), getToolPrecision());
-				if (verbose){
+				if (verbose==2){
 		      cout<< i<<"th coeff:"<<sPrintBinary(coef[i])<<endl;
 		    }
 		    size=*((int *)first(cc));
@@ -628,7 +628,7 @@ vector<FixedPointCoefficient*> TableGenerator::getPolynomialCoefficients(sollya_
 				//cout<< i<<"th coeff:"<<endl;
 				//printTree(getIthCoefficient(t, i));
 				evaluateConstantExpression(coef[i], getIthCoefficient(t, i), getToolPrecision());
-				if (verbose){
+				if (verbose==2){
 		      cout<< i<<"th coeff:"<<sPrintBinary(coef[i])<<endl;
 		    }
 		    size=sizeList[i];

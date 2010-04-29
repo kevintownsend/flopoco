@@ -254,7 +254,7 @@ namespace flopoco{
 //		oplist.push_back(fixpsqrt);
 
 //***************************************************************************
-    PiecewiseFunction *pf= new  PiecewiseFunction("sqrt(2+2*x),0,1,1;sqrt(1+x),0,1,1");
+		PiecewiseFunction *pf= new  PiecewiseFunction("sqrt(2+2*x),0,1,1;sqrt(1+x),0,1,1");
 		TableGenerator *tg = new TableGenerator(target, pf, wF+1, wF+1, degree);
 		oplist.push_back(tg);
 		combinatorialOperator = false;
