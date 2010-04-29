@@ -115,29 +115,29 @@ namespace flopoco{
 		if (finalRounding_){
 			/* number of bits to recover is */
 			int recover = weightR + wOutX;
-			vhdl << tab << declare("sticky",1) << " <= '0' when Rpe"<<range(pe->getRWidth()-(pe->getRWeight()+recover)-3,0) <<" = " 
-		                                                        <<   zg(pe->getRWidth()-(pe->getRWeight()+recover)-2,0) << " else '1';"<<endl;
-			vhdl << tab << declare("extentedf", 1 + recover + 2) << " <= Rpe"<<range(pe->getRWidth()-pe->getRWeight(), pe->getRWidth()-(pe->getRWeight()+recover)-2)<<";"<<endl; 
+			vhdl << tab << 	declare("sticky",1) << " <= '0' when Rpe"<<range(pe->getRWidth()-(recover)-2,0) <<" = " 
+		                                                        <<   zg(pe->getRWidth()-(recover)-1,0) << " else '1';"<<endl;
+			vhdl << tab << declare("extentedf", recover + 1) << " <= Rpe"<<range(pe->getRWidth()-1, pe->getRWidth()-(recover+1))<<";"<<endl; 
 		                  
 			nextCycle();                              
-			IntAdder *a = new IntAdder(target, 1 + recover + 2);
+			IntAdder *a = new IntAdder(target, recover + 1);
 			oplist.push_back(a);
 	
 			inPortMap(a, "X", "extentedf");
-			inPortMapCst(a, "Y", zg(1 + recover + 2,0) );
+			inPortMapCst(a, "Y", zg(recover + 1,0) );
 			inPortMapCst(a, "Cin", "sticky");
 			outPortMap(a, "R", "fPostRound");
 			vhdl << instance(a, "Rounding_Adder");
 
 			syncCycleFromSignal("fPostRound");
 		
-			addOutput("R", 1 + recover + 1);
-			vhdl << tab << " R <= fPostRound"<<range(recover+2, 1)<<";"<<endl;
+			addOutput("R", recover);
+			vhdl << tab << " R <= fPostRound"<<range(recover, 1)<<";"<<endl;
 		}else{
 			addOutput("R", pe->getRWidth());
 			vhdl << tab << "R <= Rpe;" << endl;  
 		}
-		
+			
 	}
 
 	FunctionEvaluator::~FunctionEvaluator() {
@@ -145,6 +145,9 @@ namespace flopoco{
 	
 	
 	void FunctionEvaluator::emulate(TestCase* tc){
+		if (!finalRounding_)
+			throw("Cannot generate testCases for non-rounded case");
+			
 		setToolPrecision(165);
 		int  nrFunctions=(pf->getPiecewiseFunctionArray()).size();
 		
