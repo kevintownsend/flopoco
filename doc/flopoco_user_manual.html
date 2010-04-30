@@ -263,16 +263,16 @@ reference.</p>
 <h3>Useful building blocks for FP operators</h3>
 
 <dl>
-  <dt><code>LeftShifter wIn MaxShift</code> </dt>
+  <dt><code style="color: blue;">LeftShifter wIn MaxShift</code> </dt>
     <dd>Left barrel shifter. It has two inputs, the data to shift and a shift
       value. The width of the latter is deduced from MaxShift, which is the
       maximum shift distance. This operator will be pipelined to match target
       frequency.</dd>
-  <dt><code>RightShifter wIn MaxShift</code> </dt>
+  <dt><code style="color: blue;">RightShifter wIn MaxShift</code> </dt>
     <dd>Same, but to the right.</dd>
-  <dt><code>LZOC wIn wOut</code></dt>
+  <dt><code style="color: blue;">LZOC wIn wOut</code></dt>
     <dd>Leading Zero/One Counter.</dd>
-  <dt><code>LZOCShifterSticky wIn wOut computeSticky countType</code></dt>
+  <dt><code style="color: blue;">LZOCShifterSticky wIn wOut computeSticky countType</code></dt>
     <dd>Leading Zero/One Counter merged with a shifter. If
     computeSticky=0 the bits shifted out are discarded, if 1 they are
     ORed into a sticky bit. If countType=0, a leading zero counter is
@@ -283,12 +283,12 @@ reference.</p>
 <h3>Pipelined integer standard operators</h3>
 <dl>
   <h4><i> Adders </i></h4>
-  <dt><code>IntAdder wIn</code></dt>
+  <dt><code style="color: blue;">IntAdder wIn</code></dt>
     <dd>Integer adder. In modern VHDL, integer addition is expressed by a +
       and one usually needn't define an entity for it. However, this operator
       will be pipelined if the addition is too large to be performed at the
       target frequency. </dd>
-  <dt><code>MyIntAdder wIn optimizeType srl implementation bufferedInputs</code></dt>    
+  <dt><code style="color: blue;">MyIntAdder wIn optimizeType srl implementation bufferedInputs</code></dt>    
       <dd> IntAdder in manual mode. The option <code>optimizeType=<0,1,2,3></code> 
       where <code>0=LUT 1=REG 2=SLICE 3=LATENCY</code> allows selecting the different 
       optimization criteria. <code>srl=<0,1></code> allows generating architectures optimized
@@ -302,35 +302,35 @@ reference.</p>
 </dl>
    <h4><i> Multi-operand Adders </i></h4>   
 <dl>
-   <dt><code>IntNAdder wIn N</code></dt>
+   <dt><code style="color: blue;">IntNAdder wIn N</code></dt>
     <dd>Multi-operand integer adder using the hardware shift-registers (SRLs for Xilinx)
         available in current FPGAs. 
      </dd>
-   <dt><code>IntCompressorTree wIn N</code></dt>
+   <dt><code style="color: blue;">IntCompressorTree wIn N</code></dt>
     <dd>Multi-operand integer adder using compressor trees. High quality operator
     at the expense of synthesis time.
      </dd>
 </dl>
    <h4><i> Multipliers </i></h4>   
 <dl>     
-  <dt><code>IntMultiplier wInX wInY</code></dt>
+  <dt><code style="color: blue;">IntMultiplier wInX wInY</code></dt>
     <dd>Same for multiplication, although the frequency attainable will be
       limited by the DSP blocks available. wInX and wInY are the input widths
       of both operands. This operator fully supports the <code>-DSP_blocks=no</code> option.
       This is an unsigned operation</dd>
     <dd></dd>
-  <dt><code>SignedIntMultiplier wInX wInY</code></dt>
+  <dt><code style="color: blue;">SignedIntMultiplier wInX wInY</code></dt>
      <dd>Same as above but signed and no real support for Altera targets.</dd>
-  <dt><code>IntSquarer wInX wInY</code></dt>
+  <dt><code style="color: blue;">IntSquarer wInX wInY</code></dt>
     <dd>Same for squaring. For large multiplications on some FPGAs, it
     saves DSP blocks (your mileage may vary).</dd>
     <dd></dd>
-  <dt><code>IntKaratsuba wIn</code></dt>
+  <dt><code style="color: blue;">IntKaratsuba wIn</code></dt>
     <dd> Multiplier that saves multiplications by trading them for additions.
     The TwoWaySplitting, ThreeWaySplitting and FourWaySplitting Karatsuba-Ofman algorithms are
     implemented. See this <a href="http://prunel.ccsd.cnrs.fr/docs/00/35/64/21/PDF/RR2009-03.pdf">article</a> for more details.</dd>
     <dd></dd>
-  <dt><code>IntTilingMultiplier wInX wInY ratio maxTimeInMinutes</code>
+  <dt><code style="color: blue;">IntTilingMultiplier wInX wInY ratio maxTimeInMinutes</code>
   <dd> Integer multiplier of two integers X and Y of sizes wInX and wInY
       using the tiling technique presented in this <a href="http://prunel.ccsd.cnrs.fr/docs/00/47/57/81/PDF/RR-LIP-2010-15.pdf">article</a>
       The <code>ratio</code> is a number in [0,1] and selects between DSP dominant architectures
@@ -340,7 +340,7 @@ reference.</p>
       is used to restrict the maximum amount of time that the algorithm can search for a solution. A value
       of <code>-1</code> for this parameter will find the best solution.</dd>
  	<dd></dd>
-  <dt><code>IntTruncMultiplier wInX wInY ratio error useLimits maxTimeInMinutes</code>
+  <dt><code style="color: blue;">IntTruncMultiplier wInX wInY ratio error useLimits maxTimeInMinutes</code>
   <dd> Truncated integer multiplier of two integers X and Y of sizes wInX and wInY
       using the tiling technique and the specific truncation theory presented in this <a href="http://prunel.ccsd.cnrs.fr/docs/00/47/57/81/PDF/RR-LIP-2010-15.pdf">article</a>
       <code>error</code> gives the maximal allowed error produced by this operator. 
@@ -359,19 +359,19 @@ compatible with IEEE-754, with the exception that subnormal numbers
 are flushed to zero.
 
 <dl>
-  <dt><code>FPMultiplier wE wF</code></dt>
+  <dt><code style="color: blue;">FPMultiplier wE wF</code></dt>
     <dd>A floating-point multiplier. The actual FloPoCo
       component supports different input and output sizes, but this is
       not available from the command line.</dd>
-  <dt><code>FPAdder wE wF</code></dt>
+  <dt><code style="color: blue;">FPAdder wE wF</code></dt>
     <dd>A floating-point adder.</dd>
-  <dt><code>FPDiv wE wF</code></dt>
+  <dt><code style="color: blue;">FPDiv wE wF</code></dt>
     <dd>A floating-point divider.</dd>
-  <dt><code>FPSqrt wE wF</code></dt>
+  <dt><code style="color: blue;">FPSqrt wE wF</code></dt>
     <dd>A floating-point square root using the classical digit-recurrence algorithm. This implementation returns a correctly rounded result, uses no DSP nor RAM blocks and has low LUT usage. However, the latency can be as high as wF for high frequencies, and the frequency is limited for large wF. An alternative is FPSqrtPoly below.</dd>
-  <dt><code>FPSqrtPoly wE wF  CorrectlyRounded Degree</code></dt>
+  <dt><code style="color: blue;">FPSqrtPoly wE wF  CorrectlyRounded Degree</code></dt>
     <dd>A floating-point square root using a polynomial approximation. It consumes DSP and RAM blocks, but can reach higher frequencies than FPSqrt, and has lower latency. CorrectlyRounded (0/1) is a boolean selecting the rounding mode. If set to 0, the operator will only be faithful (last-bit accurate, but not necessarily correctly rounded). This saves a lot of resources. Degree is an integer (typically between 2 and 5) that defines the degree of the polynomial approximation, and allows the user to trade-off between DSP usage, latency and memory consumption. Lower degree means lower latency and DSP count, but larger consumption of embedded memory. </dd>
-  <dt><code>FPSquarer wE wF</code></dt>
+  <dt><code style="color: blue;">FPSquarer wE wF</code></dt>
     <dd>A floating-point squarer, using IntSquarer for the mantissa.</dd>
 </dl>
 
@@ -380,7 +380,7 @@ These operators are described in all the gory details
 in <a href="http://prunel.ccsd.cnrs.fr/ensl-00268348/">this
 article</a>.
 <dl>
-  <dt><code>LongAcc wE_in wF_in MaxMSB_in LSB_acc MSB_acc</code></dt>
+  <dt><code style="color: blue;">LongAcc wE_in wF_in MaxMSB_in LSB_acc MSB_acc</code></dt>
     <dd>Long fixed-point accumulator. By tuning
     the <code>MaxMSB_in</code>, <code>LSB_acc</code>
     and <code>MSB_acc</code> parameters to a given application, it
@@ -388,12 +388,12 @@ article</a>.
     level (and in some case to avoid any rounding), for a very small hardware cost compared to using a
     floating-point adder for accumulation.
 	 </dd>
-  <dt><code>DotProduct wE_in wF_X wF_Y MaxMSB_in LSB_acc MSB_acc</code></dt>
+  <dt><code style="color: blue;">DotProduct wE_in wF_X wF_Y MaxMSB_in LSB_acc MSB_acc</code></dt>
     <dd>Dot product operator. It feeds a long accumulator with the
       unrounded result of a floating-point multiplier, thus removing
       rounding errors from the multiplication as well.
 	 </dd>
-  <dt><code>LongAcc2FP MaxMSB_in LSB_acc MSB_acc wE_out wF_out</code></dt>
+  <dt><code style="color: blue;">LongAcc2FP MaxMSB_in LSB_acc MSB_acc wE_out wF_out</code></dt>
     <dd>  Post-normalisation unit for LongAcc. It converts the output of a
       LongAcc or DotProduct (with the same parameters) into a floating-point
       number.
@@ -407,9 +407,9 @@ article</a>.
 <p>This family of operators is described in all the gory details in <a
 href="http://prunel.ccsd.cnrs.fr/ensl-00269219/">this article</a>.</p>
 <dl>
-  <dt><code>IntConstMult w c</code></dt>
+  <dt><code style="color: blue;">IntConstMult w c</code></dt>
     <dd>integer constant multiplier: w is input size, c is the constant.</dd>
-  <dt><code>FPConstMult wE_in wF_in wE_out wF_out cst_sgn cst_exp
+  <dt><code style="color: blue;">FPConstMult wE_in wF_in wE_out wF_out cst_sgn cst_exp
   cst_int_sig</code></dt>
     <dd>floating-point constant multiplier. The constant is provided as sign,
       integral significand and integral exponent.</dd>
@@ -419,13 +419,13 @@ href="http://prunel.ccsd.cnrs.fr/ensl-00269219/">this article</a>.</p>
 <h3>Floating-point elementary functions</h3>
 
 <dl>
-	<dt><code>FPExp wE wF</code></dt>
+	<dt><code style="color: blue;">FPExp wE wF</code></dt>
 	<dd>An exponential operator, where both inputs and outputs  have <code>wE</code> bits exponent and
 	<code>wF</code> bits significand. This operator implements the exponential function as described in
 	<a href="http://perso.ens-lyon.fr/florent.de.dinechin/recherche/publis/2007-Arith.pdf">this article</a>.
 	</dd>
 
-	<dt><code>FPLog wE wF TableInsize</code></dt>
+	<dt><code style="color: blue;">FPLog wE wF TableInsize</code></dt>
 	<dd>A natural logarithm operator, where both inputs and outputs  have <code>wE</code> bits exponent and
 	<code>wF</code> bits significand. The third allows for performance tuning. In doubt, set it to 0, which will default to something sensible. Otherwise, it defines the input size of the tables used by the operator, and should be between 6 and 15. See
 <a href="http://perso.ens-lyon.fr/florent.de.dinechin/recherche/publis/2007-Arith.pdf">this article (improved version in preparation)</a>.
@@ -435,31 +435,31 @@ href="http://prunel.ccsd.cnrs.fr/ensl-00269219/">this article</a>.</p>
 
 <h3>Conversion operators</h3>
 <dl>
-	<dt><code> Fix2FP LSB MSB wE wF</code></dt>
+	<dt><code style="color: blue;"> Fix2FP LSB MSB wE wF</code></dt>
 	<dd>Convert a 2's complement fixed-point number in the bit range MSB...LSB (both
 	included) into floating-point. Example: 
 	  <code>Fix2FP 0 31 8 23</code> converts an input integer into a single-precision number.
 	</dd>
-	<dt><code>InputIEEE wEI wFI wEO wFO</code></dt>
+	<dt><code style="color: blue;">InputIEEE wEI wFI wEO wFO</code></dt>
 	<dd>Conversion from IEEE-754 formats.  Use <code>InputIEEE 8 23 wEO
 	wFO</code> to convert from single-precision (or binary32) format,
 	or <code>InputIEEE 11 52 wEO wFO</code> to convert from
 	double-precision (or binary64) format. You may convert to a larger internal format or to a narrower one. Conversions are always correctly rounded. 
 	</dd>
-	<dt><code>OurputIEEE wEI wFI wEO wFO</code></dt>
+	<dt><code style="color: blue;">OurputIEEE wEI wFI wEO wFO</code></dt>
 	<dd>Conversion to IEEE-754 formats. Not implemented yet. Do not hesitate to ask for it.
 	</dd>
-	<dt><code>FP2FP wEI wFI wEO wFO</code></dt>
+	<dt><code style="color: blue;">FP2FP wEI wFI wEO wFO</code></dt>
 	<dd>Conversion from a FloPoCo format to another one.  Not implemented yet. Do not hesitate to ask for it.
 	</dd>
 </dl>	
 
 
-<h3>Miscelanous floating-point operators</h3>
+<h3>Applications and examples</h3>
 
 
 <dl>
-	<dt><code>Collision wE wF</code></dt>
+	<dt><code style="color: blue;">Collision wE wF</code></dt>
 	<dd>A collision operator. This is mostly a case study for a compound operator. It is described in 
 	<a href="http://prunel.ccsd.cnrs.fr/ensl-00379154/">this article</a>.
 	</dd>
@@ -467,58 +467,82 @@ href="http://prunel.ccsd.cnrs.fr/ensl-00269219/">this article</a>.</p>
 
 
 
-<h3>HOTBM</h3>
-
-<p>This operator implements an arbitrary function using
-High-Order Table-Based Method, best described in 
-<a href="http://perso.ens-lyon.fr/florent.de.dinechin/recherche/publis/2005-ASAP.pdf">this article</a>.</p>
+<h3>Fixed point function evaluators</h3>
 
 <dl>
-	<dt><code>HOTBM func wI wO degree</code></dt>
-	<dt><code>HOTBMFX func wE_in wF_in wE_out wF_out degree</code></dt>
-	<dt><code>HOTBMRange func wI wO degree xmin xmax scale</code></dt>
-	<dd>HOTBM implementation of a function. <code>func</code> is a
-	  sollya-like expression of the function, <code>wI</code> is the
-	  input width, <code>wO</code> is the output width and <code>degree</code>
-	  is the degree of the Remez polynomial.
-	  <code>wE_in</code>, <code>wF_in</code>, <code>wE_out</code>, <code>wF_out</code>
+	<dt><code style="color: blue;">FunctionEvaluator function wI wO degree</code></dt>
+	<dt><code style="color: blue;">HOTBM function wI wO degree</code></dt>
+	<dd>Fixed-point  implementation of a function.
+	</dd>
+</dl>
+<p>FloPoCo provides two generic operators, <code>HOTBM</code>
+and <code>FunctionEvaluator</code>, for evaluating an arbitrary
+function in fixed point. They offer (almost) the same interface: the
+description of a function between quotes (like <code>"sin(x)^2"</code>
+ior <code>"sqrt(1+x)"</code>), input and output precisions (with a
+difference of interpretation for outputs), and a polynomial degree. The function is assumed to have its input on [0,1], if you need a function on a different domain, you need to scale the input, e.g. use <code>"sin(pi/2*x)"</code> for a sine between 0 and pi/2.
+</p>
+
+<p>Both methods use piecewise polynomial approximation, the polynomial being "computed just right". The differences are the following.
+
+<ul>
+  <li> <code>HOTBM</code> (best described in 
+<a href="http://perso.ens-lyon.fr/florent.de.dinechin/recherche/publis/2005-ASAP.pdf">this article</a>) evaluates the polynomial in parallel, and precomputes as much of the computation as it can, to  tabulate  it. As a consequence the operator has a very short delay, but doesn't scale well beyond 20 bits. In addition HOTBM is actually pre-FloPoCo code and the resulting VHDL is not pipelined. </li>
+  <li> <code>FunctionEvaluator</code> (best described in 
+<a href="http://prunel.ccsd.cnrs.fr/ensl-00470506/">this article</a>) evaluates the polynomial sequentially, using the Horner scheme. The latency is larger, but it scales to much larger precisions (64 bits), making efficient use of the embedded multipliers through the <code>IntMultiplier*</code> classes. The resulting operator is pipelined and can run to high frequencies.</li>
+</ul>
+
+<p>As both methods use a polynomial approximation, they work well for
+functions which are regular enough. In mathematical terms, they should
+be defined and n-times continuously differentiable on [0,1]. The code
+is well tested for monotonic functions only. <b>Do not hesitate to
+contact us for help on a given function.</b><p>
+
+<p>For both HOTBM and FunctionEvaluator the input operand is interpreted as a positive fixed-point number,
+with the point before the leftmost bit. The function to be implemented
+is assumed to be well defined in [0;1[. </p>
+
+<p>For HOTBM the output is a fixed-point number, where the first bit
+is the sign and the point is placed right after it. Note that the
+output is in fact <code>wO+1</code> bits wide. For
+FunctionEvaluator, <code>wO</code> defines the weight of the least
+significant bit of the result, and the actual output size depends on
+the range of the function on [0,1]. Just try it.</p>
+
+	  <p>Example:<br/>
+		 <code>flopoco HOTBM "sin(x*Pi/2)" 16 16 3</code><br/>
+		 <code>flopoco FunctionEvaluator "sin(x*Pi/2)" 32 32 4</code>
+	  </p>
+
+Interface variations on HOTBM:
+<dl>
+	<dt><code style="color: blue;">HOTBMFX func wE_in wF_in wE_out wF_out degree</code></dt>
+	<dt><code style="color: blue;">HOTBMRange func wI wO degree xmin xmax scale</code></dt>
+	<dd>	  <code>wE_in</code>, <code>wF_in</code>, <code>wE_out</code>, <code>wF_out</code>
 	  are the width of the integral and fractional parts of the input and the output,
 	  respectively.
 	  [<code>xmin</code>, <code>xmax</code>] is the input domain of the
 	  function, and <code>scale</code> is a scaling factor to be applied to
-	  the output.
+	  the output. 
+	  
+	   HOTBMFX version allows to select arbitrary fixed-point representations for the
+		 input and output. Negative values are allowed.
+
+	  HOTBMRange uses HOTBM after mapping [<code>xmin</code>,<code>xmax</code>[ to [0,1[, then multiplies the output by the scaling factor <code>scale</code>.</p>
+	  
+	  <p>Example:<br/>
+		 <code>flopoco HOTBMFX "log2(1+2^(-x))" 2 8 -1 8 1</code>
+	  </p>
+
 	</dd>
+
 </dl>
 
-<p>For HOTBM the input operand is interpreted as a positive fixed-point number,
-with the point before the leftmost bit. The function to be implemented
-is assumed to be well defined in [0;1[. The output is a fixed-point
-number, where the first bit is the sign and the point is placed right
-after it. Note that the output is in fact <code>wO+1</code> bits
-wide.</p>
 
-<p>Due to the fact that the expression of the function might contain
-characters which are treated specially by the shell, you should
-enclose it within quotes.</p>
 
-<p>Example:<br/>
-<code>flopoco HOTBM "sin(x*Pi/2)" 16 16 3</code>
-</p>
+<p>Note that the  <code>HOTBM*</code> operators perform an exploration process that typically takes a few minutes for 16 bits, and may take hours for 24 bits.</p>
 
-<p>The HOTBMFX version allows to select arbitrary fixed-point representations for the
-input and output. Negative values are allowed.</p>
 
-<p>Example:<br/>
-<code>flopoco HOTBMFX "log2(1+2^(-x))" 2 8 -1 8 1</code>
-</p>
-
-<p>HOTBMRange uses HOTBM after mapping [<code>xmin</code>,<code>xmax</code>[ to [0,1[, then multiplies the output by the scaling factor <code>scale</code>.</p>
-
-<p>Note that this launches an exploration process that typically takes a few minutes for 16 bits, and may take hours for 24 bits.</p>
-
-<p>HOTBM uses a polynomial approximation. It works well for functions
-which are regular enough (in mathematical terms, they should be
-defined and n-times continuously differentiable on the domain).<p>
 
 <h3>LNS</h3>
 
@@ -528,25 +552,25 @@ or square roots.</p>
 
 <p>
 <dl>
-	<dt><code>LNSAddSub wE wF</code></dt>
+	<dt><code style="color: blue;">LNSAddSub wE wF</code></dt>
 	<dd>
 		LNS addition operator. Both operands and the output have
 		<code>wE</code> integral bits and <code>wF</code> fractional
 		bits in their exponents.
 	</dd>
-	<dt><code>LNSMul wE wF</code></dt>
+	<dt><code style="color: blue;">LNSMul wE wF</code></dt>
 	<dd>
 		LNS multiplication operator. Both operands and the output have
 		<code>wE</code> integral bits and <code>wF</code> fractional
 		bits in their exponents.
 	</dd>
-	<dt><code>LNSDiv wE wF</code></dt>
+	<dt><code style="color: blue;">LNSDiv wE wF</code></dt>
 	<dd>
 		LNS division operator. Both operands and the output have
 		<code>wE</code> integral bits and <code>wF</code> fractional
 		bits in their exponents.
 	</dd>
-	<dt><code>LNSSqrt wE wF</code></dt>
+	<dt><code style="color: blue;">LNSSqrt wE wF</code></dt>
 	<dd>
 		LNS square root operator. Both input and output have
 		<code>wE</code> integral bits and <code>wF</code> fractional
@@ -567,14 +591,14 @@ the operator which precedes it in the command line. The test vectors are generat
 
 <p>
 <dl>
-	<dt><code>TestBench n</code></dt>
+	<dt><code style="color: blue;">TestBench n</code></dt>
 	<dd>
 The test vectors are coded in the VHDL of the test bench, and can therefore be easily accessed and modified. In addition, they may include comments. However, this means that the compilation time of the test vectors is large, and this is not convenient beyond a few thousand tests.
 <p>Example:<br/>
 <code>flopoco HOTBM "sin(x*Pi/2)" 16 16 3 TestBench 1000</code>
 </p>
 	</dd>
-	<dt><code>TestBenchFile n</code></dt>
+	<dt><code style="color: blue;">TestBenchFile n</code></dt>
 	<dd>
 <code>TestBenchFile</code> is similar to <code>TestBench</code> but moves the test vectors to a separate file called  <code>test.input</code>. Thus the VHDL itself is very short, as is the compilation time. The simulation time is proportional to the number of tests. This scales to millions of test vectors, but is slightly less convenient in the debugging phase.
 
@@ -593,7 +617,7 @@ The test vectors are coded in the VHDL of the test bench, and can therefore be e
 
 <h3>Miscellanous</h3>
 <dl>
-  <dt><code>Wrapper</code></dt>
+  <dt><code style="color: blue;">Wrapper</code></dt>
     <dd>Produce a wrapper for the preceding operator: this operator simply adds registers before and after the preceding operator.
       It is useful in some cases, e.g. to get critical path information  including the delay of the first and last stages connected to registers, not to I/O.
 	 </dd>
