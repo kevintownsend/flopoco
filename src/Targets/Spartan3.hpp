@@ -42,6 +42,7 @@ namespace flopoco{
 		/** The default constructor. */  
 		Spartan3() : Target()	{
 			id_             = "Spartan3";
+			vendor_         = "Xilinx";
 			sizeOfBlock_ 	= 18432;	// to set TODO
 			// all these values are set more or less randomly, to match  virtex 4 more or less
 			fastcarryDelay_ = 0.034e-9; //s   
