@@ -160,7 +160,7 @@ static void usage(char *name){
 	OP("LZOCShifterSticky","wIn wOut");
 	OP("LZCShifterSticky","wIn wOut");
 	OP("LOCShifterSticky","wIn wOut");
-	cerr << "    ____________ ADDER/SUBTRACTER ______________________________________________\n";
+	cerr << "    ____________ ADDERS/SUBTRACTERS ____________________________________________\n";
 	OP("IntAdder","wIn");
 	cerr << "      Integer adder, possibly pipelined\n";
 	OP("MyIntAdder","wIn optimizeType srl implementation bufferedInputs");
@@ -173,7 +173,6 @@ static void usage(char *name){
 	OP("IntDualSub","wIn opType");
 	cerr << "      Integer adder/subtracter or dual subtracter, possibly pipelined\n";
 	cerr << "      opType: if 1, compute X-Y and X+Y; if 0, compute X-Y and Y-X \n";
-	cerr << "    ____________ MULTIOPERAND ADDER ____________________________________________\n";
 	OP("IntNAdder","wIn N");
 	cerr << "      Multi-operand addition, possibly pipelined\n";
 	OP("IntCompressorTree","wIn N");
@@ -197,7 +196,9 @@ static void usage(char *name){
 	OP ("IntKaratsuba","wIn");
 	cerr << "      integer multiplier of two integers X and Y of sizes wIn. 17 < wIn <= 68\n";	
 	OP ("IntSquarer","wIn");
-	cerr << "      integer squarer. For now wIn <=68 \n";	
+	cerr << "      integer squarer. For now wIn <=68 \n";		
+	OP( "IntConstMult","w c");
+	cerr << "      Integer constant multiplier: w - input size, c - the constant\n";
 	cerr << "    ____________ FLOATING-POINT OPERATORS ______________________________________\n";
 	OP("Fix2FP","LSB MSB Signed wE wF");
 	cerr << "      Convert a 2's compliment fixed-point number in the bit range MSB...LSB \n";
@@ -229,8 +230,6 @@ static void usage(char *name){
 //	cerr << "      correctlyRounded (0) selects faithful and correct rounding (NYImplemented)\n";
 	cerr << "      degree (1,...k) polynomial degree. Higher degree => more DSP less BRAM\n";
 #endif // HAVE_SOLLYA
-	OP( "IntConstMult","w c");
-	cerr << "      Integer constant multiplier: w - input size, c - the constant\n";
 	OP("FPConstMult","wE_in wF_in wE_out wF_out cst_sgn cst_exp cst_int_sig");
 	cerr << "      Floating-point constant multiplier\n";
 	cerr << "      The constant is provided as integral significand and integral exponent.\n";
@@ -259,15 +258,13 @@ static void usage(char *name){
 	OP( "InputIEEE","wEI wFI wEO wFO");
 	cerr << "      Conversion from IEEE-754-like to FloPoCo floating-point formats\n";
 #ifdef HAVE_HOTBM
-	cerr << "    ____________ GENERIC FUNCTION EVALUATOR ____________________________________\n";
+	cerr << "    ____________ GENERIC FUNCTION EVALUATORS ____________________________________\n";
+	cerr << "      We provide two methods to evaluate a function on [0,1]\n";
 	OP( "FunctionEvaluator","function wI wO degree");
 	cerr << "      Polynomial based method for fixed-point functions\n";
 	cerr << "      wI - input width, wO - the number of bits at the right of the dot, \n";
 	cerr << "      degree - degree of polynomial approx\n";
 	cerr << "      function - sollya-syntaxed function to implement, between double quotes\n";
-	cerr << "                 \"function,xMin,xMax,Scale\"\n";
-	cerr << "      function example: sqrt(1+x),0,1,1;sqrt(2+x),0,1,1\n";
-	cerr << "    ____________ HIGH-ORDER TABLE BASED METHOD EVALUATOR _______________________\n";
 	OP( "HOTBM","function wI wO degree");
 	cerr << "      High-Order Table-Based Method for fixed-point functions (NPY)\n";
 	cerr << "      wI - input width, wO - output width, degree - degree of polynomial approx\n";
@@ -316,8 +313,8 @@ static void usage(char *name){
 	OP( "TestBenchFile","n");
 	cerr << "       Behavorial test bench for the preceding operator\n";
 	cerr << "       This test bench will include standard tests, plus n random tests.\n";
-	cerr << "       It uses a file (test.input) containing inputs and expected outputs.\n";
-	cerr << "       This reduces VHDL compilation time and is thus more efficient for large tests.\n";
+	cerr << "       Inputs and outputs are stored in a file to reduce VHDL compilation time.\n";
+	cerr << "       if n=-2, an exhaustive test is generated (use only for small operators).\n";
 	cerr << "    ____________ WRAPPER _______________________________________________________\n";
 	OP ("Wrapper","");
 	cerr << "       Wraps the preceding operator between registers\n";
@@ -1488,26 +1485,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			
 		}
 		
-		/*else if (opname == "FunctionEvaluator") {
-			int nargs = 7;
-			if (i+nargs > argc)
-				usage(argv[0]); // and exit
-			string func = argv[i++];
-			int wI = checkStrictyPositive(argv[i++], argv[0]);
-			int wO = atoi(argv[i++]);
-			int n  = checkStrictyPositive(argv[i++], argv[0]);
-			double xmin = atof(argv[i++]);
-			double xmax = atof(argv[i++]);
 
-			// xmax < xmin is a valid use case...
-			double scale = atof(argv[i++]);
-			
-			cerr << "> FunctionEvaluator func='" << func << "', wI=" << wI << ", wO=" << wO      << ", xmin=" << xmin << ", xmax=" << xmax << ", scale=" << scale <<endl;	
-			
-			Operator* tg = new FunctionEvaluator(target, func, wI, wO, n,xmin,xmax,scale );
-				addOperator(tg);
-			
-		}*/
 		else if (opname == "FunctionEvaluator") {
 			int nargs = 4;
 			if (i+nargs > argc)
@@ -1518,9 +1496,9 @@ bool parseCommandLine(int argc, char* argv[]){
 			int n  = checkStrictyPositive(argv[i++], argv[0]);
 			
 				
-			cerr << "> TableGenerator func='" << func << "', wI=" << wI << ", wO=" << wO <<endl;	
-			
-			Operator* tg = new FunctionEvaluator(target, func, wI, wO, n);
+			cerr << "> FunctionEvaluator func='" << func << "', wI=" << wI << ", wO=" << wO << ", degree=" << wO << endl;	
+			string arg=func+",0,1,1"; // we are not sure it works for other values
+			Operator* tg = new FunctionEvaluator(target, arg, wI, wO, n);
 				addOperator(tg);
 
 			
