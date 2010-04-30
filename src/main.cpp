@@ -317,9 +317,9 @@ static void usage(char *name){
 	cerr << "    ____________ WRAPPER _______________________________________________________\n";
 	OP ("Wrapper","");
 	cerr << "       Wraps the preceding operator between registers\n";
+	cerr << "(NPY) Not pipelined yet\n";
 	cerr << "________________________________________________________________________________\n";
 	cerr << "________________ OPTIONS________________________________________________________\n";
-	cerr << "(NPY) Not pipelined yet\n";
 	cerr << "General options, affecting the operators that follow them:\n";
 	cerr << "   -outputfile=<output file name>           (default=flopoco.vhdl)\n";
 	cerr << "   -verbose=<1|2|3>                         (default=0)\n";

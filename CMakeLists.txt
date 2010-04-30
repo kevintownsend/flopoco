@@ -53,7 +53,7 @@ IF (SOLLYA_LIB)
 	ADD_DEFINITIONS(-DHAVE_SOLLYA)
 	MESSAGE(STATUS "Found Sollya: ${SOLLYA_LIB}")
 ELSE (SOLLYA_LIB)
-	MESSAGE(STATUS "Sollya not found, HOTBM and CRFPConstMult won't be available")
+	MESSAGE(STATUS "Sollya not found, HOTBM and FunctionEvaluator won't be available")
 ENDIF (SOLLYA_LIB)
 
 IF (MPFR_H AND MPFR_LIB)
