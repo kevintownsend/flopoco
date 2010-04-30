@@ -253,12 +253,12 @@ namespace flopoco{
 			    vhdl << tab << tab << tab << tab << "if not fp_equal_ieee(" << s->getName() << " ,to_stdlogicvector(V_" <<  s->getName() << "),"<<s->wE()<<" , "<<s->wF()<<") then " << endl;
 			    vhdl << tab << tab << tab << tab << tab << "assert false report(\"Incorrect output for " << s->getName() << ", expected value : \" & str(to_stdlogicvector(V_" << s-> getName() << ")) & \" , result :  \" & str(" << s->getName()  << ")) &  \"|| line : \" & integer'image(counter) & \" of input file \" ;"<< endl;               
 			    vhdl << tab << tab << tab << tab << tab << " errorCounter := errorCounter + 1; end if;" << endl;                                                                 
-			    vhdl << tab << tab << tab << tab << "end if;" << endl;
+			    //vhdl << tab << tab << tab << tab << "end if;" << endl;
                         } else { 
 			    vhdl << tab << tab << tab << tab << "if not (" << s->getName() << "= to_stdlogicvector(V_" << s->getName() << ")) then " << endl;
 			    vhdl << tab << tab << tab << tab << tab << "assert false report(\"Incorrect output for " << s->getName() << ", expected value : \" & str(to_stdlogicvector(V_" << s->getName() << ")) & \" , result : \" & str(" << s->getName() <<")) &  \"|| line : \" & integer'image(counter) & \" of input file \" ;"<< endl;  
 			    vhdl << tab << tab << tab << tab << tab << " errorCounter := errorCounter + 1; end if;" << endl;                                                                 
-			    vhdl << tab << tab << tab << tab << "end if;" << endl;
+			    //vhdl << tab << tab << tab << tab << "end if;" << endl;
 			};
 
 			vhdl << tab << tab << tab << "else" << endl; 
