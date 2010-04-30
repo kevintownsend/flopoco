@@ -1,13 +1,8 @@
 TODO file for FloPoCo
 
 Pipeline framework, Operator and Targets:
-* upgrade DotProduct and IntDualSub to new framework
-* upgrade SRT4Step
-* upgrade LNS operators
 * add FPU object and remove all global variables, to enable library build
-
-FPMultiplier 
-* optimize frequency 
+* add semantic support of fixed-point to Signal
 
 FPAdder
 * several optimization opportunities, see the TODO inside FPAdder.cpp
@@ -16,6 +11,11 @@ FPAdder
 FPExp:
 * true FloPoCoization, pipeline
 * better (DSP-aware) architectural exploration
+* polynomial-based version
+
+FPLog:
+* Fix a few remaining last-bit accuracy problems, damn.
+* compare with polynomial-based version.
 
 HOTBM:
 * true FloPoCoization, pipeline
@@ -32,7 +32,7 @@ ConstMult:
 * compare with Spiral.net
 * Implement the continued fraction stuff for FPCRConstMult
 
-SumOfProducts
+SumOfProducts, LongAcc
 * add test bench generation
 
 Shifters
@@ -40,7 +40,6 @@ Shifters
 
 General
 * Doxygenize while it's not too late
-* replace all the cout messages by cerr ones
 
 ********************************************************************
 
@@ -56,12 +55,13 @@ Version 0.7 : FPExp
 Version 0.8 : DotProduct
 Version 0.9 : LNS operators, thanks to Sylvain Collange
 Version 0.11:   FPDiv, IntSquarer, new pipeline framework
-Version 1.15   FPSqrt FPSquarer InputIEEE Fix2FP 
+Version 1.15:   FPSqrt FPSquarer InputIEEE Fix2FP 
+Version 2.0 :  FunctionEvaluator 
 -- we're here (faster than expected)
 Version ???   FPAddSub (for FFT butterfly structure)
 Version ???   FixToFPUniformDist (2008 ASAP paper by Thomas with improvements)
 Version ???   FPNorm2D
-Version ???   FPNorm3D
+Version ???   FPNorm3D -- Almost there, see Collision
 Version ???   FPSinCos
 Version ??    FPBoxMuller
 Version ???   Interval operators

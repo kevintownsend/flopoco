@@ -1,4 +1,20 @@
 ======================================================================
+Version 2.0.0
+This version brings significant improvements to the framework:
+- pipeline now made really easy: the C++ is now much easier to write
+    and read, no longer need to insert use() everywhere
+- improved support of Altera targets 
+- added TestBenchFile, including exhaustive test
+- much improved support of DSP blocks through Int*Multiplier operators
+- UserDefinedOperator to bootstrap new users
+There are few new operators, but they will boost future developments:
+- FunctionEvaluator for high-precision fixed-point function evaluation
+- MyIntAdder (name is temporary) for pipelined large additions
+- IntTilingMultiplier, IntTruncMultipliers, IntKaratsubaMultiplier
+    for DSP-efficient pipelined multipliers
+- FPSqrtPoly, a polynomial version of the floating-point square root
+
+======================================================================
 Version 1.15.2
 - fixes a bug in LongAcc2FP
 - introduces autotools support thanks to Daniele Mastrandrea, 

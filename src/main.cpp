@@ -33,7 +33,6 @@
 #include "Shifters.hpp"
 #include "LZOC.hpp"
 #include "LZOCShifterSticky.hpp"
-#include "UserDefinedOperator.hpp"
 #include "IntAdder.hpp"
 #include "IntNAdder.hpp"
 #include "IntCompressorTree.hpp"
@@ -63,7 +62,6 @@
 #include "FPSqrt.hpp"
 #include "FPSqrtPoly.hpp"
 
-//#include "FPFMA.hpp"
 #include "LongAcc.hpp"
 #include "LongAcc2FP.hpp"
 #include "DotProduct.hpp"
@@ -88,7 +86,6 @@
 #include "IntSquarer.hpp"
 
 #ifndef _WIN32
-//#include "BigTestBench.hpp"
 #include "ConstMult/CRFPConstMult.hpp"
 #include "ConstMult/FPConstMultParser.hpp"
 
@@ -113,6 +110,8 @@
 
 #include "TableGenerator.hpp"
 #include "FunctionEvaluator.hpp"
+
+#include "UserDefinedOperator.hpp"
 
 #define BRIGHT 1
 #define RED 31
@@ -1053,17 +1052,6 @@ bool parseCommandLine(int argc, char* argv[]){
 			addOperator(op);
 		}
 #endif // HAVE_SOLLYA
-//		else if (opname == "FPFMA")
-//		{
-//			int nargs = 2;
-//			if (i+nargs > argc)
-//				usage(argv[0]); // and exit
-//			int wE = checkStrictyPositive(argv[i++], argv[0]);
-//			int wF = checkStrictyPositive(argv[i++], argv[0]);
-//			cerr << "> FPFMA: wE=" << wE << " wF=" << wF << endl;
-//			op = new FPFMA(target, wE, wF, true);
-//			addOperator(op);
-//		}
 
 		else if(opname=="LongAcc"){
 			int nargs = 5;
