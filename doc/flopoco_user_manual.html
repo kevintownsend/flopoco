@@ -576,7 +576,9 @@ The test vectors are coded in the VHDL of the test bench, and can therefore be e
 	</dd>
 	<dt><code>TestBenchFile n</code></dt>
 	<dd>
-<code>TestBenchFile</code> is similar to <code>TestBench</code> but moves the test vectors to a separate file called  <code>test.input</code>. Thus the VHDL itself is very short, as is the compilation time. The simulation time is proportional to the number of tests. This scales to millions of test vectors, but is slightly less convenient in the debugging phase.</p>
+<code>TestBenchFile</code> is similar to <code>TestBench</code> but moves the test vectors to a separate file called  <code>test.input</code>. Thus the VHDL itself is very short, as is the compilation time. The simulation time is proportional to the number of tests. This scales to millions of test vectors, but is slightly less convenient in the debugging phase.
+
+<p>If n=-2, and exhaustive test is generated. If n=-1, no file is generated.</p>
 
 <p>Example:<br/>
 <code>flopoco FPAdder 8 16  TestBenchFile 20000</code>
