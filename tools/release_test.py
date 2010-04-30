@@ -11,7 +11,7 @@ import time
 
 test_cases_per_combination = 10000
 useModelSim=True # if True, use modelsim; if False, use ghdl
-testBench = "TestBenchFile"   #one of TestBench or TestBenchFile
+testBench = "TestBench"   #one of TestBench or TestBenchFile
 
 
 #-------------------------------------------------------------------------------
