@@ -29,8 +29,8 @@ ELSE(WIN32)
 	#SET(CMAKE_CXX_FLAGS_DEBUG "-g -pg -Wall")
 	SET(CMAKE_CXX_FLAGS_DEBUG "-g -Wall")
 	# Do you want an executable of 12MB ?
-	SET(CMAKE_BUILD_TYPE Debug)
-#SET(CMAKE_BUILD_TYPE release)
+	#SET(CMAKE_BUILD_TYPE Debug)
+   SET(CMAKE_BUILD_TYPE release)
 ENDIF(WIN32)
 
 
