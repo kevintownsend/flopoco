@@ -145,12 +145,12 @@ namespace flopoco{
 		for (uint32_t i=0; i<unsigned(degree_)+1; i++)
 			aGuard_[i] = maxBoundA;
 
-		for (int j=1; j<=degree_; j++)
-			cout << "maxY["<<j<<"]="<<maxBoundY[j]<<" "; 
-		cout << endl;
-		for (int j=0; j<=degree_; j++)
-			cout << "aGuard["<<j<<"]="<<aGuard_[j]<<" "; 
-		cout << endl;
+		// for (int j=1; j<=degree_; j++)
+		// 	cout << "maxY["<<j<<"]="<<maxBoundY[j]<<" "; 
+		// cout << endl;
+		// for (int j=0; j<=degree_; j++)
+		// 	cout << "aGuard["<<j<<"]="<<aGuard_[j]<<" "; 
+		// cout << endl;
 
 		mpfr_t u, *e;
 		mpfr_init2(u, 100);

@@ -255,7 +255,7 @@ namespace flopoco{
 		/*This operator is combinatorial (in fact is just a ROM.*/
 		setCombinatorial();
 	
-	  generateDebugPwf();
+		//generateDebugPwf();
 	
 	
 	  
