@@ -83,12 +83,11 @@ namespace flopoco{
 		  string ds = join("ds", i);
 		  string xh = join("xh", i);
 		  string wh = join("wh", i);
-		  vhdl << tab << declare(di) << " <= "<< use(wip) << "("<< wF+3<<");" << endl;
-		  vhdl << tab << declare(xi,wF+5) << " <= "<< use(wip) << " & \"0\";" << endl;
-		  //			vhdl << tab << declare(zs,step,true) << " <= \"0\" & " << use(sip) << ";" << endl;
+		  vhdl << tab << declare(di) << " <= "<< wip << "("<< wF+3<<");" << endl;
+		  vhdl << tab << declare(xi,wF+5) << " <= " << wip << " & \"0\";" << endl;
 		  vhdl << tab << declare(ds,step+3) << " <=  \"0\" & ";
 		  if (step>1)
-		    vhdl 	<< use(sip) << " & ";
+		    vhdl 	<< sip << " & ";
 		  vhdl << " (not " << di << ") & " << di << " & \"1\";" << endl;
 		  vhdl << tab << declare(xh,step+3) << " <= " << xi << range(wF+4, wF+2-step) << ";" << endl;
 		  vhdl << tab << "with " << di << " select" << endl
@@ -103,7 +102,7 @@ namespace flopoco{
 		  if(step==1)
 		    vhdl << "not " << di << " ;"<< endl; 
 		  else
-		    vhdl << use(sip) /*<< range(step-1,1)*/ << " & not " << di << ";"<< endl; 
+		    vhdl << sip /*<< range(step-1,1)*/ << " & not " << di << ";"<< endl; 
 				
 		  // Pipeline management
 		  double stageDelay= target->adderDelay(step) + target->localWireDelay() + 2*target->lutDelay();
