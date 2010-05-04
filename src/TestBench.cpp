@@ -569,7 +569,7 @@ namespace flopoco{
 			
 				if (s->type() != Signal::out) continue;
 				if (s->isFP() != true and s->isIEEE() != true) continue;
-				std::cout << "debug : inserting size " << s->width() << " in fp subtype map. " << std::endl;
+				//				std::cout << "debug : inserting size " << s->width() << " in fp subtype map. " << std::endl;
 				widths.insert(s->width());
 			}
 
