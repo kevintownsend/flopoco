@@ -66,18 +66,7 @@ namespace flopoco{
 		determineObjectiveStatesForTruncations();
 		setNumberOfPossibleValuesForEachY();
 
-
-		/*init vectors */
-		for (uint32_t i=1; i<=unsigned(degree_)+1; i++){
-			yGuard_[i] = 0; //maxBoundY;
-			yState_[i] = 0;
-		}
-		
-		for (uint32_t i=0; i<unsigned(degree_)+1; i++)
-			aGuard_[i] = maxBoundA;
-			
-			
-		yState_[1]=-1;	
+		initializeExplorationVectors();
 
 		mpfr_t u, *e;
 		mpfr_init2(u, 100);
@@ -94,9 +83,7 @@ namespace flopoco{
 						e = errorEstimator(yGuard_, aGuard_);
 						mpfr_add( u, *approximationError, *e, GMP_RNDN);
 						if ( i%128 == 0){
-							ostringstream o;
-							o << " err = "<< mpfr_get_exp(u);
-							REPORT(INFO, o.str());
+							REPORT(DEBUG, " err = "<< mpfr_get_exp(u));
 						}
 						errExp = (mpfr_get_d(u, GMP_RNDZ)==0 ? 0 :mpfr_get_exp(u));
 						if (errExp <= -targetPrec-1 ){
@@ -112,6 +99,8 @@ namespace flopoco{
 				}	
 			}		
 		}else{
+			/* a 1st degree polynomial a1y+a0 doesn't need any guard bit exploration
+			 for the coefficients */
 			sol = false;
 			while (!sol){
 				while ((!sol) && (nextStateY())){
@@ -119,9 +108,9 @@ namespace flopoco{
 					u = (mpfr_t*)malloc(sizeof(mpfr_t));
 					mpfr_init2(*u, 100);
 					mpfr_add( *u, *approximationError, *errorEstimator(yGuard_, aGuard_), GMP_RNDN);
-					cerr << " err = " << mpfr_get_exp(*u) << endl;
+					REPORT(DEBUG, " err = " << mpfr_get_exp(*u));
 					int errExp = (mpfr_get_d(*u, GMP_RNDZ)==0 ? 0 :mpfr_get_exp(*u));
-					if (errExp <= -targetPrec-1 ){
+					if (errExp <= -targetPrec-1){
 						sol = true;
 					}
 				}	
@@ -517,6 +506,21 @@ namespace flopoco{
 			aGuard_[i] = 0;
 			maxBoundY[i] = 0;
 		}
+	}
+	
+	
+	void PolynomialEvaluator::initializeExplorationVectors(){
+		/*init vectors */
+		for (uint32_t i=1; i<=unsigned(degree_)+1; i++){
+			yGuard_[i] = 0; //maxBoundY;
+			yState_[i] = 0;
+		}
+		
+		for (uint32_t i=0; i<unsigned(degree_)+1; i++)
+			aGuard_[i] = maxBoundA;
+			
+			
+		yState_[1]=-1;	
 	}
 
 }

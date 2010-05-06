@@ -209,6 +209,8 @@ namespace flopoco{
 
 			/** hide messy vector initializations */
 			void initializeErrorVectors();
+			/** hide messy vector exploration vectors initializations */
+			void initializeExplorationVectors();
 			
 			
 			/** fills-up a map of objective states for the truncations */
@@ -298,7 +300,16 @@ namespace flopoco{
 
 			mpfr_t* errorEstimator(vector<int> &yGuard, vector<int> &aGuard);
 
-
+			/** We allow possible truncation of y. Horner evaluation therefore 
+			    allows for d differnt truncations on y (1 to d). For each y 
+			    there are at most 3 possible truncation values:
+			    -no truncation
+			    -truncate so to fit x dimmension of the embedded multiplier
+			    -truncate so to fit y dimmension of the embedded multiplier
+			  * @param[in] i      What y are we talking about. Takes values in 1..d
+			  * @param[in] level  which one of the 3 values are we talking about 0..2
+			  * @return the corresponding value to the selected level 
+			  */ 
 			int getPossibleYValue(int i, int state){
 				pair<multimap<int, int>::iterator, multimap<int, int>::iterator> ppp;
 				ppp = objectiveStatesY.equal_range(i);
@@ -312,15 +323,19 @@ namespace flopoco{
 				return 0; //should never get here			
 			}
 
+			/** advances to the next step in the design space exploration on the
+			 * y dimmension.
+			 * @return true if there is a next state, false if a solution has been
+			 *found.
+			 */
 			bool nextStateY(){
 				if (! sol){
 					aGuard_[degree_] = 0 ;
 					int carry = 1;
 					bool allMaxBoundsZero = true;
-					for (int i=1; i<=degree_;i++){
+					for (int i=degree_; i>=1;i--){
 						if (maxBoundY[i]-1 != 0)
 							allMaxBoundsZero = false; 
-					
 						if ((yState_[i] == maxBoundY[i]-1) && ( carry==1)){
 							yState_[i] = 0;
 							carry = 1;
@@ -331,7 +346,6 @@ namespace flopoco{
 					}
 				
 					for (int i=1; i<=degree_; i++){
-//						cout << "i,yState_[i]"<<i<<"    "<<yState_[i]<<endl;
 						yGuard_[i] = -getPossibleYValue(i,yState_[i]);
 					}
 					
