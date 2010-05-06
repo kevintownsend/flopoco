@@ -57,12 +57,11 @@ namespace flopoco{
 			int lastChunkSize;
 			int *cIndex;                       /**< array containing the indexes for all Chunks*/
 			maxInputDelay = getMaxInputDelays (inputDelays);
-			if (verbose)
-				cout << "The maximum input delay is: " << maxInputDelay << endl;
+			REPORT(DEBUG, "The maximum input delay is: " << maxInputDelay);
 	
 			if ( maxInputDelay > objectivePeriod ){
 				//the maximum combinatorial delay of the input is larger than the objective period, so the requested frequency might not be reached.
-				cout << "WARNING: the combinatorial delay at the input of " << this->getName() << " is above objective period "<<endl;
+				REPORT(INFO, "WARNING: the combinatorial delay at the input of " << this->getName() << " is above objective period ");
 				maxInputDelay = objectivePeriod;
 			}
 
@@ -79,22 +78,22 @@ namespace flopoco{
 				target->suggestSlackSubaddSize(maxInAdd, wIn_, maxInputDelay); 
 				int nbOfChunksFirstDesign = ceil(double(wIn_)/double(maxInAdd));
 				int scoreFirstDesign = nbOfChunksFirstDesign - 1;
-				if (verbose) cout << "Exploring first design ... score is:"<< scoreFirstDesign << endl;
+				REPORT(DEBUG, "Exploring first design ... score is:"<< scoreFirstDesign);
 			
 				target->suggestSubaddSize(maxInAdd, wIn_); 
 				int nbOfChunksSecondDesign = ceil(double(wIn_)/double(maxInAdd));
 				int scoreSecondDesign = nbOfChunksSecondDesign;
-				if (verbose) cout << "Exploring second design ... score is:"<< scoreSecondDesign << endl;
+				REPORT(DEBUG, "Exploring second design ... score is:"<< scoreSecondDesign);
 			
 				if ((scoreFirstDesign > scoreSecondDesign) &&
 					 (maxInputDelay <= 0)) // this expresion was added to ensure that the implemented design will have the necessary input delay
 					{
-						if (verbose) cout << "Implementation of the second design" << endl;
+						REPORT(DEBUG, "Implementation of the second design");
 						nbOfChunks = nbOfChunksSecondDesign;
 						target->suggestSubaddSize(chunkSize_, wIn_); 
 						lastChunkSize = ( wIn_ % chunkSize_ == 0 ? chunkSize_ : wIn_ % chunkSize_);
 					}else{
-					if (verbose) cout << "Implementation of the first design" << endl;
+					REPORT(DEBUG, "Implementation of the first design");
 					nbOfChunks = nbOfChunksFirstDesign;
 					target->suggestSlackSubaddSize(chunkSize_, wIn_, maxInputDelay); 
 					lastChunkSize = ( wIn_ % chunkSize_ == 0 ? chunkSize_ : wIn_ % chunkSize_);
@@ -118,16 +117,16 @@ namespace flopoco{
 			for (int i=1; i < nbOfChunks; i++)
 				cIndex[i] = cIndex[i-1] + cSize[i];
 	
-			if (verbose){
-				cout << "The chunk sizes[MSB-->LSB]: "<<endl;
-				for (int i=nbOfChunks-1;i>=0;i--)
-					cout<<cSize[i]<<" ";
-				cout<<endl; 
-				cout << "The index sizes[MSB-->LSB]: "<<endl;
-				for (int i=nbOfChunks-1;i>=0;i--)
-					cout<<cIndex[i]<<" ";
-				cout<<endl; 
-			}	
+			// if (verbose){
+			// 	cout << "The chunk sizes[MSB-->LSB]: "<<endl;
+			// 	for (int i=nbOfChunks-1;i>=0;i--)
+			// 		cout<<cSize[i]<<" ";
+			// 	cout<<endl; 
+			// 	cout << "The index sizes[MSB-->LSB]: "<<endl;
+			// 	for (int i=nbOfChunks-1;i>=0;i--)
+			// 		cout<<cIndex[i]<<" ";
+			// 	cout<<endl; 
+			// }	
 			
 			if (wIn>1){ 
 				if (N>=2){
@@ -195,8 +194,7 @@ namespace flopoco{
 					}
 					vhdl << tab << "--final propagations " << endl; 
 			
-					if (verbose)
-						cout << "The number of chunks is: " << nbOfChunks << endl;
+					REPORT(DEBUG, "The number of chunks is: " << nbOfChunks);
 			
 					for (int i=2; i<nbOfChunks+1; i++){
 						for (int j=i-1; j< nbOfChunks ; j++){
