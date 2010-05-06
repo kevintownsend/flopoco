@@ -35,114 +35,49 @@ namespace flopoco{
 	
 		PolynomialEvaluator::PolynomialEvaluator(Target* target, vector<FixedPointCoefficient*> coef, YVar* y, int targetPrec, mpfr_t* approxError):
 		Operator(target), y_(y), targetPrec_(targetPrec){
+		
 		setCopyrightString("Bogdan Pasca (2010)");
-		
-		setApproximationError(approxError);
 		srcFileName = "PolynomialEvaluator";
+		setName(join("PolynomialEvaluator_d",degree_));
 
-		/* tweak coef for i/o compatibility with the table generator */
-		
-		for (uint32_t i=0; i< coef.size(); i++){
-			FixedPointCoefficient *fp = new FixedPointCoefficient(coef[i]);
-			fp->setSize( coef[i]->getSize()+coef[i]->getWeight());
-			fp->setWeight(fp->getWeight()); 
-			coef_.push_back(fp);
-		}
+		/* set the approximation error budget we are allowed */
+		setApproximationError(approxError);
 
-		degree_ = coef.size()-1;
+		updateCoefficients(coef);
+		setPolynomialDegree(coef.size()-1);
+		REPORT(DETAILED, "Polynomial to evaluate: " << printPolynomial(coef, y, 0));
 		
-		/* init */
-		
-		setName( join("PolynomialEvaluator_d",degree_));
-		REPORT(DETAILED, "Polynomial to evaluate: " << printPolynomial(coef, y));
-		
-		
-		/* ================== I/O declarations ==================*/
+		/* I/O Signal Declarations; y and the coefficients*/
 		addInput("Y", y_->getSize());
+		REPORT(DEBUG, "y size=" << y_->getSize() << " weight=" << y_->getWeight());
+
 		for (uint32_t i=0; i <= unsigned(degree_); i++){
-			addInput(join("a",i), coef_[i]->getSize()+1);
-			REPORT(DEBUG, "Coefficient a"<<i<<" size=" << coef_[i]->getSize() << " weight=" << coef_[i]->getWeight());
-		}
-			REPORT(DEBUG, "y size=" << y_->getSize() << " weight=" << y_->getWeight());
-		/* Gappa Style */
-		
-		yGuard_.reserve(20);
-		aGuard_.reserve(20);
-		nYGuard_.reserve(20);
-		maxBoundY.reserve(20);
-
-		sigmakPSize.reserve(20);
-		pikPTSize.reserve(20);
-		pikPSize.reserve(20);
-		sigmakPWeight.reserve(20);
-		pikPTWeight.reserve(20);
-		pikPWeight.reserve(20);
-		
-		maxBoundA = 5;
-		
-		/*init vectors */
-		for (uint32_t i=0; i<=unsigned(degree_)+1; i++){
-			yGuard_[i]  = 0; //maxBoundY;
-			nYGuard_[i] = 0;
-			aGuard_[i] = 0;
-			maxBoundY[i] = 0;
-		}
-
-		
-		/* the abs of the maximal value of y */
-		mpfr_init2 ( maxABSy, 100);
-		mpfr_set_ui( maxABSy, 2, GMP_RNDN);
-		mpfr_pow_si( maxABSy, maxABSy, y_->getSize(), GMP_RNDN);
-		mpfr_add_si( maxABSy, maxABSy, -1, GMP_RNDN);
-		mpfr_set_exp( maxABSy, mpfr_get_exp(maxABSy)+y_->getWeight()-y_->getSize());
-		REPORT(DETAILED, "Abs max value of y is " << mpfr_get_d( maxABSy, GMP_RNDN)); 
-		
-		mpfr_t* tmp; 
-		tmp = errorEstimator(yGuard_, aGuard_);
-		mpfr_clear(*tmp);
-		free(tmp);
-
-		for (uint32_t i=1; i<=unsigned(degree_); i++){
-			if (i != unsigned(degree_)){
-				maxBoundY[i] = - signed(degree_-i)*y_->getWeight();
-			}else
-				maxBoundY[i] = 0;
-				
-			if (maxBoundY[i] <= 0)
-				maxBoundY[i] = 0;
+			addInput(join("a",i), coef_[i]->getSize()+1); /* the size does not contain the sign bit */
+			REPORT(DEBUG, "a"<<i<<" size=" << coef_[i]->getSize() << " weight=" << coef_[i]->getWeight());
 		}
 		
-//		for (uint32_t i=1; i<=unsigned(degree_); i++){
-//			if ( y_->getSize() >= 17){
-//				int mul1 = int(ceil(double(y_->getSize())/double(17))); 
-//				int mul2 = int(ceil(double(y_->getSize()-maxBoundY[i])/double(17)));
-//				
-//				if ( mul1 == mul2) //no sense to do optimization
-//					maxBoundY[i] = 0;
-////				else{
-////					minBoundY[i] = 
-////				
-////				}
-//						
-//			}else
-//				maxBoundY[i] = 0; 
-//		}
+		initializeErrorVectors();
+		
+		/* needed in the approximation error computation. We do it once as 
+		this doesn't change during the iterations */
+		setMaxYValue(y); 
+	
+		coldStart();
+		determineObjectiveStatesForTruncations();
+		setNumberOfPossibleValuesForEachY();
+
 
 		/*init vectors */
 		for (uint32_t i=1; i<=unsigned(degree_)+1; i++){
 			yGuard_[i] = 0; //maxBoundY;
-			nYGuard_[i] = 0;
+			yState_[i] = 0;
 		}
 		
 		for (uint32_t i=0; i<unsigned(degree_)+1; i++)
 			aGuard_[i] = maxBoundA;
-
-		// for (int j=1; j<=degree_; j++)
-		// 	cout << "maxY["<<j<<"]="<<maxBoundY[j]<<" "; 
-		// cout << endl;
-		// for (int j=0; j<=degree_; j++)
-		// 	cout << "aGuard["<<j<<"]="<<aGuard_[j]<<" "; 
-		// cout << endl;
+			
+			
+		yState_[1]=-1;	
 
 		mpfr_t u, *e;
 		mpfr_init2(u, 100);
@@ -477,7 +412,7 @@ namespace flopoco{
 			REPORT( DETAILED, "|sigma"<<i<<"P| weight=" << (mpfr_get_d(*r,GMP_RNDN)!=0?mpfr_get_exp(*r):0)); 
 		}
 		
-		REPORT( DETAILED, "Error (order) for P(y)=" << mpfr_get_exp( *sigmakP_sigmak[degree_]));
+		REPORT(DETAILED, "Error (order) for P(y)=" << mpfr_get_exp( *sigmakP_sigmak[degree_]));
 		
 //		/***** Clean up *********************/
 
@@ -537,20 +472,51 @@ namespace flopoco{
 		
 		mpfr_clear(*yy);
 		free(yy);
-		
-//		free(t3);
-		
-//		cout << " +++++++++++++++" << endl;
-//		
-//		pikPT_pikP.clear();
-//		sigmakP.clear();
 			 
 		return sigmakP_sigmak[degree_];
 	} 
 
 
+	void PolynomialEvaluator::updateCoefficients(vector<FixedPointCoefficient*> coef){
+		REPORT(DETAILED, "Coefficient manipulation ... ");
+		for (uint32_t i=0; i< coef.size(); i++){
+			REPORT(DEBUG, "Coefficient before; size="<<coef[i]->getSize()<<" weight="<<coef[i]->getWeight());
+			FixedPointCoefficient *fp = new FixedPointCoefficient(coef[i]);
+			/* update the coefficient size; see Doxygen in hpp for more details*/
+			fp->setSize(coef[i]->getSize()+coef[i]->getWeight());
+			coef_.push_back(fp);
+			REPORT(DEBUG, "Coefficient after; size="<<coef_[i]->getSize()<<" weight="<<coef_[i]->getWeight()); 
+		}
+	}
+
 
 	PolynomialEvaluator::~PolynomialEvaluator() {
+	}
+
+	void PolynomialEvaluator::initializeErrorVectors(){
+		/* Gappa Style */
+		
+		yGuard_.reserve(20);
+		aGuard_.reserve(20);
+		yState_.reserve(20);
+		maxBoundY.reserve(20);
+
+		sigmakPSize.reserve(20);
+		pikPTSize.reserve(20);
+		pikPSize.reserve(20);
+		sigmakPWeight.reserve(20);
+		pikPTWeight.reserve(20);
+		pikPWeight.reserve(20);
+		
+		maxBoundA = 5;
+		
+		/*init vectors */
+		for (uint32_t i=0; i<=unsigned(degree_)+1; i++){
+			yGuard_[i]  = 0; //maxBoundY;
+			yState_[i] = 0;
+			aGuard_[i] = 0;
+			maxBoundY[i] = 0;
+		}
 	}
 
 }
