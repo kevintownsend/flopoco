@@ -1,34 +1,3 @@
 Installation Instructions
 *************************
-
-FloPoCo may be compiled either using CMake or the autotools. 
-The recommended way is CMake, which is available for most Unix and
-Linux distributions and for Windows. See below.
-
-If you prefer to use the autotools read the README.autotools file.
-
-Dependencies:
-
-FloPoCo depends on MPFR, which is available for most Unices. On
-Debian and derivative, the package to install is libmpfr-dev.
-See www.mpfr.org for other systems.
-
-For HOTBM support, you need also to install libsollya from the Sollya tool
-http://sollya.gforge.inria.fr/ 
-Please note that libsollya is not stable, so interface changes might
-break FloPoCo compilation. If this is the case, try to download r588
-of libsollya from the SVN repository.
-
-
-Compilation using CMake:
-On Linux/unix, type in a terminal:
-
-cmake .
-make
-
-then try 
-./flopoco 
-
-CMake also generates MSVisual C++ project files. This should work (it has worked
-each time we tried), but we do not test it as systematically.
-
+See doc/flopoco_user_manual.html
