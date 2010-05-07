@@ -523,7 +523,7 @@ namespace flopoco{
 		for (uint32_t i=0; i<unsigned(degree_)+1; i++)
 			aGuard_[i] = maxBoundA[i];
 			
-		yState_[degree_]=-1;	
+		yState_[1]=-1;	
 	}
 
 }

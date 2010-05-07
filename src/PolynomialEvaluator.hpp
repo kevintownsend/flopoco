@@ -343,7 +343,7 @@ namespace flopoco{
 					aGuard_[degree_] = 0 ;
 					int carry = 1;
 					bool allMaxBoundsZero = true;
-					for (int i=degree_; i>=1;i--){
+					for (int i=1; i<=degree_;i++){
 						if (maxBoundY[i]-1 != 0)
 							allMaxBoundsZero = false; 
 						if ((yState_[i] == maxBoundY[i]-1) && ( carry==1)){
