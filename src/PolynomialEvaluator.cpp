@@ -65,6 +65,7 @@ namespace flopoco{
 		coldStart();
 		determineObjectiveStatesForTruncations();
 		setNumberOfPossibleValuesForEachY();
+		setNumberOfPossibleValuesForEachA();
 
 		initializeExplorationVectors();
 
@@ -377,14 +378,14 @@ namespace flopoco{
 				sigmakPSize[i]   = maxMSB + 1 - (coef_[degree_-i]->getWeight() - coef_[degree_-i]->getSize() - aGuard[degree_-i]);
 				sigmakPWeight[i] = maxMSB + 1;
 			
-				REPORT( DEBUG, " sigmakPSize="<< sigmakPSize[i] << " sigmakPWeight[i]="<<sigmakPWeight[i]);
+				REPORT( DEBUG, " sigma"<<i<<"PSize="<< sigmakPSize[i] << " sigma"<<i<<"PWeight[i]="<<sigmakPWeight[i]);
 			}else{
 				int maxMSB = max ( coef_[degree_-i]->getWeight(), pikPWeight[i]);
 				int minLSB = min ( coef_[degree_-i]->getWeight()-coef_[degree_-i]->getSize(),pikPWeight[i]-pikPSize[i]); 
 				sigmakPSize[i]   = 1 + maxMSB - minLSB + 1;//maxMSB + 1 - (coef_[degree_-i]->getWeight() - coef_[degree_-i]->getSize() - aGuard[degree_-i]);
 				sigmakPWeight[i] = 1 + maxMSB;
 			
-				REPORT( DEBUG, " sigmakPSize="<< sigmakPSize[i] << " sigmakPWeight[i]="<<sigmakPWeight[i]);
+				REPORT( DEBUG, " sigma"<<i<<"PSize="<< sigmakPSize[i] << " sigma"<<i<<"PWeight[i]="<<sigmakPWeight[i]);
 			}
 			
 			//cerr << " +++  pikpt"<<i<< " size="<<  pikPTSize[i] << " weight = " << pikPTWeight[i] << endl;
@@ -489,6 +490,7 @@ namespace flopoco{
 		aGuard_.reserve(20);
 		yState_.reserve(20);
 		maxBoundY.reserve(20);
+		maxBoundA.reserve(20);
 
 		sigmakPSize.reserve(20);
 		pikPTSize.reserve(20);
@@ -497,15 +499,17 @@ namespace flopoco{
 		pikPTWeight.reserve(20);
 		pikPWeight.reserve(20);
 		
-		maxBoundA = 5;
-		
 		/*init vectors */
 		for (uint32_t i=0; i<=unsigned(degree_)+1; i++){
 			yGuard_[i]  = 0; //maxBoundY;
 			yState_[i] = 0;
 			aGuard_[i] = 0;
 			maxBoundY[i] = 0;
+			maxBoundA[i] = 0;
 		}
+		
+		maxBoundA[0] = 0; /* first coef doesn't need any guard bits */
+//		maxBoundA[degree_] = 1; /*last addition is not truncated, so no guard bits are required for a */
 	}
 	
 	
@@ -517,10 +521,9 @@ namespace flopoco{
 		}
 		
 		for (uint32_t i=0; i<unsigned(degree_)+1; i++)
-			aGuard_[i] = maxBoundA;
+			aGuard_[i] = maxBoundA[i];
 			
-			
-		yState_[1]=-1;	
+		yState_[degree_]=-1;	
 	}
 
 }

@@ -241,6 +241,15 @@ namespace flopoco{
 				}
 			}
 			
+			void setNumberOfPossibleValuesForEachA(){
+				int Xd, Yd;
+				target_->getDSPWidths(Xd,Yd);
+			
+				for (int i=1; i <= getPolynomialDegree(); i++){
+					maxBoundA[i] = max(Xd-sigmakPSize[i]%Xd, Yd - sigmakPSize[i]%Yd);
+					REPORT(DEBUG, "MaxBoundA["<<i<<"]="<<maxBoundA[i]);
+				}
+			}
 			
 			/** sets the mpfr associated to the maximal value of y. This value
 			 * is required in the error analysis step
@@ -311,6 +320,7 @@ namespace flopoco{
 			  * @return the corresponding value to the selected level 
 			  */ 
 			int getPossibleYValue(int i, int state){
+				REPORT(DEBUG, "Possible value i="<<i<<" state="<<state);
 				pair<multimap<int, int>::iterator, multimap<int, int>::iterator> ppp;
 				ppp = objectiveStatesY.equal_range(i);
 				int index=0;
@@ -357,11 +367,17 @@ namespace flopoco{
 					return false;
 			}
 
+
+			/** advances to the next step in the design space exploration on the
+			 * coefficient guard bit direction.
+			 * @return true if there is a next state, false if a solution has been
+			 *found.
+			 */
 			bool nextStateA(){
 				if (! sol){
 					int carry = 1;
 					for (int i=1; i<=degree_;i++){
-						if ((aGuard_[i] == maxBoundA) && ( carry==1)){
+						if ((aGuard_[i] == maxBoundA[i]) && ( carry==1)){
 							aGuard_[i] = 0;
 							carry = 1;
 						}else{
@@ -423,9 +439,8 @@ namespace flopoco{
 			vector<int> aGuard_; // positive values refer to "real" guard bits
 
 			vector<int> maxBoundY;
-			vector<int> minBoundY;
+			vector<int> maxBoundA;
 			
-			int maxBoundA;
 			
 			int currentPrec;
 			bool sol;
