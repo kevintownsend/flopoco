@@ -278,6 +278,10 @@ static void usage(char *name){
 #endif // HAVE_HOTBM
 #ifdef HAVE_LNS
 	cerr << "    ____________ LNS OPERATORS _________________________________________________\n";
+	cerr << "    Common parameters:\n";
+	cerr << "      wE - width of integral part of exponent. Typically from 4 to 8.\n";
+	cerr << "           Negative values allowed at your own risk.\n";
+	cerr << "      wF - width of fractional part of exponent. Typically from 8 to 20.\n";
 	OP( "LNSAddSub","wE wF");
 	cerr << "      Addition in Logarithmic Number System.\n";
 	OP( "LNSMul","wE wF");
