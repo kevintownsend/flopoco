@@ -56,6 +56,7 @@ namespace flopoco{
 			REPORT(DEBUG, "a"<<i<<" size=" << coef_[i]->getSize() << " weight=" << coef_[i]->getWeight());
 		}
 		
+		allocateErrorVectors();
 		initializeErrorVectors();
 		
 		/* needed in the approximation error computation. We do it once as 
@@ -63,6 +64,7 @@ namespace flopoco{
 		setMaxYValue(y); 
 	
 		coldStart();
+		
 		determineObjectiveStatesForTruncations();
 		setNumberOfPossibleValuesForEachY();
 		setNumberOfPossibleValuesForEachA();
@@ -79,24 +81,45 @@ namespace flopoco{
 			int i=0;
 			while (!sol){
 				while ((!sol) && (nextStateY())){
-					while (((!sol) && nextStateA())){
-						i++;
-						e = errorEstimator(yGuard_, aGuard_);
-						mpfr_add( u, *approximationError, *e, GMP_RNDN);
-						if ( i%128 == 0){
-							REPORT(DEBUG, " err = "<< mpfr_get_exp(u));
-						}
-						errExp = (mpfr_get_d(u, GMP_RNDZ)==0 ? 0 :mpfr_get_exp(u));
-						if (errExp <= -targetPrec-1 ){
-							sol = true;
-							mpfr_clear(u);
-							mpfr_clear(*e);
-							free(e);
-						}else{
-							mpfr_clear(*e);
-							free(e);
-						}
-					} 
+					/* set all A guard bits on 0. do sort of a cold start */
+					resetCoefficientGuardBits();
+					/* run once the error estimation algo with these parameters */
+					e = errorEstimator(yGuard_, aGuard_);
+					/* test if by chance we met the error budget */
+					mpfr_add( u, *approximationError, *e, GMP_RNDN);
+					errExp = (mpfr_get_d(u, GMP_RNDZ)==0 ? 0 :mpfr_get_exp(u));
+					if (errExp <= -targetPrec-1 ){
+						/* if we do, then we set the solution true and that's it */
+						sol = true;
+						mpfr_clear(u);
+						mpfr_clear(*e);
+						free(e);
+					}else{
+						mpfr_clear(*e);
+						free(e);
+						/* if we don't, then we try to add some guard bits to a */
+						/* this number also depends on Y */
+						setNumberOfPossibleValuesForEachA();
+						/* now we iterate on a */
+						while (((!sol) && nextStateA())){
+							i++;
+							e = errorEstimator(yGuard_, aGuard_);
+							mpfr_add( u, *approximationError, *e, GMP_RNDN);
+							if ( i%128 == 0){
+								REPORT(DEBUG, " err = "<< mpfr_get_exp(u));
+							}
+							errExp = (mpfr_get_d(u, GMP_RNDZ)==0 ? 0 :mpfr_get_exp(u));
+							if (errExp <= -targetPrec-1 ){
+								sol = true;
+								mpfr_clear(u);
+								mpfr_clear(*e);
+								free(e);
+							}else{
+								mpfr_clear(*e);
+								free(e);
+							}
+						}					
+					}
 				}	
 			}		
 		}else{
@@ -483,6 +506,8 @@ namespace flopoco{
 	PolynomialEvaluator::~PolynomialEvaluator() {
 	}
 
+
+
 	void PolynomialEvaluator::initializeErrorVectors(){
 		/* Gappa Style */
 		
@@ -492,12 +517,6 @@ namespace flopoco{
 		maxBoundY.reserve(20);
 		maxBoundA.reserve(20);
 
-		sigmakPSize.reserve(20);
-		pikPTSize.reserve(20);
-		pikPSize.reserve(20);
-		sigmakPWeight.reserve(20);
-		pikPTWeight.reserve(20);
-		pikPWeight.reserve(20);
 		
 		/*init vectors */
 		for (uint32_t i=0; i<=unsigned(degree_)+1; i++){
@@ -512,6 +531,10 @@ namespace flopoco{
 //		maxBoundA[degree_] = 1; /*last addition is not truncated, so no guard bits are required for a */
 	}
 	
+	void PolynomialEvaluator::resetCoefficientGuardBits(){
+		for (uint32_t i=0; i<unsigned(degree_)+1; i++)
+			aGuard_[i] = 0;
+	}
 	
 	void PolynomialEvaluator::initializeExplorationVectors(){
 		/*init vectors */
@@ -525,6 +548,85 @@ namespace flopoco{
 			
 		yState_[1]=-1;	
 	}
+
+	/* ----------------- ERROR RELATED ----------------------------------*/
+	/* ------------------------------------------------------------------*/
+	void PolynomialEvaluator::allocateErrorVectors(){
+		sigmakPSize.reserve(20);
+		pikPTSize.reserve(20);
+		pikPSize.reserve(20);
+		sigmakPWeight.reserve(20);
+		pikPTWeight.reserve(20);
+		pikPWeight.reserve(20);
+	}
+
+	void PolynomialEvaluator::setApproximationError( mpfr_t *p){
+		approximationError = (mpfr_t*) malloc( sizeof(mpfr_t));
+		mpfr_init2(*approximationError, 1000);
+		mpfr_set( *approximationError, *p, GMP_RNDN);
+		REPORT(DETAILED, "The approximation error budget is (represetned as double):" << mpfr_get_d(*approximationError,GMP_RNDN)); 
+	}
+
+	void PolynomialEvaluator::setMaxYValue(YVar* y){
+		/* the abs of the maximal value of y */
+		mpfr_init2 ( maxABSy, 100);
+		mpfr_set_ui( maxABSy, 2, GMP_RNDN);
+		mpfr_pow_si( maxABSy, maxABSy, y_->getSize(), GMP_RNDN);
+		mpfr_add_si( maxABSy, maxABSy, -1, GMP_RNDN);
+		mpfr_set_exp( maxABSy, mpfr_get_exp(maxABSy)+y_->getWeight()-y_->getSize());
+		REPORT(DETAILED, "Abs max value of y is " << mpfr_get_d( maxABSy, GMP_RNDN)); 
+	}
+
+
+	/* ---------------- EXPLORATION RELATED -----------------------------*/
+	/* ------------------------------------------------------------------*/
+	void PolynomialEvaluator::determineObjectiveStatesForTruncations(){
+		int Xd, Yd;
+		target_->getDSPWidths(Xd,Yd);
+		for (int i=0; i < getPolynomialDegree(); i++){
+			if (( y_->getSize()> unsigned(Xd) ) && (y_->getSize() % unsigned(Xd) != 0))
+				objectiveStatesY.insert(pair<int,int>(i+1, y_->getSize() % Xd));
+			if (Yd!=Xd)
+				if (( y_->getSize()> unsigned(Yd) ) && (y_->getSize() % unsigned(Yd) != 0))
+					objectiveStatesY.insert(pair<int,int>(i+1, y_->getSize() % Yd));
+			/* insert the "do no truncation" pair */
+			objectiveStatesY.insert(pair<int,int>(i+1, 0)); 
+		}
+		for (multimap<int, int>::iterator it = objectiveStatesY.begin(); it != objectiveStatesY.end(); ++it){
+			REPORT(DEBUG, "yGuardObjective[" << (*it).first << ", " << (*it).second << "]");
+		}
+	}
+	
+	void PolynomialEvaluator::setNumberOfPossibleValuesForEachY(){
+		for (int i=1; i <= getPolynomialDegree(); i++){
+			maxBoundY[i] = objectiveStatesY.count(i);
+			REPORT(DEBUG, "MaxBoundY["<<i<<"]="<<maxBoundY[i]);
+		}
+	}
+
+	void PolynomialEvaluator::setNumberOfPossibleValuesForEachA(){
+		int Xd, Yd;
+		target_->getDSPWidths(Xd,Yd);
+		for (int i=1; i <= getPolynomialDegree(); i++){
+			maxBoundA[i] = max(Xd-sigmakPSize[i]%Xd, Yd - sigmakPSize[i]%Yd);
+			REPORT(DEBUG, "MaxBoundA["<<i<<"]="<<maxBoundA[i]);
+		}
+	}
+
+	/* ------------------------------ EXTRA -----------------------------*/
+	/* ------------------------------------------------------------------*/
+
+	string PolynomialEvaluator::printPolynomial( vector<FixedPointCoefficient*> coef, YVar* y, int level){
+		ostringstream horner;
+		if (level == getPolynomialDegree()){
+			horner << "a["<<level<<"]2^("<<coef[level]->getWeight()<<")";
+			return horner.str();
+		}else{
+			horner << "y*2^("<<y_->getWeight()<<"){"<< printPolynomial(coef, y, level+1) << "} + " << "a["<<level<<"]2^("<<coef[level]->getWeight()<<")";
+			return horner.str();
+		}
+	}
+
 
 }
 

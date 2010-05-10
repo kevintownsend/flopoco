@@ -170,6 +170,10 @@ namespace flopoco{
 			/** Destructor */
 			~PolynomialEvaluator();
 			
+			
+			/* ------------------------------ EXTRA -----------------------------*/
+			/* ------------------------------------------------------------------*/
+			
 			/** Update coefficinents. 
 			 * The input coefficients have the format: 
 			 *           size   = #of bits at the right of the .
@@ -183,87 +187,75 @@ namespace flopoco{
 			/** Sets the polynomial degree 
 			 * @param d the polynomial degree
 			 */
-			void setPolynomialDegree(int d){
-				if (d < 0)
-					throw("Negative polynomial degree");
-				degree_ = d;
-			}
+			void setPolynomialDegree(int d){ if (d < 0) throw("Negative polynomial degree"); degree_ = d;}
 
 			/** Gets the polynomial degree 
 			 * @return the polynomial degree
 			*/
-			int getPolynomialDegree(){
-				return degree_;
-			}
+			int getPolynomialDegree(){ return degree_; }
 			
+			/** print the polynomial 
+			 * @param[in] coef  the coefficinets
+			 * @param[in] y     the variable
+			 * @param[in] level the initial recursion level 0
+			 * @return          the polynomial string
+			*/
+			string printPolynomial( vector<FixedPointCoefficient*> coef, YVar* y, int level);
+			
+			
+			
+			
+			/* ----------------- ERROR RELATED ----------------------------------*/
+			/* ------------------------------------------------------------------*/
 			
 			/** sets the approximation error budget for the polynomial evaluator.
              * @param p the error budget as an mpfr pointer
              */			
-			void setApproximationError( mpfr_t *p){
-				approximationError = (mpfr_t*) malloc( sizeof(mpfr_t));
-				mpfr_init2(*approximationError, 1000);
-				mpfr_set( *approximationError, *p, GMP_RNDN);
-				REPORT(DETAILED, "The approximation error budget is (represetned as double):" << mpfr_get_d(*approximationError,GMP_RNDN)); 
-			}
-
-			/** hide messy vector initializations */
-			void initializeErrorVectors();
-			/** hide messy vector exploration vectors initializations */
-			void initializeExplorationVectors();
-			
-			
-			/** fills-up a map of objective states for the truncations */
-			void determineObjectiveStatesForTruncations(){
-				int Xd, Yd;
-				target_->getDSPWidths(Xd,Yd);
-				for (int i=0; i < getPolynomialDegree(); i++){
-					if (( y_->getSize()> unsigned(Xd) ) && (y_->getSize() % unsigned(Xd) != 0))
-						objectiveStatesY.insert(pair<int,int>(i+1, y_->getSize() % Xd));
-					if (Yd!=Xd)
-						if (( y_->getSize()> unsigned(Yd) ) && (y_->getSize() % unsigned(Yd) != 0))
-							objectiveStatesY.insert(pair<int,int>(i+1, y_->getSize() % Yd));
-
-					/* insert the "do nothing" pair */
-					objectiveStatesY.insert(pair<int,int>(i+1, 0)); 
-
-				}
-				for (multimap<int, int>::iterator it = objectiveStatesY.begin(); it != objectiveStatesY.end(); ++it){
-					REPORT(DEBUG, "yGuardObjective[" << (*it).first << ", " << (*it).second << "]");
-				}
-				REPORT(DEBUG, "+++++++++++++++++++++++++++++++++++++++");
-			}
-			
-			void setNumberOfPossibleValuesForEachY(){
-				for (int i=1; i <= getPolynomialDegree(); i++){
-					maxBoundY[i] = objectiveStatesY.count(i);
-					REPORT(DEBUG, "MaxBoundY["<<i<<"]="<<maxBoundY[i]);
-				}
-			}
-			
-			void setNumberOfPossibleValuesForEachA(){
-				int Xd, Yd;
-				target_->getDSPWidths(Xd,Yd);
-			
-				for (int i=1; i <= getPolynomialDegree(); i++){
-					maxBoundA[i] = max(Xd-sigmakPSize[i]%Xd, Yd - sigmakPSize[i]%Yd);
-					REPORT(DEBUG, "MaxBoundA["<<i<<"]="<<maxBoundA[i]);
-				}
-			}
+			void setApproximationError( mpfr_t *p);
 			
 			/** sets the mpfr associated to the maximal value of y. This value
 			 * is required in the error analysis step
 			 * @param[in] y the variable containing info about the size and weight
 			 */
-			void setMaxYValue(YVar* y){
-				/* the abs of the maximal value of y */
-				mpfr_init2 ( maxABSy, 100);
-				mpfr_set_ui( maxABSy, 2, GMP_RNDN);
-				mpfr_pow_si( maxABSy, maxABSy, y_->getSize(), GMP_RNDN);
-				mpfr_add_si( maxABSy, maxABSy, -1, GMP_RNDN);
-				mpfr_set_exp( maxABSy, mpfr_get_exp(maxABSy)+y_->getWeight()-y_->getSize());
-				REPORT(DETAILED, "Abs max value of y is " << mpfr_get_d( maxABSy, GMP_RNDN)); 
-			}
+			void setMaxYValue(YVar* y);
+
+			/** perform errorVector allocations */
+			void allocateErrorVectors();
+			
+			/** hide messy vector initializations */
+			void initializeErrorVectors();
+			
+			/** The function that does the error estimation starting from a 
+			 * set of guard bits for the coefficients and a set of truncations
+			 * for the Y
+			 * @param[in] yGuard the vector containing the truncation error for Y
+			 * @param[in] aGuard the vector with the guard bits for the coeffs.
+			 * @return the maximum approximation error for this set of params
+			 */
+			mpfr_t* errorEstimator(vector<int> &yGuard, vector<int> &aGuard);
+			
+		
+			/* ---------------- EXPLORATION RELATED -----------------------------*/
+			/* ------------------------------------------------------------------*/
+			
+			/** hide messy vector exploration vectors initializations */
+			void initializeExplorationVectors();
+			
+			
+			/** fills-up a map of objective states for the truncations */
+			void determineObjectiveStatesForTruncations();
+			
+			/** updates the MaxBoundY vector with the maximum number of states
+			 * for each Y */
+			void setNumberOfPossibleValuesForEachY();
+			
+			/** TODO PROPER WAY; it only accounts (for now) on the DPS block
+			 *  size. We can use as many guard bits in order not to use extra
+			 *  multipliers 
+			 */
+			void setNumberOfPossibleValuesForEachA();
+			
+			void resetCoefficientGuardBits();
 			
 			/** Get range values for multiplications. We pefrom one error 
 			  * analysis run where we dont't truncate or add any guard bits
@@ -275,39 +267,12 @@ namespace flopoco{
 				free(tmp);
 			}
 			
+
+
+
+
+
 			
-
-			/** print the polynomial 
-			 * @param[in] coef  the coefficinets
-			 * @param[in] y     the variable
-			 * @param[in] level the initial recursion level 0
-			 * @return          the polynomial string
-			*/
-			string printPolynomial( vector<FixedPointCoefficient*> coef, YVar* y, int level){
-				ostringstream horner;
-
-				if (level == getPolynomialDegree()){
-					horner << "a["<<level<<"]2^("<<coef[level]->getWeight()<<")";
-					return horner.str();
-				}else{
-					horner << "y*2^("<<y_->getWeight()<<"){"<< printPolynomial(coef, y, level+1) << "} + " << "a["<<level<<"]2^("<<coef[level]->getWeight()<<")";
-					return horner.str();
-				}
-			}
-
-
-			/** the absolute error caused by a truncation where the resulting
-			    LSB is found at this index (trunkIndex)*/
-			mpfr_t* getTruncError( int trunkIndex) {
-				mpfr_t* tmp;
-				mpfr_init2 ( *tmp, 500);
-				mpfr_set_si( *tmp, 2 , GMP_RNDN);
-				mpfr_pow_si( *tmp, *tmp, trunkIndex, GMP_RNDN);
-				return tmp;				
-			}
-
-
-			mpfr_t* errorEstimator(vector<int> &yGuard, vector<int> &aGuard);
 
 			/** We allow possible truncation of y. Horner evaluation therefore 
 			    allows for d differnt truncations on y (1 to d). For each y 
