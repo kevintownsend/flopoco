@@ -465,14 +465,16 @@ bool parseCommandLine(int argc, char* argv[]){
 			}
 		}
 		else if(opname=="IntIntKCM"){
-			int nargs = 2;
+			int nargs = 3;
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
 				int w = atoi(argv[i++]);
 				mpz_class mpc(argv[i++]);
-				cerr << "> IntIntKCM , w="<<w<<", c="<<mpz2string(mpc)<<"\n";
-				op = new IntIntKCM(target, w, mpc);
+				int signedInput = checkBoolean(argv[i++], argv[0]);
+
+				cerr << "> IntIntKCM , w="<<w<<", c="<<mpz2string(mpc) << (signedInput==0?" unsigned":" signed") << "\n";
+				op = new IntIntKCM(target, w, mpc, signedInput);
 				addOperator(op);
 			}        
 		}

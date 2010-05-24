@@ -35,10 +35,10 @@ public:
 
 protected:
 	int wIn_;                         /**< the width for the input X*/
+ 	bool signedInput_; 	
 	int chunkSize_;                   /**< the size of the lut> **/
 	mpz_class C_;                           /**< the constant to be used for the multiplication*/
 	int wOut_;
-	
 private:
 	map<string, double> inputDelays_; /**< a map between input signal names and their maximum delays */
 

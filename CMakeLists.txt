@@ -182,7 +182,7 @@ ADD_EXECUTABLE(flopoco
  src/LongAcc2FP
  src/DotProduct
  src/ConstMult/IntConstMult src/ConstMult/ShiftAddOp src/ConstMult/ShiftAddDag 
- src/ConstMult/IntIntKCM src/ConstMult/FirstKCMTable
+ src/ConstMult/IntIntKCM src/ConstMult/KCMTable
  src/ConstMult/FPConstMult 
 # src/ConstMult/CRFPConstMult 
  src/TestCase
@@ -263,7 +263,7 @@ ADD_EXECUTABLE(flopoco
  src/LongAcc2FP
  src/DotProduct
  src/ConstMult/IntConstMult src/ConstMult/ShiftAddOp src/ConstMult/ShiftAddDag 
- src/ConstMult/IntIntKCM src/ConstMult/FirstKCMTable src/ConstMult/LastKCMTable
+ src/ConstMult/IntIntKCM src/ConstMult/KCMTable
  src/ConstMult/FPConstMult 
  src/ConstMult/CRFPConstMult 
  src/ConstMult/FPConstMultParser 
