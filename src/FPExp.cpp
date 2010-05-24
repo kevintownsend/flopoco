@@ -113,18 +113,18 @@ FPExp::FPExp(Target* target, int wE, int wF)
 	vhdl << tab  << declare("XexpField", wE) << " <= X(wE+wF-1 downto wF);" << endl;
  	vhdl << tab  << declare("Xfrac", wF) << " <= X(wF-1 downto 0);" << endl;
 	int e0 = bias - (wF+g);
-	vhdl << tab  << declare("e0", wE+2) << " <= conv_std_logic_vector(" << e0 << ", wE+2);  -- bias-wX" << endl;
+	vhdl << tab  << declare("e0", wE+2) << " <= conv_std_logic_vector(" << e0 << ", wE+2);  -- bias - (wF+g)" << endl;
 	vhdl << tab  << declare("shiftVal", wE+2) << " <= (\"00\" & XexpField) - e0; -- for a left shift" << endl;
 
 	vhdl << tab  << "-- underflow when input is shifted to zero (shiftval<0), in which case exp = 1" << endl;
-	vhdl << tab  << declare("ufl0") << " <= shiftVal(wE+1);" << endl;
+	vhdl << tab  << declare("expIs1") << " <= shiftVal(wE+1);" << endl;
  
 	// As we don't have a signed shifter, shift first, complement next. TODO? replace with a signed shifter
 	vhdl << tab << "--  mantissa with implicit bit" << endl;
 	vhdl << tab  << declare("mXu", wF+1) << " <= \"1\" & Xfrac;" << endl;
 
  	// left shift
-	int maxshift=wE-1+ wF+g +1; // maxX < 2^(wE-1); the last +1 is for early overflow detection
+	int maxshift=wE-1+ wF+g; // maxX < 2^(wE-1); 
 	Shifter* lshift = new Shifter(target, wF+1, maxshift , Shifter::Left);   
 	oplist.push_back(lshift);
 	int shiftInSize = lshift->getShiftInWidth();
@@ -135,13 +135,9 @@ FPExp::FPExp(Target* target, int wE, int wF)
 	inPortMap(lshift, "X", "mXu");
 	vhdl << instance(lshift, "mantissa_shift");
 	syncCycleFromSignal("fixX0");
-	// int fixX0width = getSignalByName("fixX0")->width();
-	// vhdl << tab << declare("fixX", wE+wF+g) << " <= " << "fixX0" << range(fixX0width-1, fixX0width-(wE+wF+g)) << ";" << endl;
 
-
-	vhdl << tab  << "-- Partial overflow detection" << endl;
-	// Was:  vhdl << tab  << declare("ofl") << " <= not shiftVal(wE+1) when shiftVal(wE downto 0) > conv_std_logic_vector(wX+wE-1, wE+1) else '0';" << endl;
-	vhdl << tab  << declare("ofl0") << " <= fixX0(" << wE-1 + wF+g + wF+1 << ");" << endl;
+	vhdl << tab  << "-- Partial overflow/underflow detection" << endl;
+	vhdl << tab  << declare("oufl0") << " <= not shiftVal(wE+1) when shiftVal(wE downto 0) > conv_std_logic_vector(" << maxshift << ", wE+1) else '0';" << endl;
 
  	int sizeXfix = wE-1 + 1+wF+g +1; // +1 for the sign
 	vhdl << tab << declare("fixX", sizeXfix) << " <= " << "'0' & fixX0" << range(wE-1 + wF+g + wF+1 -1, wF) << ";" << endl;
@@ -151,19 +147,6 @@ FPExp::FPExp(Target* target, int wE, int wF)
  	// fixXsigned(), on wE+3 bits,  is an int . 2^-2
 	// cstInvLog2,   on wE+3 bits,  is an int . 2^{-wE-2}
 	// The product is an int . 2^{-wE-4}
-
-// #if 0 // Only works for positive x
-
-// 	vhdl << tab << "-- TODO an IntConstMult here" <<endl;
-// 	vhdl << tab <<	declare("xMulIn",wE+2) << " <=  fixX "<< range(sizeXfix-2, sizeXfix-wE-3) << " + XSign;" << endl;
-// 	vhdl << tab <<	declare("xInvLog20",2*(wE+3)) << " <=  ('0' & (xMulIn  * cstInvLog2)) ;" << endl;
-// 	vhdl << tab <<	declare("xInvLog2u",2*(wE+3)) << " <=   xInvLog20 when XSign='0' else xInvLog20 + ("<< rangeAssign(2*(wE+3)-1, wE+2, "'0'") << " & xMulIn);" << endl;
-
-
-// 	vhdl << tab << declare("K", wE+1) << " <= xInvLog2u " << range(2*(wE+3)-2, wE+4) << " when XSign='0' -- truncation to an integer" << endl
-// 		  << tab << tab << "else not xInvLog2u " << range(2*(wE+3)-2, wE+4) << "; -- rouding down in all cases" <<endl;
-
-// #else
 
 	vhdl << tab <<	declare("xMulIn",wE+3) << " <=  fixXsigned "<< range(sizeXfix-1, sizeXfix-wE-3) << "; -- 2's complement, rounded down" << endl;
 	IntIntKCM *mulInvLog2 = new IntIntKCM(target, wE+3, mpzInvLog2, true /* signed input */);
@@ -207,20 +190,27 @@ FPExp::FPExp(Target* target, int wE, int wF)
 
 
 	vhdl << tab << "-- Rounding: all this should consume one row of LUTs" << endl; 
-	vhdl << tab << declare("preRoundBiasSig", wE+wF+1)
-		  << " <= conv_std_logic_vector(" << bias+1 << ", wE+1)  & expY" << range(rWidth-4, rWidth-4-wF+1) << " when needNorm = '1'" << endl
-		  << tab << tab << "else conv_std_logic_vector(" << bias << ", wE+1)  & expY" << range(rWidth-5, rWidth-5-wF+1) << " ;" << endl;
-	vhdl << tab << declare("roundNormAddend", wE+wF+1) << " <=  K & "<< rangeAssign(wF-1, 1, "'0'") << " & roundBit;" << endl;
-	vhdl << tab << declare("roundedExpSig", wE+wF+1) << " <= preRoundBiasSig + roundNormAddend when Xexn=\"01\" else "
-		  << " \"00\" & (wE-2 downto 0 => '1') & (wF-1 downto 0 => '0');" << endl;
+	vhdl << tab << declare("preRoundBiasSig", wE+wF+2)
+		  << " <= conv_std_logic_vector(" << bias+1 << ", wE+2)  & expY" << range(rWidth-4, rWidth-4-wF+1) << " when needNorm = '1'" << endl
+		  << tab << tab << "else conv_std_logic_vector(" << bias << ", wE+2)  & expY" << range(rWidth-5, rWidth-5-wF+1) << " ;" << endl;
+	vhdl << tab << declare("roundNormAddend", wE+wF+2) << " <= K(" << wE << ") & K & "<< rangeAssign(wF-1, 1, "'0'") << " & roundBit;" << endl;
+	vhdl << tab << declare("roundedExpSig", wE+wF+2) << " <= preRoundBiasSig + roundNormAddend when Xexn=\"01\" else "
+		  << " \"000\" & (wE-2 downto 0 => '1') & (wF-1 downto 0 => '0');" << endl;
 	
-	vhdl << tab << declare("ofl1") << " <= ofl0 or roundedExpSig(wE+wF);" << endl;
-	vhdl << tab << declare("ofl2") << " <= '1' when Xexn = \"10\"      else ofl1 and (not ufl0);" << endl;
+	vhdl << tab << declare("ofl1") << " <= not XSign and oufl0 and (not Xexn(1) and Xexn(0)); -- input positive, normal,  very large" << endl;
+	vhdl << tab << declare("ofl2") << " <= not XSign and (roundedExpSig(wE+wF) and not roundedExpSig(wE+wF+1)) and (not Xexn(1) and Xexn(0)); -- input positive, normal, overflowed" << endl;
+ 	vhdl << tab << declare("ofl3") << " <= not Xsign and Xexn(1) and not Xexn(0);  -- input was -infty" << endl;
+ 	vhdl << tab << declare("ofl") << " <= ofl1 or ofl2 or ofl3;" << endl;
 
+	vhdl << tab << declare("ufl1") << " <= (roundedExpSig(wE+wF) and roundedExpSig(wE+wF+1))  and (not Xexn(1) and Xexn(0)); -- input normal" << endl;
+ 	vhdl << tab << declare("ufl2") << " <= XSign and Xexn(1) and not Xexn(0);  -- input was -infty" << endl;
+	vhdl << tab << declare("ufl3") << " <= XSign and oufl0  and (not Xexn(1) and Xexn(0)); -- input negative, normal,  very large" << endl;
+
+ 	vhdl << tab << declare("ufl") << " <= ufl1 or ufl2 or ufl3;" << endl;
 
 	vhdl << tab << declare("Rexn", 2) << " <= \"11\" when Xexn = \"11\"" << endl
- 		  << tab << tab << "else \"10\" when ofl2='1'" << endl
-		  << tab << tab << "else \"00\" when ufl0='1' and  Xexn = \"01\"" << endl
+ 		  << tab << tab << "else \"10\" when ofl='1'" << endl
+		  << tab << tab << "else \"00\" when ufl='1'" << endl
 		  << tab << tab << "else \"01\";" << endl;
 		
 
@@ -700,10 +690,10 @@ void FPExp::buildStandardTestCases(TestCaseList* tcl){
 
 		mpfr_t x, y;
 		FPNumber *fx, *fy;
+		double d;
 
 		mpfr_init2(x, 1+wF);
 		mpfr_init2(y, 1+wF);
-
 
 
 		tc = new TestCase(this); 
@@ -718,14 +708,15 @@ void FPExp::buildStandardTestCases(TestCaseList* tcl){
 
 
 		tc = new TestCase(this); 
-		fx = new FPNumber(wE, wF, FPNumber::largestNegative);
-		//cout << fx->getSignalValue() << endl;
+		tc->addComment("The largest number whose exp is finite");
+		fx = new FPNumber(wE, wF, FPNumber::largestPositive);
 		fx->getMPFR(x);
-		//double d = mpfr_get_d(x, GMP_RNDN);
-		//cout << d << enadl;
 		mpfr_log(y, x, GMP_RNDN);
-		//d = mpfr_get_d(y, GMP_RNDN);
-		//cout << d << endl;
+		//		cout << "A " << fx->getSignalValue() << endl;
+		//		 d = mpfr_get_d(x, GMP_RNDN);
+		// cout << d << endl;
+		// d = mpfr_get_d(y, GMP_RNDN);
+		// cout << d << endl;
 		fy = new FPNumber(wE, wF, y); 
 		tc->addFPInput("X", fy);
 		emulate(tc);
@@ -733,6 +724,37 @@ void FPExp::buildStandardTestCases(TestCaseList* tcl){
 		delete(fx); 
 
 		tc = new TestCase(this); 
+		tc->addComment("The first number whose exp is infinite");
+		mpfr_nextabove(y);
+		fy = new FPNumber(wE, wF, y); 
+		tc->addFPInput("X", fy);
+		emulate(tc);
+		tcl->add(tc);
+		delete(fy);
+
+
+
+
+		tc = new TestCase(this); 
+		tc->addComment("The last number whose exp is nonzero");
+		fx = new FPNumber(wE, wF, FPNumber::smallestPositive);
+		fx->getMPFR(x);
+		mpfr_log(y, x, GMP_RNDU);
+
+		// cout << "A " << fx->getSignalValue() << endl;
+		// d = mpfr_get_d(x, GMP_RNDN);
+		// cout << d << endl;
+		// d = mpfr_get_d(y, GMP_RNDN);
+		// cout << d << endl;
+
+		fy = new FPNumber(wE, wF, y); 
+		tc->addFPInput("X", fy);
+		emulate(tc);
+		tcl->add(tc);
+		delete(fx); 
+
+		tc = new TestCase(this); 
+		tc->addComment("The first number whose exp flushes to zero");
 		mpfr_nextbelow(y);
 		fy = new FPNumber(wE, wF, y); 
 		tc->addFPInput("X", fy);
@@ -771,30 +793,6 @@ void FPExp::buildStandardTestCases(TestCaseList* tcl){
 		tc->addFPInput("X", -3.0);
 		emulate(tc);
 		tcl->add(tc);
-
-		tc = new TestCase(this); 
-		fx = new FPNumber(wE, wF, FPNumber::largestPositive);
-		//cout << fx->getSignalValue() << endl;
-		fx->getMPFR(x);
-		//double d = mpfr_get_d(x, GMP_RNDN);
-		//cout << d << enadl;
-		mpfr_log(y, x, GMP_RNDN);
-		//d = mpfr_get_d(y, GMP_RNDN);
-		//cout << d << endl;
-		fy = new FPNumber(wE, wF, y); 
-		tc->addFPInput("X", fy);
-		emulate(tc);
-		tcl->add(tc);
-		delete(fx); 
-
-		tc = new TestCase(this); 
-		mpfr_nextabove(y);
-		fy = new FPNumber(wE, wF, y); 
-		tc->addFPInput("X", fy);
-		emulate(tc);
-		tcl->add(tc);
-		delete(fy);
-
 
 	
 		mpfr_clears(x, y, NULL);
