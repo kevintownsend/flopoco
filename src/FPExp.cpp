@@ -29,7 +29,8 @@ FPExp::FPExp(Target* target, int wE, int wF)
 		uniqueName_ = o.str();
 	}
 
-	setCopyrightString("J. Detrey, F. de Dinechin, X. Pujol (2007), C. Klein (2008)");
+	setCopyrightString("F. de Dinechin (2008)");
+	srcFileName="FPExp";
 	
 
 	addFPInput("X", wE, wF);
@@ -89,10 +90,10 @@ FPExp::FPExp(Target* target, int wE, int wF)
 
 	mpfr_clears(mp1, mp2, mplog2, mpinvlog2, NULL);
 
-	int sizeY=wF+g-1;
-	int sizeY2=wF+g-1 -p;
-	int sizepolyIn=wF+g-2*p-3; // As in the FPT2005 paper
-	int sizepolyOut=wF+g-2*p-2; // As in the FPT2005 paper
+	// int sizeY=wF+g-1;
+	// int sizeY2=wF+g-1 -p;
+	// int sizepolyIn=wF+g-2*p-3; // As in the FPT2005 paper
+	// int sizepolyOut=wF+g-2*p-2; // As in the FPT2005 paper
 
 	addConstant("wE", "positive", wE);
 	addConstant("wF", "positive", wF);
@@ -137,7 +138,7 @@ FPExp::FPExp(Target* target, int wE, int wF)
 	syncCycleFromSignal("fixX0");
 
 	vhdl << tab  << "-- Partial overflow/underflow detection" << endl;
-	vhdl << tab  << declare("oufl0") << " <= not shiftVal(wE+1) when shiftVal(wE downto 0) > conv_std_logic_vector(" << maxshift << ", wE+1) else '0';" << endl;
+	vhdl << tab  << declare("oufl0") << " <= not shiftVal(wE+1) when shiftVal(wE downto 0) >= conv_std_logic_vector(" << maxshift << ", wE+1) else '0';" << endl;
 
  	int sizeXfix = wE-1 + 1+wF+g +1; // +1 for the sign
 	vhdl << tab << declare("fixX", sizeXfix) << " <= " << "'0' & fixX0" << range(wE-1 + wF+g + wF+1 -1, wF) << ";" << endl;
@@ -173,14 +174,14 @@ FPExp::FPExp(Target* target, int wE, int wF)
 	vhdl << tab << "-- Now compute the exp of this fixed-point value" <<endl;
 	REPORT(LIST, "Generating the polynomial approximation, this may take some time");
 	// nY is in [0, 1]
-	FunctionEvaluator *fe = new FunctionEvaluator(target, "exp(x), 0,1,1", wF+g, wF+g, 2);
+	FunctionEvaluator *fe = new FunctionEvaluator(target, "exp(x), 0,1,1", wF+g, wF+g, d);
 	oplist.push_back(fe);
 	inPortMap(fe, "X", "Y");
 	outPortMap(fe, "R", "expY");
 	vhdl << instance(fe, "poly");
 	syncCycleFromSignal("expY");
 	// here we have in expY the exponential  	
-	int rWeight=fe->getRWeight(); // TODO should be 2, 3 if signed, but I get 4
+	// int rWeight=fe->getRWeight(); // TODO should be 2, 3 if signed, but I get 4
 	//	int rWidth=fe->getRWidth(); // TODO bug, it is the one before rounding
 	int rWidth=getSignalByName("expY")->width(); 
 
@@ -690,7 +691,7 @@ void FPExp::buildStandardTestCases(TestCaseList* tcl){
 
 		mpfr_t x, y;
 		FPNumber *fx, *fy;
-		double d;
+		// double d;
 
 		mpfr_init2(x, 1+wF);
 		mpfr_init2(y, 1+wF);
