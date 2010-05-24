@@ -43,6 +43,7 @@ namespace flopoco{
 		Operator(target), op_(op), n_(n)
 	{
 		LongAccN = n;
+		srcFileName="TestBench";
 		setName("TestBench_" + op_->getName());
 		
 		setCombinatorial(); // this is a combinatorial operator
