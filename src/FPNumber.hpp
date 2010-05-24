@@ -19,11 +19,15 @@ namespace flopoco{
 
 		/** Several possible special values */
 		typedef enum {
-			plusInfty,                        /**< A positive infinity with random non-zero exponent and fraction bits  */
-			minusInfty,                       /**< A negative infinity with random non-zero exponent and fraction bits  */
-			plusDirtyZero,                    /**< A zero with non-zero exponent and fraction bits */
-			minusDirtyZero,                   /**< A zero with non-zero exponent and fraction bits */
-			NaN                       /**<  */
+			plusInfty,                   /**< A positive infinity with random non-zero exponent and fraction bits  */
+			minusInfty,                  /**< A negative infinity with random non-zero exponent and fraction bits  */
+			plusDirtyZero,               /**< A zero with non-zero exponent and fraction bits */
+			minusDirtyZero,              /**< A zero with non-zero exponent and fraction bits */
+			NaN,                         /**< A NaN */
+			largestPositive,                 /**< The largest positive FPNumber  */
+			smallestPositive,                 /**< The smallest positive FPNumber  */
+			largestNegative,                 /**< The largest (in magnitude) negative FPNumber  */
+			smallestNegative                  /**< The smallest (in magnitude) negative FPNumber*/
 		} SpecialValue;
 
 		/**

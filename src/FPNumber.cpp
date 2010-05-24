@@ -70,6 +70,30 @@ namespace flopoco{
 			exponent = getLargeRandom(wE);
 			mantissa = getLargeRandom(wF);
 			break;
+		case largestPositive: 
+			exception = 1;
+			sign = 0;
+			exponent = (1<<wE)-1;
+			mantissa = (1<<wF)-1;
+			break;
+		case smallestPositive: 
+			exception = 1;
+			sign = 0;
+			exponent = 0;
+			mantissa = 0;
+			break;
+		case largestNegative: 
+			exception = 1;
+			sign = 1;
+			exponent = (1<<wE)-1;
+			mantissa = (1<<wF)-1;
+			break;
+		case smallestNegative: 
+			exception = 1;
+			sign = 1;
+			exponent = 0;
+			mantissa = 0;
+			break;
 		}
 	}
 

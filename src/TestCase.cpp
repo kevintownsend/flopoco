@@ -88,6 +88,21 @@ namespace flopoco{
 		inputs[name] = mpx;
 	}
 
+	void TestCase::addFPInput(string name, FPNumber *x) {
+		Signal* s = op_->getSignalByName(name);
+		if(!s->isFP()) {
+			throw string("TestCase::addFPInput: Cannot convert a FPNumber into non-FP signal");
+		} 
+		int wE, wF;
+		x->getPrecision(wE, wF);
+		if((s->wE() != wE) || (s->wF() !=wF)) {
+			throw string("TestCase::addFPInput(string, FPNumber): size of provided FPNumber does not match");
+		} 
+		mpz_class mpx = x->getSignalValue();
+
+		inputs[name] = mpx;
+	}
+
 	void TestCase::addIEEEInput(string name, IEEENumber::SpecialValue v) {
 		// get signal size
 		Signal* s = op_->getSignalByName(name);

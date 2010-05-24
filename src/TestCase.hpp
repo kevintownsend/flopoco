@@ -59,9 +59,16 @@ namespace flopoco{
 		 * Adds an input in the FloPoCo FP format for this TestCase
 		 * @param s The signal which will value the given value
 		 * @param x the value which will be assigned to the signal, provided as a double.
-		 * (use this method with care) 
+		 * (use this method with care, typically only for values such as 1.0 which are representable whatever wE or wF) 
 		 */
 		void addFPInput(string s, double x);
+
+		/**
+		 * Adds an input in the FloPoCo FP format for this TestCase
+		 * @param s The signal which will value the given value
+		 * @param x the value which will be assigned to the signal, provided as an FPNumber.
+		 */
+		void addFPInput(string s, FPNumber *x);
 
 		/**
 		 * Adds an input in the IEEE FP format for this TestCase
