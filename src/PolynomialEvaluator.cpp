@@ -38,13 +38,13 @@ namespace flopoco{
 		
 		setCopyrightString("Bogdan Pasca (2010)");
 		srcFileName = "PolynomialEvaluator";
+		setPolynomialDegree(coef.size()-1);
 		setName(join("PolynomialEvaluator_d",degree_));
 
 		/* set the approximation error budget we are allowed */
 		setApproximationError(approxError);
 
 		updateCoefficients(coef);
-		setPolynomialDegree(coef.size()-1);
 		REPORT(DETAILED, "Polynomial to evaluate: " << printPolynomial(coef, y, 0));
 		
 		/* I/O Signal Declarations; y and the coefficients*/
