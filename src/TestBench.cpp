@@ -325,10 +325,10 @@ namespace flopoco{
                   string inputFileName = "test.input";
                   ofstream fileOut(inputFileName.c_str(),ios::out);
                   // if error at opening, let's mention it !
-                  if (!fileOut) cerr << "FloPoCo was not abe to open " << inputFileName << " in order to write down inputs. " << endl;
+                  if (!fileOut) cerr << "FloPoCo was not able to open " << inputFileName << " in order to write inputs. " << endl;
 
 
-
+						REPORT(LIST,"Generating the exhaustive test bench, this may take some time");
                   // exhaustive test
                   int length = inputSignalVector.size();
                   int* IOwidth = new int[length]; 
