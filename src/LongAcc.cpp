@@ -75,6 +75,8 @@ namespace flopoco{
 		sizeAcc_ = MSBA_-LSBA_+1;
 
 		addFPInput ("X", wEX_,wFX_);
+		addInput   ("newDataSet");
+		addOutput  ("ready");
 		addOutput  ("A", sizeAcc_);  
 		addOutput  ("C", sizeAcc_);
 		addOutput  ("XOverflow");  
@@ -161,7 +163,7 @@ namespace flopoco{
 				join("acc_",i,"_ext")<<range((i!=nbOfChunks-1?chunkSize_-1:lastChunkSize-1),0) << ";" << endl;
 			vhdl << tab << declare(join("carryBit_",i+1),1, false, Signal::registeredWithSyncReset) <<"  <= " << join("acc_",i,"_ext")<<of((i!=nbOfChunks-1?chunkSize_:lastChunkSize)) << ";" << endl;
 			nextCycle();		
-			vhdl << tab << declare(join("acc_",i,"_ext"),(i!=nbOfChunks-1?chunkSize_:lastChunkSize)+1) << " <= ( \"0\" & " << use(join("acc_",i)) << ") + " <<
+			vhdl << tab << declare(join("acc_",i,"_ext"),(i!=nbOfChunks-1?chunkSize_:lastChunkSize)+1) << " <= ( \"0\" & (" << use(join("acc_",i)) << " and "<<rangeAssign( (i!=nbOfChunks-1?chunkSize_:lastChunkSize)-1,0, "not(newDataSet)") <<")) + " <<
 				"( \"0\" & ext_summand2c" << range( (i!=nbOfChunks-1?chunkSize_*(i+1)-1:sizeAcc_-1), chunkSize_*i) << ") + " << 
 				use(join("carryBit_",i)) << ";" << endl;
 			setCycleFromSignal("carryBit_0");
@@ -225,7 +227,7 @@ namespace flopoco{
 		vhdl << tab << "XUnderflow <= xUnderflowRegister;"<<endl; 
 
 		setCycleFromSignal("acc");
-
+		vhdl << tab << "ready <= newDataSet;"<<endl;
 	}
 
 

@@ -49,6 +49,8 @@ namespace flopoco{
 		 * @param[in] wOut   the with of the output in bits  
 		 **/
 		DualTable(Target* target, int _wIn, int _wOut, int _minIn=0, int _maxIn=-1);
+		
+		DualTable(Target* target);
 
 		virtual ~DualTable() {};
 

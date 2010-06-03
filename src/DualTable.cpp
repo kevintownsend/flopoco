@@ -126,6 +126,11 @@ namespace flopoco{
 	
 	}
 	
+	DualTable::DualTable(Target* target) : 
+		Operator(target)
+	{
+		setCopyrightString("Radu Tudoran (2010)");
+	}
 
 
 	// We have to define this method because the constructor of DualTable cannot use the (pure virtual) function()
