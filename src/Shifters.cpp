@@ -76,7 +76,7 @@ namespace flopoco{
 			if (verbose)
 				cerr<<"> Shifters\t depth = "<<dep<<" at i="<<currentLevel<<endl;	
 
-			stageDelay = intlog(mpz_class(target->lutInputs()), mpz_class(dep)) * target->lutDelay() + (intlog(mpz_class(target->lutInputs()),mpz_class(dep))-1) * target->localWireDelay();
+			stageDelay += intlog(mpz_class(target->lutInputs()), mpz_class(dep)) * target->lutDelay() + (intlog(mpz_class(target->lutInputs()),mpz_class(dep))-1) * target->localWireDelay();
 			if (lastRegLevel == -1)
 				stageDelay+= maxInputDelay_;
 		
