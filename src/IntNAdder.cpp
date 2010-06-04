@@ -40,6 +40,7 @@ namespace flopoco{
 			
 		ostringstream name;
 		name << "IntNAdder_" << wIn_<<"_"<<N;
+		srcFileName = "IntNAdder";
 		setName(name.str());
 
 		setCopyrightString("Bogdan Pasca (2009)");
@@ -185,31 +186,39 @@ namespace flopoco{
 							nextCycle();
 						}else{
 							currentLevel++;
-							delay += target->adderDelay(wIn_) + target->localWireDelay();
-							if (delay > objectivePeriod){
-								nextCycle();
-								delay = target->adderDelay(wIn_) + target->localWireDelay();
+							if (l < N-1){
+								/* for the last addition we don't insert any register after 
+								as there is no more computation for this operator when nbOfChunks==1*/
+								delay += target->adderDelay(wIn_) + target->localWireDelay();
+								if (delay > objectivePeriod){
+									nextCycle();
+									delay = target->adderDelay(wIn_) + target->localWireDelay();
+								}
 							}
 						}
 					}
-					vhdl << tab << "--final propagations " << endl; 
-			
+
 					REPORT(DEBUG, "The number of chunks is: " << nbOfChunks);
+					
+					if (nbOfChunks>1){
+						vhdl << tab << "--final propagations " << endl; 
 			
-					for (int i=2; i<nbOfChunks+1; i++){
-						for (int j=i-1; j< nbOfChunks ; j++){
-							ostringstream dname, uname1, uname2;
-							dname << "sX"<<j<<"_0_l"<<currentLevel;
-							uname1 << "sX"<<j<<"_0_l"<<currentLevel-1;
-							uname2 << "sX"<<j-1<<"_0_l"<<currentLevel-1;
-							vhdl << tab << declare(dname.str(), cSize[j]+1) << " <= ( \"0\" & " << uname1.str()<<range(cSize[j]-1,0) << ") + " 
-								                                                                << uname2.str()<<of(cSize[j-1])<<";" <<endl;
+						for (int i=2; i<nbOfChunks+1; i++){
+							for (int j=i-1; j< nbOfChunks ; j++){
+								ostringstream dname, uname1, uname2;
+								dname <<  "sX"<<j<<"_0_l"<<currentLevel;
+								uname1 << "sX"<<j<<"_0_l"<<currentLevel-1;
+								uname2 << "sX"<<j-1<<"_0_l"<<currentLevel-1;
+								vhdl << tab << declare(dname.str(), cSize[j]+1) << " <= ( \"0\" & " << uname1.str()<<range(cSize[j]-1,0) << ") + " 
+										                                                            << uname2.str()<<of(cSize[j-1])<<";" <<endl;
+							}
+							currentLevel++;
+							if (i<nbOfChunks) 
+								nextCycle();
 						}
-						currentLevel++;
-						if (i<nbOfChunks) 
-							nextCycle();
 					}
 					currentLevel--;
+				
 					vhdl << tab << "R <= ";
 					int k=0;
 
