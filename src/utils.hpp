@@ -274,6 +274,8 @@ namespace flopoco{
 	string printMapContent( map <string, int> inputDelays);
 	
 	string printVectorContent( vector< pair<string, int> > table);
+	
+	string to_lowercase(const std::string& s);
 }
 
 #endif

@@ -522,5 +522,12 @@ namespace flopoco{
 		return tmp.str(); 
 	}
 
+	string to_lowercase(const std::string& s){
+		std::string t;
+		for (std::string::const_iterator i = s.begin(); i != s.end(); ++i)
+		t += tolower(*i);
+		return t;
+	}
+
 
 }

@@ -412,7 +412,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				}
 				else if (o == "verbose") {
 					verbose = atoi(v.c_str()); // there must be a more direct method of string
-					if (verbose<0 || verbose>3) {
+					if (verbose<0 || verbose>4) {
 						cerr<<"ERROR: verbose should be 1, 2 or 3,    got "<<v<<"."<<endl;
 						usage(argv[0]);
 					}
@@ -1605,6 +1605,7 @@ int main(int argc, char* argv[] )
 	
 	for(i=0; i<oplist.size(); i++) {
 		try {
+			REPORT(FULL, "OPERATOR:"<<oplist[i]->getName());
 			REPORT(FULL, "--DECLARE LIST---------------------------------------------------");
 			REPORT(FULL, printMapContent(oplist[i]->getDeclareTable()) );
 			REPORT(FULL, "--USE LIST-------------------------------------------------------");

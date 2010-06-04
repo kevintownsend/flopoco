@@ -1097,7 +1097,24 @@ namespace flopoco{
 				tReplace << use(name, useCycle - declareCycle); 
 				replaceString = tReplace.str();
 			}else{
-//				cout << "+++++ Element NOT FOUND" << endl;
+				/* parse the declare by hand and check lower/upper case */
+				bool found = false;
+//				vector<pair<string,int> >::iterator iterDecl;
+				string tmp;
+				for (iterDeclare = declareTable.begin(); iterDeclare!=declareTable.end();++iterDeclare){
+					tmp = iterDeclare->first;
+					if ( (to_lowercase(tmp)).compare(to_lowercase(name))==0){
+						found = true;
+						break;
+					}
+				}
+				
+				if (found == true){
+					cerr << "ERROR: Clash on signal:"<<name<<". Definition used signal name "<<tmp<<". Check signal case!"<<endl;
+					exit(-1);
+				}
+								
+				cout << "+++++ Element NOT FOUND:" << name << endl;
 				tReplace << name;
 				replaceString = tReplace.str();
 			}

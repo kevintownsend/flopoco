@@ -133,7 +133,7 @@ FPExp::FPExp(Target* target, int wE, int wF)
 	Shifter* lshift = new Shifter(target, wF+1, maxshift , Shifter::Left);   
 	oplist.push_back(lshift);
 	int shiftInSize = lshift->getShiftInWidth();
-	vhdl << tab  << declare("shiftValIn", shiftInSize) << " <= shiftval" << range(shiftInSize-1, 0) << ";" << endl;
+	vhdl << tab  << declare("shiftValIn", shiftInSize) << " <= shiftVal" << range(shiftInSize-1, 0) << ";" << endl;
 
 	outPortMap(lshift, "R", "fixX0");
 	inPortMap(lshift, "S", "shiftValIn");
