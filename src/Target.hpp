@@ -173,6 +173,14 @@ namespace flopoco{
 		 * @return the frequency
 		 */
 		double frequencyMHz();
+
+
+		/** Returns the target frequency, normalized between 0 and 1 in a target-independent way.
+			 1 means maximum practical frequency (400MHz on Virtex4, 500MHz on Virtex-5, etc)
+			 This method is intended to make it easier to write target-independent frequency-directed operators
+		 */
+		double normalizedFrequency();
+
 	
 		/** Sets the desired frequency for this target
 		 * @param f the desired frequency
@@ -220,6 +228,7 @@ namespace flopoco{
 		int    multYInputs_;        /**< The size for the Y dimmension of the hardware multipliers */
 		bool   useHardMultipliers_; /**< If true the operator design can use the hardware multipliers */
 		long   sizeOfBlock_;		/**< The size of a primitive memory block */
+		double maxFrequencyMHz_ ;/**< The maximum practical frequency attainable on this target. An indicator of relative performance of FPGAs. 400 is for Virtex4 */
 	
 	};
 

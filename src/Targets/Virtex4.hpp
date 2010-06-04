@@ -45,6 +45,7 @@ namespace flopoco{
 			vendor_         = "Xilinx";
 			sizeOfBlock_ 	= 18432;	// the size of a primitive block is 2^11 * 9
 			// all these values are set more or less randomly, to match  virtex 4 more or less
+			maxFrequencyMHz_= 400;
 			fastcarryDelay_ = 0.034e-9; //s   
 			elemWireDelay_  = 0.436e-9;
 			lutDelay_       = 0.15e-9; 
