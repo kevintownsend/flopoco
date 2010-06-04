@@ -238,12 +238,12 @@ namespace flopoco{
 				if(signedInput_ && (i==nbOfTables-1)) {
 					inPortMap (t2, "X", join("d",i));
 					outPortMap(t2, "Y", join("pp",i));
+					vhdl << tab << "-- last table multiplies by signed input" << endl;
 					vhdl << instance(t2, join("KCMTable_",i));
 				}
 				else {
 					inPortMap (t1, "X", join("d",i));
 					outPortMap(t1, "Y", join("pp",i));
-					vhdl << tab << "-- last table multiplies by signed input" << endl;
 					vhdl << instance(t1, join("KCMTable_",i));
 				}
 			}
@@ -267,20 +267,33 @@ namespace flopoco{
 				}
 			}
 		
-			map<string, double> inMap;
-			inMap["X0"] = delay;
+			if(wIn_>32 && target->normalizedFrequency()>=0.5) { // TODO a real test, or fix the inMap?
+				map<string, double> inMap;
+				inMap["X0"] = delay;
 		
-			IntNAdder* adder = new IntNAdder(target, addOpSize, nbOfTables, inMap);
-			oplist.push_back(adder);
-			for (int i=0; i<nbOfTables; i++)
-				inPortMap (adder, join("X",i) , join("addOp",i));
+				IntNAdder* adder = new IntNAdder(target, addOpSize, nbOfTables, inMap);
+				oplist.push_back(adder);
+				for (int i=0; i<nbOfTables; i++)
+					inPortMap (adder, join("X",i) , join("addOp",i));
 		
-			inPortMapCst(adder, "Cin", "'0'");
-			outPortMap(adder, "R", "OutRes");
-			vhdl << instance(adder, "Result_Adder");
-		
-			syncCycleFromSignal("OutRes");
-		
+				inPortMapCst(adder, "Cin", "'0'");
+				outPortMap(adder, "R", "OutRes");
+				vhdl << instance(adder, "Result_Adder");
+				syncCycleFromSignal("OutRes");
+			}
+
+			else{
+				if(target->normalizedFrequency()>0.5)
+					nextCycle();
+				// stupid addition
+				vhdl << tab << declare("OutRes", addOpSize) << " <= ";
+				for (int i=0; i<nbOfTables; i++) {
+					vhdl <<  join("addOp",i);
+					if(i<nbOfTables-1)
+						vhdl << " + ";
+				}
+				vhdl << ";" << endl;
+			}		
 			vhdl << tab << "R <= OutRes & pp0" << range(lutWidth-1,0) << ";" <<endl;
 	}
 

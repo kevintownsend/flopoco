@@ -387,8 +387,8 @@ public:
 
 
 	
+
 	/** build all the signal declarations from signals implicitely declared by declare().
-	 *  This is the 2.0 equivalent of outputVHDLSignalDeclarations
 	 */
 	string buildVHDLSignalDeclarations();
 
@@ -401,6 +401,9 @@ public:
 	 */
 	string buildVHDLRegisters();
 
+	/** build all the type declarations.
+	 */
+	string buildVHDLTypeDeclarations();
 
 	/** output the VHDL constants. */
 	string buildVHDLConstantDeclarations();
@@ -553,10 +556,15 @@ public:
 	void outputVHDLSignalDeclarations(std::ostream& o);
 
 
+	/** Add a VHDL type declaration. */
+ 	void addType(std::string name, std::string def);
+
 	/** Add a VHDL constant. This may make the code easier to read, but more difficult to debug. */
 	void addConstant(std::string name, std::string ctype, int cvalue);
 
 	void addConstant(std::string name, std::string ctype, mpz_class cvalue);
+	
+	void addConstant(std::string name, std::string ctype, string cvalue);
 	
 
 	/** Add attribute, declaring the attribute name if it is not done already.
@@ -633,8 +641,9 @@ private:
 	bool                   isSequential_;               /**< True if the operator needs a clock signal*/
 	int                    pipelineDepth_;              /**< The pipeline depth of the operator. 0 for combinatorial circuits */
 	map<string, Signal*>   signalMap_;                  /**< A container of tuples for recovering the signal based on it's name */ 
-	map<string, pair<string, mpz_class> > constants_;    /**< The list of constants of the operator: name, <type, value> */
+	map<string, pair<string, string> > constants_;      /**< The list of constants of the operator: name, <type, value> */
 	map<string, string>    attributes_;                  /**< The list of attribute declarations (name, type) */
+	map<string, string>    types_;                      /**< The list of type declarations (name, type) */
 	map<pair<string,string>, string >  attributesValues_;/**< attribute values <attribute name, object (component, signal, etc)> ,  value> */
 	bool                   hasRegistersWithoutReset_;   /**< True if the operator has registers without a reset */
 	bool                   hasRegistersWithAsyncReset_; /**< True if the operator has registers having an asynch reset */

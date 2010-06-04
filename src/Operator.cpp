@@ -812,12 +812,26 @@ namespace flopoco{
 		return o.str();	
 	}
 
+
+
 	void Operator::addConstant(std::string name, std::string t, mpz_class v) {
-		constants_[name] =  make_pair(t, v);
+		ostringstream tmp; 
+		tmp << v;
+		constants_[name] =  make_pair(t, tmp.str());
+	}
+
+	void Operator::addType(std::string name, std::string value) {
+		types_ [name] =  value;
 	}
 
 	void Operator::addConstant(std::string name, std::string t, int v) {
-		constants_[name] =  make_pair(t, mpz_class(v));
+		ostringstream tmp; 
+		tmp << v;
+		constants_[name] =  make_pair(t, tmp.str());
+	}
+
+	void Operator::addConstant(std::string name, std::string t, string v) {
+		constants_[name] =  make_pair(t, v);
 	}
 
 
@@ -829,12 +843,23 @@ namespace flopoco{
 	}
 
 
+	string Operator::buildVHDLTypeDeclarations() {
+		ostringstream o;
+		for(map<string, string >::iterator it = types_.begin(); it !=types_.end(); it++) {
+			string name  = it->first;
+			string value = it->second;
+			o <<  "type " << name << " is "  << value << ";" << endl;
+		}
+		return o.str();	
+	}
+
+
 	string Operator::buildVHDLConstantDeclarations() {
 		ostringstream o;
-		for(map<string, pair<string, mpz_class> >::iterator it = constants_.begin(); it !=constants_.end(); it++) {
+		for(map<string, pair<string, string> >::iterator it = constants_.begin(); it !=constants_.end(); it++) {
 			string name  = it->first;
 			string type = it->second.first;
-			mpz_class value = it->second.second;
+			string value = it->second.second;
 			o <<  "constant " << name << ": " << type << " := " << value << ";" << endl;
 		}
 		return o.str();	
@@ -1031,6 +1056,7 @@ namespace flopoco{
 		newArchitecture(o,name);
 		o << buildVHDLComponentDeclarations();	
 		o << buildVHDLSignalDeclarations();
+		o << buildVHDLTypeDeclarations();
 		o << buildVHDLConstantDeclarations();
 		o << buildVHDLAttributes();
 		beginArchitecture(o);		

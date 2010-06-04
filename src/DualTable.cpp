@@ -16,13 +16,12 @@
 /* 
  The class contains a primitive Dual Port Memory block, that is nested inside the DualTable class. This is done in order to prevent the miss used of the inner object.
  The Memories are splitied in fundamental units(blocks) that can be recognized by the simulator as dual port memories. The limit of a memory block until it is recognized as
- a dual port one is 2^11*9 bits. However this value could be moved in the target in the eventuality that some other targets would have others such limits. However, on all models
- of Virtex 4 on which the design was tested this value holds. This class is an abstract one, and in order to be used it must be extended by a concret class which will implement the
+ a dual port one is 2^11*9 bits on Virtex 4. 
+
+This class is an abstract one, and in order to be used it must be extended by a concret class which will implement the
  "function" method. It is very similar to the Table class.
 */
 
-#include <iostream>
-#include "utils.hpp"
 #include "DualTable.hpp"
 
 
@@ -63,21 +62,20 @@ namespace flopoco{
 		wIn(_wIn), wOut(_wOut), minIn(_minIn), maxIn(_maxIn),target(target)
 	{
 	
-		setCopyrightString("Radu Tudoran (2009)");
+		setCopyrightString("Radu Tudoran, Florent de Dinechin (2009)");
+		//		setCombinatorial();
 
 		//limitSingleMemory = intpow2(11)*9;
 		limitSingleMemory = target->sizeOfMemoryBlock();
 		
 		// Set up the IO signals
-	
 		addInput ("X1"  , wIn);
 		addOutput ("Y1"  , wOut);
 		addInput ("X2"  , wIn);
 		addOutput ("Y2"  , wOut);			
 		
-		if(intpow2(wIn)*wOut<=limitSingleMemory)
-			{
-		
+		// if((1<<wIn)*wOut<=limitSingleMemory)
+		// 	{
 				if(maxIn==-1) maxIn=(1<<wIn)-1;
 				if(minIn<0) {
 					cerr<<"ERROR in DualTable::DualTable, minIn<0\n";
@@ -91,41 +89,33 @@ namespace flopoco{
 					full=true;
 				else
 					full=false;
-	
 				nrOfMemBlocks=1;
-	
-	
-	
-			}
-		else
-			{
+ 	// }
+	// else
+	// 	{
+	// 		maxIn= intlog2(limitSingleMemory / wOut);
+	// 		if((1<<maxIn)*wOut>limitSingleMemory)
+	// 			maxIn--;
 		
-				maxIn= intlog2(limitSingleMemory / wOut);
-				if(intpow2(maxIn)*wOut>limitSingleMemory)
-					maxIn--;
+	// 		nrOfMemBlocks = 1<<(wIn-maxIn);
 	
-	
-		
-				nrOfMemBlocks = intpow2(wIn-maxIn);
-	
-				if(nrOfMemBlocks * maxIn<wIn)
-					nrOfMemBlocks++;
+	// 		if(nrOfMemBlocks * maxIn<wIn)
+	// 			nrOfMemBlocks++;
 		
 			
-				if(minIn<0) {
-					cerr<<"ERROR in DualTable::DualTable, minIn<0\n";
-					exit(EXIT_FAILURE);
-				}
+	// 		if(minIn<0) {
+	// 			cerr<<"ERROR in DualTable::DualTable, minIn<0\n";
+	// 			exit(EXIT_FAILURE);
+	// 		}
 	
-				full=true;
+	// 		full=true;
 	
-				cerr << "WARNING : FloPoCo is building a DualTable with " << wIn <<" X "<< wOut<< " , it will be large." << endl;
-		
-			}
-	
-	
+	// 		cerr << "WARNING : FloPoCo is building a DualTable with " << wIn <<" X "<< wOut<< " , it will be large." << endl;
+	// 	}
 	}
 	
+
+
 	DualTable::DualTable(Target* target) : 
 		Operator(target)
 	{
@@ -133,40 +123,60 @@ namespace flopoco{
 	}
 
 
-	// We have to define this method because the constructor of DualTable cannot use the (pure virtual) function()
-	void DualTable::outputVHDL(std::ostream& o, std::string name) {
-		int i;
-		mpz_class y;
-		ostringstream data;
+	void DualTable::outputVHDL(std::ostream& o, std::string name)
+	{
+		fillTable();
+		Operator::outputVHDL(o,  name);
+	}
 
-		if( intpow2(wIn) * wOut<=limitSingleMemory)
-			{
-	
-		
-				for(int v=minIn;v<=maxIn;v++)
-					{data<<function(v)<<" ";
-					}
+
+
+	void DualTable::fillTable() {
+		// if( (1<<wIn) * wOut<=limitSingleMemory)
+		// 	{
+		ostringstream array;
+		int x;
+		mpz_class y;
+		ostringstream type;
+
+		type<<"array (0 to "<< intpow2(wIn)-1<< ") of std_logic_vector("<<wOut-1 <<" downto 0)";
+		addType("ROMContent", type.str());
 				
-		
-				primitiveBlock  = new primitiveDualMemory(target,wIn,wOut,minIn,maxIn);
-				primitiveBlock->setInputData(data);
-				primitiveBlock  ->changeName(getName()+"primitiveBlock");	
-				oplist.push_back(primitiveBlock  );
-				inPortMapCst  (primitiveBlock  , "X1","X1");
-				inPortMapCst  (primitiveBlock  , "X2","X2");
-				outPortMap (primitiveBlock  , "Y1","data1");
-				outPortMap (primitiveBlock  , "Y2","data2");
-				vhdl << instance(primitiveBlock  ,"primitiveBlock");
-		
-				vhdl<<tab<<"Y1 <=data1;"<<endl;
-				vhdl<<tab<<"Y2 <=data2;"<<endl;
-		
-			}
+
+		array <<tab << "( "<<endl;
+	
+		int count=0;
+		for (x = minIn; x <= maxIn; x++) {
+			//cout << x << "  " << y << endl;
+			y=function(x);
+			array 	<< tab<<tab << "\"" << unsignedBinary(y, wOut)  ;
+			if(x!=maxIn)
+				array<< "\", ";
+			else
+				array<<"\" ";
+			count++;
+			if(count==4)
+				{array<<endl;
+					count=0;
+				}
+		}
+		array<<")"<<endl;
+
+				
+		addConstant("memVar", "ROMContent", array.str());
+
+		vhdl<<tab<<tab<<tab<<" Y1 <= memVar(conv_integer(X1)); "<<endl;
+		vhdl<<tab<<tab<<tab<<" Y2 <= memVar(conv_integer(X2)); "<<endl;
+
+ #if 0
+			} 
+// This is remnants of code by Radu that did the splitting of a large table in many smaller tables. 
+// I can't believe the tools are unable to do it.
+// To check
 		else
 			{
-	
-				ostringstream name1,name2,name3;
-	
+				throw string("Large DualTables broken for now, sorry");
+				ostringstream name1,name2,name3, data;
 				int rangeHighAddress = wIn - maxIn;
 		
 				vhdl<<tab<<declare("address1L",maxIn)<<" <= X1"<<range(maxIn-1,0)<<";"<<endl;
@@ -174,10 +184,8 @@ namespace flopoco{
 				vhdl<<tab<<declare("address2L",maxIn)<<" <= X2"<<range(maxIn-1,0)<<";"<<endl;
 				vhdl<<tab<<declare("address2H",rangeHighAddress,true)<<" <= X2"<<range(wIn-1,maxIn)<<";"<<endl;
 	
-	
 				primitiveBlocks = (primitiveDualMemory**) calloc (nrOfMemBlocks,sizeof(primitiveDualMemory*));
-		
-	
+
 				for(int c1=0;c1<nrOfMemBlocks;c1++)
 					{
 						data.str("");
@@ -188,7 +196,7 @@ namespace flopoco{
 						name3.str("");
 						name3<<"data2FromM_"<<c1;
 		
-						int maxInInner= intpow2(maxIn);
+						int maxInInner= (1<<maxIn);
 		
 						for(int v=minIn;v<=maxInInner-1-minIn;v++)
 							{
@@ -204,8 +212,6 @@ namespace flopoco{
 						outPortMap (primitiveBlocks[c1]  , "Y1",name2.str());
 						outPortMap (primitiveBlocks[c1]  , "Y2",name3.str());
 						vhdl << instance(primitiveBlocks[c1]  ,name1.str());
-		
-			
 					}
 	
 				vhdl<<endl;
@@ -230,21 +236,18 @@ namespace flopoco{
 				vhdl << tab<<tab << "\"";
 				for (i = 0; i < wOut; i++) 
 					vhdl << "-";
-				vhdl <<  "\" when others;" << endl;
-	
-		
+				vhdl <<  "\" when others;" << endl;		
 			}
+#endif
 	
-		Operator::outputVHDL(o,  name);
 	}
 
 
 
 
 
-
 	int DualTable::size_in_LUTs() {
-		return wOut*int(intpow2(wIn-target_->lutInputs()));
+		return wOut*(1<<(wIn-target_->lutInputs()));
 	}
 
 

@@ -4,6 +4,7 @@
 #include <math.h>	// For NaN
 
 #include "FPExp.hpp"
+//#include "fpexponential/SPExpDualTable.hpp"
 #include "FPNumber.hpp"
 #include "ConstMult/IntIntKCM.hpp"
 #include "Shifters.hpp"
@@ -18,6 +19,7 @@ using namespace std;
 
 namespace flopoco{
 	extern vector<Operator *> oplist;
+
 
 FPExp::FPExp(Target* target, int wE, int wF)
 	: Operator(target), wE(wE), wF(wF)
@@ -36,8 +38,10 @@ FPExp::FPExp(Target* target, int wE, int wF)
 	addFPInput("X", wE, wF);
 	addFPOutput("R", wE, wF, 2);  // 2 because faithfully rounded
 
-	g=3; // TODO
-	p=9; // TODO
+	// TODO a bit more science here. Not sure the following code works for any other g
+	g=3; 
+
+
 	int d=2; // degree: TODO
 
 	// The two constants
@@ -64,7 +68,7 @@ FPExp::FPExp(Target* target, int wE, int wF)
 	mpfr_mul_2si(mplog2, mplog2, wE+wF+g, GMP_RNDN); //Exact
 	mpfr_get_z(mpzLog2.get_mpz_t(), mplog2, GMP_RNDN);
 
-#if 1 // remove to use KCMs
+#if 0 // remove to use KCMs
 	std::string  cstLog2;
 	{
 		std::ostringstream o;
@@ -136,71 +140,157 @@ FPExp::FPExp(Target* target, int wE, int wF)
 	inPortMap(lshift, "X", "mXu");
 	vhdl << instance(lshift, "mantissa_shift");
 	syncCycleFromSignal("fixX0");
+	nextCycle();
 
 	vhdl << tab  << "-- Partial overflow/underflow detection" << endl;
 	vhdl << tab  << declare("oufl0") << " <= not shiftVal(wE+1) when shiftVal(wE downto 0) >= conv_std_logic_vector(" << maxshift << ", wE+1) else '0';" << endl;
 
- 	int sizeXfix = wE-1 + 1+wF+g +1; // +1 for the sign
+ 	int sizeXfix = wE-1 + 1+wF+g +1; // +1 for the sign == wE+wF+g +1
 	vhdl << tab << declare("fixX", sizeXfix) << " <= " << "'0' & fixX0" << range(wE-1 + wF+g + wF+1 -1, wF) << ";" << endl;
 	vhdl << tab << "-- two's compliment version mantissa" << endl;
-	vhdl << tab  << declare("fixXsigned", sizeXfix) << " <= ((" << sizeXfix-1 << " downto 0 => '0') - fixX) when XSign = '1' else  fixX;" << endl;
+	vhdl << tab  << declare("fixXsigned", sizeXfix) << " <= " << endl
+		  << tab << "(" << sizeXfix-1 << " downto 0 => '0') when expIs1='1'" << endl
+		  << tab << "else ((" << sizeXfix-1 << " downto 0 => '0') - fixX) when XSign = '1'" << endl
+		  << tab << "else fixX;" << endl;
 
  	// fixXsigned(), on wE+3 bits,  is an int . 2^-2
 	// cstInvLog2,   on wE+3 bits,  is an int . 2^{-wE-2}
 	// The product is an int . 2^{-wE-4}
 
 	vhdl << tab <<	declare("xMulIn",wE+3) << " <=  fixXsigned "<< range(sizeXfix-1, sizeXfix-wE-3) << "; -- 2's complement, rounded down" << endl;
+
+	if((wE+wF)*target->normalizedFrequency() > 14)
+		nextCycle();
+
 	IntIntKCM *mulInvLog2 = new IntIntKCM(target, wE+3, mpzInvLog2, true /* signed input */);
 	oplist.push_back(mulInvLog2);
 	outPortMap(mulInvLog2, "R", "xInvLog2ToZero");
 	inPortMap(mulInvLog2, "X", "xMulIn");
 	vhdl << instance(mulInvLog2, "mulInvLog2");
+	syncCycleFromSignal("xInvLog2ToZero");
 
+	if((wE+wF)*target->normalizedFrequency() > 8)
+		nextCycle(); 
+	
 	vhdl << tab <<	declare("xInvLog2",2*(wE+3)) << " <=   xInvLog2ToZero when XSign='0' else xInvLog2ToZero + ("<< rangeAssign(2*(wE+3)-1, wE+3, "'1'") << " & xMulIn); -- if X<0 xMulIn should be multiplied by RU(1/log2) = 1+invlog2" << endl;
 
-	vhdl << tab << declare("K", wE+1) << " <= xInvLog2 " << range(2*(wE+3)-2, wE+4) << "; -- rouding down in all cases" <<endl;
+	vhdl << tab << declare("K", wE+1) << " <= xInvLog2 " << range(2*(wE+3)-2, wE+4) << "; -- rounding down in all cases" <<endl;
 
+	if((wE+wF)*target->normalizedFrequency() > 4)
+		nextCycle();
 
 	IntIntKCM *mulLog2 = new IntIntKCM(target, wE+1, mpzLog2, true /* signed input */);
 	oplist.push_back(mulLog2);
 	outPortMap(mulLog2, "R", "KLog2");
 	inPortMap(mulLog2, "X", "K");
 	vhdl << instance(mulLog2, "mulLog2");
+	syncCycleFromSignal("KLog2");
+	nextCycle();
 
 	vhdl << tab << declare("Ypadded", sizeXfix) << " <= fixXsigned - KLog2" << range(wE+1 + wE+wF+g -1, wE+1 + wE+wF+g - sizeXfix) << ";\n";
-	vhdl << tab << declare("Y", wF+g) << " <= Ypadded" << range(wF+g-1, 0) << ";\n";
-	vhdl << tab << declare("ShouldBeZero", wE) << " <= Ypadded" << range(sizeXfix-1, sizeXfix-wE) << "; -- for debug TODO remove\n";
+	vhdl << tab << declare("Y", wF+g) << " <= Ypadded" << range(sizeXfix-wE-2, 0) << ";\n";
+	vhdl << tab << declare("ShouldBeZero", wE+1) << " <= Ypadded" << range(sizeXfix-1, sizeXfix-wE-1) << "; -- for debug TODO remove\n";
+
 	if(wF+g<=32) {
 	vhdl << tab << "-- Now compute the exp of this fixed-point value" <<endl;
-	REPORT(LIST, "Generating the polynomial approximation, this may take some time");
-	// nY is in [0, 1]
-	FunctionEvaluator *fe = new FunctionEvaluator(target, "exp(x), 0,1,1", wF+g, wF+g, d);
-	oplist.push_back(fe);
-	inPortMap(fe, "X", "Y");
-	outPortMap(fe, "R", "expY");
-	vhdl << instance(fe, "poly");
-	syncCycleFromSignal("expY");
-	// here we have in expY the exponential  	
-	// int rWeight=fe->getRWeight(); // TODO should be 2, 3 if signed, but I get 4
-	//	int rWidth=fe->getRWidth(); // TODO bug, it is the one before rounding
-	int rWidth=getSignalByName("expY")->width(); 
 
- 	vhdl << tab << declare("ShouldBeZero2", 2) << " <= expY" << range(rWidth-1, rWidth-2)  << "; -- for debug TODO remove\n";
-	vhdl << tab << declare("needNorm") << " <= expY(" << rWidth-3 << ");" << endl;
-	vhdl << tab << declare("roundBit") << " <= expY(" << rWidth-4-wF << ")  when needNorm = '1'    else expY(" <<  rWidth-5-wF << ") ;" << endl;
+	int rWidth;
 
+	if(wE==8 && wF==23) {
+		// For g=3 we enter with Y on 26 bits. Better first pad it
+		vhdl << tab << declare("Y0", 27) << " <= Y & '0';\n";
+
+		int sizeY=27;
+		k=9;
+		int sizeZ=18; // should be wF+g-k; 
+		// CHECK k+sizeZ == sizeY
+
+
+		vhdl << tab << declare("Addr1", k) << " <= Y0" << range(sizeY-1, sizeY-k) << ";\n";
+		vhdl << tab << declare("Z", sizeZ) << " <= Y0" << range(sizeZ-1, 0) << ";\n";
+		vhdl << tab << declare("Addr2", k) << " <= Z" << range(sizeZ-1, sizeZ-k) << ";\n";
+		magicExpTable* table;
+		table = new magicExpTable(target);
+		oplist.push_back(table);
+		outPortMap(table, "Y2", "lowerTerm0");
+		inPortMap(table, "X2", "Addr2");
+		outPortMap(table, "Y1", "expA0");
+		inPortMap(table, "X1", "Addr1");
+		vhdl << instance(table, "table");
+		syncCycleFromSignal("expA0");
+		if((wE+wF)*target->normalizedFrequency() > 8)
+			nextCycle();
+		if((wE+wF)*target->normalizedFrequency() > 16)
+			nextCycle(); // To get high-speed BRam speed
+		
+		// TODO if needed: since the leading bit is always 1, maybe we can win one bit of accuracy on the input of the product
+		vhdl << tab << "-- Adding back the leading bit" << endl;
+		
+		vhdl << tab << declare("expAh", 2) << " <= '0' & expA0(35);" << endl;
+		vhdl << tab << declare("expA", 28) << " <= (\"01\" + expAh) & expA0" << range(34, 34-25) << ";" << endl;
+		
+		vhdl << tab << "-- Computing Z + (exp(z)-1-Z)" << endl;
+		vhdl << tab << declare("lowerTerm", k) << " <= lowerTerm0" << range(k-1, 0) << ";" << endl;
+		vhdl << tab << declare("expZminus1", sizeZ+1) << " <= ('0' & Z) + (" << rangeAssign(sizeZ, sizeZ-k, "'0'") << " & lowerTerm) ;" << endl;
+		vhdl << tab << "-- Magical rounding-by-truncation to 17 bits, thanks to an half-ulp stored in the table" << endl;
+		vhdl << tab << declare("expZminus1rounded", 17) << " <= expZminus1" << range(sizeZ, 2) << ";" << endl;
+
+		vhdl << tab << declare("expAtruncated", 17) << " <= expA" << range(27, 27-16) << ";" << endl;
+
+		if((wE+wF)*target->normalizedFrequency() > 4)
+			nextCycle();
+
+		vhdl << tab << declare("lowerProduct", 34) << " <= expAtruncated * expZminus1rounded;" << endl;
+		if((wE+wF)*target->normalizedFrequency() > 14)
+			nextCycle();
+
+		vhdl << tab << "-- Final addition -- the product ranges on bit weights -7 to -40" << endl;
+		vhdl << tab << declare("expY", 28) << " <= expA + (" << rangeAssign(27, 27-7, "'0'") << " & lowerProduct" << range(33, 33-19) << ");" << endl;
+
+		rWidth=28; // for the rounding
+	}
+	else{
+ 
+		REPORT(LIST, "Generating the polynomial approximation, this may take some time");
+		// nY is in [0, 1]
+		FunctionEvaluator *fe = new FunctionEvaluator(target, "exp(x), 0,1,1", wF+g, wF+g, d);
+		oplist.push_back(fe);
+		inPortMap(fe, "X", "Y");
+		outPortMap(fe, "R", "expY0");
+		vhdl << instance(fe, "poly");
+		syncCycleFromSignal("expY0");
+		// here we have in expY the exponential  	x
+		// int rWeight=fe->getRWeight(); // TODO should be 2, 3 if signed, but I get 4
+		//	int rWidth=fe->getRWidth(); // TODO bug, it is the one before rounding
+		rWidth=getSignalByName("expY0")->width(); 
+
+		vhdl << tab << declare("ShouldBeZero2", 2) << " <= expY0" << range(rWidth-1, rWidth-2)  << "; -- for debug TODO remove\n";
+		vhdl << tab << declare("expY", rWidth-2) << " <= expY0" << range(rWidth-3, 0)  << "; -- the clean one\n";
+		rWidth-=2;
+	}
+
+
+	// The following is generic normalization/rounding code if we have an approx of exp(y) of size rwidth in expY.
+	// We start a cycle here
+	nextCycle();
+
+	vhdl << tab << declare("needNoNorm") << " <= expY(" << rWidth-1 << ");" << endl;
+	vhdl << tab << declare("roundBit") << " <= expY(" << rWidth-2-wF << ")  when needNoNorm = '1'    else expY(" <<  rWidth-3-wF << ") ;" << endl;
 
 	vhdl << tab << "-- Rounding: all this should consume one row of LUTs" << endl; 
 	vhdl << tab << declare("preRoundBiasSig", wE+wF+2)
-		  << " <= conv_std_logic_vector(" << bias+1 << ", wE+2)  & expY" << range(rWidth-4, rWidth-4-wF+1) << " when needNorm = '1'" << endl
-		  << tab << tab << "else conv_std_logic_vector(" << bias << ", wE+2)  & expY" << range(rWidth-5, rWidth-5-wF+1) << " ;" << endl;
+		  << " <= conv_std_logic_vector(" << bias+1 << ", wE+2)  & expY" << range(rWidth-2, rWidth-2-wF+1) << " when needNoNorm = '1'" << endl
+		  << tab << tab << "else conv_std_logic_vector(" << bias << ", wE+2)  & expY" << range(rWidth-3, rWidth-3-wF+1) << " ;" << endl;
 	vhdl << tab << declare("roundNormAddend", wE+wF+2) << " <= K(" << wE << ") & K & "<< rangeAssign(wF-1, 1, "'0'") << " & roundBit;" << endl;
+
+	if((wE+wF)*target->normalizedFrequency() > 16)
+		nextCycle();
 	vhdl << tab << declare("roundedExpSig", wE+wF+2) << " <= preRoundBiasSig + roundNormAddend when Xexn=\"01\" else "
 		  << " \"000\" & (wE-2 downto 0 => '1') & (wF-1 downto 0 => '0');" << endl;
 	
 	vhdl << tab << declare("ofl1") << " <= not XSign and oufl0 and (not Xexn(1) and Xexn(0)); -- input positive, normal,  very large" << endl;
 	vhdl << tab << declare("ofl2") << " <= not XSign and (roundedExpSig(wE+wF) and not roundedExpSig(wE+wF+1)) and (not Xexn(1) and Xexn(0)); -- input positive, normal, overflowed" << endl;
- 	vhdl << tab << declare("ofl3") << " <= not Xsign and Xexn(1) and not Xexn(0);  -- input was -infty" << endl;
+ 	vhdl << tab << declare("ofl3") << " <= not XSign and Xexn(1) and not Xexn(0);  -- input was -infty" << endl;
  	vhdl << tab << declare("ofl") << " <= ofl1 or ofl2 or ofl3;" << endl;
 
 	vhdl << tab << declare("ufl1") << " <= (roundedExpSig(wE+wF) and roundedExpSig(wE+wF+1))  and (not Xexn(1) and Xexn(0)); -- input normal" << endl;
@@ -214,129 +304,9 @@ FPExp::FPExp(Target* target, int wE, int wF)
 		  << tab << tab << "else \"00\" when ufl='1'" << endl
 		  << tab << tab << "else \"01\";" << endl;
 		
-
 	vhdl << tab << "R <= Rexn & '0' & roundedExpSig" << range(wE+wF-1, 0) << ";" << endl;
 	}
 
-
-#if 0
-	vhdl << tab << declare("preRoundSignificand", wF) << " <= nZ(wF+g-1 downto g) when sign = '0'    else  nZ(wF+g-2 downto g-1);" << endl;
-	vhdl << tab << declare("preRoundExponent",wE+1) << " <= nK + (\"00\" & (wE-2 downto 1 => '1') & (not sign));" << endl;
-	vhdl << tab << declare("preRoundExponentSignificand", wE+wF+1) << " <= preRoundExponent & preRoundSignificand;" << endl;
-	vhdl << tab << declare("postRoundExponentSignificand", wE+wF+1) 
-		  << " <= preRoundExponentSignificand + nZ(g-1) when sign = '0'    else  preRoundExponentSignificand + nZ(g-2);" << endl;
-	vhdl << tab << declare("exponent",wE+1) << " <= postRoundExponentSignificand(wE+wF downto wF);" << endl;
-	vhdl << tab << declare("significand", wF) << " <= postRoundExponentSignificand(wF-1 downto 0);" << endl;
-
-	vhdl << tab << declare("ofl1") << " <= ofl0 or exponent(wE);" << endl;
-	vhdl << tab << declare("ufl1") << " <= '1' when X(wE+wF+2 downto wE+wF+1) = \"00\"      else  ufl0;" << endl;
-	vhdl << tab << declare("ofl2") << " <= '1' when X(wE+wF+2 downto wE+wF+1) = \"10\"      else ofl1 and (not ufl1);" << endl;
-	vhdl << tab << "R(wE+wF+2 downto wE+wF+1) <= \"11\"                   when X(wE+wF+2 downto wE+wF+1) = \"11\" else" << endl
-		  << "                               (not X(wE+wF)) & \"0\" when ofl2 = '1'                         else" << endl
-		  << "                               \"01\";" << endl;
-	vhdl << tab << "R(wE+wF downto 0) <= \"00\" & (wE-2 downto 0 => '1') & (wF-1 downto 0 => '0') when ufl1 = '1' else" << endl
-		  << "                         \"0\" & exponent(wE-1 downto 0) & significand;" << endl;
-
-#endif
-#if 0
-
-	fp_exp <<
-		"\n"
-		"  signal fixX : std_logic_vector(wE+wF+g-1 downto 0); -- fixed point, 2's complement X\n"
-		"  signal nK0 : std_logic_vector(wE+4+wE downto 0);\n"
-		"  signal nK1 : std_logic_vector(wE+4+wE+1 downto 0);\n"
-		"  signal nK  : std_logic_vector(wE downto 0);\n"
-		"  \n"
-		"  signal nKLog20 : std_logic_vector(wE+wE-1+wF+g-1 downto 0);\n"
-		"  signal nKLog2  : std_logic_vector(wE+wE-1+wF+g downto 0);\n"
-		"  signal nY  : std_logic_vector(wE+wF+g-1 downto 0);\n"
-		"  signal sign : std_logic;\n"
-		"  signal unsigned_input : std_logic_vector(wF+g-2 downto 0);\n"
-		"  \n"
-		"  signal nZ : std_logic_vector(wF+g-1 downto 0);\n"
-		"  \n"
-		"  signal preRoundSignificand : std_logic_vector(wF-1 downto 0);\n"
-		"  signal preRoundExponent : std_logic_vector(wE downto 0); \n"
-		"  signal preRoundExponentSignificand : std_logic_vector(wE+wF downto 0);\n"
-		"  signal postRoundExponentSignificand : std_logic_vector(wE+wF downto 0);\n"
-		"  signal significand : std_logic_vector(wF-1 downto 0);\n"
-		"  signal exponent : std_logic_vector(wE downto 0);\n"
-		"\n"
-		"  signal sticky : std_logic;\n"
-		"  signal round  : std_logic;\n"
-		"\n"
-		"  signal fR0 : std_logic_vector(wF+1 downto 0);\n"
-		"  signal fR1 : std_logic_vector(wF downto 0);\n"
-		"  signal fR  : std_logic_vector(wF-1 downto 0);\n"
-		"\n"
-		"  signal eR : std_logic_vector(wE downto 0);\n"
-		"  \n"
-		"  signal ofl0 : std_logic;\n"
-		"  signal ofl1 : std_logic;\n"
-		"  signal ofl2 : std_logic;\n"
-		"  signal ufl0 : std_logic;\n"
-		"  signal ufl1 : std_logic;\n"
-		"  \n"
-		"begin\n"
-		"  -- conversion of X to fixed point\n"
-		"  shift : " << uniqueName_ << "_shift\n"
-		"    generic map ( wE => wE,\n"
-		"                  wF => wF,\n"
-		"                  g => g )\n"
-		"    port map ( fpX => X(wE+wF downto 0),\n"
-		"               fixX  => fixX,\n"
-		"               ofl => ofl0,\n"
-		"               ufl => ufl0 );\n"
-		"\n"
-		"  -- compute E\n"
-		"  nK0 <= fixX(wE+wF+g-2 downto wF+g-4) * cstInvLog2;\n"
-		"  nK1 <= (\"0\" & nK0) - (\"0\" & cstInvLog2 & (wE+4-2 downto 0 => '0')) when fixX(wE+wF+g-1) = '1' else\n"
-		"         \"0\" & nK0;\n"
-		"  -- round E\n"
-		"  nK <= nK1(wE+4+wE+1 downto 4+wE+1) + ((wE downto 1 => '0') & nK1(4+wE));\n"
-		"\n"
-		"  -- compute Y\n"
-		"  nKLog20 <= nK(wE-1 downto 0) * cstLog2;\n"
-		"  nKLog2  <= (\"0\" & nKLog20) - (\"0\" & cstLog2 & (wE-1 downto 0 => '0')) when nK(wE) = '1' else\n"
-		"             \"0\" & nKLog20;\n"
-		"\n"
-		"  nY <= fixX - nKLog2(wE+wE-1+wF+g-1 downto wE-1);\n"
-		"  sign <= nY(wF+g-1);\n"
-		"  unsigned_input <= nY(wF+g-2 downto 0) when sign = '0' else (wF+g-2 downto 0 => '0') - nY(wF+g-2 downto 0);\n"
-		"  \n";
-
-	fp_exp << 
-		"  label2 : " << uniqueName_ << "_exp_" << result_length - 1 << endl <<
-		"    port map (x    => unsigned_input,\n"
-		"              y    => nZ,\n"
-		"              sign => sign);\n"
-		"\n"
-		"  preRoundSignificand(wF-1 downto 0) <= nZ(wF+g-1 downto g) when sign = '0' else\n"
-		"                 nZ(wF+g-2 downto g-1);\n"
-		"  preRoundExponent <= nK + (\"00\" & (wE-2 downto 1 => '1') & (not sign));\n"
-		"  preRoundExponentSignificand <= preRoundExponent & preRoundSignificand;\n"
-		"  postRoundExponentSignificand <= preRoundExponentSignificand + nZ(g-1) when sign = '0' else\n"
-		"                                  preRoundExponentSignificand + nZ(g-2);\n"
-		"  exponent <= postRoundExponentSignificand(wE+wF downto wF);\n"
-		"  significand <= postRoundExponentSignificand(wF-1 downto 0);\n"
-		"\n"
-		"  ofl1 <= ofl0 or exponent(wE);\n"
-		"\n"
-		"  ufl1 <= '1' when X(wE+wF+2 downto wE+wF+1) = \"00\" else\n"
-		"          ufl0;\n"
-		"\n"
-		"  ofl2 <= '1' when X(wE+wF+2 downto wE+wF+1) = \"10\" else\n"
-		"          ofl1 and (not ufl1);\n"
-		"  \n"
-		"  R(wE+wF+2 downto wE+wF+1) <= \"11\"                   when X(wE+wF+2 downto wE+wF+1) = \"11\" else\n"
-		"                                 (not X(wE+wF)) & \"0\" when ofl2 = '1'                         else\n"
-		"                                 \"01\";\n"
-		"\n"
-		"  R(wE+wF downto 0) <= \"00\" & (wE-2 downto 0 => '1') & (wF-1 downto 0 => '0') when ufl1 = '1' else\n"
-		"                         \"0\" & exponent(wE-1 downto 0) & significand;\n"
-		"end architecture;\n";
-
-#endif
 
 }	
 
@@ -344,319 +314,6 @@ FPExp::~FPExp()
 {
 }
 
-#if 0
-// Overloading the virtual functions of Operator
-void FPExp::outputVHDL(std::ostream& o, std::string name)
-{
-	stringstream fp_exp, fixp_exp, fixp_exp_tbl;
-
-	f->generate(uniqueName_, fixp_exp, fixp_exp_tbl);
-
-	std::string cstInvLog2, cstLog2;
-	{
-		mpz_class z;
-
-		mpfr_t mp2, mp1, mp;
-		mpfr_init2(mp, 2*(wE+wF+g));	// XXX: way too much precision
-		mpfr_inits(mp1, mp2, 0, NULL);
-		mpfr_set_si(mp1, 1, GMP_RNDN);
-		mpfr_set_si(mp2, 2, GMP_RNDN);
-
-		mpfr_log(mp, mp2, GMP_RNDN);
-		mpfr_mul_2si(mp, mp, wE-1+wF+g, GMP_RNDN);
-		mpfr_get_z(z.get_mpz_t(), mp, GMP_RNDN);
-		{
-			std::ostringstream o;
-			o.fill('0');
-			o.width(wE-1+wF+g);
-			o << z.get_str(2);
-			cstLog2 = o.str();
-		}
-
-		mpfr_mul_2si(mp, mp, -(wE-1+wF+g), GMP_RNDN);
-		mpfr_div(mp, mp1, mp, GMP_RNDN);
-		mpfr_mul_2si(mp, mp, wE+1, GMP_RNDN);
-		mpfr_get_z(z.get_mpz_t(), mp, GMP_RNDN);
-		{
-			std::ostringstream o;
-			o.fill('0');
-			o.width(wE+1);
-			o << z.get_str(2);
-			cstInvLog2 = o.str();
-		}
-
-		mpfr_clears(mp1, mp2, mp, 0, NULL);
-	}
-
-	fp_exp <<
-		"library ieee;\n"
-		"use ieee.std_logic_1164.all;\n"
-		"use ieee.std_logic_arith.all;\n"
-		"use ieee.std_logic_unsigned.all;\n"
-		"\n"
-		"package pkg_" << uniqueName_ << " is\n"
-		"  function min ( x, y : integer ) return integer;\n"
-		"  function max ( x, y : integer ) return integer;\n"
-		"  function fp_exp_shift_wx ( wE, wF, g : positive ) return positive;\n"
-		"  function log2 ( x : positive ) return integer;\n"
-		"  \n"
-		"  component " << uniqueName_ << "_shift is\n"
-		"    generic ( wE : positive;\n"
-		"              wF : positive;\n"
-		"              g : positive );\n"
-		"    port ( fpX : in  std_logic_vector(wE+wF downto 0);\n"
-		"           fixX  : out std_logic_vector(wE+wF+g-1 downto 0);\n"
-		"           ofl : out std_logic;\n"
-		"           ufl : out std_logic );\n"
-		"  end component;\n"
-		"  \n";
-
-	fp_exp <<
-		"  component " << uniqueName_ << " is" << endl <<
-		"    generic ( wE : positive := " << wE << ";" << endl <<
-		"              wF : positive := " << result_length - g << ";" << endl <<
-		"              g : positive := " << g << " );" << endl;
-
-	fp_exp <<
-		"    port ( x : in  std_logic_vector(2+wE+wF downto 0);\n"
-		"           r : out std_logic_vector(2+wE+wF downto 0) );\n"
-		"  end component;\n"
-		"end package;\n"
-		"\n"
-		"package body pkg_" << uniqueName_ << " is\n"
-		"  function min ( x, y : integer ) return integer is\n"
-		"  begin\n"
-		"    if x <= y then\n"
-		"      return x;\n"
-		"    else\n"
-		"      return y;\n"
-		"    end if;\n"
-		"  end function;\n"
-		"\n"
-		"  function max ( x, y : integer ) return integer is\n"
-		"  begin\n"
-		"    if x >= y then\n"
-		"      return x;\n"
-		"    else\n"
-		"      return y;\n"
-		"    end if;\n"
-		"  end function;\n"
-		"  \n"
-		"  function fp_exp_shift_wx ( wE, wF, g : positive ) return positive is\n"
-		"  begin\n"
-		"    return min(wF+g, 2**(wE-1)-1);\n"
-		"  end function;\n"
-		"  \n"
-		"  function log2 ( x : positive ) return integer is\n"
-		"    variable n : natural := 0;\n"
-		"  begin\n"
-		"    while 2**(n+1) <= x loop\n"
-		"      n := n+1;\n"
-		"    end loop;\n"
-		"    return n;\n"
-		"  end function;\n"
-		"\n"
-		"end package body;\n"
-		"\n"
-		"-- Conversion de l'entrée en virgule fixe\n"
-		"-- ======================================\n"
-		"\n"
-		"library ieee;\n"
-		"use ieee.std_logic_1164.all;\n"
-		"use ieee.std_logic_arith.all;\n"
-		"use ieee.std_logic_unsigned.all;\n"
-		"library work;\n"
-		"use work.pkg_" << uniqueName_ << ".all;\n"
-		"\n"
-		"entity " << uniqueName_ << "_shift is\n"
-		"  generic ( wE : positive;\n"
-		"            wF : positive;\n"
-		"            g : positive );\n"
-		"  port ( fpX : in  std_logic_vector(wE+wF downto 0);\n"
-		"         fixX  : out std_logic_vector(wE+wF+g-1 downto 0);\n"
-		"         ofl : out std_logic;\n"
-		"         ufl : out std_logic );\n"
-		"end entity;\n"
-		"\n"
-		"architecture arch of " << uniqueName_ << "_shift is\n"
-		"  -- length of the fraction part of X\n"
-		"  constant wX : integer  := fp_exp_shift_wx(wE, wF, g);\n"
-		"  -- nombre d'étapes du décalage \n"
-		"  -- (de l'ordre de log2(taille du nombre en virgule fixe))\n"
-		"  constant n  : positive := log2(wX+wE-2)+1;\n"
-		"\n"
-		"  signal e0 : std_logic_vector(wE+1 downto 0);\n"
-		"  signal eX : std_logic_vector(wE+1 downto 0);\n"
-		"\n"
-		"  signal mXu : std_logic_vector(wF downto 0);\n"
-		"  signal mXs : std_logic_vector(wF+1 downto 0);\n"
-		"\n"
-		"  signal buf : std_logic_vector((n+1)*(wF+2**n+1)-1 downto 0);\n"
-		"begin\n"
-		"  -- évalue le décalage à effectuer\n"
-		"  e0 <= conv_std_logic_vector(2**(wE-1)-1 - wX, wE+2);\n"
-		"  eX <= (\"00\" & fpX(wE+wF-1 downto wF)) - e0;\n"
-		"\n"
-		"  -- underflow quand l'entrée est arrondie à zéro (donc au final exp(entrée) = 1) (?)\n"
-		"  ufl <= eX(wE+1);\n"
-		"  -- overflow (détection partielle en se basant uniquement sur l'exposant de l'entrée)\n"
-		"  ofl <= not eX(wE+1) when eX(wE downto 0) > conv_std_logic_vector(wX+wE-2, wE+1) else\n"
-		"         '0';\n"
-		"\n"
-		"  -- mantisse de l'entrée (rajoute le 1 implicite)\n"
-		"  mXu <= \"1\" & fpX(wF-1 downto 0);\n"
-		"  -- représentation signée de la mantisse\n"
-		"  mXs <= (wF+1 downto 0 => '0') - (\"0\" & mXu) when fpX(wE+wF) = '1' else (\"0\" & mXu);\n"
-		"\n"
-		"  -- ajoute eX zéros à droite de la mantisse\n"
-		"  buf(wF+1 downto 0) <= mXs;\n"
-		"  shift : for i in 0 to n-1 generate\n"
-		"    buf( (i+1)*(wF+2**n+1) + wF+2**(i+1) downto\n"
-		"         (i+1)*(wF+2**n+1) )\n"
-		"      <=   -- pas de décalage si eX(i) = 0\n"
-		"           ( 2**i-1 downto 0 => buf(i*(wF+2**n+1) + wF+2**i) ) &\n"
-		"           buf( i*(wF+2**n+1) + wF+2**i downto\n"
-		"                i*(wF+2**n+1) )\n"
-		"        when eX(i) = '0' else\n"
-		"           -- décalage de 2 ^ i bits si eX(i) = 1\n"
-		"           buf( i*(wF+2**n+1) + wF+2**i downto\n"
-		"                i*(wF+2**n+1) ) &\n"
-		"           ( 2**i-1 downto 0 => '0' );\n"
-		"  end generate;\n"
-		"\n"
-		"  no_padding : if wX >= g generate\n"
-		"    fixX <= buf(n*(wF+2**n+1)+wF+wE+wX-1 downto n*(wF+2**n+1)+wX-g);\n"
-		"  end generate;\n"
-		"\n"
-		"  padding : if wX < g generate\n"
-		"    fixX <= buf(n*(wF+2**n+1)+wF+wE+wX-1 downto n*(wF+2**n+1)) & (g-wX-1 downto 0 => '0');\n"
-		"  end generate;\n"
-		"\n"
-		"end architecture;\n"
-		"\n"
-		"-- Exponentielle en virgule flottante\n"
-		"-- ==================================\n"
-		"\n"
-		"library ieee;\n"
-		"use ieee.std_logic_1164.all;\n"
-		"use ieee.std_logic_arith.all;\n"
-		"use ieee.std_logic_unsigned.all;\n"
-		"library work;\n"
-		"use work.pkg_" << uniqueName_ << "_exp.all;\n"
-		"use work.pkg_" << uniqueName_ << ".all;\n"
-		"\n";
-
-	fp_exp <<
-		"entity " << uniqueName_ << " is" << endl <<
-		"    generic ( wE : positive := " << wE << ";" << endl <<
-		"              wF : positive := " << result_length - g << ";" << endl <<
-		"              g : positive := " << g << " );" << endl <<
-		"    port ( x : in  std_logic_vector(2+wE+wF downto 0);" << endl <<
-		"           r : out std_logic_vector(2+wE+wF downto 0));" << endl <<
-		"end entity;" << endl << endl <<
-		"architecture arch of " << uniqueName_ << " is" << endl <<
-		"  constant cstInvLog2 : std_logic_vector(wE+1 downto 0) := \"" << cstInvLog2 << "\";" << endl <<
-		"  constant cstLog2 : std_logic_vector(wE-1+wF+g-1 downto 0) := \"" << cstLog2 << "\";" << endl;
-
-	fp_exp <<
-		"\n"
-		"  signal fixX : std_logic_vector(wE+wF+g-1 downto 0); -- fixed point, 2's complement X\n"
-		"  signal nK0 : std_logic_vector(wE+4+wE downto 0);\n"
-		"  signal nK1 : std_logic_vector(wE+4+wE+1 downto 0);\n"
-		"  signal nK  : std_logic_vector(wE downto 0);\n"
-		"  \n"
-		"  signal nKLog20 : std_logic_vector(wE+wE-1+wF+g-1 downto 0);\n"
-		"  signal nKLog2  : std_logic_vector(wE+wE-1+wF+g downto 0);\n"
-		"  signal nY  : std_logic_vector(wE+wF+g-1 downto 0);\n"
-		"  signal sign : std_logic;\n"
-		"  signal unsigned_input : std_logic_vector(wF+g-2 downto 0);\n"
-		"  \n"
-		"  signal nZ : std_logic_vector(wF+g-1 downto 0);\n"
-		"  \n"
-		"  signal preRoundSignificand : std_logic_vector(wF-1 downto 0);\n"
-		"  signal preRoundExponent : std_logic_vector(wE downto 0); \n"
-		"  signal preRoundExponentSignificand : std_logic_vector(wE+wF downto 0);\n"
-		"  signal postRoundExponentSignificand : std_logic_vector(wE+wF downto 0);\n"
-		"  signal significand : std_logic_vector(wF-1 downto 0);\n"
-		"  signal exponent : std_logic_vector(wE downto 0);\n"
-		"\n"
-		"  signal sticky : std_logic;\n"
-		"  signal round  : std_logic;\n"
-		"\n"
-		"  signal fR0 : std_logic_vector(wF+1 downto 0);\n"
-		"  signal fR1 : std_logic_vector(wF downto 0);\n"
-		"  signal fR  : std_logic_vector(wF-1 downto 0);\n"
-		"\n"
-		"  signal eR : std_logic_vector(wE downto 0);\n"
-		"  \n"
-		"  signal ofl0 : std_logic;\n"
-		"  signal ofl1 : std_logic;\n"
-		"  signal ofl2 : std_logic;\n"
-		"  signal ufl0 : std_logic;\n"
-		"  signal ufl1 : std_logic;\n"
-		"  \n"
-		"begin\n"
-		"  -- conversion of X to fixed point\n"
-		"  shift : " << uniqueName_ << "_shift\n"
-		"    generic map ( wE => wE,\n"
-		"                  wF => wF,\n"
-		"                  g => g )\n"
-		"    port map ( fpX => X(wE+wF downto 0),\n"
-		"               fixX  => fixX,\n"
-		"               ofl => ofl0,\n"
-		"               ufl => ufl0 );\n"
-		"\n"
-		"  -- compute E\n"
-		"  nK0 <= fixX(wE+wF+g-2 downto wF+g-4) * cstInvLog2;\n"
-		"  nK1 <= (\"0\" & nK0) - (\"0\" & cstInvLog2 & (wE+4-2 downto 0 => '0')) when fixX(wE+wF+g-1) = '1' else\n"
-		"         \"0\" & nK0;\n"
-		"  -- round E\n"
-		"  nK <= nK1(wE+4+wE+1 downto 4+wE+1) + ((wE downto 1 => '0') & nK1(4+wE));\n"
-		"\n"
-		"  -- compute Y\n"
-		"  nKLog20 <= nK(wE-1 downto 0) * cstLog2;\n"
-		"  nKLog2  <= (\"0\" & nKLog20) - (\"0\" & cstLog2 & (wE-1 downto 0 => '0')) when nK(wE) = '1' else\n"
-		"             \"0\" & nKLog20;\n"
-		"\n"
-		"  nY <= fixX - nKLog2(wE+wE-1+wF+g-1 downto wE-1);\n"
-		"  sign <= nY(wF+g-1);\n"
-		"  unsigned_input <= nY(wF+g-2 downto 0) when sign = '0' else (wF+g-2 downto 0 => '0') - nY(wF+g-2 downto 0);\n"
-		"  \n";
-
-	fp_exp << 
-		"  label2 : " << uniqueName_ << "_exp_" << result_length - 1 << endl <<
-		"    port map (x    => unsigned_input,\n"
-		"              y    => nZ,\n"
-		"              sign => sign);\n"
-		"\n"
-		"  preRoundSignificand(wF-1 downto 0) <= nZ(wF+g-1 downto g) when sign = '0' else\n"
-		"                 nZ(wF+g-2 downto g-1);\n"
-		"  preRoundExponent <= nK + (\"00\" & (wE-2 downto 1 => '1') & (not sign));\n"
-		"  preRoundExponentSignificand <= preRoundExponent & preRoundSignificand;\n"
-		"  postRoundExponentSignificand <= preRoundExponentSignificand + nZ(g-1) when sign = '0' else\n"
-		"                                  preRoundExponentSignificand + nZ(g-2);\n"
-		"  exponent <= postRoundExponentSignificand(wE+wF downto wF);\n"
-		"  significand <= postRoundExponentSignificand(wF-1 downto 0);\n"
-		"\n"
-		"  ofl1 <= ofl0 or exponent(wE);\n"
-		"\n"
-		"  ufl1 <= '1' when X(wE+wF+2 downto wE+wF+1) = \"00\" else\n"
-		"          ufl0;\n"
-		"\n"
-		"  ofl2 <= '1' when X(wE+wF+2 downto wE+wF+1) = \"10\" else\n"
-		"          ofl1 and (not ufl1);\n"
-		"  \n"
-		"  R(wE+wF+2 downto wE+wF+1) <= \"11\"                   when X(wE+wF+2 downto wE+wF+1) = \"11\" else\n"
-		"                                 (not X(wE+wF)) & \"0\" when ofl2 = '1'                         else\n"
-		"                                 \"01\";\n"
-		"\n"
-		"  R(wE+wF downto 0) <= \"00\" & (wE-2 downto 0 => '1') & (wF-1 downto 0 => '0') when ufl1 = '1' else\n"
-		"                         \"0\" & exponent(wE-1 downto 0) & significand;\n"
-		"end architecture;\n";
-
-	o << fixp_exp_tbl.str() << fixp_exp.str() << fp_exp.str();
-}
-#endif
 
 
 void FPExp::emulate(TestCase * tc)
@@ -697,6 +354,12 @@ void FPExp::buildStandardTestCases(TestCaseList* tcl){
 		mpfr_init2(y, 1+wF);
 
 
+
+		tc = new TestCase(this); 
+		tc->addFPInput("X", log(2));
+		emulate(tc);
+		tcl->add(tc);
+
 		tc = new TestCase(this); 
 		tc->addFPInput("X", FPNumber::plusDirtyZero);
 		emulate(tc);
@@ -706,6 +369,40 @@ void FPExp::buildStandardTestCases(TestCaseList* tcl){
 		tc->addFPInput("X", FPNumber::minusDirtyZero);
 		emulate(tc);
 		tcl->add(tc);
+
+
+
+		tc = new TestCase(this); 
+		tc->addFPInput("X", 1.0);
+		emulate(tc);
+		tcl->add(tc);
+
+		tc = new TestCase(this); 
+		tc->addFPInput("X", 2.0);
+		emulate(tc);
+		tcl->add(tc);
+
+		tc = new TestCase(this); 
+		tc->addFPInput("X", 1.5);
+		emulate(tc);
+		tcl->add(tc);
+
+		tc = new TestCase(this); 
+		tc->addFPInput("X", -1.0);
+		emulate(tc);
+		tcl->add(tc);
+
+		tc = new TestCase(this); 
+		tc->addFPInput("X", -2.0);
+		emulate(tc);
+		tcl->add(tc);
+
+		tc = new TestCase(this); 
+		tc->addFPInput("X", -3.0);
+		emulate(tc);
+		tcl->add(tc);
+
+
 
 
 		tc = new TestCase(this); 
@@ -764,36 +461,6 @@ void FPExp::buildStandardTestCases(TestCaseList* tcl){
 		delete(fy);
 
 
-
-		tc = new TestCase(this); 
-		tc->addFPInput("X", 1.0);
-		emulate(tc);
-		tcl->add(tc);
-
-		tc = new TestCase(this); 
-		tc->addFPInput("X", 2.0);
-		emulate(tc);
-		tcl->add(tc);
-
-		tc = new TestCase(this); 
-		tc->addFPInput("X", 1.5);
-		emulate(tc);
-		tcl->add(tc);
-
-		tc = new TestCase(this); 
-		tc->addFPInput("X", -1.0);
-		emulate(tc);
-		tcl->add(tc);
-
-		tc = new TestCase(this); 
-		tc->addFPInput("X", -2.0);
-		emulate(tc);
-		tcl->add(tc);
-
-		tc = new TestCase(this); 
-		tc->addFPInput("X", -3.0);
-		emulate(tc);
-		tcl->add(tc);
 
 	
 		mpfr_clears(x, y, NULL);
