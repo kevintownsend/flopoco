@@ -63,7 +63,7 @@ namespace flopoco{
 	{
 	
 		setCopyrightString("Radu Tudoran, Florent de Dinechin (2009)");
-		//		setCombinatorial();
+		setCombinatorial();
 
 		//limitSingleMemory = intpow2(11)*9;
 		limitSingleMemory = target->sizeOfMemoryBlock();
