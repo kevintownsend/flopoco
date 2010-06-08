@@ -250,7 +250,7 @@ FPExp::FPExp(Target* target, int wE, int wF)
 		rWidth=28; // for the rounding
 	}
 	else{
- 
+#ifdef HAVE_HOTBM
 		REPORT(LIST, "Generating the polynomial approximation, this may take some time");
 		// nY is in [0, 1]
 		FunctionEvaluator *fe = new FunctionEvaluator(target, "exp(x), 0,1,1", wF+g, wF+g, d);
@@ -267,6 +267,10 @@ FPExp::FPExp(Target* target, int wE, int wF)
 		vhdl << tab << declare("ShouldBeZero2", 2) << " <= expY0" << range(rWidth-1, rWidth-2)  << "; -- for debug TODO remove\n";
 		vhdl << tab << declare("expY", rWidth-2) << " <= expY0" << range(rWidth-3, 0)  << "; -- the clean one\n";
 		rWidth-=2;
+#else
+		cerr<<"ERROR: FPExp requires HOTBM"<<endl;
+		exit (EXIT_FAILURE);
+#endif
 	}
 
 

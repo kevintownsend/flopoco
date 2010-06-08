@@ -61,7 +61,7 @@ libflopoco_la_SOURCES = VHDLLexer.lpp \
 			ConstMult/ShiftAddOp.cpp \
 			ConstMult/ShiftAddDag.cpp \
 			ConstMult/IntIntKCM.cpp \
-			ConstMult/FirstKCMTable.cpp \
+			ConstMult/KCMTable.cpp \
 			ConstMult/FPConstMult.cpp \
 			TestCase.cpp \
 			FPNumber.cpp \
@@ -84,7 +84,7 @@ libflopoco_la_SOURCES = VHDLLexer.lpp \
 			IntSquarer.cpp
 
 if no_WIN32
-libflopoco_la_SOURCES += ConstMult/LastKCMTable.cpp ConstMult/CRFPConstMult.cpp \
+libflopoco_la_SOURCES += ConstMult/CRFPConstMult.cpp \
 			PolynomialEvaluator.cpp \
 			TableGenerator.cpp \
 			PiecewiseFunction.cpp \
