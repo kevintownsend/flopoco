@@ -1114,7 +1114,7 @@ namespace flopoco{
 					exit(-1);
 				}
 								
-				cout << "+++++ Element NOT FOUND:" << name << endl;
+//				cout << "+++++ Element NOT FOUND:" << name << endl;
 				tReplace << name;
 				replaceString = tReplace.str();
 			}
