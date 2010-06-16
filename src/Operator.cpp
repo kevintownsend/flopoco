@@ -1,5 +1,5 @@
 /*
-  The base Operator class, every operator should inherit it
+  the base Operator class, every operator should inherit it
 
   Author : Florent de Dinechin, Bogdan Pasca
 
@@ -333,6 +333,18 @@ namespace flopoco{
 
 	}
 
+
+	void Operator::pipelineInfo(std::ostream& o){
+		pipelineInfo(o, copyrightString_);
+	}
+
+
+	void Operator::pipelineInfo(std::ostream& o, std::string authorsyears){
+		if(isSequential()){
+			o<<"-- Pipeline depth: " <<getPipelineDepth() << " cycles"  <<endl <<endl;
+		}
+	}
+
 	void Operator::outputVHDL(std::ostream& o) {
 		this->outputVHDL(o, this->uniqueName_); 
 	}
@@ -637,7 +649,7 @@ namespace flopoco{
 		Signal* formal;
 		ostringstream e;
 		string name;
-		e << "ERROR in inPortMap(), "; // just in case
+		e << "ERROR in inPortMap() of " << op->getName() << ","; // just in case
 	
 		if(isSequential()) {
 			Signal *s;
@@ -1051,6 +1063,7 @@ namespace flopoco{
 	void Operator::outputVHDL(std::ostream& o, std::string name) {
   
 		licence(o);
+		pipelineInfo(o);
 		stdLibs(o);
 		outputVHDLEntity(o);
 		newArchitecture(o,name);

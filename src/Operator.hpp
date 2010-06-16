@@ -533,6 +533,12 @@ public:
 	 */
 	void licence(std::ostream& o);
 
+
+	void pipelineInfo(std::ostream& o, std::string authorsYears);
+
+
+	void pipelineInfo(std::ostream& o);
+
 	/** DEPRECATED  Output the standard library paperwork 
 	 * @param o the stream where the libraries will be written to
 	 */
