@@ -191,12 +191,15 @@ FPExp::FPExp(Target* target, int wE, int wF)
 	vhdl << tab << declare("Y", wF+g) << " <= Ypadded" << range(sizeXfix-wE-2, 0) << ";\n";
 	vhdl << tab << declare("ShouldBeZero", wE+1) << " <= Ypadded" << range(sizeXfix-1, sizeXfix-wE-1) << "; -- for debug TODO remove\n";
 
-	if(wF+g<=32) {
 	vhdl << tab << "-- Now compute the exp of this fixed-point value" <<endl;
 
 	int rWidth;
 
+
+ 
 	if(wE==8 && wF==23) {
+		//--------------------------------Special case for single precision-----------------
+		// TODO and smaller
 		// For g=3 we enter with Y on 26 bits. Better first pad it
 		vhdl << tab << declare("Y0", 27) << " <= Y & '0';\n";
 
@@ -250,12 +253,34 @@ FPExp::FPExp(Target* target, int wE, int wF)
 		rWidth=28; // for the rounding
 	}
 	else{
-#ifdef HAVE_HOTBM
-		REPORT(LIST, "Generating the polynomial approximation, this may take some time");
+#ifdef HAVE_SOLLYA
 		// nY is in [0, 1]
-		FunctionEvaluator *fe = new FunctionEvaluator(target, "exp(x), 0,1,1", wF+g, wF+g, d);
+		// values for double-precision. For the other ones: TODO
+		k=12;
+		d=3; // TODO for DP 2 is better
+		int sizeY=wF+g+1;
+		int sizeZ=wF+g+1-k; 
+
+		vhdl << tab << declare("Addr1", k) << " <= Y0" << range(sizeY-1, sizeY-k) << ";\n";
+		vhdl << tab << declare("Z", sizeZ) << " <= Y0" << range(sizeZ-1, 0) << ";\n";
+		firstExpTable* table;
+		table = new firstExpTable(target, k, wF+g+1);
+		oplist.push_back(table);
+		outPortMap(table, "Y", "expA0");
+		inPortMap(table, "X", "Addr1");
+		vhdl << instance(table, "table");
+		syncCycleFromSignal("expA0");
+		if((wE+wF)*target->normalizedFrequency() > 8)
+			nextCycle();
+		if((wE+wF)*target->normalizedFrequency() > 16)
+			nextCycle(); // To get high-speed BRam speed
+
+
+		vhdl << tab << declare("Zhigh", k) << " <= Z" << range(sizeZ-1, sizeZ-k) << ";\n";
+		REPORT(LIST, "Generating the polynomial approximation, this may take some time");
+		FunctionEvaluator *fe = new FunctionEvaluator(target, "exp(x)-x-1, 0,1,1", wF+g+1-2*k, wF+g+1-2*k, d);
 		oplist.push_back(fe);
-		inPortMap(fe, "X", "Y");
+		inPortMap(fe, "X", "Zhigh");
 		outPortMap(fe, "R", "expY0");
 		vhdl << instance(fe, "poly");
 		syncCycleFromSignal("expY0");
@@ -268,8 +293,7 @@ FPExp::FPExp(Target* target, int wE, int wF)
 		vhdl << tab << declare("expY", rWidth-2) << " <= expY0" << range(rWidth-3, 0)  << "; -- the clean one\n";
 		rWidth-=2;
 #else
-		cerr<<"ERROR: FPExp requires HOTBM"<<endl;
-		exit (EXIT_FAILURE);
+		throw string("FPExp requires Sollya for this precision, sorry.")<<endl;
 #endif
 	}
 
@@ -309,7 +333,7 @@ FPExp::FPExp(Target* target, int wE, int wF)
 		  << tab << tab << "else \"01\";" << endl;
 		
 	vhdl << tab << "R <= Rexn & '0' & roundedExpSig" << range(wE+wF-1, 0) << ";" << endl;
-	}
+	
 
 
 }	

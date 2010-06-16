@@ -4,6 +4,7 @@
 #include <sstream>
 
 #include "Operator.hpp"
+#include "Table.hpp"
 #include "DualTable.hpp"
 
 class Fragment;
@@ -64,12 +65,49 @@ namespace flopoco{
 
 				// debug
 				if((h>=(1<<27)) || l>=512 || h<0 || l<0)
-					cout << "!!!!!" << h << l <<endl;
+					REPORT(0, "Ouch!!!!!" << h << l );
 
 				//cout << x << "\t" << h << "\t" << l <<endl;
 				mpfr_clears(y, yh, yl, a, one, NULL);
 						
 				return l + (h<<9);
+			};
+		};
+
+
+		class firstExpTable: public Table {
+		public:
+
+			firstExpTable(Target* target, int wIn, int wOut) : 
+				Table(target, wIn, wOut) {
+				ostringstream name; 
+				name <<"firstExpTable_" << wIn << "_" << wOut;
+				setName(name.str());
+			};
+
+			mpz_class function(int x){
+				mpz_class h;
+				mpfr_t a, y, one;
+				mpfr_init2(a, wIn);
+				mpfr_set_ui(a, x, GMP_RNDN);
+				mpfr_div_2si(a, a, wIn, GMP_RNDN); // now a in [O1[
+				mpfr_init2(y, wOut); 
+				mpfr_exp(y, a, GMP_RNDN);
+				mpfr_init2(one, 16);
+				mpfr_set_d(one, 1.0, GMP_RNDN);
+				mpfr_sub(y, y, one, GMP_RNDN); // e^x -1 in [0,2[
+
+				mpfr_mul_2si(y, y, wOut-1, GMP_RNDN);
+				mpfr_get_z(h.get_mpz_t(), y,  GMP_RNDN);
+
+				// debug
+				if((h>=(1<<wOut)) || h<0)
+					REPORT(0, "Ouch!!!!!" << h);
+
+				//cout << x << "\t" << h << "\t" << l <<endl;
+				mpfr_clears(y, a, one, NULL);
+						
+				return h;
 			};
 		};
 
