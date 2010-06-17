@@ -188,7 +188,10 @@ FPExp::FPExp(Target* target, int wE, int wF)
 	nextCycle();
 
 	vhdl << tab << declare("Ypadded", sizeXfix) << " <= fixXsigned - KLog2" << range(wE+1 + wE+wF+g -1, wE+1 + wE+wF+g - sizeXfix) << ";\n";
-	vhdl << tab << declare("Y", wF+g) << " <= Ypadded" << range(sizeXfix-wE-2, 0) << ";\n";
+
+	int sizeY=wF+g; // This is also the weight of Y's LSB
+
+	vhdl << tab << declare("Y", sizeY) << " <= Ypadded" << range(sizeXfix-wE-2, 0) << ";\n";
 	vhdl << tab << declare("ShouldBeZero", wE+1) << " <= Ypadded" << range(sizeXfix-1, sizeXfix-wE-1) << "; -- for debug TODO remove\n";
 
 	vhdl << tab << "-- Now compute the exp of this fixed-point value" <<endl;
@@ -203,7 +206,7 @@ FPExp::FPExp(Target* target, int wE, int wF)
 		// For g=3 we enter with Y on 26 bits. Better first pad it
 		vhdl << tab << declare("Y0", 27) << " <= Y & '0';\n";
 
-		int sizeY=27;
+		sizeY=27;  // (23+3+1) TODO this is a difference to std case
 		k=9;
 		int sizeZ=18; // should be wF+g-k; 
 		// CHECK k+sizeZ == sizeY
@@ -235,6 +238,7 @@ FPExp::FPExp(Target* target, int wE, int wF)
 		vhdl << tab << "-- Computing Z + (exp(z)-1-Z)" << endl;
 		vhdl << tab << declare("lowerTerm", k) << " <= lowerTerm0" << range(k-1, 0) << ";" << endl;
 		vhdl << tab << declare("expZminus1", sizeZ+1) << " <= ('0' & Z) + (" << rangeAssign(sizeZ, sizeZ-k, "'0'") << " & lowerTerm) ;" << endl;
+		// TODO This is nonsense. No need to store the extra accuracy then.
 		vhdl << tab << "-- Magical rounding-by-truncation to 17 bits, thanks to an half-ulp stored in the table" << endl;
 		vhdl << tab << declare("expZminus1rounded", 17) << " <= expZminus1" << range(sizeZ, 2) << ";" << endl;
 
@@ -252,19 +256,21 @@ FPExp::FPExp(Target* target, int wE, int wF)
 
 		rWidth=28; // for the rounding
 	}
+
+
+	// Generic polynomial evaluation, up to double-precision
 	else{
 #ifdef HAVE_SOLLYA
 		// nY is in [0, 1]
 		// values for double-precision. For the other ones: TODO
-		k=12;
-		d=3; // TODO for DP 2 is better
-		int sizeY=wF+g+1;
-		int sizeZ=wF+g+1-k; 
+		k=11;
+		d=2; // TODO for DP 2 is better
+		int sizeZ=wF+g-k; 
 
-		vhdl << tab << declare("Addr1", k) << " <= Y0" << range(sizeY-1, sizeY-k) << ";\n";
-		vhdl << tab << declare("Z", sizeZ) << " <= Y0" << range(sizeZ-1, 0) << ";\n";
+		vhdl << tab << declare("Addr1", k) << " <= Y" << range(sizeY-1, sizeY-k) << ";\n";
+		vhdl << tab << declare("Z", sizeZ) << " <= Y" << range(sizeZ-1, 0) << ";\n";
 		firstExpTable* table;
-		table = new firstExpTable(target, k, wF+g+1);
+		table = new firstExpTable(target, k, wF+g+1); // e^A-1 has MSB weight 1
 		oplist.push_back(table);
 		outPortMap(table, "Y", "expA0");
 		inPortMap(table, "X", "Addr1");
@@ -274,26 +280,57 @@ FPExp::FPExp(Target* target, int wE, int wF)
 			nextCycle();
 		if((wE+wF)*target->normalizedFrequency() > 16)
 			nextCycle(); // To get high-speed BRam speed
+		vhdl << tab << "-- Adding back the leading bit" << endl;
+		vhdl << tab << declare("expAh", 2) << " <= '0' & expA0(wF+g);" << endl;
+		int expAsize = wF+g+2; // e^A has MSB weight 2
+		vhdl << tab << declare("expA", expAsize) << " <= (\"01\" + expAh) & expA0" << range(expAsize-3, 0) << ";" << endl;
 
-
-		vhdl << tab << declare("Zhigh", k) << " <= Z" << range(sizeZ-1, sizeZ-k) << ";\n";
+		int sizeZhigh=wF+g-2*k;
+		vhdl << tab << declare("Zhigh", sizeZhigh) << " <= Z" << range(sizeZ-1, sizeZ-sizeZhigh) << ";\n";
 		REPORT(LIST, "Generating the polynomial approximation, this may take some time");
-		FunctionEvaluator *fe = new FunctionEvaluator(target, "exp(x)-x-1, 0,1,1", wF+g+1-2*k, wF+g+1-2*k, d);
+		
+		// We want the LSB value to be  2^(wF+g)
+		FunctionEvaluator *fe = new FunctionEvaluator(target, "exp(x)-x-1, 0,1,1", sizeZhigh, wF+g, d);
 		oplist.push_back(fe);
 		inPortMap(fe, "X", "Zhigh");
-		outPortMap(fe, "R", "expY0");
+		outPortMap(fe, "R", "expZmZm1_0");
 		vhdl << instance(fe, "poly");
-		syncCycleFromSignal("expY0");
-		// here we have in expY the exponential  	x
+		syncCycleFromSignal("expZmZm1_0");
+		// here we have in expZmZm1 the exponential  	x
 		// int rWeight=fe->getRWeight(); // TODO should be 2, 3 if signed, but I get 4
 		//	int rWidth=fe->getRWidth(); // TODO bug, it is the one before rounding
-		rWidth=getSignalByName("expY0")->width(); 
+		rWidth=getSignalByName("expZmZm1_0")->width(); 
 
-		vhdl << tab << declare("ShouldBeZero2", 2) << " <= expY0" << range(rWidth-1, rWidth-2)  << "; -- for debug TODO remove\n";
-		vhdl << tab << declare("expY", rWidth-2) << " <= expY0" << range(rWidth-3, 0)  << "; -- the clean one\n";
-		rWidth-=2;
+		// Alignment of expZmZm10:  MSB has weight -2*k, LSB has weight -(wF+g).
+		int expZmZm1size = wF+g - 2*k +1;
+		// FunctionEvaluator, in its ignorance, may have added MSB bits 
+		vhdl << tab << declare("ShouldBeZero2", (rWidth- expZmZm1size)) << " <= expZmZm1_0" << range(rWidth-1, expZmZm1size)  << "; -- for debug to check it is always 0" <<endl;
+		vhdl << tab << declare("expZmZm1", expZmZm1size) << " <= expZmZm1_0" << range(expZmZm1size-1, 0)  << "; -- the clean one" <<endl;
+		
+		
+		vhdl << tab << "-- Computing Z + (exp(Z)-1-Z)" << endl;
+		vhdl << tab << declare("expZminus1", sizeZ+1) << " <= ('0' & Z) + (" << rangeAssign(sizeZ, sizeZ-k, "'0'") << " & expZmZm1) ;" << endl;
+
+		vhdl << tab << "-- Truncating expA to the same accuracy as expZminus1" << endl;
+		vhdl << tab << declare("expAtruncated", sizeZ+1) << " <= expA" << range(expAsize-1, expAsize-sizeZ-1) << ";" << endl;
+
+		if((wE+wF)*target->normalizedFrequency() > 4)
+			nextCycle();
+
+		vhdl << tab << declare("lowerProduct", 2*(sizeZ+1)) << " <= expAtruncated * expZminus1;" << endl;
+		if((wE+wF)*target->normalizedFrequency() > 14)
+			nextCycle();
+
+		vhdl << tab << "-- Final addition -- the product MSB bit weight is -k+2 = "<< -k+2 << endl;
+		//TODO fix here
+		vhdl << tab << declare("expY", expAsize) << " <= expA + (" << rangeAssign(expAsize-1, expAsize-k-2, "'0'") 
+		     << " & lowerProduct" << range(2*(sizeZ+1)-1, 2*(sizeZ+1)- (expAsize-k-2)) << ");" << endl;
+
+		rWidth=expAsize; // for the rounding
+			       
+				       
 #else
-		throw string("FPExp requires Sollya for this precision, sorry.")<<endl;
+		throw string("FPExp requires Sollya for this precision, sorry.");
 #endif
 	}
 
