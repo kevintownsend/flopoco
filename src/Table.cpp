@@ -85,7 +85,7 @@ namespace flopoco{
 		else
 			full=false;
 		if (wIn > 10)
-			cerr << "WARNING : FloPoCo is building a table with " << wIn << " input bits, it will be large." << endl;
+		  REPORT(0, "WARNING : FloPoCo is building a table with " << wIn << " input bits, it will be large.");
 	}
 
 Table::Table(Target* target) : 
