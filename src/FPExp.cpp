@@ -265,7 +265,17 @@ FPExp::FPExp(Target* target, int wE, int wF)
 		// values for double-precision. For the other ones: TODO
 		k=11;
 		d=2; // TODO for DP 2 is better
-		int sizeZ=wF+g-k; 
+		int sizeZ = wF+g-k; 
+		int sizeExpA = wF+g+2; // e^A has MSB weight 2
+		int sizeZhigh=wF+g-2*k;
+		int sizeZxpZmZm1 = wF+g - 2*k +1;
+		int sizeExpZm1 = sizeZ+1;
+		REPORT(2, "sizeZ=" << sizeZ);
+		REPORT(2, "sizeExpA=" << sizeExpA);
+		REPORT(2, "sizeZhigh=" << sizeZhigh);
+		REPORT(2, "sizeZxpZmZm1=" << sizeZxpZmZm1);
+		REPORT(2, "sizeExpZm1=" << sizeExpZm1);
+		//REPORT(2, "=" << );
 
 		vhdl << tab << declare("Addr1", k) << " <= Y" << range(sizeY-1, sizeY-k) << ";\n";
 		vhdl << tab << declare("Z", sizeZ) << " <= Y" << range(sizeZ-1, 0) << ";\n";
@@ -282,51 +292,47 @@ FPExp::FPExp(Target* target, int wE, int wF)
 			nextCycle(); // To get high-speed BRam speed
 		vhdl << tab << "-- Adding back the leading bit" << endl;
 		vhdl << tab << declare("expAh", 2) << " <= '0' & expA0(wF+g);" << endl;
-		int expAsize = wF+g+2; // e^A has MSB weight 2
-		vhdl << tab << declare("expA", expAsize) << " <= (\"01\" + expAh) & expA0" << range(expAsize-3, 0) << ";" << endl;
+		vhdl << tab << declare("expA", sizeExpA) << " <= (\"01\" + expAh) & expA0" << range(sizeExpA-3, 0) << ";" << endl;
 
-		int sizeZhigh=wF+g-2*k;
 		vhdl << tab << declare("Zhigh", sizeZhigh) << " <= Z" << range(sizeZ-1, sizeZ-sizeZhigh) << ";\n";
 		REPORT(LIST, "Generating the polynomial approximation, this may take some time");
 		
 		// We want the LSB value to be  2^(wF+g)
-		FunctionEvaluator *fe = new FunctionEvaluator(target, "exp(x)-x-1, 0,1,1", sizeZhigh, wF+g, d);
+		FunctionEvaluator *fe;
+		ostringstream function;
+		function << "exp(x*1b-" << k << ")-x*1b-" << k << "-1, 0,1,1";
+		fe = new FunctionEvaluator(target, function.str(), sizeZhigh, wF+g, d);
 		oplist.push_back(fe);
 		inPortMap(fe, "X", "Zhigh");
 		outPortMap(fe, "R", "expZmZm1_0");
 		vhdl << instance(fe, "poly");
 		syncCycleFromSignal("expZmZm1_0");
-		// here we have in expZmZm1 the exponential  	x
-		// int rWeight=fe->getRWeight(); // TODO should be 2, 3 if signed, but I get 4
-		//	int rWidth=fe->getRWidth(); // TODO bug, it is the one before rounding
-		rWidth=getSignalByName("expZmZm1_0")->width(); 
+		// here we have in expZmZm1 e^Z-Z-1
 
 		// Alignment of expZmZm10:  MSB has weight -2*k, LSB has weight -(wF+g).
-		int expZmZm1size = wF+g - 2*k +1;
 		// FunctionEvaluator, in its ignorance, may have added MSB bits 
-		vhdl << tab << declare("ShouldBeZero2", (rWidth- expZmZm1size)) << " <= expZmZm1_0" << range(rWidth-1, expZmZm1size)  << "; -- for debug to check it is always 0" <<endl;
-		vhdl << tab << declare("expZmZm1", expZmZm1size) << " <= expZmZm1_0" << range(expZmZm1size-1, 0)  << "; -- the clean one" <<endl;
-		
+		//		vhdl << tab << declare("ShouldBeZero2", (rWidth- sizeZxpZmZm1)) << " <= expZmZm1_0" << range(rWidth-1, sizeZxpZmZm1)  << "; -- for debug to check it is always 0" <<endl;
+		vhdl << tab << declare("expZmZm1", sizeZxpZmZm1) << " <= expZmZm1_0" << range(sizeZxpZmZm1-1, 0)  << "; " <<endl;
 		
 		vhdl << tab << "-- Computing Z + (exp(Z)-1-Z)" << endl;
-		vhdl << tab << declare("expZminus1", sizeZ+1) << " <= ('0' & Z) + (" << rangeAssign(sizeZ, sizeZ-k, "'0'") << " & expZmZm1) ;" << endl;
+		vhdl << tab << declare("expZminus1", sizeExpZm1) << " <= ('0' & Z) + (" << rangeAssign(sizeZ, sizeZ-k+1, "'0'") << " & expZmZm1) ;" << endl;
 
 		vhdl << tab << "-- Truncating expA to the same accuracy as expZminus1" << endl;
-		vhdl << tab << declare("expAtruncated", sizeZ+1) << " <= expA" << range(expAsize-1, expAsize-sizeZ-1) << ";" << endl;
+		vhdl << tab << declare("expAtruncated", sizeExpZm1) << " <= expA" << range(sizeExpA-1, sizeExpA-sizeExpZm1) << ";" << endl;
 
 		if((wE+wF)*target->normalizedFrequency() > 4)
 			nextCycle();
 
-		vhdl << tab << declare("lowerProduct", 2*(sizeZ+1)) << " <= expAtruncated * expZminus1;" << endl;
+		vhdl << tab << declare("lowerProduct", 2*sizeExpZm1) << " <= expAtruncated * expZminus1;" << endl;
 		if((wE+wF)*target->normalizedFrequency() > 14)
 			nextCycle();
 
 		vhdl << tab << "-- Final addition -- the product MSB bit weight is -k+2 = "<< -k+2 << endl;
-		//TODO fix here
-		vhdl << tab << declare("expY", expAsize) << " <= expA + (" << rangeAssign(expAsize-1, expAsize-k-2, "'0'") 
-		     << " & lowerProduct" << range(2*(sizeZ+1)-1, 2*(sizeZ+1)- (expAsize-k-2)) << ");" << endl;
 
-		rWidth=expAsize; // for the rounding
+		vhdl << tab << declare("expY", sizeExpA) << " <= expA + (" << rangeAssign(sizeExpA-1, sizeExpA-k+1, "'0'") 
+		     << " & lowerProduct" << range(2*sizeExpZm1-1, 2*sizeExpZm1- (sizeExpA-k+1)) << ");" << endl;
+
+		rWidth=sizeExpA; // for the rounding
 			       
 				       
 #else

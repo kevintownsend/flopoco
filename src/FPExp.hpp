@@ -26,6 +26,7 @@ namespace flopoco{
 			magicExpTable(Target* target) : 
 				DualTable(target, 9, 36, 0, 511) {
 				ostringstream name; 
+				srcFileName="FPExp::MagicSPExpTable";
 				name <<"MagicSPExpTable";
 				setName(name.str());
 			};
@@ -81,6 +82,7 @@ namespace flopoco{
 			firstExpTable(Target* target, int wIn, int wOut) : 
 				Table(target, wIn, wOut) {
 				ostringstream name; 
+				srcFileName="FPExp::MagicSPExpTable";
 				name <<"firstExpTable_" << wIn << "_" << wOut;
 				setName(name.str());
 			};
@@ -101,7 +103,7 @@ namespace flopoco{
 				mpfr_get_z(h.get_mpz_t(), y,  GMP_RNDN);
 
 				// debug
-				if((h>=(1<<wOut)) || h<0)
+				if((h>=(mpz_class(1)<<wOut)) || h<0)
 					REPORT(0, "Ouch!!!!!" << h);
 
 				//cout << x << "\t" << h << "\t" << l <<endl;
