@@ -541,7 +541,7 @@ void FPExp::buildStandardTestCases(TestCaseList* tcl){
 	}
 
 	// One test out of 8 fully random (tests NaNs etc)
-	// All the remaining ones test numbers with exponents between -wF-2 and wE-2,
+	// All the remaining ones test numbers with exponents between -wF-3 and wE-2,
         // For numbers outside this range, exp over/underflows or flushes to 1. 
  
 	TestCase* FPExp::buildRandomTestCase(int i){
@@ -556,7 +556,7 @@ void FPExp::buildStandardTestCases(TestCaseList* tcl){
 		}
 		else
 		  {
-		    mpz_class e = (getLargeRandom(wE+wF) % (wE+wF+1) ) -wF-2; // Should be between -wF-2 and wE-2
+		    mpz_class e = (getLargeRandom(wE+wF) % (wE+wF+2) ) -wF-3; // Should be between -wF-3 and wE-2
 		    cout << e << endl;
 		    e = bias + e;
 		    mpz_class sign = getLargeRandom(1);
