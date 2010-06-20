@@ -113,15 +113,19 @@ namespace flopoco{
 			};
 		};
 
-		FPExp(Target* target, int wE, int wF);
-		~FPExp();
+	  /** The constructor that tries to automate the choice of optimal parameters*/
+	  FPExp(Target* target, int wE, int wF);
+	  /** The constructor where we specify k (input size of the first table) and d (the polynomial degree)*/
+	  FPExp(Target* target, int wE, int wF, int k, int d);
+	  ~FPExp();
 		
 		// Overloading the virtual functions of Operator
 		// void outputVHDL(std::ostream& o, std::string name);
 		
-		void emulate(TestCase * tc);
-		void buildStandardTestCases(TestCaseList* tcl);
-		
+	  void emulate(TestCase * tc);
+	  void buildStandardTestCases(TestCaseList* tcl);
+	  TestCase* buildRandomTestCase(int i);
+
 	private:
 		int wE, wF;
 		int k; // Size of the address bits for the first table

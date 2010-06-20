@@ -1240,6 +1240,21 @@ bool parseCommandLine(int argc, char* argv[]){
 			addOperator(op);
 		}
 
+
+		else if (opname == "FPExpExp")
+		{
+			int nargs = 4;
+			if (i+nargs > argc)
+				usage(argv[0]); // and exit
+			int wE = checkStrictyPositive(argv[i++], argv[0]);
+			int wF = checkStrictyPositive(argv[i++], argv[0]);
+			int k = checkStrictyPositive(argv[i++], argv[0]);
+			int d = checkStrictyPositive(argv[i++], argv[0]);
+			cerr << "> FPExp: wE=" << wE << " wF=" << wF << endl;
+			op = new FPExp(target, wE, wF, k, d);
+			addOperator(op);
+		}
+
 		else if (opname == "FPLog")
 		{
 			int nargs = 3;

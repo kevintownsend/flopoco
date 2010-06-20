@@ -357,7 +357,7 @@ public:
 	 * @param tcl a TestCaseList
 	 * @param n the number of random test cases to add
 	 */
-	virtual void buildRandomTestCases(TestCaseList* tcl, int n);
+	virtual void buildRandomTestCaseList(TestCaseList* tcl, int n);
 
 	/**
 	 * Generate Random Test case identified by an integer . There is a default
@@ -370,7 +370,7 @@ public:
 	 * @param i the identifier of the test case to be generated
 	 * @return TestCase*
 	 */
-	virtual TestCase* buildRandomTestCases(int n);
+	virtual TestCase* buildRandomTestCase(int i);
 
 
 

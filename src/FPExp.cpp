@@ -20,8 +20,16 @@ using namespace std;
 namespace flopoco{
 	extern vector<Operator *> oplist;
 
+  FPExp::FPExp(Target* target, int wE, int wF) 
+	: Operator(target), wE(wE), wF(wF)
+{
+    cout << "TODO!" <<endl;
+    int k=11;
+    int d=2;
+    FPExp(target, wE, wF, k, d);
+  }
 
-FPExp::FPExp(Target* target, int wE, int wF)
+  FPExp::FPExp(Target* target, int wE, int wF, int k, int d)
 	: Operator(target), wE(wE), wF(wF)
 {
 	/* Generate unique name */
@@ -40,9 +48,6 @@ FPExp::FPExp(Target* target, int wE, int wF)
 
 	// TODO a bit more science here. Not sure the following code works for any other g
 	g=3; 
-
-
-	int d=2; // degree: TODO
 
 	// The two constants
 	mpz_class mpzLog2, mpzInvLog2;
@@ -263,8 +268,6 @@ FPExp::FPExp(Target* target, int wE, int wF)
 #ifdef HAVE_SOLLYA
 		// nY is in [0, 1]
 		// values for double-precision. For the other ones: TODO
-		k=11;
-		d=2; // TODO for DP 2 is better
 		int sizeZ = wF+g-k; 
 		int sizeExpA = wF+g+2; // e^A has MSB weight 2
 		int sizeZhigh=wF+g-2*k;
@@ -537,6 +540,33 @@ void FPExp::buildStandardTestCases(TestCaseList* tcl){
 		mpfr_clears(x, y, NULL);
 	}
 
+	// One test out of 8 fully random (tests NaNs etc)
+	// All the remaining ones test numbers with exponents between -wF-2 and wE-2,
+        // For numbers outside this range, exp over/underflows or flushes to 1. 
+ 
+	TestCase* FPExp::buildRandomTestCase(int i){
+		TestCase *tc;
+		tc = new TestCase(this); 
+		mpz_class x;
+		mpz_class normalExn = mpz_class(1)<<(wE+wF+1);
+		mpz_class bias = ((1<<(wE-1))-1);
+		/* Fill inputs */
+		if ((i & 7) == 0) { //fully random
+		  x = getLargeRandom(wE+wF+3);
+		}
+		else
+		  {
+		    mpz_class e = (getLargeRandom(wE+wF) % (wE+wF+1) ) -wF-2; // Should be between -wF-2 and wE-2
+		    cout << e << endl;
+		    e = bias + e;
+		    mpz_class sign = getLargeRandom(1);
+		    x  = getLargeRandom(wF) + (e << wF) + (sign<<(wE+wF)) + normalExn;
+		  }
+		tc->addInput("X", x);
+		/* Get correct outputs */
+		emulate(tc);
+		return tc;
+	}
 
 
 }

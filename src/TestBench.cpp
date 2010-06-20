@@ -57,7 +57,7 @@ namespace flopoco{
 		op-> buildStandardTestCases(&tcl_);
                 // initialization of randomstate generator with the seed base on the number of
                 // randomtestcase to be generated
-		if (!fromFile) op-> buildRandomTestCases(&tcl_, n);
+		if (!fromFile) op-> buildRandomTestCaseList(&tcl_, n);
 	
 
 		// The instance
@@ -309,9 +309,9 @@ namespace flopoco{
 		        	TestCase* tc = tcl_.getTestCase(i);
                                 if (fileOut) fileOut << tc->generateInputString(IOorderInput,IOorderOutput);
                       } 
-                      // generation on the fly of random test case (VALID only for FPFMA)
+                      // generation on the fly of random test case
                       for (int i = 0; i < n_; i++) {
-                              TestCase* tc = op_->buildRandomTestCases(i);
+                              TestCase* tc = op_->buildRandomTestCase(i);
                                 if (fileOut) fileOut << tc->generateInputString(IOorderInput,IOorderOutput);
                               delete tc; 
                       }; 
