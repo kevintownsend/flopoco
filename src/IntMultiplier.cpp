@@ -167,19 +167,23 @@ namespace flopoco{
 								vhdl << instance(add, "adder");
 
 								syncCycleFromSignal("addRes");
-				
+
+								outDelayMap["R"] = (add->getOutDelayMap())["R"];
+												
 								if ((x*chunksX+y*chunksY) - wInX - wInY < -extension){
 									vhdl << tab << "R <= addRes" << range((x*chunksX+y*chunksY+extension)-1,0) << " & sum0Low" << range(x-1, x-1 + ((x*chunksX+y*chunksY+extension) - wInX - wInY)+1) << ";" << endl;
 								}else{
 									vhdl << tab << "R <= addRes" << range((x*chunksX+y*chunksY+extension)-1, ((x*chunksX+y*chunksY+extension) - wInX - wInY)) << ";" << endl;
-						
+									outDelayMap["R"] = 0.0;
 								}
 							}else{
 								vhdl << tab << "R <= " << use(join("sum",0))<<range(y*chunksY+x-1, x*chunksX+y*chunksY -( wInX+wInY)) << ";" << endl;
 							}
 						}
-						else 
+						else{ 
 							vhdl << tab << "R <= X * Y ;" <<endl;
+							outDelayMap["R"] = 1.0/ target->frequency();
+						}
 					}
 				else // the target is a Stratix
 					{

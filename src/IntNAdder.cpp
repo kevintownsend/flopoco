@@ -86,10 +86,11 @@ namespace flopoco{
 				int scoreSecondDesign = nbOfChunksSecondDesign;
 				REPORT(DEBUG, "Exploring second design ... score is:"<< scoreSecondDesign);
 			
-				if ((scoreFirstDesign > scoreSecondDesign) &&
-					 (maxInputDelay <= 0)) // this expresion was added to ensure that the implemented design will have the necessary input delay
+				if (scoreFirstDesign >= scoreSecondDesign) // &&
+//					 (maxInputDelay <= 0)) // this expresion was added to ensure that the implemented design will have the necessary input delay
 					{
 						REPORT(DEBUG, "Implementation of the second design");
+						nextCycle();
 						nbOfChunks = nbOfChunksSecondDesign;
 						target->suggestSubaddSize(chunkSize_, wIn_); 
 						lastChunkSize = ( wIn_ % chunkSize_ == 0 ? chunkSize_ : wIn_ % chunkSize_);
@@ -189,10 +190,10 @@ namespace flopoco{
 							if (l < N-1){
 								/* for the last addition we don't insert any register after 
 								as there is no more computation for this operator when nbOfChunks==1*/
-								delay += target->adderDelay(wIn_) + target->localWireDelay();
+								delay += target->adderDelay(wIn_) + 3*target->localWireDelay();
 								if (delay > objectivePeriod){
 									nextCycle();
-									delay = target->adderDelay(wIn_) + target->localWireDelay();
+									delay = target->adderDelay(wIn_) + 3*target->localWireDelay();
 								}
 							}
 						}

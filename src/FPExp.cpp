@@ -8,8 +8,10 @@
 #include "FPNumber.hpp"
 #include "ConstMult/IntIntKCM.hpp"
 #include "Shifters.hpp"
+#include "IntMultiplier.hpp"
 #include "FunctionEvaluator.hpp"
 #include "utils.hpp"
+#include "IntAdder.hpp"
 
 //#include "fpexponential/Fragment.hpp"
 //#include "fpexponential/explore.h"
@@ -152,11 +154,29 @@ namespace flopoco{
 
  	int sizeXfix = wE-1 + 1+wF+g +1; // +1 for the sign == wE+wF+g +1
 	vhdl << tab << declare("fixX", sizeXfix) << " <= " << "'0' & fixX0" << range(wE-1 + wF+g + wF+1 -1, wF) << ";" << endl;
+	
 	vhdl << tab << "-- two's compliment version mantissa" << endl;
-	vhdl << tab  << declare("fixXsigned", sizeXfix) << " <= " << endl
-		  << tab << "(" << sizeXfix-1 << " downto 0 => '0') when expIs1='1'" << endl
-		  << tab << "else ((" << sizeXfix-1 << " downto 0 => '0') - fixX) when XSign = '1'" << endl
-		  << tab << "else fixX;" << endl;
+	vhdl << tab << declare("addOp0",sizeXfix) << " <= (fixX xor "<<rangeAssign(sizeXfix-1,0,"XSign")<<") and "<<rangeAssign(sizeXfix-1,0,"not(expIs1)")<<";"<<endl;
+		
+	vhdl << tab << declare("addCarry") << "<= XSign and not(expIs1);"<<endl;
+//	nextCycle();
+	
+	IntAdder *twosComplMantissa = new IntAdder(target, sizeXfix);
+	oplist.push_back(twosComplMantissa);
+	
+	inPortMap(twosComplMantissa, "X", "addOp0");
+	inPortMapCst(twosComplMantissa, "Y", zg(sizeXfix,0));
+	inPortMap(twosComplMantissa, "Cin", "addCarry");
+	outPortMap(twosComplMantissa, "R", "fixXsigned");
+	
+	vhdl << instance( twosComplMantissa, "The2cMantissa") << endl;
+	syncCycleFromSignal("fixXsigned");
+	nextCycle(); ////////????FIXME
+	
+//	vhdl << tab  << declare("fixXsigned", sizeXfix) << " <= " << endl
+//		  << tab << "(" << sizeXfix-1 << " downto 0 => '0') when expIs1='1'" << endl
+//		  << tab << "else ((" << sizeXfix-1 << " downto 0 => '0') - fixX) when XSign = '1'" << endl
+//		  << tab << "else fixX;" << endl;
 
  	// fixXsigned(), on wE+3 bits,  is an int . 2^-2
 	// cstInvLog2,   on wE+3 bits,  is an int . 2^{-wE-2}
@@ -192,7 +212,21 @@ namespace flopoco{
 	syncCycleFromSignal("KLog2");
 	nextCycle();
 
-	vhdl << tab << declare("Ypadded", sizeXfix) << " <= fixXsigned - KLog2" << range(wE+1 + wE+wF+g -1, wE+1 + wE+wF+g - sizeXfix) << ";\n";
+	IntAdder *yPaddedAdder = new IntAdder(target,sizeXfix);
+	oplist.push_back(yPaddedAdder);
+	
+	vhdl << tab << declare("neg2Op",sizeXfix) << " <= not(KLog2" << range(wE+1 + wE+wF+g -1, wE+1 + wE+wF+g - sizeXfix)<<");"<<endl;
+	
+	inPortMap( yPaddedAdder, "X", "fixXsigned");
+	inPortMapCst ( yPaddedAdder, "Y", "neg2Op");
+	inPortMapCst ( yPaddedAdder, "Cin", "'1'");
+	outPortMap( yPaddedAdder, "R", "Ypadded");
+	
+	vhdl << tab << instance(yPaddedAdder, "theYPaddedAdder") << endl;
+	syncCycleFromSignal("Ypadded"); 
+	nextCycle(); 
+
+//	vhdl << tab << declare("Ypadded", sizeXfix) << " <= fixXsigned - KLog2" << range(wE+1 + wE+wF+g -1, wE+1 + wE+wF+g - sizeXfix) << ";\n";
 
 	int sizeY=wF+g; // This is also the weight of Y's LSB
 
@@ -310,6 +344,7 @@ namespace flopoco{
 		outPortMap(fe, "R", "expZmZm1_0");
 		vhdl << instance(fe, "poly");
 		syncCycleFromSignal("expZmZm1_0");
+			nextCycle(); 
 		// here we have in expZmZm1 e^Z-Z-1
 
 		// Alignment of expZmZm10:  MSB has weight -2*k, LSB has weight -(wF+g).
@@ -323,17 +358,51 @@ namespace flopoco{
 		vhdl << tab << "-- Truncating expA to the same accuracy as expZminus1" << endl;
 		vhdl << tab << declare("expAtruncated", sizeExpZm1) << " <= expA" << range(sizeExpA-1, sizeExpA-sizeExpZm1) << ";" << endl;
 
-		if((wE+wF)*target->normalizedFrequency() > 4)
-			nextCycle();
+//		if((wE+wF)*target->normalizedFrequency() > 4)
+			nextCycle(); //in any case this will be absorbed by the DSP blocks
 
-		vhdl << tab << declare("lowerProduct", 2*sizeExpZm1) << " <= expAtruncated * expZminus1;" << endl;
-		if((wE+wF)*target->normalizedFrequency() > 14)
-			nextCycle();
+		IntMultiplier *lowProd = new IntMultiplier(target, sizeExpZm1, sizeExpZm1);
+		oplist.push_back(lowProd);
+		
+		inPortMap(lowProd, "X", "expAtruncated");
+		inPortMap(lowProd, "Y", "expZminus1");
+		outPortMap(lowProd, "R", "lowerProduct");
+		
+		vhdl << instance(lowProd, "TheLowerProduct")<<endl;
+		 
+//		vhdl << tab << declare("lowerProduct", 2*sizeExpZm1) << " <= expAtruncated * expZminus1;" << endl;
+
+		syncCycleFromSignal("lowerProduct");
+
+//		if((wE+wF)*target->normalizedFrequency() > 14) //TODO will need to buffer out before addition
+//			nextCycle();
 
 		vhdl << tab << "-- Final addition -- the product MSB bit weight is -k+2 = "<< -k+2 << endl;
-
-		vhdl << tab << declare("expY", sizeExpA) << " <= expA + (" << rangeAssign(sizeExpA-1, sizeExpA-k+1, "'0'") 
-		     << " & lowerProduct" << range(2*sizeExpZm1-1, 2*sizeExpZm1- (sizeExpA-k+1)) << ");" << endl;
+		
+		map<string,double> finalAdderInDelayMap;
+		finalAdderInDelayMap["Y"] = (lowProd->getOutDelayMap())["R"];
+		
+		IntAdder *finalAdder = new IntAdder(target, sizeExpA, finalAdderInDelayMap, 2, 1, -1);
+		oplist.push_back(finalAdder);
+		
+		vhdl << tab << declare("extendedLowerProduct",sizeExpA) << " <= (" << rangeAssign(sizeExpA-1, sizeExpA-k+1, "'0'") 
+		     << " & lowerProduct" << range(2*sizeExpZm1-1, 2*sizeExpZm1- (sizeExpA-k+1)) << ");" << endl;		
+		     
+		     
+		inPortMap(finalAdder, "X", "expA");
+		inPortMap(finalAdder, "Y", "extendedLowerProduct");
+		inPortMapCst(finalAdder, "Cin", "'0'");
+		outPortMap(finalAdder, "R", "expY");
+		
+		vhdl << instance(finalAdder,"TheFinalAdder") << endl;
+		syncCycleFromSignal("expY");
+		
+//		nextCycle(); //thsi one should be controlled by some parameter
+		
+//		cout << ">>>>>>>>>>>>>>>>>>>>...The delay on the adder output R is" << finalAdder->getOutDelayMap()["R"] << endl;
+			
+//		vhdl << tab << declare("expY", sizeExpA) << " <= expA + (" << rangeAssign(sizeExpA-1, sizeExpA-k+1, "'0'") 
+//		     << " & lowerProduct" << range(2*sizeExpZm1-1, 2*sizeExpZm1- (sizeExpA-k+1)) << ");" << endl;
 
 		rWidth=sizeExpA; // for the rounding
 			       

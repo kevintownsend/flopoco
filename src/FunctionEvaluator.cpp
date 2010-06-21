@@ -82,7 +82,7 @@ namespace flopoco{
 
 
 		addInput ("X", wInX);
-		vhdl << tab << declare("addr", addrSize) << " <= X"<<range(wInX-1, wInX-addrSize)<<";"<<endl;
+		vhdl << tab << declare("addr", addrSize,true) << " <= X"<<range(wInX-1, wInX-addrSize)<<";"<<endl;
 
 		/* Instantiate the table generator */
 		nextCycle();/////////////////////////////////// The Coefficent ROM has a registered iunput

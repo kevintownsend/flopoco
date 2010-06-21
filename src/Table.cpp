@@ -68,7 +68,7 @@ namespace flopoco{
 		setCopyrightString("Florent de Dinechin (2007)");
 
 		// Set up the IO signals
-		addInput ("X"  , wIn);
+		addInput ("X"  , wIn, true);
 		addOutput ("Y"  , wOut);
 		setCombinatorial();
 		if(maxIn==-1) maxIn=(1<<wIn)-1;

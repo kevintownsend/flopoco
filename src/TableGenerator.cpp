@@ -249,8 +249,8 @@ namespace flopoco{
 		setName(name.str());
 		
 		/*Set up the IO signals*/
-		addInput ("X"  , wIn);
-		addOutput ("Y"  , wOut);
+		addInput ("X"  , wIn, true);
+		addOutput ("Y"  , wOut, true,1);
 				
 		/*This operator is combinatorial (in fact is just a ROM.*/
 		setCombinatorial();

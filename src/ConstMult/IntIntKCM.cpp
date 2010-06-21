@@ -248,7 +248,7 @@ namespace flopoco{
 				}
 			}
 		
-			delay += target->lutDelay();
+			delay += target->lutDelay() + 2*target->localWireDelay();
 		
 			//determine the addition operand size
 			int addOpSize = (nbOfTables - 2) * lutWidth + (constantWidth +  lastLutWidth);
@@ -267,7 +267,7 @@ namespace flopoco{
 				}
 			}
 		
-			if(wIn_>32 && target->normalizedFrequency()>=0.5) { // TODO a real test, or fix the inMap?
+//			if(wIn_>32 && target->normalizedFrequency()>=0.5) { // TODO a real test, or fix the inMap?
 				map<string, double> inMap;
 				inMap["X0"] = delay;
 		
@@ -280,20 +280,20 @@ namespace flopoco{
 				outPortMap(adder, "R", "OutRes");
 				vhdl << instance(adder, "Result_Adder");
 				syncCycleFromSignal("OutRes");
-			}
+//			}
 
-			else{
-				if(target->normalizedFrequency()>0.5)
-					nextCycle();
-				// stupid addition
-				vhdl << tab << declare("OutRes", addOpSize) << " <= ";
-				for (int i=0; i<nbOfTables; i++) {
-					vhdl <<  join("addOp",i);
-					if(i<nbOfTables-1)
-						vhdl << " + ";
-				}
-				vhdl << ";" << endl;
-			}		
+//			else{
+//				if(target->normalizedFrequency()>0.5)
+//					nextCycle();
+//				// stupid addition
+//				vhdl << tab << declare("OutRes", addOpSize) << " <= ";
+//				for (int i=0; i<nbOfTables; i++) {
+//					vhdl <<  join("addOp",i);
+//					if(i<nbOfTables-1)
+//						vhdl << " + ";
+//				}
+//				vhdl << ";" << endl;
+//			}		
 			vhdl << tab << "R <= OutRes & pp0" << range(lutWidth-1,0) << ";" <<endl;
 	}
 
