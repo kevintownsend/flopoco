@@ -379,11 +379,22 @@ namespace flopoco{
 	}
 
 	void Operator::outputFinalReport() {
-		cerr << "Entity " << uniqueName_ <<":"<< endl;
+		ostringstream tabs, ctabs;
+		for (int i=0;i<level-1;i++){
+			tabs << "|" << tab;
+			ctabs << "|" << tab;
+		}
+			
+		if (level>0){
+			tabs << "|" << "---";
+			ctabs << "|" << tab;
+		}
+
+		cerr << tabs.str() << "Entity " << uniqueName_ <<":"<< endl;
 		if(this->getPipelineDepth()!=0)
-			cerr << tab << "Pipeline depth = " << getPipelineDepth() << endl;
+			cerr << ctabs.str() << tab << "Pipeline depth = " << getPipelineDepth() << endl;
 		else
-			cerr << tab << "Not pipelined"<< endl;
+			cerr << ctabs.str() << tab << "Not pipelined"<< endl;
 	}
 
 
@@ -1159,6 +1170,17 @@ namespace flopoco{
 	void Operator::emulate(TestCase * tc) {
 		throw std::string("emulate() not implemented for ") + uniqueName_;
 	}
+	
+	bool Operator::hasComponent(string s){
+		map<string, Operator*>::iterator theIterator;
+		
+		theIterator = subComponents_.find(s);
+		if (theIterator != subComponents_.end() )
+			return true;
+		else
+			return false;
+	}
+	
 
 }
 

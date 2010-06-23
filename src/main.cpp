@@ -143,6 +143,9 @@ namespace flopoco{
 	
 	map<string, double> emptyDelayMap;
 	bool combinatorialOperator;
+
+	int Operator::uid = 0; //init of the uid static member of Operator
+
 }
 
 static void usage(char *name){
@@ -1598,6 +1601,8 @@ int main(int argc, char* argv[] )
 	uint32_t i;
 	string srcFileName = "main.cpp";
 
+	
+
 	target = new Virtex4();
 
 	try {
@@ -1642,6 +1647,22 @@ int main(int argc, char* argv[] )
 		}
 	}
 	file.close();
+	
+	for(int k=oplist.size()-1; k>=0; k--) {
+		if (unsigned(k)== (oplist.size()-1))
+			oplist[k]->level = 0;
+		else{
+			string currentName = oplist[k]->getName();
+			oplist[k]->level = 0;
+			for(int j=oplist.size()-1; j>k; j--) {
+				if (oplist[j]->hasComponent(currentName) ){
+					oplist[k]->level = oplist[j]->level + 1;
+				}	
+			}
+			
+		}
+	}	
+	
 	
 	cerr << endl<<"Final report:"<<endl;
 	for(i=0; i<oplist.size(); i++) {

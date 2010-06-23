@@ -52,7 +52,15 @@ const std::string tab = "   ";
  */
 class Operator
 {
+
+	static int uid;                  /**< The counter holding a unique id */
+
 public:
+
+	static int getNewUId(){
+		Operator::uid++;
+		return Operator::uid;
+	}
 
 	/** Operator Constructor.
 	 * Creates an operator instance with an instantiated target for deployment.
@@ -626,6 +634,11 @@ public:
 	Target* getTarget(){
 		return target_;
 	}
+	
+	bool hasComponent(string s);
+	
+
+	int level; //printing issues
 
 protected:    
 	Target*             target_;          /**< The target on which the operator will be deployed */

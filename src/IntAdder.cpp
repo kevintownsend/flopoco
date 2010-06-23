@@ -40,7 +40,7 @@ extern vector<Operator*> oplist;
 		name << "IntAdder_" << wIn_<<"_f"<<target->frequencyMHz()
 		     <<"_"<<(optimizeType==0? "logic": (optimizeType==1?"reg":"slice")) /*what the operator will be optimized for */
 		     <<"_"<<(srl? "SRL": "noSRL")  /* if architecture will be optimized for Shirt Registers */
-		     <<"_"<<(getMaxInputDelays(inputDelays)==0? "BUFFER": "noBUFFER");
+		     <<"_"<<(getMaxInputDelays(inputDelays)==0? "BUFFER": "noBUFFER")<<"_uid"<<Operator::getNewUId();
 		setName(name.str());
 
 		// Set up the IO signals
