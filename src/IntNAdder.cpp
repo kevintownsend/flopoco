@@ -33,17 +33,12 @@ namespace flopoco{
 		Operator(target), wIn_(wIn), N_(N), inputDelays_(inputDelays) 
 	{
 	
-//		if (wIn<2){
-//			cerr << "ERROR >IntNAdder. wIn >=2. VHDL file will NOT be produced" << endl;
-//			exit ( EXIT_FAILURE );	
-//		}
-			
 		ostringstream name;
-		name << "IntNAdder_" << wIn_<<"_"<<N;
+		name << "IntNAdder_" << wIn_<<"_"<<N<<"_uid"<<Operator::getNewUId();
 		srcFileName = "IntNAdder";
 		setName(name.str());
 
-		setCopyrightString("Bogdan Pasca (2009)");
+		setCopyrightString("Bogdan Pasca (2009, 2010)");
 
 		// Set up the IO signals
 		for (int i=0; i<N; i++)
@@ -64,38 +59,36 @@ namespace flopoco{
 				//the maximum combinatorial delay of the input is larger than the objective period, so the requested frequency might not be reached.
 				REPORT(INFO, "WARNING: the combinatorial delay at the input of " << this->getName() << " is above objective period ");
 				maxInputDelay = objectivePeriod;
-			}
-
-			if ( ((objectivePeriod - maxInputDelay) - target->adderDelay(1) ) < 0 )	{
+				nextCycle();
+				setCriticalPath(0.0);
+			} else if ( ((objectivePeriod - maxInputDelay) - target->adderDelay(1) ) < 0 )	{
 				//if not enough slack is available for any combinatorial circuit, we register the inputs
 				nextCycle();
+				setCriticalPath(0.0);
 				target->suggestSubaddSize(chunkSize_ ,wIn_);
 				nbOfChunks = ceil(double(wIn_)/double(chunkSize_));
 				lastChunkSize = ( wIn_ % chunkSize_ == 0 ? chunkSize_ : wIn_ % chunkSize_);
-			}
-			else{
+			} else{
 				int maxInAdd;
 				//explore 2 designs and chose the best				
 				target->suggestSlackSubaddSize(maxInAdd, wIn_, maxInputDelay); 
 				int nbOfChunksFirstDesign = ceil(double(wIn_)/double(maxInAdd));
 				int scoreFirstDesign = nbOfChunksFirstDesign - 1;
 				REPORT(DEBUG, "Exploring first design ... score is:"<< scoreFirstDesign);
-			
 				target->suggestSubaddSize(maxInAdd, wIn_); 
 				int nbOfChunksSecondDesign = ceil(double(wIn_)/double(maxInAdd));
 				int scoreSecondDesign = nbOfChunksSecondDesign;
 				REPORT(DEBUG, "Exploring second design ... score is:"<< scoreSecondDesign);
-			
-				if (scoreFirstDesign >= scoreSecondDesign) // &&
-//					 (maxInputDelay <= 0)) // this expresion was added to ensure that the implemented design will have the necessary input delay
-					{
-						REPORT(DEBUG, "Implementation of the second design");
-						nextCycle();
-						nbOfChunks = nbOfChunksSecondDesign;
-						target->suggestSubaddSize(chunkSize_, wIn_); 
-						lastChunkSize = ( wIn_ % chunkSize_ == 0 ? chunkSize_ : wIn_ % chunkSize_);
-					}else{
+				if (scoreFirstDesign >= scoreSecondDesign){
+					REPORT(DEBUG, "Implementation of the second design");
+					nextCycle();//
+					setCriticalPath(0.0);
+					nbOfChunks = nbOfChunksSecondDesign;
+					target->suggestSubaddSize(chunkSize_, wIn_); 
+					lastChunkSize = ( wIn_ % chunkSize_ == 0 ? chunkSize_ : wIn_ % chunkSize_);
+				}else{
 					REPORT(DEBUG, "Implementation of the first design");
+					setCriticalPath(maxInputDelay);
 					nbOfChunks = nbOfChunksFirstDesign;
 					target->suggestSlackSubaddSize(chunkSize_, wIn_, maxInputDelay); 
 					lastChunkSize = ( wIn_ % chunkSize_ == 0 ? chunkSize_ : wIn_ % chunkSize_);
@@ -118,21 +111,9 @@ namespace flopoco{
 			cIndex[0]= cSize[0];
 			for (int i=1; i < nbOfChunks; i++)
 				cIndex[i] = cIndex[i-1] + cSize[i];
-	
-			// if (verbose){
-			// 	cout << "The chunk sizes[MSB-->LSB]: "<<endl;
-			// 	for (int i=nbOfChunks-1;i>=0;i--)
-			// 		cout<<cSize[i]<<" ";
-			// 	cout<<endl; 
-			// 	cout << "The index sizes[MSB-->LSB]: "<<endl;
-			// 	for (int i=nbOfChunks-1;i>=0;i--)
-			// 		cout<<cIndex[i]<<" ";
-			// 	cout<<endl; 
-			// }	
 			
 			if (wIn>1){ 
 				if (N>=2){
-					double delay = 0.0;
 					//split the inputs (this should be reusable)
 					for (int i=0;i<N;i++)
 						for (int j=0; j<nbOfChunks; j++){
@@ -141,10 +122,8 @@ namespace flopoco{
 							//j=the chunk index i is the input index and l is the current level
 							name << "sX"<<j<<"_"<<i<<"_l"<<0;
 							int low=0, high=0;
-							for (int k=0;k<=j;k++)
-								high+=cSize[k];
-							for (int k=0;k<=j-1;k++)
-								low+=cSize[k];
+							for (int k=0;k<=j  ;k++)  	high+=cSize[k];
+							for (int k=0;k<=j-1;k++)	low +=cSize[k];
 							if(high-1<=wIn)
 								vhdl << tab << declare (name.str(),cSize[j]+1) << " <=  \"0\" & X"<<i<<range(high-1,low)<<";"<<endl;
 							else{
@@ -160,7 +139,9 @@ namespace flopoco{
 			
 					int currentLevel = 1;
 					for (int l=1; l<N; l++){
-						//perform addition round; there is only one additon per round 
+						//perform addition round; there is only one additon per round
+						manageCriticalPath(target->adderDelay(cSize[0]));
+						 
 						for (int j=0; j<nbOfChunks; j++){
 							ostringstream dname, uname1, uname2, uname3;
 							dname << "sX"<<j<<"_0_l"<<l;
@@ -182,21 +163,7 @@ namespace flopoco{
 								vhdl << tab << declare(dname.str(), cSize[j]+1) << " <= " << uname.str() << ";" <<endl;
 							}
 				
-						if (nbOfChunks>1) { 
-							currentLevel++;
-							nextCycle();
-						}else{
-							currentLevel++;
-							if (l < N-1){
-								/* for the last addition we don't insert any register after 
-								as there is no more computation for this operator when nbOfChunks==1*/
-								delay += target->adderDelay(wIn_) + 3*target->localWireDelay();
-								if (delay > objectivePeriod){
-									nextCycle();
-									delay = target->adderDelay(wIn_) + 3*target->localWireDelay();
-								}
-							}
-						}
+						currentLevel++;
 					}
 
 					REPORT(DEBUG, "The number of chunks is: " << nbOfChunks);
@@ -205,6 +172,7 @@ namespace flopoco{
 						vhdl << tab << "--final propagations " << endl; 
 			
 						for (int i=2; i<nbOfChunks+1; i++){
+							manageCriticalPath(target->adderDelay(cSize[i]));
 							for (int j=i-1; j< nbOfChunks ; j++){
 								ostringstream dname, uname1, uname2;
 								dname <<  "sX"<<j<<"_0_l"<<currentLevel;
@@ -214,12 +182,11 @@ namespace flopoco{
 										                                                            << uname2.str()<<of(cSize[j-1])<<";" <<endl;
 							}
 							currentLevel++;
-							if (i<nbOfChunks) 
-								nextCycle();
 						}
 					}
 					currentLevel--;
 				
+					outDelayMap["R"] = getCriticalPath();
 					vhdl << tab << "R <= ";
 					int k=0;
 
@@ -249,6 +216,7 @@ namespace flopoco{
 	
 						int currentLevel = 1;
 						for (int i=2; i<nbOfChunks+2; i++){
+							manageCriticalPath(target->adderDelay(cSize[i]));
 							for (int j=i-2; j< nbOfChunks ; j++){
 								ostringstream dname, uname1, uname2;
 								dname << "sX"<<j<<"_0_l"<<currentLevel;
@@ -260,8 +228,6 @@ namespace flopoco{
 									vhdl << tab << declare(dname.str(), cSize[j]+1) << " <= ( \"0\" & " << uname1.str()<<range(cSize[j]-1,0) << ") + Cin ;" <<endl;
 							}
 							currentLevel++;
-							if (i<nbOfChunks+1) 
-								nextCycle();
 						}
 						currentLevel--;
 						vhdl << tab << "R <= ";
@@ -274,6 +240,7 @@ namespace flopoco{
 							k++;
 						}
 						vhdl << ";" <<endl;
+						outDelayMap["R"] = getCriticalPath();
 					}
 				}
 				
