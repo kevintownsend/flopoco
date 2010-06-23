@@ -38,6 +38,7 @@ namespace flopoco{
 		ostringstream name;
 		name << "IntCompressorTree_" << wIn_<<"_"<<N_;
 		setName(name.str());
+		srcFileName = "IntCompressorTree";
 		setCopyrightString("Bogdan Pasca (2009)");
 
 		// Set up the IO signals
@@ -48,19 +49,14 @@ namespace flopoco{
 		}
 
 		addOutput("R"  , wIn_, 1, true);
-
-		if (verbose){
-			cout <<"delay for X is   "<< inputDelays["X"]<<endl;	
-////			cout <<"delay for Y is   "<< inputDelays["Y"]<<endl;
-		}
+		REPORT(DEBUG, "delay for X0 is   "<< inputDelays["X0"]);	
+		
+		setCriticalPath(getMaxInputDelays(inputDelays));
 
 		int lutSize = target->lutInputs();
 		bool processing = true;
 		int nbOfInputs = N_;
 		int treeLevel = 1;
-
-		IntAdder *finalAdder = new IntAdder(target, wIn_);
-		oplist.push_back(finalAdder);	
 
 		//for homogeneous signal names
 		for (int j=0; j<nbOfInputs;j++){
@@ -71,6 +67,7 @@ namespace flopoco{
 	
 		while (processing){
 			if ((nbOfInputs == 1) || (wIn == 1)){
+				manageCriticalPath(target->lutDelay());
 				vhdl << tab << "R <= ";
 				for (int i=N-1; i>=0; i--){
 					if (i>0)
@@ -79,7 +76,12 @@ namespace flopoco{
 						vhdl << "X"<<i<< ";"<<endl;
 				} 
 				processing = false;
+				outDelayMap["R"] = getCriticalPath();
 			}else if (nbOfInputs == 2){
+			
+				IntAdder *finalAdder = new IntAdder(target, wIn_, inDelayMap("X",getCriticalPath()));
+				oplist.push_back(finalAdder);	
+
 				name.str("");
 				name << "level_" << treeLevel-1 << "_sum_";			
 				vhdl << endl;
@@ -93,6 +95,7 @@ namespace flopoco{
 				syncCycleFromSignal("myR");
 			
 				vhdl << tab << "R <= myR;" << endl;
+				outDelayMap["R"] = finalAdder->getOutputDelay("R");
 				processing = false;
 			}else{
 				int a[16];    //possibly in the future LUTS may have up to 16 inputs
@@ -118,24 +121,25 @@ namespace flopoco{
 
 				bt(1, lutSize, nbOfInputs, sol, a, nbOfInputs, bestSol);
 	
-				if (verbose){
-					cerr << "BACKTRACKING FINISHED" << endl;
-					cerr << endl;
-					cerr << " Solution = ";
+				REPORT(DEBUG, "BACKTRACKING FINISHED");
+				REPORT(DEBUG, " Solution = ");
 				
+				ostringstream tmp;
 				for (int i=1; i <=lutSize; i++)
-					clog << bestSol[i] << ", ";
-				clog << " having score " << bestSol[0] << endl;
-				}
+					tmp << bestSol[i] << ", ";
+				tmp << " having score " << bestSol[0] << endl;
+				REPORT(DEBUG, tmp.str());
+				
+				manageCriticalPath( target->lutDelay() + target->localWireDelay() );
 			
 				int currentlyMapped = 0;
 				int currentOutput = 0;
 				int currentCompressor = 0;
 				for (int i=lutSize; i>=1; i--){
-					if (verbose) cerr << "mapping compressors " << i << " to " << intlog2(i) << endl;
+					REPORT(DEBUG, "mapping compressors " << i << " to " << intlog2(i));
 					int sumSize = intlog2(i);			
 					for (int h=1; h<=bestSol[i]; h++){
-						if (verbose) cerr << tab << "number " << h << endl;
+						REPORT(DEBUG, tab << "number " << h);
 						if (i>2){
 							for (int j=0; j < wIn_; j++){ //do the compressor computation
 								name.str("");
@@ -245,17 +249,19 @@ namespace flopoco{
 	}
 
 	void IntCompressorTree::printSolution(int n, int * sol, int * coef, int *bestSol){
-		if (verbose){
-			cerr << endl << "solution !!! :"; 
+		ostringstream tmp;			
+			tmp <<  "solution !!! :"; 
 			for (int i=1; i<=n; i++)
-				cout << sol[i] << ", ";
-		}
+				tmp << sol[i] << ", ";
 
+		REPORT(DEBUG, tmp.str());
 		int val=0;
 		for (int i=1; i<=n; i++)
 			val+=sol[i]*coef[i];
 		
-		if (verbose) cerr << " score = " << val << " coeficinets=";
+		
+		tmp.str("");
+		tmp << "score = " << val << " coeficinets=";
 	
 		if (val < bestSol[0]){
 			for (int i=1; i<=n; i++)
@@ -265,7 +271,9 @@ namespace flopoco{
 	
 		if (verbose)
 			for (int i=1; i<=n ; i ++)
-				cout << coef[i] << "::";	
+				tmp << coef[i] << "::";	
+
+		REPORT(DEBUG, tmp.str());
 
 	}
 
