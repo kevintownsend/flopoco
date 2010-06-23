@@ -102,6 +102,9 @@ Table::Table(Target* target) :
 		vhdl	<< "  with X select  Y <= " << endl;
 		for (x = minIn; x <= maxIn; x++) {
 			y=function(x);
+			if( y>=(1<<wOut) || y<0)
+				REPORT(0, "Output out of range" << "x=" << x << "  y= " << y );
+			
 			//    cout << x <<"  "<< y << endl;
 			vhdl 	<< tab << "\"" << unsignedBinary(y, wOut) << "\" when \"" << unsignedBinary(x, wIn) << "\"," << endl;
 		}
