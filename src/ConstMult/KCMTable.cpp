@@ -26,6 +26,7 @@ namespace flopoco{
 		Table(target, wIn, wOut),  C_(C), inputSigned_(inputSigned)
 	{
 		ostringstream name; 
+		srcFileName="KCMTable";
 		name <<"KCMTable_" << wIn << "_" << C << (inputSigned_?"_signed":"_unsigned");
 		setName(name.str());
 	}
