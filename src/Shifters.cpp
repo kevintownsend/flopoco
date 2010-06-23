@@ -105,7 +105,7 @@ namespace flopoco{
 			
 		}
 		//update the output slack
-		outDelayMap["R"] = period - stageDelay;
+		outDelayMap["R"] = stageDelay;
 	
 		ostringstream lastLevelName;
 		lastLevelName << "level"<<wShiftIn_;
