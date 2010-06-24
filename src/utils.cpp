@@ -528,6 +528,12 @@ namespace flopoco{
 		t += tolower(*i);
 		return t;
 	}
+	
+	map<string, double> inDelayMap(string s, double d){
+		map<string, double> m;
+		m[s] = d;
+		return m;
+	}
 
 
 }
