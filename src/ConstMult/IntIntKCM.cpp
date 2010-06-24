@@ -48,7 +48,7 @@ namespace flopoco{
 		name << "IntIntKCM_" << wIn_ << "_" << C << (signedInput_?"_signed":"_unsigned");
 		setName(name.str());
 
-
+		setCriticalPath( getMaxInputDelays(inputDelays) );
 
 		// if(0*inputTwosComplement){
 
@@ -180,7 +180,7 @@ namespace flopoco{
 			chunkSize_ = lutWidth;
 			int nbOfTables = int ( ceil( double(wIn)/double(lutWidth)) );
 			int lastLutWidth = (wIn%lutWidth==0?lutWidth: wIn%lutWidth);
-			double delay = 0.0;
+//			double delay = 0.0;
 	
 	
 			// if (verbose){
@@ -231,6 +231,7 @@ namespace flopoco{
 					addAttribute("altera_attribute", "string", t2->getName()+": component", "-name ALLOW_ANY_ROM_SIZE_FOR_RECOGNITION ON");
 			}
 
+			manageCriticalPath(target->lutDelay() + 2*target->localWireDelay());
 
 			//perform nbOfTables multiplications
  			for ( int i=0; i<nbOfTables; i++){
@@ -248,7 +249,7 @@ namespace flopoco{
 				}
 			}
 		
-			delay += target->lutDelay() + 2*target->localWireDelay();
+//			delay += target->lutDelay() + 2*target->localWireDelay();
 		
 			//determine the addition operand size
 			int addOpSize = (nbOfTables - 2) * lutWidth + (constantWidth +  lastLutWidth);
@@ -268,15 +269,15 @@ namespace flopoco{
 			}
 		
 //			if(wIn_>32 && target->normalizedFrequency()>=0.5) { // TODO a real test, or fix the inMap?
-				map<string, double> inMap;
-				inMap["X0"] = delay;
+//				map<string, double> inMap;
+//				inMap["X0"] = delay;
 		
-				IntNAdder* adder = new IntNAdder(target, addOpSize, nbOfTables, inMap);
+				IntCompressorTree* adder = new IntCompressorTree(target, addOpSize, nbOfTables, inDelayMap("X0",getCriticalPath()));
 				oplist.push_back(adder);
 				for (int i=0; i<nbOfTables; i++)
 					inPortMap (adder, join("X",i) , join("addOp",i));
 		
-				inPortMapCst(adder, "Cin", "'0'");
+//				inPortMapCst(adder, "Cin", "'0'");
 				outPortMap(adder, "R", "OutRes");
 				vhdl << instance(adder, "Result_Adder");
 				syncCycleFromSignal("OutRes");
@@ -293,7 +294,10 @@ namespace flopoco{
 //						vhdl << " + ";
 //				}
 //				vhdl << ";" << endl;
-//			}		
+//			}
+
+			outDelayMap["R"] = adder->getOutputDelay("R");
+		
 			vhdl << tab << "R <= OutRes & pp0" << range(lutWidth-1,0) << ";" <<endl;
 	}
 
