@@ -4,6 +4,7 @@
 #include <sstream>
 #include <gmp.h>
 #include <gmpxx.h>
+#include "../IntCompressorTree.hpp"
 #include "../Operator.hpp"
 
 
