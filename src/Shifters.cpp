@@ -58,11 +58,12 @@ namespace flopoco{
 		vhdl << tab << declare("ps", wShiftIn_) << "<= S;" <<endl;
 	
 		// local variables
-		double period = (1.0)/target->frequency();
-		double stageDelay = 0.0;
 		int    lastRegLevel = -1;
 		int    unregisteredLevels = 0;
 		int    dep = 0;
+		
+		setCriticalPath( getMaxInputDelays( inputDelays) );
+		manageCriticalPath( target->localWireDelay() );
 		
 		for (int currentLevel=0; currentLevel<wShiftIn_; currentLevel++){
 			//compute current level delay
@@ -75,15 +76,16 @@ namespace flopoco{
 		
 			if (verbose)
 				cerr<<"> Shifters\t depth = "<<dep<<" at i="<<currentLevel<<endl;	
-
-			stageDelay += intlog(mpz_class(target->lutInputs()), mpz_class(dep)) * target->lutDelay() + (intlog(mpz_class(target->lutInputs()),mpz_class(dep))-1) * target->localWireDelay();
-			if (lastRegLevel == -1)
-				stageDelay+= maxInputDelay_;
-		
-			if (stageDelay>period){
+			
+			setCriticalPath( intlog(mpz_class(2) /*target->lutInputs())*/, mpz_class(dep)) * (target->lutDelay() + target->localWireDelay()) );
+			//compiler changed
+			REPORT(DEBUG, tab << "DELAY is " << getCriticalPath());
+			REPORT(DEBUG, tab << "the log value is " << intlog(mpz_class(target->lutInputs()), mpz_class(dep)) );
+			if (manageCriticalPath()){
 				lastRegLevel = currentLevel;
-				nextCycle(); ////////////////////////////////////////////////
+				REPORT(DEBUG, tab << "REG LEVEL current delay is:" << getCriticalPath());
 			}
+
 			ostringstream currentLevelName, nextLevelName;
 			currentLevelName << "level"<<currentLevel;
 			nextLevelName << "level"<<currentLevel+1;
@@ -105,7 +107,7 @@ namespace flopoco{
 			
 		}
 		//update the output slack
-		outDelayMap["R"] = stageDelay;
+		outDelayMap["R"] = getCriticalPath();
 	
 		ostringstream lastLevelName;
 		lastLevelName << "level"<<wShiftIn_;
@@ -113,8 +115,6 @@ namespace flopoco{
 			vhdl << tab << "R <= "<<lastLevelName.str()<<"("<< wIn + intpow2(wShiftIn_)-1-1 << " downto " << wIn_ + intpow2(wShiftIn_)-1 - wOut_ <<");"<<endl;
 		else
 			vhdl << tab << "R <= "<<lastLevelName.str()<<"("<< wOut_-1 << " downto 0);"<<endl;
-
-
 	}
 
 	Shifter::~Shifter() {
@@ -130,7 +130,7 @@ namespace flopoco{
 
 	void Shifter::outputVHDL(std::ostream& o, std::string name) {
 		ostringstream signame;
-		licence(o,"Florent de Dinechin, Bogdan Pasca (2007,2008,2009)");
+		licence(o,"Florent de Dinechin, Bogdan Pasca (2007,2008,2009,2010)");
 		Operator::stdLibs(o);
 		outputVHDLEntity(o);
 		newArchitecture(o,name);
