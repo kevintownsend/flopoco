@@ -23,8 +23,6 @@ namespace flopoco{
 		 **/
 		IntCompressorTree(Target* target, int wIn, int N, map<string, double> inputDelays = emptyDelayMap);
 
-		void outputVHDL(std::ostream& o, std::string name);
-	
 		bool solution(int k, int n, int targetSum, int * sol, int * coef);
 		void printSolution(int n, int * sol, int * coef, int *bestSol);
 		bool successor( int k, int sum, int * sol);

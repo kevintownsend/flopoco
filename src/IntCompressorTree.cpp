@@ -78,7 +78,7 @@ namespace flopoco{
 				processing = false;
 				outDelayMap["R"] = getCriticalPath();
 			}else if (nbOfInputs == 2){
-			
+				manageCriticalPath(target->localWireDelay());
 				IntAdder *finalAdder = new IntAdder(target, wIn_, inDelayMap("X",getCriticalPath()));
 				oplist.push_back(finalAdder);	
 
@@ -130,7 +130,7 @@ namespace flopoco{
 				tmp << " having score " << bestSol[0] << endl;
 				REPORT(DEBUG, tmp.str());
 				
-				manageCriticalPath( target->lutDelay() + target->localWireDelay() );
+				manageCriticalPath( target->lutDelay() + target->localWireDelay());
 			
 				int currentlyMapped = 0;
 				int currentOutput = 0;
@@ -329,22 +329,5 @@ namespace flopoco{
 		tc->addExpectedOutput("R", svR);
 
 	}
-
-	void IntCompressorTree::outputVHDL(std::ostream& o, std::string name) {
-		licence(o);
-		o << "library ieee; " << endl;
-		o << "use ieee.std_logic_1164.all;" << endl;
-		o << "use ieee.std_logic_unsigned.all;" << endl;
-		o << "library work;" << endl;
-		outputVHDLEntity(o);
-		newArchitecture(o,name);
-		o << buildVHDLComponentDeclarations();	
-		o << buildVHDLSignalDeclarations();
-		beginArchitecture(o);		
-		o<<buildVHDLRegisters();
-		o << vhdl.str();
-		endArchitecture(o);
-	}
-
 
 }
