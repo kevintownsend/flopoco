@@ -513,6 +513,17 @@ namespace flopoco{
 		criticalPath_ += delay;
 	}
 
+	bool Operator::manageCriticalPath(double delay){
+		criticalPath_ += delay;
+		if (criticalPath_ > (1.0/target_->frequency())){
+			nextCycle(); //TODO Warrning
+			criticalPath_ = min(delay, 1.0/target_->frequency());
+			return true;
+		}
+		else
+			return false;
+	}
+
 	void Operator::nextCycleCond(double delay){
 		criticalPath_ += delay;
 		REPORT(DEBUG, "cycle " << currentCycle_ << ",  cumulated critical path would be " << criticalPath_ << "s,   target is " << 1/target_->frequency() );
