@@ -13,6 +13,9 @@
 
 namespace flopoco{
 
+	extern map<string, double> emptyDelayMap;
+
+
 	/** The FunctionEvaluator class */
 	class FunctionEvaluator : public Operator
 	{
@@ -20,7 +23,7 @@ namespace flopoco{
 		/**
 		 * The FunctionEvaluator constructor
 		 */
-		FunctionEvaluator(Target* target, string func, int wInX, int wOutX, int n, bool finalRounding = true);
+		FunctionEvaluator(Target* target, string func, int wInX, int wOutX, int n, bool finalRounding = true, map<string, double> inputDelays = emptyDelayMap);
 
 		/**
 		 * FunctionEvaluator destructor

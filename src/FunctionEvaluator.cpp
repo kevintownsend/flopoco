@@ -38,7 +38,7 @@ namespace flopoco{
 #define DEBUGVHDL 0
 
 
-	FunctionEvaluator::FunctionEvaluator(Target* target, string func, int wInX, int wOutX, int n, bool finalRounding):
+	FunctionEvaluator::FunctionEvaluator(Target* target, string func, int wInX, int wOutX, int n, bool finalRounding, map<string, double> inputDelays):
 		Operator(target), wInX_(wInX), wOutX_(wOutX), finalRounding_(finalRounding){
 
 		ostringstream name;
@@ -61,7 +61,7 @@ namespace flopoco{
 		REPORT(INFO, "The number of intervals of the function: "<< intpow2(tg->wIn));
 		REPORT(INFO, "The number of bits used for y: "<< wInX-tg->wIn << " and its weight is: " << -tg->wIn);
 		
-		
+			
 		/* the nmber of bits of the address */
 		int addrSize = tg->wIn;
 		/* the number of bits of y is */
@@ -70,8 +70,10 @@ namespace flopoco{
 		int yWeight = -tg->wIn;
 		
 		YVar* y = new YVar(ySize, yWeight);
-		pe = new PolynomialEvaluator(target, tg->getCoeffParamVector(), y, wOutX+1, tg->getMaxApproxError() );
+
+		pe = new PolynomialEvaluator(target, tg->getCoeffParamVector(), y, wOutX+1, tg->getMaxApproxError() , inDelayMap("Y",getCriticalPath()));
 		oplist.push_back(pe);
+
 
 		wR = pe->getRWidth();
 		weightR = pe->getRWeight()+1;
@@ -92,6 +94,8 @@ namespace flopoco{
 		syncCycleFromSignal("Coef");
 		nextCycle();/////////////////////////////////// The Coefficent ROM has a registered output
 		
+		setCriticalPath(0.0);
+			
 		vhdl << tab << declare ("y",ySize) << " <= X"<<range(ySize-1 ,0) << ";" << endl;
 		
 		/* get the coefficients */
@@ -112,15 +116,18 @@ namespace flopoco{
 		vhdl << instance( pe, "PolynomialEvaluator");
 
 		syncCycleFromSignal("Rpe");
+		setCriticalPath(pe->getOutputDelay("R"));
+		
 		if (finalRounding_){
 			/* number of bits to recover is */
 			int recover = weightR + wOutX;
+			manageCriticalPath(target->adderDelay(pe->getRWidth()-(recover)-2));
 			vhdl << tab << 	declare("sticky",1) << " <= '0' when Rpe"<<range(pe->getRWidth()-(recover)-2,0) <<" = " 
 		                                                        <<   zg(pe->getRWidth()-(recover)-1,0) << " else '1';"<<endl;
 			vhdl << tab << declare("extentedf", recover + 1) << " <= Rpe"<<range(pe->getRWidth()-1, pe->getRWidth()-(recover+1))<<";"<<endl; 
 		                  
-			nextCycle();                              
-			IntAdder *a = new IntAdder(target, recover + 1);
+//			nextCycle();                              
+			IntAdder *a = new IntAdder(target, recover + 1, inDelayMap("X",getCriticalPath()));
 			oplist.push_back(a);
 	
 			inPortMap(a, "X", "extentedf");
@@ -132,8 +139,10 @@ namespace flopoco{
 			syncCycleFromSignal("fPostRound");
 		
 			addOutput("R", recover);
+			outDelayMap["R"]=a->getOutputDelay("R");
 			vhdl << tab << " R <= fPostRound"<<range(recover, 1)<<";"<<endl;
 		}else{
+			outDelayMap["R"] = getCriticalPath();
 			addOutput("R", pe->getRWidth());
 			vhdl << tab << "R <= Rpe;" << endl;  
 		}
