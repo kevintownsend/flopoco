@@ -12,6 +12,9 @@
 
 
 namespace flopoco{
+
+extern map<string, double> emptyDelayMap;
+
 	/** 
 	 * The Integer Multiplier class. Receives at input two numbers of 
 	 * wInX and wInY widths and outputs a result having the width wOut=wInX+wInY 
@@ -25,7 +28,7 @@ namespace flopoco{
 		 * @param wInX integer argument representing the width in bits of the input X 
 		 * @param wInY integer argument representing the width in bits of the input Y
 		 **/
-		SignedIntMultiplier(Target* target, int wInX, int wInY);
+		SignedIntMultiplier(Target* target, int wInX, int wInY, map<string, double> inputDelays = emptyDelayMap);
 	
 		/** SignedIntMultiplier destructor */
 		~SignedIntMultiplier();

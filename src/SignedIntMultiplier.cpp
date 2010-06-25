@@ -32,6 +32,7 @@
 #include "utils.hpp"
 #include "Operator.hpp"
 #include "SignedIntMultiplier.hpp"
+#include "IntCompressorTree.hpp"
 
 using namespace std;
 
@@ -39,9 +40,15 @@ namespace flopoco{
 
 	extern vector<Operator*> oplist;
 
-	SignedIntMultiplier:: SignedIntMultiplier(Target* target, int wInX, int wInY) :
+	SignedIntMultiplier:: SignedIntMultiplier(Target* target, int wInX, int wInY, map<string, double> inputDelays) :
 		Operator(target), wInX_(wInX), wInY_(wInY), wOut_(wInX + wInY){
  		srcFileName = "SignedIntMultiplier";
+ 
+ 		double target_freq = target->frequency();
+		double maxDSPFrequency = int(floor(1.0/ (target->DSPMultiplierDelay() + 1.0e-10)));
+		
+		if (target_freq > maxDSPFrequency)
+			target->setFrequency(maxDSPFrequency);
  
 		ostringstream name;
 		name <<"SignedIntMultiplier_"<<wInX_<<"_"<<wInY_;
@@ -88,21 +95,29 @@ namespace flopoco{
 						vhdl << tab << declare(join("x",k), xS) << " <= " << (k<cOp2-1?"\"0\" & ":"") << "sX" << range((k<cOp2-1?(k+1)*x:x*(cOp2-1)+xS)-1,k*x) << ";" << endl;
 					for (int k=0; k < cOp1 ; k++)
 						vhdl << tab << declare(join("y",k), yS) << " <= " << (k<cOp1-1?"\"0\" & ":"") << "sY" << range((k<cOp1-1?(k+1)*y:y*(cOp1-1)+yS)-1,k*y) << ";" << endl;
+
+					setCriticalPath( getMaxInputDelays(inputDelays));
+
 				
 					//MULTIPLICATIONS WITH SOME ACCUMULATIONS
 					for (int i=0; i < cOp2; i++){ 
+						setCriticalPath ( getMaxInputDelays(inputDelays) );
 						for (int j=0; j < cOp1; j++){ 
 							if (j==0){ // @ the first the operation is only multiplication, not MAC
+								manageCriticalPath(target->DSPMultiplierDelay());
 								vhdl << tab << declare(join("px",i,"y",j), xS+yS) << " <= " << join("x",i) << " * " << join("y",j) << ";" << endl;
 							}else{
+								manageCriticalPath(target->DSPlocalWireDelay() + target->DSPAdderDelay());
 								vhdl << tab << declare(join("tpx",i,"y",j),xS+yS) << " <= " << join("x",i) << " * " << join("y",j) << ";" << endl; 
 								vhdl << tab << declare(join("px",i,"y",j), xS+yS) << " <= " << join("tpx",i,"y",j) << " + " 
 								                                                            << join("px",i,"y",j-1) << range(xS+yS-1,y) << ";" << endl; //sign extend TODO
 							}
-							if (!((j==cOp1-1) && (i<cOp2-1))) nextCycle();
+//							if (!((j==cOp1-1) && (i<cOp2-1))) nextCycle();
 						}
 						if (i<cOp2-1) setCycle(0); //reset cycle
 					}
+					
+					REPORT(DEBUG, "Delay value at DSP outputs " << getCriticalPath());
 			
 					//FORM THE INTERMEDIARY PRODUCTS
 					for (int i=0; i < cOp2 ; i++){
@@ -113,9 +128,11 @@ namespace flopoco{
 					}
 
 					if (cOp2 > 1){
+						manageCriticalPath(target->DSPinterconnectWireDelay()+target->localWireDelay());
 						vhdl << tab << declare ("sum0Low", x) << " <= sum0" << range(x-1,0) << ";" << endl;
-
-						IntNAdder* add =  new IntNAdder(target, y*(cOp1-1)+yS +  x*(cOp2-1)+xS - x, cOp2);
+						REPORT( DEBUG, "The delay at compressor tree input is = " << getCriticalPath());
+//						IntNAdder* add =  new IntNAdder(target, y*(cOp1-1)+yS +  x*(cOp2-1)+xS - x, cOp2);
+						IntCompressorTree* add =  new IntCompressorTree(target, y*(cOp1-1)+yS +  x*(cOp2-1)+xS - x, cOp2, inDelayMap("X0",getCriticalPath()));
 						oplist.push_back(add);
 		
 						/* prepare operands */
@@ -143,11 +160,12 @@ namespace flopoco{
 						for (int i=0; i< cOp2; i++)
 							inPortMap (add, join("X",i) , join("addOp",i));
 		
-						inPortMapCst(add, "Cin", "'0'");
+//						inPortMapCst(add, "Cin", "'0'");
 						outPortMap(add, "R", "addRes");
 						vhdl << instance(add, "adder");
 
 						syncCycleFromSignal("addRes");
+						outDelayMap["R"] = (add->getOutDelayMap())["R"];
 
 						if ( (y*(cOp1-1)+yS + x*(cOp2-1)+xS ) - (wInX + wInY) < x ){
 							vhdl << tab << "R <= addRes & sum0Low "<<range(x-1, (y*(cOp1-1)+yS + x*(cOp2-1)+xS ) - (wInX + wInY) )<< ";" << endl;
@@ -156,8 +174,11 @@ namespace flopoco{
 						}
 					}else{
 						vhdl << tab << "R <= sum0"<<range( y*(cOp1-1) + xS + yS - 1, y*(cOp1-1) + xS + yS - (wInX + wInY ) ) << ";" << endl;
+						outDelayMap["R"] = getCriticalPath();
 					}
-				}else{ 
+				}else{
+					setCriticalPath( getMaxInputDelays(inputDelays));
+					manageCriticalPath( target->DSPMultiplierDelay());
 					vhdl << tab << "R <= X * Y ;" <<endl;
 				}
 			}else if ((target->getID()=="Virtex5") || (target->getID()=="Virtex6")){
@@ -238,7 +259,9 @@ namespace flopoco{
 				
 					REPORT(DEBUG, "number of chunks for first  operand = " << cOp1);
 					REPORT(DEBUG, "number of chunks for second operand = " << cOp2);
-				
+					
+					setCriticalPath( getMaxInputDelays(inputDelays));
+					
 					/* chunk splitting the first operand into chunks of 17 and 24 bits*/
 					for (int k=0; k < cOp1 ; k++)
 						vhdl << tab << declare(join("x",k), x+1) << " <= " << (k<cOp1-1?"\"0\" & ":"") << "sX" << range((k<cOp1-1?(k+1)*x:xS)-1,k*x) << ";" << endl;
@@ -247,15 +270,18 @@ namespace flopoco{
 	
 					//MULTIPLICATIONS WITH SOME ACCUMULATIONS
 					for (int i=0; i < cOp2; i++){ 
+						setCriticalPath ( getMaxInputDelays(inputDelays) );
 						for (int j=0; j < cOp1; j++){ 
 							if (j==0){ // @ the first the operation is only multiplication, not MAC
+								manageCriticalPath(target->DSPMultiplierDelay());
 								vhdl << tab << declare(join("px",j,"y",i), x+y+2) << " <= " << join("x",j) << " * " << join("y",i) << ";" << endl;
 							}else{
+								manageCriticalPath(target->DSPlocalWireDelay() + target->DSPAdderDelay());
 								vhdl << tab << declare(join("tpx",j,"y",i),x+y+2) << " <= " << join("x",j) << " * " << join("y",i) << ";" << endl; 
 								vhdl << tab << declare(join("px",j,"y",i), x+y+2) << " <= " << join("tpx",j,"y",i) << " + " 
 									                                                        << join("px",j-1,"y",i) << range(x+y+1,x) << ";" << endl; 
 							}
-							if (!((j==cOp1-1) && (i<cOp2-1))) nextCycle();
+//							if (!((j==cOp1-1) && (i<cOp2-1))) nextCycle();
 						}
 						if (i<cOp2-1) setCycle(0); //reset cycle
 					}
@@ -272,7 +298,10 @@ namespace flopoco{
 						/* more than one operand in the final adder */
 						vhdl << tab << declare ("sum0Low", y) << " <= sum0" << range(y-1,0) << ";" << endl;
 
-						IntNAdder* add =  new IntNAdder(target, (xS + y + 1) + (cOp2-1)*y - y, cOp2);
+						manageCriticalPath(target->DSPinterconnectWireDelay());
+						REPORT( DEBUG, "The delay at compressor tree input is = " << getCriticalPath());
+//						IntNAdder* add =  new IntNAdder(target, (xS + y + 1) + (cOp2-1)*y - y, cOp2);
+						IntCompressorTree* add =  new IntCompressorTree(target, (xS + y + 1) + (cOp2-1)*y - y, cOp2, inDelayMap("X0",getCriticalPath()));
 						oplist.push_back(add);
 	
 						/* prepare operands */
@@ -300,11 +329,12 @@ namespace flopoco{
 						for (int i=0; i< cOp2; i++)
 							inPortMap (add, join("X",i) , join("addOp",i));
 	
-						inPortMapCst(add, "Cin", "'0'");
+//						inPortMapCst(add, "Cin", "'0'");
 						outPortMap(add, "R", "addRes");
 						vhdl << instance(add, "adder");
 
 						syncCycleFromSignal("addRes");
+						outDelayMap["R"] = (add->getOutDelayMap())["R"];
 
 						if ( ( xS+ yS ) - (wInX + wInY) < y ){
 							vhdl << tab << "R <= addRes & sum0Low "<<range(y-1, xS + yS - (wInX + wInY) )<< ";" << endl;
@@ -313,17 +343,25 @@ namespace flopoco{
 						}
 					}else{
 						vhdl << tab << "R <= sum0"<<range(xS+yS-1, xS+yS - (wInX + wInY)) << ";" << endl;
+						outDelayMap["R"] = getCriticalPath();
 					}
 				}else{
+					setCriticalPath( getMaxInputDelays(inputDelays));
+					manageCriticalPath( target->DSPMultiplierDelay());
 					vhdl << tab << "R <= X * Y ;" <<endl;
 				}
 			}else{
 				REPORT(0, "WARNINNG: Only implemented for Xilinx Targets for now");
+				setCriticalPath( getMaxInputDelays(inputDelays));
+				manageCriticalPath( target->DSPMultiplierDelay());
 				vhdl << tab << "R <= X * Y;"<<endl;
 			}
 		}
 		else
 			vhdl << tab << "R <= X * Y;" <<endl;
+		
+		if (target_freq > maxDSPFrequency)
+			target->setFrequency( target_freq );
 	}
 
 	SignedIntMultiplier::~SignedIntMultiplier() {
