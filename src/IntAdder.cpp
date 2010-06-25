@@ -1205,8 +1205,8 @@ extern vector<Operator*> oplist;
 			}
 //			shortLatencyInputRegister = 1;
 			/* TODO */
-//			return PINF;
-			return cost;
+			return PINF;
+//			return cost;
 		}
 		cerr << "Error in " <<  __FILE__ << "@" << __LINE__;
 		exit(-1);
