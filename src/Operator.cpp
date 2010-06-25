@@ -514,14 +514,16 @@ namespace flopoco{
 	}
 
 	bool Operator::manageCriticalPath(double delay){
-		criticalPath_ += delay;
-		if (criticalPath_ > (1.0/target_->frequency())){
+//		criticalPath_ += delay;
+		if (criticalPath_ + delay > (1.0/target_->frequency())){
 			nextCycle(); //TODO Warrning
 			criticalPath_ = min(delay, 1.0/target_->frequency());
 			return true;
 		}
-		else
+		else{
+			criticalPath_ += delay;
 			return false;
+		}
 	}
 
 	void Operator::nextCycleCond(double delay){
