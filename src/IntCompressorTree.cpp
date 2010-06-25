@@ -52,6 +52,7 @@ namespace flopoco{
 		REPORT(DEBUG, "delay for X0 is   "<< inputDelays["X0"]);	
 		
 		setCriticalPath(getMaxInputDelays(inputDelays));
+		manageCriticalPath();
 
 		int lutSize = target->lutInputs();
 		bool processing = true;
@@ -131,6 +132,7 @@ namespace flopoco{
 				REPORT(DEBUG, tmp.str());
 				
 				manageCriticalPath( target->lutDelay() + target->localWireDelay());
+				REPORT(DEBUG, "Delay in compressor tree @ some level " << getCriticalPath());
 			
 				int currentlyMapped = 0;
 				int currentOutput = 0;
