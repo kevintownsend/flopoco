@@ -36,7 +36,8 @@ namespace flopoco{
 		ostringstream name;
 		double target_freq = target->frequency();
 		double maxDSPFrequency = int(floor(1.0/ (target->DSPMultiplierDelay() + 1.0e-10)));
-		target->setFrequency(maxDSPFrequency);
+		if (target_freq > maxDSPFrequency)
+			target->setFrequency(maxDSPFrequency);
 
 		/* Name Setup procedure
 		 *  The name has the format: IntMultiplier_wInX_wInY
@@ -1782,9 +1783,9 @@ namespace flopoco{
 				else 
 					vhdl << tab << "R <= X * Y ;" <<endl;
 			}
-		
-		target->setFrequency( target_freq );
 
+		if (target_freq > maxDSPFrequency)
+			target->setFrequency( target_freq );
 	}
 
 	IntMultiplier::~IntMultiplier() {
