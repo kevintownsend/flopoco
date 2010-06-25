@@ -33,7 +33,7 @@ namespace flopoco{
 
 	extern vector<Operator*> oplist;
 	
-		PolynomialEvaluator::PolynomialEvaluator(Target* target, vector<FixedPointCoefficient*> coef, YVar* y, int targetPrec, mpfr_t* approxError):
+		PolynomialEvaluator::PolynomialEvaluator(Target* target, vector<FixedPointCoefficient*> coef, YVar* y, int targetPrec, mpfr_t* approxError,map<string, double> inputDelays):
 		Operator(target), y_(y), targetPrec_(targetPrec){
 		
 		setCopyrightString("Bogdan Pasca (2010)");
@@ -156,7 +156,7 @@ namespace flopoco{
 		REPORT(INFO, s1.str());
 		REPORT(INFO, s2.str());
 		//REPORT(INFO, "------------------------------------------------------------");
-
+		setCriticalPath(getMaxInputDelays(inputDelays));
 
 //		exit(-1);///////////////////////////////
 		for (uint32_t i=0; i<=unsigned(degree_); i++){
@@ -171,7 +171,7 @@ namespace flopoco{
 //				cout << "sigmakPSize[i-1]( "<<i-1<<") is = " << sigmakPSize[i-1] << "yGuard_[i]="<<yGuard_[i]<< " y_->getSize()="<<y_->getSize()<<endl;
 				vhdl << tab << "-- weight of piP"<<i<<" is="<<pikPWeight[i]<<" size="<<pikPSize[i]+2<<endl;
 
-				SignedIntMultiplier* sm = new SignedIntMultiplier ( target, 1+y_->getSize()+yGuard_[i], sigmakPSize[i-1]+1);
+				SignedIntMultiplier* sm = new SignedIntMultiplier ( target, 1+y_->getSize()+yGuard_[i], sigmakPSize[i-1]+1, inDelayMap("X",getCriticalPath()));
 				oplist.push_back(sm);
 				
 				inPortMap ( sm, "X", join("yT",i));
@@ -180,12 +180,14 @@ namespace flopoco{
 				
 				vhdl << instance ( sm, join("Product_",i) );
 				syncCycleFromSignal(join("piP",i)); 
-				nextCycle();///////////////////////////////////////////////////
+//				nextCycle();///////////////////////////////////////////////////
+				
+				setCriticalPath( sm->getOutputDelay("R") );
 				
 				if (i<unsigned(degree_)){
 					vhdl << tab << "-- weight of piPT"<<i<<" is="<<pikPTWeight[i]<<" size="<<pikPTSize[i]+1<<endl;
 					vhdl << tab << declare( join("piPT",i), pikPTSize[i]+1 ) << " <= " << join("piP",i)<<range(pikPSize[i], pikPSize[i] - pikPTSize[i] ) << ";" <<endl; // coef_[i]->getSize()+1+y_->getSize()+yGuard_[i]-1, coef_[i]->getSize()+1+y_->getSize()+yGuard_[i]-1 - pikPTSize[i]) << ";" << endl;   
-					IntAdder* sa = new IntAdder (target, sigmakPSize[i]+1);
+					IntAdder* sa = new IntAdder (target, sigmakPSize[i]+1, inDelayMap("X",getCriticalPath()));
 					oplist.push_back(sa);
 				
 				
@@ -207,7 +209,7 @@ namespace flopoco{
 					nextCycle();///////////////////////////////////////////////////                                                                   
 				                                                                   
 				}else{
-					IntAdder* sa = new IntAdder (target, sigmakPSize[i]+1);
+					IntAdder* sa = new IntAdder (target, sigmakPSize[i]+1, inDelayMap("X",getCriticalPath()));
 					oplist.push_back(sa);
 
 					vhdl << tab << declare( join("op1_",i), sigmakPSize[i]+1 ) << " <= (" << rangeAssign(sigmakPWeight[i]-pikPWeight[i]-1,0, join("piP",i)+of(pikPSize[i]+1)) 
@@ -228,7 +230,9 @@ namespace flopoco{
 					weightR = sigmakPWeight[i];
 					addOutput("R", sigmakPSize[i]+1);
 					vhdl << tab << "R <= " << join("sigmaP",i) << ";" << endl;
-				}			
+				}
+
+				outDelayMap["R"]=getCriticalPath();			
 			}		
 		}
 	}

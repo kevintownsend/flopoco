@@ -12,6 +12,7 @@
 
 
 namespace flopoco{
+
 #define MINF -16384
 
 	extern map<string, double> emptyDelayMap;
@@ -165,7 +166,7 @@ namespace flopoco{
 			 * The polynomial evaluator class. FIXME the parameters are subhect to change
 			 * TODO document them
 			 */
-			PolynomialEvaluator(Target* target, vector<FixedPointCoefficient*> coef, YVar* y, int targetPrec, mpfr_t* approxError);
+			PolynomialEvaluator(Target* target, vector<FixedPointCoefficient*> coef, YVar* y, int targetPrec, mpfr_t* approxError, map<string, double> inputDelays = emptyDelayMap);
 
 			/** Destructor */
 			~PolynomialEvaluator();
