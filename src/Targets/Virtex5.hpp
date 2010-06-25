@@ -66,9 +66,9 @@ namespace flopoco{
 			nrDSPs_ 		= 160; // XC5VLX30 has 1 column of 32 DSPs
 			dspFixedShift_ 	= 17; 
 			
-			DSPMultiplierDelay_       = 2.970e-9;
-			DSPAdderDelay_            = 1.820e-9;
-			DSPlocalWireDelay_        = 0.266e-9;
+			DSPMultiplierDelay_       = 2.387e-9;
+			DSPAdderDelay_            = 1.889e-9;
+			DSPlocalWireDelay_        = 0.235e-9;
 			DSPinterconnectWireDelay_ = 0.436e-9;
 
 		}
