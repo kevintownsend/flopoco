@@ -115,16 +115,37 @@ namespace flopoco{
 		 * @return the addition delay for an n bit addition
 		 */
 		virtual double adderDelay(int n) =0;
+		
+		/** Function which returns the delay of the multiplier of the DSP block
+		 * @return delay of the DSP multiplier
+		 */
+		virtual double DSPMultiplierDelay() =0;
+
+		/** Function which returns the delay of the adder of the DSP block
+		 * @return delay of the DSP adder
+		 */
+		virtual double DSPAdderDelay()=0;
+		
+		/** Function which returns the delay of the wiring between neighboring 
+		 * DSPs
+		 * @return delay of the interconnect between DSPs
+		 */
+		virtual double DSPlocalWireDelay()=0;
+
+		/** Function which returns the delay of the wiring between neighboring 
+		 * DSPs
+		 * @return delay of the interconnect between DSPs
+		 */
+		virtual double DSPinterconnectWireDelay()=0;
 
 		/** Function which returns the local wire delay (local routing)
 		 * @return local wire delay 
 		 */
 		virtual double localWireDelay() =0;
 	
-		/** Function which returns the size of a primitive memory block,which could be recognized by the sintetyzer as a dual block.
+		/** Function which returns the size of a primitive memory block,which could be recognized by the synthesizer as a dual block.
 		 * @return the size of the primitive memory block
 		 */	
-	
 		virtual long sizeOfMemoryBlock() = 0 ;
 
 		/** Function which returns the distant wire delay.
@@ -135,7 +156,6 @@ namespace flopoco{
 		/** Function which returns the Equivalence between slices and a DSP.
 		 * @return X ,  where X * Slices = 1 DSP
 		 */
-	
 		virtual int getEquivalenceSliceDSP() = 0;
 	
 		/** Function which returns the number of DSPs that exist in FPGA
@@ -147,7 +167,6 @@ namespace flopoco{
 		/** Function which returns the maximum widths of the operands of a DSP
 		 * @return widths
 		 */
-	
 		virtual void getDSPWidths(int &x, int &y, bool sign = false) = 0;
 	
 		virtual void getAdderParameters(double &k1, double &k2, int size) = 0;
@@ -216,7 +235,8 @@ namespace flopoco{
 		/** Constructs a specific DSP to each target */
 		virtual DSP* createDSP() = 0;
 	
-	
+		//todo
+		
 
 	protected:
 		string id_;

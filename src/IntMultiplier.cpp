@@ -30,10 +30,13 @@ namespace flopoco{
 
 	extern vector<Operator*> oplist;
 
-	IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY) :
+	IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY, map<string, double> inputDelays) :
 		Operator(target), wInX_(wInX), wInY_(wInY), wOut_(wInX + wInY){
  
 		ostringstream name;
+		double target_freq = target->frequency();
+		double maxDSPFrequency = int(floor(1.0/ (target->DSPMultiplierDelay() + 1.0e-10)));
+		target->setFrequency(maxDSPFrequency);
 
 		/* Name Setup procedure
 		 *  The name has the format: IntMultiplier_wInX_wInY
@@ -121,6 +124,9 @@ namespace flopoco{
 							}
 							////////////////////////////////////////////////////
 							//SPLITTINGS
+							
+							setCriticalPath( getMaxInputDelays(inputDelays));
+							
 							for (int k=0; k<chunksX ; k++)
 								vhdl << tab << declare(join("x",k),x) << " <= sX" << range((k+1)*x-1,k*x) << ";" << endl;
 							for (int k=0; k<chunksY ; k++)
@@ -128,14 +134,17 @@ namespace flopoco{
 
 							//MULTIPLICATIONS WITH SOME ACCUMULATIONS
 							for (int i=0; i<chunksX; i++){ 
+								setCriticalPath ( getMaxInputDelays(inputDelays) );
 								for (int j=0; j<chunksY; j++){ 
 									if (j==0){ // @ the first the operation is only multiplication, not MAC
+										manageCriticalPath(target->DSPMultiplierDelay());
 										vhdl << tab << declare(join("px",i,"y",j),x+y) << " <= " << use(join("x",i)) << " * " << use(join("y",j)) << ";" << endl;
 									}else{
+										manageCriticalPath(target->DSPlocalWireDelay() + target->DSPAdderDelay());
 										vhdl << tab << declare(join("tpx",i,"y",j),x+y) << " <= " << use(join("x",i)) << " * " << use(join("y",j))  << ";" << endl; 
 										vhdl << tab << declare(join("px",i,"y",j),x+y+1) << " <= ( \"0\" & " << use(join("tpx",i,"y",j)) << ") + " << use(join("px",i,"y",j-1))<<range(x+y-1,y) << ";" << endl; 
 									}
-									if (!((j==chunksY-1) && (i<chunksX-1))) nextCycle();
+//									if (!((j==chunksY-1) && (i<chunksX-1))) nextCycle();
 								}
 								if (i<chunksX-1) setCycle(0); //reset cycle
 							}
@@ -150,7 +159,12 @@ namespace flopoco{
 							vhdl << tab << declare ("sum0Low", x) << " <= sum0" << range(x-1,0) << ";" << endl;
 					
 							if (chunksX>1){
-								IntNAdder* add =  new IntNAdder(target, x*chunksX+y*chunksY+extension, chunksX);
+								manageCriticalPath(target->DSPinterconnectWireDelay());
+							
+								REPORT(DEBUG, "delay at adder input " << getCriticalPath() ); 
+//								IntNAdder* add =  new IntNAdder(target, x*chunksX+y*chunksY+extension, chunksX, inDelayMap("X0",getCriticalPath()));
+								IntCompressorTree* add =  new IntCompressorTree(target, x*chunksX+y*chunksY+extension, chunksX, inDelayMap("X0",getCriticalPath()));
+
 								oplist.push_back(add);
 				
 								for (int i=0; i< chunksX; i++){
@@ -162,7 +176,7 @@ namespace flopoco{
 								for (int i=0; i< chunksX; i++)
 									inPortMap (add, join("X",i) , join("addOp",i));
 				
-								inPortMapCst(add, "Cin", "'0'");
+//								inPortMapCst(add, "Cin", "'0'");
 								outPortMap(add, "R", "addRes");
 								vhdl << instance(add, "adder");
 
@@ -174,14 +188,18 @@ namespace flopoco{
 									vhdl << tab << "R <= addRes" << range((x*chunksX+y*chunksY+extension)-1,0) << " & sum0Low" << range(x-1, x-1 + ((x*chunksX+y*chunksY+extension) - wInX - wInY)+1) << ";" << endl;
 								}else{
 									vhdl << tab << "R <= addRes" << range((x*chunksX+y*chunksY+extension)-1, ((x*chunksX+y*chunksY+extension) - wInX - wInY)) << ";" << endl;
-									outDelayMap["R"] = 0.0;
+//									outDelayMap["R"] = 0.0;
 								}
 							}else{
 								vhdl << tab << "R <= " << use(join("sum",0))<<range(y*chunksY+x-1, x*chunksX+y*chunksY -( wInX+wInY)) << ";" << endl;
+								outDelayMap["R"] = getCriticalPath();
 							}
 						}
-						else{ 
+						else{
+							setCriticalPath( getMaxInputDelays(inputDelays));
+							manageCriticalPath( target->DSPMultiplierDelay());
 							vhdl << tab << "R <= X * Y ;" <<endl;
+							
 							outDelayMap["R"] = 1.0/ target->frequency();
 						}
 					}
@@ -1764,6 +1782,9 @@ namespace flopoco{
 				else 
 					vhdl << tab << "R <= X * Y ;" <<endl;
 			}
+		
+		target->setFrequency( target_freq );
+
 	}
 
 	IntMultiplier::~IntMultiplier() {

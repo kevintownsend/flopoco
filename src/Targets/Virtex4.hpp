@@ -65,6 +65,12 @@ namespace flopoco{
 		
 			lutInputs_ = 4;
 			nrDSPs_ = 220; // XC4VLX15 has 1 column of 32 DSPs, 60 is for testing purposes	
+			
+			DSPMultiplierDelay_       = 2.970e-9;
+			DSPAdderDelay_            = 1.820e-9;
+			DSPlocalWireDelay_        = 0.266e-9;
+			DSPinterconnectWireDelay_ = 0.436e-9;
+			//0.631;
 		}
 
 		/** The destructor */
@@ -75,6 +81,12 @@ namespace flopoco{
 		 */
 		double carryPropagateDelay();
 		double adderDelay(int size);
+
+		double DSPMultiplierDelay(){ return DSPMultiplierDelay_;}
+		double DSPAdderDelay(){ return DSPAdderDelay_;}
+		double DSPlocalWireDelay(){ return DSPlocalWireDelay_;}
+		double DSPinterconnectWireDelay(){ return DSPinterconnectWireDelay_;}
+
 		void   getAdderParameters(double &k1, double &k2, int size);
 		double localWireDelay();
 		double lutDelay();
@@ -108,6 +120,12 @@ namespace flopoco{
 		double slice2sliceDelay_;       /**< This is approximate. It approximates the wire delays between Slices */
 		double xorcyCintoO_;    /**< the S to O delay of the xor gate */
 		int nrDSPs_;			/**< Number of available DSP blocks on the board */
+
+		double DSPMultiplierDelay_;
+		double DSPAdderDelay_;
+		double DSPlocalWireDelay_;
+		double DSPinterconnectWireDelay_;
+
 	};
 
 }

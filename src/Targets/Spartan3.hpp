@@ -64,6 +64,12 @@ namespace flopoco{
 			xorcyCintoO_    = 0.786e-9;
 		
 			lutInputs_ = 4;
+			
+			DSPMultiplierDelay_       = 2.970e-9;
+			DSPAdderDelay_            = 1.820e-9;
+			DSPlocalWireDelay_        = 0.266e-9;
+			DSPinterconnectWireDelay_ = 0.436e-9;
+
 		}
 
 		/** The destructor */
@@ -74,6 +80,12 @@ namespace flopoco{
 		 */
 		double carryPropagateDelay();
 		double adderDelay(int size);
+		
+		double DSPMultiplierDelay(){ return DSPMultiplierDelay_;}
+		double DSPAdderDelay(){ return DSPAdderDelay_;}
+		double DSPlocalWireDelay(){ return DSPlocalWireDelay_;}
+		double DSPinterconnectWireDelay(){ return DSPinterconnectWireDelay_;}
+		
 		void   getAdderParameters(double &k1, double &k2, int size);
 		double localWireDelay();
 		double lutDelay();
@@ -106,6 +118,12 @@ namespace flopoco{
 		double muxf5_;          /**< The delay of the almighty mux F5*/
 		double slice2sliceDelay_;       /**< This is approximate. It approximates the wire delays between Slices */
 		double xorcyCintoO_;    /**< the S to O delay of the xor gate */
+		
+		double DSPMultiplierDelay_;
+		double DSPAdderDelay_;
+		double DSPlocalWireDelay_;
+		double DSPinterconnectWireDelay_;
+
 	};
 
 }

@@ -26,6 +26,7 @@
 #include <sstream>
 #include <string>
 #include "Target.hpp"
+#include <math.h>
 
 
 using namespace std;
@@ -61,7 +62,7 @@ namespace flopoco{
 
 
 	double Target::frequencyMHz(){
-		return frequency_/1000000;
+		return floor(frequency_/1000000);
 	}
 
 	double Target::normalizedFrequency(){
