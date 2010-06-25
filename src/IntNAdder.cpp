@@ -79,7 +79,7 @@ namespace flopoco{
 				int nbOfChunksSecondDesign = ceil(double(wIn_)/double(maxInAdd));
 				int scoreSecondDesign = nbOfChunksSecondDesign;
 				REPORT(DEBUG, "Exploring second design ... score is:"<< scoreSecondDesign);
-				if (scoreFirstDesign >= scoreSecondDesign){
+				if (scoreFirstDesign > scoreSecondDesign){
 					REPORT(DEBUG, "Implementation of the second design");
 					nextCycle();//
 					setCriticalPath(0.0);
