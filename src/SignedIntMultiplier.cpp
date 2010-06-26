@@ -184,19 +184,25 @@ namespace flopoco{
 			}else if ((target->getID()=="Virtex5") || (target->getID()=="Virtex6")){
 				//multiplier block size is 25x18 signed, 24x17 unsigned
 				//check best splitting
+				const int aSize = 15;
 				
-				int l18[5],l25[5];
-				l18[0]=18; 
-				l18[1]=35;
-				l18[2]=52;
-				l18[3]=69;
-				l18[4]=86;
+				int l18[aSize],l25[5];
+				for (int i=0; i< aSize; i++){
+					l18[i] = (i+1)*17 + 1;
+					l25[i] = (i+1)*24 + 1;
+				}
 				
-				l25[0]=25;
-				l25[1]=49;
-				l25[2]=73;
-				l25[3]=97;
-				l25[4]=121;
+//				l18[0]=18; 
+//				l18[1]=35;
+//				l18[2]=52;
+//				l18[3]=69;
+//				l18[4]=86;
+//				
+//				l25[0]=25;
+//				l25[1]=49;
+//				l25[2]=73;
+//				l25[3]=97;
+//				l25[4]=121;
 				
 				int k1_0=0, k2_0=0;
 				while (l18[k1_0] < wInX)
@@ -350,7 +356,7 @@ namespace flopoco{
 					manageCriticalPath( target->DSPMultiplierDelay());
 					vhdl << tab << "R <= X * Y ;" <<endl;
 				}
-			}else{
+			}else{ //the altera version
 				REPORT(0, "WARNINNG: Only implemented for Xilinx Targets for now");
 				setCriticalPath( getMaxInputDelays(inputDelays));
 				manageCriticalPath( target->DSPMultiplierDelay());
