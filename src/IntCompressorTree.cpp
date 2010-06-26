@@ -150,7 +150,7 @@ namespace flopoco{
 								for (int k=currentlyMapped; k<currentlyMapped+i; k++) {
 									name.str("");
 									name << "level_" << treeLevel-1 << "_sum_"<<k;
-									vhdl << "("	<< zg(sumSize-1,0) << " & " << use(name.str())<<of(j)<<")";
+									vhdl << "("	<< zg(sumSize-1,0) << " & " << use(name.str())<<range(j,j)<<")";
 									if (k < currentlyMapped+i-1)
 										vhdl << " + ";
 								}
@@ -192,7 +192,7 @@ namespace flopoco{
 								for (int k=wIn_-1-m; k >= 0; k--)	{							
 									name.str("");//emptyName
 									name << "level_" << treeLevel << "_compressor_"<<currentCompressor-1<< "_column_" << k ;
-									vhdl << use(name.str())<<of(m);
+									vhdl << use(name.str())<<range(m,m);
 									if (k!=0)
 										vhdl << " & ";
 								}
