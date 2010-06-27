@@ -40,7 +40,7 @@ extern int verbose;
 
 
 const std::string tab = "   ";
-
+extern map<string, double> emptyDelayMap;
 
 
 
@@ -66,7 +66,7 @@ public:
 	 * Creates an operator instance with an instantiated target for deployment.
 	 * @param target_ The deployment target of the operator.
 	 */
-	Operator(Target* target)  {
+	Operator(Target* target, map<string, double> inputDelays = emptyDelayMap)  {
 		target_                     = target;
 		numberOfInputs_             = 0;
 		numberOfOutputs_            = 0;
@@ -76,6 +76,7 @@ public:
 		pipelineDepth_              = 0;
 		currentCycle_               = 0;
 		needRecirculationSignal_    = false;
+		inputDelayMap               = inputDelays;
 
 		if (target_->isPipelined())
 			setSequential();
@@ -651,6 +652,7 @@ protected:
 	map<string, Operator*> subComponents_;/**< The list of sub-components */
 	map<string, string> portMap_;         /**< Port map for an instance of this operator */
 	map<string, double> outDelayMap;      /**< Slack delays on the outputs */
+	map<string, double> inputDelayMap;       /**< Slack delays on the inputs */
 	FlopocoStream       vhdl;             /**< The internal stream to which the constructor will build the VHDL code */
 	string              srcFileName;      /**< Used to debug and report.  */
 	map<string, int>    declareTable;     /**< Table containing the name and declaration cycle of the signal */

@@ -750,7 +750,7 @@ namespace flopoco{
 	
 		o << tab << instanceName << ": " << op->getName();
 		if (op->isSequential()) 
-			o << "  -- pipelineDepth="<< op->getPipelineDepth();
+			o << "  -- pipelineDepth="<< op->getPipelineDepth() << " maxInDelay=" << getMaxInputDelays(op->inputDelayMap);
 		o << endl;
 		o << tab << tab << "port map (";
 		// build vhdl and erase portMap_
