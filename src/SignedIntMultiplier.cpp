@@ -41,7 +41,7 @@ namespace flopoco{
 	extern vector<Operator*> oplist;
 
 	SignedIntMultiplier:: SignedIntMultiplier(Target* target, int wInX, int wInY, map<string, double> inputDelays) :
-		Operator(target), wInX_(wInX), wInY_(wInY), wOut_(wInX + wInY){
+		Operator(target, inputDelays), wInX_(wInX), wInY_(wInY), wOut_(wInX + wInY){
  		srcFileName = "SignedIntMultiplier";
  
  		double target_freq = target->frequency();
@@ -355,12 +355,16 @@ namespace flopoco{
 					setCriticalPath( getMaxInputDelays(inputDelays));
 					manageCriticalPath( target->DSPMultiplierDelay());
 					vhdl << tab << "R <= X * Y ;" <<endl;
+					outDelayMap["R"] = getCriticalPath();
+
 				}
 			}else{ //the altera version
 				REPORT(0, "WARNINNG: Only implemented for Xilinx Targets for now");
 				setCriticalPath( getMaxInputDelays(inputDelays));
 				manageCriticalPath( target->DSPMultiplierDelay());
 				vhdl << tab << "R <= X * Y;"<<endl;
+				outDelayMap["R"] = getCriticalPath();
+
 			}
 		}
 		else
