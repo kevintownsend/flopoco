@@ -31,7 +31,7 @@ namespace flopoco{
 	extern vector<Operator*> oplist;
 
 	IntMultiplier:: IntMultiplier(Target* target, int wInX, int wInY, map<string, double> inputDelays) :
-		Operator(target), wInX_(wInX), wInY_(wInY), wOut_(wInX + wInY){
+		Operator(target, inputDelays), wInX_(wInX), wInY_(wInY), wOut_(wInX + wInY){
  
 		ostringstream name;
 		double target_freq = target->frequency();
@@ -213,7 +213,12 @@ namespace flopoco{
 						quadMultiply = !target->suggestSubmultSize(x, y, wInX, wInY);
 						chunkSize_ = max(x, y);
 				
+						setCriticalPath( getMaxInputDelays(inputDelays));
+						manageCriticalPath( target->DSPMultiplierDelay() );
 						delay += target->distantWireDelay((int)target->frequencyMHz());
+						
+						
+						
 				
 						int chunksX =  int(ceil( ( double(wInX) / (double) chunkSize_) ));
 						int chunksY =  int(ceil( ( double(wInY) / (double) chunkSize_) ));
