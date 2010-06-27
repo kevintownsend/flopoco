@@ -87,10 +87,10 @@ namespace flopoco{
 		double carryPropagateDelay();
 		double adderDelay(int size);
 
-		double DSPMultiplierDelay(){ return multiplierDelay_[0];}
-		double DSPAdderDelay(){ return 0.0;} //TODO
-		double DSPlocalWireDelay(){ return 0.0;}//TODO
-		double DSPinterconnectWireDelay(){ return 0.0;}	
+		double DSPMultiplierDelay(){ return multiplierDelay_[2];}
+		double DSPAdderDelay(){ return 2.439e-9;} //TODO
+		double DSPlocalWireDelay(){ return 0.378e-9;}//TODO
+		double DSPinterconnectWireDelay(){ return 0.724e-9;}	
 		
 		void   getAdderParameters(double &k1, double &k2, int size);
 		double localWireDelay();
