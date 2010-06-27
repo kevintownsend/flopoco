@@ -39,7 +39,7 @@ namespace flopoco{
 
 
 	FunctionEvaluator::FunctionEvaluator(Target* target, string func, int wInX, int wOutX, int n, bool finalRounding, map<string, double> inputDelays):
-		Operator(target), wInX_(wInX), wOutX_(wOutX), finalRounding_(finalRounding){
+		Operator(target, inputDelays), wInX_(wInX), wOutX_(wOutX), finalRounding_(finalRounding){
 
 		ostringstream name;
 		srcFileName="FunctionEvaluator";
@@ -70,7 +70,7 @@ namespace flopoco{
 		int yWeight = -tg->wIn;
 		
 		YVar* y = new YVar(ySize, yWeight);
-
+		setCriticalPath(0.0);
 		pe = new PolynomialEvaluator(target, tg->getCoeffParamVector(), y, wOutX+1, tg->getMaxApproxError() , inDelayMap("Y",getCriticalPath()));
 		oplist.push_back(pe);
 

@@ -33,7 +33,7 @@ namespace flopoco{
 	extern vector<Operator*> oplist;
 
 	IntCompressorTree::IntCompressorTree(Target* target, int wIn, int N, map<string, double> inputDelays):
-		Operator(target), wIn_(wIn), N_(N), inputDelays_(inputDelays) 
+		Operator(target, inputDelays), wIn_(wIn), N_(N), inputDelays_(inputDelays) 
 	{
 		ostringstream name;
 		name << "IntCompressorTree_" << wIn_<<"_"<<N_;

@@ -32,7 +32,7 @@ namespace flopoco{
 extern vector<Operator*> oplist;
 
 	IntAdder::IntAdder(Target* target, int wIn, map<string, double> inputDelays, int optimizeType, bool srl, int implementation):
-		Operator(target), wIn_(wIn), shortLatencyInputRegister(0)
+		Operator(target, inputDelays), wIn_(wIn), shortLatencyInputRegister(0) 
 	{
 		ostringstream name;
 		srcFileName="IntAdder";

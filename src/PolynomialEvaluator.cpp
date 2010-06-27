@@ -34,7 +34,7 @@ namespace flopoco{
 	extern vector<Operator*> oplist;
 	
 		PolynomialEvaluator::PolynomialEvaluator(Target* target, vector<FixedPointCoefficient*> coef, YVar* y, int targetPrec, mpfr_t* approxError,map<string, double> inputDelays):
-		Operator(target), y_(y), targetPrec_(targetPrec){
+		Operator(target, inputDelays), y_(y), targetPrec_(targetPrec){
 		
 		setCopyrightString("Bogdan Pasca (2010)");
 		srcFileName = "PolynomialEvaluator";

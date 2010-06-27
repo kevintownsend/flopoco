@@ -30,7 +30,7 @@ using namespace std;
 namespace flopoco{
 
 	IntNAdder::IntNAdder(Target* target, int wIn, int N, map<string, double> inputDelays):
-		Operator(target), wIn_(wIn), N_(N), inputDelays_(inputDelays) 
+		Operator(target, inputDelays), wIn_(wIn), N_(N), inputDelays_(inputDelays) 
 	{
 	
 		ostringstream name;

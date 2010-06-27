@@ -32,7 +32,7 @@ namespace flopoco{
 	extern vector<Operator *> oplist;
 
 	IntIntKCM::IntIntKCM(Target* target, int wIn, mpz_class C, bool inputTwosComplement, map<string, double> inputDelays):
-		Operator(target), wIn_(wIn), signedInput_(inputTwosComplement), C_(C), inputDelays_(inputDelays) 
+		Operator(target, inputDelays), wIn_(wIn), signedInput_(inputTwosComplement), C_(C), inputDelays_(inputDelays) 
 	{
 		// Set up the IO signals
 		addInput ("X" , wIn_);

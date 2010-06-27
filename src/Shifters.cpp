@@ -41,7 +41,7 @@ namespace flopoco{
 
 
 	Shifter::Shifter(Target* target, int wIn, int maxShift, ShiftDirection direction, map<string, double> inputDelays) :
-		Operator(target), wIn_(wIn), maxShift_(maxShift), direction_(direction) {
+		Operator(target, inputDelays), wIn_(wIn), maxShift_(maxShift), direction_(direction) {
 	
 		setOperatorName();
 
