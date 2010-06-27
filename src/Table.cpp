@@ -70,7 +70,11 @@ namespace flopoco{
 		// Set up the IO signals
 		addInput ("X"  , wIn, true);
 		addOutput ("Y"  , wOut);
-		setCombinatorial();
+		if (target->getVendor()=="Xilinx"){
+			setCombinatorial();
+		}else
+			nextCycle();
+		
 		if(maxIn==-1) maxIn=(1<<wIn)-1;
 		if(minIn<0) {
 			cerr<<"ERROR in Table::Table, minIn<0\n";
@@ -91,29 +95,68 @@ namespace flopoco{
 Table::Table(Target* target) : 
 		Operator(target)
 	{
-		setCopyrightString("Florent de Dinechin (2007)");
+		setCopyrightString("Florent de Dinechin, Bogdan Pasca (2007, 2010)");
 	}
 
 	// We have to define this method because the constructor of Table cannot use the (pure virtual) function()
 	void Table::outputVHDL(std::ostream& o, std::string name) {
-		int i,x;
-		mpz_class y;
 
-		vhdl	<< "  with X select  Y <= " << endl;
-		for (x = minIn; x <= maxIn; x++) {
-			y=function(x);
-			if( y>=(1<<wOut) || y<0)
-				REPORT(0, "Output out of range" << "x=" << x << "  y= " << y );
+		if (target_->getVendor()=="Xilinx"){
+			int i,x;
+			mpz_class y;
+			vhdl	<< "  with X select  Y <= " << endl;
+			for (x = minIn; x <= maxIn; x++) {
+				y=function(x);
+				if( y>=(1<<wOut) || y<0)
+					REPORT(0, "Output out of range" << "x=" << x << "  y= " << y );
+				vhdl 	<< tab << "\"" << unsignedBinary(y, wOut) << "\" when \"" << unsignedBinary(x, wIn) << "\"," << endl;
+			}
+			vhdl << tab << "\"";
+			for (i = 0; i < wOut; i++) 
+				vhdl << "-";
+			vhdl <<  "\" when others;" << endl;
+
+			Operator::outputVHDL(o,  name);
+		}else{
+			int x;
+			mpz_class y;
+			licence(o);
+
+			o << "library ieee; " << endl;
+			o << "use ieee.std_logic_1164.all;" << endl;
+			o << "use ieee.numeric_std.all;" << endl;
+			o << "library work;" << endl;
+			outputVHDLEntity(o);
+			newArchitecture(o,name);
 			
-			//    cout << x <<"  "<< y << endl;
-			vhdl 	<< tab << "\"" << unsignedBinary(y, wOut) << "\" when \"" << unsignedBinary(x, wIn) << "\"," << endl;
+			o << tab << "-- Build a 2-D array type for the RoM" << endl;
+			o << tab << "subtype word_t is std_logic_vector("<<wOut-1<<" downto 0);" << endl;
+			o << tab << "type memory_t is array(2**"<<wIn<<"-1 downto 0) of word_t;" << endl;
+			o << tab <<"function init_rom" << endl;
+			o << tab << tab << "return memory_t is " << endl;
+			o << tab << tab << "variable tmp : memory_t := (" << endl;
+			for (x = minIn; x <= maxIn; x++) {
+				y=function(x);
+				if( y>=(1<<wOut) || y<0)
+					REPORT(0, "Output out of range" << "x=" << x << "  y= " << y );
+				o << tab << "\"" << unsignedBinary(y, wOut) << "\"," << endl;
+			}
+			o << tab << tab << "others => (others => '0'));" << endl;
+			o << tab << tab << "	begin " << endl;
+			o << tab << tab << "return tmp;" << endl;
+			o << tab << tab << "end init_rom;" << endl;
+			
+			o << "	signal rom : memory_t := init_rom;" << endl;
+			beginArchitecture(o);		
+			o << "	process(clk)" << endl;
+			o << tab << "begin" << endl;
+			o << tab << "if(rising_edge(clk)) then" << endl;
+			o << tab << "	Y <= rom(  TO_INTEGER(unsigned(X))  );" << endl;
+			o << tab << "end if;" << endl;
+			o << tab << "end process;" << endl;
+			endArchitecture(o);
 		}
-		vhdl << tab << "\"";
-		for (i = 0; i < wOut; i++) 
-			vhdl << "-";
-		vhdl <<  "\" when others;" << endl;
-
-		Operator::outputVHDL(o,  name);
+		
 	}
 
 

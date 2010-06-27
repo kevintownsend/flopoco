@@ -253,7 +253,7 @@ namespace flopoco{
 		addOutput ("Y"  , wOut, true,1);
 				
 		/*This operator is combinatorial (in fact is just a ROM.*/
-		setCombinatorial();
+		//setCombinatorial();
 	
 		//generateDebugPwf();
 	
@@ -495,7 +495,7 @@ namespace flopoco{
 		addOutput ("Y"  , wOut);
 				
 		/* This operator is combinatorial (in fact is just a ROM.*/
-		setCombinatorial();
+//		setCombinatorial();
 	
 	    generateDebugPwf();
 	
