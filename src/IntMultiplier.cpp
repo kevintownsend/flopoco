@@ -213,8 +213,8 @@ namespace flopoco{
 						quadMultiply = !target->suggestSubmultSize(x, y, wInX, wInY);
 						chunkSize_ = max(x, y);
 				
-						setCriticalPath( getMaxInputDelays(inputDelays));
-						manageCriticalPath( target->DSPMultiplierDelay() );
+//						setCriticalPath( getMaxInputDelays(inputDelays)); //FIXME remove hardcoded register insertions
+//						manageCriticalPath( target->DSPMultiplierDelay() );
 						delay += target->distantWireDelay((int)target->frequencyMHz());
 						
 						
