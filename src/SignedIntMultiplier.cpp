@@ -361,10 +361,19 @@ namespace flopoco{
 			}else{ //the altera version
 				REPORT(0, "WARNINNG: Only implemented for Xilinx Targets for now");
 				setCriticalPath( getMaxInputDelays(inputDelays));
-				manageCriticalPath( target->DSPMultiplierDelay());
-				vhdl << tab << "R <= X * Y;"<<endl;
-				outDelayMap["R"] = getCriticalPath();
-
+				manageCriticalPath( target->DSPinterconnectWireDelay() );
+				
+				if (( wInX <= 36) && (wInY <= 36)){
+					manageCriticalPath( target->DSPMultiplierDelay() + target->DSPAdderDelay() );
+					manageCriticalPath( target->DSPAdderDelay() );
+					vhdl << tab << "R <= X * Y;"<<endl;
+					manageCriticalPath( target->DSPinterconnectWireDelay());		
+					outDelayMap["R"] = getCriticalPath();
+				}else{
+					manageCriticalPath( target->DSPMultiplierDelay());
+					vhdl << tab << "R <= X * Y;"<<endl;
+					outDelayMap["R"] = getCriticalPath();
+				}
 			}
 		}
 		else
