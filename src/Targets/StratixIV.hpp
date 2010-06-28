@@ -78,6 +78,12 @@ namespace flopoco{
 			multiplierDelay_[1] 	= 3.069e-9; 	// *obtained experimentaly from Quartus 2
 			multiplierDelay_[2] 	= 2.744e-9; 	// *obtained experimentaly from Quartus 2
 			multiplierDelay_[3] 	= 3.604e-9; 	// *obtained experimentaly from Quartus 2
+			
+			DSPMultiplierDelay_       = 2.744e-9;
+			DSPAdderDelay_            = 1.420e-9;
+			DSPlocalWireDelay_        = 0.266e-9;//?
+			DSPinterconnectWireDelay_ = 1.619e-9;
+			
 		}
 	
 		/** The destructor */
@@ -89,10 +95,10 @@ namespace flopoco{
 		double carryPropagateDelay();
 		double adderDelay(int size);
 		
-		double DSPMultiplierDelay(){ return multiplierDelay_[0];}
-		double DSPAdderDelay(){ return 0.0;} //TODO
-		double DSPlocalWireDelay(){ return 0.0;}//TODO
-		double DSPinterconnectWireDelay(){ return 0.0;}	
+		double DSPMultiplierDelay(){ return DSPMultiplierDelay_;}
+		double DSPAdderDelay(){ return DSPAdderDelay_;} //TODO
+		double DSPlocalWireDelay(){ return DSPlocalWireDelay_;}//TODO
+		double DSPinterconnectWireDelay(){ return DSPinterconnectWireDelay_;}	
 		
 		void   getAdderParameters(double &k1, double &k2, int size);
 		double localWireDelay();
@@ -138,6 +144,11 @@ namespace flopoco{
 		double	inputRegDelay_[4];	/**< The input register delay to DSP block for each multiplier width available */
 		double	pipe2OutReg2Add; 	/**< The DPS block pipeline register to output register delay in two-multipliers adder mode */
 		double  pipe2OutReg4Add; 	/**< The DPS block pipeline register to output register delay in four-multipliers adder mode */
+	
+		double DSPMultiplierDelay_;
+		double DSPAdderDelay_;
+		double DSPlocalWireDelay_;
+		double DSPinterconnectWireDelay_;
 	
 	};
 }
