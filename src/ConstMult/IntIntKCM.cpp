@@ -34,8 +34,11 @@ namespace flopoco{
 	IntIntKCM::IntIntKCM(Target* target, int wIn, mpz_class C, bool inputTwosComplement, map<string, double> inputDelays):
 		Operator(target, inputDelays), wIn_(wIn), signedInput_(inputTwosComplement), C_(C), inputDelays_(inputDelays) 
 	{
+	
+		setCopyrightString("Bogdan Pasca, Florent de Dinechin (2009,2010)");		
 		// Set up the IO signals
 		addInput ("X" , wIn_);
+		
 
 		if(C<0)
 			throw string("IntIntKCM: only positive constants are supported");
@@ -248,8 +251,10 @@ namespace flopoco{
 					vhdl << instance(t1, join("KCMTable_",i));
 				}
 			}
+			
+			for ( int i=0; i<nbOfTables; i++)
+				syncCycleFromSignal(join("pp",i));
 		
-//			delay += target->lutDelay() + 2*target->localWireDelay();
 		
 			//determine the addition operand size
 			int addOpSize = (nbOfTables - 2) * lutWidth + (constantWidth +  lastLutWidth);
