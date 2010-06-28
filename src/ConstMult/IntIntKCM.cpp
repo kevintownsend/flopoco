@@ -218,7 +218,7 @@ namespace flopoco{
 					addAttribute("rom_style", "string", t1->getName()+": component", "distributed");
 				}
 			if (target->getVendor() == "Altera") 
-				addAttribute("altera_attribute", "string", t1->getName()+": component", "-name ALLOW_ANY_ROM_SIZE_FOR_RECOGNITION ON");
+				addAttribute("altera_attribute", "string", t1->getName()+": component", "-name ALLOW_ANY_ROM_SIZE_FOR_RECOGNITION OFF");
 
 
 			if(signedInput_) {
@@ -231,7 +231,7 @@ namespace flopoco{
 						addAttribute("rom_style", "string", t2->getName()+": component", "distributed");
 					}
 				if (target->getVendor() == "Altera") 
-					addAttribute("altera_attribute", "string", t2->getName()+": component", "-name ALLOW_ANY_ROM_SIZE_FOR_RECOGNITION ON");
+					addAttribute("altera_attribute", "string", t2->getName()+": component", "-name ALLOW_ANY_ROM_SIZE_FOR_RECOGNITION OFF");
 			}
 
 			manageCriticalPath(target->lutDelay() + 2*target->localWireDelay());
