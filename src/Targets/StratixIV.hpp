@@ -74,10 +74,17 @@ namespace flopoco{
 			multiplierWidth_[2] 	= 18;
 			multiplierWidth_[3] 	= 36;
 		
-			multiplierDelay_[0] 	= 3.156e-9; 	// *obtained experimentaly from Quartus 2
-			multiplierDelay_[1] 	= 3.069e-9; 	// *obtained experimentaly from Quartus 2
-			multiplierDelay_[2] 	= 2.744e-9; 	// *obtained experimentaly from Quartus 2
-			multiplierDelay_[3] 	= 3.604e-9; 	// *obtained experimentaly from Quartus 2
+//			multiplierDelay_[0] 	= 3.156e-9; 	// *obtained experimentaly from Quartus 2
+//			multiplierDelay_[1] 	= 3.069e-9; 	// *obtained experimentaly from Quartus 2
+//			multiplierDelay_[2] 	= 2.744e-9; 	// *obtained experimentaly from Quartus 2
+//			multiplierDelay_[3] 	= 3.604e-9; 	// *obtained experimentaly from Quartus 2
+
+			multiplierDelay_[0] 	= 2.0e-9; 	// *obtained experimentaly from Quartus 2
+			multiplierDelay_[1] 	= 2.0e-9; 	// *obtained experimentaly from Quartus 2
+			multiplierDelay_[2] 	= 2.0e-9; 	// *obtained experimentaly from Quartus 2
+			multiplierDelay_[3] 	= 2.0e-9; 	// *obtained experimentaly from Quartus 2
+
+
 			
 			DSPMultiplierDelay_       = 2.744e-9;
 			DSPAdderDelay_            = 1.420e-9;
