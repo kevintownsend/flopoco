@@ -419,7 +419,7 @@ namespace flopoco{
 
 		//C++ wrapper for GMP does not work properly on win32, using mpz2string
 		name <<"IntConstMult_"<<xsize<<"_"<<mpz2string(n);
-		uniqueName_=name.str();
+		setName(name.str());
 
 		implementation = new ShiftAddDag(this);
 		nsize = intlog2(n);

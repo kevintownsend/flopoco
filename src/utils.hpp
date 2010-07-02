@@ -225,7 +225,15 @@ namespace flopoco{
 	 **/
 	string vhdlize(string const & expr);
 
-	string vhdlize(double num);
+	/**
+	 * Turns a double to a string that will go in a valid VHDL name
+	 */
+	string  vhdlize(double num);
+
+	/**
+	 * Turns a (possibly negative) int to a string that will go in a valid VHDL name
+	 */
+	string vhdlize(int num);
 
 	string mpz2string(mpz_class x);
 

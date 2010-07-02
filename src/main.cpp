@@ -75,6 +75,7 @@
 #include "ConstMult/IntConstMult.hpp"
 #include "ConstMult/FPConstMult.hpp"
 #include "ConstMult/IntIntKCM.hpp"
+#include "ConstMult/FixRealKCM.hpp"
 
 #include "FPExp.hpp" 
 #include "FPLog.hpp"
@@ -200,7 +201,14 @@ static void usage(char *name){
 	OP ("IntSquarer","wIn");
 	cerr << "      integer squarer. For now wIn <=68 \n";		
 	OP( "IntConstMult","w c");
-	cerr << "      Integer constant multiplier: w - input size, c - the constant\n";
+	cerr << "      Integer constant multiplier using shift-and-add: w - input size, c - the constant\n";
+	OP( "IntIntKCM","w c");
+	cerr << "      Integer constant multiplier using KCM: w - input size, c - the constant\n";
+#ifdef HAVE_SOLLYA
+	OP( "FixRealKCM","msbIn lsbIn lsbOut constant");
+	cerr << "      Faithful multiplier of a fixed-point input by a real constant\n";
+	cerr << "      The constant is provided as a Sollya expression, e.g \"log(2)\"\n";
+#endif // HAVE_SOLLYA
 	cerr << "    ____________ FLOATING-POINT OPERATORS ______________________________________\n";
 	OP("Fix2FP","LSB MSB Signed wE wF");
 	cerr << "      Convert a 2's compliment fixed-point number in the bit range MSB...LSB \n";
@@ -514,6 +522,22 @@ bool parseCommandLine(int argc, char* argv[]){
 			}        
 		} 	
 #ifdef HAVE_SOLLYA
+		else if(opname=="FixRealKCM"){
+			int nargs = 4;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int msbIn = atoi(argv[i++]);
+				int lsbIn = atoi(argv[i++]);
+				int lsbOut = atoi(argv[i++]);
+				string constant = argv[i++];
+				cerr << "> FixRealKCM, msbIn="<<msbIn<<", lsbIn="<<lsbIn 
+					  <<", lsbOut="<<lsbOut
+					  << ", constant="<<constant <<endl;
+				op = new FixRealKCM(target, msbIn, lsbIn, lsbOut, constant);
+				addOperator(op);
+			}        
+		}
 		else if(opname=="CRFPConstMult"){ 
 			int nargs = 5;
 			if (i+nargs > argc)

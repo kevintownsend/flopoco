@@ -410,6 +410,16 @@ namespace flopoco{
 		return vhdlize(oss.str());
 	}
 
+	string vhdlize(int num)
+	{
+		ostringstream oss;
+		if (num<0) 
+		  oss << "M" << (-num);
+		else
+		  oss << num;
+		return oss.str();
+	}
+
 	string mpz2string(mpz_class x)
 	{
 		return x.get_str(10);	
