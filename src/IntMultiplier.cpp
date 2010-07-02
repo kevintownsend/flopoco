@@ -60,7 +60,7 @@ namespace flopoco{
 				if (verbose)
 					cerr << "> IntMultiplier: The target is " << target->getID() << endl;
 			
-				if ((target->getID()=="Virtex4")||(target->getID()=="Virtex5")||(target->getID()=="Spartan3")) 
+				if (target->getVendor()=="Xilinx") 
 					{
 						int chunksX, chunksY;
 						int x, y;
@@ -230,42 +230,37 @@ namespace flopoco{
 						setCriticalPath( getMaxInputDelays(inputDelays));
 						manageCriticalPath( target->DSPinterconnectWireDelay());
 						manageCriticalPath( target->DSPMultiplierDelay());
-						manageCriticalPath( target->DSPAdderDelay());
-						manageCriticalPath( target->DSPAdderDelay());
+//						manageCriticalPath( target->DSPAdderDelay());
+//						manageCriticalPath( target->DSPAdderDelay());
 						vhdl << tab << "R <= X * Y;" << endl;
 						manageCriticalPath( target->DSPinterconnectWireDelay() );
 						outDelayMap["R"]=getCriticalPath();
 					}else if ((wInX <= 54) && (wInY <= 36)){
 						//first multiplication
-							setCriticalPath( getMaxInputDelays(inputDelays));
-							manageCriticalPath( target->DSPinterconnectWireDelay());
-							manageCriticalPath( target->DSPMultiplierDelay());
+//							setCriticalPath( getMaxInputDelays(inputDelays));
+//							manageCriticalPath( target->DSPinterconnectWireDelay());
+//							manageCriticalPath( target->DSPMultiplierDelay());
 						
 							vhdl << tab << declare("x0",36) << " <= "<< opX << range(35,0) << ";" << endl;
 							vhdl << tab << declare("y0",36) << " <= "<< opY << range(35,0) << ";" << endl;
 
 							setCriticalPath( getMaxInputDelays(inputDelays));
-							manageCriticalPath( target->DSPinterconnectWireDelay());
-							manageCriticalPath( target->DSPMultiplierDelay());
-							manageCriticalPath( target->DSPAdderDelay());
-							manageCriticalPath( target->DSPAdderDelay());
+							manageCriticalPath( target->DSPMultiplierDelay() + target->DSPinterconnectWireDelay());
+//							manageCriticalPath( target->DSPAdderDelay());
+//							manageCriticalPath( target->DSPAdderDelay());
 							vhdl << tab << declare("r0",72) << "<= x0 * y0;" << endl;
 						
 						setCycle(0); //reset for second multiplication
-							setCriticalPath( getMaxInputDelays(inputDelays));
-							manageCriticalPath( target->DSPinterconnectWireDelay());
-							manageCriticalPath( target->DSPMultiplierDelay());
 							vhdl << tab << declare("x1",wInX-36) << " <= "<< opX << range(wInX-1,36) << ";" << endl;
 							vhdl << tab << declare("y1",18) << " <= "<< opY << range(17,0) << ";" << endl;
-							manageCriticalPath( target->DSPMultiplierDelay());
+							setCriticalPath( getMaxInputDelays(inputDelays));
+							manageCriticalPath( target->DSPMultiplierDelay() + target->DSPinterconnectWireDelay());
 							vhdl << tab << declare("r1",18 + (wInX-36)) << "<= x1 * y1;" << endl;
 							
 						setCycle(0); //reset for second multiplication
-							setCriticalPath( getMaxInputDelays(inputDelays));
-							manageCriticalPath( target->DSPinterconnectWireDelay());
-							manageCriticalPath( target->DSPMultiplierDelay());
 							vhdl << tab << declare("y2",wInY-18) << " <= "<< opY << range(wInY-1,18) << ";" << endl;
-							manageCriticalPath( target->DSPMultiplierDelay());
+							setCriticalPath( getMaxInputDelays(inputDelays));
+							manageCriticalPath( target->DSPMultiplierDelay() + target->DSPinterconnectWireDelay());
 							vhdl << tab << declare("r2",(wInY-18) + (wInX-36)) << "<= x1 * y2;" << endl;
 							
 						//syncronization
@@ -273,7 +268,7 @@ namespace flopoco{
 							syncCycleFromSignal("r1");
 							syncCycleFromSignal("r2");
 							
-							manageCriticalPath( target->DSPinterconnectWireDelay() );
+//							manageCriticalPath( target->DSPinterconnectWireDelay() );
 							nextCycle();///////////////
 							vhdl << tab << declare("addOp1",18 + (wInY-18) + (wInX-36)) << " <= "
 							            << zg(18 + (wInY-18) + (wInX-36) - 36,0) << " & " << "r0" << range(71, 36) << ";" << endl;
@@ -290,86 +285,50 @@ namespace flopoco{
 													
 					}	else if ((wInX <= 54) && (wInY <= 54)){
 						//first multiplication
-							setCriticalPath( getMaxInputDelays(inputDelays));
-							manageCriticalPath( target->DSPinterconnectWireDelay());
-							manageCriticalPath( target->DSPMultiplierDelay());
-						
 							vhdl << tab << declare("x0",36) << " <= "<< opX << range(35,0) << ";" << endl;
 							vhdl << tab << declare("y0",36) << " <= "<< opY << range(35,0) << ";" << endl;
 
 							setCriticalPath( getMaxInputDelays(inputDelays));
-							manageCriticalPath( target->DSPinterconnectWireDelay());
-							manageCriticalPath( target->DSPMultiplierDelay());
-							manageCriticalPath( target->DSPAdderDelay());
-							manageCriticalPath( target->DSPAdderDelay());
+							manageCriticalPath( target->DSPinterconnectWireDelay() + target->DSPMultiplierDelay());
 							vhdl << tab << declare("r00",72) << "<= x0 * y0;" << endl;
-//							double r00_cp = getCriticalPath();
 
 						///////////////////////////////////////////////////////						
 						setCycle(0); //reset for second multiplication
-							setCriticalPath( getMaxInputDelays(inputDelays));
-							manageCriticalPath( target->DSPinterconnectWireDelay());
-							manageCriticalPath( target->DSPMultiplierDelay());
 							vhdl << tab << declare("x1",wInX-36) << " <= "<< opX << range(wInX-1,36) << ";" << endl;
 							vhdl << tab << declare("y1",18) << " <= "<< opY << range(17,0) << ";" << endl;
 							vhdl << tab << declare("x3",18) << " <= "<< opX << range(17,0) << ";" << endl;
 							vhdl << tab << declare("y3",wInY-36) << " <= "<< opY << range(wInY-1,36) << ";" << endl;
-
-							manageCriticalPath( target->DSPMultiplierDelay());
-							vhdl << tab << declare("r11",18 + (wInX-36)) << "<= x1 * y1;" << endl;
-							vhdl << tab << declare("r33",18 + (wInY-36)) << "<= x3 * y3;" << endl;
-
-							manageCriticalPath( target->DSPMultiplierDelay());
-							double r33_cp = getCriticalPath();
-						///////////////////////////////////////////////////////
-							
-						setCycle(0); //reset for second multiplication
-							setCriticalPath( getMaxInputDelays(inputDelays));
-							manageCriticalPath( target->DSPinterconnectWireDelay());
-							manageCriticalPath( target->DSPMultiplierDelay());
 							vhdl << tab << declare("y2",18) << " <= "<< opY << range(35,18) << ";" << endl;
 							vhdl << tab << declare("x2",18) << " <= "<< opX << range(35,18) << ";" << endl;
-							manageCriticalPath( target->DSPMultiplierDelay());
+
+							setCriticalPath( getMaxInputDelays(inputDelays));
+							manageCriticalPath( target->DSPMultiplierDelay() + target->DSPinterconnectWireDelay());
+
+							vhdl << tab << declare("r11",18 + (wInX-36)) << "<= x1 * y1;" << endl;
+							vhdl << tab << declare("r33",18 + (wInY-36)) << "<= x3 * y3;" << endl;
 							vhdl << tab << declare("r12",18 + (wInX-36)) << "<= x1 * y2;" << endl;
 							vhdl << tab << declare("r23",18 + (wInY-36)) << "<= x2 * y3;" << endl;
-							double r23_cp = getCriticalPath();
+							
+							manageCriticalPath( target->DSPAdderDelay() );
+							int maxOperandWidth = max (18 + (wInX-36), 18 + (wInY-36) );
+							vhdl << tab << declare ("sum_r11_r33", maxOperandWidth+1 )  << " <= (" << zg(maxOperandWidth+1 - (18 + (wInX-36)),0) << " & r11) + "
+							                                                            << "  (" << zg(maxOperandWidth+1 - (18 + (wInY-36)),0) << " & r33);" << endl;
+							vhdl << tab << declare ("sum_r12_r23", maxOperandWidth+1 )  << " <= (" << zg(maxOperandWidth+1 - (18 + (wInX-36)),0) << " & r12) + "
+							                                                            << "  (" << zg(maxOperandWidth+1 - (18 + (wInY-36)),0) << " & r23);" << endl;
 
 						///////////////////////////////////////////////////////
 
 						setCycle(0); //reset for the third multiplication
 							setCriticalPath( getMaxInputDelays(inputDelays));
-							manageCriticalPath( target->DSPinterconnectWireDelay());
-							manageCriticalPath( target->DSPMultiplierDelay());
-							manageCriticalPath( target->DSPMultiplierDelay());
+							manageCriticalPath( target->DSPMultiplierDelay() + target->DSPinterconnectWireDelay());
 							vhdl << tab << declare("r13",(wInY-36) + (wInX-36)) << "<= x1 * y3;" << endl;
-//							double r13_cp = getCriticalPath();
-
-						//syncronization
-							syncCycleFromSignal("r11");
-							syncCycleFromSignal("r33");
-							setCriticalPath( r33_cp );
-							manageCriticalPath( target->DSPAdderDelay() );
-							int maxOperandWidth = max (18 + (wInX-36), 18 + (wInY-36) );
-							vhdl << tab << declare ("sum_r11_r33", maxOperandWidth+1 )  << " <= (" << zg(maxOperandWidth+1 - (18 + (wInX-36)),0) << " & r11) + "
-							                                                            << "  (" << zg(maxOperandWidth+1 - (18 + (wInY-36)),0) << " & r33);" << endl;
-//							double sum_r11_r33_cp = getCriticalPath();
-
-						//syncronization
-							syncCycleFromSignal("r12");
-							syncCycleFromSignal("r23");
-							setCriticalPath( r23_cp );
-							manageCriticalPath( target->DSPAdderDelay() );
-							vhdl << tab << declare ("sum_r12_r23", maxOperandWidth+1 )  << " <= (" << zg(maxOperandWidth+1 - (18 + (wInX-36)),0) << " & r12) + "
-							                                                            << "  (" << zg(maxOperandWidth+1 - (18 + (wInY-36)),0) << " & r23);" << endl;
-//							double sum_r12_r23_cp = getCriticalPath();
 							
 						//syncronization
 							syncCycleFromSignal("sum_r11_r33");
 							syncCycleFromSignal("r00");	
-							syncCycleFromSignal("r13");
 							
 //							manageCriticalPath( target->DSPinterconnectWireDelay() );
-							nextCycle();///////////////
+//							nextCycle();/////////////// DSP out
 
 							vhdl << tab << declare("addOp1",36 + (wInY-36) + (wInX-36)) << " <= r13  & r00" << range(71, 36) << ";" << endl;
 							vhdl << tab << declare("addOp2",36 + (wInY-36) + (wInX-36)) << " <= "
