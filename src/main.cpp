@@ -28,6 +28,7 @@
 #include "Targets/Spartan3.hpp"
 #include "Targets/Virtex4.hpp"
 #include "Targets/Virtex5.hpp"
+#include "Targets/Virtex6.hpp"
 #include "Targets/StratixII.hpp"
 #include "Targets/StratixIV.hpp"
 #include "Shifters.hpp"
@@ -430,6 +431,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				}
 				else if (o == "target") {
 					if(v=="Virtex4") target=new Virtex4();
+					else if (v=="Virtex6") target=new Virtex6();
 					else if (v=="Virtex5") target=new Virtex5();
 					else if (v=="Spartan3") target=new Spartan3();
 					else if (v=="StratixII") target=new StratixII();
