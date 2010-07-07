@@ -158,7 +158,7 @@ namespace flopoco{
 		      if (mpfr_cmp(*mpErr, eps)>0) {
 		        errBoundBool=0; 
 		        if(verbose){
-  		        cout<< "we have found an interval where the error is not small enough, proceed to splitting"<<endl;
+  		        cout<< "we have found an interval where the error is not small enough, proceed to splitting. Failed at interval "<< k << "/" << nrIntervals-1 <<endl;
 	          }
 		        /*erase the polys and the errors put so far for this function; keep the previous good ones intact*/
 		        polys.resize(nrIntCompleted+1);
