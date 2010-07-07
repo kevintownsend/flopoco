@@ -8,7 +8,15 @@ CLEANFILES = $(BUILT_SOURCES) *.output
 LEX_OUTPUT_ROOT=VHDLLexer.hpp VHDLLexer.hpp lex.yy
 
 noinst_LTLIBRARIES = libflopoco.la
-noinst_HEADERS = DotProduct.hpp DualTable.hpp Fix2FP.hpp FlopocoStream.hpp FPAdder.hpp FPDiv.hpp FPExp.hpp FPLog.hpp FPMultiplier.hpp FPNumber.hpp \
+
+noinst_HEADERS = apps/Collision.hpp \
+        ConstMult/IntIntKCM.hpp ConstMult/CRFPConstMult.hpp ConstMult/FixRealKCM.hpp ConstMult/FPConstMult.hpp ConstMult/FPConstMultParser.hpp ConstMult/IntConstMult.hpp ConstMult/KCMTable.hpp\
+        ConstMult/ShiftAddDag.hpp ConstMult/ShiftAddOp.hpp \
+        fplogarithm/FirstInvTable.hpp fplogarithm/FirstLogTable.hpp fplogarithm/OtherLogTable.hpp \
+        LNS/AtanPow.hpp LNS/Cotran.hpp LNS/CotranHybrid.hpp LNS/CotranTables.hpp LNS/LNSAdd.hpp LNS/LNSAddSub.hpp LNS/LNSDiv.hpp LNS/LNSMul.hpp LNS/LNSSqrt.hpp \
+        squareroot/PolynomialTableCorrectRounded.hpp squareroot/PolynomialTable.hpp \
+        Targets/DSP.hpp Targets/Spartan3.hpp Targets/StratixII.hpp Targets/StratixIV.hpp Targets/Virtex4.hpp Targets/Virtex5.hpp Targets/Virtex6.hpp \
+        DotProduct.hpp DualTable.hpp Fix2FP.hpp FlopocoStream.hpp FPAdder.hpp FPDiv.hpp FPExp.hpp FPLog.hpp FPMultiplier.hpp FPNumber.hpp \
 	FPSqrt.hpp FPSqrtPoly.hpp FPSquarer.hpp FunctionEvaluator.hpp HOTBM.hpp IEEENumber.hpp InputIEEE.hpp IntAdder.hpp IntCompressorTree.hpp IntDualSub.hpp IntKaratsuba.hpp IntMultiplier.hpp \
 	IntNAdder.hpp IntSquarer.hpp IntTilingMult.hpp IntTruncMultiplier.hpp LongAcc2FP.hpp LongAcc.hpp LongIntAdder.hpp LZOC.hpp LZOCShifterSticky.hpp Operator.hpp OutputIEEE.hpp PolynomialEvaluator.hpp \
 	Shifters.hpp Signal.hpp SignedIntMultiplier.hpp TableGenerator.hpp Table.hpp Target.hpp TestBench.hpp TestCase.hpp UserDefinedOperator.hpp utils.hpp VHDLLexer.hpp Wrapper.hpp 
@@ -20,6 +28,7 @@ libflopoco_la_SOURCES = VHDLLexer.lpp \
 			Target.cpp \
 			Targets/Virtex4.cpp \
 			Targets/Spartan3.cpp \
+			Targets/Virtex6.cpp \
 			Targets/StratixII.cpp \
 			Targets/Virtex5.cpp \
 			Targets/StratixIV.cpp \
@@ -84,7 +93,7 @@ libflopoco_la_SOURCES = VHDLLexer.lpp \
 			IntSquarer.cpp
 
 if no_WIN32
-libflopoco_la_SOURCES += ConstMult/CRFPConstMult.cpp \
+libflopoco_la_SOURCES += ConstMult/CRFPConstMult.cpp ConstMult/FixRealKCM.cpp\
 			PolynomialEvaluator.cpp \
 			TableGenerator.cpp \
 			PiecewiseFunction.cpp \
