@@ -11,6 +11,8 @@
 
  */
 
+// TODO if LUTsize=5 and wIn=11, we should have 2 tables, not 3
+
 #include <iostream>
 #include <sstream>
 #include <vector>
@@ -183,6 +185,14 @@ namespace flopoco{
 			chunkSize_ = lutWidth;
 			int nbOfTables = int ( ceil( double(wIn)/double(lutWidth)) );
 			int lastLutWidth = (wIn%lutWidth==0?lutWidth: wIn%lutWidth);
+
+#if 0 // TODO need to hack table generation, too
+		// Better to double an existing table than adding one more table and one more addition.
+		if (lastLutWidth==1){ 
+		  nbOfTables--;
+		  lastLutWidth=lutWidth + 1;
+		}
+#endif
 //			double delay = 0.0;
 	
 	

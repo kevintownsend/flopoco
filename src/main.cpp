@@ -203,10 +203,10 @@ static void usage(char *name){
 	cerr << "      integer squarer. For now wIn <=68 \n";		
 	OP( "IntConstMult","w c");
 	cerr << "      Integer constant multiplier using shift-and-add: w - input size, c - the constant\n";
-	OP( "IntIntKCM","w c");
+	OP( "IntIntKCM","w c signedInput");
 	cerr << "      Integer constant multiplier using KCM: w - input size, c - the constant\n";
 #ifdef HAVE_SOLLYA
-	OP( "FixRealKCM","msbIn lsbIn lsbOut constant");
+	OP( "FixRealKCM","lsbIn msbIn signedInput lsbOut constant");
 	cerr << "      Faithful multiplier of a fixed-point input by a real constant\n";
 	cerr << "      The constant is provided as a Sollya expression, e.g \"log(2)\"\n";
 #endif // HAVE_SOLLYA
@@ -525,18 +525,19 @@ bool parseCommandLine(int argc, char* argv[]){
 		} 	
 #ifdef HAVE_SOLLYA
 		else if(opname=="FixRealKCM"){
-			int nargs = 4;
+			int nargs = 5;
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
-				int msbIn = atoi(argv[i++]);
 				int lsbIn = atoi(argv[i++]);
+				int msbIn = atoi(argv[i++]);
+				int signedInput = checkBoolean(argv[i++], argv[0]);
 				int lsbOut = atoi(argv[i++]);
 				string constant = argv[i++];
 				cerr << "> FixRealKCM, msbIn="<<msbIn<<", lsbIn="<<lsbIn 
 					  <<", lsbOut="<<lsbOut
 					  << ", constant="<<constant <<endl;
-				op = new FixRealKCM(target, msbIn, lsbIn, lsbOut, constant);
+				op = new FixRealKCM(target, lsbIn, msbIn, signedInput, lsbOut, constant);
 				addOperator(op);
 			}        
 		}

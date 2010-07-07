@@ -400,6 +400,9 @@ namespace flopoco{
 		// but this function becomes unusable with numbers if we enforce this...
 		if(*result.begin() == '_')
 			*result.begin() = 'x';
+		// Trailing underscores are forbidden in VHDL identifiers!
+		if(*(newend-1) == '_')
+		  newend--;
 		return result.substr(0, newend - result.begin());
 	}
 
