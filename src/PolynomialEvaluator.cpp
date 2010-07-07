@@ -65,6 +65,8 @@ namespace flopoco{
 	
 		coldStart();
 		
+		
+		if (1){
 		determineObjectiveStatesForTruncations();
 		setNumberOfPossibleValuesForEachY();
 		setNumberOfPossibleValuesForEachA();
@@ -140,7 +142,7 @@ namespace flopoco{
 				}	
 			}		
 		}
-
+	}
 
 		ostringstream s1, s2;		
 		s1 << "Guard bits for the sums: ";
@@ -588,11 +590,26 @@ namespace flopoco{
 		int Xd, Yd;
 		target_->getDSPWidths(Xd,Yd);
 		for (int i=0; i < getPolynomialDegree(); i++){
-			if (( y_->getSize()> unsigned(Xd) ) && (y_->getSize() % unsigned(Xd) != 0))
-				objectiveStatesY.insert(pair<int,int>(i+1, y_->getSize() % Xd));
+			if (( y_->getSize()> unsigned(Xd) ) && (y_->getSize() % unsigned(Xd) != 0)){
+				
+				int k=1;
+				while (k*Xd < y_->getSize()){
+					objectiveStatesY.insert(pair<int,int>(i+1, y_->getSize() - k*Xd));
+					k++;					
+				}
+				
+//				objectiveStatesY.insert(pair<int,int>(i+1, y_->getSize() % Xd));
+			}
 			if (Yd!=Xd)
-				if (( y_->getSize()> unsigned(Yd) ) && (y_->getSize() % unsigned(Yd) != 0))
-					objectiveStatesY.insert(pair<int,int>(i+1, y_->getSize() % Yd));
+				if (( y_->getSize()> unsigned(Yd) ) && (y_->getSize() % unsigned(Yd) != 0)){
+//					objectiveStatesY.insert(pair<int,int>(i+1, y_->getSize() % Yd));
+
+				int k=1;
+				while (k*Yd < y_->getSize()){
+					objectiveStatesY.insert(pair<int,int>(i+1, y_->getSize() - k*Yd));
+					k++;					
+				}
+				}
 			/* insert the "do no truncation" pair */
 			objectiveStatesY.insert(pair<int,int>(i+1, 0)); 
 		}
