@@ -27,7 +27,8 @@ namespace flopoco{
     int msbOut;
     int wOut;
     string constant;
-    mpfr_t mpConstant;
+    mpfr_t mpC;
+    int msbC;
     int g;
 
   };

@@ -57,12 +57,12 @@ namespace flopoco{
       throw error.str();
     }
 
-    mpfr_inits(mpConstant, NULL);
-    evaluateConstantExpression(mpConstant, node,  getToolPrecision());
+    mpfr_inits(mpC, NULL);
+    evaluateConstantExpression(mpC, node,  getToolPrecision());
 
-    REPORT(DEBUG, "Constant evaluates to " << mpfr_get_d(mpConstant, GMP_RNDN));
+    REPORT(DEBUG, "Constant evaluates to " << mpfr_get_d(mpC, GMP_RNDN));
 
-    evaluateConstantExpression(mpConstant, node, 100*(msbIn-lsbIn+1)); // 100*wIn bits should be enough for everybody
+    evaluateConstantExpression(mpC, node, 100*(msbIn-lsbIn+1)); // 100*wIn bits should be enough for everybody
     // build the name
     ostringstream name; 
     name <<"FixFPKCM_" << vhdlize(lsbIn)  << "_" << vhdlize(msbIn) << "_" << vhdlize(lsbOut) << "_" << vhdlize(constant_)  ;
@@ -70,8 +70,8 @@ namespace flopoco{
 
     mpfr_t log2C;
     mpfr_init2(log2C, 1000); // should be enough for anybody
-    mpfr_log2(log2C, mpConstant, GMP_RNDN);
-    int msbC = mpfr_get_si(log2C, GMP_RNDU);
+    mpfr_log2(log2C, mpC, GMP_RNDN);
+    msbC = mpfr_get_si(log2C, GMP_RNDU);
 
     msbOut = msbC + msbIn;
     REPORT(DEBUG, "msbConstant=" << msbC << "   msbOut="<<msbOut);
@@ -151,8 +151,8 @@ namespace flopoco{
 	}
 
       FixRealKCMTable *t; 
-      int ppSize=i*lutWidth + diSize + g;
-      t = new FixRealKCMTable(target, this, i, diSize, ppSize);
+      int ppiSize=i*lutWidth + diSize + g + msbC;
+      t = new FixRealKCMTable(target, this, i, diSize, ppiSize);
       oplist.push_back(t);
       if (target->getVendor() == "Xilinx") 
 	{
@@ -161,20 +161,19 @@ namespace flopoco{
 	}
       if (target->getVendor() == "Altera") 
 	addAttribute("altera_attribute", "string", t->getName()+": component", "-name ALLOW_ANY_ROM_SIZE_FOR_RECOGNITION OFF");
-      
-      manageCriticalPath(target->lutDelay() + 2*target->localWireDelay());
-      
+            
       inPortMap (t , "X", join("d",i));
       outPortMap(t , "Y", join("pp",i));
       vhdl << instance(t , join("KCMTable_",i));
 
       vhdl << tab << declare( join("addOp",i), wOut+g ) << " <= ";
       if (i!=nbOfTables-1) //if not the last table
-	vhdl << rangeAssign(wOut+g-1, ppSize, "'0'") << " & " ;
+	vhdl << rangeAssign(wOut+g-1, ppiSize, "'0'") << " & " ;	
       vhdl << join("pp",i) << ";" << endl;
       
       }
-      
+      manageCriticalPath(target->lutDelay() + 2*target->localWireDelay());
+
       IntCompressorTree* adder = new IntCompressorTree(target, wOut+g, nbOfTables, inDelayMap("X0",getCriticalPath()));
       oplist.push_back(adder);
       for (int i=0; i<nbOfTables; i++)
@@ -211,7 +210,7 @@ namespace flopoco{
     mpfr_t mpR;
     mpfr_init2(mpR, 10*wOut);	
     // do the multiplication
-    mpfr_mul(mpR, mpX, mpConstant, GMP_RNDN);
+    mpfr_mul(mpR, mpX, mpC, GMP_RNDN);
     // scale back to an integer
     mpfr_mul_2si(mpR, mpR, -lsbOut, GMP_RNDN); //Exact
     mpz_class svRu, svRd;
@@ -252,18 +251,20 @@ namespace flopoco{
     mpfr_t mpX; 
     mpfr_init2(mpX, wIn);	
     mpfr_set_si(mpX, x, GMP_RNDN); // should be exact
+    mpfr_mul_2si(mpX, mpX, index*(target()->lutInputs()), GMP_RNDN); //Exact
+    // now mpX is the integer radix-LUTinput digit, with its proper weight 
 
     // Now we want to compute the product correctly rounded to LSB  lsbOut-g
     // but we have to coerce MPFR into rounding to this fixed-point format.
     mpfr_t mpR;
     mpfr_init2(mpR, 10*wOut);	
     // do the mult in large precision
-    mpfr_mul(mpR, mpX, mother->mpConstant, GMP_RNDN);
+    mpfr_mul(mpR, mpX, mother->mpC, GMP_RNDN);
 
-    // Result is integer*C. 
+    // Result is integer*C.
 
     // scale it so that bit at position lsbOut-g gets weight 0, so that rounding to int does the expected rounding 
-    mpfr_mul_2si(mpR, mpR, mother->lsbIn+index*(target()->lutInputs()) -mother->lsbOut+mother->g, GMP_RNDN); //Exact
+    mpfr_mul_2si(mpR, mpR, mother->lsbIn -mother->lsbOut + mother->g, GMP_RNDN); //Exact
 
     // Here is when we do the rounding
     mpfr_get_z(result.get_mpz_t(), mpR, GMP_RNDN); // Should be exact
