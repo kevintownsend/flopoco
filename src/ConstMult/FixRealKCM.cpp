@@ -74,8 +74,8 @@ namespace flopoco{
     msbC = mpfr_get_si(log2C, GMP_RNDU);
 
     msbOut = msbC + msbIn;
-    REPORT(DEBUG, "msbConstant=" << msbC << "   msbOut="<<msbOut);
     wOut = msbOut-lsbOut+1;
+    REPORT(DEBUG, "msbConstant=" << msbC << "   lsbOut="<<lsbOut << "   msbOut="<<msbOut << "   wOut="<<wOut);
 	
     addInput("X", wIn);
     addOutput("R", wOut);
@@ -151,7 +151,7 @@ namespace flopoco{
 	}
 
       FixRealKCMTable *t; 
-      int ppiSize=i*lutWidth + diSize + g + msbC;
+      int ppiSize=i*lutWidth + diSize + g + msbC +wOut-wIn;
       t = new FixRealKCMTable(target, this, i, diSize, ppiSize);
       oplist.push_back(t);
       if (target->getVendor() == "Xilinx") 
@@ -261,10 +261,9 @@ namespace flopoco{
     // do the mult in large precision
     mpfr_mul(mpR, mpX, mother->mpC, GMP_RNDN);
 
-    // Result is integer*C.
+    // Result is integer*C, which is more or less what we need: just scale to add g bits.
 
-    // scale it so that bit at position lsbOut-g gets weight 0, so that rounding to int does the expected rounding 
-    mpfr_mul_2si(mpR, mpR, mother->lsbIn -mother->lsbOut + mother->g, GMP_RNDN); //Exact
+    mpfr_mul_2si(mpR, mpR, mother->g + mother->wOut - mother->wIn, GMP_RNDN); //Exact
 
     // Here is when we do the rounding
     mpfr_get_z(result.get_mpz_t(), mpR, GMP_RNDN); // Should be exact
