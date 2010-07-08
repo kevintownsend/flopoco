@@ -91,7 +91,6 @@ namespace flopoco{
 				inPortMapCst(finalAdder,"Cin","'0'");
 				outPortMap(finalAdder,"R","myR");
 				vhdl << instance(finalAdder,"FinalAdder_CompressorTree") << endl;
-				if (verbose) cerr << tab << "Final Adder Instantiation " << endl;
 			
 				syncCycleFromSignal("myR");
 			
@@ -114,12 +113,6 @@ namespace flopoco{
 				} 
 				a[0]=0;
 	
-				if (verbose){
-					for (int i=1; i<= lutSize; i++)
-						cerr << a[i] << ", "; 
-					cerr << endl;
-				}
-
 				bt(1, lutSize, nbOfInputs, sol, a, nbOfInputs, bestSol);
 	
 				REPORT(DEBUG, "BACKTRACKING FINISHED");
@@ -128,7 +121,7 @@ namespace flopoco{
 				ostringstream tmp;
 				for (int i=1; i <=lutSize; i++)
 					tmp << bestSol[i] << ", ";
-				tmp << " having score " << bestSol[0] << endl;
+				tmp << " having score " << bestSol[0];
 				REPORT(DEBUG, tmp.str());
 				
 				manageCriticalPath( target->lutDelay() + target->localWireDelay());

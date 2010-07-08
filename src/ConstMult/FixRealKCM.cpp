@@ -59,6 +59,8 @@ namespace flopoco{
 
     mpfr_inits(mpC, NULL);
     evaluateConstantExpression(mpC, node,  getToolPrecision());
+    if(mpfr_cmp_si(mpC, 0)<0)
+      throw string("FixRealKCM: only positive constants are supported");
 
     REPORT(DEBUG, "Constant evaluates to " << mpfr_get_d(mpC, GMP_RNDN));
 

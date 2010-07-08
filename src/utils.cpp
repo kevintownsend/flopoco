@@ -443,7 +443,7 @@ namespace flopoco{
 		ostringstream o;
 		map<string, double>::iterator iter;
 		for (iter = inputDelays.begin(); iter!=inputDelays.end();++iter)
-			o << "The delay for " << iter->first << " is " << iter->second << endl;			
+			o << "The delay for " << iter->first << " is " << iter->second << ";   ";			
 		return o.str();
 	}
 

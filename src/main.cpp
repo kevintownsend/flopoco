@@ -1664,7 +1664,7 @@ int main(int argc, char* argv[] )
 
 			/* second parse is only for sequential operators */
 			if (oplist[i]->isSequential()){
-				REPORT (DEBUG, "--2nd PARSE-------------------------------------------------------");
+				REPORT (FULL, "--2nd PASS-------------------------------------------------------");
 				oplist[i]->parse2();
 			}
 
