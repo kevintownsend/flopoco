@@ -36,12 +36,13 @@ namespace flopoco{
   class FixRealKCMTable : public Table
   {
   public:
-    FixRealKCMTable(Target* target, FixRealKCM* mother, int i, int wIn, int wOut);
+    FixRealKCMTable(Target* target, FixRealKCM* mother, int i, int wIn, int wOut, bool signedInput);
     ~FixRealKCMTable();
     
     mpz_class function(int x);
     FixRealKCM* mother;
     int index; 
+    bool signedInput;
   };
 
 }

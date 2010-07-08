@@ -38,18 +38,13 @@ namespace flopoco{
     Operator(target, inputDelays), lsbIn(lsbIn_), msbIn(msbIn_), signedInput(signedInput_),
     wIn(msbIn_-lsbIn_+1), lsbOut(lsbOut_), constant(constant_) 
   {
-
-
-
     srcFileName="FixRealKCM";
 
-    if(lsbIn>msbIn) {
+    if(lsbIn>msbIn) 
       	throw string("FixRealKCM: Error, lsbIn>msbIn");
-    }
-
-    sollya_node_t node;
-
+    
     /* Convert the input string into a sollya evaluation tree */
+    sollya_node_t node;
     node = parseString(constant.c_str());	/* If conversion did not succeed (i.e. parse error) */
     if (node == 0) {
       ostringstream error;
@@ -67,7 +62,8 @@ namespace flopoco{
     evaluateConstantExpression(mpC, node, 100*(msbIn-lsbIn+1)); // 100*wIn bits should be enough for everybody
     // build the name
     ostringstream name; 
-    name <<"FixFPKCM_" << vhdlize(lsbIn)  << "_" << vhdlize(msbIn) << "_" << vhdlize(lsbOut) << "_" << vhdlize(constant_)  ;
+    name <<"FixFPKCM_" << vhdlize(lsbIn)  << "_" << vhdlize(msbIn) << "_" << vhdlize(lsbOut) << "_" 
+	 << vhdlize(constant_)  << (signedInput?"_signed":"_unsigned");
     setName(name.str()); 
 
     mpfr_t log2C;
@@ -87,12 +83,12 @@ namespace flopoco{
 
 
     if(wIn <= lutWidth+2){
-      ///////////////////////////////////   Case 1 table ////////////////////////////////////
+      ///////////////////////////////////  multiplication using 1 table only ////////////////////////////////////
       REPORT(INFO, "Constant multiplication in a single table, will be correctly rounded");
       g=0;
 
       FixRealKCMTable *t; 
-      t = new FixRealKCMTable(target, this, 0, wIn, wOut);
+      t = new FixRealKCMTable(target, this, 0, wIn, wOut, signedInput);
       oplist.push_back(t);
       if (target->getVendor() == "Xilinx") 
 	{
@@ -141,20 +137,24 @@ namespace flopoco{
 
 
       //first split the input X into digits having lutWidth bits -> this is as generic as it gets :)
+      bool tableSigned;
       for (int i=0; i<nbOfTables; i++) {
 	int diSize;
 	if (i < nbOfTables-1){
 	  vhdl << tab << declare( join("d",i), lutWidth ) << " <= X" << range(lutWidth*(i+1)-1, lutWidth*i ) << ";" <<endl;
 	  diSize=lutWidth;
+	  tableSigned=false;
 	}
 	else {// last table is a bit special
 	  vhdl << tab << declare( join("d",i), lastLutWidth ) << " <= " << "X" << range( wIn-1 , lutWidth*i ) << ";" <<endl;
 	  diSize=lastLutWidth;
+	  if(signedInput)
+	    tableSigned=true;
 	}
 
       FixRealKCMTable *t; 
       int ppiSize=i*lutWidth + diSize + g + msbC +wOut-wIn;
-      t = new FixRealKCMTable(target, this, i, diSize, ppiSize);
+      t = new FixRealKCMTable(target, this, i, diSize, ppiSize, tableSigned);
       oplist.push_back(t);
       if (target->getVendor() == "Xilinx") 
 	{
@@ -202,6 +202,11 @@ namespace flopoco{
   void FixRealKCM::emulate(TestCase* tc){
     /* Get I/O values */
     mpz_class svX = tc->getInputValue("X");
+    // get rid of two's complement
+    if(signedInput) {
+      if ( svX > ( (mpz_class(1)<<(wIn-1))-1) )
+	svX = svX - (mpz_class(1)<<wIn);
+    }
     // Cast it to mpfr 
     mpfr_t mpX; 
     mpfr_init2(mpX, msbIn-lsbIn+2);	
@@ -233,11 +238,11 @@ namespace flopoco{
 
 
 
+  /****************************** The FixRealKCMTable class ********************/
 
 
-
-  FixRealKCMTable::FixRealKCMTable(Target* target, FixRealKCM* mother, int i, int wIn, int wOut) : 
-    Table(target, wIn, wOut), mother(mother), index(i)
+  FixRealKCMTable::FixRealKCMTable(Target* target, FixRealKCM* mother, int i, int wIn, int wOut, bool signedInput) : 
+    Table(target, wIn, wOut), mother(mother), index(i), signedInput(signedInput)
   {
     ostringstream name; 
     srcFileName="FixRealKCM";
@@ -247,8 +252,14 @@ namespace flopoco{
   
   FixRealKCMTable::~FixRealKCMTable() {}
 
-  mpz_class FixRealKCMTable::function(int x) {
-    mpz_class result;
+  mpz_class FixRealKCMTable::function(int x0) {
+    int x;
+    // get rid of two's complement
+    x = x0;
+    if(signedInput) {
+      if ( x0 > ((1<<(wIn-1))-1) )
+	x = x - (1<<wIn);
+    }
     // Cast x to mpfr 
     mpfr_t mpX; 
     mpfr_init2(mpX, wIn);	
@@ -268,7 +279,14 @@ namespace flopoco{
     mpfr_mul_2si(mpR, mpR, mother->g + mother->wOut - mother->wIn, GMP_RNDN); //Exact
 
     // Here is when we do the rounding
+    mpz_class result;
     mpfr_get_z(result.get_mpz_t(), mpR, GMP_RNDN); // Should be exact
+
+    // Gimme back two's complement
+    if(signedInput) {
+      if ( x0 > (1<<(wIn-1))-1 ) // if x was negative
+	result = result + (mpz_class(1)<<wOut);
+    }
     return  result;
   }
 
