@@ -69,7 +69,7 @@ namespace flopoco{
 
 		// Set up the IO signals
 		addInput ("X"  , wIn, true);
-		addOutput ("Y"  , wOut);
+		addOutput ("Y"  , wOut, 1, true);
 		if ((target->getVendor()=="Xilinx")){
 			setCombinatorial();
 		}else
