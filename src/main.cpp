@@ -259,7 +259,7 @@ static void usage(char *name){
 	OP( "DotProduct","wE wFX wFY MaxMSB_in LSB_acc MSB_acc");
 	cerr << "      Floating-point dot product unit \n";
 	OP( "FPExp","wE wF");
-	cerr << "      Floating-point exponential function (NPY)\n";
+	cerr << "      Floating-point exponential function\n";
 	OP( "FPLog","wE wF InTableSize");
 	cerr << "      Floating-point logarithm function;\n";
 	cerr << "      InTableSize is the numbers of bits to input to the tables. \n";
