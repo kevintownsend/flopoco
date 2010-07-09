@@ -23,11 +23,11 @@ namespace flopoco{
 	class TableGenerator : public Table {
 
 		public:
-		   TableGenerator(Target* target, PiecewiseFunction* pf, int wInX, int wOutX, int n);
-       TableGenerator(Target* target, string func, int wInX, int wOutX, int n);
-			 /* TODO: Doxygen parameters*/ 
+			TableGenerator(Target* target, PiecewiseFunction* pf, int wInX, int wOutX, int n);
+			TableGenerator(Target* target, string func, int wInX, int wOutX, int n);
+			/* TODO: Doxygen parameters*/ 
 			TableGenerator(Target* target, string func, int wInX, int wOutX, int n,double xmin, double xmax, double scale);
-      
+
 			/**
 			 * TableGenerator destructor
 			 */
@@ -36,26 +36,26 @@ namespace flopoco{
 			MPPolynomial* getMPPolynomial(sollya_node_t t);
 			vector<FixedPointCoefficient*> getPolynomialCoefficients(sollya_node_t t, sollya_chain_t c);
 			vector<FixedPointCoefficient*> getPolynomialCoefficients(sollya_node_t t, int* sizeList);
-      vector<vector<FixedPointCoefficient*> > getPolynomialCoefficientsVector();
-      void printPolynomialCoefficientsVector();
-      void updateMinWeightParam(int i, FixedPointCoefficient* zz);
-      vector<FixedPointCoefficient*> getCoeffParamVector();
-      void printCoeffParamVector();
-      mpfr_t *getMaxApproxError();
-      void generateDebug();
-      void generateDebugPwf();
-      sollya_chain_t makeIntPtrChainCustomized(int m, int n, int precshift, int msize);
-      vector<int> getNrIntArray();
-      /************************************************/
-      /********Virtual methoods from class Table*******/
-      mpz_class function(int x);
+			vector<vector<FixedPointCoefficient*> > getPolynomialCoefficientsVector();
+			void printPolynomialCoefficientsVector();
+			void updateMinWeightParam(int i, FixedPointCoefficient* zz);
+			vector<FixedPointCoefficient*> getCoeffParamVector();
+			void printCoeffParamVector();
+			mpfr_t *getMaxApproxError();
+			void generateDebug();
+			void generateDebugPwf();
+			sollya_chain_t makeIntPtrChainCustomized(int m, int n, int precshift, int msize);
+			vector<int> getNrIntArray();
+
+			/************************************************/
+			/********Virtual methoods from class Table*******/
+			mpz_class function(int x);
+
 			int    double2input(double x);
 			double input2double(int x);
 			mpz_class double2output(double x);
 			double output2double(mpz_class x);
-	    /************************************************/
-      
-      
+		/************************************************/
 		protected:
 			int wInX_;   /**< TODO: Description*/ 
 			int wOutX_;  /**< TODO: Description*/
@@ -63,8 +63,8 @@ namespace flopoco{
 			vector< vector<FixedPointCoefficient*> > polyCoeffVector;
 			vector<FixedPointCoefficient*> coeffParamVector;
 			mpfr_t *maxError;
-      PiecewiseFunction *pwf;
-      vector <int> nrIntArray;
+			PiecewiseFunction *pwf;
+			vector <int> nrIntArray;
 	};
 }
 #endif
