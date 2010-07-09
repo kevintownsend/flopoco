@@ -185,6 +185,7 @@ namespace flopoco{
 //				nextCycle();///////////////////////////////////////////////////
 				
 				setCriticalPath( sm->getOutputDelay("R") );
+				vhdl << tab << "-- the delay at the output of the multiplier is : " << sm->getOutputDelay("R") << endl;
 				
 				if (i<unsigned(degree_)){
 					vhdl << tab << "-- weight of piPT"<<i<<" is="<<pikPTWeight[i]<<" size="<<pikPTSize[i]+1<<endl;
@@ -203,15 +204,16 @@ namespace flopoco{
 
 					inPortMap ( sa, "X", join("op1_",i) );
 					inPortMap ( sa, "Y", join("op2_",i) );
-					inPortMapCst ( sa, "Cin", "'0'");
+					inPortMapCst ( sa, "Cin", "'1'");
 					outPortMap( sa, "R", join("sigmaP",i));
 				
 					vhdl << instance ( sa, join("Sum",i));
 					syncCycleFromSignal( join("sigmaP",i) );
-					nextCycle();///////////////////////////////////////////////////                                                                   
+					setCriticalPath( sa->getOutputDelay("R") );
+//					nextCycle();///////////////////////////////////////////////////                                                                   
 				                                                                   
 				}else{
-					IntAdder* sa = new IntAdder (target, sigmakPSize[i]+1, inDelayMap("X",getCriticalPath()));
+					IntAdder* sa = new IntAdder (target, (coef_[0]->getSize()+3), inDelayMap("X",getCriticalPath()));
 					oplist.push_back(sa);
 
 					vhdl << tab << declare( join("op1_",i), sigmakPSize[i]+1 ) << " <= (" << rangeAssign(sigmakPWeight[i]-pikPWeight[i]-1,0, join("piP",i)+of(pikPSize[i]+1)) 
@@ -220,18 +222,19 @@ namespace flopoco{
 					vhdl << tab << declare( join("op2_",i), sigmakPSize[i]+1 ) << " <= (" << rangeAssign(sigmakPWeight[i]-coef_[degree_-i]->getWeight()-1,0, join("a",degree_-i)+of(coef_[degree_-i]->getSize()))
 //						                                                               << " & " << join("a",degree_-i) << " & "<< zg(sigmakPSize[i]-sigmakPWeight[i]-(coef[degree_-i]->getSize()-coef[degree_-i]->getWeight())-1 ,0) << ");"<<endl;
 					                                                                      << " & " << join("a",degree_-i) << " & "<< zg(sigmakPSize[i]+1 - (sigmakPWeight[i]-coef_[degree_-i]->getWeight()) - (coef_[degree_-i]->getSize()+1),0) << ");"<<endl;
-					inPortMap ( sa, "X", join("op1_",i) );
-					inPortMap ( sa, "Y", join("op2_",i) );
+					inPortMapCst ( sa, "X", join("op1_",i)+range(sigmakPSize[i], sigmakPSize[i]+1 - (coef_[0]->getSize()+3)) );
+					inPortMapCst ( sa, "Y", join("op2_",i)+range(sigmakPSize[i], sigmakPSize[i]+1 - (coef_[0]->getSize()+3)) );
 					inPortMapCst ( sa, "Cin", "'0'");
 					outPortMap( sa, "R", join("sigmaP",i));
 		
 					vhdl << instance ( sa, join("Sum",i));
 					syncCycleFromSignal( join("sigmaP",i) );
 
-					wR = sigmakPSize[i]+1;
+					wR = coef_[0]->getSize()+2; //sigmakPSize[i]+1;
 					weightR = sigmakPWeight[i];
-					addOutput("R", sigmakPSize[i]+1);
-					vhdl << tab << "R <= " << join("sigmaP",i) << ";" << endl;
+					addOutput("R", coef_[0]->getSize()+2 );//sigmakPSize[i]+1);
+					setCriticalPath(sa->getOutputDelay("R"));
+					vhdl << tab << "R <= " << join("sigmaP",i)<< range(coef_[0]->getSize()+2,1)<<";"<<endl; //<< << ";" << endl;
 				}
 
 				outDelayMap["R"]=getCriticalPath();			
@@ -595,6 +598,8 @@ namespace flopoco{
 				int k=1;
 				while (k*Xd < y_->getSize()){
 					objectiveStatesY.insert(pair<int,int>(i+1, y_->getSize() - k*Xd));
+//					if ( y_->getSize() - k*Xd < coef_[getPolynomialDegree()-i-1]->getSize())
+//						break;
 					k++;					
 				}
 				
@@ -607,9 +612,11 @@ namespace flopoco{
 				int k=1;
 				while (k*Yd < y_->getSize()){
 					objectiveStatesY.insert(pair<int,int>(i+1, y_->getSize() - k*Yd));
+//					if ( y_->getSize() - k*Yd < coef_[getPolynomialDegree()-i-1]->getSize())
+//						break;
 					k++;					
 				}
-				}
+			}
 			/* insert the "do no truncation" pair */
 			objectiveStatesY.insert(pair<int,int>(i+1, 0)); 
 		}
