@@ -43,7 +43,7 @@ namespace flopoco{
 	SignedIntMultiplier:: SignedIntMultiplier(Target* target, int wInX, int wInY, map<string, double> inputDelays) :
 		Operator(target, inputDelays), wInX_(wInX), wInY_(wInY), wOut_(wInX + wInY){
  		srcFileName = "SignedIntMultiplier";
- 		REPORT(0, " ----- PARAMS: wInX="<<wInX <<" wInY="<<wInY << " inDelay=" << getMaxInputDelays(inputDelays));
+ 		REPORT(DEBUG, " ----- PARAMS: wInX="<<wInX <<" wInY="<<wInY << " inDelay=" << getMaxInputDelays(inputDelays));
  
  		double target_freq = target->frequency();
 		double maxDSPFrequency = int(floor(1.0/ (target->DSPMultiplierDelay() + 1.0e-10)));
@@ -102,7 +102,7 @@ namespace flopoco{
 				
 					//MULTIPLICATIONS WITH SOME ACCUMULATIONS
 					for (int i=0; i < cOp2; i++){ 
-						setCriticalPath ( getMaxInputDelays(inputDelays) );
+						setCriticalPath ( getMaxInputDelays(inputDelays) + target->DSPinterconnectWireDelay() );
 						for (int j=0; j < cOp1; j++){ 
 							if (j==0){ // @ the first the operation is only multiplication, not MAC
 								manageCriticalPath(target->DSPMultiplierDelay());
@@ -113,7 +113,6 @@ namespace flopoco{
 								vhdl << tab << declare(join("px",i,"y",j), xS+yS) << " <= " << join("tpx",i,"y",j) << " + " 
 								                                                            << join("px",i,"y",j-1) << range(xS+yS-1,y) << ";" << endl; //sign extend TODO
 							}
-//							if (!((j==cOp1-1) && (i<cOp2-1))) nextCycle();
 						}
 						if (i<cOp2-1) setCycle(0); //reset cycle
 					}
@@ -129,10 +128,11 @@ namespace flopoco{
 					}
 
 					if (cOp2 > 1){
-						manageCriticalPath(target->DSPinterconnectWireDelay()+target->localWireDelay());
+//						manageCriticalPath(target->DSPinterconnectWireDelay()+target->localWireDelay());
 						vhdl << tab << declare ("sum0Low", x) << " <= sum0" << range(x-1,0) << ";" << endl;
 						REPORT( DEBUG, "The delay at compressor tree input is = " << getCriticalPath());
-//						IntNAdder* add =  new IntNAdder(target, y*(cOp1-1)+yS +  x*(cOp2-1)+xS - x, cOp2);
+						nextCycle();//
+						setCriticalPath(0);
 						IntCompressorTree* add =  new IntCompressorTree(target, y*(cOp1-1)+yS +  x*(cOp2-1)+xS - x, cOp2, inDelayMap("X0",getCriticalPath()));
 						oplist.push_back(add);
 		
@@ -158,29 +158,38 @@ namespace flopoco{
 							}
 						}//TODO compact ifs
 
+						/* use a multioperand adder to sum up the products */
 						for (int i=0; i< cOp2; i++)
 							inPortMap (add, join("X",i) , join("addOp",i));
-		
-//						inPortMapCst(add, "Cin", "'0'");
+
 						outPortMap(add, "R", "addRes");
 						vhdl << instance(add, "adder");
-
 						syncCycleFromSignal("addRes");
-						outDelayMap["R"] = (add->getOutDelayMap())["R"];
+
+						setCriticalPath( add->getOutputDelay("R") );
+						manageCriticalPath( target->DSPinterconnectWireDelay() );
 
 						if ( (y*(cOp1-1)+yS + x*(cOp2-1)+xS ) - (wInX + wInY) < x ){
 							vhdl << tab << "R <= addRes & sum0Low "<<range(x-1, (y*(cOp1-1)+yS + x*(cOp2-1)+xS ) - (wInX + wInY) )<< ";" << endl;
 						}else{	
 							vhdl << tab << "R <= addRes"<<range(y*(cOp1-1)+yS +  x*(cOp2-1)+xS - x -1, (y*(cOp1-1)+yS + x*(cOp2-1)+xS -x ) - (wInX + wInY)	 )<< ";" << endl;
 						}
+
+						outDelayMap["R"] = getCriticalPath();
 					}else{
+						/* only one operand */
+						manageCriticalPath( target->DSPinterconnectWireDelay() );
 						vhdl << tab << "R <= sum0"<<range( y*(cOp1-1) + xS + yS - 1, y*(cOp1-1) + xS + yS - (wInX + wInY ) ) << ";" << endl;
 						outDelayMap["R"] = getCriticalPath();
 					}
 				}else{
-					setCriticalPath( getMaxInputDelays(inputDelays));
-					manageCriticalPath( target->DSPMultiplierDelay());
-					vhdl << tab << "R <= X * Y ;" <<endl;
+					setCriticalPath( getMaxInputDelays(inputDelays)+target->DSPinterconnectWireDelay());
+					manageCriticalPath( target->DSPMultiplierDelay() );
+					vhdl << tab << declare("r_mul",wInX+wInY) << " <= X * Y;"<<endl;
+					manageCriticalPath(target->DSPinterconnectWireDelay());
+					vhdl << tab << "R <= r_mul ;" <<endl;
+					outDelayMap["R"] = getCriticalPath();
+					
 				}
 			}else if ((target->getID()=="Virtex5") || (target->getID()=="Virtex6")){
 				//multiplier block size is 25x18 signed, 24x17 unsigned
