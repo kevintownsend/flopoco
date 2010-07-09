@@ -119,28 +119,30 @@ namespace flopoco{
 		setCriticalPath(pe->getOutputDelay("R"));
 		
 		if (finalRounding_){
-			/* number of bits to recover is */
+//			/* number of bits to recover is */
 			int recover = weightR + wOutX;
-			manageCriticalPath(target->adderDelay(pe->getRWidth()-(recover)-2));
-			vhdl << tab << 	declare("sticky",1) << " <= '0' when Rpe"<<range(pe->getRWidth()-(recover)-2,0) <<" = " 
-		                                                        <<   zg(pe->getRWidth()-(recover)-1,0) << " else '1';"<<endl;
-			vhdl << tab << declare("extentedf", recover + 1) << " <= Rpe"<<range(pe->getRWidth()-1, pe->getRWidth()-(recover+1))<<";"<<endl; 
-		                  
-//			nextCycle();                              
-			IntAdder *a = new IntAdder(target, recover + 1, inDelayMap("X",getCriticalPath()));
-			oplist.push_back(a);
-	
-			inPortMap(a, "X", "extentedf");
-			inPortMapCst(a, "Y", zg(recover + 1,0) );
-			inPortMapCst(a, "Cin", "sticky");
-			outPortMap(a, "R", "fPostRound");
-			vhdl << instance(a, "Rounding_Adder");
+			vhdl << tab << "-- weight of poly result is : " << weightR << endl;
+//			manageCriticalPath(target->adderDelay(pe->getRWidth()-(recover)-2));
+//			vhdl << tab << 	declare("sticky",1) << " <= '0' when Rpe"<<range(pe->getRWidth()-(recover)-2,0) <<" = " 
+//		                                                        <<   zg(pe->getRWidth()-(recover)-1,0) << " else '1';"<<endl;
+//			vhdl << tab << declare("extentedf", recover + 1) << " <= Rpe"<<range(pe->getRWidth()-1, pe->getRWidth()-(recover+1))<<";"<<endl; 
+//		                  
+////			nextCycle();                              
+//			IntAdder *a = new IntAdder(target, recover + 1, inDelayMap("X",getCriticalPath()));
+//			oplist.push_back(a);
+//	
+//			inPortMap(a, "X", "extentedf");
+//			inPortMapCst(a, "Y", zg(recover + 1,0) );
+//			inPortMapCst(a, "Cin", "sticky");
+//			outPortMap(a, "R", "fPostRound");
+//			vhdl << instance(a, "Rounding_Adder");
 
-			syncCycleFromSignal("fPostRound");
+//			syncCycleFromSignal("fPostRound");
 		
 			addOutput("R", recover);
-			outDelayMap["R"]=a->getOutputDelay("R");
-			vhdl << tab << " R <= fPostRound"<<range(recover, 1)<<";"<<endl;
+//			outDelayMap["R"]=a->getOutputDelay("R");
+//			vhdl << tab << " R <= fPostRound"<<range(recover, 1)<<";"<<endl;
+			vhdl << tab << " R <= Rpe"<<range(wR-1, wR-recover)<<";"<<endl;
 		}else{
 			outDelayMap["R"] = getCriticalPath();
 			addOutput("R", pe->getRWidth());
@@ -180,7 +182,7 @@ namespace flopoco{
 		/* Compute the function */
 		f->eval(mpR, mpX);
 		if (verbose){
-		if (verbose==3){
+		if (verbose==4){
 		cout<<"Input is:"<<sPrintBinary(mpX)<<endl;
 		cout<<"Output is:"<<sPrintBinary(mpR)<<endl;
 	}
