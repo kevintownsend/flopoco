@@ -126,8 +126,8 @@ namespace flopoco{
 					sX = makeAdd(makeVariable(),aiNode);
 					sY = substitute(tempNode, sX);
 					if (sY == 0)
-						REPORT(DETAILED, "Sollya error when performing range mapping.");
-					if(verbose>=DETAILED){
+						REPORT(DEBUG, "Sollya error when performing range mapping.");
+					if(verbose>=DEBUG){
 						cout<<"\n-------------"<<endl;
 						printTree(sY);
 						cout<<"\nover: "<<sPrintBinary(zero)<<" "<< sPrintBinary(bi)<<"withprecshift:"<<precShift<<endl;
