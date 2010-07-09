@@ -4,17 +4,15 @@
 #include <math.h>	// For NaN
 
 #include "FPExp.hpp"
-//#include "fpexponential/SPExpDualTable.hpp"
 #include "FPNumber.hpp"
 #include "ConstMult/IntIntKCM.hpp"
+#include "ConstMult/FixRealKCM.hpp"
 #include "Shifters.hpp"
 #include "IntMultiplier.hpp"
 #include "FunctionEvaluator.hpp"
 #include "utils.hpp"
 #include "IntAdder.hpp"
 
-//#include "fpexponential/Fragment.hpp"
-//#include "fpexponential/explore.h"
 
 using namespace std;
 
@@ -189,6 +187,8 @@ namespace flopoco{
 	if((wE+wF)*target->normalizedFrequency() > 4)
 		nextCycle();
 
+#if 0
+
 	IntIntKCM *mulLog2 = new IntIntKCM(target, wE+1, mpzLog2, true /* signed input */);
 	oplist.push_back(mulLog2);
 	outPortMap(mulLog2, "R", "KLog2");
@@ -197,25 +197,38 @@ namespace flopoco{
 	syncCycleFromSignal("KLog2");
 	nextCycle();
 
-	IntAdder *yPaddedAdder = new IntAdder(target,sizeXfix);
+	vhdl << tab << declare("neg2Op",sizeXfix) << " <= not(KLog2" << range(wE+1 + wE+wF+g -1, wE+1 + wE+wF+g - sizeXfix)<<");"<<endl;
+#else
+	FixRealKCM *mulLog2 = new FixRealKCM(target, 0, wE, true  /* signed input */, -wF-g, "log(2)" );
+	oplist.push_back(mulLog2);
+	outPortMap(mulLog2, "R", "KLog2");
+	inPortMap(mulLog2, "X", "K");
+	vhdl << instance(mulLog2, "mulLog2");
+	syncCycleFromSignal("KLog2");
+	nextCycle();
+
+	vhdl << tab << declare("neg2Op",wF+g) << " <= not(KLog2" << range(wF+g-1, 0) << ");"<<endl;
+	vhdl << tab << declare("fixXsignedLSB",wF+g) << " <= fixXsigned" << range(wF+g-1, 0) << ";"<<endl;
+
+#endif
+	
+	IntAdder *yPaddedAdder = new IntAdder(target,wF+g); // we know the leading bits will cancel out
 	oplist.push_back(yPaddedAdder);
 	
-	vhdl << tab << declare("neg2Op",sizeXfix) << " <= not(KLog2" << range(wE+1 + wE+wF+g -1, wE+1 + wE+wF+g - sizeXfix)<<");"<<endl;
-	
-	inPortMap( yPaddedAdder, "X", "fixXsigned");
+	inPortMap( yPaddedAdder, "X", "fixXsignedLSB");
 	inPortMapCst ( yPaddedAdder, "Y", "neg2Op");
 	inPortMapCst ( yPaddedAdder, "Cin", "'1'");
-	outPortMap( yPaddedAdder, "R", "Ypadded");
+	outPortMap( yPaddedAdder, "R", "Y");
 	
-	vhdl << tab << instance(yPaddedAdder, "theYPaddedAdder") << endl;
-	syncCycleFromSignal("Ypadded"); 
+	vhdl << instance(yPaddedAdder, "theYAdder") << endl;
+	syncCycleFromSignal("Y"); 
 	nextCycle(); 
 
 //	vhdl << tab << declare("Ypadded", sizeXfix) << " <= fixXsigned - KLog2" << range(wE+1 + wE+wF+g -1, wE+1 + wE+wF+g - sizeXfix) << ";\n";
 
 	int sizeY=wF+g; // This is also the weight of Y's LSB
 
-	vhdl << tab << declare("Y", sizeY) << " <= Ypadded" << range(sizeXfix-wE-2, 0) << ";\n";
+	//	vhdl << tab << declare("Y", sizeY) << " <= Ypadded" << range(sizeXfix-wE-2, 0) << ";\n";
 
 	vhdl << tab << "-- Now compute the exp of this fixed-point value" <<endl;
 
