@@ -88,16 +88,9 @@ namespace flopoco{
       g=0;
 
       FixRealKCMTable *t; 
-      t = new FixRealKCMTable(target, this, 0, wIn, wOut, signedInput);
+      t = new FixRealKCMTable(target, this, 0, wIn, wOut, signedInput, false);
       oplist.push_back(t);
-      if (target->getVendor() == "Xilinx") 
-	{
-	  addAttribute("rom_extract", "string", t->getName()+": component", "yes");
-	  addAttribute("rom_style", "string", t->getName()+": component", "distributed");
-	}
-      if (target->getVendor() == "Altera") 
-	addAttribute("altera_attribute", "string", t->getName()+": component", "-name ALLOW_ANY_ROM_SIZE_FOR_RECOGNITION OFF");
-      
+      useHardRAM(t);
       manageCriticalPath(target->lutDelay() + 2*target->localWireDelay());
       
       inPortMap (t , "X", "X");
@@ -121,7 +114,7 @@ namespace flopoco{
 	nbOfTables--;
 	lastLutWidth=lutWidth + 1;
       }
-      REPORT(INFO, "Constant multiplication in "<< nbOfTables << " tables");
+      REPORT(INFO, "Constant multiplication in "<< nbOfTables << " tables, input size " << lutWidth << " then: " << lastLutWidth);
 
       // How many guard bits? ulp=2^lsbOut
       // One half-ulp for the final rounding, and nbOfTables tables with an error of 2^(lsbOut-g-1) each 
@@ -137,32 +130,29 @@ namespace flopoco{
 
 
       //first split the input X into digits having lutWidth bits -> this is as generic as it gets :)
-      bool tableSigned;
+      bool tableSigned, last;
       for (int i=0; i<nbOfTables; i++) {
 	int diSize;
 	if (i < nbOfTables-1){
 	  vhdl << tab << declare( join("d",i), lutWidth ) << " <= X" << range(lutWidth*(i+1)-1, lutWidth*i ) << ";" <<endl;
 	  diSize=lutWidth;
 	  tableSigned=false;
+	  last=false;
 	}
 	else {// last table is a bit special
 	  vhdl << tab << declare( join("d",i), lastLutWidth ) << " <= " << "X" << range( wIn-1 , lutWidth*i ) << ";" <<endl;
 	  diSize=lastLutWidth;
 	  if(signedInput)
 	    tableSigned=true;
+	  last=true;
 	}
 
       FixRealKCMTable *t; 
-      int ppiSize=i*lutWidth + diSize + g + msbC +wOut-wIn;
-      t = new FixRealKCMTable(target, this, i, diSize, ppiSize, tableSigned);
+
+      int ppiSize = wOut+g - (nbOfTables-1-i)*lutWidth ;
+      t = new FixRealKCMTable(target, this, i, diSize, ppiSize, tableSigned, last);
       oplist.push_back(t);
-      if (target->getVendor() == "Xilinx") 
-	{
-	  addAttribute("rom_extract", "string", t->getName()+": component", "yes");
-	  addAttribute("rom_style", "string", t->getName()+": component", "distributed");
-	}
-      if (target->getVendor() == "Altera") 
-	addAttribute("altera_attribute", "string", t->getName()+": component", "-name ALLOW_ANY_ROM_SIZE_FOR_RECOGNITION OFF");
+      useHardRAM(t);
             
       inPortMap (t , "X", join("d",i));
       outPortMap(t , "Y", join("pp",i));
@@ -241,8 +231,8 @@ namespace flopoco{
   /****************************** The FixRealKCMTable class ********************/
 
 
-  FixRealKCMTable::FixRealKCMTable(Target* target, FixRealKCM* mother, int i, int wIn, int wOut, bool signedInput) : 
-    Table(target, wIn, wOut), mother(mother), index(i), signedInput(signedInput)
+  FixRealKCMTable::FixRealKCMTable(Target* target, FixRealKCM* mother, int i, int wIn, int wOut, bool signedInput, bool last) : 
+    Table(target, wIn, wOut), mother(mother), index(i), signedInput(signedInput), last(last)
   {
     ostringstream name; 
     srcFileName="FixRealKCM";
@@ -275,8 +265,11 @@ namespace flopoco{
     mpfr_mul(mpR, mpX, mother->mpC, GMP_RNDN);
 
     // Result is integer*C, which is more or less what we need: just scale to add g bits.
+    mpfr_mul_2si(mpR, mpR, mother->wOut - mother->wIn + mother->g, GMP_RNDN); //Exact
 
-    mpfr_mul_2si(mpR, mpR, mother->g + mother->wOut - mother->wIn, GMP_RNDN); //Exact
+    // and add the half-ulp of the result that turns truncation into rounding
+    if(last && (index!=0) && (index!=1)) // if one or two tables, we don't need to add this bit
+      mpfr_add_si(mpR, mpR, 1<<(mother->g-1), GMP_RNDN);
 
     // Here is when we do the rounding
     mpz_class result;
