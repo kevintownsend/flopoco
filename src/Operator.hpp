@@ -310,6 +310,12 @@ public:
 	 */
 	string instance(Operator* op, string instanceName, string clkName, string rstName);
 
+	/** adds attributes to the generated VHDL so that the tools use embedded RAM blocks for an instance
+	 * @ param t a pointer to this instance
+	 */
+	void useHardRAM(Operator* t); 
+
+
 	/**
 	 * A new architecture inline function
 	 * @param[in,out] o 	- the stream to which the new architecture line will be added
