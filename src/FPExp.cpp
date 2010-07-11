@@ -61,14 +61,11 @@ namespace flopoco{
 
 
 
-
-
-
-
-
-
+	
 	// 1/log2 ~ 1.44, truncated, on sizeFirstKCM bits
 	int sizeFirstKCM=wE+4;
+
+	// All this mostly useless now that we have FixReal KCM
 	mpfr_init2(mplog2, 3*(wE+wF+g));	// way too much precision
 	mpfr_log(mplog2, mp2, GMP_RNDN);
 	mpfr_init2(mpinvlog2, sizeFirstKCM);	
@@ -167,6 +164,8 @@ namespace flopoco{
 		nextCycle();
 
 
+#if 1
+
 	// TODO all the following should be implemented as a single specific KCM
 	IntIntKCM *mulInvLog2 = new IntIntKCM(target, sizeFirstKCM, mpzInvLog2, true /* signed input */);
 	oplist.push_back(mulInvLog2);
@@ -174,6 +173,16 @@ namespace flopoco{
 	inPortMap(mulInvLog2, "X", "xMulIn");
 	vhdl << instance(mulInvLog2, "mulInvLog2");
 	syncCycleFromSignal("xInvLog2");
+
+
+#else
+	FixRealKCM *mulInvLog2 = new  FixRealKCM(target, -2, wE+1, true  /* signed input */, -2, "1/log(2)" );
+	oplist.push_back(mulInvLog2);
+	outPortMap(mulInvLog2, "R", "xInvLog2");
+	inPortMap(mulInvLog2, "X", "xMulIn");
+	vhdl << instance(mulInvLog2, "mulInvLog2");
+	syncCycleFromSignal("xInvLog2");
+#endif
 
 	if((wE+wF)*target->normalizedFrequency() > 8)
 		nextCycle(); 
@@ -187,6 +196,7 @@ namespace flopoco{
 	if((wE+wF)*target->normalizedFrequency() > 4)
 		nextCycle();
 
+	int sizeY=wF+g; // This is also the weight of Y's LSB
 #if 0
 
 	IntIntKCM *mulLog2 = new IntIntKCM(target, wE+1, mpzLog2, true /* signed input */);
@@ -197,7 +207,9 @@ namespace flopoco{
 	syncCycleFromSignal("KLog2");
 	nextCycle();
 
-	vhdl << tab << declare("neg2Op",sizeXfix) << " <= not(KLog2" << range(wE+1 + wE+wF+g -1, wE+1 + wE+wF+g - sizeXfix)<<");"<<endl;
+	vhdl << tab << declare("neg2Op",sizeY) << " <= not(KLog2" << range(wE+wF+g -1, wE+wF+g - sizeY)<<");"<<endl;
+	vhdl << tab << declare("fixXsignedLSB",sizeY) << " <= fixXsigned" << range(sizeY-1, 0) << ";"<<endl;
+
 #else
 	FixRealKCM *mulLog2 = new FixRealKCM(target, 0, wE, true  /* signed input */, -wF-g, "log(2)" );
 	oplist.push_back(mulLog2);
@@ -207,14 +219,15 @@ namespace flopoco{
 	syncCycleFromSignal("KLog2");
 	nextCycle();
 
-	vhdl << tab << declare("neg2Op",wF+g) << " <= not(KLog2" << range(wF+g-1, 0) << ");"<<endl;
-	vhdl << tab << declare("fixXsignedLSB",wF+g) << " <= fixXsigned" << range(wF+g-1, 0) << ";"<<endl;
+	vhdl << tab << declare("neg2Op",sizeY) << " <= not(KLog2" << range(sizeY-1, 0) << ");"<<endl;
+	vhdl << tab << declare("fixXsignedLSB",sizeY) << " <= fixXsigned" << range(sizeY-1, 0) << ";"<<endl;
 
 #endif
-	
-	IntAdder *yPaddedAdder = new IntAdder(target,wF+g); // we know the leading bits will cancel out
+
+	IntAdder *yPaddedAdder = new IntAdder(target, sizeY); // we know the leading bits will cancel out
 	oplist.push_back(yPaddedAdder);
 	
+
 	inPortMap( yPaddedAdder, "X", "fixXsignedLSB");
 	inPortMapCst ( yPaddedAdder, "Y", "neg2Op");
 	inPortMapCst ( yPaddedAdder, "Cin", "'1'");
@@ -224,11 +237,6 @@ namespace flopoco{
 	syncCycleFromSignal("Y"); 
 	nextCycle(); 
 
-//	vhdl << tab << declare("Ypadded", sizeXfix) << " <= fixXsigned - KLog2" << range(wE+1 + wE+wF+g -1, wE+1 + wE+wF+g - sizeXfix) << ";\n";
-
-	int sizeY=wF+g; // This is also the weight of Y's LSB
-
-	//	vhdl << tab << declare("Y", sizeY) << " <= Ypadded" << range(sizeXfix-wE-2, 0) << ";\n";
 
 	vhdl << tab << "-- Now compute the exp of this fixed-point value" <<endl;
 

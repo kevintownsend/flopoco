@@ -79,4 +79,6 @@ namespace flopoco{
 	bool Target::getUseHardMultipliers(){
 		return useHardMultipliers_ ;
 	} 
+
+
 }
