@@ -48,7 +48,7 @@ namespace flopoco{
 		Table(target),	wInX_(wInX), wOutX_(wOutX), pwf(pf){
 		
 		setCopyrightString("Mioara Joldes (2010)");
-
+		srcFileName = "TableGenerator";
 		/* Start initialization */
 		setToolPrecision(165);
 		int nrMaxIntervals=1024*1024;
@@ -153,7 +153,9 @@ namespace flopoco{
 					errPolys.push_back(mpErr);
 					if (mpfr_cmp(*mpErr, eps)>0) {
 						errBoundBool=0; 
-						REPORT(DETAILED," we have found an interval where the error is not small enough, proceed to splitting. Failed at interval "<< k << "/" << nrIntervals-1);
+						REPORT(DETAILED, tab << "we have found an interval where the error is not small enough");
+						REPORT(DETAILED, tab << "failed at interval "<< k << "/" << nrIntervals-1);
+						REPORT(DETAILED, tab << "proceed to splitting"); 
 						/*erase the polys and the errors put so far for this function; keep the previous good ones intact*/
 						polys.resize(nrIntCompleted+1);
 						errPolys.resize(nrIntCompleted+1);
@@ -165,10 +167,8 @@ namespace flopoco{
 			}
 			if (errBoundBool==1){ 
 				/*we have the good polynomials for one function*/
-				if(verbose >= INFO){
-					cout<< "the number of intervals is:"<< nrIntervals<<endl; 
-					cout<< "We proceed to the next function"<<endl; 
-				}
+					REPORT(DETAILED, "the number of intervals is:"<< nrIntervals); 
+					REPORT(DETAILED, "We proceed to the next function");
 				/*we have to update the total size of the coefficients*/
 				int ii=0;
 				while (tempChain2!=NULL){
@@ -251,7 +251,7 @@ namespace flopoco{
 			//generateDebugPwf();
 			if (verbose>=INFO){	
 				printPolynomialCoefficientsVector();
-				cout<<"Parameters for polynomial evaluator:"<<endl;
+				REPORT(DETAILED, "Parameters for polynomial evaluator:");
 				printCoeffParamVector();
 			}
 		}else{
@@ -658,7 +658,7 @@ namespace flopoco{
 		int j, degree;
 		degree= coeffParamVector.size();
 		for (j=0; j<degree; j++){		
-			cout<<" "<<(*coeffParamVector[j]).getSize()<< " "<<(*coeffParamVector[j]).getWeight()<<endl; 
+			REPORT(DETAILED, " "<<(*coeffParamVector[j]).getSize()<< " "<<(*coeffParamVector[j]).getWeight()); 
 		}
 	}
 
