@@ -38,22 +38,33 @@ namespace flopoco{
 		
 		setCopyrightString("Bogdan Pasca (2010)");
 		srcFileName = "PolynomialEvaluator";
-		setPolynomialDegree(coef.size()-1);
 		setName(join("PolynomialEvaluator_d",degree_));
 
-		/* set the approximation error budget we are allowed */
-		setApproximationError(approxError);
+		setApproximationError(approxError); /* set the approximation error budget we are allowed */
+		setPolynomialDegree(coef.size()-1);
 
+		/* both y and a[i], i in 0 ... d are described by two values: size and weight 
+		for y, which is always positive, the two parameters are
+		
+		|<-- y_->getWeight() --->|
+		.---------------------[0][y_{size-1} downto 0    ]
+		                         |<--- y_getSize() ----->|
+		
+		for the coefficients
+		|<-- coef[i]->getWeight() --->|
+		.--------------------------[s][coef[i]->getSize()-1 downto 0 ]
+		                              |<--- coef[i]_->getSize() ---->|        */
+		
 		updateCoefficients(coef);
 		REPORT(DETAILED, "Polynomial to evaluate: " << printPolynomial(coef, y, 0));
+		REPORT(DETAILED, "y size=" << y_->getSize() << " weight=" << y_->getWeight());
 		
 		/* I/O Signal Declarations; y and the coefficients*/
-		addInput("Y", y_->getSize());
-		REPORT(DEBUG, "y size=" << y_->getSize() << " weight=" << y_->getWeight());
+		addInput("Y", y_->getSize()); /* y is positive so we don't store the sign */
 
 		for (uint32_t i=0; i <= unsigned(degree_); i++){
 			addInput(join("a",i), coef_[i]->getSize()+1); /* the size does not contain the sign bit */
-			REPORT(DEBUG, "a"<<i<<" size=" << coef_[i]->getSize() << " weight=" << coef_[i]->getWeight());
+			REPORT(DETAILED, "a"<<i<<" size=" << coef_[i]->getSize() << " weight=" << coef_[i]->getWeight());
 		}
 		
 		allocateErrorVectors();
@@ -62,15 +73,12 @@ namespace flopoco{
 		/* needed in the approximation error computation. We do it once as 
 		this doesn't change during the iterations */
 		setMaxYValue(y); 
-	
-		coldStart();
-		
-		
-		if (1){
-		determineObjectiveStatesForTruncations();
-		setNumberOfPossibleValuesForEachY();
-		setNumberOfPossibleValuesForEachA();
 
+		hornerGuardBitProfiler(); // sets the min values for pi truncations
+				
+		if (1){
+		determineObjectiveStatesForTruncationsOnY();
+		setNumberOfPossibleValuesForEachY();
 		initializeExplorationVectors();
 
 		mpfr_t u, *e;
@@ -79,51 +87,45 @@ namespace flopoco{
 		int errExp;
 		/* design space exploration */				
 		if (degree_>1){
-			sol = false;
-			int i=0;
-			while (!sol){
-				while ((!sol) && (nextStateY())){
-					/* set all A guard bits on 0. do sort of a cold start */
-					resetCoefficientGuardBits();
-					/* run once the error estimation algo with these parameters */
-					e = errorEstimator(yGuard_, aGuard_);
-					/* test if by chance we met the error budget */
-					mpfr_add( u, *approximationError, *e, GMP_RNDN);
-					errExp = (mpfr_get_d(u, GMP_RNDZ)==0 ? 0 :mpfr_get_exp(u));
-					if (errExp <= -targetPrec-1 ){
-						/* if we do, then we set the solution true and that's it */
-						sol = true;
-						mpfr_clear(u);
-						mpfr_clear(*e);
-						free(e);
-					}else{
-						mpfr_clear(*e);
-						free(e);
-						/* if we don't, then we try to add some guard bits to a */
-						/* this number also depends on Y */
-						setNumberOfPossibleValuesForEachA();
-						/* now we iterate on a */
-						while (((!sol) && nextStateA())){
-							i++;
-							e = errorEstimator(yGuard_, aGuard_);
-							mpfr_add( u, *approximationError, *e, GMP_RNDN);
-							if ( i%128 == 0){
-								REPORT(DEBUG, " err = "<< mpfr_get_exp(u));
-							}
-							errExp = (mpfr_get_d(u, GMP_RNDZ)==0 ? 0 :mpfr_get_exp(u));
-							if (errExp <= -targetPrec-1 ){
-								sol = true;
-								mpfr_clear(u);
-								mpfr_clear(*e);
-								free(e);
-							}else{
-								mpfr_clear(*e);
-								free(e);
-							}
-						}					
-					}
-				}	
-			}		
+			
+			while ((!sol) && (nextStateY())){
+				reinitCoefficientGuardBits();
+				/* run once the error estimation algo with these parameters */
+				e = errorEstimator(yGuard_, aGuard_);
+				/* test if by chance we met the error budget */
+				mpfr_add( u, *approximationError, *e, GMP_RNDN);
+				errExp = (mpfr_get_d(u, GMP_RNDZ)==0 ? 0 :mpfr_get_exp(u));
+				if ((errExp <= -targetPrec-1)){
+					/* if we do, then we set the solution true and that's it */
+					sol = true;
+					mpfr_clear(*e);
+					free(e);
+				}
+			}
+			/* at this point we have found a rough solution. We now try to find 
+			smaller values for coefficient guard bits */
+		
+			sol = false; //reinit sol;
+			reinitCoefficientGuardBits();
+			nextStateA(); //
+		
+			while (((!sol) && nextStateA())){
+				e = errorEstimator(yGuard_, aGuard_);
+				mpfr_add( u, *approximationError, *e, GMP_RNDN);
+				errExp = (mpfr_get_d(u, GMP_RNDZ)==0 ? 0 :mpfr_get_exp(u));
+				if (errExp <= -targetPrec-1 ){
+					sol = true;
+					mpfr_clear(u);
+					mpfr_clear(*e);
+					free(e);
+				}else{
+					mpfr_clear(*e);
+					free(e);
+				}
+			}
+		
+		/* at this pont we have a fine grain version of the solution */					
+
 		}else{
 			/* a 1st degree polynomial a1y+a0 doesn't need any guard bit exploration
 			 for the coefficients */
@@ -241,6 +243,26 @@ namespace flopoco{
 			}		
 		}
 	}
+	
+	
+	void PolynomialEvaluator::hornerGuardBitProfiler(){
+		
+		Sigma* sigma[degree_];
+		Pi*    pi   [degree_];
+		
+		sigma[0] = new Sigma( coef_[degree_]->getSize(), coef_[degree_]->getWeight() , unsigned(0) , 0);
+
+		
+		for (int i=1; i<=degree_; i++){
+			pi[i]     = new Pi    ( y_->getSize(), y_->getWeight(), sigma[i-1]->getSize(), sigma[i-1]->getWeight());
+			sigma[i]  = new Sigma ( pi[i]->getSize(), pi[i]->getWeight(), coef_[degree_-i]->getSize(), coef_[degree_-i]->getWeight());
+		}	
+
+		for (int i=0; i<=degree_; i++){
+			maxBoundA[i] = sigma[i]->getGuardBits();			
+		}	
+	}
+	
 	
 	////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////
@@ -544,6 +566,26 @@ namespace flopoco{
 		for (uint32_t i=0; i<unsigned(degree_)+1; i++)
 			aGuard_[i] = 0;
 	}
+
+
+	void PolynomialEvaluator::reinitCoefficientGuardBits(){
+		bool done = false;
+		for (uint32_t i=1; i<unsigned(degree_)+1; i++)
+			if ((!done) && (maxBoundA[i]>0)){
+				aGuard_[i] = maxBoundA[i] - 1;
+				done = true;
+			}else{
+				aGuard_[i] = maxBoundA[i];
+			}
+	}
+
+	void PolynomialEvaluator::reinitCoefficientGuardBitsLastIteration(){
+		/* a solution was found with max values for guard bits. now we try to
+		reduce */
+		for (uint32_t i=1; i<unsigned(degree_)+1; i++)
+			aGuard_[i] = maxBoundA[i];
+	}
+
 	
 	void PolynomialEvaluator::initializeExplorationVectors(){
 		/*init vectors */
@@ -589,31 +631,22 @@ namespace flopoco{
 
 	/* ---------------- EXPLORATION RELATED -----------------------------*/
 	/* ------------------------------------------------------------------*/
-	void PolynomialEvaluator::determineObjectiveStatesForTruncations(){
+	void PolynomialEvaluator::determineObjectiveStatesForTruncationsOnY(){
 		int Xd, Yd;
 		target_->getDSPWidths(Xd,Yd);
 		for (int i=0; i < getPolynomialDegree(); i++){
 			if (( y_->getSize()> unsigned(Xd) ) && (y_->getSize() % unsigned(Xd) != 0)){
-				
 				int k=1;
-				while (k*Xd < y_->getSize()){
-					objectiveStatesY.insert(pair<int,int>(i+1, y_->getSize() - k*Xd));
-//					if ( y_->getSize() - k*Xd < coef_[getPolynomialDegree()-i-1]->getSize())
-//						break;
+				while (k*Xd < int(y_->getSize())){
+						objectiveStatesY.insert(pair<int,int>(i+1, y_->getSize() - k*Xd));
 					k++;					
 				}
-				
-//				objectiveStatesY.insert(pair<int,int>(i+1, y_->getSize() % Xd));
 			}
 			if (Yd!=Xd)
 				if (( y_->getSize()> unsigned(Yd) ) && (y_->getSize() % unsigned(Yd) != 0)){
-//					objectiveStatesY.insert(pair<int,int>(i+1, y_->getSize() % Yd));
-
 				int k=1;
-				while (k*Yd < y_->getSize()){
+				while (k*Yd < int(y_->getSize())){
 					objectiveStatesY.insert(pair<int,int>(i+1, y_->getSize() - k*Yd));
-//					if ( y_->getSize() - k*Yd < coef_[getPolynomialDegree()-i-1]->getSize())
-//						break;
 					k++;					
 				}
 			}

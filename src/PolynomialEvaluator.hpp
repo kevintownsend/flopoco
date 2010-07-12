@@ -151,6 +151,74 @@ namespace flopoco{
 			int      shift_;
 	}; 
 	
+	/** horner variables, sigma and pi */
+	class Sigma{
+		public: 
+			Sigma(int size1, int weight1, int size2, int weight2){
+				if (size2 == 0) {
+					size = size1; 
+					weight = weight1;
+					guardBits = 0;
+//					cout <<  "Created Sigma size=" << size << " weight="<<weight << " guardBits=" << guardBits << endl;
+				}else{
+					/* not sigma 0 */
+					int msb = max ( weight1, weight2);
+					int lsb = min ( int (weight1 + (weight1>=0?1:0) - size1), int(weight2 + (weight2>=0?1:0) - size2) );
+					
+					size = msb - lsb + 1 + 1; /* the second 1 is to overflow bit */
+					weight = msb + 1;
+					
+					guardBits = abs (weight1 - weight2);
+//					cout <<  "Created Sigma size=" << size << " weight="<<weight << " guardBits=" << guardBits << endl;
+				}
+			}
+			
+			/* Destructor */
+			~Sigma(){};
+
+			unsigned getSize(){
+				return size;
+			}
+			
+			int getWeight(){
+				return weight;
+			}
+			
+			int getGuardBits(){
+				return guardBits;
+			}
+			
+		protected:
+			unsigned size;
+			int      weight;
+			int      guardBits;
+	}; 
+
+	/** horner variables, sigma and pi */
+	class Pi{
+		public: 
+			Pi(unsigned size1, int weight1, unsigned size2, int weight2):
+				size(size1+size2), weight(weight1+weight2){
+//				cout << "Created Pi size=" << size << " weight="<<weight << endl;
+			}
+			
+			/* Destructor */
+			~Pi(){};
+
+			unsigned getSize(){
+				return size;
+			}
+			
+			int getWeight(){
+				return weight;
+			}
+			
+		protected:
+			unsigned size;
+			int      weight;
+	}; 
+
+	
 	
 	
 
@@ -235,6 +303,8 @@ namespace flopoco{
 			 */
 			mpfr_t* errorEstimator(vector<int> &yGuard, vector<int> &aGuard);
 			
+			
+			void hornerGuardBitProfiler();
 		
 			/* ---------------- EXPLORATION RELATED -----------------------------*/
 			/* ------------------------------------------------------------------*/
@@ -244,7 +314,7 @@ namespace flopoco{
 			
 			
 			/** fills-up a map of objective states for the truncations */
-			void determineObjectiveStatesForTruncations();
+			void determineObjectiveStatesForTruncationsOnY();
 			
 			/** updates the MaxBoundY vector with the maximum number of states
 			 * for each Y */
@@ -258,6 +328,10 @@ namespace flopoco{
 			
 			void resetCoefficientGuardBits();
 			
+			void reinitCoefficientGuardBits();
+			
+			void reinitCoefficientGuardBitsLastIteration();
+			
 			/** Get range values for multiplications. We pefrom one error 
 			  * analysis run where we dont't truncate or add any guard bits
 			  */
@@ -268,13 +342,6 @@ namespace flopoco{
 				free(tmp);
 			}
 			
-
-
-
-
-
-			
-
 			/** We allow possible truncation of y. Horner evaluation therefore 
 			    allows for d differnt truncations on y (1 to d). For each y 
 			    there are at most 3 possible truncation values:
