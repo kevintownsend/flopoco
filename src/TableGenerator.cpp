@@ -189,7 +189,7 @@ namespace flopoco{
 		mpfr_clear(zero);
 	
 		if (errBoundBool==1){
-			if(verbose>=INFO){
+			if(verbose>=DEBUG){
 				cout<< "the total number of intervals is:"<< nrIntCompleted<<endl; 
 				cout<< "We proceed to the extraction of the coefficients:"<<endl; 
 			}
@@ -641,9 +641,9 @@ namespace flopoco{
 		for (i=0; i<nrIntervals; i++){	
 			pcoeffs=polyCoeffVector[i];
 			degree= pcoeffs.size();
-			cout<<"polynomial "<<i<<": "<<endl;
-			for (j=0; j<degree; j++){		
-				cout<<" "<<(*pcoeffs[j]).getSize()<< " "<<(*pcoeffs[j]).getWeight()<<endl; 
+			REPORT(DEBUG, "polynomial "<<i<<": ");
+			for (j=0; j<degree; j++){
+				REPORT(DEBUG, " "<<(*pcoeffs[j]).getSize()<< " "<<(*pcoeffs[j]).getWeight());
 			}
 		}
 	}
