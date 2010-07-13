@@ -52,7 +52,8 @@ namespace flopoco{
       throw error.str();
     }
 
-    mpfr_inits(mpC, NULL);
+    mpfr_init2(mpC, 10000);
+    setToolPrecision(10000);
     evaluateConstantExpression(mpC, node,  getToolPrecision());
     if(mpfr_cmp_si(mpC, 0)<0)
       throw string("FixRealKCM: only positive constants are supported");
@@ -62,7 +63,7 @@ namespace flopoco{
     evaluateConstantExpression(mpC, node, 100*(msbIn-lsbIn+1)); // 100*wIn bits should be enough for everybody
     // build the name
     ostringstream name; 
-    name <<"FixFPKCM_" << vhdlize(lsbIn)  << "_" << vhdlize(msbIn) << "_" << vhdlize(lsbOut) << "_" 
+    name <<"FixRealKCM_" << vhdlize(lsbIn)  << "_" << vhdlize(msbIn) << "_" << vhdlize(lsbOut) << "_" 
 	 << vhdlize(constant_)  << (signedInput?"_signed":"_unsigned");
     setName(name.str()); 
 
