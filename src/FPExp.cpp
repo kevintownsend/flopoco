@@ -24,9 +24,20 @@ namespace flopoco{
 	FPExp::FPExp(Target* target, int wE, int wF) 
 		: Operator(target), wE(wE), wF(wF)
 	{
-		cout << "TODO!" <<endl;
-		int k=11;
-		int d=2;
+		int k, d;
+		d=2; 
+		k=9;
+
+		// TODO! Totally random 
+		if(wF>60) {
+			d=3;
+			k=10;
+		}
+		if(wF>100) {
+			d=4;
+			k=11;
+		}
+
 		FPExp(target, wE, wF, k, d);
 	}
 
