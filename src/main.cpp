@@ -80,6 +80,7 @@
 
 #include "FPExp.hpp" 
 #include "FPLog.hpp"
+#include "FPPow.hpp"
 
 #include "InputIEEE.hpp"
 #include "OutputIEEE.hpp"
@@ -1295,6 +1296,26 @@ bool parseCommandLine(int argc, char* argv[]){
 			int inTableSize=atoi(argv[i++]);
 			cerr << "> FPLog: wE=" << wE << " wF=" << wF << endl;
 			op = new FPLog(target, wE, wF, inTableSize);
+			addOperator(op);
+		}
+
+
+		else if (opname == "FPPow")
+		{
+			int nargs = 7;
+			if (i+nargs > argc)
+				usage(argv[0]); // and exit 
+
+			//int logTableSize, int expTableSize, int expDegree, int expG, int logG
+			int wE = checkStrictyPositive(argv[i++], argv[0]);
+			int wF = checkStrictyPositive(argv[i++], argv[0]);
+			int logTableSize=atoi(argv[i++]);
+			int expTableSize=checkStrictyPositive(argv[i++], argv[0]);
+			int expDegree=checkStrictyPositive(argv[i++], argv[0]);
+			int expG=checkStrictyPositive(argv[i++], argv[0]);
+			int logG=checkStrictyPositive(argv[i++], argv[0]);
+			cerr << "> FPPow: wE=" << wE << " wF=" << wF << endl;
+			op = new FPPow(target, wE, wF,logTableSize, expTableSize, expDegree,  expG, logG );
 			addOperator(op);
 		}
 

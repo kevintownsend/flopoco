@@ -190,20 +190,21 @@ ADD_EXECUTABLE(flopoco
  src/FPNumber
  src/IEEENumber
  
- src/fpexponential/math_lib
- src/fpexponential/signal
- src/fpexponential/fragment
- src/fpexponential/stdfragment
- src/fpexponential/logfragment
- src/fpexponential/gen_table
- src/fpexponential/explore
+# src/fpexponential/math_lib
+# src/fpexponential/signal
+# src/fpexponential/fragment
+# src/fpexponential/stdfragment
+# src/fpexponential/logfragment
+# src/fpexponential/gen_table
+# src/fpexponential/explore
  src/FPExp
  
  src/fplogarithm/FirstInvTable
  src/fplogarithm/FirstLogTable
  src/fplogarithm/OtherLogTable
  src/FPLog
-# src/FPPow
+ src/FPPow
+
 
  src/InputIEEE
  src/OutputIEEE
@@ -274,20 +275,21 @@ ADD_EXECUTABLE(flopoco
  src/FPNumber
  src/IEEENumber
 
- src/fpexponential/math_lib
- src/fpexponential/signal
- src/fpexponential/fragment
- src/fpexponential/stdfragment
- src/fpexponential/logfragment
- src/fpexponential/gen_table
- src/fpexponential/explore
- src/FPExp 
+# src/fpexponential/math_lib
+# src/fpexponential/signal
+# src/fpexponential/fragment
+# src/fpexponential/stdfragment
+# src/fpexponential/logfragment
+# src/fpexponential/gen_table
+# src/fpexponential/explore
 
  src/fplogarithm/FirstInvTable
  src/fplogarithm/FirstLogTable
  src/fplogarithm/OtherLogTable
  src/FPLog
- #src/FPPow
+
+ src/FPExp 
+ src/FPPow
 
  src/InputIEEE
  src/OutputIEEE
