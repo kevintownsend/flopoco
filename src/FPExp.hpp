@@ -25,7 +25,7 @@ namespace flopoco{
 
 			magicExpTable(Target* target) :
 
-			DualTable(target, 9, 36, 0, 511) {
+				DualTable(target, 9, 36, 0, 511) {
 				ostringstream name; 
 				srcFileName="FPExp::MagicSPExpTable";
 				name <<"MagicSPExpTable";
@@ -64,7 +64,7 @@ namespace flopoco{
 				//now scale so that first bit 
 				mpfr_set_d(one, 1.0, GMP_RNDN);
 				mpfr_mul_2si(one, one, 26, GMP_RNDN); //  2^-26
- 				mpfr_init2(yl, 9); 
+				mpfr_init2(yl, 9); 
 				mpfr_mul(yl, y, one, GMP_RNDN); // y scaled up to  [0..511] (actually [0..258])
 				mpfr_get_z(l.get_mpz_t(), yl,  GMP_RNDN);
 
@@ -157,7 +157,7 @@ namespace flopoco{
 				// to send it to weight wOut-1 we need to multiply by 2^(2k + wOut-1)  
 				mpfr_set_d(one, 1.0, GMP_RNDN);
 				mpfr_mul_2si(one, one, 2*k+wOut-1, GMP_RNDN); // 
- 				mpfr_init2(yl, wOut); 
+				mpfr_init2(yl, wOut); 
 				mpfr_mul(yl, y, one, GMP_RNDN); // y scaled up)
 				mpfr_get_z(l.get_mpz_t(), yl,  GMP_RNDN);
 
@@ -173,18 +173,18 @@ namespace flopoco{
 			};
 		};
 
-	  /** The constructor that tries to automate the choice of optimal parameters*/
-	  FPExp(Target* target, int wE, int wF);
-	  /** The constructor where we specify k (input size of the first table) and d (the polynomial degree)*/
-	  FPExp(Target* target, int wE, int wF, int k, int d);
-	  ~FPExp();
+		/** The constructor that tries to automate the choice of optimal parameters*/
+		FPExp(Target* target, int wE, int wF);
+		/** The constructor where we specify k (input size of the first table) and d (the polynomial degree)*/
+		FPExp(Target* target, int wE, int wF, int k, int d);
+		~FPExp();
 		
 		// Overloading the virtual functions of Operator
 		// void outputVHDL(std::ostream& o, std::string name);
 		
-	  void emulate(TestCase * tc);
-	  void buildStandardTestCases(TestCaseList* tcl);
-	  TestCase* buildRandomTestCase(int i);
+		void emulate(TestCase * tc);
+		void buildStandardTestCases(TestCaseList* tcl);
+		TestCase* buildRandomTestCase(int i);
 
 	private:
 		int wE, wF;
