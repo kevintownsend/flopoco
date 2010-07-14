@@ -18,8 +18,90 @@ using namespace std;
 
 // TODO fix-point KCM by a real constant
 
+#define LARGE_PREC 1000 // 1000 bits should be enough for everybody
+
 namespace flopoco{
 	extern vector<Operator *> oplist;
+
+
+	mpz_class FPExp::magicTable::function(int x){
+				mpz_class h, l;
+				mpfr_t a, yh,yl, one;
+
+				// convert x to 2's compliment
+				int xs=x;
+				if(xs>>(wIn-1))
+					xs-=(1<<wIn);
+
+				mpfr_init2(a, wIn);
+				mpfr_init2(one, 16);
+				mpfr_set_d(one, 1.0, GMP_RNDN);
+				mpfr_init2(yh, LARGE_PREC); 
+				mpfr_init2(yl, LARGE_PREC); 
+
+				mpfr_set_si(a, xs, GMP_RNDN);
+				mpfr_div_2si(a, a, wIn, GMP_RNDN); // now a in [-1/2, 1/2[
+				mpfr_exp(yh, a, GMP_RNDN); // e^x in [0.6,1.7[
+
+				mpfr_mul_2si(yh, yh, 26, GMP_RNDN);
+				mpfr_get_z(h.get_mpz_t(), yh,  GMP_RNDN);  // Here is the rounding! Should be a 27-bit number
+
+				mpfr_set_ui(a, x, GMP_RNDN);
+				mpfr_div_2si(a, a, 2*wIn, GMP_RNDN); // now a in [0,1[. 2^-9
+
+				mpfr_exp(yl, a, GMP_RNDN); // e^(2^-9 x)
+				mpfr_sub(yl, yl, a, GMP_RNDN); // e^(2^-9 x) -x 
+
+				mpfr_sub(yl, yl, one, GMP_RNDN); // e^(2^-9 x) -x -1
+
+				//now scale 
+				mpfr_mul_2si(yl, yl, 26, GMP_RNDN); //  * 2^-26:  y scaled up to  [0..511] (actually [0..258])
+				mpfr_get_z(l.get_mpz_t(), yl,  GMP_RNDN);
+
+				// debug
+				if((h>=(1<<27)) || l>=512 || h<0 || l<0)
+					REPORT(0, "Ouch!!!!!" <<"x=" << x << " " << xs << "    " << h << " " << l );
+
+				//cout << x << "\t" << h << "\t" << l <<endl;
+				mpfr_clears(yh, yl, a, one, NULL);
+						
+				return l + (h<<9);
+			};
+
+
+
+
+
+			mpz_class FPExp::firstExpTable::function(int x){
+				mpz_class h;
+				mpfr_t a, y;
+
+				// convert x to 2's compliment
+				int xs=x;
+				if(xs>>(wIn-1))
+					xs-=(1<<wIn);
+
+				mpfr_init2(a, wIn);
+				mpfr_set_si(a, xs, GMP_RNDN);
+				mpfr_div_2si(a, a, wIn, GMP_RNDN); // now a in [-1/2, 1/2[
+				mpfr_init2(y, LARGE_PREC); 
+				mpfr_exp(y, a, GMP_RNDN); // in [0.6, 1.7], MSB is 1
+
+				mpfr_mul_2si(y, y, wOut-1, GMP_RNDN);
+				mpfr_get_z(h.get_mpz_t(), y,  GMP_RNDN);  // here the rounding takes place
+
+				// debug
+				if((h>=(mpz_class(1)<<wOut)) || h<0)
+					REPORT(0, "Ouch!!!!!" << h);
+
+				//cout << x << "\t" << h << "\t" << l <<endl;
+				mpfr_clears(y, a, NULL);
+						
+				return h;
+			};
+
+
+
 
 
 	FPExp::FPExp(Target* target, int wE_, int wF_, int k_, int d_, int guardBits, bool fullInput)
@@ -52,7 +134,7 @@ namespace flopoco{
 	
 		int wFIn; // The actual size of the input 
 		if(fullInput) 
-			wFIn=wF+wE+1;
+			wFIn=wF+wE;
 		else 
 			wFIn=wF;
 
@@ -122,11 +204,11 @@ namespace flopoco{
  
 		// As we don't have a signed shifter, shift first, complement next. TODO? replace with a signed shifter
 		vhdl << tab << "--  mantissa with implicit bit" << endl;
-		vhdl << tab  << declare("mXu", wF+1) << " <= \"1\" & Xfrac;" << endl;
+		vhdl << tab  << declare("mXu", wFIn+1) << " <= \"1\" & Xfrac;" << endl;
 
 		// left shift
 		int maxshift=wE-1+ wF+g; // maxX < 2^(wE-1); 
-		Shifter* lshift = new Shifter(target, wF+1, maxshift , Shifter::Left);   
+		Shifter* lshift = new Shifter(target, wFIn+1, maxshift , Shifter::Left);   
 		oplist.push_back(lshift);
 		int shiftInSize = lshift->getShiftInWidth();
 		vhdl << tab  << declare("shiftValIn", shiftInSize) << " <= shiftVal" << range(shiftInSize-1, 0) << ";" << endl;
@@ -140,8 +222,7 @@ namespace flopoco{
 
 		vhdl << tab  << "-- Partial overflow/underflow detection" << endl;
 		vhdl << tab  << declare("oufl0") << " <= not shiftVal(wE+1) when shiftVal(wE downto 0) >= conv_std_logic_vector(" << maxshift << ", wE+1) else '0';" << endl;
-
-		vhdl << tab << declare("fixX", sizeXfix) << " <= " << "'0' & fixX0" << range(wE-1 + wF+g + wF+1 -1, wF) << ";" << endl;
+		vhdl << tab << declare("fixX", sizeXfix) << " <= " << "'0' & fixX0" << range(wE-1 + wF+g + wFIn+1 -1, wFIn) << ";" << endl;
 	
 		vhdl << tab << "-- two's compliment version mantissa" << endl;
 		vhdl << tab << declare("addOp0",sizeXfix) << " <= (fixX xor "<<rangeAssign(sizeXfix-1,0,"XSign")<<") and "<<rangeAssign(sizeXfix-1,0,"not(expIs1)")<<";"<<endl;
@@ -271,21 +352,29 @@ namespace flopoco{
 		vhdl << tab << declare("Addr1", k) << " <= Y" << range(sizeY-1, sizeY-k) << ";\n";
 		vhdl << tab << declare("Z", sizeZ) << " <= Y" << range(sizeZ-1, 0) << ";\n";
 
- 
-		if(0 && wF==23) {
-			//--------------------------------Special case for single precision-----------------
-			// TODO and smaller
-			// For g=3 we enter with Y on 26 bits. Better first pad it
-			vhdl << tab << declare("Y0", 27) << " <= Y & '0';\n";
-			sizeY=27;  // (23+3+1) TODO this is a difference to std case
-			k=9;
-			int sizeZ=18; // should be wF+g-k; 
-			// CHECK k+sizeZ == sizeY
+ #ifdef HAVE_SOLLYA
+		vhdl << tab << declare("Zhigh", sizeZhigh) << " <= Z" << range(sizeZ-1, sizeZ-sizeZhigh) << ";\n";
+		
+		if(wF+g<=26) { // Magic exp table works up to single precision
+			
+#if 0 //// stupid ISE not able to pack both tables in a single dual-port one
+			LowerExpTable* lowertable;
+			lowertable = new LowerExpTable(target, k, sizeZhigh, wF+g); // last parameter is -LSB of the result
+			oplist.push_back(lowertable);
+			outPortMap(lowertable, "Y", "expZmZm1_0");
+			inPortMap(lowertable, "X", "Zhigh");
+			vhdl << instance(lowertable, "expZmZm1_table");
+#else
 
+			//The following is really designed for k=9
+			if(k!=9){
+				REPORT(0, "k!=9, setting it to 9 to use the magic exp dual table")
+					k=9;	
+			}
 
 			vhdl << tab << declare("Addr2", k) << " <= Z" << range(sizeZ-1, sizeZ-k) << ";\n";
-			magicExpTable* table;
-			table = new magicExpTable(target);
+			magicTable* table;
+			table = new magicTable(target);
 			oplist.push_back(table);
 			outPortMap(table, "Y2", "lowerTerm0");
 			inPortMap(table, "X2", "Addr2");
@@ -293,189 +382,132 @@ namespace flopoco{
 			inPortMap(table, "X1", "Addr1");
 			vhdl << instance(table, "table");
 
-			vhdl << tab << declare("expA", 28) << " <=  expA0" << range(35, 8) << ";" << endl;
+			vhdl << tab << declare("expA", 27) << " <=  expA0" << range(35, 9) << ";" << endl;
+			vhdl << tab << declare("expZmZm1_0", 9) << " <= lowerTerm0" << range(8, 0) << ";" << endl;
 
-			syncCycleFromSignal("expA");
-			if((wE+wF)*target->normalizedFrequency() > 8)
-				nextCycle();
-			if((wE+wF)*target->normalizedFrequency() > 16)
-				nextCycle(); // To get high-speed BRam speed
-		
-			vhdl << tab << "-- Computing Z + (exp(z)-1-Z)" << endl;
-			vhdl << tab << declare("lowerTerm", k) << " <= lowerTerm0" << range(k-1, 0) << ";" << endl;
-			vhdl << tab << declare("expZminus1", sizeZ+1) << " <= ('0' & Z) + (" << rangeAssign(sizeZ, sizeZ-k, "'0'") << " & lowerTerm) ;" << endl;
-			// TODO This is nonsense. No need to store the extra accuracy then.
-			vhdl << tab << "-- Magical rounding-by-truncation to 17 bits, thanks to an half-ulp stored in the table" << endl;
-			vhdl << tab << declare("expZminus1rounded", 17) << " <= expZminus1" << range(sizeZ, 2) << ";" << endl;
 
-			vhdl << tab << declare("expAtruncated", 17) << " <= expA" << range(27, 27-16) << ";" << endl;
+#endif
+		}
+		else { // use a polynomial evaluator
+			firstExpTable* table;
+			table = new firstExpTable(target, k, sizeExpA); // e^A-1 has MSB weight 1
+			oplist.push_back(table);
+			outPortMap(table, "Y", "expA");
+			inPortMap(table, "X", "Addr1");
+			vhdl << instance(table, "table");
 
-			if((wE+wF)*target->normalizedFrequency() > 4)
-				nextCycle();
-
-			vhdl << tab << declare("lowerProduct", 34) << " <= expAtruncated * expZminus1rounded;" << endl;
-			if((wE+wF)*target->normalizedFrequency() > 14)
-				nextCycle();
-
-			vhdl << tab << "-- Final addition -- the product ranges on bit weights -7 to -40" << endl;
-			vhdl << tab << declare("expY", 28) << " <= expA + (" << rangeAssign(27, 27-7, "'0'") << " & lowerProduct" << range(33, 33-19) << ");" << endl;
-
-			rWidth=28; // for the rounding
+			REPORT(LIST, "Generating the polynomial approximation, this may take some time");
+			// We want the LSB value to be  2^(wF+g)
+			FunctionEvaluator *fe;
+			ostringstream function;
+			function << "exp(x*1b-" << k << ")-x*1b-" << k << "-1, 0,1,1";
+			fe = new FunctionEvaluator(target, function.str(), sizeZhigh, wF+g, d);
+			oplist.push_back(fe);
+			inPortMap(fe, "X", "Zhigh");
+			outPortMap(fe, "R", "expZmZm1_0");
+			vhdl << instance(fe, "poly");
 		}
 
+		syncCycleFromSignal("expA");
 
-		// Generic polynomial evaluation, up to double-precision
-		else{
-#ifdef HAVE_SOLLYA
+		syncCycleFromSignal("expZmZm1_0");
 
-
-			vhdl << tab << declare("Zhigh", sizeZhigh) << " <= Z" << range(sizeZ-1, sizeZ-sizeZhigh) << ";\n";
-
-			if(wF<=23) { // Magic exp table works up to single precision
-
-#if 0 //// stupid ISE not able to pack both tables in a single dual-port one
-				LowerExpTable* lowertable;
-				lowertable = new LowerExpTable(target, k, sizeZhigh, wF+g); // last parameter is -LSB of the result
-				oplist.push_back(lowertable);
-				outPortMap(lowertable, "Y", "expZmZm1_0");
-				inPortMap(lowertable, "X", "Zhigh");
-				vhdl << instance(lowertable, "expZmZm1_table");
-#else
-				vhdl << tab << declare("Addr2", k) << " <= Z" << range(sizeZ-1, sizeZ-k) << ";\n";
-				magicExpTable* table;
-				table = new magicExpTable(target);
-				oplist.push_back(table);
-				outPortMap(table, "Y2", "lowerTerm0");
-				inPortMap(table, "X2", "Addr2");
-				outPortMap(table, "Y1", "expA0");
-				inPortMap(table, "X1", "Addr1");
-				vhdl << instance(table, "table");
-
-				vhdl << tab << declare("expA", 27) << " <=  expA0" << range(35, 9) << ";" << endl;
-				vhdl << tab << declare("expZmZm1_0", k) << " <= lowerTerm0" << range(k-1, 0) << ";" << endl;
-
-
-#endif
-			}
-			else { // use a polynomial evaluator
-				firstExpTable* table;
-				table = new firstExpTable(target, k, sizeExpA); // e^A-1 has MSB weight 1
-				oplist.push_back(table);
-				outPortMap(table, "Y", "expA");
-				inPortMap(table, "X", "Addr1");
-				vhdl << instance(table, "table");
-
-				REPORT(LIST, "Generating the polynomial approximation, this may take some time");
-				// We want the LSB value to be  2^(wF+g)
-				FunctionEvaluator *fe;
-				ostringstream function;
-				function << "exp(x*1b-" << k << ")-x*1b-" << k << "-1, 0,1,1";
-				fe = new FunctionEvaluator(target, function.str(), sizeZhigh, wF+g, d);
-				oplist.push_back(fe);
-				inPortMap(fe, "X", "Zhigh");
-				outPortMap(fe, "R", "expZmZm1_0");
-				vhdl << instance(fe, "poly");
-			}
-
-			syncCycleFromSignal("expA");
-
-			syncCycleFromSignal("expZmZm1_0");
-
-			if((wE+wF)*target->normalizedFrequency() > 8)
-				nextCycle();
-			if((wE+wF)*target->normalizedFrequency() > 16)
-				nextCycle(); // To get high-speed BRam speed
+		if((wE+wF)*target->normalizedFrequency() > 8)
+			nextCycle();
+		if((wE+wF)*target->normalizedFrequency() > 16)
+			nextCycle(); // To get high-speed BRam speed
 
 
 		
 
-			// here we have in expZmZm1 e^Z-Z-1
+		// here we have in expZmZm1 e^Z-Z-1
 
-			// Alignment of expZmZm10:  MSB has weight -2*k, LSB has weight -(wF+g).
-			// FunctionEvaluator, in its ignorance, may have added MSB bits 
-			//		vhdl << tab << declare("ShouldBeZero2", (rWidth- sizeZxpZmZm1)) << " <= expZmZm1_0" << range(rWidth-1, sizeZxpZmZm1)  << "; -- for debug to check it is always 0" <<endl;
-			vhdl << tab << declare("expZmZm1", sizeZxpZmZm1) << " <= expZmZm1_0" << range(sizeZxpZmZm1-1, 0)  << "; " <<endl;
+		// Alignment of expZmZm10:  MSB has weight -2*k, LSB has weight -(wF+g).
+		// FunctionEvaluator, in its ignorance, may have added MSB bits 
+		//		vhdl << tab << declare("ShouldBeZero2", (rWidth- sizeZxpZmZm1)) << " <= expZmZm1_0" << range(rWidth-1, sizeZxpZmZm1)  << "; -- for debug to check it is always 0" <<endl;
+		vhdl << tab << declare("expZmZm1", sizeZxpZmZm1) << " <= expZmZm1_0" << range(sizeZxpZmZm1-1, 0)  << "; " <<endl;
 		
-			vhdl << tab << "-- Computing Z + (exp(Z)-1-Z)" << endl;
-			vhdl << tab << declare("expZminus1", sizeExpZm1) << " <= ('0' & Z) + (" << rangeAssign(sizeZ, sizeZ-k+1, "'0'") << " & expZmZm1) ;" << endl;
+		vhdl << tab << "-- Computing Z + (exp(Z)-1-Z)" << endl;
+		vhdl << tab << declare("expZminus1", sizeExpZm1) << " <= ('0' & Z) + (" << rangeAssign(sizeZ, sizeZ-k+1, "'0'") << " & expZmZm1) ;" << endl;
 
-			vhdl << tab << "-- Truncating expA to the same accuracy as expZminus1" << endl;
-			vhdl << tab << declare("expArounded0", sizeMultIn+1) << " <= (expA" << range(sizeExpA-1, sizeExpA-sizeMultIn-1) << ") + '1';  -- rounding" << endl;
-			vhdl << tab << declare("expArounded", sizeMultIn) << " <= expArounded0" << range(sizeMultIn, 1) << ";" << endl;
-			//		vhdl << tab << declare("expZm1truncated", sizeMultIn) << " <= expZminus1" << range(sizeExpZm1-1, sizeExpZm1-sizeMultIn) << ";" << endl;
+		vhdl << tab << "-- Truncating expA to the same accuracy as expZminus1" << endl;
+		vhdl << tab << declare("expArounded0", sizeMultIn+1) << " <= (expA" << range(sizeExpA-1, sizeExpA-sizeMultIn-1) << ") + '1';  -- rounding" << endl;
+		vhdl << tab << declare("expArounded", sizeMultIn) << " <= expArounded0" << range(sizeMultIn, 1) << ";" << endl;
+		//		vhdl << tab << declare("expZm1truncated", sizeMultIn) << " <= expZminus1" << range(sizeExpZm1-1, sizeExpZm1-sizeMultIn) << ";" << endl;
 
-			//		if((wE+wF)*target->normalizedFrequency() > 4)
-			nextCycle(); //in any case this will be absorbed by the DSP blocks
+		//		if((wE+wF)*target->normalizedFrequency() > 4)
+		nextCycle(); //in any case this will be absorbed by the DSP blocks
 
-			IntMultiplier *lowProd = new IntMultiplier(target, sizeMultIn, sizeExpZm1);
-			oplist.push_back(lowProd);
+		IntMultiplier *lowProd = new IntMultiplier(target, sizeMultIn, sizeExpZm1);
+		oplist.push_back(lowProd);
 		
-			inPortMap(lowProd, "X", "expArounded");
-			inPortMap(lowProd, "Y", "expZminus1");
-			outPortMap(lowProd, "R", "lowerProduct");
+		inPortMap(lowProd, "X", "expArounded");
+		inPortMap(lowProd, "Y", "expZminus1");
+		outPortMap(lowProd, "R", "lowerProduct");
 		
-			vhdl << instance(lowProd, "TheLowerProduct")<<endl;
+		vhdl << instance(lowProd, "TheLowerProduct")<<endl;
 		 
-			//		vhdl << tab << declare("lowerProduct", 2*sizeExpZm1) << " <= expAtruncated * expZminus1;" << endl;
+		//		vhdl << tab << declare("lowerProduct", 2*sizeExpZm1) << " <= expAtruncated * expZminus1;" << endl;
 
-			syncCycleFromSignal("lowerProduct");
+		syncCycleFromSignal("lowerProduct");
 
-			//		if((wE+wF)*target->normalizedFrequency() > 14) //TODO will need to buffer out before addition
-			//			nextCycle();
+		//		if((wE+wF)*target->normalizedFrequency() > 14) //TODO will need to buffer out before addition
+		//			nextCycle();
 
-			vhdl << tab << "-- Final addition -- the product MSB bit weight is -k+2 = "<< -k+2 << endl;
+		vhdl << tab << "-- Final addition -- the product MSB bit weight is -k+2 = "<< -k+2 << endl;
 		
-			map<string,double> finalAdderInDelayMap;
-			finalAdderInDelayMap["Y"] = (lowProd->getOutDelayMap())["R"];
+		map<string,double> finalAdderInDelayMap;
+		finalAdderInDelayMap["Y"] = (lowProd->getOutDelayMap())["R"];
+
+
 #if 0 // Trying to round the product instead of truncating it		Why doesn't that work?
-			IntAdder *finalAdder = new IntAdder(target, sizeExpA+1, finalAdderInDelayMap, 2, 1, -1);
-			oplist.push_back(finalAdder);
+		IntAdder *finalAdder = new IntAdder(target, sizeExpA+1, finalAdderInDelayMap, 2, 1, -1);
+		oplist.push_back(finalAdder);
 		
-			vhdl << tab << declare("extendedLowerProduct",sizeExpA+1) << " <= (" << rangeAssign(sizeExpA-1, sizeExpA-k+1, "'0'") 
-			     << " & lowerProduct" << range(sizeMultIn+sizeExpZm1-1, sizeMultIn+sizeExpZm1 - (sizeExpA-k+1) -1) << ");" << endl;		
-			vhdl << tab << declare("extendedExpA",sizeExpA+1) << " <= expA & '1'; -- rounding bit for the product" << endl;		
+		vhdl << tab << declare("extendedLowerProduct",sizeExpA+1) << " <= (" << rangeAssign(sizeExpA-1, sizeExpA-k+1, "'0'") 
+		     << " & lowerProduct" << range(sizeMultIn+sizeExpZm1-1, sizeMultIn+sizeExpZm1 - (sizeExpA-k+1) -1) << ");" << endl;		
+		vhdl << tab << declare("extendedExpA",sizeExpA+1) << " <= expA & '1'; -- rounding bit for the product" << endl;		
 		     
 		     
-			inPortMap(finalAdder, "X", "extendedExpA");
-			inPortMap(finalAdder, "Y", "extendedLowerProduct");
-			inPortMapCst(finalAdder, "Cin", "'0'");
-			outPortMap(finalAdder, "R", "expY0");
+		inPortMap(finalAdder, "X", "extendedExpA");
+		inPortMap(finalAdder, "Y", "extendedLowerProduct");
+		inPortMapCst(finalAdder, "Cin", "'0'");
+		outPortMap(finalAdder, "R", "expY0");
 		
-			vhdl << instance(finalAdder,"TheFinalAdder") << endl;
-			syncCycleFromSignal("expY0");
-			vhdl << tab << declare("expY",sizeExpA) << " <= expY0" << range(sizeExpA, 1) << " ; -- rounding" << endl;		
+		vhdl << instance(finalAdder,"TheFinalAdder") << endl;
+		syncCycleFromSignal("expY0");
+		vhdl << tab << declare("expY",sizeExpA) << " <= expY0" << range(sizeExpA, 1) << " ; -- rounding" << endl;		
 		     		
 #else  //  truncating it		
-			IntAdder *finalAdder = new IntAdder(target, sizeExpA, finalAdderInDelayMap, 2, 1, -1);
-			oplist.push_back(finalAdder);
+		IntAdder *finalAdder = new IntAdder(target, sizeExpA, finalAdderInDelayMap, 2, 1, -1);
+		oplist.push_back(finalAdder);
 		
-			vhdl << tab << declare("extendedLowerProduct",sizeExpA) << " <= (" << rangeAssign(sizeExpA-1, sizeExpA-k+1, "'0'") 
-			     << " & lowerProduct" << range(sizeMultIn+sizeExpZm1-1, sizeMultIn+sizeExpZm1 - (sizeExpA-k+1)) << ");" << endl;		
+		vhdl << tab << declare("extendedLowerProduct",sizeExpA) << " <= (" << rangeAssign(sizeExpA-1, sizeExpA-k+1, "'0'") 
+		     << " & lowerProduct" << range(sizeMultIn+sizeExpZm1-1, sizeMultIn+sizeExpZm1 - (sizeExpA-k+1)) << ");" << endl;		
 		     		     
-			inPortMap(finalAdder, "X", "expA");
-			inPortMap(finalAdder, "Y", "extendedLowerProduct");
-			inPortMapCst(finalAdder, "Cin", "'0'");
-			outPortMap(finalAdder, "R", "expY");
+		inPortMap(finalAdder, "X", "expA");
+		inPortMap(finalAdder, "Y", "extendedLowerProduct");
+		inPortMapCst(finalAdder, "Cin", "'0'");
+		outPortMap(finalAdder, "R", "expY");
 		
-			vhdl << instance(finalAdder,"TheFinalAdder") << endl;
-			syncCycleFromSignal("expY");
+		vhdl << instance(finalAdder,"TheFinalAdder") << endl;
+		syncCycleFromSignal("expY");
 		     		
 #endif
 
-			//		nextCycle(); //thsi one should be controlled by some parameter
+		//		nextCycle(); //thsi one should be controlled by some parameter
 		
-			//		cout << ">>>>>>>>>>>>>>>>>>>>...The delay on the adder output R is" << finalAdder->getOutDelayMap()["R"] << endl;
+		//		cout << ">>>>>>>>>>>>>>>>>>>>...The delay on the adder output R is" << finalAdder->getOutDelayMap()["R"] << endl;
 			
-			//		vhdl << tab << declare("expY", sizeExpA) << " <= expA + (" << rangeAssign(sizeExpA-1, sizeExpA-k+1, "'0'") 
-			//		     << " & lowerProduct" << range(2*sizeExpZm1-1, 2*sizeExpZm1- (sizeExpA-k+1)) << ");" << endl;
+		//		vhdl << tab << declare("expY", sizeExpA) << " <= expA + (" << rangeAssign(sizeExpA-1, sizeExpA-k+1, "'0'") 
+		//		     << " & lowerProduct" << range(2*sizeExpZm1-1, 2*sizeExpZm1- (sizeExpA-k+1)) << ");" << endl;
 
-			rWidth=sizeExpA; // for the rounding
+		rWidth=sizeExpA; // for the rounding
 			       
 				       
 #else
-			throw string("FPExp requires Sollya for this precision, sorry.");
+		throw string("FPExp requires Sollya for this precision, sorry.");
 #endif
-		}
 
 
 		// The following is generic normalization/rounding code if we have an approx of exp(y) of size rwidth in expY

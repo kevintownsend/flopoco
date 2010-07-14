@@ -1274,15 +1274,17 @@ bool parseCommandLine(int argc, char* argv[]){
 
 		else if (opname == "FPExpExp")
 		{
-			int nargs = 4;
+			int nargs = 6;
 			if (i+nargs > argc)
 				usage(argv[0]); // and exit
 			int wE = checkStrictyPositive(argv[i++], argv[0]);
 			int wF = checkStrictyPositive(argv[i++], argv[0]);
-			int k = checkStrictyPositive(argv[i++], argv[0]);
-			int d = checkStrictyPositive(argv[i++], argv[0]);
+			int k=atoi(argv[i++]);
+			int d=atoi(argv[i++]);
+			int g=atoi(argv[i++]);
+			int fullInput=checkBoolean(argv[i++],  argv[0]);
 			cerr << "> FPExp: wE=" << wE << " wF=" << wF << endl;
-			op = new FPExp(target, wE, wF, k, d);
+			op = new FPExp(target, wE, wF, k, d, g, fullInput);
 			addOperator(op);
 		}
 
