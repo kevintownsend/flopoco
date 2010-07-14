@@ -173,10 +173,16 @@ namespace flopoco{
 			};
 		};
 
-		/** The constructor that tries to automate the choice of optimal parameters*/
-		FPExp(Target* target, int wE, int wF);
-		/** The constructor where we specify k (input size of the first table) and d (the polynomial degree)*/
-		FPExp(Target* target, int wE, int wF, int k, int d);
+		/** The constructor with manual control of all options
+		    * @param wE exponent size
+		    * @param wF fraction size
+		    * @param k size of the input to the first table 
+		    * @param d  degree of the polynomial approximation (if k=d=0, the constructor tries to compute sensible values)
+		    * @param guardBits number of gard bits, defaults to 3, which is enough for faithful rounding 
+		    * @param fullInput boolean, if true input mantissa is of size wE+wF+1, so that input shift doesn't padd it with 0s (useful for FPPow)
+		    */
+
+		FPExp(Target* target, int wE, int wF, int k, int d, int guardBits=3, bool fullInput=false);
 		~FPExp();
 		
 		// Overloading the virtual functions of Operator
@@ -187,11 +193,11 @@ namespace flopoco{
 		TestCase* buildRandomTestCase(int i);
 
 	private:
-		int wE, wF;
-		int k; // Size of the address bits for the first table
-		int result_length, g;
-		// Fragment *f;
-		double area, max_error;
+		int wE; /**< Exponent size */
+		int wF; /**< Fraction size */
+		int k;  /**< Size of the address bits for the first table  */
+		int d;  /**< Degree of the polynomial approximation */
+		int g;  /**< Number of guard bits */
 	};
 
 }

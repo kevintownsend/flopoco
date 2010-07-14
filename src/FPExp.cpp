@@ -21,29 +21,25 @@ using namespace std;
 namespace flopoco{
 	extern vector<Operator *> oplist;
 
-	FPExp::FPExp(Target* target, int wE, int wF) 
-		: Operator(target), wE(wE), wF(wF)
+
+	FPExp::FPExp(Target* target, int wE_, int wF_, int k_, int d_, int guardBits, bool fullInput)
+		: Operator(target), wE(wE_), wF(wF_), k(k_), d(d_), g(guardBits)
 	{
-		int k, d;
-		d=2; 
-		k=9;
-
-		// TODO! Totally random 
-		if(wF>60) {
-			d=3;
-			k=10;
+		// if automatic mode, set up the parameters
+		if(k==0 && d==0) {
+			d=2; 
+			k=9;
+			if(wF>60) {
+				d=3;
+				k=10;
+			}
+			if(wF>100) {
+				d=4;
+				k=11;
+			}
 		}
-		if(wF>100) {
-			d=4;
-			k=11;
-		}
 
-		FPExp(target, wE, wF, k, d);
-	}
 
-	FPExp::FPExp(Target* target, int wE, int wF, int k, int d)
-		: Operator(target), wE(wE), wF(wF)
-	{
 		/* Generate unique name */
 		{
 			std::ostringstream o;
@@ -54,12 +50,15 @@ namespace flopoco{
 		setCopyrightString("F. de Dinechin (2008)");
 		srcFileName="FPExp";
 	
+		int wFIn; // The actual size of the input 
+		if(fullInput) 
+			wFIn=wF+wE+1;
+		else 
+			wFIn=wF;
 
-		addFPInput("X", wE, wF);
+		addFPInput("X", wE, wFIn);
 		addFPOutput("R", wE, wF, 2);  // 2 because faithfully rounded
 
-		// TODO a bit more science here. Not sure the following code works for any other g
-		g=3; 
 
 		// The two constants
 		mpz_class mpzLog2, mpzInvLog2;
@@ -95,6 +94,7 @@ namespace flopoco{
 
 		addConstant("wE", "positive", wE);
 		addConstant("wF", "positive", wF);
+		addConstant("wFIn", "positive", wFIn);
 		addConstant("g", "positive", g);
 
 		int bias = (1<<(wE-1))-1;
@@ -106,11 +106,13 @@ namespace flopoco{
 			throw e.str();
 		}
 
+		// Here we may have a wF-bit mantissa, or a wF+wE+1-bit one
+		int sizeXfix = wE-1 + 1+wF+g +1; // +1 for the sign == wE+wF+g +1
+		vhdl << tab  << declare("Xexn", 2) << " <= X(wE+wFIn+2 downto wE+wFIn+1);" << endl;
+		vhdl << tab  << declare("XSign") << " <= X(wE+wFIn);" << endl;
+		vhdl << tab  << declare("XexpField", wE) << " <= X(wE+wFIn-1 downto wFIn);" << endl;
+		vhdl << tab  << declare("Xfrac", wFIn) << " <= X(wFIn-1 downto 0);" << endl;
 
-		vhdl << tab  << declare("Xexn", 2) << " <= X(wE+wF+2 downto wE+wF+1);" << endl;
-		vhdl << tab  << declare("XSign") << " <= X(wE+wF);" << endl;
-		vhdl << tab  << declare("XexpField", wE) << " <= X(wE+wF-1 downto wF);" << endl;
-		vhdl << tab  << declare("Xfrac", wF) << " <= X(wF-1 downto 0);" << endl;
 		int e0 = bias - (wF+g);
 		vhdl << tab  << declare("e0", wE+2) << " <= conv_std_logic_vector(" << e0 << ", wE+2);  -- bias - (wF+g)" << endl;
 		vhdl << tab  << declare("shiftVal", wE+2) << " <= (\"00\" & XexpField) - e0; -- for a left shift" << endl;
@@ -139,7 +141,6 @@ namespace flopoco{
 		vhdl << tab  << "-- Partial overflow/underflow detection" << endl;
 		vhdl << tab  << declare("oufl0") << " <= not shiftVal(wE+1) when shiftVal(wE downto 0) >= conv_std_logic_vector(" << maxshift << ", wE+1) else '0';" << endl;
 
-		int sizeXfix = wE-1 + 1+wF+g +1; // +1 for the sign == wE+wF+g +1
 		vhdl << tab << declare("fixX", sizeXfix) << " <= " << "'0' & fixX0" << range(wE-1 + wF+g + wF+1 -1, wF) << ";" << endl;
 	
 		vhdl << tab << "-- two's compliment version mantissa" << endl;
@@ -177,7 +178,6 @@ namespace flopoco{
 
 #if 1
 
-		// TODO all the following should be implemented as a single specific KCM
 		IntIntKCM *mulInvLog2 = new IntIntKCM(target, sizeFirstKCM, mpzInvLog2, true /* signed input */);
 		oplist.push_back(mulInvLog2);
 		outPortMap(mulInvLog2, "R", "xInvLog2");
@@ -187,6 +187,7 @@ namespace flopoco{
 
 
 #else
+		// TODO should work but there is a bug
 		FixRealKCM *mulInvLog2 = new  FixRealKCM(target, -2, wE+1, true  /* signed input */, -2, "1/log(2)" );
 		oplist.push_back(mulInvLog2);
 		outPortMap(mulInvLog2, "R", "xInvLog2");

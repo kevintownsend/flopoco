@@ -1267,7 +1267,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			int wE = checkStrictyPositive(argv[i++], argv[0]);
 			int wF = checkStrictyPositive(argv[i++], argv[0]);
 			cerr << "> FPExp: wE=" << wE << " wF=" << wF << endl;
-			op = new FPExp(target, wE, wF);
+			op = new FPExp(target, wE, wF, 0, 0);
 			addOperator(op);
 		}
 
