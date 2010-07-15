@@ -631,7 +631,7 @@ namespace flopoco{
 		Signal* formal;
 		Signal* s;
 		ostringstream e;
-		e << "ERROR in outPortMap(), "; // just in case
+		e << "ERROR in outPortMap() for entity " << op->getName()  << ", "; // just in case
 		// check the signals doesn't already exist
 		if(signalMap_.find(actualSignalName) !=  signalMap_.end()) {
 			e << "signal " << actualSignalName << " already exists";
@@ -673,7 +673,7 @@ namespace flopoco{
 		Signal* formal;
 		ostringstream e;
 		string name;
-		e << "ERROR in inPortMap() of " << op->getName() << ","; // just in case
+		e << "ERROR in inPortMap() for entity " << op->getName() << ","; // just in case
 	
 		if(isSequential()) {
 			Signal *s;
@@ -724,7 +724,7 @@ namespace flopoco{
 		Signal* formal;
 		ostringstream e;
 		string name;
-		e << "ERROR in inPortMap(), "; // just in case
+		e << "ERROR in inPortMap() for entity " << op->getName()  << ", "; // just in case
 
 		try {
 			formal=op->getSignalByName(componentPortName);
