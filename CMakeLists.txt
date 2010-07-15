@@ -203,7 +203,7 @@ ADD_EXECUTABLE(flopoco
  src/fplogarithm/FirstLogTable
  src/fplogarithm/OtherLogTable
  src/FPLog
-# src/FPPow
+ src/FPPow
 
 
  src/InputIEEE
@@ -289,7 +289,7 @@ ADD_EXECUTABLE(flopoco
  src/FPLog
 
  src/FPExp 
-# src/FPPow
+ src/FPPow
 
  src/InputIEEE
  src/OutputIEEE

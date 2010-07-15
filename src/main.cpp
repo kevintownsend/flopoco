@@ -80,7 +80,7 @@
 
 #include "FPExp.hpp" 
 #include "FPLog.hpp"
-//#include "FPPow.hpp"
+#include "FPPow.hpp"
 
 #include "InputIEEE.hpp"
 #include "OutputIEEE.hpp"
@@ -1301,7 +1301,6 @@ bool parseCommandLine(int argc, char* argv[]){
 			addOperator(op);
 		}
 
-#if 0
 		else if (opname == "FPPow")
 		{
 			int nargs = 7;
@@ -1320,7 +1319,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			op = new FPPow(target, wE, wF,logTableSize, expTableSize, expDegree,  expG, logG );
 			addOperator(op);
 		}
-#endif
+
 		else if (opname == "InputIEEE")
 		{
 			int nargs = 4;
