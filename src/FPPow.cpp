@@ -102,30 +102,33 @@ namespace flopoco{
 		addFPOutput("R", wE, wF, 2); // 2 because faithfully rounded
 
 		
-		vhdl << tab << declare("logIn", wF+wE+logG+2) << " <= X & " << rangeAssign(wE+logG-1, 0, "'0'") << " ;" << endl; 
+		
 
-#if 0
+		vhdl << tab << declare("logIn", 3+wF+wE+logG+wE) << " <= X & " << rangeAssign(wE+logG-1, 0, "'0'") << " ;" << endl; 
+
 		FPLog* log = new FPLog(target,  wE,  wF+wE+logG, logTableSize );
 		oplist.push_back(log);
-		outPortMap(log, "R", "lnX");
 		inPortMap(log, "X", "logIn");
+		outPortMap(log, "R", "lnX");
 		vhdl << instance(log, "log");
 
+		syncCycleFromSignal("lnX");
 
-		FPMultiplier* mult = FPMultiplier(target,   /*X:*/ wE, wF+wE+logG,   /*Y:*/ wE, wF,  /*R: */  wE,  wF+wE+expG,  0 /*no norm*/);
+		FPMultiplier* mult = new FPMultiplier(target,   /*X:*/ wE, wF+wE+logG,   /*Y:*/ wE, wF,  /*R: */  wE,  wF+wE+expG,  true /* norm*/);
+		oplist.push_back(mult);
+		inPortMap(mult, "Y", "X");
+		inPortMap(mult, "X", "lnX");
+		outPortMap(mult, "R", "P");
+		vhdl << instance(mult, "mult");
+
+		syncCycleFromSignal("P");
+
+		FPExp* exp = new FPExp(target,  wE,  wF, 0/* means default*/, 0, 4, true);
 		oplist.push_back(exp);
+		inPortMap(exp, "X", "P");
 		outPortMap(exp, "R", "powBeforeround");
-		inPortMap(exp, "X", "expIn");
 		vhdl << instance(exp, "exp");
 
-
-		FPExp* exp = new FPLog(target,  wE,  wF+wE+logG, expTableSize, expDegree);
-		oplist.push_back(exp);
-		outPortMap(exp, "R", "powBeforeround");
-		inPortMap(exp, "X", "expIn");
-		vhdl << instance(exp, "exp");
-
-#endif
 	}	
 
 	FPPow::~FPPow()
