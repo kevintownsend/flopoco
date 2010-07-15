@@ -111,6 +111,10 @@ namespace flopoco{
 		if(k==0 && d==0) {
 			d=2; 
 			k=9;
+
+			if (wF<30)
+				d=1;
+
 			if(wF>60) {
 				d=3;
 				k=10;
@@ -189,7 +193,7 @@ namespace flopoco{
 		}
 
 		// Here we may have a wF-bit mantissa, or a wF+wE+1-bit one
-		int sizeXfix = wE-1 + 1+wF+g +1; // +1 for the sign == wE+wF+g +1
+		int sizeXfix = wE+wF+g +1; // +1 for the sign
 		vhdl << tab  << declare("Xexn", 2) << " <= X(wE+wFIn+2 downto wE+wFIn+1);" << endl;
 		vhdl << tab  << declare("XSign") << " <= X(wE+wFIn);" << endl;
 		vhdl << tab  << declare("XexpField", wE) << " <= X(wE+wFIn-1 downto wFIn);" << endl;
@@ -206,6 +210,25 @@ namespace flopoco{
 		vhdl << tab << "--  mantissa with implicit bit" << endl;
 		vhdl << tab  << declare("mXu", wFIn+1) << " <= \"1\" & Xfrac;" << endl;
 
+#if 0  //  maxshift is too large, but fixing it breaks alignment
+		// left shift
+		int maxshift=wE+g-1; // maxX < 2^(wE-1); 
+		Shifter* lshift = new Shifter(target, wFIn+1, maxshift , Shifter::Left);   
+		oplist.push_back(lshift);
+		int shiftInSize = lshift->getShiftInWidth();
+		vhdl << tab  << declare("shiftValIn", shiftInSize) << " <= shiftVal" << range(shiftInSize-1, 0) << ";" << endl;
+
+		outPortMap(lshift, "R", "fixX0");
+		inPortMap(lshift, "S", "shiftValIn");
+		inPortMap(lshift, "X", "mXu");
+		vhdl << instance(lshift, "mantissa_shift");
+		syncCycleFromSignal("fixX0");
+		nextCycle();
+
+		vhdl << tab  << "-- Partial overflow/underflow detection" << endl;
+		vhdl << tab  << declare("oufl0") << " <= not shiftVal(wE+1) when shiftVal(wE downto 0) >= conv_std_logic_vector(" << maxshift << ", wE+1) else '0';" << endl;
+		vhdl << tab << declare("fixX", sizeXfix) << " <= " << "'0' & fixX0" << range(wE+g + wFIn+1 -1,  wFIn-wF) << ";" << endl;
+#else
 		// left shift
 		int maxshift=wE-1+ wF+g; // maxX < 2^(wE-1); 
 		Shifter* lshift = new Shifter(target, wFIn+1, maxshift , Shifter::Left);   
@@ -223,7 +246,10 @@ namespace flopoco{
 		vhdl << tab  << "-- Partial overflow/underflow detection" << endl;
 		vhdl << tab  << declare("oufl0") << " <= not shiftVal(wE+1) when shiftVal(wE downto 0) >= conv_std_logic_vector(" << maxshift << ", wE+1) else '0';" << endl;
 		vhdl << tab << declare("fixX", sizeXfix) << " <= " << "'0' & fixX0" << range(wE-1 + wF+g + wFIn+1 -1, wFIn) << ";" << endl;
-	
+
+#endif	
+
+
 		vhdl << tab << "-- two's compliment version mantissa" << endl;
 		vhdl << tab << declare("addOp0",sizeXfix) << " <= (fixX xor "<<rangeAssign(sizeXfix-1,0,"XSign")<<") and "<<rangeAssign(sizeXfix-1,0,"not(expIs1)")<<";"<<endl;
 		
@@ -395,7 +421,18 @@ namespace flopoco{
 			outPortMap(table, "Y", "expA");
 			inPortMap(table, "X", "Addr1");
 			vhdl << instance(table, "table");
-
+#if 0 // TODO
+			REPORT(LIST, "Generating the polynomial approximation, this may take some time");
+			// We want the LSB value to be  2^(wF+g)
+			FunctionEvaluator *fe;
+			ostringstream function;
+			function << "1b"<<2*k<<"*exp(x*1b-" << k << ")-x*1b-" << k << "-1, 0,1,1";
+			fe = new FunctionEvaluator(target, function.str(), sizeZhigh, wF+g-2*k, d);
+			oplist.push_back(fe);
+			inPortMap(fe, "X", "Zhigh");
+			outPortMap(fe, "R", "expZmZm1_0");
+			vhdl << instance(fe, "poly");
+#else
 			REPORT(LIST, "Generating the polynomial approximation, this may take some time");
 			// We want the LSB value to be  2^(wF+g)
 			FunctionEvaluator *fe;
@@ -406,6 +443,8 @@ namespace flopoco{
 			inPortMap(fe, "X", "Zhigh");
 			outPortMap(fe, "R", "expZmZm1_0");
 			vhdl << instance(fe, "poly");
+#endif
+
 		}
 
 		syncCycleFromSignal("expA");
@@ -423,7 +462,6 @@ namespace flopoco{
 		// here we have in expZmZm1 e^Z-Z-1
 
 		// Alignment of expZmZm10:  MSB has weight -2*k, LSB has weight -(wF+g).
-		// FunctionEvaluator, in its ignorance, may have added MSB bits 
 		//		vhdl << tab << declare("ShouldBeZero2", (rWidth- sizeZxpZmZm1)) << " <= expZmZm1_0" << range(rWidth-1, sizeZxpZmZm1)  << "; -- for debug to check it is always 0" <<endl;
 		vhdl << tab << declare("expZmZm1", sizeZxpZmZm1) << " <= expZmZm1_0" << range(sizeZxpZmZm1-1, 0)  << "; " <<endl;
 		
