@@ -292,7 +292,7 @@ namespace flopoco{
 			void allocateErrorVectors();
 			
 			/** hide messy vector initializations */
-			void initializeErrorVectors();
+			void allocateAndInitializeExplorationVectors();
 			
 			/** The function that does the error estimation starting from a 
 			 * set of guard bits for the coefficients and a set of truncations
@@ -302,6 +302,7 @@ namespace flopoco{
 			 * @return the maximum approximation error for this set of params
 			 */
 			mpfr_t* errorEstimator(vector<int> &yGuard, vector<int> &aGuard);
+
 			
 			
 			void hornerGuardBitProfiler();
@@ -324,8 +325,6 @@ namespace flopoco{
 			 *  size. We can use as many guard bits in order not to use extra
 			 *  multipliers 
 			 */
-			void setNumberOfPossibleValuesForEachA();
-			
 			void resetCoefficientGuardBits();
 			
 			void reinitCoefficientGuardBits();
@@ -440,9 +439,6 @@ namespace flopoco{
 				return coef_;
 			}
 			
-
-			
-			
 			int getRWidth(){
 				return wR;
 			}
@@ -453,7 +449,11 @@ namespace flopoco{
 
 		protected:
 		
-			mpfr_t* approximationError;
+			mpfr_t* approximationError; /* the error performed in the polynomial finding step */
+			mpfr_t targetError;         /* the target error for this component. In most cases
+			                               this should be equal to 1/2 ulp as the other 1/2 ulp
+			                               is lost in the final rounding */
+
 			unsigned wR;
 			int weightR;
 			

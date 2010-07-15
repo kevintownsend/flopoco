@@ -41,6 +41,11 @@ namespace flopoco{
 		setName(join("PolynomialEvaluator_d",degree_));
 
 		setApproximationError(approxError); /* set the approximation error budget we are allowed */
+
+		mpfr_init2 ( targetError, 150);
+ 		mpfr_set_si( targetError, 2, GMP_RNDN);
+		mpfr_pow_si( targetError, targetError, -targetPrec-1, GMP_RNDN); /* 1/2 ulp target error */
+
 		setPolynomialDegree(coef.size()-1);
 
 		/* both y and a[i], i in 0 ... d are described by two values: size and weight 
@@ -68,7 +73,7 @@ namespace flopoco{
 		}
 		
 		allocateErrorVectors();
-		initializeErrorVectors();
+		allocateAndInitializeExplorationVectors();
 		
 		/* needed in the approximation error computation. We do it once as 
 		this doesn't change during the iterations */
@@ -76,7 +81,6 @@ namespace flopoco{
 
 		hornerGuardBitProfiler(); // sets the min values for pi truncations
 				
-		if (1){
 		determineObjectiveStatesForTruncationsOnY();
 		setNumberOfPossibleValuesForEachY();
 		initializeExplorationVectors();
@@ -84,36 +88,41 @@ namespace flopoco{
 		mpfr_t u, *e;
 		mpfr_init2(u, 100);
 
-		int errExp;
 		/* design space exploration */				
-		if (degree_>1){
-			
-			while ((!sol) && (nextStateY())){
-				reinitCoefficientGuardBits();
-				/* run once the error estimation algo with these parameters */
-				e = errorEstimator(yGuard_, aGuard_);
-				/* test if by chance we met the error budget */
-				mpfr_add( u, *approximationError, *e, GMP_RNDN);
-				errExp = (mpfr_get_d(u, GMP_RNDZ)==0 ? 0 :mpfr_get_exp(u));
-				if ((errExp <= -targetPrec-1)){
-					/* if we do, then we set the solution true and that's it */
-					sol = true;
-					mpfr_clear(*e);
-					free(e);
-				}
-			}
-			/* at this point we have found a rough solution. We now try to find 
-			smaller values for coefficient guard bits */
-		
-			sol = false; //reinit sol;
+
+		/* try to truncate as much as possible from y using the maximum
+		useful number of guard bits */			
+		while ((!sol) && (nextStateY())){
 			reinitCoefficientGuardBits();
-			nextStateA(); //
-		
+			/* run once the error estimation algo with these parameters */
+			e = errorEstimator(yGuard_, aGuard_);
+			/* test if by chance we met the error budget */
+			/* epsilon_approx + epsilon_eval <= 1/2 ulp. the other half ulp
+			comes from the final rounding (which we incorporate in a0*/
+			mpfr_add( u, *approximationError, *e, GMP_RNDN);
+
+			if (  mpfr_cmp( u, targetError) <= 0 ){
+				REPORT(DETAILED, " Solution fund. Starting refinement");
+				/* if we do, then we set the solution true and that's it */
+				sol = true;
+				mpfr_clear(*e);
+				free(e);
+			}
+		}
+		/* at this point we have found a rough solution. We now try to find 
+		smaller values for coefficient guard bits */
+
+		if (degree_ > 1 ){
+			/* the second part of the exploration is performed only when the 
+			polynomial degree is larger than 1 */			
+			sol = false; //reinit sol;
+			reinitCoefficientGuardBits(); /* sets all guard bits to maximum -1 */
+			nextStateA(); /* this state brings them back to maximum so that the
+				             next nextStateA() gets them to 0,0,0,0 ...0 */
 			while (((!sol) && nextStateA())){
 				e = errorEstimator(yGuard_, aGuard_);
 				mpfr_add( u, *approximationError, *e, GMP_RNDN);
-				errExp = (mpfr_get_d(u, GMP_RNDZ)==0 ? 0 :mpfr_get_exp(u));
-				if (errExp <= -targetPrec-1 ){
+				if ( mpfr_cmp ( u, targetError) <= 0){ //proper verification
 					sol = true;
 					mpfr_clear(u);
 					mpfr_clear(*e);
@@ -123,28 +132,7 @@ namespace flopoco{
 					free(e);
 				}
 			}
-		
-		/* at this pont we have a fine grain version of the solution */					
-
-		}else{
-			/* a 1st degree polynomial a1y+a0 doesn't need any guard bit exploration
-			 for the coefficients */
-			sol = false;
-			while (!sol){
-				while ((!sol) && (nextStateY())){
-					mpfr_t* u;
-					u = (mpfr_t*)malloc(sizeof(mpfr_t));
-					mpfr_init2(*u, 100);
-					mpfr_add( *u, *approximationError, *errorEstimator(yGuard_, aGuard_), GMP_RNDN);
-					REPORT(DEBUG, " err = " << mpfr_get_exp(*u));
-					int errExp = (mpfr_get_d(*u, GMP_RNDZ)==0 ? 0 :mpfr_get_exp(*u));
-					if (errExp <= -targetPrec-1){
-						sol = true;
-					}
-				}	
-			}		
 		}
-	}
 
 		ostringstream s1, s2;		
 		s1 << "Guard bits for the sums: ";
@@ -246,26 +234,20 @@ namespace flopoco{
 	
 	
 	void PolynomialEvaluator::hornerGuardBitProfiler(){
-		
 		Sigma* sigma[degree_];
 		Pi*    pi   [degree_];
 		
 		sigma[0] = new Sigma( coef_[degree_]->getSize(), coef_[degree_]->getWeight() , unsigned(0) , 0);
-
 		
 		for (int i=1; i<=degree_; i++){
 			pi[i]     = new Pi    ( y_->getSize(), y_->getWeight(), sigma[i-1]->getSize(), sigma[i-1]->getWeight());
 			sigma[i]  = new Sigma ( pi[i]->getSize(), pi[i]->getWeight(), coef_[degree_-i]->getSize(), coef_[degree_-i]->getWeight());
 		}	
-
-		for (int i=0; i<=degree_; i++){
+		for (int i=0; i<=degree_; i++)
 			maxBoundA[i] = sigma[i]->getGuardBits();			
-		}	
 	}
-	
-	
-	////////////////////////////////////////////////////////////////////////////
-	////////////////////////////////////////////////////////////////////////////
+
+
 	mpfr_t* PolynomialEvaluator::errorEstimator(vector<int> &yGuard, vector<int> &aGuard){
 		ostringstream s1, s2, s3;		
 		
@@ -273,18 +255,24 @@ namespace flopoco{
 			s1 << "aG["<<j<<"]="<<aGuard[j]<<" "; 
 		for (int j=1; j<=degree_; j++){
 			s2 << "yG["<<j<<"]=" << yGuard[j] << " "; 
-			s3 << "maxY["<<j<<"]=" << maxBoundY[j] << " "; 
 		}
 
 		REPORT(DETAILED, "------------------------------------------------------------");
 		REPORT(DETAILED, s1.str());
 		REPORT(DETAILED, s2.str());
-		REPORT(DETAILED, s3.str());
-		REPORT(DETAILED, "---------- HEADER ----------");
-		
+
+		/* pre-set the magnitude of y */
+		mpfr_t *yy;
+		yy =(mpfr_t*) malloc( sizeof( mpfr_t));
+		mpfr_init2 ( *yy, 100);
+		mpfr_set_ui( *yy, 2, GMP_RNDN);
+		mpfr_pow_si( *yy, *yy, y_->getSize(), GMP_RNDN);
+		mpfr_add_si( *yy, *yy , -1, GMP_RNDN);
+		mpfr_set_exp( *yy, ( mpfr_get_d(*yy, GMP_RNDZ)!=0?mpfr_get_exp(*yy):0) + y_->getWeight() - y_->getSize());
+
+		/* pre-setting the error values for the truncations on y */		
 		vector<mpfr_t*> ykT_y; //the yk tild. The max absolute value of ykT
 		ykT_y.push_back( NULL );
-
 		for (uint32_t i=1; i<= unsigned(degree_); i++){
 			mpfr_t *cykT;
 			cykT = (mpfr_t*) malloc(sizeof(mpfr_t));
@@ -297,40 +285,32 @@ namespace flopoco{
 			ykT_y.push_back(cykT);
 		}
 
-		for (uint32_t i=1; i<= unsigned(degree_); i++)
-			REPORT(DETAILED, "degree of |y"<<i<<"T - y|="<< (mpfr_get_d(*ykT_y[i],GMP_RNDN)!=0?mpfr_get_exp(*ykT_y[i]):0));
-
+		/* pre-setting the error values for the truncations on pi' */		
 		vector<mpfr_t*> pikPT_pikP; //the pi k prime tild - p k prime ( trunc error)
 		pikPT_pikP.push_back(NULL);
 		for (uint32_t i=1; i< unsigned(degree_); i++){ //not needed of n
 			mpfr_t *cpikPT_pikP;
 			cpikPT_pikP = (mpfr_t*) malloc(sizeof(mpfr_t));
 			mpfr_init2(*cpikPT_pikP, 100);
-			
 			mpfr_set_ui(*cpikPT_pikP, 2, GMP_RNDN);
 			mpfr_pow_si(*cpikPT_pikP, *cpikPT_pikP, coef_[degree_-i]->getWeight()-(signed(coef_[degree_-i]->getSize())+aGuard[degree_-i]), GMP_RNDN); 
 			pikPT_pikP.push_back(cpikPT_pikP);
 		}
-		pikPT_pikP.push_back(NULL);
-		
-		for (uint32_t i=1; i< unsigned(degree_); i++)
-			REPORT(DETAILED, "|pi"<<i<<"TP - pi"<<i<<"T|="<< (mpfr_get_d(*pikPT_pikP[i],GMP_RNDN)!=0? mpfr_get_exp(*pikPT_pikP[i]):0));
-		
-		
+		pikPT_pikP.push_back(NULL); /* don't do truncation on last addition operand */
+
+		/* pre-set the first value from sigmakP-sigmak, being 0 */
 		vector<mpfr_t*> sigmakP_sigmak;
-		//initialize sigma0P_sigma0
-		mpfr_t *sigmanP_sigman;
-		sigmanP_sigman =(mpfr_t*) malloc( sizeof( mpfr_t));
+		mpfr_t *sigmanP_sigman = (mpfr_t*) malloc( sizeof( mpfr_t));
 		mpfr_init2 ( *sigmanP_sigman, 100);
 		mpfr_set_ui( *sigmanP_sigman, 0, GMP_RNDN);
 		sigmakP_sigmak.push_back(sigmanP_sigman);	//sigmakP_sigmak[0]
 
 		vector<mpfr_t*> pikP_pik;
 		vector<mpfr_t*> sigmakP;
-
 		vector<mpfr_t*> a;
 
 		mpfr_t *ak;
+		/* pre-set the magnitudes of the coefficients */
 		for (uint32_t i=0; i<=unsigned(degree_);i++){
 			ak =(mpfr_t*) malloc( sizeof( mpfr_t));
 			mpfr_init2 ( *ak, 100);
@@ -341,20 +321,8 @@ namespace flopoco{
 			a.push_back(ak);
 		}
 
-		for (uint32_t i=0; i< a.size(); i++)
-			REPORT(DETAILED, "weight of a"<<i<<"="<< mpfr_get_exp(*a[i]));
-		
+		/* the magnitude of the sigmaP[0] is the magnitude of a[d] */		
 		sigmakP.push_back(a[degree_]);
-
-		mpfr_t *yy;
-		yy =(mpfr_t*) malloc( sizeof( mpfr_t));
-		mpfr_init2 ( *yy, 100);
-		mpfr_set_ui( *yy, 2, GMP_RNDN);
-		mpfr_pow_si( *yy, *yy, y_->getSize(), GMP_RNDN);
-		mpfr_add_si( *yy, *yy , -1, GMP_RNDN);
-		mpfr_set_exp( *yy, ( mpfr_get_d(*yy, GMP_RNDZ)!=0?mpfr_get_exp(*yy):0) + y_->getWeight() - y_->getSize());
-
-		REPORT(DETAILED, "weight of y="<< mpfr_get_exp(*yy));
 
 		vector<mpfr_t*> pikPT;
 
@@ -364,52 +332,31 @@ namespace flopoco{
 		pikP_pik.push_back(NULL);
 		pikPT.push_back(NULL);
 		
-		REPORT(DETAILED, "----------   END  ----------");
 		for (uint32_t i=1; i<=unsigned(degree_); i++){
-			mpfr_t *t; //the pi
+			
+			/* (yT-y)*sigmak-1P */
+			mpfr_t *t,*t2; 
 			t = (mpfr_t *) malloc( sizeof( mpfr_t ));			
 			mpfr_init2( *t, 100);
 			mpfr_mul ( *t, *ykT_y[i], *sigmakP[i-1], GMP_RNDN);
 
-			REPORT(DETAILED, "|(y"<<i<<"T - y)*sigma"<<i-1<<"P| weight=" << (mpfr_get_d(*t,GMP_RNDN)!=0?mpfr_get_exp(*t):0));
-
-			pikPWeight[i]  = y_->getWeight() + sigmakPWeight[i-1]; 
-			pikPSize[i]   = (y_->getSize()+yGuard[i]) + sigmakPSize[i-1];
-
-			mpfr_t *t2;
+			/* y(sigmak-1P-sigmak-1) */
 			t2 = (mpfr_t *) malloc (sizeof (mpfr_t));
 			mpfr_init2( *t2, 100);
 			mpfr_mul ( *t2 , *yy , *sigmakP_sigmak[i-1], GMP_RNDN);
-	
-			REPORT(DETAILED, "|y*(sigma"<<i-1<<"P - sigma"<<i-1<<")| weight=" <<  (mpfr_get_d(*t2,GMP_RNDN)!=0?mpfr_get_exp(*t2):0));
-			
-			mpfr_add (*t, *t , *t2, GMP_RNDN);
+			mpfr_add ( *t, *t , *t2, GMP_RNDN);
+
+			/* pikP-piK = (yT-y)*sigmak-1P + y(sigmak-1P-sigmak-1) */
 			pikP_pik.push_back(t);
 			mpfr_clear(*t2);
 			free(t2);
 
-			REPORT( DETAILED, "|pi"<<i<<"P - pi"<<i<<"| weight=" <<  (mpfr_get_d(*pikP_pik[i],GMP_RNDN)!=0?mpfr_get_exp(*pikP_pik[i]):0)); 
-
-			
+			/* sigma computation: sigmakP - sigmaK = (pikPT - pikP) + (pikP - pik) */
+			pikPWeight[i]  = y_->getWeight() + sigmakPWeight[i-1]; 
+			pikPSize[i]    = (y_->getSize()+yGuard[i]) + sigmakPSize[i-1];
+		
 			pikPTWeight[i] =  y_->getWeight() + sigmakPWeight[i-1]; 
-			pikPTSize[i] =    y_->getWeight() + sigmakPWeight[i-1]  + (coef_[degree_-i]->getSize()+aGuard[i]-coef_[degree_-i]->getWeight());
-//			cerr << " +++  pikpt"<<i<< " size="<<  pikPTSize[i] << " weight = " << pikPTWeight[i] << endl;
-	
-//			REPORT( DEBUG, " pikPTSize="<< pikPTSize[i] << " pikPTWeight[i]="<<pikPTWeight[i]);
-//			REPORT( DEBUG, "pikPTWeight[i]"<<pikPTWeight[i]<<" coef_[degree_-i]->getSize() "<< coef_[degree_-i]->getSize() << " coef_[degree_-i]->getWeight() "<<coef_[degree_-i]->getWeight() << " aGuard =" << aGuard[i] ); 
-
-			//compute value of pi k P T
-			mpfr_t *h;
-			h = (mpfr_t *) malloc( sizeof(mpfr_t));
-			mpfr_init2(*h, 100);
-			mpfr_set_ui( *h, 2, GMP_RNDN);
-			mpfr_pow_si( *h, *h, pikPTSize[i], GMP_RNDN);
-			mpfr_add_si( *h, *h , -1, GMP_RNDN);
-			mpfr_set_exp( *h, (mpfr_get_d(*h, GMP_RNDZ)!=0? mpfr_get_exp(*h):0) + pikPTWeight[i] - pikPTSize[i]);
-
-			pikPT.push_back(h);
-//			free(h);
-			////////////////////////////////////////////////////////////////////
+			pikPTSize[i]   =  y_->getWeight() + sigmakPWeight[i-1]  + (coef_[degree_-i]->getSize()+aGuard[i]-coef_[degree_-i]->getWeight());
 
 			mpfr_t *t3; //the sigma
 			if (i < unsigned(degree_)){
@@ -421,61 +368,63 @@ namespace flopoco{
 				mpfr_init2( *t3, 100);
 				mpfr_set( *t3, *pikP_pik[i], GMP_RNDN); 		   
 			}
-			
 			sigmakP_sigmak.push_back(t3);
-//			free(t3);
-
-			REPORT( DETAILED, "|sigma"<<i<<"P - sigma"<<i<<"| weight=" << (mpfr_get_d(*sigmakP_sigmak[i],GMP_RNDN)!=0?mpfr_get_exp(*sigmakP_sigmak[i]):0)); 
 
 			if (i!=unsigned(degree_)){
 				int maxMSB = max ( coef_[degree_-i]->getWeight(), pikPTWeight[i]);
 				sigmakPSize[i]   = maxMSB + 1 - (coef_[degree_-i]->getWeight() - coef_[degree_-i]->getSize() - aGuard[degree_-i]);
 				sigmakPWeight[i] = maxMSB + 1;
-			
-				REPORT( DEBUG, " sigma"<<i<<"PSize="<< sigmakPSize[i] << " sigma"<<i<<"PWeight[i]="<<sigmakPWeight[i]);
 			}else{
 				int maxMSB = max ( coef_[degree_-i]->getWeight(), pikPWeight[i]);
 				int minLSB = min ( coef_[degree_-i]->getWeight()-coef_[degree_-i]->getSize(),pikPWeight[i]-pikPSize[i]); 
 				sigmakPSize[i]   = 1 + maxMSB - minLSB + 1;//maxMSB + 1 - (coef_[degree_-i]->getWeight() - coef_[degree_-i]->getSize() - aGuard[degree_-i]);
 				sigmakPWeight[i] = 1 + maxMSB;
-			
-				REPORT( DEBUG, " sigma"<<i<<"PSize="<< sigmakPSize[i] << " sigma"<<i<<"PWeight[i]="<<sigmakPWeight[i]);
 			}
-			
-			//cerr << " +++  pikpt"<<i<< " size="<<  pikPTSize[i] << " weight = " << pikPTWeight[i] << endl;
-			
-			
+
+			/* set values for next iteration */
+			/* pikpt */
+			mpfr_t *h;
+			h = (mpfr_t *) malloc( sizeof(mpfr_t));
+			mpfr_init2(*h, 100);
+			mpfr_set_ui( *h, 2, GMP_RNDN);
+			mpfr_pow_si( *h, *h, pikPTSize[i], GMP_RNDN);
+			mpfr_add_si( *h, *h , -1, GMP_RNDN);
+			mpfr_set_exp( *h, (mpfr_get_d(*h, GMP_RNDZ)!=0? mpfr_get_exp(*h):0) + pikPTWeight[i] - pikPTSize[i]);
+			pikPT.push_back(h);
+
+			/* sigmakP = a[d-k] + pikpt */			
 			mpfr_t *r;
 			r = (mpfr_t *) malloc( sizeof(mpfr_t));
 			mpfr_init2( *r, 100);
 			mpfr_add ( *r, *pikPT[i], *a[degree_-i], GMP_RNDN);			
-
 			sigmakP.push_back(r);
-//			sigmakP[i] = r;
 			
-			REPORT( DETAILED, "|sigma"<<i<<"P| weight=" << (mpfr_get_d(*r,GMP_RNDN)!=0?mpfr_get_exp(*r):0)); 
 		}
 		
-		REPORT(DETAILED, "Error (order) for P(y)=" << mpfr_get_exp( *sigmakP_sigmak[degree_]));
+		REPORT(DETAILED, "Error (order) for P(y)=" << mpfr_get_exp(*sigmakP_sigmak[degree_]));
 		
-//		/***** Clean up *********************/
-
-		
-
-
+		/***** Clean up *********************/
 		for (uint32_t i=1; i<= unsigned(degree_); i++){
+			if (ykT_y[i]!= NULL){
+				if (*ykT_y[i] != ((mpfr_ptr)0))
+					mpfr_clear(*ykT_y[i]);
+				free( ykT_y[i] );
+			}
+			if (pikPT[i]!=NULL){
+				mpfr_clear(*pikPT[i]);
+				free(pikPT[i]);
+			}
+
 			if ( pikPT_pikP[i] != NULL){
 				if ( *pikPT_pikP[i]  != ((mpfr_ptr)0))
 					mpfr_clear(*pikPT_pikP[i]);
 				free(pikPT_pikP[i]);
 			}
-			
 			if (pikP_pik[i] != NULL){
 				mpfr_clear(*pikP_pik[i]);
 				free(pikP_pik[i]);
 			}
 		}
-		
 		for (uint32_t i=0; i<= unsigned(degree_); i++){
 			if (i < unsigned(degree_)){
 				if (sigmakP_sigmak[i] != NULL){
@@ -484,13 +433,11 @@ namespace flopoco{
 					free(sigmakP_sigmak[i]);
 				}
 			}
-		
 			if (sigmakP[i] != NULL){
 				if ( *sigmakP[i] != ((mpfr_ptr)0))
 					mpfr_clear(*sigmakP[i]);
 					free(sigmakP[i]);
 			}
-		
 			if ( i < unsigned(degree_)){
 				if (a[i] != NULL){
 					if ( (*a[i]) != NULL)
@@ -499,26 +446,11 @@ namespace flopoco{
 				}
 			}
 		}
-		
-		
-		for (uint32_t i=1; i<= unsigned(degree_); i++){
-			if (ykT_y[i]!= NULL){
-				if (*ykT_y[i] != ((mpfr_ptr)0))
-					mpfr_clear(*ykT_y[i]);
-				free( ykT_y[i] );
-			}
-			
-			if (pikPT[i]!=NULL){
-				mpfr_clear(*pikPT[i]);
-				free(pikPT[i]);
-			}
-		}
-		
 		mpfr_clear(*yy);
 		free(yy);
 			 
 		return sigmakP_sigmak[degree_];
-	} 
+	}
 
 
 	void PolynomialEvaluator::updateCoefficients(vector<FixedPointCoefficient*> coef){
@@ -538,30 +470,57 @@ namespace flopoco{
 	}
 
 
+	/* ----------------- ERROR RELATED ----------------------------------*/
+	/* ------------------------------------------------------------------*/
+	void PolynomialEvaluator::allocateErrorVectors(){
+		sigmakPSize.reserve(degree_+2);
+		pikPTSize.reserve(degree_+2);
+		pikPSize.reserve(degree_+2);
+		sigmakPWeight.reserve(degree_+2);
+		pikPTWeight.reserve(degree_+2);
+		pikPWeight.reserve(degree_+2);
+	}
 
-	void PolynomialEvaluator::initializeErrorVectors(){
-		/* Gappa Style */
-		
-		yGuard_.reserve(20);
-		aGuard_.reserve(20);
-		yState_.reserve(20);
-		maxBoundY.reserve(20);
-		maxBoundA.reserve(20);
 
-		
+	void PolynomialEvaluator::setApproximationError( mpfr_t *p){
+		approximationError = (mpfr_t*) malloc( sizeof(mpfr_t));
+		mpfr_init2(*approximationError, 1000);
+		mpfr_set( *approximationError, *p, GMP_RNDN);
+		REPORT(DETAILED, "The approximation error budget is (represetned as double):" << mpfr_get_d(*approximationError,GMP_RNDN)); 
+	}
+
+
+	void PolynomialEvaluator::setMaxYValue(YVar* y){
+		/* the abs of the maximal value of y */
+		mpfr_init2 ( maxABSy, 100);
+		mpfr_set_ui( maxABSy, 2, GMP_RNDN);
+		mpfr_pow_si( maxABSy, maxABSy, y_->getSize(), GMP_RNDN);
+		mpfr_add_si( maxABSy, maxABSy, -1, GMP_RNDN);
+		mpfr_set_exp( maxABSy, mpfr_get_exp(maxABSy)+y_->getWeight()-y_->getSize());
+		REPORT(DETAILED, "Abs max value of y is " << mpfr_get_d( maxABSy, GMP_RNDN)); 
+	}
+
+
+	/* ---------------- EXPLORATION RELATED -----------------------------*/
+	/* ------------------------------------------------------------------*/
+	void PolynomialEvaluator::allocateAndInitializeExplorationVectors(){
+		/* reserve memory */
+		yGuard_.reserve(degree_+2);
+		aGuard_.reserve(degree_+2);
+		yState_.reserve(degree_+2);
+		maxBoundY.reserve(degree_+2);
+		maxBoundA.reserve(degree_+2);
 		/*init vectors */
 		for (uint32_t i=0; i<=unsigned(degree_)+1; i++){
-			yGuard_[i]  = 0; //maxBoundY;
+			yGuard_[i]  = 0;
 			yState_[i] = 0;
 			aGuard_[i] = 0;
-			maxBoundY[i] = 0;
-			maxBoundA[i] = 0;
+			maxBoundY[i] = 0; //proper values set by setNumberOfPossibleValuesForEachY
+			maxBoundA[i] = 0; //the proper values will be set by the profiler
 		}
-		
-		maxBoundA[0] = 0; /* first coef doesn't need any guard bits */
-//		maxBoundA[degree_] = 1; /*last addition is not truncated, so no guard bits are required for a */
 	}
-	
+
+
 	void PolynomialEvaluator::resetCoefficientGuardBits(){
 		for (uint32_t i=0; i<unsigned(degree_)+1; i++)
 			aGuard_[i] = 0;
@@ -593,44 +552,12 @@ namespace flopoco{
 			yGuard_[i] = 0; //maxBoundY;
 			yState_[i] = 0;
 		}
-		
 		for (uint32_t i=0; i<unsigned(degree_)+1; i++)
 			aGuard_[i] = maxBoundA[i];
-			
 		yState_[1]=-1;	
 	}
 
-	/* ----------------- ERROR RELATED ----------------------------------*/
-	/* ------------------------------------------------------------------*/
-	void PolynomialEvaluator::allocateErrorVectors(){
-		sigmakPSize.reserve(20);
-		pikPTSize.reserve(20);
-		pikPSize.reserve(20);
-		sigmakPWeight.reserve(20);
-		pikPTWeight.reserve(20);
-		pikPWeight.reserve(20);
-	}
 
-	void PolynomialEvaluator::setApproximationError( mpfr_t *p){
-		approximationError = (mpfr_t*) malloc( sizeof(mpfr_t));
-		mpfr_init2(*approximationError, 1000);
-		mpfr_set( *approximationError, *p, GMP_RNDN);
-		REPORT(DETAILED, "The approximation error budget is (represetned as double):" << mpfr_get_d(*approximationError,GMP_RNDN)); 
-	}
-
-	void PolynomialEvaluator::setMaxYValue(YVar* y){
-		/* the abs of the maximal value of y */
-		mpfr_init2 ( maxABSy, 100);
-		mpfr_set_ui( maxABSy, 2, GMP_RNDN);
-		mpfr_pow_si( maxABSy, maxABSy, y_->getSize(), GMP_RNDN);
-		mpfr_add_si( maxABSy, maxABSy, -1, GMP_RNDN);
-		mpfr_set_exp( maxABSy, mpfr_get_exp(maxABSy)+y_->getWeight()-y_->getSize());
-		REPORT(DETAILED, "Abs max value of y is " << mpfr_get_d( maxABSy, GMP_RNDN)); 
-	}
-
-
-	/* ---------------- EXPLORATION RELATED -----------------------------*/
-	/* ------------------------------------------------------------------*/
 	void PolynomialEvaluator::determineObjectiveStatesForTruncationsOnY(){
 		int Xd, Yd;
 		target_->getDSPWidths(Xd,Yd);
@@ -658,6 +585,7 @@ namespace flopoco{
 		}
 	}
 	
+	
 	void PolynomialEvaluator::setNumberOfPossibleValuesForEachY(){
 		for (int i=1; i <= getPolynomialDegree(); i++){
 			maxBoundY[i] = objectiveStatesY.count(i);
@@ -665,18 +593,9 @@ namespace flopoco{
 		}
 	}
 
-	void PolynomialEvaluator::setNumberOfPossibleValuesForEachA(){
-		int Xd, Yd;
-		target_->getDSPWidths(Xd,Yd);
-		for (int i=1; i <= getPolynomialDegree(); i++){
-			maxBoundA[i] = max(Xd-sigmakPSize[i]%Xd, Yd - sigmakPSize[i]%Yd);
-			REPORT(DEBUG, "MaxBoundA["<<i<<"]="<<maxBoundA[i]);
-		}
-	}
 
 	/* ------------------------------ EXTRA -----------------------------*/
 	/* ------------------------------------------------------------------*/
-
 	string PolynomialEvaluator::printPolynomial( vector<FixedPointCoefficient*> coef, YVar* y, int level){
 		ostringstream horner;
 		if (level == getPolynomialDegree()){
