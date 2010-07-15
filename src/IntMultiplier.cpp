@@ -1865,9 +1865,11 @@ namespace flopoco{
 				int chunkSize_ = target->lutInputs()/2;
 				int chunksX =  int(ceil( ( double(wInX) / (double) chunkSize_) ));
 				int chunksY =  int(ceil( ( double(wInY) / (double) chunkSize_) ));
-		
-				clog << "> IntMultiplier:  X splitted in "<< chunksX << " chunks and Y in " << chunksY << " chunks; " << endl;
-				if (chunksX + chunksY > 2) { //we need more than 1 LUT
+				
+				setCriticalPath( getMaxInputDelays(inputDelays) );
+
+				REPORT(DEBUG, "X splitted in "<< chunksX << " chunks and Y in " << chunksY << " chunks; ");
+				if (chunksX + chunksY > 2) { //we do more than 1 subproduct
 					int widthX = wInX_;
 					int widthY = wInY_;	
 	
@@ -1893,6 +1895,7 @@ namespace flopoco{
 						vhdl<<tab<<declare(join("y",k),chunkSize_)<<" <= sY"<<range((k+1)*chunkSize_-1,k*chunkSize_)<<";"<<endl;
     	
 
+					manageCriticalPath( target->lutDelay() + target->lutInputs()*target->localWireDelay() );
 					//COMPUTE PARTIAL PRODUCTS
 					for (int i=0; i<chunksY; i++)
 						for (int j=0; j<chunksX; j++)
@@ -1917,17 +1920,18 @@ namespace flopoco{
 						}
 					}
 	
-					IntNAdder* add =  new IntNAdder(target, adderWidth, 2*chunksX);
+					IntCompressorTree* add =  new IntCompressorTree(target, adderWidth, 2*chunksX, inDelayMap("X0", getCriticalPath()));
 					oplist.push_back(add);
 	
 					for (int i=0; i<2; i++)
 						for (int j=0; j<chunksX; j++)
 							inPortMap (add, join("X",i*chunksX+j) , join("cp",i,j));
 			
-					inPortMapCst(add, "Cin", "'0'");
+//					inPortMapCst(add, "Cin", "'0'");
 					outPortMap(add, "R", "addRes");
 					vhdl << instance(add, "adder");
 					syncCycleFromSignal("addRes");
+					setCriticalPath(add->getOutputDelay("R"));
 	
 					vhdl<<tab<<"R<=addRes" << range(adderWidth-1,adderWidth-wInX_-wInY_) << ";" << endl;		
 				}
