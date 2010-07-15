@@ -55,7 +55,7 @@ namespace flopoco{
 	
 	
 	
-		vhdl << tab << declare("sozb",1) <<" <= ozb;" << endl;
+		vhdl << tab << declare("sozb",1) <<" <= OZB;" << endl;
 		currLevel << "level"<<wOut_;
 		ostringstream padStr;
 		if (wIn_==intpow2(wOut_)) padStr<<"";
