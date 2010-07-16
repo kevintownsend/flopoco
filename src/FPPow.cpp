@@ -101,6 +101,8 @@ namespace flopoco{
 		addFPInput("Y", wE, wF);
 		addFPOutput("R", wE, wF, 2); // 2 because faithfully rounded
 
+		addConstant("wE", "positive", wE);
+		addConstant("wF", "positive", wF);
 		
 		
 
@@ -113,21 +115,100 @@ namespace flopoco{
 		vhdl << instance(log, "log");
 
 		syncCycleFromSignal("lnX");
+		nextCycle();
 
 		FPMultiplier* mult = new FPMultiplier(target,   /*X:*/ wE, wF+wE+logG,   /*Y:*/ wE, wF,  /*R: */  wE,  wF+wE+expG,  true /* norm*/);
 		oplist.push_back(mult);
-		inPortMap(mult, "Y", "X");
+		inPortMap(mult, "Y", "Y");
 		inPortMap(mult, "X", "lnX");
 		outPortMap(mult, "R", "P");
 		vhdl << instance(mult, "mult");
 
 		syncCycleFromSignal("P");
+		nextCycle();
 
-		FPExp* exp = new FPExp(target,  wE,  wF, 0/* means default*/, 0, 4, true);
+		FPExp* exp = new FPExp(target,  wE,  wF, 0/* means default*/, 0, expG, true);
 		oplist.push_back(exp);
 		inPortMap(exp, "X", "P");
-		outPortMap(exp, "R", "powBeforeround");
+		outPortMap(exp, "R", "E");
 		vhdl << instance(exp, "exp");
+
+
+		// That was the part that takes 99% of the size. Now the exception 
+
+		vhdl << tab  << declare("flagsE", 2) << " <= E(wE+wF+2 downto wE+wF+1);" << endl;
+
+		vhdl << tab  << declare("flagsX", 2) << " <= X(wE+wF+2 downto wE+wF+1);" << endl;
+		vhdl << tab  << declare("signX") << " <= X(wE+wF);" << endl;
+		vhdl << tab  << declare("expFieldX", wE) << " <= X(wE+wF-1 downto wF);" << endl;
+		vhdl << tab  << declare("fracX", wF) << " <= X(wF-1 downto 0);" << endl;
+
+		vhdl << tab  << declare("flagsY", 2) << " <= Y(wE+wF+2 downto wE+wF+1);" << endl;
+		vhdl << tab  << declare("signY") << " <= Y(wE+wF);" << endl;
+		vhdl << tab  << declare("expFieldY", wE) << " <= Y(wE+wF-1 downto wF);" << endl;
+		vhdl << tab  << declare("fracY", wF) << " <= Y(wF-1 downto 0);" << endl;
+
+		vhdl << tab  << declare("infX") << " <= '1' when flagsX=\"10\" else '0';" << endl;
+		vhdl << tab  << declare("infY") << " <= '1' when flagsY=\"10\" else '0';" << endl;
+		vhdl << tab  << declare("infE") << " <= '1' when flagsE=\"10\" else '0';" << endl;
+		vhdl << tab  << declare("nanX") << " <= '1' when flagsX=\"11\" else '0';" << endl;
+		vhdl << tab  << declare("nanY") << " <= '1' when flagsY=\"11\" else '0';" << endl;
+		vhdl << tab  << declare("zeroX") << " <= '1' when flagsX=\"00\" else '0';" << endl;
+		vhdl << tab  << declare("zeroY") << " <= '1' when flagsY=\"00\" else '0';" << endl;
+		vhdl << tab  << declare("zeroE") << " <= '1' when flagsE=\"00\" else '0';" << endl;
+		vhdl << tab  << declare("normalX") << " <= '1' when flagsX=\"01\" else '0';" << endl;
+		vhdl << tab  << declare("normalY") << " <= '1' when flagsY=\"01\" else '0';" << endl;
+
+		vhdl << tab  << declare("XisOne") << " <= '1' when X = \"0100\" & " << rangeAssign(wE-2, 0, "'1'") << " & " << rangeAssign(wF-1, 0, "'0'") << " else '0';" << endl;
+
+		vhdl << tab  << "-- x^(+/-0)=1" << endl;
+		vhdl << tab  << declare("case_x_to_0") << " <= '1' when (signX='0' and normalX='1' and zeroY='1') else '0';" << endl;
+
+		vhdl << tab  << "-- +-0^^negative =+inf" << endl;
+		vhdl << tab  << declare("case_0_to_yn") << " <= '1' when (zeroX='1' and normalY='1' and signY='1')  else '0';" << endl;
+
+		vhdl << tab  << "-- +-0^^positive =+0" << endl;
+		vhdl << tab  << declare("case_0_to_yp") << " <= '1' when (zeroX='1' and normalY='1' and signY='0')  else '0';" << endl;
+
+		vhdl << tab  << "-- -+-0^^-inf=+inf" << endl;
+		vhdl << tab  << declare("case_0_to_neginf") << " <= '1' when (zeroX='1' and infY='1' and signY='1')  else '0';" << endl;
+
+		vhdl << tab  << "--  -0^^+inf=NaN" << endl;
+		vhdl << tab  << declare("case_neg0_to_posinf") << " <= '1' when (zeroX='1' and signY='1' and infY='1' and signY='0')  else '0';" << endl;
+
+		vhdl << tab  << "-- 0^^+inf=0" << endl;
+		vhdl << tab  << declare("case_pos0_to_posinf") << " <= '1' when (zeroX='1' and signY='0' and infY='1' and signY='0')  else '0';" << endl;
+
+		vhdl << tab  << "--  1^+-inf=NaN" << endl;
+		vhdl << tab  << declare("case_pos1_to_inf") << " <= '1' when (XisOne='1'  and signX='0' and infY='1') else '0';" << endl;
+
+		vhdl << tab  << "-- 1^+-fin=1" << endl;
+		vhdl << tab  << declare("case_1_to_finite") << " <= '1' when (XisOne='1' and normalY='1') else '0';" << endl;
+
+		vhdl << tab  << "--  +-0^+-0=NaN" << endl;
+		vhdl << tab  << declare("case_0_to_0") << " <= zeroX and zeroY;" << endl;
+
+		vhdl << tab  << "--  +inf^+-0=NaN" << endl;
+		vhdl << tab  << declare("case_posinf_to_0") << " <=  '1' when (infX='1' and signX='0' and zeroY='1') else '0';" << endl;
+
+		vhdl << tab  << "-- When do we get a NaN" << endl;
+		vhdl << tab  << declare("RisComputedNaN") << " <= case_0_to_0  or (signX and normalX) or case_neg0_to_posinf;" << endl;
+		vhdl << tab  << declare("RisNaN") << " <= nanX or nanY or RisComputedNaN;" << endl;
+
+		vhdl << tab  << "-- When do we get an inf" << endl;
+		vhdl << tab  << declare("RisInf") << " <= case_0_to_yn or case_0_to_neginf or infE;" << endl;
+
+		vhdl << tab  << "-- When do we get a zero" << endl;
+		vhdl << tab  << declare("RisZero") << " <= zeroE or (zeroX and normalX) or (infX and signY) or case_0_to_neginf;" << endl;
+
+		vhdl << tab  << declare("flagR", 2) << " <= " << endl
+		     << tab  << tab << "     \"11\" when RisNaN='1'" << endl
+		     << tab  << tab << "else \"00\" when RisZero='1'" << endl
+		     << tab  << tab << "else \"10\" when RisInf='1'" << endl
+		     << tab  << tab << "else \"01\";" << endl;
+
+		vhdl << tab << declare("signR") << " <= '0';" << endl;
+		vhdl << tab << "R <= flagR & signR & E " << range(wE+wF-1, 0) <<" ;" << endl; 
 
 	}	
 
@@ -145,7 +226,7 @@ namespace flopoco{
 	{
 		/* Get I/O values */
 		mpz_class svX = tc->getInputValue("X");
-		mpz_class svY = tc->getInputValue("X");
+		mpz_class svY = tc->getInputValue("Y");
 		
 		/* Compute correct value */
 		FPNumber fpx(wE, wF);
@@ -176,6 +257,39 @@ namespace flopoco{
 
 
 	void FPPow::buildStandardTestCases(TestCaseList* tcl){
+		TestCase *tc;
+
+
+		tc = new TestCase(this); 
+		tc->addFPInput("X", 3.0);
+		tc->addFPInput("Y", 2.0);
+		emulate(tc);
+		tcl->add(tc);
+
+		tc = new TestCase(this); 
+		tc->addFPInput("X", 9.0);
+		tc->addFPInput("Y", 0.5);
+		emulate(tc);
+		tcl->add(tc);
+
+		tc = new TestCase(this); 
+		tc->addFPInput("X", 2.0);
+		tc->addFPInput("Y", 0.5);
+		emulate(tc);
+		tcl->add(tc);
+
+		tc = new TestCase(this); 
+		tc->addFPInput("X", 3423.0);
+		tc->addFPInput("Y", 0.125234);
+		emulate(tc);
+		tcl->add(tc);
+
+		tc = new TestCase(this); 
+		tc->addFPInput("X", .23432);
+		tc->addFPInput("Y", 0.5342);
+		emulate(tc);
+		tcl->add(tc);
+
 
 	}
 

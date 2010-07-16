@@ -138,7 +138,7 @@ namespace flopoco{
 	
 		int wFIn; // The actual size of the input 
 		if(fullInput) 
-			wFIn=wF+wE;
+			wFIn=wF+wE+g;
 		else 
 			wFIn=wF;
 
