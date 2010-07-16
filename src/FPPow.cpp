@@ -133,6 +133,7 @@ namespace flopoco{
 		outPortMap(exp, "R", "E");
 		vhdl << instance(exp, "exp");
 
+		nextCycle();
 
 		// That was the part that takes 99% of the size. Now the exception 
 

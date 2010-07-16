@@ -102,8 +102,6 @@ namespace flopoco{
 					{
 						int newWIn = wIn_-cS0;
 						target->suggestSubaddSize(chunkSize_,newWIn);
-						cout << "chunckSize" << chunkSize_ << endl;
-						cout << "newWIn" << newWIn << endl;
 						nbOfChunks = ceil( double(newWIn)/double(chunkSize_));
 				
 						cSize = new int[nbOfChunks+1];
