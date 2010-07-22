@@ -28,12 +28,12 @@ extern map<string, double> emptyDelayMap;
 		 * @param wInX integer argument representing the width in bits of the input X 
 		 * @param wInY integer argument representing the width in bits of the input Y
 		 **/
-		IntMultiplier(Target* target, int wInX, int wInY, map<string, double> inputDelays = emptyDelayMap);
+		IntMultiplier(Target* target, int wInX, int wInY, map<string, double> inputDelays = emptyDelayMap, bool sign=false);
 	
 		/** IntMultiplier destructor */
 		~IntMultiplier();
 	
-
+		void outputVHDL(std::ostream& o, std::string name);
 
 
 		void emulate(TestCase* tc);
@@ -57,6 +57,8 @@ extern map<string, double> emptyDelayMap;
 		bool     reverse_; 	          /**< Signals if we are doing the multiplication X*Y of Y*X */
 		IntAdder *intAdd1_; 
 		IntAdder *intAdd2_; 
+	
+		bool sign_;
 	};
 
 }
