@@ -183,8 +183,9 @@ static void usage(char *name){
 	OP("IntCompressorTree","wIn N");
 	cerr << "      Multi-operand addition using compressor trees, possibly pipelined\n";
 	cerr << "    ____________ INTEGER MULTIPLIERS/SQUARER/KARATSUBA _________________________\n";
-	OP("IntMultiplier","wInX wInY");
-	cerr << "      Integer multiplier of two integers X and Y of sizes wInX and wInY \n";	
+	OP("IntMultiplier","wInX wInY signed");
+	cerr << "      Integer multiplier of two integers X and Y of sizes wInX and wInY \n";
+	cerr << "      signed is one of {0,1} \n";	
 	OP("SignedIntMultiplier","wInX wInY");
 	cerr << "      Signed integer multiplier. wInX and wInY include the sign\n";	
 	OP("IntTilingMultiplier","wInX wInY ratio maxTimeInMinutes");
@@ -817,14 +818,20 @@ bool parseCommandLine(int argc, char* argv[]){
 			}    
 		}
 		else if(opname=="IntMultiplier"){
-			int nargs = 2;
+			int nargs = 3;
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
-				int wInX = checkStrictyPositive(argv[i++], argv[0]);
-				int wInY = checkStrictyPositive(argv[i++], argv[0]);
-				cerr << "> IntMultiplier , wInX="<<wInX<<", wInY="<<wInY<<"\n";
-				op = new IntMultiplier(target, wInX, wInY);
+				int wInX    = checkStrictyPositive(argv[i++], argv[0]);
+				int wInY    = checkStrictyPositive(argv[i++], argv[0]);
+				int sign    =  checkBoolean(argv[i++], argv[0]);
+				bool sign_;
+				if (sign > 0)
+					sign_ = true;
+				else
+					sign_ = false;
+				cerr << "> IntMultiplier , wInX="<<wInX<<", wInY="<<wInY<<" signed="<<sign_<<"\n";
+				op = new IntMultiplier(target, wInX, wInY, emptyDelayMap, sign_);
 				addOperator(op);
 			}
 		}
@@ -902,8 +909,10 @@ bool parseCommandLine(int argc, char* argv[]){
 				if (!((useLimits==0)||(useLimits==1)))
 					throw "useLimits is 0 or 1";				
 				int maxTimeInMinutes = atoi(argv[i++]);
-				cerr << "> IntTruncMult , wInX="<<wInX<<", wInY="<<wInY<<" ratio=" << r <<" error order= "<<ordError<< " useLimits="<<useLimits<<" maxTimeInMinutes="<<maxTimeInMinutes<<"\n";
-				op = new IntTruncMultiplier(target, wInX, wInY, r,ordError,useLimits, maxTimeInMinutes, true);
+				int sign = atoi(argv[i++]);
+
+				cerr << "> IntTruncMult , wInX="<<wInX<<", wInY="<<wInY<<" ratio=" << r <<" error order= "<<ordError<< " useLimits="<<useLimits<<" maxTimeInMinutes="<<maxTimeInMinutes<<" signed="<<sign<<"\n";
+				op = new IntTruncMultiplier(target, wInX, wInY, r,ordError,useLimits, maxTimeInMinutes, true, sign);
 				addOperator(op);
 			}
 		}		
