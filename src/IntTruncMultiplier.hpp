@@ -119,10 +119,12 @@ namespace flopoco{
 	{
 	public:
 		
-		IntTruncMultiplier(Target* target, int wX, int wY, float ratio, int k,int uL, int maxTimeInMinutes, bool interactive = true);
+		IntTruncMultiplier(Target* target, int winX, int winY, float ratio, int k,int uL, int maxTimeInMinutes, bool interactive = true, bool sign = false);
 	
 		/** IntTruncMultiplier destructor */
 		~IntTruncMultiplier();
+
+		void outputVHDL(std::ostream& o, std::string name);
 
 		/** Computes the max value of a w x h bit multiplication 
 		 * @param[in] w the size of the first operand
@@ -422,6 +424,8 @@ namespace flopoco{
 		int subCount;
 		int dspWidth,dspHeight;
 		int minShift;
+		
+		bool sign;
 	};
 
 }

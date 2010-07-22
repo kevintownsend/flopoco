@@ -33,8 +33,8 @@ namespace flopoco{
 	extern vector<Operator*> oplist;
 
 
-	IntTruncMultiplier::IntTruncMultiplier(Target* target, int wX, int wY, float ratio, int k, int uL, int maxTimeInMinutes, bool interactive):
-		Operator(target), wX(wX), wY(wY), ratio(ratio),targetPrecision(k),useLimits(uL), maxTimeInMinutes(maxTimeInMinutes-1){
+	IntTruncMultiplier::IntTruncMultiplier(Target* target, int winX, int winY, float ratio, int k, int uL, int maxTimeInMinutes, bool interactive, bool sign):
+		Operator(target), wX(winX), wY(winY), ratio(ratio),targetPrecision(k),useLimits(uL), maxTimeInMinutes(maxTimeInMinutes-1), sign(sign){
 		start = clock(); /* time management */
 		srcFileName="IntTruncMultiplier";
 		isSquarer = false;	
@@ -47,6 +47,20 @@ namespace flopoco{
 		addInput ("X", wX, true);
 		addInput ("Y", wY, true);
 		addOutput("R", wX + wY - k, 2, true); 
+	
+		wOut = wX + wY - k;
+	
+		if (sign) {
+			//for a signed multiplier the tiling board is smaller by one unit.
+			//code generation will take into account the sign on the tiles 
+			//from the left and bottom parts of the boardArea
+			
+			cerr <<"Signed, original values for wX="<<wX<< " wY="<<wY<<endl;
+			wX--;
+			wY--;
+			cerr <<"Signed, modified values for wX="<<wX<< " wY="<<wY<<endl;
+				
+		}
 	
 		warningInfo();
 	
@@ -2442,139 +2456,135 @@ namespace flopoco{
 		DSP** tempc = new DSP*[nrDSPs];	// buffer that with hold a copy of the global configuration
 		int partitions = 0; 			// subtracted operand count	
 			
-		//memcpy(tempc, config, sizeof(DSP*) * nrDSPs );
-		
 		memcpy(tempc, config, sizeof(DSP*) * nrDSPs );
 		
-		if ( ( target_->getID() == "Virtex4") ||
-			 ( target_->getID() == "Virtex5") ||
-			 ( target_->getID() == "Spartan3"))  // then the target is A Xilinx FPGA 
-			{
-				for (int i=0; i<nrDSPs; i++)
-					if (tempc[i] != NULL)
-						{
-							DSP* d = tempc[i];
-							int j=0;
-							int connected = 0;
-			
-							while (d != NULL)
-								{
-									connected++;
-									d = d->getShiftOut();
-								}
-							cout << "CONNECTED =================> " << connected << endl;
-							d = tempc[i];
-			
-							while (d != NULL)
-								{
-									d->getTopRightCorner(trx1, try1);
-									d->getBottomLeftCorner(blx1, bly1);
-									d->getTopRightCorner(trx2, try2);
-									d->getBottomLeftCorner(blx2, bly2);
+		if ( target_->getVendor() == "Xilinx"){  // then the target is A Xilinx FPGA 
+			for (int i=0; i<nrDSPs; i++)
+				if (tempc[i] != NULL){
+					DSP* d = tempc[i]; // the current DSP that is to be processed
+					int j = 0; /* the index of the element in the chain to be processed */
 
-//									cout << "coordinates before trx"<<trx1<<" try="<<try1<<" blx"<<blx1<<" bly="<<bly1<<endl;
-									convertCoordinates(trx1, try1, blx1, bly1);
-									convertCoordinatesKeepNeg(trx2, try2, blx2, bly2); /*REAL dsp coord. Chaning is done with respect to these ones */
+					/* chech how many DSPs are there in this chain */
+					int connected = 0;
+					while (d != NULL){
+						connected++;
+						d = d->getShiftOut();
+					} /* parse the whole chain in order to get the last DSP */
+					REPORT(DEBUG, "CONNECTED " << connected);
 
-									cout << "coordinates      trx="<<trx1<<" try="<<try1<<" blx"<<blx1<<" bly="<<bly1<<endl;
-									cout << "coordinates REAL trx="<<trx2<<" try="<<try2<<" blx"<<blx2<<" bly="<<bly2<<endl;
+					d = tempc[i]; /* get back to the initial one */
 
-									int sh = 0;
+					setCycle(0);
+//TODO						setCriticalPath(getMaxInputDelays(inputDelays));
+					setCriticalPath(0);
+	
+					while (d != NULL){
+						bool onEdge = false;
+						
+						d->getTopRightCorner(trx1, try1);
+						d->getBottomLeftCorner(blx1, bly1);
+						d->getTopRightCorner(trx2, try2);
+						d->getBottomLeftCorner(blx2, bly2);
 
-									fpadX = wInX-blx1-1;
-									fpadX = (fpadX<0)?0:fpadX;
-									
-									fpadY = wInY-bly1-1;
-									fpadY = (fpadY<0)?0:fpadY;
-									
-									bpadX = trx1;
-									bpadX = (bpadX<0)?0:bpadX;
-									
-									bpadY = try1;
-									bpadY = (bpadY<0)?0:bpadY;
-									
-									multW = blx2-trx2+1;
-									multH = bly2-try2+1;
-			
-									setCycle(0);
-									
-									xname.str("");
-									xname << "x" << i << "_" << j;
-									vhdl << tab << declare(xname.str(), multW,true) << " <= X" << range(blx1, trx1) << " & " << zg(trx1-trx2 + blx1-blx2) << ";" << endl;
-									
-									yname.str("");
-									yname << "y" << i << "_" << j;
-									vhdl << tab << declare(yname.str(), multH,true) << ((isSquarer)?" <= X":" <= Y") << range(bly1, try1)<< " & " << zg(try1-try2 + bly1-bly2) << ";" << endl;
-				
-									if ((d->getShiftIn() != NULL) && (j>0)) // multiply accumulate
-										{
-											mname.str("");
-											mname << "pxy" << i;
-											cname.str("");
-											cname << "txy" << i << j;
-											setCycle(j);
-											vhdl << tab << declare(cname.str(), multW+multH) << " <= " << use(xname.str()) << " * " << use(yname.str()) << ";" << endl;
-											vhdl << tab << declare(join(mname.str(),j), multW+multH+1) << " <= (\"0\" & " << use(cname.str()) << ") + " << use(join(mname.str(), j-1)) << range(multW+multH-1, d->getShiftAmount()) << ";" << endl;	
-											if (d->getShiftOut() == NULL) // concatenate the entire partial product
-												{
-													setCycle(connected);
-													sname.seekp(ios_base::beg);
-													//sname << zg(wInX+wInY+extW+extH-blx1-bly1-3, 0) << " & " << use(join(mname.str(),j)) << range(multW-fpadX + multH-fpadY-1, 0) << " & " << sname.str();
-													int beginZeros = fpadX+fpadY-1-sh;
-													int endZeros = multW+multH;
-													if (beginZeros < 0) // in case the multiplication by 2 is out of bounds cut the first zero
-														endZeros += beginZeros;
-													sname << zg(beginZeros, 0) << " & " << use(join(mname.str(),j)) << range(endZeros, 0) << " & " << sname.str();
-												}
-											else // concatenate only the lower portion of the partial product
-												{
-													setCycle(connected);
-													sname.seekp(ios_base::beg);
-//													sname << use(join(mname.str(),j)) << range(d->getShiftAmount()- (try1-try2 + bly1-bly2) - (trx1-trx2 + blx1-blx2) -1, 0) << " & " << sname.str();
-													sname << use(join(mname.str(),j)) << range(d->getShiftAmount() -1, 0) << " & " << sname.str();
-												}
-										}
-									else // only multiplication
-										{
-											mname.str("");
-											mname << "pxy" << i << j;
-											vhdl << tab << declare(mname.str(), multW+multH) << " <= " << use(xname.str()) << " * " << use(yname.str()) << ";" << endl;
-											sname.str("");
-											if (d->getShiftOut() == NULL) // concatenate the entire partial product
-												{
-													setCycle(connected);
-													//sname << zg(wInX+wInY+extW+extH-blx1-bly1-2, 0) << " & " << use(mname.str()) << range(multH+multW-1, bpadX+bpadY)<< " & " << zg(trx1-extW,0) << " & " << zg(try1-extH,0) <<  ";" << endl;
-													sname << zg(fpadX+fpadY-sh, 0) << " & " << use(mname.str()) << " & " << zg(try1+trx1+sh - minShift,0) <<  ";" << endl;
-												}
-											else // concatenate only the lower portion of the partial product
-												{
-													setCycle(connected);
-													sname << use(mname.str()) << range(d->getShiftAmount()- (try1-try2 + bly1-bly2) - (trx1-trx2 + blx1-blx2) -1, 0) << " & " << zg(try1+trx1+sh-minShift,0) << ";" << endl;
-												}
-										}
-				
-									// erase d from the tempc buffer to avoid handleing it twice
-									for (int k=i+1; k<nrDSPs; k++)
-										{
-											if ((tempc[k] != NULL) && (tempc[k] == d))
-												{
-													//~ cout << "tempc[" << k << "] deleted" << endl;
-													tempc[k] = NULL;
-													break;
-												}
-										}
-				
-				
-									d = d->getShiftOut();
-									j++;
-								}	
-							sname.seekp(ios_base::beg);
-							sname << tab << declare(join("addOpDSP", nrOp),wInX+wInY-minShift) << " <= " << sname.str();
-							vhdl << sname.str();
-							nrOp++;		
+						convertCoordinates(trx1, try1, blx1, bly1); 
+						convertCoordinatesKeepNeg(trx2, try2, blx2, bly2); /*REAL dsp coord. may exceed board area */
+
+						REPORT(INFO, "coordinates      trx="<<trx1<<" try="<<try1<<" blx"<<blx1<<" bly="<<bly1);
+						REPORT(INFO, "coordinates REAL trx="<<trx2<<" try="<<try2<<" blx"<<blx2<<" bly="<<bly2);
+
+						int sh = 0;
+						/* forward padding variables */
+						fpadX = (wInX - 1) - blx1; //max coord on X axis - bottom left corner (x)
+						fpadX = (fpadX<0)? 0: fpadX; //no need to pad if tile exceeds limits
+						fpadY = (wInY-1) - bly1;
+						fpadY = (fpadY<0)?0:fpadY;
+
+						/* the real size of the multiplication. */					
+						multW = blx2-trx2+1;
+						multH = bly2-try2+1;
+
+						if ( (wX == blx1+1) || (wY == bly1+1) )
+							onEdge = true; //if the block is on the edge it must be sign extended
+						
+						/* the correct operands */
+						vhdl << tab << declare(join("x",i,"_",j), multW + 1, true) << " <= ";
+						if (sign && (blx1+1 == wX)){
+							vhdl << rangeAssign(blx2-blx1 -1, 0 , "X"+of(blx1+1))  
+								 << " & X" << range(blx1 + 1, trx1) //the real part of X that's getting multiplied
+								 << " & "  << zg(trx1-trx2) <<  ";" << endl;
+						}else{
+							vhdl << zg(blx2-blx1 + 1) 
+							     << " & X" << range(blx1, trx1) 
+							     << " & "  << zg(trx1-trx2) << ";" << endl;
+						}	
+						
+						vhdl << tab << declare(join("y",i,"_",j), multH + 1,true) << " <= ";
+						if (sign  && (wY == bly1+1)){
+							vhdl << rangeAssign(bly2-bly1 - 1, 0, "Y"+of(bly1+1))
+							     << " & Y" << range(bly1+1, try1)
+							     << " & " << zg(try1-try2) << ";" << endl;
+						}else{
+							vhdl << zg(bly2-bly1+1)
+							     << " & Y" << range(bly1, try1)
+							     << " & " << zg(try1-try2) << ";" << endl;
 						}
-				subCount = partitions;
-				return nrOp;
+						
+						//conditions will obviously happen at the same time
+						if ((d->getShiftIn() != NULL) && (j>0)){ // multiply accumulate 
+
+//							manageCriticalPath( target_->DSPMultiplierDelay() + target_->DSPlocalWireDelay() );								
+
+							vhdl << tab << declare(join("txy",i,j), multW + multH + 2) << " <= " << join("x",i,"_",j) << " * " << join("y",i,"_",j) << ";" << endl;
+
+							manageCriticalPath( target_->DSPAdderDelay());								
+
+							vhdl << tab << declare(join("pxy",i,j), multW + multH + 2) << " <= " << join("txy",i,j)   << " + (" 
+							<< rangeAssign( d->getShiftAmount() -1, 0, join("pxy",i,j-1)+of(multW + multH + 1)) << " & " //sign extension 
+							<< join("pxy",i,j-1) << range(multW+multH+1, d->getShiftAmount()) << ");" << endl;	
+
+							sname.seekp(ios_base::beg);
+							if (d->getShiftOut() == NULL){ // concatenate the entire partial product
+								if (sign)
+									sname << rangeAssign(fpadX + fpadY - 1, 0, join("pxy",i,j)+of(multH+multW+1)) << " & " << join("pxy",i,j) << range( (blx1-trx1+1) + (bly1-try1+1) + 2 -1, 0) << " & " << sname.str();							
+								else
+									sname << rangeAssign(fpadX + fpadY - 1, 0, join("pxy",i,j)+of(multH+multW+1)) << " & " << join("pxy",i,j) << range( (blx1-trx1+1) + (bly1-try1+1)  -1, 0) << " & " << sname.str();							
+							}else{ // concatenate only the lower portion of the partial product
+								sname << join("pxy",i,j) << range(d->getShiftAmount()-1, 0) << " & " << sname.str();
+							}
+						}else{
+							// only multiplication
+							manageCriticalPath(target_->DSPMultiplierDelay() + target_->DSPinterconnectWireDelay());
+							vhdl << tab << declare(join("pxy",i,j), multW + multH + 2) << " <= " << join("x",i,"_",j) << " * " << join("y",i,"_",j) << ";-- -" << endl;
+							sname.str("");
+							if (d->getShiftOut() == NULL) //concatenate the entire partial product
+								if (onEdge && sign)//we need to sign extend this operand
+									sname << rangeAssign(fpadX+fpadY -1 , 0,  join("pxy",i,j)+of(multW+multH+1)) << " & " << join("pxy",i,j) << range( (blx1-trx2+1) + (bly1-try2+1) + 2 -1, trx1-trx2+try1-try2) << " & " << zg(try1+trx1-minShift, 0) <<  ";--+" << endl;
+								else if (sign)//extend with 0
+									sname << zg(fpadX+fpadY -1 , 0) << " & " << join("pxy",i,j)<<range( (blx1-trx1+1) + (bly1-try1+1) + 2 -1, 0) << " & " << zg(try1 + trx1 -minShift, 0)  <<  ";--/" << endl;
+								else
+									sname << zg(fpadX+fpadY , 0) << " & " << join("pxy",i,j)<<range( (blx1-trx1+1) + (bly1-try1+1) -1, 0) << " & " << zg(try1 + trx1 -minShift, 0)  <<  ";--/" << endl;	
+							else // concatenate only the lower portion of the partial product
+								sname << join("pxy",i,j) << range(d->getShiftAmount()- (try1-try2 + bly2-bly1) - (trx1-trx2 + blx2-blx1) -1 ,0) << " & " << zg( try1 + trx1 -minShift,0) << ";--*" << endl;
+						}
+	
+						// erase d from the tempc buffer to avoid handleing it twice
+						for (int k=i+1; k<nrDSPs; k++)
+							if ((tempc[k] != NULL) && (tempc[k] == d)){
+								tempc[k] = NULL;
+								break;
+							}
+	
+						//next tile	
+						d = d->getShiftOut();
+						j++;
+					}	
+					sname.seekp(ios_base::beg);
+					sname << tab << declare(join("addOpDSP", nrOp),wInX+wInY+(sign?2:0)-minShift) << " <= " << sname.str();
+					vhdl << sname.str();
+					nrOp++;		
+				}
+			subCount = partitions;
+			return nrOp;
 		}
 		else // the target is Stratix
 		{
@@ -2673,34 +2683,65 @@ namespace flopoco{
 		unsigned partitions;
 		for (partitions=0; partitions<config.size(); partitions++)
 		{	
-			int njj, nj, ni, nii;
-			config[partitions]->getCoordinates(nj, ni, njj, nii);
-			convertCoordinates(nj, ni, njj, nii);
-			int sh = 0;
-			if ((isSquarer) && (ni > njj))
-				sh = 1;
-			// CODE GENERATING VHDL 
-			setCycle(0);	
+			int trx1, try1, blx1, bly1;
+			bool onEdge;
+			config[partitions]->getCoordinates(trx1, try1, blx1, bly1);
+			convertCoordinates(trx1, try1, blx1, bly1);
+
+			setCycle(0); //TODO	
+//			setCriticalPath( getMaxInputDelays(inputDelays));
+			
 			target_->setUseHardMultipliers(false);
-			IntMultiplier* mult =  new IntMultiplier(target_, njj-nj+1, nii-ni+1);
-			ostringstream cname;
-			cname << mult->getName() << "_" << partitions;
-			mult->changeName(cname.str());
+			
+			if ((blx1 == wX-1) || ( bly1 == wY-1))
+			onEdge = true; //if the block is on the edge it must be sign extended
+			
+			int wMultX, wMultY;
+			wMultX = blx1-trx1+1; 
+			wMultY = bly1-try1+1; 
+			if ((sign) && (onEdge)){
+				wMultX++; //the extra 1 is for the sign
+				wMultY++;
+			}			
+			
+			
+			IntMultiplier* mult =  new IntMultiplier(target_, wMultX, wMultY, inDelayMap("X", getCriticalPath()), (sign) && (onEdge) ); //if it's on edge then is signed
+			mult->changeName( join( mult->getName()+"_",partitions) );
 			oplist.push_back(mult);
-			// TODO: compute width of x and y + corretc range for X and Y
-			vhdl << tab << declare(join("x_",partitions), njj-nj+1, true) << " <= X" << range(njj, nj) << ";" << endl;
-			inPortMap(mult, "X", join("x_",partitions));
-			vhdl << tab << declare(join("y_",partitions), nii-ni+1, true ) << " <= " << ((isSquarer)?"X":"Y") << range(nii, ni) << ";" << endl;
-			inPortMap(mult, "Y", join("y_",partitions));
-		
+			
+			vhdl << tab << declare(join("x_",partitions), wMultX, true) << " <= " ;
+			if ((sign) && onEdge )
+				if (blx1==wX-1)
+					vhdl << "X" << range(blx1+1, trx1) << ";" << endl;
+				else
+					vhdl << "\"0\" & X" << range(blx1, trx1) << ";" << endl;
+			else
+				vhdl << "X" << range(blx1, trx1) << ";" << endl;	
+
+			vhdl << tab << declare(join("y_",partitions), wMultY, true) << " <= " ;
+			if ((sign) && onEdge )
+				if (bly1==wY-1)
+					vhdl << "Y" << range(bly1+1, try1) << ";" << endl;
+				else
+					vhdl << "\"0\" & Y" << range(bly1, try1) << ";" << endl;
+			else
+				vhdl << "Y" << range(bly1, try1) << ";" << endl;	
+				
+			inPortMap (mult, "X", join("x_",partitions));
+			inPortMap (mult, "Y", join("y_",partitions));
 			outPortMap(mult, "R", join("result", partitions));
-		
 			vhdl << instance(mult, join("Mult", partitions));
 		
 			syncCycleFromSignal(join("result", partitions));
 			
-			vhdl << tab << declare(join("addOpSlice", partitions), wInX+wInY-minShift) << " <= " << zg(wInX-njj-1+wInY-nii-1-sh, 0) << " & " << join("result", partitions) << " & " << zg(nj+ni+sh-minShift, 0) << ";" << endl;
-			//cout<<"partitions " << partitions << " @ cycle " << getCurrentCycle() << endl;
+			vhdl << tab << declare(join("addOpSlice", partitions), wInX+wInY + (sign?2:0) -minShift) << " <= " ;
+			if (sign){
+				vhdl << rangeAssign(wX+wY+(sign?2:0) - (trx1+wMultX+try1+wMultY) -1 , 0, join("result", partitions)+of(wMultX+wMultY-1)) << " & " << join("result", partitions) 
+					 << " & " << zg(trx1+try1-minShift, 0) << ";" << endl;	
+			}else{
+				vhdl << zg(wX+wY+(sign?2:0) - (trx1+wMultX+try1+wMultY) , 0) << " & " << join("result", partitions) 
+					 << " & " << zg(trx1+try1-minShift, 0) << ";" << endl;	
+			}
 		}
 				
 		return (int)partitions;
@@ -2760,9 +2801,9 @@ namespace flopoco{
 		Operator *add;
 		
 		if   (target_->getID() != "Virtex5"){
-			add =  new IntNAdder(getTarget(), wInX+wInY-minShift, nrDSPOperands+nrSliceOperands+subCount, inMap);
+			add =  new IntNAdder(getTarget(), wInX+wInY+(sign?2:0)-minShift, nrDSPOperands+nrSliceOperands+subCount, inMap);
 		} else{
-			add =  new IntCompressorTree(getTarget(), wInX+wInY-minShift, nrDSPOperands+nrSliceOperands+subCount, inMap);
+			add =  new IntCompressorTree(getTarget(), wInX+wInY+(sign?2:0)-minShift, nrDSPOperands+nrSliceOperands+subCount, inMap);
 		}
 		
 		//IntCompressorTree* add =  new IntCompressorTree(target, adderWidth, opCount);
@@ -2781,7 +2822,6 @@ namespace flopoco{
 			{
 				ostringstream concatPartialProd;
 				concatPartialProd  << "addOpSlice" << j;
-				//cout << "@ In Port Map Current Cycle is " << getCurrentCycle() << endl;
 				inPortMap (add, join("X",j+nrDSPOperands) , concatPartialProd.str());
 			}	
 			
@@ -2800,13 +2840,13 @@ namespace flopoco{
 		
 		/* rounding and compensation needed only if k>0*/
 		if (targetPrecision==0)
-			vhdl << tab << "R <= addRes" << range(wX+wY-1-minShift, targetPrecision-minShift) << ";" << endl;
+			vhdl << tab << "R <= addRes" << range(wX+wY+(sign?2:0)-1-minShift, targetPrecision-minShift) << ";" << endl;
 		else{
 			/*value of the add bit */
 			if (targetPrecision==1){
 				/* just need to add the compensation '1' and truncate */
 				nextCycle();
-				IntAdder *af = new IntAdder(getTarget(), wX+wY);
+				IntAdder *af = new IntAdder(getTarget(), wX+wY+(sign?2:0));
 				oplist.push_back(af);
 				
 				
@@ -2817,24 +2857,24 @@ namespace flopoco{
 				vhdl << instance(af, "RoundCompensate");
 				
 				syncCycleFromSignal("roundCompRes");
-				vhdl << tab << "R <= roundCompRes" << range(wX+wY-1-minShift, targetPrecision-minShift) << ";" << endl;
+				vhdl << tab << "R <= roundCompRes" << range(wX+wY+(sign?2:0)-1-minShift, targetPrecision-minShift) << ";" << endl;
 			}else{
 				/* target precision > 1 */
 				nextCycle();
 				/* compute sticky bit */
-				vhdl << tab << declare("sticky",1,false) << "<= '1' when addRes"<<range(targetPrecision-minShift-2,0)<<">0 else '0';"<<endl;				
-				IntAdder *af = new IntAdder(getTarget(), wX+wY-1-minShift - (targetPrecision-minShift) + 1 + 1);
+				vhdl << tab << declare("sticky",1,false) << "<= '0' when addRes"<<range(targetPrecision-minShift-2,0)<<"=0 else '1';"<<endl;				
+				IntAdder *af = new IntAdder(getTarget(), wX+wY+(sign?2:0)-1-minShift - (targetPrecision-minShift) + 1 + 1);
 				oplist.push_back(af);
 				nextCycle();
 
-				inPortMapCst(af, "X", "addRes"+range(wX+wY-1-minShift, targetPrecision-minShift-1));
-				inPortMapCst(af, "Y", join("CONV_STD_LOGIC_VECTOR(1,",wX+wY-1-minShift - (targetPrecision-minShift) + 1 + 1,")") );
+				inPortMapCst(af, "X", "addRes"+range(wX+wY+(sign?2:0)-1-minShift, targetPrecision-minShift-1));
+				inPortMapCst(af, "Y", join("CONV_STD_LOGIC_VECTOR(1,",wX+wY+(sign?2:0)-1-minShift - (targetPrecision-minShift) + 1 + 1,")") );
 				inPortMapCst(af, "Cin", "sticky");
 				outPortMap(af, "R", "roundCompRes");
 				vhdl << instance(af, "RoundCompensate");
 				
 				syncCycleFromSignal("roundCompRes");
-				vhdl << tab << "R <= roundCompRes" << range(wX+wY - targetPrecision,1) << ";" << endl;
+				vhdl << tab << "R <= roundCompRes" << range(wX+wY+(sign?2:0) - targetPrecision,1) << ";" << endl;
 			}
 		}
 	}
@@ -3123,6 +3163,27 @@ namespace flopoco{
 		return configSoft;
 	}
 	
+	void IntTruncMultiplier::outputVHDL(std::ostream& o, std::string name) {
+		licence(o);
+		o << "library ieee; " << endl;
+		o << "use ieee.std_logic_1164.all;" << endl;
+		o << "use ieee.std_logic_arith.all;" << endl;
+		if (sign)
+			o << "use ieee.std_logic_signed.all;" << endl;
+		else
+			o << "use ieee.std_logic_unsigned.all;" << endl;
+		o << "library work;" << endl;
+		outputVHDLEntity(o);
+		newArchitecture(o,name);
+		o << buildVHDLComponentDeclarations();	
+		o << buildVHDLSignalDeclarations();
+		beginArchitecture(o);		
+		o<<buildVHDLRegisters();
+		o << vhdl.str();
+		endArchitecture(o);
+	}
+	
+	
 	vector<SoftDSP*>IntTruncMultiplier::insertSoftDSPswithLimits(DSP** config){
 		vector<SoftDSP*> configSoft;
 		configSoft.clear();
@@ -3312,12 +3373,41 @@ namespace flopoco{
 		mpz_class svX = tc->getInputValue("X");
 		mpz_class svY = tc->getInputValue("Y");
 		
-		mpz_class svR = svX * svY;
-		svR = (svR >> int(targetPrecision));
+		if (!sign){
+			mpz_class svR = svX * svY;
+			svR = (svR >> int(targetPrecision));
 		
-		tc->addExpectedOutput("R", svR);
-		svR = svR + mpz_class(1);
-		tc->addExpectedOutput("R", svR);
+			tc->addExpectedOutput("R", svR);
+			svR = svR + mpz_class(1);
+			tc->addExpectedOutput("R", svR);
+		}else{
+			mpz_class big1 = (mpz_class(1) << (wX+1));
+			mpz_class big1P = (mpz_class(1) << (wX+1-1));
+			mpz_class big2 = (mpz_class(1) << (wY+1));
+			mpz_class big2P = (mpz_class(1) << (wY+1-1));
+
+			if ( svX >= big1P)
+				svX = svX-big1;
+
+			if ( svY >= big2P)
+				svY = svY -big2;
+			
+			mpz_class svR = svX * svY;
+			
+			if ( svR < 0){
+				mpz_class tmpSUB = (mpz_class(1) << (wX+1+wY+1));
+				svR = tmpSUB + svR; 
+			}
+
+
+			svR = (svR >> int(targetPrecision));
+			tc->addExpectedOutput("R", svR);
+			svR = svR + mpz_class(1);
+			tc->addExpectedOutput("R", svR);
+
+		}
+		
+		
 	}
 	
 }
