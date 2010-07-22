@@ -477,6 +477,13 @@ namespace flopoco{
 		return o.str();
 	}
 
+	string join( std::string id, int n1, int n2, int n3)
+	{
+		ostringstream o;
+		o << id << n1 << n2 << n3;
+		return o.str();
+	}
+
 
 	string join( std::string id1, int n, std::string id2)
 	{
@@ -518,7 +525,7 @@ namespace flopoco{
 			o<<"("<<left<<" downto " << right <<" => " << s << ")";
 			return o.str();
 		}else
-			return "";
+			return "\"\"";
 	}
 
 	string of( int x)

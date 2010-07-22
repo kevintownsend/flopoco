@@ -246,6 +246,7 @@ namespace flopoco{
 	string join( std::string id, int n);
 
 	string join( std::string id, int n1, int n2);
+	string join( std::string id, int n1, int n2, int n3);
 
 	string join( std::string id1, int n, std::string id2);
 
