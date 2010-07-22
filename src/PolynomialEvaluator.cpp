@@ -36,6 +36,8 @@ namespace flopoco{
 		PolynomialEvaluator::PolynomialEvaluator(Target* target, vector<FixedPointCoefficient*> coef, YVar* y, int targetPrec, mpfr_t* approxError,map<string, double> inputDelays):
 		Operator(target, inputDelays), y_(y), targetPrec_(targetPrec){
 		
+		setPolynomialDegree(coef.size()-1);
+		
 		setCopyrightString("Bogdan Pasca (2010)");
 		srcFileName = "PolynomialEvaluator";
 		setName(join("PolynomialEvaluator_d",degree_));
@@ -46,7 +48,7 @@ namespace flopoco{
  		mpfr_set_si( targetError, 2, GMP_RNDN);
 		mpfr_pow_si( targetError, targetError, -targetPrec-1, GMP_RNDN); /* 1/2 ulp target error */
 
-		setPolynomialDegree(coef.size()-1);
+
 
 		/* both y and a[i], i in 0 ... d are described by two values: size and weight 
 		for y, which is always positive, the two parameters are
