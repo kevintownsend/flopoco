@@ -39,7 +39,7 @@ namespace flopoco{
 		srcFileName="IntTruncMultiplier";
 		isSquarer = false;	
 		ostringstream name;
-		name <<"IntTruncMultiplier_"<<wX<<"_"<<wY;
+		name <<"IntTruncMultiplier_"<<wX<<"_"<<wY<<"_"<<wX + wY - k<<"_"<<(sign?"signed":"unsigned");
 		setName(name.str());
 	
 		setCopyrightString("Sebastian Banescu, Bogdan Pasca, Radu Tudoran 2010");

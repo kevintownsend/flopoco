@@ -146,42 +146,38 @@ namespace flopoco{
 			s2 << "yG["<<j<<"]="<<yGuard_[j]<<" "; 
 		
 		// Commented out by Florent whose laptop has a smaller screen
-		//REPORT(INFO, "------------------------------------------------------------");
 		REPORT(INFO, s1.str());
 		REPORT(INFO, s2.str());
-		//REPORT(INFO, "------------------------------------------------------------");
 		setCriticalPath(getMaxInputDelays(inputDelays));
 
-//		exit(-1);///////////////////////////////
 		for (uint32_t i=0; i<=unsigned(degree_); i++){
 			if (i==0){
 				vhdl << tab << "-- weight of sigmaP"<<i<<" is="<<coef_[degree_-i]->getWeight()<<" size="<<1+coef_[degree_-i]->getSize()<<endl;
 				vhdl << tab << declare( join("sigmaP",i), 1+coef_[degree_-i]->getSize()) << " <= a"<<degree_<<";"<<endl; 
 			}else{
-				vhdl << tab << "-- weight of yT"<<i<<" is="<<y_->getWeight()<<" size="<<1+y_->getSize()+yGuard_[i]<<endl;
-				vhdl << tab << declare( join("yT",i) , 1+y_->getSize()+yGuard_[i]) << " <= \"0\" & Y"<<range(y_->getSize()-1, -yGuard_[i]) << ";" << endl;
-
-				
-//				cout << "sigmakPSize[i-1]( "<<i-1<<") is = " << sigmakPSize[i-1] << "yGuard_[i]="<<yGuard_[i]<< " y_->getSize()="<<y_->getSize()<<endl;
-				vhdl << tab << "-- weight of piP"<<i<<" is="<<pikPWeight[i]<<" size="<<pikPSize[i]+2<<endl;
-
-				SignedIntMultiplier* sm = new SignedIntMultiplier ( target, 1+y_->getSize()+yGuard_[i], sigmakPSize[i-1]+1, inDelayMap("X",getCriticalPath()));
-				oplist.push_back(sm);
-				
-				inPortMap ( sm, "X", join("yT",i));
-				inPortMap ( sm, "Y", join("sigmaP",i-1));
-				outPortMap (sm, "R", join("piP",i));
-				
-				vhdl << instance ( sm, join("Product_",i) );
-				syncCycleFromSignal(join("piP",i)); 
-//				nextCycle();///////////////////////////////////////////////////
-				
-				setCriticalPath( sm->getOutputDelay("R") );
-				vhdl << tab << "-- the delay at the output of the multiplier is : " << sm->getOutputDelay("R") << endl;
-				
 				if (i<unsigned(degree_)){
-					vhdl << tab << "-- weight of piPT"<<i<<" is="<<pikPTWeight[i]<<" size="<<pikPTSize[i]+1<<endl;
-					vhdl << tab << declare( join("piPT",i), pikPTSize[i]+1 ) << " <= " << join("piP",i)<<range(pikPSize[i], pikPSize[i] - pikPTSize[i] ) << ";" <<endl; // coef_[i]->getSize()+1+y_->getSize()+yGuard_[i]-1, coef_[i]->getSize()+1+y_->getSize()+yGuard_[i]-1 - pikPTSize[i]) << ";" << endl;   
+					vhdl << tab << "-- weight of yT"<<i<<" is="<<y_->getWeight()<<" size="<<1+y_->getSize()+yGuard_[i]<<endl;
+					vhdl << tab << declare( join("yT",i) , 1+y_->getSize()+yGuard_[i]) << " <= \"0\" & Y"<<range(y_->getSize()-1, -yGuard_[i]) << ";" << endl;
+					vhdl << tab << "-- weight of piP"<<i<<" is="<<pikPWeight[i]<<" size="<<pikPSize[i]+2<<endl;
+
+//IntTruncMultiplier(Target* target, int winX, int winY, float ratio, int k, int uL, int maxTimeInMinutes, bool interactive, bool sign)
+
+					IntTruncMultiplier* sm = new IntTruncMultiplier ( target, 1+y_->getSize()+yGuard_[i], sigmakPSize[i-1]+1, 0.7,1+y_->getSize()+yGuard_[i] + sigmakPSize[i-1]+1 - (pikPTSize[i]+2), 1, -1, false, true); //inDelayMap("X",getCriticalPath()));
+					oplist.push_back(sm);
+				
+					inPortMap ( sm, "X", join("yT",i));
+					inPortMap ( sm, "Y", join("sigmaP",i-1));
+					outPortMap (sm, "R", join("piPT",i));
+				
+					vhdl << instance ( sm, join("Product_",i) );
+					syncCycleFromSignal(join("piPT",i)); 
+				
+					setCriticalPath( sm->getOutputDelay("R") );
+//					vhdl << tab << "-- the delay at the output of the multiplier is : " << sm->getOutputDelay("R") << endl;
+//					vhdl << tab << "-- weight of piPT"<<i<<" is="<<pikPTWeight[i]<<" size="<<pikPTSize[i]+1<<endl;
+//					vhdl << tab << declare( join("piPT",i), pikPTSize[i]+1 ) << " <= " << join("piP",i)<<range(pikPSize[i], pikPSize[i] - pikPTSize[i] ) << ";" <<endl; // coef_[i]->getSize()+1+y_->getSize()+yGuard_[i]-1, coef_[i]->getSize()+1+y_->getSize()+yGuard_[i]-1 - pikPTSize[i]) << ";" << endl;   
+
+
 					IntAdder* sa = new IntAdder (target, sigmakPSize[i]+1, inDelayMap("X",getCriticalPath()));
 					oplist.push_back(sa);
 				
@@ -205,6 +201,24 @@ namespace flopoco{
 //					nextCycle();///////////////////////////////////////////////////                                                                   
 				                                                                   
 				}else{
+					vhdl << tab << "-- weight of yT"<<i<<" is="<<y_->getWeight()<<" size="<<1+y_->getSize()+yGuard_[i]<<endl;
+					vhdl << tab << declare( join("yT",i) , 1+y_->getSize()+yGuard_[i]) << " <= \"0\" & Y"<<range(y_->getSize()-1, -yGuard_[i]) << ";" << endl;
+					vhdl << tab << "-- weight of piP"<<i<<" is="<<pikPWeight[i]<<" size="<<pikPSize[i]+2<<endl;
+
+					SignedIntMultiplier* sm = new SignedIntMultiplier ( target, 1+y_->getSize()+yGuard_[i], sigmakPSize[i-1]+1, inDelayMap("X",getCriticalPath()));
+					oplist.push_back(sm);
+				
+					inPortMap ( sm, "X", join("yT",i));
+					inPortMap ( sm, "Y", join("sigmaP",i-1));
+					outPortMap (sm, "R", join("piP",i));
+				
+					vhdl << instance ( sm, join("Product_",i) );
+					syncCycleFromSignal(join("piP",i)); 
+				
+					setCriticalPath( sm->getOutputDelay("R") );
+					vhdl << tab << "-- the delay at the output of the multiplier is : " << sm->getOutputDelay("R") << endl;
+
+
 					IntAdder* sa = new IntAdder (target, (coef_[0]->getSize()+3), inDelayMap("X",getCriticalPath()));
 					oplist.push_back(sa);
 

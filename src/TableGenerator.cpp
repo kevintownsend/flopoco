@@ -154,7 +154,7 @@ namespace flopoco{
 					if (mpfr_cmp(*mpErr, eps)>0) {
 						errBoundBool=0; 
 						REPORT(DETAILED, tab << "we have found an interval where the error is not small enough");
-						REPORT(DETAILED, tab << "failed at interval "<< k << "/" << nrIntervals-1);
+						REPORT(DETAILED, tab << "failed at interval "<< k+1 << "/" << nrIntervals);
 						REPORT(DETAILED, tab << "proceed to splitting"); 
 						/*erase the polys and the errors put so far for this function; keep the previous good ones intact*/
 						polys.resize(nrIntCompleted+1);
@@ -713,9 +713,17 @@ namespace flopoco{
 		for (i=1; i<n; i++){
 			temp=(tempTable[i-1]-precshift)/msize;
 			if (temp!=0)
-			tempTable[i]=temp*msize;
-			else	tempTable[i]=(tempTable[i-1]-precshift);
+				tempTable[i]=temp*msize ;
+			else	
+				tempTable[i]=(tempTable[i-1]-precshift);
 		}
+
+//		tempTable[0]+=2;		
+//		tempTable[1]+=2;
+//		tempTable[2]+=2;
+//		tempTable[4]+=2;
+//		tempTable[3]+=2;
+		
 	
 		c = NULL;
 	 
