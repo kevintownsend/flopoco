@@ -2681,6 +2681,8 @@ namespace flopoco{
 	int IntTruncMultiplier::multiplicationInSlices(vector<SoftDSP*> config)
 	{
 		unsigned partitions;
+		bool savedUseHardMultipliers = target_->getUseHardMultipliers();
+
 		for (partitions=0; partitions<config.size(); partitions++)
 		{	
 			int trx1, try1, blx1, bly1;
@@ -2743,7 +2745,8 @@ namespace flopoco{
 					 << " & " << zg(trx1+try1-minShift, 0) << ";" << endl;	
 			}
 		}
-				
+		
+		target_->setUseHardMultipliers(savedUseHardMultipliers);		
 		return (int)partitions;
 	}	
 
@@ -2857,6 +2860,7 @@ namespace flopoco{
 				vhdl << instance(af, "RoundCompensate");
 				
 				syncCycleFromSignal("roundCompRes");
+				outDelayMap["R"] = af->getOutputDelay("R");
 				vhdl << tab << "R <= roundCompRes" << range(wX+wY+(sign?2:0)-1-minShift, targetPrecision-minShift) << ";" << endl;
 			}else{
 				/* target precision > 1 */
@@ -2874,6 +2878,7 @@ namespace flopoco{
 				vhdl << instance(af, "RoundCompensate");
 				
 				syncCycleFromSignal("roundCompRes");
+				outDelayMap["R"] = af->getOutputDelay("R");
 				vhdl << tab << "R <= roundCompRes" << range(wX+wY+(sign?2:0) - targetPrecision,1) << ";" << endl;
 			}
 		}

@@ -144,7 +144,7 @@ namespace flopoco{
 								            << join("sum",i) << range(y*(cOp1-1) + xS + yS - 1,x) << ";" <<endl;
 							}else if (i==1){ 
 								vhdl << tab << declare (join("addOp",i),(cOp2-1)*x + y*(cOp1-1) + xS + yS - x) << " <= " 
-								            << rangeAssign( (cOp2-1-i)*x-1, 0, join("sum",i)+of(y*(cOp1-1) + xS + yS - 1 ))  << ((cOp2-1-i)*x-1>=0?" & ":"") 
+								            << rangeAssign( (cOp2-1-i)*x-1, 0, join("sum",i)+of(y*(cOp1-1) + xS + yS - 1 )) << " & " // << ((cOp2-1-i)*x-1>=0?" & ":"") 
 								            << join("sum",i) << ";" <<endl;
 							}else if ((i > 1) && ( i!= cOp2-1)){ 
 								vhdl << tab << declare (join("addOp",i),(cOp2-1)*x + y*(cOp1-1) + xS + yS - x) << " <= " 
