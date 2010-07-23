@@ -198,7 +198,13 @@ namespace flopoco{
 					vhdl << tab << declare( join("yT",i) , 1+y_->getSize()+yGuard_[i]) << " <= \"0\" & Y"<<range(y_->getSize()-1, -yGuard_[i]) << ";" << endl;
 					vhdl << tab << "-- weight of piP"<<i<<" is="<<pikPWeight[i]<<" size="<<pikPSize[i]+2<<endl;
 
-					SignedIntMultiplier* sm = new SignedIntMultiplier ( target, 1+y_->getSize()+yGuard_[i], sigmakPSize[i-1]+1, inDelayMap("X",getCriticalPath()));
+
+//sigmakPSize[i] - (coef_[0]->getSize()+3)
+
+					IntTruncMultiplier* sm = new IntTruncMultiplier ( target, 1+y_->getSize()+yGuard_[i], sigmakPSize[i-1]+1, 0.7, sigmakPSize[i] - (coef_[0]->getSize()+2) , 1, -1, false, true); //inDelayMap("X",getCriticalPath()));
+
+
+//					SignedIntMultiplier* sm = new SignedIntMultiplier ( target, 1+y_->getSize()+yGuard_[i], sigmakPSize[i-1]+1, inDelayMap("X",getCriticalPath()));
 					oplist.push_back(sm);
 				
 					inPortMap ( sm, "X", join("yT",i));
@@ -212,17 +218,17 @@ namespace flopoco{
 					vhdl << tab << "-- the delay at the output of the multiplier is : " << sm->getOutputDelay("R") << endl;
 
 
-					IntAdder* sa = new IntAdder (target, (coef_[0]->getSize()+3), inDelayMap("X",getCriticalPath()));
+					IntAdder* sa = new IntAdder (target, (coef_[0]->getSize()+2), inDelayMap("X",getCriticalPath()));
 					oplist.push_back(sa);
 
-					vhdl << tab << declare( join("op1_",i), sigmakPSize[i]+1 ) << " <= (" << rangeAssign(sigmakPWeight[i]-pikPWeight[i]-1,0, join("piP",i)+of(pikPSize[i]+1)) 
-						                                                               << " & " << join("piP",i)<<range(pikPSize[i],0)  << " & \"0\");" << endl;
+					vhdl << tab << declare( join("op1_",i), (coef_[0]->getSize()+2) ) << " <= " << rangeAssign( (coef_[0]->getSize()+2)-(sm->wOut-1) -1,0, join("piP",i)+of(sm->wOut-1)) 
+						                                                               << " & " << join("piP",i)<<range(sm->wOut-2,0) << ";" << endl;
 
-					vhdl << tab << declare( join("op2_",i), sigmakPSize[i]+1 ) << " <= (" << rangeAssign(sigmakPWeight[i]-coef_[degree_-i]->getWeight()-1,0, join("a",degree_-i)+of(coef_[degree_-i]->getSize()))
-//						                                                               << " & " << join("a",degree_-i) << " & "<< zg(sigmakPSize[i]-sigmakPWeight[i]-(coef[degree_-i]->getSize()-coef[degree_-i]->getWeight())-1 ,0) << ");"<<endl;
-					                                                                      << " & " << join("a",degree_-i) << " & "<< zg(sigmakPSize[i]+1 - (sigmakPWeight[i]-coef_[degree_-i]->getWeight()) - (coef_[degree_-i]->getSize()+1),0) << ");"<<endl;
-					inPortMapCst ( sa, "X", join("op1_",i)+range(sigmakPSize[i], sigmakPSize[i]+1 - (coef_[0]->getSize()+3)) );
-					inPortMapCst ( sa, "Y", join("op2_",i)+range(sigmakPSize[i], sigmakPSize[i]+1 - (coef_[0]->getSize()+3)) );
+					vhdl << tab << declare( join("op2_",i), sigmakPSize[i] ) << " <= (" << rangeAssign(sigmakPWeight[i]-coef_[degree_-i]->getWeight()-1,0, join("a",degree_-i)+of(coef_[degree_-i]->getSize()))
+					                                                                      << " & " << join("a",degree_-i) << " & "<< zg(sigmakPSize[i] - (sigmakPWeight[i]-coef_[degree_-i]->getWeight()) - (coef_[degree_-i]->getSize()+1),0) << ");"<<endl;
+
+					inPortMapCst ( sa, "X", join("op1_",i));
+					inPortMapCst ( sa, "Y", join("op2_",i)+range(sigmakPSize[i]-1, sigmakPSize[i] - (coef_[0]->getSize()+2)) );
 					inPortMapCst ( sa, "Cin", "'0'");
 					outPortMap( sa, "R", join("sigmaP",i));
 		
@@ -233,7 +239,7 @@ namespace flopoco{
 					weightR = sigmakPWeight[i];
 					addOutput("R", coef_[0]->getSize()+2 );//sigmakPSize[i]+1);
 					setCriticalPath(sa->getOutputDelay("R"));
-					vhdl << tab << "R <= " << join("sigmaP",i)<< range(coef_[0]->getSize()+2,1)<<";"<<endl; //<< << ";" << endl;
+					vhdl << tab << "R <= " << join("sigmaP",i)<< range(coef_[0]->getSize()+1,0)<<";"<<endl; //<< << ";" << endl;
 				}
 
 				outDelayMap["R"]=getCriticalPath();			

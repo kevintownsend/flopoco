@@ -119,6 +119,11 @@ namespace flopoco{
 	{
 	public:
 		
+		int wInX;             /**<The width of first input*/
+		int wInY;             /**<The width of second input*/
+		int wOut;             /**<The width of output */
+	
+		
 		IntTruncMultiplier(Target* target, int winX, int winY, float ratio, int k,int uL, int maxTimeInMinutes, bool interactive = true, bool sign = false);
 	
 		/** IntTruncMultiplier destructor */
@@ -272,9 +277,6 @@ namespace flopoco{
 		
 		
 		
-		int wInX;             /**<The width of first input*/
-		int wInY;             /**<The width of second input*/
-		int wOut;             /**<The width of output */
 		int truncationOffset; /** The truncation offset for the multiplication that are not completed. 0 value means that we perform a normal multiplication*/
 		DSP** globalConfig;   /**<The working configuration of the tiling algorithm on DSPs */
 		float bestCost;       /**<The best cost obtained so far*/
