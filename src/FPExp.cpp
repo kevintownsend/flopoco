@@ -330,14 +330,20 @@ namespace flopoco{
 		vhdl << tab << declare("fixXsignedLSB",sizeY) << " <= fixXsigned" << range(sizeY-1, 0) << ";"<<endl;
 
 #else
+#ifdef HAVE_SOLLYA
 		FixRealKCM *mulLog2 = new FixRealKCM(target, 0, wE, true  /* signed input */, -wF-g, "log(2)" );
+
 		oplist.push_back(mulLog2);
 		outPortMap(mulLog2, "R", "KLog2");
 		inPortMap(mulLog2, "X", "K");
 		vhdl << instance(mulLog2, "mulLog2");
 		syncCycleFromSignal("KLog2");
 		nextCycle();
-
+#else
+                ostringstream e;
+			e << "ERROR in FPExp, unable to build architecture if HAVE_SOLLYA is not enabled" <<endl;
+			throw e.str();
+#endif
 		vhdl << tab << declare("neg2Op",sizeY) << " <= not(KLog2" << range(sizeY-1, 0) << ");"<<endl;
 		vhdl << tab << declare("fixXsignedLSB",sizeY) << " <= fixXsigned" << range(sizeY-1, 0) << ";"<<endl;
 

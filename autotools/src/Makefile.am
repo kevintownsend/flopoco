@@ -76,17 +76,11 @@ libflopoco_la_SOURCES = VHDLLexer.lpp \
 			TestCase.cpp \
 			FPNumber.cpp \
 			IEEENumber.cpp \
-			fpexponential/math_lib.cpp \
-			fpexponential/signal.cpp \
-			fpexponential/fragment.cpp \
-			fpexponential/stdfragment.cpp \
-			fpexponential/logfragment.cpp \
-			fpexponential/gen_table.cpp \
-			fpexponential/explore.cpp \
 			FPExp.cpp \
 			fplogarithm/FirstInvTable.cpp \
 			fplogarithm/FirstLogTable.cpp \
 			fplogarithm/OtherLogTable.cpp \
+			FPPow.cpp \
 			FPLog.cpp \
 			InputIEEE.cpp \
 			OutputIEEE.cpp \
