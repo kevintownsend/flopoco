@@ -319,12 +319,14 @@ namespace flopoco{
 
 		vhdl << tab << declare("A0", a[0]) << " <= X" << range(wF-1,  wF-a[0]) << ";" << endl;
 
+		nextCycle();
 		vhdl << tab << "-- First inv table" << endl;
 		FirstInvTable* it0 = new FirstInvTable(target, a[0], a[0]+1);
 		oplist.push_back(it0);
 		inPortMap       (it0, "X", "A0");
 		outPortMap      (it0, "Y", "InvA0");
 		vhdl << instance(it0, "itO");
+		useHardRAM(it0);
 
 		nextCycle();
 		// TODO: somehow arbitrary
@@ -596,28 +598,61 @@ namespace flopoco{
 		syncCycleFromSignal("E_small", false);
 		nextCycle(); ///////////////////// 
 
+		setCriticalPath(0);
+
 		int E_normalSize = getSignalByName("E_normal")->width(); 
+		
+
 		vhdl << tab << declare("E0offset", wE) << " <= \"" << unsignedBinary((mpz_class(1)<<(wE-1)) -2 + wE , wE) << "\"; -- E0 + wE "<<endl;
+
+		manageCriticalPath(target_->lutDelay() + target_->adderDelay(wE));
+
 		vhdl << tab << declare("ER", wE) << " <= E_small" << range(wE-1,0) << " when small='1'" << endl;
 		if(wE>E_normalSize)
 			vhdl << "      else E0offset - (" << rangeAssign(wE-1,  E_normalSize, "'0'") << " & E_normal);" << endl;
 		else
 			vhdl << "      else E0offset - E_normal;" << endl;
+
+
 		vhdl << tab << declare("Log_g", wF+gLog) << " <=  Log_small_normd(wF+g-2 downto 0) & \"0\" when small='1'           -- remove implicit 1" << endl
 			  << "      else Log_normal_normd(targetprec-2 downto targetprec-wF-g-1 );  -- remove implicit 1" << endl ;
+
 		// Sticky is always 1 for a transcendental function !
 		// vhdl << tab << declare("sticky") << " <= '0' when Log_g(g-2 downto 0) = (g-2 downto 0 => '0')    else '1';" << endl;
 		vhdl << tab << declare("round") << " <= Log_g(g-1) ; -- sticky is always 1 for a transcendental function " << endl;
-		vhdl << tab << "-- if round leads to a change of binade, the carry propagation magically updates both mantissa and exponent" << endl;
-		// TODO an IntAdder here ?
-		vhdl << tab << declare("EFR", wE+wF) << " <= (ER & Log_g(wF+g-1 downto g)) + ((wE+wF-1 downto 1 => '0') & round); " << endl;
 
+
+
+		vhdl << tab << "-- if round leads to a change of binade, the carry propagation magically updates both mantissa and exponent" << endl;
+
+#if 0
+		vhdl << tab << declare("EFR", wE+wF) << " <= (ER & Log_g(wF+g-1 downto g)) + ((wE+wF-1 downto 1 => '0') & round); " << endl;
+#else
+		vhdl << tab << declare("fraX", wE+wF) << " <= (ER & Log_g(wF+g-1 downto g)) ; " << endl;
+		vhdl << tab << declare("fraY", wE+wF) << " <= ((wE+wF-1 downto 1 => '0') & round); " << endl;
+		IntAdder* finalRoundAdder = new IntAdder(target, wE+wF, inDelayMap("X", getCriticalPath()));
+			oplist.push_back(finalRoundAdder);
+		inPortMap(finalRoundAdder, "X", "fraX");
+		inPortMap(finalRoundAdder, "Y", "fraY");
+		inPortMapCst(finalRoundAdder, "Cin", "'0'");
+		outPortMap(finalRoundAdder, "R", "EFR");
+		vhdl << instance(finalRoundAdder, "finalRoundAdder");
+		syncCycleFromSignal("EFR");
+	
+		setCriticalPath(finalRoundAdder->getOutputDelay("R"));
+
+
+		manageCriticalPath(target_->lutDelay() );
+#endif
 		vhdl << tab << "R(wE+wF+2 downto wE+wF) <= \"110\" when ((XExnSgn(2) and (XExnSgn(1) or XExnSgn(0))) or (XExnSgn(1) and XExnSgn(0))) = '1' else" << endl
 			  << "                              \"101\" when XExnSgn(2 downto 1) = \"00\"  else" << endl
 			  << "                              \"100\" when XExnSgn(2 downto 1) = \"10\"  else" << endl
 			  << "                              \"00\" & sR when (((Log_normal_normd(targetprec-1)='0') and (small='0')) or ( (Log_small_normd (wF+g-1)='0') and (small='1'))) or (ufl = '1') else" << endl
 			  << "                               \"01\" & sR;" << endl;
 		vhdl << tab << "R(wE+wF-1 downto 0) <=  EFR;" << endl;
+
+		outDelayMap["R"]=getCriticalPath();
+
 	}	
 
 	FPLog::~FPLog()

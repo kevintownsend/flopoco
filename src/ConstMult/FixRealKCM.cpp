@@ -91,7 +91,7 @@ namespace flopoco{
 			FixRealKCMTable *t; 
 			t = new FixRealKCMTable(target, this, 0, wIn, wOut, signedInput, false);
 			oplist.push_back(t);
-			useHardRAM(t);
+			useSoftRAM(t);
 			manageCriticalPath(target->lutDelay() + 2*target->localWireDelay());
       
 			inPortMap (t , "X", "X");
@@ -153,7 +153,7 @@ namespace flopoco{
 				int ppiSize = wOut+g - (nbOfTables-1-i)*lutWidth ;
 				t = new FixRealKCMTable(target, this, i, diSize, ppiSize, tableSigned, last);
 				oplist.push_back(t);
-				useHardRAM(t);
+				useSoftRAM(t);
             
 				inPortMap (t , "X", join("d",i));
 				outPortMap(t , "Y", join("pp",i));

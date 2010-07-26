@@ -16,7 +16,6 @@
 
 using namespace std;
 
-// TODO fix-point KCM by a real constant
 
 #define LARGE_PREC 1000 // 1000 bits should be enough for everybody
 
@@ -427,29 +426,16 @@ namespace flopoco{
 			outPortMap(table, "Y", "expA");
 			inPortMap(table, "X", "Addr1");
 			vhdl << instance(table, "table");
-#if 0 // TODO
 			REPORT(LIST, "Generating the polynomial approximation, this may take some time");
 			// We want the LSB value to be  2^(wF+g)
 			FunctionEvaluator *fe;
 			ostringstream function;
-			function << "1b"<<2*k<<"*exp(x*1b-" << k << ")-x*1b-" << k << "-1, 0,1,1";
+			function << "1b"<<2*k<<"*(exp(x*1b-" << k << ")-x*1b-" << k << "-1), 0,1,1";
 			fe = new FunctionEvaluator(target, function.str(), sizeZhigh, wF+g-2*k, d);
 			oplist.push_back(fe);
 			inPortMap(fe, "X", "Zhigh");
 			outPortMap(fe, "R", "expZmZm1_0");
 			vhdl << instance(fe, "poly");
-#else
-			REPORT(LIST, "Generating the polynomial approximation, this may take some time");
-			// We want the LSB value to be  2^(wF+g)
-			FunctionEvaluator *fe;
-			ostringstream function;
-			function << "exp(x*1b-" << k << ")-x*1b-" << k << "-1, 0,1,1";
-			fe = new FunctionEvaluator(target, function.str(), sizeZhigh, wF+g, d);
-			oplist.push_back(fe);
-			inPortMap(fe, "X", "Zhigh");
-			outPortMap(fe, "R", "expZmZm1_0");
-			vhdl << instance(fe, "poly");
-#endif
 
 		}
 

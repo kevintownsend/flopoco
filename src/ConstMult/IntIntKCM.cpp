@@ -97,14 +97,14 @@ namespace flopoco{
 			KCMTable *t1, *t2; 
  			t1 = new KCMTable(target, lutWidth, constantWidth + lutWidth, C, false);
 			oplist.push_back(t1);
-			useHardRAM(t1);
+			useSoftRAM(t1);
 
 
 			if(signedInput_) {
 				t2 = new KCMTable(target, lutWidth, constantWidth + lutWidth, C, true);
 				oplist.push_back(t2);
 
-				useHardRAM(t2);
+				useSoftRAM(t2);
 			}
 
 			manageCriticalPath(target->lutDelay() + 2*target->localWireDelay());

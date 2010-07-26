@@ -314,6 +314,7 @@ public:
 	 * @ param t a pointer to this instance
 	 */
 	void useHardRAM(Operator* t); 
+	void useSoftRAM(Operator* t); 
 
 
 	/**

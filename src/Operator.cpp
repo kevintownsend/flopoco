@@ -838,14 +838,26 @@ namespace flopoco{
 
 
   void Operator::useHardRAM(Operator* t) {
-      if (target_->getVendor() == "Xilinx") 
-	{
-	  addAttribute("rom_extract", "string", t->getName()+": component", "yes");
-	  addAttribute("rom_style", "string", t->getName()+": component", "distributed");
-	}
-      if (target_->getVendor() == "Altera") 
-	addAttribute("altera_attribute", "string", t->getName()+": component", "-name ALLOW_ANY_ROM_SIZE_FOR_RECOGNITION OFF");
+	  if (target_->getVendor() == "Xilinx") 
+		  {
+			  addAttribute("rom_extract", "string", t->getName()+": component", "yes");
+			  addAttribute("rom_style", "string", t->getName()+": component", "block");
+		  }
+	  if (target_->getVendor() == "Altera") 
+		  addAttribute("altera_attribute", "string", t->getName()+": component", "-name ALLOW_ANY_ROM_SIZE_FOR_RECOGNITION ON");
   }
+
+	void Operator::useSoftRAM(Operator* t) {
+		if (target_->getVendor() == "Xilinx") 
+			{
+				addAttribute("rom_extract", "string", t->getName()+": component", "yes");
+				addAttribute("rom_style", "string", t->getName()+": component", "distributed");
+			}
+		if (target_->getVendor() == "Altera") 
+			addAttribute("altera_attribute", "string", t->getName()+": component", "-name ALLOW_ANY_ROM_SIZE_FOR_RECOGNITION OFF");
+	}
+
+
 
 	string Operator::buildVHDLComponentDeclarations() {
 		ostringstream o;
@@ -856,7 +868,6 @@ namespace flopoco{
 		}
 		return o.str();	
 	}
-
 
 
 	void Operator::addConstant(std::string name, std::string t, mpz_class v) {
