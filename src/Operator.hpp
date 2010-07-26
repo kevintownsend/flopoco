@@ -247,7 +247,7 @@ public:
 		 * @param name is the signal name. It must have been defined before 
 		 * @param report is a boolean, if true it will report the cycle 
 		 */
-	void syncCycleFromSignal(string name, bool report=true) ;
+	bool syncCycleFromSignal(string name, bool report=true) ;
 
 
 

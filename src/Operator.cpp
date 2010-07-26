@@ -470,8 +470,9 @@ namespace flopoco{
 	}
 
 
-	void Operator::syncCycleFromSignal(string name, bool report) {
+	bool Operator::syncCycleFromSignal(string name, bool report) {
 		// lexing part
+		bool advance = false;
 		vhdl.flush(currentCycle_);
 		ostringstream e;
 		e << "ERROR in syncCycleFromSignal, "; // just in case
@@ -493,6 +494,7 @@ namespace flopoco{
 			} 
 			// advance cycle if needed
 			if (s->getCycle()>currentCycle_){
+				advance = true;
 				currentCycle_ = s->getCycle();
 				vhdl.setCycle(currentCycle_);
 			}
@@ -503,6 +505,8 @@ namespace flopoco{
 			if (currentCycle_ > pipelineDepth_) 
 				pipelineDepth_ = currentCycle_;
 		}
+		
+		return advance;
 	}
 
 	double Operator::getCriticalPath() {return criticalPath_;}

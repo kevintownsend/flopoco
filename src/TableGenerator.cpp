@@ -722,7 +722,7 @@ namespace flopoco{
 //		tempTable[1]+=2;
 //		tempTable[2]+=2;
 //		tempTable[4]+=2;
-//		tempTable[3]+=2;
+		tempTable[3]+=1;
 		
 	
 		c = NULL;

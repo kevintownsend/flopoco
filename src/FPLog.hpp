@@ -38,7 +38,7 @@ namespace flopoco{
 	class FPLog : public Operator
 	{
 	public:
-		FPLog(Target* target, int wE, int wF, int inTableSize=0);
+		FPLog(Target* target, int wE, int wF, int inTableSize=0, map<string, double> inputDelays = emptyDelayMap);
 		~FPLog();
 
 		//		Overloading the virtual functions of Operator
