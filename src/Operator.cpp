@@ -574,7 +574,7 @@ namespace flopoco{
 	}
 
 
-
+#if 1
 	string Operator::use(string name) {
 		ostringstream e;
 		e << "ERROR in use(), "; // just in case
@@ -629,7 +629,7 @@ namespace flopoco{
 			return name;
 	}
 
-
+#endif
 
 	void Operator::outPortMap(Operator* op, string componentPortName, string actualSignalName){
 		Signal* formal;

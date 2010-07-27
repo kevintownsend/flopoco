@@ -2450,7 +2450,7 @@ namespace flopoco{
 		int trx1, try1, blx1, bly1; 	// coordinates of the two corners of a DSP block 
 		int trx2, try2, blx2, bly2; 	// coordinates of the two corners of a DSP block 
 
-		int fpadX, fpadY, bpadX, bpadY;	// zero padding on both axis
+		int fpadX, fpadY;	// zero padding on both axis
 		int multW, multH; 				// width and height of the multiplier the DSP block is using
 		ostringstream xname, yname, mname, cname, sname;
 		DSP** tempc = new DSP*[nrDSPs];	// buffer that with hold a copy of the global configuration
@@ -2492,7 +2492,7 @@ namespace flopoco{
 						REPORT(INFO, "coordinates      trx="<<trx1<<" try="<<try1<<" blx"<<blx1<<" bly="<<bly1);
 						REPORT(INFO, "coordinates REAL trx="<<trx2<<" try="<<try2<<" blx"<<blx2<<" bly="<<bly2);
 
-						int sh = 0;
+						//						int sh = 0;
 						/* forward padding variables */
 						fpadX = (wInX - 1) - blx1; //max coord on X axis - bottom left corner (x)
 						fpadX = (fpadX<0)? 0: fpadX; //no need to pad if tile exceeds limits

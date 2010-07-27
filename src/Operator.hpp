@@ -263,6 +263,7 @@ public:
 	// TODO: add methods that allow for signals with reset (when rewriting LongAcc for the new framework)
 
 
+#if 1
 	/** use a signal on the Right 
 	 * @param name is the name of the signal
 	 * @return name
@@ -270,7 +271,7 @@ public:
 	string use(string name);
 
 	string use(string name, int delay);
-
+#endif
 
 	/** Declare an output mapping for an instance of a sub-component
 	 * Also declares the local signal implicitely, with width taken from the component 	

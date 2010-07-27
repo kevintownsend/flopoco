@@ -266,6 +266,9 @@ static void usage(char *name){
 	cerr << "      Floating-point logarithm function;\n";
 	cerr << "      InTableSize is the numbers of bits to input to the tables. \n";
 	cerr << "      O defaults to something sensible\n";
+	OP( "FPPowr","wE wF LogTableSize ExpTableSize ExpDegree");
+	cerr << "      Floating-point powr function from IEEE-754-2008 (experimental);\n";
+	cerr << "      For the parameters, try 8 23 10 10 2 3 3 (simple), 11 52 12 12 2 33  (double)\n";
 	OP( "OutputIEEE","wEI wFI wEO wFO");
 	cerr << "      Conversion from FloPoCo to IEEE-754-like floating-point formats\n";
 	OP( "InputIEEE","wEI wFI wEO wFO");
@@ -1310,7 +1313,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			addOperator(op);
 		}
 
-		else if (opname == "FPPow")
+		else if (opname == "FPPowr")
 		{
 			int nargs = 7;
 			if (i+nargs > argc)
@@ -1324,7 +1327,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			int expDegree=checkStrictyPositive(argv[i++], argv[0]);
 			int expG=checkStrictyPositive(argv[i++], argv[0]);
 			int logG=checkStrictyPositive(argv[i++], argv[0]);
-			cerr << "> FPPow: wE=" << wE << " wF=" << wF << endl;
+			cerr << "> FPPowr: wE=" << wE << " wF=" << wF << endl;
 			op = new FPPow(target, wE, wF,logTableSize, expTableSize, expDegree,  expG, logG );
 			addOperator(op);
 		}
