@@ -44,16 +44,12 @@ namespace flopoco{
 		// -------- Parameter set up -----------------
 		wOut_ = intlog2(wIn);
 		p2wOut_ = 1<<wOut_; // no need for GMP here
-		double period = (1.0)/target->frequency();
-
 
 		setOperatorName();
 
 		addInput ("I", wIn_);
 		addInput ("OZB");  
 		addOutput("O", wOut_);
-	
-	
 	
 		vhdl << tab << declare("sozb",1) <<" <= OZB;" << endl;
 		currLevel << "level"<<wOut_;
@@ -63,33 +59,27 @@ namespace flopoco{
 		
 		vhdl << tab << declare(currLevel.str(),intpow2(wOut_)) << "<= I" << padStr.str() <<";"<<endl; //zero padding if necessary
 		//each operation is formed of a comparisson folloewd by a multiplexing
-		double delay = 0.0;
-		delay+=getMaxInputDelays(inputDelays);
+		setCriticalPath( getMaxInputDelays(inputDelays));
+
 		for (int i=wOut_;i>=1;i--){
 			currDigit.str(""); currDigit << "digit" << i ;
 			currLevel.str(""); currLevel << "level" << i;
 			nextLevel.str(""); nextLevel << "level" << i-1;
-			delay += intlog(mpz_class(target->lutInputs()), intpow2(i-1)) * target->lutDelay() + intlog(mpz_class(target->lutInputs()), intpow2(i-1))* target->localWireDelay();
-			if (delay > period ) {
-				nextCycle();////////////////////////
-				delay =0.0;
-			}
+			manageCriticalPath( intlog(mpz_class(target->lutInputs()), intpow2(i-1)) * target->lutDelay() + intlog(mpz_class(target->lutInputs()), intpow2(i-1))* target->localWireDelay() ); 
+
 			vhdl << tab <<declare(currDigit.str(),1) << "<= '1' when " << currLevel.str() << "("<<intpow2(i)-1<<" downto "<<intpow2(i-1)<<") = "
 				  <<"("<<intpow2(i)-1<<" downto "<<intpow2(i-1)<<" => sozb)"
 				  << " else '0';"<<endl;
 
 			if (i>1){
-				delay +=target->lutDelay();
-				if (delay > period ) {
-					nextCycle();////////////////////////
-					delay =0.0;
-				}
+				manageCriticalPath( target->lutDelay() );
+
 				vhdl << tab << declare(nextLevel.str(),intpow2(i-1)) << "<= "<<currLevel.str() << "("<<intpow2(i-1)-1<<" downto 0) when " << currDigit.str()<<"='1' "
 					  <<"else "<<currLevel.str()<<"("<<intpow2(i)-1<<" downto "<<intpow2(i-1)<<");"<<endl;
 			}
 		}
 		//update output slack
-		outDelayMap["O"] = period - delay;
+		outDelayMap["O"] = getCriticalPath();
 	
 		vhdl << tab << "O <= ";
 		for (int i=wOut_;i>=1;i--){

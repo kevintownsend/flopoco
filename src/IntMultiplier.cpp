@@ -141,6 +141,8 @@ namespace flopoco{
 						}
 						if (i<chunksX-1) setCycle(0); //reset cycle
 					}
+
+					manageCriticalPath( 2*target->DSPinterconnectWireDelay() + target->DSPlocalWireDelay() );
 		
 					//FORM THE INTERMEDIARY PRODUCTS
 					for (int i=0; i<chunksX ; i++){

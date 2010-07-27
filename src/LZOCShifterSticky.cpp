@@ -72,10 +72,8 @@ namespace flopoco{
 		if ((computeSticky_)&&(wOut_<wIn))   vhdl << tab << declare(join("sticky",wCount_), 1  ) << " <= '0' ;"<<endl; //init sticky 
 	
 		int currLev=wIn, prevLev=0;
-		double stageDelay = getMaxInputDelays(inputDelays); 
-		double opDelay = 0.0;
-		double period = (1.0)/target->frequency();
-	
+
+		setCriticalPath( getMaxInputDelays(inputDelays) );
 		for (int i=wCount_-1; i>=0; i--){
 			//int currLev = (wOut_>intpow2(i)?wOut_:intpow2(i));
 			prevLev = currLev;
@@ -84,19 +82,12 @@ namespace flopoco{
 			currLev = (wOut_>intpow2(i)?wOut_:intpow2(i));
 			currLev += (intpow2(i)-1); 
 			currLev = (currLev > wIn_? wIn_: currLev);
-			opDelay = compDelay(intpow2(i));
-			if (stageDelay + opDelay > period){
-				nextCycle(); ///////////////////////////////////////
-				stageDelay = 0.0;
-			}
+			manageCriticalPath( compDelay(intpow2(i)) ) ;
+
 			vhdl << tab << declare(join("count",i),1) << "<= '1' when " <<join("level",i+1)<<range(prevLev-1,prevLev - intpow2(i))<<" = "
 				  <<"("<<prevLev-1<<" downto "<<prevLev - intpow2(i)<<"=>"<< (countType_==-1? "sozb": countType_==0?"'0'":"'1'")<<") else '0';"<<endl;
-			stageDelay += opDelay;
-			opDelay = muxDelay();
-			if (stageDelay + opDelay > period){
-				nextCycle(); ///////////////////////////////////////
-				stageDelay = 0.0;
-			}
+
+			manageCriticalPath( muxDelay() );
 			vhdl << tab << declare(join("level",i),currLev) << "<= " << join("level",i+1)<<"("<<prevLev-1<<" downto "<< prevLev-currLev << ")"
 				  << " when " << join("count",i) << "='0' else ";
 			int l,r;
@@ -108,14 +99,10 @@ namespace flopoco{
 			if (prevLev - intpow2(i) < currLev )
 				vhdl << (l>=r?" & ":"") << rangeAssign(currLev -(prevLev - intpow2(i))-1,0,"'0'");
 			vhdl << ";"<<endl;
-			stageDelay += opDelay;
 
 			if ((computeSticky_)&&(wOut_<wIn)) {
-				opDelay = compDelay( max( prevLev-currLev, (currLev < prevLev - intpow2(i) ? (prevLev - int(intpow2(i)) ) - currLev : 0 ))  );
-				if (stageDelay + opDelay > period){
-					nextCycle(); ///////////////////////////////////////
-					stageDelay = 0.0;
-				}
+				
+				manageCriticalPath( compDelay( max( prevLev-currLev, (currLev < prevLev - intpow2(i) ? (prevLev - int(intpow2(i)) ) - currLev : 0 ))  ) ); 
 
 				vhdl << tab << declare(join("sticky_high_",i),1) << "<= '0'";
 				if (prevLev-currLev > 0)
@@ -128,26 +115,22 @@ namespace flopoco{
 						  <<" downto "<< 0 <<") = CONV_STD_LOGIC_VECTOR(0,"<< (currLev < prevLev - intpow2(i) ? (prevLev - intpow2(i)) - currLev : 0 ) <<") else '1'";
 				vhdl << ";"<<endl;
 
-				stageDelay += opDelay;
-				opDelay = muxDelay();
-				if (stageDelay + opDelay > period){
-					nextCycle(); ///////////////////////////////////////
-					stageDelay = 0.0;
-				}
+				manageCriticalPath( muxDelay() );
+
 				vhdl << tab << declare(join("sticky",i),1) << "<= " << join("sticky",i+1) << " or " << join("sticky_high_",i) 
 					  << " when " << join("count",i) << "='0' else " << join("sticky",i+1) << " or " << join("sticky_low_",i)<<";"<<endl;
-				stageDelay += opDelay;
 			}
 		
 			vhdl <<endl;
-		}     
+		}    
+		 
 		//assign back the value to wOut_
 		wOut_ =  wOut_true;
 		vhdl << tab << "O <= "<< join("level",0)
 			  << (wOut_<=wIn?"":join("&",rangeAssign(wOut_-wIn-1,0,"'0'")))<<";"<<endl;
 	
-		outDelayMap["O"] = period - stageDelay;
-		outDelayMap["Count"] = max(0.0, period - (stageDelay+muxDelay()));
+		outDelayMap["O"] = getCriticalPath();
+		outDelayMap["Count"] = getCriticalPath();
 	
 		vhdl << tab << declare("sCount",wCount_) <<" <= ";
 		for (int i=wCount_-1; i>=0; i--){
@@ -163,7 +146,7 @@ namespace flopoco{
 			vhdl << tab << "Count <= sCount;"<<endl;
 		}
 		if (computeSticky_){
-			outDelayMap["Sticky"] = period - stageDelay;
+			outDelayMap["Sticky"] = getCriticalPath();
 			if (wOut_>=wIn)
 				vhdl << tab << "Sticky <= '0';"<<endl; 
 			else

@@ -53,19 +53,30 @@ namespace flopoco{
 		void emulate(TestCase* tc);
 	
 		double compDelay(int n){
-			double fdcq = 0.826e-9;
-			double lutd = 0.147e-9;
-			double muxcy = 0.034e-9;
-			double fdd = 0.017e-9;
+//			double fdcq = 0.826e-9;
+//			double lutd = 0.147e-9;
+//			double muxcy = 0.034e-9;
+//			double fdd = 0.017e-9;
+			
+//			if (countType_>=0)
+//				return 2*target_->lutDelay(); 
+//			else
+				return target_->adderDelay(n) + target_->lutDelay(); 
 		
-			return (fdcq + lutd + (muxcy*n/2) + fdd);
+//			return (fdcq + lutd + (muxcy*n/2) + fdd);
 		};
 		double muxDelay(){
-			double fdcq = 0.826e-9;
-			double lutd = 0.147e-9;
-			double fdd = 0.017e-9;
-		
-			return (fdcq + lutd + fdd);
+
+			if (countType_>=0)
+				return 2*target_->lutDelay(); 
+			else
+				return 4*target_->lutDelay(); 
+
+//			double fdcq = 0.826e-9;
+//			double lutd = 0.147e-9;
+//			double fdd = 0.017e-9;
+//		
+//			return (fdcq + lutd + fdd);
 		}
 
 
