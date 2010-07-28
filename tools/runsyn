@@ -36,7 +36,9 @@
 ########################################################
 
 virtex4="xc4vfx100-12-ff1152"
-virtex5="xc5vlx30-3-ff324"
+virtex5="xc5vfx100T-3-ff1738"
+virtex6="xc6vhx380T-3-ff1923"
+
 spartan3="xc3s200-5-pq208"
 spartan3e="xc3s100e-5-tq144"
 
@@ -45,6 +47,8 @@ if [ $target == "virtex4" ]; then
 	selected_target=$virtex4
 elif [ $target == "virtex5" ]; then
 	selected_target=$virtex5
+elif [ $target == "virtex6" ]; then
+	selected_target=$virtex6	
 elif [ $target == "spartan3" ]; then
 	selected_target=$spartan3
 elif [ $target == "spartan3e" ]; then
@@ -167,7 +171,7 @@ run
 -shift_extract YES
 -xor_collapse YES
 -rom_style Auto
--auto_bram_packing NO
+-auto_bram_packing YES
 -mux_extract YES
 -resource_sharing YES
 -async_to_sync NO
@@ -175,9 +179,9 @@ run
 -max_fanout 500
 -bufg 32
 -register_duplication YES
--register_balancing No
+-register_balancing YES
 -slice_packing YES
--optimize_primitives NO
+-optimize_primitives YES
 -use_clock_enable Auto
 -use_sync_set Auto
 -use_sync_reset Auto
@@ -189,7 +193,7 @@ if [ $target == $virtex4 ]; then
 	echo "-bufr 16" >> $opName.xst
 fi
 
-if [ $target == $virtex4 -o $target == $virtex5 ]; then
+if [ $target == $virtex4 -o $target == $virtex5 -o $target == $virtex6 ]; then
 	echo "
 	-iuc NO
 	-power NO
@@ -420,12 +424,12 @@ cd ..
 	
 xst  -ifn $topModule.xst -ofn $topModule.syr | tee console.out
 
-echo -en "\033[0;33;40m"
-grep 'WARNING' console.out
+#echo -en "\033[0;33;40m"
+#grep 'WARNING' console.out
+##echo -e "\033[0m"
+#echo -en "\033[0;31;40m"
+#grep 'ERROR' console.out
 #echo -e "\033[0m"
-echo -en "\033[0;31;40m"
-grep 'ERROR' console.out
-echo -e "\033[0m"
 
 
 #if not requested -> the results are not outputed to a file
