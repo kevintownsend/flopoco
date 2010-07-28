@@ -146,7 +146,7 @@ namespace flopoco{
 //			nextCycle(); ////////////////////////////////////////////////
 			vhdl << declare("op1",101) << "<= x51_67_sqr & x34_50_sqr" << range(33,0) << " & x17_33_sqr" << range(33,1) <<  ";"<<endl;
 			vhdl << declare("op2",101) << "<="<< zg(101-68,0)<<" & x_17_33_51_67_pshift & x_0_16_51_67_pshift" << range(16,0)<<" & x_0_16_34_50" << range(16,0)<<";"<<endl;
-			intadder = new IntAdder(target, 101, inputDelays("X", target->DSPToLogicWireDelay() + getCriticalPath() );
+			intadder = new IntAdder(target, 101, inDelayMap("X", target->DSPToLogicWireDelay() + getCriticalPath() ));
 			oplist.push_back(intadder);
 
 			inPortMap(intadder, "X", "op1");
