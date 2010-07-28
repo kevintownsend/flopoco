@@ -777,7 +777,6 @@ namespace flopoco{
 		syncCycleFromSignal("EFR");
 	
 		setCriticalPath(finalRoundAdder->getOutputDelay("R"));
-#endif
 
 		manageCriticalPath(target_->lutDelay() );
 		vhdl << tab << "R(wE+wF+2 downto wE+wF) <= \"110\" when ((XExnSgn(2) and (XExnSgn(1) or XExnSgn(0))) or (XExnSgn(1) and XExnSgn(0))) = '1' else" << endl
