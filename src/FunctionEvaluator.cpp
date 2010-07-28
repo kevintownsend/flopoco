@@ -143,6 +143,7 @@ namespace flopoco{
 //			outDelayMap["R"]=a->getOutputDelay("R");
 //			vhdl << tab << " R <= fPostRound"<<range(recover, 1)<<";"<<endl;
 			vhdl << tab << " R <= Rpe"<<range(wR-1, wR-recover)<<";"<<endl;
+			outDelayMap["R"] = getCriticalPath();
 		}else{
 			outDelayMap["R"] = getCriticalPath();
 			addOutput("R", pe->getRWidth());

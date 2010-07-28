@@ -24,86 +24,79 @@ namespace flopoco{
 
 
 	mpz_class FPExp::magicTable::function(int x){
-				mpz_class h, l;
-				mpfr_t a, yh,yl, one;
+		mpz_class h, l;
+		mpfr_t a, yh,yl, one;
 
-				// convert x to 2's compliment
-				int xs=x;
-				if(xs>>(wIn-1))
-					xs-=(1<<wIn);
+		// convert x to 2's compliment
+		int xs=x;
+		if(xs>>(wIn-1))
+			xs-=(1<<wIn);
 
-				mpfr_init2(a, wIn);
-				mpfr_init2(one, 16);
-				mpfr_set_d(one, 1.0, GMP_RNDN);
-				mpfr_init2(yh, LARGE_PREC); 
-				mpfr_init2(yl, LARGE_PREC); 
+		mpfr_init2(a, wIn);
+		mpfr_init2(one, 16);
+		mpfr_set_d(one, 1.0, GMP_RNDN);
+		mpfr_init2(yh, LARGE_PREC); 
+		mpfr_init2(yl, LARGE_PREC); 
 
-				mpfr_set_si(a, xs, GMP_RNDN);
-				mpfr_div_2si(a, a, wIn, GMP_RNDN); // now a in [-1/2, 1/2[
-				mpfr_exp(yh, a, GMP_RNDN); // e^x in [0.6,1.7[
+		mpfr_set_si(a, xs, GMP_RNDN);
+		mpfr_div_2si(a, a, wIn, GMP_RNDN); // now a in [-1/2, 1/2[
+		mpfr_exp(yh, a, GMP_RNDN); // e^x in [0.6,1.7[
 
-				mpfr_mul_2si(yh, yh, 26, GMP_RNDN);
-				mpfr_get_z(h.get_mpz_t(), yh,  GMP_RNDN);  // Here is the rounding! Should be a 27-bit number
+		mpfr_mul_2si(yh, yh, 26, GMP_RNDN);
+		mpfr_get_z(h.get_mpz_t(), yh,  GMP_RNDN);  // Here is the rounding! Should be a 27-bit number
 
-				mpfr_set_ui(a, x, GMP_RNDN);
-				mpfr_div_2si(a, a, 2*wIn, GMP_RNDN); // now a in [0,1[. 2^-9
+		mpfr_set_ui(a, x, GMP_RNDN);
+		mpfr_div_2si(a, a, 2*wIn, GMP_RNDN); // now a in [0,1[. 2^-9
 
-				mpfr_exp(yl, a, GMP_RNDN); // e^(2^-9 x)
-				mpfr_sub(yl, yl, a, GMP_RNDN); // e^(2^-9 x) -x 
+		mpfr_exp(yl, a, GMP_RNDN); // e^(2^-9 x)
+		mpfr_sub(yl, yl, a, GMP_RNDN); // e^(2^-9 x) -x 
 
-				mpfr_sub(yl, yl, one, GMP_RNDN); // e^(2^-9 x) -x -1
+		mpfr_sub(yl, yl, one, GMP_RNDN); // e^(2^-9 x) -x -1
 
-				//now scale 
-				mpfr_mul_2si(yl, yl, 26, GMP_RNDN); //  * 2^-26:  y scaled up to  [0..511] (actually [0..258])
-				mpfr_get_z(l.get_mpz_t(), yl,  GMP_RNDN);
+		//now scale 
+		mpfr_mul_2si(yl, yl, 26, GMP_RNDN); //  * 2^-26:  y scaled up to  [0..511] (actually [0..258])
+		mpfr_get_z(l.get_mpz_t(), yl,  GMP_RNDN);
 
-				// debug
-				if((h>=(1<<27)) || l>=512 || h<0 || l<0)
-					REPORT(0, "Ouch!!!!!" <<"x=" << x << " " << xs << "    " << h << " " << l );
+		// debug
+		if((h>=(1<<27)) || l>=512 || h<0 || l<0)
+			REPORT(0, "Ouch!!!!!" <<"x=" << x << " " << xs << "    " << h << " " << l );
 
-				//cout << x << "\t" << h << "\t" << l <<endl;
-				mpfr_clears(yh, yl, a, one, NULL);
-						
-				return l + (h<<9);
-			};
+		//cout << x << "\t" << h << "\t" << l <<endl;
+		mpfr_clears(yh, yl, a, one, NULL);
+				
+		return l + (h<<9);
+	};
 
+	mpz_class FPExp::firstExpTable::function(int x){
+		mpz_class h;
+		mpfr_t a, y;
 
+		// convert x to 2's compliment
+		int xs=x;
+		if(xs>>(wIn-1))
+			xs-=(1<<wIn);
 
+		mpfr_init2(a, wIn);
+		mpfr_set_si(a, xs, GMP_RNDN);
+		mpfr_div_2si(a, a, wIn, GMP_RNDN); // now a in [-1/2, 1/2[
+		mpfr_init2(y, LARGE_PREC); 
+		mpfr_exp(y, a, GMP_RNDN); // in [0.6, 1.7], MSB is 1
 
+		mpfr_mul_2si(y, y, wOut-1, GMP_RNDN);
+		mpfr_get_z(h.get_mpz_t(), y,  GMP_RNDN);  // here the rounding takes place
 
-			mpz_class FPExp::firstExpTable::function(int x){
-				mpz_class h;
-				mpfr_t a, y;
+		// debug
+		if((h>=(mpz_class(1)<<wOut)) || h<0)
+			REPORT(0, "Ouch!!!!!" << h);
 
-				// convert x to 2's compliment
-				int xs=x;
-				if(xs>>(wIn-1))
-					xs-=(1<<wIn);
-
-				mpfr_init2(a, wIn);
-				mpfr_set_si(a, xs, GMP_RNDN);
-				mpfr_div_2si(a, a, wIn, GMP_RNDN); // now a in [-1/2, 1/2[
-				mpfr_init2(y, LARGE_PREC); 
-				mpfr_exp(y, a, GMP_RNDN); // in [0.6, 1.7], MSB is 1
-
-				mpfr_mul_2si(y, y, wOut-1, GMP_RNDN);
-				mpfr_get_z(h.get_mpz_t(), y,  GMP_RNDN);  // here the rounding takes place
-
-				// debug
-				if((h>=(mpz_class(1)<<wOut)) || h<0)
-					REPORT(0, "Ouch!!!!!" << h);
-
-				//cout << x << "\t" << h << "\t" << l <<endl;
-				mpfr_clears(y, a, NULL);
-						
-				return h;
-			};
+		//cout << x << "\t" << h << "\t" << l <<endl;
+		mpfr_clears(y, a, NULL);
+				
+		return h;
+	};
 
 
-
-
-
-	FPExp::FPExp(Target* target, int wE_, int wF_, int k_, int d_, int guardBits, bool fullInput)
+	FPExp::FPExp(Target* target, int wE_, int wF_, int k_, int d_, int guardBits, bool fullInput, map<string, double> inputDelays)
 		: Operator(target), wE(wE_), wF(wF_), k(k_), d(d_), g(guardBits)
 	{
 		// if automatic mode, set up the parameters
@@ -132,7 +125,7 @@ namespace flopoco{
 			uniqueName_ = o.str();
 		}
 
-		setCopyrightString("F. de Dinechin (2008)");
+		setCopyrightString("F. de Dinechin, Bogdan Pasca (2008-2010)");
 		srcFileName="FPExp";
 	
 		int wFIn; // The actual size of the input 
@@ -154,9 +147,6 @@ namespace flopoco{
 		mpfr_set_si(mp1, 1, GMP_RNDN);
 		mpfr_set_si(mp2, 2, GMP_RNDN);
 
-
-
-	
 		// 1/log2 ~ 1.44, truncated, on sizeFirstKCM bits
 		int sizeFirstKCM=wE+4;
 
@@ -191,6 +181,7 @@ namespace flopoco{
 			throw e.str();
 		}
 
+		setCriticalPath( getMaxInputDelays(inputDelays) );
 		// Here we may have a wF-bit mantissa, or a wF+wE+1-bit one
 		int sizeXfix = wE+wF+g +1; // +1 for the sign
 		vhdl << tab  << declare("Xexn", 2) << " <= X(wE+wFIn+2 downto wE+wFIn+1);" << endl;
@@ -200,7 +191,11 @@ namespace flopoco{
 
 		int e0 = bias - (wF+g);
 		vhdl << tab  << declare("e0", wE+2) << " <= conv_std_logic_vector(" << e0 << ", wE+2);  -- bias - (wF+g)" << endl;
+		manageCriticalPath( target->localWireDelay() + target->adderDelay(wE+2) ); 
 		vhdl << tab  << declare("shiftVal", wE+2) << " <= (\"00\" & XexpField) - e0; -- for a left shift" << endl;
+		vhdl << tab  << "-- Partial overflow/underflow detection" << endl;
+		int maxshift=wE-1+ wF+g; // maxX < 2^(wE-1); 
+		vhdl << tab  << declare("oufl0") << " <= not shiftVal(wE+1) when shiftVal(wE downto 0) >= conv_std_logic_vector(" << maxshift << ", wE+1) else '0';" << endl;
 
 		vhdl << tab  << "-- underflow when input is shifted to zero (shiftval<0), in which case exp = 1" << endl;
 		vhdl << tab  << declare("expIs1") << " <= shiftVal(wE+1);" << endl;
@@ -229,8 +224,8 @@ namespace flopoco{
 		vhdl << tab << declare("fixX", sizeXfix) << " <= " << "'0' & fixX0" << range(wE+g + wFIn+1 -1,  wFIn-wF) << ";" << endl;
 #else
 		// left shift
-		int maxshift=wE-1+ wF+g; // maxX < 2^(wE-1); 
-		Shifter* lshift = new Shifter(target, wFIn+1, maxshift , Shifter::Left);   
+
+		Shifter* lshift = new Shifter(target, wFIn+1, maxshift , Shifter::Left, inDelayMap("S", target->localWireDelay() + getCriticalPath())  );   
 		oplist.push_back(lshift);
 		int shiftInSize = lshift->getShiftInWidth();
 		vhdl << tab  << declare("shiftValIn", shiftInSize) << " <= shiftVal" << range(shiftInSize-1, 0) << ";" << endl;
@@ -240,22 +235,19 @@ namespace flopoco{
 		inPortMap(lshift, "X", "mXu");
 		vhdl << instance(lshift, "mantissa_shift");
 		syncCycleFromSignal("fixX0");
-		nextCycle();
+		setCriticalPath( lshift->getOutputDelay("R") );
 
-		vhdl << tab  << "-- Partial overflow/underflow detection" << endl;
-		vhdl << tab  << declare("oufl0") << " <= not shiftVal(wE+1) when shiftVal(wE downto 0) >= conv_std_logic_vector(" << maxshift << ", wE+1) else '0';" << endl;
 		vhdl << tab << declare("fixX", sizeXfix) << " <= " << "'0' & fixX0" << range(wE-1 + wF+g + wFIn+1 -1, wFIn) << ";" << endl;
 
 #endif	
 
 
 		vhdl << tab << "-- two's compliment version mantissa" << endl;
+		manageCriticalPath( target->localWireDelay() + target->lutDelay() );
 		vhdl << tab << declare("addOp0",sizeXfix) << " <= (fixX xor "<<rangeAssign(sizeXfix-1,0,"XSign")<<") and "<<rangeAssign(sizeXfix-1,0,"not(expIs1)")<<";"<<endl;
-		
 		vhdl << tab << declare("addCarry") << "<= XSign and not(expIs1);"<<endl;
-		//	nextCycle();
 	
-		IntAdder *twosComplMantissa = new IntAdder(target, sizeXfix);
+		IntAdder *twosComplMantissa = new IntAdder(target, sizeXfix, inDelayMap("X", target->localWireDelay() + getCriticalPath() ) );
 		oplist.push_back(twosComplMantissa);
 	
 		inPortMap(twosComplMantissa, "X", "addOp0");
@@ -265,12 +257,7 @@ namespace flopoco{
 	
 		vhdl << instance( twosComplMantissa, "The2cMantissa") << endl;
 		syncCycleFromSignal("fixXsigned");
-		nextCycle(); ////////????FIXME
-	
-		//	vhdl << tab  << declare("fixXsigned", sizeXfix) << " <= " << endl
-		//		  << tab << "(" << sizeXfix-1 << " downto 0 => '0') when expIs1='1'" << endl
-		//		  << tab << "else ((" << sizeXfix-1 << " downto 0 => '0') - fixX) when XSign = '1'" << endl
-		//		  << tab << "else fixX;" << endl;
+		setCriticalPath( twosComplMantissa->getOutputDelay("R") );
 
 		// fixXsigned(), on wE+3 bits,  is an int . 2^-2
 		// cstInvLog2,   on wE+3 bits,  is an int . 2^{-wE-2}
@@ -278,41 +265,34 @@ namespace flopoco{
 
 		vhdl << tab <<	declare("xMulIn",sizeFirstKCM) << " <=  fixXsigned "<< range(sizeXfix-1, sizeXfix-sizeFirstKCM) << "; -- 2's complement, rounded down" << endl;
 
-		if((wE+wF)*target->normalizedFrequency() > 14)
-			nextCycle();
-
-
 #if 1
 
-		IntIntKCM *mulInvLog2 = new IntIntKCM(target, sizeFirstKCM, mpzInvLog2, true /* signed input */);
+		IntIntKCM *mulInvLog2 = new IntIntKCM(target, sizeFirstKCM, mpzInvLog2, true /* signed input */, inDelayMap( "X", target->localWireDelay() + getCriticalPath())  );
 		oplist.push_back(mulInvLog2);
 		outPortMap(mulInvLog2, "R", "xInvLog2");
 		inPortMap(mulInvLog2, "X", "xMulIn");
 		vhdl << instance(mulInvLog2, "mulInvLog2");
 		syncCycleFromSignal("xInvLog2");
+		setCriticalPath( mulInvLog2->getOutputDelay("R") );
 
 
 #else
 		// TODO should work but there is a bug
-		FixRealKCM *mulInvLog2 = new  FixRealKCM(target, -2, wE+1, true  /* signed input */, -2, "1/log(2)" );
+		FixRealKCM *mulInvLog2 = new  FixRealKCM(target, -2, wE+1, true  /* signed input */, -2, "1/log(2)", inDelayMap( "X", target->localWireDelay() + getCriticalPath()) );
 		oplist.push_back(mulInvLog2);
 		outPortMap(mulInvLog2, "R", "xInvLog2");
 		inPortMap(mulInvLog2, "X", "xMulIn");
 		vhdl << instance(mulInvLog2, "mulInvLog2");
 		syncCycleFromSignal("xInvLog2");
+		setCriticalPath( mulInvLog2->getOutputDelay("R") );
 #endif
 
-		if((wE+wF)*target->normalizedFrequency() > 8)
-			nextCycle(); 
 		int xInvlog2size=getSignalByName("xInvLog2")->width();
+		
+		manageCriticalPath( target->localWireDelay() + target->adderDelay(wE+2) );
 		vhdl << tab << declare("Kunrounded", wE+2) << " <= xInvLog2 " << range(xInvlog2size-2, xInvlog2size -wE-3) << " + ( " << rangeAssign(wE+1,1,"'0'") << "  & '1'); -- adding round bit " <<endl;
 		vhdl << tab << declare("K", wE+1) << " <= Kunrounded " << range(wE+1,1) << "; -- rounding to nearest" <<endl;
 
-		// end TODO
-
-
-		if((wE+wF)*target->normalizedFrequency() > 4)
-			nextCycle();
 
 		int sizeY=wF+g; // This is also the weight of Y's LSB
 #if 0
@@ -330,25 +310,27 @@ namespace flopoco{
 
 #else
 #ifdef HAVE_SOLLYA
-		FixRealKCM *mulLog2 = new FixRealKCM(target, 0, wE, true  /* signed input */, -wF-g, "log(2)" );
+		FixRealKCM *mulLog2 = new FixRealKCM(target, 0, wE, true  /* signed input */, -wF-g, "log(2)", inDelayMap( "X", target->localWireDelay() + getCriticalPath()) );
 
 		oplist.push_back(mulLog2);
 		outPortMap(mulLog2, "R", "KLog2");
 		inPortMap(mulLog2, "X", "K");
 		vhdl << instance(mulLog2, "mulLog2");
 		syncCycleFromSignal("KLog2");
-		nextCycle();
+		setCriticalPath( mulLog2->getOutputDelay("R") );
 #else
                 ostringstream e;
 			e << "ERROR in FPExp, unable to build architecture if HAVE_SOLLYA is not enabled" <<endl;
 			throw e.str();
 #endif
+
+		manageCriticalPath( target->localWireDelay() + target->lutDelay() );
 		vhdl << tab << declare("neg2Op",sizeY) << " <= not(KLog2" << range(sizeY-1, 0) << ");"<<endl;
 		vhdl << tab << declare("fixXsignedLSB",sizeY) << " <= fixXsigned" << range(sizeY-1, 0) << ";"<<endl;
 
 #endif
 
-		IntAdder *yPaddedAdder = new IntAdder(target, sizeY); // we know the leading bits will cancel out
+		IntAdder *yPaddedAdder = new IntAdder(target, sizeY, inDelayMap("X", target->localWireDelay() + getCriticalPath()) ); // we know the leading bits will cancel out
 		oplist.push_back(yPaddedAdder);
 	
 
@@ -358,8 +340,8 @@ namespace flopoco{
 		outPortMap( yPaddedAdder, "R", "Y");
 	
 		vhdl << instance(yPaddedAdder, "theYAdder") << endl;
-		syncCycleFromSignal("Y"); 
-		nextCycle(); 
+		syncCycleFromSignal("Y");
+		setCriticalPath(  yPaddedAdder->getOutputDelay("R"));
 
 
 		vhdl << tab << "-- Now compute the exp of this fixed-point value" <<endl;
@@ -380,11 +362,11 @@ namespace flopoco{
 		REPORT(2, "sizeExpZm1=" << sizeExpZm1);
 		//REPORT(2, "=" << );
 
-		vhdl << tab << declare("Addr1", k) << " <= Y" << range(sizeY-1, sizeY-k) << ";\n";
-		vhdl << tab << declare("Z", sizeZ) << " <= Y" << range(sizeZ-1, 0) << ";\n";
+
+		
 
  #ifdef HAVE_SOLLYA
-		vhdl << tab << declare("Zhigh", sizeZhigh) << " <= Z" << range(sizeZ-1, sizeZ-sizeZhigh) << ";\n";
+ 		double cpexpA;
 		
 		if(wF+g<=26) { // Magic exp table works up to single precision
 			
@@ -402,51 +384,70 @@ namespace flopoco{
 				REPORT(0, "k!=9, setting it to 9 to use the magic exp dual table")
 					k=9;	
 			}
+			vhdl << tab << declare("Addr1", k) << " <= Y" << range(sizeY-1, sizeY-k) << ";\n";
+			vhdl << tab << declare("Z", sizeZ) << " <= Y" << range(sizeZ-1, 0) << ";\n";
 
 			vhdl << tab << declare("Addr2", k) << " <= Z" << range(sizeZ-1, sizeZ-k) << ";\n";
 			magicTable* table;
 			table = new magicTable(target);
 			oplist.push_back(table);
+			
+//			manageCriticalPath( target->LogicToRAMWireDelay() + target->RAMDelay() );
+			nextCycle(); //otherwise it does not get synthetized as a RAM			
 			outPortMap(table, "Y2", "lowerTerm0");
 			inPortMap(table, "X2", "Addr2");
 			outPortMap(table, "Y1", "expA0");
 			inPortMap(table, "X1", "Addr1");
 			vhdl << instance(table, "table");
-
+			syncCycleFromSignal("expA0");
+			setCriticalPath(target->LogicToRAMWireDelay() + target->RAMDelay());
+			
+			//TODO FIXME
+			cpexpA = getCriticalPath();
 			vhdl << tab << declare("expA", 27) << " <=  expA0" << range(35, 9) << ";" << endl;
 			vhdl << tab << declare("expZmZm1_0", 9) << " <= lowerTerm0" << range(8, 0) << ";" << endl;
-
 
 #endif
 		}
 		else { // use a polynomial evaluator
+			vhdl << tab << declare("Addr1", k) << " <= Y" << range(sizeY-1, sizeY-k) << ";\n";
+			vhdl << tab << declare("Z", sizeZ) << " <= Y" << range(sizeZ-1, 0) << ";\n";
+			vhdl << tab << declare("Zhigh", sizeZhigh) << " <= Z" << range(sizeZ-1, sizeZ-sizeZhigh) << ";\n";
+		
+			double cpZhigh = getCriticalPath();
+			manageCriticalPath( target->LogicToRAMWireDelay() + target->RAMDelay() );
 			firstExpTable* table;
 			table = new firstExpTable(target, k, sizeExpA); // e^A-1 has MSB weight 1
 			oplist.push_back(table);
 			outPortMap(table, "Y", "expA");
 			inPortMap(table, "X", "Addr1");
 			vhdl << instance(table, "table");
+			cpexpA = getCriticalPath();
+			
+			syncCycleFromSignal("Zhigh");
+			setCriticalPath( cpZhigh );
 			REPORT(LIST, "Generating the polynomial approximation, this may take some time");
 			// We want the LSB value to be  2^(wF+g)
 			FunctionEvaluator *fe;
 			ostringstream function;
 			function << "1b"<<2*k<<"*(exp(x*1b-" << k << ")-x*1b-" << k << "-1), 0,1,1";
-			fe = new FunctionEvaluator(target, function.str(), sizeZhigh, wF+g-2*k, d);
+			fe = new FunctionEvaluator(target, function.str(), sizeZhigh, wF+g-2*k, d, true, inDelayMap("X", target->localWireDelay() + getCriticalPath()) );
 			oplist.push_back(fe);
 			inPortMap(fe, "X", "Zhigh");
 			outPortMap(fe, "R", "expZmZm1_0");
 			vhdl << instance(fe, "poly");
-
+			syncCycleFromSignal("expZmZm1_0");
+			setCriticalPath( fe->getOutputDelay("R") );
 		}
 
-		syncCycleFromSignal("expA");
+//		syncCycleFromSignal("expA");
 
-		syncCycleFromSignal("expZmZm1_0");
+//		syncCycleFromSignal("expZmZm1_0");
 
-		if((wE+wF)*target->normalizedFrequency() > 8)
-			nextCycle();
-		if((wE+wF)*target->normalizedFrequency() > 16)
-			nextCycle(); // To get high-speed BRam speed
+//		if((wE+wF)*target->normalizedFrequency() > 8)
+//			nextCycle();
+//		if((wE+wF)*target->normalizedFrequency() > 16)
+//			nextCycle(); // To get high-speed BRam speed
 
 
 		
@@ -458,17 +459,47 @@ namespace flopoco{
 		vhdl << tab << declare("expZmZm1", sizeZxpZmZm1) << " <= expZmZm1_0" << range(sizeZxpZmZm1-1, 0)  << "; " <<endl;
 		
 		vhdl << tab << "-- Computing Z + (exp(Z)-1-Z)" << endl;
-		vhdl << tab << declare("expZminus1", sizeExpZm1) << " <= ('0' & Z) + (" << rangeAssign(sizeZ, sizeZ-k+1, "'0'") << " & expZmZm1) ;" << endl;
+		
+		IntAdder* addexpZminus1 = new IntAdder( target, sizeExpZm1, inDelayMap( "X", target->localWireDelay() + getCriticalPath() ) );
+		oplist.push_back(addexpZminus1);
+		
+		vhdl << tab << declare( "expZminus1X", sizeExpZm1) << " <= '0' & Z;"<<endl;
+		vhdl << tab << declare( "expZminus1Y", sizeExpZm1) << " <= " << rangeAssign(sizeZ, sizeZ-k+1, "'0'") << " & expZmZm1 ;" << endl;
+		
+		inPortMap(addexpZminus1, "X", "expZminus1X");
+		inPortMap(addexpZminus1, "Y", "expZminus1Y");
+		inPortMapCst( addexpZminus1, "Cin" , " '0' ");
+		outPortMap( addexpZminus1, "R", "expZminus1");
+		vhdl << instance( addexpZminus1, "Adder_expZminus1");
+		syncCycleFromSignal("expZminus1");
+		setCriticalPath( addexpZminus1->getOutputDelay("R") );
+
 
 		vhdl << tab << "-- Truncating expA to the same accuracy as expZminus1" << endl;
-		vhdl << tab << declare("expArounded0", sizeMultIn+1) << " <= (expA" << range(sizeExpA-1, sizeExpA-sizeMultIn-1) << ") + '1';  -- rounding" << endl;
+		setCycleFromSignal("expA");
+		setCriticalPath( cpexpA );
+		
+		
+		IntAdder* expArounded0 = new IntAdder( target, sizeMultIn+1, inDelayMap( "X", target->localWireDelay() + getCriticalPath() ) );
+		oplist.push_back(expArounded0);
+		
+		
+		
+		inPortMapCst(expArounded0, "X", "expA"+range(sizeExpA-1, sizeExpA-sizeMultIn-1));
+		inPortMapCst(expArounded0, "Y", zg(sizeMultIn+1,0));
+		inPortMapCst( expArounded0, "Cin" , " '1' ");
+		outPortMap( expArounded0, "R", "expArounded0");
+		vhdl << instance( expArounded0, "Adder_expArounded0");
+		syncCycleFromSignal("expArounded0");
+		setCriticalPath( expArounded0->getOutputDelay("R") );
+		
 		vhdl << tab << declare("expArounded", sizeMultIn) << " <= expArounded0" << range(sizeMultIn, 1) << ";" << endl;
-		//		vhdl << tab << declare("expZm1truncated", sizeMultIn) << " <= expZminus1" << range(sizeExpZm1-1, sizeExpZm1-sizeMultIn) << ";" << endl;
+		
+		if (syncCycleFromSignal( "expZminus1" ) )
+			setCriticalPath(addexpZminus1->getOutputDelay("R"));
+		
 
-		//		if((wE+wF)*target->normalizedFrequency() > 4)
-		nextCycle(); //in any case this will be absorbed by the DSP blocks
-
-		IntMultiplier *lowProd = new IntMultiplier(target, sizeMultIn, sizeExpZm1);
+		IntMultiplier *lowProd = new IntMultiplier(target, sizeMultIn, sizeExpZm1, inDelayMap("X", target->LogicToDSPWireDelay() + getCriticalPath() ) );
 		oplist.push_back(lowProd);
 		
 		inPortMap(lowProd, "X", "expArounded");
@@ -476,18 +507,10 @@ namespace flopoco{
 		outPortMap(lowProd, "R", "lowerProduct");
 		
 		vhdl << instance(lowProd, "TheLowerProduct")<<endl;
-		 
-		//		vhdl << tab << declare("lowerProduct", 2*sizeExpZm1) << " <= expAtruncated * expZminus1;" << endl;
-
 		syncCycleFromSignal("lowerProduct");
-
-		//		if((wE+wF)*target->normalizedFrequency() > 14) //TODO will need to buffer out before addition
-		//			nextCycle();
+		setCriticalPath( lowProd->getOutputDelay("R") );
 
 		vhdl << tab << "-- Final addition -- the product MSB bit weight is -k+2 = "<< -k+2 << endl;
-		
-		map<string,double> finalAdderInDelayMap;
-		finalAdderInDelayMap["Y"] = (lowProd->getOutDelayMap())["R"];
 
 
 #if 0 // Trying to round the product instead of truncating it		Why doesn't that work?
@@ -509,7 +532,7 @@ namespace flopoco{
 		vhdl << tab << declare("expY",sizeExpA) << " <= expY0" << range(sizeExpA, 1) << " ; -- rounding" << endl;		
 		     		
 #else  //  truncating it		
-		IntAdder *finalAdder = new IntAdder(target, sizeExpA, finalAdderInDelayMap, 2, 1, -1);
+		IntAdder *finalAdder = new IntAdder(target, sizeExpA, inDelayMap( "X", target->localWireDelay() + getCriticalPath()));
 		oplist.push_back(finalAdder);
 		
 		vhdl << tab << declare("extendedLowerProduct",sizeExpA) << " <= (" << rangeAssign(sizeExpA-1, sizeExpA-k+1, "'0'") 
@@ -522,18 +545,11 @@ namespace flopoco{
 		
 		vhdl << instance(finalAdder,"TheFinalAdder") << endl;
 		syncCycleFromSignal("expY");
+		setCriticalPath(finalAdder->getOutputDelay("R") );
 		     		
 #endif
 
-		//		nextCycle(); //thsi one should be controlled by some parameter
-		
-		//		cout << ">>>>>>>>>>>>>>>>>>>>...The delay on the adder output R is" << finalAdder->getOutDelayMap()["R"] << endl;
-			
-		//		vhdl << tab << declare("expY", sizeExpA) << " <= expA + (" << rangeAssign(sizeExpA-1, sizeExpA-k+1, "'0'") 
-		//		     << " & lowerProduct" << range(2*sizeExpZm1-1, 2*sizeExpZm1- (sizeExpA-k+1)) << ");" << endl;
-
 		rWidth=sizeExpA; // for the rounding
-			       
 				       
 #else
 		throw string("FPExp requires Sollya for this precision, sorry.");
@@ -543,22 +559,36 @@ namespace flopoco{
 		// The following is generic normalization/rounding code if we have an approx of exp(y) of size rwidth in expY
 		// with MSB of weight 2^1
 		// We start a cycle here
-		nextCycle();
+//		nextCycle();
 
 		vhdl << tab << declare("needNoNorm") << " <= expY(" << rWidth-1 << ");" << endl;
-		vhdl << tab << declare("roundBit") << " <= expY(" << rWidth-2-wF << ")  when needNoNorm = '1'    else expY(" <<  rWidth-3-wF << ") ;" << endl;
-
+		manageCriticalPath( target->localWireDelay() + target->lutDelay() );		
 		vhdl << tab << "-- Rounding: all this should consume one row of LUTs" << endl; 
 		vhdl << tab << declare("preRoundBiasSig", wE+wF+2)
 		     << " <= conv_std_logic_vector(" << bias << ", wE+2)  & expY" << range(rWidth-2, rWidth-2-wF+1) << " when needNoNorm = '1'" << endl
 		     << tab << tab << "else conv_std_logic_vector(" << bias-1 << ", wE+2)  & expY" << range(rWidth-3, rWidth-3-wF+1) << " ;" << endl;
+
+		vhdl << tab << declare("roundBit") << " <= expY(" << rWidth-2-wF << ")  when needNoNorm = '1'    else expY(" <<  rWidth-3-wF << ") ;" << endl;
 		vhdl << tab << declare("roundNormAddend", wE+wF+2) << " <= K(" << wE << ") & K & "<< rangeAssign(wF-1, 1, "'0'") << " & roundBit;" << endl;
 
-		if((wE+wF)*target->normalizedFrequency() > 16)
-			nextCycle();
-		vhdl << tab << declare("roundedExpSig", wE+wF+2) << " <= preRoundBiasSig + roundNormAddend when Xexn=\"01\" else "
+		
+		IntAdder *roundedExpSigOperandAdder = new IntAdder(target, wE+wF+2, inDelayMap( "X", target->localWireDelay() + getCriticalPath()));
+		oplist.push_back(roundedExpSigOperandAdder);
+		
+		inPortMap(roundedExpSigOperandAdder, "X", "preRoundBiasSig");
+		inPortMap(roundedExpSigOperandAdder, "Y", "roundNormAddend");
+		inPortMapCst(roundedExpSigOperandAdder, "Cin", "'0'");
+		outPortMap(roundedExpSigOperandAdder, "R", "roundedExpSigRes");
+		
+		vhdl << instance(roundedExpSigOperandAdder,"roundedExpSigOperandAdder") << endl;
+		syncCycleFromSignal("roundedExpSigRes");
+		setCriticalPath(finalAdder->getOutputDelay("R") );
+
+		manageCriticalPath( target->localWireDelay() + target->lutDelay() );
+		vhdl << tab << declare("roundedExpSig", wE+wF+2) << " <= roundedExpSigRes when Xexn=\"01\" else "
 		     << " \"000\" & (wE-2 downto 0 => '1') & (wF-1 downto 0 => '0');" << endl;
 	
+		manageCriticalPath( target->localWireDelay() + target->lutDelay() );
 		vhdl << tab << declare("ofl1") << " <= not XSign and oufl0 and (not Xexn(1) and Xexn(0)); -- input positive, normal,  very large" << endl;
 		vhdl << tab << declare("ofl2") << " <= not XSign and (roundedExpSig(wE+wF) and not roundedExpSig(wE+wF+1)) and (not Xexn(1) and Xexn(0)); -- input positive, normal, overflowed" << endl;
 		vhdl << tab << declare("ofl3") << " <= not XSign and Xexn(1) and not Xexn(0);  -- input was -infty" << endl;
@@ -576,7 +606,7 @@ namespace flopoco{
 		     << tab << tab << "else \"01\";" << endl;
 		
 		vhdl << tab << "R <= Rexn & '0' & roundedExpSig" << range(wE+wF-1, 0) << ";" << endl;
-	
+		outDelayMap["R"] = getCriticalPath();
 
 	}	
 

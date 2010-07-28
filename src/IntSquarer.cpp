@@ -113,37 +113,42 @@ namespace flopoco{
 		}
 		else if ((wIn>51) && (wIn<=68) && (wIn!=53) ) {
 			// --------- Sub-components ------------------
-			intadder = new IntAdder(target, 101);
-			oplist.push_back(intadder);
 
 			if (wIn<68)  
 				vhdl << declare("sigX",68) << "<= "<<zg(68-wIn,0) <<" & X;"<<endl;
 			else
 				vhdl << declare("sigX",68) << "<= X;"<<endl;
+				
+			setCriticalPath( getMaxInputDelays(inputDelays) );	
 
+			manageCriticalPath( target->LogicToDSPWireDelay() + target->DSPMultiplierDelay() ); 
 			vhdl << declare("x0_16_x17_33",34) << "<= sigX" << range(16,0) << " * sigX" << range(33,17)<<";"<<endl;
-			nextCycle(); ////////////////////////////////////////////////
+			manageCriticalPath( target->DSPCascadingWireDelay() + target->DSPAdderDelay() );
 			vhdl << declare("x0_16_sqr",36) << "<= (\"00\" & x0_16_x17_33" << range(15,0)<<" & \"000000000000000000\") + " 
 				  << "( \"0\" & sigX" << range(16,0) << ") * (\"0\" & sigX" << range(16,0)<<");"<<endl;
 			vhdl << declare("x17_33_x34_50",34) << "<= sigX" << range(33,17) << " * sigX" << range(50,34)<<";"<<endl;
-			nextCycle(); ////////////////////////////////////////////////
+			manageCriticalPath( target->DSPCascadingWireDelay() + target->DSPAdderDelay() );
 			vhdl << declare("x17_33_sqr",36) << "<= (\"00\" & x17_33_x34_50" << range(15,0)<<" & x0_16_x17_33" << range(33,16) <<") + x0_16_sqr(34) + "
 				  << "( \"0\" & sigX" << range(33,17) << ") * (\"0\" & sigX" << range(33,17)<<");"<<endl;
 			vhdl << declare("x51_67_x34_50",34) << "<= sigX" << range(67,51) << " * sigX" << range(50,34)<<";"<<endl;
 			vhdl << declare("x_0_16_34_50",34) << " <= ( sigX" << range(16,0) << ") * (sigX" << range(50,34)<<");"<<endl;
-			nextCycle(); ////////////////////////////////////////////////
+			manageCriticalPath( target->DSPCascadingWireDelay() + target->DSPAdderDelay() );
 			vhdl << declare("x34_50_sqr",36) << "<= (\"00\" & x51_67_x34_50" << range(15,0)<<" & x17_33_x34_50" << range(33,16) <<") + x17_33_sqr(34) + "
 				  << "( \"0\" & sigX" << range(50,34) << ") * (\"0\" & sigX" << range(50,34)<<");"<<endl;
 			vhdl << declare("x_0_16_51_67_pshift", 34) << " <= x_0_16_34_50" << range(33,17) << " + "
 				  << "( sigX" << range(16,0) << ") * (sigX" << range(67,51)<<");"<<endl;
-			nextCycle(); ////////////////////////////////////////////////
+			manageCriticalPath( target->DSPCascadingWireDelay() + target->DSPAdderDelay() );
 			vhdl << declare("x51_67_sqr",34) << "<= ( \"00000000000000\" & x51_67_x34_50" << range(33,16) <<") + x34_50_sqr(34) + "
 				  << "( sigX" << range(67,51) << ") * (sigX" << range(67,51)<<");"<<endl;
 			vhdl << declare("x_17_33_51_67_pshift", 34) << " <= x_0_16_51_67_pshift" << range(33,17) << " + "
 				  << "( sigX" << range(33,17) << ") * (sigX" << range(67,51)<<");"<<endl;
-			nextCycle(); ////////////////////////////////////////////////
+
+//			nextCycle(); ////////////////////////////////////////////////
 			vhdl << declare("op1",101) << "<= x51_67_sqr & x34_50_sqr" << range(33,0) << " & x17_33_sqr" << range(33,1) <<  ";"<<endl;
 			vhdl << declare("op2",101) << "<="<< zg(101-68,0)<<" & x_17_33_51_67_pshift & x_0_16_51_67_pshift" << range(16,0)<<" & x_0_16_34_50" << range(16,0)<<";"<<endl;
+			intadder = new IntAdder(target, 101, inputDelays("X", target->DSPToLogicWireDelay() + getCriticalPath() );
+			oplist.push_back(intadder);
+
 			inPortMap(intadder, "X", "op1");
 			inPortMap(intadder, "Y", "op2");
 			inPortMapCst(intadder, "Cin", "'0'");
@@ -151,10 +156,13 @@ namespace flopoco{
 			vhdl << instance(intadder, "ADDER1");
 			
 			syncCycleFromSignal("adderOutput", false);
-			
+			setCriticalPath( intadder->getOutputDelay("R"));
+						
 			vhdl << "R <= adderOutput" << range(2*wIn-36,0) << " & x17_33_sqr" << range(0,0) << " & x0_16_sqr" << range(33,0)<<";"<<endl;
+			outDelayMap["R"] = getCriticalPath();
 		}
 		else if (wIn==53){
+			//TODO -> port to new pipeline framework
 			//instantiate a 51bit squarer
 			intsquarer = new IntSquarer(target, 51);
 			oplist.push_back(intsquarer);

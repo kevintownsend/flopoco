@@ -82,6 +82,7 @@ namespace flopoco{
 
 		int lutWidth = target->lutInputs();
 
+		setCriticalPath( getMaxInputDelays(inputDelays) );
 
 		if(wIn <= lutWidth+2){
 			///////////////////////////////////  multiplication using 1 table only ////////////////////////////////////
@@ -92,7 +93,8 @@ namespace flopoco{
 			t = new FixRealKCMTable(target, this, 0, wIn, wOut, signedInput, false);
 			oplist.push_back(t);
 			useSoftRAM(t);
-			manageCriticalPath(target->lutDelay() + 2*target->localWireDelay());
+
+			manageCriticalPath(2*target->localWireDelay() + target->lutDelay());
       
 			inPortMap (t , "X", "X");
 			outPortMap(t , "Y", "Y");
@@ -100,7 +102,7 @@ namespace flopoco{
 
 
 			vhdl << tab << "R <= Y;" << endl;
-		  
+		  	outDelayMap["R"] = getCriticalPath();
 		}
 
 
@@ -129,7 +131,6 @@ namespace flopoco{
 
 			REPORT(DEBUG, "g=" << g);
 
-
 			//first split the input X into digits having lutWidth bits -> this is as generic as it gets :)
 			bool tableSigned, last;
 			for (int i=0; i<nbOfTables; i++) {
@@ -154,7 +155,9 @@ namespace flopoco{
 				t = new FixRealKCMTable(target, this, i, diSize, ppiSize, tableSigned, last);
 				oplist.push_back(t);
 				useSoftRAM(t);
-            
+            	
+            	setCriticalPath(getMaxInputDelays(inputDelays));
+            	manageCriticalPath(2*target->localWireDelay() + target->lutDelay());
 				inPortMap (t , "X", join("d",i));
 				outPortMap(t , "Y", join("pp",i));
 				vhdl << instance(t , join("KCMTable_",i));
@@ -165,17 +168,18 @@ namespace flopoco{
 				vhdl << join("pp",i) << ";" << endl;
       
 			}
-			manageCriticalPath(target->lutDelay() + 2*target->localWireDelay());
-
-			IntCompressorTree* adder = new IntCompressorTree(target, wOut+g, nbOfTables, inDelayMap("X0",getCriticalPath()));
+			
+			IntCompressorTree* adder = new IntCompressorTree(target, wOut+g, nbOfTables, inDelayMap("X0",target->localWireDelay() + getCriticalPath()));
 			oplist.push_back(adder);
 			for (int i=0; i<nbOfTables; i++)
 				inPortMap (adder, join("X",i) , join("addOp",i));
 			outPortMap(adder, "R", "OutRes");
 			vhdl << instance(adder, "Result_Adder");
 			syncCycleFromSignal("OutRes");
+			setCriticalPath( adder->getOutputDelay("R") );
 
 			vhdl << tab << "R <= OutRes" << range(wOut+g-1, g) << ";" << endl;
+			outDelayMap["R"] = getCriticalPath();
 		}
 
 		mpfr_clears(log2C, NULL);
