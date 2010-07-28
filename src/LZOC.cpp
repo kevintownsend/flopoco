@@ -37,7 +37,7 @@ using namespace std;
 namespace flopoco{
 
 	LZOC::LZOC(Target* target, int wIn, map<string, double> inputDelays) :
-		Operator(target), wIn_(wIn) {
+		Operator(target, inputDelays), wIn_(wIn) {
 		ostringstream currLevel, currDigit, nextLevel;
 	
 	

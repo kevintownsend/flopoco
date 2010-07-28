@@ -39,10 +39,13 @@ namespace flopoco{
 
 
 	LZOCShifterSticky::LZOCShifterSticky(Target* target, int wIn, int wOut, int wCount, bool computeSticky, const int countType, map<string, double> inputDelays) :
-		Operator(target), wIn_(wIn), wOut_(wOut), wCount_(wCount), computeSticky_(computeSticky), countType_(countType) {
+		Operator(target, inputDelays), wIn_(wIn), wOut_(wOut), wCount_(wCount), computeSticky_(computeSticky), countType_(countType) {
 	
 		// -------- Parameter set up -----------------
 		setEntityType( (countType_==-1?gen:spec) );
+		srcFileName = "LZOCShifterSticky";
+		
+		REPORT( INFO, "wIn="<<wIn << " wOut="<<wOut << " wCount="<<wCount << " computeSticky=" << computeSticky  << " countType=" << countType); 
 
 		ostringstream name; 
 		name << "L" << (countType_<0?"ZO":((countType_>0)?"O":"Z")) << "CShifter"
@@ -82,7 +85,8 @@ namespace flopoco{
 			currLev = (wOut_>intpow2(i)?wOut_:intpow2(i));
 			currLev += (intpow2(i)-1); 
 			currLev = (currLev > wIn_? wIn_: currLev);
-			manageCriticalPath( compDelay(intpow2(i)) ) ;
+
+			manageCriticalPath( compDelay( intpow2(i)  ) ) ;
 
 			vhdl << tab << declare(join("count",i),1) << "<= '1' when " <<join("level",i+1)<<range(prevLev-1,prevLev - intpow2(i))<<" = "
 				  <<"("<<prevLev-1<<" downto "<<prevLev - intpow2(i)<<"=>"<< (countType_==-1? "sozb": countType_==0?"'0'":"'1'")<<") else '0';"<<endl;
@@ -131,7 +135,8 @@ namespace flopoco{
 	
 		outDelayMap["O"] = getCriticalPath();
 		outDelayMap["Count"] = getCriticalPath();
-	
+
+
 		vhdl << tab << declare("sCount",wCount_) <<" <= ";
 		for (int i=wCount_-1; i>=0; i--){
 			vhdl <<join("count",i);
@@ -145,6 +150,9 @@ namespace flopoco{
 		else {
 			vhdl << tab << "Count <= sCount;"<<endl;
 		}
+
+
+
 		if (computeSticky_){
 			outDelayMap["Sticky"] = getCriticalPath();
 			if (wOut_>=wIn)

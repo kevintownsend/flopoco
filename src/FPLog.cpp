@@ -281,24 +281,27 @@ namespace flopoco{
 		inPortMap(lzoc, "OZB", "FirstBit");
 		outPortMap(lzoc, "O", "lzo"); 
 		vhdl << instance(lzoc, "lzoc1");
-
-		setCycleFromSignal("lzo", false);
+		setCycleFromSignal("lzo");
 		setCriticalPath( lzoc->getOutputDelay("O") );
+
+		manageCriticalPath( target->localWireDelay() + target->adderDelay(intlog2(wF)+1) );
+		double cpshiftval = getCriticalPath();
 		vhdl << tab << declare("pfinal_s", intlog2(wF)) << " <= \"" << unsignedBinary(mpz_class(pfinal), intlog2(wF)) << "\";"<<endl;
-
-		manageCriticalPath( target->adderDelay(intlog2(wF)+1) );
-
 		vhdl << tab << declare("shiftval", intlog2(wF)+1) << " <= ('0' & lzo) - ('0' & pfinal_s); " << endl;
 		vhdl << tab << declare("shiftvalinL", intlog2(wF-pfinal+2))     << " <= shiftval(" << intlog2(wF-pfinal+2)-1 << " downto 0);" << endl;
 		vhdl << tab << declare("shiftvalinR", intlog2(sfinal-pfinal+1)) << " <= shiftval(" << intlog2(sfinal-pfinal+1)-1 << " downto 0);" << endl;
 		vhdl << tab << declare("doRR") << " <= shiftval(log2wF); -- sign of the result" << endl;
 
+		manageCriticalPath( target->localWireDelay() + target->lutDelay() );
 		//done in parallel with the shifter
 		vhdl << tab << declare("small") << " <= EeqZero and not(doRR);" << endl;
 
+
+		if (syncCycleFromSignal("shiftvalinL"))
+			setCriticalPath(cpshiftval);
+			
 		// ao stands for "almost one"
 		vhdl << tab << "-- The left shifter for the 'small' case" <<endl; 
-		
 		ao_lshift = new Shifter(target, wF-pfinal+2,  wF-pfinal+2, Shifter::Left, inDelayMap("X",getCriticalPath()) );   
 		oplist.push_back(ao_lshift);
 
@@ -433,7 +436,7 @@ namespace flopoco{
 			syncCycleFromSignal ( join("EiYPB",i) );
 			setCriticalPath( addCycleI1->getOutputDelay("R") );
 
-			if(syncCycleFromSignal(join("P",i), false))
+			if(syncCycleFromSignal(join("P",i)))
 				setCriticalPath( cppi );
 
 			vhdl << tab << declare(join("Pp", i), s[i+1])  << " <= " << rangeAssign(p[i]-a[i],  0,  "'0'") << " & " << join("P", i);
@@ -463,7 +466,7 @@ namespace flopoco{
 
 		vhdl << tab << "--  Synchro between RR box and case almost 1" << endl;  
 		
-		if (syncCycleFromSignal("small_absZ0_normd", false))
+		if (syncCycleFromSignal("small_absZ0_normd"))
 			setCriticalPath(cpsmall_absZ0_normd);
 		
 		// In the small path we need Z2O2 accurate to  (wF+gLog+2) - pfinal
@@ -475,7 +478,7 @@ namespace flopoco{
 		else 
 			squarerInSize = sfinal-pfinal;
 		
-		manageCriticalPath( target->DSPinterconnectWireDelay() +  target->lutDelay() );		
+		manageCriticalPath( target->DSPToLogicWireDelay() +  target->lutDelay() );		
 		vhdl << tab << declare("squarerIn", squarerInSize) << " <= " 
 			 << "Zfinal(sfinal-1 downto sfinal-"<< squarerInSize << ") when doRR='1'" << endl;
 		if(squarerInSize>small_absZ0_normd_size)
@@ -484,7 +487,7 @@ namespace flopoco{
 			vhdl << tab << "                 else small_absZ0_normd" << range(small_absZ0_normd_size-1, small_absZ0_normd_size - squarerInSize) << ";  " << endl<< endl;
 
 		if(squarerInSize<=17){
-			manageCriticalPath( target->DSPinterconnectWireDelay() + target->DSPMultiplierDelay() );
+			manageCriticalPath( target->DSPToLogicWireDelay() + target->DSPMultiplierDelay() );
 			vhdl << tab << declare("Z2o2_full", 2*squarerInSize) << " <= (squarerIn * squarerIn);" << endl;
 		}else{
 			nextCycle(); // FIXME -> add pipeline framework to squarer
@@ -517,38 +520,51 @@ namespace flopoco{
 		syncCycleFromSignal("Log1p_normal");
 		setCriticalPath( addFinalLog1p_normal->getOutputDelay("R") );		
 
+
+
 		vhdl << endl << tab << "-- Now the log tables, as late as possible" << endl;
-		setCycle(getCurrentCycle() - stages -1 , true); 
-//		syncCycleFromSignal("A0");
-		nextCycle();
+
+		//profiling the number of pipeline levels of the stages 
+
 		vhdl << tab << "-- First log table" << endl;
 		FirstLogTable* lt0 = new FirstLogTable(target, a[0], target_prec, it0, this);
+
+		int profilingDepth = 0;
+		setCriticalPath(0.0);
+		if (manageCriticalPath(target->LogicToRAMWireDelay() + target->RAMDelay()) )
+			profilingDepth++;
+		for (i=1; i<= stages; i++) {
+			if (manageCriticalPath( target->LogicToRAMWireDelay() + target->RAMDelay() ))
+				profilingDepth++;
+			IntAdder * adderS = new IntAdder( target, lt0->wOut, inDelayMap("X", target->RAMToLogicWireDelay() + getCriticalPath() ));
+			profilingDepth+=adderS->getPipelineDepth();
+			setCriticalPath( adderS->getOutputDelay("R") );	
+		}	
+
+		setCriticalPath(0.0);
+		setCycleFromSignal("Log1p_normal");
+		setCycle(getCurrentCycle() - profilingDepth , true); 
+		manageCriticalPath(target->LogicToRAMWireDelay() + target->RAMDelay());
+
 		oplist.push_back(lt0);
 		inPortMap       (lt0, "X", "A0");
 		outPortMap      (lt0, "Y", "L0");
 		vhdl << instance(lt0, "ltO");
 		vhdl << tab << declare("S1", lt0->wOut) << " <= L0;"<<endl;
-		nextCycle();
-
+		
 		for (i=1; i<= stages; i++) {
 			// TODO better pipeline the small input as late as possible than pipeline the large output
-			nextCycle();
+
+			manageCriticalPath( target->LogicToDSPWireDelay() + target->RAMDelay() );
 			OtherLogTable* lti = new OtherLogTable(target, a[i], target_prec - p[i], i, a[i], p[i]); 
 			oplist.push_back(lti);
 			inPortMap       (lti, "X", join("A", i));
 			outPortMap      (lti, "Y", join("L", i));
 			vhdl << instance(lti, join("lt",i));
-			nextCycle();
-			setCriticalPath(0.0);
-			
-//			manageCriticalPath( target->adderDelay(lt0->wOut) );
-
-			nextCycle();
-//			manageCriticalPath( target->DSPinterconnectWireDelay() ); //should have something like RAMinterconnectWireDelay()
 			
 			vhdl << tab << declare(join("sopX",i), lt0->wOut) << " <= (" << rangeAssign(lt0->wOut-1, lti->wOut,  "'0'") << " & " << join("L",i) <<");"<<endl;
 			
-			IntAdder * adderS = new IntAdder( target, lt0->wOut, inDelayMap("X", getCriticalPath()));
+			IntAdder * adderS = new IntAdder( target, lt0->wOut, inDelayMap("X", target->RAMToLogicWireDelay() + getCriticalPath()));
 			oplist.push_back(adderS);
 			
 			inPortMap( adderS, "X", join("S",i) );
@@ -560,10 +576,6 @@ namespace flopoco{
 			syncCycleFromSignal( join("S",i+1) );
 			setCriticalPath( adderS->getOutputDelay("R") );
 
-//			
-//						
-//			vhdl << tab << declare(join("S",i+1),  lt0->wOut) << " <= " 
-//				  <<  join("S",i)  << " + (" << rangeAssign(lt0->wOut-1, lti->wOut,  "'0'") << " & " << join("L",i) <<");"<<endl;
 		}
 
 		vhdl << tab << declare("almostLog", lt0->wOut) << " <= " << join("S",stages+1) << ";" << endl;  
@@ -580,7 +592,6 @@ namespace flopoco{
 		vhdl << instance( adderLogF_normal, "adderLogF_normal");
 		
 		syncCycleFromSignal("LogF_normal");
-		setCriticalPath( adderLogF_normal->getOutputDelay("R") );
 			
 		// The log2 constant
 		mpfr_t two, log2;
@@ -599,16 +610,19 @@ namespace flopoco{
 		nextCycle(); ///////////////////// 
 		vhdl << tab << declare("absELog2_pad", wE+target_prec) << " <=   absELog2 & (targetprec-wF-g-1 downto 0 => '0');       " << endl;
 #else
-		IntIntKCM* kcm=new IntIntKCM(target, wE, mpz_class(zlog2), false, inDelayMap("X", getCriticalPath()) );
+		
+		
+		
+		IntIntKCM* kcm=new IntIntKCM(target, wE, mpz_class(zlog2), false);
 		oplist.push_back(kcm);
 		// get back enough cycles to synchronize it with LogF_normal
 		setCycle(getCurrentCycle() - kcm->getPipelineDepth());
 		inPortMap       (kcm, "X", "absE");
 		outPortMap      (kcm, "R", "absELog2");
 		vhdl << instance(kcm, "Log2KCM");
-		setCycle(getCurrentCycle() + kcm->getPipelineDepth(), false);
-		nextCycle(); ///////////////////// 
-		setCriticalPath(0.0);
+		setCycle(getCurrentCycle() + kcm->getPipelineDepth());
+
+//		setCriticalPath(kcm->getOutputDelay("R"));
 
 		vhdl << tab << declare("absELog2_pad", wE+target_prec) << " <=   " 
 			 << "absELog2 & (targetprec-wF-g-1 downto 0 => '0');       " << endl;		
@@ -617,8 +631,13 @@ namespace flopoco{
 		vhdl << tab << declare("LogF_normal_pad", wE+target_prec) << " <= (wE-1  downto 0 => LogF_normal(targetprec-1))  & LogF_normal;" << endl;
 
 		vhdl << tab << declare("lnaddX", wE+target_prec) << " <= absELog2_pad;"<<endl;
-		manageCriticalPath(target->lutDelay());
+
+
+		setCriticalPath( adderLogF_normal->getOutputDelay("R") );
+		if (!manageCriticalPath(target->lutDelay()))
+			setCriticalPath( max( getCriticalPath(), kcm->getOutputDelay("R")) );
 		vhdl << tab << declare("lnaddY", wE+target_prec) << " <= LogF_normal_pad when sR='0' else not(LogF_normal_pad); "<<endl;
+
 		
 		IntAdder* lnadder = new IntAdder( target, wE+target_prec, inDelayMap("X", getCriticalPath()) );
 		oplist.push_back(lnadder);
@@ -632,16 +651,15 @@ namespace flopoco{
 		syncCycleFromSignal("Log_normal");		
 		setCriticalPath( lnadder->getOutputDelay("R") );
 
-		final_norm = new LZOCShifterSticky(target, wE+target_prec, target_prec, intlog2(wE+(wF>>1))+1, false, 0, inDelayMap("I",getCriticalPath())); 
+		final_norm = new LZOCShifterSticky(target, wE+target_prec, target_prec, intlog2(wE+(wF>>1))+1, false, 0, inDelayMap("I", target->localWireDelay() + getCriticalPath())); 
 		oplist.push_back(final_norm);
 		inPortMap(final_norm, "I", "Log_normal");
 		outPortMap(final_norm, "Count", "E_normal");
 		outPortMap(final_norm, "O", "Log_normal_normd");
 		vhdl << instance(final_norm, "final_norm");
-
 		// back to the squarer output
-		setCycleFromSignal("Z2o2_full", false);
-		setCriticalPath( final_norm->getOutputDelay("R"));
+		setCycleFromSignal("Z2o2_full");
+		setCriticalPath( final_norm->getOutputDelay("O"));
 		double cpE_normal = getCriticalPath();
 
 
@@ -656,7 +674,7 @@ namespace flopoco{
 		outPortMap(ao_rshift, "R", "Z2o2_small_s");
 		vhdl << instance(ao_rshift, "ao_rshift");
 
-		setCycleFromSignal("Z2o2_small_s", false);
+		setCycleFromSignal("Z2o2_small_s");
 		setCriticalPath(ao_rshift->getOutputDelay("R") );
 
 		vhdl << tab << "  -- send the MSB to position pfinal" << endl;
@@ -680,6 +698,9 @@ namespace flopoco{
 		outPortMap(log_small_adder, "R", "Log_small");
 		vhdl << instance(log_small_adder, "log_small_adder") << endl;
 		
+
+
+		////////////////////////////////////////////////////////////////////////-> start the other path
 		syncCycleFromSignal("Log_small");
 		setCriticalPath(log_small_adder->getOutputDelay("R") );
 
@@ -713,14 +734,18 @@ namespace flopoco{
 			vhdl << tab << declare("ufl") << " <= E_small(wE);" << endl;
 		}
 
+		double cpLog_small_normd;
 		manageCriticalPath( target->lutDelay() );			
+		cpLog_small_normd = getCriticalPath();
 		vhdl << tab << declare("Log_small_normd", wF+gLog) << " <= Log_small(wF+g+1 downto 2) when Log_small(wF+g+1)='1'" << endl
 			  << "           else Log_small(wF+g downto 1)  when Log_small(wF+g)='1'  -- remove the first zero" << endl
 			  << "           else Log_small(wF+g-1 downto 0)  ; -- remove two zeroes (extremely rare, 001000000 only)" << endl ;
 
-		setCycleFromSignal("E_normal", false);
-		setCriticalPath( cpE_normal );
-		if ( syncCycleFromSignal("E_small", false))
+
+//		//////////////////////////////////////// get back to Log_normal_normd
+//		setCycleFromSignal("E_normal");
+//		setCriticalPath( cpE_normal );
+		if ( syncCycleFromSignal("E_small") )
 			setCriticalPath( cpE_small );
 		
 		int E_normalSize = getSignalByName("E_normal")->width(); 
@@ -728,14 +753,21 @@ namespace flopoco{
 		vhdl << tab << declare("E0offset", wE) << " <= \"" << unsignedBinary((mpz_class(1)<<(wE-1)) -2 + wE , wE) << "\"; -- E0 + wE "<<endl;
 
 		manageCriticalPath(target_->lutDelay() + target_->adderDelay(wE));
-
+		double cpER = getCriticalPath();
+		
 		vhdl << tab << declare("ER", wE) << " <= E_small" << range(wE-1,0) << " when small='1'" << endl;
 		if(wE>E_normalSize)
 			vhdl << "      else E0offset - (" << rangeAssign(wE-1,  E_normalSize, "'0'") << " & E_normal);" << endl;
 		else
 			vhdl << "      else E0offset - E_normal;" << endl;
 
+		//////////////////////////////////////////// now back to log
+		setCycleFromSignal("E_normal");
+		setCriticalPath( cpE_normal );
+		if ( syncCycleFromSignal("Log_small_normd"))
+			setCriticalPath( cpLog_small_normd );
 
+		manageCriticalPath( target->lutDelay() );
 		vhdl << tab << declare("Log_g", wF+gLog) << " <=  Log_small_normd(wF+g-2 downto 0) & \"0\" when small='1'           -- remove implicit 1" << endl
 			  << "      else Log_normal_normd(targetprec-2 downto targetprec-wF-g-1 );  -- remove implicit 1" << endl ;
 
@@ -744,12 +776,14 @@ namespace flopoco{
 		vhdl << tab << declare("round") << " <= Log_g(g-1) ; -- sticky is always 1 for a transcendental function " << endl;
 
 
-
 		vhdl << tab << "-- if round leads to a change of binade, the carry propagation magically updates both mantissa and exponent" << endl;
-
 #if 0
 		vhdl << tab << declare("EFR", wE+wF) << " <= (ER & Log_g(wF+g-1 downto g)) + ((wE+wF-1 downto 1 => '0') & round); " << endl;
 #else
+
+		if (syncCycleFromSignal("ER") )
+			setCriticalPath( cpER );
+
 		vhdl << tab << declare("fraX", wE+wF) << " <= (ER & Log_g(wF+g-1 downto g)) ; " << endl;
 		vhdl << tab << declare("fraY", wE+wF) << " <= ((wE+wF-1 downto 1 => '0') & round); " << endl;
 		IntAdder* finalRoundAdder = new IntAdder(target, wE+wF, inDelayMap("X", getCriticalPath()));

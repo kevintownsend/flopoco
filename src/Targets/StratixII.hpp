@@ -76,6 +76,9 @@ namespace flopoco{
 			multiplierDelay_[0] 	= 2.439e-9; 	// obtained experimentaly from Quartus 2. Value in handbook is: 2.880e-9
 			multiplierDelay_[1] 	= 2.724e-9; 	// obtained experimentaly from Quartus 2. Value in handbook is: 2.990e-9
 			multiplierDelay_[2] 	= 4.000e-9; 	// obtained experimentaly from Quartus 2. Value in handbook is: 4.450e-9
+			
+			RAMDelay_ = 2.439e-9; //TODO
+			RAMToLogicWireDelay_ = 0.439e-9; //TODO
 		}
 	
 		/** The destructor */
@@ -89,8 +92,14 @@ namespace flopoco{
 
 		double DSPMultiplierDelay(){ return multiplierDelay_[2];}
 		double DSPAdderDelay(){ return 2.439e-9;} //TODO
-		double DSPlocalWireDelay(){ return 0.378e-9;}//TODO
-		double DSPinterconnectWireDelay(){ return 0.724e-9;}	
+		double DSPCascadingWireDelay(){ return 0.378e-9;}//TODO
+		double DSPToLogicWireDelay(){ return 0.724e-9;}	
+		double LogicToDSPWireDelay(){ return 0.724e-9;}
+		
+		double RAMDelay() { return RAMDelay_; }
+		double RAMToLogicWireDelay() { return RAMToLogicWireDelay_; }
+		double LogicToRAMWireDelay() { return RAMToLogicWireDelay_; }	
+
 		
 		void   getAdderParameters(double &k1, double &k2, int size);
 		double localWireDelay();
@@ -133,6 +142,10 @@ namespace flopoco{
 		int	    nrConfigs_;		/**< The number of distinct predefinded multiplier widths */
 		int 	multiplierWidth_[3];	/**< The multiplier width available */
 		double 	multiplierDelay_[3];	/**< The corresponding delay for each multiplier width available */
+		
+		double RAMDelay_;
+		double RAMToLogicWireDelay_;
+		
 	};
 
 

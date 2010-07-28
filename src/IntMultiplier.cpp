@@ -133,7 +133,7 @@ namespace flopoco{
 								manageCriticalPath(target->DSPMultiplierDelay());
 								vhdl << tab << declare(join("px",i,"y",j),x+y) << " <= " << use(join("x",i)) << " * " << use(join("y",j)) << ";" << endl;
 							}else{
-								manageCriticalPath(target->DSPlocalWireDelay() + target->DSPAdderDelay());
+								manageCriticalPath(target->DSPCascadingWireDelay() + target->DSPAdderDelay());
 								vhdl << tab << declare(join("tpx",i,"y",j),x+y) << " <= " << use(join("x",i)) << " * " << use(join("y",j))  << ";" << endl; 
 								vhdl << tab << declare(join("px",i,"y",j),x+y+1) << " <= ( \"0\" & " << use(join("tpx",i,"y",j)) << ") + " << use(join("px",i,"y",j-1))<<range(x+y-1,y) << ";" << endl; 
 							}
@@ -142,7 +142,7 @@ namespace flopoco{
 						if (i<chunksX-1) setCycle(0); //reset cycle
 					}
 
-					manageCriticalPath( 2*target->DSPinterconnectWireDelay() + target->DSPlocalWireDelay() );
+					manageCriticalPath( 2*target->DSPToLogicWireDelay() + target->DSPCascadingWireDelay() );
 		
 					//FORM THE INTERMEDIARY PRODUCTS
 					for (int i=0; i<chunksX ; i++){
@@ -154,7 +154,7 @@ namespace flopoco{
 					vhdl << tab << declare ("sum0Low", x) << " <= sum0" << range(x-1,0) << ";" << endl;
 		
 					if (chunksX>1){
-						manageCriticalPath(target->DSPinterconnectWireDelay());
+						manageCriticalPath(target->DSPToLogicWireDelay());
 				
 						REPORT(DEBUG, "delay at adder input " << getCriticalPath() ); 
 	//								IntNAdder* add =  new IntNAdder(target, x*chunksX+y*chunksY+extension, chunksX, inDelayMap("X0",getCriticalPath()));
@@ -214,31 +214,31 @@ namespace flopoco{
 			
 			if ((wInX <= 18) && (wInY <= 18)){
 				setCriticalPath( getMaxInputDelays(inputDelays));
-				manageCriticalPath( target->DSPinterconnectWireDelay());
+				manageCriticalPath( target->DSPToLogicWireDelay());
 				manageCriticalPath( target->DSPMultiplierDelay());
 				vhdl << tab << "R <= X * Y;" << endl;
-				manageCriticalPath( target->DSPinterconnectWireDelay() );
+				manageCriticalPath( target->DSPToLogicWireDelay() );
 				outDelayMap["R"]=getCriticalPath();
 			}else if ((wInX <= 36) && (wInY <= 36)){				
 				setCriticalPath( getMaxInputDelays(inputDelays));
-				manageCriticalPath( target->DSPinterconnectWireDelay());
+				manageCriticalPath( target->DSPToLogicWireDelay());
 				manageCriticalPath( target->DSPMultiplierDelay());
 //						manageCriticalPath( target->DSPAdderDelay());
 //						manageCriticalPath( target->DSPAdderDelay());
 				vhdl << tab << "R <= X * Y;" << endl;
-				manageCriticalPath( target->DSPinterconnectWireDelay() );
+				manageCriticalPath( target->DSPToLogicWireDelay() );
 				outDelayMap["R"]=getCriticalPath();
 			}else if ((wInX <= 54) && (wInY <= 36)){
 				//first multiplication
 //							setCriticalPath( getMaxInputDelays(inputDelays));
-//							manageCriticalPath( target->DSPinterconnectWireDelay());
+//							manageCriticalPath( target->DSPToLogicWireDelay());
 //							manageCriticalPath( target->DSPMultiplierDelay());
 				
 					vhdl << tab << declare("x0",36) << " <= "<< opX << range(35,0) << ";" << endl;
 					vhdl << tab << declare("y0",36) << " <= "<< opY << range(35,0) << ";" << endl;
 
 					setCriticalPath( getMaxInputDelays(inputDelays));
-					manageCriticalPath( target->DSPMultiplierDelay() + target->DSPinterconnectWireDelay());
+					manageCriticalPath( target->DSPMultiplierDelay() + target->DSPToLogicWireDelay());
 //							manageCriticalPath( target->DSPAdderDelay());
 //							manageCriticalPath( target->DSPAdderDelay());
 					vhdl << tab << declare("r0",72) << "<= x0 * y0;" << endl;
@@ -247,13 +247,13 @@ namespace flopoco{
 					vhdl << tab << declare("x1",wInX-36) << " <= "<< opX << range(wInX-1,36) << ";" << endl;
 					vhdl << tab << declare("y1",18) << " <= "<< opY << range(17,0) << ";" << endl;
 					setCriticalPath( getMaxInputDelays(inputDelays));
-					manageCriticalPath( target->DSPMultiplierDelay() + target->DSPinterconnectWireDelay());
+					manageCriticalPath( target->DSPMultiplierDelay() + target->DSPToLogicWireDelay());
 					vhdl << tab << declare("r1",18 + (wInX-36)) << "<= x1 * y1;" << endl;
 					
 				setCycle(0); //reset for second multiplication
 					vhdl << tab << declare("y2",wInY-18) << " <= "<< opY << range(wInY-1,18) << ";" << endl;
 					setCriticalPath( getMaxInputDelays(inputDelays));
-					manageCriticalPath( target->DSPMultiplierDelay() + target->DSPinterconnectWireDelay());
+					manageCriticalPath( target->DSPMultiplierDelay() + target->DSPToLogicWireDelay());
 					vhdl << tab << declare("r2",(wInY-18) + (wInX-36)) << "<= x1 * y2;" << endl;
 					
 				//syncronization
@@ -261,7 +261,7 @@ namespace flopoco{
 					syncCycleFromSignal("r1");
 					syncCycleFromSignal("r2");
 					
-//							manageCriticalPath( target->DSPinterconnectWireDelay() );
+//							manageCriticalPath( target->DSPToLogicWireDelay() );
 					nextCycle();///////////////
 					vhdl << tab << declare("addOp1",18 + (wInY-18) + (wInX-36)) << " <= "
 					            << zg(18 + (wInY-18) + (wInX-36) - 36,0) << " & " << "r0" << range(71, 36) << ";" << endl;
@@ -282,7 +282,7 @@ namespace flopoco{
 					vhdl << tab << declare("y0",36) << " <= "<< opY << range(35,0) << ";" << endl;
 
 					setCriticalPath( getMaxInputDelays(inputDelays));
-					manageCriticalPath( target->DSPinterconnectWireDelay() + target->DSPMultiplierDelay());
+					manageCriticalPath( target->DSPToLogicWireDelay() + target->DSPMultiplierDelay());
 					vhdl << tab << declare("r00",72) << "<= x0 * y0;" << endl;
 
 				///////////////////////////////////////////////////////						
@@ -295,7 +295,7 @@ namespace flopoco{
 					vhdl << tab << declare("x2",18) << " <= "<< opX << range(35,18) << ";" << endl;
 
 					setCriticalPath( getMaxInputDelays(inputDelays));
-					manageCriticalPath( target->DSPMultiplierDelay() + target->DSPinterconnectWireDelay());
+					manageCriticalPath( target->DSPMultiplierDelay() + target->DSPToLogicWireDelay());
 
 					vhdl << tab << declare("r11",18 + (wInX-36)) << "<= x1 * y1;" << endl;
 					vhdl << tab << declare("r33",18 + (wInY-36)) << "<= x3 * y3;" << endl;
@@ -313,14 +313,14 @@ namespace flopoco{
 
 				setCycle(0); //reset for the third multiplication
 					setCriticalPath( getMaxInputDelays(inputDelays));
-					manageCriticalPath( target->DSPMultiplierDelay() + target->DSPinterconnectWireDelay());
+					manageCriticalPath( target->DSPMultiplierDelay() + target->DSPToLogicWireDelay());
 					vhdl << tab << declare("r13",(wInY-36) + (wInX-36)) << "<= x1 * y3;" << endl;
 					
 				//syncronization
 					syncCycleFromSignal("sum_r11_r33");
 					syncCycleFromSignal("r00");	
 					
-//							manageCriticalPath( target->DSPinterconnectWireDelay() );
+//							manageCriticalPath( target->DSPToLogicWireDelay() );
 //							nextCycle();/////////////// DSP out
 
 					vhdl << tab << declare("addOp1",36 + (wInY-36) + (wInX-36)) << " <= r13  & r00" << range(71, 36) << ";" << endl;

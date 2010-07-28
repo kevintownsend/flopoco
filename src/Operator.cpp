@@ -458,6 +458,7 @@ namespace flopoco{
 				o << "signal " << name<< " doesn't have (yet?) a valid cycle";
 				throw o.str();
 			} 
+			
 			currentCycle_ = s->getCycle();
 			vhdl.setCycle(currentCycle_);
 
@@ -499,7 +500,7 @@ namespace flopoco{
 				vhdl.setCycle(currentCycle_);
 			}
 
-			if(report)
+			if(report && advance)
 				vhdl << tab << "----------------Synchro barrier, entering cycle " << currentCycle_ << "----------------" << endl ;
 			// automatically update pipeline depth of the operator 
 			if (currentCycle_ > pipelineDepth_) 
@@ -519,7 +520,7 @@ namespace flopoco{
 
 	bool Operator::manageCriticalPath(double delay){
 //		criticalPath_ += delay;
-		if (criticalPath_ + delay > (1.0/target_->frequency())){
+		if ( target_->ffDelay() + (criticalPath_ + delay) + target_->localWireDelay() > (1.0/target_->frequency())){
 			nextCycle(); //TODO Warrning
 			criticalPath_ = min(delay, 1.0/target_->frequency());
 			return true;

@@ -84,12 +84,13 @@ namespace flopoco{
 			multiplierDelay_[2] 	= 2.0e-9; 	// *obtained experimentaly from Quartus 2
 			multiplierDelay_[3] 	= 2.0e-9; 	// *obtained experimentaly from Quartus 2
 
-
-			
 			DSPMultiplierDelay_       = 2.744e-9;
 			DSPAdderDelay_            = 1.420e-9;
-			DSPlocalWireDelay_        = 0.266e-9;//?
-			DSPinterconnectWireDelay_ = 1.619e-9;
+			DSPCascadingWireDelay_        = 0.266e-9;//?
+			DSPToLogicWireDelay_ = 1.619e-9;
+			
+			RAMDelay_ = 2.439e-9; //TODO
+			RAMToLogicWireDelay_ = 0.439e-9; //TODO
 			
 		}
 	
@@ -104,8 +105,14 @@ namespace flopoco{
 		
 		double DSPMultiplierDelay(){ return DSPMultiplierDelay_;}
 		double DSPAdderDelay(){ return DSPAdderDelay_;} //TODO
-		double DSPlocalWireDelay(){ return DSPlocalWireDelay_;}//TODO
-		double DSPinterconnectWireDelay(){ return DSPinterconnectWireDelay_;}	
+		double DSPCascadingWireDelay(){ return DSPCascadingWireDelay_;}//TODO
+		double DSPToLogicWireDelay (){ return DSPToLogicWireDelay_;}	
+		double LogicToDSPWireDelay (){ return DSPToLogicWireDelay_;}	
+		
+		
+		double RAMDelay() { return RAMDelay_; }
+		double RAMToLogicWireDelay() { return RAMToLogicWireDelay_; }
+		double LogicToRAMWireDelay() { return RAMToLogicWireDelay_; }
 		
 		void   getAdderParameters(double &k1, double &k2, int size);
 		double localWireDelay();
@@ -154,8 +161,11 @@ namespace flopoco{
 	
 		double DSPMultiplierDelay_;
 		double DSPAdderDelay_;
-		double DSPlocalWireDelay_;
-		double DSPinterconnectWireDelay_;
+		double DSPCascadingWireDelay_;
+		double DSPToLogicWireDelay_;
+		
+		double RAMDelay_;
+		double RAMToLogicWireDelay_;
 	
 	};
 }

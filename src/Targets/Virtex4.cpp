@@ -183,11 +183,13 @@ namespace flopoco{
 
 
 		int chunkSize = 2 + (int)floor( (1./frequency() - (fdCtoQ_ + slice2sliceDelay_ + lut2_ + muxcyStoO_ + xorcyCintoO_ + ffd_)) / muxcyCINtoO_ );
-		x = chunkSize;		
+		
+		
+		x = min(chunkSize, wIn);		
 		if (x > 0) 
 			return true;
 		else {
-			x = 2;		
+			x = min(2,wIn);		
 			return false;
 		} 
 	};
@@ -198,11 +200,12 @@ namespace flopoco{
 
 
 		int chunkSize =  2 + (int)floor( (1./frequency() - slack - (fdCtoQ_ + slice2sliceDelay_ + lut2_ + muxcyStoO_ + xorcyCintoO_ + ffd_)) / muxcyCINtoO_ );
-		x = chunkSize;		
+		x = chunkSize;	
+		x = min(chunkSize, wIn);	
 		if (x > 0) 
 			return true;
 		else {
-			x = 2;		
+			x = min(2,wIn);		
 			return false;
 		} 
 	};

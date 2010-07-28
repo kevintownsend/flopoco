@@ -2532,7 +2532,7 @@ namespace flopoco{
 						//conditions will obviously happen at the same time
 						if ((d->getShiftIn() != NULL) && (j>0)){ // multiply accumulate 
 
-//							manageCriticalPath( target_->DSPMultiplierDelay() + target_->DSPlocalWireDelay() );								
+//							manageCriticalPath( target_->DSPMultiplierDelay() + target_->DSPCascadingWireDelay() );								
 
 							vhdl << tab << declare(join("txy",i,j), multW + multH + 2) << " <= " << join("x",i,"_",j) << " * " << join("y",i,"_",j) << ";" << endl;
 
@@ -2553,7 +2553,7 @@ namespace flopoco{
 							}
 						}else{
 							// only multiplication
-							manageCriticalPath(target_->DSPMultiplierDelay() + target_->DSPinterconnectWireDelay());
+							manageCriticalPath(target_->DSPMultiplierDelay() + target_->DSPToLogicWireDelay());
 							vhdl << tab << declare(join("pxy",i,j), multW + multH + 2) << " <= " << join("x",i,"_",j) << " * " << join("y",i,"_",j) << ";-- -" << endl;
 							sname.str("");
 							if (d->getShiftOut() == NULL) //concatenate the entire partial product

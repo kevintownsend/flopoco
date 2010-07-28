@@ -53,30 +53,22 @@ namespace flopoco{
 		void emulate(TestCase* tc);
 	
 		double compDelay(int n){
-//			double fdcq = 0.826e-9;
-//			double lutd = 0.147e-9;
-//			double muxcy = 0.034e-9;
-//			double fdd = 0.017e-9;
-			
-//			if (countType_>=0)
-//				return 2*target_->lutDelay(); 
-//			else
-				return target_->adderDelay(n) + target_->lutDelay(); 
-		
-//			return (fdcq + lutd + (muxcy*n/2) + fdd);
-		};
+			if ( countType_ == -1 )
+				return target_->localWireDelay() + target_->adderDelay(n/2); 
+			else{
+				if (n <= target_->lutInputs())
+					return target_->localWireDelay() + target_->lutDelay();
+				else if ( n<= target_->lutInputs()*target_->lutInputs() )
+						return 2*target_->localWireDelay() + 2*target_->lutDelay();
+				else if ( n< target_->lutInputs()*target_->lutInputs()*target_->lutInputs() )
+						return 3*target_->localWireDelay() + 3*target_->lutDelay();
+				else					
+					return target_->localWireDelay() + target_->adderDelay(n/4); 
+			}
+		}
+
 		double muxDelay(){
-
-			if (countType_>=0)
-				return 2*target_->lutDelay(); 
-			else
-				return 4*target_->lutDelay(); 
-
-//			double fdcq = 0.826e-9;
-//			double lutd = 0.147e-9;
-//			double fdd = 0.017e-9;
-//		
-//			return (fdcq + lutd + fdd);
+			return target_->localWireDelay() + target_->lutDelay(); 
 		}
 
 

@@ -125,10 +125,26 @@ extern vector<Operator*> oplist;
 						cSize[0] = (classicalSlackVersion == 0 ? gamma: alpha);
 					else
 						cSize[0] = alpha;
+					
+					if (k==2){
 						
-					for (int i=1; i<k-1; i++)
-						cSize[i] = alpha;
-					cSize[k-1] = beta;
+						if ( maxInputDelay == 0 ){
+							cSize[1] = beta;								
+						}else{
+							if (classicalSlackVersion == 0){	
+								cSize[1] = alpha;	
+							}else{
+								cSize[1] = beta;	
+							}
+						}
+					}else{
+						
+						for (int i=1; i<k-1; i++)
+							cSize[i] = alpha;
+
+						cSize[k-1] = beta;
+					}		
+						
 				}else{
 					k = 1;
 					cSize = new int[1];
@@ -1246,15 +1262,20 @@ extern vector<Operator*> oplist;
 				else
 					typeOfChunks+=2; //three types of chunks
 		
+				REPORT (DETAILED, "Types of chunks = " << typeOfChunks);
+		
 				if (typeOfChunks==3)
 					beta = ( (wIn_-gamma) % alpha == 0 ? alpha : (wIn_-gamma) % alpha );
 				else
 					beta = 0;
 				
+				
 				if (typeOfChunks==2)
 					k = 2;
 				else
-					k = 2 + ( wIn_ - beta - gamma ) / alpha;
+					k = 2 +   int(ceil(double( wIn_ - beta - gamma ) / double(alpha)));
+					
+					
 			}else{
 				alpha = 0;
 				beta = 0;

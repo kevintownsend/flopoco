@@ -93,7 +93,12 @@ namespace flopoco{
 		 */
 		virtual bool   suggestSlackSubaddSize(int &x, int wIn, double slack)=0;
 
-		// Delay-related methods
+
+
+		/* -------------------- Delay-related methods ------------------------*/
+
+		/* -------------------  logic related  -------------------------------*/
+		
 		/** Function which returns the lutDelay for this target
 		 * @return the LUT delay
 		 */
@@ -115,7 +120,19 @@ namespace flopoco{
 		 * @return the addition delay for an n bit addition
 		 */
 		virtual double adderDelay(int n) =0;
-		
+
+		/** Function which returns the distant wire delay.
+		 * @return distant wire delay 
+		 */
+		virtual double distantWireDelay(int n) =0;
+
+		/** Function which returns the local wire delay (local routing)
+		 * @return local wire delay 
+		 */
+		virtual double localWireDelay() =0;
+
+		/* --------------------  DSP related  --------------------------------*/
+
 		/** Function which returns the delay of the multiplier of the DSP block
 		 * @return delay of the DSP multiplier
 		 */
@@ -130,28 +147,45 @@ namespace flopoco{
 		 * DSPs
 		 * @return delay of the interconnect between DSPs
 		 */
-		virtual double DSPlocalWireDelay()=0;
+		virtual double DSPCascadingWireDelay()=0;
 
-		/** Function which returns the delay of the wiring between neighboring 
-		 * DSPs
-		 * @return delay of the interconnect between DSPs
+		/** Function which returns the delay of the wiring between  
+		 * DSPs output and logic (slices)
+		 * @return delay DSP -> slice
 		 */
-		virtual double DSPinterconnectWireDelay()=0;
+		virtual double DSPToLogicWireDelay()=0;
 
-		/** Function which returns the local wire delay (local routing)
-		 * @return local wire delay 
+		/** Function which returns the delay of the wiring between 
+		 * slices and DSPs input
+		 * @return delay slice -> DSP
 		 */
-		virtual double localWireDelay() =0;
-	
+		virtual double LogicToDSPWireDelay()=0;
+
+		/* -------------------  BRAM related  --------------------------------*/
+
+		/** Function which returns the delay between
+		 * RAMs and slices
+		 * @return delay RAMout to slice
+		 */
+		virtual double RAMToLogicWireDelay()=0;
+
+		/** Function which returns the delay between
+		 * slices and RAM input
+		 * @return delay slice to RAMin
+		 */
+		virtual double LogicToRAMWireDelay()=0;
+
+		/** Function which returns the delay of the RAM
+		 * @return delay RAM
+		 */
+		virtual double RAMDelay()=0;
+
+
 		/** Function which returns the size of a primitive memory block,which could be recognized by the synthesizer as a dual block.
 		 * @return the size of the primitive memory block
 		 */	
 		virtual long sizeOfMemoryBlock() = 0 ;
 
-		/** Function which returns the distant wire delay.
-		 * @return distant wire delay 
-		 */
-		virtual double distantWireDelay(int n) =0;
 	
 		/** Function which returns the Equivalence between slices and a DSP.
 		 * @return X ,  where X * Slices = 1 DSP

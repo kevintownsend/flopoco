@@ -238,7 +238,7 @@ public:
 	 * @param name is the signal name. It must have been defined before 
 	 * @param report is a boolean, if true it will report the cycle 
 	 */
-	void setCycleFromSignal(string name, bool report=false) ;
+	void setCycleFromSignal(string name, bool report=true) ;
 
 	/** advance the current cycle to that of a signal. It may only increase current cycle. To synchronize
 		 two or more signals, first call setCycleFromSignal() on the
