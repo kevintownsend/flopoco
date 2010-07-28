@@ -37,20 +37,23 @@ namespace flopoco{
 		setName(name.str());
 		setCopyrightString("Bogdan Pasca (2009)");
 
+		srcFileName = "IntSquarer";
+
 		// Set up the IO signals
 		addInput ("X"  , wIn_);
 		addOutput("R"  , 2*wIn_);
 
-
-		if (verbose>=2){
-			cerr <<"> IntSquarer: delay for X is   "<< inputDelays["X"]<<endl;	
-		}
+		setCriticalPath( getMaxInputDelays(inputDelays) );
 
 		if (wIn <= 17 ) {
-			vhdl << tab << "R <= X * X;" << endl; 
+			vhdl << tab << declare( "sX", wIn) << " <= X;" << endl;
+			vhdl << tab << declare( "sY", wIn) << " <= X;" << endl;
+			
+			manageCriticalPath( target->LogicToDSPWireDelay() + target->DSPMultiplierDelay() );
+			vhdl << tab << "R <= sX * sY;" << endl; 
+			outDelayMap["R"] = getCriticalPath();
 		}
 		else if ((wIn>17) && (wIn<=34)) {
-
 
 			vhdl << declare("x0_16",17) << " <= X" << range(16,0) << ";" << endl;
 			if (wIn<34)
@@ -58,53 +61,25 @@ namespace flopoco{
 			else
 				vhdl << declare("x17_33",17) << " <= X" << range(33,17) << ";" << endl;
 						
-
-
-#if 0
+			manageCriticalPath( target->LogicToDSPWireDelay() + target->DSPMultiplierDelay() );
 			vhdl << declare("p0",34) << " <= x0_16 * x0_16;" <<endl;
-
-			nextCycle();//////////////////////////////////////////////
-
-			// The following is needed to bring up freq to 368MHz. Without it, we have 170 Mhz
-			// 	nextCycle();//////////////////////////////////////////////
-			// 	nextCycle();//////////////////////////////////////////////
-			
-			vhdl << declare("p1",34) << " <= x17_33 * x0_16 + ( \"0\" & p0" << range(33,18) <<");" <<endl;
 			vhdl << declare("f0",18) << " <= p0" << range(17,0) << ";" << endl;
-			
-			nextCycle();//////////////////////////////////////////////
-
-			vhdl << declare("p2",34) << " <= x17_33 * x17_33 + ( \"0\" & p1" << range(33,16) <<");" <<endl;
-			vhdl << declare("f1",16) << " <= p1" << range(15,0) << ";" << endl;
-
-			// TODO: registering output is not standard FloPoCo practice 
-			nextCycle();//////////////////////////////////////////////
-
-#else  // This code is simpler, 3 cycles only, complies with standard practice and is synthesized at 350 MHz with 48 slices
-			vhdl << declare("p0",34) << " <= x0_16 * x0_16;" <<endl;
 			vhdl << declare("p1",34) << " <= x17_33 * x0_16;" <<endl;
 
-			nextCycle();//////////////////////////////////////////////
-			
+			manageCriticalPath( target->DSPCascadingWireDelay() + target->DSPAdderDelay() );
 			vhdl << declare("s1",34) << " <= p1 + ( \"0\" & p0" << range(33,18) <<");" <<endl;
-			vhdl << declare("f0",18) << " <= p0" << range(17,0) << ";" << endl;
-			
-			vhdl << declare("p2",34) << " <= x17_33 * x17_33;" <<endl;
-			
-			
-			nextCycle();//////////////////////////////////////////////
-			
-			vhdl << declare("s2",34) << " <= p2 + ( \"0\" & s1" << range(33,16) <<");" <<endl;
 			vhdl << declare("f1",16) << " <= s1" << range(15,0) << ";" << endl;
+			vhdl << declare("p2",34) << " <= x17_33 * x17_33;" <<endl;
 
-			nextCycle();////////////////////////////////////////////// 
+			manageCriticalPath( target->DSPCascadingWireDelay() + target->DSPAdderDelay() );
+			vhdl << declare("s2",34) << " <= p2 + ( \"0\" & s1" << range(33,16) <<");" <<endl;
 
-#endif
 			if (wIn<34)
 				vhdl << "R <= s2" << range(2*wIn-34-1,0) << " & f1 & f0;" << endl;
 			else
 				vhdl << "R <= s2 & f1 & f0;" << endl;
 
+			outDelayMap["R"] = getCriticalPath();
 		}
 		else if ((wIn>34) && (wIn<=51)) {
 			// --------- Sub-components ------------------

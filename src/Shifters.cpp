@@ -44,7 +44,10 @@ namespace flopoco{
 		Operator(target, inputDelays), wIn_(wIn), maxShift_(maxShift), direction_(direction) {
 	
 		setOperatorName();
-
+		srcFileName = (direction == Right?  "RightShifter": "LeftShifter");
+		
+		REPORT( INFO, " wIn="<<wIn<<" maxShift="<<maxShift<<" direction="<< (direction == Right?  "RightShifter": "LeftShifter") );
+		
 		// -------- Parameter set up -----------------
 		wOut_         = wIn_ + maxShift_;
 		wShiftIn_     = intlog2(maxShift_);
@@ -63,8 +66,9 @@ namespace flopoco{
 		int    dep = 0;
 		
 		setCriticalPath( getMaxInputDelays( inputDelays) );
-		manageCriticalPath( target->localWireDelay() );
-		
+//		manageCriticalPath( target->localWireDelay() );
+
+//		setCriticalPath(0.0);
 		for (int currentLevel=0; currentLevel<wShiftIn_; currentLevel++){
 			//compute current level delay
 			//TODO REMEMBER WHY THIS DOES WORK
@@ -76,15 +80,12 @@ namespace flopoco{
 		
 			if (verbose)
 				cerr<<"> Shifters\t depth = "<<dep<<" at i="<<currentLevel<<endl;	
-			
-			setCriticalPath( intlog(mpz_class(2) /*target->lutInputs())*/, mpz_class(dep)) * (target->lutDelay() + target->localWireDelay()) );
-			//compiler changed
-			REPORT(DEBUG, tab << "DELAY is " << getCriticalPath());
-			REPORT(DEBUG, tab << "the log value is " << intlog(mpz_class(target->lutInputs()), mpz_class(dep)) );
-			if (manageCriticalPath()){
+			if (manageCriticalPath( intlog( mpz_class(target->lutInputs()/2), mpz_class(dep)) * (target->lutDelay() + target->localWireDelay())) ){
 				lastRegLevel = currentLevel;
 				REPORT(DEBUG, tab << "REG LEVEL current delay is:" << getCriticalPath());
 			}
+			if (currentLevel<wShiftIn_-1)	
+				setCriticalPath(0.0);
 
 			ostringstream currentLevelName, nextLevelName;
 			currentLevelName << "level"<<currentLevel;
@@ -108,6 +109,8 @@ namespace flopoco{
 		}
 		//update the output slack
 		outDelayMap["R"] = getCriticalPath();
+		REPORT(DETAILED, "Delay at output " << getCriticalPath() );
+		
 	
 		ostringstream lastLevelName;
 		lastLevelName << "level"<<wShiftIn_;
