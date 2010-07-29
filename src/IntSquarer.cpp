@@ -30,7 +30,7 @@ namespace flopoco{
 	extern vector<Operator *> oplist;
 
 	IntSquarer::IntSquarer(Target* target, int wIn, map<string, double> inputDelays):
-		Operator(target), wIn_(wIn), inputDelays_(inputDelays)
+		Operator(target, inputDelays), wIn_(wIn), inputDelays_(inputDelays)
 	{
 		ostringstream name;
 		name << "IntSquarer_" << wIn_;
@@ -53,8 +53,33 @@ namespace flopoco{
 			vhdl << tab << "R <= sX * sY;" << endl; 
 			outDelayMap["R"] = getCriticalPath();
 		}
-		else if ((wIn>17) && (wIn<=34)) {
+		
+		else if ((wIn>17) && (wIn<=33)) {
+			vhdl << tab << declare("x0_16",18) << " <= \"0\" & X" << range(16,0) << ";" << endl;
+			vhdl << tab << declare("x17_32",18) << " <= \"00\" & " << zg(33-wIn,0) << " & X" << range(wIn-1,17) << ";" << endl;
+			vhdl << tab << declare("x17_32_shr",18) << " <= \"0\" & " << zg(33-wIn,0) << " & X" << range(wIn-1,17) << " & \"0\"" << ";" << endl;
+			
+						
+			manageCriticalPath( target->LogicToDSPWireDelay() + target->DSPMultiplierDelay() );
+			vhdl << tab << declare("p0",36) << " <= x0_16 * x0_16;" <<endl;
+//			vhdl << tab << declare("f0",17) << " <= p0" << range(16,0) << ";" << endl;
+			vhdl << tab << declare("p1_x2",36) << " <= x17_32_shr * x17_32;" <<endl;
 
+			manageCriticalPath( target->DSPCascadingWireDelay() + target->DSPAdderDelay() );
+			vhdl << tab << declare("s1",36) << " <= p1_x2 + ( \"00000000000000000\" & p0" << range(35,17) <<");" <<endl;
+//			vhdl << tab << declare("f1",17) << " <= s1" << range(16,0) << ";" << endl;
+			vhdl << tab << declare("p2",36) << " <= x17_32 * x17_32;" <<endl;
+
+			manageCriticalPath( target->DSPCascadingWireDelay() + target->DSPAdderDelay() );
+			vhdl << tab << declare("s2",36) << " <= p2 + ( \"00000000000000000\" & s1" << range(35,17) <<");" <<endl;
+
+
+			manageCriticalPath( target->DSPToLogicWireDelay() );
+			vhdl << tab << "R <= s2" << range(2*wIn-34-1,0) << " & s1"<<range(16,0) << " & p0"<<range(16,0)<<";" << endl;
+			outDelayMap["R"] = getCriticalPath();
+		
+		}else if ((wIn>17) && (wIn<=34)) {
+			//FIXME: bottleneck
 			vhdl << tab << declare("x0_16",17) << " <= X" << range(16,0) << ";" << endl;
 			if (wIn<34)
 				vhdl << tab << declare("x17_33",17) << " <= "<<zg(34-wIn,0) << " & X" << range(wIn-1,17) << ";" << endl;
@@ -237,19 +262,28 @@ namespace flopoco{
 	}
 
 
-	//void IntSquarer::outputvhdl << tab(std::ostream& o, std::string name) {
-	//	ostringstream signame;
-	//	licence(o,"Bogdan Pasca (2009)");
-	//	Operator::stdLibs(o);
-	//	outputvhdl << tabEntity(o);
-	//	newArchitecture(o,name);
-	//	o << buildvhdl << tabSignalDeclarations();
-	//	o << output
-	//	beginArchitecture(o);
-	//	o << buildvhdl << tabRegisters();
-	//	o << vhdl << tab.str();
-	//	endArchitecture(o);
-	//}
+	void IntSquarer::outputVHDL(std::ostream& o, std::string name) {
+		ostringstream signame;
+		licence(o);
+		o << "library ieee; " << endl;
+		o << "use ieee.std_logic_1164.all;" << endl;
+		o << "use ieee.std_logic_arith.all;" << endl;
+		if ((wIn_>17) && (wIn_<=34)) {
+			o << "use ieee.std_logic_signed.all;" << endl;
+		}else
+			o << "use ieee.std_logic_unsigned.all;" << endl;
+		
+		o << "library work;" << endl;
+		outputVHDLEntity(o);
+		newArchitecture(o,name);
+		o << buildVHDLComponentDeclarations();	
+		o << buildVHDLSignalDeclarations();
+		beginArchitecture(o);		
+		o<<buildVHDLRegisters();
+		o << vhdl.str();
+		endArchitecture(o);
+	}
+		
 
 
 

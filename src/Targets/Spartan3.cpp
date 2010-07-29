@@ -45,7 +45,7 @@ namespace flopoco{
 		return  fastcarryDelay_; 
 	};
 
-	double Spartan3::localWireDelay(){
+	double Spartan3::localWireDelay(int fanout){
 		return  elemWireDelay_ ;
 	};
 

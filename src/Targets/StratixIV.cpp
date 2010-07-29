@@ -49,7 +49,7 @@ namespace flopoco{
 		return  fastcarryDelay_; 
 	};
 
-	double StratixIV::localWireDelay(){
+	double StratixIV::localWireDelay(int fanout){
 		return lut2lutDelay_;
 	};
 

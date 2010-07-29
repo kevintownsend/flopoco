@@ -91,7 +91,7 @@ namespace flopoco{
 			vhdl << tab << declare(join("count",i),1) << "<= '1' when " <<join("level",i+1)<<range(prevLev-1,prevLev - intpow2(i))<<" = "
 				  <<"("<<prevLev-1<<" downto "<<prevLev - intpow2(i)<<"=>"<< (countType_==-1? "sozb": countType_==0?"'0'":"'1'")<<") else '0';"<<endl;
 
-			manageCriticalPath( muxDelay() );
+			manageCriticalPath( muxDelay(currLev) );
 			vhdl << tab << declare(join("level",i),currLev) << "<= " << join("level",i+1)<<"("<<prevLev-1<<" downto "<< prevLev-currLev << ")"
 				  << " when " << join("count",i) << "='0' else ";
 			int l,r;
@@ -119,7 +119,7 @@ namespace flopoco{
 						  <<" downto "<< 0 <<") = CONV_STD_LOGIC_VECTOR(0,"<< (currLev < prevLev - intpow2(i) ? (prevLev - intpow2(i)) - currLev : 0 ) <<") else '1'";
 				vhdl << ";"<<endl;
 
-				manageCriticalPath( muxDelay() );
+				manageCriticalPath( muxDelay(currLev) );
 
 				vhdl << tab << declare(join("sticky",i),1) << "<= " << join("sticky",i+1) << " or " << join("sticky_high_",i) 
 					  << " when " << join("count",i) << "='0' else " << join("sticky",i+1) << " or " << join("sticky_low_",i)<<";"<<endl;

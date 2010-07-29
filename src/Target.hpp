@@ -129,7 +129,7 @@ namespace flopoco{
 		/** Function which returns the local wire delay (local routing)
 		 * @return local wire delay 
 		 */
-		virtual double localWireDelay() =0;
+		virtual double localWireDelay(int fanout = 1) =0;
 
 		/* --------------------  DSP related  --------------------------------*/
 

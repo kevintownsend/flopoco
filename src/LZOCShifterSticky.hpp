@@ -67,8 +67,8 @@ namespace flopoco{
 			}
 		}
 
-		double muxDelay(){
-			return target_->localWireDelay() + target_->lutDelay(); 
+		double muxDelay(int selFanout){
+			return target_->localWireDelay(selFanout) + target_->lutDelay(); 
 		}
 
 

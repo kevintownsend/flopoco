@@ -45,7 +45,7 @@ namespace flopoco{
 		return  fastcarryDelay_; 
 	};
 
-	double Virtex5::localWireDelay(){
+	double Virtex5::localWireDelay(int fanout){
 		return  elemWireDelay_ ;
 	};
 
