@@ -439,20 +439,20 @@ namespace flopoco{
 			if(syncCycleFromSignal(join("P",i)))
 				setCriticalPath( cppi );
 
-			vhdl << tab << declare(join("Pp", i), s[i+1])  << " <= " << rangeAssign(p[i]-a[i],  0,  "'0'") << " & " << join("P", i);
+			vhdl << tab << declare(join("Pp", i), s[i+1])  << " <= " << rangeAssign(p[i]-a[i],  0,  "'1'") << " & not(" << join("P", i);
 			// either pad, or truncate P
 			if(p[i]-a[i]+1  + psize[i]+a[i]  < s[i+1]) // size of leading 0s + size of p 
 				vhdl << " & "<< rangeAssign(s[i+1] - (p[i]-a[i]+1  + psize[i]+a[i]) - 1,    0,  "'0'");  // Pad
 			if(p[i]-a[i]+1  + psize[i]+a[i]  > s[i+1]) 
 				//truncate
 				vhdl << range(psize[i]+a[i]-1,    p[i]-a[i]+1  + psize[i]+a[i] - s[i+1]);
-			vhdl << ";"<<endl;
+			vhdl << ");"<<endl;
 
 			IntAdder* addCycleI2 = new IntAdder ( target, s[i+1], inDelayMap("X", getCriticalPath()) );
 			oplist.push_back(addCycleI2);
 			
 			inPortMap( addCycleI2, "X" , join("EiYPB",i) );
-			inPortMapCst( addCycleI2, "Y" , "not("+join("Pp", i)+")" );
+			inPortMap( addCycleI2, "Y" , join("Pp", i) );
 			inPortMapCst( addCycleI2, "Cin", " '1'" );
 			outPortMap( addCycleI2, "R", join("Z", i+1) );
 			vhdl << instance ( addCycleI2, join("addIter2_",i) ) << endl;
