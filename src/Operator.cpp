@@ -518,10 +518,10 @@ namespace flopoco{
 		criticalPath_ += delay;
 	}
 
-	bool Operator::manageCriticalPath(double delay){
+	bool Operator::manageCriticalPath(double delay, bool report){
 //		criticalPath_ += delay;
 		if ( target_->ffDelay() + (criticalPath_ + delay) + target_->localWireDelay() > (1.0/target_->frequency())){
-			nextCycle(); //TODO Warrning
+			nextCycle(report); //TODO Warrning
 			criticalPath_ = min(delay, 1.0/target_->frequency());
 			return true;
 		}
@@ -767,17 +767,39 @@ namespace flopoco{
                 if (op->isRecirculatory()) {
                         o << tab << tab << "stall_s => stall_s," << endl;
                 };
-		it=op->portMap_.begin();
-		if(op->isSequential()) 
-			o << tab << tab << "           " ;
-		else
-			o <<  " " ;
-		o<< (*it).first << " => "  << (*it).second;
-		//op->portMap_.erase(it);
-		it++;
-		for (  ; it != op->portMap_.end(); it++ ) {
-			o << "," << endl;
+		
+		for (it=op->portMap_.begin()  ; it != op->portMap_.end(); it++ ) {
+			bool outputSignal = false;
+			for ( int k = 0; k < int(op->ioList_.size()); k++){
+				if ((op->ioList_[k]->type() == Signal::out) && ( op->ioList_[k]->getName() == (*it).first )){ 
+					outputSignal = true;
+				}
+			}
+			
+			bool parsing = vhdl.isParsing();
+			
+			if ( outputSignal && parsing){
+				vhdl.flush(currentCycle_);
+				vhdl.disableParsing(true);
+			}
+			
+			if (it!=op->portMap_.begin())				
+				o << "," << endl;
+			else
+				if(op->isSequential()) 
+					o << tab << tab << "  " ;
+				else
+				o <<  " " ;
+			
+			
 			o <<  tab << tab << "           " << (*it).first << " => "  << (*it).second;
+			
+			if ( outputSignal && parsing ){
+				vhdl << o.str();
+				vhdl.flush(currentCycle_);
+				o.str("");
+				vhdl.disableParsing(!parsing);
+			}
 			//op->portMap_.erase(it);
 		}
 		o << ");" << endl;
@@ -1136,13 +1158,16 @@ namespace flopoco{
 			string searchString (tSearch.str());
 
 			iterDeclare = declareTable.find(name);
+			declareCycle = iterDeclare->second;
 			
 			if (iterDeclare != declareTable.end()){
-				declareCycle = iterDeclare->second;
 //				cout << "+++++ Element FOUND at level :" << declareCycle << endl;
-				
 				tReplace << use(name, useCycle - declareCycle); 
 				replaceString = tReplace.str();
+				if (useCycle<declareCycle){
+					cerr << "ERROR: Signal:"<<name<<". defined @ cycle "<<declareCycle<<" and used @ cycle " << useCycle <<endl;
+//					exit(-1);
+				}
 			}else{
 				/* parse the declare by hand and check lower/upper case */
 				bool found = false;

@@ -286,6 +286,10 @@ extern bool combinatorialOperator;
 				disabledParsing = s;
 			}
 			
+			bool isParsing(){
+				return !disabledParsing;
+			}
+			
 		protected:
 			
 			ostringstream vhdlCode;              /**< the vhdl code afte */

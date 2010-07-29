@@ -297,8 +297,8 @@ namespace flopoco{
 		vhdl << tab << declare("small") << " <= EeqZero and not(doRR);" << endl;
 
 
-		if (syncCycleFromSignal("shiftvalinL"))
-			setCriticalPath(cpshiftval);
+		setCycleFromSignal("shiftvalinL");
+		setCriticalPath(cpshiftval);
 			
 		// ao stands for "almost one"
 		vhdl << tab << "-- The left shifter for the 'small' case" <<endl; 
@@ -478,7 +478,7 @@ namespace flopoco{
 		else 
 			squarerInSize = sfinal-pfinal;
 		
-		manageCriticalPath( target->DSPToLogicWireDelay() +  target->lutDelay() );		
+		manageCriticalPath( target->localWireDelay() +  target->lutDelay() );		
 		vhdl << tab << declare("squarerIn", squarerInSize) << " <= " 
 			 << "Zfinal(sfinal-1 downto sfinal-"<< squarerInSize << ") when doRR='1'" << endl;
 		if(squarerInSize>small_absZ0_normd_size)
@@ -486,17 +486,17 @@ namespace flopoco{
 		else  // sfinal-pfinal <= small_absZ0_normd_size
 			vhdl << tab << "                 else small_absZ0_normd" << range(small_absZ0_normd_size-1, small_absZ0_normd_size - squarerInSize) << ";  " << endl<< endl;
 
-		IntSquarer* sq = new IntSquarer(target, squarerInSize, inDelayMap( "X", target->localWireDelay() + getCriticalPath() ) );
+		IntSquarer* sq = new IntSquarer(target, squarerInSize, inDelayMap( "X", target->LogicToDSPWireDelay() + getCriticalPath() ) );
 		
 		oplist.push_back(sq);
 		inPortMap  (sq, "X", "squarerIn");
 		outPortMap (sq, "R", "Z2o2_full");
 		vhdl << instance(sq, "squarer");
-		setCycleFromSignal("Z2o2_full", true);
-
+		syncCycleFromSignal("Z2o2_full", true);
 		setCriticalPath( sq->getOutputDelay("R")  );
 
 		manageCriticalPath(target->DSPToLogicWireDelay());
+		double cpZ2o2_full_dummy = getCriticalPath();
 		vhdl << tab << declare("Z2o2_full_dummy", 2*squarerInSize) << " <= Z2o2_full;" << endl;
 		
 		vhdl << tab << declare("Z2o2_normal", sfinal-pfinal-1) << " <= Z2o2_full_dummy ("<< 2*squarerInSize-1 << "  downto " << 2*squarerInSize - (sfinal-pfinal-1) << ");" << endl;
@@ -523,13 +523,14 @@ namespace flopoco{
 
 		vhdl << tab << "-- First log table" << endl;
 		FirstLogTable* lt0 = new FirstLogTable(target, a[0], target_prec, it0, this);
-
+		oplist.push_back(lt0);
+		
 		int profilingDepth = 0;
 		setCriticalPath(0.0);
-		if (manageCriticalPath(target->LogicToRAMWireDelay() + target->RAMDelay()) )
+		if (manageCriticalPath(target->LogicToRAMWireDelay() + target->RAMDelay(), false) )
 			profilingDepth++;
 		for (i=1; i<= stages; i++) {
-			if (manageCriticalPath( target->LogicToRAMWireDelay() + target->RAMDelay() ))
+			if (manageCriticalPath( target->LogicToRAMWireDelay() + target->RAMDelay(), false ))
 				profilingDepth++;
 			IntAdder * adderS = new IntAdder( target, lt0->wOut, inDelayMap("X", target->RAMToLogicWireDelay() + getCriticalPath() ));
 			profilingDepth+=adderS->getPipelineDepth();
@@ -541,7 +542,7 @@ namespace flopoco{
 		setCycle(getCurrentCycle() - profilingDepth , true); 
 		manageCriticalPath(target->LogicToRAMWireDelay() + target->RAMDelay());
 
-		oplist.push_back(lt0);
+
 		inPortMap       (lt0, "X", "A0");
 		outPortMap      (lt0, "Y", "L0");
 		vhdl << instance(lt0, "ltO");
@@ -651,6 +652,9 @@ namespace flopoco{
 
 		int Z2o2_small_size=(wF+gLog+2) - pfinal; // we need   (wF+gLog+2) - pfinal bits of Z2O2
 
+		if (syncCycleFromSignal("Z2o2_full_dummy"))
+			setCriticalPath(cpZ2o2_full_dummy);
+
 		vhdl << tab << declare("Z2o2_small_bs", Z2o2_small_size)  << " <= Z2o2_full_dummy" << range(2*squarerInSize -1, 2*squarerInSize -Z2o2_small_size) << ";" << endl;
 
 		ao_rshift = new Shifter(target, Z2o2_small_size, sfinal-pfinal+1, Shifter::Right, inDelayMap("X", getCriticalPath()) ) ;
@@ -731,14 +735,16 @@ namespace flopoco{
 //		//////////////////////////////////////// get back to Log_normal_normd
 		if ( syncCycleFromSignal("E_small") )
 			setCriticalPath( cpE_small );
+		if ( syncCycleFromSignal("E_normal") )
+			setCriticalPath( cpE_normal );
+		
 		
 		int E_normalSize = getSignalByName("E_normal")->width(); 
 
-		vhdl << tab << declare("E0offset", wE) << " <= \"" << unsignedBinary((mpz_class(1)<<(wE-1)) -2 + wE , wE) << "\"; -- E0 + wE "<<endl;
-
 		manageCriticalPath(target_->lutDelay() + target_->adderDelay(wE));
 		double cpER = getCriticalPath();
-		
+
+		vhdl << tab << declare("E0offset", wE) << " <= \"" << unsignedBinary((mpz_class(1)<<(wE-1)) -2 + wE , wE) << "\"; -- E0 + wE "<<endl;
 		vhdl << tab << declare("ER", wE) << " <= E_small" << range(wE-1,0) << " when small='1'" << endl;
 		if(wE>E_normalSize)
 			vhdl << "      else E0offset - (" << rangeAssign(wE-1,  E_normalSize, "'0'") << " & E_normal);" << endl;

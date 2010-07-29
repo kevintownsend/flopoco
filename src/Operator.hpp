@@ -224,7 +224,7 @@ public:
 	 * @param the delay to add to the critical path of current pipeline stage */
 	void addToCriticalPath(double delay) ;
 
-	bool manageCriticalPath(double delay=0.0);
+	bool manageCriticalPath(double delay=0.0, bool report=true);
 
 	/** Adds to the critical path of the current stage, and insert a pipeline stage if needed
 	 * @param the delay to add to the critical path of current pipeline stage */

@@ -38,6 +38,7 @@ namespace flopoco{
 		double maxDSPFrequency = int(floor(1.0/ (target->DSPMultiplierDelay() + 1.0e-10)));
 		if (target_freq > maxDSPFrequency)
 			target->setFrequency(maxDSPFrequency);
+			
 
 		/* Name Setup procedure
 		 *  The name has the format: IntMultiplier_wInX_wInY
@@ -49,6 +50,9 @@ namespace flopoco{
 			name << "_signed";
 		srcFileName="IntMultiplier";
 		setName(name.str());
+		
+		REPORT(INFO, "################################################################################");
+		REPORT(INFO, " ------------------- wInX="<<wInX<<" wInY="<<wInY<<" sign="<<sign<<" -------------------");
 	
 		setCopyrightString("Bogdan Pasca, Sebastian Banescu (2008-2009)");
 	
