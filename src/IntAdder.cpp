@@ -117,6 +117,8 @@ extern vector<Operator*> oplist;
 						REPORT(DEBUG, "alpha="<<alpha<<" beta="<<beta<<" k="<<k);
 					}
 				}
+
+				if (k>1){
 				
 				/* init the array with chunk sizes */
 				cSize = new int[k+1];
@@ -150,6 +152,8 @@ extern vector<Operator*> oplist;
 					cSize = new int[1];
 					cSize[0] = wIn_;
 				}
+				
+
 
 				/* the indexes of the chunks */
 				cIndex = new int[k];
@@ -191,6 +195,15 @@ extern vector<Operator*> oplist;
 				/* the output is asociated with the combinatorial delay caused 
 				by the most-significant bits addition */
 				outDelayMap["R"] = target->adderDelay(cSize[k-1]) + (getCurrentCycle()>0?0:getMaxInputDelays(inputDelays)); 
+				}else{
+					vhdl << tab << " R <= X + Y + Cin;" << endl;
+					
+					if ((classicalSlackVersion != 0) || ( maxInputDelay == 0 )){
+						outDelayMap["R"] = target->adderDelay(wIn);	
+					}else{
+						outDelayMap["R"] = target->adderDelay(wIn) + getMaxInputDelays(inputDelays); 	
+					}	
+				}
 			}
 			
 			//**********************************************************************
@@ -224,67 +237,76 @@ extern vector<Operator*> oplist;
 						REPORT(DETAILED, "alpha="<<alpha<<" beta="<<beta<<" k="<<k);
 					}
 				}
+				
+				if (k>1){
 
-				//the sizes of the chunks
-				cSize = new int[k+1];
-				if ( k > 1 ){
-					for (int i=0; i<k-1; i++)
-						cSize[i] = alpha;
-					cSize[k-1] = beta;
-				}
-				else{
-					k = 1;
-					cSize = new int[1];
-					cSize[0] = wIn_;
-				}
+					//the sizes of the chunks
+					cSize = new int[k+1];
+					if ( k > 1 ){
+						for (int i=0; i<k-1; i++)
+							cSize[i] = alpha;
+						cSize[k-1] = beta;
+					}
+					else{
+						k = 1;
+						cSize = new int[1];
+						cSize[0] = wIn_;
+					}
 
-				//the indexes in the inputs of the chunks
-				cIndex = new int[k];
-				cIndex[0]= cSize[0];
-				for (int i=1; i < k; i++)
-					cIndex[i] = cIndex[i-1] + cSize[i];
+					//the indexes in the inputs of the chunks
+					cIndex = new int[k];
+					cIndex[0]= cSize[0];
+					for (int i=1; i < k; i++)
+						cIndex[i] = cIndex[i-1] + cSize[i];
 		
-				ostringstream verb;
-				verb << "The chunk sizes[MSB-->LSB]: ";
-				for (int i=k-1;i>=0;i--)
-					verb << cSize[i]<<" ";
-				REPORT( DETAILED, verb.str());
-				verb.str("");
-				verb << "The index sizes[MSB-->LSB]: ";
-				for (int i=k-1;i>=0;i--)
-					verb<<cIndex[i]<<" ";
-				REPORT( DEBUG, verb.str());
+					ostringstream verb;
+					verb << "The chunk sizes[MSB-->LSB]: ";
+					for (int i=k-1;i>=0;i--)
+						verb << cSize[i]<<" ";
+					REPORT( DETAILED, verb.str());
+					verb.str("");
+					verb << "The index sizes[MSB-->LSB]: ";
+					for (int i=k-1;i>=0;i--)
+						verb<<cIndex[i]<<" ";
+					REPORT( DEBUG, verb.str());
 
 
-				////////////////////////////////////////////////////////////////////////
+					////////////////////////////////////////////////////////////////////////
 		
-				for (int i=0; i < k; i++){
-					vhdl << tab << declare (join("s_sum_l",0,"_idx",i), cSize[i]+1, true) << " <= ( \"0\" & X" << range(cIndex[i]-1, (i>0?cIndex[i-1]:0)) << ") + "
-						  << "( \"0\" & Y" << range(cIndex[i]-1, (i>0?cIndex[i-1]:0)) << ")" ;
-					if (i==0) vhdl << " + Cin";
-					vhdl << ";" << endl;
-				}
-				for (int i=0; i < k; i++){
-					vhdl << tab << declare (join("sum_l",0,"_idx",i), cSize[i], true) << " <= " << join("s_sum_l",0,"_idx",i)<<range(cSize[i]-1,0) << ";" << endl;
-					vhdl << tab << declare (join("c_l",0,"_idx",i), 1, true) << " <= " << join("s_sum_l",0,"_idx",i)<<range(cSize[i],cSize[i]) << ";" << endl;
-				}			
+					for (int i=0; i < k; i++){
+						vhdl << tab << declare (join("s_sum_l",0,"_idx",i), cSize[i]+1, true) << " <= ( \"0\" & X" << range(cIndex[i]-1, (i>0?cIndex[i-1]:0)) << ") + "
+							  << "( \"0\" & Y" << range(cIndex[i]-1, (i>0?cIndex[i-1]:0)) << ")" ;
+						if (i==0) vhdl << " + Cin";
+						vhdl << ";" << endl;
+					}
+					for (int i=0; i < k; i++){
+						vhdl << tab << declare (join("sum_l",0,"_idx",i), cSize[i], true) << " <= " << join("s_sum_l",0,"_idx",i)<<range(cSize[i]-1,0) << ";" << endl;
+						vhdl << tab << declare (join("c_l",0,"_idx",i), 1, true) << " <= " << join("s_sum_l",0,"_idx",i)<<range(cSize[i],cSize[i]) << ";" << endl;
+					}			
 		
-				for (int i=1; i <= k-1 ; i++){
-					nextCycle(); ///////////////////////////////////////////////////////
-					vhdl << tab << declare(join("sum_l",i,"_idx",i), cSize[i]+1, true) << " <= ( \"0\" & " << join("sum_l",0,"_idx",i)<< ") + " 
-					                                                                             << join("c_l",0,"_idx",i-1)<<range(0,0) ;
-					if (i>1) 
-						vhdl << " + " << join("sum_l",i-1,"_idx",i-1)<<of(cSize[i-1]);
-					vhdl<<";"<<endl;
-				}
+					for (int i=1; i <= k-1 ; i++){
+						nextCycle(); ///////////////////////////////////////////////////////
+						vhdl << tab << declare(join("sum_l",i,"_idx",i), cSize[i]+1, true) << " <= ( \"0\" & " << join("sum_l",0,"_idx",i)<< ") + " 
+							                                                                         << join("c_l",0,"_idx",i-1)<<range(0,0) ;
+						if (i>1) 
+							vhdl << " + " << join("sum_l",i-1,"_idx",i-1)<<of(cSize[i-1]);
+						vhdl<<";"<<endl;
+					}
 		
-				vhdl << tab << "R <= ";
-				for (int i=k-1; i >= 1; i--){
-					vhdl << join("sum_l",i,"_idx",i)<<range(cSize[i]-1,0)<< " & ";
-				}
-				vhdl << "sum_l0_idx0" << range(cSize[0]-1,0)<<";"<<endl;
+					vhdl << tab << "R <= ";
+					for (int i=k-1; i >= 1; i--){
+						vhdl << join("sum_l",i,"_idx",i)<<range(cSize[i]-1,0)<< " & ";
+					}
+					vhdl << "sum_l0_idx0" << range(cSize[0]-1,0)<<";"<<endl;
 
-				outDelayMap["R"] = target->adderDelay(cSize[k-1]); 
+					outDelayMap["R"] = target->adderDelay(cSize[k-1]);
+				}else{
+					vhdl << tab << " R <= X + Y + Cin;" << endl;
+					if ((alternativeSlackVersion != 0) || ( maxInputDelay == 0 )){
+						outDelayMap["R"] = target->adderDelay(wIn);	
+					}else
+						outDelayMap["R"] = getMaxInputDelays(inputDelays) + target->adderDelay(wIn);	
+				}
 			
 				
 			

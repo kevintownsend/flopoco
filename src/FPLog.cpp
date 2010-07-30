@@ -458,6 +458,7 @@ namespace flopoco{
 			vhdl << instance ( addCycleI2, join("addIter2_",i) ) << endl;
 			syncCycleFromSignal ( join("Z", i+1) );
 			setCriticalPath( addCycleI2->getOutputDelay("R") );
+			vhdl << " -- the critical path at the adder output = " << getCriticalPath() << endl;
 		
 		}
 
@@ -468,6 +469,9 @@ namespace flopoco{
 		
 		if (syncCycleFromSignal("small_absZ0_normd"))
 			setCriticalPath(cpsmall_absZ0_normd);
+		
+	 
+		
 		
 		// In the small path we need Z2O2 accurate to  (wF+gLog+2) - pfinal
 		// In the RR path we need Z2O2 accurate to sfinal-pfinal
