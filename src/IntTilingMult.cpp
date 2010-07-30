@@ -582,10 +582,10 @@ namespace flopoco{
 
 		if (nrDSPOperands+nrSliceOperands>1){
 			Operator* add;
-			if ( ( target_->getID() == "Virtex4") ||
-				 ( target_->getID() == "Spartan3"))  // then the target is A Xilinx FPGA 
-				add =  new IntNAdder(getTarget(), wInX+wInY, nrDSPOperands+nrSliceOperands, inMap);
-			else
+//			if ( ( target_->getID() == "Virtex4") ||
+//				 ( target_->getID() == "Spartan3"))  // then the target is A Xilinx FPGA 
+//				add =  new IntNAdder(getTarget(), wInX+wInY, nrDSPOperands+nrSliceOperands, inMap);
+//			else
 				add =  new IntCompressorTree(getTarget(), wInX+wInY, nrDSPOperands+nrSliceOperands,inMap);
 		
 			oplist.push_back(add);
@@ -607,9 +607,9 @@ namespace flopoco{
 					inPortMap (add, join("X",j+nrDSPOperands) , concatPartialProd.str());
 				}	
 
-			if ( ( target_->getID() == "Virtex4") ||
-				 ( target_->getID() == "Spartan3"))  // then the target is A Xilinx FPGA 
-				inPortMapCst(add, "Cin", "'0'");
+//			if ( ( target_->getID() == "Virtex4") ||
+//				 ( target_->getID() == "Spartan3"))  // then the target is A Xilinx FPGA 
+//				inPortMapCst(add, "Cin", "'0'");
 			outPortMap(add, "R", "addRes");
 			vhdl << instance(add, "adder");
 
@@ -3163,11 +3163,11 @@ namespace flopoco{
 									
 									xname.str("");
 									xname << "x" << i << "_" << j;
-									vhdl << tab << declare(xname.str(), multW+2) << " <= \"10\" & " << zg(fpadX,0) << " & X" << range(startX, endX) << " & " << zg(bpadX,0) << ";" << endl;
+									vhdl << tab << declare(xname.str(), multW+2, true) << " <= \"10\" & " << zg(fpadX,0) << " & X" << range(startX, endX) << " & " << zg(bpadX,0) << ";" << endl;
 									
 									yname.str("");
 									yname << "y" << i << "_" << j;
-									vhdl << tab << declare(yname.str(), multH+2) << " <= \"10\" & " << zg(fpadY,0) << " & Y" << range(startY, endY) << " & " << zg(bpadY,0) << ";" << endl;
+									vhdl << tab << declare(yname.str(), multH+2, true) << " <= \"10\" & " << zg(fpadY,0) << " & Y" << range(startY, endY) << " & " << zg(bpadY,0) << ";" << endl;
 				
 									if ((d->getShiftIn() != NULL) && (j>0)) // multiply accumulate
 										{
@@ -3518,9 +3518,9 @@ namespace flopoco{
 										mult->changeName(cname.str());
 										oplist.push_back(mult);
 										// TODO: compute width of x and y + corretc range for X and Y
-										vhdl << tab << declare(join("x_",partitions), njj-nj+1) << " <= X" << range(wInX-nj-1+extW, wInX-njj-1+extW) << ";" << endl;
+										vhdl << tab << declare(join("x_",partitions), njj-nj+1, true) << " <= X" << range(wInX-nj-1+extW, wInX-njj-1+extW) << ";" << endl;
 										inPortMap(mult, "X", join("x_",partitions));
-										vhdl << tab << declare(join("y_",partitions), nii-ni+1) << " <= Y" << range(nii-extH, ni-extH) << ";" << endl;
+										vhdl << tab << declare(join("y_",partitions), nii-ni+1, true) << " <= Y" << range(nii-extH, ni-extH) << ";" << endl;
 										inPortMap(mult, "Y", join("y_",partitions));
 					
 										outPortMap(mult, "R", join("result", partitions));

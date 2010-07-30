@@ -517,7 +517,11 @@ namespace flopoco{
 		}
 		else {
 			sizeProd = sizeMultIn + sizeExpZm1;
-			lowProd = new IntMultiplier(target, sizeMultIn, sizeExpZm1, inDelayMap("X", target->LogicToDSPWireDelay() + getCriticalPath() ) );
+			if (wF==23){
+				nextCycle();//FIXME -> add inputDelays to intTilingMultiplier
+				lowProd = new IntTilingMult(target, sizeMultIn, sizeExpZm1, 0.15, -1);//, inDelayMap("X", target->LogicToDSPWireDelay() + getCriticalPath() ) );
+			}else
+				lowProd = new IntMultiplier(target, sizeMultIn, sizeExpZm1, inDelayMap("X", target->LogicToDSPWireDelay() + getCriticalPath() ) );
 		}
 		oplist.push_back(lowProd);
 		
