@@ -124,7 +124,7 @@ namespace flopoco{
 		int wOut;             /**<The width of output */
 	
 		
-		IntTruncMultiplier(Target* target, int winX, int winY, float ratio, int k,int uL, int maxTimeInMinutes, bool interactive = true, bool sign = false);
+		IntTruncMultiplier(Target* target, int winX, int winY, float ratio, int k,int uL, int maxTimeInMinutes, bool interactive = true, bool sign = false, bool roundCompensate = true);
 	
 		/** IntTruncMultiplier destructor */
 		~IntTruncMultiplier();
@@ -163,6 +163,8 @@ namespace flopoco{
 		int useLimits;
 		mpfr_t errorSum;
 		mpfr_t targetError;
+		bool roundCompensate_;
+		
 		/* RIP */
 		void printConfiguration(DSP** configuration, vector<SoftDSP*> softDSPs);
 		

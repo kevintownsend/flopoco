@@ -52,10 +52,10 @@ namespace flopoco{
 			multXInputs_    = 25;
 			multYInputs_    = 18;
 			// all these values are set precisely to match the Virtex5
-			fdCtoQ_         = 0.396e-9; //the deterministic delay + an approximate NET delay
+			fdCtoQ_         = 0.272e-9; //the deterministic delay + an approximate NET delay
 			lut2_           = 0.086e-9;
-			lut3_           = 0.147e-9; //TODO
-			lut4_           = 0.147e-9; //TODO
+			lut3_           = 0.086e-9; //TODO
+			lut4_           = 0.086e-9; //TODO
 			muxcyStoO_      = 0.305e-9;
 			muxcyCINtoO_    = 0.023e-9;
 			ffd_            = 0.022e-9;
@@ -71,8 +71,8 @@ namespace flopoco{
 			DSPCascadingWireDelay_        = 0.235e-9;
 			DSPToLogicWireDelay_ = 0.436e-9;
 
-			RAMDelay_ = 2.387e-9; //TODO
-			RAMToLogicWireDelay_ = 0.436e-9; //TODO
+			RAMDelay_ = 1.647e-9; //TODO
+			RAMToLogicWireDelay_ = 0.388e-9; //TODO
 		}
 
 		/** The destructor */

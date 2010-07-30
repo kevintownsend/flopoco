@@ -33,8 +33,8 @@ namespace flopoco{
 	extern vector<Operator*> oplist;
 
 
-	IntTruncMultiplier::IntTruncMultiplier(Target* target, int winX, int winY, float ratio, int k, int uL, int maxTimeInMinutes, bool interactive, bool sign):
-		Operator(target), wX(winX), wY(winY), ratio(ratio),targetPrecision(k),useLimits(uL), maxTimeInMinutes(maxTimeInMinutes-1), sign(sign){
+	IntTruncMultiplier::IntTruncMultiplier(Target* target, int winX, int winY, float ratio, int k, int uL, int maxTimeInMinutes, bool interactive, bool sign, bool roundCompensate):
+		Operator(target),wX(winX), wY(winY), ratio(ratio),targetPrecision(k),useLimits(uL),  roundCompensate_(roundCompensate), maxTimeInMinutes(maxTimeInMinutes-1), sign(sign){
 		start = clock(); /* time management */
 		srcFileName="IntTruncMultiplier";
 		isSquarer = false;	
@@ -2803,11 +2803,11 @@ namespace flopoco{
 			}		
 		Operator *add;
 		
-		if   (target_->getID() != "Virtex5"){
-			add =  new IntNAdder(getTarget(), wInX+wInY+(sign?2:0)-minShift, nrDSPOperands+nrSliceOperands+subCount, inMap);
-		} else{
+//		if   (target_->getID() != "Virtex5"){
+//			add =  new IntNAdder(getTarget(), wInX+wInY+(sign?2:0)-minShift, nrDSPOperands+nrSliceOperands+subCount, inMap);
+//		} else{
 			add =  new IntCompressorTree(getTarget(), wInX+wInY+(sign?2:0)-minShift, nrDSPOperands+nrSliceOperands+subCount, inMap);
-		}
+//		}
 		
 		//IntCompressorTree* add =  new IntCompressorTree(target, adderWidth, opCount);
 		oplist.push_back(add);
@@ -2834,8 +2834,8 @@ namespace flopoco{
 				concatPartialProd  << "addOpSlice_sub" << j;
 				inPortMap (add, join("X", j+nrDSPOperands+nrSliceOperands), concatPartialProd.str());
 			}	
-		if   (target_->getID() != "Virtex5")
-			inPortMapCst(add, "Cin", "'0'");
+//		if   (target_->getID() != "Virtex5")
+//			inPortMapCst(add, "Cin", "'0'");
 		outPortMap(add, "R", "addRes");
 		vhdl << instance(add, "adder");
 
@@ -2848,38 +2848,46 @@ namespace flopoco{
 			/*value of the add bit */
 			if (targetPrecision==1){
 				/* just need to add the compensation '1' and truncate */
-				nextCycle();
-				IntAdder *af = new IntAdder(getTarget(), wX+wY+(sign?2:0));
-				oplist.push_back(af);
+				if (roundCompensate_){
+					nextCycle();
+					IntAdder *af = new IntAdder(getTarget(), wX+wY+(sign?2:0));
+					oplist.push_back(af);
 				
+					inPortMap(af, "X", "addRes");
+					inPortMapCst(af, "Y", join("CONV_STD_LOGIC_VECTOR(1,",wInX+wInY,")") );
+					inPortMapCst(af, "Cin", "'0'");
+					outPortMap(af, "R", "roundCompRes");
+					vhdl << instance(af, "RoundCompensate");
 				
-				inPortMap(af, "X", "addRes");
-				inPortMapCst(af, "Y", join("CONV_STD_LOGIC_VECTOR(1,",wInX+wInY,")") );
-				inPortMapCst(af, "Cin", "'0'");
-				outPortMap(af, "R", "roundCompRes");
-				vhdl << instance(af, "RoundCompensate");
-				
-				syncCycleFromSignal("roundCompRes");
-				outDelayMap["R"] = af->getOutputDelay("R");
-				vhdl << tab << "R <= roundCompRes" << range(wX+wY+(sign?2:0)-1-minShift, targetPrecision-minShift) << ";" << endl;
+					syncCycleFromSignal("roundCompRes");
+					outDelayMap["R"] = af->getOutputDelay("R");
+					vhdl << tab << "R <= roundCompRes" << range(wX+wY+(sign?2:0)-1-minShift, targetPrecision-minShift) << ";" << endl;
+				}else{
+					vhdl << tab << "R <= addRes" << range(wX+wY+(sign?2:0)-1-minShift, targetPrecision-minShift) << ";" << endl;
+				}
 			}else{
-				/* target precision > 1 */
-				nextCycle();
-				/* compute sticky bit */
-				vhdl << tab << declare("sticky",1,false) << "<= '0' when addRes"<<range(targetPrecision-minShift-2,0)<<"=0 else '1';"<<endl;				
-				IntAdder *af = new IntAdder(getTarget(), wX+wY+(sign?2:0)-1-minShift - (targetPrecision-minShift) + 1 + 1);
-				oplist.push_back(af);
-				nextCycle();
+				if (roundCompensate_){
+					/* target precision > 1 */
+					nextCycle();
+//					/* compute sticky bit */
+//					vhdl << tab << declare("sticky",1,false) << "<= '0' when addRes"<<range(targetPrecision-minShift-2,0)<<"=0 else '1';"<<endl;				
+//					IntAdder *af = new IntAdder(getTarget(), wX+wY+(sign?2:0)-1-minShift - (targetPrecision-minShift) + 1 + 1);
+					IntAdder *af = new IntAdder(getTarget(), wX+wY+(sign?2:0)-1-minShift - (targetPrecision-minShift) + 1 );
+					oplist.push_back(af);
+					nextCycle();
 
-				inPortMapCst(af, "X", "addRes"+range(wX+wY+(sign?2:0)-1-minShift, targetPrecision-minShift-1));
-				inPortMapCst(af, "Y", join("CONV_STD_LOGIC_VECTOR(1,",wX+wY+(sign?2:0)-1-minShift - (targetPrecision-minShift) + 1 + 1,")") );
-				inPortMapCst(af, "Cin", "sticky");
-				outPortMap(af, "R", "roundCompRes");
-				vhdl << instance(af, "RoundCompensate");
+					inPortMapCst(af, "X", "addRes"+range(wX+wY+(sign?2:0)-1-minShift, targetPrecision-minShift));
+					inPortMapCst(af, "Y", join("CONV_STD_LOGIC_VECTOR(1,",wX+wY+(sign?2:0)-1-minShift - (targetPrecision-minShift) + 1 ,")") );
+					inPortMapCst(af, "Cin", "'0'");
+					outPortMap(af, "R", "roundCompRes");
+					vhdl << instance(af, "RoundCompensate");
 				
-				syncCycleFromSignal("roundCompRes");
-				outDelayMap["R"] = af->getOutputDelay("R");
-				vhdl << tab << "R <= roundCompRes" << range(wX+wY+(sign?2:0) - targetPrecision,1) << ";" << endl;
+					syncCycleFromSignal("roundCompRes");
+					outDelayMap["R"] = af->getOutputDelay("R");
+					vhdl << tab << "R <= roundCompRes" << range(wX+wY+(sign?2:0) - targetPrecision-1,0) << ";" << endl;
+				}else{
+					vhdl << tab << "R <= addRes" << range(wX+wY+(sign?2:0)-1-minShift, targetPrecision-minShift) << ";" << endl;
+				}
 			}
 		}
 	}
