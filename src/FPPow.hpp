@@ -37,7 +37,7 @@ namespace flopoco{
 	class FPPow : public Operator
 	{
 	public:
-		FPPow(Target* target, int wE, int wF, int logTableSize, int expTableSize, int expDegree, int expG, int logG );
+		FPPow(Target* target, int wE, int wF, int logTableSize, int expTableSize, int expDegree);
 		~FPPow();
 
 		void compute_error(mpfr_t & r, mpfr_t &epsE, mpfr_t& epsM, mpfr_t& epsL );
@@ -45,8 +45,8 @@ namespace flopoco{
 		//		Overloading the virtual functions of Operator
 		void emulate(TestCase * tc);
 		void buildStandardTestCases(TestCaseList* tcl);
-		/**Overloading the function of Operator with a function that tests only positive FP numbers (full range)*/
-		void buildRandomTestCases(TestCaseList* tcl, int n); 
+		/**Overloading the function of Operator */
+		TestCase* buildRandomTestCase(int n); 
 
 		int wE, wF;
 	};

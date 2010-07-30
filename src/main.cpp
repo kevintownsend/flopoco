@@ -1284,7 +1284,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		}
 
 
-		else if (opname == "FPExpExp")
+		else if (opname == "FPExpExpert")
 		{
 			int nargs = 6;
 			if (i+nargs > argc)
@@ -1313,9 +1313,9 @@ bool parseCommandLine(int argc, char* argv[]){
 			addOperator(op);
 		}
 
-		else if (opname == "FPPowr")
+		else if (opname == "FPPowrExpert")
 		{
-			int nargs = 7;
+			int nargs = 5;
 			if (i+nargs > argc)
 				usage(argv[0]); // and exit 
 
@@ -1323,12 +1323,24 @@ bool parseCommandLine(int argc, char* argv[]){
 			int wE = checkStrictyPositive(argv[i++], argv[0]);
 			int wF = checkStrictyPositive(argv[i++], argv[0]);
 			int logTableSize=atoi(argv[i++]);
-			int expTableSize=checkStrictyPositive(argv[i++], argv[0]);
-			int expDegree=checkStrictyPositive(argv[i++], argv[0]);
-			int expG=checkStrictyPositive(argv[i++], argv[0]);
-			int logG=checkStrictyPositive(argv[i++], argv[0]);
+			int expTableSize=atoi(argv[i++]);
+			int expDegree=atoi(argv[i++]);
 			cerr << "> FPPowr: wE=" << wE << " wF=" << wF << endl;
-			op = new FPPow(target, wE, wF,logTableSize, expTableSize, expDegree,  expG, logG );
+			op = new FPPow(target, wE, wF,logTableSize, expTableSize, expDegree);
+			addOperator(op);
+		}
+
+		else if (opname == "FPPowr")
+		{
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0]); // and exit 
+
+			//int logTableSize, int expTableSize, int expDegree, int expG, int logG
+			int wE = checkStrictyPositive(argv[i++], argv[0]);
+			int wF = checkStrictyPositive(argv[i++], argv[0]);
+			cerr << "> FPPowr: wE=" << wE << " wF=" << wF << endl;
+			op = new FPPow(target, wE, wF,0, 0, 0);
 			addOperator(op);
 		}
 

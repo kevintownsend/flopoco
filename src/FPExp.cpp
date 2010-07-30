@@ -99,6 +99,13 @@ namespace flopoco{
 	FPExp::FPExp(Target* target, int wE_, int wF_, int k_, int d_, int guardBits, bool fullInput, map<string, double> inputDelays)
 		: Operator(target), wE(wE_), wF(wF_), k(k_), d(d_), g(guardBits)
 	{
+
+		// if we use the magic table, we need one guard bit less
+		if(wF<=23)
+			g=3;
+		else
+			g=4;
+
 		// if automatic mode, set up the parameters
 		if(k==0 && d==0) {
 			d=2; 
@@ -121,7 +128,11 @@ namespace flopoco{
 		/* Generate unique name */
 		{
 			std::ostringstream o;
-			o << "FPExp_" << wE << "_" << wF;
+			o << "FPExp_" << wE << "_" << wF << "_" ;
+			if(target->isPipelined()) 
+				o << target->frequencyMHz() ;
+			else
+				o << "comb";
 			uniqueName_ = o.str();
 		}
 
@@ -498,8 +509,16 @@ namespace flopoco{
 		if (syncCycleFromSignal( "expZminus1" ) )
 			setCriticalPath(addexpZminus1->getOutputDelay("R"));
 		
-
-		IntMultiplier *lowProd = new IntMultiplier(target, sizeMultIn, sizeExpZm1, inDelayMap("X", target->LogicToDSPWireDelay() + getCriticalPath() ) );
+		int sizeProd;
+		Operator* lowProd;
+		if(false && wF+g-k>17){ // commented out because 1/ it fails the test, do,n't understand why and 2/ it adds 4 cycles to the latency TODO
+			sizeProd = (sizeExpA-k+1); 
+			lowProd = new IntTruncMultiplier(target, sizeMultIn, sizeExpZm1, 0.95, (sizeMultIn + sizeExpZm1)-sizeProd, 1, -1, false, false);  //inDelayMap("X", target->LogicToDSPWireDelay() + getCriticalPath() ) );
+		}
+		else {
+			sizeProd = sizeMultIn + sizeExpZm1;
+			lowProd = new IntMultiplier(target, sizeMultIn, sizeExpZm1, inDelayMap("X", target->LogicToDSPWireDelay() + getCriticalPath() ) );
+		}
 		oplist.push_back(lowProd);
 		
 		inPortMap(lowProd, "X", "expArounded");
@@ -536,7 +555,7 @@ namespace flopoco{
 		oplist.push_back(finalAdder);
 		
 		vhdl << tab << declare("extendedLowerProduct",sizeExpA) << " <= (" << rangeAssign(sizeExpA-1, sizeExpA-k+1, "'0'") 
-		     << " & lowerProduct" << range(sizeMultIn+sizeExpZm1-1, sizeMultIn+sizeExpZm1 - (sizeExpA-k+1)) << ");" << endl;		
+		     << " & lowerProduct" << range(sizeProd-1, sizeProd - (sizeExpA-k+1)) << ");" << endl;		
 		     		     
 		inPortMap(finalAdder, "X", "expA");
 		inPortMap(finalAdder, "Y", "extendedLowerProduct");
@@ -765,6 +784,10 @@ namespace flopoco{
 	
 		mpfr_clears(x, y, NULL);
 	}
+
+
+
+
 
 	// One test out of 8 fully random (tests NaNs etc)
 	// All the remaining ones test numbers with exponents between -wF-3 and wE-2,

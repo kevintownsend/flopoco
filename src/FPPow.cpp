@@ -82,7 +82,7 @@ namespace flopoco{
 
 
 
-	FPPow::FPPow(Target* target, int wE, int wF, int logTableSize, int expTableSize, int expDegree, int expG, int logG)
+	FPPow::FPPow(Target* target, int wE, int wF, int logTableSize, int expTableSize, int expDegree)
 		: Operator(target), wE(wE), wF(wF)
 	{
 
@@ -90,7 +90,7 @@ namespace flopoco{
 
 		ostringstream o;
 
-		o << "FPPow_" << wE << "_" << wF << "_";
+		o << "FPPowr_" << wE << "_" << wF << "_";
 		if(target->isPipelined()) 
 			o << target->frequencyMHz() ;
 		else
@@ -105,10 +105,13 @@ namespace flopoco{
 		addConstant("wF", "positive", wF);
 		
 		
+		int expG=3; // This is a TODO, should be 4
 
-		vhdl << tab << declare("logIn", 3+wF+wE+logG+wE) << " <= X & " << rangeAssign(wE+logG-1, 0, "'0'") << " ;" << endl; 
+		int logwF= wF+expG+wE-1;
 
-		FPLog* log = new FPLog(target,  wE,  wF+wE+logG, logTableSize );
+		vhdl << tab << declare("logIn", 3+wE + logwF) << " <= X & " << rangeAssign(logwF-wF-1, 0, "'0'") << " ;" << endl; 
+
+		FPLog* log = new FPLog(target,  wE,  logwF, logTableSize );
 		oplist.push_back(log);
 		inPortMap(log, "X", "logIn");
 		outPortMap(log, "R", "lnX");
@@ -117,7 +120,7 @@ namespace flopoco{
 		syncCycleFromSignal("lnX");
 		nextCycle();
 
-		FPMultiplier* mult = new FPMultiplier(target,   /*X:*/ wE, wF+wE+logG,   /*Y:*/ wE, wF,  /*R: */  wE,  wF+wE+expG,  true /* norm*/);
+		FPMultiplier* mult = new FPMultiplier(target,   /*X:*/ wE, logwF,   /*Y:*/ wE, wF,  /*R: */  wE,  wF+wE+expG,  true /* norm*/);
 		oplist.push_back(mult);
 		inPortMap(mult, "Y", "Y");
 		inPortMap(mult, "X", "lnX");
@@ -297,12 +300,28 @@ namespace flopoco{
 
 
 
-	// One test out of 8 fully random (tests NaNs etc)
-	// All the remaining ones test positive numbers.
-	// with special treatment for exponents 0 and -1, 
-	// and for the range reduction worst case.
  
-	void FPPow::buildRandomTestCases(TestCaseList* tcl, int n){
+	TestCase* FPPow::buildRandomTestCase(int i){
+		TestCase *tc;
+		tc = new TestCase(this); 
+		mpz_class x,y;
+		mpz_class normalExn = mpz_class(1)<<(wE+wF+1);
+		mpz_class bias = ((1<<(wE-1))-1);
+		/* Fill inputs */
+		if ((i & 15) == 0) { //fully random
+			x = getLargeRandom(wE+wF+3);
+			y = getLargeRandom(wE+wF+3);
+		}
+		else // strictly positive, finite numbers
+			{
+				x  = getLargeRandom(wE+wF)  +  normalExn;
+				y  = getLargeRandom(wE+wF)  +  normalExn;
+			}
+		tc->addInput("X", x);
+		tc->addInput("Y", y);
+		/* Get correct outputs */
+		emulate(tc);
+		return tc;
 	}
 
 }
