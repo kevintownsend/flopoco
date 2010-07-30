@@ -25,7 +25,7 @@ namespace flopoco{
 	void Operator::addInput(const std::string name, const int width, const bool isBus) {
 		if (signalMap_.find(name) != signalMap_.end()) {
 			std::ostringstream o;
-			o << "ERROR in addInput, signal " << name<< " seems to already exist";
+			o << srcFileName << " (" << uniqueName_ << "): ERROR in addInput, signal " << name<< " seems to already exist";
 			throw o.str();
 		}
 		Signal *s = new Signal(name, Signal::in, width, isBus) ; // default TTL and cycle OK
@@ -39,7 +39,7 @@ namespace flopoco{
 	void Operator::addOutput(const std::string name, const int width, const int numberOfPossibleOutputValues, const bool isBus) {
 		if (signalMap_.find(name) != signalMap_.end()) {
 			std::ostringstream o;
-			o << "ERROR in addOutput, signal " << name << " seems to already exist";
+			o  << srcFileName << " (" << uniqueName_ << "): ERROR in addOutput, signal " << name << " seems to already exist";
 			throw o.str();
 		}
 		Signal *s = new Signal(name, Signal::out, width, isBus) ;
@@ -54,8 +54,9 @@ namespace flopoco{
 
 	void Operator::addFPInput(const std::string name, const int wE, const int wF) {
 		if (signalMap_.find(name) != signalMap_.end()) {
-			cerr << "ERROR in addFPInput , signal " << name<< " seems to already exist" << endl;
-			exit(EXIT_FAILURE);
+			std::ostringstream o;
+			o << srcFileName << " (" << uniqueName_ << "): ERROR in addFPInput, signal " << name<< " seems to already exist";
+			throw o.str();
 		}
 		Signal *s = new Signal(name, Signal::in, wE, wF);
 		s->setCycle(0);
@@ -67,8 +68,9 @@ namespace flopoco{
 
 	void Operator::addFPOutput(const std::string name, const int wE, const int wF, const int numberOfPossibleOutputValues) {
 		if (signalMap_.find(name) != signalMap_.end()) {
-			cerr << "ERROR in addFPOutput , signal " << name<< " seems to already exist" << endl;
-			exit(EXIT_FAILURE);
+			std::ostringstream o;
+			o << srcFileName << " (" << uniqueName_ << "): ERROR in addFPOutput, signal " << name<< " seems to already exist";
+			throw o.str();
 		}
 		Signal *s = new Signal(name, Signal::out, wE, wF) ;
 		s -> setNumberOfPossibleValues(numberOfPossibleOutputValues);
@@ -83,8 +85,9 @@ namespace flopoco{
 
 	void Operator::addIEEEInput(const std::string name, const int wE, const int wF) {
 		if (signalMap_.find(name) != signalMap_.end()) {
-			cerr << "ERROR in addIEEEInput , signal " << name<< " seems to already exist" << endl;
-			exit(EXIT_FAILURE);
+			std::ostringstream o;
+			o << srcFileName << " (" << uniqueName_ << "): ERROR in addIEEEInput, signal " << name<< " seems to already exist";
+			throw o.str();
 		}
 		Signal *s = new Signal(name, Signal::in, wE, wF, true);
 		s->setCycle(0);
@@ -96,8 +99,9 @@ namespace flopoco{
 
 	void Operator::addIEEEOutput(const std::string name, const int wE, const int wF, const int numberOfPossibleOutputValues) {
 		if (signalMap_.find(name) != signalMap_.end()) {
-			cerr << "ERROR in addIEEEOutput , signal " << name<< " seems to already exist" << endl;
-			exit(EXIT_FAILURE);
+			std::ostringstream o;
+			o << srcFileName << " (" << uniqueName_ << "): ERROR in addIEEEOutput, signal " << name<< " seems to already exist";
+			throw o.str();
 		}
 		Signal *s = new Signal(name, Signal::out, wE, wF, true) ;
 		s -> setNumberOfPossibleValues(numberOfPossibleOutputValues);
@@ -114,7 +118,7 @@ namespace flopoco{
 	Signal * Operator::getSignalByName(string name) {
 		ostringstream e;
 		if(signalMap_.find(name) ==  signalMap_.end()) {
-			e << "ERROR in getSignalByName, signal " << name<< " not declared";
+			e << srcFileName << " (" << uniqueName_ << "): ERROR in getSignalByName, signal " << name<< " not declared";
 			throw e.str();
 		}
 		return signalMap_[name];
@@ -441,7 +445,7 @@ namespace flopoco{
 		vhdl.flush(currentCycle_);
 
 		ostringstream e;
-		e << "ERROR in syncCycleFromSignal, "; // just in case
+		e << srcFileName << " (" << uniqueName_ << "): ERROR in syncCycleFromSignal, "; // just in case
 
 		if(isSequential()) {
 			Signal* s;
@@ -463,7 +467,7 @@ namespace flopoco{
 			vhdl.setCycle(currentCycle_);
 
 			if(report)
-				vhdl << tab << "----------------Synchro barrier, entering cycle " << currentCycle_ << "----------------" << endl ;
+				vhdl << tab << "---------------- cycle " << currentCycle_ << "----------------" << endl ;
 			// automatically update pipeline depth of the operator 
 			if (currentCycle_ > pipelineDepth_) 
 				pipelineDepth_ = currentCycle_;
@@ -476,7 +480,7 @@ namespace flopoco{
 		bool advance = false;
 		vhdl.flush(currentCycle_);
 		ostringstream e;
-		e << "ERROR in syncCycleFromSignal, "; // just in case
+		e << srcFileName << " (" << uniqueName_ << "): ERROR in syncCycleFromSignal, "; // just in case
 
 		if(isSequential()) {
 			Signal* s;
@@ -503,6 +507,7 @@ namespace flopoco{
 			if(report && advance)
 				vhdl << tab << "----------------Synchro barrier, entering cycle " << currentCycle_ << "----------------" << endl ;
 			// automatically update pipeline depth of the operator 
+
 			if (currentCycle_ > pipelineDepth_) 
 				pipelineDepth_ = currentCycle_;
 		}
@@ -549,7 +554,7 @@ namespace flopoco{
 		ostringstream e;
 		// check the signals doesn't already exist
 		if(signalMap_.find(name) !=  signalMap_.end()) {
-			e << "ERROR in declare(), signal " << name<< " already exists";
+			e << srcFileName << " (" << uniqueName_ << "): ERROR in declare(), signal " << name<< " already exists";
 			throw e.str();
 		}
 		// construct the signal (lifeSpan and cycle are reset to 0 by the constructor)
@@ -636,7 +641,7 @@ namespace flopoco{
 		Signal* formal;
 		Signal* s;
 		ostringstream e;
-		e << "ERROR in outPortMap() for entity " << op->getName()  << ", "; // just in case
+		e << srcFileName << " (" << uniqueName_ << "): ERROR in outPortMap() for entity " << op->getName()  << ", "; // just in case
 		// check the signals doesn't already exist
 		if(signalMap_.find(actualSignalName) !=  signalMap_.end()) {
 			e << "signal " << actualSignalName << " already exists";
@@ -678,7 +683,7 @@ namespace flopoco{
 		Signal* formal;
 		ostringstream e;
 		string name;
-		e << "ERROR in inPortMap() for entity " << op->getName() << ","; // just in case
+		e  << srcFileName << " (" << uniqueName_ << "): ERROR in inPortMap() for entity " << op->getName() << ","; // just in case
 	
 		if(isSequential()) {
 			Signal *s;
@@ -729,7 +734,7 @@ namespace flopoco{
 		Signal* formal;
 		ostringstream e;
 		string name;
-		e << "ERROR in inPortMap() for entity " << op->getName()  << ", "; // just in case
+		e << srcFileName << " (" << uniqueName_ << "): ERROR in inPortMapCst() for entity " << op->getName()  << ", "; // just in case
 
 		try {
 			formal=op->getSignalByName(componentPortName);
@@ -1154,24 +1159,23 @@ namespace flopoco{
 			string replaceString;
 
 			tSearch << "__"<<name<<"__"<<useCycle<<"__"; 
-//			cout << "----- Searching for: " << tSearch.str() << endl;
+			//			cout << "----- Searching for: " << tSearch.str() << endl;
 			string searchString (tSearch.str());
 
 			iterDeclare = declareTable.find(name);
 			declareCycle = iterDeclare->second;
 			
 			if (iterDeclare != declareTable.end()){
-//				cout << "+++++ Element FOUND at level :" << declareCycle << endl;
+				//				cout << "+++++ Element FOUND at level :" << declareCycle << endl;
 				tReplace << use(name, useCycle - declareCycle); 
 				replaceString = tReplace.str();
 				if (useCycle<declareCycle){
-					cerr << "ERROR: Signal:"<<name<<". defined @ cycle "<<declareCycle<<" and used @ cycle " << useCycle <<endl;
-//					exit(-1);
+					cerr << srcFileName << " (" << uniqueName_ << "): ERROR: Signal:"<<name<<". defined @ cycle "<<declareCycle<<" and used @ cycle " << useCycle <<endl;
 				}
 			}else{
 				/* parse the declare by hand and check lower/upper case */
 				bool found = false;
-//				vector<pair<string,int> >::iterator iterDecl;
+				//				vector<pair<string,int> >::iterator iterDecl;
 				string tmp;
 				for (iterDeclare = declareTable.begin(); iterDeclare!=declareTable.end();++iterDeclare){
 					tmp = iterDeclare->first;
@@ -1182,7 +1186,7 @@ namespace flopoco{
 				}
 				
 				if (found == true){
-					cerr << "ERROR: Clash on signal:"<<name<<". Definition used signal name "<<tmp<<". Check signal case!"<<endl;
+					cerr  << srcFileName << " (" << uniqueName_ << "): ERROR: Clash on signal:"<<name<<". Definition used signal name "<<tmp<<". Check signal case!"<<endl;
 					exit(-1);
 				}
 								
