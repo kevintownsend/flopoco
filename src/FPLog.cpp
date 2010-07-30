@@ -567,10 +567,12 @@ namespace flopoco{
 			inPortMap       (lti, "X", join("A", i));
 			outPortMap      (lti, "Y", join("L", i));
 			vhdl << instance(lti, join("lt",i));
-			
+			syncCycleFromSignal(join("L", i));
+		
 			vhdl << tab << declare(join("sopX",i), lt0->wOut) << " <= (" << rangeAssign(lt0->wOut-1, lti->wOut,  "'0'") << " & " << join("L",i) <<");"<<endl;
 			
-			IntAdder * adderS = new IntAdder( target, lt0->wOut, inDelayMap("X", target->RAMToLogicWireDelay() + getCriticalPath()));
+			nextCycle();//
+			IntAdder * adderS = new IntAdder( target, lt0->wOut, inDelayMap("X", target->RAMToLogicWireDelay()+  getCriticalPath()));
 			oplist.push_back(adderS);
 			
 			inPortMap( adderS, "X", join("S",i) );
@@ -697,13 +699,10 @@ namespace flopoco{
 		inPortMap (log_small_adder, "Cin", "nsRCin");
 		outPortMap(log_small_adder, "R", "Log_small");
 		vhdl << instance(log_small_adder, "log_small_adder") << endl;
-		
-
-
 		////////////////////////////////////////////////////////////////////////-> start the other path
 		syncCycleFromSignal("Log_small");
 		setCriticalPath(log_small_adder->getOutputDelay("R") );
-
+		vhdl << " -- critical path here is " << getCriticalPath() << endl;
 		manageCriticalPath( target->localWireDelay() + target->lutDelay() );
 		vhdl << tab << "-- Possibly subtract 1 or 2 to the exponent, depending on the LZC of Log_small" << endl;
 		vhdl << tab << declare("E0_sub", 2) << " <=   \"11\" when Log_small(wF+g+1) = '1'" << endl
