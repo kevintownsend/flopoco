@@ -104,8 +104,14 @@ namespace flopoco{
 		addConstant("wE", "positive", wE);
 		addConstant("wF", "positive", wF);
 		
-		
-		int expG=3; // This is a TODO, should be 4
+		int expG;
+
+		// TODO get rid of the following somehow
+		if(wF<=23)
+			expG=3;
+		else
+			expG=4;
+
 
 		int logwF= wF+expG+wE-1;
 
@@ -120,7 +126,7 @@ namespace flopoco{
 		syncCycleFromSignal("lnX");
 		nextCycle();
 
-		FPMultiplier* mult = new FPMultiplier(target,   /*X:*/ wE, logwF,   /*Y:*/ wE, wF,  /*R: */  wE,  wF+wE+expG,  true /* norm*/);
+		FPMultiplier* mult = new FPMultiplier(target,   /*X:*/ wE, logwF,   /*Y:*/ wE, wF,  /*R: */  wE,  wF+wE+expG,  true /* norm*/); // TODO; use unnorm
 		oplist.push_back(mult);
 		inPortMap(mult, "Y", "Y");
 		inPortMap(mult, "X", "lnX");
