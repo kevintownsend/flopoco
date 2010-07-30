@@ -38,11 +38,6 @@ namespace flopoco{
 		name << "FPMultiplierTiling_"<<wEX_<<"_"<<wFX_<<"_"<<wEY_<<"_"<<wFY_<<"_"<<wER_<<"_"<<wFR_; 
 		setName(name.str());
 
-		if (wFX!=wFY){
-			cerr << "karatsuba, equal sizes for inputs pls";
-			throw "karatsuba, equal sizes for inputs pls";
-		}
-
 
 		/* set if operator outputs a normalized_ result */
 		normalized_ = (norm==0?false:true);
