@@ -202,7 +202,7 @@ namespace flopoco{
 					vhdl << tab << declare( join("yT",i) , 1+y_->getSize()+yGuard_[i]) << " <= \"0\" & Y"<<range(y_->getSize()-1, -yGuard_[i]) << ";" << endl;
 					vhdl << tab << "-- weight of piP"<<i<<" is="<<pikPWeight[i]<<" size="<<pikPSize[i]+2<<endl;
 
-					IntTruncMultiplier* sm = new IntTruncMultiplier ( target, 1+y_->getSize()+yGuard_[i], sigmakPSize[i-1]+1, 0.7, sigmakPSize[i] - (coef_[0]->getSize()+2) , 1, -1, false, true); //inDelayMap("X",getCriticalPath()));
+					IntTruncMultiplier* sm = new IntTruncMultiplier ( target, 1+y_->getSize()+yGuard_[i], sigmakPSize[i-1]+1, 0.7, sigmakPSize[i] - (coef_[0]->getSize()+2) , 1, -1, false, true, false); //inDelayMap("X",getCriticalPath()));
 					oplist.push_back(sm);
 				
 					inPortMap ( sm, "X", join("yT",i));
@@ -227,7 +227,7 @@ namespace flopoco{
 
 					inPortMapCst ( sa, "X", join("op1_",i));
 					inPortMapCst ( sa, "Y", join("op2_",i));
-					inPortMapCst ( sa, "Cin", "'0'");
+					inPortMapCst ( sa, "Cin", "'1'");
 					outPortMap( sa, "R", join("sigmaP",i));
 		
 					vhdl << instance ( sa, join("Sum",i));

@@ -684,6 +684,8 @@ namespace flopoco{
 
 		setCycleFromSignal("Z2o2_small_s");
 		setCriticalPath(ao_rshift->getOutputDelay("R") );
+		vhdl << tab << "-- output delay at shifter output is " << getCriticalPath() << endl;
+
 
 		vhdl << tab << "  -- send the MSB to position pfinal" << endl;
 		int Z2o2_small_sSize = getSignalByName("Z2o2_small_s")->width();
