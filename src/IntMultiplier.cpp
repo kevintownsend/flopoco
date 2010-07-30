@@ -134,10 +134,10 @@ namespace flopoco{
 						setCriticalPath ( getMaxInputDelays(inputDelays) );
 						for (int j=0; j<chunksY; j++){ 
 							if (j==0){ // @ the first the operation is only multiplication, not MAC
-								manageCriticalPath(target->DSPMultiplierDelay());
+								manageCriticalPath(target->LogicToDSPWireDelay() + target->DSPMultiplierDelay());
 								vhdl << tab << declare(join("px",i,"y",j),x+y) << " <= " << use(join("x",i)) << " * " << use(join("y",j)) << ";" << endl;
 							}else{
-								manageCriticalPath(target->DSPCascadingWireDelay() + target->DSPAdderDelay());
+								manageCriticalPath(max(target->DSPCascadingWireDelay() + target->DSPAdderDelay(), target->DSPMultiplierDelay()) );
 								vhdl << tab << declare(join("tpx",i,"y",j),x+y) << " <= " << use(join("x",i)) << " * " << use(join("y",j))  << ";" << endl; 
 								vhdl << tab << declare(join("px",i,"y",j),x+y+1) << " <= ( \"0\" & " << use(join("tpx",i,"y",j)) << ") + " << use(join("px",i,"y",j-1))<<range(x+y-1,y) << ";" << endl; 
 							}

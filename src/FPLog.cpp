@@ -541,11 +541,10 @@ namespace flopoco{
 			setCriticalPath( adderS->getOutputDelay("R") );	
 		}	
 
-		setCriticalPath(0.0);
 		setCycleFromSignal("Log1p_normal");
 		setCycle(getCurrentCycle() - profilingDepth , true); 
+		setCriticalPath(0.0);
 		manageCriticalPath(target->LogicToRAMWireDelay() + target->RAMDelay());
-
 
 		inPortMap       (lt0, "X", "A0");
 		outPortMap      (lt0, "Y", "L0");
@@ -555,7 +554,14 @@ namespace flopoco{
 		for (i=1; i<= stages; i++) {
 			// TODO better pipeline the small input as late as possible than pipeline the large output
 
-			manageCriticalPath( target->LogicToDSPWireDelay() + target->RAMDelay() );
+			if (i==1){
+				setCycleFromSignal("Log1p_normal");
+				setCycle(getCurrentCycle() - profilingDepth , true); 
+				setCriticalPath(0.0);
+				manageCriticalPath(target->LogicToRAMWireDelay() + target->RAMDelay());
+			}else{
+				manageCriticalPath( target->LogicToDSPWireDelay() + target->RAMDelay() );
+			}
 			OtherLogTable* lti = new OtherLogTable(target, a[i], target_prec - p[i], i, a[i], p[i]); 
 			oplist.push_back(lti);
 			inPortMap       (lti, "X", join("A", i));
