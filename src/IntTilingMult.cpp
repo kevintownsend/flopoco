@@ -54,7 +54,7 @@ namespace flopoco{
 #define DEBUGVHDL 0
 
 	
-	IntTilingMult:: IntTilingMult(Target* target, int wInX, int wInY, float ratio, int maxTimeInMinutes) :
+	IntTilingMult:: IntTilingMult(Target* target, int wInX, int wInY, float ratio, int maxTimeInMinutes, bool interactive) :
 		Operator(target), wInX(wInX), wInY(wInY), wOut(wInX + wInY),ratio(ratio), maxTimeInMinutes(maxTimeInMinutes-1){
  
 		ostringstream name;
@@ -123,12 +123,13 @@ namespace flopoco{
 		
 			//the one
 			
-			cout << " DO you want to run the algorithm? (y/n)" << endl;
-			string myc;
-			cin >> myc;
-			if ( myc.compare("y")!=0)
-				exit(-1);
-						
+			if (interactive){
+				cout << " DO you want to run the algorithm? (y/n)" << endl;
+				string myc;
+				cin >> myc;
+				if ( myc.compare("y")!=0)
+					exit(-1);
+			}						
 			runAlgorithm();		
 			
 			
@@ -614,7 +615,8 @@ namespace flopoco{
 			vhdl << instance(add, "adder");
 
 			syncCycleFromSignal("addRes");
-		
+			setCriticalPath( add->getOutputDelay("R") );
+			outDelayMap["R"] = getCriticalPath();
 			vhdl << tab << "R <= addRes;" << endl;
 		}else{
 			if (nrDSPOperands==1){

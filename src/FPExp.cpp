@@ -519,7 +519,7 @@ namespace flopoco{
 			sizeProd = sizeMultIn + sizeExpZm1;
 			if (wF==23){
 				nextCycle();//FIXME -> add inputDelays to intTilingMultiplier
-				lowProd = new IntTilingMult(target, sizeMultIn, sizeExpZm1, 0.15, -1);//, inDelayMap("X", target->LogicToDSPWireDelay() + getCriticalPath() ) );
+				lowProd = new IntTilingMult(target, sizeMultIn, sizeExpZm1, 0.15, -1, false);//, inDelayMap("X", target->LogicToDSPWireDelay() + getCriticalPath() ) );
 			}else
 				lowProd = new IntMultiplier(target, sizeMultIn, sizeExpZm1, inDelayMap("X", target->LogicToDSPWireDelay() + getCriticalPath() ) );
 		}

@@ -197,12 +197,15 @@ extern vector<Operator*> oplist;
 				outDelayMap["R"] = target->adderDelay(cSize[k-1]) + (getCurrentCycle()>0?0:getMaxInputDelays(inputDelays)); 
 				}else{
 					vhdl << tab << " R <= X + Y + Cin;" << endl;
-					
-					if ((classicalSlackVersion != 0) || ( maxInputDelay == 0 )){
+					if ( maxInputDelay == 0 ){
 						outDelayMap["R"] = target->adderDelay(wIn);	
-					}else{
-						outDelayMap["R"] = target->adderDelay(wIn) + getMaxInputDelays(inputDelays); 	
-					}	
+					}else{ 
+						if (classicalSlackVersion == 0){
+							outDelayMap["R"] = target->adderDelay(wIn) + getMaxInputDelays(inputDelays); 	
+						}else{
+							outDelayMap["R"] = target->adderDelay(wIn);	
+						}	
+					}
 				}
 			}
 			
@@ -1175,7 +1178,7 @@ extern vector<Operator*> oplist;
 			REPORT( DEBUG, "SLICE, Alternative, SLACK, Version 1: alpha="<<alpha<<" beta="<<beta<<" k="<<k);
 
 			if (k==1){			
-				version1 = 0;
+				version1 = PINF;
 			}else if (srl){ 
 				if (k==2){
 					version1 = int(ceil(double(alpha + 2*beta + 1 + 2*wIn + 1)/2.));

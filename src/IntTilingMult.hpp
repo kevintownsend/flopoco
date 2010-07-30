@@ -25,7 +25,7 @@ namespace flopoco{
 		 * @param[in]		wER			the with of the exponent for the convertion result
 		 * @param[in]		wFR			the with of the fraction for the convertion result
 		 */
-		IntTilingMult(Target* target, int wInX, int wInY,float ratio, int maxTimeInMinutes);
+		IntTilingMult(Target* target, int wInX, int wInY,float ratio, int maxTimeInMinutes, bool interactive = true);
 	
 		
 
