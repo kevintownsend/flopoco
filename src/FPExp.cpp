@@ -341,9 +341,12 @@ namespace flopoco{
 
 #endif
 
+
+		double ctperiod = 1.0 / target->frequency();
+		target->setFrequency( 1.0 / (ctperiod - target->LogicToRAMWireDelay() ) );
 		IntAdder *yPaddedAdder = new IntAdder(target, sizeY, inDelayMap("X", target->localWireDelay() + getCriticalPath()) ); // we know the leading bits will cancel out
+		target->setFrequency( 1.0 / ctperiod );
 		oplist.push_back(yPaddedAdder);
-	
 
 		inPortMap( yPaddedAdder, "X", "fixXsignedLSB");
 		inPortMapCst ( yPaddedAdder, "Y", "neg2Op");
