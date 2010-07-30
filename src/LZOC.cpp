@@ -72,7 +72,7 @@ namespace flopoco{
 				  << " else '0';"<<endl;
 
 			if (i>1){
-				manageCriticalPath( target->lutDelay() );
+				manageCriticalPath( target->lutDelay() + (1 + (double(intpow2(i-1))/double(100)) )*target->localWireDelay());
 
 				vhdl << tab << declare(nextLevel.str(),intpow2(i-1)) << "<= "<<currLevel.str() << "("<<intpow2(i-1)-1<<" downto 0) when " << currDigit.str()<<"='1' "
 					  <<"else "<<currLevel.str()<<"("<<intpow2(i)-1<<" downto "<<intpow2(i-1)<<");"<<endl;

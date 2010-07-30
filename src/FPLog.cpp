@@ -389,6 +389,7 @@ namespace flopoco{
 				setCriticalPath( 0 ); //FIXME
 			}
 			double cppi = getCriticalPath();
+			vhdl << tab << " -- delay at multiplier output is " << getCriticalPath() << endl;
 
 			int yisize = s[i]+p[i]+1; // +1 because implicit 1
 
@@ -448,7 +449,12 @@ namespace flopoco{
 				vhdl << range(psize[i]+a[i]-1,    p[i]-a[i]+1  + psize[i]+a[i] - s[i+1]);
 			vhdl << ");"<<endl;
 
+
+			double ctperiod;
+			ctperiod = 1.0 / target->frequency();
+			target->setFrequency( 1.0 / (ctperiod - target->LogicToDSPWireDelay() ) );
 			IntAdder* addCycleI2 = new IntAdder ( target, s[i+1], inDelayMap("X", getCriticalPath()) );
+			target->setFrequency( 1.0 / ctperiod );
 			oplist.push_back(addCycleI2);
 			
 			inPortMap( addCycleI2, "X" , join("EiYPB",i) );

@@ -134,9 +134,11 @@ namespace flopoco{
 		vhdl << instance(mult, "mult");
 
 		syncCycleFromSignal("P");
-		nextCycle();
+		setCriticalPath( mult->getOutputDelay("R") );
+		
+//		nextCycle();
 
-		FPExp* exp = new FPExp(target,  wE,  wF, 0/* means default*/, 0, expG, true);
+		FPExp* exp = new FPExp(target,  wE,  wF, 0/* means default*/, 0, expG, true, inDelayMap("X", getCriticalPath() + 2*target->localWireDelay()) );
 		oplist.push_back(exp);
 		inPortMap(exp, "X", "P");
 		outPortMap(exp, "R", "E");

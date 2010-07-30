@@ -192,7 +192,7 @@ namespace flopoco{
 			throw e.str();
 		}
 
-		setCriticalPath( getMaxInputDelays(inputDelays) );
+		setCriticalPath( getMaxInputDelays(inputDelays) + target->localWireDelay());
 		// Here we may have a wF-bit mantissa, or a wF+wE+1-bit one
 		int sizeXfix = wE+wF+g +1; // +1 for the sign
 		vhdl << tab  << declare("Xexn", 2) << " <= X(wE+wFIn+2 downto wE+wFIn+1);" << endl;
