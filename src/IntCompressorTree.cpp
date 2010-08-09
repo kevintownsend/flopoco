@@ -36,7 +36,7 @@ namespace flopoco{
 		Operator(target, inputDelays), wIn_(wIn), N_(N), inputDelays_(inputDelays) 
 	{
 		ostringstream name;
-		name << "IntCompressorTree_" << wIn_<<"_"<<N_;
+		name << "IntCompressorTree_" << wIn_<<"_"<<N_<<"_uid"<<Operator::getNewUId();
 		setName(name.str());
 		srcFileName = "IntCompressorTree";
 		setCopyrightString("Bogdan Pasca (2009)");

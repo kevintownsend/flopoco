@@ -54,8 +54,8 @@ namespace flopoco{
 			// all these values are set precisely to match the Virtex6
 			fdCtoQ_         = 0.280e-9; //the deterministic delay + an approximate NET delay
 			lut2_           = 0.053e-9;
-			lut3_           = 0.053e-9; //TODO
-			lut4_           = 0.053e-9; //TODO
+			lut3_           = 0.053e-9; 
+			lut4_           = 0.053e-9; 
 			muxcyStoO_      = 0.219e-9;
 			muxcyCINtoO_    = 0.015e-9;
 			ffd_            = -0.012e-9;
@@ -72,8 +72,8 @@ namespace flopoco{
 			DSPCascadingWireDelay_        = 0.365e-9;
 			DSPToLogicWireDelay_ = 0.436e-9;
 
-			RAMDelay_ = 1.638e-9; //TODO
-			RAMToLogicWireDelay_ = 0.436e-9; //TODO
+			RAMDelay_ = 1.591e-9; //TODO
+			RAMToLogicWireDelay_ = 0.235e-9; //TODO
 
 		}
 

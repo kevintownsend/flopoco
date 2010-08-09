@@ -608,7 +608,8 @@ namespace flopoco{
 		
 		vhdl << instance(roundedExpSigOperandAdder,"roundedExpSigOperandAdder") << endl;
 		syncCycleFromSignal("roundedExpSigRes");
-		setCriticalPath(finalAdder->getOutputDelay("R") );
+		setCriticalPath(roundedExpSigOperandAdder->getOutputDelay("R") );
+		vhdl << tab << "-- delay at adder output is " << getCriticalPath() << endl;
 
 		manageCriticalPath( target->localWireDelay() + target->lutDelay() );
 		vhdl << tab << declare("roundedExpSig", wE+wF+2) << " <= roundedExpSigRes when Xexn=\"01\" else "

@@ -49,7 +49,7 @@ namespace flopoco{
 
 		ostringstream name; 
 		name << "L" << (countType_<0?"ZO":((countType_>0)?"O":"Z")) << "CShifter"
-			  << (computeSticky_?"Sticky":"") << "_" << wIn_ << "_to_"<<wOut_<<"_counting_"<<(1<<wCount_);
+			  << (computeSticky_?"Sticky":"") << "_" << wIn_ << "_to_"<<wOut_<<"_counting_"<<(1<<wCount_)<<"_uid"<<Operator::getNewUId();;
 		setName(name.str());
 
 		setCopyrightString("Florent de Dinechin, Bogdan Pasca (2007)");

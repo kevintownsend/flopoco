@@ -97,7 +97,7 @@ namespace flopoco{
 
 	void LZOC::setOperatorName(){
 		ostringstream name; 
-		name <<"LZOC_"<<wIn_<<"_"<<wOut_;
+		name <<"LZOC_"<<wIn_<<"_"<<wOut_<<"_uid"<<Operator::getNewUId();;
 		uniqueName_ = name.str();
 	}
 

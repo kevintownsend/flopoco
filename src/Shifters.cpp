@@ -127,7 +127,7 @@ namespace flopoco{
 		ostringstream name;
 		if(direction_==Left) name <<"LeftShifter_";
 		else                 name <<"RightShifter_";
-		name<<wIn_<<"_by_max_"<<maxShift_;
+		name<<wIn_<<"_by_max_"<<maxShift_<<"_uid"<<Operator::getNewUId();;
 		uniqueName_=name.str();
 	}
 

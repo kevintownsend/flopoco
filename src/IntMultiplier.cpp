@@ -45,7 +45,7 @@ namespace flopoco{
 		 *  wInX = width of the X input
 		 *  wInY = width of the Y input
 		 */  
-		name <<"IntMultiplier_"<<wInX_<<"_"<<wInY_;
+		name <<"IntMultiplier_"<<wInX_<<"_"<<wInY_<<"_uid"<<Operator::getNewUId();;
 		if (sign_)
 			name << "_signed";
 		srcFileName="IntMultiplier";
@@ -1889,8 +1889,9 @@ namespace flopoco{
 				inPortMapCst(resultAdder, "Cin", "'0'");
 				outPortMap( resultAdder, "R", "RAdder");
 				vhdl << tab << instance(resultAdder, "ResultAdder") << endl;
-								
+				syncCycleFromSignal("RAdder");
 				setCriticalPath( resultAdder->getOutputDelay("R"));
+
 				vhdl << tab << "R <= RAdder;"<<endl;	
 				outDelayMap["R"] = getCriticalPath();
 			} else if ((!sign_) && ((wInY == 2) && (target->lutInputs()-2<wInX))){
@@ -1908,8 +1909,9 @@ namespace flopoco{
 				inPortMapCst(resultAdder, "Cin", "'0'");
 				outPortMap( resultAdder, "R", "RAdder");
 				vhdl << tab << instance(resultAdder, "ResultAdder") << endl;
-								
+				syncCycleFromSignal("RAdder");
 				setCriticalPath( resultAdder->getOutputDelay("R"));
+
 				vhdl << tab << "R <= RAdder;"<<endl;	
 				outDelayMap["R"] = getCriticalPath();
 			} else { //the generic case
