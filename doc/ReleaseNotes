@@ -1,4 +1,20 @@
 ======================================================================
+Version 2.1.0
+Frequency-directed pipelining made easy. Operator latency scales much better
+for lower frequencies. The two functions that do it all are: manageCriticalPath()
+and setCriticalPath(). Most operators are already ported to this improved framework.
+As a result, a global improvement can be remarked. 
+
+- FPExp operator is completely new. It is a significant increment over any 
+exponential operator currently available on the market.
+- Truncated multipliers can now be signed
+- FunctionEvaluator is improved by using truncated multipliers in the polynomial 
+evaluation part.  
+- FPLog pipeline is refined 
+- FPPowr is introduced in experimental phase. 
+- plenty of improvements of other operators, especially pipeline refinement 
+
+======================================================================
 Version 2.0.0
 This version brings significant improvements to the framework:
 - pipeline now made really easy: the C++ is now much easier to write
