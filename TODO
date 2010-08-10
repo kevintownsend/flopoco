@@ -54,9 +54,10 @@ Version 0.6 : FPLog
 Version 0.7 : FPExp
 Version 0.8 : DotProduct
 Version 0.9 : LNS operators, thanks to Sylvain Collange
-Version 0.11:   FPDiv, IntSquarer, new pipeline framework
-Version 1.15:   FPSqrt FPSquarer InputIEEE Fix2FP 
-Version 2.0 :  FunctionEvaluator 
+Version 0.11: FPDiv, IntSquarer, new pipeline framework
+Version 1.15: FPSqrt FPSquarer InputIEEE Fix2FP 
+Version 2.0 : FunctionEvaluator
+Version 2.1 : FPExp, FPPowr (experimental)
 -- we're here (faster than expected)
 Version ???   FPAddSub (for FFT butterfly structure)
 Version ???   FixToFPUniformDist (2008 ASAP paper by Thomas with improvements)
