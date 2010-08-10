@@ -65,8 +65,8 @@ automatic pipeline framework is described in Section~\ref{sec:pme}
 below.
 
 Another important class hierarchy in FloPoCo is \texttt{Target}, which
-defines the architecture of the target FPGA. It currently has two
-sub-classes, \texttt{VirtexIV} and \texttt{StratixII}. You may want to
+defines the architecture of the target FPGA. It currently has several sub-classes 
+including, \texttt{VirtexIV, 5, 6} and \texttt{StratixII, IV}. You may want to
 add a new target, the best way to do so is by imitation. Please
 consider contributing it to the project.
 
@@ -89,7 +89,9 @@ And do not hesitate to contact us: \texttt{Florent.de.Dinechin} or
 \label{sec:pme}
 
 
-If you want to expirement with a dummy operator and try the notions used in this section, consider reading and modifying the file UserDefinedOperator.hpp and .cpp which contains an experiment operator class : UserDefinedOperator.
+If you want to experiment with a dummy operator and try the notions used in this
+section, consider reading and modifying the file UserDefinedOperator.hpp and
+.cpp which contains an experiment operator class : UserDefinedOperator.
 
 
 Let us consider a toy MAC unit, which in VHDL would be written
@@ -113,12 +115,12 @@ begin
    R <= X + T;
 end architecture;
 \end{verbatim}
+
 We chose for simplicity a fixed-size operator, but all the following
 works as well for parameterized operators.
 
-We have above  the description of
-a combinatorial circuit. We now show how to turn it into a pipelined
-one.
+We have above the description of a combinatorial circuit. We now show how to
+turn it into a pipelined one.
 
 
 \subsection{First steps in FloPoCo}
@@ -165,8 +167,8 @@ now turn this design into a pipelined one.
 
 \subsection{Basic pipeline}
 
-
-Let us first insert a synchronization barrier between the result of the multiplication and the adder input. The code becomes: 
+Let us first insert a synchronization barrier between the result of the
+multiplication and the adder input. The code becomes: 
 
 \begin{verbatim}
 (...)
@@ -193,14 +195,14 @@ How does it work?
 
 \item Every signal also possesses an attribute \verb!lifeSpan! which
   indicates how many cycles it will need to be delayed. This attribute
-  is initialized to 0, then possibly increased by \verb!use()! as we
-  will see below. When the \verb!lifeSpan! of a signal \verb!X!  is
+  is initialized to 0, then possibly increased by each time the signal is used.
+  When the \verb!lifeSpan! of a signal \verb!X!  is
   greater than zero, \verb!outputVHDL()! will create \verb!lifeSpan!
   new signals \verb!X_d1!, \verb!X_d2! and so on, and insert registers
   between them. In other words, \verb!X_d2! will hold the value of
   \verb!X! delayed by 2 cycles.
 
-\item FloPoCo scans the VHDL and looks for right-hand side occurences
+\item FloPoCo scans the VHDL and looks for right-hand side occurrences
   of declared signals. For instance, in the line after the
   \verb!nextCycle!, it finds \verb!X! and \verb!T!. For such signals, it does the following. First,
   it compares \verb!currentCycle! and the
@@ -232,6 +234,8 @@ inserting a single \verb!nextCycle()! in the code. FloPoCo takes care of the res
 It is also possible to have \verb!if!s before some of the
 \verb!nextCycle()!, so that the pipeline adapts to the frequency, the
 operator generic parameters, etc. See \verb!IntAdder! for an example.
+However, starting with version 2.1.0 a finer-grain procedure for pipelining 
+operators is introduced and will be explained section \ref{sec:finegrain}.
 
 Some more notes:
 \begin{itemize}
@@ -275,7 +279,7 @@ automatically computed from the user-supplied frequency.
 \begin{verbatim}
 (...)
 	// vhdl << declare("T", 64) << " <= Y * Z;" << endl;
-	IntMultiplier my_mult = new IntMultiplier(target, 32, 32);
+	IntMultiplier *my_mult = new IntMultiplier(target, 32, 32);
 	oplist.push_back(my_mult); // some day this will be an addOperator method
 	inPortMap   (my_mult, "X", "Y"); // formal, actual
 	inPortMap   (my_mult, "Y", "Z");
@@ -288,7 +292,7 @@ automatically computed from the user-supplied frequency.
 	nextCycle();
 
 	// vhdl << "R <= X + T;" << endl;
-	IntAdder my_adder = new IntAdder(target, 64);
+	IntAdder *my_adder = new IntAdder(target, 64);
 	oplist.push_back(my_adder);
 	inPortMap   (my_adder, "X", "X");
 	inPortMap   (my_adder, "Y", "T");
@@ -304,12 +308,112 @@ automatically computed from the user-supplied frequency.
 
 
 And that's it. In the code above, an \verb!inPortMap()! does the same
-job as an occurence of signal on the right-hand side, and an \verb!outPortMap()! does the same job as
+job as an occurrence of signal on the right-hand side, and an \verb!outPortMap()! does the same job as
 a \verb!declare()!, although it doesn't need a signal width since it
 can read it from the sub-component. \verb!instance()! also has the
 effect that \verb!outputVHDL()! will declare this component in the
 VHDL header of \verb!MAC!.
 
+\subsection{Fine-grain frequency-directed pipelining}
+\label{sec:finegrain}
+
+The command line of FloPoCo supports specifying the desired frequency of the
+generated operators by using the \verb!-frequency! option. The philosophy behind
+is to generate the smallest (in terms of resource usage) and the shorter latency
+operator given this frequency specification for a given target.
+
+Pipelining the operator for a fixed frequency can be easily done using the
+\verb!nextCycle()! function previously introduced. As suggested before, frequency
+directed pipelining can be accomplished by surrounding the calls to
+\verb!nextCycle()! in conditional statements. The following methodology does 
+exactly that, but makes the code look cleaner. 
+
+Let's go back to our basic MAC example (the one without components). Looking at
+the critical path it is clear that it goes through a multiplication and then an
+addition. We initialize our critical path variable by using the
+\verb!setCriticalPath(0.0)! function. Each time we are about to perform one 
+operation on the critical path (in this case a multiplication) we check 
+the current delay on the critical path + the delay of this operation. There are
+two cases:
+\begin{itemize}
+	\item this delay is smaller than the target period ($1/f$). In this case
+	the critical path delay is incremented with the operation delay.
+	\item the delay is $\ge$ than $1/f$. This actually means that it impossible
+	to perform these two operations in series while keeping the critical path
+	of the operator smaller than $1/f$. Therefore, a \verb!nextCycle()! function
+	is called to register barrier and the current critical path becomes 
+	the delay of the operation performed (the multiplication in this example).
+\end{itemize}
+
+The FloPoCo command that does it all is \verb!manageCriticalPath(multiplicationDelay)!.
+The same is valid for the next operation, the addition.
+
+The augmented FloPoCo code would look something like:
+
+\begin{verbatim}
+   setCriticalPath(0.0);
+   manageCriticalPath( target->DSPMultiplierDelay() );
+   vhdl << declare("T", 64) << " <= Y * Z;" << endl;
+   manageCriticalPath( target->adderDelay(64) );
+   vhdl << "R <= X + T ;" << endl;
+\end{verbatim}
+
+
+In order to properly integrate operators in larger pipelines operators can optionally :
+\begin{itemize}
+	\item receive a list of delays on the inputs ( ("X",1.5e-9),("Y",1.2e-9) ) representing
+	the combinatorial delays already present on these signals.
+	\item report the combinatorial delay on the output signals ("R", 2.0e-9).
+\end{itemize}
+
+Using this information we can properly adjust the pipeline for the given frequency.
+Consider that the input delays are given in the variable intuitively named 
+\verb!inputDelays!. For instance:
+
+\begin{verbatim}
+   setCriticalPath( getMaxInputDelays(inputDelays)  );
+   manageCriticalPath( target->DSPMultiplierDelay() );
+   vhdl << declare("T", 64) << " <= Y * Z;" << endl;
+   manageCriticalPath( target->adderDelay(64) );
+   vhdl << "R <= X + T ;" << endl;
+   outDelayMap["R"] = getCriticalPath(); //returns the current delay on the critical path
+\end{verbatim}
+
+In the case of the second, component-based design, the code becomes:
+
+\begin{verbatim}
+	setCriticalPath( getMaxInputDelays(inputDelays)  );
+	// vhdl << declare("T", 64) << " <= Y * Z;" << endl;
+	IntMultiplier *my_mult = new IntMultiplier(target, 32, 32, inDelayMap("X",getCriticalPath()));
+	oplist.push_back(my_mult); // some day this will be an addOperator method
+	inPortMap   (my_mult, "X", "Y"); // formal, actual
+	inPortMap   (my_mult, "Y", "Z");
+	outPortMap  (my_mult, "R","T");
+	vhdl << instance(my_mult, "my_mult"); // 2nd param is the VHDL instance name
+
+	// advance to the cycle of the result
+	syncCycleFromSignal("T"); 
+	setCriticalPath( my_mult->getOutputDelay("R") );
+	
+	// vhdl << "R <= X + T;" << endl;
+	IntAdder *my_adder = new IntAdder(target, 64, inDelayMap("X",getCriticalPath()));
+	oplist.push_back(my_adder);
+	inPortMap   (my_adder, "X", "X");
+	inPortMap   (my_adder, "Y", "T");
+	inPortMapCst(my_adder, "Cin", "0"); -- carry in
+	outPortMap  (my_adder, "R","RR");
+	vhdl << instance(my_adder, "my_add");
+
+	// advance to the cycle of the result
+	syncCycleFromSignal("RR"); 
+	setCriticalPath( my_adder->getOutputDelay("R") );
+	
+   vhdl << "R <= RR;" << endl; 
+   outDelayMap["R"] = getCriticalPath();
+\end{verbatim}
+
+For more information check our currently ported operators (FPExp for example) and
+don't hesitate to contact us.
 
 
 \section{Test bench generation}
