@@ -439,15 +439,20 @@ href="http://prunel.ccsd.cnrs.fr/ensl-00269219/">this article</a>.</p>
 
 <dl>
 	<dt><code style="color: blue;">FPExp wE wF</code></dt>
-	<dd>An exponential operator, where both inputs and outputs  have <code>wE</code> bits exponent and
-	<code>wF</code> bits significand. This operator implements the exponential function as described in
-	<a href="http://perso.ens-lyon.fr/florent.de.dinechin/recherche/publis/2007-Arith.pdf">this article</a>.
+	<dd>A brand <strong>new exponential operator</strong>, where both inputs and outputs  have <code>wE</code> bits exponent and
+	<code>wF</code> bits significand. 
 	</dd>
 
 	<dt><code style="color: blue;">FPLog wE wF TableInsize</code></dt>
 	<dd>A natural logarithm operator, where both inputs and outputs  have <code>wE</code> bits exponent and
 	<code>wF</code> bits significand. The third allows for performance tuning. In doubt, set it to 0, which will default to something sensible. Otherwise, it defines the input size of the tables used by the operator, and should be between 6 and 15. See
 <a href="http://perso.ens-lyon.fr/florent.de.dinechin/recherche/publis/2007-Arith.pdf">this article (improved version in preparation)</a>.
+	</dd>
+	
+	<dt><code style="color: blue;">FPPowr wE wF</code></dt>
+	<dd> Experimental floating-point <strong>powering </strong> function as described by the
+	powr function from IEEE-754-2008 where both inputs and outputs  have <code>wE</code> bits exponent and
+	<code>wF</code> bits significand. 
 	</dd>
 </dl>	
 
