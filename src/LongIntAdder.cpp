@@ -218,7 +218,7 @@ extern vector<Operator*> oplist;
 						a<< "Adder" << cSize[j]+1 << "Zero" << j;
 						vhdl << instance( adder, a.str() );
 				
-						if (j<nbOfChunks-1){
+//						if (j<nbOfChunks-1){
 					
 							inPortMapCst(adder, "X", uname1.str()+"ext" );
 							inPortMapCst(adder, "Y", uname2.str()+"ext" );
@@ -227,7 +227,7 @@ extern vector<Operator*> oplist;
 							a.str("");
 							a<< "Adder" << cSize[j]+1 << "One" << j;
 							vhdl << instance( adder, a.str() );
-						}
+//						}
 					if (pipe)
 						target->setPipelined();
 					else
@@ -249,48 +249,44 @@ extern vector<Operator*> oplist;
 				}
 			
 				vhdl << tab <<"--form the two carry string"<<endl;
-				vhdl << tab << declare("carryStringZero",2*(nbOfChunks-2)) << " <= "; 
-				for (int i=2*(nbOfChunks-2)-1; i>=0; i--) {
-					ostringstream dnameZero;
-					if (i%2==0){
-						dnameZero << "sX"<<(i/2)+1<<"_0_l"<<l<<"_Zero";
-						vhdl << " " << use(dnameZero.str()) <<"(" << cSize[(i/2)+1] << ")";
-					}else
-						vhdl << " \"0\" ";
-					if (i>0) vhdl << " & ";
-					else     vhdl << " ; ";
+				vhdl << tab << declare("carryStringZero",nbOfChunks-2) << " <= "; 
+				for (int i=nbOfChunks-3; i>=0; i--) {
+					vhdl << "sX"<<i+1<<"_0_l"<<l<<"_Zero" << of(cSize[i+1]) << (i>0?" & ":";") ;
 				} vhdl << endl;
-				vhdl << tab << declare("carryStringOne",2*(nbOfChunks-2)) << "  <= "; 
-				for (int i=2*(nbOfChunks-2)-1; i>=0; i--) {
-					ostringstream dnameOne;
-					if (i%2==0){
-						dnameOne << "sX"<<(i/2)+1<<"_0_l"<<l<<"_One";
-						vhdl << " " << use(dnameOne.str()) <<"(" << cSize[(i/2)+1] << ") ";
-					}else
-						vhdl << " \"1\" ";
-					if (i>0) vhdl << " & ";
-					else     vhdl << " ; ";
+	
+				vhdl << tab << declare("carryStringOne",  nbOfChunks-2) << "  <= "; 
+				for (int i=nbOfChunks-3; i>=0; i--) {
+					vhdl << "sX"<<i+1<<"_0_l"<<l<<"_One" << " " <<of(cSize[i+1]) << (i>0?" & ":";");
 				} vhdl << endl;
 
-				nextCycle();/////////////////////
+//				nextCycle();/////////////////////
 
 				vhdl << tab << "--perform the short carry additions" << endl;
 				ostringstream unameCin;
 				unameCin  << "sX"<<0<<"_0_l"<<l<<"_Cin";
-				vhdl << tab << declare("rawCarrySum",2*(nbOfChunks-2)) << " <= carryStringOne + carryStringZero + " << use(unameCin.str()) << "(" << cSize[0] << ") ;" << endl;
+				vhdl << tab << declare("rawCarrySum",nbOfChunks-2) << " <= carryStringOne + carryStringZero + " << unameCin.str() <<of(cSize[0])<< ";" << endl;
 
-				if (invalid)
-					nextCycle();/////////////////////
+
+
+//				vhdl << tab << declare("manipulatedSum",nbOfChunks-2) << "<= carryStringOne AND ( (not(rawCarrySum) AND not(carryStringZero)) OR carryStringZero);" << endl; //strike of genious
+				vhdl << tab << declare("manipulatedSum",nbOfChunks-2) << "<= (not(rawCarrySum) AND carryStringZero) OR carryStringOne;" << endl; //strike of genious
+
+//				if (invalid)
+//					nextCycle();/////////////////////
+				
 				vhdl << tab <<"--get the final pipe results"<<endl;
 				for ( int i=0; i<nbOfChunks; i++){
 					ostringstream unameZero, unameOne, unameCin;
 					unameZero << "sX"<<i<<"_0_l"<<l<<"_Zero";
 					unameOne  << "sX"<<i<<"_0_l"<<l<<"_One";
 					unameCin  << "sX"<<0<<"_0_l"<<l<<"_Cin";
-					if (i==0) vhdl << tab << declare(join("res",i),cSize[i]) << " <= " << use(unameCin.str())<< range(cSize[0]-1,0) <<  ";" << endl;
+					if (i==0) 
+						vhdl << tab << declare(join("res",i),cSize[i],true) << " <= " << unameCin.str()<< range(cSize[0]-1,0) <<  ";" << endl;
 					else {
-						if (i==1) vhdl << tab << declare(join("res",i),cSize[i]) << " <= " << use(unameZero.str()) << range(cSize[i]-1,0) << " + " << use(unameCin.str()) << "(" << cSize[0] << ");"<<endl;
-						else      vhdl << tab << declare(join("res",i),cSize[i]) << " <= " << use(unameZero.str()) << range(cSize[i]-1,0) << " + not(rawCarrySum("<<2*(i-2)+1<<"));"<<endl;
+						if (i==1) vhdl << tab << declare(join("res",i),cSize[i],true) << " <= " << unameZero.str() << range(cSize[i]-1,0) << " when " << unameCin.str()<<of(cSize[0])<<"='0' else "<<unameOne.str()<< range(cSize[i]-1,0)<<";"<<endl;
+						else      vhdl << tab << declare(join("res",i),cSize[i],true) << " <= " << unameZero.str() << range(cSize[i]-1,0) << " when manipulatedSum"<<of(i-2)<<"='0' else "<<unameOne.str()<<range(cSize[i]-1,0)<<";"<<endl;
+//						else      vhdl << tab << declare(join("res",i),cSize[i],true) << " <= " << unameZero.str() << range(cSize[i]-1,0) << " when ((not(rawCarrySum("<<i-2<<")) AND carryStringZero("<<i-2<<")) OR carryStringOne("<<i-2<<"))='0' else "<<unameOne.str()<<range(cSize[i]-1,0)<<";"<<endl;
+
 					}
 				}
 			
