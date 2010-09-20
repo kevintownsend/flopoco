@@ -100,6 +100,12 @@ namespace flopoco{
 		: Operator(target), wE(wE_), wF(wF_), k(k_), d(d_), g(guardBits)
 	{
 
+#ifndef HAVE_SOLLYA
+		ostringstream e;
+		e << "ERROR in FPExp, unable to build architecture if HAVE_SOLLYA is not enabled" <<endl;
+		throw e.str();
+#endif
+
 		// if we use the magic table, we need one guard bit less
 		if(wF<=23)
 			g=3;
@@ -215,7 +221,7 @@ namespace flopoco{
 		vhdl << tab << "--  mantissa with implicit bit" << endl;
 		vhdl << tab  << declare("mXu", wFIn+1) << " <= \"1\" & Xfrac;" << endl;
 
-#if 0  //  maxshift is too large, but fixing it breaks alignment
+#if 0  //  FIXME maxshift is too large, but fixing it breaks alignment
 		// left shift
 		int maxshift=wE+g-1; // maxX < 2^(wE-1); 
 		Shifter* lshift = new Shifter(target, wFIn+1, maxshift , Shifter::Left);   
@@ -306,8 +312,7 @@ namespace flopoco{
 
 
 		int sizeY=wF+g; // This is also the weight of Y's LSB
-#if 0
-
+#if 0 //--------------Obsoleted by FixRealKCM 
 		IntIntKCM *mulLog2 = new IntIntKCM(target, wE+1, mpzLog2, true /* signed input */);
 		oplist.push_back(mulLog2);
 		outPortMap(mulLog2, "R", "KLog2");
@@ -318,9 +323,8 @@ namespace flopoco{
 
 		vhdl << tab << declare("neg2Op",sizeY) << " <= not(KLog2" << range(wE+wF+g -1, wE+wF+g - sizeY)<<");"<<endl;
 		vhdl << tab << declare("fixXsignedLSB",sizeY) << " <= fixXsigned" << range(sizeY-1, 0) << ";"<<endl;
-
+		//-------------End of "obsoleted by FixRealKCM" 
 #else
-#ifdef HAVE_SOLLYA
 		FixRealKCM *mulLog2 = new FixRealKCM(target, 0, wE, true  /* signed input */, -wF-g, "log(2)", inDelayMap( "X", target->localWireDelay() + getCriticalPath()) );
 
 		oplist.push_back(mulLog2);
@@ -329,11 +333,6 @@ namespace flopoco{
 		vhdl << instance(mulLog2, "mulLog2");
 		syncCycleFromSignal("KLog2");
 		setCriticalPath( mulLog2->getOutputDelay("R") );
-#else
-                ostringstream e;
-			e << "ERROR in FPExp, unable to build architecture if HAVE_SOLLYA is not enabled" <<endl;
-			throw e.str();
-#endif
 
 		manageCriticalPath( target->localWireDelay() + target->lutDelay() );
 		vhdl << tab << declare("neg2Op",sizeY) << " <= not(KLog2" << range(sizeY-1, 0) << ");"<<endl;

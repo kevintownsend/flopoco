@@ -23,6 +23,7 @@
 #include "../utils.hpp"
 #include "../Operator.hpp"
 #include "FixRealKCM.hpp"
+#include "../IntAdder.hpp"
 #include "../IntCompressorTree.hpp"
 
 using namespace std;
@@ -149,6 +150,10 @@ namespace flopoco{
 					last=true;
 				}
 
+
+				// Now produce the VHDL
+				setCriticalPath(getMaxInputDelays(inputDelays));
+
 				FixRealKCMTable *t; 
 
 				int ppiSize = wOut+g - (nbOfTables-1-i)*lutWidth ;
@@ -156,8 +161,6 @@ namespace flopoco{
 				oplist.push_back(t);
 				useSoftRAM(t);
             	
-            	setCriticalPath(getMaxInputDelays(inputDelays));
-            	manageCriticalPath(2*target->localWireDelay() + target->lutDelay());
 				inPortMap (t , "X", join("d",i));
 				outPortMap(t , "Y", join("pp",i));
 				vhdl << instance(t , join("KCMTable_",i));
@@ -166,13 +169,27 @@ namespace flopoco{
 				if (i!=nbOfTables-1) //if not the last table
 					vhdl << rangeAssign(wOut+g-1, ppiSize, "'0'") << " & " ;	
 				vhdl << join("pp",i) << ";" << endl;
-      
 			}
+
+
+			// All the tables are read in parallel
+			// TODO some day this will go to Table.
+			manageCriticalPath(2*target->localWireDelay() + target->lutDelay());
 			
-			IntCompressorTree* adder = new IntCompressorTree(target, wOut+g, nbOfTables, inDelayMap("X0",target->localWireDelay() + getCriticalPath()));
-			oplist.push_back(adder);
-			for (int i=0; i<nbOfTables; i++)
-				inPortMap (adder, join("X",i) , join("addOp",i));
+			Operator* adder;
+			if(nbOfTables>2) {
+				adder = new IntCompressorTree(target, wOut+g, nbOfTables, inDelayMap("X0",target->localWireDelay() + getCriticalPath()));
+				oplist.push_back(adder);
+				for (int i=0; i<nbOfTables; i++)
+					inPortMap (adder, join("X",i) , join("addOp",i));
+			}
+			else {
+				adder = new IntAdder(target, wOut+g, inDelayMap("X0",target->localWireDelay() + getCriticalPath()));
+				oplist.push_back(adder);
+				inPortMap (adder, "X" , join("addOp",0));
+				inPortMap (adder, "Y" , join("addOp",1));
+				inPortMapCst(adder, "Cin" , "'0'");
+			}
 			outPortMap(adder, "R", "OutRes");
 			vhdl << instance(adder, "Result_Adder");
 			syncCycleFromSignal("OutRes");

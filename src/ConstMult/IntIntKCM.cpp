@@ -23,7 +23,7 @@
 #include <gmpxx.h>
 #include "../utils.hpp"
 #include "../Operator.hpp"
-#include "../IntNAdder.hpp"
+#include "../IntAdder.hpp"
 #include "IntIntKCM.hpp"
 #include "KCMTable.hpp"
 
@@ -103,11 +103,9 @@ namespace flopoco{
 			if(signedInput_) {
 				t2 = new KCMTable(target, lutWidth, constantWidth + lutWidth, C, true);
 				oplist.push_back(t2);
-
 				useSoftRAM(t2);
 			}
 
-			manageCriticalPath(target->lutDelay() + 2*target->localWireDelay());
 
 			//perform nbOfTables multiplications
  			for ( int i=0; i<nbOfTables; i++){
@@ -124,10 +122,12 @@ namespace flopoco{
 					vhdl << instance(t1, join("KCMTable_",i));
 				}
 			}
-			
-			for ( int i=0; i<nbOfTables; i++)
-				syncCycleFromSignal(join("pp",i));
-		
+
+
+			// All the tables are read in parallel
+			// TODO some day this will go to Table.
+			manageCriticalPath(target->lutDelay() + 2*target->localWireDelay());
+					
 		
 			//determine the addition operand size
 			int addOpSize = (nbOfTables - 2) * lutWidth + (constantWidth +  lastLutWidth);
@@ -146,33 +146,26 @@ namespace flopoco{
 				}
 			}
 		
-//			if(wIn_>32 && target->normalizedFrequency()>=0.5) { // TODO a real test, or fix the inMap?
-//				map<string, double> inMap;
-//				inMap["X0"] = delay;
-		
-				IntCompressorTree* adder = new IntCompressorTree(target, addOpSize, nbOfTables, inDelayMap("X0",getCriticalPath()));
+			
+			Operator* adder;
+
+			if(nbOfTables>2) {
+				adder = new IntCompressorTree(target, addOpSize, nbOfTables, inDelayMap("X0",getCriticalPath()));
 				oplist.push_back(adder);
 				for (int i=0; i<nbOfTables; i++)
 					inPortMap (adder, join("X",i) , join("addOp",i));
-		
-//				inPortMapCst(adder, "Cin", "'0'");
-				outPortMap(adder, "R", "OutRes");
-				vhdl << instance(adder, "Result_Adder");
-				syncCycleFromSignal("OutRes");
-//			}
+			}
+			else {
+				adder = new IntAdder(target, addOpSize, inDelayMap("X0",target->localWireDelay() + getCriticalPath()));
+				oplist.push_back(adder);
+				inPortMap (adder, "X" , join("addOp",0));
+				inPortMap (adder, "Y" , join("addOp",1));
+				inPortMapCst(adder, "Cin" , "'0'");
+			}
 
-//			else{
-//				if(target->normalizedFrequency()>0.5)
-//					nextCycle();
-//				// stupid addition
-//				vhdl << tab << declare("OutRes", addOpSize) << " <= ";
-//				for (int i=0; i<nbOfTables; i++) {
-//					vhdl <<  join("addOp",i);
-//					if(i<nbOfTables-1)
-//						vhdl << " + ";
-//				}
-//				vhdl << ";" << endl;
-//			}
+			outPortMap(adder, "R", "OutRes");
+			vhdl << instance(adder, "Result_Adder");
+			syncCycleFromSignal("OutRes");
 
 			outDelayMap["R"] = adder->getOutputDelay("R");
 		
