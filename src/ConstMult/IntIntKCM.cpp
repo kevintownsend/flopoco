@@ -106,6 +106,9 @@ namespace flopoco{
 				useSoftRAM(t2);
 			}
 
+			// All the tables are read in parallel
+			// TODO some day this will go to Table.
+			manageCriticalPath(target->lutDelay() + 2*target->localWireDelay());
 
 			//perform nbOfTables multiplications
  			for ( int i=0; i<nbOfTables; i++){
@@ -124,9 +127,6 @@ namespace flopoco{
 			}
 
 
-			// All the tables are read in parallel
-			// TODO some day this will go to Table.
-			manageCriticalPath(target->lutDelay() + 2*target->localWireDelay());
 					
 		
 			//determine the addition operand size
@@ -150,13 +150,13 @@ namespace flopoco{
 			Operator* adder;
 
 			if(nbOfTables>2) {
-				adder = new IntCompressorTree(target, addOpSize, nbOfTables, inDelayMap("X0",getCriticalPath()));
+				adder = new IntCompressorTree(target, addOpSize, nbOfTables, inDelayMap("X0", target->localWireDelay() + getCriticalPath()));
 				oplist.push_back(adder);
 				for (int i=0; i<nbOfTables; i++)
 					inPortMap (adder, join("X",i) , join("addOp",i));
 			}
 			else {
-				adder = new IntAdder(target, addOpSize, inDelayMap("X0",target->localWireDelay() + getCriticalPath()));
+				adder = new IntAdder(target, addOpSize, inDelayMap("X0", target->localWireDelay() + getCriticalPath()));
 				oplist.push_back(adder);
 				inPortMap (adder, "X" , join("addOp",0));
 				inPortMap (adder, "Y" , join("addOp",1));
