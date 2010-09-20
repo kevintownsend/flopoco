@@ -618,6 +618,8 @@ if [ $target == "virtex4" ]; then
 	lines=20
 elif [ $target == "virtex5" ]; then
 	lines=27
+elif [ $target == "virtex6" ]; then
+	lines=30
 elif [ $target == "spartan3" ]; then
 	lines=20
 elif [ $target == "spartan3e" ]; then
