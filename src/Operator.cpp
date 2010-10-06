@@ -21,6 +21,28 @@
 
 namespace flopoco{
 
+	Operator::Operator(Target* target, map<string, double> inputDelays, bool hardOperator){
+		target_                     = target;
+		numberOfInputs_             = 0;
+		numberOfOutputs_            = 0;
+		hasRegistersWithoutReset_   = false;
+		hasRegistersWithAsyncReset_ = false;
+		hasRegistersWithSyncReset_  = false;
+		pipelineDepth_              = 0;
+		currentCycle_               = 0;
+		needRecirculationSignal_    = false;
+		inputDelayMap               = inputDelays;
+		hardOperator_               = hardOperator; 
+		myuid                       = getNewUId();
+		
+		if (target_->isPipelined())
+			setSequential();
+		else
+			setCombinatorial();	
+		
+		vhdl.disableParsing(!target_->isPipelined());	
+	}
+	
 
 	void Operator::addInput(const std::string name, const int width, const bool isBus) {
 		if (signalMap_.find(name) != signalMap_.end()) {
@@ -383,22 +405,24 @@ namespace flopoco{
 	}
 
 	void Operator::outputFinalReport() {
-		ostringstream tabs, ctabs;
-		for (int i=0;i<level-1;i++){
-			tabs << "|" << tab;
-			ctabs << "|" << tab;
-		}
+		if (hardOperator_ == true){
+			ostringstream tabs, ctabs;
+			for (int i=0;i<level-1;i++){
+				tabs << "|" << tab;
+				ctabs << "|" << tab;
+			}
 			
-		if (level>0){
-			tabs << "|" << "---";
-			ctabs << "|" << tab;
+			if (level>0){
+				tabs << "|" << "---";
+				ctabs << "|" << tab;
+			}
+			
+			cerr << tabs.str() << "Entity " << uniqueName_ <<":"<< endl;
+			if(this->getPipelineDepth()!=0)
+				cerr << ctabs.str() << tab << "Pipeline depth = " << getPipelineDepth() << endl;
+			else
+				cerr << ctabs.str() << tab << "Not pipelined"<< endl;
 		}
-
-		cerr << tabs.str() << "Entity " << uniqueName_ <<":"<< endl;
-		if(this->getPipelineDepth()!=0)
-			cerr << ctabs.str() << tab << "Pipeline depth = " << getPipelineDepth() << endl;
-		else
-			cerr << ctabs.str() << tab << "Not pipelined"<< endl;
 	}
 
 

@@ -66,25 +66,8 @@ public:
 	 * Creates an operator instance with an instantiated target for deployment.
 	 * @param target_ The deployment target of the operator.
 	 */
-	Operator(Target* target, map<string, double> inputDelays = emptyDelayMap)  {
-		target_                     = target;
-		numberOfInputs_             = 0;
-		numberOfOutputs_            = 0;
-		hasRegistersWithoutReset_   = false;
-		hasRegistersWithAsyncReset_ = false;
-		hasRegistersWithSyncReset_  = false;
-		pipelineDepth_              = 0;
-		currentCycle_               = 0;
-		needRecirculationSignal_    = false;
-		inputDelayMap               = inputDelays;
-
-		if (target_->isPipelined())
-			setSequential();
-		else
-			setCombinatorial();	
-			
-		vhdl.disableParsing(!target_->isPipelined());	
-	}
+	Operator(Target* target, map<string, double> inputDelays = emptyDelayMap, bool hardOperator = true);
+		
 
 	/** Operator Destructor.
 	 */	
@@ -646,8 +629,50 @@ public:
 		return target_;
 	}
 	
+	bool hardOperator(){
+		return hardOperator_;
+	}
+	
 	bool hasComponent(string s);
 	
+	void cleanup(vector<Operator*> *ol, Operator* op){
+		//iterate through all the components of op
+		
+		map<string, Operator*>::iterator it;
+		REPORT(INFO, "Deleting operator "<<op->getName() << ", myid"<<op->myuid<<" hard "<< hardOperator_<<" from operator list");
+		for (unsigned j=0; j< (*ol).size(); j++)
+			cerr<< "l["<<j<<"]="<<(*ol)[j]->getName()<<" value="<< (*ol)[j]->myuid<<" hard "<<hardOperator_<<endl;
+		
+		for (it = op->subComponents_.begin(); it!= op->subComponents_.end(); it++){
+			REPORT(INFO, "rec");
+			cleanup(ol, it->second);
+			REPORT(INFO, "back");
+		}	
+			
+		for (unsigned j=0; j< (*ol).size(); j++){
+			if ((*ol)[j]->myuid == op->myuid){
+				(*ol).erase((*ol).begin()+j);
+// 				j--;
+			}
+		}	
+		REPORT(INFO,"List after removal of "<<op->getName() << ", myid"<<op->myuid<<" hard "<< hardOperator_<<" from operator list");
+		for (unsigned j=0; j< (*ol).size(); j++)
+			REPORT(INFO, "l["<<j<<"]="<<(*ol)[j]->getName()<<" value="<< (*ol)[j]->myuid);
+		
+	
+	}
+	
+	int getOperatorCost(){
+		return cost;
+	}
+	
+	void setuid(int mm){
+		myuid = mm;
+	}
+	
+	int getuid(){
+		return myuid;
+	}
 
 	int level; //printing issues
 
@@ -664,6 +689,8 @@ protected:
 	FlopocoStream       vhdl;             /**< The internal stream to which the constructor will build the VHDL code */
 	string              srcFileName;      /**< Used to debug and report.  */
 	map<string, int>    declareTable;     /**< Table containing the name and declaration cycle of the signal */
+	int                 myuid;              /**<unique id>*/
+	int                 cost;             /**< the cost of the operator depending on different metrics */
 
 
 private:
@@ -684,6 +711,7 @@ private:
 	int                    currentCycle_;               /**< The current cycle, when building a pipeline */
 	double                 criticalPath_;               /**< The current delay of the current pipeline stage */
 	bool                   needRecirculationSignal_;    /**< True if the operator has registers having a recirculation signal  */
+	bool                   hardOperator_;               /**< Flase if this operator is just an interface operator to several possible implementations*/
 
 };
 
