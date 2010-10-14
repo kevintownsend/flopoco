@@ -35,6 +35,7 @@
 #include "LZOC.hpp"
 #include "LZOCShifterSticky.hpp"
 #include "IntAdder.hpp"
+#include "IntComparator.hpp"
 #include "IntNAdder.hpp"
 #include "IntCompressorTree.hpp"
 #include "LongIntAdder.hpp"
@@ -743,6 +744,20 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(op);
 			}    
 		}
+		else if(opname=="IntComparator"){
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int wIn = checkStrictyPositive(argv[i++], argv[0]);
+				int criteria = atoi(argv[i++]);
+				
+				cerr << "> IntComparator, wIn="<<wIn<<" criteria="<<criteria<<endl  ;
+				op = new IntComparator(target,wIn,criteria);
+				addOperator(op);
+			}    
+		}
+		
 		else if(opname=="MyIntAdder"){
 			int nargs = 5;
 			if (i+nargs > argc)
