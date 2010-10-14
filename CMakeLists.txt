@@ -19,7 +19,7 @@ SET(CPACK_PACKAGE_VERSION_MINOR "9")
 SET(CPACK_PACKAGE_VERSION_PATCH "0")
 
 INCLUDE(CPack)
-
+# 
 IF(WIN32)
 	SET(CMAKE_BUILD_TYPE release)
 ELSE(WIN32) 
@@ -249,6 +249,7 @@ ADD_EXECUTABLE(flopoco
  src/LZOC src/LZOCShifterSticky
  src/Shifters
  src/FPAdder
+ src/FPAdderSinglePath
  src/Fix2FP
 # src/apps/CoilInductance/CoilInductance
 # src/apps/CoilInductance/CoordinatesTableX
@@ -264,7 +265,7 @@ ADD_EXECUTABLE(flopoco
  src/squareroot/PolynomialTable src/squareroot/PolynomialTableCorrectRounded
  src/LongAcc
  src/LongAcc2FP
- src/DotProduct
+ src/DotProduct src/FPFMAcc
  src/ConstMult/IntConstMult src/ConstMult/ShiftAddOp src/ConstMult/ShiftAddDag 
  src/ConstMult/IntIntKCM src/ConstMult/KCMTable
  src/ConstMult/FPConstMult 

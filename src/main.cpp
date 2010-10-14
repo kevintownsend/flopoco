@@ -54,6 +54,8 @@
 
 #include "FPSquarer.hpp"
 #include "FPAdder.hpp"
+#include "FPAdderSinglePath.hpp"
+
 #include "Fix2FP.hpp"
 //~ #include "apps/CoilInductance/CoordinatesTableX.hpp"
 //~ #include "apps/CoilInductance/CoordinatesTableZ.hpp"
@@ -66,6 +68,7 @@
 #include "LongAcc.hpp"
 #include "LongAcc2FP.hpp"
 #include "DotProduct.hpp"
+#include "FPFMAcc.hpp"
 
 #include "PolynomialEvaluator.hpp"
 
@@ -932,6 +935,19 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(op);
 			}
 		}
+		else if(opname=="FPAdderSinglePath"){
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int wE = checkStrictyPositive(argv[i++], argv[0]);
+				int wF = checkStrictyPositive(argv[i++], argv[0]);
+				
+				cerr << "> FPAdder , wE="<<wE<<", wF="<<wF<<" \n";
+				op = new FPAdderSinglePath(target, wE, wF, wE, wF, wE, wF);
+				addOperator(op);
+			}
+		}		
 		else if(opname=="Fix2FP"){
 			int nargs = 5;
 			if (i+nargs > argc)
