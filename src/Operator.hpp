@@ -637,29 +637,16 @@ public:
 	
 	void cleanup(vector<Operator*> *ol, Operator* op){
 		//iterate through all the components of op
-		
 		map<string, Operator*>::iterator it;
-		REPORT(INFO, "Deleting operator "<<op->getName() << ", myid"<<op->myuid<<" hard "<< hardOperator_<<" from operator list");
-		for (unsigned j=0; j< (*ol).size(); j++)
-			cerr<< "l["<<j<<"]="<<(*ol)[j]->getName()<<" value="<< (*ol)[j]->myuid<<" hard "<<hardOperator_<<endl;
-		
-		for (it = op->subComponents_.begin(); it!= op->subComponents_.end(); it++){
-			REPORT(INFO, "rec");
+	
+		for (it = op->subComponents_.begin(); it!= op->subComponents_.end(); it++)
 			cleanup(ol, it->second);
-			REPORT(INFO, "back");
-		}	
 			
 		for (unsigned j=0; j< (*ol).size(); j++){
 			if ((*ol)[j]->myuid == op->myuid){
 				(*ol).erase((*ol).begin()+j);
-// 				j--;
 			}
 		}	
-		REPORT(INFO,"List after removal of "<<op->getName() << ", myid"<<op->myuid<<" hard "<< hardOperator_<<" from operator list");
-		for (unsigned j=0; j< (*ol).size(); j++)
-			REPORT(INFO, "l["<<j<<"]="<<(*ol)[j]->getName()<<" value="<< (*ol)[j]->myuid);
-		
-	
 	}
 	
 	int getOperatorCost(){
