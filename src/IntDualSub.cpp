@@ -184,7 +184,7 @@ namespace flopoco{
 			} 
 		}else{
 			vhdl << tab << "RxMy <= X + not(Y) + '1';" <<endl;
-			vhdl << tab << "R"<<son_<<" <= "<< (opType_==0?"not(X)":"X")<<" + Y + "<<(opType_==0?"":"'1'")<<";"<<endl;
+			vhdl << tab << "R"<<son_<<" <= "<< (opType_==0?"not(X)":"X")<<" + Y"<<(opType_==0?"":" + '1'")<<";"<<endl;
 		}
 	}
 
