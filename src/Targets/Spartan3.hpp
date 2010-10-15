@@ -104,6 +104,8 @@ namespace flopoco{
 		bool   suggestSubmultSize(int &x, int &y, int wInX, int wInY);
 		bool   suggestSubaddSize(int &x, int wIn);
 		bool   suggestSlackSubaddSize(int &x, int wIn, double slack);
+		bool   suggestSlackSubcomparatorSize(int &x, int wIn, double slack, bool constant);
+		
 		int    getIntMultiplierCost(int wInX, int wInY);
 		long   sizeOfMemoryBlock();
 		DSP*   createDSP(); 

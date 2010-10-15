@@ -246,8 +246,14 @@ namespace flopoco{
 			x=1;		
 			return false;
 		} 
+	}
+	
+	bool StratixIV::suggestSlackSubcomparatorSize(int& x, int wIn, double slack, bool constant)
+	{
+		bool succes = true;
 		
-		
+		x = wIn; //FIXME
+		return succes;
 	}
 	
 	int StratixIV::getIntMultiplierCost(int wInX, int wInY){

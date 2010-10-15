@@ -93,8 +93,16 @@ namespace flopoco{
 		 */
 		virtual bool   suggestSlackSubaddSize(int &x, int wIn, double slack)=0;
 
-
-
+		/** Function for determining the subcomparator sizes so that the design is able 
+		* to function at a desired frequency 
+		* @param[in,out] x the size of the subaddition for x and y
+		* @param[in] wIn the widths of x and y
+		* @param[in] slack the time delay consumed out of the input period 
+		* @param[in] constant if the comparisson is done against a constant or Y
+		*/
+		virtual bool suggestSlackSubcomparatorSize(int &x, int wIn, double slack, bool constant)=0;
+		
+		
 		/* -------------------- Delay-related methods ------------------------*/
 
 		/* -------------------  logic related  -------------------------------*/

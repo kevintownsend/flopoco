@@ -215,6 +215,26 @@ namespace flopoco{
 		} 
 	};
 	
+	bool Spartan3::suggestSlackSubcomparatorSize(int& x, int wIn, double slack, bool constant)
+	{
+		bool succes = true;
+		
+		if (!constant){
+			x = (lutInputs_/2)*(((1./frequency() - slack) - (lut2_ + muxcyStoO_))/muxcyCINtoO_ - 1)+1;
+		}else{
+			x = (lutInputs_/2)*(((1./frequency() - slack) - (lut2_ + muxcyStoO_))/muxcyCINtoO_ - 1)+1;
+		}
+		if (x<lutInputs_){ //capture possible negative values
+			x = lutInputs_;
+			succes = false;
+		}
+		
+		if (x> wIn)//saturation 
+			x = wIn;
+		
+		return succes;
+	}
+	
 	int Spartan3::getIntMultiplierCost(int wInX, int wInY){
 		
 		int lutCost = 0;
