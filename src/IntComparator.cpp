@@ -66,78 +66,80 @@ namespace flopoco{
 			case -2: vhdl << tab << "R <= '1' when (X <  Y) else '0';"<<endl; break;
 			case -1: vhdl << tab << "R <= '1' when (X <= Y) else '0';"<<endl; break;
 			case  0:{ 
-				
-				//equality is implemented as tree of luts
-				//how many luts we need for the first level?
-				int l = target->lutInputs();
-				int nLUTsStage = (wIn % l/2 == 0? wIn/ (l/2): wIn/ (l/2) + 1);
-				int numberOfLevels = 1;
 
-				REPORT(INFO, "number of luts for first level is " << nLUTsStage);
-				
-				int sizeFirstStage = (l/2)*nLUTsStage;
-				vhdl << tab << declare("eX",sizeFirstStage)<< " <= " << zg(sizeFirstStage - wIn) << " & X;"<<endl;
-				vhdl << tab << declare("eY",sizeFirstStage)<< " <= " << zg(sizeFirstStage - wIn) << " & Y;"<<endl;
-				
-				setCriticalPath(0.0);
-				manageCriticalPath(target->localWireDelay() + target->lutDelay());
-				//first stage
-				for (int i=0; i<nLUTsStage;i++){
-					vhdl << tab << declare( join("level0_LUT",i) ) << "<= '1' when eX"<<range((l/2)*(i+1)-1,(l/2)*i)<<"=eY"<<range((l/2)*(i+1)-1,(l/2)*i)<<"else '0';"<<endl;
-				}
-				
-				vhdl << tab << declare("Xlevel0",nLUTsStage) << " <= ";
-				for (int i=0; i<nLUTsStage;i++){
-					if (i==nLUTsStage-1)
-						vhdl << " level0_LUT"<<i<<";"<<endl;
-					else
-						vhdl << " level0_LUT"<<i<<" & ";
-				}
-				
-				
-				while (nLUTsStage != 1){
-					int inputBits  = nLUTsStage;
-					int outputBits = 0;
-					int idx        = 0;
-					int eaten;
+				//determine chunk size
+				int cs;
+				setCriticalPath(getMaxInputDelays(inputDelays));
+				if (!target->suggestSlackSubcomparatorSize(cs, wIn_, getCriticalPath() + target->localWireDelay() + target_->ffDelay(), constant)){
+					REPORT(INFO, "Extra reg level inserted here!");
+					nextCycle();
+					setCriticalPath(0.0);
+					target->suggestSlackSubcomparatorSize(cs, wIn, target->localWireDelay() + target_->ffDelay(), constant);
+				}	
+				REPORT(INFO, "The suggested chunk size for the first splitting was:"<<cs);
+				//number of chunks
+				int k = ( wIn % cs ==0? wIn/cs : wIn/cs + 1);
+				if (k > 1){
+					//first checks in parallel all chunks for equality
+					REPORT(INFO, "Cp before "<<getCriticalPath());
+					REPORT(INFO, "comp delay = " << target->comparatorDelay(cs));
+					manageCriticalPath( target->comparatorDelay(cs) );
+					REPORT(INFO, "Cp after"<< getCriticalPath());
 					
-					manageCriticalPath(target->localWireDelay() + target->lutDelay());
-					while (inputBits >  0 ) {
-						if (inputBits >= l){
-							eaten = l;
-							vhdl << tab << declare( join("level",numberOfLevels,"_LUT",outputBits) ) 
-							<< "<= '1' when Xlevel"<<numberOfLevels-1<<range(idx+l-1,idx)<<" = not("<<zg(l,0)<<") else '0';"<<endl;
-						}else{
-							eaten = inputBits;
-							vhdl << tab << declare( join("level",numberOfLevels,"_LUT",outputBits) )
-							<< "<= '1' when Xlevel"<<numberOfLevels-1<<range(idx+eaten-1,idx)<<"=not("<<zg(eaten,0)<< ") else '0';"<<endl;
-						}
-							
-						idx+=eaten;
-						outputBits++;
-						inputBits-=eaten; 
-					}
-					
-					//create the new X
-					vhdl << tab << declare(join("Xlevel",numberOfLevels),outputBits) << " <= ";
-					for (int i=0; i<outputBits;i++){
-						if (i==outputBits-1)
-							vhdl << " level"<<numberOfLevels<<"_LUT"<<i<<";"<<endl;
+					for (int i=0; i<k; i++){
+						vhdl <<tab << declare(join("b",i,"l",0))<<" <= '1' when X"<<range(min((i+1)*cs-1,wIn-1),i*cs);
+						if (!constant)
+							vhdl<<"=Y"<<range(min((i+1)*cs-1,wIn-1),i*cs)<<" else '0';"<<endl;
 						else
-							vhdl << " level"<<numberOfLevels<<"_LUT"<<i<<" & ";
+							vhdl<<"=conv_std_logic_vector("<<constValue<<","<< wIn<<") else '0';"<<endl;
 					}
+					//form a new std logic vector of k bits that will be checked against '11...111'
+					int l = 0;
+					int ibits = k;
+					//determine number of chunks needed for this comparisson. In most cases this will be 1
+					if (!target->suggestSlackSubcomparatorSize(cs, ibits, getCriticalPath() + target->localWireDelay() + target_->ffDelay(), true)){
+						nextCycle();
+						setCriticalPath(0.0);
+						target->suggestSlackSubcomparatorSize(cs, ibits, target->localWireDelay() + target_->ffDelay(), true);
+					}	
+					REPORT(INFO, "The number of ibits is "<<ibits<<" cs="<<cs);
+					k = ( ibits % cs ==0? ibits/cs : ibits/cs + 1);
+					while (ibits>1){
+						l++;
+						//join bits in a vector
+						vhdl << tab << declare(join("lev",l),ibits) << " <= ";
+						for (int i=0; i<ibits;i++){
+							if (i==ibits-1)
+								vhdl << join("b",i,"l",l-1) << ";"<<endl;
+							else
+								vhdl << join("b",i,"l",l-1) << " & ";
+						}	
+						manageCriticalPath(target->comparatorConstDelay(ibits));
+						for (int i=0; i<k; i++){
+							vhdl <<tab << declare(join("b",i,"l",l))<<" <= '1' when lev"<<l<<range(min((i+1)*cs-1,ibits-1),i*cs)
+							<<"="<< og(  min((i+1)*cs-1,ibits-1)+1 -i*cs ,0 )<<" else '0';"<<endl;
+						}
+						
+						if (!target->suggestSlackSubcomparatorSize(cs, k, getCriticalPath() + target->localWireDelay() + target_->ffDelay() , true)){
+							nextCycle();
+							setCriticalPath(0.0);
+							target->suggestSlackSubcomparatorSize(cs, k, 0.0 + target->localWireDelay() + target_->ffDelay(), true);
+						}
+						ibits = k;
+						k = ( ibits % cs ==0? ibits/cs : ibits/cs + 1);
+					}
+					//assign R
+					vhdl << tab << "R <= " <<join("b",0,"l",l)<<";"<<endl;
+					outDelayMap["R"] = getCriticalPath();
 					
-					
-					nLUTsStage = outputBits; //reinit for next iteration
-					numberOfLevels++;
-					
+				}else{
+					//if we can do it all in one cycle
+					if (!constant)
+						vhdl << tab << "R <= '1' when X=Y else '0';"<<endl;
+					else
+						vhdl << tab << "R <= '1' when X=conv_std_logic_vector("<<constValue<<","<< wIn<<") else '0';"<<endl;
 				}
-				
-				numberOfLevels--;
-				REPORT(INFO, "number of levels was " << numberOfLevels);
-				
-				vhdl << tab << "R <= Xlevel"<<numberOfLevels<<";" <<endl; break;
-			}
+			} break;
 			case  1: vhdl << tab << "R <= '1' when (X >  Y) else '0';"<<endl; break;
 			case  2: vhdl << tab << "R <= '1' when (X = Y) else '0';"<<endl; break;
 			default:;
