@@ -365,6 +365,30 @@ namespace flopoco{
 		//default (will not get here)
 		return "";
 	}
+	
+	string og(int n, int margins){
+		ostringstream left,full, right, ones;
+		int i;
+		
+		for (i=1; i<=n;i++)
+			ones<<"1";
+		
+		left<<"\""<<ones.str();
+		full<<left.str()<<"\"";
+		right<<ones.str()<<"\"";
+		
+		switch(margins){
+			case -2: return ones.str(); break;
+			case -1: return left.str();  break;
+			case  0: return full.str();  break;
+			case  1: return right.str(); break;
+			default: return full.str(); 
+		}
+		
+		//default (will not get here)
+		return "";
+	}
+	
 
 	// Does not handle multi-byte encodings.
 	char vhdlizeChar(char c)

@@ -102,6 +102,8 @@ namespace flopoco{
 		 */
 		double carryPropagateDelay();
 		double adderDelay(int size);
+		double comparatorDelay(int size);
+		double comparatorConstDelay(int size);
 		
 		double DSPMultiplierDelay(){ return DSPMultiplierDelay_;}
 		double DSPAdderDelay(){ return DSPAdderDelay_;} //TODO

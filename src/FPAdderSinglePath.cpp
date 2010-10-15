@@ -42,12 +42,11 @@ namespace flopoco{
 
 		srcFileName="FPAdderSinglePath";
 			
-		//parameter set up
+		//parameter set up. For now all wEX=wEY=wER and the same holds for fractions
 		wF = wFX;
 		wE = wEX;
 			
-		ostringstream name, synch, synch2;
-
+		ostringstream name;
 		name<<"FPAdderSinglePath_"<<wE<<"_"<<wF<<"_uid"<<getNewUId(); 
 		setName(name.str()); 
 
@@ -66,10 +65,11 @@ namespace flopoco{
 		//                          Swap/Difference                                |
 		// ========================================================================|
 		vhdl<<"-- Exponent difference and swap  --"<<endl;
-		vhdl<< tab << declare("swap")       << " <= '1' when Y"<<range(wE+wF-1,0)<<">X"<<range(wE+wF-1,0)<<"else '0';"<<endl;
-		vhdl<< tab << declare("eqdiffsign") << " <= '1' when Y"<<range(wE+wF-1,0)<<"=X"<<range(wE+wF-1,0)<<"else '0';"<<endl; 
 		vhdl<< tab << declare("eXmeY",wE+1) << " <= (\"0\" & X"<<range(wE+wF-1,wF)<<") - (\"0\" & Y"<<range(wE+wF-1,wF)<<");"<<endl;
 		vhdl<< tab << declare("eYmeX",wE+1) << " <= (\"0\" & Y"<<range(wE+wF-1,wF)<<") - (\"0\" & X"<<range(wE+wF-1,wF)<<");"<<endl;
+				
+		vhdl<< tab << declare("swap")       << " <= '1' when Y"<<range(wE+wF-1,0)<<">X"<<range(wE+wF-1,0)<<"else '0';"<<endl;
+		vhdl<< tab << declare("eqdiffsign") << " <= '1' when Y"<<range(wE+wF-1,0)<<"=X"<<range(wE+wF-1,0)<<"else '0';"<<endl; 
 
 		// depending on the value of swap, assign the corresponding values to the newX and newY signals 
 		vhdl<<tab<<declare("newX",wE+wF+3) << " <= Y     when swap = '1' else X;"<<endl;

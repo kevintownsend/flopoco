@@ -38,7 +38,7 @@ using namespace std;
 namespace flopoco{
 
 
-	IntComparator::IntComparator(Target* target, int wIn, int criteria, map<string, double> inputDelays) :
+	IntComparator::IntComparator(Target* target, int wIn, int criteria, bool constant, int constValue, map<string, double> inputDelays) :
 		Operator(target, inputDelays), wIn_(wIn), criteria_(criteria) {
 	
 		// -------- Parameter set up -----------------
@@ -65,9 +65,81 @@ namespace flopoco{
 		switch(criteria_){
 			case -2: vhdl << tab << "R <= '1' when (X <  Y) else '0';"<<endl; break;
 			case -1: vhdl << tab << "R <= '1' when (X <= Y) else '0';"<<endl; break;
-			case  0: vhdl << tab << "R <= '1' when (X =  Y) else '0';"<<endl; break;
+			case  0:{ 
+				
+				//equality is implemented as tree of luts
+				//how many luts we need for the first level?
+				int l = target->lutInputs();
+				int nLUTsStage = (wIn % l/2 == 0? wIn/ (l/2): wIn/ (l/2) + 1);
+				int numberOfLevels = 1;
+
+				REPORT(INFO, "number of luts for first level is " << nLUTsStage);
+				
+				int sizeFirstStage = (l/2)*nLUTsStage;
+				vhdl << tab << declare("eX",sizeFirstStage)<< " <= " << zg(sizeFirstStage - wIn) << " & X;"<<endl;
+				vhdl << tab << declare("eY",sizeFirstStage)<< " <= " << zg(sizeFirstStage - wIn) << " & Y;"<<endl;
+				
+				setCriticalPath(0.0);
+				manageCriticalPath(target->localWireDelay() + target->lutDelay());
+				//first stage
+				for (int i=0; i<nLUTsStage;i++){
+					vhdl << tab << declare( join("level0_LUT",i) ) << "<= '1' when eX"<<range((l/2)*(i+1)-1,(l/2)*i)<<"=eY"<<range((l/2)*(i+1)-1,(l/2)*i)<<"else '0';"<<endl;
+				}
+				
+				vhdl << tab << declare("Xlevel0",nLUTsStage) << " <= ";
+				for (int i=0; i<nLUTsStage;i++){
+					if (i==nLUTsStage-1)
+						vhdl << " level0_LUT"<<i<<";"<<endl;
+					else
+						vhdl << " level0_LUT"<<i<<" & ";
+				}
+				
+				
+				while (nLUTsStage != 1){
+					int inputBits  = nLUTsStage;
+					int outputBits = 0;
+					int idx        = 0;
+					int eaten;
+					
+					manageCriticalPath(target->localWireDelay() + target->lutDelay());
+					while (inputBits >  0 ) {
+						if (inputBits >= l){
+							eaten = l;
+							vhdl << tab << declare( join("level",numberOfLevels,"_LUT",outputBits) ) 
+							<< "<= '1' when Xlevel"<<numberOfLevels-1<<range(idx+l-1,idx)<<" = not("<<zg(l,0)<<") else '0';"<<endl;
+						}else{
+							eaten = inputBits;
+							vhdl << tab << declare( join("level",numberOfLevels,"_LUT",outputBits) )
+							<< "<= '1' when Xlevel"<<numberOfLevels-1<<range(idx+eaten-1,idx)<<"=not("<<zg(eaten,0)<< ") else '0';"<<endl;
+						}
+							
+						idx+=eaten;
+						outputBits++;
+						inputBits-=eaten; 
+					}
+					
+					//create the new X
+					vhdl << tab << declare(join("Xlevel",numberOfLevels),outputBits) << " <= ";
+					for (int i=0; i<outputBits;i++){
+						if (i==outputBits-1)
+							vhdl << " level"<<numberOfLevels<<"_LUT"<<i<<";"<<endl;
+						else
+							vhdl << " level"<<numberOfLevels<<"_LUT"<<i<<" & ";
+					}
+					
+					
+					nLUTsStage = outputBits; //reinit for next iteration
+					numberOfLevels++;
+					
+				}
+				
+				numberOfLevels--;
+				REPORT(INFO, "number of levels was " << numberOfLevels);
+				
+				vhdl << tab << "R <= Xlevel"<<numberOfLevels<<";" <<endl; break;
+			}
 			case  1: vhdl << tab << "R <= '1' when (X >  Y) else '0';"<<endl; break;
-			case  2: vhdl << tab << "R <= '1' when (X >= Y) else '0';"<<endl; break;
+			case  2: vhdl << tab << "R <= '1' when (X = Y) else '0';"<<endl; break;
 			default:;
 		}
 		

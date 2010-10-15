@@ -121,6 +121,20 @@ namespace flopoco{
 		 */
 		virtual double adderDelay(int n) =0;
 
+		/** Function which returns the delay for an n bit eq comparisson 
+		* @param n the number of bits of the comparisson
+		* @return the delay of the comparisson between two vectors
+		*/
+		virtual double comparatorDelay(int n) =0;
+
+		/** Function which returns the delay for an n bit eq comparisson with a 
+		* constant
+		* @param n the number of bits of the comparisson
+		* @return the delay of the comparisson between a vector and a constant
+		*/
+		virtual double comparatorConstDelay(int n) =0;
+		
+		
 		/** Function which returns the distant wire delay.
 		 * @return distant wire delay 
 		 */

@@ -753,11 +753,25 @@ bool parseCommandLine(int argc, char* argv[]){
 				int criteria = atoi(argv[i++]);
 				
 				cerr << "> IntComparator, wIn="<<wIn<<" criteria="<<criteria<<endl  ;
-				op = new IntComparator(target,wIn,criteria);
+				op = new IntComparator(target,wIn,criteria,false,0);
 				addOperator(op);
 			}    
 		}
-		
+		else if(opname=="IntConstComparator"){
+			int nargs = 3;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int wIn = checkStrictyPositive(argv[i++], argv[0]);
+				int criteria = atoi(argv[i++]);
+				int constant = atoi(argv[i++]);
+				
+				cerr << "> IntComparator, wIn="<<wIn<<" criteria="<<criteria<<endl  ;
+				op = new IntComparator(target,wIn,criteria, true, constant);
+				addOperator(op);
+			}    
+	}
+	
 		else if(opname=="MyIntAdder"){
 			int nargs = 5;
 			if (i+nargs > argc)

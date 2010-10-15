@@ -32,6 +32,14 @@ namespace flopoco{
 		return lut2_ + muxcyStoO_ + double(size-1)*muxcyCINtoO_ + xorcyCintoO_ ; 
 	};
 
+	double Virtex4::comparatorDelay(int size){
+		return lut2_ + muxcyStoO_ + double((size-1)/(lutInputs_/2)+1)*muxcyCINtoO_; 
+	}
+	
+	double Virtex4::comparatorConstDelay(int size){
+		return lut2_ + muxcyStoO_ + double((size-1)/lutInputs_+1)*muxcyCINtoO_; 
+	}
+	
 	void Virtex4::getAdderParameters(double &k1, double &k2, int size){
 		k1 = fdCtoQ_ + slice2sliceDelay_ + lut2_ + muxcyStoO_ + xorcyCintoO_;
 		k2 = muxcyCINtoO_;
