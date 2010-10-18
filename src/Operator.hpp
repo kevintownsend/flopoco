@@ -223,6 +223,9 @@ public:
 	 */
 	void setCycleFromSignal(string name, bool report=true) ;
 
+	int getCycleFromSignal(string name, bool report = false);
+		
+	
 	/** advance the current cycle to that of a signal. It may only increase current cycle. To synchronize
 		 two or more signals, first call setCycleFromSignal() on the
 		 first, then syncCycleFromSignal() on the remaining ones. It
