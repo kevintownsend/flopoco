@@ -86,12 +86,15 @@ namespace flopoco{
 			currLev += (intpow2(i)-1); 
 			currLev = (currLev > wIn_? wIn_: currLev);
 
-			manageCriticalPath( compDelay( intpow2(i)  ) ) ;
-
+			if (countType>=0)
+				manageCriticalPath( target->comparatorConstDelay( intpow2(i) ) ) ;
+			else
+				manageCriticalPath( target->comparatorDelay( intpow2(i) ) ) ;
+				
 			vhdl << tab << declare(join("count",i),1) << "<= '1' when " <<join("level",i+1)<<range(prevLev-1,prevLev - intpow2(i))<<" = "
 				  <<"("<<prevLev-1<<" downto "<<prevLev - intpow2(i)<<"=>"<< (countType_==-1? "sozb": countType_==0?"'0'":"'1'")<<") else '0';"<<endl;
 
-			manageCriticalPath( muxDelay(currLev) );
+			manageCriticalPath( target->localWireDelay() + target->lutDelay() );
 			vhdl << tab << declare(join("level",i),currLev) << "<= " << join("level",i+1)<<"("<<prevLev-1<<" downto "<< prevLev-currLev << ")"
 				  << " when " << join("count",i) << "='0' else ";
 			int l,r;

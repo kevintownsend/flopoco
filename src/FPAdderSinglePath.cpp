@@ -66,6 +66,9 @@ FPAdderSinglePath::FPAdderSinglePath(Target* target, int wEX, int wFX, int wEY, 
 		// ========================================================================|
 		vhdl<<"-- Exponent difference and swap  --"<<endl;
 
+		vhdl << tab << declare("excExpFracX",2+wE+wF) << " <= X"<<range(wE+wF+2, wE+wF+1) << " & X"<<range(wE+wF-1, 0)<<";"<<endl;
+		vhdl << tab << declare("excExpFracY",2+wE+wF) << " <= Y"<<range(wE+wF+2, wE+wF+1) << " & Y"<<range(wE+wF-1, 0)<<";"<<endl;
+
 		setCriticalPath(getMaxInputDelays(inputDelays));
 		manageCriticalPath(target->localWireDelay() + target->comparatorDelay(wE+wF)); //comparator delay implemented for now as adder
 		vhdl<< tab << declare("eqdiffsign") << " <= '1' when Y"<<range(wE+wF-1,0)<<"=X"<<range(wE+wF-1,0)<<"else '0';"<<endl; 
@@ -121,7 +124,7 @@ FPAdderSinglePath::FPAdderSinglePath(Target* target, int wEX, int wFX, int wEY, 
 		}
 		manageCriticalPath(target->localWireDelay() + target->lutDelay());//multiplexer
 		vhdl<<tab<<declare("expDiff",wE+1) << " <= eXmeY when swap = '0' else eYmeX;"<<endl; 
-		manageCriticalPath(target->localWireDelay() + target->adderDelay(wE+1));
+		manageCriticalPath(target->localWireDelay() + target->comparatorConstDelay(wE+1));
 		vhdl<<tab<<declare("shiftedOut") << " <= '1' when (expDiff >= "<<wF+2<<") else '0';"<<endl;
 		//shiftVal=the number of positions that fracY must be shifted to the right				
 		
@@ -203,16 +206,16 @@ FPAdderSinglePath::FPAdderSinglePath(Target* target, int wEX, int wFX, int wEY, 
 		outPortMap (lzocs, "O","shiftedFrac");
 		vhdl << instance(lzocs, "LZC_component");
 		syncCycleFromSignal("shiftedFrac");
-		setCriticalPath(lzocs->getOutputDelay("R"));
+		setCriticalPath(lzocs->getOutputDelay("O"));
 // 		double cpnZerosNew = getCriticalPath();
 		double cpshiftedFrac = getCriticalPath();
 		
 		//need to decide how much to add to the exponent
-		manageCriticalPath(target->localWireDelay() + target->adderDelay(wE+2));
-		vhdl << tab << declare("expPart",wE+2) << " <= (" << zg(wE+2-lzocs->getCountWidth(),0) <<" & nZerosNew) - 1;"<<endl;
+/*		manageCriticalPath(target->localWireDelay() + target->adderDelay(wE+2));*/
+// 	vhdl << tab << declare("expPart",wE+2) << " <= (" << zg(wE+2-lzocs->getCountWidth(),0) <<" & nZerosNew) - 1;"<<endl;
 		//update exponent
 		manageCriticalPath(target->localWireDelay() + target->adderDelay(wE+2));
-		vhdl << tab << declare("updatedExp",wE+2) << " <= (\"00\" & expX) - expPart;"<<endl;
+		vhdl << tab << declare("updatedExp",wE+2) << " <= (\"00\" & expX) - (" << zg(wE+2-lzocs->getCountWidth(),0) <<" & nZerosNew) + '1';"<<endl;
 		//concatenate exponent with fraction to absorb the possible carry out
 		vhdl<<tab<<declare("expFrac",wE+2+wF+1)<<"<= updatedExp & shiftedFrac"<<range(wF+3,3)<<";"<<endl;
 		double cpexpFrac = getCriticalPath();
@@ -258,7 +261,7 @@ FPAdderSinglePath::FPAdderSinglePath(Target* target, int wEX, int wFX, int wEY, 
 		vhdl << tab << declare("expR",wE) <<" <= RoundedExpFrac"<<range(wF+wE,wF+1)<<";"<<endl;
 
 		manageCriticalPath(target->localWireDelay() + target->lutDelay());
-		vhdl << tab << declare("exExpExc",4) << " <= upExc&excRt;"<<endl;
+		vhdl << tab << declare("exExpExc",4) << " <= upExc & excRt;"<<endl;
 		vhdl << tab << "with (exExpExc) select "<<endl;
 		vhdl << tab << declare("excRt2",2) << "<= \"00\" when \"0000\"|\"0100\"|\"1000\"|\"1100\"|\"1001\"|\"1101\","<<endl
 		<<tab<<tab<<"\"01\" when \"0001\","<<endl
