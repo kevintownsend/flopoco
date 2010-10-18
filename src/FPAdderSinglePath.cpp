@@ -70,9 +70,8 @@ FPAdderSinglePath::FPAdderSinglePath(Target* target, int wEX, int wFX, int wEY, 
 		vhdl << tab << declare("excExpFracY",2+wE+wF) << " <= Y"<<range(wE+wF+2, wE+wF+1) << " & Y"<<range(wE+wF-1, 0)<<";"<<endl;
 
 		setCriticalPath(getMaxInputDelays(inputDelays));
-		manageCriticalPath(target->localWireDelay() + target->comparatorDelay(wE+wF)); //comparator delay implemented for now as adder
-		vhdl<< tab << declare("eqdiffsign") << " <= '1' when Y"<<range(wE+wF-1,0)<<"=X"<<range(wE+wF-1,0)<<"else '0';"<<endl; 
-// 		double cpeqdiffsign = getCriticalPath(); 
+		manageCriticalPath(target->localWireDelay() + target->comparatorDelay(wE+wF+2)); 
+		vhdl<< tab << declare("eqdiffsign") << " <= '1' when excExpFracX = excExpFracY else '0';"<<endl; 
 		
 		setCriticalPath(getMaxInputDelays(inputDelays));
 		manageCriticalPath(target->localWireDelay() + target->adderDelay(wE+1));
@@ -83,7 +82,7 @@ FPAdderSinglePath::FPAdderSinglePath(Target* target, int wEX, int wFX, int wEY, 
 		
 		setCriticalPath(getMaxInputDelays(inputDelays));
 		manageCriticalPath(target->localWireDelay() + target->adderDelay(wE+1)); //comparator delay implemented for now as adder
-		vhdl<< tab << declare("swap")       << " <= '1' when Y"<<range(wE+wF-1,0)<<">X"<<range(wE+wF-1,0)<<"else '0';"<<endl;
+		vhdl<< tab << declare("swap")       << " <= '1' when excExpFracY > excExpFracX else '0';"<<endl;
 		double cpswap = getCriticalPath();
 		
 		manageCriticalPath(target->localWireDelay() + target->lutDelay());
@@ -99,7 +98,8 @@ FPAdderSinglePath::FPAdderSinglePath(Target* target, int wEX, int wFX, int wEY, 
 		vhdl << tab << declare("EffSub") << " <= signX xor signY;"<<endl;
 		vhdl << tab << declare("sdsXsYExnXY",6) << " <= signX & signY & excX & excY;"<<endl; 
 		vhdl << tab << declare("sdExnXY",4) << " <= excX & excY;"<<endl; 
-		vhdl << tab << declare("fracY",wF+1) << " <= '1' & newY("<<wF-1<<" downto 0);"<<endl;
+		manageCriticalPath(target->localWireDelay()+ target->lutDelay());
+		vhdl << tab << declare("fracY",wF+1) << " <= "<< zg(wF+1)<<" when excY=\"00\" else ('1' & newY("<<wF-1<<" downto 0));"<<endl;
 		double cpfracY = getCriticalPath();
 
 		
@@ -108,7 +108,7 @@ FPAdderSinglePath::FPAdderSinglePath(Target* target, int wEX, int wFX, int wEY, 
 		manageCriticalPath(target->localWireDelay()+2*target->lutDelay());
 		vhdl <<tab<<"with sdsXsYExnXY select "<<endl;
 		vhdl <<tab<<declare("excRt",2) << " <= \"00\" when \"000000\"|\"010000\"|\"100000\"|\"110000\","<<endl
-		<<tab<<tab<<"\"01\" when \"000101\"|\"010101\"|\"100101\"|\"110101\","<<endl
+		<<tab<<tab<<"\"01\" when \"000101\"|\"010101\"|\"100101\"|\"110101\"|\"000100\"|\"010100\"|\"100100\"|\"110100\"|\"000001\"|\"010001\"|\"100001\"|\"110001\","<<endl
 		<<tab<<tab<<"\"10\" when \"111010\"|\"001010\"|\"001000\"|\"011000\"|\"101000\"|\"111000\"|\"000010\"|\"010010\"|\"100010\"|\"110010\"|\"001001\"|\"011001\"|\"101001\"|\"111001\"|\"000110\"|\"010110\"|\"100110\"|\"110110\", "// and signX=signY) else "<<endl
 		<<tab<<tab<<"\"11\" when others;"<<endl;
 		manageCriticalPath(target->localWireDelay() + target->lutDelay());
@@ -273,9 +273,11 @@ FPAdderSinglePath::FPAdderSinglePath(Target* target, int wEX, int wFX, int wEY, 
 
 		// assign result 
 		vhdl<<tab<< declare("computedR",wE+wF+3) << " <= excR & signR & expR & fracR;"<<endl;
-		manageCriticalPath(target->localWireDelay() +  target->lutDelay());
+		vhdl << tab << "R <= computedR;"<<endl;
+		
+		/*		manageCriticalPath(target->localWireDelay() +  target->lutDelay());
 		vhdl<<tab<<"with sdExnXY select"<<endl;
-		vhdl<<tab<<"R <= newX when \"0100\"|\"1000\"|\"1001\", newY when \"0001\"|\"0010\"|\"0110\", computedR when others;"<<endl;
+		vhdl<<tab<<"R <= newX when \"0100\"|\"1000\"|\"1001\", newY when \"0001\"|\"0010\"|\"0110\", computedR when others;"<<endl;*/
 	}
 
 	FPAdderSinglePath::~FPAdderSinglePath() {
