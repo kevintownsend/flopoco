@@ -69,9 +69,9 @@ FPAdderSinglePath::FPAdderSinglePath(Target* target, int wEX, int wFX, int wEY, 
 		vhdl << tab << declare("excExpFracX",2+wE+wF) << " <= X"<<range(wE+wF+2, wE+wF+1) << " & X"<<range(wE+wF-1, 0)<<";"<<endl;
 		vhdl << tab << declare("excExpFracY",2+wE+wF) << " <= Y"<<range(wE+wF+2, wE+wF+1) << " & Y"<<range(wE+wF-1, 0)<<";"<<endl;
 
-		setCriticalPath(getMaxInputDelays(inputDelays));
+/*		setCriticalPath(getMaxInputDelays(inputDelays));
 		manageCriticalPath(target->localWireDelay() + target->comparatorDelay(wE+wF+2)); 
-		vhdl<< tab << declare("eqdiffsign") << " <= '1' when excExpFracX = excExpFracY else '0';"<<endl; 
+		vhdl<< tab << declare("eqdiffsign") << " <= '1' when excExpFracX = excExpFracY else '0';"<<endl; */
 		
 		setCriticalPath(getMaxInputDelays(inputDelays));
 		manageCriticalPath(target->localWireDelay() + target->adderDelay(wE+1));
@@ -210,12 +210,18 @@ FPAdderSinglePath::FPAdderSinglePath(Target* target, int wEX, int wFX, int wEY, 
 // 		double cpnZerosNew = getCriticalPath();
 		double cpshiftedFrac = getCriticalPath();
 		
+		
+		
+		
 		//need to decide how much to add to the exponent
 /*		manageCriticalPath(target->localWireDelay() + target->adderDelay(wE+2));*/
 // 	vhdl << tab << declare("expPart",wE+2) << " <= (" << zg(wE+2-lzocs->getCountWidth(),0) <<" & nZerosNew) - 1;"<<endl;
 		//update exponent
 		manageCriticalPath(target->localWireDelay() + target->adderDelay(wE+2));
 		vhdl << tab << declare("updatedExp",wE+2) << " <= (\"00\" & expX) - (" << zg(wE+2-lzocs->getCountWidth(),0) <<" & nZerosNew) + '1';"<<endl;
+		vhdl << tab << declare("eqdiffsign")<< " <= '1' when nZerosNew="<<og(lzocs->getCountWidth(),0)<<" else '0';"<<endl; 
+		
+		
 		//concatenate exponent with fraction to absorb the possible carry out
 		vhdl<<tab<<declare("expFrac",wE+2+wF+1)<<"<= updatedExp & shiftedFrac"<<range(wF+3,3)<<";"<<endl;
 		double cpexpFrac = getCriticalPath();
