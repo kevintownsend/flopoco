@@ -39,11 +39,11 @@ namespace flopoco{
 		void buildStandardTestCases(TestCaseList* tcl);
 		
 		void warningInfo(){
-			cout << "********************************************************************************"<<endl;
-			cout << "*      The generation of this operator makes extensive use of the stack !      *"<<endl;
-			cout << "*      If operator generation is not successful, increase stack limit          *"<<endl;
-			cout << "*                    ulimit -s 5120000000                                      *"<<endl;
-			cout << "********************************************************************************"<<endl;
+			REPORT(INFO, "********************************************************************************");
+			REPORT(INFO, "*      The generation of this operator makes extensive use of the stack !      *");
+			REPORT(INFO, "*      If operator generation is not successful, increase stack limit          *");
+			REPORT(INFO, "*                    ulimit -s 5120000000                                      *");
+			REPORT(INFO, "********************************************************************************");
 		}
 
 	private:

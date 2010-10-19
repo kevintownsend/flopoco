@@ -1224,7 +1224,8 @@ namespace flopoco{
 				tReplace << use(name, useCycle - declareCycle); 
 				replaceString = tReplace.str();
 				if (useCycle<declareCycle){
-					cerr << srcFileName << " (" << uniqueName_ << "): ERROR: Signal:"<<name<<". defined @ cycle "<<declareCycle<<" and used @ cycle " << useCycle <<endl;
+					cerr << srcFileName << " (" << uniqueName_ << "): WARNING: Signal:"<<name<<". defined @ cycle "<<declareCycle<<" and used @ cycle " << useCycle <<endl;
+					cerr << srcFileName << " (" << uniqueName_ << "): If this is a feedback signal you may ignore this warning"<<endl;
 				}
 			}else{
 				/* parse the declare by hand and check lower/upper case */

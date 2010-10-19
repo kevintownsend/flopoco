@@ -977,6 +977,20 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(op);
 			}
 		}		
+		else if(opname=="FPFMAcc"){
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int wE = checkStrictyPositive(argv[i++], argv[0]);
+				int wF = checkStrictyPositive(argv[i++], argv[0]);
+				
+				cerr << "> FPFMAcc , wE="<<wE<<", wF="<<wF<<" \n";
+				op = new FPFMAcc(target, wE, wF);
+				addOperator(op);
+			}
+		}		
+		
 		else if(opname=="Fix2FP"){
 			int nargs = 5;
 			if (i+nargs > argc)

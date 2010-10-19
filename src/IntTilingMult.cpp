@@ -85,18 +85,18 @@ namespace flopoco{
 			
 
 			
-			REPORT( LIST, "Input board size is width="<<wInX<<" height="<<wInY);
-			REPORT( LIST, "Extra width:="<<getExtraWidth()<<" extra height:="<<getExtraHeight());
-			REPORT( LIST, "Extended board width="<<vnme<<" height="<<vmme);
+			REPORT( INFO, "Input board size is width="<<wInX<<" height="<<wInY);
+			REPORT( INFO, "Extra width:="<<getExtraWidth()<<" extra height:="<<getExtraHeight());
+			REPORT( INFO, "Extended board width="<<vnme<<" height="<<vmme);
 
 			/* detailed info about the abstracted DSP block */
 			int x,y;
 			target->getDSPWidths(x,y);
-			REPORT( LIST, "DSP block: width= "<< x <<" height=" << y);
+			REPORT( INFO, "DSP block: width= "<< x <<" height=" << y);
 
 			/* get an estimated number of DSPs needed to tile the board with */
 			nrDSPs = estimateDSPs();
-			REPORT( LIST, "Estimated DSPs = " <<nrDSPs);
+			REPORT( INFO, "Estimated DSPs = " <<nrDSPs);
 
 			/* the maximum number of DSPs that can be chained on Virtex devices.
 			The number is related with the number of register levels inside the
@@ -112,7 +112,7 @@ namespace flopoco{
 			it may be placed from the already placed blocks */
 			float tempDist =	0;
 			maxDist2Move = (int) ( sqrt(tempDist) );
-			REPORT( LIST, "maxDist2Move = "<<maxDist2Move);
+			REPORT( INFO, "maxDist2Move = "<<maxDist2Move);
 		
 			float const scale=100.0;
 			costDSP = ( (1.0+scale) - scale * ratio );
@@ -138,11 +138,11 @@ namespace flopoco{
 			
 			
 		
-			cout<<"Estimated DSPs:= "<<nrDSPs <<endl;
+			REPORT(INFO, "Estimated DSPs:= "<<nrDSPs);
 			target->getDSPWidths(x,y);
-			cout<<"Width of DSP is := "<<x<<" Height of DSP is:="<<y<<endl;
-			cout<<"Extra width:= "<<getExtraWidth()<<" \nExtra height:="<<getExtraHeight()<<endl;
-			cout<<"maxDist2Move:= "<<maxDist2Move<<endl;
+			REPORT(INFO,"Width of DSP is := "<<x<<" Height of DSP is:="<<y);
+			REPORT(INFO,"Extra width:= "<<getExtraWidth()<<" \nExtra height:="<<getExtraHeight());
+			REPORT(INFO,"maxDist2Move:= "<<maxDist2Move);
 	
 		
 			generateVHDLCode4CompleteTilling();
@@ -562,8 +562,8 @@ namespace flopoco{
 		bindDSPs(bestConfig);      
 		int nrDSPOperands = multiplicationInDSPs(bestConfig);
 		int nrSliceOperands = multiplicationInSlices(bestConfig);
-		cout << "nr of DSP operands="<<nrDSPOperands<<endl;
-		cout << "nr of softDSP operands="<<nrSliceOperands<<endl;
+		REPORT(DETAILED, "nr of DSP operands="<<nrDSPOperands);
+		REPORT(DETAILED, "nr of softDSP operands="<<nrSliceOperands);
 		map<string, double> inMap;
 		
 		for (int j=0; j<nrDSPOperands; j++)
@@ -604,7 +604,7 @@ namespace flopoco{
 				{
 					ostringstream concatPartialProd;
 					concatPartialProd  << "addOpSlice" << j;
-					cout << "@ In Port Map Current Cycle is " << getCurrentCycle() << endl;
+					REPORT(DETAILED, "@ In Port Map Current Cycle is " << getCurrentCycle());
 					inPortMap (add, join("X",j+nrDSPOperands) , concatPartialProd.str());
 				}	
 
@@ -675,7 +675,7 @@ namespace flopoco{
 			
 		//this will initialize the bestConfig with the first configuration
 		bestCost = FLT_MAX ;
-		cout<<"Max score is"<<bestCost<<endl;
+		REPORT(INFO, "Max score is"<<bestCost);
 		//bestConfig = (DSP**)malloc(nrDSPs * sizeof(DSP*));
 		bestConfig = new DSP*[nrDSPs];
 		for(int i=0;i<nrDSPs;i++)
@@ -696,7 +696,7 @@ namespace flopoco{
 		
 		
 		display(bestConfig);
-		cout<<"Best cost is "<<bestCost<<endl;
+		REPORT(INFO, "Best cost is "<<bestCost);
 		
 		
 		/*
@@ -764,9 +764,9 @@ namespace flopoco{
 			tempc[0]=bestConfig[0]=globalConfig[0]=NULL;
 			
 			bestCost = FLT_MAX ;
-			cout<<"Max score is"<<bestCost<<endl;
+			REPORT(INFO, "Max score is "<<bestCost);
 			compareCost();
-			cout<<"New best score is"<<bestCost<<endl;
+			REPORT(INFO, "New best score is "<<bestCost);
 			display(bestConfig);
 		}
 	
@@ -910,7 +910,7 @@ namespace flopoco{
 							{
 					//			cout<<"Pas 1_2 "<<i<<endl;
 								if(i==0){
-									cout<<"DSP #1 has made another step!"<<endl;
+									REPORT(DETAILED, "DSP #1 has made another step!");
 									//~ display(globalConfig);
 									//~ cout<<endl<<endl<<endl;
 				
@@ -1145,8 +1145,8 @@ namespace flopoco{
 		//~ m=wInY + 2* getExtraHeight();
 		n = vn;
 		m= vm;
-		cout<<"real width"<<vn - 2* getExtraWidth()<<"real height"<<vm - 2* getExtraHeight()<<endl;
-		cout<<"width "<<n<<"height "<<m<<endl;
+		REPORT(INFO, "real width"<<vn - 2* getExtraWidth()<<"real height"<<vm - 2* getExtraHeight());
+		REPORT(INFO, "width "<<n<<"height "<<m);
 		mat = new int*[m];
 	
 		int nmew = vnme;
@@ -1166,7 +1166,7 @@ namespace flopoco{
 			
 				config[i]->getTopRightCorner(c1X,c1Y);
 				config[i]->getBottomLeftCorner(c2X,c2Y);
-				cout<<"DSP #"<<i+1<<"has toprigh ("<<c1X<<","<<c1Y<<") and botomleft ("<<c2X<<","<<c2Y<<")"<<endl;
+				REPORT(INFO, "DSP #"<<i+1<<"has toprigh ("<<c1X<<","<<c1Y<<") and botomleft ("<<c2X<<","<<c2Y<<")");
 				fig << " 2 2 0 1 0 7 50 -1 -1 0.000 0 0 -1 0 0 5 " << endl;
 				fig << "	  " << (-c2X+getExtraWidth()-1)*45 << " " << (c1Y-getExtraHeight())*45 
 				         << " " << (-c1X+getExtraWidth())*45 << " " << (c1Y-getExtraHeight())*45 
@@ -1296,7 +1296,7 @@ namespace flopoco{
 						
 								if( j>= nmew || jj< ew || i >= mmeh || ii < eh)
 									{
-										cout<<"Partition number "<<count<<" is totally out of the real multiplication bounds. ("<<j<<" , "<<i<<" , "<<jj<<" , "<<ii<<")"<<endl;
+										REPORT(INFO,"Partition number "<<count<<" is totally out of the real multiplication bounds. ("<<j<<" , "<<i<<" , "<<jj<<" , "<<ii<<")");
 									}
 								else
 									{
@@ -1317,10 +1317,10 @@ namespace flopoco{
 											nii = m -getExtraHeight() -1;
 										else
 											nii = ii;
-										cout<<"Partition number "<<count<<" with bounds. ("<<j<<" , "<<i<<" , "<<jj<<" , "<<ii<<") has now bounds ("<<nj<<" , "<<ni<<" , "<<njj<<" , "<<nii<<")"<<endl;
+										REPORT(INFO, "Partition number "<<count<<" with bounds. ("<<j<<" , "<<i<<" , "<<jj<<" , "<<ii<<") has now bounds ("<<nj<<" , "<<ni<<" , "<<njj<<" , "<<nii<<")");
 									}
 						
-								cout<<j<<" "<<i<<" "<<jj<<" "<<ii<<endl;
+								REPORT(INFO,j<<" "<<i<<" "<<jj<<" "<<ii);
 								fillMatrix(mat,n,m,j,i,jj,ii,count);
 								count++;
 						
@@ -1333,30 +1333,31 @@ namespace flopoco{
 		
 		char af;
 		int afi;
-		for(int i=0;i<m;i++)
+		if (verbose>1){
+			for(int i=0;i<m;i++)
 			{
 				if(i==getExtraHeight())
 					cout<<endl;
-			
-				for(int j=0;j<n;j++)
-					{
-						if(j==getExtraWidth())
-							cout<<" ";
-						if(j==n-getExtraWidth())
-							cout<<" ";
 				
-						if(mat[i][j]<10)
-							afi=mat[i][j];
-						else
-							afi=mat[i][j]+7;
-						af=(int)afi+48;
-						cout<<af;
-					}
+				for(int j=0;j<n;j++)
+				{
+					if(j==getExtraWidth())
+						cout<<" ";
+					if(j==n-getExtraWidth())
+						cout<<" ";
+					
+					if(mat[i][j]<10)
+						afi=mat[i][j];
+					else
+						afi=mat[i][j]+7;
+					af=(int)afi+48;
+					cout<<af;
+				}
 				cout<<endl;
 				if(i==m-getExtraHeight()-1)
 					cout<<endl;
 			}
-		
+		}
 		for(int ii=0;ii<m;ii++)
 		   delete [] (mat[ii]);
 	
@@ -1875,7 +1876,7 @@ namespace flopoco{
 		
 		
 				bestCost=temp;
-				cout<<"New best score is: " << bestCost << endl;
+				REPORT(INFO, "New best score is: " << bestCost);
 				//memcpy(bestConfig,tempc,sizeof(DSP*) *nrDSPs );	
 				for(int ii=0;ii<nrDSPs;ii++)
 					memcpy(bestConfig[ii],globalConfig[ii],sizeof(DSP) );
@@ -1890,7 +1891,7 @@ namespace flopoco{
 					//display(bestConfig);
 					if(compareOccupation(tempc)==true)
 						{
-							cout<<"Interchange for equal cost. Now best has cost "<<temp<<endl;
+							REPORT(INFO, "Interchange for equal cost. Now best has cost "<<temp);
 							
 							bestCost=temp;
 			
@@ -3119,7 +3120,7 @@ namespace flopoco{
 									connected++;
 									d = d->getShiftOut();
 								}
-							cout << "CONNECTED ================ " <<connected << endl;
+							REPORT(DETAILED, "CONNECTED ================ " <<connected);
 							d = tempc[i];
 							
 							
@@ -3488,7 +3489,7 @@ namespace flopoco{
 				
 								if( j >= n-extW || jj < extW || i >= m-extH || ii < extH)
 									{
-										cout<<"Partition number "<<count<<" is totally out of the real multiplication bounds. ("<<j<<" , "<<i<<" , "<<jj<<" , "<<ii<<")"<<endl;
+										REPORT(DETAILED, "Partition number "<<count<<" is totally out of the real multiplication bounds. ("<<j<<" , "<<i<<" , "<<jj<<" , "<<ii<<")");
 									}
 								else
 									{
@@ -3532,8 +3533,8 @@ namespace flopoco{
 										syncCycleFromSignal(join("result", partitions));
 										
 										vhdl << tab << declare(join("addOpSlice", partitions), wInX+wInY) << " <= " << zg(wInX+wInY-(wInX-nj-1+extW+nii-extH)-2, 0) << " & " << join("result", partitions) << " & " << zg(wInX-njj-1+extW+ni-extH, 0) << ";" << endl;
-										cout<<"Partition number "<<count<<" with bounds. ("<<j<<" , "<<i<<" , "<<jj<<" , "<<ii<<") has now bounds ("<<nj<<" , "<<ni<<" , "<<njj<<" , "<<nii<<")"<<endl;
-										cout<<"partitions " << partitions << " @ cycle " << getCurrentCycle() << endl;
+										REPORT(DETAILED, "Partition number "<<count<<" with bounds. ("<<j<<" , "<<i<<" , "<<jj<<" , "<<ii<<") has now bounds ("<<nj<<" , "<<ni<<" , "<<njj<<" , "<<nii<<")");
+										REPORT(DETAILED, "partitions " << partitions << " @ cycle " << getCurrentCycle());
 										
 										partitions++;
 									}
@@ -3633,7 +3634,7 @@ namespace flopoco{
 			for(i=0; i<nrDSPs; i++){
 				configuration[i]->getTopRightCorner(xT,yT);
 				configuration[i]->getBottomLeftCorner(xB,yB);
-				cout << "HARD DSP Top right = " << xT << ", " << yT << " and bottom left = " << xB << ", " <<yB << endl;
+				REPORT(DETAILED, "HARD DSP Top right = " << xT << ", " << yT << " and bottom left = " << xB << ", " <<yB);
 				fig << " 2 2 0 1 0 7 50 -1 -1 0.000 0 0 -1 0 0 5 " << endl;
 				fig << "	  " << (-xB+getExtraWidth()-1)*45 << " " << (yT-getExtraHeight())*45 
 				         << " " << (-xT+getExtraWidth())*45 << " " << (yT-getExtraHeight())*45 
@@ -3643,7 +3644,7 @@ namespace flopoco{
 				
 				int dpx = (-(xT+xB)/2+getExtraWidth()-1)*45;
 				int dpy = ((yB+yT)/2-getExtraHeight())*45;         
-				cout << "x="<<dpx<<" y="<<dpy<<endl;
+				REPORT(DETAILED, "x="<<dpx<<" y="<<dpy);
 				fig << " 4 1 0 50 -1 0 12 0.0000 4 195 630 "<<dpx<<" "<<dpy<<" DSP"<<i<<"\\001" << endl;
 
 				//annotations
@@ -3669,38 +3670,37 @@ namespace flopoco{
 			softDSPs[k]->trim(vnme, vmme);
 			softDSPs[k]->getTopRightCorner(xT,yT);
 			softDSPs[k]->getBottomLeftCorner(xB,yB);
-
 			
-			cout << "SOFT DSP Top right = " << xT << ", " << yT << " and bottom left = " << xB << ", " <<yB << endl;
-				fig << " 2 2 0 1 0 7 50 -1 19 0.000 0 0 -1 0 0 5 " << endl;
-				fig << "	  " << (-xB+getExtraWidth()-1)*45 << " " << (yT-getExtraHeight())*45 
-				         << " " << (-xT+getExtraWidth())*45 << " " << (yT-getExtraHeight())*45 
-				         << " " << (-xT+getExtraWidth())*45 << " " << (yB-getExtraHeight()+1)*45 
-				         << " " << (-xB+getExtraWidth()-1)*45 << " " << (yB-getExtraHeight()+1)*45 
-				         << " " << (-xB+getExtraWidth()-1)*45 << " " << (yT-getExtraHeight())*45 << endl;
-				int dpx = (-(xT+xB)/2+getExtraWidth()-1)*45;
-				int dpy = ((yB+yT)/2-getExtraHeight())*45;         
-				cout << "x="<<dpx<<" y="<<dpy<<endl;
-				fig << " 4 1 0 50 -1 0 12 0.0000 4 195 630 "<<dpx<<" "<<dpy<<" M"<<k<<"\\001" << endl;
-				
-				xT++;
-				yT++;
-				xB++;
-				yB++;
-				int tmp;
-				tmp=xT;
-				xT=xB;
-				xB=tmp;
-				tmp=yT;
-				yT=yB;
-				yB=tmp;
-				
-				//annotations
-				fig << " 4 1 0 50 -1 0 7 0.0000 4 195 630 "<<(-xB+getExtraWidth())*45<<" "<<-45<<" "<<xB-getExtraWidth()<<"\\001" << endl;
-				fig << " 4 1 0 50 -1 0 7 0.0000 4 195 630 "<<(-xT+getExtraWidth()-1)*45<<" "<<-45<<" "<<xT-getExtraWidth()<<"\\001" << endl;
-				fig << " 4 0 0 50 -1 0 7 0.0000 4 195 630 "<<45<<" "<<(yT-getExtraHeight()+2)*45<<" "<<yT-getExtraHeight()<<"\\001" << endl;
-				fig << " 4 0 0 50 -1 0 7 0.0000 4 195 630 "<<45<<" "<<(yB-getExtraHeight()+1)*45<<" "<<yB-getExtraHeight()<<"\\001" << endl;
-
+			REPORT(DETAILED,  "SOFT DSP Top right = " << xT << ", " << yT << " and bottom left = " << xB << ", " <<yB);
+			fig << " 2 2 0 1 0 7 50 -1 19 0.000 0 0 -1 0 0 5 " << endl;
+			fig << "	  " << (-xB+getExtraWidth()-1)*45 << " " << (yT-getExtraHeight())*45 
+			<< " " << (-xT+getExtraWidth())*45 << " " << (yT-getExtraHeight())*45 
+			<< " " << (-xT+getExtraWidth())*45 << " " << (yB-getExtraHeight()+1)*45 
+			<< " " << (-xB+getExtraWidth()-1)*45 << " " << (yB-getExtraHeight()+1)*45 
+			<< " " << (-xB+getExtraWidth()-1)*45 << " " << (yT-getExtraHeight())*45 << endl;
+			int dpx = (-(xT+xB)/2+getExtraWidth()-1)*45;
+			int dpy = ((yB+yT)/2-getExtraHeight())*45;         
+			REPORT(DETAILED,  "x="<<dpx<<" y="<<dpy);
+			fig << " 4 1 0 50 -1 0 12 0.0000 4 195 630 "<<dpx<<" "<<dpy<<" M"<<k<<"\\001" << endl;
+			
+			xT++;
+			yT++;
+			xB++;
+			yB++;
+			int tmp;
+			tmp=xT;
+			xT=xB;
+			xB=tmp;
+			tmp=yT;
+			yT=yB;
+			yB=tmp;
+			
+			//annotations
+			fig << " 4 1 0 50 -1 0 7 0.0000 4 195 630 "<<(-xB+getExtraWidth())*45<<" "<<-45<<" "<<xB-getExtraWidth()<<"\\001" << endl;
+			fig << " 4 1 0 50 -1 0 7 0.0000 4 195 630 "<<(-xT+getExtraWidth()-1)*45<<" "<<-45<<" "<<xT-getExtraWidth()<<"\\001" << endl;
+			fig << " 4 0 0 50 -1 0 7 0.0000 4 195 630 "<<45<<" "<<(yT-getExtraHeight()+2)*45<<" "<<yT-getExtraHeight()<<"\\001" << endl;
+			fig << " 4 0 0 50 -1 0 7 0.0000 4 195 630 "<<45<<" "<<(yB-getExtraHeight()+1)*45<<" "<<yB-getExtraHeight()<<"\\001" << endl;
+			
 		}
 		
 		fig << "		2 2 1 1 0 7 50 -1 -1 4.000 0 0 -1 0 0 5" << endl;
@@ -3719,7 +3719,7 @@ namespace flopoco{
 		int hh,ww,aa;
 		getTarget()->getDSPWidths(hh,ww);
 		aa = hh * ww;
-		cout << " DSP area is: " << aa << endl;
+		REPORT(INFO, " DSP area is: " << aa ); 
 		
 		
 		if (configuration!=NULL){
@@ -3743,18 +3743,18 @@ namespace flopoco{
 				
 				if ( float((xB-xT+1)*(yB-yT+1))< float(aa)) {
 					if ( float((xB-xT+1)*(yB-yT+1))/float(aa) < 0.5 ){
-						cout << "HARD DSP is SEVERELY under-utilized, just " << float((xB-xT+1)*(yB-yT+1))/float(aa) << "%" << endl;
+						REPORT(INFO, "HARD DSP is SEVERELY under-utilized, just " << float((xB-xT+1)*(yB-yT+1))/float(aa) << "%");
 						sunderutilized++;
 					}else{
-						cout << "HARD DSP utilized " << float((xB-xT+1)*(yB-yT+1))/float(aa) << "%" << endl;
+						REPORT(INFO, "HARD DSP utilized " << float((xB-xT+1)*(yB-yT+1))/float(aa) << "%");
 						underutilized++;
 					}
 				}
 			}
-			cout << "********************************************************************************"<<endl;
-			cout << "*      underutilized = " << underutilized  + sunderutilized << endl;
-			cout << "*      suggested ratio = " << (float(nrDSPs)*ratio - float(sunderutilized)) / float(nrDSPs) << endl;
-			cout << "********************************************************************************"<<endl;
+			REPORT(INFO, "********************************************************************************");
+			REPORT(INFO, "*      underutilized = " << underutilized  + sunderutilized);
+			REPORT(INFO, "*      suggested ratio = " << (float(nrDSPs)*ratio - float(sunderutilized)) / float(nrDSPs));
+			REPORT(INFO, "********************************************************************************");
 		}
 		
 		

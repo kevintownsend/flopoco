@@ -72,7 +72,7 @@ namespace flopoco{
 		vhdl << tab << declare("sigX",1 + wFX_) << " <= \"1\" & X" << range(wFX_-1,0) << ";" << endl;
 		vhdl << tab << declare("sigY",1 + wFY_) << " <= \"1\" & Y" << range(wFY_-1,0) << ";" << endl;
 
-		intmult_ = new IntTilingMult(target, wFX_+1, wFY_+1, ratio, maxTimeInMinutes);
+		intmult_ = new IntTilingMult(target, wFX_+1, wFY_+1, ratio, maxTimeInMinutes,false);
 		oplist.push_back(intmult_);
 
 		inPortMap( intmult_, "X", "sigX");
