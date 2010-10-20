@@ -82,13 +82,13 @@ FPAdderSinglePath::FPAdderSinglePath(Target* target, int wEX, int wFX, int wEY, 
 		
 		setCriticalPath(getMaxInputDelays(inputDelays));
 		manageCriticalPath(target->localWireDelay() + target->adderDelay(wE)); //comparator delay implemented for now as adder
-		vhdl<< tab << declare("swap")       << " <= '1' when excExpFracY > excExpFracX else '0';"<<endl;
+		vhdl<< tab << declare("noswap")       << " <= '1' when excExpFracX >= excExpFracY else '0';"<<endl;
 		double cpswap = getCriticalPath();
 		
 		manageCriticalPath(target->localWireDelay() + target->lutDelay());
 		// depending on the value of swap, assign the corresponding values to the newX and newY signals 
-		vhdl<<tab<<declare("newX",wE+wF+3) << " <= Y     when swap = '1' else X;"<<endl;
-		vhdl<<tab<<declare("newY",wE+wF+3) << " <= X     when swap = '1' else Y;"<<endl;
+		vhdl<<tab<<declare("newX",wE+wF+3) << " <= X     when noswap = '1' else Y;"<<endl;
+		vhdl<<tab<<declare("newY",wE+wF+3) << " <= Y     when noswap = '1' else X;"<<endl;
 		//break down the signals
 		vhdl << tab << declare("expX",wE) << "<= newX"<<range(wE+wF-1,wF)<<";"<<endl;
 		vhdl << tab << declare("excX",2)  << "<= newX"<<range(wE+wF+2,wE+wF+1)<<";"<<endl;
@@ -115,15 +115,15 @@ FPAdderSinglePath::FPAdderSinglePath(Target* target, int wEX, int wFX, int wEY, 
 		vhdl <<tab<<declare("signR") << "<= '0' when (sdsXsYExnXY=\"100000\" or sdsXsYExnXY=\"010000\") else signX;"<<endl;
 		
 		
-		setCycleFromSignal("swap");;
-		if ( getCycleFromSignal("eYmeX") == getCycleFromSignal("swap") )
+		setCycleFromSignal("noswap");;
+		if ( getCycleFromSignal("eYmeX") == getCycleFromSignal("noswap") )
 			setCriticalPath(max(cpeXmeY, cpswap));
 		else{
 			if (syncCycleFromSignal("eYmeX"))
 				setCriticalPath(cpeXmeY);
 		}
 		manageCriticalPath(target->localWireDelay() + target->lutDelay());//multiplexer
-		vhdl<<tab<<declare("expDiff",wE+1) << " <= eXmeY when swap = '0' else eYmeX;"<<endl; 
+		vhdl<<tab<<declare("expDiff",wE+1) << " <= eXmeY when noswap = '1' else eYmeX;"<<endl; 
 		manageCriticalPath(target->localWireDelay() + target->comparatorConstDelay(wE+1));
 		vhdl<<tab<<declare("shiftedOut") << " <= '1' when (expDiff >= "<<wF+2<<") else '0';"<<endl;
 		//shiftVal=the number of positions that fracY must be shifted to the right				
@@ -159,8 +159,9 @@ FPAdderSinglePath::FPAdderSinglePath(Target* target, int wEX, int wFX, int wEY, 
 		vhdl << instance(rightShifter, "RightShifterComponent");
 		syncCycleFromSignal("shiftedFracY");
 		setCriticalPath(rightShifter->getOutputDelay("R"));
+		nextCycle();         ////
+		setCriticalPath(0.0);////
 		double cpshiftedFracY = getCriticalPath();
-
 		//sticky compuation in parallel with addition, no need for manageCriticalPath
 		//FIXME: compute inside shifter;
 		//compute sticky bit as the or of the shifted out bits during the alignment //
@@ -169,6 +170,8 @@ FPAdderSinglePath::FPAdderSinglePath(Target* target, int wEX, int wFX, int wEY, 
 		double cpsticky = getCriticalPath();
 		
 		setCycleFromSignal("shiftedFracY");
+		nextCycle();         ////
+		setCriticalPath(0.0);////
 		setCriticalPath(cpshiftedFracY);
 		//pad fraction of Y [overflow][shifted frac having inplicit 1][guard][round]
 		vhdl<<tab<< declare("fracYfar", wF+4)      << " <= \"0\" & shiftedFracY("<<2*wF+3<<" downto "<<wF+1<<");"<<endl;	
@@ -176,6 +179,13 @@ FPAdderSinglePath::FPAdderSinglePath(Target* target, int wEX, int wFX, int wEY, 
 		vhdl<<tab<< declare("fracYfarXorOp", wF+4) << " <= fracYfar xor ("<<wF+3<<" downto 0 => EffSub);"<<endl;
 		//pad fraction of X [overflow][inplicit 1][fracX][guard bits]				
 		vhdl<<tab<< declare("fracXfar", wF+4)      << " <= \"01\" & (newX("<<wF-1<<" downto 0)) & \"00\";"<<endl;
+		
+		if (getCycleFromSignal("sticky")==getCycleFromSignal("fracXfar"))
+			setCriticalPath( max (cpsticky, getCriticalPath()) );
+		else
+			if (syncCycleFromSignal("sticky"))
+				setCriticalPath(cpsticky);
+		manageCriticalPath(target->localWireDelay()+ target->lutDelay());	
 		vhdl<<tab<< declare("cInAddFar")           << " <= EffSub and not sticky;"<< endl;//TODO understand why
 		
 		//result is always positive.
@@ -199,6 +209,10 @@ FPAdderSinglePath::FPAdderSinglePath(Target* target, int wEX, int wFX, int wEY, 
 		//shift in place
 		vhdl << tab << declare("fracGRS",wF+5) << "<= fracAddResult & sticky; "<<endl;
 	
+		//incremented exponent. 
+		vhdl << tab << declare("extendedExpInc",wE+2) << "<= (\"00\" & expX) + '1';"<<endl;
+		
+		
 		lzocs = new LZOCShifterSticky(target, wF+5, wF+5, intlog2(wF+5), false, 0, inDelayMap("I",getCriticalPath()));
 		oplist.push_back(lzocs);
 		inPortMap  (lzocs, "I", "fracGRS");
@@ -217,8 +231,9 @@ FPAdderSinglePath::FPAdderSinglePath(Target* target, int wEX, int wFX, int wEY, 
 /*		manageCriticalPath(target->localWireDelay() + target->adderDelay(wE+2));*/
 // 	vhdl << tab << declare("expPart",wE+2) << " <= (" << zg(wE+2-lzocs->getCountWidth(),0) <<" & nZerosNew) - 1;"<<endl;
 		//update exponent
+		
 		manageCriticalPath(target->localWireDelay() + target->adderDelay(wE+2));
-		vhdl << tab << declare("updatedExp",wE+2) << " <= (\"00\" & expX) - (" << zg(wE+2-lzocs->getCountWidth(),0) <<" & nZerosNew) + '1';"<<endl;
+		vhdl << tab << declare("updatedExp",wE+2) << " <= extendedExpInc - (" << zg(wE+2-lzocs->getCountWidth(),0) <<" & nZerosNew);"<<endl;
 		vhdl << tab << declare("eqdiffsign")<< " <= '1' when nZerosNew="<<og(lzocs->getCountWidth(),0)<<" else '0';"<<endl; 
 		
 		

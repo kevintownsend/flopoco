@@ -12,7 +12,7 @@ namespace flopoco{
 
 	extern map<string, double> emptyDelayMap;
 	/** 
-	 * A leading zero/one counter + shifter + sticky bit computer for FloPoCo
+	 * An integer comparator for FloPoCo
 	 */ 
 	class IntComparator : public Operator
 	{
