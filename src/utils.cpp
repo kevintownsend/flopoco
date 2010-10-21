@@ -523,8 +523,14 @@ namespace flopoco{
 		o << id << n << id2 << n2;
 		return o.str();
 	}
-
-
+	
+	string join( std::string id, int n, std::string id2, int n2, std::string id3)
+	{
+		ostringstream o;
+		o << id << n << id2 << n2 << id3;
+		return o.str();
+	}
+	
 	string join( std::string id, string n)
 	{
 		ostringstream o;

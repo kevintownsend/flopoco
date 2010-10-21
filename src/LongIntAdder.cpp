@@ -4,7 +4,7 @@
  * It may be pipelined to arbitrary frequency.
  * Also useful to derive the carry-propagate delays for the subclasses of Target
  *
- * Authors : Florent de Dinechin, Bogdan Pasca
+ * Authors : Bogdan Pasca
  *
  * This file is part of the FloPoCo project developed by the Arenaire
  * team at Ecole Normale Superieure de Lyon
@@ -36,7 +36,7 @@
 #include "Operator.hpp"
 #include "LongIntAdder.hpp"
 #include "IntAdder.hpp"
-#define TEST 1
+// #define XILINX_OPTIMIZATION 0
 
 
 using namespace std;
@@ -178,74 +178,40 @@ extern vector<Operator*> oplist;
 			
 				int l=1;
 				for (int j=0; j<nbOfChunks; j++){
-					ostringstream dnameZero, dnameOne, uname1, uname2, dnameCin;
-					dnameZero << "sX"<<j<<"_0_l"<<l<<"_Zero";
-					dnameOne  << "sX"<<j<<"_0_l"<<l<<"_One";
-					dnameCin  << "sX"<<j<<"_0_l"<<l<<"_Cin";
-				
-					uname1 << "sX"<<j<<"_0_l"<<l-1;
-					uname2 << "sX"<<j<<"_1_l"<<l-1;
-					
+
 #ifdef XILINX_OPTIMIZATION
-	// the xst synthetsies x+y and x+y+1 slower if this optimization is not used				
-					bool pipe = target->isPipelined();
+					{ //code for adder instantiation to stop ise from "optimizing"
+					int tp = target->isPipelined();
 					target->setNotPipelined();
-
 					IntAdder *adder = new IntAdder(target, cSize[j]+1);
-					ostringstream a;
-					a.str("");
-
-					vhdl << tab << declare( uname1.str()+"ext", cSize[j]+1 ) << " <= \"0\" & "  <<  use(uname1.str()) << range(cSize[j]-1,0) << ";" << endl;
-					vhdl << tab << declare( uname2.str()+"ext", cSize[j]+1 ) << " <= \"0\" & "  <<  use(uname2.str()) << range(cSize[j]-1,0) << ";" << endl;
-			
+					oplist.push_back(adder);
+					if (tp) target->setPipelined();
+				
 					if (j>0){ //for all chunks greater than zero we perform this additions
-							bool found = false;
-							for(unsigned k=0; k<oplist.size(); k++) {
-								if  ( (oplist[k]->getName()).compare(adder->getName()) ==0 ){
-									REPORT(3, "found in opList ... not adding");
-									found = true;
-								}
-							}
-						if (found == false)						{
-							REPORT(3, "Not found in list, adding " << adder->getName());
-							oplist.push_back(adder);
-						}
-				
-						inPortMapCst(adder, "X", uname1.str()+"ext" );
-						inPortMapCst(adder, "Y", uname2.str()+"ext" );
+						inPortMap(adder, "X", join("sX",j,"_0_l",l-1) );
+						inPortMap(adder, "Y", join("sX",j,"_1_l",l-1) );
 						inPortMapCst(adder, "Cin", "'0'");
-						outPortMap(adder, "R", dnameZero.str());
-						a<< "Adder" << cSize[j]+1 << "Zero" << j;
-						vhdl << instance( adder, a.str() );
-				
-//						if (j<nbOfChunks-1){
-					
-							inPortMapCst(adder, "X", uname1.str()+"ext" );
-							inPortMapCst(adder, "Y", uname2.str()+"ext" );
-							inPortMapCst(adder, "Cin", "'1'");
-							outPortMap(adder, "R", dnameOne.str());
-							a.str("");
-							a<< "Adder" << cSize[j]+1 << "One" << j;
-							vhdl << instance( adder, a.str() );
-//						}
-					if (pipe)
-						target->setPipelined();
-					else
-						target->setNotPipelined();
+						outPortMap(adder, "R", join("sX",j,"_0_l",l,"_Zero") );
+						vhdl << instance(adder, join("adderZ",j) );
+
+						inPortMapCst(adder, "Cin", "'1'");
+						outPortMap(adder, "R", join("sX",j,"_0_l",l,"_One"));
+						vhdl << instance( adder, join("adderO",j) );
+						
 					}else{
 						vhdl << tab << "-- the carry resulting from the addition of the chunk + Cin is obtained directly" << endl;
-						vhdl << tab << declare(dnameCin.str(),cSize[j]+1) << "  <= (\"0\" & "<< use(uname1.str())<<range(cSize[j]-1,0) <<") +  (\"0\" & "<< use(uname2.str())<<range(cSize[j]-1,0)<<") + scIn;"<<endl;
+						vhdl << tab << declare(join("sX",j,"_0_l",l,"_Cin"),cSize[j]+1) << " <= " << join("sX",j,"_0_l",l-1)<<" + "<<join("sX",j,"_1_l",l-1)<<" + scIn;"<<endl;
 					}
+				}
 #else					
 					if (j>0){ //for all chunks greater than zero we perform this additions
-						vhdl << tab << declare(dnameZero.str(),cSize[j]+1) << " <= (\"0\" & "<< use(uname1.str())<<range(cSize[j]-1,0) <<") +  (\"0\" & "<< use(uname2.str())<<range(cSize[j]-1,0)<<");"<<endl;
-						if (j<nbOfChunks-1)
-						vhdl << tab << declare(dnameOne.str(),cSize[j]+1) << "  <= (\"0\" & "<< use(uname1.str())<<range(cSize[j]-1,0) <<") +  (\"0\" & "<< use(uname2.str())<<range(cSize[j]-1,0)<<") + '1';"<<endl;
+						vhdl<<tab<<declare(join("sX",j,"_0_l",l,"_Zero"),cSize[j]+1)<< " <= "<< join("sX",j,"_0_l",l-1)<< " + "<<join("sX",j,"_1_l",l-1)<<";"<<endl;
+						vhdl<<tab<<declare(join("sX",j,"_0_l",l,"_One"),cSize[j]+1)<< "  <= "<< join("sX",j,"_0_l",l-1)<< " + "<<join("sX",j,"_1_l",l-1)<<" + '1';"<<endl;
 					}else{
-						vhdl << tab << "-- the carry resulting from the addition of the chunk + Cin is obtained directly" << endl;
-						vhdl << tab << declare(dnameCin.str(),cSize[j]+1) << "  <= (\"0\" & "<< use(uname1.str())<<range(cSize[j]-1,0) <<") +  (\"0\" & "<< use(uname2.str())<<range(cSize[j]-1,0)<<") + scIn;"<<endl;
+						vhdl<<tab<< "-- the carry resulting from the addition of the chunk + Cin is obtained directly" << endl;
+						vhdl<<tab<<declare(join("sX",j,"_0_l",l,"_Cin"),cSize[j]+1)<< "  <= " << join("sX",j,"_0_l",l-1)<<" + "<<join("sX",j,"_1_l",l-1)<<" + scIn;"<<endl;
 					}
-#endif
+#endif		
 				}
 			
 				vhdl << tab <<"--form the two carry string"<<endl;
@@ -269,7 +235,7 @@ extern vector<Operator*> oplist;
 
 
 //				vhdl << tab << declare("manipulatedSum",nbOfChunks-2) << "<= carryStringOne AND ( (not(rawCarrySum) AND not(carryStringZero)) OR carryStringZero);" << endl; //strike of genious
-				vhdl << tab << declare("manipulatedSum",nbOfChunks-2) << "<= (not(rawCarrySum) AND carryStringZero) OR carryStringOne;" << endl; //strike of genious
+				vhdl << tab << declare("manipulatedSum",nbOfChunks-2) << "<= (not(rawCarrySum) AND carryStringOne) OR carryStringZero;" << endl; //strike of genious
 
 //				if (invalid)
 //					nextCycle();/////////////////////
