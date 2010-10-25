@@ -238,7 +238,7 @@ ADD_EXECUTABLE(flopoco
  src/IntAdder src/IntAdderClassical src/IntAdderAlternative src/IntAdderShortLatency
  src/IntNAdder
  src/IntCompressorTree
- src/LongIntAdder
+ src/LongIntAdder src/LongIntAdderCmpCmpAdd src/LongIntAdderCmpAddAdd
  src/IntComparator
  src/IntDualSub
  src/IntMultiplier

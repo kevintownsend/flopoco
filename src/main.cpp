@@ -39,6 +39,9 @@
 #include "IntNAdder.hpp"
 #include "IntCompressorTree.hpp"
 #include "LongIntAdder.hpp"
+#include "LongIntAdderCmpCmpAdd.hpp"
+#include "LongIntAdderCmpAddAdd.hpp"
+
 #include "IntDualSub.hpp"
 
 #include "IntMultiplier.hpp"
@@ -835,6 +838,30 @@ bool parseCommandLine(int argc, char* argv[]){
 				int wIn = checkStrictyPositive(argv[i++], argv[0]);
 				cerr << "> LongIntAdder, wIn="<<wIn<<endl  ;
 				op = new LongIntAdder(target,wIn);
+				addOperator(op);
+			}    
+		}
+		
+		else if(opname=="LongIntAdderCmpCmpAdd"){
+			int nargs = 1;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int wIn = checkStrictyPositive(argv[i++], argv[0]);
+				cerr << "> LongIntAdderCmpCmpAdd, wIn="<<wIn<<endl  ;
+				op = new LongIntAdderCmpCmpAdd(target,wIn);
+				addOperator(op);
+			}    
+		}
+		
+		else if(opname=="LongIntAdderCmpAddAdd"){
+			int nargs = 1;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int wIn = checkStrictyPositive(argv[i++], argv[0]);
+				cerr << "> LongIntAdderCmpAddAdd, wIn="<<wIn<<endl  ;
+				op = new LongIntAdderCmpAddAdd(target,wIn);
 				addOperator(op);
 			}    
 		}
