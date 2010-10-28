@@ -64,7 +64,71 @@ extern vector<Operator*> oplist;
 
 		if (isSequential()){
 
-			//declare the constant
+			double xordelay;
+			double dcarry;
+			if (target->getID()=="Virtex5"){
+				xordelay = 0.300e-9;
+				dcarry = 0.023e-9;
+			}else{ 
+				if (target->getID()=="Virtex6"){
+					xordelay = 0.180e-9;
+					dcarry = 0.015e-9;
+				}else{ 
+					if (target->getID()=="Virtex4"){
+						xordelay = 0.273e-9;
+						dcarry = 0.034e-9;
+					}
+				}
+			}
+			
+			double t = 1.0 / target->frequency();
+			int ll;
+			double c = (2 * target->localWireDelay()) + target->lutDelay()+ xordelay; 
+			target->suggestSlackSubaddSize(ll, wIn, (t+c)/2);
+			
+			int l1=ll-1;
+			
+			int l0;
+			target->suggestSlackSubaddSize(l0, wIn, t - target->lutDelay()+ target->adderDelay(l1));
+			
+			int maxAdderSize =  l0+l1+ll*(ll+1)/2;
+			REPORT(INFO, "ll="<<ll);
+			REPORT(INFO, "max adder size is="<< maxAdderSize);
+			
+/*			exit(-1);*/
+			
+			cSize = new int[1000];
+			
+			cSize[0]=l0;
+			cSize[1]=l1;
+			cSize[2]=ll;
+			
+			int td = wIn;
+			td -= (l0+l1+ll);
+			
+			if ((td < 0) || (wIn>maxAdderSize)){
+				cout << "OOOups ..." <<endl;
+				exit(-1);
+			}
+			
+			nbOfChunks = 3;
+			while (td>0){
+				int nc = cSize[nbOfChunks-1] -1;
+				if (nc >= td){
+					//finish
+					cSize[nbOfChunks] = td;
+					td = 0;
+					nbOfChunks++;
+				}else{
+					cSize[nbOfChunks]= cSize[nbOfChunks-1]-1;
+					td-=cSize[nbOfChunks];
+					nbOfChunks++;
+				}
+			}
+				
+				
+			
+/*			//declare the constant
 			double c = (2 * target->localWireDelay()) + target->adderDelay(1); 
 			double t = 1.0 / target->frequency();
 			//compute l
@@ -90,7 +154,7 @@ extern vector<Operator*> oplist;
 				cSize[nbOfChunks-1] = min(ll, td);
 				td -= min(ll, td);
 				ll--;
-			}
+			}*/
 					
 			//=================================================
 			//split the inputs ( this should be reusable )

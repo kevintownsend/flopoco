@@ -38,7 +38,7 @@ namespace flopoco{
 	}
 	
 	double Virtex5::comparatorDelay(int size){
-		return lut2_ + muxcyStoO_ + double((size-1)/(lutInputs_/2)+1)*muxcyCINtoO_; 
+		return lut2_ + muxcyStoO_ + double((ceil(size/2.0)-1)/(lutInputs_/2)+1)*muxcyCINtoO_; 
 	}
 	
 	double Virtex5::comparatorConstDelay(int size){
@@ -108,7 +108,9 @@ namespace flopoco{
 	
 	bool Virtex5::suggestSubaddSize(int &x, int wIn){
 		
-		int chunkSize = 2 + (int)floor( (1./frequency() - (fdCtoQ_ + slice2sliceDelay_ + lut2_ + muxcyStoO_ + xorcyCintoO_ + ffd_)) / muxcyCINtoO_ );
+//		int chunkSize = 2 + (int)floor( (1./frequency() - (fdCtoQ_ + slice2sliceDelay_ + lut2_ + muxcyStoO_ + xorcyCintoO_ + ffd_)) / muxcyCINtoO_ );
+		int chunkSize = 2 + (int)floor( (1./frequency() - (lut2_ + muxcyStoO_ + xorcyCintoO_)) / muxcyCINtoO_ );
+		
 		x = chunkSize;		
 		if (x > 0) 
 			return true;
@@ -120,7 +122,9 @@ namespace flopoco{
 	
 	bool Virtex5::suggestSlackSubaddSize(int &x, int wIn, double slack){
 		
-		int chunkSize = 2 + (int)floor( (1./frequency() - slack - (fdCtoQ_ + slice2sliceDelay_ + lut2_ + muxcyStoO_ + xorcyCintoO_ + ffd_)) / muxcyCINtoO_ );
+// 		int chunkSize = 2 + (int)floor( (1./frequency() - slack - (fdCtoQ_ + slice2sliceDelay_ + lut2_ + muxcyStoO_ + xorcyCintoO_ + ffd_)) / muxcyCINtoO_ );
+		int chunkSize = 2 + (int)floor( (1./frequency() - slack - (lut2_ + muxcyStoO_ + xorcyCintoO_)) / muxcyCINtoO_ );
+		
 		x = chunkSize;		
 		if (x > 0) 
 			return true;

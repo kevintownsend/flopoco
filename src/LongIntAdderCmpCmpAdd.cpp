@@ -66,6 +66,9 @@ extern vector<Operator*> oplist;
 			
 			//compute the maximum input delay
 			maxInputDelay = getMaxInputDelays(inputDelays);
+			
+			
+			if (false){
 			if (verbose)
 				cout << "The maximum input delay is "<<	maxInputDelay<<endl;
 			
@@ -156,6 +159,83 @@ extern vector<Operator*> oplist;
 				cerr << "ERROR: check the algo" << endl; /*should never get here ... */
 				exit(0);
 			}
+			}
+			
+			double xordelay;
+			double dcarry;
+			double muxcystoo;
+			if (target->getID()=="Virtex5"){
+				xordelay = 0.300e-9;
+				dcarry = 0.023e-9;
+				muxcystoo = 0.305e-9;
+			}else{ 
+				if (target->getID()=="Virtex6"){
+					xordelay = 0.180e-9;
+					dcarry = 0.015e-9;
+					muxcystoo =	0.219e-9;
+				}else{ 
+					if (target->getID()=="Virtex4"){
+						xordelay = 0.273e-9;
+						dcarry = 0.034e-9;
+						muxcystoo = 0.278e-9;
+					}
+				}
+			}
+			
+			double t = 1.0 / target->frequency();
+			int ll;
+			
+			ll = 2.0*(t - 3*target->lutDelay()-3*xordelay-2*muxcystoo-2*target->localWireDelay() + 2*dcarry)/(3.0*dcarry);
+
+			double l1 = ll;
+			
+			int l0;
+
+			double c = ( target-> comparatorDelay(l1) + target->lutDelay()); 
+			REPORT(INFO, "c="<<c);
+			target->suggestSlackSubaddSize(l0, wIn, t-c);
+			REPORT(INFO, "l0="<<l0);
+			
+			
+			
+			int maxAdderSize =  l0+l1+ll*(ll+1)/2;
+			REPORT(INFO, "ll="<<ll);
+			REPORT(INFO, "max adder size is="<< maxAdderSize);
+			
+			/*			exit(-1);*/
+			
+			cSize = new int[1000];
+			
+			cSize[0]=l0;
+			cSize[1]=l1;
+			cSize[2]=ll;
+			
+			int td = wIn;
+			td -= (l0+l1+ll);
+			
+			if ((td < 0) || (wIn>maxAdderSize)){
+				cout << "OOOups ..." <<endl;
+				exit(-1);
+			}
+			
+			nbOfChunks = 3;
+			while (td>0){
+				int nc = cSize[nbOfChunks-1] -1;
+				if (nc >= td){
+					//finish
+					cSize[nbOfChunks] = td;
+					td = 0;
+					nbOfChunks++;
+				}else{
+					cSize[nbOfChunks]= cSize[nbOfChunks-1]-1;
+					td-=cSize[nbOfChunks];
+					nbOfChunks++;
+				}
+			}
+			
+			for (int i=0; i<nbOfChunks; i++)
+				REPORT(INFO, "cSize["<<i<<"]="<<cSize[i]);
+			
 			
 			//=================================================
 			//split the inputs ( this should be reusable )
@@ -172,9 +252,9 @@ extern vector<Operator*> oplist;
 					for (int k=0;k<=j-1;k++)
 						low+=cSize[k];
 					if (j==0)
-						vhdl << tab << declare (name.str(),cSize[j]+1) << " <=  \"0\" & X"<<i<<range(high-1,low)<<";"<<endl;
+						vhdl << tab << declare (name.str(),cSize[j]+1,true) << " <=  \"0\" & X"<<i<<range(high-1,low)<<";"<<endl;
 					else
-						vhdl << tab << declare (name.str(),cSize[j]) << " <= X"<<i<<range(high-1,low)<<";"<<endl;
+						vhdl << tab << declare (name.str(),cSize[j],true) << " <= X"<<i<<range(high-1,low)<<";"<<endl;
 				}
 			}	
 			vhdl << tab << declare("scIn",1) << " <= Cin;"<<endl;
