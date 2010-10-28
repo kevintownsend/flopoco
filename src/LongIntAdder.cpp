@@ -36,7 +36,7 @@
 #include "Operator.hpp"
 #include "LongIntAdder.hpp"
 #include "IntAdder.hpp"
-// #define XILINX_OPTIMIZATION 0
+#define XILINX_OPTIMIZATION 0
 
 
 using namespace std;
@@ -67,96 +67,178 @@ extern vector<Operator*> oplist;
 			if (version == 1){
 				//compute the maximum input delay
 				maxInputDelay = getMaxInputDelays(inputDelays);
-				if (verbose)
-					cout << "The maximum input delay is "<<	maxInputDelay<<endl;
-
-				cSize = new int[2000];
-				REPORT(3, "-- The new version: direct mapping without 0/1 padding, IntAdders instantiated");
-				double	objectivePeriod = double(1) / target->frequency();
-				REPORT(2, "Objective period is "<< objectivePeriod <<" at an objective frequency of "<<target->frequency());
-				target->suggestSubaddSize(chunkSize_ ,wIn_);
-				REPORT(2, "The chunkSize for first two chunks is: " << chunkSize_ );
-			
-				if (2*chunkSize_ >= wIn_){
-					cerr << "ERROR FOR NOW -- instantiate int adder, dimmension too small for LongIntAdder" << endl;
-					exit(0);
-				}
-			
-				cSize[0] = chunkSize_;
-				cSize[1] = chunkSize_;
-			
-				bool finished = false; /* detect when finished the first the first
-					                   phase of the chunk selection algo */
-				int width = wIn_ - 2*chunkSize_; /* remaining size to split into chunks */
-				int propagationSize = 0; /* carry addition size */
-				int chunkIndex = 2; /* the index of the chunk for which the size is
-					                to be determined at the current step */
-				bool invalid = false; /* the result of the first phase of the algo */
-			
-				/* FIRST PHASE */
-				REPORT(3, "FIRST PHASE chunk splitting");
-				while (not (finished))	 {
-					REPORT(2, "The width is " << width);
-					propagationSize+=2;
-					double delay = objectivePeriod - target->adderDelay(width)- target->adderDelay(propagationSize); //2*target->localWireDelay()  -
-					REPORT(2, "The value of the delay at step " << chunkIndex << " is " << delay);
-					if ((delay > 0) || (width < 4)) {
-						REPORT(2, "finished -> found last chunk of size: " << width);
-						cSize[chunkIndex] = width;
-						finished = true;
-					}else{
-						REPORT(2, "Found regular chunk ");
-						int cs; 
-						double slack =  target->adderDelay(propagationSize) ; //+ 2*target->localWireDelay()
-						REPORT(2, "slack is: " << slack);
-						REPORT(2, "adderDelay of " << propagationSize << " is " << target->adderDelay(propagationSize) );
-						target->suggestSlackSubaddSize( cs, width, slack);
-						REPORT(2, "size of the regular chunk is : " << cs);
-						width = width - cs;
-						cSize[chunkIndex] = cs;
-
-						if ( (cSize[chunkIndex-1]<=2) && (cSize[chunkIndex-1]<=2) && ( invalid == false) ){
-							REPORT(1, "[WARNING] Register level inserted after carry-propagation chain");
-							invalid = true; /* invalidate the current splitting */
-						}
-						chunkIndex++; /* as this is not the last pair of chunks,
-							          pass to the next pair */
-				}
-					}
-				REPORT(2, "First phase return valid result: " << invalid);
-			
-				/* SECOND PHASE: 
-				only if first phase is cannot return a valid chunk size
-				decomposition */
-				if (invalid){
-					REPORT(2,"SECOND PHASE chunk splitting ...");
+				
+				
+				if (false){
+					if (verbose)
+						cout << "The maximum input delay is "<<	maxInputDelay<<endl;
+					
+					cSize = new int[2000];
+					REPORT(3, "-- The new version: direct mapping without 0/1 padding, IntAdders instantiated");
+					double	objectivePeriod = double(1) / target->frequency();
+					REPORT(2, "Objective period is "<< objectivePeriod <<" at an objective frequency of "<<target->frequency());
 					target->suggestSubaddSize(chunkSize_ ,wIn_);
-					lastChunkSize_ = (wIn_% chunkSize_ ==0 ? chunkSize_ :wIn_% chunkSize_);
+					REPORT(2, "The chunkSize for first two chunks is: " << chunkSize_ );
+					
+					if (2*chunkSize_ >= wIn_){
+						cerr << "ERROR FOR NOW -- instantiate int adder, dimmension too small for LongIntAdder" << endl;
+						exit(0);
+					}
+					
+					cSize[0] = chunkSize_;
+					cSize[1] = chunkSize_;
+					
+					bool finished = false; /* detect when finished the first the first
+					phase of the chunk selection algo */
+					int width = wIn_ - 2*chunkSize_; /* remaining size to split into chunks */
+					int propagationSize = 0; /* carry addition size */
+					int chunkIndex = 2; /* the index of the chunk for which the size is
+					to be determined at the current step */
+					bool invalid = false; /* the result of the first phase of the algo */
+					
+					/* FIRST PHASE */
+					REPORT(3, "FIRST PHASE chunk splitting");
+					while (not (finished))	 {
+						REPORT(2, "The width is " << width);
+						propagationSize+=2;
+						double delay = objectivePeriod - target->adderDelay(width)- target->adderDelay(propagationSize); //2*target->localWireDelay()  -
+						REPORT(2, "The value of the delay at step " << chunkIndex << " is " << delay);
+						if ((delay > 0) || (width < 4)) {
+							REPORT(2, "finished -> found last chunk of size: " << width);
+							cSize[chunkIndex] = width;
+							finished = true;
+						}else{
+							REPORT(2, "Found regular chunk ");
+							int cs; 
+							double slack =  target->adderDelay(propagationSize) ; //+ 2*target->localWireDelay()
+							REPORT(2, "slack is: " << slack);
+							REPORT(2, "adderDelay of " << propagationSize << " is " << target->adderDelay(propagationSize) );
+							target->suggestSlackSubaddSize( cs, width, slack);
+							REPORT(2, "size of the regular chunk is : " << cs);
+							width = width - cs;
+							cSize[chunkIndex] = cs;
+							
+							if ( (cSize[chunkIndex-1]<=2) && (cSize[chunkIndex-1]<=2) && ( invalid == false) ){
+								REPORT(1, "[WARNING] Register level inserted after carry-propagation chain");
+								invalid = true; /* invalidate the current splitting */
+							}
+							chunkIndex++; /* as this is not the last pair of chunks,
+							pass to the next pair */
+						}
+					}
+					REPORT(2, "First phase return valid result: " << invalid);
+					
+					/* SECOND PHASE: 
+					only if first phase is cannot return a valid chunk size
+					decomposition */
+					if (invalid){
+						REPORT(2,"SECOND PHASE chunk splitting ...");
+						target->suggestSubaddSize(chunkSize_ ,wIn_);
+						lastChunkSize_ = (wIn_% chunkSize_ ==0 ? chunkSize_ :wIn_% chunkSize_);
+						
+						/* the index of the last chunk pair */
+						chunkIndex = (wIn_% chunkSize_ ==0 ? ( wIn_ / chunkSize_) - 1 :  (wIn_-lastChunkSize_) / chunkSize_ ); 								
+						for (int i=0; i < chunkIndex; i++)
+							cSize[i] = chunkSize_;
+						/* last chunk is handled separately  */
+						cSize[chunkIndex] = lastChunkSize_;
+					}
+					
+					/* VERIFICATION PHASE: check if decomposition is correct */		
+					REPORT(2, "found " << chunkIndex + 1  << " chunks ");
+					nbOfChunks = chunkIndex + 1; 
+					int sum = 0;
+					ostringstream chunks;
+					for (int i=chunkIndex; i>=0; i--){
+						chunks << cSize[i] << " ";
+						sum+=cSize[i];
+					}
+					chunks << endl;
+					REPORT(2, "Chunks are: " << chunks.str());
+					REPORT(2, "The chunk size sum is " << sum << " and initial width was " << wIn_);
+					if (sum != wIn_){
+						cerr << "ERROR: check the algo" << endl; /*should never get here ... */
+						exit(0);
+					}
+				}
+				
+				double t = 1.0 / target->frequency();
+				int lkm1;
+				if (!target->suggestSlackSubaddSize(lkm1, wIn, target->localWireDelay() + target->lutDelay()))
+					REPORT(INFO, "Impossible 1");
+				
+				int ll;
+				double xordelay;
+				double dcarry;
+				if (target->getID()=="Virtex5"){
+					xordelay = 0.300e-9;
+					dcarry = 0.023e-9;
+				}else{ 
+					if (target->getID()=="Virtex6"){
+						xordelay = 0.180e-9;
+						dcarry = 0.015e-9;
+					}else{ 
+						if (target->getID()=="Virtex4"){
+							xordelay = 0.273e-9;
+							dcarry = 0.034e-9;
+						}
+					}
+				}	
+						
+				target->suggestSlackSubaddSize(ll, wIn, 2*target->localWireDelay() + target->lutDelay() + xordelay + target->lutDelay());
+				
+				int l0;
+				target->suggestSlackSubaddSize(l0, wIn, t - (target->lutDelay()+ dcarry) );
+				
+				REPORT(INFO, "l0="<<l0);
+				
+				
+				int maxAdderSize = lkm1 + ll*(ll+1)/2 + l0;
+				REPORT(INFO, "ll="<<ll);
+				REPORT(INFO, "max adder size is="<< maxAdderSize);
+				
+				if (wIn>maxAdderSize) 
+					REPORT(INFO, "cannot do proper chunk splitting");
+				
+				cSize = new int[100];
 
-					/* the index of the last chunk pair */
-					chunkIndex = (wIn_% chunkSize_ ==0 ? ( wIn_ / chunkSize_) - 1 :  (wIn_-lastChunkSize_) / chunkSize_ ); 								
-					for (int i=0; i < chunkIndex; i++)
-						cSize[i] = chunkSize_;
-					/* last chunk is handled separately  */
-					cSize[chunkIndex] = lastChunkSize_;
+				int td = wIn;
+				cSize[0] = l0;
+				cSize[1] = 1;
+				td -= (l0+1);
+				nbOfChunks = 2;
+				while (td > 0){
+// 					cout <<"running";
+					int nc = cSize[nbOfChunks-1] + 1;
+					int nnc = lkm1;
+					
+					REPORT(INFO,"nc="<<nc);
+					REPORT(INFO,"nnc="<<nnc);
+					
+					if (nc + nnc >= td){
+						REPORT(INFO, "Finish");
+						//we can finish it now;
+						if (nc>=td)
+							nc = td-1;
+						cSize[nbOfChunks] = nc;
+						nbOfChunks++;
+						td-=nc;
+						cSize[nbOfChunks] = td;
+						nbOfChunks++;
+						td=0;
+					}else{
+						REPORT(INFO, "run");
+						//not possible to finish chunk splitting now
+						cSize[nbOfChunks] = nc;
+						nbOfChunks++;
+						td-=nc;
+					}
 				}
-
-				/* VERIFICATION PHASE: check if decomposition is correct */		
-				REPORT(2, "found " << chunkIndex + 1  << " chunks ");
-				nbOfChunks = chunkIndex + 1; 
-				int sum = 0;
-				ostringstream chunks;
-				for (int i=chunkIndex; i>=0; i--){
-					chunks << cSize[i] << " ";
-					sum+=cSize[i];
-				}
-				chunks << endl;
-				REPORT(2, "Chunks are: " << chunks.str());
-				REPORT(2, "The chunk size sum is " << sum << " and initial width was " << wIn_);
-				if (sum != wIn_){
-					cerr << "ERROR: check the algo" << endl; /*should never get here ... */
-					exit(0);
-				}
+				
+				
+				for (int i=0; i<nbOfChunks; i++)
+					REPORT(INFO, "cSize["<<i<<"]="<<cSize[i]);
+				
 		
 				//=================================================
 				//split the inputs ( this should be reusable )
