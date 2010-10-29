@@ -38,6 +38,8 @@
 #include "IntAdder.hpp"
 #define XILINX_OPTIMIZATION 0
 
+#define MAXSIZE
+
 
 using namespace std;
 namespace flopoco{
@@ -162,12 +164,8 @@ extern vector<Operator*> oplist;
 					}
 				}
 				
-				double t = 1.0 / target->frequency();
-				int lkm1;
-				if (!target->suggestSlackSubaddSize(lkm1, wIn, target->localWireDelay() + target->lutDelay()))
-					REPORT(INFO, "Impossible 1");
 				
-				int ll;
+				int ll,l0;
 				double xordelay;
 				double dcarry;
 				if (target->getID()=="Virtex5"){
@@ -183,11 +181,21 @@ extern vector<Operator*> oplist;
 							dcarry = 0.034e-9;
 						}
 					}
-				}	
-						
+				}
+				double t = 1.0 / target->frequency();
+				int lkm1;
+				
+#ifdef MAXSIZE
+for (int aa=25; aa<=400; aa+=25){
+	target->setFrequency(double(aa)*1000000.0);
+
+#endif
+					
+				if (!target->suggestSlackSubaddSize(lkm1, wIn, target->localWireDelay() + target->lutDelay()))
+					REPORT(INFO, "Impossible 1");
+				
 				target->suggestSlackSubaddSize(ll, wIn, 2*target->localWireDelay() + target->lutDelay() + xordelay + target->lutDelay());
 				
-				int l0;
 				target->suggestSlackSubaddSize(l0, wIn, t - (target->lutDelay()+ dcarry) );
 				
 				REPORT(INFO, "l0="<<l0);
@@ -199,7 +207,12 @@ extern vector<Operator*> oplist;
 				
 				if (wIn>maxAdderSize) 
 					REPORT(INFO, "cannot do proper chunk splitting");
-				
+
+#ifdef MAXSIZE
+cout << " f="<<aa<<" s="<<maxAdderSize<<endl;
+}
+exit(1);
+#endif					
 				cSize = new int[100];
 
 				int td = wIn;

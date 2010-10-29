@@ -38,6 +38,8 @@
 #include "IntAdder.hpp"
 // #define XILINX_OPTIMIZATION 0
 
+// #define MAXSIZE
+
 
 using namespace std;
 namespace flopoco{
@@ -182,14 +184,20 @@ extern vector<Operator*> oplist;
 				}
 			}
 			
-			double t = 1.0 / target->frequency();
 			int ll;
-			
-			ll = 2.0*(t - 3*target->lutDelay()-3*xordelay-2*muxcystoo-2*target->localWireDelay() + 2*dcarry)/(3.0*dcarry);
-
-			double l1 = ll;
-			
+			int l1;
 			int l0;
+			int maxAdderSize;
+#ifdef MAXSIZE
+for (int aa=25; aa<=400; aa+=25){
+	target->setFrequency(double(aa)*1000000.0);
+
+#endif
+			double t = 1.0 / target->frequency();
+			
+			ll = (2.0/3.0)* ((t - 3*target->lutDelay()-3*xordelay-3*muxcystoo-2*target->localWireDelay())/dcarry + 2);
+
+			l1 = ll;
 
 			double c = ( target-> comparatorDelay(l1) + target->lutDelay()); 
 			REPORT(INFO, "c="<<c);
@@ -198,9 +206,15 @@ extern vector<Operator*> oplist;
 			
 			
 			
-			int maxAdderSize =  l0+l1+ll*(ll+1)/2;
+			maxAdderSize =  l0+l1+ll*(ll+1)/2;
 			REPORT(INFO, "ll="<<ll);
 			REPORT(INFO, "max adder size is="<< maxAdderSize);
+
+#ifdef MAXSIZE
+		cout << " f="<<aa<<" s="<<maxAdderSize<<endl;
+}
+exit(1);
+#endif			
 			
 			/*			exit(-1);*/
 			

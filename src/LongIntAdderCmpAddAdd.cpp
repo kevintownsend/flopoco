@@ -37,6 +37,7 @@
 #include "LongIntAdderCmpAddAdd.hpp"
 #include "IntAdder.hpp"
 // #define XILINX_OPTIMIZATION 0
+// #define MAXSIZE
 
 
 using namespace std;
@@ -82,19 +83,30 @@ extern vector<Operator*> oplist;
 			}
 			
 			double t = 1.0 / target->frequency();
-			int ll;
+			int ll,l0,l1,maxAdderSize;
+			
+#ifdef MAXSIZE
+for (int aa=25; aa<=400; aa+=25){
+	target->setFrequency(double(aa)*1000000.0);
+				
+#endif
 			double c = (2 * target->localWireDelay()) + target->lutDelay()+ xordelay; 
 			target->suggestSlackSubaddSize(ll, wIn, (t+c)/2);
 			
-			int l1=ll-1;
+			l1=ll-1;
 			
-			int l0;
 			target->suggestSlackSubaddSize(l0, wIn, t - target->lutDelay()+ target->adderDelay(l1));
 			
-			int maxAdderSize =  l0+l1+ll*(ll+1)/2;
+			maxAdderSize =  l0+l1+ll*(ll+1)/2;
+						
 			REPORT(INFO, "ll="<<ll);
 			REPORT(INFO, "max adder size is="<< maxAdderSize);
-			
+
+#ifdef MAXSIZE
+cout << " f="<<aa<<" s="<<maxAdderSize<<endl;
+}
+exit(1);
+#endif
 /*			exit(-1);*/
 			
 			cSize = new int[1000];
