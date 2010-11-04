@@ -152,18 +152,18 @@ extern vector<Operator*> oplist;
 			wE_sum = wE_out;
 
 
-		vhdl << tab << declare("x_exn",2) << " <=  x("<<wE_in<<"+"<<wF_in<<"+2 downto "<<wE_in<<"+"<<wF_in<<"+1);"<<endl;
-		vhdl << tab << declare("x_sgn") << " <=  x("<<wE_in<<"+"<<wF_in<<");"<<endl;
-		vhdl << tab << declare("x_exp", wE_in) << " <=  x("<<wE_in<<"+"<<wF_in<<"-1 downto "<<wF_in<<");"<<endl;
+		vhdl << tab << declare("x_exn",2) << " <=  X("<<wE_in<<"+"<<wF_in<<"+2 downto "<<wE_in<<"+"<<wF_in<<"+1);"<<endl;
+		vhdl << tab << declare("x_sgn") << " <=  X("<<wE_in<<"+"<<wF_in<<");"<<endl;
+		vhdl << tab << declare("x_exp", wE_in) << " <=  X("<<wE_in<<"+"<<wF_in<<"-1 downto "<<wF_in<<");"<<endl;
 
 
 		if(mantissa_is_one) {			
 			vhdl << tab << "-- The mantissa of the constant is  1" << endl;
 			if(wF_out == wF_in) {
-				vhdl << tab << declare("r_frac", wF_out) << " <= x("<<wF_in-1 <<" downto 0);"<<endl;
+				vhdl << tab << declare("r_frac", wF_out) << " <= X("<<wF_in-1 <<" downto 0);"<<endl;
 			}
 			else if(wF_out > wF_in){
-				vhdl << tab << tab << declare("r_frac", wF_out) << " <= x("<<wF_in-1 <<" downto 0)  &  " << rangeAssign(wF_out-wF_in-1, 0, "'0'") << ";"<<endl;
+				vhdl << tab << tab << declare("r_frac", wF_out) << " <= X("<<wF_in-1 <<" downto 0)  &  " << rangeAssign(wF_out-wF_in-1, 0, "'0'") << ";"<<endl;
 				}
 			else{ // wF_out < wF_in, this is a rounding of the mantissa TODO
 				throw string("FPConstMult: multiplication by a power of two when  wF_out < wF_in not yet implemented, please complain to the FloPoCo team if you need it");
@@ -172,7 +172,7 @@ extern vector<Operator*> oplist;
 	
 		}
 		else{ // normal case, mantissa is not one
-			vhdl << tab << declare("x_sig", wF_in+1) << " <= '1' & x("<<wF_in-1 <<" downto 0);"<<endl;
+			vhdl << tab << declare("x_sig", wF_in+1) << " <= '1' & X("<<wF_in-1 <<" downto 0);"<<endl;
 			vhdl << tab << declare("xcut_rd", wF_in+1) << " <= \""
 				  << unsignedBinary(xcut_sig_rd, wF_in+1) << "\";"<<endl;
 			vhdl << tab << declare("gt_than_xcut") << " <= '1' when ( x_sig("<<wF_in-1<<" downto 0) > xcut_rd("<<wF_in-1<<" downto 0) ) else '0';"<<endl;
