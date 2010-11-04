@@ -62,7 +62,8 @@ namespace flopoco{
 				
 		}
 	
-		warningInfo();
+		if (verbose>1)
+			warningInfo();
 	
 		wInX             = wX;
 		wInY             = wY;
@@ -210,7 +211,7 @@ namespace flopoco{
 			for(i=0; i<nrDSPs; i++){
 				configuration[i]->getTopRightCorner(xT,yT);
 				configuration[i]->getBottomLeftCorner(xB,yB);
-				cout << "HARD DSP Top right = " << xT-getExtraWidth() << ", " << yT << " and bottom left = " << xB-getExtraHeight() << ", " <<yB << endl;
+				REPORT(DETAILED, "HARD DSP Top right = " << xT-getExtraWidth() << ", " << yT << " and bottom left = " << xB-getExtraHeight() << ", " <<yB);
 				fig << " 2 2 0 1 0 7 50 -1 -1 0.000 0 0 -1 0 0 5 " << endl;
 				fig << " " <<- (-xB+getExtraWidth()-1) * 45 << " " <<- (yT-getExtraHeight())     * 45
 				    << " " <<- (-xT+getExtraWidth())   * 45 << " " <<- (yT-getExtraHeight())     * 45
@@ -225,7 +226,7 @@ namespace flopoco{
 			softDSPs[k]->trim(vnme, vmme);
 			softDSPs[k]->getTopRightCorner(xT,yT);
 			softDSPs[k]->getBottomLeftCorner(xB,yB);
-			cout << "SOFT DSP Top right = " << xT << ", " << yT << " and bottom left = " << xB << ", " <<yB << endl;
+			REPORT(DETAILED, "SOFT DSP Top right = " << xT << ", " << yT << " and bottom left = " << xB << ", " <<yB);
 				fig << " 2 2 0 1 0 7 50 -1 19 0.000 0 0 -1 0 0 5 " << endl;
 				fig << "	  " <<- (-xB+getExtraWidth()-1)*45 << " " <<- (yT-getExtraHeight())*45 
 				         << " " <<- (-xT+getExtraWidth())*45 << " " <<- (yT-getExtraHeight())*45 
@@ -438,7 +439,7 @@ namespace flopoco{
 						if(move(globalConfig,i)) // the current DSP was successfuly moved
 							{
 								if(i==0){
-									cout<<"DSP #1 has made another step!"<<endl;
+									REPORT(DETAILED,"DSP #1 has made another step!");
 								}
 								finish = (clock() - start)/(CLOCKS_PER_SEC*60);
 								if (finish > maxTimeInMinutes)
@@ -877,30 +878,35 @@ namespace flopoco{
 			}
 		char af;
 		int afi;
+		ostringstream tmp;
+		
 		for(int i=0;i<m;i++)
 			{
 				if(i==getExtraHeight())
-					cout<<endl;
+					REPORT(INFO, "");
 			
+
 				for(int j=0;j<n;j++)
 					{
 						if(j==getExtraWidth())
-							cout<<" ";
+							tmp<<" ";
 						if(j==n-getExtraWidth())
-							cout<<" ";
+							tmp<<" ";
 				
 						if(mat[i][j]<10)
 							afi=mat[i][j];
 						else
 							afi=mat[i][j]+7;
 						af=(int)afi+48;
-						cout<<af;
+						
+						tmp<<af;
 					}
-				cout<<endl;
+				tmp<<endl;
 				if(i==m-getExtraHeight()-1)
-					cout<<endl;
+					tmp<<endl;
 			}
-		
+		REPORT(DETAILED, tmp.str() );		
+
 		for(int ii=0;ii<m;ii++)
 		   delete [] (mat[ii]);
 	
@@ -1083,30 +1089,32 @@ namespace flopoco{
 			}
 		char af;
 		int afi;
+		ostringstream tmp;
 		for(int i=0;i<m;i++)
 			{
 				if(i==getExtraHeight())
-					cout<<endl;
+					tmp<<endl;
 			
 				for(int j=0;j<n;j++)
 					{
 						if(j==getExtraWidth())
-							cout<<" ";
+							tmp<<" ";
 						if(j==n-getExtraWidth())
-							cout<<" ";
+							tmp<<" ";
 				
 						if(mat[i][j]<10)
 							afi=mat[i][j];
 						else
 							afi=mat[i][j]+7;
 						af=(int)afi+48;
-						cout<<af;
+						tmp<<af;
 					}
-				cout<<endl;
+				tmp<<endl;
 				if(i==m-getExtraHeight()-1)
-					cout<<endl;
+					tmp<<endl;
 			}
-		
+		REPORT(DETAILED, tmp.str());		
+
 		for(int ii=0;ii<m;ii++)
 		   delete [] (mat[ii]);
 	
@@ -2593,7 +2601,7 @@ namespace flopoco{
 	
 				for (int i=0; i<nrDSPs; i++)
 					if (tempc[i] != NULL){
-							cout << "At DSP#"<< i+1 << " tempc["<<i<<"]" << endl; 
+							REPORT(DETAILED, "At DSP#"<< i+1 << " tempc["<<i<<"]");
 							tempc[i]->getTopRightCorner(trx1, try1);
 							tempc[i]->getBottomLeftCorner(blx1, bly1);
 							convertCoordinates(trx1, try1, blx1, bly1);
@@ -2622,13 +2630,13 @@ namespace flopoco{
 			
 								/* At most 4 operands */
 								for (int j=0; j<3; j++)
-									if (addOps[j] == NULL)
-										cout << "addOps["<< j << "]=NULL" << endl;
-									else
-										cout << "addOps["<< j << "]=not null" << endl;
+									if (addOps[j] == NULL){
+										REPORT(DETAILED, "addOps["<< j << "]=NULL");
+									}else
+										REPORT(DETAILED, "addOps["<< j << "]=not null");
 			
 								for (int j=0; j<boundDSPs; j++){
-										cout << "j = " << j << endl;
+										REPORT(DETAILED, "j = " << j );
 										// erase addOps[j] from the tempc buffer to avoid handleing it twice
 										for (int k=i+1; k<nrDSPs; k++){
 											if ((tempc[k] != NULL) && (tempc[k] == addOps[j])){
