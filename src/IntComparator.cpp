@@ -53,16 +53,18 @@ namespace flopoco{
 			case  0: name << "IntComparator_"<< wIn<<"_"<<"eq";     break;
 			case  1: name << "IntComparator_"<< wIn<<"_"<<"geq";    break;
 			case  2: name << "IntComparator_"<< wIn<<"_"<<"greater";break;
-			default: name << name << "IntComparator_"<< wIn<<"_"<<"eq";
+			default: name << "IntComparator_"<< wIn<<"_"<<"eq";
 		}
+		
+		name << "_uid"<<getNewUId();
 		setName(name.str());
 		setCopyrightString("Bogdan Pasca (2010)");
 
-		addInput ("X", wIn_);
-		addInput ("Y", wIn_);
-		addOutput("R"); 
+		addInput ("X", wIn_,true);
+		addInput ("Y", wIn_,true);
+		addOutput("R",true); 
 
-		switch(criteria_){
+		switch(criteria){
 			case -2: vhdl << tab << "R <= '1' when (X <  Y) else '0';"<<endl; break;
 			case -1: vhdl << tab << "R <= '1' when (X <= Y) else '0';"<<endl; break;
 			case  0:{ 
@@ -140,8 +142,8 @@ namespace flopoco{
 						vhdl << tab << "R <= '1' when X=conv_std_logic_vector("<<constValue<<","<< wIn<<") else '0';"<<endl;
 				}
 			} break;
-			case  1: vhdl << tab << "R <= '1' when (X >  Y) else '0';"<<endl; break;
-			case  2: vhdl << tab << "R <= '1' when (X = Y) else '0';"<<endl; break;
+			case  1: vhdl << tab << "R <= '1' when (X >=  Y) else '0';"<<endl; break;
+			case  2: vhdl << tab << "R <= '1' when (X > Y) else '0';"<<endl; break;
 			default:;
 		}
 		

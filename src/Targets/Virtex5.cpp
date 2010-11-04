@@ -38,7 +38,7 @@ namespace flopoco{
 	}
 	
 	double Virtex5::comparatorDelay(int size){
-		return lut2_ + muxcyStoO_ + double((ceil(size/2.0)-1)/(lutInputs_/2)+1)*muxcyCINtoO_; 
+		return lut2_ + muxcyStoO_ + double(ceil(size/2.0)-1)*muxcyCINtoO_; 
 	}
 	
 	double Virtex5::comparatorConstDelay(int size){

@@ -36,9 +36,11 @@
 #include "Operator.hpp"
 #include "LongIntAdderCmpAddAdd.hpp"
 #include "IntAdder.hpp"
-// #define XILINX_OPTIMIZATION 0
-// #define MAXSIZE
+#include "IntComparator.hpp"
 
+#define XILINX_OPTIMIZATION 0
+// #define MAXSIZE
+// #define RCATEST
 
 using namespace std;
 namespace flopoco{
@@ -67,35 +69,57 @@ extern vector<Operator*> oplist;
 
 			double xordelay;
 			double dcarry;
+			double muxcystoo;
 			if (target->getID()=="Virtex5"){
 				xordelay = 0.300e-9;
 				dcarry = 0.023e-9;
+				muxcystoo = 0.305e-9;
 			}else{ 
 				if (target->getID()=="Virtex6"){
 					xordelay = 0.180e-9;
 					dcarry = 0.015e-9;
+					muxcystoo =	0.219e-9;
 				}else{ 
 					if (target->getID()=="Virtex4"){
 						xordelay = 0.273e-9;
 						dcarry = 0.034e-9;
+						muxcystoo = 0.278e-9;
 					}
 				}
 			}
 			
-			double t = 1.0 / target->frequency();
+// 			double t;
 			int ll,l0,l1,maxAdderSize;
+			
+			
+#ifdef RCATEST
+	for (int aa=25; aa<=400; aa+=25){
+		target->setFrequency(double(aa)*1000000.0);
+		int y;
+		target->suggestSubaddSize(y, 10000);
+		cout << "f="<<aa<<" s="<<y<<endl;
+	}
+	exit(-1);
+#endif			
 			
 #ifdef MAXSIZE
 for (int aa=25; aa<=400; aa+=25){
 	target->setFrequency(double(aa)*1000000.0);
-				
 #endif
-			double c = (2 * target->localWireDelay()) + target->lutDelay()+ xordelay; 
-			target->suggestSlackSubaddSize(ll, wIn, (t+c)/2);
-			
-			l1=ll-1;
-			
-			target->suggestSlackSubaddSize(l0, wIn, t - target->lutDelay()+ target->adderDelay(l1));
+
+double t = 1.0 / target->frequency();				
+
+ll = (1.0/2.0)* ((t - 3*target->lutDelay()-3*xordelay-3*muxcystoo-2*target->localWireDelay())/dcarry + 2);
+l1=ll-1;
+
+
+
+// 			double c = (2 * target->localWireDelay()) + target->lutDelay()+ xordelay; 
+// 			target->suggestSlackSubaddSize(ll, wIn, (t+c)/2);
+// 			
+// 			l1=ll-1;
+// 			
+			target->suggestSlackSubaddSize(l0, wIn, t - (target->lutDelay()+ target->adderDelay(l1)) );
 			
 			maxAdderSize =  l0+l1+ll*(ll+1)/2;
 						
@@ -193,9 +217,42 @@ exit(1);
 			int l=1;
 			for (int j=0; j<nbOfChunks; j++){
 				if (j>0){ //for all chunks greater than zero we perform this comparissons
+#ifndef XILINX_OPTIMIZATION	
 					vhdl<<tab<<declare(join("sX",j,"_0_l",l,"_Zero"), cSize[j]+1, true)<< " <= (\"0\" & " << join("sX",j,"_0_l",l-1)
 					<< ") + (\"0\" & "<<join("sX",j,"_1_l",l-1)<<");"<<endl;
 					vhdl<<tab<<declare(join("sX",j,"_0_l",l,"_One"))<< "  <= '1' when "<< join("sX",j,"_0_l",l-1)<< " >= not("<<join("sX",j,"_1_l",l-1)<<") else '0';"<<endl;
+#else 
+int tp = target->isPipelined();
+target->setNotPipelined();
+IntAdder *addZero = new IntAdder(target, cSize[j]+1);
+IntComparator *compOne = new IntComparator(target, cSize[j], 1, false, 0);
+
+oplist.push_back(addZero);
+oplist.push_back(compOne);
+
+if (tp) target->setPipelined();
+
+vhdl << tab << declare(join("opX",j), cSize[j]+1) << " <= \"0\" & " << join("sX",j,"_0_l",l-1)<<";"<<endl;
+vhdl << tab << declare(join("opY",j), cSize[j]+1) << " <= \"0\" & " << join("sX",j,"_1_l",l-1)<<";"<<endl;
+
+
+inPortMap(addZero, "X", join("opX",j) );
+inPortMap(addZero, "Y", join("opY",j) );
+inPortMapCst(addZero, "Cin", "'0'");
+outPortMap(addZero, "R", join("sX",j,"_0_l",l,"_Zero") );
+vhdl << instance(addZero, join("addZ",j) );
+
+vhdl << tab << declare(join("nsX",j,"_1_l",l-1), cSize[j]) << " <= not("<<join("sX",j,"_1_l",l-1)<<");"<<endl;
+
+inPortMap(compOne, "X", join("sX",j,"_0_l",l-1) );
+inPortMap(compOne, "Y", join("nsX",j,"_1_l",l-1) );
+outPortMap(compOne, "R", join("sX",j,"_0_l",l,"_One") );
+vhdl << instance(compOne, join("cmpO",j) );
+
+
+#endif
+				
+				
 				}else{
 					//for the zero chunk we directly perform the addition
 					vhdl<<tab<< "-- the carry resulting from the addition of the chunk + Cin is obtained directly" << endl;

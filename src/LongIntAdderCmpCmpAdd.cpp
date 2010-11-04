@@ -36,7 +36,9 @@
 #include "Operator.hpp"
 #include "LongIntAdderCmpCmpAdd.hpp"
 #include "IntAdder.hpp"
-// #define XILINX_OPTIMIZATION 0
+#include "IntComparator.hpp"
+	
+#define XILINX_OPTIMIZATION
 
 // #define MAXSIZE
 
@@ -276,8 +278,32 @@ exit(1);
 			int l=1;
 			for (int j=0; j<nbOfChunks; j++){
 				if (j>0){ //for all chunks greater than zero we perform this comparissons
+#ifndef XILINX_OPTIMIZATION					
 					vhdl<<tab<<declare(join("sX",j,"_0_l",l,"_Zero"))<< " <= '1' when "<< join("sX",j,"_0_l",l-1)<< " > not("<<join("sX",j,"_1_l",l-1)<<") else '0';"<<endl;
 					vhdl<<tab<<declare(join("sX",j,"_0_l",l,"_One"))<< "  <= '1' when "<< join("sX",j,"_0_l",l-1)<< " >= not("<<join("sX",j,"_1_l",l-1)<<") else '0';"<<endl;
+#else
+int tp = target->isPipelined();
+target->setNotPipelined();
+IntComparator *compZero = new IntComparator(target, cSize[j], 2, false, 0);
+oplist.push_back(compZero);
+IntComparator *compOne = new IntComparator(target, cSize[j], 1, false, 0);
+oplist.push_back(compOne);
+
+if (tp) target->setPipelined();
+
+vhdl << tab << declare(join("nsX",j,"_1_l",l-1), cSize[j],true) << " <= not("<<join("sX",j,"_1_l",l-1)<<");"<<endl;
+
+   inPortMap(compZero, "X", join("sX",j,"_0_l",l-1) );
+	inPortMap(compZero, "Y", join("nsX",j,"_1_l",l-1) );
+	outPortMap(compZero, "R", join("sX",j,"_0_l",l,"_Zero") );
+	vhdl << instance(compZero, join("cmpZ",j) );
+	
+	inPortMap(compOne, "X", join("sX",j,"_0_l",l-1) );
+	inPortMap(compOne, "Y", join("nsX",j,"_1_l",l-1) );
+	outPortMap(compOne, "R", join("sX",j,"_0_l",l,"_One") );
+	vhdl << instance(compOne, join("cmpO",j) );
+	
+#endif
 				}else{
 					//for the zero chunk we directly perform the addition
 					vhdl<<tab<< "-- the carry resulting from the addition of the chunk + Cin is obtained directly" << endl;

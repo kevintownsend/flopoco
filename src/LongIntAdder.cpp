@@ -38,7 +38,7 @@
 #include "IntAdder.hpp"
 #define XILINX_OPTIMIZATION 0
 
-#define MAXSIZE
+// #define MAXSIZE
 
 
 using namespace std;
@@ -168,21 +168,25 @@ extern vector<Operator*> oplist;
 				int ll,l0;
 				double xordelay;
 				double dcarry;
+				double muxcystoo;
 				if (target->getID()=="Virtex5"){
 					xordelay = 0.300e-9;
 					dcarry = 0.023e-9;
+					muxcystoo = 0.305e-9;
+					
 				}else{ 
 					if (target->getID()=="Virtex6"){
 						xordelay = 0.180e-9;
 						dcarry = 0.015e-9;
+						muxcystoo =	0.219e-9;
 					}else{ 
 						if (target->getID()=="Virtex4"){
 							xordelay = 0.273e-9;
 							dcarry = 0.034e-9;
+							muxcystoo = 0.278e-9;
 						}
 					}
 				}
-				double t = 1.0 / target->frequency();
 				int lkm1;
 				
 #ifdef MAXSIZE
@@ -190,13 +194,15 @@ for (int aa=25; aa<=400; aa+=25){
 	target->setFrequency(double(aa)*1000000.0);
 
 #endif
-					
+
+double t = 1.0 / target->frequency();
+
 				if (!target->suggestSlackSubaddSize(lkm1, wIn, target->localWireDelay() + target->lutDelay()))
 					REPORT(INFO, "Impossible 1");
 				
-				target->suggestSlackSubaddSize(ll, wIn, 2*target->localWireDelay() + target->lutDelay() + xordelay + target->lutDelay());
+				target->suggestSlackSubaddSize(ll, wIn, (2*target->localWireDelay() + target->lutDelay() + xordelay + target->lutDelay()) );
 				
-				target->suggestSlackSubaddSize(l0, wIn, t - (target->lutDelay()+ dcarry) );
+				target->suggestSlackSubaddSize(l0, wIn, t - (2*target->lutDelay()+ xordelay) );
 				
 				REPORT(INFO, "l0="<<l0);
 				
