@@ -4,14 +4,14 @@ Pipeline framework, Operator and Targets:
 * add FPU object and remove all global variables, to enable library build
 * add semantic support of fixed-point to Signal
 
+
+FunctionEvaluator
+* Cache polynomials
+* Cleaning up and class renaming
+
 FPAdder
 * several optimization opportunities, see the TODO inside FPAdder.cpp
 * implement a single-path version
-
-FPExp:
-* true FloPoCoization, pipeline
-* better (DSP-aware) architectural exploration
-* polynomial-based version
 
 FPLog:
 * Fix a few remaining last-bit accuracy problems, damn.
@@ -22,8 +22,7 @@ HOTBM:
 * better (DSP-aware) architectural exploration
 
 ConstMult:
-* implement KCM algorithm and select it if it means less hardware
-    (it will for small wX/large constants)
+* group KCM and shift-and-add in a single OO hierearchy (selecting the one with less hardware)
 * For FPConstMult, don't output the LSBs of the IntConstMult 
    but only their sticky
 * Try left to right and right to left; try variations of the initial recoding
@@ -60,7 +59,7 @@ Version 2.0 : FunctionEvaluator
 Version 2.1 : FPExp, FPPowr (experimental)
 -- we're here (faster than expected)
 Version ???   FPAddSub (for FFT butterfly structure)
-Version ???   FixToFPUniformDist (2008 ASAP paper by Thomas with improvements)
+Version ???   FixToFPUniformDist (2008 ASAP paper by Thomas)
 Version ???   FPNorm2D
 Version ???   FPNorm3D -- Almost there, see Collision
 Version ???   FPSinCos
