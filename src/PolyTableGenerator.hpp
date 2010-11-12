@@ -1,5 +1,5 @@
-#ifndef TableGenerator_HPP
-#define TableGenerator_HPP
+#ifndef PolyTableGenerator_HPP
+#define PolyTableGenerator_HPP
 #include <vector>
 #include <sstream>
 #include <gmp.h>
@@ -19,19 +19,19 @@
 
 namespace flopoco{
 
-	/** The TableGenerator class.  */
-	class TableGenerator : public Table {
+	/** The PolyTableGenerator class.  */
+	class PolyTableGenerator : public Table {
 
 		public:
-			TableGenerator(Target* target, PiecewiseFunction* pf, int wInX, int wOutX, int n);
-			TableGenerator(Target* target, string func, int wInX, int wOutX, int n);
+			PolyTableGenerator(Target* target, PiecewiseFunction* pf, int wInX, int wOutX, int n);
+			PolyTableGenerator(Target* target, string func, int wInX, int wOutX, int n);
 			/* TODO: Doxygen parameters*/ 
-			TableGenerator(Target* target, string func, int wInX, int wOutX, int n,double xmin, double xmax, double scale);
+			PolyTableGenerator(Target* target, string func, int wInX, int wOutX, int n,double xmin, double xmax, double scale);
 
 			/**
-			 * TableGenerator destructor
+			 * PolyTableGenerator destructor
 			 */
-			~TableGenerator();
+			~PolyTableGenerator();
 			
 			MPPolynomial* getMPPolynomial(sollya_node_t t);
 			vector<FixedPointCoefficient*> getPolynomialCoefficients(sollya_node_t t, sollya_chain_t c);

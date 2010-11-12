@@ -36,7 +36,7 @@
 #include <gmpxx.h>
 #include "utils.hpp"
 #include "Operator.hpp"
-#include "TableGenerator.hpp"
+#include "PolyTableGenerator.hpp"
 
 using namespace std;
 
@@ -44,11 +44,11 @@ namespace flopoco{
 
 	extern vector<Operator*> oplist;
 
-	TableGenerator::TableGenerator(Target* target, PiecewiseFunction* pf, int wInX, int wOutX, int n): 
+	PolyTableGenerator::PolyTableGenerator(Target* target, PiecewiseFunction* pf, int wInX, int wOutX, int n): 
 		Table(target),	wInX_(wInX), wOutX_(wOutX), pwf(pf){
 		
 		setCopyrightString("Mioara Joldes (2010)");
-		srcFileName = "TableGenerator";
+		srcFileName = "PolyTableGenerator";
 		/* Start initialization */
 		setToolPrecision(165);
 		int nrMaxIntervals=1024*1024;
@@ -238,7 +238,7 @@ namespace flopoco{
 		
 			ostringstream name;
 			/*Set up the name of the entity */
-			name <<"TableGenerator_"<<wIn<<"_"<<wOut;
+			name <<"PolyTableGenerator_"<<wIn<<"_"<<wOut;
 			setName(name.str());
 		
 			/*Set up the IO signals*/
@@ -256,7 +256,7 @@ namespace flopoco{
 			}
 		}else{
 			/*if we didn't manage to have the good polynomials for all the piecewise functions*/
-			cout<< "TableGenerator error: Could not approximate the given function(s)"<<endl; 
+			cout<< "PolyTableGenerator error: Could not approximate the given function(s)"<<endl; 
 		}
 	
 		mpfr_clear(a);
@@ -273,18 +273,18 @@ namespace flopoco{
 
 	/*This constructor receives the function to be approximated as a string
 	Look above to find one that receives the function as a Piecewise function already parsed*/
-	TableGenerator::TableGenerator(Target* target, string func, int wInX, int wOutX, int n):
+	PolyTableGenerator::PolyTableGenerator(Target* target, string func, int wInX, int wOutX, int n):
 	Table(target) {
 		
 		setCopyrightString("Mioara Joldes (2010)");		
 
 		/*parse the string, create a list of functions, create an array of f's, compute an approximation on each interval*/
 		PiecewiseFunction *pf=new PiecewiseFunction(func);
-		TableGenerator(target, pf, wInX, wOutX, n);
+		PolyTableGenerator(target, pf, wInX, wOutX, n);
 	}
 
 
-	TableGenerator::TableGenerator(Target* target, string func, int wInX, int wOutX, int n, double xmin, double xmax, double scale ): 
+	PolyTableGenerator::PolyTableGenerator(Target* target, string func, int wInX, int wOutX, int n, double xmin, double xmax, double scale ): 
 	Table(target),	wInX_(wInX), wOutX_(wOutX), f(new Function(func, xmin, xmax, scale)){
 	
 		/* Start initialization */
@@ -458,7 +458,7 @@ namespace flopoco{
 	
 			ostringstream name;
 			/* Set up the name of the entity */
-			name <<"TableGenerator_"<<wIn<<"_"<<wOut;
+			name <<"PolyTableGenerator_"<<wIn<<"_"<<wOut;
 			setName(name.str());
 	
 			// Set up the IO signals
@@ -493,11 +493,11 @@ namespace flopoco{
 		//finishTool();
 	}
 
-	TableGenerator::~TableGenerator() {
+	PolyTableGenerator::~PolyTableGenerator() {
 	}
 
 
-	MPPolynomial* TableGenerator::getMPPolynomial(sollya_node_t t){
+	MPPolynomial* PolyTableGenerator::getMPPolynomial(sollya_node_t t){
 		int degree=1,i;
 		sollya_node_t *nCoef;
 		mpfr_t *coef;
@@ -526,7 +526,7 @@ namespace flopoco{
 		return mpPx;
 	}
 
-	vector<FixedPointCoefficient*> TableGenerator::getPolynomialCoefficients(sollya_node_t t, sollya_chain_t c){
+	vector<FixedPointCoefficient*> PolyTableGenerator::getPolynomialCoefficients(sollya_node_t t, sollya_chain_t c){
 		int degree=1,i,size, weight;
 		sollya_node_t *nCoef;
 		mpfr_t *coef;
@@ -572,7 +572,7 @@ namespace flopoco{
 	}
 
 
-	vector<FixedPointCoefficient*> TableGenerator::getPolynomialCoefficients(sollya_node_t t, int* sizeList){
+	vector<FixedPointCoefficient*> PolyTableGenerator::getPolynomialCoefficients(sollya_node_t t, int* sizeList){
 		int degree=1,i,size, weight;
 		sollya_node_t *nCoef;
 		mpfr_t *coef;
@@ -617,7 +617,7 @@ namespace flopoco{
 	}
 
 
-	void TableGenerator::updateMinWeightParam(int i, FixedPointCoefficient* zz)
+	void PolyTableGenerator::updateMinWeightParam(int i, FixedPointCoefficient* zz)
 	{
 		if (coeffParamVector.size()<=(unsigned)i) {
 			coeffParamVector.push_back(zz);
@@ -628,12 +628,12 @@ namespace flopoco{
 	}
 
 
-	vector<vector<FixedPointCoefficient*> > TableGenerator::getPolynomialCoefficientsVector(){
+	vector<vector<FixedPointCoefficient*> > PolyTableGenerator::getPolynomialCoefficientsVector(){
 		return polyCoeffVector;
 	}
 
 
-	void TableGenerator::printPolynomialCoefficientsVector(){
+	void PolyTableGenerator::printPolynomialCoefficientsVector(){
 		int i,j,nrIntervals, degree;
 		vector<FixedPointCoefficient*> pcoeffs;
 		nrIntervals=polyCoeffVector.size();
@@ -649,12 +649,12 @@ namespace flopoco{
 	}
 
 
-	vector<FixedPointCoefficient*> TableGenerator::getCoeffParamVector(){
+	vector<FixedPointCoefficient*> PolyTableGenerator::getCoeffParamVector(){
 		return coeffParamVector;
 	}
 
 
-	void TableGenerator::printCoeffParamVector(){
+	void PolyTableGenerator::printCoeffParamVector(){
 		int j, degree;
 		degree= coeffParamVector.size();
 		for (j=0; j<degree; j++){		
@@ -663,12 +663,12 @@ namespace flopoco{
 	}
 
 
-	mpfr_t * TableGenerator::getMaxApproxError(){
+	mpfr_t * PolyTableGenerator::getMaxApproxError(){
 		return maxError;
 	}
 
 
-	void TableGenerator::generateDebug(){
+	void PolyTableGenerator::generateDebug(){
 		int j;
 		cout<<"f=";
 		printTree(simplifyTreeErrorfree(f->getSollyaNode()));
@@ -681,12 +681,12 @@ namespace flopoco{
 	}
 
 
-	vector<int> TableGenerator::getNrIntArray(){
+	vector<int> PolyTableGenerator::getNrIntArray(){
 		return nrIntArray;
 	}
 
 
-	void TableGenerator::generateDebugPwf(){
+	void PolyTableGenerator::generateDebugPwf(){
 		int j;
 		cout<<"pwf=";
 		cout<<pwf->getName()<<endl;
@@ -704,7 +704,7 @@ namespace flopoco{
 	}
 
 
-	sollya_chain_t TableGenerator::makeIntPtrChainCustomized(int m, int n, int precshift, int msize) {
+	sollya_chain_t PolyTableGenerator::makeIntPtrChainCustomized(int m, int n, int precshift, int msize) {
 		int i,j, temp;
 		int *elem;
 		sollya_chain_t c;
@@ -738,32 +738,32 @@ namespace flopoco{
 
 /****************************************************************************************/
 /************Implementation of virtual methods of Class Table***************************/
-	int TableGenerator::double2input(double x){
+	int PolyTableGenerator::double2input(double x){
 		int result;
-		cerr << "???	TableGenerator::double2input not yet implemented ";
+		cerr << "???	PolyTableGenerator::double2input not yet implemented ";
 		exit(1);
 		return result;
 	}
 
 
-	double	TableGenerator::input2double(int x) {
+	double	PolyTableGenerator::input2double(int x) {
 		double y;
-		cerr << "??? TableGenerator::double2input not yet implemented ";
+		cerr << "??? PolyTableGenerator::double2input not yet implemented ";
 		exit(1);
 		return(y);
 	}
 
 
-	mpz_class	TableGenerator::double2output(double x){
-		cerr << "???	TableGenerator::double2input not yet implemented ";
+	mpz_class	PolyTableGenerator::double2output(double x){
+		cerr << "???	PolyTableGenerator::double2input not yet implemented ";
 		exit(1);
 		return 0;
 	}
 
 
-	double	TableGenerator::output2double(mpz_class x) {
+	double	PolyTableGenerator::output2double(mpz_class x) {
 		double y;
-		cerr << "???	TableGenerator::double2input not yet implemented ";
+		cerr << "???	PolyTableGenerator::double2input not yet implemented ";
 		exit(1);
 	
 		return(y);
@@ -772,7 +772,7 @@ namespace flopoco{
 
 /***************************************************************************************/
 /********************This is the implementation of the actual mapping*******************/
-	mpz_class	TableGenerator::function(int x)
+	mpz_class	PolyTableGenerator::function(int x)
 	{
 		mpz_class r=0; mpfr_t *cf; mpz_t c;char * z;
 		int amount,j,nrIntervals, degree,trailingZeros,numberSize;

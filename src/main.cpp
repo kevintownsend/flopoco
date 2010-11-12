@@ -118,7 +118,7 @@
 #endif
 #endif
 
-#include "TableGenerator.hpp"
+#include "PolyTableGenerator.hpp"
 #include "FunctionEvaluator.hpp"
 
 #include "UserDefinedOperator.hpp"
@@ -1639,7 +1639,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			}
 		}
 #ifdef HAVE_HOTBM
-		else if (opname == "TableGenerator") {
+		else if (opname == "PolyTableGenerator") {
 			int nargs = 4;
 			if (i+nargs > argc)
 				usage(argv[0]); // and exit
@@ -1649,9 +1649,9 @@ bool parseCommandLine(int argc, char* argv[]){
 			int n  = checkStrictyPositive(argv[i++], argv[0]);
 			
 						
-			cerr << "> TableGenerator func='" << func << "', wI=" << wI << ", wO=" << wO <<endl;	
+			cerr << "> PolyTableGenerator func='" << func << "', wI=" << wI << ", wO=" << wO <<endl;	
 			
-			Operator* tg = new TableGenerator(target, func, wI, wO, n);
+			Operator* tg = new PolyTableGenerator(target, func, wI, wO, n);
 				addOperator(tg);
 			
 		}

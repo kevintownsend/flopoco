@@ -228,7 +228,7 @@ ADD_EXECUTABLE(flopoco
  src/DualTable 
  src/DualTable2
 
- src/TableGenerator
+ src/PolyTableGenerator
  src/PiecewiseFunction
  
  src/Wrapper
