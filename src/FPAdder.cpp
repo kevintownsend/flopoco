@@ -10,6 +10,7 @@
   Copyright © ENS-Lyon, INRIA, CNRS, UCBL,  
   CeCILL license, 2008-2010.
 
+  All rights reserved
   */
 
 // TODO move close path prenormalization up to the Swap Difference box

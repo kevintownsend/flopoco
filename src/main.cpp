@@ -120,6 +120,7 @@
 
 #include "PolyTableGenerator.hpp"
 #include "FunctionEvaluator.hpp"
+#include "FPPipeline.hpp"
 
 #include "UserDefinedOperator.hpp"
 
@@ -1670,9 +1671,19 @@ bool parseCommandLine(int argc, char* argv[]){
 			cerr << "> FunctionEvaluator func='" << func << "', wI=" << wI << ", wO=" << wO << ", degree=" << n << endl;	
 			string arg=func+",0,1,1"; // we are not sure it works for other values
 			Operator* tg = new FunctionEvaluator(target, arg, wI, wO, n);
-				addOperator(tg);
+			addOperator(tg);
+		}
 
-			
+		else if (opname == "FPPipeline") {
+			int nargs = 3;
+			if (i+nargs > argc)
+				usage(argv[0]); // and exit
+			string expr = argv[i++];
+			int wE = checkStrictyPositive(argv[i++], argv[0]);
+			int wF = checkStrictyPositive(argv[i++], argv[0]);
+			cerr << "> FPPipeline expr='" << expr << "', wE=" << wE << ", wF=" << wF << endl;	
+			Operator* tg = new FPPipeline(target, expr, wE, wF);
+			addOperator(tg);
 		}
 
 #endif

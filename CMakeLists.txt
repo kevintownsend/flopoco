@@ -231,6 +231,8 @@ ADD_EXECUTABLE(flopoco
  src/PolyTableGenerator
  src/PiecewiseFunction
  
+ src/FPPipeline
+
  src/Wrapper
  src/TestBench 
  #src/BigTestBench
