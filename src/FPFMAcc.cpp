@@ -62,8 +62,12 @@ namespace flopoco{
 		syncCycleFromSignal("rmult");
 		
 		//minimize mux size: fp format is [exc][sign][exp][frac]. 0 is represented 00 0
-		vhdl << tab << declare("addOperandExcSign",3) << " <= "<<zg(3,0)<<" when S='0' else accOut"<<range(wE+wF+2,wE+wF)<<";"<<endl;
-		vhdl << tab << declare("addOperand", wE+wF+3) << " <= addOperandExcSign & accOut"<<range(wE+wF-1, 0)<<";"<<endl;
+//		vhdl << tab << declare("addOperandExcSign",3) << " <= "<<zg(3,0)<<" when S='0' else accOut"<<range(wE+wF+2,wE+wF)<<";"<<endl;
+//		vhdl << tab << declare("addOperand", wE+wF+3) << " <= addOperandExcSign & accOut"<<range(wE+wF-1, 0)<<";"<<endl;
+
+		vhdl << tab << declare("addOperand", wE+wF+3) << " <= "<<zg( wE+wF+3,0)<<" when S='0' else accOut;"<<endl;
+
+
 		nextCycle();
 		
 		FPAdderSinglePath *fas = new FPAdderSinglePath(target, wE, wF, wE, wF, wE, wF);
