@@ -481,7 +481,12 @@ public:
 	  */
 	Signal* getSignalByName(string s);
 
+	vector<Signal*> getSignalList(){
+		return signalList_;
+	};
 
+	bool isSignalDeclared(string name);
+		
 
 
 
@@ -665,14 +670,17 @@ public:
 	}
 
 	int level; //printing issues
+	
+	
+	
 
 protected:    
 	Target*             target_;          /**< The target on which the operator will be deployed */
 	string              uniqueName_;      /**< By default, a name derived from the operator class and the parameters */
-	vector<Signal*>     ioList_;          /**< The list of I/O signals of the operator */
 	vector<Signal*>     testCaseSignals_; /**< The list of pointers to the signals in a test case entry. Its size also gives the dimension of a test case */
-	vector<Signal*>     signalList_;      /**< The list of internal signals of the operator */
 	map<string, Operator*> subComponents_;/**< The list of sub-components */
+	vector<Signal*>     signalList_;      /**< The list of internal signals of the operator */
+	vector<Signal*>     ioList_;          /**< The list of I/O signals of the operator */
 	map<string, string> portMap_;         /**< Port map for an instance of this operator */
 	map<string, double> outDelayMap;      /**< Slack delays on the outputs */
 	map<string, double> inputDelayMap;       /**< Slack delays on the inputs */

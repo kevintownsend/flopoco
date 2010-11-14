@@ -33,7 +33,7 @@ namespace flopoco{
 		Operator(target, inputDelays), wIn_(wIn), inputDelays_(inputDelays)
 	{
 		ostringstream name;
-		name << "IntSquarer_" << wIn_;
+		name << "IntSquarer_" << wIn_ << "_uid"<<getNewUId();
 		setName(name.str());
 		setCopyrightString("Bogdan Pasca (2009)");
 

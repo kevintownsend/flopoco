@@ -38,7 +38,7 @@ namespace flopoco{
 		Operator(target), wE_(wE), wFX_(wFX), wFR_(wFR){
 
 		ostringstream name;
-		name<<"FPSquarer_"<<wE_<<"_"<<wFX_<<"_"<<wFR_; 
+		name<<"FPSquarer_"<<wE_<<"_"<<wFX_<<"_"<<wFR_<<"_uid"<<getNewUId(); 
 		setName(name.str());
 		setCopyrightString("Bogdan Pasca (2009)");
 	

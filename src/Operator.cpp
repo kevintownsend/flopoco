@@ -146,6 +146,13 @@ namespace flopoco{
 		return signalMap_[name];
 	}
 	
+	bool Operator::isSignalDeclared(string name){
+		ostringstream e;
+		if(signalMap_.find(name) ==  signalMap_.end()) {
+			return false;
+		}
+		return true;
+	}
 	
 	void Operator::setName(std::string prefix, std::string postfix){
 		ostringstream pr, po;
