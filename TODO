@@ -1,13 +1,21 @@
 TODO file for FloPoCo
 
+Testbench
+* Bug on outputs that are bits with isBus false and  multiple-valued  
+	(see the P output of Collision in release 2.1.0)
+* Multiple valued outputs should always be intervals, shouldn't they?
+
+
 Pipeline framework, Operator and Targets:
 * add FPU object and remove all global variables, to enable library build
 * add semantic support of fixed-point to Signal
 
+Collision
+* manage infinities etc
+* decompose into FPSumOf3Squares and Collision
 
 FunctionEvaluator
 * Cache polynomials
-* Cleaning up and class renaming
 
 FPAdder
 * several optimization opportunities, see the TODO inside FPAdder.cpp
