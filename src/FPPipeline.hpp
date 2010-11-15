@@ -149,7 +149,7 @@ namespace flopoco{
 				cout << "Generating VHDL ... " << endl;
 				
 				if (node->inputNode()){
-					cout << "Input node detected " << endl;
+// 					cout << "Input node detected " << endl;
 					//we start at cycle 0, for now
 					setCycle(0);
 					//check if inputs are already declared. if not declare the inputs
@@ -159,7 +159,6 @@ namespace flopoco{
 							addFPInput(node->inNodesNames[i], wE, wF);
 						}
 					}
-					
 				}else{
 					for (unsigned i=0; i< node->inNodes.size(); i++){
 						generateVHDL(node->inNodes[i], false);
@@ -167,6 +166,7 @@ namespace flopoco{
 					//sync with all inputs. 
 					for (unsigned i=0; i< node->inNodes.size(); i++)
 						syncCycleFromSignal(node->inNodes[i]->oName);
+					nextCycle();
 				}
 				
 				if (node->outputNode)
@@ -215,6 +215,7 @@ namespace flopoco{
 				
 				if (node->outputNode){
 					syncCycleFromSignal(node->oName);
+					nextCycle();
  					vhdl << tab << node->oNameReal << " <= " << node->oName << ";" << endl;
 				}
 				
