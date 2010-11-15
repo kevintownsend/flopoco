@@ -321,7 +321,7 @@ static void usage(char *name){
 #endif
 #endif // HAVE_LNS
 	cerr << "    ____________ APPLICATIONS __________________________________________________\n";
-	OP("Collision","wE wF opt n");;
+	OP("Collision","wE wF opt");;
 	cerr << "       A collision detection operator, computes the predicate X²+Y²+Z²<R2\n";
 	cerr << "       opt: assemble FP operators if 0, optimized architecture if 1 \n";
 
