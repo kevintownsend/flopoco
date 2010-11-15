@@ -188,7 +188,7 @@ namespace flopoco{
 		
 			//---------------------------------------------------------------------
 			// Now recompute our two shift values -- they were already computed at cycle 0 but it is cheaper this way, otherwise we have to register, negate and mux them.
-			manageCriticalPath(  target->adderDelay(wE) );
+			manageCriticalPath(  target->adderDelay(wE-1) );
 
 			vhdl << tab << declare("fullShiftValB", wE) << " <=  (EA" << range(wE-2,0) << " - EB" << range(wE-2,0) << ") & '0' ; -- positive result, no overflow " << endl;
 			vhdl << tab << declare("fullShiftValC", wE) << " <=  (EA" << range(wE-2,0) << " - EC" << range(wE-2,0) << ") & '0' ; -- positive result, no overflow " << endl;
