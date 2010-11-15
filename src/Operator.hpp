@@ -264,9 +264,10 @@ public:
 	 * @param op is a pointer to the subcomponent
 	 * @param componentPortName is the name of the port on the component
 	 * @param actualSignalName is the name of the signal in This mapped to this port
+	 * @param newSignal_ (by default true), defined wheter or not actualSignalName has to be declared as a new signal by outPortMap
 	 * @return name
 	 */
-	void outPortMap(Operator* op, string componentPortName, string actualSignalName);
+	void outPortMap(Operator* op, string componentPortName, string actualSignalName, bool newSignal = true);
 
 
 	/** use a signal as input of a subcomponent
@@ -303,6 +304,13 @@ public:
 	void useHardRAM(Operator* t); 
 	void useSoftRAM(Operator* t); 
 
+	/** define architecture name for this operator (by default : arch)
+	 *	@param[in] 	architectureName		- new name for the operator architecture
+	 **/
+	void setArchitectureName(string architectureName) {
+		architectureName_ = architectureName;
+	};	
+
 
 	/**
 	 * A new architecture inline function
@@ -310,7 +318,7 @@ public:
 	 * @param[in]     name	- the name of the entity corresponding to this architecture
 	 **/
 	inline void newArchitecture(std::ostream& o, std::string name){
-		o << "architecture arch of " << name  << " is" << endl;
+		o << "architecture " << architectureName_ << " of " << name  << " is" << endl;
 	}
 	
 	/**
@@ -672,11 +680,11 @@ public:
 	int level; //printing issues
 	
 	
-	
 
 protected:    
 	Target*             target_;          /**< The target on which the operator will be deployed */
 	string              uniqueName_;      /**< By default, a name derived from the operator class and the parameters */
+	string 				architectureName_;	/**< Name of the operator architecture */
 	vector<Signal*>     testCaseSignals_; /**< The list of pointers to the signals in a test case entry. Its size also gives the dimension of a test case */
 	map<string, Operator*> subComponents_;/**< The list of sub-components */
 	vector<Signal*>     signalList_;      /**< The list of internal signals of the operator */

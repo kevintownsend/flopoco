@@ -34,6 +34,7 @@ namespace flopoco{
 		inputDelayMap               = inputDelays;
 		hardOperator_               = hardOperator; 
 		myuid                       = getNewUId();
+		architectureName_			= "arch";
 		
 		if (target_->isPipelined())
 			setSequential();
@@ -698,13 +699,13 @@ namespace flopoco{
 	
 	#endif
 	
-	void Operator::outPortMap(Operator* op, string componentPortName, string actualSignalName){
+	void Operator::outPortMap(Operator* op, string componentPortName, string actualSignalName, bool newSignal){
 		Signal* formal;
 		Signal* s;
 		ostringstream e;
 		e << srcFileName << " (" << uniqueName_ << "): ERROR in outPortMap() for entity " << op->getName()  << ", "; // just in case
 		// check the signals doesn't already exist
-		if(signalMap_.find(actualSignalName) !=  signalMap_.end()) {
+		if(signalMap_.find(actualSignalName) !=  signalMap_.end() && newSignal) {
 			e << "signal " << actualSignalName << " already exists";
 			throw e.str();
 		}
@@ -720,21 +721,22 @@ namespace flopoco{
 			<< " doesn't seem to be an output port";
 			throw e.str();
 		}
-		int width = formal -> width();
-		bool isbus = formal -> isBus();
-		// construct the signal (lifeSpan and cycle are reset to 0 by the constructor)
-		s = new Signal(actualSignalName, Signal::wire, width, isbus);
-		// define its cycle 
-		if(isSequential())
-			s->setCycle( this->currentCycle_ + op->getPipelineDepth() );
+		if (newSignal) {
+			int width = formal -> width();
+			bool isbus = formal -> isBus();
+			// construct the signal (lifeSpan and cycle are reset to 0 by the constructor)
+			s = new Signal(actualSignalName, Signal::wire, width, isbus);
+			// define its cycle 
+			if(isSequential())
+				s->setCycle( this->currentCycle_ + op->getPipelineDepth() );
 		
-		// add this signal to the declare table
-		declareTable[actualSignalName] = s->getCycle();
-		
-		// add the signal to signalMap and signalList
-		signalList_.push_back(s);    
-		signalMap_[actualSignalName] = s ;
-		
+			// add this signal to the declare table
+			declareTable[actualSignalName] = s->getCycle();
+			
+			// add the signal to signalMap and signalList
+			signalList_.push_back(s);    
+			signalMap_[actualSignalName] = s ;
+		};
 		// add the mapping to the mapping list of Op
 		op->portMap_[componentPortName] = actualSignalName;
 	}
