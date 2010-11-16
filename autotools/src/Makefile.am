@@ -19,7 +19,7 @@ noinst_HEADERS = apps/Collision.hpp \
         DotProduct.hpp FPFMAcc.hpp DualTable.hpp DualTable2.hpp Fix2FP.hpp FlopocoStream.hpp FPAdder.hpp FPAdderSinglePath.hpp FPDiv.hpp FPExp.hpp FPLog.hpp FPMultiplier.hpp FPNumber.hpp \
 	FPSqrt.hpp FPSqrtPoly.hpp FPSquarer.hpp FunctionEvaluator.hpp HOTBM.hpp IEEENumber.hpp InputIEEE.hpp IntAdder.hpp IntAdderClassical.hpp IntAdderAlternative.hpp IntAdderShortLatency.hpp IntCompressorTree.hpp IntDualSub.hpp IntKaratsuba.hpp IntMultiplier.hpp \
 	IntNAdder.hpp IntSquarer.hpp IntTilingMult.hpp IntTruncMultiplier.hpp LongAcc2FP.hpp LongAcc.hpp LongIntAdder.hpp LongIntAdderCmpCmpAdd.hpp LongIntAdderCmpAddAdd.hpp LZOC.hpp LZOCShifterSticky.hpp Operator.hpp OutputIEEE.hpp PolynomialEvaluator.hpp \
-	Shifters.hpp Signal.hpp SignedIntMultiplier.hpp TableGenerator.hpp Table.hpp Target.hpp TestBench.hpp TestCase.hpp UserDefinedOperator.hpp utils.hpp VHDLLexer.hpp Wrapper.hpp 
+	Shifters.hpp Signal.hpp SignedIntMultiplier.hpp PolyTableGenerator.hpp PiecewiseFunction.hh Table.hpp Target.hpp TestBench.hpp TestCase.hpp UserDefinedOperator.hpp utils.hpp VHDLLexer.hpp Wrapper.hpp 
 
 libflopoco_la_SOURCES = VHDLLexer.lpp \
 			utils.cpp \
@@ -92,8 +92,9 @@ libflopoco_la_SOURCES = VHDLLexer.lpp \
 if no_WIN32
 libflopoco_la_SOURCES += ConstMult/CRFPConstMult.cpp ConstMult/FixRealKCM.cpp\
 			PolynomialEvaluator.cpp \
-			TableGenerator.cpp \
-			PiecewiseFunction.cpp \
+			PolyTableGenerator.cpp \
+			PiecewiseFunction.cc \
+			FPPipeline.cpp \
 			FunctionEvaluator.cpp \
 			UtilSollya.cc
 endif
