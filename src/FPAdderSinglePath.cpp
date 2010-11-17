@@ -81,8 +81,28 @@ FPAdderSinglePath::FPAdderSinglePath(Target* target, int wEX, int wFX, int wEY, 
 		
 		
 		setCriticalPath(getMaxInputDelays(inputDelays));
-		manageCriticalPath(target->localWireDelay() + target->adderDelay(wE)); //comparator delay implemented for now as adder
-		vhdl<< tab << declare("noswap")       << " <= '1' when excExpFracX >= excExpFracY else '0';"<<endl;
+		
+		if (wF < 30){
+			manageCriticalPath(target->localWireDelay() + target->adderDelay(wE)); //comparator delay implemented for now as adder
+			vhdl<< tab << declare("noswap")       << " <= '1' when excExpFracX >= excExpFracY else '0';"<<endl;
+		}else{
+			IntAdder *cmpAdder = new IntAdder(target, wE+wF+2+1);
+			oplist.push_back(cmpAdder);
+			
+			vhdl << tab << declare("addCmpOp1",wE+wF+2+1) << "<= " << zg(1,0) << " & excExpFracX;"<<endl;
+			vhdl << tab << declare("addCmpOp2",wE+wF+2+1) << "<= " << og(1,0) << " & not(excExpFracY);"<<endl;
+			
+			inPortMap(cmpAdder, "X", "addCmpOp1");
+			inPortMap(cmpAdder, "Y", "addCmpOp2");
+			inPortMapCst(cmpAdder, "Cin", "'1'");
+			outPortMap (cmpAdder, "R", "cmpRes");
+			
+			vhdl << instance(cmpAdder, "cmpAdder") << endl;
+			syncCycleFromSignal("cmpRes");
+			setCriticalPath( cmpAdder->getOutputDelay("R") );
+			vhdl<< tab << declare("noswap")       << " <= not(cmpRes"<<of(wE+wF+2)<<");"<<endl;
+		}
+		
 		double cpswap = getCriticalPath();
 		
 		manageCriticalPath(target->localWireDelay() + target->lutDelay());

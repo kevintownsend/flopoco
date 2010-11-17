@@ -36,7 +36,7 @@ namespace flopoco{
 
 	extern vector<Operator*> oplist;
 
-	FPFMAcc::FPFMAcc(Target* target, int wE, int wF):
+	FPFMAcc::FPFMAcc(Target* target, int wE, int wF, int adderLatency):
 		Operator(target), wE(wE), wF(wF) {
 		srcFileName="FPFMAcc1";
 		ostringstream name;
@@ -78,6 +78,15 @@ namespace flopoco{
 		outPortMap  (fas, "R", "racc");
 		vhdl << tab << instance( fas, "FloatingPointAccumulators") << endl;
 		syncCycleFromSignal("racc");
+		
+		if (adderLatency > 0){
+			if (fas->getPipelineDepth()<=adderLatency){
+				setCycle( getCycleFromSignal("racc") + adderLatency - fas->getPipelineDepth());
+			}else{
+				cout << "WARNING: adder delay " << fas->getPipelineDepth() << " is larger than the requested adder delay" << adderLatency << endl;
+			}
+		}
+		
 		nextCycle(); //register output for now
 		vhdl << tab << declare("accOut", wE+wF+3) << " <= racc;" << endl; 
 

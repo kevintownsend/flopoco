@@ -27,7 +27,7 @@ namespace flopoco{
 		 * @param[in]		wER			the the with of the exponent for the multiplication result
 		 * @param[in]		wFR			the the with of the fraction for the multiplication result
 		 **/
-		FPMultiplier(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, int wFR, int norm);
+		FPMultiplier(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, int wFR, int norm = 1);
 
 		/**
 		 * FPMultiplier destructor

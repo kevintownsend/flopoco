@@ -6,7 +6,8 @@
 #include <mpfr.h>
 #include <gmpxx.h>
 #include <cstdlib>
-
+#include <iostream>
+#include <fstream>
 
 #include "FPAdder.hpp"
 #include "FPAdderSinglePath.hpp"
@@ -16,6 +17,8 @@
 #include "FPSqrt.hpp"
 #include "FPExp.hpp"
 #include "FPLog.hpp"
+#include "FPSqrtPoly.hpp"
+#include "FPSqrt.hpp"
 
 #include "Operator.hpp"
 // #include "HOTBM/sollya.h"	// Do NOT use libsollya from user's environment
@@ -33,6 +36,7 @@ namespace flopoco{
 		class FPNode {
 			public: 
 				typedef enum {
+					input,
 					adder, 
 					subtracter,
 					multiplier,
@@ -47,7 +51,7 @@ namespace flopoco{
 						inNodes.push_back(argInNodes[i]);
 						inNodesNames.push_back(argInNodes[i]->oName);
 					}	
-					
+
 					if (argOName=="")
 						oName = setNodeName();
 					else
@@ -59,6 +63,14 @@ namespace flopoco{
 						oNameReal = oName;
 						oName = "tmp_"+u.str()+oName;
 					}
+					
+					if (fop==input){
+						vinputNode = true;
+						oName = argInNodes[0]->oName;
+					}else{
+						vinputNode = false;
+					}
+
 					
 				};
 				
@@ -78,6 +90,13 @@ namespace flopoco{
 						oNameReal = oName;
 						oName = "tmp_"+u.str()+oName;
 					}
+
+					if (fop==input){
+						vinputNode = true;
+						oName = argInNodesNames[0];
+					}else {
+						vinputNode = false;
+					}
 				};
 				
 				string setNodeName(){
@@ -96,11 +115,12 @@ namespace flopoco{
 				};
 				
 				bool inputNode(){
-					return ( inNodes.size()==0?true:false);
+					return ( inNodes.size()==0?true:false) or (vinputNode);
 				}
 				
 				
 				FPOperators fun;
+				bool vinputNode;
 				string inName[2];
 				string oName;
 				string oNameReal;
@@ -121,8 +141,9 @@ namespace flopoco{
 			~FPPipeline();
 			
 			void printTree(FPNode *node){
+//				cout << "entering printing function" << endl;
 				if (node->inputNode()){
-					cout << node->oName << "=operation"<<node->fun<<"(";
+					cout << node->oName << "=InputOperation"<<node->fun<<"(";
 					for (unsigned i=0; i<node->inNodesNames.size(); i++){
 						cout << node->inNodesNames[i];
 						if (i<node->inNodesNames.size()-1)
@@ -166,7 +187,14 @@ namespace flopoco{
 					//sync with all inputs. 
 					for (unsigned i=0; i< node->inNodes.size(); i++)
 						syncCycleFromSignal(node->inNodes[i]->oName);
-					nextCycle();
+					
+					bool nodesAreInputs = true;
+					for (unsigned i=0; i< node->inNodes.size(); i++)
+						if (!node->inNodes[i]->inputNode()) 
+							nodesAreInputs = false;
+
+					if (!nodesAreInputs)
+						nextCycle();
 				}
 				
 				if (node->outputNode)
@@ -177,6 +205,10 @@ namespace flopoco{
 				//let's instantiate the proper operator
 
 				switch (node->fun) {
+
+					case FPNode::input:{ 
+						break;
+					}
 					
 					case FPNode::adder:{ 
 						cout << " instance adder. Oplistsize =" <<oplist.size() << endl;
@@ -193,6 +225,23 @@ namespace flopoco{
 						vhdl << instance(op1, tmp.str())<<endl;
 						break;
 					}
+
+					case FPNode::multiplier:{ 
+						cout << " instance adder. Oplistsize =" <<oplist.size() << endl;
+						
+						op1 = new FPMultiplier(target_, wE, wF, wE, wF, wE, wF);
+						oplist.push_back(op1);
+
+						inPortMap( op1, "X", node->inNodesNames[0]);
+						inPortMap( op1, "Y", node->inNodesNames[1]);
+						outPortMap( op1, "R", node->oName);
+						
+						ostringstream tmp;
+						tmp << "multiplier" << getNewUId();
+						vhdl << instance(op1, tmp.str())<<endl;
+						break;
+					}
+
 					case FPNode::sqr:{
 						cout << " instance squarer Oplistsize =" <<oplist.size()<<endl;
 						op1 = new FPSquarer(target_, wE, wF, wF);
@@ -207,6 +256,26 @@ namespace flopoco{
 						cout << "    generated squarer instance" << endl;
 						break;
 					}
+					case FPNode::sqrt:{
+						cout << " instance sqrt Oplistsize =" <<oplist.size()<<endl;
+#ifdef ha
+						int degree = int ( floor ( double(wF) / 10.0) );
+						op1 = new FPSqrtPoly(target_, wE, wF, 0, degree);
+#else
+						op1 = new FPSqrt(target_, wE, wF);//, 1, degree);
+#endif
+						oplist.push_back(op1);
+						
+						inPortMap( op1, "X", node->inNodesNames[0]);
+						outPortMap( op1, "R", node->oName);
+						
+						ostringstream tmp;
+						tmp << "squarer" << getNewUId();
+						vhdl << instance(op1, tmp.str())<<endl;
+						cout << "    generated square root instance" << endl;
+						break;
+					}
+
 					default:{
 						cout << "nothing else implemented yet" << endl;
 						exit(-1);

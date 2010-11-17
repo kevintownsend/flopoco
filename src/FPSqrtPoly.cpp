@@ -159,7 +159,7 @@ namespace flopoco{
 			//FIXME for now we instantiate an int Multiplier, but we can do better
 
 #ifdef LESS_DSPS		
-			if ((correctRounding)&&(false)){
+				if ((correctRounding)&&(false)){
 #else
 				if (correctRounding){
 #endif
@@ -224,10 +224,7 @@ namespace flopoco{
 					vhdl << tab << "R <= exnR & excsX(0) & finalExp & finalFrac;" << endl; 
 				}
 
-
-
-
-				}else{
+		}else{
 #endif // KEEP_HANDCRAFTER_VERSION
 
 

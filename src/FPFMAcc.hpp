@@ -1,3 +1,4 @@
+
 #ifndef FPFMACC_HPP
 #define FPFMACC_HPP
 #include <vector>
@@ -25,7 +26,7 @@ namespace flopoco{
 		 * @param[in]		wE       the width of the exponent for the inputs X and Y
 		 * @param[in]		wF      the width of the fraction for the input X
 		 **/ 
-		FPFMAcc(Target* target, int wE, int wF);
+		FPFMAcc(Target* target, int wE, int wF, int adderLatency = -1);
 
 		/**
 		 * FPFMAcc destructor

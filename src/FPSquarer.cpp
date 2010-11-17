@@ -100,6 +100,8 @@ namespace flopoco{
 			vhdl << tab << "R <= excR &  \"0\"  & extExp" << range(wE-1, 0) << " & finalFrac;" << endl;
 		}else{
 			//rounding will be needed
+			setCriticalPath(0.0);
+			manageCriticalPath( target->localWireDelay() + target->comparatorConstDelay(2*(wFX+1)-(wFR+3)));
 			vhdl << tab << declare("sticky",1) << "<='0' when sqrFrac" << range( 2*(wFX+1)-(wFR+3)-1,0)<<"="<<zg(2*(wFX+1)-(wFR+3),0) << "else '1';"<<endl;
 			vhdl << tab << declare("guard",1) << " <= sqrFrac" << of(2*(wFX+1)-(wFR+3))<<" when sqrFrac" << of(2*(wFX+1)-1)<<"='0' else " 
 				 << "sqrFrac" << of(2*(wFX+1)-(wFR+3)+1) << ";"<< endl;
@@ -112,7 +114,7 @@ namespace flopoco{
 			vhdl << tab << tab << "sqrFrac" << range(2*(wFX_+1)-3,2*(wFX_+1)-3+1-wFR) << ";" << endl;
 	    
 			//the rounding phase
-			IntAdder* add = new IntAdder(target, wE+2 + wFR);
+			IntAdder* add = new IntAdder(target, wE+2 + wFR, inDelayMap("X", target->localWireDelay() + getCriticalPath()));
 			oplist.push_back(add); 
 		
 			vhdl << tab << declare("concatExpFrac", wE+2 + wFR) << " <= extExp & finalFrac;" << endl;
@@ -125,13 +127,13 @@ namespace flopoco{
 			vhdl << instance (add, "Rounding_Instance");
 
 			syncCycleFromSignal("postRound");	
+			setCriticalPath(add->getOutputDelay("R"));
 
 
-		
-			vhdl << tab << declare ("excConcat",4) << " <= exc & postRound" << range(wE+2 + 
-	    
-	    
-																																				 wFR-1,wE+2 + wFR-2) << ";" <<endl;
+			
+			vhdl << tab << declare ("excConcat",4) << " <= exc & postRound" << range(wE+2 + wFR-1,wE+2 + wFR-2) << ";" <<endl;
+			
+			manageCriticalPath(target->localWireDelay() + target->lutDelay());
 			//exception bits
 			vhdl << tab << "with excConcat select " << endl;
 			vhdl << tab << declare("excR",2) << "<=""\"00\" when \"0000\"," << endl;
