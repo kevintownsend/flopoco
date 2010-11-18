@@ -38,9 +38,14 @@ namespace flopoco{
         /** Initialization of FloPoCoRandomState state */
         gmp_randstate_t FloPoCoRandomState::m_state;
 
-        void FloPoCoRandomState::init(int n) {
-          gmp_randinit_mt(m_state);
-          gmp_randseed_ui(m_state,n);
+		bool FloPoCoRandomState::isInit_ = false;
+
+        void FloPoCoRandomState::init(int n, bool force) {
+			// if isInit_ is set, we do not initialize the random state again
+			if (isInit_ && !force) return;
+			gmp_randinit_mt(m_state);
+			gmp_randseed_ui(m_state,n);
+			isInit_ = true;
         };
 
         //gmp_randstate_t* FloPoCoRandomState::getState() { return m_state;};

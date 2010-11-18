@@ -27,18 +27,27 @@ namespace flopoco{
          * between calls to getLargeRandom function
          */
         class FloPoCoRandomState {
+			private:
+				/** the function init could be called from several places, to avoid
+				 *	multiple initialization this variable will be set to true on 
+				 * 	the first call to init, and then will trigger a quick return of init
+				 * 	without a new complete initialization of the random state
+				**/
+				static bool isInit_;
           public:
             /**
              * public value to store currend gmp random state
              */
             static gmp_randstate_t m_state;
 
+
             /**
              * static public function to initialize random generator
              * with a seed base on the integer n
              * @param n the integer used to generate the seed
+			 * @param force  if set will not consider the isInit_ flag
              */
-            static void init(int n);
+            static void init(int n, bool force = true);
         };
 
 	/** Returns under the form of a string of given size, the unsigned binary representation of an integer.
