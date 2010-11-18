@@ -96,7 +96,7 @@ namespace flopoco{
 
                 if (fromFile) generateTestFromFile();
                 else generateTestInVhdl();
-        }
+	}
 
 
 
@@ -105,152 +105,151 @@ namespace flopoco{
 
 
 
-        /* Generating the tests using a file to store the IO, allow to have a lot of IOs without
-         * increasing the VHDL compilation time
-         */ 
-        void TestBench::generateTestFromFile() {
-                // we reordonate the Signal in order to put all the output 
-                // TODO :could be clean by using two list, directly retrieved from the operator
-                vector<Signal*> inputSignalVector;
-                vector<Signal*> outputSignalVector;
+	/* Generating the tests using a file to store the IO, allow to have a lot of IOs without
+	 * increasing the VHDL compilation time
+	 */ 
+	void TestBench::generateTestFromFile() {
+		// we reordonate the Signal in order to put all the output 
+		// TODO :could be clean by using two list, directly retrieved from the operator
+		vector<Signal*> inputSignalVector;
+		vector<Signal*> outputSignalVector;
+
 		for(int i=0; i < op_->getIOListSize(); i++){
 			Signal* s = op_->getIOListSignal(i);
-                        if (s->type() == Signal::out) outputSignalVector.push_back(s);
-                        else if (s->type() == Signal::in) inputSignalVector.push_back(s);
-                };
+			if (s->type() == Signal::out) outputSignalVector.push_back(s);
+			else if (s->type() == Signal::in) inputSignalVector.push_back(s);
+		};
 
-                // decleration of test time
+		// decleration of test time
 		int currentOutputTime = 0;
 
-                // In order to generate the file containing inputs and expected output in a correct order
-                // we will store the use order for file decompression
-                list<string> IOorderInput;
-                list<string> IOorderOutput;
+		// In order to generate the file containing inputs and expected output in a correct order
+		// we will store the use order for file decompression
+		list<string> IOorderInput;
+		list<string> IOorderOutput;
 
 
-                vhdl << tab << "-- Reading the input from a file " << endl;
+		vhdl << tab << "-- Reading the input from a file " << endl;
 		vhdl << tab << "process" <<endl;
 
 
-                /* Variable declaration */
-                vhdl << tab << tab << "variable inline : line; " << endl;                    // variable to read a line
-                vhdl << tab << tab << "variable counter : integer := 1;" << endl;
-                vhdl << tab << tab << "variable errorCounter : integer := 0;" << endl;
-                vhdl << tab << tab << "variable possibilityNumber : integer := 0;" << endl;
-                vhdl << tab << tab << "variable localErrorCounter : integer := 0;" << endl;
-                vhdl << tab << tab << "variable tmpChar : character;" << endl;                        // variable to store a character (escape between inputs)
-                vhdl << tab << tab << "file inputsFile : text is \"test.input\"; " << endl; // declaration of the input file
+		/* Variable declaration */
+		vhdl << tab << tab << "variable inline : line; " << endl;                    // variable to read a line
+		vhdl << tab << tab << "variable counter : integer := 1;" << endl;
+		vhdl << tab << tab << "variable errorCounter : integer := 0;" << endl;
+		vhdl << tab << tab << "variable possibilityNumber : integer := 0;" << endl;
+		vhdl << tab << tab << "variable localErrorCounter : integer := 0;" << endl;
+		vhdl << tab << tab << "variable tmpChar : character;" << endl;                        // variable to store a character (escape between inputs)
+		vhdl << tab << tab << "file inputsFile : text is \"test.input\"; " << endl; // declaration of the input file
 
 
-                /* Variable to store value for inputs and expected outputs*/
+		/* Variable to store value for inputs and expected outputs*/
 		for(int i=0; i < op_->getIOListSize(); i++){
 			Signal* s = op_->getIOListSignal(i);
 			vhdl << tab << tab << "variable V_" << s->getName(); 
                                       vhdl << " : bit_vector("<< s->width() - 1 << " downto 0);" << endl;
 		}
 
-                /* Process Beginning */
-                vhdl << tab << "begin" << endl;
+		/* Process Beginning */
+		vhdl << tab << "begin" << endl;
 
-                /* Reset Sending */
+		/* Reset Sending */
 		vhdl << tab << tab << "-- Send reset" <<endl;
 		vhdl << tab << tab << "rst <= '1';" << endl;
 		vhdl << tab << tab << "wait for 10 ns;" << endl;
 		vhdl << tab << tab << "rst <= '0';" << endl;
 
-                /* File Reading */
-                vhdl << tab << tab << "while not endfile(inputsFile) loop" << endl;
-                vhdl << tab << tab << tab << " -- positionning inputs" << endl;
+		/* File Reading */
+		vhdl << tab << tab << "while not endfile(inputsFile) loop" << endl;
+		vhdl << tab << tab << tab << " -- positionning inputs" << endl;
 
-                /* All inputs and the corresponding expected outputs will be on the same line
-                 * so we begin by reading this line, once and for all (once by test) */
-                vhdl << tab << tab << tab << "readline(inputsFile,inline);" << endl;
+		/* All inputs and the corresponding expected outputs will be on the same line
+		 * so we begin by reading this line, once and for all (once by test) */
+		vhdl << tab << tab << tab << "readline(inputsFile,inline);" << endl;
 
-                // input reading and forwarding to the operator
+		// input reading and forwarding to the operator
 		for(unsigned int i=0; i < inputSignalVector.size(); i++){
 			Signal* s = inputSignalVector[i];
-                        vhdl << tab << tab << tab << "read(inline ,V_"<< s->getName() << ");" << endl;
-                        vhdl << tab << tab << tab << "read(inline,tmpChar);" << endl; // we consume the character between each inputs
+			vhdl << tab << tab << tab << "read(inline ,V_"<< s->getName() << ");" << endl;
+			vhdl << tab << tab << tab << "read(inline,tmpChar);" << endl; // we consume the character between each inputs
 			if (s->width() == 1 and !s->isBus()) vhdl << tab << tab << tab << s->getName() << " <= to_stdlogicvector(V_" << s->getName() << ")(0);" << endl;
 			else vhdl << tab << tab << tab << s->getName() << " <= to_stdlogicvector(V_" << s->getName() << ");" << endl;
-                        // adding the IO to IOorder
-                        IOorderInput.push_back(s->getName());
+			// adding the IO to IOorder
+			IOorderInput.push_back(s->getName());
 		}
-                vhdl << tab << tab << tab << "readline(inputsFile,inline);" << endl;  // it consume output line
+		vhdl << tab << tab << tab << "readline(inputsFile,inline);" << endl;  // it consume output line
 		vhdl << tab << tab << tab << "wait for 10 ns;" << endl; // let 10 ns between each input
 		vhdl << tab << tab << "end loop;" << endl;
 		vhdl << tab << tab << "wait for 10000 ns; -- wait for simulation to finish" << endl; // TODO : tune correctly with pipeline depth
 		vhdl << tab << "end process;" << endl;
 
-                /**
-                 * Declaration of a waiting time between sending the input and comparing
-                 * the result with the output
-                 * in case of a pipelined operator we have to wait the complete latency of all the operator
-                 * that means all the pipeline stages each step
-                 * TODO : entrelaced the inputs / outputs in order to avoid this wait
-                 */
-                vhdl << tab << tab << tab << " -- verifying the corresponding output" << endl;
+		/**
+		 * Declaration of a waiting time between sending the input and comparing
+		 * the result with the output
+		 * in case of a pipelined operator we have to wait the complete latency of all the operator
+		 * that means all the pipeline stages each step
+		 * TODO : entrelaced the inputs / outputs in order to avoid this wait
+		 */
+		vhdl << tab << tab << tab << " -- verifying the corresponding output" << endl;
 		vhdl << tab << tab << tab << "process" << endl;
-                /* Variable declaration */
-                vhdl << tab << tab << "variable inline : line; " << endl;                    // variable to read a line
-                vhdl << tab << tab << "variable inline0 : line; " << endl;                    // variable to read a line
-                vhdl << tab << tab << "variable counter : integer := 1;" << endl;
-                vhdl << tab << tab << "variable errorCounter : integer := 0;" << endl;
-                vhdl << tab << tab << "variable possibilityNumber : integer := 0;" << endl;
-                vhdl << tab << tab << "variable localErrorCounter : integer := 0;" << endl;
-                vhdl << tab << tab << "variable tmpChar : character;" << endl;                        // variable to store a character (escape between inputs)
+		/* Variable declaration */
+		vhdl << tab << tab << "variable inline : line; " << endl;                    // variable to read a line
+		vhdl << tab << tab << "variable inline0 : line; " << endl;                    // variable to read a line
+		vhdl << tab << tab << "variable counter : integer := 1;" << endl;
+		vhdl << tab << tab << "variable errorCounter : integer := 0;" << endl;
+		vhdl << tab << tab << "variable possibilityNumber : integer := 0;" << endl;
+		vhdl << tab << tab << "variable localErrorCounter : integer := 0;" << endl;
+		vhdl << tab << tab << "variable tmpChar : character;" << endl;                        // variable to store a character (escape between inputs)
 		//vhdl << tab << tab << "variable tmpString : string;" << endl;
-                vhdl << tab << tab << "file inputsFile : text is \"test.input\"; " << endl; // declaration of the input file
+		vhdl << tab << tab << "file inputsFile : text is \"test.input\"; " << endl; // declaration of the input file
+		
+		
+		/* Variable to store value for inputs and expected outputs*/
+		for(int i=0; i < op_->getIOListSize(); i++){
+			Signal* s = op_->getIOListSignal(i);
+			vhdl << tab << tab << "variable V_" << s->getName();
+			vhdl << " : bit_vector("<< s->width() - 1 << " downto 0);" << endl;
+        }
 
+		/* Process Beginning */
+		vhdl << tab << "begin" << endl;
 
-                /* Variable to store value for inputs and expected outputs*/
-                for(int i=0; i < op_->getIOListSize(); i++){
-                        Signal* s = op_->getIOListSignal(i);
-                        vhdl << tab << tab << "variable V_" << s->getName();
-                                      vhdl << " : bit_vector("<< s->width() - 1 << " downto 0);" << endl;
-                }
-
-                /* Process Beginning */
-                vhdl << tab << "begin" << endl;
-
-                vhdl << tab << tab << tab << " wait for 10 ns;" << endl; // wait for reset signal to finish
-                currentOutputTime += 10;
+		vhdl << tab << tab << tab << " wait for 10 ns;" << endl; // wait for reset signal to finish
+		currentOutputTime += 10;
 		if (op_->getPipelineDepth() > 0){
-                        vhdl << tab << tab << "wait for "<< op_->getPipelineDepth()*10 <<" ns; -- wait for pipeline to flush" <<endl;
-                        currentOutputTime += op_->getPipelineDepth()*10;
-                }
-                else{
-                        vhdl << tab << tab << "wait for "<< 2 <<" ns; -- wait for pipeline to flush" <<endl;
-                        currentOutputTime += 2;
-                }
+			vhdl << tab << tab << "wait for "<< op_->getPipelineDepth()*10 <<" ns; -- wait for pipeline to flush" <<endl;
+			currentOutputTime += op_->getPipelineDepth()*10;
+		} else {
+			vhdl << tab << tab << "wait for "<< 2 <<" ns; -- wait for pipeline to flush" <<endl;
+			currentOutputTime += 2;
+		};
 
 
-                /* File Reading */
-                vhdl << tab << tab << "while not endfile(inputsFile) loop" << endl;
-                vhdl << tab << tab << tab << " -- positionning inputs" << endl;
+		/* File Reading */
+		vhdl << tab << tab << "while not endfile(inputsFile) loop" << endl;
+		vhdl << tab << tab << tab << " -- positionning inputs" << endl;
 
-                /* All inputs and the corresponding expected outputs will be on the same line
-                 * so we begin by reading this line, once and for all (once by test) */
-                vhdl << tab << tab << tab << "readline(inputsFile,inline0);" << endl; // it consumes input line
-                vhdl << tab << tab << tab << "readline(inputsFile,inline);" << endl;
+		/* All inputs and the corresponding expected outputs will be on the same line
+		 * so we begin by reading this line, once and for all (once by test) */
+		vhdl << tab << tab << tab << "readline(inputsFile,inline0);" << endl; // it consumes input line
+		vhdl << tab << tab << tab << "readline(inputsFile,inline);" << endl;
 
-
-		//Vyvhdl << tab << tab << tab << "wait for "<< op_->getPipelineDepth()*10 <<" ns; -- wait for pipeline to flush" <<endl;
+		// vhdl << tab << tab << tab << "wait for "<< op_->getPipelineDepth()*10 <<" ns; -- wait for pipeline to flush" <<endl;
 		for(unsigned int i=0; i < outputSignalVector.size(); i++){
 			Signal* s = outputSignalVector[i];
-                        vhdl << tab << tab << tab << "read(inline, possibilityNumber);" << endl;
-                        vhdl << tab << tab << tab << "localErrorCounter := 0;" << endl;
-                        vhdl << tab << tab << tab << "read(inline,tmpChar);" << endl; // we consume the character after output list
-		      vhdl << tab << tab << tab << "if possibilityNumber = 0 then" << endl; 
-                        vhdl << tab << tab << tab << tab << "localErrorCounter := 0;" << endl;//read(inline,tmpChar);" << endl; // we consume the character between each outputs
+			vhdl << tab << tab << tab << "read(inline, possibilityNumber);" << endl;
+			vhdl << tab << tab << tab << "localErrorCounter := 0;" << endl;
+			vhdl << tab << tab << tab << "read(inline,tmpChar);" << endl; // we consume the character after output list
+			vhdl << tab << tab << tab << "if possibilityNumber = 0 then" << endl; 
+			vhdl << tab << tab << tab << tab << "localErrorCounter := 0;" << endl;//read(inline,tmpChar);" << endl; // we consume the character between each outputs
 			vhdl << tab << tab << tab << "elsif possibilityNumber = 1 then " << endl;
-                        vhdl << tab << tab << tab << tab << "read(inline ,V_"<< s->getName() << ");" << endl;
+			vhdl << tab << tab << tab << tab << "read(inline ,V_"<< s->getName() << ");" << endl;
 			if (s->isFP()) { 
 			    vhdl << tab << tab << tab << tab << "if not fp_equal(fp"<< s->width() << "'(" << s->getName() << ") ,to_stdlogicvector(V_" <<  s->getName() << ")) then " << endl;
 			    vhdl << tab << tab << tab << tab << tab << " errorCounter := errorCounter + 1;" << endl;
 			    vhdl << tab << tab << tab << tab << tab << "assert false report(\"Incorrect output for " << s->getName() << ", expected value : \" & str(to_stdlogicvector(V_" << s->getName() << ")) & \" , result :  \" & str(" << s->getName() << ")) &  \"|| line : \" & integer'image(counter) & \" of input file \" ;"<< endl;                        
 			    vhdl << tab << tab << tab << tab << "end if;" << endl;
-                        } else if (s->isIEEE()) {                                                                                                                                             
+			} else if (s->isIEEE()) {  
 			    vhdl << tab << tab << tab << tab << "if not fp_equal_ieee(" << s->getName() << " ,to_stdlogicvector(V_" <<  s->getName() << "),"<<s->wE()<<" , "<<s->wF()<<") then " << endl;
 			    vhdl << tab << tab << tab << tab << tab << "assert false report(\"Incorrect output for " << s->getName() << ", expected value : \" & str(to_stdlogicvector(V_" << s-> getName() << ")) & \" , result :  \" & str(" << s->getName()  << ")) &  \"|| line : \" & integer'image(counter) & \" of input file \" ;"<< endl;               
 			    vhdl << tab << tab << tab << tab << tab << " errorCounter := errorCounter + 1; " << endl;                                                                 
@@ -263,129 +262,124 @@ namespace flopoco{
 			};
 
 			vhdl << tab << tab << tab << "else" << endl; 
-                        vhdl << tab << tab << tab << tab << "for i in possibilityNumber downto 1 loop " << endl;
-                        vhdl << tab << tab << tab << tab << tab << "read(inline ,V_"<< s->getName() << ");" << endl;
-                        vhdl << tab << tab << tab << tab << tab << "read(inline,tmpChar);" << endl; // we consume the character between each outputs
-                        if (s->isFP()) {  
-                          vhdl << tab << tab << tab << tab << tab << "if fp_equal(fp"<< s->width() << "'(" << s->getName() << ") ,to_stdlogicvector(V_" <<  s->getName() << ")) " 
-						  << "  then localErrorCounter := 1; end if; " << endl;
-                        } else if (s->isIEEE()) {
-			  vhdl << tab << tab << tab << tab << tab << "if fp_equal_ieee(" << s->getName() << " ,to_stdlogicvector(V_" <<  s->getName() << "),"<<s->wE()<<" , "<<s->wF()<<")"
-                                                    << " then localErrorCounter := 1; end if;" << endl;                                    
-                        } else {
-                           vhdl << tab << tab << tab << tab << tab << "if (" << s->getName() << "= to_stdlogicvector(V_" << s->getName() << ")) " 
-                                                     << " then localErrorCounter := 1; end if;" << endl;
-                        }
-                        vhdl << tab << tab << tab << tab << "end loop;" << endl;
-                        vhdl << tab << tab << tab << tab << " if (localErrorCounter = 0) then " << endl;
+			vhdl << tab << tab << tab << tab << "for i in possibilityNumber downto 1 loop " << endl;
+			vhdl << tab << tab << tab << tab << tab << "read(inline ,V_"<< s->getName() << ");" << endl;
+			vhdl << tab << tab << tab << tab << tab << "read(inline,tmpChar);" << endl; // we consume the character between each outputs
+			if (s->isFP()) {  
+				vhdl << tab << tab << tab << tab << tab << "if fp_equal(fp"<< s->width() << "'(" << s->getName() << ") ,to_stdlogicvector(V_" <<  s->getName() << ")) " << "  then localErrorCounter := 1; end if; " << endl;
+			} else if (s->isIEEE()) {
+				vhdl << tab << tab << tab << tab << tab << "if fp_equal_ieee(" << s->getName() << " ,to_stdlogicvector(V_" <<  s->getName() << "),"<<s->wE()<<" , "<<s->wF()<<")" << " then localErrorCounter := 1; end if;" << endl;                                    
+			} else {
+				vhdl << tab << tab << tab << tab << tab << "if (" << s->getName() << "= to_stdlogicvector(V_" << s->getName() << ")) " << " then localErrorCounter := 1; end if;" << endl;
+			}
+			vhdl << tab << tab << tab << tab << "end loop;" << endl;
+			vhdl << tab << tab << tab << tab << " if (localErrorCounter = 0) then " << endl;
 			vhdl << tab << tab << tab << tab << tab << "errorCounter := errorCounter + 1; -- incrementing global error counter" << endl;
-                        vhdl << tab << tab << tab << tab << tab << "assert false report(\"Incorrect output for " << s->getName() << ", expected value : \" & str(to_stdlogicvector(V_" << s->getName() << ")) & \"... (other values line \" & integer'image(counter) & \" of test.input) , result :  \" & str(" << s->getName() <<") &  \"|| line : \" & integer'image(counter) & \" of input file \") ;"<< endl;  
+			vhdl << tab << tab << tab << tab << tab << "assert false report(\"Incorrect output for " << s->getName() << ", expected value : \" & str(to_stdlogicvector(V_" << s->getName() << ")) & \"... (other values line \" & integer'image(counter) & \" of test.input) , result :  \" & str(" << s->getName() <<") &  \"|| line : \" & integer'image(counter) & \" of input file \") ;"<< endl;  
 			vhdl << tab << tab << tab << tab << "end if;" << endl;
 			vhdl << tab << tab << tab << "end if;" << endl;
 			// TODO add test to increment global error counter
-                        /* adding the IO to the IOorder list */
-                        IOorderOutput.push_back(s->getName());
-                };
-                vhdl << tab << tab << tab << " wait for 10 ns; -- wait for pipeline to flush" << endl;
-                currentOutputTime += 10 * (tcl_.getNumberOfTestCases()+n_); // time for simulation
-                vhdl << tab << tab << tab << "counter := counter + 2;" << endl; // incrementing by 2 because a testcase takes two lines (one for input, one for output)
-                vhdl << tab << tab << "end loop;" << endl;
-                vhdl << tab << tab << "report (integer'image(errorCounter) & \" error(s) encoutered.\");" << endl;
+			/* adding the IO to the IOorder list */
+			IOorderOutput.push_back(s->getName());
+		};
+		vhdl << tab << tab << tab << " wait for 10 ns; -- wait for pipeline to flush" << endl;
+		currentOutputTime += 10 * (tcl_.getNumberOfTestCases()+n_); // time for simulation
+		vhdl << tab << tab << tab << "counter := counter + 2;" << endl; // incrementing by 2 because a testcase takes two lines (one for input, one for output)
+		vhdl << tab << tab << "end loop;" << endl;
+		vhdl << tab << tab << "report (integer'image(errorCounter) & \" error(s) encoutered.\");" << endl;
 		vhdl << tab << tab << "assert false report \"End of simulation\" severity failure;" <<endl;
 		vhdl << tab << "end process;" <<endl;
 
-                /* Setting the computed simulation Time */	
-		simulationTime=currentOutputTime;
+		/* Setting the computed simulation Time */	
+		simulationTime = currentOutputTime;
 
-	        /* Generating a file of inputs */ 
-                // opening a file to write down the output (for text-file based test)
-                // if n < 0 we do not generate a file
-                if (n_ >= 0) {
-                  string inputFileName = "test.input";
-                  ofstream fileOut(inputFileName.c_str(),ios::out);
-                  // if error at opening, let's mention it !
-                  if (!fileOut) cerr << "FloPoCo was not abe to open " << inputFileName << " in order to write down inputs. " << endl;
-	        	for (int i = 0; i < tcl_.getNumberOfTestCases(); i++)	{
-		        	TestCase* tc = tcl_.getTestCase(i);
-                                if (fileOut) fileOut << tc->generateInputString(IOorderInput,IOorderOutput);
-                      } 
-                      // generation on the fly of random test case
-                      for (int i = 0; i < n_; i++) {
-                              TestCase* tc = op_->buildRandomTestCase(i);
-                                if (fileOut) fileOut << tc->generateInputString(IOorderInput,IOorderOutput);
-                              delete tc; 
-                      }; 
+		/* Generating a file of inputs */ 
+		// opening a file to write down the output (for text-file based test)
+		// if n < 0 we do not generate a file
+		if (n_ >= 0) {
+			string inputFileName = "test.input";
+			ofstream fileOut(inputFileName.c_str(),ios::out);
+			// if error at opening, let's mention it !
+			if (!fileOut) cerr << "FloPoCo was not abe to open " << inputFileName << " in order to write down inputs. " << endl;
+			for (int i = 0; i < tcl_.getNumberOfTestCases(); i++)	{
+				TestCase* tc = tcl_.getTestCase(i);
+				if (fileOut) fileOut << tc->generateInputString(IOorderInput,IOorderOutput);
+			} 
+			// generation on the fly of random test case
+			for (int i = 0; i < n_; i++) {
+				TestCase* tc = op_->buildRandomTestCase(i);
+				if (fileOut) fileOut << tc->generateInputString(IOorderInput,IOorderOutput);
+				delete tc; 
+			}; 
 
-                      // closing input file
-                      fileOut.close();
-                };
-
-
-                // exhaustive test IO generation 
-                if(n_ == -2) {
-                  string inputFileName = "test.input";
-                  ofstream fileOut(inputFileName.c_str(),ios::out);
-                  // if error at opening, let's mention it !
-                  if (!fileOut) cerr << "FloPoCo was not able to open " << inputFileName << " in order to write inputs. " << endl;
+			// closing input file
+			fileOut.close();
+		};
 
 
-						REPORT(LIST,"Generating the exhaustive test bench, this may take some time");
-                  // exhaustive test
-                  int length = inputSignalVector.size();
-                  int* IOwidth = new int[length]; 
-                  // getting signal width
-                  for (int i = 0; i < length; i++) IOwidth[i] = inputSignalVector[i]->width(); 
-                  mpz_class* bound = new mpz_class[length];
-                  mpz_class* counters = new mpz_class[length];
-                  int number = 1; 
-                  for (int i = 0; i < length; i++) {
-                    bound[i] = (mpz_class(1) << IOwidth[i]);// * tmp;
-                    counters[i] = 0;
-                    number *= pow(2,IOwidth[i]);
-                  }
-                  // getting signal name
-                  string* IOname = new string[length];
-                  for (int i = 0; i < length; i++) IOname[i] = inputSignalVector[i]->getName();
-                  TestCase* tc;
+		// exhaustive test IO generation 
+		if(n_ == -2) {
+			string inputFileName = "test.input";
+			ofstream fileOut(inputFileName.c_str(),ios::out);
+			// if error at opening, let's mention it !
+			if (!fileOut) cerr << "FloPoCo was not able to open " << inputFileName << " in order to write inputs. " << endl;
 
-                  // simulation time computation
-                  currentOutputTime = 0;
-                  // init
-                  currentOutputTime += 10;
-                  currentOutputTime += 5 * number;
-                  currentOutputTime += op_->getPipelineDepth()*10* number;
-                  currentOutputTime += 5 * number;
-                  simulationTime=currentOutputTime;
+			REPORT(LIST,"Generating the exhaustive test bench, this may take some time");
+			// exhaustive test
+			int length = inputSignalVector.size();
+			int* IOwidth = new int[length]; 
+			// getting signal width
+			for (int i = 0; i < length; i++) IOwidth[i] = inputSignalVector[i]->width(); 
+			mpz_class* bound = new mpz_class[length];
+            mpz_class* counters = new mpz_class[length];
+			int number = 1; 
+			for (int i = 0; i < length; i++) {
+				bound[i] = (mpz_class(1) << IOwidth[i]);// * tmp;
+				counters[i] = 0;
+				number *= pow(2,IOwidth[i]);
+			}
+			// getting signal name
+            string* IOname = new string[length];
+			for (int i = 0; i < length; i++) IOname[i] = inputSignalVector[i]->getName();
+			TestCase* tc;
+			
+			// simulation time computation
+			currentOutputTime = 0;
+            // init
+			currentOutputTime += 10;
+			currentOutputTime += 5 * number;
+			currentOutputTime += op_->getPipelineDepth()*10* number;
+			currentOutputTime += 5 * number;
+            simulationTime=currentOutputTime;
+			
+			  
 
-                    
-
-                  while (true) {
-                    for (int i = 0; i < length-1; i++) {
-                      if (counters[i] >= bound[i]) { 
-                        counters[i] = 0;
-                        counters[i+1] += 1;
-                      } 
-                    }
-                    // if the max counter overflows, break
-                    if (counters[length-1] >= bound[length-1]) break;
-                    // Test Case inputs
-                    tc = new TestCase(op_);
-                    for (int i = 0; i < length; i++) {
-                      tc->addInput(IOname[i],counters[i]);
-                    }
-                    op_->emulate(tc); 
-                    if (fileOut) fileOut << tc->generateInputString(IOorderInput,IOorderOutput);                  
-                  // incrementation
-                  counters[0]++;
-		  delete tc;
-                  }
-                fileOut.close();
-
-                }
-          }
+			while (true) {
+				for (int i = 0; i < length-1; i++) {
+            		if (counters[i] >= bound[i]) { 
+						counters[i] = 0;
+						counters[i+1] += 1;
+					} 
+				}
+				// if the max counter overflows, break
+				if (counters[length-1] >= bound[length-1]) break;
+				// Test Case inputs
+				tc = new TestCase(op_);
+				for (int i = 0; i < length; i++) {
+					tc->addInput(IOname[i],counters[i]);
+				}
+				op_->emulate(tc); 
+				if (fileOut) fileOut << tc->generateInputString(IOorderInput,IOorderOutput);                  
+				// incrementation
+				counters[0]++;
+				delete tc;
+			}
+			fileOut.close();
+		}
+	}
 
 
-          void TestBench::generateTestInVhdl() {
+	void TestBench::generateTestInVhdl() {
 		vhdl << tab << "-- Setting the inputs" <<endl;
 		vhdl << tab << "process" <<endl;
 		vhdl << tab << "begin" <<endl;
@@ -398,13 +392,13 @@ namespace flopoco{
 			vhdl << tab << tab << "wait for 10 ns;" <<endl;
 		}
 		/* COULD NOT BE USED BECAUSE IT HAS TO BE THE SAME TESTCASE FOR INPUT AND OUTPUT GENERATION 
-                // generation on the fly of random test case (VALID only for FPFMA)
-                for (int i = 0; i < n_; i++) {
-                        TestCase* tc = op_->buildRandomTestCases(i);
-			vhdl << tc->getInputVHDL(tab + tab);
-			vhdl << tab << tab << "wait for 10ns;" << endl;
-                        delete tc; 
-                };*/ 
+		// generation on the fly of random test case (VALID only for FPFMA)
+		for (int i = 0; i < n_; i++) {
+		TestCase* tc = op_->buildRandomTestCases(i);
+		vhdl << tc->getInputVHDL(tab + tab);
+		vhdl << tab << tab << "wait for 10ns;" << endl;
+		delete tc; 
+		};*/ 
 		vhdl << tab << tab << "wait for 100000 ns; -- allow simulation to finish" << endl;
 		vhdl << tab << "end process;" <<endl;
 		vhdl <<endl;

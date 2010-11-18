@@ -258,8 +258,10 @@ namespace flopoco{
 		// into fixed-point ones
 		mpfr_set_d(long_acc, (double)(1<<(MSBA_+1)), GMP_RNDN);
 
+
 		for(int i=0; i<n; i++){
-			mpfr_random(r); // deprecated function; r is [0,1]
+			//mpfr_random(r); // deprecated function; r is [0,1]
+			mpfr_urandomb(r, FloPoCoRandomState::m_state);
 			//    mpfr_add(r, one, r, GMP_RNDN); // r in [1 2[
 		
 			mpfr_add(fp_acc, fp_acc, r, GMP_RNDN);
@@ -305,7 +307,8 @@ namespace flopoco{
 		mpfr_set_d(long_acc, (double)(1<<(MSBA_+1)), GMP_RNDN);
 
 		for(int i=0; i<n; i++){
-			mpfr_random(r); // deprecated function; r is [0,1]
+			//mpfr_random(r); // deprecated function; r is [0,1]
+			mpfr_urandomb(r, FloPoCoRandomState::m_state);
 			mpfr_mul(r, r, two, GMP_RNDN); 
 			mpfr_sub(r, r, one, GMP_RNDN); 
 		
