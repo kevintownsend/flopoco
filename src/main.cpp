@@ -59,6 +59,7 @@
 #include "FPSquarer.hpp"
 #include "FPAdder.hpp"
 #include "FPAdderSinglePath.hpp"
+#include "FPAdder3Input.hpp"
 
 #include "Fix2FP.hpp"
 //~ #include "apps/CoilInductance/CoordinatesTableX.hpp"
@@ -1005,6 +1006,19 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(op);
 			}
 		}		
+		else if(opname=="FPAdder3Input"){
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int wE = checkStrictyPositive(argv[i++], argv[0]);
+				int wF = checkStrictyPositive(argv[i++], argv[0]);
+				
+				cerr << "> FPAdder3Input , wE="<<wE<<", wF="<<wF<<" \n";
+				op = new FPAdder3Input(target, wE, wF);
+				addOperator(op);
+			}
+	}	
 		else if(opname=="FPFMAcc"){
 			int nargs = 3;
 			if (i+nargs > argc)

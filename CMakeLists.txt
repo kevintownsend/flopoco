@@ -253,6 +253,7 @@ ADD_EXECUTABLE(flopoco
  src/Shifters
  src/FPAdder
  src/FPAdderSinglePath
+ src/FPAdder3Input
  src/Fix2FP
 # src/apps/CoilInductance/CoilInductance
 # src/apps/CoilInductance/CoordinatesTableX
