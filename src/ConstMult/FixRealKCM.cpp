@@ -287,7 +287,7 @@ namespace flopoco{
 		mpfr_mul(mpR, mpX, mother->mpC, GMP_RNDN);
 
 		// Result is integer*C, which is more or less what we need: just scale to add g bits.
-		mpfr_mul_2si(mpR, mpR, mother->wOut - mother->wIn + mother->g, GMP_RNDN); //Exact
+		mpfr_mul_2si(mpR, mpR, mother->wOut - mother->wIn - mother->msbC + mother->g, GMP_RNDN); //Exact
 
 		// and add the half-ulp of the result that turns truncation into rounding
 		if(last && (index!=0) && (index!=1)) // if one or two tables, we don't need to add this bit
