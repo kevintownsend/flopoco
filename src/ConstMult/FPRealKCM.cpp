@@ -80,32 +80,34 @@ namespace flopoco{
 		outPortMap(frkcm, "R", "fracMultRes");
 		vhdl << tab << instance( frkcm, "ConstMultKCM") << endl;
 		syncCycleFromSignal("fracMultRes");
+		setCriticalPath(frkcm->getOutputDelay("R"));
 		
 		//get number of bits of output
 		//normalize
 		vhdl << tab << declare("norm") << " <= fracMultRes"<<of(wF+1)<<";"<<endl;
+		
+		manageCriticalPath(target->localWireDelay() + target->adderDelay(wE+2));
 		vhdl << tab << declare("nf",wF) << " <= fracMultRes"<<range(wF-1,0)<<" when norm='0' else fracMultRes"<<range(wF,1)<<";"<<endl;
 		
 		//update exponent
 		vhdl << tab << declare("expOp1",wE+2) << " <= CONV_STD_LOGIC_VECTOR("<<iExp-1<<","<<wE+2<<");"<<endl;
 		vhdl << tab << declare("finalExp",wE+2) << " <= (\"00\" & eX) + expOp1 + norm;"<<endl;
 		
-		
-		
+		manageCriticalPath(target->localWireDelay() + target->lutDelay());
 		vhdl << tab << "with finalExp"<<range(wE+1,wE)<<" select "<<endl;
 		vhdl << tab << declare("excUpdated", 2) << " <= exc when \"00\","<<endl;
 		vhdl << tab << tab << "\"00\" when \"10\"|\"11\","<<endl;
 		vhdl << tab << tab << "\"10\" when \"01\","<<endl;
 		vhdl << tab << tab << " exc when others;"<<endl;
 		
+		manageCriticalPath(target->localWireDelay() + target->lutDelay());
 		vhdl << tab << "with exc select "<<endl;
 		vhdl << tab << declare("excUpdated2", 2) << " <= exc when \"00\"|\"10\"|\"11\","<<endl;
 		vhdl << tab << tab << " excUpdated when \"01\","<<endl;
 		vhdl << tab << tab << " exc when others;"<<endl;
 		
-		
-		
 		vhdl << tab << "R <= excUpdated2 & sign & finalExp"<<range(wE-1,0)<<" & nf;"<<endl;
+		outDelayMap["R"] = getCriticalPath();
 	}
 
 
