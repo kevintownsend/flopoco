@@ -73,7 +73,7 @@
 #include "LongAcc.hpp"
 #include "LongAcc2FP.hpp"
 #include "DotProduct.hpp"
-#include "FPFMAcc.hpp"
+
 
 #include "PolynomialEvaluator.hpp"
 
@@ -85,6 +85,8 @@
 #include "ConstMult/FPConstMult.hpp"
 #include "ConstMult/IntIntKCM.hpp"
 #include "ConstMult/FixRealKCM.hpp"
+#include "ConstMult/FPRealKCM.hpp"
+
 
 #include "FPExp.hpp" 
 #include "FPLog.hpp"
@@ -94,6 +96,10 @@
 #include "OutputIEEE.hpp"
  
 #include "apps/Collision.hpp"
+#include "apps/FPFMAcc.hpp"
+#include "apps/FPJacobi.hpp"
+
+
 #include "IntSquarer.hpp"
 
 #ifndef _WIN32
@@ -552,6 +558,19 @@ bool parseCommandLine(int argc, char* argv[]){
 					  <<", lsbOut="<<lsbOut
 					  << ", constant="<<constant <<endl;
 				op = new FixRealKCM(target, lsbIn, msbIn, signedInput, lsbOut, constant);
+				addOperator(op);
+			}        
+		}
+		else if(opname=="FPRealKCM"){
+			int nargs = 3;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int wE = atoi(argv[i++]);
+				int wF = atoi(argv[i++]);
+				string constant = argv[i++];
+				cerr << "> FPRealKCM, wE="<<wE<<", wF="<<wF << ", constant="<<constant <<endl;
+				op = new FPRealKCM(target, wE, wF, constant);
 				addOperator(op);
 			}        
 		}
@@ -1032,7 +1051,21 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(op);
 			}
 		}		
-		
+		else if(opname=="FPJacobi"){
+			int nargs = 5;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int wE = checkStrictyPositive(argv[i++], argv[0]);
+				int wF = checkStrictyPositive(argv[i++], argv[0]);
+				int l0 = checkStrictyPositive(argv[i++], argv[0]);
+				int l1 = checkStrictyPositive(argv[i++], argv[0]);
+				int l2 = checkStrictyPositive(argv[i++], argv[0]);
+				cerr << "> FPJacobi , wE="<<wE<<", wF="<<wF<<" l0="<<l0<<" l1="<<l1<<" l2="<<l2<< " \n";
+				op = new FPJacobi(target, wE, wF, l0, l1, l2);
+				addOperator(op);
+			}
+	}	
 		else if(opname=="Fix2FP"){
 			int nargs = 5;
 			if (i+nargs > argc)

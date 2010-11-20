@@ -9,9 +9,9 @@
 #include <cstdlib>
 
 
-#include "Operator.hpp"
-#include "FPAdderSinglePath.hpp"
-#include "FPMultiplierTiling.hpp"
+#include "../Operator.hpp"
+#include "../FPAdderSinglePath.hpp"
+#include "../FPMultiplierTiling.hpp"
 
 namespace flopoco{
 

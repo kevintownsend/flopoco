@@ -210,6 +210,7 @@ ADD_EXECUTABLE(flopoco
  src/OutputIEEE
  
  src/apps/Collision
+ src/apps/FPFMAcc
  src/IntSquarer
 )
 
@@ -269,13 +270,14 @@ ADD_EXECUTABLE(flopoco
  src/squareroot/PolynomialTable src/squareroot/PolynomialTableCorrectRounded
  src/LongAcc
  src/LongAcc2FP
- src/DotProduct src/FPFMAcc
+ src/DotProduct 
  src/ConstMult/IntConstMult src/ConstMult/ShiftAddOp src/ConstMult/ShiftAddDag 
  src/ConstMult/IntIntKCM src/ConstMult/KCMTable
  src/ConstMult/FPConstMult 
  src/ConstMult/CRFPConstMult 
  src/ConstMult/FPConstMultParser 
  src/ConstMult/FixRealKCM
+ src/ConstMult/FPRealKCM
  src/TestCase
  src/FPNumber
  src/IEEENumber
@@ -299,6 +301,8 @@ ADD_EXECUTABLE(flopoco
  src/InputIEEE
  src/OutputIEEE
  src/apps/Collision
+ src/apps/FPFMAcc
+ src/apps/FPJacobi
  src/IntSquarer
 
  src/PolynomialEvaluator
