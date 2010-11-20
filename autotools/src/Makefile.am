@@ -87,6 +87,7 @@ libflopoco_la_SOURCES = VHDLLexer.lpp \
 			InputIEEE.cpp \
 			OutputIEEE.cpp \
 			apps/Collision.cpp \
+			apps/FPJacobi.hpp \
 			FPFMAcc.cpp \
 			IntSquarer.cpp
 
