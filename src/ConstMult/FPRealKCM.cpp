@@ -73,7 +73,7 @@ namespace flopoco{
 		vhdl << tab << declare("exc",2) << "<= X"<<range(wE+wF+2, wE+wF+1)<<";"<<endl;
 		vhdl << tab << declare("sign") << "<= X"<<of(wE+wF)<<";"<<endl;
 		
-		FixRealKCM *frkcm = new FixRealKCM( target, -wF, 0, 0, -wF+iExp-1-1, constant);
+		FixRealKCM *frkcm = new FixRealKCM( target, -wF, 0, 0, -wF+iExp-1, constant);
 		oplist.push_back(frkcm);
 		
 		inPortMap(frkcm, "X", "fracX");
