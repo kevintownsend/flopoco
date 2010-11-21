@@ -60,9 +60,9 @@ namespace flopoco{
 		//input muxes
 		nextCycle(); // buffer inputs
 		
-		vhdl << tab << declare("opX",wE+wF+3) << " <= X when S='1' else opOutNear;"<<endl;
-		vhdl << tab << declare("opY",wE+wF+3) << " <= Y when S='1' else opOutMedium;"<<endl;
-		vhdl << tab << declare("opZ",wE+wF+3) << " <= Z when S='1' else opOutFar;"<<endl;
+		vhdl << tab << declare("opX",wE+wF+3) << " <= X when S='0' else opOutNear;"<<endl;
+		vhdl << tab << declare("opY",wE+wF+3) << " <= Y when S='0' else opOutMedium;"<<endl;
+		vhdl << tab << declare("opZ",wE+wF+3) << " <= Z when S='0' else opOutFar;"<<endl;
 		
 		nextCycle(); // register level
 		FPAdder3Input *fpa3in = new FPAdder3Input( target, wE, wF);
