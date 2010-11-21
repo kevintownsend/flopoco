@@ -1061,8 +1061,9 @@ bool parseCommandLine(int argc, char* argv[]){
 				int l0 = checkStrictyPositive(argv[i++], argv[0]);
 				int l1 = checkStrictyPositive(argv[i++], argv[0]);
 				int l2 = checkStrictyPositive(argv[i++], argv[0]);
-				cerr << "> FPJacobi , wE="<<wE<<", wF="<<wF<<" l0="<<l0<<" l1="<<l1<<" l2="<<l2<< " \n";
-				op = new FPJacobi(target, wE, wF, l0, l1, l2);
+				int ver = atoi(argv[i++]);
+				cerr << "> FPJacobi , wE="<<wE<<", wF="<<wF<<" l0="<<l0<<" l1="<<l1<<" l2="<<l2<<" ver="<<ver<< " \n";
+				op = new FPJacobi(target, wE, wF, l0, l1, l2,ver);
 				addOperator(op);
 			}
 	}	

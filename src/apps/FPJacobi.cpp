@@ -28,6 +28,7 @@
 
 #include "FPJacobi.hpp"
 #include "../FPAdder3Input.hpp"
+#include "../FPAdderSinglePath.hpp"
 #include "../ConstMult/FPRealKCM.hpp"
 
 
@@ -37,7 +38,7 @@ namespace flopoco{
 
 	extern vector<Operator*> oplist;
 
-	FPJacobi::FPJacobi(Target* target, int wE, int wF, int l0, int l1, int l2):
+	FPJacobi::FPJacobi(Target* target, int wE, int wF, int l0, int l1, int l2, int version):
 		Operator(target), wE(wE), wF(wF) {
 		srcFileName="FPJacobi1";
 		ostringstream name;
@@ -65,16 +66,41 @@ namespace flopoco{
 		vhdl << tab << declare("opZ",wE+wF+3) << " <= Z when S='0' else opOutFarReg;"<<endl;
 		
 		nextCycle(); // register level
-		FPAdder3Input *fpa3in = new FPAdder3Input( target, wE, wF);
-		oplist.push_back(fpa3in);
 		
-		inPortMap (fpa3in, "X", "opX");
-		inPortMap (fpa3in, "Y", "opY");
-		inPortMap (fpa3in, "Z", "opZ");
-		outPortMap(fpa3in, "R", "addRes");
-		vhdl << tab << instance( fpa3in, "InputAdder") << endl;
-		syncCycleFromSignal("addRes");
-		nextCycle();
+		if ( version == 0){
+			FPAdder3Input *fpa3in = new FPAdder3Input( target, wE, wF);
+			oplist.push_back(fpa3in);
+			
+			inPortMap (fpa3in, "X", "opX");
+			inPortMap (fpa3in, "Y", "opY");
+			inPortMap (fpa3in, "Z", "opZ");
+			outPortMap(fpa3in, "R", "addRes");
+			vhdl << tab << instance( fpa3in, "InputAdder") << endl;
+			syncCycleFromSignal("addRes");
+			nextCycle();
+			
+		}else{
+			FPAdderSinglePath *fpa1 = new FPAdderSinglePath(target, wE, wF, wE, wF, wE, wF);
+			oplist.push_back(fpa1);
+			
+			inPortMap (fpa1, "X", "opX");
+			inPortMap (fpa1, "Y", "opY");
+			outPortMap(fpa1, "R", "addRes_1");
+			vhdl << tab << instance( fpa1, "InputAdder1") << endl;
+			syncCycleFromSignal("addRes_1");
+			nextCycle();
+
+			FPAdderSinglePath *fpa2 = new FPAdderSinglePath( target, wE, wF, wE, wF, wE, wF);
+			oplist.push_back(fpa2);
+			
+			inPortMap (fpa1, "X", "addRes_1");
+			inPortMap (fpa1, "Y", "opZ");
+			outPortMap(fpa1, "R", "addRes");
+			vhdl << tab << instance( fpa1, "InputAdder2") << endl;
+			syncCycleFromSignal("addRes");
+			nextCycle();
+		}
+		
 		
 		FPRealKCM *cm = new FPRealKCM( target, wE, wF, "1/3");
 		oplist.push_back(cm);

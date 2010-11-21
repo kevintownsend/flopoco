@@ -24,7 +24,7 @@ namespace flopoco{
 		 * @param[in]		wE       the width of the exponent for the inputs X and Y
 		 * @param[in]		wF      the width of the fraction for the input X
 		 **/ 
-		FPJacobi(Target* target, int wE, int wF, int l1, int l2, int l3);
+		FPJacobi(Target* target, int wE, int wF, int l1, int l2, int l3, int version);
 
 		/**
 		 * FPJacobi destructor
