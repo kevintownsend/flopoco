@@ -10,7 +10,7 @@ LEX_OUTPUT_ROOT=VHDLLexer.hpp VHDLLexer.hpp lex.yy
 noinst_LTLIBRARIES = libflopoco.la
 
 noinst_HEADERS = apps/Collision.hpp apps/FPFMAcc.hpp apps/FPJacobi.hpp\
-        ConstMult/IntIntKCM.hpp ConstMult/CRFPConstMult.hpp ConstMult/FixRealKCM.hpp ConstMult/FPConstMult.hpp ConstMult/FPConstMultParser.hpp ConstMult/IntConstMult.hpp ConstMult/KCMTable.hpp\
+        ConstMult/IntIntKCM.hpp ConstMult/CRFPConstMult.hpp ConstMult/FixRealKCM.hpp ConstMult/FPRealKCM.hpp ConstMult/FPConstMult.hpp ConstMult/FPConstMultParser.hpp ConstMult/IntConstMult.hpp ConstMult/KCMTable.hpp\
         ConstMult/ShiftAddDag.hpp ConstMult/ShiftAddOp.hpp \
         fplogarithm/FirstInvTable.hpp fplogarithm/FirstLogTable.hpp fplogarithm/OtherLogTable.hpp \
         LNS/AtanPow.hpp LNS/Cotran.hpp LNS/CotranHybrid.hpp LNS/CotranTables.hpp LNS/LNSAdd.hpp LNS/LNSAddSub.hpp LNS/LNSDiv.hpp LNS/LNSMul.hpp LNS/LNSSqrt.hpp \
@@ -55,7 +55,6 @@ libflopoco_la_SOURCES = VHDLLexer.lpp \
 			LZOCShifterSticky.cpp \
 			Shifters.cpp \
 			FPAdder.cpp \
-                        FPAdderSinglePath.cpp \
 			Fix2FP.cpp \
 			FPMultiplier.cpp \
 			FPMultiplierKaratsuba.cpp \
@@ -87,17 +86,19 @@ libflopoco_la_SOURCES = VHDLLexer.lpp \
 			InputIEEE.cpp \
 			OutputIEEE.cpp \
 			apps/Collision.cpp \
-			apps/FPJacobi.hpp \
-			FPFMAcc.cpp \
+                        apps/FPFMAcc.cpp \
 			IntSquarer.cpp
 
 if no_WIN32
-libflopoco_la_SOURCES += ConstMult/CRFPConstMult.cpp ConstMult/FixRealKCM.cpp\
+libflopoco_la_SOURCES += FPAdderSinglePath.cpp \
+			FPAdder3Input.cpp \
+                        ConstMult/CRFPConstMult.cpp ConstMult/FixRealKCM.cpp ConstMult/FPRealKCM.cpp \
 			PolynomialEvaluator.cpp \
 			PolyTableGenerator.cpp \
 			PiecewiseFunction.cc \
 			FPPipeline.cpp \
 			FunctionEvaluator.cpp \
+			apps/FPJacobi.cpp \
 			UtilSollya.cc
 endif
 

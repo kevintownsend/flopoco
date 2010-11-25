@@ -1051,6 +1051,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(op);
 			}
 		}		
+#ifdef HAVE_SOLLYA
 		else if(opname=="FPJacobi"){
 			int nargs = 5;
 			if (i+nargs > argc)
@@ -1067,6 +1068,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(op);
 			}
 	}	
+#endif // HAVE_SOLLYA
 		else if(opname=="Fix2FP"){
 			int nargs = 5;
 			if (i+nargs > argc)
