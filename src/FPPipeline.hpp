@@ -21,6 +21,7 @@
 #include "FPSqrt.hpp"
 
 #include "Operator.hpp"
+#include "FPExpressions/ExpressionParserData.h"
 // #include "HOTBM/sollya.h"	// Do NOT use libsollya from user's environment
 // #include "UtilSollya.hh"
 
@@ -141,7 +142,6 @@ namespace flopoco{
 			~FPPipeline();
 			
 			void printTree(FPNode *node){
-//				cout << "entering printing function" << endl;
 				if (node->inputNode()){
 					cout << node->oName << "=InputOperation"<<node->fun<<"(";
 					for (unsigned i=0; i<node->inNodesNames.size(); i++){
@@ -289,6 +289,194 @@ namespace flopoco{
 				}
 				
 			};
+
+			/* --------------------------------------------------------------- */
+			void generateVHDL_c(node* n, bool top){
+				cout << "Generating VHDL ... " << endl;
+				
+				if (n->type == 0){
+					//we start at cycle 0, for now
+					setCycle(0);
+					//check if inputs are already declared. if not declare the inputs
+					if (!isSignalDeclared(n->name)){
+						cout << "signal " << n->name << "   declared" << endl;
+						addFPInput(n->name, wE, wF);
+					}
+				}else{
+					//iterate on all inputs
+					nodeList* lh = n->nodeArray;
+					while (lh!=NULL){
+						generateVHDL_c(lh->n, false);
+						lh=lh->next;
+					}
+					lh = n->nodeArray;
+					while (lh!=NULL){
+						syncCycleFromSignal(lh->n->name);
+						lh=lh->next;
+					}
+					cout << "finished with node" << endl;
+				}
+				
+				if (n->name==NULL){
+					//assign a unique name;
+					ostringstream t;
+					t << "tmp_var_"<<getNewUId();
+					cout << " new temporary variable created "<<t.str()<<" size="<<t.str().length() <<endl; 
+					string w = t.str();
+					char *c  = new char[t.str().length()+1];
+//					c=(char*)malloc(t.str().length()*sizeof(char));
+					c = strncpy(c, t.str().c_str(), t.str().length() );
+					c[t.str().length()]=NULL;
+					cout << " new temporary variable created "<< c <<" size="<<t.str().length() <<endl; 
+					n->name = c;
+				}
+
+				ostringstream t;				
+				if (n->isOutput){
+					t << "out_" << n->name;
+					addFPOutput(t.str(), wE, wF);
+				}
+
+				
+				Operator* op1;
+				//let's instantiate the proper operator
+
+				switch (n->type) {
+
+					case 0:{  //input
+						break;
+					}
+					
+					case 1:{ //adder 
+						cout << " instance adder" << endl;
+						
+						op1 = new FPAdderSinglePath(target_, wE, wF, wE, wF, wE, wF);
+						oplist.push_back(op1);
+
+						inPortMap( op1, "X", n->nodeArray->n->name);
+						inPortMap( op1, "Y", n->nodeArray->next->n->name);
+						outPortMap( op1, "R", n->name);
+						
+						ostringstream tmp;
+						tmp << "adder" << getNewUId();
+						vhdl << instance(op1, tmp.str())<<endl;
+						break;
+					}
+					case 2:{ //subtracter 
+						cout << " instance subtracter"<< endl;
+						
+						op1 = new FPAdderSinglePath(target_, wE, wF, wE, wF, wE, wF);
+						oplist.push_back(op1);
+
+						ostringstream temp;
+						temp << "minus_"<<n->nodeArray->next->n->name;
+						vhdl<<tab<<declare(temp.str(),wE+wF+3) << " <= " << n->nodeArray->next->n->name <<range(wE+wF+2,wE+wF+1)
+						                                       << " & not(" << n->nodeArray->next->n->name <<of(wE+wF)<<")"
+						                                       << " & " << n->nodeArray->next->n->name << range(wE+wF-1,0)<<";"<<endl;  
+
+						inPortMap( op1, "X", n->nodeArray->n->name);
+						inPortMap( op1, "Y", temp.str());
+						outPortMap( op1, "R", n->name);
+						
+						ostringstream tmp;
+						tmp << "adder" << getNewUId();
+						vhdl << instance(op1, tmp.str())<<endl;
+						break;
+					}
+
+					case 3:{ //multiplier
+						cout << " instance adder"<< endl;
+						
+						op1 = new FPMultiplier(target_, wE, wF, wE, wF, wE, wF);
+						oplist.push_back(op1);
+
+						inPortMap( op1, "X", n->nodeArray->n->name);
+						inPortMap( op1, "Y", n->nodeArray->next->n->name);
+						outPortMap( op1, "R", n->name);
+						
+						ostringstream tmp;
+						tmp << "multiplier" << getNewUId();
+						vhdl << instance(op1, tmp.str())<<endl;
+						break;
+					}
+					case 5:{ //squarer
+						cout << " instance squarer" << endl;
+						
+						op1 = new FPSquarer(target_, wE, wF, wF);
+						oplist.push_back(op1);
+
+						inPortMap( op1, "X", n->nodeArray->n->name);
+						outPortMap( op1, "R", n->name);
+						
+						ostringstream tmp;
+						tmp << "squarer" << getNewUId();
+						vhdl << instance(op1, tmp.str())<<endl;
+						break;
+					}
+					case 6:{ //sqrt
+						cout << " instance sqrt"<<endl;
+#ifdef ha
+						int degree = int ( floor ( double(wF) / 10.0) );
+						op1 = new FPSqrtPoly(target_, wE, wF, 0, degree);
+#else
+						op1 = new FPSqrt(target_, wE, wF);//, 1, degree);
+#endif
+						oplist.push_back(op1);
+						
+						inPortMap( op1, "X", n->nodeArray->n->name);
+						outPortMap( op1, "R", n->name);
+						
+						ostringstream tmp;
+						tmp << "squarer" << getNewUId();
+						vhdl << instance(op1, tmp.str())<<endl;
+						cout << "    generated square root instance" << endl;
+						break;
+					}
+					case 7:{ //exponential
+						cout << " instance exp" << endl;
+						
+						op1 = new FPExp(target_, wE, wF, 0, 0);
+						oplist.push_back(op1);
+
+						inPortMap( op1, "X", n->nodeArray->n->name);
+						outPortMap( op1, "R", n->name);
+						
+						ostringstream tmp;
+						tmp << "exponential" << getNewUId();
+						vhdl << instance(op1, tmp.str())<<endl;
+						break;
+					}
+					case 8:{ //logarithm
+						cout << " instance log" << endl;
+						
+						op1 = new FPLog(target_, wE, wF, 9);
+						oplist.push_back(op1);
+
+						inPortMap( op1, "X", n->nodeArray->n->name);
+						outPortMap( op1, "R", n->name);
+						
+						ostringstream tmp;
+						tmp << "logarithm" << getNewUId();
+						vhdl << instance(op1, tmp.str())<<endl;
+						break;
+					}
+
+
+					default:{
+						cout << "nothing else implemented yet" << endl;
+						exit(-1);
+					}
+				}
+				
+				if (n->isOutput){
+					syncCycleFromSignal(n->name);
+					nextCycle();
+ 					vhdl << tab << "out_"<<n->name << " <= " << n->name << ";" << endl;
+				}
+				
+			};
+
+
 			
 		protected:
 			int wE;   /**< Exponent size*/ 

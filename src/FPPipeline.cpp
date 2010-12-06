@@ -27,10 +27,22 @@ All rights reserved
 #include "Operator.hpp"
 #include "FPPipeline.hpp"
 
+#include "FPExpressions/ExpressionParser.h"
+#include <string.h>
+#include <stdio.h>
+#include <fcntl.h>
+
+int FlopocoExpressionlex(void);
+int FlopocoExpressionparse(void);
+int FlopocoExpressionerror(char *);
+program* p;
+
+
+//#define sumeofsquaresNaive
 //#define sumeofsquares
 //#define polynomial
 //#define sqrtx2y2
-#define sqrtx2y2z2		
+//#define sqrtx2y2z2		
 
 using namespace std;
 
@@ -47,20 +59,20 @@ namespace flopoco{
 		setName(complete_name.str());
 		// r = x^2 + y^2 + z^2 example
 		
-		ifstream f;
-		f.open(func.c_str());//
-		//print file contents
-		
-		string line;
-		if (f.is_open())
-		{
-			while ( f.good() )
-			{
-				getline (f,line);
-				cout << line << endl;
-			}
-			f.close();
-		}
+//		ifstream f;
+//		f.open(func.c_str());//
+//		//print file contents
+//		
+//		string line;
+//		if (f.is_open())
+//		{
+//			while ( f.good() )
+//			{
+//				getline (f,line);
+//				cout << line << endl;
+//			}
+//			f.close();
+//		}
 
 #ifdef sumeofsquares		
 		vector<FPNode*> fpNodeList;
@@ -96,6 +108,47 @@ namespace flopoco{
 		FPNode *nadd2 = new FPNode(FPNode::adder, vadd2, "r", true);
 		fpNodeList.push_back(nadd2);
 #endif
+
+#ifdef sumeofsquaresNaive		
+		vector<FPNode*> fpNodeList;
+		
+		vector<string> inx, iny, inz;
+		inx.push_back("x");
+		iny.push_back("y");
+		inz.push_back("z");
+
+		FPNode *nx = new FPNode(FPNode::input, inx);
+		FPNode *ny = new FPNode(FPNode::input, iny);
+		FPNode *nz = new FPNode(FPNode::input, inz);
+		
+		vector<FPNode*> vsqrx, vsqry,vsqrz;
+		vsqrx.push_back(nx);
+		vsqrx.push_back(nx);
+		
+		vsqry.push_back(ny);
+		vsqry.push_back(ny);
+		
+		vsqrz.push_back(nz);
+		vsqrz.push_back(nz);
+
+		FPNode *nxsqr = new FPNode(FPNode::multiplier, vsqrx);
+		FPNode *nysqr = new FPNode(FPNode::multiplier, vsqry);
+		FPNode *nzsqr = new FPNode(FPNode::multiplier, vsqrz);
+		
+		vector<FPNode*> vadd1;
+		vadd1.push_back(nxsqr);
+		vadd1.push_back(nysqr);
+		
+		FPNode *nadd1 = new FPNode(FPNode::adder, vadd1);
+		
+		vector<FPNode*> vadd2;
+		vadd2.push_back(nadd1);
+		vadd2.push_back(nzsqr);
+		
+		FPNode *nadd2 = new FPNode(FPNode::adder, vadd2, "r", true);
+		fpNodeList.push_back(nadd2);
+#endif
+
 
 #ifdef polynomial		
 		vector<FPNode*> fpNodeList;
@@ -232,15 +285,80 @@ namespace flopoco{
 
 
 		
-		for (unsigned i=0; i<fpNodeList.size(); i++){
-			cout << "------------------" << endl;
-			printTree( fpNodeList[i]);
-		}
-		
-		for (unsigned i=0; i<fpNodeList.size(); i++){
-			cout << "------------------" << endl;
-			generateVHDL( fpNodeList[i], true);
-		}
+//		for (unsigned i=0; i<fpNodeList.size(); i++){
+//			cout << "------------------" << endl;
+//			printTree( fpNodeList[i]);
+//		}
+//		
+//		for (unsigned i=0; i<fpNodeList.size(); i++){
+//			cout << "------------------" << endl;
+//			generateVHDL( fpNodeList[i], true);
+//		}
+
+
+	// redirect stdin to the file pointer
+	int stdin = dup(0);
+	close(0);
+	int fp = open(func.c_str(), O_RDONLY, "r");
+//	int fp = open("expressions.in", O_RDONLY, "r");
+
+	dup2(fp, 0);
+    FlopocoExpressionparse();
+	close(fp);
+	dup2(0, stdin);
+	
+    cout << "-----------------------------------" << endl;
+    nodeList* head = p->assignList;
+    while (head!=NULL){
+	printExpression(head->n); 	cout << endl;			
+		head = head->next;
+    }
+    cout << "-----------------------------------" << endl;
+    varList* headv = p->outVariableList;
+    while (headv != NULL){
+    	cout << "out: variable " << headv->name	<< ";" << endl;
+    	headv = headv->next;
+    }
+    cout << "-----------------------------------" << endl;
+    
+    head = p->assignList;
+    /* creates the computational tree our of the assignment list, by linking 
+    all variables already declared to their use */
+    makeComputationalTree(NULL, head, head); 
+
+    cout << "NEW NODES: ------------------------" << endl;
+    head = p->assignList;
+    while (head!=NULL){
+		printExpression( head->n); 	cout << endl;			
+		head = head->next;
+    }
+    cout << "-----------------------------------" << endl;
+    
+    /* create a node output list, where each node is a computational datapath.
+    if in the user-provided outputList, some of the variables are part of 
+    intermediary computations for one, say larger, node these will not be added
+    to the new list */
+
+    nodeList* outList = createOuputList(p->assignList, p->outVariableList);
+
+    cout << "PROPER OUT LIST: ------------------" << endl;
+    nodeList* outListHead = outList;
+    while (outListHead != NULL){
+		printExpression( outListHead->n);
+    	outListHead = outListHead->next;
+    } cout << endl;
+	
+	nodeList* oh = outList;
+	
+	while (oh!=NULL){
+		generateVHDL_c( oh->n, true);
+		oh = oh->next;	
+	}
+
+	//		for (unsigned i=0; i<fpNodeList.size(); i++){
+//			cout << "------------------" << endl;
+//			generateVHDL( fpNodeList[i], true);
+//		}
 		
 		
 		

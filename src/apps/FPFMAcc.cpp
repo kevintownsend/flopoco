@@ -80,8 +80,9 @@ namespace flopoco{
 		syncCycleFromSignal("racc");
 		
 		if (adderLatency > 0){
-			if (fas->getPipelineDepth()<=adderLatency){
-				setCycle( getCycleFromSignal("racc") + adderLatency - fas->getPipelineDepth());
+			if (fas->getPipelineDepth()+2<=adderLatency){
+				cout << "delaying signals ..." << endl;
+				setCycle( getCycleFromSignal("racc") + adderLatency - 2 - fas->getPipelineDepth());
 			}else{
 				cout << "WARNING: adder delay " << fas->getPipelineDepth() << " is larger than the requested adder delay" << adderLatency << endl;
 			}

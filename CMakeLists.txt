@@ -70,27 +70,72 @@ ENDIF (MPFR_FOUND)
 # Create target for the lexer
  ADD_CUSTOM_TARGET(VHDLLexer echo "Creating VHDLLexer.c VHDLLexer.h")
 
-# Create custom command for flex/lex (note the outputs)
-FIND_PROGRAM(FLEX_EXECUTABLE
+# Create custom command for flex++/lex (note the outputs)
+FIND_PROGRAM(FLEXPP_EXECUTABLE
 	NAMES flex++
 	PATHS /usr/bin
-	DOC "Flex executable")
+	DOC "Flex++ executable")
 
-IF(FLEX_EXECUTABLE)
-	MESSAGE(STATUS "Found lex: ${FLEX_EXECUTABLE}")
-ELSE(FLEX_EXECUTABLE)
-  	MESSAGE(FATAL_ERROR "Could not find LEX.\nOn Debian-based systems install flex")
-ENDIF(FLEX_EXECUTABLE)
+IF(FLEXPP_EXECUTABLE)
+	MESSAGE(STATUS "Found lex: ${FLEXPP_EXECUTABLE}")
+ELSE(FLEXPP_EXECUTABLE)
+  	MESSAGE(FATAL_ERROR "Could not find LEX.\nOn Debian-based systems install flex++")
+ENDIF(FLEXPP_EXECUTABLE)
 
 ADD_CUSTOM_COMMAND(
 	SOURCE src/VHDLLexer.lpp
-	COMMAND ${FLEX_EXECUTABLE} 
+	COMMAND ${FLEXPP_EXECUTABLE} 
 	ARGS -+ -o src/VHDLLexer.cpp --header-file=src/VHDLLexer.hpp
     src/VHDLLexer.lpp
 	TARGET VHDLLexer
 	OUTPUTS src/VHDLLexer.cpp src/VHDLLexer.hpp)
 
 SET_SOURCE_FILES_PROPERTIES(src/VHDLLexer GENERATED) 
+
+
+# Create custom command for bison/yacc (note the outputs)
+FIND_PROGRAM(BISON_EXECUTABLE
+	NAMES bison
+	PATHS /usr/bin
+	DOC "Bison executable")
+
+IF(BISON_EXECUTABLE)
+	MESSAGE(STATUS "Found bison: ${BISON_EXECUTABLE}")
+ELSE(BISON_EXECUTABLE)
+  	MESSAGE(FATAL_ERROR "Could not find Bison.\nOn Debian-based systems install bison")
+ENDIF(BISON_EXECUTABLE)
+
+ADD_CUSTOM_COMMAND(
+	SOURCE src/FPExpressions/ExpressionParser.y
+	COMMAND ${BISON_EXECUTABLE}
+	ARGS -y -d --defines=src/FPExpressions/ExpressionParser.h --output=src/FPExpressions/ExpressionParser.cpp --name-prefix=FlopocoExpression
+    src/FPExpressions/ExpressionParser.y
+	TARGET ExpressionParser
+	OUTPUTS src/FPExpressions/ExpressionParser.cpp)
+
+SET_SOURCE_FILES_PROPERTIES(src/FPExpressions/ExpressionParser GENERATED) 
+
+# Create custom command for flex/lex (note the outputs)
+FIND_PROGRAM(FLEX_EXECUTABLE
+	NAMES flex
+	PATHS /usr/bin
+	DOC "Flex executable")
+
+IF(FLEX_EXECUTABLE)
+	MESSAGE(STATUS "Found flex: ${FLEX_EXECUTABLE}")
+ELSE(FLEX_EXECUTABLE)
+  	MESSAGE(FATAL_ERROR "Could not find LEX.\nOn Debian-based systems install flex++")
+ENDIF(FLEX_EXECUTABLE)
+
+ADD_CUSTOM_COMMAND(
+	SOURCE src/FPExpressions/ExpressionScanner.l
+	COMMAND ${FLEX_EXECUTABLE} 
+	ARGS --prefix=FlopocoExpression --header-file=src/FPExpressions/FlopocoScanner.h -o src/FPExpressions/ExpressionScanner.cpp 
+    src/FPExpressions/ExpressionScanner.l
+	TARGET ExpressionScanner
+	OUTPUTS src/FPExpressions/ExpressionScanner.cpp)
+
+SET_SOURCE_FILES_PROPERTIES(src/FPExpressions/ExpressionScanner GENERATED)
 
 
 # Build HOTBM
@@ -216,6 +261,10 @@ ADD_EXECUTABLE(flopoco
 
 ELSE(WIN32)
 ADD_EXECUTABLE(flopoco
+ src/FPExpressions/ExpressionParserData
+ src/FPExpressions/ExpressionParser 
+ src/FPExpressions/ExpressionScanner 
+
  src/main
  src/utils
  src/FlopocoStream
