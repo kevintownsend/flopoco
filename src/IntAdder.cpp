@@ -106,7 +106,9 @@ namespace flopoco {
 		tc->addExpectedOutput ( "R", svR );
 	}
 	
-	
+        void IntAdder::changeName(std::string operatorName){
+		addImplementationList[selectedVersion]->changeName(operatorName);
+        }
 }
 
 

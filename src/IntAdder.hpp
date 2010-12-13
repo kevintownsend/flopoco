@@ -40,6 +40,8 @@ namespace flopoco {
 			~IntAdder();
 			
 			void outputVHDL(std::ostream& o, std::string name);
+
+			void changeName(std::string operatorName);
 				
 			/**
 			* The emulate function.
