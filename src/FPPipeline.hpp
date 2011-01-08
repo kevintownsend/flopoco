@@ -9,7 +9,6 @@
 #include <iostream>
 #include <fstream>
 
-#include "FPAdder.hpp"
 #include "FPAdderSinglePath.hpp"
 
 #include "FPMultiplier.hpp"

@@ -47,7 +47,7 @@ FPAdderSinglePath::FPAdderSinglePath(Target* target, int wEX, int wFX, int wEY, 
 		wE = wEX;
 			
 		ostringstream name;
-		name<<"FPAdderSinglePath_"<<wE<<"_"<<wF<<"_uid"<<getNewUId(); 
+		name<<"FPAdder_"<<wE<<"_"<<wF<<"_uid"<<getNewUId(); 
 		setName(name.str()); 
 
 		setCopyrightString("Bogdan Pasca, Florent de Dinechin (2010)");		

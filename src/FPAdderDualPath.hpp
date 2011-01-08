@@ -1,5 +1,5 @@
-#ifndef FPADDER_HPP
-#define FPADDER_HPP
+#ifndef FPADDERDUALPATH_HPP
+#define FPADDERDUALPATH_HPP
 #include <vector>
 #include <sstream>
 #include <gmp.h>
@@ -16,12 +16,12 @@
 
 namespace flopoco{
 
-	/** The FPAdder class */
-	class FPAdder : public Operator
+	/** The FPAdderDualPath class */
+	class FPAdderDualPath : public Operator
 	{
 	public:
 		/**
-		 * The FPAdder constructor
+		 * The FPAdderDualPath constructor
 		 * @param[in]		target		the target device
 		 * @param[in]		wEX			the the with of the exponent for the f-p number X
 		 * @param[in]		wFX			the the with of the fraction for the f-p number X
@@ -30,12 +30,12 @@ namespace flopoco{
 		 * @param[in]		wER			the the with of the exponent for the addition result
 		 * @param[in]		wFR			the the with of the fraction for the addition result
 		 */
-		FPAdder(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, int wFR);
+		FPAdderDualPath(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, int wFR);
 
 		/**
-		 * FPAdder destructor
+		 * FPAdderDualPath destructor
 		 */
-		~FPAdder();
+		~FPAdderDualPath();
 
 
 		void emulate(TestCase * tc);
@@ -81,4 +81,4 @@ namespace flopoco{
 
 }
 
-#endif
+#endif 

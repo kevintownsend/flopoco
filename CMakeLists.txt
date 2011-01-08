@@ -209,7 +209,7 @@ ADD_EXECUTABLE(flopoco
  src/IntKaratsuba
  src/LZOC src/LZOCShifterSticky
  src/Shifters
- src/FPAdder
+ src/FPAdderDualPath
  src/Fix2FP
 # src/apps/CoilInductance/CoilInductance
 # src/apps/CoilInductance/CoordinatesTableX
@@ -301,7 +301,7 @@ ADD_EXECUTABLE(flopoco
  src/IntKaratsuba
  src/LZOC src/LZOCShifterSticky
  src/Shifters
- src/FPAdder
+ src/FPAdderDualPath
  src/FPAdderSinglePath
  src/FPAdder3Input
  src/Fix2FP

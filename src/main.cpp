@@ -57,7 +57,7 @@
 #include "FPMultiplierTiling.hpp"
 
 #include "FPSquarer.hpp"
-#include "FPAdder.hpp"
+#include "FPAdderDualPath.hpp"
 #include "FPAdderSinglePath.hpp"
 #include "FPAdder3Input.hpp"
 
@@ -233,6 +233,8 @@ static void usage(char *name){
 	cerr << "      into floating-point\n";
 	OP( "FPAdder","wE wF");
 	cerr << "      Floating-point adder \n";
+	OP( "FPAdderDualPath","wE wF");
+	cerr << "      Floating-point adder with dual-path architecture (shorter latency, larger area)\n";
 	OP( "FPMultiplier","wE wF_in wF_out");
 	cerr << "      Floating-point multiplier, supporting different in/out precision  \n";
 	OP( "FPMultiplierKaratsuba","wE wF_in wF_out");
@@ -999,20 +1001,8 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(op);
 			}
 		}		
-		else if(opname=="FPAdder"){
-			int nargs = 2;
-			if (i+nargs > argc)
-				usage(argv[0]);
-			else {
-				int wE = checkStrictyPositive(argv[i++], argv[0]);
-				int wF = checkStrictyPositive(argv[i++], argv[0]);
-				
-				cerr << "> FPAdder , wE="<<wE<<", wF="<<wF<<" \n";
-				op = new FPAdder(target, wE, wF, wE, wF, wE, wF);
-				addOperator(op);
-			}
-		}
-		else if(opname=="FPAdderSinglePath"){
+		// For the FPAdder the default is the single-path design
+		else if(opname=="FPAdder"){ 
 			int nargs = 2;
 			if (i+nargs > argc)
 				usage(argv[0]);
@@ -1025,6 +1015,19 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(op);
 			}
 		}		
+		else if(opname=="FPAdderDualPath"){
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int wE = checkStrictyPositive(argv[i++], argv[0]);
+				int wF = checkStrictyPositive(argv[i++], argv[0]);
+				
+				cerr << "> FPAdderDualPath , wE="<<wE<<", wF="<<wF<<" \n";
+				op = new FPAdderDualPath(target, wE, wF, wE, wF, wE, wF);
+				addOperator(op);
+			}
+		}
 		else if(opname=="FPAdder3Input"){
 			int nargs = 2;
 			if (i+nargs > argc)
