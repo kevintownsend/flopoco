@@ -16,7 +16,7 @@ noinst_HEADERS = apps/Collision.hpp apps/FPFMAcc.hpp apps/FPJacobi.hpp\
         LNS/AtanPow.hpp LNS/Cotran.hpp LNS/CotranHybrid.hpp LNS/CotranTables.hpp LNS/LNSAdd.hpp LNS/LNSAddSub.hpp LNS/LNSDiv.hpp LNS/LNSMul.hpp LNS/LNSSqrt.hpp \
         squareroot/PolynomialTableCorrectRounded.hpp squareroot/PolynomialTable.hpp \
         Targets/DSP.hpp Targets/Spartan3.hpp Targets/StratixII.hpp Targets/StratixIV.hpp Targets/Virtex4.hpp Targets/Virtex5.hpp Targets/Virtex6.hpp \
-        DotProduct.hpp  DualTable.hpp DualTable2.hpp Fix2FP.hpp FlopocoStream.hpp FPAdder.hpp FPAdderSinglePath.hpp FPDiv.hpp FPExp.hpp FPLog.hpp FPMultiplier.hpp FPNumber.hpp \
+        DotProduct.hpp  DualTable.hpp DualTable2.hpp Fix2FP.hpp FlopocoStream.hpp FPAdderDualPath.hpp FPAdderSinglePath.hpp FPDiv.hpp FPExp.hpp FPLog.hpp FPMultiplier.hpp FPNumber.hpp \
 	FPSqrt.hpp FPSqrtPoly.hpp FPSquarer.hpp FunctionEvaluator.hpp HOTBM.hpp IEEENumber.hpp InputIEEE.hpp IntAdder.hpp IntAdderClassical.hpp IntAdderAlternative.hpp IntAdderShortLatency.hpp IntCompressorTree.hpp IntDualSub.hpp IntKaratsuba.hpp IntMultiplier.hpp \
 	IntNAdder.hpp IntSquarer.hpp IntTilingMult.hpp IntTruncMultiplier.hpp LongAcc2FP.hpp LongAcc.hpp LongIntAdder.hpp LongIntAdderCmpCmpAdd.hpp LongIntAdderCmpAddAdd.hpp LZOC.hpp LZOCShifterSticky.hpp Operator.hpp OutputIEEE.hpp PolynomialEvaluator.hpp \
 	Shifters.hpp Signal.hpp SignedIntMultiplier.hpp PolyTableGenerator.hpp PiecewiseFunction.hh Table.hpp Target.hpp TestBench.hpp TestCase.hpp UserDefinedOperator.hpp utils.hpp VHDLLexer.hpp Wrapper.hpp 
@@ -54,7 +54,7 @@ libflopoco_la_SOURCES = VHDLLexer.lpp \
 			LZOC.cpp \
 			LZOCShifterSticky.cpp \
 			Shifters.cpp \
-			FPAdder.cpp \
+			FPAdderDualPath.cpp \
 			Fix2FP.cpp \
 			FPMultiplier.cpp \
 			FPMultiplierKaratsuba.cpp \
