@@ -80,7 +80,7 @@ C [^/*]
 ")"				  { cout << "Found )" << endl; return FPEXPRESSION_RPAR;}
 
 
-[a-zA-Z]+            {
+[a-zA-Z_][a-zA-Z0-9_]*  {
 						
 						FlopocoExpressionlval.s_type = (char*) malloc( sizeof(char)*strlen(FlopocoExpressiontext) );
 						for (unsigned i=0;i<strlen(FlopocoExpressiontext);i++)
