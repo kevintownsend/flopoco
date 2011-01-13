@@ -308,17 +308,14 @@ namespace flopoco{
 			maxIn=actualTable.size()-1;
 			// Now in the file: the coefficient details
 			file >> nrCoeffs;
-			cout << "***nrcoeff=" << nrCoeffs  << endl;
 			for (int i=0; i<nrCoeffs; i++){
 				FixedPointCoefficient *c;
 				int size, weight;
 				file >> size;
 				file >> weight;
-				cout << "***    " << size << " " << weight  << endl;
 				c = new FixedPointCoefficient(size, weight);
 				coeffParamVector.push_back(c);
 			}
-			cout << "***nrcoeff=" << nrCoeffs  << endl;
 
 			
 			//generateDebugPwf();
@@ -361,6 +358,8 @@ namespace flopoco{
 	}
 
 
+
+	#if 0
 	// TODO reuse of code ? There seems to be a lot of redundancy here 
 
 	PolyTableGenerator::PolyTableGenerator(Target* target, string func, int wInX, int wOutX, int n, double xmin, double xmax, double scale ): 
@@ -568,6 +567,8 @@ namespace flopoco{
 		freeChain(tempChain2,freeIntPtr);
 		//finishTool();
 	}
+
+#endif
 
 	PolyTableGenerator::~PolyTableGenerator() {
 	}
@@ -905,7 +906,7 @@ namespace flopoco{
 				
 				amount=amount+(*coeffParamVector[j]).getSize()+(*coeffParamVector[j]).getWeight()+1;
 			}
-			cout << x << "  " << r << endl;
+			//cout << x << "  " << r << endl;
 			actualTable.push_back(r);
 		}
 	}

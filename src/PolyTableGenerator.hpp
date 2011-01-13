@@ -26,7 +26,7 @@ namespace flopoco{
 			PolyTableGenerator(Target* target, PiecewiseFunction* pf, int wInX, int wOutX, int n);
 			PolyTableGenerator(Target* target, string func, int wInX, int wOutX, int n);
 			/* TODO: Doxygen parameters*/ 
-			PolyTableGenerator(Target* target, string func, int wInX, int wOutX, int n,double xmin, double xmax, double scale);
+			//PolyTableGenerator(Target* target, string func, int wInX, int wOutX, int n,double xmin, double xmax, double scale);
 
 			/**
 			 * PolyTableGenerator destructor
