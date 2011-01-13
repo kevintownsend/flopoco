@@ -17,6 +17,7 @@ int FlopocoExpressionerror(char *);
 %union{
 	char c_type;
 	int i_type;
+	double d_type;
 	char* s_type;
 	node* thisNode;         // each node is either a leaf or an assignement
 	nodeList* thisNodeList; //list containing the assignments
@@ -27,7 +28,7 @@ int FlopocoExpressionerror(char *);
 
 %token FPEXPRESSION_UNKNOWN FPEXPRESSION_PV FPEXPRESSION_OUTPUT FPEXPRESSION_LPAR FPEXPRESSION_RPAR FPEXPRESSION_SQR FPEXPRESSION_SQRT FPEXPRESSION_EXP FPEXPRESSION_LOG
 %token <c_type> FPEXPRESSION_PLUS FPEXPRESSION_MINUS FPEXPRESSION_TIMES FPEXPRESSION_DIV FPEXPRESSION_EQUALS 
-%token <i_type> FPEXPRESSION_NUMBER
+%token <s_type> FPEXPRESSION_FPNUMBER
 %token <s_type> FPEXPRESSION_VARIABLE
 
 %type <thisNode> factor expression expressionp term termp assignment
@@ -45,7 +46,7 @@ code: assignmentList outputList { 	program* ptemp;
 									ptemp->outVariableList = $2;
 									$$ = ptemp;
 									p = $$;
-									std::cout << "parse went fine" << std::endl; 
+									//std::cout << "parse went fine" << std::endl; 
 								}
 	;
 
@@ -61,7 +62,7 @@ assignmentList: assignmentList assignment {
 
 assignment: FPEXPRESSION_VARIABLE FPEXPRESSION_EQUALS expression FPEXPRESSION_PV { $3->name=$1;
 											$$ = $3; 
-											std::cout << " Valid assignment;" << std::endl;
+											//std::cout << " Valid assignment;" << std::endl;
 										}
 	;
 
@@ -145,25 +146,25 @@ termp: FPEXPRESSION_TIMES factor termp
 	;
 
 factor: FPEXPRESSION_SQRT FPEXPRESSION_LPAR expression FPEXPRESSION_RPAR{
-								std::cout << "creating sqrt node " << std::endl;  
+								//std::cout << "creating sqrt node " << std::endl;  
 	                         $$=createNodeHavingRightOperandOnly($3,6);
 	                         }
 	| FPEXPRESSION_SQR FPEXPRESSION_LPAR expression FPEXPRESSION_RPAR{   
-							std::cout << "creating sqr node " << std::endl;
+							//std::cout << "creating sqr node " << std::endl;
 	                         $$=createNodeHavingRightOperandOnly($3,5);
 	                         } 
 	| FPEXPRESSION_EXP FPEXPRESSION_LPAR expression FPEXPRESSION_RPAR{   
-							std::cout << "creating exp node " << std::endl;
+							//std::cout << "creating exp node " << std::endl;
 	                         $$=createNodeHavingRightOperandOnly($3,7);
 	                         }
 	| FPEXPRESSION_LOG FPEXPRESSION_LPAR expression FPEXPRESSION_RPAR{   
-							std::cout << "creating log node " << std::endl;
+							//std::cout << "creating log node " << std::endl;
 	                         $$=createNodeHavingRightOperandOnly($3,8);
 	                         }	                          	                         
 	|FPEXPRESSION_VARIABLE {  
 					$$=createVariableNode($1);
 				 }
-	| FPEXPRESSION_NUMBER     { $$=createConstantNode($1); }
+	| FPEXPRESSION_FPNUMBER     { $$=createConstantNode($1); }
 	| FPEXPRESSION_LPAR expression FPEXPRESSION_RPAR { $$=$2; }
 	;
 

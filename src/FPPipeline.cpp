@@ -58,21 +58,6 @@ namespace flopoco{
 		complete_name << "Pipeline" << getNewUId(); 
 		setName(complete_name.str());
 		// r = x^2 + y^2 + z^2 example
-		
-//		ifstream f;
-//		f.open(func.c_str());//
-//		//print file contents
-//		
-//		string line;
-//		if (f.is_open())
-//		{
-//			while ( f.good() )
-//			{
-//				getline (f,line);
-//				cout << line << endl;
-//			}
-//			f.close();
-//		}
 
 #ifdef sumeofsquares		
 		vector<FPNode*> fpNodeList;
@@ -282,92 +267,66 @@ namespace flopoco{
 		fpNodeList.push_back(nsqrt1);
 
 #endif
+		// redirect stdin to the file pointer
+		int stdin = dup(0);
+		close(0);
+		int fp = open(func.c_str(), O_RDONLY, "r");
 
-
-		
-//		for (unsigned i=0; i<fpNodeList.size(); i++){
-//			cout << "------------------" << endl;
-//			printTree( fpNodeList[i]);
-//		}
-//		
-//		for (unsigned i=0; i<fpNodeList.size(); i++){
-//			cout << "------------------" << endl;
-//			generateVHDL( fpNodeList[i], true);
-//		}
-
-
-	// redirect stdin to the file pointer
-	int stdin = dup(0);
-	close(0);
-	int fp = open(func.c_str(), O_RDONLY, "r");
-//	int fp = open("expressions.in", O_RDONLY, "r");
-
-	dup2(fp, 0);
-    FlopocoExpressionparse();
-	close(fp);
-	dup2(0, stdin);
+		dup2(fp, 0);
+		FlopocoExpressionparse();
+		close(fp);
+		dup2(0, stdin);
 	
-    cout << "-----------------------------------" << endl;
-    nodeList* head = p->assignList;
-    while (head!=NULL){
-	printExpression(head->n); 	cout << endl;			
-		head = head->next;
-    }
-    cout << "-----------------------------------" << endl;
-    varList* headv = p->outVariableList;
-    while (headv != NULL){
-    	cout << "out: variable " << headv->name	<< ";" << endl;
-    	headv = headv->next;
-    }
-    cout << "-----------------------------------" << endl;
-    
-    head = p->assignList;
-    /* creates the computational tree our of the assignment list, by linking 
-    all variables already declared to their use */
-    makeComputationalTree(NULL, head, head); 
+		REPORT(DEBUG, "-----------------------------------");
+		nodeList* head = p->assignList;
+		while (head!=NULL){
+		printExpression(head->n); 	cout << endl;			
+			head = head->next;
+		}
+		REPORT(DEBUG, "-----------------------------------");
+		varList* headv = p->outVariableList;
+		while (headv != NULL){
+			cout << "out: variable " << headv->name	<< ";" << endl;
+			headv = headv->next;
+		}
+		REPORT(DEBUG, "-----------------------------------");	
+		head = p->assignList;
+		/* creates the computational tree our of the assignment list, by linking 
+		all variables already declared to their use */
+		makeComputationalTree(NULL, head, head); 
 
-    cout << "NEW NODES: ------------------------" << endl;
-    head = p->assignList;
-    while (head!=NULL){
-		printExpression( head->n); 	cout << endl;			
-		head = head->next;
-    }
-    cout << "-----------------------------------" << endl;
-    
-    /* create a node output list, where each node is a computational datapath.
-    if in the user-provided outputList, some of the variables are part of 
-    intermediary computations for one, say larger, node these will not be added
-    to the new list */
-
-    nodeList* outList = createOuputList(p->assignList, p->outVariableList);
-
-    cout << "PROPER OUT LIST: ------------------" << endl;
-    nodeList* outListHead = outList;
-    while (outListHead != NULL){
-		printExpression( outListHead->n);
-    	outListHead = outListHead->next;
-    } cout << endl;
+		REPORT(DEBUG, "NEW NODES: ------------------------");
+		head = p->assignList;
+		while (head!=NULL){
+			printExpression( head->n); 	cout << endl;			
+			head = head->next;
+		}
+		REPORT(DEBUG, "-----------------------------------");	
 	
-	nodeList* oh = outList;
-	
-	while (oh!=NULL){
-		generateVHDL_c( oh->n, true);
-		oh = oh->next;	
-	}
+		/* create a node output list, where each node is a computational datapath.
+		if in the user-provided outputList, some of the variables are part of 
+		intermediary computations for one, say larger, node these will not be added
+		to the new list */
 
-	//		for (unsigned i=0; i<fpNodeList.size(); i++){
-//			cout << "------------------" << endl;
-//			generateVHDL( fpNodeList[i], true);
-//		}
-		
-		
-		
+		nodeList* outList = createOuputList(p->assignList, p->outVariableList);
+
+		REPORT(DEBUG, "PROPER OUT LIST: ------------------");
+		nodeList* outListHead = outList;
+		while (outListHead != NULL){
+			printExpression( outListHead->n);
+			outListHead = outListHead->next;
+		} cout << endl;
+	
+		nodeList* oh = outList;
+	
+		while (oh!=NULL){
+			generateVHDL_c( oh->n, true);
+			oh = oh->next;	
+		}
 	}
 	
 	FPPipeline::~FPPipeline() {
 	}
-	
-	
 	
 }
 #endif //HAVE_SOLLYA

@@ -297,9 +297,13 @@ namespace flopoco{
 					//we start at cycle 0, for now
 					setCycle(0);
 					//check if inputs are already declared. if not declare the inputs
-					if (!isSignalDeclared(n->name)){
-						cout << "signal " << n->name << "   declared" << endl;
-						addFPInput(n->name, wE, wF);
+					if (n->name!=NULL){
+						if (!isSignalDeclared(n->name)){
+							cout << "signal " << n->name << "   declared" << endl;
+							addFPInput(n->name, wE, wF);
+						}
+					}else{
+						//this is a constant
 					}
 				}else{
 					//iterate on all inputs
@@ -316,11 +320,13 @@ namespace flopoco{
 					cout << "finished with node" << endl;
 				}
 				
+				bool hadNoName = (n->name==NULL);
+				
 				if (n->name==NULL){
 					//assign a unique name;
 					ostringstream t;
 					t << "tmp_var_"<<getNewUId();
-					cout << " new temporary variable created "<<t.str()<<" size="<<t.str().length() <<endl; 
+//					cout << " new temporary variable created "<<t.str()<<" size="<<t.str().length() <<endl; 
 					string w = t.str();
 					char *c  = new char[t.str().length()+1];
 //					c=(char*)malloc(t.str().length()*sizeof(char));
@@ -328,6 +334,15 @@ namespace flopoco{
 					c[t.str().length()]=NULL;
 					cout << " new temporary variable created "<< c <<" size="<<t.str().length() <<endl; 
 					n->name = c;
+					cout << " the value was created for the constant " << n->value << endl;
+				}
+				
+				if ((hadNoName)&&(n->type == 0)){
+					//it is a constant_expr
+					mpfr_t mpx;
+					mpfr_init2 (mpx, wF+1);
+					mpfr_set_str (mpx, n->s_value, 10, GMP_RNDN);
+					vhdl << tab << declare(n->name, wE+wF+3) << " <= \""<<fp2bin(mpx, wE, wF)<< "\";"<<endl;
 				}
 
 				ostringstream t;				

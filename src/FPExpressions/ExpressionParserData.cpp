@@ -2,22 +2,22 @@
 
 using namespace std;
 
-
 node* createVariableNode(char* nodeName){
 	node* n;
 	n = (node*) malloc( sizeof(node) );
 	//set type as input
-	n->type = 0; //TODO put flopoco namespace flopoco::FPPipeline::FPNode::input
+	n->type = 0; //TODO put flopoco namespace FPPipeline::FPNode::input
 	n->name = nodeName;
 	return n;
 }
 
-node* createConstantNode(int nodeValue){
+node* createConstantNode(char* str_value){
 	node* n;
 	n = (node*) malloc( sizeof(node) );
 	//set type as input
-	n->type = 0; //TODO put flopoco namespace flopoco::FPPipeline::FPNode::input
-	n->value = nodeValue;
+	n->type = 0; //TODO put flopoco namespace FPPipeline::FPNode::input
+	n->value = atof(str_value);
+	n->s_value = str_value;
 	return n;
 }
 
@@ -97,10 +97,11 @@ varList* createVarList(char* s){
 }
 
 void printExpression(node* n){
+	ostringstream pprint;
 	if (n->name!=NULL)
-		cout << n->name << "=";
-	cout <<  "op"<<n->type;
-	cout << "[";
+		pprint << n->name << "=";
+	pprint <<  "op"<<n->type;
+	pprint << "[";
 	nodeList* head = n->nodeArray;
 	while (head!=NULL){
 		if (head->n->type==0){ //input node
@@ -109,13 +110,17 @@ void printExpression(node* n){
 			else //constant
 				cout << head->n->value;	
 		} else {
-			cout << "(";
+			pprint << "(";
 			printExpression(head->n);	
-			cout << ")";
+			pprint << ")";
 		}
 		head = head->next;
 	}
-	cout << "]";
+	pprint << "]";
+	
+#ifdef EXPRESSIONPARSER_DEBUG
+	cout << pprint.str();
+#endif
 }
 
 void makeComputationalTree(node* parent, nodeList* expressionList, nodeList* statementList){
@@ -126,7 +131,6 @@ void makeComputationalTree(node* parent, nodeList* expressionList, nodeList* sta
 			if (h->n->name!=NULL){
 				//fetch the name;
 				char* c = h->n->name;
-//				cout << "Found input node with name:" << c << endl;
 				//parse	statements to see if const is declared
 				nodeList* th = statementList;
 				bool found=false;
@@ -139,14 +143,11 @@ void makeComputationalTree(node* parent, nodeList* expressionList, nodeList* sta
 				if (th!=NULL){ //found declaration: replace constant node by this node
 					if (parent!=NULL){ // program statement list; do not replace
 						h->n = th->n; //retarget pointers 
-//						cout << "performed relinking" << endl;
 					}
-				}	
-			}
+				}else{}	
+			}else{}
 		} else {
-//			cout << "Entering recursion" << endl;
 			makeComputationalTree( h->n, h->n->nodeArray, statementList);	
-//			cout << "Leaving recursion" << endl;
 		}
 	h = h->next;
 	}
@@ -167,10 +168,11 @@ node* findVariableNodeByName(char* varName, nodeList* statementList){
 
 
 bool isNodePresentInExpression(node* theNode, node* expression){
+	ostringstream pprint;
 	nodeList* expressionOperandListHead = expression->nodeArray;
-	cout << "is node " << theNode->name << " present in expression: "; 
+	pprint << "is node " << theNode->name << " present in expression: "; 
 	printExpression(expression); 
-	cout << " ? " << endl;
+	pprint << " ? " << endl;
 	bool present = false;
 	while (expressionOperandListHead!=NULL){
 		if (expressionOperandListHead->n->nodeArray!=NULL)
@@ -178,13 +180,17 @@ bool isNodePresentInExpression(node* theNode, node* expression){
 		present = (present || (expressionOperandListHead->n == theNode));
 		expressionOperandListHead = expressionOperandListHead->next;	
 	}
-	cout << "answer: " << present << endl;
+	pprint << "answer: " << present << endl;
+#ifdef EXPRESSIONPARSER_DEBUG 
+	cout << pprint.str();
+#endif	
 	return present;
 }
 
 
 
 nodeList* createOuputList(nodeList* statementList, varList* variableList){
+	ostringstream pprint;
 	/* for each output variable, find the corresponding node*/
 	varList* vh = variableList;
 	nodeList* useList;
@@ -193,7 +199,7 @@ nodeList* createOuputList(nodeList* statementList, varList* variableList){
 		
 	while (vh!=NULL){
 		char* currentVariable = vh->name;
-		cout << "processing variable " << vh->name << endl;	
+		pprint << "processing variable " << vh->name << endl;	
 		node* correspondingNode = findVariableNodeByName(currentVariable, statementList);	
 		if (potentialOutput==NULL){
 			correspondingNode->isOutput=true;
@@ -204,7 +210,7 @@ nodeList* createOuputList(nodeList* statementList, varList* variableList){
 		}
 		vh= vh->next;
 	}
-	cout << "Created Potential Output List" << endl;
+	pprint << "Created Potential Output List" << endl;
 	
 	nodeList* poh = potentialOutput;
 	nodeList* pohj = potentialOutput;
@@ -227,7 +233,9 @@ nodeList* createOuputList(nodeList* statementList, varList* variableList){
 		poh = poh->next;
 	}
 	
+#ifdef EXPRESSIONPARSER_DEBUG
+	cout << pprint.str();
+#endif
 	return properOutput;
 }
-
 

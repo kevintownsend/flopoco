@@ -6,12 +6,14 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <stdlib.h>
+#include <sstream>
 
 struct theNodeList;
 
 typedef struct theNode {
     int type;
     double value; //TODO MPFR
+    char* s_value; //keep it as a string
     char* name;
     bool isOutput;
     struct theNodeList* nodeArray;
@@ -35,7 +37,7 @@ typedef struct theProgram{
 
 
 node* createVariableNode(char* nodeName);
-node* createConstantNode(int nodeValue);
+node* createConstantNode(char* str_value);
 node* createNodeHavingRightOperandOnly(node* rightNode, int opType);
 
 
@@ -52,6 +54,5 @@ void makeComputationalTree(node* parent, nodeList* expressionList, nodeList* sta
 node* findVariableNodeByName(char* varName, nodeList* statementList);
 bool isNodePresentInExpression(node* theNode, node* expression);
 nodeList* createOuputList(nodeList* statementList, varList* variableList);
-
 
 #endif
