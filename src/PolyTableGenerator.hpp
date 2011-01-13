@@ -57,6 +57,7 @@ namespace flopoco{
 			double output2double(mpz_class x);
 		/************************************************/
 		protected:
+			void buildActualTable();
 			int wInX_;   /**< TODO: Description*/ 
 			int wOutX_;  /**< TODO: Description*/
 			Function *f;
@@ -64,7 +65,8 @@ namespace flopoco{
 			vector<FixedPointCoefficient*> coeffParamVector;
 			mpfr_t *maxError;
 			PiecewiseFunction *pwf;
-			vector <int> nrIntArray;
+		  vector <int> nrIntArray;
+		vector <mpz_class> actualTable;
 	};
 }
 #endif
