@@ -182,7 +182,7 @@ namespace flopoco{
 						ii++;
 					}
 					nrIntCompleted=nrIntCompleted+nrIntervals;	
-					nrIntArray.push_back(intlog2(nrIntervals-1));
+					nrIntervalsArray.push_back(intlog2(nrIntervals-1));
 				} 
 			}
 			/*here we have the good polynomials for all the piecewise functions*/
@@ -250,7 +250,13 @@ namespace flopoco{
 				file << wOut << endl;
 				// The approx error
 				file << mpfr_get_d(*getMaxApproxError(), GMP_RNDU) << endl;
-				// The number of intervals
+				// The size of the nrIntervalsArray
+				file << nrIntervalsArray.size() << endl;  
+				// The values of nrIntervalsArray
+				for(k=0; (unsigned)k<nrIntervalsArray.size(); k++) {
+					file << nrIntervalsArray[k] << endl;
+				}
+				// The size of the actual table
 				file << actualTable.size() << endl;  
 				// The compact array
 				for(k=0; (unsigned)k<actualTable.size(); k++) {
@@ -295,7 +301,16 @@ namespace flopoco{
 			maxError=(mpfr_t*) safeMalloc(sizeof(mpfr_t));
 			mpfr_init2(*maxError, 53);
 			mpfr_set_d(*maxError, maxApproxError, GMP_RNDU);
-			// The number of intervals
+			// The size of the nrIntervalsArray
+			int nrIntervalsArraySize;
+			file >> nrIntervalsArraySize;
+			// The values of nrIntervalsArray
+			for(int k=0; k<nrIntervalsArraySize; k++) {
+				int nrInter;
+				file >> nrInter;
+				nrIntervalsArray.push_back(nrInter);
+			}
+			// The size of the actual table
 			file >> nrIntervals;
 			// The compact array
 			for (int i=0; i<nrIntervals; i++){
@@ -317,7 +332,6 @@ namespace flopoco{
 				coeffParamVector.push_back(c);
 			}
 
-			
 			//generateDebugPwf();
 			if (verbose>=INFO){	
 				printPolynomialCoefficientsVector();
@@ -325,7 +339,6 @@ namespace flopoco{
 				printCoeffParamVector();
 			}
 
-			
 		}
 			
 		ostringstream name;
@@ -765,7 +778,7 @@ namespace flopoco{
 
 
 	vector<int> PolyTableGenerator::getNrIntArray(){
-		return nrIntArray;
+		return nrIntervalsArray;
 	}
 
 
