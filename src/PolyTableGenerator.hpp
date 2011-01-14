@@ -23,10 +23,9 @@ namespace flopoco{
 	class PolyTableGenerator : public Table {
 
 	public:
-		PolyTableGenerator(Target* target, PiecewiseFunction* pf, int wInX, int wOutX, int n);
-		PolyTableGenerator(Target* target, string func, int wInX, int wOutX, int n);
+		PolyTableGenerator(Target* target, PiecewiseFunction* pf,  int wOutX, int n);
+		PolyTableGenerator(Target* target, string func,  int wOutX, int n);
 		/* TODO: Doxygen parameters*/ 
-		//PolyTableGenerator(Target* target, string func, int wInX, int wOutX, int n,double xmin, double xmax, double scale);
 
 		/**
 		 * PolyTableGenerator destructor
@@ -58,8 +57,7 @@ namespace flopoco{
 		/************************************************/
 	protected:
 		void buildActualTable();
-		int wInX_;   /**< TODO: Description*/ 
-		int wOutX_;  /**< TODO: Description*/
+		int wOutX_;  /**< Output precision required from this polynomial. The output interval is assumed to be [0,1], so wOutX will actually determine all the coefficient sizes */
 		Function *f;
 		vector< vector<FixedPointCoefficient*> > polyCoeffVector;
 		vector<FixedPointCoefficient*> coeffParamVector; /**< This is a vector of coefficient parameters: for each degree, the size and weight of the corresponding coeff */

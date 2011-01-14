@@ -36,14 +36,14 @@ namespace flopoco{
 
 	extern vector<Operator*> oplist;
 
-	PolyTableGenerator::PolyTableGenerator(Target* target, PiecewiseFunction* pf, int wInX, int wOutX, int n): 
-		Table(target),	wInX_(wInX), wOutX_(wOutX), pwf(pf){
+	PolyTableGenerator::PolyTableGenerator(Target* target, PiecewiseFunction* pf, int wOutX, int n): 
+		Table(target), wOutX_(wOutX), pwf(pf){
 		
 		setCopyrightString("Mioara Joldes (2010)");
 		srcFileName = "PolyTableGenerator";
 
 		ostringstream  cacheFileName;
-		cacheFileName << "Poly_"<<vhdlize(pf->getName()) << "_" << wInX << "_" << wOutX << ".cache";
+		cacheFileName << "Poly_"<<vhdlize(pf->getName()) << "_" << "_" << wOutX << ".cache";
 
 		// Test existence of cache file
 		fstream file;
@@ -360,228 +360,19 @@ namespace flopoco{
 
 	/*This constructor receives the function to be approximated as a string
 		Look above to find one that receives the function as a Piecewise function already parsed*/
-	PolyTableGenerator::PolyTableGenerator(Target* target, string func, int wInX, int wOutX, int n):
+	PolyTableGenerator::PolyTableGenerator(Target* target, string func,  int wOutX, int n):
 		Table(target) {
 		
 		setCopyrightString("Mioara Joldes (2010)");		
 
 		/*parse the string, create a list of functions, create an array of f's, compute an approximation on each interval*/
 		PiecewiseFunction *pf=new PiecewiseFunction(func);
-		PolyTableGenerator(target, pf, wInX, wOutX, n);
+		PolyTableGenerator(target, pf,  wOutX, n);
 	}
 
 
 
-	#if 0
-	// TODO reuse of code ? There seems to be a lot of redundancy here 
 
-	PolyTableGenerator::PolyTableGenerator(Target* target, string func, int wInX, int wOutX, int n, double xmin, double xmax, double scale ): 
-		Table(target),	wInX_(wInX), wOutX_(wOutX), f(new Function(func, xmin, xmax, scale)){
-	
-		/* Start initialization */
-		setToolPrecision(165);
-	
-		/* End of initialization */
-		//int verbose=1;
-		int nrMaxIntervals=1024*1024;	
-		/* Convert the input string into a sollya evaluation tree */
-		sollya_node_t tempNode = f->getSollyaNode(); //function
-		int guardBits =1;
-		mpfr_t a;
-		mpfr_t b;
-		mpfr_t eps;
-	
-		mpfr_init2(a,getToolPrecision());
-		mpfr_init2(b,getToolPrecision());
-		mpfr_init2(eps,getToolPrecision());
-	
-		/* Convert parameters to their required type */
-		mpfr_set_d(a,0.,GMP_RNDN);
-		mpfr_set_d(b,1.,GMP_RNDN);
-		mpfr_set_ui(eps, 1, GMP_RNDN);
-		mpfr_mul_2si(eps, eps, -wOutX-1-guardBits, GMP_RNDN); // eps< 2^{-woutX-1}
-	
-		//sollya_node_t w=parseString("1"); //weight
-		// sollya_range_t r;
-		//r=guessDegree(tempNode, w, a, b, eps);
-	
-		sollya_node_t tempNode2=parseString("0"); //ct part
-		sollya_chain_t tempChain = makeIntPtrChainFromTo(0,n); //monomials
-
-		//start with one interval; subdivide until the error is satisfied
-	
-		int nrIntervals = 1;
-		int precShift=0;
-		vector<sollya_node_t> polys;
-	
-		vector<mpfr_t*> errPolys;
-	
-		sollya_node_t tempNode3, nDiff;
-		sollya_chain_t tempChain2;
-	
-		mpfr_t ai;
-		mpfr_t bi;
-		mpfr_t zero;
-		mpfr_t* mpErr;
-	
-
-		mpfr_init2(ai,getToolPrecision());
-		mpfr_init2(bi,getToolPrecision());
-	
-		mpfr_init2(zero,getToolPrecision());
-	
-		int k;
-		int errBoundBool =0;
-		sollya_node_t sX,sY,aiNode;
-	
-		while((errBoundBool==0)&& (nrIntervals <=nrMaxIntervals)){
-			errBoundBool=1; //suppose the nr of intervals is good
-			//polys.reserve(nrIntervals);
-			//errPolys.reserve(nrIntervals);
-			if (verbose>=DEBUG){
-				cout<<"trying with "<< nrIntervals <<" intervals"<<endl;
-			}
-			for (k=0; k<nrIntervals; k++){
-				mpfr_set_ui(ai,k,GMP_RNDN);
-				mpfr_set_ui(bi,1,GMP_RNDN);
-				mpfr_div_ui(ai, ai, nrIntervals, GMP_RNDN);
-				mpfr_div_ui(bi, bi, nrIntervals, GMP_RNDN);		
-		
-				mpfr_set_ui(zero,0,GMP_RNDN);
-			
-				aiNode = makeConstant(ai);
-				sX = makeAdd(makeVariable(),aiNode);
-				//sY = simplifyTreeErrorfree(substitute(tempNode, sX));
-				sY = substitute(tempNode, sX);
-				if (sY == 0)
-					cout<<"Sollya error when performing range mapping."<<endl;
-			
-				if (verbose>=DEBUG){
-					cout<<"\n-------------"<<endl;	
-					printTree(sY);
-					cout<<"\nover: "<<sPrintBinary(zero)<<" "<< sPrintBinary(bi)<<"withprecshift:"<<precShift<<endl;	
-				}
-			
-				tempChain2 = makeIntPtrChainToFromBy(wOutX+1+guardBits,n+1, precShift); //precision
-			
-				//tempNode3 = FPminimax(firstArg, tempChain, tempChain2, tempChain3, a, b, resB, resC, tempNode, tempNode2);
-				tempNode3 = FPminimax(sY, tempChain ,tempChain2, NULL,			zero, bi, FIXED, ABSOLUTESYM, tempNode2,NULL);
-			
-				polys.push_back(tempNode3);
-				if (verbose>=DEBUG){
-					printTree(tempNode3);
-					printf("\n");
-				}
-			
-				//Compute the error 
-				nDiff = makeSub(sY, tempNode3);
-				mpErr= (mpfr_t *) safeMalloc(sizeof(mpfr_t));
-				mpfr_init2(*mpErr,getToolPrecision());	
-				uncertifiedInfnorm(*mpErr, nDiff, zero, bi, 501/*default in sollya*/, getToolPrecision()); 
-				if (verbose>=DEBUG){
-					cout<< "infinite norm:"<<sPrintBinary(*mpErr)<<endl;
-					cout<< "eps:"<<sPrintBinary(eps)<<endl;
-				}
-				errPolys.push_back(mpErr);
-				if (mpfr_cmp(*mpErr, eps)>0) {
-					errBoundBool=0; //we have found an interval where the error is not good
-					if(verbose>=DEBUG){
-						cout<< "we have found an interval where the error is not good, proceed to splitting"<<endl;
-					}
-					//k=nrIntervals;
-					polys.clear();
-					errPolys.clear();
-					nrIntervals=2 * nrIntervals;
-					precShift=precShift+1;
-					break;
-				}
-			}
-		} 
-		if (errBoundBool==1){
-			if(verbose==1){
-				cout<< "the number of intervals is:"<< nrIntervals<<endl; 
-				cout<< "We proceed to the extraction of the coefficients:"<<endl; 
-			}
-			//Get the maximum error
-	
-			mpfr_t *mpErrMax;
-			mpErrMax=(mpfr_t*) safeMalloc(sizeof(mpfr_t));
-			mpfr_init2(*mpErrMax, getToolPrecision());
-			mpfr_set(*mpErrMax,*errPolys[0], GMP_RNDN);
-		
-			for (k=1;(unsigned)k<errPolys.size();k++){
-				if (mpfr_cmp(*mpErrMax, *(errPolys[k]))<0)
-					mpfr_set(*mpErrMax,*(errPolys[k]), GMP_RNDN);
-			}
-		
-			maxError=(mpfr_t*) safeMalloc(sizeof(mpfr_t));
-			mpfr_init2(*maxError,getToolPrecision());
-			mpfr_set(*maxError,*mpErrMax,GMP_RNDN);
-		
-			mpfr_clear(*mpErrMax);
-			free(mpErrMax);
-			if (verbose>=DEBUG){
-				cout<< "maximum error="<<sPrintBinary(*maxError)<<endl;
-			}
-			//Extract coefficients
-			vector<FixedPointCoefficient*> fpCoeffVector;
-		
-			k=0;
-			for (k=0;k<nrIntervals;k++){
-				if (verbose>=DEBUG){
-					cout<<"\n----"<< k<<"th polynomial:----"<<endl;
-					printTree(polys[k]);
-				}
-			
-				fpCoeffVector = getPolynomialCoefficients(polys[k], tempChain2);
-				polyCoeffVector.push_back(fpCoeffVector);
-			}
-
-			/*****setting of Table parameters**/
-			//int wInZ, minInZ, maxInZ, wOutZ;
-			wIn=intlog2(nrIntervals-1);
-			minIn=0;
-			maxIn=nrIntervals-1;
-			wOut=0;
-			for(k=0; (unsigned)k<coeffParamVector.size();k++){
-				wOut=wOut+(*coeffParamVector[k]).getSize()+(*coeffParamVector[k]).getWeight()+1; //a +1 is necessary for the sign
-			}
-	
-			ostringstream name;
-			/* Set up the name of the entity */
-			name <<"PolyTableGenerator_"<<wIn<<"_"<<wOut;
-			setName(name.str());
-	
-			// Set up the IO signals
-			addInput ("X"	, wIn);
-			addOutput ("Y"	, wOut);
-			
-
-			generateDebugPwf();
-		
-			if (verbose>=DEBUG){	
-				printPolynomialCoefficientsVector();
-				cout<<"Parameters for polynomial evaluator:"<<endl;
-				printCoeffParamVector();
-			}
-		}
-		else{
-			throw("PolyTableGenerator: something went wrong"); 
-		}
-		
-		mpfr_clear(a);
-		mpfr_clear(b);
-
-		//free_memory(tempNode);
-		free_memory(tempNode2);
-		//free_memory(tempNode3);
-
-		freeChain(tempChain,freeIntPtr);
-		freeChain(tempChain2,freeIntPtr);
-		//finishTool();
-	}
-
-#endif
 
 	PolyTableGenerator::~PolyTableGenerator() {
 	}
@@ -768,7 +559,7 @@ namespace flopoco{
 		int j;
 		cout<<"f=";
 		printTree(simplifyTreeErrorfree(f->getSollyaNode()));
-		cout<<" wIn="<<wInX_<<" wOut="<<(-1)*wOutX_<<endl;
+		cout<<" wOut="<<(-1)*wOutX_<<endl;
 		cout<<"k="<<polyCoeffVector.size()<<" d="<<coeffParamVector.size()<<endl;
 		cout<<"The size of the coefficients is:"<<endl;
 		for (j=0; (unsigned)j<coeffParamVector.size(); j++){
@@ -786,7 +577,7 @@ namespace flopoco{
 		int j;
 		cout<<"pwf=";
 		cout<<pwf->getName()<<endl;
-		cout<<" wIn="<<wInX_<<" wOut="<<(-1)*wOutX_<<endl;
+		cout<<" wOut="<<(-1)*wOutX_<<endl;
 		cout<<"k="<<polyCoeffVector.size()<<" d="<<coeffParamVector.size()<<endl;
 		cout<<"The size of the branch is:"<<endl;
 		for (j=0; (unsigned)j<getNrIntArray().size(); j++){

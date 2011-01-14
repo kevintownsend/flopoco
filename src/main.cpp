@@ -1698,14 +1698,13 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]); // and exit
 			string func = argv[i++];
-			int wI = checkStrictyPositive(argv[i++], argv[0]);
 			int wO = atoi(argv[i++]);
 			int n  = checkStrictyPositive(argv[i++], argv[0]);
 			
 						
-			cerr << "> PolyTableGenerator func='" << func << "', wI=" << wI << ", wO=" << wO <<endl;	
+			cerr << "> PolyTableGenerator func='" << func << "', wO=" << wO <<endl;	
 			
-			Operator* tg = new PolyTableGenerator(target, func, wI, wO, n);
+			Operator* tg = new PolyTableGenerator(target, func,  wO, n);
 				addOperator(tg);
 			
 		}
