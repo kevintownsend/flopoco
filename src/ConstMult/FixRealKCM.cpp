@@ -77,6 +77,9 @@ namespace flopoco{
 		wOut = msbOut-lsbOut+1;
 		REPORT(DEBUG, "msbConstant=" << msbC << "   lsbOut="<<lsbOut << "   msbOut="<<msbOut << "   wOut="<<wOut);
 	
+		if(wIn>wOut) 
+			throw string("FixRealKCM: Error, wIn>wOut,  You probably want to truncate your input instead.");
+
 		addInput("X", wIn);
 		addOutput("R", wOut);
 
@@ -159,6 +162,7 @@ namespace flopoco{
 					ppiSize=wOut+g;
 				}
 
+				REPORT(DEBUG, "Table i=" << i << ", input size=" << diSize<< ", output size=" << ppiSize);
 
 				// Now produce the VHDL
 				setCriticalPath(getMaxInputDelays(inputDelays));
