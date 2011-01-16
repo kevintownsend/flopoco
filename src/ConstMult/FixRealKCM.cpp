@@ -118,7 +118,7 @@ namespace flopoco{
 				nbOfTables--;
 				lastLutWidth=lutWidth + 1;
 			}
-			REPORT(INFO, "Constant multiplication in "<< nbOfTables << " tables, input size " << lutWidth << " then: " << lastLutWidth);
+			REPORT(INFO, "Constant multiplication in "<< nbOfTables << " tables, input sizes:  for the first tables, " << lutWidth << ", for the last table: " << lastLutWidth);
 
 			// How many guard bits? ulp=2^lsbOut
 			// One half-ulp for the final rounding, and nbOfTables tables with an error of 2^(lsbOut-g-1) each 
@@ -136,11 +136,19 @@ namespace flopoco{
 			bool tableSigned, last;
 			for (int i=0; i<nbOfTables; i++) {
 				int diSize;
+
+				// The bit width of the output of this table
+				// The last table has to have wOut+g  bits.
+				// The previous one wOut+g-lastLutWidth
+				// the previous one wOut+g-lastLutWidth-lutWidth etc
+				int ppiSize;
+
 				if (i < nbOfTables-1){
 					vhdl << tab << declare( join("d",i), lutWidth ) << " <= X" << range(lutWidth*(i+1)-1, lutWidth*i ) << ";" <<endl;
 					diSize=lutWidth;
 					tableSigned=false;
 					last=false;
+					ppiSize = wOut+g  - lastLutWidth - (nbOfTables-2-i)*lutWidth ;
 				}
 				else {// last table is a bit special
 					vhdl << tab << declare( join("d",i), lastLutWidth ) << " <= " << "X" << range( wIn-1 , lutWidth*i ) << ";" <<endl;
@@ -148,6 +156,7 @@ namespace flopoco{
 					if(signedInput)
 						tableSigned=true;
 					last=true;
+					ppiSize=wOut+g;
 				}
 
 
@@ -155,8 +164,6 @@ namespace flopoco{
 				setCriticalPath(getMaxInputDelays(inputDelays));
 
 				FixRealKCMTable *t; 
-
-				int ppiSize = wOut+g - (nbOfTables-1-i)*lutWidth ;
 				t = new FixRealKCMTable(target, this, i, diSize, ppiSize, tableSigned, last);
 				oplist.push_back(t);
 				useSoftRAM(t);
@@ -273,7 +280,7 @@ namespace flopoco{
 				x = x - (1<<wIn);
 		}
 		// Cast x to mpfr 
-		mpfr_t mpX; 
+		mpfr_t mpX;
 		mpfr_init2(mpX, wIn);	
 		mpfr_set_si(mpX, x, GMP_RNDN); // should be exact
 		mpfr_mul_2si(mpX, mpX, index*(target()->lutInputs()), GMP_RNDN); //Exact
