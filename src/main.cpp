@@ -324,10 +324,8 @@ static void usage(char *name){
 	cerr << "      LNS division.\n";
 	OP( "LNSSqrt","wE wF");
 	cerr << "      LNS square root.\n";
-#if 0 // Currently broken, most of its code was commented out for using deprecated methods. TODO
 	cerr << "    AtanPow wE wF o\n";
 	cerr << "      (4/pi)*atan(2^x) function.\n";
-#endif
 #endif // HAVE_LNS
 	cerr << "    ____________ APPLICATIONS __________________________________________________\n";
 	OP("Collision","wE wF opt");;
