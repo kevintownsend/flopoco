@@ -717,7 +717,7 @@ private:
 	int                    currentCycle_;               /**< The current cycle, when building a pipeline */
 	double                 criticalPath_;               /**< The current delay of the current pipeline stage */
 	bool                   needRecirculationSignal_;    /**< True if the operator has registers having a recirculation signal  */
-	bool                   hardOperator_;               /**< Flase if this operator is just an interface operator to several possible implementations*/
+	bool                   hardOperator_;               /**< False if this operator is just an interface operator to several possible implementations*/
 
 };
 
