@@ -57,25 +57,29 @@ namespace flopoco{
 
 			vhdl << tab << declare("xi0", wF+wE-1) << " <= x" << range(wF+wE-2, 0) << ";" << endl;
 
-			inPortMap  (t[0], "x", "xi0");
-			outPortMap (t[0], "r","out_t0");
+			inPortMap  (t[0], "X", "xi0");
+			outPortMap (t[0], "R","out_t0");
 			vhdl << instance(t[0], "inst_t0");
 
 		}
 
+		vhdl << tab << declare("xi1", wF+2) << " <= x" << range(wF+1, 0) << ";" << endl;
+
 		if(wF > 6) {
-		
 			t[1] = new HOTBM(target, "log2(1+2^x)", uniqueName_, wF+2, wF-4, o, -8, -4, 1 << 4);
 			oplist.push_back(t[1]);
-			vhdl << tab << declare("xi1", wF+2) << " <= x" << range(wF+1, 0) << ";" << endl;
 
-			inPortMap  (t[1], "x", "xi1");
-			outPortMap (t[1], "r","out_t1");
+			inPortMap  (t[1], "X", "xi1");
+			outPortMap (t[1], "R","out_t1");
 			vhdl << instance(t[1], "inst_t1");
 		}
 	
 		t[2] = new HOTBM(target, "log2(1+2^x)", uniqueName_, wF+2, wF, o, -4, 0, 1);
 		oplist.push_back(t[2]);
+
+		inPortMap  (t[2], "X", "xi1");
+		outPortMap (t[2], "R","out_t2");
+		vhdl << instance(t[2], "inst_t2");
 
 		vhdl << "  r <= ";
 	

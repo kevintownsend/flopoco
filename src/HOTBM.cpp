@@ -47,8 +47,8 @@ namespace flopoco{
 			uniqueName_ = o.str();
 		}
 		setCombinatorial();
-		addInput("x", wI);
-		addOutput("r", wO+1, 2);  // faithful rounding
+		addInput("X", wI);
+		addOutput("R", wO+1, 2);  // faithful rounding
 	}
 
 	HOTBM::~HOTBM()

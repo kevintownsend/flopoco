@@ -8,7 +8,7 @@ namespace flopoco{
 
 	struct AtanPow : Operator
 	{
-		AtanPow(Target * target, int wE, int wF, int o, EvaluationMethod method = Hotbm);
+		AtanPow(Target * target, int wE, int wF, int o, EvaluationMethod method = Polynomial);
 		virtual ~AtanPow();
 
 		//virtual void outputVHDL(std::ostream& o, std::string name);

@@ -49,8 +49,8 @@ namespace flopoco{
 			oplist.push_back(T[0]);
 
 			vhdl << tab << declare("x0", wF+wE-1) << " <= x(" << (wF+wE-2) << " downto 0);\n";
-			inPortMap(T[0], "x", "x0");
-			outPortMap(T[0], "r","out_t0");
+			inPortMap(T[0], "X", "x0");
+			outPortMap(T[0], "R","out_t0");
 			vhdl << instance(T[0], "inst_t0");	
 		}
 
@@ -60,16 +60,16 @@ namespace flopoco{
 			T[1] = NewInterpolator(wF+2, wF-4, o, -8, -4, 1 << 4);
 			oplist.push_back(T[1]);
 
-			inPortMap(T[1], "x", "x1");
-			outPortMap(T[1], "r","out_t1");
+			inPortMap(T[1], "X", "x1");
+			outPortMap(T[1], "R","out_t1");
 			vhdl << instance(T[1], "inst_t1");	
 		}
 
 		T[2] = NewInterpolator(wF+2, wF, o, -4, 0, 1);
 		oplist.push_back(T[2]);
 
-		inPortMap(T[2], "x", "x1");
-		outPortMap(T[2], "r","out_t2");
+		inPortMap(T[2], "X", "x1");
+		outPortMap(T[2], "R","out_t2");
 		vhdl << instance(T[2], "inst_t2");	
 
 		vhdl << tab << "r <= ";
