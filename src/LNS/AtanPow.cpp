@@ -99,5 +99,4 @@ namespace flopoco{
 	{
 	}
 
-#endif
 }
