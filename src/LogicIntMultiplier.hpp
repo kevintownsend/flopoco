@@ -1,5 +1,5 @@
-#ifndef UnsignedIntMultiplier_HPP
-#define UnsignedIntMultiplier_HPP
+#ifndef LogicIntMultiplier_HPP
+#define LogicIntMultiplier_HPP
 #include <vector>
 #include <sstream>
 #include <gmp.h>
@@ -19,19 +19,19 @@ extern map<string, double> emptyDelayMap;
 	 * The Integer Multiplier class. Receives at input two numbers of 
 	 * wInX and wInY widths and outputs a result having the width wOut=wInX+wInY 
 	 **/
-	class UnsignedIntMultiplier : public Operator
+	class LogicIntMultiplier : public Operator
 	{
 	public:
 		/** 
-		 * The constructor of the UnsignedIntMultiplier class
+		 * The constructor of the LogicIntMultiplier class
 		 * @param target argument of type Target containing the data for which this operator will be optimized
 		 * @param wInX integer argument representing the width in bits of the input X 
 		 * @param wInY integer argument representing the width in bits of the input Y
 		 **/
-		UnsignedIntMultiplier(Target* target, int wInX, int wInY, map<string, double> inputDelays = emptyDelayMap);
+		LogicIntMultiplier(Target* target, int wInX, int wInY, map<string, double> inputDelays = emptyDelayMap, bool sign=false);
 	
-		/** UnsignedIntMultiplier destructor */
-		~UnsignedIntMultiplier();
+		/** LogicIntMultiplier destructor */
+		~LogicIntMultiplier();
 	
 		void outputVHDL(std::ostream& o, std::string name);
 
@@ -58,6 +58,7 @@ extern map<string, double> emptyDelayMap;
 		IntAdder *intAdd1_; 
 		IntAdder *intAdd2_; 
 	
+		bool sign_;
 	};
 
 }

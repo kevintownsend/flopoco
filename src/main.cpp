@@ -198,7 +198,7 @@ static void usage(char *name){
 	OP("IntCompressorTree","wIn N");
 	cerr << "      Multi-operand addition using compressor trees, possibly pipelined\n";
 	cerr << "    ____________ INTEGER MULTIPLIERS/SQUARER/KARATSUBA _________________________\n";
-	OP("IntMultiplier","wInX wInY signed");
+	OP("IntMultiplier","wInX wInY signed ratio");
 	cerr << "      Integer multiplier of two integers X and Y of sizes wInX and wInY \n";
 	cerr << "      signed is one of {0,1} \n";	
 	OP("SignedIntMultiplier","wInX wInY");
@@ -901,20 +901,21 @@ bool parseCommandLine(int argc, char* argv[]){
 			}    
 		}
 		else if(opname=="IntMultiplier"){
-			int nargs = 3;
+			int nargs = 4;
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
 				int wInX    = checkStrictyPositive(argv[i++], argv[0]);
 				int wInY    = checkStrictyPositive(argv[i++], argv[0]);
 				int sign    =  checkBoolean(argv[i++], argv[0]);
+				float ratio = atof(argv[i++]);
 				bool sign_;
 				if (sign > 0)
 					sign_ = true;
 				else
 					sign_ = false;
 				cerr << "> IntMultiplier , wInX="<<wInX<<", wInY="<<wInY<<" signed="<<sign_<<"\n";
-				op = new IntMultiplier(target, wInX, wInY, emptyDelayMap, sign_);
+				op = new IntMultiplier(target, wInX, wInY, emptyDelayMap, sign_, ratio);
 				addOperator(op);
 			}
 		}

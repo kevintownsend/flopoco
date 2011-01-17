@@ -81,22 +81,26 @@ namespace flopoco{
 			}else if (nbOfInputs == 2){
 				manageCriticalPath(target->localWireDelay());
 				IntAdder *finalAdder = new IntAdder(target, wIn_, inDelayMap("X",getCriticalPath()));
-				oplist.push_back(finalAdder);	
+				oplist.push_back(finalAdder);
+				REPORT(INFO, "Finished 2 input adder instantiation");	
 
 				name.str("");
 				name << "level_" << treeLevel-1 << "_sum_";			
 				vhdl << endl;
-				inPortMap(finalAdder,"X",use(join(name.str(),0)));
-				inPortMap(finalAdder,"Y",use(join(name.str(),1)));
+				inPortMap(finalAdder,"X",join(name.str(),0));
+				inPortMap(finalAdder,"Y",join(name.str(),1));
 				inPortMapCst(finalAdder,"Cin","'0'");
 				outPortMap(finalAdder,"R","myR");
+				REPORT(DEBUG, "Port Map Succeed");
 				vhdl << instance(finalAdder,"FinalAdder_CompressorTree") << endl;
+				REPORT(DEBUG, "Instantiation Succeed");
 			
 				syncCycleFromSignal("myR");
 			
 				vhdl << tab << "R <= myR;" << endl;
 				outDelayMap["R"] = finalAdder->getOutputDelay("R");
 				processing = false;
+				REPORT(DEBUG, "Should have finished ...");
 			}else{
 				int a[16];    //possibly in the future LUTS may have up to 16 inputs
 				int sol[16];
@@ -229,6 +233,7 @@ namespace flopoco{
 				nbOfInputs = bestSol[0];
 				treeLevel++;
 			}
+			REPORT(DEBUG, "Finished IntCompressor");
 		}		
 	}		
 

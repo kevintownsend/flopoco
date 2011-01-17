@@ -62,7 +62,7 @@ namespace flopoco{
 			
 			start = clock(); /* time management */
 			
-			name <<"IntMultiplier_"<<wInX<<"_"<<wInY;
+			name <<"IntMultiplier_"<<wInX<<"_"<<wInY<<"_uid"<<getNewUId();
 			setName(name.str());
 		
 			setCopyrightString("Sebastian Banescu, Radu Tudoran, Bogdan Pasca 2009-2010");
@@ -588,6 +588,7 @@ namespace flopoco{
 //				add =  new IntNAdder(getTarget(), wInX+wInY, nrDSPOperands+nrSliceOperands, inMap);
 //			else
 				add =  new IntCompressorTree(getTarget(), wInX+wInY, nrDSPOperands+nrSliceOperands,inMap);
+			REPORT(DEBUG, "Finished generating the compressor tree");
 		
 			oplist.push_back(add);
 
@@ -599,7 +600,8 @@ namespace flopoco{
 
 					inPortMap (add, join("X",j) , concatPartialProd.str());
 				}	
-			
+			REPORT(DEBUG, "Finished mapping the DSP Operands");
+					
 			for (int j=0; j<nrSliceOperands; j++)
 				{
 					ostringstream concatPartialProd;
@@ -607,6 +609,8 @@ namespace flopoco{
 					REPORT(DETAILED, "@ In Port Map Current Cycle is " << getCurrentCycle());
 					inPortMap (add, join("X",j+nrDSPOperands) , concatPartialProd.str());
 				}	
+			REPORT(DEBUG, "Finished mapping the SLICE Operands");
+
 
 //			if ( ( target_->getID() == "Virtex4") ||
 //				 ( target_->getID() == "Spartan3"))  // then the target is A Xilinx FPGA 

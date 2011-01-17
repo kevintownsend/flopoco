@@ -82,6 +82,7 @@ namespace flopoco {
 				REPORT(INFO, "deleting version "<<int(j));
 				cleanup(&oplist, addImplementationList[j]);
 			}
+		REPORT(INFO, "Finished implementing the adder");
 	}
 	
 	/**************************************************************************/
