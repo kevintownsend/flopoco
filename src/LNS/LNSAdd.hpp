@@ -2,6 +2,7 @@
 #define LNSADD_HPP
 
 #include "../Operator.hpp"
+#include "GenericEvaluator.hpp"
 
 
 namespace flopoco{
@@ -10,7 +11,7 @@ namespace flopoco{
 	// z in fixed-point, wE integral bits, wF fractional bits
 	struct LNSAdd : Operator
 	{
-		LNSAdd(Target * target, int wE, int wF, int o);
+		LNSAdd(Target * target, int wE, int wF, int o, EvaluationMethod method = Polynomial);
 		virtual ~LNSAdd();
 
 
@@ -20,7 +21,6 @@ namespace flopoco{
 		int wF;
 		int order;
 	private:
-	
 		Operator * t[3];
 	};
 

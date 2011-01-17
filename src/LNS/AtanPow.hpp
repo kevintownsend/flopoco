@@ -11,8 +11,6 @@ namespace flopoco{
 		AtanPow(Target * target, int wE, int wF, int o, EvaluationMethod method = Polynomial);
 		virtual ~AtanPow();
 
-		//virtual void outputVHDL(std::ostream& o, std::string name);
-
 		int wE;
 		int wF;
 		int order;

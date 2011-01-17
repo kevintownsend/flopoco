@@ -33,7 +33,7 @@ namespace flopoco{
 	
 	extern vector<Operator*> oplist;	// ???
 
-	LNSAdd::LNSAdd(Target * target, int wE, int wF, int o) :
+	LNSAdd::LNSAdd(Target * target, int wE, int wF, int o, EvaluationMethod method) :
 		Operator(target), wE(wE), wF(wF), order(o)
 	{
 		setCombinatorial();
@@ -52,7 +52,7 @@ namespace flopoco{
 		if(wF > 7) {
 			// Who is going to free this memory??
 			// T0 always order 1?...
-			t[0] = new HOTBM(target, "log2(1+2^x)", uniqueName_, wF+wE-1, wF-7, o, -(1 << wE), -8, 1 << 7);
+			t[0] = NewEvaluator(target, "log2(1+2^x)", uniqueName_, wF+wE-1, wF-7, o, -(1 << wE), -8, 1 << 7, method);
 			oplist.push_back(t[0]);
 
 			vhdl << tab << declare("xi0", wF+wE-1) << " <= x" << range(wF+wE-2, 0) << ";" << endl;
@@ -66,7 +66,7 @@ namespace flopoco{
 		vhdl << tab << declare("xi1", wF+2) << " <= x" << range(wF+1, 0) << ";" << endl;
 
 		if(wF > 6) {
-			t[1] = new HOTBM(target, "log2(1+2^x)", uniqueName_, wF+2, wF-4, o, -8, -4, 1 << 4);
+			t[1] = NewEvaluator(target, "log2(1+2^x)", uniqueName_, wF+2, wF-4, o, -8, -4, 1 << 4, method);
 			oplist.push_back(t[1]);
 
 			inPortMap  (t[1], "X", "xi1");
@@ -74,7 +74,7 @@ namespace flopoco{
 			vhdl << instance(t[1], "inst_t1");
 		}
 	
-		t[2] = new HOTBM(target, "log2(1+2^x)", uniqueName_, wF+2, wF, o, -4, 0, 1);
+		t[2] = NewEvaluator(target, "log2(1+2^x)", uniqueName_, wF+2, wF, o, -4, 0, 1, method);
 		oplist.push_back(t[2]);
 
 		inPortMap  (t[2], "X", "xi1");
