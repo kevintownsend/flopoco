@@ -44,7 +44,7 @@ namespace flopoco{
 		ostringstream name;
 		srcFileName="FunctionEvaluator";
 		
-		name<<"FunctionEvaluator"; 
+		name<<"FunctionEvaluator_"<<getNewUId(); 
 		setName(name.str()); 
 
 		setCopyrightString("Bogdan Pasca, Mioara Joldes (2010)");
