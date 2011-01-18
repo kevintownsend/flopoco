@@ -72,7 +72,7 @@ ENDIF (MPFR_FOUND)
 
 # Create custom command for flex++/lex (note the outputs)
 FIND_PROGRAM(FLEXPP_EXECUTABLE
-	NAMES flex++
+	NAMES flex
 	PATHS /usr/bin
 	DOC "Flex++ executable")
 
@@ -83,10 +83,10 @@ ELSE(FLEXPP_EXECUTABLE)
 ENDIF(FLEXPP_EXECUTABLE)
 
 ADD_CUSTOM_COMMAND(
-	SOURCE src/VHDLLexer.lpp
+	SOURCE src/VHDLLexerRule.l
 	COMMAND ${FLEXPP_EXECUTABLE} 
-	ARGS -+ -o src/VHDLLexer.cpp --header-file=src/VHDLLexer.hpp
-    src/VHDLLexer.lpp
+	ARGS -o src/VHDLLexer.cpp 
+    src/VHDLLexerRule.l
 	TARGET VHDLLexer
 	OUTPUTS src/VHDLLexer.cpp src/VHDLLexer.hpp)
 

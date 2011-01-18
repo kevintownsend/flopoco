@@ -8,7 +8,8 @@
 #include <gmpxx.h>
 #include <cstdlib>
 
-#include "VHDLLexer.hpp"
+//#include "VHDLLexer.hpp"
+#include "LexerContext.hpp"
 
 
 namespace flopoco{
@@ -27,104 +28,19 @@ extern bool combinatorialOperator;
 	class FlopocoStream{
 	
 		/* Methods for overloading the output operator available on streams */
-		friend FlopocoStream& operator<<(FlopocoStream& output, const char c) {
-			output.vhdlCodeBuffer << c;
-			return output; 
-		}
-		
-		friend FlopocoStream& operator<<(FlopocoStream& output, const signed char c) {
-			output.vhdlCodeBuffer << c;
-			return output; 
-		}
-		
-		friend FlopocoStream& operator<<(FlopocoStream& output, const unsigned char c) {
-			output.vhdlCodeBuffer << c;
-			return output; 
-		}
+		/*friend FlopocoStream& operator <= (FlopocoStream& output, string s) {
 
-		friend FlopocoStream& operator<<(FlopocoStream& output, const char *c) {
-			output.vhdlCodeBuffer << c;
-			return output; 
-		}
-		
-		friend FlopocoStream& operator<<(FlopocoStream& output, const signed char *c) {
-			output.vhdlCodeBuffer << c;
-			return output; 
-		}
-		
-		friend FlopocoStream& operator<<(FlopocoStream& output, const unsigned char *c) {
-			output.vhdlCodeBuffer << c;
-			return output; 
-		}
+			output.vhdlCodeBuffer << " <= " << s;
+			return output;
+		}*/
 
 
-		friend FlopocoStream& operator<<(FlopocoStream& output, const string s) {
-			output.vhdlCodeBuffer << s;
-			return output; 
-		}
-
-		friend FlopocoStream & operator<<(FlopocoStream& output, const ostream o) {
-			output.vhdlCodeBuffer << o;
-			return output; 
-		}
-
-		friend FlopocoStream & operator<<(FlopocoStream& output, const bool b) {
-			output.vhdlCodeBuffer << b;
-			return output; 
-		}	
-	
-
-		friend FlopocoStream& operator<<(FlopocoStream& output, const short s) {
-			output.vhdlCodeBuffer << s;
-			return output; 
-		}
-
-		friend FlopocoStream& operator<<(FlopocoStream& output, const unsigned short s) {
-			output.vhdlCodeBuffer << s;
-			return output; 
-		}
+                template <class paramType> friend FlopocoStream& operator <<(FlopocoStream& output, paramType c) {
+                        output.vhdlCodeBuffer << c;
+                        return output;
+                }
 
 
-		friend FlopocoStream & operator<<(FlopocoStream& output, const int i) {
-			output.vhdlCodeBuffer << i;
-			return output; 
-		}
-
-		friend FlopocoStream & operator<<(FlopocoStream& output, unsigned int i) {
-			output.vhdlCodeBuffer << i;
-			return output; 
-		}
-		
-		friend FlopocoStream & operator<<(FlopocoStream& output, int64_t i) {
-			output.vhdlCodeBuffer << i;
-			return output; 
-		}
-
-		friend FlopocoStream & operator<<(FlopocoStream& output, const unsigned long l) {
-			output.vhdlCodeBuffer << l;
-			return output; 
-		}
-
-		friend FlopocoStream & operator<<(FlopocoStream& output, const float f) {
-			output.vhdlCodeBuffer << f;
-			return output; 
-		}
-		
-		friend FlopocoStream & operator<<(FlopocoStream& output, const double d) {
-			output.vhdlCodeBuffer << d;
-			return output; 
-		}
-
-		friend FlopocoStream & operator<<(FlopocoStream& output, const long double d) {
-			output.vhdlCodeBuffer << d;
-			return output; 
-		}
-
-
-		friend FlopocoStream & operator<<(FlopocoStream& output, const mpz_class x) {
-			output.vhdlCodeBuffer << x;
-			return output; 
-		}
 
 		friend FlopocoStream & operator<<(FlopocoStream& output, FlopocoStream fs) {
 			output.vhdlCodeBuffer << fs.str();
@@ -142,7 +58,7 @@ extern bool combinatorialOperator;
 			 * Initializes the two streams: vhdlCode and vhdlCodeBuffer
 			 */
 			FlopocoStream();
-			
+
 			/**
 			 * FlopocoStream destructor
 			 */
@@ -218,6 +134,19 @@ extern bool combinatorialOperator;
 				ostringstream vhdlO;
 				istringstream in( vhdlCodeBuffer.str() );
 				/* instantiate the flex++ object  for lexing the buffer info */
+				LexerContext* lexer = new LexerContext(&in, &vhdlO);
+				/* set a global variable (see main.cpp) with the cycle information
+				This variable is visible from within the flex++ scanner class */
+				yyTheCycle = currentCycle;
+				/* call the FlexLexer ++ on the buffer. The lexing output is
+				 in the variable vhdlO. Additionally, a temporary table contating
+				 the tuples <name, cycle> is created */
+				lexer->lex();
+				/* the temporary table is used to update the member of the FlopocoStream
+				 class useTable */
+
+#if 0
+				/* instantiate the flex++ object  for lexing the buffer info */
 				FlexLexer *l = new yyFlexLexer(&in, &vhdlO);
 				/* set a global variable (see main.cpp) with the cycle information
 				This variable is visible from within the flex++ scanner class */
@@ -228,6 +157,7 @@ extern bool combinatorialOperator;
 				l->yylex(&in, &vhdlO);
 				/* the temporary table is used to update the member of the FlopocoStream
 				 class useTable */
+#endif
 				updateUseMap();
 				/* the annotated string is returned */
 				return vhdlO.str();

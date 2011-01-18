@@ -1,16 +1,15 @@
-/*
+/**
   FloPoCo Stream for VHDL code including cycle information
 
   This file is part of the FloPoCo project developed by the Arenaire
   team at Ecole Normale Superieure de Lyon
   
-  Author :   Bogdan Pasca
+  Authors :   Bogdan Pasca, Nicolas Brunie
 
   Initial software.
   Copyright © ENS-Lyon, INRIA, CNRS, UCBL,  
-  CeCILL License, 2008-2010.
+  CeCILL License, 2008-2010. */
 
- */
 
 #include <iostream>
 #include <sstream>
@@ -37,7 +36,7 @@ namespace flopoco{
 		vhdlCodeBuffer.str("");
 		currentCycle_ = 0;
 	}
-	
+
 
 	FlopocoStream::~FlopocoStream(){
 	}
