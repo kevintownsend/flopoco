@@ -8,7 +8,7 @@
 
 #include "Operator.hpp"
 #include "IntAdder.hpp"
-#include "IntTilingMult.hpp"
+#include "IntMultipliers/IntTilingMult.hpp"
 
 namespace flopoco{
 

@@ -20,8 +20,8 @@
 #include <gmp.h>
 #include <mpfr.h>
 #include <gmpxx.h>
-#include "utils.hpp"
-#include "Operator.hpp"
+#include "../utils.hpp"
+#include "../Operator.hpp"
 #include "LogicIntMultiplier.hpp"
 
 using namespace std;
@@ -59,8 +59,6 @@ namespace flopoco{
 		addInput ("X", wInX_,true);
 		addInput ("Y", wInY_,true);
 		addOutput("R", wOut_,1, true); /* wOut_ = wInX_ + wInY_ */
-	
-		double delay = 0.0;
 	
 		/***************************************************************************
 		 ***************************************************************************/

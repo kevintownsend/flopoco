@@ -18,8 +18,8 @@ noinst_HEADERS = apps/Collision.hpp apps/FPFMAcc.hpp apps/FPJacobi.hpp\
         Targets/DSP.hpp Targets/Spartan3.hpp Targets/StratixII.hpp Targets/StratixIV.hpp Targets/Virtex4.hpp Targets/Virtex5.hpp Targets/Virtex6.hpp \
         DotProduct.hpp  DualTable.hpp DualTable2.hpp Fix2FP.hpp FlopocoStream.hpp FPAdderDualPath.hpp FPAdderSinglePath.hpp FPDiv.hpp FPExp.hpp FPLog.hpp FPMultiplier.hpp FPNumber.hpp \
 	FPSqrt.hpp FPSqrtPoly.hpp FPSquarer.hpp FunctionEvaluator.hpp HOTBM.hpp IEEENumber.hpp InputIEEE.hpp IntAdder.hpp IntAdderClassical.hpp IntAdderAlternative.hpp IntAdderShortLatency.hpp IntCompressorTree.hpp IntDualSub.hpp IntKaratsuba.hpp IntMultiplier.hpp \
-	IntNAdder.hpp IntSquarer.hpp IntTilingMult.hpp IntTruncMultiplier.hpp LongAcc2FP.hpp LongAcc.hpp LongIntAdder.hpp LongIntAdderCmpCmpAdd.hpp LongIntAdderCmpAddAdd.hpp LZOC.hpp LZOCShifterSticky.hpp Operator.hpp OutputIEEE.hpp PolynomialEvaluator.hpp \
-	Shifters.hpp Signal.hpp SignedIntMultiplier.hpp PolyTableGenerator.hpp PiecewiseFunction.hh Table.hpp Target.hpp TestBench.hpp TestCase.hpp UserDefinedOperator.hpp utils.hpp VHDLLexer.hpp Wrapper.hpp 
+	IntNAdder.hpp IntSquarer.hpp IntMultipliers/IntTilingMult.hpp IntTruncMultiplier.hpp LongAcc2FP.hpp LongAcc.hpp LongIntAdder.hpp LongIntAdderCmpCmpAdd.hpp LongIntAdderCmpAddAdd.hpp LZOC.hpp LZOCShifterSticky.hpp Operator.hpp OutputIEEE.hpp PolynomialEvaluator.hpp \
+	Shifters.hpp Signal.hpp IntMultipliers/SignedIntMultiplier.hpp IntMultipliers/UnsignedIntMultiplier.hpp IntMultipliers/LogicIntMultiplier.hpp PolyTableGenerator.hpp PiecewiseFunction.hh Table.hpp Target.hpp TestBench.hpp TestCase.hpp UserDefinedOperator.hpp utils.hpp VHDLLexer.hpp Wrapper.hpp 
 
 libflopoco_la_SOURCES = VHDLLexer.lpp \
 			utils.cpp \
@@ -47,10 +47,10 @@ libflopoco_la_SOURCES = VHDLLexer.lpp \
                         IntComparator.cpp \
 			IntDualSub.cpp \
 			IntMultiplier.cpp \
-			SignedIntMultiplier.cpp \
-			UnsignedIntMultiplier.cpp \
-			IntTilingMult.cpp \
-			LogicIntMultiplier.cpp \
+			IntMultipliers/SignedIntMultiplier.cpp \
+			IntMultipliers/UnsignedIntMultiplier.cpp \
+			IntMultipliers/IntTilingMult.cpp \
+			IntMultipliers/LogicIntMultiplier.cpp \
 			IntTruncMultiplier.cpp \
 			IntKaratsuba.cpp \
 			LZOC.cpp \

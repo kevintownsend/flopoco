@@ -7,9 +7,9 @@
 #include <gmpxx.h>
 #include <time.h>
 
-#include "Operator.hpp"
-#include "IntCompressorTree.hpp"
-#include "IntTruncMultiplier.hpp"
+#include "../Operator.hpp"
+#include "../IntCompressorTree.hpp"
+#include "../IntTruncMultiplier.hpp"
 
 
 namespace flopoco{

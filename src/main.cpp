@@ -45,10 +45,11 @@
 #include "IntDualSub.hpp"
 
 #include "IntMultiplier.hpp"
-#include "IntTilingMult.hpp"
+#include "IntMultipliers/IntTilingMult.hpp"
+#include "IntMultipliers/SignedIntMultiplier.hpp"
+
 #include "Targets/DSP.hpp"
 
-#include "SignedIntMultiplier.hpp"
 #include "IntTruncMultiplier.hpp"
 #include "IntKaratsuba.hpp"
 

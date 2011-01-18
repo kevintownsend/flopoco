@@ -25,9 +25,9 @@
 
 
 #include <gmpxx.h>
-#include "utils.hpp"
-#include "Operator.hpp"
-#include "IntMultiplier.hpp"
+#include "../utils.hpp"
+#include "../Operator.hpp"
+#include "../IntMultiplier.hpp"
 #include "IntTilingMult.hpp"
 
 #include <cstdlib>

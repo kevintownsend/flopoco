@@ -203,11 +203,13 @@ ADD_EXECUTABLE(flopoco
  src/IntCompressorTree
  src/LongIntAdder
  src/IntDualSub
+
  src/IntMultiplier
- src/SignedIntMultiplier
- src/UnsignedIntMultiplier
- src/IntTilingMult
- src/LogicIntMultiplier
+ src/IntMultipliers/SignedIntMultiplier
+ src/IntMultipliers/UnsignedIntMultiplier
+ src/IntMultipliers/IntTilingMult
+ src/IntMultipliers/LogicIntMultiplier
+
  src/IntTruncMultiplier
  src/IntKaratsuba
  src/LZOC src/LZOCShifterSticky
@@ -296,11 +298,12 @@ ADD_EXECUTABLE(flopoco
  src/LongIntAdder src/LongIntAdderCmpCmpAdd src/LongIntAdderCmpAddAdd
  src/IntComparator
  src/IntDualSub
+ 
  src/IntMultiplier
- src/SignedIntMultiplier
- src/UnsignedIntMultiplier
- src/IntTilingMult
- src/LogicIntMultiplier 
+ src/IntMultipliers/SignedIntMultiplier
+ src/IntMultipliers/UnsignedIntMultiplier
+ src/IntMultipliers/IntTilingMult
+ src/IntMultipliers/LogicIntMultiplier 
  src/IntTruncMultiplier
  
  src/IntKaratsuba

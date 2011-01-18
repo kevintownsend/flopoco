@@ -22,10 +22,10 @@ CeCILL license, 2008-2010.
 #include "utils.hpp"
 #include "Operator.hpp"
 #include "IntMultiplier.hpp"
-#include "SignedIntMultiplier.hpp"
-#include "UnsignedIntMultiplier.hpp"
-#include "LogicIntMultiplier.hpp"
-#include "IntTilingMult.hpp"
+#include "IntMultipliers/SignedIntMultiplier.hpp"
+#include "IntMultipliers/UnsignedIntMultiplier.hpp"
+#include "IntMultipliers/LogicIntMultiplier.hpp"
+#include "IntMultipliers/IntTilingMult.hpp"
 // 
 using namespace std;
 

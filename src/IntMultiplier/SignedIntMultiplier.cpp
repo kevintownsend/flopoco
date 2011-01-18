@@ -29,10 +29,10 @@
 #include <gmp.h>
 #include <mpfr.h>
 #include <gmpxx.h>
-#include "utils.hpp"
-#include "Operator.hpp"
+#include "../utils.hpp"
+#include "../Operator.hpp"
+#include "../IntCompressorTree.hpp"
 #include "SignedIntMultiplier.hpp"
-#include "IntCompressorTree.hpp"
 
 using namespace std;
 

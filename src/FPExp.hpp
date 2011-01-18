@@ -6,7 +6,7 @@
 #include "Operator.hpp"
 #include "Table.hpp"
 #include "DualTable.hpp"
-#include "IntTilingMult.hpp"
+#include "IntMultipliers/IntTilingMult.hpp"
 
 class Fragment;
 class FPNumber;
