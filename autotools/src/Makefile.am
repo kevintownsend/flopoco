@@ -47,9 +47,11 @@ libflopoco_la_SOURCES = VHDLLexer.lpp \
                         IntComparator.cpp \
 			IntDualSub.cpp \
 			IntMultiplier.cpp \
-			IntTruncMultiplier.cpp \
 			SignedIntMultiplier.cpp \
+			UnsignedIntMultiplier.cpp \
 			IntTilingMult.cpp \
+			LogicIntMultiplier.cpp \
+			IntTruncMultiplier.cpp \
 			IntKaratsuba.cpp \
 			LZOC.cpp \
 			LZOCShifterSticky.cpp \
