@@ -2,7 +2,7 @@
 
 ACLOCAL_AMFLAGS = -I ../m4
 
-AM_LFLAGS = -+ -o lex.yy.c --header-file=VHDLLexer.hpp
+AM_LFLAGS = -o lex.yy.c --header-file=VHDLLexer.hpp
 BUILT_SOURCES = VHDLLexer.hpp VHDLLexer.cpp 
 CLEANFILES = $(BUILT_SOURCES) *.output
 LEX_OUTPUT_ROOT=VHDLLexer.hpp VHDLLexer.hpp lex.yy

@@ -1,16 +1,35 @@
-%{
-#include <stdio.h>
-#include <iostream>
-#include <string.h>
-#include <utility>
-#include <vector>
-#include <ctype.h>
-#include <map>
+%option reentrant
+%option prefix="Flopoco_"
+%option noyywrap
+%option yylineno
 
-namespace flopoco{
-	extern int yyTheCycle;
-	extern std::vector< std::pair<std::string, int> > theUseTable;
-}
+
+%{
+	#include "LexerContext.hpp"
+	#include <stdio.h>
+	#include <iostream>
+	#include <string.h>
+	#include <utility>
+	#include <vector>
+	#include <ctype.h>
+	#include <map>
+
+	#define YY_EXTRA_TYPE LexerContext*
+	#define YY_INPUT(buf, result, max_size) {\
+		char c; \
+		(*yyextra->is).get(c); \
+		if (yyextra->is->eof()) \
+			result = YY_NULL; \
+		else { \
+			buf[0] = c; \
+			result = 1; \
+		}\
+	}
+
+	namespace flopoco{
+		extern int yyTheCycle;
+		extern std::vector< std::pair<std::string, int> > theUseTable;
+	}
 
 %}
 
@@ -119,48 +138,56 @@ base_specifier	  	  (B|b|O|o|X|x)
 "when"|"WHEN" |
 "while"|"WHILE" |
 "with"|"WITH" |
-"xor"|"XOR"  { (*yyout) << yytext; }
+"xor"|"XOR"  { (*yyextra->os) << yytext; }
 
 
 
 
 
-{letter}(_?{letter_or_digit})*({space_character})*"=>" { (*yyout) << yytext; } 
+{letter}(_?{letter_or_digit})*({space_character})*"=>" { (*yyextra->os) << yytext; } 
 
-[ \t\n] (*yyout) << yytext;
+[ \t\n] (*yyextra->os) << yytext;
 
 
 
-{letter}(_?{letter_or_digit})* { (*yyout) << "__" << yytext << "__" << flopoco::yyTheCycle <<"__";
+{letter}(_?{letter_or_digit})* { (*yyextra->os) << "__" << yytext << "__" << flopoco::yyTheCycle <<"__";
 								  std::pair< std::string, int> tmp;
 								  tmp.first = yytext;
 								  tmp.second = flopoco::yyTheCycle;
 								 flopoco::theUseTable.push_back ( tmp );		
 								} 
 
-\&|\'|\(|\)|"**"|\*|\+|\,|\-|":="|\:|\;|"<="|">="|\<|\>|=|\/=|"=>"|"<>"|\||!|\.|\/ { (*yyout) << yytext; }	
+\&|\'|\(|\)|"**"|\*|\+|\,|\-|":="|\:|\;|"<="|">="|\<|\>|=|\/=|"=>"|"<>"|\||!|\.|\/ { (*yyextra->os) << yytext; }	
 
 
 ({decimal_literal})|({base}#{based_integer}(\.{based_integer})?#({exponent})?)|({base}:{based_integer}(\.{based_integer})?:({exponent})?)		{
-			(*yyout) << yytext; 
+			(*yyextra->os) << yytext; 
 			}
 
-'({graphic_character}|\"|\%)' 	{ (*yyout) << yytext; }
+'({graphic_character}|\"|\%)' 	{ (*yyextra->os) << yytext; }
 
-(\"({graphic_character}|(\"\")|\%)*\")|(\%({graphic_character}|(\%\%)|\")*\%) { (*yyout) << yytext; }
+(\"({graphic_character}|(\"\")|\%)*\")|(\%({graphic_character}|(\%\%)|\")*\%) { (*yyextra->os) << yytext; }
 
-{base_specifier}(\"{extended_digit}(_?{extended_digit})*\"|\%{extended_digit}(_?{extended_digit})*\%) 	{ (*yyout) << yytext; }
+{base_specifier}(\"{extended_digit}(_?{extended_digit})*\"|\%{extended_digit}(_?{extended_digit})*\%) 	{ (*yyextra->os) << yytext; }
 
 \-\-.*$ 	{
 			/* comment */
-			(*yyout) << yytext;
+			(*yyextra->os) << yytext;
 			}
 
-(.) (*yyout) << yytext;
+(.) (*yyextra->os) << yytext;
 
 %%
 
+void LexerContext::init_scanner() {
+	yylex_init(&scanner);
+	yyset_extra(this, scanner);
+}
 
-int yyFlexLexer::yywrap (void) {
-	return 1;
+void LexerContext::destroy_scanner() {
+	yylex_destroy(scanner);
+}
+
+void LexerContext::lex() {
+	yylex(scanner);
 }
