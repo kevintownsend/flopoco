@@ -44,7 +44,6 @@ namespace flopoco {
 		// Set up the IO signals
 		addInput ( "X"  , wInX_, true );
 		addInput ( "Y"  , wInY_, true );
-		addInput ( "Cin", 1 );
 		addOutput ( "R"  , wInX_+wInY_, 1 , true );
 		
 		REPORT(INFO, "Implementing IntMultiplier ");
@@ -83,6 +82,7 @@ namespace flopoco {
 		oplist.push_back(IntMultiplierInstantiation); //the code of the selected implementation 
 		outDelayMap["R"] = IntMultiplierInstantiation->getOutputDelay("R"); //populate output delays
 		setCycle(IntMultiplierInstantiation->getPipelineDepth());
+		IntMultiplierInstantiation->setName ( name.str() );//accordingly set the name of the implementation
 		
 	}
 	
