@@ -176,14 +176,14 @@ There are two main differences between the format (wE=8, wF=23) and the IEEE-754
 </ul>
 
 <p>
- Note that anyway, FloPoCo provides conversion operators from and to IEEE-754 formats (simple and double precision).
+ Note that anyway, FloPoCo provides conversion operators from and to IEEE-754 formats (single and double precision).
 </p>
 
 <hr/>
 <h2>LNS format</h2>
 
 <p>Numbers in the Logarithm Number System used in FloPoCo have an encoding
-similar to the floating-point format, which is also the same as the one used in
+similar to the floating-point format. It is also the same as the one used in
 <a
 href="http://www.ens-lyon.fr/LIP/Arenaire/Ware/FPLibrary/">FPLibrary</a>.</p>
 
@@ -603,6 +603,9 @@ or square roots.</p>
 	</dd>
 </dl>
 </p>
+
+<p>The implementation of LNS addition/subtraction is based on HOTBM to compute sums,
+and uses cotransformation to evaluate differences. It is described in <a href="http://perso.ens-lyon.fr/sylvain.collange/papers/ArCo_Arith19.pdf">this article</a>.</p>
 
 <h3>Test Benches</h3>
 

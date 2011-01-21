@@ -19,7 +19,7 @@
 
 <h3>Single-line installation on Ubuntu 10.04</h3>
 
-<code>yes | sudo apt-get install g++ libgmp3-dev libmpfr-dev libxml2-dev bison libmpfi-dev flex++ cmake; wget http://perso.ens-lyon.fr/damien.stehle/downloads/libfplll-3.0.12.tar.gz; gunzip < libfplll-3.0.12.tar.gz | tar xvf -; cd libfplll-3.0.12/; ./configure; make; sudo make install; cd ..; wget https://gforge.inria.fr/frs/download.php/26858/sollya-2.0.tar.gz; gunzip < sollya-2.0.tar.gz | tar xvf -; cd sollya-2.0/; ./configure; make; sudo make install; cd ..; wget https://gforge.inria.fr/frs/download.php/26920/flopoco-2.0.0.tgz; gunzip < flopoco-2.0.0.tgz    | tar xvf -; cd flopoco-2.0.0/; cmake .; make; ./flopoco;</code>
+<code>yes | sudo apt-get install g++ libgmp3-dev libmpfr-dev libxml2-dev bison libmpfi-dev flex++ cmake; wget http://perso.ens-lyon.fr/damien.stehle/downloads/libfplll-3.0.12.tar.gz; gunzip < libfplll-3.0.12.tar.gz | tar xvf -; cd libfplll-3.0.12/; ./configure; make; sudo make install; cd ..; wget https://gforge.inria.fr/frs/download.php/26858/sollya-2.0.tar.gz; gunzip < sollya-2.0.tar.gz | tar xvf -; cd sollya-2.0/; ./configure; make; sudo make install; cd ..; wget https://gforge.inria.fr/frs/download.php/28112/flopoco-2.1.1.tgz; gunzip < flopoco-2.1.1.tgz    | tar xvf -; cd flopoco-2.1.1/; cmake .; make; ./flopoco;</code>
 
 <h3>Generic installation instructions</h3>
 
@@ -603,6 +603,9 @@ or square roots.</p>
 	</dd>
 </dl>
 </p>
+
+<p>The implementation of LNS addition/subtraction is based on HOTBM to compute sums,
+and uses cotransformation to evaluate differences. It is described in <a href="http://perso.ens-lyon.fr/sylvain.collange/papers/ArCo_Arith19.pdf">this article</a>.</p>
 
 <h3>Test Benches</h3>
 
