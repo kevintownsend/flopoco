@@ -3,7 +3,7 @@
 
 #include <list>
 
-#include "Function.hh"
+#include "../Function.hpp"
 #include "Param.hh"
 #include "PWPolynomial.hh"
 #include "Term.hh"

@@ -121,7 +121,10 @@ Table::Table(Target* target) :
 			vhdl <<  "\" when others;" << endl;
 
 			Operator::outputVHDL(o,  name);
-		}else{
+		}
+
+
+		else { // Altera I guess
 			int x;
 			mpz_class y;
 			licence(o);

@@ -6,7 +6,7 @@
 #include <vector>
 #include "HOTBM/Util.hh"
 #include "HOTBM/sollya.h"	// Do NOT use libsollya from user's environment
-#include "HOTBM/Function.hh"
+#include "Function.hpp"
 #include <stdlib.h>
 using namespace std;
 

@@ -1,7 +1,7 @@
 #ifndef _MINIMAX_HH_
 #define _MINIMAX_HH_
 
-#include "Function.hh"
+#include "../Function.hpp"
 #include "MPPolynomial.hh"
 
 using namespace std;

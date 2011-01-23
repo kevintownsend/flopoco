@@ -7,15 +7,15 @@
 #include <gmpxx.h>
 #include <cstdlib>
 
-#include "Operator.hpp"
-#include "Table.hpp"
+#include "../Operator.hpp"
+#include "../Table.hpp"
 #include "PolynomialEvaluator.hpp"
 #include "HOTBM/sollya.h"	// Do NOT use libsollya from user's environment
 
-#include "HOTBM/Function.hh"
+#include "Function.hpp"
+#include "PiecewiseFunction.hpp"
 #include "HOTBM/MPPolynomial.hh"
-#include "UtilSollya.hh"
-#include "PiecewiseFunction.hh"
+#include "../UtilSollya.hh"
 
 namespace flopoco{
 

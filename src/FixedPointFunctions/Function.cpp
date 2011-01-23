@@ -1,4 +1,4 @@
-#include "Function.hh"
+#include "Function.hpp"
 #include <sstream>
 
 namespace flopoco{

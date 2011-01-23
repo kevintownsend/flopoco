@@ -19,7 +19,7 @@
 #include <gmp.h>
 #include <mpfr.h>
 #include <gmpxx.h>
-#include "../HOTBM/sollya.h" // TODO : fix upstream Sollya, or fix in FloPoCo
+#include "../FixedPointFunctions/HOTBM/sollya.h" // TODO : fix upstream Sollya, or fix in FloPoCo
 #include "../utils.hpp"
 #include "../Operator.hpp"
 #include "FPConstMult.hpp"

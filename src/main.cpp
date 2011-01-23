@@ -76,7 +76,7 @@
 #include "DotProduct.hpp"
 
 
-#include "PolynomialEvaluator.hpp"
+#include "FixedPointFunctions/PolynomialEvaluator.hpp"
 
 
 #include "Wrapper.hpp"
@@ -109,7 +109,7 @@
 
 
 #ifdef HAVE_HOTBM
-#include "HOTBM.hpp"
+#include "FixedPointFunctions/HOTBM.hpp"
 #endif
 
 #ifdef HAVE_LNS
@@ -126,8 +126,9 @@
 #endif
 #endif
 
-#include "PolyTableGenerator.hpp"
-#include "FunctionEvaluator.hpp"
+#include "FixedPointFunctions/FunctionTable.hpp"
+#include "FixedPointFunctions/PolyTableGenerator.hpp"
+#include "FixedPointFunctions/FunctionEvaluator.hpp"
 #include "FPPipeline.hpp"
 
 #include "UserDefinedOperator.hpp"
@@ -293,11 +294,11 @@ static void usage(char *name){
 	cerr << "      Conversion from IEEE-754-like to FloPoCo floating-point formats\n";
 #ifdef HAVE_HOTBM
 	cerr << "    ____________ GENERIC FUNCTION EVALUATORS ____________________________________\n";
-	cerr << "      We provide two methods to evaluate a function on [0,1]\n";
-	OP( "FunctionEvaluator","function wI wO degree");
-	cerr << "      Polynomial based method for fixed-point functions\n";
-	cerr << "      wI - input width, wO - the number of bits at the right of the dot, \n";
-	cerr << "      degree - degree of polynomial approx\n";
+	cerr << "      We provide two methods to evaluate a fixed-point function on [0,1]\n";
+	OP( "FunctionEvaluator","function wI lsbO degree");
+	cerr << "      Optimized Horner polynomial approximation, DSP based if available\n";
+	cerr << "      wI - input width (also weight of input LSB), lsbO - weight of output LSB,\n";
+	cerr << "      degree - degree of polynomial approximation (typically 2 to 5),\n";
 	cerr << "      function - sollya-syntaxed function to implement, between double quotes\n";
 	OP( "HOTBM","function wI wO degree");
 	cerr << "      High-Order Table-Based Method for fixed-point functions (NPY)\n";
@@ -1709,6 +1710,21 @@ bool parseCommandLine(int argc, char* argv[]){
 			
 		}
 		
+
+		else if (opname == "FunctionTable") {
+			int nargs = 4;
+			if (i+nargs > argc)
+				usage(argv[0]); // and exit
+			string func = argv[i++];
+			int wI = checkStrictyPositive(argv[i++], argv[0]);
+			int lsbO = atoi(argv[i++]);
+			int msbO = atoi(argv[i++]);
+			
+				
+			cerr << "> FunctionTable func='" << func << "', wI=" << wI << ", lsbO=" << lsbO << ", msbO=" << msbO << endl;	
+			Operator* tg = new FunctionTable(target, func, wI, lsbO, msbO);
+			addOperator(tg);
+		}
 
 		else if (opname == "FunctionEvaluator") {
 			int nargs = 4;

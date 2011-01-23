@@ -21,11 +21,9 @@
 #include <mpfr.h>
 #include <stdio.h>
 #include <gmpxx.h>
-#include "utils.hpp"
-#include "Operator.hpp"
-
-
 #include "PolynomialEvaluator.hpp"
+
+
 
 using namespace std;
 
@@ -50,7 +48,8 @@ namespace flopoco{
 
 
 
-		/* both y and a[i], i in 0 ... d are described by two values: size and weight 
+		/* both y and a[i], i in 0 ... d are described by two values: size and MSB weight 
+
 		for y, which is always positive, the two parameters are
 		
 		|<-- y_->getWeight() --->|
@@ -104,7 +103,7 @@ namespace flopoco{
 			mpfr_add( u, *approximationError, *e, GMP_RNDN);
 
 			if (  mpfr_cmp( u, targetError) <= 0 ){
-				REPORT(DETAILED, " Solution fund. Starting refinement");
+				REPORT(DETAILED, " Solution found. Starting refinement");
 				/* if we do, then we set the solution true and that's it */
 				sol = true;
 				mpfr_clear(*e);
@@ -145,20 +144,19 @@ namespace flopoco{
 		for (int j=1; j<=degree_; j++)
 			s2 << "yG["<<j<<"]="<<yGuard_[j]<<" "; 
 		
-		// Commented out by Florent whose laptop has a smaller screen
 		REPORT(INFO, s1.str());
 		REPORT(INFO, s2.str());
 		setCriticalPath(getMaxInputDelays(inputDelays));
 
 		for (uint32_t i=0; i<=unsigned(degree_); i++){
 			if (i==0){
-				vhdl << tab << "-- weight of sigmaP"<<i<<" is="<<coef_[degree_-i]->getWeight()<<" size="<<1+coef_[degree_-i]->getSize()<<endl;
+				vhdl << tab << "-- LSB weight of sigmaP"<<i<<" is="<<coef_[degree_-i]->getWeight()<<" size="<<1+coef_[degree_-i]->getSize()<<endl;
 				vhdl << tab << declare( join("sigmaP",i), 1+coef_[degree_-i]->getSize()) << " <= a"<<degree_<<";"<<endl; 
 			}else{
 				if (i<unsigned(degree_)){
-					vhdl << tab << "-- weight of yT"<<i<<" is="<<y_->getWeight()<<" size="<<1+y_->getSize()+yGuard_[i]<<endl;
+					vhdl << tab << "-- LSB weight of yT"<<i<<" is="<<y_->getWeight()<<" size="<<1+y_->getSize()+yGuard_[i]<<endl;
 					vhdl << tab << declare( join("yT",i) , 1+y_->getSize()+yGuard_[i]) << " <= \"0\" & Y"<<range(y_->getSize()-1, -yGuard_[i]) << ";" << endl;
-					vhdl << tab << "-- weight of piP"<<i<<" is="<<pikPWeight[i]<<" size="<<pikPSize[i]+2<<endl;
+					vhdl << tab << "-- LSB weight of piP"<<i<<" is="<<pikPWeight[i]<<" size="<<pikPSize[i]+2<<endl;
 
 					//TODO => input Delay
 					int wIn1 = 1+y_->getSize()+yGuard_[i];
@@ -202,7 +200,12 @@ namespace flopoco{
 					vhdl << tab << declare( join("yT",i) , 1+y_->getSize()+yGuard_[i]) << " <= \"0\" & Y"<<range(y_->getSize()-1, -yGuard_[i]) << ";" << endl;
 					vhdl << tab << "-- weight of piP"<<i<<" is="<<pikPWeight[i]<<" size="<<pikPSize[i]+2<<endl;
 
-					IntTruncMultiplier* sm = new IntTruncMultiplier ( target, 1+y_->getSize()+yGuard_[i], sigmakPSize[i-1]+1, 0.7, sigmakPSize[i] - (coef_[0]->getSize()+2) , 1, -1, false, true, false); //inDelayMap("X",getCriticalPath()));
+					IntTruncMultiplier* sm = new IntTruncMultiplier ( target, 
+																														1+y_->getSize()+yGuard_[i], 
+																														sigmakPSize[i-1]+1, 
+																														0.7, 
+																														sigmakPSize[i] - (coef_[0]->getSize()+2) , 
+																														1, -1, false, true, false); //inDelayMap("X",getCriticalPath()));
 					oplist.push_back(sm);
 				
 					inPortMap ( sm, "X", join("yT",i));
@@ -219,11 +222,13 @@ namespace flopoco{
 					IntAdder* sa = new IntAdder (target, (coef_[0]->getSize()+2), inDelayMap("X",getCriticalPath()));
 					oplist.push_back(sa);
 
-					vhdl << tab << declare( join("op1_",i), (coef_[0]->getSize()+2) ) << " <= " << rangeAssign( (coef_[0]->getSize()+2)-(sm->wOut-1) -1,0, join("piP",i)+of(sm->wOut-1)) 
-						                                                               << " & " << join("piP",i)<<range(sm->wOut-2,0) << ";" << endl;
-
-					vhdl << tab << declare( join("op2_",i), (coef_[0]->getSize()+2) ) << " <= " << rangeAssign(0,0, join("a",degree_-i)+of(coef_[degree_-i]->getSize()))
-					                                                                      << " & " << join("a",degree_-i) << ";"<<endl;
+					vhdl << tab << declare( join("op1_",i), (coef_[0]->getSize()+2) ) << " <= " 
+							 << rangeAssign( (coef_[0]->getSize()+2)-(sm->wOut-1) -1,0, join("piP",i)+of(sm->wOut-1)) 
+							 << " & " << join("piP",i)<<range(sm->wOut-2,0) << ";" << endl;
+					
+					vhdl << tab << declare( join("op2_",i), (coef_[0]->getSize()+2) ) << " <= " 
+							 << rangeAssign(0,0, join("a",degree_-i)+of(coef_[degree_-i]->getSize()))
+							 << " & " << join("a",degree_-i) << ";"<<endl;
 
 					inPortMapCst ( sa, "X", join("op1_",i));
 					inPortMapCst ( sa, "Y", join("op2_",i));

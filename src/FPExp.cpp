@@ -9,7 +9,8 @@
 #include "ConstMult/FixRealKCM.hpp"
 #include "Shifters.hpp"
 #include "IntMultiplier.hpp"
-#include "FunctionEvaluator.hpp"
+#include "FixedPointFunctions/FunctionEvaluator.hpp"
+#include "FixedPointFunctions/FunctionTable.hpp"
 #include "utils.hpp"
 #include "IntAdder.hpp"
 
@@ -439,6 +440,8 @@ namespace flopoco{
 			
 			syncCycleFromSignal("Zhigh");
 			setCriticalPath( cpZhigh );
+
+#if 1
 			REPORT(LIST, "Generating the polynomial approximation, this may take some time");
 			// We want the LSB value to be  2^(wF+g)
 			FunctionEvaluator *fe;
@@ -451,6 +454,19 @@ namespace flopoco{
 			vhdl << instance(fe, "poly");
 			syncCycleFromSignal("expZmZm1_0");
 			setCriticalPath( fe->getOutputDelay("R") );
+#else
+			FunctionTable *fe;
+			ostringstream function;
+			function << "1b"<<2*k<<"*(exp(x*1b-" << k << ")-x*1b-" << k << "-1)";
+			fe = new FunctionTable(target, function.str(), sizeZhigh, -wF-g+2*k, -1, inDelayMap("X", target->localWireDelay() + getCriticalPath()) );
+			oplist.push_back(fe);
+			inPortMap(fe, "X", "Zhigh");
+			outPortMap(fe, "Y", "expZmZm1_0");
+			vhdl << instance(fe, "poly");
+			syncCycleFromSignal("expZmZm1_0");
+			setCriticalPath( fe->getOutputDelay("R") );
+
+#endif
 		}
 
 //		syncCycleFromSignal("expA");

@@ -1,7 +1,7 @@
 #ifndef _TERM_HH_
 #define _TERM_HH_
 
-#include "Function.hh"
+#include "../Function.hpp"
 #include "Param.hh"
 #include "PWPolynomial.hh"
 #include "Util.hh"

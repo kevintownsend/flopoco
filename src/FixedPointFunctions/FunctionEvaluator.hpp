@@ -6,10 +6,9 @@
 #include <mpfr.h>
 #include <gmpxx.h>
 
-#include "Operator.hpp"
+#include "../Operator.hpp"
 #include "PolyTableGenerator.hpp"
-#include "FunctionEvaluator.hpp"
-#include "IntAdder.hpp"
+#include "../IntAdder.hpp"
 
 namespace flopoco{
 
@@ -23,7 +22,7 @@ namespace flopoco{
 		/**
 		 * The FunctionEvaluator constructor
 		 */
-		FunctionEvaluator(Target* target, string func, int wInX, int wOutX, int n, bool finalRounding = true, map<string, double> inputDelays = emptyDelayMap);
+		FunctionEvaluator(Target* target, string func, int wInX, int lsbOut, int n, bool finalRounding = true, map<string, double> inputDelays = emptyDelayMap);
 
 		/**
 		 * FunctionEvaluator destructor
@@ -50,7 +49,7 @@ namespace flopoco{
 		int weightR;
 
 		int wInX_;   
-		int wOutX_;
+		int lsbOut_;
 		bool finalRounding_;
 		
 	};

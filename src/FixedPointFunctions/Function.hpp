@@ -4,8 +4,8 @@
 #include <string>
 #include <iostream>
 
-#include "Util.hh"
-#include "sollya.h"	// Do NOT use libsollya from user's environment
+#include "HOTBM/Util.hh"
+#include "HOTBM/sollya.h"	// Do NOT use libsollya from user's environment
 
 using namespace std;
 

@@ -143,22 +143,22 @@ IF (SOLLYA_LIB)
 	ADD_DEFINITIONS(-DHAVE_HOTBM)
 	ADD_LIBRARY(hotbm STATIC
 		src/VHDLLexer
-		src/HOTBM.cpp
-		src/HOTBM/Function.cc
-		src/HOTBM/HOTBMInstance.cc
-		src/HOTBM/Param.cc
-		src/HOTBM/Exhaustive.cc
-		src/HOTBM/Util.cc
-		src/HOTBM/PWPolynomial.cc
-		src/HOTBM/Polynomial.cc
-		src/HOTBM/MPPolynomial.cc
-		src/HOTBM/Power.cc
-		src/HOTBM/PowerAdHoc.cc
-		src/HOTBM/TermROM.cc
-		src/HOTBM/Term.cc
-		src/HOTBM/Minimax.cc
-		src/HOTBM/PowerROM.cc
-		src/HOTBM/TermPowMult.cc
+		src/FixedPointFunctions/HOTBM.cpp
+		src/FixedPointFunctions/Function.cpp
+		src/FixedPointFunctions/HOTBM/HOTBMInstance.cc
+		src/FixedPointFunctions/HOTBM/Param.cc
+		src/FixedPointFunctions/HOTBM/Exhaustive.cc
+		src/FixedPointFunctions/HOTBM/Util.cc
+		src/FixedPointFunctions/HOTBM/PWPolynomial.cc
+		src/FixedPointFunctions/HOTBM/Polynomial.cc
+		src/FixedPointFunctions/HOTBM/MPPolynomial.cc
+		src/FixedPointFunctions/HOTBM/Power.cc
+		src/FixedPointFunctions/HOTBM/PowerAdHoc.cc
+		src/FixedPointFunctions/HOTBM/TermROM.cc
+		src/FixedPointFunctions/HOTBM/Term.cc
+		src/FixedPointFunctions/HOTBM/Minimax.cc
+		src/FixedPointFunctions/HOTBM/PowerROM.cc
+		src/FixedPointFunctions/HOTBM/TermPowMult.cc
 	)
 	TARGET_LINK_LIBRARIES(hotbm  xml2 mpfi ${SOLLYA_LIB})
 	SET(HOTBM_LIB hotbm)
@@ -283,8 +283,8 @@ ADD_EXECUTABLE(flopoco
  src/DualTable 
  src/DualTable2
 
- src/PolyTableGenerator
- src/PiecewiseFunction
+ src/FixedPointFunctions/PolyTableGenerator
+ src/FixedPointFunctions/PiecewiseFunction
  
  src/FPPipeline
 
@@ -362,8 +362,9 @@ ADD_EXECUTABLE(flopoco
  src/apps/FPJacobi
  src/IntSquarer
 
- src/PolynomialEvaluator
- src/FunctionEvaluator
+ src/FixedPointFunctions/FunctionTable
+ src/FixedPointFunctions/PolynomialEvaluator
+ src/FixedPointFunctions/FunctionEvaluator
  src/UtilSollya
 )
 ENDIF(WIN32) 

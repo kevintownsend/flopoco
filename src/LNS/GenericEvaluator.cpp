@@ -1,6 +1,6 @@
 #include "GenericEvaluator.hpp"
-#include "../HOTBM.hpp"
-#include "../FunctionEvaluator.hpp"
+#include "../FixedPointFunctions/HOTBM.hpp"
+#include "../FixedPointFunctions/FunctionEvaluator.hpp"
 #include <string>
 #include <sstream>
 

@@ -1,6 +1,6 @@
 #ifdef HAVE_SOLLYA
 
-#include "PiecewiseFunction.hh"
+#include "PiecewiseFunction.hpp"
 #include <sstream>
 
 namespace flopoco{

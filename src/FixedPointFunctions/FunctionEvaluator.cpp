@@ -24,8 +24,7 @@
 #include <mpfr.h>
 
 #include <gmpxx.h>
-#include "utils.hpp"
-#include "Operator.hpp"
+#include "../utils.hpp"
 
 #include "FunctionEvaluator.hpp"
 
@@ -38,8 +37,8 @@ namespace flopoco{
 #define DEBUGVHDL 0
 
 
-	FunctionEvaluator::FunctionEvaluator(Target* target, string func, int wInX, int wOutX, int n, bool finalRounding, map<string, double> inputDelays):
-		Operator(target, inputDelays), wInX_(wInX), wOutX_(wOutX), finalRounding_(finalRounding){
+	FunctionEvaluator::FunctionEvaluator(Target* target, string func, int wInX, int lsbOut, int n, bool finalRounding, map<string, double> inputDelays):
+		Operator(target, inputDelays), wInX_(wInX), lsbOut_(lsbOut), finalRounding_(finalRounding){
 
 		ostringstream name;
 		srcFileName="FunctionEvaluator";
@@ -47,15 +46,15 @@ namespace flopoco{
 		name<<"FunctionEvaluator_"<<getNewUId(); 
 		setName(name.str()); 
 
-		setCopyrightString("Bogdan Pasca, Mioara Joldes (2010)");
+		setCopyrightString("Bogdan Pasca, Mioara Joldes, Florent de Dinechin (2010)");
 		
 		REPORT(INFO, "Will try to implement the function: " << func );
 		REPORT(INFO, "The input precision of x is: " << wInX << " with x in [0,1[");
-		REPORT(INFO, "The required number fractional bits of the output is: "<<wOutX);
-		REPORT(INFO, "The degree of the polynomial used to aproximate this function is: " << n );
+		REPORT(INFO, "The LSB weight of the output is: "<<lsbOut);
+		REPORT(INFO, "The degree of the polynomial used to approximate this function is: " << n );
 		
 		pf = new PiecewiseFunction(func);
-		tg = new PolyTableGenerator(target, pf, wOutX+1, n);
+		tg = new PolyTableGenerator(target, pf, lsbOut+1, n);
 		oplist.push_back(tg);
 		
 		REPORT(INFO, "The number of intervals of the function: "<< intpow2(tg->wIn));
@@ -71,7 +70,7 @@ namespace flopoco{
 		
 		YVar* y = new YVar(ySize, yWeight);
 		setCriticalPath(0.0);
-		pe = new PolynomialEvaluator(target, tg->getCoeffParamVector(), y, wOutX+1, tg->getMaxApproxError() , inDelayMap("Y",getCriticalPath()));
+		pe = new PolynomialEvaluator(target, tg->getCoeffParamVector(), y, lsbOut+1, tg->getMaxApproxError() , inDelayMap("Y",getCriticalPath()));
 		oplist.push_back(pe);
 
 
@@ -87,7 +86,7 @@ namespace flopoco{
 		vhdl << tab << declare("addr", addrSize,true) << " <= X"<<range(wInX-1, wInX-addrSize)<<";"<<endl;
 
 		/* Instantiate the table generator */
-		nextCycle();/////////////////////////////////// The Coefficent ROM has a registered iunput
+		nextCycle();/////////////////////////////////// The Coefficent ROM has a registered input
 		inPortMap ( tg, "X", "addr");
 		outPortMap ( tg, "Y", "Coef");
 		vhdl << instance ( tg, "GeneratedTable" );
@@ -120,7 +119,7 @@ namespace flopoco{
 		
 		if (finalRounding_){
 //			/* number of bits to recover is */
-			int recover = weightR + wOutX;
+			int recover = weightR + lsbOut;
 			vhdl << tab << "-- weight of poly result is : " << weightR << endl;
 //			manageCriticalPath(target->adderDelay(pe->getRWidth()-(recover)-2));
 //			vhdl << tab << 	declare("sticky",1) << " <= '0' when Rpe"<<range(pe->getRWidth()-(recover)-2,0) <<" = " 
@@ -173,8 +172,8 @@ namespace flopoco{
 
 		mpz_class svX = tc->getInputValue("X");
 		mpfr_t mpX, mpR;
-		mpfr_init2(mpX,165);
-		mpfr_init2(mpR,165);
+		mpfr_init2(mpX,wInX_+2);
+		mpfr_init2(mpR,10*lsbOut_);
 		int outSign = 0;
 		/* Convert a random signal to an mpfr_t in [0,1[ */
 		mpfr_set_z(mpX, svX.get_mpz_t(), GMP_RNDN);
@@ -182,26 +181,22 @@ namespace flopoco{
 	
 		/* Compute the function */
 		f->eval(mpR, mpX);
-		if (verbose){
-		if (verbose==4){
-		cout<<"Input is:"<<sPrintBinary(mpX)<<endl;
-		cout<<"Output is:"<<sPrintBinary(mpR)<<endl;
-	}
-		}
+		REPORT(FULL,"emulate() input is:"<<sPrintBinary(mpX)); 
+		REPORT(FULL,"emulate() output before rounding is:"<<sPrintBinary(mpR)); 
 		/* Compute the signal value */
 		if (mpfr_signbit(mpR))
 			{
 				outSign = 1;
 				mpfr_abs(mpR, mpR, GMP_RNDN);
 			}
-		mpfr_mul_2si(mpR, mpR, wOutX_, GMP_RNDN);
+		mpfr_mul_2si(mpR, mpR, lsbOut_, GMP_RNDN);
 
-		/* NOT A TYPO. Function Evaluator only guarantees faithful
-		 * rounding, so we will round down here,
-		 * add both the upper and lower neighbor.
+		/* Function Evaluator only guarantees faithful rounding, so we
+		 *  round down here, then add one ulp to obtain rounded up value.
 		 */
 		mpfr_get_z(rd.get_mpz_t(), mpR, GMP_RNDD);
 		ru = rd + 1;
+		REPORT(FULL,"emulate() output rd="<<rd <<"  ru="<< ru); 
 
 		tc->addExpectedOutput("R", rd);
 		tc->addExpectedOutput("R", ru);

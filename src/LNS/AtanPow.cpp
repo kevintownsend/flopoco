@@ -24,7 +24,7 @@
 #include "AtanPow.hpp"
 #include <sstream>
 #include <vector>
-#include "../HOTBM.hpp"
+#include "../FixedPointFunctions/HOTBM.hpp"
 
 using namespace std;
 
