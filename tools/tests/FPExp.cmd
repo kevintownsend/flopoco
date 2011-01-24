@@ -7,4 +7,4 @@ flopoco FPExp 9 32
 flopoco FPExp 10 32
 flopoco FPExp 10 35
 flopoco FPExp 11 52
-flopoco FPExp 16 111
+flopoco FPExp 15 64
