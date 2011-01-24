@@ -664,6 +664,7 @@ namespace flopoco{
 		vector<FixedPointCoefficient*> pcoeffs;
 		nrIntervals=polyCoeffVector.size();
 		for(x=0; x<(unsigned)nrIntervals; x++){
+			r=0;
 			pcoeffs=polyCoeffVector[(unsigned)x];
 			degree= pcoeffs.size();
 			amount=0;
