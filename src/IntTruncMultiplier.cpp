@@ -2569,7 +2569,8 @@ namespace flopoco{
 								if (onEdge && sign)//we need to sign extend this operand
 									sname << rangeAssign(fpadX+fpadY -1 , 0,  join("pxy",i,j)+of(multW+multH+1)) << " & " << join("pxy",i,j) << range( (blx1-trx2+1) + (bly1-try2+1) + 2 -1, trx1-trx2+try1-try2) << " & " << zg(try1+trx1-minShift, 0) <<  ";--+" << endl;
 								else if (sign)//extend with 0
-									sname << zg(fpadX+fpadY -1 , 0) << " & " << join("pxy",i,j)<<range( (blx1-trx1+1) + (bly1-try1+1) + 2 -1, 0) << " & " << zg(try1 + trx1 -minShift, 0)  <<  ";--/" << endl;
+//									sname << zg(fpadX+fpadY -1 , 0) << " & " << join("pxy",i,j)<<range( (blx1-trx1+1) + (bly1-try1+1) + 2 -1, 0) << " & " << zg(try1 + trx1 -minShift, 0)  <<  ";--/" << endl;
+									sname << zg(fpadX+fpadY    , 0) << " & " << join("pxy",i,j)<<range( (blx1-trx1+1) + (bly1-try1+1) + 2 -1, 0) << " & " << zg(try1 + trx1 -minShift, 0)  <<  ";--/" << endl;
 								else
 									sname << zg(fpadX+fpadY , 0) << " & " << join("pxy",i,j)<<range( (blx1-trx1+1) + (bly1-try1+1) -1, 0) << " & " << zg(try1 + trx1 -minShift, 0)  <<  ";--/" << endl;	
 							else // concatenate only the lower portion of the partial product
@@ -2849,6 +2850,7 @@ namespace flopoco{
 		vhdl << instance(add, "adder");
 
 		syncCycleFromSignal("addRes");
+		setCriticalPath(add->getOutputDelay("R"));
 		
 		/* rounding and compensation needed only if k>0*/
 		if (targetPrecision==0)
@@ -2877,23 +2879,36 @@ namespace flopoco{
 			}else{
 				if (roundCompensate_){
 					/* target precision > 1 */
-					nextCycle();
 //					/* compute sticky bit */
 //					vhdl << tab << declare("sticky",1,false) << "<= '0' when addRes"<<range(targetPrecision-minShift-2,0)<<"=0 else '1';"<<endl;				
 //					IntAdder *af = new IntAdder(getTarget(), wX+wY+(sign?2:0)-1-minShift - (targetPrecision-minShift) + 1 + 1);
-					IntAdder *af = new IntAdder(getTarget(), wX+wY+(sign?2:0)-1-minShift - (targetPrecision-minShift) + 1 );
-					oplist.push_back(af);
-					nextCycle();
+//					if (sign){
+//						IntAdder *af = new IntAdder(getTarget(), wX+wY+(sign?2:0)-1-minShift - (targetPrecision-minShift) + 1 + 1, inDelayMap("X", target_->localWireDelay() + getCriticalPath()) );
+//						oplist.push_back(af);
 
-					inPortMapCst(af, "X", "addRes"+range(wX+wY+(sign?2:0)-1-minShift, targetPrecision-minShift));
-					inPortMapCst(af, "Y", join("CONV_STD_LOGIC_VECTOR(1,",wX+wY+(sign?2:0)-1-minShift - (targetPrecision-minShift) + 1 ,")") );
-					inPortMapCst(af, "Cin", "'0'");
-					outPortMap(af, "R", "roundCompRes");
-					vhdl << instance(af, "RoundCompensate");
+//						inPortMapCst(af, "X", "addRes"+range(wX+wY+(sign?2:0)-1-minShift, targetPrecision-minShift-1));
+//						inPortMapCst(af, "Y", join("CONV_STD_LOGIC_VECTOR(1,",wX+wY+(sign?2:0)-1-minShift - (targetPrecision-minShift) + 1 +1 ,")") );
+//						inPortMapCst(af, "Cin", "'0'");
+//						outPortMap(af, "R", "roundCompRes");
+//						vhdl << instance(af, "RoundCompensate");
+//				
+//						syncCycleFromSignal("roundCompRes");
+//						outDelayMap["R"] = af->getOutputDelay("R");
+//						vhdl << tab << "R <= roundCompRes" << range(wX+wY+(sign?2:0) - targetPrecision-1+1,1) << ";" << endl;
+//					}else{
+						IntAdder *af = new IntAdder(getTarget(), wX+wY+(sign?2:0)-1-minShift - (targetPrecision-minShift) + 1, inDelayMap("X", target_->localWireDelay() + getCriticalPath()) );
+						oplist.push_back(af);
+
+						inPortMapCst(af, "X", "addRes"+range(wX+wY+(sign?2:0)-1-minShift, targetPrecision-minShift));
+						inPortMapCst(af, "Y", join("CONV_STD_LOGIC_VECTOR(1,",wX+wY+(sign?2:0)-1-minShift - (targetPrecision-minShift) + 1 ,")") );
+						inPortMapCst(af, "Cin", "'0'");
+						outPortMap(af, "R", "roundCompRes");
+						vhdl << instance(af, "RoundCompensate");
 				
-					syncCycleFromSignal("roundCompRes");
-					outDelayMap["R"] = af->getOutputDelay("R");
-					vhdl << tab << "R <= roundCompRes" << range(wX+wY+(sign?2:0) - targetPrecision-1,0) << ";" << endl;
+						syncCycleFromSignal("roundCompRes");
+						outDelayMap["R"] = af->getOutputDelay("R");
+						vhdl << tab << "R <= roundCompRes" << range(wX+wY+(sign?2:0) - targetPrecision-1,0) << ";" << endl;
+//					}
 				}else{
 					vhdl << tab << "R <= addRes" << range(wX+wY+(sign?2:0)-1-minShift, targetPrecision-minShift) << ";" << endl;
 				}
