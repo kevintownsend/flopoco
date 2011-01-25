@@ -56,10 +56,10 @@ namespace flopoco{
 			//code generation will take into account the sign on the tiles 
 			//from the left and bottom parts of the boardArea
 			
-			cerr <<"Signed, original values for wX="<<wX<< " wY="<<wY<<endl;
+			REPORT(DEBUG, "Signed, original values for wX="<<wX<< " wY="<<wY);
 			wX--;
 			wY--;
-			cerr <<"Signed, modified values for wX="<<wX<< " wY="<<wY<<endl;
+			REPORT(DEBUG, "Signed, modified values for wX="<<wX<< " wY="<<wY);
 				
 		}
 	
@@ -306,6 +306,12 @@ namespace flopoco{
 			free(currentSum);
 			mpfr_clear(s);
 		}
+		
+		if (sign){
+			//the removed bits might have an negative influence as well, therefore they have double amplitude
+			mpfr_mul_si( *fullSum, *fullSum, 2, GMP_RNDN);	
+		}
+		
 		return fullSum;
 	}
 	
@@ -2882,20 +2888,20 @@ namespace flopoco{
 //					/* compute sticky bit */
 //					vhdl << tab << declare("sticky",1,false) << "<= '0' when addRes"<<range(targetPrecision-minShift-2,0)<<"=0 else '1';"<<endl;				
 //					IntAdder *af = new IntAdder(getTarget(), wX+wY+(sign?2:0)-1-minShift - (targetPrecision-minShift) + 1 + 1);
-//					if (sign){
-//						IntAdder *af = new IntAdder(getTarget(), wX+wY+(sign?2:0)-1-minShift - (targetPrecision-minShift) + 1 + 1, inDelayMap("X", target_->localWireDelay() + getCriticalPath()) );
-//						oplist.push_back(af);
+					if (sign){
+						IntAdder *af = new IntAdder(getTarget(), wX+wY+(sign?2:0)-1-minShift - (targetPrecision-minShift) + 1 + 1, inDelayMap("X", target_->localWireDelay() + getCriticalPath()) );
+						oplist.push_back(af);
 
-//						inPortMapCst(af, "X", "addRes"+range(wX+wY+(sign?2:0)-1-minShift, targetPrecision-minShift-1));
-//						inPortMapCst(af, "Y", join("CONV_STD_LOGIC_VECTOR(1,",wX+wY+(sign?2:0)-1-minShift - (targetPrecision-minShift) + 1 +1 ,")") );
-//						inPortMapCst(af, "Cin", "'0'");
-//						outPortMap(af, "R", "roundCompRes");
-//						vhdl << instance(af, "RoundCompensate");
-//				
-//						syncCycleFromSignal("roundCompRes");
-//						outDelayMap["R"] = af->getOutputDelay("R");
-//						vhdl << tab << "R <= roundCompRes" << range(wX+wY+(sign?2:0) - targetPrecision-1+1,1) << ";" << endl;
-//					}else{
+						inPortMapCst(af, "X", "addRes"+range(wX+wY+(sign?2:0)-1-minShift, targetPrecision-minShift-1));
+						inPortMapCst(af, "Y", join("CONV_STD_LOGIC_VECTOR(1,",wX+wY+(sign?2:0)-1-minShift - (targetPrecision-minShift) + 1 +1 ,")") );
+						inPortMapCst(af, "Cin", "'0'");
+						outPortMap(af, "R", "roundRes");
+						vhdl << instance(af, "Round");
+				
+						syncCycleFromSignal("roundRes");
+						outDelayMap["R"] = af->getOutputDelay("R");
+						vhdl << tab << "R <= roundRes" << range(wX+wY+(sign?2:0) - targetPrecision-1+1,1) << ";" << endl;
+					}else{
 						IntAdder *af = new IntAdder(getTarget(), wX+wY+(sign?2:0)-1-minShift - (targetPrecision-minShift) + 1, inDelayMap("X", target_->localWireDelay() + getCriticalPath()) );
 						oplist.push_back(af);
 
@@ -2908,7 +2914,7 @@ namespace flopoco{
 						syncCycleFromSignal("roundCompRes");
 						outDelayMap["R"] = af->getOutputDelay("R");
 						vhdl << tab << "R <= roundCompRes" << range(wX+wY+(sign?2:0) - targetPrecision-1,0) << ";" << endl;
-//					}
+					}
 				}else{
 					vhdl << tab << "R <= addRes" << range(wX+wY+(sign?2:0)-1-minShift, targetPrecision-minShift) << ";" << endl;
 				}
