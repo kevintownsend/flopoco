@@ -24,6 +24,7 @@
 #include "utils.hpp"
 #include "Operator.hpp"
 #include "IntMultiplier.hpp"
+#include "IntMultipliers/LogicIntMultiplier.hpp"
 #include "IntTruncMultiplier.hpp"
 
 using namespace std;
@@ -2715,7 +2716,7 @@ namespace flopoco{
 			}			
 			
 			
-			IntMultiplier* mult =  new IntMultiplier(target_, wMultX, wMultY, inDelayMap("X", getCriticalPath()), (sign) && (onEdge) ); //if it's on edge then is signed
+			LogicIntMultiplier* mult =  new LogicIntMultiplier(target_, wMultX, wMultY, inDelayMap("X", getCriticalPath()), (sign) && (onEdge) ); //if it's on edge then is signed
 			mult->changeName( join( mult->getName()+"_",partitions) );
 			oplist.push_back(mult);
 			

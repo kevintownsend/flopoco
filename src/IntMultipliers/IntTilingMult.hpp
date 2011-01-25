@@ -10,6 +10,7 @@
 #include "../Operator.hpp"
 #include "../IntCompressorTree.hpp"
 #include "../IntTruncMultiplier.hpp"
+#include "LogicIntMultiplier.hpp"
 
 
 namespace flopoco{

@@ -3518,8 +3518,8 @@ namespace flopoco{
 										setCycle(0);
 										SoftDSP *sdsp = new SoftDSP(wInX-nj+2*extW, nii+1, wInX-njj-2+2*extW, ni-1);
 										softConfig.push_back(sdsp);
-										target_->setUseHardMultipliers(false);
-										IntMultiplier* mult =  new IntMultiplier(target_, njj-nj+1, nii-ni+1);
+//										target_->setUseHardMultipliers(false);
+										LogicIntMultiplier* mult =  new LogicIntMultiplier(target_, njj-nj+1, nii-ni+1); //unsigned
 										ostringstream cname;
 										cname << mult->getName() << "_" << partitions;
 										mult->changeName(cname.str());

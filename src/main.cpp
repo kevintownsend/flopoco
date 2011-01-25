@@ -209,13 +209,14 @@ static void usage(char *name){
 	cerr << "      Integer multiplier of two integers X and Y of sizes wInX and wInY\n";
 	cerr << "      0 <= ratio <= 1; larger ratio => DSP dominant architectures\n";
 	cerr << "      maxTimeInMinutes 0..; 0=find optimal solution (no time limit)\n"; 	
-	OP("IntTruncMultiplier","wInX wInY ratio error useLimits maxTimeInMinutes");
+	OP("IntTruncMultiplier","wInX wInY ratio error useLimits maxTimeInMinutes sign");
 	cerr << "      Integer multiplier of two integers X and Y of sizes wInX and wInY \n"; 
 	cerr << "      with a given error order.\n";	
 	cerr << "      0 <= ratio <= 1; larger ratio => DSP dominant architectures\n";
 	cerr << "      wInX+wInY<error<=0. The order of the error.\n";
 	cerr << "      useLimits. Soft-core multipliers are size-limited\n";
-	cerr << "      maxTimeInMinutes 0..; 0=find optimal solution (no time limit)\n"; 	
+	cerr << "      maxTimeInMinutes 0..; 0=find optimal solution (no time limit)\n";
+	cerr << "      sign is boolean 1:signed; 0:unsigned\n"; 	
 	OP ("IntKaratsuba","wIn");
 	cerr << "      integer multiplier of two integers X and Y of sizes wIn. 17 < wIn <= 68\n";	
 	OP ("IntSquarer","wIn");
