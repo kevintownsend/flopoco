@@ -84,7 +84,7 @@ FPAdderSinglePath::FPAdderSinglePath(Target* target, int wEX, int wFX, int wEY, 
 		
 		if (wF < 30){
 			manageCriticalPath(target->localWireDelay() + target->adderDelay(wE)); //comparator delay implemented for now as adder
-			vhdl<< tab << declare("noswap")       << " <= '1' when excExpFracX >= excExpFracY else '0';"<<endl;
+			vhdl<< tab << declare("swap")       << " <= '0' when excExpFracX >= excExpFracY else '1';"<<endl;
 		}else{
 			IntAdder *cmpAdder = new IntAdder(target, wE+wF+2+1);
 			oplist.push_back(cmpAdder);
@@ -100,15 +100,15 @@ FPAdderSinglePath::FPAdderSinglePath(Target* target, int wEX, int wFX, int wEY, 
 			vhdl << instance(cmpAdder, "cmpAdder") << endl;
 			syncCycleFromSignal("cmpRes");
 			setCriticalPath( cmpAdder->getOutputDelay("R") );
-			vhdl<< tab << declare("noswap")       << " <= not(cmpRes"<<of(wE+wF+2)<<");"<<endl;
+			vhdl<< tab << declare("swap")       << " <= cmpRes"<<of(wE+wF+2)<<";"<<endl;
 		}
 		
 		double cpswap = getCriticalPath();
 		
 		manageCriticalPath(target->localWireDelay() + target->lutDelay());
 		// depending on the value of swap, assign the corresponding values to the newX and newY signals 
-		vhdl<<tab<<declare("newX",wE+wF+3) << " <= X     when noswap = '1' else Y;"<<endl;
-		vhdl<<tab<<declare("newY",wE+wF+3) << " <= Y     when noswap = '1' else X;"<<endl;
+		vhdl<<tab<<declare("newX",wE+wF+3) << " <= X     when swap = '0' else Y;"<<endl;
+		vhdl<<tab<<declare("newY",wE+wF+3) << " <= Y     when swap = '0' else X;"<<endl;
 		//break down the signals
 		vhdl << tab << declare("expX",wE) << "<= newX"<<range(wE+wF-1,wF)<<";"<<endl;
 		vhdl << tab << declare("excX",2)  << "<= newX"<<range(wE+wF+2,wE+wF+1)<<";"<<endl;
@@ -135,15 +135,15 @@ FPAdderSinglePath::FPAdderSinglePath(Target* target, int wEX, int wFX, int wEY, 
 		vhdl <<tab<<declare("signR") << "<= '0' when (sdsXsYExnXY=\"100000\" or sdsXsYExnXY=\"010000\") else signX;"<<endl;
 		
 		
-		setCycleFromSignal("noswap");;
-		if ( getCycleFromSignal("eYmeX") == getCycleFromSignal("noswap") )
+		setCycleFromSignal("swap");;
+		if ( getCycleFromSignal("eYmeX") == getCycleFromSignal("swap") )
 			setCriticalPath(max(cpeXmeY, cpswap));
 		else{
 			if (syncCycleFromSignal("eYmeX"))
 				setCriticalPath(cpeXmeY);
 		}
 		manageCriticalPath(target->localWireDelay() + target->lutDelay());//multiplexer
-		vhdl<<tab<<declare("expDiff",wE+1) << " <= eXmeY when noswap = '1' else eYmeX;"<<endl; 
+		vhdl<<tab<<declare("expDiff",wE+1) << " <= eXmeY when swap = '0' else eYmeX;"<<endl; 
 		manageCriticalPath(target->localWireDelay() + target->comparatorConstDelay(wE+1));
 		vhdl<<tab<<declare("shiftedOut") << " <= '1' when (expDiff >= "<<wF+2<<") else '0';"<<endl;
 		//shiftVal=the number of positions that fracY must be shifted to the right				
