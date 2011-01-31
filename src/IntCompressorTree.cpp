@@ -52,17 +52,16 @@ namespace flopoco{
 		REPORT(DEBUG, "delay for X0 is   "<< inputDelays["X0"]);	
 		
 		setCriticalPath(getMaxInputDelays(inputDelays));
-		manageCriticalPath();
 
 		int lutSize = target->lutInputs();
 		bool processing = true;
 		int nbOfInputs = N_;
-		int treeLevel = 1;
+		int tLev = 1;
 
 		//for homogeneous signal names
 		for (int j=0; j<nbOfInputs;j++){
 			name.str("");
-			name << "level_" << treeLevel-1 << "_sum_"<<j;
+			name << "l_" << tLev-1 << "_s_"<<j;
 			vhdl << tab << declare(name.str(),wIn_, true) << " <= " << use(join("X",j)) << ";" << endl;
 		}
 	
@@ -79,22 +78,16 @@ namespace flopoco{
 				processing = false;
 				outDelayMap["R"] = getCriticalPath();
 			}else if (nbOfInputs == 2){
-				manageCriticalPath(target->localWireDelay());
-				IntAdder *finalAdder = new IntAdder(target, wIn_, inDelayMap("X",getCriticalPath()));
+				IntAdder *finalAdder = new IntAdder(target, wIn_, inDelayMap("X",target->localWireDelay()+ getCriticalPath()));
 				oplist.push_back(finalAdder);
 				REPORT(INFO, "Finished 2 input adder instantiation");	
 
-				name.str("");
-				name << "level_" << treeLevel-1 << "_sum_";			
-				vhdl << endl;
-				inPortMap(finalAdder,"X",join(name.str(),0));
-				inPortMap(finalAdder,"Y",join(name.str(),1));
+				inPortMap(finalAdder,"X",join("l_",tLev-1,"_s_",0));
+				inPortMap(finalAdder,"Y",join("l_",tLev-1,"_s_",1));
 				inPortMapCst(finalAdder,"Cin","'0'");
 				outPortMap(finalAdder,"R","myR");
-				REPORT(DEBUG, "Port Map Succeed");
 				vhdl << instance(finalAdder,"FinalAdder_CompressorTree") << endl;
 				REPORT(DEBUG, "Instantiation Succeed");
-			
 				syncCycleFromSignal("myR");
 			
 				vhdl << tab << "R <= myR;" << endl;
@@ -131,9 +124,9 @@ namespace flopoco{
 				manageCriticalPath( target->lutDelay() + target->localWireDelay());
 				REPORT(DEBUG, "Delay in compressor tree @ some level " << getCriticalPath());
 			
-				int currentlyMapped = 0;
-				int currentOutput = 0;
-				int currentCompressor = 0;
+				int cMap = 0;
+				int cOutp = 0;
+				int cComp = 0;
 				for (int i=lutSize; i>=1; i--){
 					REPORT(DEBUG, "mapping compressors " << i << " to " << intlog2(i));
 					int sumSize = intlog2(i);			
@@ -141,100 +134,55 @@ namespace flopoco{
 						REPORT(DEBUG, tab << "number " << h);
 						if (i>2){
 							for (int j=0; j < wIn_; j++){ //do the compressor computation
-								name.str("");
-								name << "level_" << treeLevel << "_compressor_"<<currentCompressor<< "_column_" << j ;
-								vhdl << tab << declare(name.str(), sumSize, true) << " <= ";
-								for (int k=currentlyMapped; k<currentlyMapped+i; k++) {
-									name.str("");
-									name << "level_" << treeLevel-1 << "_sum_"<<k;
-									vhdl << "("	<< zg(sumSize-1,0) << " & " << use(name.str())<<range(j,j)<<")";
-									if (k < currentlyMapped+i-1)
+								vhdl << tab << declare( join("l_",tLev,"_c_",cComp,"_cl_",j) , sumSize, true) << " <= ";
+								for (int k=cMap; k<cMap+i; k++) {
+									vhdl << "("	<< zg(sumSize-1,0) << " & " << join("l_",tLev-1,"_s_",k) << range(j,j)<<")";
+									if (k < cMap+i-1)
 										vhdl << " + ";
 								}
 								vhdl << ";" << endl;
 							}
-							currentCompressor++;
+							cComp++;
 						}
 						if (i == 2){
-							name.str("");
-							name << "level_" << treeLevel << "_compressor_"<<currentCompressor<< "_column_" << 0 ;
-							vhdl << tab << declare(name.str(), wIn_, true) << " <= ";
-							name.str("");
-							name << "level_" << treeLevel-1 << "_sum_"<<currentlyMapped;
-							vhdl << use(name.str()) << ";" << endl;
-
-							name.str("");
-							name << "level_" << treeLevel << "_compressor_"<<currentCompressor<< "_column_" << 1 ;
-							vhdl << tab << declare(name.str(), wIn_, true) << " <= ";
-							name.str("");
-							name << "level_" << treeLevel-1 << "_sum_"<<currentlyMapped+1;
-							vhdl << use(name.str()) << ";" << endl;
-							currentCompressor++;
+							vhdl << tab << declare(join("l_",tLev,"_c_",cComp,"_cl_",0), wIn_, true) << " <= " << join("l_",tLev-1,"_s_",cMap)<<";"<<endl;
+							vhdl << tab << declare(join("l_",tLev,"_c_",cComp,"_cl_",1), wIn_, true) << " <= " << join("l_",tLev-1,"_s_",cMap+1)<<";"<<endl;
+							cComp++;
 						}
 						if (i == 1){
-							name.str("");
-							name << "level_" << treeLevel << "_compressor_"<<currentCompressor<< "_column_" << 0 ;
-							vhdl << tab << declare(name.str(), wIn, true) << " <= ";
-							name.str("");
-							name << "level_" << treeLevel-1 << "_sum_"<<currentlyMapped;
-							vhdl << use(name.str()) << ";" << endl;
-							currentCompressor++;
+							vhdl << tab << declare(join("l_",tLev,"_c_",cComp,"_cl_",0), wIn_, true) << " <= " << join("l_",tLev-1,"_s_",cMap)<<";"<<endl;
+							cComp++;
 						}
 						//form the summs for the current compressor
 						if (i>2){
 							for (int m=0; m < sumSize; m++){
-								name.str("");
-								name << "level_" << treeLevel << "_sum_"<< currentOutput + m;
-								vhdl << tab << declare (name.str(), wIn_, true) << " <= ";
+								vhdl << tab << declare (join("l_",tLev,"_s_",cOutp + m), wIn_, true) << " <= ";
 								for (int k=wIn_-1-m; k >= 0; k--)	{							
-									name.str("");//emptyName
-									name << "level_" << treeLevel << "_compressor_"<<currentCompressor-1<< "_column_" << k ;
-									vhdl << use(name.str())<<range(m,m);
-									if (k!=0)
-										vhdl << " & ";
+									vhdl << join("l_",tLev,"_c_",cComp-1,"_cl_",k)<<range(m,m) << (k!=0?" & ":"");
 								}
 								if (m>0)
-									vhdl << " & " <<  zg(m,0);
+									vhdl << " & " << zg(m,0);
 								vhdl << ";" << endl;
 							}
 						}else{
 							if (i==2){
-								name.str("");
-								name << "level_" << treeLevel << "_sum_"<< currentOutput;
-								vhdl << tab << declare (name.str(), wIn_, true) << " <= ";
-								name.str("");//emptyName
-								name << "level_" << treeLevel << "_compressor_"<<currentCompressor-1<< "_column_" << 0 ;
-								vhdl << use(name.str())<<";"<<endl;
-							
-								name.str("");
-								name << "level_" << treeLevel << "_sum_"<< currentOutput+1;
-								vhdl << tab << declare (name.str(), wIn_, true) << " <= ";
-								name.str("");//emptyName
-								name << "level_" << treeLevel << "_compressor_"<<currentCompressor-1<< "_column_" << 1 ;
-								vhdl << use(name.str())<<";"<<endl;
-							}else
-								if (i==1){
-									name.str("");
-									name << "level_" << treeLevel << "_sum_"<< currentOutput;
-									vhdl << tab << declare (name.str(), wIn_, true) << " <= ";
-									name.str("");//emptyName
-									name << "level_" << treeLevel << "_compressor_"<<currentCompressor-1<< "_column_" << 0 ;
-									vhdl << use(name.str())<<";"<<endl;
-								}
-					
+								vhdl << tab << declare (join("l_",tLev,"_s_",cOutp  ), wIn_, true) << " <= " << join("l_",tLev,"_c_",cComp-1,"_cl_",0)<<";"<<endl;
+								vhdl << tab << declare (join("l_",tLev,"_s_",cOutp+1), wIn_, true) << " <= " << join("l_",tLev,"_c_",cComp-1,"_cl_",1)<<";"<<endl;
+							}else if (i==1){
+								vhdl << tab << declare (join("l_",tLev,"_s_",cOutp  ), wIn_, true) << " <= " << join("l_",tLev,"_c_",cComp-1,"_cl_",0)<<";"<<endl;
+							}
 						}
-					
-						currentlyMapped += i;
-						currentOutput += intlog2(i);
+						cMap += i;
+						cOutp += intlog2(i);
 					}
 				}
 				//form the sums
 			
 				nbOfInputs = bestSol[0];
-				treeLevel++;
+				tLev++;
 			}
 			REPORT(DEBUG, "Finished IntCompressor");
-		}		
+		}
 	}		
 
 
