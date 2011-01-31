@@ -286,7 +286,7 @@ namespace flopoco{
 		REPORT(DEBUG, "-----------------------------------");
 		varList* headv = p->outVariableList;
 		while (headv != NULL){
-			cout << "out: variable " << headv->name	<< ";" << endl;
+			REPORT(DEBUG, "out: variable " << headv->name	<< ";");
 			headv = headv->next;
 		}
 		REPORT(DEBUG, "-----------------------------------");	

@@ -106,9 +106,9 @@ void printExpression(node* n){
 	while (head!=NULL){
 		if (head->n->type==0){ //input node
 			if (head->n->name!=NULL) //variable
-				cout << head->n->name;
+				pprint << head->n->name;
 			else //constant
-				cout << head->n->value;	
+				pprint << head->n->value;	
 		} else {
 			pprint << "(";
 			printExpression(head->n);	

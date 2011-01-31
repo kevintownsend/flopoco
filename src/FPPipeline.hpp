@@ -166,16 +166,15 @@ namespace flopoco{
 			
 			
 			void generateVHDL(FPNode *node, bool top){
-				cout << "Generating VHDL ... " << endl;
+				REPORT(INFO, "Generating VHDL ... ");
 				
 				if (node->inputNode()){
-// 					cout << "Input node detected " << endl;
 					//we start at cycle 0, for now
 					setCycle(0);
 					//check if inputs are already declared. if not declare the inputs
 					for (unsigned i=0; i< node->inNodesNames.size();i++){
 						if (!isSignalDeclared(node->inNodesNames[i])){
-							cout << "signal " << node->inNodesNames[i] << "   declared" << endl;
+							REPORT(DETAILED, "signal " << node->inNodesNames[i] << "   declared");
 							addFPInput(node->inNodesNames[i], wE, wF);
 						}
 					}
@@ -199,7 +198,6 @@ namespace flopoco{
 				if (node->outputNode)
 					addFPOutput(node->oNameReal, wE, wF);
 				
-// 				cout << "    code " << endl;
 				Operator* op1;
 				//let's instantiate the proper operator
 
@@ -210,7 +208,7 @@ namespace flopoco{
 					}
 					
 					case FPNode::adder:{ 
-						cout << " instance adder. Oplistsize =" <<oplist.size() << endl;
+						REPORT(DETAILED, " instance adder. Oplistsize =" <<oplist.size());
 						
 						op1 = new FPAdderSinglePath(target_, wE, wF, wE, wF, wE, wF);
 						oplist.push_back(op1);
@@ -226,7 +224,7 @@ namespace flopoco{
 					}
 
 					case FPNode::multiplier:{ 
-						cout << " instance adder. Oplistsize =" <<oplist.size() << endl;
+						REPORT(DETAILED, " instance adder. Oplistsize =" <<oplist.size());
 						
 						op1 = new FPMultiplier(target_, wE, wF, wE, wF, wE, wF);
 						oplist.push_back(op1);
@@ -242,7 +240,7 @@ namespace flopoco{
 					}
 
 					case FPNode::sqr:{
-						cout << " instance squarer Oplistsize =" <<oplist.size()<<endl;
+						REPORT(DETAILED, " instance squarer Oplistsize =" <<oplist.size());
 						op1 = new FPSquarer(target_, wE, wF, wF);
 						oplist.push_back(op1);
 						
@@ -252,11 +250,11 @@ namespace flopoco{
 						ostringstream tmp;
 						tmp << "squarer" << getNewUId();
 						vhdl << instance(op1, tmp.str())<<endl;
-						cout << "    generated squarer instance" << endl;
+						REPORT(INFO, "generated squarer instance");
 						break;
 					}
 					case FPNode::sqrt:{
-						cout << " instance sqrt Oplistsize =" <<oplist.size()<<endl;
+						REPORT(DETAILED, " instance sqrt Oplistsize =" <<oplist.size());
 #ifdef ha
 						int degree = int ( floor ( double(wF) / 10.0) );
 						op1 = new FPSqrtPoly(target_, wE, wF, 0, degree);
@@ -271,12 +269,12 @@ namespace flopoco{
 						ostringstream tmp;
 						tmp << "squarer" << getNewUId();
 						vhdl << instance(op1, tmp.str())<<endl;
-						cout << "    generated square root instance" << endl;
+						REPORT(DETAILED, "    generated square root instance");
 						break;
 					}
 
 					default:{
-						cout << "nothing else implemented yet" << endl;
+						cerr << "nothing else implemented yet" << endl;
 						exit(-1);
 					}
 				}
@@ -291,7 +289,7 @@ namespace flopoco{
 
 			/* --------------------------------------------------------------- */
 			void generateVHDL_c(node* n, bool top){
-				cout << "Generating VHDL ... " << endl;
+				REPORT(DETAILED, "Generating VHDL ... ");
 				
 				if (n->type == 0){
 					//we start at cycle 0, for now
@@ -299,7 +297,7 @@ namespace flopoco{
 					//check if inputs are already declared. if not declare the inputs
 					if (n->name!=NULL){
 						if (!isSignalDeclared(n->name)){
-							cout << "signal " << n->name << "   declared" << endl;
+							REPORT(DETAILED, "signal " << n->name << "   declared");
 							addFPInput(n->name, wE, wF);
 						}
 					}else{
@@ -317,7 +315,7 @@ namespace flopoco{
 						syncCycleFromSignal(lh->n->name);
 						lh=lh->next;
 					}
-					cout << "finished with node" << endl;
+					REPORT(DETAILED, "finished with node");
 				}
 				
 				bool hadNoName = (n->name==NULL);
@@ -326,15 +324,13 @@ namespace flopoco{
 					//assign a unique name;
 					ostringstream t;
 					t << "tmp_var_"<<getNewUId();
-//					cout << " new temporary variable created "<<t.str()<<" size="<<t.str().length() <<endl; 
 					string w = t.str();
 					char *c  = new char[t.str().length()+1];
-//					c=(char*)malloc(t.str().length()*sizeof(char));
 					c = strncpy(c, t.str().c_str(), t.str().length() );
 					c[t.str().length()]=NULL;
-					cout << " new temporary variable created "<< c <<" size="<<t.str().length() <<endl; 
+					REPORT(DETAILED, " new temporary variable created "<< c <<" size="<<t.str().length());
 					n->name = c;
-					cout << " the value was created for the constant " << n->value << endl;
+					REPORT(DETAILED, " the value was created for the constant " << n->value);
 				}
 				
 				if ((hadNoName)&&(n->type == 0)){
@@ -362,7 +358,7 @@ namespace flopoco{
 					}
 					
 					case 1:{ //adder 
-						cout << " instance adder" << endl;
+						REPORT(DETAILED, " instance adder");
 						
 						op1 = new FPAdderSinglePath(target_, wE, wF, wE, wF, wE, wF);
 						oplist.push_back(op1);
@@ -377,7 +373,7 @@ namespace flopoco{
 						break;
 					}
 					case 2:{ //subtracter 
-						cout << " instance subtracter"<< endl;
+						REPORT(DETAILED, " instance subtracter");
 						
 						op1 = new FPAdderSinglePath(target_, wE, wF, wE, wF, wE, wF);
 						oplist.push_back(op1);
@@ -399,7 +395,7 @@ namespace flopoco{
 					}
 
 					case 3:{ //multiplier
-						cout << " instance adder"<< endl;
+						REPORT(DETAILED, " instance multiplier");
 						
 						op1 = new FPMultiplier(target_, wE, wF, wE, wF, wE, wF);
 						oplist.push_back(op1);
@@ -414,7 +410,7 @@ namespace flopoco{
 						break;
 					}
 					case 5:{ //squarer
-						cout << " instance squarer" << endl;
+						REPORT(DETAILED, " instance squarer");
 						
 						op1 = new FPSquarer(target_, wE, wF, wF);
 						oplist.push_back(op1);
@@ -428,7 +424,7 @@ namespace flopoco{
 						break;
 					}
 					case 6:{ //sqrt
-						cout << " instance sqrt"<<endl;
+						REPORT(DETAILED, " instance sqrt");
 #ifdef ha
 						int degree = int ( floor ( double(wF) / 10.0) );
 						op1 = new FPSqrtPoly(target_, wE, wF, 0, degree);
@@ -443,11 +439,10 @@ namespace flopoco{
 						ostringstream tmp;
 						tmp << "squarer" << getNewUId();
 						vhdl << instance(op1, tmp.str())<<endl;
-						cout << "    generated square root instance" << endl;
 						break;
 					}
 					case 7:{ //exponential
-						cout << " instance exp" << endl;
+						REPORT(DETAILED, " instance exp");
 						
 						op1 = new FPExp(target_, wE, wF, 0, 0);
 						oplist.push_back(op1);
@@ -461,7 +456,7 @@ namespace flopoco{
 						break;
 					}
 					case 8:{ //logarithm
-						cout << " instance log" << endl;
+						REPORT(DETAILED, " instance log");
 						
 						op1 = new FPLog(target_, wE, wF, 9);
 						oplist.push_back(op1);
@@ -477,7 +472,7 @@ namespace flopoco{
 
 
 					default:{
-						cout << "nothing else implemented yet" << endl;
+						cerr << "nothing else implemented yet" << endl;
 						exit(-1);
 					}
 				}
