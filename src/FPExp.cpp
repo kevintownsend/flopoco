@@ -211,9 +211,6 @@ namespace flopoco{
 		vhdl << tab  << declare("e0", wE+2) << " <= conv_std_logic_vector(" << e0 << ", wE+2);  -- bias - (wF+g)" << endl;
 		manageCriticalPath( target->localWireDelay() + target->adderDelay(wE+2) ); 
 		vhdl << tab  << declare("shiftVal", wE+2) << " <= (\"00\" & XexpField) - e0; -- for a left shift" << endl;
-		vhdl << tab  << "-- Partial overflow/underflow detection" << endl;
-		int maxshift=wE-1+ wF+g; // maxX < 2^(wE-1); 
-		vhdl << tab  << declare("oufl0") << " <= not shiftVal(wE+1) when shiftVal(wE downto 0) >= conv_std_logic_vector(" << maxshift << ", wE+1) else '0';" << endl;
 
 		vhdl << tab  << "-- underflow when input is shifted to zero (shiftval<0), in which case exp = 1" << endl;
 		vhdl << tab  << declare("expIs1") << " <= shiftVal(wE+1);" << endl;
@@ -242,6 +239,14 @@ namespace flopoco{
 		vhdl << tab << declare("fixX", sizeXfix) << " <= " << "'0' & fixX0" << range(wE+g + wFIn+1 -1,  wFIn-wF) << ";" << endl;
 #else
 		// left shift
+		double scp = getCriticalPath();
+		vhdl << tab  << "-- Partial overflow/underflow detection" << endl;
+		int maxshift=wE-1+ wF+g; // maxX < 2^(wE-1); 
+		manageCriticalPath( target->adderDelay(wE+1) + target->localWireDelay() + target->lutDelay() + target->localWireDelay());
+		vhdl << tab  << declare("oufl0") << " <= not shiftVal(wE+1) when shiftVal(wE downto 0) >= conv_std_logic_vector(" << maxshift << ", wE+1) else '0';" << endl;
+
+		setCycleFromSignal("shiftVal");
+		setCriticalPath(scp);
 
 		Shifter* lshift = new Shifter(target, wFIn+1, maxshift , Shifter::Left, inDelayMap("S", target->localWireDelay() + getCriticalPath())  );   
 		oplist.push_back(lshift);

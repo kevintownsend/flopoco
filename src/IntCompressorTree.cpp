@@ -134,13 +134,20 @@ namespace flopoco{
 						REPORT(DEBUG, tab << "number " << h);
 						if (i>2){
 							for (int j=0; j < wIn_; j++){ //do the compressor computation
-								vhdl << tab << declare( join("l_",tLev,"_c_",cComp,"_cl_",j) , sumSize, true) << " <= ";
+								vhdl << tab << declare( join("sell_",tLev,"_c_",cComp,"_cl_",j) , i, true) << " <= ";
 								for (int k=cMap; k<cMap+i; k++) {
-									vhdl << "("	<< zg(sumSize-1,0) << " & " << join("l_",tLev-1,"_s_",k) << range(j,j)<<")";
+									vhdl << join("l_",tLev-1,"_s_",k) << of(j);
 									if (k < cMap+i-1)
-										vhdl << " + ";
-								}
-								vhdl << ";" << endl;
+										vhdl << " & ";
+								}vhdl << ";" << endl;
+								vhdl << tab << " with "<<join("sell_",tLev,"_c_",cComp,"_cl_",j)<<" select" << endl;
+								vhdl << tab << declare( join("l_",tLev,"_c_",cComp,"_cl_",j) , sumSize, true) << " <= "<<endl;
+								for (int ii=0;ii<(1<<i); ii++)
+									if (ii==0)
+										vhdl << tab << "\""<<unsignedBinary(0,sumSize)<<"\" when \""<< unsignedBinary(0,i)<<"\",";
+									else
+										vhdl << tab << "\""<<unsignedBinary(coutOnes(ii),sumSize)<<"\" when \""<< unsignedBinary(ii,i)<<"\",";
+								vhdl << tab << "\""<<unsignedBinary(0,sumSize)<<"\" when others;"<<endl;
 							}
 							cComp++;
 						}

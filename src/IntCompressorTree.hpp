@@ -29,6 +29,14 @@ namespace flopoco{
 		bool valid(int k, int sum, int n, int * sol, int * coef);
 		void bt(int k, int n, int sum, int* sol, int* coef, int targetSum, int *bestSol);
 	
+		int coutOnes(int k){
+			int n = 0;
+			while (k!=0){
+				n+=(k%2);
+				k=(k-(k%2))/2;
+			}
+			return n;
+		}
 		/**
 		 *  Destructor
 		 */
