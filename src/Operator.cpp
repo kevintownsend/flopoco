@@ -470,6 +470,20 @@ namespace flopoco{
 				pipelineDepth_ = currentCycle_;
 		}
 	}
+
+	void Operator::previousCycle(bool report) {
+		// lexing part
+		vhdl.flush(currentCycle_);
+		
+		if(isSequential()) {
+			
+			currentCycle_ --; 
+			vhdl.setCycle(currentCycle_);
+			if(report)
+				vhdl << tab << "----------------Synchro barrier, entering cycle " << currentCycle_ << "----------------" << endl;
+			
+		}
+	}
 	
 	
 	void Operator::setCycleFromSignal(string name, bool report) {

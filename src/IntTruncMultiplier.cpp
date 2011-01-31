@@ -2490,7 +2490,6 @@ namespace flopoco{
 					d = tempc[i]; /* get back to the initial one */
 
 					setCycle(0);
-//TODO						setCriticalPath(getMaxInputDelays(inputDelays));
 					setCriticalPath(0);
 	
 					while (d != NULL){
@@ -2521,6 +2520,7 @@ namespace flopoco{
 						if ( (wX == blx1+1) || (wY == bly1+1) )
 							onEdge = true; //if the block is on the edge it must be sign extended
 						
+						setCycle(0);
 						/* the correct operands */
 						vhdl << tab << declare(join("x",i,"_",j), multW + 1, true) << " <= ";
 						if (sign && (blx1+1 == wX)){
@@ -2546,15 +2546,12 @@ namespace flopoco{
 						
 						//conditions will obviously happen at the same time
 						if ((d->getShiftIn() != NULL) && (j>0)){ // multiply accumulate 
-
-//							manageCriticalPath( target_->DSPMultiplierDelay() + target_->DSPCascadingWireDelay() );								
-
+							setCycleFromSignal( join("pxy",i,j-1));
+							nextCycle();
 							vhdl << tab << declare(join("txy",i,j), multW + multH + 2) << " <= " << join("x",i,"_",j) << " * " << join("y",i,"_",j) << ";" << endl;
-
-							manageCriticalPath( target_->DSPAdderDelay());								
-
+							syncCycleFromSignal( join("pxy",i,j-1));
 							vhdl << tab << declare(join("pxy",i,j), multW + multH + 2) << " <= " << join("txy",i,j)   << " + (" 
-							<< rangeAssign( d->getShiftAmount() -1, 0, join("pxy",i,j-1)+of(multW + multH + 1)) << " & " //sign extension 
+							<< rangeAssign( d->getShiftAmount() -1, 0, (sign?join("pxy",i,j-1)+of(multW + multH + 1):"'0'")) << " & " //sign extension 
 							<< join("pxy",i,j-1) << range(multW+multH+1, d->getShiftAmount()) << ");" << endl;	
 
 							sname.seekp(ios_base::beg);
@@ -2568,21 +2565,21 @@ namespace flopoco{
 							}
 						}else{
 							// only multiplication
-							manageCriticalPath(target_->DSPMultiplierDelay() + target_->DSPToLogicWireDelay());
+							syncCycleFromSignal( join("x",i,"_",j) );
+							syncCycleFromSignal( join("y",i,"_",j) );
+							nextCycle();
 							vhdl << tab << declare(join("pxy",i,j), multW + multH + 2) << " <= " << join("x",i,"_",j) << " * " << join("y",i,"_",j) << ";-- -" << endl;
 							sname.str("");
 							if (d->getShiftOut() == NULL) //concatenate the entire partial product
 								if (onEdge && sign)//we need to sign extend this operand
 									sname << rangeAssign(fpadX+fpadY -1 , 0,  join("pxy",i,j)+of(multW+multH+1)) << " & " << join("pxy",i,j) << range( (blx1-trx2+1) + (bly1-try2+1) + 2 -1, trx1-trx2+try1-try2) << " & " << zg(try1+trx1-minShift, 0) <<  ";--+" << endl;
 								else if (sign)//extend with 0
-//									sname << zg(fpadX+fpadY -1 , 0) << " & " << join("pxy",i,j)<<range( (blx1-trx1+1) + (bly1-try1+1) + 2 -1, 0) << " & " << zg(try1 + trx1 -minShift, 0)  <<  ";--/" << endl;
 									sname << zg(fpadX+fpadY    , 0) << " & " << join("pxy",i,j)<<range( (blx1-trx1+1) + (bly1-try1+1) + 2 -1, 0) << " & " << zg(try1 + trx1 -minShift, 0)  <<  ";--/" << endl;
 								else
 									sname << zg(fpadX+fpadY , 0) << " & " << join("pxy",i,j)<<range( (blx1-trx1+1) + (bly1-try1+1) -1, 0) << " & " << zg(try1 + trx1 -minShift, 0)  <<  ";--/" << endl;	
 							else // concatenate only the lower portion of the partial product
 								sname << join("pxy",i,j) << range(d->getShiftAmount()- (try1-try2 + bly2-bly1) - (trx1-trx2 + blx2-blx1) -1 ,0) << " & " << zg( try1 + trx1 -minShift,0) << ";--*" << endl;
 						}
-	
 						// erase d from the tempc buffer to avoid handleing it twice
 						for (int k=i+1; k<nrDSPs; k++)
 							if ((tempc[k] != NULL) && (tempc[k] == d)){
@@ -2595,6 +2592,7 @@ namespace flopoco{
 						j++;
 					}	
 					sname.seekp(ios_base::beg);
+					nextCycle();//necessary for infering 1 reg level inside DPSs. Otherwise the registers are pulled in the SRL
 					sname << tab << declare(join("addOpDSP", nrOp),wInX+wInY+(sign?2:0)-minShift) << " <= " << sname.str();
 					vhdl << sname.str();
 					nrOp++;		
@@ -3211,10 +3209,7 @@ namespace flopoco{
 		o << "library ieee; " << endl;
 		o << "use ieee.std_logic_1164.all;" << endl;
 		o << "use ieee.std_logic_arith.all;" << endl;
-		if (sign)
-			o << "use ieee.std_logic_signed.all;" << endl;
-		else
-			o << "use ieee.std_logic_unsigned.all;" << endl;
+		o << "use ieee.std_logic_signed.all;" << endl;
 		o << "library work;" << endl;
 		outputVHDLEntity(o);
 		newArchitecture(o,name);

@@ -197,6 +197,10 @@ public:
 	 * @param the new value of the current cycle */
 	void nextCycle(bool report=true) ;
 
+	/** Define the current cycle 
+	 * @param the new value of the current cycle */
+	void previousCycle(bool report=true) ;
+
 	/** get the critical path of the current cycle so far */
 	double getCriticalPath() ;
 
