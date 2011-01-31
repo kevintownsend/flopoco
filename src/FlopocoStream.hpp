@@ -11,6 +11,14 @@
 //#include "VHDLLexer.hpp"
 #include "LexerContext.hpp"
 
+#ifdef UNUSED
+#elif defined(__GNUC__)
+# define UNUSED(x) x __attribute__((unused))
+#elif defined(__LCLINT__)
+# define UNUSED(x) /*@unused@*/ x
+#else
+# define UNUSED(x) x
+#endif
 
 namespace flopoco{
 
@@ -47,7 +55,7 @@ extern bool combinatorialOperator;
 			return output; 
 		}
 		
-		friend FlopocoStream& operator<<( FlopocoStream& output, ostream& (*f)(ostream& fs) ){
+		friend FlopocoStream& operator<<( FlopocoStream& output, UNUSED(ostream& (*f)(ostream& fs)) ){
 			output.vhdlCodeBuffer << std::endl;
 			return output;
 		}
@@ -82,7 +90,7 @@ extern bool combinatorialOperator;
 			 * Resets both the buffer and the code stream. 
 			 * @return returns empty string for compatibility issues.
 			 */ 
-			string str(string s){
+			string str(string UNUSED(s) ){
 				vhdlCode.str("");
 				vhdlCodeBuffer.str("");
 				return "";
