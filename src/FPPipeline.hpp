@@ -31,264 +31,29 @@ namespace flopoco{
 	
 	/** The FPPipeline class.  */
 	class FPPipeline : public Operator {
-		
-		
-		
-		class FPNode {
-			public: 
-				typedef enum {
-					input,
-					adder, 
-					subtracter,
-					multiplier,
-					sqr,
-					sqrt
-				} FPOperators;
-				
-				FPNode(FPOperators fop, vector<FPNode*> argInNodes, string argOName = "", bool outNode = false){
-					outputNode = outNode;
-					fun = fop;
-					for (unsigned i=0; i< argInNodes.size(); i++){
-						inNodes.push_back(argInNodes[i]);
-						inNodesNames.push_back(argInNodes[i]->oName);
-					}	
-
-					if (argOName=="")
-						oName = setNodeName();
-					else
-						oName = argOName;
-
-					if (outNode){
-						ostringstream u;
-						u << Operator::getNewUId();
-						oNameReal = oName;
-						oName = "tmp_"+u.str()+oName;
-					}
-					
-					if (fop==input){
-						vinputNode = true;
-						oName = argInNodes[0]->oName;
-					}else{
-						vinputNode = false;
-					}
-
-					
-				};
-				
-				FPNode(FPOperators fop, vector<string> argInNodesNames, string argOName = "", bool outNode = false){
-					outputNode = outNode;
-					fun = fop;
-					for (unsigned i=0; i< argInNodesNames.size(); i++)
-						inNodesNames.push_back(argInNodesNames[i]);
-					// 					inNodesNames(argInNodesNames);
-					if (argOName=="")
-						oName = setNodeName();
-					else
-						oName = argOName;
-					if (outNode){
-						ostringstream u;
-						u << Operator::getNewUId();
-						oNameReal = oName;
-						oName = "tmp_"+u.str()+oName;
-					}
-
-					if (fop==input){
-						vinputNode = true;
-						oName = argInNodesNames[0];
-					}else {
-						vinputNode = false;
-					}
-				};
-				
-				string setNodeName(){
-					ostringstream varName;
-					varName << "var";
-					if (inputNode()){
-						for (unsigned i=0; i< inNodesNames.size(); i++)
-							if (inNodesNames[i] != ""){
-								varName << "_"<<inNodesNames[i];
-							}else{}
-					}else{
-						for (unsigned i=0; i< inNodes.size(); i++)
-							varName << "_"<<inNodes[i]->oName;
-					}
-					return varName.str();
-				};
-				
-				bool inputNode(){
-					return ( inNodes.size()==0?true:false) or (vinputNode);
-				}
-				
-				
-				FPOperators fun;
-				bool vinputNode;
-				string inName[2];
-				string oName;
-				string oNameReal;
-				int inputs;
-				vector<FPNode*> inNodes;
-				vector<string> inNodesNames;
-				bool outputNode;
-		};
-		
 		public:
-			
-			/* TODO: Doxygen parameters*/ 
-			FPPipeline(Target* target, string func, int wE, int wF);
+			/** Class that assembles floating-point operators starting with 
+			 * an untyped, untimed Python-like description of the computational
+			 * datapath
+			 * @param[in] target     The target FPGA object
+			 * @param[in] filename   The filename containing the datapath
+			 * @param[in] wE         Exponent width
+			 * @param[in] wF         Fraction width
+			**/ 
+			FPPipeline(Target* target, string filename, int wE, int wF);
 			
 			/**
 			* FPPipeline destructor
 			*/
 			~FPPipeline();
 			
-			void printTree(FPNode *node){
-				if (node->inputNode()){
-					cout << node->oName << "=InputOperation"<<node->fun<<"(";
-					for (unsigned i=0; i<node->inNodesNames.size(); i++){
-						cout << node->inNodesNames[i];
-						if (i<node->inNodesNames.size()-1)
-							cout<<",";
-					}
-					cout << ");"<<endl;
-				}else{
-					for (unsigned i=0; i< node->inNodes.size(); i++){
-						printTree(node->inNodes[i]);
-					}
-					
-					cout << node->oName << "=operation"<< node->fun<<"(";
-					for (unsigned i=0; i< node->inNodes.size(); i++){
-						cout << node->inNodes[i]->oName;
-						if (i< node->inNodes.size()-1)
-							cout << ",";
-					}
-					cout << ");"<<endl;
-				}
-			};
-			
-			
-			void generateVHDL(FPNode *node, bool top){
-				REPORT(INFO, "Generating VHDL ... ");
-				
-				if (node->inputNode()){
-					//we start at cycle 0, for now
-					setCycle(0);
-					//check if inputs are already declared. if not declare the inputs
-					for (unsigned i=0; i< node->inNodesNames.size();i++){
-						if (!isSignalDeclared(node->inNodesNames[i])){
-							REPORT(DETAILED, "signal " << node->inNodesNames[i] << "   declared");
-							addFPInput(node->inNodesNames[i], wE, wF);
-						}
-					}
-				}else{
-					for (unsigned i=0; i< node->inNodes.size(); i++){
-						generateVHDL(node->inNodes[i], false);
-					}
-					//sync with all inputs. 
-					for (unsigned i=0; i< node->inNodes.size(); i++)
-						syncCycleFromSignal(node->inNodes[i]->oName);
-					
-					bool nodesAreInputs = true;
-					for (unsigned i=0; i< node->inNodes.size(); i++)
-						if (!node->inNodes[i]->inputNode()) 
-							nodesAreInputs = false;
-
-					if (!nodesAreInputs)
-						nextCycle();
-				}
-				
-				if (node->outputNode)
-					addFPOutput(node->oNameReal, wE, wF);
-				
-				Operator* op1;
-				//let's instantiate the proper operator
-
-				switch (node->fun) {
-
-					case FPNode::input:{ 
-						break;
-					}
-					
-					case FPNode::adder:{ 
-						REPORT(DETAILED, " instance adder. Oplistsize =" <<oplist.size());
-						
-						op1 = new FPAdderSinglePath(target_, wE, wF, wE, wF, wE, wF);
-						oplist.push_back(op1);
-
-						inPortMap( op1, "X", node->inNodesNames[0]);
-						inPortMap( op1, "Y", node->inNodesNames[1]);
-						outPortMap( op1, "R", node->oName);
-						
-						ostringstream tmp;
-						tmp << "adder" << getNewUId();
-						vhdl << instance(op1, tmp.str())<<endl;
-						break;
-					}
-
-					case FPNode::multiplier:{ 
-						REPORT(DETAILED, " instance adder. Oplistsize =" <<oplist.size());
-						
-						op1 = new FPMultiplier(target_, wE, wF, wE, wF, wE, wF);
-						oplist.push_back(op1);
-
-						inPortMap( op1, "X", node->inNodesNames[0]);
-						inPortMap( op1, "Y", node->inNodesNames[1]);
-						outPortMap( op1, "R", node->oName);
-						
-						ostringstream tmp;
-						tmp << "multiplier" << getNewUId();
-						vhdl << instance(op1, tmp.str())<<endl;
-						break;
-					}
-
-					case FPNode::sqr:{
-						REPORT(DETAILED, " instance squarer Oplistsize =" <<oplist.size());
-						op1 = new FPSquarer(target_, wE, wF, wF);
-						oplist.push_back(op1);
-						
-						inPortMap( op1, "X", node->inNodesNames[0]);
-						outPortMap( op1, "R", node->oName);
-						
-						ostringstream tmp;
-						tmp << "squarer" << getNewUId();
-						vhdl << instance(op1, tmp.str())<<endl;
-						REPORT(INFO, "generated squarer instance");
-						break;
-					}
-					case FPNode::sqrt:{
-						REPORT(DETAILED, " instance sqrt Oplistsize =" <<oplist.size());
-#ifdef ha
-						int degree = int ( floor ( double(wF) / 10.0) );
-						op1 = new FPSqrtPoly(target_, wE, wF, 0, degree);
-#else
-						op1 = new FPSqrt(target_, wE, wF);//, 1, degree);
-#endif
-						oplist.push_back(op1);
-						
-						inPortMap( op1, "X", node->inNodesNames[0]);
-						outPortMap( op1, "R", node->oName);
-						
-						ostringstream tmp;
-						tmp << "squarer" << getNewUId();
-						vhdl << instance(op1, tmp.str())<<endl;
-						REPORT(DETAILED, "    generated square root instance");
-						break;
-					}
-
-					default:{
-						cerr << "nothing else implemented yet" << endl;
-						exit(-1);
-					}
-				}
-				
-				if (node->outputNode){
-					syncCycleFromSignal(node->oName);
-					nextCycle();
- 					vhdl << tab << node->oNameReal << " <= " << node->oName << ";" << endl;
-				}
-				
-			};
-
-			/* --------------------------------------------------------------- */
+			/**
+			 * Function which generates the VHDL code containing the assembled 
+			 * operators starting from the node containg the output variable
+			 * @param[in] n    The output variable (one of the output node list)
+			 * @param[in] top  Boolean describing if this function is called from
+			 * the statement level, or in some recursion level
+			*/
 			void generateVHDL_c(node* n, bool top){
 				REPORT(DETAILED, "Generating VHDL ... ");
 				

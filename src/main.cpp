@@ -136,9 +136,10 @@
 #define BRIGHT 1
 #define RED 31
 #define OPER 32
+#define NEWOPER 31
 #define PARAM 34
 #define OP(op,paramList)             {cerr << "    "; printf("%c[%d;%dm",27,1,OPER); cerr <<  op; printf("%c[%dm",27,0); cerr<< " "; printf("%c[%d;%dm",27,1,PARAM); cerr << paramList; printf("%c[%dm\n",27,0); } 
-
+#define NEWOP(op,paramList)          {cerr << "    "; printf("%c[%d;%dm",27,1,NEWOPER); cerr <<  op; printf("%c[%dm",27,0); cerr<< " "; printf("%c[%d;%dm",27,1,PARAM); cerr << paramList; printf("%c[%dm\n",27,0); } 
 
 
 using namespace std;
@@ -231,6 +232,16 @@ static void usage(char *name){
 	cerr << "      The constant is provided as a Sollya expression, e.g \"log(2)\"\n";
 #endif // HAVE_SOLLYA
 	cerr << "    ____________ FLOATING-POINT OPERATORS ______________________________________\n";
+	NEWOP("FPPipeline", "filename wE wF");
+	cerr << "      Early Alpha Release. \n";
+	cerr << "      Assembles the computational datapath described by the input file.\n";
+	cerr << "      The precision for all operators is given wE wF\n";
+	cerr << "      The datapath is described in an untyped and untimed Python-like syntax\n";
+	cerr << "      Supported operations: +,-,*,\\,sqr(),sqrt(),exp(),log() \n";
+	cerr << "      Examples:\n";
+	cerr << "      Jacobi1D:              |  Horner:              | 2D Norm:\n";
+	cerr << "      j = (a0+a1+a2)*0.333;  |  p = a0+x*(a2+x*a2);  | r = sqrt(sqr(x0-x1)+sqr(y0-y1));\n";
+	cerr << "      output j;              |  output p;            | output r;\n";
 	OP("Fix2FP","LSB MSB Signed wE wF");
 	cerr << "      Convert a 2's compliment fixed-point number in the bit range MSB...LSB \n";
 	cerr << "      into floating-point\n";
@@ -266,7 +277,7 @@ static void usage(char *name){
 	OP("FPConstMult","wE_in wF_in wE_out wF_out cst_sgn cst_exp cst_int_sig");
 	cerr << "      Floating-point constant multiplier\n";
 	cerr << "      The constant is provided as integral significand and integral exponent.\n";
-	OP("FPRealKCM","wE wF cosntantExpression");
+	NEWOP("FPRealKCM","wE wF cosntantExpression");
 	cerr << "      Floating-point constant multiplier using the KCM algorithm\n";
 	cerr << "      last argument is a Sollya expression between double quotes,e.g.\"exp(pi/2)\".\n";
 #ifdef HAVE_SOLLYA

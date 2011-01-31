@@ -1,5 +1,5 @@
 #include "ExpressionParserData.h"
-#define EXPRESSIONPARSER_DEBUG
+//#define EXPRESSIONPARSER_DEBUG
 using namespace std;
 
 node* createVariableNode(char* nodeName){
@@ -203,7 +203,6 @@ nodeList* createOuputList(nodeList* statementList, varList* variableList){
 	ostringstream pprint;
 	/* for each output variable, find the corresponding node*/
 	varList* vh = variableList;
-	nodeList* useList;
 	nodeList* potentialOutput = NULL;
 	nodeList* properOutput = NULL;
 		

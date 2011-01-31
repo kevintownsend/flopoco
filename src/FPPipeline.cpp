@@ -50,7 +50,7 @@ namespace flopoco{
 	
 	extern vector<Operator*> oplist;
 	
-	FPPipeline::FPPipeline(Target* target, string func, int wE_, int wF_): 
+	FPPipeline::FPPipeline(Target* target, string filename, int wE_, int wF_): 
 	Operator(target), wE(wE_), wF(wF_) {
 		// Name HAS to be unique!
 		// will cause weird bugs otherwise
@@ -58,6 +58,7 @@ namespace flopoco{
 		complete_name << "Pipeline" << getNewUId(); 
 		setName(complete_name.str());
 		// r = x^2 + y^2 + z^2 example
+		srcFileName = "FPPipeline";
 
 #ifdef sumeofsquares		
 		vector<FPNode*> fpNodeList;
@@ -270,7 +271,7 @@ namespace flopoco{
 		// redirect stdin to the file pointer
 		int stdin = dup(0);
 		close(0);
-		int fp = open(func.c_str(), O_RDONLY, "r");
+		int fp = open(filename.c_str(), O_RDONLY, "r");
 
 		dup2(fp, 0);
 		FlopocoExpressionparse();
@@ -280,7 +281,8 @@ namespace flopoco{
 		REPORT(DEBUG, "-----------------------------------");
 		nodeList* head = p->assignList;
 		while (head!=NULL){
-		printExpression(head->n); 	cout << endl;			
+			printExpression(head->n); 	
+			REPORT(DEBUG,endl);			
 			head = head->next;
 		}
 		REPORT(DEBUG, "-----------------------------------");
@@ -298,7 +300,8 @@ namespace flopoco{
 		REPORT(DEBUG, "NEW NODES: ------------------------");
 		head = p->assignList;
 		while (head!=NULL){
-			printExpression(head->n); 	cout << endl;			
+			printExpression(head->n); 	
+			REPORT(DEBUG,endl);			
 			head = head->next;
 		}
 		REPORT(DEBUG, "-----------------------------------");	
@@ -315,7 +318,8 @@ namespace flopoco{
 		while (outListHead != NULL){
 			printExpression( outListHead->n);
 			outListHead = outListHead->next;
-		} cout << endl;
+		} 
+		REPORT(DEBUG,endl);			
 	
 		nodeList* oh = outList;
 	
