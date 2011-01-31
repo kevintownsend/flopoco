@@ -2855,7 +2855,7 @@ namespace flopoco{
 
 		syncCycleFromSignal("addRes");
 		setCriticalPath(add->getOutputDelay("R"));
-		
+
 		/* rounding and compensation needed only if k>0*/
 		if (targetPrecision==0)
 			vhdl << tab << "R <= addRes" << range(wX+wY+(sign?2:0)-1-minShift, targetPrecision-minShift) << ";" << endl;
@@ -2875,7 +2875,7 @@ namespace flopoco{
 					vhdl << instance(af, "RoundCompensate");
 				
 					syncCycleFromSignal("roundCompRes");
-					outDelayMap["R"] = af->getOutputDelay("R");
+					setCriticalPath( af->getOutputDelay("R") );
 					vhdl << tab << "R <= roundCompRes" << range(wX+wY+(sign?2:0)-1-minShift, targetPrecision-minShift) << ";" << endl;
 				}else{
 					vhdl << tab << "R <= addRes" << range(wX+wY+(sign?2:0)-1-minShift, targetPrecision-minShift) << ";" << endl;
@@ -2897,7 +2897,7 @@ namespace flopoco{
 						vhdl << instance(af, "Round");
 				
 						syncCycleFromSignal("roundRes");
-						outDelayMap["R"] = af->getOutputDelay("R");
+						setCriticalPath(af->getOutputDelay("R"));
 						vhdl << tab << "R <= roundRes" << range(wX+wY+(sign?2:0) - targetPrecision-1+1,1) << ";" << endl;
 					}else{
 						IntAdder *af = new IntAdder(getTarget(), wX+wY+(sign?2:0)-1-minShift - (targetPrecision-minShift) + 1, inDelayMap("X", target_->localWireDelay() + getCriticalPath()) );
@@ -2910,7 +2910,7 @@ namespace flopoco{
 						vhdl << instance(af, "RoundCompensate");
 				
 						syncCycleFromSignal("roundCompRes");
-						outDelayMap["R"] = af->getOutputDelay("R");
+						setCriticalPath(af->getOutputDelay("R"));
 						vhdl << tab << "R <= roundCompRes" << range(wX+wY+(sign?2:0) - targetPrecision-1,0) << ";" << endl;
 					}
 				}else{
@@ -2918,6 +2918,8 @@ namespace flopoco{
 				}
 			}
 		}
+		outDelayMap["R"] = getCriticalPath();
+
 	}
 	
 	vector<SoftDSP*> IntTruncMultiplier::insertSoftDSPs(DSP** config)
