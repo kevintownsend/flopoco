@@ -166,7 +166,8 @@ namespace flopoco{
 
 				// Now produce the VHDL
 				setCriticalPath(getMaxInputDelays(inputDelays));
-
+				manageCriticalPath( target->lutDelay() + target->localWireDelay() );
+				
 				FixRealKCMTable *t; 
 				t = new FixRealKCMTable(target, this, i, diSize, ppiSize, tableSigned, last);
 				oplist.push_back(t);
@@ -185,7 +186,7 @@ namespace flopoco{
 
 			// All the tables are read in parallel
 			// TODO some day this will go to Table.
-			manageCriticalPath(2*target->localWireDelay() + target->lutDelay());
+//			manageCriticalPath(2*target->localWireDelay() + target->lutDelay());
 			
 			Operator* adder;
 			if(nbOfTables>2) {
