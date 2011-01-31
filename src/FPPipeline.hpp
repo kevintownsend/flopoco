@@ -18,6 +18,7 @@
 #include "FPLog.hpp"
 #include "FPSqrtPoly.hpp"
 #include "FPSqrt.hpp"
+#include "ConstMult/FPRealKCM.hpp"
 
 #include "Operator.hpp"
 #include "FPExpressions/ExpressionParserData.h"
@@ -301,7 +302,7 @@ namespace flopoco{
 							addFPInput(n->name, wE, wF);
 						}
 					}else{
-						//this is a constant
+						//this is a constant, so it has no name, and is not declared
 					}
 				}else{
 					//iterate on all inputs
@@ -312,7 +313,8 @@ namespace flopoco{
 					}
 					lh = n->nodeArray;
 					while (lh!=NULL){
-						syncCycleFromSignal(lh->n->name);
+						if (lh->n->name!=NULL)
+							syncCycleFromSignal(lh->n->name);
 						lh=lh->next;
 					}
 					REPORT(DETAILED, "finished with node");
@@ -396,17 +398,43 @@ namespace flopoco{
 
 					case 3:{ //multiplier
 						REPORT(DETAILED, " instance multiplier");
-						
-						op1 = new FPMultiplier(target_, wE, wF, wE, wF, wE, wF);
-						oplist.push_back(op1);
+						if (((n->nodeArray->n->type==0)&&(n->nodeArray->n->s_value!=NULL)) || 
+						    ((n->nodeArray->next->n->type==0)&&(n->nodeArray->next->n->s_value!=NULL))){
+							REPORT(INFO, "constant node detected");
+							ostringstream constant_expr, operand_name;
+							if ((n->nodeArray->n->type==0)&&(n->nodeArray->n->s_value!=NULL)){
+								//the first one is the constant
+								constant_expr << n->nodeArray->n->s_value;
+								operand_name << n->nodeArray->next->n->name;		
+							}else{
+								constant_expr << n->nodeArray->next->n->s_value;
+								operand_name << n->nodeArray->n->name;		
+							}
+							
+							REPORT(INFO, "Constant is "<< constant_expr.str());
 
-						inPortMap( op1, "X", n->nodeArray->n->name);
-						inPortMap( op1, "Y", n->nodeArray->next->n->name);
-						outPortMap( op1, "R", n->name);
+							op1 = new FPRealKCM(target_,wE, wF, constant_expr.str());
+							oplist.push_back(op1);
+							
+							inPortMap( op1, "X", operand_name.str());
+							outPortMap( op1, "R", n->name);
+
+							ostringstream tmp;
+							tmp << "constant_multiplier" << getNewUId();
+							vhdl << instance(op1, tmp.str())<<endl;
+						}else{
+							//we just plug-in a regular multiplier
+							op1 = new FPMultiplier(target_, wE, wF, wE, wF, wE, wF);
+							oplist.push_back(op1);
+
+							inPortMap( op1, "X", n->nodeArray->n->name);
+							inPortMap( op1, "Y", n->nodeArray->next->n->name);
+							outPortMap( op1, "R", n->name);
 						
-						ostringstream tmp;
-						tmp << "multiplier" << getNewUId();
-						vhdl << instance(op1, tmp.str())<<endl;
+							ostringstream tmp;
+							tmp << "multiplier" << getNewUId();
+							vhdl << instance(op1, tmp.str())<<endl;
+						}
 						break;
 					}
 					case 5:{ //squarer
@@ -469,10 +497,14 @@ namespace flopoco{
 						vhdl << instance(op1, tmp.str())<<endl;
 						break;
 					}
-
+					case 17:{ //assignement
+						vhdl << tab << declare( n->name, wE+wF+3) << "<= " << n->nodeArray->n->name <<";"<<endl;
+						break;
+					}
 
 					default:{
-						cerr << "nothing else implemented yet" << endl;
+						
+						cerr << "nothing else implemented yet for operation code: "<<n->type << endl;
 						exit(-1);
 					}
 				}

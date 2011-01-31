@@ -67,13 +67,12 @@ assignment: FPEXPRESSION_VARIABLE FPEXPRESSION_EQUALS expression FPEXPRESSION_PV
 	;
 
 expression: term expressionp { 
-								//std::cout << "here2" << std::endl;
 									if ($2==NULL){
-										$$ = $1;
+										// this is just an assignement
+										$$=createNodeHavingRightOperandOnly($1,17); //assignment code is 17
 									}else{
 										//fill the rest of the node;
 										$2->nodeArray = appendNodeToListFront($1,$2->nodeArray);
-//										$2->nodeArray[0]=$1;
 										$$=$2;
 									} 
 							 }

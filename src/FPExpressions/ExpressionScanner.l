@@ -85,7 +85,9 @@ C [^/*]
 
                  
 [-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)? {
-						FlopocoExpressionlval.s_type = FlopocoExpressiontext;
+						FlopocoExpressionlval.s_type = (char*) malloc( sizeof(char)*strlen(FlopocoExpressiontext) );
+						for (unsigned i=0;i<strlen(FlopocoExpressiontext);i++)
+							FlopocoExpressionlval.s_type[i] = FlopocoExpressiontext[i];
 						return FPEXPRESSION_FPNUMBER;
 					}                  
                   

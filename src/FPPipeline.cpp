@@ -298,7 +298,7 @@ namespace flopoco{
 		REPORT(DEBUG, "NEW NODES: ------------------------");
 		head = p->assignList;
 		while (head!=NULL){
-			printExpression( head->n); 	cout << endl;			
+			printExpression(head->n); 	cout << endl;			
 			head = head->next;
 		}
 		REPORT(DEBUG, "-----------------------------------");	

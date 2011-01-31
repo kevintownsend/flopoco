@@ -1,5 +1,5 @@
 #include "ExpressionParserData.h"
-
+#define EXPRESSIONPARSER_DEBUG
 using namespace std;
 
 node* createVariableNode(char* nodeName){
@@ -15,9 +15,10 @@ node* createConstantNode(char* str_value){
 	node* n;
 	n = (node*) malloc( sizeof(node) );
 	//set type as input
-	n->type = 0; //TODO put flopoco namespace FPPipeline::FPNode::input
-	n->value = atof(str_value);
+	n->type = 0; //type defines the type of the created node 
+	n->value = 0;
 	n->s_value = str_value;
+	n->name = NULL;
 	return n;
 }
 
@@ -108,7 +109,7 @@ void printExpression(node* n){
 			if (head->n->name!=NULL) //variable
 				pprint << head->n->name;
 			else //constant
-				pprint << head->n->value;	
+				pprint << head->n->s_value;	
 		} else {
 			pprint << "(";
 			printExpression(head->n);	
@@ -129,6 +130,9 @@ void makeComputationalTree(node* parent, nodeList* expressionList, nodeList* sta
 		if (h->n->type==0){ // if it's an input node
 			//if this node is not a constant
 			if (h->n->name!=NULL){
+#ifdef EXPRESSIONPARSER_DEBUG
+				cout << "Linking node:" << h->n->name<<";"<<endl;
+#endif			
 				//fetch the name;
 				char* c = h->n->name;
 				//parse	statements to see if const is declared
@@ -141,7 +145,13 @@ void makeComputationalTree(node* parent, nodeList* expressionList, nodeList* sta
 					th = th->next;	
 				}
 				if (th!=NULL){ //found declaration: replace constant node by this node
+#ifdef EXPRESSIONPARSER_DEBUG
+					cout << "Found declaration for node:" << h->n->name<<";"<<endl;
+#endif			
 					if (parent!=NULL){ // program statement list; do not replace
+#ifdef EXPRESSIONPARSER_DEBUG
+					cout << "Linked!"<<endl;
+#endif			
 						h->n = th->n; //retarget pointers 
 					}
 				}else{}	
