@@ -248,10 +248,12 @@ static void usage(char *name){
 	OP("Fix2FP","LSB MSB Signed wE wF");
 	cerr << "      Convert a 2's compliment fixed-point number in the bit range MSB...LSB \n";
 	cerr << "      into floating-point\n";
-	OP( "FPAdder","wE wF");
-	cerr << "      Floating-point adder \n";
+	NEWOP( "FPAdder","wE wF");
+	cerr << "      Floating-point adder (default architecture is now single-path) \n";
 	OP( "FPAdderDualPath","wE wF");
 	cerr << "      Floating-point adder with dual-path architecture (shorter latency, larger area)\n";
+	NEWOP( "FPAdder3Input","wE wF");
+	cerr << "      A 3-operand floating-point adder\n";
 	OP( "FPMultiplier","wE wF_in wF_out");
 	cerr << "      Floating-point multiplier, supporting different in/out precision  \n";
 	OP( "FPMultiplierKaratsuba","wE wF_in wF_out");

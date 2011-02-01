@@ -1,4 +1,16 @@
 ======================================================================
+Version 2.2.0
+The new version brings with it:
+- the star of this release is FPPipeline, offered in early alpha phase
+allowing the fast assembling of large and complex computational pipelines
+- improvements on floating-point adders with the addition of a smaller 
+single path architecture(the default architecture now when calling FPAdder)
+- a brand new 3-operand FPAdder 
+- some bug-fixes
+- plenty of other improvements of other operators, especially due to 
+pipeline refinement 
+
+======================================================================
 Version 2.1.0
 Frequency-directed pipelining made easy. Operator latency scales much better
 for lower frequencies. The two functions that do it all are: manageCriticalPath()
