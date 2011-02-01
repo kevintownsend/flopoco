@@ -19,7 +19,7 @@
 
 <h3>Single-line installation on Ubuntu 10.04</h3>
 
-<code>yes | sudo apt-get install g++ libgmp3-dev libmpfr-dev libxml2-dev bison libmpfi-dev flex++ cmake; wget http://perso.ens-lyon.fr/damien.stehle/downloads/libfplll-3.0.12.tar.gz; gunzip < libfplll-3.0.12.tar.gz | tar xvf -; cd libfplll-3.0.12/; ./configure; make; sudo make install; cd ..; wget https://gforge.inria.fr/frs/download.php/26858/sollya-2.0.tar.gz; gunzip < sollya-2.0.tar.gz | tar xvf -; cd sollya-2.0/; ./configure; make; sudo make install; cd ..; wget https://gforge.inria.fr/frs/download.php/28112/flopoco-2.1.1.tgz; gunzip < flopoco-2.1.1.tgz    | tar xvf -; cd flopoco-2.1.1/; cmake .; make; ./flopoco;</code>
+<code>yes | sudo apt-get install g++ libgmp3-dev libmpfr-dev libxml2-dev bison libmpfi-dev flex++ cmake && wget http://perso.ens-lyon.fr/damien.stehle/downloads/libfplll-3.0.12.tar.gz && tar xzf libfplll-3.0.12.tar.gz && cd libfplll-3.0.12/ && ./configure && make -j  && sudo make install && cd .. && wget http://sollya.gforge.inria.fr/sollya-weekly-01-30-2011.tar.gz && tar xzf sollya-weekly-01-30-2011.tar.gz && cd sollya-weekly-01-30-2011/ && ./configure && make -j  && sudo make install && cd .. && wget https://gforge.inria.fr/frs/download.php/28112/flopoco-2.2.0.tgz && gunzip < flopoco-2.2.0.tgz    | tar xvf - && cd flopoco-2.2.0/ && cmake . && make -j  && ./flopoco</code>
 
 <h3>Generic installation instructions</h3>
 
@@ -318,6 +318,11 @@ reference.</p>
       where <code>0=Classical, 1=Alternative, 2=Short-Latency</code>. Please check out this
       <a href="http://prunel.ccsd.cnrs.fr/docs/00/47/57/80/PDF/RR-LIP-2010-16.pdf">article</a>
       for more details.
+  <dt><code style="color: blue;">IntDualSub wIn opType</code></dt>
+    <dd> Integer adder/subtracter or dual subtracter, possibly pipelined. The
+    operation type defines the functioning mode: if 1, compute X-Y and X+Y; 
+    if 0, compute X-Y and Y-X. 
+ </dd>
 </dl>
    <h4><i> Multi-operand Adders </i></h4>   
 <dl>
@@ -332,12 +337,17 @@ reference.</p>
 </dl>
    <h4><i> Multipliers </i></h4>   
 <dl>     
-  <dt><code style="color: blue;">IntMultiplier wInX wInY</code></dt>
-    <dd>Same for multiplication, although the frequency attainable will be
-      limited by the DSP blocks available. wInX and wInY are the input widths
-      of both operands. This operator fully supports the <code>-DSP_blocks=no</code> option.
-      This is an unsigned operation</dd>
-    <dd></dd>
+  <dt><code style="color: blue;">IntMultiplier wInX wInY signed ratio</code></dt>
+	<dd>The IntMultiplier operator now regroups in a transparent way multiple 
+	possible architectures. The <i>signed</i> parameter controls whether or not  
+	the inputs will be treated as 2's complement numbers for the signed case.
+	The <i>ratio</i> parameter is a user knob for targeting a more DSP-oriented 
+	architecture (<i>ratio=1</i>), or an architecture where some smaller 
+	multiplications are casted in logic. A 0 value for the <i>ratio</i> will 
+	generate an DSP-free architecture.</dd>
+  <dt><code style="color: blue;">UnsignedIntMultiplier wInX wInY</code></dt>
+     <dd>Generates a DSP-oriented multiplication architecture. Trades possible 
+     DSP underutilization for logic and latency </dd>
   <dt><code style="color: blue;">SignedIntMultiplier wInX wInY</code></dt>
      <dd>Same as above but signed and no real support for Altera targets.</dd>
   <dt><code style="color: blue;">IntSquarer wInX wInY</code></dt>
@@ -383,7 +393,11 @@ are flushed to zero.
       component supports different input and output sizes, but this is
       not available from the command line.</dd>
   <dt><code style="color: blue;">FPAdder wE wF</code></dt>
-    <dd>A floating-point adder.</dd>
+    <dd>A floating-point adder with a new, more compact single-path architecture.</dd>
+  <dt><code style="color: blue;">FPAdderDualPath wE wF</code></dt>
+    <dd>A previous FPAdder architecture. Trades a larger circuit size for a smaller latency.</dd>
+  <dt><code style="color: blue;">FPAdder3Input wE wF</code></dt>
+    <dd>A brand new 3-operand floating-point adder</dd>
   <dt><code style="color: blue;">FPDiv wE wF</code></dt>
     <dd>A floating-point divider.</dd>
   <dt><code style="color: blue;">FPSqrt wE wF</code></dt>
@@ -393,6 +407,45 @@ are flushed to zero.
   <dt><code style="color: blue;">FPSquarer wE wF</code></dt>
     <dd>A floating-point squarer, using IntSquarer for the mantissa.</dd>
 </dl>
+
+<h3>Floating-point pipelined datapath generation </h3> 
+
+Current FloPoCo release is proud to offer in <i>early alpha</i> version:
+
+  <dt><code style="color: blue;">FPPipeline filename wE wF</code></dt>
+    <dd> The operator receives the <i>filename</i> containing an untimed, untyped
+    description (Python-like) of the datapath to be generated, together with the 
+    global precision of the operators to be used.
+    
+    Below are some examples of input files:
+	<table border="1">
+		<tr>
+			<td>
+    <code>
+    /* Jacobi1D: */<br/>               
+      j = (a0+a1+a2)*0.333;  <br/> 
+      output j; <br/> 
+    </code>
+    		</td>
+			<td>
+    <code>
+    /* Horner: */  <br/>            
+      p = a0+x*(a2+x*a2);  <br/>
+      output p; <br/>
+    </code>
+    		</td>
+ 			<td>
+    <code>
+    /* 2D Norm: */ <br/>              
+      r = sqrt(sqr(x0-x1)+sqr(y0-y1)); <br/>
+      output r; <br/>
+    </code>
+    		</td>
+   		</tr>
+   		</table>
+	<br/>
+	The currently supported operators are: +,-,*,/, sqr(), sqrt(), exp(), log(). 
+    </dd>
 
 <h3>Long fixed-point accumulator, and derivatives</h3>
 These operators are described in all the gory details

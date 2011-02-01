@@ -43,13 +43,13 @@ extern bool combinatorialOperator;
 		}*/
 
 
-                template <class paramType> friend FlopocoStream& operator <<(FlopocoStream& output, paramType c) {
-                        output.vhdlCodeBuffer << c;
-                        return output;
-                }
+		template <class paramType> friend FlopocoStream& operator <<(FlopocoStream& output, paramType c) {
+			output.vhdlCodeBuffer << c;
+			return output;
+		}
+		
 
-
-
+		
 		friend FlopocoStream & operator<<(FlopocoStream& output, FlopocoStream fs) {
 			output.vhdlCodeBuffer << fs.str();
 			return output; 
