@@ -47,6 +47,7 @@
 #include "IntMultiplier.hpp"
 #include "IntMultipliers/IntTilingMult.hpp"
 #include "IntMultipliers/SignedIntMultiplier.hpp"
+#include "IntMultipliers/UnsignedIntMultiplier.hpp"
 
 #include "Targets/DSP.hpp"
 
@@ -204,6 +205,8 @@ static void usage(char *name){
 	OP("IntMultiplier","wInX wInY signed ratio");
 	cerr << "      Integer multiplier of two integers X and Y of sizes wInX and wInY \n";
 	cerr << "      signed is one of {0,1} \n";	
+	OP("UnsignedIntMultiplier","wInX wInY");
+	cerr << "      Unsigned integer multiplier.\n";	
 	OP("SignedIntMultiplier","wInX wInY");
 	cerr << "      Signed integer multiplier. wInX and wInY include the sign\n";	
 	OP("IntTilingMultiplier","wInX wInY ratio maxTimeInMinutes");
@@ -936,23 +939,18 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(op);
 			}
 		}
-
-//		else if(opname=="IntTruncMultiplier"){
-//			int nargs = 4;
-//			if (i+nargs > argc)
-//				usage(argv[0]);
-//			else {
-//				int wInX = checkStrictyPositive(argv[i++], argv[0]);
-//				int wInY = checkStrictyPositive(argv[i++], argv[0]);
-//				float ratio = atof(argv[i++]);
-//				int k    = atoi(argv[i++]);
-//				
-//				cerr << "> IntTruncMultiplier , wInX="<<wInX<<", wInY="<<wInY<<"\n";
-//				
-//				op = new IntTruncMultiplier(target, wInX, wInY, ratio, k);
-//				addOperator(op);
-//			}
-//		}
+		else if(opname=="UnsignedIntMultiplier"){
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int wInX = checkStrictyPositive(argv[i++], argv[0]);
+				int wInY = checkStrictyPositive(argv[i++], argv[0]);
+				cerr << "> UnsignedIntMultiplier , wInX="<<wInX<<", wInY="<<wInY<<"\n";
+				op = new UnsignedIntMultiplier(target, wInX, wInY);
+				addOperator(op);
+			}
+		}
 		else if(opname=="SignedIntMultiplier"){
 			int nargs = 2;
 			if (i+nargs > argc)
