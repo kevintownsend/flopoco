@@ -1,14 +1,19 @@
 ======================================================================
 Version 2.2.0
 The new version brings with it:
-- the star of this release is FPPipeline, offered in early alpha phase
-allowing the fast assembling of large and complex computational pipelines
-- improvements on floating-point adders with the addition of a smaller 
-single path architecture(the default architecture now when calling FPAdder)
-- a brand new 3-operand FPAdder 
+- FPPipeline assembles floating-point computational pipelines 
+  from a C-like description (early alpha)
+- a smaller (single path) architecture for floating-point addition
+  (now the default architecture when calling FPAdder)
+- 3-operand FPAdder
+- KCM constant multipliers, including a FixRealKCM and FPRealKCM
 - some bug-fixes
 - plenty of other improvements of other operators, especially due to 
 pipeline refinement 
+
+======================================================================
+Version 2.1.1
+Identical to 2.1.0 except one small fix to enable compilation with latest mpfr
 
 ======================================================================
 Version 2.1.0
