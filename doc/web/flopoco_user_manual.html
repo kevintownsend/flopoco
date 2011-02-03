@@ -17,7 +17,14 @@
 <hr/>
 <h2>Installation</h2>
 
-<h3>Single-line installation on Ubuntu 10.04LTS or 10.10</h3>
+<h3>Single-line installation on Ubuntu 10.10</h3>
+Copy this in a dash/bash shell:
+
+<code>yes | sudo apt-get install g++ libgmp3-dev libmpfr-dev libxml2-dev bison libmpfi-dev flex cmake && wget http://perso.ens-lyon.fr/damien.stehle/downloads/libfplll-3.0.12.tar.gz && tar xzf libfplll-3.0.12.tar.gz && cd libfplll-3.0.12/ && ./configure && make -j  && sudo make install && cd .. && wget http://sollya.gforge.inria.fr/sollya-weekly-01-30-2011.tar.gz && tar xzf sollya-weekly-01-30-2011.tar.gz && cd sollya-weekly-01-30-2011/ && ./configure && make -j  && sudo make install && cd .. && wget https://gforge.inria.fr/frs/download.php/28208/flopoco-2.2.0.tgz && gunzip < flopoco-2.2.0.tgz    | tar xvf - && cd flopoco-2.2.0/ && cmake . && make -j  && ./flopoco</code>
+
+<h3>Single-line installation on Ubuntu 10.04LTS</h3>
+
+Copy this in a dash/bash shell:
 
 <code>yes | sudo apt-get install g++ libgmp3-dev libmpfr-dev libxml2-dev bison libmpfi-dev flex++ cmake && wget http://perso.ens-lyon.fr/damien.stehle/downloads/libfplll-3.0.12.tar.gz && tar xzf libfplll-3.0.12.tar.gz && cd libfplll-3.0.12/ && ./configure && make -j  && sudo make install && cd .. && wget http://sollya.gforge.inria.fr/sollya-weekly-01-30-2011.tar.gz && tar xzf sollya-weekly-01-30-2011.tar.gz && cd sollya-weekly-01-30-2011/ && ./configure && make -j  && sudo make install && cd .. && wget https://gforge.inria.fr/frs/download.php/28208/flopoco-2.2.0.tgz && gunzip < flopoco-2.2.0.tgz    | tar xvf - && cd flopoco-2.2.0/ && cmake . && make -j  && ./flopoco</code>
 
@@ -413,9 +420,10 @@ are flushed to zero.
 Current FloPoCo release is proud to offer in <i>early alpha</i> version:
 
   <dt><code style="color: blue;">FPPipeline filename wE wF</code></dt>
-    <dd> The operator receives the <i>filename</i> containing an untimed, untyped
-    description (Python-like) of the datapath to be generated, together with the 
-    global precision of the operators to be used.
+    <dd> The operator receives the <i>filename</i> containing an
+    untimed, untyped description (Python-like) of the datapath to be
+    generated, together with the global precision of the operators to
+    be used.
     
     Below are some examples of input files:
 	<table border="1">
@@ -423,7 +431,7 @@ Current FloPoCo release is proud to offer in <i>early alpha</i> version:
 			<td>
     <code>
     /* Jacobi1D: */<br/>               
-      j = (a0+a1+a2)*0.333;  <br/> 
+      j = (a0+a1+a2)*0.3333333333333333;  <br/> 
       output j; <br/> 
     </code>
     		</td>
