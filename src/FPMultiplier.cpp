@@ -35,7 +35,7 @@ namespace flopoco{
 		Operator(target), wEX_(wEX), wFX_(wFX), wEY_(wEY), wFY_(wFY), wER_(wER), wFR_(wFR) {
 
 		ostringstream name;
-		name << "FPMultiplier_"<<wEX_<<"_"<<wFX_<<"_"<<wEY_<<"_"<<wFY_<<"_"<<wER_<<"_"<<wFR_; 
+		name << "FPMultiplier_"<<wEX_<<"_"<<wFX_<<"_"<<wEY_<<"_"<<wFY_<<"_"<<wER_<<"_"<<wFR_<<"_uid"<<getNewUId(); 
 		setName(name.str());
 
 		/* set if operator outputs a normalized_ result */

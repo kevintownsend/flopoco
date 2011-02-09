@@ -359,13 +359,12 @@ namespace flopoco{
 			o<<"--"; for(i=0; i<s; i++) o<<" "; o << "(" << commentedName_ << ")" << endl; 
 		}
 		
-		o<<"-- This operator is part of the Infinite Virtual Library FloPoCoLib"<<endl
-		o<<"-- All rights reserved "<<endl
+		o<<"-- This operator is part of the Infinite Virtual Library FloPoCoLib"<<endl;
+		o<<"-- All rights reserved "<<endl;
 		// <<"-- and is distributed under the terms of the GNU Lesser General Public Licence"<<endl
 		// <<"-- with a Tobin Tax restriction (see README file for details)."<<endl
-		<<"-- Authors: " << authorsyears <<endl
-		<<"--------------------------------------------------------------------------------"<<endl;
-		
+		o<<"-- Authors: " << authorsyears <<endl;
+		o<<"--------------------------------------------------------------------------------"<<endl;
 	}
 	
 	
@@ -1277,6 +1276,7 @@ namespace flopoco{
 	}
 	
 	void Operator::parse2(){
+		REPORT(INFO, "Starting second-level parsing for operator "<<srcFileName);
 		vector<pair<string,int> >:: iterator iterUse;
 		map<string, int>::iterator iterDeclare;
 		
