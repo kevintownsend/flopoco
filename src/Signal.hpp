@@ -130,6 +130,17 @@ namespace flopoco{
 		 */	
 		int getLifeSpan() ;
 
+		/** obtain the delay of this signal
+		 * @return the delay
+		 */	
+		double getDelay();
+
+		/** sets the delay of this signal
+		 * @param[in] delay the delay
+		 */	
+		void setDelay(double delay);
+
+
 		/** Set the number of possible output values. */
 		void  setNumberOfPossibleValues(int n);
 
@@ -166,6 +177,9 @@ namespace flopoco{
 
 		int           lifeSpan_;    /**< The max delay that will be applied to this signal; */
 		int           cycle_;       /**<  the cycle at which this signal is active in a pipelined operator. 0 means synchronized with the inputs */
+
+		double        delay_;       /**<  the delay of the signal, starting from a previous register level */
+
 	
 		bool          isFP_;        /**< If the signal is of the FloPoCo floating-point type */  
 		bool          isIEEE_;      /**< If the signal is of the IEEE floating-point type */  

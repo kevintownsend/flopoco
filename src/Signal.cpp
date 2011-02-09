@@ -125,6 +125,13 @@ namespace flopoco{
 		return lifeSpan_;
 	}
 
+	double Signal::getDelay(){
+		return delay_;
+	}
+	
+	void Signal::setDelay(double delay){
+		delay_ = delay;	
+	}
 
 	void  Signal::setNumberOfPossibleValues(int n){
 		numberOfPossibleValues_ = n;
