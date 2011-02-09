@@ -239,6 +239,17 @@ public:
 		 */
 	bool syncCycleFromSignal(string name, bool report=true) ;
 
+	/** advance the current cycle to that of a signal, updating critical paths.
+		 * @param name is the signal name. It must have been defined before 
+		 * @param criticalPath is a double, the critical path already consumed up to the signal passed as first arg. 
+
+		 We have three cases:
+		 1/ currentCycle > name.cycle, then do nothing
+		 2/ currentCycle < name.cycle, then advance currentCycle to name.cycle, and set the current critical path to criticalPath
+		 3/ currentCycle = name.cycle: set critical path to the max of the two critical paths.
+		 */
+	bool syncCycleFromSignal(string name, double criticalPath, bool report=true) ;
+
 
 
 

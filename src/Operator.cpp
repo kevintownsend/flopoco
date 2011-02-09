@@ -360,8 +360,9 @@ namespace flopoco{
 		}
 		
 		o<<"-- This operator is part of the Infinite Virtual Library FloPoCoLib"<<endl
-		<<"-- and is distributed under the terms of the GNU Lesser General Public Licence"<<endl
-		<<"-- with a Tobin Tax restriction (see README file for details)."<<endl
+		o<<"-- All rights reserved "<<endl
+		// <<"-- and is distributed under the terms of the GNU Lesser General Public Licence"<<endl
+		// <<"-- with a Tobin Tax restriction (see README file for details)."<<endl
 		<<"-- Authors: " << authorsyears <<endl
 		<<"--------------------------------------------------------------------------------"<<endl;
 		
@@ -465,6 +466,7 @@ namespace flopoco{
 			if(report)
 				vhdl << tab << "----------------Synchro barrier, entering cycle " << currentCycle_ << "----------------" << endl;
 			
+			criticalPath_ = 0;
 			// automatically update pipeline depth of the operator 
 			if (currentCycle_ > pipelineDepth_) 
 				pipelineDepth_ = currentCycle_;
@@ -491,7 +493,7 @@ namespace flopoco{
 		vhdl.flush(currentCycle_);
 		
 		ostringstream e;
-		e << srcFileName << " (" << uniqueName_ << "): ERROR in syncCycleFromSignal, "; // just in case
+		e << srcFileName << " (" << uniqueName_ << "): ERROR in setCycleFromSignal, "; // just in case
 		
 		if(isSequential()) {
 			Signal* s;
@@ -526,7 +528,7 @@ namespace flopoco{
 		vhdl.flush(currentCycle_);
 		
 		ostringstream e;
-		e << srcFileName << " (" << uniqueName_ << "): ERROR in syncCycleFromSignal, "; // just in case
+		e << srcFileName << " (" << uniqueName_ << "): ERROR in getCycleFromSignal, "; // just in case
 		
 		if(isSequential()) {
 			Signal* s;
@@ -590,6 +592,63 @@ namespace flopoco{
 		
 		return advance;
 	}
+
+
+
+	bool Operator::syncCycleFromSignal(string name, double criticalPath, bool report) {
+		// lexing part
+		bool advance = false;
+		vhdl.flush(currentCycle_);
+		ostringstream e;
+		e << srcFileName << " (" << uniqueName_ << "): ERROR in syncCycleFromSignal, "; // just in case
+		
+		if(isSequential()) {
+			Signal* s;
+			try {
+				s=getSignalByName(name);
+			}
+			catch (string e2) {
+				e << endl << tab << e2;
+				throw e.str();
+			}
+			
+			if( s->getCycle() < 0 ) {
+				ostringstream o;
+				o << "signal " << name << " doesn't have (yet?) a valid cycle";
+				throw o.str();
+			} 
+
+			if (s->getCycle() > currentCycle_){
+				// advance cycle. 
+				advance = true;
+				currentCycle_ = s->getCycle();
+				criticalPath_= criticalPath;
+				vhdl.setCycle(currentCycle_);
+			}
+			
+			if (s->getCycle() == currentCycle_){
+				advance = false;
+				if (criticalPath>criticalPath_)
+					criticalPath_=criticalPath ;
+			}
+			
+			// if (s->getCycle() < currentCycle_) do nothing: 
+			//   the argument signal will be delayed, so its critical path will be 0
+
+
+			if(report && advance)
+				vhdl << tab << "----------------Synchro barrier, entering cycle " << currentCycle_ << "----------------" << endl ;
+			// automatically update pipeline depth of the operator 
+			
+			if (currentCycle_ > pipelineDepth_) 
+				pipelineDepth_ = currentCycle_;
+		}
+		
+		return advance;
+	}
+
+
+
 	
 	double Operator::getCriticalPath() {return criticalPath_;}
 	
