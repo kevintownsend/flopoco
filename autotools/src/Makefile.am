@@ -2,10 +2,9 @@
 
 ACLOCAL_AMFLAGS = -I ../m4
 
-AM_LFLAGS = -o lex.yy.c --header-file=VHDLLexer.hpp
-BUILT_SOURCES = VHDLLexer.hpp VHDLLexer.cpp 
-CLEANFILES = $(BUILT_SOURCES) *.output
-LEX_OUTPUT_ROOT=VHDLLexer.hpp VHDLLexer.hpp lex.yy
+AM_LFLAGS = -o lex.yy.c
+BUILT_SOURCES = VHDLLexer.cpp 
+CLEANFILES = $(BUILT_SOURCES) lex.yy.c *.output
 
 noinst_LTLIBRARIES = libflopoco.la
 
@@ -19,7 +18,7 @@ noinst_HEADERS = apps/Collision.hpp apps/FPFMAcc.hpp apps/FPJacobi.hpp\
         DotProduct.hpp  DualTable.hpp DualTable2.hpp Fix2FP.hpp FlopocoStream.hpp FPAdderDualPath.hpp FPAdderSinglePath.hpp FPDiv.hpp FPExp.hpp FPLog.hpp FPMultiplier.hpp FPNumber.hpp \
 	FPSqrt.hpp FPSqrtPoly.hpp FPSquarer.hpp FixedPointFunctions/FunctionEvaluator.hpp FixedPointFunctions/HOTBM.hpp IEEENumber.hpp InputIEEE.hpp IntAdder.hpp IntAdderClassical.hpp IntAdderAlternative.hpp IntAdderShortLatency.hpp IntCompressorTree.hpp IntDualSub.hpp IntKaratsuba.hpp IntMultiplier.hpp \
 	IntNAdder.hpp IntSquarer.hpp IntMultipliers/IntTilingMult.hpp IntTruncMultiplier.hpp LongAcc2FP.hpp LongAcc.hpp LongIntAdder.hpp LongIntAdderCmpCmpAdd.hpp LongIntAdderCmpAddAdd.hpp LZOC.hpp LZOCShifterSticky.hpp Operator.hpp OutputIEEE.hpp FixedPointFunctions/PolynomialEvaluator.hpp \
-	Shifters.hpp Signal.hpp IntMultipliers/SignedIntMultiplier.hpp IntMultipliers/UnsignedIntMultiplier.hpp IntMultipliers/LogicIntMultiplier.hpp FixedPointFunctions/PolyTableGenerator.hpp FixedPointFunctions/PiecewiseFunction.hpp  FixedPointFunctions/FunctionTable.hpp Table.hpp Target.hpp TestBench.hpp TestCase.hpp UserDefinedOperator.hpp utils.hpp VHDLLexer.hpp Wrapper.hpp 
+	Shifters.hpp Signal.hpp IntMultipliers/SignedIntMultiplier.hpp IntMultipliers/UnsignedIntMultiplier.hpp IntMultipliers/LogicIntMultiplier.hpp FixedPointFunctions/PolyTableGenerator.hpp FixedPointFunctions/PiecewiseFunction.hpp  FixedPointFunctions/FunctionTable.hpp Table.hpp Target.hpp TestBench.hpp TestCase.hpp UserDefinedOperator.hpp utils.hpp Wrapper.hpp 
 
 libflopoco_la_SOURCES = VHDLLexer.lpp \
 			utils.cpp \
