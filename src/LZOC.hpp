@@ -26,12 +26,6 @@ namespace flopoco{
 		/** The LZOC destructor	*/
 		~LZOC();
 
-		/**
-		 * Method belonging to the Operator class overloaded by the LZOC class
-		 * @param[in,out] o     the stream where the current architecture will be outputed to
-		 * @param[in]     name  the name of the entity corresponding to the architecture generated in this method
-		 **/
-		void outputVHDL(std::ostream& o, std::string name);
 
 		/** 
 		 * Sets the default name of this operator

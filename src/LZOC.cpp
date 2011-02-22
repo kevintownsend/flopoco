@@ -101,18 +101,6 @@ namespace flopoco{
 		uniqueName_ = name.str();
 	}
 
-	void LZOC::outputVHDL(std::ostream& o, std::string name) {
-		licence(o,"Florent de Dinechin, Bogdan Pasca (2007,2009)");
-		Operator::stdLibs(o);
-		outputVHDLEntity(o);
-		newArchitecture(o,name);
-		o << buildVHDLSignalDeclarations();
-		beginArchitecture(o);
-		o << buildVHDLRegisters();
-		o << vhdl.str();
-		endArchitecture(o);
-	}
-
 
 	void LZOC::emulate(TestCase* tc)
 	{
