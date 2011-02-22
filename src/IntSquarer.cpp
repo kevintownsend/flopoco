@@ -265,6 +265,7 @@ namespace flopoco{
 	void IntSquarer::outputVHDL(std::ostream& o, std::string name) {
 		ostringstream signame;
 		licence(o);
+		pipelineInfo(o);
 		o << "library ieee; " << endl;
 		o << "use ieee.std_logic_1164.all;" << endl;
 		o << "use ieee.std_logic_arith.all;" << endl;
