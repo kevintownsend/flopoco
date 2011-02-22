@@ -62,17 +62,14 @@ namespace flopoco{
 						
 			manageCriticalPath( target->LogicToDSPWireDelay() + target->DSPMultiplierDelay() );
 			vhdl << tab << declare("p0",36) << " <= x0_16 * x0_16;" <<endl;
-//			vhdl << tab << declare("f0",17) << " <= p0" << range(16,0) << ";" << endl;
-			vhdl << tab << declare("p1_x2",36) << " <= x17_32_shr * x17_32;" <<endl;
+			vhdl << tab << declare("p1_x2",36) << " <= x17_32_shr * x0_16;" <<endl;
 
 			manageCriticalPath( target->DSPCascadingWireDelay() + target->DSPAdderDelay() );
 			vhdl << tab << declare("s1",36) << " <= p1_x2 + ( \"00000000000000000\" & p0" << range(35,17) <<");" <<endl;
-//			vhdl << tab << declare("f1",17) << " <= s1" << range(16,0) << ";" << endl;
 			vhdl << tab << declare("p2",36) << " <= x17_32 * x17_32;" <<endl;
 
 			manageCriticalPath( target->DSPCascadingWireDelay() + target->DSPAdderDelay() );
 			vhdl << tab << declare("s2",36) << " <= p2 + ( \"00000000000000000\" & s1" << range(35,17) <<");" <<endl;
-
 
 			manageCriticalPath( target->DSPToLogicWireDelay() );
 			vhdl << tab << "R <= s2" << range(2*wIn-34-1,0) << " & s1"<<range(16,0) << " & p0"<<range(16,0)<<";" << endl;
