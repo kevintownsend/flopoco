@@ -368,15 +368,12 @@ namespace flopoco{
 	}
 	
 	
+	
 	void Operator::pipelineInfo(std::ostream& o){
-		pipelineInfo(o, copyrightString_);
-	}
-	
-	
-	void Operator::pipelineInfo(std::ostream& o, std::string authorsyears){
-		if(isSequential()){
+		if(isSequential())
 			o<<"-- Pipeline depth: " <<getPipelineDepth() << " cycles"  <<endl <<endl;
-		}
+		else 
+			o<<"-- combinatorial"  <<endl <<endl;
 	}
 	
 	void Operator::outputVHDL(std::ostream& o) {
@@ -1257,7 +1254,6 @@ namespace flopoco{
 	}
 	
 	void Operator::outputVHDL(std::ostream& o, std::string name) {
-		
 		licence(o);
 		pipelineInfo(o);
 		stdLibs(o);
