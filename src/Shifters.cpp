@@ -131,19 +131,6 @@ namespace flopoco{
 		uniqueName_=name.str();
 	}
 
-	void Shifter::outputVHDL(std::ostream& o, std::string name) {
-		ostringstream signame;
-		licence(o,"Florent de Dinechin, Bogdan Pasca (2007,2008,2009,2010)");
-		Operator::stdLibs(o);
-		outputVHDLEntity(o);
-		newArchitecture(o,name);
-		o << buildVHDLSignalDeclarations();
-		beginArchitecture(o);
-		o << buildVHDLRegisters();
-		o << vhdl.str();
-		endArchitecture(o);
-	}
-
 	void Shifter::emulate(TestCase* tc)
 	{
 		mpz_class sx = tc->getInputValue("X");

@@ -38,12 +38,6 @@ namespace flopoco{
 		/** Destructor */
 		~Shifter();
 
-		/**
-		 * Method belonging to the Operator class overloaded by the Shifter class
-		 * @param[in,out] o     the stream where the current architecture will be outputed to
-		 * @param[in]     name  the name of the entity corresponding to the architecture generated in this method
-		 **/
-		void outputVHDL(std::ostream& o, std::string name);
 
 		/** 
 		 * Sets the default name of this operator
