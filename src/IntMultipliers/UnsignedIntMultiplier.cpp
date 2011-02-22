@@ -219,16 +219,14 @@ namespace flopoco{
 				manageCriticalPath( target->DSPToLogicWireDelay());
 				manageCriticalPath( target->DSPMultiplierDelay());
 				vhdl << tab << "R <= X * Y;" << endl;
-				manageCriticalPath( target->DSPToLogicWireDelay() );
+//				manageCriticalPath( target->DSPToLogicWireDelay() );
 				outDelayMap["R"]=getCriticalPath();
 			}else if ((wInX <= 36) && (wInY <= 36)){				
 				setCriticalPath( getMaxInputDelays(inputDelays));
 				manageCriticalPath( target->DSPToLogicWireDelay());
 				manageCriticalPath( target->DSPMultiplierDelay());
-//						manageCriticalPath( target->DSPAdderDelay());
-//						manageCriticalPath( target->DSPAdderDelay());
 				vhdl << tab << "R <= X * Y;" << endl;
-				manageCriticalPath( target->DSPToLogicWireDelay() );
+//				manageCriticalPath( target->DSPToLogicWireDelay() );
 				outDelayMap["R"]=getCriticalPath();
 			}else if ((wInX <= 54) && (wInY <= 36)){
 				//first multiplication
@@ -341,9 +339,6 @@ namespace flopoco{
 				exit(-1);
 			
 			}
-			
-		
-		
 		}	
 		else if (0) // the target is a Stratix
 			{

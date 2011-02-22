@@ -37,6 +37,7 @@ namespace flopoco{
 		ostringstream name;
 		name << "FPMultiplier_"<<wEX_<<"_"<<wFX_<<"_"<<wEY_<<"_"<<wFY_<<"_"<<wER_<<"_"<<wFR_<<"_uid"<<getNewUId(); 
 		setName(name.str());
+		setCopyrightString("Bogdan Pasca, Florent de Dinechin 2008-2011");
 
 		/* set if operator outputs a normalized_ result */
 		normalized_ = (norm==0?false:true);
@@ -44,7 +45,7 @@ namespace flopoco{
 		addFPInput ("X", wEX_, wFX_);
 		addFPInput ("Y", wEY_, wFY_);
 		if(normalized_==true) 
-			addFPOutput ("R"   , wER_, wFR    );  
+			addFPOutput ("R"   , wER , wFR);  
 		else{
 			wFR_ = 2 + wFX_ + wFY_;
 			addOutput  ("ResultExponent"   , wER_    );  
@@ -85,8 +86,10 @@ namespace flopoco{
 		inPortMap( intmult_, "Y", "sigY");
 		outPortMap(intmult_, "R", "sigProd");
 		vhdl << instance(intmult_, "SignificandMultiplication");
+		syncCycleFromSignal("sigProd");
+		setCriticalPath( intmult_->getOutputDelay("R"));
 		double significandCriticalPath=getCriticalPath();
-
+		
 
 		/* Exception Handling, assumed to be faster than both exponent and significand computations */
 		setCycle(0);
@@ -98,14 +101,10 @@ namespace flopoco{
 		vhdl << tab << "       \"10\" when \"0110\" | \"1001\" | \"1010\" ,"<<endl;		
 		vhdl << tab << "       \"11\" when others;"<<endl;		
 
-
-
 		//syncronization
-		
-		syncCycleFromSignal("sigProd", significandCriticalPath);
-		syncCycleFromSignal("expSum", exponentCriticalPath);	
 
-		
+		syncCycleFromSignal("expSum", exponentCriticalPath);	
+		syncCycleFromSignal("sigProd", significandCriticalPath); 
 		
 		if (normalized_==true){
 		/******************************************************************/
