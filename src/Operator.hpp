@@ -306,16 +306,6 @@ public:
 
 
 
-#if 0
-	/** returns the VHDL for an instance of a sub-component. 
-	 * @param op represents the operator to be port mapped 
-	 * @param instanceName is the name of the instance as a label
-	 * @param clkName the name of the input clock signal
- 	 * @param clkName the name of the input rst signal
-	 * @return name
-	 */
-	string instance(Operator* op, string instanceName, string clkName, string rstName);
-#endif
 
 	/** adds attributes to the generated VHDL so that the tools use embedded RAM blocks for an instance
 	 * @ param t a pointer to this instance
