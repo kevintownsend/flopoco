@@ -894,15 +894,15 @@ namespace flopoco{
 		if (op->isSequential()) 
 			o << "  -- pipelineDepth="<< op->getPipelineDepth() << " maxInDelay=" << getMaxInputDelays(op->inputDelayMap);
 		o << endl;
-		o << tab << tab << "port map (";
+		o << tab << tab << "port map ( ";
 		// build vhdl and erase portMap_
 		map<string,string>::iterator it;
 		if(op->isSequential()) {
-			o <<            " clk  => clk, " << endl;
-			o <<  tab <<tab << "           rst  => rst, " << endl;
+			o << "clk  => clk";
+			o << "," << endl << tab << tab << "           rst  => rst";
 		}
 		if (op->isRecirculatory()) {
-			o << tab << tab << "stall_s => stall_s," << endl;
+			o << "," << endl << tab << tab << "           stall_s => stall_s";
 		};
 		
 		for (it=op->portMap_.begin()  ; it != op->portMap_.end(); it++ ) {
@@ -920,16 +920,10 @@ namespace flopoco{
 				vhdl.disableParsing(true);
 			}
 			
-			if (it!=op->portMap_.begin())				
-				o << "," << endl;
-			else
-				if(op->isSequential()) 
-					o << tab << tab << "  " ;
-				else
-					o <<  " " ;
+			if (it!=op->portMap_.begin() || op->isSequential())				
+				o << "," << endl <<  tab << tab << "           ";
 				
-				
-				o <<  tab << tab << "           " << (*it).first << " => "  << (*it).second;
+				o << (*it).first << " => "  << (*it).second;
 			
 			if ( outputSignal && parsing ){
 				vhdl << o.str();
@@ -945,7 +939,8 @@ namespace flopoco{
 		subComponents_[op->getName()]  = op;
 		return o.str();
 	}
-	
+
+#if 0 // Commented out by Florent: it doesn't have the vhdl parsing gimmicks	
 	string Operator::instance(Operator* op, string instanceName, string clkName, string rstName){
 		ostringstream o;
 		// TODO add checks here? Check that all the signals are covered for instance
@@ -980,7 +975,9 @@ namespace flopoco{
 		subComponents_[op->getName()]  = op;
 		return o.str();
 	}
-	
+#endif	
+
+
 	
 	string Operator::buildVHDLSignalDeclarations() {
 		ostringstream o;
