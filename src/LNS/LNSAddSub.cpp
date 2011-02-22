@@ -62,7 +62,7 @@ namespace flopoco{
 		int wEssZero = min(wE, intlog2(wF)) + wF;
 	
 		// Translated back from VHDL...
-		int DBMaxInput = (int)rint(double(1 << wF) * log((1.0 - (pow(2.0, (-pow(2.0, -wF)))))) / log(2.));;
+		int DBMaxInput = (int)rint(double(1 << wF) * log((1.0 - (pow(2.0, (-pow(2.0, -wF)))))) / log(2.));
 
 		licence(o,"Jérémie Detrey, Florent de Dinechin (2003-2004), Sylvain Collange (2008)");
 		o << 

@@ -123,7 +123,7 @@
 #include "LNS/LNSDiv.hpp"
 #include "LNS/LNSSqrt.hpp"
 #include "LNS/AtanPow.hpp"
-
+#include "LNS/LogSinCos.hpp"
 #endif
 #endif
 
@@ -391,7 +391,7 @@ static void usage(char *name){
 	exit (EXIT_FAILURE);
 }
 
-int checkStrictyPositive(char* s, char* cmd) {
+int checkStrictlyPositive(char* s, char* cmd) {
 	int n=atoi(s);
 	if (n<=0){
 		cerr<<"ERROR: got "<<s<<", expected strictly positive number."<<endl;
@@ -560,10 +560,10 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
-				int wE_in = checkStrictyPositive(argv[i++], argv[0]);
-				int wF_in = checkStrictyPositive(argv[i++], argv[0]);
-				int wE_out = checkStrictyPositive(argv[i++], argv[0]);
-				int wF_out = checkStrictyPositive(argv[i++], argv[0]);
+				int wE_in = checkStrictlyPositive(argv[i++], argv[0]);
+				int wF_in = checkStrictlyPositive(argv[i++], argv[0]);
+				int wE_out = checkStrictlyPositive(argv[i++], argv[0]);
+				int wF_out = checkStrictlyPositive(argv[i++], argv[0]);
 				int cst_sgn  = checkSign(argv[i++], argv[0]); 
 				int cst_exp  = atoi(argv[i++]); // TODO no check on this arg
 				mpz_class cst_sig(argv[i++]);
@@ -610,10 +610,10 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else { 
-				int wE_in = checkStrictyPositive(argv[i++], argv[0]);
-				int wF_in = checkStrictyPositive(argv[i++], argv[0]);
-				int wE_out = checkStrictyPositive(argv[i++], argv[0]);
-				int wF_out = checkStrictyPositive(argv[i++], argv[0]);
+				int wE_in = checkStrictlyPositive(argv[i++], argv[0]);
+				int wF_in = checkStrictlyPositive(argv[i++], argv[0]);
+				int wE_out = checkStrictlyPositive(argv[i++], argv[0]);
+				int wF_out = checkStrictlyPositive(argv[i++], argv[0]);
 				string constant = argv[i++];
 				cerr << "> CRFPConstMult, wE_in="<<wE_in<<", wF_in="<<wF_in 
 					  <<", wE_out="<<wE_out<<", wF_out="<<wF_out
@@ -627,11 +627,11 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else { 
-				int wE_in = checkStrictyPositive(argv[i++], argv[0]);
-				int wF_in = checkStrictyPositive(argv[i++], argv[0]);
-				int wE_out = checkStrictyPositive(argv[i++], argv[0]);
-				int wF_out = checkStrictyPositive(argv[i++], argv[0]);
-				int wF_C = checkStrictyPositive(argv[i++], argv[0]);
+				int wE_in = checkStrictlyPositive(argv[i++], argv[0]);
+				int wF_in = checkStrictlyPositive(argv[i++], argv[0]);
+				int wE_out = checkStrictlyPositive(argv[i++], argv[0]);
+				int wF_out = checkStrictlyPositive(argv[i++], argv[0]);
+				int wF_C = checkStrictlyPositive(argv[i++], argv[0]);
 				string constant = argv[i++];
 				cerr << "> FPConstMultParser, wE_in="<<wE_in<<", wF_in="<<wF_in 
 					  <<", wE_out="<<wE_out<<", wF_out="<<wF_out 
@@ -647,8 +647,8 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
-				int wIn = checkStrictyPositive(argv[i++], argv[0]);
-				int maxShift = checkStrictyPositive(argv[i++], argv[0]);
+				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
+				int maxShift = checkStrictlyPositive(argv[i++], argv[0]);
 				map<string, double> inputDelays;
 				inputDelays["X"]=0;
 				inputDelays["S"]=0;
@@ -662,8 +662,8 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
-				int wIn = checkStrictyPositive(argv[i++], argv[0]);
-				int maxShift = checkStrictyPositive(argv[i++], argv[0]);
+				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
+				int maxShift = checkStrictlyPositive(argv[i++], argv[0]);
 				map<string, double> inputDelays;
 				inputDelays["X"]=0;
 				inputDelays["S"]=0;
@@ -677,7 +677,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
-				int wIn = checkStrictyPositive(argv[i++], argv[0]);
+				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
 				cerr << "> LZOC, wIn="<<wIn<<"\n";
 				op = new LZOC(target, wIn);
 				addOperator(op);
@@ -688,8 +688,8 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
-				int wIn  = checkStrictyPositive(argv[i++], argv[0]);
-				int wOut = checkStrictyPositive(argv[i++], argv[0]);
+				int wIn  = checkStrictlyPositive(argv[i++], argv[0]);
+				int wOut = checkStrictlyPositive(argv[i++], argv[0]);
 				if (wIn > 1){
 					cerr << "> LZOCShifter, wIn="<<wIn<<", wOut="<<wOut<< endl;
 					op = new LZOCShifterSticky(target, wIn, wOut, intlog2(wIn), 0, -1);
@@ -703,8 +703,8 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
-				int wIn  = checkStrictyPositive(argv[i++], argv[0]);
-				int wOut = checkStrictyPositive(argv[i++], argv[0]);
+				int wIn  = checkStrictlyPositive(argv[i++], argv[0]);
+				int wOut = checkStrictlyPositive(argv[i++], argv[0]);
 				if (wIn > 1){
 					cerr << "> LZCShifter, wIn="<<wIn<<", wOut="<<wOut<< endl;
 					op = new LZOCShifterSticky(target, wIn, wOut, intlog2(wIn), 0, 0);
@@ -718,8 +718,8 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
-				int wIn  = checkStrictyPositive(argv[i++], argv[0]);
-				int wOut = checkStrictyPositive(argv[i++], argv[0]);
+				int wIn  = checkStrictlyPositive(argv[i++], argv[0]);
+				int wOut = checkStrictlyPositive(argv[i++], argv[0]);
 				if (wIn > 1){
 					cerr << "> LOCShifter, wIn="<<wIn<<", wOut="<<wOut<< endl;
 					op = new LZOCShifterSticky(target, wIn, wOut, intlog2(wIn), 0, 1);
@@ -733,8 +733,8 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
-				int wIn  = checkStrictyPositive(argv[i++], argv[0]);
-				int wOut = checkStrictyPositive(argv[i++], argv[0]);
+				int wIn  = checkStrictlyPositive(argv[i++], argv[0]);
+				int wOut = checkStrictlyPositive(argv[i++], argv[0]);
 				if (wIn > 1){
 					cerr << "> LZOCShifterSticky, wIn="<<wIn<<", wOut="<<wOut<< endl;
 					op = new LZOCShifterSticky(target, wIn, wOut, intlog2(wIn), 1, -1);
@@ -748,8 +748,8 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
-				int wIn  = checkStrictyPositive(argv[i++], argv[0]);
-				int wOut = checkStrictyPositive(argv[i++], argv[0]);
+				int wIn  = checkStrictlyPositive(argv[i++], argv[0]);
+				int wOut = checkStrictlyPositive(argv[i++], argv[0]);
 				if (wIn > 1){
 					cerr << "> LZCShifterSticky, wIn="<<wIn<<", wOut="<<wOut<< endl;
 					op = new LZOCShifterSticky(target, wIn, wOut, intlog2(wIn), 1, 0);
@@ -763,8 +763,8 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
-				int wIn  = checkStrictyPositive(argv[i++], argv[0]);
-				int wOut = checkStrictyPositive(argv[i++], argv[0]);
+				int wIn  = checkStrictlyPositive(argv[i++], argv[0]);
+				int wOut = checkStrictlyPositive(argv[i++], argv[0]);
 				if (wIn > 1){
 					cerr << "> LOCShifterSticky, wIn="<<wIn<<", wOut="<<wOut<< endl;
 					op = new LZOCShifterSticky(target, wIn, wOut, intlog2(wIn), 1, 1);
@@ -781,8 +781,8 @@ bool parseCommandLine(int argc, char* argv[]){
                               the help information for Flopoco */
 				usage(argv[0]);
 			else {
-				int param0 = checkStrictyPositive(argv[i++], argv[0]);
-				int param1 = checkStrictyPositive(argv[i++], argv[0]);
+				int param0 = checkStrictlyPositive(argv[i++], argv[0]);
+				int param1 = checkStrictlyPositive(argv[i++], argv[0]);
 				cerr << "> UserDefinedOperator, param0="<<param0<<", param1=" << param1 << endl  ;
                                 op = new UserDefinedOperator(target,param0,param1);
                                 addOperator(op);
@@ -793,7 +793,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
-				int wIn = checkStrictyPositive(argv[i++], argv[0]);
+				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
 				cerr << "> IntAdder, wIn="<<wIn<<endl  ;
 				op = new IntAdder(target,wIn);
 				addOperator(op);
@@ -804,7 +804,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
-				int wIn = checkStrictyPositive(argv[i++], argv[0]);
+				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
 				int criteria = atoi(argv[i++]);
 				
 				cerr << "> IntComparator, wIn="<<wIn<<" criteria="<<criteria<<endl  ;
@@ -817,7 +817,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
-				int wIn = checkStrictyPositive(argv[i++], argv[0]);
+				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
 				int criteria = atoi(argv[i++]);
 				int constant = atoi(argv[i++]);
 				
@@ -832,7 +832,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
-				int wIn = checkStrictyPositive(argv[i++], argv[0]);
+				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
 				int type = atoi(argv[i++]);
 				int srl = atoi(argv[i++]);
 				int implementation = atoi(argv[i++]);
@@ -861,8 +861,8 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
-				int wIn = checkStrictyPositive(argv[i++], argv[0]);
-				int N   = checkStrictyPositive(argv[i++], argv[0]);
+				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
+				int N   = checkStrictlyPositive(argv[i++], argv[0]);
 				cerr << "> IntNAdder, wIn="<<wIn<<" N="<<N<<endl  ;
 				op = new IntNAdder(target,wIn,N);
 				addOperator(op);
@@ -874,8 +874,8 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
-				int wIn = checkStrictyPositive(argv[i++], argv[0]);
-				int N   = checkStrictyPositive(argv[i++], argv[0]);
+				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
+				int N   = checkStrictlyPositive(argv[i++], argv[0]);
 				cerr << "> IntCompressorTree, wIn="<<wIn<<" N="<<N<<endl  ;
 				op = new IntCompressorTree(target,wIn,N);
 				addOperator(op);
@@ -887,7 +887,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
-				int wIn = checkStrictyPositive(argv[i++], argv[0]);
+				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
 				cerr << "> LongIntAdder, wIn="<<wIn<<endl  ;
 				op = new LongIntAdder(target,wIn);
 				addOperator(op);
@@ -899,7 +899,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
-				int wIn = checkStrictyPositive(argv[i++], argv[0]);
+				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
 				cerr << "> LongIntAdderCmpCmpAdd, wIn="<<wIn<<endl  ;
 				op = new LongIntAdderCmpCmpAdd(target,wIn);
 				addOperator(op);
@@ -911,7 +911,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
-				int wIn = checkStrictyPositive(argv[i++], argv[0]);
+				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
 				cerr << "> LongIntAdderCmpAddAdd, wIn="<<wIn<<endl  ;
 				op = new LongIntAdderCmpAddAdd(target,wIn);
 				addOperator(op);
@@ -924,7 +924,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
-				int wIn = checkStrictyPositive(argv[i++], argv[0]);
+				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
 				int opType = checkBoolean(argv[i++], argv[0]);
 				cerr << "> IntDualSub, wIn="<<wIn<<" OpType="<<opType<<endl  ;
 				op = new IntDualSub(target,wIn,opType);
@@ -936,8 +936,8 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
-				int wInX    = checkStrictyPositive(argv[i++], argv[0]);
-				int wInY    = checkStrictyPositive(argv[i++], argv[0]);
+				int wInX    = checkStrictlyPositive(argv[i++], argv[0]);
+				int wInY    = checkStrictlyPositive(argv[i++], argv[0]);
 				int sign    =  checkBoolean(argv[i++], argv[0]);
 				float ratio = atof(argv[i++]);
 				bool sign_;
@@ -955,8 +955,8 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
-				int wInX = checkStrictyPositive(argv[i++], argv[0]);
-				int wInY = checkStrictyPositive(argv[i++], argv[0]);
+				int wInX = checkStrictlyPositive(argv[i++], argv[0]);
+				int wInY = checkStrictlyPositive(argv[i++], argv[0]);
 				cerr << "> UnsignedIntMultiplier , wInX="<<wInX<<", wInY="<<wInY<<"\n";
 				op = new UnsignedIntMultiplier(target, wInX, wInY);
 				addOperator(op);
@@ -967,8 +967,8 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
-				int wInX = checkStrictyPositive(argv[i++], argv[0]);
-				int wInY = checkStrictyPositive(argv[i++], argv[0]);
+				int wInX = checkStrictlyPositive(argv[i++], argv[0]);
+				int wInY = checkStrictlyPositive(argv[i++], argv[0]);
 				cerr << "> SignedIntMultiplier , wInX="<<wInX<<", wInY="<<wInY<<"\n";
 				op = new SignedIntMultiplier(target, wInX, wInY);
 				addOperator(op);
@@ -979,7 +979,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
-				int wIn = checkStrictyPositive(argv[i++], argv[0]);
+				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
 				cerr << "> IntKaratsuba , wIn="<<wIn<<"\n";
 				op = new IntKaratsuba(target, wIn);
 				addOperator(op);
@@ -990,8 +990,8 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
-				int wInX = checkStrictyPositive(argv[i++], argv[0]);
-				int wInY = checkStrictyPositive(argv[i++], argv[0]);
+				int wInX = checkStrictlyPositive(argv[i++], argv[0]);
+				int wInY = checkStrictlyPositive(argv[i++], argv[0]);
 				float r = atof(argv[i++]);
 				if (r<0)
 					throw "Ratio > 0";
@@ -1007,8 +1007,8 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
-				int wInX = checkStrictyPositive(argv[i++], argv[0]);
-				int wInY = checkStrictyPositive(argv[i++], argv[0]);
+				int wInX = checkStrictlyPositive(argv[i++], argv[0]);
+				int wInY = checkStrictlyPositive(argv[i++], argv[0]);
 				float r = atof(argv[i++]);
 				if (r<0)
 					throw "Ratio > 0";
@@ -1032,8 +1032,8 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
-				int wE = checkStrictyPositive(argv[i++], argv[0]);
-				int wF = checkStrictyPositive(argv[i++], argv[0]);
+				int wE = checkStrictlyPositive(argv[i++], argv[0]);
+				int wF = checkStrictlyPositive(argv[i++], argv[0]);
 				
 				cerr << "> FPAdder , wE="<<wE<<", wF="<<wF<<" \n";
 				op = new FPAdderSinglePath(target, wE, wF, wE, wF, wE, wF);
@@ -1045,8 +1045,8 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
-				int wE = checkStrictyPositive(argv[i++], argv[0]);
-				int wF = checkStrictyPositive(argv[i++], argv[0]);
+				int wE = checkStrictlyPositive(argv[i++], argv[0]);
+				int wF = checkStrictlyPositive(argv[i++], argv[0]);
 				
 				cerr << "> FPAdderDualPath , wE="<<wE<<", wF="<<wF<<" \n";
 				op = new FPAdderDualPath(target, wE, wF, wE, wF, wE, wF);
@@ -1058,8 +1058,8 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
-				int wE = checkStrictyPositive(argv[i++], argv[0]);
-				int wF = checkStrictyPositive(argv[i++], argv[0]);
+				int wE = checkStrictlyPositive(argv[i++], argv[0]);
+				int wF = checkStrictlyPositive(argv[i++], argv[0]);
 				
 				cerr << "> FPAdder3Input , wE="<<wE<<", wF="<<wF<<" \n";
 				op = new FPAdder3Input(target, wE, wF);
@@ -1071,9 +1071,9 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
-				int wE = checkStrictyPositive(argv[i++], argv[0]);
-				int wF = checkStrictyPositive(argv[i++], argv[0]);
-				int adderLatency = checkStrictyPositive(argv[i++], argv[0]);
+				int wE = checkStrictlyPositive(argv[i++], argv[0]);
+				int wF = checkStrictlyPositive(argv[i++], argv[0]);
+				int adderLatency = checkStrictlyPositive(argv[i++], argv[0]);
 				cerr << "> FPFMAcc , wE="<<wE<<", wF="<<wF<<" adderLatency="<<adderLatency<< " \n";
 				op = new FPFMAcc(target, wE, wF, adderLatency);
 				addOperator(op);
@@ -1085,11 +1085,11 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
-				int wE = checkStrictyPositive(argv[i++], argv[0]);
-				int wF = checkStrictyPositive(argv[i++], argv[0]);
-				int l0 = checkStrictyPositive(argv[i++], argv[0]);
-				int l1 = checkStrictyPositive(argv[i++], argv[0]);
-				int l2 = checkStrictyPositive(argv[i++], argv[0]);
+				int wE = checkStrictlyPositive(argv[i++], argv[0]);
+				int wF = checkStrictlyPositive(argv[i++], argv[0]);
+				int l0 = checkStrictlyPositive(argv[i++], argv[0]);
+				int l1 = checkStrictlyPositive(argv[i++], argv[0]);
+				int l2 = checkStrictlyPositive(argv[i++], argv[0]);
 				int ver = atoi(argv[i++]);
 				cerr << "> FPJacobi , wE="<<wE<<", wF="<<wF<<" l0="<<l0<<" l1="<<l1<<" l2="<<l2<<" ver="<<ver<< " \n";
 				op = new FPJacobi(target, wE, wF, l0, l1, l2,ver);
@@ -1102,11 +1102,11 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
-				int LSB = atoi(argv[i++]);//checkStrictyPositive(argv[i++], argv[0]);
-				int MSB = atoi(argv[i++]);//checkStrictyPositive(argv[i++], argv[0]);
+				int LSB = atoi(argv[i++]);//checkStrictlyPositive(argv[i++], argv[0]);
+				int MSB = atoi(argv[i++]);//checkStrictlyPositive(argv[i++], argv[0]);
 				int sign = atoi(argv[i++]);
-				int wE = checkStrictyPositive(argv[i++], argv[0]);
-				int wF = checkStrictyPositive(argv[i++], argv[0]);
+				int wE = checkStrictlyPositive(argv[i++], argv[0]);
+				int wF = checkStrictlyPositive(argv[i++], argv[0]);
 				
 				cerr << "> Fix2FP, LSB="<<LSB<<", MSB="<<MSB<<", wE="<<wE<<", wF="<<wF<<" \n";
 				op = new Fix2FP(target, LSB, MSB, sign,wE, wF);
@@ -1120,8 +1120,8 @@ bool parseCommandLine(int argc, char* argv[]){
 		// 	else {
 		// 		int LSBI = atoi(argv[i++]);
 		// 		int MSBI = atoi(argv[i++]);
-		// 		int wE = checkStrictyPositive(argv[i++], argv[0]);
-		// 		int wF = checkStrictyPositive(argv[i++], argv[0]);				
+		// 		int wE = checkStrictlyPositive(argv[i++], argv[0]);
+		// 		int wF = checkStrictlyPositive(argv[i++], argv[0]);				
 		// 		int MaxMSBO= atoi(argv[i++]);
 		// 		int LSBO = atoi(argv[i++]);
 		// 		int MSBO = atoi(argv[i++]);
@@ -1136,7 +1136,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		// 	if (i+nargs > argc)
 		// 		usage(argv[0]);
 		// 	else {
-		// 		int wIn = checkStrictyPositive(argv[i++], argv[0]);
+		// 		int wIn = checkStrictlyPositive(argv[i++], argv[0]);
 		// 		int LSB = atoi(argv[i++]);
 		// 		int MSB = atoi(argv[i++]);
 		// 		char *pa=argv[i++];
@@ -1150,7 +1150,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		// 	if (i+nargs > argc)
 		// 		usage(argv[0]);
 		// 	else {
-		// 		int wIn = checkStrictyPositive(argv[i++], argv[0]);
+		// 		int wIn = checkStrictlyPositive(argv[i++], argv[0]);
 		// 		int LSB = atoi(argv[i++]);
 		// 		int MSB = atoi(argv[i++]);
 		// 		char *pa=argv[i++];
@@ -1164,7 +1164,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		// 	if (i+nargs > argc)
 		// 		usage(argv[0]);
 		// 	else {
-		// 		int wIn = checkStrictyPositive(argv[i++], argv[0]);
+		// 		int wIn = checkStrictlyPositive(argv[i++], argv[0]);
 		// 		int LSB = atoi(argv[i++]);
 		// 		int MSB = atoi(argv[i++]);
 		// 		char *pa=argv[i++];
@@ -1178,9 +1178,9 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
-				int wE = checkStrictyPositive(argv[i++], argv[0]);
-				int wFIn = checkStrictyPositive(argv[i++], argv[0]);
-				int wFOut = checkStrictyPositive(argv[i++], argv[0]);
+				int wE = checkStrictlyPositive(argv[i++], argv[0]);
+				int wFIn = checkStrictlyPositive(argv[i++], argv[0]);
+				int wFOut = checkStrictlyPositive(argv[i++], argv[0]);
 				cerr << "> FPMultiplier , wE="<<wE<<", wFIn="<<wFIn<<", wFOut="<<wFOut<<" \n";
 				op = new FPMultiplier(target, wE, wFIn, wE, wFIn, wE, wFOut, 1);
 				addOperator(op);
@@ -1191,9 +1191,9 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
-				int wE = checkStrictyPositive(argv[i++], argv[0]);
-				int wFIn = checkStrictyPositive(argv[i++], argv[0]);
-				int wFOut = checkStrictyPositive(argv[i++], argv[0]);
+				int wE = checkStrictlyPositive(argv[i++], argv[0]);
+				int wFIn = checkStrictlyPositive(argv[i++], argv[0]);
+				int wFOut = checkStrictlyPositive(argv[i++], argv[0]);
 				cerr << "> FPMultiplierKaratsuba , wE="<<wE<<", wFIn="<<wFIn<<", wFOut="<<wFOut<<" \n";
 				op = new FPMultiplierKaratsuba(target, wE, wFIn, wE, wFIn, wE, wFOut, 1);
 				addOperator(op);
@@ -1204,9 +1204,9 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
-				int wE = checkStrictyPositive(argv[i++], argv[0]);
-				int wFIn = checkStrictyPositive(argv[i++], argv[0]);
-				int wFOut = checkStrictyPositive(argv[i++], argv[0]);
+				int wE = checkStrictlyPositive(argv[i++], argv[0]);
+				int wFIn = checkStrictlyPositive(argv[i++], argv[0]);
+				int wFOut = checkStrictlyPositive(argv[i++], argv[0]);
 				float r = atof(argv[i++]);
 				int maxTimeInMinutes = atoi(argv[i++]);
 
@@ -1220,9 +1220,9 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
-				int wE = checkStrictyPositive(argv[i++], argv[0]);
-				int wFX = checkStrictyPositive(argv[i++], argv[0]);
-				int wFR = checkStrictyPositive(argv[i++], argv[0]);
+				int wE = checkStrictlyPositive(argv[i++], argv[0]);
+				int wFX = checkStrictlyPositive(argv[i++], argv[0]);
+				int wFR = checkStrictlyPositive(argv[i++], argv[0]);
 				cerr << "> FPSquarer , wE="<<wE<<", wFX="<<wFX<<" wFR="<<wFR<< " \n";
 				op = new FPSquarer(target, wE, wFX, wFR);
 				addOperator(op);
@@ -1233,8 +1233,8 @@ bool parseCommandLine(int argc, char* argv[]){
 			int nargs = 2;
 			if (i+nargs > argc)
 				usage(argv[0]); // and exit
-			int wE = checkStrictyPositive(argv[i++], argv[0]);
-			int wF = checkStrictyPositive(argv[i++], argv[0]);
+			int wE = checkStrictlyPositive(argv[i++], argv[0]);
+			int wF = checkStrictlyPositive(argv[i++], argv[0]);
 			cerr << "> FPDiv: wE=" << wE << " wF=" << wF << endl;
 			op = new FPDiv(target, wE, wF);
 			addOperator(op);
@@ -1244,8 +1244,8 @@ bool parseCommandLine(int argc, char* argv[]){
 			int nargs = 2;
 			if (i+nargs > argc)
 				usage(argv[0]); // and exit
-			int wE = checkStrictyPositive(argv[i++], argv[0]);
-			int wF = checkStrictyPositive(argv[i++], argv[0]);
+			int wE = checkStrictlyPositive(argv[i++], argv[0]);
+			int wF = checkStrictlyPositive(argv[i++], argv[0]);
 			cerr << "> FPSqrt: wE=" << wE << " wF=" << wF  << endl;
 			op = new FPSqrt(target, wE, wF);
 			addOperator(op);
@@ -1256,10 +1256,10 @@ bool parseCommandLine(int argc, char* argv[]){
 			int nargs = 3;
 			if (i+nargs > argc)
 				usage(argv[0]); // and exit
-			int wE = checkStrictyPositive(argv[i++], argv[0]);
-			int wF = checkStrictyPositive(argv[i++], argv[0]);
+			int wE = checkStrictlyPositive(argv[i++], argv[0]);
+			int wF = checkStrictlyPositive(argv[i++], argv[0]);
 //			int correctlyRounded = checkBoolean(argv[i++], argv[0]);
-			int degree = checkStrictyPositive(argv[i++], argv[0]);
+			int degree = checkStrictlyPositive(argv[i++], argv[0]);
 //			cerr << "> FPSqrtPoly: wE=" << wE << " wF=" << wF << " correctlyRounded="<< correctlyRounded << " degree =" << degree << endl;
 			cerr << "> FPSqrtPoly: wE=" << wE << " wF=" << wF << " degree =" << degree << endl;
 			op = new FPSqrtPoly(target, wE, wF, 0, degree);
@@ -1272,8 +1272,8 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
-				int wEX = checkStrictyPositive(argv[i++], argv[0]);
-				int wFX = checkStrictyPositive(argv[i++], argv[0]);
+				int wEX = checkStrictlyPositive(argv[i++], argv[0]);
+				int wFX = checkStrictlyPositive(argv[i++], argv[0]);
 				int MaxMSBX = atoi(argv[i++]); // may be negative
 				int LSBA = atoi(argv[i++]); // may be negative
 				int MSBA = atoi(argv[i++]); // may be negative
@@ -1309,8 +1309,8 @@ bool parseCommandLine(int argc, char* argv[]){
 			else {
 				int LSBA = atoi(argv[i++]); // may be negative
 				int MSBA = atoi(argv[i++]); // may be negative
-				int wE_out = checkStrictyPositive(argv[i++], argv[0]);
-				int wF_out = checkStrictyPositive(argv[i++], argv[0]);
+				int wE_out = checkStrictlyPositive(argv[i++], argv[0]);
+				int wF_out = checkStrictlyPositive(argv[i++], argv[0]);
 				cerr << "> Post-Normalization unit for Long accumulator, LSBA="<<LSBA<<", MSBA="<<MSBA<<" wE_out="<<wE_out<<", wF_out="<<wF_out<<"\n";
 				op = new LongAcc2FP(target, LSBA, MSBA, wE_out, wF_out);
 				addOperator(op);
@@ -1323,9 +1323,9 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
-				int wE = checkStrictyPositive(argv[i++], argv[0]);
-				int wFX = checkStrictyPositive(argv[i++], argv[0]);
-				int wFY = checkStrictyPositive(argv[i++], argv[0]);
+				int wE = checkStrictlyPositive(argv[i++], argv[0]);
+				int wFX = checkStrictlyPositive(argv[i++], argv[0]);
+				int wFY = checkStrictlyPositive(argv[i++], argv[0]);
 				int MaxMSBX = atoi(argv[i++]);
 				int LSBA = atoi(argv[i++]);
 				int MSBA = atoi(argv[i++]);
@@ -1341,9 +1341,9 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
-				int wE = checkStrictyPositive(argv[i++], argv[0]);
-				int wFX = checkStrictyPositive(argv[i++], argv[0]);
-				int wFY = checkStrictyPositive(argv[i++], argv[0]);
+				int wE = checkStrictlyPositive(argv[i++], argv[0]);
+				int wFX = checkStrictlyPositive(argv[i++], argv[0]);
+				int wFY = checkStrictlyPositive(argv[i++], argv[0]);
 				int MaxMSBX = atoi(argv[i++]); // may be negative
 				int LSBA = atoi(argv[i++]); // may be negative
 				int MSBA = atoi(argv[i++]); // may be negative
@@ -1381,9 +1381,9 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]); // and exit
 			string func = argv[i++];
-			int wI = checkStrictyPositive(argv[i++], argv[0]);
-			int wO = checkStrictyPositive(argv[i++], argv[0]);
-			int n  = checkStrictyPositive(argv[i++], argv[0]);
+			int wI = checkStrictlyPositive(argv[i++], argv[0]);
+			int wO = checkStrictlyPositive(argv[i++], argv[0]);
+			int n  = checkStrictlyPositive(argv[i++], argv[0]);
 			cerr << "> HOTBM func='" << func << "', wI=" << wI << ", wO=" << wO <<endl;
 			op = new HOTBM(target, func, "", wI, wO, n);
 			addOperator(op);
@@ -1398,7 +1398,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			int wF_in = atoi(argv[i++]); // may be negative
 			int wE_out = atoi(argv[i++]); // may be negative
 			int wF_out = atoi(argv[i++]); // may be negative
-			int n  = checkStrictyPositive(argv[i++], argv[0]);
+			int n  = checkStrictlyPositive(argv[i++], argv[0]);
 			
 			// Input of HOTBM is unsigned, but output is in 2's-complement!
 			// Use 1 more bit for the output sign
@@ -1418,9 +1418,9 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]); // and exit
 			string func = argv[i++];
-			int wI = checkStrictyPositive(argv[i++], argv[0]);
-			int wO = checkStrictyPositive(argv[i++], argv[0]);
-			int n  = checkStrictyPositive(argv[i++], argv[0]);
+			int wI = checkStrictlyPositive(argv[i++], argv[0]);
+			int wO = checkStrictlyPositive(argv[i++], argv[0]);
+			int n  = checkStrictlyPositive(argv[i++], argv[0]);
 			double xmin = atof(argv[i++]);
 			double xmax = atof(argv[i++]);
 
@@ -1441,8 +1441,8 @@ bool parseCommandLine(int argc, char* argv[]){
 			int nargs = 2;
 			if (i+nargs > argc)
 				usage(argv[0]); // and exit
-			int wE = checkStrictyPositive(argv[i++], argv[0]);
-			int wF = checkStrictyPositive(argv[i++], argv[0]);
+			int wE = checkStrictlyPositive(argv[i++], argv[0]);
+			int wF = checkStrictlyPositive(argv[i++], argv[0]);
 			cerr << "> FPExp: wE=" << wE << " wF=" << wF << endl;
 			op = new FPExp(target, wE, wF, 0, 0);
 			addOperator(op);
@@ -1454,8 +1454,8 @@ bool parseCommandLine(int argc, char* argv[]){
 			int nargs = 6;
 			if (i+nargs > argc)
 				usage(argv[0]); // and exit
-			int wE = checkStrictyPositive(argv[i++], argv[0]);
-			int wF = checkStrictyPositive(argv[i++], argv[0]);
+			int wE = checkStrictlyPositive(argv[i++], argv[0]);
+			int wF = checkStrictlyPositive(argv[i++], argv[0]);
 			int k=atoi(argv[i++]);
 			int d=atoi(argv[i++]);
 			int g=atoi(argv[i++]);
@@ -1470,8 +1470,8 @@ bool parseCommandLine(int argc, char* argv[]){
 			int nargs = 3;
 			if (i+nargs > argc)
 				usage(argv[0]); // and exit
-			int wE = checkStrictyPositive(argv[i++], argv[0]);
-			int wF = checkStrictyPositive(argv[i++], argv[0]);
+			int wE = checkStrictlyPositive(argv[i++], argv[0]);
+			int wF = checkStrictlyPositive(argv[i++], argv[0]);
 			int inTableSize=atoi(argv[i++]);
 			cerr << "> FPLog: wE=" << wE << " wF=" << wF << endl;
 			op = new FPLog(target, wE, wF, inTableSize);
@@ -1485,8 +1485,8 @@ bool parseCommandLine(int argc, char* argv[]){
 				usage(argv[0]); // and exit 
 
 			//int logTableSize, int expTableSize, int expDegree, int expG, int logG
-			int wE = checkStrictyPositive(argv[i++], argv[0]);
-			int wF = checkStrictyPositive(argv[i++], argv[0]);
+			int wE = checkStrictlyPositive(argv[i++], argv[0]);
+			int wF = checkStrictlyPositive(argv[i++], argv[0]);
 			int logTableSize=atoi(argv[i++]);
 			int expTableSize=atoi(argv[i++]);
 			int expDegree=atoi(argv[i++]);
@@ -1502,8 +1502,8 @@ bool parseCommandLine(int argc, char* argv[]){
 				usage(argv[0]); // and exit 
 
 			//int logTableSize, int expTableSize, int expDegree, int expG, int logG
-			int wE = checkStrictyPositive(argv[i++], argv[0]);
-			int wF = checkStrictyPositive(argv[i++], argv[0]);
+			int wE = checkStrictlyPositive(argv[i++], argv[0]);
+			int wF = checkStrictlyPositive(argv[i++], argv[0]);
 			cerr << "> FPPowr: wE=" << wE << " wF=" << wF << endl;
 			op = new FPPow(target, wE, wF,0, 0, 0);
 			addOperator(op);
@@ -1514,10 +1514,10 @@ bool parseCommandLine(int argc, char* argv[]){
 			int nargs = 4;
 			if (i+nargs > argc)
 				usage(argv[0]); // and exit
-			int wEI = checkStrictyPositive(argv[i++], argv[0]);
-			int wFI = checkStrictyPositive(argv[i++], argv[0]);
-			int wEO = checkStrictyPositive(argv[i++], argv[0]);
-			int wFO = checkStrictyPositive(argv[i++], argv[0]);
+			int wEI = checkStrictlyPositive(argv[i++], argv[0]);
+			int wFI = checkStrictlyPositive(argv[i++], argv[0]);
+			int wEO = checkStrictlyPositive(argv[i++], argv[0]);
+			int wFO = checkStrictlyPositive(argv[i++], argv[0]);
 			cerr << "> InputIEEE: wEI=" << wEI << " wFI=" << wFI << " wEO=" << wEO << " wFO=" << wFO << endl;
 			op = new InputIEEE(target, wEI, wFI, wEO, wFO);
 			addOperator(op);
@@ -1528,10 +1528,10 @@ bool parseCommandLine(int argc, char* argv[]){
 			int nargs = 4;
 			if (i+nargs > argc)
 				usage(argv[0]); // and exit
-			int wEI = checkStrictyPositive(argv[i++], argv[0]);
-			int wFI = checkStrictyPositive(argv[i++], argv[0]);
-			int wEO = checkStrictyPositive(argv[i++], argv[0]);
-			int wFO = checkStrictyPositive(argv[i++], argv[0]);
+			int wEI = checkStrictlyPositive(argv[i++], argv[0]);
+			int wFI = checkStrictlyPositive(argv[i++], argv[0]);
+			int wEO = checkStrictlyPositive(argv[i++], argv[0]);
+			int wFO = checkStrictlyPositive(argv[i++], argv[0]);
 			cerr << "> OutputIEEE: wEI=" << wEI << " wFI=" << wFI << " wEO=" << wEO << " wFO=" << wFO << endl;
 			op = new OutputIEEE(target, wEI, wFI, wEO, wFO);
 			addOperator(op);
@@ -1542,8 +1542,8 @@ bool parseCommandLine(int argc, char* argv[]){
 			int nargs = 3;
 			if (i+nargs > argc)
 				usage(argv[0]); // and exit
-			int wE = checkStrictyPositive(argv[i++], argv[0]);
-			int wF = checkStrictyPositive(argv[i++], argv[0]);
+			int wE = checkStrictlyPositive(argv[i++], argv[0]);
+			int wF = checkStrictlyPositive(argv[i++], argv[0]);
 			int optimize = checkBoolean(argv[i++], argv[0]);
 			cerr << "> Collision: wE=" << wE << " wF=" << wF << (optimize==0? " using FP operators" : " optimized version") << endl;
 			op = new Collision(target, wE, wF, optimize);
@@ -1554,7 +1554,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			int nargs = 1;
 			if (i+nargs > argc)
 				usage(argv[0]); // and exit
-			int wIn = checkStrictyPositive(argv[i++], argv[0]);
+			int wIn = checkStrictlyPositive(argv[i++], argv[0]);
 			cerr << "> IntSquarer: wIn=" << wIn << endl;
 			op = new IntSquarer(target, wIn);
 			addOperator(op);
@@ -1567,7 +1567,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]); // and exit
 			int wE = atoi(argv[i++]);	// can be null or negative
-			int wF = checkStrictyPositive(argv[i++], argv[0]);
+			int wF = checkStrictlyPositive(argv[i++], argv[0]);
 			cerr << "> LNSAddSub: wE=" << wE << " wF=" << wF << endl;
 			op = new LNSAddSub(target, wE, wF);
 			if(cl_name!="")	op->setName(cl_name);
@@ -1579,7 +1579,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]); // and exit
 			int wE = atoi(argv[i++]);	// can be null or negative
-			int wF = checkStrictyPositive(argv[i++], argv[0]);
+			int wF = checkStrictlyPositive(argv[i++], argv[0]);
 			cerr << "> LNSMul: wE=" << wE << " wF=" << wF << endl;
 			op = new LNSMul(target, wE, wF);
 			if(cl_name!="")	op->setName(cl_name);
@@ -1591,7 +1591,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]); // and exit
 			int wE = atoi(argv[i++]);	// can be null or negative
-			int wF = checkStrictyPositive(argv[i++], argv[0]);
+			int wF = checkStrictlyPositive(argv[i++], argv[0]);
 			cerr << "> LNSDiv: wE=" << wE << " wF=" << wF << endl;
 			op = new LNSDiv(target, wE, wF);
 			addOperator(op);
@@ -1602,7 +1602,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]); // and exit
 			int wE = atoi(argv[i++]);	// can be null or negative
-			int wF = checkStrictyPositive(argv[i++], argv[0]);
+			int wF = checkStrictlyPositive(argv[i++], argv[0]);
 			cerr << "> LNSSqrt: wE=" << wE << " wF=" << wF << endl;
 			op = new LNSSqrt(target, wE, wF);
 			if(cl_name!="")	op->setName(cl_name);
@@ -1614,8 +1614,8 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]); // and exit
 			int wE = atoi(argv[i++]);	// can be null or negative
-			int wF = checkStrictyPositive(argv[i++], argv[0]);
-			int o = checkStrictyPositive(argv[i++], argv[0]);
+			int wF = checkStrictlyPositive(argv[i++], argv[0]);
+			int o = checkStrictlyPositive(argv[i++], argv[0]);
 			cerr << "> LNSAdd: wE=" << wE << " wF=" << wF << " o=" << o << endl;
 			op = new LNSAdd(target, wE, wF, o);
 			addOperator(op);
@@ -1627,8 +1627,8 @@ bool parseCommandLine(int argc, char* argv[]){
 			int nargs = 3;
 			if (i+nargs > argc)
 				usage(argv[0]); // and exit
-			int wF = checkStrictyPositive(argv[i++], argv[0]);
-			int j = checkStrictyPositive(argv[i++], argv[0]);
+			int wF = checkStrictlyPositive(argv[i++], argv[0]);
+			int j = checkStrictlyPositive(argv[i++], argv[0]);
 			int wE = atoi(argv[i++]);
 			cerr << "> CotranF1: wF=" << wF << " j=" << j << " wE=" << wE << endl;
 			op = new TableOp(target, new CotranF1Table(wF, j, wE));
@@ -1639,8 +1639,8 @@ bool parseCommandLine(int argc, char* argv[]){
 			int nargs = 2;
 			if (i+nargs > argc)
 				usage(argv[0]); // and exit
-			int wF = checkStrictyPositive(argv[i++], argv[0]);
-			int j = checkStrictyPositive(argv[i++], argv[0]);
+			int wF = checkStrictlyPositive(argv[i++], argv[0]);
+			int j = checkStrictlyPositive(argv[i++], argv[0]);
 			cerr << "> CotranF2: wF=" << wF << " j=" << j << endl;
 			op = new TableOp(target, new CotranF2Table(wF, j));
 			addOperator(op);
@@ -1650,8 +1650,8 @@ bool parseCommandLine(int argc, char* argv[]){
 			int nargs = 2;
 			if (i+nargs > argc)
 				usage(argv[0]); // and exit
-			int wF = checkStrictyPositive(argv[i++], argv[0]);
-			int j = checkStrictyPositive(argv[i++], argv[0]);
+			int wF = checkStrictlyPositive(argv[i++], argv[0]);
+			int j = checkStrictlyPositive(argv[i++], argv[0]);
 			cerr << "> CotranF3: wF=" << wF << " j=" << j << endl;
 			op = new TableOp(target, new CotranF3Table(wF, j));
 			addOperator(op);
@@ -1663,8 +1663,8 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]); // and exit
 			int wE = atoi(argv[i++]);	// can be null or negative
-			int wF = checkStrictyPositive(argv[i++], argv[0]);
-			int j = checkStrictyPositive(argv[i++], argv[0]);
+			int wF = checkStrictlyPositive(argv[i++], argv[0]);
+			int j = checkStrictlyPositive(argv[i++], argv[0]);
 			int wECotran = atoi(argv[i++]);
 			int o = atoi(argv[i++]);
 			cerr << "> Cotran: wE=" << wE << " wF=" << wF << " j=" << j
@@ -1678,8 +1678,8 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]); // and exit
 			int wE = atoi(argv[i++]);	// can be null or negative
-			int wF = checkStrictyPositive(argv[i++], argv[0]);
-			int j = checkStrictyPositive(argv[i++], argv[0]);
+			int wF = checkStrictlyPositive(argv[i++], argv[0]);
+			int j = checkStrictlyPositive(argv[i++], argv[0]);
 			int wECotran = atoi(argv[i++]);
 			int o = atoi(argv[i++]);
 			cerr << "> Cotran: wE=" << wE << " wF=" << wF << " j=" << j 
@@ -1692,11 +1692,24 @@ bool parseCommandLine(int argc, char* argv[]){
 			int nargs = 3;
 			if (i+nargs > argc)
 				usage(argv[0]); // and exit
-			int wE = checkStrictyPositive(argv[i++], argv[0]);
-			int wF = checkStrictyPositive(argv[i++], argv[0]);
-			int o = checkStrictyPositive(argv[i++], argv[0]);
+			int wE = checkStrictlyPositive(argv[i++], argv[0]);
+			int wF = checkStrictlyPositive(argv[i++], argv[0]);
+			int o = checkStrictlyPositive(argv[i++], argv[0]);
 			cerr << "> AtanPow: wE=" << wE << " wF=" << wF << " o=" << o << endl;
 			op = new AtanPow(target, wE, wF, o);
+			addOperator(op);
+		}
+		else if (opname == "LogSinCos")
+		{
+			int nargs = 3;
+			if (i+nargs > argc)
+				usage(argv[0]); // and exit
+			int fL = checkStrictlyPositive(argv[i++], argv[0]);
+			int fTheta = checkStrictlyPositive(argv[i++], argv[0]);
+			int o = checkStrictlyPositive(argv[i++], argv[0]);
+			cerr << "> LogSinCos: fL=" << fL
+				<< " fTheta=" << fTheta << " o=" << o << endl;
+			op = new LogSinCos(target, fL, fTheta, o);
 			addOperator(op);
 		}
 #endif
@@ -1724,7 +1737,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				usage(argv[0]); // and exit
 			string func = argv[i++];
 			int wO = atoi(argv[i++]);
-			int n  = checkStrictyPositive(argv[i++], argv[0]);
+			int n  = checkStrictlyPositive(argv[i++], argv[0]);
 			
 						
 			cerr << "> PolyTableGenerator func='" << func << "', wO=" << wO <<endl;	
@@ -1740,7 +1753,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]); // and exit
 			string func = argv[i++];
-			int wI = checkStrictyPositive(argv[i++], argv[0]);
+			int wI = checkStrictlyPositive(argv[i++], argv[0]);
 			int lsbO = atoi(argv[i++]);
 			int msbO = atoi(argv[i++]);
 			
@@ -1755,9 +1768,9 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]); // and exit
 			string func = argv[i++];
-			int wI = checkStrictyPositive(argv[i++], argv[0]);
+			int wI = checkStrictlyPositive(argv[i++], argv[0]);
 			int wO = atoi(argv[i++]);
-			int n  = checkStrictyPositive(argv[i++], argv[0]);
+			int n  = checkStrictlyPositive(argv[i++], argv[0]);
 			
 				
 			cerr << "> FunctionEvaluator func='" << func << "', wI=" << wI << ", wO=" << wO << ", degree=" << n << endl;	
@@ -1771,8 +1784,8 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0]); // and exit
 			string expr = argv[i++];
-			int wE = checkStrictyPositive(argv[i++], argv[0]);
-			int wF = checkStrictyPositive(argv[i++], argv[0]);
+			int wE = checkStrictlyPositive(argv[i++], argv[0]);
+			int wF = checkStrictlyPositive(argv[i++], argv[0]);
 			cerr << "> FPPipeline expr='" << expr << "', wE=" << wE << ", wF=" << wF << endl;	
 			Operator* tg = new FPPipeline(target, expr, wE, wF);
 			addOperator(tg);
