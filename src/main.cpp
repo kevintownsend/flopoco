@@ -472,6 +472,7 @@ bool parseCommandLine(int argc, char* argv[]){
 					}
 				}
 				else if (o == "target") {
+					Target* oldTarget=target;
 					if(v=="Virtex4") target=new Virtex4();
 					else if (v=="Virtex6") target=new Virtex6();
 					else if (v=="Virtex5") target=new Virtex5();
@@ -482,7 +483,15 @@ bool parseCommandLine(int argc, char* argv[]){
 						cerr<<"ERROR: unknown target: "<<v<<endl;
 						usage(argv[0]);
 					}
+					// if previous options had changed it
+					target->setFrequency(oldTarget->frequency());
+					target->setUseHardMultipliers(oldTarget->getUseHardMultipliers());
+					if (oldTarget->isPipelined()) 
+						target->setPipelined();
+					else 
+						target->setNotPipelined();
 				}
+
 				else if (o == "pipeline") {
 					if(v=="yes") target->setPipelined();
 					else if(v=="no")  target->setNotPipelined();
