@@ -266,7 +266,7 @@ namespace flopoco{
 		o << "library ieee; " << endl;
 		o << "use ieee.std_logic_1164.all;" << endl;
 		o << "use ieee.std_logic_arith.all;" << endl;
-		if ((wIn_>17) && (wIn_<=34)) {
+		if ((wIn_>17) && (wIn_<34)) {
 			o << "use ieee.std_logic_signed.all;" << endl;
 		}else
 			o << "use ieee.std_logic_unsigned.all;" << endl;
