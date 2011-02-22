@@ -1825,22 +1825,6 @@ bool parseCommandLine(int argc, char* argv[]){
 			cerr << tab << "ghdl -r --ieee=synopsys " << op->getName() << " --vcd=" << op->getName() << ".vcd" <<endl;
 			cerr << tab << "gtkwave " << op->getName() << ".vcd" << endl;
 		}
-#if 0  //We should resurrect it some day
-		else if (opname == "BigTestBench") {
-			int nargs = 1;
-			if (i+nargs > argc)
-				usage(argv[0]); // and exit
-			if(oplist.empty()){
-				cerr<<"ERROR: BigTestBench has no operator to wrap (it should come after the operator it wraps)"<<endl;
-				usage(argv[0]); // and exit
-			}
-			int n = checkPositiveOrNull(argv[i++], argv[0]);
-			Operator* toWrap = oplist.back();
-			cerr << "> BigTestBench for " << toWrap->getName()<<endl;
-			Operator* op = new BigTestBench(target, toWrap, n);
-			addOperator(op);
-		}
- #endif
 		else  {
 			cerr << "ERROR: Problem parsing input line, exiting";
 			usage(argv[0]);
