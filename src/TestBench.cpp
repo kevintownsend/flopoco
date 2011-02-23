@@ -173,7 +173,7 @@ namespace flopoco{
 			Signal* s = inputSignalVector[i];
 			vhdl << tab << tab << tab << "read(inline ,V_"<< s->getName() << ");" << endl;
 			vhdl << tab << tab << tab << "read(inline,tmpChar);" << endl; // we consume the character between each inputs
-			if (s->width() == 1 and !s->isBus()) vhdl << tab << tab << tab << s->getName() << " <= to_stdlogicvector(V_" << s->getName() << ")(0);" << endl;
+			if ((s->width() == 1) && (!s->isBus())) vhdl << tab << tab << tab << s->getName() << " <= to_stdlogicvector(V_" << s->getName() << ")(0);" << endl;
 			else vhdl << tab << tab << tab << s->getName() << " <= to_stdlogicvector(V_" << s->getName() << ");" << endl;
 			// adding the IO to IOorder
 			IOorderInput.push_back(s->getName());
@@ -209,7 +209,7 @@ namespace flopoco{
 		for(int i=0; i < op_->getIOListSize(); i++){
 			Signal* s = op_->getIOListSignal(i);
 			vhdl << tab << tab << "variable V_" << s->getName();
-			if (s->width() != 1) vhdl << " : bit_vector("<< s->width() - 1 << " downto 0);" << endl;
+			if ((s->width() != 1) || (s->isBus())) vhdl << " : bit_vector("<< s->width() - 1 << " downto 0);" << endl;
 			else  vhdl << " : bit;" << endl;
 
         }
@@ -263,7 +263,7 @@ namespace flopoco{
 							 << s->getName()  << ")) &  \"|| line : \" & integer'image(counter) & \" of input file \" ;"<< endl;               
 			    vhdl << tab << tab << tab << tab << tab << " errorCounter := errorCounter + 1; " << endl;                                                                 
 			    vhdl << tab << tab << tab << tab << "end if;" << endl;
-			} else if (s->width() == 1) { 
+			} else if ((s->width() == 1) && (!s->isBus())) { 
 			    vhdl << tab << tab << tab << tab << "if not (" << s->getName() << "= to_stdlogic(V_" << s->getName() << ")) then " << endl;
 			    vhdl << tab << tab << tab << tab << tab << "assert false report(\"Incorrect output for " << s->getName() 
 							 <<        ",expected value: \" & str(to_stdlogic(V_" << s->getName() 
@@ -290,7 +290,7 @@ namespace flopoco{
 				vhdl << tab << tab << tab << tab << tab << "if fp_equal(fp"<< s->width() << "'(" << s->getName() << ") ,to_stdlogicvector(V_" <<  s->getName() << ")) " << "  then localErrorCounter := 1; end if; " << endl;
 			} else if (s->isIEEE()) {
 				vhdl << tab << tab << tab << tab << tab << "if fp_equal_ieee(" << s->getName() << " ,to_stdlogicvector(V_" <<  s->getName() << "),"<<s->wE()<<" , "<<s->wF()<<")" << " then localErrorCounter := 1; end if;" << endl;                                    
-			} else if (s->width() == 1) {
+			} else if ((s->width() == 1) && (!s->isBus())) {
 				vhdl << tab << tab << tab << tab << tab << "if (" << s->getName() << "= to_stdlogic(V_" << s->getName() << ")) " << " then localErrorCounter := 1; end if;" << endl;
 			} else {
 				vhdl << tab << tab << tab << tab << tab << "if (" << s->getName() << "= to_stdlogicvector(V_" << s->getName() << ")) " << " then localErrorCounter := 1; end if;" << endl;
@@ -299,7 +299,7 @@ namespace flopoco{
 			vhdl << tab << tab << tab << tab << " if (localErrorCounter = 0) then " << endl;
 			vhdl << tab << tab << tab << tab << tab << "errorCounter := errorCounter + 1; -- incrementing global error counter" << endl;
 			vhdl << tab << tab << tab << tab << tab << "assert false report(\"Incorrect output for " << s->getName() << ", ";
-			if (s->width() == 1) 
+			if ((s->width() == 1) && ( !s->isBus()))
 				vhdl << "expected value: \" & str(to_stdlogic(V_" << s->getName() << ")) ";
 			else 
 				vhdl << "expected value : \" & str(to_stdlogicvector(V_" << s->getName() << ")) ";
