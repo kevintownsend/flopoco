@@ -1,3 +1,12 @@
+# Usage:  -n option for new release test generation. 
+# no parameter continues from where it left-off
+# Log file in  the release_test.res file
+# Completed files have an '@' on the first line, that's how the script
+# knows that they are done. Before starting a fresh release it is
+# recommended to flush all the files and recover them from the svn.
+
+
+
 import random
 import math
 import os
@@ -8,6 +17,7 @@ import pipes
 import time
 import sys
 import fileinput
+
 
 
 test_cases_per_combination = 1000
