@@ -49,11 +49,11 @@ namespace flopoco{
 		// Range reduction: split x between quandrant and reduced argument
 		
 		// Octant (together with sign bit)
-		vhdl << tab << declare("q", 2) << " <= x(" << (1+fTheta) << " downto " << fTheta << ");\n";
+		vhdl << tab << declare("q", 2) << " <= x" << range(1+fTheta, fTheta) << ";\n";
 
 		// Reduced argument
-		vhdl << tab << declare("xr", fTheta) << " <= x(" << fTheta-1 << " downto 0);\n";
-		vhdl << tab << declare("s") << " <= x(" << (2+fTheta) << ");\n";
+		vhdl << tab << declare("xr", fTheta) << " <= x" << range(fTheta-1, 0) << ";\n";
+		vhdl << tab << declare("s") << " <= x" << of(2+fTheta) << ";\n";
 		
 		// Compute |xr|, -|xr|
 		vhdl << tab << declare("minusxr", fTheta) << " <= not xr + 1;\n";
@@ -78,6 +78,19 @@ namespace flopoco{
 		outPortMap(logcos, "R","lc1");
 		vhdl << instance(logcos, "inst_logcos");	
 		
+		// Danger zone?
+		
+		// Always negative numbers: 1-extend
+		// Shift left and align
+		int d2arg_width = 2+eEssZero+max(fL,fTheta);
+		vhdl << tab << declare("lc1_twice", d2arg_width) << " <= " << align(0, "lc1", fTheta-fL+1) << ";\n";
+		vhdl << tab << declare("xr_neg_aligned", d2arg_width)
+			<< " <= (" << og(2+eEssZero) << " & " << align(0, "xr_neg", fL-fTheta) << ");\n";
+		
+		vhdl << tab << "with dz select\n"
+			<< tab << declare("d2arg", d2arg_width) << " <=\n"
+			<< tab << tab << "xr_neg_aligned when '1',\n"
+			<< tab << tab << "lc1_twice when others;\n";
 		// .....
 		// TODO
 		
