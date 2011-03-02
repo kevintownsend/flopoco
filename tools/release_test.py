@@ -23,6 +23,7 @@ import fileinput
 test_cases_per_combination = 1000
 useModelSim=True # if True, use modelsim; if False, use ghdl
 testBench = "TestBenchFile"   #one of TestBench or TestBenchFile
+timeUntilDiscardTest = 5
 
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
@@ -144,7 +145,17 @@ if __name__ == '__main__':
 							child_stdin.write('add wave -r * \n')
 							child_stdin.write(modelsim_food[string.find(modelsim_food,"run"):]+"\n")
 							child_stdin.write('exit \n')
-							while ((not finished) and (did_compile)):
+#							timer set-up
+							startTime = time.clock()
+							timeUp = False						
+														
+							while ((not finished) and (did_compile) and (not timeUp)):
+								currentTime = time.clock()	
+								print "the start time was:" + str(startTime)
+								print "the currentTime time was" + str(currentTime)
+								if (currentTime - startTime > float(timeUntilDiscardTest)):
+									timeUp = True
+									
 								st = child_stdout.readline()
 								#print st[0:len(st)-2]
 								logfile.write(st[0:len(st)-2]+"\n")
@@ -166,6 +177,11 @@ if __name__ == '__main__':
 									if status > 0:
 										did_compile = False
 										finished = True
+								
+	
+
+							if timeUp:
+								print "some bad thing happended!!!"
 
 							if did_compile:
 								child_stdin.write('exit \n')
