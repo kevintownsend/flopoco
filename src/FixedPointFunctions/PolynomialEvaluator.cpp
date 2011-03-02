@@ -38,7 +38,7 @@ namespace flopoco{
 		
 		setCopyrightString("Bogdan Pasca (2010)");
 		srcFileName = "PolynomialEvaluator";
-		setName(join("PolynomialEvaluator_d",degree_));
+		setName(join("PolynomialEvaluator_degree",degree_,"_uid",getNewUId()));
 
 		setApproximationError(approxError); /* set the approximation error budget we are allowed */
 

@@ -431,3 +431,9 @@ flopoco -target=Virtex5 -frequency=200 SignedIntMultiplier 256 256
 flopoco -target=Virtex5 -frequency=400 SignedIntMultiplier 256 256
 flopoco -target=Virtex5 -frequency=500 SignedIntMultiplier 256 256
 
+flopoco -target=StratixII -frequency=400 SignedIntMultiplier 1 1
+flopoco -target=StratixII -frequency=400 SignedIntMultiplier 16 16
+flopoco -target=StratixII -frequency=400 SignedIntMultiplier 36 36
+flopoco -target=StratixII -frequency=400 SignedIntMultiplier 256 256
+
+

@@ -360,12 +360,10 @@ namespace flopoco{
 				if (( wInX <= 36) && (wInY <= 36)){
 					manageCriticalPath( target->DSPToLogicWireDelay() + target->DSPMultiplierDelay());
 					vhdl << tab << "R <= X * Y;"<<endl;
-					manageCriticalPath( target->DSPToLogicWireDelay());		
 					outDelayMap["R"] = getCriticalPath();
 				}else{
 					manageCriticalPath( target->DSPMultiplierDelay());
 					vhdl << tab << "R <= X * Y;"<<endl;
-					manageCriticalPath( target->DSPToLogicWireDelay() );
 					outDelayMap["R"] = getCriticalPath();
 				}
 			}
