@@ -34,7 +34,7 @@ ConstMult:
 * Try left to right and right to left; try variations of the initial recoding
 * more clever, Lefevre-inspired algorithm
 * Use DSP: find the most interesting constant fitting on 18 bits
-* compare with Spiral.net
+* compare with Spiral.net and Gustafsson papers
 * Implement the continued fraction stuff for FPCRConstMult
 
 SumOfProducts, LongAcc
