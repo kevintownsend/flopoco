@@ -20,7 +20,7 @@
 <h3>Single-line installation on Ubuntu 10.10 or 10.04LTS</h3>
 Copy this in a dash/bash shell (and enter your password when prompted):
 
-<p><code>yes | sudo apt-get install g++ libgmp3-dev libmpfr-dev libxml2-dev bison libmpfi-dev flex cmake && wget http://perso.ens-lyon.fr/damien.stehle/downloads/libfplll-3.0.12.tar.gz && tar xzf libfplll-3.0.12.tar.gz && cd libfplll-3.0.12/ && ./configure && make -j  && sudo make install && cd .. && wget https://gforge.inria.fr/frs/download.php/28248/sollya-2.9.tar.gz && tar xzf sollya-2.9.tar.gz && cd sollya-2.9/ && ./configure && make -j  && sudo make install && cd .. && wget https://gforge.inria.fr/frs/download.php/28208/flopoco-2.2.0.tgz && gunzip < flopoco-2.2.0.tgz    | tar xvf - && cd flopoco-2.2.0/ && cmake . && make -j  && ./flopoco</code></p>
+<p><code>yes | sudo apt-get install g++ libgmp3-dev libmpfr-dev libxml2-dev bison libmpfi-dev flex cmake && wget http://perso.ens-lyon.fr/damien.stehle/downloads/libfplll-3.0.12.tar.gz && tar xzf libfplll-3.0.12.tar.gz && cd libfplll-3.0.12/ && ./configure && make -j  && sudo make install && cd .. && wget https://gforge.inria.fr/frs/download.php/28248/sollya-2.9.tar.gz && tar xzf sollya-2.9.tar.gz && cd sollya-2.9/ && ./configure && make -j  && sudo make install && cd .. && wget https://gforge.inria.fr/frs/download.php/28337/flopoco-2.2.1.tgz && gunzip < flopoco-2.2.1.tgz    | tar xvf - && cd flopoco-2.2.1/ && cmake . && make -j  && ./flopoco</code></p>
 
 <h3>Generic installation instructions</h3>
 
@@ -478,15 +478,39 @@ article</a>.
 
 <h3>Constant multipliers</h3>
 
-<p>This family of operators is described in all the gory details in <a
-href="http://prunel.ccsd.cnrs.fr/ensl-00269219/">this article</a>.</p>
+
+<p>We provide two techniques for building a multiplier by a constant. One is the good old KCM technique described by Chapman in 1994. It builds an operator whose size is independent on the constant, but grows with the size of the input. It is very efficient for very small input bit sizes and arbitrary constants. The other one is based on shift-and-add graphs, and is described in all the gory details in <a href="http://perso.ens-lyon.fr/florent.de.dinechin/recherche/publis/2008-ASAP-constmult.pdf">this article</a>. It will be more efficient for some constants. Some day we will be able to provide a uniform interface for these two families, in between you may want to try and synthesize both and pick up the best.</p>
+
 <dl>
   <dt><code style="color: blue;">IntConstMult w c</code></dt>
-    <dd>integer constant multiplier: w is input size, c is the constant.</dd>
+    <dd>Integer constant multiplier using the shift-and-add technique: w is input size, c is the constant.</dd>
+
+  <dt><code style="color: blue;"> IntIntKCM w c signedInput</code></dt>
+    <dd>Integer constant multiplier using KCM: w is input size, c is the constant.</dd>
+
+  <dt><code style="color: blue;"> FixRealKCM lsbIn msbIn signedInput lsbOut constant</code></dt>
+    <dd>Faithful multiplier of a fixed-point input by a real constant. 
+			The fixed-point format of the input is provided as two integers lsbIn and msbIn which give the weights of the least significand bit and the weight of the most significand bit. The input may be signed, or not.
+      The constant is provided as a Sollya expression, e.g "log(2)". This operator is briefly described  in III.A.  of  <a href="http://perso.ens-lyon.fr/florent.de.dinechin/recherche/publis/2010-FPT-Exp.pdf">this article</a></dd>
+
   <dt><code style="color: blue;">FPConstMult wE_in wF_in wE_out wF_out cst_sgn cst_exp
   cst_int_sig</code></dt>
-    <dd>floating-point constant multiplier. The constant is provided as sign,
-      integral significand and integral exponent.</dd>
+    <dd>Floating-point constant multiplier using the shift-and-add approach. 
+			The constant is provided as sign, integral significand and integral exponent. Also described in <a href="http://perso.ens-lyon.fr/florent.de.dinechin/recherche/publis/2008-ASAP-constmult.pdf">this article</a>.</dd>
+
+
+  <dt><code style="color: blue;">FPConstMultParser wE_in wF_in wE_out wF_out wF_C constant_expr</code></dt>
+    <dd>
+      Floating-point constant multiplier with a parser for the constant.
+			This is basically the same as the previous, with a nicer interface:
+      last argument is a Sollya expression between double quotes,e.g."exp(pi/2)".</dd>
+
+  <dt><code style="color: blue;">FPRealKCM wE wF constantExpression</code></dt>
+    <dd>
+      Same as the previous but using the KCM algorithm.
+		</dd>
+
+
 </dl>
 
 
@@ -494,7 +518,7 @@ href="http://prunel.ccsd.cnrs.fr/ensl-00269219/">this article</a>.</p>
 
 <dl>
 	<dt><code style="color: blue;">FPExp wE wF</code></dt>
-	<dd>A brand <strong>new exponential operator</strong>, where both inputs and outputs  have <code>wE</code> bits exponent and
+	<dd>An  exponential operator, where both inputs and outputs  have <code>wE</code> bits exponent and
 	<code>wF</code> bits significand. 
 	</dd>
 
