@@ -1,4 +1,9 @@
 ======================================================================
+Version 2.2.1
+This is a bugfix release. It corrects major bugs on some multipliers
+not working on some Altera targets, and some minor bugs.
+
+======================================================================
 Version 2.2.0
 The new version brings with it:
 - FPPipeline assembles floating-point computational pipelines 
