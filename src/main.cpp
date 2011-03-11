@@ -282,7 +282,7 @@ static void usage(char *name){
 	OP("FPConstMult","wE_in wF_in wE_out wF_out cst_sgn cst_exp cst_int_sig");
 	cerr << "      Floating-point constant multiplier\n";
 	cerr << "      The constant is provided as integral significand and integral exponent.\n";
-	NEWOP("FPRealKCM","wE wF cosntantExpression");
+	NEWOP("FPRealKCM","wE wF constantExpression");
 	cerr << "      Floating-point constant multiplier using the KCM algorithm\n";
 	cerr << "      last argument is a Sollya expression between double quotes,e.g.\"exp(pi/2)\".\n";
 #ifdef HAVE_SOLLYA
