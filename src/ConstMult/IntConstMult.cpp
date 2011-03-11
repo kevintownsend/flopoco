@@ -8,7 +8,7 @@
 
   Initial software.
   Copyright © ENS-Lyon, INRIA, CNRS, UCBL,  
-  CeCILL License, 2008-2010.
+  CeCILL License, 2008-2011.
 
 */
 
@@ -410,66 +410,43 @@ namespace flopoco{
 
 
 
-	IntConstMult::IntConstMult(Target* _target, int _xsize, mpz_class _n) :
-		Operator(_target), n(_n), xsize(_xsize){
+	IntConstMult::IntConstMult(Target* _target, int _xsize, mpz_class n) :
+		Operator(_target), n(n), xsize(_xsize){
 		ostringstream name; 
 
 		srcFileName="IntConstMult";
-		setCopyrightString("Florent de Dinechin (2007)");
+		setCopyrightString("Florent de Dinechin (2007-2011)");
 
 		//C++ wrapper for GMP does not work properly on win32, using mpz2string
 		name <<"IntConstMult_"<<xsize<<"_"<<mpz2string(n);
 		setName(name.str());
 
 		implementation = new ShiftAddDag(this);
-		nsize = intlog2(n);
+
+
 		rsize = intlog2(n * ((mpz_class(1)<<xsize)-1));
 
 		addInput("inX", xsize);
 		addOutput("R", rsize);
 
-		if((mpz_class(1) << (intlog2(n)-1)) == n) { // power of two
-			REPORT(INFO, "Power of two");
-			vhdl << tab << "R <= inX & " << rangeAssign(intlog2(n)-2, 0, "'0'") << ";" << endl;
-		}
-		else {
-			vhdl << tab << declare("X", xsize) << " <= inX;" << endl; // no longer useful but harmless
-			bits = new int[nsize];
-			BoothCode = new int[nsize+1];
-			// Build the binary representation -- I'm sure there is a mpz method for it
-			mpz_class nn = n;
-			int l = 0;
-			while(nn!=0) {
-				bits[l] = (nn.get_ui())%2;
-				l++;
-				nn = nn>>1;
-			}
-			if(verbose>=DETAILED) {
-				cerr << "> "<< srcFileName << ": constant binary is "; 
-				for (int i=nsize-1; i>=0; i--)    cerr << ((int) bits[i]);   
-				cerr << endl;
-			}
-			recodeBooth();
-
-			REPORT(DETAILED, "Booth code is "<< printBoothCode()   );
-			REPORT(DETAILED, "Non-zero digits:" << nonZeroInBoothCode);
+		vhdl << tab << declare("X", xsize) << " <= inX;" << endl; // no longer useful but harmless
 
 
+		// Build in implementation a tree constant multiplier 
+		implementation->result = buildMultBoothTree(n);
 
-			// Build in implementation a tree constant multiplier 
-			buildMultBoothTree();
-			if(verbose>=3) showShiftAddDag();
-			int cost=compute_total_cost(implementation->result);
-			REPORT(INFO, "Estimated bare cost (not counting pipeline overhead) : " << cost << " FA/LUT" );
-
-			double delay=0.0;
-			// recursively build the pipeline in the vhdl stream
-			build_pipeline(implementation->result, delay);
+		// if(verbose>=3) showShiftAddDag();
 		
-			// copy the top of the DAG into variable R
-			vhdl << endl << tab << "R <= " << implementation->result->name << "("<< rsize-1 <<" downto 0);"<<endl;
+		int cost=compute_total_cost(implementation->result);
+		REPORT(INFO, "Estimated bare cost (not counting pipeline overhead) : " << cost << " FA/LUT" );
 		
-		}
+		double delay=0.0;
+		// recursively build the pipeline in the vhdl stream
+		build_pipeline(implementation->result, delay);
+		
+		// copy the top of the DAG into variable R
+		vhdl << endl << tab << "R <= " << implementation->result->name << "("<< rsize-1 <<" downto 0);"<<endl;
+		
 	}
 
 
@@ -538,15 +515,12 @@ namespace flopoco{
 
 
 	IntConstMult::~IntConstMult() {
-		delete [ ] bits;
-		delete [ ] BoothCode;
 		delete implementation;
 	}
 
-
-	string IntConstMult::printBoothCode() {
+	string IntConstMult::printBoothCode(int* BoothCode, int size) {
 		ostringstream s;
-		for (int i=nsize; i>=0; i--) {
+		for (int i=size; i>=0; i--) {
 			if(BoothCode[i]==0)       s << "0"; 
 			else if(BoothCode[i]==1)  s << "+" ;
 			else if(BoothCode[i]==-1) s << "-" ;   
@@ -554,15 +528,27 @@ namespace flopoco{
 		return s.str();
 	}
 
-	void IntConstMult::recodeBooth() {
+	/** Recodes input n returns the number of non-zero bits */
+	int IntConstMult::recodeBooth(mpz_class n, int* BoothCode) {
 		int i;
 		int *b, *c;
-		nonZeroInBoothCode = 0;
+		int nonZeroInBoothCode = 0;
+		int nsize = intlog2(n);
 
+		// Build the binary representation -- I'm sure there is a mpz method for it
+		mpz_class nn = n;
+		int l = 0;
 		b = new int[nsize+1];
-		for (i=0; i<nsize; i++)
-			b[i] = bits[i];
+		while(nn!=0) {
+			b[l] = (nn.get_ui())%2;
+			l++;
+			nn = nn>>1;
+		}
 		b[nsize]=0;
+
+		ostringstream o;
+		for (int i=nsize-1; i>=0; i--)    o << ((int) b[i]);   
+		REPORT(DETAILED, "Constant binary is " << o.str()); 
 
 		c = new int[nsize+1];
 				
@@ -576,6 +562,7 @@ namespace flopoco{
 		}
 		BoothCode[nsize] = c[nsize];
 
+
 		// This method generates +0- for 3 instead of 0++.
 		// As the -1 will cost us more, we rewrite that
 
@@ -588,17 +575,21 @@ namespace flopoco{
 				}
 			}
 		}
+
+		REPORT(DETAILED, "Booth recoding is " << printBoothCode(BoothCode, nsize+1)); 
+
 		for (i=0; i<=nsize; i++) {
 			if (BoothCode[i] != 0) 
 				nonZeroInBoothCode ++;
 		}
 		delete [] c; delete [] b;
+		return nonZeroInBoothCode;
 	}
 
 
 
 
-
+#if 0
 	// The simple, sequential version: the DAG is a rake
 	void  IntConstMult::buildMultBooth(){
 		int k,i;
@@ -637,79 +628,101 @@ namespace flopoco{
 		// Which variable number holds the result?
 		implementation->result = z;
 	}
+#endif
 
 
 
 
 
-
-	// The same as the previous, but builds a balanced tree.
-	void  IntConstMult::buildMultBoothTree(){
+	// Builds a balanced tree.
+	// Assumes: implementation is initialized
+	ShiftAddOp*  IntConstMult::buildMultBoothTree(mpz_class n){
 		int k,i,j,nk;
-		ShiftAddOp *z;
+		ShiftAddOp *result;
 		ShiftAddOp**  level;
 		int*     shifts;
 	
-		i=0;
-		while(0==BoothCode[i]) i++;
-		int globalshift=i;
-		if (nonZeroInBoothCode==1) { // a power of two
-			if(i==0) // no need to add a variable
-				z = implementation->PX;
-			else {
-				z = new ShiftAddOp(implementation, Shift,   implementation->PX, i);
-			}
-			implementation->result = z;
+		int nsize = intlog2(n);
+		
+		if((mpz_class(1) << (nsize-1)) == n) { // power of two
+			REPORT(INFO, "Power of two");
+			result= implementation->provideShiftAddOp(Shift, implementation->PX, intlog2(n)-1);
 		}
-		else { // at least two non-zero bits
+		else {
+			int* BoothCode;
+			int nonZeroInBoothCode;
+			BoothCode = new int[nsize+1];
+			nonZeroInBoothCode = recodeBooth(n, BoothCode);
+			
+			//			REPORT(DETAILED, "Booth code is "<< printBoothCode()   );
+			REPORT(DETAILED, "Non-zero digits:" << nonZeroInBoothCode);
 
-			// build the opposite of the input
-			ShiftAddOp* MX = new ShiftAddOp(implementation, Neg, implementation->PX);
-
-			// fill an initial array with Xs and MXs
-			level = new ShiftAddOp*[nonZeroInBoothCode];
-			shifts = new int[nonZeroInBoothCode];
-			for (j=0; j<nonZeroInBoothCode-1; j++) {
-				if (1==BoothCode[i]) 
-					level[j] = implementation->PX;
-				else
-					level[j] = MX; 
-				shifts[j] = i - globalshift;
-				i++;
-				while(0==BoothCode[i]) i++;
+			i=0;
+			while(0==BoothCode[i]) i++;
+			int globalshift=i;
+			if (nonZeroInBoothCode==1) { // a power of two
+				if(i==0) // no need to add a variable
+					result = implementation->PX;
+				else {
+					result = new ShiftAddOp(implementation, Shift,   implementation->PX, i);
+				}
 			}
-			level[j] = implementation->PX;
-			shifts[j] = i-globalshift;
-
-			k=nonZeroInBoothCode;
-			while(k!=1) {
-				nk=k>>1;
-				for (j=0; j<nk; j++) {
+			else { // at least two non-zero bits
 				
-					level[j] = implementation->provideShiftAddOp(Add, level[2*j+1], (shifts[2*j+1]-shifts[2*j]),  level[2*j]);
-					shifts[j] = shifts[2*j];
+				// build the opposite of the input
+				ShiftAddOp* MX = new ShiftAddOp(implementation, Neg, implementation->PX);
+				
+				// fill an initial array with Xs and MXs
+				level = new ShiftAddOp*[nonZeroInBoothCode];
+				shifts = new int[nonZeroInBoothCode];
+				for (j=0; j<nonZeroInBoothCode-1; j++) {
+					if (1==BoothCode[i]) 
+						level[j] = implementation->PX;
+					else
+						level[j] = MX; 
+					shifts[j] = i - globalshift;
+					i++;
+					while(0==BoothCode[i]) i++;
 				}
-				if(nk<<1 != k) {
-					level[j] = level[2*j];
-					shifts[j] = shifts[2*j];
-					k=nk+1;
+				level[j] = implementation->PX;
+				shifts[j] = i-globalshift;
+				
+				k=nonZeroInBoothCode;
+				while(k!=1) {
+					nk=k>>1;
+					for (j=0; j<nk; j++) {
+						
+						level[j] = implementation->provideShiftAddOp(Add, level[2*j+1], (shifts[2*j+1]-shifts[2*j]),  level[2*j]);
+						shifts[j] = shifts[2*j];
+					}
+					if(nk<<1 != k) {
+						level[j] = level[2*j];
+						shifts[j] = shifts[2*j];
+						k=nk+1;
+					}
+					else 
+						k=nk;
 				}
-				else 
-					k=nk;
+				if(globalshift==0)
+					result = level[0];
+				else
+					result= implementation->provideShiftAddOp(Shift, level[0], globalshift);
+				
+				delete level;
+				delete shifts;
+				delete [ ] BoothCode;
+				
 			}
-			if(globalshift==0)
-				implementation->result = level[0];
-			else
-				implementation->result = implementation->provideShiftAddOp(Shift, level[0], globalshift);
-
 		}
-
-		delete level;
-		delete shifts;
 
 		REPORT(DETAILED,  "Number of adders: "<<implementation->saolist.size() );
+		return result;
 	}
+	
 
+	void IntConstMult::buildTreeForRational(mpz_class header, mpz_class period, int headerSize, int periodSize, int i, int j) {
+		// First build the DAG for the period
+	};
 
 
 	void IntConstMult::showShiftAddDag(){

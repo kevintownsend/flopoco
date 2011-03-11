@@ -34,15 +34,17 @@ namespace flopoco{
 		IntConstMult(Target* target, int xsize, mpz_class n);
 		~IntConstMult();
 
-		mpz_class n;
-		int nsize;
-		int xsize;
-		int rsize;
+		mpz_class n;  /**< The constant */ 
+		int xsize;   
+		int rsize;   
+		ShiftAddDag* implementation;
+
+#if 0
 		int* bits;
 		int* BoothCode;
 		int nonZeroInBoothCode;
+#endif
 
-		ShiftAddDag* implementation;
 
 
 		// Overloading the virtual functions of Operator
@@ -50,12 +52,19 @@ namespace flopoco{
 		void emulate(TestCase* tc);
 		void buildStandardTestCases(TestCaseList* tcl);
 
+		/** Recodes input n; returns the number of non-zero bits */
+		int recodeBooth(mpz_class n, int* BoothCode);
+
+		// void buildMultBooth();      /**< Build a rectangular (low area, long latency) implementation */
+		ShiftAddOp* buildMultBoothTree(mpz_class n);  /**< Build a balanced tree implementation as per the ASAP 2008 paper */ 
+
+		/** Build an optimal tree for rational constants
+		 Parameters are such that n = headerSize + (2^i + 2^j)periodSize */ 
+		void buildTreeForRational(mpz_class header, mpz_class period, int headerSize, int periodSize, int i, int j);  
+
 	private:
 		void build_pipeline(ShiftAddOp* sao, double& delay);
-		void recodeBooth();
-		string printBoothCode();
-		void buildMultBooth();
-		void buildMultBoothTree();
+		string printBoothCode(int* BoothCode, int size);
 		void showShiftAddDag();
 		void optimizeLefevre(const vector<mpz_class>& constants);
 
