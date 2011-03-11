@@ -43,6 +43,12 @@ namespace flopoco{
 		mpfr_t mpR;
 		mpz_t zz;
 
+		bool periodic_constant;
+
+		// Ugly interface hack !
+		if(wF_C==1)
+			periodic_constant= true;
+
 		srcFileName="FPConstMultParser";
 		/* Convert the input string into a sollya evaluation tree */
 		node = parseString(constant.c_str());	/* If conversion did not succeed (i.e. parse error) */
@@ -51,16 +57,108 @@ namespace flopoco{
 			error << srcFileName << ": Unable to parse string "<< constant << " as a numeric constant" <<endl;
 			throw error.str();
 		}
+		//     flopoco -verbose=1 FPConstMultParser 8 23 8 23 30 "1/7"
+
 
 		mpfr_inits(mpR, NULL);
 		evaluateConstantExpression(mpR, node,  getToolPrecision());
-
+		
 		REPORT(DEBUG, "Constant evaluates to " << mpfr_get_d(mpR, GMP_RNDN));
 
-		evaluateConstantExpression(mpR, node,  cst_width);
+		if(periodic_constant) {
+			int periodSize, headerSize; 
+			mpz_class periodicPattern, header; // The two values to look for
+			// Evaluate to a very large number of bits, then look for a period
+			// evaluate to 2000 bits
+			#define EVAL_PRECISION 10000
+			int zSize=2*EVAL_PRECISION;
+			mpfr_set_prec(mpR, zSize);
+			evaluateConstantExpression(mpR, node, zSize);
+			int exponent;
+			int maxPeriodSize=128;
+			mpz_t z_mpz;
+			mpz_class z, x0, x1;
+			mpz_init(z_mpz);
+			exponent = mpfr_get_z_exp(z_mpz, mpR);
+			z = mpz_class(z_mpz);
+			mpz_clear(z_mpz);
+			REPORT(DEBUG, "Constant is " << z.get_str(2)); 
+			REPORT(DETAILED, "Looking for a period");
+			periodSize=2;
+			bool found=false;
+			while (!found &&  periodSize < maxPeriodSize) {
+				// first go to the middle of these 2000 bits
+				mpz_class t = z >> (EVAL_PRECISION);
+				// First filter
+				x0 = t-((t >> periodSize)<<periodSize);
+				t = t >> periodSize;
+				x1 = t-((t >> periodSize)<<periodSize);
+				int i=2;
+ 				int max_number_of_periods = (EVAL_PRECISION/maxPeriodSize) >> 1;
+				REPORT(DEBUG, "Trying periodSize=" << periodSize << " max_number_of_periods=" << max_number_of_periods);
+				while(x0==x1 && i<max_number_of_periods) {
+					REPORT(DEBUG, "i=" <<i << " x0=" << x0.get_str(2) << " x1=" << x1.get_str(2) );
+					t = t >> periodSize;
+					x1 = t-((t >> periodSize)<<periodSize);
+					i++;
+				}
+				if(i==max_number_of_periods)
+					found=true;
+				else
+					periodSize ++;
+			}
 
+			if(found){
+				REPORT(DEBUG, "Found periodic pattern " << x0 << " (" << x0.get_str(2) << ") " << " of size "<< periodSize);
+				// Now look for header bits
+				// first build a table of rotations of this constant
+				vector<mpz_class> periods;
+				for (int i=0; i<periodSize; i++) {
+					periods.push_back(x0); 
+					x1 = x0>>(periodSize-1); // MSB
+					x0 = ((x0-(x1 << (periodSize-1)))<<1) + x1;
+					// cerr << x0.get_str(2) << endl;
+				}
+				// Now compare to the first bits of the constant
+				headerSize=0;
+				header=0;
+				x1 = z >> (zSize-periodSize);
+				// cerr << x1.get_str(2) << endl;
+				bool header_found=false;
+				while (!header_found && headerSize<maxPeriodSize) {
+					//cerr << "DDDDD " << headerSize << " " <<   header.get_str(2) << " " << x1.get_str(2) << endl;
+					for (int i=0; i<periodSize; i++){
+						//cerr << "zzzzzzz " <<  i << "  "<< x1.get_str(2) << " " << periods[i].get_str(2) << endl;
+						if (x1==periods[i]) {
+							header_found=true;
+							periodicPattern=periods[i];
+						}
+					}
+					if(!header_found) {
+						headerSize++;
+						header = z >> (zSize-headerSize); 
+						mpz_class a, b, c;
+						// a = (z - (header << (zSize-headerSize)));
+						// b = a >> ((zSize-headerSize - periodSize));
+						// cerr << "KKKKKKKKKKKKKK " << ((zSize-headerSize - periodSize))  << "  "<< a.get_str(2) << endl << b.get_str(2) << endl;
+						x1 = (z - (header << (zSize-headerSize)))  >> (zSize-headerSize - periodSize) ;
+					}
+				}
+				if(header_found) {
+					REPORT(INFO, "Found header " << header.get_str(2) << " and periodic pattern " << periodicPattern.get_str(2) << " of size " << periodSize);
+				}
+				else {
+					REPORT(INFO, "Found no header for periodic pattern " << periodicPattern.get_str(2) << " of size " << periodSize);
+				}
+			}			
+			else
+				REPORT(INFO, "Periodic pattern not found");
+			exit(0);
+		}
+		else{
+			evaluateConstantExpression(mpR, node,  cst_width);
+		}
 		// Now convert mpR into exponent + integral significand
-
 
 		if(0==mpfr_get_d(mpR, GMP_RNDN)) {
 			REPORT(INFO, "building a multiplier by 0, it will be easy");
