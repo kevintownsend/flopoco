@@ -14,12 +14,10 @@ Collision
 * manage infinities etc
 * decompose into FPSumOf3Squares and Collision
 
-FunctionEvaluator
-* Cache polynomials
 
-FPAdder
-* several optimization opportunities, see the TODO inside FPAdder.cpp
-* implement a single-path version
+FPLog:
+* Fix a few remaining last-bit accuracy problems, damn.
+* compare with polynomial-based version.
 
 FPLog:
 * Fix a few remaining last-bit accuracy problems, damn.
@@ -64,7 +62,7 @@ Version 0.9 : LNS operators, thanks to Sylvain Collange
 Version 0.11: FPDiv, IntSquarer, new pipeline framework
 Version 1.15: FPSqrt FPSquarer InputIEEE Fix2FP 
 Version 2.0 : FunctionEvaluator
-Version 2.1 : FPExp, FPPowr (experimental)
+Version 2.2 : FPExp, FPPowr (experimental)
 -- we're here (faster than expected)
 Version ???   FPAddSub (for FFT butterfly structure)
 Version ???   FixToFPUniformDist (2008 ASAP paper by Thomas)
