@@ -49,7 +49,7 @@ namespace flopoco {
 		addInput ( "Cin", 1 );
 		addOutput ( "R"  , wIn_, 1 , true );
 		
-		REPORT(INFO, "Implementing IntAdder " << wIn);
+		REPORT(DETAILED, "Implementing IntAdder " << wIn);
 		
 		Operator* intAdderInstantiation;
 		intAdderInstantiation = new IntAdderClassical(target, wIn, name.str() , inputDelays, optimizeType, srl);
@@ -68,7 +68,7 @@ namespace flopoco {
 				selectedVersion = j;
 			}
 		
-		REPORT(INFO, "Selected implementation is "<<selectedVersion<<" with cost="<<currentCost);
+		REPORT(DETAILED, "Selected implementation for IntAdder"<< wIn << " is "<<selectedVersion<<" with cost="<<currentCost);
 		
 		addImplementationList[selectedVersion]->setuid(getuid()); //the selected implemetation becomes this operator 
 		
@@ -79,10 +79,10 @@ namespace flopoco {
 		//cleanup; clear the oplist of the components that will be unused, and the components used therein 
 		for (unsigned j=0; j< addImplementationList.size(); j++)
 			if ( int(j)!= selectedVersion){
-				REPORT(INFO, "deleting version "<<int(j));
+				REPORT(DEBUG, "deleting version "<<int(j));
 				cleanup(&oplist, addImplementationList[j]);
 			}
-		REPORT(INFO, "Finished implementing the adder");
+		REPORT(DEBUG, "Finished implementing the adder");
 	}
 	
 	/**************************************************************************/
