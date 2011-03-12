@@ -10,7 +10,7 @@
 #include "../Operator.hpp"
 #include "../Table.hpp"
 #include "PolynomialEvaluator.hpp"
-#include "HOTBM/sollya.h"	// Do NOT use libsollya from user's environment
+#include "../sollya.h"	
 
 #include "Function.hpp"
 #include "PiecewiseFunction.hpp"

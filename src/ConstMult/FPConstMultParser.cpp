@@ -19,7 +19,7 @@
 #include <gmp.h>
 #include <mpfr.h>
 #include <gmpxx.h>
-#include "../FixedPointFunctions/HOTBM/sollya.h" // TODO : fix upstream Sollya, or fix in FloPoCo
+#include "../sollya.h" // TODO : fix upstream Sollya, or fix in FloPoCo
 #include "../utils.hpp"
 #include "../Operator.hpp"
 #include "FPConstMult.hpp"
@@ -137,7 +137,7 @@ namespace flopoco{
 					if(!header_found) {
 						headerSize++;
 						header = z >> (zSize-headerSize); 
-						mpz_class a, b, c;
+						// mpz_class a, b, c;
 						// a = (z - (header << (zSize-headerSize)));
 						// b = a >> ((zSize-headerSize - periodSize));
 						// cerr << "KKKKKKKKKKKKKK " << ((zSize-headerSize - periodSize))  << "  "<< a.get_str(2) << endl << b.get_str(2) << endl;
@@ -146,10 +146,29 @@ namespace flopoco{
 				}
 				if(header_found) {
 					REPORT(INFO, "Found header " << header.get_str(2) << " and periodic pattern " << periodicPattern.get_str(2) << " of size " << periodSize);
+
+					// Now go on
+					int wC = wF_out + 3; // for faithful rounding, but could come from the interface
+					int r = ceil(   ((double)(wC-headerSize)) / ((double)periodSize)   ); // Needed repetitions
+					int i = intlog2(r) -1; // 2^i < r < 2^{i+1}
+					int j = intlog2(r - ((mpz_class(1)<<i))) -1 ;
+					if(j!=-1) {
+						REPORT(DETAILED, "wC=" << wC << ", need to repeat the period " << r << " times, will repeat 2^i+2^j with i=" << i << " and j=" << j);
+					}
+					else {
+						REPORT(DETAILED, "wC=" << wC << ", need to repeat the period " << r << "=2^" << i << " times");
+					}
+					// Now call the special constructor of IntConstMult with these parameters
+					
+					icm = new IntConstMult(target, wF_in+1, periodicPattern, periodSize, header, headerSize, i, j);
+					oplist.push_back(icm);
+
+
 				}
 				else {
 					REPORT(INFO, "Found no header for periodic pattern " << periodicPattern.get_str(2) << " of size " << periodSize);
 				}
+
 			}			
 			else
 				REPORT(INFO, "Periodic pattern not found");

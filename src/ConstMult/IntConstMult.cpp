@@ -423,6 +423,52 @@ namespace flopoco{
 
 		implementation = new ShiftAddDag(this);
 
+		rsize = intlog2(n * ((mpz_class(1)<<xsize)-1));
+
+		addInput("inX", xsize);
+		addOutput("R", rsize);
+
+		vhdl << tab << declare("X", xsize) << " <= inX;" << endl; // no longer useful but harmless
+
+		// Build in implementation a tree constant multiplier 
+		implementation->result = buildMultBoothTree(n);
+
+		if(verbose>=DETAILED) showShiftAddDag();
+		
+		int cost=compute_total_cost(implementation->result);
+		REPORT(INFO, "Estimated bare cost (not counting pipeline overhead) : " << cost << " FA/LUT" );
+		
+		double delay=0.0;
+		// recursively build the pipeline in the vhdl stream
+		build_pipeline(implementation->result, delay);
+		
+		// copy the top of the DAG into variable R
+		vhdl << endl << tab << "R <= " << implementation->result->name << "("<< rsize-1 <<" downto 0);"<<endl;
+		
+	}
+
+
+
+	IntConstMult::IntConstMult(Target* _target, int _xsize, mpz_class period, int periodSize, mpz_class header, int headerSize, int i, int j) :
+		Operator(_target), xsize(_xsize){
+		ostringstream name; 
+
+		srcFileName="IntConstMult (periodic)";
+		setCopyrightString("Florent de Dinechin (2007-2011)");
+		name <<"IntConstMultPeriodic_"<<xsize<<"_"<<mpz2string(header)<<"_"<<mpz2string(period);
+		setName(name.str());
+
+		implementation = new ShiftAddDag(this);
+		// Build n nevertheless: used for emulate() etc, and we need its size
+		int r; // How many repetitions of the constant?
+		if(j==-1)
+			r = 1<<i;
+		else 
+			r=(1<<i) + (1<<j);
+		n=header;
+		for (int k=0; k<r; k++)
+			n=(n<<periodSize)+period;
+		REPORT(DEBUG, "Rebuilt n as " << n.get_str(2)); 
 
 		rsize = intlog2(n * ((mpz_class(1)<<xsize)-1));
 
@@ -431,11 +477,10 @@ namespace flopoco{
 
 		vhdl << tab << declare("X", xsize) << " <= inX;" << endl; // no longer useful but harmless
 
-
 		// Build in implementation a tree constant multiplier 
 		implementation->result = buildMultBoothTree(n);
 
-		// if(verbose>=3) showShiftAddDag();
+		if(verbose>=DETAILED) showShiftAddDag();
 		
 		int cost=compute_total_cost(implementation->result);
 		REPORT(INFO, "Estimated bare cost (not counting pipeline overhead) : " << cost << " FA/LUT" );
@@ -528,7 +573,7 @@ namespace flopoco{
 		return s.str();
 	}
 
-	/** Recodes input n returns the number of non-zero bits */
+	/** Recodes input n, returns the number of non-zero bits */
 	int IntConstMult::recodeBooth(mpz_class n, int* BoothCode) {
 		int i;
 		int *b, *c;
@@ -726,9 +771,9 @@ namespace flopoco{
 
 
 	void IntConstMult::showShiftAddDag(){
-		cout<<"    ShiftAddDag"<<endl;
+		REPORT(DETAILED, " ShiftAddDag:");
 		for (uint32_t i=0; i<implementation->saolist.size(); i++) {
-			cout << "     "<<*(implementation->saolist[i]) <<endl;
+			REPORT(DETAILED, "  "<<*(implementation->saolist[i]));
 		}
 	};
 

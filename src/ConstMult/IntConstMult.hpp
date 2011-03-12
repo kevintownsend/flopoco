@@ -31,7 +31,15 @@ namespace flopoco{
 	class IntConstMult : public Operator
 	{
 	public:
+		/** The standard constructor, inputs the number to implement */ 
 		IntConstMult(Target* target, int xsize, mpz_class n);
+
+		/** A constructor for constants defined as a header and a period (significands of rational constants).
+				Parameters i and j are such that the period must be repeated 2^i + 2^j times. 
+				If j==-1, just repeat the period 2^i times
+		 */
+		IntConstMult(Target* _target, int _xsize, mpz_class period, int periodSize, mpz_class header, int headerSize, int i, int j);
+
 		~IntConstMult();
 
 		mpz_class n;  /**< The constant */ 
