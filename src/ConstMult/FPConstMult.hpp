@@ -12,8 +12,14 @@ namespace flopoco{
 	class FPConstMult : public Operator
 	{
 	public:
+		/** The generic constructor */
 		FPConstMult(Target* target, int wE_in, int wF_in, int wE_out, int wF_out, int cst_sgn, int cst_exp, mpz_class cst_sig);
-		FPConstMult(Target* target, int wE_in, int wF_in, int wE_out, int wF_out); // used by CRFPConstMult
+		
+		/** An empty constructor,  used by CRFPConstMult */
+		FPConstMult(Target* target, int wE_in, int wF_in, int wE_out, int wF_out);
+		
+		/** A constructor that parses an expression for the constant */
+		FPConstMult(Target* target, int wE_in, int wF_in, int wE_out, int wF_out, int wF_C, string constant);
 		~FPConstMult();
 
 		int wE_in; 
@@ -23,6 +29,7 @@ namespace flopoco{
 		int cst_sgn;
 		int cst_exp_when_mantissa_1_2;
 		int cst_exp_when_mantissa_int;
+		int cst_width;
 		mpz_class cst_sig;
 		string cst_name;
 
@@ -36,9 +43,12 @@ namespace flopoco{
 		IntConstMult *icm;
 		int icm_depth;
 
+		/** The method that sets up all the attributes, called by the various constructors to avoid code duplication */
+		void setup();
+
 		/** The method that declares all the signals and sets up the pipeline.
 			 It is called by the constructors of FPConstMult and CRFPConstMult to avoid code duplication */
-		void setup();
+		void buildVHDL();
 
 		void emulate(TestCase *tc);
 

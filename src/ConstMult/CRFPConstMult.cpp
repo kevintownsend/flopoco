@@ -134,7 +134,7 @@ namespace flopoco{
 		icm = new IntConstMult(target, wF_in+1, cst_sig);
 		oplist.push_back(icm);
 
-		setup();
+		buildVHDL();
 
 	}
 
