@@ -106,7 +106,6 @@
 
 #ifndef _WIN32
 #include "ConstMult/CRFPConstMult.hpp"
-#include "ConstMult/FPConstMultParser.hpp"
 
 
 #ifdef HAVE_HOTBM
@@ -279,20 +278,23 @@ static void usage(char *name){
 //	cerr << "      correctlyRounded (0) selects faithful and correct rounding (NYImplemented)\n";
 	cerr << "      degree (1,...k) polynomial degree. Higher degree => more DSP less BRAM\n";
 #endif // HAVE_SOLLYA
-	OP("FPConstMult","wE_in wF_in wE_out wF_out cst_sgn cst_exp cst_int_sig");
+#ifdef HAVE_SOLLYA
+	OP( "FPConstMult","wE_in wF_in wE_out wF_out wC constant_expr");
+	cerr << "      Faithful floating-point constant multiplier\n";
+	cerr << "      last argument is a Sollya expression between double quotes,e.g.\"exp(pi/2)\".\n";
+	cerr << "      If wC>1, it is the size in bits on which the constant must be evaluated.\n";
+	cerr << "      If wC=0 the size is computed for a faithful result.\n";
+	cerr << "      If wC=-1, idem, use this option for simple rational constants such as 1/3 or 1/10\n";
+	OP( "CRFPConstMult","wE_in wF_in wE_out wF_out constant_expr");
+	cerr << "      Correctly-rounded floating-point constant multiplier\n";
+	cerr << "      The constant is provided as a Sollya expression, between double quotes.\n";
+#endif // HAVE_SOLLYA
+	OP("FPConstMultExpert","wE_in wF_in wE_out wF_out cst_sgn cst_exp cst_int_sig");
 	cerr << "      Floating-point constant multiplier\n";
 	cerr << "      The constant is provided as integral significand and integral exponent.\n";
 	NEWOP("FPRealKCM","wE wF constantExpression");
 	cerr << "      Floating-point constant multiplier using the KCM algorithm\n";
 	cerr << "      last argument is a Sollya expression between double quotes,e.g.\"exp(pi/2)\".\n";
-#ifdef HAVE_SOLLYA
-	OP( "FPConstMultParser","wE_in wF_in wE_out wF_out wF_C constant_expr");
-	cerr << "      Floating-point constant multiplier with a parser for the constant:\n";
-	cerr << "      last argument is a Sollya expression between double quotes,e.g.\"exp(pi/2)\".\n";
-	OP( "CRFPConstMult","wE_in wF_in wE_out wF_out constant_expr");
-	cerr << "      Correctly-rounded floating-point constant multiplier\n";
-	cerr << "      The constant is provided as a Sollya expression, between double quotes.\n";
-#endif // HAVE_SOLLYA
 	OP( "LongAcc","wE_in wF_in MaxMSB_in LSB_acc MSB_acc");
 	cerr << "      Long fixed-point accumulator\n";
 	OP( "LongAcc2FP","LSB_acc MSB_acc wE_out wF_out");
@@ -555,7 +557,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			}        
 		}
 
-		else if(opname=="FPConstMult"){
+		else if(opname=="FPConstMultExpert"){
 			int nargs = 7;
 			if (i+nargs > argc)
 				usage(argv[0]);
@@ -567,7 +569,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				int cst_sgn  = checkSign(argv[i++], argv[0]); 
 				int cst_exp  = atoi(argv[i++]); // TODO no check on this arg
 				mpz_class cst_sig(argv[i++]);
-				cerr << "> FPConstMult, wE_in="<<wE_in<<", wF_in="<<wF_in
+				cerr << "> FPConstMultExpert, wE_in="<<wE_in<<", wF_in="<<wF_in
 						 <<", wE_out="<<wE_out<<", wF_out="<<wF_out
 						 <<", cst_sgn="<<cst_sgn<<", cst_exp="<<cst_exp<< ", cst_sig="<<mpz2string(cst_sig)<<endl;
 				op = new FPConstMult(target, wE_in, wF_in, wE_out, wF_out, cst_sgn, cst_exp, cst_sig);
@@ -622,7 +624,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(op);
 			}        
 		} 	
-		else if(opname=="FPConstMultParser"){ 
+		else if(opname=="FPConstMult"){ 
 			int nargs = 6;
 			if (i+nargs > argc)
 				usage(argv[0]);
@@ -633,11 +635,11 @@ bool parseCommandLine(int argc, char* argv[]){
 				int wF_out = checkStrictlyPositive(argv[i++], argv[0]);
 				int wF_C = checkStrictlyPositive(argv[i++], argv[0]);
 				string constant = argv[i++];
-				cerr << "> FPConstMultParser, wE_in="<<wE_in<<", wF_in="<<wF_in 
+				cerr << "> FPConstMult, wE_in="<<wE_in<<", wF_in="<<wF_in 
 					  <<", wE_out="<<wE_out<<", wF_out="<<wF_out 
 					  << ", wF_C=" << wF_C
 					  << ", constant="<<constant <<endl;
-				op = new FPConstMultParser(target, wE_in, wF_in, wE_out, wF_out, wF_C, constant);
+				op = new FPConstMult(target, wE_in, wF_in, wE_out, wF_out, wF_C, constant);
 				addOperator(op);
 			}        
 		} 	

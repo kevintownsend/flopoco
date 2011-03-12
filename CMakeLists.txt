@@ -333,7 +333,6 @@ ADD_EXECUTABLE(flopoco
  src/ConstMult/IntIntKCM src/ConstMult/KCMTable
  src/ConstMult/FPConstMult 
  src/ConstMult/CRFPConstMult 
- src/ConstMult/FPConstMultParser 
  src/ConstMult/FixRealKCM
  src/ConstMult/FPRealKCM
  src/TestCase
