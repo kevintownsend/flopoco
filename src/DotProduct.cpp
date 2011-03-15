@@ -27,6 +27,7 @@
 #include "Operator.hpp"
 
 #include "DotProduct.hpp"
+#include "FPMultiplier.hpp"
 
 
 using namespace std;

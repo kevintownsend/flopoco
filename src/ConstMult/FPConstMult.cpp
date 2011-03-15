@@ -122,6 +122,7 @@ extern vector<Operator*> oplist;
 	}
 
 
+#ifdef HAVE_SOLLYA
 
 	// The parser version
 	FPConstMult::FPConstMult(Target* target, int wE_in_, int wF_in_, int wE_out_, int wF_out_, int wF_C, string constant):
@@ -347,6 +348,7 @@ extern vector<Operator*> oplist;
 			buildVHDL();
 		}
 	}
+#endif //HAVE_SOLLYA
 
 
 	void FPConstMult::setup() {

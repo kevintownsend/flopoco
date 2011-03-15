@@ -9,7 +9,7 @@ CLEANFILES = $(BUILT_SOURCES) lex.yy.c *.output
 noinst_LTLIBRARIES = libflopoco.la
 
 noinst_HEADERS = apps/Collision.hpp apps/FPFMAcc.hpp apps/FPJacobi.hpp\
-        ConstMult/IntIntKCM.hpp ConstMult/CRFPConstMult.hpp ConstMult/FixRealKCM.hpp ConstMult/FPRealKCM.hpp ConstMult/FPConstMult.hpp ConstMult/FPConstMultParser.hpp ConstMult/IntConstMult.hpp ConstMult/KCMTable.hpp\
+        ConstMult/IntIntKCM.hpp ConstMult/CRFPConstMult.hpp ConstMult/FixRealKCM.hpp ConstMult/FPRealKCM.hpp ConstMult/FPConstMult.hpp ConstMult/IntConstMult.hpp ConstMult/KCMTable.hpp\
         ConstMult/ShiftAddDag.hpp ConstMult/ShiftAddOp.hpp \
         fplogarithm/FirstInvTable.hpp fplogarithm/FirstLogTable.hpp fplogarithm/OtherLogTable.hpp \
         LNS/AtanPow.hpp LNS/Cotran.hpp LNS/CotranHybrid.hpp LNS/CotranTables.hpp LNS/LNSAdd.hpp LNS/LNSAddSub.hpp LNS/LNSDiv.hpp LNS/LNSMul.hpp LNS/LNSSqrt.hpp \

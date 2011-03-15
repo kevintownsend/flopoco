@@ -126,7 +126,7 @@ namespace flopoco{
 		syncCycleFromSignal("lnX");
 		nextCycle();
 
-		FPMultiplier* mult = new FPMultiplier(target,   /*X:*/ wE, logwF,   /*Y:*/ wE, wF,  /*R: */  wE,  wF+wE+expG,  true /* norm*/); // TODO; use unnorm
+		FPMultiplier* mult = new FPMultiplier(target,   /*X:*/ wE, logwF,   /*Y:*/ wE, wF,  /*R: */  wE,  wF+wE+expG,  1 /* norm*/); // TODO; use unnorm
 		oplist.push_back(mult);
 		inPortMap(mult, "Y", "Y");
 		inPortMap(mult, "X", "lnX");
