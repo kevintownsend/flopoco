@@ -410,6 +410,14 @@ namespace flopoco{
 
 
 
+
+
+
+
+
+
+
+
 	IntConstMult::IntConstMult(Target* _target, int _xsize, mpz_class n) :
 		Operator(_target), n(n), xsize(_xsize){
 		ostringstream name; 
@@ -449,7 +457,14 @@ namespace flopoco{
 
 
 
-	IntConstMult::IntConstMult(Target* _target, int _xsize, mpz_class period, int periodSize, mpz_class header, int headerSize, int i, int j) :
+
+
+
+
+
+
+
+	IntConstMult::IntConstMult(Target* _target, int _xsize, mpz_class n, mpz_class period, int periodSize, mpz_class header, int headerSize, int i, int j) :
 		Operator(_target), xsize(_xsize){
 		ostringstream name; 
 
@@ -459,18 +474,9 @@ namespace flopoco{
 		setName(name.str());
 
 		implementation = new ShiftAddDag(this);
-		// Build n nevertheless: used for emulate() etc, and we need its size
-		int r; // How many repetitions of the constant?
-		if(j==-1)
-			r = 1<<i;
-		else 
-			r=(1<<i) + (1<<j);
-		n=header;
-		for (int k=0; k<r; k++)
-			n=(n<<periodSize)+period;
-		REPORT(DEBUG, "Rebuilt n as " << n.get_str(2)); 
 
 		rsize = intlog2(n * ((mpz_class(1)<<xsize)-1));
+		REPORT(INFO, "Building a periodic DAG for  " << n );
 
 		addInput("inX", xsize);
 		addOutput("R", rsize);
@@ -478,7 +484,17 @@ namespace flopoco{
 		vhdl << tab << declare("X", xsize) << " <= inX;" << endl; // no longer useful but harmless
 
 		// Build in implementation a tree constant multiplier 
-		implementation->result = buildMultBoothTree(n);
+		
+		ShiftAddOp* powerOfTwo[100];
+
+		powerOfTwo[0] = buildMultBoothTree(period);
+		for (int k=1; k<=i; k++){
+			powerOfTwo[k]=  new ShiftAddOp(implementation, Add, powerOfTwo[k-1], periodSize<<(k-1), powerOfTwo[k-1] );
+		}
+		if(j==-1)
+			implementation->result = 	powerOfTwo[i];
+		else
+			implementation->result = new ShiftAddOp(implementation, Add, powerOfTwo[i], periodSize<<i, powerOfTwo[j] );
 
 		if(verbose>=DETAILED) showShiftAddDag();
 		
