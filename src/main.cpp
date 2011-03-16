@@ -633,7 +633,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				int wF_in = checkStrictlyPositive(argv[i++], argv[0]);
 				int wE_out = checkStrictlyPositive(argv[i++], argv[0]);
 				int wF_out = checkStrictlyPositive(argv[i++], argv[0]);
-				int wF_C = checkStrictlyPositive(argv[i++], argv[0]);
+				int wF_C = atoi(argv[i++]);
 				string constant = argv[i++];
 				cerr << "> FPConstMult, wE_in="<<wE_in<<", wF_in="<<wF_in 
 					  <<", wE_out="<<wE_out<<", wF_out="<<wF_out 

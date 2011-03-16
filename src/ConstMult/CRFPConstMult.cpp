@@ -39,6 +39,7 @@ namespace flopoco{
 		FPConstMult(target, wE_in, wF_in, wE_out, wF_out), 
 		constant (_constant) 
 	{
+#if 0
 		sollya_node_t node;
 		mpfr_t mpR;
 		mpz_t zz;
@@ -136,6 +137,7 @@ namespace flopoco{
 
 		buildVHDL();
 
+#endif
 	}
 
 

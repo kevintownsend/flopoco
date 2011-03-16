@@ -36,23 +36,20 @@ namespace flopoco{
 extern vector<Operator*> oplist;
 
 
-	FPConstMult::FPConstMult(Target* target, int wE_in_, int wF_in_, int wE_out_, int wF_out_, int cst_sgn_, int cst_exp_, mpz_class cst_sig_):
+	FPConstMult::FPConstMult(Target* target, int wE_in_, int wF_in_, int wE_out_, int wF_out_, int cstSgn_, int cst_exp_, mpz_class cst_sig_):
 		Operator(target), 
 		wE_in(wE_in_), wF_in(wF_in_), wE_out(wE_out_), wF_out(wF_out_), 
-		cst_sgn(cst_sgn_), cst_exp_when_mantissa_int(cst_exp_), cst_sig(cst_sig_)
+		cstSgn(cstSgn_), cst_exp_when_mantissa_int(cst_exp_), cst_sig(cst_sig_)
 	{
 		srcFileName="FPConstMult";
 		ostringstream name;
-		name <<"FPConstMult_"<<(cst_sgn==0?"":"M") <<mpz2string(cst_sig)<<"b"<<(cst_exp_when_mantissa_int<0?"M":"")<<abs(cst_exp_when_mantissa_int)<<"_"<<wE_in<<"_"<<wF_in<<"_"<<wE_out<<"_"<<wF_out;
+		name <<"FPConstMult_"<<(cstSgn==0?"":"M") <<mpz2string(cst_sig)<<"b"<<(cst_exp_when_mantissa_int<0?"M":"")<<abs(cst_exp_when_mantissa_int)<<"_"<<wE_in<<"_"<<wF_in<<"_"<<wE_out<<"_"<<wF_out;
 		uniqueName_=name.str();
 
 		if(cst_sig==0) {
 			REPORT(INFO, "building a multiplier by 0, it will be easy");
 			vhdl  << tab << "r <= " << rangeAssign(wE_out+wF_out+1, 0, "'0'") << ";"<<endl;
 		}
-
-
-
 		else {
 			// Constant normalization
 			while ((cst_sig % 2) ==0) {
@@ -66,26 +63,26 @@ extern vector<Operator*> oplist;
 				mantissa_is_one = true;
 			}
 
-			cst_width = intlog2(cst_sig);
-			cst_exp_when_mantissa_1_2 = cst_exp_when_mantissa_int + cst_width - 1; 
+			cstWidth = intlog2(cst_sig);
+			cst_exp_when_mantissa_1_2 = cst_exp_when_mantissa_int + cstWidth - 1; 
 
 			// initialize mpfr constant
-			mpfr_init2(mpfr_cst_sig, max(cst_width, 2));
+			mpfr_init2(mpfr_cst_sig, max(cstWidth, 2));
 			mpfr_set_z(mpfr_cst_sig, cst_sig.get_mpz_t(), GMP_RNDN); // exact op
-			mpfr_mul_2si(mpfr_cst_sig, mpfr_cst_sig, -(cst_width-1), GMP_RNDN);  // exact op, gets mpfr_cst_sig in 1..2
+			mpfr_mul_2si(mpfr_cst_sig, mpfr_cst_sig, -(cstWidth-1), GMP_RNDN);  // exact op, gets mpfr_cst_sig in 1..2
 			
-			mpfr_init(mpfr_cst);
-			mpfr_set(mpfr_cst, mpfr_cst_sig, GMP_RNDN);
-			mpfr_mul_2si(mpfr_cst, mpfr_cst, cst_exp_when_mantissa_1_2, GMP_RNDN);
+			mpfr_init(mpfrC);
+			mpfr_set(mpfrC, mpfr_cst_sig, GMP_RNDN);
+			mpfr_mul_2si(mpfrC, mpfrC, cst_exp_when_mantissa_1_2, GMP_RNDN);
 			
-			if(cst_sgn==1)
-				mpfr_neg(mpfr_cst,  mpfr_cst, GMP_RNDN);
-			REPORT(INFO, "mpfr_cst = " << mpfr_get_d(mpfr_cst, GMP_RNDN));
+			if(cstSgn==1)
+				mpfr_neg(mpfrC,  mpfrC, GMP_RNDN);
+			REPORT(INFO, "mpfrC = " << mpfr_get_d(mpfrC, GMP_RNDN));
 
 
 			if(!mantissa_is_one) {			
 				// initialize mpfr_xcut_sig = 2/cst_sig, will be between 1 and 2
-				mpfr_init2(mpfr_xcut_sig, 4*(cst_width+wE_in+wE_out));
+				mpfr_init2(mpfr_xcut_sig, 4*(cstWidth+wE_in+wE_out));
 				mpfr_set_d(mpfr_xcut_sig, 2.0, GMP_RNDN);               // exaxt op
 				mpfr_div(mpfr_xcut_sig, mpfr_xcut_sig, mpfr_cst_sig, GMP_RNDD);
 
@@ -124,22 +121,28 @@ extern vector<Operator*> oplist;
 
 #ifdef HAVE_SOLLYA
 
+
+
+
 	// The parser version
 	FPConstMult::FPConstMult(Target* target, int wE_in_, int wF_in_, int wE_out_, int wF_out_, int wF_C, string constant):
 		Operator(target), 
-		wE_in(wE_in_), wF_in(wF_in_), wE_out(wE_out_), wF_out(wF_out_)
+		wE_in(wE_in_), wF_in(wF_in_), wE_out(wE_out_), wF_out(wF_out_), cstWidth(wF_C)
 	{
 		sollya_node_t node;
-		mpfr_t mpR;
-		mpz_t zz;
+
 
 		bool periodic_constant;
 
 		// Ugly interface hack !
-		if(wF_C==1)
+		if(wF_C==-1)
 			periodic_constant= true;
 
-		srcFileName="FPConstMultParser";
+		if(wF_C==0){ //  means: please compute wF_C for faithful rounding
+			cstWidth=wF_out+3;
+		}
+
+		srcFileName="FPConstMult";
 		/* Convert the input string into a sollya evaluation tree */
 		node = parseString(constant.c_str());	/* If conversion did not succeed (i.e. parse error) */
 		if (node == 0) {
@@ -150,30 +153,30 @@ extern vector<Operator*> oplist;
 		//     flopoco -verbose=1 FPConstMultParser 8 23 8 23 30 "1/7"
 
 
-		mpfr_inits(mpR, NULL);
-		evaluateConstantExpression(mpR, node,  getToolPrecision());
+		mpfr_inits(mpfrC, NULL);
+		evaluateConstantExpression(mpfrC, node,  getToolPrecision());
 		
-		REPORT(DEBUG, "Constant evaluates to " << mpfr_get_d(mpR, GMP_RNDN));
+		REPORT(DEBUG, "Constant evaluates to " << mpfr_get_d(mpfrC, GMP_RNDN));
 
 		if(periodic_constant) {
 			int periodSize, headerSize; 
 			mpz_class periodicPattern, header; // The two values to look for
+
 			// Evaluate to a very large number of bits, then look for a period
 			// evaluate to 2000 bits
-			#define EVAL_PRECISION 10000
+			#define EVAL_PRECISION 2000
 			int zSize=2*EVAL_PRECISION;
-			mpfr_set_prec(mpR, zSize);
-			evaluateConstantExpression(mpR, node, zSize);
+			mpfr_set_prec(mpfrC, zSize);
+			evaluateConstantExpression(mpfrC, node, zSize);
 			int exponent;
 			int maxPeriodSize=128;
 			mpz_t z_mpz;
 			mpz_class z, x0, x1;
 			mpz_init(z_mpz);
-			exponent = mpfr_get_z_exp(z_mpz, mpR);
+			exponent = mpfr_get_z_exp(z_mpz, mpfrC);
 			z = mpz_class(z_mpz);
 			mpz_clear(z_mpz);
-			REPORT(DEBUG, "Constant is " << z.get_str(2)); 
-			REPORT(DETAILED, "Looking for a period");
+			REPORT(DETAILED, "Looking for a period in a constant which looks like " << z.get_str(2)); 
 			periodSize=2;
 			bool found=false;
 			while (!found &&  periodSize < maxPeriodSize) {
@@ -243,126 +246,177 @@ extern vector<Operator*> oplist;
 					int i = intlog2(r) -1; // 2^i < r < 2^{i+1}
 					int j = intlog2(r - ((mpz_class(1)<<i))) -1 ;
 					if(j!=-1) {
+						cstWidth = headerSize  + ((1<<i)+(1<<j))*periodSize;
 						REPORT(DETAILED, "wC=" << wC << ", need to repeat the period " << r << " times, will repeat 2^i+2^j with i=" << i << " and j=" << j);
 					}
 					else {
+						cstWidth = headerSize  + (1<<i)*periodSize;
 						REPORT(DETAILED, "wC=" << wC << ", need to repeat the period " << r << "=2^" << i << " times");
 					}
-					// Now call the special constructor of IntConstMult with these parameters
+					// Now rebuild the mpfrC constant TODO
 					
-					icm = new IntConstMult(target, wF_in+1, periodicPattern, periodSize, header, headerSize, i, j);
-					oplist.push_back(icm);
-
-
+					//					icm = new IntConstMult(target, wF_in+1, periodicPattern, periodSize, header, headerSize, i, j);
+					// oplist.push_back(icm);
+					exit(0);
 				}
 				else {
-					REPORT(INFO, "Found no header for periodic pattern " << periodicPattern.get_str(2) << " of size " << periodSize);
+					ostringstream error;
+					error << srcFileName << ": Found no header for periodic pattern " << periodicPattern.get_str(2) << " of size " << periodSize ;
+					throw error.str();
 				}
 
 			}			
-			else
-				REPORT(INFO, "Periodic pattern not found");
-			exit(0);
-		}
-		else{
-			evaluateConstantExpression(mpR, node,  cst_width);
-		}
-		// Now convert mpR into exponent + integral significand
-
-		if(0==mpfr_get_d(mpR, GMP_RNDN)) {
-			REPORT(INFO, "building a multiplier by 0, it will be easy");
-			vhdl  << tab << "r <= " << rangeAssign(wE_out+wF_out+1, 0, "'0'") << ";"<<endl;
-		}
-		else {
-			// sign
-			if(mpfr_sgn(mpR)<0) {
-				mpfr_neg(mpR, mpR, GMP_RNDN);
-				cst_sgn=1;
-			} 
 			else {
-				cst_sgn=0;
+				ostringstream error;
+				error << srcFileName << "Periodic pattern not found" ;
+				throw error.str();
 			}
+		}
+		else{  // if (periodic)
+			evaluateConstantExpression(mpfrC, node,  cstWidth);
+		}
 
-			// compute exponent and mantissa
-			cst_exp_when_mantissa_1_2 = mpfr_get_exp(mpR) - 1; //mpfr_get_exp() assumes significand in [1/2,1)  
-			cst_exp_when_mantissa_int = cst_exp_when_mantissa_1_2 - cst_width + 1; 
-			mpfr_init2(mpfr_cst_sig, cst_width);
-			mpfr_div_2si(mpfr_cst_sig, mpR, cst_exp_when_mantissa_1_2, GMP_RNDN);
-			REPORT(INFO, "mpfr_cst_sig  = " << mpfr_get_d(mpfr_cst_sig, GMP_RNDN));
-
-			// Build the corresponding FPConstMult.
-
-			// initialize mpfr_xcut_sig = 2/cst_sig, will be between 1 and 2
-			mpfr_init2(mpfr_xcut_sig, 32*(cst_width+wE_in+wE_out)); // should be accurate enough
-			mpfr_set_d(mpfr_xcut_sig, 2.0, GMP_RNDN);               // exaxt op
-			mpfr_div(mpfr_xcut_sig, mpfr_xcut_sig, mpfr_cst_sig, GMP_RNDD);
-
-			// now  round it down to wF_in+1 bits 
-			mpfr_t xcut_wF;
-			mpfr_init2(xcut_wF, wF_in+1);
-			mpfr_set(xcut_wF, mpfr_xcut_sig, GMP_RNDD);
-			mpfr_mul_2si(xcut_wF, xcut_wF, wF_in, GMP_RNDN);
-			
-			// It should now be an int; cast it into a mpz, then a mpz_class 
-			mpz_init2(zz, wF_in+1);
-			mpfr_get_z(zz, xcut_wF, GMP_RNDN);
-			xcut_sig_rd = mpz_class(zz);
-			mpz_clear(zz);
-			REPORT(DETAILED, "mpfr_xcut_sig = " << mpfr_get_d(mpfr_xcut_sig, GMP_RNDN) );
-
-			// Now build the mpz significand
-			mpfr_mul_2si(mpfr_cst_sig,  mpfr_cst_sig, cst_width, GMP_RNDN);
-   
-			// It should now be an int; cast it into a mpz, then a mpz_class 
-			mpz_init2(zz, cst_width);
-			mpfr_get_z(zz, mpfr_cst_sig, GMP_RNDN);
-			cst_sig = mpz_class(zz);
-			mpz_clear(zz);
-			REPORT(DETAILED, "mpzclass cst_sig = " << cst_sig);
-
-			// Constant normalization
-			while ((cst_sig % 2) ==0) {
-				REPORT(INFO, "Significand is even, normalising");
-				cst_sig = cst_sig >>1;
-				cst_exp_when_mantissa_int+=1;
-			}
-			mantissa_is_one = false;
-			if(cst_sig==1) {
-				REPORT(INFO, "Constant mantissa is 1, multiplying by it will be easy"); 
-				mantissa_is_one = true;
-			}
-			
-			// build the name
-			ostringstream name; 
-			name <<"FPConstMult_"<<(cst_sgn==0?"":"M") <<cst_sig<<"b"
-				  <<(cst_exp_when_mantissa_int<0?"M":"")<<abs(cst_exp_when_mantissa_int)
-				  <<"_"<<wE_in<<"_"<<wF_in<<"_"<<wE_out<<"_"<<wF_out;
-			uniqueName_=name.str();
-
-			// cleaning up
-			mpfr_clears(mpR, mpfr_xcut_sig, xcut_wF, mpfr_cst_sig, NULL);
-
+		setup();
+		
+		// build the name
+		ostringstream name; 
+		name <<"FPConstMult_"<<(cstSgn==0?"":"M") <<cst_sig<<"b"
+				 <<(cst_exp_when_mantissa_int<0?"M":"")<<abs(cst_exp_when_mantissa_int)
+				 <<"_"<<wE_in<<"_"<<wF_in<<"_"<<wE_out<<"_"<<wF_out;
+		uniqueName_=name.str();
+		
+		// cleaning up : TODO
+		//			mpfr_clears(mpfrC, mpfr_xcut_sig, xcut_wF, mpfr_cst_sig, NULL);
+		
+		if(!constant_is_zero && !mantissa_is_one) {
 			icm = new IntConstMult(target, wF_in+1, cst_sig);
 			oplist.push_back(icm);
-			
-			buildVHDL();
 		}
+		
+		buildVHDL();
+	}
+
+
+
+	// Set up the various constants out of an MPFR constant
+	void FPConstMult::setup()
+	{
+
+		mpz_t zz;
+		cstWidth=mpfr_get_prec(mpfrC);
+
+
+		if(mpfr_zero_p(mpfrC)) {
+			REPORT(INFO, "building a multiplier by 0, it will be easy");
+			constant_is_zero=true;
+			return;
+		}
+
+		// sign
+		if(mpfr_sgn(mpfrC)<0) {
+			mpfr_neg(mpfrC, mpfrC, GMP_RNDN);
+			cstSgn=1;
+		} 
+		else {
+			cstSgn=0;
+		}
+
+		// compute exponent and mantissa
+		cst_exp_when_mantissa_1_2 = mpfr_get_exp(mpfrC) - 1; //mpfr_get_exp() assumes significand in [1/2,1)  
+		cst_exp_when_mantissa_int = cst_exp_when_mantissa_1_2 - cstWidth + 1; 
+		mpfr_init2(mpfr_cst_sig, cstWidth);
+		mpfr_div_2si(mpfr_cst_sig, mpfrC, cst_exp_when_mantissa_1_2, GMP_RNDN);
+		REPORT(INFO, "mpfr_cst_sig  = " << mpfr_get_d(mpfr_cst_sig, GMP_RNDN));
+		
+		// Build the corresponding FPConstMult.
+
+		// initialize mpfr_xcut_sig = 2/cst_sig, will be between 1 and 2
+		mpfr_init2(mpfr_xcut_sig, 32*(cstWidth+wE_in+wE_out)); // should be accurate enough
+		mpfr_set_d(mpfr_xcut_sig, 2.0, GMP_RNDN);               // exaxt op
+		mpfr_div(mpfr_xcut_sig, mpfr_xcut_sig, mpfr_cst_sig, GMP_RNDD);
+
+		// now  round it down to wF_in+1 bits 
+		mpfr_t xcut_wF;
+		mpfr_init2(xcut_wF, wF_in+1);
+		mpfr_set(xcut_wF, mpfr_xcut_sig, GMP_RNDD);
+		mpfr_mul_2si(xcut_wF, xcut_wF, wF_in, GMP_RNDN);
+		
+		// It should now be an int; cast it into a mpz, then a mpz_class 
+		mpz_init2(zz, wF_in+1);
+		mpfr_get_z(zz, xcut_wF, GMP_RNDN);
+		xcut_sig_rd = mpz_class(zz);
+		mpz_clear(zz);
+		REPORT(DETAILED, "mpfr_xcut_sig = " << mpfr_get_d(mpfr_xcut_sig, GMP_RNDN) );
+
+		// Now build the mpz significand
+		mpfr_mul_2si(mpfr_cst_sig,  mpfr_cst_sig, cstWidth, GMP_RNDN);
+		
+		// It should now be an int; cast it into a mpz, then a mpz_class 
+		mpz_init2(zz, cstWidth);
+		mpfr_get_z(zz, mpfr_cst_sig, GMP_RNDN);
+		cst_sig = mpz_class(zz);
+		mpz_clear(zz);
+		REPORT(DETAILED, "mpzclass cst_sig = " << cst_sig);
+		
+		// Constant normalization
+		while ((cst_sig % 2) ==0) {
+			REPORT(DETAILED, "Significand is even, normalising");
+			cst_sig = cst_sig >>1;
+			cst_exp_when_mantissa_int += 1;
+			cstWidth -= 1;
+		}
+
+		if(cst_sig==1) {
+			REPORT(INFO, "Constant mantissa is 1, multiplying by it will be easy"); 
+			mantissa_is_one = true;
+			return;
+		}
+		return; // normal constant
+	}
+	
+
+
+
+
+	FPConstMult::FPConstMult(Target* target, int wE_in, int wF_in, int wE_out, int wF_out):
+		Operator(target),
+		wE_in(wE_in), wF_in(wF_in), wE_out(wE_out), wF_out(wF_out) 
+	{
 	}
 #endif //HAVE_SOLLYA
 
 
-	void FPConstMult::setup() {
+	FPConstMult::~FPConstMult() {
+		// TODO but who cares really
+		// clean up memory -- with ifs, because in some cases they have not been init'd
+		if(mpfrC) mpfr_clear(mpfrC);
+		if(mpfr_cst_sig) mpfr_clear(mpfr_cst_sig);
+		if(mpfr_xcut_sig) mpfr_clear(mpfr_xcut_sig);
 	}
 
-	void FPConstMult::buildVHDL() {
 
+
+
+
+	void FPConstMult::buildVHDL() {
 
 		// Set up the IO signals
 		addFPInput("X", wE_in, wF_in);
 		addFPOutput("R", wE_out, wF_out);
 
-
 		setCopyrightString("Florent de Dinechin (2007)");
+
+		if(constant_is_zero) {
+			vhdl << tab << declare("x_exn",2) << " <=  X("<<wE_in<<"+"<<wF_in<<"+2 downto "<<wE_in<<"+"<<wF_in<<"+1);"<<endl;
+			vhdl << tab << declare("x_sgn") << " <=  X("<<wE_in<<"+"<<wF_in<<");"<<endl;
+			
+			vhdl << tab << declare("r_exn", 2) << " <=      \"00\" when ((x_exn = \"00\") or (x_exn = \"01\"))  -- zero"<<endl 
+					 << tab << "         else \"11\" ;-- 0*inf = 0*NaN = NaN" << endl;
+
+			vhdl  << tab << "R <= r_exn & x_sgn & " << rangeAssign(wE_out+wF_out-1, 0, "'0'") << ";"<<endl;
+			
+			return;
+		}
 
 		// bit width of constant exponent
 		int wE_cst=intlog2(abs(cst_exp_when_mantissa_1_2));
@@ -422,7 +476,7 @@ extern vector<Operator*> oplist;
 		}
 
 		// Handling signs is trivial
-		if(cst_sgn==0)
+		if(cstSgn==0)
 			vhdl << tab << declare("r_sgn") << " <= x_sgn; -- positive constant"<<endl;
 		else
 			vhdl << tab << declare("r_sgn") << " <= not x_sgn; -- negative constant"<<endl;
@@ -465,22 +519,6 @@ extern vector<Operator*> oplist;
 
 
 
-	FPConstMult::FPConstMult(Target* target, int wE_in, int wF_in, int wE_out, int wF_out):
-		Operator(target),
-		wE_in(wE_in), wF_in(wF_in), wE_out(wE_out), wF_out(wF_out) 
-	{
-	}
-
-
-	FPConstMult::~FPConstMult() {
-		// TODO but who cares really
-		// clean up memory -- with ifs, because in some cases they have not been init'd
-		if(mpfr_cst) mpfr_clear(mpfr_cst);
-		if(mpfr_cst_sig) mpfr_clear(mpfr_cst_sig);
-		if(mpfr_xcut_sig) mpfr_clear(mpfr_xcut_sig);
-	}
-
-
 
 
 	void FPConstMult::emulate(TestCase *tc)
@@ -495,7 +533,7 @@ extern vector<Operator*> oplist;
 		mpfr_init2(x, 1+wF_in);
 		mpfr_init2(r, 1+wF_out); 
 		fpx.getMPFR(x);
-		mpfr_mul(r, x, mpfr_cst, GMP_RNDN);
+		mpfr_mul(r, x, mpfrC, GMP_RNDN);
 
 		// Set outputs 
 		FPNumber  fpr(wE_out, wF_out, r);

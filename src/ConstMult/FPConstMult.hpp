@@ -28,24 +28,27 @@ namespace flopoco{
 		int wF_in; 
 		int wE_out; 
 		int wF_out; 
-		int cst_sgn;
+		mpfr_t mpfrC; 
+		int cstWidth;
+
+		int cstSgn;
 		int cst_exp_when_mantissa_1_2;
 		int cst_exp_when_mantissa_int;
-		int cst_width;
 		mpz_class cst_sig;
 		string cst_name;
 
-		mpfr_t mpfr_cst; 
 		mpfr_t mpfr_cst_sig; // between 1 and 2
 		mpfr_t mpfr_xcut_sig; // between 1 and 2
 
 		mpz_class xcut_sig_rd; // an int on wF_in+1 bits, which is mpfr_xcut_sig rounded down 
 
 		bool mantissa_is_one; /**< is the mantissa equal to 1? */
+		bool constant_is_zero; /**< is the constant equal to 0? */
+
 		IntConstMult *icm;
 		int icm_depth;
 
-		/** The method that sets up all the attributes, called by the various constructors to avoid code duplication */
+		/** The method that sets up all the attributes, called by the various constructors to avoid code duplication. */
 		void setup();
 
 		/** The method that declares all the signals and sets up the pipeline.
