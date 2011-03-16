@@ -36,6 +36,8 @@ namespace flopoco{
 extern vector<Operator*> oplist;
 
 
+	// The expert version
+
 	FPConstMult::FPConstMult(Target* target, int wE_in_, int wF_in_, int wE_out_, int wF_out_, int cstSgn_, int cst_exp_, mpz_class cst_sig_):
 		Operator(target), 
 		wE_in(wE_in_), wF_in(wF_in_), wE_out(wE_out_), wF_out(wF_out_), 
@@ -138,10 +140,6 @@ extern vector<Operator*> oplist;
 		if(wF_C==-1)
 			periodic_constant= true;
 
-		if(wF_C==0){ //  means: please compute wF_C for faithful rounding
-			cstWidth=wF_out+3;
-		}
-
 		srcFileName="FPConstMult";
 		/* Convert the input string into a sollya evaluation tree */
 		node = parseString(constant.c_str());	/* If conversion did not succeed (i.e. parse error) */
@@ -201,81 +199,88 @@ extern vector<Operator*> oplist;
 					periodSize ++;
 			}
 
-			if(found){
-				REPORT(DEBUG, "Found periodic pattern " << x0 << " (" << x0.get_str(2) << ") " << " of size "<< periodSize);
-				// Now look for header bits
-				// first build a table of rotations of this constant
-				vector<mpz_class> periods;
-				for (int i=0; i<periodSize; i++) {
-					periods.push_back(x0); 
-					x1 = x0>>(periodSize-1); // MSB
-					x0 = ((x0-(x1 << (periodSize-1)))<<1) + x1;
-					// cerr << x0.get_str(2) << endl;
-				}
-				// Now compare to the first bits of the constant
-				headerSize=0;
-				header=0;
-				x1 = z >> (zSize-periodSize);
-				// cerr << x1.get_str(2) << endl;
-				bool header_found=false;
-				while (!header_found && headerSize<maxPeriodSize) {
-					//cerr << "DDDDD " << headerSize << " " <<   header.get_str(2) << " " << x1.get_str(2) << endl;
-					for (int i=0; i<periodSize; i++){
-						//cerr << "zzzzzzz " <<  i << "  "<< x1.get_str(2) << " " << periods[i].get_str(2) << endl;
-						if (x1==periods[i]) {
-							header_found=true;
-							periodicPattern=periods[i];
-						}
-					}
-					if(!header_found) {
-						headerSize++;
-						header = z >> (zSize-headerSize); 
-						// mpz_class a, b, c;
-						// a = (z - (header << (zSize-headerSize)));
-						// b = a >> ((zSize-headerSize - periodSize));
-						// cerr << "KKKKKKKKKKKKKK " << ((zSize-headerSize - periodSize))  << "  "<< a.get_str(2) << endl << b.get_str(2) << endl;
-						x1 = (z - (header << (zSize-headerSize)))  >> (zSize-headerSize - periodSize) ;
-					}
-				}
-				if(header_found) {
-					REPORT(INFO, "Found header " << header.get_str(2) << " and periodic pattern " << periodicPattern.get_str(2) << " of size " << periodSize);
 
-					// Now go on
-					int wC = wF_out + 3; // for faithful rounding, but could come from the interface
-					int r = ceil(   ((double)(wC-headerSize)) / ((double)periodSize)   ); // Needed repetitions
-					int i = intlog2(r) -1; // 2^i < r < 2^{i+1}
-					int j = intlog2(r - ((mpz_class(1)<<i))) -1 ;
-					if(j!=-1) {
-						cstWidth = headerSize  + ((1<<i)+(1<<j))*periodSize;
-						REPORT(DETAILED, "wC=" << wC << ", need to repeat the period " << r << " times, will repeat 2^i+2^j with i=" << i << " and j=" << j);
-					}
-					else {
-						cstWidth = headerSize  + (1<<i)*periodSize;
-						REPORT(DETAILED, "wC=" << wC << ", need to repeat the period " << r << "=2^" << i << " times");
-					}
-					// Now rebuild the mpfrC constant TODO
-					
-					//					icm = new IntConstMult(target, wF_in+1, periodicPattern, periodSize, header, headerSize, i, j);
-					// oplist.push_back(icm);
-					exit(0);
-				}
-				else {
-					ostringstream error;
-					error << srcFileName << ": Found no header for periodic pattern " << periodicPattern.get_str(2) << " of size " << periodSize ;
-					throw error.str();
-				}
-
-			}			
-			else {
+			if(!found){
 				ostringstream error;
-				error << srcFileName << "Periodic pattern not found" ;
+				error << srcFileName << ": period not found" <<endl;
 				throw error.str();
 			}
+			
+			REPORT(DEBUG, "Found periodic pattern " << x0 << " (" << x0.get_str(2) << ") " << " of size "<< periodSize);
+			// Now look for header bits
+			// first build a table of rotations of this constant
+			vector<mpz_class> periods;
+			for (int i=0; i<periodSize; i++) {
+				periods.push_back(x0); 
+				x1 = x0>>(periodSize-1); // MSB
+				x0 = ((x0-(x1 << (periodSize-1)))<<1) + x1;
+				// cerr << x0.get_str(2) << endl;
+			}
+			// Now compare to the first bits of the constant
+			headerSize=0;
+			header=0;
+			x1 = z >> (zSize-periodSize);
+			// cerr << x1.get_str(2) << endl;
+			bool header_found=false;
+			while (!header_found && headerSize<maxPeriodSize) {
+				//cerr << "DDDDD " << headerSize << " " <<   header.get_str(2) << " " << x1.get_str(2) << endl;
+				for (int i=0; i<periodSize; i++){
+					//cerr << "zzzzzzz " <<  i << "  "<< x1.get_str(2) << " " << periods[i].get_str(2) << endl;
+					if (x1==periods[i]) {
+						header_found=true;
+						periodicPattern=periods[i];
+					}
+				}
+				if(!header_found) {
+					headerSize++;
+					header = z >> (zSize-headerSize); 
+					// mpz_class a, b, c;
+					// a = (z - (header << (zSize-headerSize)));
+					// b = a >> ((zSize-headerSize - periodSize));
+					// cerr << "KKKKKKKKKKKKKK " << ((zSize-headerSize - periodSize))  << "  "<< a.get_str(2) << endl << b.get_str(2) << endl;
+						x1 = (z - (header << (zSize-headerSize)))  >> (zSize-headerSize - periodSize) ;
+				}
+			} // end while
+			// Now go on
+			int wC = wF_out + 3; // for faithful rounding, but could come from the interface
+			int r = ceil(   ((double)(wC-headerSize)) / ((double)periodSize)   ); // Needed repetitions
+			int i = intlog2(r) -1; // 2^i < r < 2^{i+1}
+			int j = intlog2(r - ((mpz_class(1)<<i))) -1 ;
+			if(!header_found){
+				cstWidth = headerSize  + (1<<i)*periodSize;
+				REPORT(DETAILED, "wC=" << wC << ", need to repeat the period " << r << "=2^" << i << " times");
+			}
+			else {
+				REPORT(INFO, "Found header " << header.get_str(2) << " and periodic pattern " << periodicPattern.get_str(2) << " of size " << periodSize);
+			}
+
+			if(j!=-1) {
+				cstWidth = headerSize  + ((1<<i)+(1<<j))*periodSize;
+				REPORT(DETAILED, "wC=" << wC << ", need to repeat the period " << r << " times, will repeat 2^i+2^j with i=" << i << " and j=" << j);
+			}
+			// Now rebuild the mpfrC constant TODO
+			
+			//					icm = new IntConstMult(target, wF_in+1, periodicPattern, periodSize, header, headerSize, i, j);
+			// oplist.push_back(icm);
+			exit(0);
 		}
+				// else {
+				// 	ostringstream error;
+				// 	error << srcFileName << ": Found no header for periodic pattern " << periodicPattern.get_str(2) << " of size " << periodSize ;
+				// 	throw error.str();
+				// }
+
 		else{  // if (periodic)
+
+			// Nonperiodic version
+
+			if(wF_C==0) //  means: please compute wF_C for faithful rounding
+				cstWidth=wF_out+3;
+			
+			mpfr_set_prec(mpfrC, wF_out+3);
 			evaluateConstantExpression(mpfrC, node,  cstWidth);
 		}
-
+		
 		setup();
 		
 		// build the name
@@ -298,13 +303,22 @@ extern vector<Operator*> oplist;
 
 
 
+
+
+
+
+
+
+
 	// Set up the various constants out of an MPFR constant
+	// The constant precision must be set up properly in 
 	void FPConstMult::setup()
 	{
 
 		mpz_t zz;
 		cstWidth=mpfr_get_prec(mpfrC);
 
+		REPORT(DEBUG, "cstWidth=" << cstWidth);
 
 		if(mpfr_zero_p(mpfrC)) {
 			REPORT(INFO, "building a multiplier by 0, it will be easy");
