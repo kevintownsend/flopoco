@@ -687,9 +687,12 @@ public:
 	}
 
 	int level; //printing issues
-	
-	
 
+	/** add a comment line in to vhdl stream */
+	void addComment(string comment, string align = tab);
+
+	/** add a full line of '-' with comment centered within */
+	void addFullComment(string comment, int lineLength = 80);
 protected:    
 	Target*             target_;          /**< The target on which the operator will be deployed */
 	string              uniqueName_;      /**< By default, a name derived from the operator class and the parameters */

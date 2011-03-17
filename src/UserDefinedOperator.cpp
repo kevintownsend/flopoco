@@ -47,6 +47,8 @@ UserDefinedOperator::UserDefinedOperator(Target* target, int param0_, int param1
   addInput ("X" , param0);
   addInput ("Y" , param0);
   addInput ("Z" , param0);
+  addFullComment(" addFullComment for a large comment ");
+  addComment("addComment for small left-aligned comment");
 
   // declaring output
   addOutput("S" , param1);

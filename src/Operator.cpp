@@ -1340,6 +1340,17 @@ namespace flopoco{
 		else
 			return false;
 	}
+
+	void Operator::addComment(string comment, string align){
+		vhdl << align << "-- " << comment << endl;
+	}
+
+	void Operator::addFullComment(string comment, int lineLength) {
+		string align = "--";
+		// - 2 for the two spaces
+		for (int i = 2; i < (lineLength - 2- comment.size()) / 2; i++) align += "-";
+		vhdl << align << " " << comment << " " << align << endl; 
+	}
 	
 		
 }
