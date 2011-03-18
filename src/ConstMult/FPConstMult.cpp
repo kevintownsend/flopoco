@@ -38,43 +38,43 @@ extern vector<Operator*> oplist;
 
 	// The expert version
 
-	FPConstMult::FPConstMult(Target* target, int wE_in_, int wF_in_, int wE_out_, int wF_out_, int cstSgn_, int cst_exp_, mpz_class cst_sig_):
+	FPConstMult::FPConstMult(Target* target, int wE_in_, int wF_in_, int wE_out_, int wF_out_, int cstSgn_, int cst_exp_, mpz_class cstIntSig_):
 		Operator(target), 
 		wE_in(wE_in_), wF_in(wF_in_), wE_out(wE_out_), wF_out(wF_out_), 
-		cstSgn(cstSgn_), cst_exp_when_mantissa_int(cst_exp_), cst_sig(cst_sig_)
+		cstSgn(cstSgn_), cst_exp_when_mantissa_int(cst_exp_), cstIntSig(cstIntSig_)
 	{
 		srcFileName="FPConstMult";
 		ostringstream name;
-		name <<"FPConstMult_"<<(cstSgn==0?"":"M") <<mpz2string(cst_sig)<<"b"<<(cst_exp_when_mantissa_int<0?"M":"")<<abs(cst_exp_when_mantissa_int)<<"_"<<wE_in<<"_"<<wF_in<<"_"<<wE_out<<"_"<<wF_out;
+		name <<"FPConstMult_"<<(cstSgn==0?"":"M") <<mpz2string(cstIntSig)<<"b"<<(cst_exp_when_mantissa_int<0?"M":"")<<abs(cst_exp_when_mantissa_int)<<"_"<<wE_in<<"_"<<wF_in<<"_"<<wE_out<<"_"<<wF_out;
 		uniqueName_=name.str();
 
-		if(cst_sig==0) {
+		if(cstIntSig==0) {
 			REPORT(INFO, "building a multiplier by 0, it will be easy");
 			vhdl  << tab << "r <= " << rangeAssign(wE_out+wF_out+1, 0, "'0'") << ";"<<endl;
 		}
 		else {
 			// Constant normalization
-			while ((cst_sig % 2) ==0) {
+			while ((cstIntSig % 2) ==0) {
 				REPORT(INFO, "Significand is even, normalising");
-				cst_sig = cst_sig >>1;
+				cstIntSig = cstIntSig >>1;
 				cst_exp_when_mantissa_int+=1;
 			}
 			mantissa_is_one = false;
-			if(cst_sig==1) {
+			if(cstIntSig==1) {
 				REPORT(INFO, "Constant mantissa is 1, multiplying by it will be easy"); 
 				mantissa_is_one = true;
 			}
 
-			cstWidth = intlog2(cst_sig);
+			cstWidth = intlog2(cstIntSig);
 			cst_exp_when_mantissa_1_2 = cst_exp_when_mantissa_int + cstWidth - 1; 
 
 			// initialize mpfr constant
-			mpfr_init2(mpfr_cst_sig, max(cstWidth, 2));
-			mpfr_set_z(mpfr_cst_sig, cst_sig.get_mpz_t(), GMP_RNDN); // exact op
-			mpfr_mul_2si(mpfr_cst_sig, mpfr_cst_sig, -(cstWidth-1), GMP_RNDN);  // exact op, gets mpfr_cst_sig in 1..2
+			mpfr_init2(cstSig, max(cstWidth, 2));
+			mpfr_set_z(cstSig, cstIntSig.get_mpz_t(), GMP_RNDN); // exact op
+			mpfr_mul_2si(cstSig, cstSig, -(cstWidth-1), GMP_RNDN);  // exact op, gets cstSig in 1..2
 			
 			mpfr_init(mpfrC);
-			mpfr_set(mpfrC, mpfr_cst_sig, GMP_RNDN);
+			mpfr_set(mpfrC, cstSig, GMP_RNDN);
 			mpfr_mul_2si(mpfrC, mpfrC, cst_exp_when_mantissa_1_2, GMP_RNDN);
 			
 			if(cstSgn==1)
@@ -82,33 +82,10 @@ extern vector<Operator*> oplist;
 			REPORT(INFO, "mpfrC = " << mpfr_get_d(mpfrC, GMP_RNDN));
 
 
-			if(!mantissa_is_one) {			
-				// initialize mpfr_xcut_sig = 2/cst_sig, will be between 1 and 2
-				mpfr_init2(mpfr_xcut_sig, 4*(cstWidth+wE_in+wE_out));
-				mpfr_set_d(mpfr_xcut_sig, 2.0, GMP_RNDN);               // exaxt op
-				mpfr_div(mpfr_xcut_sig, mpfr_xcut_sig, mpfr_cst_sig, GMP_RNDD);
-
-				// now  round it up to wF_in+1 bits 
-				mpfr_t xcut_wF;
-				mpfr_init2(xcut_wF, wF_in+1);
-				mpfr_set(xcut_wF, mpfr_xcut_sig, GMP_RNDD);
-				mpfr_mul_2si(xcut_wF, xcut_wF, wF_in, GMP_RNDN);
-				// It should now be an int; cast it into a mpz, then a mpz_class 
-				mpz_t zz;
-				mpz_init2(zz, wF_in+1);
-				mpfr_get_z(zz, xcut_wF, GMP_RNDN);
-				xcut_sig_rd= mpz_class(zz);
-
-				REPORT(DETAILED, "mpfr_cst_sig  = " << mpfr_get_d(mpfr_cst_sig, GMP_RNDN));
-				REPORT(DETAILED, "mpfr_xcut_sig = " << mpfr_get_d(mpfr_xcut_sig, GMP_RNDN)); 
-				if(verbose) { // can't use REPORT because of GMP's C++ wrapper problem under windoze
-					cerr << "xcut_sig_rd   = " << mpz2string(xcut_sig_rd) << "   ";
-					printBinNumGMP(cerr, xcut_sig_rd, wF_in+1);  cerr << endl;
-				}
-				mpfr_clear(xcut_wF);
-				mpz_clear(zz);
+			if(!mantissa_is_one) {
+				computeXCut();
 				// sub component
-				icm = new IntConstMult(target, wF_in+1, cst_sig);
+				icm = new IntConstMult(target, wF_in+1, cstIntSig);
 				oplist.push_back(icm);
 			}
 
@@ -284,10 +261,10 @@ extern vector<Operator*> oplist;
 
 			// Now rebuild the mpfrC constant (for emulate() etc)
 			// First, as an integer mantissa
-			cst_sig = header;
+			cstIntSig = header;
 			for(int k=0; k<r; k++)
-				cst_sig = (cst_sig<<periodSize) + periodicPattern;
-			REPORT(DEBUG, "Constant mantissa rebuilt as " << cst_sig << " ==  " << cst_sig.get_str(2) );
+				cstIntSig = (cstIntSig<<periodSize) + periodicPattern;
+			REPORT(DEBUG, "Constant mantissa rebuilt as " << cstIntSig << " ==  " << cstIntSig.get_str(2) );
 
 			// now as an MPFR
 			cstWidth = headerSize  + r*periodSize;
@@ -296,13 +273,17 @@ extern vector<Operator*> oplist;
 			evaluateConstantExpression(mpfrC, node, zSize); // mpfrC is a dummy here
 			mpz_class dummy;
 			cst_exp_when_mantissa_int = mpfr_get_z_exp(dummy.get_mpz_t(), mpfrC);
-			mpfr_set_z(mpfrC, cst_sig.get_mpz_t(), GMP_RNDN);
+			mpfr_set_z(mpfrC, cstIntSig.get_mpz_t(), GMP_RNDN);
 			mpfr_mul_2si(mpfrC, mpfrC, cst_exp_when_mantissa_int, GMP_RNDN); // exact
 			REPORT(DEBUG, "Constant rebuilt as " << mpfr_get_d( mpfrC, GMP_RNDN) );
 
-			icm = new IntConstMult(target, wF_in+1, cst_sig, periodicPattern, periodSize, header, headerSize, i, j);
-			oplist.push_back(icm);
+			setupSgnAndExpCases();
+			computeExpSig();
+			computeXCut();
+			// normalizeCst(); If the constant is even, it will be managed in the IntConstMult
 
+			icm = new IntConstMult(target, wF_in+1, cstIntSig, periodicPattern, periodSize, header, headerSize, i, j);
+			oplist.push_back(icm);
 
 		}
 				// else {
@@ -322,14 +303,21 @@ extern vector<Operator*> oplist;
 
 			if(wF_C==0) //  means: please compute wF_C for faithful rounding
 				cstWidth=wF_out+3;
+			else
+				cstWidth=wF_C;
 			
 			mpfr_set_prec(mpfrC, wF_out+3);
 			evaluateConstantExpression(mpfrC, node,  cstWidth);
 
-			setup();
+
+			setupSgnAndExpCases();
+			computeExpSig();
+			computeIntExpSig();
+			computeXCut();
+			normalizeCst();
 
 			if(!constant_is_zero && !mantissa_is_one) {
-				icm = new IntConstMult(target, wF_in+1, cst_sig);
+				icm = new IntConstMult(target, wF_in+1, cstIntSig);
 				oplist.push_back(icm);
 			}
 			
@@ -338,13 +326,10 @@ extern vector<Operator*> oplist;
 		
 		// build the name
 		ostringstream name; 
-		name <<"FPConstMult_"<<(cstSgn==0?"":"M") <<cst_sig<<"b"
+		name <<"FPConstMult_"<<(cstSgn==0?"":"M") <<cstIntSig<<"b"
 				 <<(cst_exp_when_mantissa_int<0?"M":"")<<abs(cst_exp_when_mantissa_int)
 				 <<"_"<<wE_in<<"_"<<wF_in<<"_"<<wE_out<<"_"<<wF_out;
 		uniqueName_=name.str();
-		
-		// cleaning up : TODO
-		//			mpfr_clears(mpfrC, mpfr_xcut_sig, xcut_wF, mpfr_cst_sig, NULL);
 		
 		
 		buildVHDL();
@@ -361,12 +346,8 @@ extern vector<Operator*> oplist;
 
 	// Set up the various constants out of an MPFR constant
 	// The constant precision must be set up properly in 
-	void FPConstMult::setup()
+	void FPConstMult::setupSgnAndExpCases()
 	{
-
-		mpz_t zz;
-		cstWidth=mpfr_get_prec(mpfrC);
-
 		REPORT(DEBUG, "cstWidth=" << cstWidth);
 
 		if(mpfr_zero_p(mpfrC)) {
@@ -383,20 +364,31 @@ extern vector<Operator*> oplist;
 		else {
 			cstSgn=0;
 		}
+	}
 
+
+	// Needs: cstWidth, mpfrC
+	// Provides: 
+	void FPConstMult::computeExpSig()
+	{
 		// compute exponent and mantissa
 		cst_exp_when_mantissa_1_2 = mpfr_get_exp(mpfrC) - 1; //mpfr_get_exp() assumes significand in [1/2,1)  
-		cst_exp_when_mantissa_int = cst_exp_when_mantissa_1_2 - cstWidth + 1; 
-		mpfr_init2(mpfr_cst_sig, cstWidth);
-		mpfr_div_2si(mpfr_cst_sig, mpfrC, cst_exp_when_mantissa_1_2, GMP_RNDN);
-		REPORT(INFO, "mpfr_cst_sig  = " << mpfr_get_d(mpfr_cst_sig, GMP_RNDN));
-		
-		// Build the corresponding FPConstMult.
+		mpfr_init2( cstSig, cstWidth);
+		mpfr_div_2si(cstSig, mpfrC, cst_exp_when_mantissa_1_2, GMP_RNDN);
+		REPORT(INFO, "cstSig  = " << mpfr_get_d(cstSig, GMP_RNDN));		
+	}
 
-		// initialize mpfr_xcut_sig = 2/cst_sig, will be between 1 and 2
+
+	// Needs: cstWidth, cstSig
+	//
+	void FPConstMult::computeXCut()
+	{
+		mpz_t zz;
+
+		// initialize mpfr_xcut_sig = 2/cstIntSig, will be between 1 and 2
 		mpfr_init2(mpfr_xcut_sig, 32*(cstWidth+wE_in+wE_out)); // should be accurate enough
 		mpfr_set_d(mpfr_xcut_sig, 2.0, GMP_RNDN);               // exaxt op
-		mpfr_div(mpfr_xcut_sig, mpfr_xcut_sig, mpfr_cst_sig, GMP_RNDD);
+		mpfr_div(mpfr_xcut_sig, mpfr_xcut_sig, cstSig, GMP_RNDD);
 
 		// now  round it down to wF_in+1 bits 
 		mpfr_t xcut_wF;
@@ -410,26 +402,27 @@ extern vector<Operator*> oplist;
 		xcut_sig_rd = mpz_class(zz);
 		mpz_clear(zz);
 		REPORT(DETAILED, "mpfr_xcut_sig = " << mpfr_get_d(mpfr_xcut_sig, GMP_RNDN) );
+	}
 
-		// Now build the mpz significand
-		mpfr_mul_2si(mpfr_cst_sig,  mpfr_cst_sig, cstWidth, GMP_RNDN);
-		
-		// It should now be an int; cast it into a mpz, then a mpz_class 
-		mpz_init2(zz, cstWidth);
-		mpfr_get_z(zz, mpfr_cst_sig, GMP_RNDN);
-		cst_sig = mpz_class(zz);
-		mpz_clear(zz);
-		REPORT(DETAILED, "mpzclass cst_sig = " << cst_sig);
-		
+
+	void FPConstMult::computeIntExpSig()
+	{
+		cst_exp_when_mantissa_int = mpfr_get_z_exp(cstIntSig.get_mpz_t(), mpfrC);
+		REPORT(DETAILED, "mpzclass cstIntSig = " << cstIntSig);
+	}
+
+
+	void FPConstMult::normalizeCst()
+	{
 		// Constant normalization
-		while ((cst_sig % 2) ==0) {
+		while ((cstIntSig % 2) ==0) {
 			REPORT(DETAILED, "Significand is even, normalising");
-			cst_sig = cst_sig >>1;
+			cstIntSig = cstIntSig >>1;
 			cst_exp_when_mantissa_int += 1;
 			cstWidth -= 1;
 		}
 
-		if(cst_sig==1) {
+		if(cstIntSig==1) {
 			REPORT(INFO, "Constant mantissa is 1, multiplying by it will be easy"); 
 			mantissa_is_one = true;
 			return;
@@ -453,7 +446,7 @@ extern vector<Operator*> oplist;
 		// TODO but who cares really
 		// clean up memory -- with ifs, because in some cases they have not been init'd
 		if(mpfrC) mpfr_clear(mpfrC);
-		if(mpfr_cst_sig) mpfr_clear(mpfr_cst_sig);
+		if(cstSig) mpfr_clear(cstSig);
 		if(mpfr_xcut_sig) mpfr_clear(mpfr_xcut_sig);
 	}
 
@@ -592,20 +585,40 @@ extern vector<Operator*> oplist;
 		/* Compute correct value */
 		FPNumber fpx(wE_in, wF_in);
 		fpx = svX;
-		mpfr_t x, r;
+		mpfr_t x, ru,rd;
 		mpfr_init2(x, 1+wF_in);
-		mpfr_init2(r, 1+wF_out); 
+		mpfr_init2(ru, 1+wF_out); 
+		mpfr_init2(rd, 1+wF_out); 
 		fpx.getMPFR(x);
-		mpfr_mul(r, x, mpfrC, GMP_RNDN);
+		mpfr_mul(ru, x, mpfrC, GMP_RNDU);
+		mpfr_mul(rd, x, mpfrC, GMP_RNDD);
 
 		// Set outputs 
-		FPNumber  fpr(wE_out, wF_out, r);
-		mpz_class svR = fpr.getSignalValue();
-		tc->addExpectedOutput("R", svR);
+		FPNumber  fpru(wE_out, wF_out, ru);
+		mpz_class svRU = fpru.getSignalValue();
+		tc->addExpectedOutput("R", svRU);
+		FPNumber  fprd(wE_out, wF_out, rd);
+		mpz_class svRD = fprd.getSignalValue();
+		tc->addExpectedOutput("R", svRD);
 
 		// clean up
-		mpfr_clears(x, r, NULL);
+		mpfr_clears(x, ru, rd, NULL);
 
 	}
 
 }
+
+#if 0
+
+flopoco.vhdl:332:16:@9822ns:(assertion error): Incorrect output for R, expected value : 0100101010100011000101101010010... (other values line 1963 of test.input), result:  0100101010101101000000110110111|| line : 1963 of input file 
+flopoco.vhdl:332:16:@9832ns:(assertion error): Incorrect output for R, expected value : 0100110011111111011011010111011... (other values line 1965 of test.input), result:  0100110011111010011100000100111|| line : 1965 of input file 
+flopoco.vhdl:332:16:@9852ns:(assertion error): Incorrect output for R, expected value : 0111010110000101101100110011011... (other values line 1969 of test.input), result:  0111010110000110000111110011101|| line : 1969 of input file 
+flopoco.vhdl:332:16:@9932ns:(assertion error): Incorrect output for R, expected value : 0100101011011001010101011111011... (other values line 1985 of test.input), result:  0100101011001011011111010001110|| line : 1985 of input file 
+flopoco.vhdl:332:16:@9942ns:(assertion error): Incorrect output for R, expected value : 0100100010000110010001110010101... (other values line 1987 of test.input), result:  0100100010001110000010110110100|| line : 1987 of input file 
+flopoco.vhdl:332:16:@9952ns:(assertion error): Incorrect output for R, expected value : 0101100101000010010010111011000... (other values line 1989 of test.input), result:  0101100101010111000111100101100|| line : 1989 of input file 
+flopoco.vhdl:332:16:@9982ns:(assertion error): Incorrect output for R, expected value : 0100111110001000110010000111110... (other values line 1995 of test.input), result:  0100111110010000101001110001011|| line : 1995 of input file 
+flopoco.vhdl:332:16:@9992ns:(assertion error): Incorrect output for R, expected value : 
+0110111011101111111001000110001... (other values line 1997 of test.input), result:  
+0110111011101000011001001001011|| line : 1997 of input file 
+
+#endif

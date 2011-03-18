@@ -34,10 +34,10 @@ namespace flopoco{
 		int cstSgn;
 		int cst_exp_when_mantissa_1_2;
 		int cst_exp_when_mantissa_int;
-		mpz_class cst_sig;
+		mpz_class cstIntSig;
 		string cst_name;
 
-		mpfr_t mpfr_cst_sig; // between 1 and 2
+		mpfr_t cstSig; // between 1 and 2, high accuracy
 		mpfr_t mpfr_xcut_sig; // between 1 and 2
 
 		mpz_class xcut_sig_rd; // an int on wF_in+1 bits, which is mpfr_xcut_sig rounded down 
@@ -48,8 +48,18 @@ namespace flopoco{
 		IntConstMult *icm;
 		int icm_depth;
 
-		/** The method that sets up all the attributes, called by the various constructors to avoid code duplication. */
-		void setup();
+
+		/** to avoid code duplication. */
+		void setupSgnAndExpCases();
+
+		void computeExpSig();
+
+		void computeIntExpSig();
+
+		void computeXCut();
+
+		void normalizeCst();
+
 
 		/** The method that declares all the signals and sets up the pipeline.
 			 It is called by the constructors of FPConstMult and CRFPConstMult to avoid code duplication */
