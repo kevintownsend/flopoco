@@ -335,6 +335,7 @@ extern vector<Operator*> oplist;
 		buildVHDL();
 	}
 
+#endif //HAVE_SOLLYA
 
 
 
@@ -439,7 +440,6 @@ extern vector<Operator*> oplist;
 		wE_in(wE_in), wF_in(wF_in), wE_out(wE_out), wF_out(wF_out) 
 	{
 	}
-#endif //HAVE_SOLLYA
 
 
 	FPConstMult::~FPConstMult() {
