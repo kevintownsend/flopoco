@@ -494,7 +494,7 @@ namespace flopoco{
 		if(j==-1)
 			implementation->result = 	powerOfTwo[i];
 		else
-			implementation->result = new ShiftAddOp(implementation, Add, powerOfTwo[i], periodSize<<i, powerOfTwo[j] );
+			implementation->result = new ShiftAddOp(implementation, Add, powerOfTwo[j], periodSize<<i, powerOfTwo[i] );
 
 		if(verbose>=DETAILED) showShiftAddDag();
 		
