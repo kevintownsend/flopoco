@@ -255,7 +255,7 @@ extern vector<Operator*> oplist;
 			}
 			else{
 				r=(1<<i)+(1<<j);
-				REPORT(DETAILED, "... Will repeat 2^i+2^j with i=" << i << " and j=" << j);
+				REPORT(DETAILED, "... Will repeat 2^i+2^j = " << (1<<i) + (1<<j) << " with i=" << i << " and j=" << j);
 			}
 
 
@@ -280,8 +280,22 @@ extern vector<Operator*> oplist;
 			setupSgnAndExpCases();
 			computeExpSig();
 			computeXCut();
-			// normalizeCst(); If the constant is even, it will be managed in the IntConstMult
 
+			// If the period has zeroes at the LSB, there are FAs to save
+			// We shift the constant and the periodic pattern, but we do not touch its size
+			// So the shifts by 2^k*periodSize will still do the right thing
+
+
+			int zeroesToTheRight=0;
+			while ((cstIntSig % 2) ==0) {
+				REPORT(DEBUG, "Significand is even, normalising");
+				cstIntSig = cstIntSig >>1;
+				periodicPattern = periodicPattern >>1;
+				cst_exp_when_mantissa_int++;
+				zeroesToTheRight++;
+			}
+
+			// Now periodicPattern is even, and this constructor has to remember to shift it by zeroesToTheRight
 			icm = new IntConstMult(target, wF_in+1, cstIntSig, periodicPattern, periodSize, header, headerSize, i, j);
 			oplist.push_back(icm);
 

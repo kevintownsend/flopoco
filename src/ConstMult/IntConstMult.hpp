@@ -38,7 +38,8 @@ namespace flopoco{
 				Parameters i and j are such that the period must be repeated 2^i + 2^j times. 
 				If j==-1, just repeat the period 2^i times
 		 */
-		IntConstMult(Target* _target, int _xsize, mpz_class n, mpz_class period, int periodSize, mpz_class header, int headerSize, int i, int j);
+		IntConstMult(Target* _target, int _xsize, mpz_class n, 
+								 mpz_class period, int periodSize, mpz_class header, int headerSize, int i, int j);
 
 		~IntConstMult();
 
@@ -47,11 +48,6 @@ namespace flopoco{
 		int rsize;   
 		ShiftAddDag* implementation;
 
-#if 0
-		int* bits;
-		int* BoothCode;
-		int nonZeroInBoothCode;
-#endif
 
 
 

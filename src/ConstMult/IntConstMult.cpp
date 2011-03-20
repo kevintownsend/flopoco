@@ -55,6 +55,9 @@ namespace flopoco{
 	}
 
 
+
+
+
 	// No longer used
 
 	int compute_tree_depth(ShiftAddOp* sao) {
@@ -82,6 +85,10 @@ namespace flopoco{
 		}
 	}
 
+
+
+
+
 	// Do not forget to call reset_visited before calling this one.
 	int compute_total_cost_rec(ShiftAddOp* sao) {
 		if (sao==NULL || sao->already_visited)
@@ -102,6 +109,10 @@ namespace flopoco{
 		}
 		throw string("This exception in IntConstMult::compute_total_cost_rec should never happen");
 	}
+
+
+
+
 
 	int compute_total_cost(ShiftAddOp* sao) {
 		reset_visited(sao);
@@ -445,6 +456,7 @@ namespace flopoco{
 		
 		int cost=compute_total_cost(implementation->result);
 		REPORT(INFO, "Estimated bare cost (not counting pipeline overhead) : " << cost << " FA/LUT" );
+		REPORT(INFO, "Depth of the DAG : " << compute_tree_depth(implementation->result) );
 		
 		double delay=0.0;
 		// recursively build the pipeline in the vhdl stream
@@ -487,20 +499,24 @@ namespace flopoco{
 		
 		ShiftAddOp* powerOfTwo[100];
 
+		// Build the multiplier by the period
 		powerOfTwo[0] = buildMultBoothTree(period);
+
+
 		for (int k=1; k<=i; k++){
-			powerOfTwo[k]=  new ShiftAddOp(implementation, Add, powerOfTwo[k-1], periodSize<<(k-1), powerOfTwo[k-1] );
+			powerOfTwo[k]=  new ShiftAddOp(implementation, Add, powerOfTwo[k-1], (periodSize<<(k-1)), powerOfTwo[k-1] );
 		}
 		if(j==-1)
 			implementation->result = 	powerOfTwo[i];
 		else
-			implementation->result = new ShiftAddOp(implementation, Add, powerOfTwo[j], periodSize<<i, powerOfTwo[i] );
+			implementation->result = new ShiftAddOp(implementation, Add, powerOfTwo[j], (periodSize<<i), powerOfTwo[i] );
 
 		if(verbose>=DETAILED) showShiftAddDag();
 		
 		int cost=compute_total_cost(implementation->result);
 		REPORT(INFO, "Estimated bare cost (not counting pipeline overhead) : " << cost << " FA/LUT" );
-		
+		REPORT(INFO, "Depth of the DAG : " << compute_tree_depth(implementation->result) );
+
 		double delay=0.0;
 		// recursively build the pipeline in the vhdl stream
 		build_pipeline(implementation->result, delay);
@@ -579,15 +595,30 @@ namespace flopoco{
 		delete implementation;
 	}
 
+
+
+
+
 	string IntConstMult::printBoothCode(int* BoothCode, int size) {
 		ostringstream s;
-		for (int i=size; i>=0; i--) {
+		for (int i=size-1; i>=0; i--) {
 			if(BoothCode[i]==0)       s << "0"; 
 			else if(BoothCode[i]==1)  s << "+" ;
 			else if(BoothCode[i]==-1) s << "-" ;   
 		}
 		return s.str();
 	}
+
+
+
+	bool needsMinusX(int * boothCode, int n) {
+		for(int i=0; i<n; i++)
+			if(boothCode[i]==-1)
+				return true;
+		return false;
+	}
+
+
 
 	/** Recodes input n, returns the number of non-zero bits */
 	int IntConstMult::recodeBooth(mpz_class n, int* BoothCode) {
@@ -599,9 +630,11 @@ namespace flopoco{
 		// Build the binary representation -- I'm sure there is a mpz method for it
 		mpz_class nn = n;
 		int l = 0;
+		int nonZero=0;
 		b = new int[nsize+1];
 		while(nn!=0) {
 			b[l] = (nn.get_ui())%2;
+			nonZero+=b[l]; // count the ones
 			l++;
 			nn = nn>>1;
 		}
@@ -609,8 +642,9 @@ namespace flopoco{
 
 		ostringstream o;
 		for (int i=nsize-1; i>=0; i--)    o << ((int) b[i]);   
-		REPORT(DETAILED, "Constant binary is " << o.str()); 
+		REPORT(DETAILED, "Constant binary is  " << o.str() << " with " << nonZero << " ones"); 
 
+		int needMinusX=0;
 		c = new int[nsize+1];
 				
 		c[0] = 0;
@@ -620,10 +654,14 @@ namespace flopoco{
 			else 
 				c[i+1] = 0;
 			BoothCode[i] = b[i] + c[i] -2*c[i+1];
+			if(BoothCode[i]==-1)
+				needMinusX=1;
 		}
 		BoothCode[nsize] = c[nsize];
 
 
+#if 0
+		// A bit of tinkering
 		// This method generates +0- for 3 instead of 0++.
 		// As the -1 will cost us more, we rewrite that
 
@@ -637,15 +675,32 @@ namespace flopoco{
 			}
 		}
 
-		REPORT(DETAILED, "Booth recoding is " << printBoothCode(BoothCode, nsize+1)); 
+#endif
 
 		for (i=0; i<=nsize; i++) {
 			if (BoothCode[i] != 0) 
 				nonZeroInBoothCode ++;
 		}
+
+		REPORT(DETAILED, "Booth recoding is  " << printBoothCode(BoothCode, nsize+1)  << " with " << nonZeroInBoothCode << " non-zero digits"); 
+		
+#if 1
+		// If there is no savings in terms of additions, discard the Booth code 
+		if (nonZeroInBoothCode+needMinusX >= nonZero) {
+			REPORT(DETAILED, "Reverting to non-Booth"); 
+			for (i=0; i<nsize; i++)
+				BoothCode[i] = b[i];
+			nonZeroInBoothCode=nonZero;
+			REPORT(DETAILED, "Booth recoding is   " << printBoothCode(BoothCode, nsize)  << " with " << nonZeroInBoothCode << " non-zero digits"); 
+		}
+  
+#endif
 		delete [] c; delete [] b;
 		return nonZeroInBoothCode;
 	}
+
+
+
 
 
 
@@ -715,9 +770,6 @@ namespace flopoco{
 			BoothCode = new int[nsize+1];
 			nonZeroInBoothCode = recodeBooth(n, BoothCode);
 			
-			//			REPORT(DETAILED, "Booth code is "<< printBoothCode()   );
-			REPORT(DETAILED, "Non-zero digits:" << nonZeroInBoothCode);
-
 			i=0;
 			while(0==BoothCode[i]) i++;
 			int globalshift=i;
@@ -731,7 +783,11 @@ namespace flopoco{
 			else { // at least two non-zero bits
 				
 				// build the opposite of the input
-				ShiftAddOp* MX = new ShiftAddOp(implementation, Neg, implementation->PX);
+	
+				ShiftAddOp* MX;
+
+				if(needsMinusX(BoothCode, nsize))
+					MX = new ShiftAddOp(implementation, Neg, implementation->PX);
 				
 				// fill an initial array with Xs and MXs
 				level = new ShiftAddOp*[nonZeroInBoothCode];
