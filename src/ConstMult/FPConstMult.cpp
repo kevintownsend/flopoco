@@ -109,13 +109,259 @@ extern vector<Operator*> oplist;
 
 
 
+	// The rational version
+	FPConstMult::FPConstMult(Target* target, int wE_in_, int wF_in_, int wE_out_, int wF_out_, int a, int b, bool correctRounding):
+		Operator(target), 
+		wE_in(wE_in_), wF_in(wF_in_), wE_out(wE_out_), wF_out(wF_out_)
+	{
+
+		srcFileName="FPConstMult";
+
+		if(b<=0){
+			ostringstream error;
+			error << srcFileName << " (rational) : b must be strictly positive" <<endl;
+			throw error.str();
+		}
+
+		if(a<0){
+			cstSgn=1;
+			a=-a;
+		}
+			
+		int expWhenVeryLargeInt;
+		int periodSize, headerSize; 
+		mpz_class periodicPattern, header; // The two values to look for
+		mpfr_t mpa, mpb;
+		mpfr_inits(mpfrC,mpa,mpb, NULL);
+		mpfr_set_si(mpa, a, GMP_RNDN);
+		mpfr_set_si(mpb, b, GMP_RNDN);
+
+
+
+
+		// Florent is not a mathematician
+
+		// Evaluate to a very large number of bits, then look for a period
+		// evaluate to 2000 bits
+#define EVAL_PRECISION 2000
+		int zSize=2*EVAL_PRECISION;
+		mpfr_set_prec(mpfrC, zSize);
+
+		mpfr_div(mpfrC, mpa, mpb, GMP_RNDN);
+
+		int maxPeriodSize=128;
+		mpz_t z_mpz;
+		mpz_class z, x0, x1;
+		mpz_init(z_mpz);
+		expWhenVeryLargeInt = mpfr_get_z_exp(z_mpz, mpfrC);
+		z = mpz_class(z_mpz);
+		mpz_clear(z_mpz);
+		REPORT(DETAILED, "Looking for a period in a constant which looks like " << z.get_str(2)); 
+		periodSize=2;
+
+		bool found=false;
+		while (!found &&  periodSize < maxPeriodSize) {
+			// first go to the middle of these 2000 bits
+			mpz_class t = z >> (EVAL_PRECISION);
+			// First filter
+			x0 = t-((t >> periodSize)<<periodSize);
+			t = t >> periodSize;
+			x1 = t-((t >> periodSize)<<periodSize);
+			int i=2;
+			int max_number_of_periods = (EVAL_PRECISION/maxPeriodSize) >> 1;
+			REPORT(DEBUG, "Trying periodSize=" << periodSize << " max_number_of_periods=" << max_number_of_periods);
+			while(x0==x1 && i<max_number_of_periods) {
+				// REPORT(DEBUG, "i=" <<i << " x0=" << x0.get_str(2) << " x1=" << x1.get_str(2) );
+				t = t >> periodSize;
+				x1 = t-((t >> periodSize)<<periodSize);
+				i++;
+			}
+			if(i==max_number_of_periods)
+				found=true;
+			else
+				periodSize ++;
+		}
+
+
+		if(!found){
+			ostringstream error;
+			error << srcFileName << ": period not found" <<endl;
+			throw error.str();
+		}
+			
+		REPORT(DEBUG, "Found periodic pattern " << x0 << " (" << x0.get_str(2) << ") " << " of size "<< periodSize);
+		// Now look for header bits
+		// first build a table of rotations of this constant
+		vector<mpz_class> periods;
+		for (int i=0; i<periodSize; i++) {
+			periods.push_back(x0); 
+			x1 = x0>>(periodSize-1); // MSB
+			x0 = ((x0-(x1 << (periodSize-1)))<<1) + x1;
+			// cerr << x0.get_str(2) << endl;
+		}
+		// Now compare to the first bits of the constant
+		headerSize=0;
+		header=0;
+		x1 = z >> (zSize-periodSize);
+		// cerr << x1.get_str(2) << endl;
+		bool header_found=false;
+		while (!header_found && headerSize<maxPeriodSize) {
+			for (int i=0; i<periodSize; i++){
+				if (x1==periods[i]) {
+					header_found=true;
+					periodicPattern=periods[i];
+				}
+			}
+			if(!header_found) {
+				headerSize++;
+				header = z >> (zSize-headerSize); 
+				x1 = (z - (header << (zSize-headerSize)))  >> (zSize-headerSize - periodSize) ;
+			}
+		} // end while
+
+			// NOT TODO The previous header finding code is wrong but we'll never fix it because this method is obsolete.
+
+
+		REPORT(DETAILED, "Found header " << header.get_str(2) << " of size "<< headerSize 
+					 << " and period " << periodicPattern.get_str(2) << " of size " << periodSize);
+
+		// Nicolas is a mathematician
+
+		mpz_class aa, bb, cc;
+		aa=a; 
+		bb=b;
+
+		// First euclidean division of a by b
+		header = aa/bb;
+		headerSize=intlog2(header);
+
+		cc = aa - header*bb; // remainder
+
+		{
+			// Now look for the order of cc modulo bb
+			int i=1;
+			mpz_class twotoi=2;
+			bool tryOrder = true;
+			while (tryOrder){
+				// Stupidely compute bb^i
+				if((twotoi % bb) == 1)
+					tryOrder=false;
+				else{
+					i++;
+					twotoi = twotoi <<1;
+				}
+			}
+			// and the period is 2^i/b
+			mpz_class period2 = twotoi/b;
+
+			// now this procedure is OK with a factor that is a power of two.
+			//  padd to the right with zeroes
+			int shortsize=intlog2(period2);
+			period2 = period2 << (i-shortsize);
+		REPORT(DETAILED, "Found header " << header.get_str(2) << " of size "<< headerSize 
+					 << " and period " << period2.get_str(2) << " of size " << i);
+		}
+
+
+		
+
+
+
+
+
+
+		// Now go on
+		int wC = wF_out + 3; // for faithful rounding, but could come from the interface: TODO
+		int r = ceil(   ((double)(wC-headerSize)) / ((double)periodSize)   ); // Needed repetitions
+		REPORT(DETAILED, "wC=" << wC << ", need to repeat the period " << r << " times");
+		int i = intlog2(r) -1; // 2^i < r < 2^{i+1}
+		int rr = r - (1<<i);
+		int j;
+		if (rr==0)
+			j=-1;
+		else
+			j= intlog2(rr-1);
+
+		// now round up the number of needed repetitions
+		if(j==-1) {
+			r=(1<<i);
+			REPORT(DETAILED, "... Will repeat 2^i with i=" << i);
+		}
+		else{
+			r=(1<<i)+(1<<j);
+			REPORT(DETAILED, "... Will repeat 2^i+2^j = " << (1<<i) + (1<<j) << " with i=" << i << " and j=" << j);
+		}
+
+
+
+
+		// Now rebuild the mpfrC constant (for emulate() etc)
+		// First, as an integer mantissa
+		cstIntSig = header;
+		for(int k=0; k<r; k++)
+			cstIntSig = (cstIntSig<<periodSize) + periodicPattern;
+		REPORT(DEBUG, "Constant mantissa rebuilt as " << cstIntSig << " ==  " << cstIntSig.get_str(2) );
+
+		// now as an MPFR
+		cstWidth = headerSize  + r*periodSize;
+		mpfr_set_prec(mpfrC, cstWidth);
+		mpfr_div(mpfrC, mpa, mpb, GMP_RNDN);
+		// get the exponent when the mantissa is on this size
+		mpz_class dummy;
+		cst_exp_when_mantissa_int = mpfr_get_z_exp(dummy.get_mpz_t(), mpfrC);
+		mpfr_set_z(mpfrC, cstIntSig.get_mpz_t(), GMP_RNDN);
+		mpfr_mul_2si(mpfrC, mpfrC, cst_exp_when_mantissa_int, GMP_RNDN); // exact
+
+
+		REPORT(DEBUG, "Constant rebuilt as " << mpfr_get_d( mpfrC, GMP_RNDN) );
+
+		// No need for setupSgnAndExpCases(): the constant cannot be zero and sign is already managed
+		computeExpSig();
+		computeXCut();
+
+		// restore sign for emulate()
+		if(cstSgn)
+			mpfr_neg(mpfrC, mpfrC, GMP_RNDN);
+
+		// If the period has zeroes at the LSB, there are FAs to save
+		// We shift the constant and the periodic pattern, but we do not touch its size
+		// So the shifts by 2^k*periodSize will still do the right thing
+
+
+		int zeroesToTheRight=0;
+		while ((cstIntSig % 2) ==0) {
+			REPORT(DEBUG, "Significand is even, normalising");
+			cstIntSig = cstIntSig >>1;
+			periodicPattern = periodicPattern >>1;
+			cst_exp_when_mantissa_int++;
+			zeroesToTheRight++;
+		}
+
+		// Now periodicPattern is even, and this constructor has to remember to shift it by zeroesToTheRight
+		icm = new IntConstMult(target, wF_in+1, cstIntSig, periodicPattern, periodSize, header, headerSize, i, j);
+		oplist.push_back(icm);
+
+		
+		
+		// build the name
+		ostringstream name; 
+		name <<"FPConstMultRational_"
+				 <<wE_in<<"_"<<wF_in<<"_"<<wE_out<<"_"<<wF_out<<"_"
+				 <<(cstSgn==0?"":"M") <<a<<"div"<<b<<"_"<<(correctRounding?"CR":"faithful");
+		uniqueName_=name.str();
+		
+		buildVHDL();
+		mpfr_clears(mpa, mpb, NULL);
+
+	}
+
+
+
 
 
 
 
 #ifdef HAVE_SOLLYA
-
-
 
 
 	// The parser version
@@ -277,7 +523,6 @@ extern vector<Operator*> oplist;
 			mpfr_mul_2si(mpfrC, mpfrC, cst_exp_when_mantissa_int, GMP_RNDN); // exact
 			REPORT(DEBUG, "Constant rebuilt as " << mpfr_get_d( mpfrC, GMP_RNDN) );
 
-			setupSgnAndExpCases();
 			computeExpSig();
 			computeXCut();
 
@@ -363,7 +608,6 @@ extern vector<Operator*> oplist;
 	// The constant precision must be set up properly in 
 	void FPConstMult::setupSgnAndExpCases()
 	{
-		REPORT(DEBUG, "cstWidth=" << cstWidth);
 
 		if(mpfr_zero_p(mpfrC)) {
 			REPORT(INFO, "building a multiplier by 0, it will be easy");
@@ -634,5 +878,13 @@ flopoco.vhdl:332:16:@9982ns:(assertion error): Incorrect output for R, expected 
 flopoco.vhdl:332:16:@9992ns:(assertion error): Incorrect output for R, expected value : 
 0110111011101111111001000110001... (other values line 1997 of test.input), result:  
 0110111011101000011001001001011|| line : 1997 of input file 
+
+111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110001
+> FPConstMult: Found header 0 of size 0 and period 10100011110101110000 of size 20
+> FPConstMult: Found header 0 of size 0 and period 1010001111010111 of size 20
+> FPConstMult: wC=26, need to repeat the period 2 times
+
+ 10100011110101111010001111010111
+ 10100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001
 
 #endif

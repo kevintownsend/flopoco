@@ -15,6 +15,9 @@ namespace flopoco{
 		/** The generic constructor */
 		FPConstMult(Target* target, int wE_in, int wF_in, int wE_out, int wF_out, int cst_sgn, int cst_exp, mpz_class cst_sig);
 		
+		/** A constructor for rational constants */
+		FPConstMult(Target* target, int wE_in, int wF_in, int wE_out, int wF_out, int a, int b, bool correctRounding);
+		
 		/** An empty constructor,  used by CRFPConstMult */
 		FPConstMult(Target* target, int wE_in, int wF_in, int wE_out, int wF_out);
 		

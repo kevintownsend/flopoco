@@ -284,11 +284,14 @@ static void usage(char *name){
 	cerr << "      last argument is a Sollya expression between double quotes,e.g.\"exp(pi/2)\".\n";
 	cerr << "      If wC>1, it is the size in bits on which the constant must be evaluated.\n";
 	cerr << "      If wC=0 the size is computed for a faithful result.\n";
-	cerr << "      If wC=-1, idem, use this option for simple rational constants such as 1/3 or 1/10\n";
 	OP( "CRFPConstMult","wE_in wF_in wE_out wF_out constant_expr");
 	cerr << "      Correctly-rounded floating-point constant multiplier\n";
 	cerr << "      The constant is provided as a Sollya expression, between double quotes.\n";
 #endif // HAVE_SOLLYA
+	OP( "FPConstMultRational","wE_in wF_in wE_out wF_out a b correctRounding");
+	cerr << "      Floating-point constant multiplier by a rational a/b\n";
+	cerr << "      Useful for multiplications by simple rational constants such as 2/3 or 1/9\n";
+	cerr << "      correctRounding=0 (faithful rounding) or 1 (correct rounding)\n";
 	OP("FPConstMultExpert","wE_in wF_in wE_out wF_out cst_sgn cst_exp cst_int_sig");
 	cerr << "      Floating-point constant multiplier\n";
 	cerr << "      The constant is provided as integral significand and integral exponent.\n";
@@ -556,6 +559,26 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(op);
 			}        
 		}
+
+		else if(opname=="FPConstMultRational"){
+			int nargs = 7;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int wE_in = checkStrictlyPositive(argv[i++], argv[0]);
+				int wF_in = checkStrictlyPositive(argv[i++], argv[0]);
+				int wE_out = checkStrictlyPositive(argv[i++], argv[0]);
+				int wF_out = checkStrictlyPositive(argv[i++], argv[0]);
+				int a  = atoi(argv[i++]); 
+				int b  = checkStrictlyPositive(argv[i++], argv[0]); 
+				bool correctRounding  = checkBoolean(argv[i++], argv[0]); 
+				cerr << "> FPConstMultRational ("<<(correctRounding?"CR":"faithful")<<"), wE_in="<<wE_in<<", wF_in="<<wF_in
+						 <<", wE_out="<<wE_out<<", wF_out="<<wF_out
+						 <<", constant="<<a<<"/"<<b<<endl;
+				op = new FPConstMult(target, wE_in, wF_in, wE_out, wF_out, a, b, correctRounding);
+				addOperator(op);
+			}        
+		} 	
 
 		else if(opname=="FPConstMultExpert"){
 			int nargs = 7;
