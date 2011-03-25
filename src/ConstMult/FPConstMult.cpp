@@ -83,7 +83,6 @@ extern vector<Operator*> oplist;
 
 
 			if(!mantissa_is_one) {
-				computeXCut();
 				// sub component
 				icm = new IntConstMult(target, wF_in+1, cstIntSig);
 				oplist.push_back(icm);
@@ -127,8 +126,23 @@ extern vector<Operator*> oplist;
 			cstSgn=1;
 			a=-a;
 		}
+
+		// Now get rid of powers of two in both a and b.
+		// we transform them into (a',b',expUpdate) such that a' and b' are both odd
+		// and a/b = a'/b'.2^expUpdate
+		int expUpdate=0; 
+		while((a&1)==0) {
+			a=a>>1;
+			expUpdate++;
+		}
+		while((b&1)==0) {
+			b=b>>1;
+			expUpdate--;
+		}
 			
-		int expWhenVeryLargeInt;
+		mantissa_is_one = (a==b); // fairly different architecture in this case
+
+		// Now look for a period
 		int periodSize, headerSize; 
 		mpz_class periodicPattern, header; // The two values to look for
 		mpfr_t mpa, mpb;
@@ -136,96 +150,6 @@ extern vector<Operator*> oplist;
 		mpfr_set_si(mpa, a, GMP_RNDN);
 		mpfr_set_si(mpb, b, GMP_RNDN);
 
-
-
-
-		// Florent is not a mathematician
-
-		// Evaluate to a very large number of bits, then look for a period
-		// evaluate to 2000 bits
-#define EVAL_PRECISION 2000
-		int zSize=2*EVAL_PRECISION;
-		mpfr_set_prec(mpfrC, zSize);
-
-		mpfr_div(mpfrC, mpa, mpb, GMP_RNDN);
-
-		int maxPeriodSize=128;
-		mpz_t z_mpz;
-		mpz_class z, x0, x1;
-		mpz_init(z_mpz);
-		expWhenVeryLargeInt = mpfr_get_z_exp(z_mpz, mpfrC);
-		z = mpz_class(z_mpz);
-		mpz_clear(z_mpz);
-		REPORT(DETAILED, "Looking for a period in a constant which looks like " << z.get_str(2)); 
-		periodSize=2;
-
-		bool found=false;
-		while (!found &&  periodSize < maxPeriodSize) {
-			// first go to the middle of these 2000 bits
-			mpz_class t = z >> (EVAL_PRECISION);
-			// First filter
-			x0 = t-((t >> periodSize)<<periodSize);
-			t = t >> periodSize;
-			x1 = t-((t >> periodSize)<<periodSize);
-			int i=2;
-			int max_number_of_periods = (EVAL_PRECISION/maxPeriodSize) >> 1;
-			REPORT(DEBUG, "Trying periodSize=" << periodSize << " max_number_of_periods=" << max_number_of_periods);
-			while(x0==x1 && i<max_number_of_periods) {
-				// REPORT(DEBUG, "i=" <<i << " x0=" << x0.get_str(2) << " x1=" << x1.get_str(2) );
-				t = t >> periodSize;
-				x1 = t-((t >> periodSize)<<periodSize);
-				i++;
-			}
-			if(i==max_number_of_periods)
-				found=true;
-			else
-				periodSize ++;
-		}
-
-
-		if(!found){
-			ostringstream error;
-			error << srcFileName << ": period not found" <<endl;
-			throw error.str();
-		}
-			
-		REPORT(DEBUG, "Found periodic pattern " << x0 << " (" << x0.get_str(2) << ") " << " of size "<< periodSize);
-		// Now look for header bits
-		// first build a table of rotations of this constant
-		vector<mpz_class> periods;
-		for (int i=0; i<periodSize; i++) {
-			periods.push_back(x0); 
-			x1 = x0>>(periodSize-1); // MSB
-			x0 = ((x0-(x1 << (periodSize-1)))<<1) + x1;
-			// cerr << x0.get_str(2) << endl;
-		}
-		// Now compare to the first bits of the constant
-		headerSize=0;
-		header=0;
-		x1 = z >> (zSize-periodSize);
-		// cerr << x1.get_str(2) << endl;
-		bool header_found=false;
-		while (!header_found && headerSize<maxPeriodSize) {
-			for (int i=0; i<periodSize; i++){
-				if (x1==periods[i]) {
-					header_found=true;
-					periodicPattern=periods[i];
-				}
-			}
-			if(!header_found) {
-				headerSize++;
-				header = z >> (zSize-headerSize); 
-				x1 = (z - (header << (zSize-headerSize)))  >> (zSize-headerSize - periodSize) ;
-			}
-		} // end while
-
-			// NOT TODO The previous header finding code is wrong but we'll never fix it because this method is obsolete.
-
-
-		REPORT(DETAILED, "Found header " << header.get_str(2) << " of size "<< headerSize 
-					 << " and period " << periodicPattern.get_str(2) << " of size " << periodSize);
-
-		// Nicolas is a mathematician
 
 		mpz_class aa, bb, cc;
 		aa=a; 
@@ -237,39 +161,31 @@ extern vector<Operator*> oplist;
 
 		cc = aa - header*bb; // remainder
 
-		{
-			// Now look for the order of cc modulo bb
-			int i=1;
-			mpz_class twotoi=2;
-			bool tryOrder = true;
-			while (tryOrder){
-				// Stupidely compute bb^i
-				if((twotoi % bb) == 1)
-					tryOrder=false;
-				else{
-					i++;
-					twotoi = twotoi <<1;
-				}
+		// Now look for the order of cc modulo bb
+		periodSize=1;
+		mpz_class twotoperiodSize=2;
+		bool tryOrder = true;
+		while (tryOrder){
+			// Stupidely compute bb^periodSize
+			if((twotoperiodSize % bb) == 1)
+				tryOrder=false;
+			else{
+				periodSize++;
+				twotoperiodSize = twotoperiodSize <<1;
 			}
-			// and the period is 2^i/b
-			mpz_class period2 = twotoi/b;
-
-			// now this procedure is OK with a factor that is a power of two.
-			//  padd to the right with zeroes
-			int shortsize=intlog2(period2);
-			period2 = period2 << (i-shortsize);
-		REPORT(DETAILED, "Found header " << header.get_str(2) << " of size "<< headerSize 
-					 << " and period " << period2.get_str(2) << " of size " << i);
 		}
+		// and the period is 2^periodSize/b
+		periodicPattern = twotoperiodSize/b;
+
+		// now this procedure is OK with a factor that is a power of two.
+		//  padd to the right with zeroes
+		int shortsize=intlog2(periodicPattern);
+		periodicPattern = periodicPattern << (periodSize-shortsize);
+		REPORT(DETAILED, "Found header " << header.get_str(2) << " of size "<< headerSize 
+					 << " and period " << periodicPattern.get_str(2) << " of size " << periodSize);
 
 
-		
-
-
-
-
-
-
+	 
 		// Now go on
 		
 		int wC;
@@ -299,9 +215,6 @@ extern vector<Operator*> oplist;
 			REPORT(DETAILED, "... Will repeat 2^i+2^j = " << (1<<i) + (1<<j) << " with i=" << i << " and j=" << j);
 		}
 
-
-
-
 		// Now rebuild the mpfrC constant (for emulate() etc)
 		// First, as an integer mantissa
 		cstIntSig = header;
@@ -316,6 +229,7 @@ extern vector<Operator*> oplist;
 		// get the exponent when the mantissa is on this size
 		mpz_class dummy;
 		cst_exp_when_mantissa_int = mpfr_get_z_exp(dummy.get_mpz_t(), mpfrC);
+		cst_exp_when_mantissa_int += expUpdate;
 		mpfr_set_z(mpfrC, cstIntSig.get_mpz_t(), GMP_RNDN);
 		mpfr_mul_2si(mpfrC, mpfrC, cst_exp_when_mantissa_int, GMP_RNDN); // exact
 
@@ -324,7 +238,6 @@ extern vector<Operator*> oplist;
 
 		// No need for setupSgnAndExpCases(): the constant cannot be zero and sign is already managed
 		computeExpSig();
-		computeXCut();
 
 		// restore sign for emulate()
 		if(cstSgn)
@@ -378,13 +291,6 @@ extern vector<Operator*> oplist;
 	{
 		sollya_node_t node;
 
-
-		bool periodic_constant;
-
-		// Ugly interface hack !
-		if(wF_C==-1)
-			periodic_constant= true;
-
 		srcFileName="FPConstMult";
 		/* Convert the input string into a sollya evaluation tree */
 		node = parseString(constant.c_str());	/* If conversion did not succeed (i.e. parse error) */
@@ -400,170 +306,7 @@ extern vector<Operator*> oplist;
 		evaluateConstantExpression(mpfrC, node,  getToolPrecision());
 		REPORT(DEBUG, "Constant evaluates to " << mpfr_get_d(mpfrC, GMP_RNDN));
 
-		int expWhenVeryLargeInt;
 
-
-		if(periodic_constant) {
-			int periodSize, headerSize; 
-			mpz_class periodicPattern, header; // The two values to look for
-
-			// Evaluate to a very large number of bits, then look for a period
-			// evaluate to 2000 bits
-			#define EVAL_PRECISION 2000
-			int zSize=2*EVAL_PRECISION;
-			mpfr_set_prec(mpfrC, zSize);
-
-			evaluateConstantExpression(mpfrC, node, zSize);
-			int maxPeriodSize=128;
-			mpz_t z_mpz;
-			mpz_class z, x0, x1;
-			mpz_init(z_mpz);
-			expWhenVeryLargeInt = mpfr_get_z_exp(z_mpz, mpfrC);
-			z = mpz_class(z_mpz);
-			mpz_clear(z_mpz);
-			REPORT(DETAILED, "Looking for a period in a constant which looks like " << z.get_str(2)); 
-			periodSize=2;
-
-			bool found=false;
-			while (!found &&  periodSize < maxPeriodSize) {
-				// first go to the middle of these 2000 bits
-				mpz_class t = z >> (EVAL_PRECISION);
-				// First filter
-				x0 = t-((t >> periodSize)<<periodSize);
-				t = t >> periodSize;
-				x1 = t-((t >> periodSize)<<periodSize);
-				int i=2;
- 				int max_number_of_periods = (EVAL_PRECISION/maxPeriodSize) >> 1;
-				REPORT(DEBUG, "Trying periodSize=" << periodSize << " max_number_of_periods=" << max_number_of_periods);
-				while(x0==x1 && i<max_number_of_periods) {
-					// REPORT(DEBUG, "i=" <<i << " x0=" << x0.get_str(2) << " x1=" << x1.get_str(2) );
-					t = t >> periodSize;
-					x1 = t-((t >> periodSize)<<periodSize);
-					i++;
-				}
-				if(i==max_number_of_periods)
-					found=true;
-				else
-					periodSize ++;
-			}
-
-
-			if(!found){
-				ostringstream error;
-				error << srcFileName << ": period not found" <<endl;
-				throw error.str();
-			}
-			
-			REPORT(DEBUG, "Found periodic pattern " << x0 << " (" << x0.get_str(2) << ") " << " of size "<< periodSize);
-			// Now look for header bits
-			// first build a table of rotations of this constant
-			vector<mpz_class> periods;
-			for (int i=0; i<periodSize; i++) {
-				periods.push_back(x0); 
-				x1 = x0>>(periodSize-1); // MSB
-				x0 = ((x0-(x1 << (periodSize-1)))<<1) + x1;
-				// cerr << x0.get_str(2) << endl;
-			}
-			// Now compare to the first bits of the constant
-			headerSize=0;
-			header=0;
-			x1 = z >> (zSize-periodSize);
-			// cerr << x1.get_str(2) << endl;
-			bool header_found=false;
-			while (!header_found && headerSize<maxPeriodSize) {
-				for (int i=0; i<periodSize; i++){
-					if (x1==periods[i]) {
-						header_found=true;
-						periodicPattern=periods[i];
-					}
-				}
-				if(!header_found) {
-					headerSize++;
-					header = z >> (zSize-headerSize); 
-					x1 = (z - (header << (zSize-headerSize)))  >> (zSize-headerSize - periodSize) ;
-				}
-			} // end while
-
-			// TODO The previous is wrong
-
-			REPORT(DETAILED, "Found header " << header.get_str(2) << " of size "<< headerSize 
-			       << " and period " << periodicPattern.get_str(2) << " of size " << periodSize);
-
-			// Now go on
-			int wC = wF_out + 3; // for faithful rounding, but could come from the interface: TODO
-			int r = ceil(   ((double)(wC-headerSize)) / ((double)periodSize)   ); // Needed repetitions
-			REPORT(DETAILED, "wC=" << wC << ", need to repeat the period " << r << " times");
-			int i = intlog2(r) -1; // 2^i < r < 2^{i+1}
-			int rr = r - (1<<i);
-			int j;
-			if (rr==0)
-				j=-1;
-			else
-				j= intlog2(rr-1);
-
-			// now round up the number of needed repetitions
-			if(j==-1) {
-				r=(1<<i);
-				REPORT(DETAILED, "... Will repeat 2^i with i=" << i);
-			}
-			else{
-				r=(1<<i)+(1<<j);
-				REPORT(DETAILED, "... Will repeat 2^i+2^j = " << (1<<i) + (1<<j) << " with i=" << i << " and j=" << j);
-			}
-
-
-			// Now rebuild the mpfrC constant (for emulate() etc)
-			// First, as an integer mantissa
-			cstIntSig = header;
-			for(int k=0; k<r; k++)
-				cstIntSig = (cstIntSig<<periodSize) + periodicPattern;
-			REPORT(DEBUG, "Constant mantissa rebuilt as " << cstIntSig << " ==  " << cstIntSig.get_str(2) );
-
-			// now as an MPFR
-			cstWidth = headerSize  + r*periodSize;
-			mpfr_set_prec(mpfrC, cstWidth);
-			// get the exponent when the mantissa is on this size
-			evaluateConstantExpression(mpfrC, node, zSize); // mpfrC is a dummy here
-			mpz_class dummy;
-			cst_exp_when_mantissa_int = mpfr_get_z_exp(dummy.get_mpz_t(), mpfrC);
-			mpfr_set_z(mpfrC, cstIntSig.get_mpz_t(), GMP_RNDN);
-			mpfr_mul_2si(mpfrC, mpfrC, cst_exp_when_mantissa_int, GMP_RNDN); // exact
-			REPORT(DEBUG, "Constant rebuilt as " << mpfr_get_d( mpfrC, GMP_RNDN) );
-
-			computeExpSig();
-			computeXCut();
-
-			// If the period has zeroes at the LSB, there are FAs to save
-			// We shift the constant and the periodic pattern, but we do not touch its size
-			// So the shifts by 2^k*periodSize will still do the right thing
-
-
-			int zeroesToTheRight=0;
-			while ((cstIntSig % 2) ==0) {
-				REPORT(DEBUG, "Significand is even, normalising");
-				cstIntSig = cstIntSig >>1;
-				periodicPattern = periodicPattern >>1;
-				cst_exp_when_mantissa_int++;
-				zeroesToTheRight++;
-			}
-
-			// Now periodicPattern is even, and this constructor has to remember to shift it by zeroesToTheRight
-			icm = new IntConstMult(target, wF_in+1, cstIntSig, periodicPattern, periodSize, header, headerSize, i, j);
-			oplist.push_back(icm);
-
-		}
-				// else {
-				// 	ostringstream error;
-				// 	error << srcFileName << ": Found no header for periodic pattern " << periodicPattern.get_str(2) << " of size " << periodSize ;
-				// 	throw error.str();
-				// }
-
-
-
-
-
-
-		else{  // if (periodic)
 
 			// Nonperiodic version
 
@@ -579,7 +322,6 @@ extern vector<Operator*> oplist;
 			setupSgnAndExpCases();
 			computeExpSig();
 			computeIntExpSig();
-			computeXCut();
 			normalizeCst();
 
 			if(!constant_is_zero && !mantissa_is_one) {
@@ -587,7 +329,6 @@ extern vector<Operator*> oplist;
 				oplist.push_back(icm);
 			}
 			
-		}
 		
 		
 		// build the name
@@ -646,7 +387,7 @@ extern vector<Operator*> oplist;
 
 
 	// Needs: cstWidth, cstSig
-	//
+	// Obsolete
 	void FPConstMult::computeXCut()
 	{
 		mpz_t zz;
@@ -762,27 +503,19 @@ extern vector<Operator*> oplist;
 		vhdl << tab << declare("x_exn",2) << " <=  X("<<wE_in<<"+"<<wF_in<<"+2 downto "<<wE_in<<"+"<<wF_in<<"+1);"<<endl;
 		vhdl << tab << declare("x_sgn") << " <=  X("<<wE_in<<"+"<<wF_in<<");"<<endl;
 		vhdl << tab << declare("x_exp", wE_in) << " <=  X("<<wE_in<<"+"<<wF_in<<"-1 downto "<<wF_in<<");"<<endl;
+		vhdl << tab << declare("x_sig", wF_in+1) << " <= '1' & X("<<wF_in-1 <<" downto 0);"<<endl;
 
-
+#if 0 // got rid of this xcut nonsense at some point
 		// xcut computation
 		if(mantissa_is_one) {			
 			vhdl << tab << declare("gt_than_xcut") << " <= '0';"<<endl;
 		}
 		else {
-			vhdl << tab << declare("x_sig", wF_in+1) << " <= '1' & X("<<wF_in-1 <<" downto 0);"<<endl;
 			vhdl << tab << declare("xcut_rd", wF_in+1) << " <= \""
 				  << unsignedBinary(xcut_sig_rd, wF_in+1) << "\";"<<endl;
 			vhdl << tab << declare("gt_than_xcut") << " <= '1' when ( x_sig("<<wF_in-1<<" downto 0) > xcut_rd("<<wF_in-1<<" downto 0) ) else '0';"<<endl;
 		}
-
-
-		// exponent handling
-		vhdl << tab << declare("abs_unbiased_cst_exp",wE_sum+1) << " <= \""
-			  << unsignedBinary(expAddend, wE_sum+1) << "\";" << endl;
-		vhdl << tab << declare("r_exp_nopb",    wE_out+1) << " <= "
-			  << "((" << wE_sum << " downto " << wE_in << " => '0')  & x_exp)  "
-			  << (expAddendSign==0 ? "+" : "-" ) << "  abs_unbiased_cst_exp"
-			  << "  +  (("<<wE_sum<<" downto 1 => '0') & gt_than_xcut);"<<endl;
+#endif
 
 
 		if(mantissa_is_one) {			
@@ -791,20 +524,26 @@ extern vector<Operator*> oplist;
 				vhdl << tab << declare("r_frac", wF_out) << " <= X("<<wF_in-1 <<" downto 0);"<<endl;
 			}
 			else if(wF_out > wF_in){
-				vhdl << tab << tab << declare("r_frac", wF_out) << " <= X("<<wF_in-1 <<" downto 0)  &  " << rangeAssign(wF_out-wF_in-1, 0, "'0'") << ";"<<endl;
+				vhdl << tab << declare("r_frac", wF_out) << " <= X("<<wF_in-1 <<" downto 0)  &  " << rangeAssign(wF_out-wF_in-1, 0, "'0'") << ";"<<endl;
 				}
 			else{ // wF_out < wF_in, this is a rounding of the mantissa TODO
-				throw string("FPConstMult: multiplication by a power of two when  wF_out < wF_in not yet implemented, please complain to the FloPoCo team if you need it");
-			vhdl << tab << declare("expfrac_rnd", wE_out+1+wF_out) << " <= r_exp_nopb & r_frac;"<<endl;
+				REPORT(INFO, "rounding of multiplication by a power of two  not implemented properly when  wF_out < wF_in, please complain to the FloPoCo team if you need it");
+				vhdl << tab << declare("r_frac", wF_out) << " <= X" << range(wF_in-1, wF_out-wF_in) << ";" << endl;
 			}
-	
+			vhdl << tab << declare("expfrac_rnd", wE_out+1+wF_out) << " <= r_exp_nopb & r_frac;"<<endl;
 		}
+
+
+
 		else{ // normal case, mantissa is not one
 			inPortMap  (icm, "inX", "x_sig");
 			outPortMap (icm, "R","sig_prod");
 			vhdl << instance(icm, "sig_mult");
+
 			setCycleFromSignal("sig_prod"); 
-			nextCycle();
+			setCriticalPath(icm->getOutputDelay("R"));
+
+#if 0  // when we had xcut
 			// Possibly shift the significand one bit left, and remove implicit 1 
 			vhdl << tab << declare("shifted_frac",    wF_out+1) << " <= sig_prod("<<icm->rsize -2<<" downto "<<icm->rsize - wF_out-2 <<")  when gt_than_xcut = '1'"<<endl
 				  << tab << "           else sig_prod("<<icm->rsize -3<<" downto "<<icm->rsize - wF_out - 3<<");"<<endl;  
@@ -815,7 +554,28 @@ extern vector<Operator*> oplist;
 			vhdl << tab << declare("expfrac_rnd1",  wE_out+1+wF_out+1) << " <= (("<<wE_out+1+wF_out <<" downto 1 => '0') & '1') + expfrac_br;"<<endl;
 
 			vhdl << tab << declare("expfrac_rnd", wE_out+1+wF_out) << " <= expfrac_rnd1("<< wE_out+1+wF_out <<" downto  1);"<<endl;
+
+#endif
+
+			vhdl << tab << declare("norm") << " <= sig_prod"<<of(icm->rsize -1)<<";"<<endl;
+			vhdl << tab << declare("shifted_frac",    wF_out+1) << " <= sig_prod("<<icm->rsize -2<<" downto "<<icm->rsize - wF_out-2 <<")  when norm = '1'"<<endl
+					 << tab << "           else sig_prod("<<icm->rsize -3<<" downto "<<icm->rsize - wF_out - 3<<");"<<endl;  
+			
+		// exponent handling
+			vhdl << tab << declare("abs_unbiased_cst_exp",wE_sum+1) << " <= \""
+					 << unsignedBinary(expAddend, wE_sum+1) << "\";" << endl;
+			vhdl << tab << declare("r_exp_br",    wE_out+1) << " <= "
+					 << "((" << wE_sum << " downto " << wE_in << " => '0')  & x_exp)  "
+					 << (expAddendSign==0 ? "+" : "-" ) << "  abs_unbiased_cst_exp"
+					 << "  +  (("<<wE_sum<<" downto 1 => '0') & norm);"<<endl;
+			
+			vhdl << tab << declare("expfrac_br",   wE_out+1+wF_out+1) << " <= r_exp_br & shifted_frac;"<<endl;
+			// add the rounding bit //TODO: No  round to nearest here. OK for faithful. For CR, does this case it ever appear?
+			vhdl << tab << declare("expfrac_rnd1",  wE_out+1+wF_out+1) << " <= (("<<wE_out+1+wF_out <<" downto 1 => '0') & '1') + expfrac_br;"<<endl;
+			vhdl << tab << declare("expfrac_rnd", wE_out+1+wF_out) << " <= expfrac_rnd1("<< wE_out+1+wF_out <<" downto  1);"<<endl;
 		}
+
+
 
 		// Handling signs is trivial
 		if(cstSgn==0)
@@ -832,14 +592,15 @@ extern vector<Operator*> oplist;
 			vhdl <<  "expfrac_rnd(" << wE_out+wF_out << ");" << endl;
 
 		// underflow handling
+		vhdl << tab << declare("r_exp_rnd",    wE_out+1) << " <= expfrac_rnd" << range(wE_out+wF_out, wF_out) << ";"<<endl;
 		vhdl << tab << declare("underflow") << " <= " ;
 		if (minExp(wE_in) + cst_exp_when_mantissa_1_2 > minExp(wE_out)) // no underflow can ever happen
 			vhdl << "'0'; --  underflow never happens for this constant and these (wE_in, wE_out)" << endl;
 		else 
-			vhdl <<  "r_exp_nopb(" << wE_sum << ");" << endl;
+			vhdl <<  "r_exp_rnd(" << wE_sum << ");" << endl;
 			 
 	
-		vhdl << tab << declare("r_exp", wE_out) << " <= r_exp_nopb("<<wE_out-1<<" downto 0) ;"<<endl;
+		vhdl << tab << declare("r_exp", wE_out) << " <= r_exp_br("<<wE_out-1<<" downto 0) ;"<<endl;
 
 		vhdl << tab << declare("r_exn", 2) << " <=      \"00\" when ((x_exn = \"00\") or (x_exn = \"01\" and underflow='1'))  -- zero"<<endl 
 			  << tab << "         else \"10\" when ((x_exn = \"10\") or (x_exn = \"01\" and overflow='1'))   -- infinity" << endl
@@ -899,31 +660,6 @@ extern vector<Operator*> oplist;
 }
 
 #if 0
-
-e 
-flopoco.vhdl:340:16:@425612ns:(assertion error): Incorrect output for R, expected value: 
-010 0101 0000000000 result: 
-010 0100 0000000000|| line : 85121 of input file 
-flopoco.vhdl:340:16:@435852ns:(assertion error): Incorrect output for R, expected value: 01001100000000000 result: 01001010000000000|| line : 87169 of input file 
-flopoco.vhdl:340:16:@446092ns:(assertion error): Incorrect output for R, expected value: 01001110000000000 result: 01001100000000000|| line : 89217 of input file 
-flopoco.vhdl:340:16:@456332ns:(assertion error): Incorrect output for R, expected value: 01010000000000000 result: 01001110000000000|| line : 91265 of input file 
-flopoco.vhdl:340:16:@466572ns:(assertion error): Incorrect output for R, expected value: 01010010000000000 result: 01010000000000000|| line : 93313 of input file 
-flopoco.vhdl:340:16:@476812ns:(assertion error): Incorrect output for R, expected value: 01010100000000000 result: 01010010000000000|| line : 95361 of input file 
-flopoco.vhdl:340:16:@487052ns:(assertion error): Incorrect output for R, expected value: 01010110000000000 result: 01010100000000000|| line : 97409 of input file 
-flopoco.vhdl:340:16:@538252ns:(assertion error): Incorrect output for R, expected value: 01100000000000000 result: 00111110000000000|| line : 107649 of input file 
-flopoco.vhdl:340:16:@548492ns:(assertion error): Incorrect output for R, expected value: 01100010000000000 result: 01100000000000000|| line : 109697 of input file 
-flopoco.vhdl:340:16:@558732ns:(assertion error): Incorrect output for R, expected value: 01100100000000000 result: 01100010000000000|| line : 111745 of input file 
-flopoco.vhdl:340:16:@568972ns:(assertion error): Incorrect output for R, expected value: 01100110000000000 result: 01100100000000000|| line : 113793 of input file 
-flopoco.vhdl:340:16:@579212ns:(assertion error): Incorrect output for R, expected value: 01101000000000000 result: 01100110000000000|| line : 115841 of input file 
-flopoco.vhdl:340:16:@589452ns:(assertion error): Incorrect output for R, expected value: 
-011 0101 0000000000 result: 
-011 0100 0000000000|| line : 117889 of input file 
-flopoco.vhdl:340:16:@599692ns:(assertion error): Incorrect output for R, expected value: 01101100000000000 result: 01101010000000000|| line : 119937 of input file 
-flopoco.vhdl:340:16:@609932ns:(assertion error): Incorrect output for R, expected value: 01101110000000000 result: 01101100000000000|| line : 121985 of input file 
-flopoco.vhdl:340:16:@620172ns:(assertion error): Incorrect output for R, expected value: 01110000000000000 result: 01101110000000000|| line : 124033 of input file 
-flopoco.vhdl:340:16:@630412ns:(assertion error): Incorrect output for R, expected value: 01110010000000000 result: 01110000000000000|| line : 126081 of input file 
-flopoco.vhdl:340:16:@640652ns:(assertion error): Incorrect output for R, expected value: 01110100000000000 result: 01110010000000000|| line : 128129 of input file 
-flopoco.vhdl:340:16:@650892ns:(assertion error): Incorrect output for R, expected value: 01110110000000000 result: 01110100000000000|| line : 130177 of input file 
 
 
 

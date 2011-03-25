@@ -475,6 +475,7 @@ namespace flopoco{
 
 
 
+	// The constructor for rational constants
 
 	IntConstMult::IntConstMult(Target* _target, int _xsize, mpz_class n, mpz_class period, int periodSize, mpz_class header, int headerSize, int i, int j) :
 		Operator(_target), xsize(_xsize){
@@ -511,10 +512,24 @@ namespace flopoco{
 		for (int k=1; k<=i; k++){
 			powerOfTwo[k]=  new ShiftAddOp(implementation, Add, powerOfTwo[k-1], (periodSize<<(k-1)), powerOfTwo[k-1] );
 		}
-		if(j==-1)
-			implementation->result = 	powerOfTwo[i];
-		else
-			implementation->result = new ShiftAddOp(implementation, Add, powerOfTwo[j], (periodSize<<i), powerOfTwo[i] );
+
+
+		if(header==0)  {
+			if(j==-1)
+				implementation->result = 	powerOfTwo[i];
+			else
+				implementation->result = new ShiftAddOp(implementation, Add, powerOfTwo[j], (periodSize<<i), powerOfTwo[i] );
+		}
+		else {
+			ShiftAddOp* headerSAO;
+			headerSAO=buildMultBoothTree(header);
+			if(j==-1)
+				implementation->result = 	new ShiftAddOp(implementation, Add, headerSAO, (periodSize<<i), powerOfTwo[i] );
+			else {
+				ShiftAddOp* tmp = new ShiftAddOp(implementation, Add, headerSAO, (periodSize<<j), powerOfTwo[j] );
+				implementation->result = new ShiftAddOp(implementation, Add, tmp, (periodSize<<i), powerOfTwo[i] );
+			}
+		}
 
 		if(verbose>=DETAILED) showShiftAddDag();
 		
@@ -841,10 +856,6 @@ namespace flopoco{
 		return result;
 	}
 	
-
-	void IntConstMult::buildTreeForRational(mpz_class header, mpz_class period, int headerSize, int periodSize, int i, int j) {
-		// First build the DAG for the period
-	};
 
 
 	void IntConstMult::showShiftAddDag(){
