@@ -482,7 +482,12 @@ namespace flopoco{
 
 		srcFileName="IntConstMult (periodic)";
 		setCopyrightString("Florent de Dinechin (2007-2011)");
-		name <<"IntConstMultPeriodic_"<<xsize<<"_"<<mpz2string(header)<<"_"<<headerSize<<"_"<<mpz2string(period)<<"_"<<periodSize<<"_"<<i<<"_"<<j;
+		name <<"IntConstMultPeriodic_"<<xsize<<"_"<<mpz2string(header)<<"_"<<headerSize
+				 <<"_"<<mpz2string(period)<<"_"<<periodSize<<"_"<<i<<"_";
+		if (j<0) 
+			name << "M" << -j;
+		else
+			name << j;
 		setName(name.str());
 
 		implementation = new ShiftAddDag(this);

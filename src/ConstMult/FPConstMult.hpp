@@ -33,6 +33,7 @@ namespace flopoco{
 		int wF_out; 
 		mpfr_t mpfrC; 
 		int cstWidth;
+		bool correctRounding;
 
 		int cstSgn;
 		int cst_exp_when_mantissa_1_2;

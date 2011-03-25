@@ -36,7 +36,7 @@ namespace flopoco{
 extern vector<Operator*> oplist;
 
 
-	// The expert version
+	// The expert version // TODO define correctRounding
 
 	FPConstMult::FPConstMult(Target* target, int wE_in_, int wF_in_, int wE_out_, int wF_out_, int cstSgn_, int cst_exp_, mpz_class cstIntSig_):
 		Operator(target), 
@@ -110,9 +110,9 @@ extern vector<Operator*> oplist;
 
 
 	// The rational version
-	FPConstMult::FPConstMult(Target* target, int wE_in_, int wF_in_, int wE_out_, int wF_out_, int a, int b, bool correctRounding):
+	FPConstMult::FPConstMult(Target* target, int wE_in_, int wF_in_, int wE_out_, int wF_out_, int a, int b, bool correctRounding_):
 		Operator(target), 
-		wE_in(wE_in_), wF_in(wF_in_), wE_out(wE_out_), wF_out(wF_out_)
+		wE_in(wE_in_), wF_in(wF_in_), wE_out(wE_out_), wF_out(wF_out_), correctRounding(correctRounding_)
 	{
 
 		srcFileName="FPConstMult";
@@ -271,7 +271,14 @@ extern vector<Operator*> oplist;
 
 
 		// Now go on
-		int wC = wF_out + 3; // for faithful rounding, but could come from the interface: TODO
+		
+		int wC;
+		if(correctRounding){
+			wC=wF_out+wF_in+wE_in; 
+			REPORT(INFO, "WARNING: correct rounding only probable, target internal precision set to " << wC << " bits");
+		}
+		else // faithful rounding
+			wC = wF_out + 3; 
 		int r = ceil(   ((double)(wC-headerSize)) / ((double)periodSize)   ); // Needed repetitions
 		REPORT(DETAILED, "wC=" << wC << ", need to repeat the period " << r << " times");
 		int i = intlog2(r) -1; // 2^i < r < 2^{i+1}
@@ -757,6 +764,27 @@ extern vector<Operator*> oplist;
 		vhdl << tab << declare("x_exp", wE_in) << " <=  X("<<wE_in<<"+"<<wF_in<<"-1 downto "<<wF_in<<");"<<endl;
 
 
+		// xcut computation
+		if(mantissa_is_one) {			
+			vhdl << tab << declare("gt_than_xcut") << " <= '0';"<<endl;
+		}
+		else {
+			vhdl << tab << declare("x_sig", wF_in+1) << " <= '1' & X("<<wF_in-1 <<" downto 0);"<<endl;
+			vhdl << tab << declare("xcut_rd", wF_in+1) << " <= \""
+				  << unsignedBinary(xcut_sig_rd, wF_in+1) << "\";"<<endl;
+			vhdl << tab << declare("gt_than_xcut") << " <= '1' when ( x_sig("<<wF_in-1<<" downto 0) > xcut_rd("<<wF_in-1<<" downto 0) ) else '0';"<<endl;
+		}
+
+
+		// exponent handling
+		vhdl << tab << declare("abs_unbiased_cst_exp",wE_sum+1) << " <= \""
+			  << unsignedBinary(expAddend, wE_sum+1) << "\";" << endl;
+		vhdl << tab << declare("r_exp_nopb",    wE_out+1) << " <= "
+			  << "((" << wE_sum << " downto " << wE_in << " => '0')  & x_exp)  "
+			  << (expAddendSign==0 ? "+" : "-" ) << "  abs_unbiased_cst_exp"
+			  << "  +  (("<<wE_sum<<" downto 1 => '0') & gt_than_xcut);"<<endl;
+
+
 		if(mantissa_is_one) {			
 			vhdl << tab << "-- The mantissa of the constant is  1" << endl;
 			if(wF_out == wF_in) {
@@ -767,15 +795,11 @@ extern vector<Operator*> oplist;
 				}
 			else{ // wF_out < wF_in, this is a rounding of the mantissa TODO
 				throw string("FPConstMult: multiplication by a power of two when  wF_out < wF_in not yet implemented, please complain to the FloPoCo team if you need it");
+			vhdl << tab << declare("expfrac_rnd", wE_out+1+wF_out) << " <= r_exp_nopb & r_frac;"<<endl;
 			}
-			vhdl << tab << declare("gt_than_xcut") << " <= '0';"<<endl;
 	
 		}
 		else{ // normal case, mantissa is not one
-			vhdl << tab << declare("x_sig", wF_in+1) << " <= '1' & X("<<wF_in-1 <<" downto 0);"<<endl;
-			vhdl << tab << declare("xcut_rd", wF_in+1) << " <= \""
-				  << unsignedBinary(xcut_sig_rd, wF_in+1) << "\";"<<endl;
-			vhdl << tab << declare("gt_than_xcut") << " <= '1' when ( x_sig("<<wF_in-1<<" downto 0) > xcut_rd("<<wF_in-1<<" downto 0) ) else '0';"<<endl;
 			inPortMap  (icm, "inX", "x_sig");
 			outPortMap (icm, "R","sig_prod");
 			vhdl << instance(icm, "sig_mult");
@@ -784,9 +808,13 @@ extern vector<Operator*> oplist;
 			// Possibly shift the significand one bit left, and remove implicit 1 
 			vhdl << tab << declare("shifted_frac",    wF_out+1) << " <= sig_prod("<<icm->rsize -2<<" downto "<<icm->rsize - wF_out-2 <<")  when gt_than_xcut = '1'"<<endl
 				  << tab << "           else sig_prod("<<icm->rsize -3<<" downto "<<icm->rsize - wF_out - 3<<");"<<endl;  
+
+			
+			vhdl << tab << declare("expfrac_br",   wE_out+1+wF_out+1) << " <= r_exp_nopb & shifted_frac;"<<endl;
 			// add the rounding bit
-			vhdl << tab << tab << declare("rounded_frac",   wF_out+1) << " <= (("<<wF_out <<" downto 1 => '0') & '1') + shifted_frac;"<<endl;
-			vhdl << tab << tab << declare("r_frac", wF_out) << " <= rounded_frac("<<wF_out <<" downto  1);"<<endl;
+			vhdl << tab << declare("expfrac_rnd1",  wE_out+1+wF_out+1) << " <= (("<<wE_out+1+wF_out <<" downto 1 => '0') & '1') + expfrac_br;"<<endl;
+
+			vhdl << tab << declare("expfrac_rnd", wE_out+1+wF_out) << " <= expfrac_rnd1("<< wE_out+1+wF_out <<" downto  1);"<<endl;
 		}
 
 		// Handling signs is trivial
@@ -795,20 +823,13 @@ extern vector<Operator*> oplist;
 		else
 			vhdl << tab << declare("r_sgn") << " <= not x_sgn; -- negative constant"<<endl;
 
-		// exponent handling
-		vhdl << tab << declare("abs_unbiased_cst_exp",wE_sum+1) << " <= \""
-			  << unsignedBinary(expAddend, wE_sum+1) << "\";" << endl;
-		vhdl << tab << declare("r_exp_nopb",    wE_out+1) << " <= "
-			  << "((" << wE_sum << " downto " << wE_in << " => '0')  & x_exp)  "
-			  << (expAddendSign==0 ? "+" : "-" ) << "  abs_unbiased_cst_exp"
-			  << "  +  (("<<wE_sum<<" downto 1 => '0') & gt_than_xcut);"<<endl;
 
 		// overflow handling
 		vhdl << tab << declare("overflow") << " <= " ;
 		if (maxExp(wE_in) + cst_exp_when_mantissa_1_2 + 1 < maxExp(wE_out)) // no overflow can ever happen
 			vhdl << "'0'; --  overflow never happens for this constant and these (wE_in, wE_out)" << endl;
 		else 
-			vhdl <<  "'0' when r_exp_nopb(" << wE_sum << " downto " << wE_out << ") = (" << wE_sum << " downto " << wE_out <<" => '0')     else '1';" << endl;
+			vhdl <<  "expfrac_rnd(" << wE_out+wF_out << ");" << endl;
 
 		// underflow handling
 		vhdl << tab << declare("underflow") << " <= " ;
@@ -825,7 +846,7 @@ extern vector<Operator*> oplist;
 			  << tab << "         else \"11\" when  (x_exn = \"11\")                      -- NaN" << endl
 			  << tab << "         else \"01\";                                          -- normal number" << endl;
 
-		vhdl  << tab << "r <= r_exn & r_sgn & r_exp & r_frac;"<<endl;
+		vhdl  << tab << "r <= r_exn & r_sgn & (expfrac_rnd"<< range(wE_out+wF_out-1,0) <<");"<<endl;
 
 
 	}
@@ -843,48 +864,67 @@ extern vector<Operator*> oplist;
 		/* Compute correct value */
 		FPNumber fpx(wE_in, wF_in);
 		fpx = svX;
-		mpfr_t x, ru,rd;
+		mpfr_t x, ru,rd,rn;
 		mpfr_init2(x, 1+wF_in);
-		mpfr_init2(ru, 1+wF_out); 
-		mpfr_init2(rd, 1+wF_out); 
 		fpx.getMPFR(x);
-		mpfr_mul(ru, x, mpfrC, GMP_RNDU);
-		mpfr_mul(rd, x, mpfrC, GMP_RNDD);
+		if(correctRounding){
+			mpfr_init2(rn, 1+wF_out); 
+			mpfr_mul(rn, x, mpfrC, GMP_RNDN);
 
-		// Set outputs 
-		FPNumber  fpru(wE_out, wF_out, ru);
-		mpz_class svRU = fpru.getSignalValue();
-		tc->addExpectedOutput("R", svRU);
-		FPNumber  fprd(wE_out, wF_out, rd);
-		mpz_class svRD = fprd.getSignalValue();
-		tc->addExpectedOutput("R", svRD);
+			// Set outputs 
+			FPNumber  fprn(wE_out, wF_out, rn);
+			mpz_class svRN = fprn.getSignalValue();
+			tc->addExpectedOutput("R", svRN);
+			// clean up
+			mpfr_clears(x, rn, NULL);
+		}
+		else{
+			mpfr_init2(ru, 1+wF_out); 
+			mpfr_init2(rd, 1+wF_out); 
+			mpfr_mul(ru, x, mpfrC, GMP_RNDU);
+			mpfr_mul(rd, x, mpfrC, GMP_RNDD);
 
-		// clean up
-		mpfr_clears(x, ru, rd, NULL);
-
+			// Set outputs 
+			FPNumber  fpru(wE_out, wF_out, ru);
+			mpz_class svRU = fpru.getSignalValue();
+			tc->addExpectedOutput("R", svRU);
+			FPNumber  fprd(wE_out, wF_out, rd);
+			mpz_class svRD = fprd.getSignalValue();
+			tc->addExpectedOutput("R", svRD);
+			// clean up
+			mpfr_clears(x, ru, rd, NULL);
+		}
 	}
 
 }
 
 #if 0
 
-flopoco.vhdl:332:16:@9822ns:(assertion error): Incorrect output for R, expected value : 0100101010100011000101101010010... (other values line 1963 of test.input), result:  0100101010101101000000110110111|| line : 1963 of input file 
-flopoco.vhdl:332:16:@9832ns:(assertion error): Incorrect output for R, expected value : 0100110011111111011011010111011... (other values line 1965 of test.input), result:  0100110011111010011100000100111|| line : 1965 of input file 
-flopoco.vhdl:332:16:@9852ns:(assertion error): Incorrect output for R, expected value : 0111010110000101101100110011011... (other values line 1969 of test.input), result:  0111010110000110000111110011101|| line : 1969 of input file 
-flopoco.vhdl:332:16:@9932ns:(assertion error): Incorrect output for R, expected value : 0100101011011001010101011111011... (other values line 1985 of test.input), result:  0100101011001011011111010001110|| line : 1985 of input file 
-flopoco.vhdl:332:16:@9942ns:(assertion error): Incorrect output for R, expected value : 0100100010000110010001110010101... (other values line 1987 of test.input), result:  0100100010001110000010110110100|| line : 1987 of input file 
-flopoco.vhdl:332:16:@9952ns:(assertion error): Incorrect output for R, expected value : 0101100101000010010010111011000... (other values line 1989 of test.input), result:  0101100101010111000111100101100|| line : 1989 of input file 
-flopoco.vhdl:332:16:@9982ns:(assertion error): Incorrect output for R, expected value : 0100111110001000110010000111110... (other values line 1995 of test.input), result:  0100111110010000101001110001011|| line : 1995 of input file 
-flopoco.vhdl:332:16:@9992ns:(assertion error): Incorrect output for R, expected value : 
-0110111011101111111001000110001... (other values line 1997 of test.input), result:  
-0110111011101000011001001001011|| line : 1997 of input file 
+e 
+flopoco.vhdl:340:16:@425612ns:(assertion error): Incorrect output for R, expected value: 
+010 0101 0000000000 result: 
+010 0100 0000000000|| line : 85121 of input file 
+flopoco.vhdl:340:16:@435852ns:(assertion error): Incorrect output for R, expected value: 01001100000000000 result: 01001010000000000|| line : 87169 of input file 
+flopoco.vhdl:340:16:@446092ns:(assertion error): Incorrect output for R, expected value: 01001110000000000 result: 01001100000000000|| line : 89217 of input file 
+flopoco.vhdl:340:16:@456332ns:(assertion error): Incorrect output for R, expected value: 01010000000000000 result: 01001110000000000|| line : 91265 of input file 
+flopoco.vhdl:340:16:@466572ns:(assertion error): Incorrect output for R, expected value: 01010010000000000 result: 01010000000000000|| line : 93313 of input file 
+flopoco.vhdl:340:16:@476812ns:(assertion error): Incorrect output for R, expected value: 01010100000000000 result: 01010010000000000|| line : 95361 of input file 
+flopoco.vhdl:340:16:@487052ns:(assertion error): Incorrect output for R, expected value: 01010110000000000 result: 01010100000000000|| line : 97409 of input file 
+flopoco.vhdl:340:16:@538252ns:(assertion error): Incorrect output for R, expected value: 01100000000000000 result: 00111110000000000|| line : 107649 of input file 
+flopoco.vhdl:340:16:@548492ns:(assertion error): Incorrect output for R, expected value: 01100010000000000 result: 01100000000000000|| line : 109697 of input file 
+flopoco.vhdl:340:16:@558732ns:(assertion error): Incorrect output for R, expected value: 01100100000000000 result: 01100010000000000|| line : 111745 of input file 
+flopoco.vhdl:340:16:@568972ns:(assertion error): Incorrect output for R, expected value: 01100110000000000 result: 01100100000000000|| line : 113793 of input file 
+flopoco.vhdl:340:16:@579212ns:(assertion error): Incorrect output for R, expected value: 01101000000000000 result: 01100110000000000|| line : 115841 of input file 
+flopoco.vhdl:340:16:@589452ns:(assertion error): Incorrect output for R, expected value: 
+011 0101 0000000000 result: 
+011 0100 0000000000|| line : 117889 of input file 
+flopoco.vhdl:340:16:@599692ns:(assertion error): Incorrect output for R, expected value: 01101100000000000 result: 01101010000000000|| line : 119937 of input file 
+flopoco.vhdl:340:16:@609932ns:(assertion error): Incorrect output for R, expected value: 01101110000000000 result: 01101100000000000|| line : 121985 of input file 
+flopoco.vhdl:340:16:@620172ns:(assertion error): Incorrect output for R, expected value: 01110000000000000 result: 01101110000000000|| line : 124033 of input file 
+flopoco.vhdl:340:16:@630412ns:(assertion error): Incorrect output for R, expected value: 01110010000000000 result: 01110000000000000|| line : 126081 of input file 
+flopoco.vhdl:340:16:@640652ns:(assertion error): Incorrect output for R, expected value: 01110100000000000 result: 01110010000000000|| line : 128129 of input file 
+flopoco.vhdl:340:16:@650892ns:(assertion error): Incorrect output for R, expected value: 01110110000000000 result: 01110100000000000|| line : 130177 of input file 
 
-111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110001
-> FPConstMult: Found header 0 of size 0 and period 10100011110101110000 of size 20
-> FPConstMult: Found header 0 of size 0 and period 1010001111010111 of size 20
-> FPConstMult: wC=26, need to repeat the period 2 times
 
- 10100011110101111010001111010111
- 10100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001111010111000010100011110101110000101000111101011100001010001
 
 #endif
