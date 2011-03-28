@@ -477,7 +477,7 @@ namespace flopoco{
 
 	// The constructor for rational constants
 
-	IntConstMult::IntConstMult(Target* _target, int _xsize, mpz_class n, mpz_class period, int periodSize, mpz_class header, int headerSize, int i, int j) :
+	IntConstMult::IntConstMult(Target* _target, int _xsize, mpz_class n, mpz_class period, int periodSize, mpz_class header, int headerSize, int i, int j, int zeroLSBs) :
 		Operator(_target), xsize(_xsize){
 		ostringstream name; 
 
@@ -503,7 +503,7 @@ namespace flopoco{
 
 		// Build in implementation a tree constant multiplier 
 		
-		ShiftAddOp* powerOfTwo[100];
+		ShiftAddOp* powerOfTwo[1000];
 
 		// Build the multiplier by the period
 		powerOfTwo[0] = buildMultBoothTree(period);
@@ -521,12 +521,16 @@ namespace flopoco{
 				implementation->result = new ShiftAddOp(implementation, Add, powerOfTwo[j], (periodSize<<i), powerOfTwo[i] );
 		}
 		else {
+			// REPORT(DEBUG, "DAG before adding header and zero=" << zeroLSBs);
+			// if(verbose>=DETAILED) showShiftAddDag();
+			REPORT(DEBUG, "Header not null: header="<<header);
 			ShiftAddOp* headerSAO;
 			headerSAO=buildMultBoothTree(header);
+			cerr << headerSAO << endl;
 			if(j==-1)
-				implementation->result = 	new ShiftAddOp(implementation, Add, headerSAO, (periodSize<<i), powerOfTwo[i] );
+				implementation->result = 	new ShiftAddOp(implementation, Add, headerSAO, (periodSize<<i)-zeroLSBs, powerOfTwo[i] );
 			else {
-				ShiftAddOp* tmp = new ShiftAddOp(implementation, Add, headerSAO, (periodSize<<j), powerOfTwo[j] );
+				ShiftAddOp* tmp = implementation->provideShiftAddOp(Add, headerSAO, (periodSize<<j)-zeroLSBs, powerOfTwo[j] );
 				implementation->result = new ShiftAddOp(implementation, Add, tmp, (periodSize<<i), powerOfTwo[i] );
 			}
 		}
@@ -779,7 +783,8 @@ namespace flopoco{
 		int*     shifts;
 	
 		int nsize = intlog2(n);
-		
+
+		REPORT(DEBUG, "Entering buildMultBoothTree for "<< n);		
 		if((mpz_class(1) << (nsize-1)) == n) { // power of two
 			REPORT(INFO, "Power of two");
 			result= implementation->provideShiftAddOp(Shift, implementation->PX, intlog2(n)-1);

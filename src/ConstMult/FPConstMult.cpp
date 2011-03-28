@@ -13,6 +13,7 @@
 
 
 // TODO Case mantissa=1, wE_out>wE_in
+// TODO pipeline, re-compute mpfrC out of initial a and b at the end of the rational constructor.
 // TODO standard test vectors: 1, 0, various exn, xcut borders
 
 
@@ -127,6 +128,19 @@ extern vector<Operator*> oplist;
 			a=-a;
 		}
 
+		// First simplify the fraction: compute GCD by Euclide, then divide a and b by it
+		int ae=max(a,b);
+		int be=min(a,b);
+		int re=ae%be;
+		while(re!=0) {
+			ae=be;
+			be=re;
+			re=ae%be;
+		}
+		a=a/be;
+		b=b/be;
+		REPORT(DEBUG, "GCD of a and b is " << be << ", simplified fraction to " << a << "/" << b);
+
 		// Now get rid of powers of two in both a and b.
 		// we transform them into (a',b',expUpdate) such that a' and b' are both odd
 		// and a/b = a'/b'.2^expUpdate
@@ -139,128 +153,139 @@ extern vector<Operator*> oplist;
 			b=b>>1;
 			expUpdate--;
 		}
-			
+		
+		if(b==1) {
+			throw("This fraction does not have an infinite binary representation -- not implemented yet");
+		}
+
 		mantissa_is_one = (a==b); // fairly different architecture in this case
 
-		// Now look for a period
-		int periodSize, headerSize; 
-		mpz_class periodicPattern, header; // The two values to look for
-		mpfr_t mpa, mpb;
-		mpfr_inits(mpfrC,mpa,mpb, NULL);
-		mpfr_set_si(mpa, a, GMP_RNDN);
-		mpfr_set_si(mpb, b, GMP_RNDN);
-
-
-		mpz_class aa, bb, cc;
-		aa=a; 
-		bb=b;
-
-		// First euclidean division of a by b
-		header = aa/bb;
-		headerSize=intlog2(header);
-
-		cc = aa - header*bb; // remainder
-
-		// Now look for the order of cc modulo bb
-		periodSize=1;
-		mpz_class twotoperiodSize=2;
-		bool tryOrder = true;
-		while (tryOrder){
-			// Stupidely compute bb^periodSize
-			if((twotoperiodSize % bb) == 1)
-				tryOrder=false;
-			else{
-				periodSize++;
-				twotoperiodSize = twotoperiodSize <<1;
-			}
+		if(mantissa_is_one){
+			mpfr_inits(mpfrC, NULL);
+			mpfr_set_d(mpfrC, 1.0, GMP_RNDN);
+			mpfr_mul_2si(mpfrC,mpfrC, expUpdate, GMP_RNDN);
+			cst_exp_when_mantissa_1_2 = expUpdate;
 		}
-		// and the period is 2^periodSize/b
-		periodicPattern = twotoperiodSize/b;
-
-		// now this procedure is OK with a factor that is a power of two.
-		//  padd to the right with zeroes
-		int shortsize=intlog2(periodicPattern);
-		periodicPattern = periodicPattern << (periodSize-shortsize);
-		REPORT(DETAILED, "Found header " << header.get_str(2) << " of size "<< headerSize 
-					 << " and period " << periodicPattern.get_str(2) << " of size " << periodSize);
-
-
-	 
-		// Now go on
-		
-		int wC;
-		if(correctRounding){
-			wC=wF_out+wF_in+wE_in; 
-			REPORT(INFO, "WARNING: correct rounding only probable, target internal precision set to " << wC << " bits");
-		}
-		else // faithful rounding
-			wC = wF_out + 3; 
-		int r = ceil(   ((double)(wC-headerSize)) / ((double)periodSize)   ); // Needed repetitions
-		REPORT(DETAILED, "wC=" << wC << ", need to repeat the period " << r << " times");
-		int i = intlog2(r) -1; // 2^i < r < 2^{i+1}
-		int rr = r - (1<<i);
-		int j;
-		if (rr==0)
-			j=-1;
 		else
-			j= intlog2(rr-1);
+			{
+		
+			// Now look for a period
+			int periodSize, headerSize; 
+			mpz_class periodicPattern, header; // The two values to look for
+			mpfr_t mpa, mpb;
+			mpfr_inits(mpfrC,mpa,mpb, NULL);
+			mpfr_set_si(mpa, a, GMP_RNDN);
+			mpfr_set_si(mpb, b, GMP_RNDN);
 
-		// now round up the number of needed repetitions
-		if(j==-1) {
-			r=(1<<i);
-			REPORT(DETAILED, "... Will repeat 2^i with i=" << i);
+
+			mpz_class aa, bb, cc;
+			aa=a; 
+			bb=b;
+
+			// First euclidean division of a by b
+			header = aa/bb;
+			headerSize=intlog2(header);
+
+			cc = aa - header*bb; // remainder
+
+			// Now look for the order of cc modulo bb
+			periodSize=1;
+			mpz_class twotoperiodSize=2;
+			bool tryOrder = true;
+			while (tryOrder){
+				// Stupidely compute bb^periodSize
+				if((twotoperiodSize % bb) == 1)
+					tryOrder=false;
+				else{
+					periodSize++;
+					twotoperiodSize = twotoperiodSize <<1;
+				}
+			}
+			// and the period is 2^periodSize/b
+			periodicPattern = twotoperiodSize/b;
+
+			// now this procedure is OK with a factor that is a power of two.
+			//  padd to the right with zeroes
+			int shortsize=intlog2(periodicPattern);
+			periodicPattern = periodicPattern << (periodSize-shortsize);
+			REPORT(DETAILED, "Found header " << header.get_str(2) << " of size "<< headerSize 
+						 << " and period " << periodicPattern.get_str(2) << " of size " << periodSize);
+	 
+			int wC;
+			if(correctRounding){
+				wC=wF_out+wF_in+wE_in; 
+				REPORT(INFO, "WARNING: correct rounding only probable, target internal precision set to " << wC << " bits");
+			}
+			else // faithful rounding
+				wC = wF_out + 3; 
+			int r = ceil(   ((double)(wC-headerSize)) / ((double)periodSize)   ); // Needed repetitions
+			REPORT(DETAILED, "wC=" << wC << ", need to repeat the period " << r << " times");
+			int i = intlog2(r) -1; // 2^i < r < 2^{i+1}
+			int rr = r - (1<<i);
+			int j;
+			if (rr==0)
+				j=-1;
+			else
+				j= intlog2(rr-1);
+
+			// now round up the number of needed repetitions
+			if(j==-1) {
+				r=(1<<i);
+				REPORT(DETAILED, "... Will repeat 2^i with i=" << i);
+			}
+			else{
+				r=(1<<i)+(1<<j);
+				REPORT(DETAILED, "... Will repeat 2^i+2^j = " << (1<<i) + (1<<j) << " with i=" << i << " and j=" << j);
+			}
+
+			// Now rebuild the mpfrC constant (for emulate() etc)
+			// First, as an integer mantissa
+			cstIntSig = header;
+			for(int k=0; k<r; k++)
+				cstIntSig = (cstIntSig<<periodSize) + periodicPattern;
+			REPORT(DEBUG, "Constant mantissa rebuilt as " << cstIntSig << " ==  " << cstIntSig.get_str(2) );
+
+			// now as an MPFR
+			cstWidth = headerSize  + r*periodSize;
+			mpfr_set_prec(mpfrC, cstWidth);
+			mpfr_div(mpfrC, mpa, mpb, GMP_RNDN);
+			// get the exponent when the mantissa is on this size
+			mpz_class dummy;
+			cst_exp_when_mantissa_int = mpfr_get_z_exp(dummy.get_mpz_t(), mpfrC);
+			cst_exp_when_mantissa_int += expUpdate;
+			mpfr_set_z(mpfrC, cstIntSig.get_mpz_t(), GMP_RNDN);
+			mpfr_mul_2si(mpfrC, mpfrC, cst_exp_when_mantissa_int, GMP_RNDN); // exact
+
+
+			REPORT(DEBUG, "Constant rebuilt as " << mpfr_get_d( mpfrC, GMP_RNDN) );
+
+			// No need for setupSgnAndExpCases(): the constant cannot be zero and sign is already managed
+			computeExpSig();
+
+			// restore sign for emulate()
+			if(cstSgn)
+				mpfr_neg(mpfrC, mpfrC, GMP_RNDN);
+
+			// If the period has zeroes at the LSB, there are FAs to save
+			// We shift the constant and the periodic pattern, but we do not touch its size
+			// So the shifts by 2^k*periodSize will still do the right thing
+
+
+			int zeroesToTheRight=0;
+			while ((cstIntSig % 2) ==0) {
+				REPORT(DEBUG, "Significand is even, normalising");
+				cstIntSig = cstIntSig >>1;
+				periodicPattern = periodicPattern >>1;
+				cst_exp_when_mantissa_int++;
+				zeroesToTheRight++;
+			}
+
+			// Now periodicPattern is even, and this constructor has to remember to shift it by zeroesToTheRight
+			icm = new IntConstMult(target, wF_in+1, cstIntSig, periodicPattern, periodSize, header, headerSize, i, j, zeroesToTheRight);
+			oplist.push_back(icm);
+
+			mpfr_clears(mpa, mpb, NULL);
 		}
-		else{
-			r=(1<<i)+(1<<j);
-			REPORT(DETAILED, "... Will repeat 2^i+2^j = " << (1<<i) + (1<<j) << " with i=" << i << " and j=" << j);
-		}
-
-		// Now rebuild the mpfrC constant (for emulate() etc)
-		// First, as an integer mantissa
-		cstIntSig = header;
-		for(int k=0; k<r; k++)
-			cstIntSig = (cstIntSig<<periodSize) + periodicPattern;
-		REPORT(DEBUG, "Constant mantissa rebuilt as " << cstIntSig << " ==  " << cstIntSig.get_str(2) );
-
-		// now as an MPFR
-		cstWidth = headerSize  + r*periodSize;
-		mpfr_set_prec(mpfrC, cstWidth);
-		mpfr_div(mpfrC, mpa, mpb, GMP_RNDN);
-		// get the exponent when the mantissa is on this size
-		mpz_class dummy;
-		cst_exp_when_mantissa_int = mpfr_get_z_exp(dummy.get_mpz_t(), mpfrC);
-		cst_exp_when_mantissa_int += expUpdate;
-		mpfr_set_z(mpfrC, cstIntSig.get_mpz_t(), GMP_RNDN);
-		mpfr_mul_2si(mpfrC, mpfrC, cst_exp_when_mantissa_int, GMP_RNDN); // exact
-
-
-		REPORT(DEBUG, "Constant rebuilt as " << mpfr_get_d( mpfrC, GMP_RNDN) );
-
-		// No need for setupSgnAndExpCases(): the constant cannot be zero and sign is already managed
-		computeExpSig();
-
-		// restore sign for emulate()
-		if(cstSgn)
-			mpfr_neg(mpfrC, mpfrC, GMP_RNDN);
-
-		// If the period has zeroes at the LSB, there are FAs to save
-		// We shift the constant and the periodic pattern, but we do not touch its size
-		// So the shifts by 2^k*periodSize will still do the right thing
-
-
-		int zeroesToTheRight=0;
-		while ((cstIntSig % 2) ==0) {
-			REPORT(DEBUG, "Significand is even, normalising");
-			cstIntSig = cstIntSig >>1;
-			periodicPattern = periodicPattern >>1;
-			cst_exp_when_mantissa_int++;
-			zeroesToTheRight++;
-		}
-
-		// Now periodicPattern is even, and this constructor has to remember to shift it by zeroesToTheRight
-		icm = new IntConstMult(target, wF_in+1, cstIntSig, periodicPattern, periodSize, header, headerSize, i, j);
-		oplist.push_back(icm);
-
 		
 		
 		// build the name
@@ -271,7 +296,6 @@ extern vector<Operator*> oplist;
 		uniqueName_=name.str();
 		
 		buildVHDL();
-		mpfr_clears(mpa, mpb, NULL);
 
 	}
 
@@ -517,6 +541,13 @@ extern vector<Operator*> oplist;
 		}
 #endif
 
+		// exponent handling
+			vhdl << tab << declare("abs_unbiased_cst_exp",wE_sum+1) << " <= \""
+					 << unsignedBinary(expAddend, wE_sum+1) << "\";" << endl;
+			vhdl << tab << declare("r_exp_br",    wE_out+1) << " <= "
+					 << "((" << wE_sum << " downto " << wE_in << " => '0')  & x_exp)  "
+					 << (expAddendSign==0 ? "+" : "-" ) << "  abs_unbiased_cst_exp"
+					 << "  +  (("<<wE_sum<<" downto 1 => '0') & norm);"<<endl;
 
 		if(mantissa_is_one) {			
 			vhdl << tab << "-- The mantissa of the constant is  1" << endl;
@@ -527,10 +558,11 @@ extern vector<Operator*> oplist;
 				vhdl << tab << declare("r_frac", wF_out) << " <= X("<<wF_in-1 <<" downto 0)  &  " << rangeAssign(wF_out-wF_in-1, 0, "'0'") << ";"<<endl;
 				}
 			else{ // wF_out < wF_in, this is a rounding of the mantissa TODO
-				REPORT(INFO, "rounding of multiplication by a power of two  not implemented properly when  wF_out < wF_in, please complain to the FloPoCo team if you need it");
-				vhdl << tab << declare("r_frac", wF_out) << " <= X" << range(wF_in-1, wF_out-wF_in) << ";" << endl;
+				REPORT(INFO, "rounding of multiplication by a power of two  not implemented properly when  wF_out < wF_in, truncating. Please complain to the FloPoCo team if you need correct rounding");
+				vhdl << tab << declare("r_frac", wF_out) << " <= X" << range(wF_in-1, wF_out -wF_in) << ";"<<endl;
 			}
-			vhdl << tab << declare("expfrac_rnd", wE_out+1+wF_out) << " <= r_exp_nopb & r_frac;"<<endl;
+			vhdl << tab << declare("expfrac_rnd",   wE_out+1+wF_out) << " <= r_exp_br & r_frac;"<<endl;
+			vhdl << tab << declare("norm") << " <= '0';"<<endl;
 		}
 
 
@@ -561,13 +593,6 @@ extern vector<Operator*> oplist;
 			vhdl << tab << declare("shifted_frac",    wF_out+1) << " <= sig_prod("<<icm->rsize -2<<" downto "<<icm->rsize - wF_out-2 <<")  when norm = '1'"<<endl
 					 << tab << "           else sig_prod("<<icm->rsize -3<<" downto "<<icm->rsize - wF_out - 3<<");"<<endl;  
 			
-		// exponent handling
-			vhdl << tab << declare("abs_unbiased_cst_exp",wE_sum+1) << " <= \""
-					 << unsignedBinary(expAddend, wE_sum+1) << "\";" << endl;
-			vhdl << tab << declare("r_exp_br",    wE_out+1) << " <= "
-					 << "((" << wE_sum << " downto " << wE_in << " => '0')  & x_exp)  "
-					 << (expAddendSign==0 ? "+" : "-" ) << "  abs_unbiased_cst_exp"
-					 << "  +  (("<<wE_sum<<" downto 1 => '0') & norm);"<<endl;
 			
 			vhdl << tab << declare("expfrac_br",   wE_out+1+wF_out+1) << " <= r_exp_br & shifted_frac;"<<endl;
 			// add the rounding bit //TODO: No  round to nearest here. OK for faithful. For CR, does this case it ever appear?
@@ -600,7 +625,7 @@ extern vector<Operator*> oplist;
 			vhdl <<  "r_exp_rnd(" << wE_sum << ");" << endl;
 			 
 	
-		vhdl << tab << declare("r_exp", wE_out) << " <= r_exp_br("<<wE_out-1<<" downto 0) ;"<<endl;
+		//		vhdl << tab << declare("r_exp", wE_out) << " <= r_exp_br("<<wE_out-1<<" downto 0) ;"<<endl;
 
 		vhdl << tab << declare("r_exn", 2) << " <=      \"00\" when ((x_exn = \"00\") or (x_exn = \"01\" and underflow='1'))  -- zero"<<endl 
 			  << tab << "         else \"10\" when ((x_exn = \"10\") or (x_exn = \"01\" and overflow='1'))   -- infinity" << endl

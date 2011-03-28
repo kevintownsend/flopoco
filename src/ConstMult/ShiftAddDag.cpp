@@ -92,11 +92,15 @@ namespace flopoco{
 	// corresponding node.
 	ShiftAddOp* ShiftAddDag::provideShiftAddOp(ShiftAddOpType op, ShiftAddOp* i, int s, ShiftAddOp* j){
 		mpz_class n=this->computeConstant(op, i, s, j);
-		for(unsigned int ii=0; ii<this->saolist.size(); ii++) {
-			if (n==saolist[ii]->n) 
-				return saolist[ii];
+		if(n==1)
+			return PX;
+		else {
+			for(unsigned int ii=0; ii<this->saolist.size(); ii++) {
+				if (n==saolist[ii]->n) 
+					return saolist[ii];
+			}
+			return new ShiftAddOp(this, op, i, s, j);
 		}
-		return new ShiftAddOp(this, op, i, s, j);
 	}
 
 
