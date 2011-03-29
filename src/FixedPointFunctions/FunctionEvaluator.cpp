@@ -12,8 +12,6 @@
 
   */
 
-#ifdef HAVE_SOLLYA
-
 #include <iostream>
 #include <sstream>
 #include <vector>
@@ -26,7 +24,10 @@
 #include <gmpxx.h>
 #include "../utils.hpp"
 
+
 #include "FunctionEvaluator.hpp"
+
+#ifdef HAVE_SOLLYA
 
 using namespace std;
 

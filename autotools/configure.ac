@@ -31,6 +31,30 @@ AC_ARG_ENABLE(	[exec],
 		[EXEC=$enableval])
 AM_CONDITIONAL(BUILD_FLOPOCO_EXEC, test "x$EXEC" = xyes)
 
+AC_ARG_WITH(sollya-dir,
+    [  --with-sollya-dir=DIR  where the root sources of SOLLYA are installed ],
+    [
+       ac_sollya_dir="$withval"
+    ])
+AC_ARG_WITH(sollya-obj-dir,
+    [  --with-sollya-obj-dir=DIR  where the root of SOLLYA are installed ],
+    [
+       ac_sollya_obj_dir="$withval"
+    ])
+
+dnl check for the sollya library
+if test "x$ac_sollya_dir" != x && test "x$ac_sollya_obj_dir" != x; then
+   AC_DEFINE(HAVE_SOLLYA, 1, "Found Sollya")
+   SOLLYA_INCLUDE="-I $ac_sollya_dir"
+   SOLLYA_LDFLAGS="-L$ac_sollya_obj_dir -lsollya"
+   AC_SUBST(SOLLYA_INCLUDE)
+   AC_SUBST(SOLLYA_LDFLAGS)
+   ac_build_sollya=yes
+else
+   ac_build_sollya=no
+fi
+AM_CONDITIONAL(BUILD_SOLLYA_FILES, test "x$ac_build_sollya" = xyes)
+
 dnl Detect whether target OS is Windows
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <windows.h>]], [[HANDLE h; DWORD d;]])], [OS_WIN32="yes"], [OS_WIN32="no"])
 AM_CONDITIONAL(no_WIN32, test "x$OS_WIN32" = xno)

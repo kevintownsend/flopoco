@@ -10,7 +10,6 @@ CeCILL license, 2008-2010.
 All rights reserved
 */
 
-#ifdef HAVE_SOLLYA
 
 #include <iostream>
 #include <sstream>
@@ -25,6 +24,8 @@ All rights reserved
 #include <gmpxx.h>
 #include "utils.hpp"
 #include "Operator.hpp"
+
+#ifdef HAVE_SOLLYA
 #include "FPPipeline.hpp"
 
 #include "FPExpressions/ExpressionParser.h"

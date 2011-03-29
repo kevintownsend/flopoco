@@ -25,6 +25,10 @@
 #ifndef TARGET_HPP
 #define TARGET_HPP
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "Targets/DSP.hpp"
 #include <string>
 

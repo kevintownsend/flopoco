@@ -12,7 +12,6 @@
 
 */
 
-#ifdef HAVE_SOLLYA
 
 #include <iostream>
 #include <sstream>
@@ -23,6 +22,7 @@
 #include "../sollya.h"
 #include "../utils.hpp"
 #include "../Operator.hpp"
+#ifdef HAVE_SOLLYA
 #include "FPConstMult.hpp"
 #include "CRFPConstMult.hpp"
 #include "../FPNumber.hpp"

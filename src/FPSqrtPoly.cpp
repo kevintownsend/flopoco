@@ -9,10 +9,7 @@
   Initial software.
   Copyright © ENS-Lyon, INRIA, CNRS, UCBL,  
   CeCILL license, 2008-2010.
-*/
-
-#ifdef HAVE_SOLLYA
- 
+*/ 
 #include <iostream>
 #include <sstream>
 #include <vector>
@@ -25,6 +22,8 @@
 #include <gmpxx.h>
 #include "utils.hpp"
 #include "Operator.hpp"
+
+#ifdef HAVE_SOLLYA
 #include "IntAdder.hpp"
 #include "IntMultiplier.hpp"
 #include "IntSquarer.hpp"

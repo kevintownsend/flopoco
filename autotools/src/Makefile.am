@@ -105,4 +105,23 @@ libflopoco_la_SOURCES += FPAdderSinglePath.cpp \
 
 endif
 
+if BUILD_SOLLYA_FILES
+libflopoco_la_SOURCES += VHDLLexer.cpp \
+		FixedPointFunctions/HOTBM.cpp \
+		FixedPointFunctions/Function.cpp \
+		FixedPointFunctions/HOTBM/HOTBMInstance.cc\
+		FixedPointFunctions/HOTBM/Param.cc\
+		FixedPointFunctions/HOTBM/Exhaustive.cc\
+		FixedPointFunctions/HOTBM/Util.cc\
+		FixedPointFunctions/HOTBM/PWPolynomial.cc\
+		FixedPointFunctions/HOTBM/Polynomial.cc\
+		FixedPointFunctions/HOTBM/MPPolynomial.cc\
+		FixedPointFunctions/HOTBM/Power.cc\
+		FixedPointFunctions/HOTBM/PowerAdHoc.cc\
+		FixedPointFunctions/HOTBM/TermROM.cc\
+		FixedPointFunctions/HOTBM/Term.cc\
+		FixedPointFunctions/HOTBM/Minimax.cc\
+		FixedPointFunctions/HOTBM/PowerROM.cc\
+		FixedPointFunctions/HOTBM/TermPowMult.cc
+endif
 

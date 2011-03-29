@@ -1,5 +1,10 @@
 #ifndef OPERATOR_HPP
 #define OPERATOR_HPP
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <vector>
 #include <map>
 #include <gmpxx.h>

@@ -12,7 +12,6 @@
 
   */
 
-#ifdef HAVE_SOLLYA
 
 #include <iostream>
 #include <sstream>
@@ -27,6 +26,8 @@
 #include "../utils.hpp"
 
 #include "FunctionTable.hpp"
+
+#ifdef HAVE_SOLLYA
 
 using namespace std;
 

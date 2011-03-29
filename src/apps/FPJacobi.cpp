@@ -11,7 +11,6 @@
   CeCILL license, 2008-2010.
 
  */
-#ifdef HAVE_SOLLYA
 
 #include <iostream>
 #include <sstream>
@@ -26,6 +25,7 @@
 #include <gmpxx.h>
 #include "../utils.hpp"
 #include "../Operator.hpp"
+#ifdef HAVE_SOLLYA
 
 #include "FPJacobi.hpp"
 #include "../FPAdder3Input.hpp"

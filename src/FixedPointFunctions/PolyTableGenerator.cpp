@@ -13,7 +13,6 @@
  All rights reserved
 */
 
-#ifdef HAVE_SOLLYA
 
 #include <iostream>
 #include <sstream>
@@ -28,6 +27,8 @@
 #include <gmpxx.h>
 #include "../utils.hpp"
 #include "../Operator.hpp"
+
+#ifdef HAVE_SOLLYA
 #include "PolyTableGenerator.hpp"
 
 using namespace std;

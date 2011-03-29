@@ -11,8 +11,9 @@
  CeCILL License, 2008-2010.
 */
 
-#ifdef HAVE_SOLLYA
+#include "../Operator.hpp"
 
+#ifdef HAVE_SOLLYA
 #include <iostream>
 #include <sstream>
 #include <vector>
@@ -21,7 +22,6 @@
 #include <gmpxx.h>
 #include "../sollya.h"
 #include "../utils.hpp"
-#include "../Operator.hpp"
 #include "FixRealKCM.hpp"
 #include "../IntAdder.hpp"
 #include "../IntCompressorTree.hpp"
