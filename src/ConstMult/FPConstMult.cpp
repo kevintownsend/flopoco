@@ -42,7 +42,7 @@ extern vector<Operator*> oplist;
 	FPConstMult::FPConstMult(Target* target, int wE_in_, int wF_in_, int wE_out_, int wF_out_, int cstSgn_, int cst_exp_, mpz_class cstIntSig_):
 		Operator(target), 
 		wE_in(wE_in_), wF_in(wF_in_), wE_out(wE_out_), wF_out(wF_out_), 
-		cstSgn(cstSgn_), cst_exp_when_mantissa_int(cst_exp_), cstIntSig(cstIntSig_), mantissa_is_one(false), constant_is_zero(false)
+		cstSgn(cstSgn_), cst_exp_when_mantissa_int(cst_exp_), cstIntSig(cstIntSig_), constant_is_zero(false)
 	{
 		srcFileName="FPConstMult";
 		ostringstream name;
@@ -51,7 +51,7 @@ extern vector<Operator*> oplist;
 
 		if(cstIntSig==0) {
 			REPORT(INFO, "building a multiplier by 0, it will be easy");
-			vhdl  << tab << "r <= " << rangeAssign(wE_out+wF_out+1, 0, "'0'") << ";"<<endl;
+			constant_is_zero=true;
 		}
 		else {
 			// Constant normalization
@@ -89,30 +89,18 @@ extern vector<Operator*> oplist;
 				oplist.push_back(icm);
 			}
 
-
-			// do all the declarations. Pushed into a method so that CRFPConstMult can inherit it
-			buildVHDL();
-
 		}
+		// do all the declarations. Pushed into a method so that CRFPConstMult can inherit it
+		buildVHDL();
 
 	}
-
-
-
-
-
-
-
-
-
-
 
 
 
 	// The rational version
 	FPConstMult::FPConstMult(Target* target, int wE_in_, int wF_in_, int wE_out_, int wF_out_, int a, int b, bool correctRounding_):
 		Operator(target), 
-		wE_in(wE_in_), wF_in(wF_in_), wE_out(wE_out_), wF_out(wF_out_), correctRounding(correctRounding_), mantissa_is_one(false), constant_is_zero(false)
+		wE_in(wE_in_), wF_in(wF_in_), wE_out(wE_out_), wF_out(wF_out_), correctRounding(correctRounding_), constant_is_zero(false)
 	{
 
 		srcFileName="FPConstMult";
