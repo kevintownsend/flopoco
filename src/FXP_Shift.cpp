@@ -8,11 +8,6 @@
 #include <string.h>
 
 #include <gmp.h>
-#undef DEBUG
-#pragma GCC diagnostic ignored "-Wshadow"
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-#pragma GCC diagnostic ignored "-Wsign-conversion"
-
 
 #include <gmpxx.h>
 #include "utils.hpp"
@@ -73,19 +68,19 @@ namespace flopoco{
       {
          vhdl << tab << "with n" << of(i) << " select"<< endl;
          vhdl << tab << tab << "shift" << range((i+2)*(wFX+1)-1, (i+1)*(wFX+1)) << " <= "<<endl;
-         vhdl << tab << tab << tab << "(" << ((1<<i)-1) << " downto 0 => '0') & shift" << range((i+1)*(wFX+1)-1, i*(wFX+1)+(1<<i)) <<
+         vhdl << tab << tab << tab << rangeAssign(((1<<i)-1),0,"'0'") << " & shift" << range((i+1)*(wFX+1)-1, i*(wFX+1)+(1<<i)) <<
                " when '1',"<<endl;
          vhdl << tab << tab << tab << "shift" << range((i+1)*(wFX+1)-1, i*(wFX+1)) <<  " when others;"<<endl;
          vhdl << tab << "s" << of(i+1) << "<= s" << of(i) << " when shift" << range(i*(wFX+1)+((1<<i)-1), i*(wFX+1))
-                << " = (" << ((1<<i)-1) << " downto 0 => '0') else n" << of(i) << " or s" << of(i)<<";"<<endl<<endl;
+                << " = " << rangeAssign(((1<<i)-1),0,"'0'") << " else n" << of(i) << " or s" << of(i)<<";"<<endl<<endl;
        }
       if(maxShift < wE)
       {
-         vhdl << tab << declare("kill",1) << " <= '0' when n" << range(wE-1, maxShift) << " = (" << wE-1 << " downto " << maxShift << " => '0') else '1';"<<endl;
+         vhdl << tab << declare("kill",1) << " <= '0' when n" << range(wE-1, maxShift) << " = " << rangeAssign(wE-1, maxShift, "'0'") << " else '1';"<<endl;
          vhdl << tab << "with kill select"<<endl;
-         vhdl << tab << tab << "fR" << range(wFX+1, 1) << " <= (" << wFX+1 << " downto 1 => '0') when '1'," << endl;
+         vhdl << tab << tab << "fR" << range(wFX+1, 1) << " <= " << rangeAssign(wFX+1,1,"'0'") << " when '1'," << endl;
          vhdl << tab << tab << "shift" << range((maxShift+1)*(wFX+1)-1, maxShift*(wFX+1)) << " when others;" << endl;
-         vhdl << tab <<  "fR" << of(0) << " <= s" << of(maxShift) << " when shift" << range((maxShift+1)*(wFX+1)-1, maxShift*(wFX+1)) << " = (" << wFX << " downto 0 => '0') else kill or s" <<
+         vhdl << tab <<  "fR" << of(0) << " <= s" << of(maxShift) << " when shift" << range((maxShift+1)*(wFX+1)-1, maxShift*(wFX+1)) << " = " << rangeAssign(wFX,0,"'0'") << " else kill or s" <<
                of(maxShift) << ";"<<endl;
       }
       else
@@ -101,9 +96,7 @@ namespace flopoco{
 
    void FXP_Shift::emulate(TestCase * tc)
    {
-
       // TODO
-
    }
 
 

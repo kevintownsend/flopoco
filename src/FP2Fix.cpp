@@ -8,11 +8,6 @@
 #include <string.h>
 
 #include <gmp.h>
-#undef DEBUG
-#pragma GCC diagnostic ignored "-Wshadow"
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-#pragma GCC diagnostic ignored "-Wsign-conversion"
-
 
 #include <gmpxx.h>
 #include "utils.hpp"
@@ -102,12 +97,12 @@ namespace flopoco{
 
       if (wF+1 < wFX0+2)
       {
-         vhdl << tab << declare("fA0",wFX0+2) << " <= \"1\" & I" << range(wF-1, 0) << " & " << range(wFX0-wF,0) << ") => '0');"<<endl;
+         vhdl << tab << declare("fA0",wFX0+2) << " <= \"1\" & I" << range(wF-1, 0) << " & " << rangeAssign(wFX0-wF,0,"'0'")<<";"<<endl;
       }
       else
       {
          vhdl << tab << declare("fA0",wFX0+2) << range(wFX0+1,1) << " <= \"1\" & I" << range(wF-1, wF-wFX0) << ";" << endl;
-         vhdl << tab << "fA0" << of(0) << " <= '0' when I" << range(wF-wFX0-1, 0) << " = (" << wF-wFX0-1 << " downto " << "0 => '0') else '1';"<<endl;
+         vhdl << tab << "fA0" << of(0) << " <= '0' when I" << range(wF-wFX0-1, 0) << " = " << rangeAssign(wF-wFX0-1,0,"'0'") << " else '1';"<<endl;
       }
       //FXP shifter mappings
       FXP_shifter = new FXP_Shift(target, wE, wFX0);
@@ -122,14 +117,14 @@ namespace flopoco{
 
       if(trunc_p)
       {
-         vhdl << tab << declare("fA2",wFX+1) <<  "<= (" << wFX-wFX0 << " downto 0 => '0') & fA1" << range(wFX0+1, 2)<< ";"<<endl;
+         vhdl << tab << declare("fA2",wFX+1) <<  "<= " << rangeAssign(wFX-wFX0,0,"'0'") << " & fA1" << range(wFX0+1, 2)<< ";"<<endl;
       }
       else
       {
          vhdl << tab << declare("round",1) << " <= fA1(1) and (fA1(2) or fA1(0));"<<endl;
 
-         vhdl << tab << declare("fA2a",wFX+1) <<  "<= (" << wFX-wFX0 << " downto 0 => '0') & fA1" << range(wFX0+1, 2)<< ";"<<endl;
-         vhdl << tab << declare("fA2b",wFX+1) <<  "<= (" << wFX << " downto 1 => '0') & round;"<<endl;
+         vhdl << tab << declare("fA2a",wFX+1) <<  "<= " << rangeAssign(wFX-wFX0,0,"'0'") << " & fA1" << range(wFX0+1, 2)<< ";"<<endl;
+         vhdl << tab << declare("fA2b",wFX+1) <<  "<= " << rangeAssign(wFX,1,"'0'") << " & round;"<<endl;
          MantSum = new IntAdder(target, wFX+1);
          MantSum->changeName(getName()+"MantSum");
          oplist.push_back(MantSum);
@@ -158,7 +153,7 @@ namespace flopoco{
       vhdl << tab << declare("fA3", wFX) << of(0) << " <= fA2" << of(0) << " xor I" << of(wE+wF) << ";" << endl;
       for(int i=1; i < wFX; ++i)
          vhdl << tab << "fA3" << of(i) << " <= fA2" << of(i) << " xor I" << of(wE+wF) << ";" << endl;
-      vhdl << tab << declare("fA3b", wFX) << " <= (" << wFX-1 << " downto 1 => '0') & I(" << wE+wF << ");" << endl;
+      vhdl << tab << declare("fA3b", wFX) << " <= " << rangeAssign(wFX-1,1,"'0'") << " & I(" << wE+wF << ");" << endl;
 
       MantSum2 = new IntAdder(target, wFX);
       MantSum2->changeName(getName()+"MantSum2");
@@ -174,7 +169,7 @@ namespace flopoco{
       vhdl << tab << declare("eTest",2) << " <= (overFl0 or overFl1) & undrFl0;" << endl;
 
       vhdl << tab << "with eTest select" << endl;
-      vhdl << tab << tab << "O <= (" << wFX-1 << " downto 0 => '0') when \"01\"," << endl;
+      vhdl << tab << tab << "O <= " << rangeAssign(wFX-1,0,"'0'") << " when \"01\"," << endl;
       vhdl << tab << tab << "I" << of(wE+wF) << " & (" << wFX-2 << " downto 0 => not I" << of(wE+wF) << ") when \"10\","<<endl;
       vhdl << tab << tab << "fA4 when others;"<<endl;
    }
@@ -186,9 +181,7 @@ namespace flopoco{
 
    void FP2Fix::emulate(TestCase * tc)
    {
-
       // TODO
-
    }
 
 
