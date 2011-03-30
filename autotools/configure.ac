@@ -11,8 +11,14 @@ AC_PROG_CPP
 AC_PROG_INSTALL
 AC_PROG_LIBTOOL
 AM_PROG_LEX
+AC_PROG_YACC
 
-#we need flex instead of lex
+# we need bison instead of yacc
+YACC_TRIMMED=`echo ${YACC}| sed 's/-y//;s/ //'`
+if test ${YACC_TRIMMED} != bison; then
+  AC_MSG_ERROR(bison is required)
+fi
+#and flex instead of lex
 if test "$LEX" != flex; then
     AC_MSG_ERROR(flex is required)
 fi
@@ -45,11 +51,13 @@ AC_ARG_WITH(sollya-obj-dir,
 dnl check for the sollya library
 if test "x$ac_sollya_dir" != x && test "x$ac_sollya_obj_dir" != x; then
    AC_DEFINE(HAVE_SOLLYA, 1, "Found Sollya")
+   AC_DEFINE(HAVE_HOTBM, 1, "HOTBM available")
    SOLLYA_INCLUDE="-I $ac_sollya_dir"
    SOLLYA_LDFLAGS="-L$ac_sollya_obj_dir -lsollya"
    AC_SUBST(SOLLYA_INCLUDE)
    AC_SUBST(SOLLYA_LDFLAGS)
    ac_build_sollya=yes
+AC_CONFIG_FILES([src/FPExpressions/Makefile])
 else
    ac_build_sollya=no
 fi

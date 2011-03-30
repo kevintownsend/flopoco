@@ -1,9 +1,12 @@
 # Makefile for flopoco/src
+SUBDIRS = 
+if BUILD_SOLLYA_FILES
+SUBDIRS += FPExpressions
+endif
 
 ACLOCAL_AMFLAGS = -I ../m4
 
-AM_LFLAGS = -o lex.yy.c
-BUILT_SOURCES = VHDLLexer.cpp 
+BUILT_SOURCES = VHDLLexer.cpp
 CLEANFILES = $(BUILT_SOURCES) lex.yy.c *.output
 
 noinst_LTLIBRARIES = libflopoco.la
@@ -21,7 +24,7 @@ noinst_HEADERS = apps/Collision.hpp apps/FPFMAcc.hpp apps/FPJacobi.hpp\
 	IntNAdder.hpp IntSquarer.hpp IntMultipliers/IntTilingMult.hpp IntTruncMultiplier.hpp LongAcc2FP.hpp LongAcc.hpp LongIntAdder.hpp LongIntAdderCmpCmpAdd.hpp LongIntAdderCmpAddAdd.hpp LZOC.hpp LZOCShifterSticky.hpp Operator.hpp OutputIEEE.hpp FixedPointFunctions/PolynomialEvaluator.hpp \
 	Shifters.hpp Signal.hpp IntMultipliers/SignedIntMultiplier.hpp IntMultipliers/UnsignedIntMultiplier.hpp IntMultipliers/LogicIntMultiplier.hpp FixedPointFunctions/PolyTableGenerator.hpp FixedPointFunctions/PiecewiseFunction.hpp  FixedPointFunctions/FunctionTable.hpp Table.hpp Target.hpp TestBench.hpp TestCase.hpp UserDefinedOperator.hpp utils.hpp Wrapper.hpp 
 
-libflopoco_la_SOURCES = VHDLLexer.lpp \
+libflopoco_la_SOURCES = VHDLLexer.cpp \
 			utils.cpp \
 			FlopocoStream.cpp \
 			Targets/DSP.cpp \
@@ -126,5 +129,13 @@ libflopoco_la_SOURCES += VHDLLexer.cpp \
 		FixedPointFunctions/HOTBM/Minimax.cc\
 		FixedPointFunctions/HOTBM/PowerROM.cc\
 		FixedPointFunctions/HOTBM/TermPowMult.cc
+
+libflopoco_la_LIBADD = $(top_builddir)/src/FPExpressions/libFPExpressions.la
+libflopoco_la_CPPFLAGS = -I$(top_builddir)/src/FPExpressions/ -I$(top_srcdir)/src/FPExpressions
+
 endif
 
+VHDLLexer.cpp:$(top_srcdir)/src/VHDLLexerRule.l
+	${LEX} -o $(top_builddir)/src/VHDLLexer.cpp $(top_srcdir)/src/VHDLLexerRule.l
+
+VHDLLexer.hpp:$(top_builddir)/src/VHDLLexer.cpp
