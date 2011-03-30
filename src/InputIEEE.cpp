@@ -135,8 +135,38 @@ namespace flopoco{
 
 
 		else if (wEI<wEO) { // No overflow possible. Subnormal inputs need to be normalized
-			throw  string("InputIEEE not yet implemented for wEI<wEO, send us a mail if you need it");
-			// cout << "Warning: subnormal inputs would be representable in the destination format,\n   but will be flushed to zero anyway (TODO)" << endl;
+			REPORT(INFO, "Warning: subnormal inputs would be representable in the destination format,\n   but will be flushed to zero anyway (TODO). Please complain to the FloPoCo team if you need correct rounding");
+			int32_t biasI = (1<<(wEI-1)) -1;
+			int32_t eMaxO = (1<<(wEO-1)); // that's our maximal exponent, one more than IEEE's
+			vhdl << tab << declare("overflow") << " <= '0';--  overflow never happens for these (wE_in, wE_out)"  << endl;
+			vhdl << tab << declare("underflow") << " <= '0';--  underflow never happens for these (wE_in, wE_out)" << endl;
+			// We have to compute ER = E_X - bias(wE_in) + bias(wE_R)
+			// Let us pack all the constants together
+			mpz_class expAddend = -biasI + eMaxO-1;
+			vhdl << tab << declare("expR",    wEO) << " <= "
+					 << "(" << rangeAssign(wEO-1, wEI, "'0'") << "  & expX) + "
+					 << "\"" << unsignedBinary(expAddend, wEO) << "\""
+					 << ";"<<endl;
+			if(wFO>=wFI){ // no rounding needed
+				vhdl << tab << declare("fracR",wFO) << " <= " << use("fracX");
+				if(wFO>wFI) // need to pad with 0s
+					vhdl << " & CONV_STD_LOGIC_VECTOR(0," << wFO-wFI <<");" << endl;
+				else 
+					vhdl << ";" << endl;
+				vhdl << tab << declare("roundOverflow") << " <= '0';" << endl;
+			}
+			else
+				throw  string("InputIEEE not yet implemented for wEI<wEO and wFI>wFO, send us a mail if you need it");
+
+			vhdl << tab << declare("NaN") << " <= expInfty and not fracZero;" << endl;
+			vhdl << tab << declare("infinity") << " <= (expInfty and fracZero) or (not NaN and (overflow or roundOverflow));" << endl;
+			vhdl << tab << declare("zero") << " <= expZero or underflow;" << endl ;
+
+			vhdl << tab << declare("exnR",2) << " <= " << endl
+				  << tab << tab << "     \"11\" when NaN='1' " << endl
+				  << tab << tab << "else \"10\" when infinity='1' " << endl
+				  << tab << tab << "else \"00\" when zero='1' " << endl
+				  << tab << tab << "else \"01\" ;  -- normal number" << endl;
 		}
 
 
