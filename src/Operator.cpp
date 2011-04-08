@@ -30,6 +30,7 @@ namespace flopoco{
 		hasRegistersWithSyncReset_  = false;
 		pipelineDepth_              = 0;
 		currentCycle_               = 0;
+		criticalPath_               = 0;
 		needRecirculationSignal_    = false;
 		inputDelayMap               = inputDelays;
 		hardOperator_               = hardOperator; 

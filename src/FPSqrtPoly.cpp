@@ -341,8 +341,8 @@ namespace flopoco{
 		syncCycleFromSignal("fPostRound");
 		
 
-		addOutput("RFull", pe->getRWidth());
-		vhdl << tab << " RFull <= rfx;" << endl; 
+		//addOutput("RFull", pe->getRWidth());
+		//vhdl << tab << " RFull <= rfx;" << endl; 
 		
 		vhdl << tab << " R <= exnR & sX & expPostBiasAddition"<<range(wE,1)<<" & fPostRound"<<range(wF, 1)<<";"<<endl;
 		

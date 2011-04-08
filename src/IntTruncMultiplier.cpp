@@ -2700,7 +2700,7 @@ namespace flopoco{
 		for (partitions=0; partitions<config.size(); partitions++)
 		{	
 			int trx1, try1, blx1, bly1;
-			bool onEdge;
+			bool onEdge=false;
 			config[partitions]->getCoordinates(trx1, try1, blx1, bly1);
 			convertCoordinates(trx1, try1, blx1, bly1);
 
