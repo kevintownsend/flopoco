@@ -214,19 +214,31 @@ namespace flopoco{
 				opY = "Y";
 			}
 			
-			if ((wInX <= 18) && (wInY <= 18)){
-				setCriticalPath( getMaxInputDelays(inputDelays));
-				manageCriticalPath( target->DSPToLogicWireDelay());
-				manageCriticalPath( target->DSPMultiplierDelay());
-				vhdl << tab << "R <= X * Y;" << endl;
-//				manageCriticalPath( target->DSPToLogicWireDelay() );
-				outDelayMap["R"]=getCriticalPath();
+			if ((wInX <= 54) && (wInY <= 54)){
+				vhdl << tab << "lpm_mult_component2 : lpm_mult "<<endl;
+				vhdl << tab << "	GENERIC MAP ("<<endl;
+				vhdl << tab << "		lpm_hint => \"MAXIMIZE_SPEED=9\","<<endl;
+				vhdl << tab << "		lpm_pipeline => 0,"<<endl;
+				vhdl << tab << "		lpm_representation => \"UNSIGNED\","<<endl;
+				vhdl << tab << "		lpm_type => \"LPM_MULT\","<<endl;
+				vhdl << tab << "		lpm_widtha => "<<wInX_<<","<<endl;
+				vhdl << tab << "		lpm_widthb => "<<wInY_<<","<<endl;
+				vhdl << tab << "		lpm_widthp => "<<wOut_<<endl;
+				vhdl << tab << "	)"<<endl;
+				vhdl << tab << "	PORT MAP ("<<endl;
+				if (target->isPipelined())
+				vhdl << tab << "		clock => clk,"<<endl;
+				vhdl << tab << "		dataa => X,"<<endl;
+				vhdl << tab << "		datab => Y,"<<endl;
+				vhdl << tab << "		result => R"<<endl;
+				vhdl << tab << "	);"<<endl;
+				setCycle(3);		
+				outDelayMap["R"] = 0.0;
 			}else if ((wInX <= 36) && (wInY <= 36)){				
 				setCriticalPath( getMaxInputDelays(inputDelays));
 				manageCriticalPath( target->DSPToLogicWireDelay());
 				manageCriticalPath( target->DSPMultiplierDelay());
 				vhdl << tab << "R <= X * Y;" << endl;
-//				manageCriticalPath( target->DSPToLogicWireDelay() );
 				outDelayMap["R"]=getCriticalPath();
 			}else if ((wInX <= 54) && (wInY <= 36)){
 				//first multiplication
@@ -1864,9 +1876,33 @@ namespace flopoco{
 		o << "use ieee.std_logic_arith.all;" << endl;
 		o << "use ieee.std_logic_unsigned.all;" << endl;
 		o << "library work;" << endl;
+		if (target_->getVendor()=="Altera"){ //Altera specifi functions for infering DSPs
+			o << "LIBRARY lpm;"<<endl;
+			o << "USE lpm.all;"<<endl;	
+		}
+		
 		outputVHDLEntity(o);
 		newArchitecture(o,name);
-		o << buildVHDLComponentDeclarations();	
+		if (target_->getVendor()=="Altera"){
+			o << buildVHDLComponentDeclarations();
+			o << "COMPONENT lpm_mult"<<endl;
+			o << "GENERIC ( "<<endl;
+			o << "	lpm_hint		: STRING; "<<endl;
+			o << "	lpm_representation		: STRING; "<<endl;
+			o << "	lpm_pipeline : NATURAL; "<<endl;
+			o << "	lpm_type		: STRING; "<<endl;
+			o << "	lpm_widtha		: NATURAL; "<<endl;
+			o << "	lpm_widthb		: NATURAL; "<<endl;
+			o << "	lpm_widthp		: NATURAL "<<endl;
+			o << "); "<<endl;
+			o << "PORT ( "<<endl;
+			o << "		clock	 : IN STD_LOGIC ;"<<endl;
+			o << "		dataa	 : IN STD_LOGIC_VECTOR (lpm_widtha-1 DOWNTO 0);"<<endl;
+			o << "		datab	 : IN STD_LOGIC_VECTOR (lpm_widthb-1 DOWNTO 0);"<<endl;
+			o << "		result : OUT STD_LOGIC_VECTOR (lpm_widthp-1 DOWNTO 0)"<<endl;
+			o << ");"<<endl;
+			o << "END COMPONENT;	"<<endl;
+		}
 		o << buildVHDLSignalDeclarations();
 		beginArchitecture(o);		
 		o<<buildVHDLRegisters();
