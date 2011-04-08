@@ -43,6 +43,7 @@ namespace flopoco{
 	Shifter::Shifter(Target* target, int wIn, int maxShift, ShiftDirection direction, map<string, double> inputDelays) :
 		Operator(target, inputDelays), wIn_(wIn), maxShift_(maxShift), direction_(direction) {
 	
+		setCopyrightString ( "Bogdan Pasca, Florent de Dinechin (2008-2011)" );	
 		setOperatorName();
 		srcFileName = (direction == Right?  "RightShifter": "LeftShifter");
 		
