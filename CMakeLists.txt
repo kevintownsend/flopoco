@@ -27,9 +27,9 @@ ELSE(WIN32)
 	#SET(CMAKE_CXX_FLAGS_DEBUG "-Wall")
 	# Uncomment for profiling
 	#SET(CMAKE_CXX_FLAGS_DEBUG "-g -pg -Wall")
-	SET(CMAKE_CXX_FLAGS_DEBUG "-g -Wall")
+	SET(CMAKE_CXX_FLAGS_DEBUG "-pg -Wall")
 	# Do you want an executable of 12MB ?
-	SET(CMAKE_BUILD_TYPE Debug)
+	SET(CMAKE_BUILD_TYPE DEBUG)
    #SET(CMAKE_BUILD_TYPE release)
 ENDIF(WIN32)
 
@@ -262,6 +262,7 @@ ADD_EXECUTABLE(flopoco
  
  src/apps/Collision
  src/apps/FPFMAcc
+ 
  src/IntSquarer
 )
 
@@ -293,60 +294,84 @@ ADD_EXECUTABLE(flopoco
  src/TestBench 
  #src/BigTestBench
  src/UserDefinedOperator
- src/IntAdder src/IntAdderClassical src/IntAdderAlternative src/IntAdderShortLatency
+ 
+# Addition related --------------------------------------------------
+#--------------------------------------------------------------------
+ src/IntAdder 
+ src/IntAdderClassical 
+ src/IntAdderAlternative 
+ src/IntAdderShortLatency
+
+# ---------- First generation of fast adders ------------------------
+ src/IntAddition/LongIntAdderAddAddMuxGen1 
+ src/IntAddition/LongIntAdderCmpCmpAddGen1 
+ src/IntAddition/LongIntAdderCmpAddIncGen1
+
+# ---------- Second Generation of fast adders -----------------------
+ src/IntAddition/IntAdderSpecific 
+ src/IntAddition/IntComparatorSpecific 
+ src/IntAddition/CarryGenerationCircuit 
+ src/IntAddition/LongIntAdderAddAddMuxGen2 
+ src/IntAddition/LongIntAdderCmpCmpAddGen2 
+ src/IntAddition/LongIntAdderCmpAddIncGen2
+
+# ---------- Multioperand -------------------------------------------
  src/IntNAdder
  src/IntCompressorTree
- src/LongIntAdder src/LongIntAdderCmpCmpAdd src/LongIntAdderCmpAddAdd
+
  src/IntComparator
  src/IntDualSub
  
+# Multiplication related --------------------------------------------
+#--------------------------------------------------------------------
  src/IntMultiplier
  src/IntMultipliers/SignedIntMultiplier
  src/IntMultipliers/UnsignedIntMultiplier
  src/IntMultipliers/IntTilingMult
  src/IntMultipliers/LogicIntMultiplier 
  src/IntTruncMultiplier
- 
+ src/IntSquarer
  src/IntKaratsuba
- src/LZOC src/LZOCShifterSticky
+
+# Shifters/LZOC related ---------------------------------------------
+#--------------------------------------------------------------------
+ src/LZOC 
+ src/LZOCShifterSticky
  src/Shifters
+
+# Fixed-point function evaluation  ----------------------------------
+#--------------------------------------------------------------------
+ src/FixedPointFunctions/FunctionTable
+ src/FixedPointFunctions/PolynomialEvaluator
+ src/FixedPointFunctions/FunctionEvaluator
+
+# Floating-Point ----------------------------------------------------
+#--------------------------------------------------------------------
  src/FPAdderDualPath
  src/FPAdderSinglePath
  src/FPAdder3Input
- src/Fix2FP
-# src/apps/CoilInductance/CoilInductance
-# src/apps/CoilInductance/CoordinatesTableX
-# src/apps/CoilInductance/CoordinatesTableZ
-# src/apps/CoilInductance/CoordinatesTableY
+
  src/FPMultiplier
  src/FPMultiplierKaratsuba
  src/FPMultiplierTiling
  src/FPSquarer
+
  src/FPDiv
+ 
  src/FPSqrt
  src/FPSqrtPoly
- src/squareroot/PolynomialTable src/squareroot/PolynomialTableCorrectRounded
- src/LongAcc
- src/LongAcc2FP
+ src/squareroot/PolynomialTable 
+ src/squareroot/PolynomialTableCorrectRounded
+ 
  src/DotProduct 
+ 
  src/ConstMult/IntConstMult src/ConstMult/ShiftAddOp src/ConstMult/ShiftAddDag 
  src/ConstMult/IntIntKCM src/ConstMult/KCMTable
  src/ConstMult/FPConstMult 
  src/ConstMult/CRFPConstMult 
  src/ConstMult/FixRealKCM
  src/ConstMult/FPRealKCM
- src/TestCase
- src/FPNumber
- src/IEEENumber
-
-# src/fpexponential/math_lib
-# src/fpexponential/signal
-# src/fpexponential/fragment
-# src/fpexponential/stdfragment
-# src/fpexponential/logfragment
-# src/fpexponential/gen_table
-# src/fpexponential/explore
-
+ 
  src/fplogarithm/FirstInvTable
  src/fplogarithm/FirstLogTable
  src/fplogarithm/OtherLogTable
@@ -354,17 +379,48 @@ ADD_EXECUTABLE(flopoco
 
  src/FPExp 
  src/FPPow
+ 
+ src/LongAcc
+ src/LongAcc2FP
 
+ src/FPSumOfSquares
+
+# ---------- Conversion --------------------------------------------- 
+ src/Fix2FP
  src/InputIEEE
  src/OutputIEEE
+
+# Applications ------------------------------------------------------
+#--------------------------------------------------------------------
+
+# src/apps/CoilInductance/CoilInductance
+# src/apps/CoilInductance/CoordinatesTableX
+# src/apps/CoilInductance/CoordinatesTableZ
+# src/apps/CoilInductance/CoordinatesTableY
+
  src/apps/Collision
+ 
  src/apps/FPFMAcc
  src/apps/FPJacobi
- src/IntSquarer
 
- src/FixedPointFunctions/FunctionTable
- src/FixedPointFunctions/PolynomialEvaluator
- src/FixedPointFunctions/FunctionEvaluator
+ src/apps/TaMaDiCore 
+ src/apps/TaMaDiPriorityEncoder 
+ src/apps/TaMaDiDecoder 
+ src/apps/TaMaDiFIFO 
+ src/apps/TaMaDiShiftRegister 
+ src/apps/TaMaDiModule 
+ src/apps/TaMaDiModuleDummyWrapper
+ src/apps/TaMaDiModuleWrapperInterface
+ src/apps/TaMaDiDispatcherInterface
+ src/apps/TaMaDiDeserializer
+ src/apps/TaMaDiSystem
+
+# TestBench-related -------------------------------------------------
+#--------------------------------------------------------------------
+ src/TestCase
+ src/FPNumber
+ src/IEEENumber
+
  src/UtilSollya
 )
 ENDIF(WIN32) 
