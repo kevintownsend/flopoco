@@ -367,6 +367,8 @@ namespace flopoco{
 		o << "library work;" << endl;
 		outputVHDLEntity(o);
 		newArchitecture(o,name);
+		o << "	attribute multstyle : string;"<<endl;
+   		o << "	attribute multstyle of arch : architecture is \"logic\";"<<endl;
 		o << buildVHDLComponentDeclarations();	
 		o << buildVHDLSignalDeclarations();
 		beginArchitecture(o);		
