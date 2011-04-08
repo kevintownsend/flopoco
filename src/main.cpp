@@ -24,94 +24,150 @@
 #include "Operator.hpp"
 #include "FlopocoStream.hpp"
 
+
 #include "Target.hpp"
+#include "Targets/DSP.hpp"
 #include "Targets/Spartan3.hpp"
 #include "Targets/Virtex4.hpp"
 #include "Targets/Virtex5.hpp"
 #include "Targets/Virtex6.hpp"
 #include "Targets/StratixII.hpp"
 #include "Targets/StratixIV.hpp"
+
+/* shifters + lzoc ------------------------------------------- */
 #include "Shifters.hpp"
 #include "LZOC.hpp"
 #include "LZOCShifterSticky.hpp"
-#include "IntAdder.hpp"
-#include "IntComparator.hpp"
-#include "IntNAdder.hpp"
-#include "IntCompressorTree.hpp"
-#include "LongIntAdder.hpp"
-#include "LongIntAdderCmpCmpAdd.hpp"
-#include "LongIntAdderCmpAddAdd.hpp"
 
+/* regular pipelined integer adder/ adder+subtracter --------- */
+#include "IntAdder.hpp"
 #include "IntDualSub.hpp"
 
+/* multioperand adders --------------------------------------- */
+#include "IntNAdder.hpp"
+#include "IntCompressorTree.hpp"
+
+/* comparator(s) --------------------------------------------- */
+#include "IntComparator.hpp"
+
+/* fast adders ----------------------------------------------- */
+#include "IntAddition/LongIntAdderAddAddMuxGen1.hpp"
+#include "IntAddition/LongIntAdderCmpCmpAddGen1.hpp"
+#include "IntAddition/LongIntAdderCmpAddIncGen1.hpp"
+
+#include "IntAddition/IntAdderSpecific.hpp"
+#include "IntAddition/CarryGenerationCircuit.hpp"
+#include "IntAddition/LongIntAdderAddAddMuxGen2.hpp"
+#include "IntAddition/LongIntAdderCmpCmpAddGen2.hpp"
+#include "IntAddition/LongIntAdderCmpAddIncGen2.hpp"
+#include "IntAddition/IntComparatorSpecific.hpp"
+
+/* multiplication-related ------------------------------------ */
 #include "IntMultiplier.hpp"
 #include "IntMultipliers/IntTilingMult.hpp"
 #include "IntMultipliers/SignedIntMultiplier.hpp"
 #include "IntMultipliers/UnsignedIntMultiplier.hpp"
-
-#include "Targets/DSP.hpp"
-
 #include "IntTruncMultiplier.hpp"
 #include "IntKaratsuba.hpp"
-
-#include "FPMultiplier.hpp"
-#include "FPMultiplierKaratsuba.hpp"
-#include "FPMultiplierTiling.hpp"
-
-#include "FPSquarer.hpp"
-#include "FPAdderDualPath.hpp"
-#include "FPAdderSinglePath.hpp"
-#include "FPAdder3Input.hpp"
-
-#include "Fix2FP.hpp"
-//~ #include "apps/CoilInductance/CoordinatesTableX.hpp"
-//~ #include "apps/CoilInductance/CoordinatesTableZ.hpp"
-//~ #include "apps/CoilInductance/CoordinatesTableY.hpp"
-//#include "apps/CoilInductance/CoilInductance.hpp"
-#include "FPDiv.hpp"
-#include "FPSqrt.hpp"
-#include "FPSqrtPoly.hpp"
-
-#include "LongAcc.hpp"
-#include "LongAcc2FP.hpp"
-#include "DotProduct.hpp"
-
-
-#include "FixedPointFunctions/PolynomialEvaluator.hpp"
-
-
-#include "Wrapper.hpp"
-#include "TestBench.hpp"
+#include "IntSquarer.hpp"
 
 #include "ConstMult/IntConstMult.hpp"
 #include "ConstMult/FPConstMult.hpp"
 #include "ConstMult/IntIntKCM.hpp"
 #include "ConstMult/FixRealKCM.hpp"
-#include "ConstMult/FPRealKCM.hpp"
 
 
-#include "FPExp.hpp" 
-#include "FPLog.hpp"
-#include "FPPow.hpp"
-
-#include "InputIEEE.hpp"
-#include "OutputIEEE.hpp"
- 
-#include "apps/Collision.hpp"
-#include "apps/FPFMAcc.hpp"
-#include "apps/FPJacobi.hpp"
-
-
-#include "IntSquarer.hpp"
-
+/* fixed-point function evaluation---------------------------- */
 #ifndef _WIN32
-#include "ConstMult/CRFPConstMult.hpp"
-
-
 #ifdef HAVE_HOTBM
 #include "FixedPointFunctions/HOTBM.hpp"
 #endif
 
+#ifdef HAVE_SOLLYA
+#include "FixedPointFunctions/FunctionTable.hpp"
+#include "FixedPointFunctions/PolyTableGenerator.hpp"
+#include "FixedPointFunctions/FunctionEvaluator.hpp"
+#include "FixedPointFunctions/PolynomialEvaluator.hpp"
+#endif
+#endif
+
+/* floating-point -------------------------------------------- */ 
+#include "FPMultiplier.hpp"
+#include "FPMultiplierKaratsuba.hpp"
+#include "FPMultiplierTiling.hpp"
+#include "FPSquarer.hpp"
+
+#ifndef _WIN32
+#ifdef HAVE_SOLLYA
+#include "ConstMult/CRFPConstMult.hpp"
+#endif
+#endif
+
+#include "FPAdderDualPath.hpp"
+#include "FPAdderSinglePath.hpp"
+#include "FPAdder3Input.hpp"
+
+#include "FPDiv.hpp"
+#include "FPExp.hpp" 
+#include "FPLog.hpp"
+#include "FPPow.hpp"
+
+#include "FPSqrt.hpp"
+#include "FPSqrtPoly.hpp"
+
+#include "LongAcc.hpp"
+#include "LongAcc2FP.hpp"
+
+#include "DotProduct.hpp"
+#include "FPSumOfSquares.hpp"
+
+#include "FPPipeline.hpp"
+
+#include "Fix2FP.hpp"
+#include "InputIEEE.hpp"
+#include "OutputIEEE.hpp"
+
+
+/* test-bench related ---------------------------------------- */
+#include "TestBench.hpp"
+
+
+/* applications ---------------------------------------------- */
+
+/* Coil Inductance application */
+//#include "apps/CoilInductance/CoordinatesTableX.hpp"
+//#include "apps/CoilInductance/CoordinatesTableZ.hpp"
+//#include "apps/CoilInductance/CoordinatesTableY.hpp"
+//#include "apps/CoilInductance/CoilInductance.hpp"
+
+/* fast evaluation of the possible intrusion of a point within a 
+spheric enclosure -------------------------------------------- */ 
+#include "apps/Collision.hpp"
+
+/* a floating-point fused multiply-accumulate operator for the 
+use withing matrix-multiplication scenarios ------------------ */ 
+#include "apps/FPFMAcc.hpp"
+
+/* a 1D Jacobi computation kernel ---------------------------- */ 
+#include "apps/FPJacobi.hpp"
+
+/* the TaMaDi application, using FPGAs to caluclate the hard-to
+round cases for elementary functions ------------------------- */
+#include "apps/TaMaDiSystem.hpp"
+#include "apps/TaMaDiModule.hpp"
+#include "apps/TaMaDiCore.hpp"
+#include "apps/TaMaDiModuleDummyWrapper.hpp"
+#include "apps/TaMaDiModuleWrapperInterface.hpp"
+#include "apps/TaMaDiDispatcherInterface.hpp"
+#include "apps/TaMaDiPriorityEncoder.hpp"
+#include "apps/TaMaDiDecoder.hpp"
+#include "apps/TaMaDiFIFO.hpp"
+#include "apps/TaMaDiShiftRegister.hpp"
+#include "apps/TaMaDiDeserializer.hpp"
+
+
+/* logarithmic number system  -------------------------------- */ 
+#ifndef _WIN32
 #ifdef HAVE_LNS
 #include "LNS/LNSAddSub.hpp"
 #include "LNS/LNSAdd.hpp"
@@ -126,12 +182,11 @@
 #endif
 #endif
 
-#include "FixedPointFunctions/FunctionTable.hpp"
-#include "FixedPointFunctions/PolyTableGenerator.hpp"
-#include "FixedPointFunctions/FunctionEvaluator.hpp"
-#include "FPPipeline.hpp"
-
+/* misc ------------------------------------------------------ */
+#include "Wrapper.hpp"
 #include "UserDefinedOperator.hpp"
+
+
 
 #define BRIGHT 1
 #define RED 31
@@ -193,6 +248,10 @@ static void usage(char *name){
 	cerr << "      implementation=<-1,0,1,2> -1=optimizeType dependent,\n";  
 	cerr << "                                 0=Classical, 1=Alternative, 2=Short-Latency\n";
 	cerr << "      bufferedInputs=<0,1>\n";
+	OP("LongIntAdderAddAddMux","wIn generation");
+	OP("LongIntAdderCmpAddInc","wIn generation");
+	OP("LongIntAdderCmpCmpAdd","wIn generation");
+	cerr << "      generation 1 are the 2010 ver., 2 are the 2011 ver.\n";
 	OP("IntDualSub","wIn opType");
 	cerr << "      Integer adder/subtracter or dual subtracter, possibly pipelined\n";
 	cerr << "      opType: if 1, compute X-Y and X+Y; if 0, compute X-Y and Y-X \n";
@@ -358,7 +417,9 @@ static void usage(char *name){
 	OP("Collision","wE wF opt");;
 	cerr << "       A collision detection operator, computes the predicate X²+Y²+Z²<R2\n";
 	cerr << "       opt: assemble FP operators if 0, optimized architecture if 1 \n";
-
+	OP("FPSumOfSquares","wE wF opt");;
+	cerr << "       A floating-point sum-of-3 squares operator\n";
+	cerr << "       opt: assemble FP operators if 0, optimized architecture if 1 \n";
 	// cerr << "  Applications: \n";
 	// cerr << "    CoilInductance LSBI MSBI wEIn wFIn MaxMSBO LSBO MSBO FilePath\n";
 	// cerr << "       \n";
@@ -436,6 +497,7 @@ int checkSign(char* s, char* cmd) {
 
 void addOperator(Operator *op) {
 	if(cl_name!="")	{
+		cerr << "Updating entity name to: " << cl_name << endl;
 		op->changeName(cl_name);
 		cl_name="";
 	}
@@ -820,7 +882,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			else {
 				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
 				cerr << "> IntAdder, wIn="<<wIn<<endl  ;
-				op = new IntAdder(target,wIn);
+				op = new IntAdder(target,wIn, inDelayMap("X",target->ffDelay() + target->localWireDelay()) );
 				addOperator(op);
 			}    
 		}
@@ -907,42 +969,95 @@ bool parseCommandLine(int argc, char* argv[]){
 			}    
 		}
 
-		else if(opname=="LongIntAdder"){
+		/* Exploration of other fast adders */
+		else if(opname=="IntAdderSpecific"){ //Hidden
 			int nargs = 1;
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
 				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
-				cerr << "> LongIntAdder, wIn="<<wIn<<endl  ;
-				op = new LongIntAdder(target,wIn);
+				cerr << "> IntAdderSpecific, wIn="<<wIn<<endl  ;
+				op = new IntAdderSpecific(target,wIn);
 				addOperator(op);
 			}    
 		}
+		else if(opname=="IntComparatorSpecific"){ //Hidden
+			int nargs = 1;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
+				int type = atoi(argv[i++]);
+				cerr << "> IntComparatorSpecific, wIn="<<wIn<<" type="<<type<< endl  ;
+				op = new IntComparatorSpecific(target,wIn,type);
+				addOperator(op);
+			}    
+		}
+		else if(opname=="CarryGenerationCircuit"){ //Hidden
+			int nargs = 1;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
+				cerr << "> CarryGenerationCircuit, wIn="<<wIn<<endl  ;
+				op = new CarryGenerationCircuit(target,wIn);
+				addOperator(op);
+			}    
+		}
+		/* interface */
+		else if(opname=="LongIntAdderAddAddMux"){ //AAM
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
+				int g   = checkStrictlyPositive(argv[i++], argv[0]);
+				cerr << "> LongIntAdderSpecific, wIn="<<wIn<<endl  ;
+				if (g==1)
+					op = new LongIntAdderAddAddMuxGen1(target,wIn);
+				else if (g==2)
+					op = new LongIntAdderAddAddMuxGen2(target,wIn, inDelayMap("X",target->ffDelay() + target->localWireDelay() ));
+				else 
+					throw "Generation parameter is either 1 or 2";
+				addOperator(op);
+			}    
+		}
+		else if(opname=="LongIntAdderCmpCmpAdd"){ //CCA
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
+				int g   = checkStrictlyPositive(argv[i++], argv[0]);
+				cerr << "> LongIntAdderCmpCmpAddSpecific, wIn="<<wIn<<endl  ;
+				if (g==1)
+					op = new LongIntAdderCmpCmpAddGen1(target,wIn);
+				else if (g==2)
+					op = new LongIntAdderCmpCmpAddGen2(target,wIn, inDelayMap("X",target->ffDelay() + target->localWireDelay() ));
+				else 
+					throw "Generation parameter is either 1 or 2";
+				addOperator(op);
+			}    
+		}
+		else if(opname=="LongIntAdderCmpAddInc"){ //CAI
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
+				int g   = checkStrictlyPositive(argv[i++], argv[0]);
+				cerr << "> LongIntAdderCmpAddInc, wIn="<<wIn<<endl  ;
+				if (g==1)
+					op = new LongIntAdderCmpAddIncGen1(target,wIn);
+				else if (g==2)
+					op = new LongIntAdderCmpAddIncGen2(target,wIn, inDelayMap("X",target->ffDelay() + target->localWireDelay() ));
+				else 
+					throw "Generation parameter is either 1 or 2";
+				addOperator(op);
+			}    
+		}
+		/*---------------------------------------------------------*/
 		
-		else if(opname=="LongIntAdderCmpCmpAdd"){
-			int nargs = 1;
-			if (i+nargs > argc)
-				usage(argv[0]);
-			else {
-				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
-				cerr << "> LongIntAdderCmpCmpAdd, wIn="<<wIn<<endl  ;
-				op = new LongIntAdderCmpCmpAdd(target,wIn);
-				addOperator(op);
-			}    
-		}
-		
-		else if(opname=="LongIntAdderCmpAddAdd"){
-			int nargs = 1;
-			if (i+nargs > argc)
-				usage(argv[0]);
-			else {
-				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
-				cerr << "> LongIntAdderCmpAddAdd, wIn="<<wIn<<endl  ;
-				op = new LongIntAdderCmpAddAdd(target,wIn);
-				addOperator(op);
-			}    
-		}
-
 		//HIDDEN
 		else if(opname=="IntDualSub"){
 			int nargs = 2;
@@ -1122,6 +1237,188 @@ bool parseCommandLine(int argc, char* argv[]){
 			}
 	}	
 #endif // HAVE_SOLLYA
+		else if(opname=="TaMaDiModule"){
+			int nargs = 8;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int wP = checkStrictlyPositive(argv[i++], argv[0]);
+				int degree = checkStrictlyPositive(argv[i++], argv[0]);
+				int numberOfIterations = checkStrictlyPositive(argv[i++], argv[0]);
+				int widthOfIntervalID =  checkStrictlyPositive(argv[i++], argv[0]);
+				int n = checkStrictlyPositive(argv[i++], argv[0]); //number of pe
+				int inFifoDepth = checkStrictlyPositive(argv[i++], argv[0]);
+				int peFifoDepth = checkStrictlyPositive(argv[i++], argv[0]);
+				int outFifoDepth = checkStrictlyPositive(argv[i++], argv[0]);
+				
+				cerr << "> TaMaDiModule , wP="<<wP<<", degree="<<degree<<" numberOfIterations="<<numberOfIterations<<" widthOfIntervalID="<<widthOfIntervalID<<" n="<<n<<" inFifo="<<inFifoDepth<<" peFifo="<<peFifoDepth<<" outFifo"<<outFifoDepth <<" \n";
+				op = new TaMaDiModule(target, wP, degree, numberOfIterations, widthOfIntervalID, n, inFifoDepth, peFifoDepth, outFifoDepth);
+				addOperator(op);
+			}
+		}	
+		else if(opname=="TaMaDiModuleDummyWrapper"){
+			int nargs = 8;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int wP = checkStrictlyPositive(argv[i++], argv[0]);
+				int degree = checkStrictlyPositive(argv[i++], argv[0]);
+				int numberOfIterations = checkStrictlyPositive(argv[i++], argv[0]);
+				int widthOfIntervalID =  checkStrictlyPositive(argv[i++], argv[0]);
+				int n = checkStrictlyPositive(argv[i++], argv[0]); //number of pe
+				int inFifoDepth = checkStrictlyPositive(argv[i++], argv[0]);
+				int peFifoDepth = checkStrictlyPositive(argv[i++], argv[0]);
+				int outFifoDepth = checkStrictlyPositive(argv[i++], argv[0]);
+				
+				cerr << "> TaMaDiModuleDummyWrapper , wP="<<wP<<", degree="<<degree<<" numberOfIterations="<<numberOfIterations<<" widthOfIntervalID="<<widthOfIntervalID<<" n="<<n<<" inFifo="<<inFifoDepth<<" peFifo="<<peFifoDepth<<" outFifo"<<outFifoDepth <<" \n";
+				op = new TaMaDiModuleDummyWrapper(target, wP, degree, numberOfIterations, widthOfIntervalID, n, inFifoDepth, peFifoDepth, outFifoDepth);
+				addOperator(op);
+			}
+		}
+		else if(opname=="TaMaDiDeserializer"){
+			int nargs = 8;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int wP = checkStrictlyPositive(argv[i++], argv[0]);
+				int degree = checkStrictlyPositive(argv[i++], argv[0]);
+				int numberOfIterations = checkStrictlyPositive(argv[i++], argv[0]);
+				int widthOfIntervalID =  checkStrictlyPositive(argv[i++], argv[0]);
+				int n = checkStrictlyPositive(argv[i++], argv[0]); //number of pe
+				int inFifoDepth = checkStrictlyPositive(argv[i++], argv[0]);
+				int peFifoDepth = checkStrictlyPositive(argv[i++], argv[0]);
+				int outFifoDepth = checkStrictlyPositive(argv[i++], argv[0]);
+				
+				cerr << "> TaMaDiDeserializer , wP="<<wP<<", degree="<<degree<<" numberOfIterations="<<numberOfIterations<<" widthOfIntervalID="<<widthOfIntervalID<<" n="<<n<<" inFifo="<<inFifoDepth<<" peFifo="<<peFifoDepth<<" outFifo"<<outFifoDepth <<" \n";
+				op = new TaMaDiDeserializer(target, wP, degree, numberOfIterations, widthOfIntervalID, n, inFifoDepth, peFifoDepth, outFifoDepth);
+				addOperator(op);
+			}
+		}		
+		else if(opname=="TaMaDiModuleWrapperInterface"){
+			int nargs = 8;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int wP = checkStrictlyPositive(argv[i++], argv[0]);
+				int degree = checkStrictlyPositive(argv[i++], argv[0]);
+				int numberOfIterations = checkStrictlyPositive(argv[i++], argv[0]);
+				int widthOfIntervalID =  checkStrictlyPositive(argv[i++], argv[0]);
+				int n = checkStrictlyPositive(argv[i++], argv[0]); //number of pe
+				int inFifoDepth = checkStrictlyPositive(argv[i++], argv[0]);
+				int peFifoDepth = checkStrictlyPositive(argv[i++], argv[0]);
+				int outFifoDepth = checkStrictlyPositive(argv[i++], argv[0]);
+				
+				cerr << "> TaMaDiModuleWrapperInterface , wP="<<wP<<", degree="<<degree<<" numberOfIterations="<<numberOfIterations<<" widthOfIntervalID="<<widthOfIntervalID<<" n="<<n<<" inFifo="<<inFifoDepth<<" peFifo="<<peFifoDepth<<" outFifo"<<outFifoDepth <<" \n";
+				op = new TaMaDiModuleWrapperInterface(target, wP, degree, numberOfIterations, widthOfIntervalID, n, inFifoDepth, peFifoDepth, outFifoDepth);
+				addOperator(op);
+			}
+		}
+		else if(opname=="TaMaDiDispatcherInterface"){
+			int nargs = 10;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int wP = checkStrictlyPositive(argv[i++], argv[0]);
+				int degree = checkStrictlyPositive(argv[i++], argv[0]);
+				int numberOfIterations = checkStrictlyPositive(argv[i++], argv[0]);
+				int widthOfIntervalID =  checkStrictlyPositive(argv[i++], argv[0]);
+				int n = checkStrictlyPositive(argv[i++], argv[0]); //number of pe
+				int inFifoDepth = checkStrictlyPositive(argv[i++], argv[0]);
+				int peFifoDepth = checkStrictlyPositive(argv[i++], argv[0]);
+				int outFifoDepth = checkStrictlyPositive(argv[i++], argv[0]);
+				int InterfaceInFifoDepth = checkStrictlyPositive(argv[i++], argv[0]);
+				int InterfaceOutFifoDepth = checkStrictlyPositive(argv[i++], argv[0]);
+				
+				cerr << "> TaMaDiModuleWrapperInterface , wP="<<wP<<", degree="<<degree<<" numberOfIterations="<<numberOfIterations<<" widthOfIntervalID="<<widthOfIntervalID<<" n="<<n<<" inFifo="<<inFifoDepth<<" peFifo="<<peFifoDepth<<" outFifo"<<outFifoDepth << " interfaceInFifo="<<InterfaceInFifoDepth<<" interfaceOutFifoDepth="<<InterfaceOutFifoDepth<<"\n";
+				op = new TaMaDiDispatcherInterface(target, wP, degree, numberOfIterations, widthOfIntervalID, n, inFifoDepth, peFifoDepth, outFifoDepth, InterfaceInFifoDepth, InterfaceOutFifoDepth);
+				addOperator(op);
+			}
+		}
+		else if(opname=="TaMaDiSystem"){
+			int nargs = 11;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int wP = checkStrictlyPositive(argv[i++], argv[0]);
+				int degree = checkStrictlyPositive(argv[i++], argv[0]);
+				int numberOfIterations = checkStrictlyPositive(argv[i++], argv[0]);
+				int widthOfIntervalID =  checkStrictlyPositive(argv[i++], argv[0]);
+				int n = checkStrictlyPositive(argv[i++], argv[0]); //number of pe
+				int inFifoDepth = checkStrictlyPositive(argv[i++], argv[0]);
+				int peFifoDepth = checkStrictlyPositive(argv[i++], argv[0]);
+				int outFifoDepth = checkStrictlyPositive(argv[i++], argv[0]);
+				int InterfaceInFifoDepth = checkStrictlyPositive(argv[i++], argv[0]);
+				int InterfaceOutFifoDepth = checkStrictlyPositive(argv[i++], argv[0]);
+				int moduleCount = checkStrictlyPositive(argv[i++], argv[0]);
+				
+				cerr << "> TaMaDiModuleWrapperInterface , wP="<<wP<<", degree="<<degree<<" numberOfIterations="<<numberOfIterations<<" widthOfIntervalID="<<widthOfIntervalID<<" n="<<n<<" inFifo="<<inFifoDepth<<" peFifo="<<peFifoDepth<<" outFifo"<<outFifoDepth << " interfaceInFifo="<<InterfaceInFifoDepth<<" interfaceOutFifoDepth="<<InterfaceOutFifoDepth<<" moduleCount="<<moduleCount<<"\n";
+				op = new TaMaDiSystem(target, wP, degree, numberOfIterations, widthOfIntervalID, n, inFifoDepth, peFifoDepth, outFifoDepth, InterfaceInFifoDepth, InterfaceOutFifoDepth, moduleCount );
+				addOperator(op);
+			}
+		}
+		else if(opname=="TaMaDiCore"){
+			int nargs = 4;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int wP = checkStrictlyPositive(argv[i++], argv[0]);
+				int degree = checkStrictlyPositive(argv[i++], argv[0]);
+				int numberOfIterations = checkStrictlyPositive(argv[i++], argv[0]);
+				int widthOfIntervalID =  checkStrictlyPositive(argv[i++], argv[0]);
+				cerr << "> TaMaDiCore , wP="<<wP<<", degree="<<degree<<" numberOfIterations="<<numberOfIterations<<" widthOfIntervalID="<<widthOfIntervalID <<" \n";
+				op = new TaMaDiCore(target, wP, degree, numberOfIterations, widthOfIntervalID);
+				addOperator(op);
+			}
+		}	
+		else if(opname=="TaMaDiPriorityEncoder"){
+			int nargs = 1;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int n = checkStrictlyPositive(argv[i++], argv[0]);
+				cerr << "> TaMaDiPriorityEncoder , n="<<n<<" \n";
+				op = new TaMaDiPriorityEncoder(target, n);
+				addOperator(op);
+			}
+		}	
+		else if(opname=="TaMaDiDecoder"){
+			int nargs = 1;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int n = checkStrictlyPositive(argv[i++], argv[0]);
+				cerr << "> TaMaDiDecoder ,output n="<<n<<" \n";
+				op = new TaMaDiDecoder(target, n);
+				addOperator(op);
+			}
+		}	
+		else if(opname=="TaMaDiFIFO"){
+			int nargs = 3;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int w = checkStrictlyPositive(argv[i++], argv[0]);
+				int n = checkStrictlyPositive(argv[i++], argv[0]);
+				int limit = atoi(argv[i++]);
+				cerr << "> TaMaDiFIFO ,output w="<<n<<" depth="<<n<<" with full report limit at "<<limit<<" \n";
+				op = new TaMaDiFIFO(target, w, n, limit);
+				addOperator(op);
+			}
+		}
+		
+		else if(opname=="TaMaDiShiftRegister"){
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0]);
+			else {
+				int w = checkStrictlyPositive(argv[i++], argv[0]);
+				int n = checkStrictlyPositive(argv[i++], argv[0]);
+				cerr << "> TaMaDiShiftRegister ,w="<<w<<" levels="<<n<<" \n";
+				op = new TaMaDiShiftRegister(target, w, n);
+				addOperator(op);
+			}
+		}		
+
 		else if(opname=="Fix2FP"){
 			int nargs = 5;
 			if (i+nargs > argc)
@@ -1574,6 +1871,20 @@ bool parseCommandLine(int argc, char* argv[]){
 			op = new Collision(target, wE, wF, optimize);
 			addOperator(op);
 		}
+		else if (opname == "FPSumOfSquares")
+		{
+			int nargs = 3;
+			if (i+nargs > argc)
+				usage(argv[0]); // and exit
+			int wE = checkStrictlyPositive(argv[i++], argv[0]);
+			int wF = checkStrictlyPositive(argv[i++], argv[0]);
+			int optimize = checkBoolean(argv[i++], argv[0]);
+			cerr << "> FPSumOfSquares: wE=" << wE << " wF=" << wF << (optimize==0? " using FP operators" : " optimized version") << endl;
+			op = new FPSumOfSquares(target, wE, wF, optimize);
+			addOperator(op);
+		}
+
+
 		else if (opname == "IntSquarer")
 		{
 			int nargs = 1;
