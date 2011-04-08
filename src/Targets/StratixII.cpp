@@ -223,7 +223,6 @@ namespace flopoco{
 					carryFlag = 2;
 				else if (chunkSize % almsPerLab_ == 0) // next carry delay is one between two halves of the same LAB
 					carryFlag = 1;
-				
 			}
 			else if (carryFlag == 1) // subtract the carry delay between two halves of the same LAB
 			{

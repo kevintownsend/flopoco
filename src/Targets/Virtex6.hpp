@@ -46,9 +46,9 @@ namespace flopoco{
 			sizeOfBlock_ 	= 18432;	// the size of a primitive block is 2^11 * 9
 			maxFrequencyMHz_= 500;
 			// all these values are set more or less randomly, to match  virtex 5 more or less
-			fastcarryDelay_ = 0.023e-9; //s   
-			elemWireDelay_  = 0.436e-9;
-			lutDelay_       = 0.086e-9; 
+			fastcarryDelay_ = 0.015e-9; //s   
+			elemWireDelay_  = 0.313e-9;
+			lutDelay_       = 0.053e-9; 
 			multXInputs_    = 25;
 			multYInputs_    = 18;
 			// all these values are set precisely to match the Virtex6

@@ -53,7 +53,7 @@ namespace flopoco{
 	};
 	
 	double Virtex6::localWireDelay(int fanout){
-		return  elemWireDelay_ ;
+		return  elemWireDelay_*(1+double(fanout)/100.0);
 	};
 	
 	double Virtex6::distantWireDelay(int n){
@@ -107,7 +107,7 @@ namespace flopoco{
 	
 	bool Virtex6::suggestSubaddSize(int &x, int wIn){
 		
-		int chunkSize = 2 + (int)floor( (1./frequency() - (fdCtoQ_ + slice2sliceDelay_ + lut2_ + muxcyStoO_ + xorcyCintoO_ + ffd_)) / muxcyCINtoO_ );
+		int chunkSize = 2 + (int)floor( (1./frequency() - (fdCtoQ_ + lut2_ + muxcyStoO_ + xorcyCintoO_ + ffd_)) / muxcyCINtoO_ );
 		x = chunkSize;		
 		if (x > 0) 
 			return true;
@@ -119,9 +119,9 @@ namespace flopoco{
 	
 	bool Virtex6::suggestSlackSubaddSize(int &x, int wIn, double slack){
 		
-		int chunkSize = 2 + (int)floor( (1./frequency() - slack - (fdCtoQ_ + slice2sliceDelay_ + lut2_ + muxcyStoO_ + xorcyCintoO_ + ffd_)) / muxcyCINtoO_ );
+		int chunkSize = 1 + (int)floor( (1./frequency() - slack - (lut2_ + muxcyStoO_ + xorcyCintoO_)) / muxcyCINtoO_ );
 		x = chunkSize;		
-		if (x > 0) 
+		if (x > 1) 
 			return true;
 		else {
 			x = 2;		
