@@ -32,7 +32,7 @@ namespace flopoco {
 	extern vector<Operator*> oplist;
 	
 	IntAdderAlternative::IntAdderAlternative ( Target* target, int wIn, string name, map<string, double> inputDelays, int optimizeType, bool srl) :
-	Operator ( target, inputDelays ), wIn_ ( wIn ) {
+	Operator ( target, inputDelays ), wIn_ ( wIn ), alternativeSlackVersion(0) {
 		srcFileName="IntAdderAlternative";
 		setCopyrightString ( "Bogdan Pasca, Florent de Dinechin (2008-2010)" );
 		setName ( name );

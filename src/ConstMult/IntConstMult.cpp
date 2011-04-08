@@ -135,7 +135,7 @@ namespace flopoco{
 		double idelay=0,jdelay=0, max_children_delay;
 		int size, isize, jsize, shift, adder_size; 
 		bool use_pipelined_adder;
-		IntAdder* adder;
+		IntAdder* adder=0;
 	
 		if (sao==NULL)
 			return;
@@ -809,7 +809,7 @@ namespace flopoco{
 				
 				// build the opposite of the input
 	
-				ShiftAddOp* MX;
+				ShiftAddOp* MX=0;
 
 				if(needsMinusX(BoothCode, nsize))
 					MX = new ShiftAddOp(implementation, Neg, implementation->PX);

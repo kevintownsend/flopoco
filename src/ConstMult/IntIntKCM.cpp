@@ -94,7 +94,7 @@ namespace flopoco{
 				vhdl << "X" << range( wIn-1 , lutWidth*i ) << ";" <<endl;
 				}
 	
-			KCMTable *t1, *t2; 
+			KCMTable *t1, *t2=0; 
  			t1 = new KCMTable(target, lutWidth, constantWidth + lutWidth, C, false);
 			oplist.push_back(t1);
 			useSoftRAM(t1);

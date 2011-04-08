@@ -136,7 +136,7 @@ namespace flopoco{
 			REPORT(DEBUG, "g=" << g);
 
 			//first split the input X into digits having lutWidth bits -> this is as generic as it gets :)
-			bool tableSigned, last;
+			bool tableSigned=false, last;
 			for (int i=0; i<nbOfTables; i++) {
 				int diSize;
 

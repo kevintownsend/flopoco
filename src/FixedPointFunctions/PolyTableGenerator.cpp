@@ -83,8 +83,8 @@ namespace flopoco{
 			vector<sollya_node_t> polys;
 			vector<mpfr_t*> errPolys;
 	
-			sollya_node_t tempNode,tempNode2, tempNode3, nDiff, sX,sY,aiNode;
-			sollya_chain_t tempChain, tempChain2;
+			sollya_node_t tempNode=0,tempNode2, tempNode3, nDiff=0, sX=0,sY,aiNode;
+			sollya_chain_t tempChain, tempChain2=0;
 	
 			mpfr_t ai;
 			mpfr_t bi;
@@ -96,7 +96,7 @@ namespace flopoco{
 			mpfr_init2(bi,getToolPrecision());
 			mpfr_init2(zero,getToolPrecision());
  
-			int k, errBoundBool;
+			int k, errBoundBool=0;
 			tempNode2=parseString("0"); /*ct part*/
 			tempChain = makeIntPtrChainFromTo(0,n); /*monomials*/
  
