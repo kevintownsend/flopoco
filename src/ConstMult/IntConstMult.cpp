@@ -477,7 +477,7 @@ namespace flopoco{
 
 	// The constructor for rational constants
 
-	IntConstMult::IntConstMult(Target* _target, int _xsize, mpz_class n, mpz_class period, int periodSize, mpz_class header, int headerSize, int i, int j, int zeroLSBs) :
+	IntConstMult::IntConstMult(Target* _target, int _xsize, mpz_class n, mpz_class period, int periodSize, mpz_class header, int headerSize, int i, int j) :
 		Operator(_target), xsize(_xsize){
 		ostringstream name; 
 
@@ -528,9 +528,9 @@ namespace flopoco{
 			headerSAO=buildMultBoothTree(header);
 			cerr << headerSAO << endl;
 			if(j==-1)
-				implementation->result = 	new ShiftAddOp(implementation, Add, headerSAO, (periodSize<<i)-zeroLSBs, powerOfTwo[i] );
+				implementation->result = 	new ShiftAddOp(implementation, Add, headerSAO, (periodSize<<i), powerOfTwo[i] );
 			else {
-				ShiftAddOp* tmp = implementation->provideShiftAddOp(Add, headerSAO, (periodSize<<j)-zeroLSBs, powerOfTwo[j] );
+				ShiftAddOp* tmp = implementation->provideShiftAddOp(Add, headerSAO, (periodSize<<j), powerOfTwo[j] );
 				implementation->result = new ShiftAddOp(implementation, Add, tmp, (periodSize<<i), powerOfTwo[i] );
 			}
 		}
@@ -684,23 +684,6 @@ namespace flopoco{
 		BoothCode[nsize] = c[nsize];
 
 
-#if 0
-		// A bit of tinkering
-		// This method generates +0- for 3 instead of 0++.
-		// As the -1 will cost us more, we rewrite that
-
-		if (nsize>=1) {
-			for (i=nsize-1; i>=0; i--) {
-				if ((BoothCode[i]==-1) && (BoothCode[i+1]==0) && (BoothCode[i+2]==1)) {
-					BoothCode[i]=1;
-					BoothCode[i+1]=1;
-					BoothCode[i+2]=0;
-				}
-			}
-		}
-
-#endif
-
 		for (i=0; i<=nsize; i++) {
 			if (BoothCode[i] != 0) 
 				nonZeroInBoothCode ++;
@@ -708,7 +691,6 @@ namespace flopoco{
 
 		REPORT(DETAILED, "Booth recoding is  " << printBoothCode(BoothCode, nsize+1)  << " with " << nonZeroInBoothCode << " non-zero digits"); 
 		
-#if 1
 		// If there is no savings in terms of additions, discard the Booth code 
 		if (nonZeroInBoothCode+needMinusX >= nonZero) {
 			REPORT(DETAILED, "Reverting to non-Booth"); 
@@ -718,7 +700,6 @@ namespace flopoco{
 			REPORT(DETAILED, "Booth recoding is   " << printBoothCode(BoothCode, nsize)  << " with " << nonZeroInBoothCode << " non-zero digits"); 
 		}
   
-#endif
 		delete [] c; delete [] b;
 		return nonZeroInBoothCode;
 	}

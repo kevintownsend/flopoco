@@ -119,7 +119,7 @@
 #include "LongAcc2FP.hpp"
 
 #include "DotProduct.hpp"
-#include "FPSumOfSquares.hpp"
+//#include "FPSumOfSquares.hpp"
 
 #include "FPPipeline.hpp"
 
@@ -347,10 +347,9 @@ static void usage(char *name){
 	cerr << "      Correctly-rounded floating-point constant multiplier\n";
 	cerr << "      The constant is provided as a Sollya expression, between double quotes.\n";
 #endif // HAVE_SOLLYA
-	OP( "FPConstMultRational","wE_in wF_in wE_out wF_out a b correctRounding");
+	OP( "FPConstMultRational","wE_in wF_in wE_out wF_out a b");
 	cerr << "      Floating-point constant multiplier by a rational a/b\n";
 	cerr << "      Useful for multiplications by simple rational constants such as 2/3 or 1/9\n";
-	cerr << "      correctRounding=0 (faithful rounding) or 1 (correct rounding)\n";
 	OP("FPConstMultExpert","wE_in wF_in wE_out wF_out cst_sgn cst_exp cst_int_sig");
 	cerr << "      Floating-point constant multiplier\n";
 	cerr << "      The constant is provided as integral significand and integral exponent.\n";
@@ -623,7 +622,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		}
 
 		else if(opname=="FPConstMultRational"){
-			int nargs = 7;
+			int nargs = 6;
 			if (i+nargs > argc)
 				usage(argv[0]);
 			else {
@@ -633,11 +632,10 @@ bool parseCommandLine(int argc, char* argv[]){
 				int wF_out = checkStrictlyPositive(argv[i++], argv[0]);
 				int a  = atoi(argv[i++]); 
 				int b  = checkStrictlyPositive(argv[i++], argv[0]); 
-				bool correctRounding  = checkBoolean(argv[i++], argv[0]); 
-				cerr << "> FPConstMultRational ("<<(correctRounding?"CR":"faithful")<<"), wE_in="<<wE_in<<", wF_in="<<wF_in
+				cerr << "> FPConstMultRational, wE_in="<<wE_in<<", wF_in="<<wF_in
 						 <<", wE_out="<<wE_out<<", wF_out="<<wF_out
 						 <<", constant="<<a<<"/"<<b<<endl;
-				op = new FPConstMult(target, wE_in, wF_in, wE_out, wF_out, a, b, correctRounding);
+				op = new FPConstMult(target, wE_in, wF_in, wE_out, wF_out, a, b);
 				addOperator(op);
 			}        
 		} 	
@@ -1871,6 +1869,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			op = new Collision(target, wE, wF, optimize);
 			addOperator(op);
 		}
+#if 0
 		else if (opname == "FPSumOfSquares")
 		{
 			int nargs = 3;
@@ -1883,7 +1882,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			op = new FPSumOfSquares(target, wE, wF, optimize);
 			addOperator(op);
 		}
-
+#endif
 
 		else if (opname == "IntSquarer")
 		{

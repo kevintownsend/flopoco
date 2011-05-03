@@ -39,7 +39,7 @@ namespace flopoco{
 				If j==-1, just repeat the period 2^i times
 		 */
 		IntConstMult(Target* _target, int _xsize, mpz_class n, 
-								 mpz_class period, int periodSize, mpz_class header, int headerSize, int i, int j, int zeroLSBs=0);
+								 mpz_class period, int periodSize, mpz_class header, int headerSize, int i, int j);
 
 		~IntConstMult();
 

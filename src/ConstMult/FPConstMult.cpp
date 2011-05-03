@@ -49,6 +49,12 @@ extern vector<Operator*> oplist;
 		name <<"FPConstMult_"<<(cstSgn==0?"":"M") <<mpz2string(cstIntSig)<<"b"<<(cst_exp_when_mantissa_int<0?"M":"")<<abs(cst_exp_when_mantissa_int)<<"_"<<wE_in<<"_"<<wF_in<<"_"<<wE_out<<"_"<<wF_out;
 		uniqueName_=name.str();
 
+		if(wE_in<3 || wE_out <3){
+			ostringstream error;
+			error << srcFileName << ": exponent size must be at least 3" <<endl;
+			throw error.str();
+		}
+
 		if(cstIntSig==0) {
 			REPORT(INFO, "building a multiplier by 0, it will be easy");
 			constant_is_zero=true;
@@ -97,24 +103,52 @@ extern vector<Operator*> oplist;
 
 
 
+
+
+
+
+
+
+
+
+
+
 	// The rational version
-	FPConstMult::FPConstMult(Target* target, int wE_in_, int wF_in_, int wE_out_, int wF_out_, int a, int b, bool correctRounding_):
+	FPConstMult::FPConstMult(Target* target, int wE_in_, int wF_in_, int wE_out_, int wF_out_, int a_, int b_):
 		Operator(target), 
-		wE_in(wE_in_), wF_in(wF_in_), wE_out(wE_out_), wF_out(wF_out_), correctRounding(correctRounding_), constant_is_zero(false)
+		wE_in(wE_in_), wF_in(wF_in_), wE_out(wE_out_), wF_out(wF_out_), constant_is_zero(false)
 	{
 
-		srcFileName="FPConstMult";
+		int a=a_;
+		int b=b_;
+		srcFileName="FPConstMult (rational)";
 
 		if(b<=0){
 			ostringstream error;
-			error << srcFileName << " (rational) : b must be strictly positive" <<endl;
+			error << srcFileName << ": b must be strictly positive" <<endl;
 			throw error.str();
 		}
+		if(wE_in<3 || wE_out <3){
+			ostringstream error;
+			error << srcFileName << ": exponent size must be at least 3" <<endl;
+			throw error.str();
+		}
+
+		//build mpfrC out of the initials a and b, it's safer
+		mpfr_t mpa, mpb;
+		mpfr_inits(mpfrC,mpa,mpb, NULL);
+		mpfr_set_si(mpa, a, GMP_RNDN);
+		mpfr_set_si(mpb, b, GMP_RNDN);
+		mpfr_set_prec(mpfrC, 10*(wE_in+wF_in+wE_out+wF_out)); // should be enough for anybody
+		mpfr_div(mpfrC, mpa, mpb, GMP_RNDN);
+		
+		REPORT(DEBUG, "Constant evaluates as " << mpfr_get_d( mpfrC, GMP_RNDN) );
 
 		if(a<0){
 			cstSgn=1;
 			a=-a;
 		}
+		
 
 		// First simplify the fraction: compute GCD by Euclide, then divide a and b by it
 		int ae=max(a,b);
@@ -149,7 +183,6 @@ extern vector<Operator*> oplist;
 		mantissa_is_one = (a==b); // fairly different architecture in this case
 
 		if(mantissa_is_one){
-			mpfr_inits(mpfrC, NULL);
 			mpfr_set_d(mpfrC, 1.0, GMP_RNDN);
 			mpfr_mul_2si(mpfrC,mpfrC, expUpdate, GMP_RNDN);
 			cst_exp_when_mantissa_1_2 = expUpdate;
@@ -160,8 +193,6 @@ extern vector<Operator*> oplist;
 			// Now look for a period
 			int periodSize, headerSize; 
 			mpz_class periodicPattern, header; // The two values to look for
-			mpfr_t mpa, mpb;
-			mpfr_inits(mpfrC,mpa,mpb, NULL);
 			mpfr_set_si(mpa, a, GMP_RNDN);
 			mpfr_set_si(mpb, b, GMP_RNDN);
 
@@ -175,39 +206,42 @@ extern vector<Operator*> oplist;
 			headerSize=intlog2(header);
 
 			cc = aa - header*bb; // remainder
-
-			// Now look for the order of cc modulo bb
+			REPORT(DEBUG, "fraction " << a_ << "/" << b_ << " rewritten as " << header << "+" << cc << "/" << bb );
+			// Now look for the order of 2 modulo bb
 			periodSize=1;
 			mpz_class twotoperiodSize=2;
-			bool tryOrder = true;
-			while (tryOrder){
-				// Stupidely compute bb^periodSize
-				if((twotoperiodSize % bb) == 1)
-					tryOrder=false;
-				else{
-					periodSize++;
-					twotoperiodSize = twotoperiodSize <<1;
-				}
+			while ((twotoperiodSize % bb) != 1){
+				periodSize++;
+				twotoperiodSize = twotoperiodSize <<1;
 			}
 			// and the period is 2^periodSize/b
-			periodicPattern = twotoperiodSize/b;
+			periodicPattern = cc*twotoperiodSize/b;
 
-			// now this procedure is OK with a factor that is a power of two.
-			//  padd to the right with zeroes
-			int shortsize=intlog2(periodicPattern);
-			periodicPattern = periodicPattern << (periodSize-shortsize);
+
+			// The period may begin with zeroes. 
+			// Example: 1/3, or any other smaller than 0.5
+			// but the following will generate optimal code
+			// 
+
+
 			REPORT(DETAILED, "Found header " << header.get_str(2) << " of size "<< headerSize 
 						 << " and period " << periodicPattern.get_str(2) << " of size " << periodSize);
 	 
 			int wC;
-			if(correctRounding){
-				wC=wF_out+wF_in+wE_in; 
-				REPORT(INFO, "WARNING: correct rounding only probable, target internal precision set to " << wC << " bits");
+
+			if(wF_out >= wF_in) {
+				correctRounding=true;
+				wC = wF_out + 1 + intlog2(b);
+				REPORT(INFO, "Building a correctly rounded multiplier");
+			} 
+			else {
+				correctRounding=false;
+				wC = wF_out + 3;
+				REPORT(INFO, "wF_out < <F_in, building a faithful multiplier");
 			}
-			else // faithful rounding
-				wC = wF_out + 3; 
+
 			int r = ceil(   ((double)(wC-headerSize)) / ((double)periodSize)   ); // Needed repetitions
-			REPORT(DETAILED, "wC=" << wC << ", need to repeat the period " << r << " times");
+			REPORT(DETAILED, "target wC=" << wC << ", need to repeat the period " << r << " times");
 			int i = intlog2(r) -1; // 2^i < r < 2^{i+1}
 			int rr = r - (1<<i);
 			int j;
@@ -226,40 +260,58 @@ extern vector<Operator*> oplist;
 				REPORT(DETAILED, "... Will repeat 2^i+2^j = " << (1<<i) + (1<<j) << " with i=" << i << " and j=" << j);
 			}
 
-			// Now rebuild the mpfrC constant (for emulate() etc)
-			// First, as an integer mantissa
+
+			// Rebuild the integer mantissa, just to check
 			cstIntSig = header;
 			for(int k=0; k<r; k++)
 				cstIntSig = (cstIntSig<<periodSize) + periodicPattern;
 			REPORT(DEBUG, "Constant mantissa rebuilt as " << cstIntSig << " ==  " << cstIntSig.get_str(2) );
+			// Beware, this may not be normalized (example 1/3 begins with a zero)
 
-			// now as an MPFR
-			cstWidth = headerSize  + r*periodSize;
-			mpfr_set_prec(mpfrC, cstWidth);
-			mpfr_div(mpfrC, mpa, mpb, GMP_RNDN);
+			cstWidth = headerSize  + r*periodSize; // may be a few bits too many if the period has MSB 0s, eg 1/3
+
+			REPORT(DETAILED, "Final constant precision is " << cstWidth << " bits");
+
+			int patternLeadingZeroes;
+			if(header==0) {
+			 	// Do we have leading zeroes in the pattern?
+			 	patternLeadingZeroes = periodSize - intlog2(periodicPattern);
+				REPORT(DETAILED, "Null header, and period starting with  " << patternLeadingZeroes << " zero(s)...");
+				cstWidth -= patternLeadingZeroes;
+				REPORT(DETAILED, "   ... so the practical size of the constant is " << cstWidth 
+							 << " bits, but it does provide "<< cstWidth + patternLeadingZeroes << " bits of accuracy");
+			}
+			
+
+			// TODO sort out the exponents
+			cst_exp_when_mantissa_1_2 = mpfr_get_exp(mpfrC) - 1; //mpfr_get_exp() assumes significand in [1/2,1)  
+			cst_exp_when_mantissa_1_2 += expUpdate;
+			cst_exp_when_mantissa_int = cst_exp_when_mantissa_1_2 - cstWidth;
+
+#if 0
+
+			mpfr_t mpfrC2;
+			mpfr_init2(mpfrC2, 10*cstWidth); // should be enough for anybody
+			mpfr_div(mpfrC2, mpa, mpb, GMP_RNDN);
+
+
 			// get the exponent when the mantissa is on this size
 			mpz_class dummy;
-			cst_exp_when_mantissa_int = mpfr_get_z_exp(dummy.get_mpz_t(), mpfrC);
+			// Nobody needs cst_exp_when_mantissa_int for FPRational
+			//			cst_exp_when_mantissa_int = mpfr_get_z_exp(dummy.get_mpz_t(), mpfrC2);
 			cst_exp_when_mantissa_int += expUpdate;
-			mpfr_set_z(mpfrC, cstIntSig.get_mpz_t(), GMP_RNDN);
-			mpfr_mul_2si(mpfrC, mpfrC, cst_exp_when_mantissa_int, GMP_RNDN); // exact
+			mpfr_set_z(mpfrC2, cstIntSig.get_mpz_t(), GMP_RNDN);
+			mpfr_mul_2si(mpfrC2, mpfrC2, cst_exp_when_mantissa_int, GMP_RNDN); // exact
+			REPORT(DEBUG, "Constant rebuilt as " << mpfr_get_d( mpfrC2, GMP_RNDN) );
+			cst_exp_when_mantissa_1_2 = mpfr_get_exp(mpfrC2) - 1; //mpfr_get_exp() assumes significand in [1/2,1)  
+			mpfr_init2( cstSig, cstWidth);
+			mpfr_div_2si(cstSig, mpfrC2, cst_exp_when_mantissa_1_2, GMP_RNDN);
+			REPORT(INFO, "cstSig  = " << mpfr_get_d(cstSig, GMP_RNDN));		
+			mpfr_clear(mpfrC2);
 
 
-			REPORT(DEBUG, "Constant rebuilt as " << mpfr_get_d( mpfrC, GMP_RNDN) );
 
-			// No need for setupSgnAndExpCases(): the constant cannot be zero and sign is already managed
-			computeExpSig();
-
-			// restore sign for emulate()
-			if(cstSgn)
-				mpfr_neg(mpfrC, mpfrC, GMP_RNDN);
-
-			// If the period has zeroes at the LSB, there are FAs to save
-			// We shift the constant and the periodic pattern, but we do not touch its size
-			// So the shifts by 2^k*periodSize will still do the right thing
-
-
-			int zeroesToTheRight=0;
+ 			int zeroesToTheRight=0;
 			while ((cstIntSig % 2) ==0) {
 				REPORT(DEBUG, "Significand is even, normalising");
 				cstIntSig = cstIntSig >>1;
@@ -268,11 +320,11 @@ extern vector<Operator*> oplist;
 				zeroesToTheRight++;
 			}
 
-			// Now periodicPattern is even, and this constructor has to remember to shift it by zeroesToTheRight
-			icm = new IntConstMult(target, wF_in+1, cstIntSig, periodicPattern, periodSize, header, headerSize, i, j, zeroesToTheRight);
+#endif
+
+			icm = new IntConstMult(target, wF_in+1, cstIntSig, periodicPattern, periodSize, header, headerSize, i, j);
 			oplist.push_back(icm);
 
-			mpfr_clears(mpa, mpb, NULL);
 		}
 		
 		
@@ -285,6 +337,7 @@ extern vector<Operator*> oplist;
 		
 		buildVHDL();
 
+ 		mpfr_clears(mpa, mpb, NULL);
 	}
 
 
@@ -494,7 +547,7 @@ extern vector<Operator*> oplist;
 
 		// bit width of constant exponent
 		int wE_cst=intlog2(abs(cst_exp_when_mantissa_1_2));
-		REPORT(DETAILED, "wE_cst = "<<wE_cst<<endl);
+		REPORT(DEBUG, "wE_cst = " << wE_cst);
 	
 		// We have to compute Er = E_X - bias(wE_in) + E_C + bias(wE_R)
 		// Let us pack all the constants together
@@ -510,7 +563,7 @@ extern vector<Operator*> oplist;
 			wE_sum = wE_in;
 		if(wE_out > wE_sum) 
 			wE_sum = wE_out;
-
+		REPORT(DEBUG, "expAddend: " << expAddendSign << " " << expAddend << "   wE_sum " << wE_sum);
 
 		vhdl << tab << declare("x_exn",2) << " <=  X("<<wE_in<<"+"<<wF_in<<"+2 downto "<<wE_in<<"+"<<wF_in<<"+1);"<<endl;
 		vhdl << tab << declare("x_sgn") << " <=  X("<<wE_in<<"+"<<wF_in<<");"<<endl;
@@ -630,6 +683,7 @@ extern vector<Operator*> oplist;
 
 
 
+	// Computes multiplication by mpfrC, which is a high-precision value of the constant
 	void FPConstMult::emulate(TestCase *tc)
 	{
 		/* Get I/O values */
