@@ -47,6 +47,9 @@ namespace flopoco{
 		addFPInput ("X", wE, wF);
 		addFPOutput("R", wE, wF);
 
+		vhdl << "--Split the Floating-Point input"<<endl;
+		vhdl << tab << declare("fracX",wF) << " <= X" << range(wF-1, 0) << ";"  << endl; 
+		vhdl << tab << declare("expX", wE)<< "  <= X" << range(wE+wF-1, wF) << ";"  << endl; 
 
 #if KEEP_HANDCRAFTED_VERSION
 		if ((wE==8) && (wF==23) && (degree==2)) {
@@ -92,10 +95,6 @@ namespace flopoco{
 				keepBitsRightOfA1BeforeFinalMult = 0;
 			}
 	
-			vhdl << "--Split the Floating-Point input"<<endl;
-			vhdl << tab << declare("fracX",wF) << " <= X" << range(wF-1, 0) << ";"  << endl; 
-			vhdl << tab << declare("expX", wE)<< "  <= X" << range(wE+wF-1, wF) << ";"  << endl; 
-
 			vhdl << "--A concatenation of the exception bits and the sign bit"<<endl;
 			vhdl << tab << declare("excsX", 3) << " <= X" << range(wE+wF+2, wE+wF) << ";"  << endl; 
 
@@ -240,9 +239,6 @@ namespace flopoco{
 			consider either using faithful rounding with one bit more of mantisa for the 
 			same numbrical quality, either use the muliplicative version FPSqrt */
 			
-				cout << "coef msbs " << coeff_msb[2] << " " << coeff_msb[1] << " " << coeff_msb[0] <<endl;
-				cout << "coef size " << coeffStorageSizes[2] << " " << coeffStorageSizes[1] << " " << coeffStorageSizes[0] <<endl;
-	
 				vhdl << tab << declare("resRoundedOnWFp1",1+wF+1)<<" <= sumA0ProdXA1sumA2X"<<range(coeffStorageSizes[0]-1,coeffStorageSizes[0]-(1+wF+1))<<";"<<endl;
 				
 				/* addOneHalf ulp in parallel with squaring */
@@ -270,7 +266,9 @@ namespace flopoco{
 				implemented as a subtraction */
 				vhdl << tab << declare("extSquaredResult",1+2*(wF+2))<< "<= \"0\" & squaredResult;"<<endl; 
 				/* extend x with zeros to the right and left and then negate*/
-				vhdl << tab << declare("negXext", 1+2*(wF+2)) << " <= \"10\" & not(fracX) & "<<og(3+wF,0)<<";"<<endl;
+				vhdl << tab << declare("negXext", 1+2*(wF+2)) << " <= (\"10\" & not(fracX) & "<<og(3+wF,0)<<") when squaredResult"<<of(2*(wF+2)-1)<<"='1' else (\"110\" & not(fracX) & "<<og(2+wF,0)<<");"<<endl;
+
+//				vhdl << tab << declare("negXext", 1+2*(wF+2)) << " <= \"10\" & not(fracX) & "<<og(3+wF,0)<<";"<<endl;
 			
 				IntAdder *cr_subtracter = new IntAdder(target, 1+2*(wF+2));
 				oplist.push_back(cr_subtracter);
@@ -296,12 +294,8 @@ namespace flopoco{
 		}else{
 #endif // KEEP_HANDCRAFTER_VERSION
 
-
-
 		vhdl << tab << declare("excsX",3) << " <= X"<<range(wE+wF+2,wE+wF)<<";"<<endl;
 		vhdl << tab << declare("sX",1) << "  <= X"<<of(wE+wF)<<";"<<endl;
-		vhdl << tab << declare("expX",wE) << " <= X"<<range(wE+wF-1,wF)<<";"<<endl;
-		vhdl << tab << declare("fX",wF+1) << " <= \"1\" & X"<<range(wF-1,0 )<<";"<<endl;
 		
 		vhdl << "--If the real exponent is odd"<<endl;
 		vhdl << tab << declare("OddExp")    << " <= not(expX(0));"  << endl;  
@@ -320,43 +314,45 @@ namespace flopoco{
 //		oplist.push_back(fixpsqrt);
 
 //***************************************************************************
-		PiecewiseFunction *pf= new  PiecewiseFunction("sqrt(2+2*x),0,1,1;sqrt(1+x),0,1,1");
-		PolyTableGenerator *tg = new PolyTableGenerator(target, pf, wF+1, degree);
+		PiecewiseFunction  *pf = new PiecewiseFunction("sqrt(2+2*x),0,1,1;sqrt(1+x),0,1,1");
+		PolyTableGenerator *tg = new PolyTableGenerator(target, pf, wF+2+(correctlyRounded?1:0), degree);
 		oplist.push_back(tg);
-		combinatorialOperator = false;
 		
-		int k1, k2;
-		k1 = (tg->getNrIntArray())[0];
-		k2 = (tg->getNrIntArray())[1];
+		int addrLinesPolyOdd, addrLinesPolyEven; 
 		
-		int aa = tg->wIn;
-	
-		int dk1k2 = k1-k2;
+		/* the number of address lines needed to store the intervals for the odd case*/		
+		addrLinesPolyOdd = (tg->getNrIntArray())[0];
+		/* the number of address lines needed to store the intervals for the even case*/		
+		addrLinesPolyEven = (tg->getNrIntArray())[1];
+
+		//TODO remove
+		cout <<  "nr intervals odd = " << addrLinesPolyOdd << "nr intervals even = "<<addrLinesPolyEven<<endl;
 		
-		vhdl << tab << declare("theAddr",aa) << " <= (expX(0) & X"<<range(wF-1,wF-k1)<<") when expX(0)='0' else "<<endl
-		                                 << "(expX(0) & " << zg(dk1k2,0) << " & X"<<range(wF-1,wF-k2)<<");"<<endl;
-		vhdl << tab << declare("theFrac",wF-k2) << " <= ("<< zg(dk1k2,0) <<" & X"<<range(wF-k1-1,0)<<") when expX(0)='0' else "<<endl
-		                                 << "X"<<range(wF-k2-1,0)<<";"<<endl;
+		/* the numbger of address lines of the table */
+		int addrLinesTable = tg->wIn;
+
+		/* this will be different than 0 if for we require more intervals to get 
+		the same precision for the odd case, The difference is usually 1*/
+		int largerTableForOdd = addrLinesPolyOdd-addrLinesPolyEven;
 		
-		REPORT(DEBUG, "k1="<<k1<<" k2="<<k2);
+		vhdl << tab << declare("tableAddress", addrLinesTable) << " <= (expX(0) & X"<<range(wF-1,wF-addrLinesPolyOdd)<<") when expX(0)='0' else "<<endl
+		                                                           << "(expX(0) & " <<zg(largerTableForOdd,0) << " & X"<<range(wF-1,wF-addrLinesPolyEven)<<");"<<endl;
+
+		vhdl << tab << declare("theFrac",wF-addrLinesPolyEven) << " <= ("<< zg(largerTableForOdd,0) <<" & X"<<range(wF-addrLinesPolyOdd-1,0)<<") when expX(0)='0' else "<<endl
+		                                                            << "X"<<range(wF-addrLinesPolyEven-1,0)<<";"<<endl;
 		
-		YVar* y = new YVar(wF-k2, -k2);
+		YVar* y = new YVar(wF-addrLinesPolyEven, -addrLinesPolyEven);
 		
-		PolynomialEvaluator *pe = new PolynomialEvaluator(target, tg->getCoeffParamVector(), y, wF+1, tg->getMaxApproxError() );
+		PolynomialEvaluator *pe = new PolynomialEvaluator(target, tg->getCoeffParamVector(), y, wF+2+(correctlyRounded?1:0), tg->getMaxApproxError() );
 		oplist.push_back(pe);
 		
-//		wR = pe->getRWidth();
-//		weightR = pe->getRWeight();
-
-//		vhdl << tab << declare("addr", tg->wIn) << " <= Xaddr;"<<endl;
-		nextCycle();/////////////////////////////////// The Coefficent ROM has a registered iunput
+		nextCycle();// The Coefficent ROM has a registered iunput
 		
-		inPortMap ( tg, "X", "theAddr");
+		inPortMap  ( tg, "X", "tableAddress");
 		outPortMap ( tg, "Y", "Coef");
 		vhdl << instance ( tg, "GeneratedTable" );
-		
 		syncCycleFromSignal("Coef");
-		nextCycle();/////////////////////////////////// The Coefficent ROM has a registered output
+		nextCycle();// The Coefficent ROM has a registered output
 		
 		vhdl << tab << declare ("y",y->getSize()) << " <= theFrac;" << endl;
 		
@@ -374,52 +370,83 @@ namespace flopoco{
 		}
 		outPortMap( pe, "R", "rfx");
 		vhdl << instance( pe, "PolynomialEvaluator");
-		
 		syncCycleFromSignal("rfx");
+		setCriticalPath( pe->getOutputDelay("R"));		                  
 
+		if (!correctlyRounded){
+			vhdl << tab << declare("extentedf", 1 + wF + 1) << " <= rfx"<<range(pe->getRWidth()-pe->getRWeight()-1, pe->getRWidth()-(pe->getRWeight()+wF)-2)<<";"<<endl; 
+		                             
+			IntAdder *roundingAdder = new IntAdder(target, 1 + wF + 1, inDelayMap("X", target->localWireDelay() + getCriticalPath()));
+			oplist.push_back(roundingAdder);
+		
+			inPortMap    ( roundingAdder, "X"  , "extentedf");
+			inPortMapCst ( roundingAdder, "Y"  , zg(1 + wF + 1,0) );
+			inPortMapCst ( roundingAdder, "Cin", "'1'");
+			outPortMap   ( roundingAdder, "R"  , "fPostRound");
+			vhdl << instance( roundingAdder, "Rounding_Adder");
 
-//***************************************************************************
-
-
-//		inPortMap(fixpsqrt, "Xaddr", "theAddr");
-//		inPortMap(fixpsqrt, "Xfrac", "theFrac");
-//		outPortMap(fixpsqrt, "R", "rfx");
-//		vhdl << instance(fixpsqrt, "FixPointSQRT");
-//		
-//		syncCycleFromSignal("rfx");
+			syncCycleFromSignal("fPostRound");
+			vhdl << tab << " R <= exnR & sX & expPostBiasAddition"<<range(wE,1)<<" & fPostRound"<<range(wF, 1)<<";"<<endl;
+		}else{ /* correctly rounded version */
+			/* round on one bit more */
+			vhdl << tab << declare("extentedf", 1 + wF + 2) << " <= rfx"<<range(pe->getRWidth()-pe->getRWeight()-1, pe->getRWidth()-(pe->getRWeight()+wF)-3)<<";"<<endl; 
+		                             
+			IntAdder *roundingAdder = new IntAdder(target, 1 + wF + 2, inDelayMap("X", target->localWireDelay() + getCriticalPath()));
+			oplist.push_back(roundingAdder);
 		
-		
-//		vhdl << tab << declare("sticky",1) << " <=  rfx"<<of(pe->getRWidth()-(pe->getRWeight()+wF)-1)<<";"<<endl;
-		
-		
-		vhdl << tab << declare("sticky",1) << " <= '0' when rfx"<<range(pe->getRWidth()-(pe->getRWeight()+wF)-3,0) <<" = " 
-		                                                        <<   zg(pe->getRWidth()-(pe->getRWeight()+wF)-2,0) << " else '1';"<<endl;
-		
-		vhdl << tab << declare("extentedf", 1 + wF + 2) << " <= rfx"<<range(pe->getRWidth()-pe->getRWeight(), pe->getRWidth()-(pe->getRWeight()+wF)-2)<<";"<<endl; 
-//		                                                << " & sticky;"<<endl;
-		                  
-		nextCycle();                              
-		IntAdder *a = new IntAdder(target, 1 + wF + 2);
-		oplist.push_back(a);
-		
-		inPortMap(a, "X", "extentedf");
-		inPortMapCst(a, "Y", zg(1 + wF + 2,0) );
-		inPortMapCst(a, "Cin", "sticky");
-		outPortMap(a, "R", "fPostRound");
-		vhdl << instance(a, "Rounding_Adder");
-
-		syncCycleFromSignal("fPostRound");
-		
-
-		//addOutput("RFull", pe->getRWidth());
-		//vhdl << tab << " RFull <= rfx;" << endl; 
-		
-		vhdl << tab << " R <= exnR & sX & expPostBiasAddition"<<range(wE,1)<<" & fPostRound"<<range(wF, 1)<<";"<<endl;
-		
-		
-//		cout << "The result number of bits is " << 	pe->getRWidth();
-//		cout << "The result weight is " << 	        pe->getRWeight();
+			inPortMap    ( roundingAdder, "X"  , "extentedf");
+			inPortMapCst ( roundingAdder, "Y"  , zg(1 + wF + 2,0) );
+			inPortMapCst ( roundingAdder, "Cin", "'1'");
+			outPortMap   ( roundingAdder, "R"  , "fPostRound");
+			vhdl << instance( roundingAdder, "Rounding_Adder");
+			syncCycleFromSignal("fPostRound");
 			
+			vhdl << tab << declare("resRoundedOnWFp1",1+wF+1)<<" <= fPostRound"<<range(1+wF+1,1)<<";"<<endl;
+				
+			/* addOneHalf ulp in parallel with squaring */
+			IntAdder *ohu = new IntAdder(target, 1+wF+1);
+			oplist.push_back(ohu);
+		
+			inPortMapCst( ohu, "X", "resRoundedOnWFp1");
+			inPortMapCst( ohu, "Y", zg(2+wF));
+			inPortMapCst( ohu, "Cin", "'1'");
+			outPortMap  ( ohu, "R", "resRoundedphu");
+			vhdl << tab << instance(ohu, "AdderOfOneHalfUlpToRoundedResult");
+		
+			/* compute the square of sumA0ProdXA1sumA2X */
+			IntSquarer *cr_squarer = new IntSquarer(target, 1+wF+1);
+			oplist.push_back(cr_squarer);
+		
+			inPortMapCst(cr_squarer, "X", "resRoundedOnWFp1");
+			outPortMap  (cr_squarer, "R", "squaredResult");
+			vhdl << tab << instance(cr_squarer, "Squarer_CorrectRounding");
+			syncCycleFromSignal("squaredResult");
+		
+			/* the results is on 2*(2+wF) bits */
+
+			/* extend squaredResult with one bit to accomodate for the sign of the final comparisson
+			implemented as a subtraction */
+			vhdl << tab << declare("extSquaredResult",1+2*(wF+2))<< "<= \"0\" & squaredResult;"<<endl; 
+			/* extend x with zeros to the right and left and then negate*/
+			vhdl << tab << declare("negXext", 1+2*(wF+2)) << " <= (\"10\" & not(fracX) & "<<og(3+wF,0)<<") when squaredResult"<<of(2*(wF+2)-1)<<"='1' else (\"110\" & not(fracX) & "<<og(2+wF,0)<<");"<<endl;
+		
+			IntAdder *cr_subtracter = new IntAdder(target, 1+2*(wF+2));
+			oplist.push_back(cr_subtracter);
+		
+			inPortMap   ( cr_subtracter, "X", "extSquaredResult");
+			inPortMap   ( cr_subtracter, "Y", "negXext");
+			inPortMapCst( cr_subtracter, "Cin", "'1'");
+			outPortMap  ( cr_subtracter, "R", "sqr_of_sqrtx_m_x"); 
+			vhdl << tab << instance(cr_subtracter, "cr_subtracter");
+			syncCycleFromSignal("sqr_of_sqrtx_m_x");
+
+			vhdl << tab << declare("finalFrac", wF) << " <= resRoundedOnWFp1" << range(wF,1) << " when sqr_of_sqrtx_m_x"<<of(2*(wF+2))<<"='0' else "
+			                                        << "resRoundedphu"<< range(wF, 1)<<";"<<endl;
+			vhdl << tab << declare("finalExp", wE) << " <= expPostBiasAddition" << range(wE,1) <<";"<<endl;
+
+			vhdl << tab << " R <= exnR & sX & expPostBiasAddition"<<range(wE,1)<<" & finalFrac;"<<endl;
+		}
+		
 #if KEEP_HANDCRAFTED_VERSION
 		}
 #endif			

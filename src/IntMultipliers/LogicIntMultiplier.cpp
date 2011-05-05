@@ -345,8 +345,13 @@ namespace flopoco{
 					setCriticalPath(add->getOutputDelay("R"));
 					vhdl<<tab<<"R<=addRes" << range(adderWidth-1,adderWidth-wInX_-wInY_) << ";" << endl;		
 				}
+			}else{// we perform just one multiplication 
+				setCriticalPath(getMaxInputDelays(inputDelays));
+				manageCriticalPath( target->lutDelay() + target->localWireDelay());
+				vhdl << tab << " R <= X * Y;"<<endl;
+				outDelayMap["R"] = getCriticalPath();				
+			}
 		}
-	}
 
 		if (target_freq > maxDSPFrequency)
 			target->setFrequency( target_freq );
