@@ -383,7 +383,7 @@ ADD_EXECUTABLE(flopoco
  src/LongAcc
  src/LongAcc2FP
 
-# src/FPSumOfSquares
+ src/FPSumOfSquares
 
 # ---------- Conversion --------------------------------------------- 
  src/Fix2FP

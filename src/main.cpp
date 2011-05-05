@@ -119,7 +119,7 @@
 #include "LongAcc2FP.hpp"
 
 #include "DotProduct.hpp"
-//#include "FPSumOfSquares.hpp"
+#include "FPSumOfSquares.hpp"
 
 #include "FPPipeline.hpp"
 
@@ -1578,11 +1578,10 @@ bool parseCommandLine(int argc, char* argv[]){
 				usage(argv[0]); // and exit
 			int wE = checkStrictlyPositive(argv[i++], argv[0]);
 			int wF = checkStrictlyPositive(argv[i++], argv[0]);
-//			int correctlyRounded = checkBoolean(argv[i++], argv[0]);
+			int correctlyRounded = checkBoolean(argv[i++], argv[0]);
 			int degree = checkStrictlyPositive(argv[i++], argv[0]);
-//			cerr << "> FPSqrtPoly: wE=" << wE << " wF=" << wF << " correctlyRounded="<< correctlyRounded << " degree =" << degree << endl;
-			cerr << "> FPSqrtPoly: wE=" << wE << " wF=" << wF << " degree =" << degree << endl;
-			op = new FPSqrtPoly(target, wE, wF, 0, degree);
+			cerr << "> FPSqrtPoly: wE=" << wE << " wF=" << wF << " correctlyRounded="<< correctlyRounded << " degree =" << degree << endl;
+			op = new FPSqrtPoly(target, wE, wF, correctlyRounded, degree);
 			addOperator(op);
 		}
 #endif // HAVE_SOLLYA
@@ -1869,7 +1868,6 @@ bool parseCommandLine(int argc, char* argv[]){
 			op = new Collision(target, wE, wF, optimize);
 			addOperator(op);
 		}
-#if 0
 		else if (opname == "FPSumOfSquares")
 		{
 			int nargs = 3;
@@ -1882,8 +1880,6 @@ bool parseCommandLine(int argc, char* argv[]){
 			op = new FPSumOfSquares(target, wE, wF, optimize);
 			addOperator(op);
 		}
-#endif
-
 		else if (opname == "IntSquarer")
 		{
 			int nargs = 1;
