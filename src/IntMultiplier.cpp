@@ -60,7 +60,7 @@ namespace flopoco {
 			selectedVersion = 4; //LogicIntMultiplier with sign 1
 		}else if ((target->getUseHardMultipliers()) && (sign)){
 			selectedVersion = 4;	
-		}else if ((target->getUseHardMultipliers()) && (sign)){
+		}else if ((target->getUseHardMultipliers()) && (!sign)){
 			selectedVersion = 3;
 		}	
 

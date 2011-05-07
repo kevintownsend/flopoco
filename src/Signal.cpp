@@ -195,5 +195,5 @@ namespace flopoco{
 		else
 			return "'" + o + "'";
 	}
-
+	
 }

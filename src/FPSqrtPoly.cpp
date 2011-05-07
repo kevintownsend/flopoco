@@ -29,7 +29,7 @@
 #include "IntSquarer.hpp"
 #include "FPSqrtPoly.hpp"
 
-#define KEEP_HANDCRAFTED_VERSION 1
+//#define KEEP_HANDCRAFTED_VERSION 1
 
 using namespace std;
 
@@ -50,6 +50,10 @@ namespace flopoco{
 		vhdl << "--Split the Floating-Point input"<<endl;
 		vhdl << tab << declare("fracX",wF) << " <= X" << range(wF-1, 0) << ";"  << endl; 
 		vhdl << tab << declare("expX", wE)<< "  <= X" << range(wE+wF-1, wF) << ";"  << endl; 
+		
+		vhdl << "--If the real exponent is odd"<<endl;
+		vhdl << tab << declare("OddExp")   << " <= not(expX(0));"  << endl;  
+		
 
 #if KEEP_HANDCRAFTED_VERSION
 		if ((wE==8) && (wF==23) && (degree==2)) {
@@ -98,8 +102,6 @@ namespace flopoco{
 			vhdl << "--A concatenation of the exception bits and the sign bit"<<endl;
 			vhdl << tab << declare("excsX", 3) << " <= X" << range(wE+wF+2, wE+wF) << ";"  << endl; 
 
-			vhdl << "--If the real exponent is odd"<<endl;
-			vhdl << tab << declare("OddExp")   << " <= not(expX(0));"  << endl;  
 	
 			//first estimation of the exponent
 			vhdl << tab << declare("expBiasPostDecrement", wE+1) << " <= CONV_STD_LOGIC_VECTOR("<< (1<<(wE-1))-2 <<","<<wE+1<<");"<<endl;
@@ -168,7 +170,8 @@ namespace flopoco{
 			vhdl << instance(add1, "Adder_a1_prod_x_a2");
 	
 			syncCycleFromSignal("a1pxa2"); 
-			nextCycle();//////////////////
+			setCriticalPath( add1->getOutputDelay("R") );
+			nextCycle();////////////////// The tiling multiplier does not yet support inDelayMap
 	
 			//perform the multiplication between x and ( a1 + a2x )  
 			//TODO pipeline if keepBitsRightOfA1BeforeFinalMult > 0  
@@ -180,11 +183,11 @@ namespace flopoco{
 			/* we choose 34 bits for a1pxa2 (so we take just two multipliers)
 			and we keep keepBitsRightOfA1BeforeFinalMult */ 				
 			if (correctRounding)
-				vhdl << tab << declare("a1pxa2truncated",34) << " <= " << zg(17-keepBitsRightOfA1BeforeFinalMult,0) << " & a1pxa2"<<range(coeffStorageSizes[1] + keepBitsRightOfA1-1, keepBitsRightOfA1 - keepBitsRightOfA1BeforeFinalMult) << ";" << endl;
+				vhdl << tab << declare("a1pxa2truncated",17+keepBitsRightOfA1BeforeFinalMult) << " <= a1pxa2"<<range(coeffStorageSizes[1] + keepBitsRightOfA1-1, keepBitsRightOfA1 - keepBitsRightOfA1BeforeFinalMult) << ";" << endl;
 			else
 				vhdl << tab << declare("a1pxa2truncated",17) << " <= a1pxa2"<<range(coeffStorageSizes[1] + keepBitsRightOfA1-1, keepBitsRightOfA1) << ";" << endl;				
 
-			IntMultiplier * mult_x_a1pa2x = new IntMultiplier(target, (sizeOfX+1), (correctRounding?34:17));
+			IntMultiplier * mult_x_a1pa2x = new IntMultiplier(target, (sizeOfX+1), (correctRounding?17+keepBitsRightOfA1BeforeFinalMult:17), inDelayMap("X", target->localWireDelay() + getCriticalPath()), 0, 0.9);
 			oplist.push_back(mult_x_a1pa2x);
 
 			inPortMap (mult_x_a1pa2x, "X", "lowX");
@@ -195,7 +198,7 @@ namespace flopoco{
 
 			/* discard the msb 15 bits as they are all zeros. 
 			FIXME replace this by one DSP an one adder */
-			vhdl << tab << declare("prodXA1sumA2X",(correctRounding?36:34)) << " <= prodXA1sumA2X_large"<<range((correctRounding?35:33),0) << ";" << endl;
+			vhdl << tab << declare("prodXA1sumA2X",(correctRounding?34+keepBitsRightOfA1BeforeFinalMult:34)) << " <= prodXA1sumA2X_large"<<range((correctRounding?35:33),0) << ";" << endl;
 
 			/* compose the operands for the addition a0 + [ prev_computation ] */
 			/* fetch a0 from memory */
@@ -218,12 +221,13 @@ namespace flopoco{
 
 			outPortMap(adder_a0px_a1pxa2,   "R", "sumA0ProdXA1sumA2X");
 			vhdl << instance(adder_a0px_a1pxa2, "Adder_a0px_a1pxa2");
-			syncCycleFromSignal("sumA0ProdXA1sumA2X"); 
+			syncCycleFromSignal("sumA0ProdXA1sumA2X");
+			setCriticalPath( adder_a0px_a1pxa2->getOutputDelay("R"));
+			 
 			/* we performed rounding by adding one half ulp to the final result directly 
 			in the addition a0 + ... */
 
 			if (!correctlyRounded){
-		
 				/* the final addition cannot overflow as sqrt(11.111111....) is smaller than 10.0000..0 */
 				
 				vhdl << tab << declare("finalFrac", wF) << " <= sumA0ProdXA1sumA2X" << range(coeffStorageSizes[0]-2, coeffStorageSizes[0]-wF-1) << ";" << endl;
@@ -235,6 +239,7 @@ namespace flopoco{
 				     << tab << tab << "excsX" << range(2, 1) << " when \"001\" | \"000\" | \"100\", " << endl
 				     << tab << tab << "\"11\" when others;"  << endl;
 				vhdl << tab << "R <= exnR & excsX(0) & finalExp & finalFrac;" << endl; 
+				outDelayMap["R"] = getCriticalPath();
 			}else{ /* correctly rounded version; this is rather costly; one should 
 			consider either using faithful rounding with one bit more of mantisa for the 
 			same numbrical quality, either use the muliplicative version FPSqrt */
@@ -242,7 +247,7 @@ namespace flopoco{
 				vhdl << tab << declare("resRoundedOnWFp1",1+wF+1)<<" <= sumA0ProdXA1sumA2X"<<range(coeffStorageSizes[0]-1,coeffStorageSizes[0]-(1+wF+1))<<";"<<endl;
 				
 				/* addOneHalf ulp in parallel with squaring */
-				IntAdder *ohu = new IntAdder(target, 1+wF+1);
+				IntAdder *ohu = new IntAdder(target, 1+wF+1, inDelayMap("X",target->localWireDelay() + getCriticalPath()));
 				oplist.push_back(ohu);
 			
 				inPortMapCst( ohu, "X", "resRoundedOnWFp1");
@@ -250,15 +255,19 @@ namespace flopoco{
 				inPortMapCst( ohu, "Cin", "'1'");
 				outPortMap  ( ohu, "R", "resRoundedphu");
 				vhdl << tab << instance(ohu, "AdderOfOneHalfUlpToRoundedResult");
-			
+
+				vhdl << tab << declare("negXext", 1+2*(wF+2)) << " <= (\"10\" & not(fracX) & "<<og(3+wF,0)<<") when OddExp='1' else (\"110\" & not(fracX) & "<<og(2+wF,0)<<");"<<endl;
+							
+				//done in parallel
 				/* compute the square of sumA0ProdXA1sumA2X */
-				IntSquarer *cr_squarer = new IntSquarer(target, 1+wF+1);
+				IntSquarer *cr_squarer = new IntSquarer(target, 1+wF+1, inDelayMap("X",target->localWireDelay() + getCriticalPath()) );
 				oplist.push_back(cr_squarer);
 			
 				inPortMapCst(cr_squarer, "X", "resRoundedOnWFp1");
 				outPortMap  (cr_squarer, "R", "squaredResult");
 				vhdl << tab << instance(cr_squarer, "Squarer_CorrectRounding");
 				syncCycleFromSignal("squaredResult");
+				setCriticalPath( cr_squarer->getOutputDelay("R"));
 			
 				/* the results is on 2*(2+wF) bits */
 
@@ -266,11 +275,8 @@ namespace flopoco{
 				implemented as a subtraction */
 				vhdl << tab << declare("extSquaredResult",1+2*(wF+2))<< "<= \"0\" & squaredResult;"<<endl; 
 				/* extend x with zeros to the right and left and then negate*/
-				vhdl << tab << declare("negXext", 1+2*(wF+2)) << " <= (\"10\" & not(fracX) & "<<og(3+wF,0)<<") when squaredResult"<<of(2*(wF+2)-1)<<"='1' else (\"110\" & not(fracX) & "<<og(2+wF,0)<<");"<<endl;
-
-//				vhdl << tab << declare("negXext", 1+2*(wF+2)) << " <= \"10\" & not(fracX) & "<<og(3+wF,0)<<";"<<endl;
 			
-				IntAdder *cr_subtracter = new IntAdder(target, 1+2*(wF+2));
+				IntAdder *cr_subtracter = new IntAdder(target, 1+2*(wF+2), inDelayMap("X",target->localWireDelay() + getCriticalPath()) );
 				oplist.push_back(cr_subtracter);
 			
 				inPortMap   ( cr_subtracter, "X", "extSquaredResult");
@@ -279,7 +285,9 @@ namespace flopoco{
 				outPortMap  ( cr_subtracter, "R", "sqr_of_sqrtx_m_x"); 
 				vhdl << tab << instance(cr_subtracter, "cr_subtracter");
 				syncCycleFromSignal("sqr_of_sqrtx_m_x");
+				setCriticalPath( cr_subtracter->getOutputDelay("R"));
 	
+				manageCriticalPath(target->lutDelay() + target->localWireDelay());
 				vhdl << tab << declare("finalFrac", wF) << " <= resRoundedOnWFp1" << range(wF,1) << " when sqr_of_sqrtx_m_x"<<of(2*(wF+2))<<"='0' else "
 				                                        << "resRoundedphu"<< range(wF, 1)<<";"<<endl;
 				vhdl << tab << declare("finalExp", wE) << " <= expPostBiasAddition" << range(wE,1) <<";"<<endl;
@@ -290,6 +298,7 @@ namespace flopoco{
 				     << tab << tab << "excsX" << range(2, 1) << " when \"001\" | \"000\" | \"100\", " << endl
 				     << tab << tab << "\"11\" when others;"  << endl;
 				vhdl << tab << "R <= exnR & excsX(0) & finalExp & finalFrac;" << endl; 
+				outDelayMap["R"] = getCriticalPath();
 			}
 		}else{
 #endif // KEEP_HANDCRAFTER_VERSION
@@ -297,9 +306,6 @@ namespace flopoco{
 		vhdl << tab << declare("excsX",3) << " <= X"<<range(wE+wF+2,wE+wF)<<";"<<endl;
 		vhdl << tab << declare("sX",1) << "  <= X"<<of(wE+wF)<<";"<<endl;
 		
-		vhdl << "--If the real exponent is odd"<<endl;
-		vhdl << tab << declare("OddExp")    << " <= not(expX(0));"  << endl;  
-
 		//first estimation of the exponent
 		vhdl << tab << declare("expBiasPostDecrement", wE+1) << " <= CONV_STD_LOGIC_VECTOR("<< (1<<(wE-1))-2 <<","<<wE+1<<");"<<endl;
 		vhdl << tab << declare("expPostBiasAddition", wE+1) << " <= ( \"0\" & expX) + expBiasPostDecrement + not(OddExp);"<<endl;
@@ -388,7 +394,7 @@ namespace flopoco{
 			syncCycleFromSignal("fPostRound");
 			vhdl << tab << " R <= exnR & sX & expPostBiasAddition"<<range(wE,1)<<" & fPostRound"<<range(wF, 1)<<";"<<endl;
 		}else{ /* correctly rounded version */
-			/* round on one bit more */
+			/* round on one bit more */ //TODO this rounding should be saved once we can directly feed TableGenerator the 1/2 ulps to add to c0
 			vhdl << tab << declare("extentedf", 1 + wF + 2) << " <= rfx"<<range(pe->getRWidth()-pe->getRWeight()-1, pe->getRWidth()-(pe->getRWeight()+wF)-3)<<";"<<endl; 
 		                             
 			IntAdder *roundingAdder = new IntAdder(target, 1 + wF + 2, inDelayMap("X", target->localWireDelay() + getCriticalPath()));
@@ -400,11 +406,12 @@ namespace flopoco{
 			outPortMap   ( roundingAdder, "R"  , "fPostRound");
 			vhdl << instance( roundingAdder, "Rounding_Adder");
 			syncCycleFromSignal("fPostRound");
+			setCriticalPath( roundingAdder->getOutputDelay("R"));
 			
 			vhdl << tab << declare("resRoundedOnWFp1",1+wF+1)<<" <= fPostRound"<<range(1+wF+1,1)<<";"<<endl;
 				
 			/* addOneHalf ulp in parallel with squaring */
-			IntAdder *ohu = new IntAdder(target, 1+wF+1);
+			IntAdder *ohu = new IntAdder(target, 1+wF+1, inDelayMap("X", target->localWireDelay() + getCriticalPath()));
 			oplist.push_back(ohu);
 		
 			inPortMapCst( ohu, "X", "resRoundedOnWFp1");
@@ -412,25 +419,28 @@ namespace flopoco{
 			inPortMapCst( ohu, "Cin", "'1'");
 			outPortMap  ( ohu, "R", "resRoundedphu");
 			vhdl << tab << instance(ohu, "AdderOfOneHalfUlpToRoundedResult");
+			syncCycleFromSignal("resRoundedphu");
+
+			/* extend x with zeros to the right and left and then negate*/
+			vhdl << tab << declare("negXext", 1+2*(wF+2)) << " <= (\"10\" & not(fracX) & "<<og(3+wF,0)<<") when OddExp='1' else (\"110\" & not(fracX) & "<<og(2+wF,0)<<");"<<endl;
+			//x fraction alignment is done in parallel with squaring
 		
 			/* compute the square of sumA0ProdXA1sumA2X */
-			IntSquarer *cr_squarer = new IntSquarer(target, 1+wF+1);
+			IntSquarer *cr_squarer = new IntSquarer(target, 1+wF+1, inDelayMap("X", target->localWireDelay() + getCriticalPath()));
 			oplist.push_back(cr_squarer);
 		
 			inPortMapCst(cr_squarer, "X", "resRoundedOnWFp1");
 			outPortMap  (cr_squarer, "R", "squaredResult");
 			vhdl << tab << instance(cr_squarer, "Squarer_CorrectRounding");
-			syncCycleFromSignal("squaredResult");
-		
+			syncCycleFromSignal("squaredResult"); //this will be the longest path between the two 
+			setCriticalPath( cr_squarer->getOutputDelay("R") );
 			/* the results is on 2*(2+wF) bits */
 
 			/* extend squaredResult with one bit to accomodate for the sign of the final comparisson
 			implemented as a subtraction */
 			vhdl << tab << declare("extSquaredResult",1+2*(wF+2))<< "<= \"0\" & squaredResult;"<<endl; 
-			/* extend x with zeros to the right and left and then negate*/
-			vhdl << tab << declare("negXext", 1+2*(wF+2)) << " <= (\"10\" & not(fracX) & "<<og(3+wF,0)<<") when squaredResult"<<of(2*(wF+2)-1)<<"='1' else (\"110\" & not(fracX) & "<<og(2+wF,0)<<");"<<endl;
 		
-			IntAdder *cr_subtracter = new IntAdder(target, 1+2*(wF+2));
+			IntAdder *cr_subtracter = new IntAdder(target, 1+2*(wF+2), inDelayMap("X", target->localWireDelay() + getCriticalPath()));
 			oplist.push_back(cr_subtracter);
 		
 			inPortMap   ( cr_subtracter, "X", "extSquaredResult");
@@ -439,12 +449,15 @@ namespace flopoco{
 			outPortMap  ( cr_subtracter, "R", "sqr_of_sqrtx_m_x"); 
 			vhdl << tab << instance(cr_subtracter, "cr_subtracter");
 			syncCycleFromSignal("sqr_of_sqrtx_m_x");
-
+			setCriticalPath(cr_subtracter->getOutputDelay("R"));
+				
+			manageCriticalPath( target->localWireDelay() + getCriticalPath());	
 			vhdl << tab << declare("finalFrac", wF) << " <= resRoundedOnWFp1" << range(wF,1) << " when sqr_of_sqrtx_m_x"<<of(2*(wF+2))<<"='0' else "
 			                                        << "resRoundedphu"<< range(wF, 1)<<";"<<endl;
 			vhdl << tab << declare("finalExp", wE) << " <= expPostBiasAddition" << range(wE,1) <<";"<<endl;
 
 			vhdl << tab << " R <= exnR & sX & expPostBiasAddition"<<range(wE,1)<<" & finalFrac;"<<endl;
+			outDelayMap["R"]=getCriticalPath();
 		}
 		
 #if KEEP_HANDCRAFTED_VERSION

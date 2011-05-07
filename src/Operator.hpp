@@ -256,6 +256,17 @@ public:
 	bool syncCycleFromSignal(string name, double criticalPath, bool report=true) ;
 
 
+	/** sets the delay of the signal with name given by first argument 
+		@param name the name of the signal
+		@param delay the delay to be associated with the name	
+	**/
+	void setSignalDelay(string name, double delay);
+
+	/** returns the delay on the signal with the name denoted by the argument 
+		@param name signal Name
+		@return delay of this signal
+	*/
+	double getSignalDelay(string name);
 
 
 	/** Declares a signal implicitely by having it appearing on the Left Hand Side of a VHDL assignment

@@ -644,9 +644,32 @@ namespace flopoco{
 		return advance;
 	}
 
+	void Operator::setSignalDelay(string name, double delay){
+		Signal* s;
+		try {
+			s=getSignalByName(name);
+		}
+		catch (string e2) {
+			cout << "WARNING: signal having name " << name << " was not found in file " << srcFileName << " when called using getSignalDelay" << endl;
+			return;
+		}
 
+		s->setDelay(delay);		
+	}	
 
-	
+	double Operator::getSignalDelay(string name){
+		Signal* s;
+		try {
+			s=getSignalByName(name);
+		}
+		catch (string e2) {
+			cout << "WARNING: signal having name " << name << " was not found in file " << srcFileName << " when called using getSignalDelay" << endl;
+			return 0.0;
+		}
+
+		return s->getDelay();		
+	}
+
 	double Operator::getCriticalPath() {return criticalPath_;}
 	
 	void Operator::setCriticalPath(double delay) {criticalPath_=delay;}

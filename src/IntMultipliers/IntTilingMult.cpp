@@ -54,7 +54,7 @@ namespace flopoco{
 #define DEBUGVHDL 0
 
 	
-	IntTilingMult:: IntTilingMult(Target* target, int wInX, int wInY, float ratio, int maxTimeInMinutes, bool interactive) :
+	IntTilingMult:: IntTilingMult(Target* target, int wInX, int wInY, float ratio, int maxTimeInMinutes, bool interactive, map<string, double> inputDelays) :
 		Operator(target), wInX(wInX), wInY(wInY), wOut(wInX + wInY),ratio(ratio), maxTimeInMinutes(maxTimeInMinutes-1){
  
 		ostringstream name;

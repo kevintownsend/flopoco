@@ -50,6 +50,26 @@ namespace flopoco{
 		addOutput("R", wX + wY - k, 2, true); 
 	
 		wOut = wX + wY - k;
+		
+		int wxDSP, wyDSP;
+		//test if the multiplication fits into one DSP
+		target->getDSPWidths(wxDSP, wyDSP, sign);
+		bool testForward, testReverse, testFit;
+		testForward     = (winX<=wxDSP)&&(winY<=wyDSP);
+		testReverse = (winY<=wxDSP)&&(winX<=wyDSP);
+		testFit = testForward || testReverse;
+		
+		if (testFit){
+			nextCycle();// TODO: not needed for low frequencies
+			vhdl << tab << declare("rfull", wX + wY) << " <= X * Y;"<<endl;
+			nextCycle();// TODO: to be fixed
+			vhdl << tab << "R <= rfull"<<range(wX + wY-1, k)<<";"<<endl;	
+			outDelayMap["R"] = 0.0;
+			
+			return;
+			//don't go do the rest as we already solved our problem			
+		}
+		
 	
 		if (sign) {
 			//for a signed multiplier the tiling board is smaller by one unit.
@@ -2749,6 +2769,7 @@ namespace flopoco{
 			vhdl << instance(mult, join("Mult", partitions));
 		
 			syncCycleFromSignal(join("result", partitions));
+			setSignalDelay(join("result", partitions), mult->getOutputDelay("R"));
 			
 			vhdl << tab << declare(join("addOpSlice", partitions), wInX+wInY + (sign?2:0) -minShift) << " <= " ;
 			if (sign){
@@ -2799,33 +2820,33 @@ namespace flopoco{
 			{
 				ostringstream concatPartialProd;
 				concatPartialProd  << "addOpDSP" << j;
-				syncCycleFromSignal(concatPartialProd.str());
+				syncCycleFromSignal(concatPartialProd.str(), getSignalDelay(concatPartialProd.str()));
 			}	
 			
 		for (int j=0; j<nrSliceOperands; j++)
 			{
 				ostringstream concatPartialProd;
 				concatPartialProd  << "addOpSlice" << j;
-				syncCycleFromSignal(concatPartialProd.str());
+				syncCycleFromSignal(concatPartialProd.str(), getSignalDelay(concatPartialProd.str()));
 			}	
 			
 		for (int j=0; j<subCount; j++)
 			{
 				ostringstream concatPartialProd;
 				concatPartialProd  << "addOpSlice_sub" << j;
-				syncCycleFromSignal(concatPartialProd.str());
+				syncCycleFromSignal(concatPartialProd.str(), getSignalDelay(concatPartialProd.str()) );
 			}		
 		Operator *add;
 		
 //		if   (target_->getID() != "Virtex5"){
 //			add =  new IntNAdder(getTarget(), wInX+wInY+(sign?2:0)-minShift, nrDSPOperands+nrSliceOperands+subCount, inMap);
 //		} else{
-			add =  new IntCompressorTree(getTarget(), wInX+wInY+(sign?2:0)-minShift, nrDSPOperands+nrSliceOperands+subCount, inMap);
+			add =  new IntCompressorTree(getTarget(), wInX+wInY+(sign?2:0)-minShift, nrDSPOperands+nrSliceOperands+subCount, inDelayMap("X0",target_->localWireDelay() + getCriticalPath() )  );
 //		}
 		
 		//IntCompressorTree* add =  new IntCompressorTree(target, adderWidth, opCount);
 		oplist.push_back(add);
-		nextCycle();
+//		nextCycle();
 
 		for (int j=0; j<nrDSPOperands; j++)
 			{

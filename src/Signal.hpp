@@ -167,12 +167,11 @@ namespace flopoco{
 		std::string valueToVHDLHex(mpz_class v, bool quot = true);
 
 
-
 	private:
 		std::string   name_;        /**< The name of the signal */
 		SignalType    type_;        /**< The type of the signal, see SignalType */
 		int           width_;       /**< The width of the signal */
-
+		
 		int           numberOfPossibleValues_; /**< For signals of type out, indicates how many values will be acceptable. Typically 1 for correct rounding, and 2 for faithful rounding */
 
 		int           lifeSpan_;    /**< The max delay that will be applied to this signal; */
@@ -187,6 +186,7 @@ namespace flopoco{
 		int           wF_;          /**< The width of the fraction. Used for FP signals */
 		
 		bool          isBus_;       /**< True is the signal is a bus (std_logic_vector)*/
+		
 	};
 
 }
