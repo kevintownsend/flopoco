@@ -29,7 +29,7 @@
 #include "IntSquarer.hpp"
 #include "FPSqrtPoly.hpp"
 
-//#define KEEP_HANDCRAFTED_VERSION 1
+#define KEEP_HANDCRAFTED_VERSION 1
 
 using namespace std;
 

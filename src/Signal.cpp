@@ -9,13 +9,13 @@ namespace flopoco{
 
 	Signal::Signal(const string name, const Signal::SignalType type, const int width, const bool isBus) : 
 		name_(name), type_(type), width_(width), numberOfPossibleValues_(1), lifeSpan_(0),  cycle_(0),	
-		isFP_(false), isIEEE_(false), wE_(0), wF_(0),  isBus_(isBus) {
+		isFP_(false), isIEEE_(false), wE_(0), wF_(0), isBus_(isBus), delay_(0.0) {
 	}
 
 	Signal::Signal(const string name, const Signal::SignalType type, const int wE, const int wF, const bool ieeeFormat) : 
 		name_(name), type_(type), width_(wE+wF+3), numberOfPossibleValues_(1), 
 		lifeSpan_(0), cycle_(0),
-		isFP_(true), isIEEE_(false), wE_(wE), wF_(wF), isBus_(false)
+		isFP_(true), isIEEE_(false), wE_(wE), wF_(wF), isBus_(false), delay_(0.0)
 	{
 		if(ieeeFormat) { // correct some of the initializations above
 			width_=wE+wF+1;

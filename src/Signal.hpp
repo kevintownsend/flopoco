@@ -177,7 +177,6 @@ namespace flopoco{
 		int           lifeSpan_;    /**< The max delay that will be applied to this signal; */
 		int           cycle_;       /**<  the cycle at which this signal is active in a pipelined operator. 0 means synchronized with the inputs */
 
-		double        delay_;       /**<  the delay of the signal, starting from a previous register level */
 
 	
 		bool          isFP_;        /**< If the signal is of the FloPoCo floating-point type */  
@@ -186,6 +185,8 @@ namespace flopoco{
 		int           wF_;          /**< The width of the fraction. Used for FP signals */
 		
 		bool          isBus_;       /**< True is the signal is a bus (std_logic_vector)*/
+		double        delay_;       /**<  the delay of the signal, starting from a previous register level */
+
 		
 	};
 

@@ -54,14 +54,19 @@ namespace flopoco{
 		int wxDSP, wyDSP;
 		//test if the multiplication fits into one DSP
 		target->getDSPWidths(wxDSP, wyDSP, sign);
-		bool testForward, testReverse, testFit;
+		bool testForward, testReverse;
 		testForward     = (winX<=wxDSP)&&(winY<=wyDSP);
 		testReverse = (winY<=wxDSP)&&(winX<=wyDSP);
 		testFit = testForward || testReverse;
 		
 		if (testFit){
 			nextCycle();// TODO: not needed for low frequencies
-			vhdl << tab << declare("rfull", wX + wY) << " <= X * Y;"<<endl;
+			if (sign)
+				vhdl << tab << declare("rfull", wX + wY) << " <= X * Y;"<<endl;
+			else //sign extension is necessary for using use ieee.std_logic_signed.all; 
+			    // for correct inference of Xilinx DSP functions
+				vhdl << tab << declare("rfull", wX + wY + 2) << " <= (\"0\" & X) * (\"0\" & Y);"<<endl;
+			
 			nextCycle();// TODO: to be fixed
 			vhdl << tab << "R <= rfull"<<range(wX + wY-1, k)<<";"<<endl;	
 			outDelayMap["R"] = 0.0;
@@ -2769,16 +2774,17 @@ namespace flopoco{
 			vhdl << instance(mult, join("Mult", partitions));
 		
 			syncCycleFromSignal(join("result", partitions));
-			setSignalDelay(join("result", partitions), mult->getOutputDelay("R"));
 			
 			vhdl << tab << declare(join("addOpSlice", partitions), wInX+wInY + (sign?2:0) -minShift) << " <= " ;
-			if (sign){
+			if ((sign) && onEdge ){
 				vhdl << rangeAssign(wX+wY+(sign?2:0) - (trx1+wMultX+try1+wMultY) -1 , 0, join("result", partitions)+of(wMultX+wMultY-1)) << " & " << join("result", partitions) 
 					 << " & " << zg(trx1+try1-minShift, 0) << ";" << endl;	
 			}else{
 				vhdl << zg(wX+wY+(sign?2:0) - (trx1+wMultX+try1+wMultY) , 0) << " & " << join("result", partitions) 
 					 << " & " << zg(trx1+try1-minShift, 0) << ";" << endl;	
 			}
+
+			setSignalDelay(join("addOpSlice", partitions), mult->getOutputDelay("R"));
 		}
 		
 		target_->setUseHardMultipliers(savedUseHardMultipliers);		
@@ -3442,24 +3448,40 @@ namespace flopoco{
 			svR = svR + mpz_class(1);
 			tc->addExpectedOutput("R", svR);
 		}else{
-			mpz_class big1 = (mpz_class(1) << (wX+1));
-			mpz_class big1P = (mpz_class(1) << (wX+1-1));
-			mpz_class big2 = (mpz_class(1) << (wY+1));
-			mpz_class big2P = (mpz_class(1) << (wY+1-1));
-
+			mpz_class big1, big1P,big2, big2P;
+			
+			if (!testFit){
+				big1 = (mpz_class(1) << (wX+1));
+				big1P = (mpz_class(1) << (wX+1-1));
+				big2 = (mpz_class(1) << (wY+1));
+				big2P = (mpz_class(1) << (wY+1-1));
+			}else{
+				big1 = (mpz_class(1) << (wX));
+				big1P = (mpz_class(1) << (wX-1));
+				big2 = (mpz_class(1) << (wY));
+				big2P = (mpz_class(1) << (wY-1));
+			}
+			
 			if ( svX >= big1P)
 				svX = svX-big1;
 
 			if ( svY >= big2P)
 				svY = svY -big2;
 			
+			cout << "X="<<svX<<" ,Y="<<svY<<endl;
+			
+			cout << "wX="<<wX<<" ,wY="<<wY<<endl;
+			
 			mpz_class svR = svX * svY;
 			
 			if ( svR < 0){
-				mpz_class tmpSUB = (mpz_class(1) << (wX+1+wY+1));
+				mpz_class tmpSUB;
+				if (!testFit)
+					tmpSUB = (mpz_class(1) << (wX+1+wY+1));
+				else
+					tmpSUB = (mpz_class(1) << (wX+wY));
 				svR = tmpSUB + svR; 
 			}
-
 
 			svR = (svR >> int(targetPrecision));
 			tc->addExpectedOutput("R", svR);

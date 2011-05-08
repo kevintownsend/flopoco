@@ -430,6 +430,8 @@ namespace flopoco{
 		int minShift;
 		
 		bool sign;
+		
+		bool testFit;
 	};
 
 }
