@@ -1903,6 +1903,7 @@ namespace flopoco{
 			o << ");"<<endl;
 			o << "END COMPONENT;	"<<endl;
 		}
+		o << buildVHDLComponentDeclarations();
 		o << buildVHDLSignalDeclarations();
 		beginArchitecture(o);		
 		o<<buildVHDLRegisters();

@@ -709,14 +709,17 @@ public:
 
 	/** add a full line of '-' with comment centered within */
 	void addFullComment(string comment, int lineLength = 80);
+
+	map<string, Operator*> subComponents_;/**< The list of sub-components */
+	vector<Signal*>     signalList_;      /**< The list of internal signals of the operator */
+	vector<Signal*>     ioList_;          /**< The list of I/O signals of the operator */
+
 protected:    
 	Target*             target_;          /**< The target on which the operator will be deployed */
 	string              uniqueName_;      /**< By default, a name derived from the operator class and the parameters */
 	string 				architectureName_;	/**< Name of the operator architecture */
 	vector<Signal*>     testCaseSignals_; /**< The list of pointers to the signals in a test case entry. Its size also gives the dimension of a test case */
-	map<string, Operator*> subComponents_;/**< The list of sub-components */
-	vector<Signal*>     signalList_;      /**< The list of internal signals of the operator */
-	vector<Signal*>     ioList_;          /**< The list of I/O signals of the operator */
+
 	map<string, string> portMap_;         /**< Port map for an instance of this operator */
 	map<string, double> outDelayMap;      /**< Slack delays on the outputs */
 	map<string, double> inputDelayMap;       /**< Slack delays on the inputs */

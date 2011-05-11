@@ -78,11 +78,16 @@ namespace flopoco {
 		}
 
 		IntMultiplierInstantiation->setuid(getuid()); //the selected implemetation becomes this operator 
-		
 		oplist.push_back(IntMultiplierInstantiation); //the code of the selected implementation 
+
 		outDelayMap["R"] = IntMultiplierInstantiation->getOutputDelay("R"); //populate output delays
 		setCycle(IntMultiplierInstantiation->getPipelineDepth());
 		IntMultiplierInstantiation->setName ( name.str() );//accordingly set the name of the implementation
+
+		signalList_ = IntMultiplierInstantiation->signalList_;
+		subComponents_ = IntMultiplierInstantiation->subComponents_;
+		ioList_ = IntMultiplierInstantiation->ioList_;
+		
 		
 	}
 	
