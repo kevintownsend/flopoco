@@ -66,24 +66,19 @@ namespace flopoco{
 		addInput  ("AccOverflow",1);
 		addOutput ("R", 3 + wEOut_ + wFOut_);
 
-	
-		if (target->isPipelined()) 
-			setSequential();
-		else
-			setCombinatorial();
-	
-		// Set up various architectural parameters
-		sizeAcc_ = MSBA_-LSBA_+1;	
-
 		vhdl << tab <<declare("signA") << " <= A" << of(sizeAcc_-1)<<";"<<endl;
 		vhdl << tab <<declare("signC") << " <= C" << of(sizeAcc_-1)<<";"<<endl;
+		
 		vhdl << tab <<declare("AccOverflowFlag") << " <= AccOverflow;"<<endl;	
 
-		IntAdder *a = new IntAdder(target, sizeAcc_);
+		vhdl << tab << declare("eA", sizeAcc_+1) << " <= signA & A;"<<endl;
+		vhdl << tab << declare("eC", sizeAcc_+1) << " <= signC & C;"<<endl;
+		
+		IntAdder *a = new IntAdder(target, sizeAcc_+1);
 		oplist.push_back(a);
 	
-		inPortMap( a,   "X",   "A");
-		inPortMap( a,   "Y",   "C");
+		inPortMap( a,   "X",   "eA");
+		inPortMap( a,   "Y",   "eC");
 		inPortMapCst(a, "Cin", "'0'");
 		outPortMap( a,  "R",   "cpR");
 		vhdl << instance(a,    "CarryPropagation");
@@ -92,39 +87,37 @@ namespace flopoco{
 		setCriticalPath( a->getOutputDelay("R"));
 		setSignalDelay( "cpR", getCriticalPath());
 
-		vhdl << tab << declare("resSign") << " <= cpR" << of(sizeAcc_-1) << ";" << endl;
+		vhdl << tab << declare("resSign") << " <= cpR" << of(sizeAcc_) << ";" << endl;
 
-		manageCriticalPath(target->localWireDelay() + target->lutDelay());	
-		//detect Addition overflow
-		vhdl << tab << declare("signConcat",3) << " <= signA & signC & resSign;" << endl;
-		vhdl << tab << "with signConcat select " << endl;
-		vhdl << tab << declare("ovf") << " <= '0' when \"000\", "<<endl;
-		vhdl << tab << "       '1' when \"001\","<<endl;
-		vhdl << tab << "       '0' when \"010\","<<endl;
-		vhdl << tab << "       '0' when \"011\","<<endl;
-		vhdl << tab << "       '0' when \"100\","<<endl;
-		vhdl << tab << "       '0' when \"101\","<<endl;
-		vhdl << tab << "       '1' when \"110\","<<endl;
-		vhdl << tab << "       '0' when \"111\","<<endl;
-		vhdl << tab << "       '0' when others;"<<endl;
+//		manageCriticalPath(target->localWireDelay() + target->lutDelay());	
+//		//detect Addition overflow
+//		vhdl << tab << declare("signConcat",3) << " <= signA & signC & resSign;" << endl;
+//		vhdl << tab << "with signConcat select " << endl;
+//		vhdl << tab << declare("ovf") << " <= '0' when \"000\", "<<endl;
+//		vhdl << tab << "       '1' when \"001\","<<endl;
+//		vhdl << tab << "       '0' when \"010\","<<endl;
+//		vhdl << tab << "       '0' when \"011\","<<endl;
+//		vhdl << tab << "       '0' when \"100\","<<endl;
+//		vhdl << tab << "       '0' when \"101\","<<endl;
+//		vhdl << tab << "       '1' when \"110\","<<endl;
+//		vhdl << tab << "       '0' when \"111\","<<endl;
+//		vhdl << tab << "       '0' when others;"<<endl;
 
-		manageCriticalPath(target->localWireDelay() + target->lutDelay());
-		vhdl << tab << declare("ovf_updated") << " <= ovf or AccOverflow;" << endl;
 		
 		//count the number of zeros/ones in order to determine the value of the exponent
 		//Leading Zero/One counter 
 		
-		setCycleFromSignal("cpR");
-		setCriticalPath( getSignalDelay("cpR") );
+//		setCycleFromSignal("cpR");
+//		setCriticalPath( getSignalDelay("cpR") );
 		
-		lzocShifterSticky_ = new LZOCShifterSticky(target, sizeAcc_,  wFOut_ + 1, intlog2(sizeAcc_), false, -1, inDelayMap("I",target->localWireDelay()+getCriticalPath())); 
+		lzocShifterSticky_ = new LZOCShifterSticky(target, sizeAcc_+1,  wFOut_ + 1, intlog2(sizeAcc_+1), false, -1, inDelayMap("I",target->localWireDelay()+getCriticalPath())); 
 		oplist.push_back(lzocShifterSticky_);
 		countWidth_ = lzocShifterSticky_->getCountWidth();
 	
-		inPortMap(lzocShifterSticky_, "I", "cpR");
-		inPortMap(lzocShifterSticky_, "OZb", "resSign");
-		outPortMap(lzocShifterSticky_, "Count", "nZO");
-		outPortMap(lzocShifterSticky_, "O"    , "resFrac");
+		inPortMapCst ( lzocShifterSticky_, "I", "cpR");
+		inPortMap    ( lzocShifterSticky_, "OZb", "resSign");
+		outPortMap   ( lzocShifterSticky_, "Count", "nZO");
+		outPortMap   ( lzocShifterSticky_, "O"    , "resFrac");
 		vhdl << tab << instance(lzocShifterSticky_, "InputLZOCShifter");
 		
 		syncCycleFromSignal("resFrac");
@@ -139,7 +132,7 @@ namespace flopoco{
 		// the 1 is added here, as a carry in bit for the substraction MSBA - nZO,
 		// which is an addition in 2's complement
 		manageCriticalPath(target->localWireDelay() + target->adderDelay(countWidth_+1));
-		vhdl << tab <<declare("expAdj", countWidth_+1) << " <= CONV_STD_LOGIC_VECTOR("<<MSBA_<<","<<countWidth_+1<<") - (\"0\" & nZO);"<<endl;
+		vhdl << tab <<declare("expAdj", countWidth_+1) << " <= CONV_STD_LOGIC_VECTOR("<<MSBA_+1<<","<<countWidth_+1<<") - (\"0\" & nZO);"<<endl;
 		expBias_ =  intpow2(wEOut-1) - 1;
 		if (countWidth_+1 < wEOut_){
 			// this case is encountered most often.
@@ -181,7 +174,8 @@ namespace flopoco{
 		}			
 	
 //		manageCriticalPath(target->localWireDelay() + target->lutDelay());
-		vhdl << tab <<declare("excRes",2) << " <= excBits when ovf_updated='0' else \"10\";"<<endl;
+		vhdl << tab <<declare("excRes",2) << " <= excBits;"<<endl;// when ovf_updated='0' else \"10\";"<<endl;
+		setSignalDelay("excRes", getCriticalPath());
 
 		//get back to the fraction part
 		setCycleFromSignal("resFrac");
@@ -201,93 +195,16 @@ namespace flopoco{
 		vhdl << tab << instance(b, "carryPropagator");
 		syncCycleFromSignal("resultFraction");		
 		setCriticalPath( b->getOutputDelay("R"));
-	
+		
+		syncCycleFromSignal("excRes",  getSignalDelay("excRes"));
+		
 		vhdl << tab << "R <= excRes & resSign & expRAdjusted" << range(wEOut_-1,0)<<" & resultFraction" << range(wFOut_-1,0) <<";"<<endl;
 		outDelayMap["R"] = getCriticalPath();
 	}
 
 	LongAcc2FP::~LongAcc2FP() {
 	}
-
-
-	void LongAcc2FP::buildRandomTestCases(TestCaseList* tcl, int n){
-
-		TestCase *tc;
-		mpz_class A,C;
-		
-		C=mpz_class(0);
-		int chunkSize, k;
-		
-		ownTarget_->suggestSubaddSize(chunkSize, MSBA_-LSBA_+1);
-		if (chunkSize>=MSBA_-LSBA_+1)
-			k=1;
-		else
-			k= int(ceil( double(MSBA_-LSBA_+1)/double(chunkSize)));
-
-		for (int i = 0; i < n; i++) {
-			C= mpz_class(0);
-			tc = new TestCase(this);
-			
-			A = getLargeRandom(MSBA_-LSBA_+1);
-
-			tc->addInput("A", A);
-			
-			if (k==1)
-				tc->addInput("C", mpz_class(0));
-			else{
-				for (int j=0;j<k-1;j++){
-					C = C + (  getLargeRandom(1)<< (chunkSize*(j+1)) );
-					tc->addInput("C", C);
-				}
-			
-			
-			}
-			tc->addInput("AccOverflow",mpz_class(0));
-			
-			/* Get correct outputs */
-			emulate(tc);
-			tcl->add(tc);
-		}
-	}
-	TestCase* LongAcc2FP::buildRandomTestCases(int i){
-
-		TestCase *tc;
-		mpz_class A,C;
-		
-		C=mpz_class(0);
-		int chunkSize, k;
-		
-		ownTarget_->suggestSubaddSize(chunkSize, MSBA_-LSBA_+1);
-		if (chunkSize>=MSBA_-LSBA_+1)
-			k=1;
-		else
-			k= int(ceil( double(MSBA_-LSBA_+1)/double(chunkSize)));
-
-		C= mpz_class(0);
-		tc = new TestCase(this);
-		
-		A = getLargeRandom(MSBA_-LSBA_+1);
-
-		tc->addInput("A", A);
-		
-		if (k==1)
-			tc->addInput("C", mpz_class(0));
-		else{
-			for (int j=0;j<k-1;j++){
-				C = C + (  getLargeRandom(1)<< (chunkSize*(j+1)) );
-				tc->addInput("C", C);
-			}
-		
-		
-		}
-		tc->addInput("AccOverflow",mpz_class(0));
-		
-		/* Get correct outputs */
-		emulate(tc);
-		return tc;	
-	}
-
-
+	
 	void LongAcc2FP::emulate(TestCase *tc)
 	{
 		/* Get I/O values */
@@ -337,6 +254,48 @@ namespace flopoco{
 
 		// clean-up
 		mpfr_clears(x, myFP, NULL);
+	}
+	
+	void LongAcc2FP::buildStandardTestCases(TestCaseList* tcl){
+	}
+
+	TestCase* LongAcc2FP::buildRandomTestCase(int i){
+
+		TestCase *tc;
+		mpz_class A,C;
+		
+		C=mpz_class(0);
+		int chunkSize, k;
+		
+		target_->suggestSubaddSize(chunkSize, MSBA_-LSBA_+1);
+		if (chunkSize >= MSBA_-LSBA_+1)
+			k=1;
+		else
+			k= int(ceil( double(MSBA_-LSBA_+1)/double(chunkSize)));
+
+
+		C= mpz_class(0);
+		tc = new TestCase(this);
+		
+		A = getLargeRandom(MSBA_-LSBA_+1);
+
+		tc->addInput("A", A);
+		
+		if (k==1)
+			tc->addInput("C", mpz_class(0));
+		else{
+			for (int j=0;j<k-1;j++){
+				C = C + (  getLargeRandom(1)<< (chunkSize*(j+1)) );
+				tc->addInput("C", C);
+			}
+		
+		
+		}
+		tc->addInput("AccOverflow",mpz_class(0));
+		
+		/* Get correct outputs */
+		emulate(tc);
+		return tc;	
 	}
 	
 }

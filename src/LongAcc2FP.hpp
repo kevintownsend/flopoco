@@ -29,10 +29,11 @@ namespace flopoco{
 		/** Destructor */
 		~LongAcc2FP();
 		
-		void buildRandomTestCases(TestCaseList* tcl, int n);
-		TestCase* buildRandomTestCases(int n);
+		void emulate(TestCase * tc);
 		
-		void emulate(TestCase *tc);
+		void buildStandardTestCases(TestCaseList* tcl);
+		
+		TestCase* buildRandomTestCase(int i);
 
 
 
