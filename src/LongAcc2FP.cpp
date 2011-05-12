@@ -48,10 +48,10 @@ namespace flopoco{
 		Operator(target), 
 		LSBA_(LSBA), MSBA_(MSBA), wEOut_(wEOut), wFOut_(wFOut)
 	{
-	
+		srcFileName = "LongAcc2FP";
 		ownTarget_ = target;
 		ostringstream name;
-		setCopyrightString("Bogdan Pasca (2008-2009)");		
+		setCopyrightString("Bogdan Pasca (2008-2011)");		
 		name <<"LongAcc2FP_"
 			  <<(LSBA_>=0?"":"M")<<abs(LSBA_)<<"_"
 			  <<(MSBA_>=0?"":"M")<<abs(MSBA_)<<"_"
@@ -61,61 +61,43 @@ namespace flopoco{
 		sizeAcc_ = MSBA - LSBA + 1;
 	
 		//inputs and outputs
-		addInput  ("A", sizeAcc_);
-		addInput  ("C", sizeAcc_);
-		addInput  ("AccOverflow",1);
-		addOutput ("R", 3 + wEOut_ + wFOut_);
+		addInput    ("A", sizeAcc_);
+		addInput    ("C", sizeAcc_);
+		addInput    ("AccOverflow",1);
+		addFPOutput ("R", wEOut_, wFOut_);
 
 		vhdl << tab <<declare("signA") << " <= A" << of(sizeAcc_-1)<<";"<<endl;
 		vhdl << tab <<declare("signC") << " <= C" << of(sizeAcc_-1)<<";"<<endl;
 		
 		vhdl << tab <<declare("AccOverflowFlag") << " <= AccOverflow;"<<endl;	
 
-		vhdl << tab << declare("eA", sizeAcc_+1) << " <= signA & A;"<<endl;
-		vhdl << tab << declare("eC", sizeAcc_+1) << " <= signC & C;"<<endl;
+		vhdl << tab << declare("extA", sizeAcc_+1) << " <= signA & A;"<<endl;
+		vhdl << tab << declare("extC", sizeAcc_+1) << " <= signC & C;"<<endl;
 		
 		IntAdder *a = new IntAdder(target, sizeAcc_+1);
 		oplist.push_back(a);
 	
-		inPortMap( a,   "X",   "eA");
-		inPortMap( a,   "Y",   "eC");
+		inPortMap( a,   "X",   "extA");
+		inPortMap( a,   "Y",   "extC");
 		inPortMapCst(a, "Cin", "'0'");
-		outPortMap( a,  "R",   "cpR");
+		outPortMap( a,  "R",   "acc");
 		vhdl << instance(a,    "CarryPropagation");
 	
-		syncCycleFromSignal("cpR");
+		syncCycleFromSignal("acc");
 		setCriticalPath( a->getOutputDelay("R"));
-		setSignalDelay( "cpR", getCriticalPath());
+		setSignalDelay( "acc", getCriticalPath());
 
-		vhdl << tab << declare("resSign") << " <= cpR" << of(sizeAcc_) << ";" << endl;
+		vhdl << tab << declare("resSign") << " <= acc" << of(sizeAcc_) << ";" << endl;
 
-//		manageCriticalPath(target->localWireDelay() + target->lutDelay());	
-//		//detect Addition overflow
-//		vhdl << tab << declare("signConcat",3) << " <= signA & signC & resSign;" << endl;
-//		vhdl << tab << "with signConcat select " << endl;
-//		vhdl << tab << declare("ovf") << " <= '0' when \"000\", "<<endl;
-//		vhdl << tab << "       '1' when \"001\","<<endl;
-//		vhdl << tab << "       '0' when \"010\","<<endl;
-//		vhdl << tab << "       '0' when \"011\","<<endl;
-//		vhdl << tab << "       '0' when \"100\","<<endl;
-//		vhdl << tab << "       '0' when \"101\","<<endl;
-//		vhdl << tab << "       '1' when \"110\","<<endl;
-//		vhdl << tab << "       '0' when \"111\","<<endl;
-//		vhdl << tab << "       '0' when others;"<<endl;
-
-		
-		//count the number of zeros/ones in order to determine the value of the exponent
-		//Leading Zero/One counter 
-		
-//		setCycleFromSignal("cpR");
-//		setCriticalPath( getSignalDelay("cpR") );
+		/* count the number of zeros/ones in order to determine 
+		the value of the exponent */
 		
 		lzocShifterSticky_ = new LZOCShifterSticky(target, sizeAcc_+1,  wFOut_ + 1, intlog2(sizeAcc_+1), false, -1, inDelayMap("I",target->localWireDelay()+getCriticalPath())); 
 		oplist.push_back(lzocShifterSticky_);
 		countWidth_ = lzocShifterSticky_->getCountWidth();
 	
-		inPortMapCst ( lzocShifterSticky_, "I", "cpR");
-		inPortMap    ( lzocShifterSticky_, "OZb", "resSign");
+		inPortMapCst ( lzocShifterSticky_, "I"    , "acc");
+		inPortMap    ( lzocShifterSticky_, "OZb"  , "resSign");
 		outPortMap   ( lzocShifterSticky_, "Count", "nZO");
 		outPortMap   ( lzocShifterSticky_, "O"    , "resFrac");
 		vhdl << tab << instance(lzocShifterSticky_, "InputLZOCShifter");
@@ -124,57 +106,40 @@ namespace flopoco{
 		setCriticalPath( lzocShifterSticky_->getOutputDelay("O") );	
 		setSignalDelay("resFrac",getCriticalPath());
 
-//		// c2MnZO is  -nZO in 2'c complement with a twist. Usually for 2's complement all bits must be inverted
-//		// and then a 1 must be added to the LSB. We postpone the extra 1 addition until later.
-//		manageCriticalPath(target->localWireDelay()+target->lutDelay());
-//		vhdl << tab <<declare("c2MnZO", countWidth_+1) << " <= \"1\" & not(nZO);"<<endl; //the bit inversion is done in O(1)
-	
-		// the 1 is added here, as a carry in bit for the substraction MSBA - nZO,
-		// which is an addition in 2's complement
 		manageCriticalPath(target->localWireDelay() + target->adderDelay(countWidth_+1));
-		vhdl << tab <<declare("expAdj", countWidth_+1) << " <= CONV_STD_LOGIC_VECTOR("<<MSBA_+1<<","<<countWidth_+1<<") - (\"0\" & nZO);"<<endl;
+		vhdl << tab <<declare("unbiasedExp", countWidth_+1) << " <= CONV_STD_LOGIC_VECTOR("<<MSBA_+1<<","<<countWidth_+1<<") - (\"0\" & nZO);"<<endl;
 		expBias_ =  intpow2(wEOut-1) - 1;
 		if (countWidth_+1 < wEOut_){
-			// this case is encountered most often.
-			// by adding expBias to expAdj, we always get a positive quantity, so no need to converte back to SM
+			/* accumulator does not cover all exponent range */
 			manageCriticalPath(target->localWireDelay() + target->adderDelay(wEOut_));
-			//the exponent bias	
-			vhdl << tab << declare("expBias",wEOut_) << " <= CONV_STD_LOGIC_VECTOR("<<expBias_<<","<<wEOut_<<");"<<endl; //fixed value
-			vhdl << tab <<declare("expRAdjusted",wEOut_) << " <= expBias + "<< // + sign extended expAdj
-				"(" << rangeAssign(wEOut_-1,countWidth_+1, use("expAdj")+of(countWidth_)) << " & expAdj);"<<endl;
-			vhdl << tab <<declare("excBits",2) << " <=\"01\";"<<endl;
+			vhdl << tab << declare("bias"     , wEOut_) << " <= CONV_STD_LOGIC_VECTOR("<<expBias_<<","<<wEOut_<<");"<<endl; //fixed value
+			vhdl << tab << declare("expBiased", wEOut_) << " <= bias + ("<< rangeAssign(wEOut_-1,countWidth_+1, "unbiasedExp"+of(countWidth_))<<" & unbiasedExp);"<<endl;
+			vhdl << tab << declare("excBits"  , 2)      << " <=\"01\";"<<endl;
 		} else if (countWidth_+1 == wEOut_){
 			manageCriticalPath(target->localWireDelay() + target->adderDelay(wEOut_));
-			vhdl << tab << declare("expBias",wEOut_) << " <= CONV_STD_LOGIC_VECTOR("<<expBias_<<","<<wEOut_<<");"<<endl; //fixed value
-			vhdl << tab <<declare("expRAdjusted",wEOut_) <<" <= expBias + expAdj;"<<endl;
-			vhdl << tab <<declare("excBits",2) << " <=\"01\";"<<endl;
+			vhdl << tab << declare("bias"     ,wEOut_) << " <= CONV_STD_LOGIC_VECTOR("<<expBias_<<","<<wEOut_<<");"<<endl; //fixed value
+			vhdl << tab << declare("expBiased",wEOut_) << " <= bias + unbiasedExp;"<<endl;
+			vhdl << tab << declare("excBits"  ,2)      << " <=\"01\";"<<endl;
 		}else{
-			// case encountered when we wish to put the contents of the accumulator in a floating point number 
-			// with a very small exponent
+			/* acc covers more range than destination output format */
 			manageCriticalPath(target->localWireDelay() + target->adderDelay(countWidth_+1));
-			vhdl << tab << declare("expBias",wEOut_) << " <= CONV_STD_LOGIC_VECTOR("<<expBias_<<","<<wEOut_<<");"<<endl; //fixed value
-			vhdl << tab <<declare("expAdjustedExt",countWidth_+1)<<" <= (" << rangeAssign(countWidth_, wEOut_, "'0'") << " & expBias) + expAdj;"<<endl;
-	
-			vhdl << tab <<declare("signExpAdjustedExt") << " <= expAdjustedExt" << of(countWidth_)<<";"<<endl;
+			vhdl << tab << declare("bias"   , countWidth_+1) << " <= CONV_STD_LOGIC_VECTOR("<<expBias_<<","<<countWidth_+1<<");"<<endl; 
+			vhdl << tab << declare("expExt" , countWidth_+1) << " <= bias + unbiasedExp;"<<endl;
+			vhdl << tab << declare("signExpExt") << " <= expExt" << of(countWidth_)<<";"<<endl;
 
-			manageCriticalPath(target->localWireDelay() + target->adderDelay(countWidth_));//FIXME it might not be enough for correct inference
-			vhdl << tab <<declare("modulusExpAdjusted",countWidth_) << "<= ("<<rangeAssign(countWidth_-1,0, "signExpAdjustedExt")<<" xor expAdjustedExt"<<range(countWidth_-1,0)<<") + signExpAdjustedExt"<<";"<<endl;
-		
-			vhdl << tab <<declare("maxExponent",countWidth_)<<" <= CONV_STD_LOGIC_VECTOR("<<(mpz_class(1)<<wEOut_)-1<<" , "<<countWidth_<<");"<<endl;
-	
-//			manageCriticalPath(target->localWireDelay() + target->lutDelay());
-			vhdl << tab <<declare("expOverflow")<<" <= '1' when ((modulusExpAdjusted > maxExponent) and (signExpAdjustedExt='0')) else '0';"<<endl;
-			vhdl << tab <<declare("expUnderflow")<<" <= '1' when ((modulusExpAdjusted > maxExponent) and (signExpAdjustedExt='1')) else '0';"<<endl;
+			if (countWidth_==wEOut_)
+				vhdl << tab <<declare("expOverflow") <<" <= '0';"<<endl;
+			else
+				vhdl << tab <<declare("expOverflow") <<" <= '1' when ( expExt"<<range(countWidth_-1,wEOut_)<<">"<<zg(countWidth_-wEOut_)<<" and signExpExt='0') else '0';"<<endl;
+			vhdl << tab <<declare("expUnderflow")<<" <= signExpExt;"<<endl;
 	
 			declare("excBits",2);
-			vhdl << tab <<"excBits(1) <= expOverflow and  not(expUnderflow);"<<endl;
-			vhdl << tab <<"excBits(0) <= not(expOverflow) and not(expUnderflow);"<<endl;
-			
-			vhdl << tab <<declare("expRAdjusted",wEOut_) << " <= expAdjustedExt" << range(wEOut_-1,0)<<";"<<endl;
+			vhdl << tab <<"excBits(1) <= expOverflow or expUnderflow or AccOverflow;"<<endl;
+			vhdl << tab <<"excBits(0) <= not(expOverflow) and not(expUnderflow) and not AccOverflow;"<<endl;
+			vhdl << tab <<declare("expBiased",wEOut_) << " <= expExt" << range(wEOut_-1,0)<<";"<<endl;
 		}			
 	
-//		manageCriticalPath(target->localWireDelay() + target->lutDelay());
-		vhdl << tab <<declare("excRes",2) << " <= excBits;"<<endl;// when ovf_updated='0' else \"10\";"<<endl;
+		vhdl << tab <<declare("excRes",2) << " <= excBits;"<<endl;
 		setSignalDelay("excRes", getCriticalPath());
 
 		//get back to the fraction part
@@ -184,21 +149,22 @@ namespace flopoco{
 		manageCriticalPath( target->localWireDelay() + target->lutDelay()); 
 		vhdl << tab << declare("notResFrac",wFOut_+1) << " <= resFrac xor "<<rangeAssign(wFOut_,0,"resSign")<<";"<<endl;
 
-		//a possible carry propagation
-		IntAdder *b = new IntAdder(target,wFOut_ + 1, inDelayMap("X", target->localWireDelay() + getCriticalPath()) );
-		oplist.push_back(b);
+		//convert fraction in sign-magnitude
+		IntAdder *smFracAdder = new IntAdder(target,wFOut_ + 1, inDelayMap("X", target->localWireDelay() + getCriticalPath()) );
+		oplist.push_back(smFracAdder);
 	
-		inPortMap(b, "X", "notResFrac");
-		inPortMapCst(b, "Y", zg(wFOut+1,0));
-		inPortMap(b, "Cin", "resSign");
-		outPortMap(b, "R", "resultFraction");
-		vhdl << tab << instance(b, "carryPropagator");
+		inPortMap   (smFracAdder, "X",   "notResFrac");
+		inPortMapCst(smFracAdder, "Y",   zg(wFOut+1,0));
+		inPortMap   (smFracAdder, "Cin", "resSign");
+		outPortMap  (smFracAdder, "R",   "resultFraction");
+
+		vhdl << tab << instance(smFracAdder, "SignMagnitudeFracAdder");
+
 		syncCycleFromSignal("resultFraction");		
-		setCriticalPath( b->getOutputDelay("R"));
-		
+		setCriticalPath( smFracAdder->getOutputDelay("R"));
 		syncCycleFromSignal("excRes",  getSignalDelay("excRes"));
 		
-		vhdl << tab << "R <= excRes & resSign & expRAdjusted" << range(wEOut_-1,0)<<" & resultFraction" << range(wFOut_-1,0) <<";"<<endl;
+		vhdl << tab << "R <= excRes & resSign & expBiased" << range(wEOut_-1,0)<<" & resultFraction" << range(wFOut_-1,0) <<";"<<endl;
 		outDelayMap["R"] = getCriticalPath();
 	}
 
