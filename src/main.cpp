@@ -32,6 +32,7 @@
 #include "Targets/Virtex5.hpp"
 #include "Targets/Virtex6.hpp"
 #include "Targets/StratixII.hpp"
+#include "Targets/StratixIII.hpp"
 #include "Targets/StratixIV.hpp"
 
 /* shifters + lzoc ------------------------------------------- */
@@ -448,7 +449,7 @@ static void usage(char *name){
 	cerr << "   -verbose=<1|2|3>                         (default=0)\n";
 	cerr << "   -pipeline=<yes|no>                       (default=yes)\n";
 	cerr << "   -frequency=<target frequency in MHz>     (default=400)\n";
-	cerr << "   -target=<Spartan3|Virtex4|Virtex5|StratixII|StratixIV>      (default=Virtex4)\n";
+	cerr << "   -target=<Spartan3|Virtex4|Virtex5|StratixII|StratixIII|StratixIV>      (default=Virtex4)\n";
 	cerr << "   -DSP_blocks=<yes|no>\n";
 	cerr << "       optimize for the use of DSP blocks   (default=yes)\n";
 	cerr << "   -name=<entity name>\n";
@@ -544,6 +545,7 @@ bool parseCommandLine(int argc, char* argv[]){
 					else if (v=="Virtex5") target=new Virtex5();
 					else if (v=="Spartan3") target=new Spartan3();
 					else if (v=="StratixII") target=new StratixII();
+					else if (v=="StratixIII") target=new StratixIII();
 					else if (v=="StratixIV") target=new StratixIV();
 					else {
 						cerr<<"ERROR: unknown target: "<<v<<endl;

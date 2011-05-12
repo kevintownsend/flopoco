@@ -81,7 +81,7 @@ namespace flopoco{
 		
 			if (verbose)
 				cerr<<"> Shifters\t depth = "<<dep<<" at i="<<currentLevel<<endl;	
-			if (manageCriticalPath( intlog( mpz_class(target->lutInputs()/2), mpz_class(dep)) * (target->lutDelay() + target->localWireDelay())) ){
+			if (manageCriticalPath( intlog( mpz_class(target->lutInputs()/2), mpz_class(dep)) * (target->lutDelay() + target->localWireDelay(intpow2(currentLevel)/10))) ){
 				lastRegLevel = currentLevel;
 				REPORT(DEBUG, tab << "REG LEVEL current delay is:" << getCriticalPath());
 			}

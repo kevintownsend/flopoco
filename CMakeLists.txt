@@ -190,7 +190,7 @@ ADD_EXECUTABLE(flopoco
  src/utils
  src/FlopocoStream
  src/Targets/DSP
- src/Target src/Targets/Virtex4 src/Targets/Spartan3 src/Targets/Virtex6 src/Targets/StratixII src/Targets/Virtex5 src/Targets/StratixIV
+ src/Target src/Targets/Virtex4 src/Targets/Spartan3 src/Targets/Virtex6 src/Targets/StratixII src/Targets/StratixIII src/Targets/Virtex5 src/Targets/StratixIV
  src/Operator
  src/Signal
  src/Table 
@@ -278,7 +278,7 @@ ADD_EXECUTABLE(flopoco
  src/VHDLLexer
 
  src/Targets/DSP
- src/Target src/Targets/Virtex4 src/Targets/Spartan3 src/Targets/Virtex6 src/Targets/StratixII src/Targets/Virtex5 src/Targets/StratixIV
+ src/Target src/Targets/Virtex4 src/Targets/Spartan3 src/Targets/Virtex6 src/Targets/StratixII src/Targets/StratixIII src/Targets/Virtex5 src/Targets/StratixIV
  src/Operator
  src/Signal
  src/Table 
