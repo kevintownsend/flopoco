@@ -7,9 +7,8 @@
 #include <gmpxx.h>
 #include <cstdlib>
 
-
 #include "Operator.hpp"
-#include "FPMultiplier.hpp"
+#include "IntMultiplier.hpp"
 #include "LongAcc.hpp"
 
 namespace flopoco{
@@ -29,7 +28,7 @@ namespace flopoco{
 		 * @param[in]		LSBA    The weight of the LSB of the accumulator; determines the final accuracy of the result
 		 * @param[in]		MSBA    The weight of the MSB of the accumulator; has to greater than that of the maximal expected result
 		 **/ 
-		DotProduct(Target* target, int wE, int wFX, int wFY, int MaxMSBX, int LSBA, int MSBA );
+		DotProduct(Target* target, int wE, int wFX, int wFY, int MaxMSBX, int LSBA, int MSBA,  map<string, double> inputDelays = emptyDelayMap);
 
 		/**
 		 * DotProduct destructor
@@ -59,10 +58,6 @@ namespace flopoco{
 		int sizeAcc_;
 
 	private:
-		/** instance of a FPMultiplier */
-		FPMultiplier* fpMultiplier;
-		/** instance of a LongAcc */
-		LongAcc* longAcc;  
 	};
 }
 #endif

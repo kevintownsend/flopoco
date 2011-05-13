@@ -65,14 +65,10 @@ namespace flopoco{
 		int    lastRegLevel = -1;
 		int    unregisteredLevels = 0;
 		int    dep = 0;
-		
 		setCriticalPath( getMaxInputDelays( inputDelays) );
-//		manageCriticalPath( target->localWireDelay() );
 
-//		setCriticalPath(0.0);
 		for (int currentLevel=0; currentLevel<wShiftIn_; currentLevel++){
 			//compute current level delay
-			//TODO REMEMBER WHY THIS DOES WORK
 			unregisteredLevels = currentLevel - lastRegLevel;
 			if ( intpow2(unregisteredLevels-1) > wIn_+currentLevel+1 ) 
 				dep = wIn + currentLevel + unregisteredLevels;
@@ -80,8 +76,11 @@ namespace flopoco{
 				dep = intpow2(unregisteredLevels-1);
 		
 			if (verbose)
-				cerr<<"> Shifters\t depth = "<<dep<<" at i="<<currentLevel<<endl;	
-			if (manageCriticalPath( intlog( mpz_class(target->lutInputs()/2), mpz_class(dep)) * (target->lutDelay() + target->localWireDelay(intpow2(currentLevel)/10))) ){
+				cerr<<"> Shifters\t depth = "<<dep<<" at i="<<currentLevel<<endl;
+				
+			double wireD = target->localWireDelay( wIn );
+			cerr << " wire delay is " << wireD << " and unregisteredLevels="<<unregisteredLevels<< endl;
+			if (manageCriticalPath( intlog( mpz_class(target->lutInputs()/2), mpz_class(dep)) * target->lutDelay() + (intlog( mpz_class(target->lutInputs()/2), mpz_class(dep))-1)*target->localWireDelay()+ wireD)){
 				lastRegLevel = currentLevel;
 				REPORT(DEBUG, tab << "REG LEVEL current delay is:" << getCriticalPath());
 			}

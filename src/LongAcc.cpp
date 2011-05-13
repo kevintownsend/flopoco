@@ -43,10 +43,13 @@ namespace flopoco{
 	extern vector<Operator*> oplist;
 	extern int LongAccN;
 
-	LongAcc::LongAcc(Target* target, int wEX, int wFX, int MaxMSBX, int LSBA, int MSBA): 
+	LongAcc::LongAcc(Target* target, int wEX, int wFX, int MaxMSBX, int LSBA, int MSBA, map<string, double> inputDelays,  bool forDotProd, int wFY): 
 		Operator(target), 
 		wEX_(wEX), wFX_(wFX), MaxMSBX_(MaxMSBX), LSBA_(LSBA), MSBA_(MSBA), AccValue_(0), xOvf(0)
 	{
+		if (!forDotProd)
+			wFY=wFX;
+		
 		int i;
 		setCopyrightString("Florent de Dinechin, Bogdan Pasca (2008-2009)");		
 
@@ -74,7 +77,15 @@ namespace flopoco{
 		// Set up various architectural parameters
 		sizeAcc_ = MSBA_-LSBA_+1;
 
-		addFPInput ("X", wEX_,wFX_);
+		if (forDotProd){
+			addInput ("sigX_dprod");
+			addInput ("excX_dprod", 2);
+			addInput ("fracX_dprod", 1+wFX+1+wFY);
+			addInput ("expX_dprod", wEX);
+		}else
+			addFPInput ("X", wEX_,wFX_);
+		
+
 		addInput   ("newDataSet");
 		addOutput  ("ready");
 		addOutput  ("A", sizeAcc_);  
@@ -116,23 +127,31 @@ namespace flopoco{
 		int nbOfChunks = ceil(double(sizeAcc_)/double(chunkSize_));
 		int lastChunkSize = ( sizeAcc_ % chunkSize_ == 0 ? chunkSize_  : sizeAcc_ % chunkSize_);
 
-		vhdl << tab << declare("fracX",wFX_+1) << " <=  \"1\" & X" << range(wFX_-1,0) << ";" << endl;
-		vhdl << tab << declare("expX" ,wEX_  ) << " <= X" << range(wEX_+wFX_-1,wFX_) << ";" << endl;
-		vhdl << tab << declare("signX",1     ) << " <= X" << of(wEX_+wFX_) << ";" << endl;
-		vhdl << tab << declare("exnX" ,2     ) << " <= X" << range(wEX_+wFX_+2,wEX_+wFX_+1) << ";" << endl;
+		if (!forDotProd){
+			vhdl << tab << declare("fracX",wFX_+1) << " <=  \"1\" & X" << range(wFX_-1,0) << ";" << endl;
+			vhdl << tab << declare("expX" ,wEX_  ) << " <= X" << range(wEX_+wFX_-1,wFX_) << ";" << endl;
+			vhdl << tab << declare("signX",1     ) << " <= X" << of(wEX_+wFX_) << ";" << endl;
+			vhdl << tab << declare("exnX" ,2     ) << " <= X" << range(wEX_+wFX_+2,wEX_+wFX_+1) << ";" << endl;
+		}else{
+			vhdl << tab << declare("fracX",wFX_ + wFY +2) << " <= fracX_dprod;" << endl;
+			vhdl << tab << declare("expX" ,wEX_  ) << " <= expX_dprod;" << endl;
+			vhdl << tab << declare("signX",1     ) << " <= sigX_dprod;" << endl;
+			vhdl << tab << declare("exnX" ,2     ) << " <= excX_dprod;" << endl;
+		}
 	
+		setCriticalPath( getMaxInputDelays(inputDelays));
+		manageCriticalPath( target->localWireDelay() + target->adderDelay(wEX+1)); 
 		vhdl << tab << declare("xOverflowCond",1) << " <= '1' when (( expX > CONV_STD_LOGIC_VECTOR("<<MaxMSBX_ + E0X_<<","<< wEX_<<")) or (exnX >= \"10\")) else '0' ;"<<endl; 
 		vhdl << tab << declare("xUnderflowCond",1) << " <= '1' when (expX < CONV_STD_LOGIC_VECTOR("<<LSBA_ + E0X_<<","<<wEX_<<")) else '0' ;" << endl;  
-		//determination of the shift value
 		int64_t exp_offset = E0X_+LSBA_;
 		vhdl << tab << declare("shiftVal",wEX_+1) << " <= (\"0\" & expX) - CONV_STD_LOGIC_VECTOR("<< exp_offset <<","<<  wEX_+1<<");" << endl;
 
 		//input shifter mappings
-		shifter_ = new Shifter(target, wFX_+1, maxShift_, Shifter::Left);
+		shifter_ = new Shifter(target, (forDotProd?wFX_+wFY+2:wFX_+1), maxShift_, Shifter::Left, inDelayMap("X", target->localWireDelay() + getCriticalPath()));
 		oplist.push_back(shifter_);
 
 		inPortMap   (shifter_, "X", "fracX");
-		inPortMapCst(shifter_, "S", use("shiftVal")+range(shifter_->getShiftInWidth() - 1,0));
+		inPortMapCst(shifter_, "S", "shiftVal"+range(shifter_->getShiftInWidth() - 1,0));
 		outPortMap  (shifter_, "R", "shifted_frac");
 		vhdl << instance(shifter_, "LongAccInputShifter");
 	

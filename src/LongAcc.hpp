@@ -23,7 +23,7 @@ namespace flopoco{
 		 * @param LSBA the weight of the least significand bit of the accumulator
 		 * @param MSBA the weight of the most significand bit of the accumulator
 		 */ 
-		LongAcc(Target* target, int wEX, int wFX, int MaxMSBX, int LSBA, int MSBA);
+		LongAcc(Target* target, int wEX, int wFX, int MaxMSBX, int LSBA, int MSBA, map<string, double> inputDelays = emptyDelayMap, bool forDotProd = false, int wFY = -1);
 	
 		/** Destructor */
 		~LongAcc();

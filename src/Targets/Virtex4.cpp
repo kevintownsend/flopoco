@@ -57,7 +57,7 @@ namespace flopoco{
 		if (fanout == 1)
 			return elemWireDelay_ ;
 		else
-			return (1+ (double(fanout)/100))*elemWireDelay_;
+			return (1+ (double(fanout)/50))*elemWireDelay_;
 		
 	};
 	
