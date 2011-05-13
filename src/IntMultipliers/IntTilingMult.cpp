@@ -65,7 +65,7 @@ namespace flopoco{
 			name <<"IntMultiplier_"<<wInX<<"_"<<wInY<<"_uid"<<getNewUId();
 			setName(name.str());
 		
-			setCopyrightString("Sebastian Banescu, Radu Tudoran, Bogdan Pasca 2009-2010");
+			setCopyrightString("Sebastian Banescu, Radu Tudoran, Bogdan Pasca 2009-2011");
 	
 			addInput ("X", wInX);
 			addInput ("Y", wInY);
@@ -79,11 +79,10 @@ namespace flopoco{
 			vm = wInY + 2*getExtraHeight();
 			
 			/* one of the important optimizations consist in removing the extra
-			stripes on on top and on the bottom */	
+			stripes on the top and on the bottom */	
 			vnme = vn - getExtraWidth();		
 			vmme = vm - getExtraHeight();
 			
-
 			
 			REPORT( INFO, "Input board size is width="<<wInX<<" height="<<wInY);
 			REPORT( INFO, "Extra width:="<<getExtraWidth()<<" extra height:="<<getExtraHeight());
@@ -103,7 +102,7 @@ namespace flopoco{
 			DSPs. */
 			if ( ( target_->getID() == "Virtex4") ||
 			 ( target_->getID() == "Spartan3"))  // then the target is A Xilinx FPGA 
-				nrOfShifts4Virtex=int(sqrt(nrDSPs));			
+				nrOfShifts4Virtex=5;//int(sqrt(nrDSPs));			
 			else
 				nrOfShifts4Virtex=20;
 			
@@ -115,11 +114,16 @@ namespace flopoco{
 			REPORT( INFO, "maxDist2Move = "<<maxDist2Move);
 		
 			float const scale=100.0;
-			costDSP = ( (1.0+scale) - scale * ratio );
-			//~ cout<<"Cost DSP is "<<costDSP<<endl;
-			costLUT = ( (1.0+scale) - scale * (1-ratio) ) /  ((float) target_->getEquivalenceSliceDSP() );
-			//~ cout<<"Cost LUT is "<<costLUT<<endl;
-		
+//			costDSP = ( (1.0+scale) - scale * ratio );
+
+			costDSP = 1.0;
+			REPORT(INFO, "Cost DSP is " << costDSP);
+//			costLUT = ( (1.0+scale) - scale * (1-ratio) ) / ((float) target_->getEquivalenceSliceDSP() );
+
+			costLUT = 1.0 / double(target_->getEquivalenceSliceDSP());
+			REPORT(INFO, "Equivalent slices to implement one DSP=" << target_->getEquivalenceSliceDSP());
+			REPORT(INFO, "Cost LUT is " << costLUT);
+			
 		
 			//the one
 			
@@ -132,11 +136,6 @@ namespace flopoco{
 			}						
 			runAlgorithm();		
 			
-			
-			
-			
-			
-			
 		
 			REPORT(INFO, "Estimated DSPs:= "<<nrDSPs);
 			target->getDSPWidths(x,y);
@@ -146,408 +145,8 @@ namespace flopoco{
 	
 		
 			generateVHDLCode4CompleteTilling();
-		
-		
-		
-		
-		
-		/*
-		int n=vn;
-			int m=vm;
-			int exw=getExtraWidth();
-			int exh=getExtraHeight();
-	
-			mat = new int*[m];
-			for(int i=0;i<m;i++)
-			{
-				mat[i] = new int [n];
-				for(int j=0;j<n;j++)
-					mat[i][j]=0;
-			}
-			
-			
-			int w, h;
-			target->getDSPWidths(w, h);
-			
-			cout<<w<<" "<<h<<endl;
-			int shift = 17;
-			
-			
-			nrDSPs=2;
-			globalConfig = new DSP*[nrDSPs];
-			globalConfig[0] = new DSP(shift, w, h);	
-			globalConfig[0]->setNrOfPrimitiveDSPs(1);
-			globalConfig[0]->rotate();
-			globalConfig[0]->setTopRightCorner(exw, exh);
-			globalConfig[0]->setBottomLeftCorner(exw+h-1, exh+w-1);
-			
-			
-			globalConfig[1] = new DSP(shift, w, h);	
-			globalConfig[1]->setNrOfPrimitiveDSPs(1);			
-			//globalConfig[1]->rotate();
-			globalConfig[1]->setTopRightCorner(exw , exh +h   );
-			globalConfig[1]->setBottomLeftCorner(exw + w-1, exh +2*h-1);
-			
-			display(globalConfig);
-			bindDSPs(globalConfig);
-			*/
-		
-		
-		//~ //globalConfig[0] = target->createDSP();
-		//~ globalConfig[0]->setTopRightCorner(9,6);
-		//~ globalConfig[0]->setBottomLeftCorner(32,39);
-		
-		//~ //globalConfig[1] = target->createDSP();
-		//~ globalConfig[1]->rotate();
-		//~ globalConfig[1]->setTopRightCorner(33,6);
-		//~ globalConfig[1]->setBottomLeftCorner(66,29);
-		
-		//~ //globalConfig[2] = target->createDSP();
-		
-		//~ globalConfig[2]->setTopRightCorner(43,30);
-		//~ globalConfig[2]->setBottomLeftCorner(66,63);
-		
-		//~ //globalConfig[3] = target->createDSP();
-		//~ globalConfig[3]->rotate();
-		//~ globalConfig[3]->setTopRightCorner(9,40);
-		//~ globalConfig[3]->setBottomLeftCorner(42,63);
-		
-		
-		//~ display(globalConfig);
-		
-		//~ compareCost();
-		
-		//~ display(bestConfig);
-		
-		//~ cout<<"Best cost is "<<bestCost<<endl;
-		
-		//~ globalConfig[1]->rotate();
-		//~ replace(globalConfig,1);
-		//~ display(globalConfig);
-		
-		//~ //START SIMULATED ANNEALING -------------
-		//~ counterfirst =0 ;
-		//~ int n,m;
 
-		//~ n=vn;
-		//~ m=vm;
-	
-		//~ mat = new int*[m];
-		//~ for(int i=0;i<m;i++)
-			//~ {
-				//~ mat[i] = new int[n];
-				//~ for(int j=0;j<n;j++)
-					//~ mat[i][j]=0;
-			//~ }
 		
-		//~ tempc= new DSP*[nrDSPs];
-		//~ for(int ii=0;ii<nrDSPs;ii++)
-			//~ tempc[ii]= new DSP();
-
-		//~ /*we will try the algorithm with 2 values of nrDSPs	
-		  //~ One will be the estimated value(nrDSPs) and the second one will be nrDSPs-1	
-		//~ */
-		//~ rot = new bool[nrDSPs];
-		//~ for(int i =0;i<nrDSPs;i++)
-			//~ rot[i]=false;
-	
-		//~ simulatedAnnealing();
-		
-		
-		
-		
-		//~ move(globalConfig,1);
-		//~ replace(globalConfig,2);
-		//~ replace(globalConfig,3);
-		//~ display(globalConfig);Pas
-		
-		
-	 
-		//~ globalConfig[0]->setTopRightCorner(19,0);
-		//~ globalConfig[0]->setBottomLeftCorner(35,16);
-		//~ replace(globalConfig,1);
-		//~ replace(globalConfig,2);
-		//~ display(globalConfig);
-		//~ move(globalConfig,1);
-		//~ replace(globalConfig,2);
-		//~ display(globalConfig);
-		
-		//~ do{
-			
-			//~ replace(globalConfig,1);
-		//~ do{
-			//~ replace(globalConfig,2);
-		//~ while(move(globalConfig,2))
-		//~ {
-			//~ compareCost();
-		//~ }
-		//~ }while(move(globalConfig,1));
-		
-		//~ display(globalConfig);
-		//~ }while(move(globalConfig,0));
-		
-		//~ display(bestConfig);
-		
-		
-		//~ move(globalConfig,0);
-		//~ replace(globalConfig,1);
-		//~ replace(globalConfig,2);
-		//~ display(globalConfig);
-		//~ move(globalConfig,1);
-		//~ move(globalConfig,1);
-		//~ replace(globalConfig,2);
-		//~ display(globalConfig);
-		//~ move(globalConfig,2);
-		//~ move(globalConfig,2);
-		//~ display(globalConfig);
-		
-		//~ while(move(globalConfig,2));
-		//~ display(globalConfig);
-		//~ move(globalConfig,2);
-		//~ display(globalConfig);
-	 
-		//~ ///experiment(bogdan)  ./flopoco -target=Virtex5 IntTilingMult 58 58 0.44
-		//~ tempc= new DSP*[nrDSPs];
-		//~ for(int ii=0;ii<nrDSPs;ii++)
-		//~ tempc[ii]= new DSP();
-		//~ int n,m;
-		//~ int count=1;
-	
-		//~ n=vn;
-		//~ m=vm;
-		//~ mat = new int*[m];
-		//~ for(int i=0;i<m;i++)
-		//~ {
-		//~ mat[i] = new int [n];
-		//~ for(int j=0;j<n;j++)
-		//~ mat[i][j]=0;
-		//~ }
-	
-	
-	
-		//~ initTiling(bestConfig,nrDSPs);
-		//~ initTiling(globalConfig,nrDSPs);
-	
-	
-		//Test The Configuration
-		//~ globalConfig[0] = target->createDSP();
-		//~ globalConfig[0]->setTopRightCorner(2,2);
-		//~ globalConfig[0]->setBottomLeftCorner(25,18);
-		//~ globalConfig[1] = target->createDSP();
-		//~ globalConfig[1]->setTopRightCorner(2,19);
-		//~ globalConfig[1]->setBottomLeftCorner(25,35);
-		//~ globalConfig[2] = target->createDSP();
-		//~ globalConfig[2]->rotate();
-		//~ globalConfig[2]->setTopRightCorner(2,36);
-		//~ globalConfig[2]->setBottomLeftCorner(18,59);
-		//~ globalConfig[3] = target->createDSP();
-		//~ globalConfig[3]->rotate();
-		//~ globalConfig[3]->setTopRightCorner(19,36);
-		//~ globalConfig[3]->setBottomLeftCorner(35,59);
-		
-		//~ globalConfig[4] = target->createDSP();
-		//~ globalConfig[4]->rotate();
-		//~ globalConfig[4]->setTopRightCorner(26,2);
-		//~ globalConfig[4]->setBottomLeftCorner(42,25);
-		//~ globalConfig[5] = target->createDSP();
-		//~ globalConfig[5]->rotate();
-		//~ globalConfig[5]->setTopRightCorner(43,2);
-		//~ globalConfig[5]->setBottomLeftCorner(59,25);
-		//~ globalConfig[6] = target->createDSP();
-		//~ globalConfig[6]->setTopRightCorner(36,26);
-		//~ globalConfig[6]->setBottomLeftCorner(59,42);
-		//~ globalConfig[7] = target->createDSP();
-		//~ globalConfig[7]->setTopRightCorner(36,43);
-		//~ globalConfig[7]->setBottomLeftCorner(59,59);
-		
-		//~ display(globalConfig);
-		//~ cout<<endl<<"This is the target configuration"<<endl;
-		//~ compareCost();
-		//~ cout<<"The best score is "<<bestCost<<endl;
-		//~ display(bestConfig);
-	
-	
-	
-		//~ bestCost = 333222;
-		//~ compareCost();
-	 
-		//~ display(bestConfig);
-	
-		//~ initTiling(globalConfig,nrDSPs);
-	
-		 //~ globalConfig[0]->setTopRightCorner(7,5);
-		 //~ globalConfig[0]->setBottomLeftCorner(23,28);
-		 //~ replace(globalConfig,1);
-		 //~ replace(globalConfig,2);
-		 //~ replace(globalConfig,3);
-		 //~ display(globalConfig);
-		 
-		//~ globalConfig[1]->setTopRightCorner(24,5);
-		//~ globalConfig[1]->setBottomLeftCorner(40,28);
-		//~ globalConfig[2]->setTopRightCorner(41,5);
-		//~ globalConfig[2]->setBottomLeftCorner(64,21);
-		//~ globalConfig[3]->setTopRightCorner(41,22);
-		//~ globalConfig[3]->setBottomLeftCorner(64,38);
-		//~ globalConfig[4]->setTopRightCorner(7,29);
-		//~ globalConfig[4]->setBottomLeftCorner(30,45);
-		//~ globalConfig[5]->setTopRightCorner(7,46);
-		//~ globalConfig[5]->setBottomLeftCorner(30,62);
-		//~ globalConfig[6]->setTopRightCorner(31,39);
-		//~ globalConfig[6]->setBottomLeftCorner(47,62);
-		//~ globalConfig[7]->setTopRightCorner(48,39);
-		//~ globalConfig[7]->setBottomLeftCorner(64,62);
-	
-		//~ display(globalConfig);
-	
-	
-		//~ cout<<checkFarness(globalConfig,2);
-		//~ move(globalConfig,1);
-		//~ display(globalConfig);
-	
-		//~ compareCost();
-	
-		//experiment pentru ./flopoco -target=Virtex5 IntTilingMult 18 34 0.35
-		//~ tempc= new DSP*[nrDSPs];
-		//~ for(int ii=0;ii<nrDSPs;ii++)
-		//~ tempc[ii]= new DSP();
-		//~ int n,m;
-		//~ int count=1;
-	
-		//~ n=vn;
-		//~ m=vm;
-		//~ mat = new int*[m];
-		//~ for(int i=0;i<m;i++)
-		//~ {
-		//~ mat[i] = new int [n];
-		//~ for(int j=0;j<n;j++)
-		//~ mat[i][j]=0;
-		//~ }
-	
-	
-	
-		//~ initTiling(bestConfig,nrDSPs);
-		//~ initTiling(globalConfig,nrDSPs);
-	
-		//~ globalConfig[0]->setTopRightCorner(6,4);
-		//~ globalConfig[0]->setBottomLeftCorner(22,27);
-		//~ display(globalConfig);
-	
-		//~ bestCost = 333222;
-		//~ compareCost();
-	
-	
-	
-		//~ initTiling(globalConfig,nrDSPs);
-	
-		//~ globalConfig[0]->setTopRightCorner(4,4);
-		//~ globalConfig[0]->setBottomLeftCorner(20,27);
-		//~ display(globalConfig);
-	
-	
-	
-		//~ compareCost();
-	 
-		///////////////////////////////////////////
-	
-	
-		//~ globalConfig[1]->setTopRightCorner(1,17);
-		//~ globalConfig[1]->setBottomLeftCorner(17,33);
-		//~ globalConfig[2]->setTopRightCorner(21,-12);
-		//~ globalConfig[2]->setBottomLeftCorner(37,4);
-
-		//~ display(globalConfig);
-	
-		//~ maxDist2Move=2;
-	
-		//~ //cout<<endl<<checkFarness(globalConfig,2) <<endl;
-	
-		//~ //cout<<move(globalConfig,2)<<endl;
-		//~ cout<<move(globalConfig,0)<<endl;
-		//~ display(globalConfig);
-		//~ replace(globalConfig,1);
-		//~ replace(globalConfig,2);
-		//~ display(globalConfig);
-		//~ cout<<move(globalConfig,2)<<endl;
-	
-		//~ display(globalConfig);
-	
-	
-
-
-
-		//~ initTiling(bestConfig,nrDSPs);
-		//~ bestCost=367.455;
-	
-		//~ initTiling(globalConfig,nrDSPs);
-	
-		//~ globalConfig[0]->setTopRightCorner(1,2);
-		//~ globalConfig[0]->setBottomLeftCorner(9,10);
-		//~ globalConfig[1]->setTopRightCorner(9,13);
-		//~ globalConfig[1]->setBottomLeftCorner(17,21);
-		//~ globalConfig[2]->setTopRightCorner(18,4);
-		//~ globalConfig[2]->setBottomLeftCorner(26,12);
-	
-	
-		//~ cout<<"Initial configuration"<<endl<<endl;
-		//~ display(globalConfig);
-	
-		//~ maxDist2Move=2;
-	
-		//~ cout<<endl<<checkFarness(globalConfig,1) <<endl;
-	
-		//~ compareCost();
-	
-	
-		
-	
-		
-		//~ initTiling(globalConfig,nrDSPs);
-	
-		//~ globalConfig[0]->setTopRightCorner(2,15);
-		//~ globalConfig[0]->setBottomLeftCorner(18,31);
-		//~ globalConfig[1]->setTopRightCorner(19,15);
-		//~ globalConfig[1]->setBottomLeftCorner(35,31);
-	
-		//~ int t;
-		//~ cout<<"cost of partitions is "<<partitionOfGridSlices(globalConfig,t);
-		//~ cout<<"Cost of obtained best is "<<computeCost(globalConfig)<<endl;
-		//~ display(globalConfig);
-	
-		//~ cout<<endl<<endl;
-	
-		//~ initTiling(globalConfig,nrDSPs);
-	
-		//~ globalConfig[0]->setTopRightCorner(2,14);
-		//~ globalConfig[0]->setBottomLeftCorner(18,30);
-		//~ globalConfig[1]->setTopRightCorner(19,14);
-		//~ globalConfig[1]->setBottomLeftCorner(35,30);
-	
-		//~ cout<<"cost of partitions is "<<partitionOfGridSlices(globalConfig,t);
-		//~ cout<<"Cost of obtained best is "<<computeCost(globalConfig)<<endl;
-		//~ display(globalConfig);
-		
-		
-		
-
-		/*
-	
-	
-		  initTiling(globalConfig, 4);
-		  for (int i=0; i<19; i++)
-		  move(globalConfig, 2);
-		  //replace(globalConfig, 1);
-		  //move(globalConfig, 0);
-		  //int x, y;
-	
-		  for (int i=0; i<4; i++)
-		  {
-		  globalConfig[i]->getTopRightCorner(x,y);
-		  cout << "DSP block #" << i << " is positioned at top-right: (" << x << ", " << y << ")";
-		  globalConfig[i]->getBottomLeftCorner(x,y);
-		  cout << "and bottom-left: (" << x << ", " << y << ")" << endl;
-		  }
-		*/  	
-
 	}
 	
 	IntTilingMult::~IntTilingMult() {
@@ -640,118 +239,55 @@ namespace flopoco{
 	void IntTilingMult::runAlgorithm()
 	{
 		
-		int n,m;
-
-		//~ n=wInX + 2* getExtraWidth();
-		//~ m=wInY + 2* getExtraHeight();
-
-		n=vn;
-		m=vm;
+		int n = vn, m = vm;
 	
+		/* declare and initialize a matrix of integers for printing purposes */
 		mat = new int*[m];
-		for(int i=0;i<m;i++)
-			{
-				mat[i] = new int [n];
-				for(int j=0;j<n;j++)
-					mat[i][j]=0;
-			}
+		for(int i=0;i<m;i++){
+			mat[i] = new int [n];
+			for(int j=0;j<n;j++)
+				mat[i][j]=0;
+		}
 		
-		//if the estimated number of DSPs is grather then 0 then we should run the algorithm
+		/* if the estimated number of DSPs is grather then 0 then we should 
+		run the algorithm */
 		if(nrDSPs>0){
-			tempc= new DSP*[nrDSPs];
+			tempc = new DSP*[nrDSPs];
 			for(int ii=0;ii<nrDSPs;ii++)
 				tempc[ii]= new DSP();
-			/*we will try the algorithm with 2 values of nrDSPs	
-			One will be the estimated value(nrDSPs) and the second one will be nrDSPs-1	
-			*/
+
+			/* declare an array to store if multipliers are rotated. Say 
+			a multiplier in Virtex5 returns x=17 y=24. If it is used with
+			x=24 and y=17 the corresponding position in the rotate table 
+			will be true */
 			rot = new bool[nrDSPs];
 			for(int i =0;i<nrDSPs;i++)
-				rot[i]=false;
+				rot[i]=false; /* initially none are rotated */
 		
-				//The second
-				numberDSP4Overlap=nrDSPs;
-				initTiling(globalConfig,nrDSPs);
-		
-		
-	
+			//The second
+			numberDSP4Overlap = nrDSPs;
+			initTiling (globalConfig,nrDSPs);
+			display(globalConfig);
 			
-		
+			//this will initialize the bestConfig with the first configuration
+			bestCost = FLT_MAX ;
+			REPORT(INFO, "Max score is" << bestCost);
+			bestConfig = new DSP*[nrDSPs];
+			for(int i=0;i<nrDSPs;i++)
+				bestConfig[i]= new DSP();
 			
-		//this will initialize the bestConfig with the first configuration
-		bestCost = FLT_MAX ;
-		REPORT(INFO, "Max score is"<<bestCost);
-		//bestConfig = (DSP**)malloc(nrDSPs * sizeof(DSP*));
-		bestConfig = new DSP*[nrDSPs];
-		for(int i=0;i<nrDSPs;i++)
-			bestConfig[i]= new DSP();
-		compareCost();
-		//cout<<"New best score is: " << bestCost << endl;
-	
-		//display(bestConfig);
-	
-	
-		//the best configuration should be consider initially the first one. So the bestConfig parameter will be initialized with global config and hence the bestCost will be initialized with the first cost
-	
-	
-		//the one
-		numberDSP4Overlap=nrDSPs;
-		tilingAlgorithm(nrDSPs-1,nrDSPs-1,false,nrDSPs-1);
-		bindDSPs(bestConfig);
-		
-		
-		display(bestConfig);
-		REPORT(INFO, "Best cost is "<<bestCost);
-		
-		
-		/*
-		globalConfig[2]->setTopRightCorner(2,26);
-		globalConfig[2]->setBottomLeftCorner(25,59);
-		globalConfig[1]->setTopRightCorner(36,2);
-		globalConfig[1]->setBottomLeftCorner(59,35);
-		globalConfig[3]->setTopRightCorner(26,36);
-		globalConfig[3]->setBottomLeftCorner(59,59);
-		bestCost = computeCost(globalConfig);
-		display(globalConfig);
-		*/
-		
-	
-	
-	
-	
+			compareCost();
 
-		//~ // After all configurations with the nrDSPs number of DSPs were evaluated then a new search is carryed with one DSP less
-		//~ // After the initialization of the new configuration with nrDSPs-1, the cost must be evaluated and confrunted with the best score obtained so far.
-	
-		//~ if(nrDSPs-1>0)
-		//~ {
-		
-	
-		//~ for(int i =0;i<nrDSPs;i++)
-		//~ rot[i]=false;
-		
-		//~ initTiling(globalConfig,nrDSPs -1);	
-		//~ compareCost();
-		//~ tilingAlgorithm(nrDSPs-2,nrDSPs-2,false);
-		//~ }	
-	
-	
-	
-	
-		//dealocari
-	
-		//~ for(int ii=0;ii<m;ii++)
-			//~ delete[](mat[ii]);
-	
-		//~ delete[] (mat);
-	
-		//~ for(int ii=0;ii<nrDSPs;ii++)
-			//~ free(tempc[ii]);
-	
-		//~ delete[] (tempc);
-		
-		}
-		else
-		{
+			//the one
+			numberDSP4Overlap = nrDSPs;
+
+			tilingAlgorithm (nrDSPs-1, nrDSPs-1, false, nrDSPs-1);
+			
+			bindDSPs(bestConfig);
+				
+			display(bestConfig);
+			REPORT(INFO, "Best cost is "<<bestCost);
+		}else{
 			n=vn;
 			m=vm;
 	
@@ -777,204 +313,115 @@ namespace flopoco{
 	}
 
 	
-	/** The movement of the DSP blocks with values belonging to their widths and heights still needs to be done. Now it only runs with one type of move on one of the directions, which is not ok for the cases when the DSPs are not squares.
+	/** The movement of the DSP blocks with values belonging to their widths 
+	and heights still needs to be done. Now it only runs with one type of move 
+	on one of the directions, which is not ok for the cases when the DSPs 
+	are not squares.
 	 */
-	void IntTilingMult::tilingAlgorithm(int i, int n,bool repl,int lastMovedDSP)
+	void IntTilingMult::tilingAlgorithm(int i, int n, bool repl, int lastMovedDSP)
 	{
-		if(i==n)
-			{
+		finish = (clock() - start)/(CLOCKS_PER_SEC*60);
+		if (finish > maxTimeInMinutes){
+			cout << "Time's up!"<<endl;
+			return;
+		}
 				
-				if(repl==true) // if previous DSPs were moved this one needs to recompute all positions 
-					{
-						//cout<<" Pas 4_1 "<<i<<endl;
-						if(replace(globalConfig,i)) // repostioned the DSP
-							{
-						//		cout<<"Pas 4_0_1 "<<i<<endl;
-								compareCost();
-								//display(globalConfig);
-								finish = (clock() - start)/(CLOCKS_PER_SEC*60);
-								if (finish > maxTimeInMinutes)
-									return;
-								rot[i]=false;
-								tilingAlgorithm(i,n,false,lastMovedDSP);
-								
-							}
-						else // could not reposition the DSP in the bounds of the tiling board
-							{
-						//		cout<<"Pas 4_5_1 "<<i<<endl;
-								rot[i]=false;
-								if( lastMovedDSP>=0) // go one level up the backtracking stack
-								{	
-									finish = (clock() - start)/(CLOCKS_PER_SEC*60);
-									if (finish > maxTimeInMinutes)
-										return;
-									tilingAlgorithm(lastMovedDSP,n,false, lastMovedDSP);
-									
-								}
-							}
-					}
-				else // the last DSP is being moved on the tiling board
-					{
-						//	cout<<"Pas __1 "<<i<<endl;
-						if(move(globalConfig,i)) // successfuly moved the last block
-							{
-								//cout<<" Pas 1_1 "<<i<<endl;
-								compareCost();
-								finish = (clock() - start)/(CLOCKS_PER_SEC*60);
-								if (finish > maxTimeInMinutes)
-									return;
-								tilingAlgorithm(i,n,repl,i);		//repl should be false
-								
-							}
-						//~ else
-						//~ if(move(globalConfig,i,DSPh,DSPw))
-						//~ {
-						//~ cout<<" Pas 1_1 "<<i<<endl;
-						//~ compareCost();
-						//~ tilingAlgorithm(i,n,repl,i);		//repl should be false
-						//~ }
- 						else // could not find a position for the last block
-							{
-								if(rot[i]==false && (globalConfig[i]->getMaxMultiplierWidth() != globalConfig[i]->getMaxMultiplierHeight() ))
-									{ // if the DSP was not rotated and is not sqare then roteate it
-										//display(globalConfig);
-										//~ cout<<" Pas 2_1 "<<i<<endl;
-										globalConfig[i]->rotate();
-										//display(globalConfig);
-										rot[i]=true;
-										if(replace(globalConfig,i)) // the DSP could be repositioned
-											{
-												//display(globalConfig);
-												compareCost();
-												finish = (clock() - start)/(CLOCKS_PER_SEC*60);
-												if (finish > maxTimeInMinutes)
-													return;
-												tilingAlgorithm(i,n,repl,i);		//repl should be false
-												
-											}
-										else // go to the previous block 
-											{
-												if(i-1>=0)
-												{	
-													finish = (clock() - start)/(CLOCKS_PER_SEC*60);
-													if (finish > maxTimeInMinutes)
-														return;
-													tilingAlgorithm(i-1,n,false,i);
-													
-												}
-											}
-									}
-								else // the DSP was either rotated already or is square
-									{
-										//~ cout<<" Pas 3_1 "<<i<<endl;
-										if(i-1>=0)
-										{	
-											finish = (clock() - start)/(CLOCKS_PER_SEC*60);
-											if (finish > maxTimeInMinutes)
-												return;
-											tilingAlgorithm(i-1,n,repl,i);		//repl should be false
-											
-										}
-									}
-							}
-					}
-			}
-		else // we are not at the last DSP
-			{
-				if(repl==true) // the previuos DSPs were successfuly repositioned
-					{
-					//	cout<<" Pas 4_2 "<<i<<endl;
-						if(replace(globalConfig,i)) // the current DSP was successfuly repositioned
-							{
-								finish = (clock() - start)/(CLOCKS_PER_SEC*60);
-								if (finish > maxTimeInMinutes)
-										return;
-								rot[i]=false;
-								tilingAlgorithm(i+1,n,repl, lastMovedDSP);
-							}
-						else // the current DSP could not be repositioned
-							{// go to the DSP block that was moved (not repostioned) the last time
-								rot[i]=false;
-								if( lastMovedDSP>=0) 
-								{
-									finish = (clock() - start)/(CLOCKS_PER_SEC*60);
-									if (finish > maxTimeInMinutes)
-										return;
-									tilingAlgorithm( lastMovedDSP,n,false, lastMovedDSP);
-								}
-							}
-			
-		
-					}
-				else // the folling DSP could not be moved or repositioned 
+		if (i == n){
+			if (repl == true){ // if previous DSPs were moved this one needs to recompute all positions 
+				if(replace(globalConfig,i)){ // repostioned the DSP
+					compareCost();
+					rot[i]=false;
+					tilingAlgorithm(i,n,false,lastMovedDSP);
+				}else{ 
+				/* could not reposition the DSP in the bounds of the tiling board */
+					rot[i]=false;
+					if( lastMovedDSP>=0) // go one level up the backtracking stack
 					{	
-						//~ if(i==0)
-						//~ display(globalConfig);
-						if(move(globalConfig,i)) // the current DSP was successfuly moved
-							{
-					//			cout<<"Pas 1_2 "<<i<<endl;
-								if(i==0){
-									REPORT(DETAILED, "DSP #1 has made another step!");
-									//~ display(globalConfig);
-									//~ cout<<endl<<endl<<endl;
-				
-								}
-								finish = (clock() - start)/(CLOCKS_PER_SEC*60);
-								if (finish > maxTimeInMinutes)
-										return;
-								tilingAlgorithm(i+1,n,true,i);
-								
-							}
-						//~ if(counterfirst%100==0)
-						//~ cout<<counterfirst<<"DSP #1 has made 100 steps!"<<endl;
-						//~ display(globalConfig);
-						//~ cout<<endl<<endl<<endl;
-				
-						//~ }
-						//~ tilingAlgorithm(i+1,n,true,i);
-						//~ }
-						else // the current DSP was not moved successfuly
-							{
-								if(rot[i]==false && (globalConfig[i]->getMaxMultiplierWidth() != globalConfig[i]->getMaxMultiplierHeight() ))
-									{// if the DSP was not rotated and is not sqare then roteate it
-					//					cout<<" Pas 2_2 "<<i<<endl;
-										globalConfig[i]->rotate();
-										if(replace(globalConfig,i)) // the current DSP was successfuly repositioned
-											{
-												finish = (clock() - start)/(CLOCKS_PER_SEC*60);
-												if (finish > maxTimeInMinutes)
-													return;
-												rot[i]=true;
-												tilingAlgorithm(i+1,n,true,i);
-												
-											}
-										else // the current DSP was not successfuly repositioned
-											{
-												if(i-1>=0)
-												{
-													finish = (clock() - start)/(CLOCKS_PER_SEC*60);
-													if (finish > maxTimeInMinutes)
-														return;
-													tilingAlgorithm(i-1,n,repl,i);
-												}
-											}
-									}
-								else // the DSP is either square or has been already rotated
-									{
-					//					cout<<" Pas 3_2 "<<i<<endl;
-										if(i-1>=0)
-										{
-											finish = (clock() - start)/(CLOCKS_PER_SEC*60);
-											if (finish > maxTimeInMinutes)
-												return;
-											tilingAlgorithm(i-1,n,repl,i);		//repl should be false
-										}
-									}
-							}
+						tilingAlgorithm(lastMovedDSP,n,false, lastMovedDSP);
 					}
-			}
+				}
+			}else{ 
+				/* the last DSP is being moved on the tiling board */
+				/* if successfuly moved the last block */
+				if( move(globalConfig,i)){ 
+					compareCost();
+					finish = (clock() - start)/(CLOCKS_PER_SEC*60);
 
-	
+					
+					tilingAlgorithm(i,n,repl,i);		//repl should be false
+				} else {
+					/* if we didn't rotate it and it is worth rotating */
+					if (rot[i] == false && (globalConfig[i]->getMaxMultiplierWidth() != globalConfig[i]->getMaxMultiplierHeight() )){ 
+						globalConfig[i]->rotate();
+						rot[i]=true;
+						/* try repositioning the rotated block */
+						if(replace(globalConfig,i)){
+							compareCost();
+							finish = (clock() - start)/(CLOCKS_PER_SEC*60);
+							tilingAlgorithm(i, n, repl, i);		//repl should be false
+						} else{
+						 /* go to the previous block */
+							if( i-1 >= 0){	
+								finish = (clock() - start)/(CLOCKS_PER_SEC*60);
+								tilingAlgorithm(i-1,n,false,i);
+							}
+						}
+					}else {
+						/* the DSP was either rotated already or is square */
+						if(i-1 >= 0){	
+							finish = (clock() - start)/(CLOCKS_PER_SEC*60);
+							tilingAlgorithm(i-1,n,repl,i);		//repl should be false
+						}
+					}
+				}
+			}
+		} else { 
+			/* we are not at the last DSP */
+			if(repl == true){ 
+				/* the previuos DSPs were successfuly repositioned */
+				if (replace(globalConfig,i)){ 
+					/* and now we reposition the current DSP */
+					rot[i]=false;
+					tilingAlgorithm(i+1, n, repl, lastMovedDSP);
+				}else{ 
+					/* the current DSP could not be repositioned */
+					/* go to the DSP block that was moved (not repostioned) 
+					the last time */
+					rot[i]=false;
+					if( lastMovedDSP>=0) {
+						finish = (clock() - start)/(CLOCKS_PER_SEC*60);
+						tilingAlgorithm( lastMovedDSP,n,false, lastMovedDSP);
+					}
+				}
+			}else{ 
+			/* the folling DSP could not be moved or repositioned */
+				if(move(globalConfig,i)){ 
+				/* the current DSP was successfuly moved*/
+					finish = (clock() - start)/(CLOCKS_PER_SEC*60);
+					tilingAlgorithm(i+1,n,true,i);
+				}else{ 
+				/* the current DSP was not moved successfuly */
+					if(rot[i]==false && (globalConfig[i]->getMaxMultiplierWidth() != globalConfig[i]->getMaxMultiplierHeight() )){
+						/* if the DSP was not rotated and is not sqare then roteate it */
+						globalConfig[i]->rotate();
+						if(replace(globalConfig,i)){ // the current DSP was successfuly repositioned
+							rot[i]=true;
+							tilingAlgorithm(i+1,n,true,i);
+						}else{ 
+						/* the current DSP was not successfuly repositioned */
+							if(i-1>=0){
+								tilingAlgorithm(i-1,n,repl,i);
+							}
+						}
+					}else{ 
+						/* the DSP is either square or has been already rotated */
+						if(i-1>=0){
+							tilingAlgorithm(i-1,n,repl,i);		//repl should be false
+						}
+					}
+				}
+			}
+		}
 	}
 
 
@@ -1113,17 +560,14 @@ namespace flopoco{
 	
 	}
 
-	void IntTilingMult::fillMatrix(int **&matrix,int lw,int lh,int topleftX,int topleftY,int botomrightX,int botomrightY,int value)
-	{
-		for(int j=topleftX;j<=botomrightX;j++)
-			{
-				for(int i=topleftY;i<=botomrightY;i++)
-					{
-						if(j>-1&&i>-1&&i<lh&&j<lw)
+	/* fill matrix with DSP index */
+	void IntTilingMult::fillMatrix(int **&matrix, int lw, int lh,int topleftX,int topleftY, int botomrightX, int botomrightY, int value){
+		for(int j=topleftX; j<= botomrightX; j++){
+			for(int i=topleftY; i <= botomrightY; i++){
+						if(j>-1 && i>-1 && i<lh && j<lw)
 							matrix[i][j]=value;
 					}
 			}
-	
 	}
 
 
@@ -1381,596 +825,337 @@ namespace flopoco{
 	}
 
 
-
+	/* the rest of the board not tiled by DSPs needs to be implemented using 
+	soft-core multipliers */
 	int IntTilingMult::partitionOfGridSlices(DSP** config,int &partitions)
 	{
-		//~ cout<<"Incepe"<<endl;
-		int costSlice=0;
+		cout << " repartitioning logic multipliers " << endl;
+		
+		int costSlice = 0, count = 1, nj,ni,njj,nii;
+
+		int n = vn, m = vm, nmew = vnme, mmeh = vmme;
 	
-		int n,m;
-		int count=1;
-		n=vn;
-		m=vm;
-	
-		int nmew = vnme;
 		int ew = getExtraWidth();
-		int mmeh = vmme;
 		int eh = getExtraHeight();
-		int nj,ni,njj,nii;
+
+		/* init display matrix */
+		for(int i=0; i<m; i++){
+			for(int j=0;j<n;j++)
+				mat[i][j]=0;
+		}
+				
+		/* interate through the tiled DSPs and fill the matrix accordingly */
+		for(int i=0;i<nrDSPs;i++){
+			int trX,trY, blX,blY;
 		
+			config[i]->getTopRightCorner  ( trX, trY);
+			config[i]->getBottomLeftCorner( blX, blY);
+
+			trX = n - trX -1;
+			blX = n - blX -1;
 		
-		//~ cout<<"width "<<n<<"height "<<m<<endl;
-	
-		for(int i=0;i<m;i++)
-			{
-			
-				for(int j=0;j<n;j++)
-					mat[i][j]=0;
-			}
-		for(int i=0;i<nrDSPs;i++)
-			{
-				int c1X,c2X,c1Y,c2Y;
-			
-				config[i]->getTopRightCorner(c1X,c1Y);
-				config[i]->getBottomLeftCorner(c2X,c2Y);
-				//~ cout<<"DSP #"<<i+1<<"has toprigh ("<<c1X<<","<<c1Y<<") and botomleft ("<<c2X<<","<<c2Y<<")"<<endl;
-				c1X=n-c1X-1;
-				c2X=n-c2X-1;
-				//~ cout<<"new x1 "<<c1X<<" new x2 "<<c2X<<endl;
-			
-				fillMatrix(mat,n,m,c2X,c1Y,c1X,c2Y,count);
-				count++;			
-			}
-		//partitions = count;
+			fillMatrix( mat, n, m, blX, trY, trX, blY, count);
+			count++;			
+		}
+
+		
 		partitions = 0;
 	
-		//~ cout<<"Partea 2"<<endl;
-		
-		for(int i=0;i<m;i++)
-			{
-				for(int j=0;j<n;j++)
-					{
-						if(mat[i][j]==0)
-							{
-								int ver =0;
-								int ii=i,jj=j;
-								while(ver<6&&(ii<m-1||jj<n-1))
-									{
-							
-							
-										if(ver<3)
-											{
-								
-												if(ver==0||ver==1)
-													ii++;
-												if(ii>m-1)
-													{
-														ii=m-1;
-														ver=2;							
-													}
-							
-												if(ver==0||ver==2)
-													jj++;
-							
-												if(jj>n-1)
-													{
-														jj=n-1;
-														ver=1;
-													}
-												//~ if(count==3)
-												//~ cout<<"P0  ii:="<<ii<<" jj:="<<jj<<" ver:="<<ver<<endl;
-								
-								
-							
-												for(int k=ii,q=jj;k>i-1&&(ver==0||ver==2);k--)
-													if(mat[k][q]!=0)
-														{
-															if(ver==0)
-																ver=1;
-															else
-																ver=3;
-															jj--;
-														}
-												//~ if(count==3)
-												//~ {
-												//~ cout<<"P1   ii:="<<ii<<" jj:="<<jj<<" ver:="<<ver<<endl; 
-												//~ }
-									
-												for(int k=ii,q=jj;q>j-1&&(ver==0||ver==1);q--)
-													if(mat[k][q]!=0)
-														{
-															if(ver==0)
-																ver=2;
-															else
-																ver=3;
-															ii--;
-														}
-												//~ if(count==3)
-												//~ {cout<<"P2  ii:="<<ii<<" jj:="<<jj<<" ver:="<<ver<<endl;
-												//~ cout<<endl;
-												//~ }
-							
-											}
-										else
-											{
-												if(ver==3||ver==5)
-													jj++;
-							
-												if(jj>n-1)
-													{
-														jj=n-1;
-														ver=4;
-													}
-								
-												//~ if(count==3)
-												//~ cout<<"P3  ii:="<<ii<<" jj:="<<jj<<" ver:="<<ver<<endl;
-								
-												if(ver==3||ver==4)
-													ii++;
-												if(ii>m-1)
-													{
-														ii=m-1;
-														ver=5;							
-													}
-							
-								
-												//~ if(count==3)
-												//~ cout<<"P3  ii:="<<ii<<" jj:="<<jj<<" ver:="<<ver<<endl;
-
-								
-												for(int k=ii,q=jj;q>j-1&&(ver==3||ver==4);q--)
-													if(mat[k][q]!=0)
-														{
-															if(ver==3)
-																ver=5;
-															else
-																ver=6;
-															ii--;
-														}
-												//~ if(count==3)
-												//~ {
-												//~ cout<<"P4   ii:="<<ii<<" jj:="<<jj<<" ver:="<<ver<<endl; 
-												//~ }
-								
-												for(int k=ii,q=jj;k>i-1&&(ver==3||ver==5);k--)
-													if(mat[k][q]!=0)
-														{
-															if(ver==3)
-																ver=4;
-															else
-																ver=6;
-															jj--;
-														}
-												if(ver==5&&jj==n-1)
-													ver=6;
-												if(ver==4&&ii==m-1)
-													ver=6;
-										
-												//~ if(count==3)
-												//~ {cout<<"P5  ii:="<<ii<<" jj:="<<jj<<" ver:="<<ver<<endl;
-												//~ cout<<endl;
-												//~ }
-							
-								
-											}
-									}
-						
-								//~ cout<<count<<endl;
-						
-					
-												
-						
-								if( j>=nmew || jj< ew || i >= mmeh || ii < eh)
-									{
-							
-									}
-								else
-									{
-										if( j < ew )
-											nj = ew ;
-										else
-											nj = j;
-										if( jj >=nmew )
-											njj = nmew -1;
-										else
-											njj = jj;
-							
-										if( i < eh )
-											ni = eh ;
-										else
-											ni = i;
-										if( ii >=mmeh)
-											nii = mmeh -1;
-										else
-											nii = ii;
-							
-										partitions++;
-										//cout << "IntMultiplierCost ("<<nj<<", "<<njj<<") ("<<ni<<", "<<nii<<") cost="<< target_->getIntMultiplierCost(njj-nj+1,nii-ni+1) << endl;
-										costSlice += target_->getIntMultiplierCost(njj-nj+1,nii-ni+1);//(njj-nj+1)*(nii-ni+1);
-							
-							
-														
-									}
-						
-						
-						
-								fillMatrix(mat,n,m,j,i,jj,ii,count);
-								count++;
-						
+		/* for every little pixel non-tiled */
+		/* ALL THIS PART: can surely be done much simpler */
+		for(int i=0;i<m;i++){
+			for(int j=0;j<n;j++){
+				if(mat[i][j] == 0){ 
+				/* this is not yet tiled */
+					int ver =0;
+					int ii = i, jj = j;
+					/* iterate through 6 versions of logic multipliers 
+					bounded by the tiling board */
+					while( ver < 6 && (ii < m-1 || jj < n-1)){
+						if (ver < 3){
+							if (ver == 0 || ver == 1){
+							/* increase the multiplier size on the i direction (Y) */
+								ii++;
+							} 
+							if (ii > m-1){
+							/* if we have increased it too much, we set it to the maximum
+							direction on Y and we set the filling direction to 2 */
+								ii = m-1;
+								ver = 2;							
 							}
+							if (ver == 0 || ver == 2){
+							/* increase the dimension in the X direction */
+								jj++; 
+							}
+							if(jj > n-1){
+							/* if we have increased it too much, then we reset
+							it */
+								jj = n-1;
+								ver = 1;
+							}
+										
+							for(int k = ii, q = jj; k > i-1 && ( ver == 0 || ver == 2); k--){
+								if ( mat[k][q] != 0){
+								/* the soft-core multiplier overlaps with some other entity */
+									if (ver == 0)
+										ver = 1;
+									else
+										ver = 3;
+									
+									jj--; 
+								}
+							}
+									
+							for(int k = ii, q = jj; q > j-1 && ( ver == 0 || ver == 1); q--){
+								if ( mat[k][q] != 0){
+									if (ver == 0)
+										ver = 2;
+									else
+										ver = 3;
+									
+									ii--;
+								}
+							}
+						} else {
+							if (ver == 3 || ver == 5)
+								jj++;
+							
+							if (jj > n-1){
+								jj = n-1;
+								ver = 4;
+							}
+							
+							if(ver==3||ver==4)
+								ii++;
+								
+							if (ii > m-1){
+								ii=m-1;
+								ver = 5;							
+							}
+							
+							for(int k=ii, q=jj; q>j-1 && (ver==3||ver==4);q--){
+								if(mat[k][q]!=0){
+									if( ver==3 )
+										ver=5;
+									else
+										ver=6;
+									
+									ii--;
+								}
+							}
+								
+							for(int k=ii,q=jj;k>i-1&&(ver==3||ver==5);k--){
+								if(mat[k][q]!=0){
+									if(ver==3)
+										ver=4;
+									else
+										ver=6;
+									jj--;
+								}
+							}
+
+							if(ver==5&&jj==n-1)
+								ver=6;
+							if(ver==4&&ii==m-1)
+								ver=6;
+						}
 					}
-			
+					
+					if (! (j>=nmew || jj< ew || i >= mmeh || ii < eh)){
+						cerr << "j=" <<j << " jj="<<jj<<" i="<<i<<" ii="<<ii<<endl;
+
+						/* if the logic block was not outside the board */
+									
+						if( j < ew )
+							nj = ew ;
+						else
+							nj = j;
+				
+						if( jj >= nmew )
+							njj = nmew -1;
+						else
+							njj = jj;
+						
+						if( i < eh )
+							ni = eh ;
+						else
+							ni = i;
+				
+						if( ii >=mmeh)
+							nii = mmeh -1;
+						else
+							nii = ii;
+						
+						partitions++;
+						cerr << " Need Logic Multiplier of size = " << njj-nj+1 << " X "<< nii-ni+1 << endl;
+						costSlice += target_->getIntMultiplierCost(njj-nj+1,nii-ni+1);
+						
+						fillMatrix(mat,n,m,j,i,jj,ii,count);
+						count++;
+					}
+				}
 			}
-		
-		//de verificat
-		
-		//cout<<"Count "<<count<<" Partitions "<<partitions<<endl;
-		
-		//partitions =count -partitions;
-		 
-		
-		//~ char af;
-		//~ int afi;
-		//~ for(int i=0;i<m;i++)
-		//~ {
-		//~ for(int j=0;j<n;j++)
-		//~ {
-		//~ if(mat[i][j]<10)
-		//~ afi=mat[i][j];
-		//~ else
-		//~ afi=mat[i][j]+7;
-		//~ af=(int)afi+48;
-		//~ cout<<af;
-		//~ }
-		//~ cout<<endl;
-		//~ }
-	
-		//~ cout<<"gata"<<endl;
-	
-		//~ for(int ii=0;ii<m;ii++)
-		//~ delete[](mat[ii]);
-	
-		//~ delete[] (mat);
-	
+		}
 		return costSlice;
 	}	
 
-
-
 	int IntTilingMult::bindDSPs4Virtex(DSP** &config)
 	{
-		int nrOfUsedDSPs=0;
-		//~ int dx,dy;
-		
-		//~ for(int i=0;i<nrDSPs;i++){
-			
-			//~ config[i]->getTopRightCorner(dx,dy);
-			//~ if(config[i]!=NULL )  // && (dx<=vnme && dy<vmme)  // with this condition in this if the algorithm will be encorege to try to compute with less dsps that the user has given
-				//~ {
-					//~ nrOfUsedDSPs++;
-				//~ }
-			//~ //countsShift[i]=0;	
-			//~ }
-		nrOfUsedDSPs = nrDSPs;	
-			
+		int nrOfUsedDSPs = nrDSPs;
 		DSP* ref;
-	
+		
 		sortDSPs(config);
-		
 			
-		int itx,ity,jtx,jty,ibx,iby;//,jbx,jby;
-		//int prev=0;
-			
-		//cout<<endl<<endl;	
-		int count;
+		int itx,ity, ibx,iby, jtx,jty, count;
 		
-		for(int i=0;i<nrDSPs;i++)
-			{
+		for(int i=0; i< nrDSPs; i++){
+			if ((config[i]!=NULL) && (config[i]->getShiftIn()==NULL)){
+				ref=config[i];
 				
-				if ((config[i]!=NULL) && (config[i]->getShiftIn()==NULL))
-					{
+				count = ref->getNrOfPrimitiveDSPs(); 
+
+				bool ver = true;
+				int rw,rh;
+				int sa;
+				
+				/* now we start binding DSPs */		
+				while ( ver==true && ref->getShiftOut() == NULL && count < nrOfShifts4Virtex){
+					ver=false;
+
+					/* BINDING DSPs in crucial so this function MUST be optimized
+					 TODO */
+					for(int j=0; j < nrDSPs &&  ref->getShiftOut()==NULL; j++){
 						
-						ref=config[i];
-						count=ref->getNrOfPrimitiveDSPs();
-						bool ver=true;
-						int rw,rh;
-						int sa;
-						//while(ver==true&&ref->getShiftOut()==NULL && countsShift[prev] <nrOfShifts4Virtex-1)
-						while(ver==true&&ref->getShiftOut()==NULL && count <nrOfShifts4Virtex)
-							{
-								ver=false;
-								ref->getTopRightCorner(itx,ity);
-								ref->getBottomLeftCorner(ibx,iby);
-								rw=ref->getMaxMultiplierWidth();
-								rh=ref->getMaxMultiplierHeight();
-					
-								for(int j=0;j<nrDSPs&&ver==false;j++)
-									{
-										if(config[j]!=NULL &&j!=i && ((count+ config[j]->getNrOfPrimitiveDSPs())<=nrOfShifts4Virtex))
-											{
-												config[j]->getTopRightCorner(jtx,jty);
-												if((jtx<=vnme && jty<vmme))
-												{
-												
-												sa = config[j]->getShiftAmount();
-												//cout<<"Now considering taking(in left) dsp nr. "<<i<<" with tx:="<<itx<<" ty:="<<ity<<" bx:="<<ibx<<"by:="<<iby<<" with dsp nr. "<<j<<" with tx:="<<jtx<<" ty:="<<jty<<endl;
-												//config[j]->getBottomLeftCorner(jbx,jby);
-												if(rw!=34 && rh!=34)
-												{
-												if(jtx==ibx+1&&jty==ity&&rw==sa&&config[j]->getShiftIn()==NULL)
-													{
-														//cout<<"DSP #"<<i<<" bind with DSP# "<<j<<endl;
-														ver=true;
-														ref->setShiftOut(config[j]);
-														config[j]->setShiftIn(ref);
-														nrOfUsedDSPs--;
-														ref=config[j];
-														count+=ref->getNrOfPrimitiveDSPs();
-														//~ countsShift[prev]++;
-														//~ countsShift[j] = countsShift[prev];
-														//~ prev = j;								
-													}
-												}
-												else
-												{
-													//~ cout<<config[i]->getMaxMultiplierHeight()<<" "<<rh<<" ";
-													//~ cout<<(config[i]->getMaxMultiplierHeight()% rh)<<endl;
+						ref->getTopRightCorner  (itx,ity);
+						ref->getBottomLeftCorner(ibx,iby);
 
-													if( jtx==ibx+1 && sa!=0 && rw%sa==0 && ( (rw == 34 && jty==ity)   || ( rw==17 && jty==ity+sa   )  ))
+						rw = ref->getMaxMultiplierWidth();
+						rh = ref->getMaxMultiplierHeight();
 
-													{
-														//cout<<" case 1_2 DSP #"<<i<<" bind with DSP# "<<j<<endl;
-														ver=true;
-														ref->setShiftOut(config[j]);
-														config[j]->setShiftIn(ref);
-														nrOfUsedDSPs--;
-														ref=config[j];
-														count+=ref->getNrOfPrimitiveDSPs();
-													}
-													
-												}
-											}
-											}
-									}
-					
-								for(int j=0;j<nrDSPs&&ver==false;j++)
-									{
-										if(config[j]!=NULL &&j!=i&& count+ config[j]->getNrOfPrimitiveDSPs()<=nrOfShifts4Virtex)
-											{
-												config[j]->getTopRightCorner(jtx,jty);
-												if((jtx<=vnme && jty<vmme))
-												{
-												sa = config[j]->getShiftAmount();
-												//cout<<"Now considering taking(down) dsp nr. "<<i<<" with tx:="<<itx<<" ty:="<<ity<<" bx:="<<ibx<<"by:="<<iby<<" with dsp nr. "<<j<<" with tx:="<<jtx<<" ty:="<<jty<<endl;
-												//config[j]->getBottomLeftCorner(jbx,jby);
-												if(rw!=34 && rh!=34)
-												{
-												if(iby+1==jty&&itx==jtx&&rh==sa&&config[j]->getShiftIn()==NULL)
-													{
-														//cout<<"DSP #"<<i<<" bind with DSP# "<<j<<endl;
-														ver=true;
-														ref->setShiftOut(config[j]);
-														config[j]->setShiftIn(ref);
-														nrOfUsedDSPs--;
-														ref=config[j];								
-														count+=ref->getNrOfPrimitiveDSPs();
-														//~ countsShift[prev]++;
-														//~ countsShift[j] = countsShift[prev];
-														//~ prev = j;
-													}
-												}
-												else
-												{
-													//~ cout<<config[i]->getMaxMultiplierWidth()<<" "<<rw<<endl;
-													//~ cout<<(config[i]->getMaxMultiplierWidth()% rw)<<endl;
-
-													//&&  (config[j]->getMaxMultiplierWidth()% rw==0)
-													if( iby+1==jty &&sa!=0&& rh% sa==0 && ( (rh == 34 && jtx==itx   )   || ( rw==17 && jtx==itx+sa)  ))
-
-													{
-														//cout<<"case 2_2 DSP #"<<i<<" bind with DSP# "<<j<<endl;
-														ver=true;
-														ref->setShiftOut(config[j]);
-														config[j]->setShiftIn(ref);
-														nrOfUsedDSPs--;
-														ref=config[j];								
-														count+=ref->getNrOfPrimitiveDSPs();
-													}
-												}
-											}
-											}						
-									}					
+						/* we can potentially bind two if by combining the two
+						we don't exceed the maximum number of shift combinations */
+						if ( config[j]!=NULL && j!=i && ((count + config[j]->getNrOfPrimitiveDSPs()) <= nrOfShifts4Virtex)){
+							config[j]->getTopRightCorner(jtx,jty);
+							/* if this one is in the bounds of the board */
+							if ( jtx<=vnme && jty<vmme){
+								cout<<" itx ity "<<itx<<" "<<ity<<" jtx jty "<< jtx<<" "<<jty<<endl;
+								sa = config[j]->getShiftAmount(); //17 for Xilinx
+								/* for now this condition binds DSPs on horizontal
+								we might need to change this one for optimality */
+								if ( (jtx + jty == itx + ity) && config[j]->getShiftIn()==NULL){
+									cout<<"DSP #"<<i<<" bind with DSP# "<<j<<"on direct line"<<endl;
+									ver = true;
+									ref->setShiftOut(config[j]);
+									config[j]->setShiftIn(ref);
+								
+									nrOfUsedDSPs--;
+									ref = config[j];
+									count += ref->getNrOfPrimitiveDSPs();
+//								}else if ( (jtx == ibx+1 && jty==ity     && rw==sa && config[j]->getShiftIn()==NULL) || 
+//										   (jtx == itx   && jty==iby+1   && rh==sa && config[j]->getShiftIn()==NULL)){
+								}else if (jtx + jty - itx - ity == sa &&  config[j]->getShiftIn()==NULL) {
+									/* this is the binding condition */
+									cout<<"DSP #"<<i<<" bind with DSP# "<<j<<" on shift line" << endl;
+									ver = true;
+									ref->setShiftOut(config[j]);
+									config[j]->setShiftIn(ref);
+								
+									nrOfUsedDSPs--;
+									ref = config[j];
+									count += ref->getNrOfPrimitiveDSPs();
+								}else{}
 							}
-				
+						}
 					}
-			
+					cout << "exit for ..." << endl;
+				}
 			}
-	
-		//cout<<" nr de dspuri dupa bind "<<nrOfUsedDSPs<<endl;
+		}
 		return nrOfUsedDSPs;
-	
 	}
 
-	void IntTilingMult::sortDSPs(DSP** &config)
-	{
+	/* sort the DSP blocks in the config list according to their Top
+	left corner coordinates */
+	void IntTilingMult::sortDSPs(DSP** &config){
 		int ix,iy,jx,jy;
 		DSP* temp;
-		for(int i=0;i<nrDSPs-1;i++)
-			{		
-				for(int j=i+1;j<nrDSPs;j++)
-					{
-						config[i]->getTopRightCorner(ix,iy);
-						config[j]->getTopRightCorner(jx,jy);
-						if(iy>jy)
-							{
-								temp=config[i];
-								config[i]=config[j];
-								config[j]=temp;				
-							}
-						else
-							if(iy==jy)
-								{
-									if(ix>jx)
-										{
-											temp=config[i];
-											config[i]=config[j];
-											config[j]=temp;						
-										}
-								}
-					}
+		for(int i=0; i< nrDSPs-1;i++){		
+			for(int j=i+1;j<nrDSPs;j++){
+				config[i]->getTopRightCorner(ix,iy);
+				config[j]->getTopRightCorner(jx,jy);
+				if (iy + ix > jy + jx)  {
+					temp      = config[i];
+					config[i] = config[j];
+					config[j] = temp;				
+				}
 			}
-	
+		}
 	}
 
-	int IntTilingMult::bindDSPs(DSP** &config)
-	{
+
+	/* binds DSPs into supertiles */
+	int IntTilingMult::bindDSPs(DSP** &config){
 		if  ( (target_->getID() == "Virtex4") ||
 		      (target_->getID() == "Virtex5") ||
-		      (target_->getID() == "Spartan3"))  // then the target is a Xilinx FPGA
-			{
-				return bindDSPs4Virtex(config);
-			}
-		else // the target is Stratix
-			{
-				return bindDSPs4Stratix(config);
-			}
+		      (target_->getID() == "Spartan3")){  // then the target is a Xilinx FPGA
+			return bindDSPs4Virtex(config);
+		}else{ // the target is Stratix
+			return bindDSPs4Stratix(config);
+		}
 	}
 
 
+	/* compares the cost of the global config with best config and sets 
+	the best config accordingly */
 	void IntTilingMult::compareCost()
 	{
-		//~ cout<<"Inta la cost"<<endl;
-	
-		//~ DSP** tempc;
-		
-		//~ tempc= new DSP*[nrDSPs];
-		//~ for(int ii=0;ii<nrDSPs;ii++)
-		//~ tempc[ii]= new DSP();
-		
-		//memcpy(tempc,globalConfig,sizeof(DSP*) *nrDSPs );
 		for(int ii=0;ii<nrDSPs;ii++)
-			memcpy(tempc[ii],globalConfig[ii],sizeof(DSP) );
+			memcpy(tempc[ii],globalConfig[ii],sizeof(DSP));
 	
-		//display(tempc);
-		//~ cout<<"intra la display cost"<<endl;
-		
 		float temp = computeCost(tempc);
 		
-		/*
-		display(globalConfig);
-		cout<<"score temp is"<<temp<<" and current best is"<<bestCost<<endl;
-		getchar();
-		*/
-		if(temp < bestCost)
-			{
-				//~ cout<<"Costul e mai bun la cel curent!Schimba"<<endl;
-				
-				//cout<<"Interchange! Score for current is"<<temp<<" and current best is"<<bestCost<<endl;
-				
-				//~ int c1X,c2X,c1Y,c2Y;
-				//~ int n=wInX + 2* getExtraWidth();
-				//~ tempc[0]->getTopRightCorner(c1X,c1Y);
-				//~ tempc[0]->getBottomLeftCorner(c2X,c2Y);
-				//~ cout<<"DSP #"<<1<<"has toprigh ("<<c1X<<","<<c1Y<<") and botomleft ("<<c2X<<","<<c2Y<<")"<<endl;
-				//~ c1X=n-c1X-1;
-				//~ c2X=n-c2X-1;
-				//~ //cout<<"new x1 "<<c1X<<" new x2 "<<c2X<<endl;
-				//~ cout<<"matrix DSP #"<<1<<"has topleft ("<<c2X<<","<<c1Y<<") and botomright ("<<c1X<<","<<c2Y<<")"<<endl;
-		
-		
-		
-				bestCost=temp;
-				REPORT(INFO, "New best score is: " << bestCost);
-				//memcpy(bestConfig,tempc,sizeof(DSP*) *nrDSPs );	
+		if(temp < bestCost){
+			bestCost = temp;
+			cerr << "---------------------------------------New best score is: " << bestCost << endl;
+
+			for(int ii=0;ii<nrDSPs;ii++)
+				memcpy(bestConfig[ii],globalConfig[ii],sizeof(DSP) );
+		}else if (temp == bestCost ){
+			if (compareOccupation(tempc)==true) {
+				REPORT(INFO, "Interchange for equal cost. Now best has cost "<<temp);
+				bestCost = temp;
 				for(int ii=0;ii<nrDSPs;ii++)
 					memcpy(bestConfig[ii],globalConfig[ii],sizeof(DSP) );
-				//display(bestConfig);
 			}
-		else
-			if(temp == bestCost )
-				{
-					//cout<<"Cost egal!!!"<<endl;
-					//cout<<"Rezult compare is"<<compareOccupation(tempc)<<endl;
-					//~ cout<<"score temp is"<<temp<<" and current best is"<<bestCost<<endl;
-					//display(bestConfig);
-					if(compareOccupation(tempc)==true)
-						{
-							REPORT(INFO, "Interchange for equal cost. Now best has cost "<<temp);
-							
-							bestCost=temp;
-			
-							for(int ii=0;ii<nrDSPs;ii++)
-								memcpy(bestConfig[ii],globalConfig[ii],sizeof(DSP) );
-							//	display(bestConfig);
-						}
-				}
-	
-	
-		//~ for(int ii=0;ii<nrDSPs;ii++)
-		//~ free(tempc[ii]);
-	
-		//~ delete[] (tempc);
-	
+		}
 	}
 
-
-
+	/* computes the cost of a given configuration */
 	float IntTilingMult::computeCost(DSP** &config)
 	{
-	
-		
 		float acc=0.0;
+		int nrOfUsedDSPs = nrDSPs;
+		acc += ((float)nrDSPs)*costDSP;
 		
-		//costLUT = ( (1.0+scale) - scale * (1-ratio) ) /  ((float)100);
+		int partitions = 0; 
+		float LUTs4Multiplication =  partitionOfGridSlices (config, partitions);
 	
-		//~ cout<<"Cost of a DSP is "<<costDSP<<endl<<"Cost of a Slice is "<<costLUT<<endl;
-	
-		//~ int nrOfUsedDSPs=0;
-	
-		//~ for(int i=0;i<nrDSPs;i++)
-			//~ if(config[i]!=NULL)
-				//~ {
-					//~ acc+=costDSP;
-					//~ nrOfUsedDSPs++;
-				//~ }
+		cerr << " -----------------------------------Number of slices 4 multiplication of the rest is "<<LUTs4Multiplication<<endl;
+		acc += costLUT * LUTs4Multiplication;
 		
-		int nrOfUsedDSPs=nrDSPs;
-		acc = ((float)nrDSPs)*costDSP;
-	
-		
-		//~ cout<<"Number of used DSP blocks is "<<nrOfUsedDSPs<<endl;
-		
-		int partitions;
-		float LUTs4Multiplication =  partitionOfGridSlices(config,partitions);
-	
-		//~ cout<<"Number of slices 4 multiplication of the rest is "<<LUTs4Multiplication<<endl;
-		
-		acc =((float)nrOfUsedDSPs)*costDSP + costLUT * LUTs4Multiplication;
-		
-		//~ cout<<"Number of partitions for LUTs is "<<partitions<<endl;
-		nrOfUsedDSPs = bindDSPs(config);
-		//~ cout<<"Number of operands coming from DSPs is "<<nrOfUsedDSPs<<endl;
-		
-	
-		float LUTs4NAdder=((float)target_->getIntNAdderCost(wInX + wInY,nrOfUsedDSPs+partitions) );
-		//float LUTs4NAdder=((float)200);
-				
-				
-	
-		//~ cout<<"LUTs used for last "<<nrOfUsedDSPs+partitions<<" adder are"<<LUTs4NAdder<<endl;
-		
-		acc +=  LUTs4NAdder* costLUT;	
-		
-		
-		//~ Substracting the cost of different additions that can be done in DSPs(Virtex) or the cost of a DSP if they can be combined(Altera)
-		
-		
+		/* some of the DSPs can be bined in order to save some additions */
+		nrOfUsedDSPs = bindDSPs(config); 
+		cout << "------------------------------------ number of used DSPs = "<< nrOfUsedDSPs << endl;
+
+		float LUTs4NAdder=((float)target_->getIntNAdderCost(wInX + wInY, nrOfUsedDSPs+partitions) );
+		cerr << "  ---------------------------------- AdderCost = " << LUTs4NAdder << endl;
+		acc +=  LUTs4NAdder * costLUT;	
 		return acc;
-			
 	}
 
-	
-	
+
+	/* this function might need to be changed depending on the meaning of 
+	ratio */	
 	int IntTilingMult::estimateDSPs()
 	{
 		if (ratio > 1){
@@ -1981,7 +1166,7 @@ namespace flopoco{
 		float t1,t2,t3,t4; /* meaningful vars ;) */
 		int Xd, Yd;  /* the dimension of the multiplier on X and on Y */
 		target_->getDSPWidths(Xd,Yd);
-		bool fitMultiplicaication = false;
+		bool fitMultInDSPs = true;
 
 		int maxDSP, mDSP = target_->getNumberOfDSPs();
 		int wInXt = wInX;
@@ -1999,43 +1184,13 @@ namespace flopoco{
 		
 		maxDSP = int ( max( ceil(t1)*ceil(t2), ceil(t3)*ceil(t4)) );
 	
-		if(maxDSP > mDSP){
-			fitMultiplicaication = true;
+		if(maxDSP > mDSP){ /* there are not enough DSPs on this FPGA to perform 
+			this multiplication using just DSPs */
+			fitMultInDSPs = false;
 			maxDSP = mDSP; //set the maximum number of DSPs to the multiplication size
 		}
 			
-		if (ratio == 1){
-			if (fitMultiplicaication){
-				REPORT(INFO, "Warning!!! The number of existing DSPs on this FPGA is not enough to cover the whole multiplication!");
-			}else{
-				REPORT(INFO, "Warning!!! The minimum number of DSP that is neccessary to cover the whole addition will be used!");
-			}
-			return maxDSP;
-		}else{	
-						
-//			float scaleDSPs = 1.0;
-//			if(maxDSP>4)
-//				scaleDSPs= ((float)maxDSP) / ((float)maxDSP-2);
-//			float temp = ( float(target_->getIntMultiplierCost(wInX,wInY)) * ratio* scaleDSPs)  /   (float(target_->getEquivalenceSliceDSP())) ;
-//			//float temp = ( float(target_->getIntMultiplierCost(wInX,wInY)) )  /   ((1.-ratio)*float(target_->getEquivalenceSliceDSP())) ;
-//			cout<<"val calc "<<temp<<endl;
-//			int i_tmp = int(ceil(temp));
-//			cout<<" rounded "<<i_tmp<<endl;
-//	
-//			if(i_tmp > maxDSP){
-//				if (fitMultiplicaication){
-//					REPORT(INFO, "Warning!!! The number of estimated DSPs with respect with this ratio of preference is grather then the needed number of DSPs to perform this multiplication!");
-//				}else{
-//					REPORT(INFO, "Warning!!! The number of estimated DSPs with respect with this ratio of preference is grather then the total number of DSPs that exist on this board!");
-//				}
-//				
-//				i_tmp = maxDSP;
-//				//cout<<" final val is(the max dsps) "<<i_tmp<<endl;
-//			}
-//			return i_tmp ;
-
-			return int(ceil((float)maxDSP * ratio));
-		}
+		return int(ceil((float)maxDSP * ratio));
 	}
 	
 	
@@ -2147,126 +1302,40 @@ namespace flopoco{
 	
 	}
 
+	/* we check the validity of our tiling */
 	bool IntTilingMult::checkOverlap(DSP** config, int index)
 	{	
-		
-		//return false;
-		int x,y,w,h;
-		h = config[index]->getMaxMultiplierHeight();
-		w = config[index]->getMaxMultiplierWidth();
-		int poscur = config[index]->getCurrentPosition();
-		int posav = config[index]->getAvailablePositions();
-		int minY,minX;
-		config[index]->getTopRightCorner(minX,minY);
-		//~ cout<<index<<" "<< minX<<" "<<minY<<" "<<poscur<<" "<<posav<<" ";
-		minX+=w; 
-		for(;poscur<posav;poscur++)
-		{
-			if(minY>config[index]->Ypositions[poscur])
-			{
-				minY=config[index]->Ypositions[poscur];
-				minX=config[index]->Xpositions[poscur];
-			}
-		}
-		//~ cout<<index<<" "<< minX<<" "<<minY<<" ";
-		
-		config[index]->getBottomLeftCorner(x,y);
-		
-		
-		
-		long area = (vn - minX+6) * (vm -minY+6) + w * (vm- y);
-
-		//~ cout<<" area "<<area<<" dspArea "<<dsplimit<<" ";
-		int dsplimittemp = (int)ceil( ((double)area) / dsplimit );
-		//~ cout<<" limit "<<dsplimittemp<<" nrrest "<<(numberDSP4Overlap -index-1)<<endl;
-		//I have added +1 to the number of dsps that could be place because when we work with combined dsps there exists the case when an are of a dsp is not added
-		if( dsplimittemp+1 < (numberDSP4Overlap -index-1))
-
-			return true;
-		
-		//return false;
-		
-		//not used now
-		
 		int xtr1, ytr1, xbl1, ybl1, xtr2, ytr2, xbl2, ybl2;
-		//int nrdsp = sizeof(config)/sizeof(DSP*);
-		config[index]->getTopRightCorner(xtr1, ytr1);
-		config[index]->getBottomLeftCorner(xbl1, ybl1);
-	
 
+		config[index]->getTopRightCorner  (xtr1, ytr1);
+		config[index]->getBottomLeftCorner(xbl1, ybl1);
 		
-		bool a1 ;
-		bool a2 ;
-		bool a3 ;
-		bool a4 ;
-		bool a5 ;
-		bool a6 ;
-				
-		bool b1 ;
-		bool b2 ;
-		bool b3 ;
-		bool b4 ;
-		bool b5 ;
-		bool b6 ;
-		
-	
 		if(verbose)
 			cout << tab << tab << "checkOverlap: ref is block #" << index << ". Top-right is at (" << xtr1 << ", " << ytr1 << ") and Bottom-right is at (" << xbl1 << ", " << ybl1 << ")" << endl;
 	
-		for (int i=0; i<index; i++)
-			if (config[i] != NULL)
-				{
-					config[i]->getTopRightCorner(xtr2, ytr2);
-					config[i]->getBottomLeftCorner(xbl2, ybl2);
-					//cout<<index<<" "<<i<<" "<<xbl1<<" "<<xtr2<<endl;
-					if (((xbl1 < xbl2) && (ytr2 > ybl1)) || 	// config[index] is above and to the right of config[i]
-						  ((xbl1 < xtr2)))// && (ybl1 < ybl2))) 							// config[index] is to the right of config[i]
-						return true;
+		for (int i=0; i<index; i++){
+			if (config[i] != NULL) /* it should be different, morally ... */
+			{
+				config[i]->getTopRightCorner  (xtr2, ytr2);
+				config[i]->getBottomLeftCorner(xbl2, ybl2);
 			
-				
-					if(verbose)
-						cout << tab << tab << "checkOverlap: comparing with block #" << i << ". Top-right is at (" << xtr2 << ", " << ytr2 << ") and Bottom-right is at (" << xbl1 << ", " << ybl1 << ")" << endl;
+				if(verbose)
+					cout << tab << tab << "checkOverlap: comparing with block #" << i << ". Top-right is at (" << xtr2 << ", " << ytr2 << ") and Bottom-right is at (" << xbl1 << ", " << ybl1 << ")" << endl;
+		
+				if (((xtr2 <= xbl1) && (ytr2 <= ybl1) && (xtr2 >= xtr1) && (ytr2 >= ytr1)) || // config[index] overlaps the upper and/or right part(s) of config[i]
+				((xbl2 <= xbl1) && (ybl2 <= ybl1) && (xbl2 >= xtr1) && (ybl2 >= ytr1)) || // config[index] overlaps the bottom and/or left part(s) of config[i]
+				((xtr2 <= xbl1) && (ybl2 <= ybl1) && (xtr2 >= xtr1) && (ybl2 >= ytr1)) || // config[index] overlaps the upper and/or left part(s) of config[i]
+				((xbl2 <= xbl1) && (ytr2 <= ybl1) && (xbl2 >= xtr1) && (ytr2 >= ytr1)) || // config[index] overlaps the bottom and/or right part(s) of config[i]
+				((xbl2 >= xbl1) && (ybl2 <= ybl1) && (ytr2 >= ytr1) && (xtr2 <= xtr1)) || // config[index] overlaps the center part of config[i]
 			
-					//~ if (((xtr2 <= xbl1) && (ytr2 <= ybl1) && (xtr2 >= xtr1) && (ytr2 >= ytr1)) || // config[index] overlaps the upper and/or right part(s) of config[i]
-					//~ ((xbl2 <= xbl1) && (ybl2 <= ybl1) && (xbl2 >= xtr1) && (ybl2 >= ytr1)) || // config[index] overlaps the bottom and/or left part(s) of config[i]
-					//~ ((xtr2 <= xbl1) && (ybl2 <= ybl1) && (xtr2 >= xtr1) && (ybl2 >= ytr1)) || // config[index] overlaps the upper and/or left part(s) of config[i]
-					//~ ((xbl2 <= xbl1) && (ytr2 <= ybl1) && (xbl2 >= xtr1) && (ytr2 >= ytr1)) || // config[index] overlaps the bottom and/or right part(s) of config[i]
-					//~ ((xbl2 >= xbl1) && (ybl2 <= ybl1) && (ytr2 >= ytr1) && (xtr2 <= xtr1)) || // config[index] overlaps the center part of config[i]
-				
-					//~ ((xtr1 <= xbl2) && (ytr1 <= ybl2) && (xtr1 >= xtr2) && (ytr1 >= ytr2)) || // config[i] overlaps the upper and/or right part(s) of config[index]
-					//~ ((xbl1 <= xbl2) && (ybl1 <= ybl2) && (xbl1 >= xtr2) && (ybl1 >= ytr2)) || // config[i] overlaps the bottom and/or left part(s) of config[index]
-					//~ ((xtr1 <= xbl2) && (ybl1 <= ybl2) && (xtr1 >= xtr2) && (ybl1 >= ytr2)) || // config[i] overlaps the upper and/or left part(s) of config[index]
-					//~ ((xbl1 <= xbl2) && (ytr1 <= ybl2) && (xbl1 >= xtr2) && (ytr1 >= ytr2)) || // config[i] overlaps the bottom and/or right part(s) of config[index]
-					//~ ((xbl1 >= xbl2) && (ybl1 <= ybl2) && (ytr1 >= ytr2) && (xtr1 <= xtr2))    // config[i] overlaps the center part of config[index]
-					//~ )
-					//~ return true;
-					
-					
-					
-					// the optimisation of the above if
-					a1 = (xtr2 <= xbl1);
-					a2 = (xtr2 >= xtr1);
-					a3 = (xbl2 <= xbl1);
-					a4 = (xbl2 >= xtr1);
-					a5 = (xbl2 >= xbl1);
-					a6 = (xtr1 >= xtr2);
-				
-					b1 = (ytr2 <= ybl1);
-					b2 = (ytr2 >= ytr1);
-					b3 = (ybl2 <= ybl1);
-					b4 = (ybl2 >= ytr1);
-					b5 = (ytr1 >= ytr2);
-					b6 = (ybl1 <= ybl2);
-				
-					if ((((a1 && a2)||(a3 && a4)) && ((b1 && b2)||(b3 && b4))) || 
-					    (((a4 && a6)||(a5 && a1)) && ((b6 && b1)||(b4 && b5))) || 
-					    (((a5 && b3) && ( b2 && a6)) || ((a3 && b6) && (b5 && a2))))
-						return true;
-					
-				
-			
-			
-				}	
+				((xtr1 <= xbl2) && (ytr1 <= ybl2) && (xtr1 >= xtr2) && (ytr1 >= ytr2)) || // config[i] overlaps the upper and/or right part(s) of config[index]
+				((xbl1 <= xbl2) && (ybl1 <= ybl2) && (xbl1 >= xtr2) && (ybl1 >= ytr2)) || // config[i] overlaps the bottom and/or left part(s) of config[index]
+				((xtr1 <= xbl2) && (ybl1 <= ybl2) && (xtr1 >= xtr2) && (ybl1 >= ytr2)) || // config[i] overlaps the upper and/or left part(s) of config[index]
+				((xbl1 <= xbl2) && (ytr1 <= ybl2) && (xbl1 >= xtr2) && (ytr1 >= ytr2)) || // config[i] overlaps the bottom and/or right part(s) of config[index]
+				((xbl1 >= xbl2) && (ybl1 <= ybl2) && (ytr1 >= ytr2) && (xtr1 <= xtr2)))    // config[i] overlaps the center part of config[index]
+					return true;
+			}
+		}		
 		if(verbose)
 			cout << tab << tab << "checkOverlap: return false" << endl;	
 		return false;
@@ -2274,7 +1343,8 @@ namespace flopoco{
 
 
 	/**
-		There is one case that is not resolved w=yet. For DSP with widths different then height the algorithm should move the dsp with both values
+		There is one case that is not resolved yet. For DSP with widths 
+		different then height the algorithm should move the dsp with both values
 	*/
 
 	bool IntTilingMult::move(DSP** config, int index)
@@ -2303,98 +1373,34 @@ namespace flopoco{
 		if(index==0) // the first DSP block can move freely on the tiling grid
 		{
 			return false;
-			/*
-			//if ((xtr1 > 0) && (ytr1 > 0) && (xbl1 < vn-1) && (ybl1 < vm-1))
-					{// then the DSP block is placed outside the bounds 		
-	
-						//do{
-							// move down one unit
-							ytr1++;
-							ybl1++;
-			
-							if (ytr1 > exh) // the DSP block has reached the bottom limit of the tiling grid
-								{
-									// move to top of grid and one unit to the left 
-									xtr1++;
-									xbl1++;
-									
-									ytr1 = exh -1; //0
-									ybl1 = ytr1 + h-1;
-										
-									if (xtr1 > exw) // the DSP block has reached the left limit of the tiling grid
-										return false;
-								}						
-							config[index]->setTopRightCorner(xtr1, ytr1);
-							config[index]->setBottomLeftCorner(xbl1, ybl1);
-						//}while (checkOverlap(config, index));
-					}
-					*/
 		}
 		else // all DSP blocks except the first one can move only in fixed positions
 		{
-						do{
-							// move to next position
-							pos = config[index]->pop();
-							if(pos >= 0)
-							{
-									ytr1 = config[index]->Ypositions[pos];
-									ybl1 = ytr1 + h-1;
-									xtr1 = config[index]->Xpositions[pos];
-									xbl1 = xtr1 + w-1;
-							}
-							else
-								return false;
-								
-							//if ((ytr1 > gh) || (xtr1 > gw) || (ybl1 < exh) || (xbl1 < exw)) // the DSP block is out of the tiling grid
-							//	continue;
-														
-							config[index]->setTopRightCorner(xtr1, ytr1);
-							config[index]->setBottomLeftCorner(xbl1, ybl1);
-						}while (checkOverlap(config, index));
-		}
-		
-			
-		/* set the current position of the DSP block within the tiling grid
-		config[index]->setTopRightCorner(xtr1, ytr1);
-		config[index]->setBottomLeftCorner(xbl1, ybl1);
-		
-		
-		int f = checkFarness(config,index);	
-		if (f == 0)
-			return true;
-		else if (f == 1)
-			return false;
-		else if (f  == 2)
-			{
-				// move to top of grid and one unit to the left 
-				xtr1++;
-				xbl1++;
-				ytr1 = exh - h+1;
-				ybl1 = ytr1 + h-1;
-		
-				if (xbl1 > vn-1) // the DSP block has reached the left limit of the tiling grid
+			do{
+				// move to next position
+				pos = config[index]->pop();
+				if(pos >= 0){
+					ytr1 = config[index]->Ypositions[pos];
+					ybl1 = ytr1 + h-1;
+					xtr1 = config[index]->Xpositions[pos];
+					xbl1 = xtr1 + w-1;
+				}
+				else
 					return false;
+					
 				config[index]->setTopRightCorner(xtr1, ytr1);
 				config[index]->setBottomLeftCorner(xbl1, ybl1);
-				move(config, index,w,h);
-			}
-		else if (f == 3)
-			{
-				move(config, index,w,h);	
-			}
-		return false;
-		*/
+			}while (checkOverlap(config, index));
+		}
 		return true;
 	}
 
 	bool IntTilingMult::replace(DSP** config, int index)
 	{
-		//~ cout<<"DSP nr "<<index<<endl;
 		int xtr1, ytr1, xbl1, ybl1;
 		int w, h;
 		string targetID = target_->getID();
 		
-		//target->getDSPWidths(w,h);
 		w= config[index]->getMaxMultiplierWidth();
 		h= config[index]->getMaxMultiplierHeight();
 		config[index]->setPosition(0);
@@ -2408,157 +1414,136 @@ namespace flopoco{
 				config[index]->setPosition((avpos - curpos));
 		}
 		
-		if (index > 0)
-		{
-			w= config[index-1]->getMaxMultiplierWidth();
-			h= config[index-1]->getMaxMultiplierHeight();
-			//int dif = abs(h-w);
-			//int maxd = h;
-			int mind = w;
-			
-			if (w > h)
-			{
-				mind = h;
-			}
+		if (index > 0){
+			/* starting with the second DSP */
+			w = config[index-1]->getMaxMultiplierWidth();
+			h = config[index-1]->getMaxMultiplierHeight();
+
+			/* calulate the minimum width of the DSP */
+			int mind = min(w,h);
 			int mindX = mind;
 			int mindY = mind;
 			
-
-			if (targetID == "Virtex5")
-			{ // align bottom-left corner of current with X-possition of previous to catch ideal case
-				mindX = abs(w-h);
+			if (targetID == "Virtex5"){ 
+				/* align top right of current 24-17 bits left, 24 bits lower */
+				mindX = -abs(w-h);
 				mindY = h;
 			}
-			else if ((targetID == "StratixIV") || (targetID == "StratixIV"))
-			{ // align on diagonal
+			else if ((targetID == "StratixII") || (targetID == "StratixIII") || (targetID == "StratixIV")){ 
+				// align on diagonal in order to use internal adders 
 				mindX = -w;
 				mindY = h;	
 			}
-			//int positionDisplacementX[] = {0, dif, mind, maxd, w, w, w, w};
+
+			//TODO add positions from article
 			int positionDisplacementX[] = {0, w, mindX};
-			//int positionDisplacementY[] = {h, h, h, h, 0, dif, mind, maxd};
 			int positionDisplacementY[] = {h, 0, mindY};
 
-			int x,y,x1,y1, pos;
-			config[index-1]->getTopRightCorner(x, y);
+			int x,y, x1,y1, pos;
+			config[index-1]->getTopRightCorner(x,y);
 			
-			//* Loop unrolling
-			bool extraPosition = ((w!=h) || ((targetID == "StratixIV") || (targetID == "StratixIV")));
-			for (int i=0; i<3; i++)
-			{
-				x1 =x+positionDisplacementX[i];
-				y1 =y+positionDisplacementY[i];
-				//if(  (x1<vn&&y1<vm)||(x1>vn&&y1>vm)  ) //allows dsp to get out of the board in the diagonal of the bottom left corner
-				if (x1<vnme && y1<vmme && x1>0 && y1>0) 
-					if((i!=2) || extraPosition)
+			bool extraPosition = ( (w!=h) || ((targetID == "StratixII") || (targetID == "StratixIV") || (targetID == "StratixIV") ));
+			for (int i=0; i<3; i++){
+				x1 = x + positionDisplacementX[i];
+				y1 = y + positionDisplacementY[i];
+				if (x1 < vnme && y1 < vmme && x1>0 && y1>0) /* if inside the board */ 
+					if ( (i!=2) || extraPosition) /* for Virtex5 and Altera FPGAs */
 					config[index]->push(x1, y1);
-				
 			}
-			
-			/*
-			cout<<endl<<"index "<<index<<" ";
-			config[index]->resetPosition();
-			do
-			{
-				pos = config[index]->pop();
-				if(pos>=0)
-					cout<<" ("<<config[index]->Xpositions[pos]<<" , "<<config[index]->Ypositions[pos]<<")";	
-			}while(pos>=0);
-			cout<<endl;
-			*/
 			
 			w= config[index]->getMaxMultiplierWidth();
 			h= config[index]->getMaxMultiplierHeight();
 
 			config[index]->resetPosition();
-			
-			do{// go to next position in list
+			do{
+				/* we previously added a few trial positions for this block,
+				now it's time to try them out */
+				/* go to next position in list */
 				pos = config[index]->pop();
-				if(pos >= 0)
-				{
+				if(pos >= 0){
 					ytr1 = config[index]->Ypositions[pos];
 					ybl1 = ytr1 + h-1;
 					xtr1 = config[index]->Xpositions[pos];
 					xbl1 = xtr1 + w-1;
-				}
-				else
-				{
+				}else{
+					/* place DSP outside board: it should never get here */
 					config[index]->setTopRightCorner(vn, vm);
 					config[index]->setBottomLeftCorner(vn+w, vm+h);
 					return false;
 				}
 				
-				//~ cout<<index<<" (X,Y)="<<xtr1<<" "<<ytr1<<endl;
-					
-				//if ((ytr1 > gh) && (xtr1 > gw) && (ybl1 < exh) && (xbl1 < exw)) // the DSP block is out of the tiling grid
-				//	continue;
-											
+				/* we properly write-out the position of the next DSP */
 				config[index]->setTopRightCorner(xtr1, ytr1);
 				config[index]->setBottomLeftCorner(xbl1, ybl1);
-			}while (checkOverlap(config, index));
-				
+			
+			/* we validate this position if no overlaping exists with the 
+			curent index-1 configuration */
+			}while (checkOverlap(config, index)); 
+			
+			/* if we got here then we found a good position for our multiplier*/	
 			return true;
-		}
-		else
-		{	
-		// TODO if first DSP block	
-		//xtr1 = ytr1 = 0;
-		//xbl1 = w-1;
-		//ybl1 = h-1;
+		}else{	
+			/* if this DSP is the firs one to be placed */			
+			int exh = getExtraHeight();
+			int exw = getExtraWidth();
 		
-		//cout<<"index"<<endl;
+			/* tiling board has a band around it. 
 			
-		int exh = getExtraHeight();
-		int exw = getExtraWidth();
-		
-		//~ xtr1 = exw -1;
-		//~ ytr1 = exh ;	
-		//~ ybl1 = ytr1 + h-1;
-		//~ xbl1 = xtr1 + w-1;
-		xtr1 = exw ;
-		ytr1 = exh ;	
-		ybl1 = ytr1 + h-1;
-		xbl1 = xtr1 + w-1;
+			------------------------
+			' ___________________  '
+			' |                  | '
+			' |                  | '
+			' |                  | '
+			' |__________________| '
+			'                      '
+			'----------------------
+			the next places the first multiplier in the top right corner
+			*/
+			 
+			xtr1 = exw ;
+			ytr1 = exh ;	
+			ybl1 = ytr1 + h-1;
+			xbl1 = xtr1 + w-1;
 			
-		config[index]->setTopRightCorner(xtr1, ytr1);
-		config[index]->setBottomLeftCorner(xbl1, ybl1);
+			config[index]->setTopRightCorner(xtr1, ytr1);
+			config[index]->setBottomLeftCorner(xbl1, ybl1);
 		
-		if(verbose)
-			cout << tab << "replace : DSP width is " << w << ", height is " << h << endl; 
-		// try yo place the DSP block inside the extended region of the tiling grid
+			REPORT( DETAILED, "replace : DSP width is " << w << ", height is " << h);
 		}
 		return true;
 	}
 
+
+	/* do an initial tiling of the board using the dspCount multipliers */
 	void IntTilingMult::initTiling(DSP** &config, int dspCount)
 	{
-		int w,h; 
+		int w, h; 
 		target_->getDSPWidths(w, h);
 		dsplimit = w*h;
+		
+		/* we initially allocate an array of empty pointers to our 
+		tiling configuration */
 		config = new DSP*[nrDSPs];
-		//nrOfShifts4Virtex=4;
-		//countsShift = new int[nrDSPs];
 		for (int i=0; i<nrDSPs; i++)
-		{
 			config[i] = NULL;
-		}
-		for (int i=0; i<dspCount; i++)
-		{
-			if(verbose)
-				cout << "initTiling : iteration #" << i << endl; 
+		
+		for (int i=0; i<dspCount; i++){
+			REPORT(DETAILED, "initTiling : iteration #" << i); 
 			config[i] = target_->createDSP();						
 			config[i]->setNrOfPrimitiveDSPs(1);
 			
-			config[i]->allocatePositions(3*i); // each DSP offers 8 positions
-			if(!replace(config, i))
-			{
-				w=config[i]->getMaxMultiplierWidth();
-				h= config[i]->getMaxMultiplierHeight();
+			/* each DSP offers 8 positions, actually a lot less but 8 is 
+			for margin */
+			config[i]->allocatePositions(3*i); 
+
+			/* try to place the DSP ... */
+			if(!replace(config, i)){
+				w = config[i]->getMaxMultiplierWidth();
+				h = config[i]->getMaxMultiplierHeight();
 				config[i]->setTopRightCorner(vn, vm);
 				config[i]->setBottomLeftCorner(vn+w, vm+h);
 			}
 		}
-		
 	}
 	
 	void IntTilingMult::initTiling2(DSP** &config, int dspCount)
@@ -3127,7 +2112,7 @@ namespace flopoco{
 							REPORT(DETAILED, "CONNECTED ================ " <<connected);
 							d = tempc[i];
 							
-							
+							int startXOld=0, startYOld=0;							
 							while (d != NULL)
 								{
 									d->getTopRightCorner(trx1, try1);
@@ -3184,7 +2169,11 @@ namespace flopoco{
 											cname << "txy" << i << j;
 											setCycle(j);
 											vhdl << tab << declare(cname.str(), multW+multH+2) << " <= " << use(xname.str())<<range(multW,0) << " * " << use(yname.str())<<range(multH,0) << ";" << endl;
-											vhdl << tab << declare(join(mname.str(),j), multW+multH+2) << " <= (" << use(cname.str())<<range(multW+multH+1,0) << ") + (" <<zg(d->getShiftAmount(),0)<< " &" << use(join(mname.str(), j-1)) << range(multW+multH+1, d->getShiftAmount()) << ");" << endl;	
+											
+											if (startX+startY == startXOld+startYOld)
+												vhdl << tab << declare(join(mname.str(),j), multW+multH+2) << " <= (" << cname.str()<<range(multW+multH+1,0) << ") + (" << join(mname.str(), j-1) << ");" << endl;	
+											else
+												vhdl << tab << declare(join(mname.str(),j), multW+multH+2) << " <= (" << cname.str()<<range(multW+multH+1,0) << ") + (" <<zg(d->getShiftAmount(),0)<< " &" << join(mname.str(), j-1) << range(multW+multH+1, d->getShiftAmount()) << ");" << endl;	
 											if (d->getShiftOut() == NULL) // concatenate the entire partial product
 												{
 													setCycle(connected);
@@ -3203,7 +2192,33 @@ namespace flopoco{
 												{
 													setCycle(connected);
 													sname.seekp(ios_base::beg);
-													sname << use(join(mname.str(),j)) << range(d->getShiftAmount()-1, 0) << " & " << sname.str();
+													
+													/* check if the next element has as 17-bit shift wr to this one */
+													int ttrx1,ttry1,bblx1,bbly1, ffpadX, ffpadY, bbpadX, bbpadY;
+													d->getShiftOut()->getTopRightCorner(ttrx1, ttry1);
+													d->getShiftOut()->getBottomLeftCorner(bblx1, bbly1);
+									
+													ffpadX = bblx1-wInX-extW+1;
+													ffpadX = (ffpadX<0)?0:ffpadX;
+									
+													ffpadY = bbly1-wInY-extH+1;
+													ffpadY = (ffpadY<0)?0:ffpadY;
+									
+													bbpadX = extW-ttrx1;
+													bbpadX = (bbpadX<0)?0:bbpadX;
+									
+													bbpadY = extH-ttry1;
+													bbpadY = (bbpadY<0)?0:bbpadY;
+									
+									
+													int startXNext = bblx1-ffpadX-extW;
+													int endXNext = ttrx1+bbpadX-extW;
+													int startYNext = bbly1-ffpadY-extH;
+													int endYNext = ttry1+bbpadY-extH;
+													
+													if //((startX+startY != startXOld+startYOld))// && 
+													( startX+startY != startXNext+startYNext) //)
+														sname << join(mname.str(),j) << range(d->getShiftAmount()-1, 0) << " & " << sname.str();
 												}
 										}
 									else // only multiplication
@@ -3225,8 +2240,34 @@ namespace flopoco{
 												}
 											else // concatenate only the lower portion of the partial product
 												{
-//													setCycle(connected);
-													sname << use(mname.str()) << range(d->getShiftAmount()-1, bpadX+bpadY) << " & " << zg(trx1-extW,0) << " & " << zg(try1-extH,0) << ";" << endl;
+													/* check if the next element has as 17-bit shift wr to this one */
+													int ttrx1,ttry1,bblx1,bbly1, ffpadX, ffpadY, bbpadX, bbpadY;
+													d->getShiftOut()->getTopRightCorner(ttrx1, ttry1);
+													d->getShiftOut()->getBottomLeftCorner(bblx1, bbly1);
+									
+													ffpadX = bblx1-wInX-extW+1;
+													ffpadX = (ffpadX<0)?0:ffpadX;
+									
+													ffpadY = bbly1-wInY-extH+1;
+													ffpadY = (ffpadY<0)?0:ffpadY;
+									
+													bbpadX = extW-ttrx1;
+													bbpadX = (bbpadX<0)?0:bbpadX;
+									
+													bbpadY = extH-ttry1;
+													bbpadY = (bbpadY<0)?0:bbpadY;
+									
+									
+													int startXNext = bblx1-ffpadX-extW;
+													int endXNext = ttrx1+bbpadX-extW;
+													int startYNext = bbly1-ffpadY-extH;
+													int endYNext = ttry1+bbpadY-extH;
+													
+													if //((startX+startY != startXOld+startYOld))// && 
+													( startX+startY != startXNext+startYNext) //)
+														sname << use(mname.str()) << range(d->getShiftAmount()-1, bpadX+bpadY) << " & ";
+														
+													sname <<  zg(trx1-extW,0) << " & " << zg(try1-extH,0) << ";" << endl;
 												}
 										}
 				
@@ -3242,6 +2283,9 @@ namespace flopoco{
 										}
 				
 				
+									startXOld = startX;
+									startYOld = startY;
+									
 									d = d->getShiftOut();
 									j++;
 								}
@@ -3656,16 +2700,6 @@ namespace flopoco{
 				fig << " 4 1 0 50 -1 0 7 0.0000 4 195 630 "<<(-xT+getExtraWidth()-1)*45<<" "<<-45<<" "<<xT-getExtraWidth()<<"\\001" << endl;
 				fig << " 4 0 0 50 -1 0 7 0.0000 4 195 630 "<<45<<" "<<(yT-getExtraHeight()+2)*45<<" "<<yT-getExtraHeight()<<"\\001" << endl;
 				fig << " 4 0 0 50 -1 0 7 0.0000 4 195 630 "<<45<<" "<<(yB-getExtraHeight()+1)*45<<" "<<yB-getExtraHeight()<<"\\001" << endl;
-
-
-//				fig << "	  " << (-xB+getExtraWidth()-1)*45 << " " << (yT-getExtraHeight())*45 
-//		         << " " << (-xT+getExtraWidth())*45 << " " << (yT-getExtraHeight())*45 
-//		         << " " << (-xT+getExtraWidth())*45 << " " << (yB-getExtraHeight()+1)*45 
-//		         << " " << (-xB+getExtraWidth()-1)*45 << " " << (yB-getExtraHeight()+1)*45 
-
-
-
-
 			}
 		}
 
@@ -3704,7 +2738,6 @@ namespace flopoco{
 			fig << " 4 1 0 50 -1 0 7 0.0000 4 195 630 "<<(-xT+getExtraWidth()-1)*45<<" "<<-45<<" "<<xT-getExtraWidth()<<"\\001" << endl;
 			fig << " 4 0 0 50 -1 0 7 0.0000 4 195 630 "<<45<<" "<<(yT-getExtraHeight()+2)*45<<" "<<yT-getExtraHeight()<<"\\001" << endl;
 			fig << " 4 0 0 50 -1 0 7 0.0000 4 195 630 "<<45<<" "<<(yB-getExtraHeight()+1)*45<<" "<<yB-getExtraHeight()<<"\\001" << endl;
-			
 		}
 		
 		fig << "		2 2 1 1 0 7 50 -1 -1 4.000 0 0 -1 0 0 5" << endl;

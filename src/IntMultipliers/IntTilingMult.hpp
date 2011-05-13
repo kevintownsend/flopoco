@@ -177,30 +177,21 @@ namespace flopoco{
 		/** The maximum allow distance to move away from the others for the last block */
 		int maxDist2Move;
 	
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
 		/** This function estimates the maximum number of DSPs that can be used
 		with respect to the preference of the user */
 		int estimateDSPs();
 
 		/** This function computes the cost of the configuration received as input parameter */
-	
+
 		float computeCost(DSP** &config);
+	
+//		float computeCostBinding(DSP** &config);
 
 		/** This function compares the cost of the current configuration( globalConfig) with the best configuration obtained so far(bestConfig). If the current one is better then the best one, 
 			 then it will copy the current configuration into the best one.
 		*/
 		void compareCost();
+//		void compareCostBinding();
 	
 		/** This function is the backtracking function for finding the best configuration with respect to the user preference
 		 */

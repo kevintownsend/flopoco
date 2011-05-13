@@ -37,7 +37,7 @@ namespace flopoco{
 
 	extern vector<Operator*> oplist;
 
-	DotProduct::DotProduct(Target* target, int wE, int wFX, int wFY, int MaxMSBX, int LSBA, int MSBA,  map<string, double> inputDelays):
+	DotProduct::DotProduct(Target* target, int wE, int wFX, int wFY, int MaxMSBX, int LSBA, int MSBA, double ratio,  map<string, double> inputDelays):
 		Operator(target), wE(wE), wFX(wFX), wFY(wFY), MaxMSBX(MaxMSBX), LSBA(LSBA), MSBA(MSBA)  {
 	
 		ostringstream name;
@@ -90,7 +90,7 @@ namespace flopoco{
 		vhdl << tab << declare("signP") << " <= sX xor sY;"<<endl;
 
 		/* multiply mantissas */
-		IntMultiplier *mMult = new IntMultiplier(target, 1+wFX, 1+wFY, inDelayMap("X", target->localWireDelay() + getCriticalPath()), 0, 0.9);
+		IntMultiplier *mMult = new IntMultiplier(target, 1+wFX, 1+wFY, inDelayMap("X", target->localWireDelay() + getCriticalPath()), 2, ratio);
 		oplist.push_back(mMult); 
 
 		inPortMap ( mMult, "X", "fracX");

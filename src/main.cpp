@@ -1668,8 +1668,9 @@ bool parseCommandLine(int argc, char* argv[]){
 				int MaxMSBX = atoi(argv[i++]); // may be negative
 				int LSBA = atoi(argv[i++]); // may be negative
 				int MSBA = atoi(argv[i++]); // may be negative
-				cerr << "> DotProduct , wE="<<wE<<", wFX="<<wFX<<", wFY="<<wFY<<", MaxMSBX="<<MaxMSBX<<", LSBA="<<LSBA<<", MSBA="<<MSBA<<"\n";
-				op = new DotProduct(target, wE, wFX, wFY, MaxMSBX, LSBA, MSBA);
+				double ratio = atof(argv[i++]); // may be negative
+				cerr << "> DotProduct , wE="<<wE<<", wFX="<<wFX<<", wFY="<<wFY<<", MaxMSBX="<<MaxMSBX<<", LSBA="<<LSBA<<", MSBA="<<MSBA<<", ratio="<<ratio<<"\n";
+				op = new DotProduct(target, wE, wFX, wFY, MaxMSBX, LSBA, MSBA, ratio);
 				addOperator(op);
 			}
 		}
