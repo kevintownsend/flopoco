@@ -70,7 +70,7 @@ namespace flopoco {
 		switch (selectedVersion) {
 			case 0: { IntMultiplierInstantiation = new UnsignedIntMultiplier(target, wInX, wInY, inputDelays); break;}
 			case 1: { IntMultiplierInstantiation = new SignedIntMultiplier(target, wInX, wInY, inputDelays); break;}
-			case 2: { IntMultiplierInstantiation = new IntTilingMult(target, wInX, wInY, ratio, -1, false); break;}
+			case 2: { IntMultiplierInstantiation = new IntTilingMult(target, wInX, wInY, ratio, 2, false); break;}
 			case 3: { IntMultiplierInstantiation = new LogicIntMultiplier(target, wInX, wInY, inputDelays, false); break;}
 			case 4: { IntMultiplierInstantiation = new LogicIntMultiplier(target, wInX, wInY, inputDelays, true); break; }
 			default: { REPORT(INFO, "Something is wrong!, check IntMultiplier");		

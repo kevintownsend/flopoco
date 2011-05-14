@@ -361,8 +361,9 @@ static void usage(char *name){
 	cerr << "      Long fixed-point accumulator\n";
 	OP( "LongAcc2FP","LSB_acc MSB_acc wE_out wF_out");
 	cerr << "      Post-normalisation unit for LongAcc \n";
-	OP( "DotProduct","wE wFX wFY MaxMSB_in LSB_acc MSB_acc");
-	cerr << "      Floating-point dot product unit \n";
+	OP( "DotProduct","wE wFX wFY MaxMSB_in LSB_acc MSB_acc ratio");
+	cerr << "      Floating-point dot product unit. Ratio parameter controls  \n";
+	cerr << "      DSP/Logic tradeoff\n";
 	OP( "FPExp","wE wF");
 	cerr << "      Floating-point exponential function\n";
 	OP( "FPLog","wE wF InTableSize");

@@ -79,7 +79,7 @@ namespace flopoco{
 				cerr<<"> Shifters\t depth = "<<dep<<" at i="<<currentLevel<<endl;
 				
 			double wireD = target->localWireDelay( wIn );
-			cerr << " wire delay is " << wireD << " and unregisteredLevels="<<unregisteredLevels<< endl;
+			REPORT(DEBUG, " wire delay is " << wireD << " and unregisteredLevels="<<unregisteredLevels);
 			if (manageCriticalPath( intlog( mpz_class(target->lutInputs()/2), mpz_class(dep)) * target->lutDelay() + (intlog( mpz_class(target->lutInputs()/2), mpz_class(dep))-1)*target->localWireDelay()+ wireD)){
 				lastRegLevel = currentLevel;
 				REPORT(DEBUG, tab << "REG LEVEL current delay is:" << getCriticalPath());

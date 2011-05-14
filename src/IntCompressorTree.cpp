@@ -39,7 +39,7 @@ namespace flopoco{
 		name << "IntCompressorTree_" << wIn_<<"_"<<N_<<"_uid"<<Operator::getNewUId();
 		setName(name.str());
 		srcFileName = "IntCompressorTree";
-		setCopyrightString("Bogdan Pasca (2009)");
+		setCopyrightString("Bogdan Pasca (2009-2011)");
 
 		// Set up the IO signals
 		for (int i=0; i<N; i++){
@@ -121,7 +121,7 @@ namespace flopoco{
 				tmp << " having score " << bestSol[0];
 				REPORT(DEBUG, tmp.str());
 				
-				manageCriticalPath( target->lutDelay() + target->localWireDelay());
+				manageCriticalPath( target->lutDelay() + target->localWireDelay( target->lutInputs() ));
 				REPORT(DEBUG, "Delay in compressor tree @ some level " << getCriticalPath());
 			
 				int cMap = 0;

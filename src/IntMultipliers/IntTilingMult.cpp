@@ -102,9 +102,9 @@ namespace flopoco{
 			DSPs. */
 			if ( ( target_->getID() == "Virtex4") ||
 			 ( target_->getID() == "Spartan3"))  // then the target is A Xilinx FPGA 
-				nrOfShifts4Virtex=5;//int(sqrt(nrDSPs));			
+				nrOfShifts4Virtex=16;//int(sqrt(nrDSPs));			
 			else
-				nrOfShifts4Virtex=20;
+				nrOfShifts4Virtex=32;
 			
 			//~ float tempDist =	 (movePercentage  * getExtraWidth() * getExtraWidth()) /4.0 + (movePercentage *getExtraHeight() * getExtraHeight()) /4.0;
 			/* each time a tile is placed maxDist2Move is the maximum distance
@@ -136,7 +136,12 @@ namespace flopoco{
 			}						
 			runAlgorithm();		
 			
-		
+			REPORT(INFO, "################################################################################"); 
+			REPORT(INFO, "Algorithm found a solution:");
+			computeCost(bestConfig);
+
+
+
 			REPORT(INFO, "Estimated DSPs:= "<<nrDSPs);
 			target->getDSPWidths(x,y);
 			REPORT(INFO,"Width of DSP is := "<<x<<" Height of DSP is:="<<y);
@@ -283,9 +288,9 @@ namespace flopoco{
 
 			tilingAlgorithm (nrDSPs-1, nrDSPs-1, false, nrDSPs-1);
 			
-			bindDSPs(bestConfig);
-				
-			display(bestConfig);
+//			bindDSPs(bestConfig);
+//			display(bestConfig);
+
 			REPORT(INFO, "Best cost is "<<bestCost);
 		}else{
 			n=vn;
@@ -829,8 +834,6 @@ namespace flopoco{
 	soft-core multipliers */
 	int IntTilingMult::partitionOfGridSlices(DSP** config,int &partitions)
 	{
-		cout << " repartitioning logic multipliers " << endl;
-		
 		int costSlice = 0, count = 1, nj,ni,njj,nii;
 
 		int n = vn, m = vm, nmew = vnme, mmeh = vmme;
@@ -962,7 +965,6 @@ namespace flopoco{
 					}
 					
 					if (! (j>=nmew || jj< ew || i >= mmeh || ii < eh)){
-						cerr << "j=" <<j << " jj="<<jj<<" i="<<i<<" ii="<<ii<<endl;
 
 						/* if the logic block was not outside the board */
 									
@@ -987,8 +989,10 @@ namespace flopoco{
 							nii = ii;
 						
 						partitions++;
-						cerr << " Need Logic Multiplier of size = " << njj-nj+1 << " X "<< nii-ni+1 << endl;
-						costSlice += target_->getIntMultiplierCost(njj-nj+1,nii-ni+1);
+						int logicMultiplierCost = target_->getIntMultiplierCost(njj-nj+1,nii-ni+1);
+						costSlice += logicMultiplierCost;
+						REPORT(DETAILED, " Need Logic Multiplier of size = " << njj-nj+1 << " X "<< nii-ni+1 << " with logic cost="<<logicMultiplierCost);
+
 						
 						fillMatrix(mat,n,m,j,i,jj,ii,count);
 						count++;
@@ -1016,14 +1020,12 @@ namespace flopoco{
 
 				bool ver = true;
 				int rw,rh;
-				int sa;
+				int sa; /* the shift amount */
 				
 				/* now we start binding DSPs */		
 				while ( ver==true && ref->getShiftOut() == NULL && count < nrOfShifts4Virtex){
 					ver=false;
 
-					/* BINDING DSPs in crucial so this function MUST be optimized
-					 TODO */
 					for(int j=0; j < nrDSPs &&  ref->getShiftOut()==NULL; j++){
 						
 						ref->getTopRightCorner  (itx,ity);
@@ -1038,12 +1040,12 @@ namespace flopoco{
 							config[j]->getTopRightCorner(jtx,jty);
 							/* if this one is in the bounds of the board */
 							if ( jtx<=vnme && jty<vmme){
-								cout<<" itx ity "<<itx<<" "<<ity<<" jtx jty "<< jtx<<" "<<jty<<endl;
+								REPORT(DEBUG, " itx ity "<<itx<<" "<<ity<<" jtx jty "<< jtx<<" "<<jty);
 								sa = config[j]->getShiftAmount(); //17 for Xilinx
 								/* for now this condition binds DSPs on horizontal
 								we might need to change this one for optimality */
 								if ( (jtx + jty == itx + ity) && config[j]->getShiftIn()==NULL){
-									cout<<"DSP #"<<i<<" bind with DSP# "<<j<<"on direct line"<<endl;
+									REPORT(DETAILED, "DSP #"<<i<<" bind with DSP# "<<j<<"on direct line");
 									ver = true;
 									ref->setShiftOut(config[j]);
 									config[j]->setShiftIn(ref);
@@ -1051,11 +1053,9 @@ namespace flopoco{
 									nrOfUsedDSPs--;
 									ref = config[j];
 									count += ref->getNrOfPrimitiveDSPs();
-//								}else if ( (jtx == ibx+1 && jty==ity     && rw==sa && config[j]->getShiftIn()==NULL) || 
-//										   (jtx == itx   && jty==iby+1   && rh==sa && config[j]->getShiftIn()==NULL)){
 								}else if (jtx + jty - itx - ity == sa &&  config[j]->getShiftIn()==NULL) {
 									/* this is the binding condition */
-									cout<<"DSP #"<<i<<" bind with DSP# "<<j<<" on shift line" << endl;
+									REPORT(DETAILED, "DSP #"<<i<<" bind with DSP# "<<j<<" on shift line");
 									ver = true;
 									ref->setShiftOut(config[j]);
 									config[j]->setShiftIn(ref);
@@ -1067,7 +1067,6 @@ namespace flopoco{
 							}
 						}
 					}
-					cout << "exit for ..." << endl;
 				}
 			}
 		}
@@ -1116,7 +1115,7 @@ namespace flopoco{
 		
 		if(temp < bestCost){
 			bestCost = temp;
-			cerr << "---------------------------------------New best score is: " << bestCost << endl;
+			REPORT( INFO, "New best score is: " << bestCost);
 
 			for(int ii=0;ii<nrDSPs;ii++)
 				memcpy(bestConfig[ii],globalConfig[ii],sizeof(DSP) );
@@ -1140,16 +1139,17 @@ namespace flopoco{
 		int partitions = 0; 
 		float LUTs4Multiplication =  partitionOfGridSlices (config, partitions);
 	
-		cerr << " -----------------------------------Number of slices 4 multiplication of the rest is "<<LUTs4Multiplication<<endl;
+		REPORT( DETAILED, "Number of slices 4 multiplication of the rest is " << LUTs4Multiplication);
 		acc += costLUT * LUTs4Multiplication;
 		
 		/* some of the DSPs can be bined in order to save some additions */
 		nrOfUsedDSPs = bindDSPs(config); 
-		cout << "------------------------------------ number of used DSPs = "<< nrOfUsedDSPs << endl;
+		REPORT(DETAILED, "number of used DSPs = "<< nrOfUsedDSPs);
 
 		float LUTs4NAdder=((float)target_->getIntNAdderCost(wInX + wInY, nrOfUsedDSPs+partitions) );
-		cerr << "  ---------------------------------- AdderCost = " << LUTs4NAdder << endl;
-		acc +=  LUTs4NAdder * costLUT;	
+		REPORT( DETAILED, " AdderCost = " << LUTs4NAdder);
+		acc +=  LUTs4NAdder * costLUT;
+		REPORT( DETAILED, " Configuration cost = " << acc);	
 		return acc;
 	}
 
@@ -1310,8 +1310,7 @@ namespace flopoco{
 		config[index]->getTopRightCorner  (xtr1, ytr1);
 		config[index]->getBottomLeftCorner(xbl1, ybl1);
 		
-		if(verbose)
-			cout << tab << tab << "checkOverlap: ref is block #" << index << ". Top-right is at (" << xtr1 << ", " << ytr1 << ") and Bottom-right is at (" << xbl1 << ", " << ybl1 << ")" << endl;
+		REPORT(DEBUG, tab << tab << "checkOverlap: ref is block #" << index << ". Top-right is at (" << xtr1 << ", " << ytr1 << ") and Bottom-right is at (" << xbl1 << ", " << ybl1 << ")");
 	
 		for (int i=0; i<index; i++){
 			if (config[i] != NULL) /* it should be different, morally ... */
@@ -1319,8 +1318,7 @@ namespace flopoco{
 				config[i]->getTopRightCorner  (xtr2, ytr2);
 				config[i]->getBottomLeftCorner(xbl2, ybl2);
 			
-				if(verbose)
-					cout << tab << tab << "checkOverlap: comparing with block #" << i << ". Top-right is at (" << xtr2 << ", " << ytr2 << ") and Bottom-right is at (" << xbl1 << ", " << ybl1 << ")" << endl;
+				REPORT(DEBUG, "checkOverlap: comparing with block #" << i << ". Top-right is at (" << xtr2 << ", " << ytr2 << ") and Bottom-right is at (" << xbl1 << ", " << ybl1 << ")");
 		
 				if (((xtr2 <= xbl1) && (ytr2 <= ybl1) && (xtr2 >= xtr1) && (ytr2 >= ytr1)) || // config[index] overlaps the upper and/or right part(s) of config[i]
 				((xbl2 <= xbl1) && (ybl2 <= ybl1) && (xbl2 >= xtr1) && (ybl2 >= ytr1)) || // config[index] overlaps the bottom and/or left part(s) of config[i]
@@ -1336,8 +1334,7 @@ namespace flopoco{
 					return true;
 			}
 		}		
-		if(verbose)
-			cout << tab << tab << "checkOverlap: return false" << endl;	
+		REPORT( DEBUG, "checkOverlap: return false");
 		return false;
 	}
 
@@ -1358,8 +1355,7 @@ namespace flopoco{
 		config[index]->getTopRightCorner(xtr1, ytr1);
 		config[index]->getBottomLeftCorner(xbl1, ybl1);
 	
-		if(verbose)
-			cout << tab << "replace : DSP #" << index << " width is " << w << ", height is " << h << endl; 
+		REPORT(DEBUG, tab <<  "replace : DSP #" << index << " width is " << w << ", height is " << h);
 		/*
 		 * Initialized in the constructor:
 		 * vn = wInX+2*getExtraWidth(); width of the tiling grid including extensions
@@ -1862,99 +1858,101 @@ namespace flopoco{
 			memcpy(globalConfig[i], bestConfig[i], sizeof(DSP));
 	}
 	
-	int IntTilingMult::bindDSPs4Stratix(DSP** config)
-	{
+	/* in this function DSPs are binded into supertiles in order to use
+	their internal adders; */
+	int IntTilingMult::bindDSPs4Stratix(DSP** config){
 		int nrDSPs_ = nrDSPs;
 		int DSPcount = nrDSPs_;
-	
+
 		for (int i=0; i<nrDSPs_; i++)
 			if (config[i] == NULL)
 				DSPcount--;
 		
 			
 		for (int i=0; i<DSPcount; i++)
-			if (config[i]->getNumberOfAdders() < 3) // serach for an aligned DSP block that can be added with this one
-				{
-					int xtri, ytri, wx, wy, nrOp;
-					bool bound;
-					config[i]->getTopRightCorner(xtri, ytri);
-					target_->getDSPWidths(wx,wy);
+			if (config[i]->getNumberOfAdders() < 3){ // serach for an aligned DSP block that can be added with this one
 				
-					if (verbose)
-						cout << "bindDSP4Stratix: DSP #" << i << " has less than 3 operands. Top-right is at ( " << xtri << ", " << ytri << ") width is " << wx << endl;
-					DSP** operands;
-					DSP** operandsj;
-					DSP** opsk;
-					for (int j=0; j<DSPcount; j++)
-						if (i != j)
-							{
-								nrOp = config[i]->getNumberOfAdders();
-								if (nrOp == 3)
-									break;
+				int xtri, ytri, wx, wy, nrOp;
+				bool bound;
+				
+				config[i]->getTopRightCorner(xtri, ytri);
+				target_->getDSPWidths(wx,wy);
 			
-								operands = config[i]->getAdditionOperands();
-								bound = false;
-								// check if the DSP blocks are bound
-								for (int k=0; k<nrOp; k++)
-									if (operands[k] == config[j]) // the DSPs are allready bound
-										{
-											if (verbose)
-												cout << "bindDSP4Stratix: DSP #" << j << " has #" << i << " as one of its operands allready." << endl;
-											bound = true;
-											break;
-										}
-				
-								if (bound)
-									continue;
-								// if they are not bound
-								int xtrj, ytrj, nrOpj;
-								config[j]->getTopRightCorner(xtrj, ytrj);
-								nrOpj = config[j]->getNumberOfAdders();
-				
-								if (verbose)
-									cout << "bindDSP4Stratix:" << tab << " Checking against DSP #" << j << " Top-right is at ( " << xtrj << ", " << ytrj << ") width is " << wx << endl;
-			
-								if ((((xtrj-xtri == -wx) && (ytrj-ytri == wy)) || ((xtrj-xtri == wx) && (ytrj-ytri == -wy))) && // if they have the same alignment
-									 (nrOpj + nrOp < 3)) // if the DSPs we want to bind have less than 3 other DSPs to add together
-									{ // copy the operands from one another and bind them 
-					
+				if (verbose)
+					cout << "bindDSP4Stratix: DSP #" << i << " has less than 3 operands. Top-right is at ( " << xtri << ", " << ytri << ") width is " << wx << endl;
+				DSP** operands;
+				DSP** operandsj;
+				DSP** opsk;
+				for (int j=0; j<DSPcount; j++)
+					if (i != j)
+						{
+							nrOp = config[i]->getNumberOfAdders();
+							if (nrOp == 3)
+								break;
+		
+							operands = config[i]->getAdditionOperands();
+							bound = false;
+							// check if the DSP blocks are bound
+							for (int k=0; k<nrOp; k++)
+								if (operands[k] == config[j]) // the DSPs are allready bound
+									{
 										if (verbose)
-											cout << "bindDSP4Stratix : DSP #" << j << " together with #" << i << " have fewer than 3 operands. We can bind them." << endl;
-										operandsj = config[j]->getAdditionOperands();
-					
-										for (int k=0; k<nrOp; k++)
-											{
-												operandsj[nrOpj+k] = operands[k];
-												// each operand of congif[i] also gets bounded 
-												int opcntk = operands[k]->getNumberOfAdders();
-												operands[k]->setNumberOfAdders(nrOp+nrOpj+1);
-												opsk = operands[k]->getAdditionOperands();
-												for (int l=0; l < nrOpj; l++)
-													opsk[l+opcntk] = operandsj[l];
-												opsk[nrOpj+opcntk] = config[j];
-												operands[k]->setAdditionOperands(opsk);
-											}
-										operandsj[nrOp+nrOpj] = config[i];
-										config[j]->setAdditionOperands(operandsj);
-										config[j]->setNumberOfAdders(nrOp+nrOpj+1);
-					
-										for (int k=0; k<nrOpj; k++)
-											{
-												operands[nrOp+k] = operandsj[k];
-												// each operand of congif[j] also gets bounded 
-												int opcntk = operandsj[k]->getNumberOfAdders();
-												operandsj[k]->setNumberOfAdders(nrOp+nrOpj+1);
-												opsk = operandsj[k]->getAdditionOperands();
-												for (int l=0; l < nrOp; l++)
-													opsk[l+opcntk] = operands[l];
-												opsk[nrOp+opcntk] = config[i];
-												operandsj[k]->setAdditionOperands(opsk);
-											}
-										operands[nrOp+nrOpj] = config[j];
-										config[i]->setAdditionOperands(operands);
-										config[i]->setNumberOfAdders(nrOp+nrOpj+1);
+											cout << "bindDSP4Stratix: DSP #" << j << " has #" << i << " as one of its operands allready." << endl;
+										bound = true;
+										break;
 									}
-							}
+			
+							if (bound)
+								continue;
+							// if they are not bound
+							int xtrj, ytrj, nrOpj;
+							config[j]->getTopRightCorner(xtrj, ytrj);
+							nrOpj = config[j]->getNumberOfAdders();
+			
+							if (verbose)
+								cout << "bindDSP4Stratix:" << tab << " Checking against DSP #" << j << " Top-right is at ( " << xtrj << ", " << ytrj << ") width is " << wx << endl;
+		
+							if ((((xtrj-xtri == -wx) && (ytrj-ytri == wy)) || ((xtrj-xtri == wx) && (ytrj-ytri == -wy))) && // if they have the same alignment
+								 (nrOpj + nrOp < 3)) // if the DSPs we want to bind have less than 3 other DSPs to add together
+								{ // copy the operands from one another and bind them 
+				
+									if (verbose)
+										cout << "bindDSP4Stratix : DSP #" << j << " together with #" << i << " have fewer than 3 operands. We can bind them." << endl;
+									operandsj = config[j]->getAdditionOperands();
+				
+									for (int k=0; k<nrOp; k++)
+										{
+											operandsj[nrOpj+k] = operands[k];
+											// each operand of congif[i] also gets bounded 
+											int opcntk = operands[k]->getNumberOfAdders();
+											operands[k]->setNumberOfAdders(nrOp+nrOpj+1);
+											opsk = operands[k]->getAdditionOperands();
+											for (int l=0; l < nrOpj; l++)
+												opsk[l+opcntk] = operandsj[l];
+											opsk[nrOpj+opcntk] = config[j];
+											operands[k]->setAdditionOperands(opsk);
+										}
+									operandsj[nrOp+nrOpj] = config[i];
+									config[j]->setAdditionOperands(operandsj);
+									config[j]->setNumberOfAdders(nrOp+nrOpj+1);
+				
+									for (int k=0; k<nrOpj; k++)
+										{
+											operands[nrOp+k] = operandsj[k];
+											// each operand of congif[j] also gets bounded 
+											int opcntk = operandsj[k]->getNumberOfAdders();
+											operandsj[k]->setNumberOfAdders(nrOp+nrOpj+1);
+											opsk = operandsj[k]->getAdditionOperands();
+											for (int l=0; l < nrOp; l++)
+												opsk[l+opcntk] = operands[l];
+											opsk[nrOp+opcntk] = config[i];
+											operandsj[k]->setAdditionOperands(opsk);
+										}
+									operands[nrOp+nrOpj] = config[j];
+									config[i]->setAdditionOperands(operands);
+									config[i]->setNumberOfAdders(nrOp+nrOpj+1);
+								}
+						}
 				}
 		
 		/* We now have:
@@ -2094,213 +2092,191 @@ namespace flopoco{
 		if ( ( target_->getID() == "Virtex4") ||
 			 ( target_->getID() == "Virtex5") ||
 			 ( target_->getID() == "Spartan3"))  // then the target is A Xilinx FPGA 
-			{	
-				for (int i=0; i<nrDSPs; i++)
-					if (tempc[i] != NULL)
-						{
-							//~ cout << "At DSP#"<< i+1 << " tempc["<<i<<"]" << endl; 
-							DSP* d = tempc[i];
-							int j=0;
-							int connected = 0;
-							bool outside = false;
-							
-							while (d != NULL)
-								{
-									connected++;
-									d = d->getShiftOut();
-								}
-							REPORT(DETAILED, "CONNECTED ================ " <<connected);
-							d = tempc[i];
-							
-							int startXOld=0, startYOld=0;							
-							while (d != NULL)
-								{
-									d->getTopRightCorner(trx1, try1);
-									d->getBottomLeftCorner(blx1, bly1);
-									extW = getExtraWidth();
-									extH = getExtraHeight();
-									
-									fpadX = blx1-wInX-extW+1;
-									//~ cout << "fpadX = " << fpadX << endl;
-									fpadX = (fpadX<0)?0:fpadX;
-									
-									fpadY = bly1-wInY-extH+1;
-									//~ cout << "fpadY = " << fpadY << endl;
-									fpadY = (fpadY<0)?0:fpadY;
-									
-									bpadX = extW-trx1;
-									bpadX = (bpadX<0)?0:bpadX;
-									
-									bpadY = extH-try1;
-									bpadY = (bpadY<0)?0:bpadY;
-									
-									multW = blx1 - trx1 + 1;
-									multH = bly1 - try1 + 1;
+		{	
+			for (int i=0; i<nrDSPs; i++){
+				if (tempc[i] != NULL){
+					DSP* d = tempc[i];
+					int j=0;
+					int connected = 0;
+					bool outside = false;
+					
+					/* determine ne number of tiles in the supertile */ 
+					while (d != NULL) {
+						connected++;
+						d = d->getShiftOut();
+					}
 
-//									multW = d->getMultiplierWidth();
-//									multH = d->getMultiplierHeight();
-									
-									int startX = blx1-fpadX-extW;
-									int endX = trx1+bpadX-extW;
-									int startY = bly1-fpadY-extH;
-									int endY = try1+bpadY-extH;
-									
-									if ((startX < endX) || (startY < endY))
-									{
-										outside = true;
-										break;
-									}
-										
-									setCycle(0);
-									
-									xname.str("");
-									xname << "x" << i << "_" << j;
-									vhdl << tab << declare(xname.str(), multW+2, true) << " <= \"10\" & " << zg(fpadX,0) << " & X" << range(startX, endX) << " & " << zg(bpadX,0) << ";" << endl;
-									
-									yname.str("");
-									yname << "y" << i << "_" << j;
-									vhdl << tab << declare(yname.str(), multH+2, true) << " <= \"10\" & " << zg(fpadY,0) << " & Y" << range(startY, endY) << " & " << zg(bpadY,0) << ";" << endl;
-				
-									if ((d->getShiftIn() != NULL) && (j>0)) // multiply accumulate
-										{
-											mname.str("");
-											mname << "pxy" << i;
-											cname.str("");
-											cname << "txy" << i << j;
-											setCycle(j);
-											vhdl << tab << declare(cname.str(), multW+multH+2) << " <= " << use(xname.str())<<range(multW,0) << " * " << use(yname.str())<<range(multH,0) << ";" << endl;
-											
-											if (startX+startY == startXOld+startYOld)
-												vhdl << tab << declare(join(mname.str(),j), multW+multH+2) << " <= (" << cname.str()<<range(multW+multH+1,0) << ") + (" << join(mname.str(), j-1) << ");" << endl;	
-											else
-												vhdl << tab << declare(join(mname.str(),j), multW+multH+2) << " <= (" << cname.str()<<range(multW+multH+1,0) << ") + (" <<zg(d->getShiftAmount(),0)<< " &" << join(mname.str(), j-1) << range(multW+multH+1, d->getShiftAmount()) << ");" << endl;	
-											if (d->getShiftOut() == NULL) // concatenate the entire partial product
-												{
-													setCycle(connected);
-													sname.seekp(ios_base::beg);
-													//sname << zg(wInX-(blx1-fpadX-extW)+wInY-(bly1-fpadY-extH)-2, 0) << " & " << use(join(mname.str(),j)) << range(multW-fpadX + multH-fpadY-1, 0) << " & " << sname.str();
-													int nrZeros = wInX-(blx1-extW)-fpadX + wInY-(bly1-extH)-fpadY-3;
-													if (nrZeros < 0)
-														sname << zg(wInX-(blx1-fpadX-extW)+wInY-(bly1-fpadY-extH)-2, 0) << " & " << use(join(mname.str(),j)) << range(multW-fpadX + multH-fpadY-1, 0) << " & " << sname.str();
-//														sname << use(join(mname.str(),j)) << range(multW-fpadX + multH-fpadY-1, 0) << " & " << sname.str();
+					REPORT(DETAILED, "Found Supertile having " <<connected<<" connected DSPs");
+					d = tempc[i];
+					
+					int startXOld=0, startYOld=0;
+					while (d != NULL){
 
-													else
-														sname << zg(wInX-(blx1-extW) + wInY-(bly1-extH)-3, 0) << " & " << use(join(mname.str(),j)) << range(multW + multH, 0) << " & " << sname.str();
-	
-												}
-											else // concatenate only the lower portion of the partial product
-												{
-													setCycle(connected);
-													sname.seekp(ios_base::beg);
-													
-													/* check if the next element has as 17-bit shift wr to this one */
-													int ttrx1,ttry1,bblx1,bbly1, ffpadX, ffpadY, bbpadX, bbpadY;
-													d->getShiftOut()->getTopRightCorner(ttrx1, ttry1);
-													d->getShiftOut()->getBottomLeftCorner(bblx1, bbly1);
-									
-													ffpadX = bblx1-wInX-extW+1;
-													ffpadX = (ffpadX<0)?0:ffpadX;
-									
-													ffpadY = bbly1-wInY-extH+1;
-													ffpadY = (ffpadY<0)?0:ffpadY;
-									
-													bbpadX = extW-ttrx1;
-													bbpadX = (bbpadX<0)?0:bbpadX;
-									
-													bbpadY = extH-ttry1;
-													bbpadY = (bbpadY<0)?0:bbpadY;
-									
-									
-													int startXNext = bblx1-ffpadX-extW;
-													int endXNext = ttrx1+bbpadX-extW;
-													int startYNext = bbly1-ffpadY-extH;
-													int endYNext = ttry1+bbpadY-extH;
-													
-													if //((startX+startY != startXOld+startYOld))// && 
-													( startX+startY != startXNext+startYNext) //)
-														sname << join(mname.str(),j) << range(d->getShiftAmount()-1, 0) << " & " << sname.str();
-												}
-										}
-									else // only multiplication
-										{
-											mname.str("");
-											mname << "pxy" << i << j;
-											vhdl << tab << declare(mname.str(), multW+multH+2) << " <= " << use(xname.str())<<range(multW,0) << " * " << use(yname.str())<<range(multH,0) << ";" << endl;
-											sname.str("");
-											if (d->getShiftOut() == NULL) // concatenate the entire partial product
-												{
-//													setCycle(connected);
-													//sname << zg(wInX-(blx1-fpadX-extW)+wInY-(bly1-fpadY-extH)-2, 0) << " & " << use(mname.str()) << range(multH-fpadY+multW-fpadX-1, bpadX+bpadY)<< " & " << zg(trx1-extW,0) << " & " << zg(try1-extH,0) <<  ";" << endl;
-													int nrZeros = wInX-(blx1-extW)-fpadX + wInY-(bly1-extH)-fpadY-2;
-													if (nrZeros < 0)
-														sname << zg(wInX-(blx1-fpadX-extW)+wInY-(bly1-fpadY-extH)-2, 0) << " & " << use(mname.str()) << range(multH-fpadY+multW-fpadX-1, 0)<< " & " << zg(trx1-extW-bpadX,0) << " & " << zg(try1-extH-bpadY,0) <<  ";" << endl;
-													else
-														sname << zg(wInX-(blx1-extW) + wInY-(bly1-extH)-2, 0) << " & " << use(mname.str()) << range(multW + multH-1, 0) << " & " << zg(trx1-extW-bpadX,0) << " & " << zg(try1-extH-bpadY,0) <<  ";" << endl;
-	
-												}
-											else // concatenate only the lower portion of the partial product
-												{
-													/* check if the next element has as 17-bit shift wr to this one */
-													int ttrx1,ttry1,bblx1,bbly1, ffpadX, ffpadY, bbpadX, bbpadY;
-													d->getShiftOut()->getTopRightCorner(ttrx1, ttry1);
-													d->getShiftOut()->getBottomLeftCorner(bblx1, bbly1);
-									
-													ffpadX = bblx1-wInX-extW+1;
-													ffpadX = (ffpadX<0)?0:ffpadX;
-									
-													ffpadY = bbly1-wInY-extH+1;
-													ffpadY = (ffpadY<0)?0:ffpadY;
-									
-													bbpadX = extW-ttrx1;
-													bbpadX = (bbpadX<0)?0:bbpadX;
-									
-													bbpadY = extH-ttry1;
-													bbpadY = (bbpadY<0)?0:bbpadY;
-									
-									
-													int startXNext = bblx1-ffpadX-extW;
-													int endXNext = ttrx1+bbpadX-extW;
-													int startYNext = bbly1-ffpadY-extH;
-													int endYNext = ttry1+bbpadY-extH;
-													
-													if //((startX+startY != startXOld+startYOld))// && 
-													( startX+startY != startXNext+startYNext) //)
-														sname << use(mname.str()) << range(d->getShiftAmount()-1, bpadX+bpadY) << " & ";
-														
-													sname <<  zg(trx1-extW,0) << " & " << zg(try1-extH,0) << ";" << endl;
-												}
-										}
-				
-									// erase d from the tempc buffer to avoid handleing it twice
-									for (int k=i+1; k<nrDSPs; k++)
-										{
-											if ((tempc[k] != NULL) && (tempc[k] == d))
-												{
-													//~ cout << "tempc[" << k << "] deleted" << endl;
-													tempc[k] = NULL;
-													break;
-												}
-										}
-				
-				
-									startXOld = startX;
-									startYOld = startY;
-									
-									d = d->getShiftOut();
-									j++;
-								}
-								
-							if (outside) continue;	
-							sname.seekp(ios_base::beg);
-							sname << tab << declare(join("addOpDSP", nrOp),wInX+wInY) << " <= " << sname.str();
-							vhdl << sname.str();
-							nrOp++;		
+						d->getTopRightCorner  (trx1, try1);
+						d->getBottomLeftCorner(blx1, bly1);
+						extW = getExtraWidth();
+						extH = getExtraHeight();
+						
+						fpadX = blx1-wInX-extW+1;
+						fpadX = (fpadX<0)?0:fpadX;
+						
+						fpadY = bly1-wInY-extH+1;
+						fpadY = (fpadY<0)?0:fpadY;
+						
+						bpadX = extW-trx1;
+						bpadX = (bpadX<0)?0:bpadX;
+						
+						bpadY = extH-try1;
+						bpadY = (bpadY<0)?0:bpadY;
+						
+						multW = blx1 - trx1 + 1;
+						multH = bly1 - try1 + 1;
+
+						/* these are the true coordinates of the tile */
+						int startX = blx1-fpadX-extW;
+						int endX = trx1+bpadX-extW;
+						int startY = bly1-fpadY-extH;
+						int endY = try1+bpadY-extH;
+							
+						/* just in case check that this tile is not outside
+						the area of interest */
+
+						if ((startX < endX) || (startY < endY)) {
+							outside = true;
+							break;
 						}
-		
-				return nrOp;
+						
+						/* this is where the DSP-part of the multiplier code 
+						gets generated; TODO: bring to new standard so 
+						it gets less levels of pipeline */
+						setCycle(0);
+						
+						xname.str("");
+						xname << "x" << i << "_" << j;
+						vhdl << tab << declare(xname.str(), multW+2, true) << " <= \"10\" & " << zg(fpadX,0) << " & X" << range(startX, endX) << " & " << zg(bpadX,0) << ";" << endl;
+						
+						yname.str("");
+						yname << "y" << i << "_" << j;
+						vhdl << tab << declare(yname.str(), multH+2, true) << " <= \"10\" & " << zg(fpadY,0) << " & Y" << range(startY, endY) << " & " << zg(bpadY,0) << ";" << endl;
+	
+						if ((d->getShiftIn() != NULL) && (j>0)){ // multiply accumulate
+							mname.str("");
+							mname << "pxy" << i;
+							cname.str("");
+							cname << "txy" << i << j;
+							setCycle(j);
+							vhdl << tab << declare(cname.str(), multW+multH+2) << " <= " << xname.str()<<range(multW,0) << " * " << use(yname.str())<<range(multH,0) << ";" << endl;
+							
+							if (startX+startY == startXOld+startYOld) 
+								/* the contribution of the previous tile will not be shifted*/
+								vhdl << tab << declare(join(mname.str(),j), multW+multH+2) << " <= (" << cname.str()<<range(multW+multH+1,0) << ") + (" << join(mname.str(), j-1) << ");" << endl;	
+							else
+								/* this is the regular case where previous MSB (17 to ..) from
+								the previous tile are added */
+								vhdl << tab << declare(join(mname.str(),j), multW+multH+2) << " <= (" << cname.str()<<range(multW+multH+1,0) << ") + (" <<zg(d->getShiftAmount(),0)<< " &" << join(mname.str(), j-1) << range(multW+multH+1, d->getShiftAmount()) << ");" << endl;	
+							
+							if (d->getShiftOut() == NULL){ // concatenate the entire partial product
+								setCycle(connected);
+								sname.seekp(ios_base::beg);
+								int nrZeros = wInX-(blx1-extW)-fpadX + wInY-(bly1-extH)-fpadY-3;
+								if (nrZeros < 0)
+									sname << zg(wInX-(blx1-fpadX-extW)+wInY-(bly1-fpadY-extH)-2, 0) << " & " << use(join(mname.str(),j)) << range(multW-fpadX + multH-fpadY-1, 0) << " & " << sname.str();
+								else
+									sname << zg(wInX-(blx1-extW) + wInY-(bly1-extH)-3, 0) << " & " << use(join(mname.str(),j)) << range(multW + multH, 0) << " & " << sname.str();
+							} else { // concatenate only the lower portion of the partial product
+								setCycle(connected);
+								sname.seekp(ios_base::beg);
+								
+								/* check if the next element has as 17-bit shift wr to this one */
+								int ttrx1,ttry1,bblx1,bbly1, ffpadX, ffpadY, bbpadX, bbpadY;
+								d->getShiftOut()->getTopRightCorner(ttrx1, ttry1);
+								d->getShiftOut()->getBottomLeftCorner(bblx1, bbly1);
+				
+								ffpadX = bblx1-wInX-extW+1;
+								ffpadX = (ffpadX<0)?0:ffpadX;
+				
+								ffpadY = bbly1-wInY-extH+1;
+								ffpadY = (ffpadY<0)?0:ffpadY;
+				
+								bbpadX = extW-ttrx1;
+								bbpadX = (bbpadX<0)?0:bbpadX;
+				
+								bbpadY = extH-ttry1;
+								bbpadY = (bbpadY<0)?0:bbpadY;
+				
+								int startXNext = bblx1-ffpadX-extW;
+								int startYNext = bbly1-ffpadY-extH;
+								
+								if ( startX+startY != startXNext+startYNext) //)
+									sname << join(mname.str(),j) << range(d->getShiftAmount()-1, 0) << " & " << sname.str();
+							}
+						}else{ // only multiplication
+							mname.str("");
+							mname << "pxy" << i << j;
+							vhdl << tab << declare(mname.str(), multW+multH+2) << " <= " << use(xname.str())<<range(multW,0) << " * " << use(yname.str())<<range(multH,0) << ";" << endl;
+
+							sname.str("");
+							if (d->getShiftOut() == NULL){ // concatenate the entire partial product
+								int nrZeros = wInX-(blx1-extW)-fpadX + wInY-(bly1-extH)-fpadY-2;
+								if (nrZeros < 0)
+									sname << zg(wInX-(blx1-fpadX-extW)+wInY-(bly1-fpadY-extH)-2, 0) << " & " << use(mname.str()) << range(multH-fpadY+multW-fpadX-1, 0)<< " & " << zg(trx1-extW-bpadX,0) << " & " << zg(try1-extH-bpadY,0) <<  ";" << endl;
+								else
+									sname << zg(wInX-(blx1-extW) + wInY-(bly1-extH)-2, 0) << " & " << use(mname.str()) << range(multW + multH-1, 0) << " & " << zg(trx1-extW-bpadX,0) << " & " << zg(try1-extH-bpadY,0) <<  ";" << endl;
+							} else { // concatenate only the lower portion of the partial product
+								/* check if the next element has as 17-bit shift wr to this one */
+								int ttrx1,ttry1,bblx1,bbly1, ffpadX, ffpadY, bbpadX, bbpadY;
+								d->getShiftOut()->getTopRightCorner(ttrx1, ttry1);
+								d->getShiftOut()->getBottomLeftCorner(bblx1, bbly1);
+				
+								ffpadX = bblx1-wInX-extW+1;
+								ffpadX = (ffpadX<0)?0:ffpadX;
+				
+								ffpadY = bbly1-wInY-extH+1;
+								ffpadY = (ffpadY<0)?0:ffpadY;
+				
+								bbpadX = extW-ttrx1;
+								bbpadX = (bbpadX<0)?0:bbpadX;
+				
+								bbpadY = extH-ttry1;
+								bbpadY = (bbpadY<0)?0:bbpadY;
+				
+				
+								int startXNext = bblx1-ffpadX-extW;
+								int startYNext = bbly1-ffpadY-extH;
+								
+								if (startX+startY != startXNext+startYNext) 
+									sname << use(mname.str()) << range(d->getShiftAmount()-1, bpadX+bpadY) << " & ";
+									
+								sname <<  zg(trx1-extW,0) << " & " << zg(try1-extH,0) << ";" << endl;
+							}
+						}
+	
+						// erase d from the tempc buffer to avoid handeling it twice
+						for (int k=i+1; k<nrDSPs; k++) {
+							if ((tempc[k] != NULL) && (tempc[k] == d)) {
+								tempc[k] = NULL;
+								break;
+							}
+						}
+
+						/* save previous tile coordinates as they will be 
+						used in next tile generation */
+						startXOld = startX;
+						startYOld = startY;
+						
+						d = d->getShiftOut();
+						j++;
+					}
+					
+					if (outside) continue;	
+					sname.seekp(ios_base::beg);
+					sname << tab << declare(join("addOpDSP", nrOp),wInX+wInY) << " <= " << sname.str();
+					vhdl << sname.str();
+					nrOp++;		
+				}
 			}
-		else // the target is Stratix
-		{
+			return nrOp;
+		} else { // the target is Stratix TODO: check this code
 				int boundDSPs;  				// number of bound DSPs in a group
 				DSP** addOps;					// addition operands bound to a certain DSP
 	
