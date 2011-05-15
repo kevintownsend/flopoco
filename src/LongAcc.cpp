@@ -118,15 +118,17 @@ namespace flopoco{
 				 <<(-E0X_)<< " to " << ((1<<wEX_)-1)-E0X_ <<endl;
 			exit (EXIT_FAILURE);
 		}
-		
+
+		/* set-up carry-save parameters */		
 		int chunkSize_;
 		target->suggestSlackSubaddSize(chunkSize_ , sizeAcc_, target->localWireDelay() + target->lutDelay());
-		
-		cout << "chunkSize = " << chunkSize_ << endl;
+		REPORT( DEBUG, "Addition chunk size in LongAcc is:"<<chunkSize_);
 		 
-		int nbOfChunks = ceil(double(sizeAcc_)/double(chunkSize_));
+		int nbOfChunks    = ceil(double(sizeAcc_)/double(chunkSize_));
 		int lastChunkSize = ( sizeAcc_ % chunkSize_ == 0 ? chunkSize_  : sizeAcc_ % chunkSize_);
 
+
+		/* if LongAcc is used in DotProduct, then its input fraction is twice as large */
 		if (!forDotProd){
 			vhdl << tab << declare("fracX",wFX_+1) << " <=  \"1\" & X" << range(wFX_-1,0) << ";" << endl;
 			vhdl << tab << declare("expX" ,wEX_  ) << " <= X" << range(wEX_+wFX_-1,wFX_) << ";" << endl;
@@ -138,15 +140,21 @@ namespace flopoco{
 			vhdl << tab << declare("signX",1     ) << " <= sigX_dprod;" << endl;
 			vhdl << tab << declare("exnX" ,2     ) << " <= excX_dprod;" << endl;
 		}
-	
+
 		setCriticalPath( getMaxInputDelays(inputDelays));
 		manageCriticalPath( target->localWireDelay() + target->adderDelay(wEX+1)); 
-		vhdl << tab << declare("xOverflowCond",1) << " <= '1' when (( expX > CONV_STD_LOGIC_VECTOR("<<MaxMSBX_ + E0X_<<","<< wEX_<<")) or (exnX >= \"10\")) else '0' ;"<<endl; 
-		vhdl << tab << declare("xUnderflowCond",1) << " <= '1' when (expX < CONV_STD_LOGIC_VECTOR("<<LSBA_ + E0X_<<","<<wEX_<<")) else '0' ;" << endl;  
-		int64_t exp_offset = E0X_+LSBA_;
+
+		/* declaring the underflow and overflow conditions of the input X. 
+		these two flags are used to reparameter the accumulator following a test
+		run. If Xoverflow has happened, then MaxMSBX needs to be increased and 
+		the accumulation result is invalidated. If Xunderflow is raised then 
+		user can lower LSBA for obtaining a even better accumulation precision */
+		vhdl << tab << declare("xOverflowCond" ,1, false, Signal::registeredWithSyncReset) << " <= '1' when (( expX > CONV_STD_LOGIC_VECTOR("<<MaxMSBX_ + E0X_<<","<< wEX_<<")) or (exnX >= \"10\")) else '0' ;"<<endl; 
+		vhdl << tab << declare("xUnderflowCond",1, false, Signal::registeredWithSyncReset) << " <= '1' when (expX < CONV_STD_LOGIC_VECTOR("<<LSBA_ + E0X_<<","<<wEX_<<")) else '0' ;" << endl;  
+		
+		mpz_class exp_offset = E0X_+LSBA_;
 		vhdl << tab << declare("shiftVal",wEX_+1) << " <= (\"0\" & expX) - CONV_STD_LOGIC_VECTOR("<< exp_offset <<","<<  wEX_+1<<");" << endl;
 
-		//input shifter mappings
 		shifter_ = new Shifter(target, (forDotProd?wFX_+wFY+2:wFX_+1), maxShift_, Shifter::Left, inDelayMap("X", target->localWireDelay() + getCriticalPath()));
 		oplist.push_back(shifter_);
 
@@ -156,21 +164,25 @@ namespace flopoco{
 		vhdl << instance(shifter_, "LongAccInputShifter");
 	
 		syncCycleFromSignal("shifted_frac");
-		//determine if the input has been shifted out from the accumulator. 
-		//in this case the accumulator will be incremented with 0
-		vhdl << tab << declare("flushedToZero",1) << " <= '1' when (shiftVal" << of(wEX_)<<"='1' -- negative left shift " << endl;
-		vhdl << tab << "                               or exnX=\"00\")" << endl;
-		vhdl << tab << "                 else '0';" << endl;
-		vhdl << tab << declare("summand", sizeSummand_, true, Signal::registeredWithSyncReset) << "<= " << rangeAssign(sizeSummand_-1,0,"'0'") << " when flushedToZero='1' " << 
-			" else shifted_frac" << range(sizeShiftedFrac_-1,wFX_)<<";" << endl;
+
+
+
+		/* determine if the input has been shifted out from the accumulator. 
+		In this case the accumulator will added 0 */
+		vhdl << tab << declare("flushedToZero",1) << " <= '1' when (shiftVal" << of(wEX_)<<"='1' or exnX=\"00\") else '0';" << endl;
+
+		/* in most FPGAs computation of the summand2c will be done in one LUT level */
+		vhdl << tab << declare("summand", sizeSummand_, true, Signal::registeredWithSyncReset) << "<= " << 
+					zg(sizeSummand_) << " when flushedToZero='1' else shifted_frac" << range(sizeShiftedFrac_-1,wFX_)<<";" << endl;
 
 		vhdl << tab << "-- 2's complement of the summand" << endl;
-		// Don't compute 2's complement just yet, just invert the bits and leave the addition of the extra 1 in accumulation, as a carry in bit
-		vhdl << tab << declare("summand2c", sizeSummand_, true) << " <= summand when (signX='0' or flushedToZero='1') "<<
-			"else not(summand);"<< endl;
+		/* Don't compute 2's complement just yet, just invert the bits and leave 
+		the addition of the extra 1 in accumulation, as a carry in bit for the 
+		first chunk*/
+		vhdl << tab << declare("summand2c", sizeSummand_, true) << " <= summand when (signX='0' or flushedToZero='1') else not(summand);"<< endl;
 
-		vhdl << tab << "-- extension of the summand to accumulator size" << endl;
-		vhdl << tab << declare("ext_summand2c",sizeAcc_,true) << " <= " << (sizeAcc_-1<sizeSummand_?"":rangeAssign(sizeAcc_-1, sizeSummand_, use("signX")+ " and not " + use("flushedToZero")) + " & " ) << "summand2c;" << endl;
+		vhdl << tab << "-- sign extension of the summand to accumulator size" << endl;
+		vhdl << tab << declare("ext_summand2c",sizeAcc_,true) << " <= " << (sizeAcc_-1<sizeSummand_?"":rangeAssign(sizeAcc_-1, sizeSummand_, "signX and not flushedToZero")+" & ") << "summand2c;" << endl;
 
 		vhdl << tab << "-- accumulation itself" << endl;
 		//determine the value of the carry in bit
@@ -187,61 +199,40 @@ namespace flopoco{
 			nextCycle();		
 			vhdl << tab << declare(join("acc_",i,"_ext"),(i!=nbOfChunks-1?chunkSize_:lastChunkSize)+1) << " <= ( \"0\" & (" <<join("acc_",i)<< " and "<<rangeAssign( (i!=nbOfChunks-1?chunkSize_:lastChunkSize)-1,0, "not(newDataSet)") <<")) + " <<
 				"( \"0\" & ext_summand2c" << range( (i!=nbOfChunks-1?chunkSize_*(i+1)-1:sizeAcc_-1), chunkSize_*i) << ") + " << 
-				use(join("carryBit_",i)) << ";" << endl;
+				"("<<join("carryBit_",i) << (i>0?" and not(newDataSet)":"")<< ");" << endl;
 			setCycleFromSignal("carryBit_0");
 		}
 
+		setCycleFromSignal("carryBit_0",false);
+		vhdl << tab << declare("xOverflowRegister",1,false, Signal::registeredWithSyncReset) << " <= "; nextCycle(false); vhdl << "xOverflowRegister or xOverflowCond;"<<endl;
+		setCycleFromSignal("carryBit_0",false);
+		vhdl << tab << declare("xUnderflowRegister",1,false, Signal::registeredWithSyncReset) << " <= "; nextCycle(false); vhdl << "xUnderflowRegister or xUnderflowCond;"<<endl;
+		setCycleFromSignal("carryBit_0",false);
+		vhdl << tab << declare("accOverflowRegister",1,false, Signal::registeredWithSyncReset) << " <= "; nextCycle(false); vhdl << "accOverflowRegister or "<<join("carryBit_",nbOfChunks) << ";"<<endl;
+		setCycleFromSignal("carryBit_0",false);
+
 		nextCycle();
-		//compose the acc signal 
 		
+		//compose the acc signal 
 		vhdl << tab << declare("acc", sizeAcc_) << " <= ";
-		for (i=nbOfChunks-1;i>=0;i--) {
-			if (i>0)
-				vhdl << use(join("acc_",i)) << " & ";
-			else
-				vhdl << use(join("acc_",i)) << ";" << endl;
-		}
+		for (i=nbOfChunks-1;i>=0;i--)
+			vhdl << join("acc_",i) <<  (i>0?" & ":";\n");
 	
 		vhdl << tab << declare("carry", sizeAcc_) << " <= ";
-	
 		for (i=nbOfChunks-1;i>=0; i--){
-			if (i<nbOfChunks-1){
-				vhdl << use( join("carryBit_",i+1) ); 
-			}
+			vhdl << (i<nbOfChunks-1?join("carryBit_",i+1)+" & ":"");
+			vhdl << (i==nbOfChunks-1?zg(lastChunkSize-(i>0?1:0))+(i>0?" & ":""):(i>0?zg(chunkSize_-1)+" & ":zg(chunkSize_)));
+		}vhdl << ";" << endl;
 
-			if (i<nbOfChunks-1)
-				vhdl << " & ";
-		
-			if (i==nbOfChunks-1)			
-				{
-					if(nbOfChunks-1==0&&lastChunkSize-1<sizeAcc_)
-						vhdl << zg(lastChunkSize,0);
-					else			
-						vhdl << zg(lastChunkSize-1,0);
-				}
-			else
-				if (i>0)
-					vhdl << zg(chunkSize_-1,0);
-				else
-					vhdl << zg(chunkSize_,0);
-
-			if (i>0)
-				vhdl << " & ";
-
+		if (nbOfChunks > 1 ){
+			vhdl << tab << "A <=   acc;" << endl;
+			vhdl << tab << "C <=   carry;" << endl;
+		}else{
+			vhdl << tab << "A <=  acc_0;" << endl;
+			vhdl << tab << "C <=   carry;" << endl;
 		}
-		vhdl << ";" << endl;
-
-		vhdl << tab << declare("xOverflowRegister",1) << " <= "; nextCycle(false); vhdl << "xOverflowRegister or xOverflowCond;"<<endl;
-		setCycleFromSignal("acc",false);
-		vhdl << tab << declare("xUnderflowRegister",1) << " <= "; nextCycle(false); vhdl << "xUnderflowRegister or xUnderflowCond;"<<endl;
-		setCycleFromSignal("acc",false);
-		vhdl << tab << declare("accOverflowRegister",1) << " <= "; nextCycle(false); vhdl << "accOverflowRegister or "<<use(join("carryBit_",nbOfChunks)) << ";"<<endl;
-		setCycleFromSignal("acc",false);
-
-		vhdl << tab << "A <=   acc;" << endl;
-		vhdl << tab << "C <=   carry;" << endl;
-
-		nextCycle();
+	
+//		nextCycle();
 		//if accumulator overflows this flag will be set to 1 until a maunal reset is performed
 		vhdl << tab << "AccOverflow <= accOverflowRegister;"<<endl; 
 		//if the input overflows then this flag will be set to 1, and will remain 1 until manual reset is performed
@@ -581,4 +572,44 @@ namespace flopoco{
 		}
 	}
 
+	void LongAcc::emulate(TestCase* tc){
+	}
+
+	TestCase* LongAcc::buildRandomTestCase(int i){
+
+		TestCase *tc;
+		mpz_class x;
+
+		/* normal exception bits */
+		mpz_class normalExn = mpz_class(1)<<(wEX_+wFX_+1);
+
+		/*really random sign*/
+		mpz_class sign = mpz_class(getLargeRandom(1)%2)<<(wEX_+wFX_);
+
+		/* do exponent */
+		mpz_class exponent = getLargeRandom(wEX_);
+		while (! (MaxMSBX_ >= exponent - (intpow2(wEX_-1)-1))){
+			exponent = getLargeRandom(wEX_);
+		}
+		/* shift exponent in place */
+		exponent = exponent << (wFX_);
+
+		mpz_class frac = getLargeRandom(wFX_);		
+		
+		x = normalExn + sign + exponent + frac;
+
+		tc = new TestCase(this); 
+		tc->addInput("X", x);
+
+		if (i == 0){
+			tc->addInput("newDataSet", mpz_class(1));	
+		}else{
+			tc->addInput("newDataSet", mpz_class(0));	
+		}
+
+
+		/* Get correct outputs */
+		emulate(tc);
+		return tc;
+	}
 }

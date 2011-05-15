@@ -175,7 +175,7 @@ namespace flopoco{
 		mpfr_init2(long_acc, sizeAcc_+1);
 //#define DPACC
 
-//#define QPACC
+#define QPACC
 
 #ifdef DPACC
 		mpfr_init2(fp_acc, 53);

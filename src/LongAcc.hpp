@@ -38,6 +38,11 @@ namespace flopoco{
 		 */
 		void fillTestCase(mpz_class a[]);
 
+		void emulate(TestCase* tc);
+
+		TestCase* buildRandomTestCase(int i);
+
+
 		mpz_class mapFP2Acc(FPNumber X);
 	
 		mpz_class sInt2C2(mpz_class X, int width);
