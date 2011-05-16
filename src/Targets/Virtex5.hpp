@@ -52,7 +52,7 @@ namespace flopoco{
 			multXInputs_    = 25;
 			multYInputs_    = 18;
 			// all these values are set precisely to match the Virtex5
-			fdCtoQ_         = 0.272e-9; //the deterministic delay + an approximate NET delay
+			fdCtoQ_         = 0.396e-9; //the deterministic delay + an approximate NET delay
 			lut2_           = 0.086e-9;
 			lut3_           = 0.086e-9; //TODO
 			lut4_           = 0.086e-9; //TODO
@@ -60,7 +60,7 @@ namespace flopoco{
 			muxcyCINtoO_    = 0.023e-9;
 			ffd_            = 0.022e-9;
 			muxf5_          = 0.291e-9;
-			slice2sliceDelay_       = 0.436e-9;
+			slice2sliceDelay_ = 0.436e-9;
 			xorcyCintoO_    = 0.300e-9;
 			lutInputs_ 		= 6;
 			nrDSPs_ 		= 160; // XC5VLX30 has 1 column of 32 DSPs

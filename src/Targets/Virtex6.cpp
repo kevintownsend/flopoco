@@ -107,9 +107,9 @@ namespace flopoco{
 	
 	bool Virtex6::suggestSubaddSize(int &x, int wIn){
 		
-		int chunkSize = 2 + (int)floor( (1./frequency() - (fdCtoQ_ + lut2_ + muxcyStoO_ + xorcyCintoO_ + ffd_)) / muxcyCINtoO_ );
+		int chunkSize = 1 + (int)floor( (1./frequency() - (lut2_ + muxcyStoO_ + xorcyCintoO_)) / muxcyCINtoO_ );
 		x = chunkSize;		
-		if (x > 0) 
+		if (x > 1) 
 			return true;
 		else {
 			x = 2;		

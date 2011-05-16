@@ -78,7 +78,7 @@ namespace flopoco{
 				processing = false;
 				outDelayMap["R"] = getCriticalPath();
 			}else if (nbOfInputs == 2){
-				IntAdder *finalAdder = new IntAdder(target, wIn_, inDelayMap("X",target->localWireDelay()+ getCriticalPath()));
+				IntAdder *finalAdder = new IntAdder(target, wIn_, inDelayMap("X", target->localWireDelay()+ getCriticalPath() + (getCriticalPath()==0? target->ffDelay():0 )));
 				oplist.push_back(finalAdder);
 				REPORT(INFO, "Finished 2 input adder instantiation");	
 

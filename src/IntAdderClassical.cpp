@@ -43,6 +43,14 @@ namespace flopoco {
 		addInput  ( "Cin", 1 );
 		addOutput ( "R"  , wIn_, 1 , true );
 		
+		objectivePeriod	 = 1 / target->frequency();
+		maxInputDelay      = getMaxInputDelays ( inputDelays );
+		if ( maxInputDelay > objectivePeriod ) {
+			nextCycle();
+			maxInputDelay = 0.0;
+			maxInputDelay = target->ffDelay() + target->localWireDelay();	
+			inputDelays.clear();
+		}	
 		
 		switch (optimizeType) {
 			case 0:  cost = getLutCostClassical(target,wIn, inputDelays, srl); break;
@@ -51,18 +59,11 @@ namespace flopoco {
 			default: cost = getSliceCostClassical(target,wIn, inputDelays, srl); break;
 		}
 		
-		vhdl << tab << "--Classical"<<endl;
+
 		
+		vhdl << tab << "--Classical"<<endl;
 		if ( isSequential() ) {
-			objectivePeriod	 = 1 / target->frequency();
-			maxInputDelay      = getMaxInputDelays ( inputDelays );
-			
-			if ( maxInputDelay > objectivePeriod ) {
-				REPORT ( INFO, "WARNING: combinatorial delay at the input of " << this->getName() << " is > objective period " );
-				maxInputDelay = objectivePeriod;
-			}
-			
-			if ( maxInputDelay == 0 ) {
+			if ( maxInputDelay == (target->localWireDelay() + target->ffDelay()) ) {
 				/* the non-slack version */
 				updateParameters ( target, alpha, beta, k );
 				REPORT ( DEBUG, "alpha="<<alpha<<" beta="<<beta<<" k="<<k );
@@ -402,7 +403,7 @@ namespace flopoco {
 	/**************************************************************************/
 	void IntAdderClassical::updateParameters ( Target* target, int &alpha, int &beta, int &k ) {
 		
-		target->suggestSubaddSize ( alpha , wIn_ ); /* chunk size */
+		target->suggestSlackSubaddSize ( alpha , wIn_, target->ffDelay() + target->localWireDelay() ); /* chunk size */
 		if ( wIn_ == alpha ) {
 			/* addition requires one chunk */
 			beta = 0;
@@ -427,7 +428,7 @@ namespace flopoco {
 			gamma=0;
 		} else
 			if ( wIn_ - gamma > 0 ) { //more than 1 chunk
-				target->suggestSubaddSize ( alpha, wIn_-gamma );
+				target->suggestSlackSubaddSize (alpha, wIn_-gamma, target->ffDelay() + target->localWireDelay());
 				if ( wIn_-gamma == alpha )
 					typeOfChunks++; //only two types of chunks
 					else

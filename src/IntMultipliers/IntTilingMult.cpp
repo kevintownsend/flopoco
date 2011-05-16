@@ -124,9 +124,6 @@ namespace flopoco{
 			REPORT(INFO, "Equivalent slices to implement one DSP=" << target_->getEquivalenceSliceDSP());
 			REPORT(INFO, "Cost LUT is " << costLUT);
 			
-		
-			//the one
-			
 			if (interactive){
 				cout << " DO you want to run the algorithm? (y/n)" << endl;
 				string myc;
@@ -141,91 +138,54 @@ namespace flopoco{
 			computeCost(bestConfig);
 
 
-
 			REPORT(INFO, "Estimated DSPs:= "<<nrDSPs);
 			target->getDSPWidths(x,y);
-			REPORT(INFO,"Width of DSP is := "<<x<<" Height of DSP is:="<<y);
-			REPORT(INFO,"Extra width:= "<<getExtraWidth()<<" \nExtra height:="<<getExtraHeight());
-			REPORT(INFO,"maxDist2Move:= "<<maxDist2Move);
-	
+			REPORT(DETAILED,"Width of DSP is := "<<x<<" Height of DSP is:="<<y);
+			REPORT(DETAILED,"Extra width:= "<<getExtraWidth()<<" Extra height:="<<getExtraHeight());
+			REPORT(DETAILED,"maxDist2Move:= "<<maxDist2Move);
 		
 			generateVHDLCode4CompleteTilling();
-
-		
 	}
+
 	
 	IntTilingMult::~IntTilingMult() {
 	}
 
-
-
 	
 	void IntTilingMult::generateVHDLCode4CompleteTilling(){
-		
-//		bestConfig = splitLargeBlocks(bestConfig, nrDSPs);
-		bindDSPs(bestConfig);      
-		int nrDSPOperands = multiplicationInDSPs(bestConfig);
+
+		int nrDSPOperands   = multiplicationInDSPs  (bestConfig);
 		int nrSliceOperands = multiplicationInSlices(bestConfig);
+
 		REPORT(DETAILED, "nr of DSP operands="<<nrDSPOperands);
 		REPORT(DETAILED, "nr of softDSP operands="<<nrSliceOperands);
 		map<string, double> inMap;
 		
 		for (int j=0; j<nrDSPOperands; j++)
-			{
-				ostringstream concatPartialProd;
-				concatPartialProd  << "addOpDSP" << j;
-				syncCycleFromSignal(concatPartialProd.str());
-			}	
+			syncCycleFromSignal( join("addOpDSP",j), getSignalDelay(join("addOpDSP",j)));
 			
 		for (int j=0; j<nrSliceOperands; j++)
-			{
-				ostringstream concatPartialProd;
-				concatPartialProd  << "addOpSlice" << j;
-				syncCycleFromSignal(concatPartialProd.str());
-			}
-		nextCycle();/////////////////////////////////////////////////////////	
+			syncCycleFromSignal( join("addOpSlice",j), getSignalDelay(join("addOpSlice",j)));
 
-		if (nrDSPOperands+nrSliceOperands>1){
-			Operator* add;
-//			if ( ( target_->getID() == "Virtex4") ||
-//				 ( target_->getID() == "Spartan3"))  // then the target is A Xilinx FPGA 
-//				add =  new IntNAdder(getTarget(), wInX+wInY, nrDSPOperands+nrSliceOperands, inMap);
-//			else
-				add =  new IntCompressorTree(getTarget(), wInX+wInY, nrDSPOperands+nrSliceOperands,inMap);
-			REPORT(DEBUG, "Finished generating the compressor tree");
-		
+		nextCycle();		
+		if (nrDSPOperands + nrSliceOperands > 1){
+			IntCompressorTree *add =  new IntCompressorTree(getTarget(), wInX+wInY, nrDSPOperands+nrSliceOperands, inDelayMap("X0", target_->localWireDelay()) );
 			oplist.push_back(add);
-
+			REPORT(DEBUG, "Finished generating the compressor tree");
 
 			for (int j=0; j<nrDSPOperands; j++)
-				{
-					ostringstream concatPartialProd;
-					concatPartialProd  << "addOpDSP" << j;
-
-					inPortMap (add, join("X",j) , concatPartialProd.str());
-				}	
-			REPORT(DEBUG, "Finished mapping the DSP Operands");
+				inPortMap (add, join("X",j) , join("addOpDSP",j) );
 					
 			for (int j=0; j<nrSliceOperands; j++)
-				{
-					ostringstream concatPartialProd;
-					concatPartialProd  << "addOpSlice" << j;
-					REPORT(DETAILED, "@ In Port Map Current Cycle is " << getCurrentCycle());
-					inPortMap (add, join("X",j+nrDSPOperands) , concatPartialProd.str());
-				}	
-			REPORT(DEBUG, "Finished mapping the SLICE Operands");
+				inPortMap (add, join("X",j+nrDSPOperands) , join("addOpSlice",j) );
 
-
-//			if ( ( target_->getID() == "Virtex4") ||
-//				 ( target_->getID() == "Spartan3"))  // then the target is A Xilinx FPGA 
-//				inPortMapCst(add, "Cin", "'0'");
 			outPortMap(add, "R", "addRes");
-			vhdl << instance(add, "adder");
-
+			vhdl << instance(add, "FinalAdder");
 			syncCycleFromSignal("addRes");
 			setCriticalPath( add->getOutputDelay("R") );
-			outDelayMap["R"] = getCriticalPath();
+
 			vhdl << tab << "R <= addRes;" << endl;
+			outDelayMap["R"] = getCriticalPath();
 		}else{
 			if (nrDSPOperands==1){
 				syncCycleFromSignal("addOpDSP0");
@@ -2089,9 +2049,7 @@ namespace flopoco{
 			
 		memcpy(tempc, config, sizeof(DSP*) * nrDSPs );
 	
-		if ( ( target_->getID() == "Virtex4") ||
-			 ( target_->getID() == "Virtex5") ||
-			 ( target_->getID() == "Spartan3"))  // then the target is A Xilinx FPGA 
+		if (target_->getVendor() == "Xilinx")
 		{	
 			for (int i=0; i<nrDSPs; i++){
 				if (tempc[i] != NULL){
@@ -2109,7 +2067,7 @@ namespace flopoco{
 					REPORT(DETAILED, "Found Supertile having " <<connected<<" connected DSPs");
 					d = tempc[i];
 					
-					int startXOld=0, startYOld=0;
+					int rtXOld=0, rtYOld=0;
 					while (d != NULL){
 
 						d->getTopRightCorner  (trx1, try1);
@@ -2132,15 +2090,36 @@ namespace flopoco{
 						multW = blx1 - trx1 + 1;
 						multH = bly1 - try1 + 1;
 
-						/* these are the true coordinates of the tile */
+						/* these are the true coordinates of the tile used to 
+						address the X and Y std_logic_vector inputs. */
 						int startX = blx1-fpadX-extW;
-						int endX = trx1+bpadX-extW;
+						int endX   = trx1+bpadX-extW;
 						int startY = bly1-fpadY-extH;
-						int endY = try1+bpadY-extH;
+						int endY   = try1+bpadY-extH;
+							
+						/* these are the real coordinates of the tile which may
+						have values outside the 0..wIn-1 range if the tile goes
+						outside the tiling board */
+						int rtX = trx1 - extW;
+						int rtY = try1 - extH;
+						int rbX = blx1 - extW;
+						int rbY = bly1 - extH;
+
+						/* these are the values of the possibly smaller tile
+						which covers the tiling board */ 
+						int bounded_bX = (rbX > wInX-1? wInX-1: rbX);
+						int bounded_bY = (rbY > wInY-1? wInY-1: rbY);
+						
+						int bounded_tX = (rtX < 0? 0: rtX);
+						int bounded_tY = (rtY < 0? 0: rtY);
+						
+						int tileSize = (bounded_bX - bounded_tX + 1) + (bounded_bY - bounded_tY + 1);
+						int nrZeros  = (wInX-1) - bounded_bX +  (wInY-1) - bounded_bY;
+						
+						int previousPadding = 0;
 							
 						/* just in case check that this tile is not outside
 						the area of interest */
-
 						if ((startX < endX) || (startY < endY)) {
 							outside = true;
 							break;
@@ -2151,103 +2130,79 @@ namespace flopoco{
 						it gets less levels of pipeline */
 						setCycle(0);
 						
-						xname.str("");
-						xname << "x" << i << "_" << j;
-						vhdl << tab << declare(xname.str(), multW+2, true) << " <= \"10\" & " << zg(fpadX,0) << " & X" << range(startX, endX) << " & " << zg(bpadX,0) << ";" << endl;
-						
-						yname.str("");
-						yname << "y" << i << "_" << j;
-						vhdl << tab << declare(yname.str(), multH+2, true) << " <= \"10\" & " << zg(fpadY,0) << " & Y" << range(startY, endY) << " & " << zg(bpadY,0) << ";" << endl;
+						vhdl << tab << declare(join("x",i,"_",j), multW+1) << " <= \"0\" & " << zg(fpadX,0) << " & X" << range(startX, endX) << " & " << zg(bpadX,0) << ";" << endl;
+						vhdl << tab << declare(join("y",i,"_",j), multH+1) << " <= \"0\" & " << zg(fpadY,0) << " & Y" << range(startY, endY) << " & " << zg(bpadY,0) << ";" << endl;
 	
-						if ((d->getShiftIn() != NULL) && (j>0)){ // multiply accumulate
+						if ((d->getShiftIn() != NULL) && (j>0)){ 
+							/* this block will also accumulate the product computed 
+							by the neighbour DSP block, either as is, either shifted 
+							17 bits right (MSB bits of neighbouring product) */
 							mname.str("");
 							mname << "pxy" << i;
 							cname.str("");
 							cname << "txy" << i << j;
 							setCycle(j);
-							vhdl << tab << declare(cname.str(), multW+multH+2) << " <= " << xname.str()<<range(multW,0) << " * " << use(yname.str())<<range(multH,0) << ";" << endl;
+							vhdl << tab << declare(join("txy",i,j), multW+multH+2) << " <= " << join("x",i,"_",j)<<range(multW,0) << " * " << join("y",i,"_",j)<<range(multH,0) << ";" << endl;
 							
-							if (startX+startY == startXOld+startYOld) 
+							if (rtX+rtY == rtXOld+rtYOld) 
 								/* the contribution of the previous tile will not be shifted*/
-								vhdl << tab << declare(join(mname.str(),j), multW+multH+2) << " <= (" << cname.str()<<range(multW+multH+1,0) << ") + (" << join(mname.str(), j-1) << ");" << endl;	
+								vhdl << tab << declare(join("pxy",i,j), multW+multH+2) << " <= (" << join("txy",i,j)<<range(multW+multH+1,0) << ") + (" << join("pxy",i,j-1) << ");" << endl;	
 							else
 								/* this is the regular case where previous MSB (17 to ..) from
 								the previous tile are added */
-								vhdl << tab << declare(join(mname.str(),j), multW+multH+2) << " <= (" << cname.str()<<range(multW+multH+1,0) << ") + (" <<zg(d->getShiftAmount(),0)<< " &" << join(mname.str(), j-1) << range(multW+multH+1, d->getShiftAmount()) << ");" << endl;	
+								vhdl << tab << declare(join("pxy",i,j), multW+multH+2) << " <= (" << join("txy",i,j)<<range(multW+multH+1,0) << ") + (" <<zg(d->getShiftAmount(),0)<< " &" << join("pxy",i,j-1) << range(multW+multH+1, d->getShiftAmount()) << ");" << endl;	
 							
-							if (d->getShiftOut() == NULL){ // concatenate the entire partial product
+							if (d->getShiftOut() == NULL){ 
+								/* concatenate the entire partial product */
 								setCycle(connected);
 								sname.seekp(ios_base::beg);
-								int nrZeros = wInX-(blx1-extW)-fpadX + wInY-(bly1-extH)-fpadY-3;
-								if (nrZeros < 0)
-									sname << zg(wInX-(blx1-fpadX-extW)+wInY-(bly1-fpadY-extH)-2, 0) << " & " << use(join(mname.str(),j)) << range(multW-fpadX + multH-fpadY-1, 0) << " & " << sname.str();
-								else
-									sname << zg(wInX-(blx1-extW) + wInY-(bly1-extH)-3, 0) << " & " << use(join(mname.str(),j)) << range(multW + multH, 0) << " & " << sname.str();
+
+								sname << zg(nrZeros) << " & " << join("pxy",i,j) << range(multW+multH - fpadX - fpadY - 1, min(bpadX + bpadY, max(0,previousPadding - d->getShiftAmount()))) << " & " << sname.str();
 							} else { // concatenate only the lower portion of the partial product
 								setCycle(connected);
 								sname.seekp(ios_base::beg);
+
+								int trx2,try2,blx2,bly2;
+								d->getShiftOut()->getTopRightCorner  (trx2, try2);
+								d->getShiftOut()->getBottomLeftCorner(blx2, bly2);
 								
-								/* check if the next element has as 17-bit shift wr to this one */
-								int ttrx1,ttry1,bblx1,bbly1, ffpadX, ffpadY, bbpadX, bbpadY;
-								d->getShiftOut()->getTopRightCorner(ttrx1, ttry1);
-								d->getShiftOut()->getBottomLeftCorner(bblx1, bbly1);
-				
-								ffpadX = bblx1-wInX-extW+1;
-								ffpadX = (ffpadX<0)?0:ffpadX;
-				
-								ffpadY = bbly1-wInY-extH+1;
-								ffpadY = (ffpadY<0)?0:ffpadY;
-				
-								bbpadX = extW-ttrx1;
-								bbpadX = (bbpadX<0)?0:bbpadX;
-				
-								bbpadY = extH-ttry1;
-								bbpadY = (bbpadY<0)?0:bbpadY;
-				
-								int startXNext = bblx1-ffpadX-extW;
-								int startYNext = bbly1-ffpadY-extH;
-								
-								if ( startX+startY != startXNext+startYNext) //)
-									sname << join(mname.str(),j) << range(d->getShiftAmount()-1, 0) << " & " << sname.str();
+								int rtXNext = trx2 - extW;
+								int rtYNext = try2 - extH;
+
+								if (rtX + rtY != rtXNext + rtYNext) 
+									sname << join("pxy",i,j) << range( min(tileSize, d->getShiftAmount())-1, min(bpadX + bpadY, previousPadding+d->getShiftAmount())) << " & " << sname.str();
 							}
 						}else{ // only multiplication
-							mname.str("");
-							mname << "pxy" << i << j;
-							vhdl << tab << declare(mname.str(), multW+multH+2) << " <= " << use(xname.str())<<range(multW,0) << " * " << use(yname.str())<<range(multH,0) << ";" << endl;
-
+							vhdl << tab << declare(join("pxy",i,j), multW+multH+2) << " <= " << join("x",i,"_",j)<<range(multW,0) << " * " <<join("y",i,"_",j)<<range(multH,0) << ";" << endl;
 							sname.str("");
 							if (d->getShiftOut() == NULL){ // concatenate the entire partial product
-								int nrZeros = wInX-(blx1-extW)-fpadX + wInY-(bly1-extH)-fpadY-2;
-								if (nrZeros < 0)
-									sname << zg(wInX-(blx1-fpadX-extW)+wInY-(bly1-fpadY-extH)-2, 0) << " & " << use(mname.str()) << range(multH-fpadY+multW-fpadX-1, 0)<< " & " << zg(trx1-extW-bpadX,0) << " & " << zg(try1-extH-bpadY,0) <<  ";" << endl;
-								else
-									sname << zg(wInX-(blx1-extW) + wInY-(bly1-extH)-2, 0) << " & " << use(mname.str()) << range(multW + multH-1, 0) << " & " << zg(trx1-extW-bpadX,0) << " & " << zg(try1-extH-bpadY,0) <<  ";" << endl;
+								
+								sname << zg(nrZeros) << " & " << join("pxy",i,j) << range(tileSize + bpadX+bpadY -1, bpadX+bpadY) << " & " << zg(bounded_tX + bounded_tY) << ";" << endl;
+							
 							} else { // concatenate only the lower portion of the partial product
 								/* check if the next element has as 17-bit shift wr to this one */
-								int ttrx1,ttry1,bblx1,bbly1, ffpadX, ffpadY, bbpadX, bbpadY;
-								d->getShiftOut()->getTopRightCorner(ttrx1, ttry1);
-								d->getShiftOut()->getBottomLeftCorner(bblx1, bbly1);
-				
-								ffpadX = bblx1-wInX-extW+1;
-								ffpadX = (ffpadX<0)?0:ffpadX;
-				
-								ffpadY = bbly1-wInY-extH+1;
-								ffpadY = (ffpadY<0)?0:ffpadY;
-				
-								bbpadX = extW-ttrx1;
-								bbpadX = (bbpadX<0)?0:bbpadX;
-				
-								bbpadY = extH-ttry1;
-								bbpadY = (bbpadY<0)?0:bbpadY;
-				
-				
-								int startXNext = bblx1-ffpadX-extW;
-								int startYNext = bbly1-ffpadY-extH;
+
+								/* these are the real coordinates next tile.
+								if this tile has the same weight as the current 
+								then the contribuiton of the current tile will
+								be absorbed in the next so nothing will be 
+								outputed*/
+								int trx2,try2,blx2,bly2;
+								d->getShiftOut()->getTopRightCorner  (trx2, try2);
+								d->getShiftOut()->getBottomLeftCorner(blx2, bly2);
 								
-								if (startX+startY != startXNext+startYNext) 
-									sname << use(mname.str()) << range(d->getShiftAmount()-1, bpadX+bpadY) << " & ";
-									
-								sname <<  zg(trx1-extW,0) << " & " << zg(try1-extH,0) << ";" << endl;
+								int rtXNext = trx2 - extW;
+								int rtYNext = try2 - extH;
+								
+								cout << "rtXNext="<<rtXNext<<" rtYNext="<<rtYNext<<" rtX="<<rtX<<" rtY="<<rtY<<endl; 
+
+								if ( rtX+rtY != rtXNext+rtYNext) //indeed, 17 bit shift 
+									if (bpadX+bpadY < d->getShiftAmount())
+									sname << join("pxy",i,j) << range(d->getShiftAmount()-1, bpadX+bpadY);
+								
+								sname << " & " << zg(bounded_tX + bounded_tY)<<";"<<endl;
+								
+								previousPadding = bpadX + bpadY;
 							}
 						}
 	
@@ -2261,8 +2216,8 @@ namespace flopoco{
 
 						/* save previous tile coordinates as they will be 
 						used in next tile generation */
-						startXOld = startX;
-						startYOld = startY;
+						rtXOld = rtX;
+						rtYOld = rtY;
 						
 						d = d->getShiftOut();
 						j++;

@@ -190,13 +190,7 @@ namespace flopoco{
 	};	 
 	
 	bool Virtex4::suggestSubaddSize(int &x, int wIn){
-		
-		//	int chunkSize = (int)floor( (1./frequency() - lutDelay()) / carryPropagateDelay()); // 1 if no need for pipeline
-		
-		
 		int chunkSize = 2 + (int)floor( (1./frequency() - (fdCtoQ_ + slice2sliceDelay_ + lut2_ + muxcyStoO_ + xorcyCintoO_ + ffd_)) / muxcyCINtoO_ );
-		
-		
 		x = min(chunkSize, wIn);		
 		if (x > 0) 
 			return true;
@@ -207,11 +201,7 @@ namespace flopoco{
 	};
 	
 	bool Virtex4::suggestSlackSubaddSize(int &x, int wIn, double slack){
-		
-		//	int chunkSize = (int)floor( (1./frequency() - lutDelay()) / carryPropagateDelay()); // 1 if no need for pipeline
-		
-		
-		int chunkSize =  1 + (int)floor( (1./frequency() - slack - (/*fdCtoQ_ +*/ slice2sliceDelay_ + lut2_ + muxcyStoO_ + xorcyCintoO_ /*+ ffd_*/)) / muxcyCINtoO_ );
+		int chunkSize =  1 + (int)floor( (1./frequency() - slack - (lut2_ + muxcyStoO_ + xorcyCintoO_)) / muxcyCINtoO_ );
 		x = chunkSize;	
 		x = min(chunkSize, wIn);	
 		if (x > 0) 

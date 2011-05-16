@@ -109,7 +109,7 @@ namespace flopoco{
 	bool Virtex5::suggestSubaddSize(int &x, int wIn){
 		
 //		int chunkSize = 2 + (int)floor( (1./frequency() - (fdCtoQ_ + slice2sliceDelay_ + lut2_ + muxcyStoO_ + xorcyCintoO_ + ffd_)) / muxcyCINtoO_ );
-		int chunkSize = 1 + (int)floor( (1./frequency() - (lut2_ + muxcyStoO_ + xorcyCintoO_)) / muxcyCINtoO_ );
+		int chunkSize = 1 + (int)floor( (1./frequency() - localWireDelay() - (lut2_ + muxcyStoO_ + xorcyCintoO_)) / muxcyCINtoO_ );
 		
 		x = chunkSize;		
 		if (x > 0) 
@@ -274,6 +274,44 @@ namespace flopoco{
 	
 	int Virtex5::getIntNAdderCost(int wIn, int n)
 	{
+		/* compressor tree cost */
+		int p = n, q = 0;
+		int levels = 0;
+		
+		
+		do{
+			while (p - 6 > 0){
+				p-=6;
+				q+=3;
+			}
+			while (p - 5 > 0){
+				p-=5;
+				q+=3;
+			}
+			while (p - 4 > 0){
+				p-=4;
+				q+=3;
+			}
+			while (p - 3 > 0){
+				p-=3;
+				q+=2;
+			}
+			levels++;
+			p=q;
+			q=0;
+		}while (p>2);
+		
+		/* at this point levels holds the number of lut levels*/
+		int alpha, beta, k, intAdderCost;
+		suggestSubaddSize(alpha, wIn);
+		beta = (wIn % alpha == 0? alpha: wIn % alpha);
+		k = (wIn % alpha ==0? wIn/alpha: wIn/alpha + 1);
+				
+		intAdderCost = (4*k-7)*alpha + 3*beta;
+		
+		return (intAdderCost + levels*wIn);
+		
+		/*
 		int chunkSize, lastChunkSize, nr, a, b, cost;
 		
 		suggestSubaddSize(chunkSize, wIn);
@@ -306,5 +344,6 @@ namespace flopoco{
 		
 		cost = a+b*0.25;
 		return cost;
+		*/
 	}
 }
