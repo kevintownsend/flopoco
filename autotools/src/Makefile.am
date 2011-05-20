@@ -17,22 +17,23 @@ noinst_HEADERS = apps/Collision.hpp apps/FPFMAcc.hpp apps/FPJacobi.hpp\
         fplogarithm/FirstInvTable.hpp fplogarithm/FirstLogTable.hpp fplogarithm/OtherLogTable.hpp \
         LNS/AtanPow.hpp LNS/Cotran.hpp LNS/CotranHybrid.hpp LNS/CotranTables.hpp LNS/LNSAdd.hpp LNS/LNSAddSub.hpp LNS/LNSDiv.hpp LNS/LNSMul.hpp LNS/LNSSqrt.hpp \
         squareroot/PolynomialTableCorrectRounded.hpp squareroot/PolynomialTable.hpp \
-        Targets/DSP.hpp Targets/Spartan3.hpp Targets/StratixII.hpp Targets/StratixIV.hpp Targets/Virtex4.hpp Targets/Virtex5.hpp Targets/Virtex6.hpp \
+        Targets/DSP.hpp Targets/Spartan3.hpp Targets/StratixII.hpp Targets/StratixIII.hpp Targets/StratixIV.hpp Targets/Virtex4.hpp Targets/Virtex5.hpp Targets/Virtex6.hpp \
         DotProduct.hpp  DualTable.hpp DualTable2.hpp Fix2FP.hpp FP2Fix.hpp FXP_Shift.hpp FlopocoStream.hpp FPAdderDualPath.hpp FPAdderSinglePath.hpp \
         FPDiv.hpp FPExp.hpp FPLog.hpp FPMultiplier.hpp FPNumber.hpp \
 	FPSqrt.hpp FPSqrtPoly.hpp FPSquarer.hpp FixedPointFunctions/FunctionEvaluator.hpp FixedPointFunctions/HOTBM.hpp IEEENumber.hpp InputIEEE.hpp IntAdder.hpp IntAdderClassical.hpp IntAdderAlternative.hpp IntAdderShortLatency.hpp IntCompressorTree.hpp IntDualSub.hpp IntKaratsuba.hpp IntMultiplier.hpp \
-	IntNAdder.hpp IntSquarer.hpp IntMultipliers/IntTilingMult.hpp IntTruncMultiplier.hpp LongAcc2FP.hpp LongAcc.hpp LongIntAdder.hpp LongIntAdderCmpCmpAdd.hpp LongIntAdderCmpAddAdd.hpp LZOC.hpp LZOCShifterSticky.hpp Operator.hpp OutputIEEE.hpp FixedPointFunctions/PolynomialEvaluator.hpp \
-	Shifters.hpp Signal.hpp IntMultipliers/SignedIntMultiplier.hpp IntMultipliers/UnsignedIntMultiplier.hpp IntMultipliers/LogicIntMultiplier.hpp FixedPointFunctions/PolyTableGenerator.hpp FixedPointFunctions/PiecewiseFunction.hpp  FixedPointFunctions/FunctionTable.hpp Table.hpp Target.hpp TestBench.hpp TestCase.hpp UserDefinedOperator.hpp utils.hpp Wrapper.hpp 
+	IntNAdder.hpp IntSquarer.hpp IntMultipliers/IntTilingMult.hpp IntTruncMultiplier.hpp LongAcc2FP.hpp LongAcc.hpp LZOC.hpp LZOCShifterSticky.hpp Operator.hpp OutputIEEE.hpp FixedPointFunctions/PolynomialEvaluator.hpp \
+	Shifters.hpp Signal.hpp IntMultipliers/SignedIntMultiplier.hpp IntMultipliers/UnsignedIntMultiplier.hpp IntMultipliers/LogicIntMultiplier.hpp FixedPointFunctions/PolyTableGenerator.hpp FixedPointFunctions/PiecewiseFunction.hpp  FixedPointFunctions/FunctionTable.hpp Table.hpp Target.hpp TestBench.hpp TestCase.hpp UserDefinedOperator.hpp utils.hpp Wrapper.hpp FPSumOfSquares.hpp
 
-libflopoco_la_SOURCES = VHDLLexer.cpp \
-			utils.cpp \
+libflopoco_la_SOURCES = utils.cpp \
 			FlopocoStream.cpp \
+			VHDLLexer.cpp \
 			Targets/DSP.cpp \
 			Target.cpp \
 			Targets/Virtex4.cpp \
 			Targets/Spartan3.cpp \
 			Targets/Virtex6.cpp \
 			Targets/StratixII.cpp \
+			Targets/StratixIII.cpp \
 			Targets/Virtex5.cpp \
 			Targets/StratixIV.cpp \
 			Operator.cpp \
@@ -43,10 +44,21 @@ libflopoco_la_SOURCES = VHDLLexer.cpp \
 			Wrapper.cpp \
 			TestBench.cpp \
 			UserDefinedOperator.cpp\
-                        IntAdder.cpp IntAdderClassical.cpp IntAdderAlternative.cpp IntAdderShortLatency.cpp \
+			IntAdder.cpp\
+			IntAdderClassical.cpp\
+			IntAdderAlternative.cpp\
+			IntAdderShortLatency.cpp\
+			IntAddition/LongIntAdderAddAddMuxGen1.cpp \
+			IntAddition/LongIntAdderCmpCmpAddGen1.cpp \
+			IntAddition/LongIntAdderCmpAddIncGen1.cpp \
+			IntAddition/IntAdderSpecific.cpp \
+			IntAddition/IntComparatorSpecific.cpp \
+			IntAddition/CarryGenerationCircuit.cpp \
+			IntAddition/LongIntAdderAddAddMuxGen2.cpp \
+			IntAddition/LongIntAdderCmpCmpAddGen2.cpp \
+			IntAddition/LongIntAdderCmpAddIncGen2.cpp \
 			IntNAdder.cpp \
 			IntCompressorTree.cpp \
-                        LongIntAdder.cpp LongIntAdderCmpCmpAdd.cpp LongIntAdderCmpAddAdd.cpp \
                         IntComparator.cpp \
 			IntDualSub.cpp \
 			IntMultiplier.cpp \
@@ -55,14 +67,12 @@ libflopoco_la_SOURCES = VHDLLexer.cpp \
 			IntMultipliers/IntTilingMult.cpp \
 			IntMultipliers/LogicIntMultiplier.cpp \
 			IntTruncMultiplier.cpp \
+			IntSquarer.cpp \
 			IntKaratsuba.cpp \
 			LZOC.cpp \
 			LZOCShifterSticky.cpp \
 			Shifters.cpp \
 			FPAdderDualPath.cpp \
-			Fix2FP.cpp \
-			FP2Fix.cpp \
-			FXP_Shift.cpp \
 			FPMultiplier.cpp \
 			FPMultiplierKaratsuba.cpp \
 			FPMultiplierTiling.cpp \
@@ -72,8 +82,6 @@ libflopoco_la_SOURCES = VHDLLexer.cpp \
 			FPSqrtPoly.cpp \
 			squareroot/PolynomialTable.cpp \
 			squareroot/PolynomialTableCorrectRounded.cpp \
-			LongAcc.cpp \
-			LongAcc2FP.cpp \
 			DotProduct.cpp \
 			ConstMult/IntConstMult.cpp \
 			ConstMult/ShiftAddOp.cpp \
@@ -81,32 +89,51 @@ libflopoco_la_SOURCES = VHDLLexer.cpp \
 			ConstMult/IntIntKCM.cpp \
 			ConstMult/KCMTable.cpp \
 			ConstMult/FPConstMult.cpp \
-			TestCase.cpp \
-			FPNumber.cpp \
-			IEEENumber.cpp \
-			FPExp.cpp \
 			fplogarithm/FirstInvTable.cpp \
 			fplogarithm/FirstLogTable.cpp \
 			fplogarithm/OtherLogTable.cpp \
-			FPPow.cpp \
 			FPLog.cpp \
+			FPExp.cpp \
+			FPPow.cpp \
+			LongAcc.cpp \
+			LongAcc2FP.cpp \
+			FPSumOfSquares.cpp \
+			Fix2FP.cpp \
 			InputIEEE.cpp \
 			OutputIEEE.cpp \
 			apps/Collision.cpp \
                         apps/FPFMAcc.cpp \
-			IntSquarer.cpp
+			TestCase.cpp \
+			FPNumber.cpp \
+			IEEENumber.cpp \
+			FP2Fix.cpp \
+			FXP_Shift.cpp
+
+#LongIntAdder.cpp LongIntAdderCmpCmpAdd.cpp LongIntAdderCmpAddAdd.cpp 
 
 if no_WIN32
-libflopoco_la_SOURCES += FPAdderSinglePath.cpp \
-			FPAdder3Input.cpp \
-                        ConstMult/CRFPConstMult.cpp ConstMult/FixRealKCM.cpp ConstMult/FPRealKCM.cpp \
-			FPPipeline.cpp \
+libflopoco_la_SOURCES +=  \
 			FixedPointFunctions/PolyTableGenerator.cpp \
 			FixedPointFunctions/PiecewiseFunction.cpp \
+			FPPipeline.cpp \
 			FixedPointFunctions/FunctionTable.cpp \
 			FixedPointFunctions/PolynomialEvaluator.cpp \
 			FixedPointFunctions/FunctionEvaluator.cpp \
+			FPAdderSinglePath.cpp \
+			FPAdder3Input.cpp \
+                        ConstMult/CRFPConstMult.cpp ConstMult/FixRealKCM.cpp ConstMult/FPRealKCM.cpp \
 			apps/FPJacobi.cpp \
+			apps/TaMaDiCore.cpp \
+			apps/TaMaDiPriorityEncoder.cpp \
+			apps/TaMaDiDecoder.cpp \
+			apps/TaMaDiFIFO.cpp \
+			apps/TaMaDiShiftRegister.cpp \
+			apps/TaMaDiModule.cpp \
+			apps/TaMaDiModuleDummyWrapper.cpp \
+			apps/TaMaDiModuleWrapperInterface.cpp \
+			apps/TaMaDiDispatcherInterface.cpp \
+			apps/TaMaDiDeserializer.cpp \
+			apps/TaMaDiSystem.cpp \
 			UtilSollya.cc
 
 endif
