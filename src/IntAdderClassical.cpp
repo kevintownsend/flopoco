@@ -52,6 +52,8 @@ namespace flopoco {
 			inputDelays.clear();
 		}	
 		
+		classicalSlackVersion = -1;
+		
 		switch (optimizeType) {
 			case 0:  cost = getLutCostClassical(target,wIn, inputDelays, srl); break;
 			case 1:  cost = getRegCostClassical(target,wIn, inputDelays, srl); break;
@@ -63,10 +65,10 @@ namespace flopoco {
 		
 		vhdl << tab << "--Classical"<<endl;
 		if ( isSequential() ) {
-			if ( maxInputDelay == (target->localWireDelay() + target->ffDelay()) ) {
+			if ( maxInputDelay == (target->localWireDelay() + target->ffDelay()) || classicalSlackVersion==-1 ) {
 				/* the non-slack version */
 				updateParameters ( target, alpha, beta, k );
-				REPORT ( DEBUG, "alpha="<<alpha<<" beta="<<beta<<" k="<<k );
+				REPORT ( DEBUG, "1) alpha="<<alpha<<" beta="<<beta<<" k="<<k );
 			} else {
 				if ( classicalSlackVersion == 0 ) {
 					/* the slack version that does not buffer the inputs*/

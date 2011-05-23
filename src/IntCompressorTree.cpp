@@ -92,6 +92,7 @@ namespace flopoco{
 			
 				vhdl << tab << "R <= myR;" << endl;
 				outDelayMap["R"] = finalAdder->getOutputDelay("R");
+				vhdl << " -- delay at adder output " <<  outDelayMap["R"] << endl;
 				processing = false;
 				REPORT(DEBUG, "Should have finished ...");
 			}else{

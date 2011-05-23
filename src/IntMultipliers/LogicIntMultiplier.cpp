@@ -344,6 +344,7 @@ namespace flopoco{
 					syncCycleFromSignal("addRes");
 					setCriticalPath(add->getOutputDelay("R"));
 					vhdl<<tab<<"R<=addRes" << range(adderWidth-1,adderWidth-wInX_-wInY_) << ";" << endl;		
+					outDelayMap["R"] = getCriticalPath();				
 				}
 			}else{// we perform just one multiplication 
 				setCriticalPath(getMaxInputDelays(inputDelays));

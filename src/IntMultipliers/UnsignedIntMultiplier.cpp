@@ -156,7 +156,7 @@ namespace flopoco{
 					vhdl << tab << declare ("sum0Low", x) << " <= sum0" << range(x-1,0) << ";" << endl;
 		
 					if (chunksX>1){
-						manageCriticalPath(target->DSPToLogicWireDelay());
+						manageCriticalPath(target->ffDelay()+ target->DSPToLogicWireDelay());
 				
 						REPORT(DEBUG, "delay at adder input " << getCriticalPath() ); 
 	//								IntNAdder* add =  new IntNAdder(target, x*chunksX+y*chunksY+extension, chunksX, inDelayMap("X0",getCriticalPath()));
