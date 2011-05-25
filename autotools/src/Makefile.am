@@ -1,7 +1,7 @@
 # Makefile for flopoco/src
 SUBDIRS = 
 if BUILD_SOLLYA_FILES
-SUBDIRS += FPExpressions
+SUBDIRS += FPExpressions LNS
 endif
 
 ACLOCAL_AMFLAGS = -I ../m4

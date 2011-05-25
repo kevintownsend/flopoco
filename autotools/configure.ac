@@ -52,12 +52,14 @@ dnl check for the sollya library
 if test "x$ac_sollya_dir" != x && test "x$ac_sollya_obj_dir" != x; then
    AC_DEFINE(HAVE_SOLLYA, 1, "Found Sollya")
    AC_DEFINE(HAVE_HOTBM, 1, "HOTBM available")
+   AC_DEFINE(HAVE_LNS, 1, "LNS available")
    SOLLYA_INCLUDE="-I $ac_sollya_dir"
    SOLLYA_LDFLAGS="-L$ac_sollya_obj_dir -lsollya"
    AC_SUBST(SOLLYA_INCLUDE)
    AC_SUBST(SOLLYA_LDFLAGS)
    ac_build_sollya=yes
 AC_CONFIG_FILES([src/FPExpressions/Makefile])
+AC_CONFIG_FILES([src/LNS/Makefile])
 else
    ac_build_sollya=no
 fi
