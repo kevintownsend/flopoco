@@ -157,7 +157,7 @@ libflopoco_la_SOURCES += VHDLLexer.cpp \
 		FixedPointFunctions/HOTBM/PowerROM.cc\
 		FixedPointFunctions/HOTBM/TermPowMult.cc
 
-libflopoco_la_LIBADD = $(top_builddir)/src/FPExpressions/libFPExpressions.la
+libflopoco_la_LIBADD = $(top_builddir)/src/FPExpressions/libFPExpressions.la $(top_builddir)/src/LNS/libLNS.la
 libflopoco_la_CPPFLAGS = -I$(top_builddir)/src/FPExpressions/ -I$(top_srcdir)/src/FPExpressions
 
 endif
