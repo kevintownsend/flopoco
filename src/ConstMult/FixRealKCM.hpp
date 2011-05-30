@@ -12,7 +12,8 @@ namespace flopoco{
 	class FixRealKCM : public Operator
 	{
 	public:
-		FixRealKCM(Target* target, int lsbIn, int msbIn, int signedInput, int lsbOut, string constant, map<string, double> inputDelays = emptyDelayMap);
+		FixRealKCM(Target* target, int lsbIn, int msbIn, int signedInput, int lsbOut, string constant, 
+							 double targetUlpError = 1.0, map<string, double> inputDelays = emptyDelayMap);
 		~FixRealKCM();
 
 		// Overloading the virtual functions of Operator

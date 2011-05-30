@@ -38,6 +38,7 @@ namespace flopoco{
 	{
 	
 		setCopyrightString("Bogdan Pasca, Florent de Dinechin (2009,2010)");		
+		srcFileName="IntIntKCM";
 		// Set up the IO signals
 		addInput ("X" , wIn_);
 		
@@ -70,11 +71,11 @@ namespace flopoco{
 #endif
 //			double delay = 0.0;
 	
-	
+			REPORT(INFO, "Constant multiplication in "<< nbOfTables << " tables, input sizes:  for the first tables, " << lutWidth << ", for the last table: " << lastLutWidth);
 			// if (verbose){
 			// 	cerr << "> IntIntKCM:\t The width of the constant is = " << constantWidth<<endl;
 			// 	cerr << "> IntIntKCM:\t The number of inputs / LUT is = " << lutWidth << endl;
-			// 	cerr << "> IntIntKCM:\t The number of tables needed is = " << nbOfTables << endl;
+			// 	cerr << "> IntIntKCM:\t The  << endl;
 			// }
 
 

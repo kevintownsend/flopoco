@@ -156,7 +156,8 @@ namespace flopoco{
 		addFPOutput("R", wE, wF, 2);  // 2 because faithfully rounded
 
 
-		// The two constants
+
+		//***************** Building a few MPFR constants, useful or obsolete ******** 
 		mpz_class mpzLog2, mpzInvLog2;
 	
 		mpfr_t mp2, mp1, mplog2, mpinvlog2;
@@ -199,9 +200,11 @@ namespace flopoco{
 			throw e.str();
 		}
 
+
+
+		//***************** Input unpacking and shifting to fixed-point ******** 
+
 		setCriticalPath( getMaxInputDelays(inputDelays) + target->localWireDelay());
-		// Here we may have a wF-bit mantissa, or a wF+wE+1-bit one
-		int sizeXfix = wE+wF+g +1; // +1 for the sign
 		vhdl << tab  << declare("Xexn", 2) << " <= X(wE+wFIn+2 downto wE+wFIn+1);" << endl;
 		vhdl << tab  << declare("XSign") << " <= X(wE+wFIn);" << endl;
 		vhdl << tab  << declare("XexpField", wE) << " <= X(wE+wFIn-1 downto wFIn);" << endl;
@@ -213,7 +216,7 @@ namespace flopoco{
 		vhdl << tab  << declare("shiftVal", wE+2) << " <= (\"00\" & XexpField) - e0; -- for a left shift" << endl;
 
 		vhdl << tab  << "-- underflow when input is shifted to zero (shiftval<0), in which case exp = 1" << endl;
-		vhdl << tab  << declare("expIs1") << " <= shiftVal(wE+1);" << endl;
+		vhdl << tab  << declare("resultWillBeOne") << " <= shiftVal(wE+1);" << endl;
  
 		// As we don't have a signed shifter, shift first, complement next. TODO? replace with a signed shifter
 		vhdl << tab << "--  mantissa with implicit bit" << endl;
@@ -227,7 +230,7 @@ namespace flopoco{
 		int shiftInSize = lshift->getShiftInWidth();
 		vhdl << tab  << declare("shiftValIn", shiftInSize) << " <= shiftVal" << range(shiftInSize-1, 0) << ";" << endl;
 
-		outPortMap(lshift, "R", "fixX0");
+		outPortMap(lshift, "R", "fixX");
 		inPortMap(lshift, "S", "shiftValIn");
 		inPortMap(lshift, "X", "mXu");
 		vhdl << instance(lshift, "mantissa_shift");
@@ -236,8 +239,11 @@ namespace flopoco{
 
 		vhdl << tab  << "-- Partial overflow/underflow detection" << endl;
 		vhdl << tab  << declare("oufl0") << " <= not shiftVal(wE+1) when shiftVal(wE downto 0) >= conv_std_logic_vector(" << maxshift << ", wE+1) else '0';" << endl;
-		vhdl << tab << declare("fixX", sizeXfix) << " <= " << "'0' & fixX0" << range(wE+g + wFIn+1 -1,  wFIn-wF) << ";" << endl;
+
+
 #else
+
+
 		// left shift
 		double scp = getCriticalPath();
 		vhdl << tab  << "-- Partial overflow/underflow detection" << endl;
@@ -260,103 +266,88 @@ namespace flopoco{
 		syncCycleFromSignal("fixX0");
 		setCriticalPath( lshift->getOutputDelay("R") );
 
-		vhdl << tab << declare("fixX", sizeXfix) << " <= " << "'0' & fixX0" << range(wE-1 + wF+g + wFIn+1 -1, wFIn) << ";" << endl;
-
 #endif	
-
-
-		vhdl << tab << "-- two's compliment version mantissa" << endl;
-		manageCriticalPath( target->localWireDelay() + target->lutDelay() );
-		vhdl << tab << declare("addOp0",sizeXfix) << " <= (fixX xor "<<rangeAssign(sizeXfix-1,0,"XSign")<<") and "<<rangeAssign(sizeXfix-1,0,"not(expIs1)")<<";"<<endl;
-		vhdl << tab << declare("addCarry") << "<= XSign and not(expIs1);"<<endl;
-	
-		IntAdder *twosComplMantissa = new IntAdder(target, sizeXfix, inDelayMap("X", target->localWireDelay() + getCriticalPath() ) );
-		oplist.push_back(twosComplMantissa);
-	
-		inPortMap(twosComplMantissa, "X", "addOp0");
-		inPortMapCst(twosComplMantissa, "Y", zg(sizeXfix,0));
-		inPortMap(twosComplMantissa, "Cin", "addCarry");
-		outPortMap(twosComplMantissa, "R", "fixXsigned");
-	
-		vhdl << instance( twosComplMantissa, "The2cMantissa") << endl;
-		syncCycleFromSignal("fixXsigned");
-		setCriticalPath( twosComplMantissa->getOutputDelay("R") );
-
-		// fixXsigned(), on wE+3 bits,  is an int . 2^-2
-		// cstInvLog2,   on wE+3 bits,  is an int . 2^{-wE-2}
-		// The product is an int . 2^{-wE-4}
-
-		vhdl << tab <<	declare("xMulIn",sizeFirstKCM) << " <=  fixXsigned "<< range(sizeXfix-1, sizeXfix-sizeFirstKCM) << "; -- 2's complement, rounded down" << endl;
-
-#if 1
-
-		IntIntKCM *mulInvLog2 = new IntIntKCM(target, sizeFirstKCM, mpzInvLog2, true /* signed input */, inDelayMap( "X", target->localWireDelay() + getCriticalPath())  );
-		oplist.push_back(mulInvLog2);
-		outPortMap(mulInvLog2, "R", "xInvLog2");
-		inPortMap(mulInvLog2, "X", "xMulIn");
-		vhdl << instance(mulInvLog2, "mulInvLog2");
-		syncCycleFromSignal("xInvLog2");
-		setCriticalPath( mulInvLog2->getOutputDelay("R") );
-
-
-#else
-		// TODO should work but there is a bug
-		FixRealKCM *mulInvLog2 = new  FixRealKCM(target, -2, wE+1, true  /* signed input */, -2, "1/log(2)", inDelayMap( "X", target->localWireDelay() + getCriticalPath()) );
-		oplist.push_back(mulInvLog2);
-		outPortMap(mulInvLog2, "R", "xInvLog2");
-		inPortMap(mulInvLog2, "X", "xMulIn");
-		vhdl << instance(mulInvLog2, "mulInvLog2");
-		syncCycleFromSignal("xInvLog2");
-		setCriticalPath( mulInvLog2->getOutputDelay("R") );
-#endif
-
-		int xInvlog2size=getSignalByName("xInvLog2")->width();
 		
-		manageCriticalPath( target->localWireDelay() + target->adderDelay(wE+2) );
-		vhdl << tab << declare("Kunrounded", wE+2) << " <= xInvLog2 " << range(xInvlog2size-2, xInvlog2size -wE-3) << " + ( " << rangeAssign(wE+1,1,"'0'") << "  & '1'); -- adding round bit " <<endl;
-		vhdl << tab << declare("K", wE+1) << " <= Kunrounded " << range(wE+1,1) << "; -- rounding to nearest" <<endl;
+		manageCriticalPath( target->localWireDelay() + target->lutDelay() );
+
+		int sizeXfix = wE+wF+g; // still unsigned; msb=wE-1; lsb = -wF-g
+		vhdl << tab << declare("fixX", sizeXfix) << " <= " << " fixX0" << range(wE-1 + wF+g + wFIn+1 -1, wFIn) << " and "<<rangeAssign(sizeXfix-1,0,"not(resultWillBeOne)")<<";" << endl;
+
+		int lsbXforFirstMult=-3; 
+		int sizeXMulIn = wE-2 - lsbXforFirstMult +1; // msb=wE-2, lsb=-3
+		vhdl << tab <<	declare("xMulIn", sizeXMulIn) << " <=  fixX" << range(sizeXfix-2, sizeXfix - sizeXMulIn-1  ) << "; -- truncation, error 2^-3" << endl;
+
+		//***************** Multiplication by 1/log2 to get approximate result ******** 
+		// FixRealKCM does the rounding to the proper place with the proper error
+		FixRealKCM *mulInvLog2 = new  FixRealKCM(target,
+																						 lsbXforFirstMult, // lsbIn 
+																						 wE-2 , // msbIn,
+																						 false,  // unsigned input,
+																						 0,   // lsbOut,
+																						 "1/log(2)", //  constant
+																						 0.5 + 0.09, // error: we have 0.125 on X, and target is 0.5+0.22 
+																						 inDelayMap( "X", target->localWireDelay() + getCriticalPath()) );
+		oplist.push_back(mulInvLog2);
+		outPortMap(mulInvLog2, "R", "absK");
+		inPortMap(mulInvLog2, "X", "xMulIn");
+		vhdl << instance(mulInvLog2, "mulInvLog2");
+
+		syncCycleFromSignal("absK");
+		setCriticalPath( mulInvLog2->getOutputDelay("R") );
 
 
-		int sizeY=wF+g; // This is also the weight of Y's LSB
-#if 0 //--------------Obsoleted by FixRealKCM 
-		IntIntKCM *mulLog2 = new IntIntKCM(target, wE+1, mpzLog2, true /* signed input */);
+		// Now I have two things to do in parallel: compute K, and compute absKLog2
+		// First compute K
+		manageCriticalPath(target->localWireDelay() + target->adderDelay(wE+1));
+		vhdl << tab << declare("minusAbsK",wE+1) << " <= " << rangeAssign(wE, 0, "'0'")<< " - ('0' & absK);"<<endl;
+		// The synthesizer should be able to merge the addition and this mux, so the next line is commented
+		// manageCriticalPath(target->localWireDelay() + target->lutDelay());
+		vhdl << tab << declare("K",wE+1) << " <= minusAbsK when  XSign='1'   else ('0' & absK);"<<endl;
+
+		// get back to the cycle+critical path at the output of the first multiplier
+		// We kind of forget the critical path at the end of the compute K block, because mulLog2 will be much larger.
+		syncCycleFromSignal("absK");
+		setCriticalPath( mulInvLog2->getOutputDelay("R") );
+
+		FixRealKCM *mulLog2 = new FixRealKCM(target, 
+																				 0, 
+																				 wE-1, 
+																				 false  /* unsigned input */, 
+																				 -wF-g, 
+																				 "log(2)", 
+																				 1.0, 
+																				 inDelayMap( "X", target->localWireDelay() + getCriticalPath()) );
+
 		oplist.push_back(mulLog2);
-		outPortMap(mulLog2, "R", "KLog2");
-		inPortMap(mulLog2, "X", "K");
+		outPortMap(mulLog2, "R", "absKLog2");
+		inPortMap(mulLog2, "X", "absK");
 		vhdl << instance(mulLog2, "mulLog2");
-		syncCycleFromSignal("KLog2");
-		nextCycle();
-
-		vhdl << tab << declare("neg2Op",sizeY) << " <= not(KLog2" << range(wE+wF+g -1, wE+wF+g - sizeY)<<");"<<endl;
-		vhdl << tab << declare("fixXsignedLSB",sizeY) << " <= fixXsigned" << range(sizeY-1, 0) << ";"<<endl;
-		//-------------End of "obsoleted by FixRealKCM" 
-#else
-		FixRealKCM *mulLog2 = new FixRealKCM(target, 0, wE, true  /* signed input */, -wF-g, "log(2)", inDelayMap( "X", target->localWireDelay() + getCriticalPath()) );
-
-		oplist.push_back(mulLog2);
-		outPortMap(mulLog2, "R", "KLog2");
-		inPortMap(mulLog2, "X", "K");
-		vhdl << instance(mulLog2, "mulLog2");
-		syncCycleFromSignal("KLog2");
+		syncCycleFromSignal("absKLog2");
 		setCriticalPath( mulLog2->getOutputDelay("R") );
 
+
+		// absKLog2: msb wE-2, lsb -wF-g
+
+		int sizeY=wF+g; // This is also the weight of Y's LSB
+
 		manageCriticalPath( target->localWireDelay() + target->lutDelay() );
-		vhdl << tab << declare("neg2Op",sizeY) << " <= not(KLog2" << range(sizeY-1, 0) << ");"<<endl;
-		vhdl << tab << declare("fixXsignedLSB",sizeY) << " <= fixXsigned" << range(sizeY-1, 0) << ";"<<endl;
 
-#endif
+		vhdl << tab << declare("subOp1",sizeY) << " <= fixX" << range(sizeY-1, 0) << " when XSign='0'"
+				 << " else not (fixX" << range(sizeY-1, 0) << ");"<<endl;
+		vhdl << tab << declare("subOp2",sizeY) << " <= absKLog2" << range(sizeY-1, 0) << " when XSign='1'"
+				 << " else not (absKLog2" << range(sizeY-1, 0) << ");"<<endl;
 
-
-		double ctperiod = 1.0 / target->frequency();
-		target->setFrequency( 1.0 / (ctperiod - target->LogicToRAMWireDelay() ) );
-		IntAdder *yPaddedAdder = new IntAdder(target, sizeY, inDelayMap("X", target->localWireDelay() + getCriticalPath()) ); // we know the leading bits will cancel out
+		double ctperiod = 1.0 / target->frequency(); 
+		target->setFrequency( 1.0 / (ctperiod - target->LogicToRAMWireDelay() ) ); // Bogdan, WTF is that? 
+		IntAdder *yPaddedAdder = new IntAdder(target, sizeY, // we know the leading bits will cancel out
+																					inDelayMap("X", target->localWireDelay() + getCriticalPath()) ); 
 		target->setFrequency( 1.0 / ctperiod );
 		oplist.push_back(yPaddedAdder);
 
-		inPortMap( yPaddedAdder, "X", "fixXsignedLSB");
-		inPortMapCst ( yPaddedAdder, "Y", "neg2Op");
-		inPortMapCst ( yPaddedAdder, "Cin", "'1'");
 		outPortMap( yPaddedAdder, "R", "Y");
+		inPortMapCst ( yPaddedAdder, "Cin", "'1'");
+		inPortMapCst ( yPaddedAdder, "Y", "subOp2");
+		inPortMap( yPaddedAdder, "X", "subOp1");
 	
 		vhdl << instance(yPaddedAdder, "theYAdder") << endl;
 		syncCycleFromSignal("Y");

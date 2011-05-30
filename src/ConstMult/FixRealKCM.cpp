@@ -33,9 +33,10 @@ namespace flopoco{
 	extern vector<Operator*> oplist;
 
 
-  
 
-	FixRealKCM::FixRealKCM(Target* target, int lsbIn_, int msbIn_, int signedInput_, int lsbOut_, string constant_, map<string, double> inputDelays) :
+
+
+	FixRealKCM::FixRealKCM(Target* target, int lsbIn_, int msbIn_, int signedInput_, int lsbOut_, string constant_, double targetUlpError, map<string, double> inputDelays) :
 		Operator(target, inputDelays), lsbIn(lsbIn_), msbIn(msbIn_), signedInput(signedInput_),
 		wIn(msbIn_-lsbIn_+1), lsbOut(lsbOut_), constant(constant_) 
 	{
@@ -44,6 +45,16 @@ namespace flopoco{
 		if(lsbIn>msbIn) 
 			throw string("FixRealKCM: Error, lsbIn>msbIn");
     
+		if(targetUlpError>1.0) 
+			throw string("FixRealKCM: Error, targetUlpError>1.0. Should be between 0.5 and 1.");
+		if(targetUlpError<0.5) 
+			throw string("FixRealKCM: Error, targetUlpError<0.5. Should be between 0.5 and 1.");
+		
+		int signBit=0;
+		if(signedInput)
+			signBit=1;
+		wIn+=signBit;
+
 		/* Convert the input string into a sollya evaluation tree */
 		sollya_node_t node;
 		node = parseString(constant.c_str());	/* If conversion did not succeed (i.e. parse error) */
@@ -74,11 +85,11 @@ namespace flopoco{
 		msbC = mpfr_get_si(log2C, GMP_RNDU);
 
 		msbOut = msbC + msbIn;
-		wOut = msbOut-lsbOut+1;
+		wOut = msbOut + signBit - lsbOut+1;
 		REPORT(DEBUG, "msbConstant=" << msbC << "   lsbOut="<<lsbOut << "   msbOut="<<msbOut << "   wOut="<<wOut);
 	
-		if(wIn>wOut) 
-			throw string("FixRealKCM: Error, wIn>wOut,  You probably want to truncate your input instead.");
+		 // if(wIn>wOut) 
+		 // 	throw string("FixRealKCM: Error, wIn>wOut,  You probably want to truncate your input instead.");
 
 		addInput("X", wIn);
 		addOutput("R", wOut);
@@ -123,17 +134,24 @@ namespace flopoco{
 			}
 			REPORT(INFO, "Constant multiplication in "<< nbOfTables << " tables, input sizes:  for the first tables, " << lutWidth << ", for the last table: " << lastLutWidth);
 
-			// How many guard bits? ulp=2^lsbOut
+			// How many guard bits? ulp=2^lsbOut, and we want to ensure targetUlpError
 			// One half-ulp for the final rounding, and nbOfTables tables with an error of 2^(lsbOut-g-1) each 
-			// so we want nbOfTables*2^(lsbOut-g-1) < 2^lsbOut-1 so g>=log2(nbOfTables)
-			// 3, 4 tables: g=2;  5..8 tables: g=3  etc
+			// so we want nbOfTables*2^(lsbOut-g-1) + 0.5 < targetUlpError*2^lsbOut 
 
-			if(nbOfTables==2)
+			// For targetUlpError=1.0,    3, 4 tables: g=2;  5..8 tables: g=3  etc
+
+			if(nbOfTables==2 && targetUlpError==1.0)
 				g=0; // specific case: two CR table make up a faithful sum
 			else
-				g = round(ceil(log2(nbOfTables)));
+				g = ceil(log2(nbOfTables/((targetUlpError-0.5)*exp2(-lsbOut)))) -1 -lsbOut;
 
 			REPORT(DEBUG, "g=" << g);
+
+
+			// All the tables are read in parallel
+			setCriticalPath(getMaxInputDelays(inputDelays));
+			manageCriticalPath( target->lutDelay() + target->localWireDelay() );
+
 
 			//first split the input X into digits having lutWidth bits -> this is as generic as it gets :)
 			bool tableSigned=false, last;
@@ -165,13 +183,11 @@ namespace flopoco{
 				REPORT(DEBUG, "Table i=" << i << ", input size=" << diSize<< ", output size=" << ppiSize);
 
 				// Now produce the VHDL
-				setCriticalPath(getMaxInputDelays(inputDelays));
-				manageCriticalPath( target->lutDelay() + target->localWireDelay() );
 				
 				FixRealKCMTable *t; 
 				t = new FixRealKCMTable(target, this, i, diSize, ppiSize, tableSigned, last);
-				oplist.push_back(t);
 				useSoftRAM(t);
+				oplist.push_back(t);
             	
 				inPortMap (t , "X", join("d",i));
 				outPortMap(t , "Y", join("pp",i));
@@ -184,9 +200,6 @@ namespace flopoco{
 			}
 
 
-			// All the tables are read in parallel
-			// TODO some day this will go to Table.
-//			manageCriticalPath(2*target->localWireDelay() + target->lutDelay());
 			
 			Operator* adder;
 			if(nbOfTables>2) {
