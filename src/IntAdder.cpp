@@ -108,7 +108,6 @@ namespace flopoco {
 	}
 	
     void IntAdder::changeName(std::string operatorName){
-    	exit(-1);
 		Operator::changeName(operatorName);
 		addImplementationList[selectedVersion]->changeName(operatorName);
 		cout << "changin IntAdder name to " << operatorName << endl;
