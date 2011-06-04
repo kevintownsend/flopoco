@@ -599,7 +599,7 @@ namespace flopoco{
 //		nextCycle();
 
 		vhdl << tab << declare("needNoNorm") << " <= expY(" << rWidth-1 << ");" << endl;
-		manageCriticalPath( target->localWireDelay() + target->lutDelay() );		
+		manageCriticalPath( target->localWireDelay(wE+wF+2) + target->lutDelay() );		
 		vhdl << tab << "-- Rounding: all this should consume one row of LUTs" << endl; 
 		vhdl << tab << declare("preRoundBiasSig", wE+wF+2)
 		     << " <= conv_std_logic_vector(" << bias << ", wE+2)  & expY" << range(rWidth-2, rWidth-2-wF+1) << " when needNoNorm = '1'" << endl

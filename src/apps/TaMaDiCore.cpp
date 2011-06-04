@@ -37,7 +37,7 @@ namespace flopoco{
 
 	extern vector<Operator*> oplist;
 
-	TaMaDiCore::TaMaDiCore(Target* target, int wp, int d, int iterations, int wIntervalID):
+	TaMaDiCore::TaMaDiCore(Target* target, int wp, int d, int iterations, int wIntervalID, int version, int pathWidth):
 	Operator(target), wp(wp),d(d), iterations(iterations), wIntervalID(wIntervalID) 
 	{
 		srcFileName="TaMaDiCore";

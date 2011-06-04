@@ -410,28 +410,29 @@ namespace flopoco{
 		return pipelineDepth_; 
 	}
 	
-	void Operator::outputFinalReport() {
-		if (hardOperator_ == true){
-			ostringstream tabs, ctabs;
-			for (int i=0;i<level-1;i++){
-				tabs << "|" << tab;
-				ctabs << "|" << tab;
-			}
-			
-			if (level>0){
-				tabs << "|" << "---";
-				ctabs << "|" << tab;
-			}
-			
-			cerr << tabs.str() << "Entity " << uniqueName_ <<":"<< endl;
-			if(this->getPipelineDepth()!=0)
-				cerr << ctabs.str() << tab << "Pipeline depth = " << getPipelineDepth() << endl;
-			else
-				cerr << ctabs.str() << tab << "Not pipelined"<< endl;
+	void Operator::outputFinalReport(int level) {
+
+		for (unsigned i=0; i< getOpList().size(); i++)
+			if (! getOpListR().empty())
+				getOpListR()[i]->outputFinalReport(level+1);	
+
+		ostringstream tabs, ctabs;
+		for (int i=0;i<level-1;i++){
+			tabs << "|" << tab;
+			ctabs << "|" << tab;
 		}
+		
+		if (level>0){
+			tabs << "|" << "---";
+			ctabs << "|" << tab;
+		}
+		
+		cerr << tabs.str() << "Entity " << uniqueName_ <<":"<< endl;
+		if(this->getPipelineDepth()!=0)
+			cerr << ctabs.str() << tab << "Pipeline depth = " << getPipelineDepth() << endl;
+		else
+			cerr << ctabs.str() << tab << "Not pipelined"<< endl;
 	}
-	
-	
 	
 	void Operator::setCycle(int cycle, bool report) {
 		// lexing part
@@ -1238,21 +1239,22 @@ namespace flopoco{
 	}
 	
 	void Operator::outputVHDL(std::ostream& o, std::string name) {
-		licence(o);
-		pipelineInfo(o);
-		stdLibs(o);
-		outputVHDLEntity(o);
-		newArchitecture(o,name);
-		o << buildVHDLComponentDeclarations();	
-		o << buildVHDLSignalDeclarations();
-		o << buildVHDLTypeDeclarations();
-		o << buildVHDLConstantDeclarations();
-		o << buildVHDLAttributes();
-		beginArchitecture(o);		
-		o<<buildVHDLRegisters();
-		o << vhdl.str();
-		endArchitecture(o);
-		
+		if (! vhdl.isEmpty() ){
+			licence(o);
+			pipelineInfo(o);
+			stdLibs(o);
+			outputVHDLEntity(o);
+			newArchitecture(o,name);
+			o << buildVHDLComponentDeclarations();	
+			o << buildVHDLSignalDeclarations();
+			o << buildVHDLTypeDeclarations();
+			o << buildVHDLConstantDeclarations();
+			o << buildVHDLAttributes();
+			beginArchitecture(o);		
+			o<<buildVHDLRegisters();
+			o << vhdl.str();
+			endArchitecture(o);
+		}
 	}
 	
 	void Operator::parse2(){
@@ -1372,7 +1374,7 @@ namespace flopoco{
 	void Operator::addFullComment(string comment, int lineLength) {
 		string align = "--";
 		// - 2 for the two spaces
-		for (int i = 2; i < (lineLength - 2- comment.size()) / 2; i++) align += "-";
+		for (unsigned i = 2; i < (lineLength - 2- comment.size()) / 2; i++) align += "-";
 		vhdl << align << " " << comment << " " << align << endl; 
 	}
 	

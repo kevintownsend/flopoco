@@ -16,7 +16,7 @@ namespace flopoco {
 	extern map<string, double> emptyDelayMap;
 	/** The IntAdderClassical class for experimenting with adders.
 	*/
-	class IntAdderClassical : public Operator{
+	class IntAdderClassical : public IntAdder{
 		public:
 			/**
 			* The IntAdderClassical constructor
@@ -61,46 +61,10 @@ namespace flopoco {
 			*/
 			int getSliceCostClassical ( Target* target, int wIn, map<string, double> inputDelays, bool srl );
 			
-			void updateParameters ( Target* target, int &alpha, int &beta, int &k );
-			
-			/**
-			* Updates the parameters needed of architecture implementation: wIn is taken from class attributes
-			* @param[in]  target            the target device
-			* @param[in]  inputDelays       the map containing the input delays
-			* @param[out] alpha             the size of the chunk (except first and last chunk)
-			* @param[out] beta              the size of the last chunk
-			* @param[out] gamma             the size of the first
-			* @param[out] k                 the number of chunks
-			*/
-			void updateParameters ( Target* target, map<string, double> inputDelays, int &alpha, int &beta, int &gamma, int &k );
-			
-			/**
-			* Updates the parameters needed of architecture implementation: wIn is taken from class attributes
-			* @param[in]  target            the target device
-			* @param[in]  inputDelays       the map containing the input delays
-			* @param[out] alpha             the size of the chunk (except first and last chunk)
-			* @param[out] beta              the size of the last chunk
-			* @param[out] k                 the number of chunks
-			*/
-			void updateParameters ( Target* target, map<string, double> inputDelays, int &alpha, int &beta, int &k );
-			
-			/**
-			* Returns the result of the optimization algorithm for the short-latency architecture on the input data.
-			* @param[in] target            the target device
-			* @param[in] wIn               the input width
-			* @param[in] k                 the number of chunks
-			*/
-
 			/**
 			*  Destructor
 			*/
 			~IntAdderClassical();
-			
-			/**
-			* The emulate function.
-			* @param[in] tc               a list of test-cases
-			*/
-// 			void emulate ( TestCase* tc );
 			
 		protected:
 			int wIn_;                         /**< the width for X, Y and R*/
@@ -126,7 +90,8 @@ namespace flopoco {
 			
 			int shortLatencyInputRegister;
 			double objectivePeriod;           /**< the inverse of the frequency */
-	};
-	
+			
+			bool inputsGotRegistered; 
+			};
 }
 #endif

@@ -109,7 +109,7 @@ namespace flopoco{
 
 			// All the tables are read in parallel
 			// TODO some day this will go to Table.
-			manageCriticalPath(target->lutDelay() + 2*target->localWireDelay());
+			manageCriticalPath(target->lutDelay() + target->localWireDelay(constantWidth+lutWidth));
 
 			//perform nbOfTables multiplications
  			for ( int i=0; i<nbOfTables; i++){

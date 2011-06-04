@@ -150,7 +150,7 @@ namespace flopoco{
 
 			// All the tables are read in parallel
 			setCriticalPath(getMaxInputDelays(inputDelays));
-			manageCriticalPath( target->lutDelay() + target->localWireDelay() );
+			manageCriticalPath( target->lutDelay() + target->localWireDelay(wOut+g) );
 
 
 			//first split the input X into digits having lutWidth bits -> this is as generic as it gets :)
@@ -209,7 +209,7 @@ namespace flopoco{
 					inPortMap (adder, join("X",i) , join("addOp",i));
 			}
 			else {
-				adder = new IntAdder(target, wOut+g, inDelayMap("X0",target->localWireDelay() + getCriticalPath()));
+				adder = new IntAdder(target, wOut+g, inDelayMap("X",target->localWireDelay() + getCriticalPath()));
 				oplist.push_back(adder);
 				inPortMap (adder, "X" , join("addOp",0));
 				inPortMap (adder, "Y" , join("addOp",1));

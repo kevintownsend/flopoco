@@ -223,204 +223,383 @@ namespace flopoco{
 
 	int Operator::uid = 0; //init of the uid static member of Operator
 
+static void outputVHDLToFile(vector<Operator*> &oplist, ofstream& file){
+		string srcFileName = "main.cpp";
+		for(unsigned i=0; i<oplist.size(); i++) {
+			try {
+				REPORT(FULL, "OPERATOR:"<<oplist[i]->getName());
+				REPORT(FULL, "--DECLARE LIST---------------------------------------------------");
+				REPORT(FULL, printMapContent(oplist[i]->getDeclareTable()) );
+				REPORT(FULL, "--USE LIST-------------------------------------------------------");
+				REPORT(FULL, printVectorContent(  (oplist[i]->getFlopocoVHDLStream())->getUseTable()) );
+				
+				// check for subcomponents 
+				if (! oplist[i]->getOpListR().empty() ){
+					//recursively call to print subcomponent
+					outputVHDLToFile(oplist[i]->getOpListR(), file);	
+				}
+				oplist[i]->getFlopocoVHDLStream()->flush();
+
+				/* second parse is only for sequential operators */
+				if (oplist[i]->isSequential()){
+					REPORT (FULL, "--2nd PASS-------------------------------------------------------");
+					oplist[i]->parse2();
+				}
+				oplist[i]->outputVHDL(file);			
+			
+			} catch (std::string s) {
+					cerr << "Exception while generating '" << oplist[i]->getName() << "': " << s <<endl;
+			}
+		}
+	}
 }
 
-static void usage(char *name){
-	cerr << "\nUsage: "<<name<<" <operator specification list>\n" ;
-	cerr << "Each operator specification is one of: \n";
-    OP( "UserDefinedOperator","param0 param1");
-	cerr << "    ____________ SHIFTERS/LZOC _________________________________________________\n";
-	OP("LeftShifter","wIn MaxShift");
-	OP("RightShifter","wIn MaxShift");
-	OP("LZOC","wIn");
-	OP("LZOCShifter","wIn wOut");
-	OP("LZCShifter","wIn wOut");
-	OP("LOCShifter","wIn wOut");
-	OP("LZOCShifterSticky","wIn wOut");
-	OP("LZCShifterSticky","wIn wOut");
-	OP("LOCShifterSticky","wIn wOut");
-	cerr << "    ____________ ADDERS/SUBTRACTERS ____________________________________________\n";
-	OP("IntAdder","wIn");
-	cerr << "      Integer adder, possibly pipelined\n";
-	OP("MyIntAdder","wIn optimizeType srl implementation bufferedInputs");
-	cerr << "      Integer adder, multple parameters, possibly pipelined\n";
-	cerr << "      optimizeType=<0,1,2,3> 0=LUT 1=REG 2=SLICE 3=LATENCY\n";
-	cerr << "      srl=<0,1> Allow SRLs\n";
-	cerr << "      implementation=<-1,0,1,2> -1=optimizeType dependent,\n";  
-	cerr << "                                 0=Classical, 1=Alternative, 2=Short-Latency\n";
-	cerr << "      bufferedInputs=<0,1>\n";
-	OP("LongIntAdderAddAddMux","wIn generation");
-	OP("LongIntAdderCmpAddInc","wIn generation");
-	OP("LongIntAdderCmpCmpAdd","wIn generation");
-	cerr << "      generation 1 are the 2010 ver., 2 are the 2011 ver.\n";
-	OP("IntDualSub","wIn opType");
-	cerr << "      Integer adder/subtracter or dual subtracter, possibly pipelined\n";
-	cerr << "      opType: if 1, compute X-Y and X+Y; if 0, compute X-Y and Y-X \n";
-	OP("IntNAdder","wIn N");
-	cerr << "      Multi-operand addition, possibly pipelined\n";
-	OP("IntCompressorTree","wIn N");
-	cerr << "      Multi-operand addition using compressor trees, possibly pipelined\n";
-	cerr << "    ____________ INTEGER MULTIPLIERS/SQUARER/KARATSUBA _________________________\n";
-	OP("IntMultiplier","wInX wInY signed ratio");
-	cerr << "      Integer multiplier of two integers X and Y of sizes wInX and wInY \n";
-	cerr << "      signed is one of {0,1} \n";	
-	OP("UnsignedIntMultiplier","wInX wInY");
-	cerr << "      Unsigned integer multiplier.\n";	
-	OP("SignedIntMultiplier","wInX wInY");
-	cerr << "      Signed integer multiplier. wInX and wInY include the sign\n";	
-	OP("IntTilingMultiplier","wInX wInY ratio maxTimeInMinutes");
-	cerr << "      Integer multiplier of two integers X and Y of sizes wInX and wInY\n";
-	cerr << "      0 <= ratio <= 1; larger ratio => DSP dominant architectures\n";
-	cerr << "      maxTimeInMinutes 0..; 0=find optimal solution (no time limit)\n"; 	
-	OP("IntTruncMultiplier","wInX wInY ratio error useLimits maxTimeInMinutes sign");
-	cerr << "      Integer multiplier of two integers X and Y of sizes wInX and wInY \n"; 
-	cerr << "      with a given error order.\n";	
-	cerr << "      0 <= ratio <= 1; larger ratio => DSP dominant architectures\n";
-	cerr << "      wInX+wInY<error<=0. The order of the error.\n";
-	cerr << "      useLimits. Soft-core multipliers are size-limited\n";
-	cerr << "      maxTimeInMinutes 0..; 0=find optimal solution (no time limit)\n";
-	cerr << "      sign is boolean 1:signed; 0:unsigned\n"; 	
-	OP ("IntKaratsuba","wIn");
-	cerr << "      integer multiplier of two integers X and Y of sizes wIn. 17 < wIn <= 68\n";	
-	OP ("IntSquarer","wIn");
-	cerr << "      integer squarer. For now wIn <=68 \n";		
-	OP( "IntConstMult","w c");
-	cerr << "      Integer constant multiplier using shift-and-add: w - input size, c - the constant\n";
-	OP( "IntIntKCM","w c signedInput");
-	cerr << "      Integer constant multiplier using KCM: w - input size, c - the constant\n";
+static void usage(char *name, string opName = ""){
+	bool full = (opName=="");
+
+	if ( full ){
+		cerr << "\nUsage: "<<name<<" <operator specification list>\n" ;
+		cerr << "Each operator specification is one of: \n";
+	}
+	if ( full || opName == "UserDefinedOperator")
+	    OP( "UserDefinedOperator","param0 param1");
+	if ( full )
+		cerr << "    ____________ SHIFTERS/LZOC _________________________________________________\n";
+
+	if ( full || opName == "LeftShifter") 
+		OP("LeftShifter","wIn MaxShift");
+	if ( full || opName == "RightShifter") 
+		OP("RightShifter","wIn MaxShift");
+	if ( full || opName == "LZOC") 	
+		OP("LZOC","wIn");
+	if ( full || opName == "LZOCShifter") 	
+		OP("LZOCShifter","wIn wOut");
+	if ( full || opName == "LZCShifter") 	
+		OP("LZCShifter","wIn wOut");
+	if ( full || opName == "LOCShifter") 	
+		OP("LOCShifter","wIn wOut");
+	if ( full || opName == "LZOCShifterSticky") 		
+		OP("LZOCShifterSticky","wIn wOut");
+	if ( full || opName == "LZCShifterSticky") 		
+		OP("LZCShifterSticky","wIn wOut");
+	if ( full || opName == "LOCShifterSticky") 			
+		OP("LOCShifterSticky","wIn wOut");
+
+	if ( full )
+		cerr << "    ____________ ADDERS/SUBTRACTERS ____________________________________________\n";
+
+	if ( full || opName == "IntAdder"){ 	
+		OP("IntAdder","wIn");
+		cerr << "      Integer adder, possibly pipelined\n";
+	}
+	if ( full || opName == "IntAdderExpert"){ 		
+		OP("IntAdderExpert","wIn optimizeType srl implementation bufferedInputs");
+		cerr << "      Integer adder, multple parameters, possibly pipelined\n";
+		cerr << "      optimizeType=<0,1,2,3> 0=LUT 1=REG 2=SLICE 3=LATENCY\n";
+		cerr << "      srl=<0,1> Allow SRLs\n";
+		cerr << "      implementation=<-1,0,1,2> -1=optimizeType dependent,\n";  
+		cerr << "                                 0=Classical, 1=Alternative, 2=Short-Latency\n";
+		cerr << "      bufferedInputs=<0,1>\n";
+	}
+	if ( full || opName == "IntAdder" || opName == "LongIntAdderAddAddMux")
+		OP("LongIntAdderAddAddMux","wIn generation");
+	if ( full || opName == "IntAdder" || opName == "LongIntAdderCmpAddInc")
+		OP("LongIntAdderCmpAddInc","wIn generation");
+	if ( full || opName == "IntAdder" || opName == "LongIntAdderCmpCmpAdd")	
+		OP("LongIntAdderCmpCmpAdd","wIn generation");
+	if ( full || opName == "IntAdder" || opName == "LongIntAdderAddAddMux" || opName == "LongIntAdderCmpAddInc" || opName == "LongIntAdderCmpCmpAdd")
+		cerr << "      generation 1 are the 2010 ver., 2 are the 2011 ver.\n";
+
+	if ( full || opName == "IntAdder" || opName == "IntDualSub"){
+		OP("IntDualSub","wIn opType");
+		cerr << "      Integer adder/subtracter or dual subtracter, possibly pipelined\n";
+		cerr << "      opType: if 1, compute X-Y and X+Y; if 0, compute X-Y and Y-X \n";
+	}
+	
+	if ( full || opName == "IntAdder" || opName == "IntNAdder"){
+		OP("IntNAdder","wIn N");
+		cerr << "      Multi-operand addition, possibly pipelined\n";
+	}
+
+	if ( full || opName == "IntAdder" || opName == "IntCompressorTree"){
+		OP("IntCompressorTree","wIn N");
+		cerr << "      Multi-operand addition using compressor trees, possibly pipelined\n";
+	}
+
+	if ( full )	
+		cerr << "    ____________ INTEGER MULTIPLIERS/SQUARER/KARATSUBA _________________________\n";
+
+	if ( full || opName == "IntMultiplier"){
+		OP("IntMultiplier","wInX wInY signed ratio");
+		cerr << "      Integer multiplier of two integers X and Y of sizes wInX and wInY \n";
+		cerr << "      signed is one of {0,1} \n";
+	}
+
+	if ( full || opName == "IntMultiplier" || opName == "UnsignedIntMultiplier" ){
+		OP("UnsignedIntMultiplier","wInX wInY");
+		cerr << "      Unsigned integer multiplier.\n";	
+	}
+
+	if ( full || opName == "IntMultiplier" || opName == "SignedIntMultiplier"){
+		OP("SignedIntMultiplier","wInX wInY");
+		cerr << "      Signed integer multiplier. wInX and wInY include the sign\n";	
+	}
+
+	if ( full || opName == "IntMultiplier" || opName == "IntTilingMultiplier"){		
+		OP("IntTilingMultiplier","wInX wInY ratio maxTimeInMinutes");
+		cerr << "      Integer multiplier of two integers X and Y of sizes wInX and wInY\n";
+		cerr << "      0 <= ratio <= 1; larger ratio => DSP dominant architectures\n";
+		cerr << "      maxTimeInMinutes 0..; 0=find optimal solution (no time limit)\n"; 	
+	}
+	
+	if ( full || opName == "IntMultiplier" || opName == "IntTruncMultiplier"){			
+		OP("IntTruncMultiplier","wInX wInY ratio error useLimits maxTimeInMinutes sign");
+		cerr << "      Integer multiplier of two integers X and Y of sizes wInX and wInY \n"; 
+		cerr << "      with a given error order.\n";	
+		cerr << "      0 <= ratio <= 1; larger ratio => DSP dominant architectures\n";
+		cerr << "      wInX+wInY<error<=0. The order of the error.\n";
+		cerr << "      useLimits. Soft-core multipliers are size-limited\n";
+		cerr << "      maxTimeInMinutes 0..; 0=find optimal solution (no time limit)\n";
+		cerr << "      sign is boolean 1:signed; 0:unsigned\n"; 	
+	}
+
+	if ( full || opName == "IntMultiplier" || opName == "IntKaratsuba"){			
+		OP ("IntKaratsuba","wIn");
+		cerr << "      integer multiplier of two integers X and Y of sizes wIn. 17 < wIn <= 68\n";	
+	}
+	if ( full || opName == "IntMultiplier" || opName == "IntSquarer"){			
+		OP ("IntSquarer","wIn");
+		cerr << "      integer squarer. For now wIn <=68 \n";		
+	}
+	if ( full || opName == "IntMultiplier" || opName == "IntConstMult"){				
+		OP( "IntConstMult","w c");
+		cerr << "      Integer constant multiplier using shift-and-add: w - input size, c - the constant\n";
+	}
+	if ( full || opName == "IntMultiplier" || opName == "IntIntKCM"){					
+		OP( "IntIntKCM","w c signedInput");
+		cerr << "      Integer constant multiplier using KCM: w - input size, c - the constant\n";
+	}
 #ifdef HAVE_SOLLYA
-	OP( "FixRealKCM","lsbIn msbIn signedInput lsbOut constant");
-	cerr << "      Faithful multiplier of a fixed-point input by a real constant\n";
-	cerr << "      The constant is provided as a Sollya expression, e.g \"log(2)\"\n";
+	if ( full || opName == "FixRealKCM"){					
+		OP( "FixRealKCM","lsbIn msbIn signedInput lsbOut constant");
+		cerr << "      Faithful multiplier of a fixed-point input by a real constant\n";
+		cerr << "      The constant is provided as a Sollya expression, e.g \"log(2)\"\n";
+	}
 #endif // HAVE_SOLLYA
+	if ( full )
 	cerr << "    ____________ FLOATING-POINT OPERATORS ______________________________________\n";
+
+	if ( full || opName == "FPPipeline"){					
 	NEWOP("FPPipeline", "filename wE wF");
-	cerr << "      Early Alpha Release. \n";
-	cerr << "      Assembles the computational datapath described by the input file.\n";
-	cerr << "      The precision for all operators is given wE wF\n";
-	cerr << "      The datapath is described in an untyped and untimed Python-like syntax\n";
-	cerr << "      Supported operations: +,-,*,\\,sqr(),sqrt(),exp(),log() \n";
-	cerr << "      Examples:\n";
-	cerr << "      Jacobi1D:              |  Horner:              | 2D Norm:\n";
-	cerr << "      j = (a0+a1+a2)*0.333;  |  p = a0+x*(a2+x*a2);  | r = sqrt(sqr(x0-x1)+sqr(y0-y1));\n";
-	cerr << "      output j;              |  output p;            | output r;\n";
-	OP("Fix2FP","LSB MSB Signed wE wF");
-	cerr << "      Convert a 2's compliment fixed-point number in the bit range MSB...LSB \n";
-	cerr << "      into floating-point\n";
-	NEWOP( "FPAdder","wE wF");
-	cerr << "      Floating-point adder (default architecture is now single-path) \n";
-	OP( "FPAdderDualPath","wE wF");
-	cerr << "      Floating-point adder with dual-path architecture (shorter latency, larger area)\n";
-	NEWOP( "FPAdder3Input","wE wF");
-	cerr << "      A 3-operand floating-point adder\n";
-	OP( "FPMultiplier","wE wF_in wF_out");
-	cerr << "      Floating-point multiplier, supporting different in/out precision  \n";
-	OP( "FPMultiplierKaratsuba","wE wF_in wF_out");
-	cerr << "      Floating-point multiplier, supporting different in/out precision. \n";
-	cerr << "      Mantissa multiplier uses Karatsuba\n";
-	OP( "FPMultiplierTiling","wE wF_in wF_out ratio timeInMinutes");
-	cerr << "      Floating-point multiplier, supporting different in/out precision. \n";
-	cerr << "      Mantissa multiplier uses Tiling Algorithm  \n";
-	OP( "FPSquarer","wE wFin wFout");
-	cerr << "      Floating-point squarer \n";
-	OP( "FPDiv","wE wF");
-	cerr << "      Floating-point divider \n";
-	OP("FPSqrt","wE wF");
-	cerr << "      Floating-point square root, implemented using digit recurrence\n";
-	cerr << "      (no DSP, long latency)\n";
+		cerr << "      Early Alpha Release. \n";
+		cerr << "      Assembles the computational datapath described by the input file.\n";
+		cerr << "      The precision for all operators is given wE wF\n";
+		cerr << "      The datapath is described in an untyped and untimed Python-like syntax\n";
+		cerr << "      Supported operations: +,-,*,\\,sqr(),sqrt(),exp(),log() \n";
+		cerr << "      Examples:\n";
+		cerr << "      Jacobi1D:              |  Horner:              | 2D Norm:\n";
+		cerr << "      j = (a0+a1+a2)*0.333;  |  p = a0+x*(a2+x*a2);  | r = sqrt(sqr(x0-x1)+sqr(y0-y1));\n";
+		cerr << "      output j;              |  output p;            | output r;\n";
+	}
+
+	if ( full || opName == "Fix2FP"){					
+		OP("Fix2FP","LSB MSB Signed wE wF");
+		cerr << "      Convert a 2's compliment fixed-point number in the bit range MSB...LSB \n";
+		cerr << "      into floating-point\n";
+	}	
+
+	if ( full || opName == "FPAdder"){					
+		NEWOP( "FPAdder","wE wF");
+		cerr << "      Floating-point adder (default architecture is now single-path) \n";
+	}	
+	if ( full || opName == "FPAdder" || opName == "FPAdderDualPath"){					
+		OP( "FPAdderDualPath","wE wF");
+		cerr << "      Floating-point adder with dual-path architecture (shorter latency, larger area)\n";
+	}
+	if ( full || opName == "FPAdder" || opName == "FPAdder3Input"){					
+		NEWOP( "FPAdder3Input","wE wF");
+		cerr << "      A 3-operand floating-point adder\n";
+	}
+
+	if ( full || opName == "FPMultiplier"){					
+		OP( "FPMultiplier","wE wF_in wF_out");
+		cerr << "      Floating-point multiplier, supporting different in/out precision  \n";
+	}
+	if ( full || opName == "FPMultiplier" || opName == "FPMultiplierKaratsuba"){						
+		OP( "FPMultiplierKaratsuba","wE wF_in wF_out");
+		cerr << "      Floating-point multiplier, supporting different in/out precision. \n";
+		cerr << "      Mantissa multiplier uses Karatsuba\n";
+	}
+	if ( full || opName == "FPMultiplier" || opName == "FPMultiplierTiling"){						
+		OP( "FPMultiplierTiling","wE wF_in wF_out ratio timeInMinutes");
+		cerr << "      Floating-point multiplier, supporting different in/out precision. \n";
+		cerr << "      Mantissa multiplier uses Tiling Algorithm  \n";
+	}
+	if ( full || opName == "FPMultiplier" || opName == "FPSquarer"){					
+		OP( "FPSquarer","wE wFin wFout");
+		cerr << "      Floating-point squarer \n";
+	}
+	if ( full || opName == "FPDiv"){					
+		OP( "FPDiv","wE wF");
+		cerr << "      Floating-point divider \n";
+	}
+	if ( full || opName == "FPSqrt"){					
+		OP("FPSqrt","wE wF");
+		cerr << "      Floating-point square root, implemented using digit recurrence\n";
+		cerr << "      (no DSP, long latency)\n";
+	}
 #ifdef HAVE_SOLLYA
 //	cerr << "    FPSqrtPoly wE wF correctlyRounded degree\n";
-	OP( "FPSqrtPoly","wE wF degree");
-	cerr << "      Floating-point square root, using polynomial approximation \n";
-	cerr << "      (DSP-based, shorter latency and higher frequency for large wF)\n";
-	cerr << "      faithful rounding\n";
-//	cerr << "      correctlyRounded (0 or 1) selects between faithful and correct rounding (NYImplemented)\n";
-//	cerr << "      correctlyRounded (0) selects faithful and correct rounding (NYImplemented)\n";
-	cerr << "      degree (1,...k) polynomial degree. Higher degree => more DSP less BRAM\n";
+	if ( full || opName == "FPSqrt" || opName == "FPSqrtPoly"){					
+		OP( "FPSqrtPoly","wE wF correctlyRounded degree");
+		cerr << "      Floating-point square root, using polynomial approximation \n";
+		cerr << "      (DSP-based, shorter latency and higher frequency for large wF)\n";
+		cerr << "      faithful rounding\n";
+		cerr << "      correctlyRounded (0 or 1) selects between faithful and correct rounding (NYImplemented)\n";
+		cerr << "      degree (1,...k) polynomial degree. Higher degree => more DSP less BRAM\n";
+	}
 #endif // HAVE_SOLLYA
 #ifdef HAVE_SOLLYA
-	OP( "FPConstMult","wE_in wF_in wE_out wF_out wC constant_expr");
-	cerr << "      Faithful floating-point constant multiplier\n";
-	cerr << "      last argument is a Sollya expression between double quotes,e.g.\"exp(pi/2)\".\n";
-	cerr << "      If wC>1, it is the size in bits on which the constant must be evaluated.\n";
-	cerr << "      If wC=0 the size is computed for a faithful result.\n";
-	OP( "CRFPConstMult","wE_in wF_in wE_out wF_out constant_expr");
-	cerr << "      Correctly-rounded floating-point constant multiplier\n";
-	cerr << "      The constant is provided as a Sollya expression, between double quotes.\n";
+	if ( full || opName == "FPConstMult"){					
+		OP( "FPConstMult","wE_in wF_in wE_out wF_out wC constant_expr");
+		cerr << "      Faithful floating-point constant multiplier\n";
+		cerr << "      last argument is a Sollya expression between double quotes,e.g.\"exp(pi/2)\".\n";
+		cerr << "      If wC>1, it is the size in bits on which the constant must be evaluated.\n";
+		cerr << "      If wC=0 the size is computed for a faithful result.\n";
+	}
+	if ( full || opName == "FPConstMult" || opName == "CRFPConstMult"){					
+		OP( "CRFPConstMult","wE_in wF_in wE_out wF_out constant_expr");
+		cerr << "      Correctly-rounded floating-point constant multiplier\n";
+		cerr << "      The constant is provided as a Sollya expression, between double quotes.\n";
+	}	
 #endif // HAVE_SOLLYA
-	OP( "FPConstMultRational","wE_in wF_in wE_out wF_out a b");
-	cerr << "      Floating-point constant multiplier by a rational a/b\n";
-	cerr << "      Useful for multiplications by simple rational constants such as 2/3 or 1/9\n";
-	OP("FPConstMultExpert","wE_in wF_in wE_out wF_out cst_sgn cst_exp cst_int_sig");
-	cerr << "      Floating-point constant multiplier\n";
-	cerr << "      The constant is provided as integral significand and integral exponent.\n";
-	NEWOP("FPRealKCM","wE wF constantExpression");
-	cerr << "      Floating-point constant multiplier using the KCM algorithm\n";
-	cerr << "      last argument is a Sollya expression between double quotes,e.g.\"exp(pi/2)\".\n";
-	OP( "LongAcc","wE_in wF_in MaxMSB_in LSB_acc MSB_acc");
-	cerr << "      Long fixed-point accumulator\n";
-	OP( "LongAcc2FP","LSB_acc MSB_acc wE_out wF_out");
-	cerr << "      Post-normalisation unit for LongAcc \n";
-	OP( "DotProduct","wE wFX wFY MaxMSB_in LSB_acc MSB_acc ratio");
-	cerr << "      Floating-point dot product unit. Ratio parameter controls  \n";
-	cerr << "      DSP/Logic tradeoff\n";
-	OP( "FPExp","wE wF");
-	cerr << "      Floating-point exponential function\n";
-	OP( "FPLog","wE wF InTableSize");
-	cerr << "      Floating-point logarithm function;\n";
-	cerr << "      InTableSize is the numbers of bits to input to the tables. \n";
-	cerr << "      O defaults to something sensible\n";
-	OP( "FPPowr","wE wF");// LogTableSize ExpTableSize ExpDegree");
-	cerr << "      Floating-point powr function from IEEE-754-2008 (experimental);\n";
-//	cerr << "      For the parameters, try 8 23 10 10 2 3 3 (simple), 11 52 12 12 2 33  (double)\n";
-	OP( "OutputIEEE","wEI wFI wEO wFO");
-	cerr << "      Conversion from FloPoCo to IEEE-754-like floating-point formats\n";
-	OP( "InputIEEE","wEI wFI wEO wFO");
-	cerr << "      Conversion from IEEE-754-like to FloPoCo floating-point formats\n";
+	if ( full || opName == "FPConstMult" || opName == "FPConstMultRational"){					
+		OP( "FPConstMultRational","wE_in wF_in wE_out wF_out a b");
+		cerr << "      Floating-point constant multiplier by a rational a/b\n";
+		cerr << "      Useful for multiplications by simple rational constants such as 2/3 or 1/9\n";
+	}
+	if ( full || opName == "FPConstMult" || opName == "FPConstMultExpert"){					
+		OP("FPConstMultExpert","wE_in wF_in wE_out wF_out cst_sgn cst_exp cst_int_sig");
+		cerr << "      Floating-point constant multiplier\n";
+		cerr << "      The constant is provided as integral significand and integral exponent.\n";
+	}
+	if ( full || opName == "FPConstMult" || opName == "FPRealKCM"){					
+		NEWOP("FPRealKCM","wE wF constantExpression");
+		cerr << "      Floating-point constant multiplier using the KCM algorithm\n";
+		cerr << "      last argument is a Sollya expression between double quotes,e.g.\"exp(pi/2)\".\n";
+	}
+	if ( full || opName == "LongAcc"){					
+		OP( "LongAcc","wE_in wF_in MaxMSB_in LSB_acc MSB_acc");
+		cerr << "      Long fixed-point accumulator\n";
+	}		
+	if ( full || opName == "LongAcc" || opName == "LongAcc2FP"){					
+		OP( "LongAcc2FP","LSB_acc MSB_acc wE_out wF_out");
+		cerr << "      Post-normalisation unit for LongAcc \n";
+	}
+	if ( full || opName == "DotProduct"){					
+		OP( "DotProduct","wE wFX wFY MaxMSB_in LSB_acc MSB_acc ratio");
+		cerr << "      Floating-point dot product unit. Ratio parameter controls  \n";
+		cerr << "      DSP/Logic tradeoff\n";
+	}
+	if ( full || opName == "FPExp"){					
+		OP( "FPExp","wE wF");
+		cerr << "      Floating-point exponential function\n";
+	}
+	if ( full || opName == "FPLog"){					
+		OP( "FPLog","wE wF InTableSize");
+		cerr << "      Floating-point logarithm function;\n";
+		cerr << "      InTableSize is the numbers of bits to input to the tables. \n";
+		cerr << "      O defaults to something sensible\n";
+	}
+	if ( full || opName == "FPPowr"){					
+		OP( "FPPowr","wE wF");// LogTableSize ExpTableSize ExpDegree");
+		cerr << "      Floating-point powr function from IEEE-754-2008 (experimental);\n";
+		//	cerr << "      For the parameters, try 8 23 10 10 2 3 3 (simple), 11 52 12 12 2 33  (double)\n";
+	}
+
+	if ( full || opName == "OutputIEEE"){					
+		OP( "OutputIEEE","wEI wFI wEO wFO");
+		cerr << "      Conversion from FloPoCo to IEEE-754-like floating-point formats\n";
+	}
+	if ( full || opName == "InputIEEE"){					
+		OP( "InputIEEE","wEI wFI wEO wFO");
+		cerr << "      Conversion from IEEE-754-like to FloPoCo floating-point formats\n";
+	}
 #ifdef HAVE_HOTBM
-	cerr << "    ____________ GENERIC FUNCTION EVALUATORS ____________________________________\n";
-	cerr << "      We provide two methods to evaluate a fixed-point function on [0,1]\n";
-	OP( "FunctionEvaluator","function wI lsbO degree");
-	cerr << "      Optimized Horner polynomial approximation, DSP based if available\n";
-	cerr << "      wI - input width (also weight of input LSB), lsbO - weight of output LSB,\n";
-	cerr << "      degree - degree of polynomial approximation (typically 2 to 5),\n";
-	cerr << "      function - sollya-syntaxed function to implement, between double quotes\n";
-	OP( "HOTBM","function wI wO degree");
-	cerr << "      High-Order Table-Based Method for fixed-point functions (NPY)\n";
-	cerr << "      wI - input width, wO - output width, degree - degree of polynomial approx\n";
-	cerr << "      function - sollya-syntaxed function to implement, between double quotes\n";
-	OP( "HOTBMFX","function wE_in wF_in wE_out wF_out degree");
-	cerr << "      Same as HOTBM, with explicit fixed-point formats (NPY)\n";
-	cerr << "      Note: input is unsigned, output is signed.\n";
-	OP( "HOTBMRange","function wI wO degree xmin xmax scale");
-	cerr << "      Same as HOTBM, with explicit range and scale (NPY)\n";
-	cerr << "      xmin xmax - bounds of the input range, mapped to [0,1[\n";
-	cerr << "      scale - scaling factor to apply to the function output\n";
+	if ( full ){
+		cerr << "    ____________ GENERIC FUNCTION EVALUATORS ____________________________________\n";
+		cerr << "      We provide two methods to evaluate a fixed-point function on [0,1]\n";
+	}
+	if ( full || opName == "FunctionEvaluator"){					
+		OP( "FunctionEvaluator","function wI lsbO degree");
+		cerr << "      Optimized Horner polynomial approximation, DSP based if available\n";
+		cerr << "      wI - input width (also weight of input LSB), lsbO - weight of output LSB,\n";
+		cerr << "      degree - degree of polynomial approximation (typically 2 to 5),\n";
+		cerr << "      function - sollya-syntaxed function to implement, between double quotes\n";
+	}
+	if ( full || opName == "HOTBM"){					
+		OP( "HOTBM","function wI wO degree");
+		cerr << "      High-Order Table-Based Method for fixed-point functions (NPY)\n";
+		cerr << "      wI - input width, wO - output width, degree - degree of polynomial approx\n";
+		cerr << "      function - sollya-syntaxed function to implement, between double quotes\n";
+	}
+	if ( full || opName == "HOTBM" || opName == "HOTBMFX"){					
+		OP( "HOTBMFX","function wE_in wF_in wE_out wF_out degree");
+		cerr << "      Same as HOTBM, with explicit fixed-point formats (NPY)\n";
+		cerr << "      Note: input is unsigned, output is signed.\n";
+	}
+	if ( full || opName == "HOTBM" || opName == "HOTBMRange"){					
+		OP( "HOTBMRange","function wI wO degree xmin xmax scale");
+		cerr << "      Same as HOTBM, with explicit range and scale (NPY)\n";
+		cerr << "      xmin xmax - bounds of the input range, mapped to [0,1[\n";
+		cerr << "      scale - scaling factor to apply to the function output\n";
+	}
 #endif // HAVE_HOTBM
 #ifdef HAVE_LNS
+	if ( full )
 	cerr << "    ____________ LNS OPERATORS _________________________________________________\n";
-	cerr << "    Common parameters:\n";
-	cerr << "      wE - width of integral part of exponent. Typically from 4 to 8.\n";
-	cerr << "           Negative values allowed at your own risk.\n";
-	cerr << "      wF - width of fractional part of exponent. Typically from 8 to 20.\n";
-	OP( "LNSAddSub","wE wF");
-	cerr << "      Addition in Logarithmic Number System.\n";
-	OP( "LNSMul","wE wF");
-	cerr << "      LNS multiplication.\n";
-	OP( "LNSDiv","wE wF");
-	cerr << "      LNS division.\n";
-	OP( "LNSSqrt","wE wF");
-	cerr << "      LNS square root.\n";
-	cerr << "    AtanPow wE wF o\n";
-	cerr << "      (4/pi)*atan(2^x) function.\n";
+
+	if ( full || opName == "LNSAddSub" || opName == "LNSMul" || opName == "LNSDiv" || opName == "LNSSqrt"){
+		cerr << "    Common parameters:\n";
+		cerr << "      wE - width of integral part of exponent. Typically from 4 to 8.\n";
+		cerr << "           Negative values allowed at your own risk.\n";
+		cerr << "      wF - width of fractional part of exponent. Typically from 8 to 20.\n";
+	}
+
+	if ( full || opName == "LNSAddSub"){
+		OP( "LNSAddSub","wE wF");
+		cerr << "      Addition in Logarithmic Number System.\n";
+	}	
+	if ( full || opName == "LNSMul"){
+		OP( "LNSMul","wE wF");
+		cerr << "      LNS multiplication.\n";
+	}
+	if ( full || opName == "LNSDiv"){
+		OP( "LNSDiv","wE wF");
+		cerr << "      LNS division.\n";
+	}
+	if ( full || opName == "LNSSqrt"){
+		OP( "LNSSqrt","wE wF");
+		cerr << "      LNS square root.\n";
+	}
+	if ( full || opName == "AtanPow"){
+		OP("AtanPow", "wE wF o");
+		cerr << "      (4/pi)*atan(2^x) function.\n";
+	}	
 #endif // HAVE_LNS
+	if ( full )
 	cerr << "    ____________ APPLICATIONS __________________________________________________\n";
-	OP("Collision","wE wF opt");;
-	cerr << "       A collision detection operator, computes the predicate X²+Y²+Z²<R2\n";
-	cerr << "       opt: assemble FP operators if 0, optimized architecture if 1 \n";
-	OP("FPSumOfSquares","wE wF opt");;
-	cerr << "       A floating-point sum-of-3 squares operator\n";
-	cerr << "       opt: assemble FP operators if 0, optimized architecture if 1 \n";
+
+	if ( full || opName == "Collision"){
+		OP("Collision","wE wF opt");;
+		cerr << "       A collision detection operator, computes the predicate X²+Y²+Z²<R2\n";
+		cerr << "       opt: assemble FP operators if 0, optimized architecture if 1 \n";
+	}
+	if ( full || opName == "FPSumOfSquares"){
+		OP("FPSumOfSquares","wE wF opt");;
+		cerr << "       A floating-point sum-of-3 squares operator\n";
+		cerr << "       opt: assemble FP operators if 0, optimized architecture if 1 \n";
+	}	
 	// cerr << "  Applications: \n";
 	// cerr << "    CoilInductance LSBI MSBI wEIn wFIn MaxMSBO LSBO MSBO FilePath\n";
 	// cerr << "       \n";
@@ -429,32 +608,36 @@ static void usage(char *name){
 	// cerr << "    CoordinatesTableY wIn LSB MSB FilePath\n";
 	// cerr << "    CoordinatesTableZ wIn LSB MSB FilePath\n";
 	//=====================================================
-
-	cerr << "    ____________ TEST-BENCH ____________________________________________________\n";
-	OP ("TestBench","n");
-	cerr << "       Behavorial test bench for the preceding operator\n";
-	cerr << "       This test bench will include standard tests, plus n random tests.\n";
-	OP( "TestBenchFile","n");
-	cerr << "       Behavorial test bench for the preceding operator\n";
-	cerr << "       This test bench will include standard tests, plus n random tests.\n";
-	cerr << "       Inputs and outputs are stored in a file to reduce VHDL compilation time.\n";
-	cerr << "       if n=-2, an exhaustive test is generated (use only for small operators).\n";
-	cerr << "    ____________ WRAPPER _______________________________________________________\n";
-	OP ("Wrapper","");
-	cerr << "       Wraps the preceding operator between registers\n";
-	cerr << "(NPY) Not pipelined yet\n";
-	cerr << "________________________________________________________________________________\n";
-	cerr << "________________ OPTIONS________________________________________________________\n";
-	cerr << "General options, affecting the operators that follow them:\n";
-	cerr << "   -outputfile=<output file name>           (default=flopoco.vhdl)\n";
-	cerr << "   -verbose=<1|2|3>                         (default=0)\n";
-	cerr << "   -pipeline=<yes|no>                       (default=yes)\n";
-	cerr << "   -frequency=<target frequency in MHz>     (default=400)\n";
-	cerr << "   -target=<Spartan3|Virtex4|Virtex5|StratixII|StratixIII|StratixIV>      (default=Virtex4)\n";
-	cerr << "   -DSP_blocks=<yes|no>\n";
-	cerr << "       optimize for the use of DSP blocks   (default=yes)\n";
-	cerr << "   -name=<entity name>\n";
-	cerr << "       defines the name of the VHDL entity of the next operator\n";
+	if ( full || opName=="TestBench" ){
+		cerr << "    ____________ TEST-BENCH ____________________________________________________\n";
+		OP ("TestBench","n");
+		cerr << "       Behavorial test bench for the preceding operator\n";
+		cerr << "       This test bench will include standard tests, plus n random tests.\n";
+		OP( "TestBenchFile","n");
+		cerr << "       Behavorial test bench for the preceding operator\n";
+		cerr << "       This test bench will include standard tests, plus n random tests.\n";
+		cerr << "       Inputs and outputs are stored in a file to reduce VHDL compilation time.\n";
+		cerr << "       if n=-2, an exhaustive test is generated (use only for small operators).\n";
+	}
+	
+	if ( full || opName=="extra"){
+		cerr << "    ____________ WRAPPER _______________________________________________________\n";
+		OP ("Wrapper","");
+		cerr << "       Wraps the preceding operator between registers\n";
+		cerr << "(NPY) Not pipelined yet\n";
+		cerr << "________________________________________________________________________________\n";
+		cerr << "________________ OPTIONS________________________________________________________\n";
+		cerr << "General options, affecting the operators that follow them:\n";
+		cerr << "   -outputfile=<output file name>           (default=flopoco.vhdl)\n";
+		cerr << "   -verbose=<1|2|3>                         (default=0)\n";
+		cerr << "   -pipeline=<yes|no>                       (default=yes)\n";
+		cerr << "   -frequency=<target frequency in MHz>     (default=400)\n";
+		cerr << "   -target=<Spartan3|Virtex4|Virtex5|StratixII|StratixIII|StratixIV>      (default=Virtex4)\n";
+		cerr << "   -DSP_blocks=<yes|no>\n";
+		cerr << "       optimize for the use of DSP blocks   (default=yes)\n";
+		cerr << "   -name=<entity name>\n";
+		cerr << "       defines the name of the VHDL entity of the next operator\n";
+	}
 	exit (EXIT_FAILURE);
 }
 
@@ -536,7 +719,7 @@ bool parseCommandLine(int argc, char* argv[]){
 					verbose = atoi(v.c_str()); // there must be a more direct method of string
 					if (verbose<0 || verbose>4) {
 						cerr<<"ERROR: verbose should be 1, 2 or 3,    got "<<v<<"."<<endl;
-						usage(argv[0]);
+						usage(argv[0], "extra");
 					}
 				}
 				else if (o == "target") {
@@ -550,7 +733,7 @@ bool parseCommandLine(int argc, char* argv[]){
 					else if (v=="StratixIV") target=new StratixIV();
 					else {
 						cerr<<"ERROR: unknown target: "<<v<<endl;
-						usage(argv[0]);
+						usage(argv[0],"extra");
 					}
 					// if previous options had changed it
 					target->setFrequency(oldTarget->frequency());
@@ -566,7 +749,7 @@ bool parseCommandLine(int argc, char* argv[]){
 					else if(v=="no")  target->setNotPipelined();
 					else {
 						cerr<<"ERROR: pipeline option should be yes or no,    got "<<v<<"."<<endl; 
-						usage(argv[0]);
+						usage(argv[0],"extra");
 					}
 				}
 				else if (o == "frequency") {
@@ -585,7 +768,7 @@ bool parseCommandLine(int argc, char* argv[]){
 					else if(v=="no")  target->setUseHardMultipliers(false);
 					else {
 						cerr<<"ERROR: DSP_blocks option should be yes or no,    got "<<v<<"."<<endl; 
-						usage(argv[0]);
+						usage(argv[0],"extra");
 					}
 				}
 				else if (o == "name") {
@@ -600,7 +783,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if(opname=="IntIntKCM"){
 			int nargs = 3;
 			if (i+nargs > argc)
-				usage(argv[0]);
+				usage(argv[0],opname);
 			else {
 				int w = atoi(argv[i++]);
 				mpz_class mpc(argv[i++]);
@@ -614,7 +797,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if(opname=="IntConstMult"){
 			int nargs = 2;
 			if (i+nargs > argc)
-				usage(argv[0]);
+				usage(argv[0],opname);
 			else {
 				int w = atoi(argv[i++]);
 				mpz_class mpc(argv[i++]);
@@ -627,7 +810,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if(opname=="FPConstMultRational"){
 			int nargs = 6;
 			if (i+nargs > argc)
-				usage(argv[0]);
+				usage(argv[0],opname);
 			else {
 				int wE_in = checkStrictlyPositive(argv[i++], argv[0]);
 				int wF_in = checkStrictlyPositive(argv[i++], argv[0]);
@@ -646,7 +829,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if(opname=="FPConstMultExpert"){
 			int nargs = 7;
 			if (i+nargs > argc)
-				usage(argv[0]);
+				usage(argv[0],opname);
 			else {
 				int wE_in = checkStrictlyPositive(argv[i++], argv[0]);
 				int wF_in = checkStrictlyPositive(argv[i++], argv[0]);
@@ -666,7 +849,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if(opname=="FixRealKCM"){
 			int nargs = 5;
 			if (i+nargs > argc)
-				usage(argv[0]);
+				usage(argv[0],opname);
 			else {
 				int lsbIn = atoi(argv[i++]);
 				int msbIn = atoi(argv[i++]);
@@ -683,7 +866,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if(opname=="FPRealKCM"){
 			int nargs = 3;
 			if (i+nargs > argc)
-				usage(argv[0]);
+				usage(argv[0],opname);
 			else {
 				int wE = atoi(argv[i++]);
 				int wF = atoi(argv[i++]);
@@ -696,7 +879,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if(opname=="CRFPConstMult"){ 
 			int nargs = 5;
 			if (i+nargs > argc)
-				usage(argv[0]);
+				usage(argv[0],opname);
 			else { 
 				int wE_in = checkStrictlyPositive(argv[i++], argv[0]);
 				int wF_in = checkStrictlyPositive(argv[i++], argv[0]);
@@ -713,7 +896,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if(opname=="FPConstMult"){ 
 			int nargs = 6;
 			if (i+nargs > argc)
-				usage(argv[0]);
+				usage(argv[0],opname);
 			else { 
 				int wE_in = checkStrictlyPositive(argv[i++], argv[0]);
 				int wF_in = checkStrictlyPositive(argv[i++], argv[0]);
@@ -733,7 +916,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if(opname=="LeftShifter"){
 			int nargs = 2;
 			if (i+nargs > argc)
-				usage(argv[0]);
+				usage(argv[0],opname);
 			else {
 				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
 				int maxShift = checkStrictlyPositive(argv[i++], argv[0]);
@@ -748,7 +931,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if(opname=="RightShifter"){
 			int nargs = 2;
 			if (i+nargs > argc)
-				usage(argv[0]);
+				usage(argv[0],opname);
 			else {
 				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
 				int maxShift = checkStrictlyPositive(argv[i++], argv[0]);
@@ -763,7 +946,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if(opname=="LZOC"){
 			int nargs = 1;
 			if (i+nargs > argc)
-				usage(argv[0]);
+				usage(argv[0],opname);
 			else {
 				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
 				cerr << "> LZOC, wIn="<<wIn<<"\n";
@@ -774,7 +957,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if(opname=="LZOCShifter"){
 			int nargs = 2;
 			if (i+nargs > argc)
-				usage(argv[0]);
+				usage(argv[0],opname);
 			else {
 				int wIn  = checkStrictlyPositive(argv[i++], argv[0]);
 				int wOut = checkStrictlyPositive(argv[i++], argv[0]);
@@ -789,7 +972,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if(opname=="LZCShifter"){
 			int nargs = 2;
 			if (i+nargs > argc)
-				usage(argv[0]);
+				usage(argv[0],opname);
 			else {
 				int wIn  = checkStrictlyPositive(argv[i++], argv[0]);
 				int wOut = checkStrictlyPositive(argv[i++], argv[0]);
@@ -804,7 +987,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if(opname=="LOCShifter"){
 			int nargs = 2;
 			if (i+nargs > argc)
-				usage(argv[0]);
+				usage(argv[0],opname);
 			else {
 				int wIn  = checkStrictlyPositive(argv[i++], argv[0]);
 				int wOut = checkStrictlyPositive(argv[i++], argv[0]);
@@ -819,7 +1002,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if(opname=="LZOCShifterSticky"){
 			int nargs = 2;
 			if (i+nargs > argc)
-				usage(argv[0]);
+				usage(argv[0],opname);
 			else {
 				int wIn  = checkStrictlyPositive(argv[i++], argv[0]);
 				int wOut = checkStrictlyPositive(argv[i++], argv[0]);
@@ -834,7 +1017,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if(opname=="LZCShifterSticky"){
 			int nargs = 2;
 			if (i+nargs > argc)
-				usage(argv[0]);
+				usage(argv[0],opname);
 			else {
 				int wIn  = checkStrictlyPositive(argv[i++], argv[0]);
 				int wOut = checkStrictlyPositive(argv[i++], argv[0]);
@@ -849,7 +1032,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if(opname=="LOCShifterSticky"){
 			int nargs = 2;
 			if (i+nargs > argc)
-				usage(argv[0]);
+				usage(argv[0],opname);
 			else {
 				int wIn  = checkStrictlyPositive(argv[i++], argv[0]);
 				int wOut = checkStrictlyPositive(argv[i++], argv[0]);
@@ -867,7 +1050,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
                             /* if there is less than 2 parameters, we output 
                               the help information for Flopoco */
-				usage(argv[0]);
+				usage(argv[0],opname);
 			else {
 				int param0 = checkStrictlyPositive(argv[i++], argv[0]);
 				int param1 = checkStrictlyPositive(argv[i++], argv[0]);
@@ -879,7 +1062,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if(opname=="IntAdder"){
 			int nargs = 1;
 			if (i+nargs > argc)
-				usage(argv[0]);
+				usage(argv[0], opname);
 			else {
 				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
 				cerr << "> IntAdder, wIn="<<wIn<<endl  ;
@@ -890,7 +1073,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if(opname=="IntComparator"){
 			int nargs = 2;
 			if (i+nargs > argc)
-				usage(argv[0]);
+				usage(argv[0],opname);
 			else {
 				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
 				int criteria = atoi(argv[i++]);
@@ -903,7 +1086,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if(opname=="IntConstComparator"){
 			int nargs = 3;
 			if (i+nargs > argc)
-				usage(argv[0]);
+				usage(argv[0],opname);
 			else {
 				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
 				int criteria = atoi(argv[i++]);
@@ -915,10 +1098,10 @@ bool parseCommandLine(int argc, char* argv[]){
 			}    
 	}
 	
-		else if(opname=="MyIntAdder"){
+		else if(opname=="IntAdderExpert"){
 			int nargs = 5;
 			if (i+nargs > argc)
-				usage(argv[0]);
+				usage(argv[0],opname);
 			else {
 				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
 				int type = atoi(argv[i++]);
@@ -930,7 +1113,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				map <string, double> delayMap;
 
 				if (!bufferedIn){
-					delayMap["X"] = 1e-25;
+					delayMap["X"] = target->ffDelay() + target->localWireDelay() + 1.0e-25;
 				}
 				
 				switch (type) {
@@ -947,7 +1130,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if(opname=="IntNAdder"){
 			int nargs = 2;
 			if (i+nargs > argc)
-				usage(argv[0]);
+				usage(argv[0],opname);
 			else {
 				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
 				int N   = checkStrictlyPositive(argv[i++], argv[0]);
@@ -960,7 +1143,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if(opname=="IntCompressorTree"){
 			int nargs = 2;
 			if (i+nargs > argc)
-				usage(argv[0]);
+				usage(argv[0],opname);
 			else {
 				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
 				int N   = checkStrictlyPositive(argv[i++], argv[0]);
@@ -974,7 +1157,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if(opname=="IntAdderSpecific"){ //Hidden
 			int nargs = 1;
 			if (i+nargs > argc)
-				usage(argv[0]);
+				usage(argv[0],opname);
 			else {
 				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
 				cerr << "> IntAdderSpecific, wIn="<<wIn<<endl  ;
@@ -985,7 +1168,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if(opname=="IntComparatorSpecific"){ //Hidden
 			int nargs = 1;
 			if (i+nargs > argc)
-				usage(argv[0]);
+				usage(argv[0],opname);
 			else {
 				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
 				int type = atoi(argv[i++]);
@@ -997,7 +1180,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if(opname=="CarryGenerationCircuit"){ //Hidden
 			int nargs = 1;
 			if (i+nargs > argc)
-				usage(argv[0]);
+				usage(argv[0],opname);
 			else {
 				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
 				cerr << "> CarryGenerationCircuit, wIn="<<wIn<<endl  ;
@@ -1009,7 +1192,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if(opname=="LongIntAdderAddAddMux"){ //AAM
 			int nargs = 2;
 			if (i+nargs > argc)
-				usage(argv[0]);
+				usage(argv[0],opname);
 			else {
 				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
 				int g   = checkStrictlyPositive(argv[i++], argv[0]);
@@ -1026,7 +1209,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if(opname=="LongIntAdderCmpCmpAdd"){ //CCA
 			int nargs = 2;
 			if (i+nargs > argc)
-				usage(argv[0]);
+				usage(argv[0],opname);
 			else {
 				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
 				int g   = checkStrictlyPositive(argv[i++], argv[0]);
@@ -1043,7 +1226,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if(opname=="LongIntAdderCmpAddInc"){ //CAI
 			int nargs = 2;
 			if (i+nargs > argc)
-				usage(argv[0]);
+				usage(argv[0],opname);
 			else {
 				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
 				int g   = checkStrictlyPositive(argv[i++], argv[0]);
@@ -1063,7 +1246,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if(opname=="IntDualSub"){
 			int nargs = 2;
 			if (i+nargs > argc)
-				usage(argv[0]);
+				usage(argv[0],opname);
 			else {
 				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
 				int opType = checkBoolean(argv[i++], argv[0]);
@@ -1075,7 +1258,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if(opname=="IntMultiplier"){
 			int nargs = 4;
 			if (i+nargs > argc)
-				usage(argv[0]);
+				usage(argv[0],opname);
 			else {
 				int wInX    = checkStrictlyPositive(argv[i++], argv[0]);
 				int wInY    = checkStrictlyPositive(argv[i++], argv[0]);
@@ -1094,7 +1277,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if(opname=="UnsignedIntMultiplier"){
 			int nargs = 2;
 			if (i+nargs > argc)
-				usage(argv[0]);
+				usage(argv[0],opname);
 			else {
 				int wInX = checkStrictlyPositive(argv[i++], argv[0]);
 				int wInY = checkStrictlyPositive(argv[i++], argv[0]);
@@ -1106,7 +1289,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if(opname=="SignedIntMultiplier"){
 			int nargs = 2;
 			if (i+nargs > argc)
-				usage(argv[0]);
+				usage(argv[0],opname);
 			else {
 				int wInX = checkStrictlyPositive(argv[i++], argv[0]);
 				int wInY = checkStrictlyPositive(argv[i++], argv[0]);
@@ -1118,7 +1301,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if(opname=="IntKaratsuba"){
 			int nargs = 1;
 			if (i+nargs > argc)
-				usage(argv[0]);
+				usage(argv[0],opname);
 			else {
 				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
 				cerr << "> IntKaratsuba , wIn="<<wIn<<"\n";
@@ -1129,7 +1312,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if(opname=="IntTilingMultiplier"){
 			int nargs = 4;
 			if (i+nargs > argc)
-				usage(argv[0]);
+				usage(argv[0],opname);
 			else {
 				int wInX = checkStrictlyPositive(argv[i++], argv[0]);
 				int wInY = checkStrictlyPositive(argv[i++], argv[0]);
@@ -1146,7 +1329,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if(opname=="IntTruncMultiplier"){
 			int nargs = 6;
 			if (i+nargs > argc)
-				usage(argv[0]);
+				usage(argv[0],opname);
 			else {
 				int wInX = checkStrictlyPositive(argv[i++], argv[0]);
 				int wInY = checkStrictlyPositive(argv[i++], argv[0]);
@@ -1171,7 +1354,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if(opname=="FPAdder"){ 
 			int nargs = 2;
 			if (i+nargs > argc)
-				usage(argv[0]);
+				usage(argv[0],opname);
 			else {
 				int wE = checkStrictlyPositive(argv[i++], argv[0]);
 				int wF = checkStrictlyPositive(argv[i++], argv[0]);
@@ -1184,7 +1367,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if(opname=="FPAdderDualPath"){
 			int nargs = 2;
 			if (i+nargs > argc)
-				usage(argv[0]);
+				usage(argv[0],opname);
 			else {
 				int wE = checkStrictlyPositive(argv[i++], argv[0]);
 				int wF = checkStrictlyPositive(argv[i++], argv[0]);
@@ -1197,7 +1380,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if(opname=="FPAdder3Input"){
 			int nargs = 2;
 			if (i+nargs > argc)
-				usage(argv[0]);
+				usage(argv[0],opname);
 			else {
 				int wE = checkStrictlyPositive(argv[i++], argv[0]);
 				int wF = checkStrictlyPositive(argv[i++], argv[0]);
@@ -1210,7 +1393,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if(opname=="FPFMAcc"){
 			int nargs = 3;
 			if (i+nargs > argc)
-				usage(argv[0]);
+				usage(argv[0],opname);
 			else {
 				int wE = checkStrictlyPositive(argv[i++], argv[0]);
 				int wF = checkStrictlyPositive(argv[i++], argv[0]);
@@ -1224,7 +1407,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if(opname=="FPJacobi"){
 			int nargs = 5;
 			if (i+nargs > argc)
-				usage(argv[0]);
+				usage(argv[0],opname);
 			else {
 				int wE = checkStrictlyPositive(argv[i++], argv[0]);
 				int wF = checkStrictlyPositive(argv[i++], argv[0]);
@@ -1241,7 +1424,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if(opname=="TaMaDiModule"){
 			int nargs = 8;
 			if (i+nargs > argc)
-				usage(argv[0]);
+				usage(argv[0],opname);
 			else {
 				int wP = checkStrictlyPositive(argv[i++], argv[0]);
 				int degree = checkStrictlyPositive(argv[i++], argv[0]);
@@ -1260,7 +1443,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if(opname=="TaMaDiModuleDummyWrapper"){
 			int nargs = 8;
 			if (i+nargs > argc)
-				usage(argv[0]);
+				usage(argv[0],opname);
 			else {
 				int wP = checkStrictlyPositive(argv[i++], argv[0]);
 				int degree = checkStrictlyPositive(argv[i++], argv[0]);
@@ -1279,7 +1462,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if(opname=="TaMaDiDeserializer"){
 			int nargs = 8;
 			if (i+nargs > argc)
-				usage(argv[0]);
+				usage(argv[0],opname);
 			else {
 				int wP = checkStrictlyPositive(argv[i++], argv[0]);
 				int degree = checkStrictlyPositive(argv[i++], argv[0]);
@@ -1298,7 +1481,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if(opname=="TaMaDiModuleWrapperInterface"){
 			int nargs = 8;
 			if (i+nargs > argc)
-				usage(argv[0]);
+				usage(argv[0],opname);
 			else {
 				int wP = checkStrictlyPositive(argv[i++], argv[0]);
 				int degree = checkStrictlyPositive(argv[i++], argv[0]);
@@ -1317,7 +1500,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if(opname=="TaMaDiDispatcherInterface"){
 			int nargs = 10;
 			if (i+nargs > argc)
-				usage(argv[0]);
+				usage(argv[0],opname);
 			else {
 				int wP = checkStrictlyPositive(argv[i++], argv[0]);
 				int degree = checkStrictlyPositive(argv[i++], argv[0]);
@@ -1338,7 +1521,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if(opname=="TaMaDiSystem"){
 			int nargs = 11;
 			if (i+nargs > argc)
-				usage(argv[0]);
+				usage(argv[0],opname);
 			else {
 				int wP = checkStrictlyPositive(argv[i++], argv[0]);
 				int degree = checkStrictlyPositive(argv[i++], argv[0]);
@@ -1360,7 +1543,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if(opname=="TaMaDiCore"){
 			int nargs = 4;
 			if (i+nargs > argc)
-				usage(argv[0]);
+				usage(argv[0],opname);
 			else {
 				int wP = checkStrictlyPositive(argv[i++], argv[0]);
 				int degree = checkStrictlyPositive(argv[i++], argv[0]);
@@ -1374,7 +1557,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if(opname=="TaMaDiPriorityEncoder"){
 			int nargs = 1;
 			if (i+nargs > argc)
-				usage(argv[0]);
+				usage(argv[0],opname);
 			else {
 				int n = checkStrictlyPositive(argv[i++], argv[0]);
 				cerr << "> TaMaDiPriorityEncoder , n="<<n<<" \n";
@@ -1385,7 +1568,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if(opname=="TaMaDiDecoder"){
 			int nargs = 1;
 			if (i+nargs > argc)
-				usage(argv[0]);
+				usage(argv[0],opname);
 			else {
 				int n = checkStrictlyPositive(argv[i++], argv[0]);
 				cerr << "> TaMaDiDecoder ,output n="<<n<<" \n";
@@ -1396,7 +1579,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if(opname=="TaMaDiFIFO"){
 			int nargs = 3;
 			if (i+nargs > argc)
-				usage(argv[0]);
+				usage(argv[0],opname);
 			else {
 				int w = checkStrictlyPositive(argv[i++], argv[0]);
 				int n = checkStrictlyPositive(argv[i++], argv[0]);
@@ -1410,7 +1593,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if(opname=="TaMaDiShiftRegister"){
 			int nargs = 2;
 			if (i+nargs > argc)
-				usage(argv[0]);
+				usage(argv[0],opname);
 			else {
 				int w = checkStrictlyPositive(argv[i++], argv[0]);
 				int n = checkStrictlyPositive(argv[i++], argv[0]);
@@ -1423,7 +1606,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if(opname=="Fix2FP"){
 			int nargs = 5;
 			if (i+nargs > argc)
-				usage(argv[0]);
+				usage(argv[0],opname);
 			else {
 				int LSB = atoi(argv[i++]);//checkStrictlyPositive(argv[i++], argv[0]);
 				int MSB = atoi(argv[i++]);//checkStrictlyPositive(argv[i++], argv[0]);
@@ -1439,7 +1622,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		// else if(opname=="CoilInductance"){
 		// 	int nargs = 7;
 		// 	if (i+nargs > argc)
-		// 		usage(argv[0]);
+		// 		usage(argv[0],opname);
 		// 	else {
 		// 		int LSBI = atoi(argv[i++]);
 		// 		int MSBI = atoi(argv[i++]);
@@ -1457,7 +1640,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		// else if(opname=="CoordinatesTableX"){
 		// 	int nargs = 4;
 		// 	if (i+nargs > argc)
-		// 		usage(argv[0]);
+		// 		usage(argv[0],opname);
 		// 	else {
 		// 		int wIn = checkStrictlyPositive(argv[i++], argv[0]);
 		// 		int LSB = atoi(argv[i++]);
@@ -1471,7 +1654,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		// else if(opname=="CoordinatesTableZ"){
 		// 	int nargs = 4;
 		// 	if (i+nargs > argc)
-		// 		usage(argv[0]);
+		// 		usage(argv[0],opname);
 		// 	else {
 		// 		int wIn = checkStrictlyPositive(argv[i++], argv[0]);
 		// 		int LSB = atoi(argv[i++]);
@@ -1485,7 +1668,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		// else if(opname=="CoordinatesTableY"){
 		// 	int nargs = 4;
 		// 	if (i+nargs > argc)
-		// 		usage(argv[0]);
+		// 		usage(argv[0],opname);
 		// 	else {
 		// 		int wIn = checkStrictlyPositive(argv[i++], argv[0]);
 		// 		int LSB = atoi(argv[i++]);
@@ -1499,7 +1682,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if(opname=="FPMultiplier"){
 			int nargs = 3; 
 			if (i+nargs > argc)
-				usage(argv[0]);
+				usage(argv[0],opname);
 			else {
 				int wE = checkStrictlyPositive(argv[i++], argv[0]);
 				int wFIn = checkStrictlyPositive(argv[i++], argv[0]);
@@ -1512,7 +1695,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if(opname=="FPMultiplierKaratsuba"){
 			int nargs = 3; 
 			if (i+nargs > argc)
-				usage(argv[0]);
+				usage(argv[0],opname);
 			else {
 				int wE = checkStrictlyPositive(argv[i++], argv[0]);
 				int wFIn = checkStrictlyPositive(argv[i++], argv[0]);
@@ -1525,7 +1708,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if(opname=="FPMultiplierTiling"){
 			int nargs = 5; 
 			if (i+nargs > argc)
-				usage(argv[0]);
+				usage(argv[0],opname);
 			else {
 				int wE = checkStrictlyPositive(argv[i++], argv[0]);
 				int wFIn = checkStrictlyPositive(argv[i++], argv[0]);
@@ -1541,7 +1724,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if(opname=="FPSquarer"){
 			int nargs = 3; 
 			if (i+nargs > argc)
-				usage(argv[0]);
+				usage(argv[0],opname);
 			else {
 				int wE = checkStrictlyPositive(argv[i++], argv[0]);
 				int wFX = checkStrictlyPositive(argv[i++], argv[0]);
@@ -1555,7 +1738,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		{
 			int nargs = 2;
 			if (i+nargs > argc)
-				usage(argv[0]); // and exit
+				usage(argv[0],opname); // and exit
 			int wE = checkStrictlyPositive(argv[i++], argv[0]);
 			int wF = checkStrictlyPositive(argv[i++], argv[0]);
 			cerr << "> FPDiv: wE=" << wE << " wF=" << wF << endl;
@@ -1566,7 +1749,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		{
 			int nargs = 2;
 			if (i+nargs > argc)
-				usage(argv[0]); // and exit
+				usage(argv[0],opname); // and exit
 			int wE = checkStrictlyPositive(argv[i++], argv[0]);
 			int wF = checkStrictlyPositive(argv[i++], argv[0]);
 			cerr << "> FPSqrt: wE=" << wE << " wF=" << wF  << endl;
@@ -1578,7 +1761,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		{
 			int nargs = 3;
 			if (i+nargs > argc)
-				usage(argv[0]); // and exit
+				usage(argv[0],opname); // and exit
 			int wE = checkStrictlyPositive(argv[i++], argv[0]);
 			int wF = checkStrictlyPositive(argv[i++], argv[0]);
 			int correctlyRounded = checkBoolean(argv[i++], argv[0]);
@@ -1592,7 +1775,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if(opname=="LongAcc"){
 			int nargs = 5;
 			if (i+nargs > argc)
-				usage(argv[0]);
+				usage(argv[0],opname);
 			else {
 				int wEX = checkStrictlyPositive(argv[i++], argv[0]);
 				int wFX = checkStrictlyPositive(argv[i++], argv[0]);
@@ -1609,7 +1792,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if(opname=="LongAccPrecTest"){
 			int nargs = 6; // same as LongAcc, plus an iteration count
 			if (i+nargs > argc)
-				usage(argv[0]);
+				usage(argv[0],opname);
 			else {
 				int wEX = atoi(argv[i++]);
 				int wFX = atoi(argv[i++]);
@@ -1627,7 +1810,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if(opname=="LongAcc2FP"){
 			int nargs = 4;
 			if (i+nargs > argc)
-				usage(argv[0]);
+				usage(argv[0],opname);
 			else {
 				int LSBA = atoi(argv[i++]); // may be negative
 				int MSBA = atoi(argv[i++]); // may be negative
@@ -1643,7 +1826,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if(opname=="DotProdPrecTest"){
 			int nargs = 7; // same as LongAcc, plus an iteration count
 			if (i+nargs > argc)
-				usage(argv[0]);
+				usage(argv[0],opname);
 			else {
 				int wE = checkStrictlyPositive(argv[i++], argv[0]);
 				int wFX = checkStrictlyPositive(argv[i++], argv[0]);
@@ -1661,7 +1844,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if(opname=="DotProduct"){
 			int nargs = 6;
 			if (i+nargs > argc)
-				usage(argv[0]);
+				usage(argv[0],opname);
 			else {
 				int wE = checkStrictlyPositive(argv[i++], argv[0]);
 				int wFX = checkStrictlyPositive(argv[i++], argv[0]);
@@ -1678,7 +1861,7 @@ bool parseCommandLine(int argc, char* argv[]){
 //		else if(opname=="PolynomialEvaluator"){
 //			int nargs = 1;
 //			if (i+nargs > argc)
-//				usage(argv[0]);
+//				usage(argv[0],opname);
 //			else {
 //				int prec = atoi(argv[i++]); // may be negative
 //				FixedPointCoefficient* f0 = new FixedPointCoefficient( 27, 0);
@@ -1702,7 +1885,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if (opname == "HOTBM") {
 			int nargs = 4;
 			if (i+nargs > argc)
-				usage(argv[0]); // and exit
+				usage(argv[0],opname); // and exit
 			string func = argv[i++];
 			int wI = checkStrictlyPositive(argv[i++], argv[0]);
 			int wO = checkStrictlyPositive(argv[i++], argv[0]);
@@ -1715,7 +1898,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if (opname == "HOTBMFX") {
 			int nargs = 6;
 			if (i+nargs > argc)
-				usage(argv[0]); // and exit
+				usage(argv[0],opname); // and exit
 			string func = argv[i++];
 			int wE_in = atoi(argv[i++]); // may be negative
 			int wF_in = atoi(argv[i++]); // may be negative
@@ -1739,7 +1922,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if (opname == "HOTBMRange") {
 			int nargs = 7;
 			if (i+nargs > argc)
-				usage(argv[0]); // and exit
+				usage(argv[0],opname); // and exit
 			string func = argv[i++];
 			int wI = checkStrictlyPositive(argv[i++], argv[0]);
 			int wO = checkStrictlyPositive(argv[i++], argv[0]);
@@ -1763,7 +1946,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		{
 			int nargs = 2;
 			if (i+nargs > argc)
-				usage(argv[0]); // and exit
+				usage(argv[0],opname); // and exit
 			int wE = checkStrictlyPositive(argv[i++], argv[0]);
 			int wF = checkStrictlyPositive(argv[i++], argv[0]);
 			cerr << "> FPExp: wE=" << wE << " wF=" << wF << endl;
@@ -1776,7 +1959,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		{
 			int nargs = 6;
 			if (i+nargs > argc)
-				usage(argv[0]); // and exit
+				usage(argv[0],opname); // and exit
 			int wE = checkStrictlyPositive(argv[i++], argv[0]);
 			int wF = checkStrictlyPositive(argv[i++], argv[0]);
 			int k=atoi(argv[i++]);
@@ -1792,7 +1975,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		{
 			int nargs = 3;
 			if (i+nargs > argc)
-				usage(argv[0]); // and exit
+				usage(argv[0],opname); // and exit
 			int wE = checkStrictlyPositive(argv[i++], argv[0]);
 			int wF = checkStrictlyPositive(argv[i++], argv[0]);
 			int inTableSize=atoi(argv[i++]);
@@ -1805,7 +1988,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		{
 			int nargs = 5;
 			if (i+nargs > argc)
-				usage(argv[0]); // and exit 
+				usage(argv[0],opname); // and exit 
 
 			//int logTableSize, int expTableSize, int expDegree, int expG, int logG
 			int wE = checkStrictlyPositive(argv[i++], argv[0]);
@@ -1822,7 +2005,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		{
 			int nargs = 2;
 			if (i+nargs > argc)
-				usage(argv[0]); // and exit 
+				usage(argv[0],opname); // and exit 
 
 			//int logTableSize, int expTableSize, int expDegree, int expG, int logG
 			int wE = checkStrictlyPositive(argv[i++], argv[0]);
@@ -1836,7 +2019,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		{
 			int nargs = 4;
 			if (i+nargs > argc)
-				usage(argv[0]); // and exit
+				usage(argv[0],opname); // and exit
 			int wEI = checkStrictlyPositive(argv[i++], argv[0]);
 			int wFI = checkStrictlyPositive(argv[i++], argv[0]);
 			int wEO = checkStrictlyPositive(argv[i++], argv[0]);
@@ -1850,7 +2033,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		{
 			int nargs = 4;
 			if (i+nargs > argc)
-				usage(argv[0]); // and exit
+				usage(argv[0],opname); // and exit
 			int wEI = checkStrictlyPositive(argv[i++], argv[0]);
 			int wFI = checkStrictlyPositive(argv[i++], argv[0]);
 			int wEO = checkStrictlyPositive(argv[i++], argv[0]);
@@ -1864,7 +2047,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		{
 			int nargs = 3;
 			if (i+nargs > argc)
-				usage(argv[0]); // and exit
+				usage(argv[0],opname); // and exit
 			int wE = checkStrictlyPositive(argv[i++], argv[0]);
 			int wF = checkStrictlyPositive(argv[i++], argv[0]);
 			int optimize = checkBoolean(argv[i++], argv[0]);
@@ -1876,7 +2059,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		{
 			int nargs = 3;
 			if (i+nargs > argc)
-				usage(argv[0]); // and exit
+				usage(argv[0],opname); // and exit
 			int wE = checkStrictlyPositive(argv[i++], argv[0]);
 			int wF = checkStrictlyPositive(argv[i++], argv[0]);
 			int optimize = checkBoolean(argv[i++], argv[0]);
@@ -1888,7 +2071,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		{
 			int nargs = 1;
 			if (i+nargs > argc)
-				usage(argv[0]); // and exit
+				usage(argv[0],opname); // and exit
 			int wIn = checkStrictlyPositive(argv[i++], argv[0]);
 			cerr << "> IntSquarer: wIn=" << wIn << endl;
 			op = new IntSquarer(target, wIn);
@@ -1900,7 +2083,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		{
 			int nargs = 2;
 			if (i+nargs > argc)
-				usage(argv[0]); // and exit
+				usage(argv[0],opname); // and exit
 			int wE = atoi(argv[i++]);	// can be null or negative
 			int wF = checkStrictlyPositive(argv[i++], argv[0]);
 			cerr << "> LNSAddSub: wE=" << wE << " wF=" << wF << endl;
@@ -1912,7 +2095,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		{
 			int nargs = 2;
 			if (i+nargs > argc)
-				usage(argv[0]); // and exit
+				usage(argv[0],opname); // and exit
 			int wE = atoi(argv[i++]);	// can be null or negative
 			int wF = checkStrictlyPositive(argv[i++], argv[0]);
 			cerr << "> LNSMul: wE=" << wE << " wF=" << wF << endl;
@@ -1924,7 +2107,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		{
 			int nargs = 2;
 			if (i+nargs > argc)
-				usage(argv[0]); // and exit
+				usage(argv[0],opname); // and exit
 			int wE = atoi(argv[i++]);	// can be null or negative
 			int wF = checkStrictlyPositive(argv[i++], argv[0]);
 			cerr << "> LNSDiv: wE=" << wE << " wF=" << wF << endl;
@@ -1935,7 +2118,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		{
 			int nargs = 2;
 			if (i+nargs > argc)
-				usage(argv[0]); // and exit
+				usage(argv[0],opname); // and exit
 			int wE = atoi(argv[i++]);	// can be null or negative
 			int wF = checkStrictlyPositive(argv[i++], argv[0]);
 			cerr << "> LNSSqrt: wE=" << wE << " wF=" << wF << endl;
@@ -1947,7 +2130,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		{
 			int nargs = 3;
 			if (i+nargs > argc)
-				usage(argv[0]); // and exit
+				usage(argv[0],opname); // and exit
 			int wE = atoi(argv[i++]);	// can be null or negative
 			int wF = checkStrictlyPositive(argv[i++], argv[0]);
 			int o = checkStrictlyPositive(argv[i++], argv[0]);
@@ -1961,7 +2144,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		{
 			int nargs = 3;
 			if (i+nargs > argc)
-				usage(argv[0]); // and exit
+				usage(argv[0],opname); // and exit
 			int wF = checkStrictlyPositive(argv[i++], argv[0]);
 			int j = checkStrictlyPositive(argv[i++], argv[0]);
 			int wE = atoi(argv[i++]);
@@ -1973,7 +2156,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		{
 			int nargs = 2;
 			if (i+nargs > argc)
-				usage(argv[0]); // and exit
+				usage(argv[0],opname); // and exit
 			int wF = checkStrictlyPositive(argv[i++], argv[0]);
 			int j = checkStrictlyPositive(argv[i++], argv[0]);
 			cerr << "> CotranF2: wF=" << wF << " j=" << j << endl;
@@ -1984,7 +2167,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		{
 			int nargs = 2;
 			if (i+nargs > argc)
-				usage(argv[0]); // and exit
+				usage(argv[0],opname); // and exit
 			int wF = checkStrictlyPositive(argv[i++], argv[0]);
 			int j = checkStrictlyPositive(argv[i++], argv[0]);
 			cerr << "> CotranF3: wF=" << wF << " j=" << j << endl;
@@ -1996,7 +2179,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		{
 			int nargs = 4;
 			if (i+nargs > argc)
-				usage(argv[0]); // and exit
+				usage(argv[0],opname); // and exit
 			int wE = atoi(argv[i++]);	// can be null or negative
 			int wF = checkStrictlyPositive(argv[i++], argv[0]);
 			int j = checkStrictlyPositive(argv[i++], argv[0]);
@@ -2011,7 +2194,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		{
 			int nargs = 4;
 			if (i+nargs > argc)
-				usage(argv[0]); // and exit
+				usage(argv[0],opname); // and exit
 			int wE = atoi(argv[i++]);	// can be null or negative
 			int wF = checkStrictlyPositive(argv[i++], argv[0]);
 			int j = checkStrictlyPositive(argv[i++], argv[0]);
@@ -2026,7 +2209,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		{
 			int nargs = 3;
 			if (i+nargs > argc)
-				usage(argv[0]); // and exit
+				usage(argv[0],opname); // and exit
 			int wE = checkStrictlyPositive(argv[i++], argv[0]);
 			int wF = checkStrictlyPositive(argv[i++], argv[0]);
 			int o = checkStrictlyPositive(argv[i++], argv[0]);
@@ -2038,7 +2221,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		{
 			int nargs = 3;
 			if (i+nargs > argc)
-				usage(argv[0]); // and exit
+				usage(argv[0],opname); // and exit
 			int fL = checkStrictlyPositive(argv[i++], argv[0]);
 			int fTheta = checkStrictlyPositive(argv[i++], argv[0]);
 			int o = checkStrictlyPositive(argv[i++], argv[0]);
@@ -2053,11 +2236,11 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if (opname == "Wrapper") {
 			int nargs = 0;
 			if (i+nargs > argc)
-				usage(argv[0]);
+				usage(argv[0],opname);
 			else {
 				if(oplist.empty()){
 					cerr<<"ERROR: Wrapper has no operator to wrap (it should come after the operator it wraps)"<<endl;
-					usage(argv[0]);
+					usage(argv[0],opname);
 				}
 				Operator* toWrap = oplist.back();
 				cerr << "> Wrapper for " << toWrap->getName()<<endl;
@@ -2069,7 +2252,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if (opname == "PolyTableGenerator") {
 			int nargs = 4;
 			if (i+nargs > argc)
-				usage(argv[0]); // and exit
+				usage(argv[0],opname); // and exit
 			string func = argv[i++];
 			int wO = atoi(argv[i++]);
 			int n  = checkStrictlyPositive(argv[i++], argv[0]);
@@ -2086,7 +2269,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if (opname == "FunctionTable") {
 			int nargs = 4;
 			if (i+nargs > argc)
-				usage(argv[0]); // and exit
+				usage(argv[0],opname); // and exit
 			string func = argv[i++];
 			int wI = checkStrictlyPositive(argv[i++], argv[0]);
 			int lsbO = atoi(argv[i++]);
@@ -2101,7 +2284,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if (opname == "FunctionEvaluator") {
 			int nargs = 4;
 			if (i+nargs > argc)
-				usage(argv[0]); // and exit
+				usage(argv[0],opname); // and exit
 			string func = argv[i++];
 			int wI = checkStrictlyPositive(argv[i++], argv[0]);
 			int wO = atoi(argv[i++]);
@@ -2117,7 +2300,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if (opname == "FPPipeline") {
 			int nargs = 3;
 			if (i+nargs > argc)
-				usage(argv[0]); // and exit
+				usage(argv[0],opname); // and exit
 			string expr = argv[i++];
 			int wE = checkStrictlyPositive(argv[i++], argv[0]);
 			int wF = checkStrictlyPositive(argv[i++], argv[0]);
@@ -2131,10 +2314,10 @@ bool parseCommandLine(int argc, char* argv[]){
 		else if (opname == "TestBench") {
 			int nargs = 1;
 			if (i+nargs > argc)
-				usage(argv[0]); // and exit
+				usage(argv[0],opname); // and exit
 			if(oplist.empty()){
 				cerr<<"ERROR: TestBench has no operator to wrap (it should come after the operator it wraps)"<<endl;
-				usage(argv[0]); // and exit
+				usage(argv[0],opname); // and exit
 			}
 			int n = checkPositiveOrNull(argv[i++], argv[0]);
 			Operator* toWrap = oplist.back();
@@ -2159,10 +2342,10 @@ bool parseCommandLine(int argc, char* argv[]){
 			/* Using a file to store IO */
 			int nargs = 1;
 			if (i+nargs > argc)
-				usage(argv[0]); // and exit
+				usage(argv[0],opname); // and exit
 			if(oplist.empty()){
 				cerr<<"ERROR: TestBench has no operator to wrap (it should come after the operator it wraps)"<<endl;
-				usage(argv[0]); // and exit
+				usage(argv[0],opname); // and exit
 			}
 			int n = atoi(argv[i++]);//checkPositiveOrNull(argv[i++], argv[0]);
 			Operator* toWrap = oplist.back();
@@ -2216,52 +2399,31 @@ int main(int argc, char* argv[] )
 
 	ofstream file;
 	file.open(filename.c_str(), ios::out);
-	
-	for(i=0; i<oplist.size(); i++) {
-		try {
-			REPORT(FULL, "OPERATOR:"<<oplist[i]->getName());
-			REPORT(FULL, "--DECLARE LIST---------------------------------------------------");
-			REPORT(FULL, printMapContent(oplist[i]->getDeclareTable()) );
-			REPORT(FULL, "--USE LIST-------------------------------------------------------");
-
-//			combinatorialOperator = not(oplist[i]->isSequential());
-			oplist[i]->getFlopocoVHDLStream()->flush();
-			
-			REPORT(FULL, printVectorContent(  (oplist[i]->getFlopocoVHDLStream())->getUseTable()) );
-
-			/* second parse is only for sequential operators */
-			if (oplist[i]->isSequential()){
-				REPORT (FULL, "--2nd PASS-------------------------------------------------------");
-				oplist[i]->parse2();
-			}
-
-			oplist[i]->outputVHDL(file);			
-		} catch (std::string s) {
-			cerr << "Exception while generating '" << oplist[i]->getName() << "': " << s <<endl;
-		}
-	}
+	outputVHDLToFile(oplist, file);
 	file.close();
 	
-	for(int k=oplist.size()-1; k>=0; k--) {
-		if (unsigned(k)== (oplist.size()-1))
-			oplist[k]->level = 0;
-		else{
-			string currentName = oplist[k]->getName();
-			oplist[k]->level = 0;
-			for(int j=oplist.size()-1; j>k; j--) {
-				if (oplist[j]->hasComponent(currentName) ){
-					oplist[k]->level = oplist[j]->level + 1;
-				}	
-			}
-			
-		}
-	}	
-	
+//	for(int k=oplist.size()-1; k>=0; k--) {
+//		if (unsigned(k)== (oplist.size()-1))
+//			oplist[k]->level = 0;
+//		else{
+//			string currentName = oplist[k]->getName();
+//			oplist[k]->level = 0;
+//			for(int j=oplist.size()-1; j>k; j--) {
+//				if (oplist[j]->hasComponent(currentName) ){
+//					oplist[k]->level = oplist[j]->level + 1;
+//				}	
+//			}
+//		}
+//	}	
 	
 	cerr << endl<<"Final report:"<<endl;
 	for(i=0; i<oplist.size(); i++) {
-		oplist[i]->outputFinalReport();
+		oplist[i]->outputFinalReport(0);
 	}
+	
 	cerr<< "Output file: " << filename <<endl;
 	return 0;
 }
+
+
+

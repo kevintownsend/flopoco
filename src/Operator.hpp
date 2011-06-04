@@ -552,6 +552,14 @@ public:
 	 * @return pointer to ioList 
 	 */
 	vector<Signal*> * getIOList();
+
+	/** passes the IOList by value.
+	 * @return the ioList 
+	 */
+	vector<Signal*> getIOListV(){
+		return ioList_;
+	}
+
 	
 	/** Returns a pointer a signal from the ioList.
 	 * @param the index of the signal in the list
@@ -632,16 +640,13 @@ public:
 	 * reports the pipeline depth, but feel free to overload if you have any
 	 * thing useful to tell to the end user
 	*/
-	virtual void outputFinalReport();	
+	virtual void outputFinalReport(int level);	
 	
 	
 	/** Gets the pipeline depth of this operator 
 	 * @return the pipeline depth of the operator
 	*/
 	int getPipelineDepth();
-
-
-
 
 	/**
 	* @return the output map containing the signal -> delay associations 
@@ -653,13 +658,6 @@ public:
 	*/	
 	map<string, int> getDeclareTable();
 
-//	/**
-//	* @return the output map containing the signal -> declaration cycle 
-//	*/	
-//	vector<pair<string, int> > getUseTable(){
-//		return useTable;
-//	}
-	
 	FlopocoStream* getFlopocoVHDLStream(){
 		return &vhdl;
 	}
@@ -669,10 +667,100 @@ public:
 	Target* getTarget(){
 		return target_;
 	}
+
+	string getUniqueName(){
+		return uniqueName_;
+	}
+
+	string getArchitectureName(){
+		return architectureName_;
+	}
+	
+	vector<Signal*> getTestCaseSignals(){
+		return testCaseSignals_;
+	}
+	
+	map<string, string> getPortMap(){
+		return portMap_;
+	}
+	
+	
+	map<string, double> getInputDelayMap(){
+		return inputDelayMap;
+	}
+	
+	map<string, Operator*> getSubComponents(){
+		return subComponents_;
+	}
+	
+	string getSrcFileName(){
+		return srcFileName;
+	}
+	
+	int getOperatorCost(){
+		return cost;
+	}
+
+	int getNumberOfInputs(){
+		return numberOfInputs_;
+	}
+	
+	int getNumberOfOutputs(){
+		return numberOfOutputs_;
+	}
+	
+	map<string, Signal*> getSignalMap(){
+		return signalMap_;
+	}
+
+	map<string, pair<string, string> > getConstants(){
+		return constants_;
+	}
+	
+	map<string, string> getAttributes(){
+		return attributes_;
+	}
+	
+	map<string, string> getTypes(){
+		return types_;
+	}
+	
+	map<pair<string,string>, string> getAttributesValues(){
+		return attributesValues_;
+	}
+
+	bool getHasRegistersWithoutReset(){
+		return hasRegistersWithoutReset_;
+	}
+
+	bool getHasRegistersWithAsyncReset(){
+		return hasRegistersWithAsyncReset_;
+	}
+
+	bool getHasRegistersWithSyncReset(){
+		return hasRegistersWithSyncReset_;
+	}
+
+	string getCopyrightString(){
+		return copyrightString_;
+	}
+
+	bool getNeedRecirculationSignal(){
+		return needRecirculationSignal_;
+	}
 	
 	bool hardOperator(){
 		return hardOperator_;
 	}
+	
+	vector<Operator*> getOpList(){
+		return oplist;
+	}
+
+	vector<Operator*>& getOpListR(){
+		return oplist;
+	}
+
 	
 	bool hasComponent(string s);
 	
@@ -690,9 +778,7 @@ public:
 		}	
 	}
 	
-	int getOperatorCost(){
-		return cost;
-	}
+
 	
 	void setuid(int mm){
 		myuid = mm;
@@ -700,6 +786,46 @@ public:
 	
 	int getuid(){
 		return myuid;
+	}
+	
+	void cloneOperator(Operator *op){
+		subComponents_ = op->getSubComponents();
+		signalList_ = op->getSignalList();	
+		ioList_     = op->getIOListV();
+		target_           = op->getTarget();
+		uniqueName_       = op->getUniqueName();
+		architectureName_ = op->getArchitectureName();
+		testCaseSignals_ = op->getTestCaseSignals();	
+		portMap_ = op->getPortMap();
+		outDelayMap = map<string,double>(op->getOutDelayMap());
+		inputDelayMap = op->getInputDelayMap();
+		vhdl.vhdlCodeBuffer << op->vhdl.vhdlCodeBuffer.str();
+		vhdl.vhdlCode       << op->vhdl.vhdlCode.str();
+		vhdl.currentCycle_   = op->vhdl.currentCycle_;	
+		vhdl.useTable        = op->vhdl.useTable;
+		srcFileName = op->getSrcFileName();
+		declareTable = op->getDeclareTable();
+		cost = op->getOperatorCost();
+		numberOfInputs_  = op->getNumberOfInputs();
+		numberOfOutputs_ = op->getNumberOfOutputs();
+		isSequential_    = op->isSequential();
+		pipelineDepth_   = op->getPipelineDepth();
+		signalMap_ = op->getSignalMap();
+		constants_ = op->getConstants();
+		attributes_ = op->getAttributes();
+		types_ = op->getTypes();
+		attributesValues_ = op->getAttributesValues();
+
+		hasRegistersWithoutReset_   = op->getHasRegistersWithoutReset();
+		hasRegistersWithAsyncReset_ = op->getHasRegistersWithAsyncReset();
+		hasRegistersWithSyncReset_  = op->getHasRegistersWithSyncReset();
+		copyrightString_            = op->getCopyrightString();
+		currentCycle_               = op->getCurrentCycle();
+		criticalPath_               = op->getCriticalPath();
+		needRecirculationSignal_    = op->getNeedRecirculationSignal();
+		hardOperator_               = op->hardOperator();
+		
+		oplist                      = op->getOpList();
 	}
 
 	int level; //printing issues
@@ -714,6 +840,8 @@ public:
 	vector<Signal*>     signalList_;      /**< The list of internal signals of the operator */
 	vector<Signal*>     ioList_;          /**< The list of I/O signals of the operator */
 
+	FlopocoStream       vhdl;             /**< The internal stream to which the constructor will build the VHDL code */
+
 protected:    
 	Target*             target_;          /**< The target on which the operator will be deployed */
 	string              uniqueName_;      /**< By default, a name derived from the operator class and the parameters */
@@ -723,12 +851,11 @@ protected:
 	map<string, string> portMap_;         /**< Port map for an instance of this operator */
 	map<string, double> outDelayMap;      /**< Slack delays on the outputs */
 	map<string, double> inputDelayMap;       /**< Slack delays on the inputs */
-	FlopocoStream       vhdl;             /**< The internal stream to which the constructor will build the VHDL code */
 	string              srcFileName;      /**< Used to debug and report.  */
 	map<string, int>    declareTable;     /**< Table containing the name and declaration cycle of the signal */
 	int                 myuid;              /**<unique id>*/
 	int                 cost;             /**< the cost of the operator depending on different metrics */
-
+	vector<Operator*>   oplist;
 
 private:
 	int                    numberOfInputs_;             /**< The number of inputs of the operator */

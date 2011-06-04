@@ -218,7 +218,6 @@ extern bool combinatorialOperator;
 				return useTable;
 			}
 
-			vector<pair<string, int> > useTable; /**< table contating <id, cycle> info */
 
 			void disableParsing(bool s){
 				disabledParsing = s;
@@ -228,12 +227,20 @@ extern bool combinatorialOperator;
 				return !disabledParsing;
 			}
 			
-		protected:
-			
+			bool isEmpty(){
+				return ((vhdlCode.str()).length() == 0 && (vhdlCodeBuffer.str()).length() == 0 );
+			}
+
+
 			ostringstream vhdlCode;              /**< the vhdl code afte */
 			ostringstream vhdlCodeBuffer;        /**< the vhdl code buffer */
-		
+			
 			int currentCycle_;                   /**< the current cycle is used in the picewise code scanning */
+	
+			vector<pair<string, int> > useTable; /**< table contating <id, cycle> info */
+
+		protected:
+		
 			bool disabledParsing;
 	};
 }

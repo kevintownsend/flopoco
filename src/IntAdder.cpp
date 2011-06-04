@@ -52,46 +52,57 @@ namespace flopoco {
 		REPORT(DETAILED, "Implementing IntAdder " << wIn);
 		
 		Operator* intAdderInstantiation;
-		intAdderInstantiation = new IntAdderClassical(target, wIn, name.str() , inputDelays, optimizeType, srl);
-		addImplementationList.push_back(intAdderInstantiation);
 		
-		intAdderInstantiation = new IntAdderAlternative(target, wIn, name.str() , inputDelays, optimizeType, srl);
-		addImplementationList.push_back(intAdderInstantiation);
+		if (implementation == -1){ // we must explore
+			intAdderInstantiation = new IntAdderClassical(target, wIn, name.str() , inputDelays, optimizeType, srl);
+			addImplementationList.push_back(intAdderInstantiation);
+		
+			intAdderInstantiation = new IntAdderAlternative(target, wIn, name.str() , inputDelays, optimizeType, srl);
+			addImplementationList.push_back(intAdderInstantiation);
 
-		intAdderInstantiation = new IntAdderShortLatency(target, wIn, name.str() , inputDelays, optimizeType, srl);
-		addImplementationList.push_back(intAdderInstantiation);
-				
+			intAdderInstantiation = new IntAdderShortLatency(target, wIn, name.str() , inputDelays, optimizeType, srl);
+			addImplementationList.push_back(intAdderInstantiation);
+		}else{
+			switch (implementation){
+				case 0: 	
+					intAdderInstantiation = new IntAdderClassical(target, wIn, name.str() , inputDelays, optimizeType, srl);
+					addImplementationList.push_back(intAdderInstantiation);
+					break;
+				case 1:
+					intAdderInstantiation = new IntAdderAlternative(target, wIn, name.str() , inputDelays, optimizeType, srl);
+					addImplementationList.push_back(intAdderInstantiation);
+					break;
+				case 2: 
+					intAdderInstantiation = new IntAdderShortLatency(target, wIn, name.str() , inputDelays, optimizeType, srl);
+					addImplementationList.push_back(intAdderInstantiation);
+					break;
+				default:
+					intAdderInstantiation = new IntAdderClassical(target, wIn, name.str() , inputDelays, optimizeType, srl);
+					addImplementationList.push_back(intAdderInstantiation);
+			}	
+		}
+		
 		int currentCost = 16384;
 		for (unsigned j=0; j< addImplementationList.size(); j++)
 			if (currentCost > addImplementationList[j]->getOperatorCost()){
 				currentCost = addImplementationList[j]->getOperatorCost();
 				selectedVersion = j;
 			}
-		
+
+		cloneOperator(addImplementationList[selectedVersion]);
+
 		REPORT(DETAILED, "Selected implementation for IntAdder"<< wIn << " is "<<selectedVersion<<" with cost="<<currentCost);
-		
-		addImplementationList[selectedVersion]->setuid(getuid()); //the selected implemetation becomes this operator 
-		
-		oplist.push_back(addImplementationList[selectedVersion]); //the code of the selected implementation 
-		outDelayMap["R"] = addImplementationList[selectedVersion]->getOutputDelay("R"); //populate output delays
-		setCycle(addImplementationList[selectedVersion]->getPipelineDepth());
-		
-		//cleanup; clear the oplist of the components that will be unused, and the components used therein 
-		for (unsigned j=0; j< addImplementationList.size(); j++)
-			if ( int(j)!= selectedVersion){
-				REPORT(DEBUG, "deleting version "<<int(j));
-				cleanup(&oplist, addImplementationList[j]);
-			}
-		REPORT(DEBUG, "Finished implementing the adder");
+
+//		//cleanup; clear the oplist of the components that will be unused, and the components used therein 
+//		for (unsigned j=0; j< addImplementationList.size(); j++){
+//			REPORT(DEBUG, "deleting version "<<int(j));
+//			cleanup(&oplist, addImplementationList[j]);
+//		}
+//		REPORT(DEBUG, "Finished implementing the adder");
 	}
 	
 	/**************************************************************************/
 	IntAdder::~IntAdder() {
-	}
-	
-	void IntAdder::outputVHDL(std::ostream& o, std::string name) {
-
-	
 	}
 	
 	/******************************************************************************/

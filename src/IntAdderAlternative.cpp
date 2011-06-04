@@ -32,7 +32,7 @@ namespace flopoco {
 	extern vector<Operator*> oplist;
 	
 	IntAdderAlternative::IntAdderAlternative ( Target* target, int wIn, string name, map<string, double> inputDelays, int optimizeType, bool srl) :
-	Operator ( target, inputDelays ), wIn_ ( wIn ), alternativeSlackVersion(0) {
+	IntAdder(target, wIn, inputDelays, true), wIn_(wIn), alternativeSlackVersion(0) {
 		srcFileName="IntAdderAlternative";
 		setCopyrightString ( "Bogdan Pasca, Florent de Dinechin (2008-2010)" );
 		setName ( name );
@@ -43,12 +43,26 @@ namespace flopoco {
 		addInput ( "Cin", 1 );
 		addOutput ( "R"  , wIn_, 1 , true );
 		
-		vhdl << tab << "--Alternative"<<endl;
+		inputsGotRegistered = false;
+		objectivePeriod	 = 1 / target->frequency();
+		maxInputDelay    = getMaxInputDelays ( inputDelays );
 		
+		if ( maxInputDelay > objectivePeriod ) {
+			/* this component should register its inputs */
+			nextCycle();
+			maxInputDelay = target->ffDelay() + target->localWireDelay();	
+			inputDelays.clear();
+			inputsGotRegistered = true;
+		}
+		
+		vhdl << tab << "--Alternative"<<endl;
+		alternativeSlackVersion = -1;
+		 	
 		switch (optimizeType) {
-			case 0:  cost = getLutCostAlternative(target,wIn, inputDelays, srl); break;
-			case 1:  cost = getRegCostAlternative(target,wIn, inputDelays, srl); break;
+			case 0:  cost = getLutCostAlternative  (target,wIn, inputDelays, srl); break;
+			case 1:  cost = getRegCostAlternative  (target,wIn, inputDelays, srl); break;
 			case 2:  cost = getSliceCostAlternative(target,wIn, inputDelays, srl); break;
+
 			default: cost = getSliceCostAlternative(target,wIn, inputDelays, srl); break;
 		}
 		
@@ -56,18 +70,18 @@ namespace flopoco {
 			objectivePeriod	 = 1 / target->frequency();
 			maxInputDelay = min(getMaxInputDelays(inputDelays), objectivePeriod);
 			
-			if ( maxInputDelay == 0 ) {
+			if ( alternativeSlackVersion == -1 ) {
 				/* the non-slack version */
 				updateParameters ( target, alpha, beta, k );
-				REPORT ( DETAILED, "alpha="<<alpha<<" beta="<<beta<<" k="<<k );
+				REPORT ( DETAILED, "1) alpha="<<alpha<<" beta="<<beta<<" k="<<k );
 			} else {
 				if (alternativeSlackVersion==0){
 					updateParameters ( target, inputDelays, alpha, beta, k );
-					REPORT ( DETAILED, "alpha="<<alpha<<" beta="<<beta<<" k="<<k );
+					REPORT ( DETAILED, "2) alpha="<<alpha<<" beta="<<beta<<" k="<<k );
 				} else {
 					nextCycle(); ///////////////////////////////////////////////
 					updateParameters ( target, alpha, beta, k );
-					REPORT ( DETAILED, "alpha="<<alpha<<" beta="<<beta<<" k="<<k );
+					REPORT ( DETAILED, "3) alpha="<<alpha<<" beta="<<beta<<" k="<<k );
 				}
 			}
 			
@@ -367,94 +381,6 @@ namespace flopoco {
 		exit ( -1 );
 		return -1;
 	}
-	
-	/**************************************************************************/
-	void IntAdderAlternative::updateParameters ( Target* target, int &alpha, int &beta, int &k ) {
-		
-		target->suggestSubaddSize ( alpha , wIn_ ); /* chunk size */
-		if ( wIn_ == alpha ) {
-			/* addition requires one chunk */
-			beta = 0;
-			k    = 1;
-		} else {
-			beta = ( wIn_ % alpha == 0 ? alpha : wIn_ % alpha );
-			k    = ( wIn_ % alpha == 0 ? wIn_ / alpha : ceil ( double ( wIn_ ) / double ( alpha ) ) );
-		}
-	}
-	
-	/**************************************************************************/
-	void IntAdderAlternative::updateParameters ( Target* target, map<string, double> inputDelays, int &alpha, int &beta, int &gamma, int &k ) {
-		
-		int typeOfChunks = 1;
-		bool status = target->suggestSlackSubaddSize ( gamma , wIn_, getMaxInputDelays ( inputDelays ) ); // the first chunk size
-		REPORT ( DEBUG, "suggestSlackSubaddSize returns gamma="<<gamma<<" with status:"<< ( status?"true":"false" ) );
-		
-		if ( ! status ) {
-			k=-1;
-			alpha=0;
-			beta=0;
-			gamma=0;
-		} else
-			if ( wIn_ - gamma > 0 ) { //more than 1 chunk
-				target->suggestSubaddSize ( alpha, wIn_-gamma );
-				if ( wIn_-gamma == alpha )
-					typeOfChunks++; //only two types of chunks
-					else
-						typeOfChunks+=2; //three types of chunks
-						
-						REPORT ( DETAILED, "Types of chunks = " << typeOfChunks );
-					
-					if ( typeOfChunks==3 )
-						beta = ( ( wIn_-gamma ) % alpha == 0 ? alpha : ( wIn_-gamma ) % alpha );
-					else
-						beta = alpha;
-
-					if ( typeOfChunks==2 )
-						k = 2;
-					else
-						k = 2 +   int ( ceil ( double ( wIn_ - beta - gamma ) / double ( alpha ) ) );
-					
-					
-			} else {
-				alpha = 0;
-				beta = 0;
-				k=1;
-			}
-	}
-	
-	/**************************************************************************/
-	void IntAdderAlternative::updateParameters ( Target* target, map<string, double> inputDelays, int &alpha, int &beta, int &k ) {
-		bool status = target->suggestSlackSubaddSize ( alpha , wIn_,  getMaxInputDelays ( inputDelays ) ); /* chunk size */
-		if ( !status ) {
-			k=-1;
-			alpha=0;
-			beta=0;
-		} else
-			if ( wIn_ == alpha ) {
-				/* addition requires one chunk */
-				beta = 0;
-				k    = 1;
-			} else {
-				beta = ( wIn_ % alpha == 0 ? alpha : wIn_ % alpha );
-				k    = ( wIn_ % alpha == 0 ? wIn_ / alpha : ceil ( double ( wIn_ ) / double ( alpha ) ) );
-			}
-			
-	}
-
-/******************************************************************************/
-	void IntAdderAlternative::emulate ( TestCase* tc ) {
-		mpz_class svX = tc->getInputValue ( "X" );
-		mpz_class svY = tc->getInputValue ( "Y" );
-		mpz_class svC = tc->getInputValue ( "Cin" );
-		
-		mpz_class svR = svX + svY + svC;
-		// Don't allow overflow
-		mpz_clrbit ( svR.get_mpz_t(),wIn_ );
-		
-		tc->addExpectedOutput ( "R", svR );
-	}
-	
-	
 }
 
 

@@ -19,6 +19,10 @@ namespace flopoco {
 	 */
 	class IntAdder : public Operator {
 	public:
+	
+		IntAdder (Target* target, int wIn, map<string, double> inputDelays, bool noAmbiguity): Operator(target,inputDelays), wIn_(wIn){
+		}
+		
 		/**
 		 * The IntAdder constructor
 		 * @param[in] target           the target device
@@ -31,7 +35,6 @@ namespace flopoco {
 		 * @param[in] srl              optimize for use of shift registers
 		 **/
 		IntAdder ( Target* target, int wIn, map<string, double> inputDelays = emptyDelayMap, int optimizeType = SLICE, bool srl = true, int implementation = -1 );
-			
 
 			
 		/**
@@ -40,10 +43,10 @@ namespace flopoco {
 		~IntAdder();
 		
 		/** Overloaded to do nothing */
-		void outputVHDL(std::ostream& o, std::string name);
+//		void outputVHDL(std::ostream& o, std::string name);
 
 		void changeName(std::string operatorName);
-				
+
 		/**
 		 * The emulate function.
 		 * @param[in] tc               a list of test-cases
@@ -51,12 +54,108 @@ namespace flopoco {
 		void emulate ( TestCase* tc );
 				
 	protected:
-		int wIn_;                         /**< the width for X, Y and R*/
+		/**
+		* Updates the parameters needed of architecture implementation: wIn is taken from class attributes
+		* @param[in]  target            the target device
+		* @param[out] alpha             the size of the chunk (except last chunk)
+		* @param[out] beta              the size of the last chunk
+		* @param[out] k                 the number of chunks
+		*/
+		void updateParameters ( Target* target, int &alpha, int &beta, int &k ) {
+		
+		target->suggestSlackSubaddSize ( alpha , wIn_, target->ffDelay() + target->localWireDelay() ); /* chunk size */
+			if ( wIn_ == alpha ) { /* addition requires one chunk */
+				beta = 0;
+				k    = 1;
+			} else {
+				beta = ( wIn_ % alpha == 0 ? alpha : wIn_ % alpha );
+				k    = ( wIn_ % alpha == 0 ? wIn_ / alpha : ceil ( double ( wIn_ ) / double ( alpha ) ) );
+			}
+		};
+	
+		/**
+		* Updates the parameters needed of architecture implementation: wIn is taken from class attributes
+		* @param[in]  target            the target device
+		* @param[in]  inputDelays       the map containing the input delays
+		* @param[out] alpha             the size of the chunk (except first and last chunk)
+		* @param[out] beta              the size of the last chunk
+		* @param[out] gamma             the size of the first
+		* @param[out] k                 the number of chunks
+		*/
+		void updateParameters ( Target* target, map<string, double> inputDelays, int &alpha, int &beta, int &gamma, int &k ) {
+			int typeOfChunks = 1;
+			bool status = target->suggestSlackSubaddSize ( gamma , wIn_, getMaxInputDelays(inputDelays) ); // the first chunk size
+			if (!status){ /* well, it will not work in this case, we will have to register the inputs */
+				k     = -1;
+				alpha =  0;
+				beta  =  0;
+				gamma =  0;
+			} else
+				if (wIn_ - gamma > 0) { //more than 1 chunk
+					target->suggestSlackSubaddSize (alpha, wIn_-gamma, target->ffDelay() + target->localWireDelay());
+					if (wIn_ - gamma == alpha)
+						typeOfChunks++; 
+					else
+						typeOfChunks+=2; /* beta will have to be computed as well */
+					
+					if (typeOfChunks == 3)
+						beta = ( (wIn_-gamma) % alpha == 0 ? alpha : ( wIn_-gamma ) % alpha );
+					else
+						beta = alpha;
+					
+					if ( typeOfChunks==2 )
+						k = 2;
+					else
+						k = 2 + int ( ceil ( double ( wIn_ - beta - gamma ) / double ( alpha ) ) );
+				} else { /* in thiis case there is only one chunk type: gamma */
+					alpha = 0;
+					beta  = 0;
+					k     = 1;
+				}
+		};
+	
+		/**
+		* Updates the parameters needed of architecture implementation: wIn is taken from class attributes
+		* @param[in]  target            the target device
+		* @param[in]  inputDelays       the map containing the input delays
+		* @param[out] alpha             the size of the chunk (except first and last chunk)
+		* @param[out] beta              the size of the last chunk
+		* @param[out] k                 the number of chunks
+		*/
+		void updateParameters ( Target* target, map<string, double> inputDelays, int &alpha, int &beta, int &k ) {
+			bool status = target->suggestSlackSubaddSize ( alpha , wIn_,  getMaxInputDelays ( inputDelays ) ); /* chunk size */
+			if ( !status ) {
+				k=-1;
+				alpha=0;
+				beta=0;
+			} else
+				if ( wIn_ == alpha ) {
+					/* addition requires one chunk */
+					beta = 0;
+					k    = 1;
+				} else {
+					beta = ( wIn_ % alpha == 0 ? alpha : wIn_ % alpha );
+					k    = ( wIn_ % alpha == 0 ? wIn_ / alpha : ceil ( double ( wIn_ ) / double ( alpha ) ) );
+				}
 			
+		}
+
+		int wIn_;                         /**< the width for X, Y and R*/
 	private:
 		vector<Operator*> addImplementationList;
 		int selectedVersion;
 	};
 	
+	
+//	/* --------------------------------------------------------------------- */
+//	class IntAdderCommon {
+//	public:
+//		IntAdderCommon(int wIn): wIn_(wIn){
+//		};
+
+
+//		private:
+//			int wIn_;
+//	};
 }
 #endif

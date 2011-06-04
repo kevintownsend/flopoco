@@ -21,7 +21,7 @@ namespace flopoco {
 	extern map<string, double> emptyDelayMap;
 	/** The IntAdderShortLatency class for experimenting with adders.
 	*/
-	class IntAdderShortLatency : public Operator {
+	class IntAdderShortLatency : public IntAdder {
 		public:
 			/**
 			* The IntAdderShortLatency constructor
@@ -69,35 +69,35 @@ namespace flopoco {
 			*/
 			int getSliceCostShortLatency ( Target* target, int wIn, map<string, double> inputDelays, bool srl );
 			
-			/**
-			* Updates the parameters needed of architecture implementation: wIn is taken from class attributes
-			* @param[in]  target            the target device
-			* @param[out] alpha             the size of the chunk (except last chunk)
-			* @param[out] beta              the size of the last chunk
-			* @param[out] k                 the number of chunks
-			*/
-			void updateParameters ( Target* target, int &alpha, int &beta, int &k );
-			
-			/**
-			* Updates the parameters needed of architecture implementation: wIn is taken from class attributes
-			* @param[in]  target            the target device
-			* @param[in]  inputDelays       the map containing the input delays
-			* @param[out] alpha             the size of the chunk (except first and last chunk)
-			* @param[out] beta              the size of the last chunk
-			* @param[out] gamma             the size of the first
-			* @param[out] k                 the number of chunks
-			*/
-			void updateParameters ( Target* target, map<string, double> inputDelays, int &alpha, int &beta, int &gamma, int &k );
-			
-			/**
-			* Updates the parameters needed of architecture implementation: wIn is taken from class attributes
-			* @param[in]  target            the target device
-			* @param[in]  inputDelays       the map containing the input delays
-			* @param[out] alpha             the size of the chunk (except first and last chunk)
-			* @param[out] beta              the size of the last chunk
-			* @param[out] k                 the number of chunks
-			*/
-			void updateParameters ( Target* target, map<string, double> inputDelays, int &alpha, int &beta, int &k );
+//			/**
+//			* Updates the parameters needed of architecture implementation: wIn is taken from class attributes
+//			* @param[in]  target            the target device
+//			* @param[out] alpha             the size of the chunk (except last chunk)
+//			* @param[out] beta              the size of the last chunk
+//			* @param[out] k                 the number of chunks
+//			*/
+//			void updateParameters ( Target* target, int &alpha, int &beta, int &k );
+//			
+//			/**
+//			* Updates the parameters needed of architecture implementation: wIn is taken from class attributes
+//			* @param[in]  target            the target device
+//			* @param[in]  inputDelays       the map containing the input delays
+//			* @param[out] alpha             the size of the chunk (except first and last chunk)
+//			* @param[out] beta              the size of the last chunk
+//			* @param[out] gamma             the size of the first
+//			* @param[out] k                 the number of chunks
+//			*/
+//			void updateParameters ( Target* target, map<string, double> inputDelays, int &alpha, int &beta, int &gamma, int &k );
+//			
+//			/**
+//			* Updates the parameters needed of architecture implementation: wIn is taken from class attributes
+//			* @param[in]  target            the target device
+//			* @param[in]  inputDelays       the map containing the input delays
+//			* @param[out] alpha             the size of the chunk (except first and last chunk)
+//			* @param[out] beta              the size of the last chunk
+//			* @param[out] k                 the number of chunks
+//			*/
+//			void updateParameters ( Target* target, map<string, double> inputDelays, int &alpha, int &beta, int &k );
 			
 			/**
 			* Returns the result of the optimization algorithm for the short-latency architecture on the input data.

@@ -6,7 +6,7 @@
 #include <gmpxx.h>
 #include "utils.hpp"
 #include "Operator.hpp"
-
+#include "IntAdder.hpp"
 namespace flopoco {
 	
 #define LOGIC      0
@@ -20,7 +20,7 @@ namespace flopoco {
 	extern map<string, double> emptyDelayMap;
 	/** The IntAdderAlternative class for experimenting with adders.
 	*/
-	class IntAdderAlternative : public Operator {
+	class IntAdderAlternative : public IntAdder {
 		public:
 			/**
 			* The IntAdderAlternative constructor
@@ -66,47 +66,10 @@ namespace flopoco {
 			int getSliceCostAlternative ( Target* target, int wIn, map<string, double> inputDelays, bool srl );
 			
 			/**
-			* Updates the parameters needed of architecture implementation: wIn is taken from class attributes
-			* @param[in]  target            the target device
-			* @param[out] alpha             the size of the chunk (except last chunk)
-			* @param[out] beta              the size of the last chunk
-			* @param[out] k                 the number of chunks
-			*/
-			void updateParameters ( Target* target, int &alpha, int &beta, int &k );
-			
-			/**
-			* Updates the parameters needed of architecture implementation: wIn is taken from class attributes
-			* @param[in]  target            the target device
-			* @param[in]  inputDelays       the map containing the input delays
-			* @param[out] alpha             the size of the chunk (except first and last chunk)
-			* @param[out] beta              the size of the last chunk
-			* @param[out] gamma             the size of the first
-			* @param[out] k                 the number of chunks
-			*/
-			void updateParameters ( Target* target, map<string, double> inputDelays, int &alpha, int &beta, int &gamma, int &k );
-			
-			/**
-			* Updates the parameters needed of architecture implementation: wIn is taken from class attributes
-			* @param[in]  target            the target device
-			* @param[in]  inputDelays       the map containing the input delays
-			* @param[out] alpha             the size of the chunk (except first and last chunk)
-			* @param[out] beta              the size of the last chunk
-			* @param[out] k                 the number of chunks
-			*/
-			void updateParameters ( Target* target, map<string, double> inputDelays, int &alpha, int &beta, int &k );
-			
-			/**
 			*  Destructor
 			*/
 			~IntAdderAlternative();
 				
-			/**
-			* The emulate function.
-			* @param[in] tc               a list of test-cases
-			*/
-			
-			void emulate ( TestCase* tc );
-			
 		protected:
 			int wIn_;                         /**< the width for X, Y and R*/
 			
@@ -124,6 +87,7 @@ namespace flopoco {
 			int alternativeSlackVersion;      /**< for the slack case, two architectures are possible in the alternative case. */
 			
 			double objectivePeriod;           /**< the inverse of the frequency */
+			bool inputsGotRegistered; 
 	};
 	
 }
