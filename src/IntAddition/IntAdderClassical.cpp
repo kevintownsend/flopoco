@@ -22,8 +22,8 @@ CeCILL license, 2008-2010.
 #include <gmp.h>
 #include <mpfr.h>
 #include <gmpxx.h>
-#include "utils.hpp"
-#include "Operator.hpp"
+#include "../Operator.hpp"
+#include "../IntAdder.hpp"
 #include "IntAdderClassical.hpp"
 
 using namespace std;

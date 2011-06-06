@@ -23,14 +23,13 @@ CeCILL license, 2008-2010.
 #include <mpfr.h>
 #include <gmpxx.h>
 #include "utils.hpp"
-#include "Operator.hpp"
 #include "IntAdder.hpp"
-#include "IntAdderClassical.hpp"
-#include "IntAdderAlternative.hpp"
-#include "IntAdderShortLatency.hpp"
-// 
-using namespace std;
 
+#include "IntAddition/IntAdderClassical.hpp"
+#include "IntAddition/IntAdderAlternative.hpp"
+#include "IntAddition/IntAdderShortLatency.hpp"
+ 
+using namespace std;
 namespace flopoco {
 	extern vector<Operator*> oplist;
 	

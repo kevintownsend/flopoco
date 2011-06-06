@@ -22,8 +22,6 @@ CeCILL license, 2008-2010.
 #include <gmp.h>
 #include <mpfr.h>
 #include <gmpxx.h>
-#include "utils.hpp"
-#include "Operator.hpp"
 #include "IntAdderShortLatency.hpp"
 
 using namespace std;
