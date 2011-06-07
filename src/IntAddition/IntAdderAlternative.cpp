@@ -102,18 +102,22 @@ namespace flopoco {
 					if ( i==0 ) vhdl << " + Cin";
 					vhdl << ";" << endl;
 				}
+
 				for ( int i=0; i < k; i++ ) {
 					vhdl << tab << declare ( join ( "sum_l",0,"_idx",i ), cSize[i], true ) << " <= " << join ( "s_sum_l",0,"_idx",i ) <<range ( cSize[i]-1,0 ) << ";" << endl;
-					vhdl << tab << declare ( join ( "c_l",0,"_idx",i ), 1, true ) << " <= " << join ( "s_sum_l",0,"_idx",i ) <<range ( cSize[i],cSize[i] ) << ";" << endl;
+					vhdl << tab << declare ( join ( "c_l",0,"_idx",i ), 1, true )          << " <= " << join ( "s_sum_l",0,"_idx",i ) <<range ( cSize[i],cSize[i] ) << ";" << endl;
 				}
 				
 				for ( int i=1; i <= k-1 ; i++ ) {
 					nextCycle(); ///////////////////////////////////////////////////////
-					vhdl << tab << declare ( join ( "sum_l",i,"_idx",i ), cSize[i]+1, true ) << " <= ( \"0\" & " << join ( "sum_l",0,"_idx",i ) << ") + "
-					<< join ( "c_l",0,"_idx",i-1 ) <<range ( 0,0 ) ;
-					if ( i>1 )
-						vhdl << " + " << join ( "sum_l",i-1,"_idx",i-1 ) <<of ( cSize[i-1] );
-					vhdl<<";"<<endl;
+					vhdl << tab << declare ( join ( "s_sum_l",i,"_idx",i ), cSize[i]+1, true ) << " <=  " <<  join ( "s_sum_l",0,"_idx",i ) << " + "// "//( \"0\" & " << join ( "sum_l",0,"_idx",i ) << ") + "
+					<< join ( "c_l", i-1 ,"_idx",i-1 ) <<range (0,0) << ";" << endl ;
+//					if ( i>1 )
+//						vhdl << " + " << join ( "sum_l",i-1,"_idx",i-1 ) <<of ( cSize[i-1] );
+//					vhdl<<";"<<endl;
+
+					vhdl << tab << declare ( join ( "sum_l",i,"_idx",i ), cSize[i], true ) << " <= " << join ( "s_sum_l",i,"_idx",i ) <<range ( cSize[i]-1,0 ) << ";" << endl;
+					vhdl << tab << declare ( join ( "c_l",i,"_idx",i ), 1, true )          << " <= " << join ( "s_sum_l",i,"_idx",i ) <<range ( cSize[i],cSize[i] ) << ";" << endl;
 				}
 				
 				vhdl << tab << "R <= ";
