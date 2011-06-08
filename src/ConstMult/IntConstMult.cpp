@@ -526,7 +526,7 @@ namespace flopoco{
 			REPORT(DEBUG, "Header not null: header="<<header);
 			ShiftAddOp* headerSAO;
 			headerSAO=buildMultBoothTree(header);
-			cerr << headerSAO << endl;
+			//cerr << headerSAO << endl;
 			if(j==-1)
 				implementation->result = 	new ShiftAddOp(implementation, Add, headerSAO, (periodSize<<i), powerOfTwo[i] );
 			else {
