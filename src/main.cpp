@@ -292,14 +292,15 @@ static void usage(char *name, string opName = ""){
 		OP("IntAdder","wIn");
 		cerr << "      Integer adder, possibly pipelined\n";
 	}
-	if ( full || opName == "IntAdderExpert"){ 		
-		OP("IntAdderExpert","wIn optimizeType srl implementation bufferedInputs");
+	if ( full || opName == "IntAdderExpert" || opName == "IntAdder"){ 		
+		OP("IntAdderExpert","wIn optimizeType srl implementation bufferedInputs inputDelay");
 		cerr << "      Integer adder, multple parameters, possibly pipelined\n";
 		cerr << "      optimizeType=<0,1,2,3> 0=LUT 1=REG 2=SLICE 3=LATENCY\n";
 		cerr << "      srl=<0,1> Allow SRLs\n";
 		cerr << "      implementation=<-1,0,1,2> -1=optimizeType dependent,\n";  
 		cerr << "                                 0=Classical, 1=Alternative, 2=Short-Latency\n";
 		cerr << "      bufferedInputs=<0,1>\n";
+		cerr << "      inputDelay\n";
 	}
 	if ( full || opName == "IntAdder" || opName == "LongIntAdderAddAddMux")
 		OP("LongIntAdderAddAddMux","wIn generation");
@@ -1108,12 +1109,16 @@ bool parseCommandLine(int argc, char* argv[]){
 				int srl = atoi(argv[i++]);
 				int implementation = atoi(argv[i++]);
 				int bufferedIn = atoi(argv[i++]);
+				double inputDelay = atof(argv[i++]);
+
 				cerr << "> IntAdder, wIn="<<wIn<<", frequency="<<target->frequency()<< endl  ;
 
 				map <string, double> delayMap;
 
-				if (!bufferedIn){
+				if (bufferedIn){
 					delayMap["X"] = target->ffDelay() + target->localWireDelay() + 1.0e-25;
+				}else{
+					delayMap["X"] = inputDelay;
 				}
 				
 				switch (type) {
