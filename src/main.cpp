@@ -504,7 +504,14 @@ static void usage(char *name, string opName = ""){
 	}
 	if ( full || opName == "FPExp"){					
 		OP( "FPExp","wE wF");
-		cerr << "      Floating-point exponential function\n";
+		cerr << "      Floating-point exponential function. For expert mode, use FPExpExpert.\n";
+	}
+	if( full  || opName == "FPExpExpert") {
+		OP( "FPExpExpert","wE wF k d g fullInput");
+		cerr << "      Floating-point exponential function, expert mode\n";
+		cerr << "      k: number of bits addressing the table;   d: degree of the polynomial;\n";
+		cerr << "      g: number of guard bits\n";
+		cerr << "      fullInput (boolean): if 1, accepts extended (typically unrounded) input\n";
 	}
 	if ( full || opName == "FPLog"){					
 		OP( "FPLog","wE wF InTableSize");
