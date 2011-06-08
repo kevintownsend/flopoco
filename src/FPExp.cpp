@@ -251,8 +251,7 @@ namespace flopoco{
 		manageCriticalPath( target->adderDelay(wE+1) + target->localWireDelay() + target->lutDelay() + target->localWireDelay());
 		vhdl << tab  << declare("oufl0") << " <= not shiftVal(wE+1) when shiftVal(wE downto 0) >= conv_std_logic_vector(" << maxshift << ", wE+1) else '0';" << endl;
 
-		setCycleFromSignal("shiftVal");
-		setCriticalPath(scp);
+		setCycleFromSignal("shiftVal", scp);
 
 		Shifter* lshift = new Shifter(target, wFIn+1, maxshift , Shifter::Left, inDelayMap("S", target->localWireDelay() + getCriticalPath())  );   
 		oplist.push_back(lshift);
@@ -263,8 +262,7 @@ namespace flopoco{
 		inPortMap(lshift, "S", "shiftValIn");
 		inPortMap(lshift, "X", "mXu");
 		vhdl << instance(lshift, "mantissa_shift");
-		syncCycleFromSignal("fixX0");
-		setCriticalPath( lshift->getOutputDelay("R") );
+		syncCycleFromSignal("fixX0", lshift->getOutputDelay("R") );
 
 #endif	
 		
@@ -292,8 +290,7 @@ namespace flopoco{
 		inPortMap(mulInvLog2, "X", "xMulIn");
 		vhdl << instance(mulInvLog2, "mulInvLog2");
 
-		syncCycleFromSignal("absK");
-		setCriticalPath( mulInvLog2->getOutputDelay("R") );
+		syncCycleFromSignal("absK", mulInvLog2->getOutputDelay("R") );
 
 
 		// Now I have two things to do in parallel: compute K, and compute absKLog2
@@ -306,8 +303,7 @@ namespace flopoco{
 
 		// get back to the cycle+critical path at the output of the first multiplier
 		// We kind of forget the critical path at the end of the compute K block, because mulLog2 will be much larger.
-		syncCycleFromSignal("absK");
-		setCriticalPath( mulInvLog2->getOutputDelay("R") );
+		setCycleFromSignal("absK", mulInvLog2->getOutputDelay("R") );
 
 		FixRealKCM *mulLog2 = new FixRealKCM(target, 
 																				 0, 
@@ -322,8 +318,7 @@ namespace flopoco{
 		outPortMap(mulLog2, "R", "absKLog2");
 		inPortMap(mulLog2, "X", "absK");
 		vhdl << instance(mulLog2, "mulLog2");
-		syncCycleFromSignal("absKLog2");
-		setCriticalPath( mulLog2->getOutputDelay("R") );
+		syncCycleFromSignal("absKLog2", mulLog2->getOutputDelay("R") );
 
 
 		// absKLog2: msb wE-2, lsb -wF-g
@@ -350,8 +345,7 @@ namespace flopoco{
 		inPortMap( yPaddedAdder, "X", "subOp1");
 	
 		vhdl << instance(yPaddedAdder, "theYAdder") << endl;
-		syncCycleFromSignal("Y");
-		setCriticalPath(  yPaddedAdder->getOutputDelay("R"));
+		syncCycleFromSignal("Y", yPaddedAdder->getOutputDelay("R"));
 
 
 		vhdl << tab << "-- Now compute the exp of this fixed-point value" <<endl;
@@ -409,8 +403,7 @@ namespace flopoco{
 			outPortMap(table, "Y1", "expA0");
 			inPortMap(table, "X1", "Addr1");
 			vhdl << instance(table, "table");
-			syncCycleFromSignal("expA0");
-			setCriticalPath(target->LogicToRAMWireDelay() + target->RAMDelay());
+			syncCycleFromSignal("expA0", target->LogicToRAMWireDelay() + target->RAMDelay());
 			
 			//TODO FIXME
 			cpexpA = getCriticalPath();
@@ -434,8 +427,7 @@ namespace flopoco{
 			vhdl << instance(table, "table");
 			cpexpA = getCriticalPath();
 			
-			syncCycleFromSignal("Zhigh");
-			setCriticalPath( cpZhigh );
+			syncCycleFromSignal("Zhigh", cpZhigh );
 
 #if 1
 			REPORT(LIST, "Generating the polynomial approximation, this may take some time");
@@ -448,8 +440,7 @@ namespace flopoco{
 			inPortMap(fe, "X", "Zhigh");
 			outPortMap(fe, "R", "expZmZm1_0");
 			vhdl << instance(fe, "poly");
-			syncCycleFromSignal("expZmZm1_0");
-			setCriticalPath( fe->getOutputDelay("R") );
+			syncCycleFromSignal("expZmZm1_0", fe->getOutputDelay("R") );
 #else
 			FunctionTable *fe;
 			ostringstream function;
@@ -459,8 +450,7 @@ namespace flopoco{
 			inPortMap(fe, "X", "Zhigh");
 			outPortMap(fe, "Y", "expZmZm1_0");
 			vhdl << instance(fe, "poly");
-			syncCycleFromSignal("expZmZm1_0");
-			setCriticalPath( fe->getOutputDelay("R") );
+			syncCycleFromSignal("expZmZm1_0", fe->getOutputDelay("R") );
 
 #endif
 		}
@@ -496,13 +486,11 @@ namespace flopoco{
 		inPortMapCst( addexpZminus1, "Cin" , " '0' ");
 		outPortMap( addexpZminus1, "R", "expZminus1");
 		vhdl << instance( addexpZminus1, "Adder_expZminus1");
-		syncCycleFromSignal("expZminus1");
-		setCriticalPath( addexpZminus1->getOutputDelay("R") );
+		syncCycleFromSignal("expZminus1", addexpZminus1->getOutputDelay("R") );
 
 
 		vhdl << tab << "-- Truncating expA to the same accuracy as expZminus1" << endl;
-		setCycleFromSignal("expA");
-		setCriticalPath( cpexpA );
+		setCycleFromSignal("expA", cpexpA );
 		
 		
 		IntAdder* expArounded0 = new IntAdder( target, sizeMultIn+1, inDelayMap( "X", target->localWireDelay() + getCriticalPath() ) );
@@ -515,13 +503,11 @@ namespace flopoco{
 		inPortMapCst( expArounded0, "Cin" , " '1' ");
 		outPortMap( expArounded0, "R", "expArounded0");
 		vhdl << instance( expArounded0, "Adder_expArounded0");
-		syncCycleFromSignal("expArounded0");
-		setCriticalPath( expArounded0->getOutputDelay("R") );
+		syncCycleFromSignal("expArounded0", expArounded0->getOutputDelay("R") );
 		
 		vhdl << tab << declare("expArounded", sizeMultIn) << " <= expArounded0" << range(sizeMultIn, 1) << ";" << endl;
 		
-		if (syncCycleFromSignal( "expZminus1" ) )
-			setCriticalPath(addexpZminus1->getOutputDelay("R"));
+		syncCycleFromSignal( "expZminus1", addexpZminus1->getOutputDelay("R"));
 		
 		int sizeProd;
 		Operator* lowProd;
@@ -544,8 +530,7 @@ namespace flopoco{
 		outPortMap(lowProd, "R", "lowerProduct");
 		
 		vhdl << instance(lowProd, "TheLowerProduct")<<endl;
-		syncCycleFromSignal("lowerProduct");
-		setCriticalPath( lowProd->getOutputDelay("R") );
+		syncCycleFromSignal("lowerProduct", lowProd->getOutputDelay("R") );
 
 		vhdl << tab << "-- Final addition -- the product MSB bit weight is -k+2 = "<< -k+2 << endl;
 
@@ -581,8 +566,7 @@ namespace flopoco{
 		outPortMap(finalAdder, "R", "expY");
 		
 		vhdl << instance(finalAdder,"TheFinalAdder") << endl;
-		syncCycleFromSignal("expY");
-		setCriticalPath(finalAdder->getOutputDelay("R") );
+		syncCycleFromSignal("expY", finalAdder->getOutputDelay("R") );
 		     		
 #endif
 
@@ -618,8 +602,7 @@ namespace flopoco{
 		outPortMap(roundedExpSigOperandAdder, "R", "roundedExpSigRes");
 		
 		vhdl << instance(roundedExpSigOperandAdder,"roundedExpSigOperandAdder") << endl;
-		syncCycleFromSignal("roundedExpSigRes");
-		setCriticalPath(roundedExpSigOperandAdder->getOutputDelay("R") );
+		syncCycleFromSignal("roundedExpSigRes", roundedExpSigOperandAdder->getOutputDelay("R") );
 		vhdl << tab << "-- delay at adder output is " << getCriticalPath() << endl;
 
 		manageCriticalPath( target->localWireDelay() + target->lutDelay() );
