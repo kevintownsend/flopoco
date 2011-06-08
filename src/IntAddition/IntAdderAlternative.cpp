@@ -147,23 +147,23 @@ namespace flopoco {
 	/**************************************************************************/
 	int IntAdderAlternative::getLutCostAlternative ( Target* target, int wIn, map<string, double> inputDelays, bool srl ) {
 		REPORT ( DEBUG, DEBUG_SEPARATOR );
-		if ( getMaxInputDelays ( inputDelays ) == 0 ) {
+		if ( getMaxInputDelays(inputDelays) == target->ffDelay() + target->localWireDelay() || getMaxInputDelays(inputDelays) == 0.0 ) {
 			/* no input slack problem */
 			int alpha, beta, k, cost;
 			updateParameters ( target, alpha, beta, k );
 			REPORT ( DEBUG, "LUT, Alternative, NO-SLACK: alpha="<<alpha<<" beta="<<beta<<" k="<<k );
 			
-			if ( srl ) {
+			if (target->getVendor() == "Xilinx" && srl ) {
 				if ( k == 1 ) {
 					cost = wIn;
-				} else if ( k == 2 ) {
-					cost = ( alpha + 2*beta );
-				} else {
-					/* more than two chunk splitting */
-					cost = ( ( 4*k-8 ) *alpha + 3*beta + k-3 );
+				} else if ( k <= 3 ) {
+					cost = (k-1)*wIn -  alpha + k*(k-1)/2;
+				} else { //k>=4
+					/* more than 3 chunk splitting */
+					cost = (4*k-10)*alpha + 3*beta + 2*k-1;
 				}
 			} else {
-				cost = ( 2*wIn - alpha );
+				cost =  2*wIn - alpha + 2*k-3;
 			}
 			REPORT ( DETAILED, "Selected: Alternative, NO-SLACK with LUT cost " << cost );
 			return cost;
@@ -176,60 +176,62 @@ namespace flopoco {
 			kVersion0 = k;
 			REPORT ( DEBUG, "LUT, Alternative, SLACK, Version 0: alpha="<<alpha<<" beta="<<beta<<" k="<<k );
 			
-			if ( k>0 )
-				if ( srl ) {
+			if ( k>0 ){
+				if (target->getVendor() == "Xilinx" && srl) {
 					if ( k==1 ) {
-						version0=wIn;
-					} else if ( k == 2 ) {
-						version0 = alpha + 2*beta;
-					} else {
-						version0 = ( 4*k-8 ) *alpha + 3*beta + k-3;
+						version0 = wIn;
+					} else if ( k <= 3 ) {
+						version0 = (k-1)*wIn -  alpha + k*(k-1)/2;
+					} else { //k>=4
+						/* more than 3 chunk splitting */
+						version0 = (4*k-10)*alpha + 3*beta + 2*k-1;
 					}
 				} else {
-					version0 = 2*wIn - alpha;
+					version0 = 2*wIn - alpha + 2*k - 3;
 				}
-				else
-					version0 = PINF; //infinity
-					
-					/* Version 1: we buffer the inputs and proceed */
-					updateParameters ( target, alpha, beta, k );
-				kVersion1 = k;
-				REPORT ( DEBUG, "LUT, Alternative, SLACK, Version 1 (buffered inputs): alpha="<<alpha<<" beta="<<beta<<" k="<<k << " p="<<k+1 );
+			}else
+				version0 = PINF; //infinity
 				
-				if ( srl ) {
-					if ( k==1 ) {
-						version1=wIn;
-					} else if ( k == 2 ) {
-						version1 = alpha + 2*beta;
-					} else {
-						version1 = ( 4*k-8 ) *alpha + 3*beta + k-3;
-					}
-				} else {
-					version1 = 2*wIn - alpha;
+			/* Version 1: we buffer the inputs and proceed */
+			updateParameters ( target, alpha, beta, k );
+			kVersion1 = k;
+			REPORT ( DEBUG, "LUT, Alternative, SLACK, Version 1 (buffered inputs): alpha="<<alpha<<" beta="<<beta<<" k="<<k << " p="<<k+1 );
+			
+			if (target->getVendor() == "Xilinx" && srl) {
+				if ( k==1 ) {
+					version1 = wIn;
+				} else if ( k <= 3 ) {
+					version1 = (k-1)*wIn -  alpha + k*(k-1)/2;
+				} else { //k>=4
+					/* more than 3 chunk splitting */
+					version1 = (4*k-10)*alpha + 3*beta + 2*k-1;
 				}
-				
-				REPORT ( DEBUG, "LUT, Alternative, SLACK, Version 0: " << version0 );
-				REPORT ( DEBUG, "LUT, Alternative, SLACK, Version 1 (buffered inputs): " << version1 );
-				
-				if ( version0 == version1 ) {
-					if ( kVersion0 <= kVersion1 ) {
-						alternativeSlackVersion = 0;
-						REPORT ( DETAILED, "Alternative SLACK, version is 0 with LUT cost " << version0 << " and k="<<kVersion0 );
-						return version0;
-					} else {
-						alternativeSlackVersion = 1;
-						REPORT ( DETAILED, "Alternative SLACK, version is 1 with LUT cost " << version1 << " and k="<<kVersion1 );
-						return version1;
-					}
-				} else if ( version0 < version1 ) {
+			} else {
+				version1 = 2*wIn - alpha + 2*k - 3;
+			}
+			
+			REPORT ( DEBUG, "LUT, Alternative, SLACK, Version 0: " << version0 );
+			REPORT ( DEBUG, "LUT, Alternative, SLACK, Version 1 (buffered inputs): " << version1 );
+			
+			if ( version0 == version1 ) {
+				if ( kVersion0 <= kVersion1 ) {
 					alternativeSlackVersion = 0;
-					REPORT ( DETAILED, "Alternative SLACK version is 0 with LUT cost " << version0 );
+					REPORT ( DETAILED, "Alternative SLACK, version is 0 with LUT cost " << version0 << " and k="<<kVersion0 );
 					return version0;
 				} else {
 					alternativeSlackVersion = 1;
-					REPORT ( DETAILED, "Alternative SLACK version is 1 with LUT cost " << version1 );
+					REPORT ( DETAILED, "Alternative SLACK, version is 1 with LUT cost " << version1 << " and k="<<kVersion1 );
 					return version1;
 				}
+			} else if ( version0 < version1 ) {
+				alternativeSlackVersion = 0;
+				REPORT ( DETAILED, "Alternative SLACK version is 0 with LUT cost " << version0 );
+				return version0;
+			} else {
+				alternativeSlackVersion = 1;
+				REPORT ( DETAILED, "Alternative SLACK version is 1 with LUT cost " << version1 );
+				return version1;
+			}
 		}
 		
 		cerr << "Error in " <<  __FILE__ << "@" << __LINE__;
@@ -241,7 +243,7 @@ namespace flopoco {
 	/**************************************************************************/
 	int IntAdderAlternative::getRegCostAlternative ( Target* target, int wIn, map<string, double> inputDelays, bool srl ) {
 		REPORT ( DEBUG, DEBUG_SEPARATOR );
-		if ( getMaxInputDelays ( inputDelays ) == 0 ) {
+		if ( getMaxInputDelays(inputDelays) == target->ffDelay() + target->localWireDelay() || getMaxInputDelays(inputDelays) == 0.0 ) {
 			/* no input slack problem */
 			int alpha, beta, k, cost;
 			updateParameters ( target, alpha, beta, k );
@@ -250,10 +252,13 @@ namespace flopoco {
 			if ( k == 1 ) {
 				cost = 0;
 			} else {
-				if ( srl )
-					cost = ( ( 2*k-3 ) *alpha + beta + 2*k-3 );
+				if (target->getVendor() == "Xilinx" && srl )
+					if (k <= 3)
+						cost = (k-1)*wIn + k*(k-1)/2;
+					else
+						cost = (4*k-8)*alpha + 2*beta + k-2;
 				else
-					cost = ( ( k-1 ) *wIn + k*k-2*k+1 );
+					cost = (k-1)*wIn + k*k-2*k+1;
 			}
 			
 			REPORT ( DETAILED, "Selected: Alternative, NO-SLACK, with REG cost " << cost );
@@ -265,43 +270,49 @@ namespace flopoco {
 			updateParameters ( target, inputDelays, alpha, beta, k );
 			REPORT ( DEBUG, "REG, Alternative, SLACK, Version 0: alpha="<<alpha<<" beta="<<beta<<" k="<<k << " p="<<k+1 );
 			
-			if ( k>0 )
+			if ( k>0 ){
 				if ( k==1 ) {
 					version0 = 0;
 				} else {
-					if ( srl )
-						version0 = ( 2*k-3 ) *alpha + beta + 2*k-3;
+					if (target->getVendor() == "Xilinx" &&  srl )
+						if (k <= 3)
+							version0 = (k-1)*wIn + k*(k-1)/2;
+						else
+							version0 = (4*k-8)*alpha + 2*beta + k-2;
 					else
-						version0 = ( ( k-1 ) *w + k*k-3*k+3 );
+						version0 = (k-1)*wIn + k*k-2*k+1;
 				}
-				else
-					version0 = PINF; //infinity
+			}else
+				version0 = PINF; //infinity
 					
-					/* Version 1 */
-					updateParameters ( target, alpha, beta, k );
-				REPORT ( DEBUG, "REG, Alternative, SLACK, Version 1: alpha="<<alpha<<" beta="<<beta<<" k="<<k );
-				
-				if ( k==1 ) {
-					version1 = 0;
-				} else {
-					if ( srl )
-						version1 = ( 4*k-8 ) *alpha + 3*beta + 2*k-3 + 2*wIn+1;
+			/* Version 1 */
+			updateParameters ( target, alpha, beta, k );
+			REPORT ( DEBUG, "REG, Alternative, SLACK, Version 1: alpha="<<alpha<<" beta="<<beta<<" k="<<k );
+			
+			if ( k==1 ) {
+				version1 = 0;
+			} else {
+				if (target->getVendor() == "Xilinx" &&  srl )
+					if (k <= 3)
+						version1 = 2*wIn + 1 + (k-1)*wIn + k*(k-1)/2;
 					else
-						version1 = wIn + ( ( k-1 ) *w + k*k-3*k+3 );
-				}
-				
-				REPORT ( DETAILED, "REG, Alternative, Version 0: " << version0 );
-				REPORT ( DETAILED, "REG, Alternative, Version 1 (buffered inputs): " << version1 );
-				
-				if ( version0 <= version1 ) {
-					alternativeSlackVersion = 0;
-					REPORT ( DETAILED, "Selected: Alternative slack version is 0 with cost " << version0 );
-					return version0;
-				} else {
-					alternativeSlackVersion = 1;
-					REPORT ( DETAILED, "Selected: Alternative slack version is 1 with cost " << version1 );
-					return version1;
-				}
+						version1 = 2*wIn + 1 + (4*k-8)*alpha + 2*beta + k-2;
+				else
+					version1 = 2*wIn + 1 + (k-1)*wIn + k*k-2*k+1;;
+			}
+			
+			REPORT ( DETAILED, "REG, Alternative, Version 0: " << version0 );
+			REPORT ( DETAILED, "REG, Alternative, Version 1 (buffered inputs): " << version1 );
+			
+			if ( version0 <= version1 ) {
+				alternativeSlackVersion = 0;
+				REPORT ( DETAILED, "Selected: Alternative slack version is 0 with cost " << version0 );
+				return version0;
+			} else {
+				alternativeSlackVersion = 1;
+				REPORT ( DETAILED, "Selected: Alternative slack version is 1 with cost " << version1 );
+				return version1;
+			}
 		}
 		cerr << "Error in " <<  __FILE__ << "@" << __LINE__;
 		exit ( -1 );
@@ -311,22 +322,21 @@ namespace flopoco {
 	/**************************************************************************/
 	int IntAdderAlternative::getSliceCostAlternative ( Target* target, int wIn, map<string, double> inputDelays, bool srl ) {
 		REPORT ( DEBUG, DEBUG_SEPARATOR );
-		if ( getMaxInputDelays ( inputDelays ) == 0 ) {
+		if ( getMaxInputDelays(inputDelays) == target->ffDelay() + target->localWireDelay() || getMaxInputDelays(inputDelays) == 0.0 ) {
 			/* no input slack problem */
 			int alpha, beta, k, cost;
 			updateParameters ( target, alpha, beta, k );
 			REPORT ( DEBUG, "SLICE, ALTERNATIVE, NO-SLACK: alpha="<<alpha<<" beta="<<beta<<" k="<<k );
 			
-			if ( k == 1 ) {
-				cost = int ( ceil ( double ( wIn ) / double ( 2 ) ) );
-			} else if ( srl ) {
-				if ( k == 2 ) {
-					cost = int ( ceil ( double ( alpha + 2*beta + 1 ) / double ( 2 ) ) );
-				} else {
-					cost = int ( ceil ( double ( ( 4*k-8 ) *alpha + 3*beta + 2*k - 5 ) / double ( 2 ) ) );
-				}
+			if ( k == 1 ){
+				cost = wIn ;
+			} else if (target->getVendor() == "Xilinx" &&  srl ) {
+				if (k<=3)
+					cost = (k-1)*wIn + beta + (k-1)*k/2;
+				else
+					cost = (4*k-8)*alpha + 3*beta + 2*(k - 2);
 			} else {
-				cost = int ( ceil ( double ( ( k-1 ) *wIn + beta + k*k-2*k+1 ) / double ( 2 ) ) );
+				cost = (k-1)*wIn + beta + k*k-2*k+1;
 			}
 			
 			REPORT ( DETAILED, "Selected: Alternative, NO-SLACK with SLICE cost " << cost );
@@ -339,32 +349,31 @@ namespace flopoco {
 			
 			if ( k>0 ) {
 				if ( k==1 ) {
-					version0=0;
-				} else if ( srl ) {
-					if ( k==2 ) {
-						version0 = int ( ceil ( double ( alpha + 2*beta + 1 ) /2. ) );
-					} else {
-						version0 = int ( ceil ( double ( ( 4*k-8 ) *alpha + 3*beta + 2*k-5 ) /2. ) );
-					}
+					version0 = wIn;
+				} else if (target->getVendor() == "Xilinx" && srl ) {
+					if (k<=3)
+						version0 = (k-1)*wIn + beta + (k-1)*k/2;
+					else
+						version0 = (4*k-8)*alpha + 3*beta + 2*(k - 2);
 				} else {
-					version0 = int ( ceil ( double ( 2*wIn + ( k*k-4*k+3 ) *alpha + ( k-2 ) *beta ) / double ( 2 ) ) );
+					version0 = (k-1)*wIn + beta + k*k-2*k+1;
 				}
 			} else
 				version0 = PINF; //infinity
 				
-				updateParameters ( target, alpha, beta, k );
+			updateParameters (target, alpha, beta, k );
 			REPORT ( DEBUG, "SLICE, Alternative, SLACK, Version 1: alpha="<<alpha<<" beta="<<beta<<" k="<<k );
 			
 			if ( k==1 ) {
-				version1 = PINF;
-			} else if ( srl ) {
-				if ( k==2 ) {
-					version1 = int ( ceil ( double ( alpha + 2*beta + 1 + 2*wIn + 1 ) /2. ) );
+				version1 = 2*wIn + 1 + wIn;
+			} else if (target->getVendor() == "Xilinx" &&  srl ) {
+				if (k<=3){
+					version1 = 2*wIn + 1 + (k-1)*wIn + beta + (k-1)*k/2;
 				} else {
-					version1 = int ( ceil ( double ( ( 4*k-8 ) *alpha + 3*beta + 2*k-5 + 2*wIn + 1 ) /2. ) );
+					version1 = 2*wIn + 1 + (4*k-8)*alpha + 3*beta + 2*(k - 2);
 				}
 			} else {
-				version1 = int ( ceil ( double ( 4*wIn + ( k*k-4*k+3 ) *alpha + ( k-2 ) *beta ) / double ( 2 ) ) );
+				version1 = 2*wIn + 1 + (k-1)*wIn + beta + k*k-2*k+1;
 			}
 			REPORT ( DETAILED, "SLICE, Alternative, SLACK, Version 0: " << version0 );
 			REPORT ( DETAILED, "SLICE, Alternative, SLACK, Version 1: " << version1 );

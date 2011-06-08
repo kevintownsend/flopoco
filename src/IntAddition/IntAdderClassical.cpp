@@ -167,7 +167,7 @@ namespace flopoco {
 				else
 					cost = wIn + (k-2)*alpha; //(k-2)alpha SRLs
 			}else{// for Altera or NoSRL 
-				cost = wIn + 2*k-1;
+				cost = wIn + k-1;
 				REPORT(DETAILED, "Selected: Classical, NO-SLACK with LUT cost " << cost);
 			}
 			return cost;
