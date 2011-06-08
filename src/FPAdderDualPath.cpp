@@ -13,6 +13,7 @@
   All rights reserved
   */
 
+// TODO rework the pipeline properly using the newer framework
 // TODO move close path prenormalization up to the Swap Difference box
 //   if it becomes a part of the critical path
 // TODO remove pipeline stage after finalRoundAdd if slack allows
@@ -105,7 +106,7 @@ namespace flopoco{
 		// determine if the fractional part of Y was shifted out of the operation //
 		vhdl<<tab<<declare("shiftedOut") << " <= "; 
 		if (wE>sizeRightShift){
-			nextCycleCond(target->adderDelay(wE-sizeRightShift));
+			manageCriticalPath(target->adderDelay(wE-sizeRightShift));
 			for (int i=wE-1;i>=sizeRightShift;i--)
 				if (i==sizeRightShift)
 					vhdl<< "exponentDifference("<<i<<")";
@@ -133,7 +134,7 @@ namespace flopoco{
 		// was nextCycle();////////////////////////////////////////////////////////////////////////////////////
 
 		// compute EffSub as (signA xor signB) at cycle 1
-		nextCycleCond(2 * target->lutDelay() + 2*target-> localWireDelay());
+		manageCriticalPath(2 * target->lutDelay() + 2*target-> localWireDelay());
 		vhdl<<tab<<declare("EffSub") << " <= newX("<<wEX+wFX<<") xor newY("<<wEY+wFY<<");"<<endl;
 		
 		// compute the close/far path selection signal at cycle1 
@@ -395,7 +396,7 @@ namespace flopoco{
 		vhdl << instance(finalRoundAdd, "finalRoundAdder");
 
 		if(finalRoundAdd->getPipelineDepth() == 0) {
-			nextCycleCond(finalRoundAdd->getOutputDelay("R")); // may insert a nextCycle
+			manageCriticalPath(finalRoundAdd->getOutputDelay("R")); // may insert a nextCycle
 		}
 		else{
 			setCriticalPath(finalRoundAdd->getOutputDelay("R"));

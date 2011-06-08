@@ -531,7 +531,7 @@ extern vector<Operator*> oplist;
 		addFPInput("X", wE_in, wF_in);
 		addFPOutput("R", wE_out, wF_out);
 
-		setCopyrightString("Florent de Dinechin (2007)");
+		setCopyrightString("Florent de Dinechin (2007-2011)");
 
 		if(constant_is_zero) {
 			vhdl << tab << declare("x_exn",2) << " <=  X("<<wE_in<<"+"<<wF_in<<"+2 downto "<<wE_in<<"+"<<wF_in<<"+1);"<<endl;
@@ -570,25 +570,6 @@ extern vector<Operator*> oplist;
 		vhdl << tab << declare("x_exp", wE_in) << " <=  X("<<wE_in<<"+"<<wF_in<<"-1 downto "<<wF_in<<");"<<endl;
 		vhdl << tab << declare("x_sig", wF_in+1) << " <= '1' & X("<<wF_in-1 <<" downto 0);"<<endl;
 
-#if 0 // got rid of this xcut nonsense at some point
-		// xcut computation
-		if(mantissa_is_one) {			
-			vhdl << tab << declare("gt_than_xcut") << " <= '0';"<<endl;
-		}
-		else {
-			vhdl << tab << declare("xcut_rd", wF_in+1) << " <= \""
-				  << unsignedBinary(xcut_sig_rd, wF_in+1) << "\";"<<endl;
-			vhdl << tab << declare("gt_than_xcut") << " <= '1' when ( x_sig("<<wF_in-1<<" downto 0) > xcut_rd("<<wF_in-1<<" downto 0) ) else '0';"<<endl;
-		}
-#endif
-
-		// exponent handling
-			vhdl << tab << declare("abs_unbiased_cst_exp",wE_sum+1) << " <= \""
-					 << unsignedBinary(expAddend, wE_sum+1) << "\";" << endl;
-			vhdl << tab << declare("r_exp_br",    wE_out+1) << " <= "
-					 << "((" << wE_sum << " downto " << wE_in << " => '0')  & x_exp)  "
-					 << (expAddendSign==0 ? "+" : "-" ) << "  abs_unbiased_cst_exp"
-					 << "  +  (("<<wE_sum<<" downto 1 => '0') & norm);"<<endl;
 
 		if(mantissa_is_one) {			
 			vhdl << tab << "-- The mantissa of the constant is  1" << endl;
@@ -604,6 +585,7 @@ extern vector<Operator*> oplist;
 			}
 			vhdl << tab << declare("expfrac_rnd",   wE_out+1+wF_out) << " <= r_exp_br & r_frac;"<<endl;
 			vhdl << tab << declare("norm") << " <= '0';"<<endl;
+			setSignalDelay("norm", 0.0); // save the delay for later
 		}
 
 
@@ -612,36 +594,37 @@ extern vector<Operator*> oplist;
 			inPortMap  (icm, "inX", "x_sig");
 			outPortMap (icm, "R","sig_prod");
 			vhdl << instance(icm, "sig_mult");
-
+			
 			setCycleFromSignal("sig_prod"); 
 			setCriticalPath(icm->getOutputDelay("R"));
-
-#if 0  // when we had xcut
-			// Possibly shift the significand one bit left, and remove implicit 1 
-			vhdl << tab << declare("shifted_frac",    wF_out+1) << " <= sig_prod("<<icm->rsize -2<<" downto "<<icm->rsize - wF_out-2 <<")  when gt_than_xcut = '1'"<<endl
-				  << tab << "           else sig_prod("<<icm->rsize -3<<" downto "<<icm->rsize - wF_out - 3<<");"<<endl;  
-
 			
-			vhdl << tab << declare("expfrac_br",   wE_out+1+wF_out+1) << " <= r_exp_nopb & shifted_frac;"<<endl;
-			// add the rounding bit
-			vhdl << tab << declare("expfrac_rnd1",  wE_out+1+wF_out+1) << " <= (("<<wE_out+1+wF_out <<" downto 1 => '0') & '1') + expfrac_br;"<<endl;
-
-			vhdl << tab << declare("expfrac_rnd", wE_out+1+wF_out) << " <= expfrac_rnd1("<< wE_out+1+wF_out <<" downto  1);"<<endl;
-
-#endif
-
-			vhdl << tab << declare("norm") << " <= sig_prod"<<of(icm->rsize -1)<<";"<<endl;
+			vhdl << tab << declare("norm") << " <= sig_prod" << of(icm->rsize -1) << ";"<<endl;
+			setSignalDelay("norm", getCriticalPath()); // save the delay for later
+			
+			// one mux controlled by the diffusion of the "norm" bit
+			//manageCriticalPath(target->localWireDelay(wF_out+1) + target->lutDelay());
+			
 			vhdl << tab << declare("shifted_frac",    wF_out+1) << " <= sig_prod("<<icm->rsize -2<<" downto "<<icm->rsize - wF_out-2 <<")  when norm = '1'"<<endl
-					 << tab << "           else sig_prod("<<icm->rsize -3<<" downto "<<icm->rsize - wF_out - 3<<");"<<endl;  
+			     << tab << "           else sig_prod("<<icm->rsize -3<<" downto "<<icm->rsize - wF_out - 3<<");"<<endl;  
 			
 			
 			vhdl << tab << declare("expfrac_br",   wE_out+1+wF_out+1) << " <= r_exp_br & shifted_frac;"<<endl;
-			// add the rounding bit //TODO: No  round to nearest here. OK for faithful. For CR, does this case it ever appear?
+			// add the rounding bit //TODO: No  round to nearest here. OK for faithful. For CR, does this case ever appear?
 			vhdl << tab << declare("expfrac_rnd1",  wE_out+1+wF_out+1) << " <= (("<<wE_out+1+wF_out <<" downto 1 => '0') & '1') + expfrac_br;"<<endl;
 			vhdl << tab << declare("expfrac_rnd", wE_out+1+wF_out) << " <= expfrac_rnd1("<< wE_out+1+wF_out <<" downto  1);"<<endl;
 		}
+		
+		// Here if mantissa was 1 critical path is 0. Otherwise we want to reset critical path to the norm bit
+		setCycleFromSignal("norm");
+		
 
-
+		// exponent handling
+			vhdl << tab << declare("abs_unbiased_cst_exp",wE_sum+1) << " <= \""
+					 << unsignedBinary(expAddend, wE_sum+1) << "\";" << endl;
+			vhdl << tab << declare("r_exp_br",    wE_out+1) << " <= "
+					 << "((" << wE_sum << " downto " << wE_in << " => '0')  & x_exp)  "
+					 << (expAddendSign==0 ? "+" : "-" ) << "  abs_unbiased_cst_exp"
+					 << "  +  (("<<wE_sum<<" downto 1 => '0') & norm);"<<endl;
 
 		// Handling signs is trivial
 		if(cstSgn==0)

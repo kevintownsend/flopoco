@@ -487,6 +487,11 @@ namespace flopoco{
 	
 	
 	void Operator::setCycleFromSignal(string name, bool report) {
+		setCycleFromSignal(name, 0.0, report);
+	}
+	
+	
+	void Operator::setCycleFromSignal(string name, double criticalPath, bool report) {
 		// lexing part
 		vhdl.flush(currentCycle_);
 		
@@ -510,6 +515,7 @@ namespace flopoco{
 			} 
 			
 			currentCycle_ = s->getCycle();
+			criticalPath_ = criticalPath_;
 			vhdl.setCycle(currentCycle_);
 			
 			if(report)
@@ -682,24 +688,13 @@ namespace flopoco{
 	bool Operator::manageCriticalPath(double delay, bool report){
 		//		criticalPath_ += delay;
 		if ( target_->ffDelay() + (criticalPath_ + delay) + target_->localWireDelay() > (1.0/target_->frequency())){
-			nextCycle(report); //TODO Warrning
+			nextCycle(report); //TODO Warning
 			criticalPath_ = min(delay, 1.0/target_->frequency());
 			return true;
 		}
 		else{
 			criticalPath_ += delay;
 			return false;
-		}
-	}
-	
-	void Operator::nextCycleCond(double delay){
-		criticalPath_ += delay;
-		REPORT(DEBUG, "cycle " << currentCycle_ << ",  cumulated critical path would be " << criticalPath_ << "s,   target is " << 1/target_->frequency() );
-		if(criticalPath_ > 1/target_->frequency()) {
-			// insert a pipeline register and reset the cumulated delay
-			nextCycle();
-			criticalPath_= target_->ffDelay() + delay;
-			REPORT(DEBUG, "     Inserted register level, critical path reset to " << criticalPath_);
 		}
 	}
 	

@@ -218,19 +218,23 @@ public:
 
 	bool manageCriticalPath(double delay=0.0, bool report=true);
 
-	/** Adds to the critical path of the current stage, and insert a pipeline stage if needed
-	 * @param the delay to add to the critical path of current pipeline stage */
-	void nextCycleCond(double delay) ;
 
 	/** get the critical path delay associated to a given output of the operator
 	 * @param the name of the output */
 	double getOutputDelay(string s); 
 
-	/** Set the current cycle to that of a signal. It may increase or decrease current cycle. 
+	/** Set the current cycle to that of a signal and reset the critical path. It may increase or decrease current cycle. 
 	 * @param name is the signal name. It must have been defined before 
 	 * @param report is a boolean, if true it will report the cycle 
 	 */
 	void setCycleFromSignal(string name, bool report=true) ;
+
+	/** Set the current cycle and the critical path. It may increase or decrease current cycle. 
+	 * @param name is the signal name. It must have been defined before. 
+	 * @param criticalPath is the critical path delay associated to this signal: typically getDelay(name)
+	 * @param report is a boolean, if true it will report the cycle 
+	 */
+	void setCycleFromSignal(string name, double criticalPath, bool report=true) ;
 
 	int getCycleFromSignal(string name, bool report = false);
 		
