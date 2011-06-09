@@ -27,7 +27,7 @@ namespace flopoco{
 		 * @param wInX integer argument representing the width in bits of the input X 
 		 * @param wInY integer argument representing the width in bits of the input Y
 		 **/
-		IntKaratsuba(Target* target, int wIn);
+		IntKaratsuba(Target* target, int wIn, map<string, double> inputDelays = emptyDelayMap);
 
 		void outputVHDL(std::ostream& o, std::string name);
 		/**

@@ -1118,7 +1118,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				int bufferedIn = atoi(argv[i++]);
 				double inputDelay = atof(argv[i++]);
 
-				cerr << "> IntAdder, wIn="<<wIn<<", frequency="<<target->frequency()<< endl  ;
+				cerr << "> IntAdder, wIn="<<wIn<<", frequency="<<target->frequency()<< " inputDelay="<<inputDelay<< endl  ;
 
 				map <string, double> delayMap;
 

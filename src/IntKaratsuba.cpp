@@ -34,7 +34,7 @@ namespace flopoco{
 
 	extern vector<Operator*> oplist;
 
-	IntKaratsuba:: IntKaratsuba(Target* target, int wIn) :
+	IntKaratsuba:: IntKaratsuba(Target* target, int wIn, map<string, double> inputDelays) :
 		Operator(target), wIn_(wIn), wOut_(2*wIn){
 
 		ostringstream name;
@@ -53,6 +53,7 @@ namespace flopoco{
 		//TODO replace 17 with a generic multiplierWidth()
 	
 		int chunks = ( wIn % 17 ==0 ? wIn/17 : ceil( double(wIn)/double(17)) );
+		setCriticalPath(getMaxInputDelays(inputDelays));
 
 		if (chunks > 4){
 			throw("The TwoWayKaratsuba and the ThreeWayKaratsuba are implemented. wIn <= 68"); 
@@ -65,30 +66,63 @@ namespace flopoco{
 			vhdl << tab << declare ("sY", 34) << " <= Y & " << zg(34-wIn, 0) << ";" << endl;
 			//chunk splitting
 			vhdl << tab << declare ("x0", 18) << " <= \"0\" & sX" << range(16,0)  << ";" << endl;
+			setSignalDelay("x0", getCriticalPath());
 			vhdl << tab << declare ("x1", 18) << " <= \"0\" & sX" << range(33,17) << ";" << endl;
 			vhdl << tab << declare ("y0", 18) << " <= \"0\" & sY" << range(16,0)  << ";" << endl;
 			vhdl << tab << declare ("y1", 18) << " <= \"0\" & sY" << range(33,17) << ";" << endl;
-			nextCycle();////////////////////////////////////////////////////////////
-			//precomputing
+
+			manageCriticalPath( target->adderDelay(18));
 			vhdl << tab << declare ("dx", 18) << " <= x1 - x0;" << endl;
 			vhdl << tab << declare ("dy", 18) << " <= y1 - y0;" << endl;
-			//computing
-			vhdl << tab << declare ("r0", 36) << " <= x0 * y0;" << endl;
-			nextCycle();////////////////////////////////////////////////////////////
-			vhdl << tab << declare ("r1", 36) << " <= r0 - (dx * dy);"<<endl;
-			nextCycle();////////////////////////////////////////////////////////////
-			vhdl << tab << declare ("r2", 36) << " <= r1 + (x1 * y1);"<<endl;
-			nextCycle();////////////////////////////////////////////////////////////
-			vhdl << tab << declare ("t0", 36) << " <= r0;" << endl;
-			vhdl << tab << declare ("t1", 36) << " <= r2;" << endl;		
-			vhdl << tab << declare ("t2", 36) << " <= r2 - r1;" << endl;		
+			setSignalDelay("dx",getCriticalPath());
+			setSignalDelay("dy",getCriticalPath());
+
+			setCycleFromSignal("x0", getSignalDelay("x0"), false);
+			manageCriticalPath(target->LogicToDSPWireDelay() + target->DSPMultiplierDelay());
+			vhdl << tab << declare ("p0", 36) << " <= x0 * y0;" << endl;
+			setSignalDelay("p0", getCriticalPath());
+
+			setCycleFromSignal("dx", getSignalDelay("dx"));
+			manageCriticalPath(target->LogicToDSPWireDelay() + target->DSPMultiplierDelay());
+			vhdl << tab << declare ("tp1", 36) << " <= dx * dy;"<<endl;
+			syncCycleFromSignal("p0", getSignalDelay("p0"));
+			manageCriticalPath(target->DSPAdderDelay());		
+			vhdl << tab << declare ("p1", 36) << " <= p0 - tp1;"<<endl;
+			setSignalDelay("p1", getCriticalPath());
+
+			setCycleFromSignal("x0", getSignalDelay("x0"));
+			manageCriticalPath(target->LogicToDSPWireDelay() + target->DSPMultiplierDelay());
+			vhdl << tab << declare ("tp2", 36) << " <= x1 * y1;"<<endl;
+			syncCycleFromSignal("p1", getSignalDelay("p1"));
+			manageCriticalPath(target->DSPAdderDelay());		
+			vhdl << tab << declare ("p2", 36) << " <= p1 + tp2;"<<endl;
+
+			manageCriticalPath(target->DSPToLogicWireDelay() + target->adderDelay(36));
+//			manageCriticalPath(target->adderDelay(36));		
+			vhdl << tab << declare ("t2", 36) << " <= p2 - p1;" << endl;		
+
+			vhdl << tab << declare ("t0", 36) << " <= p0;" << endl;
+			vhdl << tab << declare ("t1", 36) << " <= p2;" << endl;		
+
 			vhdl << tab << declare ("a1", 51) << " <= t2"<<range(33,0) << " & t0" <<range(33,17) << ";" << endl;
-			vhdl << tab << declare ("b1", 51) << " <= " << zg(15,0) << " & r2;" << endl;
+			vhdl << tab << declare ("b1", 51) << " <= " << zg(15,0) << " & p2;" << endl;
+
+			IntAdder *ia = new IntAdder(target, 51, inDelayMap("X", target->localWireDelay() + getCriticalPath()));
+			oplist.push_back(ia);
+			
+			inPortMap(ia, "X", "a1");
+			inPortMap(ia, "Y", "b1");
+			inPortMapCst(ia, "Cin", "'0'");
+			outPortMap(ia, "R", "a1pb1");
+			
+			vhdl<< tab << instance(ia, "finalAdder");
+			syncCycleFromSignal("a1pb1");
+			setCriticalPath( ia->getOutputDelay("R"));
+			
 			if (68 - 2*wIn < 17 )
-				vhdl << tab << "R <= (a1 + b1) & t0"<<range(16, (68 - 2*wIn)) << ";" << endl;
+				vhdl << tab << "R <= a1pb1 & t0"<<range(16, (68 - 2*wIn)) << ";" << endl;
 			else{
-				vhdl << tab << declare("a1b1sum",51) <<  " <= a1 + b1;" << endl;
-				vhdl << tab << "R <= a1b1sum" << range(50, 68-2*wIn-17) << ";" << endl;
+				vhdl << tab << "R <= a1pb1" << range(50, 68-2*wIn-17) << ";" << endl;
 			}
 		}else if (chunks == 3){
 			//pad inputs to 51 bits

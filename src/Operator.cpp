@@ -657,7 +657,7 @@ namespace flopoco{
 			s=getSignalByName(name);
 		}
 		catch (string e2) {
-			cout << "WARNING: signal having name " << name << " was not found in file " << srcFileName << " when called using getSignalDelay" << endl;
+			cout << "WARNING: signal having name " << name << " was not found in file " << srcFileName << " when called using setSignalDelay" << endl;
 			return;
 		}
 

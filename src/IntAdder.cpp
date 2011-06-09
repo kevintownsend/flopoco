@@ -59,8 +59,8 @@ namespace flopoco {
 			intAdderInstantiation = new IntAdderAlternative(target, wIn, name.str() , inputDelays, optimizeType, srl);
 			addImplementationList.push_back(intAdderInstantiation);
 
-			intAdderInstantiation = new IntAdderShortLatency(target, wIn, name.str() , inputDelays, optimizeType, srl);
-			addImplementationList.push_back(intAdderInstantiation);
+//			intAdderInstantiation = new IntAdderShortLatency(target, wIn, name.str() , inputDelays, optimizeType, srl);
+//			addImplementationList.push_back(intAdderInstantiation);
 		}else{
 			switch (implementation){
 				case 0: 	
@@ -87,7 +87,7 @@ namespace flopoco {
 				currentCost = addImplementationList[j]->getOperatorCost();
 				selectedVersion = j;
 			}
-
+			
 		cloneOperator(addImplementationList[selectedVersion]);
 
 		REPORT(DETAILED, "Selected implementation for IntAdder"<< wIn << " is "<<selectedVersion<<" with cost="<<currentCost);

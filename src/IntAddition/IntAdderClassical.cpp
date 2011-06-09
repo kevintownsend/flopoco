@@ -162,10 +162,10 @@ namespace flopoco {
 			updateParameters (target, alpha, beta, k);
 			REPORT ( DEBUG, "LUT, Classical, NO-SLACK: alpha="<<alpha<<" beta="<<beta<<" k="<<k );
 			if (target->getVendor() == "Xilinx" && srl ){
-				if ( k==1 || k==2 )  
-					cost = wIn ;
+				if (k==1 || k==2)  
+					cost = wIn + k-1;
 				else
-					cost = wIn + (k-2)*alpha; //(k-2)alpha SRLs
+					cost = (4*k-10)*alpha + 3*beta + k-1; 
 			}else{// for Altera or NoSRL 
 				cost = wIn + k-1;
 				REPORT(DETAILED, "Selected: Classical, NO-SLACK with LUT cost " << cost);
@@ -179,27 +179,32 @@ namespace flopoco {
 			REPORT ( DEBUG, "LUT, Classical, SLACK, Version 0: alpha="<<alpha<<" beta`="<<beta<<" gamma="<<gamma<<" k="<<k );
 			if ( k > 0 ) /* there is an alternative possible splitting */
 				if (target->getVendor()=="Xilinx" && srl) {
-					if ( k==1 || k==2 )
+					if ( k==1 ) 
 						version0 = wIn;
+					else if (k==2)
+						version0 = wIn + 1;
+					else if (k==3)
+						version0 = wIn + 2*beta + 2;
 					else
-						version0 = 4*wIn - 3*alpha - 2*gamma  - beta;
+						version0 = wIn + gamma + (3*k-10)*alpha + 2*beta + k-1;
 				}else /* NO SRLs */
-					version0 = wIn + 2*k-1;
+					version0 = wIn + k-1;
 			else /* no solution was found, cost is +INF */
 				version0 = PINF;
 				
 			/* Version 1: we buffer the inputs and proceed */
 			updateParameters (target, alpha, beta, k);
 			REPORT ( DEBUG, "LUT, Classical, SLACK, Version 1 (buffered inputs): alpha="<<alpha<<" beta="<<beta<<" k="<<k << " p="<<k+1 );
-			if ( target->getVendor() == "Xilinx" && srl){
-				if ( k==1 ) 
-					version1 = wIn;
-				else if ( k == 2 )
-					version1 = w + 2*beta;
+			if (target->getVendor() == "Xilinx" && srl ){
+				if (k==1)
+					version1 = wIn;   
+				else if (k==2)
+					version1 = 2*beta + wIn + 1;
 				else
-					version1 = 4*wIn - 3*alpha - beta;
-			}else{ /* Altera number of luts */
-				version1 = wIn + 2*k-1;
+					version1 = (4*k-8)*alpha + 3*beta + k-1; 
+			}else{// for Altera or NoSRL 
+				version1 = wIn + k-1;
+				REPORT(DETAILED, "Selected: Classical, NO-SLACK with LUT cost " << cost);
 			}
 				
 			REPORT ( DEBUG, "LUT, Classical, SLACK, Version 0: " << version0 );
@@ -230,20 +235,20 @@ namespace flopoco {
 		
 		if ( getMaxInputDelays(inputDelays) == target->ffDelay() + target->localWireDelay() || getMaxInputDelays(inputDelays) == 0.0 ) {
 
-			if ( inputsGotRegistered ){
-				int alpha, beta, k, cost;
-				updateParameters (target, alpha, beta, k);
-				REPORT ( DEBUG, "REG, CLASSICAL, NO-SLACK: alpha="<<alpha<<" beta="<<beta<<" k="<<k );
-				if ( k == 1 ) {
-					cost = 2*wIn;
-				}else if (target->getVendor() == "Xilinx" && srl)
-					cost = wIn - beta  + 2* wIn;
-				else
-					cost = ( ( 3*k*k -7*k+4 ) *alpha/2 + 2* ( k-1 ) *beta + k-1 ) + 2*wIn;
-			
-				REPORT ( DETAILED, "Selected: Classical, NO-SLACK, with REG cost " << cost );
-				return cost;
-			}else{ //the adder inputs come from one register which is outside
+//			if ( inputsGotRegistered ){
+//				int alpha, beta, k, cost;
+//				updateParameters (target, alpha, beta, k);
+//				REPORT ( DEBUG, "REG, CLASSICAL, NO-SLACK: alpha="<<alpha<<" beta="<<beta<<" k="<<k );
+//				if ( k == 1 ) {
+//					cost = 2*wIn;
+//				}else if (target->getVendor() == "Xilinx" && srl)
+//					cost = wIn - beta  + 2* wIn;
+//				else
+//					cost = ( ( 3*k*k -7*k+4 ) *alpha/2 + 2* ( k-1 ) *beta + k-1 ) + 2*wIn;
+//			
+//				REPORT ( DETAILED, "Selected: Classical, NO-SLACK, with REG cost " << cost );
+//				return cost;
+//			}else{ //the adder inputs come from one register which is outside
 				int alpha, beta, k, cost;
 				updateParameters (target, alpha, beta, k);
 				REPORT ( DEBUG, "REG, CLASSICAL, NO-SLACK: alpha="<<alpha<<" beta="<<beta<<" k="<<k );
@@ -256,7 +261,7 @@ namespace flopoco {
 			
 				REPORT ( DETAILED, "Selected: Classical, NO-SLACK, with REG cost " << cost );
 				return cost;
-			}
+//			}
 		} else { /* there's no register before the computations, eiter internal or external to the adder */
 			int version0, version1;
 			int alpha, beta, gamma, k;
@@ -269,9 +274,11 @@ namespace flopoco {
 					version0 = 0;
 				if ( target->getVendor()=="Xilinx" && srl){
 					if ( k == 2 )
-						version0 = wIn + alpha + 1;
-					else
-						version0 = 3*wIn - 2*gamma  - beta + k - 1;
+						version0 = gamma + 2*alpha + 1;
+					else if (k==3)
+						version0 = 2*gamma + 3*alpha + 2*beta + 2;
+					else 	
+						version0 = 2*gamma + (4*k-9)*alpha + 2*beta + k-1;
 				}else{ //altera  
 					if (k == 2 )
 						version0 = wIn + alpha + 1;
@@ -287,16 +294,16 @@ namespace flopoco {
 			
 			if (target->getVendor()=="Xilinx" && srl){
 				if ( k==1 ) 
-					version1 = wIn;
+					version1 = 2*wIn + 1;
 				else if ( k == 2 )
 					version1 = 3*alpha + 2*beta + 2;
 				else 
-					version1 = 3*wIn - beta + k - 1;
+					version1 = (4*k-5)*alpha + 2*beta + k;
 			}else{
 				if ( k==1 )
-					version1 = wIn;
+					version1 = 2*wIn + 1;
 				else
-					version1 = wIn + ( ( 3*k*k -7*k+4 ) *alpha/2 + 2* ( k-1 ) *beta + k-1 );
+					version1 = 2*wIn + 1 + ( ( 3*k*k -7*k+4 ) *alpha/2 + 2* ( k-1 ) *beta + k-1 );
 			}
 			
 			REPORT ( DEBUG, "REG, Classical, SLACK, Version 0: " << version0 );
@@ -327,33 +334,35 @@ namespace flopoco {
 
 		if ( getMaxInputDelays(inputDelays) == target->ffDelay() + target->localWireDelay() || getMaxInputDelays(inputDelays) == 0.0 ) {
 
-			if (inputsGotRegistered){
-				int alpha, beta, k, cost;
-				updateParameters ( target, alpha, beta, k );
-				REPORT ( DEBUG, "SLICE, CLASSICAL, NO-SLACK: alpha="<<alpha<<" beta="<<beta<<" k="<<k );
-				if ( k == 1 )
-					cost =  wIn + 2*wIn;
-				else if ( target->getVendor()=="Xilinx" && srl )
-					cost = wIn + ( k-2 )*alpha  + k - 1 + 2*alpha;
-				else
-					cost = wIn + ( ( 3* ( k*k-3*k+2 ) ) /2 ) *alpha + 2* ( k-1 ) *beta + 2*wIn;
-			
-				REPORT ( DETAILED, "Selected: Classical NO-SLACK, with elementary SLICE/ALM cost " << cost );
-				return cost;
-			}else{	/* inputs were already registerd before entering intAdder */
+//			if (inputsGotRegistered){
+//				int alpha, beta, k, cost;
+//				updateParameters ( target, alpha, beta, k );
+//				REPORT ( DEBUG, "SLICE, CLASSICAL, NO-SLACK: alpha="<<alpha<<" beta="<<beta<<" k="<<k );
+//				if ( k == 1 )
+//					cost =  wIn + 2*wIn;
+//				else if ( target->getVendor()=="Xilinx" && srl )
+//					cost = wIn + ( k-2 )*alpha  + k - 1 + 2*alpha;
+//				else
+//					cost = wIn + ( ( 3* ( k*k-3*k+2 ) ) /2 ) *alpha + 2* ( k-1 ) *beta + 2*wIn;
+//			
+//				REPORT ( DETAILED, "Selected: Classical NO-SLACK, with elementary SLICE/ALM cost " << cost );
+//				return cost;
+//			}else{	/* inputs were already registerd before entering intAdder */
+	
 				int alpha, beta, k, cost;
 				updateParameters ( target, alpha, beta, k );
 				REPORT ( DEBUG, "SLICE, CLASSICAL, NO-SLACK: alpha="<<alpha<<" beta="<<beta<<" k="<<k );
 				if ( k == 1 )
 					cost =  wIn ;
 				else if ( target->getVendor()=="Xilinx" && srl )
-					cost = wIn + ( k-2 )*alpha  + k - 1 ;
+					cost = (4*k-7)*alpha + 3*beta + k-1 ;
 				else
 					cost = wIn + ( ( 3* ( k*k-3*k+2 ) ) /2 ) *alpha + 2* ( k-1 ) *beta;
 
 				REPORT ( DETAILED, "Selected: Classical NO-SLACK, with elementary SLICE/ALM cost " << cost );
 				return cost;
-			}	
+
+//			}	
 		} else {
 			int version0, version1;
 			int alpha, beta, gamma, k;
@@ -364,18 +373,19 @@ namespace flopoco {
 			
 			if ( k>0 ){ /* solution found */
 				if ( k==1 )
-					version0= int ( ceil ( double ( wIn ) /double ( 2 ) ) );
+					version0= wIn;
 				if ( target->getVendor() == "Xilinx" && srl ) {
-					if ( k == 2 ) {
-						version0 = int ( ceil ( double ( 3*alpha + gamma + 1 ) /double ( 2 ) ) );
-					} else {
-						version0 = int ( ceil ( double ( 4*wIn - alpha - 2*gamma -2*beta + k - 1 ) /double ( 2 ) ) );
-					}
+					if ( k == 2 ) 
+						version0 = gamma + 3*alpha +1;
+					else if (k==3)
+						version0 = wIn + 3*beta + gamma + 2;
+					else
+						version0 = wIn + gamma + (3*k-7)*alpha + 2*beta + k-1; 						
 				} else { //no SRL, Altera
 					if ( k == 2 ) {
-						version0 = int ( ceil ( double ( gamma + 3*alpha + 1 ) / double ( 2 ) ) );
+						version0 = gamma + 3*alpha + 1;
 					} else {
-						version0 = int ( ceil ( double ( wIn + ( k-2 ) *gamma + 2* ( k-1 ) *beta + alpha* ( 2*k*k-11*k+10 ) /2 ) /double ( 2 ) ) );
+						version0 = wIn + (k-2 )*gamma + 2* ( k-1 ) *beta + alpha* ( 2*k*k-11*k+10 ) /2 ;
 					}
 				}
 			}else
@@ -386,19 +396,18 @@ namespace flopoco {
 			REPORT ( DEBUG, "elementary SLICE/ALM, Classical, SLACK Version 1: alpha="<<alpha<<" beta="<<beta<<" k="<<k<<" p="<<k+1 );
 			
 			if ( k==1 )
-				version1= int ( ceil ( double ( wIn ) /double ( 2 ) ) );
-			
+				version1= wIn;
 			if (target->getVendor() == "Xilinx" && srl){
 				if ( k == 2 ) {
-					version1 = int ( ceil ( double ( 3*alpha + 2*beta + 2 ) /double ( 2 ) ) );
+					version1 = 3*alpha + 3*beta + 2;
 				} else {
-					version1= int ( ceil ( double ( 4*wIn - alpha - beta ) /double ( 2 ) ) );
+					version1= 3*wIn + (k-2)*alpha + k-1;
 				}
 			} else { //noSRL and Altera
 				if ( k == 2 ) {
-					version1 = int ( ceil ( double ( 2*wIn + ( ( 3* ( k*k-3*k+2 ) ) /2 ) *alpha + 2* ( k-1 ) *beta ) / double ( 2 ) ) );
+					version1 = 2*wIn + 1 + 3*((k*k-3*k+2)/2)*alpha + 2*( k-1 )*beta;
 				} else {
-					version1 = int ( ceil ( double ( 3*wIn + ( ( 3* ( k*k-3*k+2 ) ) /2 ) *alpha + 2* ( k-1 ) *beta ) / double ( 2 ) ) );
+					version1 = 3*wIn + 1 + 3*((k*k-3*k+2)/2)*alpha + 2*( k-1 )*beta;
 				}
 			}
 			

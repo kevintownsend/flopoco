@@ -160,7 +160,7 @@ namespace flopoco {
 					cost = (k-1)*wIn -  alpha + k*(k-1)/2;
 				} else { //k>=4
 					/* more than 3 chunk splitting */
-					cost = (4*k-10)*alpha + 3*beta + 2*k-1;
+					cost = (4*k-10)*alpha + 3*beta + 3*k-7;
 				}
 			} else {
 				cost =  2*wIn - alpha + 2*k-3;
@@ -184,7 +184,7 @@ namespace flopoco {
 						version0 = (k-1)*wIn -  alpha + k*(k-1)/2;
 					} else { //k>=4
 						/* more than 3 chunk splitting */
-						version0 = (4*k-10)*alpha + 3*beta + 2*k-1;
+						version0 = (4*k-10)*alpha + 3*beta + 3*k-7;
 					}
 				} else {
 					version0 = 2*wIn - alpha + 2*k - 3;
@@ -204,7 +204,7 @@ namespace flopoco {
 					version1 = (k-1)*wIn -  alpha + k*(k-1)/2;
 				} else { //k>=4
 					/* more than 3 chunk splitting */
-					version1 = (4*k-10)*alpha + 3*beta + 2*k-1;
+					version1 = (4*k-10)*alpha + 3*beta + 3*k-7;
 				}
 			} else {
 				version1 = 2*wIn - alpha + 2*k - 3;
@@ -256,7 +256,7 @@ namespace flopoco {
 					if (k <= 3)
 						cost = (k-1)*wIn + k*(k-1)/2;
 					else
-						cost = (4*k-8)*alpha + 2*beta + k-2;
+						cost = (4*k-8)*alpha + 2*beta + (k-1)*k/2;
 				else
 					cost = (k-1)*wIn + k*k-2*k+1;
 			}
@@ -278,7 +278,7 @@ namespace flopoco {
 						if (k <= 3)
 							version0 = (k-1)*wIn + k*(k-1)/2;
 						else
-							version0 = (4*k-8)*alpha + 2*beta + k-2;
+							version0 = (4*k-8)*alpha + 2*beta + 3*k-9;// (2*k-2)*alpha + beta + (k-1)*k/2;
 					else
 						version0 = (k-1)*wIn + k*k-2*k+1;
 				}
@@ -296,7 +296,7 @@ namespace flopoco {
 					if (k <= 3)
 						version1 = 2*wIn + 1 + (k-1)*wIn + k*(k-1)/2;
 					else
-						version1 = 2*wIn + 1 + (4*k-8)*alpha + 2*beta + k-2;
+						version1 = 2*wIn + 1 + (4*k-8)*alpha + 2*beta + 3*k-9;//(2*k-2)*alpha + beta + (k-1)*k/2;
 				else
 					version1 = 2*wIn + 1 + (k-1)*wIn + k*k-2*k+1;;
 			}
@@ -334,7 +334,7 @@ namespace flopoco {
 				if (k<=3)
 					cost = (k-1)*wIn + beta + (k-1)*k/2;
 				else
-					cost = (4*k-8)*alpha + 3*beta + 2*(k - 2);
+					cost = (4*k-8)*alpha + 3*beta + (k-1)*k/2;
 			} else {
 				cost = (k-1)*wIn + beta + k*k-2*k+1;
 			}
@@ -354,7 +354,7 @@ namespace flopoco {
 					if (k<=3)
 						version0 = (k-1)*wIn + beta + (k-1)*k/2;
 					else
-						version0 = (4*k-8)*alpha + 3*beta + 2*(k - 2);
+						version0 = (4*k-8)*alpha + 3*beta + (k-1)*k/2;
 				} else {
 					version0 = (k-1)*wIn + beta + k*k-2*k+1;
 				}
@@ -370,7 +370,7 @@ namespace flopoco {
 				if (k<=3){
 					version1 = 2*wIn + 1 + (k-1)*wIn + beta + (k-1)*k/2;
 				} else {
-					version1 = 2*wIn + 1 + (4*k-8)*alpha + 3*beta + 2*(k - 2);
+					version1 = 2*wIn + 1 + (4*k-8)*alpha + 3*beta + (k-1)*k/2;
 				}
 			} else {
 				version1 = 2*wIn + 1 + (k-1)*wIn + beta + k*k-2*k+1;
