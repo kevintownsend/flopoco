@@ -477,14 +477,14 @@ namespace flopoco{
 
 	// The constructor for rational constants
 
-	IntConstMult::IntConstMult(Target* _target, int _xsize, mpz_class n, mpz_class period, int periodSize, mpz_class header, int headerSize, int i, int j) :
+	IntConstMult::IntConstMult(Target* _target, int _xsize, mpz_class n, mpz_class period, int periodMSBZeroes, int periodSize, mpz_class header, int headerSize, int i, int j) :
 		Operator(_target), xsize(_xsize){
 		ostringstream name; 
 
 		srcFileName="IntConstMult (periodic)";
 		setCopyrightString("Florent de Dinechin (2007-2011)");
 		name <<"IntConstMultPeriodic_"<<xsize<<"_"<<mpz2string(header)<<"_"<<headerSize
-				 <<"_"<<mpz2string(period)<<"_"<<periodSize<<"_"<<i<<"_";
+		     <<"_"<<mpz2string(period<<periodMSBZeroes)<<"_"<<periodSize<<"_"<<i<<"_";
 		if (j<0) 
 			name << "M" << -j;
 		else
@@ -508,6 +508,10 @@ namespace flopoco{
 		// Build the multiplier by the period
 		powerOfTwo[0] = buildMultBoothTree(period);
 
+		// Example: actual period 11000, periodSize=5, is represented by period=11, periodMSBZeroes=3
+		// powerOfTwo[0] will build mult by 11
+		// powerOfTwo[1] will build mult by 1100011: shift=periodSize
+		// powerOfTwo[2] will build mult by 11000110001100011: shift=2*periodSize
 
 		for (int k=1; k<=i; k++){
 			powerOfTwo[k]=  new ShiftAddOp(implementation, Add, powerOfTwo[k-1], (periodSize<<(k-1)), powerOfTwo[k-1] );
@@ -515,7 +519,7 @@ namespace flopoco{
 
 
 		if(header==0)  {
-			if(j==-1)
+			if(j==-1) //just repeat the period 2^i times
 				implementation->result = 	powerOfTwo[i];
 			else
 				implementation->result = new ShiftAddOp(implementation, Add, powerOfTwo[j], (periodSize<<i), powerOfTwo[i] );
@@ -526,11 +530,10 @@ namespace flopoco{
 			REPORT(DEBUG, "Header not null: header="<<header);
 			ShiftAddOp* headerSAO;
 			headerSAO=buildMultBoothTree(header);
-			//cerr << headerSAO << endl;
-			if(j==-1)
-				implementation->result = 	new ShiftAddOp(implementation, Add, headerSAO, (periodSize<<i), powerOfTwo[i] );
+			if(j==-1)//just repeat the period 2^i times
+				implementation->result = 	new ShiftAddOp(implementation, Add, headerSAO, (periodSize<<i) - periodMSBZeroes, powerOfTwo[i] );
 			else {
-				ShiftAddOp* tmp = implementation->provideShiftAddOp(Add, headerSAO, (periodSize<<j), powerOfTwo[j] );
+				ShiftAddOp* tmp = implementation->provideShiftAddOp(Add, headerSAO, (periodSize<<j) - periodMSBZeroes, powerOfTwo[j] );
 				implementation->result = new ShiftAddOp(implementation, Add, tmp, (periodSize<<i), powerOfTwo[i] );
 			}
 		}

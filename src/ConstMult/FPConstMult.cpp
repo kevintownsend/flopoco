@@ -13,7 +13,7 @@
 
 
 // TODO Case mantissa=1, wE_out>wE_in
-// TODO pipeline, re-compute mpfrC out of initial a and b at the end of the rational constructor.
+// TODO pipeline, 
 // TODO standard test vectors: 1, 0, various exn, xcut borders
 
 
@@ -272,7 +272,7 @@ extern vector<Operator*> oplist;
 
 			REPORT(DETAILED, "Final constant precision is " << cstWidth << " bits");
 
-			int patternLeadingZeroes;
+			int patternLeadingZeroes, patternLSBZeroes;
 			if(header==0) {
 			 	// Do we have leading zeroes in the pattern?
 			 	patternLeadingZeroes = periodSize - intlog2(periodicPattern);
@@ -283,46 +283,23 @@ extern vector<Operator*> oplist;
 			}
 			
 
-			// TODO sort out the exponents
 			cst_exp_when_mantissa_1_2 = mpfr_get_exp(mpfrC) - 1; //mpfr_get_exp() assumes significand in [1/2,1)  
 			cst_exp_when_mantissa_1_2 += expUpdate;
 			cst_exp_when_mantissa_int = cst_exp_when_mantissa_1_2 - cstWidth;
 
-#if 0
 
-			mpfr_t mpfrC2;
-			mpfr_init2(mpfrC2, 10*cstWidth); // should be enough for anybody
-			mpfr_div(mpfrC2, mpa, mpb, GMP_RNDN);
-
-
-			// get the exponent when the mantissa is on this size
-			mpz_class dummy;
-			// Nobody needs cst_exp_when_mantissa_int for FPRational
-			//			cst_exp_when_mantissa_int = mpfr_get_z_exp(dummy.get_mpz_t(), mpfrC2);
-			cst_exp_when_mantissa_int += expUpdate;
-			mpfr_set_z(mpfrC2, cstIntSig.get_mpz_t(), GMP_RNDN);
-			mpfr_mul_2si(mpfrC2, mpfrC2, cst_exp_when_mantissa_int, GMP_RNDN); // exact
-			REPORT(DEBUG, "Constant rebuilt as " << mpfr_get_d( mpfrC2, GMP_RNDN) );
-			cst_exp_when_mantissa_1_2 = mpfr_get_exp(mpfrC2) - 1; //mpfr_get_exp() assumes significand in [1/2,1)  
-			mpfr_init2( cstSig, cstWidth);
-			mpfr_div_2si(cstSig, mpfrC2, cst_exp_when_mantissa_1_2, GMP_RNDN);
-			REPORT(INFO, "cstSig  = " << mpfr_get_d(cstSig, GMP_RNDN));		
-			mpfr_clear(mpfrC2);
-
-
-
- 			int zeroesToTheRight=0;
+			// Do we have trailing zeroes in the pattern ?
 			while ((cstIntSig % 2) ==0) {
 				REPORT(DEBUG, "Significand is even, normalising");
 				cstIntSig = cstIntSig >>1;
 				periodicPattern = periodicPattern >>1;
 				cst_exp_when_mantissa_int++;
-				zeroesToTheRight++;
+				patternLSBZeroes++;
 			}
+			REPORT(DETAILED, "Periodic pattern has " << patternLSBZeroes << " zero(s) at the LSB");
 
-#endif
 
-			icm = new IntConstMult(target, wF_in+1, cstIntSig, periodicPattern, periodSize, header, headerSize, i, j);
+			icm = new IntConstMult(target, wF_in+1, cstIntSig, periodicPattern, patternLSBZeroes, periodSize, header, headerSize, i, j);
 			oplist.push_back(icm);
 
 		}
@@ -570,6 +547,7 @@ extern vector<Operator*> oplist;
 		vhdl << tab << declare("x_exp", wE_in) << " <=  X("<<wE_in<<"+"<<wF_in<<"-1 downto "<<wF_in<<");"<<endl;
 		vhdl << tab << declare("x_sig", wF_in+1) << " <= '1' & X("<<wF_in-1 <<" downto 0);"<<endl;
 
+		vhdl <<endl << tab << "-- significand processing"<<endl;
 
 		if(mantissa_is_one) {			
 			vhdl << tab << "-- The mantissa of the constant is  1" << endl;
@@ -583,7 +561,6 @@ extern vector<Operator*> oplist;
 				REPORT(INFO, "rounding of multiplication by a power of two  not implemented properly when  wF_out < wF_in, truncating. Please complain to the FloPoCo team if you need correct rounding");
 				vhdl << tab << declare("r_frac", wF_out) << " <= X" << range(wF_in-1, wF_out -wF_in) << ";"<<endl;
 			}
-			vhdl << tab << declare("expfrac_rnd",   wE_out+1+wF_out) << " <= r_exp_br & r_frac;"<<endl;
 			vhdl << tab << declare("norm") << " <= '0';"<<endl;
 			setSignalDelay("norm", 0.0); // save the delay for later
 		}
@@ -602,29 +579,39 @@ extern vector<Operator*> oplist;
 			setSignalDelay("norm", getCriticalPath()); // save the delay for later
 			
 			// one mux controlled by the diffusion of the "norm" bit
-			//manageCriticalPath(target->localWireDelay(wF_out+1) + target->lutDelay());
+			manageCriticalPath(target_->localWireDelay(wF_out+1) + target_->lutDelay());
 			
 			vhdl << tab << declare("shifted_frac",    wF_out+1) << " <= sig_prod("<<icm->rsize -2<<" downto "<<icm->rsize - wF_out-2 <<")  when norm = '1'"<<endl
 			     << tab << "           else sig_prod("<<icm->rsize -3<<" downto "<<icm->rsize - wF_out - 3<<");"<<endl;  
 			
 			
+		}
+		
+		// Here if mantissa was 1 critical path is 0. Otherwise we want to reset critical path to the norm bit
+		setCycleFromSignal("norm", getSignalDelay("norm"));
+		
+		vhdl <<endl << tab << "-- exponent processing"<<endl;
+		
+		vhdl << tab << declare("abs_unbiased_cst_exp",wE_sum+1) << " <= \""
+		     << unsignedBinary(expAddend, wE_sum+1) << "\";" << endl;
+		vhdl << tab << declare("r_exp_br",    wE_out+1) << " <= "
+		     << "((" << wE_sum << " downto " << wE_in << " => '0')  & x_exp)  "
+		     << (expAddendSign==0 ? "+" : "-" ) << "  abs_unbiased_cst_exp"
+		     << "  +  (("<<wE_sum<<" downto 1 => '0') & norm);"<<endl;
+
+
+
+		vhdl <<endl << tab << "-- final rounding"<<endl;
+		
+		if(mantissa_is_one) {			
+			vhdl << tab << declare("expfrac_rnd",   wE_out+1+wF_out) << " <= r_exp_br & r_frac;"<<endl;
+		} 
+		else {
 			vhdl << tab << declare("expfrac_br",   wE_out+1+wF_out+1) << " <= r_exp_br & shifted_frac;"<<endl;
 			// add the rounding bit //TODO: No  round to nearest here. OK for faithful. For CR, does this case ever appear?
 			vhdl << tab << declare("expfrac_rnd1",  wE_out+1+wF_out+1) << " <= (("<<wE_out+1+wF_out <<" downto 1 => '0') & '1') + expfrac_br;"<<endl;
 			vhdl << tab << declare("expfrac_rnd", wE_out+1+wF_out) << " <= expfrac_rnd1("<< wE_out+1+wF_out <<" downto  1);"<<endl;
 		}
-		
-		// Here if mantissa was 1 critical path is 0. Otherwise we want to reset critical path to the norm bit
-		setCycleFromSignal("norm");
-		
-
-		// exponent handling
-			vhdl << tab << declare("abs_unbiased_cst_exp",wE_sum+1) << " <= \""
-					 << unsignedBinary(expAddend, wE_sum+1) << "\";" << endl;
-			vhdl << tab << declare("r_exp_br",    wE_out+1) << " <= "
-					 << "((" << wE_sum << " downto " << wE_in << " => '0')  & x_exp)  "
-					 << (expAddendSign==0 ? "+" : "-" ) << "  abs_unbiased_cst_exp"
-					 << "  +  (("<<wE_sum<<" downto 1 => '0') & norm);"<<endl;
 
 		// Handling signs is trivial
 		if(cstSgn==0)
@@ -643,7 +630,7 @@ extern vector<Operator*> oplist;
 		// underflow handling
 		vhdl << tab << declare("r_exp_rnd",    wE_out+1) << " <= expfrac_rnd" << range(wE_out+wF_out, wF_out) << ";"<<endl;
 		vhdl << tab << declare("underflow") << " <= " ;
-		if (minExp(wE_in) + cst_exp_when_mantissa_1_2 > minExp(wE_out)) // no underflow can ever happen
+		if (minExp(wE_in) + cst_exp_when_mantissa_1_2 >= minExp(wE_out)) // no underflow can ever happen
 			vhdl << "'0'; --  underflow never happens for this constant and these (wE_in, wE_out)" << endl;
 		else 
 			vhdl <<  "r_exp_rnd(" << wE_sum << ");" << endl;
