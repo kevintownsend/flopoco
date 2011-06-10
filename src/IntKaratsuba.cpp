@@ -248,7 +248,7 @@ namespace flopoco{
 
 
 #ifdef NADD
-			IntNAdder* c = new IntNAdder(target, 119, 7); //68*2 - 17
+			IntNAdder* c = new IntNAdder(target, 119, 7, inDelayMap("X0", target->localWireDelay()) ); //68*2 - 17
 			oplist.push_back(c);
 #else
 			IntCompressorTree* c = new IntCompressorTree(target, 119, 7); //68*2 - 17
