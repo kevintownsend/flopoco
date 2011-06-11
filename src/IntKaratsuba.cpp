@@ -350,6 +350,8 @@ namespace flopoco{
 					int p = getCycleFromSignal("sX");
 					int q = getCycleFromSignal(join("s",i-1));
 					setCycle( max(p, q-1) );
+					if (i==1)
+						nextCycle();
 				}
 				manageCriticalPath(target->LogicToDSPWireDelay() + target->DSPMultiplierDelay());
 				vhdl << tab << declare( join("P",i,i), 2*(chunkSize_+1) )<< " <= (\"0\" & sX"<<range( (i+1)*chunkSize_-1, i*chunkSize_ ) << ") * (\"0\" & sY"<<range( (i+1)*chunkSize_-1, i*chunkSize_ ) << ");"<<endl;
