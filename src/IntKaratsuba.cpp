@@ -54,10 +54,10 @@ namespace flopoco{
 	
 		int chunks = ( wIn % 17 ==0 ? wIn/17 : ceil( double(wIn)/double(17)) );
 		setCriticalPath(getMaxInputDelays(inputDelays));
+		
+		int chunkSize_ = 17;
 
-		if (chunks > 4){
-			throw("The TwoWayKaratsuba and the ThreeWayKaratsuba are implemented. wIn <= 68"); 
-		}else if (chunks == 1){
+		if (chunks == 1){
 			/* no need for karatsuba here */
 			vhdl << tab << "R <= X * Y;" << endl;
 		}else if (chunks == 2){
@@ -283,6 +283,174 @@ namespace flopoco{
 			}else{
 				vhdl << tab << " R <= addRes" << range(118, 136-2*wIn-17) << ";" << endl;
 			}
+		}else{
+			//N-way katastuba
+			int g=5; //accumulation guard bits
+			
+			//expand inputs to multiple of chunk size
+			//pad inputs to 34 bits
+			vhdl << tab << declare ("sX", chunks*chunkSize_) << " <= X & " << zg(chunks*chunkSize_-wIn, 0) << ";" << endl;
+			vhdl << tab << declare ("sY", chunks*chunkSize_) << " <= Y & " << zg(chunks*chunkSize_-wIn, 0) << ";" << endl;
+			
+			//step 1 compute differences 
+			
+			setCriticalPath( getMaxInputDelays(inputDelays) );
+
+			manageCriticalPath( target->adderDelay(chunkSize_+1)); 
+			for (int i=1; i< chunks; i++){
+				for (int j=0; j<i; j++){
+					vhdl << tab << declare( join("dx",i,"_",j), chunkSize_+1 ) << "<= (\"0\" & sX"<<range( (i+1)*chunkSize_-1, i*chunkSize_ ) << ") - (\"0\" & sX"<<range( (j+1)*chunkSize_-1, j*chunkSize_ ) << ");"<<endl;				
+					vhdl << tab << declare( join("dy",i,"_",j), chunkSize_+1 ) << "<= (\"0\" & sY"<<range( (i+1)*chunkSize_-1, i*chunkSize_ ) << ") - (\"0\" & sY"<<range( (j+1)*chunkSize_-1, j*chunkSize_ ) << ");"<<endl;				
+					setSignalDelay(join("dx",i,"_",j), getCriticalPath());
+					setSignalDelay(join("dy",i,"_",j), getCriticalPath());
+				}
+			}
+			
+			manageCriticalPath(target->LogicToDSPWireDelay() + target->DSPMultiplierDelay());
+			//kernel multiplications 
+			for (int i=0; i<chunks; i++){
+				vhdl << tab << declare( join("P",i,i), 2*(chunkSize_+1) )<< " <= (\"0\" & sX"<<range( (i+1)*chunkSize_-1, i*chunkSize_ ) << ") * (\"0\" & sY"<<range( (i+1)*chunkSize_-1, i*chunkSize_ ) << ");"<<endl;
+				setSignalDelay( join("P",i,i), getCriticalPath());
+			}
+			
+//			setCycleFromSignal(join("dx",1,"_",0), getSignalDelay(join("dx",1,"_",0) );
+			//now the accumulations to be performed inside DSPs
+			for (int u=1; u<2*(chunks-1); u++){
+				bool chainIn=false;
+				int chainIn_i=-1, chainIn_j=-1;
+				for (int i=0;i<chunks;i++)
+					for (int j=0; j<chunks; j++){
+						if (i!=j && i>j && i+j==u){
+							//perform multiplication
+							setCycleFromSignal( join("dx",i,"_",j), getSignalDelay(join("dx",i,"_",j))); //second operand is identical
+							manageCriticalPath( target->LogicToDSPWireDelay() + target->DSPMultiplierDelay());
+							vhdl << tab << declare( join( (!chainIn?"P":"tP"),i,j), 2*(chunkSize_+1) )<< " <= "<< join("dx",i,"_",j)<<" * " << join("dy",i,"_",j)<<" ;"<<endl;//todo extend accumulation
+							setSignalDelay(join((!chainIn?"P":"tP"),i,j), getCriticalPath());
+							if (chainIn){
+								//sync with the other input
+								syncCycleFromSignal( join("P",chainIn_i,chainIn_j), getSignalDelay(join("P",chainIn_i,chainIn_j)));
+								manageCriticalPath( target->DSPAdderDelay() );
+								//perform addition 
+								vhdl << tab << declare( join("P",i,j), 2*(chunkSize_+1) + g) << " <= " << signExtend( join("tP",i,j), 2*(chunkSize_+1) + g) << " + " << signExtend(join("P",chainIn_i,chainIn_j),2*(chunkSize_+1) + g)<<";"<<endl; 
+								setSignalDelay( join("P",i,j), getCriticalPath());
+							}
+							chainIn = true;
+							chainIn_i=i;
+							chainIn_j=j;
+						}
+					}
+			}	
+			
+			//now we describe the adder tree that produces the S_k
+			setCycleFromSignal( "P00", getSignalDelay("P00"));
+			for (int i=0; i<chunks-1; i++){
+				manageCriticalPath( target->localWireDelay() + target->adderDelay(2*(chunkSize_+1) + g)); //TODO replace with IntAdder
+				vhdl << tab << declare( join("s",i+1), 2*(chunkSize_+1) + g ) << " <= " << signExtend( (i==0? "P00": join("s",i)), 2*(chunkSize_+1) + g) << " + " << signExtend( join("P",i+1,i+1), 2*(chunkSize_+1) + g)<<";"<<endl;
+				setSignalDelay(join("s",i+1), getCriticalPath());
+			}
+			//now for the subtractions
+			//these go all in parallel
+			manageCriticalPath( target->localWireDelay() + target->adderDelay(2*(chunkSize_+1) + g));
+			for (int i=chunks; i<2*(chunks-1); i++){
+				vhdl << tab << declare( join("s",i), 2*(chunkSize_+1) + g ) << " <= " << signExtend( join("s",chunks-1), 2*(chunkSize_+1) + g) << " - " << signExtend( (i==chunks? "P00": join("s",i-chunks)), 2*(chunkSize_+1) + g)<<";"<<endl;
+				setSignalDelay( join("s",i), getCriticalPath());
+			}
+
+			manageCriticalPath( target->localWireDelay() + target->adderDelay(2*(chunkSize_+1) + g));
+			//form the s'
+			for (int i=0; i<2*chunks-1; i++){
+				if (i==0){
+					vhdl << tab << declare( join("sp",i), 3*chunkSize_) << " <= " << zeroExtend( "P00", 3*chunkSize_) << ";"<<endl;
+				}else if (i==2*chunks-2){
+					vhdl << tab << declare( join("sp",i),3*chunkSize_ ) << " <= " << zeroExtend( join("P",chunks-1,chunks-1), 3*chunkSize_) << ";"<<endl;
+				}else{
+					// we need one more subtraction
+					int p = (i < chunks? i: chunks-1); 
+					int q = (i < chunks? 0: i-chunks+1);
+					
+					vhdl << tab << declare( join("tsp",i), 2*(chunkSize_+1) + g ) << " <= " << signExtend( join("s",i), 2*(chunkSize_+1) + g ) << " - " << signExtend( join("P",p,q) , 2*(chunkSize_+1) + g ) << ";" << endl;
+					vhdl << tab << declare( join("sp",i), 3*chunkSize_) << " <= " << zeroExtend( join("tsp",i), 3*chunkSize_) <<";"<<endl; 
+				}
+			}
+			
+			//form the 3 operands to go in the multioperand adder
+			
+			//first determine how many will go into the first, so to get the signal size
+			int size = 0;
+			int i=0;
+			while (i < 2*chunks-1){
+				i+=3;
+				size++;
+			}
+			int startIndex = i-3;
+			cout << "Operand 0 startIndex="<<startIndex<<" and size is " << size<<endl;
+			
+			vhdl << tab << declare( "top0",  size*(3*chunkSize_)+ (startIndex==2*(chunks-1)?-chunkSize_:0) ) << " <= ";
+			for (int i=startIndex; i>0; i=i-3){
+					vhdl << join("sp",i)<< (startIndex==2*(chunks-1) && i==startIndex?range(2*chunkSize_-1,0):"") << " & "; 			
+			}
+			vhdl << join("sp",0)<<";"<<endl;
+			
+			//now this one is extended to output width size
+			vhdl << tab << declare("op0", 2* (chunkSize_*chunks))<< "<= " << zeroExtend("top0", 2* (chunkSize_*chunks))<<";"<<endl;
+			
+			//now for the second one
+			size = 0;
+			i=1;
+			while (i < 2*chunks-1){
+				i+=3;
+				size++;
+			}
+			startIndex = i-3;
+			cout << "Operand 0 startIndex="<<startIndex<<" and size is " << size<<endl;
+
+				
+			vhdl << tab << declare( "top1",  size*(3*chunkSize_) + chunkSize_ + (startIndex==2*(chunks-1)?-chunkSize_:0) ) << " <= ";
+			for (int i=startIndex; i>1; i=i-3){
+					vhdl << join("sp",i)<< (startIndex==2*(chunks-1) && i==startIndex?range(2*chunkSize_-1,0):"") << " & "; 			
+			}
+			vhdl << join("sp",1)<<" & "<< zg(chunkSize_) << ";"<<endl;
+			
+			//now this one is extended to output width size
+			vhdl << tab << declare("op1", 2* (chunkSize_*chunks))<< "<= " << zeroExtend("top1", 2* (chunkSize_*chunks))<<";"<<endl;
+			
+
+			//now for the second one
+			size = 0;
+			i=2;
+			while (i < 2*chunks-1){
+				i+=3;
+				size++;
+			}
+			startIndex = i-3;
+			cout << "Operand 0 startIndex="<<startIndex<<" and size is " << size<<endl;
+
+				
+			vhdl << tab << declare( "top2",  size*(3*chunkSize_) + 2*chunkSize_ + (startIndex==2*(chunks-1)?-chunkSize_:0)) << " <= ";
+			for (int i=startIndex; i>2; i=i-3){
+					vhdl << join("sp",i)<< (startIndex==2*(chunks-1) && i==startIndex?range(2*chunkSize_-1,0):"") << " & "; 			
+			}
+			vhdl << join("sp",2) <<" & "<< zg(2*chunkSize_) <<";"<<endl;
+			
+			//now this one is extended to output width size
+			vhdl << tab << declare("op2", 2* (chunkSize_*chunks))<< "<= " << zeroExtend("top2", 2* (chunkSize_*chunks))<<";"<<endl;
+
+			IntCompressorTree *ina = new IntCompressorTree( target, 2* (chunkSize_*chunks), 3, inDelayMap("X0", target->localWireDelay() + getCriticalPath()) );
+			oplist.push_back(ina);
+			
+			inPortMap(ina, "X0", "op0");
+			inPortMap(ina, "X1", "op1");
+			inPortMap(ina, "X2", "op2");
+//			inPortMapCst(ina, "Cin", "'0'");
+			
+			outPortMap(ina, "R", "res");
+			vhdl << tab << instance(ina, "FinalAdder") << endl;
+			syncCycleFromSignal("res");
+			setCriticalPath( ina->getOutputDelay("R"));
+			
+			vhdl << "R <= res;" << endl;
+			
+			outDelayMap["R"] = getCriticalPath();
 		}
 	}
 

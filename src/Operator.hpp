@@ -15,7 +15,7 @@
 #include <utility>
 #include <vector>
 #include "FlopocoStream.hpp"
-
+#include "utils.hpp"
 
 using namespace std;
 
@@ -830,6 +830,66 @@ public:
 		hardOperator_               = op->hardOperator();
 		
 		oplist                      = op->getOpList();
+	}
+
+	string signExtend(string name, int w){
+		ostringstream e;
+		e << srcFileName << " (" << uniqueName_ << "): ERROR in signExtend, "; // just in case
+
+		Signal* s;
+		try {
+			s=getSignalByName(name);
+		}
+		catch (string e2) {
+			e << endl << tab << e2;
+			throw e.str();
+		}
+
+		//get the signals's width 
+		if (w == s->width()){
+			//nothing to do
+			return name;
+		}else if (w < s->width()){
+			cout << "WARNING: you required a sign extension to "<<w<<" bits of signal " << name << " whose width is " << s->width() << endl;
+			return name;
+		}else{
+			ostringstream n;
+			n << "(";
+			for (int i=0; i< w - s->width(); i++){
+				n<< name << of ( s->width() -1 ) << " & ";
+			}
+			n << name << ")";
+			string r = n.str();
+			return r;
+		}
+	}
+	
+	string zeroExtend(string name, int w){
+		ostringstream e;
+		e << srcFileName << " (" << uniqueName_ << "): ERROR in zeroExtend, "; // just in case
+
+		Signal* s;
+		try {
+			s=getSignalByName(name);
+		}
+		catch (string e2) {
+			e << endl << tab << e2;
+			throw e.str();
+		}
+
+		//get the signals's width 
+		if (w == s->width()){
+			//nothing to do
+			return name;
+		}else if (w < s->width()){
+			cout << "WARNING: you required a zero extension to "<<w<<" bits of signal " << name << " whose width is " << s->width() << endl;
+			return name;
+		}else{
+			ostringstream n;
+			n << "(" << zg(w-s->width())<<" &" <<name << ")";
+			string r = n.str();
+			return r;
+		}
 	}
 
 	int level; //printing issues
