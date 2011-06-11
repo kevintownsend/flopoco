@@ -291,10 +291,11 @@ namespace flopoco{
 			//pad inputs to 34 bits
 			vhdl << tab << declare ("sX", chunks*chunkSize_) << " <= X & " << zg(chunks*chunkSize_-wIn, 0) << ";" << endl;
 			vhdl << tab << declare ("sY", chunks*chunkSize_) << " <= Y & " << zg(chunks*chunkSize_-wIn, 0) << ";" << endl;
-			
 			//step 1 compute differences 
 			
 			setCriticalPath( getMaxInputDelays(inputDelays) );
+
+			setSignalDelay("sX", getCriticalPath());
 
 			manageCriticalPath( target->adderDelay(chunkSize_+1)); 
 			for (int i=1; i< chunks; i++){
@@ -306,13 +307,6 @@ namespace flopoco{
 				}
 			}
 			
-			manageCriticalPath(target->LogicToDSPWireDelay() + target->DSPMultiplierDelay());
-			//kernel multiplications 
-			for (int i=0; i<chunks; i++){
-				vhdl << tab << declare( join("P",i,i), 2*(chunkSize_+1) )<< " <= (\"0\" & sX"<<range( (i+1)*chunkSize_-1, i*chunkSize_ ) << ") * (\"0\" & sY"<<range( (i+1)*chunkSize_-1, i*chunkSize_ ) << ");"<<endl;
-				setSignalDelay( join("P",i,i), getCriticalPath());
-			}
-			
 //			setCycleFromSignal(join("dx",1,"_",0), getSignalDelay(join("dx",1,"_",0) );
 			//now the accumulations to be performed inside DSPs
 			for (int u=1; u<2*(chunks-1); u++){
@@ -322,7 +316,14 @@ namespace flopoco{
 					for (int j=0; j<chunks; j++){
 						if (i!=j && i>j && i+j==u){
 							//perform multiplication
-							setCycleFromSignal( join("dx",i,"_",j), getSignalDelay(join("dx",i,"_",j))); //second operand is identical
+							if (!chainIn)
+								setCycleFromSignal( join("dx",i,"_",j), getSignalDelay(join("dx",i,"_",j))); //second operand is identical
+							else{
+								int p = getCycleFromSignal( join("dx",i,"_",j) );
+								int q = getCycleFromSignal( join("P",chainIn_i,chainIn_j));
+								setCycle( max(p, q-1) );
+							}
+							
 							manageCriticalPath( target->LogicToDSPWireDelay() + target->DSPMultiplierDelay());
 							vhdl << tab << declare( join( (!chainIn?"P":"tP"),i,j), 2*(chunkSize_+1) )<< " <= "<< join("dx",i,"_",j)<<" * " << join("dy",i,"_",j)<<" ;"<<endl;//todo extend accumulation
 							setSignalDelay(join((!chainIn?"P":"tP"),i,j), getCriticalPath());
@@ -340,18 +341,42 @@ namespace flopoco{
 						}
 					}
 			}	
-			
-			//now we describe the adder tree that produces the S_k
-			setCycleFromSignal( "P00", getSignalDelay("P00"));
-			for (int i=0; i<chunks-1; i++){
-				manageCriticalPath( target->localWireDelay() + target->adderDelay(2*(chunkSize_+1) + g)); //TODO replace with IntAdder
-				vhdl << tab << declare( join("s",i+1), 2*(chunkSize_+1) + g ) << " <= " << signExtend( (i==0? "P00": join("s",i)), 2*(chunkSize_+1) + g) << " + " << signExtend( join("P",i+1,i+1), 2*(chunkSize_+1) + g)<<";"<<endl;
-				setSignalDelay(join("s",i+1), getCriticalPath());
+
+			//kernel multiplications 
+			for (int i=0; i<chunks; i++){
+				if (i==0){
+					setCycleFromSignal("sX", getSignalDelay("sX"));
+				}else{
+					int p = getCycleFromSignal("sX");
+					int q = getCycleFromSignal(join("s",i-1));
+					setCycle( max(p, q-1) );
+				}
+				manageCriticalPath(target->LogicToDSPWireDelay() + target->DSPMultiplierDelay());
+				vhdl << tab << declare( join("P",i,i), 2*(chunkSize_+1) )<< " <= (\"0\" & sX"<<range( (i+1)*chunkSize_-1, i*chunkSize_ ) << ") * (\"0\" & sY"<<range( (i+1)*chunkSize_-1, i*chunkSize_ ) << ");"<<endl;
+				
+				if (i>0){
+					syncCycleFromSignal( join("s", i-1), getSignalDelay( join("s",i-1)) );
+					manageCriticalPath( target->localWireDelay() + target->adderDelay(2*(chunkSize_+1) + g)); //TODO replace with IntAdder
+					vhdl << tab << declare( join("s",i), 2*(chunkSize_+1) + g ) << " <= " << signExtend( join("s",i-1), 2*(chunkSize_+1) + g) << " + " << signExtend( join("P",i,i), 2*(chunkSize_+1) + g)<<";"<<endl;
+					setSignalDelay(join("s",i), getCriticalPath());
+				}else{
+					vhdl << tab << declare("s0", 2*(chunkSize_+1))  << " <= P00;"<<endl;
+					setSignalDelay("s0", getCriticalPath());
+				}
 			}
+			
+//			//now we describe the adder tree that produces the S_k
+//			setCycleFromSignal( "P00", getSignalDelay("P00"));
+//			for (int i=0; i<chunks-1; i++){
+//				manageCriticalPath( target->localWireDelay() + target->adderDelay(2*(chunkSize_+1) + g)); //TODO replace with IntAdder
+//				vhdl << tab << declare( join("s",i+1), 2*(chunkSize_+1) + g ) << " <= " << signExtend( (i==0? "P00": join("s",i)), 2*(chunkSize_+1) + g) << " + " << signExtend( join("P",i+1,i+1), 2*(chunkSize_+1) + g)<<";"<<endl;
+//				setSignalDelay(join("s",i+1), getCriticalPath());
+//			}
+
 			//now for the subtractions
 			//these go all in parallel
 			manageCriticalPath( target->localWireDelay() + target->adderDelay(2*(chunkSize_+1) + g));
-			for (int i=chunks; i<2*(chunks-1); i++){
+			for (int i=chunks; i<2*chunks-1; i++){
 				vhdl << tab << declare( join("s",i), 2*(chunkSize_+1) + g ) << " <= " << signExtend( join("s",chunks-1), 2*(chunkSize_+1) + g) << " - " << signExtend( (i==chunks? "P00": join("s",i-chunks)), 2*(chunkSize_+1) + g)<<";"<<endl;
 				setSignalDelay( join("s",i), getCriticalPath());
 			}
@@ -360,9 +385,9 @@ namespace flopoco{
 			//form the s'
 			for (int i=0; i<2*chunks-1; i++){
 				if (i==0){
-					vhdl << tab << declare( join("sp",i), 3*chunkSize_) << " <= " << zeroExtend( "P00", 3*chunkSize_) << ";"<<endl;
+					vhdl << tab << declare( join("sp",i), 3*chunkSize_) << " <= " << zeroExtend( "s0", 3*chunkSize_) << ";"<<endl;
 				}else if (i==2*chunks-2){
-					vhdl << tab << declare( join("sp",i),3*chunkSize_ ) << " <= " << zeroExtend( join("P",chunks-1,chunks-1), 3*chunkSize_) << ";"<<endl;
+					vhdl << tab << declare( join("sp",i), 3*chunkSize_ ) << " <= " << zeroExtend( join("s",i), 3*chunkSize_) << ";"<<endl;
 				}else{
 					// we need one more subtraction
 					int p = (i < chunks? i: chunks-1); 
