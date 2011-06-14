@@ -372,6 +372,9 @@ namespace flopoco{
 		/** This function will sort the DSPs blocks by the topright corner */
 	
 		void sortDSPs(DSP** &config);
+
+		void sortDSPs2(DSP** &config);
+
 	
 		/** This is a temporary function used only for displaing a configuration. It has no relevance to the algorithm. */
 	

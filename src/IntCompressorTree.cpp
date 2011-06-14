@@ -60,9 +60,7 @@ namespace flopoco{
 
 		//for homogeneous signal names
 		for (int j=0; j<nbOfInputs;j++){
-			name.str("");
-			name << "l_" << tLev-1 << "_s_"<<j;
-			vhdl << tab << declare(name.str(),wIn_, true) << " <= " << use(join("X",j)) << ";" << endl;
+			vhdl << tab << declare( join("l_",tLev-1,"_s_",j), wIn_, true) << " <= " << join("X",j) << ";" << endl;
 		}
 	
 		while (processing){

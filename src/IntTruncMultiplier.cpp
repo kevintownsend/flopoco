@@ -43,7 +43,7 @@ namespace flopoco{
 		name <<"IntTruncMultiplier_"<<wX<<"_"<<wY<<"_"<<wX + wY - k<<"_"<<(sign?"signed":"unsigned");
 		setName(name.str());
 	
-		setCopyrightString("Sebastian Banescu, Bogdan Pasca, Radu Tudoran 2010");
+		setCopyrightString("Sebastian Banescu, Bogdan Pasca, Radu Tudoran (2010-2011)");
 	
 		addInput ("X", wX, true);
 		addInput ("Y", wY, true);
@@ -1459,39 +1459,147 @@ namespace flopoco{
 			
 			}
 		return nrOfUsedDSPs;
-	
 	}
 	
-	void IntTruncMultiplier::sortDSPs(DSP** &config)
-	{
+	/* FIXME: replaced with function from TilingMult, TODO factorize these functions in a new class */
+//	int IntTruncMultiplier::bindDSPs4Virtex(DSP** &config)
+//	{
+//		int nrOfUsedDSPs = nrDSPs;
+//		DSP* ref;
+//		
+//		sortDSPs2(config);
+//			
+//		int itx,ity, ibx,iby, jtx,jty, count;
+//		
+//		for(int i=0; i< nrDSPs; i++){
+//			if ((config[i]!=NULL) && (config[i]->getShiftOut()==NULL)){
+//				ref=config[i];
+//				
+//				count = ref->getNrOfPrimitiveDSPs(); 
+
+//				bool ver = true;
+//				int rw,rh;
+//				int sa; /* the shift amount */
+//				
+//				/* now we start binding DSPs */		
+//				while ( ver==true && ref->getShiftIn() == NULL && count < nrOfShifts4Virtex){
+//					ver=false;
+
+//					for(int j=0; j < nrDSPs &&  ref->getShiftIn()==NULL; j++){
+//						
+//						ref->getTopRightCorner  (itx,ity);
+//						ref->getBottomLeftCorner(ibx,iby);
+
+//						rw = ref->getMaxMultiplierWidth();
+//						rh = ref->getMaxMultiplierHeight();
+
+//						/* we can potentially bind two if by combining the two
+//						we don't exceed the maximum number of shift combinations */
+//						if ( config[j]!=NULL && j!=i && ((count + config[j]->getNrOfPrimitiveDSPs()) <= nrOfShifts4Virtex)){
+//							config[j]->getTopRightCorner(jtx,jty);
+//							/* if this one is in the bounds of the board */
+//							if ( jtx<=vnme && jty<vmme){
+//								REPORT(DEBUG, " itx ity "<<itx<<" "<<ity<<" jtx jty "<< jtx<<" "<<jty);
+//								sa = config[j]->getShiftAmount(); //17 for Xilinx
+//								/* for now this condition binds DSPs on horizontal
+//								we might need to change this one for optimality */
+//								if ( (jtx + jty == itx + ity) && config[j]->getShiftIn()==NULL){
+//									REPORT(DETAILED, "DSP #"<<i<<" bind with DSP# "<<j<<"on direct line");
+//									ver = true;
+//									ref->setShiftIn(config[j]);
+//									config[j]->setShiftOut(ref);
+//								
+//									nrOfUsedDSPs--;
+//									ref = config[j];
+//									count += ref->getNrOfPrimitiveDSPs();
+//								}else if (jtx + jty - itx - ity == sa &&  config[j]->getShiftIn()==NULL) {
+//									/* this is the binding condition */
+//									REPORT(DETAILED, "DSP #"<<i<<" bind with DSP# "<<j<<" on shift line");
+//									ver = true;
+//									ref->setShiftIn(config[j]);
+//									config[j]->setShiftOut(ref);
+//								
+//									nrOfUsedDSPs--;
+//									ref = config[j];
+//									count += ref->getNrOfPrimitiveDSPs();
+//								}else{}
+//							}
+//						}
+//					}
+//				}
+//			}
+//		}
+//		return nrOfUsedDSPs;
+//	}
+	
+	
+	/* FIXME: replaced with the TilingMult function */
+	/* sort the DSP blocks in the config list according to their Top
+	left corner coordinates */
+	void IntTruncMultiplier::sortDSPs(DSP** &config){
 		int ix,iy,jx,jy;
 		DSP* temp;
-		for(int i=0;i<nrDSPs-1;i++)
-			{		
-				for(int j=i+1;j<nrDSPs;j++)
-					{
-						config[i]->getTopRightCorner(ix,iy);
-						config[j]->getTopRightCorner(jx,jy);
-						if(iy<jy)
-							{
-								temp=config[i];
-								config[i]=config[j];
-								config[j]=temp;				
-							}
-						else
-							if(iy==jy)
-								{
-									if(ix<jx)
-										{
-											temp=config[i];
-											config[i]=config[j];
-											config[j]=temp;						
-										}
-								}
-					}
+		for(int i=0; i< nrDSPs-1;i++){		
+			for(int j=i+1;j<nrDSPs;j++){
+				config[i]->getTopRightCorner(ix,iy);
+				config[j]->getTopRightCorner(jx,jy);
+				if (iy + ix <= jy + jx)  {
+					temp      = config[i];
+					config[i] = config[j];
+					config[j] = temp;				
+				}
 			}
-	
+		}
 	}
+
+	void IntTruncMultiplier::sortDSPs2(DSP** &config){
+		int ix,iy,jx,jy;
+		DSP* temp;
+		for(int i=0; i< nrDSPs-1;i++){		
+			for(int j=i+1;j<nrDSPs;j++){
+				config[i]->getTopRightCorner(ix,iy);
+				config[j]->getTopRightCorner(jx,jy);
+				if (iy + ix > jy + jx)  {
+					temp      = config[i];
+					config[i] = config[j];
+					config[j] = temp;				
+				}
+			}
+		}
+	}
+
+	
+	
+//	void IntTruncMultiplier::sortDSPs(DSP** &config)
+//	{
+//		int ix,iy,jx,jy;
+//		DSP* temp;
+//		for(int i=0;i<nrDSPs-1;i++)
+//			{		
+//				for(int j=i+1;j<nrDSPs;j++)
+//					{
+//						config[i]->getTopRightCorner(ix,iy);
+//						config[j]->getTopRightCorner(jx,jy);
+//						if(iy<jy)
+//							{
+//								temp=config[i];
+//								config[i]=config[j];
+//								config[j]=temp;				
+//							}
+//						else
+//							if(iy==jy)
+//								{
+//									if(ix<jx)
+//										{
+//											temp=config[i];
+//											config[i]=config[j];
+//											config[j]=temp;						
+//										}
+//								}
+//					}
+//			}
+//	
+//	}
 
 	int IntTruncMultiplier::bindDSPs(DSP** &config)
 	{
@@ -1534,10 +1642,7 @@ namespace flopoco{
 
 	float IntTruncMultiplier::computeCost(DSP** &config)
 	{
-	
-		
 		float acc=0.0;
-		
 		//costLUT = ( (1.0+scale) - scale * (1-ratio) ) /  ((float)100);
 	
 		REPORT(DETAILED,"Cost of a DSP is "<<costDSP<<endl<<"Cost of a Slice is "<<costLUT);
@@ -1971,7 +2076,7 @@ namespace flopoco{
 
 			if (targetID == "Virtex5")
 			{ // align bottom-left corner of current with X-possition of previous to catch ideal case
-				mindX = abs(w-h);
+				mindX = -abs(w-h);
 				mindY = h;
 			}
 			else if ((targetID == "StratixIV") || (targetID == "StratixIV"))
@@ -2603,7 +2708,7 @@ namespace flopoco{
 								else
 									sname << zg(fpadX+fpadY , 0) << " & " << join("pxy",i,j)<<range( (blx1-trx1+1) + (bly1-try1+1) -1, 0) << " & " << zg(try1 + trx1 -minShift, 0)  <<  ";--/" << endl;	
 							else // concatenate only the lower portion of the partial product
-								sname << join("pxy",i,j) << range(d->getShiftAmount()- (try1-try2 + bly2-bly1) - (trx1-trx2 + blx2-blx1) -1 ,0) << " & " << zg( try1 + trx1 -minShift,0) << ";--*" << endl;
+								sname << join("pxy",i,j) << range(d->getShiftAmount()- (try1-try2 + bly2-bly1) - (trx1-trx2 + blx2-blx1) -1 ,0) << " & " << zg( try1 + trx1 -minShift,0) << ";--"<<try1<<","<<trx1<<"*" << endl;
 						}
 						// erase d from the tempc buffer to avoid handleing it twice
 						for (int k=i+1; k<nrDSPs; k++)
@@ -2807,6 +2912,8 @@ namespace flopoco{
 				minShift = min (minShift, trx1+try1);
 			}
 		}
+		REPORT(INFO, "The minimal shift of DSPs is:" << minShift);
+
 
 		for (uint32_t partitions=0; partitions<softConfig.size(); partitions++)
 		{	
@@ -2815,7 +2922,7 @@ namespace flopoco{
 			convertCoordinates(nj, ni, njj, nii);
 			minShift = min (minShift, nj+ni);
 		}
-		REPORT(INFO, "The minimal shift is:" << minShift);
+		REPORT(INFO, "The minimal shift of DSP + soft is:" << minShift);
 		     
 		//bestConfig = splitLargeBlocks(bestConfig, nrDSPs);
 		int nrDSPOperands = multiplicationInDSPs(bestConfig);
@@ -2847,7 +2954,7 @@ namespace flopoco{
 //		if   (target_->getID() != "Virtex5"){
 //			add =  new IntNAdder(getTarget(), wInX+wInY+(sign?2:0)-minShift, nrDSPOperands+nrSliceOperands+subCount, inMap);
 //		} else{
-			add =  new IntCompressorTree(getTarget(), wInX+wInY+(sign?2:0)-minShift, nrDSPOperands+nrSliceOperands+subCount, inDelayMap("X0",target_->localWireDelay() + getCriticalPath() )  );
+			add =  new IntCompressorTree(getTarget(), wInX+wInY+(sign?2:0)-minShift, nrDSPOperands+nrSliceOperands+subCount + (targetPrecision>0 && roundCompensate_?1:0), inDelayMap("X0",target_->localWireDelay() + getCriticalPath() )  );
 //		}
 		
 		//IntCompressorTree* add =  new IntCompressorTree(target, adderWidth, opCount);
@@ -2874,7 +2981,13 @@ namespace flopoco{
 				ostringstream concatPartialProd;
 				concatPartialProd  << "addOpSlice_sub" << j;
 				inPortMap (add, join("X", j+nrDSPOperands+nrSliceOperands), concatPartialProd.str());
-			}	
+			}
+			
+		if (targetPrecision > 0 && roundCompensate_){
+			ostringstream concatPartialProd;
+			concatPartialProd<< zg( wInX+wInY+(sign?2:0)-targetPrecision-1, -1) << "1" << zg(targetPrecision-minShift,1);
+			inPortMapCst( add, join("X",nrDSPOperands+nrSliceOperands+subCount), concatPartialProd.str() );
+		}		
 //		if   (target_->getID() != "Virtex5")
 //			inPortMapCst(add, "Cin", "'0'");
 		outPortMap(add, "R", "addRes");
@@ -2883,68 +2996,71 @@ namespace flopoco{
 		syncCycleFromSignal("addRes");
 		setCriticalPath(add->getOutputDelay("R"));
 
-		/* rounding and compensation needed only if k>0*/
-		if (targetPrecision==0)
-			vhdl << tab << "R <= addRes" << range(wX+wY+(sign?2:0)-1-minShift, targetPrecision-minShift) << ";" << endl;
-		else{
-			/*value of the add bit */
-			if (targetPrecision==1){
-				/* just need to add the compensation '1' and truncate */
-				if (roundCompensate_){
-					nextCycle();
-					IntAdder *af = new IntAdder(getTarget(), wX+wY+(sign?2:0));
-					oplist.push_back(af);
-				
-					inPortMap(af, "X", "addRes");
-					inPortMapCst(af, "Y", join("CONV_STD_LOGIC_VECTOR(1,",wInX+wInY,")") );
-					inPortMapCst(af, "Cin", "'0'");
-					outPortMap(af, "R", "roundCompRes");
-					vhdl << instance(af, "RoundCompensate");
-				
-					syncCycleFromSignal("roundCompRes");
-					setCriticalPath( af->getOutputDelay("R") );
-					vhdl << tab << "R <= roundCompRes" << range(wX+wY+(sign?2:0)-1-minShift, targetPrecision-minShift) << ";" << endl;
-				}else{
-					vhdl << tab << "R <= addRes" << range(wX+wY+(sign?2:0)-1-minShift, targetPrecision-minShift) << ";" << endl;
-				}
-			}else{
-				if (roundCompensate_){
-					/* target precision > 1 */
-//					/* compute sticky bit */
-//					vhdl << tab << declare("sticky",1,false) << "<= '0' when addRes"<<range(targetPrecision-minShift-2,0)<<"=0 else '1';"<<endl;				
-//					IntAdder *af = new IntAdder(getTarget(), wX+wY+(sign?2:0)-1-minShift - (targetPrecision-minShift) + 1 + 1);
-					if (sign){
-						IntAdder *af = new IntAdder(getTarget(), wX+wY+(sign?2:0)-1-minShift - (targetPrecision-minShift) + 1 + 1, inDelayMap("X", target_->localWireDelay() + getCriticalPath()) );
-						oplist.push_back(af);
+//		/* rounding and compensation needed only if k>0*/
+//		if (targetPrecision==0)
+//			vhdl << tab << "R <= addRes" << range(wX+wY+(sign?2:0)-1-minShift, targetPrecision-minShift) << ";" << endl;
+//		else{
+//			/*value of the add bit */
+//			if (targetPrecision==1){
+//				/* just need to add the compensation '1' and truncate */
+//				if (roundCompensate_){
+//					nextCycle();
+//					IntAdder *af = new IntAdder(getTarget(), wX+wY+(sign?2:0));
+//					oplist.push_back(af);
+//				
+//					inPortMap(af, "X", "addRes");
+//					inPortMapCst(af, "Y", join("CONV_STD_LOGIC_VECTOR(1,",wInX+wInY,")") );
+//					inPortMapCst(af, "Cin", "'0'");
+//					outPortMap(af, "R", "roundCompRes");
+//					vhdl << instance(af, "RoundCompensate");
+//				
+//					syncCycleFromSignal("roundCompRes");
+//					setCriticalPath( af->getOutputDelay("R") );
+//					vhdl << tab << "R <= roundCompRes" << range(wX+wY+(sign?2:0)-1-minShift, targetPrecision-minShift) << ";" << endl;
+//				}else{
+//					vhdl << tab << "R <= addRes" << range(wX+wY+(sign?2:0)-1-minShift, targetPrecision-minShift) << ";" << endl;
+//				}
+//			}else{
+//				if (roundCompensate_){
+//					/* target precision > 1 */
+////					/* compute sticky bit */
+////					vhdl << tab << declare("sticky",1,false) << "<= '0' when addRes"<<range(targetPrecision-minShift-2,0)<<"=0 else '1';"<<endl;				
+////					IntAdder *af = new IntAdder(getTarget(), wX+wY+(sign?2:0)-1-minShift - (targetPrecision-minShift) + 1 + 1);
+//					if (sign){
+//						IntAdder *af = new IntAdder(getTarget(), wX+wY+(sign?2:0)-1-minShift - (targetPrecision-minShift) + 1 + 1, inDelayMap("X", target_->localWireDelay() + getCriticalPath()) );
+//						oplist.push_back(af);
 
-						inPortMapCst(af, "X", "addRes"+range(wX+wY+(sign?2:0)-1-minShift, targetPrecision-minShift-1));
-						inPortMapCst(af, "Y", join("CONV_STD_LOGIC_VECTOR(1,",wX+wY+(sign?2:0)-1-minShift - (targetPrecision-minShift) + 1 +1 ,")") );
-						inPortMapCst(af, "Cin", "'0'");
-						outPortMap(af, "R", "roundRes");
-						vhdl << instance(af, "Round");
-				
-						syncCycleFromSignal("roundRes");
-						setCriticalPath(af->getOutputDelay("R"));
-						vhdl << tab << "R <= roundRes" << range(wX+wY+(sign?2:0) - targetPrecision-1+1,1) << ";" << endl;
-					}else{
-						IntAdder *af = new IntAdder(getTarget(), wX+wY+(sign?2:0)-1-minShift - (targetPrecision-minShift) + 1, inDelayMap("X", target_->localWireDelay() + getCriticalPath()) );
-						oplist.push_back(af);
+//						inPortMapCst(af, "X", "addRes"+range(wX+wY+(sign?2:0)-1-minShift, targetPrecision-minShift-1));
+//						inPortMapCst(af, "Y", join("CONV_STD_LOGIC_VECTOR(1,",wX+wY+(sign?2:0)-1-minShift - (targetPrecision-minShift) + 1 +1 ,")") );
+//						inPortMapCst(af, "Cin", "'0'");
+//						outPortMap(af, "R", "roundRes");
+//						vhdl << instance(af, "Round");
+//				
+//						syncCycleFromSignal("roundRes");
+//						setCriticalPath(af->getOutputDelay("R"));
+//						vhdl << tab << "R <= roundRes" << range(wX+wY+(sign?2:0) - targetPrecision-1+1,1) << ";" << endl;
+//					}else{
+//						IntAdder *af = new IntAdder(getTarget(), wX+wY+(sign?2:0)-1-minShift - (targetPrecision-minShift) + 1, inDelayMap("X", target_->localWireDelay() + getCriticalPath()) );
+//						oplist.push_back(af);
 
-						inPortMapCst(af, "X", "addRes"+range(wX+wY+(sign?2:0)-1-minShift, targetPrecision-minShift));
-						inPortMapCst(af, "Y", join("CONV_STD_LOGIC_VECTOR(1,",wX+wY+(sign?2:0)-1-minShift - (targetPrecision-minShift) + 1 ,")") );
-						inPortMapCst(af, "Cin", "'0'");
-						outPortMap(af, "R", "roundCompRes");
-						vhdl << instance(af, "RoundCompensate");
-				
-						syncCycleFromSignal("roundCompRes");
-						setCriticalPath(af->getOutputDelay("R"));
-						vhdl << tab << "R <= roundCompRes" << range(wX+wY+(sign?2:0) - targetPrecision-1,0) << ";" << endl;
-					}
-				}else{
-					vhdl << tab << "R <= addRes" << range(wX+wY+(sign?2:0)-1-minShift, targetPrecision-minShift) << ";" << endl;
-				}
-			}
-		}
+//						inPortMapCst(af, "X", "addRes"+range(wX+wY+(sign?2:0)-1-minShift, targetPrecision-minShift));
+//						inPortMapCst(af, "Y", join("CONV_STD_LOGIC_VECTOR(1,",wX+wY+(sign?2:0)-1-minShift - (targetPrecision-minShift) + 1 ,")") );
+//						inPortMapCst(af, "Cin", "'0'");
+//						outPortMap(af, "R", "roundCompRes");
+//						vhdl << instance(af, "RoundCompensate");
+//				
+//						syncCycleFromSignal("roundCompRes");
+//						setCriticalPath(af->getOutputDelay("R"));
+//						vhdl << tab << "R <= roundCompRes" << range(wX+wY+(sign?2:0) - targetPrecision-1,0) << ";" << endl;
+//					}
+//				}else{
+//					vhdl << tab << "R <= addRes" << range(wX+wY+(sign?2:0)-1-minShift, targetPrecision-minShift) << ";" << endl;
+//				}
+//			}
+//			vhdl << tab << "R <= addRes" << range(wX+wY+(sign?2:0)-1-minShift, targetPrecision-minShift) << ";" << endl;
+//		}
+		vhdl << tab << "R <= addRes" << range(wX+wY+(sign?2:0)-1-minShift, targetPrecision-minShift) << ";" << endl;
+		
 		outDelayMap["R"] = getCriticalPath();
 
 	}

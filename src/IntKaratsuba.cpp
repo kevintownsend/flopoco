@@ -246,7 +246,6 @@ namespace flopoco{
 			vhdl << tab << declare("t5k_1",37) << " <= (t5k_0(36 downto 1) & \"0\") - (p32 & \"0\");"<<endl;
 			nextCycle();////////////////////////////////////////////////////////////
 
-
 #ifdef NADD
 			IntNAdder* c = new IntNAdder(target, 119, 7, inDelayMap("X0", target->localWireDelay()) ); //68*2 - 17
 			oplist.push_back(c);
