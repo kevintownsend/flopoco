@@ -20,7 +20,7 @@ noinst_HEADERS = apps/Collision.hpp apps/FPFMAcc.hpp apps/FPJacobi.hpp\
         Targets/DSP.hpp Targets/Spartan3.hpp Targets/StratixII.hpp Targets/StratixIII.hpp Targets/StratixIV.hpp Targets/Virtex4.hpp Targets/Virtex5.hpp Targets/Virtex6.hpp \
         DotProduct.hpp  DualTable.hpp DualTable2.hpp Fix2FP.hpp FP2Fix.hpp FXP_Shift.hpp FlopocoStream.hpp FPAdderDualPath.hpp FPAdderSinglePath.hpp \
         FPDiv.hpp FPExp.hpp FPLog.hpp FPMultiplier.hpp FPNumber.hpp \
-	FPSqrt.hpp FPSqrtPoly.hpp FPSquarer.hpp FixedPointFunctions/FunctionEvaluator.hpp FixedPointFunctions/HOTBM.hpp IEEENumber.hpp InputIEEE.hpp IntAdder.hpp IntAdderClassical.hpp IntAdderAlternative.hpp IntAdderShortLatency.hpp IntCompressorTree.hpp IntDualSub.hpp IntKaratsuba.hpp IntMultiplier.hpp \
+	FPSqrt.hpp FPSqrtPoly.hpp FPSquarer.hpp FixedPointFunctions/FunctionEvaluator.hpp FixedPointFunctions/HOTBM.hpp IEEENumber.hpp InputIEEE.hpp IntAdder.hpp IntAddition/IntAdderClassical.hpp IntAddition/IntAdderAlternative.hpp IntAddition/IntAdderShortLatency.hpp IntCompressorTree.hpp IntDualSub.hpp IntKaratsuba.hpp IntMultiplier.hpp \
 	IntNAdder.hpp IntSquarer.hpp IntMultipliers/IntTilingMult.hpp IntTruncMultiplier.hpp LongAcc2FP.hpp LongAcc.hpp LZOC.hpp LZOCShifterSticky.hpp Operator.hpp OutputIEEE.hpp FixedPointFunctions/PolynomialEvaluator.hpp \
 	Shifters.hpp Signal.hpp IntMultipliers/SignedIntMultiplier.hpp IntMultipliers/UnsignedIntMultiplier.hpp IntMultipliers/LogicIntMultiplier.hpp FixedPointFunctions/PolyTableGenerator.hpp FixedPointFunctions/PiecewiseFunction.hpp  FixedPointFunctions/FunctionTable.hpp Table.hpp Target.hpp TestBench.hpp TestCase.hpp UserDefinedOperator.hpp utils.hpp Wrapper.hpp FPSumOfSquares.hpp
 
@@ -45,18 +45,7 @@ libflopoco_la_SOURCES = utils.cpp \
 			TestBench.cpp \
 			UserDefinedOperator.cpp\
 			IntAdder.cpp\
-			IntAdderClassical.cpp\
-			IntAdderAlternative.cpp\
-			IntAdderShortLatency.cpp\
-			IntAddition/LongIntAdderAddAddMuxGen1.cpp \
-			IntAddition/LongIntAdderCmpCmpAddGen1.cpp \
-			IntAddition/LongIntAdderCmpAddIncGen1.cpp \
-			IntAddition/IntAdderSpecific.cpp \
-			IntAddition/IntComparatorSpecific.cpp \
-			IntAddition/CarryGenerationCircuit.cpp \
-			IntAddition/LongIntAdderAddAddMuxGen2.cpp \
-			IntAddition/LongIntAdderCmpCmpAddGen2.cpp \
-			IntAddition/LongIntAdderCmpAddIncGen2.cpp \
+			IntAddition/IntAdderClassical.cpp\
 			IntNAdder.cpp \
 			IntCompressorTree.cpp \
                         IntComparator.cpp \
@@ -122,6 +111,17 @@ libflopoco_la_SOURCES +=  \
 			FPAdderSinglePath.cpp \
 			FPAdder3Input.cpp \
                         ConstMult/CRFPConstMult.cpp ConstMult/FixRealKCM.cpp ConstMult/FPRealKCM.cpp \
+			IntAddition/IntAdderAlternative.cpp\
+			IntAddition/IntAdderShortLatency.cpp\
+			IntAddition/LongIntAdderAddAddMuxGen1.cpp \
+			IntAddition/LongIntAdderCmpCmpAddGen1.cpp \
+			IntAddition/LongIntAdderCmpAddIncGen1.cpp \
+			IntAddition/IntAdderSpecific.cpp \
+			IntAddition/IntComparatorSpecific.cpp \
+			IntAddition/CarryGenerationCircuit.cpp \
+			IntAddition/LongIntAdderAddAddMuxGen2.cpp \
+			IntAddition/LongIntAdderCmpCmpAddGen2.cpp \
+			IntAddition/LongIntAdderCmpAddIncGen2.cpp \
 			apps/FPJacobi.cpp \
 			apps/TaMaDiCore.cpp \
 			apps/TaMaDiPriorityEncoder.cpp \
