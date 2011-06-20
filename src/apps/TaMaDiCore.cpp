@@ -58,6 +58,7 @@ namespace flopoco{
 		addOutput ("potentialUlpNumber", counterWidth);
 		addOutput ("potentialInterval", wIntervalID);
 		addOutput ("potentialOutput");
+
 		addOutput ("finished"); 
 		 
 		/* computing core description */
@@ -194,8 +195,9 @@ namespace flopoco{
 		vhdl << tab << "potentialInterval <= iid;"<<endl;
 		setCycle(1);
 		declare("finished_signal_d1");
-#ifdef IAS	
-//		declare("potentialOutput");	
+
+if (target->getVendor()=="Altera"){
+		declare("potentialOutput_1");	
 		vhdl << tab << "LPM_COMPARE_component"<<getNewUId()<<" : LPM_COMPARE"<<endl;
 		vhdl << tab << "GENERIC MAP ("<<endl;
 		vhdl << tab << "lpm_hint => \"ONE_INPUT_IS_CONSTANT=YES\","<<endl;
@@ -207,12 +209,31 @@ namespace flopoco{
 		vhdl << tab << "PORT MAP ("<<endl;
 		vhdl << tab << "clock => clk,"<<endl;
 		vhdl << tab << "dataa => "<<join("adder",d-1)<<","<<endl;
-		vhdl << tab << "datab => "<<zg(wp,2) <<","<<endl;
-		vhdl << tab << "AeB => potentialOutput"<<endl;
+		vhdl << tab << "datab => "<<"\"1"<<zg(wp-1,1) <<","<<endl;
+		vhdl << tab << "AeB => potentialOutput_1"<<endl;
 		vhdl << tab << "	);"<<endl;
-#else		
-		vhdl << tab << "potentialOutput <= '1' when "<<join("adder",d-1)<<"="<<zg(wp,2)<<" else '0';"<<endl;
-#endif
+
+		declare("potentialOutput_2");	
+		vhdl << tab << "LPM_COMPARE_component"<<getNewUId()<<" : LPM_COMPARE"<<endl;
+		vhdl << tab << "GENERIC MAP ("<<endl;
+		vhdl << tab << "lpm_hint => \"ONE_INPUT_IS_CONSTANT=YES\","<<endl;
+		vhdl << tab << "lpm_pipeline => 2,"<<endl;
+		vhdl << tab << "lpm_representation => \"UNSIGNED\","<<endl;
+		vhdl << tab << "lpm_type => \"LPM_COMPARE\","<<endl;
+		vhdl << tab << "lpm_width => "<<wp<<endl;;
+		vhdl << tab << "	)"<<endl;
+		vhdl << tab << "PORT MAP ("<<endl;
+		vhdl << tab << "clock => clk,"<<endl;
+		vhdl << tab << "dataa => "<<join("adder",d-1)<<","<<endl;
+		vhdl << tab << "datab => "<<"\"0"<<og(wp-1,1) <<","<<endl;
+		vhdl << tab << "AeB => potentialOutput_2"<<endl;
+		vhdl << tab << "	);"<<endl;
+
+		vhdl << tab << "potentialOutput <= potentialOutput_1 or potentialOutput_2;"<<endl;
+}else{
+		vhdl << tab << "potentialOutput <= '1' when ("<<join("adder",d-1)<<"="<<"\"1"<<zg(wp-1,1)<<" or "<<join("adder",d-1)<<"="<<"\"0"<<og(wp-1,1) <<") else '0';"<<endl;
+}
+
 		vhdl << tab << declare("finished_signal") << " <= '1' when ulp_counter_d"<<d<<"=CONV_STD_LOGIC_VECTOR("<<iterations<<","<<counterWidth<<") else '0';"<<endl;
 		vhdl << tab << "finished <= finished_signal_d1;"<<endl;
 	}

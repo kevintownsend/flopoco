@@ -616,6 +616,59 @@ static void usage(char *name, string opName = ""){
 	// cerr << "    CoordinatesTableY wIn LSB MSB FilePath\n";
 	// cerr << "    CoordinatesTableZ wIn LSB MSB FilePath\n";
 	//=====================================================
+
+	if ( full || opName == "TaMaDiModule" || opName == "TaMaDi"){
+		OP("TaMaDiModule","wP degree nbOfIterations IntervalIDWidth nbOfPE inFiFoDepth PEFiFoDepth outFiFoDepth");;
+		cerr << "       Assembles a TaMaDiMultimodule formed of multiple TaMaDi cores\n";
+		cerr << "       wP             : internal fixed-point working precision \n";
+		cerr << "       degree         : polyonomial degree used in the TaMaDiCore \n";
+		cerr << "       nbOfIterations : the number of allowed iterations per TaMaDiCore\n";
+		cerr << "       IntervalIDWidth: the number of bits required for storing the interval ID\n";
+		cerr << "       nbOfPE         : the number of TaMaDiCores instantiated in the multi-module \n";
+		cerr << "       inFiFoDepth    : the multi-module's input FIFO depth \n";
+		cerr << "       PEFiFoDepth    : each TaMaDiCore is associated with its own output FIFO; \n";
+		cerr << "                        this argument sets its depth; \n";
+		cerr << "       outFiFoDepth   : the multi-module's output FIFO depth \n";
+	}	
+	if ( full || opName == "TaMaDiModuleDummyWrapper"|| opName == "TaMaDi"){
+		OP("TaMaDiModuleDummyWrapper","wP degree nbOfIterations IntervalIDWidth nbOfPE inFiFoDepth PEFiFoDepth outFiFoDepth");;
+		cerr << "       Assembles a TaMaDiMultimodule and adds a serial interface\n";
+	}	
+	if ( full || opName == "TaMaDiDeserializer"|| opName == "TaMaDi"){
+		OP("TaMaDiDeserializer","wP degree nbOfIterations IntervalIDWidth nbOfPE inFiFoDepth PEFiFoDepth outFiFoDepth");;
+		cerr << "       Module used to deserialize the data from the DMA FIFO into initialization packets\n";
+	}	
+	if ( full || opName == "TaMaDiModuleWrapperInterface"|| opName == "TaMaDi"){
+		OP("TaMaDiModuleWrapperInterface","wP degree nbOfIterations IntervalIDWidth nbOfPE inFiFoDepth PEFiFoDepth outFiFoDepth");;
+		cerr << "       Adds the counter-based interface for the credit-based dispatch scheme\n";
+	}	
+	if ( full || opName == "TaMaDiModuleDispatcherInterface"|| opName == "TaMaDi"){
+		OP("TaMaDiModuleDispatcherInterface","wP degree nbOfIterations IntervalIDWidth nbOfPE inFiFoDepth PEFiFoDepth outFiFoDepth InterfaceInFiFoDepth InterfaceOutFiFoDepth");;
+		cerr << "       The Dispatcher module which dispatches initialization packets to the interface-wrapped TaMaDiMultiModules\n";
+		cerr << "       InterfaceInFiFoDepth    : the Dispatcher's input FIFO depth (will be filled-in by the Deserializer) \n";
+		cerr << "       InterfaceOutFiFoDepth   : the Dispatcher's output FIFO depth (will be filled by the TaMaDiMultimodules with HR cases\n";
+	}	
+	if ( full || opName == "TaMaDiSystem"|| opName == "TaMaDi"){
+		OP("TaMaDiSystem","wP degree nbOfIterations IntervalIDWidth nbOfPE inFiFoDepth PEFiFoDepth outFiFoDepth InterfaceInFiFoDepth InterfaceOutFiFoDepth nbOfModules");;
+		cerr << "       Assembles a full system with a Deserializer, Dispatcher and several multi-modules\n";
+		cerr << "       wP             : internal fixed-point working precision \n";
+		cerr << "       degree         : polyonomial degree used in the TaMaDiCore \n";
+		cerr << "       nbOfIterations : the number of allowed iterations per TaMaDiCore\n";
+		cerr << "       IntervalIDWidth: the number of bits required for storing the interval ID\n";
+		cerr << "       nbOfPE         : the number of TaMaDiCores instantiated in the multi-module \n";
+		cerr << "       inFiFoDepth    : the multi-module's input FIFO depth \n";
+		cerr << "       PEFiFoDepth    : each TaMaDiCore is associated with its own output FIFO; \n";
+		cerr << "                        this argument sets its depth; \n";
+		cerr << "       outFiFoDepth   : the multi-module's output FIFO depth \n";
+		cerr << "       InterfaceInFiFoDepth    : the Dispatcher's input FIFO depth (will be filled-in by the Deserializer) \n";
+		cerr << "       InterfaceOutFiFoDepth   : the Dispatcher's output FIFO depth (will be filled by the TaMaDiMultimodules with HR cases\n";
+		cerr << "       nbOfModules             : the number of multi-modules instantiated in the TaMaDiSystem"<<endl;
+	}	
+	if ( full || opName == "TaMaDiCore" || opName == "TaMaDi"){
+		OP("TaMaDiCore","wP degree nbOfIterations IntervalIDWidth");;
+		cerr << "       The TaMaDiCore performing the polynomial evaluation based on the tabulated differences\n";
+	}	
+
 	if ( full || opName=="TestBench" ){
 		cerr << "    ____________ TEST-BENCH ____________________________________________________\n";
 		OP ("TestBench","n");
@@ -1547,7 +1600,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				int InterfaceOutFifoDepth = checkStrictlyPositive(argv[i++], argv[0]);
 				int moduleCount = checkStrictlyPositive(argv[i++], argv[0]);
 				
-				cerr << "> TaMaDiModuleWrapperInterface , wP="<<wP<<", degree="<<degree<<" numberOfIterations="<<numberOfIterations<<" widthOfIntervalID="<<widthOfIntervalID<<" n="<<n<<" inFifo="<<inFifoDepth<<" peFifo="<<peFifoDepth<<" outFifo"<<outFifoDepth << " interfaceInFifo="<<InterfaceInFifoDepth<<" interfaceOutFifoDepth="<<InterfaceOutFifoDepth<<" moduleCount="<<moduleCount<<"\n";
+				cerr << "> TaMaDiSystem , wP="<<wP<<", degree="<<degree<<" numberOfIterations="<<numberOfIterations<<" widthOfIntervalID="<<widthOfIntervalID<<" n="<<n<<" inFifo="<<inFifoDepth<<" peFifo="<<peFifoDepth<<" outFifo"<<outFifoDepth << " interfaceInFifo="<<InterfaceInFifoDepth<<" interfaceOutFifoDepth="<<InterfaceOutFifoDepth<<" moduleCount="<<moduleCount<<"\n";
 				op = new TaMaDiSystem(target, wP, degree, numberOfIterations, widthOfIntervalID, n, inFifoDepth, peFifoDepth, outFifoDepth, InterfaceInFifoDepth, InterfaceOutFifoDepth, moduleCount );
 				addOperator(op);
 			}
