@@ -119,9 +119,6 @@ namespace flopoco{
 			vhdl << tab << "R <= Y;" << endl;
 		  	outDelayMap["R"] = getCriticalPath();
 		}
-
-
-
 		else {
 			///////////////////////////////////   Generic Case  ////////////////////////////////////
 

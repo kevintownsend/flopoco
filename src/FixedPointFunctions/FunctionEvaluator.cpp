@@ -87,7 +87,7 @@ namespace flopoco{
 		vhdl << tab << declare("addr", addrSize,true) << " <= X"<<range(wInX-1, wInX-addrSize)<<";"<<endl;
 
 		/* Instantiate the table generator */
-		nextCycle();/////////////////////////////////// The Coefficent ROM has a registered input
+//		nextCycle();/////////////////////////////////// The Coefficent ROM has a registered input
 		inPortMap ( tg, "X", "addr");
 		outPortMap ( tg, "Y", "Coef");
 		vhdl << instance ( tg, "GeneratedTable" );

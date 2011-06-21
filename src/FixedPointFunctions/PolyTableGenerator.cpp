@@ -110,8 +110,12 @@ namespace flopoco{
 			
 				REPORT(INFO, "Now approximating "<<fi->getName());
 				/*start with one interval; subdivide until the error is satisfied for all functions involved*/
-				int nrIntervals = 1;
-				int precShift=0;
+				int nrIntervals = 256;
+				int precShift=7;
+
+//				int nrIntervals = 1;
+//				int precShift=0;
+
 				errBoundBool =0;
 		
 				/*Convert the input string into a sollya evaluation tree*/ 

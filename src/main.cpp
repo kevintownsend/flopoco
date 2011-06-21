@@ -63,6 +63,9 @@
 #include "IntAddition/LongIntAdderCmpAddIncGen2.hpp"
 #include "IntAddition/IntComparatorSpecific.hpp"
 
+#include "IntAddition/LongIntAdderMuxNetwork.hpp"
+
+
 /* multiplication-related ------------------------------------ */
 #include "IntMultiplier.hpp"
 #include "IntMultipliers/IntTilingMult.hpp"
@@ -1268,6 +1271,17 @@ bool parseCommandLine(int argc, char* argv[]){
 					op = new LongIntAdderAddAddMuxGen2(target,wIn, inDelayMap("X",target->ffDelay() + target->localWireDelay() ));
 				else 
 					throw "Generation parameter is either 1 or 2";
+				addOperator(op);
+			}    
+		}
+		else if(opname=="LongIntAdderMuxNetwork"){ //Mux network
+			int nargs = 1;
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			else {
+				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
+				cerr << "> LongIntAdderMuxNetwork, wIn="<<wIn<<endl  ;
+				op = new LongIntAdderMuxNetwork(target,wIn);
 				addOperator(op);
 			}    
 		}

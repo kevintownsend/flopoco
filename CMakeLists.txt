@@ -316,6 +316,8 @@ ADD_EXECUTABLE(flopoco
  src/IntAddition/LongIntAdderCmpCmpAddGen2 
  src/IntAddition/LongIntAdderCmpAddIncGen2
 
+ src/IntAddition/LongIntAdderMuxNetwork
+
 # ---------- Multioperand -------------------------------------------
  src/IntNAdder
  src/IntCompressorTree

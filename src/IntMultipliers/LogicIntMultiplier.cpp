@@ -306,6 +306,7 @@ namespace flopoco{
 					syncCycleFromSignal("addRes");
 					setCriticalPath(add->getOutputDelay("R"));
 
+					outDelayMap["R"] = getCriticalPath();	
 					vhdl<<tab<<"R<=addRes" << range(adderWidth-1,adderWidth-wInX_-wInY_) << ";" << endl;		
 				}else{ //unsigned version
 				/* ----------------------------------------------------*/
