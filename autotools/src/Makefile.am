@@ -122,6 +122,7 @@ libflopoco_la_SOURCES +=  \
 			IntAddition/LongIntAdderAddAddMuxGen2.cpp \
 			IntAddition/LongIntAdderCmpCmpAddGen2.cpp \
 			IntAddition/LongIntAdderCmpAddIncGen2.cpp \
+			IntAddition/LongIntAdderMuxNetwork.cpp \
 			apps/FPJacobi.cpp \
 			apps/TaMaDiCore.cpp \
 			apps/TaMaDiPriorityEncoder.cpp \
