@@ -37,7 +37,7 @@ namespace flopoco{
 	class FixRealKCMTable : public Table
 	{
 	public:
-		FixRealKCMTable(Target* target, FixRealKCM* mother, int i, int wIn, int wOut, bool signedInput, bool last);
+		FixRealKCMTable(Target* target, FixRealKCM* mother, int i, int wIn, int wOut, bool signedInput, bool last, int logicTable = 1);
 		~FixRealKCMTable();
     
 		mpz_class function(int x);

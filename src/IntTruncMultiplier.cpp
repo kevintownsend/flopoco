@@ -2074,7 +2074,7 @@ namespace flopoco{
 			int mindY = mind;
 			
 
-			if (targetID == "Virtex5")
+			if (false && (targetID == "Virtex5" || targetID == "Virtex6"))
 			{ // align bottom-left corner of current with X-possition of previous to catch ideal case
 				mindX = -abs(w-h);
 				mindY = h;

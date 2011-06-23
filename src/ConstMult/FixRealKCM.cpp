@@ -99,7 +99,7 @@ namespace flopoco{
 
 		setCriticalPath( getMaxInputDelays(inputDelays) );
 
-		if(wIn <= lutWidth+2){
+		if(wIn <= lutWidth){
 			///////////////////////////////////  multiplication using 1 table only ////////////////////////////////////
 			REPORT(INFO, "Constant multiplication in a single table, will be correctly rounded");
 			g=0;
@@ -118,8 +118,7 @@ namespace flopoco{
 
 			vhdl << tab << "R <= Y;" << endl;
 		  	outDelayMap["R"] = getCriticalPath();
-		}
-		else {
+		}else {
 			///////////////////////////////////   Generic Case  ////////////////////////////////////
 
 			int nbOfTables = int ( ceil( double(wIn)/double(lutWidth)) );
@@ -182,7 +181,7 @@ namespace flopoco{
 				// Now produce the VHDL
 				
 				FixRealKCMTable *t; 
-				t = new FixRealKCMTable(target, this, i, diSize, ppiSize, tableSigned, last);
+				t = new FixRealKCMTable(target, this, i, diSize, ppiSize, tableSigned, last, 1);
 				useSoftRAM(t);
 				oplist.push_back(t);
             	
@@ -275,8 +274,8 @@ namespace flopoco{
 	/****************************** The FixRealKCMTable class ********************/
 
 
-	FixRealKCMTable::FixRealKCMTable(Target* target, FixRealKCM* mother, int i, int wIn, int wOut, bool signedInput, bool last) : 
-		Table(target, wIn, wOut), mother(mother), index(i), signedInput(signedInput), last(last)
+	FixRealKCMTable::FixRealKCMTable(Target* target, FixRealKCM* mother, int i, int wIn, int wOut, bool signedInput, bool last, int pipeline) : 
+		Table(target, wIn, wOut, 0, -1, pipeline), mother(mother), index(i), signedInput(signedInput), last(last)
 	{
 		ostringstream name; 
 		srcFileName="FixRealKCM";

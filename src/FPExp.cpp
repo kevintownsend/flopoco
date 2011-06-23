@@ -266,9 +266,8 @@ namespace flopoco{
 
 #endif	
 		
-		manageCriticalPath( target->localWireDelay() + target->lutDelay() );
-
 		int sizeXfix = wE+wF+g; // still unsigned; msb=wE-1; lsb = -wF-g
+		manageCriticalPath( target->localWireDelay(sizeXfix) + target->lutDelay() );
 		vhdl << tab << declare("fixX", sizeXfix) << " <= " << " fixX0" << range(wE-1 + wF+g + wFIn+1 -1, wFIn) << " and "<<rangeAssign(sizeXfix-1,0,"not(resultWillBeOne)")<<";" << endl;
 
 		int lsbXforFirstMult=-3; 
@@ -284,7 +283,9 @@ namespace flopoco{
 																						 0,   // lsbOut,
 																						 "1/log(2)", //  constant
 																						 0.5 + 0.09, // error: we have 0.125 on X, and target is 0.5+0.22 
-																						 inDelayMap( "X", target->localWireDelay() + getCriticalPath()) );
+																						 inDelayMap( "X", target->localWireDelay() + getCriticalPath())
+																						 
+																						 );
 		oplist.push_back(mulInvLog2);
 		outPortMap(mulInvLog2, "R", "absK");
 		inPortMap(mulInvLog2, "X", "xMulIn");
@@ -392,21 +393,22 @@ namespace flopoco{
 			vhdl << tab << declare("Z", sizeZ) << " <= Y" << range(sizeZ-1, 0) << ";\n";
 
 			vhdl << tab << declare("Addr2", k) << " <= Z" << range(sizeZ-1, sizeZ-k) << ";\n";
-			magicTable* table;
-			table = new magicTable(target);
+			magicTable* table = new magicTable(target);
 			oplist.push_back(table);
 			
-//			manageCriticalPath( target->LogicToRAMWireDelay() + target->RAMDelay() );
-			nextCycle(); //otherwise it does not get synthetized as a RAM			
+			/* Magic Table is an instance of DualTable which is, for now combinatorial */
+			nextCycle(); //However, to get the MagicTable inferred as a dual-port ram, it needs buffered inputs			
 			outPortMap(table, "Y2", "lowerTerm0");
 			inPortMap(table, "X2", "Addr2");
 			outPortMap(table, "Y1", "expA0");
 			inPortMap(table, "X1", "Addr1");
 			vhdl << instance(table, "table");
-			syncCycleFromSignal("expA0", target->LogicToRAMWireDelay() + target->RAMDelay());
+			setSignalDelay("expA0",  target->RAMDelay() );
+			syncCycleFromSignal("expA0", getSignalDelay("expA0"));
 			
 			//TODO FIXME
 			cpexpA = getCriticalPath();
+			setSignalDelay("expA", getCriticalPath());
 			vhdl << tab << declare("expA", 27) << " <=  expA0" << range(35, 9) << ";" << endl;
 			vhdl << tab << declare("expZmZm1_0", 9) << " <= lowerTerm0" << range(8, 0) << ";" << endl;
 
@@ -418,15 +420,17 @@ namespace flopoco{
 			vhdl << tab << declare("Zhigh", sizeZhigh) << " <= Z" << range(sizeZ-1, sizeZ-sizeZhigh) << ";\n";
 		
 			double cpZhigh = getCriticalPath();
-			manageCriticalPath( target->LogicToRAMWireDelay() + target->RAMDelay() );
+//			manageCriticalPath( target->LogicToRAMWireDelay() + target->RAMDelay() );
 			firstExpTable* table;
 			table = new firstExpTable(target, k, sizeExpA); // e^A-1 has MSB weight 1
 			oplist.push_back(table);
 			outPortMap(table, "Y", "expA");
 			inPortMap(table, "X", "Addr1");
 			vhdl << instance(table, "table");
+			setSignalDelay("expA",  table->getOutputDelay("Y"));
+			syncCycleFromSignal("expA", getSignalDelay("expA"));
+			vhdl << "-- signal delay at BRAM output = "<<getSignalDelay("expA")<<endl;
 			cpexpA = getCriticalPath();
-			
 			syncCycleFromSignal("Zhigh", cpZhigh );
 
 #if 1
@@ -455,20 +459,7 @@ namespace flopoco{
 #endif
 		}
 
-//		syncCycleFromSignal("expA");
-
-//		syncCycleFromSignal("expZmZm1_0");
-
-//		if((wE+wF)*target->normalizedFrequency() > 8)
-//			nextCycle();
-//		if((wE+wF)*target->normalizedFrequency() > 16)
-//			nextCycle(); // To get high-speed BRam speed
-
-
-		
-
 		// here we have in expZmZm1 e^Z-Z-1
-
 		// Alignment of expZmZm10:  MSB has weight -2*k, LSB has weight -(wF+g).
 		//		vhdl << tab << declare("ShouldBeZero2", (rWidth- sizeZxpZmZm1)) << " <= expZmZm1_0" << range(rWidth-1, sizeZxpZmZm1)  << "; -- for debug to check it is always 0" <<endl;
 		vhdl << tab << declare("expZmZm1", sizeZxpZmZm1) << " <= expZmZm1_0" << range(sizeZxpZmZm1-1, 0)  << "; " <<endl;
@@ -490,12 +481,10 @@ namespace flopoco{
 
 
 		vhdl << tab << "-- Truncating expA to the same accuracy as expZminus1" << endl;
-		setCycleFromSignal("expA", cpexpA );
+		setCycleFromSignal("expA", getSignalDelay("expA"));
 		
-		
-		IntAdder* expArounded0 = new IntAdder( target, sizeMultIn+1, inDelayMap( "X", target->localWireDelay() + getCriticalPath() ) );
+		IntAdder* expArounded0 = new IntAdder( target, sizeMultIn+1, inDelayMap( "X", target->RAMToLogicWireDelay() + getCriticalPath()) );
 		oplist.push_back(expArounded0);
-		
 		
 		
 		inPortMapCst(expArounded0, "X", "expA"+range(sizeExpA-1, sizeExpA-sizeMultIn-1));

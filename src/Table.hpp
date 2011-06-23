@@ -60,9 +60,9 @@ namespace flopoco{
 		 * @param[in] wIn    the with of the input in bits
 		 * @param[in] wOut   the with of the output in bits  
 		 **/
-		Table(Target* target, int _wIn, int _wOut, int _minIn=0, int _maxIn=-1);
+		Table(Target* target, int _wIn, int _wOut, int _minIn=0, int _maxIn=-1, int logicTable = 0 );
 
-    Table(Target* target);
+		Table(Target* target);
      
 		virtual ~Table() {};
 
@@ -121,6 +121,7 @@ namespace flopoco{
 		int size_in_LUTs();
 	private:
 		bool full; /**< true if there is no "don't care" inputs, i.e. minIn=0 and maxIn=2^wIn-1 */
+		int logicTable_;
 	};
 
 }

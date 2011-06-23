@@ -49,6 +49,8 @@ namespace flopoco{
 				srcFileName="FPExp::firstExpTable";
 				name <<"firstExpTable_" << wIn << "_" << wOut;
 				setName(name.str());
+				
+				outDelayMap["Y"] = target->RAMDelay();
 			};
 
 			mpz_class function(int x);

@@ -515,7 +515,7 @@ namespace flopoco{
 			} 
 			
 			currentCycle_ = s->getCycle();
-			criticalPath_ = criticalPath_;
+			criticalPath_ = criticalPath;
 			vhdl.setCycle(currentCycle_);
 			
 			if(report)

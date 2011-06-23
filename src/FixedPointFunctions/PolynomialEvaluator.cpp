@@ -219,7 +219,7 @@ namespace flopoco{
 					vhdl << tab << "-- the delay at the output of the multiplier is : " << sm->getOutputDelay("R") << endl;
 
 
-					IntAdder* sa = new IntAdder (target, (coef_[0]->getSize()+2), inDelayMap("X",getCriticalPath()));
+					IntAdder* sa = new IntAdder (target, (coef_[0]->getSize()+2), inDelayMap("X",target->localWireDelay() +  getCriticalPath()));
 					oplist.push_back(sa);
 
 					vhdl << tab << declare( join("op1_",i), (coef_[0]->getSize()+2) ) << " <= " 
