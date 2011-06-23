@@ -109,7 +109,7 @@ namespace flopoco{
 			oplist.push_back(t);
 			useSoftRAM(t);
 
-			manageCriticalPath(2*target->localWireDelay() + target->lutDelay());
+			manageCriticalPath(target->localWireDelay() + target->lutDelay());
       
 			inPortMap (t , "X", "X");
 			outPortMap(t , "Y", "Y");
@@ -146,7 +146,7 @@ namespace flopoco{
 
 			// All the tables are read in parallel
 			setCriticalPath(getMaxInputDelays(inputDelays));
-			manageCriticalPath( target->lutDelay() + target->localWireDelay(wOut+g) );
+			manageCriticalPath( target->lutDelay() );
 
 
 			//first split the input X into digits having lutWidth bits -> this is as generic as it gets :)

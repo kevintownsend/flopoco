@@ -54,7 +54,7 @@ namespace flopoco{
 	};
 	
 	double Virtex5::localWireDelay(int fanout){
-		return  elemWireDelay_*(1+double(fanout)/100.0) ;
+		return  elemWireDelay_*(1+double(fanout)/50.0) ;
 	};
 	
 	double Virtex5::distantWireDelay(int n){
@@ -105,34 +105,58 @@ namespace flopoco{
 		}
 		return true;
 	}	 
-	
+
 	bool Virtex5::suggestSubaddSize(int &x, int wIn){
-		
-//		int chunkSize = 2 + (int)floor( (1./frequency() - (fdCtoQ_ + slice2sliceDelay_ + lut2_ + muxcyStoO_ + xorcyCintoO_ + ffd_)) / muxcyCINtoO_ );
-		int chunkSize = 1 + (int)floor( (1./frequency() - localWireDelay() - (lut2_ + muxcyStoO_ + xorcyCintoO_)) / muxcyCINtoO_ );
-		
-		x = chunkSize;		
+		int chunkSize = 2 + (int)floor( (1./frequency() - (fdCtoQ_ + slice2sliceDelay_ + lut2_ + muxcyStoO_ + xorcyCintoO_ + ffd_)) / muxcyCINtoO_ );
+		x = min(chunkSize, wIn);		
 		if (x > 0) 
 			return true;
 		else {
-			x = 2;		
+			x = min(2,wIn);		
 			return false;
 		} 
 	};
 	
 	bool Virtex5::suggestSlackSubaddSize(int &x, int wIn, double slack){
-		
-// 		int chunkSize = 2 + (int)floor( (1./frequency() - slack - (fdCtoQ_ + slice2sliceDelay_ + lut2_ + muxcyStoO_ + xorcyCintoO_ + ffd_)) / muxcyCINtoO_ );
-		int chunkSize = 1 + (int)floor( (1./frequency() - slack - (lut2_ + muxcyStoO_ + xorcyCintoO_)) / muxcyCINtoO_ );
-		
-		x = chunkSize;		
-		if (x > 1) 
+		int chunkSize =  1 + (int)floor( (1./frequency() - slack - (lut2_ + muxcyStoO_ + xorcyCintoO_)) / muxcyCINtoO_ );
+		x = chunkSize;	
+		x = min(chunkSize, wIn);	
+		if (x > 0) 
 			return true;
 		else {
-			x = 2;		
+			x = min(2,wIn);		
 			return false;
 		} 
 	};
+
+	
+//	bool Virtex5::suggestSubaddSize(int &x, int wIn){
+//		
+////		int chunkSize = 2 + (int)floor( (1./frequency() - (fdCtoQ_ + slice2sliceDelay_ + lut2_ + muxcyStoO_ + xorcyCintoO_ + ffd_)) / muxcyCINtoO_ );
+//		int chunkSize = 1 + (int)floor( (1./frequency() - localWireDelay() - (lut2_ + muxcyStoO_ + xorcyCintoO_)) / muxcyCINtoO_ );
+//		
+//		x = chunkSize;		
+//		if (x > 0) 
+//			return true;
+//		else {
+//			x = 2;		
+//			return false;
+//		} 
+//	};
+//	
+//	bool Virtex5::suggestSlackSubaddSize(int &x, int wIn, double slack){
+//		
+//// 		int chunkSize = 2 + (int)floor( (1./frequency() - slack - (fdCtoQ_ + slice2sliceDelay_ + lut2_ + muxcyStoO_ + xorcyCintoO_ + ffd_)) / muxcyCINtoO_ );
+//		int chunkSize = 1 + (int)floor( (1./frequency() - slack - (lut2_ + muxcyStoO_ + xorcyCintoO_)) / muxcyCINtoO_ );
+//		
+//		x = chunkSize;		
+//		if (x > 1) 
+//			return true;
+//		else {
+//			x = 2;		
+//			return false;
+//		} 
+//	};
 	
 	bool Virtex5::suggestSlackSubcomparatorSize(int& x, int wIn, double slack, bool constant)
 	{

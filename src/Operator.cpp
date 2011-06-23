@@ -685,9 +685,22 @@ namespace flopoco{
 		criticalPath_ += delay;
 	}
 	
+//	bool Operator::manageCriticalPath(double delay, bool report){
+//		//		criticalPath_ += delay;
+//		if ( target_->ffDelay() + (criticalPath_ + delay) + target_->localWireDelay() > (1.0/target_->frequency())){
+//			nextCycle(report); //TODO Warning
+//			criticalPath_ = min(delay, 1.0/target_->frequency());
+//			return true;
+//		}
+//		else{
+//			criticalPath_ += delay;
+//			return false;
+//		}
+//	}
+
 	bool Operator::manageCriticalPath(double delay, bool report){
 		//		criticalPath_ += delay;
-		if ( target_->ffDelay() + (criticalPath_ + delay) + target_->localWireDelay() > (1.0/target_->frequency())){
+		if ( target_->ffDelay() + (criticalPath_ + delay) > (1.0/target_->frequency())){
 			nextCycle(report); //TODO Warning
 			criticalPath_ = min(delay, 1.0/target_->frequency());
 			return true;
@@ -697,6 +710,7 @@ namespace flopoco{
 			return false;
 		}
 	}
+
 	
 	double Operator::getOutputDelay(string s) {return outDelayMap[s];}  // TODO add checks
 	

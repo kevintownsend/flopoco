@@ -129,6 +129,11 @@ namespace flopoco{
 				d=4;
 				k=11;
 			}
+			if(wF==112) {
+				d=4;
+				k=13;
+			}
+
 		}
 
 
@@ -253,7 +258,7 @@ namespace flopoco{
 
 		setCycleFromSignal("shiftVal", scp);
 
-		Shifter* lshift = new Shifter(target, wFIn+1, maxshift , Shifter::Left, inDelayMap("S", target->localWireDelay() + getCriticalPath())  );   
+		Shifter* lshift = new Shifter(target, wFIn+1, maxshift , Shifter::Left, inDelayMap("S", target->localWireDelay(wFIn+1) + getCriticalPath())  );   
 		oplist.push_back(lshift);
 		int shiftInSize = lshift->getShiftInWidth();
 		vhdl << tab  << declare("shiftValIn", shiftInSize) << " <= shiftVal" << range(shiftInSize-1, 0) << ";" << endl;
@@ -267,7 +272,7 @@ namespace flopoco{
 #endif	
 		
 		int sizeXfix = wE+wF+g; // still unsigned; msb=wE-1; lsb = -wF-g
-		manageCriticalPath( target->localWireDelay(sizeXfix) + target->lutDelay() );
+		manageCriticalPath( target->localWireDelay(sizeXfix) + target->lutDelay());
 		vhdl << tab << declare("fixX", sizeXfix) << " <= " << " fixX0" << range(wE-1 + wF+g + wFIn+1 -1, wFIn) << " and "<<rangeAssign(sizeXfix-1,0,"not(resultWillBeOne)")<<";" << endl;
 
 		int lsbXforFirstMult=-3; 
@@ -283,7 +288,7 @@ namespace flopoco{
 																						 0,   // lsbOut,
 																						 "1/log(2)", //  constant
 																						 0.5 + 0.09, // error: we have 0.125 on X, and target is 0.5+0.22 
-																						 inDelayMap( "X", target->localWireDelay() + getCriticalPath())
+																						 inDelayMap( "X", target->localWireDelay(2) + getCriticalPath())
 																						 
 																						 );
 		oplist.push_back(mulInvLog2);
@@ -313,7 +318,7 @@ namespace flopoco{
 																				 -wF-g, 
 																				 "log(2)", 
 																				 1.0, 
-																				 inDelayMap( "X", target->localWireDelay() + getCriticalPath()) );
+																				 inDelayMap( "X", target->localWireDelay(wF+g) + getCriticalPath()) );
 
 		oplist.push_back(mulLog2);
 		outPortMap(mulLog2, "R", "absKLog2");
@@ -408,8 +413,8 @@ namespace flopoco{
 			
 			//TODO FIXME
 			cpexpA = getCriticalPath();
-			setSignalDelay("expA", getCriticalPath());
 			vhdl << tab << declare("expA", 27) << " <=  expA0" << range(35, 9) << ";" << endl;
+			setSignalDelay("expA", target->RAMDelay());
 			vhdl << tab << declare("expZmZm1_0", 9) << " <= lowerTerm0" << range(8, 0) << ";" << endl;
 
 #endif

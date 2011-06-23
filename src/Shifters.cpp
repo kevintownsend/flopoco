@@ -78,12 +78,13 @@ namespace flopoco{
 			if (verbose)
 				cerr<<"> Shifters\t depth = "<<dep<<" at i="<<currentLevel<<endl;
 				
-			double wireD = target->localWireDelay( wIn );
+			double wireD = target->localWireDelay(2*wIn);//the delay is unusually high
 			REPORT(DEBUG, " wire delay is " << wireD << " and unregisteredLevels="<<unregisteredLevels);
 			if (manageCriticalPath( intlog( mpz_class(target->lutInputs()/2), mpz_class(dep)) * target->lutDelay() + (intlog( mpz_class(target->lutInputs()/2), mpz_class(dep))-1)*target->localWireDelay()+ wireD)){
 				lastRegLevel = currentLevel;
 				REPORT(DEBUG, tab << "REG LEVEL current delay is:" << getCriticalPath());
 			}
+//			vhdl << "--Estimated delay is:" << getCriticalPath() << endl;
 			if (currentLevel<wShiftIn_-1)	
 				setCriticalPath(0.0);
 
@@ -118,6 +119,7 @@ namespace flopoco{
 			vhdl << tab << "R <= "<<lastLevelName.str()<<"("<< wIn + intpow2(wShiftIn_)-1-1 << " downto " << wIn_ + intpow2(wShiftIn_)-1 - wOut_ <<");"<<endl;
 		else
 			vhdl << tab << "R <= "<<lastLevelName.str()<<"("<< wOut_-1 << " downto 0);"<<endl;
+		
 	}
 
 	Shifter::~Shifter() {
