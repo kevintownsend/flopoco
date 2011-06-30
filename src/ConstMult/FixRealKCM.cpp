@@ -146,6 +146,7 @@ namespace flopoco{
 
 			// All the tables are read in parallel
 			setCriticalPath(getMaxInputDelays(inputDelays));
+			// TODO Wrong if the last table uses two luts per bit! Use the delay reported by the table itself
 			manageCriticalPath( target->lutDelay() );
 
 

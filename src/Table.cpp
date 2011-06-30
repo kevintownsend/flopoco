@@ -61,7 +61,7 @@ namespace flopoco{
 
 
 
-	Table::Table(Target* target, int _wIn, int _wOut, int _minIn, int _maxIn, int logicTable) : 
+	Table::Table(Target* target, int _wIn, int _wOut, int _minIn, int _maxIn, int logicTable, map<string, double> inputDelays) : 
 		Operator(target),
 		wIn(_wIn), wOut(_wOut), minIn(_minIn), maxIn(_maxIn), logicTable_(logicTable)
 	{
@@ -70,13 +70,6 @@ namespace flopoco{
 		// Set up the IO signals
 		addInput ("X"  , wIn, true);
 		addOutput ("Y"  , wOut, 1, true);
-		if ( logicTable_==0 )
-			nextCycle();
-			
-//		if ((target->getVendor()=="Xilinx")){
-//			setCombinatorial();
-//		}else
-//			nextCycle();
 		
 		if(maxIn==-1) maxIn=(1<<wIn)-1;
 		if(minIn<0) {
@@ -94,10 +87,28 @@ namespace flopoco{
 		if (wIn > 10)
 		  REPORT(0, "WARNING : FloPoCo is building a table with " << wIn << " input bits, it will be large.");
 		 
-		if (logicTable_ == 1)  
-			outDelayMap["Y"] =  target->lutDelay();
-		else
-			outDelayMap["Y"] =  target->RAMDelay();
+		// TODO 
+		// I cannot use manageCriticalPath because the table construction is atomic so far
+		// All this should be rethought carefully
+
+		setCriticalPath(getMaxInputDelays(inputDelays));
+
+		if (logicTable_ == 1)  {
+			// Delay is that of broadcasting the input bits to wOut LUTs, plus the LUT delay itself
+			if(wIn <= target->lutInputs()) 
+				addToCriticalPath(target->localWireDelay(wOut) + target->lutDelay());
+			else{
+				int lutsPerBit=1<<(wIn-target->lutInputs());
+				REPORT(DETAILED, "Building a logic table that uses " << lutsPerBit << " LUTs per output bit");
+				// TODO this doesn't take into account the F5 muxes etc: there should be a logicTableDelay() in Target
+				// The following is enough for practical sizes, but it is an overestimation.
+				addToCriticalPath(target->localWireDelay(wOut*lutsPerBit) + target->lutDelay() + target->localWireDelay() + target->lutDelay());
+			}
+		}
+		else 
+			addToCriticalPath(target->RAMDelay());
+
+		outDelayMap["Y"] =   getCriticalPath();
 	}
 
 	Table::Table(Target* target) : 
@@ -109,11 +120,7 @@ namespace flopoco{
 	void Table::outputVHDL(std::ostream& o, std::string name) {
 
 		licence(o);
-
-		o << "library ieee; " << endl;
-		o << "use ieee.std_logic_1164.all;" << endl;
-		o << "use ieee.numeric_std.all;" << endl;
-		o << "library work;" << endl;
+		stdLibs(o);
 		outputVHDLEntity(o);
 		newArchitecture(o,name);
 		if (logicTable_==1 || wIn <= target_->lutInputs()){

@@ -22,13 +22,14 @@ namespace flopoco{
 
 	// A table for the KCM Multiplication
 	// the size of the input to the table will be the number of inputs of a LUT
-	KCMTable::KCMTable(Target* target, int wIn, int wOut, mpz_class C, bool inputSigned) : 
-		Table(target, wIn, wOut),  C_(C), inputSigned_(inputSigned)
+	KCMTable::KCMTable(Target* target, int wIn, int wOut, mpz_class C, bool inputSigned, map<string, double> inputDelays) : 
+	Table(target, wIn, wOut, 0, -1, true, inputDelays),  C_(C), inputSigned_(inputSigned)
 	{
 		ostringstream name; 
 		srcFileName="KCMTable";
 		name <<"KCMTable_" << wIn << "_" << C << (inputSigned_?"_signed":"_unsigned");
 		setName(name.str());
+
 	}
 
 	KCMTable::~KCMTable() {}

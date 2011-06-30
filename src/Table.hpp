@@ -1,24 +1,14 @@
 /*
- * A generic class for tables of values
- *
- * Author : Florent de Dinechin
- *
- * This file is part of the FloPoCo project developed by the Arenaire
- * team at Ecole Normale Superieure de Lyon
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or 
- * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
+
+  This file is part of the FloPoCo project 
+  developed by the Arenaire team at Ecole Normale Superieure de Lyon
+  
+  Author:    Florent de Dinechin
+
+  Initial software.
+  Copyright © ENS-Lyon, INRIA, CNRS, UCBL,  
+  CeCILL license, 2008-2011.
+
  */
 
 #ifndef TABLE_HPP
@@ -27,13 +17,22 @@
 
 #include "Operator.hpp"
 
-/** A basic hardware look-up table for FloPoCo. 
+/**
+ A basic hardware look-up table for FloPoCo. 
 
 	 If the input to your table are negative, etc, or if you want to
 	 define errors, or... then derive a class from this one.
 
-*/
+	 A Table is, so far, always combinatorial. It does increase the critical path, 
+	 taking into account inputDelays and reporting outputDelay. 
 
+	 On logic tables versus blockRam tables:
+	 This has unfortunately to be managed twice,
+	   firstly by passing the proper bool value to the logicTable argument of the constructor
+	   and  secondly by calling useSoftRAM() or useHardRAM() on each instance to set the synthesis attributes. 
+
+	 You may want to force buffering the inputs to a table to be sure it will be synthesized as a BlockRAM. 
+*/
 
 namespace flopoco{
 
@@ -60,7 +59,7 @@ namespace flopoco{
 		 * @param[in] wIn    the with of the input in bits
 		 * @param[in] wOut   the with of the output in bits  
 		 **/
-		Table(Target* target, int _wIn, int _wOut, int _minIn=0, int _maxIn=-1, int logicTable = 0 );
+		Table(Target* target, int _wIn, int _wOut, int _minIn=0, int _maxIn=-1, int logicTable = 0,  map<string, double> inputDelays = emptyDelayMap );
 
 		Table(Target* target);
      

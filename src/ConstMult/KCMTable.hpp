@@ -8,7 +8,7 @@ namespace flopoco{
 	class KCMTable : public Table
 	{
 	public:
-		KCMTable(Target* target, int wIn, int wOut, mpz_class C, bool inputSigned);
+		KCMTable(Target* target, int wIn, int wOut, mpz_class C, bool inputSigned,  map<string, double> inputDelays = emptyDelayMap);
 	
 		~KCMTable();
 

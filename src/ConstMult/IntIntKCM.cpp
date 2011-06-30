@@ -54,7 +54,6 @@ namespace flopoco{
 		name << "IntIntKCM_" << wIn_ << "_" << C << (signedInput_?"_signed":"_unsigned");
 		setName(name.str());
 
-		setCriticalPath( getMaxInputDelays(inputDelays) );
 
 		int constantWidth = intlog2( C ); 
 		int lutWidth = target->lutInputs();
@@ -62,76 +61,91 @@ namespace flopoco{
 		int nbOfTables = int ( ceil( double(wIn)/double(lutWidth)) );
 		int lastLutWidth = (wIn%lutWidth==0?lutWidth: wIn%lutWidth);
 
-#if 0 // TODO need to hack table generation, too
 		// Better to double an existing table than adding one more table and one more addition.
 		if (lastLutWidth==1){ 
 		  nbOfTables--;
 		  lastLutWidth=lutWidth + 1;
 		}
-#endif
-//			double delay = 0.0;
-	
-			REPORT(INFO, "Constant multiplication in "<< nbOfTables << " tables, input sizes:  for the first tables, " << lutWidth << ", for the last table: " << lastLutWidth);
-			// if (verbose){
-			// 	cerr << "> IntIntKCM:\t The width of the constant is = " << constantWidth<<endl;
-			// 	cerr << "> IntIntKCM:\t The number of inputs / LUT is = " << lutWidth << endl;
-			// 	cerr << "> IntIntKCM:\t The  << endl;
-			// }
-
-
-			//first split the input X into digits having lutWidth bits -> this is as generic as it gets :)
-			for (int i=0; i<nbOfTables; i++)
-				if (i < nbOfTables-1)
-					vhdl << tab << declare( join("d",i), lutWidth ) << " <= X" << range(lutWidth*(i+1)-1, lutWidth*i ) << ";" <<endl;
-				else {
-					vhdl << tab << declare( join("d",i), lutWidth ) << " <= " ;
-					if(lutWidth*(i+1)>wIn){	
-						if(signedInput_) {
-							vhdl << "(" << lutWidth*(i+1)-1 << " downto " <<  wIn << "=> X(" << wIn-1 << ")) & ";
-						}
-						else
-							vhdl << rangeAssign(lutWidth*(i+1)-1, wIn, "'0'") << " & ";
-					}
-				vhdl << "X" << range( wIn-1 , lutWidth*i ) << ";" <<endl;
-				}
-	
-			KCMTable *t1, *t2=0; 
- 			t1 = new KCMTable(target, lutWidth, constantWidth + lutWidth, C, false);
-			oplist.push_back(t1);
-			useSoftRAM(t1);
-
-
-			if(signedInput_) {
-				t2 = new KCMTable(target, lutWidth, constantWidth + lutWidth, C, true);
-				oplist.push_back(t2);
-				useSoftRAM(t2);
-			}
-
-			// All the tables are read in parallel
-			// TODO some day this will go to Table.
-			manageCriticalPath(target->lutDelay() + target->localWireDelay(constantWidth+lutWidth));
-
-			//perform nbOfTables multiplications
- 			for ( int i=0; i<nbOfTables; i++){
-
-				if(signedInput_ && (i==nbOfTables-1)) {
-					inPortMap (t2, "X", join("d",i));
-					outPortMap(t2, "Y", join("pp",i));
-					vhdl << tab << "-- last table multiplies by signed input" << endl;
-					vhdl << instance(t2, join("KCMTable_",i));
-				}
-				else {
-					inPortMap (t1, "X", join("d",i));
-					outPortMap(t1, "Y", join("pp",i));
-					vhdl << instance(t1, join("KCMTable_",i));
-				}
-			}
-
-
-					
 		
+		
+		// Actually there are only two cases: 
+		// if lastLutWidth<=lutWidth, all the digits (including the last one) may have the same size,
+		// we just pad the last digit with zeroes and use the same table as for the other digits.
+		// now if lastLutWidth=lutWidth + 1  then we need a larger last digit, and a different last table.
+		// Besides if signedResult we also need a different last table.
+
+
+		REPORT(INFO, "Constant multiplication in "<< nbOfTables << " tables, input sizes:  for the first tables, " << lutWidth << ", for the last table: " << lastLutWidth);
+
+		setCriticalPath( getMaxInputDelays(inputDelays) );
+
+		// First get rid of the easy case when there is just one table
+		if(nbOfTables==1) { 
+			KCMTable  *lastTable=0; 
+			lastTable = new KCMTable(target, wIn_, constantWidth + wIn_, C, signedInput_);
+			oplist.push_back(lastTable);
+			useSoftRAM(lastTable);
+
+			// pipeline depth of a Table, so far, is always 0, but the table is well behaved and updates the critical path.
+			double tableDelay=lastTable->getOutputDelay("Y"); // since we passed an empty inputDelayMap
+
+			manageCriticalPath(tableDelay);
+			inPortMap (lastTable, "X", "X");
+			outPortMap(lastTable, "Y", "Ri");
+			vhdl << instance(lastTable, "KCMTable");
+
+			vhdl << tab << "R <= Ri;" <<endl;
+			outDelayMap["R"] = getCriticalPath();
+		}
+
+
+		else{
+			
+			///////////////////////////////////   Generic Case  ////////////////////////////////////
+
+			int nbOfTables = int ( ceil( double(wIn)/double(lutWidth)) );
+			int lastLutWidth = (wIn%lutWidth==0?lutWidth: wIn%lutWidth);
+			// Better to double an existing table than adding one more table and one more addition.
+			if (lastLutWidth==1){ 
+				nbOfTables--;
+				lastLutWidth=lutWidth + 1;
+			}
+			REPORT(INFO, "Constant multiplication in "<< nbOfTables << " tables, input sizes:  for the first tables, " << lutWidth << ", for the last table: " << lastLutWidth);
+
+			KCMTable *firstTable=0, *lastTable=0; 
+
+			firstTable = new KCMTable(target, lutWidth, constantWidth + lutWidth, C, false);
+			oplist.push_back(firstTable);
+			useSoftRAM(firstTable);
+			
+			lastTable = new KCMTable(target, lastLutWidth, constantWidth + lastLutWidth, C, signedInput_);
+			oplist.push_back(lastTable);
+			useSoftRAM(lastTable);
+
+
+
+			bool tableSigned=false, last;
+			for (int i=0; i<nbOfTables; i++) {
+
+				//first split the input X into digits having lutWidth bits
+
+				KCMTable *t;
+				if (i < nbOfTables-1){
+					vhdl << tab << declare( join("d",i), lutWidth ) << " <= X" << range(lutWidth*(i+1)-1, lutWidth*i ) << ";" <<endl;
+					t=firstTable;
+				}
+				else {// last table is a bit special
+					vhdl << tab << declare( join("d",i), lastLutWidth ) << " <= " << "X" << range( wIn-1 , lutWidth*i ) << ";" <<endl;
+					t=lastTable;
+				}
+				inPortMap (t , "X", join("d",i));
+				outPortMap(t , "Y", join("pp",i));
+				vhdl << instance(t , join("KCMTable_",i));
+			}
+
+				
 			//determine the addition operand size
-			int addOpSize = (nbOfTables - 2) * lutWidth + (constantWidth +  lastLutWidth);
+			int addOpSize = (nbOfTables - 2) * lutWidth  +  lastLutWidth + constantWidth;
 			// if (verbose)
 			// 	cerr << "> IntIntKCM:\t The addition operand size is: " << addOpSize << endl;
 		
@@ -168,9 +182,10 @@ namespace flopoco{
 			vhdl << instance(adder, "Result_Adder");
 			syncCycleFromSignal("OutRes");
 
-			outDelayMap["R"] = adder->getOutputDelay("R");
 		
+			outDelayMap["R"] = adder->getOutputDelay("R");
 			vhdl << tab << "R <= OutRes & pp0" << range(lutWidth-1,0) << ";" <<endl;
+		}
 	}
 
 	IntIntKCM::~IntIntKCM() {

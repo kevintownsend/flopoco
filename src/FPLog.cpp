@@ -42,7 +42,7 @@ namespace flopoco{
 		: Operator(target), wE(wE), wF(wF)
 	{
 
-		setCopyrightString("F. de Dinechin, C. Klein  (2008)");
+		setCopyrightString("F. de Dinechin, C. Klein  (2008-2011)");
 
 		ostringstream o;
 		srcFileName = "FPLog";
@@ -251,7 +251,7 @@ namespace flopoco{
 		vhdl << tab << declare("XExnSgn", 3) << " <=  X(wE+wF+2 downto wE+wF);" << endl;
 		vhdl << tab << declare("FirstBit") << " <=  X(wF-1);" << endl;
 
-		manageCriticalPath( target->adderDelay(wE) + target->lutDelay() );
+		manageCriticalPath( target->eqComparatorDelay(wE) + target->lutDelay() );
 		
 		// if(isSequential()) vhdl << tab << "-- Rem: the Y0 input is registered inside the RangeRed box" << endl;
 		vhdl << tab << declare("Y0", wF+2) << " <= \"1\" & X(wF-1 downto 0) & \"0\" when FirstBit = '0' else \"01\" & X(wF-1 downto 0);" << endl;
