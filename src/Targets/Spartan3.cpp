@@ -37,11 +37,11 @@ namespace flopoco{
 		k2 = muxcyCINtoO_;
 	}
 	
-	double Spartan3::comparatorDelay(int size){
+	double Spartan3::eqComparatorDelay(int size){
 		return lut2_ + muxcyStoO_ + double((size-1)/(lutInputs_/2)+1)*muxcyCINtoO_; 
 	}
 	
-	double Spartan3::comparatorConstDelay(int size){
+	double Spartan3::eqConstComparatorDelay(int size){
 		return lut2_ + muxcyStoO_ + double((size-1)/lutInputs_+1)*muxcyCINtoO_; 
 	}
 	

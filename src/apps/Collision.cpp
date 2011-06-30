@@ -395,7 +395,7 @@ namespace flopoco{
 //			vhdl << tab << declare("diff", wE+wF+g+1) << " <=  ('0'& X2PY2PZ2)  - ('0'& R2pipe & CONV_STD_LOGIC_VECTOR(0, " << g << ") );" << endl;
 //			vhdl << tab <<  "P(0) <= diff(" << wE+wF+g << ");"  << endl ;
 
-			manageCriticalPath( target->localWireDelay() + target->comparatorDelay(wE+wF+g));
+			manageCriticalPath( target->localWireDelay() + target->eqComparatorDelay(wE+wF+g));
 			vhdl << tab <<  "P(0) <= '1' when (X2PY2PZ2 > (R2pipe & CONV_STD_LOGIC_VECTOR(0, " << g << "))) else '0' ;" << endl; 
 
 		}

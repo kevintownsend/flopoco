@@ -84,8 +84,8 @@ namespace flopoco{
 				if (k > 1){
 					//first checks in parallel all chunks for equality
 					REPORT(INFO, "Cp before "<<getCriticalPath());
-					REPORT(INFO, "comp delay = " << target->comparatorDelay(cs));
-					manageCriticalPath( target->comparatorDelay(cs) );
+					REPORT(INFO, "comp delay = " << target->eqComparatorDelay(cs));
+					manageCriticalPath( target->eqComparatorDelay(cs) );
 					REPORT(INFO, "Cp after"<< getCriticalPath());
 					
 					for (int i=0; i<k; i++){
@@ -116,7 +116,7 @@ namespace flopoco{
 							else
 								vhdl << join("b",i,"l",l-1) << " & ";
 						}	
-						manageCriticalPath(target->comparatorConstDelay(ibits));
+						manageCriticalPath(target->eqConstComparatorDelay(ibits));
 						for (int i=0; i<k; i++){
 							vhdl <<tab << declare(join("b",i,"l",l))<<" <= '1' when lev"<<l<<range(min((i+1)*cs-1,ibits-1),i*cs)
 							<<"="<< og(  min((i+1)*cs-1,ibits-1)+1 -i*cs ,0 )<<" else '0';"<<endl;

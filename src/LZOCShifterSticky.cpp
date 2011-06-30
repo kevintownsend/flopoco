@@ -87,9 +87,9 @@ namespace flopoco{
 			currLev = (currLev > wIn_? wIn_: currLev);
 
 			if (countType>=0)
-				manageCriticalPath( target->localWireDelay() + target->comparatorConstDelay( intpow2(i) ) ) ;
+				manageCriticalPath( target->localWireDelay() + target->eqConstComparatorDelay( intpow2(i) ) ) ;
 			else
-				manageCriticalPath( target->localWireDelay() + target->comparatorDelay( intpow2(i) ) ) ;
+				manageCriticalPath( target->localWireDelay() + target->eqComparatorDelay( intpow2(i) ) ) ;
 				
 			vhdl << tab << declare(join("count",i),1) << "<= '1' when " <<join("level",i+1)<<range(prevLev-1,prevLev - intpow2(i))<<" = "
 				  <<"("<<prevLev-1<<" downto "<<prevLev - intpow2(i)<<"=>"<< (countType_==-1? "sozb": countType_==0?"'0'":"'1'")<<") else '0';"<<endl;

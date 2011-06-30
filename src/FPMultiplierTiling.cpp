@@ -140,7 +140,7 @@ namespace flopoco{
 				
 				vhdl << tab << declare("sticky") << " <= sigProdExt" << of(wFX_+wFY + 1 - wFR) << ";" << endl;
 				
-				manageCriticalPath(target->localWireDelay() + target->comparatorConstDelay(wFX_+wFY + 1 - wFR));
+				manageCriticalPath(target->localWireDelay() + target->eqConstComparatorDelay(wFX_+wFY + 1 - wFR));
 				vhdl << tab << declare("guard") << " <= '0' when sigProdExt" << range(wFX_+wFY + 1 - wFR - 1,0) << "=" << zg(wFX_+wFY + 1 - wFR - 1 +1,0) <<" else '1';" << endl;
 				
 				manageCriticalPath(target->localWireDelay() + target->lutDelay());

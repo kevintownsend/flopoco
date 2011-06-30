@@ -70,7 +70,7 @@ FPAdderSinglePath::FPAdderSinglePath(Target* target, int wEX, int wFX, int wEY, 
 		vhdl << tab << declare("excExpFracY",2+wE+wF) << " <= Y"<<range(wE+wF+2, wE+wF+1) << " & Y"<<range(wE+wF-1, 0)<<";"<<endl;
 
 /*		setCriticalPath(getMaxInputDelays(inputDelays));
-		manageCriticalPath(target->localWireDelay() + target->comparatorDelay(wE+wF+2)); 
+		manageCriticalPath(target->localWireDelay() + target->eqComparatorDelay(wE+wF+2)); 
 		vhdl<< tab << declare("eqdiffsign") << " <= '1' when excExpFracX = excExpFracY else '0';"<<endl; */
 		
 		setCriticalPath(getMaxInputDelays(inputDelays));
@@ -144,7 +144,7 @@ FPAdderSinglePath::FPAdderSinglePath(Target* target, int wEX, int wFX, int wEY, 
 		}
 		manageCriticalPath(target->localWireDelay() + target->lutDelay());//multiplexer
 		vhdl<<tab<<declare("expDiff",wE+1) << " <= eXmeY when swap = '0' else eYmeX;"<<endl; 
-		manageCriticalPath(target->localWireDelay() + target->comparatorConstDelay(wE+1));
+		manageCriticalPath(target->localWireDelay() + target->eqConstComparatorDelay(wE+1));
 		vhdl<<tab<<declare("shiftedOut") << " <= '1' when (expDiff >= "<<wF+2<<") else '0';"<<endl;
 		//shiftVal=the number of positions that fracY must be shifted to the right				
 		
@@ -185,7 +185,7 @@ FPAdderSinglePath::FPAdderSinglePath(Target* target, int wEX, int wFX, int wEY, 
 		//sticky compuation in parallel with addition, no need for manageCriticalPath
 		//FIXME: compute inside shifter;
 		//compute sticky bit as the or of the shifted out bits during the alignment //
-		manageCriticalPath(target->localWireDelay() + target->comparatorConstDelay(wF+1));
+		manageCriticalPath(target->localWireDelay() + target->eqConstComparatorDelay(wF+1));
 		vhdl<<tab<< declare("sticky") << " <= '0' when (shiftedFracY("<<wF<<" downto 0)=CONV_STD_LOGIC_VECTOR(0,"<<wF<<")) else '1';"<<endl;
 		double cpsticky = getCriticalPath();
 		

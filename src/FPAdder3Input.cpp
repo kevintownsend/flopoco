@@ -301,7 +301,7 @@ FPAdder3Input::FPAdder3Input(Target* target, int wE, int wF, map<string, double>
 // 		vhdl << tab << declare("posExtF",3 + 3*wF) << " <= (addRes"<<range(3 + 3*wF-1, 0) << " xor "<<rangeAssign(3 + 3*wF-1, 0, "trSign")<<") + trSign;"<<endl; 		
 		
 		//sticky
-		manageCriticalPath(target->localWireDelay() + target->comparatorConstDelay(wF-1));
+		manageCriticalPath(target->localWireDelay() + target->eqConstComparatorDelay(wF-1));
  		vhdl << tab << declare("sticky") << " <=  '1' when posExtF"<<range(wF-2,0)<<">"<<zg(wF-1,0)<<" else '0';"<<endl;
 //		vhdl << tab << declare("sticky") << " <=  trSign when xposExtF"<<range(wF-1,0)<<"="<<rangeAssign(wF,0,"trSign")<<" else not(trSign);"<<endl;
 		vhdl << tab << declare("posExtFsticky", 2*wF + 4) << " <= posExtF"<<range(3 + 3*wF-1, wF) << " & sticky;" << endl;
@@ -316,7 +316,7 @@ FPAdder3Input::FPAdder3Input(Target* target, int wE, int wF, map<string, double>
 		syncCycleFromSignal("shiftedFrac");
 		setCriticalPath(getOutputDelay("O"));
 		
-		manageCriticalPath(target->localWireDelay() + target->comparatorConstDelay(wF+1));
+		manageCriticalPath(target->localWireDelay() + target->eqConstComparatorDelay(wF+1));
 		vhdl<<tab<<declare("stk")<<"<= '1' when shiftedFrac"<<range(wF,0)<<">"<<zg(wF+1,0)<<"else '0';"<<endl;
 		vhdl<<tab<<declare("rnd")<<"<= shiftedFrac"<<of(wF+1)<<";"<<endl;
 		vhdl<<tab<<declare("grd")<<"<= shiftedFrac"<<of(wF+2)<<";"<<endl;

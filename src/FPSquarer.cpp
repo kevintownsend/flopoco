@@ -101,7 +101,7 @@ namespace flopoco{
 		}else{
 			//rounding will be needed
 			setCriticalPath(0.0);
-			manageCriticalPath( target->localWireDelay() + target->comparatorConstDelay(2*(wFX+1)-(wFR+3)));
+			manageCriticalPath( target->localWireDelay() + target->eqConstComparatorDelay(2*(wFX+1)-(wFR+3)));
 			vhdl << tab << declare("sticky",1) << "<='0' when sqrFrac" << range( 2*(wFX+1)-(wFR+3)-1,0)<<"="<<zg(2*(wFX+1)-(wFR+3),0) << "else '1';"<<endl;
 			vhdl << tab << declare("guard",1) << " <= sqrFrac" << of(2*(wFX+1)-(wFR+3))<<" when sqrFrac" << of(2*(wFX+1)-1)<<"='0' else " 
 				 << "sqrFrac" << of(2*(wFX+1)-(wFR+3)+1) << ";"<< endl;

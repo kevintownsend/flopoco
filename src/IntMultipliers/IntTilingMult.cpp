@@ -113,7 +113,7 @@ namespace flopoco{
 			maxDist2Move = (int) ( sqrt(tempDist) );
 			REPORT( INFO, "maxDist2Move = "<<maxDist2Move);
 		
-			float const scale=100.0;
+//			float const scale=100.0;
 //			costDSP = ( (1.0+scale) - scale * ratio );
 
 			costDSP = 1.0;

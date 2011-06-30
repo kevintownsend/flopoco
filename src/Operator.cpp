@@ -657,7 +657,7 @@ namespace flopoco{
 			s=getSignalByName(name);
 		}
 		catch (string e2) {
-			cout << "WARNING: signal having name " << name << " was not found in file " << srcFileName << " when called using setSignalDelay" << endl;
+			cout << "WARNING: signal " << name << " was not found in file " << srcFileName << " when called using setSignalDelay" << endl;
 			return;
 		}
 
@@ -670,7 +670,7 @@ namespace flopoco{
 			s=getSignalByName(name);
 		}
 		catch (string e2) {
-			cout << "WARNING: signal having name " << name << " was not found in file " << srcFileName << " when called using getSignalDelay" << endl;
+			cout << "WARNING: signal " << name << " was not found in file " << srcFileName << " when called using getSignalDelay" << endl;
 			return 0.0;
 		}
 
@@ -1297,7 +1297,7 @@ namespace flopoco{
 				tReplace << use(name, useCycle - declareCycle); 
 				replaceString = tReplace.str();
 				if (useCycle<declareCycle){
-					cerr << srcFileName << " (" << uniqueName_ << "): WARNING: Signal:"<<name<<". defined @ cycle "<<declareCycle<<" and used @ cycle " << useCycle <<endl;
+					cerr << srcFileName << " (" << uniqueName_ << "): WARNING: Signal " << name <<" defined @ cycle "<<declareCycle<<" and used @ cycle " << useCycle <<endl;
 					cerr << srcFileName << " (" << uniqueName_ << "): If this is a feedback signal you may ignore this warning"<<endl;
 				}
 			}else{

@@ -104,7 +104,7 @@ for (int aa=25; aa<=400; aa+=25){
 				ll = 1;
 				bool sol1 = false, sol2 = false;
 				while (!sol1 || !sol2){
-					double ed = target->localWireDelay() + target->comparatorDelay(ll) + target->localWireDelay() + target->lutDelay() + target->adderDelay(ll);
+					double ed = target->localWireDelay() + target->eqComparatorDelay(ll) + target->localWireDelay() + target->lutDelay() + target->adderDelay(ll);
 					if ((ed<t) && (!sol1))
 						sol1 = true;
 					if ((sol1) && (ed>=t))	
@@ -117,7 +117,7 @@ for (int aa=25; aa<=400; aa+=25){
 			}
 			/* chunk 1 has the same size as ll */
 			l1 = ll;
-			double c = (target->comparatorDelay(l1) + target->lutDelay()); 
+			double c = (target->eqComparatorDelay(l1) + target->lutDelay()); 
 			if (t-c<=0) l0 = 2;
 			else target->suggestSlackSubaddSize(l0, wIn, t-c);
 			

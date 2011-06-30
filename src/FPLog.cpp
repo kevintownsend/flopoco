@@ -253,10 +253,10 @@ namespace flopoco{
 
 		manageCriticalPath( target->adderDelay(wE) + target->lutDelay() );
 		
-		if(isSequential()) vhdl << tab << "-- Rem: the Y0 input is registered inside the RangeRed box" << endl;
+		// if(isSequential()) vhdl << tab << "-- Rem: the Y0 input is registered inside the RangeRed box" << endl;
 		vhdl << tab << declare("Y0", wF+2) << " <= \"1\" & X(wF-1 downto 0) & \"0\" when FirstBit = '0' else \"01\" & X(wF-1 downto 0);" << endl;
 		vhdl << tab << declare("Y0h", wF) << " <= Y0(wF downto 1);" << endl; 
-		
+		vhdl << tab << "-- Sign of the result;" << endl;
 		vhdl << tab << 	declare("sR") << " <= '0'   when  (X(wE+wF-1 downto wF) = ('0' & (wE-2 downto 0 => '1')))  -- binade [1..2)" << endl
 		                              << "     else not X(wE+wF-1);                -- MSB of exponent" << endl;
 		double cpY0 = getCriticalPath();

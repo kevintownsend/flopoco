@@ -198,7 +198,7 @@ for (int aa=25; aa<=400; aa+=25){
 
 			l1 = ll;
 
-			double c = ( target-> comparatorDelay(l1) + target->lutDelay()); 
+			double c = ( target-> eqComparatorDelay(l1) + target->lutDelay()); 
 			REPORT(INFO, "c="<<c);
 			target->suggestSlackSubaddSize(l0, wIn, t-c);
 			REPORT(INFO, "l0="<<l0);

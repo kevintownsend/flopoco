@@ -45,11 +45,11 @@ namespace flopoco{
 		((size/(almsPerLab_*2)) * (interLABcarryDelay_ - innerLABcarryDelay_)))/double(size-1); 
 	}
 	
-	double StratixIV::comparatorDelay(int size){
+	double StratixIV::eqComparatorDelay(int size){
 		return adderDelay(size);//FIXME
 	}
 	
-	double StratixIV::comparatorConstDelay(int size){
+	double StratixIV::eqConstComparatorDelay(int size){
 		return adderDelay(size/2); //FIXME
 	}
 	

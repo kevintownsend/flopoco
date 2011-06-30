@@ -89,8 +89,8 @@ namespace flopoco{
 		 */
 		double carryPropagateDelay();
 		double adderDelay(int size);
-		double comparatorDelay(int size);
-		double comparatorConstDelay(int size);
+		double eqComparatorDelay(int size);
+		double eqConstComparatorDelay(int size);
 
 		double DSPMultiplierDelay(){ return multiplierDelay_[2];}
 		double DSPAdderDelay(){ return 2.439e-9;} //TODO

@@ -37,11 +37,11 @@ namespace flopoco{
 		k2 = muxcyCINtoO_;
 	}
 	
-	double Virtex6::comparatorDelay(int size){
+	double Virtex6::eqComparatorDelay(int size){
 		return lut2_ + muxcyStoO_ + double((size-1)/(lutInputs_/2)+1)*muxcyCINtoO_; 
 	}
 	
-	double Virtex6::comparatorConstDelay(int size){
+	double Virtex6::eqConstComparatorDelay(int size){
 		return lut2_ + muxcyStoO_ + double((size-1)/lutInputs_+1)*muxcyCINtoO_; 
 	}
 	double Virtex6::ffDelay() {
