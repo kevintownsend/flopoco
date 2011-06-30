@@ -129,7 +129,6 @@ namespace flopoco{
 			manageCriticalPath(tableDelay);
 
 
-			bool tableSigned=false, last;
 			for (int i=0; i<nbOfTables; i++) {
 
 				//first split the input X into digits having lutWidth bits

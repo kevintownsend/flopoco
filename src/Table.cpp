@@ -120,7 +120,10 @@ namespace flopoco{
 	void Table::outputVHDL(std::ostream& o, std::string name) {
 
 		licence(o);
-		stdLibs(o);
+			o << "library ieee; " << endl;
+			o << "use ieee.std_logic_1164.all;" << endl;
+			o << "use ieee.numeric_std.all;" << endl;
+			o << "library work;" << endl;
 		outputVHDLEntity(o);
 		newArchitecture(o,name);
 		if (logicTable_==1 || wIn <= target_->lutInputs()){
@@ -210,18 +213,21 @@ namespace flopoco{
 				o << "Z1 <= '0' & X;"<<endl;
 			}
 					
-			o << "	process(clk)" << endl;
-			o << tab << "begin" << endl;
-			o << tab << "if(rising_edge(clk)) then" << endl;
+			if(isSequential()){
+				o << "	process(clk)" << endl;
+				o << tab << "begin" << endl;
+				o << tab << "if(rising_edge(clk)) then" << endl;
+			}
 			if (maxIn-minIn <= 256 && wOut>36){
 				o << tab << "	Y1 <= rom(  TO_INTEGER(unsigned(Z1)));" << endl;
 				o << tab << "	Y0 <= rom(  TO_INTEGER(unsigned(Z0)));" << endl;
 			}else{
 				o << tab << "	Y0 <= rom(  TO_INTEGER(unsigned(X))  );" << endl;
 			}
-			o << tab << "end if;" << endl;
-			o << tab << "end process;" << endl;
-
+			if(isSequential()){
+				o << tab << "end if;" << endl;
+				o << tab << "end process;" << endl;
+			}
 			if (maxIn-minIn <= 256 && wOut>36){
 				o << tab << " Y <= Y1 & Y0"<<range((wOut%2==0?wOut/2-1:(wOut-1)/2-1),0)<<";"<<endl; 
 			}else

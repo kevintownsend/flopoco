@@ -598,12 +598,13 @@ public:
 	 * @param o the stream where the libraries will be written to
 	 */
 	static void stdLibs(std::ostream& o){
-		o<<"library ieee;\nuse ieee.std_logic_1164.all;"<<endl 
-		 <<"use ieee.std_logic_arith.all;"<<endl
-		 <<"use ieee.std_logic_unsigned.all;"<<endl 
-		 <<"library std;" << endl
-		 <<"use std.textio.all;"<< endl 
-		 <<"library work;"<<endl<< endl;
+		o<< "library ieee;"<<endl
+		 << "use ieee.std_logic_1164.all;"<<endl
+		 << "use ieee.std_logic_arith.all;"<<endl
+		 << "use ieee.std_logic_unsigned.all;"<<endl 
+		 << "library std;" << endl
+		 << "use std.textio.all;"<< endl 
+		 << "library work;"<<endl<< endl;
 	};
 		
 	/** DEPRECATED  Output the VHDL entity of the current operator.

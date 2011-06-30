@@ -529,39 +529,37 @@ namespace flopoco{
 
 		vhdl << endl << tab << "-- Now the log tables, as late as possible" << endl;
 
-		//profiling the number of pipeline levels of the stages 
+		//profiling the number of pipeline levels of the stages: the log tables have small input and large outputs, so we had rather register the inputs.
+		// We have to compute the sum of the outputs of the log tables, and we want this sum (AlmostLog) to be synchronized to Log1pNormal, to which it will be added. 
+		// We first do it in a dummy way, starting from cycle 0, to measure the depth of this sub-pipeline
 
-		vhdl << tab << "-- First log table" << endl;
 		FirstLogTable* lt0 = new FirstLogTable(target, a[0], target_prec, it0, this);
-		oplist.push_back(lt0);
 		
-		int profilingDepth = 0;
+		int profilingDepth;
+		setCycle(0);
 		setCriticalPath(0.0);
-		if (manageCriticalPath(target->LogicToRAMWireDelay() + target->RAMDelay(), false) )
-			profilingDepth++;
 		for (i=1; i<= stages; i++) {
-			if (manageCriticalPath( target->LogicToRAMWireDelay() + target->RAMDelay(), false ))
-				profilingDepth++;
+			manageCriticalPath( target->LogicToRAMWireDelay() + target->RAMDelay(), false );
+			nextCycle();
 			IntAdder * adderS = new IntAdder( target, lt0->wOut, inDelayMap("X", target->RAMToLogicWireDelay() + getCriticalPath() ));
-			profilingDepth+=adderS->getPipelineDepth();
+			setCycle(getCurrentCycle()+adderS->getPipelineDepth());
 			setCriticalPath( adderS->getOutputDelay("R") );	
 		}	
+		profilingDepth=getCurrentCycle();
 
-		setCycleFromSignal("Log1p_normal");
+		setCycleFromSignal("Log1p_normal", false);
 		setCycle(getCurrentCycle() - profilingDepth , true); 
 		setCriticalPath(0.0);
-		manageCriticalPath(target->LogicToRAMWireDelay() + target->RAMDelay());
-
+		vhdl << tab << "-- First log table" << endl;
+		oplist.push_back(lt0);
 		inPortMap       (lt0, "X", "A0");
 		outPortMap      (lt0, "Y", "L0");
 		vhdl << instance(lt0, "ltO");
 		vhdl << tab << declare("S1", lt0->wOut) << " <= L0;"<<endl;
 		
 		for (i=1; i<= stages; i++) {
-			// TODO better pipeline the small input as late as possible than pipeline the large output
-
 			if (i==1){
-				setCycleFromSignal("Log1p_normal");
+				setCycleFromSignal("Log1p_normal", false);
 				setCycle(getCurrentCycle() - profilingDepth , true); 
 				setCriticalPath(0.0);
 				manageCriticalPath(target->LogicToRAMWireDelay() + target->RAMDelay());
@@ -577,7 +575,7 @@ namespace flopoco{
 		
 			vhdl << tab << declare(join("sopX",i), lt0->wOut) << " <= (" << rangeAssign(lt0->wOut-1, lti->wOut,  "'0'") << " & " << join("L",i) <<");"<<endl;
 			
-			nextCycle();//
+			nextCycle();// gets absorbed in the BRams, and reinits the critical paths, and we have plenty of cycles to live in 
 			IntAdder * adderS = new IntAdder( target, lt0->wOut, inDelayMap("X", target->RAMToLogicWireDelay()+  getCriticalPath()));
 			oplist.push_back(adderS);
 			
@@ -589,11 +587,11 @@ namespace flopoco{
 			vhdl << instance( adderS, join("adderS",i) ) << endl;
 			syncCycleFromSignal( join("S",i+1) );
 			setCriticalPath( adderS->getOutputDelay("R") );
-
 		}
 
+		nextCycle();
 		vhdl << tab << declare("almostLog", lt0->wOut) << " <= " << join("S",stages+1) << ";" << endl;  
-		
+
 		IntAdder* adderLogF_normal = new IntAdder( target, target_prec, inDelayMap("X", getCriticalPath() ) );
 		oplist.push_back( adderLogF_normal );
 		
