@@ -105,8 +105,10 @@ namespace flopoco{
 				addToCriticalPath(target->localWireDelay(wOut*lutsPerBit) + target->lutDelay() + target->localWireDelay() + target->lutDelay());
 			}
 		}
-		else 
+		else{
 			addToCriticalPath(target->RAMDelay());
+			nextCycle();
+		}
 
 		outDelayMap["Y"] =   getCriticalPath();
 	}

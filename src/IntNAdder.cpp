@@ -61,6 +61,9 @@ namespace flopoco{
 				maxInputDelay = objectivePeriod;
 				nextCycle();
 				setCriticalPath(0.0);
+				target->suggestSubaddSize(chunkSize_ ,wIn_);
+				nbOfChunks = ceil(double(wIn_)/double(chunkSize_));
+				lastChunkSize = ( wIn_ % chunkSize_ == 0 ? chunkSize_ : wIn_ % chunkSize_);
 			} else if ( ((objectivePeriod - maxInputDelay) - target->adderDelay(1) ) < 0 )	{
 				//if not enough slack is available for any combinatorial circuit, we register the inputs
 				nextCycle();

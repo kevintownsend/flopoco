@@ -555,6 +555,7 @@ namespace flopoco{
 		inPortMap       (lt0, "X", "A0");
 		outPortMap      (lt0, "Y", "L0");
 		vhdl << instance(lt0, "ltO");
+		syncCycleFromSignal("L0");
 		vhdl << tab << declare("S1", lt0->wOut) << " <= L0;"<<endl;
 		
 		for (i=1; i<= stages; i++) {
@@ -575,7 +576,7 @@ namespace flopoco{
 		
 			vhdl << tab << declare(join("sopX",i), lt0->wOut) << " <= (" << rangeAssign(lt0->wOut-1, lti->wOut,  "'0'") << " & " << join("L",i) <<");"<<endl;
 			
-			nextCycle();// gets absorbed in the BRams, and reinits the critical paths, and we have plenty of cycles to live in 
+//			nextCycle();// gets absorbed in the BRams, and reinits the critical paths, and we have plenty of cycles to live in 
 			IntAdder * adderS = new IntAdder( target, lt0->wOut, inDelayMap("X", target->RAMToLogicWireDelay()+  getCriticalPath()));
 			oplist.push_back(adderS);
 			

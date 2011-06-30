@@ -461,13 +461,15 @@ namespace flopoco{
 			//now this one is extended to output width size
 			vhdl << tab << declare("op2", 2* (chunkSize_*chunks))<< "<= " << zeroExtend("top2", 2* (chunkSize_*chunks))<<";"<<endl;
 
-			IntCompressorTree *ina = new IntCompressorTree( target, 2* (chunkSize_*chunks), 3, inDelayMap("X0", target->localWireDelay() + getCriticalPath()) );
+//			IntCompressorTree *ina = new IntCompressorTree( target, 2* (chunkSize_*chunks), 3, inDelayMap("X0", target->localWireDelay() + getCriticalPath()) );
+			IntNAdder *ina = new IntNAdder( target, 2* (chunkSize_*chunks), 3, inDelayMap("X0", target->localWireDelay() + getCriticalPath()) );
+
 			oplist.push_back(ina);
 			
 			inPortMap(ina, "X0", "op0");
 			inPortMap(ina, "X1", "op1");
 			inPortMap(ina, "X2", "op2");
-//			inPortMapCst(ina, "Cin", "'0'");
+			inPortMapCst(ina, "Cin", "'0'");
 			
 			outPortMap(ina, "R", "res");
 			vhdl << tab << instance(ina, "FinalAdder") << endl;

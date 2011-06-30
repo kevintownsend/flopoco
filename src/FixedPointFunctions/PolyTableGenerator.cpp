@@ -65,7 +65,7 @@ namespace flopoco{
 			/*this is the size of the multipliers to be prefered*/
 			/*in the current version this is not used yet */
 			int msize =1;
-		
+			
 			mpfr_t a;
 			mpfr_t b;
 			mpfr_t eps;
@@ -85,6 +85,8 @@ namespace flopoco{
 	
 			sollya_node_t tempNode=0,tempNode2, tempNode3, nDiff=0, sX=0,sY,aiNode;
 			sollya_chain_t tempChain, tempChain2=0;
+	
+			int tm = 512;
 	
 			mpfr_t ai;
 			mpfr_t bi;
@@ -110,6 +112,7 @@ namespace flopoco{
 			
 				REPORT(INFO, "Now approximating "<<fi->getName());
 				/*start with one interval; subdivide until the error is satisfied for all functions involved*/
+
 				int nrIntervals = 256;
 				int precShift=7;
 
