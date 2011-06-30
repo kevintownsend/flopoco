@@ -122,6 +122,11 @@ namespace flopoco{
 			oplist.push_back(lastTable);
 			useSoftRAM(lastTable);
 
+			// Critical path among the tables is through the last one, which may be larger
+			double tableDelay=lastTable->getOutputDelay("Y"); // since we passed an empty inputDelayMap
+
+			//possibly register the inputs before the table read
+			manageCriticalPath(tableDelay);
 
 
 			bool tableSigned=false, last;
