@@ -45,6 +45,10 @@ namespace flopoco {
 		objectivePeriod	 = 1 / target->frequency();
 		maxInputDelay    = getMaxInputDelays ( inputDelays );
 		
+		if (maxInputDelay < target->ffDelay() + target->localWireDelay()){
+			inputDelays["X"] = target->ffDelay() + target->localWireDelay();
+		}
+		
 		if ( maxInputDelay > objectivePeriod ) {
 			/* this component should register its inputs */
 			nextCycle();
