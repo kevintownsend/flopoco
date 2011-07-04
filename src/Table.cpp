@@ -153,10 +153,10 @@ namespace flopoco{
 
 			if (maxIn-minIn<=256 && wOut>36){
 				o << tab << "subtype word_t is std_logic_vector("<< (wOut%2==0?wOut/2-1:(wOut+1)/2-1) <<" downto 0);" << endl;
-				o << tab << "type memory_t is array(0 to 2**"<<9<<"-1) of word_t;" << endl;
+				o << tab << "type memory_t is array(0 to 511) of word_t;" << endl;
 			}else{
 				o << tab << "subtype word_t is std_logic_vector("<< wOut-1 <<" downto 0);" << endl;
-				o << tab << "type memory_t is array(0 to 2**"<<wIn<<"-1) of word_t;" << endl;
+				o << tab << "type memory_t is array(0 to " << ((1<<wIn) -1) <<") of word_t;" << endl;
 			}
 			
 			o << tab <<"function init_rom" << endl;
