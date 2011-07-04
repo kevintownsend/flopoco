@@ -52,7 +52,7 @@ namespace flopoco{
 		addInput   ("S", 1);
 		addFPOutput("A", wE, wF ); 
 		
-		FPMultiplierTiling *fmt = new FPMultiplierTiling(target, wE, wF, wE, wF, wE, wF, 1, 0.6, -1);
+		FPMultiplier *fmt = new FPMultiplier(target, wE, wF, wE, wF, wE, wF);//, 1, 0.6, -1);
 		oplist.push_back(fmt);
 		
 		inPortMap(fmt, "X", "X");

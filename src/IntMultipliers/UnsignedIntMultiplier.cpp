@@ -218,7 +218,7 @@ namespace flopoco{
 				vhdl << tab << "lpm_mult_component2 : lpm_mult "<<endl;
 				vhdl << tab << "	GENERIC MAP ("<<endl;
 				vhdl << tab << "		lpm_hint => \"MAXIMIZE_SPEED=9\","<<endl;
-				vhdl << tab << "		lpm_pipeline => 0,"<<endl;
+				vhdl << tab << "		lpm_pipeline => 3,"<<endl;
 				vhdl << tab << "		lpm_representation => \"UNSIGNED\","<<endl;
 				vhdl << tab << "		lpm_type => \"LPM_MULT\","<<endl;
 				vhdl << tab << "		lpm_widtha => "<<wInX_<<","<<endl;

@@ -92,6 +92,11 @@ namespace flopoco{
 	bool StratixIII::suggestSubmultSize(int &x, int &y, int wInX, int wInY){
 		// (DSP blocks are 36x36 and my be split as 9x9, 12x12 or 18x18)
 		if (getUseHardMultipliers()){
+			
+			x =18;
+			y = 18;
+			return true; //FIXME
+			
 			int padX[nrConfigs_+1], padY[nrConfigs_+1], ix=1, iy=1; // nr of zero padding for a specific width multiplier
 			double maxF[nrConfigs_+1]; // will hold the maximum possible freqeuncy for each multiplier width
 			
@@ -307,6 +312,10 @@ namespace flopoco{
 	void StratixIII::getDSPWidths(int &x, int &y, bool sign){
 		// set the multiplier width acording to the desired frequency
 		bool widthSet = false;
+		
+		x = y = 18;
+		//FIXME
+		return;
 		
 		for (int i=0; i<4; i++)
 			if (this->frequency() < 1/multiplierDelay_[i])
