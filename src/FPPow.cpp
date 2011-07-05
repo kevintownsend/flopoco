@@ -118,7 +118,20 @@ namespace flopoco{
 
 		int logwF= wF+expG+wE-1;
 
-		vhdl << tab << declare("logIn", 3+wE + logwF) << " <= X & " << rangeAssign(logwF-wF-1, 0, "'0'") << " ;" << endl; 
+		vhdl << tab  << declare("flagsE", 2) << " <= E(wE+wF+2 downto wE+wF+1);" << endl;
+
+		vhdl << tab  << declare("flagsX", 2) << " <= X(wE+wF+2 downto wE+wF+1);" << endl;
+		vhdl << tab  << declare("signX") << " <= X(wE+wF);" << endl;
+		vhdl << tab  << declare("expFieldX", wE) << " <= X(wE+wF-1 downto wF);" << endl;
+		vhdl << tab  << declare("fracX", wF) << " <= X(wF-1 downto 0);" << endl;
+
+		vhdl << tab  << declare("flagsY", 2) << " <= Y(wE+wF+2 downto wE+wF+1);" << endl;
+		vhdl << tab  << declare("signY") << " <= Y(wE+wF);" << endl;
+		vhdl << tab  << declare("expFieldY", wE) << " <= Y(wE+wF-1 downto wF);" << endl;
+		vhdl << tab  << declare("fracY", wF) << " <= Y(wF-1 downto 0);" << endl;
+
+		// For the input to the log, take |X| as the case X<0 is managed separately
+		vhdl << tab << declare("logIn", 3+wE + logwF) << " <= flagsX & \"0\" & expFieldX & fracX & " << rangeAssign(logwF-wF-1, 0, "'0'") << " ;" << endl; 
 
 		FPLog* log = new FPLog(target,  wE,  logwF, logTableSize );
 		oplist.push_back(log);
@@ -157,17 +170,6 @@ namespace flopoco{
 		setCycle(0);
 		setCriticalPath(0);
 
-		vhdl << tab  << declare("flagsE", 2) << " <= E(wE+wF+2 downto wE+wF+1);" << endl;
-
-		vhdl << tab  << declare("flagsX", 2) << " <= X(wE+wF+2 downto wE+wF+1);" << endl;
-		vhdl << tab  << declare("signX") << " <= X(wE+wF);" << endl;
-		vhdl << tab  << declare("expFieldX", wE) << " <= X(wE+wF-1 downto wF);" << endl;
-		vhdl << tab  << declare("fracX", wF) << " <= X(wF-1 downto 0);" << endl;
-
-		vhdl << tab  << declare("flagsY", 2) << " <= Y(wE+wF+2 downto wE+wF+1);" << endl;
-		vhdl << tab  << declare("signY") << " <= Y(wE+wF);" << endl;
-		vhdl << tab  << declare("expFieldY", wE) << " <= Y(wE+wF-1 downto wF);" << endl;
-		vhdl << tab  << declare("fracY", wF) << " <= Y(wF-1 downto 0);" << endl;
 
 
 
@@ -236,13 +238,13 @@ namespace flopoco{
 
 			vhdl << endl;
 
-			vhdl << tab  << declare("RisNaN") << " <= s_nan_in or (normalX and signX and notIntNormalY);"<<endl;
-
 			vhdl << tab  << declare("RisInfSpecialCase") << "  <= " << endl
 			     << tab << tab << "   (zeroX   and  (oddIntY or evenIntY)  and signY)      -- (+/- 0) ^ (negative int y)"<<endl
 			     << tab << tab << "or (zeroX and infY and signY)                           -- (+/- 0) ^ (-inf)"  << endl
 			     << tab << tab << "or (absXgtOneAndNormal   and  infY  and not signY)      -- (|x|>1) ^ (+inf)"  << endl
-			     << tab << tab << "or (absXltOneAndNormal   and  infY  and signY) ;        -- (|x|<1) ^ (-inf)" << endl;
+			     << tab << tab << "or (absXltOneAndNormal   and  infY  and signY)          -- (|x|<1) ^ (-inf)" << endl
+			     << tab << tab << "or (infX and  normalY  and not signY) ;                 -- (inf) ^ (y>0)" << endl;
+
 			vhdl << tab  << declare("RisInfFromExp") << "  <= '1' when flagsE=\"10\" else '0';" << endl;
 			vhdl << tab  << declare("RisInf") << "  <= RisInfSpecialCase or RisInfFromExp;" << endl;
 
@@ -250,15 +252,20 @@ namespace flopoco{
 			     << tab << tab << "   (zeroX   and  (oddIntY or evenIntY)  and not signY)  -- (+/- 0) ^ (positive int y)"<<endl
 			     << tab << tab << "or (zeroX   and  infY  and not signY)                   -- (+/- 0) ^ (+inf)"<<endl
 			     << tab << tab << "or (absXltOneAndNormal   and  infY  and not signY)      -- (|x|<1) ^ (+inf)"<<endl
-			     << tab << tab << "or (absXgtOneAndNormal   and  infY  and signY) ;        -- (|x|>1) ^ (-inf)" << endl;
+			     << tab << tab << "or (absXgtOneAndNormal   and  infY  and signY)         -- (|x|>1) ^ (-inf)" << endl
+			     << tab << tab << "or (infX and  normalY  and signY) ;                 -- (inf) ^ (y<0)" << endl;
+
 			vhdl << tab  << declare("RisZeroFromExp") << " <= '1' when flagsE=\"00\" else '0';" << endl;
 			vhdl << tab  << declare("RisZero") << " <= RisZeroSpecialCase or RisZeroFromExp;" << endl;
 
 			vhdl << tab  << declare("RisOne") << " <= " << endl
-			     << tab << tab << "   (XisOneAndNormal and signX and infY)"<<endl
+			     << tab << tab << "   zeroY"<<endl
+			     << tab << tab << "or (XisOneAndNormal and signX and infY)"<<endl
 			     << tab << tab << "or (XisOneAndNormal  and not signX)" << endl
 			     << tab << tab << "or (zeroX and zeroY)" << endl
 			     << tab << tab << "or (infX and not signX and zeroY);" << endl ;
+
+			vhdl << tab  << declare("RisNaN") << " <= (s_nan_in and not zeroY) or (normalX and signX and notIntNormalY);"<<endl;
 
 			vhdl << tab  << declare("signR") << " <= signX and (oddIntY);" << endl;
 		}
@@ -341,7 +348,6 @@ namespace flopoco{
 		FPNumber fpy(wE, wF);
 		fpx = svX;
 		fpy = svY;
-		
 		mpfr_t x,y, ru,rd;
 		mpfr_init2(x,  1+wF);
 		mpfr_init2(y,  1+wF);
@@ -351,6 +357,17 @@ namespace flopoco{
 		fpy.getMPFR(y);
 		mpfr_pow(rd, x, y, GMP_RNDD);
 		mpfr_pow(ru, x, y, GMP_RNDU);
+#if 0
+		double d;
+		d=mpfr_get_d(x,  GMP_RNDN);
+		cout << "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX "  << d  << endl;
+		d=mpfr_get_d(y,  GMP_RNDN);
+		cout << "YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY "  << d << endl;
+		d=mpfr_get_d(ru,  GMP_RNDN);
+		cout << "UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUU "  << d << endl;
+		d=mpfr_get_d(rd,  GMP_RNDN);
+		cout << "DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD "  << d << endl << endl;
+#endif		
 		FPNumber  fprd(wE, wF, rd);
 		FPNumber  fpru(wE, wF, ru);
 		mpz_class svRD = fprd.getSignalValue();
@@ -367,6 +384,12 @@ namespace flopoco{
 	void FPPow::buildStandardTestCases(TestCaseList* tcl){
 		TestCase *tc;
 
+
+		tc = new TestCase(this); 
+		tc->addFPInput("X", FPNumber::minusInfty);
+		tc->addFPInput("Y", 3.95);
+		emulate(tc);
+		tcl->add(tc);
 
 		tc = new TestCase(this); 
 		tc->addFPInput("X", 3.0);
