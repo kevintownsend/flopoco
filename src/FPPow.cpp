@@ -154,7 +154,8 @@ namespace flopoco{
 
 
 		// That was the part that takes 99% of the size. Now the exception 
-
+		setCycle(0);
+		setCriticalPath(0);
 
 		vhdl << tab  << declare("flagsE", 2) << " <= E(wE+wF+2 downto wE+wF+1);" << endl;
 
@@ -167,62 +168,8 @@ namespace flopoco{
 		vhdl << tab  << declare("signY") << " <= Y(wE+wF);" << endl;
 		vhdl << tab  << declare("expFieldY", wE) << " <= Y(wE+wF-1 downto wF);" << endl;
 		vhdl << tab  << declare("fracY", wF) << " <= Y(wF-1 downto 0);" << endl;
-#if 0
 
-		vhdl << tab  << declare("infX") << " <= '1' when flagsX=\"10\" else '0';" << endl;
-		vhdl << tab  << declare("infY") << " <= '1' when flagsY=\"10\" else '0';" << endl;
-		vhdl << tab  << declare("infE") << " <= '1' when flagsE=\"10\" else '0';" << endl;
-		vhdl << tab  << declare("nanX") << " <= '1' when flagsX=\"11\" else '0';" << endl;
-		vhdl << tab  << declare("nanY") << " <= '1' when flagsY=\"11\" else '0';" << endl;
-		vhdl << tab  << declare("zeroX") << " <= '1' when flagsX=\"00\" else '0';" << endl;
-		vhdl << tab  << declare("zeroY") << " <= '1' when flagsY=\"00\" else '0';" << endl;
-		vhdl << tab  << declare("zeroE") << " <= '1' when flagsE=\"00\" else '0';" << endl;
-		vhdl << tab  << declare("normalX") << " <= '1' when flagsX=\"01\" else '0';" << endl;
-		vhdl << tab  << declare("normalY") << " <= '1' when flagsY=\"01\" else '0';" << endl;
 
-		vhdl << tab  << declare("XisOne") << " <= '1' when X = \"0100\" & " << rangeAssign(wE-2, 0, "'1'") << " & " << rangeAssign(wF-1, 0, "'0'") << " else '0';" << endl;
-
-		vhdl << tab  << "-- x^(+/-0)=1" << endl;
-		vhdl << tab  << declare("case_x_to_0") << " <= '1' when (signX='0' and normalX='1' and zeroY='1') else '0';" << endl;
-
-		vhdl << tab  << "-- +-0^^negative =+inf" << endl;
-		vhdl << tab  << declare("case_0_to_yn") << " <= '1' when (zeroX='1' and normalY='1' and signY='1')  else '0';" << endl;
-
-		vhdl << tab  << "-- +-0^^positive =+0" << endl;
-		vhdl << tab  << declare("case_0_to_yp") << " <= '1' when (zeroX='1' and normalY='1' and signY='0')  else '0';" << endl;
-
-		vhdl << tab  << "-- -+-0^^-inf=+inf" << endl;
-		vhdl << tab  << declare("case_0_to_neginf") << " <= '1' when (zeroX='1' and infY='1' and signY='1')  else '0';" << endl;
-
-		vhdl << tab  << "--  -0^^+inf=NaN" << endl;
-		vhdl << tab  << declare("case_neg0_to_posinf") << " <= '1' when (zeroX='1' and signY='1' and infY='1' and signY='0')  else '0';" << endl;
-
-		vhdl << tab  << "-- 0^^+inf=0" << endl;
-		vhdl << tab  << declare("case_pos0_to_posinf") << " <= '1' when (zeroX='1' and signY='0' and infY='1' and signY='0')  else '0';" << endl;
-
-		vhdl << tab  << "--  1^+-inf=NaN" << endl;
-		vhdl << tab  << declare("case_pos1_to_inf") << " <= '1' when (XisOne='1'  and signX='0' and infY='1') else '0';" << endl;
-
-		vhdl << tab  << "-- 1^+-fin=1" << endl;
-		vhdl << tab  << declare("case_1_to_finite") << " <= '1' when (XisOne='1' and normalY='1') else '0';" << endl;
-
-		vhdl << tab  << "--  +-0^+-0=NaN" << endl;
-		vhdl << tab  << declare("case_0_to_0") << " <= zeroX and zeroY;" << endl;
-
-		vhdl << tab  << "--  +inf^+-0=NaN" << endl;
-		vhdl << tab  << declare("case_posinf_to_0") << " <=  '1' when (infX='1' and signX='0' and zeroY='1') else '0';" << endl;
-
-		vhdl << tab  << "-- When do we get a NaN" << endl;
-		vhdl << tab  << declare("RisComputedNaN") << " <= case_0_to_0  or (signX and normalX) or case_neg0_to_posinf;" << endl;
-		vhdl << tab  << declare("RisNaN") << " <= nanX or nanY or RisComputedNaN;" << endl;
-
-		vhdl << tab  << "-- When do we get an inf" << endl;
-		vhdl << tab  << declare("RisInf") << " <= case_0_to_yn or case_0_to_neginf or infE;" << endl;
-
-		vhdl << tab  << "-- When do we get a zero" << endl;
-		vhdl << tab  << declare("RisZero") << " <= zeroE or (zeroX and normalX) or (infX and signY) or case_0_to_neginf;" << endl;
-
-#else/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 		vhdl<<"-- Inputs analysis  --"<<endl;
 		vhdl<<"-- NaN Input  --"<<endl;
@@ -235,64 +182,33 @@ namespace flopoco{
 		vhdl<<tab<<declare("normalX") << " <= '1' when flagsX=\"01\" else '0';"<<endl;
 		vhdl<<tab<<declare("normalY") << " <= '1' when flagsY=\"01\" else '0';"<<endl;
 		
-		vhdl<<"--1 input  --"<<endl;
-		vhdl << tab  << declare("XisOne") << " <= '1' when normalX='1' and X("<<wE+wF-1<<" downto 0) = '0' & " << rangeAssign(wE-2, 0, "'1'") << " & " << rangeAssign(wF-1, 0, "'0'") << " else '0';" << endl;
+		vhdl<<"-- Comparison of X to 1   --"<<endl;
+		vhdl << tab  << declare("OneExpFrac", wE+wF) << " <=  \"0\" & " << rangeAssign(wE-2, 0, "'1'") << " & " << rangeAssign(wF-1, 0, "'0'") << ";" << endl;
+		IntAdder *cmpOneAdder = new IntAdder(target, wE+wF+1);
+		oplist.push_back(cmpOneAdder);		
+		vhdl << tab << declare("ExpFracX",wE+wF+1) << "<= \"0\" & expFieldX & fracX;"<<endl;
+		vhdl << tab << declare("OneExpFracCompl",wE+wF+1) << "<=  \"1\" & (not OneExpFrac);"<<endl;
+		inPortMap(cmpOneAdder, "X", "ExpFracX");
+		inPortMap(cmpOneAdder, "Y", "OneExpFracCompl");
+		inPortMapCst(cmpOneAdder, "Cin", "'1'");
+		outPortMap (cmpOneAdder, "R", "cmpXOneRes");
+		vhdl << instance(cmpOneAdder, "cmpXOne") << endl;
+		//		syncCycleFromSignal("cmpRes");
+		// setCriticalPath( cmpOneAdder->getOutputDelay("R") );
+		vhdl << tab  << declare("XisOneAndNormal") << " <= '1' when X = (\"010\" & OneExpFrac)" << " else '0';" << endl;
+		vhdl << tab  << declare("absXgtOneAndNormal") << " <= normalX and (not XisOneAndNormal) and (not cmpXOneRes("<<wE+wF<<"));" << endl;
+		vhdl << tab  << declare("absXltOneAndNormal") << " <= normalX and cmpXOneRes("<<wE+wF<<");" << endl;
+
 		
 		vhdl<<"-- zero inputs--"<<endl;
 		vhdl << tab  << declare("zeroX") << " <= '1' when flagsX=\"00\" else '0';"<<endl;
 		vhdl << tab  << declare("zeroY") << " <= '1' when flagsY=\"00\" else '0';"<<endl;
 		
 
-		vhdl<<"-- General Exceptions  --"<<endl;
-		
-		vhdl << tab  << "-- x^(+/-0)=1" << endl;
-		vhdl << tab  << declare("case_x_to_0") << " <= '1' when (normalX='1' and zeroY='1') else '0';" << endl;
-		
-		vhdl << tab  << "-- -+-0^^-inf=+inf" << endl;
-		vhdl << tab  << declare("case_0_to_neginf") << " <= '1' when (zeroX='1' and infY='1' and signY='1')  else '0';" << endl;
-		
-		vhdl << tab  << "--  -0^^+inf= 0 (p) NaN (pr)" << endl;
-		vhdl << tab  << declare("case_neg0_to_posinf") << " <= '1' when (zeroX='1' and signY='1' and infY='1' and signY='0')  else '0';" << endl;
-		
-		vhdl << tab  << "-- 0^^+inf=0" << endl;
-		vhdl << tab  << declare("case_pos0_to_posinf") << " <= '1' when (zeroX='1' and signY='0' and infY='1' and signY='0')  else '0';" << endl;
-		
-		vhdl << tab  << "--  +-0^+-0= 1 (p) NaN (pr)" << endl;
-		vhdl << tab  << declare("case_0_to_0") << " <= zeroX and zeroY;" << endl;
-
-		vhdl << tab  << "--  +inf^+-0= 1 (p) NaN (pr)" << endl;
-		vhdl << tab  << declare("case_posinf_to_0") << " <=  '1' when (infX='1' and signX='0' and zeroY='1') else '0';" << endl;
-
 
 
 		if(type==0){//pow
-			
-			vhdl<<"-- Pow Exceptions  --"<<endl;
-			vhdl << tab  << "-- x^(+/-0)=1" << endl;
-			vhdl << tab  << declare("pow_case_x_to_0") << " <= '1' when (normalX='1' and zeroY='1') else '0';" << endl;
-			
-			vhdl << tab  << "-- +-0^^odd integer=+-inf(-) 0(+)" << endl;
-			vhdl << tab  << declare("pow_case_0_to_y_oddInt") << " <= '1' when (zeroX='1' and intY_odd='1')  else '0';" << endl;
-			
-			vhdl << tab  << "-- +-0^^negative not odd integer=+inf" << endl;
-			vhdl << tab  << declare("pow_case_0_to_yn_notoddInt") << " <= '1' when (zeroX='1' and intY_odd='0' and normalY='1' and signY='1')  else '0';" << endl;
-			
-			vhdl << tab  << "-- +-0^^positive not odd integer=+0" << endl;
-			vhdl << tab  << declare("pow_case_0_to_yp_notoddInt") << " <= '1' when (zeroX='1' and intY_odd='0' and normalY='1' and signY='0')  else '0';" << endl;
-			
-			vhdl << tab  << "-- 1^y=1" << endl;
-			vhdl << tab  << declare("pow_case_base_1") << " <= XisOne;" << endl;
-			
-			vhdl << tab  << declare("value")<<" <= '0';"<<endl;
-			vhdl<<"-- --type of exponent is Integer-- ;"<<endl;
-#if 0 // version using Pedro's counter
-			right1counter = new RZOC(target, wF);
-			oplist.push_back(right1counter);
-			inPortMap(right1counter, "I", "fracY");
-			inPortMap(right1counter, "OZB", "value");  
-			outPortMap(right1counter, "O", "Z_rightY");
-			vhdl << instance(right1counter, "right1counter");
-#else // version using the standard FloPoCo counter
+
 			// We first have to reverse the fraction, because our LZOC counts leading bits, not trailing ones.
 			// There must be some standard VHDL way of doing that
 			vhdl << tab  << declare("fracYreverted", wF)<<" <= ";
@@ -309,26 +225,64 @@ namespace flopoco{
 			inPortMapCst(right1counter, "OZB", "\'0\'");  
 			outPortMap(right1counter, "O", "Z_rightY");
 			vhdl << instance(right1counter, "right1counter");
-#endif		
 
-			vhdl<<"-- compute the exponent of the less significant one of the mantissa"<<endl;
-			vhdl << tab  << declare("lsb_expFieldYpre", wE+1)<<" <= ('0' & expFieldY)- CONV_STD_LOGIC_VECTOR("<<intpow2(wE-1)-1<<","<<wE<<")-CONV_STD_LOGIC_VECTOR("<<wF<<","<<wE<<");"<<endl;
-			vhdl << tab  << declare("lsb_expFieldY", wE+1)<<" <= lsb_expFieldYpre + Z_rightY;"<<endl;
+			vhdl<<"-- compute the weight of the less significant one of the mantissa"<<endl;
+			vhdl << tab  << declare("WeightLSBYpre", wE+1)<<" <= ('0' & expFieldY)- CONV_STD_LOGIC_VECTOR("<< (1<<(wE-1))-1 + wF <<","<<wE+1<<");"<<endl;
+			vhdl << tab  << declare("WeightLSBY", wE+1)<<" <= WeightLSBYpre + Z_rightY;"<<endl;
 
- // TODO This is mosltly wrong. We have to shift the significand of Y to extract its bit of weight 0 to know if it is odd or even
-			//vhdl << tab  << declare("intY_even")<<" <='1' when lsb_expFieldY(wE)='0' and normalY='1' and lsb_expFieldY(0)='0' else '0';"<<endl;
-			vhdl << tab  << declare("intY_odd")<<" <= '1' when lsb_expFieldY(wE)='0' and normalY='1' and lsb_expFieldY(0)='1' else '0';"<<endl;
-			vhdl << tab  << "-- +-0^^negativefinite =+inf" << endl;
-			vhdl << tab  << declare("powr_case_0_to_yn") << " <= '1' when (zeroX='1' and normalY='1' and signY='1')  else '0';" << endl;
+			vhdl << tab  << declare("oddIntY") <<" <= normalY when WeightLSBY = CONV_STD_LOGIC_VECTOR(0, "<<wE+1<<") else '0'; -- LSB has null weight"<<endl;
+			vhdl << tab  << declare("evenIntY")<<" <= normalY when WeightLSBY(wE)='0' and oddIntY='0' else '0'; --LSB has strictly positive weight "<<endl;
+			vhdl << tab  << declare("notIntNormalY") <<" <= normalY when WeightLSBY(wE)='1' else '0'; -- LSB has negative weight"<<endl;
 
-			vhdl << tab  << declare("RisNaN") << " <= s_nan_in or (normalX and signX and (not intY_odd));"<<endl;
-			vhdl << tab  << declare("RisInf") << "  <= (pow_case_0_to_y_oddInt and signY) or pow_case_0_to_yn_notoddInt or powr_case_0_to_yn;"<<endl;
-			vhdl << tab  << declare("RisZero") << " <= (pow_case_0_to_y_oddInt and (not signY)) or pow_case_0_to_yp_notoddInt or case_neg0_to_posinf or case_pos0_to_posinf;"<<endl;
-			vhdl << tab  << declare("RisOne") << " <= case_x_to_0 or pow_case_base_1 or case_0_to_0 or case_posinf_to_0;"<<endl;
-			vhdl << tab  << declare("signR") << " <= signY and (intY_odd or pow_case_0_to_y_oddInt);"<<endl;
+			vhdl << endl;
+
+			vhdl << tab  << declare("RisNaN") << " <= s_nan_in or (normalX and signX and notIntNormalY);"<<endl;
+
+			vhdl << tab  << declare("RisInfSpecialCase") << "  <= " << endl
+			     << tab << tab << "   (zeroX   and  (oddIntY or evenIntY)  and signY)      -- (+/- 0) ^ (negative int y)"<<endl
+			     << tab << tab << "or (zeroX and infY and signY)                           -- (+/- 0) ^ (-inf)"  << endl
+			     << tab << tab << "or (absXgtOneAndNormal   and  infY  and not signY)      -- (|x|>1) ^ (+inf)"  << endl
+			     << tab << tab << "or (absXltOneAndNormal   and  infY  and signY) ;        -- (|x|<1) ^ (-inf)" << endl;
+			vhdl << tab  << declare("RisInfFromExp") << "  <= '1' when flagsE=\"10\" else '0';" << endl;
+			vhdl << tab  << declare("RisInf") << "  <= RisInfSpecialCase or RisInfFromExp;" << endl;
+
+			vhdl << tab  << declare("RisZeroSpecialCase") << " <= " << endl
+			     << tab << tab << "   (zeroX   and  (oddIntY or evenIntY)  and not signY)  -- (+/- 0) ^ (positive int y)"<<endl
+			     << tab << tab << "or (zeroX   and  infY  and not signY)                   -- (+/- 0) ^ (+inf)"<<endl
+			     << tab << tab << "or (absXltOneAndNormal   and  infY  and not signY)      -- (|x|<1) ^ (+inf)"<<endl
+			     << tab << tab << "or (absXgtOneAndNormal   and  infY  and signY) ;        -- (|x|>1) ^ (-inf)" << endl;
+			vhdl << tab  << declare("RisZeroFromExp") << " <= '1' when flagsE=\"00\" else '0';" << endl;
+			vhdl << tab  << declare("RisZero") << " <= RisZeroSpecialCase or RisZeroFromExp;" << endl;
+
+			vhdl << tab  << declare("RisOne") << " <= " << endl
+			     << tab << tab << "   (XisOneAndNormal and signX and infY)"<<endl
+			     << tab << tab << "or (XisOneAndNormal  and not signX)" << endl
+			     << tab << tab << "or (zeroX and zeroY)" << endl
+			     << tab << tab << "or (infX and not signX and zeroY);" << endl ;
+
+			vhdl << tab  << declare("signR") << " <= signX and (oddIntY);" << endl;
 		}
 		else{
+		
 			vhdl<<"-- Powr Exceptions  --"<<endl;
+			vhdl << tab  << "-- x^(+/-0)=1" << endl;
+			vhdl << tab  << declare("case_x_to_0") << " <= '1' when (normalX='1' and zeroY='1') else '0';" << endl;
+		
+			vhdl << tab  << "-- -+-0^^-inf=+inf" << endl;
+			vhdl << tab  << declare("case_0_to_neginf") << " <= '1' when (zeroX='1' and infY='1' and signY='1')  else '0';" << endl;
+		
+			vhdl << tab  << "--  -0^^+inf= 0 (p) NaN (pr)" << endl;
+			vhdl << tab  << declare("case_neg0_to_posinf") << " <= '1' when (zeroX='1' and signY='1' and infY='1' and signY='0')  else '0';" << endl;
+		
+			vhdl << tab  << "-- 0^^+inf=0" << endl;
+			vhdl << tab  << declare("case_pos0_to_posinf") << " <= '1' when (zeroX='1' and signY='0' and infY='1' and signY='0')  else '0';" << endl;
+		
+			vhdl << tab  << "--  +-0^+-0= 1 (p) NaN (pr)" << endl;
+			vhdl << tab  << declare("case_0_to_0") << " <= zeroX and zeroY;" << endl;
+
+			vhdl << tab  << "--  +inf^+-0= 1 (p) NaN (pr)" << endl;
+			vhdl << tab  << declare("case_posinf_to_0") << " <=  '1' when (infX='1' and signX='0' and zeroY='1') else '0';" << endl;
+
 			
 			vhdl << tab  << "-- +-0^^negative =+inf" << endl;
 			vhdl << tab  << declare("powr_case_0_to_yn") << " <= '1' when (zeroX='1' and normalY='1' and signY='1')  else '0';" << endl;
@@ -352,14 +306,15 @@ namespace flopoco{
 			vhdl << tab  << declare("signR") << " <= '0';"<<endl;
 		}
 
-
-#endif
 		vhdl << tab  << declare("flagR", 2) << " <= " << endl
 		     << tab  << tab << "     \"11\" when RisNaN='1'" << endl
 		     << tab  << tab << "else \"00\" when RisZero='1'" << endl
 		     << tab  << tab << "else \"10\" when RisInf='1'" << endl
 		     << tab  << tab << "else \"01\";" << endl;
-		vhdl << tab << "R <= flagR & signR & E " << range(wE+wF-1, 0) <<" ;" << endl; 
+
+		vhdl << tab << declare("R_expfrac", wE+wF) << " <= CONV_STD_LOGIC_VECTOR("<< (1<<(wE-1))-1<<","<<wE<<") &  CONV_STD_LOGIC_VECTOR(0, "<< wF << ") when RisOne='1'"
+		     << endl << tab << tab << " else E" << range(wE+wF-1, 0) << ";" << endl; 
+		vhdl << tab << "R <= flagR & signR & R_expfrac;" << endl; 
 
 
 
