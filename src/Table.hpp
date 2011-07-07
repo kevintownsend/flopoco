@@ -7,7 +7,8 @@
 
   Initial software.
   Copyright © ENS-Lyon, INRIA, CNRS, UCBL,  
-  CeCILL license, 2008-2011.
+
+  All rights reserved.
 
  */
 

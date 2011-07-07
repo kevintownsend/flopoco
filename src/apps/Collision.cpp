@@ -1,8 +1,19 @@
 /*
 
- * An FP collision operator for FloPoCo
+  An FP collision operator for FloPoCo
 
- This is mostly an example of a coarse-grain, nonstandard operator.
+  Author : Florent de Dinechin 
+
+  This file is part of the FloPoCo project developed by the Arenaire
+  team at Ecole Normale Superieure de Lyon
+
+  Initial software.
+  Copyright © ENS-Lyon, INRIA, CNRS, UCBL, 2008-2010.
+  All right reserved.
+ 
+
+
+This is mostly an example of a coarse-grain, nonstandard operator.
 
  A 3D collision detector inputs 3 FP coordinates X,Y and Z and
  the square of a radius, R2, and computes a boolean predicate which is
@@ -24,25 +35,7 @@
  TODO: turn it into a more generally useful sum-of-square, and manage exceptions.
 
  
- *
- * Author : Florent de Dinechin
- *
- * This file is part of the FloPoCo project developed by the Arenaire
- * team at Ecole Normale Superieure de Lyon
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or 
- * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
+
  */
 #include <fstream>
 #include <sstream>

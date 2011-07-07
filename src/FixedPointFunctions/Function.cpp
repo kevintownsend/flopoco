@@ -1,3 +1,18 @@
+/*
+  Function object for FloPoCo
+
+  Authors: Florent de Dinechin
+
+  This file is part of the FloPoCo project
+  developed by the Arenaire team at Ecole Normale Superieure de Lyon
+  
+  Initial software.
+  Copyright © ENS-Lyon, INRIA, CNRS, UCBL,  
+
+  All rights reserved.
+
+*/
+
 #include "Function.hpp"
 #include <sstream>
 

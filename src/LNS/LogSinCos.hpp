@@ -2,7 +2,7 @@
 #define LNS_LOGSINCOS_HPP
 
 #include "../Operator.hpp"
-#include "GenericEvaluator.hpp"
+#include "../FixedPointFunctions/GenericEvaluator.hpp"
 
 namespace flopoco{
 

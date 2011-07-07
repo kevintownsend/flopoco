@@ -1,26 +1,30 @@
 /*
-  A generic class for DualTables of values
+  Primitive Dual Port Memory block for FloPoCo
+
+  Author: Radu Tudoran
 
   This file is part of the FloPoCo project 
   developed by the Arenaire team at Ecole Normale Superieure de Lyon
   
-  Author :Radu Tudoran
-
   Initial software.
   Copyright © ENS-Lyon, INRIA, CNRS, UCBL,  
-  CeCILL license, 2008-2010.
+  2008-2010.
+  All rights reserved.
 
 */
 
 
 /* 
- The class contains a primitive Dual Port Memory block, that is nested inside the DualTable class. This is done in order to prevent the miss used of the inner object.
- The Memories are splitied in fundamental units(blocks) that can be recognized by the simulator as dual port memories. The limit of a memory block until it is recognized as
- a dual port one is 2^11*9 bits on Virtex 4. 
+ The class contains a primitive Dual Port Memory block.
 
-This class is an abstract one, and in order to be used it must be extended by a concret class which will implement the
- "function" method. It is very similar to the Table class.
-*/
+ The memories are split in fundamental units (blocks) that can be
+ recognized by the synthesis tools as dual port memories. The limit of
+ a memory block until it is recognized as a dual port one is 2^11*9
+ bits on Virtex 4.
+
+This class is an abstract one, and in order to be used it must be
+ extended by a concrete class which will implement the "function"
+ method. It is very similar to the Table class.  */
 
 #include "DualTable.hpp"
 

@@ -2,7 +2,7 @@
 #define LNSADD_HPP
 
 #include "../Operator.hpp"
-#include "GenericEvaluator.hpp"
+#include "../FixedPointFunctions/GenericEvaluator.hpp"
 
 
 namespace flopoco{

@@ -1,3 +1,16 @@
+/*
+  A table of logs for the argument reduction of the floating-point logarithm 
+  Author:  Florent de Dinechin
+
+  This file is part of the FloPoCo project
+  developed by the Arenaire team at Ecole Normale Superieure de Lyon
+  
+  Initial software.
+  Copyright © ENS-Lyon, INRIA, CNRS, UCBL,  
+  2008-2011.
+  All rights reserved.
+
+ */
 #include <iostream>
 #include <math.h>
 #include <cstdlib>

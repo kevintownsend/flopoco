@@ -7,6 +7,6 @@ noinst_LTLIBRARIES = libLNS.la
 
 noinst_HEADERS = AtanPow.hpp  Cotran.hpp  CotranHybrid.hpp  CotranTables.hpp  GenericEvaluator.hpp  LNSAdd.hpp  LNSAddSub.hpp  LNSDiv.hpp  LNSMul.hpp  LNSSqrt.hpp  LogSinCos.hpp
 
-libLNS_la_SOURCES = AtanPow.cpp  Cotran.cpp  CotranHybrid.cpp  CotranTables.cpp  GenericEvaluator.cpp  LNSAdd.cpp  LNSAddSub.cpp  LNSDiv.cpp  LNSMul.cpp  LNSSqrt.cpp  LogSinCos.cpp
+libLNS_la_SOURCES = AtanPow.cpp  Cotran.cpp  CotranHybrid.cpp  CotranTables.cpp  LNSAdd.cpp  LNSAddSub.cpp  LNSDiv.cpp  LNSMul.cpp  LNSSqrt.cpp  LogSinCos.cpp
 
 

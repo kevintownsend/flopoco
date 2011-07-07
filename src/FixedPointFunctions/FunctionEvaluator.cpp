@@ -1,5 +1,5 @@
 /*
-  Function Evaluator for FloPoCo
+  Polynomial Function Evaluator for FloPoCo
 
   Authors: Bogdan Pasca, Mioara Joldes
 
@@ -8,7 +8,8 @@
   
   Initial software.
   Copyright © ENS-Lyon, INRIA, CNRS, UCBL,  
-  CeCILL license, 2008-2010.
+  2008-2010.
+  All rights reserved.
 
   */
 

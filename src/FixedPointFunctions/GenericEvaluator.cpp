@@ -1,3 +1,18 @@
+/*
+  Generic function evaluator, using either HOTBM or polynomial evaluation
+
+  Authors: Sylvain Collange
+
+  This file is part of the FloPoCo project
+  developed by the Arenaire team at Ecole Normale Superieure de Lyon
+  
+  Initial software.
+  Copyright © ENS-Lyon, INRIA, CNRS, UCBL,  
+
+  All rights reserved.
+
+*/
+
 #include "GenericEvaluator.hpp"
 #include "../FixedPointFunctions/HOTBM.hpp"
 #include "../FixedPointFunctions/FunctionEvaluator.hpp"

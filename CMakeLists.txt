@@ -176,7 +176,7 @@ IF (HOTBM_LIB)
 		src/LNS/LNSDiv
 		src/LNS/LNSSqrt
 		src/LNS/AtanPow
-		src/LNS/GenericEvaluator
+		src/FixedPointFunctions/GenericEvaluator
 		src/LNS/LogSinCos
 	)
 	TARGET_LINK_LIBRARIES(lns ${HOTBM_LIB})

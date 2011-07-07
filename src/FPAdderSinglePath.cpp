@@ -7,8 +7,8 @@
   Authors:   Bogdan Pasca, Florent de Dinechin
 
   Initial software.
-  Copyright © ENS-Lyon, INRIA, CNRS, UCBL,  
-  CeCILL license, 2008-2010.
+  Copyright © ENS-Lyon, INRIA, CNRS, UCBL, 2008-2010.
+  All right reserved.
 
   */
 #include <iostream>

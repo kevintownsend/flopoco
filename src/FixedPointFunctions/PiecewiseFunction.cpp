@@ -1,3 +1,20 @@
+/*
+  Piecewise function object for FloPoCo
+
+  Author: Mioara Joldes
+
+  (developed for the polynomial-based square root)
+
+  This file is part of the FloPoCo project
+  developed by the Arenaire team at Ecole Normale Superieure de Lyon
+  
+  Initial software.
+  Copyright © ENS-Lyon, INRIA, CNRS, UCBL,  
+
+  All rights reserved.
+
+*/
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif

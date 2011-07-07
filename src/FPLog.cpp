@@ -8,7 +8,8 @@
 
   Initial software.
   Copyright © ENS-Lyon, INRIA, CNRS, UCBL,  
-  CeCILL license, 2008-2010.
+  2008-2010.
+  All rights reserved.
 
 */
 
@@ -661,11 +662,11 @@ namespace flopoco{
 		outPortMap(final_norm, "Count", "E_normal");
 		outPortMap(final_norm, "O", "Log_normal_normd");
 		vhdl << instance(final_norm, "final_norm");
-		// back to the squarer output
-		setCycleFromSignal("Z2o2_full");
 		setCriticalPath( final_norm->getOutputDelay("O"));
 		double cpE_normal = getCriticalPath();
 
+		// back to the squarer output
+		// 		setCycleFromSignal("Z2o2_full");
 
 		int Z2o2_small_size=(wF+gLog+2) - pfinal; // we need   (wF+gLog+2) - pfinal bits of Z2O2
 

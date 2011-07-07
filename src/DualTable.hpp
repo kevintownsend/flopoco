@@ -1,8 +1,3 @@
-/*
- * A generic class for tables of values
- *
- */
-
 #ifndef DUALTABLE_HPP
 #define DUALTABLE_HPP
 #include <gmpxx.h>

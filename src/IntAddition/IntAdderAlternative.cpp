@@ -11,7 +11,8 @@ developed by the Arenaire team at Ecole Normale Superieure de Lyon
 
 Initial software.
 Copyright © ENS-Lyon, INRIA, CNRS, UCBL,
-CeCILL license, 2008-2010.
+2008-2010.
+  All rights reserved.
 */
 
 #include <cstdlib>

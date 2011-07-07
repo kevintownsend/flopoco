@@ -8,7 +8,8 @@
 
   Initial software.
   Copyright © ENS-Lyon, INRIA, CNRS, UCBL,  
-  CeCILL license, 2008-2010.
+  2008-2010.
+  All rights reserved.
 */
 
 #include <typeinfo>

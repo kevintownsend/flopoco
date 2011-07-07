@@ -1,24 +1,15 @@
 /*
-* A model of FPGA that works well enough for Virtex-4 chips  (LX, speedgrade -12, e.g. xc4vlx15-12) 
-*
-* Author : Bogdan Pasca
-*
-* This file is part of the FloPoCo project developed by the Arenaire
-* team at Ecole Normale Superieure de Lyon
-*
-* This program is free software; you can redistribute it and/or modify
-* it under the terms of the GNU Lesser General Public License as published by
-* the Free Software Foundation; either version 2 of the License, or 
-* (at your option) any later version.
-* 
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU Lesser General Public License
-* along with this program; if not, write to the Free Software
-* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
+ A model of SpartanIII FPGA  (FIXME exact model?) 
+
+ Author: Bogdan Pasca
+
+  This file is part of the FloPoCo project
+  developed by the Arenaire team at Ecole Normale Superieure de Lyon
+  
+  Initial software.
+  Copyright © ENS-Lyon, INRIA, CNRS, UCBL,  
+  2008-2011.
+  All rights reserved.
 */
 #include "Spartan3.hpp"
 #include <iostream>

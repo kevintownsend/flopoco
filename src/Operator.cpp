@@ -5,7 +5,8 @@ Author : Florent de Dinechin, Bogdan Pasca
 
 Initial software.
 Copyright © ENS-Lyon, INRIA, CNRS, UCBL,  
-CeCILL license, 2008-2010.
+2008-2010.
+  All rights reserved.
 
 */
 
@@ -362,8 +363,6 @@ namespace flopoco{
 		
 		o<<"-- This operator is part of the Infinite Virtual Library FloPoCoLib"<<endl;
 		o<<"-- All rights reserved "<<endl;
-		// <<"-- and is distributed under the terms of the GNU Lesser General Public Licence"<<endl
-		// <<"-- with a Tobin Tax restriction (see README file for details)."<<endl
 		o<<"-- Authors: " << authorsyears <<endl;
 		o<<"--------------------------------------------------------------------------------"<<endl;
 	}
