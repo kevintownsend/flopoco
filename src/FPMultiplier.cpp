@@ -43,7 +43,7 @@ namespace flopoco{
 	
 		addFPInput ("X", wEX_, wFX_);
 		addFPInput ("Y", wEY_, wFY_);
-		if(normalized_==true) 
+		if(normalized_) 
 			addFPOutput ("R"   , wER , wFR);  
 		else{
 			wFR_ = 2 + wFX_ + wFY_;
@@ -87,10 +87,10 @@ namespace flopoco{
 			// faithful rounding will be computed by IntTruncMultiplier
 			// but we still  have to re-round behind 
 			sigProdSize = wFR_+g; 
-		int useLimits=0; // TODO WTF is it? 
+		int useLimits=1; // TODO WTF is it? 
 		int maxTimeInMinutes=1;
-		int ratio=1.0;
-#if 1
+		int ratio=1.0; // TODO pass as argument
+#if 0
 		IntMultiplier* intmult_ = new IntMultiplier(target, wFX_+1, wFY_+1);
 #else
 		IntTruncMultiplier* intmult_ = new IntTruncMultiplier(target, wFX_+1, wFY_+1, sigProdSize, ratio, useLimits, maxTimeInMinutes,
@@ -122,8 +122,9 @@ namespace flopoco{
 
 		//synchronization
 
-		setCycleFromSignal("expSum", exponentCriticalPath);	
-		syncCycleFromSignal("sigProd", significandCriticalPath); 
+		syncCycleFromSignal("expSum", exponentCriticalPath,false);	
+		syncCycleFromSignal("sigProd", significandCriticalPath,true); 
+
 		
 		if (normalized_){
 		/******************************************************************/
@@ -131,11 +132,13 @@ namespace flopoco{
 			vhdl << tab<< declare("norm") << " <= sigProd" << of(wFX_+wFY_+1) << ";"<<endl;
 			
 			manageCriticalPath(target->localWireDelay() + target->adderDelay(wEX+2));
+			double expPostNormCriticalPath=getCriticalPath();
+			vhdl << tab<< "-- exponent update"<<endl;
 			vhdl << tab<< declare("expPostNorm", wEX_+2) << " <= expSum + (" << zg(wEX_+1,0) << " & norm);"<<endl;
 
 			//  exponent update is in parallel to the mantissa shift, so get back there
-			setCycleFromSignal("expSum", exponentCriticalPath);	
-			syncCycleFromSignal("sigProd", significandCriticalPath); 
+			setCycleFromSignal("expSum", exponentCriticalPath, false);	
+			syncCycleFromSignal("sigProd", significandCriticalPath, true); 
 		
 			//check is rounding is needed
 			if (1+wFR_ >= wFX_+wFY_+2) {  
@@ -158,10 +161,13 @@ namespace flopoco{
 				vhdl << tab << "R <= finalExc & sign & expPostNorm" << range(wER_-1, 0) << " & resSig;"<<endl;
 			}
 			else{
+				vhdl << tab<< "-- significand normalization shift"<<endl;
 				manageCriticalPath(target->localWireDelay() + target->lutDelay());
 				vhdl << tab << declare("sigProdExt", sigProdSize) << " <= sigProd" << range(sigProdSize-2, 0) << " & " << zg(1,0) <<" when norm='1' else"<<endl;
 				vhdl << tab << "                      sigProd" << range(sigProdSize-3, 0) << " & " << zg(2,0) << ";"<<endl;
 
+				
+				syncCycleFromSignal("expPostNorm", expPostNormCriticalPath, true); 
 				vhdl << tab << declare("expSig", 2 + wER_ + wFR_) << " <= expPostNorm & sigProdExt" << range(sigProdSize-1,  sigProdSize-wFR_) << ";" << endl;
 				
 				if(correctlyRounded_) {
