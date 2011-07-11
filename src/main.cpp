@@ -438,7 +438,7 @@ static void usage(char *name, string opName = ""){
 		cerr << "      Mantissa multiplier uses Karatsuba\n";
 	}
 	if ( full || opName == "FPMultiplier" || opName == "FPMultiplierExpert"){						
-		OP( "FPMultiplierExpert","wE wF_in wF_out correctRounding ratio optTimeInMinutes");
+		OP( "FPMultiplierExpert","wE wFX_in wFY_in wF_out correctRounding ratio optTimeInMinutes");
 		cerr << "      Floating-point multiplier, supporting different in/out precision. \n";
 	}
 	if ( full || opName == "FPMultiplier" || opName == "FPSquarer"){					
@@ -1800,18 +1800,18 @@ bool parseCommandLine(int argc, char* argv[]){
 			}
 		}  
 		else if(opname=="FPMultiplierExpert"){
-			int nargs = 6; 
+			int nargs = 7; 
 			if (i+nargs > argc)
 				usage(argv[0],opname);
 			int wE = checkStrictlyPositive(argv[i++], argv[0]);
-			int wFIn = checkStrictlyPositive(argv[i++], argv[0]);
+			int wFXIn = checkStrictlyPositive(argv[i++], argv[0]);
+			int wFYIn = checkStrictlyPositive(argv[i++], argv[0]);
 			int wFOut = checkStrictlyPositive(argv[i++], argv[0]);
 			int correctRounding = checkBoolean(argv[i++], argv[0]);
 			float r = atof(argv[i++]);
 			int maxTimeInMinutes = atoi(argv[i++]);
 
-			cerr << "> FPMultiplierExpert , wE="<<wE<<", wFIn="<<wFIn<<", wFOut="<<wFOut<<" ratio="<<r<<" maxTime="<<maxTimeInMinutes<<" \n";
-			op = new FPMultiplier(target, wE, wFIn, wE, wFIn, wE, wFOut, true, correctRounding, r, maxTimeInMinutes);
+			op = new FPMultiplier(target, wE, wFXIn, wE, wFYIn, wE, wFOut, true, correctRounding, r, maxTimeInMinutes);
 			addOperator(op);
 		}  
 		else if(opname=="FPSquarer"){

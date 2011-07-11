@@ -3,9 +3,6 @@
  
   Author : Florent de Dinechin, Pedro Echevarria
  
-  This file is part of the FloPoCo project developed by the Arenaire
-  team at Ecole Normale Superieure de Lyon
-
   This file is part of the FloPoCo project
   developed by the Arenaire team at Ecole Normale Superieure de Lyon
   
@@ -313,16 +310,26 @@ namespace flopoco{
 		syncCycleFromSignal("lnX");
 		nextCycle();
 
+#if 0
 		// TODO: the following mult could be  truncated
-		FPMultiplier* mult = new FPMultiplier(target,   /*X:*/ wE, logwF,   /*Y:*/ wE, wF,  /*R: */  wE,  wF+wE+expG,  1 /* norm*/); 
+		FPMultiplier* mult = new FPMultiplier(target,   /*X:*/ wE, logwF,   /*Y:*/ wE, wF,  /*R: */  wE,  wF+wE+expG, 
+		                                      1 /* norm*/); 
+#else
+		// truncated
+		FPMultiplier* mult = new FPMultiplier(target,   /*X:*/ wE, logwF,   /*Y:*/ wE, wF,  /*R: */  wE,  wF+wE+expG, 
+		                                      1, /* norm*/ 
+		                                      0 /* faithful only*/); 
+#endif
 		oplist.push_back(mult);
 		inPortMap(mult, "Y", "Y");
 		inPortMap(mult, "X", "lnX");
 		outPortMap(mult, "R", "P");
 		vhdl << instance(mult, "mult");
 
+
+
 		syncCycleFromSignal("P");
-#if 0
+#if 0 // while fine-tuning the pipeline
 		setCriticalPath( mult->getOutputDelay("R") );
 		FPExp* exp = new FPExp(target,  wE,  wF, 0/* means default*/, 0, expG, true, inDelayMap("X", getCriticalPath() + 2*target->localWireDelay()) );
 #else		
