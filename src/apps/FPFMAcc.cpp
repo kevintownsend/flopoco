@@ -28,7 +28,7 @@
 #include "../Operator.hpp"
 
 #include "FPFMAcc.hpp"
-#include "../IntTruncMultiplier.hpp"
+#include "../IntMultipliers/IntTruncMultiplier.hpp"
 
 
 using namespace std;

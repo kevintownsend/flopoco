@@ -6,10 +6,10 @@
 #include <mpfr.h>
 #include <gmpxx.h>
 
-#include "Operator.hpp"
-#include "IntCompressorTree.hpp"
-#include "IntNAdder.hpp"
-#include "IntAdder.hpp"
+#include "../Operator.hpp"
+#include "../IntCompressorTree.hpp"
+#include "../IntNAdder.hpp"
+#include "../IntAdder.hpp"
 
 
 namespace flopoco{

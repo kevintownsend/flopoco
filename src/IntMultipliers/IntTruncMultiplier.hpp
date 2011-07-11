@@ -6,10 +6,10 @@
 #include <mpfr.h>
 #include <gmpxx.h>
 
-#include "Operator.hpp"
-#include "IntAdder.hpp"
-#include "IntNAdder.hpp"
-#include "IntCompressorTree.hpp"
+#include "../Operator.hpp"
+#include "../IntAdder.hpp"
+#include "../IntNAdder.hpp"
+#include "../IntCompressorTree.hpp"
 
 
 namespace flopoco{
@@ -124,7 +124,7 @@ namespace flopoco{
 		int wOut;             /**<The width of output */
 	
 		
-		IntTruncMultiplier(Target* target, int winX, int winY, float ratio, int k,int uL, int maxTimeInMinutes, bool interactive = true, bool sign = false, bool roundCompensate = true);
+		IntTruncMultiplier(Target* target, int winX, int winY, int wOut, float ratio,int uL, int maxTimeInMinutes, bool interactive = false, bool sign = false, bool roundCompensate = true);
 	
 		/** IntTruncMultiplier destructor */
 		~IntTruncMultiplier();
@@ -155,9 +155,10 @@ namespace flopoco{
 	
 	protected:
 
+		// TODO FIXME Aren't these redundant with wInX, wInY? 
 		int wX;      /**< the width (in bits) of the input  X  */
 		int wY;      /**< the width (in bits) of the input  Y  */
-		int wt;      /**< the width (in bits) of the output R TODO */
+
 		float ratio; /**<the ratio between slice and dsp */
 		int targetPrecision;
 		int useLimits;

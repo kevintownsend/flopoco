@@ -9,7 +9,7 @@
 
 #include "../Operator.hpp"
 #include "../IntCompressorTree.hpp"
-#include "../IntTruncMultiplier.hpp"
+#include "../IntMultipliers/IntTruncMultiplier.hpp" // for softDSPs etc
 #include "LogicIntMultiplier.hpp"
 
 

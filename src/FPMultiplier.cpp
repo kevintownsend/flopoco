@@ -32,16 +32,14 @@ namespace flopoco{
 
 	extern vector<Operator*> oplist;
 
-	FPMultiplier::FPMultiplier(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, int wFR, int norm, map<string, double> inputDelays) :
-		Operator(target), wEX_(wEX), wFX_(wFX), wEY_(wEY), wFY_(wFY), wER_(wER), wFR_(wFR) {
+	FPMultiplier::FPMultiplier(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, int wFR, bool norm, bool correctlyRounded, map<string, double> inputDelays) :
+		Operator(target), wEX_(wEX), wFX_(wFX), wEY_(wEY), wFY_(wFY), wER_(wER), wFR_(wFR), normalized_(norm), correctlyRounded_(correctlyRounded)  {
 
 		ostringstream name;
 		name << "FPMultiplier_"<<wEX_<<"_"<<wFX_<<"_"<<wEY_<<"_"<<wFY_<<"_"<<wER_<<"_"<<wFR_<<"_uid"<<getNewUId(); 
 		setName(name.str());
 		setCopyrightString("Bogdan Pasca, Florent de Dinechin 2008-2011");
 
-		/* set if operator outputs a normalized_ result */
-		normalized_ = (norm==0?false:true);
 	
 		addFPInput ("X", wEX_, wFX_);
 		addFPInput ("Y", wEY_, wFY_);
@@ -57,7 +55,7 @@ namespace flopoco{
 
 		setCriticalPath(getMaxInputDelays(inputDelays));
 
-		/* Sing Handling -- no need to count it in the critical path */
+		/* Sign Handling -- no need to count it in the critical path */
 		vhdl << tab << declare("sign") << " <= X" << of(wEX_+wFX) << " xor Y" << of(wEY_+wFY) << ";" << endl;
 
 		/* Exponent Handling */
@@ -80,7 +78,27 @@ namespace flopoco{
 		vhdl << tab << declare("sigX",1 + wFX_) << " <= \"1\" & X" << range(wFX_-1,0) << ";" << endl;
 		vhdl << tab << declare("sigY",1 + wFY_) << " <= \"1\" & Y" << range(wFY_-1,0) << ";" << endl;
 
-		intmult_ = new IntMultiplier(target, wFX_+1, wFY_+1);
+
+		int sigProdSize;
+		int g=3; // number of guard bits needed in case of faithful rounding
+		if(normalized_) 
+			sigProdSize = wFX_+1 + wFY_+1;
+		else
+			// faithful rounding will be computed by IntTruncMultiplier
+			// but we still  have to re-round behind 
+			sigProdSize = wFR_+g; 
+		int useLimits=0; // TODO WTF is it? 
+		int maxTimeInMinutes=1;
+		int ratio=1.0;
+#if 1
+		IntMultiplier* intmult_ = new IntMultiplier(target, wFX_+1, wFY_+1);
+#else
+		IntTruncMultiplier* intmult_ = new IntTruncMultiplier(target, wFX_+1, wFY_+1, sigProdSize, ratio, useLimits, maxTimeInMinutes,
+		                                                     false, /* interactive */
+		                                                     false, /* signed */ 
+		                                                     false  /* roundCompensate*/);
+#endif
+
 		oplist.push_back(intmult_);
 
 		inPortMap( intmult_, "X", "sigX");
@@ -102,12 +120,12 @@ namespace flopoco{
 		vhdl << tab << "       \"10\" when \"0110\" | \"1001\" | \"1010\" ,"<<endl;		
 		vhdl << tab << "       \"11\" when others;"<<endl;		
 
-		//syncronization
+		//synchronization
 
-		syncCycleFromSignal("expSum", exponentCriticalPath);	
+		setCycleFromSignal("expSum", exponentCriticalPath);	
 		syncCycleFromSignal("sigProd", significandCriticalPath); 
 		
-		if (normalized_==true){
+		if (normalized_){
 		/******************************************************************/
 				
 			vhdl << tab<< declare("norm") << " <= sigProd" << of(wFX_+wFY_+1) << ";"<<endl;
@@ -115,8 +133,14 @@ namespace flopoco{
 			manageCriticalPath(target->localWireDelay() + target->adderDelay(wEX+2));
 			vhdl << tab<< declare("expPostNorm", wEX_+2) << " <= expSum + (" << zg(wEX_+1,0) << " & norm);"<<endl;
 
+			//  exponent update is in parallel to the mantissa shift, so get back there
+			setCycleFromSignal("expSum", exponentCriticalPath);	
+			syncCycleFromSignal("sigProd", significandCriticalPath); 
+		
 			//check is rounding is needed
-			if (1+wFR_ >= wFX_+wFY_+2) {  /* => no rounding needed - possible padding */
+			if (1+wFR_ >= wFX_+wFY_+2) {  
+				/* => no rounding needed - possible padding; 
+				   in this case correctlyRounded_ is irrelevant: result is exact  */
 				vhdl << tab << declare("resSig", wFR_) << " <= sigProd" << range(wFX_+wFY_,0) << " & " <<   zg(1+wFR_ - (wFX_+wFY_+2) , 0)<<" when norm='1' else"<<endl;
 				vhdl << tab <<"                      sigProd" << range(wFX_+wFY_-1,0) << " & " << zg(1+wFR_ - (wFX_+wFY_+2) + 1 , 0) << ";"<<endl;
 
@@ -134,27 +158,30 @@ namespace flopoco{
 				vhdl << tab << "R <= finalExc & sign & expPostNorm" << range(wER_-1, 0) << " & resSig;"<<endl;
 			}
 			else{
-
 				manageCriticalPath(target->localWireDelay() + target->lutDelay());
-				vhdl << tab << declare("sigProdExt", wFX_+wFY_+ 1 + 1) << " <= sigProd" << range(wFX_+wFY_, 0) << " & " << zg(1,0) <<" when norm='1' else"<<endl;
-				vhdl << tab << "                      sigProd" << range(wFX_+wFY_-1, 0) << " & " << zg(2,0) << ";"<<endl;
-							
-				vhdl << tab << declare("expSig", 2 + wER_ + wFR_) << " <= expPostNorm & sigProdExt" << range(wFX_+wFY_+ 1,wFX_+wFY_+ 2 -wFR_) << ";" << endl;
+				vhdl << tab << declare("sigProdExt", sigProdSize) << " <= sigProd" << range(sigProdSize-2, 0) << " & " << zg(1,0) <<" when norm='1' else"<<endl;
+				vhdl << tab << "                      sigProd" << range(sigProdSize-3, 0) << " & " << zg(2,0) << ";"<<endl;
 
-		
-				vhdl << tab << declare("sticky") << " <= sigProdExt" << of(wFX_+wFY + 1 - wFR) << ";" << endl;
-
-				if(wFX_+wFY + 1 - wFR>0) // otherwise the user has been stupid anyway
-					manageCriticalPath(target->localWireDelay() + target->eqConstComparatorDelay(wFX_+wFY + 1 - wFR));
-				vhdl << tab << declare("guard") << " <= '0' when sigProdExt" << range(wFX_+wFY + 1 - wFR - 1,0) << "=" << zg(wFX_+wFY + 1 - wFR - 1 +1,0) <<" else '1';" << endl;
-
-				manageCriticalPath(target->localWireDelay() + target->lutDelay());
-				vhdl << tab << declare("round") << " <= sticky and ( (guard and not(sigProdExt" << of(wFX_+wFY + 1 - wFR+1) <<")) or (" 
-				 << "sigProdExt" << of(wFX_+wFY + 1 - wFR+1) << " ))  ;" << endl;
-				                                                                      
-				intadd_ = new IntAdder(target, 2 + wER_ + wFR_, inDelayMap("X", getCriticalPath() ));
-				oplist.push_back(intadd_);
+				vhdl << tab << declare("expSig", 2 + wER_ + wFR_) << " <= expPostNorm & sigProdExt" << range(sigProdSize-1,  sigProdSize-wFR_) << ";" << endl;
 				
+				if(correctlyRounded_) {
+					vhdl << tab << declare("sticky") << " <= sigProdExt" << of(wFX_+wFY + 1 - wFR) << ";" << endl;
+					
+					if(wFX_+wFY + 1 - wFR>0) // otherwise the user has been stupid anyway
+						manageCriticalPath(target->localWireDelay() + target->eqConstComparatorDelay(sigProdSize-1 - wFR));
+					vhdl << tab << declare("guard") << " <= '0' when sigProdExt" << range(wFX_+wFY + 1 - wFR - 1,0) << "=" << zg(wFX_+wFY + 1 - wFR - 1 +1,0) <<" else '1';" << endl;
+					
+					manageCriticalPath(target->localWireDelay() + target->lutDelay());
+					vhdl << tab << declare("round") << " <= sticky and ( (guard and not(sigProdExt" << of(wFX_+wFY + 1 - wFR+1) <<")) or (" 
+					     << "sigProdExt" << of(wFX_+wFY + 1 - wFR+1) << " ))  ;" << endl;
+				}
+				else
+					{
+					vhdl << tab << declare("round") << " <= '1' ;" << endl;
+				}
+				IntAdder* intadd_ = new IntAdder(target, 2 + wER_ + wFR_, inDelayMap("X", getCriticalPath() ));
+				oplist.push_back(intadd_);
+					
 				inPortMap    (intadd_, "X",   "expSig");
 				inPortMapCst (intadd_, "Y",   zg(2 + wER_ + wFR_,0));
 				inPortMap    (intadd_, "Cin", "round");
@@ -163,22 +190,24 @@ namespace flopoco{
 				vhdl << tab << instance( intadd_, "RoundingAdder");
 				syncCycleFromSignal("expSigPostRound");
 				setCriticalPath(intadd_->getOutputDelay("R"));
-				
+					
+
+
 				vhdl << tab <<"with expSigPostRound" << range(wER_+wFR_+1, wER_+wFR_) << " select"<<endl;		
 				vhdl << tab << declare("excPostNorm",2) << " <=  \"01\"  when  \"00\","<<endl;
 				vhdl << tab <<"                            \"10\"             when \"01\", "<<endl;
 				vhdl << tab <<"                            \"00\"             when \"11\"|\"10\","<<endl;
 				vhdl << tab <<"                            \"11\"             when others;"<<endl;						
-			
+					
 				vhdl << tab << "with exc select " << endl;
 				vhdl << tab << declare("finalExc",2) << " <= exc when  \"11\"|\"10\"|\"00\"," <<endl;
 				vhdl << tab << "                    excPostNorm when others; " << endl;
-	
 				vhdl << tab << "R <= finalExc & sign & expSigPostRound" << range(wER_+wFR_-1, 0)<<";"<<endl;
 			
 			}
 		}else{ //the non-normalized version for DotProduct
 			// TODO: modern pipeline framework
+			// TODO: manage the faithful case
 				vhdl << tab <<"with expSum" << range(wER_+1, wER_) << " select"<<endl;		
 				vhdl << tab << declare("excPostProc",2) << " <=  \"01\"  when  \"00\","<<endl;
 				vhdl << tab <<"                            \"10\"             when \"01\", "<<endl;
@@ -199,8 +228,9 @@ namespace flopoco{
 	FPMultiplier::~FPMultiplier() {
 	}
 
-	// FIXME: the following is only functional for a correctly rounded multiplier.
-	// The old code for the non-normalized case is commented out below, just in case.
+
+
+	// TODO the unnormalized case is not emulated
 	void FPMultiplier::emulate(TestCase * tc)
 	{
 		/* Get I/O values */
@@ -217,13 +247,25 @@ namespace flopoco{
 		mpfr_init2(r, 1+wFR_); 
 		fpx.getMPFR(x);
 		fpy.getMPFR(y);
-		mpfr_mul(r, x, y, GMP_RNDN);
-
-		// Set outputs 
-		FPNumber  fpr(wER_, wFR_, r);
-		mpz_class svR = fpr.getSignalValue();
-		tc->addExpectedOutput("R", svR);
-
+		if(correctlyRounded_){
+			mpfr_mul(r, x, y, GMP_RNDN);
+			// Set outputs 
+			FPNumber  fpr(wER_, wFR_, r);
+			mpz_class svR = fpr.getSignalValue();
+			tc->addExpectedOutput("R", svR);
+		}
+		else{
+			// round down
+			mpfr_mul(r, x, y, GMP_RNDD);
+			FPNumber  fprd(wER_, wFR_, r);
+			mpz_class svRd = fprd.getSignalValue();
+			tc->addExpectedOutput("R", svRd);
+			// round up
+			mpfr_mul(r, x, y, GMP_RNDU);
+			FPNumber  fpru(wER_, wFR_, r);
+			mpz_class svRu = fpru.getSignalValue();
+			tc->addExpectedOutput("R", svRu);
+		}
 		// clean up
 		mpfr_clears(x, y, r, NULL);
 	}

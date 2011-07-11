@@ -7,6 +7,7 @@
 #include <gmpxx.h>
 
 #include "Operator.hpp"
+#include "IntMultipliers/IntTruncMultiplier.hpp"
 #include "IntMultiplier.hpp"
 #include "IntAdder.hpp"
 
@@ -27,7 +28,7 @@ namespace flopoco{
 		 * @param[in]		wER			the the with of the exponent for the multiplication result
 		 * @param[in]		wFR			the the with of the fraction for the multiplication result
 		 **/
-		FPMultiplier(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, int wFR, int norm = 1, map<string, double> inputDelays = emptyDelayMap);
+		FPMultiplier(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, int wFR, bool norm = true, bool correctlyRounded=true, map<string, double> inputDelays = emptyDelayMap);
 
 		/**
 		 * FPMultiplier destructor
@@ -49,12 +50,9 @@ namespace flopoco{
 		int  wFY_;                  /**< The width of the fraction for the input Y */
 		int  wER_;                  /**< The width of the exponent for the output R */
 		int  wFR_;                  /**< The width of the fraction for the output R */
-		bool normalized_;	       /**< Signal if the output of the operator is to be or not normalized*/
+		bool normalized_;	          /**< Signal if the output of the operator is to be or not normalized*/
+		bool correctlyRounded_;	    /**< true: operator computes correct rounding; false: operator computes faithful rounding */
 
-	private:
-
-		IntMultiplier* intmult_;     /**< The integer multiplier object */
-		IntAdder* intadd_;           /**< The integer multiplier object */
  
 	};
 }

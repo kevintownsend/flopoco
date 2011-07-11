@@ -72,8 +72,8 @@
 #include "IntMultipliers/IntTilingMult.hpp"
 #include "IntMultipliers/SignedIntMultiplier.hpp"
 #include "IntMultipliers/UnsignedIntMultiplier.hpp"
-#include "IntTruncMultiplier.hpp"
-#include "IntKaratsuba.hpp"
+#include "IntMultipliers/IntTruncMultiplier.hpp"
+#include "IntMultipliers/IntKaratsuba.hpp"
 #include "IntSquarer.hpp"
 
 #include "ConstMult/IntConstMult.hpp"
@@ -358,11 +358,10 @@ static void usage(char *name, string opName = ""){
 	}
 	
 	if ( full || opName == "IntMultiplier" || opName == "IntTruncMultiplier"){			
-		OP("IntTruncMultiplier","wInX wInY ratio error useLimits maxTimeInMinutes sign");
-		cerr << "      Integer multiplier of two integers X and Y of sizes wInX and wInY \n"; 
-		cerr << "      with a given error order.\n";	
+		OP("IntTruncMultiplier","wInX wInY wOut ratio useLimits maxTimeInMinutes sign");
+		cerr << "      Integer multiplier of two integers X and Y of sizes wInX and wInY, \n"; 
+		cerr << "      returning the wOut most significant bits of the exact product (faithful rounding).\n";	
 		cerr << "      0 <= ratio <= 1; larger ratio => DSP dominant architectures\n";
-		cerr << "      wInX+wInY<error<=0. The order of the error.\n";
 		cerr << "      useLimits. Soft-core multipliers are size-limited\n";
 		cerr << "      maxTimeInMinutes 0..; 0=find optimal solution (no time limit)\n";
 		cerr << "      sign is boolean 1:signed; 0:unsigned\n"; 	
@@ -428,7 +427,11 @@ static void usage(char *name, string opName = ""){
 
 	if ( full || opName == "FPMultiplier"){					
 		OP( "FPMultiplier","wE wF_in wF_out");
-		cerr << "      Floating-point multiplier, supporting different in/out precision  \n";
+		cerr << "      Standard floating-point multiplier, supporting different in/out precision  \n";
+	}
+	if ( full  || opName == "FPMultiplier" || opName == "FPMultiplierFaithful"){					
+		OP( "FPMultiplier","wE wF_in wF_out");
+		cerr << "      Faithfully rounded floating-point multiplier, (saves resources for large mantissa sizes) \n";
 	}
 	if ( full || opName == "FPMultiplier" || opName == "FPMultiplierKaratsuba"){						
 		OP( "FPMultiplierKaratsuba","wE wF_in wF_out");
@@ -523,10 +526,15 @@ static void usage(char *name, string opName = ""){
 		cerr << "      InTableSize is the numbers of bits to input to the tables. \n";
 		cerr << "      O defaults to something sensible\n";
 	}
-	if ( full || opName == "FPPowr"){					
-		OP( "FPPowr","wE wF");// LogTableSize ExpTableSize ExpDegree");
-		cerr << "      Floating-point powr function from IEEE-754-2008 (experimental);\n";
-		//	cerr << "      For the parameters, try 8 23 10 10 2 3 3 (simple), 11 52 12 12 2 33  (double)\n";
+	if ( full || opName == "FPPowr" || opName == "FPPow"  || opName == "FPPower"|| opName == "FPPowerExpert" ){					
+		OP( "FPPow","wE wF");
+		cerr << "      Floating-point pow from C99 and IEEE-754-2008; \n";
+		OP( "FPPowr","wE wF");
+		cerr << "      Floating-point powr from IEEE-754-2008; \n";
+		OP( "FPPowerExpert","wE wF  type LogTableSize ExpTableSize ExpDegree");
+		cerr << "      Floating-point pow (if type=0) or powr (if type=1) function from IEEE-754-2008; \n";
+		cerr << "      Example of parameters:  8 23 0 10 10 2 3 3 (simple), 11 52 0 12 12 2 33  (double)\n";
+		cerr << "      For each parameter, 0 should default to something sensible\n";
 	}
 
 	if ( full || opName == "OutputIEEE"){					
@@ -1402,31 +1410,30 @@ bool parseCommandLine(int argc, char* argv[]){
 				int maxTimeInMinutes = atoi(argv[i++]);
 				
 				cerr << "> IntTilingMultiplier , wInX="<<wInX<<", wInY="<<wInY<<" ratio=" << r << " maxTimeInMinutes= "<< maxTimeInMinutes << "\n";
-				op = new IntTilingMult(target, wInX, wInY, r, maxTimeInMinutes);
+				op = new IntTilingMult(target, wInX, wInY, r, maxTimeInMinutes, false);
 				addOperator(op);
 			}
 		}
 		else if(opname=="IntTruncMultiplier"){
-			int nargs = 6;
+			int nargs = 7;
 			if (i+nargs > argc)
 				usage(argv[0],opname);
 			else {
 				int wInX = checkStrictlyPositive(argv[i++], argv[0]);
 				int wInY = checkStrictlyPositive(argv[i++], argv[0]);
+				int wOut = checkStrictlyPositive(argv[i++], argv[0]);
 				float r = atof(argv[i++]);
+				// TODO I think it is more consistent to move this kind of tests insinde the operator
 				if (r<0)
-					throw "Ratio > 0";
-				int ordError = atoi(argv[i++]);
-				if (ordError<0)
-					throw "error order is >= 0";
+					throw "Ratio must be > 0";
 				int useLimits = atoi(argv[i++]);
 				if (!((useLimits==0)||(useLimits==1)))
 					throw "useLimits is 0 or 1";				
 				int maxTimeInMinutes = atoi(argv[i++]);
 				int sign = atoi(argv[i++]);
 
-				cerr << "> IntTruncMult , wInX="<<wInX<<", wInY="<<wInY<<" ratio=" << r <<" error order= "<<ordError<< " useLimits="<<useLimits<<" maxTimeInMinutes="<<maxTimeInMinutes<<" signed="<<sign<<"\n";
-				op = new IntTruncMultiplier(target, wInX, wInY, r,ordError,useLimits, maxTimeInMinutes, true, sign);
+				cerr << "> IntTruncMult , wInX="<<wInX<<", wInY=" <<wInY <<", wOut=" <<wOut << " ratio=" << r << " useLimits="<<useLimits<<" maxTimeInMinutes="<<maxTimeInMinutes<<" signed="<<sign<<"\n";
+				op = new IntTruncMultiplier(target, wInX, wInY, wOut, r,useLimits, maxTimeInMinutes, false, sign);
 				addOperator(op);
 			}
 		}		
@@ -1763,14 +1770,23 @@ bool parseCommandLine(int argc, char* argv[]){
 			int nargs = 3; 
 			if (i+nargs > argc)
 				usage(argv[0],opname);
-			else {
-				int wE = checkStrictlyPositive(argv[i++], argv[0]);
-				int wFIn = checkStrictlyPositive(argv[i++], argv[0]);
-				int wFOut = checkStrictlyPositive(argv[i++], argv[0]);
-				cerr << "> FPMultiplier , wE="<<wE<<", wFIn="<<wFIn<<", wFOut="<<wFOut<<" \n";
-				op = new FPMultiplier(target, wE, wFIn, wE, wFIn, wE, wFOut, 1);
-				addOperator(op);
-			}
+			int wE = checkStrictlyPositive(argv[i++], argv[0]);
+			int wFIn = checkStrictlyPositive(argv[i++], argv[0]);
+			int wFOut = checkStrictlyPositive(argv[i++], argv[0]);
+			cerr << "> FPMultiplier , wE="<<wE<<", wFIn="<<wFIn<<", wFOut="<<wFOut<<" \n";
+			op = new FPMultiplier(target, wE, wFIn, wE, wFIn, wE, wFOut, true /*normd*/, true /*CR*/);
+			addOperator(op);
+		} 
+		else if(opname=="FPMultiplierFaithful"){
+			int nargs = 3; 
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			int wE = checkStrictlyPositive(argv[i++], argv[0]);
+			int wFIn = checkStrictlyPositive(argv[i++], argv[0]);
+			int wFOut = checkStrictlyPositive(argv[i++], argv[0]);
+			cerr << "> FPMultiplierFaithful , wE="<<wE<<", wFIn="<<wFIn<<", wFOut="<<wFOut<<" \n";
+			op = new FPMultiplier(target, wE, wFIn, wE, wFIn, wE, wFOut, true, false);
+			addOperator(op);
 		}
 		else if(opname=="FPMultiplierKaratsuba"){
 			int nargs = 3; 
@@ -2064,20 +2080,36 @@ bool parseCommandLine(int argc, char* argv[]){
 			addOperator(op);
 		}
 
-		else if (opname == "FPPowrExpert")
+		else if (opname == "FPPowerExpert")
 		{
-			int nargs = 5;
+			int nargs = 6;
+			if (i+nargs > argc)
+				usage(argv[0],opname); // and exit 
+
+			//int logTableSize, int expTableSize, int expDegree, int expG, int logG int type
+			int wE = checkStrictlyPositive(argv[i++], argv[0]);
+			int wF = checkStrictlyPositive(argv[i++], argv[0]);
+			int type=atoi(argv[i++]);
+			int logTableSize=atoi(argv[i++]);
+			int expTableSize=atoi(argv[i++]);
+			int expDegree=atoi(argv[i++]);
+			cerr << "> "<< (type==0?"FPPow":"FPPowr") << ": wE=" << wE << " wF=" << wF 
+			     << "logTableSize" << logTableSize << "expTableSize" << expTableSize << "expDegree" << expDegree << endl;
+			op = new FPPow(target, wE, wF, type, logTableSize, expTableSize, expDegree);
+			addOperator(op);
+		}
+
+		else if (opname == "FPPow")
+		{
+			int nargs = 2;
 			if (i+nargs > argc)
 				usage(argv[0],opname); // and exit 
 
 			//int logTableSize, int expTableSize, int expDegree, int expG, int logG
 			int wE = checkStrictlyPositive(argv[i++], argv[0]);
 			int wF = checkStrictlyPositive(argv[i++], argv[0]);
-			int logTableSize=atoi(argv[i++]);
-			int expTableSize=atoi(argv[i++]);
-			int expDegree=atoi(argv[i++]);
 			cerr << "> FPPowr: wE=" << wE << " wF=" << wF << endl;
-			op = new FPPow(target, wE, wF,logTableSize, expTableSize, expDegree);
+			op = new FPPow(target, wE, wF, 0);
 			addOperator(op);
 		}
 
@@ -2091,7 +2123,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			int wE = checkStrictlyPositive(argv[i++], argv[0]);
 			int wF = checkStrictlyPositive(argv[i++], argv[0]);
 			cerr << "> FPPowr: wE=" << wE << " wF=" << wF << endl;
-			op = new FPPow(target, wE, wF,0, 0, 0);
+			op = new FPPow(target, wE, wF, 1);
 			addOperator(op);
 		}
 

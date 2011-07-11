@@ -507,7 +507,7 @@ namespace flopoco{
 		Operator* lowProd;
 		if(false && wF+g-k>17){ // commented out because 1/ it fails the test, do,n't understand why and 2/ it adds 4 cycles to the latency TODO
 			sizeProd = (sizeExpA-k+1); 
-			lowProd = new IntTruncMultiplier(target, sizeMultIn, sizeExpZm1, 0.95, (sizeMultIn + sizeExpZm1)-sizeProd, 1, -1, false, false);  //inDelayMap("X", target->LogicToDSPWireDelay() + getCriticalPath() ) );
+			lowProd = new IntTruncMultiplier(target, sizeMultIn, sizeExpZm1, sizeProd, 0.95, 1, -1, false, false);  //inDelayMap("X", target->LogicToDSPWireDelay() + getCriticalPath() ) );
 		}
 		else {
 			sizeProd = sizeMultIn + sizeExpZm1;

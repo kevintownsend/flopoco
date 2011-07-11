@@ -4,7 +4,7 @@
   This file is part of the FloPoCo project 
   developed by the Arenaire team at Ecole Normale Superieure de Lyon
   
- * Authors : Sebastian Banescu, Bogdan Pasca, Radu Tudoran
+  Authors : Sebastian Banescu, Bogdan Pasca, Radu Tudoran
 
   Initial software.
   Copyright © ENS-Lyon, INRIA, CNRS, UCBL,  
@@ -22,10 +22,10 @@
 #include <mpfr.h>
 #include <gmpxx.h>
 #include <limits.h>
-#include "utils.hpp"
-#include "Operator.hpp"
-#include "IntMultiplier.hpp"
-#include "IntMultipliers/LogicIntMultiplier.hpp"
+#include "../utils.hpp"
+#include "../Operator.hpp"
+#include "../IntMultiplier.hpp"
+#include "LogicIntMultiplier.hpp"
 #include "IntTruncMultiplier.hpp"
 
 using namespace std;
@@ -34,16 +34,17 @@ namespace flopoco{
 
 	extern vector<Operator*> oplist;
 
-
-	IntTruncMultiplier::IntTruncMultiplier(Target* target, int winX, int winY, float ratio, int k, int uL, int maxTimeInMinutes, bool interactive, bool sign, bool roundCompensate):
-		Operator(target),wX(winX), wY(winY), ratio(ratio),targetPrecision(k),useLimits(uL),  roundCompensate_(roundCompensate), maxTimeInMinutes(maxTimeInMinutes-1), sign(sign){
+	// FIXME Janitoring dangerous redundancy?:  k=targetPrecision, wX=wInX, wY=wInY (not sure, there are wX-- in some places)
+	IntTruncMultiplier::IntTruncMultiplier(Target* target, int winX, int winY, int wOut, float ratio, int uL, int maxTimeInMinutes, bool interactive, bool sign, bool roundCompensate):
+		Operator(target), wInX(winX), wInY(winY), wOut(wOut), wX(winX), wY(winY), ratio(ratio),targetPrecision(wInX+wInY-wOut),useLimits(uL),  roundCompensate_(roundCompensate), maxTimeInMinutes(maxTimeInMinutes-1), sign(sign){
 		start = clock(); /* time management */
 		srcFileName="IntTruncMultiplier";
 		isSquarer = false;	
 		ostringstream name;
-		name <<"IntTruncMultiplier_"<<wX<<"_"<<wY<<"_"<<wX + wY - k<<"_"<<(sign?"signed":"unsigned");
+		name <<"IntTruncMultiplier_"<<wX<<"_"<<wY<<"_"<<wOut<<"_"<<(sign?"signed":"unsigned");
 		setName(name.str());
-	
+		int k=targetPrecision;
+
 		setCopyrightString("Sebastian Banescu, Bogdan Pasca, Radu Tudoran (2010-2011)");
 	
 		addInput ("X", wX, true);

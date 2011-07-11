@@ -7,7 +7,7 @@
 #include "../utils.hpp"
 
 #include "../IntMultipliers/SignedIntMultiplier.hpp"
-#include "../IntTruncMultiplier.hpp"
+#include "../IntMultipliers/IntTruncMultiplier.hpp"
 #include "../IntAdder.hpp"
 #include "../Operator.hpp"
 

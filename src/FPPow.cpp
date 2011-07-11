@@ -78,12 +78,10 @@ namespace flopoco{
 
 
 
-	FPPow::FPPow(Target* target, int wE, int wF, int logTableSize, int expTableSize, int expDegree)
-		: Operator(target), wE(wE), wF(wF)
+	FPPow::FPPow(Target* target, int wE, int wF, int type, int logTableSize, int expTableSize, int expDegree)
+		: Operator(target), wE(wE), wF(wF), type(type)
 	{
 		
-		int type=0; // 0: pow; 1: powr TODO pass as argument
-
 		setCopyrightString("F. de Dinechin, C. Klein  (2008)");
 
 		ostringstream o;
@@ -201,6 +199,9 @@ namespace flopoco{
 
 			vhdl << endl;
 
+			vhdl<<"-- Pow Exceptions  --"<<endl;
+
+			// TODO case -inf^integer not managed?
 			vhdl << tab  << declare("RisInfSpecialCase") << "  <= " << endl
 			     << tab << tab << "   (zeroX  and  (oddIntY or evenIntY)  and signY)  -- (+/- 0) ^ (negative int y)"<<endl
 			     << tab << tab << "or (zeroX and infY and signY)                      -- (+/- 0) ^ (-inf)"  << endl
@@ -227,6 +228,32 @@ namespace flopoco{
 		else{
 		
 			vhdl<<"-- Powr Exceptions  --"<<endl;
+			vhdl << tab  << declare("RisInfSpecialCase") << "  <= " << endl
+			     << tab << tab << "   (zeroX  and  normalY and signY)                 -- (+/- 0) ^  (negative finite y)"<<endl
+			     << tab << tab << "or (zeroX and infY and signY)                      -- (+/- 0) ^ (-inf)"  << endl
+			     << tab << tab << "or (absXgtOneAndNormal   and  infY  and not signY) -- (|x|>1) ^ (+inf)"  << endl
+			     << tab << tab << "or (absXltOneAndNormal   and  infY  and signY)     -- (|x|<1) ^ (-inf)" << endl
+			     << tab << tab << "or (infX and  normalY  and not signY) ;            -- (inf) ^ (y>0)" << endl;
+
+			vhdl << tab  << declare("RisZeroSpecialCase") << " <= " << endl
+			     << tab << tab << "   (zeroX and  normalY and not signY)  -- (+/- 0) ^ (positive int y)"<<endl
+			     << tab << tab << "or (zeroX and  infY  and not signY)                   -- (+/- 0) ^ (+inf)"<<endl
+			     << tab << tab << "or (absXltOneAndNormal   and  infY  and not signY)    -- (|x|<1) ^ (+inf)"<<endl
+			     << tab << tab << "or (absXgtOneAndNormal   and  infY  and signY);        -- (|x|>1) ^ (-inf)" << endl;
+
+			vhdl << tab  << declare("RisOne") << " <= " << endl
+			     << tab << tab << "   (normalX and (not signX)   and zeroY)                           -- x^0 = 1 if 0<x<+inf"<<endl
+			     << tab << tab << "or (XisOneAndNormal  and (not signX) and normalY and (not signY)); -- (+1) ^ (whatever)" << endl ;
+
+			vhdl << tab  << declare("RisNaN") << " <= s_nan_in"<<endl
+			     << tab << tab << "or (signX and not zeroX)        -- (x<0) ^ whatever"<<endl
+			     << tab << tab << "or (XisOneAndNormal and infY)   -- (1) ^ (+/-inf)"<<endl
+			     << tab << tab << "or (zeroX and zeroY)            -- (+/- 0) ^ (+/- 0)"<<endl
+			     << tab << tab << "or (infX and zeroY);    -- (x<0) ^ whatever"<<endl;
+
+			vhdl << tab  << declare("signR") << " <= '0';" << endl;
+
+#if 0
 			vhdl << tab  << "-- x^(+/-0)=1" << endl;
 			vhdl << tab  << declare("case_x_to_0") << " <= '1' when (normalX='1' and zeroY='1') else '0';" << endl;
 		
@@ -266,6 +293,7 @@ namespace flopoco{
 			vhdl << tab  << declare("RisZero") << " <= powr_case_0_to_yp or case_pos0_to_posinf;"<<endl;
 			vhdl << tab  << declare("RisOne") << " <= case_x_to_0 or powr_case_1_to_finite;"<<endl;
 			vhdl << tab  << declare("signR") << " <= '0';"<<endl;
+#endif
 		}
 
 
@@ -353,33 +381,54 @@ namespace flopoco{
 		FPNumber fpy(wE, wF);
 		fpx = svX;
 		fpy = svY;
-		mpfr_t x,y, ru,rd;
+		mpfr_t x,y,  l, p,  ru,rd;
 		mpfr_init2(x,  1+wF);
 		mpfr_init2(y,  1+wF);
 		mpfr_init2(ru, 1+wF);
 		mpfr_init2(rd, 1+wF); 
+		mpfr_init2(l,  1+10*wF);
+		mpfr_init2(p,  1+10*wF);
 		fpx.getMPFR(x);
 		fpy.getMPFR(y);
-		mpfr_pow(rd, x, y, GMP_RNDD);
-		mpfr_pow(ru, x, y, GMP_RNDU);
+
+		if(type==0) {
+			// pow is easy, since we have it in mpfr
+			mpfr_pow(rd, x, y, GMP_RNDD);
+			mpfr_pow(ru, x, y, GMP_RNDU);
+		}
+		else {
+			// powr is not in mpfr. Fortunately it is defined by exp(y*ln(x)), so let's emulate it this way
+			// We should use infinite precision but we don't have it, so we approximate it with 10wF. 
+			// Statistical arguments tell that 2wF should be enough, so we are a bit on the safe side. 
+			// Still, we have no proof 10wF is enough, but then it's the occasion to find a counterexample, isn't t?
+			mpfr_log(l, x, GMP_RNDN);
+			mpfr_mul(p, l, y, GMP_RNDN);
+			// the final exp does the only directed rounding
+			mpfr_exp(rd, p, GMP_RNDD);
+			mpfr_exp(ru, p, GMP_RNDU);
 #if 0
 		double d;
 		d=mpfr_get_d(x,  GMP_RNDN);
 		cout << "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX "  << d  << endl;
 		d=mpfr_get_d(y,  GMP_RNDN);
 		cout << "YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY "  << d << endl;
+		d=mpfr_get_d(l,  GMP_RNDN);
+		cout << "LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL "  << d << endl;
+		d=mpfr_get_d(p,  GMP_RNDN);
+		cout << "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP "  << d << endl;
 		d=mpfr_get_d(ru,  GMP_RNDN);
 		cout << "UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUU "  << d << endl;
 		d=mpfr_get_d(rd,  GMP_RNDN);
 		cout << "DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD "  << d << endl << endl;
 #endif		
+		}
 		FPNumber  fprd(wE, wF, rd);
 		FPNumber  fpru(wE, wF, ru);
 		mpz_class svRD = fprd.getSignalValue();
 		mpz_class svRU = fpru.getSignalValue();
 		tc->addExpectedOutput("R", svRD);
 		tc->addExpectedOutput("R", svRU);
-		mpfr_clears(x, y, ru, rd, NULL);
+		mpfr_clears(x, y, l, p, ru, rd, NULL);
 	}
  
 
@@ -389,6 +438,14 @@ namespace flopoco{
 	void FPPow::buildStandardTestCases(TestCaseList* tcl){
 		TestCase *tc;
 
+		// Random testing quickly gets the 2^(3+3) combinations of (exn,sign)
+		// I'm not sure it gets all the cases with an integer y
+		// Anyway, much TODO here.  
+		tc = new TestCase(this); 
+		tc->addFPInput("X", FPNumber::plusInfty);
+		tc->addFPInput("Y", FPNumber::minusDirtyZero);
+		emulate(tc);
+		tcl->add(tc);
 
 		tc = new TestCase(this); 
 		tc->addFPInput("X", FPNumber::minusInfty);
@@ -426,6 +483,43 @@ namespace flopoco{
 		emulate(tc);
 		tcl->add(tc);
 
+		//The cases with negative input and integer exponent
+		tc = new TestCase(this); 
+		tc->addFPInput("X", FPNumber::minusDirtyZero);
+		tc->addFPInput("Y", -17); 
+		tc->addComment("negative odd integer exponent"); 
+		emulate(tc);
+		tcl->add(tc);
+
+		tc = new TestCase(this); 
+		tc->addFPInput("X", FPNumber::minusDirtyZero);
+		tc->addFPInput("Y", -42); 
+		tc->addComment("negative even integer exponent"); 
+		emulate(tc);
+		tcl->add(tc);
+
+		tc = new TestCase(this); 
+		tc->addFPInput("X", FPNumber::minusInfty);
+		tc->addFPInput("Y", -17); 
+		tc->addComment("negative odd integer exponent"); 
+		emulate(tc);
+		tcl->add(tc);
+
+		tc = new TestCase(this); 
+		tc->addFPInput("X", FPNumber::minusInfty);
+		tc->addFPInput("Y", -42); 
+		tc->addComment("negative even integer exponent"); 
+		emulate(tc);
+		tcl->add(tc);
+
+#if 0 // keep for cut and paste
+		tc = new TestCase(this); 
+		tc->addFPInput("X", );
+		tc->addFPInput("Y", );
+		tc->addComment(""); 
+		emulate(tc);
+		tcl->add(tc);
+#endif
 
 	}
 

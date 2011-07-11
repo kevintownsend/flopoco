@@ -2,34 +2,10 @@
 ################################################################################
 ##                    Compilation and Result Generation script
 ## This tool is part of  FloPoCo
-## and is distributed under the terms of the GNU General Public Licence.
 ## Author:  Bogdan Pasca (2008)
+## All rights reserved
 ################################################################################
 
-#quartus_map --source=flopoco.vhdl --family=StratixII  Test
-#quartus_fit --parallel=3 --fmax=400MHz  Test
-
-# Suggestions:  
-# 2 different scripts, one for Xilinx and one for Altera. 
-# One option selecting the target family (Virtex4 or Virtex5)
-
-
-# For Altera
-#COMMAND:  quartus_map --source=flopoco.vhdl --family=StratixII  Test
-#COMMENT: creates project files  Test.qpf and Test.qsf, 
-#          analyses VHDL, 
-#          writes some reports Test.map.*, don't use them
-#OPTIONS: see quartus_map --help
-#   --part=EP4SGX70DF29C3  (this one is a StratixIV, keep the default)
-#
-#COMMAND:  quartus_fit Test
-#COMMENT: place and route. 
-#	  Assigns pins to the IO (see Test.pin)
-#          writes some reports Test.fit.summary has the area information, the delay is at the end of Test.fit.rpt	
-# OPTIONS: see quartus_fit --help
-# --fmax=400MHz  
-# --parallel=3 for multicore
-# 
 
 
 # PARAMETERS MANUALLY SET BY USER

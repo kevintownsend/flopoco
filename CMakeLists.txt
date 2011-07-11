@@ -210,9 +210,9 @@ ADD_EXECUTABLE(flopoco
  src/IntMultipliers/UnsignedIntMultiplier
  src/IntMultipliers/IntTilingMult
  src/IntMultipliers/LogicIntMultiplier
+ src/IntMultipliers/IntTruncMultiplier
+ src/IntMultipliers/IntKaratsuba
 
- src/IntTruncMultiplier
- src/IntKaratsuba
  src/LZOC src/LZOCShifterSticky
  src/Shifters
  src/FPAdderDualPath
@@ -332,9 +332,9 @@ ADD_EXECUTABLE(flopoco
  src/IntMultipliers/UnsignedIntMultiplier
  src/IntMultipliers/IntTilingMult
  src/IntMultipliers/LogicIntMultiplier 
- src/IntTruncMultiplier
+ src/IntMultipliers/IntTruncMultiplier
+ src/IntMultipliers/IntKaratsuba
  src/IntSquarer
- src/IntKaratsuba
 
 # Shifters/LZOC related ---------------------------------------------
 #--------------------------------------------------------------------

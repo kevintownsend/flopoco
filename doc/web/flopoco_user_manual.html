@@ -528,10 +528,13 @@ article</a>.
 <a href="http://perso.ens-lyon.fr/florent.de.dinechin/recherche/publis/2007-Arith.pdf">this article (improved version in preparation)</a>.
 	</dd>
 	
+	<dt><code style="color: blue;">FPPow wE wF</code></dt>
+	<dd> A floating-point <strong>pow</strong> function as described in C99 and IEEE 754-2008, where both inputs and outputs  have <code>wE</code> bits exponent and <code>wF</code> bits significand. This function (including its exceptional case management) is fully compatible with the  C99 standard, hence current default libms..
+	</dd>
+
 	<dt><code style="color: blue;">FPPowr wE wF</code></dt>
-	<dd> Experimental floating-point <strong>powering </strong> function as described by the
-	powr function from IEEE-754-2008 where both inputs and outputs  have <code>wE</code> bits exponent and
-	<code>wF</code> bits significand. 
+	<dd> A floating-point <strong>powr</strong> function as described in IEEE 754-2008, where both inputs and outputs  have <code>wE</code> bits exponent and
+	<code>wF</code> bits significand. This function is a novelty of IEEE 754-2008, the difference with good old <code>pow</code> is that it is purely defined as powr(x,y)=e^(y*ln(x)), in particular in the definition of its exceptional cases. For instance, <code>pow</code> is defined for negative integer x, while <code>powr</code> returns NaN in such cases. 
 	</dd>
 </dl>	
 

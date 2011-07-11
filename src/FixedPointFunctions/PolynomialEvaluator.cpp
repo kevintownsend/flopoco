@@ -164,7 +164,7 @@ namespace flopoco{
 					int wIn2 = sigmakPSize[i-1]+1;
 					int k = 1+y_->getSize()+yGuard_[i] + sigmakPSize[i-1]+1 - (pikPTSize[i]+2);
 					
-					IntTruncMultiplier *sm = new IntTruncMultiplier ( target, wIn1, wIn2 , 1.1, k , 1, -1, false, true); //inDelayMap("X",getCriticalPath()));
+					IntTruncMultiplier *sm = new IntTruncMultiplier ( target, wIn1, wIn2, wIn1+wIn2-k , 1.1 , 1, -1, false, true); //inDelayMap("X",getCriticalPath()));
 					oplist.push_back(sm);
 					
 					nextCycle(); //TODO fix it by feeding the input delay to IntTruncMultiplier
@@ -203,9 +203,9 @@ namespace flopoco{
 
 					IntTruncMultiplier* sm = new IntTruncMultiplier ( target, 
 																														1+y_->getSize()+yGuard_[i], 
-																														sigmakPSize[i-1]+1, 
-																														1.1, 
-																														sigmakPSize[i] - (coef_[0]->getSize()+2) , 
+																														sigmakPSize[i-1]+1, 	
+					                                                  (1+y_->getSize()+yGuard_[i]) +  (sigmakPSize[i-1]+1) - (sigmakPSize[i] - (coef_[0]->getSize()+2)) , 
+					                                                  1.1, 
 																														1, -1, false, true, false); //inDelayMap("X",getCriticalPath()));
 					oplist.push_back(sm);
 				

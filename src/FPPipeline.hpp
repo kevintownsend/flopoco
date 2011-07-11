@@ -94,7 +94,7 @@ namespace flopoco{
 					string w = t.str();
 					char *c  = new char[t.str().length()+1];
 					c = strncpy(c, t.str().c_str(), t.str().length() );
-					c[t.str().length()]=NULL;
+					c[t.str().length()]=0;
 					REPORT(DETAILED, " new temporary variable created "<< c <<" size="<<t.str().length());
 					n->name = c;
 					REPORT(DETAILED, " the value was created for the constant " << n->value);

@@ -38,6 +38,7 @@ namespace flopoco{
 		ostringstream name;
 		name << "FPMultiplierTiling_"<<wEX_<<"_"<<wFX_<<"_"<<wEY_<<"_"<<wFY_<<"_"<<wER_<<"_"<<wFR_; 
 		setName(name.str());
+		setCopyrightString("Bogdan Pasca, Florent de Dinechin 2008-2011");
 		
 		
 		/* set if operator outputs a normalized_ result */

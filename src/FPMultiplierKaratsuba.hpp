@@ -7,7 +7,7 @@
 #include <gmpxx.h>
 
 #include "Operator.hpp"
-#include "IntKaratsuba.hpp"
+#include "IntMultipliers/IntKaratsuba.hpp"
 #include "IntAdder.hpp"
 
 namespace flopoco{

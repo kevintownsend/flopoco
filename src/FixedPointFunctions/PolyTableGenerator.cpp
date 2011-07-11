@@ -87,8 +87,6 @@ namespace flopoco{
 			sollya_node_t tempNode=0,tempNode2, tempNode3, nDiff=0, sX=0,sY,aiNode;
 			sollya_chain_t tempChain, tempChain2=0;
 	
-			int tm = 512;
-	
 			mpfr_t ai;
 			mpfr_t bi;
 			mpfr_t zero;
