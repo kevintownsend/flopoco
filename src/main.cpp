@@ -99,7 +99,6 @@
 /* floating-point -------------------------------------------- */ 
 #include "FPMultiplier.hpp"
 #include "FPMultiplierKaratsuba.hpp"
-#include "FPMultiplierTiling.hpp"
 #include "FPSquarer.hpp"
 
 #ifndef _WIN32
@@ -430,7 +429,7 @@ static void usage(char *name, string opName = ""){
 		cerr << "      Standard floating-point multiplier, supporting different in/out precision  \n";
 	}
 	if ( full  || opName == "FPMultiplier" || opName == "FPMultiplierFaithful"){					
-		OP( "FPMultiplier","wE wF_in wF_out");
+		OP( "FPMultiplierFaithful","wE wF_in wF_out");
 		cerr << "      Faithfully rounded floating-point multiplier, (saves resources for large mantissa sizes) \n";
 	}
 	if ( full || opName == "FPMultiplier" || opName == "FPMultiplierKaratsuba"){						
@@ -438,10 +437,9 @@ static void usage(char *name, string opName = ""){
 		cerr << "      Floating-point multiplier, supporting different in/out precision. \n";
 		cerr << "      Mantissa multiplier uses Karatsuba\n";
 	}
-	if ( full || opName == "FPMultiplier" || opName == "FPMultiplierTiling"){						
-		OP( "FPMultiplierTiling","wE wF_in wF_out ratio timeInMinutes");
+	if ( full || opName == "FPMultiplier" || opName == "FPMultiplierExpert"){						
+		OP( "FPMultiplierExpert","wE wF_in wF_out correctRounding ratio optTimeInMinutes");
 		cerr << "      Floating-point multiplier, supporting different in/out precision. \n";
-		cerr << "      Mantissa multiplier uses Tiling Algorithm  \n";
 	}
 	if ( full || opName == "FPMultiplier" || opName == "FPSquarer"){					
 		OP( "FPSquarer","wE wFin wFout");
@@ -1801,21 +1799,20 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(op);
 			}
 		}  
-		else if(opname=="FPMultiplierTiling"){
-			int nargs = 5; 
+		else if(opname=="FPMultiplierExpert"){
+			int nargs = 6; 
 			if (i+nargs > argc)
 				usage(argv[0],opname);
-			else {
-				int wE = checkStrictlyPositive(argv[i++], argv[0]);
-				int wFIn = checkStrictlyPositive(argv[i++], argv[0]);
-				int wFOut = checkStrictlyPositive(argv[i++], argv[0]);
-				float r = atof(argv[i++]);
-				int maxTimeInMinutes = atoi(argv[i++]);
+			int wE = checkStrictlyPositive(argv[i++], argv[0]);
+			int wFIn = checkStrictlyPositive(argv[i++], argv[0]);
+			int wFOut = checkStrictlyPositive(argv[i++], argv[0]);
+			int correctRounding = checkBoolean(argv[i++], argv[0]);
+			float r = atof(argv[i++]);
+			int maxTimeInMinutes = atoi(argv[i++]);
 
-				cerr << "> FPMultiplierTiling , wE="<<wE<<", wFIn="<<wFIn<<", wFOut="<<wFOut<<" ratio="<<r<<" maxTime="<<maxTimeInMinutes<<" \n";
-				op = new FPMultiplierTiling(target, wE, wFIn, wE, wFIn, wE, wFOut, 1, r, maxTimeInMinutes);
-				addOperator(op);
-			}
+			cerr << "> FPMultiplierExpert , wE="<<wE<<", wFIn="<<wFIn<<", wFOut="<<wFOut<<" ratio="<<r<<" maxTime="<<maxTimeInMinutes<<" \n";
+			op = new FPMultiplier(target, wE, wFIn, wE, wFIn, wE, wFOut, true, correctRounding, r, maxTimeInMinutes);
+			addOperator(op);
 		}  
 		else if(opname=="FPSquarer"){
 			int nargs = 3; 
