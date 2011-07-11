@@ -1,5 +1,5 @@
 /*
-  Floating-Point Fused Multiply Accumulate unit for FloPoCo
+  FIXME for FloPoCo
 
   This file is part of the FloPoCo project 
   developed by the Arenaire team at Ecole Normale Superieure de Lyon

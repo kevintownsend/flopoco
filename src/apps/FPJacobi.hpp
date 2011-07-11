@@ -9,7 +9,7 @@
 
 #include "../Operator.hpp"
 #include "../FPAdderSinglePath.hpp"
-#include "../FPMultiplierTiling.hpp"
+#include "../FPMultiplier.hpp"
 
 namespace flopoco{
 
