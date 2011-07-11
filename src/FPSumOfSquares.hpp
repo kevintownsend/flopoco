@@ -8,7 +8,7 @@
 #include "LZOC.hpp"
 #include "LZOCShifterSticky.hpp"
 #include "IntAdder.hpp"
-#include "IntNAdder.hpp"
+#include "IntMultiAdder.hpp"
 #include "IntMultiplier.hpp"
 #include "IntSquarer.hpp"
 #include "FPMultiplier.hpp"

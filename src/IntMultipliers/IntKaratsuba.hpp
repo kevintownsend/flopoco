@@ -7,8 +7,7 @@
 #include <gmpxx.h>
 
 #include "../Operator.hpp"
-#include "../IntCompressorTree.hpp"
-#include "../IntNAdder.hpp"
+#include "../IntMultiAdder.hpp"
 #include "../IntAdder.hpp"
 
 

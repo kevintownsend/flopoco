@@ -46,8 +46,9 @@
 #include "IntDualSub.hpp"
 
 /* multioperand adders --------------------------------------- */
-#include "IntNAdder.hpp"
-#include "IntCompressorTree.hpp"
+#include "IntMultiAdder.hpp"
+#include "IntAddition/IntNAdder.hpp"
+#include "IntAddition/IntCompressorTree.hpp"
 
 /* comparator(s) --------------------------------------------- */
 #include "IntComparator.hpp"
@@ -318,6 +319,12 @@ static void usage(char *name, string opName = ""){
 		OP("IntDualSub","wIn opType");
 		cerr << "      Integer adder/subtracter or dual subtracter, possibly pipelined\n";
 		cerr << "      opType: if 1, compute X-Y and X+Y; if 0, compute X-Y and Y-X \n";
+	}
+
+	if ( full || opName == "IntAdder" || opName == "IntNAdder" || opName == "IntMultiAdder") {
+		OP("IntMultiAdder","wIn N");
+		cerr << "      Multi-operand addition, possibly pipelined.\n"; 
+		cerr << "        Either IntNAdder or IntCompressorTree are generated \n";
 	}
 	
 	if ( full || opName == "IntAdder" || opName == "IntNAdder"){
@@ -1198,6 +1205,21 @@ bool parseCommandLine(int argc, char* argv[]){
 					case 3: op = new IntAdder(target, wIn, delayMap, 3, srl, implementation); break; //latency
 					default: op = new IntAdder(target,wIn, delayMap, 2, srl, implementation); break;
 				}
+				addOperator(op);
+			}    
+		}
+
+		/* Multioperand adders */
+
+		else if(opname=="IntMultiAdder"){
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			else {
+				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
+				int N   = checkStrictlyPositive(argv[i++], argv[0]);
+				cerr << "> IntMultiAdder, wIn="<<wIn<<" N="<<N<<endl  ;
+				op = new IntMultiAdder(target,wIn,N);
 				addOperator(op);
 			}    
 		}

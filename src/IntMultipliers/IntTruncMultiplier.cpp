@@ -2952,16 +2952,9 @@ namespace flopoco{
 				syncCycleFromSignal(concatPartialProd.str(), getSignalDelay(concatPartialProd.str()) );
 			}		
 		Operator *add;
+		add =  new IntMultiAdder(getTarget(), wInX+wInY+(sign?2:0)-minShift, nrDSPOperands+nrSliceOperands+subCount + (targetPrecision>0 && roundCompensate_?1:0), inDelayMap("X0",target_->localWireDelay() + getCriticalPath() )  );
 		
-//		if   (target_->getID() != "Virtex5"){
-//			add =  new IntNAdder(getTarget(), wInX+wInY+(sign?2:0)-minShift, nrDSPOperands+nrSliceOperands+subCount, inMap);
-//		} else{
-			add =  new IntCompressorTree(getTarget(), wInX+wInY+(sign?2:0)-minShift, nrDSPOperands+nrSliceOperands+subCount + (targetPrecision>0 && roundCompensate_?1:0), inDelayMap("X0",target_->localWireDelay() + getCriticalPath() )  );
-//		}
-		
-		//IntCompressorTree* add =  new IntCompressorTree(target, adderWidth, opCount);
 		oplist.push_back(add);
-//		nextCycle();
 
 		for (int j=0; j<nrDSPOperands; j++)
 			{
@@ -2990,77 +2983,12 @@ namespace flopoco{
 			concatPartialProd<< zg( wInX+wInY+(sign?2:0)-targetPrecision-1, -1) << "1" << zg(targetPrecision-minShift,1);
 			inPortMapCst( add, join("X",nrDSPOperands+nrSliceOperands+subCount), concatPartialProd.str() );
 		}		
-//		if   (target_->getID() != "Virtex5")
-//			inPortMapCst(add, "Cin", "'0'");
+
 		outPortMap(add, "R", "addRes");
 		vhdl << instance(add, "adder");
 
 		syncCycleFromSignal("addRes");
 		setCriticalPath(add->getOutputDelay("R"));
-
-//		/* rounding and compensation needed only if k>0*/
-//		if (targetPrecision==0)
-//			vhdl << tab << "R <= addRes" << range(wX+wY+(sign?2:0)-1-minShift, targetPrecision-minShift) << ";" << endl;
-//		else{
-//			/*value of the add bit */
-//			if (targetPrecision==1){
-//				/* just need to add the compensation '1' and truncate */
-//				if (roundCompensate_){
-//					nextCycle();
-//					IntAdder *af = new IntAdder(getTarget(), wX+wY+(sign?2:0));
-//					oplist.push_back(af);
-//				
-//					inPortMap(af, "X", "addRes");
-//					inPortMapCst(af, "Y", join("CONV_STD_LOGIC_VECTOR(1,",wInX+wInY,")") );
-//					inPortMapCst(af, "Cin", "'0'");
-//					outPortMap(af, "R", "roundCompRes");
-//					vhdl << instance(af, "RoundCompensate");
-//				
-//					syncCycleFromSignal("roundCompRes");
-//					setCriticalPath( af->getOutputDelay("R") );
-//					vhdl << tab << "R <= roundCompRes" << range(wX+wY+(sign?2:0)-1-minShift, targetPrecision-minShift) << ";" << endl;
-//				}else{
-//					vhdl << tab << "R <= addRes" << range(wX+wY+(sign?2:0)-1-minShift, targetPrecision-minShift) << ";" << endl;
-//				}
-//			}else{
-//				if (roundCompensate_){
-//					/* target precision > 1 */
-////					/* compute sticky bit */
-////					vhdl << tab << declare("sticky",1,false) << "<= '0' when addRes"<<range(targetPrecision-minShift-2,0)<<"=0 else '1';"<<endl;				
-////					IntAdder *af = new IntAdder(getTarget(), wX+wY+(sign?2:0)-1-minShift - (targetPrecision-minShift) + 1 + 1);
-//					if (sign){
-//						IntAdder *af = new IntAdder(getTarget(), wX+wY+(sign?2:0)-1-minShift - (targetPrecision-minShift) + 1 + 1, inDelayMap("X", target_->localWireDelay() + getCriticalPath()) );
-//						oplist.push_back(af);
-
-//						inPortMapCst(af, "X", "addRes"+range(wX+wY+(sign?2:0)-1-minShift, targetPrecision-minShift-1));
-//						inPortMapCst(af, "Y", join("CONV_STD_LOGIC_VECTOR(1,",wX+wY+(sign?2:0)-1-minShift - (targetPrecision-minShift) + 1 +1 ,")") );
-//						inPortMapCst(af, "Cin", "'0'");
-//						outPortMap(af, "R", "roundRes");
-//						vhdl << instance(af, "Round");
-//				
-//						syncCycleFromSignal("roundRes");
-//						setCriticalPath(af->getOutputDelay("R"));
-//						vhdl << tab << "R <= roundRes" << range(wX+wY+(sign?2:0) - targetPrecision-1+1,1) << ";" << endl;
-//					}else{
-//						IntAdder *af = new IntAdder(getTarget(), wX+wY+(sign?2:0)-1-minShift - (targetPrecision-minShift) + 1, inDelayMap("X", target_->localWireDelay() + getCriticalPath()) );
-//						oplist.push_back(af);
-
-//						inPortMapCst(af, "X", "addRes"+range(wX+wY+(sign?2:0)-1-minShift, targetPrecision-minShift));
-//						inPortMapCst(af, "Y", join("CONV_STD_LOGIC_VECTOR(1,",wX+wY+(sign?2:0)-1-minShift - (targetPrecision-minShift) + 1 ,")") );
-//						inPortMapCst(af, "Cin", "'0'");
-//						outPortMap(af, "R", "roundCompRes");
-//						vhdl << instance(af, "RoundCompensate");
-//				
-//						syncCycleFromSignal("roundCompRes");
-//						setCriticalPath(af->getOutputDelay("R"));
-//						vhdl << tab << "R <= roundCompRes" << range(wX+wY+(sign?2:0) - targetPrecision-1,0) << ";" << endl;
-//					}
-//				}else{
-//					vhdl << tab << "R <= addRes" << range(wX+wY+(sign?2:0)-1-minShift, targetPrecision-minShift) << ";" << endl;
-//				}
-//			}
-//			vhdl << tab << "R <= addRes" << range(wX+wY+(sign?2:0)-1-minShift, targetPrecision-minShift) << ";" << endl;
-//		}
 		vhdl << tab << "R <= addRes" << range(wX+wY+(sign?2:0)-1-minShift, targetPrecision-minShift) << ";" << endl;
 		
 		outDelayMap["R"] = getCriticalPath();

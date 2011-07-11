@@ -26,7 +26,7 @@
 #ifdef HAVE_SOLLYA
 #include "FPRealKCM.hpp"
 #include "../IntAdder.hpp"
-#include "../IntCompressorTree.hpp"
+#include "../IntMultiAdder.hpp"
 #include "FixRealKCM.hpp"
 
 using namespace std;

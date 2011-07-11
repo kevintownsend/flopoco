@@ -1232,7 +1232,7 @@ namespace flopoco{
 	}
 	
 	void Operator::parse2(){
-		REPORT(INFO, "Starting second-level parsing for operator "<<srcFileName);
+		REPORT(DEBUG, "Starting second-level parsing for operator "<<srcFileName);
 		vector<pair<string,int> >:: iterator iterUse;
 		map<string, int>::iterator iterDeclare;
 		
@@ -1251,14 +1251,12 @@ namespace flopoco{
 			string replaceString;
 			
 			tSearch << "__"<<name<<"__"<<useCycle<<"__"; 
-			//			cout << "----- Searching for: " << tSearch.str() << endl;
 			string searchString (tSearch.str());
 			
 			iterDeclare = declareTable.find(name);
 			declareCycle = iterDeclare->second;
 			
 			if (iterDeclare != declareTable.end()){
-				//				cout << "+++++ Element FOUND at level :" << declareCycle << endl;
 				tReplace << use(name, useCycle - declareCycle); 
 				replaceString = tReplace.str();
 				if (useCycle<declareCycle){
@@ -1268,7 +1266,6 @@ namespace flopoco{
 			}else{
 				/* parse the declare by hand and check lower/upper case */
 				bool found = false;
-				//				vector<pair<string,int> >::iterator iterDecl;
 				string tmp;
 				for (iterDeclare = declareTable.begin(); iterDeclare!=declareTable.end();++iterDeclare){
 					tmp = iterDeclare->first;
@@ -1283,13 +1280,11 @@ namespace flopoco{
 					exit(-1);
 				}
 				
-				//				cout << "+++++ Element NOT FOUND:" << name << endl;
 				tReplace << name;
 				replaceString = tReplace.str();
 			}
 			
 			if ( searchString != replaceString ){
-				//				cout << "Replacing ..." << endl;
 				string::size_type pos = 0;
 				while ( (pos = str.find(searchString, pos)) != string::npos ) {
 					str.replace( pos, searchString.size(), replaceString );
@@ -1297,8 +1292,6 @@ namespace flopoco{
 				}
 			}				
 		}
-		//		cout << " ==========================================================" << endl;
-		//replace the remaining declares:
 		for (iterDeclare = declareTable.begin(); iterDeclare!=declareTable.end();++iterDeclare){
 			name = iterDeclare->first;
 			useCycle = iterDeclare->second;
@@ -1321,8 +1314,6 @@ namespace flopoco{
 				}
 			}				
 		}
-		
-		//		cout << "Finished second level parsing" << endl;
 		vhdl.setSecondLevelCode(str);
 	}
 	

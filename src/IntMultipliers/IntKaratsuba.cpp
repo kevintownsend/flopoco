@@ -247,13 +247,9 @@ namespace flopoco{
 			vhdl << tab << declare("t5k_1",37) << " <= (t5k_0(36 downto 1) & \"0\") - (p32 & \"0\");"<<endl;
 			nextCycle();////////////////////////////////////////////////////////////
 
-#ifdef NADD
-			IntNAdder* c = new IntNAdder(target, 119, 7, inDelayMap("X0", target->localWireDelay()) ); //68*2 - 17
+			IntMultiAdder* c = new IntMultiAdder(target, 119, 7); //68*2 - 17
 			oplist.push_back(c);
-#else
-			IntCompressorTree* c = new IntCompressorTree(target, 119, 7); //68*2 - 17
-			oplist.push_back(c);
-#endif
+
 			vhdl << tab << declare("op0", 119) << " <= " << zg(100,0) << " & p00"<<range(35, 17) << ";" << endl;
 			vhdl << tab << declare("op1", 119) << " <= " << zg(83,0) << " & t1k_1"<<range(36, 1) << ";" << endl;
 			vhdl << tab << declare("op2", 119) << " <= " << zg(66,0) << " & t2k_1"<<range(36, 1) << " & " << zg(17,0) << ";" << endl;
@@ -269,9 +265,7 @@ namespace flopoco{
 			inPortMap( c, "X4", "op4");
 			inPortMap( c, "X5", "op5");
 			inPortMap( c, "X6", "op6");
-#ifdef NADD
-			inPortMapCst(c, "Cin", "'0'");
-#endif
+
 			outPortMap(c, "R", "addRes");
 			
 			vhdl << instance(c, "finalAdder");
@@ -462,9 +456,7 @@ namespace flopoco{
 			//now this one is extended to output width size
 			vhdl << tab << declare("op2", 2* (chunkSize_*chunks))<< "<= " << zeroExtend("top2", 2* (chunkSize_*chunks))<<";"<<endl;
 
-//			IntCompressorTree *ina = new IntCompressorTree( target, 2* (chunkSize_*chunks), 3, inDelayMap("X0", target->localWireDelay() + getCriticalPath()) );
-			IntNAdder *ina = new IntNAdder( target, 2* (chunkSize_*chunks), 3, inDelayMap("X0", target->localWireDelay() + getCriticalPath()) );
-
+			IntMultiAdder *ina = new IntMultiAdder( target, 2* (chunkSize_*chunks), 3, inDelayMap("X0", target->localWireDelay() + getCriticalPath()) );
 			oplist.push_back(ina);
 			
 			inPortMap(ina, "X0", "op0");

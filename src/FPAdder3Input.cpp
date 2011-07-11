@@ -26,7 +26,7 @@
 #include "Operator.hpp"
 
 #include "FPAdder3Input.hpp"
-#include "IntCompressorTree.hpp"
+#include "IntMultiAdder.hpp"
 
 using namespace std;
 namespace flopoco{
@@ -270,7 +270,7 @@ FPAdder3Input::FPAdder3Input(Target* target, int wE, int wF, map<string, double>
 		syncCycleFromSignal("sefZ");
 		setCriticalPath( ia2->getOutputDelay("R"));
 		
-		IntCompressorTree *ct = new IntCompressorTree(target, 3 + 3*wF+1, 3, inDelayMap("X0", target->localWireDelay() + getCriticalPath()));
+		IntMultiAdder *ct = new IntMultiAdder(target, 3 + 3*wF+1, 3, inDelayMap("X0", target->localWireDelay() + getCriticalPath()));
 		oplist.push_back(ct);
 		
 		inPortMap( ct, "X0", "sefX");
@@ -403,116 +403,4 @@ FPAdder3Input::FPAdder3Input(Target* target, int wE, int wF, map<string, double>
 		// clean up
 		mpfr_clears(x, y, r, NULL);
 	}
-
-
-
-
-
-// 	void FPAdder3Input::buildStandardTestCases(TestCaseList* tcl){
-// 		TestCase *tc;
-// 
-// 		// Regression tests 
-// 		tc = new TestCase(this); 
-// 		tc->addFPInput("X", 1.0);
-// 		tc->addFPInput("Y", -1.0);
-// 		emulate(tc);
-// 		tcl->add(tc);
-// 
-// 		tc = new TestCase(this); 
-// 		tc->addFPInput("X", 1.0);
-// 		tc->addFPInput("Y", FPNumber::plusDirtyZero);
-// 		emulate(tc);
-// 		tcl->add(tc);
-// 
-// 		tc = new TestCase(this); 
-// 		tc->addFPInput("X", 1.0);
-// 		tc->addFPInput("Y", FPNumber::minusDirtyZero);
-// 		emulate(tc);
-// 		tcl->add(tc);
-// 
-// 		tc = new TestCase(this); 
-// 		tc->addFPInput("X", FPNumber::plusInfty);
-// 		tc->addFPInput("Y", FPNumber::minusInfty);
-// 		emulate(tc);
-// 		tcl->add(tc);
-// 
-// 		tc = new TestCase(this); 
-// 		tc->addFPInput("X", FPNumber::plusInfty);
-// 		tc->addFPInput("Y", FPNumber::plusInfty);
-// 		emulate(tc);
-// 		tcl->add(tc);
-// 
-// 		tc = new TestCase(this); 
-// 		tc->addFPInput("X", FPNumber::minusInfty);
-// 		tc->addFPInput("Y", FPNumber::minusInfty);
-// 		emulate(tc);
-// 		tcl->add(tc);
-// 	
-// 	}
-
-
-
-// 	TestCase* FPAdder3Input::buildRandomTestCase(int i){
-// 
-// 		TestCase *tc;
-// 		mpz_class x,y;
-// 		mpz_class normalExn = mpz_class(1)<<(wE+wF+1);
-// 		mpz_class negative  = mpz_class(1)<<(wE+wF);
-// 
-// 		tc = new TestCase(this); 
-// 		/* Fill inputs */
-// 		if ((i & 7) == 0) {// cancellation, same exponent
-// 			mpz_class e = getLargeRandom(wE);
-// 			x  = getLargeRandom(wF) + (e << wF) + normalExn;
-// 			y  = getLargeRandom(wF) + (e << wF) + normalExn + negative;
-// 		}
-// 		else if ((i & 7) == 1) {// cancellation, exp diff=1
-// 			mpz_class e = getLargeRandom(wE);
-// 			x  = getLargeRandom(wF) + (e << wF) + normalExn;
-// 			e++; // may rarely lead to an overflow, who cares
-// 			y  = getLargeRandom(wF) + (e << wF) + normalExn + negative;
-// 		}
-// 		else if ((i & 7) == 2) {// cancellation, exp diff=1
-// 			mpz_class e = getLargeRandom(wE);
-// 			x  = getLargeRandom(wF) + (e << wF) + normalExn + negative;
-// 			e++; // may rarely lead to an overflow, who cares
-// 			y  = getLargeRandom(wF) + (e << wF) + normalExn;
-// 		}
-// 		else if ((i & 7) == 3) {// alignment within the mantissa sizes
-// 			mpz_class e = getLargeRandom(wE);
-// 			x  = getLargeRandom(wF) + (e << wF) + normalExn + negative;
-// 			e +=	getLargeRandom(intlog2(wF)); // may lead to an overflow, who cares
-// 			y  = getLargeRandom(wF) + (e << wF) + normalExn;
-// 		}
-// 		else if ((i & 7) == 4) {// subtraction, alignment within the mantissa sizes
-// 			mpz_class e = getLargeRandom(wE);
-// 			x  = getLargeRandom(wF) + (e << wF) + normalExn;
-// 			e +=	getLargeRandom(intlog2(wF)); // may lead to an overflow
-// 			y  = getLargeRandom(wF) + (e << wF) + normalExn + negative;
-// 		}
-// 		else if ((i & 7) == 5 || (i & 7) == 6) {// addition, alignment within the mantissa sizes
-// 			mpz_class e = getLargeRandom(wE);
-// 			x  = getLargeRandom(wF) + (e << wF) + normalExn;
-// 			e +=	getLargeRandom(intlog2(wF)); // may lead to an overflow
-// 			y  = getLargeRandom(wF) + (e << wF) + normalExn;
-// 		}
-// 		else{ //fully random
-// 			x = getLargeRandom(wE+wF+3);
-// 			y = getLargeRandom(wE+wF+3);
-// 		}
-// 		// Random swap
-// 		mpz_class swap = getLargeRandom(1);
-// 		if (swap == mpz_class(0)) {
-// 			tc->addInput("X", x);
-// 			tc->addInput("Y", y);
-// 		}
-// 		else {
-// 			tc->addInput("X", y);
-// 			tc->addInput("Y", x);
-// 		}
-// 		/* Get correct outputs */
-// 		emulate(tc);
-// 		return tc;
-// 	}
-
 }

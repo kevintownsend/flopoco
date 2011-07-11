@@ -100,26 +100,22 @@ namespace flopoco{
 
 			/* the maximum number of DSPs that can be chained on Virtex devices.
 			The number is related with the number of register levels inside the
-			DSPs. */
-			if ( ( target_->getID() == "Virtex4") ||
-			 ( target_->getID() == "Spartan3"))  // then the target is A Xilinx FPGA 
-				nrOfShifts4Virtex=16;//int(sqrt(nrDSPs));			
+			DSPs, but also to the latency of the resulting multiplier; a lower 
+			value for nrOfShifts4Virtex will decrease overall latency but 
+			have a larger area. */
+			if ( ( target_->getID() == "Virtex4") || ( target_->getID() == "Spartan3"))  // then the target is A Xilinx FPGA 
+				nrOfShifts4Virtex=16; //int(sqrt(nrDSPs));			
 			else
 				nrOfShifts4Virtex=32;
 			
-			//~ float tempDist =	 (movePercentage  * getExtraWidth() * getExtraWidth()) /4.0 + (movePercentage *getExtraHeight() * getExtraHeight()) /4.0;
 			/* each time a tile is placed maxDist2Move is the maximum distance
 			it may be placed from the already placed blocks */
 			float tempDist =	0;
 			maxDist2Move = (int) ( sqrt(tempDist) );
 			REPORT( INFO, "maxDist2Move = "<<maxDist2Move);
 		
-//			float const scale=100.0;
-//			costDSP = ( (1.0+scale) - scale * ratio );
-
 			costDSP = 1.0;
 			REPORT(INFO, "Cost DSP is " << costDSP);
-//			costLUT = ( (1.0+scale) - scale * (1-ratio) ) / ((float) target_->getEquivalenceSliceDSP() );
 
 			costLUT = 1.0 / double(target_->getEquivalenceSliceDSP());
 			REPORT(INFO, "Equivalent slices to implement one DSP=" << target_->getEquivalenceSliceDSP());
@@ -137,7 +133,6 @@ namespace flopoco{
 			REPORT(INFO, "################################################################################"); 
 			REPORT(INFO, "Algorithm found a solution:");
 			computeCost(bestConfig);
-
 
 			REPORT(INFO, "Estimated DSPs:= "<<nrDSPs);
 			target->getDSPWidths(x,y);
@@ -170,9 +165,10 @@ namespace flopoco{
 
 		nextCycle();		
 		if (nrDSPOperands + nrSliceOperands > 1){
-			IntCompressorTree *add =  new IntCompressorTree(getTarget(), wInX+wInY, nrDSPOperands+nrSliceOperands, inDelayMap("X0", target_->localWireDelay()) );
+			IntMultiAdder *add =  new IntMultiAdder(getTarget(), wInX+wInY, nrDSPOperands+nrSliceOperands, inDelayMap("X0", target_->localWireDelay()) );
+
 			oplist.push_back(add);
-			REPORT(DEBUG, "Finished generating the compressor tree");
+			REPORT(DEBUG, "Finished generating the multioperand adder");
 
 			for (int j=0; j<nrDSPOperands; j++)
 				inPortMap (add, join("X",j) , join("addOpDSP",j) );
@@ -196,11 +192,7 @@ namespace flopoco{
 				vhdl << tab << "R <= addOpSlice0;" << endl;
 			}
 		}
-			
 	}
-	
-	
-	
 
 	void IntTilingMult::runAlgorithm()
 	{
@@ -559,8 +551,8 @@ namespace flopoco{
 		//~ m=wInY + 2* getExtraHeight();
 		n = vn;
 		m= vm;
-		REPORT(INFO, "real width"<<vn - 2* getExtraWidth()<<"real height"<<vm - 2* getExtraHeight());
-		REPORT(INFO, "width "<<n<<"height "<<m);
+		REPORT(INFO, "real width="<<vn - 2* getExtraWidth()<<" real height="<<vm - 2* getExtraHeight());
+		REPORT(INFO, "width="<<n<<" height="<<m);
 		mat = new int*[m];
 	
 		int nmew = vnme;
@@ -1055,15 +1047,14 @@ namespace flopoco{
 
 	/* binds DSPs into supertiles */
 	int IntTilingMult::bindDSPs(DSP** &config){
-		if  ( (target_->getID() == "Virtex4") ||
-		      (target_->getID() == "Virtex5") ||
-		      (target_->getID() == "Spartan3")){  // then the target is a Xilinx FPGA
+		if (target_->getVendor() == "Xilinx"){  
+			// then the target is a Xilinx FPGA
 			return bindDSPs4Virtex(config);
-		}else{ // the target is Stratix
+		}else{ 
+			// the target is Stratix
 			return bindDSPs4Stratix(config);
 		}
 	}
-
 
 	/* compares the cost of the global config with best config and sets 
 	the best config accordingly */
@@ -1154,36 +1145,23 @@ namespace flopoco{
 		return int(ceil((float)maxDSP * ratio));
 	}
 	
-	
-	
-	
 	int  IntTilingMult::getExtraHeight()
 	{
-
-		
 		int x,y;	
 		target_->getDSPWidths(x,  y);
 		float temp = ratio * 0.75 * ((float) y);
 		return ((int)temp);
 		//return 4;
-
 	}
 
 	
 	int  IntTilingMult::getExtraWidth()
 	{
-
 		int x,y;	
 		target_->getDSPWidths(x,y);
 		float temp = ratio * 0.75 * ((float) x);
 		return ((int)temp);
-		//return 4;
-
 	}
-
-
-
-
 
 	void IntTilingMult::emulate(TestCase* tc)
 	{
@@ -1381,12 +1359,12 @@ namespace flopoco{
 			int mindX = mind;
 			int mindY = mind;
 			
-			if (targetID == "Virtex5"){ 
+			if (targetID == "Virtex5" || targetID == "Virtex6") { 
 				/* align top right of current 24-17 bits left, 24 bits lower */
 				mindX = -abs(w-h);
 				mindY = h;
 			}
-			else if ((targetID == "StratixII") || (targetID == "StratixIII") || (targetID == "StratixIV")){ 
+			else if (target_->getVendor()=="Altera"){ 
 				// align on diagonal in order to use internal adders 
 				mindX = -w;
 				mindY = h;	
@@ -1563,18 +1541,10 @@ namespace flopoco{
 		
 		// set shift amount according to target
 		int shift = 0;
-		if ((target_->getID() == "Virtex4") || (target_->getID() == "Virtex5"))
+		if (target_->getVendor() == "Xilinx")
 			shift = 17;
 		
 		int start = 0; // starting position
-		
-		
-		//~ cout<< "mw "<<mw<<" mh "<<mh<<" w "<<w<<" h "<<h<<"estimate dsps "<<nrDSPsprim<<endl;
-		//~ cout<<"h*0.9 + h*4="<<h*0.9 + h*4<<endl;
-		//~ cout<<"cond "<<(mw == h*4 || mh ==h*4)<<" tout "<<((mw == h*4 || mh ==h*4) ||(  (h*0.9 + h*4 <=mw) &&  mh>=2*w  ) || (   (h*0.9 + h*4 <=mh) &&  mw>=2*w  ))<<endl;
-		//~ cout<<" area= "<<mw*mh<<" area covered by DSPs= "<<h*w*nrDSPsprim<<" condition "<<( mw*mh*0.8>= h*w*nrDSPsprim )<<endl;
-		
-		
 		
 		
 		if (dspCount >= 16 &&
@@ -2575,13 +2545,10 @@ namespace flopoco{
 		o << "library ieee; " << endl;
 		o << "use ieee.std_logic_1164.all;" << endl;
 		o << "use ieee.std_logic_arith.all;" << endl;
-		if  ( (target_->getID() == "Virtex4") ||
-		      (target_->getID() == "Virtex5") ||
-		      (target_->getID() == "Spartan3"))  // then the target is a Xilinx FPGA
-			{
-		o << "use ieee.std_logic_signed.all;" << endl;
+		if  (target_->getVendor() == "Xilinx"){
+			o << "use ieee.std_logic_signed.all;" << endl;
 		}else{
-		o << "use ieee.std_logic_unsigned.all;" << endl;
+			o << "use ieee.std_logic_unsigned.all;" << endl;
 		}
 		
 		o << "library work;" << endl;

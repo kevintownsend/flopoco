@@ -8,9 +8,7 @@
 
 #include "../Operator.hpp"
 #include "../IntAdder.hpp"
-#include "../IntNAdder.hpp"
-#include "../IntCompressorTree.hpp"
-
+#include "../IntMultiAdder.hpp"
 
 namespace flopoco{
 

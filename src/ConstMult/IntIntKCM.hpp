@@ -4,7 +4,7 @@
 #include <sstream>
 #include <gmp.h>
 #include <gmpxx.h>
-#include "../IntCompressorTree.hpp"
+#include "../IntMultiAdder.hpp"
 #include "../Operator.hpp"
 
 

@@ -22,7 +22,7 @@
 #include <gmpxx.h>
 #include "../utils.hpp"
 #include "../Operator.hpp"
-#include "../IntCompressorTree.hpp"
+#include "../IntMultiAdder.hpp"
 #include "SignedIntMultiplier.hpp"
 
 using namespace std;
@@ -120,10 +120,10 @@ namespace flopoco{
 
 					if (cOp2 > 1){
 						vhdl << tab << declare ("sum0Low", x) << " <= sum0" << range(x-1,0) << ";" << endl;
-						REPORT( DEBUG, "The delay at compressor tree input is = " << getCriticalPath());
+						REPORT( DEBUG, "The delay at multioperand adder input is = " << getCriticalPath());
 						nextCycle();//
 						setCriticalPath(0);
-						IntCompressorTree* add =  new IntCompressorTree(target, y*(cOp1-1)+yS +  x*(cOp2-1)+xS - x, cOp2, inDelayMap("X0",getCriticalPath()));
+						IntMultiAdder* add =  new IntMultiAdder(target, y*(cOp1-1)+yS +  x*(cOp2-1)+xS - x, cOp2, inDelayMap("X0",getCriticalPath()));
 						oplist.push_back(add);
 		
 						/* prepare operands */
@@ -293,9 +293,8 @@ namespace flopoco{
 						vhdl << tab << declare ("sum0Low", y) << " <= sum0" << range(y-1,0) << ";" << endl;
 
 						manageCriticalPath(target->DSPToLogicWireDelay());
-						REPORT( DEBUG, "The delay at compressor tree input is = " << getCriticalPath());
-						/* the compressor tree works better on Virtex5/6 devices due to the larger LUTs */
-						IntCompressorTree* add =  new IntCompressorTree(target, (xS + y + 1) + (cOp2-1)*y - y, cOp2, inDelayMap("X0",getCriticalPath()));
+						REPORT( DEBUG, "The delay at multioperand adder input is = " << getCriticalPath());
+						IntMultiAdder* add =  new IntMultiAdder(target, (xS + y + 1) + (cOp2-1)*y - y, cOp2, inDelayMap("X0",getCriticalPath()));
 						oplist.push_back(add);
 	
 						/* prepare operands */

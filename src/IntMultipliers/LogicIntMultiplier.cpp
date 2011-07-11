@@ -296,7 +296,7 @@ namespace flopoco{
 						}
 					}
 
-					IntCompressorTree* add =  new IntCompressorTree(target, adderWidth, operandNames.size(), inDelayMap("X0", getCriticalPath()));
+					IntMultiAdder* add =  new IntMultiAdder(target, adderWidth, operandNames.size(), inDelayMap("X0", getCriticalPath()));
 					oplist.push_back(add);
 
 					for (int i=0; i< signed(operandNames.size()); i++)
@@ -334,7 +334,7 @@ namespace flopoco{
 						}
 					}
 
-					IntCompressorTree* add =  new IntCompressorTree(target, adderWidth, 2*chunksX, inDelayMap("X0", getCriticalPath()));
+					IntMultiAdder* add =  new IntMultiAdder(target, adderWidth, 2*chunksX, inDelayMap("X0", getCriticalPath()));
 					oplist.push_back(add);
 
 					for (int i=0; i<2; i++)

@@ -25,7 +25,7 @@
 #include "../utils.hpp"
 #include "FixRealKCM.hpp"
 #include "../IntAdder.hpp"
-#include "../IntCompressorTree.hpp"
+#include "../IntMultiAdder.hpp"
 
 using namespace std;
 
@@ -201,7 +201,7 @@ namespace flopoco{
 			
 			Operator* adder;
 			if(nbOfTables>2) {
-				adder = new IntCompressorTree(target, wOut+g, nbOfTables, inDelayMap("X0",target->localWireDelay() + getCriticalPath()));
+				adder = new IntMultiAdder(target, wOut+g, nbOfTables, inDelayMap("X0",target->localWireDelay() + getCriticalPath()));
 				oplist.push_back(adder);
 				for (int i=0; i<nbOfTables; i++)
 					inPortMap (adder, join("X",i) , join("addOp",i));

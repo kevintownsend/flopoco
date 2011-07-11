@@ -21,12 +21,11 @@
 #include <gmp.h>
 #include <mpfr.h>
 #include <gmpxx.h>
-#include "utils.hpp"
-#include "Operator.hpp"
+#include "../utils.hpp"
+#include "../Operator.hpp"
 #include "IntNAdder.hpp"
 
 using namespace std;
-
 
 namespace flopoco{
 
@@ -45,7 +44,7 @@ namespace flopoco{
 		for (int i=0; i<N; i++)
 			addInput ( join("X",i) , wIn_, true);
 
-		addInput ("Cin", 1  );
+//		addInput ("Cin", 1  );
 		addOutput("R"  , wIn_, 1, true);
 
 		if (isSequential()){
@@ -153,7 +152,7 @@ namespace flopoco{
 							uname2 << "sX"<<j<<"_1_l"<<l-1;
 							uname3 << "sX"<<j-1<<"_0_l"<<l-1;
 							vhdl << tab << declare(dname.str(),cSize[j]+1) << " <= (\"0\" & "<< uname1.str()<<range(cSize[j]-1,0) <<") +  (\"0\" & "<< uname2.str()<<range(cSize[j]-1,0)<<")";
-							if ((j==0)&&(l==1)) vhdl << " + Cin";
+//							if ((j==0)&&(l==1)) vhdl << " + Cin";
 							if (j>0) vhdl << " + " << uname3.str()<<"("<<cSize[j-1]<<") ";
 							vhdl << ";" << endl;				
 						}
@@ -229,7 +228,7 @@ namespace flopoco{
 								if (j>0)
 									vhdl << tab << declare(dname.str(), cSize[j]+1) << " <= ( \"0\" & " << uname1.str()<<range(cSize[j]-1,0) << ") + " << uname2.str() << of(cSize[j-1])<<";" <<endl;
 								else
-									vhdl << tab << declare(dname.str(), cSize[j]+1) << " <= ( \"0\" & " << uname1.str()<<range(cSize[j]-1,0) << ") + Cin ;" <<endl;
+									vhdl << tab << declare(dname.str(), cSize[j]+1) << " <= ( \"0\" & " << uname1.str()<<range(cSize[j]-1,0) << ");"<<endl; // + Cin ;" <<endl;
 							}
 							currentLevel++;
 						}
@@ -250,18 +249,18 @@ namespace flopoco{
 				
 			}else{
 				vhdl << tab << "R <= ";
-					for (int i=N-1; i>=0; i--){
+					for (int i=N-1; i>0; i--){
 						vhdl << "X"<<i<< " + ";
 					} 
-					vhdl << " Cin ;"<<endl;
+					vhdl << " X0 ;"<<endl;
 			}
 		}else{ 
 			/* if combinatorial */
 			vhdl << tab << "R <= ";
-			for (int i=N-1; i>=0; i--){
+			for (int i=N-1; i>0; i--){
 				vhdl << "X"<<i<< " + ";
 			} 
-			vhdl << " Cin ;"<<endl;
+			vhdl << " X0 ;"<<endl;
 		}
 	}
 

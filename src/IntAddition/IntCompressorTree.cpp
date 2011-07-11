@@ -20,9 +20,9 @@
 #include <gmp.h>
 #include <mpfr.h>
 #include <gmpxx.h>
-#include "utils.hpp"
-#include "Operator.hpp"
-#include "IntAdder.hpp"
+#include "../utils.hpp"
+#include "../Operator.hpp"
+#include "../IntAdder.hpp"
 #include "IntCompressorTree.hpp"
 
 using namespace std;

@@ -160,8 +160,7 @@ namespace flopoco{
 						manageCriticalPath(target->ffDelay()+ target->DSPToLogicWireDelay());
 				
 						REPORT(DEBUG, "delay at adder input " << getCriticalPath() ); 
-	//								IntNAdder* add =  new IntNAdder(target, x*chunksX+y*chunksY+extension, chunksX, inDelayMap("X0",getCriticalPath()));
-						IntCompressorTree* add =  new IntCompressorTree(target, x*chunksX+y*chunksY+extension, chunksX, inDelayMap("X0",getCriticalPath()));
+						IntMultiAdder* add =  new IntMultiAdder(target, x*chunksX+y*chunksY+extension, chunksX, inDelayMap("X0",getCriticalPath()));
 
 						oplist.push_back(add);
 	
@@ -1838,8 +1837,7 @@ namespace flopoco{
 				map<string, double> inMap;
 				inMap["X0"] = delay;
 
-				IntNAdder* add =  new IntNAdder(target, adderWidth, opCount, inMap);
-				//IntCompressorTree* add =  new IntCompressorTree(target, adderWidth, opCount);
+				IntMultiAdder* add =  new IntMultiAdder(target, adderWidth, opCount, inMap);
 				oplist.push_back(add);
 
 
@@ -1851,14 +1849,11 @@ namespace flopoco{
 						inPortMap (add, join("X",j) , concatPartialProd.str());
 					}	
 			
-				inPortMapCst(add, "Cin", "'0'");
 				outPortMap(add, "R", "addRes");
 				vhdl << instance(add, "adder");
-
 				syncCycleFromSignal("addRes");
 	
 				vhdl << tab << "R <= addRes" << range(adderWidth-1,adderWidth-wInX_-wInY_) << ";" << endl;	
-	
 			}
 		}else 
 			vhdl << tab << "R <= X * Y ;" <<endl;

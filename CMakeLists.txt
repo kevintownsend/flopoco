@@ -200,8 +200,8 @@ ADD_EXECUTABLE(flopoco
 # src/BigTestBench
  src/UserDefinedOperator
  src/IntAdder src/IntAddition/IntAdderClassical
- src/IntNAdder
- src/IntCompressorTree
+ src/IntMultiAdder src/IntAddition/IntNAdder  src/IntAddition/IntCompressorTree
+
  src/LongIntAdder
  src/IntDualSub
 
@@ -318,8 +318,7 @@ ADD_EXECUTABLE(flopoco
  src/IntAddition/LongIntAdderMuxNetwork
 
 # ---------- Multioperand -------------------------------------------
- src/IntNAdder
- src/IntCompressorTree
+ src/IntMultiAdder src/IntAddition/IntNAdder  src/IntAddition/IntCompressorTree
 
  src/IntComparator
  src/IntDualSub

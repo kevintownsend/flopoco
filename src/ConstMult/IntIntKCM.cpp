@@ -170,12 +170,11 @@ namespace flopoco{
 			Operator* adder;
 
 			if(nbOfTables>2) {
-				adder = new IntCompressorTree(target, addOpSize, nbOfTables, inDelayMap("X0", target->localWireDelay() + getCriticalPath()));
+				adder = new IntMultiAdder(target, addOpSize, nbOfTables, inDelayMap("X0", target->localWireDelay() + getCriticalPath()));
 				oplist.push_back(adder);
 				for (int i=0; i<nbOfTables; i++)
 					inPortMap (adder, join("X",i) , join("addOp",i));
-			}
-			else {
+			}else {
 				adder = new IntAdder(target, addOpSize, inDelayMap("X0", target->localWireDelay() + getCriticalPath()));
 				oplist.push_back(adder);
 				inPortMap (adder, "X" , join("addOp",0));

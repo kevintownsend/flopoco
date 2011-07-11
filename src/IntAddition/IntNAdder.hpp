@@ -4,7 +4,7 @@
 #include <sstream>
 #include <gmp.h>
 #include <gmpxx.h>
-#include "Operator.hpp"
+#include "../Operator.hpp"
 
 
 namespace flopoco{

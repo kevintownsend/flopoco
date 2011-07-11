@@ -297,11 +297,9 @@ namespace flopoco{
 			vhdl << tab << declare("paddedB", wF+g+4)  << " <= \"00\" & alignedB; " << endl;
 			vhdl << tab << declare("paddedC", wF+g+4)  << " <= \"00\" & alignedC; " << endl;
 		
-			IntNAdder* adder = new IntNAdder(target,wF+g+4, 3, inDelayMap("X0", target->localWireDelay() + getCriticalPath() ));
+			IntMultiAdder* adder = new IntMultiAdder(target,wF+g+4, 3, inDelayMap("X0", target->localWireDelay() + getCriticalPath() ));
 			oplist.push_back(adder);
 
-			// TODO multi-op adder! using two instances of our pipelined adder is inefficient
-		
 			inPortMap   (adder, "X0", "paddedA");
 			inPortMap   (adder, "X1", "paddedB");
 			inPortMap   (adder, "X2", "paddedC");

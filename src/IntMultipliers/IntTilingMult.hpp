@@ -8,8 +8,8 @@
 #include <time.h>
 
 #include "../Operator.hpp"
-#include "../IntCompressorTree.hpp"
-#include "../IntMultipliers/IntTruncMultiplier.hpp" // for softDSPs etc
+#include "../IntMultiAdder.hpp"
+#include "IntTruncMultiplier.hpp" // for softDSPs etc
 #include "LogicIntMultiplier.hpp"
 
 
