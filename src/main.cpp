@@ -1232,7 +1232,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
 				int N   = checkStrictlyPositive(argv[i++], argv[0]);
 				cerr << "> IntNAdder, wIn="<<wIn<<" N="<<N<<endl  ;
-				op = new IntNAdder(target,wIn,N);
+				op = new IntNAdder(target, wIn, N, inDelayMap("X0",target->localWireDelay()));
 				addOperator(op);
 			}    
 		}

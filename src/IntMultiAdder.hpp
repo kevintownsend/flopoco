@@ -15,10 +15,6 @@ namespace flopoco {
 	class IntMultiAdder : public Operator {
 	public:
 	
-		IntMultiAdder (Target* target, int wIn, int N, map<string, double> inputDelays, bool noAmbiguity): 
-			Operator(target,inputDelays), wIn_(wIn){
-		}
-		
 		/**
 		 * The IntMultiAdder constructor
 		 * @param[in] target           the target device
@@ -26,7 +22,7 @@ namespace flopoco {
 		 * @param[in] N                the number of operands
 		 * @param[in] inputDelays      the delays for each input
 		 **/
-		IntMultiAdder ( Target* target, int wIn, int N, map<string, double> inputDelays = emptyDelayMap);
+		IntMultiAdder ( Target* target, int wIn, int N, map<string, double> inputDelays = emptyDelayMap, bool carryIn = false);
 
 		/**
 		 *  Destructor

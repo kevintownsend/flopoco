@@ -33,7 +33,7 @@ using namespace std;
 namespace flopoco {
 	extern vector<Operator*> oplist;
 	
-	IntMultiAdder::IntMultiAdder (Target* target, int wIn, int N, map<string, double> inputDelays):
+	IntMultiAdder::IntMultiAdder (Target* target, int wIn, int N, map<string, double> inputDelays, bool carryIn):
 	Operator ( target, inputDelays, false ), wIn_ ( wIn ), N_(N)  {
 		ostringstream name;
 		srcFileName="IntMultiAdder";
@@ -52,10 +52,10 @@ namespace flopoco {
 		
 		Operator* IntMultiAdderInstantiation;
 		
-		if ( target->getVendor()=="Altera" || target->getID()=="Virtex5" || target->getID()=="Virtex6" )
+		if (( target->getVendor()=="Altera" || target->getID()=="Virtex5" || target->getID()=="Virtex6" ) && !carryIn)
 			IntMultiAdderInstantiation = new IntCompressorTree( target, wIn, N, inputDelays);
 		else
-			IntMultiAdderInstantiation = new IntNAdder( target, wIn, N, inputDelays);
+			IntMultiAdderInstantiation = new IntNAdder( target, wIn, N, inputDelays, carryIn);
 		
 		cloneOperator( IntMultiAdderInstantiation );
 		changeName ( name.str() );

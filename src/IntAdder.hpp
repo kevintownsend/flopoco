@@ -20,9 +20,6 @@ namespace flopoco {
 	class IntAdder : public Operator {
 	public:
 	
-		IntAdder (Target* target, int wIn, map<string, double> inputDelays, bool noAmbiguity): Operator(target,inputDelays), wIn_(wIn){
-		}
-		
 		/**
 		 * The IntAdder constructor
 		 * @param[in] target           the target device
