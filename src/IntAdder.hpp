@@ -19,6 +19,18 @@ namespace flopoco {
 	 */
 	class IntAdder : public Operator {
 	public:
+
+		/**
+		 * The IntAdder constructor
+		 * @param[in] target           the target device
+		 * @param[in] wIn              the with of the inputs and output
+		 * @param[in] inputDelays      the delays for each input
+		 * @param[in] ambiguity        this variable isn't actually useful. It is used to 
+		 *                             select this constructor when called from IntAdderClassical ...
+		 **/		
+		IntAdder (Target* target, int wIn, map<string, double> inputDelays, bool ambiguiy):
+			Operator(target, inputDelays), wIn_(wIn){
+		}
 	
 		/**
 		 * The IntAdder constructor
@@ -33,17 +45,11 @@ namespace flopoco {
 		 **/
 		IntAdder ( Target* target, int wIn, map<string, double> inputDelays = emptyDelayMap, int optimizeType = SLICE, bool srl = true, int implementation = -1 );
 
-			
 		/**
 		 *  Destructor
 		 */
 		~IntAdder();
 		
-		/** Overloaded to do nothing */
-//		void outputVHDL(std::ostream& o, std::string name);
-
-		void changeName(std::string operatorName);
-
 		/**
 		 * The emulate function.
 		 * @param[in] tc               a list of test-cases
@@ -137,22 +143,11 @@ namespace flopoco {
 			
 		}
 
-		int wIn_;                         /**< the width for X, Y and R*/
+		int wIn_;                                    /**< the width for X, Y and R*/
 	private:
-		vector<Operator*> addImplementationList;
-		int selectedVersion;
+		vector<Operator*> addImplementationList;     /**< this list will be populated with possible adder architectures*/
+		int selectedVersion;                         /**< the selected version from the addImplementationList */
 	};
 	
-	
-//	/* --------------------------------------------------------------------- */
-//	class IntAdderCommon {
-//	public:
-//		IntAdderCommon(int wIn): wIn_(wIn){
-//		};
-
-
-//		private:
-//			int wIn_;
-//	};
 }
 #endif

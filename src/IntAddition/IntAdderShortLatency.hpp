@@ -34,7 +34,7 @@ namespace flopoco {
 			*            2: optimize slice/ALM count
 			* @param[in] srl              optimize for use of shift registers
 			**/
-			IntAdderShortLatency ( Target* target, int wIn, string name, map<string, double> inputDelays = emptyDelayMap, int optimizeType = SLICE, bool srl = true);
+			IntAdderShortLatency ( Target* target, int wIn, map<string, double> inputDelays = emptyDelayMap, int optimizeType = SLICE, bool srl = true);
 			
 		
 			/**

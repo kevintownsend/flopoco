@@ -5,13 +5,14 @@
 #include <gmp.h>
 #include <gmpxx.h>
 #include "../Operator.hpp"
+#include "../IntMultiAdder.hpp"
 #include "../IntAdder.hpp"
 
 namespace flopoco{
 	extern map<string, double> emptyDelayMap;
 	/** The IntNAdder class for experimenting with adders. 
 	 */
-	class IntNAdder : public Operator
+	class IntNAdder : public IntMultiAdder
 	{
 	public:
 		/**
@@ -29,7 +30,7 @@ namespace flopoco{
 		~IntNAdder();
 
 
-		void emulate(TestCase* tc);
+//		void emulate(TestCase* tc);
 
 	protected:
 		int                 wIn_;         /**< the width for X, Y and R*/

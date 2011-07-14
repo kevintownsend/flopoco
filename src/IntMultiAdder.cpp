@@ -34,7 +34,7 @@ namespace flopoco {
 	extern vector<Operator*> oplist;
 	
 	IntMultiAdder::IntMultiAdder (Target* target, int wIn, int N, map<string, double> inputDelays, bool carryIn):
-	Operator ( target, inputDelays, false ), wIn_ ( wIn ), N_(N)  {
+	Operator ( target, inputDelays, false ), wIn_ ( wIn ), N_(N), carryIn_(carryIn)  {
 		ostringstream name;
 		srcFileName="IntMultiAdder";
 		setCopyrightString ( "Bogdan Pasca 2011" );
@@ -68,13 +68,14 @@ namespace flopoco {
 	/******************************************************************************/
 	void IntMultiAdder::emulate ( TestCase* tc ) {
 		
-		mpz_class svX = tc->getInputValue ( "X" );
-		
 		mpz_class svR = 0.0;
+		if (carryIn_)
+			svR = svR + tc->getInputValue ( "Cin" );
+		
 		for (int i=0; i<N_; i++)
 			svR = svR + tc->getInputValue ( join("X",i) );
 		
-		mpz_clrbit ( svR.get_mpz_t(),wIn_ );
+		svR = svR % (mpz_class(1)<<wIn_);
 		tc->addExpectedOutput ( "R", svR );
 	}
 }

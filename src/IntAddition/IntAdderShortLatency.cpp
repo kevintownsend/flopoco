@@ -30,11 +30,14 @@ using namespace std;
 namespace flopoco {
 	extern vector<Operator*> oplist;
 	
-	IntAdderShortLatency::IntAdderShortLatency ( Target* target, int wIn, string name, map<string, double> inputDelays, int optimizeType, bool srl) :
+	IntAdderShortLatency::IntAdderShortLatency ( Target* target, int wIn, map<string, double> inputDelays, int optimizeType, bool srl) :
 	IntAdder ( target, wIn, inputDelays, true ), wIn_ ( wIn ), shortLatencyInputRegister ( 0 ) {
 		srcFileName="IntAdderShortLatency";
+		ostringstream name;
+		
 		setCopyrightString ( "Bogdan Pasca, Florent de Dinechin (2008-2010)" );
-		setName ( name );
+		name << "IntAdderShortLatency_" << wIn_<<"_f"<<target->frequencyMHz()<<"_uid"<<getNewUId();
+		setName ( name.str() );
 		
 		// Set up the IO signals
 		addInput ( "X"  , wIn_, true );

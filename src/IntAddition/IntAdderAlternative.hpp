@@ -33,7 +33,7 @@ namespace flopoco {
 			*            2: optimize slice/ALM count
 			* @param[in] srl              optimize for use of shift registers
 			**/
-			IntAdderAlternative ( Target* target, int wIn, string name, map<string, double> inputDelays = emptyDelayMap, int optimizeType = 2, bool srl = true);
+			IntAdderAlternative ( Target* target, int wIn, map<string, double> inputDelays = emptyDelayMap, int optimizeType = 2, bool srl = true);
 			
 			/**
 			* Returns the cost in LUTs of the Alternative implementation

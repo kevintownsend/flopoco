@@ -30,7 +30,7 @@ using namespace std;
 namespace flopoco{
 
 	IntNAdder::IntNAdder(Target* target, int wIn, int N, map<string, double> inputDelays, bool carryIn):
-		Operator(target, inputDelays), wIn_(wIn), N_(N), carryIn_(carryIn) 
+		IntMultiAdder(target, wIn, N, inputDelays, carryIn, true), wIn_(wIn), N_(N), carryIn_(carryIn) 
 	{
 	
 		ostringstream name;
@@ -165,26 +165,26 @@ namespace flopoco{
 	}
 
 
-	void IntNAdder::emulate(TestCase* tc)
-	{
-		mpz_class svX;
-		mpz_class svC;
-		
-		if (carryIn_)
-			svC =  tc->getInputValue("Cin");
-		else 
-			svC = 0;
+//	void IntNAdder::emulate(TestCase* tc)
+//	{
+//		mpz_class svX;
+//		mpz_class svC;
+//		
+//		if (carryIn_)
+//			svC =  tc->getInputValue("Cin");
+//		else 
+//			svC = 0;
 
-		mpz_class svR = svC;
+//		mpz_class svR = svC;
 
-		for (int i=0; i<N_; i++){
-			ostringstream iName;
-			iName << "X"<<i;
-			svX = tc->getInputValue(iName.str());
-			svR = svR + svX;
-			mpz_clrbit(svR.get_mpz_t(),wIn_); 
-		}
-	
-		tc->addExpectedOutput("R", svR);
-	}
+//		for (int i=0; i<N_; i++){
+//			ostringstream iName;
+//			iName << "X"<<i;
+//			svX = tc->getInputValue(iName.str());
+//			svR = svR + svX;
+//			mpz_clrbit(svR.get_mpz_t(),wIn_); 
+//		}
+//	
+//		tc->addExpectedOutput("R", svR);
+//	}
 }

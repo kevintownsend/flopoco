@@ -34,7 +34,7 @@ namespace flopoco{
 	extern vector<Operator*> oplist;
 
 	IntCompressorTree::IntCompressorTree(Target* target, int wIn, int N, map<string, double> inputDelays):
-		Operator(target, inputDelays), wIn_(wIn), N_(N), inputDelays_(inputDelays) 
+		IntMultiAdder(target, wIn, N, inputDelays, false, true), wIn_(wIn), N_(N), inputDelays_(inputDelays) 
 	{
 		ostringstream name;
 		name << "IntCompressorTree_" << wIn_<<"_"<<N_<<"_uid"<<Operator::getNewUId();
@@ -269,20 +269,20 @@ namespace flopoco{
 	}
 
 
-	void IntCompressorTree::emulate(TestCase* tc)
-	{
-		mpz_class svX;
-		mpz_class svR = 0;
+//	void IntCompressorTree::emulate(TestCase* tc)
+//	{
+//		mpz_class svX;
+//		mpz_class svR = 0;
 
-		for (int i=0; i<N_; i++){
-			ostringstream iName;
-			iName << "X"<<i;
-			svX = tc->getInputValue(iName.str());
-			svR = svR + svX;
-			mpz_clrbit(svR.get_mpz_t(),wIn_); 
-		}
-		tc->addExpectedOutput("R", svR);
+//		for (int i=0; i<N_; i++){
+//			ostringstream iName;
+//			iName << "X"<<i;
+//			svX = tc->getInputValue(iName.str());
+//			svR = svR + svX;
+//			mpz_clrbit(svR.get_mpz_t(),wIn_); 
+//		}
+//		tc->addExpectedOutput("R", svR);
 
-	}
+//	}
 
 }

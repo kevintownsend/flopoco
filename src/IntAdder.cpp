@@ -35,13 +35,12 @@ namespace flopoco {
 	extern vector<Operator*> oplist;
 	
 	IntAdder::IntAdder ( Target* target, int wIn, map<string, double> inputDelays, int optimizeType, bool srl, int implementation):
-	Operator ( target, inputDelays, false ), wIn_ ( wIn )  {
+	Operator ( target, inputDelays, false), wIn_ ( wIn )  {
 		ostringstream name;
 		srcFileName="IntAdder";
 		setCopyrightString ( "Bogdan Pasca, Florent de Dinechin (2008-2010)" );
 		
 		name << "IntAdder_" << wIn_<<"_f"<<target->frequencyMHz()<<"_uid"<<getNewUId();
-		setName ( name.str() );
 		
 		// Set up the IO signals
 		addInput ( "X"  , wIn_, true );
@@ -49,35 +48,35 @@ namespace flopoco {
 		addInput ( "Cin", 1 );
 		addOutput ( "R"  , wIn_, 1 , true );
 		
-		REPORT(DETAILED, "Implementing IntAdder " << wIn);
+		REPORT(DETAILED, "Implementing IntAdder " << wIn << " implementation="<<implementation);
 		
 		Operator* intAdderInstantiation;
 		
 		if (implementation == -1){ // we must explore
-			intAdderInstantiation = new IntAdderClassical(target, wIn, name.str() , inputDelays, optimizeType, srl);
+			intAdderInstantiation = new IntAdderClassical(target, wIn, inputDelays, optimizeType, srl);
 			addImplementationList.push_back(intAdderInstantiation);
 		
-			intAdderInstantiation = new IntAdderAlternative(target, wIn, name.str() , inputDelays, optimizeType, srl);
+			intAdderInstantiation = new IntAdderAlternative(target, wIn, inputDelays, optimizeType, srl);
 			addImplementationList.push_back(intAdderInstantiation);
 
-//			intAdderInstantiation = new IntAdderShortLatency(target, wIn, name.str() , inputDelays, optimizeType, srl);
+//			intAdderInstantiation = new IntAdderShortLatency(target, wIn, inputDelays, optimizeType, srl);
 //			addImplementationList.push_back(intAdderInstantiation);
 		}else{
 			switch (implementation){
 				case 0: 	
-					intAdderInstantiation = new IntAdderClassical(target, wIn, name.str() , inputDelays, optimizeType, srl);
+					intAdderInstantiation = new IntAdderClassical(target, wIn, inputDelays, optimizeType, srl);
 					addImplementationList.push_back(intAdderInstantiation);
 					break;
 				case 1:
-					intAdderInstantiation = new IntAdderAlternative(target, wIn, name.str() , inputDelays, optimizeType, srl);
+					intAdderInstantiation = new IntAdderAlternative(target, wIn, inputDelays, optimizeType, srl);
 					addImplementationList.push_back(intAdderInstantiation);
 					break;
 				case 2: 
-					intAdderInstantiation = new IntAdderShortLatency(target, wIn, name.str() , inputDelays, optimizeType, srl);
+					intAdderInstantiation = new IntAdderShortLatency(target, wIn, inputDelays, optimizeType, srl);
 					addImplementationList.push_back(intAdderInstantiation);
 					break;
 				default:
-					intAdderInstantiation = new IntAdderClassical(target, wIn, name.str() , inputDelays, optimizeType, srl);
+					intAdderInstantiation = new IntAdderClassical(target, wIn, inputDelays, optimizeType, srl);
 					addImplementationList.push_back(intAdderInstantiation);
 			}	
 		}
@@ -90,6 +89,7 @@ namespace flopoco {
 			}
 			
 		cloneOperator(addImplementationList[selectedVersion]);
+		changeName ( name.str() );
 
 		REPORT(DETAILED, "Selected implementation for IntAdder"<< wIn << " is "<<selectedVersion<<" with cost="<<currentCost);
 
@@ -118,11 +118,11 @@ namespace flopoco {
 		tc->addExpectedOutput ( "R", svR );
 	}
 	
-    void IntAdder::changeName(std::string operatorName){
-		Operator::changeName(operatorName);
-		addImplementationList[selectedVersion]->changeName(operatorName);
-		//		cout << "changin IntAdder name to " << operatorName << endl;
-    }
+//    void IntAdder::changeName(std::string operatorName){
+//		Operator::changeName(operatorName);
+//		addImplementationList[selectedVersion]->changeName(operatorName);
+//		//		cout << "changin IntAdder name to " << operatorName << endl;
+//    }
 
 }
 

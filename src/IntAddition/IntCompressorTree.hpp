@@ -5,14 +5,14 @@
 #include <gmp.h>
 #include <gmpxx.h>
 #include "../Operator.hpp"
-
+#include "../IntMultiAdder.hpp"
 
 namespace flopoco{
 
 	extern map<string, double> emptyDelayMap;
 	/** The IntCompressorTree class for experimenting with adders. 
 	 */
-	class IntCompressorTree : public Operator
+	class IntCompressorTree : public IntMultiAdder
 	{
 	public:
 		/**
@@ -43,7 +43,7 @@ namespace flopoco{
 		~IntCompressorTree();
 
 
-		void emulate(TestCase* tc);
+//		void emulate(TestCase* tc);
 
 	protected:
 		int wIn_;                         /**< the width for X_{0}..X_{n-1} and R*/

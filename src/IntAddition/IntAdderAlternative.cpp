@@ -30,11 +30,14 @@ using namespace std;
 namespace flopoco {
 	extern vector<Operator*> oplist;
 	
-	IntAdderAlternative::IntAdderAlternative ( Target* target, int wIn, string name, map<string, double> inputDelays, int optimizeType, bool srl) :
+	IntAdderAlternative::IntAdderAlternative ( Target* target, int wIn, map<string, double> inputDelays, int optimizeType, bool srl) :
 	IntAdder(target, wIn, inputDelays, true), wIn_(wIn), alternativeSlackVersion(0) {
 		srcFileName="IntAdderAlternative";
+		ostringstream name;
+		
 		setCopyrightString ( "Bogdan Pasca, Florent de Dinechin (2008-2010)" );
-		setName ( name );
+		name << "IntAdderAlternative_" << wIn_<<"_f"<<target->frequencyMHz()<<"_uid"<<getNewUId();
+		setName ( name.str() );
 		
 		// Set up the IO signals
 		addInput ( "X"  , wIn_, true );
