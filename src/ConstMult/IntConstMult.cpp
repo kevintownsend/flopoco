@@ -504,7 +504,7 @@ namespace flopoco{
 
 		// Build in implementation a tree constant multiplier 
 		
-		ShiftAddOp* powerOfTwo[1000];
+		ShiftAddOp* powerOfTwo[1000]; // Should be enough for anybody
 
 		// Build the multiplier by the period
 		powerOfTwo[0] = buildMultBoothTree(period);
@@ -533,9 +533,15 @@ namespace flopoco{
 			headerSAO=buildMultBoothTree(header);
 			if(j==-1)//just repeat the period 2^i times
 				implementation->result = 	new ShiftAddOp(implementation, Add, headerSAO, (periodSize<<i) - periodMSBZeroes, powerOfTwo[i] );
-			else {
-				ShiftAddOp* tmp = implementation->provideShiftAddOp(Add, headerSAO, (periodSize<<j) - periodMSBZeroes, powerOfTwo[j] );
-				implementation->result = new ShiftAddOp(implementation, Add, tmp, (periodSize<<i), powerOfTwo[i] );
+			else { // Here we should generate both trees and use the smaller. The following static decision is probably always the good one
+				if (i==j) {// I know this case should be equivalent to j=-1 and i+1, but it seems to happen
+					powerOfTwo[i+1] = implementation->provideShiftAddOp(Add, powerOfTwo[i], (periodSize<<i), powerOfTwo[i] );
+					implementation->result = new ShiftAddOp(implementation, Add, headerSAO, (periodSize<<(i+1)) - periodMSBZeroes,powerOfTwo[i+1]);
+				}
+				else{
+					ShiftAddOp* tmp = implementation->provideShiftAddOp(Add, headerSAO, (periodSize<<j) - periodMSBZeroes, powerOfTwo[j] );
+					implementation->result = new ShiftAddOp(implementation, Add, tmp, (periodSize<<i), powerOfTwo[i] );
+				}
 			}
 		}
 

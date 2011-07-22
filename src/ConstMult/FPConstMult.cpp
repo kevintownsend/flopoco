@@ -8,7 +8,7 @@
 
   Initial software.
   Copyright © ENS-Lyon, INRIA, CNRS, UCBL,  
-  2008-2010.
+  2008-2011.
   All rights reserved.
 */
 
@@ -232,7 +232,7 @@ extern vector<Operator*> oplist;
 
 			if(wF_out >= wF_in) {
 				correctRounding=true;
-				wC = wF_out + 1 + intlog2(b);
+				wC = wF_out + 1  +1 + intlog2(b);
 				REPORT(INFO, "Building a correctly rounded multiplier");
 			} 
 			else {
