@@ -38,7 +38,7 @@ namespace flopoco{
 
 	extern vector<Operator*> oplist;
 
-	TaMaDiModuleDummyWrapper::TaMaDiModuleDummyWrapper(Target* target, int wp, int d, int iterations, int wIntervalID, int n, int inFIFODepth, int peFIFODepth, int outFIFODepth):
+	TaMaDiModuleDummyWrapper::TaMaDiModuleDummyWrapper(Target* target, int wp, int d, int iterations, int wIntervalID, int widthComp, int n, int inFIFODepth, int peFIFODepth, int outFIFODepth):
 	Operator(target), wp(wp), d(d), iterations(iterations), wIntervalID(wIntervalID), n(n) 
 	{
 		srcFileName="TaMaDiModuleDummyWrapper";
@@ -68,7 +68,7 @@ namespace flopoco{
 		vhdl << ";"<<endl;
 		
 		////////////////////////////////////////////////////////////
-		TaMaDiModule *tmodule = new TaMaDiModule(target, wp, d, iterations, wIntervalID, n, inFIFODepth, peFIFODepth, outFIFODepth);
+		TaMaDiModule *tmodule = new TaMaDiModule(target, wp, d, iterations, wIntervalID, widthComp, n, inFIFODepth, peFIFODepth, outFIFODepth);
 		oplist.push_back(tmodule);
 
 		inPortMap( tmodule, "MainFIFOInputWE", "MainFIFOInputWE");

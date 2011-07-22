@@ -38,7 +38,7 @@ namespace flopoco{
 
 	extern vector<Operator*> oplist;
 
-	TaMaDiSystem::TaMaDiSystem(Target* target, int wp, int d, int iterations, int wIntervalID, int n, int inFIFODepth, int peFIFODepth, int outFIFODepth, int DispatcherInputFIFODepth, int DispatcherOutputFIFODepth, int moduleCount):
+	TaMaDiSystem::TaMaDiSystem(Target* target, int wp, int d, int iterations, int wIntervalID, int compSize, int n, int inFIFODepth, int peFIFODepth, int outFIFODepth, int DispatcherInputFIFODepth, int DispatcherOutputFIFODepth, int moduleCount):
 	Operator(target), wp(wp), d(d), iterations(iterations), wIntervalID(wIntervalID), n(n) 
 	{
 		srcFileName="TaMaDiSystem";
@@ -52,8 +52,12 @@ namespace flopoco{
 		/* Set up the I/O signals of of the entity */
 		int ulpCounterWidth = intlog2(iterations-1);
 		
-		addInput   ("TaMaDiInput", 64); //data coming from the PCIE in packets of 64bits 
+		addInput   ("TaMaDiInput", 128); //data coming from the PCIE in packets of 128bits 
 		addInput   ("TaMaDiInputValid");
+
+		addInput   ("DMAFIFOHasData");
+		addOutput  ("DMAFIFORD");		
+		
 		addOutput  ("TaMaDiInputFIFOFull");
 
 		addOutput  ("TaMaDiOutput", wIntervalID + ulpCounterWidth);
@@ -65,18 +69,26 @@ namespace flopoco{
 		/////////////////////////////////////////////////////////////
 		TaMaDiDeserializer *ds = new TaMaDiDeserializer(target, wp, d, iterations, wIntervalID, n, inFIFODepth, peFIFODepth, outFIFODepth);
 		oplist.push_back(ds);
-		
+
 		inPortMap   (ds, "MainInput",      "TaMaDiInput");
-		inPortMap   (ds, "MainInputValid", "TaMaDiInputValid"); 
+		inPortMap   (ds, "DMAFIFOHasData", "DMAFIFOHasData");
+		inPortMapCst(ds, "CanWriteSystemInFIFO", "CanWriteSystemInFIFO");
+
+		outPortMap  (ds, "rdDMAFIFO", "rdFromDMAFIFO");
+		
 		outPortMap  (ds, "MainFIFOOutput",  "DeserializerOutput");
 		outPortMap  (ds, "ValidData",      "DeserializerOutputValid");
 		vhdl << tab << instance(ds, "PCIEDeserializerUnit");
 		syncCycleFromSignal("DeserializerOutput");
+		
+		
+		vhdl << tab << declare("CanWriteSystemInFIFO") << " <= not (DispatcherInputFIFOFull_signal); " << endl;
+		vhdl << tab << "DMAFIFORD <= rdFromDMAFIFO;" <<endl;
 			
 		/////////////////////////////////////////////////////////////
 		/// DISPATCHER INTEFACE /////////////////////////////////////
 		/////////////////////////////////////////////////////////////
-		TaMaDiDispatcherInterface *di = new TaMaDiDispatcherInterface(target, wp, d, iterations, wIntervalID, moduleCount, inFIFODepth, peFIFODepth, outFIFODepth, DispatcherInputFIFODepth, DispatcherOutputFIFODepth);
+		TaMaDiDispatcherInterface *di = new TaMaDiDispatcherInterface(target, wp, d, iterations, wIntervalID, compSize, moduleCount, inFIFODepth, peFIFODepth, outFIFODepth, DispatcherInputFIFODepth, DispatcherOutputFIFODepth);
 		oplist.push_back(di);
 		
 		inPortMap   (di, "DispatcherInputData",         "DeserializerOutput");
@@ -110,7 +122,7 @@ namespace flopoco{
 		/////////////////////////////////////////////////////////////
 		/// WRAPPED MODULES /////////////////////////////////////////
 		/////////////////////////////////////////////////////////////
-		TaMaDiModuleWrapperInterface *module = new TaMaDiModuleWrapperInterface(target, wp, d, iterations, wIntervalID, n, inFIFODepth, peFIFODepth, outFIFODepth);
+		TaMaDiModuleWrapperInterface *module = new TaMaDiModuleWrapperInterface(target, wp, d, iterations, wIntervalID, compSize, n, inFIFODepth, peFIFODepth, outFIFODepth);
 		oplist.push_back(module);
 	
 		for (int i=0; i<moduleCount; i++){

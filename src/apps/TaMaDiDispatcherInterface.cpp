@@ -38,7 +38,7 @@ namespace flopoco{
 
 	extern vector<Operator*> oplist;
 
-	TaMaDiDispatcherInterface::TaMaDiDispatcherInterface(Target* target, int wp, int d, int iterations, int wIntervalID, int n, int inFIFODepth, int peFIFODepth, int outFIFODepth, int DispatcherInputFIFODepth, int DispatcherOutputFIFODepth):
+	TaMaDiDispatcherInterface::TaMaDiDispatcherInterface(Target* target, int wp, int d, int iterations, int wIntervalID, int compSize, int n, int inFIFODepth, int peFIFODepth, int outFIFODepth, int DispatcherInputFIFODepth, int DispatcherOutputFIFODepth):
 	Operator(target), wp(wp), d(d), iterations(iterations), wIntervalID(wIntervalID), n(n) 
 	{
 		srcFileName="TaMaDiDispatcherInterface";

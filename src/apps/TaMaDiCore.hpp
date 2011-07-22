@@ -23,7 +23,7 @@ namespace flopoco{
 		 * @param[in]		p		binary-format precision we are intrested in      
 		 * @param[in]		m		largest possble precision value  
 		 **/ 
-		TaMaDiCore(Target* target, int wp, int d, int iterations, int wIntervalID, int version=0, int pathWidth=32);
+		TaMaDiCore(Target* target, int wp, int d, int iterations, int wIntervalID, int compSize);
 
 		/**
 		 * TaMaDiCore destructor

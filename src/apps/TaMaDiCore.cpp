@@ -38,7 +38,7 @@ namespace flopoco{
 
 	extern vector<Operator*> oplist;
 
-	TaMaDiCore::TaMaDiCore(Target* target, int wp, int d, int iterations, int wIntervalID, int version, int pathWidth):
+	TaMaDiCore::TaMaDiCore(Target* target, int wp, int d, int iterations, int wIntervalID, int compSize):
 	Operator(target), wp(wp),d(d), iterations(iterations), wIntervalID(wIntervalID) 
 	{
 		srcFileName="TaMaDiCore";
@@ -89,21 +89,24 @@ namespace flopoco{
 		vhdl << tab << "         elsif clk'event and clk = '1' then" << endl;
 		vhdl << tab << "            if counter_ce='1' and CE='1' then " << endl;
 		vhdl << tab << "               counter_reg_d1 <=  counter_reg;" << endl;
-		vhdl << tab << "               finished_signal_d1 <=  finished_signal;" << endl;
 		vhdl << tab << "         	end if;" << endl;
+		vhdl << tab << "            finished_signal_d1 <=  finished_signal;" << endl;
 		vhdl << tab << "         end if;" << endl;
 		vhdl << tab << "      end process;" << endl;
 
-		vhdl << tab << " process(clk, rst, ulp_counter_reset,CE) " << endl;
+		vhdl << tab << " process(clk, rst, ulp_counter_reset,CE, CE_ulp_counter, CE_ulp_counter_reg) " << endl;
 		vhdl << tab << "      begin" << endl;
 		vhdl << tab << "         if rst = '1' or ulp_counter_reset='1' then" << endl;
 		vhdl << tab << "               ulp_counter_d1 <=  (others => '0');" << endl;
 		vhdl << tab << "         elsif clk'event and clk = '1' then" << endl;
-		vhdl << tab << "            if CE='1' then"<<endl;
+		vhdl << tab << "            if CE='1' and CE_ulp_counter_reg='1' then"<<endl;
 		vhdl << tab << "               ulp_counter_d1 <=  ulp_counter;" << endl;
-		for (int i=1;i<=d;i++)
-		vhdl << tab << "               ulp_counter_d"<<i+1<<" <=  ulp_counter_d"<<i<<";" << endl;
+//		for (int i=1;i<=d;i++)
+//		vhdl << tab << "               ulp_counter_d"<<i+1<<" <=  ulp_counter_d"<<i<<";" << endl;
 		vhdl << tab << "            end if; "<<endl;
+		vhdl << tab << "            if CE_ulp_counter='1' then"<<endl;
+		vhdl << tab << "              " << declare( "CE_ulp_counter_reg")<<" <= '1';"<<endl; 
+		vhdl << tab << "            end if;" << endl;
 		vhdl << tab << "         end if;" << endl;
 		vhdl << tab << "      end process;" << endl;
 
@@ -120,13 +123,12 @@ namespace flopoco{
 		
 		//TODO Add signal declarations with reset and clock enable options
 		setCycle(1,false);
-		for (int i=1;i<=d;i++)
-			declare(join("ulp_counter_d",i+1),counterWidth);
-		setCycle(0,false);
+//		for (int i=1;i<=d;i++)
+			declare(join("ulp_counter_d",1),counterWidth);
+//		setCycle(0,false);
 
 		setCycle(1,false);
 		declare( "counter_reg_d1", countSize, true);
-		declare( "ulp_counter_d1", counterWidth, true);
 		declare("iid",wIntervalID);
 		setCycle(0,false);
 		
@@ -139,7 +141,9 @@ namespace flopoco{
 		/*signal Decoder */
 		vhdl << tab << declare("c_ce") << "<= '1' when (counter_reg_d1=CONV_STD_LOGIC_VECTOR("<<1<<","<<countSize<<")) else '0';"<<endl;
 		for (int i=0; i<d; i++)
-			vhdl << tab << declare( join("select",i) ) << "<= '1' when (counter_reg_d1=CONV_STD_LOGIC_VECTOR("<<i+2<<","<<countSize<<")) else '0';"<<endl;
+			vhdl << tab << declare( join("select",i) ) << "<= '1' when (counter_reg_d1=CONV_STD_LOGIC_VECTOR("<<i+1<<","<<countSize<<")) else '0';"<<endl;
+
+		vhdl << tab << declare( "CE_ulp_counter" ) << "<= '1' when (counter_reg_d1 > CONV_STD_LOGIC_VECTOR("<<d<<","<<countSize<<")) else '0';"<<endl;
 
 		/* register interval id */
 //		vhdl << tab << declare("c",wp) << " <= (others =>'1');"<<endl;
@@ -202,15 +206,15 @@ if (target->getVendor()=="Altera"){
 		vhdl << tab << "LPM_COMPARE_component"<<getNewUId()<<" : LPM_COMPARE"<<endl;
 		vhdl << tab << "GENERIC MAP ("<<endl;
 		vhdl << tab << "lpm_hint => \"ONE_INPUT_IS_CONSTANT=YES\","<<endl;
-		vhdl << tab << "lpm_pipeline => 2,"<<endl;
+		vhdl << tab << "lpm_pipeline => 1,"<<endl;
 		vhdl << tab << "lpm_representation => \"UNSIGNED\","<<endl;
 		vhdl << tab << "lpm_type => \"LPM_COMPARE\","<<endl;
 		vhdl << tab << "lpm_width => "<<wp<<endl;;
 		vhdl << tab << "	)"<<endl;
 		vhdl << tab << "PORT MAP ("<<endl;
 		vhdl << tab << "clock => clk,"<<endl;
-		vhdl << tab << "dataa => "<<join("adder",d-1)<<","<<endl;
-		vhdl << tab << "datab => "<<"\"1"<<zg(wp-1,1) <<","<<endl;
+		vhdl << tab << "dataa => "<<join("adder",d-1)<<range(wp-1, wp-compSize)<<","<<endl;
+		vhdl << tab << "datab => "<<"\"1"<<zg(compSize-1,1) <<","<<endl;
 		vhdl << tab << "AeB => potentialOutput_1"<<endl;
 		vhdl << tab << "	);"<<endl;
 
@@ -226,16 +230,16 @@ if (target->getVendor()=="Altera"){
 		vhdl << tab << "PORT MAP ("<<endl;
 		vhdl << tab << "clock => clk,"<<endl;
 		vhdl << tab << "dataa => "<<join("adder",d-1)<<","<<endl;
-		vhdl << tab << "datab => "<<"\"0"<<og(wp-1,1) <<","<<endl;
+		vhdl << tab << "datab => "<<"\"0"<<og(compSize-1,1)<<range(wp-1, wp-compSize)<<","<<endl;
 		vhdl << tab << "AeB => potentialOutput_2"<<endl;
 		vhdl << tab << "	);"<<endl;
 
 		vhdl << tab << "potentialOutput <= potentialOutput_1 or potentialOutput_2;"<<endl;
 }else{
-		vhdl << tab << "potentialOutput <= '1' when ("<<join("adder",d-1)<<"="<<"\"1"<<zg(wp-1,1)<<" or "<<join("adder",d-1)<<"="<<"\"0"<<og(wp-1,1) <<") else '0';"<<endl;
+		vhdl << tab << "potentialOutput <= '1' when ("<<join("adder",d-1)<<range(wp-1, wp-compSize)<<"="<<"\"1"<<zg(compSize-1,1)<<" or "<<join("adder",d-1)<<range(wp-1, wp-compSize)<<"="<<"\"0"<<og(compSize-1,1) <<") else '0';"<<endl;
 }
 
-		vhdl << tab << declare("finished_signal") << " <= '1' when ulp_counter_d"<<d<<"=CONV_STD_LOGIC_VECTOR("<<iterations<<","<<counterWidth<<") else '0';"<<endl;
+		vhdl << tab << declare("finished_signal") << " <= '1' when ulp_counter_d1=CONV_STD_LOGIC_VECTOR("<<iterations<<","<<counterWidth<<") else '0';"<<endl;
 		vhdl << tab << "finished <= finished_signal_d1;"<<endl;
 	}
 

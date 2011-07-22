@@ -37,7 +37,7 @@ namespace flopoco{
 
 	extern vector<Operator*> oplist;
 
-	TaMaDiModule::TaMaDiModule(Target* target, int wp, int d, int iterations, int wIntervalID, int n, int inFIFODepth, int peFIFODepth, int outFIFODepth):
+	TaMaDiModule::TaMaDiModule(Target* target, int wp, int d, int iterations, int wIntervalID, int compSize, int n, int inFIFODepth, int peFIFODepth, int outFIFODepth):
 	Operator(target), wp(wp), d(d), iterations(iterations), wIntervalID(wIntervalID), n(n) 
 	{
 		srcFileName="TaMaDiModule";
@@ -94,7 +94,7 @@ namespace flopoco{
 		vhdl << tab << instance( sr, "ShiftRegisterForDataSerializing");
 		////////////////////////////////////////////////////////////
 
-		TaMaDiCore *core = new TaMaDiCore(target, wp, d, iterations, wIntervalID);
+		TaMaDiCore *core = new TaMaDiCore(target, wp, d, iterations, wIntervalID, compSize);
 		oplist.push_back(core);
 		TaMaDiFIFO *coreOutFifo = new TaMaDiFIFO( target, ulpCounterWidth+wIntervalID, peFIFODepth, 0);
 		oplist.push_back(coreOutFifo);
