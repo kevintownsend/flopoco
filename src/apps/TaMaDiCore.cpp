@@ -55,7 +55,7 @@ namespace flopoco{
 		addInput   ("IntervalID",wIntervalID);
 		addInput   ("CE");
 
-		int counterWidth = intlog2(iterations);
+		int counterWidth = intlog2(iterations-1);
 		addOutput ("potentialUlpNumber", counterWidth);
 		addOutput ("potentialInterval", wIntervalID);
 		addOutput ("potentialOutput");
