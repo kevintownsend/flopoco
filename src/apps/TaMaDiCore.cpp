@@ -65,182 +65,107 @@ namespace flopoco{
 		/* computing core description */
 
 		/* describe the counter */
-		int countSize = intlog2(d+1);
+		int countSize = intlog2(1+d+1+1);
 		
-		vhdl << tab << declare( "counter_ce") << " <= (Initialize and counter_is_zero) or ((not counter_is_zero) and (not finished_signal));"<<endl;
-		vhdl << tab << declare( "ulp_counter_reset") << "<= Initialize;" <<endl;
-
-		declare("c",wp);
-		vhdl << tab << " process(clk, rst, c_ce, CE) " << endl;
+		/* counter that manages registering the Interval identifier */
+		vhdl << tab << " process(clk, rst, CE, Initialize) " << endl;
 		vhdl << tab << "      begin" << endl;
 		vhdl << tab << "         if rst = '1' then" << endl;
-		vhdl << tab << "               c <=  (others => '0');" << endl;
+		vhdl << tab << "               "<<declare("iid",wIntervalID)<<" <=  (others => '0');" << endl;
 		vhdl << tab << "         elsif clk'event and clk = '1' then" << endl;
-		vhdl << tab << "            if c_ce='1' and CE='1' then " << endl;
+		vhdl << tab << "            if CE='1' and Initialize='1' then"<<endl;
+		vhdl << tab << "               iid <=  IntervalID;" << endl;
+		vhdl << tab << "            end if; "<<endl;
+		vhdl << tab << "         end if;" << endl;
+		vhdl << tab << "      end process;" << endl;
+
+		/* a register flag that signals if this unit is ready to receive work */
+		vhdl << tab << " process(clk, rst, CE, Initialize, fin) " << endl;
+		vhdl << tab << "      begin" << endl;
+		vhdl << tab << "         if rst = '1' or fin='1' then" << endl;
+		vhdl << tab << "               "<<declare("ready")<<" <=  '1';" << endl;
+		vhdl << tab << "         elsif clk'event and clk = '1' then" << endl;
+		vhdl << tab << "         	ready <=  ready and (not Initialize);" << endl;
+		vhdl << tab << "         end if;" << endl;
+		vhdl << tab << "      end process;" << endl;
+
+		/* a state counter. */
+		/* state 0 - idle */
+		/* state 1 - write the constant register */
+		/* states 2 to d+1 are used for the select lines of the d multiplexers */		
+		/* state d+2 is used to increment the ulp counter */
+		vhdl << tab << " process(clk, rst, CE, Initialize, state_counter) " << endl;
+		vhdl << tab << "      begin" << endl;
+		vhdl << tab << "         if rst = '1' or state_counter=\"" << unsignedBinary(1+d+1+1, countSize) <<"\" then" << endl;
+		/* the idle mode for the coutner is state encoded by 0000 */
+		vhdl << tab << "               "<< declare("state_counter", countSize) << " <=  (others => '0');" << endl; 
+		vhdl << tab << "         elsif clk'event and clk = '1' then" << endl;
+		vhdl << tab << "			if (CE='1' and Initialize='1') or (CE='1' and state_counter > 0) then " <<endl;
+		vhdl << tab << "               state_counter <=  state_counter + 1;" << endl;
+		vhdl << tab << "            end if; "<<endl;
+		vhdl << tab << "         end if;" << endl;
+		vhdl << tab << "      end process;" << endl;
+
+		/* the register for the constant */	
+		vhdl << tab << " process(clk, rst, CE, state_counter) " << endl;
+		vhdl << tab << "      begin" << endl;
+		vhdl << tab << "         if rst = '1' then" << endl;
+		vhdl << tab << "              "<<declare("c", wp) << " <=  (others => '0');" << endl;
+		vhdl << tab << "         elsif clk'event and clk = '1' then" << endl;
+		vhdl << tab << "            if CE='1' and state_counter=\""<<unsignedBinary(1, countSize)<<"\" then " << endl;
 		vhdl << tab << "               c <=  SerialPin;" << endl;
 		vhdl << tab << "         	end if;" << endl;
 		vhdl << tab << "         end if;" << endl;
 		vhdl << tab << "      end process;" << endl;
 
-		vhdl << tab << " process(clk, rst, counter_ce, CE) " << endl;
-		vhdl << tab << "      begin" << endl;
-		vhdl << tab << "         if rst = '1' then" << endl;
-		vhdl << tab << "               counter_reg_d1 <=  (others => '0');" << endl;
-		vhdl << tab << "         elsif clk'event and clk = '1' then" << endl;
-		vhdl << tab << "            if counter_ce='1' and CE='1' then " << endl;
-		vhdl << tab << "               counter_reg_d1 <=  counter_reg;" << endl;
-		vhdl << tab << "         	end if;" << endl;
-		vhdl << tab << "            finished_signal_d1 <=  finished_signal;" << endl;
-		vhdl << tab << "         end if;" << endl;
-		vhdl << tab << "      end process;" << endl;
-
-		vhdl << tab << " process(clk, rst, ulp_counter_reset,CE, CE_ulp_counter, CE_ulp_counter_reg) " << endl;
-		vhdl << tab << "      begin" << endl;
-		vhdl << tab << "         if rst = '1' or ulp_counter_reset='1' then" << endl;
-		vhdl << tab << "               ulp_counter_d1 <=  (others => '0');" << endl;
-		vhdl << tab << "         elsif clk'event and clk = '1' then" << endl;
-		vhdl << tab << "            if CE='1' and CE_ulp_counter_reg='1' then"<<endl;
-		vhdl << tab << "               ulp_counter_d1 <=  ulp_counter;" << endl;
-//		for (int i=1;i<=d;i++)
-//		vhdl << tab << "               ulp_counter_d"<<i+1<<" <=  ulp_counter_d"<<i<<";" << endl;
-		vhdl << tab << "            end if; "<<endl;
-		vhdl << tab << "            if CE_ulp_counter='1' then"<<endl;
-		vhdl << tab << "              " << declare( "CE_ulp_counter_reg")<<" <= '1';"<<endl; 
-		vhdl << tab << "            end if;" << endl;
-		vhdl << tab << "         end if;" << endl;
-		vhdl << tab << "      end process;" << endl;
-
-		vhdl << tab << " process(clk, rst, Initialize) " << endl;
-		vhdl << tab << "      begin" << endl;
-		vhdl << tab << "         if rst = '1' then" << endl;
-		vhdl << tab << "               iid <=  (others => '0');" << endl;
-		vhdl << tab << "         elsif clk'event and clk = '1' then" << endl;
-		vhdl << tab << "            if Initialize='1' then"<<endl;
-		vhdl << tab << "               iid <=  IntervalID;" << endl;
-		vhdl << tab << "            end if; "<<endl;
-		vhdl << tab << "         end if;" << endl;
-		vhdl << tab << "      end process;" << endl;
-		
-		//TODO Add signal declarations with reset and clock enable options
-		setCycle(1,false);
-//		for (int i=1;i<=d;i++)
-			declare(join("ulp_counter_d",1),counterWidth);
-//		setCycle(0,false);
-
-		setCycle(1,false);
-		declare( "counter_reg_d1", countSize, true);
-		declare("iid",wIntervalID);
-		setCycle(0,false);
-		
-		vhdl << tab << declare( "counter_reg", countSize, true /*is bus*/) << " <= 	counter_reg_d1 + '1'; "<< endl;
-		vhdl << tab << declare( "ulp_counter", counterWidth) << " <= ulp_counter_d1 + '1';" << endl;
-		setCycle(1,false);
-		vhdl << tab << declare("counter_is_zero") << "<= '1' when counter_reg_d1 = "<<zg(countSize,0) << " else '0';" << endl;
-		setCycle(0,false);
-
-		/*signal Decoder */
-		vhdl << tab << declare("c_ce") << "<= '1' when (counter_reg_d1=CONV_STD_LOGIC_VECTOR("<<1<<","<<countSize<<")) else '0';"<<endl;
+		/* the multiplexer signals */
 		for (int i=0; i<d; i++)
-			vhdl << tab << declare( join("select",i) ) << "<= '1' when (counter_reg_d1=CONV_STD_LOGIC_VECTOR("<<i+1<<","<<countSize<<")) else '0';"<<endl;
+			vhdl << tab << declare( join("select",i) ) << "<= '1' when (state_counter=\""<<unsignedBinary(i+2,countSize)<<"\") else '0';"<<endl;
 
-		vhdl << tab << declare( "CE_ulp_counter" ) << "<= '1' when (counter_reg_d1 > CONV_STD_LOGIC_VECTOR("<<d<<","<<countSize<<")) else '0';"<<endl;
-
-		/* register interval id */
-//		vhdl << tab << declare("c",wp) << " <= (others =>'1');"<<endl;
-
-#ifdef IAS
-		IntAdderSpecific *ia = new IntAdderSpecific(target, wp);
-		oplist.push_back(ia);
-#endif
-		setCycle(1,false);
-		for(int i=0; i<d; i++)
-			vhdl << tab << declare(join("regSelect",i)) << " <= " << join("select",i) << ";" << endl;
-		setCycle(0,false);
-
+		/* now we describe the pairs of multiplexer-adders */
 		for(int i=0; i<d; i++){
-			setCycle(0);
-			vhdl << tab << declare( join("mux",i), wp) << " <= SerialPin when " << join("regSelect",i) << " = '1' else ";
-			setCycle(1,false);
-			vhdl << join("adder",i) << ";" << endl;
-			setCycle(0,false);
-
-
-#ifndef IAS			
-			if (i==0){
-				vhdl << tab << declare( join("adder",i), wp ) << " <= " << join("mux",i) << " + c;" << endl;  	
-			}else{
-				vhdl << tab << declare( join("adder",i), wp ) << " <= " << join("mux",i) << " + "; 
-				setCycle(1,false);
-				vhdl << join("adder",i-1) <<";"<< endl;  	
-				setCycle(0,false);
-			}							
-#else
-		setCycle(1,false);
-		inPortMapCst(ia, "X", join("mux",i));
-		setCycle(0,false);
-
-		if (i==0)
-			inPortMap(ia, "Y", "c");
-		else{
-			setCycle(1,false);
-			inPortMap(ia, "Y", join("adder",i-1));
-			setCycle(0,false);
+			vhdl << tab << declare( join("mux",i), wp) << " <= SerialPin when " << join("select",i) << " = '1' else "<< join("adder",i) << ";" << endl;
 		}
-		inPortMapCst(ia, "Cin", "'0'");
-		outPortMap (ia, "R", join("adder",i));
-		
-		vhdl << tab << instance(ia, join("ia",i))<<endl;
-#endif
-		}
-		
-		setCycle(1);
+
+		/* the register for the constant */	
+		vhdl << tab << " process(clk, rst, CE) " << endl;
+		vhdl << tab << "      begin" << endl;
+		vhdl << tab << "         if rst = '1' then" << endl;
+		for (int i=0; i<d; i++)
+			vhdl << tab << "             " << declare( join("adder",i), wp ) << " <= (others => '0');"<<endl;
+		vhdl << tab << "         elsif clk'event and clk = '1' then" << endl;
+		vhdl << tab << "            if CE='1' then " << endl;
+		for (int i=0; i<d; i++)
+			if (i==0)
+				vhdl << tab << "               "<<join("adder",i) << "<= " << join("mux",i) << " + c;" << endl;
+			else
+				vhdl << tab << "               "<<join("adder",i) << "<= " << join("mux",i) << " + " << join("adder",i-1) << ";" << endl;
+		vhdl << tab << "         	end if;" << endl;
+		vhdl << tab << "         end if;" << endl;
+		vhdl << tab << "      end process;" << endl;
+
+		/* finally, the ULP counter, the value that we use to indetify where the HR case is in this interval */
+		vhdl << tab << " process(clk, rst, CE, Initialize, state_counter, ulp_counter) " << endl;
+		vhdl << tab << "      begin" << endl;
+		vhdl << tab << "         if rst = '1' or Initialize='1'  then" << endl;
+		vhdl << tab << "              " << declare("ulp_counter",counterWidth) << " <= (others => '0');" << endl;
+		vhdl << tab << "         elsif clk'event and clk = '1' then" << endl;
+		vhdl << tab << "            if (CE='1' and state_counter=\""<<unsignedBinary(d+2,countSize) << "\") or (CE='1' and ulp_counter>0)" << " then"<<endl;
+		vhdl << tab << "               ulp_counter <=  ulp_counter + 1;" << endl;
+		vhdl << tab << "            end if; "<<endl;
+		vhdl << tab << "         end if;" << endl;
+		vhdl << tab << "      end process;" << endl;
+
 		/* one comparator */
-		vhdl << tab << "potentialUlpNumber <= ulp_counter_d1;" << endl; /*permanent*/
-		setCycle(0);
+		vhdl << tab << "potentialUlpNumber <= ulp_counter;" << endl; /*permanent*/
 		vhdl << tab << "potentialInterval <= iid;"<<endl;
-		setCycle(1);
-		declare("finished_signal_d1");
 
-if (target->getVendor()=="Altera"){
-		declare("potentialOutput_1");	
-		vhdl << tab << "LPM_COMPARE_component"<<getNewUId()<<" : LPM_COMPARE"<<endl;
-		vhdl << tab << "GENERIC MAP ("<<endl;
-		vhdl << tab << "lpm_hint => \"ONE_INPUT_IS_CONSTANT=YES\","<<endl;
-		vhdl << tab << "lpm_pipeline => 1,"<<endl;
-		vhdl << tab << "lpm_representation => \"UNSIGNED\","<<endl;
-		vhdl << tab << "lpm_type => \"LPM_COMPARE\","<<endl;
-		vhdl << tab << "lpm_width => "<<wp<<endl;;
-		vhdl << tab << "	)"<<endl;
-		vhdl << tab << "PORT MAP ("<<endl;
-		vhdl << tab << "clock => clk,"<<endl;
-		vhdl << tab << "dataa => "<<join("adder",d-1)<<range(wp-1, wp-compSize)<<","<<endl;
-		vhdl << tab << "datab => "<<"\"1"<<zg(compSize-1,1) <<","<<endl;
-		vhdl << tab << "AeB => potentialOutput_1"<<endl;
-		vhdl << tab << "	);"<<endl;
+		vhdl << tab << "potentialOutput <= '1' when ("<<join("adder",d-1)<<range(wp-1, wp-compSize)<<"="<<"\"1"<<zg(compSize-1,1)<<" or "
+		                                              <<join("adder",d-1)<<range(wp-1, wp-compSize)<<"="<<"\"0"<<og(compSize-1,1) <<") else '0';"<<endl;
 
-		declare("potentialOutput_2");	
-		vhdl << tab << "LPM_COMPARE_component"<<getNewUId()<<" : LPM_COMPARE"<<endl;
-		vhdl << tab << "GENERIC MAP ("<<endl;
-		vhdl << tab << "lpm_hint => \"ONE_INPUT_IS_CONSTANT=YES\","<<endl;
-		vhdl << tab << "lpm_pipeline => 2,"<<endl;
-		vhdl << tab << "lpm_representation => \"UNSIGNED\","<<endl;
-		vhdl << tab << "lpm_type => \"LPM_COMPARE\","<<endl;
-		vhdl << tab << "lpm_width => "<<wp<<endl;;
-		vhdl << tab << "	)"<<endl;
-		vhdl << tab << "PORT MAP ("<<endl;
-		vhdl << tab << "clock => clk,"<<endl;
-		vhdl << tab << "dataa => "<<join("adder",d-1)<<","<<endl;
-		vhdl << tab << "datab => "<<"\"0"<<og(compSize-1,1)<<range(wp-1, wp-compSize)<<","<<endl;
-		vhdl << tab << "AeB => potentialOutput_2"<<endl;
-		vhdl << tab << "	);"<<endl;
 
-		vhdl << tab << "potentialOutput <= potentialOutput_1 or potentialOutput_2;"<<endl;
-}else{
-		vhdl << tab << "potentialOutput <= '1' when ("<<join("adder",d-1)<<range(wp-1, wp-compSize)<<"="<<"\"1"<<zg(compSize-1,1)<<" or "<<join("adder",d-1)<<range(wp-1, wp-compSize)<<"="<<"\"0"<<og(compSize-1,1) <<") else '0';"<<endl;
-}
-
-		vhdl << tab << declare("finished_signal") << " <= '1' when ulp_counter_d1=CONV_STD_LOGIC_VECTOR("<<iterations<<","<<counterWidth<<") else '0';"<<endl;
-		vhdl << tab << "finished <= finished_signal_d1;"<<endl;
+		vhdl << tab << declare("fin") << " <= '1' when ulp_counter=CONV_STD_LOGIC_VECTOR("<<iterations-1<<","<<counterWidth<<") else '0';"<<endl;
+		vhdl << tab << "finished <= ready;"<<endl;
 	}
 
 	TaMaDiCore::~TaMaDiCore() {
@@ -256,51 +181,9 @@ if (target->getVendor()=="Altera"){
 		o << "use ieee.std_logic_unsigned.all;" << endl;
 
 		o << "library work;" << endl;
-		if (target_->getVendor() == "Xilinx"){
-			o << "library UNISIM;"<<endl;
-			o << "use UNISIM.VComponents.all;"<<endl;
-		}else if(target_->getVendor() == "Altera"){
-			o << "LIBRARY lpm;"<<endl;
-			o << "USE lpm.all;"<<endl;
-		}
+
 		outputVHDLEntity(o);
 		newArchitecture(o,name);
-		if (target_->getVendor() == "Altera"){
-			o << "	COMPONENT lpm_add_sub "<<endl;
-			o << "	GENERIC ("<<endl;
-			o << "		lpm_direction		: STRING;"<<endl;
-			o << "		lpm_hint		: STRING;"<<endl;
-			o << "		lpm_representation		: STRING;"<<endl;
-			o << "		lpm_type		: STRING;"<<endl;
-			o << "		lpm_width		: NATURAL"<<endl;
-			o << "	);"<<endl;
-			o << "	PORT ("<<endl;
-			o << "			cin	: IN STD_LOGIC ;"<<endl;
-			o << "			datab	: IN STD_LOGIC_VECTOR (lpm_width-1 DOWNTO 0);"<<endl;
-			o << "			cout	: OUT STD_LOGIC ;"<<endl;
-			o << "			dataa	: IN STD_LOGIC_VECTOR (lpm_width-1 DOWNTO 0);"<<endl;
-			o << "			result	: OUT STD_LOGIC_VECTOR (lpm_width-1 DOWNTO 0)"<<endl;
-			o << "	);"<<endl;
-			o << "	END COMPONENT;"<<endl;			
-
-			o << "COMPONENT lpm_compare"<<endl;
-			o << "GENERIC ("<<endl;
-			o << "	lpm_hint		: STRING;"<<endl;
-			o << "	lpm_pipeline		: NATURAL;"<<endl;
-			o << "	lpm_representation		: STRING;"<<endl;
-			o << "	lpm_type		: STRING;"<<endl;
-			o << "	lpm_width		: NATURAL"<<endl;
-			o << ");"<<endl;
-			o << "PORT ("<<endl;
-			o << "		AeB	: OUT STD_LOGIC ;"<<endl;
-			o << "		clock	: IN STD_LOGIC ;"<<endl;
-			o << "		dataa	: IN STD_LOGIC_VECTOR (lpm_width-1 DOWNTO 0);"<<endl;
-			o << "		datab	: IN STD_LOGIC_VECTOR (lpm_width-1 DOWNTO 0)"<<endl;
-			o << ");"<<endl;
-			o << "END COMPONENT;"<<endl;
-		
-		}
-
 		o << buildVHDLComponentDeclarations();	
 		o << buildVHDLSignalDeclarations();
 		beginArchitecture(o);		
@@ -308,9 +191,6 @@ if (target->getVendor()=="Altera"){
 		o << vhdl.str();
 		endArchitecture(o);
 	}
-	
-	
-
 }
 
 
