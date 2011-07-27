@@ -280,7 +280,7 @@ extern vector<Operator*> oplist;
 				REPORT(DETAILED, "Null header, and period starting with  " << patternLeadingZeroes << " zero(s)...");
 				cstWidth -= patternLeadingZeroes;
 				REPORT(DETAILED, "   ... so the practical size of the constant is " << cstWidth 
-							 << " bits, but it does provide "<< cstWidth + patternLeadingZeroes << " bits of accuracy");
+							 << " bits, and it does provide "<< cstWidth + patternLeadingZeroes << " bits of accuracy");
 			}
 			
 
@@ -288,8 +288,8 @@ extern vector<Operator*> oplist;
 			cst_exp_when_mantissa_1_2 += expUpdate;
 			cst_exp_when_mantissa_int = cst_exp_when_mantissa_1_2 - cstWidth;
 
-
 			// Do we have trailing zeroes in the pattern ?
+			patternLSBZeroes=0;
 			while ((cstIntSig % 2) ==0) {
 				REPORT(DEBUG, "Significand is even, normalising");
 				cstIntSig = cstIntSig >>1;
