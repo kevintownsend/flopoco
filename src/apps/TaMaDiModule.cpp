@@ -53,7 +53,7 @@ namespace flopoco{
 		
 		addInput   ("MainFIFOInput", (d+1)*wp+wIntervalID);
 		addInput   ("MainFIFOInputWE");
-		addOutput   ("MainFIFOInputRESignal");
+		addOutput  ("MainFIFOInputRESignal");
 		addOutput  ("MainFIFOInputFull");
 
 		addInput   ("MainFIFOOutputRE");
@@ -66,81 +66,76 @@ namespace flopoco{
 		TaMaDiFIFO *inFifo = new TaMaDiFIFO(target, (d+1)*wp+wIntervalID, inFIFODepth, 0);
 		oplist.push_back(inFifo);
 		
-		inPortMap( inFifo, "DataIn", "MainFIFOInput");
-		inPortMap( inFifo, "WriteEnable", "MainFIFOInputWE");
-		inPortMapCst( inFifo, "ReadEnable", "readEnableMainFifo");
-		outPortMap( inFifo, "DataOut", "MainFIFOInputDataOut");
-		outPortMap( inFifo, "FifoFull", "MainFIFOInputFull_signal");
-		outPortMap( inFifo, "FifoEmpty", "MainFIFOInputEmpty");
-		vhdl << tab << "MainFIFOInputFull <= MainFIFOInputFull_signal;"<<endl;
+		inPortMap   ( inFifo, "DataIn",      "MainFIFOInput");
+		inPortMap   ( inFifo, "WriteEnable", "MainFIFOInputWE");
+		inPortMapCst( inFifo, "ReadEnable",  "readEnableMainFifo");
+		outPortMap  ( inFifo, "DataOut",     "MainFIFOInputDataOut");
+		outPortMap  ( inFifo, "FifoFull",    "MainFIFOInputFull_signal");
+		outPortMap  ( inFifo, "FifoEmpty",   "MainFIFOInputEmpty");
+		vhdl << tab << instance( inFifo,     "InputFiFo");
 
-		vhdl << tab << "MainFIFOInputRESignal <= readEnableMainFifo;"<<endl;
-		vhdl << tab << instance( inFifo, "InputFiFo");
-		////////////////////////////////////////////////////////////
-	
-		vhdl << tab << declare("FIFOIntervalID",wIntervalID) << " <= MainFIFOInputDataOut"<<range(wIntervalID-1,0)<<";"<<endl;
-		vhdl << tab << declare("srData",(d+1)*wp)<<" <= MainFIFOInputDataOut"<<range((d+1)*wp + wIntervalID-1,wIntervalID)<<";"<<endl;
+		/* these signals are directly connected to the output */
+		vhdl << tab << "MainFIFOInputFull     <= MainFIFOInputFull_signal;"<<endl;
+		vhdl << tab << "MainFIFOInputRESignal <= readEnableMainFifo;" << endl; 
+
+
+		/* the main FIFO output is divided into two:
+		   1) the interval ID, used in the first clock to bootstrap one TaMaDi Core
+		   2) the initialization data (d+1) chunks of wp-precision length. 
+		      these bits are fead into a shift register which will serialize 
+		      their feeding to the TaMaDiCores */
+		vhdl << tab << declare("FIFOIntervalID",wIntervalID) << " <= MainFIFOInputDataOut"<<range((d+1)*wp + wIntervalID-1, (d+1)*wp + wIntervalID- wIntervalID)<<";"<<endl;
+		vhdl << tab << declare("srData",(d+1)*wp)<<" <= MainFIFOInputDataOut"<<range((d+1)*wp-1,0)<<";"<<endl;
 		
 		
-		////////////////////////////////////////////////////////////
 		TaMaDiShiftRegister *sr = new TaMaDiShiftRegister(target, wp, d+1);
 		oplist.push_back(sr);
 
-		inPortMap(sr, "DataIn", "srData");
-		inPortMapCst(sr, "ParallelWrite", "oneGetsInitialized");
-		
-		outPortMap (sr, "DataOut", "shiftRegisterDataOut");
-		outPortMap (sr, "Ready", "shiftRegisterReady");
-		vhdl << tab << instance( sr, "ShiftRegisterForDataSerializing");
-		////////////////////////////////////////////////////////////
+		inPortMap   (sr, "DataIn",        "srData");
+		inPortMapCst(sr, "ParallelWrite", "readEnableMainFifo"); 
+		outPortMap  (sr, "DataOut",       "shiftRegisterDataOut");
+		outPortMap  (sr, "Ready",         "shiftRegisterReady");
+		vhdl << tab << instance(sr, "ShiftRegisterForDataSerializing");
+
+		/* the module is made-up of n pairs of TaMaDi cores, and their associated 
+		output FIFOs */
 
 		TaMaDiCore *core = new TaMaDiCore(target, wp, d, iterations, wIntervalID, compSize);
 		oplist.push_back(core);
+
 		TaMaDiFIFO *coreOutFifo = new TaMaDiFIFO( target, ulpCounterWidth+wIntervalID, peFIFODepth, 0);
 		oplist.push_back(coreOutFifo);
 		
 		/* generation of the processing elements */
 		for (int i=0; i<n; i++){
-			setCycle(0);
-			vhdl << tab << declare( join("srData",i), wp ) <<" <= shiftRegisterDataOut;"<<endl;
 			vhdl << tab << declare( join("srInterval",i), wIntervalID ) << " <= FIFOIntervalID;"<<endl;
 			vhdl << tab << declare( join("ce_pe",i) ) << " <= not " << join("postPE_FIFOFull",i) << ";"<<endl;
 			
-			setCycle(1,false);
-			inPortMap( core, "SerialPin", join("srData",i));
-			inPortMap( core, "IntervalID", join("srInterval",i));
-			setCycle(0,false);
-			inPortMapCst( core, "Initialize", join("sInitializePE",i));
-			inPortMap( core, "CE", join("ce_pe",i)); //block while output fifo is full, otherwise potential ouputs might be lost
+			inPortMap   ( core, "SerialPin",  "shiftRegisterDataOut");
+			inPortMap   ( core, "IntervalID", "FIFOIntervalID");
+			inPortMapCst( core, "Initialize", join("InitializePE",i));
+			inPortMap   ( core, "CE", join("ce_pe",i)); //block while output fifo is full, otherwise potential ouputs might be lost
 
 			outPortMap(core, "potentialUlpNumber", join("potentialUlpNumberPE",i));
-			outPortMap(core, "potentialInterval", join("potentialIntervalPE",i));
-			outPortMap(core, "potentialOutput", join("potentialOutputPE",i));
-			outPortMap(core, "finished", join("readyPE",i));
-
+			outPortMap(core, "potentialInterval",  join("potentialIntervalPE",i));
+			outPortMap(core, "potentialOutput",    join("potentialOutputPE",i));
+			outPortMap(core, "finished",           join("readyPE",i));
 			vhdl << tab << instance(core, join("PE_",i));
-			
-			syncCycleFromSignal(join("potentialUlpNumberPE",i)); //gets us to cycle1
 			
 			/* concatenate to form a pair <intervalID, ulp> */
 			vhdl << tab << declare( join("postPE_FIFODataIn",i), ulpCounterWidth+wIntervalID) << " <= " << join("potentialIntervalPE",i) << " & " << join("potentialUlpNumberPE",i) <<";" <<endl;
-			vhdl << tab << declare( join("posePE_FIFOWE",i) ) << " <= (not " << join("postPE_FIFOFull",i) << ") and "<< join("potentialOutputPE",i)<<";"<<endl;
-			/* link processing element to local output fifo */
-			
-			inPortMap( coreOutFifo, "DataIn", join("postPE_FIFODataIn",i));
-			inPortMap( coreOutFifo, "WriteEnable", join("posePE_FIFOWE",i) );
-			
-			inPortMapCst( coreOutFifo, "ReadEnable", join("postPE_FIFORE",i));
-		
-			outPortMap( coreOutFifo, "DataOut", join("postPE_FIFODataOut",i));
-			outPortMap( coreOutFifo, "FifoFull", join("postPE_FIFOFull",i)); //to go to priority encoder
-			outPortMap( coreOutFifo, "FifoEmpty", join("postPE_FIFOEmpty",i)); //to go to priority encoder
+			vhdl << tab << declare( join("postPE_FIFOWE",i) ) << " <= (not " << join("postPE_FIFOFull",i) << ") and "<< join("potentialOutputPE",i)<<";"<<endl;
 
+			/* link processing element to local output fifo */
+			inPortMap   ( coreOutFifo, "DataIn",      join("postPE_FIFODataIn",i));
+			inPortMap   ( coreOutFifo, "WriteEnable", join("postPE_FIFOWE",i) );
+			inPortMapCst( coreOutFifo, "ReadEnable",  join("postPE_FIFORE",i));
+		
+			outPortMap( coreOutFifo, "DataOut",   join("postPE_FIFODataOut",i));
+			outPortMap( coreOutFifo, "FifoFull",  join("postPE_FIFOFull",i));  //goes to priority encoder
+			outPortMap( coreOutFifo, "FifoEmpty", join("postPE_FIFOEmpty",i)); //goes to priority encoder
 			vhdl << tab << instance( coreOutFifo, join("postPE_FIFO",i));
 		}
-		
-		/*create the priority encoder for synchronizing with the inputs*/
-		syncCycleFromSignal( join("readyPE",0) );
 		
 		vhdl << tab << declare( "pe_priorityEncoder", n) << " <= "; 
 		for (int i=n-1;i>=0;i--){
@@ -149,41 +144,35 @@ namespace flopoco{
 			else
 				vhdl << join("readyPE",i) << ";" <<endl;
 		}
+
 		/* check if at least one PE is ready. The Priority decoder always selects one, even if none are ready.
 		therefore, we need to add this suplementary check */		
 		vhdl << tab << declare("readyAtLeastOnePE") << " <= '1' when pe_priorityEncoder>"<<zg(n,0)<<" else '0';"<<endl; 		
 
 		TaMaDiPriorityEncoder *priorityEncoder = new TaMaDiPriorityEncoder(target, n);
 		oplist.push_back(priorityEncoder);
-		inPortMap( priorityEncoder, "X", "pe_priorityEncoder");
+
+		inPortMap ( priorityEncoder, "X", "pe_priorityEncoder");
 		outPortMap( priorityEncoder, "R", "encodedPriorityInputs");
 		vhdl << tab << instance(priorityEncoder, "priorityEncoder_Inputs");
 
 		
 		TaMaDiDecoder *priorityDecoder = new TaMaDiDecoder(target, n);
 		oplist.push_back(priorityDecoder);
-		inPortMap( priorityDecoder, "X", "encodedPriorityInputs");
+		inPortMap ( priorityDecoder, "X", "encodedPriorityInputs");
 		outPortMap( priorityDecoder, "R", "decodedPriorityInputs");
 		vhdl << tab << instance(priorityDecoder, "inputPriorityDecoder");
 		
 		/* if there is at least one PE which is ready then forward these signals (delayed by one cycle for syncronization) to Initialize signals on PE */
-		vhdl << tab << declare( "decodedPriorityInputsPostProcessing", n) << " <= decodedPriorityInputs when readyAtLeastOnePE='1' else " << zg(n,0) << ";" <<endl; 
-		nextCycle();
-		vhdl << tab << declare( "decodedPriorityInputsPostProcessingDelayed",n) << " <= decodedPriorityInputsPostProcessing;"<<endl;
-		vhdl << tab << declare("oneGetsInitialized") << " <= readyAtLeastOnePE;"<<endl;
-
-		setCycle(0); //get back to cycle 0 => lots of feedback signals 
+		vhdl << tab << declare( "decodedPriorityInputsPostProcessing", n) << " <= decodedPriorityInputs when readEnableMainFifo='1' else " << zg(n,0) << ";" <<endl; 
+		vhdl << tab << declare( "oneGetsInitialized")                     << " <= readyAtLeastOnePE;"<<endl;
 
 		for (int i=0; i<n;i++){
-			setCycle(0);
-			vhdl << tab << declare(join("InitializePE",i)) << " <= decodedPriorityInputsPostProcessingDelayed"<<of(i)<<";"<<endl; 
-			setCycle(1,false);
-			vhdl << tab << declare(join("sInitializePE",i)) << " <= " << join("InitializePE",i)<<";"<<endl;
+			vhdl << tab << declare(join("InitializePE",i)) << " <= decodedPriorityInputsPostProcessing"<<of(i)<<";"<<endl; 
 		}
-		setCycle(0);
 		vhdl << tab << declare("readEnableMainFifo") << " <= readyAtLeastOnePE and (not MainFIFOInputEmpty) and (shiftRegisterReady);"<<endl;
-		/* now for the outputs */
 
+		/* now for the outputs */
 		/* form the logic vector */
 		syncCycleFromSignal(join("postPE_FIFOEmpty",0));
 		
@@ -203,7 +192,7 @@ namespace flopoco{
 		oplist.push_back(ope);
 		
 		int bits = intlog2(n-1);
-		inPortMap( ope, "X", "opIn");
+		inPortMap ( ope, "X", "opIn");
 		outPortMap( ope, "R", "opCoded");
 		vhdl << tab << instance(ope, "outputPriorityEncoded");
 
@@ -218,15 +207,15 @@ namespace flopoco{
 		TaMaDiDecoder *od = new TaMaDiDecoder(target,n);
 		oplist.push_back(od);
 		
-		inPortMap( od, "X", "opCoded");
-		outPortMap( od , "R", "opPDecoded");
+		inPortMap ( od, "X", "opCoded");
+		outPortMap( od, "R", "opPDecoded");
 		vhdl << tab << instance( od, "outputDecoder");
 		
 		/* we select one RE if there is one fifo having some content and the output fifo is not full */
-		vhdl << tab << declare( "outputDecoderPP",n) << " <= opPDecoded when (dataToOutput='1' and (MainFIFOOutputFull_signal='0')) else "<<zg(n,0)<<";"<<endl;
+		vhdl << tab << declare( "outputDecoderPostProcessing",n) << " <= opPDecoded when (dataToOutput='1' and (MainFIFOOutputFull_signal='0')) else "<<zg(n,0)<<";"<<endl;
 		//assign the signal to the corresponding readEnable lines of the fifos
 		for (int i=0;i<n;i++)
-			vhdl << tab << declare(join("postPE_FIFORE",i)) << " <= outputDecoderPP"<<of(i)<<";"<<endl;
+			vhdl << tab << declare(join("postPE_FIFORE",i)) << " <= outputDecoderPostProcessing"<<of(i)<<";"<<endl;
 		
 		/* we write to the output fifo if it's not full and we have something to write */
 		vhdl << tab << declare("MainFIFOOutputWE")<<" <= (not MainFIFOOutputFull_signal) and (dataToOutput);"<<endl;
@@ -234,21 +223,20 @@ namespace flopoco{
 		TaMaDiFIFO *outFifo = new TaMaDiFIFO(target, ulpCounterWidth+wIntervalID, outFIFODepth, 0);
 		oplist.push_back(outFifo);
 
-		inPortMap( outFifo, "DataIn", "muxOut");
+		inPortMap( outFifo, "DataIn",      "muxOut");
 		inPortMap( outFifo, "WriteEnable", "MainFIFOOutputWE");
-		inPortMap( outFifo, "ReadEnable", "MainFIFOOutputRE"); /* comes from the entity input */
+		inPortMap( outFifo, "ReadEnable",  "MainFIFOOutputRE"); /* comes from the entity input */
 		
-		outPortMap( outFifo, "DataOut", "MainFIFOOutput_signal");
-		outPortMap( outFifo, "FifoFull", "MainFIFOOutputEmpty_signal");
-		outPortMap( outFifo, "FifoEmpty", "MainFIFOOutputFull_signal");
-
+		outPortMap( outFifo, "DataOut",    "MainFIFOOutput_signal");
+		outPortMap( outFifo, "FifoFull",   "MainFIFOOutputFull_signal");
+		outPortMap( outFifo, "FifoEmpty",  "MainFIFOOutputEmpty_signal");
 		vhdl << tab << instance(outFifo, "mainOutputFIFO");
 
 		/* assign the two outputs */
-		vhdl << tab << "MainFIFOOutput <= MainFIFOOutput_signal;"<<endl;
-		vhdl << tab << "MainFIFOOutputEmpty <= MainFIFOOutputEmpty_signal;"<<endl;
+		vhdl << tab << "MainFIFOOutput         <= MainFIFOOutput_signal;"<<endl;
+		vhdl << tab << "MainFIFOOutputEmpty    <= MainFIFOOutputEmpty_signal;"<<endl;
 
-		vhdl << tab << "MainFIFOOutputWESignal <= MainFIFOOutputWE;"<<endl;
+		vhdl << tab << "MainFIFOOutputWESignal <= MainFIFOOutputWE;"<<endl; /* we feed the WE signal to the output fifo to the upper entity */
 	}
 
 	TaMaDiModule::~TaMaDiModule() {

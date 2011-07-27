@@ -54,47 +54,47 @@ namespace flopoco{
 		addOutput  ("DataOut",widthLocation);
 		addOutput  ("Ready");
 		
-		int counterWidth = intlog2(n-1);
+		int counterWidth = intlog2(n+2);
 
-		declare("counter",counterWidth);
-		declare("readys");
-		for (int i=n-1;i>=0;i--)
-			declare( join("reg",i), widthLocation );
+		vhdl << tab << "process(clk, rst, ParallelWrite, counter)"<<endl;
+		vhdl << tab << "	begin"<<endl;
+		vhdl << tab << " 		if rst='1' or counter="<<n+2<<" then "<<endl;
+		vhdl << tab << "		   "<<declare("counter",counterWidth)<<" <= (others => '0');"<<endl;
+		vhdl << tab << "		elsif clk'event and clk='1' then"<<endl;
+		vhdl << tab << "			if ParallelWrite ='1' or counter>0 then"<<endl;
+		vhdl << tab << "				counter <= counter + 1;"<<endl;
+		vhdl << tab << "			end if;"<<endl;
+		vhdl << tab << "		end if;"<<endl;
+		vhdl << tab << "	end process;"<<endl;
+
 		
 		vhdl << tab << "process(clk, rst, ParallelWrite)"<<endl;
 		vhdl << tab << "	begin"<<endl;
 		vhdl << tab << " 		if rst='1' then "<<endl;
-		vhdl << tab << "		   readys <= '1';"<<endl;
-		vhdl << tab << "		   counter <= (others => '0');"<<endl;
+		for (int i=0; i<n; i++)
+		vhdl << tab << "			"<<declare(join("reg",i), widthLocation) << " <= (others => '0');"<<endl;
 		vhdl << tab << "		elsif clk'event and clk='1' then"<<endl;
 		vhdl << tab << "			if (ParallelWrite ='1') then"<<endl;
-		vhdl << tab << "				counter <= CONV_STD_LOGIC_VECTOR("<<n-1<<","<<counterWidth<<")"<<";"<<endl;
 		for (int i=0;i<n;i++) //parallel Load
-			vhdl << tab << join("reg",i) << "<= DataIn"<<range((i+1)*widthLocation-1,i*widthLocation)<<";"<<endl;
-		vhdl << tab << "				readys <= '0';"<<endl;
-		vhdl << tab << "			else"<<endl;
-		for (int i=0;i<n-1;i++) //parallel Load
-			vhdl << tab << join("reg",i) << "<= "<<join("reg",i+1)<<";"<<endl;
-
-		vhdl << tab << join("reg",n-1) << " <= " << zg(widthLocation,0)<<";"<<endl;
-		vhdl << tab << " if counter > 1 then"<<endl;
-		vhdl << tab << "	counter <= counter - '1';"<<endl;
-		vhdl << tab << " 	readys <= '0';"<<endl;
-		vhdl << tab << " else "<<endl;
-		vhdl << tab << " 	readys <= '1';"<<endl;
-		vhdl << tab << " end if;"<<endl; 
+		vhdl << tab << "				" << join("reg",i) << "<= DataIn"<<range((i+1)*widthLocation-1,i*widthLocation)<<";"<<endl;
 		vhdl << tab << "			end if;"<<endl;
-		vhdl << tab << " end if;"<<endl; 
-		vhdl << tab << "end process;"<<endl;
+		vhdl << tab << "		end if;"<<endl; 
+		vhdl << tab << "	end process;"<<endl;
 
-		vhdl << tab << "DataOut <= reg0;"<<endl;
-		vhdl << tab << "Ready <= readys;"<<endl;
+		vhdl << tab << "with counter select" << endl;
+		vhdl << tab << "DataOut <=" << endl;
+		for (int i=0;i<n;i++)
+			if (i<n-1)
+				vhdl << tab << tab << tab << join("reg",i) << " when \""<<unsignedBinary(i+1,counterWidth)<<"\","<<endl; 
+			else
+				vhdl << tab << tab << tab << join("reg",i) << " when others;"<<endl;  
+
+		vhdl << tab << "Ready <= '1' when counter=\""<<unsignedBinary(0,counterWidth)<< "\" else '0';"<<endl;
 	}
 
 	TaMaDiShiftRegister::~TaMaDiShiftRegister() {
 	}
 
 }
-
 
 

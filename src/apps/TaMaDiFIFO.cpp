@@ -81,7 +81,6 @@ namespace flopoco{
 		vhdl << tab << "		   filled <= (others=>'0');"<<endl;
 		vhdl << tab << "		elsif clk'event and clk='1' then"<<endl;
 		vhdl << tab << "			if (ReadEnable ='1') and (empty='0')  then"<<endl;
-		vhdl << tab << "				dout <= memory(conv_integer(readptr));"<<endl;
 		vhdl << tab << "				filled <= filled - '1';"<<endl;
 		vhdl << tab << "				readptr <= readptr + '1';      --points to next address."<<endl;
 		vhdl << tab << "				if (readptr+'1'=writeptr) then"<<endl;
@@ -106,6 +105,8 @@ namespace flopoco{
 		vhdl << tab << "			end if;"<<endl;
 		vhdl << tab << "		end if;"<<endl;
 		vhdl << tab << "end process;"<<endl;
+
+		vhdl << tab << "dout <= memory(conv_integer(readptr));"<<endl;
 		
 		if (moreThan>0)
 			vhdl << tab << "FifoTFull <= '1' when filled>=CONV_STD_LOGIC_VECTOR("<<moreThan<<","<<pointerWidth<<") else '0';"<<endl;
