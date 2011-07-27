@@ -635,12 +635,13 @@ static void usage(char *name, string opName = ""){
 	//=====================================================
 
 	if ( full || opName == "TaMaDiModule" || opName == "TaMaDi"){
-		OP("TaMaDiModule","wP degree nbOfIterations IntervalIDWidth nbOfPE inFiFoDepth PEFiFoDepth outFiFoDepth");;
+		OP("TaMaDiModule","wP degree nbOfIterations IntervalIDWidth widthComp nbOfPE inFiFoDepth PEFiFoDepth outFiFoDepth");;
 		cerr << "       Assembles a TaMaDiMultimodule formed of multiple TaMaDi cores\n";
 		cerr << "       wP             : internal fixed-point working precision \n";
 		cerr << "       degree         : polyonomial degree used in the TaMaDiCore \n";
 		cerr << "       nbOfIterations : the number of allowed iterations per TaMaDiCore\n";
 		cerr << "       IntervalIDWidth: the number of bits required for storing the interval ID\n";
+		cerr << "       widthComp      : the width of the pattern detector \n";
 		cerr << "       nbOfPE         : the number of TaMaDiCores instantiated in the multi-module \n";
 		cerr << "       inFiFoDepth    : the multi-module's input FIFO depth \n";
 		cerr << "       PEFiFoDepth    : each TaMaDiCore is associated with its own output FIFO; \n";
@@ -648,30 +649,31 @@ static void usage(char *name, string opName = ""){
 		cerr << "       outFiFoDepth   : the multi-module's output FIFO depth \n";
 	}	
 	if ( full || opName == "TaMaDiModuleDummyWrapper"|| opName == "TaMaDi"){
-		OP("TaMaDiModuleDummyWrapper","wP degree nbOfIterations IntervalIDWidth nbOfPE inFiFoDepth PEFiFoDepth outFiFoDepth");;
+		OP("TaMaDiModuleDummyWrapper","wP degree nbOfIterations IntervalIDWidth widthComp nbOfPE inFiFoDepth PEFiFoDepth outFiFoDepth");;
 		cerr << "       Assembles a TaMaDiMultimodule and adds a serial interface\n";
 	}	
 	if ( full || opName == "TaMaDiDeserializer"|| opName == "TaMaDi"){
-		OP("TaMaDiDeserializer","wP degree nbOfIterations IntervalIDWidth nbOfPE inFiFoDepth PEFiFoDepth outFiFoDepth");;
+		OP("TaMaDiDeserializer","wP degree nbOfIterations IntervalIDWidth widthComp nbOfPE inFiFoDepth PEFiFoDepth outFiFoDepth");;
 		cerr << "       Module used to deserialize the data from the DMA FIFO into initialization packets\n";
 	}	
 	if ( full || opName == "TaMaDiModuleWrapperInterface"|| opName == "TaMaDi"){
-		OP("TaMaDiModuleWrapperInterface","wP degree nbOfIterations IntervalIDWidth nbOfPE inFiFoDepth PEFiFoDepth outFiFoDepth");;
+		OP("TaMaDiModuleWrapperInterface","wP degree nbOfIterations IntervalIDWidth widthComp nbOfPE inFiFoDepth PEFiFoDepth outFiFoDepth");;
 		cerr << "       Adds the counter-based interface for the credit-based dispatch scheme\n";
 	}	
 	if ( full || opName == "TaMaDiModuleDispatcherInterface"|| opName == "TaMaDi"){
-		OP("TaMaDiModuleDispatcherInterface","wP degree nbOfIterations IntervalIDWidth nbOfPE inFiFoDepth PEFiFoDepth outFiFoDepth InterfaceInFiFoDepth InterfaceOutFiFoDepth");;
+		OP("TaMaDiModuleDispatcherInterface","wP degree nbOfIterations IntervalIDWidth widthComp nbOfPE inFiFoDepth PEFiFoDepth outFiFoDepth InterfaceInFiFoDepth InterfaceOutFiFoDepth");;
 		cerr << "       The Dispatcher module which dispatches initialization packets to the interface-wrapped TaMaDiMultiModules\n";
 		cerr << "       InterfaceInFiFoDepth    : the Dispatcher's input FIFO depth (will be filled-in by the Deserializer) \n";
 		cerr << "       InterfaceOutFiFoDepth   : the Dispatcher's output FIFO depth (will be filled by the TaMaDiMultimodules with HR cases\n";
 	}	
 	if ( full || opName == "TaMaDiSystem"|| opName == "TaMaDi"){
-		OP("TaMaDiSystem","wP degree nbOfIterations IntervalIDWidth nbOfPE inFiFoDepth PEFiFoDepth outFiFoDepth InterfaceInFiFoDepth InterfaceOutFiFoDepth nbOfModules");;
+		OP("TaMaDiSystem","wP degree nbOfIterations IntervalIDWidth widthComp nbOfPE inFiFoDepth PEFiFoDepth outFiFoDepth InterfaceInFiFoDepth InterfaceOutFiFoDepth nbOfModules");;
 		cerr << "       Assembles a full system with a Deserializer, Dispatcher and several multi-modules\n";
 		cerr << "       wP             : internal fixed-point working precision \n";
 		cerr << "       degree         : polyonomial degree used in the TaMaDiCore \n";
 		cerr << "       nbOfIterations : the number of allowed iterations per TaMaDiCore\n";
 		cerr << "       IntervalIDWidth: the number of bits required for storing the interval ID\n";
+		cerr << "       widthComp      : the width of the pattern detector \n";
 		cerr << "       nbOfPE         : the number of TaMaDiCores instantiated in the multi-module \n";
 		cerr << "       inFiFoDepth    : the multi-module's input FIFO depth \n";
 		cerr << "       PEFiFoDepth    : each TaMaDiCore is associated with its own output FIFO; \n";
@@ -682,7 +684,7 @@ static void usage(char *name, string opName = ""){
 		cerr << "       nbOfModules             : the number of multi-modules instantiated in the TaMaDiSystem"<<endl;
 	}	
 	if ( full || opName == "TaMaDiCore" || opName == "TaMaDi"){
-		OP("TaMaDiCore","wP degree nbOfIterations IntervalIDWidth");;
+		OP("TaMaDiCore","wP degree nbOfIterations IntervalIDWidth widthComp");;
 		cerr << "       The TaMaDiCore performing the polynomial evaluation based on the tabulated differences\n";
 	}	
 
@@ -1529,26 +1531,27 @@ bool parseCommandLine(int argc, char* argv[]){
 	}	
 #endif // HAVE_SOLLYA
 		else if(opname=="TaMaDiModule"){
-			int nargs = 8;
+			int nargs = 9;
 			if (i+nargs > argc)
 				usage(argv[0],opname);
 			else {
 				int wP = checkStrictlyPositive(argv[i++], argv[0]);
 				int degree = checkStrictlyPositive(argv[i++], argv[0]);
 				int numberOfIterations = checkStrictlyPositive(argv[i++], argv[0]);
-				int widthOfIntervalID =  checkStrictlyPositive(argv[i++], argv[0]);
+				int widthOfIntervalID  =  checkStrictlyPositive(argv[i++], argv[0]);
+				int widthComp          =  checkStrictlyPositive(argv[i++], argv[0]);
 				int n = checkStrictlyPositive(argv[i++], argv[0]); //number of pe
 				int inFifoDepth = checkStrictlyPositive(argv[i++], argv[0]);
 				int peFifoDepth = checkStrictlyPositive(argv[i++], argv[0]);
 				int outFifoDepth = checkStrictlyPositive(argv[i++], argv[0]);
 				
-				cerr << "> TaMaDiModule , wP="<<wP<<", degree="<<degree<<" numberOfIterations="<<numberOfIterations<<" widthOfIntervalID="<<widthOfIntervalID<<" n="<<n<<" inFifo="<<inFifoDepth<<" peFifo="<<peFifoDepth<<" outFifo"<<outFifoDepth <<" \n";
-				op = new TaMaDiModule(target, wP, degree, numberOfIterations, widthOfIntervalID, n, inFifoDepth, peFifoDepth, outFifoDepth);
+				cerr << "> TaMaDiModule , wP="<<wP<<", degree="<<degree<<" numberOfIterations="<<numberOfIterations<<" widthOfIntervalID="<<widthOfIntervalID<< " width comparisson="<<widthComp<<" n="<<n<<" inFifo="<<inFifoDepth<<" peFifo="<<peFifoDepth<<" outFifo"<<outFifoDepth <<" \n";
+				op = new TaMaDiModule(target, wP, degree, numberOfIterations, widthOfIntervalID, widthComp, n, inFifoDepth, peFifoDepth, outFifoDepth);
 				addOperator(op);
 			}
 		}	
 		else if(opname=="TaMaDiModuleDummyWrapper"){
-			int nargs = 8;
+			int nargs = 9;
 			if (i+nargs > argc)
 				usage(argv[0],opname);
 			else {
@@ -1556,18 +1559,19 @@ bool parseCommandLine(int argc, char* argv[]){
 				int degree = checkStrictlyPositive(argv[i++], argv[0]);
 				int numberOfIterations = checkStrictlyPositive(argv[i++], argv[0]);
 				int widthOfIntervalID =  checkStrictlyPositive(argv[i++], argv[0]);
+				int widthComp          =  checkStrictlyPositive(argv[i++], argv[0]);
 				int n = checkStrictlyPositive(argv[i++], argv[0]); //number of pe
 				int inFifoDepth = checkStrictlyPositive(argv[i++], argv[0]);
 				int peFifoDepth = checkStrictlyPositive(argv[i++], argv[0]);
 				int outFifoDepth = checkStrictlyPositive(argv[i++], argv[0]);
 				
-				cerr << "> TaMaDiModuleDummyWrapper , wP="<<wP<<", degree="<<degree<<" numberOfIterations="<<numberOfIterations<<" widthOfIntervalID="<<widthOfIntervalID<<" n="<<n<<" inFifo="<<inFifoDepth<<" peFifo="<<peFifoDepth<<" outFifo"<<outFifoDepth <<" \n";
-				op = new TaMaDiModuleDummyWrapper(target, wP, degree, numberOfIterations, widthOfIntervalID, n, inFifoDepth, peFifoDepth, outFifoDepth);
+				cerr << "> TaMaDiModuleDummyWrapper , wP="<<wP<<", degree="<<degree<<" numberOfIterations="<<numberOfIterations<<" widthOfIntervalID="<<widthOfIntervalID<<" width comparisson="<<widthComp<<" n="<<n<<" inFifo="<<inFifoDepth<<" peFifo="<<peFifoDepth<<" outFifo"<<outFifoDepth <<" \n";
+				op = new TaMaDiModuleDummyWrapper(target, wP, degree, numberOfIterations, widthOfIntervalID, widthComp, n, inFifoDepth, peFifoDepth, outFifoDepth);
 				addOperator(op);
 			}
 		}
 		else if(opname=="TaMaDiDeserializer"){
-			int nargs = 8;
+			int nargs = 9;
 			if (i+nargs > argc)
 				usage(argv[0],opname);
 			else {
@@ -1575,18 +1579,19 @@ bool parseCommandLine(int argc, char* argv[]){
 				int degree = checkStrictlyPositive(argv[i++], argv[0]);
 				int numberOfIterations = checkStrictlyPositive(argv[i++], argv[0]);
 				int widthOfIntervalID =  checkStrictlyPositive(argv[i++], argv[0]);
+				int widthComp          =  checkStrictlyPositive(argv[i++], argv[0]);
 				int n = checkStrictlyPositive(argv[i++], argv[0]); //number of pe
 				int inFifoDepth = checkStrictlyPositive(argv[i++], argv[0]);
 				int peFifoDepth = checkStrictlyPositive(argv[i++], argv[0]);
 				int outFifoDepth = checkStrictlyPositive(argv[i++], argv[0]);
 				
-				cerr << "> TaMaDiDeserializer , wP="<<wP<<", degree="<<degree<<" numberOfIterations="<<numberOfIterations<<" widthOfIntervalID="<<widthOfIntervalID<<" n="<<n<<" inFifo="<<inFifoDepth<<" peFifo="<<peFifoDepth<<" outFifo"<<outFifoDepth <<" \n";
+				cerr << "> TaMaDiDeserializer , wP="<<wP<<", degree="<<degree<<" numberOfIterations="<<numberOfIterations<<" widthOfIntervalID="<<widthOfIntervalID<<" width comparisson="<<widthComp<<" n="<<n<<" inFifo="<<inFifoDepth<<" peFifo="<<peFifoDepth<<" outFifo"<<outFifoDepth <<" \n";
 				op = new TaMaDiDeserializer(target, wP, degree, numberOfIterations, widthOfIntervalID, n, inFifoDepth, peFifoDepth, outFifoDepth);
 				addOperator(op);
 			}
 		}		
 		else if(opname=="TaMaDiModuleWrapperInterface"){
-			int nargs = 8;
+			int nargs = 9;
 			if (i+nargs > argc)
 				usage(argv[0],opname);
 			else {
@@ -1594,38 +1599,18 @@ bool parseCommandLine(int argc, char* argv[]){
 				int degree = checkStrictlyPositive(argv[i++], argv[0]);
 				int numberOfIterations = checkStrictlyPositive(argv[i++], argv[0]);
 				int widthOfIntervalID =  checkStrictlyPositive(argv[i++], argv[0]);
+				int widthComp          =  checkStrictlyPositive(argv[i++], argv[0]);
 				int n = checkStrictlyPositive(argv[i++], argv[0]); //number of pe
 				int inFifoDepth = checkStrictlyPositive(argv[i++], argv[0]);
 				int peFifoDepth = checkStrictlyPositive(argv[i++], argv[0]);
 				int outFifoDepth = checkStrictlyPositive(argv[i++], argv[0]);
 				
-				cerr << "> TaMaDiModuleWrapperInterface , wP="<<wP<<", degree="<<degree<<" numberOfIterations="<<numberOfIterations<<" widthOfIntervalID="<<widthOfIntervalID<<" n="<<n<<" inFifo="<<inFifoDepth<<" peFifo="<<peFifoDepth<<" outFifo"<<outFifoDepth <<" \n";
-				op = new TaMaDiModuleWrapperInterface(target, wP, degree, numberOfIterations, widthOfIntervalID, n, inFifoDepth, peFifoDepth, outFifoDepth);
+				cerr << "> TaMaDiModuleWrapperInterface , wP="<<wP<<", degree="<<degree<<" numberOfIterations="<<numberOfIterations<<" widthOfIntervalID="<<widthOfIntervalID<<" width comparisson="<<widthComp<<" n="<<n<<" inFifo="<<inFifoDepth<<" peFifo="<<peFifoDepth<<" outFifo"<<outFifoDepth <<" \n";
+				op = new TaMaDiModuleWrapperInterface(target, wP, degree, numberOfIterations, widthOfIntervalID, widthComp, n, inFifoDepth, peFifoDepth, outFifoDepth);
 				addOperator(op);
 			}
 		}
 		else if(opname=="TaMaDiDispatcherInterface"){
-			int nargs = 10;
-			if (i+nargs > argc)
-				usage(argv[0],opname);
-			else {
-				int wP = checkStrictlyPositive(argv[i++], argv[0]);
-				int degree = checkStrictlyPositive(argv[i++], argv[0]);
-				int numberOfIterations = checkStrictlyPositive(argv[i++], argv[0]);
-				int widthOfIntervalID =  checkStrictlyPositive(argv[i++], argv[0]);
-				int n = checkStrictlyPositive(argv[i++], argv[0]); //number of pe
-				int inFifoDepth = checkStrictlyPositive(argv[i++], argv[0]);
-				int peFifoDepth = checkStrictlyPositive(argv[i++], argv[0]);
-				int outFifoDepth = checkStrictlyPositive(argv[i++], argv[0]);
-				int InterfaceInFifoDepth = checkStrictlyPositive(argv[i++], argv[0]);
-				int InterfaceOutFifoDepth = checkStrictlyPositive(argv[i++], argv[0]);
-				
-				cerr << "> TaMaDiModuleWrapperInterface , wP="<<wP<<", degree="<<degree<<" numberOfIterations="<<numberOfIterations<<" widthOfIntervalID="<<widthOfIntervalID<<" n="<<n<<" inFifo="<<inFifoDepth<<" peFifo="<<peFifoDepth<<" outFifo"<<outFifoDepth << " interfaceInFifo="<<InterfaceInFifoDepth<<" interfaceOutFifoDepth="<<InterfaceOutFifoDepth<<"\n";
-				op = new TaMaDiDispatcherInterface(target, wP, degree, numberOfIterations, widthOfIntervalID, n, inFifoDepth, peFifoDepth, outFifoDepth, InterfaceInFifoDepth, InterfaceOutFifoDepth);
-				addOperator(op);
-			}
-		}
-		else if(opname=="TaMaDiSystem"){
 			int nargs = 11;
 			if (i+nargs > argc)
 				usage(argv[0],opname);
@@ -1634,6 +1619,29 @@ bool parseCommandLine(int argc, char* argv[]){
 				int degree = checkStrictlyPositive(argv[i++], argv[0]);
 				int numberOfIterations = checkStrictlyPositive(argv[i++], argv[0]);
 				int widthOfIntervalID =  checkStrictlyPositive(argv[i++], argv[0]);
+				int widthComp          =  checkStrictlyPositive(argv[i++], argv[0]);
+				int n = checkStrictlyPositive(argv[i++], argv[0]); //number of pe
+				int inFifoDepth = checkStrictlyPositive(argv[i++], argv[0]);
+				int peFifoDepth = checkStrictlyPositive(argv[i++], argv[0]);
+				int outFifoDepth = checkStrictlyPositive(argv[i++], argv[0]);
+				int InterfaceInFifoDepth = checkStrictlyPositive(argv[i++], argv[0]);
+				int InterfaceOutFifoDepth = checkStrictlyPositive(argv[i++], argv[0]);
+				
+				cerr << "> TaMaDiModuleWrapperInterface , wP="<<wP<<", degree="<<degree<<" numberOfIterations="<<numberOfIterations<<" widthOfIntervalID="<<widthOfIntervalID<<" width comparisson="<<widthComp<<" n="<<n<<" inFifo="<<inFifoDepth<<" peFifo="<<peFifoDepth<<" outFifo"<<outFifoDepth << " interfaceInFifo="<<InterfaceInFifoDepth<<" interfaceOutFifoDepth="<<InterfaceOutFifoDepth<<"\n";
+				op = new TaMaDiDispatcherInterface(target, wP, degree, numberOfIterations, widthOfIntervalID, widthComp,  n, inFifoDepth, peFifoDepth, outFifoDepth, InterfaceInFifoDepth, InterfaceOutFifoDepth);
+				addOperator(op);
+			}
+		}
+		else if(opname=="TaMaDiSystem"){
+			int nargs = 12;
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			else {
+				int wP = checkStrictlyPositive(argv[i++], argv[0]);
+				int degree = checkStrictlyPositive(argv[i++], argv[0]);
+				int numberOfIterations = checkStrictlyPositive(argv[i++], argv[0]);
+				int widthOfIntervalID =  checkStrictlyPositive(argv[i++], argv[0]);
+				int widthComp          =  checkStrictlyPositive(argv[i++], argv[0]);
 				int n = checkStrictlyPositive(argv[i++], argv[0]); //number of pe
 				int inFifoDepth = checkStrictlyPositive(argv[i++], argv[0]);
 				int peFifoDepth = checkStrictlyPositive(argv[i++], argv[0]);
@@ -1642,13 +1650,13 @@ bool parseCommandLine(int argc, char* argv[]){
 				int InterfaceOutFifoDepth = checkStrictlyPositive(argv[i++], argv[0]);
 				int moduleCount = checkStrictlyPositive(argv[i++], argv[0]);
 				
-				cerr << "> TaMaDiSystem , wP="<<wP<<", degree="<<degree<<" numberOfIterations="<<numberOfIterations<<" widthOfIntervalID="<<widthOfIntervalID<<" n="<<n<<" inFifo="<<inFifoDepth<<" peFifo="<<peFifoDepth<<" outFifo"<<outFifoDepth << " interfaceInFifo="<<InterfaceInFifoDepth<<" interfaceOutFifoDepth="<<InterfaceOutFifoDepth<<" moduleCount="<<moduleCount<<"\n";
-				op = new TaMaDiSystem(target, wP, degree, numberOfIterations, widthOfIntervalID, n, inFifoDepth, peFifoDepth, outFifoDepth, InterfaceInFifoDepth, InterfaceOutFifoDepth, moduleCount );
+				cerr << "> TaMaDiSystem , wP="<<wP<<", degree="<<degree<<" numberOfIterations="<<numberOfIterations<<" widthOfIntervalID="<<widthOfIntervalID<<" width comparisson="<<widthComp<<" n="<<n<<" inFifo="<<inFifoDepth<<" peFifo="<<peFifoDepth<<" outFifo"<<outFifoDepth << " interfaceInFifo="<<InterfaceInFifoDepth<<" interfaceOutFifoDepth="<<InterfaceOutFifoDepth<<" moduleCount="<<moduleCount<<"\n";
+				op = new TaMaDiSystem(target, wP, degree, numberOfIterations, widthOfIntervalID, widthComp, n, inFifoDepth, peFifoDepth, outFifoDepth, InterfaceInFifoDepth, InterfaceOutFifoDepth, moduleCount );
 				addOperator(op);
 			}
 		}
 		else if(opname=="TaMaDiCore"){
-			int nargs = 4;
+			int nargs = 5;
 			if (i+nargs > argc)
 				usage(argv[0],opname);
 			else {
@@ -1656,8 +1664,9 @@ bool parseCommandLine(int argc, char* argv[]){
 				int degree = checkStrictlyPositive(argv[i++], argv[0]);
 				int numberOfIterations = checkStrictlyPositive(argv[i++], argv[0]);
 				int widthOfIntervalID =  checkStrictlyPositive(argv[i++], argv[0]);
-				cerr << "> TaMaDiCore , wP="<<wP<<", degree="<<degree<<" numberOfIterations="<<numberOfIterations<<" widthOfIntervalID="<<widthOfIntervalID <<" \n";
-				op = new TaMaDiCore(target, wP, degree, numberOfIterations, widthOfIntervalID);
+				int widthComp          =  checkStrictlyPositive(argv[i++], argv[0]);
+				cerr << "> TaMaDiCore , wP="<<wP<<", degree="<<degree<<" numberOfIterations="<<numberOfIterations<<" widthOfIntervalID="<<widthOfIntervalID <<" width comparisson="<<widthComp<<" \n";
+				op = new TaMaDiCore(target, wP, degree, numberOfIterations, widthOfIntervalID, widthComp);
 				addOperator(op);
 			}
 		}	
