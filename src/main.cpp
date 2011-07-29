@@ -91,7 +91,7 @@
 
 #ifdef HAVE_SOLLYA
 #include "FixedPointFunctions/FunctionTable.hpp"
-#include "FixedPointFunctions/PolyTableGenerator.hpp"
+#include "FixedPointFunctions/PolyCoeffTable.hpp"
 #include "FixedPointFunctions/FunctionEvaluator.hpp"
 #include "FixedPointFunctions/PolynomialEvaluator.hpp"
 #endif

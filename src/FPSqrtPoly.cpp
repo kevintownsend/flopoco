@@ -322,7 +322,7 @@ namespace flopoco{
 
 //***************************************************************************
 		PiecewiseFunction  *pf = new PiecewiseFunction("sqrt(2+2*x),0,1,1;sqrt(1+x),0,1,1");
-		PolyTableGenerator *tg = new PolyTableGenerator(target, pf, wF+2+(correctlyRounded?1:0), degree);
+		PolyCoeffTable *tg = new PolyCoeffTable(target, pf, wF+2+(correctlyRounded?1:0), degree);
 		oplist.push_back(tg);
 		
 		int addrLinesPolyOdd, addrLinesPolyEven; 

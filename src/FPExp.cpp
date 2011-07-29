@@ -1,3 +1,17 @@
+/*
+  An FP exponential for FloPoCo
+  
+  This file is part of the FloPoCo project
+  developed by the Arenaire team at Ecole Normale Superieure de Lyon
+  
+  Author : Florent de Dinechin, Florent.de.Dinechin@ens-lyon.fr
+
+  Initial software.
+  Copyright © ENS-Lyon, INRIA, CNRS, UCBL,  
+  2008-2010.
+  All rights reserved.
+
+*/
 #include <iostream>
 #include <fstream>
 #include <sstream>

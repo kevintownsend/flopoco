@@ -792,46 +792,8 @@ public:
 	int getuid(){
 		return myuid;
 	}
-	
-	void cloneOperator(Operator *op){
-		subComponents_ = op->getSubComponents();
-		signalList_ = op->getSignalList();	
-		ioList_     = op->getIOListV();
-		target_           = op->getTarget();
-		uniqueName_       = op->getUniqueName();
-		architectureName_ = op->getArchitectureName();
-		testCaseSignals_ = op->getTestCaseSignals();	
-		portMap_ = op->getPortMap();
-		outDelayMap = map<string,double>(op->getOutDelayMap());
-		inputDelayMap = op->getInputDelayMap();
-		vhdl.vhdlCodeBuffer << op->vhdl.vhdlCodeBuffer.str();
-		vhdl.vhdlCode       << op->vhdl.vhdlCode.str();
-		vhdl.currentCycle_   = op->vhdl.currentCycle_;	
-		vhdl.useTable        = op->vhdl.useTable;
-		srcFileName = op->getSrcFileName();
-		declareTable = op->getDeclareTable();
-		cost = op->getOperatorCost();
-		numberOfInputs_  = op->getNumberOfInputs();
-		numberOfOutputs_ = op->getNumberOfOutputs();
-		isSequential_    = op->isSequential();
-		pipelineDepth_   = op->getPipelineDepth();
-		signalMap_ = op->getSignalMap();
-		constants_ = op->getConstants();
-		attributes_ = op->getAttributes();
-		types_ = op->getTypes();
-		attributesValues_ = op->getAttributesValues();
 
-		hasRegistersWithoutReset_   = op->getHasRegistersWithoutReset();
-		hasRegistersWithAsyncReset_ = op->getHasRegistersWithAsyncReset();
-		hasRegistersWithSyncReset_  = op->getHasRegistersWithSyncReset();
-		copyrightString_            = op->getCopyrightString();
-		currentCycle_               = op->getCurrentCycle();
-		criticalPath_               = op->getCriticalPath();
-		needRecirculationSignal_    = op->getNeedRecirculationSignal();
-		hardOperator_               = op->hardOperator();
-		
-		oplist                      = op->getOpList();
-	}
+
 
 	string signExtend(string name, int w){
 		ostringstream e;
@@ -895,11 +857,63 @@ public:
 
 	int level; //printing issues
 
+
+
+
 	/** add a comment line in to vhdl stream */
 	void addComment(string comment, string align = tab);
 
 	/** add a full line of '-' with comment centered within */
 	void addFullComment(string comment, int lineLength = 80);
+
+
+
+
+
+
+	/** Completely replace "this" with a copy of another operator. */
+	void cloneOperator(Operator *op){
+		subComponents_ = op->getSubComponents();
+		signalList_ = op->getSignalList();	
+		ioList_     = op->getIOListV();
+		target_           = op->getTarget();
+		uniqueName_       = op->getUniqueName();
+		architectureName_ = op->getArchitectureName();
+		testCaseSignals_ = op->getTestCaseSignals();	
+		portMap_ = op->getPortMap();
+		outDelayMap = map<string,double>(op->getOutDelayMap());
+		inputDelayMap = op->getInputDelayMap();
+		vhdl.vhdlCodeBuffer << op->vhdl.vhdlCodeBuffer.str();
+		vhdl.vhdlCode       << op->vhdl.vhdlCode.str();
+		vhdl.currentCycle_   = op->vhdl.currentCycle_;	
+		vhdl.useTable        = op->vhdl.useTable;
+		srcFileName = op->getSrcFileName();
+		declareTable = op->getDeclareTable();
+		cost = op->getOperatorCost();
+		numberOfInputs_  = op->getNumberOfInputs();
+		numberOfOutputs_ = op->getNumberOfOutputs();
+		isSequential_    = op->isSequential();
+		pipelineDepth_   = op->getPipelineDepth();
+		signalMap_ = op->getSignalMap();
+		constants_ = op->getConstants();
+		attributes_ = op->getAttributes();
+		types_ = op->getTypes();
+		attributesValues_ = op->getAttributesValues();
+
+		hasRegistersWithoutReset_   = op->getHasRegistersWithoutReset();
+		hasRegistersWithAsyncReset_ = op->getHasRegistersWithAsyncReset();
+		hasRegistersWithSyncReset_  = op->getHasRegistersWithSyncReset();
+		copyrightString_            = op->getCopyrightString();
+		currentCycle_               = op->getCurrentCycle();
+		criticalPath_               = op->getCriticalPath();
+		needRecirculationSignal_    = op->getNeedRecirculationSignal();
+		hardOperator_               = op->hardOperator();
+		
+		oplist                      = op->getOpList();
+	}
+
+	/////////////////////////////////////////////////////////////////////////////////////////////////
+	////////////BEWARE: don't add anything below without adding it to cloneOperator, too
 
 	map<string, Operator*> subComponents_;/**< The list of sub-components */
 	vector<Signal*>     signalList_;      /**< The list of internal signals of the operator */

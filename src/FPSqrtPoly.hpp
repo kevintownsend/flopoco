@@ -8,7 +8,7 @@
 
 #include "Operator.hpp"
 #include "FPNumber.hpp"
-#include "FixedPointFunctions/PolyTableGenerator.hpp"
+#include "FixedPointFunctions/PolyCoeffTable.hpp"
 #include "FixedPointFunctions/PolynomialEvaluator.hpp"
 #include "squareroot/PolynomialTableCorrectRounded.hpp"
 #include "squareroot/PolynomialTable.hpp"
