@@ -20,18 +20,14 @@ SET(CPACK_PACKAGE_VERSION_PATCH "0")
 
 INCLUDE(CPack)
 # 
-IF(WIN32)
-	SET(CMAKE_BUILD_TYPE release)
-ELSE(WIN32) 
-	#Compilation flags
-	#SET(CMAKE_CXX_FLAGS_DEBUG "-Wall")
-	# Uncomment for profiling
-	#SET(CMAKE_CXX_FLAGS_DEBUG "-g -pg -Wall")
-	SET(CMAKE_CXX_FLAGS_DEBUG "-pg -Wall")
-	# Do you want an executable of 12MB ?
-	SET(CMAKE_BUILD_TYPE DEBUG)
-   #SET(CMAKE_BUILD_TYPE release)
-ENDIF(WIN32)
+#Compilation flags
+#SET(CMAKE_CXX_FLAGS_DEBUG "-Wall")
+# Uncomment for profiling
+#SET(CMAKE_CXX_FLAGS_DEBUG "-g -pg -Wall")
+SET(CMAKE_CXX_FLAGS_DEBUG "-pg -Wall")
+# Do you want an executable of 12MB ?
+SET(CMAKE_BUILD_TYPE DEBUG)
+#SET(CMAKE_BUILD_TYPE release)
 
 
 FIND_PATH(MPFR_H
@@ -53,7 +49,7 @@ IF (SOLLYA_LIB)
 	ADD_DEFINITIONS(-DHAVE_SOLLYA)
 	MESSAGE(STATUS "Found Sollya: ${SOLLYA_LIB}")
 ELSE (SOLLYA_LIB)
-	MESSAGE(STATUS "Sollya not found, HOTBM and FunctionEvaluator won't be available")
+	MESSAGE(STATUS "Sollya not found, many very nice operators won't be available")
 ENDIF (SOLLYA_LIB)
 
 IF (MPFR_H AND MPFR_LIB)
@@ -138,134 +134,6 @@ ADD_CUSTOM_COMMAND(
 SET_SOURCE_FILES_PROPERTIES(src/FPExpressions/ExpressionScanner GENERATED)
 
 
-# Build HOTBM
-IF (SOLLYA_LIB)
-	ADD_DEFINITIONS(-DHAVE_HOTBM)
-	ADD_LIBRARY(hotbm STATIC
-		src/VHDLLexer
-		src/FixedPointFunctions/HOTBM.cpp
-		src/FixedPointFunctions/Function.cpp
-		src/FixedPointFunctions/HOTBM/HOTBMInstance.cc
-		src/FixedPointFunctions/HOTBM/Param.cc
-		src/FixedPointFunctions/HOTBM/Exhaustive.cc
-		src/FixedPointFunctions/HOTBM/Util.cc
-		src/FixedPointFunctions/HOTBM/PWPolynomial.cc
-		src/FixedPointFunctions/HOTBM/Polynomial.cc
-		src/FixedPointFunctions/HOTBM/MPPolynomial.cc
-		src/FixedPointFunctions/HOTBM/Power.cc
-		src/FixedPointFunctions/HOTBM/PowerAdHoc.cc
-		src/FixedPointFunctions/HOTBM/TermROM.cc
-		src/FixedPointFunctions/HOTBM/Term.cc
-		src/FixedPointFunctions/HOTBM/Minimax.cc
-		src/FixedPointFunctions/HOTBM/PowerROM.cc
-		src/FixedPointFunctions/HOTBM/TermPowMult.cc
-	)
-	TARGET_LINK_LIBRARIES(hotbm  xml2 mpfi ${SOLLYA_LIB})
-	SET(HOTBM_LIB hotbm)
-ENDIF (SOLLYA_LIB)
-
-IF (HOTBM_LIB)
-	ADD_DEFINITIONS(-DHAVE_LNS)
-	ADD_LIBRARY(lns STATIC
-		src/LNS/LNSAdd
-		src/LNS/Cotran
-		src/LNS/CotranHybrid
-		src/LNS/CotranTables
-		src/LNS/LNSAddSub
-		src/LNS/LNSMul
-		src/LNS/LNSDiv
-		src/LNS/LNSSqrt
-		src/LNS/AtanPow
-		src/FixedPointFunctions/GenericEvaluator
-		src/LNS/LogSinCos
-	)
-	TARGET_LINK_LIBRARIES(lns ${HOTBM_LIB})
-	SET(LNS_LIB lns)
-ENDIF (HOTBM_LIB)
-
-
-IF(WIN32)
-ADD_EXECUTABLE(flopoco
- src/main
- src/utils
- src/FlopocoStream
- src/Targets/DSP
- src/Target src/Targets/Virtex4 src/Targets/Spartan3 src/Targets/Virtex6 src/Targets/StratixII src/Targets/StratixIII src/Targets/Virtex5 src/Targets/StratixIV
- src/Operator
- src/Signal
- src/Table 
- src/DualTable 
- src/Wrapper
- src/TestBench 
-# src/BigTestBench
- src/UserDefinedOperator
- src/IntAdder src/IntAddition/IntAdderClassical
- src/IntMultiAdder src/IntAddition/IntNAdder  src/IntAddition/IntCompressorTree
-
- src/LongIntAdder
- src/IntDualSub
-
- src/IntMultiplier
- src/IntMultipliers/SignedIntMultiplier
- src/IntMultipliers/UnsignedIntMultiplier
- src/IntMultipliers/IntTilingMult
- src/IntMultipliers/LogicIntMultiplier
- src/IntMultipliers/IntTruncMultiplier
- src/IntMultipliers/IntKaratsuba
-
- src/LZOC src/LZOCShifterSticky
- src/Shifters
- src/FPAdderDualPath
- src/Fix2FP
-# src/apps/CoilInductance/CoilInductance
-# src/apps/CoilInductance/CoordinatesTableX
-# src/apps/CoilInductance/CoordinatesTableZ
-# src/apps/CoilInductance/CoordinatesTableY
- src/FPMultiplier
- src/FPMultiplierKaratsuba
- src/FPSquarer
- src/FPDiv
- src/FPSqrt
- src/FPSqrtPoly
- src/squareroot/PolynomialTable src/squareroot/PolynomialTableCorrectRounded
- src/LongAcc
- src/LongAcc2FP
- src/DotProduct
- src/ConstMult/IntConstMult src/ConstMult/ShiftAddOp src/ConstMult/ShiftAddDag 
- src/ConstMult/IntIntKCM src/ConstMult/KCMTable
- src/ConstMult/FPConstMult 
-# src/ConstMult/CRFPConstMult 
-# src/ConstMult/FixRealKCM
- src/TestCase
- src/FPNumber
- src/IEEENumber
- 
-# src/fpexponential/math_lib
-# src/fpexponential/signal
-# src/fpexponential/fragment
-# src/fpexponential/stdfragment
-# src/fpexponential/logfragment
-# src/fpexponential/gen_table
-# src/fpexponential/explore
- src/FPExp
- 
- src/fplogarithm/FirstInvTable
- src/fplogarithm/FirstLogTable
- src/fplogarithm/OtherLogTable
- src/FPLog
- src/FPPow
-
-
- src/InputIEEE
- src/OutputIEEE
- 
- src/apps/Collision
- src/apps/FPFMAcc
- 
- src/IntSquarer
-)
-
-ELSE(WIN32)
 ADD_EXECUTABLE(flopoco
  src/FPExpressions/ExpressionParserData
  src/FPExpressions/ExpressionParser 
@@ -283,9 +151,6 @@ ADD_EXECUTABLE(flopoco
  src/Table 
  src/DualTable 
  src/DualTable2
-
- src/FixedPointFunctions/PolyTableGenerator
- src/FixedPointFunctions/PiecewiseFunction
  
  src/FPPipeline
 
@@ -340,11 +205,35 @@ ADD_EXECUTABLE(flopoco
  src/LZOCShifterSticky
  src/Shifters
 
-# Fixed-point function evaluation  ----------------------------------
+# Fixed-point function evaluation -----------------------------------
 #--------------------------------------------------------------------
+ src/FixedPointFunctions/Function
+ src/FixedPointFunctions/PiecewiseFunction
+
  src/FixedPointFunctions/FunctionTable
+
+# src/FixedPointFunctions/Multipartite
+
+ src/FixedPointFunctions/PolyCoeffTable
  src/FixedPointFunctions/PolynomialEvaluator
  src/FixedPointFunctions/FunctionEvaluator
+
+ src/FixedPointFunctions/HOTBM.cpp
+ src/FixedPointFunctions/HOTBM/HOTBMInstance.cc
+ src/FixedPointFunctions/HOTBM/Param.cc
+ src/FixedPointFunctions/HOTBM/Exhaustive.cc
+ src/FixedPointFunctions/HOTBM/Util.cc
+ src/FixedPointFunctions/HOTBM/PWPolynomial.cc
+ src/FixedPointFunctions/HOTBM/Polynomial.cc
+ src/FixedPointFunctions/HOTBM/MPPolynomial.cc
+ src/FixedPointFunctions/HOTBM/Power.cc
+ src/FixedPointFunctions/HOTBM/PowerAdHoc.cc
+ src/FixedPointFunctions/HOTBM/TermROM.cc
+ src/FixedPointFunctions/HOTBM/Term.cc
+ src/FixedPointFunctions/HOTBM/Minimax.cc
+ src/FixedPointFunctions/HOTBM/PowerROM.cc
+ src/FixedPointFunctions/HOTBM/TermPowMult.cc 
+
 
 # Floating-Point ----------------------------------------------------
 #--------------------------------------------------------------------
@@ -390,6 +279,20 @@ ADD_EXECUTABLE(flopoco
  src/InputIEEE
  src/OutputIEEE
 
+#---------------------LNS arithmetic--------------------------------
+		src/LNS/LNSAdd
+		src/LNS/Cotran
+		src/LNS/CotranHybrid
+		src/LNS/CotranTables
+		src/LNS/LNSAddSub
+		src/LNS/LNSMul
+		src/LNS/LNSDiv
+		src/LNS/LNSSqrt
+		src/LNS/AtanPow
+		src/FixedPointFunctions/GenericEvaluator
+		src/LNS/LogSinCos
+
+
 # Applications ------------------------------------------------------
 #--------------------------------------------------------------------
 
@@ -423,7 +326,6 @@ ADD_EXECUTABLE(flopoco
 
  src/UtilSollya
 )
-ENDIF(WIN32) 
 
 
 
@@ -431,7 +333,7 @@ ENDIF(WIN32)
 IF (SOLLYA_LIB)
   TARGET_LINK_LIBRARIES(
     flopoco  
-    mpfr gmp gmpxx xml2 mpfi lns hotbm  ${SOLLYA_LIB}
+    mpfr gmp gmpxx xml2 mpfi ${SOLLYA_LIB}
     )
 ELSE (SOLLYA_LIB)
   TARGET_LINK_LIBRARIES(
