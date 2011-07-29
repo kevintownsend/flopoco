@@ -9,6 +9,7 @@ enum EvaluationMethod
 {
 	Hotbm,
 	Polynomial,
+	Multipartite
 };
 
 Operator * NewEvaluator(Target * target, char const * func, std::string const & uniqueName,

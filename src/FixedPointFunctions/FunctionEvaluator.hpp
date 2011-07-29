@@ -7,7 +7,7 @@
 #include <gmpxx.h>
 
 #include "../Operator.hpp"
-#include "PolyTableGenerator.hpp"
+#include "PolyCoeffTable.hpp"
 #include "../IntAdder.hpp"
 
 namespace flopoco{
@@ -32,7 +32,7 @@ namespace flopoco{
 		void emulate(TestCase * tc);
 
 		PiecewiseFunction *pf;
-		PolyTableGenerator *tg;
+		PolyCoeffTable *tg;
 		PolynomialEvaluator *pe;
 		
 		int getRWidth(){

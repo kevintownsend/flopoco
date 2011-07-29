@@ -56,7 +56,7 @@ namespace flopoco{
 		REPORT(INFO, "The degree of the polynomial used to approximate this function is: " << n );
 		
 		pf = new PiecewiseFunction(func);
-		tg = new PolyTableGenerator(target, pf, lsbOut+1, n);
+		tg = new PolyCoeffTable(target, pf, lsbOut+1, n);
 		oplist.push_back(tg);
 		
 		REPORT(INFO, "The number of intervals of the function: "<< intpow2(tg->wIn));
