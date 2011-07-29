@@ -103,6 +103,7 @@ namespace flopoco{
 			vhdl << tab << "               "<<join("inCreditCount",i)<<" <= CONV_STD_LOGIC_VECTOR("<<0<<","<<intlog2(inFIFODepth)<<");" << endl;
 			vhdl << tab << "         elsif clk'event and clk = '1' then" << endl;
 			vhdl << tab << "				if ("<<join("needData",i)<<"='1') and ("<<join("moduleWE_signal",i)<<"='0') then"<<endl; 
+			vhdl << tab << "					"<<join("inCreditCount",i)<<" <= "<<join("inCreditCount",i)<<" + 1;"<<endl;
 			vhdl << tab << "				elsif ("<<join("needData",i)<<"='0') and ("<<join("moduleWE_signal",i)<<"='1') then"<<endl; 
 			vhdl << tab << "					"<<join("inCreditCount",i)<<" <= "<<join("inCreditCount",i)<<" - 1;"<<endl;
 			vhdl << tab << "            	end if; "<<endl;
@@ -222,7 +223,7 @@ namespace flopoco{
 			else     vhdl << join("writeToOutputFIFO",i) << ";" <<endl;
 		}
 		vhdl << tab << declare("atLeastOneWritesToOutputFIFO") << " <= '1' when writeBusToOutputFIFO>"<<zg(n)<<" else '0';"<<endl;
-		vhdl << tab << declare("DispatcherOutputFIFOWE")<<" <= atLeastOneWritesToOutputFIFO;"<<endl;
+		vhdl << tab << declare("DispatcherOutputFIFOWE")<<" <= '1' when (outputCreditCounterDecodedPriorities2 > 0) else '0';"<<endl;//  atLeastOneWritesToOutputFIFO;"<<endl;
 
 		/* we also need to decide which is the data we are writing to the out fifo  */			
 		TaMaDiPriorityEncoder *priorityEncoderDataSelect = new TaMaDiPriorityEncoder(target, n);
@@ -233,10 +234,10 @@ namespace flopoco{
 
 		/*use the dataselect lines to multiplex among the data coming from the modules */
 		
-		vhdl << tab << " with DataSelectLines select"<<endl;
+		vhdl << tab << " with outputCreditCounterDecodedPriorities2 select"<<endl;
 		vhdl << tab << declare("DispatcherInputDataMultiplexer",wIntervalID + ulpCounterWidth) << " <= " << endl;
 		for (int i=0; i<n; i++){
-			vhdl << tab << tab << join("moduleOutputData",i) << " when \"" << unsignedBinary(i,intlog2(n-1)) << "\"," << endl; 	
+			vhdl << tab << tab << join("moduleOutputData",i) << " when \"" << unsignedBinary(intpow2(i), n) << "\"," << endl; 	
 		}
 		vhdl << tab << tab << tab << join("moduleOutputData",0)  << " when  others;"<<endl;
 

@@ -57,48 +57,49 @@ namespace flopoco{
 	
 		addOutput   ("MainFIFOOutput", wIntervalID + ulpCounterWidth); 
 		addInput    ("MainFIFOOutputRE");
-		addOutput    ("OutputWEToken");
-		addOutput  ("OutputCreditToken");
+		addOutput   ("OutputWEToken");
+		addOutput   ("OutputCreditToken");
 
 		/* here we instantiate the TaMaDi Module */
 		////////////////////////////////////////////////////////////
 		TaMaDiModule *tmodule = new TaMaDiModule(target, wp, d, iterations, wIntervalID, compSize, n, inFIFODepth, peFIFODepth, outFIFODepth);
 		oplist.push_back(tmodule);
 
-		inPortMap( tmodule, "MainFIFOInput", "MainFIFOInput");
-		inPortMap( tmodule, "MainFIFOInputWE", "MainFIFOInputWE");
+		inPortMap ( tmodule, "MainFIFOInput",         "MainFIFOInput");
+		inPortMap ( tmodule, "MainFIFOInputWE",       "MainFIFOInputWE");
 		outPortMap( tmodule, "MainFIFOInputRESignal", "MainFIFOInputRESignal_s"); //used for incrementing the credit counter
-		outPortMap( tmodule, "MainFIFOInputFull", "MainFIFOInputFull_s"); //this will not be used
+		outPortMap( tmodule, "MainFIFOInputFull",     "MainFIFOInputFull_s"); //this will not be used
 
-		inPortMap( tmodule, "MainFIFOOutputRE", "MainFIFOOutputRE"); //signal received from the global controller
-		outPortMap( tmodule, "MainFIFOOutputEmpty", "MainFIFOOutputEmpty_s"); //not used, all data is in the counter
-		outPortMap( tmodule, "MainFIFOOutput", "MainFIFOOutput_s");
+		inPortMap ( tmodule, "MainFIFOOutputRE",      "MainFIFOOutputRE"); //signal received from the global controller
+		outPortMap( tmodule, "MainFIFOOutputEmpty",   "MainFIFOOutputEmpty_s"); //not used, all data is in the counter
+		outPortMap( tmodule, "MainFIFOOutput",        "MainFIFOOutput_s");
 		outPortMap( tmodule, "MainFIFOOutputWESignal","MainFIFOOutputWESignal_s"); 
-		vhdl << tab << instance( tmodule, "TaMaDiModuleX");
+		vhdl << tab << instance(tmodule, "TaMaDiModuleX");
 		
-		declare("inputCreditCounter", intlog2(inFIFODepth));
-		vhdl << tab << declare("inputCreditCounterUp") <<" <= MainFIFOInputRESignal_s;"<<endl; 
-		vhdl << tab << " process(clk, rst, inputCreditCounterGZ, inputCreditCounterUp) " << endl;
+		vhdl << tab << declare("inputCreditCounterUp") << " <= MainFIFOInputRESignal_s;"<<endl; 
+
+		vhdl << tab << " process(clk, rst, inputCreditCounter, inputCreditCounterUp) " << endl;
 		vhdl << tab << "      begin" << endl;
 		vhdl << tab << "         if rst = '1' then" << endl;
-		vhdl << tab << "               inputCreditCounter <= CONV_STD_LOGIC_VECTOR("<<inFIFODepth<<","<<intlog2(inFIFODepth)<<");" << endl;
+		/* the credit counter is initialized with the size of the input FIFO */
+		vhdl << tab << "               " << declare("inputCreditCounter", intlog2(inFIFODepth))<<" <= CONV_STD_LOGIC_VECTOR("<<inFIFODepth<<","<<intlog2(inFIFODepth)<<");" << endl; 
 		vhdl << tab << "         elsif clk'event and clk = '1' then" << endl;
-		vhdl << tab << "				if (inputCreditCounterGZ='1') and (inputCreditCounterUp='0') then"<<endl; 
-		vhdl << tab << "					inputCreditCounter <= inputCreditCounter - 1;"<<endl;
-		vhdl << tab << "            	end if; "<<endl;
+		vhdl << tab << "			if (inputCreditCounter > 0) and (inputCreditCounterUp='0') then"<<endl; 
+		vhdl << tab << "				inputCreditCounter <= inputCreditCounter - 1;"<<endl;
+		vhdl << tab << "            end if; "<<endl;
 		vhdl << tab << "         end if;" << endl;
 		vhdl << tab << "      end process;" << endl;
 		
-		vhdl << tab << declare("inputCreditCounterGZ") << " <= '1' when inputCreditCounter>"<<zg(intlog2(inFIFODepth))<<" else '0';"<<endl; 
+		vhdl << tab << declare("inputCreditCounterGZ") << "<= '1' when (inputCreditCounter > 0) else '0';"<<endl;
 		vhdl << tab << "InputCreditToken <= inputCreditCounterGZ or inputCreditCounterUp;"<<endl;
 
 		vhdl << tab << "OutputCreditToken <= MainFIFOOutputWESignal_s;"<<endl;
 		
 		vhdl << tab << "MainFIFOOutput <= MainFIFOOutput_s;"<<endl;
-		setCycle(0,false);
-		vhdl << tab << declare("tmpMainFIFOOutputWESignal_s") << " <= MainFIFOOutputWESignal_s;"<<endl;
-		setCycle(1,false);		
-		vhdl << tab << "OutputWEToken <= tmpMainFIFOOutputWESignal_s;"<<endl;
+//		setCycle(0,false);
+//		vhdl << tab << declare("tmpMainFIFOOutputWESignal_s") << " <= MainFIFOOutputWESignal_s;"<<endl;
+//		setCycle(1,false);		
+		vhdl << tab << "OutputWEToken <= MainFIFOOutputWESignal_s;"<<endl;
 	}
 
 	TaMaDiModuleWrapperInterface::~TaMaDiModuleWrapperInterface() {

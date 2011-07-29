@@ -77,7 +77,7 @@ namespace flopoco{
 		vhdl << tab << "         if rst = '1' or deserializerCounter=CONV_STD_LOGIC_VECTOR("<<chunks+2<<","<<intlog2(chunks+2)<< ") then" << endl;
 		vhdl << tab << "               deserializerCounter <=  (others => '0');" << endl;
 		vhdl << tab << "         elsif clk'event and clk = '1' then" << endl;
-		vhdl << tab << "            if DMAFIFOHasData='1' and CanWriteSystemInFIFO='1' then " << endl;
+		vhdl << tab << "            if (DMAFIFOHasData='1' and CanWriteSystemInFIFO='1') or (deserializerCounter=" <<chunks+1<<  ") then " << endl;
 		vhdl << tab << "               deserializerCounter <=  deserializerCounter + CONV_STD_LOGIC_VECTOR(1,"<<intlog2(chunks+2)<< ");" << endl;
 		vhdl << tab << "         	end if;" << endl;
 		vhdl << tab << "         end if;" << endl;
