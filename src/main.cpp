@@ -219,8 +219,8 @@ namespace flopoco{
 	int LongAccN;
 
 	/* flex vars */
-	int yyTheCycle;
-	vector<pair<string, int> > theUseTable;
+	//	int yyTheCycle;
+	// vector<pair<string, int> > theUseTable;
 	
 	map<string, double> emptyDelayMap;
 	bool combinatorialOperator;

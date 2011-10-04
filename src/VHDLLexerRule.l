@@ -26,10 +26,6 @@
 		}\
 	}
 
-	namespace flopoco{
-		extern int yyTheCycle;
-		extern std::vector< std::pair<std::string, int> > theUseTable;
-	}
 
 %}
 
@@ -150,11 +146,11 @@ base_specifier	  	  (B|b|O|o|X|x)
 
 
 
-{letter}(_?{letter_or_digit})* { (*yyextra->os) << "__" << yytext << "__" << flopoco::yyTheCycle <<"__";
+{letter}(_?{letter_or_digit})* { (*yyextra->os) << "__" << yytext << "__" << (yyextra->yyTheCycle) <<"__";
 								  std::pair< std::string, int> tmp;
 								  tmp.first = yytext;
-								  tmp.second = flopoco::yyTheCycle;
-								 flopoco::theUseTable.push_back ( tmp );		
+								  tmp.second = (yyextra->yyTheCycle);
+								  yyextra->theUseTable.push_back ( tmp );		
 								} 
 
 \&|\'|\(|\)|"**"|\*|\+|\,|\-|":="|\:|\;|"<="|">="|\<|\>|=|\/=|"=>"|"<>"|\||!|\.|\/ { (*yyextra->os) << yytext; }	

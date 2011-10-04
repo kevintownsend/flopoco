@@ -22,9 +22,6 @@
 
 namespace flopoco{
 
-extern int yyTheCycle;
-extern vector<pair<string,int> > theUseTable;
-extern bool combinatorialOperator;
 
 	/** 
 	 * The FlopocoStream class.
@@ -143,9 +140,8 @@ extern bool combinatorialOperator;
 				istringstream in( vhdlCodeBuffer.str() );
 				/* instantiate the flex++ object  for lexing the buffer info */
 				LexerContext* lexer = new LexerContext(&in, &vhdlO);
-				/* set a global variable (see main.cpp) with the cycle information
-				This variable is visible from within the flex++ scanner class */
-				yyTheCycle = currentCycle;
+				/* This variable is visible from within the flex++ scanner class */
+				lexer->yyTheCycle = currentCycle;
 				/* call the FlexLexer ++ on the buffer. The lexing output is
 				 in the variable vhdlO. Additionally, a temporary table contating
 				 the tuples <name, cycle> is created */
@@ -153,20 +149,7 @@ extern bool combinatorialOperator;
 				/* the temporary table is used to update the member of the FlopocoStream
 				 class useTable */
 
-#if 0
-				/* instantiate the flex++ object  for lexing the buffer info */
-				FlexLexer *l = new yyFlexLexer(&in, &vhdlO);
-				/* set a global variable (see main.cpp) with the cycle information
-				This variable is visible from within the flex++ scanner class */
-				yyTheCycle = currentCycle;
-				/* call the FlexLexer ++ on the buffer. The lexing output is
-				 in the variable vhdlO. Additionally, a temporary table contating
-				 the tuples <name, cycle> is created */
-				l->yylex(&in, &vhdlO);
-				/* the temporary table is used to update the member of the FlopocoStream
-				 class useTable */
-#endif
-				updateUseMap();
+				updateUseMap(lexer);
 				/* the annotated string is returned */
 				return vhdlO.str();
 			}
@@ -192,9 +175,9 @@ extern bool combinatorialOperator;
 			 * A wrapper for updateUseTable
 			 * The external table is erased of information
 			 */			
-			void updateUseMap(){
-				updateUseTable(theUseTable);
-				theUseTable.erase(theUseTable.begin(), theUseTable.end());
+			void updateUseMap(LexerContext* lexer){
+				updateUseTable(lexer->theUseTable);
+				lexer->theUseTable.erase(lexer->theUseTable.begin(), lexer->theUseTable.end());
 			}
 			
 			void setCycle(int cycle){

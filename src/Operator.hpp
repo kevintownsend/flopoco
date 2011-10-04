@@ -38,16 +38,13 @@ namespace flopoco {
 #define REPORT(level, stream) {if ((level)<=(verbose)){ cerr << "> " << srcFileName << ": " << stream << endl;}else{}} 
 
 
-
+	// global variables to get rid from
 extern int verbose;
-//extern bool combinatorialOperator; //FIXME: BAD design practice working with global variables
-
-
-
-const std::string tab = "   ";
+extern bool combinatorialOperator;
 extern map<string, double> emptyDelayMap;
 
 
+const std::string tab = "   ";
 
 
 
