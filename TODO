@@ -19,9 +19,8 @@ FPLog:
 * Fix a few remaining last-bit accuracy problems, damn.
 * compare with polynomial-based version.
 
-FPLog:
-* Fix a few remaining last-bit accuracy problems, damn.
-* compare with polynomial-based version.
+FPExp:
+* Everybody wants less-than-single-precision
 
 HOTBM:
 * true FloPoCoization, pipeline
