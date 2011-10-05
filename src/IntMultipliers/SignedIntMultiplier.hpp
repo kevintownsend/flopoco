@@ -13,7 +13,6 @@
 
 namespace flopoco{
 
-extern map<string, double> emptyDelayMap;
 
 	/** 
 	 * The Integer Multiplier class. Receives at input two numbers of 

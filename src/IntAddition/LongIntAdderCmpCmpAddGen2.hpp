@@ -11,7 +11,6 @@
 
 namespace flopoco{
 
-	extern map<string, double> emptyDelayMap;
 	/** The LongIntAdderCmpCmpAddGen2 class for experimenting with adders. 
 	 */
 	class LongIntAdderCmpCmpAddGen2 : public Operator

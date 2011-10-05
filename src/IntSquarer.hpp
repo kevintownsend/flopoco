@@ -10,7 +10,6 @@
 
 namespace flopoco{
 
-	extern map<string, double> emptyDelayMap;
 	/** The IntSquarer class for experimenting with adders. 
 	 */
 	class IntSquarer : public Operator

@@ -9,7 +9,6 @@
 #include "../IntAdder.hpp"
 
 namespace flopoco{
-	extern map<string, double> emptyDelayMap;
 	/** The IntNAdder class for experimenting with adders. 
 	 */
 	class IntNAdder : public IntMultiAdder

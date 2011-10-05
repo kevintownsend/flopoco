@@ -13,7 +13,6 @@
 
 namespace flopoco{
 
-	extern map<string, double> emptyDelayMap;
 	/** The LongIntAdderMuxNetwork class for experimenting with long fast adders. */
 	class LongIntAdderMuxNetwork : public Operator
 	{

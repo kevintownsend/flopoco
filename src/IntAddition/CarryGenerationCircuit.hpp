@@ -9,7 +9,6 @@
 
 namespace flopoco{
 
-	extern map<string, double> emptyDelayMap;
 	/** The CarryGenerationCircuit class for experimenting with adders. 
 	 */
 	class CarryGenerationCircuit : public Operator

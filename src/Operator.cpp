@@ -389,13 +389,11 @@ namespace flopoco{
 	}
 	
 	void Operator::setSequential() {
-		combinatorialOperator = false;
 		isSequential_=true; 
 		vhdl.disableParsing(false); 
 	}
 	
 	void Operator::setCombinatorial() {
-		combinatorialOperator = true;
 		isSequential_=false;
 		vhdl.disableParsing(true); 
 	}
@@ -1343,7 +1341,38 @@ namespace flopoco{
 		vhdl << align << " " << comment << " " << align << endl; 
 	}
 	
-		
+
+	void Operator::outputVHDLToFile(vector<Operator*> &oplist, ofstream& file){
+		string srcFileName = "main.cpp";
+		for(unsigned i=0; i<oplist.size(); i++) {
+			try {
+				REPORT(FULL, "OPERATOR:"<<oplist[i]->getName());
+				REPORT(FULL, "--DECLARE LIST---------------------------------------------------");
+				REPORT(FULL, printMapContent(oplist[i]->getDeclareTable()) );
+				REPORT(FULL, "--USE LIST-------------------------------------------------------");
+				REPORT(FULL, printVectorContent(  (oplist[i]->getFlopocoVHDLStream())->getUseTable()) );
+				
+				// check for subcomponents 
+				if (! oplist[i]->getOpListR().empty() ){
+					//recursively call to print subcomponent
+					outputVHDLToFile(oplist[i]->getOpListR(), file);	
+				}
+				oplist[i]->getFlopocoVHDLStream()->flush();
+
+				/* second parse is only for sequential operators */
+				if (oplist[i]->isSequential()){
+					REPORT (FULL, "--2nd PASS-------------------------------------------------------");
+					oplist[i]->parse2();
+				}
+				oplist[i]->outputVHDL(file);			
+			
+			} catch (std::string s) {
+					cerr << "Exception while generating '" << oplist[i]->getName() << "': " << s <<endl;
+			}
+		}
+	
+ }
+
 }
 
 

@@ -22,175 +22,7 @@
 #include <cstdlib>
 
 
-#include "Operator.hpp"
-#include "FlopocoStream.hpp"
-
-
-#include "Target.hpp"
-#include "Targets/DSP.hpp"
-#include "Targets/Spartan3.hpp"
-#include "Targets/Virtex4.hpp"
-#include "Targets/Virtex5.hpp"
-#include "Targets/Virtex6.hpp"
-#include "Targets/StratixII.hpp"
-#include "Targets/StratixIII.hpp"
-#include "Targets/StratixIV.hpp"
-
-/* shifters + lzoc ------------------------------------------- */
-#include "Shifters.hpp"
-#include "LZOC.hpp"
-#include "LZOCShifterSticky.hpp"
-
-/* regular pipelined integer adder/ adder+subtracter --------- */
-#include "IntAdder.hpp"
-#include "IntDualSub.hpp"
-
-/* multioperand adders --------------------------------------- */
-#include "IntMultiAdder.hpp"
-#include "IntAddition/IntNAdder.hpp"
-#include "IntAddition/IntCompressorTree.hpp"
-
-/* comparator(s) --------------------------------------------- */
-#include "IntComparator.hpp"
-
-/* fast adders ----------------------------------------------- */
-#include "IntAddition/LongIntAdderAddAddMuxGen1.hpp"
-#include "IntAddition/LongIntAdderCmpCmpAddGen1.hpp"
-#include "IntAddition/LongIntAdderCmpAddIncGen1.hpp"
-
-#include "IntAddition/IntAdderSpecific.hpp"
-#include "IntAddition/CarryGenerationCircuit.hpp"
-#include "IntAddition/LongIntAdderAddAddMuxGen2.hpp"
-#include "IntAddition/LongIntAdderCmpCmpAddGen2.hpp"
-#include "IntAddition/LongIntAdderCmpAddIncGen2.hpp"
-#include "IntAddition/IntComparatorSpecific.hpp"
-
-#include "IntAddition/LongIntAdderMuxNetwork.hpp"
-
-
-/* multiplication-related ------------------------------------ */
-#include "IntMultiplier.hpp"
-#include "IntMultipliers/IntTilingMult.hpp"
-#include "IntMultipliers/SignedIntMultiplier.hpp"
-#include "IntMultipliers/UnsignedIntMultiplier.hpp"
-#include "IntMultipliers/IntTruncMultiplier.hpp"
-#include "IntMultipliers/IntKaratsuba.hpp"
-#include "IntSquarer.hpp"
-
-#include "ConstMult/IntConstMult.hpp"
-#include "ConstMult/FPConstMult.hpp"
-#include "ConstMult/IntIntKCM.hpp"
-#include "ConstMult/FixRealKCM.hpp"
-
-
-/* fixed-point function evaluation---------------------------- */
-#ifndef _WIN32
-#ifdef HAVE_HOTBM
-#include "FixedPointFunctions/HOTBM.hpp"
-#endif
-
-#ifdef HAVE_SOLLYA
-#include "FixedPointFunctions/FunctionTable.hpp"
-#include "FixedPointFunctions/PolyCoeffTable.hpp"
-#include "FixedPointFunctions/FunctionEvaluator.hpp"
-#include "FixedPointFunctions/PolynomialEvaluator.hpp"
-#endif
-#endif
-
-/* floating-point -------------------------------------------- */ 
-#include "FPMultiplier.hpp"
-#include "FPMultiplierKaratsuba.hpp"
-#include "FPSquarer.hpp"
-
-#ifndef _WIN32
-#ifdef HAVE_SOLLYA
-#include "ConstMult/CRFPConstMult.hpp"
-#endif
-#endif
-
-#include "FPAdderDualPath.hpp"
-#include "FPAdderSinglePath.hpp"
-#include "FPAdder3Input.hpp"
-
-#include "FPDiv.hpp"
-#include "FPExp.hpp" 
-#include "FPLog.hpp"
-#include "FPPow.hpp"
-
-#include "FPSqrt.hpp"
-#include "FPSqrtPoly.hpp"
-
-#include "LongAcc.hpp"
-#include "LongAcc2FP.hpp"
-
-#include "DotProduct.hpp"
-#include "FPSumOfSquares.hpp"
-
-#include "FPPipeline.hpp"
-
-#include "Fix2FP.hpp"
-#include "InputIEEE.hpp"
-#include "OutputIEEE.hpp"
-
-
-/* test-bench related ---------------------------------------- */
-#include "TestBench.hpp"
-
-
-/* applications ---------------------------------------------- */
-
-/* Coil Inductance application */
-//#include "apps/CoilInductance/CoordinatesTableX.hpp"
-//#include "apps/CoilInductance/CoordinatesTableZ.hpp"
-//#include "apps/CoilInductance/CoordinatesTableY.hpp"
-//#include "apps/CoilInductance/CoilInductance.hpp"
-
-/* fast evaluation of the possible intrusion of a point within a 
-spheric enclosure -------------------------------------------- */ 
-#include "apps/Collision.hpp"
-
-/* a floating-point fused multiply-accumulate operator for the 
-use withing matrix-multiplication scenarios ------------------ */ 
-#include "apps/FPFMAcc.hpp"
-
-/* a 1D Jacobi computation kernel ---------------------------- */ 
-#include "apps/FPJacobi.hpp"
-
-/* the TaMaDi application, using FPGAs to caluclate the hard-to
-round cases for elementary functions ------------------------- */
-#include "apps/TaMaDiSystem.hpp"
-#include "apps/TaMaDiModule.hpp"
-#include "apps/TaMaDiCore.hpp"
-#include "apps/TaMaDiModuleDummyWrapper.hpp"
-#include "apps/TaMaDiModuleWrapperInterface.hpp"
-#include "apps/TaMaDiDispatcherInterface.hpp"
-#include "apps/TaMaDiPriorityEncoder.hpp"
-#include "apps/TaMaDiDecoder.hpp"
-#include "apps/TaMaDiFIFO.hpp"
-#include "apps/TaMaDiShiftRegister.hpp"
-#include "apps/TaMaDiDeserializer.hpp"
-
-
-/* logarithmic number system  -------------------------------- */ 
-#ifndef _WIN32
-#ifdef HAVE_LNS
-#include "LNS/LNSAddSub.hpp"
-#include "LNS/LNSAdd.hpp"
-#include "LNS/CotranTables.hpp"
-#include "LNS/Cotran.hpp"
-#include "LNS/CotranHybrid.hpp"
-#include "LNS/LNSMul.hpp"
-#include "LNS/LNSDiv.hpp"
-#include "LNS/LNSSqrt.hpp"
-#include "LNS/AtanPow.hpp"
-#include "LNS/LogSinCos.hpp"
-#endif
-#endif
-
-/* misc ------------------------------------------------------ */
-#include "Wrapper.hpp"
-#include "UserDefinedOperator.hpp"
-
+#include "FloPoCo.hpp"
 
 
 #define BRIGHT 1
@@ -205,57 +37,24 @@ round cases for elementary functions ------------------------- */
 using namespace std;
 using namespace flopoco;
 
-// Global variables, useful through most of FloPoCo, to be encapuslated in something someday
+// Global variables, useful in this main to avoid parameter passing
 
-namespace flopoco{
-
-	vector<Operator*> oplist;
 
 	string filename="flopoco.vhdl";
 	string cl_name=""; // used for the -name option
+	Target* target;
+
+
+
+
+// global variables used through most of FloPoCo, to be encapuslated in something someday
+namespace flopoco{
 
 	int verbose=0;
-	Target* target;
 	int LongAccN;
-
-	/* flex vars */
-	//	int yyTheCycle;
-	// vector<pair<string, int> > theUseTable;
 	
-	map<string, double> emptyDelayMap;
-	bool combinatorialOperator;
-
 	int Operator::uid = 0; //init of the uid static member of Operator
 
-static void outputVHDLToFile(vector<Operator*> &oplist, ofstream& file){
-		string srcFileName = "main.cpp";
-		for(unsigned i=0; i<oplist.size(); i++) {
-			try {
-				REPORT(FULL, "OPERATOR:"<<oplist[i]->getName());
-				REPORT(FULL, "--DECLARE LIST---------------------------------------------------");
-				REPORT(FULL, printMapContent(oplist[i]->getDeclareTable()) );
-				REPORT(FULL, "--USE LIST-------------------------------------------------------");
-				REPORT(FULL, printVectorContent(  (oplist[i]->getFlopocoVHDLStream())->getUseTable()) );
-				
-				// check for subcomponents 
-				if (! oplist[i]->getOpListR().empty() ){
-					//recursively call to print subcomponent
-					outputVHDLToFile(oplist[i]->getOpListR(), file);	
-				}
-				oplist[i]->getFlopocoVHDLStream()->flush();
-
-				/* second parse is only for sequential operators */
-				if (oplist[i]->isSequential()){
-					REPORT (FULL, "--2nd PASS-------------------------------------------------------");
-					oplist[i]->parse2();
-				}
-				oplist[i]->outputVHDL(file);			
-			
-			} catch (std::string s) {
-					cerr << "Exception while generating '" << oplist[i]->getName() << "': " << s <<endl;
-			}
-		}
-	}
 }
 
 static void usage(char *name, string opName = ""){
@@ -759,7 +558,7 @@ int checkSign(char* s, char* cmd) {
 }
 
 
-void addOperator(Operator *op) {
+void addOperator(vector<Operator*> &oplist, Operator *op) {
 	if(cl_name!="")	{
 		cerr << "Updating entity name to: " << cl_name << endl;
 		op->changeName(cl_name);
@@ -772,7 +571,7 @@ void addOperator(Operator *op) {
 
 
 
-bool parseCommandLine(int argc, char* argv[]){
+bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 	if (argc<2) {
 		usage(argv[0]); 
 		return false;
@@ -871,7 +670,7 @@ bool parseCommandLine(int argc, char* argv[]){
 
 				cerr << "> IntIntKCM , w="<<w<<", c="<<mpz2string(mpc) << (signedInput==0?" unsigned":" signed") << "\n";
 				op = new IntIntKCM(target, w, mpc, signedInput);
-				addOperator(op);
+				addOperator(oplist, op);
 			}        
 		}
 		else if(opname=="IntConstMult"){
@@ -883,7 +682,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				mpz_class mpc(argv[i++]);
 				cerr << "> IntConstMult , w="<<w<<", c="<<mpz2string(mpc)<<"\n";
 				op = new IntConstMult(target, w, mpc);
-				addOperator(op);
+				addOperator(oplist, op);
 			}        
 		}
 
@@ -902,7 +701,7 @@ bool parseCommandLine(int argc, char* argv[]){
 						 <<", wE_out="<<wE_out<<", wF_out="<<wF_out
 						 <<", constant="<<a<<"/"<<b<<endl;
 				op = new FPConstMult(target, wE_in, wF_in, wE_out, wF_out, a, b);
-				addOperator(op);
+				addOperator(oplist, op);
 			}        
 		} 	
 
@@ -922,7 +721,7 @@ bool parseCommandLine(int argc, char* argv[]){
 						 <<", wE_out="<<wE_out<<", wF_out="<<wF_out
 						 <<", cst_sgn="<<cst_sgn<<", cst_exp="<<cst_exp<< ", cst_sig="<<mpz2string(cst_sig)<<endl;
 				op = new FPConstMult(target, wE_in, wF_in, wE_out, wF_out, cst_sgn, cst_exp, cst_sig);
-				addOperator(op);
+				addOperator(oplist, op);
 			}        
 		} 	
 #ifdef HAVE_SOLLYA
@@ -940,7 +739,7 @@ bool parseCommandLine(int argc, char* argv[]){
 					  <<", lsbOut="<<lsbOut
 					  << ", constant="<<constant <<endl;
 				op = new FixRealKCM(target, lsbIn, msbIn, signedInput, lsbOut, constant);
-				addOperator(op);
+				addOperator(oplist, op);
 			}        
 		}
 		else if(opname=="FPRealKCM"){
@@ -953,7 +752,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				string constant = argv[i++];
 				cerr << "> FPRealKCM, wE="<<wE<<", wF="<<wF << ", constant="<<constant <<endl;
 				op = new FPRealKCM(target, wE, wF, constant);
-				addOperator(op);
+				addOperator(oplist, op);
 			}        
 		}
 		else if(opname=="CRFPConstMult"){ 
@@ -970,7 +769,7 @@ bool parseCommandLine(int argc, char* argv[]){
 					  <<", wE_out="<<wE_out<<", wF_out="<<wF_out
 					  << ", constant="<<constant <<endl;
 				op = new CRFPConstMult(target, wE_in, wF_in, wE_out, wF_out, constant);
-				addOperator(op);
+				addOperator(oplist, op);
 			}        
 		} 	
 		else if(opname=="FPConstMult"){ 
@@ -989,7 +788,7 @@ bool parseCommandLine(int argc, char* argv[]){
 					  << ", wF_C=" << wF_C
 					  << ", constant="<<constant <<endl;
 				op = new FPConstMult(target, wE_in, wF_in, wE_out, wF_out, wF_C, constant);
-				addOperator(op);
+				addOperator(oplist, op);
 			}        
 		} 	
 #endif // HAVE_SOLLYA
@@ -1005,7 +804,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				inputDelays["S"]=0;
 				cerr << "> LeftShifter, wIn="<<wIn<<", maxShift="<<maxShift<<"\n";
 				op = new Shifter(target, wIn, maxShift, Shifter::Left);
-				addOperator(op);
+				addOperator(oplist, op);
 			}    
 		}
 		else if(opname=="RightShifter"){
@@ -1020,7 +819,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				inputDelays["S"]=0;
 				cerr << "> RightShifter, wIn="<<wIn<<", maxShift="<<maxShift<<"\n";
 				op = new Shifter(target, wIn, maxShift, Shifter::Right, inputDelays);
-				addOperator(op);
+				addOperator(oplist, op);
 			}
 		}
 		else if(opname=="LZOC"){
@@ -1031,7 +830,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
 				cerr << "> LZOC, wIn="<<wIn<<"\n";
 				op = new LZOC(target, wIn);
-				addOperator(op);
+				addOperator(oplist, op);
 			}
 		}
 		else if(opname=="LZOCShifter"){
@@ -1044,7 +843,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				if (wIn > 1){
 					cerr << "> LZOCShifter, wIn="<<wIn<<", wOut="<<wOut<< endl;
 					op = new LZOCShifterSticky(target, wIn, wOut, intlog2(wIn), 0, -1);
-					addOperator(op);
+					addOperator(oplist, op);
 				}else
 					cerr << "wIn must be > 1"<<endl;
 			}
@@ -1059,7 +858,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				if (wIn > 1){
 					cerr << "> LZCShifter, wIn="<<wIn<<", wOut="<<wOut<< endl;
 					op = new LZOCShifterSticky(target, wIn, wOut, intlog2(wIn), 0, 0);
-					addOperator(op);
+					addOperator(oplist, op);
 				}else
 					cerr << "wIn must be > 1"<<endl;
 			}
@@ -1074,7 +873,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				if (wIn > 1){
 					cerr << "> LOCShifter, wIn="<<wIn<<", wOut="<<wOut<< endl;
 					op = new LZOCShifterSticky(target, wIn, wOut, intlog2(wIn), 0, 1);
-					addOperator(op);
+					addOperator(oplist, op);
 				}else
 					cerr << "wIn must be > 1"<<endl;
 			}
@@ -1089,7 +888,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				if (wIn > 1){
 					cerr << "> LZOCShifterSticky, wIn="<<wIn<<", wOut="<<wOut<< endl;
 					op = new LZOCShifterSticky(target, wIn, wOut, intlog2(wIn), 1, -1);
-					addOperator(op);
+					addOperator(oplist, op);
 				}else
 					cerr << "wIn must be > 1"<<endl;
 			}
@@ -1104,7 +903,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				if (wIn > 1){
 					cerr << "> LZCShifterSticky, wIn="<<wIn<<", wOut="<<wOut<< endl;
 					op = new LZOCShifterSticky(target, wIn, wOut, intlog2(wIn), 1, 0);
-					addOperator(op);
+					addOperator(oplist, op);
 				}else
 					cerr << "wIn must be > 1"<<endl;
 			}
@@ -1119,7 +918,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				if (wIn > 1){
 					cerr << "> LOCShifterSticky, wIn="<<wIn<<", wOut="<<wOut<< endl;
 					op = new LZOCShifterSticky(target, wIn, wOut, intlog2(wIn), 1, 1);
-					addOperator(op);
+					addOperator(oplist, op);
 				}else
 					cerr << "wIn must be > 1"<<endl;
 			}
@@ -1136,7 +935,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				int param1 = checkStrictlyPositive(argv[i++], argv[0]);
 				cerr << "> UserDefinedOperator, param0="<<param0<<", param1=" << param1 << endl  ;
                                 op = new UserDefinedOperator(target,param0,param1);
-                                addOperator(op);
+                                addOperator(oplist, op);
 			}    
 		}
 		else if(opname=="IntAdder"){
@@ -1147,7 +946,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
 				cerr << "> IntAdder, wIn="<<wIn<<endl  ;
 				op = new IntAdder(target,wIn, inDelayMap("X",target->ffDelay() + target->localWireDelay()) );
-				addOperator(op);
+				addOperator(oplist, op);
 			}    
 		}
 		else if(opname=="IntComparator"){
@@ -1160,7 +959,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				
 				cerr << "> IntComparator, wIn="<<wIn<<" criteria="<<criteria<<endl  ;
 				op = new IntComparator(target,wIn,criteria,false,0);
-				addOperator(op);
+				addOperator(oplist, op);
 			}    
 		}
 		else if(opname=="IntConstComparator"){
@@ -1174,7 +973,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				
 				cerr << "> IntComparator, wIn="<<wIn<<" criteria="<<criteria<<endl  ;
 				op = new IntComparator(target,wIn,criteria, true, constant);
-				addOperator(op);
+				addOperator(oplist, op);
 			}    
 	}
 	
@@ -1207,7 +1006,7 @@ bool parseCommandLine(int argc, char* argv[]){
 					case 3: op = new IntAdder(target, wIn, delayMap, 3, srl, implementation); break; //latency
 					default: op = new IntAdder(target,wIn, delayMap, 2, srl, implementation); break;
 				}
-				addOperator(op);
+				addOperator(oplist, op);
 			}    
 		}
 
@@ -1222,7 +1021,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				int N   = checkStrictlyPositive(argv[i++], argv[0]);
 				cerr << "> IntMultiAdder, wIn="<<wIn<<" N="<<N<<endl  ;
 				op = new IntMultiAdder(target,wIn,N);
-				addOperator(op);
+				addOperator(oplist, op);
 			}    
 		}
 
@@ -1235,7 +1034,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				int N   = checkStrictlyPositive(argv[i++], argv[0]);
 				cerr << "> IntNAdder, wIn="<<wIn<<" N="<<N<<endl  ;
 				op = new IntNAdder(target, wIn, N, inDelayMap("X0",target->localWireDelay()));
-				addOperator(op);
+				addOperator(oplist, op);
 			}    
 		}
 
@@ -1248,7 +1047,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				int N   = checkStrictlyPositive(argv[i++], argv[0]);
 				cerr << "> IntCompressorTree, wIn="<<wIn<<" N="<<N<<endl  ;
 				op = new IntCompressorTree(target,wIn,N);
-				addOperator(op);
+				addOperator(oplist, op);
 			}    
 		}
 
@@ -1261,7 +1060,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
 				cerr << "> IntAdderSpecific, wIn="<<wIn<<endl  ;
 				op = new IntAdderSpecific(target,wIn);
-				addOperator(op);
+				addOperator(oplist, op);
 			}    
 		}
 		else if(opname=="IntComparatorSpecific"){ //Hidden
@@ -1273,7 +1072,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				int type = atoi(argv[i++]);
 				cerr << "> IntComparatorSpecific, wIn="<<wIn<<" type="<<type<< endl  ;
 				op = new IntComparatorSpecific(target,wIn,type);
-				addOperator(op);
+				addOperator(oplist, op);
 			}    
 		}
 		else if(opname=="CarryGenerationCircuit"){ //Hidden
@@ -1284,7 +1083,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
 				cerr << "> CarryGenerationCircuit, wIn="<<wIn<<endl  ;
 				op = new CarryGenerationCircuit(target,wIn);
-				addOperator(op);
+				addOperator(oplist, op);
 			}    
 		}
 		/* interface */
@@ -1302,7 +1101,7 @@ bool parseCommandLine(int argc, char* argv[]){
 					op = new LongIntAdderAddAddMuxGen2(target,wIn, inDelayMap("X",target->ffDelay() + target->localWireDelay() ));
 				else 
 					throw "Generation parameter is either 1 or 2";
-				addOperator(op);
+				addOperator(oplist, op);
 			}    
 		}
 		else if(opname=="LongIntAdderMuxNetwork"){ //Mux network
@@ -1313,7 +1112,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
 				cerr << "> LongIntAdderMuxNetwork, wIn="<<wIn<<endl  ;
 				op = new LongIntAdderMuxNetwork(target,wIn);
-				addOperator(op);
+				addOperator(oplist, op);
 			}    
 		}
 		else if(opname=="LongIntAdderCmpCmpAdd"){ //CCA
@@ -1330,7 +1129,7 @@ bool parseCommandLine(int argc, char* argv[]){
 					op = new LongIntAdderCmpCmpAddGen2(target,wIn, inDelayMap("X",target->ffDelay() + target->localWireDelay() ));
 				else 
 					throw "Generation parameter is either 1 or 2";
-				addOperator(op);
+				addOperator(oplist, op);
 			}    
 		}
 		else if(opname=="LongIntAdderCmpAddInc"){ //CAI
@@ -1347,7 +1146,7 @@ bool parseCommandLine(int argc, char* argv[]){
 					op = new LongIntAdderCmpAddIncGen2(target,wIn, inDelayMap("X",target->ffDelay() + target->localWireDelay() ));
 				else 
 					throw "Generation parameter is either 1 or 2";
-				addOperator(op);
+				addOperator(oplist, op);
 			}    
 		}
 		/*---------------------------------------------------------*/
@@ -1362,7 +1161,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				int opType = checkBoolean(argv[i++], argv[0]);
 				cerr << "> IntDualSub, wIn="<<wIn<<" OpType="<<opType<<endl  ;
 				op = new IntDualSub(target,wIn,opType);
-				addOperator(op);
+				addOperator(oplist, op);
 			}    
 		}
 		else if(opname=="IntMultiplier"){
@@ -1381,7 +1180,7 @@ bool parseCommandLine(int argc, char* argv[]){
 					sign_ = false;
 				cerr << "> IntMultiplier , wInX="<<wInX<<", wInY="<<wInY<<" signed="<<sign_<<"\n";
 				op = new IntMultiplier(target, wInX, wInY, emptyDelayMap, sign_, ratio);
-				addOperator(op);
+				addOperator(oplist, op);
 			}
 		}
 		else if(opname=="UnsignedIntMultiplier"){
@@ -1393,7 +1192,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				int wInY = checkStrictlyPositive(argv[i++], argv[0]);
 				cerr << "> UnsignedIntMultiplier , wInX="<<wInX<<", wInY="<<wInY<<"\n";
 				op = new UnsignedIntMultiplier(target, wInX, wInY);
-				addOperator(op);
+				addOperator(oplist, op);
 			}
 		}
 		else if(opname=="SignedIntMultiplier"){
@@ -1405,7 +1204,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				int wInY = checkStrictlyPositive(argv[i++], argv[0]);
 				cerr << "> SignedIntMultiplier , wInX="<<wInX<<", wInY="<<wInY<<"\n";
 				op = new SignedIntMultiplier(target, wInX, wInY);
-				addOperator(op);
+				addOperator(oplist, op);
 			}
 		}
 		else if(opname=="IntKaratsuba"){
@@ -1416,7 +1215,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
 				cerr << "> IntKaratsuba , wIn="<<wIn<<"\n";
 				op = new IntKaratsuba(target, wIn);
-				addOperator(op);
+				addOperator(oplist, op);
 			}    
 		}   
 		else if(opname=="IntTilingMultiplier"){
@@ -1433,7 +1232,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				
 				cerr << "> IntTilingMultiplier , wInX="<<wInX<<", wInY="<<wInY<<" ratio=" << r << " maxTimeInMinutes= "<< maxTimeInMinutes << "\n";
 				op = new IntTilingMult(target, wInX, wInY, r, maxTimeInMinutes, false);
-				addOperator(op);
+				addOperator(oplist, op);
 			}
 		}
 		else if(opname=="IntTruncMultiplier"){
@@ -1456,7 +1255,7 @@ bool parseCommandLine(int argc, char* argv[]){
 
 				cerr << "> IntTruncMult , wInX="<<wInX<<", wInY=" <<wInY <<", wOut=" <<wOut << " ratio=" << r << " useLimits="<<useLimits<<" maxTimeInMinutes="<<maxTimeInMinutes<<" signed="<<sign<<"\n";
 				op = new IntTruncMultiplier(target, wInX, wInY, wOut, r,useLimits, maxTimeInMinutes, false, sign);
-				addOperator(op);
+				addOperator(oplist, op);
 			}
 		}		
 		// For the FPAdder the default is the single-path design
@@ -1470,7 +1269,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				
 				cerr << "> FPAdder , wE="<<wE<<", wF="<<wF<<" \n";
 				op = new FPAdderSinglePath(target, wE, wF, wE, wF, wE, wF);
-				addOperator(op);
+				addOperator(oplist, op);
 			}
 		}		
 		else if(opname=="FPAdderDualPath"){
@@ -1483,7 +1282,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				
 				cerr << "> FPAdderDualPath , wE="<<wE<<", wF="<<wF<<" \n";
 				op = new FPAdderDualPath(target, wE, wF, wE, wF, wE, wF);
-				addOperator(op);
+				addOperator(oplist, op);
 			}
 		}
 		else if(opname=="FPAdder3Input"){
@@ -1496,7 +1295,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				
 				cerr << "> FPAdder3Input , wE="<<wE<<", wF="<<wF<<" \n";
 				op = new FPAdder3Input(target, wE, wF);
-				addOperator(op);
+				addOperator(oplist, op);
 			}
 	}	
 		else if(opname=="FPFMAcc"){
@@ -1509,7 +1308,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				int adderLatency = checkStrictlyPositive(argv[i++], argv[0]);
 				cerr << "> FPFMAcc , wE="<<wE<<", wF="<<wF<<" adderLatency="<<adderLatency<< " \n";
 				op = new FPFMAcc(target, wE, wF, adderLatency);
-				addOperator(op);
+				addOperator(oplist, op);
 			}
 		}		
 #ifdef HAVE_SOLLYA
@@ -1526,7 +1325,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				int ver = atoi(argv[i++]);
 				cerr << "> FPJacobi , wE="<<wE<<", wF="<<wF<<" l0="<<l0<<" l1="<<l1<<" l2="<<l2<<" ver="<<ver<< " \n";
 				op = new FPJacobi(target, wE, wF, l0, l1, l2,ver);
-				addOperator(op);
+				addOperator(oplist, op);
 			}
 	}	
 #endif // HAVE_SOLLYA
@@ -1547,7 +1346,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				
 				cerr << "> TaMaDiModule , wP="<<wP<<", degree="<<degree<<" numberOfIterations="<<numberOfIterations<<" widthOfIntervalID="<<widthOfIntervalID<< " width comparisson="<<widthComp<<" n="<<n<<" inFifo="<<inFifoDepth<<" peFifo="<<peFifoDepth<<" outFifo"<<outFifoDepth <<" \n";
 				op = new TaMaDiModule(target, wP, degree, numberOfIterations, widthOfIntervalID, widthComp, n, inFifoDepth, peFifoDepth, outFifoDepth);
-				addOperator(op);
+				addOperator(oplist, op);
 			}
 		}	
 		else if(opname=="TaMaDiModuleDummyWrapper"){
@@ -1567,7 +1366,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				
 				cerr << "> TaMaDiModuleDummyWrapper , wP="<<wP<<", degree="<<degree<<" numberOfIterations="<<numberOfIterations<<" widthOfIntervalID="<<widthOfIntervalID<<" width comparisson="<<widthComp<<" n="<<n<<" inFifo="<<inFifoDepth<<" peFifo="<<peFifoDepth<<" outFifo"<<outFifoDepth <<" \n";
 				op = new TaMaDiModuleDummyWrapper(target, wP, degree, numberOfIterations, widthOfIntervalID, widthComp, n, inFifoDepth, peFifoDepth, outFifoDepth);
-				addOperator(op);
+				addOperator(oplist, op);
 			}
 		}
 		else if(opname=="TaMaDiDeserializer"){
@@ -1587,7 +1386,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				
 				cerr << "> TaMaDiDeserializer , wP="<<wP<<", degree="<<degree<<" numberOfIterations="<<numberOfIterations<<" widthOfIntervalID="<<widthOfIntervalID<<" width comparisson="<<widthComp<<" n="<<n<<" inFifo="<<inFifoDepth<<" peFifo="<<peFifoDepth<<" outFifo"<<outFifoDepth <<" \n";
 				op = new TaMaDiDeserializer(target, wP, degree, numberOfIterations, widthOfIntervalID, n, inFifoDepth, peFifoDepth, outFifoDepth);
-				addOperator(op);
+				addOperator(oplist, op);
 			}
 		}		
 		else if(opname=="TaMaDiModuleWrapperInterface"){
@@ -1607,7 +1406,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				
 				cerr << "> TaMaDiModuleWrapperInterface , wP="<<wP<<", degree="<<degree<<" numberOfIterations="<<numberOfIterations<<" widthOfIntervalID="<<widthOfIntervalID<<" width comparisson="<<widthComp<<" n="<<n<<" inFifo="<<inFifoDepth<<" peFifo="<<peFifoDepth<<" outFifo"<<outFifoDepth <<" \n";
 				op = new TaMaDiModuleWrapperInterface(target, wP, degree, numberOfIterations, widthOfIntervalID, widthComp, n, inFifoDepth, peFifoDepth, outFifoDepth);
-				addOperator(op);
+				addOperator(oplist, op);
 			}
 		}
 		else if(opname=="TaMaDiDispatcherInterface"){
@@ -1629,7 +1428,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				
 				cerr << "> TaMaDiModuleWrapperInterface , wP="<<wP<<", degree="<<degree<<" numberOfIterations="<<numberOfIterations<<" widthOfIntervalID="<<widthOfIntervalID<<" width comparisson="<<widthComp<<" n="<<n<<" inFifo="<<inFifoDepth<<" peFifo="<<peFifoDepth<<" outFifo"<<outFifoDepth << " interfaceInFifo="<<InterfaceInFifoDepth<<" interfaceOutFifoDepth="<<InterfaceOutFifoDepth<<"\n";
 				op = new TaMaDiDispatcherInterface(target, wP, degree, numberOfIterations, widthOfIntervalID, widthComp,  n, inFifoDepth, peFifoDepth, outFifoDepth, InterfaceInFifoDepth, InterfaceOutFifoDepth);
-				addOperator(op);
+				addOperator(oplist, op);
 			}
 		}
 		else if(opname=="TaMaDiSystem"){
@@ -1652,7 +1451,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				
 				cerr << "> TaMaDiSystem , wP="<<wP<<", degree="<<degree<<" numberOfIterations="<<numberOfIterations<<" widthOfIntervalID="<<widthOfIntervalID<<" width comparisson="<<widthComp<<" n="<<n<<" inFifo="<<inFifoDepth<<" peFifo="<<peFifoDepth<<" outFifo"<<outFifoDepth << " interfaceInFifo="<<InterfaceInFifoDepth<<" interfaceOutFifoDepth="<<InterfaceOutFifoDepth<<" moduleCount="<<moduleCount<<"\n";
 				op = new TaMaDiSystem(target, wP, degree, numberOfIterations, widthOfIntervalID, widthComp, n, inFifoDepth, peFifoDepth, outFifoDepth, InterfaceInFifoDepth, InterfaceOutFifoDepth, moduleCount );
-				addOperator(op);
+				addOperator(oplist, op);
 			}
 		}
 		else if(opname=="TaMaDiCore"){
@@ -1667,7 +1466,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				int widthComp          =  checkStrictlyPositive(argv[i++], argv[0]);
 				cerr << "> TaMaDiCore , wP="<<wP<<", degree="<<degree<<" numberOfIterations="<<numberOfIterations<<" widthOfIntervalID="<<widthOfIntervalID <<" width comparisson="<<widthComp<<" \n";
 				op = new TaMaDiCore(target, wP, degree, numberOfIterations, widthOfIntervalID, widthComp);
-				addOperator(op);
+				addOperator(oplist, op);
 			}
 		}	
 		else if(opname=="TaMaDiPriorityEncoder"){
@@ -1678,7 +1477,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				int n = checkStrictlyPositive(argv[i++], argv[0]);
 				cerr << "> TaMaDiPriorityEncoder , n="<<n<<" \n";
 				op = new TaMaDiPriorityEncoder(target, n);
-				addOperator(op);
+				addOperator(oplist, op);
 			}
 		}	
 		else if(opname=="TaMaDiDecoder"){
@@ -1689,7 +1488,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				int n = checkStrictlyPositive(argv[i++], argv[0]);
 				cerr << "> TaMaDiDecoder ,output n="<<n<<" \n";
 				op = new TaMaDiDecoder(target, n);
-				addOperator(op);
+				addOperator(oplist, op);
 			}
 		}	
 		else if(opname=="TaMaDiFIFO"){
@@ -1702,7 +1501,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				int limit = atoi(argv[i++]);
 				cerr << "> TaMaDiFIFO ,output w="<<n<<" depth="<<n<<" with full report limit at "<<limit<<" \n";
 				op = new TaMaDiFIFO(target, w, n, limit);
-				addOperator(op);
+				addOperator(oplist, op);
 			}
 		}
 		
@@ -1715,7 +1514,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				int n = checkStrictlyPositive(argv[i++], argv[0]);
 				cerr << "> TaMaDiShiftRegister ,w="<<w<<" levels="<<n<<" \n";
 				op = new TaMaDiShiftRegister(target, w, n);
-				addOperator(op);
+				addOperator(oplist, op);
 			}
 		}		
 
@@ -1732,7 +1531,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				
 				cerr << "> Fix2FP, LSB="<<LSB<<", MSB="<<MSB<<", wE="<<wE<<", wF="<<wF<<" \n";
 				op = new Fix2FP(target, LSB, MSB, sign,wE, wF);
-				addOperator(op);
+				addOperator(oplist, op);
 			}
 		}
 		// else if(opname=="CoilInductance"){
@@ -1750,7 +1549,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		// 		char *pa=argv[i++];
 		// 		cerr << "> CoilInductance  LSBI="<<LSBI<<", MSBI="<<MSBI<<",wEIn="<<wE<<",wFIn"<<wF<<", MaxMSBO="<<MaxMSBO<<", LSBO="<<LSBO<<", MSBO="<<MSBO<<" \n";
 		// 		op = new CoilInductance(target, LSBI, MSBI,wE,wF,MaxMSBO,LSBO,MSBO,pa);
-		// 		addOperator(op);
+		// 		addOperator(oplist, op);
 		// 	}
 		// }
 		// else if(opname=="CoordinatesTableX"){
@@ -1764,7 +1563,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		// 		char *pa=argv[i++];
 		// 		cerr << "> CoordinatesTableX, wIn="<<wIn<<", LSB="<<LSB<<", MSB="<<MSB<<" \n";
 		// 		op = new CoordinatesTableX(target, wIn,LSB, MSB,pa);
-		// 		addOperator(op);
+		// 		addOperator(oplist, op);
 		// 	}
 		// }
 		// else if(opname=="CoordinatesTableZ"){
@@ -1778,7 +1577,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		// 		char *pa=argv[i++];
 		// 		cerr << "> CoordinatesTableZ, wIn="<<wIn<<", LSB="<<LSB<<", MSB="<<MSB<<" \n";
 		// 		op = new CoordinatesTableZ(target, wIn,LSB, MSB,pa);
-		// 		addOperator(op);
+		// 		addOperator(oplist, op);
 		// 	}
 		// }
 		// else if(opname=="CoordinatesTableY"){
@@ -1792,7 +1591,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		// 		char *pa=argv[i++];
 		// 		cerr << "> CoordinatesTableY, wIn="<<wIn<<", LSB="<<LSB<<", MSB="<<MSB<<" \n";
 		// 		op = new CoordinatesTableY(target, wIn,LSB, MSB,pa);
-		// 		addOperator(op);
+		// 		addOperator(oplist, op);
 		// 	}
 		// }
 		else if(opname=="FPMultiplier"){
@@ -1804,7 +1603,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			int wFOut = checkStrictlyPositive(argv[i++], argv[0]);
 			cerr << "> FPMultiplier , wE="<<wE<<", wFIn="<<wFIn<<", wFOut="<<wFOut<<" \n";
 			op = new FPMultiplier(target, wE, wFIn, wE, wFIn, wE, wFOut, true /*normd*/, true /*CR*/);
-			addOperator(op);
+			addOperator(oplist, op);
 		} 
 		else if(opname=="FPMultiplierFaithful"){
 			int nargs = 3; 
@@ -1815,7 +1614,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			int wFOut = checkStrictlyPositive(argv[i++], argv[0]);
 			cerr << "> FPMultiplierFaithful , wE="<<wE<<", wFIn="<<wFIn<<", wFOut="<<wFOut<<" \n";
 			op = new FPMultiplier(target, wE, wFIn, wE, wFIn, wE, wFOut, true, false);
-			addOperator(op);
+			addOperator(oplist, op);
 		}
 		else if(opname=="FPMultiplierKaratsuba"){
 			int nargs = 3; 
@@ -1827,7 +1626,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				int wFOut = checkStrictlyPositive(argv[i++], argv[0]);
 				cerr << "> FPMultiplierKaratsuba , wE="<<wE<<", wFIn="<<wFIn<<", wFOut="<<wFOut<<" \n";
 				op = new FPMultiplierKaratsuba(target, wE, wFIn, wE, wFIn, wE, wFOut, 1);
-				addOperator(op);
+				addOperator(oplist, op);
 			}
 		}  
 		else if(opname=="FPMultiplierExpert"){
@@ -1843,7 +1642,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			int maxTimeInMinutes = atoi(argv[i++]);
 
 			op = new FPMultiplier(target, wE, wFXIn, wE, wFYIn, wE, wFOut, true, correctRounding, r, maxTimeInMinutes);
-			addOperator(op);
+			addOperator(oplist, op);
 		}  
 		else if(opname=="FPSquarer"){
 			int nargs = 3; 
@@ -1855,7 +1654,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				int wFR = checkStrictlyPositive(argv[i++], argv[0]);
 				cerr << "> FPSquarer , wE="<<wE<<", wFX="<<wFX<<" wFR="<<wFR<< " \n";
 				op = new FPSquarer(target, wE, wFX, wFR);
-				addOperator(op);
+				addOperator(oplist, op);
 			}
 		} 
 		else if (opname == "FPDiv")
@@ -1867,7 +1666,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			int wF = checkStrictlyPositive(argv[i++], argv[0]);
 			cerr << "> FPDiv: wE=" << wE << " wF=" << wF << endl;
 			op = new FPDiv(target, wE, wF);
-			addOperator(op);
+			addOperator(oplist, op);
 		}
 		else if (opname == "FPSqrt")
 		{
@@ -1878,7 +1677,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			int wF = checkStrictlyPositive(argv[i++], argv[0]);
 			cerr << "> FPSqrt: wE=" << wE << " wF=" << wF  << endl;
 			op = new FPSqrt(target, wE, wF);
-			addOperator(op);
+			addOperator(oplist, op);
 		}
 #ifdef HAVE_SOLLYA
 		else if (opname == "FPSqrtPoly")
@@ -1892,7 +1691,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			int degree = checkStrictlyPositive(argv[i++], argv[0]);
 			cerr << "> FPSqrtPoly: wE=" << wE << " wF=" << wF << " correctlyRounded="<< correctlyRounded << " degree =" << degree << endl;
 			op = new FPSqrtPoly(target, wE, wF, correctlyRounded, degree);
-			addOperator(op);
+			addOperator(oplist, op);
 		}
 #endif // HAVE_SOLLYA
 
@@ -1908,7 +1707,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				int MSBA = atoi(argv[i++]); // may be negative
 				cerr << "> Long accumulator , wEX="<<wEX<<", wFX="<<wFX<<", MaxMSBX="<<MaxMSBX<<", LSBA="<<LSBA<<", MSBA="<<MSBA<<"\n";
 				op = new LongAcc(target, wEX, wFX, MaxMSBX, LSBA, MSBA);
-				addOperator(op);
+				addOperator(oplist, op);
 			}
 		}
 
@@ -1942,7 +1741,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				int wF_out = checkStrictlyPositive(argv[i++], argv[0]);
 				cerr << "> Post-Normalization unit for Long accumulator, LSBA="<<LSBA<<", MSBA="<<MSBA<<" wE_out="<<wE_out<<", wF_out="<<wF_out<<"\n";
 				op = new LongAcc2FP(target, LSBA, MSBA, wE_out, wF_out);
-				addOperator(op);
+				addOperator(oplist, op);
 			}
 		}
 #ifndef _WIN32
@@ -1979,7 +1778,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				double ratio = atof(argv[i++]); // may be negative
 				cerr << "> DotProduct , wE="<<wE<<", wFX="<<wFX<<", wFY="<<wFY<<", MaxMSBX="<<MaxMSBX<<", LSBA="<<LSBA<<", MSBA="<<MSBA<<", ratio="<<ratio<<"\n";
 				op = new DotProduct(target, wE, wFX, wFY, MaxMSBX, LSBA, MSBA, ratio);
-				addOperator(op);
+				addOperator(oplist, op);
 			}
 		}
 //		else if(opname=="PolynomialEvaluator"){
@@ -2000,7 +1799,7 @@ bool parseCommandLine(int argc, char* argv[]){
 //				coef.push_back(f2);
 
 //				op = new PolynomialEvaluator(target, coef, y, prec);
-//				addOperator(op);
+//				addOperator(oplist, op);
 //			}
 //		}
 				
@@ -2016,7 +1815,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			int n  = checkStrictlyPositive(argv[i++], argv[0]);
 			cerr << "> HOTBM func='" << func << "', wI=" << wI << ", wO=" << wO <<endl;
 			op = new HOTBM(target, func, "", wI, wO, n);
-			addOperator(op);
+			addOperator(oplist, op);
 		}
 
 		else if (opname == "HOTBMFX") {
@@ -2040,7 +1839,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			cerr << "> HOTBM func='" << func << "', wE_in=" << wE_in << ", wF_in=" << wF_in
 			     << ", wE_out=" << wE_out << ", wF_out=" << wF_out << endl;
 			op = new HOTBM(target, func, "", wI, wO, n, xmin, xmax, scale);
-			addOperator(op);
+			addOperator(oplist, op);
 		}
 		
 		else if (opname == "HOTBMRange") {
@@ -2059,7 +1858,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			cerr << "> HOTBM func='" << func << "', wI=" << wI << ", wO=" << wO
 			     << ", xmin=" << xmin << ", xmax=" << xmax << ", scale=" << scale <<endl;
 			op = new HOTBM(target, func, "", wI, wO, n, xmin, xmax, scale);
-			addOperator(op);
+			addOperator(oplist, op);
 		}
 		
 #endif // HAVE_HOTBM
@@ -2075,7 +1874,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			int wF = checkStrictlyPositive(argv[i++], argv[0]);
 			cerr << "> FPExp: wE=" << wE << " wF=" << wF << endl;
 			op = new FPExp(target, wE, wF, 0, 0);
-			addOperator(op);
+			addOperator(oplist, op);
 		}
 
 
@@ -2092,7 +1891,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			int fullInput=checkBoolean(argv[i++],  argv[0]);
 			cerr << "> FPExp: wE=" << wE << " wF=" << wF << endl;
 			op = new FPExp(target, wE, wF, k, d, g, fullInput);
-			addOperator(op);
+			addOperator(oplist, op);
 		}
 
 		else if (opname == "FPLog")
@@ -2105,7 +1904,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			int inTableSize=atoi(argv[i++]);
 			cerr << "> FPLog: wE=" << wE << " wF=" << wF << endl;
 			op = new FPLog(target, wE, wF, inTableSize);
-			addOperator(op);
+			addOperator(oplist, op);
 		}
 
 		else if (opname == "FPPowerExpert")
@@ -2124,7 +1923,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			cerr << "> "<< (type==0?"FPPow":"FPPowr") << ": wE=" << wE << " wF=" << wF 
 			     << "logTableSize" << logTableSize << "expTableSize" << expTableSize << "expDegree" << expDegree << endl;
 			op = new FPPow(target, wE, wF, type, logTableSize, expTableSize, expDegree);
-			addOperator(op);
+			addOperator(oplist, op);
 		}
 
 		else if (opname == "FPPow")
@@ -2138,7 +1937,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			int wF = checkStrictlyPositive(argv[i++], argv[0]);
 			cerr << "> FPPowr: wE=" << wE << " wF=" << wF << endl;
 			op = new FPPow(target, wE, wF, 0);
-			addOperator(op);
+			addOperator(oplist, op);
 		}
 
 		else if (opname == "FPPowr")
@@ -2152,7 +1951,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			int wF = checkStrictlyPositive(argv[i++], argv[0]);
 			cerr << "> FPPowr: wE=" << wE << " wF=" << wF << endl;
 			op = new FPPow(target, wE, wF, 1);
-			addOperator(op);
+			addOperator(oplist, op);
 		}
 
 		else if (opname == "InputIEEE")
@@ -2166,7 +1965,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			int wFO = checkStrictlyPositive(argv[i++], argv[0]);
 			cerr << "> InputIEEE: wEI=" << wEI << " wFI=" << wFI << " wEO=" << wEO << " wFO=" << wFO << endl;
 			op = new InputIEEE(target, wEI, wFI, wEO, wFO);
-			addOperator(op);
+			addOperator(oplist, op);
 		}
 
 		else if (opname == "OutputIEEE")
@@ -2180,7 +1979,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			int wFO = checkStrictlyPositive(argv[i++], argv[0]);
 			cerr << "> OutputIEEE: wEI=" << wEI << " wFI=" << wFI << " wEO=" << wEO << " wFO=" << wFO << endl;
 			op = new OutputIEEE(target, wEI, wFI, wEO, wFO);
-			addOperator(op);
+			addOperator(oplist, op);
 		}
 
 		else if (opname == "Collision")
@@ -2193,7 +1992,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			int optimize = checkBoolean(argv[i++], argv[0]);
 			cerr << "> Collision: wE=" << wE << " wF=" << wF << (optimize==0? " using FP operators" : " optimized version") << endl;
 			op = new Collision(target, wE, wF, optimize);
-			addOperator(op);
+			addOperator(oplist, op);
 		}
 		else if (opname == "FPSumOfSquares")
 		{
@@ -2205,7 +2004,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			int optimize = checkBoolean(argv[i++], argv[0]);
 			cerr << "> FPSumOfSquares: wE=" << wE << " wF=" << wF << (optimize==0? " using FP operators" : " optimized version") << endl;
 			op = new FPSumOfSquares(target, wE, wF, optimize);
-			addOperator(op);
+			addOperator(oplist, op);
 		}
 		else if (opname == "IntSquarer")
 		{
@@ -2215,7 +2014,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			int wIn = checkStrictlyPositive(argv[i++], argv[0]);
 			cerr << "> IntSquarer: wIn=" << wIn << endl;
 			op = new IntSquarer(target, wIn);
-			addOperator(op);
+			addOperator(oplist, op);
 		}
 #ifndef _WIN32
 #ifdef HAVE_LNS
@@ -2229,7 +2028,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			cerr << "> LNSAddSub: wE=" << wE << " wF=" << wF << endl;
 			op = new LNSAddSub(target, wE, wF);
 			if(cl_name!="")	op->setName(cl_name);
-			addOperator(op);
+			addOperator(oplist, op);
 		}
 		else if (opname == "LNSMul")
 		{
@@ -2241,7 +2040,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			cerr << "> LNSMul: wE=" << wE << " wF=" << wF << endl;
 			op = new LNSMul(target, wE, wF);
 			if(cl_name!="")	op->setName(cl_name);
-			addOperator(op);
+			addOperator(oplist, op);
 		}
 		else if (opname == "LNSDiv")
 		{
@@ -2252,7 +2051,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			int wF = checkStrictlyPositive(argv[i++], argv[0]);
 			cerr << "> LNSDiv: wE=" << wE << " wF=" << wF << endl;
 			op = new LNSDiv(target, wE, wF);
-			addOperator(op);
+			addOperator(oplist, op);
 		}
 		else if (opname == "LNSSqrt")
 		{
@@ -2264,7 +2063,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			cerr << "> LNSSqrt: wE=" << wE << " wF=" << wF << endl;
 			op = new LNSSqrt(target, wE, wF);
 			if(cl_name!="")	op->setName(cl_name);
-			addOperator(op);
+			addOperator(oplist, op);
 		}
 		else if (opname == "LNSAdd")
 		{
@@ -2276,7 +2075,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			int o = checkStrictlyPositive(argv[i++], argv[0]);
 			cerr << "> LNSAdd: wE=" << wE << " wF=" << wF << " o=" << o << endl;
 			op = new LNSAdd(target, wE, wF, o);
-			addOperator(op);
+			addOperator(oplist, op);
 		}
 		// Undocumented LNS operators, for debugging purposes
 #if 0
@@ -2290,7 +2089,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			int wE = atoi(argv[i++]);
 			cerr << "> CotranF1: wF=" << wF << " j=" << j << " wE=" << wE << endl;
 			op = new TableOp(target, new CotranF1Table(wF, j, wE));
-			addOperator(op);
+			addOperator(oplist, op);
 		}
 		else if (opname == "CotranF2")
 		{
@@ -2301,7 +2100,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			int j = checkStrictlyPositive(argv[i++], argv[0]);
 			cerr << "> CotranF2: wF=" << wF << " j=" << j << endl;
 			op = new TableOp(target, new CotranF2Table(wF, j));
-			addOperator(op);
+			addOperator(oplist, op);
 		}
 		else if (opname == "CotranF3")
 		{
@@ -2312,7 +2111,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			int j = checkStrictlyPositive(argv[i++], argv[0]);
 			cerr << "> CotranF3: wF=" << wF << " j=" << j << endl;
 			op = new TableOp(target, new CotranF3Table(wF, j));
-			addOperator(op);
+			addOperator(oplist, op);
 		}
 #endif // #if 0
 		else if (opname == "Cotran")
@@ -2328,7 +2127,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			cerr << "> Cotran: wE=" << wE << " wF=" << wF << " j=" << j
 				<< " wECotran=" << wECotran << " o=" << o << endl;
 			op = new Cotran(target, wE, wF, j, wECotran);
-			addOperator(op);
+			addOperator(oplist, op);
 		}
 		else if (opname == "CotranHybrid")
 		{
@@ -2343,7 +2142,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			cerr << "> Cotran: wE=" << wE << " wF=" << wF << " j=" << j 
 				<< " wECotran=" << wECotran << " o=" << o << endl;
 			op = new CotranHybrid(target, wE, wF, j, wECotran);
-			addOperator(op);
+			addOperator(oplist, op);
 		}
 		else if (opname == "AtanPow")
 		{
@@ -2355,7 +2154,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			int o = checkStrictlyPositive(argv[i++], argv[0]);
 			cerr << "> AtanPow: wE=" << wE << " wF=" << wF << " o=" << o << endl;
 			op = new AtanPow(target, wE, wF, o);
-			addOperator(op);
+			addOperator(oplist, op);
 		}
 		else if (opname == "LogSinCos")
 		{
@@ -2368,7 +2167,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			cerr << "> LogSinCos: fL=" << fL
 				<< " fTheta=" << fTheta << " o=" << o << endl;
 			op = new LogSinCos(target, fL, fTheta, o);
-			addOperator(op);
+			addOperator(oplist, op);
 		}
 #endif
 
@@ -2385,7 +2184,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				Operator* toWrap = oplist.back();
 				cerr << "> Wrapper for " << toWrap->getName()<<endl;
 				op =new Wrapper(target, toWrap);
-				addOperator(op);
+				addOperator(oplist, op);
 			}
 		}
 #ifdef HAVE_HOTBM
@@ -2401,7 +2200,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			cerr << "> PolyTableGenerator func='" << func << "', wO=" << wO <<endl;	
 			
 			Operator* tg = new PolyTableGenerator(target, func,  wO, n);
-				addOperator(tg);
+				addOperator(oplist, tg);
 			
 		}
 		
@@ -2418,7 +2217,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				
 			cerr << "> FunctionTable func='" << func << "', wI=" << wI << ", lsbO=" << lsbO << ", msbO=" << msbO << endl;	
 			Operator* tg = new FunctionTable(target, func, wI, lsbO, msbO);
-			addOperator(tg);
+			addOperator(oplist, tg);
 		}
 
 		else if (opname == "FunctionEvaluator") {
@@ -2434,7 +2233,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			cerr << "> FunctionEvaluator func='" << func << "', wI=" << wI << ", wO=" << wO << ", degree=" << n << endl;	
 			string arg=func+",0,1,1"; // we are not sure it works for other values
 			Operator* tg = new FunctionEvaluator(target, arg, wI, wO, n);
-			addOperator(tg);
+			addOperator(oplist, tg);
 		}
 
 		else if (opname == "FPPipeline") {
@@ -2446,7 +2245,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			int wF = checkStrictlyPositive(argv[i++], argv[0]);
 			cerr << "> FPPipeline expr='" << expr << "', wE=" << wE << ", wF=" << wF << endl;	
 			Operator* tg = new FPPipeline(target, expr, wE, wF);
-			addOperator(tg);
+			addOperator(oplist, tg);
 		}
 
 #endif
@@ -2463,7 +2262,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			Operator* toWrap = oplist.back();
 			Operator* op = new TestBench(target, toWrap, n);
 			cerr << "> TestBench for " << toWrap->getName()<<endl;
-			addOperator(op);
+			addOperator(oplist, op);
 			cerr << "To run the simulation using ModelSim, type the following in 'vsim -c':" <<endl;
 			cerr << tab << "vdel -all -lib work" <<endl;
 			cerr << tab << "vlib work" <<endl;
@@ -2491,7 +2290,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			Operator* toWrap = oplist.back();
 			Operator* op = new TestBench(target, toWrap, n, true);
 			cerr << "> TestBench for " << toWrap->getName()<<endl;
-			addOperator(op);
+			addOperator(oplist, op);
 			cerr << "To run the simulation using ModelSim, type the following in 'vsim -c':" <<endl;
 			cerr << tab << "vdel -all -lib work" <<endl;
 			cerr << tab << "vlib work" <<endl;
@@ -2513,6 +2312,21 @@ bool parseCommandLine(int argc, char* argv[]){
 	return true;
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 int main(int argc, char* argv[] )
 {
 	uint32_t i;
@@ -2522,8 +2336,10 @@ int main(int argc, char* argv[] )
 
 	target = new Virtex4();
 
+	vector<Operator*> oplist;
+
 	try {
-		parseCommandLine(argc, argv);
+		parseCommandLine(argc, argv, oplist);
 	} catch (char const * s) {
 		cerr << "Exception while parsing command line: " << s << endl;
 		return 1;
@@ -2539,7 +2355,7 @@ int main(int argc, char* argv[] )
 
 	ofstream file;
 	file.open(filename.c_str(), ios::out);
-	outputVHDLToFile(oplist, file);
+	Operator::outputVHDLToFile(oplist, file);
 	file.close();
 	
 //	for(int k=oplist.size()-1; k>=0; k--) {

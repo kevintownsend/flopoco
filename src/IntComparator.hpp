@@ -10,7 +10,6 @@
 
 namespace flopoco{
 
-	extern map<string, double> emptyDelayMap;
 	/** 
 	 * An integer comparator for FloPoCo
 	 */ 

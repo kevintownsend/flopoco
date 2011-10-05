@@ -10,7 +10,6 @@
 
 
 namespace flopoco{
-	extern map<string, double> emptyDelayMap;
 
 	/** The Shifter class. Left and right shifters are perfectly
 		 symmetrical, so both are instances of the Shifter class. Only the

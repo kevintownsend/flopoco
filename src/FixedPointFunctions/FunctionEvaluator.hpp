@@ -12,8 +12,6 @@
 
 namespace flopoco{
 
-	extern map<string, double> emptyDelayMap;
-
 
 	/** The FunctionEvaluator class */
 	class FunctionEvaluator : public Operator

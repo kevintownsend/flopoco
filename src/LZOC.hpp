@@ -10,7 +10,6 @@
 
 namespace flopoco{
 
-	extern map<string, double> emptyDelayMap;
 	/** The Leading zero/one counter class.  
 	 * Recursive structure with intlog2(wIn) stages.
 	 */

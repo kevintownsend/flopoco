@@ -14,7 +14,6 @@ namespace flopoco {
 #define SLICE      2
 #define LATENCY    3
 	
-	extern map<string, double> emptyDelayMap;
 	/** The IntAdder class for experimenting with adders.
 	 */
 	class IntAdder : public Operator {

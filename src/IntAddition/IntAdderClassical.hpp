@@ -13,7 +13,6 @@ namespace flopoco {
 #define PINF 16384
 #define XILINX_OPTIMIZATION 1
 	
-	extern map<string, double> emptyDelayMap;
 	/** The IntAdderClassical class for experimenting with adders.
 	*/
 	class IntAdderClassical : public IntAdder{

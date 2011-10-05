@@ -9,8 +9,6 @@
 
 
 namespace flopoco{
-
-extern map<string, double> emptyDelayMap;
 /** The IntIntKCM class. 
 */
 class IntIntKCM : public Operator

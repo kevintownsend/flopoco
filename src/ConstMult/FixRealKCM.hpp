@@ -5,10 +5,6 @@
 
 namespace flopoco{
 
-	extern map<string, double> emptyDelayMap;
-  
-    
-
 	class FixRealKCM : public Operator
 	{
 	public:

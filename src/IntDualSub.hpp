@@ -9,7 +9,6 @@
 
 namespace flopoco{
 
-	extern map<string, double> emptyDelayMap;
 	/** The IntDualSub class computes both X-Y and Y-X, or both X-Y and X+Y 
 	 */
 	class IntDualSub : public Operator

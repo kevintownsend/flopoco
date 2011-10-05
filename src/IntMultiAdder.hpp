@@ -9,7 +9,6 @@
 
 namespace flopoco {
 	
-	extern map<string, double> emptyDelayMap;
 	/** The IntMultiAdder class for experimenting with adders.
 	 */
 	class IntMultiAdder : public Operator {

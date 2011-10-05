@@ -17,7 +17,6 @@ namespace flopoco {
 #define PINF 16384
 #define XILINX_OPTIMIZATION 1
 	
-	extern map<string, double> emptyDelayMap;
 	/** The IntAdderAlternative class for experimenting with adders.
 	*/
 	class IntAdderAlternative : public IntAdder {

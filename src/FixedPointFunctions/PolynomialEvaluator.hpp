@@ -16,7 +16,6 @@ namespace flopoco{
 
 #define MINF -16384
 
-	extern map<string, double> emptyDelayMap;
 	
 	/**
 	 * The FixedPointCoefficinet class provides the objects for representing 

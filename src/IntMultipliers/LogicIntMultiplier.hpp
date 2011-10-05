@@ -12,7 +12,6 @@
 
 namespace flopoco{
 
-extern map<string, double> emptyDelayMap;
 	/** 
 	 * The Integer Multiplier class. Receives at input two numbers of 
 	 * wInX and wInY widths and outputs a result having the width wOut=wInX+wInY 

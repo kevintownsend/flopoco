@@ -135,10 +135,9 @@ SET_SOURCE_FILES_PROPERTIES(src/FPExpressions/ExpressionScanner GENERATED)
 
 
 ADD_EXECUTABLE(flopoco
- src/FPExpressions/ExpressionParserData
- src/FPExpressions/ExpressionParser 
- src/FPExpressions/ExpressionScanner 
-
+ src/FloPoCo.hpp
+ src/Operator
+ src/Signal
  src/main
  src/utils
  src/FlopocoStream
@@ -146,12 +145,15 @@ ADD_EXECUTABLE(flopoco
 
  src/Targets/DSP
  src/Target src/Targets/Virtex4 src/Targets/Spartan3 src/Targets/Virtex6 src/Targets/StratixII src/Targets/StratixIII src/Targets/Virtex5 src/Targets/StratixIV
- src/Operator
- src/Signal
+
+
  src/Table 
  src/DualTable 
  src/DualTable2
  
+ src/FPExpressions/ExpressionParserData
+ src/FPExpressions/ExpressionParser 
+ src/FPExpressions/ExpressionScanner 
  src/FPPipeline
 
  src/Wrapper

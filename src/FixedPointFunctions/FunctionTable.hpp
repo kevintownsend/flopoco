@@ -11,9 +11,6 @@
 
 namespace flopoco{
 
-	extern map<string, double> emptyDelayMap;
-
-
 	/** The FunctionTable class */
 	class FunctionTable : public Table
 	{

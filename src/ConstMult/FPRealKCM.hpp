@@ -4,8 +4,6 @@
 #include "../Table.hpp"
 
 namespace flopoco{
-
-	extern map<string, double> emptyDelayMap;
   
     
 

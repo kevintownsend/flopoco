@@ -40,8 +40,8 @@ namespace flopoco {
 
 	// global variables to get rid from
 extern int verbose;
-extern bool combinatorialOperator;
-extern map<string, double> emptyDelayMap;
+
+static const map<string, double> emptyDelayMap;
 
 
 const std::string tab = "   ";
@@ -908,6 +908,10 @@ public:
 		
 		oplist                      = op->getOpList();
 	}
+
+
+	static void outputVHDLToFile(vector<Operator*> &oplist, ofstream& file);
+
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////BEWARE: don't add anything below without adding it to cloneOperator, too

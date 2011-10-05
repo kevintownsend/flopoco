@@ -10,7 +10,6 @@
 namespace flopoco {
 
 
-extern map<string, double> emptyDelayMap;
 /** The IntMultiplier class for experimenting with adders.
 */
 class IntMultiplier : public Operator {
