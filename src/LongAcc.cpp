@@ -34,7 +34,6 @@ using namespace std;
 namespace flopoco{
 
 	extern vector<Operator*> oplist;
-	extern int LongAccN;
 
 	LongAcc::LongAcc(Target* target, int wEX, int wFX, int MaxMSBX, int LSBA, int MSBA, map<string, double> inputDelays,  bool forDotProd, int wFY): 
 		Operator(target), 
@@ -478,7 +477,7 @@ namespace flopoco{
 		currentIteration++;
 
 		//the last additionNumberOfChunks_-1 inputs must be 0 in order to propagate the carry bit in the accumulator
-		if (currentIteration  > LongAccN - additionNumberOfChunks_ + 1)
+		if (currentIteration  > numberOfTests - additionNumberOfChunks_ + 1)
 			sX = 0;
 
 		//convert this raw number into a FP number accornding to the flopoco FP format
@@ -536,7 +535,7 @@ namespace flopoco{
 		}
 	
 		//assign value to sA only at final iteration	
-		if (currentIteration==LongAccN)
+		if (currentIteration==numberOfTests)
 			sA = sInt2C2(AccValue_, sizeAcc_);
 	
  

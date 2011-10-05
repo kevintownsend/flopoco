@@ -51,7 +51,6 @@ using namespace flopoco;
 namespace flopoco{
 
 	int verbose=0;
-	int LongAccN;
 	
 	int Operator::uid = 0; //init of the uid static member of Operator
 

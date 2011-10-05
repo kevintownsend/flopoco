@@ -30,11 +30,13 @@ using namespace std;
 namespace flopoco{
 
 
-	extern int LongAccN;
 	TestBench::TestBench(Target* target, Operator* op, int n, bool fromFile):
 		Operator(target), op_(op), n_(n)
 	{
-		LongAccN = n;
+		// This allows the op under test to know how long it is beeing tested.
+		// useful only for testing the long acc, but who knows. 
+		op->numberOfTests = n;
+
 		srcFileName="TestBench";
 		setName("TestBench_" + op_->getName());
 		

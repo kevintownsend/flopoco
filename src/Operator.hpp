@@ -866,8 +866,6 @@ public:
 
 
 
-
-
 	/** Completely replace "this" with a copy of another operator. */
 	void cloneOperator(Operator *op){
 		subComponents_ = op->getSubComponents();
@@ -921,6 +919,7 @@ public:
 	vector<Signal*>     ioList_;          /**< The list of I/O signals of the operator */
 
 	FlopocoStream       vhdl;             /**< The internal stream to which the constructor will build the VHDL code */
+	int                 numberOfTests;    /**< The number of tests, set by TestBench before this operator is tested */
 
 protected:    
 	Target*             target_;          /**< The target on which the operator will be deployed */
