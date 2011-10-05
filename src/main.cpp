@@ -312,6 +312,7 @@ static void usage(char *name, string opName = ""){
 		cerr << "      Floating-point dot product unit. Ratio parameter controls  \n";
 		cerr << "      DSP/Logic tradeoff\n";
 	}
+#ifdef HAVE_SOLLYA
 	if ( full || opName == "FPExp"){					
 		OP( "FPExp","wE wF");
 		cerr << "      Floating-point exponential function. For expert mode, use FPExpExpert.\n";
@@ -339,7 +340,7 @@ static void usage(char *name, string opName = ""){
 		cerr << "      Example of parameters:  8 23 0 10 10 2 3 3 (simple), 11 52 0 12 12 2 33  (double)\n";
 		cerr << "      For each parameter, 0 should default to something sensible\n";
 	}
-
+#endif // HAVE_SOLLYA
 	if ( full || opName == "OutputIEEE"){					
 		OP( "OutputIEEE","wEI wFI wEO wFO");
 		cerr << "      Conversion from FloPoCo to IEEE-754-like floating-point formats\n";
@@ -348,14 +349,14 @@ static void usage(char *name, string opName = ""){
 		OP( "InputIEEE","wEI wFI wEO wFO");
 		cerr << "      Conversion from IEEE-754-like to FloPoCo floating-point formats\n";
 	}
-#ifdef HAVE_HOTBM
+#ifdef HAVE_SOLLYA
 	if ( full ){
 		cerr << "    ____________ GENERIC FUNCTION EVALUATORS ____________________________________\n";
 		cerr << "      We provide two methods to evaluate a fixed-point function on [0,1]\n";
 	}
 	if ( full || opName == "FunctionEvaluator"){					
 		OP( "FunctionEvaluator","function wI lsbO degree");
-		cerr << "      Optimized Horner polynomial approximation, DSP based if available\n";
+		cerr << "      Horner polynomial approximation, DSP based if available\n";
 		cerr << "      wI - input width (also weight of input LSB), lsbO - weight of output LSB,\n";
 		cerr << "      degree - degree of polynomial approximation (typically 2 to 5),\n";
 		cerr << "      function - sollya-syntaxed function to implement, between double quotes\n";
@@ -377,7 +378,7 @@ static void usage(char *name, string opName = ""){
 		cerr << "      xmin xmax - bounds of the input range, mapped to [0,1[\n";
 		cerr << "      scale - scaling factor to apply to the function output\n";
 	}
-#endif // HAVE_HOTBM
+#endif // HAVE_SOLLYA
 #ifdef HAVE_LNS
 	if ( full )
 	cerr << "    ____________ LNS OPERATORS _________________________________________________\n";

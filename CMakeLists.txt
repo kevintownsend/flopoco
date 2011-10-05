@@ -42,7 +42,7 @@ FIND_LIBRARY(MPFR_LIB
 	DOC "Directory of the MPFR library")
 
 
-# Detect Sollya's Presence
+# Detect Sollya's presence
 FIND_LIBRARY( SOLLYA_LIB sollya )
 
 IF (SOLLYA_LIB)
@@ -51,6 +51,7 @@ IF (SOLLYA_LIB)
 ELSE (SOLLYA_LIB)
 	MESSAGE(STATUS "Sollya not found, many very nice operators won't be available")
 ENDIF (SOLLYA_LIB)
+
 
 IF (MPFR_H AND MPFR_LIB)
     SET(MPFR_FOUND TRUE)
