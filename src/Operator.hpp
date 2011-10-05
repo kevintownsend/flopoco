@@ -59,10 +59,14 @@ class Operator
 
 public:
 
-	static int getNewUId(){
-		Operator::uid++;
-		return Operator::uid;
-	}
+
+	/** generates the code for a list of operators and all their subcomponents */
+	static void outputVHDLToFile(vector<Operator*> &oplist, ofstream& file);
+
+
+	/** generates the code for this operator and all its subcomponents */
+	void outputVHDLToFile(ofstream& file);
+
 
 	/** Operator Constructor.
 	 * Creates an operator instance with an instantiated target for deployment.
@@ -175,6 +179,12 @@ public:
 	 * @return operator name
 	 */
 	string getName() const;
+
+	/** produces a new unique identifier */
+	static int getNewUId(){
+		Operator::uid++;
+		return Operator::uid;
+	}
 
 
 
@@ -362,6 +372,7 @@ public:
 	inline void endArchitecture(std::ostream& o){
 		o << "end architecture;" << endl << endl;
 	}
+
 
 
 
@@ -907,8 +918,6 @@ public:
 		oplist                      = op->getOpList();
 	}
 
-
-	static void outputVHDLToFile(vector<Operator*> &oplist, ofstream& file);
 
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////

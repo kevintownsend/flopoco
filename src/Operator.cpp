@@ -1343,7 +1343,7 @@ namespace flopoco{
 	
 
 	void Operator::outputVHDLToFile(vector<Operator*> &oplist, ofstream& file){
-		string srcFileName = "main.cpp";
+		string srcFileName = "Operator.cpp"; // for REPORT
 		for(unsigned i=0; i<oplist.size(); i++) {
 			try {
 				REPORT(FULL, "OPERATOR:"<<oplist[i]->getName());
@@ -1370,8 +1370,16 @@ namespace flopoco{
 					cerr << "Exception while generating '" << oplist[i]->getName() << "': " << s <<endl;
 			}
 		}
+	}
 	
- }
+
+	void Operator::outputVHDLToFile(ofstream& file){
+		vector<Operator*> oplist;
+		oplist.push_back(this);
+		Operator::outputVHDLToFile(oplist, file);
+	}
+	
+	
 
 }
 

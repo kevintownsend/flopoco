@@ -2330,8 +2330,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 int main(int argc, char* argv[] )
 {
 	uint32_t i;
-	string srcFileName = "main.cpp";
-
 	
 
 	target = new Virtex4();
@@ -2358,20 +2356,7 @@ int main(int argc, char* argv[] )
 	Operator::outputVHDLToFile(oplist, file);
 	file.close();
 	
-//	for(int k=oplist.size()-1; k>=0; k--) {
-//		if (unsigned(k)== (oplist.size()-1))
-//			oplist[k]->level = 0;
-//		else{
-//			string currentName = oplist[k]->getName();
-//			oplist[k]->level = 0;
-//			for(int j=oplist.size()-1; j>k; j--) {
-//				if (oplist[j]->hasComponent(currentName) ){
-//					oplist[k]->level = oplist[j]->level + 1;
-//				}	
-//			}
-//		}
-//	}	
-	
+
 	cerr << endl<<"Final report:"<<endl;
 	for(i=0; i<oplist.size(); i++) {
 		oplist[i]->outputFinalReport(0);
