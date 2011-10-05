@@ -134,11 +134,10 @@ ADD_CUSTOM_COMMAND(
 SET_SOURCE_FILES_PROPERTIES(src/FPExpressions/ExpressionScanner GENERATED)
 
 
-ADD_EXECUTABLE(flopoco
+ADD_LIBRARY(FloPoCo STATIC
  src/FloPoCo.hpp
  src/Operator
  src/Signal
- src/main
  src/utils
  src/FlopocoStream
  src/VHDLLexer
@@ -328,20 +327,21 @@ ADD_EXECUTABLE(flopoco
 
  src/UtilSollya
 )
+TARGET_LINK_LIBRARIES(
+  FloPoCo  
+  mpfr gmp gmpxx xml2 mpfi ${SOLLYA_LIB}
+  )
+SET(FLOPOCO_LIB FloPoCo)
+
+ADD_EXECUTABLE(flopoco
+ src/main 
+)
 
 
-
-
-IF (SOLLYA_LIB)
-  TARGET_LINK_LIBRARIES(
-    flopoco  
-    mpfr gmp gmpxx xml2 mpfi ${SOLLYA_LIB}
-    )
-ELSE (SOLLYA_LIB)
-  TARGET_LINK_LIBRARIES(
-    flopoco  
-    mpfr gmp gmpxx)
-ENDIF (SOLLYA_LIB)
+TARGET_LINK_LIBRARIES(
+  flopoco  
+	${FLOPOCO_LIB}
+  )
 
 
 ADD_EXECUTABLE(fp2bin src/Tools/fp2bin  src/utils)
