@@ -1,7 +1,7 @@
 /*
 Floating-point pipeline generator for FloPoCo
 
-Author : Florent de Dinechin
+Author : Bogdan Pasca, Florent de Dinechin
 
 Initial software.
 Copyright © ENS-Lyon, INRIA, CNRS, UCBL,  

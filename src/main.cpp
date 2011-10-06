@@ -46,16 +46,6 @@ using namespace flopoco;
 
 
 
-
-// global variables used through most of FloPoCo, to be encapuslated in something someday
-namespace flopoco{
-
-	int verbose=0;
-	
-	int Operator::uid = 0; //init of the uid static member of Operator
-
-}
-
 static void usage(char *name, string opName = ""){
 	bool full = (opName=="");
 
@@ -2240,11 +2230,11 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 			int nargs = 3;
 			if (i+nargs > argc)
 				usage(argv[0],opname); // and exit
-			string expr = argv[i++];
+			string filename = argv[i++];
 			int wE = checkStrictlyPositive(argv[i++], argv[0]);
 			int wF = checkStrictlyPositive(argv[i++], argv[0]);
-			cerr << "> FPPipeline expr='" << expr << "', wE=" << wE << ", wF=" << wF << endl;	
-			Operator* tg = new FPPipeline(target, expr, wE, wF);
+			cerr << "> FPPipeline filename='" << filename << "', wE=" << wE << ", wF=" << wF << endl;	
+			Operator* tg = new FPPipeline(target, filename, wE, wF);
 			addOperator(oplist, tg);
 		}
 
@@ -2323,6 +2313,16 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 
 
 
+
+
+// global variables used through most of FloPoCo, to be encapuslated in something someday
+namespace flopoco{
+
+	int verbose=0;
+	
+	int Operator::uid = 0; //init of the uid static member of Operator
+
+}
 
 
 

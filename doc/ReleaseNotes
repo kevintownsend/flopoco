@@ -1,4 +1,15 @@
 ======================================================================
+Version 2.3.0
+This version adds
+- FPPowr and FPPow functions from C99
+- FunctionTable
+- FPConstMultRational, correctly multiplication by small rational constants
+- TaMaDi architecture, an example of a full application
+- some clean-up to enable using FloPoCo as a library 
+- bug fixes and improvements
+
+
+======================================================================
 Version 2.2.1
 This is a bugfix release. It corrects major bugs on some multipliers
 not working on some Altera targets, and some minor bugs.
