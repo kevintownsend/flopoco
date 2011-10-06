@@ -1,4 +1,3 @@
-@
 #    IntTruncMultiplier wInX wInY ratio errorOrder limit maxTimeInMinutes sign
 
 yes | flopoco	-frequency=400 -target=Virtex4 IntTruncMultiplier 40 40 0.9  40 1 2 0

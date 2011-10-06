@@ -1,4 +1,3 @@
-@
 #          FPMultiplierKaratsuba
 
 flopoco FPMultiplierKaratsuba 8 23 23
