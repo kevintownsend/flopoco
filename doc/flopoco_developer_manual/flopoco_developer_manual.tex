@@ -26,10 +26,11 @@ FloPoCo \input{../../VERSION} developer manual
 
 Welcome to new developers! 
 
-The purpose of this document is to help you design an operator within the
-FloPoCo project.
+The purpose of this document is to help you use FloPoCo in your own
+project (section~\ref{sec:linking}), and to show you how to design your own pipelined operator
+using the FloPoCo framework (section~\ref{sec:pipeline-made-easy}). 
 
- \section{Getting started with FloPoCo}
+ \section{Getting started with FloPoCo\label{sec:getting-started}}
 
 
 \subsection{Getting the source and compiling using CMake}
@@ -46,13 +47,13 @@ just do some imitation of what is already there. Anyway \texttt{cmake} is well
 documented. The web page of the CMake project is \url{http://www.cmake.org/}.
 
 
-\subsection{Overview of the source code}
+\subsection{Overview of FloPoCo}
 
 In FloPoCo, everything is an \texttt{Operator}. Operator is a virtual
 class, all FloPoCo operators inherit this class. A good way to design
 a new operator is to imitate a simple one. We suggest
 %\texttt{IntAdder} or 
-\texttt{Shifter} for simple integer operators, and \texttt{FPAdder}
+\texttt{Shifter} for simple integer operators, and \texttt{FPAdderSinglePath}
 for a complex operator with several sub-components. An example of
 assembling several FP operators in a larger pipeline is
 \texttt{Collision}.
@@ -84,14 +85,31 @@ And do not hesitate to contact us: \texttt{Florent.de.Dinechin} or
   \end{latexonly}
 \end{center}
 
+\section{Linking against FloPoCo\label{sec:linking}}
+All the operators provided by the FloPoCo command line are availaible
+programmatically in libFloPoCo. A minimal example of using this
+library is provided in \texttt{src/main\_minimal.cpp}.
 
-\section{Pipelining made easy: a tutorial}
+The file \texttt{src/main.cpp} is the source of the FloPoCo command
+line, and as such uses most operators: looking at it is the quickest
+way to look for the interface of a given operator.
+
+The other way is, of course, to look at the corresponding \texttt{hpp}
+file -- they are all included by \texttt{src/Operator.hpp}. Some
+operators offer more constructors (richer interface options) than what
+is used in \texttt{src/main.cpp}.
+
+There should be a Doxygen documentation of FloPoCo.
+
+\section{Pipelining made easy: a tutorial \label{sec:pipeline-made-easy}}
 \label{sec:pme}
 
 
-If you want to experiment with a dummy operator and try the notions used in this
-section, consider reading and modifying the file UserDefinedOperator.hpp and
-.cpp which contains an experiment operator class : UserDefinedOperator.
+If you want to experiment with a dummy operator and try the notions
+used in this section, consider reading and modifying the file
+\texttt{UserDefinedOperator.hpp} and \texttt{.cpp}. They contain an
+operator class \texttt{UserDefinedOperator} that you may freely modify
+without disturbing the rest of FloPoCo.
 
 
 Let us consider a toy MAC unit, which in VHDL would be written
@@ -123,7 +141,7 @@ We have above the description of a combinatorial circuit. We now show how to
 turn it into a pipelined one.
 
 
-\subsection{First steps in FloPoCo}
+\subsection{First steps in FloPoCo operator writing}
 
 FloPoCo mostly requires you to copy the part of the VHDL that is
 between the \texttt{begin} and the \texttt{end} of the architecture
@@ -178,9 +196,11 @@ multiplication and the adder input. The code becomes:
 (...)
 \end{verbatim}
 
-Now this code will produce a properly synchronized pipelined operator
-with \verb!-pipeline=yes!, and will produce a combinatorial operator
-(the same as previously) with \verb!-pipeline=no!.
+With the command-line option \verb!-pipeline=yes!, this code will
+insert a synchronisation barrier before the adder, delaying \texttt{X}
+so that the operator is properly synchronized. It will produce a
+combinatorial operator (the same as previously) with
+\verb!-pipeline=no!.
 
 How does it work? 
 \begin{itemize}\item 
@@ -222,9 +242,9 @@ How does it work?
 \end{itemize}
 
 This whole scheme is actually run in two passes so that
-\verb!currentCycle! may for forth and back in the FloPoCo code, which is useful in some situations.
+\verb!currentCycle! may be moved forth and back in the FloPoCo code, which is useful in some situations.
 
-It should be noted that this scheme gracefully degrades to a
+This scheme gracefully degrades to a
 combinatorial operator. It also automatically adapts to random
 insertions and suppressions of synchronization barriers. Typically,
 one synthesizes an operator, and decides to break the critical path by
@@ -255,7 +275,7 @@ Some more notes:
     signals by setting \verb!currentCycle! to the max of their
     \verb!cycle!.
 
-See \verb!FPAdder! or \verb!FPLog! for examples of
+See \verb!FPAdderSinglePath! or \verb!FPLog! for examples of
   such synchronisations. 
   \end{itemize}
 
@@ -269,12 +289,14 @@ All these functions have an optional boolean
 
 \end{itemize}
 
-\subsection{Advanced pipeline with sub-components}
+
+\subsection{Pipeline with sub-components}
 
 We now show how to replace the + and * with FloPoCo pipelined
 operators. These operators support frequency-directed pipelining,
 which means that the resulting MAC will also have its pipeline depth
-automatically computed from the user-supplied frequency.
+automatically computed from the user-supplied frequency (the
+\texttt{-frequency} option of the command-line).
 
 \begin{verbatim}
 (...)
@@ -308,45 +330,54 @@ automatically computed from the user-supplied frequency.
 
 
 And that's it. In the code above, an \verb!inPortMap()! does the same
-job as an occurrence of signal on the right-hand side, and an \verb!outPortMap()! does the same job as
-a \verb!declare()!, although it doesn't need a signal width since it
-can read it from the sub-component. \verb!instance()! also has the
-effect that \verb!outputVHDL()! will declare this component in the
-VHDL header of \verb!MAC!.
+job as an occurrence of signal on the right-hand side, and an
+\verb!outPortMap()! does the same job as a \verb!declare()!, although
+it doesn't need a signal width since it can read it from the
+sub-component. \verb!instance()! also has the side effect that
+\verb!outputVHDL()! will declare this component in the VHDL header of
+\verb!MAC!.
 
-\subsection{Fine-grain frequency-directed pipelining}
+
+\subsection{Frequency-directed pipelining}
 \label{sec:finegrain}
 
-The command line of FloPoCo supports specifying the desired frequency of the
-generated operators by using the \verb!-frequency! option. The philosophy behind
-is to generate the smallest (in terms of resource usage) and the shorter latency
-operator given this frequency specification for a given target.
+The command line of FloPoCo supports specifying the desired frequency
+of the generated operators by using the \verb!-frequency! option. The
+philosophy behind is to generate the smallest (in terms of resource
+usage) and the shorter latency operator given this frequency
+specification (\texttt{-frequency} command-line option) for a given
+target (\texttt{-target} command-line option).
 
-Pipelining the operator for a fixed frequency can be easily done using the
+A fixed pipeline can be easily obtained using the
 \verb!nextCycle()! function previously introduced. As suggested before, frequency
-directed pipelining can be accomplished by surrounding the calls to
-\verb!nextCycle()! in conditional statements. The following methodology does 
-exactly that, but makes the code look cleaner. 
+directed pipelining can be accomplished by  conditional statements around the 
+\verb!nextCycle()!. The following methodology does 
+exactly that, but in a generic and (hopefully) future-proof way. 
 
-Let's go back to our basic MAC example (the one without components). Looking at
-the critical path it is clear that it goes through a multiplication and then an
-addition. We initialize our critical path variable by using the
-\verb!setCriticalPath(0.0)! function. Each time we are about to perform one 
-operation on the critical path (in this case a multiplication) we check 
-the current delay on the critical path + the delay of this operation. There are
-two cases:
+Let's go back to our basic MAC example (the one without
+components). Looking at the critical path it is clear that it goes
+through a multiplication and then an addition. Before emitting the
+code of an operation that will increase the critical path (in our
+example, the multiplication) we want to evaluate in advance what the
+critical path becomes if we add to it the delay of this
+operation. There are two cases:
 \begin{itemize}
-	\item this delay is smaller than the target period ($1/f$). In this case
-	the critical path delay is incremented with the operation delay.
-	\item the delay is $\ge$ than $1/f$. This actually means that it impossible
-	to perform these two operations in series while keeping the critical path
-	of the operator smaller than $1/f$. Therefore, a \verb!nextCycle()! function
-	is called to register barrier and the current critical path becomes 
-	the delay of the operation performed (the multiplication in this example).
+\item the new delay is greater than $1/f$. This means that it will be
+  impossible to perform these two operations in the same cycle while
+  ensuring proper operation at frequency $f$. In this case a
+  \verb!nextCycle()!  must be called to insert a
+  synchronisation barrier. This resets the critical path delay, which becomes  the
+  delay of the operation after the barrier (the multiplication in this
+  example).
+\item this new critical path delay is smaller than the target period
+  ($1/f$). In this case we just have to perform some bookkeeping: the
+  critical path delay is incremented with the operation delay.
 \end{itemize}
 
-The FloPoCo command that does it all is \verb!manageCriticalPath(multiplicationDelay)!.
-The same is valid for the next operation, the addition.
+The FloPoCo command that does it all is
+\verb!manageCriticalPath(double delay)!. It must be placed before each
+block of code that generates some hardware on the critical path --
+there is some designer expertise here.
 
 The augmented FloPoCo code would look something like:
 
@@ -358,17 +389,30 @@ The augmented FloPoCo code would look something like:
    vhdl << "R <= X + T ;" << endl;
 \end{verbatim}
 
+Note that the delay passed to \texttt{manageCriticalPath()} should be
+evaluated, whenever possible, using methods of the \texttt{Target}
+class. This ensure that this pipelining work is done once for all the possible targets. 
 
-In order to properly integrate operators in larger pipelines operators can optionally :
+
+\subsection{Sub-cycle pipelining (optional)}
+
+A working pipeline using sub-components is typically obtained by
+placing synchronization barriers on the inputs and outputs. However,
+it is often an overkill: most of the times, the previous approach
+leaves the output cycle not fully consumed. Also, sometimes, one wants
+to perform only a very simple, low-delay operation on the inputs.
+
+
+For such cases, operators can optionally :
 \begin{itemize}
 	\item receive a list of delays on the inputs ( ("X",1.5e-9),("Y",1.2e-9) ) representing
 	the combinatorial delays already present on these signals.
 	\item report the combinatorial delay on the output signals ("R", 2.0e-9).
 \end{itemize}
 
-Using this information we can properly adjust the pipeline for the given frequency.
-Consider that the input delays are given in the variable intuitively named 
-\verb!inputDelays!. For instance:
+Using this information, the sub-component constructor can properly
+adjust the pipeline for the given frequency.  Here is full example. The input
+delays are given in the variable named \verb!inputDelays!. 
 
 \begin{verbatim}
    setCriticalPath( getMaxInputDelays(inputDelays)  );
@@ -412,31 +456,37 @@ In the case of the second, component-based design, the code becomes:
    outDelayMap["R"] = getCriticalPath();
 \end{verbatim}
 
-For more information check our currently ported operators (FPExp for example) and
+For more information, check FPExp for example, and
 don't hesitate to contact us.
 
 
 \section{Test bench generation}
 
-The command\\
- \texttt{flopoco FPAdder 8 23 TestBench 500} \\
-produces a test bench of 500 test vectors to exercise FPAdder.
-
 \subsection{Operator emulation}
 
+\texttt{Operator} provides one more virtual method, \texttt{emulate},
+to be overloaded by each Operator. As the name indicates, this method
+provides a bit-accurate simulation of the operator.
+ 
+Once this method is available, the command\\
+ \texttt{flopoco FPAdder 8 23 TestBench 500} \\
+produces a test bench of 500 test vectors to exercise \texttt{FPAdder}. 
 
-It requires only one additional method, \texttt{emulate}. As the name
-indicates, this method provides a bit-accurate simulation of the operator. 
-\begin{itemize}
-\item Most operators should be fully specified: for a given input
+It is useful to consider \texttt{emulate()} as the specification of
+the behaviour of the operator. Therefore, as any instructor will tell
+you, it should be written \emph{before} the code generating the VHDL
+of the operator!
+
+
+ Most operators should be fully specified: for a given input
   vector, they must output a uniquely defined vector. Imitate
   \texttt{IntAdder} for an integer operator. For floating-point
   operators, this unique output is the combination of a mathematical
   function and a well-defined rounding mode. The bit-exact MPFR
-  library is used in this case. Imitate \texttt{FPAdder} in this case.
+  library is used in this case. Imitate \texttt{FPAdderSinglePath} in this case.
 
-\item Other operators are not defined so strictly, and may take
-  several output values. The last parameter of \texttt{addOutput}
+ Other operators are not defined so strictly, and may have
+  several acceptable output values. The last parameter of \texttt{addOutput}
   defines how many values this output may take. An acceptable
   requirement in floating-point is \emph{faithful rounding}: the
   operator should return one of the two FP values surrounding the
@@ -445,12 +495,11 @@ indicates, this method provides a bit-accurate simulation of the operator.
   MPFR. See \texttt{FPLog} for a simple example, and
   \texttt{Collision} for a more complex example (computing the two
   faithful values for $x^2+y^2+z^2$).
-\end{itemize}
 
 \subsection{Operator-specific test  vector generation}
 Overloading \texttt{\small emulate()} is enough for FloPoCo to be able
-to create a generic test bench using random inputs. However, function
-analysis also allows for better, more operator-specific test-case
+to create a generic test bench using random inputs. However, it is
+often possible to perform better, more operator-specific test-case
 generation. Let us just take two examples.
 
 \begin{itemize}\item 
