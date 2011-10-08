@@ -24,6 +24,10 @@ using namespace std;
 
 namespace flopoco {
 
+	// global const variables
+	static const map<string, double> emptyDelayMap;
+	const std::string tab = "   ";
+	
 	// Reporting levels
 #define LIST 0
 #define INFO 1
@@ -32,19 +36,12 @@ namespace flopoco {
 #define FULL 4
 
 
+
 #define INNER_SEPARATOR "................................................................................"
 #define DEBUG_SEPARATOR "________________________________________________________________________________"
 #define OUTER_SEPARATOR "################################################################################"
 #define REPORT(level, stream) {if ((level)<=(verbose)){ cerr << "> " << srcFileName << ": " << stream << endl;}else{}} 
 
-
-	// global variables to get rid from
-extern int verbose;
-
-static const map<string, double> emptyDelayMap;
-
-
-const std::string tab = "   ";
 
 
 
@@ -966,6 +963,11 @@ private:
 	bool                   hardOperator_;               /**< False if this operator is just an interface operator to several possible implementations*/
 
 };
+
+	// global variables used through most of FloPoCo,
+	// to be encapsulated in something, someday?
+	
+	extern int verbose;
 
 } //namespace
 #endif

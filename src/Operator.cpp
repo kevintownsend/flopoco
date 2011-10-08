@@ -22,6 +22,12 @@ Copyright © ENS-Lyon, INRIA, CNRS, UCBL,
 
 namespace flopoco{
 	
+
+	// global variables used through most of FloPoCo,
+	// to be encapsulated in something, someday?
+	int Operator::uid = 0; //init of the uid static member of Operator
+	int verbose=0;
+	
 	Operator::Operator(Target* target, map<string, double> inputDelays, bool hardOperator){
 		target_                     = target;
 		numberOfInputs_             = 0;

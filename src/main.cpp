@@ -2315,15 +2315,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 
 
 
-// global variables used through most of FloPoCo, to be encapuslated in something someday
-namespace flopoco{
-
-	int verbose=0;
-	
-	int Operator::uid = 0; //init of the uid static member of Operator
-
-}
-
 
 
 

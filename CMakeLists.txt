@@ -338,11 +338,21 @@ ADD_EXECUTABLE(flopoco
  src/main 
 )
 
-
 TARGET_LINK_LIBRARIES(
   flopoco  
 	${FLOPOCO_LIB}
   )
+
+
+ADD_EXECUTABLE(fpadder_example
+ src/main_minimal 
+)
+TARGET_LINK_LIBRARIES(
+  fpadder_example  
+	${FLOPOCO_LIB}
+  )
+
+
 
 
 ADD_EXECUTABLE(fp2bin src/Tools/fp2bin  src/utils)
