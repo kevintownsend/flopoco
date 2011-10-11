@@ -4,7 +4,9 @@
   This file is part of the FloPoCo project 
   developed by the Arenaire team at Ecole Normale Superieure de Lyon
   
-  Authors : Sebastian Banescu, Bogdan Pasca, Radu Tudoran
+  Authors : Sebastian Banescu, 
+            Bogdan Pasca, Bogdan.Pasca@ens-lyon.org,
+            Radu Tudoran
 
   Initial software.
   Copyright © ENS-Lyon, INRIA, CNRS, UCBL,  

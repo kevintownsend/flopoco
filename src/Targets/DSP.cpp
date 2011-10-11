@@ -34,20 +34,19 @@ namespace flopoco{
 			
 		DSP** ops = new DSP*[3];
 	
-		for (int j=0; j<3; j++)
-			{
-				ops[j] = NULL;
-			}
+		for (int j=0; j<3; j++){
+			ops[j] = NULL;
+		}
 			
 		addOperands_ = ops;
-		shiftIn_ = NULL;
-		shiftOut_ = NULL;
+		shiftIn_     = NULL;
+		shiftOut_    = NULL;
 		posPop = posPush = max_pos=availablepos=0;
-		nrOfPrimitiveDSPs=1;
+		nrOfPrimitiveDSPs = 1;
 	}
 	
 	int DSP::getNrOfPrimitiveDSPs(){
-	return 	nrOfPrimitiveDSPs;
+		return 	nrOfPrimitiveDSPs;
 	}
 	
 	void DSP::setNrOfPrimitiveDSPs(int nr){
@@ -55,54 +54,51 @@ namespace flopoco{
 	}
 
 	void DSP::allocatePositions(int dimension){
-		max_pos=dimension;
-		availablepos=0;
-		posPop = posPush =0;
-		Xpositions = new int[dimension];
-		Ypositions = new int[dimension];
+		max_pos      = dimension;
+		availablepos = 0;
+		posPop       = posPush = 0;
+		Xpositions   = new int[dimension];
+		Ypositions   = new int[dimension];
 	}
 	
-	void DSP::push(int X,int Y)
+	void DSP::push(int X, int Y)
 	{
-		int p=availablepos,tx,ty;
-		//bool ver=true;
-		for(int i=0;i<availablepos;i++)
-		{
-			if( p==availablepos&& (Xpositions[i]>X || (Xpositions[i] == X &&  Ypositions[i]>Y) ))
-				p=i;			
-			if(X == Xpositions[i] && Y == Ypositions[i])
+		int p=availablepos, tx,ty;
+
+		for (int i=0; i < availablepos; i++){
+			if ( p == availablepos && ( Xpositions[i] > X || ( Xpositions[i] == X && Ypositions[i]>Y)))
+				p = i;			
+			if (X == Xpositions[i] && Y == Ypositions[i])
 				return ;
 		}	
 		
-		//cout<<p<<" "<<X<<" "<<Y<<endl;
-		
-		if(posPush<max_pos)
-			{
-				if(p<availablepos){
+		if(posPush < max_pos){
+		/* the element is pushed somewhere in the sorted list */
+			if (p < availablepos) {
 				tx = Xpositions[p];
 				ty = Ypositions[p];
 				Xpositions[p]=X;
 				Ypositions[p]=Y;
 				X=tx;
 				Y=ty;
-				for(int i =p+1;i<availablepos;i++)
-				{
-				tx = Xpositions[i];
-				ty = Ypositions[i];
-				Xpositions[i]=X;
-				Ypositions[i]=Y;
-				X=tx;
-				Y=ty;
+
+				for(int i=p+1; i<availablepos; i++){
+					tx = Xpositions[i];
+					ty = Ypositions[i];
+					Xpositions[i]=X;
+					Ypositions[i]=Y;
+					X=tx;
+					Y=ty;
 				}
-				}
-				Xpositions[posPush]=X;
-				Ypositions[posPush++]=Y;
-				availablepos++;
 			}
+			
+			Xpositions[posPush]=X;
+			Ypositions[posPush++]=Y;
+			availablepos++;
+		}
 	}
 	
-	int DSP::pop()
-	{
+	int DSP::pop(){
 		int temp=posPop;
 		if(temp<availablepos)
 			{
@@ -124,10 +120,19 @@ namespace flopoco{
 		}
 	}
 	
+	void DSP::tilingResetPosition(){
+		posPop = posPush = 0;
+		availablepos = 0;	
+		nrOfPrimitiveDSPs = 1;
+	}
+	
 	void DSP::resetPosition()
 	{
 		posPop = 0;
 	}
+	
+	
+	
 	
 	int DSP::getAvailablePositions(){
 		return availablepos;
@@ -185,6 +190,15 @@ namespace flopoco{
 		multAccumulate_ = m;
 	}
 
+	void DSP::getCoordinates(int &xT, int &yT, int &xB, int &yB){
+		xT = positionX_[0];
+		yT = positionY_[0];
+
+		xB = positionX_[1];
+		yB = positionY_[1];
+	}
+
+
 	void DSP::getTopRightCorner(int &x, int &y){
 		x = positionX_[0];
 		y = positionY_[0];
@@ -203,6 +217,11 @@ namespace flopoco{
 	void DSP::setBottomLeftCorner(int x, int y){
 		positionX_[1] = x;
 		positionY_[1] = y;
+	}
+
+	void DSP::setConfiguration(int p){
+		setTopRightCorner  ( Xpositions[p], Ypositions[p]);
+		setBottomLeftCorner( Xpositions[p]+getMaxMultiplierWidth()-1, Ypositions[p]+getMaxMultiplierHeight()-1);	
 	}
 
 	DSP* DSP::getShiftIn(){
@@ -232,17 +251,25 @@ namespace flopoco{
 	void DSP::rotate(){
 		int tx,ty;
 		getTopRightCorner(tx,ty);
-		//cout<<"Old dimensions were "<<maxMultiplierHeight_<<" "<<maxMultiplierWidth_<<endl;
 		int tmp = maxMultiplierHeight_;
 		maxMultiplierHeight_ = maxMultiplierWidth_;
 		maxMultiplierWidth_ = tmp;
-		//cout<<"New dimensions are "<<maxMultiplierHeight_<<" "<<maxMultiplierWidth_<<endl;
-	
-		//getBottomLeftCorner(tx,ty);
-		//cout<<"Old were "<<tx<<" "<<ty<<endl;
 		setBottomLeftCorner(tx + maxMultiplierWidth_-1 , ty + maxMultiplierHeight_-1);
-		//getBottomLeftCorner(tx,ty);
-		//cout<<"New are "<<tx<<" "<<ty<<endl;
+	}
+
+	void DSP::resetRotation(){
+		if (rotated){
+			int tmp = maxMultiplierHeight_;
+			maxMultiplierHeight_ = maxMultiplierWidth_;
+			maxMultiplierWidth_ = tmp;
+		}
+	}
 	
+	bool DSP::isRotated(){
+		return rotated;
+	}
+	
+	void DSP::setRotated(bool rotateValue){
+		rotated = rotateValue;	
 	}
 }

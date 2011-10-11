@@ -4,7 +4,8 @@
   This file is part of the FloPoCo project
   developed by the Arenaire team at Ecole Normale Superieure de Lyon
   
-  Author : Florent de Dinechin, Florent.de.Dinechin@ens-lyon.fr
+  Authors : Florent de Dinechin, Florent.de.Dinechin@ens-lyon.fr
+            Bogdan Pasca, Bogdan.Pasca@ens-lyon.org
 
   Initial software.
   Copyright © ENS-Lyon, INRIA, CNRS, UCBL,  
@@ -1221,7 +1222,7 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				int maxTimeInMinutes = atoi(argv[i++]);
 				
 				cerr << "> IntTilingMultiplier , wInX="<<wInX<<", wInY="<<wInY<<" ratio=" << r << " maxTimeInMinutes= "<< maxTimeInMinutes << "\n";
-				op = new IntTilingMult(target, wInX, wInY, r, maxTimeInMinutes, false);
+				op = new IntTilingMult(target, wInX, wInY, r, maxTimeInMinutes, true);
 				addOperator(oplist, op);
 			}
 		}

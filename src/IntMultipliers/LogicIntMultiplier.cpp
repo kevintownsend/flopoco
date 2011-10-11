@@ -52,9 +52,6 @@ namespace flopoco{
 		srcFileName="LogicIntMultiplier";
 		setName(name.str());
 		
-		REPORT(INFO, "################################################################################");
-		REPORT(INFO, " ------------------- wInX="<<wInX<<" wInY="<<wInY<<" sign="<<sign<<" -------------------");
-	
 		setCopyrightString("Bogdan Pasca, Sebastian Banescu (2008-2009)");
 	
 		addInput ("X", wInX_,true);
