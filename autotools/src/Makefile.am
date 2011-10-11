@@ -11,7 +11,7 @@ CLEANFILES = $(BUILT_SOURCES) lex.yy.c *.output
 
 noinst_LTLIBRARIES = libflopoco.la
 
-noinst_HEADERS = apps/Collision.hpp apps/FPFMAcc.hpp apps/FPJacobi.hpp\
+noinst_HEADERS = FloPoCo.hpp apps/Collision.hpp apps/FPFMAcc.hpp apps/FPJacobi.hpp\
         ConstMult/IntIntKCM.hpp ConstMult/CRFPConstMult.hpp ConstMult/FixRealKCM.hpp ConstMult/FPRealKCM.hpp ConstMult/FPConstMult.hpp ConstMult/IntConstMult.hpp ConstMult/KCMTable.hpp\
         ConstMult/ShiftAddDag.hpp ConstMult/ShiftAddOp.hpp \
         fplogarithm/FirstInvTable.hpp fplogarithm/FirstLogTable.hpp fplogarithm/OtherLogTable.hpp \
@@ -20,9 +20,9 @@ noinst_HEADERS = apps/Collision.hpp apps/FPFMAcc.hpp apps/FPJacobi.hpp\
         Targets/DSP.hpp Targets/Spartan3.hpp Targets/StratixII.hpp Targets/StratixIII.hpp Targets/StratixIV.hpp Targets/Virtex4.hpp Targets/Virtex5.hpp Targets/Virtex6.hpp \
         DotProduct.hpp  DualTable.hpp DualTable2.hpp Fix2FP.hpp FP2Fix.hpp FXP_Shift.hpp FlopocoStream.hpp FPAdderDualPath.hpp FPAdderSinglePath.hpp \
         FPDiv.hpp FPExp.hpp FPLog.hpp FPMultiplier.hpp FPNumber.hpp \
-	FPSqrt.hpp FPSqrtPoly.hpp FPSquarer.hpp FixedPointFunctions/FunctionEvaluator.hpp FixedPointFunctions/HOTBM.hpp IEEENumber.hpp InputIEEE.hpp IntAdder.hpp IntAddition/IntAdderClassical.hpp IntAddition/IntAdderAlternative.hpp IntAddition/IntAdderShortLatency.hpp IntCompressorTree.hpp IntDualSub.hpp IntKaratsuba.hpp IntMultiplier.hpp \
-	IntNAdder.hpp IntSquarer.hpp IntMultipliers/IntTilingMult.hpp IntTruncMultiplier.hpp LongAcc2FP.hpp LongAcc.hpp LZOC.hpp LZOCShifterSticky.hpp Operator.hpp OutputIEEE.hpp FixedPointFunctions/PolynomialEvaluator.hpp \
-	Shifters.hpp Signal.hpp IntMultipliers/SignedIntMultiplier.hpp IntMultipliers/UnsignedIntMultiplier.hpp IntMultipliers/LogicIntMultiplier.hpp FixedPointFunctions/PolyTableGenerator.hpp FixedPointFunctions/PiecewiseFunction.hpp  FixedPointFunctions/FunctionTable.hpp  FixedPointFunctions/GenericEvaluator.cpp Table.hpp Target.hpp TestBench.hpp TestCase.hpp UserDefinedOperator.hpp utils.hpp Wrapper.hpp FPSumOfSquares.hpp
+	FPSqrt.hpp FPSqrtPoly.hpp FPSquarer.hpp FixedPointFunctions/FunctionEvaluator.hpp FixedPointFunctions/HOTBM.hpp IEEENumber.hpp InputIEEE.hpp IntAdder.hpp IntAddition/IntAdderClassical.hpp IntAddition/IntAdderAlternative.hpp IntAddition/IntAdderShortLatency.hpp IntAddition/IntCompressorTree.hpp IntMultiAdder.hpp IntDualSub.hpp IntMultipliers/IntKaratsuba.hpp IntMultiplier.hpp \
+	IntAddition/IntNAdder.hpp IntSquarer.hpp IntMultipliers/IntTilingMult.hpp IntMultipliers/IntTruncMultiplier.hpp LongAcc2FP.hpp LongAcc.hpp LZOC.hpp LZOCShifterSticky.hpp Operator.hpp OutputIEEE.hpp FixedPointFunctions/PolynomialEvaluator.hpp \
+	Shifters.hpp Signal.hpp IntMultipliers/SignedIntMultiplier.hpp IntMultipliers/UnsignedIntMultiplier.hpp IntMultipliers/LogicIntMultiplier.hpp FixedPointFunctions/PiecewiseFunction.hpp  FixedPointFunctions/FunctionTable.hpp  FixedPointFunctions/GenericEvaluator.cpp Table.hpp Target.hpp TestBench.hpp TestCase.hpp UserDefinedOperator.hpp utils.hpp Wrapper.hpp FPSumOfSquares.hpp
 
 libflopoco_la_SOURCES = utils.cpp \
 			FlopocoStream.cpp \
@@ -46,8 +46,9 @@ libflopoco_la_SOURCES = utils.cpp \
 			UserDefinedOperator.cpp\
 			IntAdder.cpp\
 			IntAddition/IntAdderClassical.cpp\
-			IntNAdder.cpp \
-			IntCompressorTree.cpp \
+			IntAddition/IntNAdder.cpp \
+			IntAddition/IntCompressorTree.cpp \
+			IntMultiAdder.cpp \
                         IntComparator.cpp \
 			IntDualSub.cpp \
 			IntMultiplier.cpp \
@@ -55,16 +56,15 @@ libflopoco_la_SOURCES = utils.cpp \
 			IntMultipliers/UnsignedIntMultiplier.cpp \
 			IntMultipliers/IntTilingMult.cpp \
 			IntMultipliers/LogicIntMultiplier.cpp \
-			IntTruncMultiplier.cpp \
+			IntMultipliers/IntTruncMultiplier.cpp \
 			IntSquarer.cpp \
-			IntKaratsuba.cpp \
+			IntMultipliers/IntKaratsuba.cpp \
 			LZOC.cpp \
 			LZOCShifterSticky.cpp \
 			Shifters.cpp \
 			FPAdderDualPath.cpp \
 			FPMultiplier.cpp \
 			FPMultiplierKaratsuba.cpp \
-			FPMultiplierTiling.cpp \
 			FPSquarer.cpp \
 			FPDiv.cpp \
 			FPSqrt.cpp \
@@ -102,7 +102,6 @@ libflopoco_la_SOURCES = utils.cpp \
 
 if no_WIN32
 libflopoco_la_SOURCES +=  \
-			FixedPointFunctions/PolyTableGenerator.cpp \
 			FixedPointFunctions/PiecewiseFunction.cpp \
 			FPPipeline.cpp \
 			FixedPointFunctions/FunctionTable.cpp \
