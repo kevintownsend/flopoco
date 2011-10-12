@@ -11,13 +11,13 @@ noinst_HEADERS = ExpressionParserData.h
 
 libFPExpressions_la_SOURCES = ExpressionParserData.cpp ExpressionScanner.cpp ExpressionParser.cpp
 
-$(top_builddir)/src/FPExpressions/ExpressionParser.cpp: $(top_srcdir)/src/FPExpressions/ExpressionParser.y
+ExpressionParser.cpp: $(top_srcdir)/src/FPExpressions/ExpressionParser.y ExpressionScanner.cpp
 	${YACC} -y -d --defines=$(top_builddir)/src/FPExpressions/ExpressionParser.h --output=$(top_builddir)/src/FPExpressions/ExpressionParser.cpp --name-prefix=FlopocoExpression $(top_srcdir)/src/FPExpressions/ExpressionParser.y
 
-$(top_builddir)/src/FPExpressions/ExpressionScanner.cpp:$(top_srcdir)/src/FPExpressions/ExpressionScanner.l
+ExpressionScanner.cpp:$(top_srcdir)/src/FPExpressions/ExpressionScanner.l
 	${LEX} --prefix=FlopocoExpression --header-file=$(top_builddir)/src/FPExpressions/FlopocoScanner.h -o $(top_builddir)/src/FPExpressions/ExpressionScanner.cpp  $(top_srcdir)/src/FPExpressions/ExpressionScanner.l
 
-FlopocoScanner.h:$(top_builddir)/src/FPExpressions/ExpressionScanner.cpp $(top_builddir)/src/FPExpressions/ExpressionParser.cpp
-ExpressionParser.h:$(top_builddir)/src/FPExpressions/ExpressionParser.cpp
+FlopocoScanner.h:ExpressionScanner.cpp ExpressionParser.cpp
+ExpressionParser.h:ExpressionParser.cpp
 
 

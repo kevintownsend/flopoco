@@ -22,9 +22,12 @@ noinst_HEADERS = FloPoCo.hpp apps/Collision.hpp apps/FPFMAcc.hpp apps/FPJacobi.h
         FPDiv.hpp FPExp.hpp FPLog.hpp FPMultiplier.hpp FPNumber.hpp \
 	FPSqrt.hpp FPSqrtPoly.hpp FPSquarer.hpp FixedPointFunctions/FunctionEvaluator.hpp FixedPointFunctions/HOTBM.hpp IEEENumber.hpp InputIEEE.hpp IntAdder.hpp IntAddition/IntAdderClassical.hpp IntAddition/IntAdderAlternative.hpp IntAddition/IntAdderShortLatency.hpp IntAddition/IntCompressorTree.hpp IntMultiAdder.hpp IntDualSub.hpp IntMultipliers/IntKaratsuba.hpp IntMultiplier.hpp \
 	IntAddition/IntNAdder.hpp IntSquarer.hpp IntMultipliers/IntTilingMult.hpp IntMultipliers/IntTruncMultiplier.hpp LongAcc2FP.hpp LongAcc.hpp LZOC.hpp LZOCShifterSticky.hpp Operator.hpp OutputIEEE.hpp FixedPointFunctions/PolynomialEvaluator.hpp \
-	Shifters.hpp Signal.hpp IntMultipliers/SignedIntMultiplier.hpp IntMultipliers/UnsignedIntMultiplier.hpp IntMultipliers/LogicIntMultiplier.hpp FixedPointFunctions/PiecewiseFunction.hpp  FixedPointFunctions/FunctionTable.hpp  FixedPointFunctions/GenericEvaluator.cpp Table.hpp Target.hpp TestBench.hpp TestCase.hpp UserDefinedOperator.hpp utils.hpp Wrapper.hpp FPSumOfSquares.hpp
+	Shifters.hpp Signal.hpp IntMultipliers/SignedIntMultiplier.hpp IntMultipliers/UnsignedIntMultiplier.hpp IntMultipliers/LogicIntMultiplier.hpp FixedPointFunctions/PiecewiseFunction.hpp  FixedPointFunctions/FunctionTable.hpp  FixedPointFunctions/GenericEvaluator.hpp Table.hpp Target.hpp TestBench.hpp TestCase.hpp UserDefinedOperator.hpp utils.hpp Wrapper.hpp FPSumOfSquares.hpp
 
-libflopoco_la_SOURCES = utils.cpp \
+libflopoco_la_SOURCES = \
+			Operator.cpp \
+			Signal.cpp \
+			utils.cpp \
 			FlopocoStream.cpp \
 			VHDLLexer.cpp \
 			Targets/DSP.cpp \
@@ -36,19 +39,30 @@ libflopoco_la_SOURCES = utils.cpp \
 			Targets/StratixIII.cpp \
 			Targets/Virtex5.cpp \
 			Targets/StratixIV.cpp \
-			Operator.cpp \
-			Signal.cpp \
 			Table.cpp \
 			DualTable.cpp \
 			DualTable2.cpp \
+			FPPipeline.cpp \
 			Wrapper.cpp \
 			TestBench.cpp \
 			UserDefinedOperator.cpp\
 			IntAdder.cpp\
 			IntAddition/IntAdderClassical.cpp\
+			IntAddition/IntAdderAlternative.cpp\
+			IntAddition/IntAdderShortLatency.cpp\
+			IntAddition/LongIntAdderAddAddMuxGen1.cpp \
+			IntAddition/LongIntAdderCmpCmpAddGen1.cpp \
+			IntAddition/LongIntAdderCmpAddIncGen1.cpp \
+			IntAddition/IntAdderSpecific.cpp \
+			IntAddition/IntComparatorSpecific.cpp \
+			IntAddition/CarryGenerationCircuit.cpp \
+			IntAddition/LongIntAdderAddAddMuxGen2.cpp \
+			IntAddition/LongIntAdderCmpCmpAddGen2.cpp \
+			IntAddition/LongIntAdderCmpAddIncGen2.cpp \
+			IntAddition/LongIntAdderMuxNetwork.cpp \
+			IntMultiAdder.cpp \
 			IntAddition/IntNAdder.cpp \
 			IntAddition/IntCompressorTree.cpp \
-			IntMultiAdder.cpp \
                         IntComparator.cpp \
 			IntDualSub.cpp \
 			IntMultiplier.cpp \
@@ -57,12 +71,36 @@ libflopoco_la_SOURCES = utils.cpp \
 			IntMultipliers/IntTilingMult.cpp \
 			IntMultipliers/LogicIntMultiplier.cpp \
 			IntMultipliers/IntTruncMultiplier.cpp \
-			IntSquarer.cpp \
 			IntMultipliers/IntKaratsuba.cpp \
+			IntSquarer.cpp \
 			LZOC.cpp \
 			LZOCShifterSticky.cpp \
 			Shifters.cpp \
+			FixedPointFunctions/Function.cpp \
+			FixedPointFunctions/PiecewiseFunction.cpp \
+			FixedPointFunctions/FunctionTable.cpp \
+			FixedPointFunctions/PolyCoeffTable.cpp \
+			FixedPointFunctions/PolynomialEvaluator.cpp \
+			FixedPointFunctions/FunctionEvaluator.cpp \
+			FixedPointFunctions/GenericEvaluator.cpp \
+			FixedPointFunctions/HOTBM.cpp \
+			FixedPointFunctions/HOTBM/HOTBMInstance.cc\
+			FixedPointFunctions/HOTBM/Param.cc\
+			FixedPointFunctions/HOTBM/Exhaustive.cc\
+			FixedPointFunctions/HOTBM/Util.cc\
+			FixedPointFunctions/HOTBM/PWPolynomial.cc\
+			FixedPointFunctions/HOTBM/Polynomial.cc\
+			FixedPointFunctions/HOTBM/MPPolynomial.cc\
+			FixedPointFunctions/HOTBM/Power.cc\
+			FixedPointFunctions/HOTBM/PowerAdHoc.cc\
+			FixedPointFunctions/HOTBM/TermROM.cc\
+			FixedPointFunctions/HOTBM/Term.cc\
+			FixedPointFunctions/HOTBM/Minimax.cc\
+			FixedPointFunctions/HOTBM/PowerROM.cc\
+			FixedPointFunctions/HOTBM/TermPowMult.cc \
 			FPAdderDualPath.cpp \
+			FPAdderSinglePath.cpp \
+			FPAdder3Input.cpp \
 			FPMultiplier.cpp \
 			FPMultiplierKaratsuba.cpp \
 			FPSquarer.cpp \
@@ -78,6 +116,9 @@ libflopoco_la_SOURCES = utils.cpp \
 			ConstMult/IntIntKCM.cpp \
 			ConstMult/KCMTable.cpp \
 			ConstMult/FPConstMult.cpp \
+                        ConstMult/CRFPConstMult.cpp \
+                        ConstMult/FixRealKCM.cpp \
+                        ConstMult/FPRealKCM.cpp \
 			fplogarithm/FirstInvTable.cpp \
 			fplogarithm/FirstLogTable.cpp \
 			fplogarithm/OtherLogTable.cpp \
@@ -92,36 +133,6 @@ libflopoco_la_SOURCES = utils.cpp \
 			OutputIEEE.cpp \
 			apps/Collision.cpp \
                         apps/FPFMAcc.cpp \
-			TestCase.cpp \
-			FPNumber.cpp \
-			IEEENumber.cpp \
-			FP2Fix.cpp \
-			FXP_Shift.cpp
-
-#LongIntAdder.cpp LongIntAdderCmpCmpAdd.cpp LongIntAdderCmpAddAdd.cpp 
-
-if no_WIN32
-libflopoco_la_SOURCES +=  \
-			FixedPointFunctions/PiecewiseFunction.cpp \
-			FPPipeline.cpp \
-			FixedPointFunctions/FunctionTable.cpp \
-			FixedPointFunctions/PolynomialEvaluator.cpp \
-			FixedPointFunctions/FunctionEvaluator.cpp \
-			FPAdderSinglePath.cpp \
-			FPAdder3Input.cpp \
-                        ConstMult/CRFPConstMult.cpp ConstMult/FixRealKCM.cpp ConstMult/FPRealKCM.cpp \
-			IntAddition/IntAdderAlternative.cpp\
-			IntAddition/IntAdderShortLatency.cpp\
-			IntAddition/LongIntAdderAddAddMuxGen1.cpp \
-			IntAddition/LongIntAdderCmpCmpAddGen1.cpp \
-			IntAddition/LongIntAdderCmpAddIncGen1.cpp \
-			IntAddition/IntAdderSpecific.cpp \
-			IntAddition/IntComparatorSpecific.cpp \
-			IntAddition/CarryGenerationCircuit.cpp \
-			IntAddition/LongIntAdderAddAddMuxGen2.cpp \
-			IntAddition/LongIntAdderCmpCmpAddGen2.cpp \
-			IntAddition/LongIntAdderCmpAddIncGen2.cpp \
-			IntAddition/LongIntAdderMuxNetwork.cpp \
 			apps/FPJacobi.cpp \
 			apps/TaMaDiCore.cpp \
 			apps/TaMaDiPriorityEncoder.cpp \
@@ -134,28 +145,17 @@ libflopoco_la_SOURCES +=  \
 			apps/TaMaDiDispatcherInterface.cpp \
 			apps/TaMaDiDeserializer.cpp \
 			apps/TaMaDiSystem.cpp \
-			UtilSollya.cc
+			TestCase.cpp \
+			FPNumber.cpp \
+			IEEENumber.cpp \
+			UtilSollya.cc \
+			FP2Fix.cpp \
+			FXP_Shift.cpp
 
-endif
+#LongIntAdder.cpp LongIntAdderCmpCmpAdd.cpp LongIntAdderCmpAddAdd.cpp 
+
 
 if BUILD_SOLLYA_FILES
-libflopoco_la_SOURCES += VHDLLexer.cpp \
-		FixedPointFunctions/HOTBM.cpp \
-		FixedPointFunctions/Function.cpp \
-		FixedPointFunctions/HOTBM/HOTBMInstance.cc\
-		FixedPointFunctions/HOTBM/Param.cc\
-		FixedPointFunctions/HOTBM/Exhaustive.cc\
-		FixedPointFunctions/HOTBM/Util.cc\
-		FixedPointFunctions/HOTBM/PWPolynomial.cc\
-		FixedPointFunctions/HOTBM/Polynomial.cc\
-		FixedPointFunctions/HOTBM/MPPolynomial.cc\
-		FixedPointFunctions/HOTBM/Power.cc\
-		FixedPointFunctions/HOTBM/PowerAdHoc.cc\
-		FixedPointFunctions/HOTBM/TermROM.cc\
-		FixedPointFunctions/HOTBM/Term.cc\
-		FixedPointFunctions/HOTBM/Minimax.cc\
-		FixedPointFunctions/HOTBM/PowerROM.cc\
-		FixedPointFunctions/HOTBM/TermPowMult.cc
 
 libflopoco_la_LIBADD = $(top_builddir)/src/FPExpressions/libFPExpressions.la $(top_builddir)/src/LNS/libLNS.la
 libflopoco_la_CPPFLAGS = -I$(top_builddir)/src/FPExpressions/ -I$(top_srcdir)/src/FPExpressions
