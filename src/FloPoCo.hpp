@@ -66,11 +66,9 @@
 
 /* fixed-point function evaluation---------------------------- */
 #ifndef _WIN32
-#ifdef HAVE_HOTBM
-#include "FixedPointFunctions/HOTBM.hpp"
-#endif
 
 #ifdef HAVE_SOLLYA
+#include "FixedPointFunctions/HOTBM.hpp"
 #include "FixedPointFunctions/FunctionTable.hpp"
 #include "FixedPointFunctions/PolyCoeffTable.hpp"
 #include "FixedPointFunctions/FunctionEvaluator.hpp"

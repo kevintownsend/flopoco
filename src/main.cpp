@@ -351,6 +351,7 @@ static void usage(char *name, string opName = ""){
 		cerr << "      wI - input width (also weight of input LSB), lsbO - weight of output LSB,\n";
 		cerr << "      degree - degree of polynomial approximation (typically 2 to 5),\n";
 		cerr << "      function - sollya-syntaxed function to implement, between double quotes\n";
+		cerr << "      example: flopoco FunctionEvaluator \"sin(x*Pi/2)\" 16 16 3\n";
 	}
 	if ( full || opName == "HOTBM"){					
 		OP( "HOTBM","function wI wO degree");
@@ -1795,7 +1796,7 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 //		}
 				
 #ifndef _WIN32
-#ifdef HAVE_HOTBM
+#ifdef HAVE_SOLLYA
 		else if (opname == "HOTBM") {
 			int nargs = 4;
 			if (i+nargs > argc)
@@ -1852,7 +1853,7 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 			addOperator(oplist, op);
 		}
 		
-#endif // HAVE_HOTBM
+#endif // HAVE_SOLLYA
 
 #endif
 
@@ -2178,7 +2179,8 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				addOperator(oplist, op);
 			}
 		}
-#ifdef HAVE_HOTBM
+#ifdef HAVE_SOLLYA
+#if 0
 		else if (opname == "PolyTableGenerator") {
 			int nargs = 4;
 			if (i+nargs > argc)
@@ -2194,7 +2196,7 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				addOperator(oplist, tg);
 			
 		}
-		
+#endif		
 
 		else if (opname == "FunctionTable") {
 			int nargs = 4;

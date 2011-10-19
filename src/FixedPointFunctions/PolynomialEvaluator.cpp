@@ -505,7 +505,7 @@ namespace flopoco{
 		approximationError = (mpfr_t*) malloc( sizeof(mpfr_t));
 		mpfr_init2(*approximationError, 1000);
 		mpfr_set( *approximationError, *p, GMP_RNDN);
-		REPORT(DETAILED, "The approximation error budget is (represetned as double):" << mpfr_get_d(*approximationError,GMP_RNDN)); 
+		REPORT(DETAILED, "The approximation error budget is (represented as double):" << mpfr_get_d(*approximationError,GMP_RNDN)); 
 	}
 
 
