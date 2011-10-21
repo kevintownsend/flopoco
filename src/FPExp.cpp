@@ -525,15 +525,17 @@ namespace flopoco{
 		}
 		else {
 			sizeProd = sizeMultIn + sizeExpZm1;
-			if (wF==23){
-				nextCycle();//FIXME -> add inputDelays to intTilingMultiplier
-				lowProd = new IntTilingMult(target, sizeMultIn, sizeExpZm1, 0.15, -1, false);//, inDelayMap("X", target->LogicToDSPWireDelay() + getCriticalPath() ) );
-			}else
-				lowProd = new IntMultiplier(target, sizeMultIn, sizeExpZm1, inDelayMap("X", target->LogicToDSPWireDelay() + getCriticalPath() ) );
+			//	if (wF==23){
+			//nextCycle();//FIXME -> add inputDelays to intTilingMultiplier
+				// ???? This builds a comlbinatorial mult,
+				//lowProd = new IntTilingMult(target, sizeMultIn, sizeExpZm1, 0.15, -1, false);//, inDelayMap("X", target->LogicToDSPWireDelay() + getCriticalPath() ) );
+			//}// else
+		 			// 		lowProd = new IntMultiplier(target, sizeMultIn, sizeExpZm1, inDelayMap("X", target->LogicToDSPWireDelay() + getCriticalPath() ) );
 		}
-		oplist.push_back(lowProd);
+		lowProd = new IntMultiplier(target, sizeMultIn, sizeExpZm1, inDelayMap("X", target->LogicToDSPWireDelay() + getCriticalPath() ) );
+			oplist.push_back(lowProd);
 		
-		inPortMap(lowProd, "X", "expArounded");
+			inPortMap(lowProd, "X", "expArounded");
 		inPortMap(lowProd, "Y", "expZminus1");
 		outPortMap(lowProd, "R", "lowerProduct");
 		
@@ -566,7 +568,7 @@ namespace flopoco{
 		oplist.push_back(finalAdder);
 		
 		vhdl << tab << declare("extendedLowerProduct",sizeExpA) << " <= (" << rangeAssign(sizeExpA-1, sizeExpA-k+1, "'0'") 
-		     << " & lowerProduct" << range(sizeProd-1, sizeProd - (sizeExpA-k+1)) << ");" << endl;		
+		     << " & lowerProduct" << range(sizeProd-1, sizeProd - (sizeExpA-k+1)) << ");" << endl;
 		     		     
 		inPortMap(finalAdder, "X", "expA");
 		inPortMap(finalAdder, "Y", "extendedLowerProduct");
