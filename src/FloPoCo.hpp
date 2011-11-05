@@ -63,6 +63,8 @@
 #include "ConstMult/IntIntKCM.hpp"
 #include "ConstMult/FixRealKCM.hpp"
 
+#include "IntConstDiv.hpp"
+
 
 /* fixed-point function evaluation---------------------------- */
 #ifndef _WIN32

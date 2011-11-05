@@ -185,6 +185,16 @@ static void usage(char *name, string opName = ""){
 		cerr << "      The constant is provided as a Sollya expression, e.g \"log(2)\"\n";
 	}
 #endif // HAVE_SOLLYA
+
+
+	if ( full || opName == "IntConstDiv"){					
+		OP( "IntConstDiv","d n alpha");
+		cerr << "      Euclidean division of input of size n by d\n";
+		cerr << "      Algorithm uses radix 2^alpha.\n";  // Try alpha=-1 for a sensible default.
+	}
+
+
+
 	if ( full )
 	cerr << "    ____________ FLOATING-POINT OPERATORS ______________________________________\n";
 
@@ -678,6 +688,20 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 			}        
 		}
 
+		else if(opname=="IntConstDiv"){
+			int nargs = 3;
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			else {
+				int d = checkStrictlyPositive(argv[i++], argv[0]);
+				int n = checkStrictlyPositive(argv[i++], argv[0]);
+				int alpha = atoi(argv[i++]);
+				op = new IntConstDiv(target, d, n, alpha);
+				addOperator(oplist, op);
+			} 
+		}
+
+
 		else if(opname=="FPConstMultRational"){
 			int nargs = 6;
 			if (i+nargs > argc)
@@ -716,6 +740,8 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				addOperator(oplist, op);
 			}        
 		} 	
+
+
 #ifdef HAVE_SOLLYA
 		else if(opname=="FixRealKCM"){
 			int nargs = 5;

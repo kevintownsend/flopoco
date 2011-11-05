@@ -262,7 +262,9 @@ ADD_LIBRARY(FloPoCo STATIC
  src/ConstMult/CRFPConstMult 
  src/ConstMult/FixRealKCM
  src/ConstMult/FPRealKCM
- 
+
+ src/IntConstDiv 
+
  src/fplogarithm/FirstInvTable
  src/fplogarithm/FirstLogTable
  src/fplogarithm/OtherLogTable
