@@ -88,13 +88,20 @@ namespace flopoco{
 		
 		EuclideanDivTable* table;
 		table = new EuclideanDivTable(target, d, alpha, gamma);
+		useSoftRAM(table);
 		oplist.push_back(table);
+		double tableDelay=table->getOutputDelay("Y"); 
 
 		string ri, xi, ini, outi, qi;
 		ri = join("r", k);
 		vhdl << tab << declare(ri, gamma) << " <= " << zg(gamma, 0) << ";" << endl;
 
+		setCriticalPath( getMaxInputDelays(inputDelays) );
+
 		for (int i=k-1; i>=0; i--) {
+
+			manageCriticalPath(tableDelay);
+
 			//			cerr << i << endl;
 			xi = join("x", i);
 			if(i==k-1 && rem!=0) // at the MSB, pad with 0es
@@ -106,6 +113,8 @@ namespace flopoco{
 			outi = join("out", i);
 			outPortMap(table, "Y", outi);
 			inPortMap(table, "X", ini);
+
+
 			vhdl << instance(table, join("table",i));
 			ri = join("r", i);
 			qi = join("q", i);
