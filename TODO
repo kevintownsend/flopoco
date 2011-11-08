@@ -9,6 +9,7 @@ Testbench
 Pipeline framework, Operator and Targets:
 * add FPU object and remove all global variables, to enable library build
 * add semantic support of fixed-point to Signal
+* fix obvious memory leaks
 
 Collision
 * manage infinities etc

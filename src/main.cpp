@@ -740,6 +740,21 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				addOperator(oplist, op);
 			}        
 		} 	
+		else if(opname=="FPConstDiv"){
+			int nargs = 6;
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			else {
+				int wE_in = checkStrictlyPositive(argv[i++], argv[0]);
+				int wF_in = checkStrictlyPositive(argv[i++], argv[0]);
+				int wE_out = checkStrictlyPositive(argv[i++], argv[0]);
+				int wF_out = checkStrictlyPositive(argv[i++], argv[0]);
+				int d = checkStrictlyPositive(argv[i++], argv[0]);
+				int alpha = checkStrictlyPositive(argv[i++], argv[0]);
+				op = new FPConstDiv(target, wE_in, wF_in, wE_out, wF_out, d, alpha);
+				addOperator(oplist, op);
+			}        
+		} 	
 
 
 #ifdef HAVE_SOLLYA

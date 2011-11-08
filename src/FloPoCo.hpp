@@ -64,6 +64,7 @@
 #include "ConstMult/FixRealKCM.hpp"
 
 #include "IntConstDiv.hpp"
+#include "FPConstDiv.hpp"
 
 
 /* fixed-point function evaluation---------------------------- */

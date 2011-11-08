@@ -60,15 +60,15 @@ namespace flopoco{
 		: Operator(target), d(d_), wIn(wIn_), alpha(alpha_)
 	{
 		/* Generate unique name */
-		{
-			std::ostringstream o;
-			o << "IntConstDiv_" << d << "_" << wIn << "_"  << alpha << "_" ;
-			if(target->isPipelined()) 
+		
+		std::ostringstream o;
+		o << "IntConstDiv_" << d << "_" << wIn << "_"  << alpha << "_" ;
+		if(target->isPipelined()) 
 				o << target->frequencyMHz() ;
-			else
-				o << "comb";
-			uniqueName_ = o.str();
-		}
+		else
+			o << "comb";
+		uniqueName_ = o.str();
+		
 
 		setCopyrightString("F. de Dinechin (2011)");
 		srcFileName="IntConstDiv";
