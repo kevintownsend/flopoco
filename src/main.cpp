@@ -703,7 +703,7 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 
 
 		else if(opname=="FPConstMultRational"){
-			int nargs = 6;
+			int nargs = 4;
 			if (i+nargs > argc)
 				usage(argv[0],opname);
 			else {
@@ -741,17 +741,22 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 			}        
 		} 	
 		else if(opname=="FPConstDiv"){
-			int nargs = 6;
+			int nargs = 4;
 			if (i+nargs > argc)
 				usage(argv[0],opname);
 			else {
+#if 0
 				int wE_in = checkStrictlyPositive(argv[i++], argv[0]);
 				int wF_in = checkStrictlyPositive(argv[i++], argv[0]);
 				int wE_out = checkStrictlyPositive(argv[i++], argv[0]);
 				int wF_out = checkStrictlyPositive(argv[i++], argv[0]);
+#else
+				int wE = checkStrictlyPositive(argv[i++], argv[0]);
+				int wF = checkStrictlyPositive(argv[i++], argv[0]);
+#endif
 				int d = checkStrictlyPositive(argv[i++], argv[0]);
 				int alpha = checkStrictlyPositive(argv[i++], argv[0]);
-				op = new FPConstDiv(target, wE_in, wF_in, wE_out, wF_out, d, alpha);
+				op = new FPConstDiv(target, wE, wF, wE, wF, d, alpha);
 				addOperator(oplist, op);
 			}        
 		} 	

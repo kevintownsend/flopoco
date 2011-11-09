@@ -42,7 +42,7 @@ extern vector<Operator*> oplist;
 	{
 		srcFileName="FPConstDiv";
 		ostringstream name;
-		name <<"FPConstDiv_"<<d<<"_"<<wE_in<<"_"<<wF_in<<"_"<<wE_out<<"_"<<wF_out;
+		name <<"FPConstDiv_"<<d<<"_"<<wE_in<<"_"<<wF_in<<"_"<<wE_out<<"_"<<wF_out<<"_";
 		if(target->isPipelined()) 
 			name << target->frequencyMHz() ;
 		else
@@ -94,27 +94,36 @@ extern vector<Operator*> oplist;
 		vhdl << tab << declare("x_exp", wE_in) << " <=  X("<<wE_in<<"+"<<wF_in<<"-1 downto "<<wF_in<<");"<<endl;
 		vhdl << tab << declare("x_sig", wF_in+1) << " <= '1' & X("<<wF_in-1 <<" downto 0);"<<endl;
 
+		manageCriticalPath(target->localWireDelay() + target->adderDelay(gamma+1));
+		vhdl << tab << declare("Diffmd", gamma+1) << " <=  ('0' & x_sig" << range(wF_in, wF_in-gamma+1)<< ") - ('0' & CONV_STD_LOGIC_VECTOR(" << d << ", " << gamma <<")) ;" << endl;
+		vhdl << tab << declare("mltd") << " <=   Diffmd("<< gamma<<");" << endl;
+
+		int mltdCycle=getCurrentCycle();
+		double mltdCP=getCriticalPath();
+
 		vhdl <<endl << tab << "-- exponent processing" << endl;
 		
+		manageCriticalPath(target->localWireDelay() + target->adderDelay(wE_out+1));
 		vhdl << tab << declare("r_exp0", wE_out+1) << " <=  ('0' & x_exp) - ( CONV_STD_LOGIC_VECTOR(" << s+1 << ", " << wE_out+1 <<")) + (not mltd);" << endl;
 
 		vhdl << tab << declare("underflow") << " <=  r_exp0(" << wE_out << ");" << endl;
 		vhdl << tab << declare("r_exp", wE_out) << " <=  r_exp0" << range(wE_out-1, 0) << ";" << endl;
 
-		vhdl <<endl << tab << "-- exception flag processing"<<endl;
+		vhdl <<endl << tab << "-- exception flag processing"<<endl; // TODO only if we have no exponent on the constant 
 		vhdl << tab << declare("r_exn", 2) << " <=  \"00\" when  x_exn=\"01\" and underflow='1' else x_exn" << ";" << endl;
 
-		vhdl <<endl << tab << "-- significand processing"<<endl;
-		vhdl << tab << declare("Diffmd", gamma+1) << " <=  ('0' & x_sig" << range(wF_in, wF_in-gamma+1)<< ") - ('0' & CONV_STD_LOGIC_VECTOR(" << d << ", " << gamma <<")) ;" << endl;
-		vhdl << tab << declare("mltd") << " <=   Diffmd("<< gamma<<");" << endl;
 
-		// a boolean gives the result  m<d'
+		// Back to where we were after the computation of mldt
+		setCycle(mltdCycle); 
+		setCriticalPath(mltdCP);
+		vhdl <<endl << tab << "-- significand processing"<<endl;
+		// mux = diffusion of the control signal + 1 LUT
+		manageCriticalPath(target->localWireDelay(wF_in) + target->lutDelay());
 		vhdl << tab << declare("divIn0", intDivSize) << " <= '0' & x_sig & CONV_STD_LOGIC_VECTOR(" << h << ", " << s <<");" << endl;
 		vhdl << tab << declare("divIn1", intDivSize) << " <= x_sig & '0' & CONV_STD_LOGIC_VECTOR(" << h << ", " << s <<");" << endl;
 		vhdl << tab << declare("divIn", intDivSize) << " <= divIn1 when mltd='1' else divIn0;" << endl;
 
-		nextCycle();
-		icd = new IntConstDiv(target, d,  intDivSize, alpha);
+		icd = new IntConstDiv(target, d,  intDivSize, alpha, inDelayMap("X",target->localWireDelay()+getCriticalPath()));
 		oplist.push_back(icd);
 
 		inPortMap  (icd, "X", "divIn");
