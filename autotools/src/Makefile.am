@@ -116,9 +116,11 @@ libflopoco_la_SOURCES = \
 			ConstMult/IntIntKCM.cpp \
 			ConstMult/KCMTable.cpp \
 			ConstMult/FPConstMult.cpp \
-                        ConstMult/CRFPConstMult.cpp \
-                        ConstMult/FixRealKCM.cpp \
-                        ConstMult/FPRealKCM.cpp \
+			ConstMult/CRFPConstMult.cpp \
+			ConstMult/FixRealKCM.cpp \
+			ConstMult/FPRealKCM.cpp \
+			IntConstDiv.cpp\
+			FPConstDiv.cpp\
 			fplogarithm/FirstInvTable.cpp \
 			fplogarithm/FirstLogTable.cpp \
 			fplogarithm/OtherLogTable.cpp \
