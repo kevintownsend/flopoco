@@ -45,7 +45,7 @@ namespace flopoco{
 		srcFileName = "PolyCoeffTable";
 
 		ostringstream  cacheFileName;
-		cacheFileName << "Poly_"<<vhdlize(pf->getName()) << "_" << "_" << wOutX << ".cache";
+		cacheFileName << "Poly_"<<vhdlize(pf->getName()) << "_" << n << "_" << wOutX << ".cache";
 
 		// Test existence of cache file
 		fstream file;
