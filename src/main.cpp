@@ -188,9 +188,17 @@ static void usage(char *name, string opName = ""){
 
 
 	if ( full || opName == "IntConstDiv"){					
-		OP( "IntConstDiv","d n alpha");
+		OP( "IntConstDiv","n d alpha");
 		cerr << "      Euclidean division of input of size n by d\n";
-		cerr << "      Algorithm uses radix 2^alpha.\n";  // Try alpha=-1 for a sensible default.
+		cerr << "      Algorithm uses radix 2^alpha,   alpha=-1 means a sensible default.\n";
+	}
+
+	if ( full || opName == "FPConstDiv"){					
+		OP( "FPConstDiv","wE wF d");
+		cerr << "      Floating-point division by the (small) integer d\n";
+		OP( "FPConstDivExpert","wE wF d e alpha");
+		cerr << "      Floating-point division by  d.2^e, where d is a small integer\n";
+		cerr << "      Algorithm uses radix 2^alpha,   alpha=-1 means a sensible default. \n";  // 
 	}
 
 
@@ -513,7 +521,7 @@ static void usage(char *name, string opName = ""){
 		cerr << "   -verbose=<1|2|3>                         (default=0)\n";
 		cerr << "   -pipeline=<yes|no>                       (default=yes)\n";
 		cerr << "   -frequency=<target frequency in MHz>     (default=400)\n";
-		cerr << "   -target=<Spartan3|Virtex4|Virtex5|StratixII|StratixIII|StratixIV>      (default=Virtex4)\n";
+		cerr << "   -target=<Spartan3|Virtex4|Virtex5|StratixII|StratixIII|StratixIV>      (default=Virtex5)\n";
 		cerr << "   -DSP_blocks=<yes|no>\n";
 		cerr << "       optimize for the use of DSP blocks   (default=yes)\n";
 		cerr << "   -name=<entity name>\n";
@@ -693,10 +701,10 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 			if (i+nargs > argc)
 				usage(argv[0],opname);
 			else {
-				int d = checkStrictlyPositive(argv[i++], argv[0]);
 				int n = checkStrictlyPositive(argv[i++], argv[0]);
+				int d = checkStrictlyPositive(argv[i++], argv[0]);
 				int alpha = atoi(argv[i++]);
-				op = new IntConstDiv(target, d, n, alpha);
+				op = new IntConstDiv(target, n, d, alpha);
 				addOperator(oplist, op);
 			} 
 		}
@@ -741,22 +749,28 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 			}        
 		} 	
 		else if(opname=="FPConstDiv"){
+			int nargs = 3;
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			else {
+				int wE = checkStrictlyPositive(argv[i++], argv[0]);
+				int wF = checkStrictlyPositive(argv[i++], argv[0]);
+				int d = checkStrictlyPositive(argv[i++], argv[0]);
+				op = new FPConstDiv(target, wE, wF, wE, wF, d, 0, -1); // exponent 0, alpha = default
+				addOperator(oplist, op);
+			}        
+		}
+		else if(opname=="FPConstDivExpert"){
 			int nargs = 4;
 			if (i+nargs > argc)
 				usage(argv[0],opname);
 			else {
-#if 0
-				int wE_in = checkStrictlyPositive(argv[i++], argv[0]);
-				int wF_in = checkStrictlyPositive(argv[i++], argv[0]);
-				int wE_out = checkStrictlyPositive(argv[i++], argv[0]);
-				int wF_out = checkStrictlyPositive(argv[i++], argv[0]);
-#else
 				int wE = checkStrictlyPositive(argv[i++], argv[0]);
 				int wF = checkStrictlyPositive(argv[i++], argv[0]);
-#endif
 				int d = checkStrictlyPositive(argv[i++], argv[0]);
-				int alpha = checkStrictlyPositive(argv[i++], argv[0]);
-				op = new FPConstDiv(target, wE, wF, wE, wF, d, alpha);
+				int e = atoi(argv[i++]);
+				int alpha = atoi(argv[i++]);
+				op = new FPConstDiv(target, wE, wF, wE, wF, d, e, alpha);
 				addOperator(oplist, op);
 			}        
 		} 	
@@ -2372,7 +2386,7 @@ int main(int argc, char* argv[] )
 	uint32_t i;
 	
 
-	target = new Virtex4();
+	target = new Virtex5();
 
 	vector<Operator*> oplist;
 

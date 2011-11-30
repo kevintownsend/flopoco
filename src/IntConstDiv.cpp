@@ -56,9 +56,26 @@ namespace flopoco{
 
 
 
-	IntConstDiv::IntConstDiv(Target* target, int d_, int wIn_, int alpha_,  map<string, double> inputDelays)
+	IntConstDiv::IntConstDiv(Target* target, int wIn_, int d_, int alpha_,  map<string, double> inputDelays)
 		: Operator(target), d(d_), wIn(wIn_), alpha(alpha_)
 	{
+		setCopyrightString("F. de Dinechin (2011)");
+		srcFileName="IntConstDiv";
+
+		gamma = intlog2(d-1);
+		if(alpha==-1){
+			alpha = target->lutInputs()-gamma;
+			if (alpha<1) {
+				REPORT(LIST, "WARNING: This value of d is too large for the LUTs of this FPGA (alpha="<<alpha<<").");
+				REPORT(LIST, " Building an architecture nevertheless, but it may be very large and inefficient.");
+				alpha=1;
+			}
+		}
+		REPORT(INFO, "alpha="<<alpha);
+
+		if((d&1)==0)
+			REPORT(LIST, "WARNING, d=" << d << " is even, this is suspiscious. Might work nevertheless, but surely suboptimal.")
+
 		/* Generate unique name */
 		
 		std::ostringstream o;
@@ -68,13 +85,9 @@ namespace flopoco{
 		else
 			o << "comb";
 		uniqueName_ = o.str();
-		
 
-		setCopyrightString("F. de Dinechin (2011)");
-		srcFileName="IntConstDiv";
-
-		gamma = intlog2(d-1);
 		qSize = wIn - intlog2(d) +1;  
+
 
 		addInput("X", wIn);
 		addOutput("Q", qSize);
@@ -84,6 +97,7 @@ namespace flopoco{
 		int rem = wIn-k*alpha;
 		if (rem!=0) k++;
 
+		REPORT(INFO, "Architecture consists of k=" << k  <<  " levels."   );
 		REPORT(DEBUG, "  d=" << d << "  wIn=" << wIn << "  alpha=" << alpha << "  gamma=" << gamma <<  "  k=" << k  <<  "  qSize=" << qSize );
 		
 		EuclideanDivTable* table;

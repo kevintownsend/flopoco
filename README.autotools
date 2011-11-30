@@ -8,8 +8,5 @@ If it doesn't, it is because the file lists in the two Makefile.am is
 out of sync with the release you are trying to compile or the svn. You
 probably have to edit the two Makefile.am to correct the errors.
 
-This setup was provided by Daniele Mastrandrea and by Fabrizio Ferrandi and it worked then,
-honest. Thanks to them.
+This setup was provided, then maintained by Daniele Mastrandrea and by Fabrizio Ferrandi. Thanks to them.
 
-
-Tested on trunk version, rev #903

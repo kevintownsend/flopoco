@@ -13,7 +13,7 @@ namespace flopoco{
 	{
 	public:
 		/** The generic constructor */
-		FPConstDiv(Target* target, int wE_in, int wF_in, int wE_out, int wF_out, int d, int alpha);
+		FPConstDiv(Target* target, int wE_in, int wF_in, int wE_out, int wF_out, int d, int dExp=0, int alpha=-1);
 		
 		
 		~FPConstDiv();
@@ -32,8 +32,12 @@ namespace flopoco{
 
 	private:
 		int d;
+		int dExp;
 		int alpha;
 		IntConstDiv *icd;
+		bool mantissaIsOne;
+		double dd; // the value of the actual constant in double: equal to d*2^dExp
+		// TODO replace the above with the mpd that we have in emulate
 	};
 
 }

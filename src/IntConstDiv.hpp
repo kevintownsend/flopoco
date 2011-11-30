@@ -49,7 +49,7 @@ namespace flopoco{
 		    * @param alpha The size of the chunk, or, use radix 2^alpha
 		    */
 
-		IntConstDiv(Target* target, int d, int wIn, int alpha,  map<string, double> inputDelays = emptyDelayMap);
+		IntConstDiv(Target* target, int wIn, int d, int alpha=-1,  map<string, double> inputDelays = emptyDelayMap);
 		~IntConstDiv();
 		
 		// Overloading the virtual functions of Operator

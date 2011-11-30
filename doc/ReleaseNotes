@@ -1,13 +1,15 @@
 ======================================================================
 Version 2.3.0
 This version adds
+- Proper librarization, and an example on how to use FloPoCoLib
 - FPPowr and FPPow functions from C99
-- FunctionTable
-- FPConstMultRational, correctly multiplication by small rational constants
+- FunctionTable (as the name suggests)
+- FPConstMultRational, correctly rounded multiplication by small rational constants
+- IntConstDiv, LUT-based Euclidean division by small integer constants
+- FPConstDiv and FPConstDivExpert, an FP wrapper for the previous
 - TaMaDi architecture, an example of a full application
-- some clean-up to enable using FloPoCo as a library 
 - bug fixes and improvements
-
+- new bugs so that we hear from you, our valued users
 
 ======================================================================
 Version 2.2.1

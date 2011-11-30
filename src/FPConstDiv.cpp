@@ -36,13 +36,17 @@ extern vector<Operator*> oplist;
 
 	// The expert version 
 
-	FPConstDiv::FPConstDiv(Target* target, int wE_in_, int wF_in_, int wE_out_, int wF_out_, int d_, int alpha_):
+	FPConstDiv::FPConstDiv(Target* target, int wE_in_, int wF_in_, int wE_out_, int wF_out_, int d_, int dExp_, int alpha_):
 		Operator(target), 
-		wE_in(wE_in_), wF_in(wF_in_), wE_out(wE_out_), wF_out(wF_out_), d(d_), alpha(alpha_)
+		wE_in(wE_in_), wF_in(wF_in_), wE_out(wE_out_), wF_out(wF_out_), d(d_), dExp(dExp_), alpha(alpha_)
 	{
 		srcFileName="FPConstDiv";
 		ostringstream name;
-		name <<"FPConstDiv_"<<d<<"_"<<wE_in<<"_"<<wF_in<<"_"<<wE_out<<"_"<<wF_out<<"_";
+		name <<"FPConstDiv_"<<wE_in<<"_"<<wF_in<<"_"<<wE_out<<"_"<<wF_out<<"_"<<d<<"_";
+		if(dExp>=0)
+			name<<dExp<<"_";
+		else
+			name<<"M"<<-dExp<<"_";
 		if(target->isPipelined()) 
 			name << target->frequencyMHz() ;
 		else
@@ -63,19 +67,23 @@ extern vector<Operator*> oplist;
 			throw o.str();
 		}
 
-#if 0 // TODO
 			// Constant normalization
-			while ((cstIntSig % 2) ==0) {
-				REPORT(INFO, "Significand is even, normalising");
-				cstIntSig = cstIntSig >>1;
-				cst_exp_when_mantissa_int+=1;
-			}
-			mantissa_is_one = false;
-			if(cstIntSig==1) {
-				REPORT(INFO, "Constant mantissa is 1, multiplying by it will be easy"); 
-				mantissa_is_one = true;
-			}
-#endif
+		while ((d % 2) ==0) {
+				REPORT(DEBUG, "d is even, normalising");
+				d = d >>1;
+				dExp+=1;
+		}
+		mantissaIsOne = false;
+		if(d==1) {
+			REPORT(INFO, "Mantissa of d is 1, dividing by it will be easy"); 
+			mantissaIsOne = true;
+		}
+		
+		// Computing the binary64 value of the actual constant, taking exponent into account
+		dd = d*intpow2(dExp);
+
+		REPORT(INFO, "dividing by the constant " << dd);
+
 
 
 		// Set up the IO signals
@@ -101,43 +109,61 @@ extern vector<Operator*> oplist;
 		int mltdCycle=getCurrentCycle();
 		double mltdCP=getCriticalPath();
 
-		vhdl <<endl << tab << "-- exponent processing" << endl;
-		
-		manageCriticalPath(target->localWireDelay() + target->adderDelay(wE_out+1));
-		vhdl << tab << declare("r_exp0", wE_out+1) << " <=  ('0' & x_exp) - ( CONV_STD_LOGIC_VECTOR(" << s+1 << ", " << wE_out+1 <<")) + (not mltd);" << endl;
-
-		vhdl << tab << declare("underflow") << " <=  r_exp0(" << wE_out << ");" << endl;
-		vhdl << tab << declare("r_exp", wE_out) << " <=  r_exp0" << range(wE_out-1, 0) << ";" << endl;
-
-		vhdl <<endl << tab << "-- exception flag processing"<<endl; // TODO only if we have no exponent on the constant 
-		vhdl << tab << declare("r_exn", 2) << " <=  \"00\" when  x_exn=\"01\" and underflow='1' else x_exn" << ";" << endl;
-
+		if(d*intpow2(dExp) >1.0) { // only underflow possible
+			vhdl <<endl << tab << "-- exponent processing. For this d we may only have underflow" << endl;
+			
+			manageCriticalPath(target->localWireDelay() + target->adderDelay(wE_out+1));
+			vhdl << tab << declare("r_exp0", wE_out+1) << " <=  ('0' & x_exp) - ( CONV_STD_LOGIC_VECTOR(" << s+1+dExp << ", " << wE_out+1 <<")) + (not mltd);" << endl;
+			
+			vhdl << tab << declare("underflow") << " <=  r_exp0(" << wE_out << ");" << endl;
+			vhdl << tab << declare("r_exp", wE_out) << " <=  r_exp0" << range(wE_out-1, 0) << ";" << endl;
+			
+			vhdl <<endl << tab << "-- exception flag processing"<<endl; 
+			vhdl << tab << declare("r_exn", 2) << " <=  \"00\" when  x_exn=\"01\" and underflow='1' else x_exn" << ";" << endl;
+		}
+		else
+			{
+			vhdl <<endl << tab << "-- exponent processing. For this d we may only have overflow" << endl;
+			
+			manageCriticalPath(target->localWireDelay() + target->adderDelay(wE_out+1));
+			vhdl << tab << declare("r_exp0", wE_out+1) << " <=  ('0' & x_exp) + ( CONV_STD_LOGIC_VECTOR(" << -(s+1+dExp) << ", " << wE_out+1 <<")) + (not mltd);" << endl;
+			
+			vhdl << tab << declare("overflow") << " <=  r_exp0(" << wE_out << ");" << endl;
+			vhdl << tab << declare("r_exp", wE_out) << " <=  r_exp0" << range(wE_out-1, 0) << ";" << endl;
+			
+			vhdl <<endl << tab << "-- exception flag processing"<<endl; 
+			vhdl << tab << declare("r_exn", 2) << " <=  \"10\" when  x_exn=\"01\" and overflow='1' else x_exn" << ";" << endl;
+			}
 
 		// Back to where we were after the computation of mldt
 		setCycle(mltdCycle); 
 		setCriticalPath(mltdCP);
 		vhdl <<endl << tab << "-- significand processing"<<endl;
-		// mux = diffusion of the control signal + 1 LUT
-		manageCriticalPath(target->localWireDelay(wF_in) + target->lutDelay());
-		vhdl << tab << declare("divIn0", intDivSize) << " <= '0' & x_sig & CONV_STD_LOGIC_VECTOR(" << h << ", " << s <<");" << endl;
-		vhdl << tab << declare("divIn1", intDivSize) << " <= x_sig & '0' & CONV_STD_LOGIC_VECTOR(" << h << ", " << s <<");" << endl;
-		vhdl << tab << declare("divIn", intDivSize) << " <= divIn1 when mltd='1' else divIn0;" << endl;
-
-		icd = new IntConstDiv(target, d,  intDivSize, alpha, inDelayMap("X",target->localWireDelay()+getCriticalPath()));
-		oplist.push_back(icd);
-
-		inPortMap  (icd, "X", "divIn");
-		outPortMap (icd, "Q","quotient");
-		outPortMap (icd, "R","remainder");
-		vhdl << instance(icd, "sig_div");
-
-		setCycleFromSignal("remainder"); 
-		setCriticalPath(icd->getOutputDelay("R"));
-
-		vhdl << tab << declare("r_frac", wF_out) << " <= quotient" << range(wF_out-1, 0) << ";"<<endl;
-		
-		vhdl << tab << "R <=  r_exn & x_sgn & r_exp & r_frac" << "; -- TODO" << endl;
-		
+		if(mantissaIsOne) {
+			vhdl << tab << declare("r_frac", wF_out) << " <= x_sig;"<<endl;
+		}
+		else {// Actual division
+			// mux = diffusion of the control signal + 1 LUT
+			manageCriticalPath(target->localWireDelay(wF_in) + target->lutDelay());
+			vhdl << tab << declare("divIn0", intDivSize) << " <= '0' & x_sig & CONV_STD_LOGIC_VECTOR(" << h << ", " << s <<");" << endl;
+			vhdl << tab << declare("divIn1", intDivSize) << " <= x_sig & '0' & CONV_STD_LOGIC_VECTOR(" << h << ", " << s <<");" << endl;
+			vhdl << tab << declare("divIn", intDivSize) << " <= divIn1 when mltd='1' else divIn0;" << endl;
+			
+			icd = new IntConstDiv(target, intDivSize, d,   alpha, inDelayMap("X",target->localWireDelay()+getCriticalPath()));
+			oplist.push_back(icd);
+			
+			inPortMap  (icd, "X", "divIn");
+			outPortMap (icd, "Q","quotient");
+			outPortMap (icd, "R","remainder");
+			vhdl << instance(icd, "sig_div");
+			
+			setCycleFromSignal("remainder"); 
+			setCriticalPath(icd->getOutputDelay("R"));
+			
+			vhdl << tab << declare("r_frac", wF_out) << " <= quotient" << range(wF_out-1, 0) << ";"<<endl;
+			
+		}
+			vhdl << tab << "R <=  r_exn & x_sgn & r_exp & r_frac" << ";" << endl;
 	}
 
 
@@ -164,11 +190,9 @@ extern vector<Operator*> oplist;
 		mpfr_init2(x, 1+wF_in);
 		mpfr_init2(r, 1+wF_out); 
 		mpfr_init(mpd); // Should be enough for everybody 
-		double dd=d; // exact
 		mpfr_set_d(mpd, dd, GMP_RNDN);
 		fpx.getMPFR(x);
-		mpfr_div(r, x, mpd, GMP_RNDN);
-		
+		mpfr_div(r, x, mpd, GMP_RNDN);		
 		// Set outputs 
 		FPNumber  fpr(wE_out, wF_out, r);
 		mpz_class svRN = fpr.getSignalValue();

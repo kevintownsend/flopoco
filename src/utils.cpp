@@ -238,28 +238,35 @@ namespace flopoco{
 	double intpow2(int power)
 	{
 		double x = 1;
-		for (int i = 0; i < power; i++)
-			x *= 2;
+		if(power>0){ 
+			for (int i = 0; i < power; i++)
+				x *= 2;
+		} else if(power<0) {
+			for (int i = 0; i < -power; i++)
+				x /= 2;
+		}
 		return x;
 	}
 
-	mpz_class mpzpow2(int power)
+	mpz_class mpzpow2(unsigned int power)
 	{
 		mpz_class x = 1;
-		for (int i = 0; i < power; i++)
+		for (unsigned int i = 0; i < power; i++)
 			x *= 2;
 		return x;
 	}
 
 
-	//  2 ^ -minusPower. Exact, no round
-	double invintpow2(int minusPower)
-	{
-		double x = 1;
-		for (int i = 0; i < minusPower; i++)
-			x /= 2;
-		return x;
-	}
+// 	#if 0
+// //  2 ^ -minusPower. Exact, no round
+// 	double invintpow2(unsigned int minusPower)
+// 	{
+// 		double x = 1;
+// 		for (int i = 0; i < minusPower; i++)
+// 			x /= 2;
+// 		return x;
+// 	}
+// #endif
 
 	// How many bits does it take to write number ?
 	int intlog2(double number)

@@ -135,7 +135,7 @@ namespace flopoco{
 	 * @param power the power at which 2 is raised
 	 * @return 2^power
 	 */
-	mpz_class mpzpow2(int power);
+	mpz_class mpzpow2(unsigned int power);
 
 
 
@@ -143,7 +143,7 @@ namespace flopoco{
 	 * @param minusPower - the power at which 2 will be raised
 	 * @return 2 ^ (- minusPower)
 	 */
-	double invintpow2(int minusPower);
+	//	double invintpow2(int minusPower);
 
 	/** How many bits does it take to write number. 
 	 * @param number the number to be represented (floating point)
