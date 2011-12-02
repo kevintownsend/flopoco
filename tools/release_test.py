@@ -21,7 +21,7 @@ import fileinput
 
 
 test_cases_per_combination = 1000
-useModelSim=True # if True, use modelsim; if False, use ghdl
+useModelSim=False # if True, use modelsim; if False, use ghdl
 testBench = "TestBenchFile"   #one of TestBench or TestBenchFile
 timeUntilDiscardTest = 5
 
@@ -190,39 +190,46 @@ if __name__ == '__main__':
 								child_stderr.close()
 
 						else: # use ghdl
-
 							cmd=ghdl_food[string.find(ghdl_food,"ghdl -a"):string.find(ghdl_food,".vhdl")+5]
 							logfile.write(cmd+"\n")
-							print(cmd)
-			 				status=commands.getoutput(cmd)
-			 				if(status):
+							print(cmd)							
+							try:
+								status=subprocess.check_output(cmd,shell=True)
+							except subprocess.CalledProcessError, e:
+								errorstring=e.output
 								print "ghdl -a error:"
-								print status
-								logfile.write(status+"\n")
+								print errorstring
+								logfile.write(errorstring+"\n")
 								did_compile=False
 								pass_test=False
 
 							cmd=ghdl_food[string.find(ghdl_food,"ghdl -e"):string.find(ghdl_food,"   ghdl -r")-1]
 							logfile.write(cmd+"\n")
 							print(cmd)
-			 				status=commands.getoutput(cmd)
-			 				if(status):
+							try:
+								status=subprocess.check_output(cmd,shell=True)
+							except subprocess.CalledProcessError, e:
+								errorstring=e.output
 								print "ghdl -e error:"
-								print status
-								logfile.write(status+"\n")
-								pass_test=False
+								print errorstring
+								logfile.write(errorstring+"\n")
 								did_compile=False
-
+								pass_test=False
+									
 							cmd=ghdl_food[string.find(ghdl_food,"ghdl -r"):string.find(ghdl_food,".vcd")+4]
 							logfile.write(cmd+"\n")
 							print(cmd)
-			 				status=commands.getoutput(cmd)
-			 				if string.find(status, "Incorrect") !=-1:
-								print "ghdl -r error:"
-								print status
-								logfile.write(status+"\n")
-								pass_test=False
-							commands.getoutput("rm *.vcd e~testbench* testbench*")
+							try:
+								status=subprocess.check_output(cmd,shell=True)
+							except subprocess.CalledProcessError, e:
+								errorstring=e.output
+								if string.find(errorstring, "Incorrect") !=-1:
+									print "ghdl -r error:"
+									print errorstring
+									logfile.write(errorstring+"\n")
+									pass_test=False
+
+							subprocess.call("rm *.vcd e~testbench* testbench*", shell=True)
 
 					pass_test = pass_test and did_generate_vhdl
 					res.append([run_cmd, `did_generate_vhdl`, `did_compile`, `pass_test`])
