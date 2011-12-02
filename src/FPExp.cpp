@@ -390,7 +390,7 @@ namespace flopoco{
 		
 
  #ifdef HAVE_SOLLYA
- 		double cpexpA;
+		//		double cpexpA;
 		
 		if(wF+g<=26) { // Magic exp table works up to single precision
 			
@@ -426,7 +426,7 @@ namespace flopoco{
 			syncCycleFromSignal("expA0", getSignalDelay("expA0"));
 			
 			//TODO FIXME
-			cpexpA = getCriticalPath();
+			//cpexpA = getCriticalPath();
 			vhdl << tab << declare("expA", 27) << " <=  expA0" << range(35, 9) << ";" << endl;
 			setSignalDelay("expA", target->RAMDelay());
 			vhdl << tab << declare("expZmZm1_0", 9) << " <= lowerTerm0" << range(8, 0) << ";" << endl;
@@ -449,7 +449,7 @@ namespace flopoco{
 			setSignalDelay("expA",  table->getOutputDelay("Y"));
 			syncCycleFromSignal("expA", getSignalDelay("expA"));
 			vhdl << "-- signal delay at BRAM output = "<<getSignalDelay("expA")<<endl;
-			cpexpA = getCriticalPath();
+			//cpexpA = getCriticalPath();
 			syncCycleFromSignal("Zhigh", cpZhigh );
 
 #if 1

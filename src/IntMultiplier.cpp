@@ -39,7 +39,7 @@ namespace flopoco {
 		srcFileName="IntMultiplier";
 		setCopyrightString ( "Bogdan Pasca 2011" );
 		
-		name <<"IntMultiplier_"<<wInX_<<"_"<<wInY_<<"_uid"<<Operator::getNewUId();;
+		name <<"IntMultiplier_"<<wInX_<<"_"<<wInY_<<"_" << (sign_?"signed":"unsigned") << "_uid"<<Operator::getNewUId();;
 		setName ( name.str() );
 		
 		// Set up the IO signals
@@ -59,9 +59,9 @@ namespace flopoco {
 			selectedVersion = 1; //SignedIntMultiplier
 		}else if ((sign) && (ratio==0)){
 			selectedVersion = 4; //LogicIntMultiplier with sign 1
-		}else if ((target->getUseHardMultipliers()) && (sign)){
+		}else if ((!target->getUseHardMultipliers()) && (sign)){
 			selectedVersion = 4;	
-		}else if ((target->getUseHardMultipliers()) && (!sign)){
+		}else if ((!target->getUseHardMultipliers()) && (!sign)){
 			selectedVersion = 3;
 		}	
 
