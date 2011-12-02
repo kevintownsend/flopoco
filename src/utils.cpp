@@ -237,7 +237,7 @@ namespace flopoco{
 	//  2 ^ power
 	double intpow2(int power)
 	{
-		double x = 1;
+		double x = 1.0;
 		if(power>0){ 
 			for (int i = 0; i < power; i++)
 				x *= 2;
@@ -251,8 +251,10 @@ namespace flopoco{
 	mpz_class mpzpow2(unsigned int power)
 	{
 		mpz_class x = 1;
-		for (unsigned int i = 0; i < power; i++)
-			x *= 2;
+		if(power>0){ 
+			for (unsigned int i = 0; i < power; i++)
+				x *= 2;
+		}
 		return x;
 	}
 
