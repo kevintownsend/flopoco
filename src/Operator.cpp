@@ -415,28 +415,40 @@ namespace flopoco{
 	
 	void Operator::outputFinalReport(int level) {
 
-		for (unsigned i=0; i< getOpList().size(); i++)
-			if (! getOpListR().empty())
-				getOpListR()[i]->outputFinalReport(level+1);	
+		if (!hardOperator()){ // interface operator
+			if(getOpList().size()!=1){
+				ostringstream o;
+				o << "!?! Operator " << getUniqueName() << " is an interface operator with " << getOpList().size() << "children";
+				throw o.str();
+			}
+			getOpListR()[0]->outputFinalReport(level);
+		}
 
-		ostringstream tabs, ctabs;
-		for (int i=0;i<level-1;i++){
-			tabs << "|" << tab;
-			ctabs << "|" << tab;
+		else{ // Hard operator
+			for (unsigned i=0; i< getOpList().size(); i++)
+				if (! getOpListR().empty())
+					getOpListR()[i]->outputFinalReport(level+1);	
+			
+			ostringstream tabs, ctabs;
+			for (int i=0;i<level-1;i++){
+				tabs << "|" << tab;
+				ctabs << "|" << tab;
+			}
+			
+			if (level>0){
+				tabs << "|" << "---";
+				ctabs << "|" << tab;
+			}
+			
+			cerr << tabs.str() << "Entity " << uniqueName_ <<":"<< endl;
+			if(this->getPipelineDepth()!=0)
+				cerr << ctabs.str() << tab << "Pipeline depth = " << getPipelineDepth() << endl;
+			else
+				cerr << ctabs.str() << tab << "Not pipelined"<< endl;
 		}
-		
-		if (level>0){
-			tabs << "|" << "---";
-			ctabs << "|" << tab;
-		}
-		
-		cerr << tabs.str() << "Entity " << uniqueName_ <<":"<< endl;
-		if(this->getPipelineDepth()!=0)
-			cerr << ctabs.str() << tab << "Pipeline depth = " << getPipelineDepth() << endl;
-		else
-			cerr << ctabs.str() << tab << "Not pipelined"<< endl;
 	}
-	
+
+
 	void Operator::setCycle(int cycle, bool report) {
 		// lexing part
 		vhdl.flush(currentCycle_);
