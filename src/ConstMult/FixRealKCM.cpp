@@ -37,9 +37,9 @@ namespace flopoco{
 
 
 
-	FixRealKCM::FixRealKCM(Target* target, int lsbIn_, int msbIn_, int signedInput_, int lsbOut_, string constant_, double targetUlpError, map<string, double> inputDelays) :
+	FixRealKCM::FixRealKCM(Target* target, int lsbIn_, int msbIn_, int signedInput_, int lsbOut_, string constant_, double targetUlpError_, map<string, double> inputDelays) :
 		Operator(target, inputDelays), lsbIn(lsbIn_), msbIn(msbIn_), signedInput(signedInput_),
-		wIn(msbIn_-lsbIn_+1), lsbOut(lsbOut_), constant(constant_) 
+		wIn(msbIn_-lsbIn_+1), lsbOut(lsbOut_), constant(constant_), targetUlpError(targetUlpError_) 
 	{
 		srcFileName="FixRealKCM";
 
@@ -310,7 +310,9 @@ namespace flopoco{
 		mpfr_mul_2si(mpR, mpR, mother->wOut - mother->wIn - mother->msbC + mother->g, GMP_RNDN); //Exact
 
 		// and add the half-ulp of the result that turns truncation into rounding
-		if(last && (index!=0) && (index!=1)) // if one or two tables, we don't need to add this bit
+		// if g=0 (meaning either one table, or two tables+faithful rounding), 
+		// we don't need to add this bit
+		if(last && mother->g!=0) 
 			mpfr_add_si(mpR, mpR, 1<<(mother->g-1), GMP_RNDN);
 
 		// Here is when we do the rounding

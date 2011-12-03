@@ -24,6 +24,7 @@ namespace flopoco{
 		int msbOut;
 		int wOut;
 		string constant;
+		float targetUlpError;
 		mpfr_t mpC;
 		int msbC;
 		int g;

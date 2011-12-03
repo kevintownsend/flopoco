@@ -794,6 +794,24 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				addOperator(oplist, op);
 			}        
 		}
+		else if(opname=="FixRealKCMExpert"){ // hidden, for debug
+			int nargs = 6;
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			else {
+				int lsbIn = atoi(argv[i++]);
+				int msbIn = atoi(argv[i++]);
+				int signedInput = checkBoolean(argv[i++], argv[0]);
+				int lsbOut = atoi(argv[i++]);
+				string constant = argv[i++];
+				float targetUlpError = atof(argv[i++]);
+				cerr << "> FixRealKCM, msbIn="<<msbIn<<", lsbIn="<<lsbIn 
+					  <<", lsbOut="<<lsbOut
+					  << ", constant="<<constant <<endl;
+				op = new FixRealKCM(target, lsbIn, msbIn, signedInput, lsbOut, constant, targetUlpError);
+				addOperator(oplist, op);
+			}        
+		}
 		else if(opname=="FPRealKCM"){
 			int nargs = 3;
 			if (i+nargs > argc)
