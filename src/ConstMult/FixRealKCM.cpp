@@ -100,7 +100,7 @@ namespace flopoco{
 
 		setCriticalPath( getMaxInputDelays(inputDelays) );
 
-		if(wIn <= lutWidth){
+		if(wIn <= lutWidth+1){
 			///////////////////////////////////  multiplication using 1 table only ////////////////////////////////////
 			REPORT(INFO, "Constant multiplication in a single table, will be correctly rounded");
 			g=0;
@@ -137,8 +137,8 @@ namespace flopoco{
 
 			// For targetUlpError=1.0,    3, 4 tables: g=2;  5..8 tables: g=3  etc
 
-			if(nbOfTables==1 || (nbOfTables==2 && targetUlpError==1.0))
-				g=0; // specific cases: one single table is CR, or two CR table make up a faithful sum
+			if(nbOfTables==2 && targetUlpError==1.0)
+				g=0; // specific case: two CR table make up a faithful sum
 			else
 				g = ceil(log2(nbOfTables/((targetUlpError-0.5)*exp2(-lsbOut)))) -1 -lsbOut;
 
@@ -204,24 +204,19 @@ namespace flopoco{
 				for (int i=0; i<nbOfTables; i++)
 					inPortMap (adder, join("X",i) , join("addOp",i));
 			}
-			else if (nbOfTables==2){
+			else { // 2 tables only
 				adder = new IntAdder(target, wOut+g, inDelayMap("X",target->localWireDelay() + getCriticalPath()));
 				oplist.push_back(adder);
 				inPortMap (adder, "X" , join("addOp",0));
 				inPortMap (adder, "Y" , join("addOp",1));
 				inPortMapCst(adder, "Cin" , "'0'");
 			}
-			if (nbOfTables>1){
-				outPortMap(adder, "R", "OutRes");
-				vhdl << instance(adder, "Result_Adder");
-				syncCycleFromSignal("OutRes");
-				setCriticalPath( adder->getOutputDelay("R") );
-				vhdl << tab << "R <= OutRes" << range(wOut+g-1, g) << ";" << endl;
-				outDelayMap["R"] = getCriticalPath();
-			}
-			else{
-				vhdl << tab << "R <= pp0;" << endl;				
-			}
+			outPortMap(adder, "R", "OutRes");
+			vhdl << instance(adder, "Result_Adder");
+			syncCycleFromSignal("OutRes");
+			setCriticalPath( adder->getOutputDelay("R") );
+			vhdl << tab << "R <= OutRes" << range(wOut+g-1, g) << ";" << endl;
+			outDelayMap["R"] = getCriticalPath();
 		}
 
 		mpfr_clears(log2C, NULL);
