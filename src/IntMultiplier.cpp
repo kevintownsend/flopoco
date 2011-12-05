@@ -55,7 +55,7 @@ namespace flopoco {
 			selectedVersion = 2; //IntTilingMultiplier
 		}else if ((!sign) && (ratio==0)){
 			selectedVersion = 3; //LogicIntMultiplier with sign 0
-		}else if ((sign) && (ratio>1)){
+		}else if ((sign) && (ratio>0)){
 			selectedVersion = 1; //SignedIntMultiplier
 		}else if ((sign) && (ratio==0)){
 			selectedVersion = 4; //LogicIntMultiplier with sign 1
