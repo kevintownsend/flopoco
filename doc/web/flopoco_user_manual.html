@@ -68,7 +68,7 @@ operators listed in <code>&lt;operator specification list&gt;</code>, plus
 possibly sub-operators instanciated by them. To use these operators in your
 design, just add this generated file to your project.</p>
 
-<p>FloPoCo will also issue a report with useful information about the generated operators, such as the pipeline depth or expected working frequency.</p>
+<p>FloPoCo will also issue a report with useful information about the generated operators, such as the pipeline depth. In addition, three levels of verbosity are available.</p>
 
 <h3>Examples</h3>
 
@@ -104,7 +104,7 @@ are transparent to the rest of the project. Options related to pipelining are re
 
 <p>The <code>-target</code> option selects the target FPGA family. We
 try to optimize for the highest speed grade available for this
-family (see below for pipelining options).</p>
+family (see <a href="#pipelining">below</a> for pipelining options).</p>
 <h3>Built-in help</h3>
 
 <p>To obtain a concise list of the available operators and options, simply
@@ -204,7 +204,7 @@ Other values are still allowed, including negative wE. Use at your own risk.</p>
 
 
 <hr/>
-<h2>Pipelining</h2>
+<h2><a name="pipelining"></a>Pipelining</h2>
 
 <p>An operator may be combinatorial, or pipelined. A combinatorial operator has pipeline depth 0. An operator of pipeline depth 1 is obtained by inserting one and only one register on any path from an input to an output. Hopefully, this divides  the critical path delay by almost 2.  An operator of pipeline depth 2 is obtained by inserting two register levels, etc.</p>
 
@@ -513,11 +513,23 @@ article</a>.
 
   <dt><code style="color: blue;">FPConstMultRational wE_in wF_in wE_out wF_out a b</code></dt>
     <dd>
-      Floating-point constant multiplier for a rational constant a/b. It uses the periodic representation of the constant to implement an optimal shift-and-add tree for it. This works well mostly for small a and b, typically division by 3, 5, 9, 17 and other small integers. This operator returns a correctly rounded result, therefore using it to multiply by 1/3 is bit-for-bit equivalent to using an IEEE-compliant division by 3.0. </dd>
+      Floating-point constant multiplier for a rational constant a/b. It uses the periodic representation of the constant to implement an optimal shift-and-add tree for it. This works well mostly for small a and b (scaled by whatever positive or negative power of two). This operator returns a correctly rounded result, therefore using it to multiply by 1/3 is bit-for-bit equivalent to using an IEEE-compliant division by 3.0. This operator is described in <a href="http://hal-ens-lyon.archives-ouvertes.fr/ensl-00610328">this article</a>. For division by b, you should also try FPConstDiv and compare the two obtained operators.</dd>
+</dl>
 
-
-
-
+<h3>Divider by a small integer constant</h3>
+These operators are described in <a href="http://hal-ens-lyon.archives-ouvertes.fr/ensl-00642145/">this article</a>. 
+<dl>
+  <dt><code style="color: blue;">IntConstDiv w d alpha</code></dt>
+    <dd> Euclidean division of input of size w by the small odd integer d. 
+      Algorithm uses radix 2^alpha,   alpha=-1 means a sensible default.</dd>
+</dl>
+<dl>
+  <dt><code style="color: blue;">FPConstDiv wE wF d</code></dt>
+    <dd> Correctly rounded floating-point division by the small integer d. This works well for small, odd values of d.</dd>
+</dl>
+<dl>
+  <dt><code style="color: blue;">FPConstDivExpert wE wF d e alpha</code></dt>
+    <dd> Correctly rounded floating-point division by d.2^e, where d is a small odd integer. alpha=-1 means a sensible default.</dd>
 </dl>
 
 
