@@ -269,14 +269,12 @@ static void usage(char *name, string opName = ""){
 		cerr << "      (no DSP, long latency)\n";
 	}
 #ifdef HAVE_SOLLYA
-//	cerr << "    FPSqrtPoly wE wF correctlyRounded degree\n";
 	if ( full || opName == "FPSqrt" || opName == "FPSqrtPoly"){					
-		OP( "FPSqrtPoly","wE wF correctlyRounded degree");
+		OP( "FPSqrtPoly","wE wF degree");
 		cerr << "      Floating-point square root, using polynomial approximation \n";
-		cerr << "      (DSP-based, shorter latency and higher frequency for large wF)\n";
-		cerr << "      faithful rounding\n";
-		cerr << "      correctlyRounded (0 or 1) selects between faithful and correct rounding (NYImplemented)\n";
-		cerr << "      degree (1,...k) polynomial degree. Higher degree => more DSP less BRAM\n";
+		cerr << "      (DSP-based, shorter latency and higher frequency for large wF than FPSqrt)\n";
+		cerr << "      degree (1,...k) polynomial degree. Higher degree => more DSP, less BRAM\n";
+		cerr << "      Warning: faithful rounding (last-bit accurate) but not correctly rounded\n";
 	}
 #endif // HAVE_SOLLYA
 #ifdef HAVE_SOLLYA
@@ -1757,10 +1755,9 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				usage(argv[0],opname); // and exit
 			int wE = checkStrictlyPositive(argv[i++], argv[0]);
 			int wF = checkStrictlyPositive(argv[i++], argv[0]);
-			int correctlyRounded = checkBoolean(argv[i++], argv[0]);
 			int degree = checkStrictlyPositive(argv[i++], argv[0]);
-			cerr << "> FPSqrtPoly: wE=" << wE << " wF=" << wF << " correctlyRounded="<< correctlyRounded << " degree =" << degree << endl;
-			op = new FPSqrtPoly(target, wE, wF, correctlyRounded, degree);
+			cerr << "> FPSqrtPoly: wE=" << wE << " wF=" << wF << " degree =" << degree << endl;
+			op = new FPSqrtPoly(target, wE, wF, false, degree);
 			addOperator(oplist, op);
 		}
 #endif // HAVE_SOLLYA

@@ -30,7 +30,7 @@
 #include "IntSquarer.hpp"
 #include "FPSqrtPoly.hpp"
 
-#define KEEP_HANDCRAFTED_VERSION 1
+#define KEEP_HANDCRAFTED_VERSION 0
 
 using namespace std;
 
@@ -332,8 +332,6 @@ namespace flopoco{
 		/* the number of address lines needed to store the intervals for the even case*/		
 		addrLinesPolyEven = (tg->getNrIntArray())[1];
 
-		//TODO remove
-		cout <<  "nr intervals odd = " << addrLinesPolyOdd << "nr intervals even = "<<addrLinesPolyEven<<endl;
 		
 		/* the numbger of address lines of the table */
 		int addrLinesTable = tg->wIn;
