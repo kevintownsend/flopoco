@@ -190,6 +190,7 @@ if __name__ == '__main__':
 								child_stderr.close()
 
 						else: # use ghdl
+							time.sleep(1)
 							cmd=ghdl_food[string.find(ghdl_food,"ghdl -a"):string.find(ghdl_food,".vhdl")+5]
 							logfile.write(cmd+"\n")
 							print(cmd)							
