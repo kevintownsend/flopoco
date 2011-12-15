@@ -1,4 +1,3 @@
-@
 #FPLog
 
 flopoco FPLog 8 23 16

@@ -1,4 +1,3 @@
-@
 # FPSquarer wE wFin wFout
 
 flopoco FPSquarer 8 23 23

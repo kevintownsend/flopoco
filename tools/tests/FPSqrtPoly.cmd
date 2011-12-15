@@ -1,4 +1,3 @@
-@
 #    FPSqrtPoly wE wF degree
 
 flopoco FPSqrtPoly 8 23 2
