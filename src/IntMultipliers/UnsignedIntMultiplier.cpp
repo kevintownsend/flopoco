@@ -347,9 +347,25 @@ namespace flopoco{
 					vhdl << tab << "R <= addRes & r00"<<range(35,0) << ";" << endl;
 					outDelayMap["R"]=getCriticalPath();
 			} else{
-				cout << "ooooups!! 2" << endl;
-				exit(-1);
-			
+				vhdl << tab << "lpm_mult_component2 : lpm_mult "<<endl;
+				vhdl << tab << "	GENERIC MAP ("<<endl;
+				vhdl << tab << "		lpm_hint => \"MAXIMIZE_SPEED=9\","<<endl;
+				vhdl << tab << "		lpm_pipeline => 5,"<<endl;
+				vhdl << tab << "		lpm_representation => \"UNSIGNED\","<<endl;
+				vhdl << tab << "		lpm_type => \"LPM_MULT\","<<endl;
+				vhdl << tab << "		lpm_widtha => "<<wInX_<<","<<endl;
+				vhdl << tab << "		lpm_widthb => "<<wInY_<<","<<endl;
+				vhdl << tab << "		lpm_widthp => "<<wOut_<<endl;
+				vhdl << tab << "	)"<<endl;
+				vhdl << tab << "	PORT MAP ("<<endl;
+				if (target->isPipelined())
+				vhdl << tab << "		clock => clk,"<<endl;
+				vhdl << tab << "		dataa => X,"<<endl;
+				vhdl << tab << "		datab => Y,"<<endl;
+				vhdl << tab << "		result => R"<<endl;
+				vhdl << tab << "	);"<<endl;
+				setCycle(5);		
+				outDelayMap["R"] = 0.0;
 			}
 		}	
 		else if (0) // the target is a Stratix
