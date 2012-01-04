@@ -63,8 +63,8 @@ namespace flopoco{
 
 			DSPMultiplierDelay_       = 2.744e-9;
 			DSPAdderDelay_            = 1.420e-9;
-			DSPCascadingWireDelay_        = 0.266e-9;//?
-			DSPToLogicWireDelay_ = 1.619e-9;
+			DSPCascadingWireDelay_    = 0.266e-9;//?
+			DSPToLogicWireDelay_      = 0.266e-9;//1.619e-9;
 			
 			RAMDelay_ = 2.439e-9; //TODO
 			RAMToLogicWireDelay_ = 0.439e-9; //TODO
