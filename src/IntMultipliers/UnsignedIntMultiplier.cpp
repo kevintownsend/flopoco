@@ -215,10 +215,12 @@ namespace flopoco{
 			}
 			
 			if ((wInX <= 54) && (wInY <= 54)){
+				int m = max(wInX, wInY)/10;
+			
 				vhdl << tab << "lpm_mult_component2 : lpm_mult "<<endl;
 				vhdl << tab << "	GENERIC MAP ("<<endl;
 				vhdl << tab << "		lpm_hint => \"MAXIMIZE_SPEED=9\","<<endl;
-				vhdl << tab << "		lpm_pipeline => 3,"<<endl;
+				vhdl << tab << "		lpm_pipeline => "<<m<<","<<endl;
 				vhdl << tab << "		lpm_representation => \"UNSIGNED\","<<endl;
 				vhdl << tab << "		lpm_type => \"LPM_MULT\","<<endl;
 				vhdl << tab << "		lpm_widtha => "<<wInX_<<","<<endl;
@@ -232,7 +234,7 @@ namespace flopoco{
 				vhdl << tab << "		datab => Y,"<<endl;
 				vhdl << tab << "		result => R"<<endl;
 				vhdl << tab << "	);"<<endl;
-				setCycle(3);		
+				setCycle(m);		
 				outDelayMap["R"] = 0.0;
 			}else if ((wInX <= 36) && (wInY <= 36)){				
 				setCriticalPath( getMaxInputDelays(inputDelays));
@@ -347,6 +349,7 @@ namespace flopoco{
 					vhdl << tab << "R <= addRes & r00"<<range(35,0) << ";" << endl;
 					outDelayMap["R"]=getCriticalPath();
 			} else{
+			
 				vhdl << tab << "lpm_mult_component2 : lpm_mult "<<endl;
 				vhdl << tab << "	GENERIC MAP ("<<endl;
 				vhdl << tab << "		lpm_hint => \"MAXIMIZE_SPEED=9\","<<endl;

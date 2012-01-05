@@ -82,7 +82,7 @@ namespace flopoco{
 
 		int sigProdSize;
 		int g=3; // number of guard bits needed in case of faithful rounding
-		if(normalized_) 
+		if(correctlyRounded_) 
 			sigProdSize = wFX_+1 + wFY_+1;
 		else
 			// faithful rounding will be computed by IntTruncMultiplier
@@ -128,7 +128,7 @@ namespace flopoco{
 		if (normalized_){
 		/******************************************************************/
 				
-			vhdl << tab<< declare("norm") << " <= sigProd" << of(wFX_+wFY_+1) << ";"<<endl;
+			vhdl << tab<< declare("norm") << " <= sigProd" << of(sigProdSize -1) << ";"<<endl;
 			
 			manageCriticalPath(target->localWireDelay() + target->adderDelay(wEX+2));
 			double expPostNormCriticalPath=getCriticalPath();

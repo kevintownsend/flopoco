@@ -103,6 +103,9 @@ namespace flopoco{
 		vmme             = vm - getExtraHeight();
 		truncationOffset = estimateNrOfDiscardedCols(k);
 		nrDSPs           = estimateDSPsv2();
+		if (target_->getVendor()=="Altera")		
+			nrDSPs += 2;
+			
 		nrSoftDSPs       = 0;
 		subCount         = 0;
 		
@@ -2819,7 +2822,7 @@ namespace flopoco{
 								nextCycle();
 								vhdl << tab << declare(join("addDSP", nrOp), multW+multH, true) << " <= " << join("x",i,"_0") << " * " << join("y",i,"_0") << ";" << endl;
 							}
-							vhdl << tab << declare(join("addOpDSP", nrOp), wInX+wInY-minShift) << " <= " << zg(wX+wY-(trx2+try2+ext+multW+multH),0) << " & " << join("addDSP", nrOp) << " & " << zg(trx2+try2-minShift,0) << ";" << endl;
+							vhdl << tab << declare(join("addOpDSP", nrOp), wInX+wInY-minShift) << " <= " << zg(wX+wY-(trx2+try2+ext+multW+multH),0) << " & " << join("addDSP", nrOp)<<range(ext+multW+multH-1 ,ext+multW+multH - (wInX+wInY-minShift) ) << " & " << zg(trx2+try2-minShift,0) << ";" << endl;
 							nrOp++;
 					}
 				return nrOp;
