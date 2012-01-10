@@ -319,6 +319,7 @@ namespace flopoco{
 			/* compute how many tiles it would take to fill the tiling (approximate) */
 			float maxDSPs = ceil(boardArea/tileArea);
 			maxDSPs = maxDSPs + 2.0/maxDSPs; //FIXME
+			maxDSPs = ceil(maxDSPs);
 			/* penalty factor due to the non paralel cut of the board. to be improved FIXME */
 			maxDSPs = 1.0*maxDSPs;
 			/* take into account the user preference, that is the ratio */
