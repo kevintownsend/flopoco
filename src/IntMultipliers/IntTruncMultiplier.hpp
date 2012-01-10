@@ -311,13 +311,14 @@ namespace flopoco{
 		int estimateDSPsv2(){
 			/* get the are of the board to be tilled */
 			float boardArea; 
-		    boardArea = (float(truncationOffset*truncationOffset)/2) + (wX-truncationOffset)*wY + (wY-truncationOffset)*wX - (wX-truncationOffset)*(wY-truncationOffset);
-		    /* get the tile area */
-		    int dx, dy;
-		    target_->getDSPWidths(dx,dy);
-		    float tileArea = dx*dy;
-		    /* compute how many tiles it would take to fill the tiling (approximate) */
-		    float maxDSPs = ceil(boardArea/tileArea);
+			boardArea = (float(truncationOffset*truncationOffset)/2) + (wX-truncationOffset)*wY + (wY-truncationOffset)*wX - (wX-truncationOffset)*(wY-truncationOffset);
+			/* get the tile area */
+			int dx, dy;
+			target_->getDSPWidths(dx,dy);
+			float tileArea = dx*dy;
+			/* compute how many tiles it would take to fill the tiling (approximate) */
+			float maxDSPs = ceil(boardArea/tileArea);
+			maxDSPs = maxDSPs + 2.0/maxDSPs; //FIXME
 			/* penalty factor due to the non paralel cut of the board. to be improved FIXME */
 			maxDSPs = 1.0*maxDSPs;
 			/* take into account the user preference, that is the ratio */
