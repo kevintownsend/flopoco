@@ -318,10 +318,10 @@ namespace flopoco{
 			float tileArea = dx*dy;
 			/* compute how many tiles it would take to fill the tiling (approximate) */
 			float maxDSPs = ceil(boardArea/tileArea);
-			maxDSPs = maxDSPs + 2.0/maxDSPs; //FIXME
-			maxDSPs = ceil(maxDSPs);
+//			maxDSPs = maxDSPs + 2.0/maxDSPs; //FIXME
+//			maxDSPs = ceil(maxDSPs);
 			/* penalty factor due to the non paralel cut of the board. to be improved FIXME */
-			maxDSPs = 1.0*maxDSPs;
+//			maxDSPs = 1.0*maxDSPs;
 			/* take into account the user preference, that is the ratio */
 			float realDSPs = ceil ( maxDSPs * ratio );
 			
@@ -410,6 +410,8 @@ namespace flopoco{
 		void convertCoordinates(int &tx, int &ty, int &bx, int &by);
 
 		void convertCoordinatesKeepNeg(int &tx, int &ty, int &bx, int &by);
+
+		void convertCoordinatesInvertedBoard(int &tx, int &ty, int &bx, int &by);
 
 		
 		/** This functions splits large DSP super-blocks or paris of blocks into unit DSP blocks found on the target
