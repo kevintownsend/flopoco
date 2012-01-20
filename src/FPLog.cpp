@@ -451,11 +451,16 @@ namespace flopoco{
 			vhdl << ");"<<endl;
 
 
+#if 0
 			double ctperiod;
 			ctperiod = 1.0 / target->frequency();
 			target->setFrequency( 1.0 / (ctperiod - target->LogicToDSPWireDelay() ) );
 			IntAdder* addCycleI2 = new IntAdder ( target, s[i+1], inDelayMap("X", getCriticalPath()) );
 			target->setFrequency( 1.0 / ctperiod );
+#else
+			IntAdder* addCycleI2 = new IntAdder ( target, s[i+1], inDelayMap("X", getCriticalPath()) );
+#endif
+
 			oplist.push_back(addCycleI2);
 			
 			inPortMap( addCycleI2, "X" , join("EiYPB",i) );
@@ -530,8 +535,9 @@ namespace flopoco{
 
 		vhdl << endl << tab << "-- Now the log tables, as late as possible" << endl;
 
-		//profiling the number of pipeline levels of the stages: the log tables have small input and large outputs, so we had rather register the inputs.
+		// the log tables have small input and large outputs, so we had rather register the inputs.
 		// We have to compute the sum of the outputs of the log tables, and we want this sum (AlmostLog) to be synchronized to Log1pNormal, to which it will be added. 
+		// To get this synchro right, we have to do a first dummy evaluation of the pipeline to profile its depth 
 		// We first do it in a dummy way, starting from cycle 0, to measure the depth of this sub-pipeline
 
 		FirstLogTable* lt0 = new FirstLogTable(target, a[0], target_prec, it0, this);
@@ -541,7 +547,9 @@ namespace flopoco{
 		setCriticalPath(0.0);
 		for (i=1; i<= stages; i++) {
 			manageCriticalPath( target->LogicToRAMWireDelay() + target->RAMDelay(), false );
-			nextCycle();
+			if( (target->getID()=="Virtex5" && target->frequencyMHz() > 250)  ) {
+					nextCycle(); nextCycle();// gets absorbed in the BRams, and reinits the critical paths, and we have plenty of cycles to live in 
+			}
 			IntAdder * adderS = new IntAdder( target, lt0->wOut, inDelayMap("X", target->RAMToLogicWireDelay() + getCriticalPath() ));
 			setCycle(getCurrentCycle()+adderS->getPipelineDepth());
 			setCriticalPath( adderS->getOutputDelay("R") );	
@@ -577,7 +585,10 @@ namespace flopoco{
 		
 			vhdl << tab << declare(join("sopX",i), lt0->wOut) << " <= (" << rangeAssign(lt0->wOut-1, lti->wOut,  "'0'") << " & " << join("L",i) <<");"<<endl;
 			
-//			nextCycle();// gets absorbed in the BRams, and reinits the critical paths, and we have plenty of cycles to live in 
+			// One of these target-specific ifs we wish we wouldn't have to write
+			if( (target->getID()=="Virtex5" && target->frequencyMHz() > 250)  ) {
+				nextCycle(); nextCycle();// gets absorbed in the BRams, and reinits the critical paths, and we have plenty of cycles to live in 
+			}
 			IntAdder * adderS = new IntAdder( target, lt0->wOut, inDelayMap("X", target->RAMToLogicWireDelay()+  getCriticalPath()));
 			oplist.push_back(adderS);
 			

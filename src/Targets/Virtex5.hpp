@@ -48,8 +48,8 @@ namespace flopoco{
 			DSPCascadingWireDelay_        = 0.235e-9;
 			DSPToLogicWireDelay_ = 0.436e-9;
 
-			RAMDelay_ = 1.647e-9; //TODO
-			RAMToLogicWireDelay_ = 0.222e-9; 
+			RAMDelay_ = 1.750e-9; 
+			RAMToLogicWireDelay_ = 0.436e-9; 
 		}
 
 		/** The destructor */
