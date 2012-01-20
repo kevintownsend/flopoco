@@ -2529,16 +2529,16 @@ namespace flopoco{
 								int rtYNext = try2 - extH;
 
 								if (rtX + rtY != rtXNext + rtYNext) 
-									sname << join("pxy",i,j) << range( min(tileSize, d->getShiftAmount())-1, min(bpadX + bpadY, previousPadding+ ( rtX+rtY == rtXOld+rtYOld?0:17) )) << " & " << sname.str();
+									sname << join("pxy",i,j) << range( min(tileSize, d->getShiftAmount())-1, min(bpadX + bpadY, max(0, previousPadding - ( rtX+rtY == rtXOld+rtYOld?0:17)) )) << " & " << sname.str();
 							}
 						}else{ // only multiplication
 							vhdl << tab << declare(join("pxy",i,j), multW+multH+2) << " <= " << join("x",i,"_",j)<<range(multW,0) << " * " <<join("y",i,"_",j)<<range(multH,0) << "; --0" << endl;
 							sname.str("");
 							if (d->getShiftOut() == NULL){ // concatenate the entire partial product
 								if (!onEdge)
-									sname << zg(nrZeros) << " & " << join("pxy",i,j) << range(tileSize + bpadX+bpadY -1, bpadX+bpadY) << " & " << zg(bounded_tX + bounded_tY) << "; --1" << endl;
+									sname << zg(nrZeros) << " & " << join("pxy",i,j) << range(tileSize + bpadX+bpadY -1, bpadX+bpadY) << " & " << zg(bounded_tX + bounded_tY - minShift) << "; --1" << endl;
 								else
-									sname << rangeAssign(nrZeros-1,0, join("pxy",i,j)+of(tileSize + bpadX+bpadY -1)) << " & " << join("pxy",i,j) << range(tileSize + bpadX+bpadY -1, bpadX+bpadY) << " & " << zg(bounded_tX + bounded_tY) << "; --1" << endl;
+									sname << rangeAssign(nrZeros-1,0, join("pxy",i,j)+of(tileSize + bpadX+bpadY -1)) << " & " << join("pxy",i,j) << range(tileSize + bpadX+bpadY -1, bpadX+bpadY) << " & " << zg(bounded_tX+bounded_tY-minShift) << "; --1" << endl;
 							} else { 
 							
 								/* check if the next element has as 17-bit shift wr to this one. If this is true, then 
@@ -2558,7 +2558,7 @@ namespace flopoco{
 									if ( bpadX + bpadY < 17)
 										sname << join("pxy",i,j) << range(d->getShiftAmount()-1, bpadX+bpadY);
 					
-									sname << " & " << zg(rtX+rtY - minShift) << " & ";
+									sname << " & " << zg(bounded_tX + bounded_tY - minShift) << " & ";
 								}
 									
 								sname <<" \"\";--3 bpadX "<< bpadX <<" bpadY "<<bpadY <<endl;
