@@ -25,9 +25,9 @@
 #include <mpfr.h>
 #include <cstdlib>
 #include <gmpxx.h>
-#include "../utils.hpp"
-#include "../Operator.hpp"
-#include "../IntAddition/IntAdderSpecific.hpp"
+#include <utils.hpp>
+#include <Operator.hpp>
+#include <IntAddition/IntAdderSpecific.hpp>
 
 #include "TaMaDiCore.hpp"
 //#define IAS

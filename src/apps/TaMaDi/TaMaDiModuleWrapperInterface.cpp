@@ -25,8 +25,8 @@
 #include <mpfr.h>
 #include <cstdlib>
 #include <gmpxx.h>
-#include "../utils.hpp"
-#include "../Operator.hpp"
+#include <utils.hpp>
+#include <Operator.hpp>
 
 #include "TaMaDiModuleWrapperInterface.hpp"
 #include "TaMaDiModule.hpp"

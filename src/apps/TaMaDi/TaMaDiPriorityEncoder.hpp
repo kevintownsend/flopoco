@@ -8,7 +8,7 @@
 #include <cstdlib>
 
 
-#include "../Operator.hpp"
+#include <Operator.hpp>
 
 namespace flopoco{
 

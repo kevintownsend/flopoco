@@ -311,17 +311,17 @@ ADD_LIBRARY(FloPoCo STATIC
  src/apps/FPFMAcc
  src/apps/FPJacobi
 
- src/apps/TaMaDiCore 
- src/apps/TaMaDiPriorityEncoder 
- src/apps/TaMaDiDecoder 
- src/apps/TaMaDiFIFO 
- src/apps/TaMaDiShiftRegister 
- src/apps/TaMaDiModule 
- src/apps/TaMaDiModuleDummyWrapper
- src/apps/TaMaDiModuleWrapperInterface
- src/apps/TaMaDiDispatcherInterface
- src/apps/TaMaDiDeserializer
- src/apps/TaMaDiSystem
+# src/apps/TaMaDiCore 
+# src/apps/TaMaDiPriorityEncoder 
+# src/apps/TaMaDiDecoder 
+# src/apps/TaMaDiFIFO 
+# src/apps/TaMaDiShiftRegister 
+# src/apps/TaMaDiModule 
+# src/apps/TaMaDiModuleDummyWrapper
+# src/apps/TaMaDiModuleWrapperInterface
+# src/apps/TaMaDiDispatcherInterface
+# src/apps/TaMaDiDeserializer
+# src/apps/TaMaDiSystem
 
 # TestBench-related -------------------------------------------------
 #--------------------------------------------------------------------

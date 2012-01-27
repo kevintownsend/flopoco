@@ -1,5 +1,5 @@
-#ifndef TaMaDiSystem_HPP
-#define TaMaDiSystem_HPP
+#ifndef TaMaDiDeserializer_HPP
+#define TaMaDiDeserializer_HPP
 #include <vector>
 #include <sstream>
 #include <gmp.h>
@@ -8,20 +8,22 @@
 #include <cstdlib>
 
 
-#include "../Operator.hpp"
-#include "TaMaDiModuleWrapperInterface.hpp"
-#include "TaMaDiDeserializer.hpp"
-#include "TaMaDiDispatcherInterface.hpp"
+#include <Operator.hpp>
+#include "TaMaDiCore.hpp"
+#include "TaMaDiFIFO.hpp"
+#include "TaMaDiPriorityEncoder.hpp"
+#include "TaMaDiDecoder.hpp"
+#include "TaMaDiShiftRegister.hpp"
 
 namespace flopoco{
 
-	/** The TaMaDiSystem class.  */
-	class TaMaDiSystem : public Operator
+	/** The TaMaDiDeserializer class.  */
+	class TaMaDiDeserializer : public Operator
 	{
 	public:
 
 		/**
-		 * The TaMaDiSystem constructor
+		 * The TaMaDiDeserializer constructor
 		 * @param[in]		target  the target device
 		 * @param[in]		wp		binary-format precision we are intrested in      
 		 * @param[in]		d		polynomial degree
@@ -29,12 +31,12 @@ namespace flopoco{
 		 * @param[in]		wIntervalID the number of bits required to store the interval ID (log2(#intervals))  
 		 * @param[in]		n		number of parallel processing units
 		 **/ 
-		TaMaDiSystem(Target* target, int wp, int d, int iterations, int wIntervalID, int compSize, int n, int inFIFODepth, int peFIFODepth, int outFIFODepth, int DispatcherInputFIFODepth, int DispatcherOutputFIFODepth, int ModuleCount);
+		TaMaDiDeserializer(Target* target, int wp, int d, int iterations, int wIntervalID, int n, int inFIFODepth, int peFIFODepth, int outFIFODepth);
 
 		/**
-		 * TaMaDiSystem destructor
+		 * TaMaDiDeserializer destructor
 		 */
-		~TaMaDiSystem();
+		~TaMaDiDeserializer();
 	
 	protected:
 		

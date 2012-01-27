@@ -1,5 +1,5 @@
-#ifndef TaMaDiDispatcherInterface_HPP
-#define TaMaDiDispatcherInterface_HPP
+#ifndef TaMaDiModuleDummyWrapper_HPP
+#define TaMaDiModuleDummyWrapper_HPP
 #include <vector>
 #include <sstream>
 #include <gmp.h>
@@ -8,7 +8,7 @@
 #include <cstdlib>
 
 
-#include "../Operator.hpp"
+#include <Operator.hpp>
 #include "TaMaDiCore.hpp"
 #include "TaMaDiFIFO.hpp"
 #include "TaMaDiPriorityEncoder.hpp"
@@ -17,13 +17,13 @@
 
 namespace flopoco{
 
-	/** The TaMaDiDispatcherInterface class.  */
-	class TaMaDiDispatcherInterface : public Operator
+	/** The TaMaDiModuleDummyWrapper class.  */
+	class TaMaDiModuleDummyWrapper : public Operator
 	{
 	public:
 
 		/**
-		 * The TaMaDiDispatcherInterface constructor
+		 * The TaMaDiModuleDummyWrapper constructor
 		 * @param[in]		target  the target device
 		 * @param[in]		wp		binary-format precision we are intrested in      
 		 * @param[in]		d		polynomial degree
@@ -31,12 +31,12 @@ namespace flopoco{
 		 * @param[in]		wIntervalID the number of bits required to store the interval ID (log2(#intervals))  
 		 * @param[in]		n		number of parallel processing units
 		 **/ 
-		TaMaDiDispatcherInterface(Target* target, int wp, int d, int iterations, int wIntervalID, int compSize, int n, int inFIFODepth, int peFIFODepth, int outFIFODepth, int DispatcherInputFIFODepth, int DispatcherOutputFIFODepth);
+		TaMaDiModuleDummyWrapper(Target* target, int wp, int d, int iterations, int wIntervalID, int widthComp, int n, int inFIFODepth, int peFIFODepth, int outFIFODepth);
 
 		/**
-		 * TaMaDiDispatcherInterface destructor
+		 * TaMaDiModuleDummyWrapper destructor
 		 */
-		~TaMaDiDispatcherInterface();
+		~TaMaDiModuleDummyWrapper();
 	
 	protected:
 		

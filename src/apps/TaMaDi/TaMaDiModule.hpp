@@ -8,7 +8,7 @@
 #include <cstdlib>
 
 
-#include "../Operator.hpp"
+#include <Operator.hpp>
 #include "TaMaDiCore.hpp"
 #include "TaMaDiFIFO.hpp"
 #include "TaMaDiPriorityEncoder.hpp"

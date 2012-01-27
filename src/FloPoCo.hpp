@@ -138,21 +138,6 @@ use withing matrix-multiplication scenarios ------------------ */
 /* a 1D Jacobi computation kernel ---------------------------- */ 
 #include "apps/FPJacobi.hpp"
 
-/* the TaMaDi application, using FPGAs to caluclate the hard-to
-round cases for elementary functions ------------------------- */
-#include "apps/TaMaDiSystem.hpp"
-#include "apps/TaMaDiModule.hpp"
-#include "apps/TaMaDiCore.hpp"
-#include "apps/TaMaDiModuleDummyWrapper.hpp"
-#include "apps/TaMaDiModuleWrapperInterface.hpp"
-#include "apps/TaMaDiDispatcherInterface.hpp"
-#include "apps/TaMaDiPriorityEncoder.hpp"
-#include "apps/TaMaDiDecoder.hpp"
-#include "apps/TaMaDiFIFO.hpp"
-#include "apps/TaMaDiShiftRegister.hpp"
-#include "apps/TaMaDiDeserializer.hpp"
-
-
 /* logarithmic number system  -------------------------------- */ 
 #ifndef _WIN32
 #ifdef HAVE_LNS

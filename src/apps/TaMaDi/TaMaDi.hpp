@@ -1,29 +1,40 @@
-#ifndef TaMaDiModuleWrapperInterface_HPP
-#define TaMaDiModuleWrapperInterface_HPP
+#ifndef TaMaDi_HPP
+#define TaMaDi_HPP
 #include <vector>
 #include <sstream>
 #include <gmp.h>
 #include <mpfr.h>
 #include <gmpxx.h>
 #include <cstdlib>
+#include <FloPoCo.hpp>
 
 
-#include "../Operator.hpp"
+
+
+/* the TaMaDi application, using FPGAs to caluclate the hard-to
+round cases for elementary functions ------------------------- */
+#include "TaMaDiSystem.hpp"
+#include "TaMaDiModule.hpp"
 #include "TaMaDiCore.hpp"
-#include "TaMaDiFIFO.hpp"
+#include "TaMaDiModuleDummyWrapper.hpp"
+#include "TaMaDiModuleWrapperInterface.hpp"
+#include "TaMaDiDispatcherInterface.hpp"
 #include "TaMaDiPriorityEncoder.hpp"
 #include "TaMaDiDecoder.hpp"
+#include "TaMaDiFIFO.hpp"
 #include "TaMaDiShiftRegister.hpp"
+#include "TaMaDiDeserializer.hpp"
+
 
 namespace flopoco{
 
-	/** The TaMaDiModuleWrapperInterface class.  */
-	class TaMaDiModuleWrapperInterface : public Operator
+	/** The TaMaDi class.  */
+	class TaMaDi : public Operator
 	{
 	public:
 
 		/**
-		 * The TaMaDiModuleWrapperInterface constructor
+		 * The TaMaDi constructor
 		 * @param[in]		target  the target device
 		 * @param[in]		wp		binary-format precision we are intrested in      
 		 * @param[in]		d		polynomial degree
@@ -31,12 +42,12 @@ namespace flopoco{
 		 * @param[in]		wIntervalID the number of bits required to store the interval ID (log2(#intervals))  
 		 * @param[in]		n		number of parallel processing units
 		 **/ 
-		TaMaDiModuleWrapperInterface(Target* target, int wp, int d, int iterations, int wIntervalID, int compSize, int n, int inFIFODepth, int peFIFODepth, int outFIFODepth);
+		TaMaDi(Target* target, int wp, int d, int iterations, int wIntervalID, int n, int inFIFODepth, int peFIFODepth, int outFIFODepth);
 
 		/**
-		 * TaMaDiModuleWrapperInterface destructor
+		 * TaMaDi destructor
 		 */
-		~TaMaDiModuleWrapperInterface();
+		~TaMaDi();
 	
 	protected:
 		

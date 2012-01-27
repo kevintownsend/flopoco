@@ -1,5 +1,5 @@
-#ifndef TaMaDi_HPP
-#define TaMaDi_HPP
+#ifndef TaMaDiModuleWrapperInterface_HPP
+#define TaMaDiModuleWrapperInterface_HPP
 #include <vector>
 #include <sstream>
 #include <gmp.h>
@@ -8,7 +8,7 @@
 #include <cstdlib>
 
 
-#include "../Operator.hpp"
+#include <Operator.hpp>
 #include "TaMaDiCore.hpp"
 #include "TaMaDiFIFO.hpp"
 #include "TaMaDiPriorityEncoder.hpp"
@@ -17,13 +17,13 @@
 
 namespace flopoco{
 
-	/** The TaMaDi class.  */
-	class TaMaDi : public Operator
+	/** The TaMaDiModuleWrapperInterface class.  */
+	class TaMaDiModuleWrapperInterface : public Operator
 	{
 	public:
 
 		/**
-		 * The TaMaDi constructor
+		 * The TaMaDiModuleWrapperInterface constructor
 		 * @param[in]		target  the target device
 		 * @param[in]		wp		binary-format precision we are intrested in      
 		 * @param[in]		d		polynomial degree
@@ -31,12 +31,12 @@ namespace flopoco{
 		 * @param[in]		wIntervalID the number of bits required to store the interval ID (log2(#intervals))  
 		 * @param[in]		n		number of parallel processing units
 		 **/ 
-		TaMaDi(Target* target, int wp, int d, int iterations, int wIntervalID, int n, int inFIFODepth, int peFIFODepth, int outFIFODepth);
+		TaMaDiModuleWrapperInterface(Target* target, int wp, int d, int iterations, int wIntervalID, int compSize, int n, int inFIFODepth, int peFIFODepth, int outFIFODepth);
 
 		/**
-		 * TaMaDi destructor
+		 * TaMaDiModuleWrapperInterface destructor
 		 */
-		~TaMaDi();
+		~TaMaDiModuleWrapperInterface();
 	
 	protected:
 		
