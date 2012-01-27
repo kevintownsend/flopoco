@@ -204,12 +204,12 @@ namespace flopoco{
 		mpz_class svX =  tc->getInputValue("X");
 		// cout << "-------------------------"<<endl;
 		// cout << "X="<<unsignedBinary(svX, wIn_);
-		bool xneg = false;
+		// bool xneg = false;
 		//x is in 2's complement, so it's value is
 		if(signedInput_) {
 			if ( svX > ( (mpz_class(1)<<(wIn_-1))-1) ){
 				// cout << "X is negative" << endl;
-				xneg = true;
+				// xneg = true;
 				svX = svX - (mpz_class(1)<<wIn_);
 			}
 		}

@@ -185,10 +185,10 @@ namespace flopoco{
 		
 		float p = (double)cy/(double)halfLut; // number of chunks concatenated per operand
 		float r = p - floor(p); // relative error; used for detecting how many operands have ceil(p) chunks concatenated
-		int chunkSize, lastChunkSize, nr, aux;
+		int chunkSize, aux;
 		suggestSubaddSize(chunkSize, wInX+wInY);
-		lastChunkSize = (wInX+wInY)%chunkSize;
-		nr = ceil((double) (wInX+wInY)/chunkSize);
+		// int lastChunkSize = (wInX+wInY)%chunkSize;
+		// int nr = ceil((double) (wInX+wInY)/chunkSize);
 		
 		
 		if (r == 0.0) // all IntNAdder operands have p concatenated partial products

@@ -176,7 +176,7 @@ namespace flopoco{
 		mpfr_t mpX, mpR;
 		mpfr_init2(mpX,wInX_+2);
 		mpfr_init2(mpR,10*lsbOut_);
-		int outSign = 0;
+		//int outSign = 0;
 		/* Convert a random signal to an mpfr_t in [0,1[ */
 		mpfr_set_z(mpX, svX.get_mpz_t(), GMP_RNDN);
 		mpfr_div_2si(mpX, mpX, wInX_, GMP_RNDN);
@@ -188,7 +188,7 @@ namespace flopoco{
 		/* Compute the signal value */
 		if (mpfr_signbit(mpR))
 			{
-				outSign = 1;
+				//outSign = 1;
 				mpfr_abs(mpR, mpR, GMP_RNDN);
 			}
 		mpfr_mul_2si(mpR, mpR, lsbOut_, GMP_RNDN);

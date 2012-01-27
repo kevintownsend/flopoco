@@ -75,7 +75,7 @@ namespace flopoco{
 		mpz_class &rd = a[1]; // rounded down
 		mpz_class &ru = a[2]; // rounded up
 
-		int outSign = 0;
+		// int outSign = 0;
 
 		mpfr_t mpX, mpR;
 		mpfr_inits(mpX, mpR, 0, NULL);
@@ -90,7 +90,7 @@ namespace flopoco{
 		/* Compute the signal value */
 		if (mpfr_signbit(mpR))
 			{
-				outSign = 1;
+				// outSign = 1;
 				mpfr_abs(mpR, mpR, GMP_RNDN);
 			}
 		mpfr_mul_2si(mpR, mpR, wO, GMP_RNDN);
