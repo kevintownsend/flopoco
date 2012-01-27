@@ -136,17 +136,6 @@ libflopoco_la_SOURCES = \
 			apps/Collision.cpp \
                         apps/FPFMAcc.cpp \
 			apps/FPJacobi.cpp \
-			apps/TaMaDiCore.cpp \
-			apps/TaMaDiPriorityEncoder.cpp \
-			apps/TaMaDiDecoder.cpp \
-			apps/TaMaDiFIFO.cpp \
-			apps/TaMaDiShiftRegister.cpp \
-			apps/TaMaDiModule.cpp \
-			apps/TaMaDiModuleDummyWrapper.cpp \
-			apps/TaMaDiModuleWrapperInterface.cpp \
-			apps/TaMaDiDispatcherInterface.cpp \
-			apps/TaMaDiDeserializer.cpp \
-			apps/TaMaDiSystem.cpp \
 			TestCase.cpp \
 			FPNumber.cpp \
 			IEEENumber.cpp \
