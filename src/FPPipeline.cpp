@@ -29,7 +29,7 @@ All rights reserved
 #ifdef HAVE_SOLLYA
 #include "FPPipeline.hpp"
 
-#include "FPExpressions/ExpressionParser.h"
+#include "ExpressionParser.h"
 #include <string.h>
 #include <stdio.h>
 #include <fcntl.h>

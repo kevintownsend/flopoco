@@ -79,15 +79,18 @@ ELSE(FLEXPP_EXECUTABLE)
   	MESSAGE(FATAL_ERROR "Could not find LEX.\nOn Debian-based systems install flex++")
 ENDIF(FLEXPP_EXECUTABLE)
 
+# necessary to include generated files
+INCLUDE_DIRECTORIES (${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/src/FPExpressions)
+
 ADD_CUSTOM_COMMAND(
 	SOURCE src/VHDLLexerRule.l
 	COMMAND ${FLEXPP_EXECUTABLE} 
-	ARGS -o src/VHDLLexer.cpp 
-    src/VHDLLexerRule.l
+	ARGS -o ${CMAKE_CURRENT_BINARY_DIR}/VHDLLexer.cpp 
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/VHDLLexerRule.l
 	TARGET VHDLLexer
-	OUTPUTS src/VHDLLexer.cpp src/VHDLLexer.hpp)
+	OUTPUTS VHDLLexer.cpp VHDLLexer.hpp)
 
-SET_SOURCE_FILES_PROPERTIES(src/VHDLLexer GENERATED) 
+SET_SOURCE_FILES_PROPERTIES(VHDLLexer GENERATED) 
 
 
 # Create custom command for bison/yacc (note the outputs)
@@ -105,12 +108,12 @@ ENDIF(BISON_EXECUTABLE)
 ADD_CUSTOM_COMMAND(
 	SOURCE src/FPExpressions/ExpressionParser.y
 	COMMAND ${BISON_EXECUTABLE}
-	ARGS -y -d --defines=src/FPExpressions/ExpressionParser.h --output=src/FPExpressions/ExpressionParser.cpp --name-prefix=FlopocoExpression
-    src/FPExpressions/ExpressionParser.y
+	ARGS -y -d --defines=${CMAKE_CURRENT_BINARY_DIR}/ExpressionParser.h --output=${CMAKE_CURRENT_BINARY_DIR}/ExpressionParser.cpp --name-prefix=FlopocoExpression
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/FPExpressions/ExpressionParser.y
 	TARGET ExpressionParser
-	OUTPUTS src/FPExpressions/ExpressionParser.cpp)
+	OUTPUTS ExpressionParser.cpp)
 
-SET_SOURCE_FILES_PROPERTIES(src/FPExpressions/ExpressionParser GENERATED) 
+SET_SOURCE_FILES_PROPERTIES(ExpressionParser GENERATED) 
 
 # Create custom command for flex/lex (note the outputs)
 FIND_PROGRAM(FLEX_EXECUTABLE
@@ -127,12 +130,12 @@ ENDIF(FLEX_EXECUTABLE)
 ADD_CUSTOM_COMMAND(
 	SOURCE src/FPExpressions/ExpressionScanner.l
 	COMMAND ${FLEX_EXECUTABLE} 
-	ARGS --prefix=FlopocoExpression --header-file=src/FPExpressions/FlopocoScanner.h -o src/FPExpressions/ExpressionScanner.cpp 
-    src/FPExpressions/ExpressionScanner.l
+	ARGS --prefix=FlopocoExpression --header-file=${CMAKE_CURRENT_BINARY_DIR}/FlopocoScanner.h -o ${CMAKE_CURRENT_BINARY_DIR}/ExpressionScanner.cpp 
+    ${CMAKE_SOURCE_DIR}/src/FPExpressions/ExpressionScanner.l
 	TARGET ExpressionScanner
-	OUTPUTS src/FPExpressions/ExpressionScanner.cpp)
+	OUTPUTS ExpressionScanner.cpp)
 
-SET_SOURCE_FILES_PROPERTIES(src/FPExpressions/ExpressionScanner GENERATED)
+SET_SOURCE_FILES_PROPERTIES(ExpressionScanner GENERATED)
 
 
 ADD_LIBRARY(FloPoCo STATIC
@@ -141,7 +144,8 @@ ADD_LIBRARY(FloPoCo STATIC
  src/Signal
  src/utils
  src/FlopocoStream
- src/VHDLLexer
+# src/VHDLLexer
+ VHDLLexer
 
  src/Targets/DSP
  src/Target src/Targets/Virtex4 src/Targets/Spartan3 src/Targets/Virtex6 src/Targets/StratixII src/Targets/StratixIII src/Targets/Virtex5 src/Targets/StratixIV
@@ -152,8 +156,10 @@ ADD_LIBRARY(FloPoCo STATIC
  src/DualTable2
  
  src/FPExpressions/ExpressionParserData
- src/FPExpressions/ExpressionParser 
- src/FPExpressions/ExpressionScanner 
+# src/FPExpressions/ExpressionParser 
+# src/FPExpressions/ExpressionScanner 
+ ExpressionParser 
+ ExpressionScanner
  src/FPPipeline
 
  src/Wrapper
