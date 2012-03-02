@@ -248,6 +248,7 @@ ADD_LIBRARY(FloPoCo STATIC
  src/FPAdderDualPath
  src/FPAdderSinglePath
  src/FPAdder3Input
+ src/FPAddSub
 
  src/FPMultiplier
  src/FPMultiplierKaratsuba

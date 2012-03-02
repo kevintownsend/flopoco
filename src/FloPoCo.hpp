@@ -93,6 +93,7 @@
 #include "FPAdderDualPath.hpp"
 #include "FPAdderSinglePath.hpp"
 #include "FPAdder3Input.hpp"
+#include "FPAddSub.hpp"
 
 #include "FPDiv.hpp"
 #include "FPExp.hpp" 

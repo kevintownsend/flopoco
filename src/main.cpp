@@ -237,6 +237,10 @@ static void usage(char *name, string opName = ""){
 		NEWOP( "FPAdder3Input","wE wF");
 		cerr << "      A 3-operand floating-point adder\n";
 	}
+	if ( full || opName == "FPAdder" || opName == "FPAddSub"){					
+		NEWOP( "FPAddSub","wE wF");
+		cerr << "      A floating-point adder/subtractor, useful e.g for butterfly circuits\n";
+	}
 
 	if ( full || opName == "FPMultiplier"){					
 		OP( "FPMultiplier","wE wF_in wF_out");
@@ -1369,7 +1373,19 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				op = new FPAdder3Input(target, wE, wF);
 				addOperator(oplist, op);
 			}
-	}	
+		}	
+		else if(opname=="FPAddSub"){
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			else {
+				int wE = checkStrictlyPositive(argv[i++], argv[0]);
+				int wF = checkStrictlyPositive(argv[i++], argv[0]);
+				
+				op = new FPAddSub(target, wE, wF, wE, wF, wE, wF);
+				addOperator(oplist, op);
+			}
+		}	
 		else if(opname=="FPFMAcc"){
 			int nargs = 3;
 			if (i+nargs > argc)
