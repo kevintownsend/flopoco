@@ -66,9 +66,7 @@ namespace flopoco{
 		/** The dual subtractor for the close path */
 		IntDualSub *dualSubClose;
 		/** The fraction adder for the far path */
-		IntAdder *fracAddFar; 
-		/** The fraction subtractor for the far path */
-		IntAdder *fracSubFar;
+		IntAdder *fracAdder;
 		/** The adder that does the final rounding */
 		IntAdder *finalRoundAdd; 
 		/** The right shifter for the far path */
