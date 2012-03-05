@@ -50,7 +50,7 @@ FPAddSub::FPAddSub(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, 
 		name<<"FPAddSub_"<<wE<<"_"<<wF<<"_uid"<<getNewUId(); 
 		setName(name.str()); 
 
-		setCopyrightString("Matei Istoan, Florent de Dinechin (2010)");		
+		setCopyrightString("Matei Istoan, Florent de Dinechin (2012)");		
 
 		sizeRightShift = intlog2(wF+3);
 
@@ -123,11 +123,19 @@ FPAddSub::FPAddSub(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, 
 		
 		//exception bits: need to be updated but for not FIXME
 		manageCriticalPath(target->localWireDelay()+2*target->lutDelay());
+		
 		vhdl <<tab<<"with sdsXsYExnXY select "<<endl;
 		vhdl <<tab<<declare("excRt",2) << " <= \"00\" when \"000000\"|\"010000\"|\"100000\"|\"110000\","<<endl
 		<<tab<<tab<<"\"01\" when \"000101\"|\"010101\"|\"100101\"|\"110101\"|\"000100\"|\"010100\"|\"100100\"|\"110100\"|\"000001\"|\"010001\"|\"100001\"|\"110001\","<<endl
 		<<tab<<tab<<"\"10\" when \"111010\"|\"001010\"|\"001000\"|\"011000\"|\"101000\"|\"111000\"|\"000010\"|\"010010\"|\"100010\"|\"110010\"|\"001001\"|\"011001\"|\"101001\"|\"111001\"|\"000110\"|\"010110\"|\"100110\"|\"110110\", "<<endl
 		<<tab<<tab<<"\"11\" when others;"<<endl;
+		
+		vhdl <<tab<<"with sdsXsYExnXY select "<<endl;
+		vhdl <<tab<<declare("excRtSub",2) << " <= \"00\" when \"000000\"|\"010000\"|\"100000\"|\"110000\","<<endl
+		<<tab<<tab<<"\"01\" when \"000101\"|\"010101\"|\"100101\"|\"110101\"|\"000100\"|\"010100\"|\"100100\"|\"110100\"|\"000001\"|\"010001\"|\"100001\"|\"110001\","<<endl
+		<<tab<<tab<<"\"10\" when \"101010\"|\"001000\"|\"011000\"|\"101000\"|\"111000\"|\"000010\"|\"010010\"|\"100010\"|\"110010\"|\"001001\"|\"011001\"|\"101001\"|\"111001\"|\"000110\"|\"010110\"|\"100110\"|\"110110\"|\"011010\", "<<endl
+		<<tab<<tab<<"\"11\" when others;"<<endl;
+		
 		manageCriticalPath(target->localWireDelay() + target->lutDelay());
 		
 		
@@ -182,7 +190,7 @@ FPAddSub::FPAddSub(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, 
 		nextCycle();         
 		setCriticalPath(0.0);
 		double cpshiftedFracY = getCriticalPath();
-		//sticky compuation in parallel with addition, no need for manageCriticalPath
+		//sticky computation in parallel with addition, no need for manageCriticalPath
 		//FIXME: compute inside shifter;
 		//compute sticky bit as the or of the shifted out bits during the alignment //
 		manageCriticalPath(target->localWireDelay() + target->eqConstComparatorDelay(wF+1));
@@ -194,10 +202,10 @@ FPAddSub::FPAddSub(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, 
 		setCriticalPath(0.0);
 		setCriticalPath(cpshiftedFracY);
 		//pad fraction of Y [overflow][shifted frac having inplicit 1][guard][round]
-		vhdl<<tab<< declare("shiftedFracYext", wF+4)      << " <= \"0\" & shiftedFracY("<<2*wF+3<<" downto "<<wF+1<<");"<<endl;	
+		vhdl<<tab<< declare("shiftedFracYext", wF+4) << " <= \"0\" & shiftedFracY("<<2*wF+3<<" downto "<<wF+1<<");"<<endl;	
 		manageCriticalPath(target->localWireDelay() + target->lutDelay());
 		vhdl<<tab<< declare("fracYAdd", wF+4) << " <= shiftedFracYext;"<<endl;
-		vhdl<<tab<< declare("fracYSub", wF+4) << " <= shiftedFracYext xor " << og(wF+4, 0) <<";"<<endl;
+		vhdl<<tab<< declare("fracYSub", wF+4) << " <= shiftedFracYext xor ( "<< wF+3 <<" downto 0 => \'1\');"<<endl;
 		//pad fraction of X [overflow][inplicit 1][fracX][guard bits]				
 		vhdl<<tab<< declare("fracX", wF+4)      << " <= \"01\" & (newX("<<wF-1<<" downto 0)) & \"00\";"<<endl;
 		
@@ -236,7 +244,6 @@ FPAddSub::FPAddSub(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, 
 		
 		//shift in place
 		vhdl << tab << declare("fracGRSSub",wF+5) << "<= fracAdderResultSub & sticky; "<<endl;
-		vhdl << tab << declare("fracGRSAdd",wF+5) << "<= fracAdderResultAdd & \'0\'; "<<endl;
 	
 		//incremented exponent. 
 		vhdl << tab << declare("extendedExpInc",wE+2) << "<= (\"00\" & expX) + '1';"<<endl;
@@ -334,7 +341,7 @@ FPAddSub::FPAddSub(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, 
 		<<tab<<tab<<"\"10\" when \"0010\"|\"0110\"|\"0101\","<<endl
 		<<tab<<tab<<"\"11\" when others;"<<endl;
 		
-		vhdl << tab << declare("exExpExcSub",4) << " <= upExcSub & excRt;"<<endl;
+		vhdl << tab << declare("exExpExcSub",4) << " <= upExcSub & excRtSub;"<<endl;
 		vhdl << tab << "with (exExpExcSub) select "<<endl;
 		vhdl << tab << declare("excRt2Sub",2) << "<= \"00\" when \"0000\"|\"0100\"|\"1000\"|\"1100\"|\"1001\"|\"1101\","<<endl
 		<<tab<<tab<<"\"01\" when \"0001\","<<endl
@@ -345,16 +352,13 @@ FPAddSub::FPAddSub(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, 
 		
 		vhdl<<tab<<declare("excRAdd",2) << " <= \"00\" when (eqdiffsign='1' and diffSigns='1') else excRt2Add;"<<endl;
 		vhdl<<tab<<declare("excRSub",2) << " <= \"00\" when (eqdiffsign='1' and diffSigns='0') else excRt2Sub;"<<endl;
-		
-		vhdl << tab << declare("updatedSignRadd") << " <= signRAdd when (diffSigns=\'0\') else signRSub;"<<endl;
-		vhdl << tab << declare("updatedSignRsub") << " <= signRSub when (diffSigns=\'0\') else signRAdd;"<<endl;
 
 		// assign result 
-		vhdl<<tab<< declare("computedRAdd",wE+wF+3) << " <= excRAdd & updatedSignRadd & expRAdd & fracRAdd;"<<endl;
-		vhdl<<tab<< declare("computedRSub",wE+wF+3) << " <= excRSub & updatedSignRsub & expRSub & fracRSub;"<<endl;
+		vhdl<<tab<< declare("computedRAdd",wE+wF) << " <= expRAdd & fracRAdd;"<<endl;
+		vhdl<<tab<< declare("computedRSub",wE+wF) << " <= expRSub & fracRSub;"<<endl;
 		
-		vhdl << tab << "Radd <= computedRAdd when (diffSigns=\'0\') else computedRSub;"<<endl;
-		vhdl << tab << "Rsub <= computedRSub when (diffSigns=\'0\') else computedRAdd;"<<endl;
+		vhdl << tab << "Radd <= excRAdd & signRAdd & computedRAdd when (diffSigns=\'0\') else excRAdd & signRAdd & computedRSub;"<<endl;
+		vhdl << tab << "Rsub <= excRSub & signRSub & computedRSub when (diffSigns=\'0\') else excRSub & signRSub & computedRAdd;"<<endl;
 	}
 
 	FPAddSub::~FPAddSub() {
