@@ -207,7 +207,7 @@ FPAddSub::FPAddSub(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, 
 		vhdl<<tab<< declare("fracYAdd", wF+4) << " <= shiftedFracYext;"<<endl;
 		vhdl<<tab<< declare("fracYSub", wF+4) << " <= shiftedFracYext xor ( "<< wF+3 <<" downto 0 => \'1\');"<<endl;
 		//pad fraction of X [overflow][inplicit 1][fracX][guard bits]				
-		vhdl<<tab<< declare("fracX", wF+4)      << " <= \"01\" & (newX("<<wF-1<<" downto 0)) & \"00\";"<<endl;
+		vhdl<<tab<< declare("fracX", wF+4) << " <= \"01\" & (newX("<<wF-1<<" downto 0)) & \"00\";"<<endl;
 		
 		if (getCycleFromSignal("sticky")==getCycleFromSignal("fracX"))
 			setCriticalPath( max (cpsticky, getCriticalPath()) );
@@ -216,19 +216,22 @@ FPAddSub::FPAddSub(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, 
 				setCriticalPath(cpsticky);
 		manageCriticalPath(target->localWireDelay()+ target->lutDelay());
 		
+		vhdl << tab << declare("cInFracAdderAdd") << " <= \'0\' and (not sticky);" << endl;
+		vhdl << tab << declare("cInFracAdderSub") << " <= \'1\' and (not sticky);" << endl;
+		
 		//mantisa addition
 		fracAdder = new IntAdder(target,wF+4, inDelayMap("X", getCriticalPath()));
 		oplist.push_back(fracAdder);
 		inPortMap  (fracAdder, "X", "fracX");
 		inPortMap  (fracAdder, "Y", "fracYAdd");
-		inPortMapCst  (fracAdder, "Cin", "\'0\'");
+		inPortMap  (fracAdder, "Cin", "cInFracAdderAdd");
 		outPortMap (fracAdder, "R","fracAdderResultAdd");
 		vhdl << instance(fracAdder, "fracAdderAdd");
 		
 		//mantisa subtraction
 		inPortMap  (fracAdder, "X", "fracX");
 		inPortMap  (fracAdder, "Y", "fracYSub");
-		inPortMapCst  (fracAdder, "Cin", "\'1\'");
+		inPortMap  (fracAdder, "Cin", "cInFracAdderSub");
 		outPortMap (fracAdder, "R","fracAdderResultSub");
 		vhdl << instance(fracAdder, "fracAdderSub");
 		
