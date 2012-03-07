@@ -83,7 +83,7 @@ namespace flopoco{
 
 		ostringstream o;
 
-		o << "FPPowr_" << wE << "_" << wF << "_";
+		o << (type?"FPPowr_":"FPPow_") << wE << "_" << wF << "_";
 		if(target->isPipelined()) 
 			o << target->frequencyMHz() ;
 		else

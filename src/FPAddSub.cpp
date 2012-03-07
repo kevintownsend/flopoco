@@ -113,8 +113,8 @@ FPAddSub::FPAddSub(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, 
 		vhdl << tab << declare("signX")   << "<= newX"<<of(wE+wF)<<";"<<endl;
 		vhdl << tab << declare("signY")   << "<= newY"<<of(wE+wF)<<";"<<endl;
 		vhdl << tab << declare("diffSigns") << " <= signX xor signY;"<<endl;
-		vhdl << tab << declare("sdsXsYExnXY",6) << " <= signX & signY & excX & excY;"<<endl; 
-		vhdl << tab << declare("sdExnXY",4) << " <= excX & excY;"<<endl; 
+		vhdl << tab << declare("sXsYExnXY",6) << " <= signX & signY & excX & excY;"<<endl; 
+		//		vhdl << tab << declare("ExnXY",4) << " <= excX & excY;"<<endl; 
 		manageCriticalPath(target->localWireDelay()+ target->lutDelay());
 		vhdl << tab << declare("fracY",wF+1) << " <= "<< zg(wF+1)<<" when excY=\"00\" else ('1' & newY("<<wF-1<<" downto 0));"<<endl;
 		double cpfracY = getCriticalPath();
@@ -124,23 +124,23 @@ FPAddSub::FPAddSub(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, 
 		//exception bits: need to be updated but for not FIXME
 		manageCriticalPath(target->localWireDelay()+2*target->lutDelay());
 		
-		vhdl <<tab<<"with sdsXsYExnXY select "<<endl;
-		vhdl <<tab<<declare("excRt",2) << " <= \"00\" when \"000000\"|\"010000\"|\"100000\"|\"110000\","<<endl
+		vhdl <<tab<<"with sXsYExnXY select "<<endl;
+		vhdl <<tab<<declare("excRtRAdd",2) << " <= \"00\" when \"000000\"|\"010000\"|\"100000\"|\"110000\","<<endl
 		<<tab<<tab<<"\"01\" when \"000101\"|\"010101\"|\"100101\"|\"110101\"|\"000100\"|\"010100\"|\"100100\"|\"110100\"|\"000001\"|\"010001\"|\"100001\"|\"110001\","<<endl
 		<<tab<<tab<<"\"10\" when \"111010\"|\"001010\"|\"001000\"|\"011000\"|\"101000\"|\"111000\"|\"000010\"|\"010010\"|\"100010\"|\"110010\"|\"001001\"|\"011001\"|\"101001\"|\"111001\"|\"000110\"|\"010110\"|\"100110\"|\"110110\", "<<endl
 		<<tab<<tab<<"\"11\" when others;"<<endl;
 		
-		vhdl <<tab<<"with sdsXsYExnXY select "<<endl;
-		vhdl <<tab<<declare("excRtSub",2) << " <= \"00\" when \"000000\"|\"010000\"|\"100000\"|\"110000\","<<endl
+		vhdl <<tab<<"with sXsYExnXY select "<<endl;
+		vhdl <<tab<<declare("excRtRSub",2) << " <= \"00\" when \"000000\"|\"010000\"|\"100000\"|\"110000\","<<endl
 		<<tab<<tab<<"\"01\" when \"000101\"|\"010101\"|\"100101\"|\"110101\"|\"000100\"|\"010100\"|\"100100\"|\"110100\"|\"000001\"|\"010001\"|\"100001\"|\"110001\","<<endl
-		<<tab<<tab<<"\"10\" when \"101010\"|\"001000\"|\"011000\"|\"101000\"|\"111000\"|\"000010\"|\"010010\"|\"100010\"|\"110010\"|\"001001\"|\"011001\"|\"101001\"|\"111001\"|\"000110\"|\"010110\"|\"100110\"|\"110110\"|\"011010\", "<<endl
+		<<tab<<tab<<"\"10\" when \"001000\"|\"011000\"|\"101000\"|\"111000\"|\"000010\"|\"010010\"|\"100010\"|\"110010\"|\"001001\"|\"011001\"|\"101001\"|\"111001\"|\"000110\"|\"010110\"|\"100110\"|\"110110\"|\"101010\"|\"011010\", "<<endl
 		<<tab<<tab<<"\"11\" when others;"<<endl;
 		
 		manageCriticalPath(target->localWireDelay() + target->lutDelay());
 		
 		
-		vhdl <<tab<<declare("signRadd") << "<= \'0\' when (sdsXsYExnXY=\"100000\" or sdsXsYExnXY=\"010000\") else signX;"<<endl;
-		vhdl <<tab<<declare("signRsub") << "<= \'0\' when (sdsXsYExnXY=\"000000\" or sdsXsYExnXY=\"110000\") else (signX and (not swap)) or ((not signX) and swap);"<<endl;
+		vhdl <<tab<<declare("signRAdd") << "<= \'0\' when (sXsYExnXY=\"100000\" or sXsYExnXY=\"010000\") else signX;"<<endl;
+		vhdl <<tab<<declare("signRSub") << "<= \'0\' when (sXsYExnXY=\"000000\" or sXsYExnXY=\"110000\") else (signX and (not swap)) or ((not signX) and swap);"<<endl;
 		
 		
 		setCycleFromSignal("swap");;
@@ -337,31 +337,35 @@ FPAddSub::FPAddSub(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, 
 
 		manageCriticalPath(target->localWireDelay() + target->lutDelay());
 		
-		vhdl << tab << declare("exExpExcAdd",4) << " <= upExcAdd & excRt;"<<endl;
+
+		vhdl << tab << declare("excRtEffAdd", 2) <<" <= excRtRAdd when (diffSigns=\'0\') else excRtRSub;"<<endl;
+		vhdl << tab << declare("excRtEffSub", 2) <<" <= excRtRAdd when (diffSigns=\'1\') else excRtRSub;"<<endl;
+
+		vhdl << tab << declare("exExpExcAdd",4) << " <= upExcAdd & excRtEffAdd;"<<endl;
 		vhdl << tab << "with (exExpExcAdd) select "<<endl;
-		vhdl << tab << declare("excRt2Add",2) << "<= \"00\" when \"0000\"|\"0100\"|\"1000\"|\"1100\"|\"1001\"|\"1101\","<<endl
+		vhdl << tab << declare("excRt2Add",2) << "<= \"00\" when \"0000\"|\"0100\"|\"1000\"|\"1100\"|\"1001\","<<endl
 		<<tab<<tab<<"\"01\" when \"0001\","<<endl
 		<<tab<<tab<<"\"10\" when \"0010\"|\"0110\"|\"0101\","<<endl
 		<<tab<<tab<<"\"11\" when others;"<<endl;
 		
-		vhdl << tab << declare("exExpExcSub",4) << " <= upExcSub & excRtSub;"<<endl;
+		vhdl << tab << declare("exExpExcSub",4) << " <= upExcSub & excRtEffSub;"<<endl;
 		vhdl << tab << "with (exExpExcSub) select "<<endl;
-		vhdl << tab << declare("excRt2Sub",2) << "<= \"00\" when \"0000\"|\"0100\"|\"1000\"|\"1100\"|\"1001\","<<endl
-		<<tab<<tab<<"\"01\" when \"0001\"|\"1101\","<<endl
+		vhdl << tab << declare("excRt2Sub",2) << "<= \"00\" when \"0000\"|\"0100\"|\"1000\"|\"1100\"|\"1001\"|\"1101\","<<endl
+		<<tab<<tab<<"\"01\" when \"0001\","<<endl
 		<<tab<<tab<<"\"10\" when \"0010\"|\"0110\"|\"0101\","<<endl
 		<<tab<<tab<<"\"11\" when others;"<<endl;
 		
 		manageCriticalPath(target->localWireDelay() + target->lutDelay());
 		
-		vhdl<<tab<<declare("excRAdd",2) << " <= \"00\" when (eqdiffsign='1' and diffSigns='1') else excRt2Add;"<<endl;
-		vhdl<<tab<<declare("excRSub",2) << " <= \"00\" when (eqdiffsign='1' and diffSigns='0') else excRt2Sub;"<<endl;
+		vhdl<<tab<<declare("excRAdd",2) << " <=  excRt2Add;"<<endl;
+		vhdl<<tab<<declare("excRSub",2) << " <= \"00\" when (eqdiffsign='1') else excRt2Sub;"<<endl;
 
 		// assign result 
 		vhdl<<tab<< declare("computedRAdd",wE+wF) << " <= expRAdd & fracRAdd;"<<endl;
 		vhdl<<tab<< declare("computedRSub",wE+wF) << " <= expRSub & fracRSub;"<<endl;
 		
-		vhdl << tab << "Radd <= excRAdd & signRAdd & computedRAdd when (diffSigns=\'0\') else excRAdd & signRAdd & computedRSub;"<<endl;
-		vhdl << tab << "Rsub <= excRSub & signRSub & computedRSub when (diffSigns=\'0\') else excRSub & signRSub & computedRAdd;"<<endl;
+		vhdl << tab << "Radd <= excRAdd & signRAdd & computedRAdd when (diffSigns=\'0\') else excRSub & signRAdd & computedRSub;"<<endl;
+		vhdl << tab << "Rsub <= excRSub & signRSub & computedRSub when (diffSigns=\'0\') else excRAdd & signRSub & computedRAdd;"<<endl;
 	}
 
 	FPAddSub::~FPAddSub() {
