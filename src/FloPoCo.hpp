@@ -3,6 +3,11 @@
 // TODO: I guess we should at some point copy here only the public part of each class, 
 // to provide a single self-contained include file.
 
+// support the autotools-generated config.h
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "Operator.hpp"
 #include "FlopocoStream.hpp"
 
