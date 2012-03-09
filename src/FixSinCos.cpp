@@ -304,7 +304,7 @@ void FixSinCos::emulate(TestCase * tc)
 
 	mpfr_set_z (x, sx.get_mpz_t(), GMP_RNDD); // this rounding is exact
 	mpfr_div_2si (x, x, w, GMP_RNDD); // this rounding is acually exact
-	int i, ep; // ep: extra precision
+	int i=0, ep; // ep: extra precision
 	do {
 		ep = 1 << i;
 		mpfr_set_prec (sind, 1+w+ep); // 1 extra of precision to have <½ulp(x) error
@@ -335,7 +335,7 @@ void FixSinCos::emulate(TestCase * tc)
 			mpfr_add_ui (cosd, cosd, 1, GMP_RNDD); // exact rnd
 		}
 		// same as before
-		if (mpfr_cmp_ui (cosd, 0) < 0) {
+		if (mpfr_cmp_ui (cosu, 0) < 0) {
 			mpfr_setsign (cosu, cosu, 0, GMP_RNDU);
 			mpfr_add_ui (cosu, cosu, 1, GMP_RNDU);
 		}
@@ -354,25 +354,18 @@ void FixSinCos::emulate(TestCase * tc)
 		if (mpz_cmp (sind_z, sinu_z) == 0 &&
 		    mpz_cmp (cosd_z, cosu_z) == 0) {
 			// the rounding are really what we want
-			cout << "coucou !" << endl;
 			break;
 		} else {
 			i++;
 		}
 	} while (i<16); // for sanity
-	if (i==16) {
-		cout << sx.get_str(16) << 'h' << endl;
-		cout << "FixSinCos.cpp:357:Rounding clusterfuck" << endl;
-	}
 	mpz_class sind_zc (sind_z), cosd_zc (cosd_z);
 	// and since FunctionEvaluator does only faithful rounding
 	// we add also as expected results the upper roundings
-	//try {
 	tc->addExpectedOutput ("S", sind_zc);
 	tc->addExpectedOutput ("C", cosd_zc);
 	tc->addExpectedOutput ("S", sind_zc+1);
 	tc->addExpectedOutput ("C", cosd_zc+1);
-	//} catch (std::string s) { cout << s << endl; }
 	// not complete yet
 	mpfr_clears (x, sind, cosd, NULL);
 }
