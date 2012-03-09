@@ -22,7 +22,7 @@ noinst_HEADERS = FloPoCo.hpp apps/Collision.hpp apps/FPFMAcc.hpp apps/FPJacobi.h
         FPDiv.hpp FPExp.hpp FPLog.hpp FPMultiplier.hpp FPNumber.hpp \
 	FPSqrt.hpp FPSqrtPoly.hpp FPSquarer.hpp FixedPointFunctions/FunctionEvaluator.hpp FixedPointFunctions/HOTBM.hpp IEEENumber.hpp InputIEEE.hpp IntAdder.hpp IntAddition/IntAdderClassical.hpp IntAddition/IntAdderAlternative.hpp IntAddition/IntAdderShortLatency.hpp IntAddition/IntCompressorTree.hpp IntMultiAdder.hpp IntDualSub.hpp IntMultipliers/IntKaratsuba.hpp IntMultiplier.hpp \
 	IntAddition/IntNAdder.hpp IntSquarer.hpp IntMultipliers/IntTilingMult.hpp IntMultipliers/IntTruncMultiplier.hpp LongAcc2FP.hpp LongAcc.hpp LZOC.hpp LZOCShifterSticky.hpp Operator.hpp OutputIEEE.hpp FixedPointFunctions/PolynomialEvaluator.hpp \
-	Shifters.hpp Signal.hpp IntMultipliers/SignedIntMultiplier.hpp IntMultipliers/UnsignedIntMultiplier.hpp IntMultipliers/LogicIntMultiplier.hpp FixedPointFunctions/PiecewiseFunction.hpp  FixedPointFunctions/FunctionTable.hpp  FixedPointFunctions/GenericEvaluator.hpp Table.hpp Target.hpp TestBench.hpp TestCase.hpp UserDefinedOperator.hpp utils.hpp Wrapper.hpp FPSumOfSquares.hpp
+	Shifters.hpp Signal.hpp IntMultipliers/SignedIntMultiplier.hpp IntMultipliers/UnsignedIntMultiplier.hpp IntMultipliers/LogicIntMultiplier.hpp FixedPointFunctions/PiecewiseFunction.hpp  FixedPointFunctions/FunctionTable.hpp  FixedPointFunctions/GenericEvaluator.hpp Table.hpp Target.hpp TestBench.hpp TestCase.hpp UserDefinedOperator.hpp utils.hpp Wrapper.hpp FPSumOfSquares.hpp FixSinCos.hpp
 
 libflopoco_la_SOURCES = \
 			Operator.cpp \
@@ -141,7 +141,8 @@ libflopoco_la_SOURCES = \
 			IEEENumber.cpp \
 			UtilSollya.cc \
 			FP2Fix.cpp \
-			FXP_Shift.cpp
+			FXP_Shift.cpp \
+			FixSinCos.cpp
 
 #LongIntAdder.cpp LongIntAdderCmpCmpAdd.cpp LongIntAdderCmpAddAdd.cpp 
 
