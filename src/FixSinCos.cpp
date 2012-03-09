@@ -294,19 +294,26 @@ void FixSinCos::emulate(TestCase * tc)
 	mpz_init2 (cosd_z, 1+w);
 	mpz_init2 (sinu_z, 1+w);
 	mpz_init2 (cosu_z, 1+w);
+	mpfr_init (sind, 1+w); // 1 extra of precision to have <½ulp(x) error
+	mpfr_init (cosd, 1+w);
+	mpfr_init (sinu, 1+w); // 1 extra of precision to have <½ulp(x) error
+	mpfr_init (cosu, 1+w);
+	// 1 extra bit (plus 11. beginning) will guarantee <½ulp(x) error on pi*x
+	mpfr_init (pixd, 2+w);
+	mpfr_init (pixu, 2+w);
 
 	mpfr_set_z (x, sx.get_mpz_t(), GMP_RNDD); // this rounding is exact
 	mpfr_div_2si (x, x, w, GMP_RNDD); // this rounding is acually exact
 	int i, ep; // ep: extra precision
 	do {
 		ep = 1 << i;
-		mpfr_init2 (sind, 1+w+ep); // 1 extra of precision to have <½ulp(x) error
-		mpfr_init2 (cosd, 1+w+ep);
-		mpfr_init2 (sinu, 1+w+ep); // 1 extra of precision to have <½ulp(x) error
-		mpfr_init2 (cosu, 1+w+ep);
+		mpfr_set_prec (sind, 1+w+ep); // 1 extra of precision to have <½ulp(x) error
+		mpfr_set_prec (cosd, 1+w+ep);
+		mpfr_set_prec (sinu, 1+w+ep); // 1 extra of precision to have <½ulp(x) error
+		mpfr_set_prec (cosu, 1+w+ep);
 		// 1 extra bit (plus 11. beginning) will guarantee <½ulp(x) error on pi*x
-		mpfr_init2 (pixd, 2+w+ep);
-		mpfr_init2 (pixu, 2+w+ep);
+		mpfr_set_prec (pixd, 2+w+ep);
+		mpfr_set_prec (pixu, 2+w+ep);
 		mpfr_const_pi (pixd, GMP_RNDD);
 		mpfr_const_pi (pixu, GMP_RNDU);
 		mpfr_mul (pixd, pixd, x, GMP_RNDD);
