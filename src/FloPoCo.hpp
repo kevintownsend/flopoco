@@ -79,6 +79,11 @@
 #endif
 #endif
 
+/* fixed-point ----------------------------------------------- */
+#ifdef HAVE_SOLLYA
+#include "FixSinCos.hpp"
+#endif
+
 /* floating-point -------------------------------------------- */ 
 #include "FPMultiplier.hpp"
 #include "FPMultiplierKaratsuba.hpp"

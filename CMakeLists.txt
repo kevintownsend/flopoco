@@ -144,7 +144,6 @@ ADD_LIBRARY(FloPoCo STATIC
  src/Signal
  src/utils
  src/FlopocoStream
-# src/VHDLLexer
  VHDLLexer
 
  src/Targets/DSP
@@ -156,15 +155,12 @@ ADD_LIBRARY(FloPoCo STATIC
  src/DualTable2
  
  src/FPExpressions/ExpressionParserData
-# src/FPExpressions/ExpressionParser 
-# src/FPExpressions/ExpressionScanner 
  ExpressionParser 
  ExpressionScanner
  src/FPPipeline
 
  src/Wrapper
  src/TestBench 
- #src/BigTestBench
  src/UserDefinedOperator
  
 # Addition related --------------------------------------------------
@@ -242,6 +238,9 @@ ADD_LIBRARY(FloPoCo STATIC
  src/FixedPointFunctions/HOTBM/PowerROM.cc
  src/FixedPointFunctions/HOTBM/TermPowMult.cc 
 
+# Fixed-point operators ---------------------------------------------
+#--------------------------------------------------------------------
+ src/FixSinCos.cpp
 
 # Floating-Point ----------------------------------------------------
 #--------------------------------------------------------------------

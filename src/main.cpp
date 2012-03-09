@@ -362,6 +362,15 @@ static void usage(char *name, string opName = ""){
 	}
 #ifdef HAVE_SOLLYA
 	if ( full ){
+		cerr << "    ____________ FIXED-POINT OPERATORS __________________________________________\n";
+	}
+	if ( full || opName == "FixSinCos" || opName == "FixSin" || opName == "FixCos"){
+		NEWOP( "FixSinCos","w");
+		cerr << "      Faithful sine and cosine of a fixed-point input in [0,1[\n";
+		cerr << "      w is the precision without counting the leading 0\n";
+		cerr << "      \033[1;31m(does not work yet)\033[0m\n";
+	}
+	if ( full ){
 		cerr << "    ____________ GENERIC FUNCTION EVALUATORS ____________________________________\n";
 		cerr << "      We provide two methods to evaluate a fixed-point function on [0,1]\n";
 	}
@@ -1051,7 +1060,7 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				op = new IntComparator(target,wIn,criteria, true, constant);
 				addOperator(oplist, op);
 			}    
-	}
+		}
 	
 		else if(opname=="IntAdderExpert"){
 			int nargs = 5;
@@ -2336,6 +2345,16 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 			int wF = checkStrictlyPositive(argv[i++], argv[0]);
 			cerr << "> FPPipeline filename='" << filename << "', wE=" << wE << ", wF=" << wF << endl;	
 			Operator* tg = new FPPipeline(target, filename, wE, wF);
+			addOperator(oplist, tg);
+		}
+
+		else if (opname == "FixSinCos") {
+			int nargs = 1;
+			if (i+nargs > argc)
+				usage(argv[0],opname); // and exit
+			int w = checkStrictlyPositive(argv[i++], argv[0]); // must be >=2 actually
+			cerr << "> FixSinCos w=" << w << endl;
+			Operator* tg = new FixSinCos(target, w);
 			addOperator(oplist, tg);
 		}
 
