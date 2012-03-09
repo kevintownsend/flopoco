@@ -6,13 +6,13 @@
 #include <mpfr.h>
 #include <gmpxx.h>
 
-#include "../Operator.hpp"
-#include "../LZOC.hpp"
-#include "../Shifters.hpp"
-#include "../FPNumber.hpp"
-#include "../IntAdder.hpp"
-#include "../IntDualSub.hpp"
-#include "../LZOCShifterSticky.hpp"
+#include "Operator.hpp"
+#include "LZOC.hpp"
+#include "Shifters.hpp"
+#include "FPNumber.hpp"
+#include "IntAdder.hpp"
+#include "IntDualSub.hpp"
+#include "LZOCShifterSticky.hpp"
 
 namespace flopoco{
 
