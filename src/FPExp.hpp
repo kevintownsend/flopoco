@@ -23,7 +23,6 @@
 #include "IntMultipliers/IntTilingMult.hpp"
 
 class Fragment;
-class FPNumber;
 
 
 namespace flopoco{
