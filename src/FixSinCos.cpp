@@ -1,3 +1,5 @@
+#include "FloPoCo.hpp"
+
 // works only with sollya
 #ifdef HAVE_SOLLYA
 
@@ -15,8 +17,6 @@
 
 // include the header of the Operator
 #include "FixSinCos.hpp"
-
-#include "FloPoCo.hpp"
 
 using namespace std;
 using namespace flopoco;
