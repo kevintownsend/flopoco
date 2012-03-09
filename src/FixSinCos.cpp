@@ -294,13 +294,13 @@ void FixSinCos::emulate(TestCase * tc)
 	mpz_init2 (cosd_z, 1+w);
 	mpz_init2 (sinu_z, 1+w);
 	mpz_init2 (cosu_z, 1+w);
-	mpfr_init (sind, 1+w); // 1 extra of precision to have <½ulp(x) error
-	mpfr_init (cosd, 1+w);
-	mpfr_init (sinu, 1+w); // 1 extra of precision to have <½ulp(x) error
-	mpfr_init (cosu, 1+w);
+	mpfr_init (sind); // 1 extra of precision to have <½ulp(x) error
+	mpfr_init (cosd);
+	mpfr_init (sinu); // 1 extra of precision to have <½ulp(x) error
+	mpfr_init (cosu);
 	// 1 extra bit (plus 11. beginning) will guarantee <½ulp(x) error on pi*x
-	mpfr_init (pixd, 2+w);
-	mpfr_init (pixu, 2+w);
+	mpfr_init (pixd);
+	mpfr_init (pixu);
 
 	mpfr_set_z (x, sx.get_mpz_t(), GMP_RNDD); // this rounding is exact
 	mpfr_div_2si (x, x, w, GMP_RNDD); // this rounding is acually exact
