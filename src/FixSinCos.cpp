@@ -9,13 +9,17 @@
   entries */
 #include "gmp.h"
 #include "mpfr.h"
+#include <assert.h>
+// for debug
+#include <signal.h>
 
 // include the header of the Operator
 #include "FixSinCos.hpp"
 
-#include "FixedPointFunctions/FunctionEvaluator.hpp"
+#include "FloPoCo.hpp"
 
 using namespace std;
+using namespace flopoco;
 
 
 // personalized parameter
@@ -54,9 +58,9 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	//addFullComment(" addFullComment for a large comment ");
 	//addComment("addComment for small left-aligned comment");
 
-	// declaring output
-	addOutput("S", w);
-	addOutput("C", w);
+	// declaring outputs
+	addOutput("S", w+1);
+	addOutput("C", w+1);
 
 
 	/* Some peace of informations can be delivered to the flopoco user if  the -verbose option is set
@@ -101,6 +105,7 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 
 	// Y_prime = .25 - y
 	// the VHDL is probably invalid
+	// perhaps do a logic ~ at a cost of 1 ulp ?
 	vhdl << declare ("Y_prime",w-2) << " <= "
 	     << "2**" << (w-2) << " - Y;" << endl;
 
@@ -112,18 +117,144 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	// Exch = A ^ B
 	vhdl << declare ("Exch",1) << " <= A xor B;" << endl;
 
-	FunctionEvaluator *f_sin, *f_cos;
-	// 5 is hardcoded: when addition formulae are added it will
-	// be replaced by dichotomy
-	f_sin = new FunctionEvaluator (target,"sin(x*Pi*4)",w-2,w,5);
-	f_cos = new FunctionEvaluator (target,"cos(x*Pi*4)",w-2,w,5);
+	// now we do manual polynomial computation to calculate sin (pi*y)
+	// and cos (pi*y) using Taylor polynomials: with y'=pi*y
+	// sin (4*pi*y) = y' - y'³/6
+	// cos (4*pi*y) = 1 - y'²/2
+	// this works if y' (or y) is small enough
+	// to accomplish this we decompose x (==Y_in in the vhdl) to x = a + y
+	// where a \in [0,1/4[ and {sin,cos} (pi*a) is tabulated
+	// and y \in [0,1b-n[ is a small enough argument
+	// then we use the addition formulae (where Sin(x)=sin(pi*x)):
+	// Sin (a+y) = Sin a Cos y + Cos a Sin y
+	//           = Sin a - Sin a (1 - Cos y) + Cos a Sin y
+	// Cos (a+y) = Cos a Cos y - Sin a Sin y
+	//           = Cos a - Cos a (1 - Cos y) - Sin a Sin y
+	const int g=3; //guard bits
+	int wIn = w-2+g;
+	// wA is the precision of A, beginning from the ,..[] bit
+	// yes I know it's moronic to int->float->int
+	// pi⁴/24=4.0587121 so (pi*y)⁴/24 is < (1+eps) ulp /this is not the thing to do actually/
+	// iff 4 * (wA+2) + 2 >= wIn+2 (2 as the log_2 of pi⁴/24)
+	// the minimal a is therefore ceil((wIn)/4) - 2
+	int wA = (int) ceil ((float) (wIn)/4.) - 2;
+	int wY = wIn-wA, wZ = wY+2;
+	// vhdl:split (Y_in -> A_tbl & Y_red)
+	vhdl << declare ("A_tbl",wA) << " <= Y_in" << range (w-3,w-2-wA) << ";" << endl
+	     << declare ("Y_red",wY) << " <= Y_in" << range (w-3-wA,0);
+	for (int i = 0; i < g; i ++) {
+		vhdl << " & '0'";
+	}
+	vhdl << ';' << endl;
+	// vhdl:lut (A_tbl -> A_cos_pi_tbl, A_sin_pi_tbl)
+	// the results have precision w+g
+	// now, evaluate Sin Y_red and 1 - Cos Y_red
+	// vhdl:cmul[pi] (Y_red -> Z)
+	FixRealKCM *pi_mult;
+	// the 2 extra bits to Z are added by the KCM multiplier
+	pi_mult = new FixRealKCM (target, 0, wY-1, false, 0, "pi"); 
+	oplist.push_back (pi_mult);
+	inPortMap (pi_mult, "X", "Y_red");
+	outPortMap (pi_mult, "R", "Z");
+	vhdl << instance (pi_mult, "pi_mult");
+	// vhdl:sqr (Z -> Z_2)
+	// we have no truncated squarer as of now
+	IntSquarer *sqr_z;
+	sqr_z = new IntSquarer (target, wY);
+	oplist.push_back (sqr_z);
+	inPortMap (sqr_z, "X", "Z");
+	outPortMap (sqr_z, "R", "Z_2_ext");
+	vhdl << instance (sqr_z, "sqr_z");
+	// so now we truncate unnecessarily calculated bits of Z_2_ext
+	int wZ_2 = 2*wZ - (w+g);
+	vhdl << declare ("Z_2",wZ_2) << " <= Z_2_ext"
+	     << range (wZ_2-1,0) << ";" << endl;
+	// vhdl:mul (Z, Z_2 -> Z_3)
+	IntTruncMultiplier *z_3;
+	int wZ_3 = 3*wZ - 2*(w+g);
+	z_3 = new IntTruncMultiplier (target, wZ, wZ_2, wZ_3,
+	                              1.f, 0, 0); //last params wtf?
+	oplist.push_back (z_3);
+	inPortMap (z_3, "X", "Z");
+	inPortMap (z_3, "Y", "Z_2");
+	outPortMap (z_3, "R", "Z_3");
+	vhdl << instance (z_3, "z_3");
+	// vhdl:slr (Z_2 -> Z_cos_red)
+	int wZ_cos_red = wZ_2 - 1;
+	vhdl << declare ("Z_cos_red", wZ_2-1)
+	     << " <= Z_2" << range (wZ_2-1,1) << ";" << endl;
+	// vhdl:cmul[1/6] (Z_3 -> Z_3_6)
+	vhdl << declare ("Z_3_2", wZ_3-1)
+	     << " <= Z_3" << range (wZ_3-1,1) << ";" << endl;
+	IntConstDiv *cdiv_3;
+	cdiv_3 = new IntConstDiv (target, wZ_3-1, 3, -1);
+	oplist.push_back (cdiv_3);
+	inPortMap (cdiv_3, "X", "Z_3_2");
+	outPortMap (cdiv_3, "Q", "Z_3_6");
+	vhdl << instance (cdiv_3, "cdiv_3");
+	// vhdl:sub (Z, Z_3_6 -> Z_sin)
+	vhdl << declare ("Z_sin", wZ)
+	     << " <= Z - Z_3_6;" << endl;
+	// and now, evaluate Sin Y_in and Cos Y_in
+	// Cos Y_in:
+	// // vhdl:id (A_cos_pi_tbl -> C_out_1)
+	// vhdl:mul (Z_cos_red, A_cos_pi_tbl -> C_out_2)
+	IntTruncMultiplier *c_out_2;
+	c_out_2 = new IntTruncMultiplier (target, wZ_cos_red, w+g, wZ_cos_red,
+	                                  1.f, 0, 0);
+	oplist.push_back (c_out_2);
+	inPortMap (c_out_2, "X", "Z_cos_red");
+	inPortMap (c_out_2, "Y", "A_cos_pi_tbl");
+	outPortMap (c_out_2, "R", "C_out_2");
+	vhdl << instance (c_out_2, "c_out_2");
+	// vhdl:mul (Z_sin, A_sin_pi_tbl -> C_out_3)
+	IntTruncMultiplier *c_out_3;
+	c_out_3 = new IntTruncMultiplier (target, wZ, w+g, wZ,
+	                                  1.f, 0, 0);
+	oplist.push_back (c_out_3);
+	inPortMap (c_out_3, "X", "Z_sin");
+	inPortMap (c_out_3, "Y", "A_sin_pi_tbl");
+	outPortMap (c_out_3, "R", "C_out_3");
+	vhdl << instance (c_out_3, "c_out_3");
+	// vhdl:add (C_out_2, C_out_3 -> C_out_4)
+	vhdl << declare ("C_out_4", wZ)
+	     << " <= C_out_2 + C_out_3;" << endl;
+	// vhdl:sub (A_cos_pi_tbl, C_out_4 -> C_out)
+	// C_out has the entire precision; _g because it still has guards
+	vhdl << declare ("C_out_g", w+g)
+	     << " <= A_cos_pi_tbl - C_out_4;" << endl;
+	// Sin Y_in:
+	// // vhdl:id (A_sin_pi_tbl -> S_out_1)
+	// vhdl:mul (Z_cos_red, A_sin_pi_tbl -> S_out_2)
+	IntTruncMultiplier *s_out_2;
+	s_out_2 = new IntTruncMultiplier (target, wZ_cos_red, w+g, wZ_cos_red,
+	                                  1.f, 0, 0);
+	oplist.push_back (s_out_2);
+	inPortMap (s_out_2, "X", "Z_cos_red");
+	inPortMap (s_out_2, "Y", "A_sin_pi_tbl");
+	outPortMap (s_out_2, "R", "S_out_2");
+	vhdl << instance (s_out_2, "s_out_2");
+	// vhdl:mul (Z_sin, A_cos_pi_tbl -> S_out_3)
+	IntTruncMultiplier *s_out_3;
+	s_out_3 = new IntTruncMultiplier (target, wZ, w+g, wZ,
+	                                  1.f, 0, 0);
+	oplist.push_back (s_out_3);
+	inPortMap (s_out_3, "X", "Z_sin");
+	inPortMap (s_out_3, "Y", "A_cos_pi_tbl");
+	outPortMap (s_out_3, "R", "S_out_3");
+	vhdl << instance (s_out_3, "s_out_3");
+	// vhdl:add (A_sin_pi_tbl, S_out_3 -> S_out_4)
+	vhdl << declare ("S_out_4", w+g) //w+g necessary because of sin(pi*a)
+	     << " <= A_sin_pi_tbl + S_out_3" << endl;
+	// vhdl:sub (S_out_4, S_out_2 -> S_out)
+	vhdl << declare ("S_out_g", w+g)
+	     << " <= S_out_4 - S_out_2" << endl;
 
-	oplist.push_back (f_sin);
-	oplist.push_back (f_cos);
-	inPortMap (f_sin, "X", "Y_prime");
-	outPortMap (f_sin, "R", "S_out");
-	inPortMap (f_cos, "X", "Y_prime");
-	outPortMap (f_cos, "R", "C_out");
+	// now remove the guard bits
+	vhdl << declare ("C_out", w)
+	     << " <= C_out_g" << range (w+g-1, g) << endl
+	     << declare ("S_out", w)
+	     << " <= S_out_g" << range (w+g-1, g) << endl;
 
 	// now just add the signs to the signals
 	/* the output format is consequently
@@ -152,39 +283,90 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 };
 
 
+// doesn't work yet
 void FixSinCos::emulate(TestCase * tc)
 {
-	/* This function will be used when the TestBench command is used in the command line
-	   we have to provide a complete and correct emulation of the operator, in order to compare correct output generated by this function with the test input generated by the vhdl code */
-	/* first we are going to format the entries */
-	mpz_class sx = tc->getInputValue("X");
-	//appends 010 on left of the binary representation (yeak)
-	mpz_class fsx ("010" + sx.get_str(2),2);
-	FPNumber fpx(0, w);
-	fpx = fsx;
-
-	mpfr_t x, sind, cosd; //round-to-nearest as of now
+	mpz_class sx = tc->getInputValue ("X");
+	mpfr_t x, sind, cosd, sinu, cosu, pixd, pixu;
+	mpz_t sind_z, cosd_z, sinu_z, cosu_z;
 	mpfr_init2 (x, 1+w);
-	mpfr_init2 (sind, 1+w);
-	mpfr_init2 (cosd, 1+w);
-	fpx.getMPFR (x);
-	mpfr_sin (sind, x, GMP_RNDD); //round to lower
-	mpfr_cos (cosd, x, GMP_RNDD);
-	FPNumber fpsin (0, w, sind);
-	FPNumber fpcos (0, w, cosd);
-	mpz_class ssin = fpsin.getSignalValue();
-	mpz_class scos = fpcos.getSignalValue();
-	// now we have to remove the 2 first bits of S/C
-	string ssin_s = ssin.get_str(2);
-	string scos_s = scos.get_str(2);
-	mpz_class ssin_fix_d (ssin_s.substr (2, string::npos), 2);
-	mpz_class scos_fix_d (scos_s.substr (2, string::npos), 2);
+	mpz_init2 (sind_z, 1+w);
+	mpz_init2 (cosd_z, 1+w);
+	mpz_init2 (sinu_z, 1+w);
+	mpz_init2 (cosu_z, 1+w);
+
+	mpfr_set_z (x, sx.get_mpz_t(), GMP_RNDD); // this rounding is exact
+	mpfr_div_2si (x, x, w, GMP_RNDD); // this rounding is acually exact
+	int i, ep; // ep: extra precision
+	do {
+		ep = 1 << i;
+		mpfr_init2 (sind, 1+w+ep); // 1 extra of precision to have <½ulp(x) error
+		mpfr_init2 (cosd, 1+w+ep);
+		mpfr_init2 (sinu, 1+w+ep); // 1 extra of precision to have <½ulp(x) error
+		mpfr_init2 (cosu, 1+w+ep);
+		// 1 extra bit (plus 11. beginning) will guarantee <½ulp(x) error on pi*x
+		mpfr_init2 (pixd, 2+w+ep);
+		mpfr_init2 (pixu, 2+w+ep);
+		mpfr_const_pi (pixd, GMP_RNDD);
+		mpfr_const_pi (pixu, GMP_RNDU);
+		mpfr_mul (pixd, pixd, x, GMP_RNDD);
+		mpfr_mul (pixu, pixu, x, GMP_RNDU);
+		if (mpfr_cmp_ui_2exp (x, 1UL, -1) > 0) { // if (x < 0.5f)
+			// then sin is increasing near x
+			mpfr_sin (sind, pixd, GMP_RNDD);
+			mpfr_sin (sinu, pixu, GMP_RNDU);
+		} else {
+			// then sin is decreasing near x
+			mpfr_sin (sind, pixu, GMP_RNDD); // use the upper x for the lower sin
+			mpfr_sin (sinu, pixd, GMP_RNDU);
+		}
+		mpfr_cos (cosd, pixu, GMP_RNDD); // cos decreases from 0 to pi
+		mpfr_cos (cosu, pixd, GMP_RNDU);
+		// if the cosine is <0 we must neg it then add 1
+		if (mpfr_cmp_ui (cosd, 0) < 0) {
+			mpfr_setsign (cosd, cosd, 0, GMP_RNDD); // exact rnd
+			mpfr_add_ui (cosd, cosd, 1, GMP_RNDD); // exact rnd
+		}
+		// same as before
+		if (mpfr_cmp_ui (cosd, 0) < 0) {
+			mpfr_setsign (cosu, cosu, 0, GMP_RNDU);
+			mpfr_add_ui (cosu, cosu, 1, GMP_RNDU);
+		}
+		mpfr_mul_2si (sind, sind, w, GMP_RNDD); // exact rnd here
+		mpfr_mul_2si (cosd, cosd, w, GMP_RNDD);
+		mpfr_mul_2si (sinu, sinu, w, GMP_RNDU);
+		mpfr_mul_2si (cosu, cosu, w, GMP_RNDU);
+		mpfr_get_z (sind_z, sind, GMP_RNDD); // there can be a real rounding here
+		mpfr_get_z (cosd_z, cosd, GMP_RNDD);
+		mpfr_get_z (sinu_z, sinu, GMP_RNDU); // there can be a real rounding here
+		mpfr_get_z (cosu_z, cosu, GMP_RNDU);
+		// now we test if the upper results are the lower ones + 1
+		// as we want them to
+		mpz_sub_ui (sinu_z, sinu_z, 1UL);
+		mpz_sub_ui (cosu_z, cosu_z, 1UL);
+		if (mpz_cmp (sind_z, sinu_z) == 0 &&
+		    mpz_cmp (cosd_z, cosu_z) == 0) {
+			// the rounding are really what we want
+			cout << "coucou !" << endl;
+			break;
+		} else {
+			i++;
+		}
+	} while (i<16); // for sanity
+	if (i==16) {
+		cout << sx.get_str(16) << 'h' << endl;
+		cout << "FixSinCos.cpp:357:Rounding clusterfuck" << endl;
+	}
+	mpz_class sind_zc (sind_z), cosd_zc (cosd_z);
 	// and since FunctionEvaluator does only faithful rounding
 	// we add also as expected results the upper roundings
-	tc->addExpectedOutput ("S", ssin_fix_d);
-	tc->addExpectedOutput ("C", scos_fix_d);
-	tc->addExpectedOutput ("S", ssin_fix_d+1);
-	tc->addExpectedOutput ("C", scos_fix_d+1);
+	//try {
+	tc->addExpectedOutput ("S", sind_zc);
+	tc->addExpectedOutput ("C", cosd_zc);
+	tc->addExpectedOutput ("S", sind_zc+1);
+	tc->addExpectedOutput ("C", cosd_zc+1);
+	//} catch (std::string s) { cout << s << endl; }
+	// not complete yet
 	mpfr_clears (x, sind, cosd, NULL);
 }
 
