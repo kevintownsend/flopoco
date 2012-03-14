@@ -149,9 +149,9 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	// wA is the precision of A, beginning from the ,..[] bit
 	// yes I know it's moronic to int->float->int
 	// pi⁴/24=4.0587121 so (pi*y)⁴/24 is < (1+eps) ulp /this is not the thing to do actually/
-	// iff 4 * (wA+2) + 2 >= wIn+2 (2 as the log_2 of pi⁴/24)
+	// iff 4 * (wA+2) - 2 >= w+g (2 as the log_2 of pi⁴/24)
 	// the minimal a is therefore ceil((wIn)/4) - 2
-	int wA = (int) ceil ((float) (wIn)/4.) - 2;
+	int wA = (int) ceil ((float) (w+g+2)/4.) - 2;
 	if (wA <= 3)
 		wA = 3;
 	int wY = wIn-wA, wZ = wY+2;
@@ -228,7 +228,7 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	outPortMap (cdiv_3, "Q", "Z_3_6");
 	vhdl << instance (cdiv_3, "cdiv_3");
 	// vhdl:sub (Z, Z_3_6 -> Z_sin)
-	vhdl << declare ("Z_sin", wZ)
+	vhdl << tab << declare ("Z_sin", wZ)
 	     << " <= Z - Z_3_6;" << endl;
 	// and now, evaluate Sin Y_in and Cos Y_in
 	// Cos Y_in:
