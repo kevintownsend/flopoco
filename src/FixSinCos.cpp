@@ -106,12 +106,28 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	// Y_prime = .25 - y
 	// the VHDL is probably invalid
 	// perhaps do a logic ~ at a cost of 1 ulp ?
-	vhdl << declare ("Y_prime",w-2) << " <= "
-	     << "2**" << (w-2) << " - Y;" << endl;
+	//vhdl << declare ("Y_prime",w-2) << " <= "
+	//     << "2**" << (w-2) << " - Y;" << endl;
+	// if we do an arithmetic 1's complement it will do **** since
+	// 1-0 doesn't fit
+	vhdl << declare ("Y_prime", w-2) << " <= "
+	     << "not Y;" << endl;
+
+	// we need to know the number of guard bits _now_ to have a good Y_in
+	const int g=4; //guard bits
+	//const int g=3; //guard bits
+	//we take 4 guard bits even if error < 8 ulp because rounding will take
+	//another half final ulp
+	int wIn = w-2+g;
 
 	// Y_in = / Y_prime if B=1
 	//        \ Y if B=0
-	vhdl << declare ("Y_in",w-2) << " <= Y_prime when B='1' else Y;"
+	// and we extend the precision to make it look as if Y_prime was
+	// 0.[1, wIn times] - Y: 1/2**g error reduction in Y_prime
+	// (which should be arithmetic 1-Y)
+	vhdl << declare ("Y_in",wIn) << " <= Y_prime & "
+	     << '"' << std::string (g, '1') << '"' << " when B='1' else Y & "
+	     << '"' << std::string (g, '0') << '"' << ";"
 	     << endl;
 
 	// Exch = A ^ B
@@ -130,23 +146,32 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	//           = Sin a - Sin a (1 - Cos y) + Cos a Sin y
 	// Cos (a+y) = Cos a Cos y - Sin a Sin y
 	//           = Cos a - Cos a (1 - Cos y) - Sin a Sin y
-	const int g=3; //guard bits
-	int wIn = w-2+g;
 	// wA is the precision of A, beginning from the ,..[] bit
 	// yes I know it's moronic to int->float->int
 	// pi⁴/24=4.0587121 so (pi*y)⁴/24 is < (1+eps) ulp /this is not the thing to do actually/
 	// iff 4 * (wA+2) + 2 >= wIn+2 (2 as the log_2 of pi⁴/24)
 	// the minimal a is therefore ceil((wIn)/4) - 2
 	int wA = (int) ceil ((float) (wIn)/4.) - 2;
+	if (wA <= 3)
+		wA = 3;
 	int wY = wIn-wA, wZ = wY+2;
 	// vhdl:split (Y_in -> A_tbl & Y_red)
-	vhdl << declare ("A_tbl",wA) << " <= Y_in" << range (w-3,w-2-wA) << ";" << endl
-	     << declare ("Y_red",wY) << " <= Y_in" << range (w-3-wA,0);
-	for (int i = 0; i < g; i ++) {
-		vhdl << " & '0'";
-	}
-	vhdl << ';' << endl;
+	vhdl << declare ("A_tbl",wA) << " <= Y_in"
+	     << range (wIn-1,wIn-wA) << ";" << endl
+	     << declare ("Y_red",wY) << " <= Y_in"
+	     << range (wIn-wA-1,0) << ';' << endl;
 	// vhdl:lut (A_tbl -> A_cos_pi_tbl, A_sin_pi_tbl)
+	FunctionTable *sin_table, *cos_table;
+	sin_table = new FunctionTable (target, "sin(x)", wA, -(w+g), -1);
+	cos_table = new FunctionTable (target, "cos(x)", wA, -(w+g), -1);
+	oplist.push_back (sin_table);
+	oplist.push_back (cos_table);
+	inPortMap (sin_table, "X", "A_tbl");
+	outPortMap (sin_table, "Y", "A_sin_pi_tbl");
+	inPortMap (cos_table, "X", "A_tbl");
+	outPortMap (cos_table, "Y", "A_cos_pi_tbl");
+	vhdl << instance (sin_table, "sin_table")
+	     << instance (cos_table, "cos_table");
 	// the results have precision w+g
 	// now, evaluate Sin Y_red and 1 - Cos Y_red
 	// vhdl:cmul[pi] (Y_red -> Z)
@@ -159,8 +184,8 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	vhdl << instance (pi_mult, "pi_mult");
 	// vhdl:sqr (Z -> Z_2)
 	// we have no truncated squarer as of now
-	IntSquarer *sqr_z;
-	sqr_z = new IntSquarer (target, wY);
+	/*IntSquarer *sqr_z;
+	sqr_z = new IntSquarer (target, wZ);
 	oplist.push_back (sqr_z);
 	inPortMap (sqr_z, "X", "Z");
 	outPortMap (sqr_z, "R", "Z_2_ext");
@@ -168,7 +193,17 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	// so now we truncate unnecessarily calculated bits of Z_2_ext
 	int wZ_2 = 2*wZ - (w+g);
 	vhdl << declare ("Z_2",wZ_2) << " <= Z_2_ext"
-	     << range (wZ_2-1,0) << ";" << endl;
+	     << range (wZ-1,wZ-wZ_2) << ";" << endl;*/
+	// so we use a trunctaed multiplier instead
+	IntTruncMultiplier *sqr_z;
+	int wZ_2 = 2*wZ - (w+g);
+	sqr_z = new IntTruncMultiplier (target, wZ, wZ, wZ_2,
+	                                1.f, 0, 0);
+	oplist.push_back (sqr_z);
+	inPortMap (sqr_z, "X", "Z");
+	inPortMap (sqr_z, "Y", "Z");
+	outPortMap (sqr_z, "R", "Z_2");
+	vhdl << instance (sqr_z, "sqr_z");
 	// vhdl:mul (Z, Z_2 -> Z_3)
 	IntTruncMultiplier *z_3;
 	int wZ_3 = 3*wZ - 2*(w+g);
@@ -178,7 +213,7 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	inPortMap (z_3, "X", "Z");
 	inPortMap (z_3, "Y", "Z_2");
 	outPortMap (z_3, "R", "Z_3");
-	vhdl << instance (z_3, "z_3");
+	vhdl << instance (z_3, "z_3_compute");
 	// vhdl:slr (Z_2 -> Z_cos_red)
 	int wZ_cos_red = wZ_2 - 1;
 	vhdl << declare ("Z_cos_red", wZ_2-1)
@@ -206,7 +241,7 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	inPortMap (c_out_2, "X", "Z_cos_red");
 	inPortMap (c_out_2, "Y", "A_cos_pi_tbl");
 	outPortMap (c_out_2, "R", "C_out_2");
-	vhdl << instance (c_out_2, "c_out_2");
+	vhdl << instance (c_out_2, "c_out_2_compute");
 	// vhdl:mul (Z_sin, A_sin_pi_tbl -> C_out_3)
 	IntTruncMultiplier *c_out_3;
 	c_out_3 = new IntTruncMultiplier (target, wZ, w+g, wZ,
@@ -215,7 +250,7 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	inPortMap (c_out_3, "X", "Z_sin");
 	inPortMap (c_out_3, "Y", "A_sin_pi_tbl");
 	outPortMap (c_out_3, "R", "C_out_3");
-	vhdl << instance (c_out_3, "c_out_3");
+	vhdl << instance (c_out_3, "c_out_3_compute");
 	// vhdl:add (C_out_2, C_out_3 -> C_out_4)
 	vhdl << declare ("C_out_4", wZ)
 	     << " <= C_out_2 + C_out_3;" << endl;
@@ -233,7 +268,7 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	inPortMap (s_out_2, "X", "Z_cos_red");
 	inPortMap (s_out_2, "Y", "A_sin_pi_tbl");
 	outPortMap (s_out_2, "R", "S_out_2");
-	vhdl << instance (s_out_2, "s_out_2");
+	vhdl << instance (s_out_2, "s_out_2_compute");
 	// vhdl:mul (Z_sin, A_cos_pi_tbl -> S_out_3)
 	IntTruncMultiplier *s_out_3;
 	s_out_3 = new IntTruncMultiplier (target, wZ, w+g, wZ,
@@ -242,19 +277,30 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	inPortMap (s_out_3, "X", "Z_sin");
 	inPortMap (s_out_3, "Y", "A_cos_pi_tbl");
 	outPortMap (s_out_3, "R", "S_out_3");
-	vhdl << instance (s_out_3, "s_out_3");
+	vhdl << instance (s_out_3, "s_out_3_compute");
 	// vhdl:add (A_sin_pi_tbl, S_out_3 -> S_out_4)
 	vhdl << declare ("S_out_4", w+g) //w+g necessary because of sin(pi*a)
-	     << " <= A_sin_pi_tbl + S_out_3" << endl;
+	     << " <= A_sin_pi_tbl + S_out_3;" << endl;
 	// vhdl:sub (S_out_4, S_out_2 -> S_out)
 	vhdl << declare ("S_out_g", w+g)
-	     << " <= S_out_4 - S_out_2" << endl;
+	     << " <= S_out_4 - S_out_2;" << endl;
 
 	// now remove the guard bits
-	vhdl << declare ("C_out", w)
-	     << " <= C_out_g" << range (w+g-1, g) << endl
+	/*vhdl << declare ("C_out", w)
+	     << " <= C_out_g" << range (w+g-1, g) << ';' << endl
 	     << declare ("S_out", w)
-	     << " <= S_out_g" << range (w+g-1, g) << endl;
+	     << " <= S_out_g" << range (w+g-1, g) << ';' << endl;*/
+	// by rounding please
+	vhdl << declare ("C_out_rnd_aux", w+g)
+	     << " <= C_out_g + " << '"' << std::string (w, '0')
+	     << '1' << std::string (g-1, '0') << '"' << ';' << endl
+	     << declare ("S_out_rnd_aux", w+g)
+	     << " <= S_out_g + " << '"' << std::string (w, '0')
+	     << '1' << std::string (g-1, '0') << '"' << ';' << endl;
+	vhdl << declare ("C_out", w)
+	     << " <= C_out_rnd_aux" << range (w+g-1, g) << ';' << endl
+	     << declare ("S_out", w)
+	     << " <= S_out_rnd_aux" << range (w+g-1, g) << ';' << endl;
 
 	// now just add the signs to the signals
 	/* the output format is consequently
@@ -263,8 +309,12 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	 *	unsigned int mantissa: w;
 	 * };
 	 */
-	vhdl << "S <= '0' & (C_out when Exch else S_out);" << endl;
-	vhdl << "C <= A & (S_out when Exch else C_out);" << endl;
+	vhdl << declare ("S_wo_sgn", w)
+	     << " <= C_out when Exch = '1' else S_out;" << endl
+	     << declare ("C_wo_sgn", w)
+	     << " <= S_out when Exch = '1' else C_out;" << endl
+	     << "S <= '0' & S_wo_sgn;" << endl
+	     << "C <= A & C_wo_sgn;" << endl;
 
 
 	/* declaring a new cycle, each variable used after this line will be delayed 
@@ -282,10 +332,16 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	//vhdl << "R" << range(param1 - 1, 0) << ");" << endl;
 };
 
-
 void FixSinCos::emulate(TestCase * tc)
 {
 	mpz_class sx = tc->getInputValue ("X");
+	// 0 needs special handling because its down-rounded
+	// cos won't be in [0,1[
+	if (sx == 0) {
+		tc->addExpectedOutput ("S", mpz_class(0));
+		tc->addExpectedOutput ("C", (mpz_class(1) << w) - 1);
+		return;
+	}
 	mpfr_t x, sind, cosd, sinu, cosu, pixd, pixu;
 	mpz_t sind_z, cosd_z, sinu_z, cosu_z;
 	mpfr_init2 (x, 1+w);
@@ -317,7 +373,7 @@ void FixSinCos::emulate(TestCase * tc)
 		mpfr_const_pi (pixu, GMP_RNDU);
 		mpfr_mul (pixd, pixd, x, GMP_RNDD);
 		mpfr_mul (pixu, pixu, x, GMP_RNDU);
-		if (mpfr_cmp_ui_2exp (x, 1UL, -1) > 0) { // if (x < 0.5f)
+		if (mpfr_cmp_ui_2exp (x, 1UL, -1) < 0) { // if (x < 0.5f)
 			// then sin is increasing near x
 			mpfr_sin (sind, pixd, GMP_RNDD);
 			mpfr_sin (sinu, pixu, GMP_RNDU);
@@ -363,8 +419,11 @@ void FixSinCos::emulate(TestCase * tc)
 	// we add also as expected results the upper roundings
 	tc->addExpectedOutput ("S", sind_zc);
 	tc->addExpectedOutput ("C", cosd_zc);
-	tc->addExpectedOutput ("S", sind_zc+1);
-	tc->addExpectedOutput ("C", cosd_zc+1);
+	mpz_class ones (1); ones <<= w; ones -= 1;
+	if ((sind_zc & ones) != ones)
+		tc->addExpectedOutput ("S", sind_zc+1);
+	if ((cosd_zc & ones) != ones)
+		tc->addExpectedOutput ("C", cosd_zc+1);
 	// not complete yet
 	mpfr_clears (x, sind, cosd, NULL);
 }
@@ -372,6 +431,22 @@ void FixSinCos::emulate(TestCase * tc)
 
 void FixSinCos::buildStandardTestCases(TestCaseList * tcl)
 {
+	TestCase* tc;
+	tc = new TestCase (this);
+	tc -> addInput ("X",mpz_class(0));
+	emulate(tc);
+	tcl->add(tc);
+	tc = new TestCase (this);
+	tc -> addInput ("X",mpz_class(1));
+	emulate(tc);
+	tcl->add(tc);
+	mpz_class ones(1);
+	ones <<= w;
+	ones -= 1;
+	tc = new TestCase (this);
+	tc -> addInput ("X",ones);
+	emulate(tc);
+	tcl->add(tc);
 }
 
 void FixSinCos::buildRandomTestCases(TestCaseList * tcl, int n)
