@@ -283,7 +283,6 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 };
 
 
-// doesn't work yet
 void FixSinCos::emulate(TestCase * tc)
 {
 	mpz_class sx = tc->getInputValue ("X");
