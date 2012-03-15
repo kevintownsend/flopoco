@@ -162,8 +162,8 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	     << range (wIn-wA-1,0) << ';' << endl;
 	// vhdl:lut (A_tbl -> A_cos_pi_tbl, A_sin_pi_tbl)
 	FunctionTable *sin_table, *cos_table;
-	sin_table = new FunctionTable (target, "sin(x)", wA, -(w+g), -1);
-	cos_table = new FunctionTable (target, "cos(x)", wA, -(w+g), -1);
+	sin_table = new FunctionTable (target, "sin(pi*x/4)", wA, -(w+g), -1);
+	cos_table = new FunctionTable (target, "cos(pi*x/4)", wA, -(w+g), -1);
 	oplist.push_back (sin_table);
 	oplist.push_back (cos_table);
 	inPortMap (sin_table, "X", "A_tbl");
