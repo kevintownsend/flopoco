@@ -271,14 +271,14 @@ namespace flopoco{
 
 #endif
 		// redirect stdin to the file pointer
-		int stdin = dup(0);
+		int my_stdin = dup(0);
 		close(0);
 		int fp = open(filename.c_str(), O_RDONLY, "r");
 
 		dup2(fp, 0);
 		FlopocoExpressionparse();
 		close(fp);
-		dup2(0, stdin);
+		dup2(0, my_stdin);
 	
 		REPORT(DEBUG, "-----------------------------------");
 		nodeList* head = p->assignList;
