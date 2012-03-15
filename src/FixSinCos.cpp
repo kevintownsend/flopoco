@@ -233,57 +233,57 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	// and now, evaluate Sin Y_in and Cos Y_in
 	// Cos Y_in:
 	// // vhdl:id (A_cos_pi_tbl -> C_out_1)
-	// vhdl:mul (Z_cos_red, A_cos_pi_tbl -> C_out_2)
+	// vhdl:mul (Z_cos_red, A_cos_pi_tbl -> Cos_y_red_Cos_a)
 	IntTruncMultiplier *c_out_2;
 	c_out_2 = new IntTruncMultiplier (target, wZ_cos_red, w+g, wZ_cos_red,
 	                                  1.f, 0, 0);
 	oplist.push_back (c_out_2);
 	inPortMap (c_out_2, "X", "Z_cos_red");
 	inPortMap (c_out_2, "Y", "A_cos_pi_tbl");
-	outPortMap (c_out_2, "R", "C_out_2");
+	outPortMap (c_out_2, "R", "Cos_y_red_Cos_a");
 	vhdl << instance (c_out_2, "c_out_2_compute");
-	// vhdl:mul (Z_sin, A_sin_pi_tbl -> C_out_3)
+	// vhdl:mul (Z_sin, A_sin_pi_tbl -> Sin_y_Sin_a)
 	IntTruncMultiplier *c_out_3;
 	c_out_3 = new IntTruncMultiplier (target, wZ, w+g, wZ,
 	                                  1.f, 0, 0);
 	oplist.push_back (c_out_3);
 	inPortMap (c_out_3, "X", "Z_sin");
 	inPortMap (c_out_3, "Y", "A_sin_pi_tbl");
-	outPortMap (c_out_3, "R", "C_out_3");
+	outPortMap (c_out_3, "R", "Sin_y_Sin_a");
 	vhdl << instance (c_out_3, "c_out_3_compute");
-	// vhdl:add (C_out_2, C_out_3 -> C_out_4)
-	vhdl << declare ("C_out_4", wZ)
-	     << " <= C_out_2 + C_out_3;" << endl;
-	// vhdl:sub (A_cos_pi_tbl, C_out_4 -> C_out)
+	// vhdl:add (Cos_y_red_Cos_a, Sin_y_Sin_a -> Cos_y_red_Cos_a_plus_Sin_y_Sin_a)
+	vhdl << declare ("Cos_y_red_Cos_a_plus_Sin_y_Sin_a", wZ)
+	     << " <= Cos_y_red_Cos_a + Sin_y_Sin_a;" << endl;
+	// vhdl:sub (A_cos_pi_tbl, Cos_y_red_Cos_a_plus_Sin_y_Sin_a -> C_out)
 	// C_out has the entire precision; _g because it still has guards
 	vhdl << declare ("C_out_g", w+g)
-	     << " <= A_cos_pi_tbl - C_out_4;" << endl;
+	     << " <= A_cos_pi_tbl - Cos_y_red_Cos_a_plus_Sin_y_Sin_a;" << endl;
 	// Sin Y_in:
 	// // vhdl:id (A_sin_pi_tbl -> S_out_1)
-	// vhdl:mul (Z_cos_red, A_sin_pi_tbl -> S_out_2)
+	// vhdl:mul (Z_cos_red, A_sin_pi_tbl -> Cos_y_red_Sin_a)
 	IntTruncMultiplier *s_out_2;
 	s_out_2 = new IntTruncMultiplier (target, wZ_cos_red, w+g, wZ_cos_red,
 	                                  1.f, 0, 0);
 	oplist.push_back (s_out_2);
 	inPortMap (s_out_2, "X", "Z_cos_red");
 	inPortMap (s_out_2, "Y", "A_sin_pi_tbl");
-	outPortMap (s_out_2, "R", "S_out_2");
+	outPortMap (s_out_2, "R", "Cos_y_red_Sin_a");
 	vhdl << instance (s_out_2, "s_out_2_compute");
-	// vhdl:mul (Z_sin, A_cos_pi_tbl -> S_out_3)
+	// vhdl:mul (Z_sin, A_cos_pi_tbl -> Sin_y_Cos_a)
 	IntTruncMultiplier *s_out_3;
 	s_out_3 = new IntTruncMultiplier (target, wZ, w+g, wZ,
 	                                  1.f, 0, 0);
 	oplist.push_back (s_out_3);
 	inPortMap (s_out_3, "X", "Z_sin");
 	inPortMap (s_out_3, "Y", "A_cos_pi_tbl");
-	outPortMap (s_out_3, "R", "S_out_3");
+	outPortMap (s_out_3, "R", "Sin_y_Cos_a");
 	vhdl << instance (s_out_3, "s_out_3_compute");
-	// vhdl:add (A_sin_pi_tbl, S_out_3 -> S_out_4)
-	vhdl << declare ("S_out_4", w+g) //w+g necessary because of sin(pi*a)
-	     << " <= A_sin_pi_tbl + S_out_3;" << endl;
-	// vhdl:sub (S_out_4, S_out_2 -> S_out)
+	// vhdl:add (A_sin_pi_tbl, Sin_y_Cos_a -> Sin_y_Cos_a_plus_Sin_a)
+	vhdl << declare ("Sin_y_Cos_a_plus_Sin_a", w+g) //w+g necessary because of sin(pi*a)
+	     << " <= A_sin_pi_tbl + Sin_y_Cos_a;" << endl;
+	// vhdl:sub (Sin_y_Cos_a_plus_Sin_a, Cos_y_red_Sin_a -> S_out)
 	vhdl << declare ("S_out_g", w+g)
-	     << " <= S_out_4 - S_out_2;" << endl;
+	     << " <= Sin_y_Cos_a_plus_Sin_a - Cos_y_red_Sin_a;" << endl;
 
 	// now remove the guard bits
 	/*vhdl << declare ("C_out", w)
