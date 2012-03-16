@@ -151,8 +151,8 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	// the 2 extra bits to Z are added by the KCM multiplier
 	pi_mult = new FixRealKCM (target, 0, wY-1, false, 0, "pi"); 
 	oplist.push_back (pi_mult);
-	outPortMap (pi_mult, "R", "Z");
 	inPortMap (pi_mult, "X", "Y_red");
+	outPortMap (pi_mult, "R", "Z");
 	vhdl << instance (pi_mult, "pi_mult");
 
 	syncCycleFromSignal("Z");
@@ -179,7 +179,10 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	inPortMap (sqr_z, "Y", "Z");
 	inPortMap (sqr_z, "X", "Z");
 	vhdl << instance (sqr_z, "sqr_z");
-	syncCycleFromSignal("Z_2");
+
+	// remember the cycle and the critical path here, because we'll get back in time here
+	syncCycleFromSignal("Z_2"); 
+	setSignalDelay("Z_2", sqr_z->getOutputDelay("R")) ;  
 
 	// vhdl:mul (Z, Z_2 -> Z_3)
 	IntTruncMultiplier *z_3;
@@ -191,52 +194,94 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	inPortMap (z_3, "Y", "Z_2");
 	inPortMap (z_3, "X", "Z");
 	vhdl << instance (z_3, "z_3_compute");
-	// vhdl:slr (Z_2 -> Z_cos_red)
-	int wZ_cos_red = wZ_2 - 1;
-	vhdl << tab << declare ("Z_cos_red", wZ_2-1)
-	     << " <= Z_2" << range (wZ_2-1,1) << ";" << endl;
+	syncCycleFromSignal("Z_3");
+
 	// vhdl:cmul[1/6] (Z_3 -> Z_3_6)
 	vhdl << tab << declare ("Z_3_2", wZ_3-1)
 	     << " <= Z_3" << range (wZ_3-1,1) << ";" << endl;
 	IntConstDiv *cdiv_3;
 	cdiv_3 = new IntConstDiv (target, wZ_3-1, 3, -1);
 	oplist.push_back (cdiv_3);
-	inPortMap (cdiv_3, "X", "Z_3_2");
 	outPortMap (cdiv_3, "Q", "Z_3_6");
+	inPortMap (cdiv_3, "X", "Z_3_2");
 	vhdl << instance (cdiv_3, "cdiv_3");
+
+	// Synchronization of Z and Z3/6
 	syncCycleFromSignal("Z_3_6");
+	syncCycleFromSignal("Z");
 	// vhdl:sub (Z, Z_3_6 -> Z_sin)
+	manageCriticalPath(target->adderDelay(wZ));
 	vhdl << tab << declare ("Z_sin", wZ)
 	     << " <= Z - Z_3_6;" << endl;
+	setSignalDelay("Z_sin", getCriticalPath());
+
 	// and now, evaluate Sin Y_in and Cos Y_in
 	// Cos Y_in:
+	// vhdl:slr (Z_2 -> Z_cos_red)
+	// First get back to the cycle of Z2
+	setCycleFromSignal("Z_2", getSignalDelay("Z_2"));
+
+	int wZ_cos_red = wZ_2 - 1;
+	vhdl << tab << declare ("Z_cos_red", wZ_2-1)
+	     << " <= Z_2" << range (wZ_2-1,1) << ";" << endl;
 	// // vhdl:id (A_cos_pi_tbl -> C_out_1)
 	// vhdl:mul (Z_cos_red, A_cos_pi_tbl -> Cos_y_red_Cos_a)
 	IntTruncMultiplier *c_out_2;
 	c_out_2 = new IntTruncMultiplier (target, wZ_cos_red, w+g, wZ_cos_red,
 	                                  1.f, 0, 0);
 	oplist.push_back (c_out_2);
-	inPortMap (c_out_2, "X", "Z_cos_red");
-	inPortMap (c_out_2, "Y", "A_cos_pi_tbl");
 	outPortMap (c_out_2, "R", "Cos_y_red_Cos_a");
+	inPortMap (c_out_2, "Y", "A_cos_pi_tbl");
+	inPortMap (c_out_2, "X", "Z_cos_red");
 	vhdl << instance (c_out_2, "c_out_2_compute");
+	syncCycleFromSignal("Cos_y_red_Cos_a");
+
+	// get back to the cycle of Z_sin, certainly later than the sinA
+	setCycleFromSignal("Z_sin", getSignalDelay("Z_sin"));
+
 	// vhdl:mul (Z_sin, A_sin_pi_tbl -> Sin_y_Sin_a)
 	IntTruncMultiplier *c_out_3;
 	c_out_3 = new IntTruncMultiplier (target, wZ, w+g, wZ,
 	                                  1.f, 0, 0);
 	oplist.push_back (c_out_3);
-	inPortMap (c_out_3, "X", "Z_sin");
-	inPortMap (c_out_3, "Y", "A_sin_pi_tbl");
 	outPortMap (c_out_3, "R", "Sin_y_Sin_a");
+	inPortMap (c_out_3, "Y", "A_sin_pi_tbl");
+	inPortMap (c_out_3, "X", "Z_sin");
 	vhdl << instance (c_out_3, "c_out_3_compute");
+	// Synchronize the output of the two multipliers
+	syncCycleFromSignal("Cos_y_red_Cos_a");
+	syncCycleFromSignal("Sin_y_Sin_a");
+	manageCriticalPath(target->adderDelay(wZ));
 	// vhdl:add (Cos_y_red_Cos_a, Sin_y_Sin_a -> Cos_y_red_Cos_a_plus_Sin_y_Sin_a)
 	vhdl << tab << declare ("Cos_y_red_Cos_a_plus_Sin_y_Sin_a", wZ)
 	     << " <= Cos_y_red_Cos_a + Sin_y_Sin_a;" << endl;
 	// vhdl:sub (A_cos_pi_tbl, Cos_y_red_Cos_a_plus_Sin_y_Sin_a -> C_out)
 	// C_out has the entire precision; _g because it still has guards
+
+	// TODO: This is suboptimal, 
+	// the critical path does not two carry propagations if there is no register.
+	manageCriticalPath(target->adderDelay(w+g));
 	vhdl << tab << declare ("C_out_g", w+g)
 	     << " <= A_cos_pi_tbl - Cos_y_red_Cos_a_plus_Sin_y_Sin_a;" << endl;
+
+	// now remove the guard bits
+	// by rounding please
+
+	// TODO for Guillaume:
+	// 1/ The adder is too large, no need to add zeroes at the g LSBs
+	// 2/ Try to fuse this addition and the previous one by adding the round bit to the sinA / cosA tables
+	// And for F2D: again suboptimal evaluation of the critical path of a sequence of additions
+	manageCriticalPath(target->adderDelay(w+g));
+	vhdl << tab << declare ("C_out_rnd_aux", w+g)
+	     << " <= C_out_g + " << '"' << std::string (w, '0')
+	     << '1' << std::string (g-1, '0') << '"' << ';' << endl;
+
+
 	// Sin Y_in:
+
+	// First get back to the cycle of Z2 (same as cos_y_red):
+	// it is certainly later than A_sin_pi_tbl
+	setCycleFromSignal("Z_2", getSignalDelay("Z_2"));
 	// // vhdl:id (A_sin_pi_tbl -> S_out_1)
 	// vhdl:mul (Z_cos_red, A_sin_pi_tbl -> Cos_y_red_Sin_a)
 	IntTruncMultiplier *s_out_2;
@@ -247,6 +292,10 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	inPortMap (s_out_2, "Y", "A_sin_pi_tbl");
 	outPortMap (s_out_2, "R", "Cos_y_red_Sin_a");
 	vhdl << instance (s_out_2, "s_out_2_compute");
+	syncCycleFromSignal("Cos_y_red_Sin_a");
+
+	// get back to the cycle of Z_sin, certainly later than the cosA
+	setCycleFromSignal("Z_sin", getSignalDelay("Z_sin"));
 	// vhdl:mul (Z_sin, A_cos_pi_tbl -> Sin_y_Cos_a)
 	IntTruncMultiplier *s_out_3;
 	s_out_3 = new IntTruncMultiplier (target, wZ, w+g, wZ,
@@ -256,25 +305,30 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	inPortMap (s_out_3, "Y", "A_cos_pi_tbl");
 	outPortMap (s_out_3, "R", "Sin_y_Cos_a");
 	vhdl << instance (s_out_3, "s_out_3_compute");
+	syncCycleFromSignal("Sin_y_Cos_a");
+
+	manageCriticalPath(target->adderDelay(wZ));
 	// vhdl:add (A_sin_pi_tbl, Sin_y_Cos_a -> Sin_y_Cos_a_plus_Sin_a)
 	vhdl << tab << declare ("Sin_y_Cos_a_plus_Sin_a", w+g) //w+g necessary because of sin(pi*a)
 	     << " <= A_sin_pi_tbl + Sin_y_Cos_a;" << endl;
 	// vhdl:sub (Sin_y_Cos_a_plus_Sin_a, Cos_y_red_Sin_a -> S_out)
+	// TODO: This is suboptimal, 
+	// the critical path does not two carry propagations if there is no register.
+	manageCriticalPath(target->adderDelay(w+g));
 	vhdl << tab << declare ("S_out_g", w+g)
 	     << " <= Sin_y_Cos_a_plus_Sin_a - Cos_y_red_Sin_a;" << endl;
 
+
 	// now remove the guard bits
-	/*vhdl << declare ("C_out", w)
-	     << " <= C_out_g" << range (w+g-1, g) << ';' << endl
-	     << declare ("S_out", w)
-	     << " <= S_out_g" << range (w+g-1, g) << ';' << endl;*/
 	// by rounding please
-	vhdl << tab << declare ("C_out_rnd_aux", w+g)
-	     << " <= C_out_g + " << '"' << std::string (w, '0')
-	     << '1' << std::string (g-1, '0') << '"' << ';' << endl
-	     << tab << declare ("S_out_rnd_aux", w+g)
+	manageCriticalPath(target->adderDelay(w+g));
+	vhdl  << tab << declare ("S_out_rnd_aux", w+g)
 	     << " <= S_out_g + " << '"' << std::string (w, '0')
 	     << '1' << std::string (g-1, '0') << '"' << ';' << endl;
+
+	//Final synchronization
+	syncCycleFromSignal("C_out_g");
+
 	vhdl << tab << declare ("C_out", w)
 	     << " <= C_out_rnd_aux" << range (w+g-1, g) << ';' << endl
 	     << tab << declare ("S_out", w)
@@ -294,21 +348,11 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	     << tab << "S <= '0' & S_wo_sgn;" << endl
 	     << tab << "C <= A & C_wo_sgn;" << endl;
 
-
-	/* declaring a new cycle, each variable used after this line will be delayed 
-	   with respect to his state in the precedent cycle
-	 */
-	//nextCycle();
-	//vhdl << declare("R",
-	//		w + 2) << " <=  ('0' & T) + (\"00\" & Z);" << endl;
-
-	/* the use(variable) is a deprecated function, that can still be encoutered 
-	   in old Flopoco's operators, simply use vhdl << "S" (flopoco will generate the correct delayed value as soon as a previous declare("S") exists */
-	// we first put the most significant bit of the result into R
-	//vhdl << "S <= (R" << of(w + 1) << " & ";
-	// and then we place the last param1 bits
-	//vhdl << "R" << range(param1 - 1, 0) << ");" << endl;
 };
+
+
+
+
 
 void FixSinCos::emulate(TestCase * tc)
 {
