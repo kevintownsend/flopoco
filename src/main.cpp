@@ -366,9 +366,8 @@ static void usage(char *name, string opName = ""){
 	}
 	if ( full || opName == "FixSinCos" || opName == "FixSin" || opName == "FixCos"){
 		NEWOP( "FixSinCos","w");
-		cerr << "      Faithful sine and cosine of a fixed-point input in [0,1[\n";
-		cerr << "      w is the precision without counting the leading 0\n";
-		cerr << "      \033[1;31m(does not work yet)\033[0m\n";
+		cerr << "      For a fixed-point input x in [0,1[, calculates (1-2^(-w)) sin(pi*x)\n";
+		cerr << "      and (1-2^(-w)) cos(pi*x); w is the precision not counting the leading 0\n";
 	}
 	if ( full ){
 		cerr << "    ____________ GENERIC FUNCTION EVALUATORS ____________________________________\n";

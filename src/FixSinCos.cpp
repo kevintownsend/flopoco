@@ -162,8 +162,12 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	     << range (wIn-wA-1,0) << ';' << endl;
 	// vhdl:lut (A_tbl -> A_cos_pi_tbl, A_sin_pi_tbl)
 	FunctionTable *sin_table, *cos_table;
-	sin_table = new FunctionTable (target, "sin(pi*x/4)", wA, -(w+g), -1);
-	cos_table = new FunctionTable (target, "cos(pi*x/4)", wA, -(w+g), -1);
+	ostringstream omu; // calculates string of one minus (guardless) ulp
+	omu << "(1 - 2^(-" << w << "))";
+	sin_table = new FunctionTable (target, omu.str() + " * sin(pi*x/4)",
+	                               wA, -(w+g), -1);
+	cos_table = new FunctionTable (target, omu.str() + " * cos(pi*x/4)",
+	                               wA, -(w+g), -1);
 	oplist.push_back (sin_table);
 	oplist.push_back (cos_table);
 	inPortMap (sin_table, "X", "A_tbl");
@@ -335,38 +339,29 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 void FixSinCos::emulate(TestCase * tc)
 {
 	mpz_class sx = tc->getInputValue ("X");
-	// 0 needs special handling because its down-rounded
-	// cos won't be in [0,1[
-	if (sx == 0) {
-		tc->addExpectedOutput ("S", mpz_class(0));
-		tc->addExpectedOutput ("C", (mpz_class(1) << w) - 1);
-		return;
-	}
-	mpfr_t x, sind, cosd, sinu, cosu, pixd, pixu;
+	mpfr_t x, sind, cosd, sinu, cosu, pixd, pixu, one_minus_ulp;
 	mpz_t sind_z, cosd_z, sinu_z, cosu_z;
 	mpfr_init2 (x, 1+w);
 	mpz_init2 (sind_z, 1+w);
 	mpz_init2 (cosd_z, 1+w);
 	mpz_init2 (sinu_z, 1+w);
 	mpz_init2 (cosu_z, 1+w);
-	mpfr_init (sind); // 1 extra of precision to have <½ulp(x) error
-	mpfr_init (cosd);
-	mpfr_init (sinu); // 1 extra of precision to have <½ulp(x) error
-	mpfr_init (cosu);
-	// 1 extra bit (plus 11. beginning) will guarantee <½ulp(x) error on pi*x
-	mpfr_init (pixd);
-	mpfr_init (pixu);
+	mpfr_inits (sind, cosd, sinu, cosu, pixd, pixu, (mpfr_ptr) 0);
+	mpfr_init2 (one_minus_ulp, 1+w);
+	//these 3 following roundings are exact
+	mpfr_set_ui (one_minus_ulp, 1UL, GMP_RNDD);
+	mpfr_div_2ui (one_minus_ulp, one_minus_ulp, w, GMP_RNDD);
+	mpfr_ui_sub (one_minus_ulp, 1UL, one_minus_ulp, GMP_RNDD);
 
 	mpfr_set_z (x, sx.get_mpz_t(), GMP_RNDD); // this rounding is exact
 	mpfr_div_2si (x, x, w, GMP_RNDD); // this rounding is acually exact
 	int i=0, ep; // ep: extra precision
 	do {
 		ep = 1 << i;
-		mpfr_set_prec (sind, 1+w+ep); // 1 extra of precision to have <½ulp(x) error
+		mpfr_set_prec (sind, 1+w+ep);
 		mpfr_set_prec (cosd, 1+w+ep);
-		mpfr_set_prec (sinu, 1+w+ep); // 1 extra of precision to have <½ulp(x) error
+		mpfr_set_prec (sinu, 1+w+ep);
 		mpfr_set_prec (cosu, 1+w+ep);
-		// 1 extra bit (plus 11. beginning) will guarantee <½ulp(x) error on pi*x
 		mpfr_set_prec (pixd, 2+w+ep);
 		mpfr_set_prec (pixu, 2+w+ep);
 		mpfr_const_pi (pixd, GMP_RNDD);
@@ -384,6 +379,11 @@ void FixSinCos::emulate(TestCase * tc)
 		}
 		mpfr_cos (cosd, pixu, GMP_RNDD); // cos decreases from 0 to pi
 		mpfr_cos (cosu, pixd, GMP_RNDU);
+		// multiply by the (1-ulp) factor now
+		mpfr_mul (sind, sind, one_minus_ulp, GMP_RNDD);
+		mpfr_mul (cosd, cosd, one_minus_ulp, GMP_RNDD);
+		mpfr_mul (sinu, sinu, one_minus_ulp, GMP_RNDU);
+		mpfr_mul (cosu, cosu, one_minus_ulp, GMP_RNDU);
 		// if the cosine is <0 we must neg it then add 1
 		if (mpfr_cmp_ui (cosd, 0) < 0) {
 			mpfr_setsign (cosd, cosd, 0, GMP_RNDD); // exact rnd
