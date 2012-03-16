@@ -41,11 +41,10 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 
 	// definition of the name of the operator
 	ostringstream name;
-	name << "FixSinCos_" << w	//<< "_" << param1
-	    ;
+	name << "FixSinCos_" << w ;
 	setName(name.str());
 
-	setCopyrightString("Guillaume Sergent 2012");
+	setCopyrightString("Guillaume Sergent (2012)");
 
 	/* SET UP THE IO SIGNALS
 	   Each IO signal is declared by addInput(name,n) or addOutput(name,n) 
@@ -63,44 +62,11 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	addOutput("C", w+1);
 
 
-	/* Some peace of informations can be delivered to the flopoco user if  the -verbose option is set
-	   [eg: flopoco -verbose=0 FixSinCos 10 5 ]
-	   , by using the REPORT function.
-	   There is three level of details
-	   -> INFO for basic information ( -verbose=1 )
-	   -> DETAILED for complete information, includes the INFO level ( -verbose=2 )
-	   -> DEBUG for complete and debug information, to be used for getting information 
-	   during the debug step of operator development, includes the INFO and DETAILED levels ( -verbose=3 )
-	 */
-	// basic message
-	//REPORT(INFO,"Declaration of FixSinCos \n");
-
-	// more detailed message
-	//ostringstream detailedMsg;
-	//detailedMsg  << "this operator has received two parameters " << w << " and " << param1;
-	//REPORT(DETAILED,detailedMsg.str());
-
-	// debug message for developper
-	//REPORT(DEBUG,"debug of FixSinCos");
-
-
-
-	/* vhdl is the stream which receives all the vhdl code, some special functions are
-	   available to smooth variable declaration and use ... 
-	   -> when first using a variable (Eg: T), declare("T",64) will create a vhdl
-	   definition of the variable : signal T and includes it it the header of the architecture definition of the operator
-
-	   Each code transmited to vhdl will be parsed and the variables previously declared in a previous cycle will be delayed automatically by a pipelined register.
-	 */
-	//vhdl << declare("T",
-	//		w + 1) << " <= ('0' & X) + ('O' & Y);" << endl;
-
 	// the argument is reduced into (0,1/4) because one sin/cos
 	// computation in this range can always compute the right sin/cos
-	vhdl << declare ("A",1) << " <= X" << of (w-1) << ";" << endl
-	     << declare ("B",1) << " <= X" << of (w-2) << ";" << endl
-	     << declare ("Y",w-2) << " <= X " << range (w-3,0) << ";"
-	     << endl;
+	vhdl << tab << declare ("A",1) << " <= X" << of (w-1) << ";" << endl
+	     << tab << declare ("B",1) << " <= X" << of (w-2) << ";" << endl
+	     << tab << declare ("Y",w-2) << " <= X " << range (w-3,0) << ";" << endl;
 	// now X -> A*.5 + B*.25 + Y where A,B \in {0,1} and Y \in {0,.25}
 
 	// Y_prime = .25 - y
@@ -110,8 +76,7 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	//     << "2**" << (w-2) << " - Y;" << endl;
 	// if we do an arithmetic 1's complement it will do **** since
 	// 1-0 doesn't fit
-	vhdl << declare ("Y_prime", w-2) << " <= "
-	     << "not Y;" << endl;
+	vhdl << tab << declare ("Y_prime", w-2) << " <= " << "not Y;" << endl;
 
 	// we need to know the number of guard bits _now_ to have a good Y_in
 	const int g=4; //guard bits
@@ -125,13 +90,13 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	// and we extend the precision to make it look as if Y_prime was
 	// 0.[1, wIn times] - Y: 1/2**g error reduction in Y_prime
 	// (which should be arithmetic 1-Y)
-	vhdl << declare ("Y_in",wIn) << " <= Y_prime & "
+	vhdl << tab << declare ("Y_in",wIn) << " <= Y_prime & "
 	     << '"' << std::string (g, '1') << '"' << " when B='1' else Y & "
 	     << '"' << std::string (g, '0') << '"' << ";"
 	     << endl;
 
 	// Exch = A ^ B
-	vhdl << declare ("Exch",1) << " <= A xor B;" << endl;
+	vhdl << tab << declare ("Exch") << " <= A xor B;" << endl;
 
 	// now we do manual polynomial computation to calculate sin (pi*y)
 	// and cos (pi*y) using Taylor polynomials: with y'=pi*y
@@ -140,7 +105,7 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	// this works if y' (or y) is small enough
 	// to accomplish this we decompose x (==Y_in in the vhdl) to x = a + y
 	// where a \in [0,1/4[ and {sin,cos} (pi*a) is tabulated
-	// and y \in [0,1b-n[ is a small enough argument
+	// and y \in [0,1b-n[ is a small enough argument 
 	// then we use the addition formulae (where Sin(x)=sin(pi*x)):
 	// Sin (a+y) = Sin a Cos y + Cos a Sin y
 	//           = Sin a - Sin a (1 - Cos y) + Cos a Sin y
@@ -156,26 +121,29 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 		wA = 3;
 	int wY = wIn-wA, wZ = wY+2;
 	// vhdl:split (Y_in -> A_tbl & Y_red)
-	vhdl << declare ("A_tbl",wA) << " <= Y_in"
+	vhdl << tab << declare ("A_tbl",wA) << " <= Y_in"
 	     << range (wIn-1,wIn-wA) << ";" << endl
-	     << declare ("Y_red",wY) << " <= Y_in"
+	     << tab << declare ("Y_red",wY) << " <= Y_in"
 	     << range (wIn-wA-1,0) << ';' << endl;
 	// vhdl:lut (A_tbl -> A_cos_pi_tbl, A_sin_pi_tbl)
 	FunctionTable *sin_table, *cos_table;
 	ostringstream omu; // calculates string of one minus (guardless) ulp
-	omu << "(1 - 2^(-" << w << "))";
+	omu << "(1 - 1b-" << w << ")";
 	sin_table = new FunctionTable (target, omu.str() + " * sin(pi*x/4)",
 	                               wA, -(w+g), -1);
 	cos_table = new FunctionTable (target, omu.str() + " * cos(pi*x/4)",
 	                               wA, -(w+g), -1);
+	sin_table -> changeName(getName() + "_SinTable");
+	cos_table -> changeName(getName() + "_CosTable");
 	oplist.push_back (sin_table);
 	oplist.push_back (cos_table);
-	inPortMap (sin_table, "X", "A_tbl");
 	outPortMap (sin_table, "Y", "A_sin_pi_tbl");
-	inPortMap (cos_table, "X", "A_tbl");
+	inPortMap (sin_table, "X", "A_tbl");
 	outPortMap (cos_table, "Y", "A_cos_pi_tbl");
+	inPortMap (cos_table, "X", "A_tbl");
 	vhdl << instance (sin_table, "sin_table")
 	     << instance (cos_table, "cos_table");
+
 	// the results have precision w+g
 	// now, evaluate Sin Y_red and 1 - Cos Y_red
 	// vhdl:cmul[pi] (Y_red -> Z)
@@ -183,9 +151,12 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	// the 2 extra bits to Z are added by the KCM multiplier
 	pi_mult = new FixRealKCM (target, 0, wY-1, false, 0, "pi"); 
 	oplist.push_back (pi_mult);
-	inPortMap (pi_mult, "X", "Y_red");
 	outPortMap (pi_mult, "R", "Z");
+	inPortMap (pi_mult, "X", "Y_red");
 	vhdl << instance (pi_mult, "pi_mult");
+
+	syncCycleFromSignal("Z");
+
 	// vhdl:sqr (Z -> Z_2)
 	// we have no truncated squarer as of now
 	/*IntSquarer *sqr_z;
@@ -198,32 +169,34 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	int wZ_2 = 2*wZ - (w+g);
 	vhdl << declare ("Z_2",wZ_2) << " <= Z_2_ext"
 	     << range (wZ-1,wZ-wZ_2) << ";" << endl;*/
-	// so we use a trunctaed multiplier instead
+	// so we use a truncated multiplier instead
 	IntTruncMultiplier *sqr_z;
 	int wZ_2 = 2*wZ - (w+g);
 	sqr_z = new IntTruncMultiplier (target, wZ, wZ, wZ_2,
 	                                1.f, 0, 0);
 	oplist.push_back (sqr_z);
-	inPortMap (sqr_z, "X", "Z");
-	inPortMap (sqr_z, "Y", "Z");
 	outPortMap (sqr_z, "R", "Z_2");
+	inPortMap (sqr_z, "Y", "Z");
+	inPortMap (sqr_z, "X", "Z");
 	vhdl << instance (sqr_z, "sqr_z");
+	syncCycleFromSignal("Z_2");
+
 	// vhdl:mul (Z, Z_2 -> Z_3)
 	IntTruncMultiplier *z_3;
 	int wZ_3 = 3*wZ - 2*(w+g);
 	z_3 = new IntTruncMultiplier (target, wZ, wZ_2, wZ_3,
 	                              1.f, 0, 0); //last params wtf?
 	oplist.push_back (z_3);
-	inPortMap (z_3, "X", "Z");
-	inPortMap (z_3, "Y", "Z_2");
 	outPortMap (z_3, "R", "Z_3");
+	inPortMap (z_3, "Y", "Z_2");
+	inPortMap (z_3, "X", "Z");
 	vhdl << instance (z_3, "z_3_compute");
 	// vhdl:slr (Z_2 -> Z_cos_red)
 	int wZ_cos_red = wZ_2 - 1;
-	vhdl << declare ("Z_cos_red", wZ_2-1)
+	vhdl << tab << declare ("Z_cos_red", wZ_2-1)
 	     << " <= Z_2" << range (wZ_2-1,1) << ";" << endl;
 	// vhdl:cmul[1/6] (Z_3 -> Z_3_6)
-	vhdl << declare ("Z_3_2", wZ_3-1)
+	vhdl << tab << declare ("Z_3_2", wZ_3-1)
 	     << " <= Z_3" << range (wZ_3-1,1) << ";" << endl;
 	IntConstDiv *cdiv_3;
 	cdiv_3 = new IntConstDiv (target, wZ_3-1, 3, -1);
@@ -231,6 +204,7 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	inPortMap (cdiv_3, "X", "Z_3_2");
 	outPortMap (cdiv_3, "Q", "Z_3_6");
 	vhdl << instance (cdiv_3, "cdiv_3");
+	syncCycleFromSignal("Z_3_6");
 	// vhdl:sub (Z, Z_3_6 -> Z_sin)
 	vhdl << tab << declare ("Z_sin", wZ)
 	     << " <= Z - Z_3_6;" << endl;
@@ -256,11 +230,11 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	outPortMap (c_out_3, "R", "Sin_y_Sin_a");
 	vhdl << instance (c_out_3, "c_out_3_compute");
 	// vhdl:add (Cos_y_red_Cos_a, Sin_y_Sin_a -> Cos_y_red_Cos_a_plus_Sin_y_Sin_a)
-	vhdl << declare ("Cos_y_red_Cos_a_plus_Sin_y_Sin_a", wZ)
+	vhdl << tab << declare ("Cos_y_red_Cos_a_plus_Sin_y_Sin_a", wZ)
 	     << " <= Cos_y_red_Cos_a + Sin_y_Sin_a;" << endl;
 	// vhdl:sub (A_cos_pi_tbl, Cos_y_red_Cos_a_plus_Sin_y_Sin_a -> C_out)
 	// C_out has the entire precision; _g because it still has guards
-	vhdl << declare ("C_out_g", w+g)
+	vhdl << tab << declare ("C_out_g", w+g)
 	     << " <= A_cos_pi_tbl - Cos_y_red_Cos_a_plus_Sin_y_Sin_a;" << endl;
 	// Sin Y_in:
 	// // vhdl:id (A_sin_pi_tbl -> S_out_1)
@@ -283,10 +257,10 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	outPortMap (s_out_3, "R", "Sin_y_Cos_a");
 	vhdl << instance (s_out_3, "s_out_3_compute");
 	// vhdl:add (A_sin_pi_tbl, Sin_y_Cos_a -> Sin_y_Cos_a_plus_Sin_a)
-	vhdl << declare ("Sin_y_Cos_a_plus_Sin_a", w+g) //w+g necessary because of sin(pi*a)
+	vhdl << tab << declare ("Sin_y_Cos_a_plus_Sin_a", w+g) //w+g necessary because of sin(pi*a)
 	     << " <= A_sin_pi_tbl + Sin_y_Cos_a;" << endl;
 	// vhdl:sub (Sin_y_Cos_a_plus_Sin_a, Cos_y_red_Sin_a -> S_out)
-	vhdl << declare ("S_out_g", w+g)
+	vhdl << tab << declare ("S_out_g", w+g)
 	     << " <= Sin_y_Cos_a_plus_Sin_a - Cos_y_red_Sin_a;" << endl;
 
 	// now remove the guard bits
@@ -295,15 +269,15 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	     << declare ("S_out", w)
 	     << " <= S_out_g" << range (w+g-1, g) << ';' << endl;*/
 	// by rounding please
-	vhdl << declare ("C_out_rnd_aux", w+g)
+	vhdl << tab << declare ("C_out_rnd_aux", w+g)
 	     << " <= C_out_g + " << '"' << std::string (w, '0')
 	     << '1' << std::string (g-1, '0') << '"' << ';' << endl
-	     << declare ("S_out_rnd_aux", w+g)
+	     << tab << declare ("S_out_rnd_aux", w+g)
 	     << " <= S_out_g + " << '"' << std::string (w, '0')
 	     << '1' << std::string (g-1, '0') << '"' << ';' << endl;
-	vhdl << declare ("C_out", w)
+	vhdl << tab << declare ("C_out", w)
 	     << " <= C_out_rnd_aux" << range (w+g-1, g) << ';' << endl
-	     << declare ("S_out", w)
+	     << tab << declare ("S_out", w)
 	     << " <= S_out_rnd_aux" << range (w+g-1, g) << ';' << endl;
 
 	// now just add the signs to the signals
@@ -313,12 +287,12 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	 *	unsigned int mantissa: w;
 	 * };
 	 */
-	vhdl << declare ("S_wo_sgn", w)
+	vhdl << tab << declare ("S_wo_sgn", w)
 	     << " <= C_out when Exch = '1' else S_out;" << endl
-	     << declare ("C_wo_sgn", w)
+	     << tab << declare ("C_wo_sgn", w)
 	     << " <= S_out when Exch = '1' else C_out;" << endl
-	     << "S <= '0' & S_wo_sgn;" << endl
-	     << "C <= A & C_wo_sgn;" << endl;
+	     << tab << "S <= '0' & S_wo_sgn;" << endl
+	     << tab << "C <= A & C_wo_sgn;" << endl;
 
 
 	/* declaring a new cycle, each variable used after this line will be delayed 
