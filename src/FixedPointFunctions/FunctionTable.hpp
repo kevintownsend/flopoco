@@ -22,7 +22,7 @@ namespace flopoco{
 			 @param[int]    lsbOut  output LSB weight
 			 @param[int]    msbOut  output MSB weight, used to determine wOut
 		 */
-		FunctionTable(Target* target, string func, int wInX, int lsbOut, int msbOut, map<string, double> inputDelays = emptyDelayMap);
+		FunctionTable(Target* target, string func, int wInX, int lsbOut, int msbOut, int logicTable=1, map<string, double> inputDelays = emptyDelayMap);
 
 		/**
 		 * FunctionTable destructor

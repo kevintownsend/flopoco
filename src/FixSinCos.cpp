@@ -64,9 +64,9 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 
 	// the argument is reduced into (0,1/4) because one sin/cos
 	// computation in this range can always compute the right sin/cos
-	vhdl << tab << declare ("A",1) << " <= X" << of (w-1) << ";" << endl
-	     << tab << declare ("B",1) << " <= X" << of (w-2) << ";" << endl
-	     << tab << declare ("Y",w-2) << " <= X " << range (w-3,0) << ";" << endl;
+	vhdl << tab << declare ("A",1) << " <= X" << of (w-1) << ";" << endl;
+	vhdl << tab << declare ("B",1) << " <= X" << of (w-2) << ";" << endl;
+	vhdl << tab << declare ("Y",w-2) << " <= X " << range (w-3,0) << ";" << endl;
 	// now X -> A*.5 + B*.25 + Y where A,B \in {0,1} and Y \in {0,.25}
 
 	// Y_prime = .25 - y
@@ -121,10 +121,8 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 		wA = 3;
 	int wY = wIn-wA, wZ = wY+2;
 	// vhdl:split (Y_in -> A_tbl & Y_red)
-	vhdl << tab << declare ("A_tbl",wA) << " <= Y_in"
-	     << range (wIn-1,wIn-wA) << ";" << endl
-	     << tab << declare ("Y_red",wY) << " <= Y_in"
-	     << range (wIn-wA-1,0) << ';' << endl;
+	vhdl << tab << declare ("A_tbl",wA) << " <= Y_in" << range (wIn-1,wIn-wA) << ";" << endl;
+	vhdl << tab << declare ("Y_red",wY) << " <= Y_in" << range (wIn-wA-1,0) << ';' << endl;
 	// vhdl:lut (A_tbl -> A_cos_pi_tbl, A_sin_pi_tbl)
 	FunctionTable *sin_table, *cos_table;
 	ostringstream omu; // calculates string of one minus (guardless) ulp
@@ -141,8 +139,8 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	inPortMap (sin_table, "X", "A_tbl");
 	outPortMap (cos_table, "Y", "A_cos_pi_tbl");
 	inPortMap (cos_table, "X", "A_tbl");
-	vhdl << instance (sin_table, "sin_table")
-	     << instance (cos_table, "cos_table");
+	vhdl << instance (sin_table, "sin_table");
+	vhdl << instance (cos_table, "cos_table");
 
 	// the results have precision w+g
 	// now, evaluate Sin Y_red and 1 - Cos Y_red
@@ -196,6 +194,7 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	vhdl << instance (z_3, "z_3_compute");
 	syncCycleFromSignal("Z_3");
 
+	// TODO for Guillaume: I think the following line could be obtained by truncating the previous mult one bit more
 	// vhdl:cmul[1/6] (Z_3 -> Z_3_6)
 	vhdl << tab << declare ("Z_3_2", wZ_3-1)
 	     << " <= Z_3" << range (wZ_3-1,1) << ";" << endl;
@@ -330,8 +329,8 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	syncCycleFromSignal("C_out_g");
 
 	vhdl << tab << declare ("C_out", w)
-	     << " <= C_out_rnd_aux" << range (w+g-1, g) << ';' << endl
-	     << tab << declare ("S_out", w)
+	     << " <= C_out_rnd_aux" << range (w+g-1, g) << ';' << endl;
+	vhdl << tab << declare ("S_out", w)
 	     << " <= S_out_rnd_aux" << range (w+g-1, g) << ';' << endl;
 
 	// now just add the signs to the signals
@@ -342,11 +341,11 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	 * };
 	 */
 	vhdl << tab << declare ("S_wo_sgn", w)
-	     << " <= C_out when Exch = '1' else S_out;" << endl
-	     << tab << declare ("C_wo_sgn", w)
-	     << " <= S_out when Exch = '1' else C_out;" << endl
-	     << tab << "S <= '0' & S_wo_sgn;" << endl
-	     << tab << "C <= A & C_wo_sgn;" << endl;
+	     << " <= C_out when Exch = '1' else S_out;" << endl;
+	vhdl << tab << declare ("C_wo_sgn", w)
+	     << " <= S_out when Exch = '1' else C_out;" << endl;
+	vhdl << tab << "S <= '0' & S_wo_sgn;" << endl;
+	vhdl << tab << "C <= A & C_wo_sgn;" << endl;
 
 };
 

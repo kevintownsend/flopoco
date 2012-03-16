@@ -10,11 +10,16 @@ Pipeline framework, Operator and Targets:
 * add FPU object and remove all global variables, to enable library build
 * add semantic support of fixed-point to Signal
 * fix obvious memory leaks
+* fix the default getCycleFromSignal
+* insert getNewUId and comb/freq info directly in setName(), and clean up
 
 Collision
 * manage infinities etc
 * decompose into FPSumOf3Squares and Collision
+* Sum of n squares
 
+Table and FunctionTable:
+* VHDL generation is broken when logicTable=0 (pipeline depth=1 but no register)
 
 FPLog:
 * Fix a few remaining last-bit accuracy problems, damn.
@@ -68,9 +73,10 @@ Version ???   FPAddSub (for FFT butterfly structure)
 Version ???   FixToFPUniformDist (2008 ASAP paper by Thomas)
 Version ???   FPNorm2D
 Version ???   FPNorm3D -- Almost there, see Collision
-Version ???   FPSinCos
+Version ???   FPSinCos, CORDIC
 Version ??    FPBoxMuller
 Version ???   Interval operators
+Version ???   Complex operators (in particular division)
 (insert your wishlist here)
 
 

@@ -36,8 +36,8 @@ namespace flopoco{
 
 	extern vector<Operator*> oplist;
 
-	FunctionTable::FunctionTable(Target* target, string func, int wInX, int lsbOut, int msbOut, map<string, double> inputDelays):
-		Table(target, wInX, msbOut-lsbOut+1), wInX_(wInX), lsbOut_(lsbOut), msbOut_(msbOut){
+	FunctionTable::FunctionTable(Target* target, string func, int wInX, int lsbOut, int msbOut, int logicTable, map<string, double> inputDelays):
+		Table(target, wInX, msbOut-lsbOut+1, 0, -1, logicTable), wInX_(wInX), lsbOut_(lsbOut), msbOut_(msbOut){
 
 		ostringstream name;
 		srcFileName="FunctionTable";

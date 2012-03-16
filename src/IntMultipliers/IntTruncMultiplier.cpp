@@ -43,7 +43,7 @@ namespace flopoco{
 		srcFileName="IntTruncMultiplier";
 		isSquarer = false;	
 		ostringstream name;
-		name <<"IntTruncMultiplier_"<<wX<<"_"<<wY<<"_"<<wOut<<"_"<<(sign?"signed":"unsigned");
+		name <<"IntTruncMultiplier_"<<wX<<"_"<<wY<<"_"<<wOut<<"_"<<(sign?"signed":"unsigned") << getNewUId();
 		setName(name.str());
 		int k=targetPrecision;
 
