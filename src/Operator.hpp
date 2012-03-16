@@ -239,6 +239,10 @@ public:
 	 * @param report is a boolean, if true it will report the cycle 
 	 */
 	void setCycleFromSignal(string name, double criticalPath, bool report=true) ;
+	// TODO: FIXME  
+	// param criticalPath is the critical path delay associated to this signal: typically getDelay(name)
+	// Shouldn't this be the default behaviour?
+	// Check current use and fix.
 
 	int getCycleFromSignal(string name, bool report = false);
 		
