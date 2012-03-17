@@ -445,10 +445,8 @@ namespace flopoco{
 
 		rsize = intlog2(n * ((mpz_class(1)<<xsize)-1));
 
-		addInput("inX", xsize);
+		addInput("X", xsize);
 		addOutput("R", rsize);
-
-		vhdl << tab << declare("X", xsize) << " <= inX;" << endl; // no longer useful but harmless
 
 		// Build in implementation a tree constant multiplier 
 		implementation->result = buildMultBoothTree(n);
@@ -497,10 +495,8 @@ namespace flopoco{
 		rsize = intlog2(n * ((mpz_class(1)<<xsize)-1));
 		REPORT(INFO, "Building a periodic DAG for  " << n );
 
-		addInput("inX", xsize);
+		addInput("X", xsize);
 		addOutput("R", rsize);
-
-		vhdl << tab << declare("X", xsize) << " <= inX;" << endl; // no longer useful but harmless
 
 		// Build in implementation a tree constant multiplier 
 		
@@ -875,7 +871,7 @@ namespace flopoco{
 
 
 	void IntConstMult::emulate(TestCase *tc){
-		mpz_class svX = tc->getInputValue("inX");
+		mpz_class svX = tc->getInputValue("X");
 		mpz_class svR = svX * n;
 		tc->addExpectedOutput("R", svR);
 	}
@@ -886,31 +882,31 @@ namespace flopoco{
 		TestCase *tc;
 
 		tc = new TestCase(this); 
-		tc->addInput("inX", mpz_class(0));
+		tc->addInput("X", mpz_class(0));
 		emulate(tc);
 		tc->addComment("Multiplication by 0");
 		tcl->add(tc);
 
 		tc = new TestCase(this); 
-		tc->addInput("inX", mpz_class(1));
+		tc->addInput("X", mpz_class(1));
 		emulate(tc);
 		tc->addComment("Multiplication by 1");
 		tcl->add(tc);
 
 		tc = new TestCase(this); 
-		tc->addInput("inX", mpz_class(2));
+		tc->addInput("X", mpz_class(2));
 		emulate(tc);
 		tc->addComment("Multiplication by 2");
 		tcl->add(tc);
 
 		tc = new TestCase(this); 
-		tc->addInput("inX", (mpz_class(1) << xsize) -1);
+		tc->addInput("X", (mpz_class(1) << xsize) -1);
 		emulate(tc);
 		tc->addComment("Multiplication by the max positive value");
 		tcl->add(tc);
 
 		//	tc = new TestCase(this); 
-		//	tc->addInput("inX", (mpz_class(1) << (xsize) -1) + mpz_class(1));
+		//	tc->addInput("X", (mpz_class(1) << (xsize) -1) + mpz_class(1));
 		//	emulate(tc);
 		//	tc->addComment("Multiplication by 10...01");
 		//	tcl->add(tc);

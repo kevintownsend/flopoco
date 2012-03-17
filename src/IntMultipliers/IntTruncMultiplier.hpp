@@ -21,6 +21,8 @@ namespace flopoco{
 	 * corresponding locations and possible associations of target DSP blocks.
 	 * On the other hand the list of SoftDSP s will store all the informations
 	 * about the soft (logic implemented) multiplier tiles.  
+
+
 	 */
 	class SoftDSP{
 	public:
@@ -122,7 +124,7 @@ namespace flopoco{
 		int wOut;             /**<The width of output */
 	
 		
-		IntTruncMultiplier(Target* target, int winX, int winY, int wOut, float ratio,int uL, int maxTimeInMinutes, bool interactive = false, bool sign = false, bool roundCompensate = true);
+		IntTruncMultiplier(Target* target, int winX, int winY, int wOut, float ratio,int uL, int maxTimeInMinutes, bool interactive = false, bool sign = false, bool roundCompensate = true, map<string, double> inputDelays = emptyDelayMap);
 	
 		/** IntTruncMultiplier destructor */
 		~IntTruncMultiplier();

@@ -37,7 +37,7 @@ namespace flopoco{
 	extern vector<Operator*> oplist;
 
 	// FIXME Janitoring dangerous redundancy?:  k=targetPrecision, wX=wInX, wY=wInY (not sure, there are wX-- in some places)
-	IntTruncMultiplier::IntTruncMultiplier(Target* target, int winX, int winY, int wOut, float ratio, int uL, int maxTimeInMinutes, bool interactive, bool sign, bool roundCompensate):
+	IntTruncMultiplier::IntTruncMultiplier(Target* target, int winX, int winY, int wOut, float ratio, int uL, int maxTimeInMinutes, bool interactive, bool sign, bool roundCompensate, map<string, double> inputDelays):
 		Operator(target), wInX(winX), wInY(winY), wOut(wOut), wX(winX), wY(winY), ratio(ratio),targetPrecision(wInX+wInY-wOut),useLimits(uL),  roundCompensate_(roundCompensate), maxTimeInMinutes(maxTimeInMinutes-1), sign(sign){
 		start = clock(); /* time management */
 		srcFileName="IntTruncMultiplier";
@@ -64,16 +64,18 @@ namespace flopoco{
 		testFit = testForward || testReverse;
 		
 		if (testFit){
-			nextCycle();// TODO: not needed for low frequencies
+			setCriticalPath(getMaxInputDelays ( inputDelays ));
+			manageCriticalPath(target->DSPMultiplierDelay());
+				//nextCycle();// TODO: not needed for low frequencies
 			if (sign)
 				vhdl << tab << declare("rfull", wX + wY) << " <= X * Y;"<<endl;
 			else //sign extension is necessary for using use ieee.std_logic_signed.all; 
 			    // for correct inference of Xilinx DSP functions
 				vhdl << tab << declare("rfull", wX + wY + 2) << " <= (\"0\" & X) * (\"0\" & Y);"<<endl;
 			
-			nextCycle();// TODO: to be fixed
+			//nextCycle();// TODO: to be fixed
 			vhdl << tab << "R <= rfull"<<range(wX + wY-1, k)<<";"<<endl;	
-			outDelayMap["R"] = 0.0;
+			outDelayMap["R"] = getCriticalPath();
 			
 			return;
 			//don't go do the rest as we already solved our problem			
@@ -116,7 +118,9 @@ namespace flopoco{
 		balanced binindg this number should be function of input width and height TODO*/
 		nrOfShifts4Virtex=20; 
 		
-		/* paranormal activity; FIXME COMMENT OR WILL GET KILLED*/
+		/* paranormal activity; FIXME: COMMENT OR WILL GET KILLED  
+		 FLORENT CONFIRMS.
+		*/
 		float const scale=100.0;
 		costDSP = ( (1.0+scale) - scale * ratio );
 		//~ cout<<"Cost DSP is "<<costDSP<<endl;

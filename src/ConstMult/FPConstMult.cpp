@@ -569,7 +569,7 @@ extern vector<Operator*> oplist;
 
 
 		else{ // normal case, mantissa is not one
-			inPortMap  (icm, "inX", "x_sig");
+			inPortMap  (icm, "X", "x_sig");
 			outPortMap (icm, "R","sig_prod");
 			vhdl << instance(icm, "sig_mult");
 			
