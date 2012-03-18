@@ -37,6 +37,10 @@ namespace flopoco{
 		addOutput  ( "Zout"  , wIn, true );
 		addOutput  ( "Dout"  			 );
 		
+		setCriticalPath(getMaxInputDelays(inputDelays));
+		
+		manageCriticalPath(target->localWireDelay(wIn) + 2*target->lutDelay());
+		
 		//shift Xin and Yin with 2^n positions to the right
 		if(stage==0){
 			vhdl << tab << declare("XinShift", wIn) << " <= Xin;" <<endl;
@@ -59,6 +63,10 @@ namespace flopoco{
 			vhdl << tab << declare("YinShift", wIn) << " <= Yin_signExtend & Yin_shifted;" <<endl;
 		}
 		
+		setCycleFromSignal("XinShift");
+		syncCycleFromSignal("YinShift");
+		manageCriticalPath(target->localWireDelay(wIn) + target->lutDelay());
+		
 		//complement the shifted Xin and Yin if necessary
 		vhdl << tab << declare("newXinShift", wIn) << " <= XinShift xor (" << wIn-1 << " downto 0 => Din);" <<endl;
 		vhdl << tab << declare("newYinShift", wIn) << " <= YinShift xor (" << wIn-1 << " downto 0 => (not Din));" <<endl;
@@ -66,6 +74,8 @@ namespace flopoco{
 		//compute the carry-ins
 		vhdl << tab << declare("cInNewX") << "<= Din;" <<endl;
 		vhdl << tab << declare("cInNewY") << "<= not Din;" <<endl;
+		
+		nextCycle();
 		
 		//create Xout and Yout
 		IntAdder *mainAdder = new IntAdder(target, wIn, inDelayMap("X",getCriticalPath()));
@@ -82,6 +92,12 @@ namespace flopoco{
 		inPortMap(mainAdder, "Cin", "cInNewX");
 		outPortMap (mainAdder, "R", "intYout");
 		vhdl << instance(mainAdder, "yAdder") << endl;
+		
+		setCycleFromSignal("intXout");
+		syncCycleFromSignal("intYout");
+		setCriticalPath(mainAdder->getOutputDelay("R"));
+		
+		double xyPath = getCriticalPath();
 		
 		//create the constant signal for the arctan
 		mpfr_t zatan, zpow2;
@@ -104,6 +120,9 @@ namespace flopoco{
 		}
 		strConverted = unsignedBinary(fixConverted, wIn-1);
 		
+		manageCriticalPath(target->localWireDelay(wIn) + 2*target->lutDelay());
+		
+		setCycleFromSignal("Zin");
 		
 		vhdl << tab << declare("atan2PowStage", wIn) << " <= \'0\' & \"" << strConverted << "\";" <<endl;
 		if(negAtan){
@@ -115,6 +134,9 @@ namespace flopoco{
 			vhdl << tab << declare("cInZ") << "<= not Din;" <<endl;
 		}
 		
+		syncCycleFromSignal("newAtan2PowStage");
+		nextCycle();
+		
 		//create Zout
 		inPortMap(mainAdder, "X", "Zin");
 		inPortMap(mainAdder, "Y", "newAtan2PowStage");
@@ -122,8 +144,20 @@ namespace flopoco{
 		outPortMap (mainAdder, "R", "intZout");
 		vhdl << instance(mainAdder, "zAdder") << endl;
 		
+		setCycleFromSignal("intZout");
+		setCriticalPath(mainAdder->getOutputDelay("R"));
+		manageCriticalPath(target->localWireDelay(wIn) + target->lutDelay());
+		
 		//create Dout as the result of the comparison of intZout with 0
 		vhdl << tab << declare("intDout") << " <= intZout(" << wIn-1 <<");" <<endl;
+		
+		double zPath = getCriticalPath();
+		
+		if (getCycleFromSignal("intXout") == getCycleFromSignal("intDout"))
+			setCriticalPath(max(zPath, getCriticalPath()));
+		else
+			if (syncCycleFromSignal("intXout"))
+				setCriticalPath(xyPath);
 		
 		//create the outputs
 		vhdl << tab << "Xout" << " <= intXout;" <<endl;

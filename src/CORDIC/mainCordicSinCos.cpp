@@ -53,7 +53,7 @@ int main(int argc, char* argv[] )
 	vector<Operator*> oplist;
 
 	int wI = 3;
-	int wF = 2;
+	int wF = 8;
 	
 	CordicSinCos* op;
 	
