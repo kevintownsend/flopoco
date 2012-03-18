@@ -1,0 +1,742 @@
+# //  ModelSim SE 6.2e Nov 16 2006 Linux 3.0.0-16-generic
+# //
+# //  Copyright 2006 Mentor Graphics Corporation
+# //              All Rights Reserved.
+# //
+# //  THIS WORK CONTAINS TRADE SECRET AND 
+# //  PROPRIETARY INFORMATION WHICH IS THE PROPERTY
+# //  OF MENTOR GRAPHICS CORPORATION OR ITS LICENSORS
+# //  AND IS SUBJECT TO LICENSE TERMS.
+# //
+vdel -all -lib work
+   vlib work
+   vcom CordicSinCos.vhdl
+# Model Technology ModelSim SE vcom 6.2e Compiler 2006.11 Nov 16 2006
+# -- Loading package standard
+# -- Loading package std_logic_1164
+# -- Loading package std_logic_arith
+# -- Loading package std_logic_unsigned
+# -- Loading package textio
+# -- Compiling entity intadder_8_f400_uid6
+# -- Compiling architecture arch of intadder_8_f400_uid6
+# -- Compiling entity fixmicrorotation_8_uid4_stage0
+# -- Compiling architecture arch of fixmicrorotation_8_uid4_stage0
+# -- Compiling entity intadder_8_f400_uid14
+# -- Compiling architecture arch of intadder_8_f400_uid14
+# -- Compiling entity fixmicrorotation_8_uid12_stage1
+# -- Compiling architecture arch of fixmicrorotation_8_uid12_stage1
+# -- Compiling entity intadder_8_f400_uid22
+# -- Compiling architecture arch of intadder_8_f400_uid22
+# -- Compiling entity fixmicrorotation_8_uid20_stage2
+# -- Compiling architecture arch of fixmicrorotation_8_uid20_stage2
+# -- Compiling entity intadder_8_f400_uid30
+# -- Compiling architecture arch of intadder_8_f400_uid30
+# -- Compiling entity fixmicrorotation_8_uid28_stage3
+# -- Compiling architecture arch of fixmicrorotation_8_uid28_stage3
+# -- Compiling entity intadder_8_f400_uid38
+# -- Compiling architecture arch of intadder_8_f400_uid38
+# -- Compiling entity fixmicrorotation_8_uid36_stage4
+# -- Compiling architecture arch of fixmicrorotation_8_uid36_stage4
+# -- Compiling entity intadder_8_f400_uid46
+# -- Compiling architecture arch of intadder_8_f400_uid46
+# -- Compiling entity fixmicrorotation_8_uid44_stage5
+# -- Compiling architecture arch of fixmicrorotation_8_uid44_stage5
+# -- Loading package numeric_std
+# -- Compiling entity fixrealkcm_m4_3_m4_0_607252935008881256169446834473_signed_table_0
+# -- Compiling architecture arch of fixrealkcm_m4_3_m4_0_607252935008881256169446834473_signed_table_0
+# -- Compiling entity fixrealkcm_m4_3_m4_0_607252935008881256169446834473_signed_table_1
+# -- Compiling architecture arch of fixrealkcm_m4_3_m4_0_607252935008881256169446834473_signed_table_1
+# -- Compiling entity intadder_9_f400_uid55
+# -- Compiling architecture arch of intadder_9_f400_uid55
+# -- Compiling entity fixrealkcm_m4_3_m4_0_607252935008881256169446834473_signed
+# -- Compiling architecture arch of fixrealkcm_m4_3_m4_0_607252935008881256169446834473_signed
+# -- Compiling entity cordicsincos_8_uid2
+# -- Compiling architecture arch of cordicsincos_8_uid2
+# -- Compiling entity testbench_cordicsincos_8_uid2
+# -- Compiling architecture behavorial of testbench_cordicsincos_8_uid2
+   vsim TestBench_CordicSinCos_8_uid2
+# vsim TestBench_CordicSinCos_8_uid2 
+# ** Note: (vsim-3812) Design is being optimized...
+# Loading /home/mistoan/local/modeltech/linux/../std.standard
+# Loading /home/mistoan/local/modeltech/linux/../ieee.std_logic_1164(body)
+# Loading /home/mistoan/local/modeltech/linux/../ieee.std_logic_arith(body)
+# Loading /home/mistoan/local/modeltech/linux/../ieee.std_logic_unsigned(body)
+# Loading /home/mistoan/local/modeltech/linux/../std.textio(body)
+# Loading work.testbench_cordicsincos_8_uid2(behavorial)
+# Loading work.cordicsincos_8_uid2(arch)
+# Loading work.fixmicrorotation_8_uid4_stage0(arch)
+# Loading work.intadder_8_f400_uid6(arch)
+# Loading work.fixmicrorotation_8_uid12_stage1(arch)
+# Loading work.intadder_8_f400_uid14(arch)
+# Loading work.fixmicrorotation_8_uid20_stage2(arch)
+# Loading work.intadder_8_f400_uid22(arch)
+# Loading work.fixmicrorotation_8_uid28_stage3(arch)
+# Loading work.intadder_8_f400_uid30(arch)
+# Loading work.fixmicrorotation_8_uid36_stage4(arch)
+# Loading work.intadder_8_f400_uid38(arch)
+# Loading work.fixmicrorotation_8_uid44_stage5(arch)
+# Loading work.intadder_8_f400_uid46(arch)
+# Loading work.fixrealkcm_m4_3_m4_0_607252935008881256169446834473_signed(arch)
+# Loading /home/mistoan/local/modeltech/linux/../ieee.numeric_std(body)
+# Loading work.fixrealkcm_m4_3_m4_0_607252935008881256169446834473_signed_table_0(arch)
+# Loading work.fixrealkcm_m4_3_m4_0_607252935008881256169446834473_signed_table_1(arch)
+# Loading work.intadder_9_f400_uid55(arch)
+   add wave -r *
+   run 52ns
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/constmultipliery/result_adder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/constmultipliery/result_adder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/constmultipliery/result_adder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/constmultiplierx/result_adder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/constmultiplierx/result_adder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/constmultiplierx/result_adder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation5/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation5/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation5/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation5/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation5/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation5/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation5/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation5/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation5/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation5/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation5/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation5/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation4/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation4/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation4/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation4/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation4/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation4/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation4/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation4/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation4/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation4/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation4/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation4/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation3/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation3/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation3/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation3/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation3/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation3/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation3/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation3/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation3/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation3/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation3/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation3/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation2/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation2/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation2/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation2/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation2/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation2/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation2/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation2/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation2/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation2/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation2/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation2/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation1/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation1/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation1/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation1/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation1/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation1/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation1/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation1/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation1/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation1/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation1/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation1/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation0/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation0/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation0/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation0/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation0/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation0/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation0/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation0/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation0/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation0/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation0/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2/test/microrotation0/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 1  Instance: /testbench_cordicsincos_8_uid2/test/constmultipliery/result_adder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 1  Instance: /testbench_cordicsincos_8_uid2/test/constmultipliery/result_adder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 1  Instance: /testbench_cordicsincos_8_uid2/test/constmultipliery/result_adder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 1  Instance: /testbench_cordicsincos_8_uid2/test/constmultiplierx/result_adder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 1  Instance: /testbench_cordicsincos_8_uid2/test/constmultiplierx/result_adder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 1  Instance: /testbench_cordicsincos_8_uid2/test/constmultiplierx/result_adder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 1  Instance: /testbench_cordicsincos_8_uid2/test/microrotation0/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 1  Instance: /testbench_cordicsincos_8_uid2/test/microrotation0/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 1  Instance: /testbench_cordicsincos_8_uid2/test/microrotation0/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 1  Instance: /testbench_cordicsincos_8_uid2/test/microrotation0/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 1  Instance: /testbench_cordicsincos_8_uid2/test/microrotation0/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 1  Instance: /testbench_cordicsincos_8_uid2/test/microrotation0/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 1  Instance: /testbench_cordicsincos_8_uid2/test/microrotation0/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 1  Instance: /testbench_cordicsincos_8_uid2/test/microrotation0/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 1  Instance: /testbench_cordicsincos_8_uid2/test/microrotation0/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 1  Instance: /testbench_cordicsincos_8_uid2/test/microrotation0/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/constmultipliery/result_adder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/constmultipliery/result_adder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/constmultipliery/result_adder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/constmultiplierx/result_adder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/constmultiplierx/result_adder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/constmultiplierx/result_adder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/microrotation5/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/microrotation5/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/microrotation5/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/microrotation5/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/microrotation5/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/microrotation5/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/microrotation5/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/microrotation5/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/microrotation5/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/microrotation5/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/microrotation5/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/microrotation5/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/microrotation4/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/microrotation4/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/microrotation4/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/microrotation4/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/microrotation4/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/microrotation4/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/microrotation4/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/microrotation4/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/microrotation4/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/microrotation4/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/microrotation4/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/microrotation4/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/microrotation3/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/microrotation3/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/microrotation3/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/microrotation3/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/microrotation3/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/microrotation3/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/microrotation3/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/microrotation3/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/microrotation3/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/microrotation3/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/microrotation3/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/microrotation3/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/microrotation2/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/microrotation2/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/microrotation2/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/microrotation2/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/microrotation2/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/microrotation2/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/microrotation2/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/microrotation2/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/microrotation2/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/microrotation2/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/microrotation2/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/microrotation2/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/microrotation1/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/microrotation1/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/microrotation1/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/microrotation1/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/microrotation1/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/microrotation1/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/microrotation1/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/microrotation1/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/microrotation1/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/microrotation1/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/microrotation1/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/microrotation1/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 4  Instance: /testbench_cordicsincos_8_uid2/test/microrotation5/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 4  Instance: /testbench_cordicsincos_8_uid2/test/microrotation5/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 4  Instance: /testbench_cordicsincos_8_uid2/test/microrotation5/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 4  Instance: /testbench_cordicsincos_8_uid2/test/microrotation5/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 4  Instance: /testbench_cordicsincos_8_uid2/test/microrotation5/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 4  Instance: /testbench_cordicsincos_8_uid2/test/microrotation5/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 4  Instance: /testbench_cordicsincos_8_uid2/test/microrotation5/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 4  Instance: /testbench_cordicsincos_8_uid2/test/microrotation5/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 4  Instance: /testbench_cordicsincos_8_uid2/test/microrotation5/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 4  Instance: /testbench_cordicsincos_8_uid2/test/microrotation5/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 4  Instance: /testbench_cordicsincos_8_uid2/test/microrotation5/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 4  Instance: /testbench_cordicsincos_8_uid2/test/microrotation5/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 4  Instance: /testbench_cordicsincos_8_uid2/test/microrotation4/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 4  Instance: /testbench_cordicsincos_8_uid2/test/microrotation4/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 4  Instance: /testbench_cordicsincos_8_uid2/test/microrotation4/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 4  Instance: /testbench_cordicsincos_8_uid2/test/microrotation4/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 4  Instance: /testbench_cordicsincos_8_uid2/test/microrotation4/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 4  Instance: /testbench_cordicsincos_8_uid2/test/microrotation4/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 4  Instance: /testbench_cordicsincos_8_uid2/test/microrotation4/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 4  Instance: /testbench_cordicsincos_8_uid2/test/microrotation4/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 4  Instance: /testbench_cordicsincos_8_uid2/test/microrotation4/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 4  Instance: /testbench_cordicsincos_8_uid2/test/microrotation4/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 4  Instance: /testbench_cordicsincos_8_uid2/test/microrotation4/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 4  Instance: /testbench_cordicsincos_8_uid2/test/microrotation4/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 4  Instance: /testbench_cordicsincos_8_uid2/test/microrotation3/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 4  Instance: /testbench_cordicsincos_8_uid2/test/microrotation3/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 4  Instance: /testbench_cordicsincos_8_uid2/test/microrotation3/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 4  Instance: /testbench_cordicsincos_8_uid2/test/microrotation3/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 4  Instance: /testbench_cordicsincos_8_uid2/test/microrotation3/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 4  Instance: /testbench_cordicsincos_8_uid2/test/microrotation3/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 4  Instance: /testbench_cordicsincos_8_uid2/test/microrotation3/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 4  Instance: /testbench_cordicsincos_8_uid2/test/microrotation3/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 4  Instance: /testbench_cordicsincos_8_uid2/test/microrotation3/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 4  Instance: /testbench_cordicsincos_8_uid2/test/microrotation3/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 4  Instance: /testbench_cordicsincos_8_uid2/test/microrotation3/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 4  Instance: /testbench_cordicsincos_8_uid2/test/microrotation3/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 4  Instance: /testbench_cordicsincos_8_uid2/test/microrotation2/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 4  Instance: /testbench_cordicsincos_8_uid2/test/microrotation2/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 4  Instance: /testbench_cordicsincos_8_uid2/test/microrotation2/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 4  Instance: /testbench_cordicsincos_8_uid2/test/microrotation2/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 4  Instance: /testbench_cordicsincos_8_uid2/test/microrotation2/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 4  Instance: /testbench_cordicsincos_8_uid2/test/microrotation2/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 4  Instance: /testbench_cordicsincos_8_uid2/test/microrotation2/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 4  Instance: /testbench_cordicsincos_8_uid2/test/microrotation2/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 4  Instance: /testbench_cordicsincos_8_uid2/test/microrotation2/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 4  Instance: /testbench_cordicsincos_8_uid2/test/microrotation2/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 4  Instance: /testbench_cordicsincos_8_uid2/test/microrotation2/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 4  Instance: /testbench_cordicsincos_8_uid2/test/microrotation2/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 4  Instance: /testbench_cordicsincos_8_uid2/test/microrotation1/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 4  Instance: /testbench_cordicsincos_8_uid2/test/microrotation1/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 4  Instance: /testbench_cordicsincos_8_uid2/test/microrotation1/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 4  Instance: /testbench_cordicsincos_8_uid2/test/microrotation1/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 4  Instance: /testbench_cordicsincos_8_uid2/test/microrotation1/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 4  Instance: /testbench_cordicsincos_8_uid2/test/microrotation1/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 4  Instance: /testbench_cordicsincos_8_uid2/test/microrotation1/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 4  Instance: /testbench_cordicsincos_8_uid2/test/microrotation1/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 4  Instance: /testbench_cordicsincos_8_uid2/test/microrotation1/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 4  Instance: /testbench_cordicsincos_8_uid2/test/microrotation1/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 4  Instance: /testbench_cordicsincos_8_uid2/test/microrotation1/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 4  Instance: /testbench_cordicsincos_8_uid2/test/microrotation1/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 5  Instance: /testbench_cordicsincos_8_uid2/test/microrotation5/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 5  Instance: /testbench_cordicsincos_8_uid2/test/microrotation5/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 5  Instance: /testbench_cordicsincos_8_uid2/test/microrotation5/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 5  Instance: /testbench_cordicsincos_8_uid2/test/microrotation5/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 5  Instance: /testbench_cordicsincos_8_uid2/test/microrotation5/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 5  Instance: /testbench_cordicsincos_8_uid2/test/microrotation5/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 5  Instance: /testbench_cordicsincos_8_uid2/test/microrotation5/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 5  Instance: /testbench_cordicsincos_8_uid2/test/microrotation5/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 5  Instance: /testbench_cordicsincos_8_uid2/test/microrotation4/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 5  Instance: /testbench_cordicsincos_8_uid2/test/microrotation4/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 5  Instance: /testbench_cordicsincos_8_uid2/test/microrotation4/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 5  Instance: /testbench_cordicsincos_8_uid2/test/microrotation4/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 5  Instance: /testbench_cordicsincos_8_uid2/test/microrotation4/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 5  Instance: /testbench_cordicsincos_8_uid2/test/microrotation4/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 5  Instance: /testbench_cordicsincos_8_uid2/test/microrotation4/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 5  Instance: /testbench_cordicsincos_8_uid2/test/microrotation4/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 5  Instance: /testbench_cordicsincos_8_uid2/test/microrotation3/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 5  Instance: /testbench_cordicsincos_8_uid2/test/microrotation3/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 5  Instance: /testbench_cordicsincos_8_uid2/test/microrotation3/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 5  Instance: /testbench_cordicsincos_8_uid2/test/microrotation3/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 5  Instance: /testbench_cordicsincos_8_uid2/test/microrotation3/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 5  Instance: /testbench_cordicsincos_8_uid2/test/microrotation3/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 5  Instance: /testbench_cordicsincos_8_uid2/test/microrotation3/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 5  Instance: /testbench_cordicsincos_8_uid2/test/microrotation3/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 5  Instance: /testbench_cordicsincos_8_uid2/test/microrotation2/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 5  Instance: /testbench_cordicsincos_8_uid2/test/microrotation2/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 5  Instance: /testbench_cordicsincos_8_uid2/test/microrotation2/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 5  Instance: /testbench_cordicsincos_8_uid2/test/microrotation2/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 5  Instance: /testbench_cordicsincos_8_uid2/test/microrotation2/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 5  Instance: /testbench_cordicsincos_8_uid2/test/microrotation2/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 5  Instance: /testbench_cordicsincos_8_uid2/test/microrotation2/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 5  Instance: /testbench_cordicsincos_8_uid2/test/microrotation2/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 5  Instance: /testbench_cordicsincos_8_uid2/test/microrotation1/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 5  Instance: /testbench_cordicsincos_8_uid2/test/microrotation1/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 5  Instance: /testbench_cordicsincos_8_uid2/test/microrotation1/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 5  Instance: /testbench_cordicsincos_8_uid2/test/microrotation1/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 5  Instance: /testbench_cordicsincos_8_uid2/test/microrotation1/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 5  Instance: /testbench_cordicsincos_8_uid2/test/microrotation1/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 5  Instance: /testbench_cordicsincos_8_uid2/test/microrotation1/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 0 ns  Iteration: 5  Instance: /testbench_cordicsincos_8_uid2/test/microrotation1/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 10 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/microrotation0/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 10 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/microrotation0/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 10 ns  Iteration: 2  Instance: /testbench_cordicsincos_8_uid2/test/microrotation0/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 10 ns  Iteration: 5  Instance: /testbench_cordicsincos_8_uid2/test/microrotation1/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 10 ns  Iteration: 5  Instance: /testbench_cordicsincos_8_uid2/test/microrotation1/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 10 ns  Iteration: 5  Instance: /testbench_cordicsincos_8_uid2/test/microrotation1/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 10 ns  Iteration: 5  Instance: /testbench_cordicsincos_8_uid2/test/microrotation1/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 10 ns  Iteration: 5  Instance: /testbench_cordicsincos_8_uid2/test/microrotation1/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 10 ns  Iteration: 5  Instance: /testbench_cordicsincos_8_uid2/test/microrotation1/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 10 ns  Iteration: 5  Instance: /testbench_cordicsincos_8_uid2/test/microrotation1/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 10 ns  Iteration: 5  Instance: /testbench_cordicsincos_8_uid2/test/microrotation1/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 10 ns  Iteration: 5  Instance: /testbench_cordicsincos_8_uid2/test/microrotation1/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 10 ns  Iteration: 7  Instance: /testbench_cordicsincos_8_uid2/test/microrotation1/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 10 ns  Iteration: 7  Instance: /testbench_cordicsincos_8_uid2/test/microrotation1/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 10 ns  Iteration: 7  Instance: /testbench_cordicsincos_8_uid2/test/microrotation1/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 10 ns  Iteration: 7  Instance: /testbench_cordicsincos_8_uid2/test/microrotation1/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 10 ns  Iteration: 9  Instance: /testbench_cordicsincos_8_uid2/test/microrotation2/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 10 ns  Iteration: 9  Instance: /testbench_cordicsincos_8_uid2/test/microrotation2/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 10 ns  Iteration: 9  Instance: /testbench_cordicsincos_8_uid2/test/microrotation2/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 10 ns  Iteration: 10  Instance: /testbench_cordicsincos_8_uid2/test/microrotation2/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 10 ns  Iteration: 10  Instance: /testbench_cordicsincos_8_uid2/test/microrotation2/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 10 ns  Iteration: 10  Instance: /testbench_cordicsincos_8_uid2/test/microrotation2/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 10 ns  Iteration: 10  Instance: /testbench_cordicsincos_8_uid2/test/microrotation2/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 10 ns  Iteration: 10  Instance: /testbench_cordicsincos_8_uid2/test/microrotation2/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 10 ns  Iteration: 10  Instance: /testbench_cordicsincos_8_uid2/test/microrotation2/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 10 ns  Iteration: 11  Instance: /testbench_cordicsincos_8_uid2/test/microrotation2/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 10 ns  Iteration: 11  Instance: /testbench_cordicsincos_8_uid2/test/microrotation2/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 10 ns  Iteration: 11  Instance: /testbench_cordicsincos_8_uid2/test/microrotation2/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 10 ns  Iteration: 11  Instance: /testbench_cordicsincos_8_uid2/test/microrotation2/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 10 ns  Iteration: 13  Instance: /testbench_cordicsincos_8_uid2/test/microrotation3/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 10 ns  Iteration: 13  Instance: /testbench_cordicsincos_8_uid2/test/microrotation3/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 10 ns  Iteration: 13  Instance: /testbench_cordicsincos_8_uid2/test/microrotation3/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 10 ns  Iteration: 15  Instance: /testbench_cordicsincos_8_uid2/test/microrotation3/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 10 ns  Iteration: 15  Instance: /testbench_cordicsincos_8_uid2/test/microrotation3/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 10 ns  Iteration: 15  Instance: /testbench_cordicsincos_8_uid2/test/microrotation3/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 10 ns  Iteration: 15  Instance: /testbench_cordicsincos_8_uid2/test/microrotation3/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 10 ns  Iteration: 17  Instance: /testbench_cordicsincos_8_uid2/test/microrotation4/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 10 ns  Iteration: 17  Instance: /testbench_cordicsincos_8_uid2/test/microrotation4/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 10 ns  Iteration: 17  Instance: /testbench_cordicsincos_8_uid2/test/microrotation4/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 10 ns  Iteration: 19  Instance: /testbench_cordicsincos_8_uid2/test/microrotation4/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 10 ns  Iteration: 19  Instance: /testbench_cordicsincos_8_uid2/test/microrotation4/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 10 ns  Iteration: 19  Instance: /testbench_cordicsincos_8_uid2/test/microrotation4/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 10 ns  Iteration: 19  Instance: /testbench_cordicsincos_8_uid2/test/microrotation4/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 10 ns  Iteration: 19  Instance: /testbench_cordicsincos_8_uid2/test/microrotation4/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 10 ns  Iteration: 19  Instance: /testbench_cordicsincos_8_uid2/test/microrotation4/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 10 ns  Iteration: 20  Instance: /testbench_cordicsincos_8_uid2/test/microrotation4/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 10 ns  Iteration: 20  Instance: /testbench_cordicsincos_8_uid2/test/microrotation4/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 10 ns  Iteration: 20  Instance: /testbench_cordicsincos_8_uid2/test/microrotation4/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 10 ns  Iteration: 20  Instance: /testbench_cordicsincos_8_uid2/test/microrotation4/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 10 ns  Iteration: 21  Instance: /testbench_cordicsincos_8_uid2/test/microrotation5/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 10 ns  Iteration: 21  Instance: /testbench_cordicsincos_8_uid2/test/microrotation5/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 10 ns  Iteration: 21  Instance: /testbench_cordicsincos_8_uid2/test/microrotation5/zadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 10 ns  Iteration: 23  Instance: /testbench_cordicsincos_8_uid2/test/microrotation5/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 10 ns  Iteration: 23  Instance: /testbench_cordicsincos_8_uid2/test/microrotation5/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 10 ns  Iteration: 23  Instance: /testbench_cordicsincos_8_uid2/test/microrotation5/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 10 ns  Iteration: 23  Instance: /testbench_cordicsincos_8_uid2/test/microrotation5/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 10 ns  Iteration: 23  Instance: /testbench_cordicsincos_8_uid2/test/microrotation5/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 10 ns  Iteration: 23  Instance: /testbench_cordicsincos_8_uid2/test/microrotation5/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 10 ns  Iteration: 25  Instance: /testbench_cordicsincos_8_uid2/test/microrotation5/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 10 ns  Iteration: 25  Instance: /testbench_cordicsincos_8_uid2/test/microrotation5/xadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 10 ns  Iteration: 25  Instance: /testbench_cordicsincos_8_uid2/test/microrotation5/yadder
+# ** Warning: There is an 'U'|'X'|'W'|'Z'|'-' in an arithmetic operand, the result will be 'X'(es).
+#    Time: 10 ns  Iteration: 25  Instance: /testbench_cordicsincos_8_uid2/test/microrotation5/yadder
+# ** Note: 0 error(s) encoutered.
+#    Time: 52 ns  Iteration: 0  Instance: /testbench_cordicsincos_8_uid2
+# ** Failure: End of simulation
+#    Time: 52 ns  Iteration: 0  Process: /testbench_cordicsincos_8_uid2/line__1277 File: CordicSinCos.vhdl
+# Break in Process line__1277 at CordicSinCos.vhdl line 1343
