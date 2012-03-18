@@ -54,7 +54,7 @@ UserDefinedOperator::UserDefinedOperator(Target* target, int param0_, int param1
   addOutput("S" , param1);
 
 
-  /* Some piece of informations can be delivered to the flopoco user if  the -verbose option is set
+  /* Some piece of information can be delivered to the flopoco user if  the -verbose option is set
       [eg: flopoco -verbose=0 UserDefinedOperator 10 5 ]
     , by using the REPORT function.
    There is three level of details
