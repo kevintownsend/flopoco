@@ -513,7 +513,7 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 
 
 void FixSinCos::emulate(TestCase * tc)
-{ // TODO all the mpfr_free
+{
 	mpz_class sx = tc->getInputValue ("X");
 	mpfr_t x, sind, cosd, sinu, cosu, pixd, pixu, one_minus_ulp;
 	mpz_t sind_z, cosd_z, sinu_z, cosu_z;
@@ -600,8 +600,9 @@ void FixSinCos::emulate(TestCase * tc)
 		tc->addExpectedOutput ("S", sind_zc+1);
 	if ((cosd_zc & ones) != ones)
 		tc->addExpectedOutput ("C", cosd_zc+1);
-	// not complete yet
-	mpfr_clears (x, sind, cosd, NULL);
+	mpfr_clears (x, sind, cosd, sinu, cosu,
+	             pixd, pixu, one_minus_ulp, NULL);
+	mpz_clears (sind_z, cosd_z, sinu_z, cosu_z, NULL);
 }
 
 
