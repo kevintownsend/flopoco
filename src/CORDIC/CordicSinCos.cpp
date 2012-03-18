@@ -167,7 +167,8 @@ namespace flopoco{
 		
 		//z=pi/2
 		tc = new TestCase (this);
-		mpfr_set_d (z, 1.5707963267949, GMP_RNDN); 
+		mpfr_const_pi (z, GMP_RNDN);
+		mpfr_div_2ui (z, z, 1UL, GMP_RNDN);
 		mpfr_mul_2si (z, z, wF, GMP_RNDN); 
 		mpfr_get_z (z_z, z, GMP_RNDN);  
 		tc -> addInput ("Z",mpz_class(z_z));
@@ -176,7 +177,8 @@ namespace flopoco{
 		
 		//z=pi/6
 		tc = new TestCase (this);
-		mpfr_set_d (z, 0.5235987755983, GMP_RNDN); 
+		mpfr_const_pi (z, GMP_RNDN);
+		mpfr_div_ui (z, z, 6UL, GMP_RNDN);
 		mpfr_mul_2si (z, z, wF, GMP_RNDN); 
 		mpfr_get_z (z_z, z, GMP_RNDN);  
 		tc -> addInput ("Z",mpz_class(z_z));
@@ -185,7 +187,8 @@ namespace flopoco{
 		
 		//z=pi/4
 		tc = new TestCase (this);
-		mpfr_set_d (z, 0.78539816339745, GMP_RNDN); 
+		mpfr_const_pi (z, GMP_RNDN);
+		mpfr_div_2ui (z, z, 2UL, GMP_RNDN);
 		mpfr_mul_2si (z, z, wF, GMP_RNDN); 
 		mpfr_get_z (z_z, z, GMP_RNDN);  
 		tc -> addInput ("Z",mpz_class(z_z));
@@ -194,7 +197,8 @@ namespace flopoco{
 		
 		//z=pi/3
 		tc = new TestCase (this);
-		mpfr_set_d (z, 1.0471975511966, GMP_RNDN); 
+		mpfr_const_pi (z, GMP_RNDN);
+		mpfr_div_ui (z, z, 3UL, GMP_RNDN);
 		mpfr_mul_2si (z, z, wF, GMP_RNDN); 
 		mpfr_get_z (z_z, z, GMP_RNDN);  
 		tc -> addInput ("Z",mpz_class(z_z));
