@@ -15,15 +15,20 @@ namespace flopoco{
 		: Operator(target), wI(wI_), wF(wF_)
 	{
 		int wIn = wI + 2*wF + 1;
+		int wIxy = wI, wFxy = wF, wIz = wI, wFz = wF;
+		int wInxy = wIxy + wFxy + 1;
+		int wInz = wIz + wFz + 1;
+		//TODO: verify the validity of the necessary guard bits
+		int guard = 3;
 		
 		srcFileName="CordicSinCos";
 		ostringstream name;
 
 		setCopyrightString ( "Istoan Matei, Florent de Dinechin (2008-2012)" );
 		if(target->isPipelined())
-			name << "CordicSinCos_" << wIn <<"_f"<< target->frequencyMHz() << "_uid" << getNewUId();
+			name << "CordicSinCos_" << 1+wI+wF <<"_f"<< target->frequencyMHz() << "_uid" << getNewUId();
 		else
-			name << "CordicSinCos_" << wIn << "_uid" << getNewUId();
+			name << "CordicSinCos_" << 1+wI+wF << "_uid" << getNewUId();
 		setName( name.str() );
 
 		// declaring inputs
@@ -38,10 +43,10 @@ namespace flopoco{
 		manageCriticalPath(target->localWireDelay(wIn) + target->lutDelay());
 		
 		//create the Z0, Y0 and D0 signals for the first stage
-		vhdl << tab << declare("X0", wIn) << "<= \'0\' & \"" << generateFixPointNumber(1, wI, 2*wF) << "\";" << endl;
-		vhdl << tab << declare("Y0", wIn) << "<= \'0\' & \"" << generateFixPointNumber(0, wI, 2*wF) << "\";" << endl;
-		vhdl << tab << declare("Z0", wIn) << "<= Z & " << zg(wF, 0) << ";" << endl;
-		vhdl << tab << declare("D0") << "<= Z(" << wI+wF << ");" << endl;
+		vhdl << tab << declare("X0", wInxy) << "<= \'0\' & \"" << generateFixPointNumber(1, wIxy, wFxy) << "\";" << endl;
+		vhdl << tab << declare("Y0", wInxy) << "<= \'0\' & \"" << generateFixPointNumber(0, wIxy, wFxy) << "\";" << endl;
+		vhdl << tab << declare("Z0", wInz+guard) << "<= Z & " << zg(guard, 0) << ";" << endl;
+		vhdl << tab << declare("D0") << "<= Z(" << wIz+wFz << ");" << endl;
 		
 		setCycleFromSignal("D0");
 				
@@ -49,10 +54,15 @@ namespace flopoco{
 		int stage;
 		FixMicroRotation *microRotation;
 		
+		wFz += guard;
+		
 		for(stage=0; stage<wIn-2; stage++){
 			manageCriticalPath(target->localWireDelay(wIn));
 			
-			microRotation = new FixMicroRotation(target, wI, 2*wF, stage, inDelayMap("Xin",getCriticalPath()));
+			if(stage<wIn-guard)
+				microRotation = new FixMicroRotation(target, wIxy, wFxy, wIxy, wFxy, wIz, wFz, stage, true, inDelayMap("Xin",getCriticalPath()));
+			else
+				microRotation = new FixMicroRotation(target, wIxy, wFxy, wIxy, wFxy, wIz, wFz, stage, false, inDelayMap("Xin",getCriticalPath()));
 			oplist.push_back(microRotation);
 			
 			inPortMap(microRotation, "Xin", getParamName("X", stage));
@@ -70,22 +80,26 @@ namespace flopoco{
 			syncCycleFromSignal(getParamName("Z", stage+1));
 			syncCycleFromSignal(getParamName("D", stage+1));
 			setCriticalPath(microRotation->getOutputDelay("Dout"));
+			
+			wFxy++;
+			if(stage<wIn-guard)
+				wFz++;
 		}
 		
 		//divide by the constant to obtain the actual value of the sine and cosine
-		FixRealKCM *constMultiplier = new FixRealKCM(target, -(2*wF), wI, 1, -(2*wF), string("0.607252935008881256169446834473"), 1.0, inDelayMap("X",getCriticalPath()));
+		FixRealKCM *constMultiplier = new FixRealKCM(target, -(wFxy), wI, 1, -(wFxy), string("0.607252935008881256169446834473"), 1.0, inDelayMap("X",getCriticalPath()));
 		oplist.push_back(constMultiplier);
 		
 		//multiply x
-		manageCriticalPath(target->localWireDelay(wIn+1) + target->lutDelay());
+		manageCriticalPath(target->localWireDelay(1+wIxy+wFxy+1) + target->lutDelay());
 		
-		vhdl << tab << declare("preXout", wIn+1) << "<= " << getParamName("X", stage) << " & '0';" << endl;
+		vhdl << tab << declare("preXout", 1+wIxy+wFxy+1) << "<= " << getParamName("X", stage) << " & '0';" << endl;
 		inPortMap (constMultiplier, "X", "preXout");
 		outPortMap(constMultiplier, "R", "intXout");
 		vhdl << instance(constMultiplier, "constMultiplierX") << endl;
 		
 		//multiply y
-		vhdl << tab << declare("preYout", wIn+1) << "<= " << getParamName("Y", stage) << " & '0';" << endl;
+		vhdl << tab << declare("preYout", 1+wIxy+wFxy+1) << "<= " << getParamName("Y", stage) << " & '0';" << endl;
 		inPortMap (constMultiplier, "X", "preYout");
 		outPortMap(constMultiplier, "R", "intYout");
 		vhdl << instance(constMultiplier, "constMultiplierY") << endl;
@@ -93,14 +107,14 @@ namespace flopoco{
 		setCriticalPath(constMultiplier->getOutputDelay("R"));
 		setCycleFromSignal("intYout");
 		syncCycleFromSignal("intXout");
-		
+		 
 		//perform rounding of the final result
 		manageCriticalPath(target->localWireDelay(1+wI+wF+1) + target->lutDelay() + target->adderDelay(1+wI+wF+1));
 		
-		vhdl << tab << declare("roundedIntXout", 1+wI+wF+1) << "<= intXout(" << wIn << " downto " << wF << ") "
+		vhdl << tab << declare("roundedIntXout", 1+wI+wF+1) << "<= intXout(" << 1+wIxy+wFxy << " downto " << wIn-2 << ") "
 															<< "+"
 															<< " (" << zg(1+wI+wF, 0) << " & \'1\');" << endl;
-		vhdl << tab << declare("roundedIntYout", 1+wI+wF+1) << "<= intYout(" << wIn << " downto " << wF << ") "
+		vhdl << tab << declare("roundedIntYout", 1+wI+wF+1) << "<= intYout(" << 1+wIxy+wFxy << " downto " << wIn-2 << ") "
 															<< "+"
 															<< " (" << zg(1+wI+wF, 0) << " & \'1\');" << endl;
 															
@@ -176,7 +190,7 @@ namespace flopoco{
 		tcl->add(tc);
 		
 		//z=pi/6
-		tc = new TestCase (this);
+		tc = new TestCase (this); 
 		mpfr_const_pi (z, GMP_RNDN);
 		mpfr_div_ui (z, z, 6UL, GMP_RNDN);
 		mpfr_mul_2si (z, z, wF, GMP_RNDN); 
