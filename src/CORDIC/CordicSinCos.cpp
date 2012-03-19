@@ -19,7 +19,7 @@ namespace flopoco{
 		int wInxy = wIxy + wFxy + 1;
 		int wInz = wIz + wFz + 1;
 		//TODO: verify the validity of the necessary guard bits
-		int guard = 3, guardxy;
+		int guardz = 3, guardxy;
 		
 		srcFileName="CordicSinCos";
 		ostringstream name;
@@ -44,6 +44,7 @@ namespace flopoco{
 		
 		//create the Z0, Y0 and D0 signals for the first stage
 		guardxy = ceil(log2(1 + wI + wF));
+		guardz  = guardxy;
 		
 		mpf_t xinit;
 		
@@ -52,7 +53,7 @@ namespace flopoco{
 		
 		vhdl << tab << declare("X0", wInxy + guardxy) << "<= \'0\' & \"" << generateFixPointNumber(xinit, wIxy, wFxy+guardxy) << "\";" << endl;
 		vhdl << tab << declare("Y0", wInxy + guardxy) << "<= \'0\' & \"" << generateFixPointNumber(0.0, wIxy, wFxy+guardxy) << "\";" << endl;
-		vhdl << tab << declare("Z0", wInz+guard) << "<= Z & " << zg(guard, 0) << ";" << endl;
+		vhdl << tab << declare("Z0", wInz  + guardxy) << "<= Z & " << zg(guardxy, 0) << ";" << endl;
 		vhdl << tab << declare("D0") << "<= Z(" << wIz+wFz << ");" << endl;
 		
 		mpf_clear (xinit);
@@ -66,13 +67,12 @@ namespace flopoco{
 		
 		wFxy += guardxy;
 		wFxyIncrement = 0;
-		wFz += guard;
+		wFz += guardz;
 		
 		for(stage=0; stage<1+wI+wF; stage++){
 			manageCriticalPath(target->localWireDelay(wIn));
-			bool largerZoutFlag = stage<wIn-guard;
 			
-			microRotation = new FixMicroRotation(target, wIxy, wFxy, wIxy, wFxy, wIz, wFz, stage, largerZoutFlag, wFxyIncrement, inDelayMap("Xin",getCriticalPath()));
+			microRotation = new FixMicroRotation(target, wIxy, wFxy, wIxy, wFxy, wIz, wFz, stage, wFxyIncrement, inDelayMap("Xin",getCriticalPath()));
 			oplist.push_back(microRotation);
 			
 			inPortMap(microRotation, "Xin", getParamName("X", stage));
@@ -91,8 +91,7 @@ namespace flopoco{
 			syncCycleFromSignal(getParamName("D", stage+1));
 			setCriticalPath(microRotation->getOutputDelay("Dout"));
 			
-			if(largerZoutFlag)
-				wFz++;
+			wIz--;
 		}
 		
 		//perform rounding of the final result

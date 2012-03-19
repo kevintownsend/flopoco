@@ -10,8 +10,8 @@ using namespace std;
 
 namespace flopoco{
 
-	FixMicroRotation::FixMicroRotation(Target* target, int wIx_, int wFx_, int wIy_, int wFy_, int wIz_, int wFz_, int stage_, bool hasLargerZout_, int xyIncrement_, map<string, double> inputDelays) 
-		: Operator(target), wIx(wIx_), wFx(wFx_), wIy(wIy_), wFy(wFy_), wIz(wIz_), wFz(wFz_), stage(stage_), hasLargerZout(hasLargerZout_), xyIncrement(xyIncrement_)
+	FixMicroRotation::FixMicroRotation(Target* target, int wIx_, int wFx_, int wIy_, int wFy_, int wIz_, int wFz_, int stage_, int xyIncrement_, map<string, double> inputDelays) 
+		: Operator(target), wIx(wIx_), wFx(wFx_), wIy(wIy_), wFy(wFy_), wIz(wIz_), wFz(wFz_), stage(stage_), xyIncrement(xyIncrement_)
 	{
 		int wInx = wIx + wFx + 1;
 		int wIny = wIy + wFy + 1;
@@ -36,10 +36,7 @@ namespace flopoco{
 		// declaring output
 		addOutput  ( "Xout"  , wInx+xyIncrement, true );
 		addOutput  ( "Yout"  , wIny+xyIncrement, true ); 
-		if(hasLargerZout)
-			addOutput  ( "Zout"  , wInz+1, true );
-		else
-			addOutput  ( "Zout"  , wInz, true );
+		addOutput  ( "Zout"  , wInz-1, true );
 		addOutput  ( "Dout"  			    );
 		
 		setCriticalPath(getMaxInputDelays(inputDelays));
@@ -124,62 +121,36 @@ namespace flopoco{
 		std::string strConverted;
 		mpz_class fixConverted;
 		
-		if(hasLargerZout)
-			fixConverted = fp2fix(zatan, wIz, wFz+1);
-		else
-			fixConverted = fp2fix(zatan, wIz, wFz);
+		fixConverted = fp2fix(zatan, wIz, wFz);			
 		
 		if(fixConverted<0){
 			fixConverted = fixConverted * (-1);
 			negAtan = true;
 		}
-		if(hasLargerZout)
-			strConverted = unsignedBinary(fixConverted, wInz);
-		else
-			strConverted = unsignedBinary(fixConverted, wInz-1);
+		strConverted = unsignedBinary(fixConverted, wInz-1);
 		
 		manageCriticalPath(target->localWireDelay(wInz+1) + 2*target->lutDelay());
 		
 		setCycleFromSignal("Zin");
 		
-		if(hasLargerZout){
-			vhdl << tab << declare("atan2PowStage", wInz+1) << " <= \'0\' & \"" << strConverted << "\";" <<endl;
-			if(negAtan){
-				vhdl << tab << declare("newAtan2PowStage", wInz+1) << " <= atan2PowStage xor (" << wInz << " downto 0 => Din);" <<endl;
-				vhdl << tab << declare("cInZ") << "<= Din;" <<endl;
-			}
-			else{
-				vhdl << tab << declare("newAtan2PowStage", wInz+1) << " <= atan2PowStage xor (" << wInz << " downto 0 => (not Din));" <<endl;
-				vhdl << tab << declare("cInZ") << "<= not Din;" <<endl;
-			}
-		}else{
-			vhdl << tab << declare("atan2PowStage", wInz) << " <= \'0\' & \"" << strConverted << "\";" <<endl;
-			if(negAtan){
-				vhdl << tab << declare("newAtan2PowStage", wInz) << " <= atan2PowStage xor (" << wInz-1 << " downto 0 => Din);" <<endl;
-				vhdl << tab << declare("cInZ") << "<= Din;" <<endl;
-			}
-			else{
-				vhdl << tab << declare("newAtan2PowStage", wInz) << " <= atan2PowStage xor (" << wInz-1 << " downto 0 => (not Din));" <<endl;
-				vhdl << tab << declare("cInZ") << "<= not Din;" <<endl;
-			}
+		vhdl << tab << declare("atan2PowStage", wInz) << " <= \'0\' & \"" << strConverted << "\";" <<endl;
+		if(negAtan){
+			vhdl << tab << declare("newAtan2PowStage", wInz) << " <= atan2PowStage xor (" << wInz-1 << " downto 0 => Din);" <<endl;
+			vhdl << tab << declare("cInZ") << "<= Din;" <<endl;
 		}
-		
-		if(hasLargerZout)
-			vhdl << tab << declare("ZinExtended", wInz+1) << "<= Zin & \'0\';" <<endl;
-		else
-			vhdl << tab << declare("ZinExtended", wInz) << "<= Zin;" <<endl;
+		else{
+			vhdl << tab << declare("newAtan2PowStage", wInz) << " <= atan2PowStage xor (" << wInz-1 << " downto 0 => (not Din));" <<endl;
+			vhdl << tab << declare("cInZ") << "<= not Din;" <<endl;
+		}
 		
 		syncCycleFromSignal("newAtan2PowStage");
 		nextCycle();
 		
 		//create Zout
-		if(hasLargerZout)
-			mainAdder = new IntAdder(target, wInz+1, inDelayMap("X",getCriticalPath()));
-		else
-			mainAdder = new IntAdder(target, wInz, inDelayMap("X",getCriticalPath()));
+		mainAdder = new IntAdder(target, wInz, inDelayMap("X",getCriticalPath()));
 		oplist.push_back(mainAdder);
 		
-		inPortMap(mainAdder, "X", "ZinExtended");
+		inPortMap(mainAdder, "X", "Zin");
 		inPortMap(mainAdder, "Y", "newAtan2PowStage");
 		inPortMap(mainAdder, "Cin", "cInZ");
 		outPortMap (mainAdder, "R", "intZout");
@@ -190,10 +161,7 @@ namespace flopoco{
 		manageCriticalPath(target->localWireDelay(wInz) + target->lutDelay());
 		
 		//create Dout as the result of the comparison of intZout with 0
-		if(hasLargerZout)
-			vhdl << tab << declare("intDout") << " <= intZout(" << wInz <<");" <<endl;
-		else
-			vhdl << tab << declare("intDout") << " <= intZout(" << wInz-1 <<");" <<endl;
+		vhdl << tab << declare("intDout") << " <= intZout(" << wInz-1 <<");" <<endl;
 		
 		double zPath = getCriticalPath();
 		
@@ -206,7 +174,7 @@ namespace flopoco{
 		//create the outputs
 		vhdl << tab << "Xout" << " <= intXout;" <<endl;
 		vhdl << tab << "Yout" << " <= intYout;" <<endl;
-		vhdl << tab << "Zout" << " <= intZout;" <<endl;
+		vhdl << tab << "Zout" << " <= intZout(" << wInz-2 << " downto 0);" <<endl;
 		vhdl << tab << "Dout" << " <= intDout;" <<endl;
 	};
 
