@@ -602,7 +602,10 @@ void FixSinCos::emulate(TestCase * tc)
 		tc->addExpectedOutput ("C", cosd_zc+1);
 	mpfr_clears (x, sind, cosd, sinu, cosu,
 	             pixd, pixu, one_minus_ulp, NULL);
-	mpz_clears (sind_z, cosd_z, sinu_z, cosu_z, NULL);
+	mpz_clear (sind_z);
+	mpz_clear (cosd_z);
+	mpz_clear (sinu_z);
+	mpz_clear (cosu_z);
 }
 
 
