@@ -241,6 +241,8 @@ ADD_LIBRARY(FloPoCo STATIC
 # Fixed-point operators ---------------------------------------------
 #--------------------------------------------------------------------
  src/FixSinCos.cpp
+ src/CORDIC/FixMicroRotation  
+ src/CORDIC/CordicSinCos
 
 # Floating-Point ----------------------------------------------------
 #--------------------------------------------------------------------

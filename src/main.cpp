@@ -2356,6 +2356,17 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 			Operator* tg = new FixSinCos(target, w);
 			addOperator(oplist, tg);
 		}
+		
+		else if (opname == "CordicSinCos") {
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0],opname); // and exit
+			int wE = checkStrictlyPositive(argv[i++], argv[0]);
+			int wF = checkStrictlyPositive(argv[i++], argv[0]);
+			cerr << "> FPPipeline wE=" << wE << ", wF=" << wF << endl;
+			Operator* tg = new CordicSinCos(target, wE, wF);
+			addOperator(oplist, tg);
+		}
 
 #endif
 
