@@ -1,6 +1,6 @@
 default: all
 
-all:configure.ac Makefile.am src/Makefile.am src/FPExpressions/Makefile.am  src/LNS/Makefile.am
+all:configure.ac Makefile.am src/Makefile.am
 	@mkdir -p m4
 	@autoreconf --install
 	
@@ -21,10 +21,3 @@ Makefile.am:autotools/Makefile.am
 
 src/Makefile.am:autotools/src/Makefile.am
 	@cp autotools/src/Makefile.am src
-
-src/FPExpressions/Makefile.am:autotools/src/FPExpressions/Makefile.am
-	@cp autotools/src/FPExpressions/Makefile.am src/FPExpressions
-
-src/LNS/Makefile.am:autotools/src/LNS/Makefile.am
-	@cp autotools/src/LNS/Makefile.am src/LNS
-

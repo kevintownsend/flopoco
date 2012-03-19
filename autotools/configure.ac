@@ -37,34 +37,6 @@ AC_ARG_ENABLE(	[exec],
 		[EXEC=$enableval])
 AM_CONDITIONAL(BUILD_FLOPOCO_EXEC, test "x$EXEC" = xyes)
 
-AC_ARG_WITH(sollya-dir,
-    [  --with-sollya-dir=DIR  where the root sources of SOLLYA are installed ],
-    [
-       ac_sollya_dir="$withval"
-    ])
-AC_ARG_WITH(sollya-obj-dir,
-    [  --with-sollya-obj-dir=DIR  where the root of SOLLYA are installed ],
-    [
-       ac_sollya_obj_dir="$withval"
-    ])
-
-dnl check for the sollya library
-if test "x$ac_sollya_dir" != x && test "x$ac_sollya_obj_dir" != x; then
-   AC_DEFINE(HAVE_SOLLYA, 1, "Found Sollya")
-   AC_DEFINE(HAVE_HOTBM, 1, "HOTBM available")
-   AC_DEFINE(HAVE_LNS, 1, "LNS available")
-   SOLLYA_INCLUDE="-I $ac_sollya_dir"
-   SOLLYA_LDFLAGS="-L$ac_sollya_obj_dir -lsollya"
-   AC_SUBST(SOLLYA_INCLUDE)
-   AC_SUBST(SOLLYA_LDFLAGS)
-   ac_build_sollya=yes
-AC_CONFIG_FILES([src/FPExpressions/Makefile])
-AC_CONFIG_FILES([src/LNS/Makefile])
-else
-   ac_build_sollya=no
-fi
-AM_CONDITIONAL(BUILD_SOLLYA_FILES, test "x$ac_build_sollya" = xyes)
-
 dnl Detect whether target OS is Windows
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <windows.h>]], [[HANDLE h; DWORD d;]])], [OS_WIN32="yes"], [OS_WIN32="no"])
 AM_CONDITIONAL(no_WIN32, test "x$OS_WIN32" = xno)
@@ -73,11 +45,19 @@ dnl Check for libraries.
 AC_CHECK_LIB([gmpxx], [main], [], [AC_MSG_ERROR(libgmpxx is missing.)])
 AC_CHECK_LIB([gmp], [main], [], [AC_MSG_ERROR(libgmp is missing.)])
 AC_CHECK_LIB([mpfr], [main], [], [AC_MSG_ERROR(libmpfr is missing.)])
+AC_CHECK_LIB([sollya], [main], [], [AC_MSG_ERROR(libsollya is missing.)])
+AC_DEFINE(HAVE_SOLLYA, 1, "Found Sollya")
 
 dnl Check for headers.
 AC_CHECK_HEADER([gmpxx.h], [], [AC_MSG_ERROR(gmpxx.h is missing.)])
 AC_CHECK_HEADER([gmp.h], [], [AC_MSG_ERROR(gmp.h is missing.)])
 AC_CHECK_HEADER([mpfr.h], [], [AC_MSG_ERROR(mpfr.h is missing.)])
+dnl need to fix the sollya header test
+dnl AC_CHECK_HEADER([sollya.h], [], [AC_MSG_ERROR(sollya.h is missing.)])
+
+dnl These defines do not seem to be used anywhere
+dnl AC_DEFINE(HAVE_HOTBM, 1, "HOTBM available")
+dnl AC_DEFINE(HAVE_LNS, 1, "LNS available")
 
 dnl Generate output
 AC_CONFIG_HEADERS([config.h])
