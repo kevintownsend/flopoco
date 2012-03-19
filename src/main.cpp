@@ -369,8 +369,8 @@ static void usage(char *name, string opName = ""){
 		cerr << "      For a fixed-point input x in [0,1[, calculates (1-2^(-w)) sin(pi*x)\n";
 		cerr << "      and (1-2^(-w)) cos(pi*x); w is the precision not counting the leading 0\n";
 	}
-	if ( full || opName == "CORDICSinCos" || opName == "FixSin" || opName == "FixCos"){
-		NEWOP( "CORDICSinCos","w");
+	if ( full || opName == "CordicCSinCos" || opName == "FixSin" || opName == "FixCos"){
+		NEWOP( "CordicSinCos","w");
 		cerr << "      For a fixed-point input x in [0,1[, calculates (1-2^(-w)) sin(pi*x)\n";
 		cerr << "      and (1-2^(-w)) cos(pi*x); w is the precision not counting the leading 0\n";
 	}
@@ -2362,17 +2362,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 			addOperator(oplist, tg);
 		}
 		
-		else if (opname == "CordicSinCos") {
-			int nargs = 2;
-			if (i+nargs > argc)
-				usage(argv[0],opname); // and exit
-			int wE = checkStrictlyPositive(argv[i++], argv[0]);
-			int wF = checkStrictlyPositive(argv[i++], argv[0]);
-			cerr << "> FPPipeline wE=" << wE << ", wF=" << wF << endl;
-			Operator* tg = new CordicSinCos(target, wE, wF);
-			addOperator(oplist, tg);
-		}
-
 		else if (opname == "CordicSinCos") {
 			int nargs = 1;
 			if (i+nargs > argc)
