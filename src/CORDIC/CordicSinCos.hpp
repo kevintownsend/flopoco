@@ -35,6 +35,7 @@ namespace flopoco{
 		
 		// definition of some function for the operator
 		std::string generateFixPointNumber(float x, int wI, int wF);
+		std::string generateFixPointNumber(mpf_t x, int wI, int wF);
 		
 		std::string getParamName(std::string s, int number);
 	};

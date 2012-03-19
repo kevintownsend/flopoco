@@ -11,11 +11,11 @@ namespace flopoco{
 	class FixMicroRotation : public Operator {
 	  
 	  public:
-		int wIx, wFx, wIy, wFy, wIz, wFz, stage;
+		int wIx, wFx, wIy, wFy, wIz, wFz, stage, xyIncrement;
 		bool hasLargerZout;
 	  
 		// constructor, defined there with two parameters (default value 0 for each)
-		FixMicroRotation(Target* target, int wIx_, int wFx_, int wIy_, int wFy_, int wIz_, int wFz_, int stage_, bool hasLargerZout_, map<string, double> inputDelays = emptyDelayMap);
+		FixMicroRotation(Target* target, int wIx_, int wFx_, int wIy_, int wFy_, int wIz_, int wFz_, int stage_, bool hasLargerZout_, int xyIncrement_, map<string, double> inputDelays = emptyDelayMap);
 
 		// destructor
 		~FixMicroRotation() {};

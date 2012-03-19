@@ -19,7 +19,7 @@ namespace flopoco{
 		int wInxy = wIxy + wFxy + 1;
 		int wInz = wIz + wFz + 1;
 		//TODO: verify the validity of the necessary guard bits
-		int guard = 3;
+		int guard = 3, guardxy;
 		
 		srcFileName="CordicSinCos";
 		ostringstream name;
@@ -43,26 +43,36 @@ namespace flopoco{
 		manageCriticalPath(target->localWireDelay(wIn) + target->lutDelay());
 		
 		//create the Z0, Y0 and D0 signals for the first stage
-		vhdl << tab << declare("X0", wInxy) << "<= \'0\' & \"" << generateFixPointNumber(1, wIxy, wFxy) << "\";" << endl;
-		vhdl << tab << declare("Y0", wInxy) << "<= \'0\' & \"" << generateFixPointNumber(0, wIxy, wFxy) << "\";" << endl;
+		guardxy = ceil(log2(1 + wI + wF));
+		
+		mpf_t xinit;
+		
+		mpf_init2   (xinit, 256);
+		mpf_set_str (xinit, "0.607252935008881256169446834473e0", 10);
+		
+		vhdl << tab << declare("X0", wInxy + guardxy) << "<= \'0\' & \"" << generateFixPointNumber(xinit, wIxy, wFxy+guardxy) << "\";" << endl;
+		vhdl << tab << declare("Y0", wInxy + guardxy) << "<= \'0\' & \"" << generateFixPointNumber(0.0, wIxy, wFxy+guardxy) << "\";" << endl;
 		vhdl << tab << declare("Z0", wInz+guard) << "<= Z & " << zg(guard, 0) << ";" << endl;
 		vhdl << tab << declare("D0") << "<= Z(" << wIz+wFz << ");" << endl;
+		
+		mpf_clear (xinit);
 		
 		setCycleFromSignal("D0");
 				
 		//create the wIn-1 stages of micro-rotations
 		int stage;
+		int wFxyIncrement;
 		FixMicroRotation *microRotation;
 		
+		wFxy += guardxy;
+		wFxyIncrement = 0;
 		wFz += guard;
 		
-		for(stage=0; stage<wIn-2; stage++){
+		for(stage=0; stage<1+wI+wF; stage++){
 			manageCriticalPath(target->localWireDelay(wIn));
+			bool largerZoutFlag = stage<wIn-guard;
 			
-			if(stage<wIn-guard)
-				microRotation = new FixMicroRotation(target, wIxy, wFxy, wIxy, wFxy, wIz, wFz, stage, true, inDelayMap("Xin",getCriticalPath()));
-			else
-				microRotation = new FixMicroRotation(target, wIxy, wFxy, wIxy, wFxy, wIz, wFz, stage, false, inDelayMap("Xin",getCriticalPath()));
+			microRotation = new FixMicroRotation(target, wIxy, wFxy, wIxy, wFxy, wIz, wFz, stage, largerZoutFlag, wFxyIncrement, inDelayMap("Xin",getCriticalPath()));
 			oplist.push_back(microRotation);
 			
 			inPortMap(microRotation, "Xin", getParamName("X", stage));
@@ -81,40 +91,20 @@ namespace flopoco{
 			syncCycleFromSignal(getParamName("D", stage+1));
 			setCriticalPath(microRotation->getOutputDelay("Dout"));
 			
-			wFxy++;
-			if(stage<wIn-guard)
+			if(largerZoutFlag)
 				wFz++;
 		}
 		
-		//divide by the constant to obtain the actual value of the sine and cosine
-		FixRealKCM *constMultiplier = new FixRealKCM(target, -(wFxy), wI, 1, -(wFxy), string("0.607252935008881256169446834473"), 1.0, inDelayMap("X",getCriticalPath()));
-		oplist.push_back(constMultiplier);
-		
-		//multiply x
-		manageCriticalPath(target->localWireDelay(1+wIxy+wFxy+1) + target->lutDelay());
-		
-		vhdl << tab << declare("preXout", 1+wIxy+wFxy+1) << "<= " << getParamName("X", stage) << " & '0';" << endl;
-		inPortMap (constMultiplier, "X", "preXout");
-		outPortMap(constMultiplier, "R", "intXout");
-		vhdl << instance(constMultiplier, "constMultiplierX") << endl;
-		
-		//multiply y
-		vhdl << tab << declare("preYout", 1+wIxy+wFxy+1) << "<= " << getParamName("Y", stage) << " & '0';" << endl;
-		inPortMap (constMultiplier, "X", "preYout");
-		outPortMap(constMultiplier, "R", "intYout");
-		vhdl << instance(constMultiplier, "constMultiplierY") << endl;
-		
-		setCriticalPath(constMultiplier->getOutputDelay("R"));
-		setCycleFromSignal("intYout");
-		syncCycleFromSignal("intXout");
-		 
 		//perform rounding of the final result
-		manageCriticalPath(target->localWireDelay(1+wI+wF+1) + target->lutDelay() + target->adderDelay(1+wI+wF+1));
+		manageCriticalPath(target->localWireDelay(1+wI+wF) + target->lutDelay() + target->adderDelay(1+wI+wF+1));
 		
-		vhdl << tab << declare("roundedIntXout", 1+wI+wF+1) << "<= intXout(" << 1+wIxy+wFxy << " downto " << wIn-2 << ") "
+		vhdl << tab << declare("preRoundedIntXout", 1+wI+wF+1) << "<= " << getParamName("X", stage) << "(" << wIxy+wFxy << " downto " << guardxy-1 << ");" << endl;
+		vhdl << tab << declare("preRoundedIntYout", 1+wI+wF+1) << "<= " << getParamName("Y", stage) << "(" << wIxy+wFxy << " downto " << guardxy-1 << ");" << endl;
+		
+		vhdl << tab << declare("roundedIntXout", 1+wI+wF+1) << "<= preRoundedIntXout "
 															<< "+"
 															<< " (" << zg(1+wI+wF, 0) << " & \'1\');" << endl;
-		vhdl << tab << declare("roundedIntYout", 1+wI+wF+1) << "<= intYout(" << 1+wIxy+wFxy << " downto " << wIn-2 << ") "
+		vhdl << tab << declare("roundedIntYout", 1+wI+wF+1) << "<= preRoundedIntYout "
 															<< "+"
 															<< " (" << zg(1+wI+wF, 0) << " & \'1\');" << endl;
 															
@@ -181,8 +171,7 @@ namespace flopoco{
 		
 		//z=pi/2
 		tc = new TestCase (this);
-		mpfr_const_pi (z, GMP_RNDN);
-		mpfr_div_2ui (z, z, 1UL, GMP_RNDN);
+		mpfr_set_d (z, 1.5707963267949, GMP_RNDN); 
 		mpfr_mul_2si (z, z, wF, GMP_RNDN); 
 		mpfr_get_z (z_z, z, GMP_RNDN);  
 		tc -> addInput ("Z",mpz_class(z_z));
@@ -191,8 +180,7 @@ namespace flopoco{
 		
 		//z=pi/6
 		tc = new TestCase (this); 
-		mpfr_const_pi (z, GMP_RNDN);
-		mpfr_div_ui (z, z, 6UL, GMP_RNDN);
+		mpfr_set_d (z, 0.5235987755983, GMP_RNDN); 
 		mpfr_mul_2si (z, z, wF, GMP_RNDN); 
 		mpfr_get_z (z_z, z, GMP_RNDN);  
 		tc -> addInput ("Z",mpz_class(z_z));
@@ -201,8 +189,7 @@ namespace flopoco{
 		
 		//z=pi/4
 		tc = new TestCase (this);
-		mpfr_const_pi (z, GMP_RNDN);
-		mpfr_div_2ui (z, z, 2UL, GMP_RNDN);
+		mpfr_set_d (z, 0.78539816339745, GMP_RNDN); 
 		mpfr_mul_2si (z, z, wF, GMP_RNDN); 
 		mpfr_get_z (z_z, z, GMP_RNDN);  
 		tc -> addInput ("Z",mpz_class(z_z));
@@ -211,8 +198,7 @@ namespace flopoco{
 		
 		//z=pi/3
 		tc = new TestCase (this);
-		mpfr_const_pi (z, GMP_RNDN);
-		mpfr_div_ui (z, z, 3UL, GMP_RNDN);
+		mpfr_set_d (z, 1.0471975511966, GMP_RNDN); 
 		mpfr_mul_2si (z, z, wF, GMP_RNDN); 
 		mpfr_get_z (z_z, z, GMP_RNDN);  
 		tc -> addInput ("Z",mpz_class(z_z));
@@ -250,6 +236,29 @@ namespace flopoco{
 		}
 		
 		mpfr_set_d(mx, xcopy, GMP_RNDN);
+		mpfr_mul_2si(mx, mx, wF, GMP_RNDN);
+		
+		mpfr_get_z(h.get_mpz_t(), mx,  GMP_RNDN); 
+        
+        result = unsignedBinary(h, size);
+        
+        return result;
+	}
+	
+	std::string CordicSinCos::generateFixPointNumber(mpf_t x, int wI, int wF)
+	{
+		std::string result;
+		int size = wI+wF;
+		mpfr_t mx;
+		mpz_class h;
+		
+		mpfr_init(mx);
+		
+		if(x<0){
+			mpf_neg (x, x);
+		}
+		
+		mpfr_set_f(mx, x, GMP_RNDN);
 		mpfr_mul_2si(mx, mx, wF, GMP_RNDN);
 		
 		mpfr_get_z(h.get_mpz_t(), mx,  GMP_RNDN); 

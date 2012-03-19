@@ -10,8 +10,8 @@ using namespace std;
 
 namespace flopoco{
 
-	FixMicroRotation::FixMicroRotation(Target* target, int wIx_, int wFx_, int wIy_, int wFy_, int wIz_, int wFz_, int stage_, bool hasLargerZout_, map<string, double> inputDelays) 
-		: Operator(target), wIx(wIx_), wFx(wFx_), wIy(wIy_), wFy(wFy_), wIz(wIz_), wFz(wFz_), stage(stage_), hasLargerZout(hasLargerZout_)
+	FixMicroRotation::FixMicroRotation(Target* target, int wIx_, int wFx_, int wIy_, int wFy_, int wIz_, int wFz_, int stage_, bool hasLargerZout_, int xyIncrement_, map<string, double> inputDelays) 
+		: Operator(target), wIx(wIx_), wFx(wFx_), wIy(wIy_), wFy(wFy_), wIz(wIz_), wFz(wFz_), stage(stage_), hasLargerZout(hasLargerZout_), xyIncrement(xyIncrement_)
 	{
 		int wInx = wIx + wFx + 1;
 		int wIny = wIy + wFy + 1;
@@ -34,8 +34,8 @@ namespace flopoco{
 		addInput  ( "Din" 			    );
 
 		// declaring output
-		addOutput  ( "Xout"  , wInx+1, true );
-		addOutput  ( "Yout"  , wIny+1, true );
+		addOutput  ( "Xout"  , wInx+xyIncrement, true );
+		addOutput  ( "Yout"  , wIny+xyIncrement, true ); 
 		if(hasLargerZout)
 			addOutput  ( "Zout"  , wInz+1, true );
 		else
@@ -44,40 +44,40 @@ namespace flopoco{
 		
 		setCriticalPath(getMaxInputDelays(inputDelays));
 		
-		manageCriticalPath(target->localWireDelay(wInx+1) + 2*target->lutDelay());
+		manageCriticalPath(target->localWireDelay(wInx+xyIncrement) + 2*target->lutDelay());
 		
 		//shift Xin and Yin with 2^n positions to the right
 		if(stage==0){
-			vhdl << tab << declare("XinShift", wInx+1) << " <= Xin & \'0\';" <<endl;
+			vhdl << tab << declare("XinShift", wInx+xyIncrement) << " <= Xin & " << zg(xyIncrement, 0) << ";" <<endl;
 		}else{
 			if(stage==1)
 				vhdl << tab << declare("Xin_signExtend", stage) << " <= Xin(" << wInx-1 << ");" <<endl;
 			else
 				vhdl << tab << declare("Xin_signExtend", stage) << " <= (others => Xin(" << wInx-1 << "));" <<endl;
-			vhdl << tab << declare("Xin_shifted", wInx-stage+1) << " <= Xin" << range(wInx-1, stage-1) << ";" <<endl;
-			vhdl << tab << declare("XinShift", wInx+1) << " <= Xin_signExtend & Xin_shifted;" <<endl;
+			vhdl << tab << declare("Xin_shifted", wInx-stage) << " <= Xin" << range(wInx-1, stage) << ";" <<endl;
+			vhdl << tab << declare("XinShift", wInx+xyIncrement) << " <= Xin_signExtend & Xin_shifted & " << zg(xyIncrement, 0) << ";" <<endl;
 		}
 		if(stage==0){
-			vhdl << tab << declare("YinShift", wIny+1) << " <= Yin & \'0\';" <<endl;
+			vhdl << tab << declare("YinShift", wIny+xyIncrement) << " <= Yin & " << zg(xyIncrement, 0) << ";" <<endl;
 		}else{
 			if(stage==1)
 				vhdl << tab << declare("Yin_signExtend", stage) << " <= Yin(" << wIny-1 << ");" <<endl;
 			else
 				vhdl << tab << declare("Yin_signExtend", stage) << " <= (others => Yin(" << wIny-1 << "));" <<endl;
-			vhdl << tab << declare("Yin_shifted", wIny-stage+1) << " <= Yin" << range(wIny-1, stage-1) << ";" <<endl;
-			vhdl << tab << declare("YinShift", wIny+1) << " <= Yin_signExtend & Yin_shifted;" <<endl;
+			vhdl << tab << declare("Yin_shifted", wIny-stage) << " <= Yin" << range(wIny-1, stage) << ";" <<endl;
+			vhdl << tab << declare("YinShift", wIny+xyIncrement) << " <= Yin_signExtend & Yin_shifted & " << zg(xyIncrement, 0) << ";" <<endl;
 		}
 		
-		vhdl << tab << declare("XinExtended", wInx+1) << " <= Xin & \'0\';" <<endl;
-		vhdl << tab << declare("YinExtended", wIny+1) << " <= Yin & \'0\';" <<endl;
+		vhdl << tab << declare("XinExtended", wInx+xyIncrement) << " <= Xin & " << zg(xyIncrement, 0) << ";" <<endl;
+		vhdl << tab << declare("YinExtended", wIny+xyIncrement) << " <= Yin & " << zg(xyIncrement, 0) << ";" <<endl;
 		
 		setCycleFromSignal("XinShift");
 		syncCycleFromSignal("YinShift");
 		manageCriticalPath(target->localWireDelay(wInx+1) + target->lutDelay());
 		
 		//complement the shifted Xin and Yin if necessary
-		vhdl << tab << declare("newXinShift", wInx+1) << " <= XinShift xor (" << wInx << " downto 0 => Din);" <<endl;
-		vhdl << tab << declare("newYinShift", wIny+1) << " <= YinShift xor (" << wIny << " downto 0 => (not Din));" <<endl;
+		vhdl << tab << declare("newXinShift", wInx+xyIncrement) << " <= XinShift xor (" << wIny+xyIncrement-1 << " downto 0 => Din);" <<endl;
+		vhdl << tab << declare("newYinShift", wIny+xyIncrement) << " <= YinShift xor (" << wIny+xyIncrement-1 << " downto 0 => (not Din));" <<endl;
 		
 		//compute the carry-ins
 		vhdl << tab << declare("cInNewX") << "<= Din;" <<endl;
@@ -88,7 +88,7 @@ namespace flopoco{
 		//create Xout and Yout
 		// TODO - should create two adders, to be fair, but can save up space
 		// for the time being, as x and y have the same precisions
-		IntAdder *mainAdder = new IntAdder(target, wInx+1, inDelayMap("X",getCriticalPath()));
+		IntAdder *mainAdder = new IntAdder(target, wInx+xyIncrement, inDelayMap("X",getCriticalPath()));
 		oplist.push_back(mainAdder);
 		
 		inPortMap(mainAdder, "X", "XinExtended");
