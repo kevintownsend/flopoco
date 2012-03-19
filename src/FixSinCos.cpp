@@ -454,6 +454,8 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	// get back to the cycle of Z_sin, certainly later than the cosA
 	setCycleFromSignal("Z_sin", getSignalDelay("Z_sin"));
 	// vhdl:mul (Z_sin, A_cos_pi_tbl -> Sin_y_Cos_a)
+
+#if 0
 	IntTruncMultiplier *s_out_3;
 	s_out_3 = new IntTruncMultiplier (target, wZ, w+g, wZ,
 	                                  1.f, 0, 0, false, false, true);
@@ -463,6 +465,20 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	outPortMap (s_out_3, "R", "Sin_y_Cos_a");
 	vhdl << instance (s_out_3, "s_out_3_compute");
 	syncCycleFromSignal("Sin_y_Cos_a");
+#else
+	vhdl << tab << "-- First truncate the larger input of the multiplier to the precision of the output" << endl;
+	vhdl << tab << declare("A_cos_pi_tbl_truncToZ_sin", wZ) << " <= A_cos_pi_tbl" << range(w+g-1, w+g-wZ) << ";" << endl;
+
+	IntTruncMultiplier *s_out_3;
+	s_out_3 = new IntTruncMultiplier (target, wZ, wZ, wZ,
+	                                  1.f, 0, 0, false, false, true);
+	oplist.push_back (s_out_3);
+	inPortMap (s_out_3, "X", "Z_sin");
+	inPortMap (s_out_3, "Y", "A_cos_pi_tbl_truncToZ_sin");
+	outPortMap (s_out_3, "R", "Sin_y_Cos_a");
+	vhdl << instance (s_out_3, "s_out_3_compute");
+	syncCycleFromSignal("Sin_y_Cos_a");
+#endif
 
 	nextCycle();
 	manageCriticalPath(target->adderDelay(wZ));
@@ -485,7 +501,7 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	     << '1' << std::string (g-1, '0') << '"' << ';' << endl;
 
 	//Final synchronization
-	syncCycleFromSignal("C_out_g");
+	syncCycleFromSignal("C_out_rnd_aux");
 
 	vhdl << tab << declare ("C_out", w)
 	     << " <= C_out_rnd_aux" << range (w+g-1, g) << ';' << endl;
