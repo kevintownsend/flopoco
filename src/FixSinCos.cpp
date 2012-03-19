@@ -39,6 +39,9 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 */
 	/* In this constructor we are going to generate an operator that takes as input three bit vectors X,Y,Z of lenght w, treats them as unsigned integers, sums them and then output the last param1 bit of the sum adding the first bit of the sum (most significant) in front of this output, all the vhdl code needed by this operator has to be generated in this function */
 
+	srcFileName="FixSinCos";
+
+	
 	// definition of the name of the operator
 	ostringstream name;
 	name << "FixSinCos_" << w ;
@@ -208,7 +211,7 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	int wZ_2 = 2*wZ - (w+g);
 #if 0
 	sqr_z = new IntTruncMultiplier (target, wZ, wZ, wZ_2,
-	                                1.f, 0, 0, false, false, true, 
+	                                1.f, 0.95, 0, false, false, true, 
 	                                sqr_z_inputDelays);
 	oplist.push_back (sqr_z);
 	outPortMap (sqr_z, "R", "Z_2");
@@ -219,7 +222,7 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	vhdl << tab << "-- First truncate the inputs of the multiplier to the precision of the output" << endl;
 	vhdl << tab << declare("Z_truncToZ2", wZ_2) << " <= Z" << range(wZ-1, wZ-wZ_2) << ";" << endl;
 	sqr_z = new IntTruncMultiplier (target, wZ_2, wZ_2, wZ_2,
-	                                1.f, 0, 0, false, false, true, 
+	                                1.f, 0.95, 0, false, false, true, 
 	                                sqr_z_inputDelays);
 	oplist.push_back (sqr_z);
 	outPortMap (sqr_z, "R", "Z_2");
@@ -245,7 +248,7 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	IntTruncMultiplier *z_3;
 	int wZ_3 = 3*wZ - 2*(w+g);
 	z_3 = new IntTruncMultiplier (target, wZ, wZ_2, wZ_3-1,  // -1 for the div by 2
-	                              1.f, 0, 0, false, false, true, 
+	                              1.f, 0.95, 0, false, false, true, 
 	                              z_3_inputDelays); //last params wtf?
 	oplist.push_back (z_3);
 	outPortMap (z_3, "R", "Z_3_2");
@@ -260,7 +263,7 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	vhdl << tab << declare("Z_truncToZ3", wZ_3) << " <= Z" << range(wZ-1, wZ-wZ_3) << ";" << endl;
 	IntTruncMultiplier *z_3;
 	z_3 = new IntTruncMultiplier (target, wZ_3, wZ_3, wZ_3,  
-	                              1.f, 0, 0, false, false, true, 
+	                              1.f, 0.95, 0, false, false, true, 
 	                              z_3_inputDelays); //last params wtf?
 	oplist.push_back (z_3);
 	outPortMap (z_3, "R", "Z_3_2");
@@ -317,7 +320,7 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 #if 0
 	IntTruncMultiplier *c_out_2;
 	c_out_2 = new IntTruncMultiplier (target, wZ_cos_red, w+g, wZ_cos_red,
-	                                  1.f, 0, 0, false, false, true);
+	                                  1.f, 0.95, 0, false, false, true);
 	oplist.push_back (c_out_2);
 	outPortMap (c_out_2, "R", "Cos_y_red_Cos_a");
 	inPortMap (c_out_2, "Y", "A_cos_pi_tbl");
@@ -328,7 +331,7 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	vhdl << tab << declare("A_cos_pi_tbl_truncToZ_cos_red", wZ_cos_red) << " <= A_cos_pi_tbl" << range(w+g-1, w+g-wZ_cos_red) << ";" << endl;
 	IntTruncMultiplier *c_out_2;
 	c_out_2 = new IntTruncMultiplier (target, wZ_cos_red, wZ_cos_red, wZ_cos_red,
-	                                  1.f, 0, 0, false, false, true);
+	                                  1.f, 0.95, 0, false, false, true);
 	oplist.push_back (c_out_2);
 	outPortMap (c_out_2, "R", "Cos_y_red_Cos_a");
 	inPortMap (c_out_2, "Y", "A_cos_pi_tbl_truncToZ_cos_red");
@@ -357,7 +360,7 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 
 #if 0
 	c_out_3 = new IntTruncMultiplier (target, wZ, w+g, wZ,
-	                                  1.f, 0, 0, false, false, true);
+	                                  1.f, 0.95, 0, false, false, true);
 	oplist.push_back (c_out_3);
 	inPortMap (c_out_3, "Y", "A_sin_pi_tbl");
 	inPortMap (c_out_3, "X", "Z_sin");
@@ -368,7 +371,7 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	vhdl << tab << "-- First truncate the larger input of the multiplier to the precision of the output" << endl;
 	vhdl << tab << declare("A_sin_pi_tbl_truncToZ", wZ) << " <= A_sin_pi_tbl" << range(w+g-1, w+g-wZ) << ";" << endl;
 	c_out_3 = new IntTruncMultiplier (target, wZ, wZ, wZ,
-	                                  1.f, 0, 0, false, false, true);
+	                                  1.f, 0.95, 0, false, false, true);
 	oplist.push_back (c_out_3);
 	inPortMap (c_out_3, "Y", "A_sin_pi_tbl_truncToZ");
 	inPortMap (c_out_3, "X", "Z_sin");
@@ -429,7 +432,7 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 #if 0
 	IntTruncMultiplier *s_out_2;
 	s_out_2 = new IntTruncMultiplier (target, wZ_cos_red, w+g, wZ_cos_red,
-	                                  1.f, 0, 0, false, false, true);
+	                                  1.f, 0.95, 0, false, false, true);
 	oplist.push_back (s_out_2);
 	inPortMap (s_out_2, "X", "Z_cos_red");
 	inPortMap (s_out_2, "Y", "A_sin_pi_tbl");
@@ -441,7 +444,7 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	vhdl << tab << declare("A_sin_pi_tbl_truncToZ_cos_red", wZ_cos_red) << " <= A_sin_pi_tbl" << range(w+g-1, w+g-wZ_cos_red) << ";" << endl;
 	IntTruncMultiplier *s_out_2;
 	s_out_2 = new IntTruncMultiplier (target, wZ_cos_red, wZ_cos_red, wZ_cos_red,
-	                                  1.f, 0, 0, false, false, true);
+	                                  1.f, 0.95, 0, false, false, true);
 	oplist.push_back (s_out_2);
 	inPortMap (s_out_2, "X", "Z_cos_red");
 	inPortMap (s_out_2, "Y", "A_sin_pi_tbl_truncToZ_cos_red");
@@ -458,7 +461,7 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 #if 0
 	IntTruncMultiplier *s_out_3;
 	s_out_3 = new IntTruncMultiplier (target, wZ, w+g, wZ,
-	                                  1.f, 0, 0, false, false, true);
+	                                  1.f, 0.95, 0, false, false, true);
 	oplist.push_back (s_out_3);
 	inPortMap (s_out_3, "X", "Z_sin");
 	inPortMap (s_out_3, "Y", "A_cos_pi_tbl");
@@ -471,7 +474,7 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 
 	IntTruncMultiplier *s_out_3;
 	s_out_3 = new IntTruncMultiplier (target, wZ, wZ, wZ,
-	                                  1.f, 0, 0, false, false, true);
+	                                  1.f, 0.95, 0, false, false, true);
 	oplist.push_back (s_out_3);
 	inPortMap (s_out_3, "X", "Z_sin");
 	inPortMap (s_out_3, "Y", "A_cos_pi_tbl_truncToZ_sin");
@@ -522,6 +525,7 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	vhdl << tab << "S <= '0' & S_wo_sgn;" << endl;
 	vhdl << tab << "C <= A & C_wo_sgn;" << endl;
 
+	REPORT(INFO, " wA=" << wA <<" wZ=" << wZ <<" wZ2=" << wZ_2 <<" wZ3=" << wZ_3 );
 };
 
 
