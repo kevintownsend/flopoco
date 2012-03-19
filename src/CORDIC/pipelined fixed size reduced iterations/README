@@ -1,0 +1,5 @@
+This folder contains the version of the CORDIC algorithm with reduced number of iterations.
+
+It results in a smaller size, but produces slower circuits; -> both by about a factor of 2.
+
+To use this version, just replace the equivalent files with these ones (temporary solution, will be fixed for smething more elegant shortly).
