@@ -29,9 +29,6 @@ namespace flopoco{
 		/* function used to create Standard testCase defined by the developper */
 		void buildStandardTestCases(TestCaseList* tcl);
 
-		/* function used to generate n random test, where n is an argument of
-		  the function , this function is DEPRECATED, use the new function below*/
-		TestCase* buildRandomTestCase(int n);
 		
 		// definition of some function for the operator
 		std::string generateFixPointNumber(float x, int wI, int wF);
