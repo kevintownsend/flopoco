@@ -244,55 +244,59 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 
 	// vhdl:mul (Z, Z_2 -> Z_3)
 
-#if O
-	IntTruncMultiplier *z_3;
-	int wZ_3 = 3*wZ - 2*(w+g);
-	z_3 = new IntTruncMultiplier (target, wZ, wZ_2, wZ_3-1,  // -1 for the div by 2
-	                              1.f, 0.95, 0, false, false, true, 
-	                              z_3_inputDelays); //last params wtf?
-	oplist.push_back (z_3);
-	outPortMap (z_3, "R", "Z_3_2");
-	inPortMap (z_3, "Y", "Z_2");
-	inPortMap (z_3, "X", "Z");
-	vhdl << instance (z_3, "z_3_compute");
-	syncCycleFromSignal("Z_3", z_3->getOutputDelay("R"));
-#else
+
 	int wZ_3 = 3*wZ - 2*(w+g) -1; // -1 for the div by 2
-	vhdl << tab << "-- First truncate the inputs of the multiplier to the precision of the output" << endl;
-	vhdl << tab << declare("Z_2_truncToZ3", wZ_3) << " <= Z_2" << range(wZ_2-1, wZ_2-wZ_3) << ";" << endl;
-	vhdl << tab << declare("Z_truncToZ3", wZ_3) << " <= Z" << range(wZ-1, wZ-wZ_3) << ";" << endl;
-	IntTruncMultiplier *z_3;
-	z_3 = new IntTruncMultiplier (target, wZ_3, wZ_3, wZ_3,  
-	                              1.f, 0.95, 0, false, false, true, 
-	                              z_3_inputDelays); //last params wtf?
-	oplist.push_back (z_3);
-	outPortMap (z_3, "R", "Z_3_2");
-	inPortMap (z_3, "Y", "Z_2_truncToZ3");
-	inPortMap (z_3, "X", "Z_truncToZ3");
-	vhdl << instance (z_3, "z_3_compute");
-	syncCycleFromSignal("Z_3_2", z_3->getOutputDelay("R"));
-#endif
+	int wZ3o6 = 3*wZ - 2*(w+g) -2;
 
+	if(wZ_3<=11) {
+		vhdl << tab << "-- First truncate Z" << endl;
+		vhdl << tab << declare("Z_truncToZ3o6", wZ3o6) << " <= Z" << range(wZ-1, wZ-wZ3o6) << ";" << endl;
+		FunctionTable *z3o6Table;
+		z3o6Table = new FunctionTable (target, "x^3/6)", wZ3o6, -wZ3o6-2, -3);
+		z3o6Table -> changeName(getName() + "_Z3o6Table");
+		oplist.push_back (z3o6Table);
+		inPortMap (z3o6Table, "X", "Z_truncToZ3o6");
+		outPortMap (z3o6Table, "Y", "Z_3_6");
+		vhdl << instance (z3o6Table, "z3o6Table");
+		
+	}
+	else { // TODO: replace all this with an ad-hoc unit
+		vhdl << tab << "-- First truncate the inputs of the multiplier to the precision of the output" << endl;
+		vhdl << tab << declare("Z_2_truncToZ3", wZ_3) << " <= Z_2" << range(wZ_2-1, wZ_2-wZ_3) << ";" << endl;
+		vhdl << tab << declare("Z_truncToZ3", wZ_3) << " <= Z" << range(wZ-1, wZ-wZ_3) << ";" << endl;
+		IntTruncMultiplier *z_3;
+		z_3 = new IntTruncMultiplier (target, wZ_3, wZ_3, wZ_3,  
+		                              1.f, 0.95, 0, false, false, true, 
+		                              z_3_inputDelays); //last params wtf?
+		oplist.push_back (z_3);
+		outPortMap (z_3, "R", "Z_3_2");
+		inPortMap (z_3, "Y", "Z_2_truncToZ3");
+		inPortMap (z_3, "X", "Z_truncToZ3");
+		vhdl << instance (z_3, "z_3_compute");
+		syncCycleFromSignal("Z_3_2", z_3->getOutputDelay("R"));
+		
 
-	map<string, double> cdiv_3_inputDelays;
+		map<string, double> cdiv_3_inputDelays;
 #if SUBCYCLEPIPELINING
-	cdiv_3_inputDelays["X"] = z_3->getOutputDelay("R");
+		cdiv_3_inputDelays["X"] = z_3->getOutputDelay("R");
 #else
-	nextCycle();
+		nextCycle();
 #endif
-	
-	IntConstDiv *cdiv_3;
-	cdiv_3 = new IntConstDiv (target, wZ_3, 3, -1, cdiv_3_inputDelays);
-	oplist.push_back (cdiv_3);
-	outPortMap (cdiv_3, "Q", "Z_3_6");
-	inPortMap (cdiv_3, "X", "Z_3_2");
-	vhdl << instance (cdiv_3, "cdiv_3");
-	syncCycleFromSignal("Z_3_6", cdiv_3->getOutputDelay("Q"));
+		
+		IntConstDiv *cdiv_3;
+		cdiv_3 = new IntConstDiv (target, wZ_3, 3, -1, cdiv_3_inputDelays);
+		oplist.push_back (cdiv_3);
+		outPortMap (cdiv_3, "Q", "Z_3_6");
+		inPortMap (cdiv_3, "X", "Z_3_2");
+		vhdl << instance (cdiv_3, "cdiv_3");
+		syncCycleFromSignal("Z_3_6", cdiv_3->getOutputDelay("Q"));
 
+	}
 #if SUBCYCLEPIPELINING
 #else
-	nextCycle();
+		nextCycle();
 #endif
+
 
 	// vhdl:sub (Z, Z_3_6 -> Z_sin)
 	manageCriticalPath(target->adderDelay(wZ));
@@ -457,6 +461,7 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	// get back to the cycle of Z_sin, certainly later than the cosA
 	setCycleFromSignal("Z_sin", getSignalDelay("Z_sin"));
 	// vhdl:mul (Z_sin, A_cos_pi_tbl -> Sin_y_Cos_a)
+	nextCycle();
 
 #if 0
 	IntTruncMultiplier *s_out_3;
