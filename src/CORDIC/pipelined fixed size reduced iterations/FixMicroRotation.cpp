@@ -36,7 +36,7 @@ namespace flopoco{
 		// declaring output
 		addOutput  ( "Xout"  , wInx+xyIncrement, true );
 		addOutput  ( "Yout"  , wIny+xyIncrement, true ); 
-		addOutput  ( "Zout"  , wInz, true );
+		addOutput  ( "Zout"  , wInz-1, true );
 		addOutput  ( "Dout"  			    );
 		
 		setCriticalPath(getMaxInputDelays(inputDelays));
@@ -174,7 +174,7 @@ namespace flopoco{
 		//create the outputs
 		vhdl << tab << "Xout" << " <= intXout;" <<endl;
 		vhdl << tab << "Yout" << " <= intYout;" <<endl;
-		vhdl << tab << "Zout" << " <= intZout;" <<endl;
+		vhdl << tab << "Zout" << " <= intZout(" << wInz-2 << " downto 0);" <<endl;
 		vhdl << tab << "Dout" << " <= intDout;" <<endl;
 	};
 
@@ -325,7 +325,6 @@ namespace flopoco{
 	}
 
 }
-
 
 
 

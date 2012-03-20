@@ -89,19 +89,24 @@ namespace flopoco{
 			syncCycleFromSignal(getParamName("Z", stage+1));
 			syncCycleFromSignal(getParamName("D", stage+1));
 			setCriticalPath(microRotation->getOutputDelay("Yout"));
+			
+			wIz--;
 		}
 		
+		vhdl << tab << declare("signExtendZ", stage) << "<= (others => " << getParamName("D", stage) << ");" << endl;
+		vhdl << tab << declare("fullZ", 1+wIz+wFz+stage) << "<= signExtendZ & " << getParamName("Z", stage) << ";" << endl;
+		
 		//multiply by Z
-		IntMultiplier* zmultiplier = new IntMultiplier(target, 1+wIxy+wFxy, 1+wIxy+wFxy, inDelayMap("X",getCriticalPath()), true, 1);
+		IntMultiplier* zmultiplier = new IntMultiplier(target, 1+wIxy+wFxy, 1+wIz+wFz+stage, inDelayMap("X",getCriticalPath()), true, 1);
 		oplist.push_back(zmultiplier);
 		
 		inPortMap(zmultiplier, "X", getParamName("X", stage));
-		inPortMap(zmultiplier, "Y", getParamName("Z", stage));
+		inPortMap(zmultiplier, "Y", "fullZ");
 		outPortMap(zmultiplier, "R", "XZ");
 		vhdl << instance(zmultiplier, "zMultiplierX") << endl;
 		
 		inPortMap(zmultiplier, "X", getParamName("Y", stage));
-		inPortMap(zmultiplier, "Y", getParamName("Z", stage));
+		inPortMap(zmultiplier, "Y", "fullZ");
 		outPortMap(zmultiplier, "R", "YZ");
 		vhdl << instance(zmultiplier, "zMultiplierY") << endl;
 		
@@ -305,7 +310,6 @@ namespace flopoco{
 	}
 
 }
-
 
 
 
