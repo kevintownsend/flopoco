@@ -119,8 +119,6 @@ namespace flopoco{
 			diSize[i-1]+=1;
 		}
 		REPORT(INFO, "Constant multiplication in "<< nbOfTables << " tables");
-		for(i=0; i<nbOfTables; i++)
-			REPORT(INFO, "  address " << i << " on " << diSize[i]<< "bits" );
 		int lutWidth = target->lutInputs(); // -1 because the tools are able to pack LUT + addition in one LUT 
 
 		setCriticalPath( getMaxInputDelays(inputDelays) );
@@ -294,6 +292,11 @@ namespace flopoco{
 				setCriticalPath( 1.0/target_->frequency() - target_->ffDelay() - slack );
 			}
 			else { // 2 tables only
+				for(int i=0; i<nbOfTables; i++) {
+					inPortMap (t[i] , "X", join("d",i));
+					outPortMap(t[i] , "Y", join("pp",i));
+					vhdl << instance(t[i] , join("KCMTable_",i));
+				}
 				vhdl << tab << declare("addOp0", wOut+g ) << " <= " << rangeAssign(wOut+g-1, ppiSize[0], "'0'") << " & pp0;" << endl;
 				adder = new IntAdder(target, wOut+g, inDelayMap("X",target->localWireDelay() + getCriticalPath()));
 				oplist.push_back(adder);
