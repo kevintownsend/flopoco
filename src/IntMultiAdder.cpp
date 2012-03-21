@@ -34,7 +34,7 @@ namespace flopoco {
 	extern vector<Operator*> oplist;
 	
 	IntMultiAdder::IntMultiAdder (Target* target, int wIn, int N, map<string, double> inputDelays, bool carryIn):
-	Operator ( target, inputDelays, false ), wIn_ ( wIn ), N_(N), carryIn_(carryIn)  {
+	Operator ( target, inputDelays), wIn_ ( wIn ), N_(N), carryIn_(carryIn)  {
 		ostringstream name;
 		srcFileName="IntMultiAdder";
 		setCopyrightString ( "Bogdan Pasca 2011" );

@@ -28,7 +28,7 @@ namespace flopoco{
 	int Operator::uid = 0; //init of the uid static member of Operator
 	int verbose=0;
 	
-	Operator::Operator(Target* target, map<string, double> inputDelays, bool hardOperator){
+	Operator::Operator(Target* target, map<string, double> inputDelays){
 		target_                     = target;
 		numberOfInputs_             = 0;
 		numberOfOutputs_            = 0;
@@ -40,9 +40,9 @@ namespace flopoco{
 		criticalPath_               = 0;
 		needRecirculationSignal_    = false;
 		inputDelayMap               = inputDelays;
-		hardOperator_               = hardOperator; 
 		myuid                       = getNewUId();
-		architectureName_			= "arch";
+		architectureName_			      = "arch";
+		indirectOperator_           =NULL;
 		
 		if (target_->isPipelined())
 			setSequential();
@@ -415,7 +415,7 @@ namespace flopoco{
 	
 	void Operator::outputFinalReport(int level) {
 
-		if (!hardOperator()){ // interface operator
+		if (getIndirectOperator()!=NULL){ // interface operator
 			if(getOpList().size()!=1){
 				ostringstream o;
 				o << "!?! Operator " << getUniqueName() << " is an interface operator with " << getOpList().size() << "children";
@@ -1242,7 +1242,10 @@ namespace flopoco{
 			o << buildVHDLAttributes();
 			beginArchitecture(o);		
 			o<<buildVHDLRegisters();
-			o << vhdl.str();
+			if(getIndirectOperator())
+				o << getIndirectOperator()->vhdl.str();
+			else
+				o << vhdl.str();
 			endArchitecture(o);
 		}
 	}

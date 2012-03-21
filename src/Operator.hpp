@@ -69,7 +69,7 @@ public:
 	 * Creates an operator instance with an instantiated target for deployment.
 	 * @param target_ The deployment target of the operator.
 	 */
-	Operator(Target* target, map<string, double> inputDelays = emptyDelayMap, bool hardOperator = true);
+	Operator(Target* target, map<string, double> inputDelays = emptyDelayMap);
 		
 
 	/** Operator Destructor.
@@ -763,8 +763,23 @@ public:
 		return needRecirculationSignal_;
 	}
 	
-	bool hardOperator(){
-		return hardOperator_;
+	Operator* getIndirectOperator(){
+		return indirectOperator_;
+	}
+
+	void setIndirectOperator(Operator* op){
+		indirectOperator_=op;
+		if(op!=NULL) 	{		
+			op->setuid(getuid()); //the selected implemetation becomes this operator 
+			
+			// TODO outDelayMap["R"] = op->getOutputDelay("R"); //populate output delays
+			setCycle(op->getPipelineDepth());
+			op->setName (getName() );//accordingly set the name of the implementation
+				
+			signalList_ = op->signalList_;
+			subComponents_ = op->subComponents_;
+			ioList_ = op->ioList_;
+		 }
 	}
 	
 	vector<Operator*> getOpList(){
@@ -914,7 +929,7 @@ public:
 		currentCycle_               = op->getCurrentCycle();
 		criticalPath_               = op->getCriticalPath();
 		needRecirculationSignal_    = op->getNeedRecirculationSignal();
-		hardOperator_               = op->hardOperator();
+		indirectOperator_               = op->getIndirectOperator();
 		
 		oplist                      = op->getOpList();
 	}
@@ -964,7 +979,7 @@ private:
 	int                    currentCycle_;               /**< The current cycle, when building a pipeline */
 	double                 criticalPath_;               /**< The current delay of the current pipeline stage */
 	bool                   needRecirculationSignal_;    /**< True if the operator has registers having a recirculation signal  */
-	bool                   hardOperator_;               /**< False if this operator is just an interface operator to several possible implementations*/
+	Operator*              indirectOperator_;               /**< NULL if this operator is just an interface operator to several possible implementations, otherwise points to the instance*/
 
 };
 

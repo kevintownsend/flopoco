@@ -25,7 +25,6 @@ public:
     */
     ~IntMultiplier();
 
-    void outputVHDL(std::ostream& o, std::string name);
 
     void changeName(std::string operatorName);
 
@@ -45,7 +44,6 @@ protected:
 private:
     vector<Operator*> multiplierImplementationList;
     int selectedVersion;
-    Operator* IntMultiplierInstantiation;
 };
 
 }
