@@ -293,12 +293,13 @@ namespace flopoco{
 			}
 			else { // 2 tables only
 				for(int i=0; i<nbOfTables; i++) {
+					//cout << endl << "*****CP=" << getCriticalPath();
 					inPortMap (t[i] , "X", join("d",i));
 					outPortMap(t[i] , "Y", join("pp",i));
 					vhdl << instance(t[i] , join("KCMTable_",i));
 				}
 				vhdl << tab << declare("addOp0", wOut+g ) << " <= " << rangeAssign(wOut+g-1, ppiSize[0], "'0'") << " & pp0;" << endl;
-				adder = new IntAdder(target, wOut+g, inDelayMap("X",target->localWireDelay() + getCriticalPath()));
+				adder = new IntAdder(target, wOut+g, inDelayMap("X",  target->localWireDelay() + getCriticalPath() + target->localWireDelay(ppiSize[1]) + target->lutDelay()  ));
 				oplist.push_back(adder);
 				inPortMap (adder, "X" , "addOp0");
 				inPortMap (adder, "Y" , "pp1");
