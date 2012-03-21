@@ -12,6 +12,8 @@
   All rights reserved.
 */
 
+// TODO the first table should have lutSize input bits!
+
 #include "../Operator.hpp"
 
 #ifdef HAVE_SOLLYA
@@ -81,7 +83,7 @@ namespace flopoco{
 		setName(name.str()); 
 
 		mpfr_t log2C;
-		mpfr_init2(log2C, 1000); // should be enough for anybody
+		mpfr_init2(log2C, 100); // should be enough for anybody
 		mpfr_log2(log2C, mpC, GMP_RNDN);
 		msbC = mpfr_get_si(log2C, GMP_RNDU);
 
@@ -96,7 +98,30 @@ namespace flopoco{
 		addOutput("R", wOut);
 
 
-		int lutWidth = target->lutInputs();
+		// First set up all the sizes
+		int nbOfTables = 0;
+		int diSize[17*42];
+
+		diSize[0] = target->lutInputs();
+		int currentSize = diSize[0];
+		int i=1;
+		while(currentSize < wIn) {
+			diSize[i] = target->lutInputs()-1;
+			currentSize += diSize[i];
+			i++;			
+		}
+		nbOfTables = i;
+		i--;
+		diSize[i] = wIn - (currentSize - diSize[i]);
+			// Better to double an existing table than adding one more table and one more addition.
+		if (diSize[i]==1){ 
+			nbOfTables--;
+			diSize[i-1]+=1;
+		}
+		REPORT(INFO, "Constant multiplication in "<< nbOfTables << " tables");
+		for(i=0; i<nbOfTables; i++)
+			REPORT(INFO, "  address " << i << " on " << diSize[i]<< "bits" );
+		int lutWidth = target->lutInputs(); // -1 because the tools are able to pack LUT + addition in one LUT 
 
 		setCriticalPath( getMaxInputDelays(inputDelays) );
 
@@ -106,7 +131,7 @@ namespace flopoco{
 			g=0;
 
 			FixRealKCMTable *t; 
-			t = new FixRealKCMTable(target, this, 0, wIn, wOut, signedInput, false);
+			t = new FixRealKCMTable(target, this, 0, 0, wIn, wOut, signedInput, false);
 			oplist.push_back(t);
 			useSoftRAM(t);
 
@@ -122,14 +147,6 @@ namespace flopoco{
 		}else {
 			///////////////////////////////////   Generic Case  ////////////////////////////////////
 
-			int nbOfTables = int ( ceil( double(wIn)/double(lutWidth)) );
-			int lastLutWidth = (wIn%lutWidth==0?lutWidth: wIn%lutWidth);
-			// Better to double an existing table than adding one more table and one more addition.
-			if (lastLutWidth==1){ 
-				nbOfTables--;
-				lastLutWidth=lutWidth + 1;
-			}
-			REPORT(INFO, "Constant multiplication in "<< nbOfTables << " tables, input sizes:  for the first tables, " << lutWidth << ", for the last table: " << lastLutWidth);
 
 			// How many guard bits? ulp=2^lsbOut, and we want to ensure targetUlpError
 			// One half-ulp for the final rounding, and nbOfTables tables with an error of 2^(lsbOut-g-1) each 
@@ -147,57 +164,55 @@ namespace flopoco{
 
 			// All the tables are read in parallel
 			setCriticalPath(getMaxInputDelays(inputDelays));
-			// TODO Wrong if the last table uses two luts per bit! Use the delay reported by the table itself
-			manageCriticalPath( target->lutDelay() );
 
-
+			int ppiSize[42*17]; // should be more than enough for everybody
+			FixRealKCMTable *t[17*42]; 
 			//first split the input X into digits having lutWidth bits -> this is as generic as it gets :)
 			bool tableSigned=false, last;
-			for (int i=0; i<nbOfTables; i++) {
-				int diSize;
+			int highBit = wIn;
+			int ppI = wOut+g;
+			for (int i=nbOfTables-1; i>=0; i--) {
 
 				// The bit width of the output of this table
 				// The last table has to have wOut+g  bits.
 				// The previous one wOut+g-lastLutWidth
 				// the previous one wOut+g-lastLutWidth-lutWidth etc
-				int ppiSize;
 
+				vhdl << tab << declare( join("d",i), diSize[i] ) << " <= X" << range(highBit-1,   highBit - diSize[i]) << ";" <<endl;
+				highBit -= diSize[i];
+				ppiSize[i] = ppI;
+				ppI -= diSize[i];
 				if (i < nbOfTables-1){
-					vhdl << tab << declare( join("d",i), lutWidth ) << " <= X" << range(lutWidth*(i+1)-1, lutWidth*i ) << ";" <<endl;
-					diSize=lutWidth;
 					tableSigned=false;
 					last=false;
-					ppiSize = wOut+g  - lastLutWidth - (nbOfTables-2-i)*lutWidth ;
 				}
 				else {// last table is a bit special
-					vhdl << tab << declare( join("d",i), lastLutWidth ) << " <= " << "X" << range( wIn-1 , lutWidth*i ) << ";" <<endl;
-					diSize=lastLutWidth;
 					if(signedInput)
 						tableSigned=true;
 					last=true;
-					ppiSize=wOut+g;
 				}
 
-				REPORT(DEBUG, "Table i=" << i << ", input size=" << diSize<< ", output size=" << ppiSize);
+				REPORT(DEBUG, "Table i=" << i << ", input size=" << diSize[i] << ", output size=" << ppiSize[i]);
 
 				// Now produce the VHDL
 				
-				FixRealKCMTable *t; 
-				t = new FixRealKCMTable(target, this, i, diSize, ppiSize, tableSigned, last, 1);
-				useSoftRAM(t);
-				oplist.push_back(t);
+				t[i] = new FixRealKCMTable(target, this, i, highBit, // already updated 
+				                           diSize[i], ppiSize[i], tableSigned, last, 1);
+				useSoftRAM(t[i]);
+				oplist.push_back(t[i]);
             	
-				inPortMap (t , "X", join("d",i));
-				outPortMap(t , "Y", join("pp",i));
-				vhdl << instance(t , join("KCMTable_",i));
 
+#define USE_MADDER 0
+#if USE_MADDER // size= 190
 				vhdl << tab << declare( join("addOp",i), wOut+g ) << " <= ";
 				if (i!=nbOfTables-1) //if not the last table
-					vhdl << rangeAssign(wOut+g-1, ppiSize, "'0'") << " & " ;	
+					vhdl << rangeAssign(wOut+g-1, ppiSize[i], "'0'") << " & " ;	
 				vhdl << join("pp",i) << ";" << endl;
+#endif
 			}
 			
-			Operator* adder;
+				Operator* adder;
+#if USE_MADDER
 			if(nbOfTables>2) {
 				adder = new IntMultiAdder(target, wOut+g, nbOfTables, inDelayMap("X0",target->localWireDelay() + getCriticalPath()));
 				oplist.push_back(adder);
@@ -215,6 +230,83 @@ namespace flopoco{
 			vhdl << instance(adder, "Result_Adder");
 			syncCycleFromSignal("OutRes");
 			setCriticalPath( adder->getOutputDelay("R") );
+
+#else // Back to the rake!
+			if(nbOfTables>2) {
+				bool pipeinit;
+				bool pipe[17*42];
+				// First evaluate the pipeline by hand, because PipelineMadeEasy(TM) overestimates; 
+				double slack = 1/target->frequency() - getCriticalPath();
+
+				if (slack<0) {
+					slack = 1/target->frequency() - target_->ffDelay();
+					pipeinit = true;
+				} else
+					pipeinit = false;
+				 
+				slack -=  target->localWireDelay(ppiSize[0]) + target->lutDelay();
+				if (slack<0) {
+					slack = 1/target->frequency() - target_->ffDelay();
+					pipe[0] = true;
+				} else
+					pipe[0] = false;
+
+				// Second table + addition costs 1 adder delay
+				slack -= target->localWireDelay(ppiSize[1]) + target->adderDelay(ppiSize[1]);
+				if (slack<0) {
+					slack = 1/target->frequency()- target_->ffDelay();
+					pipe[1] = true;
+				} else
+					pipe[1] = false;
+				
+				// Following tables add just local routing and the delay of one small addition (this includes the additional LUT delay)
+				for (int i=2; i<nbOfTables; i++){
+					slack -= target->adderDelay(target->lutInputs()-1) + target->localWireDelay(ppiSize[i]);
+					if (slack<0) {
+						slack = 1/target->frequency()- target_->ffDelay();
+						pipe[i] = true;
+					} else
+						pipe[i] = false;
+				}
+
+				// Now we may build the pipeline
+
+				if(pipeinit)
+					nextCycle();
+				int i=0;
+				inPortMap (t[i] , "X", join("d",i));
+				outPortMap(t[i] , "Y", join("pp",i));
+				vhdl << instance(t[i] , join("KCMTable_",i));
+				if(pipe[0])
+					nextCycle();
+				vhdl << tab << declare("sum0", ppiSize[0]) << " <= pp0;" << endl;
+				for (i=1; i<nbOfTables; i++){
+					if(pipe[i])
+						nextCycle();
+					inPortMap (t[i] , "X", join("d",i));
+					outPortMap(t[i] , "Y", join("pp",i));
+					vhdl << instance(t[i] , join("KCMTable_",i));
+					
+					vhdl << tab << declare(join("sum",i), ppiSize[i]) // TODO prove that this addition never overflows, or add  +1 
+					     << " <= " << join("pp",i) << " + " << join("sum", i-1) << ";" << endl;
+				}
+				vhdl << declare("OutRes", ppiSize[nbOfTables-1]) << " <= " << join("sum", nbOfTables-1) << ";" << endl;
+				setCriticalPath( 1.0/target_->frequency() - target_->ffDelay() - slack );
+			}
+			else { // 2 tables only
+				vhdl << tab << declare("addOp0", wOut+g ) << " <= " << rangeAssign(wOut+g-1, ppiSize[0], "'0'") << " & pp0;" << endl;
+				adder = new IntAdder(target, wOut+g, inDelayMap("X",target->localWireDelay() + getCriticalPath()));
+				oplist.push_back(adder);
+				inPortMap (adder, "X" , "addOp0");
+				inPortMap (adder, "Y" , "pp1");
+				inPortMapCst(adder, "Cin" , "'0'");
+				outPortMap(adder, "R", "OutRes");
+				vhdl << instance(adder, "Result_Adder");
+				syncCycleFromSignal("OutRes");
+			}
+
+			
+#endif
 			vhdl << tab << "R <= OutRes" << range(wOut+g-1, g) << ";" << endl;
 			outDelayMap["R"] = getCriticalPath();
 		}
@@ -273,12 +365,12 @@ namespace flopoco{
 	/****************************** The FixRealKCMTable class ********************/
 
 
-	FixRealKCMTable::FixRealKCMTable(Target* target, FixRealKCM* mother, int i, int wIn, int wOut, bool signedInput, bool last, int pipeline) : 
-		Table(target, wIn, wOut, 0, -1, pipeline), mother(mother), index(i), signedInput(signedInput), last(last)
+	FixRealKCMTable::FixRealKCMTable(Target* target, FixRealKCM* mother, int i, int weight, int wIn, int wOut, bool signedInput, bool last, int pipeline) : 
+		Table(target, wIn, wOut, 0, -1, pipeline), mother(mother), index(i), weight(weight), signedInput(signedInput), last(last)
 	{
 		ostringstream name; 
 		srcFileName="FixRealKCM";
-		name << mother->getName() << "_Table_"<<i;
+		name << mother->getName() << "_Table_"<<index;
 		setName(name.str());
 	}
   
@@ -296,7 +388,7 @@ namespace flopoco{
 		mpfr_t mpX;
 		mpfr_init2(mpX, wIn);	
 		mpfr_set_si(mpX, x, GMP_RNDN); // should be exact
-		mpfr_mul_2si(mpX, mpX, index*(target()->lutInputs()), GMP_RNDN); //Exact
+		mpfr_mul_2si(mpX, mpX, weight, GMP_RNDN); //Exact
 		// now mpX is the integer radix-LUTinput digit, with its proper weight 
 
 		// Now we want to compute the product correctly rounded to LSB  lsbOut-g
