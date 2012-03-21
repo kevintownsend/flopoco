@@ -6,12 +6,12 @@
 
 #include "FixMicroRotation.hpp"
 
-using namespace std;
+using namespace std; 
 
 namespace flopoco{
 
-	FixMicroRotation::FixMicroRotation(Target* target, int wIx_, int wFx_, int wIy_, int wFy_, int wIz_, int wFz_, int stage_, int xyIncrement_, map<string, double> inputDelays) 
-		: Operator(target), wIx(wIx_), wFx(wFx_), wIy(wIy_), wFy(wFy_), wIz(wIz_), wFz(wFz_), stage(stage_), xyIncrement(xyIncrement_)
+	FixMicroRotation::FixMicroRotation(Target* target, int wIx_, int wFx_, int wIy_, int wFy_, int wIz_, int wFz_, int stage_, map<string, double> inputDelays) 
+		: Operator(target), wIx(wIx_), wFx(wFx_), wIy(wIy_), wFy(wFy_), wIz(wIz_), wFz(wFz_), stage(stage_)
 	{
 		int wInx = wIx + wFx + 1;
 		int wIny = wIy + wFy + 1;
@@ -34,47 +34,50 @@ namespace flopoco{
 		addInput  ( "Din" 			    );
 
 		// declaring output
-		addOutput  ( "Xout"  , wInx+xyIncrement, true );
-		addOutput  ( "Yout"  , wIny+xyIncrement, true ); 
+		addOutput  ( "Xout"  , wInx, true );
+		addOutput  ( "Yout"  , wIny, true ); 
 		addOutput  ( "Zout"  , wInz-1, true );
 		addOutput  ( "Dout"  			    );
 		
 		setCriticalPath(getMaxInputDelays(inputDelays));
 		
-		manageCriticalPath(target->localWireDelay(wInx+xyIncrement) + 2*target->lutDelay());
+		manageCriticalPath(target->localWireDelay(wInx) + 2*target->lutDelay());
 		
 		//shift Xin and Yin with 2^n positions to the right
 		if(stage==0){
-			vhdl << tab << declare("XinShift", wInx+xyIncrement) << " <= Xin & " << zg(xyIncrement, 0) << ";" <<endl;
+			vhdl << tab << declare("XinShift", wInx) << " <= Xin;" <<endl;
 		}else{
 			if(stage==1)
 				vhdl << tab << declare("Xin_signExtend", stage) << " <= Xin(" << wInx-1 << ");" <<endl;
 			else
 				vhdl << tab << declare("Xin_signExtend", stage) << " <= (others => Xin(" << wInx-1 << "));" <<endl;
-			vhdl << tab << declare("Xin_shifted", wInx-stage) << " <= Xin" << range(wInx-1, stage) << ";" <<endl;
-			vhdl << tab << declare("XinShift", wInx+xyIncrement) << " <= Xin_signExtend & Xin_shifted & " << zg(xyIncrement, 0) << ";" <<endl;
+			if(stage<wInx-1)
+				vhdl << tab << declare("Xin_shifted", wInx-stage) << " <= Xin" << range(wInx-1, stage) << ";" <<endl;
+			else
+				vhdl << tab << declare("Xin_shifted", wInx-stage) << " <= Xin(" << stage << ");" <<endl;
+			vhdl << tab << declare("XinShift", wInx) << " <= Xin_signExtend & Xin_shifted;" <<endl;
 		}
 		if(stage==0){
-			vhdl << tab << declare("YinShift", wIny+xyIncrement) << " <= Yin & " << zg(xyIncrement, 0) << ";" <<endl;
+			vhdl << tab << declare("YinShift", wIny) << " <= Yin;" <<endl;
 		}else{
 			if(stage==1)
 				vhdl << tab << declare("Yin_signExtend", stage) << " <= Yin(" << wIny-1 << ");" <<endl;
 			else
 				vhdl << tab << declare("Yin_signExtend", stage) << " <= (others => Yin(" << wIny-1 << "));" <<endl;
-			vhdl << tab << declare("Yin_shifted", wIny-stage) << " <= Yin" << range(wIny-1, stage) << ";" <<endl;
-			vhdl << tab << declare("YinShift", wIny+xyIncrement) << " <= Yin_signExtend & Yin_shifted & " << zg(xyIncrement, 0) << ";" <<endl;
+			if(stage<wInx-1)
+				vhdl << tab << declare("Yin_shifted", wIny-stage) << " <= Yin" << range(wIny-1, stage) << ";" <<endl;
+			else
+				vhdl << tab << declare("Yin_shifted", wIny-stage) << " <= Yin(" << stage << ");" <<endl;
+			vhdl << tab << declare("YinShift", wIny) << " <= Yin_signExtend & Yin_shifted;" <<endl;
 		}
-		
-		vhdl << tab << declare("XinExtended", wInx+xyIncrement) << " <= Xin & " << zg(xyIncrement, 0) << ";" <<endl;
-		vhdl << tab << declare("YinExtended", wIny+xyIncrement) << " <= Yin & " << zg(xyIncrement, 0) << ";" <<endl;
 		
 		setCycleFromSignal("XinShift");
 		syncCycleFromSignal("YinShift");
 		manageCriticalPath(target->localWireDelay(wInx+1) + target->lutDelay());
 		
 		//complement the shifted Xin and Yin if necessary
-		vhdl << tab << declare("newXinShift", wInx+xyIncrement) << " <= XinShift xor (" << wIny+xyIncrement-1 << " downto 0 => Din);" <<endl;
-		vhdl << tab << declare("newYinShift", wIny+xyIncrement) << " <= YinShift xor (" << wIny+xyIncrement-1 << " downto 0 => (not Din));" <<endl;
+		vhdl << tab << declare("newXinShift", wInx) << " <= XinShift xor (" << wIny-1 << " downto 0 => Din);" <<endl;
+		vhdl << tab << declare("newYinShift", wIny) << " <= YinShift xor (" << wIny-1 << " downto 0 => (not Din));" <<endl;
 		
 		//compute the carry-ins
 		vhdl << tab << declare("cInNewX") << "<= Din;" <<endl;
@@ -83,18 +86,16 @@ namespace flopoco{
 		nextCycle();
 		
 		//create Xout and Yout
-		// TODO - should create two adders, to be fair, but can save up space
-		// for the time being, as x and y have the same precisions
-		IntAdder *mainAdder = new IntAdder(target, wInx+xyIncrement, inDelayMap("X",getCriticalPath()));
+		IntAdder *mainAdder = new IntAdder(target, wInx, inDelayMap("X",getCriticalPath()));
 		oplist.push_back(mainAdder);
 		
-		inPortMap(mainAdder, "X", "XinExtended");
+		inPortMap(mainAdder, "X", "Xin");
 		inPortMap(mainAdder, "Y", "newYinShift");
 		inPortMap(mainAdder, "Cin", "cInNewY");
 		outPortMap (mainAdder, "R", "intXout");
 		vhdl << instance(mainAdder, "xAdder") << endl;
 		
-		inPortMap(mainAdder, "X", "YinExtended");
+		inPortMap(mainAdder, "X", "Yin");
 		inPortMap(mainAdder, "Y", "newXinShift");
 		inPortMap(mainAdder, "Cin", "cInNewX");
 		outPortMap (mainAdder, "R", "intYout");
@@ -109,19 +110,19 @@ namespace flopoco{
 		//create the constant signal for the arctan
 		mpfr_t zatan, zpow2;
 		
-		mpfr_init(zatan);
-		mpfr_init(zpow2);
+		mpfr_init2 (zatan, wInx);
+		mpfr_init2 (zpow2, wInx);
 		
-		mpfr_set_d(zpow2, 1, GMP_RNDN);
-		mpfr_mul_2si(zpow2, zpow2, (-1)*stage, GMP_RNDN);
-		mpfr_atan(zatan, zpow2, GMP_RNDN);
+		mpfr_set_d(zpow2, 1.0, GMP_RNDD);
+		mpfr_mul_2si(zpow2, zpow2, (-1)*stage, GMP_RNDD);
+		mpfr_atan(zatan, zpow2, GMP_RNDD);
 				
 		//create the arctangent factor to be added to Zin
 		bool negAtan = false;
 		std::string strConverted;
 		mpz_class fixConverted;
 		
-		fixConverted = fp2fix(zatan, wIz, wFz);			
+		fixConverted = fp2fix(zatan, wIx, wFx);			
 		
 		if(fixConverted<0){
 			fixConverted = fixConverted * (-1);
@@ -129,7 +130,7 @@ namespace flopoco{
 		}
 		strConverted = unsignedBinary(fixConverted, wInz-1);
 		
-		manageCriticalPath(target->localWireDelay(wInz+1) + 2*target->lutDelay());
+		manageCriticalPath(target->localWireDelay(wInz) + 2*target->lutDelay());
 		
 		setCycleFromSignal("Zin");
 		
@@ -174,7 +175,10 @@ namespace flopoco{
 		//create the outputs
 		vhdl << tab << "Xout" << " <= intXout;" <<endl;
 		vhdl << tab << "Yout" << " <= intYout;" <<endl;
-		vhdl << tab << "Zout" << " <= intZout(" << wInz-2 << " downto 0);" <<endl;
+		if(wInz-2 == 0)
+			vhdl << tab << "Zout" << " <= intZout(" << wInz-2 << ");" <<endl;
+		else
+			vhdl << tab << "Zout" << " <= intZout(" << wInz-2 << " downto 0);" <<endl;
 		vhdl << tab << "Dout" << " <= intDout;" <<endl;
 	};
 
@@ -318,8 +322,8 @@ namespace flopoco{
 	mpz_class FixMicroRotation::fp2fix(mpfr_t x, int wI, int wF){
 		mpz_class h;
 		
-		mpfr_mul_2si(x, x, wF, GMP_RNDN);
-        mpfr_get_z(h.get_mpz_t(), x,  GMP_RNDN);  
+		mpfr_mul_2si(x, x, wF, GMP_RNDD);
+        mpfr_get_z(h.get_mpz_t(), x,  GMP_RNDD);  
 		
 		return h;
 	}

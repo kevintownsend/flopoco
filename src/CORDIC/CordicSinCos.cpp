@@ -19,7 +19,12 @@ namespace flopoco{
 		int wInxy = wIxy + wFxy + 1;
 		int wInz = wIz + wFz + 1;
 		//TODO: verify the validity of the necessary guard bits
-		int guardz = 3, guardxy;
+		int guardz, guardxy;
+		guardxy = ceil(log2(1 + wI + wF))+3;
+		guardz  = guardxy;
+		
+		//initialize testing random number
+		gmp_randinit_mt (state);
 		
 		srcFileName="CordicSinCos";
 		ostringstream name;
@@ -42,13 +47,11 @@ namespace flopoco{
 		
 		manageCriticalPath(target->localWireDelay(wIn) + target->lutDelay());
 		
-		//create the Z0, Y0 and D0 signals for the first stage
-		guardxy = ceil(log2(1 + wI + wF));
-		guardz  = guardxy;
-		
+		//create the Z0, Y0 and D0 signals for the first stage		
 		mpf_t xinit;
 		
-		mpf_init2   (xinit, 256);
+		mpf_set_default_prec (1+wI+wF+guardxy);
+		mpf_init2   (xinit, 1+wI+wF+guardxy);
 		mpf_set_str (xinit, "0.607252935008881256169446834473e0", 10);
 		
 		vhdl << tab << declare("X0", wInxy + guardxy) << "<= \'0\' & \"" << generateFixPointNumber(xinit, wIxy, wFxy+guardxy) << "\";" << endl;
@@ -62,17 +65,15 @@ namespace flopoco{
 				
 		//create the wIn-1 stages of micro-rotations
 		int stage;
-		int wFxyIncrement;
 		FixMicroRotation *microRotation;
 		
 		wFxy += guardxy;
-		wFxyIncrement = 0;
 		wFz += guardz;
 		
-		for(stage=0; stage<1+wI+wF; stage++){
+		for(stage=0; stage<1+wI+wF+guardxy-1; stage++){
 			manageCriticalPath(target->localWireDelay(wIn));
 			
-			microRotation = new FixMicroRotation(target, wIxy, wFxy, wIxy, wFxy, wIz, wFz, stage, wFxyIncrement, inDelayMap("Xin",getCriticalPath()));
+			microRotation = new FixMicroRotation(target, wIxy, wFxy, wIxy, wFxy, wIz, wFz, stage, inDelayMap("Xin",getCriticalPath()));
 			oplist.push_back(microRotation);
 			
 			inPortMap(microRotation, "Xin", getParamName("X", stage));
@@ -124,23 +125,24 @@ namespace flopoco{
 		mpz_class svZ = tc->getInputValue("Z");
 		mpfr_t z, rsin, rcos;
 		mpz_t rsin_z, rcos_z;
+		int g = ceil(log2(1 + wI + wF))+3;
 		
 		/* Compute correct value */
-		mpfr_init2(z, 1+wI+wF);
-		mpfr_init2(rsin, 1+wI+wF); 
-		mpfr_init2(rcos, 1+wI+wF); 
-		mpz_init2 (rsin_z, 1+wI+wF);
-		mpz_init2 (rcos_z, 1+wI+wF);
+		mpfr_init2(z, 1+wI+wF+g);
+		mpfr_init2(rsin, 1+wI+wF+g); 
+		mpfr_init2(rcos, 1+wI+wF+g); 
+		mpz_init2 (rsin_z, 1+wI+wF+g);
+		mpz_init2 (rcos_z, 1+wI+wF+g);
 		
-		mpfr_set_z (z, svZ.get_mpz_t(), GMP_RNDN); // this rounding is exact
-		mpfr_div_2si (z, z, wF, GMP_RNDN); // this rounding is acually exact
+		mpfr_set_z (z, svZ.get_mpz_t(), GMP_RNDD); // this rounding is exact
+		mpfr_div_2si (z, z, wF, GMP_RNDD); // this rounding is acually exact
 		
 		mpfr_sin(rsin, z, GMP_RNDN); 
 		mpfr_cos(rcos, z, GMP_RNDN);
 		
-		mpfr_mul_2si (rsin, rsin, wF, GMP_RNDN); // exact rnd here
+		mpfr_mul_2si (rsin, rsin, wF, GMP_RNDD); // exact rnd here
 		mpfr_get_z (rsin_z, rsin, GMP_RNDN); // there can be a real rounding here
-		mpfr_mul_2si (rcos, rcos, wF, GMP_RNDN); // exact rnd here
+		mpfr_mul_2si (rcos, rcos, wF, GMP_RNDD); // exact rnd here
 		mpfr_get_z (rcos_z, rcos, GMP_RNDN); // there can be a real rounding here
 
 		// Set outputs 
@@ -170,36 +172,36 @@ namespace flopoco{
 		
 		//z=pi/2
 		tc = new TestCase (this);
-		mpfr_set_d (z, 1.5707963267949, GMP_RNDN); 
-		mpfr_mul_2si (z, z, wF, GMP_RNDN); 
-		mpfr_get_z (z_z, z, GMP_RNDN);  
+		mpfr_set_d (z, 1.5707963267949, GMP_RNDD); 
+		mpfr_mul_2si (z, z, wF, GMP_RNDD); 
+		mpfr_get_z (z_z, z, GMP_RNDD);  
 		tc -> addInput ("Z",mpz_class(z_z));
 		emulate(tc);
 		tcl->add(tc);
 		
 		//z=pi/6
 		tc = new TestCase (this); 
-		mpfr_set_d (z, 0.5235987755983, GMP_RNDN); 
-		mpfr_mul_2si (z, z, wF, GMP_RNDN); 
-		mpfr_get_z (z_z, z, GMP_RNDN);  
+		mpfr_set_d (z, 0.5235987755983, GMP_RNDD); 
+		mpfr_mul_2si (z, z, wF, GMP_RNDD); 
+		mpfr_get_z (z_z, z, GMP_RNDD);  
 		tc -> addInput ("Z",mpz_class(z_z));
 		emulate(tc);
 		tcl->add(tc);
 		
 		//z=pi/4
 		tc = new TestCase (this);
-		mpfr_set_d (z, 0.78539816339745, GMP_RNDN); 
-		mpfr_mul_2si (z, z, wF, GMP_RNDN); 
-		mpfr_get_z (z_z, z, GMP_RNDN);  
+		mpfr_set_d (z, 0.78539816339745, GMP_RNDD); 
+		mpfr_mul_2si (z, z, wF, GMP_RNDD); 
+		mpfr_get_z (z_z, z, GMP_RNDD);  
 		tc -> addInput ("Z",mpz_class(z_z));
 		emulate(tc);
 		tcl->add(tc);
 		
 		//z=pi/3
 		tc = new TestCase (this);
-		mpfr_set_d (z, 1.0471975511966, GMP_RNDN); 
-		mpfr_mul_2si (z, z, wF, GMP_RNDN); 
-		mpfr_get_z (z_z, z, GMP_RNDN);  
+		mpfr_set_d (z, 1.0471975511966, GMP_RNDD); 
+		mpfr_mul_2si (z, z, wF, GMP_RNDD); 
+		mpfr_get_z (z_z, z, GMP_RNDD);  
 		tc -> addInput ("Z",mpz_class(z_z));
 		emulate(tc);
 		tcl->add(tc);
@@ -207,8 +209,28 @@ namespace flopoco{
 		mpfr_clears (z, NULL);
 	}
 
-
-
+	//still testing
+	TestCase* CordicSinCos::buildRandomTestCase(int i) 
+	{
+		TestCase* tc = new TestCase(this);
+		mpz_class h;
+		mpfr_t randomNumber;
+		
+		mpfr_init2 (randomNumber, 1+wI+wF);
+		//gmp_randinit_mt (state);
+		mpfr_urandomb (randomNumber, state);
+		mpfr_mul_2si(randomNumber, randomNumber, wF, GMP_RNDD);
+        mpfr_get_z(h.get_mpz_t(), randomNumber,  GMP_RNDD);
+		
+		cout << "random value created:" << h << endl;
+		
+		tc = new TestCase (this);
+		tc -> addInput ("Z", h);
+		emulate(tc);
+		
+		return tc;
+	}
+	
 	std::string CordicSinCos::generateFixPointNumber(float x, int wI, int wF)
 	{
 		std::string result;
@@ -217,16 +239,16 @@ namespace flopoco{
 		mpfr_t mx;
 		mpz_class h;
 		
-		mpfr_init(mx);
+		mpfr_init2 (mx, 1+wI+wF);
 		
 		if(xcopy<0){
 			xcopy = xcopy * (-1);
 		}
 		
-		mpfr_set_d(mx, xcopy, GMP_RNDN);
-		mpfr_mul_2si(mx, mx, wF, GMP_RNDN);
+		mpfr_set_d(mx, xcopy, GMP_RNDD);
+		mpfr_mul_2si(mx, mx, wF, GMP_RNDD);
 		
-		mpfr_get_z(h.get_mpz_t(), mx,  GMP_RNDN); 
+		mpfr_get_z(h.get_mpz_t(), mx,  GMP_RNDD); 
         
         result = unsignedBinary(h, size);
         
@@ -240,17 +262,16 @@ namespace flopoco{
 		mpfr_t mx;
 		mpz_class h;
 		
-		mpfr_init(mx);
+		mpfr_init2 (mx, 1+wI+wF);
 		
 		if(x<0){
 			mpf_neg (x, x);
 		}
 		
-		mpfr_set_f(mx, x, GMP_RNDN);
-		mpfr_mul_2si(mx, mx, wF, GMP_RNDN);
+		mpfr_set_f(mx, x, GMP_RNDD);
+		mpfr_mul_2si(mx, mx, wF, GMP_RNDD);
 		
-		mpfr_get_z(h.get_mpz_t(), mx,  GMP_RNDN); 
-        
+		mpfr_get_z(h.get_mpz_t(), mx,  GMP_RNDD);         
         result = unsignedBinary(h, size);
         
         return result;

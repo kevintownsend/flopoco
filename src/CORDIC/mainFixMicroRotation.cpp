@@ -3,11 +3,11 @@
 #include <sstream>
 #include <fstream>
 #include <string>
-#include <cstdlib>
+#include <cstdlib> 
 
 
 #include "../FloPoCo.hpp" 
-
+ 
 #include "FixMicroRotation.hpp"
 
 
@@ -77,7 +77,7 @@ int main(int argc, char* argv[] )
 			target->setFrequency(1e6*(double)frequency);
 		}
 		cout << "Creating unit under test...\n";
-		op = new FixMicroRotation(target, wI, wF, wI, wF, wI, wF, 0, 0);
+		op = new FixMicroRotation(target, wI, wF, wI, wF, wI, wF, 0);
 		addOperator(oplist, op);
 		if(tests != 0){
 			cout << "Creating Testbench...\n";

@@ -7,12 +7,13 @@
 #include "FixMicroRotation.hpp"
 
 namespace flopoco{
-
+ 
 
 	class CordicSinCos : public Operator {
 	  
 	  public:
 		int wI, wF;
+		gmp_randstate_t state;
 	  
 		// constructor, defined there with two parameters (default value 0 for each)
 		CordicSinCos(Target* target, int wI, int wF, map<string, double> inputDelays = emptyDelayMap);
@@ -29,6 +30,9 @@ namespace flopoco{
 		/* function used to create Standard testCase defined by the developper */
 		void buildStandardTestCases(TestCaseList* tcl);
 
+		/* function used to generate n random test, where n is an argument of
+		  the function , this function is DEPRECATED, use the new function below*/
+		TestCase* buildRandomTestCase(int n);
 		
 		// definition of some function for the operator
 		std::string generateFixPointNumber(float x, int wI, int wF);
