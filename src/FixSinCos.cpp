@@ -56,7 +56,7 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	   input/output */
 
 	// declaring inputs
-	addInput("X", w);
+	addInput("X", w+1);
 	//addFullComment(" addFullComment for a large comment ");
 	//addComment("addComment for small left-aligned comment");
 
@@ -67,6 +67,7 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 
 	// the argument is reduced into (0,1/4) because one sin/cos
 	// computation in this range can always compute the right sin/cos
+	vhdl << tab << declare ("X_sgn",1) << " <= X" << of (w) << ";" << endl;
 	vhdl << tab << declare ("A",1) << " <= X" << of (w-1) << ";" << endl;
 	vhdl << tab << declare ("B",1) << " <= X" << of (w-2) << ";" << endl;
 	vhdl << tab << declare ("Y",w-2) << " <= X " << range (w-3,0) << ";" << endl;
@@ -83,7 +84,9 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	vhdl << tab << declare ("Y_prime", w-2) << " <= " << "not Y;" << endl;
 
 	// we need to know the number of guard bits _now_ to have a good Y_in
-	const int g=4; //guard bits
+	// some precision is lost with the optimized multipliers
+	const int g=5;
+	//const int g=4; //guard bits
 	//const int g=3; //guard bits
 	//we take 4 guard bits even if error < 8 ulp because rounding will take
 	//another half final ulp
@@ -527,7 +530,7 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	     << " <= C_out when Exch = '1' else S_out;" << endl;
 	vhdl << tab << declare ("C_wo_sgn", w)
 	     << " <= S_out when Exch = '1' else C_out;" << endl;
-	vhdl << tab << "S <= '0' & S_wo_sgn;" << endl;
+	vhdl << tab << "S <= X_sgn & S_wo_sgn;" << endl;
 	vhdl << tab << "C <= A & C_wo_sgn;" << endl;
 
 	REPORT(INFO, " wA=" << wA <<" wZ=" << wZ <<" wZ2=" << wZ_2 <<" wZ3=" << wZ_3 );
@@ -542,7 +545,9 @@ void FixSinCos::emulate(TestCase * tc)
 	mpz_class sx = tc->getInputValue ("X");
 	mpfr_t x, sind, cosd, sinu, cosu, pixd, pixu, one_minus_ulp;
 	mpz_t sind_z, cosd_z, sinu_z, cosu_z;
-	mpfr_init2 (x, 1+w);
+	//one extra bit of precision because we temporarily hold the sign
+	//in the mantissa
+	mpfr_init2 (x, 2+w);
 	mpz_init2 (sind_z, 1+w);
 	mpz_init2 (cosd_z, 1+w);
 	mpz_init2 (sinu_z, 1+w);
@@ -556,6 +561,11 @@ void FixSinCos::emulate(TestCase * tc)
 
 	mpfr_set_z (x, sx.get_mpz_t(), GMP_RNDD); // this rounding is exact
 	mpfr_div_2si (x, x, w, GMP_RNDD); // this rounding is acually exact
+	// now handle the sign of x
+	if (mpfr_cmp_ui (x, 1UL) >= 0) { // if (x >= 1.f)
+		mpfr_add_si (x, x, -1, GMP_RNDD); //this rnd is exact
+		mpfr_setsign (x, x, 1, GMP_RNDD); //1 == neg
+	}
 	int i=0, ep; // ep: extra precision
 	do {
 		ep = 1 << i;
@@ -569,7 +579,8 @@ void FixSinCos::emulate(TestCase * tc)
 		mpfr_const_pi (pixu, GMP_RNDU);
 		mpfr_mul (pixd, pixd, x, GMP_RNDD);
 		mpfr_mul (pixu, pixu, x, GMP_RNDU);
-		if (mpfr_cmp_ui_2exp (x, 1UL, -1) < 0) { // if (x < 0.5f)
+		if (mpfr_cmp_ui_2exp (x, 1UL, -1) < 0
+		 && mpfr_cmp_si_2exp (x, -1L, -1) > 0) { // if (|x| < 0.5f)
 			// then sin is increasing near x
 			mpfr_sin (sind, pixd, GMP_RNDD);
 			mpfr_sin (sinu, pixu, GMP_RNDU);
@@ -578,8 +589,13 @@ void FixSinCos::emulate(TestCase * tc)
 			mpfr_sin (sind, pixu, GMP_RNDD); // use the upper x for the lower sin
 			mpfr_sin (sinu, pixd, GMP_RNDU);
 		}
-		mpfr_cos (cosd, pixu, GMP_RNDD); // cos decreases from 0 to pi
-		mpfr_cos (cosu, pixd, GMP_RNDU);
+		if (mpfr_cmp_ui (x, 0UL) > 0) {
+			mpfr_cos (cosd, pixu, GMP_RNDD); // cos decreases from 0 to pi
+			mpfr_cos (cosu, pixd, GMP_RNDU);
+		} else {
+			mpfr_cos (cosd, pixd, GMP_RNDD); // cos increases from -pi to 0
+			mpfr_cos (cosu, pixu, GMP_RNDU);
+		}	
 		// multiply by the (1-ulp) factor now
 		mpfr_mul (sind, sind, one_minus_ulp, GMP_RNDD);
 		mpfr_mul (cosd, cosd, one_minus_ulp, GMP_RNDD);
@@ -594,6 +610,15 @@ void FixSinCos::emulate(TestCase * tc)
 		if (mpfr_cmp_ui (cosu, 0) < 0) {
 			mpfr_setsign (cosu, cosu, 0, GMP_RNDU);
 			mpfr_add_ui (cosu, cosu, 1, GMP_RNDU);
+		}
+		// and we have to do the same for sin
+		if (mpfr_cmp_ui (sind, 0) < 0) {
+			mpfr_setsign (sind, sind, 0, GMP_RNDD); // exact rnd
+			mpfr_add_ui (sind, sind, 1, GMP_RNDD); // exact rnd
+		}
+		if (mpfr_cmp_ui (sinu, 0) < 0) {
+			mpfr_setsign (sinu, sinu, 0, GMP_RNDU);
+			mpfr_add_ui (sinu, sinu, 1, GMP_RNDU);
 		}
 		mpfr_mul_2si (sind, sind, w, GMP_RNDD); // exact rnd here
 		mpfr_mul_2si (cosd, cosd, w, GMP_RNDD);
@@ -618,13 +643,25 @@ void FixSinCos::emulate(TestCase * tc)
 	mpz_class sind_zc (sind_z), cosd_zc (cosd_z);
 	// and since FunctionEvaluator does only faithful rounding
 	// we add also as expected results the upper roundings
+	mpz_class neg_zero (1); neg_zero <<= w;
 	tc->addExpectedOutput ("S", sind_zc);
+	// we consider negative and positive 0 as being the same
+	if (sind_zc == 0)
+		tc->addExpectedOutput ("S", neg_zero);
+	if (sind_zc == neg_zero)
+		tc->addExpectedOutput ("S", mpz_class(0));
 	tc->addExpectedOutput ("C", cosd_zc);
-	mpz_class ones (1); ones <<= w; ones -= 1;
-	if ((sind_zc & ones) != ones)
+	if (cosd_zc == 0)
+		tc->addExpectedOutput ("C", neg_zero);
+	if (cosd_zc == neg_zero)
+		tc->addExpectedOutput ("C", mpz_class(0));
+	mpz_class ones (neg_zero - 1);
+	if ((sind_zc & ones) != ones) {
 		tc->addExpectedOutput ("S", sind_zc+1);
-	if ((cosd_zc & ones) != ones)
+	}
+	if ((cosd_zc & ones) != ones) {
 		tc->addExpectedOutput ("C", cosd_zc+1);
+	}
 	mpfr_clears (x, sind, cosd, sinu, cosu,
 	             pixd, pixu, one_minus_ulp, NULL);
 	mpz_clear (sind_z);
