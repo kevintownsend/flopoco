@@ -2367,7 +2367,7 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 			if (i+nargs > argc)
 				usage(argv[0],opname); // and exit
 			int w = checkStrictlyPositive(argv[i++], argv[0]); // must be >=2 actually
-			Operator* tg = new CordicSinCos(target, 1, w-1);
+			Operator* tg = new CordicSinCos(target, 1, w-2);
 			addOperator(oplist, tg);
 		}
 
