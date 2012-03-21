@@ -6,7 +6,7 @@
 #include "../utils.hpp"
 
 namespace flopoco{
-
+ 
 
 	class FixMicroRotation : public Operator {
 	  

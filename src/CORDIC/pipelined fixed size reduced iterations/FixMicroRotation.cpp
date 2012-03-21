@@ -2,7 +2,7 @@
 #include <sstream>
 
 #include "gmp.h"
-#include "mpfr.h"
+#include "mpfr.h" 
 
 #include "FixMicroRotation.hpp"
 
@@ -41,7 +41,7 @@ namespace flopoco{
 		
 		setCriticalPath(getMaxInputDelays(inputDelays));
 		
-		manageCriticalPath(target->localWireDelay(wInx+xyIncrement) + 2*target->lutDelay());
+		manageCriticalPath(target->localWireDelay(wInx+xyIncrement) + target->lutDelay());
 		
 		//shift Xin and Yin with 2^n positions to the right
 		if(stage==0){
@@ -158,7 +158,7 @@ namespace flopoco{
 		
 		setCycleFromSignal("intZout");
 		setCriticalPath(mainAdder->getOutputDelay("R"));
-		manageCriticalPath(target->localWireDelay(wInz) + target->lutDelay());
+		manageCriticalPath(target->localWireDelay(wInz));
 		
 		//create Dout as the result of the comparison of intZout with 0
 		vhdl << tab << declare("intDout") << " <= intZout(" << wInz-1 <<");" <<endl;

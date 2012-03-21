@@ -52,8 +52,8 @@ int main(int argc, char* argv[] )
 	
 	vector<Operator*> oplist;
 
-	int wI = 1;
-	int wF = 32;
+	int wI = 0;
+	int wF = 64;
 	
 	CordicSinCos* op;
 	

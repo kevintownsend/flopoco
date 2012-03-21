@@ -4,16 +4,16 @@
 #include "../Operator.hpp"
 #include "../utils.hpp"
 #include "../IntMultiplier.hpp"
+#include "../IntAdder.hpp"
 
-#include "FixMicroRotation.hpp"
-
-namespace flopoco{
+namespace flopoco{ 
 
 
 	class CordicSinCos : public Operator {
 	  
 	  public:
 		int wI, wF;
+		gmp_randstate_t state;
 	  
 		// constructor, defined there with two parameters (default value 0 for each)
 		CordicSinCos(Target* target, int wI, int wF, map<string, double> inputDelays = emptyDelayMap);
@@ -39,6 +39,8 @@ namespace flopoco{
 		std::string generateFixPointNumber(mpf_t x, int wI, int wF);
 		
 		std::string getParamName(std::string s, int number);
+		
+		mpz_class fp2fix(mpfr_t x, int wI, int wF);
 	};
 
 }

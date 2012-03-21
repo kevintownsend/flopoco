@@ -15,7 +15,7 @@ namespace flopoco{
 		: Operator(target), wI(wI_), wF(wF_)
 	{
 		int wIn = wI + 2*wF + 1;
-		int wIxy = wI, wFxy = wF, wIz = wI, wFz = wF;
+		int wIxy = wI+2, wFxy = wF, wIz = wI+2, wFz = wF;
 		int wInxy = wIxy + wFxy + 1;
 		int wInz = wIz + wFz + 1;
 		//TODO: verify the validity of the necessary guard bits
@@ -54,10 +54,10 @@ namespace flopoco{
 		mpf_init2   (xinit, 1+wI+wF+guardxy);
 		mpf_set_str (xinit, "0.607252935008881256169446834473e0", 10);
 		
-		vhdl << tab << declare("X0", wInxy + guardxy) << "<= \'0\' & \"" << generateFixPointNumber(xinit, wIxy, wFxy+guardxy) << "\";" << endl;
-		vhdl << tab << declare("Y0", wInxy + guardxy) << "<= \'0\' & \"" << generateFixPointNumber(0.0, wIxy, wFxy+guardxy) << "\";" << endl;
-		vhdl << tab << declare("Z0", wInz  + guardxy) << "<= Z & " << zg(guardxy, 0) << ";" << endl;
-		vhdl << tab << declare("D0") << "<= Z(" << wIz+wFz << ");" << endl;
+		vhdl << tab << declare("X0", wInxy + guardxy) << "<= " << zg(3, 0) << " & \"" << generateFixPointNumber(xinit, wIxy-2, wFxy+guardxy) << "\";" << endl;
+		vhdl << tab << declare("Y0", wInxy + guardxy) << "<= " << zg(3, 0) << " & \"" << generateFixPointNumber(0.0, wIxy-2, wFxy+guardxy) << "\";" << endl;
+		vhdl << tab << declare("Z0", wInz  + guardxy) << "<= Z(" << wI+wF << ") & Z(" << wI+wF << ") & Z & " << zg(guardxy, 0) << ";" << endl;
+		vhdl << tab << declare("D0") << "<= Z(" << wIz+wFz-2 << ");" << endl;
 		
 		mpf_clear (xinit);
 		
@@ -98,8 +98,8 @@ namespace flopoco{
 		//perform rounding of the final result
 		manageCriticalPath(target->localWireDelay(1+wI+wF) + target->lutDelay() + target->adderDelay(1+wI+wF+1));
 		
-		vhdl << tab << declare("preRoundedIntXout", 1+wI+wF+1) << "<= " << getParamName("X", stage) << "(" << wIxy+wFxy << " downto " << guardxy-1 << ");" << endl;
-		vhdl << tab << declare("preRoundedIntYout", 1+wI+wF+1) << "<= " << getParamName("Y", stage) << "(" << wIxy+wFxy << " downto " << guardxy-1 << ");" << endl;
+		vhdl << tab << declare("preRoundedIntXout", 1+wI+wF+1) << "<= " << getParamName("X", stage) << "(" << wIxy+wFxy-2 << " downto " << guardxy-1 << ");" << endl;
+		vhdl << tab << declare("preRoundedIntYout", 1+wI+wF+1) << "<= " << getParamName("Y", stage) << "(" << wIxy+wFxy-2 << " downto " << guardxy-1 << ");" << endl;
 		
 		vhdl << tab << declare("roundedIntXout", 1+wI+wF+1) << "<= preRoundedIntXout "
 															<< "+"
@@ -158,10 +158,13 @@ namespace flopoco{
 	void CordicSinCos::buildStandardTestCases(TestCaseList * tcl) 
 	{
 		TestCase* tc;
+		mpf_t zinit;
 		mpfr_t z;
 		mpz_t z_z;
 		
-		mpfr_init2(z, 1+wI+wF);
+		//mpf_set_default_prec (1+wI+wF+guardxy);
+		
+		mpfr_init2(z, 1+wI+wF+ceil(log2(1 + wI + wF))+3);
 		mpz_init2 (z_z, 1+wI+wF);
 		
 		//z=0
@@ -172,8 +175,12 @@ namespace flopoco{
 		
 		//z=pi/2
 		tc = new TestCase (this);
-		mpfr_set_d (z, 1.5707963267949, GMP_RNDD); 
-		mpfr_mul_2si (z, z, wF, GMP_RNDD); 
+		
+		mpf_init2   (zinit, 1+wI+wF+ceil(log2(1 + wI + wF))+3);
+		mpf_set_str (zinit, "1.5707963267949e0", 10);
+		mpfr_set_f (z, zinit, GMP_RNDD); 
+		
+		mpfr_mul_2si (z, z, wF-1, GMP_RNDD); 
 		mpfr_get_z (z_z, z, GMP_RNDD);  
 		tc -> addInput ("Z",mpz_class(z_z));
 		emulate(tc);
@@ -181,8 +188,12 @@ namespace flopoco{
 		
 		//z=pi/6
 		tc = new TestCase (this); 
-		mpfr_set_d (z, 0.5235987755983, GMP_RNDD); 
-		mpfr_mul_2si (z, z, wF, GMP_RNDD); 
+		
+		mpf_init2   (zinit, 1+wI+wF+ceil(log2(1 + wI + wF))+3);
+		mpf_set_str (zinit, "0.5235987755983e0", 10);
+		mpfr_set_f (z, zinit, GMP_RNDD); 
+		
+		mpfr_mul_2si (z, z, wF-1, GMP_RNDD); 
 		mpfr_get_z (z_z, z, GMP_RNDD);  
 		tc -> addInput ("Z",mpz_class(z_z));
 		emulate(tc);
@@ -190,8 +201,12 @@ namespace flopoco{
 		
 		//z=pi/4
 		tc = new TestCase (this);
-		mpfr_set_d (z, 0.78539816339745, GMP_RNDD); 
-		mpfr_mul_2si (z, z, wF, GMP_RNDD); 
+		
+		mpf_init2   (zinit, 1+wI+wF+ceil(log2(1 + wI + wF))+3);
+		mpf_set_str (zinit, "0.78539816339745e0", 10);
+		mpfr_set_f (z, zinit, GMP_RNDD); 
+		
+		mpfr_mul_2si (z, z, wF-1, GMP_RNDD); 
 		mpfr_get_z (z_z, z, GMP_RNDD);  
 		tc -> addInput ("Z",mpz_class(z_z));
 		emulate(tc);
@@ -199,9 +214,14 @@ namespace flopoco{
 		
 		//z=pi/3
 		tc = new TestCase (this);
-		mpfr_set_d (z, 1.0471975511966, GMP_RNDD); 
-		mpfr_mul_2si (z, z, wF, GMP_RNDD); 
+		
+		mpf_init2   (zinit, 1+wI+2+wF+ceil(log2(1 + wI + wF))+3);
+		mpf_set_str (zinit, "1.0471975511966e0", 10);
+		mpfr_set_f (z, zinit, GMP_RNDD);
+		
+		mpfr_mul_2si (z, z, wF-1, GMP_RNDD); 
 		mpfr_get_z (z_z, z, GMP_RNDD);  
+		
 		tc -> addInput ("Z",mpz_class(z_z));
 		emulate(tc);
 		tcl->add(tc);
@@ -217,9 +237,8 @@ namespace flopoco{
 		mpfr_t randomNumber;
 		
 		mpfr_init2 (randomNumber, 1+wI+wF);
-		//gmp_randinit_mt (state);
 		mpfr_urandomb (randomNumber, state);
-		mpfr_mul_2si(randomNumber, randomNumber, wF, GMP_RNDD);
+		mpfr_mul_2si(randomNumber, randomNumber, wF-1, GMP_RNDD);
         mpfr_get_z(h.get_mpz_t(), randomNumber,  GMP_RNDD);
 		
 		cout << "random value created:" << h << endl;
