@@ -575,7 +575,6 @@ extern vector<Operator*> oplist;
 			
 			setCycleFromSignal("sig_prod"); 
 			setCriticalPath(icm->getOutputDelay("R"));
-			cout << "**************************" << getCriticalPath() << endl;			
 			vhdl << tab << declare("norm") << " <= sig_prod" << of(icm->rsize -1) << ";"<<endl;
 			setSignalDelay("norm", getCriticalPath()); // save the delay for later
 			
