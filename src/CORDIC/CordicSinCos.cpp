@@ -5,26 +5,25 @@
 #include "mpfr.h"
 
 #include "CordicSinCos.hpp"
-#include "../ConstMult/FixRealKCM.hpp"
 
 using namespace std;
 
 namespace flopoco{
 
-	CordicSinCos::CordicSinCos(Target* target, int wI_, int wF_, map<string, double> inputDelays) 
-		: Operator(target), wI(wI_), wF(wF_)
+	CordicSinCos::CordicSinCos(Target* target, int w_, map<string, double> inputDelays) 
+		: Operator(target), w(w_), wI(0), wF(w_)
 	{
-		int wIn = wI + 2*wF + 1;
 		int wIxy = wI+2, wFxy = wF, wIz = wI+2, wFz = wF;
 		int wInxy = wIxy + wFxy + 1;
 		int wInz = wIz + wFz + 1;
 		//TODO: verify the validity of the necessary guard bits
 		int guardz, guardxy;
-		guardxy = ceil(log2(1 + wI + wF))+3;
-		guardz  = guardxy;
 		
 		//initialize testing random number
 		gmp_randinit_mt (state);
+		
+		guardxy = ceil(log2(1 + wI + wF))+3;
+		guardz  = guardxy;
 		
 		srcFileName="CordicSinCos";
 		ostringstream name;
@@ -37,98 +36,217 @@ namespace flopoco{
 		setName( name.str() );
 
 		// declaring inputs
-		addInput  ( "Z"  , 1+wI+wF, true );
+		addInput  ( "X"  , 1+wI+wF, true );
 
 		// declaring output
-		addOutput  ( "Xout"  , 1+wI+wF, true );
-		addOutput  ( "Yout"  , 1+wI+wF, true );
+		addOutput  ( "C"  , 1+wI+wF, true );
+		addOutput  ( "S"  , 1+wI+wF, true );
 		
 		setCriticalPath(getMaxInputDelays(inputDelays));
 		
-		manageCriticalPath(target->localWireDelay(wIn) + target->lutDelay());
+		manageCriticalPath(target->localWireDelay(wInxy + ceil(log2(1 + wI + wF))));
 		
-		//create the Z0, Y0 and D0 signals for the first stage		
+		//create the Z0, Y0 and D0 signals for the first stage
 		mpf_t xinit;
 		
 		mpf_set_default_prec (1+wI+wF+guardxy);
 		mpf_init2   (xinit, 1+wI+wF+guardxy);
 		mpf_set_str (xinit, "0.607252935008881256169446834473e0", 10);
 		
-		vhdl << tab << declare("X0", wInxy + guardxy) << "<= " << zg(3, 0) << " & \"" << generateFixPointNumber(xinit, wIxy-2, wFxy+guardxy) << "\";" << endl;
-		vhdl << tab << declare("Y0", wInxy + guardxy) << "<= " << zg(3, 0) << " & \"" << generateFixPointNumber(0.0, wIxy-2, wFxy+guardxy) << "\";" << endl;
-		vhdl << tab << declare("Z0", wInz  + guardxy) << "<= Z(" << wI+wF << ") & Z(" << wI+wF << ") & Z & " << zg(guardxy, 0) << ";" << endl;
-		vhdl << tab << declare("D0") << "<= Z(" << wIz+wFz-2 << ");" << endl;
+		vhdl << tab << declare("C0", wInxy + guardxy) << "<= " << zg(3, 0) << " & \"" << generateFixPointNumber(xinit, wIxy-2, wFxy+guardxy) << "\";" << endl;
+		vhdl << tab << declare("S0", wInxy + guardxy) << "<= " << zg(3, 0) << " & \"" << generateFixPointNumber(0.0, wIxy-2, wFxy+guardxy) << "\";" << endl;
+		vhdl << tab << declare("X0", wInz  + guardxy) << "<= X(" << wI+wF << ") & X(" << wI+wF << ") & X & " << zg(guardxy, 0) << ";" << endl;
+		vhdl << tab << declare("D0") << "<= X(" << wIz+wFz-2 << ");" << endl;
 		
 		mpf_clear (xinit);
 		
 		setCycleFromSignal("D0");
 				
-		//create the wIn-1 stages of micro-rotations
+		//create the stages of micro-rotations
 		int stage;
-		FixMicroRotation *microRotation;
 		
 		wFxy += guardxy;
 		wFz += guardz;
 		
-		for(stage=0; stage<1+wI+wF+guardxy-1; stage++){
-			manageCriticalPath(target->localWireDelay(wIn));
+		for(stage=0; stage<1+wI+2+wF+guardxy-2; stage++){
 			
-			microRotation = new FixMicroRotation(target, wIxy, wFxy, wIxy, wFxy, wIz, wFz, stage, inDelayMap("Xin",getCriticalPath()));
-			oplist.push_back(microRotation);
+			manageCriticalPath(target->localWireDelay(1+wIxy+wFxy) + target->lutDelay());
 			
-			inPortMap(microRotation, "Xin", getParamName("X", stage));
-			inPortMap(microRotation, "Yin", getParamName("Y", stage));
-			inPortMap(microRotation, "Zin", getParamName("Z", stage));
-			inPortMap(microRotation, "Din", getParamName("D", stage));
-			outPortMap(microRotation, "Xout", getParamName("X", stage+1));
-			outPortMap(microRotation, "Yout", getParamName("Y", stage+1));
-			outPortMap(microRotation, "Zout", getParamName("Z", stage+1));
-			outPortMap(microRotation, "Dout", getParamName("D", stage+1));
-			vhdl << instance(microRotation, getParamName("microRotation", stage)) << endl;
+			//shift Xin and Yin with 2^n positions to the right
+			if(stage==0){
+				vhdl << tab << declare(getParamName("CShift", stage), 1+wIxy+wFxy) << " <= C" << stage << ";" <<endl;
+			}else{
+				if(stage==1)
+					vhdl << tab << declare(getParamName("CsignExtend", stage), stage) << " <= C" << stage << "(" << 1+wIxy+wFxy-1 << ");" <<endl;
+				else
+					vhdl << tab << declare(getParamName("CsignExtend", stage), stage) << " <= (others => C" << stage << "(" << 1+wIxy+wFxy-1 << "));" <<endl;
+				vhdl << tab << declare(getParamName("Cshifted", stage), 1+wIxy+wFxy-stage) << " <= C" << stage << range(1+wIxy+wFxy-1, stage) << ";" <<endl;
+				vhdl << tab << declare(getParamName("CShift", stage), 1+wIxy+wFxy) << " <= CsignExtend" << stage << " & Cshifted" << stage << ";" <<endl;
+			}
+			if(stage==0){
+				vhdl << tab << declare(getParamName("SShift", stage), 1+wIxy+wFxy) << " <= S" << stage << ";" <<endl;
+			}else{
+				if(stage==1)
+					vhdl << tab << declare(getParamName("SsignExtend", stage), stage) << " <= S" << stage << "(" << 1+wIxy+wFxy-1 << ");" <<endl;
+				else
+					vhdl << tab << declare(getParamName("SsignExtend", stage), stage) << " <= (others => S" << stage << "(" << 1+wIxy+wFxy-1 << "));" <<endl;
+				vhdl << tab << declare(getParamName("Sshifted", stage), 1+wIxy+wFxy-stage) << " <= S" << stage << range(1+wIxy+wFxy-1, stage) << ";" <<endl;
+				vhdl << tab << declare(getParamName("SShift", stage), 1+wIxy+wFxy) << " <= SsignExtend" << stage << " & Sshifted" << stage << ";" <<endl;
+			}
 			
-			setCycleFromSignal(getParamName("X", stage+1));
-			syncCycleFromSignal(getParamName("Y", stage+1));
-			syncCycleFromSignal(getParamName("Z", stage+1));
-			syncCycleFromSignal(getParamName("D", stage+1));
-			setCriticalPath(microRotation->getOutputDelay("Dout"));
+			setCycleFromSignal(getParamName("CShift", stage));
+			syncCycleFromSignal(getParamName("SShift", stage));
+			manageCriticalPath(target->localWireDelay(1+wIxy+wFxy) + target->lutDelay());
 			
+			//complement the shifted Xin and Yin if necessary
+			vhdl << tab << declare(getParamName("newCShift", stage), 1+wIxy+wFxy) << " <= CShift" << stage << " xor (" << 1+wIxy+wFxy-1 << " downto 0 => D" << stage << ");" <<endl;
+			vhdl << tab << declare(getParamName("newSShift", stage), 1+wIxy+wFxy) << " <= SShift" << stage << " xor (" << 1+wIxy+wFxy-1 << " downto 0 => (not D" << stage << "));" <<endl;
+			
+			//compute the carry-ins
+			vhdl << tab << declare(getParamName("cInNewC", stage)) << "<= D" << stage << ";" <<endl;
+			vhdl << tab << declare(getParamName("cInNewS", stage)) << "<= not D" << stage << ";" <<endl;
+			
+			nextCycle();
+			
+			//create Xout and Yout
+			IntAdder *mainAdder = new IntAdder(target, 1+wIxy+wFxy, inDelayMap("X",getCriticalPath()));
+			oplist.push_back(mainAdder);
+			
+			inPortMap(mainAdder, "X", getParamName("C", stage));
+			inPortMap(mainAdder, "Y", getParamName("newSShift", stage));
+			inPortMap(mainAdder, "Cin", getParamName("cInNewS", stage));
+			outPortMap (mainAdder, "R", getParamName("intC", (stage+1)));
+			vhdl << instance(mainAdder, getParamName("cAdder", stage)) << endl;
+			
+			inPortMap(mainAdder, "X", getParamName("S", stage));
+			inPortMap(mainAdder, "Y", getParamName("newCShift", stage));
+			inPortMap(mainAdder, "Cin", getParamName("cInNewC", stage));
+			outPortMap (mainAdder, "R", getParamName("intS", (stage+1)));
+			vhdl << instance(mainAdder, getParamName("sAdder", stage)) << endl;
+			
+			setCycleFromSignal(getParamName("intC", (stage+1)));
+			syncCycleFromSignal(getParamName("intS", (stage+1)));
+			setCriticalPath(mainAdder->getOutputDelay("R"));
+			
+			double xyPath = getCriticalPath();
+			
+			//create the constant signal for the arctan
+			mpfr_t zatan, zpow2, constPi;
+			
+			mpfr_init(zatan);
+			mpfr_init(zpow2);
+			mpfr_init(constPi);
+			
+			mpfr_set_d(zpow2, 1, GMP_RNDD);
+			mpfr_mul_2si(zpow2, zpow2, (-1)*stage, GMP_RNDD);
+			mpfr_atan(zatan, zpow2, GMP_RNDD);
+			mpfr_mul_2si(zatan, zatan, 1, GMP_RNDD);
+			mpfr_const_pi( constPi, GMP_RNDD);
+			mpfr_div(zatan, zatan, constPi, GMP_RNDD);
+					
+			//create the arctangent factor to be added to Zin
+			bool negAtan = false;
+			std::string strConverted;
+			mpz_class fixConverted;
+			
+			fixConverted = fp2fix(zatan, wIxy, wFxy);			
+			
+			if(fixConverted<0){
+				fixConverted = fixConverted * (-1);
+				negAtan = true;
+			}
+			strConverted = unsignedBinary(fixConverted, 1+wIz+wFz-1);
+			
+			mpfr_free_cache();
+			
+			manageCriticalPath(target->localWireDelay(1+wIz+wFz) + target->lutDelay());
+			
+			setCycleFromSignal(getParamName("X",stage));
+			
+			vhdl << tab << declare(getParamName("atan2PowStage", stage), 1+wIz+wFz) << " <= \'0\' & \"" << strConverted << "\";" <<endl;
+			if(negAtan){
+				vhdl << tab << declare(getParamName("newAtan2PowStage", stage), 1+wIz+wFz) << " <= atan2PowStage" << stage << " xor (" << 1+wIz+wFz-1 << " downto 0 => D" << stage <<");" <<endl;
+				vhdl << tab << declare(getParamName("cInX", stage)) << "<= D" << stage << ";" <<endl;
+			}
+			else{
+				vhdl << tab << declare(getParamName("newAtan2PowStage", stage), 1+wIz+wFz) << " <= atan2PowStage" << stage << " xor (" << 1+wIz+wFz-1 << " downto 0 => (not D" << stage << "));" <<endl;
+				vhdl << tab << declare(getParamName("cInX", stage)) << "<= not D" << stage << ";" <<endl;
+			}
+			
+			syncCycleFromSignal(getParamName("newAtan2PowStage", stage));
+			nextCycle();
+			
+			//create Zout
+			mainAdder = new IntAdder(target, 1+wIz+wFz, inDelayMap("X",getCriticalPath()));
+			oplist.push_back(mainAdder);
+			
+			inPortMap(mainAdder, "X", getParamName("X", stage));
+			inPortMap(mainAdder, "Y", getParamName("newAtan2PowStage", stage));
+			inPortMap(mainAdder, "Cin", getParamName("cInX", stage));
+			outPortMap (mainAdder, "R", getParamName("intX", (stage+1)));
+			vhdl << instance(mainAdder, getParamName("xAdder", stage)) << endl;
+			
+			setCycleFromSignal(getParamName("intX", (stage+1)));
+			setCriticalPath(mainAdder->getOutputDelay("R"));
+			manageCriticalPath(target->localWireDelay(1+wIz+wFz));
+			
+			//create Dout as the result of the comparison of intZout with 0
+			vhdl << tab << declare(getParamName("intD", (stage+1))) << " <= intX" << stage+1 << "(" << 1+wIz+wFz-1 <<");" <<endl;
+			
+			double zPath = getCriticalPath();
+			
+			if (getCycleFromSignal(getParamName("intC", (stage+1))) == getCycleFromSignal(getParamName("intD", (stage+1))))
+				setCriticalPath(max(zPath, getCriticalPath()));
+			else
+				if (syncCycleFromSignal(getParamName("intC", (stage+1))))
+					setCriticalPath(xyPath);
+					
+			//create the outputs
+			vhdl << tab << declare(getParamName("C", stage+1), 1+wIxy+wFxy) << " <= intC" << stage+1 << ";" <<endl;
+			vhdl << tab << declare(getParamName("S", stage+1), 1+wIxy+wFxy) << " <= intS" << stage+1 << ";" <<endl;
+			vhdl << tab << declare(getParamName("X", stage+1), 1+wIz-1+wFz) << " <= intX" << stage+1 << "(" << 1+wIz+wFz-2 << " downto 0);" <<endl;
+			vhdl << tab << declare(getParamName("D", stage+1)) << " <= intD" << stage+1 << ";" <<endl;
+			
+			//decrement the size of Z
 			wIz--;
 		}
 		
-		//perform rounding of the final result
-		manageCriticalPath(target->localWireDelay(1+wI+wF) + target->lutDelay() + target->adderDelay(1+wI+wF+1));
+		manageCriticalPath(target->localWireDelay(1+wIxy+wFxy));
 		
-		vhdl << tab << declare("preRoundedIntXout", 1+wI+wF+1) << "<= " << getParamName("X", stage) << "(" << wIxy+wFxy-2 << " downto " << guardxy-1 << ");" << endl;
-		vhdl << tab << declare("preRoundedIntYout", 1+wI+wF+1) << "<= " << getParamName("Y", stage) << "(" << wIxy+wFxy-2 << " downto " << guardxy-1 << ");" << endl;
+		vhdl << tab << declare("preRoundedIntCout", 1+wI+wF+1) << "<= " << getParamName("C", stage) << "(" << wIxy-2+wFxy << " downto " << guardxy-1 << ");" << endl;
+		vhdl << tab << declare("preRoundedIntSout", 1+wI+wF+1) << "<= " << getParamName("S", stage) << "(" << wIxy-2+wFxy << " downto " << guardxy-1 << ");" << endl;
 		
-		vhdl << tab << declare("roundedIntXout", 1+wI+wF+1) << "<= preRoundedIntXout "
+		vhdl << tab << declare("roundedIntCout", 1+wI+wF+1) << "<= preRoundedIntCout "
 															<< "+"
 															<< " (" << zg(1+wI+wF, 0) << " & \'1\');" << endl;
-		vhdl << tab << declare("roundedIntYout", 1+wI+wF+1) << "<= preRoundedIntYout "
+		vhdl << tab << declare("roundedIntSout", 1+wI+wF+1) << "<= preRoundedIntSout "
 															<< "+"
 															<< " (" << zg(1+wI+wF, 0) << " & \'1\');" << endl;
 															
-		setCycleFromSignal("roundedIntXout");
-		syncCycleFromSignal("roundedIntYout");
+		setCycleFromSignal("roundedIntSout");
+		syncCycleFromSignal("roundedIntCout");
 		
 		//assign output
 		manageCriticalPath(target->localWireDelay(1+wI+wF));
 		
-		vhdl << tab << "Xout" << "<= roundedIntXout(" << 1+wI+wF << " downto 1);" << endl;
-		vhdl << tab << "Yout" << "<= roundedIntYout(" << 1+wI+wF << " downto 1);" << endl;
+		vhdl << tab << "C" << "<= roundedIntCout(" << 1+wI+wF << " downto 1);" << endl;
+		vhdl << tab << "S" << "<= roundedIntSout(" << 1+wI+wF << " downto 1);" << endl;
 	};
 
 
 	void CordicSinCos::emulate(TestCase * tc) 
 	{
 		/* Get I/O values */
-		mpz_class svZ = tc->getInputValue("Z");
-		mpfr_t z, rsin, rcos;
+		mpz_class svZ = tc->getInputValue("X");
+		mpfr_t z, constPi, rsin, rcos;
 		mpz_t rsin_z, rcos_z;
 		int g = ceil(log2(1 + wI + wF))+3;
 		
 		/* Compute correct value */
 		mpfr_init2(z, 1+wI+wF+g);
+		
+		mpfr_init2(constPi, 1+wI+wF+g);
+		
 		mpfr_init2(rsin, 1+wI+wF+g); 
 		mpfr_init2(rcos, 1+wI+wF+g); 
 		mpz_init2 (rsin_z, 1+wI+wF+g);
@@ -136,6 +254,10 @@ namespace flopoco{
 		
 		mpfr_set_z (z, svZ.get_mpz_t(), GMP_RNDD); // this rounding is exact
 		mpfr_div_2si (z, z, wF, GMP_RNDD); // this rounding is acually exact
+		
+		mpfr_mul_2si(z, z, -1, GMP_RNDD);
+		mpfr_const_pi( constPi, GMP_RNDD);
+		mpfr_mul(z, z, constPi, GMP_RNDD);
 		
 		mpfr_sin(rsin, z, GMP_RNDN); 
 		mpfr_cos(rcos, z, GMP_RNDN);
@@ -147,11 +269,12 @@ namespace flopoco{
 
 		// Set outputs 
 		mpz_class sin_zc (rsin_z), cos_zc (rcos_z);
-		tc->addExpectedOutput ("Xout", cos_zc);
-		tc->addExpectedOutput ("Yout", sin_zc);
+		tc->addExpectedOutput ("C", cos_zc);
+		tc->addExpectedOutput ("S", sin_zc);
 
 		// clean up
 		mpfr_clears (z, rsin, rcos, NULL);		
+		mpfr_free_cache();
 	}
 
 
@@ -165,11 +288,11 @@ namespace flopoco{
 		//mpf_set_default_prec (1+wI+wF+guardxy);
 		
 		mpfr_init2(z, 1+wI+wF+ceil(log2(1 + wI + wF))+3);
-		mpz_init2 (z_z, 1+wI+wF);
+		mpz_init2 (z_z, 1+wI+wF+ceil(log2(1 + wI + wF))+3);
 		
 		//z=0
 		tc = new TestCase (this);
-		tc -> addInput ("Z",mpz_class(0));
+		tc -> addInput ("X",mpz_class(0));
 		emulate(tc);
 		tcl->add(tc);
 		
@@ -177,12 +300,13 @@ namespace flopoco{
 		tc = new TestCase (this);
 		
 		mpf_init2   (zinit, 1+wI+wF+ceil(log2(1 + wI + wF))+3);
-		mpf_set_str (zinit, "1.5707963267949e0", 10);
+		//mpf_set_str (zinit, "1.5707963267949e0", 10);
+		mpf_set_str (zinit, "1.0e0", 10);
 		mpfr_set_f (z, zinit, GMP_RNDD); 
 		
 		mpfr_mul_2si (z, z, wF-1, GMP_RNDD); 
 		mpfr_get_z (z_z, z, GMP_RNDD);  
-		tc -> addInput ("Z",mpz_class(z_z));
+		tc -> addInput ("X",mpz_class(z_z));
 		emulate(tc);
 		tcl->add(tc);
 		
@@ -190,12 +314,13 @@ namespace flopoco{
 		tc = new TestCase (this); 
 		
 		mpf_init2   (zinit, 1+wI+wF+ceil(log2(1 + wI + wF))+3);
-		mpf_set_str (zinit, "0.5235987755983e0", 10);
+		//mpf_set_str (zinit, "0.5235987755983e0", 10);
+		mpf_set_str (zinit, "0.33333333333333e0", 10);
 		mpfr_set_f (z, zinit, GMP_RNDD); 
 		
 		mpfr_mul_2si (z, z, wF-1, GMP_RNDD); 
 		mpfr_get_z (z_z, z, GMP_RNDD);  
-		tc -> addInput ("Z",mpz_class(z_z));
+		tc -> addInput ("X",mpz_class(z_z));
 		emulate(tc);
 		tcl->add(tc);
 		
@@ -203,12 +328,13 @@ namespace flopoco{
 		tc = new TestCase (this);
 		
 		mpf_init2   (zinit, 1+wI+wF+ceil(log2(1 + wI + wF))+3);
-		mpf_set_str (zinit, "0.78539816339745e0", 10);
+		//mpf_set_str (zinit, "0.78539816339745e0", 10);
+		mpf_set_str (zinit, "0.5e0", 10);
 		mpfr_set_f (z, zinit, GMP_RNDD); 
 		
 		mpfr_mul_2si (z, z, wF-1, GMP_RNDD); 
 		mpfr_get_z (z_z, z, GMP_RNDD);  
-		tc -> addInput ("Z",mpz_class(z_z));
+		tc -> addInput ("X",mpz_class(z_z));
 		emulate(tc);
 		tcl->add(tc);
 		
@@ -216,13 +342,14 @@ namespace flopoco{
 		tc = new TestCase (this);
 		
 		mpf_init2   (zinit, 1+wI+2+wF+ceil(log2(1 + wI + wF))+3);
-		mpf_set_str (zinit, "1.0471975511966e0", 10);
+		//mpf_set_str (zinit, "1.0471975511966e0", 10);
+		mpf_set_str (zinit, "0.66666666666666e0", 10);
 		mpfr_set_f (z, zinit, GMP_RNDD);
 		
 		mpfr_mul_2si (z, z, wF-1, GMP_RNDD); 
 		mpfr_get_z (z_z, z, GMP_RNDD);  
 		
-		tc -> addInput ("Z",mpz_class(z_z));
+		tc -> addInput ("X",mpz_class(z_z));
 		emulate(tc);
 		tcl->add(tc);
 		
@@ -244,7 +371,7 @@ namespace flopoco{
 		cout << "random value created:" << h << endl;
 		
 		tc = new TestCase (this);
-		tc -> addInput ("Z", h);
+		tc -> addInput ("X", h);
 		emulate(tc);
 		
 		return tc;
@@ -305,9 +432,17 @@ namespace flopoco{
 		return aux.str();
 		
 	}
+	
+	mpz_class CordicSinCos::fp2fix(mpfr_t x, int wI, int wF){
+		mpz_class h;
+		
+		mpfr_mul_2si(x, x, wF, GMP_RNDD);
+        mpfr_get_z(h.get_mpz_t(), x,  GMP_RNDD);  
+		
+		return h;
+	}
 
 }
-
 
 
 

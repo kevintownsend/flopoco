@@ -52,8 +52,9 @@ int main(int argc, char* argv[] )
 	
 	vector<Operator*> oplist;
 
-	int wI = 0;
-	int wF = 64;
+	//int wI = 0;
+	//int wF = 32;
+	int w = 32;
 	
 	CordicSinCos* op;
 	
@@ -77,7 +78,7 @@ int main(int argc, char* argv[] )
 			target->setFrequency(1e6*(double)frequency);
 		}
 		cout << "Creating unit under test...\n";
-		op = new CordicSinCos(target, wI, wF);
+		op = new CordicSinCos(target, w);
 		addOperator(oplist, op);
 		if(tests != 0){
 			cout << "Creating Testbench...\n";
