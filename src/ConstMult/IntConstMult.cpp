@@ -463,7 +463,7 @@ namespace flopoco{
 		
 		// copy the top of the DAG into variable R
 		vhdl << endl << tab << "R <= " << implementation->result->name << "("<< rsize-1 <<" downto 0);"<<endl;
-		
+		outDelayMap["R"] = delay;
 	}
 
 
