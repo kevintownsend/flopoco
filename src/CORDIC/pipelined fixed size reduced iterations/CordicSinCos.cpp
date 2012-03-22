@@ -10,8 +10,8 @@ using namespace std;
 
 namespace flopoco{
 
-	CordicSinCos::CordicSinCos(Target* target, int wI_, int wF_, map<string, double> inputDelays) 
-		: Operator(target), wI(wI_), wF(wF_)
+	CordicSinCos::CordicSinCos(Target* target, int w_, map<string, double> inputDelays) 
+		: Operator(target), w(w_), wI(0), wF(w_)
 	{
 		int wIxy = wI+2, wFxy = wF, wIz = wI+2, wFz = wF;
 		int wInxy = wIxy + wFxy + 1;
@@ -36,11 +36,11 @@ namespace flopoco{
 		setName( name.str() );
 
 		// declaring inputs
-		addInput  ( "Z"  , 1+wI+wF, true );
+		addInput  ( "X"  , 1+wI+wF, true );
 
 		// declaring output
-		addOutput  ( "Xout"  , 1+wI+wF, true );
-		addOutput  ( "Yout"  , 1+wI+wF, true );
+		addOutput  ( "C"  , 1+wI+wF, true );
+		addOutput  ( "S"  , 1+wI+wF, true );
 		
 		setCriticalPath(getMaxInputDelays(inputDelays));
 		
@@ -53,10 +53,10 @@ namespace flopoco{
 		mpf_init2   (xinit, 1+wI+wF+guardxy);
 		mpf_set_str (xinit, "0.607252935008881256169446834473e0", 10);
 		
-		vhdl << tab << declare("X0", wInxy + guardxy) << "<= " << zg(3, 0) << " & \"" << generateFixPointNumber(xinit, wIxy-2, wFxy+guardxy) << "\";" << endl;
+		vhdl << tab << declare("X0", wInxy + guardxy) << "<= " << zg(2, 0) << " & \"" << generateFixPointNumber(xinit, wIxy-2, wFxy+guardxy) << "\";" << endl;
 		vhdl << tab << declare("Y0", wInxy + guardxy) << "<= " << zg(3, 0) << " & \"" << generateFixPointNumber(0.0, wIxy-2, wFxy+guardxy) << "\";" << endl;
-		vhdl << tab << declare("Z0", wInz  + guardxy) << "<= Z(" << wI+wF << ") & Z(" << wI+wF << ") & Z & " << zg(guardxy, 0) << ";" << endl;
-		vhdl << tab << declare("D0") << "<= Z(" << wIz+wFz-2 << ");" << endl;
+		vhdl << tab << declare("Z0", wInz  + guardxy) << "<= X(" << wI+wF << ") & X(" << wI+wF << ") & X & " << zg(guardxy, 0) << ";" << endl;
+		vhdl << tab << declare("D0") << "<= X(" << wIz+wFz-2 << ");" << endl;
 		
 		mpf_clear (xinit);
 		
@@ -131,14 +131,18 @@ namespace flopoco{
 			double xyPath = getCriticalPath();
 			
 			//create the constant signal for the arctan
-			mpfr_t zatan, zpow2;
+			mpfr_t zatan, zpow2, constPi;
 			
 			mpfr_init(zatan);
 			mpfr_init(zpow2);
+			mpfr_init(constPi);
 			
 			mpfr_set_d(zpow2, 1, GMP_RNDD);
 			mpfr_mul_2si(zpow2, zpow2, (-1)*stage, GMP_RNDD);
 			mpfr_atan(zatan, zpow2, GMP_RNDD);
+			mpfr_mul_2si(zatan, zatan, 1, GMP_RNDD);
+			mpfr_const_pi( constPi, GMP_RNDD);
+			mpfr_div(zatan, zatan, constPi, GMP_RNDD);
 					
 			//create the arctangent factor to be added to Zin
 			bool negAtan = false;
@@ -152,6 +156,8 @@ namespace flopoco{
 				negAtan = true;
 			}
 			strConverted = unsignedBinary(fixConverted, 1+wIz+wFz-1);
+			
+			mpfr_free_cache();
 			
 			manageCriticalPath(target->localWireDelay(1+wIz+wFz) + target->lutDelay());
 			
@@ -210,17 +216,32 @@ namespace flopoco{
 		vhdl << tab << declare("signExtendZ", stage) << "<= (others => " << getParamName("D", stage) << ");" << endl;
 		vhdl << tab << declare("fullZ", 1+wIz+wFz+stage) << "<= signExtendZ & " << getParamName("Z", stage) << ";" << endl;
 		
-		//multiply by Z
+		mpf_t piDiv2;
+		mpf_init2   (piDiv2, 2*(1+wI+wF+guardxy));
+		mpf_set_str (piDiv2, "1.570796326794895e0", 10);
+		
+		vhdl << tab << declare("piDiv2", 1+wIz+wFz+stage) << "<= " 
+			<< zg(2, 0) << " & \"" << generateFixPointNumber(piDiv2, wIz+stage-2, wFz) << "\";" << endl;
+				
+		//multiply the angle z again by pi/2
 		IntMultiplier* zmultiplier = new IntMultiplier(target, 1+wIxy+wFxy, 1+wIz+wFz+stage, inDelayMap("X",getCriticalPath()), true, 1.0);
 		oplist.push_back(zmultiplier);
 		
+		inPortMap(zmultiplier, "X", "fullZ");
+		inPortMap(zmultiplier, "Y", "piDiv2");
+		outPortMap(zmultiplier, "R", "zMulPiDiv2");
+		vhdl << instance(zmultiplier, "zMultiplierPi") << endl;
+		
+		vhdl << tab << declare("piDiv2short", 1+wIz+wFz+stage) << "<= zMulPiDiv2(" << 1+wIz+2*wFz+stage-1 << " downto " << 1+wFz-1 << ");" << endl;
+		
+		//multiply by Z
 		inPortMap(zmultiplier, "X", getParamName("X", stage));
-		inPortMap(zmultiplier, "Y", "fullZ");
+		inPortMap(zmultiplier, "Y", "piDiv2short");
 		outPortMap(zmultiplier, "R", "XZ");
 		vhdl << instance(zmultiplier, "zMultiplierX") << endl;
 		
 		inPortMap(zmultiplier, "X", getParamName("Y", stage));
-		inPortMap(zmultiplier, "Y", "fullZ");
+		inPortMap(zmultiplier, "Y", "piDiv2short");
 		outPortMap(zmultiplier, "R", "YZ");
 		vhdl << instance(zmultiplier, "zMultiplierY") << endl;
 		
@@ -258,8 +279,8 @@ namespace flopoco{
 		//assign output
 		manageCriticalPath(target->localWireDelay(1+wI+wF));
 		
-		vhdl << tab << "Xout" << "<= roundedIntXout(" << 1+wI+wF << " downto 1);" << endl;
-		vhdl << tab << "Yout" << "<= roundedIntYout(" << 1+wI+wF << " downto 1);" << endl;
+		vhdl << tab << "C" << "<= roundedIntXout(" << 1+wI+wF << " downto 1);" << endl;
+		vhdl << tab << "S" << "<= roundedIntYout(" << 1+wI+wF << " downto 1);" << endl;
 	};
 
 
@@ -267,12 +288,15 @@ namespace flopoco{
 	{
 		/* Get I/O values */
 		mpz_class svZ = tc->getInputValue("Z");
-		mpfr_t z, rsin, rcos;
+		mpfr_t z, constPi, rsin, rcos;
 		mpz_t rsin_z, rcos_z;
 		int g = ceil(log2(1 + wI + wF))+3;
 		
 		/* Compute correct value */
 		mpfr_init2(z, 1+wI+wF+g);
+		
+		mpfr_init2(constPi, 1+wI+wF+g);
+		
 		mpfr_init2(rsin, 1+wI+wF+g); 
 		mpfr_init2(rcos, 1+wI+wF+g); 
 		mpz_init2 (rsin_z, 1+wI+wF+g);
@@ -280,6 +304,10 @@ namespace flopoco{
 		
 		mpfr_set_z (z, svZ.get_mpz_t(), GMP_RNDD); // this rounding is exact
 		mpfr_div_2si (z, z, wF, GMP_RNDD); // this rounding is acually exact
+		
+		mpfr_mul_2si(z, z, -1, GMP_RNDD);
+		mpfr_const_pi( constPi, GMP_RNDD);
+		mpfr_mul(z, z, constPi, GMP_RNDD);
 		
 		mpfr_sin(rsin, z, GMP_RNDN); 
 		mpfr_cos(rcos, z, GMP_RNDN);
@@ -296,6 +324,7 @@ namespace flopoco{
 
 		// clean up
 		mpfr_clears (z, rsin, rcos, NULL);		
+		mpfr_free_cache();
 	}
 
 
@@ -309,7 +338,7 @@ namespace flopoco{
 		//mpf_set_default_prec (1+wI+wF+guardxy);
 		
 		mpfr_init2(z, 1+wI+wF+ceil(log2(1 + wI + wF))+3);
-		mpz_init2 (z_z, 1+wI+wF);
+		mpz_init2 (z_z, 1+wI+wF+ceil(log2(1 + wI + wF))+3);
 		
 		//z=0
 		tc = new TestCase (this);
@@ -321,7 +350,8 @@ namespace flopoco{
 		tc = new TestCase (this);
 		
 		mpf_init2   (zinit, 1+wI+wF+ceil(log2(1 + wI + wF))+3);
-		mpf_set_str (zinit, "1.5707963267949e0", 10);
+		//mpf_set_str (zinit, "1.5707963267949e0", 10);
+		mpf_set_str (zinit, "1.0e0", 10);
 		mpfr_set_f (z, zinit, GMP_RNDD); 
 		
 		mpfr_mul_2si (z, z, wF-1, GMP_RNDD); 
@@ -334,7 +364,8 @@ namespace flopoco{
 		tc = new TestCase (this); 
 		
 		mpf_init2   (zinit, 1+wI+wF+ceil(log2(1 + wI + wF))+3);
-		mpf_set_str (zinit, "0.5235987755983e0", 10);
+		//mpf_set_str (zinit, "0.5235987755983e0", 10);
+		mpf_set_str (zinit, "0.33333333333333e0", 10);
 		mpfr_set_f (z, zinit, GMP_RNDD); 
 		
 		mpfr_mul_2si (z, z, wF-1, GMP_RNDD); 
@@ -347,7 +378,8 @@ namespace flopoco{
 		tc = new TestCase (this);
 		
 		mpf_init2   (zinit, 1+wI+wF+ceil(log2(1 + wI + wF))+3);
-		mpf_set_str (zinit, "0.78539816339745e0", 10);
+		//mpf_set_str (zinit, "0.78539816339745e0", 10);
+		mpf_set_str (zinit, "0.5e0", 10);
 		mpfr_set_f (z, zinit, GMP_RNDD); 
 		
 		mpfr_mul_2si (z, z, wF-1, GMP_RNDD); 
@@ -360,7 +392,8 @@ namespace flopoco{
 		tc = new TestCase (this);
 		
 		mpf_init2   (zinit, 1+wI+2+wF+ceil(log2(1 + wI + wF))+3);
-		mpf_set_str (zinit, "1.0471975511966e0", 10);
+		//mpf_set_str (zinit, "1.0471975511966e0", 10);
+		mpf_set_str (zinit, "0.66666666666666e0", 10);
 		mpfr_set_f (z, zinit, GMP_RNDD);
 		
 		mpfr_mul_2si (z, z, wF-1, GMP_RNDD); 
@@ -435,7 +468,7 @@ namespace flopoco{
 		mpfr_mul_2si(mx, mx, wF, GMP_RNDD);
 		
 		mpfr_get_z(h.get_mpz_t(), mx,  GMP_RNDD);         
-        result = unsignedBinary(h, size);
+        result = unsignedBinary(h, size+1);
         
         return result;
 	}

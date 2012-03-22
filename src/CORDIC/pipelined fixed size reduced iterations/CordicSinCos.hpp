@@ -12,11 +12,11 @@ namespace flopoco{
 	class CordicSinCos : public Operator {
 	  
 	  public:
-		int wI, wF;
+		int w, wI, wF;
 		gmp_randstate_t state;
 	  
 		// constructor, defined there with two parameters (default value 0 for each)
-		CordicSinCos(Target* target, int wI, int wF, map<string, double> inputDelays = emptyDelayMap);
+		CordicSinCos(Target* target, int w, map<string, double> inputDelays = emptyDelayMap);
 
 		// destructor
 		~CordicSinCos() {};
