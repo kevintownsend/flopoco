@@ -88,7 +88,7 @@
 #ifdef HAVE_SOLLYA
 #include "FixSinCos.hpp"
 
-#include "CORDIC/FixMicroRotation.hpp"
+//#include "CORDIC/FixMicroRotation.hpp"
 #include "CORDIC/CordicSinCos.hpp"
 #endif
 
