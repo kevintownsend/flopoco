@@ -366,8 +366,8 @@ static void usage(char *name, string opName = ""){
 	}
 	if ( full || opName == "FixSinCos" || opName == "FixSin" || opName == "FixCos"){
 		NEWOP( "FixSinCos","w");
-		cerr << "      For a fixed-point signed input x in ]-1,1[, calculates (1-2^(-w)) sin(pi*x)\n";
-		cerr << "      and (1-2^(-w)) cos(pi*x); w is the precision not counting the leading 0\n";
+		cerr << "      For a fixed-point 2's complement input x in [-1,1[, calculates\n";
+		cerr << "      (1-2^(-w))*{sin,cos}(pi*x); w is the precision not counting the sign bit\n";
 	}
 	if ( full || opName == "CordicCSinCos" || opName == "FixSin" || opName == "FixCos"){
 		NEWOP( "CordicSinCos","w");

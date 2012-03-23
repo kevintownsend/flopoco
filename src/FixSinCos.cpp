@@ -529,20 +529,22 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	     << " <= C_out when Exch = '1' else S_out;" << endl;
 	vhdl << tab << declare ("C_wo_sgn", w)
 	     << " <= S_out when Exch = '1' else C_out;" << endl;
-	vhdl << tab << declare ("S_neg_wo_sgn", w)
-	     << " <= (not S_wo_sgn) + 1;" << endl;
-	vhdl << tab << declare ("C_neg_wo_sgn", w)
-	     << " <= (not C_wo_sgn) + 1;" << endl;
+	vhdl << tab << declare ("S_wo_sgn_ext", w+1)
+	     << " <= '0' & S_wo_sgn;" << endl
+	     << tab << declare ("C_wo_sgn_ext", w+1)
+	     << " <= '0' & C_wo_sgn;" << endl;
+	vhdl << tab << declare ("S_wo_sgn_neg", w+1)
+	     << " <= (not S_wo_sgn_ext) + 1;" << endl;
+	vhdl << tab << declare ("C_wo_sgn_neg", w+1)
+	     << " <= (not C_wo_sgn_ext) + 1;" << endl;
 	//vhdl << tab << declare ("S_sgn", 1)
 	//     << " <= X_sgn;" << endl;
 	vhdl << tab << declare ("C_sgn", 1)
 	     << " <= A xor X_sgn;" << endl;
-	vhdl << tab << declare ("S_sgn_wo_sgn", w)
-	     << " <= S_wo_sgn when X_sgn = '0' else S_neg_wo_sgn;" << endl
-	     << tab << declare ("C_sgn_wo_sgn", w)
-	     << " <= C_wo_sgn when C_sgn = '0' else C_neg_wo_sgn;" << endl;
-	vhdl << tab << "S <= X_sgn & S_sgn_wo_sgn;" << endl;
-	vhdl << tab << "C <= C_sgn & C_sgn_wo_sgn;" << endl;
+	vhdl << tab << "S <= S_wo_sgn_ext when X_sgn = '0'"
+	     << " else S_wo_sgn_neg;" << endl
+	     << tab << "C <= C_wo_sgn_ext when C_sgn = '0'"
+	     << " else C_wo_sgn_neg;" << endl;
 
 	REPORT(INFO, " wA=" << wA <<" wZ=" << wZ <<" wZ2=" << wZ_2 <<" wZ3=" << wZ_3 );
 };
