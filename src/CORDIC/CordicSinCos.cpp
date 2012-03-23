@@ -39,8 +39,8 @@ namespace flopoco{
 		addInput  ( "X"  , 1+wI+wF, true );
 
 		// declaring output
-		addOutput  ( "C"  , 1+wI+wF, true );
-		addOutput  ( "S"  , 1+wI+wF, true );
+		addOutput  ( "C"  , 1+wI+wF, 2 );
+		addOutput  ( "S"  , 1+wI+wF, 2 );
 		
 		setCriticalPath(getMaxInputDelays(inputDelays));
 		
@@ -106,6 +106,7 @@ namespace flopoco{
 			vhdl << tab << declare(getParamName("cInNewC", stage)) << "<= D" << stage << ";" <<endl;
 			vhdl << tab << declare(getParamName("cInNewS", stage)) << "<= not D" << stage << ";" <<endl;
 			
+			#if 0
 			nextCycle();
 			
 			//create Xout and Yout
@@ -127,15 +128,21 @@ namespace flopoco{
 			setCycleFromSignal(getParamName("intC", (stage+1)));
 			syncCycleFromSignal(getParamName("intS", (stage+1)));
 			setCriticalPath(mainAdder->getOutputDelay("R"));
-			
 			double xyPath = getCriticalPath();
+			
+#else
+			manageCriticalPath(target->localWireDelay() + target->adderDelay(1+wIxy+wFxy));
+			vhdl << tab << declare(getParamName("intC", (stage+1)), 1+wIxy+wFxy) << " <= " << getParamName("C", stage) <<  " + " <<  getParamName("newSShift", stage) <<  " + " <<  getParamName("cInNewC", stage) << ";" << endl;
+			vhdl << tab << declare(getParamName("intS", (stage+1)), 1+wIxy+wFxy) << " <= " << getParamName("S", stage) <<  " + " <<  getParamName("newCShift", stage) <<  " + " <<  getParamName("cInNewS", stage) << ";" << endl;
+#endif
+
 			
 			//create the constant signal for the arctan
 			mpfr_t zatan, zpow2, constPi;
 			
-			mpfr_init(zatan);
-			mpfr_init(zpow2);
-			mpfr_init(constPi);
+			mpfr_init2(zatan, 200);
+			mpfr_init2(zpow2, 200);
+			mpfr_init2(constPi, 200);
 			
 			mpfr_set_d(zpow2, 1, GMP_RNDD);
 			mpfr_mul_2si(zpow2, zpow2, (-1)*stage, GMP_RNDD);
@@ -161,7 +168,7 @@ namespace flopoco{
 			
 			manageCriticalPath(target->localWireDelay(1+wIz+wFz) + target->lutDelay());
 			
-			setCycleFromSignal(getParamName("X",stage));
+			// setCycleFromSignal(getParamName("X",stage));
 			
 			vhdl << tab << declare(getParamName("atan2PowStage", stage), 1+wIz+wFz) << " <= \'0\' & \"" << strConverted << "\";" <<endl;
 			if(negAtan){
@@ -173,6 +180,7 @@ namespace flopoco{
 				vhdl << tab << declare(getParamName("cInX", stage)) << "<= not D" << stage << ";" <<endl;
 			}
 			
+#if 0
 			syncCycleFromSignal(getParamName("newAtan2PowStage", stage));
 			nextCycle();
 			
@@ -200,7 +208,11 @@ namespace flopoco{
 			else
 				if (syncCycleFromSignal(getParamName("intC", (stage+1))))
 					setCriticalPath(xyPath);
-					
+#else
+
+			vhdl << tab << declare(getParamName("intX", stage+1), 1+wIz+wFz) << " <= " << getParamName("X", stage) <<  " + " <<  getParamName("newAtan2PowStage", stage) <<  " + " <<  getParamName("cInX", stage) << ";" << endl;
+
+#endif					
 			//create the outputs
 			vhdl << tab << declare(getParamName("C", stage+1), 1+wIxy+wFxy) << " <= intC" << stage+1 << ";" <<endl;
 			vhdl << tab << declare(getParamName("S", stage+1), 1+wIxy+wFxy) << " <= intS" << stage+1 << ";" <<endl;
@@ -223,11 +235,11 @@ namespace flopoco{
 															<< "+"
 															<< " (" << zg(1+wI+wF, 0) << " & \'1\');" << endl;
 															
-		setCycleFromSignal("roundedIntSout");
-		syncCycleFromSignal("roundedIntCout");
+		//		setCycleFromSignal("roundedIntSout");
+		//   syncCycleFromSignal("roundedIntCout");
 		
 		//assign output
-		manageCriticalPath(target->localWireDelay(1+wI+wF));
+		// manageCriticalPath(target->localWireDelay(1+wI+wF));
 		
 		vhdl << tab << "C" << "<= roundedIntCout(" << 1+wI+wF << " downto 1);" << endl;
 		vhdl << tab << "S" << "<= roundedIntSout(" << 1+wI+wF << " downto 1);" << endl;
@@ -239,18 +251,15 @@ namespace flopoco{
 		/* Get I/O values */
 		mpz_class svZ = tc->getInputValue("X");
 		mpfr_t z, constPi, rsin, rcos;
-		mpz_t rsin_z, rcos_z;
-		int g = ceil(log2(1 + wI + wF))+3;
 		
 		/* Compute correct value */
-		mpfr_init2(z, 1+wI+wF+g);
+		mpfr_init2(z, 1+wI+wF);
+		mpfr_init2(rsin, 1+wI+wF); 
+		mpfr_init2(rcos, 1+wI+wF); 
 		
-		mpfr_init2(constPi, 1+wI+wF+g);
+		mpfr_init2(constPi, 4*(1+wI+wF));
 		
-		mpfr_init2(rsin, 1+wI+wF+g); 
-		mpfr_init2(rcos, 1+wI+wF+g); 
-		mpz_init2 (rsin_z, 1+wI+wF+g);
-		mpz_init2 (rcos_z, 1+wI+wF+g);
+		mpz_class rsin_z, rcos_z;
 		
 		mpfr_set_z (z, svZ.get_mpz_t(), GMP_RNDD); // this rounding is exact
 		mpfr_div_2si (z, z, wF, GMP_RNDD); // this rounding is acually exact
@@ -259,18 +268,32 @@ namespace flopoco{
 		mpfr_const_pi( constPi, GMP_RNDD);
 		mpfr_mul(z, z, constPi, GMP_RNDD);
 		
-		mpfr_sin(rsin, z, GMP_RNDN); 
-		mpfr_cos(rcos, z, GMP_RNDN);
+
+		// Rounding down
+		mpfr_sin(rsin, z, GMP_RNDD); 
+		mpfr_cos(rcos, z, GMP_RNDD);
 		
 		mpfr_mul_2si (rsin, rsin, wF, GMP_RNDD); // exact rnd here
-		mpfr_get_z (rsin_z, rsin, GMP_RNDN); // there can be a real rounding here
+		mpfr_get_z (rsin_z.get_mpz_t(), rsin, GMP_RNDD); // there can be a real rounding here
 		mpfr_mul_2si (rcos, rcos, wF, GMP_RNDD); // exact rnd here
-		mpfr_get_z (rcos_z, rcos, GMP_RNDN); // there can be a real rounding here
+		mpfr_get_z (rcos_z.get_mpz_t(), rcos, GMP_RNDD); // there can be a real rounding here
 
 		// Set outputs 
-		mpz_class sin_zc (rsin_z), cos_zc (rcos_z);
-		tc->addExpectedOutput ("C", cos_zc);
-		tc->addExpectedOutput ("S", sin_zc);
+		tc->addExpectedOutput ("C", rcos_z);
+		tc->addExpectedOutput ("S", rsin_z);
+
+		// Rounding up
+		mpfr_sin(rsin, z, GMP_RNDU); 
+		mpfr_cos(rcos, z, GMP_RNDU);
+		
+		mpfr_mul_2si (rsin, rsin, wF, GMP_RNDD); // exact rnd here
+		mpfr_get_z (rsin_z.get_mpz_t(), rsin, GMP_RNDU); // should be exact, too
+		mpfr_mul_2si (rcos, rcos, wF, GMP_RNDD); // exact rnd here
+		mpfr_get_z (rcos_z.get_mpz_t(), rcos, GMP_RNDU); // there can be a real rounding here
+
+		// Set outputs 
+		tc->addExpectedOutput ("C", rcos_z);
+		tc->addExpectedOutput ("S", rsin_z);
 
 		// clean up
 		mpfr_clears (z, rsin, rcos, NULL);		
