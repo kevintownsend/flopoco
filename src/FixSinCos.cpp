@@ -67,14 +67,18 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 
 	// the argument is reduced into (0,1/4) because one sin/cos
 	// computation in this range can always compute the right sin/cos
+	// 2's complement: 0 is always positive
+	// to handle 2's complement efficiently, we consider values of X
+	// in [-1,0[ as they were in [1,2[, just adding 2 and treating
+	// the binary representation of X as if it was an unsigned fixed-point
+	// in [0,2[
 	vhdl << tab << declare ("X_sgn",1) << " <= X" << of (w) << ";" << endl;
 	vhdl << tab << declare ("A",1) << " <= X" << of (w-1) << ";" << endl;
 	vhdl << tab << declare ("B",1) << " <= X" << of (w-2) << ";" << endl;
 	vhdl << tab << declare ("Y",w-2) << " <= X " << range (w-3,0) << ";" << endl;
-	// now X -> A*.5 + B*.25 + Y where A,B \in {0,1} and Y \in {0,.25}
+	// now X -> X_sgn + A*.5 + B*.25 + Y where A,B \in {0,1} and Y \in {0,.25}
 
 	// Y_prime = .25 - y
-	// the VHDL is probably invalid
 	// perhaps do a logic ~ at a cost of 1 ulp ?
 	//vhdl << declare ("Y_prime",w-2) << " <= "
 	//     << "2**" << (w-2) << " - Y;" << endl;
@@ -519,19 +523,26 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	vhdl << tab << declare ("S_out", w)
 	     << " <= S_out_rnd_aux" << range (w+g-1, g) << ';' << endl;
 
-	// now just add the signs to the signals
-	/* the output format is consequently
-	 * struct output_format {
-	 *	unsigned int sgn: 1; // sign is 1 for neg, as in IEEE754
-	 *	unsigned int mantissa: w;
-	 * };
-	 */
+	// now just add the signs to the signals and convert them to
+	// 2's complement
 	vhdl << tab << declare ("S_wo_sgn", w)
 	     << " <= C_out when Exch = '1' else S_out;" << endl;
 	vhdl << tab << declare ("C_wo_sgn", w)
 	     << " <= S_out when Exch = '1' else C_out;" << endl;
-	vhdl << tab << "S <= X_sgn & S_wo_sgn;" << endl;
-	vhdl << tab << "C <= A & C_wo_sgn;" << endl;
+	vhdl << tab << declare ("S_neg_wo_sgn", w)
+	     << " <= (not S_wo_sgn) + 1;" << endl;
+	vhdl << tab << declare ("C_neg_wo_sgn", w)
+	     << " <= (not C_wo_sgn) + 1;" << endl;
+	//vhdl << tab << declare ("S_sgn", 1)
+	//     << " <= X_sgn;" << endl;
+	vhdl << tab << declare ("C_sgn", 1)
+	     << " <= A xor X_sgn;" << endl;
+	vhdl << tab << declare ("S_sgn_wo_sgn", w)
+	     << " <= S_wo_sgn when X_sgn = '0' else S_neg_wo_sgn;" << endl
+	     << tab << declare ("C_sgn_wo_sgn", w)
+	     << " <= C_wo_sgn when C_sgn = '0' else C_neg_wo_sgn;" << endl;
+	vhdl << tab << "S <= X_sgn & S_sgn_wo_sgn;" << endl;
+	vhdl << tab << "C <= C_sgn & C_sgn_wo_sgn;" << endl;
 
 	REPORT(INFO, " wA=" << wA <<" wZ=" << wZ <<" wZ2=" << wZ_2 <<" wZ3=" << wZ_3 );
 };
@@ -563,16 +574,16 @@ void FixSinCos::emulate(TestCase * tc)
 	mpfr_div_2si (x, x, w, GMP_RNDD); // this rounding is acually exact
 	// now handle the sign of x
 	if (mpfr_cmp_ui (x, 1UL) >= 0) { // if (x >= 1.f)
-		mpfr_add_si (x, x, -1, GMP_RNDD); //this rnd is exact
-		mpfr_setsign (x, x, 1, GMP_RNDD); //1 == neg
+		// 2's complement: just sub 2
+		mpfr_add_si (x, x, -2, GMP_RNDD); //this rnd is exact
 	}
 	int i=0, ep; // ep: extra precision
 	do {
 		ep = 1 << i;
-		mpfr_set_prec (sind, 1+w+ep);
-		mpfr_set_prec (cosd, 1+w+ep);
-		mpfr_set_prec (sinu, 1+w+ep);
-		mpfr_set_prec (cosu, 1+w+ep);
+		mpfr_set_prec (sind, 2+w+ep);
+		mpfr_set_prec (cosd, 2+w+ep);
+		mpfr_set_prec (sinu, 2+w+ep);
+		mpfr_set_prec (cosu, 2+w+ep);
 		mpfr_set_prec (pixd, 2+w+ep);
 		mpfr_set_prec (pixu, 2+w+ep);
 		mpfr_const_pi (pixd, GMP_RNDD);
@@ -601,24 +612,21 @@ void FixSinCos::emulate(TestCase * tc)
 		mpfr_mul (cosd, cosd, one_minus_ulp, GMP_RNDD);
 		mpfr_mul (sinu, sinu, one_minus_ulp, GMP_RNDU);
 		mpfr_mul (cosu, cosu, one_minus_ulp, GMP_RNDU);
-		// if the cosine is <0 we must neg it then add 1
+		// if the cosine is <0 we must add 2 to it
+		// (2's complement)
 		if (mpfr_cmp_ui (cosd, 0) < 0) {
-			mpfr_setsign (cosd, cosd, 0, GMP_RNDD); // exact rnd
-			mpfr_add_ui (cosd, cosd, 1, GMP_RNDD); // exact rnd
+			mpfr_add_ui (cosd, cosd, 2UL, GMP_RNDD); // exact rnd
 		}
 		// same as before
 		if (mpfr_cmp_ui (cosu, 0) < 0) {
-			mpfr_setsign (cosu, cosu, 0, GMP_RNDU);
-			mpfr_add_ui (cosu, cosu, 1, GMP_RNDU);
+			mpfr_add_ui (cosu, cosu, 2UL, GMP_RNDU);
 		}
 		// and we have to do the same for sin
 		if (mpfr_cmp_ui (sind, 0) < 0) {
-			mpfr_setsign (sind, sind, 0, GMP_RNDD); // exact rnd
-			mpfr_add_ui (sind, sind, 1, GMP_RNDD); // exact rnd
+			mpfr_add_ui (sind, sind, 2UL, GMP_RNDD); // exact rnd
 		}
 		if (mpfr_cmp_ui (sinu, 0) < 0) {
-			mpfr_setsign (sinu, sinu, 0, GMP_RNDU);
-			mpfr_add_ui (sinu, sinu, 1, GMP_RNDU);
+			mpfr_add_ui (sinu, sinu, 2UL, GMP_RNDU);
 		}
 		mpfr_mul_2si (sind, sind, w, GMP_RNDD); // exact rnd here
 		mpfr_mul_2si (cosd, cosd, w, GMP_RNDD);
@@ -635,32 +643,30 @@ void FixSinCos::emulate(TestCase * tc)
 		if (mpz_cmp (sind_z, sinu_z) == 0 &&
 		    mpz_cmp (cosd_z, cosu_z) == 0) {
 			// the rounding are really what we want
+			// TODO: detect wraparounds, or do the sign conversion
+			// later than there
 			break;
 		} else {
 			i++;
 		}
 	} while (i<16); // for sanity
+	if (i==16)
+		REPORT(INFO,"Computation failure with 65536 extra"
+		            "precision bits, something got wrong\n");
 	mpz_class sind_zc (sind_z), cosd_zc (cosd_z);
-	// and since FunctionEvaluator does only faithful rounding
+	// and since the operator does only faithful rounding
 	// we add also as expected results the upper roundings
 	mpz_class neg_zero (1); neg_zero <<= w;
-	tc->addExpectedOutput ("S", sind_zc);
-	// we consider negative and positive 0 as being the same
-	if (sind_zc == 0)
-		tc->addExpectedOutput ("S", neg_zero);
-	if (sind_zc == neg_zero)
-		tc->addExpectedOutput ("S", mpz_class(0));
-	tc->addExpectedOutput ("C", cosd_zc);
-	if (cosd_zc == 0)
-		tc->addExpectedOutput ("C", neg_zero);
-	if (cosd_zc == neg_zero)
-		tc->addExpectedOutput ("C", mpz_class(0));
 	mpz_class ones (neg_zero - 1);
-	if ((sind_zc & ones) != ones) {
-		tc->addExpectedOutput ("S", sind_zc+1);
+	mpz_class all_ones ((neg_zero << 1) - 1);
+	// ones is actually the greatest representable signal
+	tc->addExpectedOutput ("S", sind_zc);
+	tc->addExpectedOutput ("C", cosd_zc);
+	if (sind_zc != ones) {
+		tc->addExpectedOutput ("S", (sind_zc+1) & all_ones);
 	}
-	if ((cosd_zc & ones) != ones) {
-		tc->addExpectedOutput ("C", cosd_zc+1);
+	if (cosd_zc != ones) {
+		tc->addExpectedOutput ("C", (cosd_zc+1) & all_ones);
 	}
 	mpfr_clears (x, sind, cosd, sinu, cosu,
 	             pixd, pixu, one_minus_ulp, NULL);
