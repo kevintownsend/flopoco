@@ -267,6 +267,7 @@ namespace flopoco{
 		mpfr_div_2si (z, z, wF, GMP_RNDD); // this rounding is acually exact
 		
 		mpfr_mul_2si(z, z, -1, GMP_RNDD);
+
 		mpfr_const_pi( constPi, GMP_RNDD);
 		mpfr_mul(z, z, constPi, GMP_RNDD);
 		
@@ -381,6 +382,7 @@ namespace flopoco{
 		mpfr_clears (z, NULL);
 	}
 
+#if WTF 
 	//still testing
 	TestCase* CordicSinCos::buildRandomTestCase(int i) 
 	{
@@ -401,7 +403,8 @@ namespace flopoco{
 		
 		return tc;
 	}
-	
+#endif	
+
 	std::string CordicSinCos::generateFixPointNumber(float x, int wI, int wF)
 	{
 		std::string result;
