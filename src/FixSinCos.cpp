@@ -47,7 +47,7 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	name << "FixSinCos_" << w ;
 	setName(name.str());
 
-	setCopyrightString("Guillaume Sergent (2012)");
+	setCopyrightString("Florent de Dinechin, Guillaume Sergent (2012)");
 
 	/* SET UP THE IO SIGNALS
 	   Each IO signal is declared by addInput(name,n) or addOutput(name,n) 
