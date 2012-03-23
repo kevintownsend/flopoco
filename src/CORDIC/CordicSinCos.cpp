@@ -198,7 +198,7 @@ namespace flopoco{
 			setCriticalPath(mainAdder->getOutputDelay("R"));
 			manageCriticalPath(target->localWireDelay(1+wIz+wFz));
 			
-			//create Dout as the result of the comparison of intZout with 0
+ 			//create Dout as the result of the comparison of intZout with 0
 			vhdl << tab << declare(getParamName("intD", (stage+1))) << " <= intX" << stage+1 << "(" << 1+wIz+wFz-1 <<");" <<endl;
 			
 			double zPath = getCriticalPath();
@@ -211,6 +211,8 @@ namespace flopoco{
 #else
 
 			vhdl << tab << declare(getParamName("intX", stage+1), 1+wIz+wFz) << " <= " << getParamName("X", stage) <<  " + " <<  getParamName("newAtan2PowStage", stage) <<  " + " <<  getParamName("cInX", stage) << ";" << endl;
+ 			//create Dout as the result of the comparison of intZout with 0
+			vhdl << tab << declare(getParamName("intD", (stage+1))) << " <= intX" << stage+1 << "(" << 1+wIz+wFz-1 <<");" <<endl;
 
 #endif					
 			//create the outputs
