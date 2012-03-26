@@ -528,11 +528,12 @@ namespace flopoco{
 			//	if (wF==23){
 			//nextCycle();//FIXME -> add inputDelays to intTilingMultiplier
 				// ???? This builds a comlbinatorial mult,
-				//lowProd = new IntTilingMult(target, sizeMultIn, sizeExpZm1, 0.15, -1, false);//, inDelayMap("X", target->LogicToDSPWireDelay() + getCriticalPath() ) );
+				//lowProd = new IntTilingMult(target, sizeMultIn, sizeExpZm1, false, 0.15, -1);//, inDelayMap("X", target->LogicToDSPWireDelay() + getCriticalPath() ) );
 			//}// else
 		 			// 		lowProd = new IntMultiplier(target, sizeMultIn, sizeExpZm1, inDelayMap("X", target->LogicToDSPWireDelay() + getCriticalPath() ) );
 		}
-		lowProd = new IntMultiplier(target, sizeMultIn, sizeExpZm1, inDelayMap("X", target->LogicToDSPWireDelay() + getCriticalPath() ) );
+		lowProd = new IntMultiplier(target, sizeMultIn, sizeExpZm1, 0 /*unsigned*/, 
+		                            inDelayMap("X", target->LogicToDSPWireDelay() + getCriticalPath() ) );
 			oplist.push_back(lowProd);
 		
 			inPortMap(lowProd, "X", "expArounded");

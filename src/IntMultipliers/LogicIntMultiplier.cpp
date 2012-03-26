@@ -30,17 +30,58 @@ using namespace std;
 namespace flopoco{
 
 	extern vector<Operator*> oplist;
+	
+	// Stuff for the small multiplier table 
+	LogicIntMultiplier::SmallMultTable::SmallMultTable(Target* target, int dx, int dy) : 
+		Table(target, dx+dy, dx+dy, 0, -1, true), // logic table
+		dx(dx), dy(dy) {
+		ostringstream name; 
+		srcFileName="LogicIntMultiplier::SmallMultTable";
+				name <<"SmallMultTable_" << dy << "x" << dx;
+				setName(name.str());
+				
+				//				outDelayMap["Y"] = target->lutDelay();
+	};
+	
+	mpz_class LogicIntMultiplier::SmallMultTable::function(int yx){
+		mpz_class r;
+		int y = yx>>dx;
+		int x = yx -(y<<dx);
+		r = x*y;
+		return r;
+	};
 
-	LogicIntMultiplier:: LogicIntMultiplier(Target* target, int wInX, int wInY, map<string, double> inputDelays, bool sign) :
-		Operator(target, inputDelays), wInX_(wInX), wInY_(wInY), wOut_(wInX + wInY), sign_(sign){
- 
+
+
+	string PP(int i, int j) {
+		std::ostringstream p;
+		p << "PPX" << i << "Y" << j;
+		return p.str();
+	};
+
+	string PPTbl( int i, int j) {
+		std::ostringstream p;
+		p << "PPX" << i << "Y" << j << "_Tbl";
+		return p.str();
+	};
+
+	string XY( int i, int j) {
+		std::ostringstream p;
+		p  << "Y" << j<< "X" << i;
+		return p.str();
+	};
+
+	LogicIntMultiplier:: LogicIntMultiplier(Target* target, int wInXp, int wInYp, bool sign, map<string, double> inputDelays) :
+		Operator(target, inputDelays), wInX_(wInXp), wInY_(wInYp), wOut_(wInXp + wInYp), sign_(sign){
+		
 		ostringstream name;
 		double target_freq = target->frequency();
+		
 		double maxDSPFrequency = int(floor(1.0/ (target->DSPMultiplierDelay() + 1.0e-10)));
 		if (target_freq > maxDSPFrequency)
 			target->setFrequency(maxDSPFrequency);
-			
-
+		
+		
 		/* Name Setup procedure
 		 *  The name has the format: LogicIntMultiplier_wInX_wInY
 		 *  wInX = width of the X input
@@ -52,77 +93,102 @@ namespace flopoco{
 		srcFileName="LogicIntMultiplier";
 		setName(name.str());
 		
-		setCopyrightString("Bogdan Pasca, Sebastian Banescu (2008-2009)");
+		setCopyrightString("Bogdan Pasca, Sebastian Banescu, Florent de Dinechin (2008-2012)");
 	
 		addInput ("X", wInX_,true);
 		addInput ("Y", wInY_,true);
 		addOutput("R", wOut_,1, true); /* wOut_ = wInX_ + wInY_ */
-	
+
+		// Halve number of cases by assuming wInY<=wInX:
+		// interchange x and y in case wInY>wInX
+
+		if(wInY_> wInX_){
+			wInX=wInY_;
+			wInY=wInX_;
+			vhdl << tab << declare("XX", wInX, true) << " <= Y;" << endl; 
+			vhdl << tab << declare("YY", wInY, true) << " <= X;" << endl; 
+		}
+		else{
+			wInX=wInX_;
+			wInY=wInY_;
+			vhdl << tab << declare("XX", wInX, true) << " <= X;" << endl; 
+			vhdl << tab << declare("YY", wInY, true) << " <= Y;" << endl; 
+		}
+
 		/***************************************************************************
 		 ***************************************************************************/
 		//LogicIntMultiplier Version -- multiplication performed in LUTs. Works for both Xilinx and Altera
 		//architectures for corner cases 
-		if ((!sign_) && ( wInX == 1 )){
+		if ((wInY == 1)){
 			setCriticalPath( getMaxInputDelays( inputDelays ));
-			manageCriticalPath( target->localWireDelay() + target->lutDelay() );
-			vhdl << tab << "R <= (\"0\" & Y) when X(0)='1' else "<<zg(wInY+1,0)<<";"<<endl;	
-			outDelayMap["R"] = getCriticalPath();
-		}else if ((!sign_) && (wInY == 1)){
-			setCriticalPath( getMaxInputDelays( inputDelays ));
-			manageCriticalPath( target->localWireDelay() + target->lutDelay() );
-			vhdl << tab << "R <= (\"0\" & X) when Y(0)='1' else "<<zg(wInX+1,0)<<";"<<endl;	
-			outDelayMap["R"] = getCriticalPath();
-		}else if ((!sign_) && (((wInX == 2) && (target->lutInputs()-2>=wInY)) || ( (wInY == 2) && (target->lutInputs()-2>=wInX) ))){
-			setCriticalPath( getMaxInputDelays( inputDelays ));
-			manageCriticalPath( target->localWireDelay() + target->lutDelay() );
-			vhdl << tab << "R <= X * Y;"<<endl;	
-			outDelayMap["R"] = getCriticalPath();
-		}else if ((!sign_) && ((wInX == 2) && (target->lutInputs()-2<wInY))){
-			//one addition
-			setCriticalPath( getMaxInputDelays( inputDelays ));
-			manageCriticalPath( target->localWireDelay() + target->lutDelay() );
-			vhdl << tab << declare("R0",wInY+2) << " <= (\"00\" & Y) when X(0)='1' else "<<zg(wInY+2,0)<<";"<<endl;	
-			vhdl << tab << declare("R1",wInY+2) << " <= ( \"0\" & Y & \"0\") when X(1)='1' else "<<zg(wInY+2,0)<<";"<<endl;	
-				
-			IntAdder *resultAdder = new IntAdder( target, wInY+2, inDelayMap("X", target->localWireDelay() + getCriticalPath() ) );
-			oplist.push_back(resultAdder);
+			if (sign){
+				manageCriticalPath( target->localWireDelay(wInX) + target->adderDelay(wInX+1) );
+				vhdl << tab << "R <= (" << zg(wInX+1)  << " - (XX" << of(wInX-1) << " & XX)) when YY(0)='1' else "<< zg(wInX+1,0)<<";"<<endl;	
+			}
+			else {
+				manageCriticalPath( target->localWireDelay(wInX) + target->lutDelay() );
+				vhdl << tab << "R <= (\"0\" &  XX) when YY(0)='1' else "<<zg(wInX+1,0)<<";"<<endl;	
+			}
+				outDelayMap["R"] = getCriticalPath();
+		}
+		else if ((wInY == 2)) {
+			if(target->lutInputs()-2>=wInX){
+				if(sign) {
+					std::ostringstream o;
+					o << srcFileName << " (" << uniqueName_ << "): SORRY : ultrasmall _signed_ LogicIntMultiplier not implemented";
+					throw o.str();
+				} // FIXME of course
+				setCriticalPath( getMaxInputDelays( inputDelays ));
+				manageCriticalPath( target->localWireDelay() + target->lutDelay() );
+				vhdl << tab << "R <= XX * YY;  -- fits in one look-up table"<<endl;	
+				outDelayMap["R"] = getCriticalPath();
+			}
 			
-			inPortMap(resultAdder, "X", "R0");
-			inPortMap(resultAdder, "Y", "R1");
-			inPortMapCst(resultAdder, "Cin", "'0'");
-			outPortMap( resultAdder, "R", "RAdder");
-			vhdl << tab << instance(resultAdder, "ResultAdder") << endl;
-			syncCycleFromSignal("RAdder");
-			setCriticalPath( resultAdder->getOutputDelay("R"));
-
-			vhdl << tab << "R <= RAdder;"<<endl;	
-			outDelayMap["R"] = getCriticalPath();
-		} else if ((!sign_) && ((wInY == 2) && (target->lutInputs()-2<wInX))){
-			//one addition
-			setCriticalPath( getMaxInputDelays( inputDelays ));
-			manageCriticalPath( target->localWireDelay() + target->lutDelay() );
-			vhdl << tab << declare("R0",wInX+2) << " <= (\"00\" & X) when Y(0)='1' else "<<zg(wInX+2,0)<<";"<<endl;	
-			vhdl << tab << declare("R1",wInX+2) << " <= ( \"0\" & X & \"0\") when Y(1)='1' else "<<zg(wInX+2,0)<<";"<<endl;	
+			else { // wInY=2, one addition
+				setCriticalPath( getMaxInputDelays( inputDelays ));
+				// No need for the following, the mult should be absorbed in the addition
+				// manageCriticalPath( target->localWireDelay() + target->lutDelay() );
+				vhdl << tab << declare("R0",wInX+2) << " <= (";
+				if (sign) 
+					vhdl << "XX" << of(wInX-1) << " & XX" << of(wInX-1);  
+				else  
+					vhdl << "\"00\"";
+				vhdl <<  " & XX) when YY(0)='1' else "<<zg(wInX+2,0)<<";"<<endl;	
+				vhdl << tab << declare("R1i",wInX+2) << " <= ";
+				if (sign) 
+					vhdl << "(XX" << of(wInX-1) << "  & XX & \"0\")";
+				else  
+					vhdl << "(\"0\" & XX & \"0\")";
+				vhdl << " when YY(1)='1' else " << zg(wInX+2,0) << ";"<<endl;	
+				vhdl << tab << declare("R1",wInX+2) << " <= ";
+				if (sign) 
+					vhdl << "not R1i;" <<endl;
+				else  
+					vhdl <<  "R1i;" <<endl;
 				
-			IntAdder *resultAdder = new IntAdder( target, wInX+2, inDelayMap("X", target->localWireDelay() + getCriticalPath() ) );
-			oplist.push_back(resultAdder);
-			
-			inPortMap(resultAdder, "X", "R0");
-			inPortMap(resultAdder, "Y", "R1");
-			inPortMapCst(resultAdder, "Cin", "'0'");
-			outPortMap( resultAdder, "R", "RAdder");
-			vhdl << tab << instance(resultAdder, "ResultAdder") << endl;
-			syncCycleFromSignal("RAdder");
-			setCriticalPath( resultAdder->getOutputDelay("R"));
+				IntAdder *resultAdder = new IntAdder( target, wInX+2, inDelayMap("X", target->localWireDelay() + getCriticalPath() ) );
+				oplist.push_back(resultAdder);
+				
+				inPortMap(resultAdder, "X", "R0");
+				inPortMap(resultAdder, "Y", "R1");
+				inPortMapCst(resultAdder, "Cin", (sign? "'1'" : "'0'"));
+				outPortMap( resultAdder, "R", "RAdder");
+				vhdl << tab << instance(resultAdder, "ResultAdder") << endl;
+				syncCycleFromSignal("RAdder");
+				setCriticalPath( resultAdder->getOutputDelay("R"));
+				
+				vhdl << tab << "R <= RAdder;"<<endl;	
+				outDelayMap["R"] = getCriticalPath();
+			}
+		} 
 
-			vhdl << tab << "R <= RAdder;"<<endl;	
-			outDelayMap["R"] = getCriticalPath();
-		} else { //the generic case
-	
+				
+#if 1 // The Romanian version: shorter latency (when unpipelined), larger area
+		else { //generic case
 			int chunkSize_ = target->lutInputs()/2;
-			int chunksX =  int(ceil( ( double(wInX) / (double) chunkSize_) ));
-			int chunksY =  int(ceil( ( double(wInY) / (double) chunkSize_) ));
-	
+			int chunksX =  int(ceil( ( double(wInX_) / (double) chunkSize_) ));
+			int chunksY =  int(ceil( ( double(wInY_) / (double) chunkSize_) ));
+			
 			setCriticalPath( getMaxInputDelays(inputDelays) );
 
 			REPORT(DEBUG, "X splitted in "<< chunksX << " chunks and Y in " << chunksY << " chunks; ");
@@ -150,7 +216,7 @@ namespace flopoco{
 				for (int k=0; k<chunksY ; k++)
 					vhdl<<tab<<declare(join("y",k),chunkSize_)<<" <= sY"<<range((k+1)*chunkSize_-1,k*chunkSize_)<<";"<<endl;
 
-				manageCriticalPath( target->lutDelay() + target->lutInputs()*target->localWireDelay() );
+				manageCriticalPath( target->lutDelay() + target->localWireDelay(target->lutInputs()) );
 		
 				if (sign_){
 					/* ----------------------------------------------------*/
@@ -159,13 +225,13 @@ namespace flopoco{
 						for (int j=0; j<chunksX; j++){
 							if ((i<chunksY-1) && (j<chunksX-1)){
 								vhdl<<tab<<declare(join("px",j,"y",i),2*chunkSize_+2)<<" <= ( \"0\" & " << join("x",j) <<") * " 
-			                                        << "( \"0\" & " << join("y",i)<< ");" << endl;
+								    << "( \"0\" & " << join("y",i)<< ");" << endl;
 							} else if ((i==chunksY-1) && (j<chunksX-1)){
 								vhdl<<tab<<declare(join("px",j,"y",i),2*chunkSize_+1)<<" <= ( \"0\" & " << join("x",j) <<") * " 
-			                                        << "(" << join("y",i)<< ");" << endl;
+								    << "(" << join("y",i)<< ");" << endl;
 							} else if ((i<chunksY-1) && (j==chunksX-1)){	
 								vhdl<<tab<<declare(join("px",j,"y",i),2*chunkSize_+1)<<" <= ( " << join("x",j) <<") * " 
-			                                        << "( \"0\" & " << join("y",i)<< ");" << endl;
+								    << "( \"0\" & " << join("y",i)<< ");" << endl;
 							} else{
 								vhdl<<tab<<declare(join("px",j,"y",i),2*chunkSize_)<<" <= "<< join("x",j)<<" * " << join("y",i)<< ";" << endl;
 							}								
@@ -283,7 +349,7 @@ namespace flopoco{
 											operandNames.push_back(join("cp",i,j,k));
 											vhdl << tab << declare(join("cp",i,j,k),adderWidth) << " <= ";
 											vhdl << rangeAssign(adderWidth - (j+k+2)*chunkSize_ -1 , 0, join("px",j,"y",k)+of(2*chunkSize_-1))
-												 << " & " << join("px",j,"y",k) << range(2*chunkSize_-1,0);
+											     << " & " << join("px",j,"y",k) << range(2*chunkSize_-1,0);
 										}											
 									}
 									if (k-2 <0) //we need to finish
@@ -307,8 +373,8 @@ namespace flopoco{
 					outDelayMap["R"] = getCriticalPath();	
 					vhdl<<tab<<"R<=addRes" << range(adderWidth-1,adderWidth-wInX_-wInY_) << ";" << endl;		
 				}else{ //unsigned version
-				/* ----------------------------------------------------*/
-				//COMPUTE PARTIAL PRODUCTS
+					/* ----------------------------------------------------*/
+					//COMPUTE PARTIAL PRODUCTS
 					for (int i=0; i<chunksY; i++)
 						for (int j=0; j<chunksX; j++)
 							vhdl<<tab<<declare(join("px",j,"y",i),2*chunkSize_)<<" <= "<< join("x",j)<< " * " << join("y",i) << ";" << endl;
@@ -342,24 +408,235 @@ namespace flopoco{
 					vhdl << instance(add, "adder");
 					syncCycleFromSignal("addRes");
 					setCriticalPath(add->getOutputDelay("R"));
-					vhdl<<tab<<"R<=addRes" << range(adderWidth-1,adderWidth-wInX_-wInY_) << ";" << endl;		
+					vhdl<<tab<<"R<=addRes" << range(adderWidth-1,adderWidth-wInX-wInY) << ";" << endl;		
 					outDelayMap["R"] = getCriticalPath();				
 				}
-			}else{// we perform just one multiplication 
-				setCriticalPath(getMaxInputDelays(inputDelays));
-				manageCriticalPath( target->lutDelay() + target->localWireDelay());
-				vhdl << tab << " R <= X * Y;"<<endl;
-				outDelayMap["R"] = getCriticalPath();				
 			}
 		}
+			
+#else /////////////////// Here begins Florent Version/////////////////////
+		else { //generic case
+			if(sign_) {
+				cout << "Not implemented" << endl;
+				exit(1);
+			}
+			else{ 
+				int dx, dy0, dy;				// Here we need to split in small sub-multiplications
+				int li=target->lutInputs();
+				
+				dx = li>>1;
+				dy0 = li - dx; 
+				// TODO for Altera remove the -1
+#if 1 // If the synthesis tool can merge the sub-product and the LUT: it seems the case
+				dy = dy0 - 1;
+#else
+				dy=dy0;
+#endif
+				int hole =  (dx==dy?0:1);
+				int hole0 = (dx==dy0?0:1);
+				REPORT(DEBUG, "dx="<< dx << "  dy=" << dy << " dy0=" << dy0);
 
-		if (target_freq > maxDSPFrequency)
-			target->setFrequency( target_freq );
+				int chunksX =  int(ceil( ( double(wInX_) / (double) dx) ));
+				int chunksY =  int(ceil( ( 1+ double(wInY_-dy0) / (double) dy) ));
+				int sizeXPadded=chunksX*dx; 
+				int sizeYPadded=dy*(chunksY-1) + dy0; 
+					// TODO remove one MSB  in case of hole
+				int sizeAddendA = (chunksX+1)/2 *li;
+				int sizeAddendB = chunksX/2*li;
+				
+				setCriticalPath( getMaxInputDelays(inputDelays) );
+
+				REPORT(DEBUG, "X splitted in "<< chunksX << " chunks and Y in " << chunksY << " chunks; ");
+				REPORT(DEBUG, " sizeXPadded="<< sizeXPadded << "  sizeYPadded="<< sizeYPadded);
+				REPORT(DEBUG, " sizeAddendA=" << sizeAddendA << "  sizeAddendB=" << sizeAddendB);
+				if (chunksX + chunksY > 2) { //we do more than 1 subproduct
+					vhdl << tab << "-- padding to the right" << endl;
+					int sX=dx*chunksX;
+					int sY=dy*(chunksY-1)+dy0;
+					vhdl<<tab<<declare("Xp",sX)<<" <= XX & "<< zg(dx * chunksX - wInX, 0)<< ";"<<endl;
+					vhdl<<tab<<declare("Yp",sY)<<" <= YY & "<< zg(dy*(chunksY-1)+dy0 - wInY, 0)<< ";"<<endl;	
+					//SPLITTINGS
+					for (int k=0; k<chunksX ; k++)
+						vhdl<<tab<<declare(join("x",k),dx)<<" <= Xp"<<range((k+1)*dx-1,k*dx)<<";"<<endl;
+					vhdl<<tab<<declare("y0",dy0)<<" <= Yp"<<range(dy0-1, 0)<<";"<<endl;
+					for (int k=1; k<chunksY ; k++)
+						vhdl<<tab<<declare(join("y",k),dy)<<" <= Yp"<<range(dy0+k*dy-1, dy0+(k-1)*dy)<<";"<<endl;
+					
+					// The first row
+					
+					manageCriticalPath(target->localWireDelay(chunksX) + target->lutDelay());
+
+					SmallMultTable *t0 = new SmallMultTable( target, dx, dy0 );
+					oplist.push_back(t0);
+					
+					for (int i=0; i<chunksX; i++) { 
+						vhdl<<tab<<declare(XY(i,0), dx+dy0) << " <= y0 & x" << i << ";"<<endl;
+						inPortMap(t0, "X", XY(i,0));
+						outPortMap(t0, "Y", PP(i,0));
+						vhdl << instance(t0, PPTbl(i,0));		
+					}
+					vhdl << tab << "-- initializing the accumulators" << endl;
+					//			vhdl << tab << declare("R0", dx) << " <= " << PP(0,0) << range(dx-1, 0) << ";  -- go directly to output" <<endl;
+					vhdl << tab << declare("SumA0", sizeAddendA) << " <= ";
+					for(int j=(chunksX+1)/2-1; j>0; j--) {
+						if (dy0<dx) 
+							vhdl << " \"0\" & ";
+						vhdl << PP(2*j,0) << " & ";
+					}
+					vhdl << PP(0,0) << range(dx+dy0-1, 0) << ";" <<endl; 
+					vhdl << tab << declare("SumB0", sizeAddendB) << " <= ";
+					for(int j=chunksX/2-1; j>=0; j--) {
+						if (dy0<dx) 
+							vhdl << " \"0\" & ";
+						vhdl << PP(2*j+1, 0) ;
+						if(j!=0)  vhdl << " & ";
+					}
+					vhdl << ";" <<endl; 
+
+					// The following rows
+					
+					SmallMultTable *t = new SmallMultTable( target, dx, dy );
+					oplist.push_back(t);
+
+					// Estimation of the critical path
+					// We don't use manageCriticalPath because the additions are cascaded
+
+					bool pipe[1000]; // pipe[i] == pipe before row i+1
+
+					double cp=getCriticalPath();
+					double currentFanoutCP = target->localWireDelay(chunksX);
+					int rowsInStage=1;
+					REPORT(DEBUG, "");
+
+					for (int iy=1; iy<chunksY; iy++){
+						rowsInStage ++;
+						cp -=  currentFanoutCP; 
+						currentFanoutCP = target->localWireDelay((rowsInStage)*chunksX);
+						cp += currentFanoutCP;
+						if(iy==1) // first adder entails along carry propagation
+						 cp += target->adderDelay(sizeAddendA);
+						else
+							cp += target->adderDelay(li); // one LUT and just li bits of carry propagation
+						// following line cut from manageCriticalPath()
+						if ( target->ffDelay() + cp > (1.0/target->frequency())){
+							pipe[iy] = true;
+							rowsInStage = 1;
+							currentFanoutCP = target->localWireDelay(chunksX);
+							cp = currentFanoutCP + target->adderDelay(sizeAddendA);
+						}
+						else pipe[iy] = false;
+					}
+					// Final addition
+					rowsInStage ++;
+					cp -=  currentFanoutCP; 
+					currentFanoutCP = target->localWireDelay((rowsInStage)*chunksX);
+					cp += currentFanoutCP;
+					cp += target->adderDelay(sizeAddendA); 
+					if ( target->ffDelay() + cp > (1.0/target->frequency()))
+						pipe[chunksY] = true;
+					else
+						pipe[chunksY] = false;
+
+					
+					// Now actual code generation
+					for (int iy=1; iy<chunksY; iy++){
+						// Not easy to understand how the addition and the table are merged on virtex5
+						// The largest of the two additions is always on sumA 
+
+						if(pipe[iy]) nextCycle();
+
+						vhdl << tab << "-- Partial product row number " << iy << endl;
+						for (int ix=0; ix<chunksX; ix++) { 
+							vhdl<<tab<<declare(XY(ix,iy), dx+dy) << " <= y" << iy << " & x" << ix << ";"<<endl;
+							inPortMap(t, "X", XY(ix,iy));
+							outPortMap(t, "Y", PP(ix,iy));
+							vhdl << instance(t, PPTbl(ix,iy));		
+						}
+						vhdl << tab << "-- Building addend for addition << "<< iy-1 << endl;
+						vhdl << tab << declare(join("addendA",iy), sizeAddendA) << " <= ";
+						for(int ix=(chunksX+1)/2-1; ix>=0; ix--) {
+							if (dy<dx) 
+								vhdl << "\"0\" & ";
+							vhdl << PP(2*ix, iy);
+							if (ix>0) 
+								vhdl << " & ";
+						}
+						vhdl << ";" <<endl; 
+						vhdl << tab << declare(join("addendB",iy), sizeAddendB) << " <= ";
+						for(int ix=chunksX/2-1; ix>=0; ix--) {
+							if (dy<dx) 
+								vhdl << "\"0\" & ";
+							vhdl << PP(2*ix+1,iy);
+							if(ix>0)  
+								vhdl << " & ";
+						}
+						vhdl << ";" <<endl; 
+						vhdl << tab << "-- The additions" << endl;
+						int shift;
+						if(iy==1) 
+							shift=dy0; 
+						else 
+							shift=dy;
+						vhdl << tab << declare(join("SumAl",iy), shift) << " <= " << join("SumA",iy-1) << range(shift-1, 0) << ";" <<endl;
+						vhdl << tab << declare(join("SumA",iy), sizeAddendA) << " <= " << join("SumA",iy-1) << range(sizeAddendA-1, shift) << " + " << join("addendA",iy) << ";" <<endl;
+						vhdl << tab << declare(join("SumBl",iy), shift) << " <= " << join("SumB",iy-1) << range(shift-1, 0) << ";" <<endl;
+						vhdl << tab << declare(join("SumB",iy), sizeAddendB) << " <= " << join("SumB",iy-1) << range(sizeAddendB-1, shift) << " + " << join("addendB",iy) << ";" <<endl;
+					}
+
+					if(pipe[chunksY]) nextCycle();
+
+					manageCriticalPath(target->localWireDelay() + target->adderDelay(sizeXPadded+sizeYPadded-dx));
+
+					vhdl << tab << "-- Final sum " << endl;
+					vhdl << tab << declare("SumAfinal", sizeAddendA+(chunksY-2)*dy+dy0) << " <= " << join("SumA", chunksY-1); 
+					for (int iy=chunksY-1; iy>0; iy--){
+						vhdl << " & " << join("SumAl",iy);
+					}
+					vhdl << ";" <<endl; 
+					vhdl << tab << declare("SumBfinal", sizeAddendB+(chunksY-2)*dy+dy0) << " <= " << join("SumB", chunksY-1); 
+					for (int iy=chunksY-1; iy>0; iy--){
+						vhdl << " & " << join("SumBl",iy);
+					}
+					vhdl << ";" <<endl; 
+					// 					vhdl << tab << declare("Ph", chunksX*dx) << " <= " << join("SumA",chunksY-1) << " + " << join("SumB",chunksY-1) << ";" <<endl;
+					vhdl << tab << declare("P", sizeXPadded+sizeYPadded+dy0-dy) << " <= SumAfinal + (SumBfinal & "<< zg(dx) <<");" << endl; 
+					vhdl << tab << "R <= " << "P" << range(sizeXPadded+sizeYPadded-1, sizeXPadded+sizeYPadded-wInX-wInY) << ";" << endl; 
+				}
+			}
+			
+		}	 
+#endif 
+		
 	}
 
+	/*
+Example dx=3 dy=3
+
+row 0
+                                        xxxxxx
+                                     xxxxxx  
+                                  xxxxxx
+                               xxxxxx
+                           xxxxxx   
+
+
+ ......................    xxxxxxxxxxxxxxxxxxx  sumA0
+................              xxxxxxxxxxxxx     sumB
+
+
+ ......................    xxxxxxxxxxxxxxxxxxx  sumA0
+...................     xxxxxxxxxxxxxxxxxxx     suma1
+................           xxxxxxxxxxxxx   
+
+
+
+*/
+	
+			
 	LogicIntMultiplier::~LogicIntMultiplier() {
 	}
 
+#if 0 // Xilinx specific
 	void LogicIntMultiplier::outputVHDL(std::ostream& o, std::string name) {
 		licence(o);
 		o << "library ieee; " << endl;
@@ -373,7 +650,7 @@ namespace flopoco{
 		outputVHDLEntity(o);
 		newArchitecture(o,name);
 		o << "	attribute multstyle : string;"<<endl;
-   		o << "	attribute multstyle of arch : architecture is \"logic\";"<<endl;
+		o << "	attribute multstyle of arch : architecture is \"logic\";"<<endl;
 		o << buildVHDLComponentDeclarations();	
 		o << buildVHDLSignalDeclarations();
 		beginArchitecture(o);		
@@ -381,6 +658,7 @@ namespace flopoco{
 		o << vhdl.str();
 		endArchitecture(o);
 	}
+#endif
 
 
 	void LogicIntMultiplier::emulate(TestCase* tc)

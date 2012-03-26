@@ -1,5 +1,5 @@
 /*
-An integer multiplier for FloPoCo
+An integer multiplier mess for FloPoCo
 
 Authors:  Bogdan Pasca
 
@@ -33,7 +33,7 @@ using namespace std;
 namespace flopoco {
 	extern vector<Operator*> oplist;
 	
-	IntMultiplier::IntMultiplier (Target* target, int wInX, int wInY, map<string, double> inputDelays, bool sign, float ratio):
+	IntMultiplier::IntMultiplier (Target* target, int wInX, int wInY, bool sign, map<string, double> inputDelays, float ratio):
 	Operator ( target, inputDelays ), wInX_(wInX), wInY_(wInY), wOut_(wInX+wInY), sign_(sign), ratio_(ratio) {
 		ostringstream name;
 		srcFileName="IntMultiplier";
@@ -99,9 +99,9 @@ namespace flopoco {
 		switch (selectedVersion) {
 			case 0: { IntMultiplierInstantiation = new UnsignedIntMultiplier(target, wInX, wInY, inputDelays); break;}
 			case 1: { IntMultiplierInstantiation = new SignedIntMultiplier(target, wInX, wInY, inputDelays); break;}
-			case 2: { IntMultiplierInstantiation = new IntTilingMult(target, wInX, wInY, ratio, 2, false); break;}
-			case 3: { IntMultiplierInstantiation = new LogicIntMultiplier(target, wInX, wInY, inputDelays, false); break;}
-			case 4: { IntMultiplierInstantiation = new LogicIntMultiplier(target, wInX, wInY, inputDelays, true); break; }
+		case 2: { IntMultiplierInstantiation = new IntTilingMult(target, wInX, wInY, ratio, 2, false); break;} // this false means interactive
+			case 3: { IntMultiplierInstantiation = new LogicIntMultiplier(target, wInX, wInY, false, inputDelays); break;}
+			case 4: { IntMultiplierInstantiation = new LogicIntMultiplier(target, wInX, wInY, true, inputDelays); break; }
 			default: { REPORT(INFO, "Something is wrong!, check IntMultiplier");		
 					IntMultiplierInstantiation = new UnsignedIntMultiplier(target, wInX, wInY, inputDelays); }
 		}

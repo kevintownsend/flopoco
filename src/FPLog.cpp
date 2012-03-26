@@ -337,7 +337,7 @@ namespace flopoco{
 
 		// TODO: somehow arbitrary
 		if( target->isPipelined() && a[0]+1>=9) {  
-			IntMultiplier* p0 = new IntMultiplier(target, a[0]+1, wF+2);
+			IntMultiplier* p0 = new IntMultiplier(target, a[0]+1, wF+2, 0 /*unsigned*/);
 			oplist.push_back(p0);
 			inPortMap  (p0, "X", "InvA0");
 			inPortMap  (p0, "Y", "Y0");
@@ -372,7 +372,7 @@ namespace flopoco{
 				vhdl << range(s[i]-1, s[i]-psize[i])  << ";" << endl;   
 
 			if(target->isPipelined() && a[0]+1>=9) {   //FIXME not sure that this IF is optimal
-				IntMultiplier* pi = new IntMultiplier(target, a[i], psize[i], inDelayMap("X", getCriticalPath()) );
+				IntMultiplier* pi = new IntMultiplier(target, a[i], psize[i], 0, inDelayMap("X", getCriticalPath()) );
 				oplist.push_back(pi);
 				inPortMap  (pi, "X", join("A",i));
 				inPortMap  (pi, "Y", join("ZM",i));

@@ -2887,7 +2887,7 @@ namespace flopoco{
 			}			
 			
 			
-			LogicIntMultiplier* mult =  new LogicIntMultiplier(target_, wMultX, wMultY, inDelayMap("X", getCriticalPath()), (sign) && (onEdge) ); //if it's on edge then is signed
+			LogicIntMultiplier* mult =  new LogicIntMultiplier(target_, wMultX, wMultY, (sign) && (onEdge) , inDelayMap("X", getCriticalPath())); //if it's on edge then is signed
 			mult->changeName( join( mult->getName()+"_",partitions) );
 			oplist.push_back(mult);
 			

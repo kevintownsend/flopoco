@@ -129,37 +129,39 @@ static void usage(char *name, string opName = ""){
 	if ( full )	
 		cerr << "    ____________ INTEGER MULTIPLIERS/SQUARER/KARATSUBA _________________________\n";
 
-	if ( full || opName == "IntMultiplier"){
-		OP("IntMultiplier","wInX wInY signed ratio");
-		cerr << "      Integer multiplier of two integers X and Y of sizes wInX and wInY \n";
-		cerr << "      signed is one of {0,1} \n";
-	}
+  // // Killing Bogdan's mess
+	// if ( full || opName == "IntMultiplier"){
+	// 	OP("IntMultiplier","wInX wInY signed ratio");
+	// 	cerr << "      Integer multiplier of two integers X and Y of sizes wInX and wInY \n";
+	// 	cerr << "      signed is one of {0,1} \n";
+	// }
 
-	if ( full || opName == "IntMultiplier" || opName == "UnsignedIntMultiplier" ){
-		OP("UnsignedIntMultiplier","wInX wInY");
-		cerr << "      Unsigned integer multiplier.\n";	
-	}
+	// if ( full || opName == "IntMultiplier" || opName == "UnsignedIntMultiplier" ){
+	// 	OP("UnsignedIntMultiplier","wInX wInY");
+	// 	cerr << "      Unsigned integer multiplier.\n";	
+	// }
 
-	if ( full || opName == "IntMultiplier" || opName == "SignedIntMultiplier"){
-		OP("SignedIntMultiplier","wInX wInY");
-		cerr << "      Signed integer multiplier. wInX and wInY include the sign\n";	
-	}
+	// if ( full || opName == "IntMultiplier" || opName == "SignedIntMultiplier"){
+	// 	OP("SignedIntMultiplier","wInX wInY");
+	// 	cerr << "      Signed integer multiplier. wInX and wInY include the sign\n";	
+	// }
 
-	if ( full || opName == "IntMultiplier" || opName == "IntTilingMultiplier"){		
-		OP("IntTilingMultiplier","wInX wInY ratio maxTimeInMinutes");
+	if ( full || opName == "IntMultiplier"){		
+		OP("IntTilingMultiplier","wInX wInY sign ratio maxTimeInMinutes");
 		cerr << "      Integer multiplier of two integers X and Y of sizes wInX and wInY\n";
+		cerr << "      sign:  boolean (1:signed; 0:unsigned). If signed, wInX and wInY include the sign bit\n";
 		cerr << "      0 <= ratio <= 1; larger ratio => DSP dominant architectures\n";
 		cerr << "      maxTimeInMinutes 0..; 0=find optimal solution (no time limit)\n"; 	
 	}
 	
 	if ( full || opName == "IntMultiplier" || opName == "IntTruncMultiplier"){			
-		OP("IntTruncMultiplier","wInX wInY wOut ratio useLimits maxTimeInMinutes sign");
+		OP("IntTruncMultiplier","wInX wInY wOut sign ratio useLimits maxTimeInMinutes");
 		cerr << "      Integer multiplier of two integers X and Y of sizes wInX and wInY, \n"; 
 		cerr << "      returning the wOut most significant bits of the exact product (faithful rounding).\n";	
+		cerr << "      sign:  boolean (1:signed; 0:unsigned). If signed, wInX and wInY include the sign bit\n";
 		cerr << "      0 <= ratio <= 1; larger ratio => DSP dominant architectures\n";
 		cerr << "      useLimits. Soft-core multipliers are size-limited\n";
 		cerr << "      maxTimeInMinutes 0..; 0=find optimal solution (no time limit)\n";
-		cerr << "      sign is boolean 1:signed; 0:unsigned\n"; 	
 	}
 
 	if ( full || opName == "IntMultiplier" || opName == "IntKaratsuba"){			
@@ -697,7 +699,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				mpz_class mpc(argv[i++]);
 				int signedInput = checkBoolean(argv[i++], argv[0]);
 
-				cerr << "> IntIntKCM , w="<<w<<", c="<<mpz2string(mpc) << (signedInput==0?" unsigned":" signed") << "\n";
 				op = new IntIntKCM(target, w, mpc, signedInput);
 				addOperator(oplist, op);
 			}        
@@ -709,7 +710,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 			else {
 				int w = atoi(argv[i++]);
 				mpz_class mpc(argv[i++]);
-				cerr << "> IntConstMult , w="<<w<<", c="<<mpz2string(mpc)<<"\n";
 				op = new IntConstMult(target, w, mpc);
 				addOperator(oplist, op);
 			}        
@@ -740,9 +740,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				int wF_out = checkStrictlyPositive(argv[i++], argv[0]);
 				int a  = atoi(argv[i++]); 
 				int b  = checkStrictlyPositive(argv[i++], argv[0]); 
-				cerr << "> FPConstMultRational, wE_in="<<wE_in<<", wF_in="<<wF_in
-						 <<", wE_out="<<wE_out<<", wF_out="<<wF_out
-						 <<", constant="<<a<<"/"<<b<<endl;
 				op = new FPConstMult(target, wE_in, wF_in, wE_out, wF_out, a, b);
 				addOperator(oplist, op);
 			}        
@@ -760,9 +757,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				int cst_sgn  = checkSign(argv[i++], argv[0]); 
 				int cst_exp  = atoi(argv[i++]); // TODO no check on this arg
 				mpz_class cst_sig(argv[i++]);
-				cerr << "> FPConstMultExpert, wE_in="<<wE_in<<", wF_in="<<wF_in
-						 <<", wE_out="<<wE_out<<", wF_out="<<wF_out
-						 <<", cst_sgn="<<cst_sgn<<", cst_exp="<<cst_exp<< ", cst_sig="<<mpz2string(cst_sig)<<endl;
 				op = new FPConstMult(target, wE_in, wF_in, wE_out, wF_out, cst_sgn, cst_exp, cst_sig);
 				addOperator(oplist, op);
 			}        
@@ -806,9 +800,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				int signedInput = checkBoolean(argv[i++], argv[0]);
 				int lsbOut = atoi(argv[i++]);
 				string constant = argv[i++];
-				cerr << "> FixRealKCM, msbIn="<<msbIn<<", lsbIn="<<lsbIn 
-					  <<", lsbOut="<<lsbOut
-					  << ", constant="<<constant <<endl;
 				op = new FixRealKCM(target, lsbIn, msbIn, signedInput, lsbOut, constant);
 				addOperator(oplist, op);
 			}        
@@ -824,9 +815,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				int lsbOut = atoi(argv[i++]);
 				string constant = argv[i++];
 				float targetUlpError = atof(argv[i++]);
-				cerr << "> FixRealKCM, msbIn="<<msbIn<<", lsbIn="<<lsbIn 
-					  <<", lsbOut="<<lsbOut
-					  << ", constant="<<constant <<endl;
 				op = new FixRealKCM(target, lsbIn, msbIn, signedInput, lsbOut, constant, targetUlpError);
 				addOperator(oplist, op);
 			}        
@@ -839,7 +827,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				int wE = atoi(argv[i++]);
 				int wF = atoi(argv[i++]);
 				string constant = argv[i++];
-				cerr << "> FPRealKCM, wE="<<wE<<", wF="<<wF << ", constant="<<constant <<endl;
 				op = new FPRealKCM(target, wE, wF, constant);
 				addOperator(oplist, op);
 			}        
@@ -854,9 +841,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				int wE_out = checkStrictlyPositive(argv[i++], argv[0]);
 				int wF_out = checkStrictlyPositive(argv[i++], argv[0]);
 				string constant = argv[i++];
-				cerr << "> CRFPConstMult, wE_in="<<wE_in<<", wF_in="<<wF_in 
-					  <<", wE_out="<<wE_out<<", wF_out="<<wF_out
-					  << ", constant="<<constant <<endl;
 				op = new CRFPConstMult(target, wE_in, wF_in, wE_out, wF_out, constant);
 				addOperator(oplist, op);
 			}        
@@ -872,10 +856,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				int wF_out = checkStrictlyPositive(argv[i++], argv[0]);
 				int wF_C = atoi(argv[i++]);
 				string constant = argv[i++];
-				cerr << "> FPConstMult, wE_in="<<wE_in<<", wF_in="<<wF_in 
-					  <<", wE_out="<<wE_out<<", wF_out="<<wF_out 
-					  << ", wF_C=" << wF_C
-					  << ", constant="<<constant <<endl;
 				op = new FPConstMult(target, wE_in, wF_in, wE_out, wF_out, wF_C, constant);
 				addOperator(oplist, op);
 			}        
@@ -891,7 +871,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				map<string, double> inputDelays;
 				inputDelays["X"]=0;
 				inputDelays["S"]=0;
-				cerr << "> LeftShifter, wIn="<<wIn<<", maxShift="<<maxShift<<"\n";
 				op = new Shifter(target, wIn, maxShift, Shifter::Left);
 				addOperator(oplist, op);
 			}    
@@ -906,7 +885,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				map<string, double> inputDelays;
 				inputDelays["X"]=0;
 				inputDelays["S"]=0;
-				cerr << "> RightShifter, wIn="<<wIn<<", maxShift="<<maxShift<<"\n";
 				op = new Shifter(target, wIn, maxShift, Shifter::Right, inputDelays);
 				addOperator(oplist, op);
 			}
@@ -917,7 +895,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				usage(argv[0],opname);
 			else {
 				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
-				cerr << "> LZOC, wIn="<<wIn<<"\n";
 				op = new LZOC(target, wIn);
 				addOperator(oplist, op);
 			}
@@ -930,7 +907,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				int wIn  = checkStrictlyPositive(argv[i++], argv[0]);
 				int wOut = checkStrictlyPositive(argv[i++], argv[0]);
 				if (wIn > 1){
-					cerr << "> LZOCShifter, wIn="<<wIn<<", wOut="<<wOut<< endl;
 					op = new LZOCShifterSticky(target, wIn, wOut, intlog2(wIn), 0, -1);
 					addOperator(oplist, op);
 				}else
@@ -945,7 +921,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				int wIn  = checkStrictlyPositive(argv[i++], argv[0]);
 				int wOut = checkStrictlyPositive(argv[i++], argv[0]);
 				if (wIn > 1){
-					cerr << "> LZCShifter, wIn="<<wIn<<", wOut="<<wOut<< endl;
 					op = new LZOCShifterSticky(target, wIn, wOut, intlog2(wIn), 0, 0);
 					addOperator(oplist, op);
 				}else
@@ -960,7 +935,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				int wIn  = checkStrictlyPositive(argv[i++], argv[0]);
 				int wOut = checkStrictlyPositive(argv[i++], argv[0]);
 				if (wIn > 1){
-					cerr << "> LOCShifter, wIn="<<wIn<<", wOut="<<wOut<< endl;
 					op = new LZOCShifterSticky(target, wIn, wOut, intlog2(wIn), 0, 1);
 					addOperator(oplist, op);
 				}else
@@ -975,7 +949,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				int wIn  = checkStrictlyPositive(argv[i++], argv[0]);
 				int wOut = checkStrictlyPositive(argv[i++], argv[0]);
 				if (wIn > 1){
-					cerr << "> LZOCShifterSticky, wIn="<<wIn<<", wOut="<<wOut<< endl;
 					op = new LZOCShifterSticky(target, wIn, wOut, intlog2(wIn), 1, -1);
 					addOperator(oplist, op);
 				}else
@@ -990,7 +963,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				int wIn  = checkStrictlyPositive(argv[i++], argv[0]);
 				int wOut = checkStrictlyPositive(argv[i++], argv[0]);
 				if (wIn > 1){
-					cerr << "> LZCShifterSticky, wIn="<<wIn<<", wOut="<<wOut<< endl;
 					op = new LZOCShifterSticky(target, wIn, wOut, intlog2(wIn), 1, 0);
 					addOperator(oplist, op);
 				}else
@@ -1005,7 +977,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				int wIn  = checkStrictlyPositive(argv[i++], argv[0]);
 				int wOut = checkStrictlyPositive(argv[i++], argv[0]);
 				if (wIn > 1){
-					cerr << "> LOCShifterSticky, wIn="<<wIn<<", wOut="<<wOut<< endl;
 					op = new LZOCShifterSticky(target, wIn, wOut, intlog2(wIn), 1, 1);
 					addOperator(oplist, op);
 				}else
@@ -1022,9 +993,8 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 			else {
 				int param0 = checkStrictlyPositive(argv[i++], argv[0]);
 				int param1 = checkStrictlyPositive(argv[i++], argv[0]);
-				cerr << "> UserDefinedOperator, param0="<<param0<<", param1=" << param1 << endl  ;
-                                op = new UserDefinedOperator(target,param0,param1);
-                                addOperator(oplist, op);
+				op = new UserDefinedOperator(target,param0,param1);
+				addOperator(oplist, op);
 			}    
 		}
 		else if(opname=="IntAdder"){
@@ -1033,7 +1003,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				usage(argv[0], opname);
 			else {
 				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
-				cerr << "> IntAdder, wIn="<<wIn<<endl  ;
 				op = new IntAdder(target,wIn, inDelayMap("X",target->ffDelay() + target->localWireDelay()) );
 				addOperator(oplist, op);
 			}    
@@ -1046,7 +1015,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
 				int criteria = atoi(argv[i++]);
 				
-				cerr << "> IntComparator, wIn="<<wIn<<" criteria="<<criteria<<endl  ;
 				op = new IntComparator(target,wIn,criteria,false,0);
 				addOperator(oplist, op);
 			}    
@@ -1060,7 +1028,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				int criteria = atoi(argv[i++]);
 				int constant = atoi(argv[i++]);
 				
-				cerr << "> IntComparator, wIn="<<wIn<<" criteria="<<criteria<<endl  ;
 				op = new IntComparator(target,wIn,criteria, true, constant);
 				addOperator(oplist, op);
 			}    
@@ -1077,9 +1044,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				int implementation = atoi(argv[i++]);
 				int bufferedIn = atoi(argv[i++]);
 				double inputDelay = atof(argv[i++]);
-
-				cerr << "> IntAdder, wIn="<<wIn<<", frequency="<<target->frequency()<< " inputDelay="<<inputDelay<< endl  ;
-
 				map <string, double> delayMap;
 
 				if (bufferedIn){
@@ -1108,7 +1072,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 			else {
 				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
 				int N   = checkStrictlyPositive(argv[i++], argv[0]);
-				cerr << "> IntMultiAdder, wIn="<<wIn<<" N="<<N<<endl  ;
 				op = new IntMultiAdder(target,wIn,N);
 				addOperator(oplist, op);
 			}    
@@ -1121,7 +1084,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 			else {
 				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
 				int N   = checkStrictlyPositive(argv[i++], argv[0]);
-				cerr << "> IntNAdder, wIn="<<wIn<<" N="<<N<<endl  ;
 				op = new IntNAdder(target, wIn, N, inDelayMap("X0",target->localWireDelay()));
 				addOperator(oplist, op);
 			}    
@@ -1134,7 +1096,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 			else {
 				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
 				int N   = checkStrictlyPositive(argv[i++], argv[0]);
-				cerr << "> IntCompressorTree, wIn="<<wIn<<" N="<<N<<endl  ;
 				op = new IntCompressorTree(target,wIn,N);
 				addOperator(oplist, op);
 			}    
@@ -1147,7 +1108,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				usage(argv[0],opname);
 			else {
 				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
-				cerr << "> IntAdderSpecific, wIn="<<wIn<<endl  ;
 				op = new IntAdderSpecific(target,wIn);
 				addOperator(oplist, op);
 			}    
@@ -1159,7 +1119,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 			else {
 				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
 				int type = atoi(argv[i++]);
-				cerr << "> IntComparatorSpecific, wIn="<<wIn<<" type="<<type<< endl  ;
 				op = new IntComparatorSpecific(target,wIn,type);
 				addOperator(oplist, op);
 			}    
@@ -1170,7 +1129,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				usage(argv[0],opname);
 			else {
 				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
-				cerr << "> CarryGenerationCircuit, wIn="<<wIn<<endl  ;
 				op = new CarryGenerationCircuit(target,wIn);
 				addOperator(oplist, op);
 			}    
@@ -1183,7 +1141,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 			else {
 				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
 				int g   = checkStrictlyPositive(argv[i++], argv[0]);
-				cerr << "> LongIntAdderSpecific, wIn="<<wIn<<endl  ;
 				if (g==1)
 					op = new LongIntAdderAddAddMuxGen1(target,wIn);
 				else if (g==2)
@@ -1199,7 +1156,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				usage(argv[0],opname);
 			else {
 				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
-				cerr << "> LongIntAdderMuxNetwork, wIn="<<wIn<<endl  ;
 				op = new LongIntAdderMuxNetwork(target,wIn);
 				addOperator(oplist, op);
 			}    
@@ -1211,7 +1167,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 			else {
 				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
 				int g   = checkStrictlyPositive(argv[i++], argv[0]);
-				cerr << "> LongIntAdderCmpCmpAddSpecific, wIn="<<wIn<<endl  ;
 				if (g==1)
 					op = new LongIntAdderCmpCmpAddGen1(target,wIn);
 				else if (g==2)
@@ -1228,7 +1183,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 			else {
 				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
 				int g   = checkStrictlyPositive(argv[i++], argv[0]);
-				cerr << "> LongIntAdderCmpAddInc, wIn="<<wIn<<endl  ;
 				if (g==1)
 					op = new LongIntAdderCmpAddIncGen1(target,wIn);
 				else if (g==2)
@@ -1248,7 +1202,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 			else {
 				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
 				int opType = checkBoolean(argv[i++], argv[0]);
-				cerr << "> IntDualSub, wIn="<<wIn<<" OpType="<<opType<<endl  ;
 				op = new IntDualSub(target,wIn,opType);
 				addOperator(oplist, op);
 			}    
@@ -1262,16 +1215,25 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				int wInY    = checkStrictlyPositive(argv[i++], argv[0]);
 				int sign    =  checkBoolean(argv[i++], argv[0]);
 				float ratio = atof(argv[i++]);
-				bool sign_;
-				if (sign > 0)
-					sign_ = true;
-				else
-					sign_ = false;
-				cerr << "> IntMultiplier , wInX="<<wInX<<", wInY="<<wInY<<" signed="<<sign_<<"\n";
-				op = new IntMultiplier(target, wInX, wInY, emptyDelayMap, sign_, ratio);
+				op = new IntMultiplier(target, wInX, wInY, sign, emptyDelayMap, ratio);
 				addOperator(oplist, op);
 			}
 		}
+		// Hidden, for testing purpose
+		else if(opname=="LogicIntMultiplier"){
+			int nargs = 3;
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			else {
+				int wInX = checkStrictlyPositive(argv[i++], argv[0]);
+				int wInY = checkStrictlyPositive(argv[i++], argv[0]);
+				int sign = checkBoolean(argv[i++], argv[0]);
+				op = new LogicIntMultiplier(target, wInX, wInY, sign);
+				addOperator(oplist, op);
+			}
+		}
+
+#if 0 // What the fuck 
 		else if(opname=="UnsignedIntMultiplier"){
 			int nargs = 2;
 			if (i+nargs > argc)
@@ -1279,7 +1241,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 			else {
 				int wInX = checkStrictlyPositive(argv[i++], argv[0]);
 				int wInY = checkStrictlyPositive(argv[i++], argv[0]);
-				cerr << "> UnsignedIntMultiplier , wInX="<<wInX<<", wInY="<<wInY<<"\n";
 				op = new UnsignedIntMultiplier(target, wInX, wInY);
 				addOperator(oplist, op);
 			}
@@ -1291,35 +1252,35 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 			else {
 				int wInX = checkStrictlyPositive(argv[i++], argv[0]);
 				int wInY = checkStrictlyPositive(argv[i++], argv[0]);
-				cerr << "> SignedIntMultiplier , wInX="<<wInX<<", wInY="<<wInY<<"\n";
 				op = new SignedIntMultiplier(target, wInX, wInY);
 				addOperator(oplist, op);
 			}
 		}
+#endif
+
 		else if(opname=="IntKaratsuba"){
 			int nargs = 1;
 			if (i+nargs > argc)
 				usage(argv[0],opname);
 			else {
 				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
-				cerr << "> IntKaratsuba , wIn="<<wIn<<"\n";
 				op = new IntKaratsuba(target, wIn);
 				addOperator(oplist, op);
 			}    
 		}   
 		else if(opname=="IntTilingMultiplier"){
-			int nargs = 4;
+			int nargs = 5;
 			if (i+nargs > argc)
 				usage(argv[0],opname);
 			else {
 				int wInX = checkStrictlyPositive(argv[i++], argv[0]);
 				int wInY = checkStrictlyPositive(argv[i++], argv[0]);
+				int sign = checkBoolean(argv[i++], argv[0]);
 				float r = atof(argv[i++]);
-				if (r<0)
-					throw "Ratio > 0";
 				int maxTimeInMinutes = atoi(argv[i++]);
-				
-				cerr << "> IntTilingMultiplier , wInX="<<wInX<<", wInY="<<wInY<<" ratio=" << r << " maxTimeInMinutes= "<< maxTimeInMinutes << "\n";
+				if(sign){
+					throw(string("IntTilingMultiplier, signed: not implemented, please go pick Bogdan's eyes"));
+				}
 				op = new IntTilingMult(target, wInX, wInY, r, maxTimeInMinutes, true);
 				addOperator(oplist, op);
 			}
@@ -1332,6 +1293,7 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				int wInX = checkStrictlyPositive(argv[i++], argv[0]);
 				int wInY = checkStrictlyPositive(argv[i++], argv[0]);
 				int wOut = checkStrictlyPositive(argv[i++], argv[0]);
+				int sign = checkBoolean(argv[i++], argv[0]);
 				float r = atof(argv[i++]);
 				// TODO I think it is more consistent to move this kind of tests insinde the operator
 				if (r<0)
@@ -1340,9 +1302,7 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				if (!((useLimits==0)||(useLimits==1)))
 					throw "useLimits is 0 or 1";				
 				int maxTimeInMinutes = atoi(argv[i++]);
-				int sign = atoi(argv[i++]);
 
-				cerr << "> IntTruncMult , wInX="<<wInX<<", wInY=" <<wInY <<", wOut=" <<wOut << " ratio=" << r << " useLimits="<<useLimits<<" maxTimeInMinutes="<<maxTimeInMinutes<<" signed="<<sign<<"\n";
 				op = new IntTruncMultiplier(target, wInX, wInY, wOut, r,useLimits, maxTimeInMinutes, false, sign);
 				addOperator(oplist, op);
 			}
@@ -1356,7 +1316,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				int wE = checkStrictlyPositive(argv[i++], argv[0]);
 				int wF = checkStrictlyPositive(argv[i++], argv[0]);
 				
-				cerr << "> FPAdder , wE="<<wE<<", wF="<<wF<<" \n";
 				op = new FPAdderSinglePath(target, wE, wF, wE, wF, wE, wF);
 				addOperator(oplist, op);
 			}
@@ -1369,7 +1328,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				int wE = checkStrictlyPositive(argv[i++], argv[0]);
 				int wF = checkStrictlyPositive(argv[i++], argv[0]);
 				
-				cerr << "> FPAdderDualPath , wE="<<wE<<", wF="<<wF<<" \n";
 				op = new FPAdderDualPath(target, wE, wF, wE, wF, wE, wF);
 				addOperator(oplist, op);
 			}
@@ -1382,7 +1340,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				int wE = checkStrictlyPositive(argv[i++], argv[0]);
 				int wF = checkStrictlyPositive(argv[i++], argv[0]);
 				
-				cerr << "> FPAdder3Input , wE="<<wE<<", wF="<<wF<<" \n";
 				op = new FPAdder3Input(target, wE, wF);
 				addOperator(oplist, op);
 			}
@@ -1407,7 +1364,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				int wE = checkStrictlyPositive(argv[i++], argv[0]);
 				int wF = checkStrictlyPositive(argv[i++], argv[0]);
 				int adderLatency = checkStrictlyPositive(argv[i++], argv[0]);
-				cerr << "> FPFMAcc , wE="<<wE<<", wF="<<wF<<" adderLatency="<<adderLatency<< " \n";
 				op = new FPFMAcc(target, wE, wF, adderLatency);
 				addOperator(oplist, op);
 			}
@@ -1424,7 +1380,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				int l1 = checkStrictlyPositive(argv[i++], argv[0]);
 				int l2 = checkStrictlyPositive(argv[i++], argv[0]);
 				int ver = atoi(argv[i++]);
-				cerr << "> FPJacobi , wE="<<wE<<", wF="<<wF<<" l0="<<l0<<" l1="<<l1<<" l2="<<l2<<" ver="<<ver<< " \n";
 				op = new FPJacobi(target, wE, wF, l0, l1, l2,ver);
 				addOperator(oplist, op);
 			}
@@ -1447,7 +1402,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				int peFifoDepth = checkStrictlyPositive(argv[i++], argv[0]);
 				int outFifoDepth = checkStrictlyPositive(argv[i++], argv[0]);
 				
-				cerr << "> TaMaDiModule , wP="<<wP<<", degree="<<degree<<" numberOfIterations="<<numberOfIterations<<" widthOfIntervalID="<<widthOfIntervalID<< " width comparisson="<<widthComp<<" n="<<n<<" inFifo="<<inFifoDepth<<" peFifo="<<peFifoDepth<<" outFifo"<<outFifoDepth <<" \n";
 				op = new TaMaDiModule(target, wP, degree, numberOfIterations, widthOfIntervalID, widthComp, n, inFifoDepth, peFifoDepth, outFifoDepth);
 				addOperator(oplist, op);
 			}
@@ -1467,7 +1421,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				int peFifoDepth = checkStrictlyPositive(argv[i++], argv[0]);
 				int outFifoDepth = checkStrictlyPositive(argv[i++], argv[0]);
 				
-				cerr << "> TaMaDiModuleDummyWrapper , wP="<<wP<<", degree="<<degree<<" numberOfIterations="<<numberOfIterations<<" widthOfIntervalID="<<widthOfIntervalID<<" width comparisson="<<widthComp<<" n="<<n<<" inFifo="<<inFifoDepth<<" peFifo="<<peFifoDepth<<" outFifo"<<outFifoDepth <<" \n";
 				op = new TaMaDiModuleDummyWrapper(target, wP, degree, numberOfIterations, widthOfIntervalID, widthComp, n, inFifoDepth, peFifoDepth, outFifoDepth);
 				addOperator(oplist, op);
 			}
@@ -1487,7 +1440,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				int peFifoDepth = checkStrictlyPositive(argv[i++], argv[0]);
 				int outFifoDepth = checkStrictlyPositive(argv[i++], argv[0]);
 				
-				cerr << "> TaMaDiDeserializer , wP="<<wP<<", degree="<<degree<<" numberOfIterations="<<numberOfIterations<<" widthOfIntervalID="<<widthOfIntervalID<<" width comparisson="<<widthComp<<" n="<<n<<" inFifo="<<inFifoDepth<<" peFifo="<<peFifoDepth<<" outFifo"<<outFifoDepth <<" \n";
 				op = new TaMaDiDeserializer(target, wP, degree, numberOfIterations, widthOfIntervalID, n, inFifoDepth, peFifoDepth, outFifoDepth);
 				addOperator(oplist, op);
 			}
@@ -1507,7 +1459,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				int peFifoDepth = checkStrictlyPositive(argv[i++], argv[0]);
 				int outFifoDepth = checkStrictlyPositive(argv[i++], argv[0]);
 				
-				cerr << "> TaMaDiModuleWrapperInterface , wP="<<wP<<", degree="<<degree<<" numberOfIterations="<<numberOfIterations<<" widthOfIntervalID="<<widthOfIntervalID<<" width comparisson="<<widthComp<<" n="<<n<<" inFifo="<<inFifoDepth<<" peFifo="<<peFifoDepth<<" outFifo"<<outFifoDepth <<" \n";
 				op = new TaMaDiModuleWrapperInterface(target, wP, degree, numberOfIterations, widthOfIntervalID, widthComp, n, inFifoDepth, peFifoDepth, outFifoDepth);
 				addOperator(oplist, op);
 			}
@@ -1529,7 +1480,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				int InterfaceInFifoDepth = checkStrictlyPositive(argv[i++], argv[0]);
 				int InterfaceOutFifoDepth = checkStrictlyPositive(argv[i++], argv[0]);
 				
-				cerr << "> TaMaDiModuleWrapperInterface , wP="<<wP<<", degree="<<degree<<" numberOfIterations="<<numberOfIterations<<" widthOfIntervalID="<<widthOfIntervalID<<" width comparisson="<<widthComp<<" n="<<n<<" inFifo="<<inFifoDepth<<" peFifo="<<peFifoDepth<<" outFifo"<<outFifoDepth << " interfaceInFifo="<<InterfaceInFifoDepth<<" interfaceOutFifoDepth="<<InterfaceOutFifoDepth<<"\n";
 				op = new TaMaDiDispatcherInterface(target, wP, degree, numberOfIterations, widthOfIntervalID, widthComp,  n, inFifoDepth, peFifoDepth, outFifoDepth, InterfaceInFifoDepth, InterfaceOutFifoDepth);
 				addOperator(oplist, op);
 			}
@@ -1552,7 +1502,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				int InterfaceOutFifoDepth = checkStrictlyPositive(argv[i++], argv[0]);
 				int moduleCount = checkStrictlyPositive(argv[i++], argv[0]);
 				
-				cerr << "> TaMaDiSystem , wP="<<wP<<", degree="<<degree<<" numberOfIterations="<<numberOfIterations<<" widthOfIntervalID="<<widthOfIntervalID<<" width comparisson="<<widthComp<<" n="<<n<<" inFifo="<<inFifoDepth<<" peFifo="<<peFifoDepth<<" outFifo"<<outFifoDepth << " interfaceInFifo="<<InterfaceInFifoDepth<<" interfaceOutFifoDepth="<<InterfaceOutFifoDepth<<" moduleCount="<<moduleCount<<"\n";
 				op = new TaMaDiSystem(target, wP, degree, numberOfIterations, widthOfIntervalID, widthComp, n, inFifoDepth, peFifoDepth, outFifoDepth, InterfaceInFifoDepth, InterfaceOutFifoDepth, moduleCount );
 				addOperator(oplist, op);
 			}
@@ -1567,7 +1516,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				int numberOfIterations = checkStrictlyPositive(argv[i++], argv[0]);
 				int widthOfIntervalID =  checkStrictlyPositive(argv[i++], argv[0]);
 				int widthComp          =  checkStrictlyPositive(argv[i++], argv[0]);
-				cerr << "> TaMaDiCore , wP="<<wP<<", degree="<<degree<<" numberOfIterations="<<numberOfIterations<<" widthOfIntervalID="<<widthOfIntervalID <<" width comparisson="<<widthComp<<" \n";
 				op = new TaMaDiCore(target, wP, degree, numberOfIterations, widthOfIntervalID, widthComp);
 				addOperator(oplist, op);
 			}
@@ -1578,7 +1526,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				usage(argv[0],opname);
 			else {
 				int n = checkStrictlyPositive(argv[i++], argv[0]);
-				cerr << "> TaMaDiPriorityEncoder , n="<<n<<" \n";
 				op = new TaMaDiPriorityEncoder(target, n);
 				addOperator(oplist, op);
 			}
@@ -1589,7 +1536,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				usage(argv[0],opname);
 			else {
 				int n = checkStrictlyPositive(argv[i++], argv[0]);
-				cerr << "> TaMaDiDecoder ,output n="<<n<<" \n";
 				op = new TaMaDiDecoder(target, n);
 				addOperator(oplist, op);
 			}
@@ -1602,7 +1548,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				int w = checkStrictlyPositive(argv[i++], argv[0]);
 				int n = checkStrictlyPositive(argv[i++], argv[0]);
 				int limit = atoi(argv[i++]);
-				cerr << "> TaMaDiFIFO ,output w="<<n<<" depth="<<n<<" with full report limit at "<<limit<<" \n";
 				op = new TaMaDiFIFO(target, w, n, limit);
 				addOperator(oplist, op);
 			}
@@ -1615,7 +1560,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 			else {
 				int w = checkStrictlyPositive(argv[i++], argv[0]);
 				int n = checkStrictlyPositive(argv[i++], argv[0]);
-				cerr << "> TaMaDiShiftRegister ,w="<<w<<" levels="<<n<<" \n";
 				op = new TaMaDiShiftRegister(target, w, n);
 				addOperator(oplist, op);
 			}
@@ -1633,7 +1577,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				int wE = checkStrictlyPositive(argv[i++], argv[0]);
 				int wF = checkStrictlyPositive(argv[i++], argv[0]);
 				
-				cerr << "> Fix2FP, LSB="<<LSB<<", MSB="<<MSB<<", wE="<<wE<<", wF="<<wF<<" \n";
 				op = new Fix2FP(target, LSB, MSB, sign,wE, wF);
 				addOperator(oplist, op);
 			}
@@ -1705,7 +1648,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 			int wE = checkStrictlyPositive(argv[i++], argv[0]);
 			int wFIn = checkStrictlyPositive(argv[i++], argv[0]);
 			int wFOut = checkStrictlyPositive(argv[i++], argv[0]);
-			cerr << "> FPMultiplier , wE="<<wE<<", wFIn="<<wFIn<<", wFOut="<<wFOut<<" \n";
 			op = new FPMultiplier(target, wE, wFIn, wE, wFIn, wE, wFOut, true /*normd*/, true /*CR*/);
 			addOperator(oplist, op);
 		} 
@@ -1716,7 +1658,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 			int wE = checkStrictlyPositive(argv[i++], argv[0]);
 			int wFIn = checkStrictlyPositive(argv[i++], argv[0]);
 			int wFOut = checkStrictlyPositive(argv[i++], argv[0]);
-			cerr << "> FPMultiplierFaithful , wE="<<wE<<", wFIn="<<wFIn<<", wFOut="<<wFOut<<" \n";
 			op = new FPMultiplier(target, wE, wFIn, wE, wFIn, wE, wFOut, true, false);
 			addOperator(oplist, op);
 		}
@@ -1728,7 +1669,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				int wE = checkStrictlyPositive(argv[i++], argv[0]);
 				int wFIn = checkStrictlyPositive(argv[i++], argv[0]);
 				int wFOut = checkStrictlyPositive(argv[i++], argv[0]);
-				cerr << "> FPMultiplierKaratsuba , wE="<<wE<<", wFIn="<<wFIn<<", wFOut="<<wFOut<<" \n";
 				op = new FPMultiplierKaratsuba(target, wE, wFIn, wE, wFIn, wE, wFOut, 1);
 				addOperator(oplist, op);
 			}
@@ -1756,7 +1696,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				int wE = checkStrictlyPositive(argv[i++], argv[0]);
 				int wFX = checkStrictlyPositive(argv[i++], argv[0]);
 				int wFR = checkStrictlyPositive(argv[i++], argv[0]);
-				cerr << "> FPSquarer , wE="<<wE<<", wFX="<<wFX<<" wFR="<<wFR<< " \n";
 				op = new FPSquarer(target, wE, wFX, wFR);
 				addOperator(oplist, op);
 			}
@@ -1768,7 +1707,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				usage(argv[0],opname); // and exit
 			int wE = checkStrictlyPositive(argv[i++], argv[0]);
 			int wF = checkStrictlyPositive(argv[i++], argv[0]);
-			cerr << "> FPDiv: wE=" << wE << " wF=" << wF << endl;
 			op = new FPDiv(target, wE, wF);
 			addOperator(oplist, op);
 		}
@@ -1779,7 +1717,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				usage(argv[0],opname); // and exit
 			int wE = checkStrictlyPositive(argv[i++], argv[0]);
 			int wF = checkStrictlyPositive(argv[i++], argv[0]);
-			cerr << "> FPSqrt: wE=" << wE << " wF=" << wF  << endl;
 			op = new FPSqrt(target, wE, wF);
 			addOperator(oplist, op);
 		}
@@ -1792,7 +1729,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 			int wE = checkStrictlyPositive(argv[i++], argv[0]);
 			int wF = checkStrictlyPositive(argv[i++], argv[0]);
 			int degree = checkStrictlyPositive(argv[i++], argv[0]);
-			cerr << "> FPSqrtPoly: wE=" << wE << " wF=" << wF << " degree =" << degree << endl;
 			op = new FPSqrtPoly(target, wE, wF, false, degree);
 			addOperator(oplist, op);
 		}
@@ -1808,30 +1744,11 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				int MaxMSBX = atoi(argv[i++]); // may be negative
 				int LSBA = atoi(argv[i++]); // may be negative
 				int MSBA = atoi(argv[i++]); // may be negative
-				cerr << "> Long accumulator , wEX="<<wEX<<", wFX="<<wFX<<", MaxMSBX="<<MaxMSBX<<", LSBA="<<LSBA<<", MSBA="<<MSBA<<"\n";
 				op = new LongAcc(target, wEX, wFX, MaxMSBX, LSBA, MSBA);
 				addOperator(oplist, op);
 			}
 		}
 
-		// hidden and undocumented
-		else if(opname=="LongAccPrecTest"){
-			int nargs = 6; // same as LongAcc, plus an iteration count
-			if (i+nargs > argc)
-				usage(argv[0],opname);
-			else {
-				int wEX = atoi(argv[i++]);
-				int wFX = atoi(argv[i++]);
-				int MaxMSBX = atoi(argv[i++]);
-				int LSBA = atoi(argv[i++]);
-				int MSBA = atoi(argv[i++]);
-				int n = atoi(argv[i++]);
-				cerr << "> Test of long accumulator accuracy, wEX="<<wEX<<", wFX="<<wFX<<", MaxMSBX="<<MaxMSBX<<", LSBA="<<LSBA<<", MSBA="<<MSBA<<", "<< n << " tests\n";
-				LongAcc * op = new LongAcc(target, wEX, wFX, MaxMSBX, LSBA, MSBA);
-				// op->test_precision(n);
-				op->test_precision2();
-			}    
-		}
 
 		else if(opname=="LongAcc2FP"){
 			int nargs = 4;
@@ -1842,7 +1759,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				int MSBA = atoi(argv[i++]); // may be negative
 				int wE_out = checkStrictlyPositive(argv[i++], argv[0]);
 				int wF_out = checkStrictlyPositive(argv[i++], argv[0]);
-				cerr << "> Post-Normalization unit for Long accumulator, LSBA="<<LSBA<<", MSBA="<<MSBA<<" wE_out="<<wE_out<<", wF_out="<<wF_out<<"\n";
 				op = new LongAcc2FP(target, LSBA, MSBA, wE_out, wF_out);
 				addOperator(oplist, op);
 			}
@@ -1861,7 +1777,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				int LSBA = atoi(argv[i++]);
 				int MSBA = atoi(argv[i++]);
 				int n = atoi(argv[i++]);
-				cerr << "> Test of DotProduct accuracy, wEX="<<wE<<", wFX="<<wFX<<", wFY="<<wFY<<", MaxMSBX="<<MaxMSBX<<", LSBA="<<LSBA<<", MSBA="<<MSBA<<", "<< n << " tests\n";
 				DotProduct * op = new DotProduct(target, wE, wFX, wFY, MaxMSBX, LSBA, MSBA);
 				op->test_precision(n);
 			}    
@@ -1879,7 +1794,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				int LSBA = atoi(argv[i++]); // may be negative
 				int MSBA = atoi(argv[i++]); // may be negative
 				double ratio = atof(argv[i++]); // may be negative
-				cerr << "> DotProduct , wE="<<wE<<", wFX="<<wFX<<", wFY="<<wFY<<", MaxMSBX="<<MaxMSBX<<", LSBA="<<LSBA<<", MSBA="<<MSBA<<", ratio="<<ratio<<"\n";
 				op = new DotProduct(target, wE, wFX, wFY, MaxMSBX, LSBA, MSBA, ratio);
 				addOperator(oplist, op);
 			}
@@ -1916,7 +1830,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 			int wI = checkStrictlyPositive(argv[i++], argv[0]);
 			int wO = checkStrictlyPositive(argv[i++], argv[0]);
 			int n  = checkStrictlyPositive(argv[i++], argv[0]);
-			cerr << "> HOTBM func='" << func << "', wI=" << wI << ", wO=" << wO <<endl;
 			op = new HOTBM(target, func, "", wI, wO, n);
 			addOperator(oplist, op);
 		}
@@ -1939,8 +1852,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 			double xmin = 0;
 			double xmax = ldexp(1.0, wE_in);
 			double scale = ldexp(1.0, -wE_out);
-			cerr << "> HOTBM func='" << func << "', wE_in=" << wE_in << ", wF_in=" << wF_in
-			     << ", wE_out=" << wE_out << ", wF_out=" << wF_out << endl;
 			op = new HOTBM(target, func, "", wI, wO, n, xmin, xmax, scale);
 			addOperator(oplist, op);
 		}
@@ -1958,8 +1869,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 
 			// xmax < xmin is a valid use case...
 			double scale = atof(argv[i++]);
-			cerr << "> HOTBM func='" << func << "', wI=" << wI << ", wO=" << wO
-			     << ", xmin=" << xmin << ", xmax=" << xmax << ", scale=" << scale <<endl;
 			op = new HOTBM(target, func, "", wI, wO, n, xmin, xmax, scale);
 			addOperator(oplist, op);
 		}
@@ -1975,7 +1884,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				usage(argv[0],opname); // and exit
 			int wE = checkStrictlyPositive(argv[i++], argv[0]);
 			int wF = checkStrictlyPositive(argv[i++], argv[0]);
-			cerr << "> FPExp: wE=" << wE << " wF=" << wF << endl;
 			op = new FPExp(target, wE, wF, 0, 0);
 			addOperator(oplist, op);
 		}
@@ -1992,7 +1900,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 			int d=atoi(argv[i++]);
 			int g=atoi(argv[i++]);
 			int fullInput=checkBoolean(argv[i++],  argv[0]);
-			cerr << "> FPExp: wE=" << wE << " wF=" << wF << endl;
 			op = new FPExp(target, wE, wF, k, d, g, fullInput);
 			addOperator(oplist, op);
 		}
@@ -2005,7 +1912,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 			int wE = checkStrictlyPositive(argv[i++], argv[0]);
 			int wF = checkStrictlyPositive(argv[i++], argv[0]);
 			int inTableSize=atoi(argv[i++]);
-			cerr << "> FPLog: wE=" << wE << " wF=" << wF << endl;
 			op = new FPLog(target, wE, wF, inTableSize);
 			addOperator(oplist, op);
 		}
@@ -2023,8 +1929,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 			int logTableSize=atoi(argv[i++]);
 			int expTableSize=atoi(argv[i++]);
 			int expDegree=atoi(argv[i++]);
-			cerr << "> "<< (type==0?"FPPow":"FPPowr") << ": wE=" << wE << " wF=" << wF 
-			     << "logTableSize" << logTableSize << "expTableSize" << expTableSize << "expDegree" << expDegree << endl;
 			op = new FPPow(target, wE, wF, type, logTableSize, expTableSize, expDegree);
 			addOperator(oplist, op);
 		}
@@ -2038,7 +1942,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 			//int logTableSize, int expTableSize, int expDegree, int expG, int logG
 			int wE = checkStrictlyPositive(argv[i++], argv[0]);
 			int wF = checkStrictlyPositive(argv[i++], argv[0]);
-			cerr << "> FPPowr: wE=" << wE << " wF=" << wF << endl;
 			op = new FPPow(target, wE, wF, 0);
 			addOperator(oplist, op);
 		}
@@ -2052,7 +1955,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 			//int logTableSize, int expTableSize, int expDegree, int expG, int logG
 			int wE = checkStrictlyPositive(argv[i++], argv[0]);
 			int wF = checkStrictlyPositive(argv[i++], argv[0]);
-			cerr << "> FPPowr: wE=" << wE << " wF=" << wF << endl;
 			op = new FPPow(target, wE, wF, 1);
 			addOperator(oplist, op);
 		}
@@ -2066,7 +1968,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 			int wFI = checkStrictlyPositive(argv[i++], argv[0]);
 			int wEO = checkStrictlyPositive(argv[i++], argv[0]);
 			int wFO = checkStrictlyPositive(argv[i++], argv[0]);
-			cerr << "> InputIEEE: wEI=" << wEI << " wFI=" << wFI << " wEO=" << wEO << " wFO=" << wFO << endl;
 			op = new InputIEEE(target, wEI, wFI, wEO, wFO);
 			addOperator(oplist, op);
 		}
@@ -2080,7 +1981,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 			int wFI = checkStrictlyPositive(argv[i++], argv[0]);
 			int wEO = checkStrictlyPositive(argv[i++], argv[0]);
 			int wFO = checkStrictlyPositive(argv[i++], argv[0]);
-			cerr << "> OutputIEEE: wEI=" << wEI << " wFI=" << wFI << " wEO=" << wEO << " wFO=" << wFO << endl;
 			op = new OutputIEEE(target, wEI, wFI, wEO, wFO);
 			addOperator(oplist, op);
 		}
@@ -2093,7 +1993,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 			int wE = checkStrictlyPositive(argv[i++], argv[0]);
 			int wF = checkStrictlyPositive(argv[i++], argv[0]);
 			int optimize = checkBoolean(argv[i++], argv[0]);
-			cerr << "> Collision: wE=" << wE << " wF=" << wF << (optimize==0? " using FP operators" : " optimized version") << endl;
 			op = new Collision(target, wE, wF, optimize);
 			addOperator(oplist, op);
 		}
@@ -2105,7 +2004,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 			int wE = checkStrictlyPositive(argv[i++], argv[0]);
 			int wF = checkStrictlyPositive(argv[i++], argv[0]);
 			int optimize = checkBoolean(argv[i++], argv[0]);
-			cerr << "> FPSumOfSquares: wE=" << wE << " wF=" << wF << (optimize==0? " using FP operators" : " optimized version") << endl;
 			op = new FPSumOfSquares(target, wE, wF, optimize);
 			addOperator(oplist, op);
 		}
@@ -2115,7 +2013,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 			if (i+nargs > argc)
 				usage(argv[0],opname); // and exit
 			int wIn = checkStrictlyPositive(argv[i++], argv[0]);
-			cerr << "> IntSquarer: wIn=" << wIn << endl;
 			op = new IntSquarer(target, wIn);
 			addOperator(oplist, op);
 		}
@@ -2128,7 +2025,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				usage(argv[0],opname); // and exit
 			int wE = atoi(argv[i++]);	// can be null or negative
 			int wF = checkStrictlyPositive(argv[i++], argv[0]);
-			cerr << "> LNSAddSub: wE=" << wE << " wF=" << wF << endl;
 			op = new LNSAddSub(target, wE, wF);
 			if(cl_name!="")	op->setName(cl_name);
 			addOperator(oplist, op);
@@ -2140,7 +2036,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				usage(argv[0],opname); // and exit
 			int wE = atoi(argv[i++]);	// can be null or negative
 			int wF = checkStrictlyPositive(argv[i++], argv[0]);
-			cerr << "> LNSMul: wE=" << wE << " wF=" << wF << endl;
 			op = new LNSMul(target, wE, wF);
 			if(cl_name!="")	op->setName(cl_name);
 			addOperator(oplist, op);
@@ -2152,7 +2047,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				usage(argv[0],opname); // and exit
 			int wE = atoi(argv[i++]);	// can be null or negative
 			int wF = checkStrictlyPositive(argv[i++], argv[0]);
-			cerr << "> LNSDiv: wE=" << wE << " wF=" << wF << endl;
 			op = new LNSDiv(target, wE, wF);
 			addOperator(oplist, op);
 		}
@@ -2163,7 +2057,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				usage(argv[0],opname); // and exit
 			int wE = atoi(argv[i++]);	// can be null or negative
 			int wF = checkStrictlyPositive(argv[i++], argv[0]);
-			cerr << "> LNSSqrt: wE=" << wE << " wF=" << wF << endl;
 			op = new LNSSqrt(target, wE, wF);
 			if(cl_name!="")	op->setName(cl_name);
 			addOperator(oplist, op);
@@ -2176,7 +2069,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 			int wE = atoi(argv[i++]);	// can be null or negative
 			int wF = checkStrictlyPositive(argv[i++], argv[0]);
 			int o = checkStrictlyPositive(argv[i++], argv[0]);
-			cerr << "> LNSAdd: wE=" << wE << " wF=" << wF << " o=" << o << endl;
 			op = new LNSAdd(target, wE, wF, o);
 			addOperator(oplist, op);
 		}
@@ -2190,7 +2082,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 			int wF = checkStrictlyPositive(argv[i++], argv[0]);
 			int j = checkStrictlyPositive(argv[i++], argv[0]);
 			int wE = atoi(argv[i++]);
-			cerr << "> CotranF1: wF=" << wF << " j=" << j << " wE=" << wE << endl;
 			op = new TableOp(target, new CotranF1Table(wF, j, wE));
 			addOperator(oplist, op);
 		}
@@ -2201,7 +2092,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				usage(argv[0],opname); // and exit
 			int wF = checkStrictlyPositive(argv[i++], argv[0]);
 			int j = checkStrictlyPositive(argv[i++], argv[0]);
-			cerr << "> CotranF2: wF=" << wF << " j=" << j << endl;
 			op = new TableOp(target, new CotranF2Table(wF, j));
 			addOperator(oplist, op);
 		}
@@ -2212,7 +2102,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				usage(argv[0],opname); // and exit
 			int wF = checkStrictlyPositive(argv[i++], argv[0]);
 			int j = checkStrictlyPositive(argv[i++], argv[0]);
-			cerr << "> CotranF3: wF=" << wF << " j=" << j << endl;
 			op = new TableOp(target, new CotranF3Table(wF, j));
 			addOperator(oplist, op);
 		}
@@ -2227,8 +2116,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 			int j = checkStrictlyPositive(argv[i++], argv[0]);
 			int wECotran = atoi(argv[i++]);
 			int o = atoi(argv[i++]);
-			cerr << "> Cotran: wE=" << wE << " wF=" << wF << " j=" << j
-				<< " wECotran=" << wECotran << " o=" << o << endl;
 			op = new Cotran(target, wE, wF, j, wECotran);
 			addOperator(oplist, op);
 		}
@@ -2242,8 +2129,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 			int j = checkStrictlyPositive(argv[i++], argv[0]);
 			int wECotran = atoi(argv[i++]);
 			int o = atoi(argv[i++]);
-			cerr << "> Cotran: wE=" << wE << " wF=" << wF << " j=" << j 
-				<< " wECotran=" << wECotran << " o=" << o << endl;
 			op = new CotranHybrid(target, wE, wF, j, wECotran);
 			addOperator(oplist, op);
 		}
@@ -2255,7 +2140,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 			int wE = checkStrictlyPositive(argv[i++], argv[0]);
 			int wF = checkStrictlyPositive(argv[i++], argv[0]);
 			int o = checkStrictlyPositive(argv[i++], argv[0]);
-			cerr << "> AtanPow: wE=" << wE << " wF=" << wF << " o=" << o << endl;
 			op = new AtanPow(target, wE, wF, o);
 			addOperator(oplist, op);
 		}
@@ -2267,8 +2151,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 			int fL = checkStrictlyPositive(argv[i++], argv[0]);
 			int fTheta = checkStrictlyPositive(argv[i++], argv[0]);
 			int o = checkStrictlyPositive(argv[i++], argv[0]);
-			cerr << "> LogSinCos: fL=" << fL
-				<< " fTheta=" << fTheta << " o=" << o << endl;
 			op = new LogSinCos(target, fL, fTheta, o);
 			addOperator(oplist, op);
 		}
@@ -2285,7 +2167,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 					usage(argv[0],opname);
 				}
 				Operator* toWrap = oplist.back();
-				cerr << "> Wrapper for " << toWrap->getName()<<endl;
 				op =new Wrapper(target, toWrap);
 				addOperator(oplist, op);
 			}
@@ -2299,12 +2180,8 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 			string func = argv[i++];
 			int wO = atoi(argv[i++]);
 			int n  = checkStrictlyPositive(argv[i++], argv[0]);
-			
-						
-			cerr << "> PolyTableGenerator func='" << func << "', wO=" << wO <<endl;	
-			
 			Operator* tg = new PolyTableGenerator(target, func,  wO, n);
-				addOperator(oplist, tg);
+			addOperator(oplist, tg);
 			
 		}
 #endif		
@@ -2317,9 +2194,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 			int wI = checkStrictlyPositive(argv[i++], argv[0]);
 			int lsbO = atoi(argv[i++]);
 			int msbO = atoi(argv[i++]);
-			
-				
-			cerr << "> FunctionTable func='" << func << "', wI=" << wI << ", lsbO=" << lsbO << ", msbO=" << msbO << endl;	
 			Operator* tg = new FunctionTable(target, func, wI, lsbO, msbO);
 			addOperator(oplist, tg);
 		}
@@ -2332,9 +2206,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 			int wI = checkStrictlyPositive(argv[i++], argv[0]);
 			int wO = atoi(argv[i++]);
 			int n  = checkStrictlyPositive(argv[i++], argv[0]);
-			
-				
-			cerr << "> FunctionEvaluator func='" << func << "', wI=" << wI << ", wO=" << wO << ", degree=" << n << endl;	
 			string arg=func+",0,1,1"; // we are not sure it works for other values
 			Operator* tg = new FunctionEvaluator(target, arg, wI, wO, n);
 			addOperator(oplist, tg);
@@ -2347,7 +2218,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 			string filename = argv[i++];
 			int wE = checkStrictlyPositive(argv[i++], argv[0]);
 			int wF = checkStrictlyPositive(argv[i++], argv[0]);
-			cerr << "> FPPipeline filename='" << filename << "', wE=" << wE << ", wF=" << wF << endl;	
 			Operator* tg = new FPPipeline(target, filename, wE, wF);
 			addOperator(oplist, tg);
 		}
@@ -2357,7 +2227,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 			if (i+nargs > argc)
 				usage(argv[0],opname); // and exit
 			int w = checkStrictlyPositive(argv[i++], argv[0]); // must be >=2 actually
-			cerr << "> FixSinCos w=" << w << endl;
 			Operator* tg = new FixSinCos(target, w);
 			addOperator(oplist, tg);
 		}
@@ -2384,7 +2253,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 			int n = checkPositiveOrNull(argv[i++], argv[0]);
 			Operator* toWrap = oplist.back();
 			Operator* op = new TestBench(target, toWrap, n);
-			cerr << "> TestBench for " << toWrap->getName()<<endl;
 			addOperator(oplist, op);
 			cerr << "To run the simulation using ModelSim, type the following in 'vsim -c':" <<endl;
 			cerr << tab << "vdel -all -lib work" <<endl;

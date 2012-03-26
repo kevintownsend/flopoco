@@ -18,7 +18,7 @@ public:
     * The IntMultiplier constructor
     * @param[in] target           the target device
     **/
-    IntMultiplier(Target* target, int wInX, int wInY, map<string, double> inputDelays = emptyDelayMap, bool sign = false, float ratio = 1.0);
+    IntMultiplier(Target* target, int wInX, int wInY, bool sign = false, map<string, double> inputDelays = emptyDelayMap, float ratio = 1.0);
 
     /**
     *  Destructor

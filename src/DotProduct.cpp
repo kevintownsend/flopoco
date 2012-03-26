@@ -91,7 +91,7 @@ namespace flopoco{
 		vhdl << tab << declare("signP") << " <= sX xor sY;"<<endl;
 
 		/* multiply mantissas */
-		IntMultiplier *mMult = new IntMultiplier(target, 1+wFX, 1+wFY, inDelayMap("X", target->localWireDelay() + getCriticalPath()), 0, ratio);
+		IntMultiplier *mMult = new IntMultiplier(target, 1+wFX, 1+wFY, 0 /*unsigned*/,  inDelayMap("X", target->localWireDelay() + getCriticalPath()),  ratio);
 		oplist.push_back(mMult); 
 
 		inPortMap ( mMult, "X", "fracX");
