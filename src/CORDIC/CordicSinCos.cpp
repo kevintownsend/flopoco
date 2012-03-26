@@ -68,43 +68,46 @@ namespace flopoco{
 		wFxy += guardxy;
 		wFz += guardz;
 		
+		REPORT(DEBUG, 1+wI+2+wF+guardxy-2 << " stages");
+
 		for(stage=0; stage<1+wI+2+wF+guardxy-2; stage++){
 			
 			manageCriticalPath(target->localWireDelay(1+wIxy+wFxy) + target->lutDelay());
 			
 			//shift Xin and Yin with 2^n positions to the right
 			if(stage==0){
-				vhdl << tab << declare(getParamName("CShift", stage), 1+wIxy+wFxy) << " <= C" << stage << ";" <<endl;
+				vhdl << tab << declare(join("CShift", stage), 1+wIxy+wFxy) << " <= C" << stage << ";" <<endl;
 			}else{
 				if(stage==1)
-					vhdl << tab << declare(getParamName("CsignExtend", stage), stage) << " <= C" << stage << "(" << 1+wIxy+wFxy-1 << ");" <<endl;
+					vhdl << tab << declare(join("CsignExtend", stage), stage) << " <= C" << stage << "(" << 1+wIxy+wFxy-1 << ");" <<endl;
 				else
-					vhdl << tab << declare(getParamName("CsignExtend", stage), stage) << " <= (others => C" << stage << "(" << 1+wIxy+wFxy-1 << "));" <<endl;
-				vhdl << tab << declare(getParamName("Cshifted", stage), 1+wIxy+wFxy-stage) << " <= C" << stage << range(1+wIxy+wFxy-1, stage) << ";" <<endl;
-				vhdl << tab << declare(getParamName("CShift", stage), 1+wIxy+wFxy) << " <= CsignExtend" << stage << " & Cshifted" << stage << ";" <<endl;
+					vhdl << tab << declare(join("CsignExtend", stage), stage) << " <= (others => C" << stage << "(" << 1+wIxy+wFxy-1 << "));" <<endl;
+				vhdl << tab << declare(join("Cshifted", stage), 1+wIxy+wFxy-stage) << " <= C" << stage << range(1+wIxy+wFxy-1, stage) << ";" <<endl;
+				vhdl << tab << declare(join("CShift", stage), 1+wIxy+wFxy) << " <= CsignExtend" << stage << " & Cshifted" << stage << ";" <<endl;
 			}
 			if(stage==0){
-				vhdl << tab << declare(getParamName("SShift", stage), 1+wIxy+wFxy) << " <= S" << stage << ";" <<endl;
+				vhdl << tab << declare(join("SShift", stage), 1+wIxy+wFxy) << " <= S" << stage << ";" <<endl;
 			}else{
 				if(stage==1)
-					vhdl << tab << declare(getParamName("SsignExtend", stage), stage) << " <= S" << stage << "(" << 1+wIxy+wFxy-1 << ");" <<endl;
+					vhdl << tab << declare(join("SsignExtend", stage), stage) << " <= S" << stage << "(" << 1+wIxy+wFxy-1 << ");" <<endl;
 				else
-					vhdl << tab << declare(getParamName("SsignExtend", stage), stage) << " <= (others => S" << stage << "(" << 1+wIxy+wFxy-1 << "));" <<endl;
-				vhdl << tab << declare(getParamName("Sshifted", stage), 1+wIxy+wFxy-stage) << " <= S" << stage << range(1+wIxy+wFxy-1, stage) << ";" <<endl;
-				vhdl << tab << declare(getParamName("SShift", stage), 1+wIxy+wFxy) << " <= SsignExtend" << stage << " & Sshifted" << stage << ";" <<endl;
+					vhdl << tab << declare(join("SsignExtend", stage), stage) << " <= (others => S" << stage << "(" << 1+wIxy+wFxy-1 << "));" <<endl;
+				vhdl << tab << declare(join("Sshifted", stage), 1+wIxy+wFxy-stage) << " <= S" << stage << range(1+wIxy+wFxy-1, stage) << ";" <<endl;
+				vhdl << tab << declare(join("SShift", stage), 1+wIxy+wFxy) << " <= SsignExtend" << stage << " & Sshifted" << stage << ";" <<endl;
 			}
-			
-			setCycleFromSignal(getParamName("CShift", stage));
-			syncCycleFromSignal(getParamName("SShift", stage));
-			manageCriticalPath(target->localWireDelay(1+wIxy+wFxy) + target->lutDelay());
+
+#if 0
+			setCycleFromSignal(join("CShift", stage));
+			syncCycleFromSignal(join("SShift", stage));
+			manageCriticalPath(target->localWireDelay(1+wFxy) + target->lutDelay());
 			
 			//complement the shifted Xin and Yin if necessary
-			vhdl << tab << declare(getParamName("newCShift", stage), 1+wIxy+wFxy) << " <= CShift" << stage << " xor (" << 1+wIxy+wFxy-1 << " downto 0 => D" << stage << ");" <<endl;
-			vhdl << tab << declare(getParamName("newSShift", stage), 1+wIxy+wFxy) << " <= SShift" << stage << " xor (" << 1+wIxy+wFxy-1 << " downto 0 => (not D" << stage << "));" <<endl;
+			vhdl << tab << declare(join("newCShift", stage), 1+wIxy+wFxy) << " <= CShift" << stage << " xor (" << 1+wIxy+wFxy-1 << " downto 0 => D" << stage << ");" <<endl;
+			vhdl << tab << declare(join("newSShift", stage), 1+wIxy+wFxy) << " <= SShift" << stage << " xor (" << 1+wIxy+wFxy-1 << " downto 0 => (not D" << stage << "));" <<endl;
 			
 			//compute the carry-ins
-			vhdl << tab << declare(getParamName("cInNewC", stage)) << "<= D" << stage << ";" <<endl;
-			vhdl << tab << declare(getParamName("cInNewS", stage)) << "<= not D" << stage << ";" <<endl;
+			vhdl << tab << declare(join("cInNewC", stage)) << "<= D" << stage << ";" <<endl;
+			vhdl << tab << declare(join("cInNewS", stage)) << "<= not D" << stage << ";" <<endl;
 			
 			#if 0
 			nextCycle();
@@ -113,29 +116,36 @@ namespace flopoco{
 			IntAdder *mainAdder = new IntAdder(target, 1+wIxy+wFxy, inDelayMap("X",getCriticalPath()));
 			oplist.push_back(mainAdder);
 			
-			inPortMap(mainAdder, "X", getParamName("C", stage));
-			inPortMap(mainAdder, "Y", getParamName("newSShift", stage));
-			inPortMap(mainAdder, "Cin", getParamName("cInNewS", stage));
-			outPortMap (mainAdder, "R", getParamName("intC", (stage+1)));
-			vhdl << instance(mainAdder, getParamName("cAdder", stage)) << endl;
+			inPortMap(mainAdder, "X", join("C", stage));
+			inPortMap(mainAdder, "Y", join("newSShift", stage));
+			inPortMap(mainAdder, "Cin", join("cInNewS", stage));
+			outPortMap (mainAdder, "R", join("intC", (stage+1)));
+			vhdl << instance(mainAdder, join("cAdder", stage)) << endl;
 			
-			inPortMap(mainAdder, "X", getParamName("S", stage));
-			inPortMap(mainAdder, "Y", getParamName("newCShift", stage));
-			inPortMap(mainAdder, "Cin", getParamName("cInNewC", stage));
-			outPortMap (mainAdder, "R", getParamName("intS", (stage+1)));
-			vhdl << instance(mainAdder, getParamName("sAdder", stage)) << endl;
+			inPortMap(mainAdder, "X", join("S", stage));
+			inPortMap(mainAdder, "Y", join("newCShift", stage));
+			inPortMap(mainAdder, "Cin", join("cInNewC", stage));
+			outPortMap (mainAdder, "R", join("intS", (stage+1)));
+			vhdl << instance(mainAdder, join("sAdder", stage)) << endl;
 			
-			setCycleFromSignal(getParamName("intC", (stage+1)));
-			syncCycleFromSignal(getParamName("intS", (stage+1)));
+			setCycleFromSignal(join("intC", (stage+1)));
+			syncCycleFromSignal(join("intS", (stage+1)));
 			setCriticalPath(mainAdder->getOutputDelay("R"));
 			double xyPath = getCriticalPath();
 			
 #else
 			manageCriticalPath(target->localWireDelay() + target->adderDelay(1+wIxy+wFxy));
-			vhdl << tab << declare(getParamName("intC", (stage+1)), 1+wIxy+wFxy) << " <= " << getParamName("C", stage) <<  " + " <<  getParamName("newSShift", stage) <<  " + " <<  getParamName("cInNewC", stage) << ";" << endl;
-			vhdl << tab << declare(getParamName("intS", (stage+1)), 1+wIxy+wFxy) << " <= " << getParamName("S", stage) <<  " + " <<  getParamName("newCShift", stage) <<  " + " <<  getParamName("cInNewS", stage) << ";" << endl;
+			vhdl << tab << declare(join("intC", (stage+1)), 1+wIxy+wFxy) << " <= " << join("C", stage) <<  " + " <<  join("newSShift", stage) <<  " + " <<  join("cInNewC", stage) << ";" << endl;
+			vhdl << tab << declare(join("intS", (stage+1)), 1+wIxy+wFxy) << " <= " << join("S", stage) <<  " + " <<  join("newCShift", stage) <<  " + " <<  join("cInNewS", stage) << ";" << endl;
 #endif
 
+
+#else
+			vhdl << tab << declare(join("intC", (stage+1)), 1+wIxy+wFxy) << " <= " << join("C", stage) <<  " + " <<  join("SShift", stage) <<  " when D" << stage <<"='1'" <<  endl
+			     << tab << tab << " else "  << join("C", stage) <<  " - " <<  join("SShift", stage) << ";" << endl;
+			vhdl << tab << declare(join("intS", (stage+1)), 1+wIxy+wFxy) << " <= " << join("S", stage) <<  " + " <<  join("CShift", stage) <<  " when D" << stage <<" ='0'" <<  endl
+			     << tab << tab << " else "  << join("S", stage) <<  " - " <<  join("CShift", stage) << ";" << endl;
+#endif
 			
 			//create the constant signal for the arctan
 			mpfr_t zatan, zpow2, constPi;
@@ -168,58 +178,58 @@ namespace flopoco{
 			
 			manageCriticalPath(target->localWireDelay(1+wIz+wFz) + target->lutDelay());
 			
-			// setCycleFromSignal(getParamName("X",stage));
+			// setCycleFromSignal(join("X",stage));
 			
-			vhdl << tab << declare(getParamName("atan2PowStage", stage), 1+wIz+wFz) << " <= \'0\' & \"" << strConverted << "\";" <<endl;
+			vhdl << tab << declare(join("atan2PowStage", stage), 1+wIz+wFz) << " <= \'0\' & \"" << strConverted << "\";" <<endl;
 			if(negAtan){
-				vhdl << tab << declare(getParamName("newAtan2PowStage", stage), 1+wIz+wFz) << " <= atan2PowStage" << stage << " xor (" << 1+wIz+wFz-1 << " downto 0 => D" << stage <<");" <<endl;
-				vhdl << tab << declare(getParamName("cInX", stage)) << "<= D" << stage << ";" <<endl;
+				vhdl << tab << declare(join("newAtan2PowStage", stage), 1+wIz+wFz) << " <= atan2PowStage" << stage << " xor (" << 1+wIz+wFz-1 << " downto 0 => D" << stage <<");" <<endl;
+				vhdl << tab << declare(join("cInX", stage)) << "<= D" << stage << ";" <<endl;
 			}
 			else{
-				vhdl << tab << declare(getParamName("newAtan2PowStage", stage), 1+wIz+wFz) << " <= atan2PowStage" << stage << " xor (" << 1+wIz+wFz-1 << " downto 0 => (not D" << stage << "));" <<endl;
-				vhdl << tab << declare(getParamName("cInX", stage)) << "<= not D" << stage << ";" <<endl;
+				vhdl << tab << declare(join("newAtan2PowStage", stage), 1+wIz+wFz) << " <= atan2PowStage" << stage << " xor (" << 1+wIz+wFz-1 << " downto 0 => (not D" << stage << "));" <<endl;
+				vhdl << tab << declare(join("cInX", stage)) << "<= not D" << stage << ";" <<endl;
 			}
 			
 #if 0
-			syncCycleFromSignal(getParamName("newAtan2PowStage", stage));
+			syncCycleFromSignal(join("newAtan2PowStage", stage));
 			nextCycle();
 			
 			//create Zout
 			mainAdder = new IntAdder(target, 1+wIz+wFz, inDelayMap("X",getCriticalPath()));
 			oplist.push_back(mainAdder);
 			
-			inPortMap(mainAdder, "X", getParamName("X", stage));
-			inPortMap(mainAdder, "Y", getParamName("newAtan2PowStage", stage));
-			inPortMap(mainAdder, "Cin", getParamName("cInX", stage));
-			outPortMap (mainAdder, "R", getParamName("intX", (stage+1)));
-			vhdl << instance(mainAdder, getParamName("xAdder", stage)) << endl;
+			inPortMap(mainAdder, "X", join("X", stage));
+			inPortMap(mainAdder, "Y", join("newAtan2PowStage", stage));
+			inPortMap(mainAdder, "Cin", join("cInX", stage));
+			outPortMap (mainAdder, "R", join("intX", (stage+1)));
+			vhdl << instance(mainAdder, join("xAdder", stage)) << endl;
 			
-			setCycleFromSignal(getParamName("intX", (stage+1)));
+			setCycleFromSignal(join("intX", (stage+1)));
 			setCriticalPath(mainAdder->getOutputDelay("R"));
 			manageCriticalPath(target->localWireDelay(1+wIz+wFz));
 			
  			//create Dout as the result of the comparison of intZout with 0
-			vhdl << tab << declare(getParamName("intD", (stage+1))) << " <= intX" << stage+1 << "(" << 1+wIz+wFz-1 <<");" <<endl;
+			vhdl << tab << declare(join("intD", (stage+1))) << " <= intX" << stage+1 << "(" << 1+wIz+wFz-1 <<");" <<endl;
 			
 			double zPath = getCriticalPath();
 			
-			if (getCycleFromSignal(getParamName("intC", (stage+1))) == getCycleFromSignal(getParamName("intD", (stage+1))))
+			if (getCycleFromSignal(join("intC", (stage+1))) == getCycleFromSignal(join("intD", (stage+1))))
 				setCriticalPath(max(zPath, getCriticalPath()));
 			else
-				if (syncCycleFromSignal(getParamName("intC", (stage+1))))
+				if (syncCycleFromSignal(join("intC", (stage+1))))
 					setCriticalPath(xyPath);
 #else
 
-			vhdl << tab << declare(getParamName("intX", stage+1), 1+wIz+wFz) << " <= " << getParamName("X", stage) <<  " + " <<  getParamName("newAtan2PowStage", stage) <<  " + " <<  getParamName("cInX", stage) << ";" << endl;
+			vhdl << tab << declare(join("intX", stage+1), 1+wIz+wFz) << " <= " << join("X", stage) <<  " + " <<  join("newAtan2PowStage", stage) <<  " + " <<  join("cInX", stage) << ";" << endl;
  			//create Dout as the result of the comparison of intZout with 0
-			vhdl << tab << declare(getParamName("intD", (stage+1))) << " <= intX" << stage+1 << "(" << 1+wIz+wFz-1 <<");" <<endl;
+			vhdl << tab << declare(join("intD", (stage+1))) << " <= intX" << stage+1 << "(" << 1+wIz+wFz-1 <<");" <<endl;
 
 #endif					
 			//create the outputs
-			vhdl << tab << declare(getParamName("C", stage+1), 1+wIxy+wFxy) << " <= intC" << stage+1 << ";" <<endl;
-			vhdl << tab << declare(getParamName("S", stage+1), 1+wIxy+wFxy) << " <= intS" << stage+1 << ";" <<endl;
-			vhdl << tab << declare(getParamName("X", stage+1), 1+wIz-1+wFz) << " <= intX" << stage+1 << "(" << 1+wIz+wFz-2 << " downto 0);" <<endl;
-			vhdl << tab << declare(getParamName("D", stage+1)) << " <= intD" << stage+1 << ";" <<endl;
+			vhdl << tab << declare(join("C", stage+1), 1+wIxy+wFxy) << " <= intC" << stage+1 << ";" <<endl;
+			vhdl << tab << declare(join("S", stage+1), 1+wIxy+wFxy) << " <= intS" << stage+1 << ";" <<endl;
+			vhdl << tab << declare(join("X", stage+1), 1+wIz-1+wFz) << " <= intX" << stage+1 << "(" << 1+wIz+wFz-2 << " downto 0);" <<endl;
+			vhdl << tab << declare(join("D", stage+1)) << " <= intD" << stage+1 << ";" <<endl;
 			
 			//decrement the size of Z
 			wIz--;
@@ -227,8 +237,8 @@ namespace flopoco{
 		
 		manageCriticalPath(target->localWireDelay(1+wIxy+wFxy));
 		
-		vhdl << tab << declare("preRoundedIntCout", 1+wI+wF+1) << "<= " << getParamName("C", stage) << "(" << wIxy-2+wFxy << " downto " << guardxy-1 << ");" << endl;
-		vhdl << tab << declare("preRoundedIntSout", 1+wI+wF+1) << "<= " << getParamName("S", stage) << "(" << wIxy-2+wFxy << " downto " << guardxy-1 << ");" << endl;
+		vhdl << tab << declare("preRoundedIntCout", 1+wI+wF+1) << "<= " << join("C", stage) << "(" << wIxy-2+wFxy << " downto " << guardxy-1 << ");" << endl;
+		vhdl << tab << declare("preRoundedIntSout", 1+wI+wF+1) << "<= " << join("S", stage) << "(" << wIxy-2+wFxy << " downto " << guardxy-1 << ");" << endl;
 		
 		vhdl << tab << declare("roundedIntCout", 1+wI+wF+1) << "<= preRoundedIntCout "
 															<< "+"
@@ -430,17 +440,7 @@ namespace flopoco{
         
         return result;
 	}
-	
-	std::string CordicSinCos::getParamName(std::string s, int number)
-	{
-		std::stringstream aux;
 		
-		aux << s << number;
-		
-		return aux.str();
-		
-	}
-	
 	mpz_class CordicSinCos::fp2fix(mpfr_t x, int wI, int wF){
 		mpz_class h;
 		
