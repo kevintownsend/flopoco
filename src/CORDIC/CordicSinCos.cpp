@@ -382,28 +382,8 @@ namespace flopoco{
 		mpfr_clears (z, NULL);
 	}
 
-#if WTF 
-	//still testing
-	TestCase* CordicSinCos::buildRandomTestCase(int i) 
-	{
-		TestCase* tc = new TestCase(this);
-		mpz_class h;
-		mpfr_t randomNumber;
-		
-		mpfr_init2 (randomNumber, 1+wI+wF);
-		mpfr_urandomb (randomNumber, state);
-		mpfr_mul_2si(randomNumber, randomNumber, wF-1, GMP_RNDD);
-        mpfr_get_z(h.get_mpz_t(), randomNumber,  GMP_RNDD);
-		
-		cout << "random value created:" << h << endl;
-		
-		tc = new TestCase (this);
-		tc -> addInput ("X", h);
-		emulate(tc);
-		
-		return tc;
-	}
-#endif	
+
+
 
 	std::string CordicSinCos::generateFixPointNumber(float x, int wI, int wF)
 	{
