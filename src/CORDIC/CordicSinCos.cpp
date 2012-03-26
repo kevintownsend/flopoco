@@ -30,9 +30,9 @@ namespace flopoco{
 
 		setCopyrightString ( "Istoan Matei, Florent de Dinechin (2008-2012)" );
 		if(target->isPipelined())
-			name << "CordicSinCos_" << 1+wI+wF <<"_f"<< target->frequencyMHz() << "_uid" << getNewUId();
+			name << "CordicSinCos_" << wI+wF <<"_f"<< target->frequencyMHz() << "_uid" << getNewUId();
 		else
-			name << "CordicSinCos_" << 1+wI+wF << "_uid" << getNewUId();
+			name << "CordicSinCos_" << wI+wF << "_uid" << getNewUId();
 		setName( name.str() );
 
 		// declaring inputs
@@ -72,7 +72,7 @@ namespace flopoco{
 
 		for(stage=0; stage<1+wI+2+wF+guardxy-2; stage++){
 			
-			manageCriticalPath(target->localWireDelay(1+wIxy+wFxy) + target->lutDelay());
+			manageCriticalPath(target->localWireDelay(1+wIxy+wFxy) + target->adderDelay(1+wIxy+wFxy));
 			
 			//shift Xin and Yin with 2^n positions to the right
 			if(stage==0){
