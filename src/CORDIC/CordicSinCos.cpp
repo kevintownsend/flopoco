@@ -95,57 +95,11 @@ namespace flopoco{
 				vhdl << tab << declare(join("Sshifted", stage), 1+wIxy+wFxy-stage) << " <= S" << stage << range(1+wIxy+wFxy-1, stage) << ";" <<endl;
 				vhdl << tab << declare(join("SShift", stage), 1+wIxy+wFxy) << " <= SsignExtend" << stage << " & Sshifted" << stage << ";" <<endl;
 			}
-
-#if 0
-			setCycleFromSignal(join("CShift", stage));
-			syncCycleFromSignal(join("SShift", stage));
-			manageCriticalPath(target->localWireDelay(1+wFxy) + target->lutDelay());
-			
-			//complement the shifted Xin and Yin if necessary
-			vhdl << tab << declare(join("newCShift", stage), 1+wIxy+wFxy) << " <= CShift" << stage << " xor (" << 1+wIxy+wFxy-1 << " downto 0 => D" << stage << ");" <<endl;
-			vhdl << tab << declare(join("newSShift", stage), 1+wIxy+wFxy) << " <= SShift" << stage << " xor (" << 1+wIxy+wFxy-1 << " downto 0 => (not D" << stage << "));" <<endl;
-			
-			//compute the carry-ins
-			vhdl << tab << declare(join("cInNewC", stage)) << "<= D" << stage << ";" <<endl;
-			vhdl << tab << declare(join("cInNewS", stage)) << "<= not D" << stage << ";" <<endl;
-			
-			#if 0
-			nextCycle();
-			
-			//create Xout and Yout
-			IntAdder *mainAdder = new IntAdder(target, 1+wIxy+wFxy, inDelayMap("X",getCriticalPath()));
-			oplist.push_back(mainAdder);
-			
-			inPortMap(mainAdder, "X", join("C", stage));
-			inPortMap(mainAdder, "Y", join("newSShift", stage));
-			inPortMap(mainAdder, "Cin", join("cInNewS", stage));
-			outPortMap (mainAdder, "R", join("intC", (stage+1)));
-			vhdl << instance(mainAdder, join("cAdder", stage)) << endl;
-			
-			inPortMap(mainAdder, "X", join("S", stage));
-			inPortMap(mainAdder, "Y", join("newCShift", stage));
-			inPortMap(mainAdder, "Cin", join("cInNewC", stage));
-			outPortMap (mainAdder, "R", join("intS", (stage+1)));
-			vhdl << instance(mainAdder, join("sAdder", stage)) << endl;
-			
-			setCycleFromSignal(join("intC", (stage+1)));
-			syncCycleFromSignal(join("intS", (stage+1)));
-			setCriticalPath(mainAdder->getOutputDelay("R"));
-			double xyPath = getCriticalPath();
-			
-#else
-			manageCriticalPath(target->localWireDelay() + target->adderDelay(1+wIxy+wFxy));
-			vhdl << tab << declare(join("intC", (stage+1)), 1+wIxy+wFxy) << " <= " << join("C", stage) <<  " + " <<  join("newSShift", stage) <<  " + " <<  join("cInNewC", stage) << ";" << endl;
-			vhdl << tab << declare(join("intS", (stage+1)), 1+wIxy+wFxy) << " <= " << join("S", stage) <<  " + " <<  join("newCShift", stage) <<  " + " <<  join("cInNewS", stage) << ";" << endl;
-#endif
-
-
-#else
 			vhdl << tab << declare(join("intC", (stage+1)), 1+wIxy+wFxy) << " <= " << join("C", stage) <<  " + " <<  join("SShift", stage) <<  " when D" << stage <<"='1'" <<  endl
 			     << tab << tab << " else "  << join("C", stage) <<  " - " <<  join("SShift", stage) << ";" << endl;
 			vhdl << tab << declare(join("intS", (stage+1)), 1+wIxy+wFxy) << " <= " << join("S", stage) <<  " + " <<  join("CShift", stage) <<  " when D" << stage <<" ='0'" <<  endl
 			     << tab << tab << " else "  << join("S", stage) <<  " - " <<  join("CShift", stage) << ";" << endl;
-#endif
+
 			
 			//create the constant signal for the arctan
 			mpfr_t zatan, zpow2, constPi;
@@ -190,41 +144,12 @@ namespace flopoco{
 				vhdl << tab << declare(join("cInX", stage)) << "<= not D" << stage << ";" <<endl;
 			}
 			
-#if 0
-			syncCycleFromSignal(join("newAtan2PowStage", stage));
-			nextCycle();
-			
-			//create Zout
-			mainAdder = new IntAdder(target, 1+wIz+wFz, inDelayMap("X",getCriticalPath()));
-			oplist.push_back(mainAdder);
-			
-			inPortMap(mainAdder, "X", join("X", stage));
-			inPortMap(mainAdder, "Y", join("newAtan2PowStage", stage));
-			inPortMap(mainAdder, "Cin", join("cInX", stage));
-			outPortMap (mainAdder, "R", join("intX", (stage+1)));
-			vhdl << instance(mainAdder, join("xAdder", stage)) << endl;
-			
-			setCycleFromSignal(join("intX", (stage+1)));
-			setCriticalPath(mainAdder->getOutputDelay("R"));
-			manageCriticalPath(target->localWireDelay(1+wIz+wFz));
-			
- 			//create Dout as the result of the comparison of intZout with 0
-			vhdl << tab << declare(join("intD", (stage+1))) << " <= intX" << stage+1 << "(" << 1+wIz+wFz-1 <<");" <<endl;
-			
-			double zPath = getCriticalPath();
-			
-			if (getCycleFromSignal(join("intC", (stage+1))) == getCycleFromSignal(join("intD", (stage+1))))
-				setCriticalPath(max(zPath, getCriticalPath()));
-			else
-				if (syncCycleFromSignal(join("intC", (stage+1))))
-					setCriticalPath(xyPath);
-#else
 
 			vhdl << tab << declare(join("intX", stage+1), 1+wIz+wFz) << " <= " << join("X", stage) <<  " + " <<  join("newAtan2PowStage", stage) <<  " + " <<  join("cInX", stage) << ";" << endl;
  			//create Dout as the result of the comparison of intZout with 0
 			vhdl << tab << declare(join("intD", (stage+1))) << " <= intX" << stage+1 << "(" << 1+wIz+wFz-1 <<");" <<endl;
 
-#endif					
+			
 			//create the outputs
 			vhdl << tab << declare(join("C", stage+1), 1+wIxy+wFxy) << " <= intC" << stage+1 << ";" <<endl;
 			vhdl << tab << declare(join("S", stage+1), 1+wIxy+wFxy) << " <= intS" << stage+1 << ";" <<endl;
@@ -462,3 +387,81 @@ namespace flopoco{
 
 
 
+
+#if 0
+			setCycleFromSignal(join("CShift", stage));
+			syncCycleFromSignal(join("SShift", stage));
+			manageCriticalPath(target->localWireDelay(1+wFxy) + target->lutDelay());
+			
+			//complement the shifted Xin and Yin if necessary
+			vhdl << tab << declare(join("newCShift", stage), 1+wIxy+wFxy) << " <= CShift" << stage << " xor (" << 1+wIxy+wFxy-1 << " downto 0 => D" << stage << ");" <<endl;
+			vhdl << tab << declare(join("newSShift", stage), 1+wIxy+wFxy) << " <= SShift" << stage << " xor (" << 1+wIxy+wFxy-1 << " downto 0 => (not D" << stage << "));" <<endl;
+			
+			//compute the carry-ins
+			vhdl << tab << declare(join("cInNewC", stage)) << "<= D" << stage << ";" <<endl;
+			vhdl << tab << declare(join("cInNewS", stage)) << "<= not D" << stage << ";" <<endl;
+			
+			#if 0
+			nextCycle();
+			
+			//create Xout and Yout
+			IntAdder *mainAdder = new IntAdder(target, 1+wIxy+wFxy, inDelayMap("X",getCriticalPath()));
+			oplist.push_back(mainAdder);
+			
+			inPortMap(mainAdder, "X", join("C", stage));
+			inPortMap(mainAdder, "Y", join("newSShift", stage));
+			inPortMap(mainAdder, "Cin", join("cInNewS", stage));
+			outPortMap (mainAdder, "R", join("intC", (stage+1)));
+			vhdl << instance(mainAdder, join("cAdder", stage)) << endl;
+			
+			inPortMap(mainAdder, "X", join("S", stage));
+			inPortMap(mainAdder, "Y", join("newCShift", stage));
+			inPortMap(mainAdder, "Cin", join("cInNewC", stage));
+			outPortMap (mainAdder, "R", join("intS", (stage+1)));
+			vhdl << instance(mainAdder, join("sAdder", stage)) << endl;
+			
+			setCycleFromSignal(join("intC", (stage+1)));
+			syncCycleFromSignal(join("intS", (stage+1)));
+			setCriticalPath(mainAdder->getOutputDelay("R"));
+			double xyPath = getCriticalPath();
+			
+#else
+			manageCriticalPath(target->localWireDelay() + target->adderDelay(1+wIxy+wFxy));
+			vhdl << tab << declare(join("intC", (stage+1)), 1+wIxy+wFxy) << " <= " << join("C", stage) <<  " + " <<  join("newSShift", stage) <<  " + " <<  join("cInNewC", stage) << ";" << endl;
+			vhdl << tab << declare(join("intS", (stage+1)), 1+wIxy+wFxy) << " <= " << join("S", stage) <<  " + " <<  join("newCShift", stage) <<  " + " <<  join("cInNewS", stage) << ";" << endl;
+#endif
+#endif
+
+
+
+
+
+#if 0
+			syncCycleFromSignal(join("newAtan2PowStage", stage));
+			nextCycle();
+			
+			//create Zout
+			mainAdder = new IntAdder(target, 1+wIz+wFz, inDelayMap("X",getCriticalPath()));
+			oplist.push_back(mainAdder);
+			
+			inPortMap(mainAdder, "X", join("X", stage));
+			inPortMap(mainAdder, "Y", join("newAtan2PowStage", stage));
+			inPortMap(mainAdder, "Cin", join("cInX", stage));
+			outPortMap (mainAdder, "R", join("intX", (stage+1)));
+			vhdl << instance(mainAdder, join("xAdder", stage)) << endl;
+			
+			setCycleFromSignal(join("intX", (stage+1)));
+			setCriticalPath(mainAdder->getOutputDelay("R"));
+			manageCriticalPath(target->localWireDelay(1+wIz+wFz));
+			
+ 			//create Dout as the result of the comparison of intZout with 0
+			vhdl << tab << declare(join("intD", (stage+1))) << " <= intX" << stage+1 << "(" << 1+wIz+wFz-1 <<");" <<endl;
+			
+			double zPath = getCriticalPath();
+			
+			if (getCycleFromSignal(join("intC", (stage+1))) == getCycleFromSignal(join("intD", (stage+1))))
+				setCriticalPath(max(zPath, getCriticalPath()));
+			else
+				if (syncCycleFromSignal(join("intC", (stage+1))))
+					setCriticalPath(xyPath);
+#endif
