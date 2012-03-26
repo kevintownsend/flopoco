@@ -339,10 +339,17 @@ ADD_LIBRARY(FloPoCo STATIC
 
  src/UtilSollya
 )
+IF (SOLLYA_LIB)
 TARGET_LINK_LIBRARIES(
   FloPoCo  
   mpfr gmp gmpxx xml2 mpfi ${SOLLYA_LIB}
   )
+ELSE (SOLLYA_LIB)
+TARGET_LINK_LIBRARIES(
+  FloPoCo  
+  mpfr gmp gmpxx xml2 mpfi
+  )
+ENDIF (SOLLYA_LIB)
 SET(FLOPOCO_LIB FloPoCo)
 
 ADD_EXECUTABLE(flopoco
