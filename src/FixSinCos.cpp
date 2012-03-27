@@ -134,7 +134,7 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	// vhdl:split (Y_in -> A & Y_red)
 	vhdl << tab << declare ("A",wA) << " <= Y_in" << range (wIn-1,wIn-wA) << ";" << endl;
 	vhdl << tab << declare ("Y_red",wY) << " <= Y_in" << range (wIn-wA-1,0) << ';' << endl;
-	// vhdl:lut (A -> A_cos_pi_tbl, sinPiA)
+	// vhdl:lut (A -> A_cos_pi_tbl, SinPiA)
 	FunctionTable *sin_table, *cos_table;
 	ostringstream omu; // calculates string of one minus (guardless) ulp
 	omu << "(1 - 1b-" << w << ")";
@@ -146,9 +146,9 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	cos_table -> changeName(getName() + "_CosTable");
 	oplist.push_back (sin_table);
 	oplist.push_back (cos_table);
-	outPortMap (sin_table, "Y", "sinPiA");
+	outPortMap (sin_table, "Y", "SinPiA");
 	inPortMap (sin_table, "X", "A");
-	outPortMap (cos_table, "Y", "cosPiA");
+	outPortMap (cos_table, "Y", "CosPiA");
 	inPortMap (cos_table, "X", "A");
 	vhdl << instance (sin_table, "sin_table");
 	vhdl << instance (cos_table, "cos_table");
@@ -201,21 +201,20 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	nextCycle();
 #endif
 
-	// vhdl:sqr (Z -> Z_2)
+	// vhdl:sqr (Z -> Z2o2)
 	// we have no truncated squarer as of now
 	/*IntSquarer *sqr_z;
 	sqr_z = new IntSquarer (target, wZ);
 	oplist.push_back (sqr_z);
 	inPortMap (sqr_z, "X", "Z");
-	outPortMap (sqr_z, "R", "Z_2_ext");
+	outPortMap (sqr_z, "R", "Z2o2_ext");
 	vhdl << instance (sqr_z, "sqr_z");
-	// so now we truncate unnecessarily calculated bits of Z_2_ext
-	int wZ_2 = 2*wZ - (w+g);
-	vhdl << declare ("Z_2",wZ_2) << " <= Z_2_ext"
-	     << range (wZ-1,wZ-wZ_2) << ";" << endl;*/
+	// so now we truncate unnecessarily calculated bits of Z2o2_ext
+	int wZ2o2 = 2*wZ - (w+g);
+	vhdl << declare ("Z2o2",wZ2o2) << " <= Z2o2_ext"
+	     << range (wZ-1,wZ-wZ2o2) << ";" << endl;*/
 	// so we use a truncated multiplier instead
 	IntTruncMultiplier *sqr_z;
-	int wZ_2 = 2*wZ - (w+g);
 	int wZ2o2 = 2*wZ - (w+g)-1;
 	vhdl << tab << "-- First truncate the inputs of the multiplier to the precision of the output" << endl;
 	vhdl << tab << declare("Z_truncToZ2", wZ2o2) << " <= Z" << range(wZ-1, wZ-wZ2o2) << ";" << endl;
@@ -231,8 +230,8 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	// remember the cycle and the critical path here, because we'll get back in time here
 	map<string, double> Z3_inputDelays;
 #if SUBCYCLEPIPELINING
-	setSignalDelay("Z_2", sqr_z->getOutputDelay("R")) ; // TODO should be done automatically by outPortMap 
-	syncCycleFromSignal("Z_2", sqr_z->getOutputDelay("R")); // TODO Then this would not need to pass a CP
+	setSignalDelay("Z2o2", sqr_z->getOutputDelay("R")) ; // TODO should be done automatically by outPortMap 
+	syncCycleFromSignal("Z2o2", sqr_z->getOutputDelay("R")); // TODO Then this would not need to pass a CP
 	Z3_inputDelays["X"] = sqr_z->getOutputDelay("R");
 	Z3_inputDelays["Y"] = sqr_z->getOutputDelay("R");
 #else
@@ -240,7 +239,7 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	nextCycle();
 #endif
 
-	// vhdl:mul (Z, Z_2 -> Z3)
+	// vhdl:mul (Z, Z2o2 -> Z3)
 
 
 	int wZ3 = 3*wZ - 2*(w+g) -1; // -1 for the div by 2
@@ -254,7 +253,7 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 		z3o6Table -> changeName(getName() + "_Z3o6Table");
 		oplist.push_back (z3o6Table);
 		inPortMap (z3o6Table, "X", "Z_truncToZ3o6");
-		outPortMap (z3o6Table, "Y", "Z3_6");
+		outPortMap (z3o6Table, "Y", "Z3o6");
 		vhdl << instance (z3o6Table, "z3o6Table");
 		
 	}
@@ -299,117 +298,95 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 
 	// vhdl:sub (Z, Z3o6 -> sinZ)
 	manageCriticalPath(target->adderDelay(wZ));
-	vhdl << tab << declare ("sinZ", wZ)
+	vhdl << tab << declare ("SinZ", wZ)
 	     << " <= Z - Z3o6;" << endl;
-	setSignalDelay("sinZ", getCriticalPath());
+	setSignalDelay("SinZ", getCriticalPath());
 
 
 
 	// and now, evaluate Sin Y_in and Cos Y_in
 	// Cos Y_in:
-	// vhdl:slr (Z_2 -> Z2o2)
+	// vhdl:slr (Z2o2 -> Z2o2)
 	// First get back to the cycle of Z2
 #if SUBCYCLEPIPELINING
-	setCycleFromSignal("Z_2", getSignalDelay("Z_2"));
+	setCycleFromSignal("Z2o2", getSignalDelay("Z2o2"));
 #else
-	setCycleFromSignal("Z_2");
+	setCycleFromSignal("Z2o2");
 	nextCycle();
 #endif
 
-	// // vhdl:id (cosPiA -> C_out_1)
-	// vhdl:mul (Z2o2, cosPiA -> Cos_y_red_Cos_a)
-#if 0
-	IntTruncMultiplier *c_out_2;
-	c_out_2 = new IntTruncMultiplier (target, wZ2o2, w+g, wZ2o2,
-	                                  1.f, 0.95, 0, false, false, true);
-	oplist.push_back (c_out_2);
-	outPortMap (c_out_2, "R", "Cos_y_red_Cos_a");
-	inPortMap (c_out_2, "Y", "cosPiA");
-	inPortMap (c_out_2, "X", "Z2o2");
-	vhdl << instance (c_out_2, "c_out_2_compute");
-#else
+	// // vhdl:id (CosPiA -> C_out_1)
+	// vhdl:mul (Z2o2, CosPiA -> Z2o2CosPiA)
 	vhdl << tab << "-- First truncate the larger input of the multiplier to the precision of the output" << endl;
-	vhdl << tab << declare("cosPiA_truncToZ2o2", wZ2o2) << " <= cosPiA" << range(w+g-1, w+g-wZ2o2) << ";" << endl;
+	vhdl << tab << declare("CosPiA_truncToZ2o2", wZ2o2) << " <= CosPiA" << range(w+g-1, w+g-wZ2o2) << ";" << endl;
 	IntTruncMultiplier *c_out_2;
 	c_out_2 = new IntTruncMultiplier (target, wZ2o2, wZ2o2, wZ2o2,
 	                                  1.f, 0.95, 0, false, false, true);
 	oplist.push_back (c_out_2);
-	outPortMap (c_out_2, "R", "Cos_y_red_Cos_a");
-	inPortMap (c_out_2, "Y", "cosPiA_truncToZ2o2");
 	inPortMap (c_out_2, "X", "Z2o2");
+	inPortMap (c_out_2, "Y", "CosPiA_truncToZ2o2");
+	outPortMap (c_out_2, "R", "Z2o2CosPiA");
 	vhdl << instance (c_out_2, "c_out_2_compute");
-#endif
 
 
 #if SUBCYCLEPIPELINING
-	syncCycleFromSignal("Cos_y_red_Cos_a", c_out_2->getOutputDelay("R"));
+	syncCycleFromSignal("Z2o2CosPiA", c_out_2->getOutputDelay("R"));
 #else
-	syncCycleFromSignal("Cos_y_red_Cos_a");
+	syncCycleFromSignal("Z2o2CosPiA");
 	nextCycle();
 #endif
 
-	// get back to the cycle of sinZ, certainly later than the sinA
+	// get back to the cycle of sinZ, certainly later than the SinPiA
 #if SUBCYCLEPIPELINING
-	setCycleFromSignal("sinZ", getSignalDelay("sinZ")); 
+	setCycleFromSignal("SinZ", getSignalDelay("SinZ")); 
 #else
-	setCycleFromSignal("sinZ"); 
+	setCycleFromSignal("SinZ"); 
 	nextCycle();
 #endif
 
-	// vhdl:mul (sinZ, sinPiA -> Sin_y_Sin_a)
+	// vhdl:mul (SinZ, SinPiA -> SinZSinPiA)
 	IntTruncMultiplier *c_out_3;
 
-#if 0
-	c_out_3 = new IntTruncMultiplier (target, wZ, w+g, wZ,
-	                                  1.f, 0.95, 0, false, false, true);
-	oplist.push_back (c_out_3);
-	inPortMap (c_out_3, "Y", "sinPiA");
-	inPortMap (c_out_3, "X", "sinZ");
-	outPortMap (c_out_3, "R", "Sin_y_Sin_a");
-	vhdl << instance (c_out_3, "c_out_3_compute");
-
-#else
 	vhdl << tab << "-- First truncate the larger input of the multiplier to the precision of the output" << endl;
-	vhdl << tab << declare("sinPiA_truncToZ", wZ) << " <= sinPiA" << range(w+g-1, w+g-wZ) << ";" << endl;
+	vhdl << tab << declare("SinPiA_truncToZ", wZ) << " <= SinPiA" << range(w+g-1, w+g-wZ) << ";" << endl;
 	c_out_3 = new IntTruncMultiplier (target, wZ, wZ, wZ,
 	                                  1.f, 0.95, 0, false, false, true);
 	oplist.push_back (c_out_3);
-	inPortMap (c_out_3, "Y", "sinPiA_truncToZ");
-	inPortMap (c_out_3, "X", "sinZ");
-	outPortMap (c_out_3, "R", "Sin_y_Sin_a");
+	inPortMap (c_out_3, "Y", "SinPiA_truncToZ");
+	inPortMap (c_out_3, "X", "SinZ");
+	outPortMap (c_out_3, "R", "SinZSinPiA");
 	vhdl << instance (c_out_3, "c_out_3_compute");
-#endif
 
 	// Synchronize the output of the two multipliers
 #if SUBCYCLEPIPELINING
-	syncCycleFromSignal("Cos_y_red_Cos_a", getSignalDelay("Cos_y_Cos_a"));
-	syncCycleFromSignal("Sin_y_Sin_a", c_out_3->getOutputDelay("R"));
+	syncCycleFromSignal("Z2o2CosPiA", getSignalDelay("Cos_y_Cos_a"));
+	syncCycleFromSignal("SinZSinPiA", c_out_3->getOutputDelay("R"));
 #else
-	syncCycleFromSignal("Cos_y_red_Cos_a");
-	syncCycleFromSignal("Sin_y_Sin_a");
+	syncCycleFromSignal("Z2o2CosPiA");
+	syncCycleFromSignal("SinZSinPiA");
 	nextCycle();
 #endif
 
 
 	manageCriticalPath(target->localWireDelay() + target->adderDelay(wZ));
-	// vhdl:add (Cos_y_red_Cos_a, Sin_y_Sin_a -> Cos_y_red_Cos_a_plus_Sin_y_Sin_a)
-	vhdl << tab << declare ("Cos_y_red_Cos_a_plus_Sin_y_Sin_a", wZ)
-	     << " <= Cos_y_red_Cos_a + Sin_y_Sin_a;" << endl;
-	// vhdl:sub (cosPiA, Cos_y_red_Cos_a_plus_Sin_y_Sin_a -> C_out)
+	// vhdl:add (Z2o2CosPiA, SinZSinPiA -> Z2o2CosPiA_plus_SinZSinPiA)
+	vhdl << tab << declare ("Z2o2CosPiA_plus_SinZSinPiA", wZ)
+	     << " <= Z2o2CosPiA + SinZSinPiA;" << endl;
+	// vhdl:sub (CosPiA, Z2o2CosPiA_plus_SinZSinPiA -> C_out)
 	// C_out has the entire precision; _g because it still has guards
 
 	// TODO: This is suboptimal, 
 	// the critical path does not two carry propagations if there is no register.
 	manageCriticalPath(target->localWireDelay() + target->adderDelay(w+g));
 	vhdl << tab << declare ("C_out_g", w+g)
-	     << " <= cosPiA - Cos_y_red_Cos_a_plus_Sin_y_Sin_a;" << endl;
+	     << " <= CosPiA - Z2o2CosPiA_plus_SinZSinPiA;" << endl;
 
 	// now remove the guard bits
 	// by rounding please
 
 	// TODO for Guillaume:
 	// 1/ The adder is too large, no need to add zeroes at the g LSBs
-	// 2/ Try to fuse this addition and the previous one by adding the round bit to the sinA / cosA tables
+	// 2/ Try to fuse this addition and the previous one by adding the round bit to the SinPiA / CosPiA tables
 	// And for F2D: again suboptimal evaluation of the critical path of a sequence of additions
 	manageCriticalPath(target->localWireDelay() + target->adderDelay(w+g));
 	vhdl << tab << declare ("C_out_rnd_aux", w+g)
@@ -419,8 +396,8 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 
 	// Sin Y_in:
 
-	// First get back to the cycle of Z2 (same as cos_y_red):
-	// it is certainly later than sinPiA
+	// First get back to the cycle of Z2 (same as Cos_y_red):
+	// it is certainly later than SinPiA
 
 #if SUBCYCLEPIPELINING
 	// TODO
@@ -428,74 +405,51 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	setCycleFromSignal("Z2o2");
 #endif
 
-	// // vhdl:id (sinPiA -> S_out_1)
-	// vhdl:mul (Z2o2, sinPiA -> Cos_y_red_Sin_a)
-#if 0
-	IntTruncMultiplier *s_out_2;
-	s_out_2 = new IntTruncMultiplier (target, wZ2o2, w+g, wZ2o2,
-	                                  1.f, 0.95, 0, false, false, true);
-	oplist.push_back (s_out_2);
-	inPortMap (s_out_2, "X", "Z2o2");
-	inPortMap (s_out_2, "Y", "sinPiA");
-	outPortMap (s_out_2, "R", "Cos_y_red_Sin_a");
-	vhdl << instance (s_out_2, "s_out_2_compute");
-	syncCycleFromSignal("Cos_y_red_Sin_a");
-#else
+	// // vhdl:id (SinPiA -> S_out_1)
+	// vhdl:mul (Z2o2, SinPiA -> Z2o2SinPiA)
 	vhdl << tab << "-- First truncate the larger input of the multiplier to the precision of the output" << endl;
-	vhdl << tab << declare("sinPiA_truncToZ2o2", wZ2o2) << " <= sinPiA" << range(w+g-1, w+g-wZ2o2) << ";" << endl;
+	vhdl << tab << declare("SinPiA_truncToZ2o2", wZ2o2) << " <= SinPiA" << range(w+g-1, w+g-wZ2o2) << ";" << endl;
 	IntTruncMultiplier *s_out_2;
 	s_out_2 = new IntTruncMultiplier (target, wZ2o2, wZ2o2, wZ2o2,
 	                                  1.f, 0.95, 0, false, false, true);
 	oplist.push_back (s_out_2);
 	inPortMap (s_out_2, "X", "Z2o2");
-	inPortMap (s_out_2, "Y", "sinPiA_truncToZ2o2");
-	outPortMap (s_out_2, "R", "Cos_y_red_Sin_a");
+	inPortMap (s_out_2, "Y", "SinPiA_truncToZ2o2");
+	outPortMap (s_out_2, "R", "Z2o2SinPiA");
 	vhdl << instance (s_out_2, "s_out_2_compute");
-	syncCycleFromSignal("Cos_y_red_Sin_a");
-#endif
+	syncCycleFromSignal("Z2o2SinPiA");
 
 
-	// get back to the cycle of sinZ, certainly later than the cosA
-	setCycleFromSignal("sinZ", getSignalDelay("sinZ"));
-	// vhdl:mul (sinZ, cosPiA -> Sin_y_Cos_a)
+	// get back to the cycle of SinZ, certainly later than the CosPiA
+	setCycleFromSignal("SinZ", getSignalDelay("SinZ"));
+
+	// vhdl:mul (SinZ, CosPiA -> SinZCosPiA)
 	nextCycle();
 
-#if 0
-	IntTruncMultiplier *s_out_3;
-	s_out_3 = new IntTruncMultiplier (target, wZ, w+g, wZ,
-	                                  1.f, 0.95, 0, false, false, true);
-	oplist.push_back (s_out_3);
-	inPortMap (s_out_3, "X", "sinZ");
-	inPortMap (s_out_3, "Y", "cosPiA");
-	outPortMap (s_out_3, "R", "Sin_y_Cos_a");
-	vhdl << instance (s_out_3, "s_out_3_compute");
-	syncCycleFromSignal("Sin_y_Cos_a");
-#else
 	vhdl << tab << "-- First truncate the larger input of the multiplier to the precision of the output" << endl;
-	vhdl << tab << declare("cosPiA_truncTosinZ", wZ) << " <= cosPiA" << range(w+g-1, w+g-wZ) << ";" << endl;
+	vhdl << tab << declare("CosPiA_truncToSinZ", wZ) << " <= CosPiA" << range(w+g-1, w+g-wZ) << ";" << endl;
 
 	IntTruncMultiplier *s_out_3;
 	s_out_3 = new IntTruncMultiplier (target, wZ, wZ, wZ,
 	                                  1.f, 0.95, 0, false, false, true);
 	oplist.push_back (s_out_3);
-	inPortMap (s_out_3, "X", "sinZ");
-	inPortMap (s_out_3, "Y", "cosPiA_truncTosinZ");
-	outPortMap (s_out_3, "R", "Sin_y_Cos_a");
+	inPortMap (s_out_3, "X", "SinZ");
+	inPortMap (s_out_3, "Y", "CosPiA_truncToSinZ");
+	outPortMap (s_out_3, "R", "SinZCosPiA");
 	vhdl << instance (s_out_3, "s_out_3_compute");
-	syncCycleFromSignal("Sin_y_Cos_a");
-#endif
+	syncCycleFromSignal("SinZCosPiA");
 
 	nextCycle();
 	manageCriticalPath(target->adderDelay(wZ));
-	// vhdl:add (sinPiA, Sin_y_Cos_a -> Sin_y_Cos_a_plus_Sin_a)
-	vhdl << tab << declare ("Sin_y_Cos_a_plus_Sin_a", w+g) //w+g necessary because of sin(pi*a)
-	     << " <= sinPiA + Sin_y_Cos_a;" << endl;
-	// vhdl:sub (Sin_y_Cos_a_plus_Sin_a, Cos_y_red_Sin_a -> S_out)
+	// vhdl:add (SinPiA, SinZCosPiA -> SinZCosPiA_plus_SinPiA)
+	vhdl << tab << declare ("SinZCosPiA_plus_SinPiA", w+g) //w+g necessary because of Sin(pi*a)
+	     << " <= SinPiA + SinZCosPiA;" << endl;
+	// vhdl:sub (SinZCosPiA_plus_SinPiA, Z2o2SinPiA -> S_out)
 	// TODO: This is suboptimal, 
 	// the critical path does not two carry propagations if there is no register.
 	manageCriticalPath(target->adderDelay(w+g));
 	vhdl << tab << declare ("S_out_g", w+g)
-	     << " <= Sin_y_Cos_a_plus_Sin_a - Cos_y_red_Sin_a;" << endl;
+	     << " <= SinZCosPiA_plus_SinPiA - Z2o2SinPiA;" << endl;
 
 
 	// now remove the guard bits
@@ -536,7 +490,7 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	     << tab << "C <= C_wo_sgn_ext when C_sgn = '0'"
 	     << " else C_wo_sgn_neg;" << endl;
 
-	REPORT(INFO, " wA=" << wA <<" wZ=" << wZ <<" wZ2=" << wZ_2 <<" wZ3=" << wZ3 );
+	REPORT(INFO, " wA=" << wA <<" wZ=" << wZ <<" wZ2=" << wZ2o2 <<" wZ3=" << wZ3 );
 };
 
 
