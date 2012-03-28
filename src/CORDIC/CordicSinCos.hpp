@@ -15,7 +15,7 @@ namespace flopoco{
 	class CordicSinCos : public Operator {
 	  
 	  public:
-		int w;
+		int w, reducedIterations;
 		gmp_randstate_t state;
 	  
 		// constructor, defined there with two parameters (default value 0 for each)

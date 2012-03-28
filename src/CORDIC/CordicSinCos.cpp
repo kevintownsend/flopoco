@@ -18,17 +18,19 @@ namespace flopoco{
 
 		setCopyrightString ( "Istoan Matei, Florent de Dinechin (2008-2012)" );
 		if(target->isPipelined())
-			name << "CordicSinCos_" << 1+w <<"_f"<< target->frequencyMHz() << "_uid" << getNewUId();
+			name << "CordicSinCos_" << (reducedIterations==1?"rducedIterations":"") 
+				<< 1+w <<"_f"<< target->frequencyMHz() << "_uid" << getNewUId();
 		else
-			name << "CordicSinCos_" << 1+w << "_uid" << getNewUId();
+			name << "CordicSinCos_" << (reducedIterations==1?"rducedIterations":"") 
+				<< 1+w << "_uid" << getNewUId();
 		setName( name.str() );
 
 		// declaring inputs
-		addInput  ( "X"  , wcs, true );
+		addInput  ( "X"  , 1+w, true );
 
 		// declaring output
-		addOutput  ( "C"  , wcs, 2 );
-		addOutput  ( "S"  , wcs, 2 );
+		addOutput  ( "C"  , 1+w, 2 );
+		addOutput  ( "S"  , 1+w, 2 );
 		
 		Operator* CordicInstantiation;
 
@@ -39,7 +41,7 @@ namespace flopoco{
 
 		//setIndirectOperator(CordicInstantiation);
 		cloneOperator(CordicInstantiation);
-		oplist.push_back(CordicInstantiation);
+		changeName(name.str());
 	};
 
 
@@ -158,7 +160,7 @@ namespace flopoco{
 		mpfr_clears (z, NULL);
 	}
 	
-	void CordiSinCos::changeName(std::string operatorName){
+	void CordicSinCos::changeName(std::string operatorName){
 	        Operator::changeName(operatorName);
 	        if(getIndirectOperator())  getIndirectOperator()->changeName(operatorName);
         }

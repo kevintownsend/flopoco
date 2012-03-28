@@ -214,14 +214,15 @@ namespace flopoco{
 		outPortMap(piMultiplier, "R", "xMulPi");
 		vhdl << instance(piMultiplier, "piMultiplier") << endl;
 		
-		wx += 2+guardcs-guardx;		// TODO: check
+		wx += 2+guardcs-guardx;		// TODO: check 
+									// NOTE: the first factor in the sum corresponds to the compensation due to Pi multiplication
 		
 		vhdl << tab << declare("truncC", wx) << " <= " << join("C", stage) << range(wcs-1, wcs-wx) << ";" << endl;
 		vhdl << tab << declare("truncS", wx) << " <= " << join("S", stage) << range(wcs-1, wcs-wx) << ";" << endl;
 		
 		
 		//multiply with the angle X to obtain the actual values for sine and cosine
-		IntMultiplier* zmultiplier = new IntMultiplier(target, wx, wx, inDelayMap("X",getCriticalPath()), true, 1.0);
+		IntMultiplier* zmultiplier = new IntMultiplier(target, wx, wx, true, inDelayMap("X",getCriticalPath()), 1.0);
 		oplist.push_back(zmultiplier);
 		
 		inPortMap(zmultiplier, "X", "truncC");

@@ -3,9 +3,7 @@
 
 #include "../Operator.hpp"
 #include "../utils.hpp"
-#include "../IntMultiplier.hpp"
 #include "../IntAdder.hpp"
-#include "../ConstMult/FixRealKCM.hpp"
 
 namespace flopoco{ 
 
