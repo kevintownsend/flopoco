@@ -371,7 +371,7 @@ static void usage(char *name, string opName = ""){
 		cerr << "      For a fixed-point 2's complement input x in [-1,1[, calculates\n";
 		cerr << "      (1-2^(-w))*{sin,cos}(pi*x); w is the precision not counting the sign bit\n";
 	}
-	if ( full || opName == "CordicCSinCos" || opName == "FixSin" || opName == "FixCos"){
+	if ( full || opName == "CordicSinCos" || opName == "FixSin" || opName == "FixCos"){
 		NEWOP( "CordicSinCos","w");
 		cerr << "      For a fixed-point input x in [0,1[, calculates (1-2^(-w)) sin(pi*x)\n";
 		cerr << "      and (1-2^(-w)) cos(pi*x); w is the precision not counting the leading 0\n";
@@ -2236,7 +2236,8 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 			if (i+nargs > argc)
 				usage(argv[0],opname); // and exit
 			int w = checkStrictlyPositive(argv[i++], argv[0]); // must be >=2 actually
-			Operator* tg = new CordicSinCos(target, w);
+			int reducedIterations = checkStrictlyPositive(argv[i++], argv[0]); 
+			Operator* tg = new CordicSinCos(target, w, reducedIterations);
 			addOperator(oplist, tg);
 		}
 
