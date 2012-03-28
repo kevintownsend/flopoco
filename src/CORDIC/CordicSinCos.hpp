@@ -15,8 +15,9 @@ namespace flopoco{
 	class CordicSinCos : public Operator {
 	  
 	  public:
-		int w, reducedIterations;
+		int w, reducedIterations, guard;
 		gmp_randstate_t state;
+		mpfr_t scale; /**< 1-2^-w */
 	  
 		// constructor, defined there with two parameters (default value 0 for each)
 		CordicSinCos(Target* target, int w, int reducedIterations = 0, map<string, double> inputDelays = emptyDelayMap);
@@ -34,6 +35,12 @@ namespace flopoco{
 
 		/* function used to create Standard testCase defined by the developper */
 		void buildStandardTestCases(TestCaseList* tcl);
+
+		// definition of some function for the operator
+		std::string generateFixPointNumber(mpfr_t x, int wI, int wF);
+		
+		mpz_class fp2fix(mpfr_t x, int wI, int wF);
+
 	};
 
 }

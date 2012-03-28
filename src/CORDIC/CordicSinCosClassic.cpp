@@ -15,13 +15,11 @@ namespace flopoco{
 	{
 		int wcs = 1+w, wx = 1+w;
 		//TODO: verify the validity of the necessary guard bits
-		int guardx, guardcs;
 		
 		//initialize testing random number
 		gmp_randinit_mt (state);
 		
-		guardcs = ceil(log2(wcs));
-		guardx  = guardcs;
+		guard = ceil(log2(wcs));
 		
 		srcFileName="CordicSinCosClassic";
 		ostringstream name;
@@ -42,14 +40,14 @@ namespace flopoco{
 		
 		setCriticalPath(getMaxInputDelays(inputDelays));
 		
-		manageCriticalPath(target->localWireDelay(wcs + guardcs) + target->adderDelay(1+w) + target->lutDelay());
+		manageCriticalPath(target->localWireDelay(wcs + guard) + target->adderDelay(1+w) + target->lutDelay());
 		
 		//reduce the argument X to [0, 1/2)
 		vhdl << tab << declare("absX", 1+w) << "<= (X xor (" << w << " downto 0 => X(" << wx-1 << ")))"
 												   << " + " 
 												   << "(" << zg(w, 0) << " & X(" << wx-1 << "));"<< endl;
 		
-		vhdl << tab << declare("reducedX", wx  + guardcs) << "<= absX(" << wx-1 << ") & \'0\' & absX(" << wx-3 << " downto 0) & " << zg(guardcs, 0) << ";" << endl;
+		vhdl << tab << declare("reducedX", wx  + guard) << "<= absX(" << wx-1 << ") & \'0\' & absX(" << wx-3 << " downto 0) & " << zg(guard, 0) << ";" << endl;
 		vhdl << tab << declare("quadrantX", 2) << " <= X(" << wx-1 << " downto " << wx-2 << ");" << endl;
 		
 		syncCycleFromSignal("reducedX");
@@ -60,10 +58,10 @@ namespace flopoco{
 		//compute the scale factor
 		mpfr_t kfactor, temp;
 		
-		mpfr_init2(kfactor, 10*(wcs+guardcs));
+		mpfr_init2(kfactor, 10*(wcs+guard));
 		mpfr_set_d(kfactor, 1, GMP_RNDN);
-		for(int i=0; i<(w+guardcs); i++){
-			mpfr_init2(temp, 10*(wcs+guardcs));
+		for(int i=0; i<(w+guard); i++){
+			mpfr_init2(temp, 10*(wcs+guard));
 			mpfr_set_d(temp, 1, GMP_RNDN);
 			mpfr_mul_2si(temp, temp, (-2)*i, GMP_RNDN);
 			mpfr_add_d(temp, temp, 1, GMP_RNDN);
@@ -73,14 +71,14 @@ namespace flopoco{
 		mpfr_sqrt(kfactor, kfactor, GMP_RNDN);
 		mpfr_d_div(kfactor, 1, kfactor, GMP_RNDN);
 		
-		mpf_init2(xinit, 10*(wcs+guardcs));
+		mpf_init2(xinit, 10*(wcs+guard));
 		mpfr_get_f(xinit, kfactor, GMP_RNDN);		
 		
-		manageCriticalPath(target->localWireDelay(wcs + guardcs) + target->lutDelay());
+		manageCriticalPath(target->localWireDelay(wcs + guard) + target->lutDelay());
 		
-		vhdl << tab << declare("C0", wcs + guardcs) << "<= " << zg(1, 0) << " & \"" << generateFixPointNumber(xinit, 0, wcs-1+guardcs) << "\";" << endl;
-		vhdl << tab << declare("S0", wcs + guardcs) << "<= " << zg(1, 0) << " & \"" << generateFixPointNumber(0.0, 0, wcs-1+guardcs) << "\";" << endl;
-		vhdl << tab << declare("X0", wx  + guardcs) << "<= reducedX;" << endl;
+		vhdl << tab << declare("C0", wcs + guard) << "<= " << zg(1, 0) << " & \"" << generateFixPointNumber(xinit, 0, wcs-1+guard) << "\";" << endl;
+		vhdl << tab << declare("S0", wcs + guard) << "<= " << zg(1, 0) << " & \"" << generateFixPointNumber(0.0, 0, wcs-1+guard) << "\";" << endl;
+		vhdl << tab << declare("X0", wx  + guard) << "<= reducedX;" << endl;
 		vhdl << tab << declare("D0") << "<= absX(" << w << ");" << endl;
 		
 		mpf_clear (xinit);
@@ -88,8 +86,8 @@ namespace flopoco{
 		//create the stages of micro-rotations
 		int stage;
 		
-		wcs += guardcs;
-		wx += guardx;
+		wcs += guard;
+		wx += guard;
 		
 		//build the cordic stages
 		for(stage=0; stage<wcs-1; stage++){
@@ -122,7 +120,7 @@ namespace flopoco{
 			
 			setCycleFromSignal(join("CShift", stage));
 			syncCycleFromSignal(join("SShift", stage));
-			manageCriticalPath(target->localWireDelay(wcs + guardcs) + target->adderDelay(wcs) + target->lutDelay());
+			manageCriticalPath(target->localWireDelay(wcs + guard) + target->adderDelay(wcs) + target->lutDelay());
 			
 			vhdl << tab << declare(join("intC", stage+1), wcs) << " <= " << join("C", stage) << " + " << join("SShift", stage) << " when " << join("D", stage) << "=\'1\' else "
 				 << join("C", stage) << " - " << join("SShift", stage) << " ;" << endl;
@@ -162,7 +160,7 @@ namespace flopoco{
 			setCycleFromSignal(join("D", stage));
 			setCriticalPath(initCyclePathLength);
 			
-			manageCriticalPath(target->localWireDelay(wx + guardx) + target->adderDelay(wx) + target->lutDelay());
+			manageCriticalPath(target->localWireDelay(wx + guard) + target->adderDelay(wx) + target->lutDelay());
 			
 			vhdl << tab << declare(join("atan2PowStage", stage), wx) << " <= \'0\' & \"" << strConverted << "\";" <<endl;
 			
@@ -208,8 +206,8 @@ namespace flopoco{
 		manageCriticalPath(target->localWireDelay(1+w+1) + target->adderDelay(1+w+1));
 		syncCycleFromSignal(join("D", stage));
 		
-		vhdl << tab << declare("preRoundedIntCout", 1+w+1) << "<= " << join("C", stage) << "(" << wcs-1 << " downto " << guardcs-1 << ");" << endl;
-		vhdl << tab << declare("preRoundedIntSout", 1+w+1) << "<= " << join("S", stage) << "(" << wcs-1 << " downto " << guardcs-1 << ");" << endl;
+		vhdl << tab << declare("preRoundedIntCout", 1+w+1) << "<= " << join("C", stage) << "(" << wcs-1 << " downto " << guard-1 << ");" << endl;
+		vhdl << tab << declare("preRoundedIntSout", 1+w+1) << "<= " << join("S", stage) << "(" << wcs-1 << " downto " << guard-1 << ");" << endl;
 		
 		vhdl << tab << declare("roundedIntCout", 1+w+1) << "<= preRoundedIntCout "
 															<< "+"
@@ -248,127 +246,6 @@ namespace flopoco{
 		vhdl << tab << tab << tab << " reducedS when others;" << endl;	//edit to signal error
 	};
 
-
-	void CordicSinCosClassic::emulate(TestCase * tc) 
-	{
-		/* Get I/O values */
-		mpz_class svZ = tc->getInputValue("X");
-		mpfr_t z, constPi, rsin, rcos;
-		mpz_t rsin_z, rcos_z;
-		int g = ceil(log2(1 + w));
-		
-		/* Compute correct value */
-		mpfr_init2(z, 1+w+g);
-		
-		mpfr_init2(constPi, 1+w+g);
-		
-		mpfr_init2(rsin, 1+w+g); 
-		mpfr_init2(rcos, 1+w+g); 
-		mpz_init2 (rsin_z, 1+w+g);
-		mpz_init2 (rcos_z, 1+w+g);
-		
-		mpfr_set_z (z, svZ.get_mpz_t(), GMP_RNDD); // this rounding is exact
-		mpfr_div_2si (z, z, w, GMP_RNDD); // this rounding is acually exact
-		
-		mpfr_const_pi( constPi, GMP_RNDD);
-		mpfr_mul(z, z, constPi, GMP_RNDD);
-		
-		mpfr_sin(rsin, z, GMP_RNDN); 
-		mpfr_cos(rcos, z, GMP_RNDN);
-		
-		mpfr_mul_2si (rsin, rsin, w, GMP_RNDD); // exact rnd here
-		mpfr_get_z (rsin_z, rsin, GMP_RNDN); // there can be a real rounding here
-		mpfr_mul_2si (rcos, rcos, w, GMP_RNDD); // exact rnd here
-		mpfr_get_z (rcos_z, rcos, GMP_RNDN); // there can be a real rounding here
-
-		// Set outputs 
-		mpz_class sin_zc (rsin_z), cos_zc (rcos_z);
-		tc->addExpectedOutput ("C", cos_zc);
-		tc->addExpectedOutput ("S", sin_zc);
-
-		// clean up
-		mpfr_clears (z, rsin, rcos, NULL);		
-		mpfr_free_cache();
-	}
-
-
-	void CordicSinCosClassic::buildStandardTestCases(TestCaseList * tcl) 
-	{
-		TestCase* tc;
-		mpf_t zinit;
-		mpfr_t z;
-		mpz_t z_z;
-		
-		//mpf_set_default_prec (1+wI+wF+guardcs);
-		
-		mpfr_init2(z, 1+w+ceil(log2(1 + w)));
-		mpz_init2 (z_z, 1+w+ceil(log2(1 + w)));
-		
-		//z=0
-		tc = new TestCase (this);
-		tc -> addInput ("X",mpz_class(0));
-		emulate(tc);
-		tcl->add(tc);
-		
-		//z=pi/2
-		tc = new TestCase (this);
-		
-		mpf_init2   (zinit, 1+w+ceil(log2(1 + w)));
-		//mpf_set_str (zinit, "1.5707963267949e0", 10);
-		mpf_set_str (zinit, "0.5e0", 10);
-		mpfr_set_f (z, zinit, GMP_RNDD); 
-		
-		mpfr_mul_2si (z, z, w, GMP_RNDD); 
-		mpfr_get_z (z_z, z, GMP_RNDD);  
-		tc -> addInput ("X",mpz_class(z_z));
-		emulate(tc);
-		tcl->add(tc);
-		
-		//z=pi/6
-		tc = new TestCase (this); 
-		
-		mpf_init2   (zinit, 1+w+ceil(log2(1 + w)));
-		//mpf_set_str (zinit, "0.5235987755983e0", 10);
-		mpf_set_str (zinit, "0.16666666666666e0", 10);
-		mpfr_set_f (z, zinit, GMP_RNDD); 
-		
-		mpfr_mul_2si (z, z, w, GMP_RNDD); 
-		mpfr_get_z (z_z, z, GMP_RNDD);  
-		tc -> addInput ("X",mpz_class(z_z));
-		emulate(tc);
-		tcl->add(tc);
-		
-		//z=pi/4
-		tc = new TestCase (this);
-		
-		mpf_init2   (zinit, 1+w+ceil(log2(1 + w)));
-		//mpf_set_str (zinit, "0.78539816339745e0", 10);
-		mpf_set_str (zinit, "0.25e0", 10);
-		mpfr_set_f (z, zinit, GMP_RNDD); 
-		
-		mpfr_mul_2si (z, z, w, GMP_RNDD); 
-		mpfr_get_z (z_z, z, GMP_RNDD);  
-		tc -> addInput ("X",mpz_class(z_z));
-		emulate(tc);
-		tcl->add(tc);
-		
-		//z=pi/3
-		tc = new TestCase (this);
-		
-		mpf_init2   (zinit, 1+w+ceil(log2(1 + w)));
-		//mpf_set_str (zinit, "1.0471975511966e0", 10);
-		mpf_set_str (zinit, "0.33333333333333e0", 10);
-		mpfr_set_f (z, zinit, GMP_RNDD);
-		
-		mpfr_mul_2si (z, z, w, GMP_RNDD); 
-		mpfr_get_z (z_z, z, GMP_RNDD);  
-		
-		tc -> addInput ("X",mpz_class(z_z));
-		emulate(tc);
-		tcl->add(tc);
-		
-		mpfr_clears (z, NULL);
-	}
 
 
 	std::string CordicSinCosClassic::generateFixPointNumber(float x, int wI, int wF)
