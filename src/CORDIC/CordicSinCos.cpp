@@ -55,14 +55,16 @@ namespace flopoco{
 			manageCriticalPath(target->localWireDelay(wcs + guard) + target->adderDelay(1+w) + target->lutDelay());
 			
 			//reduce the argument X to [0, 1/2)
-			vhdl << tab << declare("absX", 1+w) << "<= (X xor (" << w << " downto 0 => X(" << wx-1 << ")))"
-													   << " + " 
-													   << "(" << zg(w, 0) << " & X(" << wx-1 << "));"<< endl;
-			
-			vhdl << tab << declare("reducedX", wx  + guard) << "<= absX(" << wx-1 << ") & \'0\' & absX(" << wx-3 << " downto 0) & " << zg(guard, 0) << ";" << endl;
+			vhdl << tab << declare("absX", wx ) << "<= (X xor (" << wx-1 << " downto 0 => X(" << wx-1 << ")))"
+												<< " + " 
+												<< "(" << zg(wx-1, 0) << " & X(" << wx-1 << "));"<< endl;
+			//vhdl << tab << declare("reducedX", wx + guard) << "<= absX(" << wx-1 << ") & \'0\' & absX(" << wx-3 << " downto 0) & " << zg(guard, 0) << ";" << endl;
+			vhdl << tab << declare("reducedX", wx + guard) 
+							<< "<= (absX(" << wx-1 << " downto " << wx-2 << ") - (\'0\' & (absX(" << wx-1 << ") xor absX(" << wx-2 << "))))" 
+							<< " & absX(" << wx-3 << " downto 0) & " << zg(guard, 0) << ";" << endl;
 			vhdl << tab << declare("quadrantX", 2) << " <= X(" << wx-1 << " downto " << wx-2 << ");" << endl;
 			
-			syncCycleFromSignal("reducedX");
+			syncCycleFromSignal("absX");
 			
 			//create the C0, S0, X0 and D0 signals for the first stage
 			//compute the scale factor
@@ -89,7 +91,7 @@ namespace flopoco{
 			vhdl << tab << declare("C0", wcs + guard) << "<= " << zg(1, 0) << " & \"" << generateFixPointNumber(kfactor, 0, wcs-1+guard) << "\";" << endl;
 			vhdl << tab << declare("S0", wcs + guard) << "<= " << zg(1, 0) << " & " << zg(wcs-1+guard) << ";" << endl;
 			vhdl << tab << declare("X0", wx  + guard) << "<= reducedX;" << endl;
-			vhdl << tab << declare("D0") << "<= absX(" << w << ");" << endl;
+			vhdl << tab << declare("D0") << "<= reducedX(" << wx+guard-1 << ");" << endl;
 			
 					
 			//create the stages of micro-rotations
@@ -226,7 +228,7 @@ namespace flopoco{
 													   << "(" << zg(wcs-1, 0) << " & \'1\');"<< endl;
 			vhdl << tab << declare("negReducedS", wcs) << "<= (reducedS xor (" << wcs-1 << " downto 0 => \'1\'))"
 													   << " + " 
-													   << "(" << zg(wcs, 0) << " & \'1\');"<< endl;
+													   << "(" << zg(wcs-1, 0) << " & \'1\');"<< endl;
 													   
 			manageCriticalPath(target->localWireDelay(1+w) + target->lutDelay() + target->adderDelay(1+w+1));
 			
