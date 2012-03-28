@@ -2232,7 +2232,7 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 		}
 		
 		else if (opname == "CordicSinCos") {
-			int nargs = 1;
+			int nargs = 2;
 			if (i+nargs > argc)
 				usage(argv[0],opname); // and exit
 			int w = checkStrictlyPositive(argv[i++], argv[0]); // must be >=2 actually
