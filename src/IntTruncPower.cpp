@@ -89,6 +89,15 @@ ProductIR& ProductIR::operator>>= (int n)
 	}
 	return *this;
 }
+ProductIR& ProductIR::operator*= (const ProductBitIR& rhs)
+{
+	std::vector<ProductBitIR>::iterator i = this->data.begin();
+	for (; i != this->data.end(); i++) {
+		//no ProductBitIR::operator*=
+		*i = *i * rhs;
+	}
+	return *this;
+}
 //incomplete
 ProductIR ProductIR::operator* (const ProductIR& rhs)
 {
