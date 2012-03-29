@@ -128,14 +128,14 @@ ProductIR& ProductIR::operator>>= (int n)
 {
 	if (n < 0)
 		throw "invalid argument (ProductIR::operator>>=)";
-	std::vector<ProductBitIR>::iterator i = this->data.begin();
-	std::vector<ProductBitIR>::iterator j = i + n;
-	for (; j != this->data.end(); i++,j++) {
-		*j = *i;
+	if (n == 0)
+		return *this;
+	std::vector<ProductBitIR>::reverse_iterator i = this->data.rbegin();
+	std::vector<ProductBitIR>::reverse_iterator j = i + n;
+	for (; j != this->data.rend(); i++,j++) {
+		*i = *j;
 	}
-	i = this->data.begin();
-	j = i + n;
-	for (; i != j; i++) {
+	for (; i != this->data.rend(); i++) {
 		*i = ProductBitIR();
 	}
 	return *this;
@@ -170,9 +170,9 @@ ProductIR ProductIR::operator* (const ProductIR& rhs)
 		ProductIR tmp (n+m-1, this->msb + rhs.msb);
 		tmp += rhs;
 		tmp >>= i;
-		std::cout << tmp << std::endl;
 		tmp *= this->data[i];
 		res += tmp;
+		std::cout << "tmp = " << tmp << "\nres = " << res << std::endl;
 	}
 	return res;
 }
