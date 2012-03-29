@@ -75,9 +75,9 @@ ProductBitIR ProductBitIR::operator* (const ProductBitIR& rhs)
 	unordered_map<MonomialOfBits, int>::const_iterator i
 		= this->data.begin();
 	unordered_map<MonomialOfBits, int>::const_iterator j
-		= res.data.begin();
+		= rhs.data.begin();
 	for (; i != this->data.end(); i++) {
-		for (; j != res.data.end(); j++) {
+		for (; j != rhs.data.end(); j++) {
 			MonomialOfBits prod = i->first * j->first;
 			res.data[prod] =
 				res.getTimes(prod) + (i->second * j->second);
@@ -127,13 +127,12 @@ ProductIR& ProductIR::operator>>= (int n)
 	if (n < 0)
 		throw "invalid argument (ProductIR::operator>>=)";
 	std::vector<ProductBitIR>::iterator i = this->data.begin();
-	std::vector<ProductBitIR>::const_iterator j =
-		this->data.begin() + n;
+	std::vector<ProductBitIR>::iterator j = i + n;
 	for (; j != this->data.end(); i++,j++) {
-		*i = *j;
+		*j = *i;
 	}
 	i = this->data.begin();
-	j = this->data.begin() + n;
+	j = i + n;
 	for (; i != j; i++) {
 		*i = ProductBitIR();
 	}
@@ -179,19 +178,21 @@ std::ostream& operator<< (std::ostream& o, const ProductIR& pi)
 #include <iostream>
 int main ()
 {
-	MonomialOfBits m (10);
-	for (int i = 0; i < 10; i++)
-		m.data[i] = ((std::rand() & 0x1) == 0);
-	std::tr1::unordered_map<MonomialOfBits, int> map;
-	map[m] = 1;
+	MonomialOfBits m (3);
 	ProductIR a(5, 0);
-	ProductBitIR pbi;
-	pbi.data = map;
-	a.data[0] = pbi;
-	ProductIR b(a*a);
-	std::cout << pbi << std::endl << pbi*pbi << std::endl;
+	for (int i0 = 0; i0 < 5; i0++) {
+		for (int i = 0; i < 3; i++)
+			m.data[i] = ((std::rand() & 0x1) == 0);
+		std::tr1::unordered_map<MonomialOfBits, int> map;
+		map[m] = 1;
+		ProductBitIR pbi;
+		pbi.data = map;
+		a.data[i0] = pbi;
+	}
+	//std::cout << m << std::endl << m*m << std::endl;
+	//std::cout << pbi << std::endl << pbi*pbi << std::endl;
 	std::cout << a << std::endl;
-	std::cout << b << std::endl;
+	std::cout << a*a << std::endl;
 	return 0;
 }
 
