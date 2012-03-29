@@ -98,13 +98,16 @@ ProductIR& ProductIR::operator*= (const ProductBitIR& rhs)
 	}
 	return *this;
 }
-//incomplete
 ProductIR ProductIR::operator* (const ProductIR& rhs)
 {
 	size_t n = this->data.size(), m = rhs.data.size();
 	ProductIR res (n+m, this->msb + rhs.msb);
-	ProductIR tmp (n+m, this->msb + rhs.msb);
 	for (int i = 0; i < n; i++) {
+		ProductIR tmp (n+m, this->msb + rhs.msb);
+		tmp += rhs;
+		tmp >>= i;
+		tmp *= this->data[i];
+		res += tmp;
 	}
 	return res;
 }
