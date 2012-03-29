@@ -33,6 +33,7 @@ public:
     * @param[in] tc               a list of test-cases
     */
     void emulate ( TestCase* tc );
+	void outputVHDL(std::ostream& o, std::string name);
 
 protected:
     int wInX_;                         /**< the width for X*/
