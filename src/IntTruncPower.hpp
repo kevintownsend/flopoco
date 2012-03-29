@@ -13,6 +13,10 @@
  * formula the simplifying it (see Jérémie Detrey's thesis pp. 40-41)
  */
 
+/* actually MonomialOfBits will be used with a unique size, and using
+ * different sizes together won't work
+ * if we know this size at compile time it would be better as a template
+ * argument */
 class MonomialOfBits {
 	public:
 		MonomialOfBits (size_t n): data(std::vector<bool>(n)) {
@@ -21,9 +25,10 @@ class MonomialOfBits {
 			this->data = m.data;
 		}
 		MonomialOfBits operator* (const MonomialOfBits& rhs) const;
-		MonomialOfBits operator= (const MonomialOfBits& rhs) {
+		MonomialOfBits& operator= (const MonomialOfBits& rhs) {
 			this->n = rhs.n;
 			this->data = rhs.data;
+			return *this;
 		}
 		bool operator== (const MonomialOfBits& rhs) const {
 			return (this->n == rhs.n) && (this->data == rhs.data);

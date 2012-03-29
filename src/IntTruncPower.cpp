@@ -13,6 +13,13 @@ MonomialOfBits MonomialOfBits::operator* (const MonomialOfBits& rhs) const
 }
 // too long a typename
 using std::tr1::unordered_map;
+
+// first we need to supply a hash function
+template<class MonomialOfBits>
+size_t std::tr1::hash<MonomialOfBits>::operator() (MonomialOfBits m) const
+{
+	return std::tr1::hash<std::vector<bool> >::hash (m.data);
+}
 ProductBitIR::ProductBitIR (const ProductBit& rhs)
 	:data (unordered_map<MonomialOfBits,int>())
 {
@@ -78,12 +85,13 @@ ProductIR& ProductIR::operator>>= (int n)
 	if (n < 0)
 		throw "invalid argument (ProductIR::operator>>=)";
 	std::vector<ProductBitIR>::iterator i = this->data.begin();
-	std::vector<ProductBitIR>::iterator j = i + n;
+	std::vector<ProductBitIR>::const_iterator j =
+		this->data.begin() + n;
 	for (; j != this->data.end(); i++,j++) {
 		*i = *j;
 	}
 	i = this->data.begin();
-	j = i+n;
+	j = this->data.begin() + n;
 	for (; i != j; i++) {
 		*i = ProductBitIR();
 	}
@@ -111,4 +119,24 @@ ProductIR ProductIR::operator* (const ProductIR& rhs)
 	}
 	return res;
 }
+
+/*
+#include <cstdlib>
+#include <iostream>
+int main ()
+{
+	MonomialOfBits m (10);
+	for (int i = 0; i < 10; i++)
+		m.data[i] = ((std::rand() & 0x1) == 0);
+	std::tr1::unordered_map<MonomialOfBits, int> map;
+	map[m] = 1;
+	ProductIR a(5, 0);
+	ProductBitIR pbi;
+	pbi.data = map;
+	a.data[0] = pbi;
+	ProductIR b(a*a);
+	std::cout << &b;
+	return 0;
+}
+*/
 
