@@ -47,7 +47,8 @@ ProductBitIR::ProductBitIR (const ProductBit& rhs)
 	std::list<MonomialOfBits>::const_iterator it
 		= rhs.data.begin();
 	for (; it != rhs.data.end(); it++) {
-		data[*it] = getTimes (*it) + 1;
+		int tmp = getTimes (*it);
+		data[*it] = tmp + 1;
 	}
 }
 int ProductBitIR::getTimes (const MonomialOfBits& e) const
@@ -64,8 +65,8 @@ ProductBitIR& ProductBitIR::operator+= (const ProductBitIR& rhs)
 	unordered_map<MonomialOfBits, int>::const_iterator it
 		= rhs.data.begin();
 	for (; it != rhs.data.end(); it++) {
-		this->data[it->first] =
-			this->getTimes(it->first) + it->second;
+		int tmp = this->getTimes (it->first);
+		this->data[it->first] = tmp + it->second;
 	}
 	return *this;
 }
