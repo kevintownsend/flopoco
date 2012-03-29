@@ -1,5 +1,6 @@
 #include "IntTruncPower.hpp"
 #include <iostream>
+#include <map>
 
 MonomialOfBits MonomialOfBits::operator* (const MonomialOfBits& rhs) const
 {
@@ -12,6 +13,19 @@ MonomialOfBits MonomialOfBits::operator* (const MonomialOfBits& rhs) const
 		*i = *i || *j;
 	}
 	return res;
+}
+bool MonomialOfBits::operator< (const MonomialOfBits& rhs) const
+{
+	if (this->n != rhs.n)
+		throw "sizes don't match (MonomialOfBits::operator<)";
+	std::vector<bool>::const_iterator
+		i = this->data.begin(), j = rhs.data.begin();
+	for (; i != this->data.end(); i++, j++) {
+		if (*i == *j) continue;
+		return (*i < *j);
+	}
+	// these are equal
+	return false;
 }
 std::ostream& operator<< (std::ostream& o, const MonomialOfBits& m)
 {
@@ -32,17 +46,8 @@ std::ostream& operator<< (std::ostream& o, const MonomialOfBits& m)
 	return o;
 }
 
-// too long a typename
-using std::tr1::unordered_map;
-
-// first we need to supply a hash function
-template<class MonomialOfBits>
-size_t std::tr1::hash<MonomialOfBits>::operator() (MonomialOfBits m) const
-{
-	return std::tr1::hash<std::vector<bool> >::hash (m.data);
-}
 ProductBitIR::ProductBitIR (const ProductBit& rhs)
-	:data (unordered_map<MonomialOfBits,int>())
+	:data (std::map<MonomialOfBits,int>())
 {
 	std::list<MonomialOfBits>::const_iterator it
 		= rhs.data.begin();
@@ -53,7 +58,7 @@ ProductBitIR::ProductBitIR (const ProductBit& rhs)
 }
 int ProductBitIR::getTimes (const MonomialOfBits& e) const
 {
-	unordered_map<MonomialOfBits, int>::const_iterator it
+	std::map<MonomialOfBits, int>::const_iterator it
 		= data.find (e);
 	if (it == data.end()) {
 		return 0;
@@ -62,7 +67,7 @@ int ProductBitIR::getTimes (const MonomialOfBits& e) const
 }
 ProductBitIR& ProductBitIR::operator+= (const ProductBitIR& rhs)
 {
-	unordered_map<MonomialOfBits, int>::const_iterator it
+	std::map<MonomialOfBits, int>::const_iterator it
 		= rhs.data.begin();
 	for (; it != rhs.data.end(); it++) {
 		int tmp = this->getTimes (it->first);
@@ -73,9 +78,9 @@ ProductBitIR& ProductBitIR::operator+= (const ProductBitIR& rhs)
 ProductBitIR ProductBitIR::operator* (const ProductBitIR& rhs)
 {
 	ProductBitIR res;
-	unordered_map<MonomialOfBits, int>::const_iterator i
+	std::map<MonomialOfBits, int>::const_iterator i
 		= this->data.begin();
-	unordered_map<MonomialOfBits, int>::const_iterator j
+	std::map<MonomialOfBits, int>::const_iterator j
 		= rhs.data.begin();
 	for (; i != this->data.end(); i++) {
 		for (; j != rhs.data.end(); j++) {
@@ -89,7 +94,7 @@ ProductBitIR ProductBitIR::operator* (const ProductBitIR& rhs)
 std::ostream& operator<< (std::ostream& o, const ProductBitIR& pbi)
 {
 	bool cont = false;
-	std::tr1::unordered_map<MonomialOfBits, int>::const_iterator it =
+	std::map<MonomialOfBits, int>::const_iterator it =
 		pbi.data.begin();
 	for (; it != pbi.data.end(); it++) {
 		if (cont)
@@ -173,7 +178,7 @@ ProductIR ProductIR::operator* (const ProductIR& rhs)
 		tmp >>= i;
 		tmp *= this->data[i];
 		res += tmp;
-		std::cout << "tmp = " << tmp << "\nres = " << res << std::endl;
+		//std::cout << "tmp = " << tmp << "\nres = " << res << std::endl;
 	}
 	return res;
 }
@@ -187,7 +192,7 @@ int main ()
 	for (int i0 = 0; i0 < 5; i0++) {
 		for (int i = 0; i < 3; i++)
 			m.data[i] = ((std::rand() & 0x1) == 0);
-		std::tr1::unordered_map<MonomialOfBits, int> map;
+		std::map<MonomialOfBits, int> map;
 		map[m] = 1;
 		ProductBitIR pbi;
 		pbi.data = map;

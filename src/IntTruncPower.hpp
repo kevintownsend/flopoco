@@ -2,7 +2,7 @@
 //#include "utils.hpp"
 #include <vector>
 #include <list>
-#include <tr1/unordered_map>
+#include <map>
 #include <iostream>
 
 //using namespace flopoco;
@@ -34,6 +34,7 @@ class MonomialOfBits {
 		bool operator== (const MonomialOfBits& rhs) const {
 			return (this->n == rhs.n) && (this->data == rhs.data);
 		}
+		bool operator< (const MonomialOfBits& rhs) const;
 		friend std::ostream& operator<<
 			(std::ostream& o, const MonomialOfBits& m);
 		std::vector<bool> data;
@@ -60,14 +61,14 @@ class ProductBitIR {
 	public:
 		ProductBitIR (const ProductBit& rhs);
 		ProductBitIR ()
-			:data (std::tr1::unordered_map<MonomialOfBits,int>()) {
+			:data (std::map<MonomialOfBits,int>()) {
 		}
 		int getTimes (const MonomialOfBits& e) const;
 		ProductBitIR& operator+= (const ProductBitIR& rhs);
 		ProductBitIR operator* (const ProductBitIR& rhs);
 		friend std::ostream& operator<<
 			(std::ostream& o, const ProductBitIR& pbi);
-		std::tr1::unordered_map<MonomialOfBits, int> data;
+		std::map<MonomialOfBits, int> data;
 };
 std::ostream& operator<< (std::ostream& o, const ProductBitIR& pbi);
 
