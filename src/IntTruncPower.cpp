@@ -57,14 +57,17 @@ ProductBitIR ProductBitIR::operator* (const ProductBitIR& rhs)
 	}
 	return res;
 }
+//src range must include dst range
 ProductIR& ProductIR::operator+= (const ProductIR& rhs)
 {
-	if (this->data.size() != rhs.data.size())
-		throw "size mismatch (ProductIR::operator+=)";
-	if (this->msb != rhs.msb)
+	if (this->msb < rhs.msb)
 		throw "msb mismatch (ProductIR::operator+=)";
+	if (this->msb - this->data.size() > rhs.msb - rhs.data.size())
+		throw "lsb mismatch (ProductIR::operator+=)";
 	std::vector<ProductBitIR>::const_iterator j = rhs.data.begin();
 	std::vector<ProductBitIR>::iterator i = this->data.begin();
+	//align the 2 iterators
+	i += (this->msb - rhs.msb);
 	for (; j != rhs.data.end(); i++,j++) {
 		*i += *j;
 	}
