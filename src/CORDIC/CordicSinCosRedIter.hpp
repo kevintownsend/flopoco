@@ -13,14 +13,16 @@ namespace flopoco{
 	class CordicSinCosRedIter : public Operator {
 	  
 	  public:
-		int w;
-		gmp_randstate_t state;
+		int w, reducedIterations, guard;
+		mpfr_t scale; /**< 1-2^-w */
 	  
 		// constructor, defined there with two parameters (default value 0 for each)
 		CordicSinCosRedIter(Target* target, int w, map<string, double> inputDelays = emptyDelayMap);
 
 		// destructor
 		~CordicSinCosRedIter() {};
+		
+		void changeName(std::string operatorName);
 
 
 		// Below all the functions needed to test the operator
@@ -32,8 +34,7 @@ namespace flopoco{
 		void buildStandardTestCases(TestCaseList* tcl);
 
 		// definition of some function for the operator
-		std::string generateFixPointNumber(float x, int wI, int wF);
-		std::string generateFixPointNumber(mpf_t x, int wI, int wF);
+		std::string generateFixPointNumber(mpfr_t x, int wI, int wF);
 		
 		mpz_class fp2fix(mpfr_t x, int wI, int wF);
 	};
