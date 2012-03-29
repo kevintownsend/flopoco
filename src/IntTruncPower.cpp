@@ -1,4 +1,6 @@
 #include "IntTruncPower.hpp"
+#include <iostream>
+
 MonomialOfBits MonomialOfBits::operator* (const MonomialOfBits& rhs) const
 {
 	if (this->n != rhs.n)
@@ -11,6 +13,25 @@ MonomialOfBits MonomialOfBits::operator* (const MonomialOfBits& rhs) const
 	}
 	return res;
 }
+std::ostream& operator<< (std::ostream& o, const MonomialOfBits& m)
+{
+	bool cont = false;
+	size_t i;
+	for (i = 0; i < m.data.size(); i++) {
+		if (m.data[i]) {
+			if (cont)
+				o << '*';
+			o << "x_" << i;
+			cont = true;
+		}
+	}
+	// and if there is no x_i at all...
+	if (!cont) {
+		o << '1';
+	}
+	return o;
+}
+
 // too long a typename
 using std::tr1::unordered_map;
 
@@ -63,6 +84,27 @@ ProductBitIR ProductBitIR::operator* (const ProductBitIR& rhs)
 		}
 	}
 	return res;
+}
+std::ostream& operator<< (std::ostream& o, const ProductBitIR& pbi)
+{
+	bool cont = false;
+	std::tr1::unordered_map<MonomialOfBits, int>::const_iterator it =
+		pbi.data.begin();
+	for (; it != pbi.data.end(); it++) {
+		if (cont)
+			o << " + ";
+		if (it->second) {
+			// can print "+ -" in some cases
+			o << it->second;
+			o << ' ';
+			o << it->first;
+			cont = true;
+		}
+	}
+	// and if there's no term...
+	if (!cont)
+		o << '0';
+	return o;
 }
 //src range must include dst range
 ProductIR& ProductIR::operator+= (const ProductIR& rhs)
@@ -119,8 +161,20 @@ ProductIR ProductIR::operator* (const ProductIR& rhs)
 	}
 	return res;
 }
+std::ostream& operator<< (std::ostream& o, const ProductIR& pi)
+{
+	int i = pi.msb;
+	std::vector<ProductBitIR>::const_iterator it = pi.data.begin();
+	bool cont = false;
+	for (; it != pi.data.end(); it++, i--) {
+		if (cont)
+			o << " + ";
+		o << '(' << (*it) << ") * 1b" << i;
+		cont = true;
+	}
+	return o;
+}
 
-/*
 #include <cstdlib>
 #include <iostream>
 int main ()
@@ -135,8 +189,9 @@ int main ()
 	pbi.data = map;
 	a.data[0] = pbi;
 	ProductIR b(a*a);
-	std::cout << &b;
+	std::cout << pbi << std::endl << pbi*pbi << std::endl;
+	std::cout << a << std::endl;
+	std::cout << b << std::endl;
 	return 0;
 }
-*/
 
