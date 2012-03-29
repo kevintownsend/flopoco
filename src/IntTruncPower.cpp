@@ -95,8 +95,10 @@ std::ostream& operator<< (std::ostream& o, const ProductBitIR& pbi)
 			o << " + ";
 		if (it->second) {
 			// can print "+ -" in some cases
-			o << it->second;
-			o << ' ';
+			if (it->second != 1) {
+				o << it->second;
+				o << ' ';
+			}
 			o << it->first;
 			cont = true;
 		}
@@ -147,19 +149,6 @@ ProductIR& ProductIR::operator*= (const ProductBitIR& rhs)
 	}
 	return *this;
 }
-ProductIR ProductIR::operator* (const ProductIR& rhs)
-{
-	size_t n = this->data.size(), m = rhs.data.size();
-	ProductIR res (n+m, this->msb + rhs.msb);
-	for (int i = 0; i < n; i++) {
-		ProductIR tmp (n+m, this->msb + rhs.msb);
-		tmp += rhs;
-		tmp >>= i;
-		tmp *= this->data[i];
-		res += tmp;
-	}
-	return res;
-}
 std::ostream& operator<< (std::ostream& o, const ProductIR& pi)
 {
 	int i = pi.msb;
@@ -172,6 +161,20 @@ std::ostream& operator<< (std::ostream& o, const ProductIR& pi)
 		cont = true;
 	}
 	return o;
+}
+ProductIR ProductIR::operator* (const ProductIR& rhs)
+{
+	size_t n = this->data.size(), m = rhs.data.size();
+	ProductIR res (n+m-1, this->msb + rhs.msb);
+	for (int i = 0; i < n; i++) {
+		ProductIR tmp (n+m-1, this->msb + rhs.msb);
+		tmp += rhs;
+		tmp >>= i;
+		std::cout << tmp << std::endl;
+		tmp *= this->data[i];
+		res += tmp;
+	}
+	return res;
 }
 
 #include <cstdlib>
