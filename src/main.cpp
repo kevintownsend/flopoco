@@ -372,9 +372,10 @@ static void usage(char *name, string opName = ""){
 		cerr << "      (1-2^(-w))*{sin,cos}(pi*x); w is the precision not counting the sign bit\n";
 	}
 	if ( full || opName == "CordicSinCos" || opName == "FixSin" || opName == "FixCos"){
-		NEWOP( "CordicSinCos","w");
-		cerr << "      For a fixed-point input x in [0,1[, calculates (1-2^(-w)) sin(pi*x)\n";
-		cerr << "      and (1-2^(-w)) cos(pi*x); w is the precision not counting the leading 0\n";
+		NEWOP( "CordicSinCos","w reduced");
+		cerr << "      Computes (1-2^(-w)) sin(pi*x) and (1-2^(-w)) cos(pi*x) for x in -[1,1[, ;\n";
+		cerr << "      w is the fixed-point precision of inputs and outputs, not counting the sign bit\n";
+		cerr << "      reduced : if 1,  reduced number of iterations at the cost of two multiplications \n";
 	}
 	if ( full ){
 		cerr << "    ____________ GENERIC FUNCTION EVALUATORS ____________________________________\n";
@@ -2230,6 +2231,17 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 			Operator* tg = new FixSinCos(target, w);
 			addOperator(oplist, tg);
 		}
+
+#if 0
+		else if (opname == "FixSin") {
+			int nargs = 1;
+			if (i+nargs > argc)
+				usage(argv[0],opname); // and exit
+			int w = checkStrictlyPositive(argv[i++], argv[0]); // must be >=2 actually
+			Operator* tg = new FixSin(target, w);
+			addOperator(oplist, tg);
+		}
+#endif
 		
 		else if (opname == "CordicSinCos") {
 			int nargs = 2;

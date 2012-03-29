@@ -87,6 +87,8 @@
 /* fixed-point ----------------------------------------------- */
 #ifdef HAVE_SOLLYA
 #include "FixSinCos.hpp"
+//#include "FixSin.hpp"
+//#include "FixCos.hpp"
 
 //#include "CORDIC/FixMicroRotation.hpp"
 #include "CORDIC/CordicSinCos.hpp"
