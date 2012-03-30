@@ -64,6 +64,7 @@ class ProductBitIR {
 			:data (std::map<MonomialOfBits,int>()) {
 		}
 		int getTimes (const MonomialOfBits& e) const;
+		void addToCoeff (const MonomialOfBits& e, int a);
 		ProductBitIR& operator+= (const ProductBitIR& rhs);
 		ProductBitIR operator* (const ProductBitIR& rhs);
 		friend std::ostream& operator<<

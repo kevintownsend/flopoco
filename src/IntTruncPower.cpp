@@ -52,8 +52,7 @@ ProductBitIR::ProductBitIR (const ProductBit& rhs)
 	std::list<MonomialOfBits>::const_iterator it
 		= rhs.data.begin();
 	for (; it != rhs.data.end(); it++) {
-		int tmp = getTimes (*it);
-		data[*it] = tmp + 1;
+		addToCoeff (*it, 1);
 	}
 }
 int ProductBitIR::getTimes (const MonomialOfBits& e) const
@@ -65,13 +64,21 @@ int ProductBitIR::getTimes (const MonomialOfBits& e) const
 	}
 	return it->second;
 }
+void ProductBitIR::addToCoeff (const MonomialOfBits& e, int coeff)
+{
+	std::map<MonomialOfBits, int>::iterator it = data.find (e);
+	if (it == data.end()) {
+		data[e] = coeff;
+	} else {
+		it->second += coeff;
+	}
+}
 ProductBitIR& ProductBitIR::operator+= (const ProductBitIR& rhs)
 {
 	std::map<MonomialOfBits, int>::const_iterator it
 		= rhs.data.begin();
 	for (; it != rhs.data.end(); it++) {
-		int tmp = this->getTimes (it->first);
-		this->data[it->first] = tmp + it->second;
+		this->addToCoeff (it->first, it->second);
 	}
 	return *this;
 }
