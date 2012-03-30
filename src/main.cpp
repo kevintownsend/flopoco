@@ -366,16 +366,22 @@ static void usage(char *name, string opName = ""){
 	if ( full ){
 		cerr << "    ____________ FIXED-POINT OPERATORS __________________________________________\n";
 	}
-	if ( full || opName == "FixSinCos" || opName == "FixSin" || opName == "FixCos"){
+	if ( full || opName == "FixSinCos" || opName == "FixSinOrCos" || opName == "FixCos"){
 		NEWOP( "FixSinCos","w");
 		cerr << "      For a fixed-point 2's complement input x in [-1,1[, calculates\n";
 		cerr << "      (1-2^(-w))*{sin,cos}(pi*x); w is the precision not counting the sign bit\n";
 	}
-	if ( full || opName == "CordicSinCos" || opName == "FixSin" || opName == "FixCos"){
+	if ( full || opName == "CordicSinCos" || opName == "FixSinOrCos" || opName == "FixCos"){
 		NEWOP( "CordicSinCos","w reduced");
 		cerr << "      Computes (1-2^(-w)) sin(pi*x) and (1-2^(-w)) cos(pi*x) for x in -[1,1[, ;\n";
 		cerr << "      w is the fixed-point precision of inputs and outputs, not counting the sign bit\n";
 		cerr << "      reduced : if 1,  reduced number of iterations at the cost of two multiplications \n";
+	}
+	if ( full || opName == "CordicSinCos" || opName == "FixSinOrCos" || opName == "FixCos"){
+		NEWOP( "FixSinOrCos","w d");
+		cerr << "      Computes (1-2^(-w)) sin(pi*x) or (1-2^(-w)) cos(pi*x) for x in -[1,1[, ;\n";
+		cerr << "      w is the fixed-point precision of inputs and outputs, not counting the sign bit\n";
+		cerr << "      d: degree of the polynomial-based method (-1 should default to something sensible)\n";
 	}
 	if ( full ){
 		cerr << "    ____________ GENERIC FUNCTION EVALUATORS ____________________________________\n";
@@ -2232,16 +2238,16 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 			addOperator(oplist, tg);
 		}
 
-#if 0
-		else if (opname == "FixSin") {
-			int nargs = 1;
+		else if (opname == "FixSinOrCos") {
+			int nargs = 2;
 			if (i+nargs > argc)
 				usage(argv[0],opname); // and exit
 			int w = checkStrictlyPositive(argv[i++], argv[0]); // must be >=2 actually
-			Operator* tg = new FixSin(target, w);
+			int degree = atoi(argv[i++]); 
+			Operator* tg = new FixedPointSinOrCos(target, w, degree);
 			addOperator(oplist, tg);
 		}
-#endif
+
 		
 		else if (opname == "CordicSinCos") {
 			int nargs = 2;

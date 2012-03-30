@@ -12,12 +12,14 @@ namespace flopoco{
 	  
 	  public:
 		int w;
+		int degree;
+		mpfr_t scale;
 	  
 		// constructor, defined there with two parameters (default value 0 for each)
-		FixedPointSinOrCos(Target* target, int w, map<string, double> inputDelays = emptyDelayMap);
+		FixedPointSinOrCos(Target* target, int w, int degree, map<string, double> inputDelays = emptyDelayMap);
 
 		// destructor
-		~FixedPointSinOrCos() {};
+		~FixedPointSinOrCos();
 		
 		void changeName(std::string operatorName);
 

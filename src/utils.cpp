@@ -399,6 +399,18 @@ namespace flopoco{
 	// Does not handle multi-byte encodings.
 	char vhdlizeChar(char c)
 	{
+		if(c=='+')
+			return 'P';
+
+		if(c=='-')
+			return 'M';
+
+		if(c=='*')
+			return 'X';
+
+		if(c=='*')
+			return 'D';
+
 		if(isalnum(c)) {
 			return c;
 		}

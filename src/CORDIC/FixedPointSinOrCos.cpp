@@ -10,21 +10,19 @@ using namespace std;
 
 namespace flopoco{
 
-	// TODO free scale in the destructor
 
-	FixedPointSinOrCos::FixedPointSinOrCos(Target* target, int w_, map<string, double> inputDelays) 
-		: Operator(target), w(w_)
+	FixedPointSinOrCos::FixedPointSinOrCos(Target* target, int w_, int degree_, map<string, double> inputDelays) 
+		: Operator(target), w(w_), degree(degree_)
 	{
-		int degree = 4;
 
 		srcFileName="FixedPointSinOrCos";
 		ostringstream name;
 
-		setCopyrightString ( "Istoan Matei, Florent de Dinechin (2008-2012)" );
+		setCopyrightString ( "Matei Istoan, Florent de Dinechin (2008-2012)" );
 		if(target->isPipelined())
-			name << "FixedPointSinOrCos_" << 1+w <<"_f"<< target->frequencyMHz() << "_uid" << getNewUId();
+			name << "FixedPointSinOrCos_" << w <<"_f"<< target->frequencyMHz() << "_uid" << getNewUId();
 		else
-			name << "FixedPointSinOrCos_" << 1+w << "_uid" << getNewUId();
+			name << "FixedPointSinOrCos_" << w << "_uid" << getNewUId();
 		setName( name.str() );
 
 		// declaring inputs
@@ -33,6 +31,13 @@ namespace flopoco{
 
 		// declaring output
 		addOutput("SorC",1+w,2);
+
+		// TODO free scale in the destructor
+		mpfr_init2(scale, 10*w);
+		mpfr_set_d(scale, -1.0, GMP_RNDN);
+		mpfr_mul_2si(scale, scale, -w, GMP_RNDN);
+		mpfr_add_d(scale, scale, 1.0, GMP_RNDN);
+
 		
 		//reduce the argument X to [0, 1/2)
 		vhdl << tab << declare("absX", 1+w ) << "<= (X xor (" << w << " downto 0 => X(" << w << ")))"
@@ -51,7 +56,9 @@ namespace flopoco{
 		vhdl << tab << declare("shortXinCos", w) << " <= XinCos(" << w-1 << " downto 0);" << endl; 
 		
 		//compute the sine and the cosine
-		FunctionEvaluator* sinCosEvaluator = new FunctionEvaluator(target, "sin(x*Pi),0,1,1", w, w, degree);
+		ostringstream fun;
+		fun << "(1-1b-"<<w<<")*sin(x*Pi),0,1,1";
+		FunctionEvaluator* sinCosEvaluator = new FunctionEvaluator(target, fun.str(), w, w, degree);
 		oplist.push_back(sinCosEvaluator);
 		
 		inPortMap(sinCosEvaluator, "X", "shortXinSin");
@@ -97,70 +104,60 @@ namespace flopoco{
 		
 	};
 
+
+
+	 FixedPointSinOrCos::~FixedPointSinOrCos(){
+		mpfr_clear(scale);
+	 };
+
 	void FixedPointSinOrCos::emulate(TestCase * tc) 
 	{
 		/* Get I/O values */
 		mpz_class svZ = tc->getInputValue("X");
 		mpz_class svSelect = tc->getInputValue("SelectFunction");
-		mpfr_t z, select, constPi, rsin, rcos;
-		mpz_t rsin_z, rcos_z;
+		mpfr_t z, constPi, sinorcos;
+		mpz_t sinorcos_z;
 		
 		/* Compute correct value */
 		mpfr_init2(z, 10*w);
-		mpfr_init(select);
 		
 		mpfr_init2(constPi, 10*w);
-		
-		mpfr_set_z (select, svSelect.get_mpz_t(), GMP_RNDN); 
-		
+				
 		mpfr_set_z (z, svZ.get_mpz_t(), GMP_RNDN); // this rounding is exact
 		mpfr_div_2si (z, z, w, GMP_RNDN); // this rounding is acually exact
 		
 		mpfr_const_pi( constPi, GMP_RNDN);
 		mpfr_mul(z, z, constPi, GMP_RNDN);
 		
-		mpfr_init2(rsin, 10*w); 
-		mpfr_init2(rcos, 10*w); 
+		mpfr_init2(sinorcos, 10*w); 
+
+		mpz_init2 (sinorcos_z, 2*w);
 
 
-		mpz_init2 (rsin_z, 2*w);
-		mpz_init2 (rcos_z, 2*w);
-		mpfr_sin(rsin, z, GMP_RNDN); 
-		mpfr_cos(rcos, z, GMP_RNDN);
+		if(svSelect==0)
+			mpfr_cos(sinorcos, z, GMP_RNDN);
+		else
+			mpfr_sin(sinorcos, z, GMP_RNDN);
 
-		mpfr_add_d(rsin, rsin, 6.0, GMP_RNDN);
-		mpfr_add_d(rcos, rcos, 6.0, GMP_RNDN);
-		mpfr_mul_2si (rsin, rsin, w, GMP_RNDN); // exact rnd here
-		mpfr_mul_2si (rcos, rcos, w, GMP_RNDN); // exact rnd here
+
+		mpfr_mul (sinorcos, sinorcos, scale, GMP_RNDN);
+		mpfr_add_d(sinorcos, sinorcos, 6.0, GMP_RNDN);
+		mpfr_mul_2si (sinorcos, sinorcos, w, GMP_RNDN);
 
 		// Rounding down
-		mpfr_get_z (rsin_z, rsin, GMP_RNDD); // there can be a real rounding here
-		mpfr_get_z (rcos_z, rcos, GMP_RNDD); // there can be a real rounding here
-		mpz_class sin_zc (rsin_z), cos_zc (rcos_z);
-		sin_zc -= mpz_class(6)<<w;
-		cos_zc -= mpz_class(6)<<w;
-		
-		if(mpfr_cmp_d (select, 0.0) == 0)
-			tc->addExpectedOutput ("SorC", cos_zc);
-		else
-			tc->addExpectedOutput ("SorC", sin_zc);
+		mpfr_get_z (sinorcos_z, sinorcos, GMP_RNDD); // Here is where the only rounding takes place
+		mpz_class sinorcos_zc (sinorcos_z);
+		sinorcos_zc -= mpz_class(6)<<w;
+		tc->addExpectedOutput ("SorC", sinorcos_zc);
 		
 		// Rounding up
-		mpfr_get_z (rsin_z, rsin, GMP_RNDU); // there can be a real rounding here
-		mpfr_get_z (rcos_z, rcos, GMP_RNDU); // there can be a real rounding here
-		mpz_class sin_zcu (rsin_z), cos_zcu (rcos_z);
-		sin_zcu -= mpz_class(6)<<w;
-		cos_zcu -= mpz_class(6)<<w;
-
-		if(mpfr_cmp_d (select, 0.0) == 0)
-			tc->addExpectedOutput ("SorC", cos_zcu);
-		else
-			tc->addExpectedOutput ("SorC", sin_zcu);
+		mpfr_get_z (sinorcos_z, sinorcos, GMP_RNDU); // Here is where the only rounding takes place
+		mpz_class sinorcos_zcu (sinorcos_z);
+		sinorcos_zcu -= mpz_class(6)<<w;
+		tc->addExpectedOutput ("SorC", sinorcos_zcu);
 		
-
-
 		// clean up
-		mpfr_clears (z, rsin, rcos, NULL);		
+		mpfr_clears (z, sinorcos, NULL);		
 		mpfr_free_cache();
 	}
 
