@@ -16,7 +16,6 @@ namespace flopoco{
 	  
 	  public:
 		int w, reducedIterations, guard;
-		gmp_randstate_t state;
 		mpfr_t scale; /**< 1-2^-w */
 	  
 		// constructor, defined there with two parameters (default value 0 for each)
