@@ -27,7 +27,7 @@ namespace flopoco{
 
 		// declaring inputs
 		addInput("X",1+w,true);
-		addInput("SelectFunction");		// 0 for cosine 1 for sine
+		addInput("SinCosbar");		// 0 for cosine 1 for sine
 
 		// declaring output
 		addOutput("SorC",1+w,2);
@@ -46,7 +46,9 @@ namespace flopoco{
 		vhdl << tab << declare("reducedX", 1+w) 
 						<< "<= (absX(" << w << " downto " << w-1 << ") - (\'0\' & (absX(" << w << ") xor absX(" << w-1 << "))))" 
 						<< " & absX(" << w-2 << " downto 0);" << endl;
-		vhdl << tab << declare("quadrantX", 2) << " <= X(" << w << " downto " << w-1 << ");" << endl;
+		vhdl << tab << declare("s") << " <= X(" << w << ");  -- sign" << endl;
+		vhdl << tab << declare("q") << " <= X(" << w-1 << ");  -- quadrant" << endl;
+		vhdl << tab << declare("sq", 2) << " <= X(" << w << " downto " << w-1 << ");  -- sign and quadrant" << endl;
 		
 		vhdl << tab << declare("XinSin", 1+w) << " <= reducedX;" << endl; 
 		vhdl << tab << declare("XinCos", 1+w) << " <= (\"01\" & " << zg(w-1) << ") - reducedX;" << endl; 
@@ -55,52 +57,34 @@ namespace flopoco{
 		vhdl << tab << declare("shortXinSin", w) << " <= XinSin(" << w-1 << " downto 0);" << endl; 
 		vhdl << tab << declare("shortXinCos", w) << " <= XinCos(" << w-1 << " downto 0);" << endl; 
 		
+		vhdl << tab << declare("effectiveSin") << " <= s xor q xor SinCosbar;" << endl; 
+
+		vhdl << tab << declare("shortXin", w) << " <= shortXinSin when effectiveSin = '1' else shortXinCos;" << endl; 
+
 		//compute the sine and the cosine
 		ostringstream fun;
 		fun << "(1-1b-"<<w<<")*sin(x*Pi),0,1,1";
 		FunctionEvaluator* sinCosEvaluator = new FunctionEvaluator(target, fun.str(), w, w, degree);
 		oplist.push_back(sinCosEvaluator);
 		
-		inPortMap(sinCosEvaluator, "X", "shortXinSin");
-		outPortMap(sinCosEvaluator, "R", "intSin");
+		inPortMap(sinCosEvaluator, "X", "shortXin");
+		outPortMap(sinCosEvaluator, "R", "intSinCos");
 		vhdl << instance(sinCosEvaluator, "sinEvaluator") << endl;
+
 		
-		inPortMap(sinCosEvaluator, "X", "shortXinCos");
-		outPortMap(sinCosEvaluator, "R", "intCos");
-		vhdl << instance(sinCosEvaluator, "cosEvaluator") << endl;
 		
 		//extract the needed bits from the function output
-		vhdl << tab << declare("shortIntSin", 1+w) << " <= intSin(" << w << " downto 0);" << endl; 
-		vhdl << tab << declare("shortIntCos", 1+w) << " <= intCos(" << w << " downto 0);" << endl; 
+		vhdl << tab << declare("shortIntSinCos", 1+w) << " <= intSinCos(" << w << " downto 0);" << endl; 
 		
 		//assign the correct value to the output
-		vhdl << tab << declare("reducedC", 1+w) << "<= shortIntCos;" << endl;
-		vhdl << tab << declare("reducedS", 1+w) << "<= shortIntSin;" << endl;
+		vhdl << tab << declare("reducedSC", 1+w) << "<= shortIntSinCos;" << endl;
 		
-		vhdl << tab << declare("negReducedC", 1+w) << "<= (reducedC xor (" << w << " downto 0 => \'1\'))"
-												   << " + " 
-												   << "(" << zg(w, 0) << " & \'1\');"<< endl;
-		vhdl << tab << declare("negReducedS", 1+w) << "<= (reducedS xor (" << w << " downto 0 => \'1\'))"
-												   << " + " 
-												   << "(" << zg(w, 0) << " & \'1\');"<< endl;
-												   
-		declare("effectiveC", 1+w);
-		vhdl << tab << "with quadrantX select" << endl;
-		vhdl << tab << tab << "effectiveC <= reducedC when \"00\"," << endl;
-		vhdl << tab << tab << tab << " negReducedS when \"01\"," << endl;
-		vhdl << tab << tab << tab << " negReducedS when \"10\"," << endl;
-		vhdl << tab << tab << tab << " reducedC when \"11\"," << endl;
-		vhdl << tab << tab << tab << " reducedC when others;" << endl;	//edit to signal error
+		vhdl << tab << declare("negReducedSC", 1+w) << "<= " << zg(w, 0) << " - reducedSC;"<< endl;
 		
-		declare("effectiveS", 1+w);
-		vhdl << tab << "with quadrantX select" << endl;
-		vhdl << tab << tab << "effectiveS <= reducedS when \"00\"," << endl;
-		vhdl << tab << tab << tab << " reducedC when \"01\"," << endl;
-		vhdl << tab << tab << tab << " negReducedC when \"10\"," << endl;
-		vhdl << tab << tab << tab << " negReducedS when \"11\"," << endl;
-		vhdl << tab << tab << tab << " reducedS when others;" << endl;	//edit to signal error
+		vhdl << tab << declare("changeSign") << " <= s xor (q and not SinCosbar);" << endl; 
+		vhdl << tab << declare("finalSC", 1+w) << "<=  reducedSC when changeSign = '0' else negReducedSC;" << endl;
 		
-		vhdl << tab << "SorC <= effectiveS when SelectFunction=\'1\' else effectiveC;" << endl;
+		vhdl << tab << "SorC <= finalSC;" << endl;
 		
 	};
 
@@ -114,7 +98,7 @@ namespace flopoco{
 	{
 		/* Get I/O values */
 		mpz_class svZ = tc->getInputValue("X");
-		mpz_class svSelect = tc->getInputValue("SelectFunction");
+		mpz_class svSelect = tc->getInputValue("SinCosbar");
 		mpfr_t z, constPi, sinorcos;
 		mpz_t sinorcos_z;
 		
@@ -177,7 +161,7 @@ namespace flopoco{
 		//z=0
 		tc = new TestCase (this);
 		tc -> addInput ("X",mpz_class(0));
-		tc -> addInput ("SelectFunction",mpz_class(1));
+		tc -> addInput ("SinCosbar",mpz_class(1));
 		emulate(tc);
 		tcl->add(tc);
 		
@@ -192,7 +176,7 @@ namespace flopoco{
 		mpfr_mul_2si (z, z, w, GMP_RNDD); 
 		mpfr_get_z (z_z, z, GMP_RNDD);  
 		tc -> addInput ("X",mpz_class(z_z));
-		tc -> addInput ("SelectFunction",mpz_class(1));
+		tc -> addInput ("SinCosbar",mpz_class(1));
 		emulate(tc);
 		tcl->add(tc);
 		
@@ -207,7 +191,7 @@ namespace flopoco{
 		mpfr_mul_2si (z, z, w, GMP_RNDD); 
 		mpfr_get_z (z_z, z, GMP_RNDD);  
 		tc -> addInput ("X",mpz_class(z_z));
-		tc -> addInput ("SelectFunction",mpz_class(1));
+		tc -> addInput ("SinCosbar",mpz_class(1));
 		emulate(tc);
 		tcl->add(tc);
 		
@@ -222,7 +206,7 @@ namespace flopoco{
 		mpfr_mul_2si (z, z, w, GMP_RNDD); 
 		mpfr_get_z (z_z, z, GMP_RNDD);  
 		tc -> addInput ("X",mpz_class(z_z));
-		tc -> addInput ("SelectFunction",mpz_class(1));
+		tc -> addInput ("SinCosbar",mpz_class(1));
 		emulate(tc);
 		tcl->add(tc);
 		
@@ -238,7 +222,7 @@ namespace flopoco{
 		mpfr_get_z (z_z, z, GMP_RNDD);  
 		
 		tc -> addInput ("X",mpz_class(z_z));
-		tc -> addInput ("SelectFunction",mpz_class(1));
+		tc -> addInput ("SinCosbar",mpz_class(1));
 		emulate(tc);
 		tcl->add(tc);
 		
