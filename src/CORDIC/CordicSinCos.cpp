@@ -33,11 +33,11 @@ namespace flopoco{
 
 		setCopyrightString ( "Istoan Matei, Florent de Dinechin (2008-2012)" );
 		if(target->isPipelined())
-			name << "CordicSinCos_" << (reducedIterations==1?"rducedIterations":"") 
-				<< 1+w <<"_f"<< target->frequencyMHz() << "_uid" << getNewUId();
+			name << "CordicSinCos_" << (reducedIterations==1?"reducedIterations":"") 
+				<< w <<"_f"<< target->frequencyMHz() << "_uid" << getNewUId();
 		else
-			name << "CordicSinCos_" << (reducedIterations==1?"rducedIterations":"") 
-				<< 1+w << "_uid" << getNewUId();
+			name << "CordicSinCos_" << (reducedIterations==1?"reducedIterations":"") 
+				<< w << "_uid" << getNewUId();
 		setName( name.str() );
 
 		// declaring inputs
