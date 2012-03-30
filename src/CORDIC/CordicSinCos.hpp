@@ -22,7 +22,7 @@ namespace flopoco{
 		CordicSinCos(Target* target, int w, int reducedIterations = 0, map<string, double> inputDelays = emptyDelayMap);
 
 		// destructor
-		~CordicSinCos() {};
+		~CordicSinCos();
 		
 		void changeName(std::string operatorName);
 

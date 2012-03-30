@@ -10,7 +10,7 @@ using namespace std;
 
 namespace flopoco{
 
-	// TODO free scale in the destructor
+
 
 	CordicSinCos::CordicSinCos(Target* target, int w_, int reducedIterations_, map<string, double> inputDelays) 
 		: Operator(target), w(w_), reducedIterations(reducedIterations_)
@@ -18,6 +18,7 @@ namespace flopoco{
 
 		int wcs = 1+w, wx = 1+w;
 		int iterations;
+			mpfr_t zatan, zpow2, constPi;
 		//TODO: verify the validity of the necessary guard bits
 		guard = ceil(log2(wcs));
 		
@@ -67,9 +68,9 @@ namespace flopoco{
 		mpfr_t kfactor, temp;
 		
 		mpfr_init2(kfactor, 10*wcs);
+		mpfr_init2(temp, 10*wcs);
 		mpfr_set_d(kfactor, 1, GMP_RNDN);
 		for(int i=0; i<iterations; i++){
-			mpfr_init2(temp, 10*wcs);
 			mpfr_set_d(temp, 1, GMP_RNDN);
 			mpfr_mul_2si(temp, temp, -2*i, GMP_RNDN);
 			mpfr_add_d(temp, temp, 1.0, GMP_RNDN);
@@ -136,9 +137,8 @@ namespace flopoco{
 
 			double csPath = getCriticalPath();
 			
-			//create the constant signal for the arctan
-			mpfr_t zatan, zpow2, constPi;
 			
+			//create the constant signal for the arctan
 			mpfr_init2(zatan, 10*wcs);
 			mpfr_init2(zpow2, 10*wcs);
 			mpfr_init2(constPi, 10*wcs);
@@ -233,7 +233,11 @@ namespace flopoco{
 			inPortMap(piMultiplier, "X", join("X", stage));
 			outPortMap(piMultiplier, "R", "xMulPi");
 			vhdl << instance(piMultiplier, "piMultiplier") << endl;
-			
+		
+			syncCycleFromSignal("xMulPi");
+			setCriticalPath(piMultiplier->getOutputDelay("R"));
+
+
 			wx += 2;	// TODO: check 
 						// NOTE: the first factor in the sum corresponds to the compensation due to Pi multiplication
 			
@@ -256,7 +260,9 @@ namespace flopoco{
 			
 			setCycleFromSignal("CX");
 			syncCycleFromSignal("SX");
-			//setCriticalPath(zmultiplier->getOutputDelay("xMultiplierC"));
+			nextCycle(); // TODO
+
+			//setCriticalPath(zmultiplier->getOutputDelay("R"));
 			 
 			
 			manageCriticalPath(target->localWireDelay(wcs) + target->adderDelay(wcs));
@@ -286,7 +292,7 @@ namespace flopoco{
 												   << " + " 
 												   << "(" << zg(wcs-1, 0) << " & \'1\');"<< endl;
 												   
-		manageCriticalPath(target->localWireDelay(wcs) + target->lutDelay() + target->adderDelay(1+w+1));
+		manageCriticalPath(target->localWireDelay(wcs) + target->lutDelay());
 		
 		declare("effectiveC", wcs);
 		vhdl << tab << "with quadrantX select" << endl;
@@ -304,6 +310,8 @@ namespace flopoco{
 		vhdl << tab << tab << tab << " negReducedS when \"11\"," << endl;
 		vhdl << tab << tab << tab << " reducedS when others;" << endl;	//edit to signal error
 		
+		manageCriticalPath(target->localWireDelay(w) +  target->adderDelay(1+w+1));
+
 		vhdl << tab << declare("roundedEffectiveC", 1+w+1) << " <= effectiveC(" << wcs-1 << " downto " << guard-1 << ") "
 														   << "+"
 														   << " (" << zg(1+w, 0) << " & \'1\');" << endl;
@@ -314,7 +322,16 @@ namespace flopoco{
 		vhdl << tab << "C <= roundedEffectiveC(" << 1+w << " downto 1);" << endl;
 		vhdl << tab << "S <= roundedEffectiveS(" << 1+w << " downto 1);" << endl;
 
+
+		mpfr_clears (temp, kfactor, zatan, zpow2, constPi, NULL);		
+
 	};
+
+
+	CordicSinCos::~CordicSinCos(){
+		mpfr_clear(scale);
+	 };
+
 
 	void CordicSinCos::changeName(std::string operatorName){
 	        Operator::changeName(operatorName);
