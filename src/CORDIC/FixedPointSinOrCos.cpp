@@ -61,6 +61,7 @@ namespace flopoco{
 
 		vhdl << tab << declare("shortXin", w) << " <= shortXinSin when effectiveSin = '1' else shortXinCos;" << endl; 
 
+		nextCycle();
 		//compute the sine and the cosine
 		ostringstream fun;
 		fun << "(1-1b-"<<w<<")*sin(x*Pi),0,1,1";
@@ -71,7 +72,9 @@ namespace flopoco{
 		outPortMap(sinCosEvaluator, "R", "intSinCos");
 		vhdl << instance(sinCosEvaluator, "sinEvaluator") << endl;
 
-		
+		syncCycleFromSignal("intSinCos");
+		nextCycle();
+
 		
 		//extract the needed bits from the function output
 		vhdl << tab << declare("shortIntSinCos", 1+w) << " <= intSinCos(" << w << " downto 0);" << endl; 
