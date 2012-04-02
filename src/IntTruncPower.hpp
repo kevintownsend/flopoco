@@ -37,6 +37,7 @@ class MonomialOfBits {
 		bool operator< (const MonomialOfBits& rhs) const;
 		friend std::ostream& operator<<
 			(std::ostream& o, const MonomialOfBits& m);
+
 		std::vector<bool> data;
 		size_t n;
 };
@@ -50,10 +51,12 @@ struct ProductBitIRElt {
 };
 */
 class ProductBitIR;
+class Product;
 class ProductBit {
 	public:
 		ProductBit (): data (std::list<MonomialOfBits>()) {
 		}
+
 		std::list<MonomialOfBits> data;
 };
 
@@ -69,6 +72,7 @@ class ProductBitIR {
 		ProductBitIR operator* (const ProductBitIR& rhs);
 		friend std::ostream& operator<<
 			(std::ostream& o, const ProductBitIR& pbi);
+
 		std::map<MonomialOfBits, int> data;
 };
 std::ostream& operator<< (std::ostream& o, const ProductBitIR& pbi);
@@ -79,14 +83,24 @@ class ProductIR {
 			:data (std::vector<ProductBitIR> (w, ProductBitIR()))
 			,msb (msb) {
 		}
+		ProductIR (const Product& rhs);
 		ProductIR& operator+= (const ProductIR& rhs);
 		ProductIR& operator>>= (int n);
 		ProductIR& operator*= (const ProductBitIR& rhs);
 		ProductIR operator* (const ProductIR& rhs);
 		friend std::ostream& operator<<
 			(std::ostream& o, const ProductIR& pi);
+
 		std::vector<ProductBitIR> data;
 		int msb;
 };
 std::ostream& operator<< (std::ostream& o, const ProductIR& pi);
+
+class Product {
+	public:
+		Product (const ProductIR& rhs);
+
+		std::vector<ProductBit> data;
+		int msb;
+};
 
