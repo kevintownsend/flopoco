@@ -238,9 +238,6 @@ void ProductIR::simplify (void)
 				throw "negative coefficient, shouldn't"
 				      "happen (ProductIR::simplify)";
 			}
-			if (coeff == 0) {
-				i->data.erase (j);
-			}
 			if (coeff > 1) {
 				i_tmp = i+1;
 				if (i_tmp == data.end()) {
