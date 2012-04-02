@@ -46,6 +46,7 @@ std::ostream& operator<< (std::ostream& o, const MonomialOfBits& m)
 	return o;
 }
 
+// the ProductBitIR must have a 0 or 1 coeff (see also the throw)
 ProductBit::ProductBit (const ProductBitIR& rhs)
 	:data (std::list<MonomialOfBits>())
 {
@@ -146,7 +147,7 @@ ProductIR::ProductIR (const Product& rhs)
 	std::vector<ProductBit>::const_iterator i = rhs.data.begin();
 	std::vector<ProductBitIR>::iterator j = data.begin();
 	for (; i != rhs.data.end(); i++, j++) {
-		*i = ProductBitIR (*j);
+		*j = ProductBitIR (*i);
 	}
 }
 //src range must include dst range
@@ -156,11 +157,14 @@ ProductIR& ProductIR::operator+= (const ProductIR& rhs)
 		throw "msb mismatch (ProductIR::operator+=)";
 	if (this->msb - this->data.size() > rhs.msb - rhs.data.size())
 		throw "lsb mismatch (ProductIR::operator+=)";
-	std::vector<ProductBitIR>::const_iterator j = rhs.data.begin();
-	std::vector<ProductBitIR>::iterator i = this->data.begin();
+	// we use reverse iterators because we know MSBs more readily
+	// than LSBs
+	std::vector<ProductBitIR>::const_reverse_iterator j
+		= rhs.data.rbegin();
+	std::vector<ProductBitIR>::reverse_iterator i = this->data.rbegin();
 	//align the 2 iterators
 	i += (this->msb - rhs.msb);
-	for (; j != rhs.data.end(); i++,j++) {
+	for (; j != rhs.data.rend(); i++,j++) {
 		*i += *j;
 	}
 	return *this;
@@ -171,12 +175,14 @@ ProductIR& ProductIR::operator>>= (int n)
 		throw "invalid argument (ProductIR::operator>>=)";
 	if (n == 0)
 		return *this;
-	std::vector<ProductBitIR>::reverse_iterator i = this->data.rbegin();
-	std::vector<ProductBitIR>::reverse_iterator j = i + n;
-	for (; j != this->data.rend(); i++,j++) {
+	// arithmetically it is a >>=, so since we use an el vector
+	// we have to do a <<= in memory
+	std::vector<ProductBitIR>::iterator i = this->data.begin();
+	std::vector<ProductBitIR>::iterator j = i + n;
+	for (; j != this->data.end(); i++,j++) {
 		*i = *j;
 	}
-	for (; i != this->data.rend(); i++) {
+	for (; i != this->data.end(); i++) {
 		*i = ProductBitIR();
 	}
 	return *this;
@@ -193,9 +199,11 @@ ProductIR& ProductIR::operator*= (const ProductBitIR& rhs)
 std::ostream& operator<< (std::ostream& o, const ProductIR& pi)
 {
 	int i = pi.msb;
-	std::vector<ProductBitIR>::const_iterator it = pi.data.begin();
+	// we begin by msb so we have to use a reverse iterator
+	std::vector<ProductBitIR>::const_reverse_iterator it
+		= pi.data.rbegin();
 	bool cont = false;
-	for (; it != pi.data.end(); it++, i--) {
+	for (; it != pi.data.rend(); it++, i--) {
 		if (cont)
 			o << " + ";
 		o << '(' << (*it) << ") * 1b" << i;
@@ -211,7 +219,8 @@ ProductIR ProductIR::operator* (const ProductIR& rhs)
 		ProductIR tmp (n+m-1, this->msb + rhs.msb);
 		tmp += rhs;
 		tmp >>= i;
-		tmp *= this->data[i];
+		// for i = 0 we have the msb etc. etc.
+		tmp *= this->data[n-1-i];
 		res += tmp;
 		//std::cout << "tmp = " << tmp << "\nres = " << res << std::endl;
 	}
@@ -219,8 +228,9 @@ ProductIR ProductIR::operator* (const ProductIR& rhs)
 }
 void ProductIR::simplify (void)
 {
-	std::vector<ProductBitIR>::reverse_iterator i = data.rbegin(), i_tmp;
-	for (; i != data.rend(); i++) {
+	// we begin by lsb: non-rev iterator
+	std::vector<ProductBitIR>::iterator i = data.begin(), i_tmp;
+	for (; i != data.end(); i++) {
 		std::map<MonomialOfBits, int>::iterator j = i->data.begin();
 		for (; j != i->data.end(); j++) {
 			int coeff = j->second;
@@ -233,12 +243,15 @@ void ProductIR::simplify (void)
 			}
 			if (coeff > 1) {
 				i_tmp = i+1;
-				if (i_tmp == data.rend()) {
-					msb++; //big endian
-					// no push_front
-					// TODO: convert to little-endian
+				if (i_tmp == data.end()) {
+					msb++;
+					data.push_back (ProductBitIR());
+					// now i and i_tmp are both invalid
+					// so regenerate them
+					i_tmp = data.end() - 1;
+					i = i_tmp - 1;
 				}
-				(i-1)->addToCoeff (j->first, coeff >> 1);
+				i_tmp->addToCoeff (j->first, coeff >> 1);
 				j->second = coeff & 0x1;
 			}
 		}

@@ -16,7 +16,7 @@
 
 /* actually MonomialOfBits will be used with a unique size, and using
  * different sizes together won't work
- * if we know this size at compile time it would be better as a template
+ * if we knew this size at compile time it would be better as a template
  * argument */
 class MonomialOfBits {
 	public:
@@ -78,6 +78,11 @@ class ProductBitIR {
 };
 std::ostream& operator<< (std::ostream& o, const ProductBitIR& pbi);
 
+/* data is represented by a *little-endian* vector in the 2 following classes.
+   why little ? because within simplify if we have a carry
+   on the msb the vector has to grow on the msb side, which
+   consequently has to be on the right as std::vectors only
+   grow to the right (std::vector<T>::push_back but not push_front) */
 class ProductIR {
 	public:
 		ProductIR (size_t w, int msb) 
