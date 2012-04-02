@@ -56,6 +56,7 @@ class ProductBit {
 	public:
 		ProductBit (): data (std::list<MonomialOfBits>()) {
 		}
+		ProductBit (const ProductBitIR& rhs);
 
 		std::list<MonomialOfBits> data;
 };
@@ -88,6 +89,7 @@ class ProductIR {
 		ProductIR& operator>>= (int n);
 		ProductIR& operator*= (const ProductBitIR& rhs);
 		ProductIR operator* (const ProductIR& rhs);
+		void simplify (void);
 		friend std::ostream& operator<<
 			(std::ostream& o, const ProductIR& pi);
 

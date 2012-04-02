@@ -46,6 +46,24 @@ std::ostream& operator<< (std::ostream& o, const MonomialOfBits& m)
 	return o;
 }
 
+ProductBit::ProductBit (const ProductBitIR& rhs)
+	:data (std::list<MonomialOfBits>())
+{
+	std::map<MonomialOfBits, int>::const_iterator it = rhs.data.begin();
+	for (; it != rhs.data.end(); it++) {
+		switch (it->second) {
+			case 0:
+				break;
+			case 1:
+				data.push_back (it->first);
+				break;
+			default:
+				throw "The data must be from a ProductIR"
+				      "on which simplify() has been called\n";
+		}
+	}
+}
+
 ProductBitIR::ProductBitIR (const ProductBit& rhs)
 	:data (std::map<MonomialOfBits,int>())
 {
@@ -121,6 +139,16 @@ std::ostream& operator<< (std::ostream& o, const ProductBitIR& pbi)
 		o << '0';
 	return o;
 }
+ProductIR::ProductIR (const Product& rhs)
+	:msb(rhs.msb),
+	data(std::vector<ProductBitIR> (rhs.data.size(),ProductBitIR()))
+{
+	std::vector<ProductBit>::const_iterator i = rhs.data.begin();
+	std::vector<ProductBitIR>::iterator j = data.begin();
+	for (; i != rhs.data.end(); i++, j++) {
+		*i = ProductBitIR (*j);
+	}
+}
 //src range must include dst range
 ProductIR& ProductIR::operator+= (const ProductIR& rhs)
 {
@@ -188,6 +216,44 @@ ProductIR ProductIR::operator* (const ProductIR& rhs)
 		//std::cout << "tmp = " << tmp << "\nres = " << res << std::endl;
 	}
 	return res;
+}
+void ProductIR::simplify (void)
+{
+	std::vector<ProductBitIR>::reverse_iterator i = data.rbegin(), i_tmp;
+	for (; i != data.rend(); i++) {
+		std::map<MonomialOfBits, int>::iterator j = i->data.begin();
+		for (; j != i->data.end(); j++) {
+			int coeff = j->second;
+			if (coeff < 0) {
+				throw "negative coefficient, shouldn't"
+				      "happen (ProductIR::simplify)";
+			}
+			if (coeff == 0) {
+				i->data.erase (j);
+			}
+			if (coeff > 1) {
+				i_tmp = i+1;
+				if (i_tmp == data.rend()) {
+					msb++; //big endian
+					// no push_front
+					// TODO: convert to little-endian
+				}
+				(i-1)->addToCoeff (j->first, coeff >> 1);
+				j->second = coeff & 0x1;
+			}
+		}
+	}
+}
+// must call ProductIR::simplify() on rhs before
+Product::Product (const ProductIR& rhs)
+	:data(std::vector<ProductBit>(rhs.data.size(), ProductBit()))
+	 ,msb (rhs.msb)
+{
+	std::vector<ProductBitIR>::const_iterator i = rhs.data.begin();
+	std::vector<ProductBit>::iterator j = data.begin();
+	for (; i != rhs.data.end(); i++, j++) {
+		*j = ProductBit (*i);
+	}
 }
 
 #include <cstdlib>
