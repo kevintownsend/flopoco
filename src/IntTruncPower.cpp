@@ -230,10 +230,12 @@ void ProductIR::simplify (void)
 {
 	// we begin by lsb: non-rev iterator
 	std::vector<ProductBitIR>::iterator i = data.begin(), i_tmp;
+	int coeff; // to avoid messing beetween goto and declarations
 	for (; i != data.end(); i++) {
 		std::map<MonomialOfBits, int>::iterator j = i->data.begin();
 		for (; j != i->data.end(); j++) {
-			int coeff = j->second;
+			loop_begin:
+			coeff = j->second;
 			if (coeff < 0) {
 				throw "negative coefficient, shouldn't"
 				      "happen (ProductIR::simplify)";
@@ -247,6 +249,13 @@ void ProductIR::simplify (void)
 					// so regenerate them
 					i_tmp = data.end() - 1;
 					i = i_tmp - 1;
+					// apparently j is also destroyed
+					j = i->data.begin();
+					// not sure continue; does what I want
+					if (j == i->data.end())
+						break;
+					else
+						goto loop_begin;
 				}
 				i_tmp->addToCoeff (j->first, coeff >> 1);
 				j->second = coeff & 0x1;
@@ -284,7 +293,10 @@ int main ()
 	//std::cout << m << std::endl << m*m << std::endl;
 	//std::cout << pbi << std::endl << pbi*pbi << std::endl;
 	std::cout << a << std::endl;
-	std::cout << a*a << std::endl;
+	ProductIR b = a*a;
+	std::cout << b << std::endl;
+	b.simplify();
+	std::cout << b << std::endl;
 	return 0;
 }
 
