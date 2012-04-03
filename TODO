@@ -2,7 +2,7 @@ TODO file for FloPoCo
 
 BUGs
 FPAdderDualPath fails many tests
-FPAdder fails full cancellation test
+FPExp for small sizes
 
 Testbench
 * Bug on outputs that are bits with isBus false and  multiple-valued  
