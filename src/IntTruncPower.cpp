@@ -216,13 +216,12 @@ ProductIR ProductIR::operator* (const ProductIR& rhs)
 	size_t n = this->data.size(), m = rhs.data.size();
 	ProductIR res (n+m-1, this->msb + rhs.msb);
 	for (int i = 0; i < n; i++) {
-		ProductIR tmp (n+m-1, this->msb + rhs.msb);
-		tmp += rhs;
-		tmp >>= i;
-		// for i = 0 we have the msb etc. etc.
-		tmp *= this->data[n-1-i];
-		res += tmp;
-		//std::cout << "tmp = " << tmp << "\nres = " << res << std::endl;
+		for (int j = 0; j < m; j++) {
+			// since product has exactly the right size
+			// it doesn't matter if we make the product
+			// in counter-endian mode
+			res.data[i+j] += this->data[i] * rhs.data[j];
+		}
 	}
 	return res;
 }
