@@ -5,6 +5,12 @@
 #include <map>
 #include <iostream>
 
+#if defined (__GNUC__) && (__GNUC_MAJOR__ > 3 || (__GNUC_MAJOR__ == 3 && __GNUC_MINOR__ >= 1))
+#define DEPRECATED __attribute__((deprecated))
+#else
+#define DEPRECATED
+#endif
+
 //using namespace flopoco;
 
 /* some bit of context here:
@@ -67,8 +73,8 @@ class ProductBitIR {
 		ProductBitIR ()
 			:data (std::map<MonomialOfBits,int>()) {
 		}
-		int getTimes (const MonomialOfBits& e) const;
-		void addToCoeff (const MonomialOfBits& e, int a);
+		int getTimes (const MonomialOfBits& e) const DEPRECATED;
+		void addToCoeff (const MonomialOfBits& e, int coeff);
 		ProductBitIR& operator+= (const ProductBitIR& rhs);
 		ProductBitIR operator* (const ProductBitIR& rhs);
 		friend std::ostream& operator<<
@@ -90,9 +96,9 @@ class ProductIR {
 			,msb (msb) {
 		}
 		ProductIR (const Product& rhs);
-		ProductIR& operator+= (const ProductIR& rhs);
-		ProductIR& operator>>= (int n);
-		ProductIR& operator*= (const ProductBitIR& rhs);
+		ProductIR& operator+= (const ProductIR& rhs) DEPRECATED;
+		ProductIR& operator>>= (int n) DEPRECATED;
+		ProductIR& operator*= (const ProductBitIR& rhs) DEPRECATED;
 		ProductIR operator* (const ProductIR& rhs);
 		void simplify (void);
 		friend std::ostream& operator<<
