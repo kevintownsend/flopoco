@@ -123,9 +123,9 @@ std::ostream& operator<< (std::ostream& o, const ProductBitIR& pbi)
 	std::map<MonomialOfBits, int>::const_iterator it =
 		pbi.data.begin();
 	for (; it != pbi.data.end(); it++) {
-		if (cont)
-			o << " + ";
 		if (it->second) {
+			if (cont)
+				o << " + ";
 			// can print "+ -" in some cases
 			if (it->second != 1) {
 				o << it->second;
