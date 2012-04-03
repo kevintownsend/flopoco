@@ -307,7 +307,7 @@ FPAdderSinglePath::FPAdderSinglePath(Target* target, int wEX, int wFX, int wEY, 
 		vhdl << tab << "with (exExpExc) select "<<endl;
 		vhdl << tab << declare("excRt2",2) << "<= \"00\" when \"0000\"|\"0100\"|\"1000\"|\"1100\"|\"1001\"|\"1101\","<<endl
 		<<tab<<tab<<"\"01\" when \"0001\","<<endl
-		<<tab<<tab<<"\"10\" when \"0010\"|\"0110\"|\"0101\","<<endl
+		<<tab<<tab<<"\"10\" when \"0010\"|\"0110\"|\"1010\"|\"1110\"|\"0101\","<<endl
 		<<tab<<tab<<"\"11\" when others;"<<endl;
 		manageCriticalPath(target->localWireDelay() + target->lutDelay());
 		vhdl<<tab<<declare("excR",2) << " <= \"00\" when (eqdiffsign='1' and EffSub='1') else excRt2;"<<endl;
