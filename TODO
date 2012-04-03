@@ -1,5 +1,9 @@
 TODO file for FloPoCo
 
+BUGs
+FPAdderDualPath fails many tests
+FPAdder fails full cancellation test
+
 Testbench
 * Bug on outputs that are bits with isBus false and  multiple-valued  
 	(see the P output of Collision in release 2.1.0)

@@ -491,6 +491,9 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	     << " else C_wo_sgn_neg;" << endl;
 
 	REPORT(INFO, " wA=" << wA <<" wZ=" << wZ <<" wZ2=" << wZ2o2 <<" wZ3=" << wZ3 );
+
+	// For LateX in the paper
+	cout << "     " << w <<  "   &   " << g <<"   &   " << wA << "   &   " << wZ << "   &   " << wZ2o2 << "   &   " << wZ3 << "   \\\\ \n \\hline" <<  endl;
 };
 
 
