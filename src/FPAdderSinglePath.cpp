@@ -148,6 +148,7 @@ FPAdderSinglePath::FPAdderSinglePath(Target* target, int wEX, int wFX, int wEY, 
 		vhdl<<tab<<declare("shiftedOut") << " <= '1' when (expDiff >= "<<wF+2<<") else '0';"<<endl;
 		//shiftVal=the number of positions that fracY must be shifted to the right				
 		
+		//		cout << "********" << wE << " " <<  sizeRightShift  <<endl;
 		
 		if (wE>sizeRightShift) {
 			manageCriticalPath(target->localWireDelay() + target->lutDelay());
@@ -155,7 +156,7 @@ FPAdderSinglePath::FPAdderSinglePath(Target* target, int wEX, int wFX, int wEY, 
 			<< " when shiftedOut='0' else CONV_STD_LOGIC_VECTOR("<<wFX+3<<","<<sizeRightShift<<") ;" << endl; 
 		}		
 		else if (wE==sizeRightShift) {
-			vhdl<<tab<<declare("shiftVal",sizeRightShift) << " <= expDiff;" << endl ;
+			vhdl<<tab<<declare("shiftVal", sizeRightShift) << " <= expDiff" << range(sizeRightShift-1,0) << ";" << endl ;
 		}
 		else 	{ //  wE< sizeRightShift
 			vhdl<<tab<<declare("shiftVal",sizeRightShift) << " <= CONV_STD_LOGIC_VECTOR(0,"<<sizeRightShift-wE <<") & expDiff;" <<	endl;
@@ -395,7 +396,13 @@ FPAdderSinglePath::FPAdderSinglePath(Target* target, int wEX, int wFX, int wEY, 
 		tc->addFPInput("Y", FPNumber::minusInfty);
 		emulate(tc);
 		tcl->add(tc);
-	
+		
+		tc = new TestCase(this); 
+		tc->addFPInput("X", -4.375e1);
+		tc->addFPInput("Y", 4.375e1);
+		emulate(tc);
+		tcl->add(tc);
+
 	}
 
 
