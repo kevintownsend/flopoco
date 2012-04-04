@@ -2,6 +2,9 @@
 #include <iostream>
 #include <map>
 
+using std::cout;
+using std::endl;
+
 MonomialOfBits MonomialOfBits::operator* (const MonomialOfBits& rhs) const
 {
 	if (this->n != rhs.n)
@@ -101,18 +104,17 @@ ProductBitIR& ProductBitIR::operator+= (const ProductBitIR& rhs)
 	}
 	return *this;
 }
-ProductBitIR ProductBitIR::operator* (const ProductBitIR& rhs)
+ProductBitIR ProductBitIR::operator* (const ProductBitIR& rhs) const
 {
 	ProductBitIR res;
 	std::map<MonomialOfBits, int>::const_iterator i
 		= this->data.begin();
-	std::map<MonomialOfBits, int>::const_iterator j
-		= rhs.data.begin();
+	std::map<MonomialOfBits, int>::const_iterator j;
 	for (; i != this->data.end(); i++) {
+		j = rhs.data.begin();
 		for (; j != rhs.data.end(); j++) {
 			MonomialOfBits prod = i->first * j->first;
-			res.data[prod] =
-				res.getTimes(prod) + (i->second * j->second);
+			res.addToCoeff (prod, i->second * j->second);
 		}
 	}
 	return res;
@@ -211,7 +213,7 @@ std::ostream& operator<< (std::ostream& o, const ProductIR& pi)
 	}
 	return o;
 }
-ProductIR ProductIR::operator* (const ProductIR& rhs)
+ProductIR ProductIR::operator* (const ProductIR& rhs) const
 {
 	size_t n = this->data.size(), m = rhs.data.size();
 	ProductIR res (n+m-1, this->msb + rhs.msb);
@@ -220,7 +222,7 @@ ProductIR ProductIR::operator* (const ProductIR& rhs)
 			// since product has exactly the right size
 			// it doesn't matter if we make the product
 			// in counter-endian mode
-			res.data[i+j] += this->data[i] * rhs.data[j];
+			res.data[i+j] += (this->data[i] * rhs.data[j]);
 		}
 	}
 	return res;
@@ -291,11 +293,14 @@ int main ()
 	}
 	//std::cout << m << std::endl << m*m << std::endl;
 	//std::cout << pbi << std::endl << pbi*pbi << std::endl;
-	std::cout << a << std::endl;
-	ProductIR b = a*a;
-	std::cout << b << std::endl;
-	b.simplify();
-	std::cout << b << std::endl;
+	std::cout << "a = " << a << std::endl;
+	std::cout << "a*a = " << a*a << std::endl;
+	ProductIR b = (a*a)*a;
+	//b.simplify();
+	std::cout << "(a*a)*a = " << b << std::endl;
+	b = a*(a*a);
+	//b.simplify();
+	std::cout << "a*(a*a) = " << b << std::endl;
 	return 0;
 }
 

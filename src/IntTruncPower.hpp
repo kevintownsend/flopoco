@@ -50,12 +50,6 @@ class MonomialOfBits {
 std::ostream& operator<< (std::ostream& o, const MonomialOfBits& m);
 
 class ProductBit;
-/*
-struct ProductBitIRElt {
-	int times;
-	ProductBit data;
-};
-*/
 class ProductBitIR;
 class Product;
 class ProductBit {
@@ -76,7 +70,7 @@ class ProductBitIR {
 		int getTimes (const MonomialOfBits& e) const DEPRECATED;
 		void addToCoeff (const MonomialOfBits& e, int coeff);
 		ProductBitIR& operator+= (const ProductBitIR& rhs);
-		ProductBitIR operator* (const ProductBitIR& rhs);
+		ProductBitIR operator* (const ProductBitIR& rhs) const;
 		friend std::ostream& operator<<
 			(std::ostream& o, const ProductBitIR& pbi);
 
@@ -99,7 +93,7 @@ class ProductIR {
 		ProductIR& operator+= (const ProductIR& rhs) DEPRECATED;
 		ProductIR& operator>>= (int n) DEPRECATED;
 		ProductIR& operator*= (const ProductBitIR& rhs) DEPRECATED;
-		ProductIR operator* (const ProductIR& rhs);
+		ProductIR operator* (const ProductIR& rhs) const;
 		void simplify (void);
 		friend std::ostream& operator<<
 			(std::ostream& o, const ProductIR& pi);
