@@ -24,6 +24,7 @@ namespace flopoco {
  * different sizes together won't work
  * if we knew this size at compile time it would be better as a template
  * argument */
+// a MonomialOfBits is a product of b_i
 class MonomialOfBits {
 	public:
 		MonomialOfBits (size_t n): data(std::vector<bool>(n)) {
@@ -49,6 +50,8 @@ class MonomialOfBits {
 class ProductBit;
 class ProductBitIR;
 class Product;
+// a ProductBit is for a sum_i (product_j b_(j_i)) where a mapping i->j_i
+// appears at most one time in the sum [not enforced in representation]
 class ProductBit {
 	public:
 		ProductBit (): data (std::list<MonomialOfBits>()) {
@@ -58,6 +61,8 @@ class ProductBit {
 		std::list<MonomialOfBits> data;
 };
 
+// and a ProductBitIR is a sum_i (alpha_i (product_j b_(j_i)))
+// note the alpha_i, which can be eliminated by ProductIR::simplify()
 class ProductBitIR {
 	public:
 		ProductBitIR (const ProductBit& rhs);
@@ -72,6 +77,9 @@ class ProductBitIR {
 		std::map<MonomialOfBits, int> data;
 };
 
+// a ProductIR is a sum of (sum_i alpha_i (product b_(j_i))) 1b-k
+// note the supplemental alpha_i's compared to Product,
+// all of those which can be eliminated by simplify()
 /* data is represented by a *little-endian* vector in the 2 following classes.
    why little ? because within simplify if we have a carry
    on the msb the vector has to grow on the msb side, which
@@ -94,6 +102,7 @@ class ProductIR {
 		int msb;
 };
 
+// a Product is a sum of (sum_i (product_j b_(j_i))) 1b-k
 class Product {
 	public:
 		Product (const ProductIR& rhs);

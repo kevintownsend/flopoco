@@ -1,4 +1,4 @@
-#include "IntTruncPower.hpp"
+#include "FormalBinaryProduct.hpp"
 #include <iostream>
 #include <map>
 
