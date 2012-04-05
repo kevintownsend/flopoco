@@ -2,6 +2,7 @@
 #include <iostream>
 #include <map>
 
+using namespace flopoco;
 using std::cout;
 using std::endl;
 

@@ -11,7 +11,7 @@
 #define DEPRECATED
 #endif
 
-//using namespace flopoco;
+namespace flopoco {
 
 /* some bit of context here:
  * there's b, a polynomial which is written b_1*1b-1 + b_2*1b-2 + ... +
@@ -41,13 +41,10 @@ class MonomialOfBits {
 			return (this->n == rhs.n) && (this->data == rhs.data);
 		}
 		bool operator< (const MonomialOfBits& rhs) const;
-		friend std::ostream& operator<<
-			(std::ostream& o, const MonomialOfBits& m);
 
 		std::vector<bool> data;
 		size_t n;
 };
-std::ostream& operator<< (std::ostream& o, const MonomialOfBits& m);
 
 class ProductBit;
 class ProductBitIR;
@@ -71,12 +68,9 @@ class ProductBitIR {
 		void addToCoeff (const MonomialOfBits& e, int coeff);
 		ProductBitIR& operator+= (const ProductBitIR& rhs);
 		ProductBitIR operator* (const ProductBitIR& rhs) const;
-		friend std::ostream& operator<<
-			(std::ostream& o, const ProductBitIR& pbi);
 
 		std::map<MonomialOfBits, int> data;
 };
-std::ostream& operator<< (std::ostream& o, const ProductBitIR& pbi);
 
 /* data is represented by a *little-endian* vector in the 2 following classes.
    why little ? because within simplify if we have a carry
@@ -95,13 +89,10 @@ class ProductIR {
 		ProductIR& operator*= (const ProductBitIR& rhs) DEPRECATED;
 		ProductIR operator* (const ProductIR& rhs) const;
 		void simplify (void);
-		friend std::ostream& operator<<
-			(std::ostream& o, const ProductIR& pi);
 
 		std::vector<ProductBitIR> data;
 		int msb;
 };
-std::ostream& operator<< (std::ostream& o, const ProductIR& pi);
 
 class Product {
 	public:
@@ -110,4 +101,10 @@ class Product {
 		std::vector<ProductBit> data;
 		int msb;
 };
+
+}
+
+std::ostream& operator<< (std::ostream& o, const flopoco::MonomialOfBits& m);
+std::ostream& operator<< (std::ostream& o, const flopoco::ProductBitIR& pbi);
+std::ostream& operator<< (std::ostream& o, const flopoco::ProductIR& pi);
 
