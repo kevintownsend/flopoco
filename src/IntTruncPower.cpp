@@ -276,31 +276,3 @@ Product::Product (const ProductIR& rhs)
 	}
 }
 
-#include <cstdlib>
-#include <iostream>
-int main ()
-{
-	MonomialOfBits m (3);
-	ProductIR a(5, 0);
-	for (int i0 = 0; i0 < 5; i0++) {
-		for (int i = 0; i < 3; i++)
-			m.data[i] = ((std::rand() & 0x1) == 0);
-		std::map<MonomialOfBits, int> map;
-		map[m] = 1;
-		ProductBitIR pbi;
-		pbi.data = map;
-		a.data[i0] = pbi;
-	}
-	//std::cout << m << std::endl << m*m << std::endl;
-	//std::cout << pbi << std::endl << pbi*pbi << std::endl;
-	std::cout << "a = " << a << std::endl;
-	std::cout << "a*a = " << a*a << std::endl;
-	ProductIR b = (a*a)*a;
-	//b.simplify();
-	std::cout << "(a*a)*a = " << b << std::endl;
-	b = a*(a*a);
-	//b.simplify();
-	std::cout << "a*(a*a) = " << b << std::endl;
-	return 0;
-}
-
