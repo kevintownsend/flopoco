@@ -1,6 +1,6 @@
 #include "FormalBinaryProduct.hpp"
 #include <iostream>
-#include <map>
+#include <gmpxx.h>
 
 using namespace flopoco;
 using std::cout;
@@ -265,6 +265,7 @@ void ProductIR::simplify (void)
 		}
 	}
 }
+// won't work well if simplify() isn't called before
 void ProductIR::divquorem (int divisor, ProductIR* quo, ProductIR* rem)
 {
 	// first gather the actually used coeffs to avoid
@@ -273,11 +274,11 @@ void ProductIR::divquorem (int divisor, ProductIR* quo, ProductIR* rem)
 	std::vector<ProductBitIR>::const_iterator i;
 	// assume coeffs are >=0
 	for (i = data.begin(); i != data.end(); i++) {
-		used_coeffs += i;
+		used_coeffs += *i;
 	}
 	// ensure right dims for quo/rem
-	*quo = ProductIR (w, msb);
-	*rem = ProductIR (w, msb);
+	*quo = ProductIR (data.size(), msb);
+	*rem = ProductIR (data.size(), msb);
 	std::map<MonomialOfBits, int>::const_iterator j;
 	for (j = used_coeffs.data.begin(); j != used_coeffs.data.end(); j++) {
 		// if the coeff is 0, don't care of the associated monomial
@@ -298,8 +299,11 @@ void ProductIR::divquorem (int divisor, ProductIR* quo, ProductIR* rem)
 		std::vector<ProductBitIR>::iterator qi = quo->data.begin(),
 		                                    ri = rem->data.begin();
 		for (; ri != rem->data.end(); qi++, ri++) {
-			qi->addToCoeff (m, quoz & 1);
-			ri->addToCoeff (m, remz & 1);
+			// ???z & 1 = 0 or 1, so get_si() is safe
+			qi->addToCoeff (m, 
+				static_cast<mpz_class>(quoz & 1).get_si());
+			ri->addToCoeff (m,
+				static_cast<mpz_class>(remz & 1).get_si());
 			quoz >>= 1; remz >>= 1;
 		}
 	}
