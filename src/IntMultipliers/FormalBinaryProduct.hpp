@@ -27,17 +27,9 @@ namespace flopoco {
 // a MonomialOfBits is a product of b_i
 class MonomialOfBits {
 	public:
-		MonomialOfBits (size_t n): data(std::vector<bool>(n)) {
-		}
-		MonomialOfBits (const MonomialOfBits& m) :n(m.n) {
-			this->data = m.data;
+		MonomialOfBits (size_t n): data(std::vector<bool>(n)), n(n) {
 		}
 		MonomialOfBits operator* (const MonomialOfBits& rhs) const;
-		MonomialOfBits& operator= (const MonomialOfBits& rhs) {
-			this->n = rhs.n;
-			this->data = rhs.data;
-			return *this;
-		}
 		bool operator== (const MonomialOfBits& rhs) const {
 			return (this->n == rhs.n) && (this->data == rhs.data);
 		}
@@ -50,11 +42,14 @@ class MonomialOfBits {
 class ProductBit;
 class ProductBitIR;
 class Product;
+class ProductIR;
+struct ProductIRQuoRem;
 // a ProductBit is for a sum_i (product_j b_(j_i)) where a mapping i->j_i
 // appears at most one time in the sum [not enforced in representation]
 class ProductBit {
 	public:
-		ProductBit (): data (std::list<MonomialOfBits>()) {
+		ProductBit ()
+			:data (std::list<MonomialOfBits>()) {
 		}
 		ProductBit (const ProductBitIR& rhs);
 
@@ -97,10 +92,16 @@ class ProductIR {
 		ProductIR& operator*= (const ProductBitIR& rhs) DEPRECATED;
 		ProductIR operator* (const ProductIR& rhs) const;
 		void simplify (void);
-		void divquorem (int divisor, ProductIR* quo, ProductIR* rem);
+		ProductIRQuoRem div (int divisor);
 
 		std::vector<ProductBitIR> data;
 		int msb;
+};
+
+// to return the result of euclidean division
+struct ProductIRQuoRem {
+	ProductIR quo;
+	ProductIR rem;
 };
 
 // a Product is a sum of (sum_i (product_j b_(j_i))) 1b-k

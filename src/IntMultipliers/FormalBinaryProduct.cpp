@@ -144,8 +144,8 @@ std::ostream& operator<< (std::ostream& o, const ProductBitIR& pbi)
 	return o;
 }
 ProductIR::ProductIR (const Product& rhs)
-	:msb(rhs.msb),
-	data(std::vector<ProductBitIR> (rhs.data.size(),ProductBitIR()))
+	:data(std::vector<ProductBitIR> (rhs.data.size(),ProductBitIR()))
+	,msb(rhs.msb)
 {
 	std::vector<ProductBit>::const_iterator i = rhs.data.begin();
 	std::vector<ProductBitIR>::iterator j = data.begin();
@@ -218,8 +218,8 @@ ProductIR ProductIR::operator* (const ProductIR& rhs) const
 {
 	size_t n = this->data.size(), m = rhs.data.size();
 	ProductIR res (n+m-1, this->msb + rhs.msb);
-	for (int i = 0; i < n; i++) {
-		for (int j = 0; j < m; j++) {
+	for (size_t i = 0; i < n; i++) {
+		for (size_t j = 0; j < m; j++) {
 			// since product has exactly the right size
 			// it doesn't matter if we make the product
 			// in counter-endian mode
@@ -266,8 +266,12 @@ void ProductIR::simplify (void)
 	}
 }
 // won't work well if simplify() isn't called before
-void ProductIR::divquorem (int divisor, ProductIR* quo, ProductIR* rem)
+// quo and/or rem can be NULL
+ProductIRQuoRem ProductIR::div (int divisor)
 {
+	// ensure right dims for quo/rem
+	ProductIRQuoRem res = {ProductIR (data.size(), msb),
+	                       ProductIR (data.size(), msb)};
 	// first gather the actually used coeffs to avoid
 	// exponential theta(2^Monomial.size) complexity
 	ProductBitIR used_coeffs;
@@ -276,9 +280,6 @@ void ProductIR::divquorem (int divisor, ProductIR* quo, ProductIR* rem)
 	for (i = data.begin(); i != data.end(); i++) {
 		used_coeffs += *i;
 	}
-	// ensure right dims for quo/rem
-	*quo = ProductIR (data.size(), msb);
-	*rem = ProductIR (data.size(), msb);
 	std::map<MonomialOfBits, int>::const_iterator j;
 	for (j = used_coeffs.data.begin(); j != used_coeffs.data.end(); j++) {
 		// if the coeff is 0, don't care of the associated monomial
@@ -287,26 +288,32 @@ void ProductIR::divquorem (int divisor, ProductIR* quo, ProductIR* rem)
 		MonomialOfBits m = j->first;
 		// make a mpz_class of coeffs of m
 		mpz_class coeffs_of_m(0);
-		for (std::vector<ProductBitIR>::const_reverse_iterator it
-			= data.rbegin(); it != data.rend(); it++) {
+		// old G++ compat: const_ needs to be removed for 3.4.6
+		std::vector<ProductBitIR>::const_reverse_iterator it;
+		for (it = data.rbegin(); it != data.rend(); it++) {
 			coeffs_of_m <<= 1;
-			coeffs_of_m += i->getTimes (m);
+			coeffs_of_m += it->getTimes (m);
 		}
 		// use gmp for the division
 		mpz_class quoz (coeffs_of_m / divisor),
 			  remz (coeffs_of_m % divisor);
 		// convert back to ProductIR
-		std::vector<ProductBitIR>::iterator qi = quo->data.begin(),
-		                                    ri = rem->data.begin();
-		for (; ri != rem->data.end(); qi++, ri++) {
+		std::vector<ProductBitIR>::iterator qi = res.quo.data.begin();
+		for (; qi != res.quo.data.end(); qi++) {
 			// ???z & 1 = 0 or 1, so get_si() is safe
 			qi->addToCoeff (m, 
 				static_cast<mpz_class>(quoz & 1).get_si());
+			quoz >>= 1;
+		}
+		std::vector<ProductBitIR>::iterator ri = res.rem.data.begin();
+		for (; ri != res.rem.data.end(); ri++) {
+			// ???z & 1 = 0 or 1, so get_si() is safe
 			ri->addToCoeff (m,
 				static_cast<mpz_class>(remz & 1).get_si());
-			quoz >>= 1; remz >>= 1;
+			remz >>= 1;
 		}
 	}
+	return res;
 }
 // must call ProductIR::simplify() on rhs before
 Product::Product (const ProductIR& rhs)
