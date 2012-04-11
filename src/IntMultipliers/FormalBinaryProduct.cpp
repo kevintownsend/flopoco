@@ -265,6 +265,45 @@ void ProductIR::simplify (void)
 		}
 	}
 }
+void ProductIR::divquorem (int divisor, ProductIR* quo, ProductIR* rem)
+{
+	// first gather the actually used coeffs to avoid
+	// exponential theta(2^Monomial.size) complexity
+	ProductBitIR used_coeffs;
+	std::vector<ProductBitIR>::const_iterator i;
+	// assume coeffs are >=0
+	for (i = data.begin(); i != data.end(); i++) {
+		used_coeffs += i;
+	}
+	// ensure right dims for quo/rem
+	*quo = ProductIR (w, msb);
+	*rem = ProductIR (w, msb);
+	std::map<MonomialOfBits, int>::const_iterator j;
+	for (j = used_coeffs.data.begin(); j != used_coeffs.data.end(); j++) {
+		// if the coeff is 0, don't care of the associated monomial
+		if (j->second == 0)
+			continue;
+		MonomialOfBits m = j->first;
+		// make a mpz_class of coeffs of m
+		mpz_class coeffs_of_m(0);
+		for (std::vector<ProductBitIR>::const_reverse_iterator it
+			= data.rbegin(); it != data.rend(); it++) {
+			coeffs_of_m <<= 1;
+			coeffs_of_m += i->getTimes (m);
+		}
+		// use gmp for the division
+		mpz_class quoz (coeffs_of_m / divisor),
+			  remz (coeffs_of_m % divisor);
+		// convert back to ProductIR
+		std::vector<ProductBitIR>::iterator qi = quo->data.begin(),
+		                                    ri = rem->data.begin();
+		for (; ri != rem->data.end(); qi++, ri++) {
+			qi->addToCoeff (m, quoz & 1);
+			ri->addToCoeff (m, remz & 1);
+			quoz >>= 1; remz >>= 1;
+		}
+	}
+}
 // must call ProductIR::simplify() on rhs before
 Product::Product (const ProductIR& rhs)
 	:data(std::vector<ProductBit>(rhs.data.size(), ProductBit()))

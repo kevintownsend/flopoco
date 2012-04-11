@@ -69,7 +69,7 @@ class ProductBitIR {
 		ProductBitIR ()
 			:data (std::map<MonomialOfBits,int>()) {
 		}
-		int getTimes (const MonomialOfBits& e) const DEPRECATED;
+		int getTimes (const MonomialOfBits& e) const;
 		void addToCoeff (const MonomialOfBits& e, int coeff);
 		ProductBitIR& operator+= (const ProductBitIR& rhs);
 		ProductBitIR operator* (const ProductBitIR& rhs) const;
@@ -97,6 +97,7 @@ class ProductIR {
 		ProductIR& operator*= (const ProductBitIR& rhs) DEPRECATED;
 		ProductIR operator* (const ProductIR& rhs) const;
 		void simplify (void);
+		void divquorem (int divisor, ProductIR* quo, ProductIR* rem);
 
 		std::vector<ProductBitIR> data;
 		int msb;
