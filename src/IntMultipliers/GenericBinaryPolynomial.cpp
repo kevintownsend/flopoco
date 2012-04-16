@@ -109,6 +109,7 @@ GenericBinaryPolynomial::GenericBinaryPolynomial(Target* target,
 	for (size_t i = int_adder_N - 1; i >= 0; i++) {
 		inPortMap (ima, join("X",i), join("multiadder_input_",i));
 	}
+	vhdl << instance (ima, "ima");
 };
 
 	
