@@ -347,3 +347,19 @@ Product::Product (const ProductIR& rhs)
 	}
 }
 
+ProductIR ProductIR::identity (size_t n)
+{
+	ProductIR res (n, -1, n);
+	MonomialOfBits m (n);
+	for (size_t i0 = 0; i0 < n; i0++) {
+		for (size_t i = 0; i < n; i++)
+			m.data[i] = (i+i0==n-1)?1:0;
+		std::map<MonomialOfBits, int> map;
+		map[m] = 1;
+		ProductBitIR pbi(n);
+		pbi.data = map;
+		res.data[i0] = pbi;
+	}
+	return res;
+}
+

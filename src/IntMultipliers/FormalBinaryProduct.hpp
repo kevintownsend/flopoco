@@ -93,6 +93,8 @@ class ProductIR {
 			,msb (msb),mon_size (mon_size) {
 		}
 		ProductIR (const Product& rhs);
+		// returns the polynomial x_0*1b-1 + x_1*1b-2 + ...
+		static ProductIR identity (size_t mon_size);
 		ProductIR& operator+= (const ProductIR& rhs) DEPRECATED;
 		ProductIR& operator>>= (int n) DEPRECATED;
 		ProductIR& operator*= (const ProductBitIR& rhs) DEPRECATED;
