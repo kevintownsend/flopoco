@@ -48,12 +48,14 @@ struct ProductIRQuoRem;
 // appears at most one time in the sum [not enforced in representation]
 class ProductBit {
 	public:
-		ProductBit ()
-			:data (std::list<MonomialOfBits>()) {
+		ProductBit (size_t mon_size)
+			:data (std::list<MonomialOfBits>())
+			,mon_size (mon_size) {
 		}
 		ProductBit (const ProductBitIR& rhs);
 
 		std::list<MonomialOfBits> data;
+		size_t mon_size;
 };
 
 // and a ProductBitIR is a sum_i (alpha_i (product_j b_(j_i)))
@@ -61,8 +63,9 @@ class ProductBit {
 class ProductBitIR {
 	public:
 		ProductBitIR (const ProductBit& rhs);
-		ProductBitIR ()
-			:data (std::map<MonomialOfBits,int>()) {
+		ProductBitIR (size_t mon_size)
+			:data (std::map<MonomialOfBits,int>())
+			,mon_size (mon_size) {
 		}
 		int getTimes (const MonomialOfBits& e) const;
 		void addToCoeff (const MonomialOfBits& e, int coeff);
@@ -70,6 +73,7 @@ class ProductBitIR {
 		ProductBitIR operator* (const ProductBitIR& rhs) const;
 
 		std::map<MonomialOfBits, int> data;
+		size_t mon_size;
 };
 
 // a ProductIR is a sum of (sum_i alpha_i (product b_(j_i))) 1b-k
@@ -82,9 +86,11 @@ class ProductBitIR {
    grow to the right (std::vector<T>::push_back but not push_front) */
 class ProductIR {
 	public:
-		ProductIR (size_t w, int msb) 
-			:data (std::vector<ProductBitIR> (w, ProductBitIR()))
-			,msb (msb) {
+		ProductIR (size_t w, int msb, size_t mon_size) 
+			:data (std::vector<ProductBitIR>
+					(w, ProductBitIR(mon_size))
+			      )
+			,msb (msb),mon_size (mon_size) {
 		}
 		ProductIR (const Product& rhs);
 		ProductIR& operator+= (const ProductIR& rhs) DEPRECATED;
@@ -96,6 +102,7 @@ class ProductIR {
 
 		std::vector<ProductBitIR> data;
 		int msb;
+		size_t mon_size;
 };
 
 // to return the result of euclidean division
@@ -111,6 +118,7 @@ class Product {
 
 		std::vector<ProductBit> data;
 		int msb;
+		size_t mon_size;
 };
 
 }

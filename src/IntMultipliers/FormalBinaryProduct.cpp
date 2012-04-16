@@ -53,6 +53,7 @@ std::ostream& operator<< (std::ostream& o, const MonomialOfBits& m)
 // the ProductBitIR must have a 0 or 1 coeff (see also the throw)
 ProductBit::ProductBit (const ProductBitIR& rhs)
 	:data (std::list<MonomialOfBits>())
+	,mon_size (rhs.mon_size)
 {
 	std::map<MonomialOfBits, int>::const_iterator it = rhs.data.begin();
 	for (; it != rhs.data.end(); it++) {
@@ -71,6 +72,7 @@ ProductBit::ProductBit (const ProductBitIR& rhs)
 
 ProductBitIR::ProductBitIR (const ProductBit& rhs)
 	:data (std::map<MonomialOfBits,int>())
+	,mon_size (rhs.mon_size)
 {
 	std::list<MonomialOfBits>::const_iterator it
 		= rhs.data.begin();
@@ -80,6 +82,8 @@ ProductBitIR::ProductBitIR (const ProductBit& rhs)
 }
 int ProductBitIR::getTimes (const MonomialOfBits& e) const
 {
+	if (e.n != mon_size)
+		throw "Wrong monomial size (ProductBitIR::addToCoeff)\n";
 	std::map<MonomialOfBits, int>::const_iterator it
 		= data.find (e);
 	if (it == data.end()) {
@@ -89,6 +93,8 @@ int ProductBitIR::getTimes (const MonomialOfBits& e) const
 }
 void ProductBitIR::addToCoeff (const MonomialOfBits& e, int coeff)
 {
+	if (e.n != mon_size)
+		throw "Wrong monomial size (ProductBitIR::addToCoeff)\n";
 	std::map<MonomialOfBits, int>::iterator it = data.find (e);
 	if (it == data.end()) {
 		data[e] = coeff;
@@ -107,7 +113,9 @@ ProductBitIR& ProductBitIR::operator+= (const ProductBitIR& rhs)
 }
 ProductBitIR ProductBitIR::operator* (const ProductBitIR& rhs) const
 {
-	ProductBitIR res;
+	if (this->mon_size != rhs.mon_size)
+		throw "operands mon_size don't match (ProductBitIR::operator*)\n";
+	ProductBitIR res (this->mon_size);
 	std::map<MonomialOfBits, int>::const_iterator i
 		= this->data.begin();
 	std::map<MonomialOfBits, int>::const_iterator j;
@@ -144,8 +152,11 @@ std::ostream& operator<< (std::ostream& o, const ProductBitIR& pbi)
 	return o;
 }
 ProductIR::ProductIR (const Product& rhs)
-	:data(std::vector<ProductBitIR> (rhs.data.size(),ProductBitIR()))
+	:data(std::vector<ProductBitIR>
+			(rhs.data.size(),ProductBitIR(rhs.mon_size))
+	     )
 	,msb(rhs.msb)
+	,mon_size (rhs.mon_size)
 {
 	std::vector<ProductBit>::const_iterator i = rhs.data.begin();
 	std::vector<ProductBitIR>::iterator j = data.begin();
@@ -160,6 +171,8 @@ ProductIR& ProductIR::operator+= (const ProductIR& rhs)
 		throw "msb mismatch (ProductIR::operator+=)";
 	if (this->msb - this->data.size() > rhs.msb - rhs.data.size())
 		throw "lsb mismatch (ProductIR::operator+=)";
+	if (this->mon_size != rhs.mon_size)
+		throw "mon_size mismatch (ProductIR::operator+=)";
 	// we use reverse iterators because we know MSBs more readily
 	// than LSBs
 	std::vector<ProductBitIR>::const_reverse_iterator j
@@ -186,12 +199,14 @@ ProductIR& ProductIR::operator>>= (int n)
 		*i = *j;
 	}
 	for (; i != this->data.end(); i++) {
-		*i = ProductBitIR();
+		*i = ProductBitIR(this->mon_size);
 	}
 	return *this;
 }
 ProductIR& ProductIR::operator*= (const ProductBitIR& rhs)
 {
+	if (this->mon_size != rhs.mon_size)
+		throw "mon_size mismatch (ProductIR::operator*=)";
 	std::vector<ProductBitIR>::iterator i = this->data.begin();
 	for (; i != this->data.end(); i++) {
 		//no ProductBitIR::operator*=
@@ -216,8 +231,10 @@ std::ostream& operator<< (std::ostream& o, const ProductIR& pi)
 }
 ProductIR ProductIR::operator* (const ProductIR& rhs) const
 {
+	if (this->mon_size != rhs.mon_size)
+		throw "mon_size mismatch (ProductIR::operator*)";
 	size_t n = this->data.size(), m = rhs.data.size();
-	ProductIR res (n+m-1, this->msb + rhs.msb);
+	ProductIR res (n+m-1, this->msb + rhs.msb, this->mon_size);
 	for (size_t i = 0; i < n; i++) {
 		for (size_t j = 0; j < m; j++) {
 			// since product has exactly the right size
@@ -246,7 +263,7 @@ void ProductIR::simplify (void)
 				i_tmp = i+1;
 				if (i_tmp == data.end()) {
 					msb++;
-					data.push_back (ProductBitIR());
+					data.push_back (ProductBitIR(mon_size));
 					// now i and i_tmp are both invalid
 					// so regenerate them
 					i_tmp = data.end() - 1;
@@ -270,11 +287,11 @@ void ProductIR::simplify (void)
 ProductIRQuoRem ProductIR::div (int divisor)
 {
 	// ensure right dims for quo/rem
-	ProductIRQuoRem res = {ProductIR (data.size(), msb),
-	                       ProductIR (data.size(), msb)};
+	ProductIRQuoRem res = {ProductIR (data.size(), msb, mon_size),
+	                       ProductIR (data.size(), msb, mon_size)};
 	// first gather the actually used coeffs to avoid
 	// exponential theta(2^Monomial.size) complexity
-	ProductBitIR used_coeffs;
+	ProductBitIR used_coeffs (mon_size);
 	std::vector<ProductBitIR>::const_iterator i;
 	// assume coeffs are >=0
 	for (i = data.begin(); i != data.end(); i++) {
@@ -317,8 +334,11 @@ ProductIRQuoRem ProductIR::div (int divisor)
 }
 // must call ProductIR::simplify() on rhs before
 Product::Product (const ProductIR& rhs)
-	:data(std::vector<ProductBit>(rhs.data.size(), ProductBit()))
-	 ,msb (rhs.msb)
+	:data(std::vector<ProductBit>
+			(rhs.data.size(), ProductBit(rhs.mon_size))
+	     )
+	,msb (rhs.msb)
+	,mon_size (rhs.mon_size)
 {
 	std::vector<ProductBitIR>::const_iterator i = rhs.data.begin();
 	std::vector<ProductBit>::iterator j = data.begin();
