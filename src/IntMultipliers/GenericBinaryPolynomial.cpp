@@ -8,7 +8,7 @@
 
 #include "GenericBinaryPolynomial.hpp"
 #include "FormalBinaryProduct.hpp"
-#include "IntCompressorTree.hpp"
+#include "IntMultiAdder.hpp"
 
 //std::string GenericBinaryPolynomial::operatorInfo = "UserDefinedInfo param0 param1 <options>";
 

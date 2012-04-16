@@ -4,6 +4,7 @@
 #include <list>
 #include <map>
 #include <iostream>
+#include <stddef.h>
 
 #if defined (__GNUC__) && (__GNUC_MAJOR__ > 3 || (__GNUC_MAJOR__ == 3 && __GNUC_MINOR__ >= 1))
 #define DEPRECATED __attribute__((deprecated))
@@ -99,6 +100,7 @@ class ProductIR {
 		ProductIR& operator>>= (int n) DEPRECATED;
 		ProductIR& operator*= (const ProductBitIR& rhs) DEPRECATED;
 		ProductIR operator* (const ProductIR& rhs) const;
+		ProductIR toPow (size_t n);
 		void simplify (void);
 		ProductIRQuoRem div (int divisor);
 

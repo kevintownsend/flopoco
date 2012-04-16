@@ -245,6 +245,16 @@ ProductIR ProductIR::operator* (const ProductIR& rhs) const
 	}
 	return res;
 }
+ProductIR ProductIR::toPow (size_t n)
+{
+	if (n <= 0)
+		throw "wrong argument (ProductIR::toPow)";
+	ProductIR res = *this;;
+	for (int i = 0; i < n-1; i++) {
+		res = res * *this;
+	}
+	return res;
+}
 void ProductIR::simplify (void)
 {
 	// we begin by lsb: non-rev iterator

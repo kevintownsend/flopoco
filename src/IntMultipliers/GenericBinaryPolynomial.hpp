@@ -1,5 +1,6 @@
 #include "Operator.hpp"
 #include "utils.hpp"
+#include "IntMultiAdder.hpp"
 
 namespace flopoco {
 
