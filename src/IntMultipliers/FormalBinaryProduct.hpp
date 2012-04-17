@@ -1,3 +1,6 @@
+#ifndef _FORMAL_BINARY_PRODUCT
+#define _FORMAL_BINARY_PRODUCT
+
 //#include "Operator.hpp"
 //#include "utils.hpp"
 #include <vector>
@@ -130,4 +133,6 @@ class Product {
 std::ostream& operator<< (std::ostream& o, const flopoco::MonomialOfBits& m);
 std::ostream& operator<< (std::ostream& o, const flopoco::ProductBitIR& pbi);
 std::ostream& operator<< (std::ostream& o, const flopoco::ProductIR& pi);
+
+#endif //include guard
 

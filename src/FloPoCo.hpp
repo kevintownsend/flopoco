@@ -62,6 +62,8 @@
 #include "IntMultipliers/IntTruncMultiplier.hpp"
 #include "IntMultipliers/IntKaratsuba.hpp"
 #include "IntSquarer.hpp"
+#include "IntMultipliers/GenericBinaryPolynomial.hpp"
+#include "IntMultipliers/IntPower.hpp"
 
 #include "ConstMult/IntConstMult.hpp"
 #include "ConstMult/FPConstMult.hpp"

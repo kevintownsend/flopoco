@@ -7,7 +7,6 @@
 #include "mpfr.h"
 
 #include "GenericBinaryPolynomial.hpp"
-#include "FormalBinaryProduct.hpp"
 #include "IntMultiAdder.hpp"
 
 //std::string GenericBinaryPolynomial::operatorInfo = "UserDefinedInfo param0 param1 <options>";
@@ -15,7 +14,7 @@
 using namespace flopoco;
 
 static void print_vhdl_string_of_monomial_option
-	(const Option<MonomialOfBits>& o)
+	(FlopocoStream& vhdl, const Option<MonomialOfBits>& o)
 {
 	if (o.is_empty()) {
 		vhdl << "0";
@@ -70,11 +69,11 @@ GenericBinaryPolynomial::GenericBinaryPolynomial(Target* target,
 		it = p.data.begin(); vit = v.begin();
 		// v and p.data have same size
 		for (; it != p.data.end(); it++,vit++) {
-			if (it->empty()) {
-				*vit = Option();
+			if (it->data.empty()) {
+				*vit = Option<MonomialOfBits>();
 			} else {
-				*vit = Option<MonomialOfBits>(it->front());
-				it->pop_front();
+				*vit = Option<MonomialOfBits>(it->data.front());
+				it->data.pop_front();
 				exit_the_loop = false;
 			}
 		}
@@ -96,7 +95,7 @@ GenericBinaryPolynomial::GenericBinaryPolynomial(Target* target,
 		for (vit = pspit->begin(); vit != pspit->end(); vit++) {
 			if (cont)
 				vhdl << " & ";
-			print_vhdl_string_of_monomial_option (*vit);
+			print_vhdl_string_of_monomial_option (vhdl, *vit);
 		}
 		vhdl << ";\n";
 		// at the end of the loop int_adder_N will contain
@@ -104,7 +103,7 @@ GenericBinaryPolynomial::GenericBinaryPolynomial(Target* target,
 		int_adder_N++;
 	}
 	ima = new IntMultiAdder (target, p.data.size(), int_adder_N,
-	                         emptyDelays, false);
+	                         inputDelays, false);
 	outPortMap (ima, "R", "R");
 	for (size_t i = int_adder_N - 1; i >= 0; i++) {
 		inPortMap (ima, join("X",i), join("multiadder_input_",i));

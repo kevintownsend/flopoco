@@ -172,6 +172,10 @@ static void usage(char *name, string opName = ""){
 		OP ("IntSquarer","wIn");
 		cerr << "      integer squarer. For now wIn <=68 \n";		
 	}
+	if ( full || opName == "IntMultiplier" || opName == "IntPower"){
+		OP ("IntPower","wIn n");
+		cerr << "      Integer power of n, unsigned, with precision wIn (NPY) (not functional yet)\n";
+	}
 	if ( full || opName == "IntMultiplier" || opName == "IntConstMult"){				
 		OP( "IntConstMult","w c");
 		cerr << "      Integer constant multiplier using shift-and-add: w - input size, c - the constant\n";
@@ -2021,6 +2025,16 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				usage(argv[0],opname); // and exit
 			int wIn = checkStrictlyPositive(argv[i++], argv[0]);
 			op = new IntSquarer(target, wIn);
+			addOperator(oplist, op);
+		}
+		else if (opname == "IntPower")
+		{
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0],opname); // and exit
+			int wIn = checkStrictlyPositive(argv[i++], argv[0]);
+			int n = checkStrictlyPositive(argv[i++], argv[0]);
+			op = new IntPower(target, wIn, n);
 			addOperator(oplist, op);
 		}
 #ifndef _WIN32

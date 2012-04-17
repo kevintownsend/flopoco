@@ -6,7 +6,7 @@ namespace flopoco {
 
 class IntPower : public GenericBinaryPolynomial {
   public:
-    IntPower(Target* target, size_t wIn, size_t n, std::map<string,double> inputDelays = emptyMap);
+    IntPower(Target* target, size_t wIn, size_t n, std::map<string,double> inputDelays = emptyDelayMap);
 
     ~IntPower() {};
 

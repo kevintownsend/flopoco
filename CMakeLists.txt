@@ -202,6 +202,9 @@ ADD_LIBRARY(FloPoCo STATIC
  src/IntMultipliers/IntTruncMultiplier
  src/IntMultipliers/IntKaratsuba
  src/IntSquarer
+ src/IntMultipliers/FormalBinaryProduct
+ src/IntMultipliers/GenericBinaryPolynomial
+ src/IntMultipliers/IntPower
 
 # Shifters/LZOC related ---------------------------------------------
 #--------------------------------------------------------------------

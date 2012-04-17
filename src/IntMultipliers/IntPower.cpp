@@ -12,7 +12,7 @@
 using namespace flopoco;
 
 IntPower::IntPower(Target* target,
-                   size_t wIn, size_t n
+                   size_t wIn, size_t n,
 		   std::map<std::string,double> inputDelays)
 	:GenericBinaryPolynomial(target,
 			ProductIR::identity(wIn).toPow(n),
