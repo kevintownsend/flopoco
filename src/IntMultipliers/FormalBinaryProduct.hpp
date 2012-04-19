@@ -104,7 +104,7 @@ class ProductIR {
 		ProductIR& operator*= (const ProductBitIR& rhs) DEPRECATED;
 		ProductIR operator* (const ProductIR& rhs) const;
 		ProductIR toPow (size_t n);
-		void simplify (void);
+		ProductIR& simplifyInPlace (void); //returns *this
 		ProductIRQuoRem div (int divisor);
 
 		std::vector<ProductBitIR> data;

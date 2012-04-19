@@ -15,12 +15,17 @@ IntPower::IntPower(Target* target,
                    size_t wIn, size_t n,
 		   std::map<std::string,double> inputDelays)
 	:GenericBinaryPolynomial(target,
-			ProductIR::identity(wIn).toPow(n),
-			inputDelays) {
+			ProductIR::identity(wIn).toPow(n).simplifyInPlace(),
+			inputDelays), wIn(wIn), n(n) {
 };
 
 	
 void IntPower::emulate(TestCase * tc) {
+	mpz_class x = tc->getInputValue ("X"), res;
+	for (size_t i = 0; i < n; i++) {
+		res *= x;
+	}
+	tc->addExpectedOutput ("R", res);
 }
 
 void IntPower::buildStandardTestCases(TestCaseList * tcl) {

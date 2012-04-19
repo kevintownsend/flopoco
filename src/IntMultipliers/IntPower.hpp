@@ -15,6 +15,7 @@ class IntPower : public GenericBinaryPolynomial {
     void buildRandomTestCases(TestCaseList* tcl, int n);
     TestCase* buildRandomTestCases(int i);
   protected:
+    size_t wIn, n;
 };
 
 }

@@ -255,7 +255,7 @@ ProductIR ProductIR::toPow (size_t n)
 	}
 	return res;
 }
-void ProductIR::simplify (void)
+ProductIR& ProductIR::simplifyInPlace (void)
 {
 	// we begin by lsb: non-rev iterator
 	std::vector<ProductBitIR>::iterator i = data.begin(), i_tmp;
@@ -291,6 +291,7 @@ void ProductIR::simplify (void)
 			}
 		}
 	}
+	return *this;
 }
 // won't work well if simplify() isn't called before
 // quo and/or rem can be NULL

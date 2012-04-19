@@ -17,7 +17,7 @@ static void print_vhdl_string_of_monomial_option
 	(FlopocoStream& vhdl, const Option<MonomialOfBits>& o)
 {
 	if (o.is_empty()) {
-		vhdl << "0";
+		vhdl << "'0'";
 		return;
 	}
 	MonomialOfBits m = o.get_value();
@@ -32,7 +32,7 @@ static void print_vhdl_string_of_monomial_option
 		}
 	}
 	if (!cont)
-		vhdl << "1";
+		vhdl << "'1'";
 }
 
 GenericBinaryPolynomial::GenericBinaryPolynomial(Target* target,
@@ -42,7 +42,7 @@ GenericBinaryPolynomial::GenericBinaryPolynomial(Target* target,
 	:Operator(target,inputDelays), p(p) {
 
 	// don't support zero-sized p
-	if (p.data.size())
+	if (p.data.size() == 0)
 		throw "Zero-size p not supported";
 
 	ostringstream name;
@@ -95,7 +95,10 @@ GenericBinaryPolynomial::GenericBinaryPolynomial(Target* target,
 		for (vit = pspit->begin(); vit != pspit->end(); vit++) {
 			if (cont)
 				vhdl << " & ";
+			vhdl << " ( ";
 			print_vhdl_string_of_monomial_option (vhdl, *vit);
+			vhdl << " ) ";
+			cont = true;
 		}
 		vhdl << ";\n";
 		// at the end of the loop int_adder_N will contain
@@ -104,11 +107,13 @@ GenericBinaryPolynomial::GenericBinaryPolynomial(Target* target,
 	}
 	ima = new IntMultiAdder (target, p.data.size(), int_adder_N,
 	                         inputDelays, false);
-	outPortMap (ima, "R", "R");
-	for (size_t i = int_adder_N - 1; i >= 0; i++) {
+	oplist.push_back (ima);
+	outPortMap (ima, "R", "R_ima");
+	for (int i = int_adder_N - 1; i >= 0; i--) {
 		inPortMap (ima, join("X",i), join("multiadder_input_",i));
 	}
 	vhdl << instance (ima, "ima");
+	vhdl << "R <= R_ima;" << endl; //can't do directly outPortMap(ima,R,R)
 };
 
 	
