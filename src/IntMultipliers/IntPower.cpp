@@ -21,10 +21,11 @@ IntPower::IntPower(Target* target,
 
 	
 void IntPower::emulate(TestCase * tc) {
-	mpz_class x = tc->getInputValue ("X"), res;
+	mpz_class x = tc->getInputValue ("X"), res(1);
 	for (size_t i = 0; i < n; i++) {
 		res *= x;
 	}
+	res &= ((mpz_class(1) << p.data.size()) - 1);
 	tc->addExpectedOutput ("R", res);
 }
 

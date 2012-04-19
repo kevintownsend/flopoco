@@ -174,7 +174,7 @@ static void usage(char *name, string opName = ""){
 	}
 	if ( full || opName == "IntMultiplier" || opName == "IntPower"){
 		OP ("IntPower","wIn n");
-		cerr << "      Integer power of n, unsigned, with precision wIn (NPY) (not functional yet)\n";
+		cerr << "      Integer power of n, unsigned, with precision wIn (NPY)\n";
 	}
 	if ( full || opName == "IntMultiplier" || opName == "IntConstMult"){				
 		OP( "IntConstMult","w c");

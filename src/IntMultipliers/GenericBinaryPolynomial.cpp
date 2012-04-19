@@ -27,7 +27,8 @@ static void print_vhdl_string_of_monomial_option
 		if (m.data[i]) {
 			if (cont)
 				vhdl << " and ";
-			vhdl << "X" << of (i);
+			vhdl << "X" << of (m.data.size() - 1 - i);
+			// because x_0 is the msb in ProductIR::identity(n)
 			cont = true;
 		}
 	}
@@ -59,6 +60,7 @@ GenericBinaryPolynomial::GenericBinaryPolynomial(Target* target,
 	// TODO: intelligently sort the list, if necessary
 	// (FormalBinaryProduct already implicitly doing sort)
 	Product p_copy(p);
+	// TODO: declare p as const / use p_copy after this line
 	std::list<std::vector<Option<MonomialOfBits> > > p_split;
 	for (;;) {
 		bool exit_the_loop = true;
@@ -91,8 +93,11 @@ GenericBinaryPolynomial::GenericBinaryPolynomial(Target* target,
 				p.data.size())
 		     << " <= ";
 		bool cont = false;
-		std::vector<Option<MonomialOfBits> >::const_iterator vit;
-		for (vit = pspit->begin(); vit != pspit->end(); vit++) {
+		// const_reverse_iterator incompatible with G++ 3.4
+		// the vector is iterated in reverse order since
+		// ProductIR is little-endian and FloPoCo is big-endian
+		std::vector<Option<MonomialOfBits> >::const_reverse_iterator vit;
+		for (vit = pspit->rbegin(); vit != pspit->rend(); vit++) {
 			if (cont)
 				vhdl << " & ";
 			vhdl << " ( ";
