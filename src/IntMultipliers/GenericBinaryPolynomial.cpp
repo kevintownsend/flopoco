@@ -110,6 +110,8 @@ GenericBinaryPolynomial::GenericBinaryPolynomial(Target* target,
 		// the length of the list
 		int_adder_N++;
 	}
+	// after having calculated the inputs, add them
+	nextCycle();
 	ima = new IntMultiAdder (target, p.data.size(), int_adder_N,
 	                         inputDelays, false);
 	oplist.push_back (ima);
@@ -118,6 +120,8 @@ GenericBinaryPolynomial::GenericBinaryPolynomial(Target* target,
 		inPortMap (ima, join("X",i), join("multiadder_input_",i));
 	}
 	vhdl << instance (ima, "ima");
+	syncCycleFromSignal ("R_ima");
+	nextCycle();
 	vhdl << "R <= R_ima;" << endl; //can't do directly outPortMap(ima,R,R)
 };
 
