@@ -1401,6 +1401,523 @@ namespace flopoco{
 	}
 	
 	
+	/////////////////////////////////////////////////////////////////////////////////////////////////
+	////////////Functions used for resource estimations
+	
+	//--Logging functions
+	//---General resources
+	void Operator::initResourceEstimation(){
+		
+		resourceEstimate << "";
+		resourceEstimateReport << "";
+		
+		estimatedCountFF = 0;
+		estimatedCountLUT = 0;
+		estimatedCountMultiplier = 0;
+		estimatedCountMemory = 0;
+		
+		estimatedCountDSP = 0;
+		estimatedCountRAM = 0;
+		estimatedCountROM = 0;
+		estimatedCountSRL = 0;
+		estimatedCountWire = 0;
+		estimatedCountIOB = 0;
+		
+		estimatedCountMux = 0;
+		estimatedCountCounter = 0;
+		estimatedCountAccumulator = 0;
+		estimatedCountDecoder = 0;
+		estimatedCountArithOp = 0;
+		estimatedCountFSM = 0;
+	}
+	
+	std::string Operator::addFF(int count){
+		std::ostringstream output;
+		
+		estimatedCountFF += count;
+		
+		(count>0)? output << "FF count increased by " << count : output << "FF count decreased by " << count;
+		output << endl;
+		return output.str();
+	}
+	
+	//TODO: should also count the different types of registers that are 
+	//		being added
+	std::string Operator::addReg(int count, int width){
+		std::ostringstream output;
+		int increment = count*width;
+		
+		estimatedCountFF += increment;
+		
+		(count>0)? output << "FF count increased by " << increment : output << "FF count decreased by " << increment;
+		output << endl;
+		return output.str();
+	}
+	
+	//TODO: should also count LUTs based on their type, for more accurate 
+	//		resource estimations
+	std::string Operator::addLUT(int count, int type){			
+		std::ostringstream output;								 
+		int targetLUTType, increment;										
+		
+		(type == 0) ? targetLUTType =  target->suggestLUTType() : targetLUTType = type;
+		increment = target->suggestLUTCount(count, targetLUTType);
+		
+		estimatedCountLUT += increment;
+		
+		(increment>0)? output << "LUT count increased by " << increment : output << "LUT count decreased by " << increment;
+		output << endl;
+		return output.str();
+	}
+	
+	//TODO: verify increase in the DSP count
+	std::string Operator::addMultiplier(int count){
+		std::ostringstream output;
+		int increment;
+		
+		estimatedCountMultiplier += count;
+		increment = target->suggestDSPfromMultiplier(count);
+		estimatedCountDSP += increment;
+		
+		(count>0)? output << "Multiplier count increased by " << count : output << "Multiplier count decreased by " << count;
+		output << endl;
+		(increment>0)? output << "DSP count increased by " << increment : output << "DSP count decreased by " << increment;
+		output << endl;
+		return output.str();
+	}
+	
+	//TODO: verify increase the DSP count 
+	std::string Operator::addMultiplier(int count, int widthX, int widthY, double ratio){
+		std::ostringstream output;
+		int increment, increment2;
+		
+		increment = ceil(ratio * target->suggestMultiplierCount(count, widthX, widthY));
+		estimatedCountMultiplier += increment;
+		increment2 = target->suggestDSPfromMultiplier(count);
+		estimatedCountDSP += increment2;
+		
+		(increment>0)? output << "Multiplier count increased by " << increment : output << "Multiplier count decreased by " << increment;
+		output << endl;
+		(increment2>0)? output << "DSP count increased by " << increment2 : output << "DSP count decreased by " << increment2;
+		output << endl;
+		return output.str();
+	}
+	
+	std::string Operator::addMemory(int count){
+		std::ostringstream output;
+		int increment;
+		
+		increment = target->suggestMemoryCount(count);		//get estimates using the default values for the target technology
+		estimatedCountMemory += increment;
+		estimatedCountRAM += increment;
+		
+		(increment>0)? output << "Memory elements count increased by " << increment << " . RAM memory was targeted" : output << "Memory elements count decreased by " << increment << " . RAM memory was targeted";
+		output << endl;
+		(increment>0)? output << "RAM count increased by " << increment : output << "RAM count decreased by " << increment;
+		output << endl;
+		return output.str();
+	}
+	
+	std::string Operator::addMemory(int count, int size, int width, int type){
+		std::ostringstream output;
+		int increment;
+		
+		increment = target->suggestMemoryCount(count, size, width, type);		//get estimates using the custom values for the target technology
+		estimatedCountMemory += increment;
+		(type) ? estimatedCountROM += increment : estimatedCountRAM += increment;
+		
+		(increment>0)? output << "Memory elements count increased by " << increment : output << "Memory elements count decreased by " << increment;
+		(type) ? " ROM memory was targeted" : " RAM memory was targeted";
+		(type) ? (increment>0)? output << "ROM count increased by " << increment : output << "ROM count decreased by " << increment
+			   : (increment>0)? output << "RAM count increased by " << increment : output << "RAM count decreased by " << increment;
+		output << endl;
+		return output.str();
+	}
+	
+	//---More particular resource logging
+	std::string Operator::addDSP(int count){
+		std::ostringstream output;
+		
+		estimatedCountDSP += count;
+		
+		(count>0)? output << "DSP count increased by " << count : output << "DSP count decreased by " << count;
+		output << endl;
+		return output.str();
+	}
+	
+	std::string Operator::addRAM(int count){
+		std::ostringstream output;
+		
+		estimatedCountRAM += count;
+		
+		(count>0)? output << "RAM count increased by " << count : output << "RAM count decreased by " << count;
+		output << endl;
+		return output.str();
+	}
+	
+	std::string Operator::addROM(int count){
+		std::ostringstream output;
+		
+		estimatedCountROM += count;
+		
+		(count>0)? output << "ROM count increased by " << count : output << "ROM count decreased by " << count;
+		output << endl;
+		return output.str();
+	}
+	
+	//TODO: should count the shift registers according to their bitwidths
+	std::string Operator::addSRL(int count){
+		std::ostringstream output;
+		int increment, increment2;
+		
+		estimatedCountSRL += count;
+		increment = target->suggestLUTfromSRL(count, width);
+		estimatedCountLUT += increment;
+		increment2 = target->suggestFFfromSRL(count, width);
+		estimatedCountFF += increment2;
+		
+		(count>0)? output << "SRL count increased by " << count : output << "SRL count decreased by " << count;
+		output << endl;
+		(increment>0)? output << "LUT count increased by " << increment : output << "LUT count decreased by " << increment;
+		output << endl;
+		(increment2>0)? output << "FF count increased by " << increment2 : output << "FF count decreased by " << increment2;
+		output << endl;
+		return output.str();
+	}
+	
+	//TODO: should count the shift registers according to their bitwidths
+	std::string Operator::addSRL(int count, int width){
+		std::ostringstream output;
+		int increment, increment2, increment3;
+		
+		increment = target->suggestSRLCount(count, width);
+		estimatedCountSRL += increment;
+		increment2 = target->suggestLUTfromSRL(count, width);
+		estimatedCountLUT += increment;
+		increment3 = target->suggestFFfromSRL(count, width);
+		estimatedCountFF += increment2;
+		
+		(increment>0)? output << "SRL count increased by " << increment : output << "SRL count decreased by " << increment;
+		output << endl;
+		(increment2>0)? output << "LUT count increased by " << increment2 : output << "LUT count decreased by " << increment2;
+		output << endl;
+		(increment3>0)? output << "FF count increased by " << increment3 : output << "FF count decreased by " << increment3;
+		output << endl;
+		return output.str();
+	}
+	
+	std::string Operator::addWire(int count, std::string signalName){
+		std::ostringstream output;
+		int increment;
+		
+		if(signalName.empty())
+			increment = count;
+		else{
+			Signal* s = signalMap_[signalName];
+			
+			increment = s->width();
+			estimatedSignalNames.push_back(signalName);
+		}
+		estimatedCountWire += increment;
+		
+		(increment>0)? output << "Wire count increased by " << increment : output << "Wire count decreased by " << increment;
+		output  << endl;
+		return output.str();
+	}
+	
+	std::string Operator::addIOB(int count, std::string){
+		std::ostringstream output;
+		int increment;
+		
+		if(portName.empty())
+			increment = count;
+		else{
+			Signal* s = portMap_[signalName];
+			
+			increment = s->width();
+			estimatedPortNames.push_back(signalName);
+		}
+		estimatedCountIOB += increment;
+		
+		(increment>0)? output << "IOB count increased by " << increment : output << "IOB count decreased by " << increment;
+		output << endl;
+		return output.str();
+	}
+	
+	//---Even more particular resource logging
+	std::string Operator::addMux(int count, int nrInputs, int width){
+		std::ostringstream output;
+		int increment, increment2;
+		
+		increment = target->suggestMuxCount(count, nrInputs, width);
+		estimatedCountMux += increment;
+		increment2 = target->suggestLUTfromMUX(increment, nrInputs, width);
+		estimatedCountLUT += increment2;
+		
+		(increment>0)? output << "MUX count increased by " << increment : output << "MUX count decreased by " << increment;
+		output << endl;
+		(increment>0)? output << "LUT count increased by " << increment2 : output << "LUT count decreased by " << increment2;
+		output << endl;
+		return output.str();
+	}
+	
+	//TODO: count the counters according to their bitwidth
+	std::string Operator::addCounter(int count, int width){
+		std::ostringstream output;
+		int increment, increment2;
+		
+		estimatedCountCounter += count;
+		increment = target->suggestLUTfromCounter(count, width);
+		estimatedCountLUT += increment;
+		increment2 = target->suggestFFfromCounter(count, width);
+		estimatedCountFF += increment2;
+		
+		(count>0)? output << "Counter count increased by " << count : output << "Counter count decreased by " << count;
+		output << endl;
+		(increment>0)? output << "LUT count increased by " << increment : output << "LUT count decreased by " << increment;
+		output << endl;
+		(increment2>0)? output << "FF count increased by " << increment2 : output << "FF count decreased by " << increment2;
+		output << endl;
+		return output.str();
+	}
+	
+	//TODO: count the accumulators according to their bitwidth
+	std::string Operator::addAccumulator(int count, int width){
+		std::ostringstream output;
+		int increment, increment2, increment3;
+		
+		estimatedCountAccumulator += count;
+		increment = target->suggestLUTfromAccumulator(count, width);
+		estimatedCountLUT += increment;
+		increment2 = target->suggestFFfromAccumulator(count, width);
+		estimatedCountFF += increment2;
+		increment3 = target->suggestDSPfromAccumulator(count, width);
+		estimatedCountDSP += increment3;
+		
+		(count>0)? output << "Accumulator count increased by " << count : output << "Accumulator count decreased by " << count;
+		output << endl;
+		(increment>0)? output << "LUT count increased by " << increment : output << "LUT count decreased by " << increment;
+		output << endl;
+		(increment2>0)? output << "FF count increased by " << increment2 : output << "FF count decreased by " << increment2;
+		output << endl;
+		(increment3>0)? output << "DSP count increased by " << increment3 : output << "DSP count decreased by " << increment3;
+		output << endl;
+		return output.str();
+	}
+	
+	//TODO: count the decoders according to their input and output 
+	//		bitwidths
+	std::string Operator::addDecoder(int count){
+		std::ostringstream output;
+		int increment, increment2, increment3;
+		
+		estimatedCountDecoder += count;
+		increment = target->suggestLUTfromAccumulator(count, width);
+		estimatedCountLUT += increment;
+		increment2 = target->suggestFFfromAccumulator(count, width);
+		estimatedCountFF += increment2;
+		increment3 = target->suggestRAMfromAccumulator(count, width);
+		estimatedCountRAM += increment3;
+		
+		(count>0)? output << "Decoder count increased by " << count : output << "Decoder count decreased by " << count;
+		output << endl;
+		(increment>0)? output << "LUT count increased by " << increment : output << "LUT count decreased by " << increment;
+		output << endl;
+		(increment2>0)? output << "FF count increased by " << increment2 : output << "FF count decreased by " << increment2;
+		output << endl;
+		(increment3>0)? output << "RAM count increased by " << increment3 : output << "RAM count decreased by " << increment3;
+		output << endl;
+		return output.str();
+	}
+	
+	std::string Operator::addArithOp(int count, int nrInputs, int width){
+		std::ostringstream output;
+		int increment, increment2, increment3;
+		
+		estimatedCountArithOp += count;
+		increment = target->suggestLUTfromArithmeticOperator(count, nrInputs, width);
+		estimatedCountLUT += increment;
+		increment2 = target->suggestFFfromArithmeticOperator(count, width);
+		estimatedCountFF += increment2;
+		increment3 = target->suggestRAMfromArithmeticOperator(count, width);
+		estimatedCountRAM += increment3;
+		
+		(count>0)? output << "Arithmetic Operator count increased by " << count : output << "Arithmetic Operator count decreased by " << count;
+		output << endl;
+		(increment>0)? output << "LUT count increased by " << increment : output << "LUT count decreased by " << increment;
+		output << endl;
+		(increment2>0)? output << "FF count increased by " << increment2 : output << "FF count decreased by " << increment2;
+		output << endl;
+		(increment3>0)? output << "ROM count increased by " << increment3 : output << "ROM count decreased by " << increment3;
+		output << endl;
+		return output.str();
+	}
+	
+	std::string Operator::addFSM(int count, int nrStates, int nrTransitions){
+		std::ostringstream output;
+		int increment, increment2, increment3;
+		
+		estimatedCountFSM += count;
+		increment = target->suggestLUTfromFSM(count, nrStates, nrTransitions);
+		estimatedCountLUT += increment;
+		increment2 = target->suggestFFfromFSM(count, nrStates, nrTransitions);
+		estimatedCountFF += increment2;
+		increment3 = target->suggestROMfromFSM(count, nrStates, nrTransitions);
+		estimatedCountROM += increment3;
+		
+		(count>0)? output << "FSM count increased by " << count : output << "FSM count decreased by " << count;
+		output << endl;
+		(increment>0)? output << "LUT count increased by " << increment : output << "LUT count decreased by " << increment;
+		output << endl;
+		(increment2>0)? output << "FF count increased by " << increment2 : output << "FF count decreased by " << increment2;
+		output << endl;
+		(increment3>0)? output << "ROM count increased by " << increment3 : output << "ROM count decreased by " << increment3;
+		output << endl;
+		return output.str();
+	}
+	
+	//--Resource usage statistics
+	std::string Operator::generateStatistics(int detailLevel){
+		
+		
+		resourceEstimateReport << "=========================================================================" << endl;
+		resourceEstimateReport << "*                     Resource Estimation Report                        *" << endl;
+		resourceEstimateReport << "=========================================================================" << endl;
+		
+		resourceEstimateReport << endl;
+		resourceEstimateReport << "Top level entity	name				: " << this->getName() << endl;
+		resourceEstimateReport << "Top level entity is pipelined		: " << (target->isPipelined()) ? "True" : "False" << endl;
+		resourceEstimateReport << "Top level entity target frequency	: " << (target->isPipelined()) ? target->frequencyMHz : "N/A" << endl;
+		resourceEstimateReport << "Top level entity uses DSP blocks		: " << (target->getUseHardMultiplier()) ? "True" : "False" << endl;
+		resourceEstimateReport << endl;
+		resourceEstimateReport << "Number of Flip-Flops					: " << (estimatedCountFF) ? estimatedCountFF : "None" << endl;
+		resourceEstimateReport << "Number of Function Generators		: " << (estimatedCountLUT) ? estimatedCountLUT : "None" << endl;
+		resourceEstimateReport << "Number of Multipliers				: " << (estimatedCountMultiplier) estimatedCountMultiplier : "None" << endl;
+		resourceEstimateReport << "Number of Memory blocks				: " << (estimatedCountMemory) estimatedCountMemory : "None" << endl;
+		resourceEstimateReport << endl;
+		if(detailLevel>0){
+		(estimatedCountDSP)  ?	resourceEstimateReport << "Number of DSP blocks					: " << estimatedCountDSP << endl : ;
+		(estimatedCountRAM)  ?	resourceEstimateReport << "Number of RAM blocks					: " << estimatedCountRAM << endl : ;
+		(estimatedCountROM)  ?	resourceEstimateReport << "Number of ROM blocks					: " << estimatedCountROM << endl : ;
+		(estimatedCountSRL)  ?	resourceEstimateReport << "Number of SRLs							: " << estimatedCountSRL << endl : ;
+		(estimatedCountWire) ?	resourceEstimateReport << "Number of Wires						: " << estimatedCountWire << endl : ;
+		(estimatedCountIOB)  ?	resourceEstimateReport << "Number of IOs	 					: " << estimatedCountIOB << endl : ;
+		resourceEstimateReport << endl;
+		}
+		if(detailLevel>1){
+		(estimatedCountMux) 		?	resourceEstimateReport << "Number of Multiplexers				: " << estimatedCountMux << endl : ;
+		(estimatedCountCounter) 	?	resourceEstimateReport << "Number of Counters					: " << estimatedCountCounter << endl : ;
+		(estimatedCountAccumulator) ?	resourceEstimateReport << "Number of Accumulators				: " << estimatedCountAccumulator << endl : ;
+		(estimatedCountDecoder)		?	resourceEstimateReport << "Number of Decoders/Encoders			: " << estimatedCountDecoder << endl : ;
+		(estimatedCountArithOp)		?	resourceEstimateReport << "Number of Arithmetic Operators		: " << estimatedCountArithOp << endl : ;
+		(estimatedCountFSM)			?	resourceEstimateReport << "Number of FSMs						: " << estimatedCountFSM << endl : ;
+		resourceEstimateReport << endl;
+		}
+		
+		resourceEstimateReport << "=========================================================================" << endl;
+	}
+	
+	//--Utility functions related to the generation of resource usage statistics
+	std::string Operator::addPipelineFF(){
+		std::ostringstream output;
+		
+		for(int i=0; i<signalList_.size(); i++) {
+			Signal *s = signalList_[i];
+			
+			estimatedCountFF += s->getLifeSpan() * s->width();
+		}
+		
+		output << "FF count compensated for with pipeline related registers." << endl;
+		return output.str();
+	}
+	
+	std::string Operator::addWireCount(){
+		std::ostringstream output;
+		
+		for(int i=0; i<signalList_.size(); i++) {
+			Signal *s = signalList_[i];
+			bool processed = false;
+			
+			for(int j=0; j<estimatedSignalNames.size(); i++) {
+				Signal *stemp = estimatedSignalNames[j];
+				if((s->getName()).compare(stemp->getName())){
+					processed = true;
+					break();
+				}
+			}
+			if(processed)
+				continue;
+			estimatedCountWire += s->width();
+		}
+		
+		output << "Wire count compensated for with wires from signal declarations." << endl;
+		return output.str();
+	}
+	
+	std::string Operator::addPortCount(){
+		std::ostringstream output;
+		
+		for(int i=0; i<ioList_.size(); i++) {
+			Signal *s = ioList_[i];
+			bool processed = false;
+			
+			for(int j=0; j<estimatedPortNames.size(); i++) {
+				Signal *stemp = estimatedPortNames[j];
+				if((s->getName()).compare(stemp->getName())){
+					processed = true;
+					break();
+				}
+			}
+			if(processed)
+				continue;
+			estimatedCountIOB += s->width();
+		}
+		
+		output << "Port count compensated for with ports from port declarations." << endl;
+		return output.str();
+	}
+	
+	std::string Operator::addComponentResourceCount(){
+		std::ostringstream output;
+		
+		for(map<string, Operator*>::iterator it = subComponents_.begin(); it !=subComponents_.end(); it++) {
+			Operator *op = it->second;
+			
+			estimatedCountFF += op->estimatedCountFF;
+			estimatedCountLUT += op->estimatedCountLUT;
+			estimatedCountMultiplier += op->estimatedCountMultiplier;
+			
+			estimatedCountDSP += op->estimatedCountDSP;
+			estimatedCountRAM += op->estimatedCountRAM;
+			estimatedCountROM += op->estimatedCountROM;
+			estimatedCountSRL += op->estimatedCountSRL;
+			estimatedCountWire += op->estimatedCountWire;
+			estimatedCountIOB += op->estimatedCountIOB;
+			
+			estimatedCountMux += op->estimatedCountMux;
+			estimatedCountCounter += op->estimatedCountCounter;
+			estimatedCountAccumulator += op->estimatedCountAccumulator;
+			estimatedCountDecoder += op->estimatedCountDecoder;
+			estimatedCountArithOp += op->estimatedCountArithOp;
+			estimatedCountFSM += op->estimatedCountFSM;
+		}
+		
+		output << "Resource count compensated for with resource estimations from subcomponents." << endl;
+		return output.str();
+	}
+	
+	std::string Operator::addAutomaticResourceEstimations(){
+		
+		resourceEstimate << this->addPipelineFF();
+		resourceEstimate << this->addWireCount();
+		resourceEstimate << this->addPortCount();
+		resourceEstimate << this->addComponentResourceCount();
+	}
+	
+	
+	/////////////////////////////////////////////////////////////////////////////////////////////////
+	
+	
 
 }
 
