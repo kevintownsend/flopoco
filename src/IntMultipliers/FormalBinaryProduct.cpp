@@ -245,7 +245,7 @@ ProductIR ProductIR::operator* (const ProductIR& rhs) const
 	}
 	return res;
 }
-ProductIR ProductIR::toPow (size_t n)
+ProductIR ProductIR::toPow (size_t n) const
 {
 	if (n <= 0)
 		throw "wrong argument (ProductIR::toPow)";
@@ -293,7 +293,7 @@ ProductIR& ProductIR::simplifyInPlace (void)
 	}
 	return *this;
 }
-ProductIR& expandMSB (int newMSB)
+ProductIR& ProductIR::expandMSB (int newMSB)
 {
 	if (newMSB <= msb)
 		// nothing to do
@@ -301,6 +301,7 @@ ProductIR& expandMSB (int newMSB)
 	for (size_t i = 0; i < (newMSB - msb); i++) {
 		data.push_back (ProductBitIR (mon_size));
 	}
+	msb = newMSB;
 	return *this;
 }
 // won't work well if simplify() isn't called before
