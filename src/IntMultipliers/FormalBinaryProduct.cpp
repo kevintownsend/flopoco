@@ -293,6 +293,16 @@ ProductIR& ProductIR::simplifyInPlace (void)
 	}
 	return *this;
 }
+ProductIR& expandMSB (int newMSB)
+{
+	if (newMSB <= msb)
+		// nothing to do
+		return *this;
+	for (size_t i = 0; i < (newMSB - msb); i++) {
+		data.push_back (ProductBitIR (mon_size));
+	}
+	return *this;
+}
 // won't work well if simplify() isn't called before
 // quo and/or rem can be NULL
 ProductIRQuoRem ProductIR::div (int divisor)

@@ -103,8 +103,9 @@ class ProductIR {
 		ProductIR& operator>>= (int n) DEPRECATED;
 		ProductIR& operator*= (const ProductBitIR& rhs) DEPRECATED;
 		ProductIR operator* (const ProductIR& rhs) const;
-		ProductIR toPow (size_t n);
+		ProductIR toPow (size_t n) const;
 		ProductIR& simplifyInPlace (void); //returns *this
+		ProductIR& expandMSB (int newMSB);
 		ProductIRQuoRem div (int divisor);
 
 		std::vector<ProductBitIR> data;
