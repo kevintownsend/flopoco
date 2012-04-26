@@ -47,7 +47,7 @@ namespace flopoco{
 	
 	string Signal::toVHDL() {
 		ostringstream o; 
-		if(type()==Signal::wire || type()==Signal::registeredWithoutReset || type()==Signal::registeredWithAsyncReset || type()==Signal::registeredWithSyncReset) 
+		if(type()==Signal::wire || type()==Signal::registeredWithoutReset || type()==Signal::registeredWithAsyncReset || type()==Signal::registeredWithSyncReset || type()==Signal::registeredWithZeroInitialiser) 
 			o << "signal ";
 		o << getName();
 		o << " : ";
@@ -97,13 +97,20 @@ namespace flopoco{
 			o << ", " << getName() << "_d" << i;
 		}
 		o << " : ";
-		if ((1==width())&&(!isBus_)) 
+		if ((1==width())&&(!isBus_)) {
 			o << "std_logic" ;
-		else 
+			if(type()==Signal::registeredWithZeroInitialiser){
+				o << " := '0'";
+			}
+		}else {
 			if(isFP_) 
 				o << " std_logic_vector(" << wE() <<"+"<<wF() << "+2 downto 0)";
 			else
 				o << " std_logic_vector(" << width()-1 << " downto 0)";
+			if(type()==Signal::registeredWithZeroInitialiser){
+				o << ":= (others=>'0')";
+			}
+		}
 		o << ";";
 		return o.str();
 	}

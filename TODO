@@ -1,9 +1,5 @@
 TODO file for FloPoCo
 
-BUGs
-FPAdderDualPath fails many tests
-FPExp for small sizes
-
 Testbench
 * Bug on outputs that are bits with isBus false and  multiple-valued  
 	(see the P output of Collision in release 2.1.0)

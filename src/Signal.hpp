@@ -26,7 +26,8 @@ namespace flopoco{
 			wire,                      /**< if the signal is a wire (not registered) */
 			registeredWithoutReset,    /**< if the signal is registered, but does not have a reset */
 			registeredWithAsyncReset,  /**< if the signal is registered, and has an asynchronous reset */
-			registeredWithSyncReset    /**< if the signal is registered, and has an synchronous reset */
+			registeredWithSyncReset,    /**< if the signal is registered, and has an synchronous reset */
+			registeredWithZeroInitialiser    /**< if the signal is registered, the it has a zero initialiser (but no reset) */
 		} SignalType;
 
 		/** Signal constructor.

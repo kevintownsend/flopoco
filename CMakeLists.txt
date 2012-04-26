@@ -41,6 +41,18 @@ FIND_LIBRARY(MPFR_LIB
 	HINTS "C:/Program Files/Microsoft Visual Studio 9.0/VC/lib"
 	DOC "Directory of the MPFR library")
 
+FIND_PATH(MPFI_H
+	  mpfi.h
+	  HINTS "C:/Program Files/Microsoft Visual Studio 9.0/VC/include"
+	  DOC "Path of mpfi.h"
+)
+
+FIND_LIBRARY(MPFI_LIB
+	NAMES mpfi mpfi.lib
+	HINTS "C:/Program Files/Microsoft Visual Studio 9.0/VC/lib"
+	DOC "Directory of the MPFI library")
+
+
 
 # Detect Sollya's presence
 FIND_LIBRARY( SOLLYA_LIB sollya )
@@ -138,7 +150,7 @@ ADD_CUSTOM_COMMAND(
 SET_SOURCE_FILES_PROPERTIES(ExpressionScanner GENERATED)
 
 
-ADD_LIBRARY(FloPoCo STATIC
+ADD_LIBRARY(FloPoCoLib STATIC
  src/FloPoCo.hpp
  src/Operator
  src/Signal
@@ -345,16 +357,16 @@ ADD_LIBRARY(FloPoCo STATIC
 )
 IF (SOLLYA_LIB)
 TARGET_LINK_LIBRARIES(
-  FloPoCo  
-  mpfr gmp gmpxx xml2 mpfi ${SOLLYA_LIB}
+  FloPoCoLib
+  gmp gmpxx xml2 ${SOLLYA_LIB} ${MPFI_LIB} ${MPFR_LIB}
   )
 ELSE (SOLLYA_LIB)
 TARGET_LINK_LIBRARIES(
-  FloPoCo  
-  mpfr gmp gmpxx xml2 mpfi
+  FloPoCoLib 
+  ${MPFR_LIB} gmp gmpxx xml2 ${MPFI_LIB}
   )
 ENDIF (SOLLYA_LIB)
-SET(FLOPOCO_LIB FloPoCo)
+SET(FLOPOCO_LIB FloPoCoLib)
 
 ADD_EXECUTABLE(flopoco
  src/main 
@@ -385,3 +397,8 @@ TARGET_LINK_LIBRARIES(bin2fp  mpfr gmp gmpxx)
 
 ADD_EXECUTABLE(longacc2fp src/Tools/longacc2fp  src/utils)
 TARGET_LINK_LIBRARIES(longacc2fp  mpfr gmp gmpxx)
+
+
+
+add_subdirectory(src/random)
+target_link_libraries(FloPoCoLib flopoco_random_lib)

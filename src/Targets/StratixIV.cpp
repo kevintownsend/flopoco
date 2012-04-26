@@ -299,14 +299,6 @@ namespace flopoco{
 	void StratixIV::getDSPWidths(int &x, int &y, bool sign){
 		// set the multiplier width acording to the desired frequency
 		bool widthSet = false;
-
-		if (sign == false)
-			x = y = 36;
-		else
-			x = y = 36;
-		
-		//FIXME
-		return;
 		
 		for (int i=0; i<4; i++)
 			if (this->frequency() < 1/multiplierDelay_[i])

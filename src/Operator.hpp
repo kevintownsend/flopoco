@@ -513,8 +513,19 @@ public:
          */
         void setRecirculationSignal();
 	
+	/** Indicates that it is not a warning if there is feedback of one cycle, but it
+		is an error if a feedback of more than one cycle happens.
+		*/
+	void setHasDelay1Feedbacks()
+	{
+		hasDelay1Feedbacks_=true;
+	}
 
 
+	bool hasDelay1Feedbacks(){
+		return hasDelay1Feedbacks_;
+	}
+	
 
 
 
@@ -929,8 +940,9 @@ public:
 		currentCycle_               = op->getCurrentCycle();
 		criticalPath_               = op->getCriticalPath();
 		needRecirculationSignal_    = op->getNeedRecirculationSignal();
-		indirectOperator_               = op->getIndirectOperator();
-		
+		indirectOperator_           = op->getIndirectOperator();
+		hasDelay1Feedbacks_         = op->hasDelay1Feedbacks();
+
 		oplist                      = op->getOpList();
 	}
 
@@ -979,6 +991,7 @@ private:
 	int                    currentCycle_;               /**< The current cycle, when building a pipeline */
 	double                 criticalPath_;               /**< The current delay of the current pipeline stage */
 	bool                   needRecirculationSignal_;    /**< True if the operator has registers having a recirculation signal  */
+	int					           hasDelay1Feedbacks_;	/**< True if this operator has feedbacks of one cyle, and no more than one cycle (i.e. an error if the distance is more). False gives warnings */
 	Operator*              indirectOperator_;               /**< NULL if this operator is just an interface operator to several possible implementations, otherwise points to the instance*/
 
 };

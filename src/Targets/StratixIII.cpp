@@ -305,11 +305,7 @@ namespace flopoco{
 		// set the multiplier width acording to the desired frequency
 		bool widthSet = false;
 		
-		if (sign == false)
-			x = y = 18;
-		else
-			x = y = 18;
-		
+		x = y = 18;
 		//FIXME
 		return;
 		

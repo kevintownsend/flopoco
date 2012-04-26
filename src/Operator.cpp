@@ -42,7 +42,8 @@ namespace flopoco{
 		inputDelayMap               = inputDelays;
 		myuid                       = getNewUId();
 		architectureName_			      = "arch";
-		indirectOperator_           =NULL;
+		indirectOperator_           = NULL;
+		hasDelay1Feedbacks_         = false;
 		
 		if (target_->isPipelined())
 			setSequential();
@@ -223,7 +224,7 @@ namespace flopoco{
 				<< tab << tab << "if clk'event and clk = '1' then\n";
 				for(i=0; i<signalList_.size(); i++) {
 					Signal *s = signalList_[i];
-					if(s->type()==Signal::registeredWithoutReset) 
+					if((s->type()==Signal::registeredWithoutReset) || (s->type()==Signal::registeredWithZeroInitialiser)) 
 						o << tab <<tab << tab << s->getName() <<"_d <=  " << s->getName() <<";\n";
 				}
 				o << tab << tab << "end if;\n";
@@ -705,7 +706,7 @@ namespace flopoco{
 		}
 		// construct the signal (lifeSpan and cycle are reset to 0 by the constructor)
 		s = new Signal(name, regType, width, isbus);
-		if(regType==Signal::registeredWithoutReset)
+		if((regType==Signal::registeredWithoutReset) || (regType==Signal::registeredWithZeroInitialiser))
 			hasRegistersWithoutReset_ = true;
 		if(regType==Signal::registeredWithSyncReset)
 			hasRegistersWithSyncReset_ = true;
@@ -1095,7 +1096,7 @@ namespace flopoco{
 			if (isRecirculatory()) o << tab << tab << tab << tab << "if stall_s = '0' then" << endl;
 			for(unsigned int i=0; i<signalList_.size(); i++) {
 				Signal *s = signalList_[i];
-				if ((s->type() == Signal::registeredWithoutReset) || (s->type() == Signal::wire)) 
+				if ((s->type() == Signal::registeredWithoutReset) || (s->type()==Signal::registeredWithZeroInitialiser) || (s->type() == Signal::wire)) 
 					if(s->getLifeSpan() >0) {
 						for(int j=1; j <= s->getLifeSpan(); j++)
 							
@@ -1279,8 +1280,15 @@ namespace flopoco{
 				tReplace << use(name, useCycle - declareCycle); 
 				replaceString = tReplace.str();
 				if (useCycle<declareCycle){
-					cerr << srcFileName << " (" << uniqueName_ << "): WARNING: Signal " << name <<" defined @ cycle "<<declareCycle<<" and used @ cycle " << useCycle <<endl;
-					cerr << srcFileName << " (" << uniqueName_ << "): If this is a feedback signal you may ignore this warning"<<endl;
+					if(!hasDelay1Feedbacks_){
+						cerr << srcFileName << " (" << uniqueName_ << "): WARNING: Signal " << name <<" defined @ cycle "<<declareCycle<<" and used @ cycle " << useCycle <<endl;
+						cerr << srcFileName << " (" << uniqueName_ << "): If this is a feedback signal you may ignore this warning"<<endl;
+					}else{
+						if(declareCycle - useCycle != 1){
+							cerr << srcFileName << " (" << uniqueName_ << "): ERROR: Signal " << name <<" defined @ cycle "<<declareCycle<<" and used @ cycle " << useCycle <<endl;
+							exit(1);
+						}
+					}
 				}
 			}else{
 				/* parse the declare by hand and check lower/upper case */

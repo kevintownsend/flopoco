@@ -46,8 +46,17 @@ using namespace flopoco;
 	Target* target;
 
 
+extern void random_usage(char *name, string opName);
+	
+extern bool random_parseCommandLine(
+	int argc, char *argv[], Target *target,
+	std::string opname, int &i,
+	vector<Operator*> &oplist
+);
 
-static void usage(char *name, string opName = ""){
+
+
+void usage(char *name, string opName = ""){
 	bool full = (opName=="");
 
 	if ( full ){
@@ -449,6 +458,12 @@ static void usage(char *name, string opName = ""){
 		cerr << "      (4/pi)*atan(2^x) function.\n";
 	}	
 #endif // HAVE_LNS
+	if ( full )
+		cerr << "    ____________ Pseudo-Random Number Generation ______________________________\n";
+
+	// Delegate to operators from random
+	random_usage(name, opName);
+
 	if ( full )
 	cerr << "    ____________ APPLICATIONS __________________________________________________\n";
 
@@ -2275,6 +2290,9 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 
 #endif
 
+		else if(random_parseCommandLine(argc, argv, target, opname, i, oplist)){
+			// we actually do nothing, the work is already done if it returned true
+		}
 		else if (opname == "TestBench") {
 			int nargs = 1;
 			if (i+nargs > argc)

@@ -39,6 +39,10 @@ namespace flopoco{
 		Operator(target), 
 		wEX_(wEX), wFX_(wFX), MaxMSBX_(MaxMSBX), LSBA_(LSBA), MSBA_(MSBA), AccValue_(0), xOvf(0)
 	{
+		// You probably want to remove the following line to have the warnings come back
+		//if you modify this operator
+		setHasDelay1Feedbacks(); 
+
 		if (!forDotProd)
 			wFY=wFX;
 		

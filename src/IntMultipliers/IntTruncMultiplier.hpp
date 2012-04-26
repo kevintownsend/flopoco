@@ -367,8 +367,6 @@ namespace flopoco{
 		/** This function will create connections between the existing DSPs in the configuration according to the policies of Altera or Virtex */
 	
 		int bindDSPs(DSP** &config);
-
-		void unbindDSPs(DSP** &config);
 	
 		/** This function will create the shifts between DSPs for Virtex boards */
 	
