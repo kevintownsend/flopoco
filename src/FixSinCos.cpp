@@ -127,9 +127,19 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	// pi⁴/24=4.0587121 so (pi*y)⁴/24 is < (1+eps) ulp /this is not the thing to do actually/
 	// iff 4 * (wA+2) - 2 >= w+g (2 as the log_2 of pi⁴/24)
 	// the minimal a is therefore ceil((wIn)/4) - 2
-	int wA = (int) ceil ((float) (w+g+2)/4.) - 2;
+	int wA = (int) ceil ((double) (w+g+2)/4.) - 2;
 	if (wA <= 3)
 		wA = 3;
+	// upper log2 of memory width needed for table
+	int wg_log2 = (int) ceil ((double) log2 (w+g));
+	int bram_words = target->sizeOfMemoryBlock() / (1u << wg_log2);
+	int bram_words_log2 = (int) floor ((double) log2 (bram_words));
+	// FIXME: assumes that both
+	// -the memory width is a power of 2
+	// -the bram can always be used as dual-port (one for sin, one for cos)
+	//  with width >=w+g
+	if (wA <= bram_words_log2-1)
+		wA = bram_words_log2-1;
 	int wY = wIn-wA, wZ = wY+2;
 	// vhdl:split (Y_in -> A & Y_red)
 	vhdl << tab << declare ("A",wA) << " <= Y_in" << range (wIn-1,wIn-wA) << ";" << endl;
@@ -216,6 +226,8 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	// so we use a truncated multiplier instead
 	IntTruncMultiplier *sqr_z;
 	int wZ2o2 = 2*wZ - (w+g)-1;
+	if (wZ2o2 < 2)
+		wZ2o2 = 2; //for sanity
 	vhdl << tab << "-- First truncate the inputs of the multiplier to the precision of the output" << endl;
 	vhdl << tab << declare("Z_truncToZ2", wZ2o2) << " <= Z" << range(wZ-1, wZ-wZ2o2) << ";" << endl;
 	sqr_z = new IntTruncMultiplier (target, wZ2o2, wZ2o2, wZ2o2,
@@ -244,7 +256,12 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 
 	int wZ3 = 3*wZ - 2*(w+g) -1; // -1 for the div by 2
 	int wZ3o6 = 3*wZ - 2*(w+g) -2;
+	if (wZ3 < 2)
+		wZ3 = 2;
+	if (wZ3o6 < 2)
+		wZ3o6 = 2; //using 1 will generate bad vhdl
 
+#if 1
 	if(wZ3<=11) {
 		vhdl << tab << "-- First truncate Z" << endl;
 		vhdl << tab << declare("Z_truncToZ3o6", wZ3o6) << " <= Z" << range(wZ-1, wZ-wZ3o6) << ";" << endl;
@@ -290,6 +307,20 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 		syncCycleFromSignal("Z3o6", cdiv_3->getOutputDelay("Q"));
 
 	}
+#else
+	vhdl << tab << declare("Z_truncToZ3o6", wZ3o6) << " <= Z" << range(wZ-1, wZ-wZ3o6) << ";" << endl;
+	ProductIR z3o6 = ProductIR::identity(wZ3o6).toPow(3).simplifyInPlace().div(6).quo.expandMSB(-1);
+	GenericBinaryPolynomial *z3o6gbp;
+	z3o6gbp = new GenericBinaryPolynomial (target, z3o6, Z3_inputDelays);
+	oplist.push_back (z3o6gbp);
+	outPortMap (z3o6gbp, "R", "Z3o6_before_trunc");
+	inPortMap (z3o6gbp, "X", "Z_truncToZ3o6");
+	vhdl << instance (z3o6gbp, "z3o6gbp");
+	syncCycleFromSignal ("Z3o6_before_trunc", z3o6gbp->getOutputDelay("R"));
+	vhdl << tab << declare("Z3o6", wZ3o6) << " <= Z3o6_before_trunc" << range(3*wZ3o6-1, 2*wZ3o6) << ";\n";
+
+#endif
+
 #if SUBCYCLEPIPELINING
 #else
 		nextCycle();
