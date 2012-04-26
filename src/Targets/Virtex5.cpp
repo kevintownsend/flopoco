@@ -267,8 +267,8 @@ namespace flopoco{
 			x = multXInputs_-1;
 			y = multYInputs_-1;
 		}else{
-			x = multXInputs_-1;
-			y = multYInputs_-1;
+			x = multXInputs_;
+			y = multYInputs_;
 		}
 	}
 	
