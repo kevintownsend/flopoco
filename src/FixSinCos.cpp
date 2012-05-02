@@ -388,42 +388,30 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	outPortMap (c_out_3, "R", "SinZSinPiA");
 	vhdl << instance (c_out_3, "c_out_3_compute");
 
-	// Synchronize the output of the two multipliers
-#if SUBCYCLEPIPELINING
-	syncCycleFromSignal("Z2o2CosPiA", getSignalDelay("Cos_y_Cos_a"));
-	syncCycleFromSignal("SinZSinPiA", c_out_3->getOutputDelay("R"));
-#else
-	syncCycleFromSignal("Z2o2CosPiA");
-	syncCycleFromSignal("SinZSinPiA");
+	setCycleFromSignal ("CosPiA");
 	nextCycle();
-#endif
 
+	manageCriticalPath(target->localWireDelay() + target->adderDelay(w+1));
+	// we add half a final ulp for the rounding; we do it now because it
+	// shortens the critical path
+	vhdl << tab << declare ("CosPiA_plus_rnd", w+g) << " <= (CosPiA"
+	     << range (w+g-1, g-1) << " + '1') & CosPiA" << range (g-2, 0)
+	     << ';' << endl;
 
-	manageCriticalPath(target->localWireDelay() + target->adderDelay(wZ));
-	// vhdl:add (Z2o2CosPiA, SinZSinPiA -> Z2o2CosPiA_plus_SinZSinPiA)
-	vhdl << tab << declare ("Z2o2CosPiA_plus_SinZSinPiA", wZ)
-	     << " <= Z2o2CosPiA + SinZSinPiA;" << endl;
-	// vhdl:sub (CosPiA, Z2o2CosPiA_plus_SinZSinPiA -> C_out)
-	// C_out has the entire precision; _g because it still has guards
+	syncCycleFromSignal ("Z2o2CosPiA");
+	nextCycle();
 
-	// TODO: This is suboptimal, 
-	// the critical path does not two carry propagations if there is no register.
+	// TODO: critical path supposed suboptimal (but don't know how to fix)
 	manageCriticalPath(target->localWireDelay() + target->adderDelay(w+g));
-	vhdl << tab << declare ("C_out_g", w+g)
-	     << " <= CosPiA - Z2o2CosPiA_plus_SinZSinPiA;" << endl;
+	vhdl << tab << declare ("CosZCosPiA_plus_rnd", w+g)
+	     << " <= CosPiA_plus_rnd - Z2o2CosPiA;" << endl;
 
-	// now remove the guard bits
-	// by rounding please
-
-	// TODO for Guillaume:
-	// 1/ The adder is too large, no need to add zeroes at the g LSBs
-	// 2/ Try to fuse this addition and the previous one by adding the round bit to the SinPiA / CosPiA tables
-	// And for F2D: again suboptimal evaluation of the critical path of a sequence of additions
+	syncCycleFromSignal ("SinZSinPiA");
+	nextCycle();
+	
 	manageCriticalPath(target->localWireDelay() + target->adderDelay(w+g));
 	vhdl << tab << declare ("C_out_rnd_aux", w+g)
-	     << " <= C_out_g + " << '"' << std::string (w, '0')
-	     << '1' << std::string (g-1, '0') << '"' << ';' << endl;
-
+	     << " <= CosZCosPiA_plus_rnd - SinZSinPiA;" << endl;
 
 	// Sin Y_in:
 
@@ -470,25 +458,27 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	vhdl << instance (s_out_3, "s_out_3_compute");
 	syncCycleFromSignal("SinZCosPiA");
 
+	setCycleFromSignal ("SinPiA");
 	nextCycle();
-	manageCriticalPath(target->adderDelay(wZ));
-	// vhdl:add (SinPiA, SinZCosPiA -> SinZCosPiA_plus_SinPiA)
-	vhdl << tab << declare ("SinZCosPiA_plus_SinPiA", w+g) //w+g necessary because of Sin(pi*a)
-	     << " <= SinPiA + SinZCosPiA;" << endl;
-	// vhdl:sub (SinZCosPiA_plus_SinPiA, Z2o2SinPiA -> S_out)
-	// TODO: This is suboptimal, 
-	// the critical path does not two carry propagations if there is no register.
-	manageCriticalPath(target->adderDelay(w+g));
-	vhdl << tab << declare ("S_out_g", w+g)
-	     << " <= SinZCosPiA_plus_SinPiA - Z2o2SinPiA;" << endl;
+	manageCriticalPath(target->localWireDelay() + target->adderDelay(w+1));
+	// we add half a final ulp for the rounding; we do it now because it
+	// shortens the critical path
+	vhdl << tab << declare ("SinPiA_plus_rnd", w+g) << " <= (SinPiA"
+	     << range (w+g-1, g-1) << " + '1') & SinPiA" << range (g-2, 0)
+	     << ';' << endl;
 
+	syncCycleFromSignal ("Z2o2SinPiA");
+	nextCycle();
 
-	// now remove the guard bits
-	// by rounding please
-	manageCriticalPath(target->adderDelay(w+g));
-	vhdl  << tab << declare ("S_out_rnd_aux", w+g)
-	     << " <= S_out_g + " << '"' << std::string (w, '0')
-	     << '1' << std::string (g-1, '0') << '"' << ';' << endl;
+	vhdl << tab << declare ("CosZSinPiA_plus_rnd", w+g)
+	     << " <= SinPiA_plus_rnd - Z2o2SinPiA;" << endl;
+
+	syncCycleFromSignal ("SinZCosPiA");
+	nextCycle();
+
+	vhdl << tab << declare ("S_out_rnd_aux", w+g)
+	     << " <= CosZSinPiA_plus_rnd + SinZCosPiA;" << endl;
+
 
 	//Final synchronization
 	syncCycleFromSignal("C_out_rnd_aux");
