@@ -146,16 +146,29 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	vhdl << tab << declare ("Y_red",wY) << " <= Y_in" << range (wIn-wA-1,0) << ';' << endl;
 	// vhdl:lut (A -> A_cos_pi_tbl, SinPiA)
 	FunctionTable *sin_table, *cos_table;
-	ostringstream omu; // calculates string of one minus (guardless) ulp
-	omu << "(1 - 1b-" << w << ")";
-	sin_table = new FunctionTable (target, omu.str() + " * sin(pi*x/4)",
-	                               wA, -(w+g), -1);
-	cos_table = new FunctionTable (target, omu.str() + " * cos(pi*x/4)",
-	                               wA, -(w+g), -1);
+	{
+		ostringstream omu; // one minus (guardless) ulp
+		omu << "(1 - 1b-" << w << ")";
+		// we'll include the half-ulp for final rounding
+		// directly in the tables
+		// TODO: a better check on wA to ensure there isn't too much
+		// error using the with-rounding {Sin,Cos}PiA in multipliers
+		ostringstream halfulp;
+		halfulp << "1b-" << (w+1);
+		sin_table = new FunctionTable (target, omu.str()
+						     + " * sin(pi*x/4) + "
+						     + halfulp.str()
+					     , wA, -(w+g), -1);
+		cos_table = new FunctionTable (target, omu.str()
+						     + " * cos(pi*x/4) + "
+						     + halfulp.str()
+					     , wA, -(w+g), -1);
+	}
 	sin_table -> changeName(getName() + "_SinTable");
 	cos_table -> changeName(getName() + "_CosTable");
 	oplist.push_back (sin_table);
 	oplist.push_back (cos_table);
+	// SinPiA and CosPiA already contain the rounding constant
 	outPortMap (sin_table, "Y", "SinPiA");
 	inPortMap (sin_table, "X", "A");
 	outPortMap (cos_table, "Y", "CosPiA");
@@ -388,23 +401,13 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	outPortMap (c_out_3, "R", "SinZSinPiA");
 	vhdl << instance (c_out_3, "c_out_3_compute");
 
-	setCycleFromSignal ("CosPiA");
-	nextCycle();
-
-	manageCriticalPath(target->localWireDelay() + target->adderDelay(w+1));
-	// we add half a final ulp for the rounding; we do it now because it
-	// shortens the critical path
-	vhdl << tab << declare ("CosPiA_plus_rnd", w+g) << " <= (CosPiA"
-	     << range (w+g-1, g-1) << " + '1') & CosPiA" << range (g-2, 0)
-	     << ';' << endl;
-
-	syncCycleFromSignal ("Z2o2CosPiA");
+	setCycleFromSignal ("Z2o2CosPiA");
 	nextCycle();
 
 	// TODO: critical path supposed suboptimal (but don't know how to fix)
 	manageCriticalPath(target->localWireDelay() + target->adderDelay(w+g));
 	vhdl << tab << declare ("CosZCosPiA_plus_rnd", w+g)
-	     << " <= CosPiA_plus_rnd - Z2o2CosPiA;" << endl;
+	     << " <= CosPiA - Z2o2CosPiA;" << endl;
 
 	syncCycleFromSignal ("SinZSinPiA");
 	nextCycle();
@@ -458,24 +461,17 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	vhdl << instance (s_out_3, "s_out_3_compute");
 	syncCycleFromSignal("SinZCosPiA");
 
-	setCycleFromSignal ("SinPiA");
-	nextCycle();
-	manageCriticalPath(target->localWireDelay() + target->adderDelay(w+1));
-	// we add half a final ulp for the rounding; we do it now because it
-	// shortens the critical path
-	vhdl << tab << declare ("SinPiA_plus_rnd", w+g) << " <= (SinPiA"
-	     << range (w+g-1, g-1) << " + '1') & SinPiA" << range (g-2, 0)
-	     << ';' << endl;
-
-	syncCycleFromSignal ("Z2o2SinPiA");
+	setCycleFromSignal ("Z2o2SinPiA");
 	nextCycle();
 
+	manageCriticalPath(target->localWireDelay() + target->adderDelay(w+g));
 	vhdl << tab << declare ("CosZSinPiA_plus_rnd", w+g)
-	     << " <= SinPiA_plus_rnd - Z2o2SinPiA;" << endl;
+	     << " <= SinPiA - Z2o2SinPiA;" << endl;
 
 	syncCycleFromSignal ("SinZCosPiA");
 	nextCycle();
 
+	manageCriticalPath(target->localWireDelay() + target->adderDelay(w+g));
 	vhdl << tab << declare ("S_out_rnd_aux", w+g)
 	     << " <= CosZSinPiA_plus_rnd + SinZCosPiA;" << endl;
 
