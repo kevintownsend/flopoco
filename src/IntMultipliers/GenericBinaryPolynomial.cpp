@@ -111,7 +111,7 @@ GenericBinaryPolynomial::GenericBinaryPolynomial(Target* target,
 		int_adder_N++;
 	}
 	// after having calculated the inputs, add them
-	nextCycle();
+	// nextCycle();
 	ima = new IntMultiAdder (target, p.data.size(), int_adder_N,
 	                         inputDelays, false);
 	oplist.push_back (ima);
