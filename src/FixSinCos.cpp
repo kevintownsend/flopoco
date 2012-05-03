@@ -89,7 +89,7 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 
 	// we need to know the number of guard bits _now_ to have a good Y_in
 	// some precision is lost with the optimized multipliers
-	const int g=5;
+	const int g=6;
 	//const int g=4; //guard bits
 	//const int g=3; //guard bits
 	//we take 4 guard bits even if error < 8 ulp because rounding will take
