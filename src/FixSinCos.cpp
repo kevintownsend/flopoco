@@ -321,17 +321,28 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 
 	}
 #else
-	vhdl << tab << declare("Z_truncToZ3o6", wZ3o6) << " <= Z" << range(wZ-1, wZ-wZ3o6) << ";" << endl;
-	ProductIR z3o6 = ProductIR::identity(wZ3o6).toPow(3).simplifyInPlace().div(6).quo.expandMSB(-1);
+	vhdl << tab << declare("Z_truncToZ3", wZ3) << " <= Z" << range(wZ-1, wZ-wZ3) << ";" << endl;
+	ProductIR z3o6 = ProductIR::identity(wZ3).toPow(3).simplifyInPlace().div(6).quo.setMSB(-3);
+	// target wZ3o6, not wZ3 when output is concerned
+	// 1 ulp of output trunc as of now
+	ProductIR z3o6_t = z3o6.truncate (mpz_class(1) << (wZ3*3-wZ3o6));
+	size_t wZ3o6_ext = z3o6_t.data.size();
 	GenericBinaryPolynomial *z3o6gbp;
-	z3o6gbp = new GenericBinaryPolynomial (target, z3o6, Z3_inputDelays);
+	z3o6gbp = new GenericBinaryPolynomial (target, z3o6_t, Z3_inputDelays);
 	oplist.push_back (z3o6gbp);
 	outPortMap (z3o6gbp, "R", "Z3o6_before_trunc");
-	inPortMap (z3o6gbp, "X", "Z_truncToZ3o6");
+	inPortMap (z3o6gbp, "X", "Z_truncToZ3");
 	vhdl << instance (z3o6gbp, "z3o6gbp");
 	syncCycleFromSignal ("Z3o6_before_trunc", z3o6gbp->getOutputDelay("R"));
-	vhdl << tab << declare("Z3o6", wZ3o6) << " <= Z3o6_before_trunc" << range(3*wZ3o6-1, 2*wZ3o6) << ";\n";
-
+	if (wZ3o6_ext >= wZ3o6) { 
+		vhdl << tab << declare("Z3o6",wZ3o6) << " <= Z3o6_before_trunc"
+		     << range(wZ3o6_ext-1, wZ3o6_ext-wZ3o6) << ";\n";
+	} else {
+		vhdl << tab << declare("Z3o6",wZ3o6)
+		     << " <= Z3o6_before_trunc & \"" 
+		     << std::string (wZ3o6-wZ3o6_ext,'0')
+		     << "\";" << endl;
+	}
 #endif
 
 #if SUBCYCLEPIPELINING
