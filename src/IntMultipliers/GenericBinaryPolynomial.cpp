@@ -42,10 +42,6 @@ GenericBinaryPolynomial::GenericBinaryPolynomial(Target* target,
 						 	inputDelays)
 	:Operator(target,inputDelays), p(p) {
 
-	// don't support zero-sized p
-	if (p.data.size() == 0)
-		throw "Zero-size p not supported";
-
 	ostringstream name;
 	name << "GenericBinaryPolynomial_" << p.mon_size << "_" << p.data.size()
 	     << "_uid" << Operator::getNewUId();
@@ -54,6 +50,10 @@ GenericBinaryPolynomial::GenericBinaryPolynomial(Target* target,
 
 	addInput ("X" , p.mon_size);
 	addOutput("R" , p.data.size());
+
+	if (p.data.size() == 0) {
+		return;
+	}
 
 	// here we split (arbitrarily, as of now) p into a sum of vectors
 	// that can be easily calculated just by logic ANDs

@@ -8,6 +8,7 @@
 #include <map>
 #include <iostream>
 #include <stddef.h>
+#include <gmpxx.h>
 
 #if defined (__GNUC__) && (__GNUC_MAJOR__ > 3 || (__GNUC_MAJOR__ == 3 && __GNUC_MINOR__ >= 1))
 #define DEPRECATED __attribute__((deprecated))
@@ -96,6 +97,10 @@ class ProductIR {
 			      )
 			,msb (msb),mon_size (mon_size) {
 		}
+		ProductIR (std::vector<ProductBitIR> data,
+				int msb, size_t mon_size)
+			:data (data), msb (msb), mon_size (mon_size) {
+		}
 		ProductIR (const Product& rhs);
 		// returns the polynomial x_0*1b-1 + x_1*1b-2 + ...
 		static ProductIR identity (size_t mon_size);
@@ -104,9 +109,10 @@ class ProductIR {
 		ProductIR& operator*= (const ProductBitIR& rhs) DEPRECATED;
 		ProductIR operator* (const ProductIR& rhs) const;
 		ProductIR toPow (size_t n) const;
-		ProductIR& simplifyInPlace (void); //returns *this
-		ProductIR& expandMSB (int newMSB);
+		ProductIR& simplifyInPlace (void); // returns *this
+		ProductIR& setMSB (int newMSB); // returns *this
 		ProductIRQuoRem div (int divisor);
+		ProductIR truncate (mpz_class ulps) const;
 
 		std::vector<ProductBitIR> data;
 		int msb;

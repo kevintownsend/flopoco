@@ -1,6 +1,5 @@
 #include "FormalBinaryProduct.hpp"
 #include <iostream>
-#include <gmpxx.h>
 
 using namespace flopoco;
 using std::cout;
@@ -293,11 +292,14 @@ ProductIR& ProductIR::simplifyInPlace (void)
 	}
 	return *this;
 }
-ProductIR& ProductIR::expandMSB (int newMSB)
+ProductIR& ProductIR::setMSB (int newMSB)
 {
-	if (newMSB <= msb)
-		// nothing to do
+	if (newMSB <= msb) {
+		for (size_t i = 0; i < (msb - newMSB); i++) {
+			data.pop_back ();
+		}
 		return *this;
+	}
 	for (size_t i = 0; i < (newMSB - msb); i++) {
 		data.push_back (ProductBitIR (mon_size));
 	}
@@ -353,6 +355,23 @@ ProductIRQuoRem ProductIR::div (int divisor)
 		}
 	}
 	return res;
+}
+ProductIR ProductIR::truncate (mpz_class ulps) const
+{
+	mpz_class cur_err(0), cur_ulp(1);
+	std::vector<ProductBitIR>::const_iterator it;
+	for (it = data.begin(); it != data.end(); it++) {
+		std::map<MonomialOfBits,int>::const_iterator i;
+		for (i = it->data.begin(); i != it->data.end(); i++) {
+			cur_err += (i->second * cur_ulp);
+		}
+		if (cur_err > ulps)
+			break;
+		cur_ulp <<= 1;
+	}
+	return ProductIR (std::vector<ProductBitIR> (it, data.end()),
+	                  msb,
+		          mon_size);
 }
 // must call ProductIR::simplify() on rhs before
 Product::Product (const ProductIR& rhs)
