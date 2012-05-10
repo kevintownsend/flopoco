@@ -68,12 +68,10 @@ namespace flopoco{
 	}
 
 
-	void HOTBM::fillTestCase(mpz_class a[])
+	void HOTBM::emulate(TestCase* tc)
 	{
 		/* Get inputs / outputs */
-		mpz_class &x  = a[0];
-		mpz_class &rd = a[1]; // rounded down
-		mpz_class &ru = a[2]; // rounded up
+		mpz_class sx = tc->getInputValue ("X");
 
 		// int outSign = 0;
 
@@ -81,7 +79,7 @@ namespace flopoco{
 		mpfr_inits(mpX, mpR, 0, NULL);
 
 		/* Convert a random signal to an mpfr_t in [0,1[ */
-		mpfr_set_z(mpX, x.get_mpz_t(), GMP_RNDN);
+		mpfr_set_z(mpX, sx.get_mpz_t(), GMP_RNDN);
 		mpfr_div_2si(mpX, mpX, wI, GMP_RNDN);
 
 		/* Compute the function */
@@ -99,8 +97,16 @@ namespace flopoco{
 		 * rounding, so we will round down here,
 		 * add both the upper and lower neighbor.
 		 */
-		mpfr_get_z(rd.get_mpz_t(), mpR, GMP_RNDD);
-		ru = rd + 1;
+		mpz_t rd_t;
+		mpz_init (rd_t);
+		mpfr_get_z(rd_t, mpR, GMP_RNDD);
+		mpz_class rd (rd_t), ru = rd + 1;
+		tc->addExpectedOutput ("R", rd);
+		tc->addExpectedOutput ("R", ru);
+		
+		mpz_clear (rd_t);
+		mpfr_clear (mpX);
+		mpfr_clear (mpR);
 	}
 
 }
