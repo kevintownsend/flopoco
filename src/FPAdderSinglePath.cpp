@@ -335,9 +335,8 @@ FPAdderSinglePath::FPAdderSinglePath(Target* target, int wEX, int wFX, int wEY, 
 		mpz_class svY = tc->getInputValue("Y");
 	
 		/* Compute correct value */
-		FPNumber fpx(wEX, wFX), fpy(wEY, wFY);
-		fpx = svX;
-		fpy = svY;
+		FPNumber fpx(wEX, wFX, svX);
+		FPNumber fpy(wEY, wFY, svY);
 		mpfr_t x, y, r;
 		mpfr_init2(x, 1+wFX);
 		mpfr_init2(y, 1+wFY);

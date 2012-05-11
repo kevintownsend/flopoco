@@ -92,7 +92,7 @@ namespace flopoco{
 
 		addFPInput("X", wE, wF);
 		addFPInput("Y", wE, wF);
-		addFPOutput("R", wE, wF, 2); // 2 because faithfully rounded
+		addFPOutput("R", wE, wF, 1); // 2 because faithfully rounded
 
 		addConstant("wE", "positive", wE);
 		addConstant("wF", "positive", wF);
@@ -384,10 +384,8 @@ namespace flopoco{
 		mpz_class svY = tc->getInputValue("Y");
 		
 		/* Compute correct value */
-		FPNumber fpx(wE, wF);
-		FPNumber fpy(wE, wF);
-		fpx = svX;
-		fpy = svY;
+		FPNumber fpx(wE, wF, svX);
+		FPNumber fpy(wE, wF, svY);
 		mpfr_t x,y,  l, p,  ru,rd;
 		mpfr_init2(x,  1+wF);
 		mpfr_init2(y,  1+wF);
@@ -398,6 +396,7 @@ namespace flopoco{
 		fpx.getMPFR(x);
 		fpy.getMPFR(y);
 
+#if 1 // The default test, testing faithful rounding
 		if(type==0) {
 			// pow is easy, since we have it in mpfr
 			mpfr_pow(rd, x, y, GMP_RNDD);
@@ -413,21 +412,6 @@ namespace flopoco{
 			// the final exp does the only directed rounding
 			mpfr_exp(rd, p, GMP_RNDD);
 			mpfr_exp(ru, p, GMP_RNDU);
-#if 0
-		double d;
-		d=mpfr_get_d(x,  GMP_RNDN);
-		cout << "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX "  << d  << endl;
-		d=mpfr_get_d(y,  GMP_RNDN);
-		cout << "YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY "  << d << endl;
-		d=mpfr_get_d(l,  GMP_RNDN);
-		cout << "LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL "  << d << endl;
-		d=mpfr_get_d(p,  GMP_RNDN);
-		cout << "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP "  << d << endl;
-		d=mpfr_get_d(ru,  GMP_RNDN);
-		cout << "UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUU "  << d << endl;
-		d=mpfr_get_d(rd,  GMP_RNDN);
-		cout << "DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD "  << d << endl << endl;
-#endif		
 		}
 		FPNumber  fprd(wE, wF, rd);
 		FPNumber  fpru(wE, wF, ru);
@@ -435,6 +419,28 @@ namespace flopoco{
 		mpz_class svRU = fpru.getSignalValue();
 		tc->addExpectedOutput("R", svRD);
 		tc->addExpectedOutput("R", svRU);
+
+#else // will generate one error for each value that is not correctly rounded
+		// useful to count the percentage of correct rounding
+		if(type==0) {
+			// pow is easy, since we have it in mpfr
+			mpfr_pow(rd, x, y, GMP_RNDN);
+		}
+		else {
+			// powr is not in mpfr. Fortunately it is defined by exp(y*ln(x)), so let's emulate it this way
+			// We should use infinite precision but we don't have it, so we approximate it with 10wF. 
+			// Statistical arguments tell that 2wF should be enough, so we are a bit on the safe side. 
+			// Still, we have no proof 10wF is enough, but then it's the occasion to find a counterexample, isn't t?
+			mpfr_log(l, x, GMP_RNDN);
+			mpfr_mul(p, l, y, GMP_RNDN);
+			// the final exp does the only directed rounding
+			mpfr_exp(rd, p, GMP_RNDN);
+		}
+		FPNumber  fprd(wE, wF, rd);
+		mpz_class svRD = fprd.getSignalValue();
+		tc->addExpectedOutput("R", svRD);
+
+#endif
 		mpfr_clears(x, y, l, p, ru, rd, NULL);
 	}
  
@@ -536,19 +542,65 @@ namespace flopoco{
 	TestCase* FPPow::buildRandomTestCase(int i){
 		TestCase *tc;
 		tc = new TestCase(this); 
-		mpz_class x,y;
+		mpz_class x,y,r;
 		mpz_class normalExn = mpz_class(1)<<(wE+wF+1);
+		mpz_class expOfOne = (((mpz_class(1))<<(wE-1))-1)<<wF;
+		mpz_class expOfOneHalf = (((mpz_class(1))<<(wE-1))-2)<<wF;
 		mpz_class bias = ((1<<(wE-1))-1);
 		/* Fill inputs */
-		if ((i & 15) == 0) { //fully random
+		int j=i%8;
+
+		if(j==0){
+			//fully random
 			x = getLargeRandom(wE+wF+3);
 			y = getLargeRandom(wE+wF+3);
 		}
-		else // strictly positive, finite numbers
-			{
-				x  = getLargeRandom(wE+wF)  +  normalExn;
-				y  = getLargeRandom(wE+wF)  +  normalExn;
-			}
+		else if (j==1) {
+			// strictly positive, finite numbers
+			x  = getLargeRandom(wF)  +  normalExn;
+			r  = getLargeRandom(wF)  +  normalExn;
+		}
+		else if (j==2 || j==3) {
+			// x and y in the binade [1,2]
+			x  = getLargeRandom(wF) + expOfOne +  normalExn;
+			y  = getLargeRandom(wF) + expOfOne +  normalExn;
+		}
+		else if (j==4 || j==5) {
+			// x random, y small integer
+			x = getLargeRandom(wE+wF) +  normalExn;
+			y = getLargeRandom(3);
+			// convert y to an mpfr_t
+			mpfr_t ty;
+			mpfr_init2(ty,  1+wF);
+			mpfr_set_z(ty, y.get_mpz_t(), GMP_RNDN);
+			FPNumber fpy(wE, wF, ty);
+			y=fpy.getSignalValue();
+			mpfr_clears( ty, NULL);
+		}
+		else {
+			//  r random not too large, x in [1,2], y=exp(log(r)/x)
+			x  = getLargeRandom(wF)  + expOfOne +  normalExn;
+			int max = 5;
+			r  = getLargeRandom(wF) +  (((getLargeRandom(max)-(1<<(max-1))) + (((mpz_class(1))<<(wE-1))-1) )<<wF)+  normalExn;
+			// Now all we want is to set y=exp(log(r)/x) 
+			// first convert x and r to mpfr_t
+			FPNumber fpx(wE, wF, x);
+			FPNumber fpr(wE, wF, r);
+			mpfr_t tx, ty, tr;
+			mpfr_init2(tx,  1+wF);
+			mpfr_init2(ty,  4*wF);
+			mpfr_init2(tr, 1+wF);
+			fpx.getMPFR(tx);
+			fpr.getMPFR(tr);
+
+			mpfr_log(ty, tr, GMP_RNDN);
+			mpfr_div(ty, ty, tx, GMP_RNDN);
+			mpfr_exp(ty, ty, GMP_RNDN);
+			FPNumber fpy(wE, wF, ty);
+			y=fpy.getSignalValue();
+			mpfr_clears(tx, ty, tr, NULL);
+		}
+
 		tc->addInput("X", x);
 		tc->addInput("Y", y);
 		/* Get correct outputs */

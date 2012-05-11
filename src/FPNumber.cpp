@@ -35,6 +35,15 @@ namespace flopoco{
 		operator=(m);
 	}
 
+
+	FPNumber::FPNumber(int wE, int wF, mpz_class z)
+		: wE(wE), wF(wF)
+	{
+		if (wE > 30)
+			throw std::string("FPNumber::FPNumber: Using exponents larger than 30 bits is not supported.");
+		operator=(z);
+	}
+
 	FPNumber::FPNumber(int wE, int wF, SpecialValue v)	
 		: wE(wE), wF(wF)
 	{

@@ -654,8 +654,7 @@ namespace flopoco{
 		mpz_class svX = tc->getInputValue("X");
 
 		/* Compute correct value */
-		FPNumber fpx(wE, wF);
-		fpx = svX;
+		FPNumber fpx(wE, wF, svX);
 
 		mpfr_t x, ru,rd;
 		mpfr_init2(x,  1+wF);

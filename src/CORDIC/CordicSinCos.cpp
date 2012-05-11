@@ -16,6 +16,7 @@ namespace flopoco{
 		: Operator(target), w(w_), reducedIterations(reducedIterations_)
 	{
 
+		srcFileName="CordicSinCos";
 		int wcs = 1+w, wx = 1+w;
 		int iterations;
 			mpfr_t zatan, zpow2, constPi;
@@ -29,10 +30,11 @@ namespace flopoco{
 
 		iterations = (reducedIterations == 1) ? ceil((1+w+guard)/2) : w+guard;
 
-		srcFileName="CordicSinCos";
+		REPORT(DEBUG, "Guard bits: "<<guard << "   Iterations: " << iterations);
+
 		ostringstream name;
 
-		setCopyrightString ( "Istoan Matei, Florent de Dinechin (2008-2012)" );
+		setCopyrightString ( "Matei Istoan, Florent de Dinechin (2012-...)" );
 		if(target->isPipelined())
 			name << "CordicSinCos_" << (reducedIterations==1?"reducedIterations":"") 
 				<< w <<"_f"<< target->frequencyMHz() << "_uid" << getNewUId();
@@ -53,6 +55,8 @@ namespace flopoco{
 		manageCriticalPath(target->localWireDelay(wx) + target->adderDelay(wx) + target->adderDelay(2) + target->lutDelay());
 		
 		//reduce the argument X to [0, 1/2)
+
+		// TODO get rid of the + below
 		vhdl << tab << declare("absX", wx ) << "<= (X xor (" << wx-1 << " downto 0 => X(" << wx-1 << ")))"
 											<< " + " 
 											<< "(" << zg(wx-1, 0) << " & X(" << wx-1 << "));"<< endl;

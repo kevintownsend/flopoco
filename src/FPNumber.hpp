@@ -54,6 +54,14 @@ namespace flopoco{
 		FPNumber(int wE, int wF, mpfr_t m);
 
 		/**
+		 * Constructs a new initialised FPNumber.
+		 * @param wE the width of the exponent
+		 * @param wF the width of the significant
+		 * @param z the initial value, given as an mpz holding the bits of the FPNumber.
+		 */
+		FPNumber(int wE, int wF, mpz_class z);
+
+		/**
 		 * Retrieves the significant.
 		 * @return Returns an mpz_class, representing the
 		 * VHDL signal of the mantissa, without leading 1.
@@ -93,10 +101,12 @@ namespace flopoco{
 		void getMPFR(mpfr_t m);
 
 		/**
-		 * Stores an mpfr_t as an internal representation of Flopoco.
-		 * @param m the mpfr_t to store.
+		 * converts an mpfr_t into an FPNumber.
+		 * @param m the mpfr_t to convert.
 		 */
 		FPNumber &operator=(mpfr_t m);
+
+
 
 		/**
 		 * Assignes a signal value. Converts the signal value to the
