@@ -263,7 +263,7 @@ exit(1);
 							low+=cSize[k];
 						vhdl << tab << declare (name.str(),cSize[j]+1) << " <=  \"0\" & X"<<i<<range(high-1,low)<<";"<<endl;
 					}
-				vhdl << tab << declare("scIn",1) << " <= Cin;"<<endl;
+				vhdl << tab << declare("scIn") << " <= Cin;"<<endl;
 			
 				int l=1;
 				for (int j=0; j<nbOfChunks; j++){
@@ -459,7 +459,7 @@ exit(1);
 							low+=cSize[k];
 						vhdl << tab << declare (join("sX",j,"_",i),cSize[j]+1) << " <=  \"0\" & X"<<i<<range(high-1,low)<<";"<<endl;
 					}
-				vhdl << tab << declare("scIn",1) << " <= Cin;"<<endl;
+				vhdl << tab << declare("scIn") << " <= Cin;"<<endl;
 
 				for (int j=0; j<nbOfChunks; j++){
 					REPORT(3, "ITERATION " << j);

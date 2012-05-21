@@ -121,7 +121,7 @@ namespace flopoco{
       }
       else
       {
-         vhdl << tab << declare("round",1) << " <= fA1(1) and (fA1(2) or fA1(0));"<<endl;
+         vhdl << tab << declare("round") << " <= fA1(1) and (fA1(2) or fA1(0));"<<endl;
 
          vhdl << tab << declare("fA2a",wFX+1) <<  "<= " << rangeAssign(wFX-wFX0,0,"'0'") << " & fA1" << range(wFX0+1, 2)<< ";"<<endl;
          vhdl << tab << declare("fA2b",wFX+1) <<  "<= " << rangeAssign(wFX,1,"'0'") << " & round;"<<endl;
@@ -138,18 +138,18 @@ namespace flopoco{
       }
       if (eMax+1 > MSB+1)
       {
-         vhdl << tab << declare("overFl0",1) << "<= '1' when I" << range(wE+wF-1,wF) << " > conv_std_logic_vector("<< eMax+MSB << "," << wE << ") else I" << of(wE+wF+2)<<";"<<endl;
+         vhdl << tab << declare("overFl0") << "<= '1' when I" << range(wE+wF-1,wF) << " > conv_std_logic_vector("<< eMax+MSB << "," << wE << ") else I" << of(wE+wF+2)<<";"<<endl;
       }
       else
       {
-         vhdl << tab << declare("overFl0",1) << "<= I" << of(wE+wF+2)<<";"<<endl;
+         vhdl << tab << declare("overFl0") << "<= I" << of(wE+wF+2)<<";"<<endl;
       }
-      vhdl << tab << declare("overFl1",1) << " <= fA2" << of(wFX) << " or fA2" << of(wFX-1)<<";"<<endl;
+      vhdl << tab << declare("overFl1") << " <= fA2" << of(wFX) << " or fA2" << of(wFX-1)<<";"<<endl;
       if (minExpWE < LSB)
-         vhdl << tab << declare("undrFl0",1) << " <= '1' when I" << range(wE+wF-1,wF) << " < conv_std_logic_vector(" << eMax+LSB-1 << "," << wE <<
+         vhdl << tab << declare("undrFl0") << " <= '1' when I" << range(wE+wF-1,wF) << " < conv_std_logic_vector(" << eMax+LSB-1 << "," << wE <<
                ") else not (I" << of (wE+wF+2) << " or I" << of(wE+wF+1) << ");" << endl;
       else
-         vhdl << tab << declare("undrFl0",1) << " <= not (I" << of (wE+wF+2) << " or I" << of(wE+wF+1) << ");" << endl;
+         vhdl << tab << declare("undrFl0") << " <= not (I" << of (wE+wF+2) << " or I" << of(wE+wF+1) << ");" << endl;
       vhdl << tab << declare("fA3", wFX) << of(0) << " <= fA2" << of(0) << " xor I" << of(wE+wF) << ";" << endl;
       for(int i=1; i < wFX; ++i)
          vhdl << tab << "fA3" << of(i) << " <= fA2" << of(i) << " xor I" << of(wE+wF) << ";" << endl;

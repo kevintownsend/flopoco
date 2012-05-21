@@ -124,7 +124,7 @@ namespace flopoco{
 			int recover = weightR + lsbOut;
 			vhdl << tab << "-- weight of poly result is : " << weightR << endl;
 //			manageCriticalPath(target->adderDelay(pe->getRWidth()-(recover)-2));
-//			vhdl << tab << 	declare("sticky",1) << " <= '0' when Rpe"<<range(pe->getRWidth()-(recover)-2,0) <<" = " 
+//			vhdl << tab << 	declare("sticky") << " <= '0' when Rpe"<<range(pe->getRWidth()-(recover)-2,0) <<" = " 
 //		                                                        <<   zg(pe->getRWidth()-(recover)-1,0) << " else '1';"<<endl;
 //			vhdl << tab << declare("extentedf", recover + 1) << " <= Rpe"<<range(pe->getRWidth()-1, pe->getRWidth()-(recover+1))<<";"<<endl; 
 //		                  

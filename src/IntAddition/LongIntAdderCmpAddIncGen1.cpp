@@ -198,7 +198,7 @@ exit(1);
 						vhdl << tab << declare (name.str(),cSize[j], true) << " <= X"<<i<<range(high-1,low)<<";"<<endl;
 				}
 			}	
-			vhdl << tab << declare("scIn",1) << " <= Cin;"<<endl;
+			vhdl << tab << declare("scIn") << " <= Cin;"<<endl;
 			
 			int l=1;
 			for (int j=0; j<nbOfChunks; j++){

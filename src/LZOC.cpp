@@ -43,7 +43,7 @@ namespace flopoco{
 		addInput ("OZB");  
 		addOutput("O", wOut_);
 	
-		vhdl << tab << declare("sozb",1) <<" <= OZB;" << endl;
+		vhdl << tab << declare("sozb") <<" <= OZB;" << endl;
 		currLevel << "level"<<wOut_;
 		ostringstream padStr;
 		if (wIn_==intpow2(wOut_)) padStr<<"";

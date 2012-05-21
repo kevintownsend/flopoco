@@ -103,10 +103,10 @@ namespace flopoco{
 			//rounding will be needed
 			setCriticalPath(0.0);
 			manageCriticalPath( target->localWireDelay() + target->eqConstComparatorDelay(2*(wFX+1)-(wFR+3)));
-			vhdl << tab << declare("sticky",1) << "<='0' when sqrFrac" << range( 2*(wFX+1)-(wFR+3)-1,0)<<"="<<zg(2*(wFX+1)-(wFR+3),0) << "else '1';"<<endl;
-			vhdl << tab << declare("guard",1) << " <= sqrFrac" << of(2*(wFX+1)-(wFR+3))<<" when sqrFrac" << of(2*(wFX+1)-1)<<"='0' else " 
+			vhdl << tab << declare("sticky") << "<='0' when sqrFrac" << range( 2*(wFX+1)-(wFR+3)-1,0)<<"="<<zg(2*(wFX+1)-(wFR+3),0) << "else '1';"<<endl;
+			vhdl << tab << declare("guard") << " <= sqrFrac" << of(2*(wFX+1)-(wFR+3))<<" when sqrFrac" << of(2*(wFX+1)-1)<<"='0' else " 
 				 << "sqrFrac" << of(2*(wFX+1)-(wFR+3)+1) << ";"<< endl;
-			vhdl << tab << declare("fracULP",1) << "<=sqrFrac" << of(2*(wFX+1)-(wFR+3)+1)<<" when sqrFrac" << of(2*(wFX+1)-1)<<"='0' else " 
+			vhdl << tab << declare("fracULP") << "<=sqrFrac" << of(2*(wFX+1)-(wFR+3)+1)<<" when sqrFrac" << of(2*(wFX+1)-1)<<"='0' else " 
 				 << "sqrFrac" << of(2*(wFX+1)-(wFR+3)+2) << ";"<< endl;
 
 			vhdl << tab << declare("extExp",wE+2) << " <= extExpPostBiasSub + sqrFrac("<<2*(wFX_+1)-1<<");" << endl; //the normalization
@@ -119,7 +119,7 @@ namespace flopoco{
 			oplist.push_back(add); 
 		
 			vhdl << tab << declare("concatExpFrac", wE+2 + wFR) << " <= extExp & finalFrac;" << endl;
-			vhdl << tab << declare("addCin",1) << " <= (guard and sticky) or (fracULP and guard and not(sticky));"<<endl;
+			vhdl << tab << declare("addCin") << " <= (guard and sticky) or (fracULP and guard and not(sticky));"<<endl;
 	
 			inPortMap(add,"X", "concatExpFrac");
 			inPortMapCst(add,"Y",zg(wE+2 + wFR,0));

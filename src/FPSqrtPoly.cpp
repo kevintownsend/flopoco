@@ -305,7 +305,7 @@ namespace flopoco{
 #endif // KEEP_HANDCRAFTER_VERSION
 
 		vhdl << tab << declare("excsX",3) << " <= X"<<range(wE+wF+2,wE+wF)<<";"<<endl;
-		vhdl << tab << declare("sX",1) << "  <= X"<<of(wE+wF)<<";"<<endl;
+		vhdl << tab << declare("sX") << "  <= X"<<of(wE+wF)<<";"<<endl;
 		
 		//first estimation of the exponent
 		vhdl << tab << declare("expBiasPostDecrement", wE+1) << " <= CONV_STD_LOGIC_VECTOR("<< (1<<(wE-1))-2 <<","<<wE+1<<");"<<endl;

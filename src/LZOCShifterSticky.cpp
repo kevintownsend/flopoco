@@ -63,7 +63,7 @@ namespace flopoco{
 
 	
 		vhdl << tab << declare(join("level",wCount_), wIn_) << " <= I ;"   <<endl; 
-		if (entityType_==gen) vhdl << tab << declare("sozb",1) << "<= OZb;"<<endl;
+		if (entityType_==gen) vhdl << tab << declare("sozb") << "<= OZb;"<<endl;
 		if ((computeSticky_)&&(wOut_<wIn))   vhdl << tab << declare(join("sticky",wCount_), 1  ) << " <= '0' ;"<<endl; //init sticky 
 	
 		int currLev=wIn, prevLev=0;

@@ -76,7 +76,7 @@ namespace flopoco{
        }
       if(maxShift < wE)
       {
-         vhdl << tab << declare("kill",1) << " <= '0' when n" << range(wE-1, maxShift) << " = " << rangeAssign(wE-1, maxShift, "'0'") << " else '1';"<<endl;
+         vhdl << tab << declare("kill") << " <= '0' when n" << range(wE-1, maxShift) << " = " << rangeAssign(wE-1, maxShift, "'0'") << " else '1';"<<endl;
          vhdl << tab << "with kill select"<<endl;
          vhdl << tab << tab << "fR" << range(wFX+1, 1) << " <= " << rangeAssign(wFX+1,1,"'0'") << " when '1'," << endl;
          vhdl << tab << tab << "shift" << range((maxShift+1)*(wFX+1)-1, maxShift*(wFX+1)) << " when others;" << endl;

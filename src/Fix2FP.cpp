@@ -100,9 +100,9 @@ namespace flopoco{
 		// code for the LZOCShifter part
 	
 		if(Signed!=0)
-			vhdl << tab << declare("signSignal",1)<<"<=input"<<of(MSB-1-LSB)<<";"<<endl;
+			vhdl << tab << declare("signSignal")<<"<=input"<<of(MSB-1-LSB)<<";"<<endl;
 		else
-			vhdl << tab << declare("signSignal",1)<<"<= '0';"<<endl;
+			vhdl << tab << declare("signSignal")<<"<= '0';"<<endl;
 	
 		vhdl << tab << declare("passedInput",inputWidth)<<"<=input"<<range(MSB-1 -LSB,0)<<";"<<endl;
 		vhdl << tab << declare("input2LZOC",inputWidth-1)<<"<=passedInput"<<range(MSB-2 -LSB,0)<<";"<<endl;
@@ -169,7 +169,7 @@ namespace flopoco{
 			vhdl << tab << declare("biassSignal",wE)<<"<='0' & biassOfOnes;"<<endl;
 			vhdl << tab << declare("biassSignalBit",wE+1)<<"<='0' & biassSignal;"<<endl;
 			vhdl << tab << declare("partialConvertedExponentBit",wE+1)<<"<= '0' & partialConvertedExponent;"<<endl;
-			vhdl << tab << declare("sign4OU",1)<<"<=partialConvertedExponent"<<of(wE-1)<<";"<<endl;
+			vhdl << tab << declare("sign4OU")<<"<=partialConvertedExponent"<<of(wE-1)<<";"<<endl;
 	
 			exponentFinal = new IntAdder(target,wE+1);
 			exponentFinal->changeName(getName()+"exponentFinal");
@@ -184,8 +184,8 @@ namespace flopoco{
 	
 			vhdl << tab << declare("convertedExponent",wE)<<"<= convertedExponentBit"<<range(wE-1,0)<<";"<<endl;
 	
-			vhdl << tab << declare("underflowSignal",1)<<"<= '1' when (sign4OU='1' and convertedExponentBit"<<range(wE,wE-1)<<" = \"01\" ) else '0' ;"<<endl;
-			vhdl << tab << declare("overflowSignal",1)<<"<= '1' when (sign4OU='0' and convertedExponentBit"<<range(wE,wE-1)<<" = \"10\" ) else '0' ;"<<endl;
+			vhdl << tab << declare("underflowSignal")<<"<= '1' when (sign4OU='1' and convertedExponentBit"<<range(wE,wE-1)<<" = \"01\" ) else '0' ;"<<endl;
+			vhdl << tab << declare("overflowSignal")<<"<= '1' when (sign4OU='0' and convertedExponentBit"<<range(wE,wE-1)<<" = \"10\" ) else '0' ;"<<endl;
 	
 			//code for verifing if the number is zero
 	
@@ -205,7 +205,7 @@ namespace flopoco{
 	
 				syncCycleFromSignal("zeroDS");
 	
-				vhdl << tab << declare("zeroInput",1)<<"<= zeroDS"<<of(MSB-LSB-1)<<" and not(signSignal);"<<endl;
+				vhdl << tab << declare("zeroInput")<<"<= zeroDS"<<of(MSB-LSB-1)<<" and not(signSignal);"<<endl;
 			}else{
 
 				vhdl << tab << declare("minusOne4ZD",MSB -LSB+1)<<"<=CONV_STD_LOGIC_VECTOR("<<-1<<","<<MSB-LSB+1<<");"<<endl;
@@ -221,7 +221,7 @@ namespace flopoco{
 	
 				setCycleFromSignal("zeroDS");
 	
-				vhdl << tab << declare("zeroInput",1)<<"<= zeroDS"<<of(MSB-LSB)<<" and not (signSignal);"<<endl;
+				vhdl << tab << declare("zeroInput")<<"<= zeroDS"<<of(MSB-LSB)<<" and not (signSignal);"<<endl;
 			}
 
 			//code for the Convertion of the fraction
@@ -250,10 +250,10 @@ namespace flopoco{
 				vhdl << tab << declare("tempFractionResult",maximalOutputValue+1)<<"<= '0' & temporalFraction;"<<endl;
 			}
 	
-			vhdl << tab << declare("correctingExponent",1)<<"<=tempFractionResult"<<of(maximalOutputValue)<<";"<<endl;
+			vhdl << tab << declare("correctingExponent")<<"<=tempFractionResult"<<of(maximalOutputValue)<<";"<<endl;
 			vhdl << tab << declare("fractionConverted",wF)<<"<=tempFractionResult"<<range(maximalOutputValue-2,maximalOutputValue -wF-1)<<";"<<endl;
 	
-			vhdl << tab << declare("firstBitofRest",1)<<"<=tempFractionResult"<<of(maximalOutputValue-wF-2)<<";"<<endl;
+			vhdl << tab << declare("firstBitofRest")<<"<=tempFractionResult"<<of(maximalOutputValue-wF-2)<<";"<<endl;
 	
 			//selection of mux 3
 			vhdl << tab << declare("lastBitOfFraction")<<"<=tempFractionResult"<<of(maximalOutputValue-wF-1)<<";"<<endl;
@@ -276,7 +276,7 @@ namespace flopoco{
 	
 			syncCycleFromSignal("zeroFractionResult");
 	
-			vhdl << tab << declare("zeroRemainder",1)<<"<= not( not (tempFractionResult"<<of(sizeOfRemainder-1)<<") and zeroFractionResult"<<of(sizeOfRemainder-1)<<");"<<endl;
+			vhdl << tab << declare("zeroRemainder")<<"<= not( not (tempFractionResult"<<of(sizeOfRemainder-1)<<") and zeroFractionResult"<<of(sizeOfRemainder-1)<<");"<<endl;
 	
 			// signals for Muxes
 	
@@ -284,17 +284,17 @@ namespace flopoco{
 				nextCycle();
 	
 			//selection of mux 3
-			vhdl << tab << declare("outputOfMux3",1)<<"<=lastBitOfFraction;"<<endl;
+			vhdl << tab << declare("outputOfMux3")<<"<=lastBitOfFraction;"<<endl;
 			vhdl << tab << "with zeroRemainder select "<<endl
-			     << tab << declare("outputOfMux2",1)<<" <= outputOfMux3 when '0', '1' when others;"<<endl;
+			     << tab << declare("outputOfMux2")<<" <= outputOfMux3 when '0', '1' when others;"<<endl;
 			vhdl << tab << "with firstBitofRest select "<<endl
-			     << tab << declare("outputOfMux1",1)<<" <= outputOfMux2 when '1', '0' when others;"<<endl;
+			     << tab << declare("outputOfMux1")<<" <= outputOfMux2 when '1', '0' when others;"<<endl;
 			vhdl << tab << declare("possibleCorrector4Rounding",wF+wE+1)<<"<=CONV_STD_LOGIC_VECTOR(0,"<<wE<<") & correctingExponent & CONV_STD_LOGIC_VECTOR(0,"<<wF<<");"<<endl;
 			vhdl << tab << declare("concatenationForRounding",wE+wF+1)<<"<= '0' & convertedExponent & fractionConverted;"<<endl;
 	
 			vhdl << tab << declare("testC",wE+wF+1)<<"<= concatenationForRounding;"<<endl;
 			vhdl << tab << declare("testR",wE+wF+1)<<"<= possibleCorrector4Rounding;"<<endl;
-			vhdl << tab << declare("testM",1)<<"<= outputOfMux1;"<<endl;
+			vhdl << tab << declare("testM")<<"<= outputOfMux1;"<<endl;
 	
 	
 			roundingAdder = new IntAdder(target,wF+wE+1);
@@ -312,8 +312,8 @@ namespace flopoco{
 			vhdl << tab << declare("convertedExponentAfterRounding",wE)<<"<= roundedResult"<<range(wE+wF-1,wF)<<";"<<endl;
 			vhdl << tab << declare("convertedFractionAfterRounding",wF)<<"<= roundedResult"<<range(wF-1,0)<<";"<<endl;
 	
-			vhdl << tab << declare("MSBSelection",1)<<"<= overflowSignal or roundedResult"<<of(wF+wE)<<";"<<endl;
-			vhdl << tab << declare("LSBSelection",1)<<"<= not(underflowSignal and not(zeroInput));"<<endl;
+			vhdl << tab << declare("MSBSelection")<<"<= overflowSignal or roundedResult"<<of(wF+wE)<<";"<<endl;
+			vhdl << tab << declare("LSBSelection")<<"<= not(underflowSignal and not(zeroInput));"<<endl;
 			vhdl << tab << declare("Selection",2)<<"<= MSBSelection & LSBSelection when zeroInput='0' else \"00\";"<<endl;
 			vhdl << tab << declare("specialBits",2)<<" <= Selection;"<<endl;
 	
@@ -344,7 +344,7 @@ namespace flopoco{
 	
 					setCycleFromSignal("zeroDS");
 	
-					vhdl << tab << declare("zeroInput",1)<<"<= zeroDS"<<of(MSB-LSB-1)<<" and not (signSignal);"<<endl;
+					vhdl << tab << declare("zeroInput")<<"<= zeroDS"<<of(MSB-LSB-1)<<" and not (signSignal);"<<endl;
 				}else{
 					vhdl << tab << declare("minusOne4ZD",MSB -LSB+1)<<"<=CONV_STD_LOGIC_VECTOR("<<-1<<","<<MSB-LSB+1<<");"<<endl;
 					vhdl << tab << declare("passedInputBit",MSB-LSB+1)<<"<= '0' & passedInput;"<<endl;
@@ -359,7 +359,7 @@ namespace flopoco{
 	
 					setCycleFromSignal("zeroDS");
 	
-					vhdl << tab << declare("zeroInput",1)<<"<= zeroDS"<<of(MSB-LSB)<<" and not (signSignal);"<<endl;
+					vhdl << tab << declare("zeroInput")<<"<= zeroDS"<<of(MSB-LSB)<<" and not (signSignal);"<<endl;
 				}
 
 				//code for the leading zeros/ones
@@ -421,7 +421,7 @@ namespace flopoco{
 					vhdl << tab << declare("tempFractionResult",maximalOutputValue+1)<<"<= '0' & temporalFraction;"<<endl;
 				}
 	
-				vhdl << tab << declare("correctingExponent",1)<<"<=tempFractionResult"<<of(sizeFractionPlusOne)<<";"<<endl;
+				vhdl << tab << declare("correctingExponent")<<"<=tempFractionResult"<<of(sizeFractionPlusOne)<<";"<<endl;
 				vhdl << tab << declare("convertedFraction",wF)<<"<=tempFractionResult"<<range(wF-1,0)<<";"<<endl;
 	
 				//code for creating the exponent
@@ -452,9 +452,9 @@ namespace flopoco{
 				vhdl << tab << declare("biassOfOnes",wE-1)<<"<=CONV_STD_LOGIC_VECTOR("<<pow(double(2),wE)-1<<","<<wE-1<<");"<<endl;
 				vhdl << tab << declare("biassSignal",wE)<<"<='0' & biassOfOnes;"<<endl;
 				vhdl << tab << declare("biassSignalBit",wE+1)<<"<='0' & biassSignal;"<<endl;
-				vhdl << tab << declare("zeroBitExponent",1)<<"<='0';"<<endl;
+				vhdl << tab << declare("zeroBitExponent")<<"<='0';"<<endl;
 				vhdl << tab << declare("partialConvertedExponentBit",wE+1)<<"<= '0' & partialConvertedExponent;"<<endl;
-				vhdl << tab << declare("sign4OU",1)<<"<= partialConvertedExponent"<<of(wE-1)<<";"<<endl;
+				vhdl << tab << declare("sign4OU")<<"<= partialConvertedExponent"<<of(wE-1)<<";"<<endl;
 	
 				exponentFinal = new IntAdder(target,wE+1);
 				exponentFinal->changeName(getName()+"exponentFinal");
@@ -469,16 +469,16 @@ namespace flopoco{
 	
 				vhdl << tab << declare("OUflowSignal1",2)<<"<= convertedExponentBit"<<range(wE,wE-1)<<";"<<endl;
 	
-				vhdl << tab << declare("underflowSignal",1)<<"<= '1' when (sign4OU='1' and OUflowSignal1=\"01\" ) else '0';"<<endl;
+				vhdl << tab << declare("underflowSignal")<<"<= '1' when (sign4OU='1' and OUflowSignal1=\"01\" ) else '0';"<<endl;
 	
-				vhdl << tab << declare("overflowSignal1",1)<<"<= '1' when (sign4OU='0' and OUflowSignal1=\"10\" ) else '0';"<<endl;
+				vhdl << tab << declare("overflowSignal1")<<"<= '1' when (sign4OU='0' and OUflowSignal1=\"10\" ) else '0';"<<endl;
 	
 				syncCycleFromSignal("correctingExponent");
 	
 				vhdl << tab << declare("zeroInput4Exponent",wE+1)<<"<=(others=>'0');"<<endl;
 				vhdl << tab << declare("possibleConvertedExponent2",wE)<<"<= convertedExponentBit"<<range(wE-1,0)<<";"<<endl;
 				vhdl << tab << declare("possibleConvertedExponent20",wE+1)<<"<= '0' & possibleConvertedExponent2;"<<endl;
-				vhdl << tab << declare("sign4OU2",1)<<"<= possibleConvertedExponent2"<<of(wE-1)<<";"<<endl;
+				vhdl << tab << declare("sign4OU2")<<"<= possibleConvertedExponent2"<<of(wE-1)<<";"<<endl;
 	
 				expCorrect = new IntAdder(target,wE+1);
 				expCorrect->changeName(getName()+"expCorrect");
@@ -492,13 +492,13 @@ namespace flopoco{
 				syncCycleFromSignal("finalConvertedExponent");
 	
 				vhdl << tab << declare("convertedExponent",wE)<<"<= finalConvertedExponent"<<range(wE-1,0)<<";"<<endl;
-				vhdl << tab << declare("overflowSignal2",1)<<"<= '1' when (sign4OU2='0' and finalConvertedExponent"<<range(wE,wE-1)<<" = \"10\" ) else '0' ;"<<endl;
-				vhdl << tab << declare("overflowSignal",1)<<"<= overflowSignal2 or overflowSignal1;"<<endl;
+				vhdl << tab << declare("overflowSignal2")<<"<= '1' when (sign4OU2='0' and finalConvertedExponent"<<range(wE,wE-1)<<" = \"10\" ) else '0' ;"<<endl;
+				vhdl << tab << declare("overflowSignal")<<"<= overflowSignal2 or overflowSignal1;"<<endl;
 
 				//code for the special bits
 	
-				vhdl << tab << declare("MSBSelection",1)<<"<= overflowSignal;"<<endl;
-				vhdl << tab << declare("LSBSelection",1)<<"<= not(underflowSignal or zeroInput);"<<endl;
+				vhdl << tab << declare("MSBSelection")<<"<= overflowSignal;"<<endl;
+				vhdl << tab << declare("LSBSelection")<<"<= not(underflowSignal or zeroInput);"<<endl;
 				vhdl << tab << declare("Selection",2)<<"<= MSBSelection & LSBSelection when zeroInput='0' else \"00\";"<<endl;
 				vhdl << tab << declare("specialBits",2)<<" <= Selection;"<<endl;
 		

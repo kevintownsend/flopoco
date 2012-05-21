@@ -165,7 +165,7 @@ namespace flopoco{
 
 		/* determine if the input has been shifted out from the accumulator. 
 		In this case the accumulator will added 0 */
-		vhdl << tab << declare("flushedToZero",1) << " <= '1' when (shiftVal" << of(wEX_)<<"='1' or exnX=\"00\") else '0';" << endl;
+		vhdl << tab << declare("flushedToZero") << " <= '1' when (shiftVal" << of(wEX_)<<"='1' or exnX=\"00\") else '0';" << endl;
 
 		/* in most FPGAs computation of the summand2c will be done in one LUT level */
 		vhdl << tab << declare("summand", sizeSummand_, true, Signal::registeredWithSyncReset) << "<= " << 

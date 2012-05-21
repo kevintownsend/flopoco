@@ -72,9 +72,9 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	// in [-1,0[ as they were in [1,2[, just adding 2 and treating
 	// the binary representation of X as if it was an unsigned fixed-point
 	// in [0,2[
-	vhdl << tab << declare ("X_sgn",1) << " <= X" << of (w) << ";" << endl;
-	vhdl << tab << declare ("Q",1) << " <= X" << of (w-1) << ";" << endl;
-	vhdl << tab << declare ("O",1) << " <= X" << of (w-2) << ";" << endl;
+	vhdl << tab << declare ("X_sgn") << " <= X" << of (w) << ";" << endl;
+	vhdl << tab << declare ("Q") << " <= X" << of (w-1) << ";" << endl;
+	vhdl << tab << declare ("O") << " <= X" << of (w-2) << ";" << endl;
 	vhdl << tab << declare ("Y",w-2) << " <= X " << range (w-3,0) << ";" << endl;
 	// now X -> X_sgn + Q*.5 + O*.25 + Y where Q,O \in {0,1} and Y \in {0,.25}
 
