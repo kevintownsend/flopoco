@@ -20,6 +20,7 @@
 #include "PowerROM.hh"
 #include "PowerAdHoc.hh"
 #include "TermPowMult.hh"
+#include "Operator.hpp"
 
 
 
@@ -302,15 +303,14 @@ class TermPowMultTableInstance: public flopoco::Operator {
 		vhdl << endl;
 
 		if (alpha)
-			addInput ("A", alpha);
+			addInput ("a", alpha);
 		if ((i >= mM) && (sigma > 1))
-			addInput ("S", sigma-1);
-		addOutput ("R", wTable);
+			addInput ("s", sigma-1);
+		addOutput ("r", wTable);
 
 		int wI = i < mM ? alpha : alpha+sigma-1;
 		if (wI)
-			vhdl << "  signal x : std_logic_vector(" << (wI-1) << " downto 0);" << endl;
-		vhdl << "begin" << endl;
+			declare ("x", wI);
 
 		if (wI) {
 			if ((i < mM) || (sigma <= 1))
@@ -345,21 +345,9 @@ Component::Component (flopoco::Target* t, TermPowMult tpm, std::string name)
 	Param& p = tpm.p;
 	Power* pow = tpm.pow;
 	setName (name);
-	using flopoco::join;
-
-	{
-		ostringstream buf;
-		buf << name << "_pow";
-		//pow->genVHDL(vhdl, buf.str());
-		Operator* op = pow->toComponent(t, buf.str());
-		oplist.push_back (op);
-		vhdl << endl << endl;
-	}
+	using namespace flopoco;
 
 	for (int i = 0; i < tp.mM+tp.mT; i++) {
-		TermPowMultTableInstance* op = new TermPowMultTableInstance
-			(t, d, tp.mM, tp.mT, tp.alphas[i], tp.sigmas[i], wTable[i], i, table[i], getName() + flopoco::join("_t",i+1));
-		oplist.push_back (op);
 	}
 
 	vhdl << "--------------------------------------------------------------------------------" << endl;
@@ -380,18 +368,11 @@ Component::Component (flopoco::Target* t, TermPowMult tpm, std::string name)
 	if (tp.alpha)
 		addInput ("a", tp.alpha);
 	addInput ("b", tp.beta);
-	addOutput ("r", p.wO+p.g);
+	addOutput ("r", p.wO+p.g+1);
 
 	declare ("sign");
 	if(tp.beta >= 2)
-		declare ("b0", tp.beta-1); //should be always vectorial
-	declare ("s", tp.p->lambda);
-	vhdl << "  component " << name << "_pow is" << endl;
-	vhdl << "    port ( ";
-	if(tp.beta >= 2)
-		vhdl << "x : in  std_logic_vector(" << (tp.beta-2) << " downto 0);" << endl << "           ";
-	vhdl << "r : out std_logic_vector(" << (tp.p->lambda-1) << " downto 0) );" << endl;
-	vhdl << "  end component;" << endl;
+		declare ("b0", tp.beta-1);
 
 	for (int i = 0; i < tp.mM+tp.mT; i++) {
 		vhdl << endl;
@@ -400,18 +381,10 @@ Component::Component (flopoco::Target* t, TermPowMult tpm, std::string name)
 		declare (join("sign_",i+1));
 		if (tp.sigmas[i] > 1)
 			declare (join("s_",i+1), tp.sigmas[i]-1);
+		// exclude outPortMapped r0's:
 		if (i < tp.mM)
-			declare (join("k_",i+1), wTable[i]);
-		declare (join("r0_",i+1), (i < tp.mM) ? (tp.sigmas[i]+wTable[i]) : wTable[i]);
+			declare (join("r0_",i+1), tp.sigmas[i]+wTable[i]);
 		declare (join("r_",i+1), p.wO+p.g+1);
-		vhdl << "  component " << name << "_t" << (i+1) << " is" << endl;
-		vhdl << "    port ( ";
-		if (tp.alphas[i])
-			vhdl << "a : in  std_logic_vector(" << (tp.alphas[i]-1) << " downto 0);" << endl << "           ";
-		if ((i >= tp.mM) && (tp.sigmas[i] > 1))
-			vhdl << "s : in  std_logic_vector(" << (tp.sigmas[i]-2) << " downto 0);" << endl << "           ";
-		vhdl << "r : out std_logic_vector(" << (wTable[i]-1) << " downto 0) );" << endl;
-		vhdl << "  end component;" << endl;
 	}
 
 	vhdl << "  sign <= not b(" << (tp.beta-1) << ");" << endl;
@@ -419,29 +392,42 @@ Component::Component (flopoco::Target* t, TermPowMult tpm, std::string name)
 		vhdl << "  b0 <= b(" << (tp.beta-2) << " downto 0) xor (" << (tp.beta-2) << " downto 0 => sign);" << endl;
 	vhdl << endl;
 
-	vhdl << "  pow : " << name << "_pow" << endl;
-	vhdl << "    port map ( ";
-	if(tp.beta >= 2)
-		vhdl << "x => b0," << endl << "               ";
-	vhdl << "r => s );" << endl;
-	vhdl << endl;
+	{
+		ostringstream buf;
+		buf << name << "_pow";
+		Operator* op = pow->toComponent(t, buf.str());
+		oplist.push_back (op);
+
+		outPortMap (op, "r", "s");
+		if (tp.beta >= 2)
+			inPortMap (op, "x", "b0");
+
+		vhdl << instance (op, "pow");
+	}
 
 	for (int i = 0; i < tp.mM+tp.mT; i++) {
 		if (tp.alphas[i])
-			vhdl << "  a_" << (i+1) << " <= a(" << (tp.alpha-1) << " downto " << (tp.alpha-tp.alphas[i]) << ");" << endl;
-		vhdl << "  sign_" << (i+1) << " <= not s(" << (tp.p->lambda-tp.rhos[i]-1) << ");" << endl;
+			vhdl << "  a_" << (i+1) << " <= a" << range(tp.alpha-1, tp.alpha-tp.alphas[i]) << ";" << endl;
+		vhdl << "  sign_" << (i+1) << " <= not s" << of(tp.p->lambda-tp.rhos[i]-1) << ";" << endl;
 		if (tp.sigmas[i] > 1) {
-			vhdl << "  s_" << (i+1) << " <= s(" << (tp.p->lambda-tp.rhos[i]-2) << " downto "
-				 << (tp.p->lambda-tp.rhos[i]-tp.sigmas[i]) << ") xor (" << (tp.p->lambda-tp.rhos[i]-2)
-				 << " downto " << (tp.p->lambda-tp.rhos[i]-tp.sigmas[i]) << " => sign_" << (i+1) << ");" << endl;
+			vhdl << "  s_" << (i+1) << " <= s" << range(tp.p->lambda-tp.rhos[i]-2, tp.p->lambda-tp.rhos[i]-tp.sigmas[i])
+			     << " xor " << rangeAssign(tp.p->lambda-tp.rhos[i]-2, tp.p->lambda-tp.rhos[i]-tp.sigmas[i], join("sign_",i+1))
+			     << ";" << endl;
 		}
-		vhdl << "  t_" << (i+1) << " : " << name << "_t" << (i+1) << endl;
-		vhdl << "    port map ( ";
-		if (tp.alphas[i])
-			vhdl << "a => a_" << (i+1) << "," << endl << "               ";
-		if ((i >= tp.mM) && (tp.sigmas[i] > 1))
-			vhdl << "s => s_" << (i+1) << "," << endl << "               ";
-		vhdl << "r => " << (i < tp.mM ? "k_" : "r0_") << (i+1) << " );" << endl;
+
+		{
+			TermPowMultTableInstance* op = new TermPowMultTableInstance
+				(t, d, tp.mM, tp.mT, tp.alphas[i], tp.sigmas[i], wTable[i], i, table[i], getName() + flopoco::join("_t",i+1));
+			oplist.push_back (op);
+
+			outPortMap (op, "r", join(i < tp.mM ? "k_" : "r0_",i+1));
+			if ((i >= tp.mM) && (tp.sigmas[i] > 1))
+				inPortMap (op, "s", join("s_",i+1));
+			if (tp.alphas[i])
+				inPortMap (op, "a", join("a_",i+1));
+
+			vhdl << instance (op, join("t_",i+1));
+		}
 
 		if (i < tp.mM)
 			vhdl << "  r0_" << (i+1) << " <= k_" << (i+1) << " * (s_" << (i+1) << " & \"1\");" << endl;

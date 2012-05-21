@@ -16,6 +16,7 @@
 
 */
 #include "PowerAdHoc.hh"
+#include "Operator.hpp"
 
 
 
@@ -261,7 +262,7 @@ Component::Component (flopoco::Target* t, PowerAdHoc pah, std::string name)
 	int nPPLine = pah.nPPLine;
 	PowerAdHoc::tPPArray& ppa = pah.ppa; // would need a copy if pah is changed to const&
 	setName (name);
-	using flopoco::join;
+	using namespace flopoco;
 
 	vhdl << "--------------------------------------------------------------------------------" << endl;
 	vhdl << "-- PowerAdHoc instance for order-" << d << " powering unit." << endl;

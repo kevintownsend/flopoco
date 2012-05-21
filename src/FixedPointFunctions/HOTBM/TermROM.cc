@@ -171,6 +171,7 @@ Component::Component (flopoco::Target* t, TermROM tr, std::string name)
 	long long int* table = tr.table;
 	setName (name);
 	Param& p = tr.p;
+	using namespace flopoco;
 
 	int beta_ = tp.beta ? tp.beta-1 : 0;
 
