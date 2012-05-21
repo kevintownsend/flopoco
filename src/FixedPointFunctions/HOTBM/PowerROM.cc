@@ -115,8 +115,8 @@ Component::Component (flopoco::Target* t, PowerROM pr, std::string name)
 	vhdl << endl;
 
 	if (pp.beta >= 2)
-		addInput ("X", pp.beta-1);
-	addOutput ("R", pp.lambda);
+		addInput ("x", pp.beta-1);
+	addOutput ("r", pp.lambda);
 
 	mpz_t *mpT = new mpz_t[P(pp.beta-1)];
 	for (long long int i = 0; i < P(pp.beta-1); i++) {

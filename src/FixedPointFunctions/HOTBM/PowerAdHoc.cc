@@ -258,21 +258,23 @@ Component::Component (flopoco::Target* t, PowerAdHoc pah, std::string name)
 {
 	const PowerAdHocParam& pp = pah.pp;
 	int d = pah.d;
+	setName (name);
+	using flopoco::join;
+
 	vhdl << "--------------------------------------------------------------------------------" << endl;
 	vhdl << "-- PowerAdHoc instance for order-" << d << " powering unit." << endl;
 	vhdl << "-- Decomposition:" << endl;
 	vhdl << "--   beta_" << d << " = " << pp.beta << "; mu_" << d << " = " << pp.mu
 	     << "; lambda_" << d << " = " << pp.lambda << "." << endl;
 	vhdl << endl;
-	setName (name);
 
-	addInput ("X", pp.beta-1);
-	addOutput ("R", pp.lambda);
+	addInput ("x", pp.beta-1);
+	addOutput ("r", pp.lambda);
 
 	for (int i = 0; i < pah.nPPLine; i++)
-		vhdl << "  signal pp" << i << " : std_logic_vector(" << (pp.mu-2) << " downto 0);" << endl;
-	vhdl << "  signal r0 : std_logic_vector(" << (pp.mu-2) << " downto 0);" << endl;
-	vhdl << "begin" << endl;
+		declare (join("pp",i), pp.mu-1);
+	declare ("r0", pp.mu-1);
+
 	for (int i = -1; i > -pp.mu; i--) {
 		int l = 0;
 		for (PowerAdHoc::tPPLine::const_iterator j = pah.ppa[i].begin(); j != pah.ppa[i].end(); j++, l++) {

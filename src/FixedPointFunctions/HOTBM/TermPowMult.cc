@@ -344,6 +344,7 @@ Component::Component (flopoco::Target* t, TermPowMult tpm, std::string name)
 	bool signTable = tpm.signTable;
 	Param& p = tpm.p;
 	setName (name);
+	using flopoco::join;
 
 	{
 		ostringstream buf;
@@ -376,14 +377,14 @@ Component::Component (flopoco::Target* t, TermPowMult tpm, std::string name)
 	vhdl << endl;
 
 	if (tp.alpha)
-		addInput ("A", tp.alpha);
-	addInput ("B", tp.beta);
-	addOutput ("R", p.wO+p.g);
+		addInput ("a", tp.alpha);
+	addInput ("b", tp.beta);
+	addOutput ("r", p.wO+p.g);
 
-	vhdl << "  signal sign   : std_logic;" << endl;
+	declare ("sign");
 	if(tp.beta >= 2)
-		vhdl << "  signal b0     : std_logic_vector(" << (tp.beta-2) << " downto 0);" << endl;
-	vhdl << "  signal s      : std_logic_vector(" << (tp.p->lambda-1) << " downto 0);" << endl;
+		declare ("b0", tp.beta-1); //should be always vectorial
+	declare ("s", tp.p->lambda);
 	vhdl << "  component " << name << "_pow is" << endl;
 	vhdl << "    port ( ";
 	if(tp.beta >= 2)
@@ -394,15 +395,14 @@ Component::Component (flopoco::Target* t, TermPowMult tpm, std::string name)
 	for (int i = 0; i < tp.mM+tp.mT; i++) {
 		vhdl << endl;
 		if (tp.alphas[i])
-			vhdl << "  signal a_" << (i+1) << "    : std_logic_vector(" << (tp.alphas[i]-1) << " downto 0);" << endl;
-		vhdl << "  signal sign_" << (i+1) << " : std_logic;" << endl;
+			declare (join("a_",i+1), tp.alphas[i]);
+		declare (join("sign_",i+1));
 		if (tp.sigmas[i] > 1)
-			vhdl << "  signal s_" << (i+1) << "    : std_logic_vector(" << (tp.sigmas[i]-2) << " downto 0);" << endl;
+			declare (join("s_",i+1), tp.sigmas[i]-1);
 		if (i < tp.mM)
-			vhdl << "  signal k_" << (i+1) << "    : std_logic_vector(" << (wTable[i]-1) << " downto 0);" << endl;
-		vhdl << "  signal r0_" << (i+1) << "   : std_logic_vector("
-			 << (i < tp.mM ? tp.sigmas[i]+wTable[i]-1 : wTable[i]-1) << " downto 0);" << endl;
-		vhdl << "  signal r_" << (i+1) << "    : std_logic_vector(" << (p.wO+p.g) << " downto 0);" << endl;
+			declare (join("k_",i+1), wTable[i]);
+		declare (join("r0_",i+1), (i < tp.mM) ? (tp.sigmas[i]+wTable[i]) : wTable[i]);
+		declare (join("r_",i+1), p.wO+p.g+1);
 		vhdl << "  component " << name << "_t" << (i+1) << " is" << endl;
 		vhdl << "    port ( ";
 		if (tp.alphas[i])
@@ -413,7 +413,6 @@ Component::Component (flopoco::Target* t, TermPowMult tpm, std::string name)
 		vhdl << "  end component;" << endl;
 	}
 
-	vhdl << "begin" << endl;
 	vhdl << "  sign <= not b(" << (tp.beta-1) << ");" << endl;
 	if(tp.beta >= 2)
 		vhdl << "  b0 <= b(" << (tp.beta-2) << " downto 0) xor (" << (tp.beta-2) << " downto 0 => sign);" << endl;

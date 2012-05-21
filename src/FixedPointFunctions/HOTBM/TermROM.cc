@@ -185,19 +185,19 @@ Component::Component (flopoco::Target* t, TermROM tr, std::string name)
 	vhdl << endl;
 
 	if (tp.alpha)
-		addInput ("A", tp.alpha);
+		addInput ("a", tp.alpha);
 	if (tp.beta)
-		addInput ("B", tp.beta);
-	addOutput ("R", tr.p.wO+tr.p.g+1);
+		addInput ("b", tp.beta);
+	addOutput ("r", tr.p.wO+tr.p.g+1);
 
 	if (tp.beta)
-		vhdl << "  signal sign : std_logic;" << endl;
+		declare ("sign");
 	if (beta_)
-		vhdl << "  signal b0   : std_logic_vector(" << (beta_-1) << " downto 0);" << endl;
+		declare ("b0", beta_);
 	if (beta_ || tp.alpha)
-		vhdl << "  signal x0   : std_logic_vector(" << (tp.alpha+beta_-1) << " downto 0);" << endl;
-	vhdl << "  signal r0   : std_logic_vector(" << (wTable-1) << " downto 0);" << endl;
-	vhdl << "begin" << endl;
+		declare ("x0", tp.alpha + beta_);
+	declare ("r0", wTable);
+
 	if (tp.beta)
 		vhdl << "  sign <= not b(" << (tp.beta-1) << ");" << endl;
 	if (beta_) {
