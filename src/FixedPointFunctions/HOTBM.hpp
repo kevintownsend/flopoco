@@ -30,6 +30,9 @@ namespace flopoco{
 		int wIn() const { return wI; }
 		int wOut() const { return wO + 1; }
 
+		// defined in HOTBMInstance.cc
+		void genVHDL();
+
 	private:
 		HOTBMInstance *inst;
 		Function &f;

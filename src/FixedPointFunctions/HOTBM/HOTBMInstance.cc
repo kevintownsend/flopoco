@@ -23,6 +23,7 @@
 #include "TermROM.hh"
 #include "TermPowMult.hh"
 #include "HOTBMInstance.hh"
+#include "../HOTBM.hpp"
 
 namespace flopoco{
 
@@ -566,8 +567,11 @@ namespace flopoco{
 		return delay;
 	}
 
-	void HOTBMInstance::genVHDL(flopoco::Target* t, flopoco::FlopocoStream& vhdl, string name, std::vector<Operator*>& oplist)
+	void flopoco::HOTBM::genVHDL()
 	{
+		Param& p = inst->p;
+		Term** tList = inst->tList;
+
 		vhdl << "--------------------------------------------------------------------------------" << endl;
 		vhdl << "--------------------------------------------------------------------------------" << endl;
 		vhdl << "-- HOTBM instance for function " << f.getName() << "." << endl;
@@ -588,55 +592,32 @@ namespace flopoco{
 			vhdl << os.str();
 		}
 		vhdl << endl;
-		vhdl << endl << endl;
 
 		for (int i = 0; i <= p.n; i++) {
+			if (p.t[i]->alpha)
+				vhdl << declare (join("a_",i),p.t[i]->alpha) << " <= x"
+				     << range (p.wI-1, p.wI-p.t[i]->alpha) << ";\n";
+			if (p.t[i]->beta)
+				vhdl << declare (join("b_",i),p.t[i]->beta) << " <= x"
+				     << range (p.beta-1, p.beta-p.t[i]->beta) << ";\n";
+
 			ostringstream buf;
-			buf << name << "_t" << i;
-			//tList[i]->genVHDL(vhdl, buf.str());
-			Operator* op = tList[i]->toComponent (t, buf.str());
+			buf << getName() << "_t" << i;
+			Operator* op = tList[i]->toComponent (target(), buf.str());
+
+			outPortMap (op, "r", join("r_",i));
+			if (p.t[i]->beta)
+				inPortMap (op, "b", join("b_",i));
+			if (p.t[i]->alpha)
+				inPortMap (op, "a", join("a_",i));
+
 			oplist.push_back(op);
-			vhdl << endl << endl;
+			vhdl << instance(op, join("t_",i));
 		}
-
-		for (int i = 0; i <= p.n; i++) {
-			if (p.t[i]->alpha)
-				vhdl << "  signal a_" << i << " : std_logic_vector(" << (p.t[i]->alpha-1) << " downto 0);" << endl;
-			if (p.t[i]->beta)
-				vhdl << "  signal b_" << i << " : std_logic_vector(" << (p.t[i]->beta-1) << " downto 0);" << endl;
-			vhdl << "  signal r_" << i << " : std_logic_vector(" << (p.wO+p.g) << " downto 0);" << endl;
-			vhdl << "  component " << name << "_t" << i << " is" << endl;
-			vhdl << "    port ( ";
-			if (p.t[i]->alpha)
-				vhdl << "a : in  std_logic_vector(" << (p.t[i]->alpha-1) << " downto 0);" << endl << "           ";
-			if (p.t[i]->beta)
-				vhdl << "b : in  std_logic_vector(" << (p.t[i]->beta-1) << " downto 0);" << endl << "           ";
-			vhdl << "r : out std_logic_vector(" << (p.wO+p.g) << " downto 0) );" << endl;
-			vhdl << "  end component;" << endl;
-			vhdl << endl;
-		}
-		vhdl << "  signal sum : std_logic_vector(" << (p.wO+p.g) << " downto 0);" << endl;
-		vhdl << "begin" << endl;
-
-		for (int i = 0; i <= p.n; i++) {
-			if (p.t[i]->alpha)
-				vhdl << "  a_" << i << " <= x(" << (p.wI-1) << " downto " << (p.wI-p.t[i]->alpha) << ");" << endl;
-			if (p.t[i]->beta)
-				vhdl << "  b_" << i << " <= x(" << (p.beta-1) << " downto " << (p.beta-p.t[i]->beta) << ");" << endl;
-			vhdl << "  t_" << i << " : " << name << "_t" << i << endl;
-			vhdl << "    port map ( ";
-			if (p.t[i]->alpha)
-				vhdl << "a => a_" << i << "," << endl << "               ";
-			if (p.t[i]->beta)
-				vhdl << "b => b_" << i << "," << endl << "               ";
-			vhdl << "r => r_" << i << " );" << endl;
-			vhdl << endl;
-		}
-
-		vhdl << "  sum <= ";
+		vhdl << declare ("sum", p.wO+p.g+1) << " <= ";
 		for (int i = 0; i <= p.n; i++)
 			vhdl << (i ? " + " : "") << "r_" << i;
 		vhdl << ";" << endl;
-		vhdl << "  r <= sum(" << (p.wO+p.g) << " downto " << (p.g) << ");" << endl;
+		vhdl << "  r <= sum" << range (p.wO+p.g, p.g) << ";" << endl;
 	}
 }

@@ -51,7 +51,7 @@ namespace flopoco{
 		addInput("X", wI);
 		addOutput("R", wO+1, 2);  // faithful rounding
 
-		inst->genVHDL(target, vhdl, getName(), oplist);
+		genVHDL();
 	}
 
 	HOTBM::~HOTBM()

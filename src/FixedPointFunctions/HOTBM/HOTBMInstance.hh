@@ -9,6 +9,7 @@
 #include "Term.hh"
 #include "Util.hh"
 #include "Operator.hpp"
+#include "../HOTBM.hpp"
 
 #define HOTBM_DUMP_X           1
 #define HOTBM_DUMP_FUNCTION    2
@@ -44,7 +45,7 @@ namespace flopoco{
 		double estimArea(int t = -1) const;
 		double estimDelay(int t = -1) const;
 
-		void genVHDL(flopoco::Target* t, flopoco::FlopocoStream& vhdl, string name, std::vector<flopoco::Operator*>& oplist);
+		friend void HOTBM::genVHDL();
 
 		static bool verbose;
 		static bool force;
