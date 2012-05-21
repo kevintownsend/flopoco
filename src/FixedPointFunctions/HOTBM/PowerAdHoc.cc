@@ -280,23 +280,23 @@ Component::Component (flopoco::Target* t, PowerAdHoc pah, std::string name)
 	for (int i = -1; i > -pp.mu; i--) {
 		int l = 0;
 		for (PowerAdHoc::tPPLine::const_iterator j = ppa[i].begin(); j != ppa[i].end(); j++, l++) {
-			vhdl << "  pp" << l << "(" << (pp.mu-1+i) << ") <= ";
+			vhdl << "  pp" << l << of(pp.mu-1+i) << " <= ";
 			if ((*j).empty())
 				vhdl << "'1'";
 			for (PowerAdHoc::tPPElement::const_iterator k = (*j).begin(); k != (*j).end(); k++) {
 				if (k != (*j).begin())
 					vhdl << " and ";
-				vhdl << "x(" << (pp.beta-1+*k) << ")";
+				vhdl << "x" << of(pp.beta-1+*k);
 			}
 			vhdl << ";" << endl;
 		}
 		for (; l < nPPLine; l++)
-			vhdl << "  pp" << l << "(" << (pp.mu-1+i) << ") <= '0';" << endl;
+			vhdl << "  pp" << l << of(pp.mu-1+i) << " <= '0';" << endl;
 		vhdl << endl;
 	}
 	vhdl << "  r0 <= ";
 	for (int i = 0; i < nPPLine; i++)
 		vhdl << (i ? " + " : "") << "pp" << i;
 	vhdl << ";" << endl;
-	vhdl << "  r <= \"1\" & r0(" << (pp.mu-2) << " downto " << (pp.mu-pp.lambda) << ");" << endl;
+	vhdl << "  r <= \"1\" & r0" << range(pp.mu-2, pp.mu-pp.lambda) << ";" << endl;
 }

@@ -200,9 +200,9 @@ Component::Component (flopoco::Target* t, TermROM tr, std::string name)
 	declare ("r0", wTable);
 
 	if (tp.beta)
-		vhdl << "  sign <= not b(" << (tp.beta-1) << ");" << endl;
+		vhdl << "  sign <= not b" << of(tp.beta-1) << ";" << endl;
 	if (beta_) {
-		vhdl << "  b0 <= b(" << (beta_-1) << " downto 0) xor (" << (beta_-1) << " downto 0 => sign);" << endl;
+		vhdl << "  b0 <= b" << range(beta_-1, 0) << " xor " << rangeAssign(beta_-1, 0, "sign") << ";" << endl;
 		if (tp.alpha)
 			vhdl << "  x0 <= a & b0;" << endl;
 		else
@@ -225,12 +225,11 @@ Component::Component (flopoco::Target* t, TermROM tr, std::string name)
 	vhdl << endl;
 
 	if ((d%2) && tp.beta){
-		vhdl << "  r(" << (wTable-1) << " downto 0) <= r0 xor (" << (wTable-1) << " downto 0 => ("
-			 << "sign));" << endl;
+		vhdl << "  r" << range(wTable-1, 0) << " <= r0 xor " << rangeAssign(wTable-1, 0, "sign") << ";" << endl;
 		// Do NOT negate sign when signTable==SignNegative here
 	}
 	else
-		vhdl << "  r(" << (wTable-1) << " downto 0) <= r0;" << endl;
+		vhdl << "  r" << range(wTable-1, 0) << " <= r0;" << endl;
 
 	if (p.wO+p.g+1 > wTable) {
 		vhdl << "  -- Sign extension" << endl;
