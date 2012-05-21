@@ -40,7 +40,7 @@ extern vector<Operator*> oplist;
 		// Set up the IO signals
 		addInput ( "X" , wIn_);
 		addInput ( "Y" , wIn_);
-		addInput ( "Cin", 1  );
+		addInput( "Cin");
 		addOutput( "R"  , wIn_);
 
 

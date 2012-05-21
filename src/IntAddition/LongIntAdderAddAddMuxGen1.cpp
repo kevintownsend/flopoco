@@ -43,7 +43,7 @@ extern vector<Operator*> oplist;
 		// Set up the IO signals
 		for (int i=0; i<2; i++)
 			addInput ( join("X",i) , wIn_);
-		addInput ("Cin", 1  );
+		addInput("Cin");
 		addOutput("R"  , wIn_);
 
 		if (verbose){

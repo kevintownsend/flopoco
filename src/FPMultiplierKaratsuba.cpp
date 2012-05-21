@@ -57,7 +57,7 @@ namespace flopoco{
 			addOutput  ("ResultExponent"   , wER_    );  
 			addOutput ("ResultSignificand", wFR_    );
 			addOutput ("ResultException"  , 2      );
-			addOutput ("ResultSign"       , 1      ); 
+			addOutput("ResultSign"       ); 
 		}
 
 		/* Sing Handling */

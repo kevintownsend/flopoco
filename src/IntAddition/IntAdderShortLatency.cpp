@@ -42,7 +42,7 @@ namespace flopoco {
 		// Set up the IO signals
 		addInput ( "X"  , wIn_, true );
 		addInput ( "Y"  , wIn_, true );
-		addInput ( "Cin", 1 );
+		addInput( "Cin");
 		addOutput ( "R"  , wIn_, 1 , true );
 		
 		vhdl << tab << "--ShortLatency"<<endl;
@@ -80,7 +80,7 @@ namespace flopoco {
 						low+=cSize[k];
 					vhdl << tab << declare ( name.str(),cSize[j]+1 ) << " <=  \"0\" & "<< ( i==0?"X":"Y" ) <<range ( high-1,low ) <<";"<<endl;
 				}
-				vhdl << tab << declare ( "scIn",1 ) << " <= Cin;"<<endl;
+				vhdl << tab << declare( "scIn") << " <= Cin;"<<endl;
 				
 				//				if (shortLatencyInputRegister ==1)
 				//					nextCycle();///////////////////

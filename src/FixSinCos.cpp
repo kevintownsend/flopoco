@@ -509,9 +509,9 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	     << " <= (not S_wo_sgn_ext) + 1;" << endl;
 	vhdl << tab << declare ("C_wo_sgn_neg", w+1)
 	     << " <= (not C_wo_sgn_ext) + 1;" << endl;
-	//vhdl << tab << declare ("S_sgn", 1)
+	//vhdl << tab << declare("S_sgn")
 	//     << " <= X_sgn;" << endl;
-	vhdl << tab << declare ("C_sgn", 1)
+	vhdl << tab << declare("C_sgn")
 	     << " <= Q xor X_sgn;" << endl;
 	vhdl << tab << "S <= S_wo_sgn_ext when X_sgn = '0'"
 	     << " else S_wo_sgn_neg;" << endl
