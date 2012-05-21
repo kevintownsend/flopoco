@@ -1,5 +1,6 @@
 TODO file for FloPoCo
 
+
 Testbench
 * Bug on outputs that are bits with isBus false and  multiple-valued  
 	(see the P output of Collision in release 2.1.0)
@@ -13,12 +14,20 @@ Pipeline framework, Operator and Targets:
 * fix the default getCycleFromSignal
 * insert getNewUId and comb/freq info directly in setName(), and clean up
 
+
+Multipliers
+* bug with empty multipliers (see FPPow 11 52)
+* uniform interface for IntMultiplier (signed/unsigned, truncated)
+* IntCompressorTree for bit heaps of arbitrary shape
+* Remove tiling exploration, replace it with cached/classical tilings
+
 Collision
 * manage infinities etc
 * decompose into FPSumOf3Squares and Collision
 * Sum of n squares
 
 Table and FunctionTable:
+* FunctionEvaluator with degree=0 should generate a FunctionTable
 * VHDL generation is broken when logicTable=0 (pipeline depth=1 but no register)
 
 FPLog:
