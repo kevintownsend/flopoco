@@ -101,11 +101,12 @@ PWPolynomial PowerROM::calcErrTab(double shift)
 	return errP;
 }
 
-Component::Component (flopoco::Target* t, PowerROM pr)
+Component::Component (flopoco::Target* t, PowerROM pr, std::string name)
 	:Operator (t)
 {
 	int d = pr.d;
 	PowerROMParam& pp = pr.pp;
+	setName (name);
 
 	vhdl << "--------------------------------------------------------------------------------" << endl;
 	vhdl << "-- PowerROM instance for order-" << d << " powering unit." << endl;

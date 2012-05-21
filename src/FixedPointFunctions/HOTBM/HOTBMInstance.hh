@@ -44,7 +44,7 @@ namespace flopoco{
 		double estimArea(int t = -1) const;
 		double estimDelay(int t = -1) const;
 
-		void genVHDL(flopoco::Target* t, flopoco::FlopocoStream& vhdl, string name, std::vector<flopoco::Operator*>);
+		void genVHDL(flopoco::Target* t, flopoco::FlopocoStream& vhdl, string name, std::vector<flopoco::Operator*>& oplist);
 
 		static bool verbose;
 		static bool force;

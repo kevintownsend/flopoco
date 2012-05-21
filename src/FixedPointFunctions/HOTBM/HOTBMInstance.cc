@@ -566,7 +566,7 @@ namespace flopoco{
 		return delay;
 	}
 
-	void HOTBMInstance::genVHDL(flopoco::Target* t, flopoco::FlopocoStream& vhdl, string name, std::vector<Operator*> oplist)
+	void HOTBMInstance::genVHDL(flopoco::Target* t, flopoco::FlopocoStream& vhdl, string name, std::vector<Operator*>& oplist)
 	{
 		vhdl << "--------------------------------------------------------------------------------" << endl;
 		vhdl << "--------------------------------------------------------------------------------" << endl;
@@ -594,7 +594,7 @@ namespace flopoco{
 			ostringstream buf;
 			buf << name << "_t" << i;
 			//tList[i]->genVHDL(vhdl, buf.str());
-			Operator* op = tList[i]->toComponent (t);
+			Operator* op = tList[i]->toComponent (t, buf.str());
 			oplist.push_back(op);
 			vhdl << endl << endl;
 		}

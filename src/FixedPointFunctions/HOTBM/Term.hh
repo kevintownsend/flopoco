@@ -27,7 +27,7 @@ public:
 	virtual double eval(long long int a, long long int b) const = 0;
 	virtual long long int evalRound(long long int a, long long int b) const = 0;
 
-	virtual flopoco::Operator* toComponent(flopoco::Target* t) = 0;
+	virtual flopoco::Operator* toComponent(flopoco::Target* t, std::string name) = 0;
 
 protected:
 	int d;

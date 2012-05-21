@@ -253,7 +253,7 @@ void PowerAdHoc::ppPrint(flopoco::FlopocoStream& vhdl, const tPPArray &ppa)
 	vhdl << "nPP: " << count << endl;
 }
 
-Component::Component (flopoco::Target* t, PowerAdHoc pah)
+Component::Component (flopoco::Target* t, PowerAdHoc pah, std::string name)
 	:Operator(t)
 {
 	const PowerAdHocParam& pp = pah.pp;
@@ -264,6 +264,7 @@ Component::Component (flopoco::Target* t, PowerAdHoc pah)
 	vhdl << "--   beta_" << d << " = " << pp.beta << "; mu_" << d << " = " << pp.mu
 	     << "; lambda_" << d << " = " << pp.lambda << "." << endl;
 	vhdl << endl;
+	setName (name);
 
 	addInput ("X", pp.beta-1);
 	addOutput ("R", pp.lambda);

@@ -23,7 +23,7 @@ public:
 
 	virtual void mpEval(mpz_t mpR, long long int b) const = 0;
 
-	virtual flopoco::Operator* toComponent(flopoco::Target* t) = 0;
+	virtual flopoco::Operator* toComponent(flopoco::Target* t, std::string name) = 0;
 
 protected:
 	int d;

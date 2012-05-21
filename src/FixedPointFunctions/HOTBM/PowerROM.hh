@@ -16,9 +16,9 @@ public:
 
 	void mpEval(mpz_t mpR, long long int b) const;
 
-	friend Component::Component (flopoco::Target*, PowerROM);
-	flopoco::Operator* toComponent(flopoco::Target* t) {
-		return new Component (t, *this);
+	friend Component::Component (flopoco::Target*, PowerROM, std::string);
+	flopoco::Operator* toComponent(flopoco::Target* t, std::string name) {
+		return new Component (t, *this, name);
 	}
 
 protected:

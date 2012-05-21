@@ -21,9 +21,9 @@ public:
 	double eval(long long int a, long long int b) const;
 	long long int evalRound(long long int a, long long int b) const;
 
-	friend Component::Component (flopoco::Target*, TermPowMult);
-	flopoco::Operator* toComponent(flopoco::Target* t) {
-		return new Component (t, *this);
+	friend Component::Component (flopoco::Target*, TermPowMult, std::string);
+	flopoco::Operator* toComponent(flopoco::Target* t, std::string name) {
+		return new Component (t, *this, name);
 	}
 
 protected:

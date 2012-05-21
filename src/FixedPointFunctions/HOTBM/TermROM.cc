@@ -161,7 +161,7 @@ PWPolynomial TermROM::calcErrTab(double shift)
 	return errP;
 }
 
-Component::Component (flopoco::Target* t, TermROM tr)
+Component::Component (flopoco::Target* t, TermROM tr, std::string name)
 	:Operator (t)
 {
 	TermROMParam& tp = tr.tp;
@@ -169,6 +169,7 @@ Component::Component (flopoco::Target* t, TermROM tr)
 	int wTable = tr.wTable;
 	TermROM::TableSign& signTable = tr.signTable;
 	long long int* table = tr.table;
+	setName (name);
 
 	int beta_ = tp.beta ? tp.beta-1 : 0;
 

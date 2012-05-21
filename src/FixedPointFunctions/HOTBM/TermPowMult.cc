@@ -334,7 +334,7 @@ class TermPowMultTableInstance: public flopoco::Operator {
 	}
 };
 
-Component::Component (flopoco::Target* t, TermPowMult tpm)
+Component::Component (flopoco::Target* t, TermPowMult tpm, std::string name)
 	:Operator (t)
 {
 	int d = tpm.d;
@@ -343,16 +343,15 @@ Component::Component (flopoco::Target* t, TermPowMult tpm)
 	TermPowMultParam& tp = tpm.tp;
 	bool signTable = tpm.signTable;
 	Param& p = tpm.p;
-	/* FIXME harder plz */
-	std::string name;
+	setName (name);
 
 	{
-		//ostringstream buf;
-		//buf << name << "_pow";
+		ostringstream buf;
+		buf << name << "_pow";
 		//pow->genVHDL(vhdl, buf.str());
-		Operator* op = tpm.pow->toComponent(t);
+		Operator* op = tpm.pow->toComponent(t, buf.str());
 		oplist.push_back (op);
-		//vhdl << endl << endl;
+		vhdl << endl << endl;
 	}
 
 	for (int i = 0; i < tp.mM+tp.mT; i++) {
