@@ -170,6 +170,7 @@ Component::Component (flopoco::Target* t, TermROM tr, std::string name)
 	TermROM::TableSign& signTable = tr.signTable;
 	long long int* table = tr.table;
 	setName (name);
+	Param& p = tr.p;
 
 	int beta_ = tp.beta ? tp.beta-1 : 0;
 
@@ -181,14 +182,14 @@ Component::Component (flopoco::Target* t, TermROM tr, std::string name)
 		vhdl << "beta_" << d << " = " << tp.beta << " (1+" << (tp.beta-1) << ")" << "; ";
 	else
 		vhdl << "beta_" << d << " = 0; ";
-	vhdl << "wO_" << d << " = " << wTable << "; " << "wO = " << tr.p.wO << "; " << "g = " << tr.p.g << "." << endl;
+	vhdl << "wO_" << d << " = " << wTable << "; " << "wO = " << p.wO << "; " << "g = " << p.g << "." << endl;
 	vhdl << endl;
 
 	if (tp.alpha)
 		addInput ("a", tp.alpha);
 	if (tp.beta)
 		addInput ("b", tp.beta);
-	addOutput ("r", tr.p.wO+tr.p.g+1);
+	addOutput ("r", p.wO+p.g+1);
 
 	if (tp.beta)
 		declare ("sign");
@@ -231,9 +232,9 @@ Component::Component (flopoco::Target* t, TermROM tr, std::string name)
 	else
 		vhdl << "  r(" << (wTable-1) << " downto 0) <= r0;" << endl;
 
-	if (tr.p.wO+tr.p.g+1 > wTable) {
+	if (p.wO+p.g+1 > wTable) {
 		vhdl << "  -- Sign extension" << endl;
-		vhdl << "  r(" << (tr.p.wO+tr.p.g) << " downto " << wTable << ") <= (" << (tr.p.wO+tr.p.g) << " downto " << wTable << " => ("
+		vhdl << "  r(" << (p.wO+p.g) << " downto " << wTable << ") <= (" << (p.wO+p.g) << " downto " << wTable << " => ("
 			 << (signTable == TermROM::SignNegative ? "not " : "");
 			 
 		if(signTable == TermROM::SignMixed) {

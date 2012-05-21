@@ -291,7 +291,7 @@ class TermPowMultTableInstance: public flopoco::Operator {
 	                          int alpha, int sigma, int wTable, int i,
 	                          long long int table[], std::string name)
 		:Operator (target) {
-		setName (name, "");
+		setName (name);
 		vhdl << "--------------------------------------------------------------------------------" << endl;
 		vhdl << "-- TermPowMult::Table instance for order-" << d << " term Q_" << (i+1) << "." << endl;
 		vhdl << "-- Decomposition:" << endl;
@@ -343,6 +343,7 @@ Component::Component (flopoco::Target* t, TermPowMult tpm, std::string name)
 	TermPowMultParam& tp = tpm.tp;
 	bool signTable = tpm.signTable;
 	Param& p = tpm.p;
+	Power* pow = tpm.pow;
 	setName (name);
 	using flopoco::join;
 
@@ -350,7 +351,7 @@ Component::Component (flopoco::Target* t, TermPowMult tpm, std::string name)
 		ostringstream buf;
 		buf << name << "_pow";
 		//pow->genVHDL(vhdl, buf.str());
-		Operator* op = tpm.pow->toComponent(t, buf.str());
+		Operator* op = pow->toComponent(t, buf.str());
 		oplist.push_back (op);
 		vhdl << endl << endl;
 	}

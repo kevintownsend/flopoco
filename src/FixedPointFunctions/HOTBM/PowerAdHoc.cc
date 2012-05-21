@@ -258,6 +258,8 @@ Component::Component (flopoco::Target* t, PowerAdHoc pah, std::string name)
 {
 	const PowerAdHocParam& pp = pah.pp;
 	int d = pah.d;
+	int nPPLine = pah.nPPLine;
+	PowerAdHoc::tPPArray& ppa = pah.ppa; // would need a copy if pah is changed to const&
 	setName (name);
 	using flopoco::join;
 
@@ -271,13 +273,13 @@ Component::Component (flopoco::Target* t, PowerAdHoc pah, std::string name)
 	addInput ("x", pp.beta-1);
 	addOutput ("r", pp.lambda);
 
-	for (int i = 0; i < pah.nPPLine; i++)
+	for (int i = 0; i < nPPLine; i++)
 		declare (join("pp",i), pp.mu-1);
 	declare ("r0", pp.mu-1);
 
 	for (int i = -1; i > -pp.mu; i--) {
 		int l = 0;
-		for (PowerAdHoc::tPPLine::const_iterator j = pah.ppa[i].begin(); j != pah.ppa[i].end(); j++, l++) {
+		for (PowerAdHoc::tPPLine::const_iterator j = ppa[i].begin(); j != ppa[i].end(); j++, l++) {
 			vhdl << "  pp" << l << "(" << (pp.mu-1+i) << ") <= ";
 			if ((*j).empty())
 				vhdl << "'1'";
@@ -288,12 +290,12 @@ Component::Component (flopoco::Target* t, PowerAdHoc pah, std::string name)
 			}
 			vhdl << ";" << endl;
 		}
-		for (; l < pah.nPPLine; l++)
+		for (; l < nPPLine; l++)
 			vhdl << "  pp" << l << "(" << (pp.mu-1+i) << ") <= '0';" << endl;
 		vhdl << endl;
 	}
 	vhdl << "  r0 <= ";
-	for (int i = 0; i < pah.nPPLine; i++)
+	for (int i = 0; i < nPPLine; i++)
 		vhdl << (i ? " + " : "") << "pp" << i;
 	vhdl << ";" << endl;
 	vhdl << "  r <= \"1\" & r0(" << (pp.mu-2) << " downto " << (pp.mu-pp.lambda) << ");" << endl;
