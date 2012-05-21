@@ -56,8 +56,8 @@ namespace flopoco{
 		addFPInput ("Z", wE, wF);
 		addFPInput ("Q", wE, wF);
 		
-		addInput("S",1);
-		addInput("oS",1);
+		addInput("S");
+		addInput("oS");
 		addFPOutput("R", wE, wF);
 		
 		//input muxes
