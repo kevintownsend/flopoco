@@ -161,94 +161,88 @@ PWPolynomial TermROM::calcErrTab(double shift)
 	return errP;
 }
 
-void TermROM::genVHDL(ostream &os, string name)
+Component::Component (flopoco::Target* t, TermROM tr)
+	:Operator (t)
 {
+	TermROMParam& tp = tr.tp;
+	int d = tr.d;
+	int wTable = tr.wTable;
+	TermROM::TableSign& signTable = tr.signTable;
+	long long int* table = tr.table;
+
 	int beta_ = tp.beta ? tp.beta-1 : 0;
 
-	os << "--------------------------------------------------------------------------------" << endl;
-	os << "-- TermROM instance for order-" << d << " term." << endl;
-	os << "-- Decomposition:" << endl;
-	os << "--   alpha_" << d << " = " << tp.alpha << "; ";
+	vhdl << "--------------------------------------------------------------------------------" << endl;
+	vhdl << "-- TermROM instance for order-" << d << " term." << endl;
+	vhdl << "-- Decomposition:" << endl;
+	vhdl << "--   alpha_" << d << " = " << tp.alpha << "; ";
 	if (tp.beta)
-		os << "beta_" << d << " = " << tp.beta << " (1+" << (tp.beta-1) << ")" << "; ";
+		vhdl << "beta_" << d << " = " << tp.beta << " (1+" << (tp.beta-1) << ")" << "; ";
 	else
-		os << "beta_" << d << " = 0; ";
-	os << "wO_" << d << " = " << wTable << "; " << "wO = " << p.wO << "; " << "g = " << p.g << "." << endl;
-	os << endl;
+		vhdl << "beta_" << d << " = 0; ";
+	vhdl << "wO_" << d << " = " << wTable << "; " << "wO = " << tr.p.wO << "; " << "g = " << tr.p.g << "." << endl;
+	vhdl << endl;
 
-	os << "library ieee;" << endl;
-	os << "use ieee.std_logic_1164.all;" << endl;
-	os << "use ieee.std_logic_arith.all;" << endl;
-	os << "use ieee.std_logic_unsigned.all;" << endl;
-	os << endl;
-
-	os << "entity " << name << " is" << endl;
-	os << "  port ( ";
 	if (tp.alpha)
-		os << "a : in  std_logic_vector(" << (tp.alpha-1) << " downto 0);" << endl << "         ";
+		addInput ("A", tp.alpha);
 	if (tp.beta)
-		os << "b : in  std_logic_vector(" << (tp.beta-1) << " downto 0);" << endl << "         ";
-	os << "r : out std_logic_vector(" << (p.wO+p.g) << " downto 0) );" << endl;
-	os << "end entity;" << endl;
-	os << endl;
+		addInput ("B", tp.beta);
+	addOutput ("R", tr.p.wO+tr.p.g+1);
 
-	os << "architecture arch of " << name << " is" << endl;
 	if (tp.beta)
-		os << "  signal sign : std_logic;" << endl;
+		vhdl << "  signal sign : std_logic;" << endl;
 	if (beta_)
-		os << "  signal b0   : std_logic_vector(" << (beta_-1) << " downto 0);" << endl;
+		vhdl << "  signal b0   : std_logic_vector(" << (beta_-1) << " downto 0);" << endl;
 	if (beta_ || tp.alpha)
-		os << "  signal x0   : std_logic_vector(" << (tp.alpha+beta_-1) << " downto 0);" << endl;
-	os << "  signal r0   : std_logic_vector(" << (wTable-1) << " downto 0);" << endl;
-	os << "begin" << endl;
+		vhdl << "  signal x0   : std_logic_vector(" << (tp.alpha+beta_-1) << " downto 0);" << endl;
+	vhdl << "  signal r0   : std_logic_vector(" << (wTable-1) << " downto 0);" << endl;
+	vhdl << "begin" << endl;
 	if (tp.beta)
-		os << "  sign <= not b(" << (tp.beta-1) << ");" << endl;
+		vhdl << "  sign <= not b(" << (tp.beta-1) << ");" << endl;
 	if (beta_) {
-		os << "  b0 <= b(" << (beta_-1) << " downto 0) xor (" << (beta_-1) << " downto 0 => sign);" << endl;
+		vhdl << "  b0 <= b(" << (beta_-1) << " downto 0) xor (" << (beta_-1) << " downto 0 => sign);" << endl;
 		if (tp.alpha)
-			os << "  x0 <= a & b0;" << endl;
+			vhdl << "  x0 <= a & b0;" << endl;
 		else
-			os << "  x0 <= b0;" << endl;
+			vhdl << "  x0 <= b0;" << endl;
 	}
 	else if (tp.alpha)
-		os << "  x0 <= a;" << endl;
+		vhdl << "  x0 <= a;" << endl;
 	if (tp.beta || tp.alpha)
-		os << endl;
+		vhdl << endl;
 
-	if (signTable == SignMixed)
-		os << "  -- Table in 2's-complement" << endl;
+	if (signTable == TermROM::SignMixed)
+		vhdl << "  -- Table in 2's-complement" << endl;
 	if (beta_ || tp.alpha)
-		VHDLGen::genROM(os, table, tp.alpha+beta_, wTable, "x0", "r0");
+		VHDLGen::genROM(vhdl, table, tp.alpha+beta_, wTable, "x0", "r0");
 	else {
-		os << "  r0 <= ";
-		VHDLGen::genInteger(os, table[0], wTable);
-		os << "; -- t = " << table[0] << endl;
+		vhdl << "  r0 <= ";
+		VHDLGen::genInteger(vhdl, table[0], wTable);
+		vhdl << "; -- t = " << table[0] << endl;
 	}
-	os << endl;
+	vhdl << endl;
 
 	if ((d%2) && tp.beta){
-		os << "  r(" << (wTable-1) << " downto 0) <= r0 xor (" << (wTable-1) << " downto 0 => ("
+		vhdl << "  r(" << (wTable-1) << " downto 0) <= r0 xor (" << (wTable-1) << " downto 0 => ("
 			 << "sign));" << endl;
 		// Do NOT negate sign when signTable==SignNegative here
 	}
 	else
-		os << "  r(" << (wTable-1) << " downto 0) <= r0;" << endl;
+		vhdl << "  r(" << (wTable-1) << " downto 0) <= r0;" << endl;
 
-	if (p.wO+p.g+1 > wTable) {
-		os << "  -- Sign extension" << endl;
-		os << "  r(" << (p.wO+p.g) << " downto " << wTable << ") <= (" << (p.wO+p.g) << " downto " << wTable << " => ("
-			 << (signTable == SignNegative ? "not " : "");
+	if (tr.p.wO+tr.p.g+1 > wTable) {
+		vhdl << "  -- Sign extension" << endl;
+		vhdl << "  r(" << (tr.p.wO+tr.p.g) << " downto " << wTable << ") <= (" << (tr.p.wO+tr.p.g) << " downto " << wTable << " => ("
+			 << (signTable == TermROM::SignNegative ? "not " : "");
 			 
-		if(signTable == SignMixed) {
+		if(signTable == TermROM::SignMixed) {
 			if ((d%2) && tp.beta)
-				os << "sign xor ";
-			os << "r0(" << (wTable-1) << ")";	// cannot use r as an input
+				vhdl << "sign xor ";
+			vhdl << "r0(" << (wTable-1) << ")";	// cannot use r as an input
 		}
 		else {
-			os << (((d%2) && tp.beta) ? "sign" : "'0'");
+			vhdl << (((d%2) && tp.beta) ? "sign" : "'0'");
 		}
-		os << "));" << endl;
+		vhdl << "));" << endl;
 	}
-
-	os << "end architecture;" << endl;
 }

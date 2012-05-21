@@ -16,9 +16,12 @@ public:
 
 	void mpEval(mpz_t mpR, long long int b) const;
 
-	void genVHDL(ostream &os, string name);
+	friend Component::Component (flopoco::Target*, PowerROM);
+	flopoco::Operator* toComponent(flopoco::Target* t) {
+		return new Component (t, *this);
+	}
 
-private:
+protected:
 	PWPolynomial calcErrTab(double shift = 0);
 
 	PowerROMParam &pp;

@@ -16,9 +16,12 @@ public:
 
 	void mpEval(mpz_t mpR, long long int b) const;
 
-	void genVHDL(ostream &os, string name);
+	friend Component::Component (flopoco::Target*, PowerAdHoc);
+	flopoco::Operator* toComponent(flopoco::Target* t) {
+		return new Component (t, *this);
+	}
 
-private:
+protected:
 	PWPolynomial calcErrTab(double shift = 0);
 
 	typedef set<int> tPPElement;
@@ -30,7 +33,7 @@ private:
 	tPPArray ppMul(const tPPArray &ppa, const tPPElement &pp);
 	tPPArray ppMul(const tPPArray &ppa1, const tPPArray &ppa2);
 	tPPArray ppPow(const tPPArray &ppa, int d);
-	void ppPrint(ostream &os, const tPPArray &ppa);
+	void ppPrint(flopoco::FlopocoStream& vhdl, const tPPArray &ppa);
 
 	PowerAdHocParam &pp;
 	tPPArray ppa;

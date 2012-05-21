@@ -227,79 +227,71 @@ PowerAdHoc::tPPArray PowerAdHoc::ppPow(const tPPArray &ppa, int d)
 	return ppaR;
 }
 
-void PowerAdHoc::ppPrint(ostream &os, const tPPArray &ppa)
+void PowerAdHoc::ppPrint(flopoco::FlopocoStream& vhdl, const tPPArray &ppa)
 {
 	int count = 0;
 	for (tPPArray::const_iterator i = ppa.begin(); i != ppa.end(); i++) {
-		os << "2^{";
-		os.width(3);
-		os << (*i).first << "}: (";
-		os.width(2);
-		os << (*i).second.size() << ")   ";
+		vhdl << "2^{";
+		vhdl.vhdlCodeBuffer.width(3);
+		vhdl << (*i).first << "}: (";
+		vhdl.vhdlCodeBuffer.width(2);
+		vhdl << (*i).second.size() << ")   ";
 		count += (*i).second.size();
 		for (tPPLine::const_iterator j = (*i).second.begin(); j != (*i).second.end(); j++) {
 			if (j != (*i).second.begin())
-				os << " + ";
+				vhdl << " + ";
 			if ((*j).empty())
-				os << "1";
+				vhdl << "1";
 			for (tPPElement::const_iterator k = (*j).begin(); k != (*j).end(); k++) {
 				if (k != (*j).begin())
-					os << ".";
-				os << "b_{" << *k << "}";
+					vhdl << ".";
+				vhdl << "b_{" << *k << "}";
 			}
 		}
-		os << endl;
+		vhdl << endl;
 	}
-	os << "nPP: " << count << endl;
+	vhdl << "nPP: " << count << endl;
 }
 
-void PowerAdHoc::genVHDL(ostream &os, string name)
+Component::Component (flopoco::Target* t, PowerAdHoc pah)
+	:Operator(t)
 {
-	os << "--------------------------------------------------------------------------------" << endl;
-	os << "-- PowerAdHoc instance for order-" << d << " powering unit." << endl;
-	os << "-- Decomposition:" << endl;
-	os << "--   beta_" << d << " = " << pp.beta << "; mu_" << d << " = " << pp.mu
-		 << "; lambda_" << d << " = " << pp.lambda << "." << endl;
-	os << endl;
+	const PowerAdHocParam& pp = pah.pp;
+	int d = pah.d;
+	vhdl << "--------------------------------------------------------------------------------" << endl;
+	vhdl << "-- PowerAdHoc instance for order-" << d << " powering unit." << endl;
+	vhdl << "-- Decomposition:" << endl;
+	vhdl << "--   beta_" << d << " = " << pp.beta << "; mu_" << d << " = " << pp.mu
+	     << "; lambda_" << d << " = " << pp.lambda << "." << endl;
+	vhdl << endl;
 
-	os << "library ieee;" << endl;
-	os << "use ieee.std_logic_1164.all;" << endl;
-	os << "use ieee.std_logic_arith.all;" << endl;
-	os << "use ieee.std_logic_unsigned.all;" << endl;
-	os << endl;
+	addInput ("X", pp.beta-1);
+	addOutput ("R", pp.lambda);
 
-	os << "entity " << name << " is" << endl;
-	os << "  port ( x : in  std_logic_vector(" << (pp.beta-2) << " downto 0);" << endl;
-	os << "         r : out std_logic_vector(" << (pp.lambda-1) << " downto 0) );" << endl;
-	os << "end entity;" << endl;
-	os << endl;
-
-	os << "architecture arch of " << name << " is" << endl;
-	for (int i = 0; i < nPPLine; i++)
-		os << "  signal pp" << i << " : std_logic_vector(" << (pp.mu-2) << " downto 0);" << endl;
-	os << "  signal r0 : std_logic_vector(" << (pp.mu-2) << " downto 0);" << endl;
-	os << "begin" << endl;
+	for (int i = 0; i < pah.nPPLine; i++)
+		vhdl << "  signal pp" << i << " : std_logic_vector(" << (pp.mu-2) << " downto 0);" << endl;
+	vhdl << "  signal r0 : std_logic_vector(" << (pp.mu-2) << " downto 0);" << endl;
+	vhdl << "begin" << endl;
 	for (int i = -1; i > -pp.mu; i--) {
 		int l = 0;
-		for (tPPLine::const_iterator j = ppa[i].begin(); j != ppa[i].end(); j++, l++) {
-			os << "  pp" << l << "(" << (pp.mu-1+i) << ") <= ";
+		for (PowerAdHoc::tPPLine::const_iterator j = pah.ppa[i].begin(); j != pah.ppa[i].end(); j++, l++) {
+			vhdl << "  pp" << l << "(" << (pp.mu-1+i) << ") <= ";
 			if ((*j).empty())
-				os << "'1'";
-			for (tPPElement::const_iterator k = (*j).begin(); k != (*j).end(); k++) {
+				vhdl << "'1'";
+			for (PowerAdHoc::tPPElement::const_iterator k = (*j).begin(); k != (*j).end(); k++) {
 				if (k != (*j).begin())
-					os << " and ";
-				os << "x(" << (pp.beta-1+*k) << ")";
+					vhdl << " and ";
+				vhdl << "x(" << (pp.beta-1+*k) << ")";
 			}
-			os << ";" << endl;
+			vhdl << ";" << endl;
 		}
-		for (; l < nPPLine; l++)
-			os << "  pp" << l << "(" << (pp.mu-1+i) << ") <= '0';" << endl;
-		os << endl;
+		for (; l < pah.nPPLine; l++)
+			vhdl << "  pp" << l << "(" << (pp.mu-1+i) << ") <= '0';" << endl;
+		vhdl << endl;
 	}
-	os << "  r0 <= ";
-	for (int i = 0; i < nPPLine; i++)
-		os << (i ? " + " : "") << "pp" << i;
-	os << ";" << endl;
-	os << "  r <= \"1\" & r0(" << (pp.mu-2) << " downto " << (pp.mu-pp.lambda) << ");" << endl;
-	os << "end architecture;" << endl;
+	vhdl << "  r0 <= ";
+	for (int i = 0; i < pah.nPPLine; i++)
+		vhdl << (i ? " + " : "") << "pp" << i;
+	vhdl << ";" << endl;
+	vhdl << "  r <= \"1\" & r0(" << (pp.mu-2) << " downto " << (pp.mu-pp.lambda) << ");" << endl;
 }

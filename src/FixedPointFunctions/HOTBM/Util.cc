@@ -57,52 +57,52 @@ double bin(int n, int k)
 
 
 
-void VHDLGen::genInteger(ostream &os, long long int x, int w)
+void VHDLGen::genInteger(flopoco::FlopocoStream& vhdl, long long int x, int w)
 {
-	os << "\"";
+	vhdl << "\"";
 	for (int i = w-1; i >= 0; i--)
-		os << I(x,i+1,1);
-	os << "\"";
+		vhdl << I(x,i+1,1);
+	vhdl << "\"";
 }
 
-void VHDLGen::genInteger(ostream &os, mpz_t mpX, int w)
+void VHDLGen::genInteger(flopoco::FlopocoStream& vhdl, mpz_t mpX, int w)
 {
-	os << "\"";
+	vhdl << "\"";
 	for (int i = w-1; i >= 0; i--)
-		os << mpz_tstbit(mpX, i);
-	os << "\"";
+		vhdl << mpz_tstbit(mpX, i);
+	vhdl << "\"";
 }
 
-void VHDLGen::genROM(ostream &os, long long int *t, int wX, int wR, string x, string r)
+void VHDLGen::genROM(flopoco::FlopocoStream& vhdl, long long int *t, int wX, int wR, string x, string r)
 {
-	os << "  with " << x << " select" << endl;
-	os << "    " << r << " <= ";
+	vhdl << "  with " << x << " select" << endl;
+	vhdl << "    " << r << " <= ";
 	for (long long int i = 0; i < P(wX); i++) {
-		VHDLGen::genInteger(os, t[i], wR);
-		os << " when ";
-		VHDLGen::genInteger(os, i, wX);
-		os << ", -- t[" << i << "] = " << t[i]  << endl;
-		os << "        " << string(r.size(), ' ');
+		VHDLGen::genInteger(vhdl, t[i], wR);
+		vhdl << " when ";
+		VHDLGen::genInteger(vhdl, i, wX);
+		vhdl << ", -- t[" << i << "] = " << t[i]  << endl;
+		vhdl << "        " << string(r.size(), ' ');
 	}
-	os << "\"" << string(wR, '-') << "\" when others;" << endl;
+	vhdl << "\"" << string(wR, '-') << "\" when others;" << endl;
 }
 
-void VHDLGen::genROM(ostream &os, mpz_t *mpT, int wX, int wR, string x, string r)
+void VHDLGen::genROM(flopoco::FlopocoStream& vhdl, mpz_t *mpT, int wX, int wR, string x, string r)
 {
 	char buf[1024];
 
-	os << "  with " << x << " select" << endl;
-	os << "    " << r << " <= ";
+	vhdl << "  with " << x << " select" << endl;
+	vhdl << "    " << r << " <= ";
 	for (long long int i = 0; i < P(wX); i++) {
-		VHDLGen::genInteger(os, mpT[i], wR);
-		os << " when ";
-		VHDLGen::genInteger(os, i, wX);
-		os << ", -- t[" << i << "] = ";
+		VHDLGen::genInteger(vhdl, mpT[i], wR);
+		vhdl << " when ";
+		VHDLGen::genInteger(vhdl, i, wX);
+		vhdl << ", -- t[" << i << "] = ";
 		mpz_get_str(buf, 10, mpT[i]);
-		os << buf << endl;
-		os << "        " << string(r.size(), ' ');
+		vhdl << buf << endl;
+		vhdl << "        " << string(r.size(), ' ');
 	}
-	os << "\"" << string(wR, '-') << "\" when others;" << endl;
+	vhdl << "\"" << string(wR, '-') << "\" when others;" << endl;
 }
 
 

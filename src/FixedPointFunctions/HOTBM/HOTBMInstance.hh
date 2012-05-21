@@ -8,6 +8,7 @@
 #include "PWPolynomial.hh"
 #include "Term.hh"
 #include "Util.hh"
+#include "Operator.hpp"
 
 #define HOTBM_DUMP_X           1
 #define HOTBM_DUMP_FUNCTION    2
@@ -38,17 +39,17 @@ namespace flopoco{
 
 		void roundTables(bool full = true);
 		void tune();
-		void dump(ostream &os, list<int> &dumpList);
+		void dump(flopoco::FlopocoStream& vhdl, list<int> &dumpList);
 
 		double estimArea(int t = -1) const;
 		double estimDelay(int t = -1) const;
 
-		void genVHDL(ostream &os, string name);
+		void genVHDL(flopoco::Target* t, flopoco::FlopocoStream& vhdl, string name, std::vector<flopoco::Operator*>);
 
 		static bool verbose;
 		static bool force;
 
-	private:
+	protected:
 		typedef pair<string, Param> tParam;
 		typedef pair<PWPolynomial, double> tApproxError;
 		typedef pair<double **, tApproxError> tApprox;

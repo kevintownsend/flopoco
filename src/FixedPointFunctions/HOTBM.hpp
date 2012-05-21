@@ -25,8 +25,6 @@ namespace flopoco{
 		~HOTBM();
 
 		// Overloading the virtual functions of Operator
-		void outputVHDL(std::ostream& o, std::string name);
-
 		void emulate(TestCase* tc);
 	
 		int wIn() const { return wI; }

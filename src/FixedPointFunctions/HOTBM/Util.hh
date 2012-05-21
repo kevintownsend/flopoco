@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <mpfr.h>
+#include "FlopocoStream.hpp"
 
 extern "C" {
 #include <math.h>
@@ -30,11 +31,11 @@ double bin(int n, int k);
 
 class VHDLGen {
 public:
-	static void genInteger(ostream &os, long long int x, int w);
-	static void genInteger(ostream &os, mpz_t mpX, int w);
+	static void genInteger(flopoco::FlopocoStream& vhdl, long long int x, int w);
+	static void genInteger(flopoco::FlopocoStream& vhdl, mpz_t mpX, int w);
 
-	static void genROM(ostream &os, long long int *t, int wX, int wR, string x, string r);
-	static void genROM(ostream &os, mpz_t *mpT, int wX, int wR, string x, string r);
+	static void genROM(flopoco::FlopocoStream& vhdl, long long int *t, int wX, int wR, string x, string r);
+	static void genROM(flopoco::FlopocoStream& vhdl, mpz_t *mpT, int wX, int wR, string x, string r);
 };
 
 

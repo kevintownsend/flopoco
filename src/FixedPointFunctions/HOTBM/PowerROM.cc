@@ -101,48 +101,37 @@ PWPolynomial PowerROM::calcErrTab(double shift)
 	return errP;
 }
 
-void PowerROM::genVHDL(ostream &os, string name)
+Component::Component (flopoco::Target* t, PowerROM pr)
+	:Operator (t)
 {
-	os << "--------------------------------------------------------------------------------" << endl;
-	os << "-- PowerROM instance for order-" << d << " powering unit." << endl;
-	os << "-- Decomposition:" << endl;
-	os << "--   beta_" << d << " = " << pp.beta << "; lambda_" << d << " = " << pp.lambda << "." << endl;
-	os << endl;
+	int d = pr.d;
+	PowerROMParam& pp = pr.pp;
 
-	os << "library ieee;" << endl;
-	os << "use ieee.std_logic_1164.all;" << endl;
-	os << "use ieee.std_logic_arith.all;" << endl;
-	os << "use ieee.std_logic_unsigned.all;" << endl;
-	os << endl;
+	vhdl << "--------------------------------------------------------------------------------" << endl;
+	vhdl << "-- PowerROM instance for order-" << d << " powering unit." << endl;
+	vhdl << "-- Decomposition:" << endl;
+	vhdl << "--   beta_" << d << " = " << pp.beta << "; lambda_" << d << " = " << pp.lambda << "." << endl;
+	vhdl << endl;
 
-	os << "entity " << name << " is" << endl;
-	os << "  port ( ";
-	if(pp.beta >= 2)
-		os << "x : in  std_logic_vector(" << (pp.beta-2) << " downto 0);" << endl << "         ";
-	os << "r : out std_logic_vector(" << (pp.lambda-1) << " downto 0) );" << endl;
-	os << "end entity;" << endl;
-	os << endl;
-
-	os << "architecture arch of " << name << " is" << endl;
-	os << "begin" << endl;
+	if (pp.beta >= 2)
+		addInput ("X", pp.beta-1);
+	addOutput ("R", pp.lambda);
 
 	mpz_t *mpT = new mpz_t[P(pp.beta-1)];
 	for (long long int i = 0; i < P(pp.beta-1); i++) {
 		mpz_init(mpT[i]);
-		mpEval(mpT[i], i);
+		pr.mpEval(mpT[i], i);
 	}
 
 	if(pp.beta >= 2)
-		VHDLGen::genROM(os, mpT, pp.beta-1, pp.lambda, "x", "r");
+		VHDLGen::genROM(vhdl, mpT, pp.beta-1, pp.lambda, "x", "r");
 	else {
-		os << "  r <= ";
-		VHDLGen::genInteger(os, mpT[0], pp.lambda);
-		os << ";" << endl;
+		vhdl << "  r <= ";
+		VHDLGen::genInteger(vhdl, mpT[0], pp.lambda);
+		vhdl << ";" << endl;
 	}		
 
 	for (long long int i = 0; i < P(pp.beta-1); i++)
 		mpz_clear(mpT[i]);
 	delete[] mpT;
-
-	os << "end architecture;" << endl;
 }

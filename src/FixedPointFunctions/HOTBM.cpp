@@ -50,6 +50,8 @@ namespace flopoco{
 		setCombinatorial();
 		addInput("X", wI);
 		addOutput("R", wO+1, 2);  // faithful rounding
+
+		inst->genVHDL(target, vhdl, getName(), oplist);
 	}
 
 	HOTBM::~HOTBM()
@@ -57,16 +59,6 @@ namespace flopoco{
 		if (inst)
 			delete inst;
 	}
-
-	// Overloading the virtual functions of Operator
-	void HOTBM::outputVHDL(std::ostream& o, std::string name)
-	{
-		if (!inst)
-			return;
-
-		inst->genVHDL(o, name);
-	}
-
 
 	void HOTBM::emulate(TestCase* tc)
 	{
