@@ -44,7 +44,7 @@ namespace flopoco {
 		// Set up the IO signals
 		addInput  ( "X"  , wIn_, true );
 		addInput  ( "Y"  , wIn_, true );
-		addInput  ( "Cin", 1 );
+		addInput( "Cin");
 		addOutput ( "R"  , wIn_, 1 , true );
 		
 		inputsGotRegistered = false;

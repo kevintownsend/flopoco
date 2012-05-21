@@ -128,12 +128,12 @@ namespace flopoco{
 		if (!forDotProd){
 			vhdl << tab << declare("fracX",wFX_+1) << " <=  \"1\" & X" << range(wFX_-1,0) << ";" << endl;
 			vhdl << tab << declare("expX" ,wEX_  ) << " <= X" << range(wEX_+wFX_-1,wFX_) << ";" << endl;
-			vhdl << tab << declare("signX",1     ) << " <= X" << of(wEX_+wFX_) << ";" << endl;
+			vhdl << tab << declare("signX") << " <= X" << of(wEX_+wFX_) << ";" << endl;
 			vhdl << tab << declare("exnX" ,2     ) << " <= X" << range(wEX_+wFX_+2,wEX_+wFX_+1) << ";" << endl;
 		}else{
 			vhdl << tab << declare("fracX",wFX_ + wFY +2) << " <= fracX_dprod;" << endl;
 			vhdl << tab << declare("expX" ,wEX_  ) << " <= expX_dprod;" << endl;
-			vhdl << tab << declare("signX",1     ) << " <= sigX_dprod;" << endl;
+			vhdl << tab << declare("signX") << " <= sigX_dprod;" << endl;
 			vhdl << tab << declare("exnX" ,2     ) << " <= excX_dprod;" << endl;
 		}
 

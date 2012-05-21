@@ -55,7 +55,7 @@ namespace flopoco{
 		//inputs and outputs
 		addInput    ("A", sizeAcc_);
 		addInput    ("C", sizeAcc_);
-		addInput    ("AccOverflow",1);
+		addInput("AccOverflow");
 		addFPOutput ("R", wEOut_, wFOut_);
 
 		vhdl << tab <<declare("signA") << " <= A" << of(sizeAcc_-1)<<";"<<endl;
