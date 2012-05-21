@@ -68,7 +68,7 @@ namespace flopoco{
 		vhdl << tab << declare(join("w",wF+3), wF+4) << " <= \"111\" & fracX & \"0\" when X(" << wF << ") = '0' else" << endl
 		     << tab << "       \"1101\" & fracX;" << endl;
 		//		vhdl << tab << declare(join("d",wF+3)) << " <= '0';" << endl;
-		//		vhdl << tab << declare(join("s",wF+3),1) << " <= '1';" << endl;
+		//		vhdl << tab << declare(join("s",wF+3)) << " <= '1';" << endl;
 
 		double delay= target->lutDelay() + target->localWireDelay() + target->ffDelay(); // estimated delay so far (one mux)
 		for(int step=1; step<=wF+2; step++) {

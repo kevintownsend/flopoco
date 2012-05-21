@@ -59,7 +59,7 @@ namespace flopoco{
 			nextLevel.str(""); nextLevel << "level" << i-1;
 			manageCriticalPath( intlog(mpz_class(target->lutInputs()), intpow2(i-1)) * target->lutDelay() + intlog(mpz_class(target->lutInputs()), intpow2(i-1))* target->localWireDelay() ); 
 
-			vhdl << tab <<declare(currDigit.str(),1) << "<= '1' when " << currLevel.str() << "("<<intpow2(i)-1<<" downto "<<intpow2(i-1)<<") = "
+			vhdl << tab <<declare(currDigit.str()) << "<= '1' when " << currLevel.str() << "("<<intpow2(i)-1<<" downto "<<intpow2(i-1)<<") = "
 				  <<"("<<intpow2(i)-1<<" downto "<<intpow2(i-1)<<" => sozb)"
 				  << " else '0';"<<endl;
 
