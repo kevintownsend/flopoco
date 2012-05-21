@@ -87,8 +87,19 @@ public:
 	 * @param width the number of bits of the signal.
 	 * @param isBus describes if this signal is a bus, that is, an instance of std_logic_vector
 	 */
-	void addInput  (const std::string name, const int width=1, const bool isBus=false);
+	void addInput  (const std::string name, const int width=1, const bool isBus=true);
 	
+	/** Adds an input wire (of type std_logic) to the operator.
+	 * Adds a signal of type Signal::in to the the I/O signal list.
+	 * @param name  the name of the signal
+	 */
+	void addInput  (const std::string name) {
+		addInput (name, 1, false);
+	}
+
+	void addInput (const char* name) {
+		addOutput (name, 1, 1, false);
+	}
 
 	/** Adds an output signal to the operator.
 	 * Adds a signal of type Signal::out to the the I/O signal list.
@@ -97,8 +108,20 @@ public:
 	 * @param numberOfPossibleOutputValues (optional, defaults to 1) set to 2 for a faithfully rounded operator for instance
 	 * @param isBus describes if this signal is a bus, that is, an instance of std_logic_vector
 	 */	
-	void addOutput(const std::string name, const int width=1, const int numberOfPossibleOutputValues=1, const bool isBus=false);
+	void addOutput(const std::string name, const int width=1, const int numberOfPossibleOutputValues=1, const bool isBus=true);
 	
+	/** Adds an output wire (of type std_logic) with one possible value
+	 ** to the operator.
+	 * Adds a signal of type Signal::out to the the I/O signal list.
+	 * @param name  the name of the signal
+	 */	
+	void addOutput(const std::string name) {
+		addOutput (name, 1, 1, false);
+	}
+
+	void addOutput(const char* name) {
+		addOutput (name, 1, 1, false);
+	}
 
 	/** Adds a floating point (FloPoCo format) input signal to the operator.
 	 * Adds a signal of type Signal::in to the the I/O signal list, 
@@ -288,7 +311,18 @@ public:
 	 * @param regType: the registring type of this signal. See also the Signal Class for more info
 	 * @return name
 	 */
-	string declare(string name, const int width=1, bool isbus=false, Signal::SignalType regType = Signal::wire );
+	string declare(string name, const int width, bool isbus=true, Signal::SignalType regType = Signal::wire );
+
+	/** Declares a signal of length 1 as in the previous declare() function, but as std_logic by default
+	 * @param name is the name of the signal
+	 * @param isbus: if true, declares the signal as std_logic_vector; else declares the signal as std_logic
+	 * @param regType: the registring type of this signal. See also the Signal Class for mor info
+	 * @return name
+	 */
+	string declare(string name, Signal::SignalType regType = Signal::wire ) {
+		return declare(name, 1, false, regType);
+	}
+
 	// TODO: add methods that allow for signals with reset (when rewriting LongAcc for the new framework)
 
 
