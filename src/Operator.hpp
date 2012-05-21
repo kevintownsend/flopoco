@@ -98,7 +98,7 @@ public:
 	}
 
 	void addInput (const char* name) {
-		addOutput (name, 1, 1, false);
+		addInput (name, 1, false);
 	}
 
 	/** Adds an output signal to the operator.
