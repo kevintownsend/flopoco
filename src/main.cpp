@@ -135,6 +135,11 @@ void usage(char *name, string opName = ""){
 		cerr << "      Multi-operand addition using compressor trees, possibly pipelined\n";
 	}
 
+	if ( full || opName == "PopCount"){
+		OP("PopCount","wIn");
+		cerr << "      Population count using a table\n";
+	}
+
 	if ( full )	
 		cerr << "    ____________ INTEGER MULTIPLIERS/SQUARER/KARATSUBA _________________________\n";
 
@@ -1125,6 +1130,17 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				op = new IntCompressorTree(target,wIn,N);
 				addOperator(oplist, op);
 			}    
+		}
+
+		else if(opname=="PopCount"){
+			int nargs = 1;
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			else {
+				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
+				op = new PopCount(target, wIn);
+				addOperator(oplist, op);
+			}
 		}
 
 		/* Exploration of other fast adders */

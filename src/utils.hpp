@@ -165,6 +165,12 @@ namespace flopoco{
 	 */
 	int intlog2(mpz_class number);
 
+	/** How many bits are set at 1 in the mnumber.
+	 * @param number the number of which we count the bits at 1
+	 * @return the number of these bits
+	 */
+	mpz_class popcnt(mpz_class number);
+
 
 
 	/** Maximum.

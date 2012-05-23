@@ -303,6 +303,17 @@ namespace flopoco{
 		return result;
 	}
 
+	mpz_class popcnt(mpz_class number)
+	{
+		if (number < 0) throw "popcnt: positive argument required";
+		mpz_class res(0), x(number);
+		while (x != 0) {
+			res += (x & 1);
+			x >>= 1;
+		}
+		return res;
+	}
+
 	mpz_class maxExp(int wE){
 		return mpz_class(1)<<(wE-1);
 	}
