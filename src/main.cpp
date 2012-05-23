@@ -130,9 +130,14 @@ void usage(char *name, string opName = ""){
 		cerr << "      Multi-operand addition, possibly pipelined\n";
 	}
 
-	if ( full || opName == "IntAdder" || opName == "IntCompressorTree"){
+	if ( full || opName == "IntAdder" || opName == "IntCompressorTree" || opName == "NewCompressorTree"){
 		OP("IntCompressorTree","wIn N");
 		cerr << "      Multi-operand addition using compressor trees, possibly pipelined\n";
+		OP("NewCompressorTree","wOut [height list]");
+		cerr << "      Multi-operand addition using compressor trees, the operands being\n";
+		cerr << "      packed putting bits of same significance together; the i-th\n";
+		cerr << "      element of the height list is the numbers of bits of signifance i\n";
+		cerr << "      to be added together.\n";
 	}
 
 	if ( full || opName == "PopCount"){
@@ -1130,6 +1135,25 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				op = new IntCompressorTree(target,wIn,N);
 				addOperator(oplist, op);
 			}    
+		}
+
+		else if(opname=="NewCompressorTree"){
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			else {
+				int wOut = checkStrictlyPositive(argv[i++], argv[0]);
+				if (i+wOut > argc)
+					usage(argv[0],opname);
+				else {
+					std::vector<unsigned> heights (wOut, 0);
+					for (int j = 0; j < wOut; j++) {
+						heights[j] = checkStrictlyPositive(argv[i++],argv[0]);
+					}
+					op = new NewCompressorTree(target,heights);
+					addOperator(oplist, op);
+				}
+			}
 		}
 
 		else if(opname=="PopCount"){
