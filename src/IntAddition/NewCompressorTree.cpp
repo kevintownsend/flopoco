@@ -52,6 +52,13 @@ NewCompressorTree::NewCompressorTree(Target * target, vector<unsigned> vops)
 		vhdl << declare (l0.str(), vops[i]) << " <= X_" << i << ";\n";
 	}
 	for (;;) {
+		// sync new level_i signals together
+		if (w) {
+			setCycleFromSignal (join("X_",0,"_level",level));
+			for (unsigned i = 1; i < w; i++) {
+				syncCycleFromSignal (join("X_",i,"_level",level));
+			}
+		}
 		vector<unsigned>::iterator it;
 		max_height = 0;
 		for (it = vops.begin(); it != vops.end(); it++) {
@@ -232,6 +239,7 @@ NewCompressorTree::NewCompressorTree(Target * target, vector<unsigned> vops)
 				vhdl << ";\n";
 			}
 			level++;
+			nextCycle();
 			vops = vops_new;
 			break;
 		}
