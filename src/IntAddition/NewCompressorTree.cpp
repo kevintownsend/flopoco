@@ -38,7 +38,7 @@ NewCompressorTree::NewCompressorTree(Target * target, vector<unsigned> vops)
 	setCopyrightString("Guillaume Sergent 2012");
 
 	for (unsigned i = 0; i < w; i++) {
-		addInput (join("X_", i), vops[i]);
+		addInput (join("X", i), vops[i]);
 	}
 	addOutput ("R", w);
 
@@ -49,7 +49,7 @@ NewCompressorTree::NewCompressorTree(Target * target, vector<unsigned> vops)
 	for (unsigned i = 0; i < w; i++) {
 		ostringstream l0;
 		l0 << "X_" << i << "_level0";
-		vhdl << declare (l0.str(), vops[i]) << " <= X_" << i << ";\n";
+		vhdl << declare (l0.str(), vops[i]) << " <= X" << i << ";\n";
 	}
 	for (;;) {
 		// sync new level_i signals together

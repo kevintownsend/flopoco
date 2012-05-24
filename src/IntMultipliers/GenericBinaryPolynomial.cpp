@@ -8,6 +8,7 @@
 
 #include "GenericBinaryPolynomial.hpp"
 #include "IntMultiAdder.hpp"
+#include "IntAddition/NewCompressorTree.hpp"
 
 //std::string GenericBinaryPolynomial::operatorInfo = "UserDefinedInfo param0 param1 <options>";
 
@@ -55,6 +56,7 @@ GenericBinaryPolynomial::GenericBinaryPolynomial(Target* target,
 		return;
 	}
 
+#if 0
 	// here we split (arbitrarily, as of now) p into a sum of vectors
 	// that can be easily calculated just by logic ANDs
 	// TODO: intelligently sort the list, if necessary
@@ -119,6 +121,39 @@ GenericBinaryPolynomial::GenericBinaryPolynomial(Target* target,
 		inPortMap (ima, join("X",i), join("multiadder_input_",i));
 	}
 	vhdl << instance (ima, "ima");
+#else
+	vector<unsigned> lengths (p.data.size(), 0);
+	for (unsigned i = 0; i < p.data.size(); i++) {
+		lengths[i] = p.data[i].data.size();
+		if (!lengths[i]) {
+			// if nct_input_i is null, just declare the signal
+			// (such that inPortMap won't complain)
+			declare (join("nct_input_",i),0);
+			continue;
+		}
+		vhdl << declare (join("nct_input_",i),lengths[i]);
+		if (lengths[i] == 1)
+			// if there's no '&' it'll be a std_logic in rhs
+			vhdl << of(0);
+		vhdl << " <= (";
+		list<MonomialOfBits>::const_iterator
+			it = p.data[i].data.begin();
+		for (; it != p.data[i].data.end(); it++) {
+			if (it != p.data[i].data.begin())
+				vhdl << ") & (";
+			print_vhdl_string_of_monomial_option (vhdl,
+					Option<MonomialOfBits>(*it));
+		}
+		vhdl << ");\n";
+	}
+	NewCompressorTree* nct = new NewCompressorTree (target, lengths);
+	oplist.push_back (nct);
+	outPortMap (nct, "R", "R_ima");
+	for (int i = p.data.size() - 1; i >= 0; i--) {
+		inPortMap (nct, join("X",i), join("nct_input_",i));
+	}
+	vhdl << instance (nct, "final_adder");
+#endif
 	syncCycleFromSignal ("R_ima");
 	nextCycle();
 	vhdl << "R <= R_ima;" << endl; //can't do directly outPortMap(ima,R,R)
