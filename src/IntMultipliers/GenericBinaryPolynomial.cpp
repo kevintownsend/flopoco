@@ -37,7 +37,7 @@ static void print_vhdl_string_of_monomial_option
 }
 
 GenericBinaryPolynomial::GenericBinaryPolynomial(Target* target,
-                                                 Product p,
+                                                 const Product& p,
 						 std::map<std::string,double>
 						 	inputDelays)
 	:Operator(target,inputDelays), p(p) {
@@ -59,8 +59,7 @@ GenericBinaryPolynomial::GenericBinaryPolynomial(Target* target,
 	// that can be easily calculated just by logic ANDs
 	// TODO: intelligently sort the list, if necessary
 	// (FormalBinaryProduct already implicitly doing sort)
-	Product p_copy(p);
-	// TODO: declare p as const / use p_copy after this line
+	Product pp(p);
 	std::list<std::vector<Option<MonomialOfBits> > > p_split;
 	for (;;) {
 		bool exit_the_loop = true;
@@ -68,9 +67,9 @@ GenericBinaryPolynomial::GenericBinaryPolynomial(Target* target,
 			(p.data.size(),Option<MonomialOfBits>());
 		std::vector<ProductBit>::iterator it;
 		std::vector<Option<MonomialOfBits> >::iterator vit;
-		it = p.data.begin(); vit = v.begin();
+		it = pp.data.begin(); vit = v.begin();
 		// v and p.data have same size
-		for (; it != p.data.end(); it++,vit++) {
+		for (; it != pp.data.end(); it++,vit++) {
 			if (it->data.empty()) {
 				*vit = Option<MonomialOfBits>();
 			} else {

@@ -40,7 +40,7 @@ class GenericBinaryPolynomial : public Operator {
     Product p;
 
   public:
-    GenericBinaryPolynomial(Target* target, Product p, std::map<string,double> inputDelays = emptyDelayMap);
+    GenericBinaryPolynomial(Target* target, const Product& p, std::map<string,double> inputDelays = emptyDelayMap);
 
     ~GenericBinaryPolynomial() {};
 
