@@ -17,6 +17,7 @@
 #include <sstream>
 #include "utils.hpp"
 #include <cstdlib>
+#include <iomanip>
 #include "math.h"
 #include <functional>
 #include <algorithm>
@@ -173,6 +174,42 @@ namespace flopoco{
 		mpfr_clear(two);
 		return s.str();
 	}
+
+
+	std::string unsignedFixPointNumber(mpfr_t x, int msb, int lsb, int margins)
+	{
+		int size = msb-lsb+1;
+		mpz_class h;
+		
+		if(x<0){
+			std::ostringstream o;
+			o <<  "Error, negative input to unsignedFixPointNumber :" << printMPFR(x,15);
+			throw o.str();
+		}
+		
+		mpfr_mul_2si(x, x, -lsb, GMP_RNDN); // exact
+		
+		mpfr_get_z(h.get_mpz_t(), x,  GMP_RNDN); // rounding takes place here     
+
+		ostringstream result;
+		if(margins==0||margins==-1)
+			result<<"\"";
+		result << unsignedBinary(h, size);
+		if(margins==0||margins==1)
+			result<<"\"";
+		return result.str(); 
+	}
+
+
+	string printMPFR(mpfr_t x, int n){
+		ostringstream s;
+		s << setprecision(n) << mpfr_get_d(x, GMP_RNDN);
+		// TODO: sth like the following
+		//		mpfr_out_str (s.get_stream(), 10, n, x, GMP_RNDN);
+
+		return s.str();
+	}
+
 
 	/** Print out binary writing of an integer on "size" bits */
 	// TODO remove this function
