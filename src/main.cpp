@@ -395,9 +395,9 @@ void usage(char *name, string opName = ""){
 		cerr << "      (1-2^(-w))*{sin,cos}(pi*x); w is the precision not counting the sign bit\n";
 	}
 	if ( full || opName == "CordicSinCos" || opName == "FixSinOrCos" || opName == "FixCos"){
-		NEWOP( "CordicSinCos","w reduced");
+		NEWOP( "CordicSinCos","wIn wOut reduced");
 		cerr << "      Computes (1-2^(-w)) sin(pi*x) and (1-2^(-w)) cos(pi*x) for x in -[1,1[, ;\n";
-		cerr << "      w is the fixed-point precision of inputs and outputs, not counting the sign bit\n";
+		cerr << "      wIn and wOut are the fixed-point precision of inputs and outputs (including  the sign bit)\n";
 		cerr << "      reduced : if 1,  reduced number of iterations at the cost of two multiplications \n";
 	}
 	if ( full || opName == "CordicSinCos" || opName == "FixSinOrCos" || opName == "FixCos"){
@@ -2319,12 +2319,13 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 
 		
 		else if (opname == "CordicSinCos") {
-			int nargs = 2;
+			int nargs = 3;
 			if (i+nargs > argc)
 				usage(argv[0],opname); // and exit
-			int w = checkStrictlyPositive(argv[i++], argv[0]); // must be >=2 actually
+			int wIn = checkStrictlyPositive(argv[i++], argv[0]); // must be >=2 actually
+			int wOut = checkStrictlyPositive(argv[i++], argv[0]); // must be >=2 actually
 			int reducedIterations = checkPositiveOrNull(argv[i++], argv[0]); 
-			Operator* tg = new CordicSinCos(target, w, reducedIterations);
+			Operator* tg = new CordicSinCos(target, wIn, wOut, reducedIterations);
 			addOperator(oplist, tg);
 		}
 
