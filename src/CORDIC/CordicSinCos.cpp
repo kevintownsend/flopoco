@@ -33,7 +33,6 @@ namespace flopoco{
 			REPORT(INFO, "wIn is small, are you sure you don't want to tabulate this operator in a ROM?");
 		}
 
-		//TODO check all the following
 		if (reducedIterations == 1)
 			maxIterations=((wOut+1)>>1);
 		else
@@ -111,11 +110,9 @@ namespace flopoco{
 		vhdl << tab << declare("q") << " <= X(" << wIn-2 << ");  -- quadrant" << endl;
 		vhdl << tab << declare("o") << " <= X(" << wIn-3 << ");  -- octant" << endl;
 		vhdl << tab << declare("sqo", 3) << " <= sgn & q & o;  -- sign, quadrant, octant" << endl;
-		//vhdl << tab << declare("sq", 2) << " <= sgn & q;  -- sign, quadrant" << endl;
 
 		vhdl << tab << declare("qrot0", 3) << " <= sqo +  \"001\"; -- rotate by an octant" << endl; 
-		vhdl << tab << declare("qrot", 2) << " <= qrot0(2 downto 1); -- new quadrant: 00 is around the origin" << endl; 
-		vhdl << tab << declare("sred") << " <= o xor qrot(0); -- reduced sign" << endl; 
+		vhdl << tab << declare("qrot", 2) << " <= qrot0(2 downto 1); -- new quadrant: 00 is the two octants around the origin" << endl; 
 		// y is built out of the remaining wIn-2 bits
 
 
@@ -169,11 +166,6 @@ namespace flopoco{
 
 		//build the cordic stages
 		for(stage=1; stage<=maxIterations; stage++){
-			double initCyclePathLength = getCriticalPath();
-			
-			manageCriticalPath(target->localWireDelay(w) + target->lutDelay());
-			syncCycleFromSignal(join("D", stage));
-			
 			//shift Xin and Yin with 2^n positions to the right
 			// Cosine is always positive, but sine may be negative and thus need sign extend
 			vhdl << tab << declare(join("CosShift", stage), w+1) << " <= " << zg(stage) << " & Cos" << stage << range(w, stage) << ";" <<endl;
@@ -183,13 +175,15 @@ namespace flopoco{
 			     << " <= " << rangeAssign(w, w+1-stage, join("sgnSin", stage))   
 			     << " & Sin" << stage << range(w, stage) << ";" << endl;
 			
-			setCycleFromSignal(join("CosShift", stage));
-			syncCycleFromSignal(join("SinShift", stage));
-			manageCriticalPath(target->localWireDelay(w) + target->adderDelay(w) + target->lutDelay());
+			// Critical path delay for one stage:
+			// The data dependency is from one Z to the next 
+			// We may assume that the rotations themselves overlap once the DI are known
+			//manageCriticalPath(target->localWireDelay(w) + target->adderDelay(w) + target->lutDelay()));
+ 			manageCriticalPath(target->localWireDelay(sizeZ) + target->adderDelay(sizeZ));
 			
 #if ROUNDED_ROTATION  // rounding of the shifted operand, should save 1 bit in each addition
 			
-#if 1
+#if 1 // this if just to check that it is useful
 			vhdl << tab << declare(join("CosShiftRoundBit", stage)) << " <= " << join("Cos", stage)  << of(stage-1) << ";" << endl;
 			vhdl << tab << declare(join("SinShiftRoundBit", stage)) << " <= " << join("Sin", stage) << of(stage-1) << ";" <<endl;
 #else
@@ -215,9 +209,7 @@ namespace flopoco{
 			     << join("Sin", stage) << " + " << join("CosShift", stage) << " when " << join("D", stage) << "=\'0\' else "
 			     << join("Sin", stage) << " - " << join("CosShift", stage) << " ;" << endl;
 
-#endif
-			double csPath = getCriticalPath();
-			
+#endif			
 			
 			//create the constant signal for the arctan
 			mpfr_init2(zatan, 10*w);
@@ -228,12 +220,7 @@ namespace flopoco{
 			mpfr_div(zatan, zatan, constPi, GMP_RNDN);
 			REPORT(DEBUG, "stage=" << stage << "  atancst=" << printMPFR(zatan, 15));		
 			//create the arctangent factor to be added to Zin
-			
-			setCycleFromSignal(join("D", stage));
-			setCriticalPath(initCyclePathLength);
-			
-			manageCriticalPath(target->localWireDelay(sizeZ) + target->adderDelay(sizeZ) + target->lutDelay());
-			
+									
 			REPORT(DEBUG, "  sizeZ=" << sizeZ << "   zMSB="<<zMSB );
 
 			if(stage<maxIterations) {
@@ -250,13 +237,15 @@ namespace flopoco{
 			sizeZ--;
 			zMSB--;
 		}
+		
+		// Give the time to finish the last rotation
+		manageCriticalPath( target->localWireDelay(w+1) + target->adderDelay(w+1) // actual CP delay
+		                    - (target->localWireDelay(sizeZ+1) + target->adderDelay(sizeZ+1))); // CP delay that was already added
+
 			
 		if(reducedIterations == 0){ //regular struture; all that remains is to assign the outputs correctly
 			
-			syncCycleFromSignal(join("D", stage));
-			
 			//assign output
-			manageCriticalPath(target->localWireDelay(w) + target->adderDelay(w));
 			
 			vhdl << tab << declare("redCos", w+1) << "<= " << join("Cos", stage) << ";" << endl;
 			vhdl << tab << declare("redSin", w+1) << "<= " << join("Sin", stage) << ";" << endl;
@@ -329,11 +318,13 @@ namespace flopoco{
 		
 		vhdl << tab << "---- final reconstruction " << endl;
 		
+
+		// All this should fit in one level of LUTs
+		manageCriticalPath(target->localWireDelay(wOut) + target->lutDelay());
+
 		vhdl << tab << declare("redCosNeg", w+1) << " <= (not redCos); -- negate by NOT, 1 ulp error"<< endl;
 		vhdl << tab << declare("redSinNeg", w+1) << " <= (not redSin); -- negate by NOT, 1 ulp error"<< endl;
 												   
-		manageCriticalPath(target->localWireDelay(w) + target->lutDelay());
-		
 		vhdl << tab << "with qrot select" << endl
 		     << tab << tab << declare("CosX0", w+1) << " <= " << endl;
 		vhdl << tab << tab << tab << " redCos    when \"00\"," << endl;
@@ -349,7 +340,7 @@ namespace flopoco{
 		vhdl << tab << tab << tab << " redCosNeg when others;" << endl;
 		
 		
-		manageCriticalPath(target->localWireDelay(w) +  target->adderDelay(1+w+1));
+		manageCriticalPath( target->adderDelay(1+wOut+1));
 
 		vhdl << tab << declare("roundedCosX", wOut+1) << " <= CosX0" << range(w, w-wOut) << " + " << " (" << zg(wOut) << " & \'1\');" << endl;
 		vhdl << tab << declare("roundedSinX", wOut+1) << " <= SinX0" << range(w, w-wOut) << " + " << " (" << zg(wOut) << " & \'1\');" << endl;
