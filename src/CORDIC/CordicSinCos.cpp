@@ -34,7 +34,7 @@ namespace flopoco{
 		}
 
 		if (reducedIterations == 1)
-			maxIterations=((wOut+1)>>1);
+			maxIterations=(wOut>>1)+1;
 		else
 			maxIterations = wOut+1;
 		
@@ -55,6 +55,10 @@ namespace flopoco{
 			eps = eps + eps*shift + 1.0; // 1.0 assume truncation in the rotation.
 #endif
 			shift *=0.5;
+		}
+
+		if (reducedIterations == 1) {
+			eps+=2; // two multiplications in sequence, each truncated
 		}
 
 		eps+=1; // the final neg-by-not
@@ -223,7 +227,7 @@ namespace flopoco{
 									
 			REPORT(DEBUG, "  sizeZ=" << sizeZ << "   zMSB="<<zMSB );
 
-			if(stage<maxIterations) {
+			if(stage<maxIterations || reducedIterations == 1) {
 				// LSB is always -w 
 				vhdl << tab << declare(join("atan2PowStage", stage), sizeZ) << " <= " << unsignedFixPointNumber(zatan, zMSB, zLSB) << ";" <<endl;
 				
@@ -254,64 +258,58 @@ namespace flopoco{
 		}
 		else{	//reduced iterations structure; rotate by the remaining angle and then assign the angles
 			
-			manageCriticalPath(target->localWireDelay(sizeZ) + target->DSPMultiplierDelay());
+			vhdl << tab << "-- Reduced iteration: finish the computation by a rotation by Pi Z" << stage << endl; 
+
 		
+			nextCycle();
 			//multiply X by Pi
-			FixRealKCM* piMultiplier = new FixRealKCM(target, -(sizeZ+stage-1), -stage-1, 1, -(sizeZ+stage-1), "pi");
+			FixRealKCM* piMultiplier = new FixRealKCM(target, zLSB, zMSB, 1, zLSB, "pi", 1.0, inDelayMap("X",getCriticalPath()) ); 
 			oplist.push_back(piMultiplier);
 			
-			inPortMap(piMultiplier, "X", join("X", stage));
-			outPortMap(piMultiplier, "R", "xMulPi");
+			vhdl << tab << declare("FinalZ", sizeZ+1) << " <= " << join("D", stage)<< " & " << join("Z", stage) << ";" << endl;
+			inPortMap(piMultiplier, "X", "FinalZ");
+			outPortMap(piMultiplier, "R", "PiZ");
 			vhdl << instance(piMultiplier, "piMultiplier") << endl;
 		
-			syncCycleFromSignal("xMulPi");
-			setCriticalPath(piMultiplier->getOutputDelay("R"));
+			syncCycleFromSignal("PiZ");
+			nextCycle();
+
+			manageCriticalPath(target->localWireDelay(sizeZ) + target->DSPMultiplierDelay());
 
 
-			sizeZ += 2;	// TODO: check 
-						// NOTE: the first factor in the sum corresponds to the compensation due to Pi multiplication
+
+			sizeZ+=3; // +2 cause mult by pi, +1 because we add back the sign
 			
-			vhdl << tab << declare("truncC", sizeZ) << " <= " << join("C", stage) << range(w-1, w-sizeZ) << ";" << endl;
-			vhdl << tab << declare("truncS", sizeZ) << " <= " << join("S", stage) << range(w-1, w-sizeZ) << ";" << endl;
+			vhdl << tab << declare("CosTrunc", sizeZ) << " <= " << join("Cos", stage) << range(w, w-sizeZ+1) << ";" << endl;
+			vhdl << tab << declare("SinTrunc", sizeZ) << " <= " << join("Sin", stage) << range(w, w-sizeZ+1) << ";" << endl;
 			
 			//multiply with the angle X to obtain the actual values for sine and cosine
-			IntMultiplier* zmultiplier = new IntMultiplier(target, sizeZ, sizeZ, true, inDelayMap("X",getCriticalPath()), 1.0);
+			IntMultiplier* zmultiplier = new IntMultiplier(target, sizeZ, sizeZ, true); // signed
 			oplist.push_back(zmultiplier);
 			
-			inPortMap(zmultiplier, "X", "truncC");
-			inPortMap(zmultiplier, "Y", "xMulPi");
-			outPortMap(zmultiplier, "R", "CX");
-			vhdl << instance(zmultiplier, "xMultiplierC") << endl;
+			inPortMap(zmultiplier, "X", "CosTrunc");
+			inPortMap(zmultiplier, "Y", "PiZ");
+			outPortMap(zmultiplier, "R", "CosTimesZ");
+			vhdl << instance(zmultiplier, "MultCosZ") << endl;
 			
-			inPortMap(zmultiplier, "X", "truncS");
-			inPortMap(zmultiplier, "Y", "xMulPi");
-			outPortMap(zmultiplier, "R", "SX");
-			vhdl << instance(zmultiplier, "xMultiplierS") << endl;
+			inPortMap(zmultiplier, "X", "SinTrunc");
+			inPortMap(zmultiplier, "Y", "PiZ");
+			outPortMap(zmultiplier, "R", "SinTimesZ");
+			vhdl << instance(zmultiplier, "MultSinZ") << endl;
 			
-			setCycleFromSignal("CX");
-			syncCycleFromSignal("SX");
-			nextCycle(); // TODO
-
-			//setCriticalPath(zmultiplier->getOutputDelay("R"));
-			 
+			syncCycleFromSignal("CosTimesZ");
 			
 			manageCriticalPath(target->localWireDelay(w) + target->adderDelay(w));
 			
-			vhdl << tab << declare("shortCX", sizeZ) << "<= CX(" << 2*sizeZ-1 << " downto " << sizeZ << ");" << endl;
-			vhdl << tab << declare("shortSX", sizeZ) << "<= SX(" << 2*sizeZ-1 << " downto " << sizeZ << ");" << endl;
+			vhdl << tab << declare("CosTimesZTrunc", sizeZ) << "<= CosTimesZ" << range(2*sizeZ-1, sizeZ) << ";" << endl;
+			vhdl << tab << declare("SinTimesZTrunc", sizeZ) << "<= SinTimesZ" << range(2*sizeZ-1, sizeZ) << ";" << endl;
 			
-			vhdl << tab << declare("paddedShortCX", w) << " <= (" << w-1 << " downto " << sizeZ << " => CX(" << 2*sizeZ-1 << ")) & shortCX;"  << endl;
-			vhdl << tab << declare("paddedShortSX", w) << " <= (" << w-1 << " downto " << sizeZ << " => SX(" << 2*sizeZ-1 << ")) & shortSX;"  << endl;
+			vhdl << tab << declare("ShiftedCosTimesZ", w+1) << " <= (" << w << " downto " << sizeZ << " => CosTimesZ(" << 2*sizeZ-1 << ")) & CosTimesZTrunc;"  << endl;
+			vhdl << tab << declare("ShiftedSinTimesZ", w+1) << " <= (" << w << " downto " << sizeZ << " => SinTimesZ(" << 2*sizeZ-1 << ")) & SinTimesZTrunc;"  << endl;
 			
-			vhdl << tab << declare("CsubShortSX", w) << " <= " << join("C", stage) << " - paddedShortSX;" << endl;
-			vhdl << tab << declare("SaddShortCX", w) << " <= " << join("S", stage) << " + paddedShortCX;" << endl;
-			
-			//assign output
-			manageCriticalPath(target->localWireDelay(w) + target->adderDelay(w));
-			
-			vhdl << tab << declare("reducedC", w) << "<= CsubShortSX;" << endl;
-			vhdl << tab << declare("reducedS", w) << "<= SaddShortCX;" << endl;
-			
+			vhdl << tab << declare("redCos", w+1) << " <= " << join("Cos", stage) << " - ShiftedSinTimesZ;" << endl;
+			vhdl << tab << declare("redSin", w+1) << " <= " << join("Sin", stage) << " + ShiftedCosTimesZ;" << endl;
+						
 		}
 
 

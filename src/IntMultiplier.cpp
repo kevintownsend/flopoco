@@ -33,13 +33,13 @@ using namespace std;
 namespace flopoco {
 	extern vector<Operator*> oplist;
 	
-	IntMultiplier::IntMultiplier (Target* target, int wInX, int wInY, bool sign, map<string, double> inputDelays, float ratio):
-	Operator ( target, inputDelays ), wInX_(wInX), wInY_(wInY), wOut_(wInX+wInY), sign_(sign), ratio_(ratio) {
+	IntMultiplier::IntMultiplier (Target* target, int wInX, int wInY, bool signedInputs, map<string, double> inputDelays, float ratio):
+	Operator ( target, inputDelays ), wInX_(wInX), wInY_(wInY), wOut_(wInX+wInY), signedInputs_(signedInputs), ratio_(ratio) {
 		ostringstream name;
 		srcFileName="IntMultiplier";
 		setCopyrightString ( "Bogdan Pasca 2011" );
 		
-		name <<"IntMultiplier_"<<wInX_<<"_"<<wInY_<<"_" << (sign_?"signed":"unsigned") << "_uid"<<Operator::getNewUId();;
+		name <<"IntMultiplier_"<<wInX_<<"_"<<wInY_<<"_" << (signedInputs_?"signed":"unsigned") << "_uid"<<Operator::getNewUId();;
 		setName ( name.str() );
 		
 		// Set up the IO signals
@@ -51,7 +51,7 @@ namespace flopoco {
 
 		int wxDSP, wyDSP;
 		//test if the multiplication fits into one DSP
-		target->getDSPWidths(wxDSP, wyDSP, sign);
+		target->getDSPWidths(wxDSP, wyDSP, signedInputs);
 		bool testForward, testReverse, testFit;
 		testForward     = (wInX<=wxDSP)&&(wInY<=wyDSP);
 		testReverse = (wInY<=wxDSP)&&(wInX<=wyDSP);
@@ -61,7 +61,7 @@ namespace flopoco {
 			setCriticalPath(getMaxInputDelays ( inputDelays ));
 			manageCriticalPath(target->DSPMultiplierDelay());
 				//nextCycle();// TODO: not needed for low frequencies
-			if (sign)
+			if (signedInputs)
 				vhdl << tab << declare("rfull", wInX + wInY) << " <= X * Y;"<<endl;
 			else //sign extension is necessary for using use ieee.std_logic_signed.all; 
 			    // for correct inference of Xilinx DSP functions
@@ -76,19 +76,19 @@ namespace flopoco {
 		}
 
 		
-		if ((!sign) && (ratio==1)){
+		if ((!signedInputs) && (ratio==1)){
 			selectedVersion = 0; //UnsignedIntMultiplier	
-		}else if ((!sign) && (ratio<1) && (ratio>0)){
+		}else if ((!signedInputs) && (ratio<1) && (ratio>0)){
 			selectedVersion = 2; //IntTilingMultiplier
-		}else if ((!sign) && (ratio==0)){
+		}else if ((!signedInputs) && (ratio==0)){
 			selectedVersion = 3; //LogicIntMultiplier with sign 0
-		}else if ((sign) && (ratio>0)){
+		}else if ((signedInputs) && (ratio>0)){
 			selectedVersion = 1; //SignedIntMultiplier
-		}else if ((sign) && (ratio==0)){
+		}else if ((signedInputs) && (ratio==0)){
 			selectedVersion = 4; //LogicIntMultiplier with sign 1
-		}else if ((!target->getUseHardMultipliers()) && (sign)){
+		}else if ((!target->getUseHardMultipliers()) && (signedInputs)){
 			selectedVersion = 4;	
-		}else if ((!target->getUseHardMultipliers()) && (!sign)){
+		}else if ((!target->getUseHardMultipliers()) && (!signedInputs)){
 			selectedVersion = 3;
 		}	
 
@@ -120,7 +120,7 @@ namespace flopoco {
 		mpz_class svX = tc->getInputValue("X");
 		mpz_class svY = tc->getInputValue("Y");
 		
-		if (! sign_){
+		if (! signedInputs_){
 
 			mpz_class svR = svX * svY;
 
@@ -160,7 +160,7 @@ namespace flopoco {
 		o << "library ieee; " << endl;
 		o << "use ieee.std_logic_1164.all;" << endl;
 		o << "use ieee.std_logic_arith.all;" << endl;
-		if  (sign_){
+		if  (signedInputs_){
 			o << "use ieee.std_logic_signed.all;" << endl;
 		}else{
 			o << "use ieee.std_logic_unsigned.all;" << endl;

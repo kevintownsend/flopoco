@@ -8,7 +8,7 @@ namespace flopoco{
 	class FixRealKCM : public Operator
 	{
 	public:
-		FixRealKCM(Target* target, int lsbIn, int msbIn, int signedInput, int lsbOut, string constant, 
+		FixRealKCM(Target* target, int lsbIn, int msbIn, bool signedInput, int lsbOut, string constant, 
 							 double targetUlpError = 1.0, map<string, double> inputDelays = emptyDelayMap);
 		~FixRealKCM();
 
