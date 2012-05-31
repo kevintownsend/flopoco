@@ -49,7 +49,7 @@ NewCompressorTree::NewCompressorTree(Target * target, vector<unsigned> vops)
 	for (unsigned i = 0; i < w; i++) {
 		ostringstream l0;
 		l0 << "X_" << i << "_level0";
-		vhdl << declare (l0.str(), vops[i]) << " <= X" << i << ";\n";
+		vhdl << tab << declare (l0.str(), vops[i]) << " <= X" << i << ";\n";
 	}
 	for (;;) {
 		// sync new level_i signals together
@@ -92,7 +92,7 @@ NewCompressorTree::NewCompressorTree(Target * target, vector<unsigned> vops)
 			break;
 		case 2:
 			// final (binary) addition in the general case
-			vhdl << declare ("R_1", w) << " <= ";
+			vhdl << tab << declare ("R_1", w) << " <= ";
 			// enumerate in reverse since IR is litte-endian and
 			// flopoco's vhdl is big-endian
 			for (int i = w-1; i >= 0; i--) {
@@ -105,7 +105,8 @@ NewCompressorTree::NewCompressorTree(Target * target, vector<unsigned> vops)
 					vhdl << "\"0\"";
 				}
 			}
-			vhdl << ";\n" << declare ("R_2", w) << " <= ";
+			vhdl <<";" << endl;
+			vhdl << tab << declare ("R_2", w) << " <= ";
 			for (int i = w-1; i >= 0; i--) {
 				if (i < w-1)
 					vhdl << " & ";
@@ -136,7 +137,7 @@ NewCompressorTree::NewCompressorTree(Target * target, vector<unsigned> vops)
 					   << "_" << vops[i]-n;
 					string out = in.str() + "_popcnt";
 
-					vhdl << declare (in.str(), n)
+					vhdl << tab << declare (in.str(), n)
 					     << " <= X_" << i << "_level"
 					     << level
 					     << range(vops[i]-1,vops[i]-n)
@@ -152,7 +153,7 @@ NewCompressorTree::NewCompressorTree(Target * target, vector<unsigned> vops)
 						bit << "X_" << i+j << "_level"
 						    << (level+1) << "_bit"
 						    << vops_new[i+j];
-						vhdl << declare (bit.str())
+						vhdl << tab << declare (bit.str())
 						     << " <= " << out
 						     << of(j) << ";\n";
 						vops_new[i+j]++;
@@ -174,7 +175,7 @@ NewCompressorTree::NewCompressorTree(Target * target, vector<unsigned> vops)
 					   << level << "_" << vops[i]-1 << "_0";
 					string out = in.str() + "_popcnt";
 
-					vhdl << declare (in.str(), inputs)
+					vhdl << tab << declare (in.str(), inputs)
 					     << " <= X_" << i << "_level"
 					     << level
 					     // vops[i] == inputs
@@ -194,7 +195,7 @@ NewCompressorTree::NewCompressorTree(Target * target, vector<unsigned> vops)
 						bit << "X_" << i+j << "_level"
 						    << (level+1) << "_bit"
 						    << vops_new[i+j];
-						vhdl << declare (bit.str())
+						vhdl << tab << declare (bit.str())
 						     << " <= " << out
 						     << of(j) << ";\n";
 						vops_new[i+j]++;
@@ -205,7 +206,7 @@ NewCompressorTree::NewCompressorTree(Target * target, vector<unsigned> vops)
 						bit << "X_" << i << "_level"
 						    << (level+1) << "_bit"
 						    << vops_new[i];
-						vhdl << declare (bit.str())
+						vhdl << tab << declare (bit.str())
 						     << " <= X_" << i
 						     << "_level" << level
 						     << of(j) << ";" << endl;
@@ -222,7 +223,7 @@ NewCompressorTree::NewCompressorTree(Target * target, vector<unsigned> vops)
 
 				ostringstream next_lvl;
 				next_lvl << "X_" << i << "_level" << (level+1);
-				vhdl << declare (next_lvl.str(),vops_new[i]);
+				vhdl << tab << declare (next_lvl.str(),vops_new[i]);
 				// if it's of length 1 the rhs will be a std_logic
 				if (vops_new[i] == 1)
 					vhdl << of(0);
@@ -239,7 +240,7 @@ NewCompressorTree::NewCompressorTree(Target * target, vector<unsigned> vops)
 				vhdl << ";\n";
 			}
 			level++;
-			nextCycle();
+			//nextCycle();
 			vops = vops_new;
 			break;
 		}
@@ -248,31 +249,19 @@ NewCompressorTree::NewCompressorTree(Target * target, vector<unsigned> vops)
 	}
 };
 
+
+
 void NewCompressorTree::emulate(TestCase * tc)
 {
 	std::vector<mpz_class> signals (w, mpz_class(0));
-	for (unsigned i = 0; i < w; i++) {
-		signals[i] = tc->getInputValue(join("X_",i));
+	for (unsigned int i = 0; i < w; i++) {
+		signals[i] = tc->getInputValue(join("X",i));
 	}
 	mpz_class res;
-	for (unsigned i = 0; i < w; i++) {
+	for (unsigned int i = 0; i < w; i++) {
 		res += (popcnt (signals[i]) << i);
 	}
 	res &= ((mpz_class(1) << w) - 1);
 	tc->addExpectedOutput("R", res);
 }
 
-
-void NewCompressorTree::buildStandardTestCases(TestCaseList * tcl)
-{
-}
-
-void NewCompressorTree::buildRandomTestCases(TestCaseList * tcl, int n)
-{
-}
-
-TestCase *NewCompressorTree::buildRandomTestCases(int i)
-{
-	TestCase *tc = new TestCase(this);
-	return tc;
-}
