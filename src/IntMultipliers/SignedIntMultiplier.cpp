@@ -53,7 +53,7 @@ namespace flopoco{
 		addOutput("R", wOut_); /* wOut_ = wInX_ + wInY_ */
 	
 	
-		if ((target->getUseHardMultipliers()) && (target->getNumberOfDSPs()>0))
+		if ((target->hasHardMultipliers()) && (target->getNumberOfDSPs()>0))
 		{
 			REPORT(DETAILED, "The target is: " << target->getID());
 			if ((target->getID()=="Virtex4")||(target->getID()=="Spartan3")){

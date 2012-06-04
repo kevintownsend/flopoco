@@ -41,6 +41,7 @@ namespace flopoco {
 #define DEBUG_SEPARATOR "________________________________________________________________________________"
 #define OUTER_SEPARATOR "################################################################################"
 #define REPORT(level, stream) {if ((level)<=(verbose)){ cerr << "> " << srcFileName << ": " << stream << endl;}else{}} 
+#define THROWERROR(stream) {{ostringstream o; o << " ERROR in " << uniqueName_ << " (" << srcFileName << "): " << stream << endl; throw o.str();}} 
 
 
 
@@ -174,6 +175,29 @@ public:
 	 */
 	void setCopyrightString(std::string authorsYears);
 
+
+	/** use the Synopsys de-facto standard ieee.std_logic_unsigned for this entity
+	 */
+	void useStdLogicUnsigned() {
+		stdLibType_ = 0;
+	};
+
+	/** use the Synopsys de-facto standard ieee.std_logic_unsigned for this entity
+	 */
+	void useStdLogicSigned() {
+		stdLibType_ = -1;
+	};
+
+
+	/** use the real IEEE standard ieee.numeric_std for this entity
+	 */
+	void useNumericStd() {
+		stdLibType_ = 1;
+	};
+
+	int getStdLibType() {
+		return stdLibType_; 
+	};
 
 	/** Sets Operator name to givenName.
 	 * Sets the name of the operator to operatorName.
@@ -648,18 +672,11 @@ public:
 
 	void pipelineInfo(std::ostream& o);
 
-	/** DEPRECATED  Output the standard library paperwork 
+	/** Output the standard library paperwork 
 	 * @param o the stream where the libraries will be written to
 	 */
-	static void stdLibs(std::ostream& o){
-		o<< "library ieee;"<<endl
-		 << "use ieee.std_logic_1164.all;"<<endl
-		 << "use ieee.std_logic_arith.all;"<<endl
-		 << "use ieee.std_logic_unsigned.all;"<<endl 
-		 << "library std;" << endl
-		 << "use std.textio.all;"<< endl 
-		 << "library work;"<<endl<< endl;
-	};
+	void stdLibs(std::ostream& o);
+
 		
 	/** DEPRECATED  Output the VHDL entity of the current operator.
 	 * @param o the stream where the entity will be outputted
@@ -940,6 +957,7 @@ public:
 
 	/** Completely replace "this" with a copy of another operator. */
 	void cloneOperator(Operator *op){
+		stdLibType_ = op->stdLibType_;
 		subComponents_ = op->getSubComponents();
 		signalList_ = op->getSignalList();	
 		ioList_     = op->getIOListV();
@@ -1008,6 +1026,7 @@ protected:
 	vector<Operator*>   oplist;
 
 private:
+	int                    stdLibType_;                 /**< 0 will use the Synopsys ieee.std_logic_unsigned, -1 uses std_logic_unsigned, 1 uses ieee numeric_std  (preferred) */
 	int                    numberOfInputs_;             /**< The number of inputs of the operator */
 	int                    numberOfOutputs_;            /**< The number of outputs of the operator */
 	bool                   isSequential_;               /**< True if the operator needs a clock signal*/

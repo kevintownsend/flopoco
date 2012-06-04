@@ -40,7 +40,7 @@ namespace flopoco{
 			pipeline_          = true;
 			lutInputs_         = 4;
 			frequency_         = 400000000.;
-			useHardMultipliers_= true;
+			hasHardMultipliers_= true;
 			id_                = "generic";
 		}
 	
@@ -217,7 +217,7 @@ namespace flopoco{
 		virtual int getNumberOfDSPs() = 0;
 	
 		/** Function which returns the maximum widths of the operands of a DSP
-		 * @return widths
+		 * @return widths with x>y
 		 */
 		virtual void getDSPWidths(int &x, int &y, bool sign = false) = 0;
 	
@@ -258,15 +258,18 @@ namespace flopoco{
 		 */	
 		void setFrequency(double f);
 
-		/** Sets the use of hardware multipliers 
-		 * @param v use or not harware multipliers
-		 */
-		void setUseHardMultipliers(bool v);
+		 /** Sets the use of hardware multipliers 
+		  * @param v use or not harware multipliers
+		  */
+		 void setUseHardMultipliers(bool v);
 
 		/** Returns true if the operator for this target is allowed to use hardware multipliers
 		 * @return the status of hardware multipliers usage
 		 */
-		bool getUseHardMultipliers(); 
+		bool hasHardMultipliers(); 
+		
+		/** Returns true if it is worth using hard multipliers for implementing a multiplier of size wX times wY */
+		bool worthUsingDSP(int wX, int wY);
 
 		/** Function which returns the number of LUTs needed to implement
 		 *	 a multiplier of the given width
@@ -296,11 +299,11 @@ namespace flopoco{
 		int    lutInputs_;          /**< The number of inputs for the LUTs */
 		bool   pipeline_;           /**< True if the target is pipelined/ false otherwise */
 		double frequency_;          /**< The desired frequency for the operator in Hz */
-		int    multXInputs_;        /**< The size for the X dimmension of the hardware multipliers */
-		int    multYInputs_;        /**< The size for the Y dimmension of the hardware multipliers */
-		bool   useHardMultipliers_; /**< If true the operator design can use the hardware multipliers */
-		long   sizeOfBlock_;		/**< The size of a primitive memory block */
-		double maxFrequencyMHz_ ;/**< The maximum practical frequency attainable on this target. An indicator of relative performance of FPGAs. 400 is for Virtex4 */
+		bool   hasHardMultipliers_; /**< If true, this target offers hardware multipliers */
+		int    multXInputs_;        /**< The size for the X dimension of the hardware multipliers (the largest, if they are not equal) */
+		int    multYInputs_;        /**< The size for the Y dimension of the hardware multipliers  (the smallest, if they are not equal)*/
+		long   sizeOfBlock_;		    /**< The size of a primitive memory block */
+		double maxFrequencyMHz_ ;   /**< The maximum practical frequency attainable on this target. An indicator of relative performance of FPGAs. 400 is for Virtex4 */
 	
 	};
 

@@ -83,8 +83,6 @@ namespace flopoco{
 	
 	bool StratixIII::suggestSubmultSize(int &x, int &y, int wInX, int wInY){
 		// (DSP blocks are 36x36 and my be split as 9x9, 12x12 or 18x18)
-		if (getUseHardMultipliers()){
-			
 			x =18;
 			y = 18;
 			return true; //FIXME
@@ -182,14 +180,6 @@ namespace flopoco{
 				x = y = 18;
 				return false;
 			}
-		}else{
-			// TODO functional approximation of multiplier size based on frequency
-			x = y = lutInputs_/2;
-			return true;
-		}
-		
-		// control should never get here
-		return false;
 	}	 
 	
 	bool StratixIII::suggestSubaddSize(int &x, int wIn){

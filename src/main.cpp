@@ -149,11 +149,13 @@ void usage(char *name, string opName = ""){
 		cerr << "    ____________ INTEGER MULTIPLIERS/SQUARER/KARATSUBA _________________________\n";
 
   // // Killing Bogdan's mess
-	// if ( full || opName == "IntMultiplier"){
-	// 	OP("IntMultiplier","wInX wInY signed ratio");
-	// 	cerr << "      Integer multiplier of two integers X and Y of sizes wInX and wInY \n";
-	// 	cerr << "      signed is one of {0,1} \n";
-	// }
+	 if ( full || opName == "IntMultiplier"){
+	 	OP("IntMultiplier","wInX wInY wOut signed ratio");
+	 	cerr << "      Integer multiplier of two integers X and Y of sizes wInX and wInY \n";
+	 	cerr << "      Result is faithfully truncated to wOut bits  (wOut=0 means: full multiplier)\n";
+	 	cerr << "      signed=0: unsigned multiplier;     signed=1: signed inputs, signed outputs \n";
+		cerr << "      0 <= ratio <= 1; larger ratio => DSP dominant architectures\n";
+	 }
 
 	// if ( full || opName == "IntMultiplier" || opName == "UnsignedIntMultiplier" ){
 	// 	OP("UnsignedIntMultiplier","wInX wInY");
@@ -683,7 +685,7 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 					}
 					// if previous options had changed it
 					target->setFrequency(oldTarget->frequency());
-					target->setUseHardMultipliers(oldTarget->getUseHardMultipliers());
+					target->setUseHardMultipliers(oldTarget->hasHardMultipliers());
 					if (oldTarget->isPipelined()) 
 						target->setPipelined();
 					else 
@@ -1148,7 +1150,7 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				else {
 					std::vector<unsigned> heights (wOut, 0);
 					for (int j = 0; j < wOut; j++) {
-						heights[j] = checkStrictlyPositive(argv[i++],argv[0]);
+						heights[wOut-1-j] = atoi(argv[i++]);
 					}
 					op = new NewCompressorTree(target,heights);
 					addOperator(oplist, op);
@@ -1273,15 +1275,16 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 			}    
 		}
 		else if(opname=="IntMultiplier"){
-			int nargs = 4;
+			int nargs = 5;
 			if (i+nargs > argc)
 				usage(argv[0],opname);
 			else {
 				int wInX    = checkStrictlyPositive(argv[i++], argv[0]);
 				int wInY    = checkStrictlyPositive(argv[i++], argv[0]);
+				int wOut    = atoi(argv[i++]);
 				int sign    =  checkBoolean(argv[i++], argv[0]);
 				float ratio = atof(argv[i++]);
-				op = new IntMultiplier(target, wInX, wInY, sign, emptyDelayMap, ratio);
+				op = new IntMultiplier(target, wInX, wInY, wOut, sign, ratio, true, emptyDelayMap);
 				addOperator(oplist, op);
 			}
 		}
@@ -1295,6 +1298,19 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				int wInY = checkStrictlyPositive(argv[i++], argv[0]);
 				int sign = checkBoolean(argv[i++], argv[0]);
 				op = new LogicIntMultiplier(target, wInX, wInY, sign);
+				addOperator(oplist, op);
+			}
+		}
+		// Hidden, for testing purpose
+		else if(opname=="NewLogicIntMultiplier"){
+			int nargs = 3;
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			else {
+				int wInX = checkStrictlyPositive(argv[i++], argv[0]);
+				int wInY = checkStrictlyPositive(argv[i++], argv[0]);
+				int sign = checkBoolean(argv[i++], argv[0]);
+				op = new IntMultiplier(target, wInX, wInY, wInX+wInY, sign, 1.0, false, emptyDelayMap);
 				addOperator(oplist, op);
 			}
 		}
@@ -2354,9 +2370,14 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 			cerr << tab << "add wave -r *" <<endl;
 			cerr << tab << "run " << ((TestBench*)op)->getSimulationTime() <<"ns" << endl;
 			cerr << "To run the simulation using gHDL, type the following in a shell prompt:" <<endl;
-			cerr << tab << "ghdl -a --ieee=synopsys -fexplicit "<< filename <<endl;
-			cerr << tab << "ghdl -e --ieee=synopsys -fexplicit " << op->getName() <<endl;
-			cerr << tab << "ghdl -r --ieee=synopsys " << op->getName() << " --vcd=" << op->getName() << ".vcd" <<endl;
+			string simlibs;
+			if(op->getStdLibType()==0 || op->getStdLibType()==-1)
+				simlibs="--ieee=synopsys ";
+			if(op->getStdLibType()==1)
+				simlibs="--ieee=standard ";
+			cerr << tab << "ghdl -a " << simlibs << "-fexplicit "<< filename <<endl;
+			cerr << tab << "ghdl -e " << simlibs << "-fexplicit " << op->getName() <<endl;
+			cerr << tab << "ghdl -r " << simlibs << op->getName() << " --vcd=" << op->getName() << ".vcd" <<endl;
 			cerr << tab << "gtkwave " << op->getName() << ".vcd" << endl;
 		}
 		
@@ -2382,9 +2403,14 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 			cerr << tab << "add wave -r *" <<endl;
 			cerr << tab << "run " << ((TestBench*)op)->getSimulationTime() << "ns" << endl;
 			cerr << "To run the simulation using gHDL, type the following in a shell prompt:" <<endl;
-			cerr << tab << "ghdl -a --ieee=synopsys -fexplicit "<< filename <<endl;
-			cerr << tab << "ghdl -e --ieee=synopsys -fexplicit " << op->getName() <<endl;
-			cerr << tab << "ghdl -r --ieee=synopsys " << op->getName() << " --vcd=" << op->getName() << ".vcd" <<endl;
+			string simlibs;
+			if(op->getStdLibType()==0 || op->getStdLibType()==-1)
+				simlibs="--ieee=synopsys ";
+			if(op->getStdLibType()==1)
+				simlibs="--ieee=standard ";
+			cerr << tab << "ghdl -a " << simlibs << "-fexplicit "<< filename <<endl;
+			cerr << tab << "ghdl -e " << simlibs << "-fexplicit " << op->getName() <<endl;
+			cerr << tab << "ghdl -r " << simlibs << op->getName() << " --vcd=" << op->getName() << ".vcd" <<endl;
 			cerr << tab << "gtkwave " << op->getName() << ".vcd" << endl;
 		}
 		else  {

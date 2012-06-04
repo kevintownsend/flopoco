@@ -2653,7 +2653,7 @@ namespace flopoco{
 	int IntTruncMultiplier::multiplicationInSlices(vector<SoftDSP*> config)
 	{
 		unsigned partitions;
-		bool savedUseHardMultipliers = target_->getUseHardMultipliers();
+		bool savedUseHardMultipliers = target_->hasHardMultipliers();
 
 		for (partitions=0; partitions<config.size(); partitions++)
 		{	

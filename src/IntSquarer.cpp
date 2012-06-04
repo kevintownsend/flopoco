@@ -199,7 +199,7 @@ namespace flopoco{
 			oplist.push_back(intsquarer);
 			
 			bool tempPipelineStatus = target->isPipelined();
-			bool tempDSPStatus = target->getUseHardMultipliers();
+			bool tempDSPStatus = target->hasHardMultipliers();
 			target->setNotPipelined();
 			target->setUseHardMultipliers(false);
 			

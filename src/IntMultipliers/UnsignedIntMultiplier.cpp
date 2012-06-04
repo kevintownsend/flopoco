@@ -61,7 +61,7 @@ namespace flopoco{
 	
 		double delay = 0.0;
 	
-		if ((target->getUseHardMultipliers()) && (target->getNumberOfDSPs()>0)){
+		if ((target->hasHardMultipliers()) && (target->getNumberOfDSPs()>0)){
 			if (verbose)
 				cerr << "> UnsignedIntMultiplier: The target is " << target->getID() << endl;
 	

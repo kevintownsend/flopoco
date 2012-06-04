@@ -82,62 +82,61 @@ namespace flopoco{
 	
 	bool StratixII::suggestSubmultSize(int &x, int &y, int wInX, int wInY){
 		// (DSP blocks are 36x36 and my be split as 9x9 or 18x18)
-		if (getUseHardMultipliers()){
-			int padX[nrConfigs_+1], padY[nrConfigs_+1], ix=1, iy=1; // nr of zero padding for a specific width multiplier
-			double maxF[nrConfigs_+1]; // will hold the maximum possible freqeuncy for each multiplier width
+		int padX[nrConfigs_+1], padY[nrConfigs_+1], ix=1, iy=1; // nr of zero padding for a specific width multiplier
+		double maxF[nrConfigs_+1]; // will hold the maximum possible freqeuncy for each multiplier width
 			
-			x = y = 1;
-			padX[nrConfigs_] = wInX-x;
-			padY[nrConfigs_] = wInY-y;
-			maxF[nrConfigs_] = 0;
+		x = y = 1;
+		padX[nrConfigs_] = wInX-x;
+		padY[nrConfigs_] = wInY-y;
+		maxF[nrConfigs_] = 0;
 			
-			for (int i=0; i<nrConfigs_; i++)
+		for (int i=0; i<nrConfigs_; i++)
 			{ // for each multiplier width available
-			maxF[i] = 1/multiplierDelay_[i]; // maximum possible freqeuncy 
-			int chunksX = ceil((double)wInX/multiplierWidth_[i]);
-			int chunksY = ceil((double)wInY/multiplierWidth_[i]);
-			padX[i] = chunksX*multiplierWidth_[i] - wInX;
-			padY[i] = chunksY*multiplierWidth_[i] - wInY;
+				maxF[i] = 1/multiplierDelay_[i]; // maximum possible freqeuncy 
+				int chunksX = ceil((double)wInX/multiplierWidth_[i]);
+				int chunksY = ceil((double)wInY/multiplierWidth_[i]);
+				padX[i] = chunksX*multiplierWidth_[i] - wInX;
+				padY[i] = chunksY*multiplierWidth_[i] - wInY;
 			
-			cout << "Mult Size: " << multiplierWidth_[i] << ", Chunks X: " << chunksX << ", Y: " << chunksY << ", PaddX: "<<padX[i] << ", PaddY: " << padY[i] << endl;
-			if (frequency() > maxF[i]) 
-				continue;
+				cout << "Mult Size: " << multiplierWidth_[i] << ", Chunks X: " << chunksX << ", Y: " << chunksY << ", PaddX: "<<padX[i] << ", PaddY: " << padY[i] << endl;
+				if (frequency() > maxF[i]) 
+					continue;
 			
 			
-			if ((padY[i] < (multiplierWidth_[i]/ (double)y)*padY[nrConfigs_]) ||
-				((padY[i] == (multiplierWidth_[i]/ (double)y)*padY[nrConfigs_]) &&
-				(multiplierWidth_[i] > multiplierWidth_[iy])))
-			{
-				y = multiplierWidth_[i];
-				padY[nrConfigs_] = padY[i];
-				iy = i;
+				if ((padY[i] < (multiplierWidth_[i]/ (double)y)*padY[nrConfigs_]) ||
+				    ((padY[i] == (multiplierWidth_[i]/ (double)y)*padY[nrConfigs_]) &&
+				     (multiplierWidth_[i] > multiplierWidth_[iy])))
+					{
+						y = multiplierWidth_[i];
+						padY[nrConfigs_] = padY[i];
+						iy = i;
+					}
+			
+				if ((padX[i] < (multiplierWidth_[i]/ (double)x)*padX[nrConfigs_]) ||
+				    ((padX[i] == (multiplierWidth_[i]/ (double)x)*padX[nrConfigs_]) &&
+				     (multiplierWidth_[i] > multiplierWidth_[ix])))
+					{
+						x = multiplierWidth_[i];
+						padX[nrConfigs_] = padX[i];
+						ix = i;
+					}	
+			
+				if (x < y)
+					{
+						y = x;
+						iy = ix;
+						padY[nrConfigs_] = padY[iy];
+					}
+				else if (y < x)
+					{
+						x = y;
+						ix = iy;
+						padX[nrConfigs_] = padX[ix];
+					}
+				cout << "x: " << x << ", y: " << y << ", padX: " << padX[nrConfigs_] << ", padY: " << padY[nrConfigs_] << endl;
 			}
 			
-			if ((padX[i] < (multiplierWidth_[i]/ (double)x)*padX[nrConfigs_]) ||
-				((padX[i] == (multiplierWidth_[i]/ (double)x)*padX[nrConfigs_]) &&
-				(multiplierWidth_[i] > multiplierWidth_[ix])))
-			{
-				x = multiplierWidth_[i];
-				padX[nrConfigs_] = padX[i];
-				ix = i;
-			}	
-			
-			if (x < y)
-			{
-				y = x;
-				iy = ix;
-				padY[nrConfigs_] = padY[iy];
-			}
-			else if (y < x)
-			{
-				x = y;
-				ix = iy;
-				padX[nrConfigs_] = padX[ix];
-			}
-			cout << "x: " << x << ", y: " << y << ", padX: " << padX[nrConfigs_] << ", padY: " << padY[nrConfigs_] << endl;
-			}
-			
-			if ((x != 1) && (y != 1))
+		if ((x != 1) && (y != 1))
 			{
 				int maxFx = 1/multiplierDelay_[ix];
 				int maxFy = 1/multiplierDelay_[iy]; 
@@ -145,48 +144,42 @@ namespace flopoco{
 				int wIn;
 				
 				if (maxFx>maxFy)
-				{
-					maxF[nrConfigs_] = maxFy;
-					wIn = y;
-				}
+					{
+						maxF[nrConfigs_] = maxFy;
+						wIn = y;
+					}
 				else
-				{
-					maxF[nrConfigs_] = maxFx;
-					wIn = x;
-				}
+					{
+						maxF[nrConfigs_] = maxFx;
+						wIn = x;
+					}
 				
 				if (frequency() < maxF[nrConfigs_])
-				{
-					double f = frequency();
+					{
+						double f = frequency();
 					
-					if ((f > 1./multiplierDelay_[1] && wIn <= 9)  ||	// don't use 18x18
-						(f > 1./multiplierDelay_[2] && wIn <= 18) || 	// don't use 36x36
-						(wIn > 18))
-						return false;
-					else
-						return true;
-				}
+						if ((f > 1./multiplierDelay_[1] && wIn <= 9)  ||	// don't use 18x18
+						    (f > 1./multiplierDelay_[2] && wIn <= 18) || 	// don't use 36x36
+						    (wIn > 18))
+							return false;
+						else
+							return true;
+					}
 				else
-				{
-					x = y = 18;
-					return false;
-				}
+					{
+						x = y = 18;
+						return false;
+					}
 			}
-			else // the desired frequency is too high
+		else // the desired frequency is too high
 			{
 				x = y = 18;
 				return false;
 			}
-		}else{
-			// TODO functional approximation of multiplier size based on frequency
-			x = y = lutInputs_/2;
-			return true;
-		}
-		
-		// control should never get here
-		return false;
-	}	 
-	
+	}
+
+
+
 	bool StratixII::suggestSubaddSize(int &x, int wIn){
 		
 		suggestSlackSubaddSize(x, wIn, 0);

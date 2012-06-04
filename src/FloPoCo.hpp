@@ -95,7 +95,6 @@
 
 //#include "CORDIC/FixMicroRotation.hpp"
 #include "CORDIC/CordicSinCos.hpp"
-#include "CORDIC/CordicSinCosRedIter.hpp"
 #endif
 
 /* floating-point -------------------------------------------- */ 

@@ -337,7 +337,7 @@ namespace flopoco{
 
 		// TODO: somehow arbitrary
 		if( target->isPipelined() && a[0]+1>=9) {  
-			IntMultiplier* p0 = new IntMultiplier(target, a[0]+1, wF+2, 0 /*unsigned*/);
+			IntMultiplier* p0 = new IntMultiplier(target, a[0]+1, wF+2, 0, false /*unsigned*/);
 			oplist.push_back(p0);
 			inPortMap  (p0, "X", "InvA0");
 			inPortMap  (p0, "Y", "Y0");
@@ -371,24 +371,25 @@ namespace flopoco{
 			else
 				vhdl << range(s[i]-1, s[i]-psize[i])  << ";" << endl;   
 
-			if(target->isPipelined() && a[0]+1>=9) {   //FIXME not sure that this IF is optimal
-				IntMultiplier* pi = new IntMultiplier(target, a[i], psize[i], 0, inDelayMap("X", getCriticalPath()) );
-				oplist.push_back(pi);
-				inPortMap  (pi, "X", join("A",i));
-				inPortMap  (pi, "Y", join("ZM",i));
-				outPortMap (pi, "R", join("P",i));
-				vhdl << instance(pi, join("p",i)+"_mult") << endl;
-
-				syncCycleFromSignal( join("P",i) );
-				setCriticalPath( pi->getOutputDelay("R") );
-			}
-			else {
-				if(verbose) cerr << "> FPLog: unpipelined multiplier for P"<<i<<", implemented as * in VHDL" << endl;  
-				nextCycle();//
-				vhdl << tab << declare(join("P",i),  psize[i] + a[i]) << " <= " << join("A",i) << "*" << join("ZM",i) << ";" << endl;
-				nextCycle();
-				setCriticalPath( 0 ); //FIXME
-			}
+#if 1
+			bool useDSP=true; // TODO experiment with logic-based.
+			IntMultiplier* pi = new IntMultiplier(target, a[i], psize[i], 0, false, 1.0, useDSP, inDelayMap("X", getCriticalPath()) );
+			oplist.push_back(pi);
+			inPortMap  (pi, "X", join("A",i));
+			inPortMap  (pi, "Y", join("ZM",i));
+			outPortMap (pi, "R", join("P",i));
+			vhdl << instance(pi, join("p",i)+"_mult") << endl;
+			
+			syncCycleFromSignal( join("P",i) );
+			setCriticalPath( pi->getOutputDelay("R") );
+			
+#else
+			if(verbose) cerr << "> FPLog: unpipelined multiplier for P"<<i<<", implemented as * in VHDL" << endl;  
+			nextCycle();//
+			vhdl << tab << declare(join("P",i),  psize[i] + a[i]) << " <= " << join("A",i) << "*" << join("ZM",i) << ";" << endl;
+			nextCycle();
+			setCriticalPath( 0 ); //FIXME
+#endif
 			double cppi = getCriticalPath();
 			vhdl << tab << " -- delay at multiplier output is " << getCriticalPath() << endl;
 

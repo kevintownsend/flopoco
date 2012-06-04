@@ -65,12 +65,21 @@ namespace flopoco{
 	}
 
 	void Target::setUseHardMultipliers(bool v){
-		useHardMultipliers_ = v;  
+		hasHardMultipliers_ = v;  
 	}
-
-	bool Target::getUseHardMultipliers(){
-		return useHardMultipliers_ ;
+	
+	bool Target::hasHardMultipliers(){
+		return hasHardMultipliers_ ;
 	} 
 
+	bool Target::worthUsingDSP(int wX, int wY){
+		// Default random setting, should be overloaded after a bit of experimenting
+		int threshold = multYInputs_ >> 1; // the smallest dimension in case of asymmetry
+		if(wX < threshold && wY < threshold)
+			return false;
+		else
+			return true;
+
+	}
 
 }

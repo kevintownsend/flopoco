@@ -532,7 +532,11 @@ namespace flopoco{
 			//}// else
 		 			// 		lowProd = new IntMultiplier(target, sizeMultIn, sizeExpZm1, inDelayMap("X", target->LogicToDSPWireDelay() + getCriticalPath() ) );
 		}
-		lowProd = new IntMultiplier(target, sizeMultIn, sizeExpZm1, 0 /*unsigned*/, 
+		lowProd = new IntMultiplier(target, sizeMultIn, sizeExpZm1, 
+		                            0,  // untruncated
+		                            false,  /*unsigned*/
+		                            1.0,
+		                            true, // useDSP
 		                            inDelayMap("X", target->LogicToDSPWireDelay() + getCriticalPath() ) );
 			oplist.push_back(lowProd);
 		

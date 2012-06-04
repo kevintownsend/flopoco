@@ -22,43 +22,50 @@ using namespace std;
 
 // the length of the result is the same as the one of vops
 // the result is truncated on overflow
-NewCompressorTree::NewCompressorTree(Target * target, vector<unsigned> vops)
-	:Operator(target), w(vops.size()), vert_operands(vops)
+NewCompressorTree::NewCompressorTree(Target * target, vector<unsigned> vops_)
+	:Operator(target), inSize(vops_.size()), vops(vops_)
 {
+
+	srcFileName="NewCompressorTree";
 	{
 		// definition of the name of the operator
 		ostringstream name;
-		name << "NewCompressorTree_" << w;
-		vector<unsigned>::const_iterator it = vops.begin();
-		for (; it != vops.end(); it++) {
-			name << '_' << *it;
+		name << "NewCompressorTree_" << inSize;
+		for (int i=inSize-1; i>=0; i--) {
+			name << '_' << vops[i];
 		}
 		setName(name.str());
 	}
 	setCopyrightString("Guillaume Sergent 2012");
 
-	for (unsigned i = 0; i < w; i++) {
+	// Computing the size of the output
+	int maxResult=0;
+	for (unsigned i=0; i<inSize; i++)	
+		maxResult += vops[i]<<i;
+		
+	wOut=intlog2(maxResult);
+	REPORT(DEBUG, "  max value of the result: maxResult=" << maxResult);
+	REPORT(DETAILED, "Output size wOut=" << wOut);
+
+	for (unsigned i = 0; i < inSize; i++) {
 		addInput (join("X", i), vops[i]);
 	}
-	addOutput ("R", w);
+	addOutput ("R", wOut);
+
+	// In all the following it is simpler to just padd the input vector with zeroes
+	for (unsigned i=inSize; i<wOut; i++)	
+		vops.push_back(0); 
 
 	unsigned level = 0, max_height;
 	unsigned n = target->lutInputs();
 	vector<Operator*> popcounts (n+1, (Operator*) 0);
 	// first construct _level0 identifiers
-	for (unsigned i = 0; i < w; i++) {
+	for (unsigned i = 0; i < inSize; i++) {
 		ostringstream l0;
 		l0 << "X_" << i << "_level0";
 		vhdl << tab << declare (l0.str(), vops[i]) << " <= X" << i << ";\n";
 	}
 	for (;;) {
-		// sync new level_i signals together
-		if (w) {
-			setCycleFromSignal (join("X_",0,"_level",level));
-			for (unsigned i = 1; i < w; i++) {
-				syncCycleFromSignal (join("X_",i,"_level",level));
-			}
-		}
 		vector<unsigned>::iterator it;
 		max_height = 0;
 		for (it = vops.begin(); it != vops.end(); it++) {
@@ -68,17 +75,17 @@ NewCompressorTree::NewCompressorTree(Target * target, vector<unsigned> vops)
 		bool exit_the_loop = false; // break will only exit the switch
 		switch (max_height) {
 		case 0:
-			if (w)
-				vhdl << "R <= \"0\";";
+			if (wOut)
+				vhdl << tab << "R <= \"0\";";
 			exit_the_loop = true;
 			break;
 		case 1:
 			// nothing to add
-			vhdl << "R <= ";
+			vhdl << tab << "R <= ";
 			// enumerate in reverse since IR is litte-endian and
 			// flopoco's vhdl is big-endian
-			for (int i = w-1; i >= 0; i--) {
-				if (i < w-1)
+			for (int i = wOut-1; i >= 0; i--) {
+				if (i < wOut-1)
 					vhdl << " & ";
 				if (vops[i]) {
 					vhdl << "X_" << i << "_level" << level
@@ -92,11 +99,11 @@ NewCompressorTree::NewCompressorTree(Target * target, vector<unsigned> vops)
 			break;
 		case 2:
 			// final (binary) addition in the general case
-			vhdl << tab << declare ("R_1", w) << " <= ";
+			vhdl << tab << declare ("R_1", wOut) << " <= ";
 			// enumerate in reverse since IR is litte-endian and
 			// flopoco's vhdl is big-endian
-			for (int i = w-1; i >= 0; i--) {
-				if (i < w-1)
+			for (int i = wOut-1; i >= 0; i--) {
+				if (i < wOut-1)
 					vhdl << " & ";
 				if (vops[i]) {
 					vhdl << "X_" << i << "_level" << level
@@ -106,9 +113,9 @@ NewCompressorTree::NewCompressorTree(Target * target, vector<unsigned> vops)
 				}
 			}
 			vhdl <<";" << endl;
-			vhdl << tab << declare ("R_2", w) << " <= ";
-			for (int i = w-1; i >= 0; i--) {
-				if (i < w-1)
+			vhdl << tab << declare ("R_2", wOut) << " <= ";
+			for (int i = wOut-1; i >= 0; i--) {
+				if (i < wOut-1)
 					vhdl << " & ";
 				if (vops[i] > 1) {
 					vhdl << "X_" << i << "_level" << level
@@ -118,12 +125,14 @@ NewCompressorTree::NewCompressorTree(Target * target, vector<unsigned> vops)
 				}
 			}
 			vhdl << ";\n";
-			vhdl << "R <= R_1 + R_2;" << endl;
+			vhdl << tab << "R <= R_1 + R_2;" << endl;
 			exit_the_loop = true;
 			break;
+
+
 		default:
-			vector<unsigned> vops_new (w, 0);
-			for (unsigned i = 0; i < w; i++) {
+			vector<unsigned> vops_new (wOut, 0);
+			for (unsigned i = 0; i < wOut; i++) {
 				unsigned inputs = vops[i];
 				while (inputs > n) {
 					if (!popcounts[n]) {
@@ -147,7 +156,7 @@ NewCompressorTree::NewCompressorTree(Target * target, vector<unsigned> vops)
 					vhdl << instance (popcounts[n],
 					                  out + "_calc");
 					for (int j = 0; j < intlog2(n); j++) {
-						if (i+j >= w)
+						if (i+j >= wOut)
 							break;
 						ostringstream bit;
 						bit << "X_" << i+j << "_level"
@@ -164,11 +173,8 @@ NewCompressorTree::NewCompressorTree(Target * target, vector<unsigned> vops)
 				// if it's compressible
 				if (inputs > 2) {
 					if (!popcounts[inputs]) {
-						popcounts[inputs] = new
-							PopCount (target,
-							          inputs);
-						oplist.push_back (popcounts
-								[inputs]);
+						popcounts[inputs] = new PopCount (target, inputs);
+						oplist.push_back (popcounts[inputs]);
 					}
 					ostringstream in;
 					in << "X_" << i << "_level"
@@ -182,14 +188,11 @@ NewCompressorTree::NewCompressorTree(Target * target, vector<unsigned> vops)
 					     << range(vops[i]-1, 0)
 					     << ";" << endl;
 					outPortMap (popcounts[inputs],"R",out);
-					inPortMap (popcounts[inputs],"X",
-					           in.str());
+					inPortMap (popcounts[inputs],"X", in.str());
 					vhdl << instance (popcounts[inputs],
 					                  out + "_calc");
-					for (int j = 0;
-					         j < intlog2(inputs);
-						 j++) {
-						if (i+j >= w)
+					for (int j = 0; j < intlog2(inputs); j++) {
+						if (i+j >= wOut)
 							break;
 						ostringstream bit;
 						bit << "X_" << i+j << "_level"
@@ -216,7 +219,7 @@ NewCompressorTree::NewCompressorTree(Target * target, vector<unsigned> vops)
 			}
 			// and now we constructed every bit of the next level
 			// so we are ready to construct the real new inputs
-			for (unsigned i = 0; i < w; i++) {
+			for (unsigned i = 0; i < wOut; i++) {
 				// do nothing if there is nothing left to add
 				// of weight i
 				if (!vops_new[i]) continue;
@@ -253,15 +256,15 @@ NewCompressorTree::NewCompressorTree(Target * target, vector<unsigned> vops)
 
 void NewCompressorTree::emulate(TestCase * tc)
 {
-	std::vector<mpz_class> signals (w, mpz_class(0));
-	for (unsigned int i = 0; i < w; i++) {
+	std::vector<mpz_class> signals (wOut, mpz_class(0));
+	for (unsigned int i = 0; i < wOut; i++) {
 		signals[i] = tc->getInputValue(join("X",i));
 	}
 	mpz_class res;
-	for (unsigned int i = 0; i < w; i++) {
+	for (unsigned int i = 0; i < wOut; i++) {
 		res += (popcnt (signals[i]) << i);
 	}
-	res &= ((mpz_class(1) << w) - 1);
 	tc->addExpectedOutput("R", res);
 }
+
 

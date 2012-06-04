@@ -83,7 +83,6 @@ namespace flopoco{
 	
 	bool StratixIV::suggestSubmultSize(int &x, int &y, int wInX, int wInY){
 		// (DSP blocks are 36x36 and my be split as 9x9, 12x12 or 18x18)
-		if (getUseHardMultipliers()){
 			int padX[nrConfigs_+1], padY[nrConfigs_+1], ix=1, iy=1; // nr of zero padding for a specific width multiplier
 			double maxF[nrConfigs_+1]; // will hold the maximum possible freqeuncy for each multiplier width
 			
@@ -177,14 +176,6 @@ namespace flopoco{
 				x = y = 18;
 				return false;
 			}
-		}else{
-			// TODO functional approximation of multiplier size based on frequency
-			x = y = lutInputs_/2;
-			return true;
-		}
-		
-		// control should never get here
-		return false;
 	}	 
 	
 	bool StratixIV::suggestSubaddSize(int &x, int wIn){

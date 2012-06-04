@@ -87,14 +87,11 @@ namespace flopoco{
 		//	if (score2 < score1)
 		//		getDSPWidths(y,x);		
 		
-		if (getUseHardMultipliers())
-		{
-			if (wInX <= x)
-				x = wInX;
-			
-			if (wInY <= y)
-				y = wInY;
-		}
+		if (wInX <= x)
+			x = wInX;
+		
+		if (wInY <= y)
+			y = wInY;
 		return true;
 	}	 
 

@@ -29,6 +29,7 @@ namespace flopoco{
 	int verbose=0;
 	
 	Operator::Operator(Target* target, map<string, double> inputDelays){
+		stdLibType_                 = 0; // unfortunately this is the historical default.
 		target_                     = target;
 		numberOfInputs_             = 0;
 		numberOfOutputs_            = 0;
@@ -314,6 +315,7 @@ namespace flopoco{
 		this->outputVHDLComponent(o,  this->uniqueName_); 
 	}
 	
+
 	
 	void Operator::outputVHDLEntity(std::ostream& o) {
 		unsigned int i;
@@ -383,6 +385,28 @@ namespace flopoco{
 			o<<"-- combinatorial"  <<endl <<endl;
 	}
 	
+
+	void Operator::stdLibs(std::ostream& o){
+		o << "library ieee;"<<endl
+		  << "use ieee.std_logic_1164.all;"<<endl;
+		if(stdLibType_==0){
+			o << "use ieee.std_logic_arith.all;"<<endl
+			  << "use ieee.std_logic_unsigned.all;"<<endl; 
+		}
+		if(stdLibType_==-1){
+			o << "use ieee.std_logic_arith.all;"<<endl
+			  << "use ieee.std_logic_signed.all;"<<endl; 
+		}
+		if(stdLibType_==1){
+			o << "use ieee.numeric_std.all;"<<endl; 
+		}
+
+		o << "library std;" << endl
+		  << "use std.textio.all;"<< endl 
+		  << "library work;"<<endl<< endl;
+	};
+
+
 	void Operator::outputVHDL(std::ostream& o) {
 		this->outputVHDL(o, this->uniqueName_); 
 	}

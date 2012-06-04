@@ -202,7 +202,7 @@ namespace flopoco{
 		int    nrAdders_;          	/**< The number of adders used by this DSP reflects the number of multipliers used and the number of outputs */
 		bool   multAccumulate_;     /**< If true the DSP block will be configured as Multiply-Accumulate */
 	
-		// attributes used for tilling algorithm
+		// attributes used for tiling algorithm
 		int 	positionX_[2];		/**< The X coordinates for the 2 points that mark the position of the DSP block inside the tiling */
 		int		positionY_[2];		/**< The Y coordinates for the 2 points that mark the position of the DSP block inside the tiling */
 		DSP*   	shiftIn_;        	/**< The DSP block from which this block obtains a shifted operand (Virtex4) */
