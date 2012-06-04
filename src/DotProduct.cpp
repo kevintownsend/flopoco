@@ -95,7 +95,6 @@ namespace flopoco{
 		                                         0 /* untruncated*/,  
 		                                         false /*unsigned*/,  
 		                                         ratio,
-		                                         true, // use DSP
 		                                         inDelayMap("X", target->localWireDelay() + getCriticalPath()));
 		oplist.push_back(mMult); 
 

@@ -372,8 +372,8 @@ namespace flopoco{
 				vhdl << range(s[i]-1, s[i]-psize[i])  << ";" << endl;   
 
 #if 1
-			bool useDSP=true; // TODO experiment with logic-based.
-			IntMultiplier* pi = new IntMultiplier(target, a[i], psize[i], 0, false, 1.0, useDSP, inDelayMap("X", getCriticalPath()) );
+			// TODO experiment with logic-based by setting the ratio to 0
+			IntMultiplier* pi = new IntMultiplier(target, a[i], psize[i], 0, false, 1.0, inDelayMap("X", getCriticalPath()) );
 			oplist.push_back(pi);
 			inPortMap  (pi, "X", join("A",i));
 			inPortMap  (pi, "Y", join("ZM",i));

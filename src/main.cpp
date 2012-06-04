@@ -1284,7 +1284,7 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				int wOut    = atoi(argv[i++]);
 				int sign    =  checkBoolean(argv[i++], argv[0]);
 				float ratio = atof(argv[i++]);
-				op = new IntMultiplier(target, wInX, wInY, wOut, sign, ratio, true, emptyDelayMap);
+				op = new IntMultiplier(target, wInX, wInY, wOut, sign, ratio,  emptyDelayMap);
 				addOperator(oplist, op);
 			}
 		}
@@ -1310,7 +1310,7 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				int wInX = checkStrictlyPositive(argv[i++], argv[0]);
 				int wInY = checkStrictlyPositive(argv[i++], argv[0]);
 				int sign = checkBoolean(argv[i++], argv[0]);
-				op = new IntMultiplier(target, wInX, wInY, wInX+wInY, sign, 1.0, false, emptyDelayMap);
+				op = new IntMultiplier(target, wInX, wInY, wInX+wInY, sign, 0.0, emptyDelayMap);
 				addOperator(oplist, op);
 			}
 		}

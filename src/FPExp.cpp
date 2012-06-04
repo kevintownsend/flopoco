@@ -536,7 +536,6 @@ namespace flopoco{
 		                            0,  // untruncated
 		                            false,  /*unsigned*/
 		                            1.0,
-		                            true, // useDSP
 		                            inDelayMap("X", target->LogicToDSPWireDelay() + getCriticalPath() ) );
 			oplist.push_back(lowProd);
 		

@@ -32,7 +32,7 @@ elif [ $target == "spartan3" ]; then
 elif [ $target == "spartan3e" ]; then
 	selected_target=$spartan3e
 else
-	selected_target=$virtex4
+	selected_target=$virtex5
 fi 
 
 

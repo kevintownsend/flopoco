@@ -57,7 +57,8 @@ namespace flopoco{
 		Operator(target),
 		wIn(_wIn), wOut(_wOut), minIn(_minIn), maxIn(_maxIn), logicTable_(logicTable)
 	{
-		setCopyrightString("Florent de Dinechin (2007)");
+		srcFileName="Table";
+		setCopyrightString("Florent de Dinechin (2007-2012)");
 
 		// Set up the IO signals
 		addInput ("X"  , wIn, true);
