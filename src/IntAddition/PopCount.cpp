@@ -44,16 +44,3 @@ void PopCount::emulate(TestCase * tc)
 }
 
 
-void PopCount::buildStandardTestCases(TestCaseList * tcl)
-{
-}
-
-void PopCount::buildRandomTestCases(TestCaseList * tcl, int n)
-{
-}
-
-TestCase *PopCount::buildRandomTestCases(int i)
-{
-	TestCase *tc = new TestCase(this);
-	return tc;
-}
