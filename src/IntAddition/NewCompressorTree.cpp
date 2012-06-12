@@ -84,7 +84,7 @@ NewCompressorTree::NewCompressorTree(Target * target, vector<unsigned> vops_)
 			vhdl << tab << "R <= ";
 			// enumerate in reverse since IR is litte-endian and
 			// flopoco's vhdl is big-endian
-			for (unsigned i = wOut-1; i >= 0; i--) {
+			for (int i = wOut-1; i >= 0; i--) {
 				if (i < wOut-1)
 					vhdl << " & ";
 				if (vops[i]) {
@@ -102,7 +102,7 @@ NewCompressorTree::NewCompressorTree(Target * target, vector<unsigned> vops_)
 			vhdl << tab << declare ("R_1", wOut) << " <= ";
 			// enumerate in reverse since IR is litte-endian and
 			// flopoco's vhdl is big-endian
-			for (unsigned i = wOut-1; i >= 0; i--) {
+			for (int i = wOut-1; i >= 0; i--) {
 				if (i < wOut-1)
 					vhdl << " & ";
 				if (vops[i]) {
@@ -114,7 +114,7 @@ NewCompressorTree::NewCompressorTree(Target * target, vector<unsigned> vops_)
 			}
 			vhdl <<";" << endl;
 			vhdl << tab << declare ("R_2", wOut) << " <= ";
-			for (unsigned i = wOut-1; i >= 0; i--) {
+			for (int i = wOut-1; i >= 0; i--) {
 				if (i < wOut-1)
 					vhdl << " & ";
 				if (vops[i] > 1) {
