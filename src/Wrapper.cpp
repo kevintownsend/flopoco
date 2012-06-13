@@ -41,9 +41,10 @@ namespace flopoco{
 		for(int i=0; i < op->getIOListSize(); i++)	{
 			Signal* s = op->getIOListSignal(i);
 			if(s->type() == Signal::in) 
-				addInput(s->getName(), s->width());
+				addInput(s->getName(), s->width(), s->isBus());
 			if(s->type() == Signal::out) 
-				addOutput(s->getName(), s->width());
+				addOutput(s->getName(), s->width(), s->isBus());
+			
 		}
 
 		
@@ -54,7 +55,7 @@ namespace flopoco{
 			Signal* s = op->getIOListSignal(i);
 			 if(s->type() == Signal::in) {
 				 idext = "i_"+s->getName();
-				 vhdl << tab << declare(idext, s->width()) << " <= " << s->getName() << ";" << endl;
+				 vhdl << tab << declare(idext, s->width(), s->isBus()) << " <= " << s->getName() << ";" << endl;
 			}
 		}		
 
