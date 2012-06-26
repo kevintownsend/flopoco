@@ -314,17 +314,17 @@ ADD_LIBRARY(FloPoCoLib STATIC
  src/OutputIEEE
 
 #---------------------LNS arithmetic--------------------------------
-		src/LNS/LNSAdd
-		src/LNS/Cotran
-		src/LNS/CotranHybrid
-		src/LNS/CotranTables
-		src/LNS/LNSAddSub
-		src/LNS/LNSMul
-		src/LNS/LNSDiv
-		src/LNS/LNSSqrt
-		src/LNS/AtanPow
-		src/FixedPointFunctions/GenericEvaluator
-		src/LNS/LogSinCos
+ src/LNS/LNSAdd
+ src/LNS/Cotran
+ src/LNS/CotranHybrid
+ src/LNS/CotranTables
+ src/LNS/LNSAddSub
+ src/LNS/LNSMul
+ src/LNS/LNSDiv
+ src/LNS/LNSSqrt
+ src/LNS/AtanPow
+ src/FixedPointFunctions/GenericEvaluator
+ src/LNS/LogSinCos
 
 
 # Applications ------------------------------------------------------
@@ -363,12 +363,12 @@ ADD_LIBRARY(FloPoCoLib STATIC
 IF (SOLLYA_LIB)
 TARGET_LINK_LIBRARIES(
   FloPoCoLib
-  gmp gmpxx xml2 ${SOLLYA_LIB} ${MPFI_LIB} ${MPFR_LIB}
+  mpfr gmp gmpxx xml2 mpfi ${SOLLYA_LIB}
   )
 ELSE (SOLLYA_LIB)
 TARGET_LINK_LIBRARIES(
   FloPoCoLib 
-  ${MPFR_LIB} gmp gmpxx xml2 ${MPFI_LIB}
+  mpfr gmp gmpxx xml2 mpfi
   )
 ENDIF (SOLLYA_LIB)
 SET(FLOPOCO_LIB FloPoCoLib)
