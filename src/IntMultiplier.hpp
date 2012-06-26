@@ -6,7 +6,8 @@
 #include <gmpxx.h>
 #include "utils.hpp"
 #include "Operator.hpp"
-#include "../Table.hpp"
+#include "Table.hpp"
+#include "BitHeap.hpp"
 
 namespace flopoco {
 
@@ -79,6 +80,7 @@ protected:
 	
 private:
 	bool useDSP;
+	BitHeap* bitHeap;  /**<  The heap of weighted bits that will be used to do the additions */
 };
 
 }

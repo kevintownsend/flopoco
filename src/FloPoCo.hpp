@@ -31,6 +31,10 @@
 #include "IntAdder.hpp"
 #include "IntDualSub.hpp"
 
+/* General purpose heap of weighted bits  -------------------- */
+#include "BitHeap.hpp"
+
+
 /* multioperand adders --------------------------------------- */
 #include "IntMultiAdder.hpp"
 #include "IntAddition/IntNAdder.hpp"

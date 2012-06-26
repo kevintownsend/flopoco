@@ -23,9 +23,10 @@ Copyright © ENS-Lyon, INRIA, CNRS, UCBL,
 #include "utils.hpp"
 #include "Operator.hpp"
 #include "IntMultiplier.hpp"
-#include "../IntAdder.hpp"
-#include "../IntMultiAdder.hpp"
-#include "../IntAddition/NewCompressorTree.hpp"
+#include "IntAdder.hpp"
+#include "IntMultiAdder.hpp"
+#include "IntAddition/NewCompressorTree.hpp"
+#include "IntAddition/PopCount.hpp"
 // #include "IntMultipliers/SignedIntMultiplier.hpp"
 // #include "IntMultipliers/UnsignedIntMultiplier.hpp"
 // #include "IntMultipliers/LogicIntMultiplier.hpp"
@@ -85,7 +86,7 @@ namespace flopoco {
 				name << "UsingDSP_";
 			else
 				name << "LogicOnly_";
-			name << wXdecl << "_" << wYdecl <<"_" << wOut << "_" << (signedIO?"signed":"unsigned") << "_uid"<<Operator::getNewUId();;
+			name << wXdecl << "_" << wYdecl <<"_" << wOut << "_" << (signedIO?"signed":"unsigned") << "_uid"<<Operator::getNewUId();
 			setName ( name.str() );
 		}
 		// Set up the IO signals
@@ -98,6 +99,9 @@ namespace flopoco {
 			useStdLogicSigned();
 		else
 			useStdLogicUnsigned();
+
+		// The bit heap
+		bitHeap = new BitHeap(this, wOut+g);
 
 		// Halve number of cases by making sure wY<=wX:
 		// interchange x and y in case wY>wX
@@ -353,20 +357,20 @@ namespace flopoco {
 		if (chunksX + chunksY > 2) { //we do more than 1 subproduct
 			vhdl << tab << "-- padding to the left" << endl;
 			vhdl<<tab<<declare("Xp",sizeXPadded)<<" <= "<< zg(padX) << " & XX" << range(wX-1, 0) << ";"<<endl;
-			vhdl<<tab<<declare("Yp",sizeYPadded)<<" <= "<< zg(padY) << " & YY" << range(wX-1, 0) << ";"<<endl;	
+			vhdl<<tab<<declare("Yp",sizeYPadded)<<" <= "<< zg(padY) << " & YY" << range(wY-1, 0) << ";"<<endl;	
 			//SPLITTINGS
 			for (int k=0; k<chunksX ; k++)
 				vhdl<<tab<<declare(join("x",k),dx)<<" <= Xp"<<range((k+1)*dx-1,k*dx)<<";"<<endl;
 			for (int k=0; k<chunksY ; k++)
 				vhdl<<tab<<declare(join("y",k),dy)<<" <= Yp"<<range((k+1)*dy-1, k*dy)<<";"<<endl;
 					
-
 			int maxWeight = wOut+g;
-
-			//initializing the bag of weighted bits (size is conservative, not all will be used)
+			int weightShift = wFull -(wOut+g);
 			REPORT(DEBUG, "maxWeight=" << maxWeight);
+
+#if 0 // using NewIntCompressorTree
+
 			vector<unsigned int> currentHeight;
-			//			for(int i=0; i<sizeXPadded+sizeYPadded; i++)
 			for(int i=0; i<wX+wY; i++)
 				currentHeight.push_back(0);
 					
@@ -457,6 +461,7 @@ namespace flopoco {
 				vhdl << tab << declare(heap(weight,height)) << " <= '1';" << endl;
 				currentHeight[weight] ++ ;		 
 #endif
+
 				// restore wX and wY
 				wX++;
 				wY++;
@@ -469,12 +474,10 @@ namespace flopoco {
 				vhdl << tab << declare(heap(weight,height)) << " <= '1';   -- The round bit"  << endl;
 				currentHeight[weight] ++ ;
 			}
-		
 			vhdl << tab << "-- Now building the heap vectors" << endl;
 			
 			vector<unsigned> finalHeapSizes;
 			for(int weight=0;	weight<maxWeight; weight++) {
-				int weightShift = wFull -(wOut+g);
 				int bitWeight = weight + weightShift; // Here is where we manage truncation
 				finalHeapSizes.push_back(currentHeight[bitWeight]);
 				vhdl << tab << declare(join("HeapVector", weight), currentHeight[bitWeight]) << " <= " ;
@@ -485,7 +488,6 @@ namespace flopoco {
 			}
 
 			// Now instantiate a compressor tree
-
 			NewCompressorTree *ct  = new NewCompressorTree(target, finalHeapSizes);
 			oplist.push_back(ct);
 
@@ -495,9 +497,98 @@ namespace flopoco {
 			outPortMap(ct, "R", "RR");
 			vhdl << instance(ct, "Compressor");
 			//		int ctOutSize=ct->wOut;
-	 
 			// ctOutSize = wOut+1 but we know that the result always fits on wOut bits
 			vhdl << tab << "R <= " << "RR" << range(wOut+g-1, g) << ";" << endl; 
+
+#else  // using BitHeap
+
+			SmallMultTable *t = new SmallMultTable( target, dx, dy, dx+dy, false ); // unsigned
+			useSoftRAM(t);
+			oplist.push_back(t);
+
+			// SmallMultTable is built to cost this:
+			manageCriticalPath( target->localWireDelay(chunksX) + target->lutDelay() ) ;  
+			for (int iy=0; iy<chunksY; iy++){
+				vhdl << tab << "-- Partial product row number " << iy << endl;
+				for (int ix=0; ix<chunksX; ix++) { 
+					vhdl << tab << declare(XY(ix,iy), dx+dy) << " <= y" << iy << " & x" << ix << ";"<<endl;
+					inPortMap(t, "X", XY(ix,iy));
+					outPortMap(t, "Y", PP(ix,iy));
+					vhdl << instance(t, PPTbl(ix,iy));
+					vhdl << tab << "-- Adding the relevant bits to the heap of bits" << endl;
+					int maxK=dx+dy; 
+					if(ix == chunksX-1)
+		 				maxK-=padX;
+					if(iy == chunksY-1)
+						maxK-=padY;
+					for (int k=0; k<maxK; k++) {
+						ostringstream s;
+						s << PP(ix,iy) << of(k); // right hand side
+						int weight = ix*dx+iy*dy+k - weightShift;
+						if(weight>=0) {// otherwise these bits deserve to be truncated
+							REPORT(DEBUG, "adding bit " << s.str() << " at weight " << weight); 
+							bitHeap->addBit(weight, s.str());
+						}
+					}
+					vhdl << endl;
+				}
+			}
+
+				
+			if(signedIO) {
+				int weight, height;
+				// reminder: wX and wY have been decremented
+				vhdl << tab << "-- Baugh-Wooley tinkering" << endl;
+				vhdl << tab << declare("sX") << " <= XX" << of(wX) << ";" << endl;
+				vhdl << tab << declare("sY") << " <= YY" << of(wY) << ";" << endl;
+				vhdl << tab << declare("rX", wX) << " <= XX" << range(wX-1, 0) << ";" << endl;
+				vhdl << tab << declare("rY", wY) << " <= YY" << range(wY-1, 0) << ";" << endl;
+				vhdl << tab << declare("sXrYb", wY) << " <= not rY when sX='1' else " << zg(wY) << ";" << endl;
+				vhdl << tab << declare("sYrXb", wX) << " <= not rX when sY='1' else " << zg(wX) << ";" << endl;
+				vhdl << tab << "-- Adding these bits to the heap of bits" << endl;
+				for (int k=0; k<wX; k++) {
+					weight=wY+k - weightShift;
+					ostringstream v;
+					v << "sYrXb(" << k << ")";
+					bitHeap->addBit(weight, v.str());
+				}
+				vhdl << endl << tab;
+				for (int k=0; k<wY; k++) {
+					weight = wX+k - weightShift;
+					ostringstream v;
+					v << "sXrYb(" << k << ")";
+					bitHeap->addBit(weight, v.str());
+				}
+				vhdl << endl;
+				// adding sX and sY at positions wX and wY
+				weight=wX - weightShift;
+				bitHeap->addBit(weight, "sX");
+				weight=wY - weightShift;
+				bitHeap->addBit(weight, "sY");
+				// adding sXb and sYb at position wX+wY
+				weight=wX+wY - weightShift;
+				bitHeap->addBit(weight, "not sY");
+				bitHeap->addBit(weight, "not sY");
+				// adding sXsY at position wX+wY
+				weight=wX+wY - weightShift;
+				bitHeap->addBit(weight, "sX and sY");
+				// restore wX and wY
+				wX++;
+				wY++;
+			
+			}
+
+			if(g>0) {
+				int weight=wFull-wOut-1- weightShift;
+				bitHeap->addBit(weight, "1", "The round bit");
+			}
+
+			// And that's it, now go compress
+			bitHeap -> generateCompressorVHDL();			
+			vhdl << tab << "R <= CompressionResult;" << endl;
+
+#endif
+		
 		}
 		
 
@@ -587,5 +678,7 @@ namespace flopoco {
 
 
 }
+
+
 
 

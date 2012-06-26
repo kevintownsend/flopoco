@@ -201,7 +201,7 @@ ADD_LIBRARY(FloPoCoLib STATIC
 # ---------- Multioperand -------------------------------------------
  src/IntMultiAdder src/IntAddition/IntNAdder  src/IntAddition/IntCompressorTree
  src/IntAddition/PopCount src/IntAddition/NewCompressorTree
-
+ src/BitHeap
  src/IntComparator
  src/IntDualSub
  

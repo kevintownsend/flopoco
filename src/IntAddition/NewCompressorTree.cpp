@@ -35,6 +35,7 @@ NewCompressorTree::NewCompressorTree(Target * target, vector<unsigned> vops_)
 			name << '_' << vops[i];
 		}
 		setName(name.str());
+		REPORT(DETAILED, name.str());
 	}
 	setCopyrightString("Guillaume Sergent 2012");
 
@@ -65,6 +66,7 @@ NewCompressorTree::NewCompressorTree(Target * target, vector<unsigned> vops_)
 		l0 << "X_" << i << "_level0";
 		vhdl << tab << declare (l0.str(), vops[i]) << " <= X" << i << ";\n";
 	}
+
 	for (;;) {
 		vector<unsigned>::iterator it;
 		max_height = 0;
