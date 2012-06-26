@@ -157,6 +157,11 @@ ADD_LIBRARY(FloPoCoLib STATIC
  src/utils
  src/FlopocoStream
  VHDLLexer
+ 
+ # Resource Estimation related ---------------------------------------
+ #--------------------------------------------------------------------
+ src/Tools/ResourceEstimationHelper
+ #--------------------------------------------------------------------
 
  src/Targets/DSP
  src/Target src/Targets/Virtex4 src/Targets/Spartan3 src/Targets/Virtex6 src/Targets/StratixII src/Targets/StratixIII src/Targets/Virtex5 src/Targets/StratixIV

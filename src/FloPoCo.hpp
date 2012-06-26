@@ -12,6 +12,11 @@
 #include "FlopocoStream.hpp"
 
 
+/* resource estimation ---------------------------------------- */
+#include "Tools/ResourceEstimationHelper.hpp"
+/* resource estimation ---------------------------------------- */
+
+
 #include "Target.hpp"
 #include "Targets/DSP.hpp"
 #include "Targets/Spartan3.hpp"

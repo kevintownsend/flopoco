@@ -1433,7 +1433,175 @@ namespace flopoco{
 	}
 	
 	
-
+	/////////////////////////////////////////////////////////////////////////////////////////////////
+	////////////Functions used for resource estimations
+	
+	//--Logging functions
+	//---General resources
+	void Operator::initResourceEstimation(){
+		
+		resourceEstimate << "Starting Resource estimation report for entity: " << uniqueName_ << " --------------- " << endl;
+		resourceEstimateReport << "";
+		
+		reHelper = new ResourceEstimationHelper(target_, this);
+		reHelper->initResourceEstimation();
+	}
+	
+	std::string Operator::addFF(int count){
+		
+		return reHelper->addFF(count);
+	}
+	
+	std::string Operator::addLUT(int nrInputs, int count){
+		
+		return reHelper->addLUT(nrInputs, count);
+	}
+	
+	std::string Operator::addReg(int width, int count){
+				
+		return reHelper->addReg(width, count);
+	}
+	
+	//TODO: verify increase in the DSP count
+	std::string Operator::addMultiplier(int count){
+		
+		return reHelper->addMultiplier(count);
+	}
+	
+	//TODO: verify increase in the DSP count 
+	std::string Operator::addMultiplier(int widthX, int widthY, double ratio, int count){
+		
+		return reHelper->addMultiplier(widthX, widthY, ratio, count);
+	}
+	
+	//TODO: verify increase in the element count
+	std::string Operator::addAdderSubtracter(int widthX, int widthY, double ratio, int count){
+		
+		return reHelper->addAdderSubtracter(widthX, widthY, ratio, count);
+	}
+	
+	//TODO: take into account the memory type (RAM or ROM); depending on 
+	//		the type, might be implemented through distributed memory or
+	//		dedicated memory blocks
+	std::string Operator::addMemory(int size, int width, int type, int count){
+		
+		return reHelper->addMemory(size, width, type, count);
+	}
+	
+	//---More particular resource logging
+	std::string Operator::addDSP(int count){
+		
+		return reHelper->addDSP(count);
+	}
+	
+	std::string Operator::addRAM(int count){
+		
+		return reHelper->addRAM(count);
+	}
+	
+	std::string Operator::addROM(int count){
+		
+		return reHelper->addROM(count);
+	}
+	
+	//TODO: should count the shift registers according to their bitwidths
+	std::string Operator::addSRL(int width, int depth, int count){
+				
+		return reHelper->addSRL(width, depth, count);
+	}
+	
+	std::string Operator::addWire(int count, std::string signalName){
+		
+		return reHelper->addWire(count, signalName);
+	}
+	
+	std::string Operator::addIOB(int count, std::string portName){
+		
+		return reHelper->addIOB(count, portName);
+	}
+	
+	//---Even more particular resource logging-------------------------
+	
+	//TODO: get a more accurate count of the number of multiplexers 
+	//		needed; currently specific resources are not taken into account
+	std::string Operator::addMux(int width, int nrInputs, int count){
+				
+		return reHelper->addMux(width, nrInputs, count);
+	}
+	
+	//TODO: count the counters according to their bitwidth
+	//TODO: get estimations when using specific resources (like DSPs)
+	//		involves also changes to getLUTPerCounter() getFFPerCounter()
+	std::string Operator::addCounter(int width, int count){
+				
+		return reHelper->addCounter(width, count);
+	}
+	
+	//TODO: count the accumulators according to their bitwidth
+	std::string Operator::addAccumulator(int width, bool useDSP, int count){
+		
+		return reHelper->addAccumulator(width, useDSP, count);
+	}
+	
+	//TODO: count the decoders according to their input and output 
+	//		bitwidths
+	std::string Operator::addDecoder(int wIn, int wOut, int count){
+				
+		return reHelper->addDecoder(wIn, wOut, count);
+	}
+	
+	std::string Operator::addArithOp(int width, int nrInputs, int count){
+				
+		return reHelper->addArithOp(width, nrInputs, count);
+	}
+	
+	//TODO: find a better approximation for the resources
+	//		currently just logic corresponding to the multiplexers
+	//TODO: find a better approximation for the resources
+	//		currently just logic corresponding to the state register
+	//TODO: find a better approximation for the resources
+	//		for now, RAM blocks are not used
+	std::string Operator::addFSM(int nrStates, int nrTransitions, int count){
+				
+		return reHelper->addFSM(nrStates, nrTransitions, count);
+	}
+	
+	//--Resource usage statistics---------------------------------------
+	std::string Operator::generateStatistics(int detailLevel){
+				
+		return reHelper->generateStatistics(detailLevel);
+	}
+	
+	//--Utility functions related to the generation of resource usage statistics
+	
+	//TODO: find a more precise way to determine the required number of
+	//		registers due to pipeline
+	std::string Operator::addPipelineFF(){
+				
+		return reHelper->addPipelineFF();
+	}
+	
+	std::string Operator::addWireCount(){
+				
+		return reHelper->addWireCount();
+	}
+	
+	std::string Operator::addPortCount(){
+				
+		return reHelper->addPortCount();
+	}
+	
+	//TODO: add function to add resource count from specified component
+	std::string Operator::addComponentResourceCount(){
+				
+		return reHelper->addComponentResourceCount();
+	}
+	
+	void Operator::addAutomaticResourceEstimations(){
+				
+		resourceEstimate << reHelper->addAutomaticResourceEstimations();
+	}
+	/////////////////////////////////////////////////////////////////////////////////////////////////
 }
 
 

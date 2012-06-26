@@ -289,6 +289,239 @@ namespace flopoco{
 	
 		/** Constructs a specific DSP to each target */
 		virtual DSP* createDSP() = 0;
+		
+		
+		/*------------ Resource Estimation - target specific ---------*/
+		/*------------------------------------------------------------*/
+		
+		/**
+		 * NOTE: These functions return values that are specific 
+		 * to the target FPGA. If the results are not satisfactory, 
+		 * the class that implements Target can just as well override 
+		 * the functions to provide better ones.
+		 */
+		
+		
+		/**
+		 * Determine whether a LUT can be split to implement multiple 
+		 * independent functions. The decision is taken based on the type 
+		 * of LUT being added (currently the type is the number of inputs 
+		 * of the LUT).
+		 * @param nrInputs the number of inputs of the LUT being added
+		 * @return whether the LUTs in the specific architecture can/cannot 
+		 * be split to perform multiple independent functions
+		 */
+		virtual bool lutSplitInputs(int nrInputs);
+		
+		/**
+		 * Determine whether the DSP can be used to implement multiple
+		 * independent multiplications. The decision is taken based on 
+		 * the target FPGA's characteristics.
+		 * @return whether or not the specific architecture can be use a
+		 * DSP block to implement several independent multiplications
+		 */
+		virtual bool dspSplitMult();
+		
+		/**
+		 * The DSP can house several independent multiplications, so this
+		 * function determines the required number of DSPs for creating
+		 * @count multipliers having the inputs of widths @widthX and
+		 * @widthY, respectively.
+		 * @param widthX the width of the first input to the multiplier
+		 * @param widthY the width of the second input to the multiplier
+		 * @return the number of required DSP blocks
+		 */
+		virtual double getMultPerDSP(int widthX, int widthY);
+		
+		/**
+		 * Determine the required number of LUTs for creating
+		 * @count multipliers having the inputs of widths @widthX and
+		 * @widthY, respectively.
+		 * @param widthX the width of the first input to the multiplier
+		 * @param widthY the width of the second input to the multiplier
+		 * @return the number of required LUTs
+		 */
+		virtual double getLUTPerMultiplier(int widthX, int widthY);
+		
+		/**
+		 * Determine the required number of FFs for creating
+		 * @count multipliers having the inputs of widths @widthX and
+		 * @widthY, respectively.
+		 * @param widthX the width of the first input to the multiplier
+		 * @param widthY the width of the second input to the multiplier
+		 * @return the number of required FFs
+		 */
+		virtual double getFFPerMultiplier(int widthX, int widthY);
+		
+		/**
+		 * Determine the required number of LUTs for creating @count
+		 * adders/subtracters having the inputs of widths @widthX and
+		 * @widthY, respectively.
+		 * @param widthX the width of the first input to the adder
+		 * @param widthY the width of the second input to the adder
+		 * @return the number of required LUTs
+		 */
+		virtual double getLUTPerAdderSubtracter(int widthX, int widthY);
+		
+		/**
+		 * Determine the required number of FFs for creating @count
+		 * adders/subtracters having the inputs of widths @widthX and
+		 * @widthY, respectively.
+		 * @param widthX the width of the first input to the adder
+		 * @param widthY the width of the second input to the adder
+		 * @return the number of required FFs
+		 */
+		virtual double getFFPerAdderSubtracter(int widthX, int widthY);
+		
+		/**
+		 * Determine the number of words in a memory block that has the
+		 * width given by the @width parameter. Memory blocks can have 
+		 * multiple configurations, according to the required width and 
+		 * depth. This function is useful for further determining the 
+		 * necessary memory blocks.
+		 * @param width the width of the memory words in bits
+		 * @return the standard number of words per block
+		 */
+		virtual int wordsPerBlock(int width);
+		
+		/**
+		 * Determine the depth of the shift register, according to the 
+		 * required depth, given by the @depth parameter. Shift registers 
+		 * can be configured to different depths on the target FPGA, thus 
+		 * allowing the use of several SRLs with less resources.
+		 * @param depth the required depth of the shift registers
+		 * @return the default depth for a shift register, best suiting 
+		 * a shift register of @depth depth
+		 */
+		virtual int getSRLDepth(int depth);
+		
+		/**
+		 * Determine the required number of LUTs for a shift register 
+		 * having the depth given by the @depth parameter. The number of
+		 * LUTs depends on the target FPGA. A return value of 0 symbolizes
+		 * that no LUTs are used to build a SRL of the given depth on the
+		 * target FPGA.
+		 * @param depth the required depth of the shift register
+		 * @return the number of LUTs required for creating a shift 
+		 * register of depth @depth; return value of 0 means that the 
+		 * resource is not required
+		 */
+		virtual double getLUTPerSRL(int depth);
+		
+		/**
+		 * Determine the required number of FFs for a shift register 
+		 * having the depth given by the @depth parameter. The number of
+		 * FFs depends on the target FPGA. A return value of 0 symbolizes
+		 * that no FFs are used to build a SRL of the given depth on the
+		 * target FPGA.
+		 * @param depth the required depth of the shift register
+		 * @return the number of FFs required for creating a shift 
+		 * register of depth @depth; return value of 0 means that the 
+		 * resource is not required
+		 */
+		virtual double getFFPerSRL(int depth);
+		
+		/**
+		 * Determine the required number of RAM elements for a shift 
+		 * register having the depth given by the @depth parameter. The 
+		 * number of RAM elements depends on the target FPGA. A return 
+		 * value of 0 symbolizes that no RAM elements are used to build 
+		 * a SRL of the given depth on the target FPGA.
+		 * @param depth the required depth of the shift register
+		 * @return the number of RAM elements required for creating a 
+		 * shift register of depth @depth; return value of 0 means that 
+		 * the resource is not required
+		 */
+		virtual double getRAMPerSRL(int depth);
+		
+		/**
+		 * Determine the required number of LUTs for a multiplexer having 
+		 * @nrInputs inputs. The number of LUTs depends on the target
+		 * FPGA (the function generator architecture and other available 
+		 * resources on the chip might influence the resource count).
+		 */
+		virtual double getLUTFromMux(int nrInputs);
+		
+		/**
+		 * Determine the required number of LUTs for a counter having a
+		 * bitwidth of @width bits. The number of LUTs can vary according 
+		 * to the properties of the FPGA and the width of the counter.
+		 * This function computes a factor that symbolizes the ratio of
+		 * LUTs per counter bits.
+		 * @param width the width of the counter
+		 * @return the ratio of LUTs per counter bits
+		 */
+		virtual double getLUTPerCounter(int width);
+		
+		/**
+		 * Determine the required number of FFs for a counter having a
+		 * bitwidth of @width bits. The number of FFs can vary according 
+		 * to the properties of the FPGA and the width of the counter.
+		 * This function computes a factor that symbolizes the ratio of
+		 * FFs per counter bits.
+		 * @param width the width of the counter
+		 * @return the ratio of LUTs per counter bits
+		 */
+		virtual double getFFPerCounter(int width);
+		
+		/**
+		 * Determine the required number of LUTs for an accumulator having a
+		 * bitwidth of @width bits. The number of LUTs can vary according 
+		 * to the properties of the FPGA, the width of the accumulator and 
+		 * the use of DSP blocks.
+		 * This function computes a factor that symbolizes the ratio of
+		 * LUTs per accumulator bits.
+		 * @param width the width of the counter
+		 * @return the ratio of LUTs per counter bits
+		 */
+		virtual double getLUTPerAccumulator(int width, bool useDSP);
+		
+		/**
+		 * Determine the required number of FFs for an accumulator having a
+		 * bitwidth of @width bits. The number of FFs can vary according 
+		 * to the properties of the FPGA, the width of the accumulator and 
+		 * the use of DSP blocks.
+		 * This function computes a factor that symbolizes the ratio of
+		 * FFs per accumulator bits.
+		 * @param width the width of the counter
+		 * @return the ratio of FFs per counter bits
+		 */
+		virtual double getFFPerAccumulator(int width, bool useDSP);
+		
+		/**
+		 * Determine the required number of DSPs for an accumulator having a
+		 * bitwidth of @width bits. The number of DSPs can vary according 
+		 * to the properties of the FPGA and the width of the accumulator.
+		 * This function computes a factor that symbolizes the ratio of
+		 * DSPs per accumulator bits.
+		 * @param width the width of the counter
+		 * @return the ratio of DSPs per counter bits
+		 */
+		virtual double getDSPPerAccumulator(int width);
+		
+		/**
+		 * Determine the required number of LUTs for a decoder having a
+		 * bitwidth of @width bits. The number of LUTs can vary according 
+		 * to the properties of the FPGA, the width of the decoder.
+		 * This function computes a factor that symbolizes the ratio of
+		 * LUTs per decoder bits.
+		 * @param width the width of the decoder
+		 * @return the ratio of LUTs per decoder bits
+		 */
+		virtual double getLUTPerDecoder(int width);
+		
+		/**
+		 * Determine the required number of FFs for a decoder having a
+		 * bitwidth of @width bits. The number of FFs can vary according 
+		 * to the properties of the FPGA, the width of the decoder.
+		 * This function computes a factor that symbolizes the ratio of
+		 * FFs per decoder bits.
+		 * @param width the width of the decoder
+		 * @return the ratio of FFs per decoder bits
+		 */
+		virtual double getFFPerDecoder(int width);
+		/*------------------------------------------------------------*/
+		
 	
 		//todo
 		
