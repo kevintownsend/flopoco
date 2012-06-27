@@ -49,6 +49,12 @@ using namespace flopoco;
 	int reLevel;
 	bool resourceEstimationDebug = false;
 	//-----------------------------------------------------------------
+	
+	//------------------ Floorplanning --------------------------------
+	bool floorplanning = false;
+	bool floorplanningDebug = false;
+	ostringstream floorplanMessages;
+	//-----------------------------------------------------------------
 
 
 extern void random_usage(char *name, string opName);
@@ -747,6 +753,27 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 					else if(v=="no")  resourceEstimationDebug = false;
 					else {
 						cerr<<"ERROR: resource estimation debugging option should be yes or no, got "<<v<<"."<<endl; 
+						usage(argv[0],"extra");
+					}
+				}
+				//------------------------------------------------------
+				//------------------------------------------------------
+				//------------------ Floorplanning ---------------------
+				else if (o == "floorplanning") {
+					if(v=="yes") floorplanning = true;
+					else if(v=="no")  floorplanning = false;
+					else {
+						cerr<<"ERROR: floorplanning option should be yes or no, got "<<v<<"."<<endl; 
+						usage(argv[0],"extra");
+					}
+				}
+				//------------------------------------------------------
+				//--------------- Floorplanning Debugging --------------
+				else if (o == "flpDebugging") {
+					if(v=="yes") floorplanningDebug = true;
+					else if(v=="no")  floorplanningDebug = false;
+					else {
+						cerr<<"ERROR: floorplanning debugging option should be yes or no, got "<<v<<"."<<endl; 
 						usage(argv[0],"extra");
 					}
 				}
@@ -2523,6 +2550,43 @@ int main(int argc, char* argv[] )
 		}
 		file.close();
 		cerr << "Resource estimation log written to the \'flopoco.debug\' file" << endl;
+	}
+	//------------------------------------------------------------------
+	
+	//------------------------ Floorplanning ---------------------------
+	if(floorplanning){
+		for (vector<Operator*>::iterator it = oplist.begin(); it!=oplist.end(); ++it) {
+			Operator* op = *it;
+			
+			if(reLevel == 0){
+				cerr << "Floorplanning option can be used only when the resource estimation is enabled." 
+						<< " Please rerun the program with the appropriate options" << endl;
+				exit(1);
+			}
+			if(floorplanning)
+				floorplanMessages << op->createFloorplan();
+		}
+	}
+	//------------------------------------------------------------------
+	
+	//------------------ Floorplanning Debugging -----------------------
+	if(floorplanningDebug){
+		if(reLevel==0 || !floorplanning){
+			cerr << "Debugging Floorplanning option can be used only when the resource estimation and the floorplanning is enabled." 
+						<< " Please rerun the program with the appropriate options" << endl;
+				exit(1);
+		}else{
+			ofstream file;
+			file.open("flopoco.floorplan.debug");
+			for (vector<Operator*>::iterator it = oplist.begin(); it!=oplist.end(); ++it) {
+				Operator* op = *it;
+				
+				file << op->floorplan.str();
+				file << floorplanMessages.str();
+			}
+			file.close();
+			cerr << "Floorplanning log (for debugging purposes) written to the \'flopoco.floorplanning.debug\' file" << endl;
+		}
 	}
 	//------------------------------------------------------------------
 	

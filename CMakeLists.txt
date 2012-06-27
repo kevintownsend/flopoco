@@ -162,6 +162,11 @@ ADD_LIBRARY(FloPoCoLib STATIC
  #--------------------------------------------------------------------
  src/Tools/ResourceEstimationHelper
  #--------------------------------------------------------------------
+ 
+ # Floorplanning related ---------------------------------------------
+ #--------------------------------------------------------------------
+ src/Tools/FloorplanningHelper
+ #--------------------------------------------------------------------
 
  src/Targets/DSP
  src/Target src/Targets/Virtex4 src/Targets/Spartan3 src/Targets/Virtex6 src/Targets/StratixII src/Targets/StratixIII src/Targets/Virtex5 src/Targets/StratixIV

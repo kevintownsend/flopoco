@@ -49,6 +49,26 @@ namespace flopoco{
 
 			RAMDelay_ = 2.970e-9; //TODO
 			RAMToLogicWireDelay_ = 0.436e-9; //TODO
+			
+			//---------------Floorplanning related----------------------
+			multiplierPosition.push_back(3);
+			multiplierPosition.push_back(35);
+			
+			memoryPosition.push_back(3);
+			memoryPosition.push_back(35);
+			
+			topSliceX = 39;
+			topSliceY = 47;
+			
+			lutPerSlice = 2;
+			ffPerSlice = 2;
+			
+			dspHeightInLUT = 8;
+			ramHeightInLUT = 8;
+			
+			dspPerColumn = 6;
+			ramPerColumn = 6;
+			//----------------------------------------------------------
 
 		}
 

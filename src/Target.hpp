@@ -23,6 +23,7 @@
 
 #include "Targets/DSP.hpp"
 #include <string>
+#include <vector>
 
 using namespace std;
 
@@ -520,6 +521,24 @@ namespace flopoco{
 		 * @return the ratio of FFs per decoder bits
 		 */
 		virtual double getFFPerDecoder(int width);
+		/*------------------------------------------------------------*/
+		
+		
+		/*------------ Floorplanning Related Items -------------------*/
+		/**
+		 * NOTE: These variables should be set for each different FPGA 
+		 * architecture, in their corresponding constructor.
+		 */
+		vector<int> multiplierPosition;			/**< The position of the columns of multipliers. The Position represents the neighboring LUT column, on the left. */
+		vector<int> memoryPosition;				/**< The position of the columns of memories. The Position represents the neighboring LUT column, on the left. */
+		int topSliceX;							/**< The x coordinate of the top right slice. */
+		int topSliceY;							/**< The y coordinate of the top right slice. */
+		int lutPerSlice;						/**< The number of function generators per slice. */
+		int ffPerSlice;							/**< The number of registers per slice. */
+		int dspHeightInLUT;						/**< The height of a DSP cell, expressed using the height of one LUT as unit of measure */
+		int ramHeightInLUT;						/**< The height of a RAM block, expressed using the height of one LUT as unit of measure */
+		int dspPerColumn;						/**< The number of DSP blocks in a column of DSPs */
+		int ramPerColumn;						/**< The number of RAM blocks in a column of RAMs */
 		/*------------------------------------------------------------*/
 		
 	

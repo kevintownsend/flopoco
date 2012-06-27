@@ -49,7 +49,36 @@ namespace flopoco{
 			DSPToLogicWireDelay_ = 0.436e-9;
 
 			RAMDelay_ = 1.750e-9; 
-			RAMToLogicWireDelay_ = 0.436e-9; 
+			RAMToLogicWireDelay_ = 0.436e-9;
+			
+			//---------------Floorplanning related----------------------
+			multiplierPosition.push_back(47);
+			multiplierPosition.push_back(51);
+			multiplierPosition.push_back(75);
+			multiplierPosition.push_back(79);
+			
+			memoryPosition.push_back(7);
+			memoryPosition.push_back(19);
+			memoryPosition.push_back(31);
+			memoryPosition.push_back(43);
+			memoryPosition.push_back(55);
+			memoryPosition.push_back(71);
+			memoryPosition.push_back(83);
+			memoryPosition.push_back(95);
+			memoryPosition.push_back(111);
+			
+			topSliceX = 111;
+			topSliceY = 159;
+			
+			lutPerSlice = 4;
+			ffPerSlice = 4;
+			
+			dspHeightInLUT = 3;		// actually 2.5
+			ramHeightInLUT = 5;
+			
+			dspPerColumn = 63;
+			ramPerColumn = 31;
+			//----------------------------------------------------------
 		}
 
 		/** The destructor */

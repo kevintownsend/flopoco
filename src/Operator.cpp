@@ -975,6 +975,14 @@ namespace flopoco{
 		}
 		o << ");" << endl;
 		
+		
+		//Floorplanning related-----------------------------------------
+		floorplan << manageFloorplan();
+		flpHelper->addToFlpComponentList(op->getName());
+		flpHelper->addToInstanceNames(op->getName(), instanceName);
+		//--------------------------------------------------------------
+		
+		
 		// add the operator to the subcomponent list 
 		subComponents_[op->getName()]  = op;
 		return o.str();
@@ -1600,6 +1608,72 @@ namespace flopoco{
 	void Operator::addAutomaticResourceEstimations(){
 				
 		resourceEstimate << reHelper->addAutomaticResourceEstimations();
+	}
+	/////////////////////////////////////////////////////////////////////////////////////////////////
+	
+	/////////////////////////////////////////////////////////////////////////////////////////////////
+	////////////Functions used for floorplanning
+	void Operator::initFloorplanning(double ratio){
+		
+		floorplan << "";
+		
+		flpHelper = new FloorplanningHelper(target_, this);
+		flpHelper->initFloorplanning(ratio);
+	}
+	
+	std::string Operator::manageFloorplan(){
+		
+		return flpHelper->manageFloorplan();
+	}
+	
+	std::string Operator::addPlacementConstraint(std::string source, std::string sink, int type){
+		
+		return flpHelper->addPlacementConstraint(source, sink, type);
+	}
+	
+	std::string Operator::addConnectivityConstraint(std::string source, std::string sink, int nrWires){
+		
+		return flpHelper->addConnectivityConstraint(source, sink, nrWires);
+	}
+	
+	std::string Operator::processPlacementConstraints(){
+				
+		return flpHelper->processPlacementConstraints();
+	}
+	
+	std::string Operator::processConnectivityConstraints(){
+		 //
+		 // currently, as the user decides where each module goes, without
+		 // the automation of the process, the relevance of the number of
+		 // links between two modules is questionable.
+		 // futrher modifications to follow.
+		 //
+		 return flpHelper->processConnectivityConstraints();
+	}
+	
+	std::string Operator::createVirtualGrid(){
+				
+		return flpHelper->createVirtualGrid();
+	}
+	
+	std::string Operator::createPlacementGrid(){
+				
+		return flpHelper->createPlacementGrid();
+	}
+	
+	std::string Operator::createConstraintsFile(){
+		
+		return flpHelper->createConstraintsFile();
+	}
+	
+	std::string Operator::createPlacementForComponent(std::string moduleName){
+				
+		return flpHelper->createPlacementForComponent(moduleName);
+	}
+	
+	std::string Operator::createFloorplan(){
+				
+		return flpHelper->createFloorplan();
 	}
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 }

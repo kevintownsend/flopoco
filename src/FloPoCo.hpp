@@ -17,6 +17,11 @@
 /* resource estimation ---------------------------------------- */
 
 
+/* floorplanning ---------------------------------------------- */
+#include "Tools/ResourceEstimationHelper.hpp"
+/* floorplanning ---------------------------------------------- */
+
+
 #include "Target.hpp"
 #include "Targets/DSP.hpp"
 #include "Targets/Spartan3.hpp"

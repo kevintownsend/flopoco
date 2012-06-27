@@ -17,6 +17,7 @@
 #include "FlopocoStream.hpp"
 #include "utils.hpp"
 #include "Tools/ResourceEstimationHelper.hpp"
+#include "Tools/FloorplanningHelper.hpp"
 
 using namespace std;
 
@@ -45,6 +46,20 @@ namespace flopoco {
 #define THROWERROR(stream) {{ostringstream o; o << " ERROR in " << uniqueName_ << " (" << srcFileName << "): " << stream << endl; throw o.str();}} 
 
 
+//Floorplanning - direction of placement constraints
+#define ABOVE						0
+#define UNDER						1
+#define TO_LEFT_OF					2
+#define TO_RIGHT_OF					3
+
+#define ABOVE_WITH_EXTRA				4
+#define UNDER_WITH_EXTRA				5
+#define TO_LEFT_OF_WITH_EXTRA				6
+#define TO_RIGHT_OF_WITH_EXTRA				7
+
+//Floorplanning - constraint type
+#define PLACEMENT 					0
+#define CONNECTIVITY					1
 
 
 /**
@@ -1289,6 +1304,110 @@ public:
 	 */
 	void addAutomaticResourceEstimations();
 	/////////////////////////////////////////////////////////////////////////////////////////////////
+	
+	
+	/////////////////////////////////////////////////////////////////////////////////////////////////
+	////////////Functions used for floorplanning
+	/**
+	 * NOTE: Floorplanning should be used only is resource estimation is 
+	 * also used. The floorplanning tools rely on the data provided by 
+	 * the resource estimation.
+	 */
+	
+	/**
+	 * Initialize the resources used for the floorplanning process. This
+	 * function should be called before the other functions used for 
+	 * floorplanning are used.
+	 * @param ratio the floorplanning ratio: to what degree should the 
+	 * bounding boxes be filled (has a default value of 0.75)
+	 */
+	void initFloorplanning(double ratio = 0.75);
+	
+	/**
+	 * Count the resources that have been added (as glue logic), since 
+	 * the last module has been instantiated. It will create a virtual 
+	 * module that is placed between the real modules, and that accounts 
+	 * for the space needed for the glue logic.
+	 * Possibly to be integrated in the instance() method, as the 
+	 * process can be done without the intervention of the user.
+	 * Uses and updates the pastEstimation... set of variables.
+	 * @return the string summarizing the operation
+	 */
+	std::string manageFloorplan();
+	
+	/**
+	 * Add a new placement constraint between the @source and @sink 
+	 * modules. The constraint should be read as: "@sink is @type of @source".
+	 * The type of the constraint should be one of the following 
+	 * predefined constants: TO_LEFT_OF, TO_RIGHT_OF, ABOVE, UNDER.
+	 * NOTE: @source and @sink are the operators' names, NOT 
+	 * the instances' names
+	 * @param source the source sub-component
+	 * @param sink the sink sub-component
+	 * @param type the constraint type (has as value predefined constant)
+	 * @return the string summarizing the operation
+	 */
+	std::string addPlacementConstraint(std::string source, std::string sink, int type);
+	
+	/**
+	 * Add a new connectivity constraint between the @source and @sink 
+	 * modules. The constraint should be read as: "@sink is connected 
+	 * to @source by @nrWires wires".
+	 * NOTE: @source and @sink are the operators' names, NOT 
+	 * the instances' names
+	 * @param source the source sub-component
+	 * @param sink the sink sub-component
+	 * @param nrWires the number of wires that connect the two modules
+	 * @return the string summarizing the operation
+	 */
+	std::string addConnectivityConstraint(std::string source, std::string sink, int nrWires);
+	
+	/**
+	 * Process the placement constraints that the user has input using 
+	 * the corresponding functions.
+	 * @return the string summarizing the operation
+	 */
+	std::string processPlacementConstraints();
+	
+	/**
+	 * Process the connectivity constraints that the user has input using 
+	 * the corresponding functions.
+	 * @return the string summarizing the operation
+	 */
+	std::string processConnectivityConstraints();
+	
+	/**
+	 * Create the virtual grid for the sub-components.
+	 * @return the string summarizing the operation
+	 */
+	std::string createVirtualGrid();
+	
+	/**
+	 * Transform the virtual placement grid into the actual placement on 
+	 * the device, ready to generate the actual constraints file.
+	 * @return the string summarizing the operation
+	 */
+	std::string createPlacementGrid();
+	
+	/**
+	 * Create the file that will contain the floorplanning constraints.
+	 * @return the string summarizing the operation
+	 */
+	std::string createConstraintsFile();
+	
+	/**
+	 * Generate the placement for a given module.
+	 * @param moduleName the name of the module
+	 * @return the string summarizing the operation
+	 */
+	std::string createPlacementForComponent(std::string moduleName);
+	
+	/**
+	 * Create the floorplan, according the flow described in each 
+	 * function and according to the user placed constraints.
+	 */
+	std::string createFloorplan();
+	/////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 
@@ -1309,6 +1428,14 @@ public:
 	std::ostringstream 	resourceEstimateReport;			/**< The final report of resource estimations made by the user */
 	
 	ResourceEstimationHelper* reHelper;				/**< Performs all the necessary operations for resource estimation */
+	/////////////////////////////////////////////////////////////////////////////////////////////////
+	
+	
+	/////////////////////////////////////////////////////////////////////////////////////////////////
+	////////////Variables used for floorplanning
+	std::ostringstream 			floorplan;						/**< Stream containing the floorplanning operations */
+	
+	FloorplanningHelper*		flpHelper;						/**< Tools for floorplanning */
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	
 
