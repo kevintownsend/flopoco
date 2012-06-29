@@ -186,151 +186,7 @@ namespace flopoco{
 			sourceCoordinate = flComponentCordVirtual[newConstraint.source];
 			sinkCoordinate = flComponentCordVirtual[newConstraint.sink];
 			if(newConstraint.type==PLACEMENT){
-				if(newConstraint.value==TO_LEFT_OF){//place sink to the left of source
-					//new coordinates of sink module
-					newCoordinate.x = sourceCoordinate.x - 1;
-					newCoordinate.y = sourceCoordinate.y;
-					
-					if(sinkCoordinate.x<sourceCoordinate.x && sinkCoordinate.y==sourceCoordinate.y)
-						continue;
-					
-					//as long as they are taken, go to the left of source
-					do{
-						unsigned int iterationsPerformed = 0;
-						
-						for(map<string, coordinateType>::iterator it = flComponentCordVirtual.begin(); it != flComponentCordVirtual.end(); it++){
-							coordinateType tempCoordinate = it->second;
-							
-							if((tempCoordinate.x==newCoordinate.x) && (tempCoordinate.y==newCoordinate.y)){
-								positionOccupied = true;
-								break;
-							}
-							iterationsPerformed++;
-						}
-						if(iterationsPerformed == flComponentCordVirtual.size()){
-							positionOccupied = false;
-						}
-						if(positionOccupied == true){
-							newCoordinate.x -= 1;
-						}
-					}while(positionOccupied == true);
-					
-					//update the coordinates in the virtual grid
-					flComponentCordVirtual[newConstraint.sink] = newCoordinate;
-					
-					result << tab << "Updated coordinates of module " << newConstraint.sink << endl;
-					result << tab << tab << " from x=" << sinkCoordinate.x << " and y=" << sinkCoordinate.y << endl;
-					result << tab << tab << " moving to the left of module " << newConstraint.source << endl;
-					result << tab << tab << " to x=" << newCoordinate.x << " and y=" << newCoordinate.y << endl;
-				}else if(newConstraint.value==TO_RIGHT_OF){//place sink to the left of source
-					//new coordinates of sink module
-					newCoordinate.x = sourceCoordinate.x + 1;
-					newCoordinate.y = sourceCoordinate.y;
-					
-					if(sinkCoordinate.x>sourceCoordinate.x && sinkCoordinate.y==sourceCoordinate.y)
-						continue;
-					
-					//as long as they are taken, go to the right of source
-					do{
-						unsigned int iterationsPerformed = 0;
-						
-						for(map<string, coordinateType>::iterator it = flComponentCordVirtual.begin(); it != flComponentCordVirtual.end(); it++){
-							coordinateType tempCoordinate = it->second;
-							
-							if((tempCoordinate.x==newCoordinate.x) && (tempCoordinate.y==newCoordinate.y)){
-								positionOccupied = true;
-								break;
-							}
-							iterationsPerformed++;
-						}
-						if(iterationsPerformed == flComponentCordVirtual.size()){
-							positionOccupied = false;
-						}
-						if(positionOccupied == true){
-							newCoordinate.x += 1;
-						}
-					}while(positionOccupied == true);
-					
-					//update the coordinates in the virtual grid
-					flComponentCordVirtual[newConstraint.sink] = newCoordinate;
-					
-					result << tab << "Updated coordinates of module " << newConstraint.sink << endl;
-					result << tab << tab << " from x=" << sinkCoordinate.x << " and y=" << sinkCoordinate.y << endl;
-					result << tab << tab << " moving to the right of module " << newConstraint.source << endl;
-					result << tab << tab << " to x=" << newCoordinate.x << " and y=" << newCoordinate.y << endl;
-				}else if(newConstraint.value==ABOVE){//place sink above source
-					//new coordinates of sink module
-					newCoordinate.x = sourceCoordinate.x;
-					newCoordinate.y = sourceCoordinate.y - 1;
-					
-					if(sinkCoordinate.y<sourceCoordinate.y && sinkCoordinate.x==sourceCoordinate.x)
-						continue;
-					
-					//as long as they are taken, go upwards of source
-					do{
-						unsigned int iterationsPerformed = 0;
-						
-						for(map<string, coordinateType>::iterator it = flComponentCordVirtual.begin(); it != flComponentCordVirtual.end(); it++){
-							coordinateType tempCoordinate = it->second;
-							
-							if((tempCoordinate.x==newCoordinate.x) && (tempCoordinate.y==newCoordinate.y)){
-								positionOccupied = true;
-								break;
-							}
-							iterationsPerformed++;
-						}
-						if(iterationsPerformed == flComponentCordVirtual.size()){
-							positionOccupied = false;
-						}
-						if(positionOccupied == true){
-							newCoordinate.y -= 1;
-						}
-					}while(positionOccupied == true);
-					
-					//update the coordinates in the virtual grid
-					flComponentCordVirtual[newConstraint.sink] = newCoordinate;
-					
-					result << tab << "Updated coordinates of module " << newConstraint.sink << endl;
-					result << tab << tab << " from x=" << sinkCoordinate.x << " and y=" << sinkCoordinate.y << endl;
-					result << tab << tab << " moving above module " << newConstraint.source << endl;
-					result << tab << tab << " to x=" << newCoordinate.x << " and y=" << newCoordinate.y << endl;
-				}else if(newConstraint.value==UNDER){//place sink under source
-					//new coordinates of sink module
-					newCoordinate.x = sourceCoordinate.x;
-					newCoordinate.y = sourceCoordinate.y + 1;
-					
-					if(sinkCoordinate.y>sourceCoordinate.y && sinkCoordinate.x==sourceCoordinate.x)
-						continue;
-					
-					//as long as they are taken, go downwards of source
-					do{
-						unsigned int iterationsPerformed = 0;
-						
-						for(map<string, coordinateType>::iterator it = flComponentCordVirtual.begin(); it != flComponentCordVirtual.end(); it++){
-							coordinateType tempCoordinate = it->second;
-							
-							if((tempCoordinate.x==newCoordinate.x) && (tempCoordinate.y==newCoordinate.y)){
-								positionOccupied = true;
-								break;
-							}
-							iterationsPerformed++;
-						}
-						if(iterationsPerformed == flComponentCordVirtual.size()){
-							positionOccupied = false;
-						}
-						if(positionOccupied == true){
-							newCoordinate.y += 1;
-						}
-					}while(positionOccupied == true);
-					
-					//update the coordinates in the virtual grid
-					flComponentCordVirtual[newConstraint.sink] = newCoordinate;
-					
-					result << tab << "Updated coordinates of module " << newConstraint.sink << endl;
-					result << tab << tab << " from x=" << sinkCoordinate.x << " and y=" << sinkCoordinate.y << endl;
-					result << tab << tab << " moving under module " << newConstraint.source << endl;
-					result << tab << tab << " to x=" << newCoordinate.x << " and y=" << newCoordinate.y << endl;
-				}else if(newConstraint.value==TO_LEFT_OF_WITH_EXTRA){
+				if(newConstraint.value==TO_LEFT_OF || newConstraint.value==TO_LEFT_OF_WITH_EXTRA){
 					//new coordinates of sink module
 					newCoordinate.x = sourceCoordinate.x - 1;
 					newCoordinate.y = sourceCoordinate.y;
@@ -359,29 +215,23 @@ namespace flopoco{
 						}
 					}while(positionOccupied == true);
 					
-					//look for the virtual module just before the sink module, if it exists
-					// if it does, then place it between the source and the sink
-					std::string prevModuleName = "";
-					
-					for(unsigned int i=0; i<flComponentList.size(); i++){
-						if(newConstraint.sink == flComponentList[i])
-							break;
-						else
-							prevModuleName = flComponentList[i];
+					if(newConstraint.value==TO_LEFT_OF_WITH_EXTRA){
+						//look for the virtual module just before the sink module, if it exists
+						// if it does, then place it between the source and the sink
+						std::string prevModuleName = "";
+						
+						for(unsigned int i=0; i<flComponentList.size(); i++){
+							if(newConstraint.sink == flComponentList[i])
+								break;
+							else
+								prevModuleName = flComponentList[i];
+						}
+						if(prevModuleName.find("virtual_module_") != string::npos){
+							flComponentCordVirtual[prevModuleName] = newCoordinate;
+							newCoordinate.x -= 1;
+						}
 					}
-					if(prevModuleName.find("virtual_module_") != string::npos){
-						flComponentCordVirtual[prevModuleName] = newCoordinate;
-						newCoordinate.x -= 1;
-					}
-					
-					//change the coordinates of the sink module
-					flComponentCordVirtual[newConstraint.sink] = newCoordinate;
-					
-					result << tab << "Updated coordinates of module " << newConstraint.sink << endl;
-					result << tab << tab << " from x=" << sinkCoordinate.x << " and y=" << sinkCoordinate.y << endl;
-					result << tab << tab << " moving to the left of module " << newConstraint.source << endl;
-					result << tab << tab << " to x=" << newCoordinate.x << " and y=" << newCoordinate.y << endl;
-				}else if(newConstraint.value==TO_RIGHT_OF_WITH_EXTRA){
+				}else if(newConstraint.value==TO_RIGHT_OF || newConstraint.value==TO_RIGHT_OF_WITH_EXTRA){
 					//new coordinates of sink module
 					newCoordinate.x = sourceCoordinate.x + 1;
 					newCoordinate.y = sourceCoordinate.y;
@@ -410,29 +260,23 @@ namespace flopoco{
 						}
 					}while(positionOccupied == true);
 					
-					//look for the virtual module just before the sink module, if it exists
-					// if it does, then place it between the source and the sink
-					std::string prevModuleName = "";
-					
-					for(unsigned int i=0; i<flComponentList.size(); i++){
-						if(newConstraint.sink == flComponentList[i])
-							break;
-						else
-							prevModuleName = flComponentList[i];
+					if(newConstraint.value==TO_RIGHT_OF_WITH_EXTRA){
+						//look for the virtual module just before the sink module, if it exists
+						// if it does, then place it between the source and the sink
+						std::string prevModuleName = "";
+						
+						for(unsigned int i=0; i<flComponentList.size(); i++){
+							if(newConstraint.sink == flComponentList[i])
+								break;
+							else
+								prevModuleName = flComponentList[i];
+						}
+						if(prevModuleName.find("virtual_module_") != string::npos){
+							flComponentCordVirtual[prevModuleName] = newCoordinate;
+							newCoordinate.x += 1;
+						}
 					}
-					if(prevModuleName.find("virtual_module_") != string::npos){
-						flComponentCordVirtual[prevModuleName] = newCoordinate;
-						newCoordinate.x += 1;
-					}
-					
-					//change the coordinates of the sink module
-					flComponentCordVirtual[newConstraint.sink] = newCoordinate;
-					
-					result << tab << "Updated coordinates of module " << newConstraint.sink << endl;
-					result << tab << tab << " from x=" << sinkCoordinate.x << " and y=" << sinkCoordinate.y << endl;
-					result << tab << tab << " moving to the right of module " << newConstraint.source << endl;
-					result << tab << tab << " to x=" << newCoordinate.x << " and y=" << newCoordinate.y << endl;
-				}else if(newConstraint.value==ABOVE_WITH_EXTRA){
+				}else if(newConstraint.value==ABOVE || newConstraint.value==ABOVE_WITH_EXTRA){
 					//new coordinates of sink module
 					newCoordinate.x = sourceCoordinate.x;
 					newCoordinate.y = sourceCoordinate.y - 1;
@@ -461,29 +305,23 @@ namespace flopoco{
 						}
 					}while(positionOccupied == true);
 					
-					//look for the virtual module just before the sink module, if it exists
-					// if it does, then place it between the source and the sink
-					std::string prevModuleName = "";
-					
-					for(unsigned int i=0; i<flComponentList.size(); i++){
-						if(newConstraint.sink == flComponentList[i])
-							break;
-						else
-							prevModuleName = flComponentList[i];
+					if(newConstraint.value==ABOVE_WITH_EXTRA){
+						//look for the virtual module just before the sink module, if it exists
+						// if it does, then place it between the source and the sink
+						std::string prevModuleName = "";
+						
+						for(unsigned int i=0; i<flComponentList.size(); i++){
+							if(newConstraint.sink == flComponentList[i])
+								break;
+							else
+								prevModuleName = flComponentList[i];
+						}
+						if(prevModuleName.find("virtual_module_") != string::npos){
+							flComponentCordVirtual[prevModuleName] = newCoordinate;
+							newCoordinate.y -= 1;
+						}
 					}
-					if(prevModuleName.find("virtual_module_") != string::npos){
-						flComponentCordVirtual[prevModuleName] = newCoordinate;
-						newCoordinate.y -= 1;
-					}
-					
-					//change the coordinates of the sink module
-					flComponentCordVirtual[newConstraint.sink] = newCoordinate;
-					
-					result << tab << "Updated coordinates of module " << newConstraint.sink << endl;
-					result << tab << tab << " from x=" << sinkCoordinate.x << " and y=" << sinkCoordinate.y << endl;
-					result << tab << tab << " moving above module " << newConstraint.source << endl;
-					result << tab << tab << " to x=" << newCoordinate.x << " and y=" << newCoordinate.y << endl;
-				}else if(newConstraint.value==UNDER_WITH_EXTRA){
+				}else if(newConstraint.value==UNDER || newConstraint.value==UNDER_WITH_EXTRA){
 					//new coordinates of sink module
 					newCoordinate.x = sourceCoordinate.x;
 					newCoordinate.y = sourceCoordinate.y + 1;
@@ -512,29 +350,36 @@ namespace flopoco{
 						}
 					}while(positionOccupied == true);
 					
-					//look for the virtual module just before the sink module, if it exists
-					// if it does, then place it between the source and the sink
-					std::string prevModuleName = "";
-					
-					for(unsigned int i=0; i<flComponentList.size(); i++){
-						if(newConstraint.sink == flComponentList[i])
-							break;
-						else
-							prevModuleName = flComponentList[i];
+					if(newConstraint.value==UNDER_WITH_EXTRA){
+						//look for the virtual module just before the sink module, if it exists
+						// if it does, then place it between the source and the sink
+						std::string prevModuleName = "";
+						
+						for(unsigned int i=0; i<flComponentList.size(); i++){
+							if(newConstraint.sink == flComponentList[i])
+								break;
+							else
+								prevModuleName = flComponentList[i];
+						}
+						if(prevModuleName.find("virtual_module_") != string::npos){
+							flComponentCordVirtual[prevModuleName] = newCoordinate;
+							newCoordinate.y += 1;
+						}
 					}
-					if(prevModuleName.find("virtual_module_") != string::npos){
-						flComponentCordVirtual[prevModuleName] = newCoordinate;
-						newCoordinate.y += 1;
-					}
-					
-					//change the coordinates of the sink module
-					flComponentCordVirtual[newConstraint.sink] = newCoordinate;
-					
-					result << tab << "Updated coordinates of module " << newConstraint.sink << endl;
-					result << tab << tab << " from x=" << sinkCoordinate.x << " and y=" << sinkCoordinate.y << endl;
-					result << tab << tab << " moving under module " << newConstraint.source << endl;
-					result << tab << tab << " to x=" << newCoordinate.x << " and y=" << newCoordinate.y << endl;
 				}
+				
+				//change the coordinates of the sink module
+				flComponentCordVirtual[newConstraint.sink] = newCoordinate;
+				
+				result << tab << "Updated coordinates of module " << newConstraint.sink << endl;
+				result << tab << tab << " from x=" << sinkCoordinate.x << " and y=" << sinkCoordinate.y << endl;
+				result << tab << tab 
+						<< ((newConstraint.value==TO_LEFT_OF  || newConstraint.value==TO_LEFT_OF_WITH_EXTRA)  ? " moving under module " :
+						   (newConstraint.value==TO_RIGHT_OF || newConstraint.value==TO_RIGHT_OF_WITH_EXTRA) ? " moving under module " : 
+						   (newConstraint.value==ABOVE 		 || newConstraint.value==ABOVE_WITH_EXTRA) 		 ? " moving under module " : 
+						   (newConstraint.value==UNDER 		 || newConstraint.value==UNDER_WITH_EXTRA) 		 ? " moving under module " : "")
+						<< newConstraint.source << endl;
+				result << tab << tab << " to x=" << newCoordinate.x << " and y=" << newCoordinate.y << endl;
 			}
 		}
 		
@@ -657,6 +502,16 @@ namespace flopoco{
 		
 		return result.str();
 	}
+	
+	/*
+	bool FloorplanningHelper::createHorrizontalPlacement(){
+		
+	}
+	
+	bool FloorplanningHelper::createVerticalPlacement(){
+		
+	}
+	*/
 	
 	std::string FloorplanningHelper::createPlacementGrid(){
 		ostringstream result;

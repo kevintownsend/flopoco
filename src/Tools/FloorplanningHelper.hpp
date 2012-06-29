@@ -43,8 +43,10 @@ using namespace std;
 #define TO_RIGHT_OF_WITH_EXTRA		7
 
 //Type of module constraint
-#define PLACEMENT 		0
-#define CONNECTIVITY	1
+#define PLACEMENT 					0
+#define CONNECTIVITY				1
+#define ASPECT						2
+#define CONTENT						3
 
 
 
@@ -65,10 +67,13 @@ namespace flopoco{
 		int type;				/**< The constraint type: placement or connection */
 		string source;			/**< The origin component */
 		string sink;			/**< The destination module */
-		int value;				/**< The value of the constraint, both for placement and connection; 
-									 for placement constraints, it represents the number of wires, or 
+		int value;				/**< The value of the constraint, both for placement, connectivity and content; 
+									 for connectivity constraints, it represents the number of wires, or 
 									 the level (strong, weak, average etc.) 
+									 for content, specifies the type of content
 								*/
+		int specialValue;		/**< The specific value of the constraint: for content, this is usually a bit-width */
+		double ratio;			/**< The aspect ratio; it is computed as ratio = width/height */
 	};
 	/////////////////////////////////////////////////////////////////////////////////////////////////	
 		

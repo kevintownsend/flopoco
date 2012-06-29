@@ -59,6 +59,9 @@ namespace flopoco{
 		
 		reHelper = new ResourceEstimationHelper(target_, this);
 		reHelper->initResourceEstimation();
+		
+		reActive = false;
+		
 		floorplan << "";
 		
 		flpHelper = new FloorplanningHelper(target_, this);
@@ -1462,34 +1465,40 @@ namespace flopoco{
 	
 	std::string Operator::addFF(int count){
 		
+		reActive = true;
 		return reHelper->addFF(count);
 	}
 	
 	std::string Operator::addLUT(int nrInputs, int count){
 		
+		reActive = true;
 		return reHelper->addLUT(nrInputs, count);
 	}
 	
 	std::string Operator::addReg(int width, int count){
 				
+		reActive = true;
 		return reHelper->addReg(width, count);
 	}
 	
 	//TODO: verify increase in the DSP count
 	std::string Operator::addMultiplier(int count){
 		
+		reActive = true;
 		return reHelper->addMultiplier(count);
 	}
 	
 	//TODO: verify increase in the DSP count 
 	std::string Operator::addMultiplier(int widthX, int widthY, double ratio, int count){
 		
+		reActive = true;
 		return reHelper->addMultiplier(widthX, widthY, ratio, count);
 	}
 	
 	//TODO: verify increase in the element count
 	std::string Operator::addAdderSubtracter(int widthX, int widthY, double ratio, int count){
 		
+		reActive = true;
 		return reHelper->addAdderSubtracter(widthX, widthY, ratio, count);
 	}
 	
@@ -1498,38 +1507,45 @@ namespace flopoco{
 	//		dedicated memory blocks
 	std::string Operator::addMemory(int size, int width, int type, int count){
 		
+		reActive = true;
 		return reHelper->addMemory(size, width, type, count);
 	}
 	
 	//---More particular resource logging
 	std::string Operator::addDSP(int count){
 		
+		reActive = true;
 		return reHelper->addDSP(count);
 	}
 	
 	std::string Operator::addRAM(int count){
 		
+		reActive = true;
 		return reHelper->addRAM(count);
 	}
 	
 	std::string Operator::addROM(int count){
 		
+		reActive = true;
 		return reHelper->addROM(count);
 	}
 	
 	//TODO: should count the shift registers according to their bitwidths
 	std::string Operator::addSRL(int width, int depth, int count){
 				
+		reActive = true;
 		return reHelper->addSRL(width, depth, count);
 	}
 	
 	std::string Operator::addWire(int count, std::string signalName){
 		
+		reActive = true;
 		return reHelper->addWire(count, signalName);
 	}
 	
 	std::string Operator::addIOB(int count, std::string portName){
 		
+		reActive = true;
 		return reHelper->addIOB(count, portName);
 	}
 	
@@ -1539,6 +1555,7 @@ namespace flopoco{
 	//		needed; currently specific resources are not taken into account
 	std::string Operator::addMux(int width, int nrInputs, int count){
 				
+		reActive = true;
 		return reHelper->addMux(width, nrInputs, count);
 	}
 	
@@ -1547,24 +1564,28 @@ namespace flopoco{
 	//		involves also changes to getLUTPerCounter() getFFPerCounter()
 	std::string Operator::addCounter(int width, int count){
 				
+		reActive = true;
 		return reHelper->addCounter(width, count);
 	}
 	
 	//TODO: count the accumulators according to their bitwidth
 	std::string Operator::addAccumulator(int width, bool useDSP, int count){
 		
+		reActive = true;
 		return reHelper->addAccumulator(width, useDSP, count);
 	}
 	
 	//TODO: count the decoders according to their input and output 
 	//		bitwidths
 	std::string Operator::addDecoder(int wIn, int wOut, int count){
-				
+		
+		reActive = true;
 		return reHelper->addDecoder(wIn, wOut, count);
 	}
 	
 	std::string Operator::addArithOp(int width, int nrInputs, int count){
-				
+		
+		reActive = true;
 		return reHelper->addArithOp(width, nrInputs, count);
 	}
 	
@@ -1575,13 +1596,15 @@ namespace flopoco{
 	//TODO: find a better approximation for the resources
 	//		for now, RAM blocks are not used
 	std::string Operator::addFSM(int nrStates, int nrTransitions, int count){
-				
+		
+		reActive = true;
 		return reHelper->addFSM(nrStates, nrTransitions, count);
 	}
 	
 	//--Resource usage statistics---------------------------------------
 	std::string Operator::generateStatistics(int detailLevel){
-				
+		
+		reActive = true;
 		return reHelper->generateStatistics(detailLevel);
 	}
 	
@@ -1590,28 +1613,33 @@ namespace flopoco{
 	//TODO: find a more precise way to determine the required number of
 	//		registers due to pipeline
 	std::string Operator::addPipelineFF(){
-				
+		
+		reActive = true;
 		return reHelper->addPipelineFF();
 	}
 	
 	std::string Operator::addWireCount(){
-				
+		
+		reActive = true;
 		return reHelper->addWireCount();
 	}
 	
 	std::string Operator::addPortCount(){
-				
+		
+		reActive = true;
 		return reHelper->addPortCount();
 	}
 	
 	//TODO: add function to add resource count from specified component
 	std::string Operator::addComponentResourceCount(){
-				
+		
+		reActive = true;
 		return reHelper->addComponentResourceCount();
 	}
 	
 	void Operator::addAutomaticResourceEstimations(){
 				
+		reActive = true;
 		resourceEstimate << reHelper->addAutomaticResourceEstimations();
 	}
 	/////////////////////////////////////////////////////////////////////////////////////////////////

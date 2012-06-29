@@ -2542,8 +2542,13 @@ int main(int argc, char* argv[] )
 	for (vector<Operator*>::iterator it = oplist.begin(); it!=oplist.end(); ++it) {
 		Operator* op = *it;
 		
-		if(reLevel!=0)
-			cerr << op->generateStatistics(reLevel);
+		if(reLevel!=0){
+			if(op->reActive)
+				cerr << op->generateStatistics(reLevel);
+			else{
+				cerr << "Resource estimation option active for an operator that has NO estimations in place." << endl;
+			}
+		}
 	}
 	//------------------------------------------------------------------
 	
@@ -2554,7 +2559,11 @@ int main(int argc, char* argv[] )
 		for (vector<Operator*>::iterator it = oplist.begin(); it!=oplist.end(); ++it) {
 			Operator* op = *it;
 			
-			file << op->resourceEstimate.str();
+			if(op->reActive)
+				file << op->resourceEstimate.str();
+			else{
+				cerr << "Resource estimation debugging option active for an operator that has NO estimations in place." << endl;
+			}
 		}
 		file.close();
 		cerr << "Resource estimation log written to the \'flopoco.debug\' file" << endl;
@@ -2566,9 +2575,9 @@ int main(int argc, char* argv[] )
 		for (vector<Operator*>::iterator it = oplist.begin(); it!=oplist.end(); ++it) {
 			Operator* op = *it;
 			
-			if(reLevel == 0){
-				cerr << "Floorplanning option can be used only when the resource estimation is enabled." 
-						<< " Please rerun the program with the appropriate options" << endl;
+			if(op->reActive == false){
+				cerr << "Floorplanning option can be used only when the resource estimations have been performed.\n" 
+						<< " Please reconsider your strategy.\n" << endl;
 				exit(1);
 			}
 			if(floorplanning)
@@ -2579,8 +2588,8 @@ int main(int argc, char* argv[] )
 	
 	//------------------ Floorplanning Debugging -----------------------
 	if(floorplanningDebug){
-		if(reLevel==0 || !floorplanning){
-			cerr << "Debugging Floorplanning option can be used only when the resource estimation and the floorplanning is enabled." 
+		if(!(reLevel>0 && floorplanning)){
+			cerr << "Debugging Floorplanning option can be used only when there are resource estimations and floorplanning is enabled." 
 						<< " Please rerun the program with the appropriate options" << endl;
 				exit(1);
 		}else{
