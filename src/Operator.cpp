@@ -52,8 +52,22 @@ namespace flopoco{
 			setCombinatorial();	
 		
 		vhdl.disableParsing(!target_->isPipelined());	
+
+		// Resource estimation and floorplanning
+		resourceEstimate << "Starting Resource estimation report for entity: " << uniqueName_ << " --------------- " << endl;
+		resourceEstimateReport << "";
+		
+		reHelper = new ResourceEstimationHelper(target_, this);
+		reHelper->initResourceEstimation();
+		floorplan << "";
+		
+		flpHelper = new FloorplanningHelper(target_, this);
+		flpHelper->initFloorplanning(0.75); // ratio, see Tools/FloorplanningHelper
+
 	}
 	
+
+
 	
 	void Operator::addInput(const std::string name, const int width, const bool isBus) {
 		if (signalMap_.find(name) != signalMap_.end()) {
@@ -1445,15 +1459,6 @@ namespace flopoco{
 	////////////Functions used for resource estimations
 	
 	//--Logging functions
-	//---General resources
-	void Operator::initResourceEstimation(){
-		
-		resourceEstimate << "Starting Resource estimation report for entity: " << uniqueName_ << " --------------- " << endl;
-		resourceEstimateReport << "";
-		
-		reHelper = new ResourceEstimationHelper(target_, this);
-		reHelper->initResourceEstimation();
-	}
 	
 	std::string Operator::addFF(int count){
 		
@@ -1613,13 +1618,6 @@ namespace flopoco{
 	
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////Functions used for floorplanning
-	void Operator::initFloorplanning(double ratio){
-		
-		floorplan << "";
-		
-		flpHelper = new FloorplanningHelper(target_, this);
-		flpHelper->initFloorplanning(ratio);
-	}
 	
 	std::string Operator::manageFloorplan(){
 		

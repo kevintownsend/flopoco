@@ -588,7 +588,6 @@ void usage(char *name, string opName = ""){
 		cerr << "________________ OPTIONS________________________________________________________\n";
 		cerr << "General options, affecting the operators that follow them:\n";
 		cerr << "   -outputfile=<output file name>           (default=flopoco.vhdl)\n";
-		cerr << "   -verbose=<1|2|3>                         (default=0)\n";
 		cerr << "   -pipeline=<yes|no>                       (default=yes)\n";
 		cerr << "   -frequency=<target frequency in MHz>     (default=400)\n";
 		cerr << "   -target=<Spartan3|Virtex4|Virtex5|StratixII|StratixIII|StratixIV>      (default=Virtex5)\n";
@@ -596,6 +595,15 @@ void usage(char *name, string opName = ""){
 		cerr << "       optimize for the use of DSP blocks   (default=yes)\n";
 		cerr << "   -name=<entity name>\n";
 		cerr << "       defines the name of the VHDL entity of the next operator\n";
+		cerr << "   -resourceEstimation=level\n";
+		cerr << "       level=0 disables resource estimation (default)\n";
+		cerr << "       level=1..3 larger number means more details\n";
+		cerr << "   -floorplanning=<yes|no>\n";
+		cerr << "       generate a floorplan (experimental, Xilinx only)\n";
+		cerr << "Debugging options, affecting the operators that follow them:\n";
+		cerr << "   -verbose=<0|1|2|3>     verbosity level. 0: no output (default), 1: basic info, 3: full debug \n";
+		cerr << "   -reDebugging=<yes|no>  debug output for resource estimation (default=no)\n";
+		cerr << "   -flpDebugging=<yes|no> debug output for floorplanning (default=no)\n";
 	}
 	exit (EXIT_FAILURE);
 }

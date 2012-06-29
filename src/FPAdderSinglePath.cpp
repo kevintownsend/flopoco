@@ -322,6 +322,8 @@ FPAdderSinglePath::FPAdderSinglePath(Target* target, int wEX, int wFX, int wEY, 
 		/*		manageCriticalPath(target->localWireDelay() +  target->lutDelay());
 		vhdl<<tab<<"with sdExnXY select"<<endl;
 		vhdl<<tab<<"R <= newX when \"0100\"|\"1000\"|\"1001\", newY when \"0001\"|\"0010\"|\"0110\", computedR when others;"<<endl;*/
+
+
 	}
 
 	FPAdderSinglePath::~FPAdderSinglePath() {

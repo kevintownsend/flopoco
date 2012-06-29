@@ -1020,11 +1020,6 @@ public:
 	////////////Functions used for resource estimations
 	
 	//--Logging functions
-	//---General resources
-	/**
-	 * Initialize data structures used for resource estimation
-	 */
-	void initResourceEstimation();
 	
 	/**
 	 * Add @count flip-flops to the total estimate
@@ -1314,14 +1309,6 @@ public:
 	 * the resource estimation.
 	 */
 	
-	/**
-	 * Initialize the resources used for the floorplanning process. This
-	 * function should be called before the other functions used for 
-	 * floorplanning are used.
-	 * @param ratio the floorplanning ratio: to what degree should the 
-	 * bounding boxes be filled (has a default value of 0.75)
-	 */
-	void initFloorplanning(double ratio = 0.75);
 	
 	/**
 	 * Count the resources that have been added (as glue logic), since 

@@ -64,7 +64,6 @@ namespace flopoco{
 		virtualModuleId++;
 		
 		virtualComponent->setName(moduleName);
-		virtualComponent->initResourceEstimation();
 		virtualComponent->reHelper->estimatedCountLUT 			= parentOp->reHelper->estimatedCountLUT 	   - prevEstimatedCountLUT;
 		virtualComponent->reHelper->estimatedCountFF  			= parentOp->reHelper->estimatedCountFF 		   - prevEstimatedCountFF;
 		virtualComponent->reHelper->estimatedCountMultiplier 	= parentOp->reHelper->estimatedCountMultiplier - prevEstimatedCountMultiplier;
