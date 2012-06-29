@@ -80,6 +80,7 @@ namespace flopoco{
 	{
 		
 		setCopyrightString("F. de Dinechin, C. Klein  (2008)");
+		srcFileName="FPPow";
 
 		ostringstream o;
 
@@ -107,6 +108,7 @@ namespace flopoco{
 
 
 		int logwF= wF+expG+wE-1;
+		REPORT(INFO, "mantissa width for the Log output: " << logwF);
 
 		vhdl << tab  << declare("flagsX", 2) << " <= X(wE+wF+2 downto wE+wF+1);" << endl;
 		vhdl << tab  << declare("signX") << " <= X(wE+wF);" << endl;
