@@ -12,7 +12,7 @@ class BasicCompressor:public Operator {
 
 
 	public:
-	BasicCompressor(Target * target, vector<int> height);
+	BasicCompressor(Target * target, vector<int> h);
 
 	~BasicCompressor() {
 	};

@@ -1,11 +1,14 @@
 #include <iostream>
 #include <sstream>
-
+#include <string>
 #include "gmp.h"
 #include "mpfr.h"
+#include <vector>
 #include <gmpxx.h>
-
+#include <stdio.h>
+#include <stdlib.h>
 #include "BasicCompressor.hpp"
+
 
 using namespace std;
 
@@ -15,59 +18,94 @@ using namespace std;
 
 
 
-BasicCompressor::BasicCompressor(Target * target, vector<int> height)
-	:Operator(target)
+BasicCompressor::BasicCompressor(Target * target, vector<int> h)
+:Operator(target)
 {
 	ostringstream name;
+	stringstream nm;
 	
-	int c1=height[1];
-	int c0=height[0];
+	int w=0;
+	int param=0;
 	
-	int w = c1+c0;
-	int wOut = intlog2(c0 + c1*2);
+	vector<int> height(h.size(), 0);
 	
-        for (int i = 0; i < height.size(); i++)
+	for(unsigned i=0; i<h.size();i++)
+		height[h.size()-i-1]=h[i];
+	
+	name << "Compressor_";
+	
+	for(unsigned i=0; i<height.size();i++)
 	{
-	  
+		w=w+height[i];
+		param=param+intpow2(height.size()-i-1)*height[i];
+		name<<height[i];
 	}
-	name << "Compressor_"<< c0 << c1 << "_" << wOut;
+
+	int wOut=intlog2(param);
+	
+	name << "_" << wOut;
 	setName(name.str());
-	setCopyrightString("Illyes K. & Popa B. 2012");
-        
-	addInput("X0", c0);
+	setCopyrightString("Bogdan Popa & Kinga Illyes 2012");
+	
+	
+	
+	stringstream xs;
+
+	
+	for(unsigned i=0;i<height.size();i++)
+	{
+		addInput(join("X",i), h[i]);
+		
+		if(i!=0)
+		{
+			xs<<"& X"<<height.size()-i-1<<" ";
+		}
+		else
+		{
+			xs<<"X"<<height.size()-1<<" ";	
+		}
+	}	
+	
+	xs<<";\n";
+	
 	addOutput("R", wOut);
 	
-	if (c1!= 0 )
-	{
-	addInput("X1", c1);
+	vhdl << tab << declare("X", w) << " <=" << xs.str();
 	
-	vhdl << tab << declare("X", c0 + c1) << " <= X1 & X0;\n";
-	}
-	else
-	{
-	  vhdl << tab << declare("X", c0 + c1) << " <= X0;\n";
-	}
 	vhdl << "with X select R <= \n";
-	for (mpz_class i = 0; i < (1 << w); i++) {
-	  if ( i < (1 << c0))
-	  {
-		vhdl << tab << "\"" << unsignedBinary(popcnt(i),wOut) << "\" when \""
-		     << unsignedBinary(i,w) << "\", \n";
-	  }
-	  else
-	  {
-		vhdl << tab << "\"" << unsignedBinary(popcnt(i>>c0)+ popcnt(i),wOut) << "\" when \""
-		     << unsignedBinary(i,w) << "\", \n";
-	  }
+	
+	for (mpz_class i = 0; i < (1 << w); i++) 
+	{
+		
+		mpz_class ppcnt=0;//popcnt(i);
+		mpz_class ii=i;
+		for(unsigned j=0;j<h.size();j++)
+		{
+			
+		
+			ppcnt+=popcnt(ii-((ii>>h[j])<<h[j]))*intpow2(j);
+			ii=ii>>h[j];
+		}
+		
+		vhdl << tab << "\"" << unsignedBinary(ppcnt,wOut) << "\" when \""
+		<< unsignedBinary(i,w) << "\", \n";
+		
+		
+		 }
+		 
+		 
+		 
+		 vhdl << tab << "\"" << std::string (wOut, '-') << "\" when others;\n" << endl;
+		 
+		 
+	};
+	
+	
+	void BasicCompressor::emulate(TestCase * tc)
+	{
+		mpz_class sx = tc->getInputValue("X");
+		tc->addExpectedOutput("R", popcnt(sx));
 	}
-	vhdl << tab << "\"" << std::string (wOut, '-') << "\" when others;\n" << endl;
-};
-
-
-void BasicCompressor::emulate(TestCase * tc)
-{
-	mpz_class sx = tc->getInputValue("X");
-	tc->addExpectedOutput("R", popcnt(sx));
-}
-
-
+	
+	
+	
