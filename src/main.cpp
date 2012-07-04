@@ -155,6 +155,11 @@ void usage(char *name, string opName = ""){
 		OP("PopCount","wIn");
 		cerr << "      Population count using a table\n";
 	}
+	if ( full || opName == "BasicCompressor"){
+		OP("BasicCompressor","[height list]");
+		cerr << "      Population count using a table\n";
+	}
+
 
 	if ( full )	
 		cerr << "    ____________ INTEGER MULTIPLIERS/SQUARER/KARATSUBA _________________________\n";
@@ -1232,6 +1237,24 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				addOperator(oplist, op);
 			}
 		}
+		
+		else if(opname=="BasicCompressor")
+		{
+			int wOut = checkStrictlyPositive(argv[i++], argv[0]);
+			if (i+wOut > argc)
+				usage(argv[0],opname);
+			else 
+			{
+				std::vector<int> height (wOut, 0);
+				for (int j = 0; j < wOut; j++) 
+				{
+					height[wOut-1-j] = atoi(argv[i++]);
+				}
+				op = new BasicCompressor(target,height);
+				addOperator(oplist, op);
+			}
+		}
+		
 
 		/* Exploration of other fast adders */
 		else if(opname=="IntAdderSpecific"){ //Hidden

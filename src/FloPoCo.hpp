@@ -50,6 +50,7 @@
 #include "IntAddition/IntNAdder.hpp"
 #include "IntAddition/IntCompressorTree.hpp"
 #include "IntAddition/PopCount.hpp"
+#include "IntAddition/BasicCompressor.hpp"
 #include "IntAddition/NewCompressorTree.hpp"
 
 /* comparator(s) --------------------------------------------- */
