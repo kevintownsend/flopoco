@@ -1350,18 +1350,35 @@ public:
 	std::string addConnectivityConstraint(std::string source, std::string sink, int nrWires);
 	
 	/**
-	 * Process the placement constraints that the user has input using 
-	 * the corresponding functions.
+	 * Add a new aspect constraint for @source module. The constraint 
+	 * should be read as: "@source's width is @ratio times larger than 
+	 * its width".
+	 * @param source the source sub-component
+	 * @param ratio the aspect ratio
 	 * @return the string summarizing the operation
 	 */
-	std::string processPlacementConstraints();
+	std::string addAspectConstraint(std::string source, double ratio);
 	
 	/**
-	 * Process the connectivity constraints that the user has input using 
-	 * the corresponding functions.
+	 * Add a new constraint for @source module, regarding the contents 
+	 * of the module. The constraint gives an indication on the possible 
+	 * size/shape constraints, depending what the module contains.
+	 * @param source the source sub-component
+	 * @param value the type of content constraint
+	 * @param length the length, if needed, of the component (for 
+	 * example for adders or multipliers)
 	 * @return the string summarizing the operation
 	 */
-	std::string processConnectivityConstraints();
+	std::string addContentConstraint(std::string source, int value, int length);
+	
+	/**
+	 * Process the placement and connectivity constraints that the 
+	 * user has input using the corresponding functions.
+	 * Start by processing the placement constraints and then, when 
+	 * needed, process the connectivity constraints
+	 * @return the string summarizing the operation
+	 */
+	std::string processConstraints();
 	
 	/**
 	 * Create the virtual grid for the sub-components.
@@ -1401,69 +1418,69 @@ public:
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////BEWARE: don't add anything below without adding it to cloneOperator, too
 
-	map<string, Operator*> 			subComponents_;				 /**< The list of sub-components */
-	vector<Signal*>     				signalList_;     				 /**< The list of internal signals of the operator */
-	vector<Signal*>     				ioList_;         					 /**< The list of I/O signals of the operator */
+	map<string, Operator*> subComponents_;					/**< The list of sub-components */
+	vector<Signal*>     signalList_;      					/**< The list of internal signals of the operator */
+	vector<Signal*>     ioList_;          					/**< The list of I/O signals of the operator */
 
-	FlopocoStream       					vhdl;            					 /**< The internal stream to which the constructor will build the VHDL code */
-	int                 						numberOfTests;   				 /**< The number of tests, set by TestBench before this operator is tested */
+	FlopocoStream       vhdl;             					/**< The internal stream to which the constructor will build the VHDL code */
+	int                 numberOfTests;    					/**< The number of tests, set by TestBench before this operator is tested */
 	
 	
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////Variables used for resource estimations
-	std::ostringstream 					resourceEstimate;				/**< The log of resource estimations made by the user */
-	std::ostringstream 					resourceEstimateReport;		/**< The final report of resource estimations made by the user */
+	std::ostringstream 	resourceEstimate;					/**< The log of resource estimations made by the user */
+	std::ostringstream 	resourceEstimateReport;				/**< The final report of resource estimations made by the user */
 	
-	ResourceEstimationHelper* 			reHelper;						/**< Performs all the necessary operations for resource estimation */
+	ResourceEstimationHelper* reHelper;						/**< Performs all the necessary operations for resource estimation */
 	
-	bool 							reActive;						/**< Shows if any resource estimation operations have been performed */
+	bool reActive;											/**< Shows if any resource estimation operations have been performed */
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	
 	
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////Variables used for floorplanning
-	std::ostringstream 					floorplan;					/**< Stream containing the floorplanning operations */
+	std::ostringstream 			floorplan;					/**< Stream containing the floorplanning operations */
 	
-	FloorplanningHelper*				flpHelper;					/**< Tools for floorplanning */
+	FloorplanningHelper*		flpHelper;					/**< Tools for floorplanning */
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	
 
 protected:    
-	Target*             					target_;          					/**< The target on which the operator will be deployed */
-	string              						uniqueName_;      				/**< By default, a name derived from the operator class and the parameters */
-	string 							architectureName_;			/**< Name of the operator architecture */
-	vector<Signal*>    	 			testCaseSignals_; 				/**< The list of pointers to the signals in a test case entry. Its size also gives the dimension of a test case */
+	Target*             target_;          					/**< The target on which the operator will be deployed */
+	string              uniqueName_;      					/**< By default, a name derived from the operator class and the parameters */
+	string 				architectureName_;					/**< Name of the operator architecture */
+	vector<Signal*>     testCaseSignals_; 					/**< The list of pointers to the signals in a test case entry. Its size also gives the dimension of a test case */
 
-	map<string, string> 				portMap_;        			 	/**< Port map for an instance of this operator */
-	map<string, double> 				outDelayMap;      				/**< Slack delays on the outputs */
-	map<string, double> 				inputDelayMap;      			/**< Slack delays on the inputs */
-	string              						srcFileName;     				/**< Used to debug and report.  */
-	map<string, int>    				declareTable;     				/**< Table containing the name and declaration cycle of the signal */
-	int                 						myuid;              				/**<unique id>*/
-	int                 						cost;             					/**< the cost of the operator depending on different metrics */
-	vector<Operator*>   				oplist;
+	map<string, string> portMap_;         					/**< Port map for an instance of this operator */
+	map<string, double> outDelayMap;      					/**< Slack delays on the outputs */
+	map<string, double> inputDelayMap;      				/**< Slack delays on the inputs */
+	string              srcFileName;      					/**< Used to debug and report.  */
+	map<string, int>    declareTable;     					/**< Table containing the name and declaration cycle of the signal */
+	int                 myuid;              				/**<unique id>*/
+	int                 cost;             					/**< the cost of the operator depending on different metrics */
+	vector<Operator*>   oplist;
 
 private:
-	int                    					stdLibType_;                 			/**< 0 will use the Synopsys ieee.std_logic_unsigned, -1 uses std_logic_unsigned, 1 uses ieee numeric_std  (preferred) */
-	int                    					numberOfInputs_;             		/**< The number of inputs of the operator */
-	int                    					numberOfOutputs_;            		/**< The number of outputs of the operator */
-	bool                   					isSequential_;               			/**< True if the operator needs a clock signal*/
-	int                    					pipelineDepth_;              		/**< The pipeline depth of the operator. 0 for combinatorial circuits */
-	map<string, Signal*>   signalMap_;                  						/**< A container of tuples for recovering the signal based on it's name */ 
-	map<string, pair<string, string> > 	constants_;      				/**< The list of constants of the operator: name, <type, value> */
-	map<string, string>    				attributes_;                  			/**< The list of attribute declarations (name, type) */
-	map<string, string>   				types_;                      			/**< The list of type declarations (name, type) */
-	map<pair<string,string>, string >  	attributesValues_;				/**< attribute values <attribute name, object (component, signal, etc)> ,  value> */
-	bool                   					hasRegistersWithoutReset_;   	/**< True if the operator has registers without a reset */
-	bool                   					hasRegistersWithAsyncReset_; 	/**< True if the operator has registers having an asynch reset */
-	bool                  		 			hasRegistersWithSyncReset_;  	/**< True if the operator has registers having a synch reset */
-	string                 					commentedName_;              		/**< Usually is the default name of the architecture.  */
-	string                 					copyrightString_;            		/**< Authors and years.  */
-	int                    					currentCycle_;               			/**< The current cycle, when building a pipeline */
-	double                 					criticalPath_;               			/**< The current delay of the current pipeline stage */
-	bool                   					needRecirculationSignal_;    		/**< True if the operator has registers having a recirculation signal  */
-	int					           		hasDelay1Feedbacks_;			/**< True if this operator has feedbacks of one cyle, and no more than one cycle (i.e. an error if the distance is more). False gives warnings */
-	Operator*              					indirectOperator_;               		/**< NULL if this operator is just an interface operator to several possible implementations, otherwise points to the instance*/
+	int                    stdLibType_;                 	/**< 0 will use the Synopsys ieee.std_logic_unsigned, -1 uses std_logic_unsigned, 1 uses ieee numeric_std  (preferred) */
+	int                    numberOfInputs_;             	/**< The number of inputs of the operator */
+	int                    numberOfOutputs_;            	/**< The number of outputs of the operator */
+	bool                   isSequential_;               	/**< True if the operator needs a clock signal*/
+	int                    pipelineDepth_;              	/**< The pipeline depth of the operator. 0 for combinatorial circuits */
+	map<string, Signal*>   signalMap_;                  	/**< A container of tuples for recovering the signal based on it's name */ 
+	map<string, pair<string, string> > constants_;      	/**< The list of constants of the operator: name, <type, value> */
+	map<string, string>    attributes_;                  	/**< The list of attribute declarations (name, type) */
+	map<string, string>    types_;                      	/**< The list of type declarations (name, type) */
+	map<pair<string,string>, string >  attributesValues_;	/**< attribute values <attribute name, object (component, signal, etc)> ,  value> */
+	bool                   hasRegistersWithoutReset_;   	/**< True if the operator has registers without a reset */
+	bool                   hasRegistersWithAsyncReset_; 	/**< True if the operator has registers having an asynch reset */
+	bool                   hasRegistersWithSyncReset_;  	/**< True if the operator has registers having a synch reset */
+	string                 commentedName_;              	/**< Usually is the default name of the architecture.  */
+	string                 copyrightString_;            	/**< Authors and years.  */
+	int                    currentCycle_;               	/**< The current cycle, when building a pipeline */
+	double                 criticalPath_;               	/**< The current delay of the current pipeline stage */
+	bool                   needRecirculationSignal_;    	/**< True if the operator has registers having a recirculation signal  */
+	int					    hasDelay1Feedbacks_;		/**< True if this operator has feedbacks of one cyle, and no more than one cycle (i.e. an error if the distance is more). False gives warnings */
+	Operator*              indirectOperator_;              /**< NULL if this operator is just an interface operator to several possible implementations, otherwise points to the instance*/
 
 };
 

@@ -48,6 +48,10 @@ using namespace std;
 #define ASPECT						2
 #define CONTENT						3
 
+//Type of module content constraint
+#define ADDER	 					0
+#define MULTIPLIER					1
+
 
 
 namespace flopoco{
@@ -133,18 +137,35 @@ namespace flopoco{
 		std::string addConnectivityConstraint(std::string source, std::string sink, int nrWires);
 		
 		/**
-		 * Process the placement constraints that the user has input using 
-		 * the corresponding functions.
+		 * Add a new aspect constraint for @source module. The constraint 
+		 * should be read as: "@source's width is @ratio times larger than 
+		 * its width".
+		 * @param source the source sub-component
+		 * @param ratio the aspect ratio
 		 * @return the string summarizing the operation
 		 */
-		std::string processPlacementConstraints();
+		std::string addAspectConstraint(std::string source, double ratio);
 		
 		/**
-		 * Process the connectivity constraints that the user has input using 
-		 * the corresponding functions.
+		 * Add a new constraint for @source module, regarding the contents 
+		 * of the module. The constraint gives an indication on the possible 
+		 * size/shape constraints, depending what the module contains.
+		 * @param source the source sub-component
+		 * @param value the type of content constraint
+		 * @param length the length, if needed, of the component (for 
+		 * example for adders or multipliers)
 		 * @return the string summarizing the operation
 		 */
-		std::string processConnectivityConstraints();
+		std::string addContentConstraint(std::string source, int value, int length);
+		
+		/**
+		 * Process the placement and connectivity constraints that the 
+		 * user has input using the corresponding functions.
+		 * Start by processing the placement constraints and then, when 
+		 * needed, process the connectivity constraints
+		 * @return the string summarizing the operation
+		 */
+		std::string processConstraints();
 		
 		/**
 		 * Create the virtual grid for the sub-components.
@@ -205,7 +226,10 @@ namespace flopoco{
 		map<string, coordinateType> flComponentCordVirtual;		/**< The coordinates of the sub-components in the virtual grid */
 		map<string, coordinateType> flComponentCordReal;			/**< The coordinates of the sub-components in the real grid */
 		map<string, coordinateType> flComponentDimension;			/**< The dimensions of the sub-components in the real grid */
-		vector<constraintType> 	  flConstraintList;				/**< The list of placement constraints between components */
+		vector<constraintType> 	  flPlacementConstraintList;	/**< The list of placement constraints between components */
+		vector<constraintType> 	  flConnectivityConstraintList;	/**< The list of placement constraints between components */
+		vector<constraintType> 	  flAspectConstraintList;		/**< The list of placement constraints between components */
+		vector<constraintType> 	  flContentConstraintList;		/**< The list of placement constraints between components */
 		
 		int 						  virtualModuleId;				/**< The unique identifier of each virtual module created, assigned in the order of their appearance */
 		

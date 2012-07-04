@@ -118,7 +118,7 @@ namespace flopoco{
 		newConstraint.sink 		= sink;
 		newConstraint.value 	= type;
 		
-		flConstraintList.push_back(newConstraint);
+		flPlacementConstraintList.push_back(newConstraint);
 		
 		result << "Created new placement constraint" << endl;
 		result << tab << "Sink module " << sink
@@ -162,7 +162,7 @@ namespace flopoco{
 		newConstraint.sink 		= sink;
 		newConstraint.value 	= nrWires;
 		
-		flConstraintList.push_back(newConstraint);
+		flConnectivityConstraintList.push_back(newConstraint);
 		
 		result << "Created new connectivity constraint" << endl;
 		result << tab << "Source module " << source 
@@ -171,221 +171,303 @@ namespace flopoco{
 		return result.str();
 	}
 	
-	std::string FloorplanningHelper::processPlacementConstraints(){
+	std::string FloorplanningHelper::addAspectConstraint(std::string source, double ratio){
 		std::ostringstream result;
+		constraintType newConstraint;
+		map<string, Operator*> subComponents = parentOp->subComponents_;
+		
+		//no non-positive values allowed for the aspect ratio
+		if(ratio<=0){
+			cerr << "Error: invalid aspect ratio:" << ratio << endl;
+			exit(1);
+		}
+		
+		//check if the source is a valid sub-component name
+		if(subComponents.find(source)==subComponents.end()){
+			cerr << "Error: source sub-component " << source << " was not found" << endl;
+			exit(1);
+		}
+		
+		newConstraint.type 		= ASPECT;
+		newConstraint.source 	= source;
+		newConstraint.ratio 	= ratio;
+		
+		flAspectConstraintList.push_back(newConstraint);
+		
+		result << "Created new aspect constraint" << endl;
+		result << tab << "Source module " << source << " width to height ratio: " << ratio << endl;
+		
+		return result.str();
+	}
+	
+	std::string FloorplanningHelper::addContentConstraint(std::string source, int value, int length){
+		std::ostringstream result;
+		constraintType newConstraint;
+		map<string, Operator*> subComponents = parentOp->subComponents_;
+		
+		//no non-positive values allowed for the length
+		if(length<=0){
+			cerr << "Error: invalid aspect ratio:" << length << endl;
+			exit(1);
+		}
+		
+		//check if the source is a valid sub-component name
+		if(subComponents.find(source)==subComponents.end()){
+			cerr << "Error: source sub-component " << source << " was not found" << endl;
+			exit(1);
+		}
+		
+		newConstraint.type 			= CONTENT;
+		newConstraint.source 		= source;
+		newConstraint.value 		= value;
+		newConstraint.specialValue 	= length;
+		
+		flContentConstraintList.push_back(newConstraint);
+		
+		result << "Created new content constraint" << endl;
+		result << tab << "Source module " << source 
+											<< " contains " << (value==ADDER ? "an adder" : value==MULTIPLIER ? "a multiplier" : "") 
+											<< " of length " << length << endl;
+		
+		return result.str();
+	}
+	
+	std::string FloorplanningHelper::processConstraints(){
+		std::ostringstream result;
+		map<string, bool> processedModules;
+		
+		//initialize the list of processed modules to false for all
+		for(unsigned int i=0; i<flComponentList.size(); i++){
+			processedModules[flComponentList[i]] = false;
+		}
 		
 		//process each constraint, one by one, and update the virtual grid
-		for(unsigned int i=0; i<flConstraintList.size(); i++){
-			constraintType newConstraint = flConstraintList[i];
+		for(unsigned int i=0; i<flPlacementConstraintList.size(); i++){
+			constraintType newConstraint = flPlacementConstraintList[i];
+			constraintType sinkConnectivityConstraint;
 			coordinateType sourceCoordinate, sinkCoordinate, newCoordinate;
-			bool positionOccupied = false;
+			bool constrainedModule = false, moduleShiftNecessary = true;
+			int incrementX, incrementY;
+			int shiftX, shiftY;
+			vector<std::string> connectedConstrainedModules;
+			vector<constraintType> connectedModulesConstraints;
 			
-			result << "Processed placement constraint" << endl;
+			result << "Processing constraint" << endl;
+			
+			//only interested in placement constraints, for the main loop
+			if(newConstraint.type != PLACEMENT)
+				continue;
+			
+			result << "Found placement constraint" << endl;
+			
+			processedModules[newConstraint.source] 	= true;
+			processedModules[newConstraint.sink] 	= true;
 			
 			//get coordinates of source and sink modules
-			sourceCoordinate = flComponentCordVirtual[newConstraint.source];
-			sinkCoordinate = flComponentCordVirtual[newConstraint.sink];
-			if(newConstraint.type==PLACEMENT){
-				if(newConstraint.value==TO_LEFT_OF || newConstraint.value==TO_LEFT_OF_WITH_EXTRA){
-					//new coordinates of sink module
-					newCoordinate.x = sourceCoordinate.x - 1;
-					newCoordinate.y = sourceCoordinate.y;
-					
-					if(sinkCoordinate.x<sourceCoordinate.x && sinkCoordinate.y==sourceCoordinate.y)
-						continue;
-					
-					//as long as they are taken, go downwards of source
-					do{
-						unsigned int iterationsPerformed = 0;
+			sourceCoordinate 	= flComponentCordVirtual[newConstraint.source];
+			sinkCoordinate 		= flComponentCordVirtual[newConstraint.sink];
+			
+			//if the modules are already obeying the constraints, skip further processing
+			if(newConstraint.value==TO_LEFT_OF || newConstraint.value==TO_LEFT_OF_WITH_EXTRA){ //to the left
+				incrementX = -1;
+				incrementY = 0;
+			
+				if(sinkCoordinate.x<sourceCoordinate.x && sinkCoordinate.y==sourceCoordinate.y)
+					continue;
+			}else if(newConstraint.value==TO_RIGHT_OF || newConstraint.value==TO_RIGHT_OF_WITH_EXTRA){ // to the right
+				incrementX = 1;
+				incrementY = 0;
+				
+				if(sinkCoordinate.x>sourceCoordinate.x && sinkCoordinate.y==sourceCoordinate.y)
+					continue;
+			}else if(newConstraint.value==ABOVE || newConstraint.value==ABOVE_WITH_EXTRA){ // above
+				incrementX = 0;
+				incrementY = -1;
+				
+				if(sinkCoordinate.x==sourceCoordinate.x && sinkCoordinate.y<sourceCoordinate.y)
+					continue;
+			}else{ // under
+				incrementX = 0;
+				incrementY = 1;
+				
+				if(sinkCoordinate.x==sourceCoordinate.x && sinkCoordinate.y<sourceCoordinate.y)
+					continue;
+			}
+			
+			//determine the initial position, from the existing connectivity constraints
+			//	initial position depends on whether other modules must occupy the same position - 
+			//	their order is decided based how strong their connections
+			//	with the source module are
+			connectedConstrainedModules.push_back(newConstraint.source);
+			for(unsigned int j=0; j<flConnectivityConstraintList.size(); j++){
+				constraintType newConnectivityConstraint = flConnectivityConstraintList[j];
+				
+				if((newConnectivityConstraint.source == newConstraint.source) && (newConnectivityConstraint.sink == newConstraint.sink)){
+					constrainedModule = true;
+					sinkConnectivityConstraint = newConnectivityConstraint;
+				}
+				
+				//if there is another module that is connected to the source 
+				//	module and that has the same relative placement, add 
+				//	it to the list of modules so that they can be rearranged
+				if((newConnectivityConstraint.source == newConstraint.source) && (newConnectivityConstraint.sink != newConstraint.sink)){
+					for(unsigned int k=0; k<flPlacementConstraintList.size(); k++){
+						constraintType tempPlacementConstraint = flPlacementConstraintList[k];
 						
-						for(map<string, coordinateType>::iterator it = flComponentCordVirtual.begin(); it != flComponentCordVirtual.end(); it++){
-							coordinateType tempCoordinate = it->second;
-							
-							if((tempCoordinate.x==newCoordinate.x) && (tempCoordinate.y==newCoordinate.y)){
-								positionOccupied = true;
-								break;
-							}
-							iterationsPerformed++;
-						}
-						if(iterationsPerformed == flComponentCordVirtual.size()){
-							positionOccupied = false;
-						}
-						if(positionOccupied == true){
-							newCoordinate.x -= 1;
-						}
-					}while(positionOccupied == true);
-					
-					if(newConstraint.value==TO_LEFT_OF_WITH_EXTRA){
-						//look for the virtual module just before the sink module, if it exists
-						// if it does, then place it between the source and the sink
-						std::string prevModuleName = "";
-						
-						for(unsigned int i=0; i<flComponentList.size(); i++){
-							if(newConstraint.sink == flComponentList[i])
-								break;
-							else
-								prevModuleName = flComponentList[i];
-						}
-						if(prevModuleName.find("virtual_module_") != string::npos){
-							flComponentCordVirtual[prevModuleName] = newCoordinate;
-							newCoordinate.x -= 1;
-						}
-					}
-				}else if(newConstraint.value==TO_RIGHT_OF || newConstraint.value==TO_RIGHT_OF_WITH_EXTRA){
-					//new coordinates of sink module
-					newCoordinate.x = sourceCoordinate.x + 1;
-					newCoordinate.y = sourceCoordinate.y;
-					
-					if(sinkCoordinate.x>sourceCoordinate.x && sinkCoordinate.y==sourceCoordinate.y)
-						continue;
-					
-					//as long as they are taken, go downwards of source
-					do{
-						unsigned int iterationsPerformed = 0;
-						
-						for(map<string, coordinateType>::iterator it = flComponentCordVirtual.begin(); it != flComponentCordVirtual.end(); it++){
-							coordinateType tempCoordinate = it->second;
-							
-							if((tempCoordinate.x==newCoordinate.x) && (tempCoordinate.y==newCoordinate.y)){
-								positionOccupied = true;
-								break;
-							}
-							iterationsPerformed++;
-						}
-						if(iterationsPerformed == flComponentCordVirtual.size()){
-							positionOccupied = false;
-						}
-						if(positionOccupied == true){
-							newCoordinate.x += 1;
-						}
-					}while(positionOccupied == true);
-					
-					if(newConstraint.value==TO_RIGHT_OF_WITH_EXTRA){
-						//look for the virtual module just before the sink module, if it exists
-						// if it does, then place it between the source and the sink
-						std::string prevModuleName = "";
-						
-						for(unsigned int i=0; i<flComponentList.size(); i++){
-							if(newConstraint.sink == flComponentList[i])
-								break;
-							else
-								prevModuleName = flComponentList[i];
-						}
-						if(prevModuleName.find("virtual_module_") != string::npos){
-							flComponentCordVirtual[prevModuleName] = newCoordinate;
-							newCoordinate.x += 1;
-						}
-					}
-				}else if(newConstraint.value==ABOVE || newConstraint.value==ABOVE_WITH_EXTRA){
-					//new coordinates of sink module
-					newCoordinate.x = sourceCoordinate.x;
-					newCoordinate.y = sourceCoordinate.y - 1;
-					
-					if(sinkCoordinate.y<sourceCoordinate.y && sinkCoordinate.x==sourceCoordinate.x)
-						continue;
-					
-					//as long as they are taken, go downwards of source
-					do{
-						unsigned int iterationsPerformed = 0;
-						
-						for(map<string, coordinateType>::iterator it = flComponentCordVirtual.begin(); it != flComponentCordVirtual.end(); it++){
-							coordinateType tempCoordinate = it->second;
-							
-							if((tempCoordinate.x==newCoordinate.x) && (tempCoordinate.y==newCoordinate.y)){
-								positionOccupied = true;
-								break;
-							}
-							iterationsPerformed++;
-						}
-						if(iterationsPerformed == flComponentCordVirtual.size()){
-							positionOccupied = false;
-						}
-						if(positionOccupied == true){
-							newCoordinate.y -= 1;
-						}
-					}while(positionOccupied == true);
-					
-					if(newConstraint.value==ABOVE_WITH_EXTRA){
-						//look for the virtual module just before the sink module, if it exists
-						// if it does, then place it between the source and the sink
-						std::string prevModuleName = "";
-						
-						for(unsigned int i=0; i<flComponentList.size(); i++){
-							if(newConstraint.sink == flComponentList[i])
-								break;
-							else
-								prevModuleName = flComponentList[i];
-						}
-						if(prevModuleName.find("virtual_module_") != string::npos){
-							flComponentCordVirtual[prevModuleName] = newCoordinate;
-							newCoordinate.y -= 1;
-						}
-					}
-				}else if(newConstraint.value==UNDER || newConstraint.value==UNDER_WITH_EXTRA){
-					//new coordinates of sink module
-					newCoordinate.x = sourceCoordinate.x;
-					newCoordinate.y = sourceCoordinate.y + 1;
-					
-					if(sinkCoordinate.y>sourceCoordinate.y && sinkCoordinate.x==sourceCoordinate.x)
-						continue;
-					
-					//as long as they are taken, go downwards of source
-					do{
-						unsigned int iterationsPerformed = 0;
-						
-						for(map<string, coordinateType>::iterator it = flComponentCordVirtual.begin(); it != flComponentCordVirtual.end(); it++){
-							coordinateType tempCoordinate = it->second;
-							
-							if((tempCoordinate.x==newCoordinate.x) && (tempCoordinate.y==newCoordinate.y)){
-								positionOccupied = true;
-								break;
-							}
-							iterationsPerformed++;
-						}
-						if(iterationsPerformed == flComponentCordVirtual.size()){
-							positionOccupied = false;
-						}
-						if(positionOccupied == true){
-							newCoordinate.y += 1;
-						}
-					}while(positionOccupied == true);
-					
-					if(newConstraint.value==UNDER_WITH_EXTRA){
-						//look for the virtual module just before the sink module, if it exists
-						// if it does, then place it between the source and the sink
-						std::string prevModuleName = "";
-						
-						for(unsigned int i=0; i<flComponentList.size(); i++){
-							if(newConstraint.sink == flComponentList[i])
-								break;
-							else
-								prevModuleName = flComponentList[i];
-						}
-						if(prevModuleName.find("virtual_module_") != string::npos){
-							flComponentCordVirtual[prevModuleName] = newCoordinate;
-							newCoordinate.y += 1;
+						if((tempPlacementConstraint.source == newConnectivityConstraint.source) 
+								&& (tempPlacementConstraint.sink == newConnectivityConstraint.sink) 
+								&& (tempPlacementConstraint.type == newConstraint.type)
+								&& (processedModules[tempPlacementConstraint.sink] == true)){
+							connectedConstrainedModules.push_back(newConnectivityConstraint.sink);
+							connectedModulesConstraints.push_back(tempPlacementConstraint);
 						}
 					}
 				}
-				
-				//change the coordinates of the sink module
-				flComponentCordVirtual[newConstraint.sink] = newCoordinate;
-				
-				result << tab << "Updated coordinates of module " << newConstraint.sink << endl;
-				result << tab << tab << " from x=" << sinkCoordinate.x << " and y=" << sinkCoordinate.y << endl;
-				result << tab << tab 
-						<< ((newConstraint.value==TO_LEFT_OF  || newConstraint.value==TO_LEFT_OF_WITH_EXTRA)  ? " moving under module " :
-						   (newConstraint.value==TO_RIGHT_OF || newConstraint.value==TO_RIGHT_OF_WITH_EXTRA) ? " moving under module " : 
-						   (newConstraint.value==ABOVE 		 || newConstraint.value==ABOVE_WITH_EXTRA) 		 ? " moving under module " : 
-						   (newConstraint.value==UNDER 		 || newConstraint.value==UNDER_WITH_EXTRA) 		 ? " moving under module " : "")
-						<< newConstraint.source << endl;
-				result << tab << tab << " to x=" << newCoordinate.x << " and y=" << newCoordinate.y << endl;
 			}
+			//find the position for the newly placed module, given the 
+			//	list of the other modules depending on the source module
+			
+			//add to the list of connected modules those that don't have 
+			//	connectivity constraints
+			for(unsigned int j=0; j<flPlacementConstraintList.size(); j++){
+				constraintType tempPlacementConstraint = flPlacementConstraintList[j];
+				bool elementPresent = false;
+				
+				if((tempPlacementConstraint.source == newConstraint.source) 
+						&& (tempPlacementConstraint.type == newConstraint.type)
+						&& (processedModules[tempPlacementConstraint.sink] == true)){
+							
+					for(unsigned int k=0; k<connectedConstrainedModules.size(); k++)
+						if(connectedConstrainedModules[k] == tempPlacementConstraint.sink){
+							elementPresent = true;
+							break;
+						}
+					if(!elementPresent){
+						connectedConstrainedModules.push_back(tempPlacementConstraint.sink);
+					}
+				}
+			}
+			
+			//initialize the new coordinates
+			
+			//check if the sink module has connectivity constraints
+			if(constrainedModule){// there is a connectivity constraint on the sink module
+				if(connectedModulesConstraints.size() == 0){  // no connectivity constraints on the other modules
+					//place the new module first after the source
+					newCoordinate.x = sourceCoordinate.x + incrementX;
+					newCoordinate.y = sourceCoordinate.y + incrementY;
+					
+					shiftX = incrementX;
+					shiftY = incrementY;
+				}else{ // there are connectivity constraints
+					//place the module based on the order of the constraints
+					constraintType tempConstraint;
+					
+					//search for the first module that has lower connectivity constraints than the sink module
+					tempConstraint.sink = "none";
+					tempConstraint.value = -1;
+					for(unsigned int j=0; j<connectedModulesConstraints.size(); j++){
+						if(connectedModulesConstraints[j].value > tempConstraint.value 
+								&& connectedModulesConstraints[j].value < sinkConnectivityConstraint.value){
+							tempConstraint = connectedModulesConstraints[j];
+						}
+					}
+					
+					if(tempConstraint.sink == "none"){// this is the lowest priority module
+						// look for the lowest connectivity constraint and add the new module after it
+						tempConstraint = connectedModulesConstraints[0];
+						
+						for(unsigned int j=1; j<connectedModulesConstraints.size(); j++){
+							if(connectedModulesConstraints[j].value > tempConstraint.value){
+								tempConstraint = connectedModulesConstraints[j];
+							}
+						}
+						
+						moduleShiftNecessary = false;
+					}
+					
+					newCoordinate.x = flComponentCordVirtual[tempConstraint.sink].x + incrementX;
+					newCoordinate.y = flComponentCordVirtual[tempConstraint.sink].y + incrementY;
+					
+					shiftX = incrementX;
+					shiftY = incrementY;
+				}
+			}else{//no connectivity constraints on the sink module
+				//get the last element added and insert this new element after it
+				coordinateType tempCoordinate = flComponentCordVirtual[connectedConstrainedModules.back()];
+				
+				newCoordinate.x = tempCoordinate.x + incrementX;
+				newCoordinate.y = tempCoordinate.y + incrementY;
+				
+				moduleShiftNecessary = false;
+			}
+			
+			//if the glue logic must also be moved
+			if(newConstraint.value==TO_LEFT_OF_WITH_EXTRA || newConstraint.value==TO_RIGHT_OF_WITH_EXTRA 
+				|| newConstraint.value==ABOVE_WITH_EXTRA || newConstraint.value==UNDER_WITH_EXTRA){
+				//look for a virtual module just before the sink module, if it exists
+				// if it does, then place it between the source and the sink
+				std::string prevModuleName = "";
+				
+				for(unsigned int j=0; j<flComponentList.size(); j++){
+					if(newConstraint.sink == flComponentList[j])
+						break;
+					else
+						prevModuleName = flComponentList[j];
+				}
+				if(prevModuleName.find("virtual_module_") != string::npos){
+					flComponentCordVirtual[prevModuleName] = newCoordinate;
+					newCoordinate.x += incrementX;
+					newCoordinate.y += incrementY;
+					
+					shiftX += incrementX;
+					shiftY += incrementY;
+				}
+			}
+						
+			//change the coordinates of the sink module
+			flComponentCordVirtual[newConstraint.sink] = newCoordinate;
+			
+			//if needed, shift the already placed modules
+			if(moduleShiftNecessary){
+				for(unsigned int j=0; j<flComponentList.size(); j++){
+					coordinateType tempCoordinate;
+					
+					if(processedModules[flComponentList[i]] && flComponentList[j]!=newConstraint.sink){
+						tempCoordinate = flComponentCordVirtual[flComponentList[j]];
+						
+						if(newConstraint.value==TO_LEFT_OF || newConstraint.value==TO_LEFT_OF_WITH_EXTRA){ //to the left
+							if(tempCoordinate.x>=newCoordinate.x && tempCoordinate.y==newCoordinate.y)
+								tempCoordinate.x += shiftX;
+						}else if(newConstraint.value==TO_RIGHT_OF || newConstraint.value==TO_RIGHT_OF_WITH_EXTRA){ // to the right
+							if(tempCoordinate.x<=newCoordinate.x && tempCoordinate.y==newCoordinate.y)
+								tempCoordinate.x += shiftX;
+						}else if(newConstraint.value==ABOVE || newConstraint.value==ABOVE_WITH_EXTRA){ // above
+							if(tempCoordinate.y<=newCoordinate.y && tempCoordinate.x==newCoordinate.x)
+								tempCoordinate.y += shiftY;
+						}else{ // under
+							if(tempCoordinate.y>=newCoordinate.y && tempCoordinate.x==newCoordinate.x)
+								tempCoordinate.y += shiftY;
+						}
+					}
+				}
+			}
+			
+			//report changes on the virtual grid
+			result << tab << "Updated coordinates of module " << newConstraint.sink << endl;
+			result << tab << tab << " from x=" << sinkCoordinate.x << " and y=" << sinkCoordinate.y << endl;
+			result << tab << tab 
+					<< ((newConstraint.value==TO_LEFT_OF  || newConstraint.value==TO_LEFT_OF_WITH_EXTRA) ? " moving to the left of module " :
+					   (newConstraint.value==TO_RIGHT_OF || newConstraint.value==TO_RIGHT_OF_WITH_EXTRA) ? " moving to the right of module " : 
+					   (newConstraint.value==ABOVE 		 || newConstraint.value==ABOVE_WITH_EXTRA) 		 ? " moving above module " 
+																										 : " moving under module ")
+					<< newConstraint.source << endl;
+			result << tab << tab << " to x=" << newCoordinate.x << " and y=" << newCoordinate.y << endl;
 		}
 		
 		//re-normalize the virtual grid
 		//the constraints might have created wholes in the grid, 
-		//	leading to inefficiency and unused space
+		//	leading to unused space, both on horizontal and vertical
 		
 		//scan the components' y coordinates; if there are negative 
 		//	coordinates, shift all coordinates downwards, so as to
@@ -467,16 +549,6 @@ namespace flopoco{
 		}
 		
 		return result.str();
-	}
-	
-	std::string FloorplanningHelper::processConnectivityConstraints(){
-		//
-		 // currently, as the user decides where each module goes, without
-		 // the automation of the process, the relevance of the number of
-		 // links between two modules is questionable.
-		 // futrher modifications to follow.
-		 //
-		 return "";
 	}
 	
 	std::string FloorplanningHelper::createVirtualGrid(){
@@ -1118,10 +1190,8 @@ namespace flopoco{
 		cerr << "Starting the creation of the floorplan for operator " << parentOp->getName() << endl;
 		cerr << "***Triggered creation of the virtual arrangement of the sub-components" << endl;
 		result << createVirtualGrid();
-		cerr << "***Triggered processing of placement constraints" << endl;
-		result << processPlacementConstraints();
-		cerr << "***Triggered processing of connectivity constraints" << endl;
-		result << processConnectivityConstraints();
+		cerr << "***Triggered processing of placement and connectivity constraints" << endl;
+		result << processConstraints();
 		cerr << "***Triggered creation of the actual arrangement of the sub-components" << endl;
 		result << createPlacementGrid();
 		cerr << "***Triggered creation of the constraints file" << endl;

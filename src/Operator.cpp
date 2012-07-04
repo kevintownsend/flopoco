@@ -53,7 +53,7 @@ namespace flopoco{
 		
 		vhdl.disableParsing(!target_->isPipelined());	
 
-		// Resource estimation and floorplanning
+		//------- Resource estimation and floorplanning ----------------
 		resourceEstimate << "Starting Resource estimation report for entity: " << uniqueName_ << " --------------- " << endl;
 		resourceEstimateReport << "";
 		
@@ -62,11 +62,13 @@ namespace flopoco{
 		
 		reActive = false;
 		
+		//--------------------------------------------------------------
 		floorplan << "";
 		
 		flpHelper = new FloorplanningHelper(target_, this);
-		flpHelper->initFloorplanning(0.75); // ratio, see Tools/FloorplanningHelper
-
+		flpHelper->initFloorplanning(0.75); 							// ratio (to what degree will the sub-components' bounding boxes 
+																		// be filled), see Tools/FloorplanningHelper
+		//--------------------------------------------------------------
 	}
 	
 
@@ -1662,19 +1664,19 @@ namespace flopoco{
 		return flpHelper->addConnectivityConstraint(source, sink, nrWires);
 	}
 	
-	std::string Operator::processPlacementConstraints(){
-				
-		return flpHelper->processPlacementConstraints();
+	std::string Operator::addAspectConstraint(std::string source, double ratio){
+		
+		return flpHelper->addAspectConstraint(source, ratio);
 	}
 	
-	std::string Operator::processConnectivityConstraints(){
-		 //
-		 // currently, as the user decides where each module goes, without
-		 // the automation of the process, the relevance of the number of
-		 // links between two modules is questionable.
-		 // futrher modifications to follow.
-		 //
-		 return flpHelper->processConnectivityConstraints();
+	std::string Operator::addContentConstraint(std::string source, int value, int length){
+		
+		return flpHelper->addContentConstraint(source, value, length);
+	}
+	
+	std::string Operator::processConstraints(){
+				
+		return flpHelper->processConstraints();
 	}
 	
 	std::string Operator::createVirtualGrid(){
