@@ -27,10 +27,9 @@ BasicCompressor::BasicCompressor(Target * target, vector<int> h)
 	int w=0;
 	int param=0;
 	
-	vector<int> height(h.size(), 0);
 	
-	for(unsigned i=0; i<h.size();i++)
-		height[h.size()-i-1]=h[i];
+	for(unsigned i=h.size()-1; i>=0;i--)
+		height.push_back(h[i]);
 	
 	name << "Compressor_";
 	
@@ -103,8 +102,18 @@ BasicCompressor::BasicCompressor(Target * target, vector<int> h)
 	
 	void BasicCompressor::emulate(TestCase * tc)
 	{
-		mpz_class sx = tc->getInputValue("X");
-		tc->addExpectedOutput("R", popcnt(sx));
+		mpz_class r=0;
+	
+		for(unsigned i=0;i<height.size();i++)
+			{
+				mpz_class sx = tc->getInputValue(join("X",i));
+				mpz_class p= popcnt(sx);
+				r += p<<i;
+			}	
+
+
+
+		tc->addExpectedOutput("R", r);
 	}
 	
 	

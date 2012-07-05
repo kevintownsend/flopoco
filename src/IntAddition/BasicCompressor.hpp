@@ -7,8 +7,7 @@ using namespace flopoco;
 
 class BasicCompressor:public Operator {
 	public:
-	static string operatorInfo;
-	int w;
+	vector<int> height;
 
 
 	public:
