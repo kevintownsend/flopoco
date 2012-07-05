@@ -1,21 +1,40 @@
 #include "Operator.hpp"
-
+#include <iostream>
+#include <sstream>
+#include <string>
+#include "gmp.h"
+#include "mpfr.h"
+#include <vector>
+#include <gmpxx.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include "utils.hpp"
 
-using namespace flopoco;
+namespace flopoco
+{
+
+	/** The BasicCompressor class generates basic patterns for bit compressions
+	 */
 
 
-class BasicCompressor:public Operator {
+	class BasicCompressor:public Operator
+	{
 	public:
-	vector<int> height;
-
-
-	public:
-	BasicCompressor(Target * target, vector<int> h);
-
-	~BasicCompressor() {
+		vector<int> height; /** inverted input vector h **/
+		int wOut; /** size of the output vector **/
+		int param; /** computes the range of the output vector **/
+		
+		
+		/** constructor **/	
+		BasicCompressor(Target * target, vector<int> h);
+	
+	
+		/** destrctor**/
+		~BasicCompressor();
+	
+	
+		/** test case generator  **/
+		void emulate(TestCase * tc);
 	};
-
-	void emulate(TestCase * tc);
-};
+}
  

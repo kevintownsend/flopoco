@@ -11,7 +11,7 @@
 
 
 using namespace std;
-
+namespace flopoco{
 
 // personalized parameter
 //string BasicCompressor::operatorInfo = "UserDefinedInfo list parameter;
@@ -44,7 +44,7 @@ BasicCompressor::BasicCompressor(Target * target, vector<int> h)
 	
 	name << "_" << wOut;
 	setName(name.str());
-	setCopyrightString("Bogdan Popa, Kinga Illyes, 2012");
+	setCopyrightString("Bogdan Popa, Illyes Kinga, 2012");
 	
 	
 	
@@ -97,8 +97,13 @@ BasicCompressor::BasicCompressor(Target * target, vector<int> h)
 		 vhdl << tab << tab << "\"" << std::string (wOut, '-') << "\" when others;\n" << endl;
 		 
 		 
-	};
+	}
 	
+	
+	
+	
+	BasicCompressor::~BasicCompressor(){
+	}
 	
 	void BasicCompressor::emulate(TestCase * tc)
 	{
@@ -116,5 +121,8 @@ BasicCompressor::BasicCompressor(Target * target, vector<int> h)
 		tc->addExpectedOutput("R", r);
 	}
 	
+}
 	
+
+
 	
