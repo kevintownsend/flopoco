@@ -26,9 +26,9 @@ BasicCompressor::BasicCompressor(Target * target, vector<int> h)
 	
 	int w=0;
 	int param=0;
+
 	
-	
-	for(unsigned i=h.size()-1; i>=0;i--)
+	for(int i=h.size()-1; i>=0;i--)
 		height.push_back(h[i]);
 	
 	name << "Compressor_";
@@ -44,7 +44,7 @@ BasicCompressor::BasicCompressor(Target * target, vector<int> h)
 	
 	name << "_" << wOut;
 	setName(name.str());
-	setCopyrightString("Bogdan Popa & Kinga Illyes 2012");
+	setCopyrightString("Bogdan Popa, Kinga Illyes, 2012");
 	
 	
 	
@@ -71,7 +71,7 @@ BasicCompressor::BasicCompressor(Target * target, vector<int> h)
 	
 	vhdl << tab << declare("X", w) << " <=" << xs.str();
 	
-	vhdl << "with X select R <= \n";
+	vhdl << tab << "with X select R <= \n";
 	
 	for (mpz_class i = 0; i < (1 << w); i++) 
 	{
@@ -86,7 +86,7 @@ BasicCompressor::BasicCompressor(Target * target, vector<int> h)
 			ii=ii>>h[j];
 		}
 		
-		vhdl << tab << "\"" << unsignedBinary(ppcnt,wOut) << "\" when \""
+		vhdl << tab << tab << "\"" << unsignedBinary(ppcnt,wOut) << "\" when \""
 		<< unsignedBinary(i,w) << "\", \n";
 		
 		
@@ -94,7 +94,7 @@ BasicCompressor::BasicCompressor(Target * target, vector<int> h)
 		 
 		 
 		 
-		 vhdl << tab << "\"" << std::string (wOut, '-') << "\" when others;\n" << endl;
+		 vhdl << tab << tab << "\"" << std::string (wOut, '-') << "\" when others;\n" << endl;
 		 
 		 
 	};
