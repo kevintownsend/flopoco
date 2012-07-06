@@ -29,8 +29,12 @@ namespace flopoco
 		BasicCompressor(Target * target, vector<int> h);
 	
 	
-		/** destrctor**/
+		/** destructor**/
 		~BasicCompressor();
+
+		int getColumn(int column);
+
+
 	
 	
 		/** test case generator  **/

@@ -27,6 +27,10 @@ BasicCompressor::BasicCompressor(Target * target, vector<int> h)
 	int w=0;
 	int param=0;
 
+	for (unsigned i=0; i<h.size(); i++)
+		if(h[i]==0)
+			h.erase(h.begin()+i);
+
 	
 	for(int i=h.size()-1; i>=0;i--)
 		height.push_back(h[i]);
@@ -90,11 +94,13 @@ BasicCompressor::BasicCompressor(Target * target, vector<int> h)
 		<< unsignedBinary(i,w) << "\", \n";
 		
 		
-		 }
+		}
 		 
 		 
 		 
-		 vhdl << tab << tab << "\"" << std::string (wOut, '-') << "\" when others;\n" << endl;
+		vhdl << tab << tab << "\"" << std::string (wOut, '-') << "\" when others;\n" << endl;
+
+		REPORT(DEBUG, "Generated " << name.str());
 		 
 		 
 	}
@@ -103,6 +109,11 @@ BasicCompressor::BasicCompressor(Target * target, vector<int> h)
 	
 	
 	BasicCompressor::~BasicCompressor(){
+	}
+
+	int BasicCompressor::getColumn(int column)
+	{
+		return height[column];
 	}
 	
 	void BasicCompressor::emulate(TestCase * tc)

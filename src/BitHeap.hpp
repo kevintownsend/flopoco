@@ -79,7 +79,7 @@ namespace flopoco{
 
 			/** returns true if this bit is still to compress, false if this bit was already compressed */
 			bool todo(){
-				return processed;
+				return (!processed);
 			};
 		
 			/** ordering by availability time */
@@ -127,6 +127,14 @@ namespace flopoco{
 		unsigned currentHeight(unsigned w);
 
 		int getUid(unsigned w);
+
+		/** counts the bits not processed yet in wb */
+		int count(list<WeightedBit*> wb);
+
+		/** marks the compressed bits as done*/
+		void reduce(int c, int red);
+
+
  
 	private:
 		Operator* op;
