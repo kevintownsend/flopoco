@@ -176,6 +176,8 @@ namespace flopoco{
 		/**
 		 * Transform the virtual placement grid into the actual placement on 
 		 * the device, ready to generate the actual constraints file.
+		 * Aspect and content constraints are also processed (when existent) in 
+		 * order to have the right size/shape for the modules.
 		 * @return the string summarizing the operation
 		 */
 		std::string createPlacementGrid();

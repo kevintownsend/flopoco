@@ -236,10 +236,16 @@ namespace flopoco{
 		std::ostringstream result;
 		map<string, bool> processedModules;
 		
+		result << "Processing placement and connectivity constraints" << endl;
+		
 		//initialize the list of processed modules to false for all
-		for(unsigned int i=0; i<flComponentList.size(); i++){
-			processedModules[flComponentList[i]] = false;
+		if(flPlacementConstraintList.size()>0){
+			for(unsigned int i=0; i<flComponentList.size(); i++){
+				processedModules[flComponentList[i]] = false;
+			}
 		}
+		
+		result << tab << "Initialized list of processed modules" << endl;
 		
 		//process each constraint, one by one, and update the virtual grid
 		for(unsigned int i=0; i<flPlacementConstraintList.size(); i++){
@@ -252,13 +258,13 @@ namespace flopoco{
 			vector<std::string> connectedConstrainedModules;
 			vector<constraintType> connectedModulesConstraints;
 			
-			result << "Processing constraint" << endl;
+			result << tab << "Processing constraint" << endl;
 			
 			//only interested in placement constraints, for the main loop
 			if(newConstraint.type != PLACEMENT)
 				continue;
 			
-			result << "Found placement constraint" << endl;
+			result << tab << tab << "Found placement constraint between " << newConstraint.source << " and " << newConstraint.sink << endl;
 			
 			processedModules[newConstraint.source] 	= true;
 			processedModules[newConstraint.sink] 	= true;
@@ -271,6 +277,8 @@ namespace flopoco{
 			if(newConstraint.value==TO_LEFT_OF || newConstraint.value==TO_LEFT_OF_WITH_EXTRA){ //to the left
 				incrementX = -1;
 				incrementY = 0;
+				
+				result << tab << tab << " Modules already obeying constraint - nothing left to do" << endl; 
 			
 				if(sinkCoordinate.x<sourceCoordinate.x && sinkCoordinate.y==sourceCoordinate.y)
 					continue;
@@ -278,17 +286,23 @@ namespace flopoco{
 				incrementX = 1;
 				incrementY = 0;
 				
+				result << tab << tab << " Modules already obeying constraint - nothing left to do" << endl;
+				
 				if(sinkCoordinate.x>sourceCoordinate.x && sinkCoordinate.y==sourceCoordinate.y)
 					continue;
 			}else if(newConstraint.value==ABOVE || newConstraint.value==ABOVE_WITH_EXTRA){ // above
 				incrementX = 0;
 				incrementY = -1;
 				
+				result << tab << tab << " Modules already obeying constraint - nothing left to do" << endl;
+				
 				if(sinkCoordinate.x==sourceCoordinate.x && sinkCoordinate.y<sourceCoordinate.y)
 					continue;
 			}else{ // under
 				incrementX = 0;
 				incrementY = 1;
+				
+				result << tab << tab << " Modules already obeying constraint - nothing left to do" << endl;
 				
 				if(sinkCoordinate.x==sourceCoordinate.x && sinkCoordinate.y<sourceCoordinate.y)
 					continue;
@@ -298,6 +312,13 @@ namespace flopoco{
 			//	initial position depends on whether other modules must occupy the same position - 
 			//	their order is decided based how strong their connections
 			//	with the source module are
+			
+			//find the other modules that have the same relative placement and
+			// find their connectivity constraints
+			
+			result << tab << tab << "Searching for other modules connected to the source module " 
+				<< newConstraint.source << " and that have connectivity constraints" << endl;
+			
 			connectedConstrainedModules.push_back(newConstraint.source);
 			for(unsigned int j=0; j<flConnectivityConstraintList.size(); j++){
 				constraintType newConnectivityConstraint = flConnectivityConstraintList[j];
@@ -329,6 +350,9 @@ namespace flopoco{
 			
 			//add to the list of connected modules those that don't have 
 			//	connectivity constraints
+			
+			result << tab << tab << "Completing the list of connected modules with the modules that do not have connectivity constraints" << endl;
+			
 			for(unsigned int j=0; j<flPlacementConstraintList.size(); j++){
 				constraintType tempPlacementConstraint = flPlacementConstraintList[j];
 				bool elementPresent = false;
@@ -350,6 +374,8 @@ namespace flopoco{
 			
 			//initialize the new coordinates
 			
+			result << tab << tab << "Initializing the new coordinates of the sink module " << newConstraint.sink << endl;
+			
 			//check if the sink module has connectivity constraints
 			if(constrainedModule){// there is a connectivity constraint on the sink module
 				if(connectedModulesConstraints.size() == 0){  // no connectivity constraints on the other modules
@@ -359,6 +385,9 @@ namespace flopoco{
 					
 					shiftX = incrementX;
 					shiftY = incrementY;
+					
+					result << tab << tab << tab << "No other module has connectivity constraints" 
+						<< " - sink module placed immediately after source" << endl;
 				}else{ // there are connectivity constraints
 					//place the module based on the order of the constraints
 					constraintType tempConstraint;
@@ -391,6 +420,9 @@ namespace flopoco{
 					
 					shiftX = incrementX;
 					shiftY = incrementY;
+					
+					result << tab << tab << tab << "There are other modules that have connectivity constraints"
+						<< " - sink module placed according to connectivities" << endl;
 				}
 			}else{//no connectivity constraints on the sink module
 				//get the last element added and insert this new element after it
@@ -400,6 +432,9 @@ namespace flopoco{
 				newCoordinate.y = tempCoordinate.y + incrementY;
 				
 				moduleShiftNecessary = false;
+				
+				result << tab << tab << tab << "There are no connectivity constraints" 
+					<< " - sink module placed as the currently placed module" << endl;
 			}
 			
 			//if the glue logic must also be moved
@@ -408,6 +443,8 @@ namespace flopoco{
 				//look for a virtual module just before the sink module, if it exists
 				// if it does, then place it between the source and the sink
 				std::string prevModuleName = "";
+				
+				result << tab << tab << "Also moving the glue logic with the sink module " << newConstraint.sink << endl;
 				
 				for(unsigned int j=0; j<flComponentList.size(); j++){
 					if(newConstraint.sink == flComponentList[j])
@@ -422,14 +459,22 @@ namespace flopoco{
 					
 					shiftX += incrementX;
 					shiftY += incrementY;
+					
+					result << tab << tab << tab << "Found virtual module before sink - moving it with the sink module" << endl;
 				}
 			}
 						
 			//change the coordinates of the sink module
 			flComponentCordVirtual[newConstraint.sink] = newCoordinate;
 			
+			result << tab << tab << "Placed new module at the desired location" << endl;
+			
 			//if needed, shift the already placed modules
 			if(moduleShiftNecessary){
+				
+				result << tab << tab << tab << "Shift of the other modules connected to source module " 
+					<< newConstraint.source << " necessary and being performed" << endl;
+				
 				for(unsigned int j=0; j<flComponentList.size(); j++){
 					coordinateType tempCoordinate;
 					
@@ -454,47 +499,69 @@ namespace flopoco{
 			}
 			
 			//report changes on the virtual grid
-			result << tab << "Updated coordinates of module " << newConstraint.sink << endl;
-			result << tab << tab << " from x=" << sinkCoordinate.x << " and y=" << sinkCoordinate.y << endl;
-			result << tab << tab 
+			result << tab << tab << "Updated coordinates of module " << newConstraint.sink << endl;
+			result << tab << tab << tab << " from x=" << sinkCoordinate.x << " and y=" << sinkCoordinate.y << endl;
+			result << tab << tab << tab
 					<< ((newConstraint.value==TO_LEFT_OF  || newConstraint.value==TO_LEFT_OF_WITH_EXTRA) ? " moving to the left of module " :
 					   (newConstraint.value==TO_RIGHT_OF || newConstraint.value==TO_RIGHT_OF_WITH_EXTRA) ? " moving to the right of module " : 
 					   (newConstraint.value==ABOVE 		 || newConstraint.value==ABOVE_WITH_EXTRA) 		 ? " moving above module " 
 																										 : " moving under module ")
 					<< newConstraint.source << endl;
-			result << tab << tab << " to x=" << newCoordinate.x << " and y=" << newCoordinate.y << endl;
+			result << tab << tab << tab << " to x=" << newCoordinate.x << " and y=" << newCoordinate.y << endl;
 		}
 		
 		//re-normalize the virtual grid
 		//the constraints might have created wholes in the grid, 
-		//	leading to unused space, both on horizontal and vertical
+		//	leading to unused space, both on the horizontal and the vertical
+		
+		result << tab << "Renormalizing virtual grid to eliminate possible gaps" << endl;
 		
 		//scan the components' y coordinates; if there are negative 
 		//	coordinates, shift all coordinates downwards, so as to
 		//	have all coordinates non-negative
-		int minLine = 0;
+		bool hasEmptyLines = false;
+		int minLine = 0, maxLine = 0;
+		int minColumn = 0;
 		
+		//compute the maximum line - indicates the modules for which 
+		//	not to search for gaps
+		//compute the minimum line - shows how much the other lines 
+		//	must be moved downwards
 		for(map<string, coordinateType>::iterator it = flComponentCordVirtual.begin(); it != flComponentCordVirtual.end(); it++){
-			if((it->second).y < minLine)
-				minLine = (it->second).y;
+			coordinateType tempCoordinate = it->second;
+			
+			if(tempCoordinate.y < minLine)
+				minLine = tempCoordinate.y;
+			if(tempCoordinate.y>maxLine)
+				maxLine = tempCoordinate.y;
+				
+			if(tempCoordinate.x < minColumn)
+				minColumn = tempCoordinate.x;
 		}
+		
+		//if there are negative lines, increase all the lines so that all 
+		//	the lines are positive
 		if(minLine < 0){
 			for(map<string, coordinateType>::iterator it = flComponentCordVirtual.begin(); it != flComponentCordVirtual.end(); it++){
 				(it->second).y += abs(minLine);
 			}
+			maxLine += abs(minLine);
+			
+			result << tab << tab << "Renormalized virtual grid lines" << endl;
+		}
+		
+		//if there are negative columns, increase all the columns so that all 
+		//	the columns are positive
+		if(minColumn < 0){
+			for(map<string, coordinateType>::iterator it = flComponentCordVirtual.begin(); it != flComponentCordVirtual.end(); it++){
+				(it->second).x += abs(minColumn);
+			}
+			
+			result << tab << tab << "Renormalized virtual grid columns" << endl;
 		}
 		
 		//scan the components' y coordinates; if there are empty lines,
 		//	move the rest of the lines up
-		bool hasEmptyLines = false;
-		int maxLine = 0;
-		
-		//compute the lowest line
-		for(map<string, coordinateType>::iterator it = flComponentCordVirtual.begin(); it != flComponentCordVirtual.end(); it++){
-			coordinateType tempCoordinate = it->second;
-			if(tempCoordinate.y>maxLine)
-				maxLine = tempCoordinate.y;
-		}
 		
 		//as long as the closest line to the current is more than a line 
 		//	away, move the line upwards so as to fill the gaps
@@ -508,7 +575,7 @@ namespace flopoco{
 				if(tempCoordinate.y == maxLine)
 					continue;
 				
-				closestCoordinate.y +=flComponentCordVirtual.size();
+				closestCoordinate.y += flComponentCordVirtual.size();
 				
 				for(map<string, coordinateType>::iterator it2 = flComponentCordVirtual.begin(); it2 != flComponentCordVirtual.end(); it2++){
 					coordinateType tempCoordinate2 = it2->second;
@@ -528,25 +595,12 @@ namespace flopoco{
 					if((it->second).y >= minGapLine)
 						flComponentCordVirtual[(it->first)].y -= (minGapSize-1);
 				}
+				
+				result << tab << tab << "Removed empty line - gap of " << minGapSize << " at line " << minGapLine << endl;
 			}else{
 				hasEmptyLines = false;
 			}
 		}while(hasEmptyLines == true);
-		
-		//scan the components' x coordinates; if there are negative 
-		//	coordinates, shift all coordinates to the right, so as to
-		//	have all coordinates non-negative
-		int minColumn = 0;
-		
-		for(map<string, coordinateType>::iterator it = flComponentCordVirtual.begin(); it != flComponentCordVirtual.end(); it++){
-			if((it->second).x < minColumn)
-				minColumn = (it->second).x;
-		}
-		if(minColumn < 0){
-			for(map<string, coordinateType>::iterator it = flComponentCordVirtual.begin(); it != flComponentCordVirtual.end(); it++){
-				(it->second).x += abs(minColumn);
-			}
-		}
 		
 		return result.str();
 	}
@@ -554,7 +608,7 @@ namespace flopoco{
 	std::string FloorplanningHelper::createVirtualGrid(){
 		std::ostringstream result;
 		
-		result << "Created virtual grid of sub-components" << endl;
+		result << "Creating virtual grid of sub-components" << endl;
 		
 		//create the virtual component grid, and place the modules one
 		//	under the other, in the order that they are instantiated
@@ -591,16 +645,14 @@ namespace flopoco{
 		
 		result << "Created real grid of components" << endl;
 		
-		//different processing techniques and efforst for modules that
+		//different processing techniques and effort for modules that
 		//	contain and that don't contain DSP and RAM blocks
-		if(parentOp->reHelper->estimatedCountMultiplier!=0 || parentOp->reHelper->estimatedCountMultiplier!=0 
-				|| parentOp->reHelper->estimatedCountMemory!=0){
+		if(parentOp->reHelper->estimatedCountDSP!=0 
+				|| parentOp->reHelper->estimatedCountRAM!=0 || parentOp->reHelper->estimatedCountROM!=0){ // for modules with DSPs/RAMs
 			int nrLines = 0, nrColumns = 0;
 			int maxDSPperLine = 0, maxDSPperColumn = 0, maxRAMperLine = 0, maxRAMperColumn = 0;
+			vector<int> nrDSPperLine, nrDSPperColumn, nrRAMperLine, nrRAMperColumn;
 			vector< vector<string> > subcomponentMatrixLines, subcomponentMatrixColumns;
-			//FEATURE NOT YET WORKING
-			//bool invertAxes = false, breakLines = false;
-			//int virtualDSPperColumn, virtualDSPperRow, virtualRAMperColumn, virtualRAMperRow;
 			int maxComponentHeight = 0;
 			
 			result << tab << "Creating the grid of real coordintes with DSP or/and RAM requirements" << endl;
@@ -608,160 +660,194 @@ namespace flopoco{
 			//determine the maximum number of DSPs in one line of the floorplan
 			//	if the nb. is larger the number of lines in the chip, throw warning to the user,
 			//	then check to see the maximum number of DSPs in one column
-			//-> if viable, invert axes and continue with the floorplan
-			//		if not, break the lines longer than the capacity
+			//-> if viable, break the lines longer than the capacity and warn 
+			//	user of the performed operations
 			
-			result << tab << "Created a (almost) 2D version of the virtual component grid, organized by lines" << endl;
+			//construct (almost) 2D versions of the virtual grid, organized by lines and by columns
 			
-			//construct a (almost) 2D version of the virtual grid, organized by lines
+			//determine the number of lines - there are no gaps, so the lines will be numbered from 0 to nrLines
 			for(map<string, coordinateType>::iterator it = flComponentCordVirtual.begin(); it != flComponentCordVirtual.end(); it++){
-				if((it->second).y > nrLines)
-					nrLines = (it->second).y;
-			}
-			for(int i=0; i<=nrLines; i++){
-				vector<string> tempLevelList;
-				int nrDSP = 0, nrRAM = 0;
+				coordinateType tempCoordinate = it->second;
 				
-				for(map<string, coordinateType>::iterator it = flComponentCordVirtual.begin(); it != flComponentCordVirtual.end(); it++){
-					if((it->second).y == i){
-						tempLevelList.push_back(it->first);
-						
-						Operator* tempOperator = subComponents[it->first];
-						nrDSP += (tempOperator->reHelper->estimatedCountMultiplier > 0) 	? 1 : 0;
-						nrRAM += (tempOperator->reHelper->estimatedCountMemory > 0) 		? 1 : 0;
-					}
+				if(tempCoordinate.y > nrLines)
+					nrLines = tempCoordinate.y;
+				if(tempCoordinate.x > nrColumns)
+					nrColumns = tempCoordinate.x;
+			}
+			
+			//create the 2D virtual grid - by lines
+			
+			//initialize the two grids
+			subcomponentMatrixLines.resize(nrLines);
+			subcomponentMatrixColumns.resize(nrColumns);
+			nrDSPperLine.resize(nrLines, 0);
+			nrDSPperColumn.resize(nrLines, 0);
+			nrRAMperLine.resize(nrLines, 0);
+			nrRAMperColumn.resize(nrColumns, 0);
+			
+			//populate the lines and comlumns grid with the elements from the 
+			// list of elements
+			for(unsigned int i=0; i<flComponentList.size(); i++){
+				Operator* tempOperator;
+				coordinateType tempCoordinate = flComponentCordVirtual[flComponentList[i]];
+				
+				if(subComponents.find(flComponentList[i]) == subComponents.end())
+					tempOperator = flVirtualComponentList[flComponentList[i]];
+				else
+					tempOperator = subComponents[flComponentList[i]];
+				
+				subcomponentMatrixLines[tempCoordinate.y].push_back(flComponentList[i]);
+				subcomponentMatrixColumns[tempCoordinate.x].push_back(flComponentList[i]);
+				
+				nrDSPperLine[tempCoordinate.y] += (tempOperator->reHelper->estimatedCountDSP > 0) ? 1 : 0;
+				nrRAMperLine[tempCoordinate.y] += (tempOperator->reHelper->estimatedCountRAM > 0) ? 1 : 0;
+				nrRAMperLine[tempCoordinate.y] += (tempOperator->reHelper->estimatedCountROM > 0) ? 1 : 0;
+				
+				nrDSPperColumn[tempCoordinate.x] += tempOperator->reHelper->estimatedCountDSP;
+				nrRAMperColumn[tempCoordinate.x] += tempOperator->reHelper->estimatedCountRAM;
+				nrRAMperColumn[tempCoordinate.x] += tempOperator->reHelper->estimatedCountROM;
+			}
+			
+			result << tab << "Created the (almost) 2D versions of the virtual component grid, organized by lines and by columns" << endl;
+			
+			//go through the lines and the columns and check if the required 
+			//	number of DSPs/RAMs is larger than those available on-chip
+			
+			result << tab << "Testing if the DSP/RAM requirements can be satisfied by the current floorplan" << endl;
+			
+			for(int i=0; i<nrLines; i++){
+				if((nrDSPperLine[i] > target->multiplierPosition.size()) || (nrRAMperLine[i] > target->memoryPosition.size())){
+					result << "Error: the current floorplan will not fit on the design;" 
+								<< " try changing the design orientation or having less elements in a line" << endl;
+					result << "Floorplan creation abandoned" << endl;
+					
+					cerr << "Error: the current floorplan will not fit on the design; try changing the design orientation" << endl;
+					cerr << tab << "Flushing the debug information to the debug file \'flopoco.floorplan.debug\' and exiting" << endl;
+					//flush debugging messages to the debug file
+					ofstream file;
+					file.open("flopoco.floorplan.debug");
+					file << result.str();
+					file.close();
+					exit(1);
 				}
-				subcomponentMatrixLines.push_back(tempLevelList);
-				
-				if(nrDSP > maxDSPperLine)
-					maxDSPperLine = nrDSP;
-				if(nrRAM > maxRAMperLine)
-					maxRAMperLine = nrRAM;
 			}
-			
-			result << tab << "Created a (almost) 2D version of the virtual component grid, organized by columns" << endl;
-			
-			//construct a (almost) 2D version of the virtual grid, organized by columns
-			for(map<string, coordinateType>::iterator it = flComponentCordVirtual.begin(); it != flComponentCordVirtual.end(); it++){
-				if((it->second).y > nrLines)
-					nrColumns = (it->second).x;
-			}
-			for(int i=0; i<=nrColumns; i++){
-				vector<string> tempLevelList;
-				int nrDSP = 0, nrRAM = 0;
-				
-				for(map<string, coordinateType>::iterator it = flComponentCordVirtual.begin(); it != flComponentCordVirtual.end(); it++){
-					if((it->second).x == i){
-						tempLevelList.push_back(it->first);
-						
-						Operator* tempOperator = subComponents[it->first];
-						nrDSP += tempOperator->reHelper->estimatedCountMultiplier;
-						nrRAM += tempOperator->reHelper->estimatedCountMemory;
-					}
+			for(int i=0; i<nrColumns; i++){
+				if((nrDSPperColumn[i] > target->dspPerColumn) || (nrRAMperLine[i] > target->ramPerColumn)){
+					result << "Error: the current floorplan will not fit on the design;" 
+								<< " try changing the design orientation or having less elements in a column" << endl;
+					result << "Floorplan creation abandoned" << endl;
+					
+					cerr << "Error: the current floorplan will not fit on the design; try changing the design orientation" << endl;
+					cerr << tab << "Flushing the debug information to the debug file \'flopoco.floorplan.debug\' and exiting" << endl;
+					//flush debugging messages to the debug file
+					ofstream file;
+					file.open("flopoco.floorplan.debug");
+					file << result.str();
+					file.close();
+					exit(1);
 				}
-				subcomponentMatrixColumns.push_back(tempLevelList);
-				
-				if(nrDSP > maxDSPperColumn)
-					maxDSPperColumn = nrDSP;
-				if(nrRAM > maxRAMperColumn)
-					maxRAMperColumn = nrRAM;
 			}
-			
-			result << tab << "Testing if columns and lines should/shouldn't be inverted" << endl;
-			
-			//FEATURE UNDER TEST - NOT YET USED
-			//determine if the axes should be inverted and if the lines
-			//	should be broken in two
-			//if(maxDSPperLine > (target->multiplierPosition).size()){
-				//if(maxDSPperColumn < (target->multiplierPosition).size())
-					//invertAxes = true;
-				//else
-					//breakLines = true;
-			//}
-			//if(maxRAMperLine > (target->memoryPosition).size()){
-				//if(maxRAMperColumn < (target->memoryPosition).size())
-					//invertAxes = true;
-				//else
-					//breakLines = true;
-			//}
-			
-			//if(invertAxes == true){
-				//for(map<string, coordinateType>::iterator it = flComponentCordVirtual.begin(); it != flComponentCordVirtual.end(); it++){
-					//int temp = (it->second).x;
-					//(it->second).x = (it->second).y;
-					//(it->second).y = temp;
-				//}
-				
-				//vector< vector<string> > tempMatrix;
-				//tempMatrix = subcomponentMatrixColumns;
-				//subcomponentMatrixColumns = subcomponentMatrixLines;
-				//subcomponentMatrixLines = tempMatrix;
-				
-				//virtualDSPperColumn = (target_->multiplierPosition).size();
-				//virtualDSPperRow = target_->dspPerColumn;
-				
-				//virtualRAMperColumn = (target_->memoryPosition).size();
-				//virtualRAMperRow = target_->ramPerColumn;
-				
-				//int temp = maxDSPperColumn;
-				//maxDSPperColumn = maxDSPperLine;
-				//maxDSPperLine = temp;
-				//temp = maxRAMperColumn;
-				//maxRAMperColumn = maxRAMperLine;
-				//maxRAMperLine = temp;
-			//}else{
-				//virtualDSPperColumn = target_->dspPerColumn;
-				//virtualDSPperRow = (target_->multiplierPosition).size();
-				
-				//virtualRAMperColumn = target_->ramPerColumn;
-				//virtualRAMperRow = (target_->memoryPosition).size();
-			//}
-			//if(breakLines == true){
-				////should break the lines, but this may lead to considerable
-				////	differences from the original floorplan
-				////  so an Error is signaled to the user to reconsider the strategy
-				//cerr << "Warning: the current floorplanning strategy, on the target FPGA, cannot be performed." 
-						//<< " Please reconsider. No floorplan has been generated." << endl;
-			//}
-			//
 			
 			//determine the maximum height of a bounding box for a 
 			//	sub-component based on the largets chain of DSPs or RAMs 
 			//	in any of the sub-components
-			for(map<string, Operator*>::iterator it = subComponents.begin(); it != subComponents.end(); it++){
-				Operator* tempOperator = it->second;
-				int multiplierHeightRatio, ramHeightRatio;
+			for(unsigned int i=0; i<flComponentList.size(); i++){
+				Operator* tempOperator;
+				std::string componentName = flComponentList[i];
+				int multiplierHeightRatio, ramHeightRatio, lutHeightRatio, ffHeightRatio;
+				double ratio = 1.0;
 				
-				multiplierHeightRatio = tempOperator->reHelper->estimatedCountMultiplier/target->dspHeightInLUT;
-				ramHeightRatio 		  = tempOperator->reHelper->estimatedCountMemory/target->ramHeightInLUT;
+				if(subComponents.find(componentName) == subComponents.end())
+					tempOperator = flVirtualComponentList[componentName];
+				else
+					tempOperator = subComponents[componentName];
+					
+				for(unsigned int j=0; j<flAspectConstraintList.size(); j++){
+					constraintType tempConstraint = flAspectConstraintList[j];
+					
+					if(tempConstraint.source == flComponentList[i])
+							ratio = tempConstraint.ratio;
+				}
+				
+				for(unsigned int j=0; j<flContentConstraintList.size(); j++){
+					constraintType tempConstraint = flContentConstraintList[j];
+					
+					if(tempConstraint.source == flComponentList[i])
+							ratio = 1.0/tempConstraint.specialValue;
+				}
+				
+				lutHeightRatio 			= ceil(sqrt(tempOperator->reHelper->estimatedCountLUT / ratio));
+				ffHeightRatio			= ceil(sqrt(tempOperator->reHelper->estimatedCountFF / 2.0 / ratio));
+				multiplierHeightRatio	= tempOperator->reHelper->estimatedCountMultiplier / target->dspHeightInLUT;
+				ramHeightRatio 			= tempOperator->reHelper->estimatedCountMemory / target->ramHeightInLUT;
+				if(lutHeightRatio > maxComponentHeight)
+					maxComponentHeight = lutHeightRatio;
+				if(ffHeightRatio > maxComponentHeight)
+					maxComponentHeight = ffHeightRatio;
 				if(multiplierHeightRatio > maxComponentHeight)
 					maxComponentHeight = multiplierHeightRatio;
 				if(ramHeightRatio > maxComponentHeight)
 					maxComponentHeight = ramHeightRatio;
 			}
 			
-			result << tab << "Ordering the elements of the lines in the order that they appear in the virtual grid" << endl;
+			result << tab << "Computed the maximum height of the components" << endl;
 			
-			//TODO: version not working properly; take ordering from logic-only version
-			
-			//order the lines of the 2D virtual placement matrix, in
-			//	increasing order of their x coordinate
+			//order the lines of the 2D virtual placement matrix, in the
+			//	increasing order of their x coordinates
+			//sort using quicksort----------------------------------------------
 			for(unsigned int i=0; i<subcomponentMatrixLines.size(); i++){
-				vector<string> tempList = subcomponentMatrixLines[i];
+				vector< vector<string> > stack;
+				vector<string> sortedLine;
 				
-				for(unsigned int j=0; j<tempList.size(); j++)
-					for(unsigned int k=0; k<tempList.size(); k++){
-						if((flComponentCordVirtual[tempList[j]]).x > (flComponentCordVirtual[tempList[k]]).x){
-							string tempString = tempList[j];
-							tempList[j] = tempList[k];
-							tempList[k] = tempString;
+				stack.push_back(subcomponentMatrixLines[i]);
+				while(stack.size()>0){
+					vector<string> tempArray;
+					
+					tempArray = stack.back();
+					stack.pop_back();
+					while(tempArray.size()==1){
+						sortedLine.insert(sortedLine.begin(), tempArray[0]);
+						
+						if(stack.size()>0){
+							tempArray = stack.back();
+							stack.pop_back();
+						}else
+							break;
+					}
+					
+					if(tempArray.size() == 1)
+						continue;
+					
+					srand(time(NULL));
+					int pivotIndex = rand() % tempArray.size();
+					string pivot = tempArray[pivotIndex];
+					vector<string> lesser, greater;
+					
+					for(unsigned int j=0; j<tempArray.size(); j++){
+						if(j == pivotIndex)
+							continue;
+						if(flComponentCordVirtual[tempArray[j]].x < flComponentCordVirtual[pivot].x){
+							lesser.insert(lesser.begin(), tempArray[j]);
+						}
+						else{
+							greater.insert(greater.begin(), tempArray[j]);
 						}
 					}
 					
-				subcomponentMatrixLines[i] = tempList;
+					if(lesser.size() > 0)
+						stack.push_back(lesser);
+					
+					stack.push_back(std::vector<string>(1, pivot));
+					
+					if(greater.size() > 0)
+						stack.push_back(greater);
+				}
+				
+				subcomponentMatrixLines[i] = sortedLine;
 			}
+			//sort using quicksort----------------------------------------------
 			
-			result << tab << "Creating the grid of real coordintes" << endl;
+			result << tab << "Ordered the elements of the lines in the order that they appear in the virtual grid" << endl;
 			
 			//go through the 2D virtual placement list and generate the
 			//	real coordinate list
@@ -771,6 +857,7 @@ namespace flopoco{
 			
 			//create an initial placement, then move the components around
 			//	so as to satisfy their resource requirements
+			//take into account ASPECT and CONTENT constraints
 			for(unsigned int i=0; i<subcomponentMatrixLines.size(); i++){
 				vector<string> matrixLine = subcomponentMatrixLines[i];
 				
