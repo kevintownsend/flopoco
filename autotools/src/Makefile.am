@@ -4,8 +4,8 @@ SUBDIRS =
 ACLOCAL_AMFLAGS = -I ../m4
 
 BUILT_SOURCES = VHDLLexer.cpp \
-                FPExpressions/ExpressionParser.cpp \
-                FPExpressions/ExpressionScanner.cpp
+                ExpressionParser.cpp \
+                ExpressionScanner.cpp
 CLEANFILES = $(BUILT_SOURCES) lex.yy.c *.output
 
 noinst_LTLIBRARIES = libflopoco.la
@@ -112,6 +112,8 @@ libflopoco_la_SOURCES = \
                         FlopocoStream.cpp \
                         VHDLLexer.cpp \
                         Targets/DSP.cpp \
+                        Tools/ResourceEstimationHelper.cpp \
+                        Tools/FloorplanningHelper.cpp \
                         Target.cpp \
                         Targets/Virtex4.cpp \
                         Targets/Spartan3.cpp \
@@ -124,8 +126,8 @@ libflopoco_la_SOURCES = \
                         DualTable.cpp \
                         DualTable2.cpp \
                         FPExpressions/ExpressionParserData.cpp \
-                        FPExpressions/ExpressionParser.cpp \
-                        FPExpressions/ExpressionScanner.cpp \
+                        ExpressionParser.cpp \
+                        ExpressionScanner.cpp \
                         FPPipeline.cpp \
                         Wrapper.cpp \
                         TestBench.cpp \
@@ -147,6 +149,10 @@ libflopoco_la_SOURCES = \
                         IntMultiAdder.cpp \
                         IntAddition/IntNAdder.cpp \
                         IntAddition/IntCompressorTree.cpp \
+                        IntAddition/PopCount.cpp \
+                        IntAddition/NewCompressorTree.cpp \
+                        IntAddition/BasicCompressor.cpp \
+                        BitHeap.cpp \
                         IntComparator.cpp \
                         IntDualSub.cpp \
                         IntMultiplier.cpp \
@@ -157,6 +163,9 @@ libflopoco_la_SOURCES = \
                         IntMultipliers/IntTruncMultiplier.cpp \
                         IntMultipliers/IntKaratsuba.cpp \
                         IntSquarer.cpp \
+                        IntMultipliers/FormalBinaryProduct.cpp \
+                        IntMultipliers/GenericBinaryPolynomial.cpp \
+                        IntMultipliers/IntPower.cpp \
                         LZOC.cpp \
                         LZOCShifterSticky.cpp \
                         Shifters.cpp \
@@ -181,9 +190,13 @@ libflopoco_la_SOURCES = \
                         FixedPointFunctions/HOTBM/Minimax.cc\
                         FixedPointFunctions/HOTBM/PowerROM.cc\
                         FixedPointFunctions/HOTBM/TermPowMult.cc \
+                        FixSinCos.cpp \
+                        CORDIC/FixedPointSinOrCos.cpp \
+                        CORDIC/CordicSinCos.cpp \
                         FPAdderDualPath.cpp \
                         FPAdderSinglePath.cpp \
                         FPAdder3Input.cpp \
+                        FPAddSub.cpp \
                         FPMultiplier.cpp \
                         FPMultiplierKaratsuba.cpp \
                         FPSquarer.cpp \
@@ -236,22 +249,22 @@ libflopoco_la_SOURCES = \
                         UtilSollya.cc \
                         FP2Fix.cpp \
 			FXP_Shift.cpp \
-                        FixSinCos.cpp \
-                        FPAddSub.cpp
+                        random/random_main.cpp \
+                        random/urng/LutSrRng.cpp
 
-libflopoco_la_CPPFLAGS = -I./FPExpressions
+libflopoco_la_CPPFLAGS = -I$(top_srcdir)/src/FPExpressions
 
-VHDLLexer.cpp:VHDLLexerRule.l
-	${LEX} -o VHDLLexer.cpp VHDLLexerRule.l
+VHDLLexer.cpp:$(top_srcdir)/src/VHDLLexerRule.l
+	${LEX} -o VHDLLexer.cpp $(top_srcdir)/src/VHDLLexerRule.l
 
 VHDLLexer.hpp:VHDLLexer.cpp
 
-FPExpressions/ExpressionParser.cpp: FPExpressions/ExpressionParser.y FPExpressions/ExpressionScanner.cpp
-	${YACC} -y -d --defines=FPExpressions/ExpressionParser.h --output=FPExpressions/ExpressionParser.cpp --name-prefix=FlopocoExpression FPExpressions/ExpressionParser.y
+ExpressionParser.cpp: $(top_srcdir)/src/FPExpressions/ExpressionParser.y ExpressionScanner.cpp
+	${YACC} -y -d --defines=ExpressionParser.h --output=ExpressionParser.cpp --name-prefix=FlopocoExpression $(top_srcdir)/src/FPExpressions/ExpressionParser.y
 
-FPExpressions/ExpressionScanner.cpp:FPExpressions/ExpressionScanner.l
-	${LEX} --prefix=FlopocoExpression --header-file=FPExpressions/FlopocoScanner.h -o FPExpressions/ExpressionScanner.cpp  FPExpressions/ExpressionScanner.l
+ExpressionScanner.cpp:$(top_srcdir)/src/FPExpressions/ExpressionScanner.l
+	${LEX} --prefix=FlopocoExpression --header-file=FlopocoScanner.h -o ExpressionScanner.cpp  $(top_srcdir)/src/FPExpressions/ExpressionScanner.l
 
-FPExpressions/FlopocoScanner.h:FPExpressions/ExpressionScanner.cpp FPExpressions/ExpressionParser.cpp
+FlopocoScanner.h:ExpressionScanner.cpp ExpressionParser.cpp
 
-FPExpressions/ExpressionParser.h:FPExpressions/ExpressionParser.cpp
+ExpressionParser.h:ExpressionParser.cpp
