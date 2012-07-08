@@ -130,10 +130,12 @@ namespace flopoco{
 		/** generate the VHDL for the bit heap. This will involve adding more bits for intermediate results.*/
 		void generateCompressorVHDL();
 
-		void compress();
+        /** generate the final adder for the bit heap (when the columns height is maximum 2*/
+        void adderVHDL();
 
-		void getMaxWeight();
-		string getResultVHDLName();
+
+        /**is making the compression for the bitheap**/
+		void compress();
 		
 		/** return the current height a column (bits not yet compressed) */
 		unsigned currentHeight(unsigned w);
@@ -141,16 +143,17 @@ namespace flopoco{
 		int getUid(unsigned w);
 
 		/** counts the bits not processed yet in wb */
-		int count(list<WeightedBit*> wb);
+		int count(list<WeightedBit*> wb, int cycle);
 
 		/** marks the compressed bits as done*/
 		void reduce(int c, int red);
 
-
         /** returns the maximum height list from the bitheap vector*/
-		int maxHeight();
+		int getMaxHeight();
 
- 
+		void getMaxWeight();
+
+ 		string getResultVHDLName();
 	private:
 		Operator* op;
 		vector<int> uid;   /**< unique id, per weight */
