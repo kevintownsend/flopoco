@@ -112,7 +112,15 @@ namespace flopoco{
 
 
 
-	void  BitHeap::addBit(unsigned w, string rhs, string comment){
+	void  BitHeap::addBit(unsigned w, string rhs, string comment)
+	{
+		list<WeightedBit*> t;
+			
+		if(bits.size()==w)
+		{
+			bits.push_back(t);
+		}
+
 		WeightedBit* bit= new WeightedBit(this, w) ;
 		list<WeightedBit*>& l=bits[w];
 
@@ -131,8 +139,32 @@ namespace flopoco{
 		op->vhdl << tab << op->declare(bit->getName()) << " <= " << rhs << ";";
 		if(comment.size())
 			op->vhdl <<  " -- " << comment;
-		op->vhdl <<  endl;			
+		op->vhdl <<  endl;		
+
+		REPORT(DEBUG, "added bit on column" << w);	
 	};
+
+
+
+	void BitHeap::removeBit(unsigned weight, int dir){
+		
+		list<WeightedBit*>& l=bits[weight];
+    
+
+    //dir if dir=0 the bit will be removed from the begining of the list, else from the end of the list of weighted bits
+		if(dir==0)
+			l.pop_front();
+		else if(dir==1)
+			l.pop_back();
+
+		
+
+
+		REPORT(DEBUG,"remove bit from the column" << weight);
+
+
+	}
+
 
 
 
@@ -178,7 +210,7 @@ namespace flopoco{
 
 	void BitHeap::reduce(int c, int red)
 	{
-		list<WeightedBit*>::iterator iter = bits[c].begin(), end=bits[c].end();
+		/*list<WeightedBit*>::iterator iter = bits[c].begin(), end=bits[c].end();
 		
 		for (list<WeightedBit*>::iterator iter = bits[c].begin(), end = bits[c].end(); iter != end; ++iter)
 		{
@@ -190,13 +222,54 @@ namespace flopoco{
     					red--;
     				}
     			}
-		}
+		}*/
+
+       while(red>0)
+       {
+       	removeBit(c,0);
+       	red--;
+       }
+
 	}
 
 
+	int BitHeap::maxHeight()
+ 	{
+		int max=0; 
+			for(int i=0; i<bits.size();i++)
+			{
+              if(bits[i].size()>max)
+              	max=bits[i].size();
+			}
+     return max;
+
+	}
 	// There are two distinct notions: compression stages, and compression cycles. Several stages can fit in one cycle.
 
 	void BitHeap::generateCompressorVHDL()
+	{
+
+		REPORT(DEBUG, "in generateCompressorVHDL");
+
+		if (maxHeight()<=2)
+		{
+			//new adder
+			//IntAdder adder = new IntAdder(target*, (maxWeight-minWeight+1), 0, false);
+			REPORT(DEBUG, "new adder here");
+			REPORT(DEBUG, bits.size());
+		}  
+		else
+		{
+			REPORT(DEBUG, "");
+			REPORT(DEBUG, "going to compress");
+			compress();
+		}
+
+
+	}
+
+
+	void BitHeap::compress()
 	{
 		Target* target=op->getTarget();
 
@@ -261,9 +334,9 @@ namespace flopoco{
 		//FIXME Two poorly done concatenations here, must be checked after the compression is fully done
 		if(w!=0)
 		{
-			op->vhdl << tab << op->declare(join("tempR", chunkDoneIndex), w, true) << " <= " ;
+			//op->vhdl << tab << op->declare(join("tempR", chunkDoneIndex), w, true) << " <= " ;
 			for(int i=w-1; i>=0; i--) {
-				REPORT(DEBUG, "Current height " << currentHeight(i)<<" of " << i);
+				//REPORT(DEBUG, "Current height " << currentHeight(i)<<" of " << i);
 				if(currentHeight(i)==1) 
 				{
 					op->vhdl << (bits[i].front())->getName()   << " & ";
@@ -282,7 +355,7 @@ namespace flopoco{
 		
 		minWeight=w;
 
-		
+		REPORT(DEBUG, "minWeight="<< minWeight);
 		//Build a vector of basic compressors that are fit for this target
 		//Size 10 should cover all possible compressors at this time
 		vector<BasicCompressor *> possibleCompressors (0, (BasicCompressor*) 0);
@@ -290,7 +363,7 @@ namespace flopoco{
 		//Not very elegant, but should work
 		int maxCompressibleBits, col0, col1;
 		maxCompressibleBits = target->lutInputs();
-		REPORT(DEBUG, maxCompressibleBits);
+		//REPORT(DEBUG, maxCompressibleBits);
 		
 		//Generate all "workable" compressors for 2 columns, on this target, descending on fitness function
 		for(col0=maxCompressibleBits; col0>=3; col0--)
@@ -306,7 +379,7 @@ namespace flopoco{
 
 		
 		
-		
+		REPORT(DEBUG,"start compressing");
 		//Remaining structure must be compressed
 		unsigned j;
 
@@ -320,20 +393,25 @@ namespace flopoco{
 
 			//REPORT(DEBUG, "count bits " << count(bits[i]));
 
-			while(count(bits[i]) > possibleCompressors[j]->getColumn(0))
+			while(count(bits[i]) >= possibleCompressors[j]->getColumn(0))
 			{
 				//REPORT(DEBUG, "In while loop 1");
 				
 				compressors.push_back(possibleCompressors[j]) ;
 				REPORT(DEBUG,"Using Compressor " << j <<", reduce column "<<i);
+				//REPORT(DEBUG,"bits["<<i<<"] size before reduce: "<<bits[i].size());
 				reduce(i, possibleCompressors[j]->getColumn(0));
+				addBit(i, "rhs", "comm");
+				addBit(i+1, "rhs", "comm");
+				addBit(i+2, "rhs", "comm");
+				//REPORT(DEBUG,"bits["<<i<<"] size after reduce: "<<bits[i].size());
 
 				
 			}
 
 			++j;
 
-			int remainingBits=count(bits[i]);
+			//int remainingBits=count(bits[i]);
             
 			while((j<possibleCompressors.size())&&(count(bits[i])>2))
 			{
@@ -343,16 +421,27 @@ namespace flopoco{
 				//REPORT(DEBUG, "compressing with " << j << ", column0 = " << possibleCompressors[j]->getColumn(0) << 
 				//	", column1 = " << possibleCompressors[j]->getColumn(1));
 
+				//REPORT(DEBUG, "equality " << count(bits[i]) << possibleCompressors[j]->getColumn(0));
+
 				if(count(bits[i])==possibleCompressors[j]->getColumn(0))
 				{
 					if(possibleCompressors[j]->getColumn(1)!=0)
 					{
+						//REPORT(DEBUG, "equality " << count(bits[i]) << possibleCompressors[j]->getColumn(0));
+
 						if((count(bits[i+1])>=possibleCompressors[j]->getColumn(1))&&(i<bits.size()-1))
 						{
 							REPORT(DEBUG,"Using Compressor " << j <<", reduce columns "<<i<<" and "<<i+1);
 							compressors.push_back(possibleCompressors[j]);
+							//REPORT(DEBUG,"bits["<<i<<"] size before reduce: "<<bits[i].size());
 							reduce(i,possibleCompressors[j]->getColumn(0));
+							//REPORT(DEBUG,"bits["<<i<<"] size after reduce: "<<bits[i].size());
+							//REPORT(DEBUG,"bits["<<i+1<<"] size before reduce: "<<bits[i+1].size());
 							reduce(i+1,possibleCompressors[j]->getColumn(1));
+							//REPORT(DEBUG,"bits["<<i+1<<"] size after reduce: "<<bits[i+1].size());
+							addBit(i, "rhs", "comm");
+							addBit(i+1, "rhs", "comm");
+							addBit(i+2, "rhs", "comm");
 						}
 						else 
 							++j;
@@ -361,7 +450,13 @@ namespace flopoco{
 					{
 						REPORT(DEBUG,"Using Compressor " << j <<", reduce column "<<i);
 						compressors.push_back(possibleCompressors[j]);
+
+						//REPORT(DEBUG,"bits["<<i<<"] size before reduce: "<<bits[i].size());
 						reduce(i,possibleCompressors[j]->getColumn(0));
+						addBit(i, "rhs", "comm");
+						addBit(i+1, "rhs", "comm");
+						addBit(i+2, "rhs", "comm");
+						//REPORT(DEBUG,"bits["<<i<<"] size after reduce: "<<bits[i].size());
 						++j;
 					}
 
@@ -370,17 +465,13 @@ namespace flopoco{
 					++j;
 			}
 
-			
-			
-
-
-
-
-
 
 
 			//while(bits[i].)
-		}  
+		}
+
+		
+
 		// end while(moreToCompress)
 		
 		/*
@@ -507,12 +598,16 @@ namespace flopoco{
 			
 			
 	*/
-		op->vhdl << tab << "-- concatenate all the compressed chunks" << endl;
+		/*op->vhdl << tab << "-- concatenate all the compressed chunks" << endl;
 		op->vhdl << tab << op->declare("CompressionResult", maxWeight) << " <= " ;
 		for(int i=chunkDoneIndex-1; i>=0; i--)
 			op->vhdl << join("tempR", i) << " & ";
 		op->vhdl << " \"\" ;" << endl;
 		op->vhdl << tab << "-- End of code generated by BitHeap::generateCompressorVHDL" << endl;
+		*/
+
+		generateCompressorVHDL();
+
 	};
 
 

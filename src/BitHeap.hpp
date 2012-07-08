@@ -114,11 +114,23 @@ namespace flopoco{
 		 @param comment  a VHDL comment for this bit*/
 		void addBit(unsigned weight, string rhs, string comment="");
 
+
+
+
+        /** remove a bit from the bitheap.
+         @param weight  the weight of the bit to be removed
+         @param dir if dir==0 the bit will be removed from the begining of the list 
+         			if dir==1 the bit will be removed from the end of the list
+        */
+        void removeBit(unsigned weight, int dir);
+
 		/** get the parent operator */
 		Operator* getOp() {return op;};
 
 		/** generate the VHDL for the bit heap. This will involve adding more bits for intermediate results.*/
 		void generateCompressorVHDL();
+
+		void compress();
 
 		void getMaxWeight();
 		string getResultVHDLName();
@@ -134,6 +146,9 @@ namespace flopoco{
 		/** marks the compressed bits as done*/
 		void reduce(int c, int red);
 
+
+        /** returns the maximum height list from the bitheap vector*/
+		int maxHeight();
 
  
 	private:

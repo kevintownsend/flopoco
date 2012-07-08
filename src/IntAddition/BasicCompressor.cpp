@@ -113,7 +113,10 @@ BasicCompressor::BasicCompressor(Target * target, vector<int> h)
 
 	int BasicCompressor::getColumn(int column)
 	{
-		return height[column];
+		if (column>=height.size())
+			return 0;
+		else
+			return height[column];
 	}
 	
 	void BasicCompressor::emulate(TestCase * tc)
