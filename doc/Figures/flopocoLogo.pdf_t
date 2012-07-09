@@ -9,17 +9,17 @@
   \fontfamily{#3}\fontseries{#4}\fontshape{#5}%
   \selectfont}%
 \fi\endgroup%
-\begin{picture}(6120,4752)(3358,-8228)
-\put(8098,-5446){\rotatebox{22.0}{\makebox(0,0)[b]{\smash{{\SetFigFont{43}{51.6}{\rmdefault}{\mddefault}{\updefault}{\color[rgb]{1,0,0}$e^{\frac{x}{\sqrt{x^2+y^2+z^2}}}$}%
+\begin{picture}(4151,3444)(5212,-8585)
+\put(8668,-6033){\rotatebox{22.0}{\makebox(0,0)[b]{\smash{{\SetFigFont{34}{40.8}{\rmdefault}{\mddefault}{\updefault}{\color[rgb]{1,0,0}$e^{\frac{x}{\sqrt{x^2+y^2+z^2}}}$}%
 }}}}}
-\put(4823,-7542){\rotatebox{340.0}{\makebox(0,0)[b]{\smash{{\SetFigFont{43}{51.6}{\rmdefault}{\mddefault}{\updefault}{\color[rgb]{0,0,1}$\pi{x}$}%
+\put(6173,-8065){\rotatebox{340.0}{\makebox(0,0)[b]{\smash{{\SetFigFont{34}{40.8}{\rmdefault}{\mddefault}{\updefault}{\color[rgb]{0,0,1}$\pi{x}$}%
 }}}}}
-\put(8781,-6224){\rotatebox{295.0}{\makebox(0,0)[b]{\smash{{\SetFigFont{43}{51.6}{\rmdefault}{\mddefault}{\updefault}{\color[rgb]{1,0,1}$\sin{e^{x+y}}$}%
+\put(7571,-7074){\rotatebox{295.0}{\makebox(0,0)[b]{\smash{{\SetFigFont{34}{40.8}{\rmdefault}{\mddefault}{\updefault}{\color[rgb]{1,0,1}$\sin{e^{x+y}}$}%
 }}}}}
-\put(6848,-7188){\makebox(0,0)[b]{\smash{{\SetFigFont{43}{51.6}{\rmdefault}{\mddefault}{\updefault}{\color[rgb]{.56,0,0}$\log{x}$}%
+\put(7278,-7794){\makebox(0,0)[b]{\smash{{\SetFigFont{34}{40.8}{\rmdefault}{\mddefault}{\updefault}{\color[rgb]{.56,0,0}$\log{x}$}%
 }}}}
-\put(6114,-6097){\rotatebox{38.0}{\makebox(0,0)[b]{\smash{{\SetFigFont{43}{51.6}{\rmdefault}{\mddefault}{\updefault}{\color[rgb]{0,.69,0}$\displaystyle y=\sum_{i=0}^n x_i$}%
+\put(8751,-7801){\rotatebox{341.0}{\makebox(0,0)[b]{\smash{{\SetFigFont{34}{40.8}{\rmdefault}{\mddefault}{\updefault}{\color[rgb]{1,0,0}$\sqrt{x}$}%
 }}}}}
-\put(7981,-6751){\rotatebox{341.0}{\makebox(0,0)[b]{\smash{{\SetFigFont{43}{51.6}{\rmdefault}{\mddefault}{\updefault}{\color[rgb]{1,0,0}$\sqrt{x}$}%
+\put(8824,-6900){\rotatebox{63.0}{\makebox(0,0)[b]{\smash{{\SetFigFont{34}{40.8}{\rmdefault}{\mddefault}{\updefault}{\color[rgb]{0,.69,0}$\displaystyle y=\sum_{i=0}^n x_i$}%
 }}}}}
 \end{picture}%
