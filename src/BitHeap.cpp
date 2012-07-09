@@ -252,6 +252,9 @@ namespace flopoco{
 	void BitHeap::generateCompressorVHDL()
 	{
 
+		// Should be while (maxheight>2) compress();
+		// then a second loop which does the final addition, pipelined
+
 		REPORT(DEBUG, "in generateCompressorVHDL");
 
 		if (getMaxHeight()<=2)
@@ -395,11 +398,11 @@ namespace flopoco{
 		//Remaining structure must be compressed
 		unsigned j;
 
-        
+		// i is the column index
 		for(unsigned i=minWeight; i<maxWeight; i++)
 		{
 
-			j=0;
+			j=0; // index of the compressors among the possible ones
 			//REPORT(DEBUG,"Good until here");
 
 			//REPORT(DEBUG, "possCompGETCOL "<<possibleCompressors[j]->getColumn(0));
@@ -408,14 +411,18 @@ namespace flopoco{
 
 
 
-
+			// map the best compressor as many times as possible 
 			while(count(bits[i], op->getCurrentCycle()) >= possibleCompressors[j]->getColumn(0))
 			{
 				//REPORT(DEBUG, "In while loop 1");
 				
 				compressors.push_back(possibleCompressors[j]) ;
 				REPORT(DEBUG,"Using Compressor " << j <<", reduce column "<<i);
+
+				//the following should be called elemReduce and take possibleCompressor[j]
+
 				//REPORT(DEBUG,"bits["<<i<<"] size before reduce: "<<bits[i].size());
+				// remove the bits that we compress
 				reduce(i, possibleCompressors[j]->getColumn(0));
 				addBit(i, "rhs", "comm");
 				addBit(i+1, "rhs", "comm");
@@ -426,6 +433,8 @@ namespace flopoco{
 			}
 
 			++j;
+
+			// The remaining bits will fit one non-best compressor, find it and apply it.
 
 			//int remainingBits=count(bits[i]);
             

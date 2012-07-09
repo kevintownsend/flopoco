@@ -210,7 +210,7 @@ namespace flopoco {
 			
 
 			if (testFit){
-				if(target->worthUsingDSP(wX, wY))
+				if(false && target->worthUsingDSP(wX, wY))
 					{
 						manageCriticalPath(target->DSPMultiplierDelay());
 						if (signedIO)

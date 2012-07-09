@@ -89,8 +89,8 @@ namespace flopoco{
 
 
 		private:
-			int cycle;
-			double criticalPath;
+			int cycle;  /**< The cycle at which the bit was created */
+			double criticalPath; /**< The cycle at which the bit was created */
 			BitHeap* bh;
 			bool processed;
 			int weight;
