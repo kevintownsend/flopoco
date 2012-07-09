@@ -26,10 +26,8 @@
 using namespace std;
 
 /*
-   
+
 */
-
-
 
 namespace flopoco{
 
@@ -290,7 +288,7 @@ namespace flopoco{
   
     void BitHeap::elemReduce(int i, BasicCompressor* bc)
     {
-
+        
     	reduce(i,bc->getColumn(0));
     	if(bc->getColumn(1)!=0)
     		reduce(i+1,bc->getColumn(1));
@@ -404,14 +402,22 @@ namespace flopoco{
 
 		generatePossibleCompressors();
 
-		int heapCount=0;
+	
 
          while (getMaxHeight()>2)
          	{
-         		compress(heapCount);
-         		++heapCount;
+         		compress();
+         		
          	}
 
+
+         for(int i=0;i<10;i++)
+         {
+         	if (usedCompressors[i]==true)
+         	{
+         		op->getOpListR().push_back(possibleCompressors[i]);
+         	}
+         }
          adderVHDL();
 	
 
@@ -427,7 +433,7 @@ namespace flopoco{
 
 
 
-	void BitHeap::compress(int heapCount)
+	void BitHeap::compress()
 	{
 		Target* target=op->getTarget();
 
@@ -514,9 +520,13 @@ namespace flopoco{
 			{
 				
 				
-				compressors.push_back(possibleCompressors[j]) ;
+				//compressors.push_back(possibleCompressors[j]) ;
 				REPORT(DEBUG,"Using Compressor " << j <<", reduce column "<<i);
+				
 				elemReduce(i,possibleCompressors[j]);
+				usedCompressors[j]=true;
+
+
 				
 			}
 
@@ -534,6 +544,7 @@ namespace flopoco{
 						if((count(bits[i+1], op->getCurrentCycle())>=possibleCompressors[j]->getColumn(1))&&(i<bits.size()-1))
 						{
 							elemReduce(i,possibleCompressors[j]);
+							usedCompressors[j]=true;
 						}
 						else 
 							++j;
@@ -541,6 +552,7 @@ namespace flopoco{
 					else
 					{
 						elemReduce(i,possibleCompressors[j]);
+						usedCompressors[j]=true;
 						++j;
 					}
 

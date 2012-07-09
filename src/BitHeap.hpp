@@ -142,7 +142,7 @@ namespace flopoco{
 
 
         /**is making the compression for the bitheap**/
-		void compress(int heapCount);
+		void compress();
 		
 		/** return the current height a column (bits not yet compressed) */
 		unsigned currentHeight(unsigned w);
