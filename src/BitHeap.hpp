@@ -73,6 +73,9 @@ namespace flopoco{
 			/** return the critical path of this bit */
 			double getCriticalPath(int atCycle);
 
+
+			
+
 			/** return the VHDL signal name of this bit */
 			string getName(){
 				return name;
@@ -99,6 +102,7 @@ namespace flopoco{
 			string name;
  			string srcFileName;
  			string uniqueName_;
+
 		};
 
 	public:
@@ -146,6 +150,9 @@ namespace flopoco{
 		/** counts the bits not processed yet in wb */
 		int count(list<WeightedBit*> wb, int cycle);
 
+
+		void generatePossibleCompressors();
+
 		/** marks the compressed bits as done*/
 		void reduce(int c, int red);
 
@@ -157,6 +164,7 @@ namespace flopoco{
  		string getResultVHDLName();
 	private:
 		Operator* op;
+		bool usedCompressors[10];
 		vector<int> uid;   /**< unique id, per weight */
 #if 0
 		const static int consumed=-1;
