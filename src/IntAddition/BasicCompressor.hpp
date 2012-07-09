@@ -1,4 +1,7 @@
-#include "Operator.hpp"
+#ifndef BasicCompressor_HPP
+#define BasicCompressor_HPP
+
+#include "../Operator.hpp"
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -8,7 +11,7 @@
 #include <gmpxx.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "utils.hpp"
+#include "../utils.hpp"
 
 namespace flopoco
 {
@@ -42,3 +45,4 @@ namespace flopoco
 	};
 }
  
+#endif

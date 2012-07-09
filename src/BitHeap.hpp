@@ -20,6 +20,7 @@
 #include "Operator.hpp"
 #include "Table.hpp"
 #include "DualTable.hpp"
+#include "IntAddition/BasicCompressor.hpp"
 #include "IntMultipliers/IntTilingMult.hpp"
 
 
@@ -114,7 +115,7 @@ namespace flopoco{
 		 @param comment  a VHDL comment for this bit*/
 		void addBit(unsigned weight, string rhs, string comment="");
 
-
+        void elemReduce(int i, BasicCompressor* bc);
 
 
         /** remove a bit from the bitheap.
