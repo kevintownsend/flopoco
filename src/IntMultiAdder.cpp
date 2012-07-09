@@ -31,7 +31,6 @@ Copyright © ENS-Lyon, INRIA, CNRS, UCBL,
  
 using namespace std;
 namespace flopoco {
-	extern vector<Operator*> oplist;
 	
 	IntMultiAdder::IntMultiAdder (Target* target, int wIn, int N, map<string, double> inputDelays, bool carryIn):
 	Operator ( target, inputDelays), wIn_ ( wIn ), N_(N), carryIn_(carryIn)  {

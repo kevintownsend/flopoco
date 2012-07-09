@@ -21,7 +21,6 @@ using namespace std;
 
 namespace flopoco{
 
-	extern vector<Operator*> oplist;	//  :'(
 	
 	LNSMul::LNSMul(Target * target, int wE, int wF) :
 		Operator(target), wE(wE), wF(wF)

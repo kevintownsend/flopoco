@@ -29,8 +29,6 @@ using namespace std;
 
 namespace flopoco{
 
-	extern vector<Operator*> oplist;
-
 	SignedIntMultiplier:: SignedIntMultiplier(Target* target, int wInX, int wInY, map<string, double> inputDelays) :
 		Operator(target, inputDelays), wInX_(wInX), wInY_(wInY), wOut_(wInX + wInY){
  		srcFileName = "SignedIntMultiplier";

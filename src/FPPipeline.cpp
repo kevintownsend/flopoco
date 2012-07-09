@@ -50,8 +50,6 @@ using namespace std;
 
 namespace flopoco{
 	
-	extern vector<Operator*> oplist;
-	
 	FPPipeline::FPPipeline(Target* target, string filename, int wE_, int wF_): 
 	Operator(target), wE(wE_), wF(wF_) {
 		// Name HAS to be unique!

@@ -35,7 +35,6 @@ using namespace std;
 #define LARGE_PREC 1000 // 1000 bits should be enough for everybody
 
 namespace flopoco{
-	extern vector<Operator *> oplist;
 
 
 	mpz_class FPExp::magicTable::function(int x){

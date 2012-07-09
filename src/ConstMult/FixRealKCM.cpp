@@ -33,10 +33,6 @@ using namespace std;
 
 namespace flopoco{
 
-	extern vector<Operator*> oplist;
-
-
-
 
 
 	FixRealKCM::FixRealKCM(Target* target, int lsbIn_, int msbIn_, bool signedInput_, int lsbOut_, string constant_, double targetUlpError_, map<string, double> inputDelays) :

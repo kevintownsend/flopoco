@@ -31,8 +31,6 @@ using namespace std;
 
 namespace flopoco{
 
-	extern vector<Operator*> oplist;
-
 #define DEBUGVHDL 0
 
 	OutputIEEE::OutputIEEE(Target* target, int wEI, int wFI, int wEO, int wFO) :

@@ -31,8 +31,6 @@ using namespace std;
 namespace flopoco{
 
 
-	extern vector<Operator*> oplist;
-
 	IntCompressorTree::IntCompressorTree(Target* target, int wIn, int N, map<string, double> inputDelays):
 		IntMultiAdder(target, wIn, N, inputDelays, false, true), wIn_(wIn), N_(N), inputDelays_(inputDelays) 
 	{

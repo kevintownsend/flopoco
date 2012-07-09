@@ -36,8 +36,6 @@ using namespace std;
 
 namespace flopoco{
 
-	extern vector<Operator*> oplist;
-
 	DotProduct::DotProduct(Target* target, int wE, int wFX, int wFY, int MaxMSBX, int LSBA, int MSBA, double ratio,  map<string, double> inputDelays):
 		Operator(target), wE(wE), wFX(wFX), wFY(wFY), MaxMSBX(MaxMSBX), LSBA(LSBA), MSBA(MSBA)  {
 	

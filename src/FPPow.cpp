@@ -30,8 +30,6 @@ using namespace std;
 
 namespace flopoco{
 
-	extern vector<Operator *> oplist;
-
 
 	void FPPow::compute_error(mpfr_t & r, mpfr_t &epsE, mpfr_t& epsM, mpfr_t& epsL ) {
 		mpfr_t r1, one;

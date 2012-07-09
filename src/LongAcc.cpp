@@ -33,8 +33,6 @@ using namespace std;
 
 namespace flopoco{
 
-	extern vector<Operator*> oplist;
-
 	LongAcc::LongAcc(Target* target, int wEX, int wFX, int MaxMSBX, int LSBA, int MSBA, map<string, double> inputDelays,  bool forDotProd, int wFY): 
 		Operator(target), 
 		wEX_(wEX), wFX_(wFX), MaxMSBX_(MaxMSBX), LSBA_(LSBA), MSBA_(MSBA), AccValue_(0), xOvf(0)

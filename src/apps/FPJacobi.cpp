@@ -38,8 +38,6 @@ using namespace std;
 
 namespace flopoco{
 
-	extern vector<Operator*> oplist;
-
 	FPJacobi::FPJacobi(Target* target, int wE, int wF, int l0, int l1, int l2, int version):
 		Operator(target), wE(wE), wF(wF) {
 		srcFileName="FPJacobi1";

@@ -24,7 +24,6 @@
 using namespace std;
 
 namespace flopoco{
-	extern vector<Operator*> oplist;	// ???
 
 	AtanPow::AtanPow(Target * target, int wE, int wF, int o, EvaluationMethod method) :
 		Operator(target), wE(wE), wF(wF), order(o), method_(method)

@@ -35,9 +35,6 @@ using namespace std;
 
 namespace flopoco{
 
-	extern vector<Operator*> oplist;
-
-
 
 	int DualTable::double2input(double x){
 		cerr << "Error, double2input is being used and has not been overriden";

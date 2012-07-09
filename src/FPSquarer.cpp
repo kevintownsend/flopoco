@@ -32,8 +32,6 @@ using namespace std;
 namespace flopoco{
 
 
-	extern vector<Operator*> oplist;
-
 
 	FPSquarer::FPSquarer(Target* target, int wE, int wFX, int wFR) :
 		Operator(target), wE_(wE), wFX_(wFX), wFR_(wFR){

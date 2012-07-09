@@ -21,7 +21,6 @@ namespace flopoco
 namespace random
 {
 	
-	extern vector<Operator *> oplist;
 
 // personalized parameter
 string LutSrRng::operatorInfo = "LutSrRng info r t k";

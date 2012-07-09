@@ -22,8 +22,6 @@ using namespace std;
 
 namespace flopoco{
  
-	extern vector<Operator*> oplist;
-
 	CotranHybrid::CotranHybrid(Target * target, int wE, int wF, int jl, int wECotranl, int o) :
 		Operator(target), wE(wE), wF(wF), j(jl), wECotran(wECotranl)
 	{

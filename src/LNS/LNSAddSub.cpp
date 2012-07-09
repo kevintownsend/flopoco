@@ -21,7 +21,6 @@ using namespace std;
 
 namespace flopoco{
 
-	extern vector<Operator*> oplist;
 
 	LNSAddSub::LNSAddSub(Target * target, int wE, int wF) :
 		Operator(target), wE(wE), wF(wF)

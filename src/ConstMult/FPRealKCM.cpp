@@ -33,8 +33,6 @@ using namespace std;
 
 namespace flopoco{
 
-	extern vector<Operator*> oplist;
-
 	FPRealKCM::FPRealKCM(Target* target, int wE, int wF,  string constant, map<string, double> inputDelays) :
 		Operator(target, inputDelays), wE(wE), wF(wF), constant(constant)
 	{

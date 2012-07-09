@@ -21,7 +21,6 @@
 using namespace std;
 
 namespace flopoco{
-	extern vector<Operator*> oplist;
 
 	LogSinCos::LogSinCos(Target * target, int fL, int fTheta, int o, EvaluationMethod method) :
 		Operator(target), fL(fL), fTheta(fTheta), order(o), method_(method)

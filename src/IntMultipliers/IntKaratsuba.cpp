@@ -33,7 +33,6 @@ namespace flopoco{
 //#define OPT 0
 #define NADD
 
-	extern vector<Operator*> oplist;
 
 	IntKaratsuba:: IntKaratsuba(Target* target, int wIn, map<string, double> inputDelays) :
 		Operator(target), wIn_(wIn), wOut_(2*wIn){

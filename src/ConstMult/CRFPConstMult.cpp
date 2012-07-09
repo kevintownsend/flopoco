@@ -32,9 +32,6 @@ using namespace std;
 
 namespace flopoco{
 
-	extern vector<Operator*> oplist;
-
-
 
 	CRFPConstMult::CRFPConstMult(Target* target, int wE_in, int wF_in, int wE_out, int wF_out, string _constant):
 		FPConstMult(target, wE_in, wF_in, wE_out, wF_out), 

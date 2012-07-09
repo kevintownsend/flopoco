@@ -35,9 +35,6 @@ using namespace std;
 
 namespace flopoco{
 
-extern vector<Operator*> oplist;
-
-
 	// The expert version // TODO define correctRounding
 
 	FPConstMult::FPConstMult(Target* target, int wE_in_, int wF_in_, int wE_out_, int wF_out_, int cstSgn_, int cst_exp_, mpz_class cstIntSig_):

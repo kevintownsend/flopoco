@@ -36,8 +36,6 @@ using namespace std;
 
 namespace flopoco{
 
-	extern vector<Operator*> oplist;
-
 	PolyCoeffTable::PolyCoeffTable(Target* target, PiecewiseFunction* pf, int wOutX, int n): 
 		Table(target), wOutX_(wOutX), pwf(pf){
 		

@@ -31,7 +31,6 @@
 //#define MAXSIZE
 using namespace std;
 namespace flopoco{
-extern vector<Operator*> oplist;
 
 	LongIntAdderAddAddMuxGen1::LongIntAdderAddAddMuxGen1(Target* target, int wIn, map<string, double> inputDelays):
 		Operator(target), wIn_(wIn), inputDelays_(inputDelays) 

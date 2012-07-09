@@ -30,8 +30,6 @@ using namespace std;
 
 namespace flopoco{
 
-	extern vector<Operator*> oplist;
-
 	FPMultiplierKaratsuba::FPMultiplierKaratsuba(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, int wFR, int norm) :
 		Operator(target), wEX_(wEX), wFX_(wFX), wEY_(wEY), wFY_(wFY), wER_(wER), wFR_(wFR) {
 

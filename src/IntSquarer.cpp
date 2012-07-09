@@ -28,8 +28,6 @@ using namespace std;
 
 namespace flopoco{
 
-	extern vector<Operator *> oplist;
-
 	IntSquarer::IntSquarer(Target* target, int wIn, map<string, double> inputDelays):
 		Operator(target, inputDelays), wIn_(wIn), inputDelays_(inputDelays)
 	{

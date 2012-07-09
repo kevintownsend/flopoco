@@ -35,8 +35,6 @@ using namespace std;
 
 namespace flopoco{
 
-	extern vector<Operator*> oplist;
-
 	FPFMAcc::FPFMAcc(Target* target, int wE, int wF, int adderLatency):
 		Operator(target), wE(wE), wF(wF) {
 		srcFileName="FPFMAcc1";

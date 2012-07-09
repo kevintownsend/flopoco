@@ -35,7 +35,6 @@
 using namespace std;
 
 namespace flopoco{
-	extern vector<Operator*> oplist;
 
 	FPSqrtPoly::FPSqrtPoly(Target* target, int wE, int wF, bool correctlyRounded, int degree):
 		Operator(target), wE(wE), wF(wF), correctRounding(correctlyRounded) {

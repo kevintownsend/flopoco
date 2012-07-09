@@ -35,8 +35,6 @@ Copyright © ENS-Lyon, INRIA, CNRS, UCBL,
 using namespace std;
 
 namespace flopoco {
-	extern vector<Operator*> oplist;
-
 
 
 	

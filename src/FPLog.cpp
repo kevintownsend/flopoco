@@ -38,7 +38,6 @@ namespace flopoco{
 
 
 
-
 	FPLog::FPLog(Target* target, int wE, int wF, int inTableSize, map<string, double> inputDelays)
 		: Operator(target), wE(wE), wF(wF)
 	{

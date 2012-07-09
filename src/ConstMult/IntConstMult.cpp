@@ -32,9 +32,6 @@ using namespace std;
 
 namespace flopoco{
 
-	extern vector<Operator*> oplist;
-
-
 	void reset_visited(ShiftAddOp* sao) {
 		if (sao!=NULL) {
 			sao->already_visited=false;

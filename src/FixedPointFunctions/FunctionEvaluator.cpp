@@ -34,8 +34,6 @@ using namespace std;
 
 namespace flopoco{
 
-	extern vector<Operator*> oplist;
-
 #define DEBUGVHDL 0
 
 

@@ -28,8 +28,6 @@
 using namespace std;
 
 namespace flopoco{
-
-	extern vector<Operator*> oplist;
 	
 	// Stuff for the small multiplier table 
 	LogicIntMultiplier::SmallMultTable::SmallMultTable(Target* target, int dx, int dy) : 

@@ -25,7 +25,6 @@
 
 using namespace std;
 namespace flopoco{
-extern vector<Operator*> oplist;
 
 	LongIntAdderMuxNetwork::LongIntAdderMuxNetwork(Target* target, int wIn, map<string, double> inputDelays, int regular):
 		Operator(target), wIn_(wIn), inputDelays_(inputDelays) 

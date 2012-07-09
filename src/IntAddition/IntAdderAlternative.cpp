@@ -28,7 +28,6 @@ Copyright © ENS-Lyon, INRIA, CNRS, UCBL,
 using namespace std;
 
 namespace flopoco {
-	extern vector<Operator*> oplist;
 	
 	IntAdderAlternative::IntAdderAlternative ( Target* target, int wIn, map<string, double> inputDelays, int optimizeType, bool srl) :
 	IntAdder(target, wIn, inputDelays, true), wIn_(wIn), alternativeSlackVersion(0) {

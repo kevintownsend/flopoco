@@ -31,8 +31,6 @@ using namespace std;
 
 namespace flopoco{
 
-extern vector<Operator*> oplist;
-
 
 	// The expert version 
 

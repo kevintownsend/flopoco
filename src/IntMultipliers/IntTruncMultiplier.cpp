@@ -34,8 +34,6 @@ using namespace std;
 
 namespace flopoco{
 
-	extern vector<Operator*> oplist;
-
 	// FIXME Janitoring dangerous redundancy?:  k=targetPrecision, wX=wInX, wY=wInY (not sure, there are wX-- in some places)
 	IntTruncMultiplier::IntTruncMultiplier(Target* target, int winX, int winY, int wOut, float ratio, int uL, int maxTimeInMinutes, bool interactive, bool sign, bool roundCompensate, map<string, double> inputDelays):
 		Operator(target), wInX(winX), wInY(winY), wOut(wOut), wX(winX), wY(winY), ratio(ratio),targetPrecision(wInX+wInY-wOut),useLimits(uL),  roundCompensate_(roundCompensate), maxTimeInMinutes(maxTimeInMinutes-1), sign(sign){

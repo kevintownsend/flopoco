@@ -49,9 +49,6 @@ using namespace std;
 
 namespace flopoco{
 
-	extern vector<Operator *> oplist;
-
-
 
 	Collision::Collision(Target* target, int wE, int wF, int optimize)
 		: Operator(target), wE(wE), wF(wF)

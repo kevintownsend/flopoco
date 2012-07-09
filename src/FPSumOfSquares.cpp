@@ -28,7 +28,6 @@ using namespace std;
 
 namespace flopoco{
 
-	extern vector<Operator *> oplist;
 
 	FPSumOfSquares::FPSumOfSquares(Target* target, int wE, int wF, int optimize)
 		: Operator(target), wE(wE), wF(wF)
