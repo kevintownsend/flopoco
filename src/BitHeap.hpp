@@ -119,6 +119,8 @@ namespace flopoco{
 		 @param comment  a VHDL comment for this bit*/
 		void addBit(unsigned weight, string rhs, string comment="");
 
+		void addBit(unsigned weight, int cycle, double criticalPath, string rhs, string comment="");
+
         void elemReduce(int i, BasicCompressor* bc);
 
 
@@ -140,7 +142,7 @@ namespace flopoco{
 
 
         /**is making the compression for the bitheap**/
-		void compress();
+		void compress(int heapCount);
 		
 		/** return the current height a column (bits not yet compressed) */
 		unsigned currentHeight(unsigned w);
@@ -150,6 +152,7 @@ namespace flopoco{
 		/** counts the bits not processed yet in wb */
 		int count(list<WeightedBit*> wb, int cycle);
 
+		double computeMaxCP(int w, int c0, int c1);
 
 		void generatePossibleCompressors();
 
