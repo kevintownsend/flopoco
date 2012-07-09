@@ -113,8 +113,6 @@ namespace flopoco{
 	{
 		double max=0.0;
 
-		REPORT(DEBUG, "Crash here "<<w<<" and "<<bits.size());
-
 		if(w>=bits.size())
 		{
 			return 0.0;
@@ -185,6 +183,7 @@ namespace flopoco{
 		if(bits.size()==w)
 		{
 			bits.push_back(t);
+			maxWeight++;
 		}
 
 		WeightedBit* bit= new WeightedBit(this, w) ;
@@ -221,6 +220,7 @@ namespace flopoco{
 		if(bits.size()==weight)
 		{
 			bits.push_back(t);
+			maxWeight++;
 		}
 
 		//????????????????????????????????????????????
