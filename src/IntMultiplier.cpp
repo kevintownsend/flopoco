@@ -583,7 +583,7 @@ namespace flopoco {
 
 			// And that's it, now go compress
 			bitHeap -> generateCompressorVHDL();			
-			vhdl << tab << "R <= CompressionResult;" << endl;
+			vhdl << tab << "R <= CompressionResult(" << wOut-1 << " downto 0);" << endl;
 
 #endif
 		

@@ -168,6 +168,10 @@ namespace flopoco{
 	private:
 		Operator* op;
 		bool usedCompressors[10];
+		unsigned chunkDoneIndex;
+		unsigned inConcatIndex;
+		unsigned outConcatIndex;
+		unsigned compressorIndex;
 		vector<int> uid;   /**< unique id, per weight */
 #if 0
 		const static int consumed=-1;

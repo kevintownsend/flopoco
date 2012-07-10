@@ -44,7 +44,7 @@ BasicCompressor::BasicCompressor(Target * target, vector<int> h)
 		name<<height[i];
 	}
 
-	int wOut=intlog2(param);
+	wOut=intlog2(param);
 	
 	name << "_" << wOut;
 	setName(name.str());
@@ -111,12 +111,17 @@ BasicCompressor::BasicCompressor(Target * target, vector<int> h)
 	BasicCompressor::~BasicCompressor(){
 	}
 
-	int BasicCompressor::getColumn(int column)
+	int BasicCompressor::getColumnSize(int column)
 	{
 		if (column>=height.size())
 			return 0;
 		else
-			return height[column];
+			return height[height.size()-column-1];
+	}
+
+	int BasicCompressor::getOutputSize()
+	{
+		return wOut;
 	}
 	
 	void BasicCompressor::emulate(TestCase * tc)

@@ -35,9 +35,9 @@ namespace flopoco
 		/** destructor**/
 		~BasicCompressor();
 
-		int getColumn(int column);
+		int getColumnSize(int column);
 
-
+		int getOutputSize();
 	
 	
 		/** test case generator  **/
