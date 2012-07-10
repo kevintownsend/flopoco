@@ -521,7 +521,7 @@ namespace flopoco
 		op->vhdl << tab << op->declare("inAdder0", maxWeight-minWeight) << " <= " << inAdder0.str() << endl;
 		op->vhdl << tab << op->declare("inAdder1", maxWeight-minWeight) << " <= " << inAdder1.str() << endl;
 
-		op->vhdl << tab << op->declare("outAdder", maxWeight-minWeight+1) << " <= inAdder0 + inAdder1;" << endl;
+		op->vhdl << tab << op->declare("outAdder", maxWeight-minWeight+1) << " <= ('0' & inAdder0) + ('0' & inAdder1);" << endl;
 
 
 
