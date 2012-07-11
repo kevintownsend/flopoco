@@ -578,7 +578,7 @@ namespace flopoco {
 
 			if(g>0) {
 				int weight=wFull-wOut-1- weightShift;
-				bitHeap->addBit(weight, "1", "The round bit");
+				bitHeap->addBit(weight, "\'1\'", "The round bit");
 			}
 
 			// And that's it, now go compress

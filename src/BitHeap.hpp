@@ -119,11 +119,11 @@ namespace flopoco{
 		 @param comment  a VHDL comment for this bit*/
 		void addBit(unsigned weight, string rhs, string comment="");
 
-		void addBit(unsigned weight, int cycle, double criticalPath, string rhs, string comment="");
-
         void elemReduce(int i, BasicCompressor* bc);
 
+        BitHeap::WeightedBit* computeLatest(int w, int c0, int c1);
 
+        
         /** remove a bit from the bitheap.
          @param weight  the weight of the bit to be removed
          @param dir if dir==0 the bit will be removed from the begining of the list 
@@ -151,8 +151,6 @@ namespace flopoco{
 
 		/** counts the bits not processed yet in wb */
 		int count(list<WeightedBit*> wb, int cycle);
-
-		double computeMaxCP(int w, int c0, int c1);
 
 		void generatePossibleCompressors();
 

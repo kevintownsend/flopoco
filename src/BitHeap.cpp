@@ -66,7 +66,9 @@ namespace flopoco
 			return false;
 	} 
 	
-	double BitHeap::WeightedBit::getCriticalPath(int atCycle){
+	double BitHeap::WeightedBit::getCriticalPath(int atCycle)
+	{
+
 		if (cycle>atCycle){
 			THROWERROR("For bit " << name << ", getCriticalPath() called for cycle "<<atCycle<< " but this bit is defined only at cycle "<< cycle);
 		}
@@ -113,72 +115,63 @@ namespace flopoco
 		return uid[w]++;
 	}	
 
-
-	double BitHeap::computeMaxCP(int w, int c0, int c1)
+	// computeLatest WeightedBit* ; top of c0 or c1
+	// do a setCycle and setCriticalP global to this
+	// then use addToCriticalPath(lutDelay)
+	// then addBit without any time parameter
+	BitHeap::WeightedBit* BitHeap::computeLatest(int w, int c0, int c1)
 	{
-		double max=0.0;
 
 		if(w>=bits.size())
+		{	
+			return NULL;
+		}
+
+		if(c1==0)
 		{
-			return 0.0;
+			int k=1;
+			WeightedBit **bb;
+			for(list<WeightedBit*>::iterator it = bits[w].begin(); it!=bits[w].end(); ++it)
+    		{
+      			if (k==c0)
+      			{
+          			bb = &*it;
+          		}
+          		k++;
+    		}
+    		return *bb;
 		}
 		else
 		{
-			list<WeightedBit*>::iterator it1, it2;
-			int j=0,k=0;
-			//it=bits[w].begin();
+			int i=1, j=1;
+			WeightedBit **b0;
+			for(list<WeightedBit*>::iterator it = bits[w].begin(); it!=bits[w].end(); ++it)
+    		{
+      			if (i==c0)
+      			{
+          			b0 = &*it;
+          		}
+          		i++;
+    		}
+    		WeightedBit **b1;
+    		for(list<WeightedBit*>::iterator it = bits[w+1].begin(); it!=bits[w+1].end(); ++it)
+    		{
+      			if (j==c1)
+      			{
+          			b1 = &*it;
+          		}
+          		j++;
+    		}
 
-			for(it1=bits[w].begin(); it1!=bits[w].end(); it1++)
-			{
-				if(j<c0)
-					if ((*it1)->getCriticalPath(op->getCurrentCycle())>max)
-						max=(*it1)->getCriticalPath(op->getCurrentCycle());
-				j++;
-			}
 
-			for(it2=bits[w+1].begin(); it2!=bits[w+1].end(); it2++)
-			{
-				if(k<c1)
-					if ((*it2)->getCriticalPath(op->getCurrentCycle())>max)
-						max=(*it2)->getCriticalPath(op->getCurrentCycle());
-				k++;
-			}
-
-
-			/*
-
-			//A little more efficient
-
-			while((j<c0)&&(it!=bits[w].end()))
-			{
-				if ((*it)->getCriticalPath(op->getCurrentCycle())>max)
-					max=(*it)->getCriticalPath(op->getCurrentCycle());
-				j++;
-				it++;
-			}
-		
-			if(c1!=0)
-			{
-				it=bits[w+1].begin();
-				while((k<c1)&&(it!=bits[w+1].end()))
-				{
-					if ((*it)->getCriticalPath(op->getCurrentCycle())>max)
-						max=(*it)->getCriticalPath(op->getCurrentCycle());
-					k++;	
-					it++;
-				}
-			}
-			*/
-
-			return max;
-
-		}
+			if((**b0) <= (**b1))
+				return *b1;
+			else 
+				return *b0;
+		}	
 	}
 
-
-
-
-
+	
 
 
 	void  BitHeap::addBit(unsigned w, string rhs, string comment)
@@ -215,62 +208,6 @@ namespace flopoco
 	};
 
 
-
-
-
-	void BitHeap::addBit(unsigned weight, int cycle,  double criticalPath, string rhs, string comment)
-	{
-		list<WeightedBit*> t;
-			
-		if(bits.size()==weight)
-		{
-			bits.push_back(t);
-			maxWeight++;
-		}
-
-		//????????????????????????????????????????????
-
-
-		//REPORT(DEBUG,"CYCLE before if in addBit="<<cycle);
-		//REPORT(DEBUG,"criticalPath="<<criticalPath <<" (1/op->getTarget()->frequency()) " <<1/op->getTarget()->frequency());
-
-		if (criticalPath > (1/op->getTarget()->frequency()))
-		{
-			criticalPath=0.0;
-			cycle++;
-		}
-
-		//REPORT(DEBUG,"CYCLE in addBit="<<cycle);
-		//////////////////////////////////////////////
-
-		WeightedBit* bit= new WeightedBit(this, weight, cycle, criticalPath);
-		list<WeightedBit*>& l=bits[weight];
-
-		//insert so that the list is sorted by bit cycle/delay
-		list<WeightedBit*>::iterator it=l.begin(); 
-		bool proceed=true;
-		while(proceed) {
-			if (it==l.end() || (**it <= *bit)){ // test in this order to avoid segfault!
-				l.insert(it, bit);
-				proceed=false;
-			}
-			else 
-				it++;
-		}
-		// now generate VHDL
-		op->vhdl << tab << op->declare(bit->getName()) << " <= " << rhs << ";";
-		if(comment.size())
-			op->vhdl <<  " -- " << comment;
-		op->vhdl <<  endl;		
-
-		REPORT(DEBUG, "added bit on column " << weight);	
-	};
-
-
-
-
-
-
 	void BitHeap::removeBit(unsigned weight, int dir){
 		
 		list<WeightedBit*>& l=bits[weight];
@@ -304,7 +241,7 @@ namespace flopoco
 
 
 
-    	reduce(i,bc->getColumnSize(0));
+    	
     	if(bc->getColumnSize(1)!=0)
     	{
     		it = bits[i+1].begin();
@@ -315,9 +252,9 @@ namespace flopoco
         			signal[1] << " & ";
         		it++;
         	}
-    		reduce(i+1,bc->getColumnSize(1));
+    		
     	}
-    	double maxCP = 0.0;//computeMaxCP(i,bc->getColumnSize(0),bc->getColumnSize(1));
+
 
     	op->vhdl << endl;
 
@@ -332,24 +269,30 @@ namespace flopoco
     		op->inPortMap(bc, join("X",j), join("in_concat_", compressorIndex,"_", inConcatIndex));
     		++inConcatIndex;
     	}
-    	REPORT(DEBUG, "outIndex=" << outConcatIndex);
-    	//op->vhdl << tab << op->declare(join("out_concat_", compressorIndex,"_", outConcatIndex), bc->getOutputSize());
+
     	op->vhdl << endl;
     	op->outPortMap(bc, "R", join("out_concat_", compressorIndex,"_", outConcatIndex));
     
     	op->vhdl << tab << op->instance(bc, join("Compressor_",compressorIndex))<<endl;
+
+    	op->setCycle(  computeLatest(i, bc->getColumnSize(0), bc->getColumnSize(1))  ->getCycle()  );
+    	op->setCriticalPath(  computeLatest(i, bc->getColumnSize(0), bc->getColumnSize(1))  ->getCriticalPath(op->getCurrentCycle()));
+		
+    	op->addToCriticalPath(op->getTarget()->lutDelay());
     	
-    	addBit(i, op->getCurrentCycle(), op->getTarget()->lutDelay() + maxCP, 
-    					join("out_concat_", compressorIndex,"_", outConcatIndex, "(0)"),"");
-    	addBit(i+1, op->getCurrentCycle(), op->getTarget()->lutDelay() + maxCP, 
-    					join("out_concat_", compressorIndex,"_", outConcatIndex, "(1)"),"");
+
+    	addBit(i, join("out_concat_", compressorIndex,"_", outConcatIndex, "(0)"),"");
+    	addBit(i+1,	join("out_concat_", compressorIndex,"_", outConcatIndex, "(1)"),"");
     	if(!((bc->getColumnSize(0)==3) && (bc->getColumnSize(1)==0)))
-    		addBit(i+2, op->getCurrentCycle(), op->getTarget()->lutDelay() + maxCP, 
-    						join("out_concat_", compressorIndex,"_", outConcatIndex, "(2)"),"");
+    		addBit(i+2, join("out_concat_", compressorIndex,"_", outConcatIndex, "(2)"),"");
+
 
     	++compressorIndex;
     	++outConcatIndex;
 
+    	reduce(i,bc->getColumnSize(0));
+    	if(bc->getColumnSize(1)!=0)
+    		reduce(i+1,bc->getColumnSize(1));
 
     }
 
@@ -445,7 +388,6 @@ namespace flopoco
 					newVect.push_back(col0);
 					newVect.push_back(col1);
 					pC.push_back(new BasicCompressor(op->getTarget(), newVect));
-					REPORT(DEBUG, "size col0 "<< pC[pC.size()-1]->getColumnSize(0));
 				}
         
     }
@@ -456,8 +398,6 @@ namespace flopoco
 
 		// Should be while (maxheight>2) compress();
 		// then a second loop which does the final addition, pipelined
-
-		REPORT(DEBUG, "in generateCompressorVHDL");
 
 		generatePossibleCompressors();
 
@@ -476,6 +416,8 @@ namespace flopoco
 			REPORT(DEBUG, "   w=" << w << ":\t height=" << bits[w].size()); 
 		}	
 
+
+
         for(int i=0;i<10;i++)
         {
          	if (usedCompressors[i]==true)
@@ -491,42 +433,46 @@ namespace flopoco
 
 	void BitHeap::adderVHDL()
 	{
+
+
 		stringstream inAdder0, inAdder1, outAdder;
-		REPORT(DEBUG, maxWeight << "  " << minWeight);
 
 		unsigned i=maxWeight-1;
 		while((i>=minWeight)&&(i<maxWeight))
 		{
-		  
+
 			if(i>=0)
 			{
-			list<WeightedBit*>::iterator it = bits[i].begin();
-			REPORT(DEBUG, bits[i].size());
-			if(bits[i].size()==2)
-			{
-				inAdder0 << (*it)->getName() << inAdder0;
-				it++;
-				inAdder1 << (*it)->getName();
-			}
-			else
-			{
-				inAdder0 << (*it)->getName();
-				inAdder1 << "\'0\'";
-			}
+				list<WeightedBit*>::iterator it = bits[i].begin();
+				if(bits[i].size()==2)
+				{
+					inAdder0 << (*it)->getName();
+					it++;
+					inAdder1 << (*it)->getName();
+				}
+				else
+				{   
+					inAdder0 << (*it)->getName();
+					inAdder1 << "\'0\'";
+				}
 
-			if (i!=minWeight)
-			{
-				inAdder0<<" & "; 
-				inAdder1<<" & ";
+		
+
+				if (i!=minWeight)
+				{
+					inAdder0<<" & "; 
+					inAdder1<<" & ";
+				}
 			}
-			}
+		
 			--i;
 		}
+
 
 		inAdder0 << ";";
 		inAdder1 << ";";
 
-		op->vhdl << tab << op->declare("inAdder0", maxWeight-minWeight) << " <= " << inAdder0.str() << endl;
+		op->vhdl << tab << op->declare("inAdder0", maxWeight-minWeight) << "<= " << inAdder0.str() << endl;
 		op->vhdl << tab << op->declare("inAdder1", maxWeight-minWeight) << " <= " << inAdder1.str() << endl;
 
 		op->vhdl << tab << op->declare("outAdder", maxWeight-minWeight+1) << " <= ('0' & inAdder0) + ('0' & inAdder1);" << endl;
@@ -575,7 +521,7 @@ namespace flopoco
 		w=0;
 		while(w<bits.size() && alreadyCompressed) 
 		{
-			//REPORT(DEBUG, "Current height for level " << w << " is " << currentHeight(w));
+			
 			
 			if(currentHeight(w)>1)
 			{
@@ -643,39 +589,6 @@ namespace flopoco
 			}
 
 			++j;
-
-			// The remaining bits will fit one non-best compressor, find it and apply it.
-			/*while(   (j < possibleCompressors.size())   &&   ( count(bits[i],op->getCurrentCycle()) > 2 )  )
-			{
-
-				if (  ( count(bits[i],op->getCurrentCycle())  ==  possibleCompressors[j]->getColumnSize(0) )  && (  count(bits[i+1],op->getCurrentCycle())  >=  possibleCompressors[j]->getColumnSize(1)  ))
-				{
-					elemReduce(i,possibleCompressors[j]);
-					usedCompressors[j]=true;
-
-					if (possibleCompressors[j]->getColumnSize(1)!=0)
-					{
-						REPORT(DEBUG,"Using Compressor " << j <<", reduce columns "<<i<<" and "<<i+1);
-						++j;
-					}
-					else
-					{
-						REPORT(DEBUG,"Using Compressor " << j <<", reduce column "<<i);
-						REPORT(DEBUG, "j "<<j);
-						++j;
-					}
-				}
-				else
-				{
-					REPORT(DEBUG, "j "<<j);
-					++j;
-					
-				}
-			}*/
-
-
-
-
 
 			while(   (j < possibleCompressors.size())   &&   ( count(bits[i],op->getCurrentCycle()) > 2 )   )
 			{
