@@ -363,6 +363,8 @@ namespace flopoco
 
 
 
+		
+		
 		return p.str();
 	};
 
@@ -492,13 +494,17 @@ namespace flopoco
 		stringstream inAdder0, inAdder1, outAdder;
 		REPORT(DEBUG, maxWeight << "  " << minWeight);
 
-		for(unsigned i=maxWeight-1; i>=minWeight; i--)
+		unsigned i=maxWeight-1;
+		while((i>=minWeight)&&(i<maxWeight))
 		{
+		  
+			if(i>=0)
+			{
 			list<WeightedBit*>::iterator it = bits[i].begin();
 			REPORT(DEBUG, bits[i].size());
 			if(bits[i].size()==2)
 			{
-				inAdder0 << (*it)->getName();
+				inAdder0 << (*it)->getName() << inAdder0;
 				it++;
 				inAdder1 << (*it)->getName();
 			}
@@ -513,6 +519,8 @@ namespace flopoco
 				inAdder0<<" & "; 
 				inAdder1<<" & ";
 			}
+			}
+			--i;
 		}
 
 		inAdder0 << ";";
