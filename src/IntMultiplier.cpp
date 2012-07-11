@@ -194,6 +194,17 @@ namespace flopoco {
 			return;
 		} 
 
+#if 0 // needed to restore basic functionality while stuff is being fixed up
+		
+		if (signedIO)
+			vhdl << tab << declare("rfull", wFull+1) << " <= XX * YY; -- that's one bit more than needed"<<endl; 
+		else //sign extension is necessary for using use ieee.std_logic_signed.all; 
+			// for correct inference of Xilinx DSP functions
+			vhdl << tab << declare("rfull", wX + wY + 2) << " <= (\"0\" & XX) * (\"0\" & YY);"<<endl;
+						
+		vhdl << tab << "R <= rfull"<<range(wFull-1, wFull-wOut)<<";"<<endl;	
+		return;
+#endif
 
 
 		// Now getting more and more generic
