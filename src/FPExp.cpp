@@ -286,7 +286,8 @@ namespace flopoco{
 		
 		int sizeXfix = wE+wF+g; // still unsigned; msb=wE-1; lsb = -wF-g
 		manageCriticalPath( target->localWireDelay(sizeXfix) + target->lutDelay());
-		vhdl << tab << declare("fixX", sizeXfix) << " <= " << " fixX0" << range(wE-1 + wF+g + wFIn+1 -1, wFIn) << " and "<<rangeAssign(sizeXfix-1,0,"not(resultWillBeOne)")<<";" << endl;
+
+		vhdl << tab << declare("fixX", sizeXfix) << " <= " << " fixX0" << range(wE-1 + wF+g + wFIn+1 -1, wFIn) << "when resultWillBeOne='0' else " << zg(sizeXfix) <<  ";" << endl;		
 
 		int lsbXforFirstMult=-3; 
 		int sizeXMulIn = wE-2 - lsbXforFirstMult +1; // msb=wE-2, lsb=-3
