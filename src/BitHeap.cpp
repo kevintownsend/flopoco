@@ -191,7 +191,7 @@ namespace flopoco
 		list<WeightedBit*>::iterator it=l.begin(); 
 		bool proceed=true;
 		while(proceed) {
-			if (it==l.end() || (**it <= *bit)){ // test in this order to avoid segfault!
+			if (it==l.end() || (*bit <= **it)){ // test in this order to avoid segfault!
 				l.insert(it, bit);
 				proceed=false;
 			}
@@ -259,6 +259,14 @@ namespace flopoco
 
     	op->vhdl << endl;
 
+	WeightedBit* b =  computeLatest(i, bc->getColumnSize(0), bc->getColumnSize(1)) ; 
+	REPORT(DEBUG, "name " << b->getName() << " cycle " <<b->getCycle());
+	op->vhdl << "-- name " << b->getName() << " cycle " <<b->getCycle() << endl;
+	op->setCycle(  b ->getCycle()  );
+    	op->setCriticalPath(  b ->getCriticalPath(op->getCurrentCycle()));
+        op->manageCriticalPath(op->getTarget()->lutDelay());
+
+
     	for(unsigned j=0; j<bc->height.size(); j++)
     	{
     		if (bc->getColumnSize(j)==1)
@@ -275,10 +283,7 @@ namespace flopoco
     	op->outPortMap(bc, "R", join("out_concat_", compressorIndex,"_", outConcatIndex));
     
 
-	op->setCycle(  computeLatest(i, bc->getColumnSize(0), bc->getColumnSize(1))  ->getCycle()  );
-    	op->setCriticalPath(  computeLatest(i, bc->getColumnSize(0), bc->getColumnSize(1))  ->getCriticalPath(op->getCurrentCycle()));
-        op->manageCriticalPath(op->getTarget()->lutDelay());
-
+	
 	//op->manageCriticalPath(op->getCriticalPath()+op->getTarget()->lutDelay());
     	//op->addToCriticalPath(op->getTarget()->lutDelay());
 	//op->manageCriticalPath();
@@ -449,7 +454,7 @@ namespace flopoco
         }
 	        
 	REPORT(DEBUG, "ADDER VHDL");
-	op->nextCycle();
+	
         adderVHDL();
 	REPORT(DEBUG, "ADDER VHDL DONE");
 
@@ -499,6 +504,7 @@ namespace flopoco
 		inAdder0 << ";";
 		inAdder1 << ";";
 
+		op->manageCriticalPath(op->getTarget()->adderDelay(maxWeight-minWeight));
 		REPORT(DEBUG, "SOME DECLARES1");
 		op->vhdl << tab << op->declare("inAdder0", maxWeight-minWeight) << "<= " << inAdder0.str() << endl;
 		op->vhdl << tab << op->declare("inAdder1", maxWeight-minWeight) << " <= " << inAdder1.str() << endl;
@@ -585,7 +591,7 @@ namespace flopoco
 					op->vhdl << "'0' & ";
 				}	
 			}
-			op->vhdl << " \"\"; -- already compressed" << endl; 
+			op->vhdl << "; -- already compressed" << endl; 
 			chunkDoneIndex++;			
 		}
 		
