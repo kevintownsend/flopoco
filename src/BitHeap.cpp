@@ -281,6 +281,11 @@ namespace flopoco
     	op->addToCriticalPath(op->getTarget()->lutDelay());
     	
 
+
+	reduce(i,bc->getColumnSize(0));
+    	if(bc->getColumnSize(1)!=0)
+    		reduce(i+1,bc->getColumnSize(1));
+		
     	addBit(i, join("out_concat_", compressorIndex,"_", outConcatIndex, "(0)"),"");
     	addBit(i+1,	join("out_concat_", compressorIndex,"_", outConcatIndex, "(1)"),"");
     	if(!((bc->getColumnSize(0)==3) && (bc->getColumnSize(1)==0)))
@@ -290,10 +295,10 @@ namespace flopoco
     	++compressorIndex;
     	++outConcatIndex;
 
-    	reduce(i,bc->getColumnSize(0));
+    	/*reduce(i,bc->getColumnSize(0));
     	if(bc->getColumnSize(1)!=0)
     		reduce(i+1,bc->getColumnSize(1));
-
+	*/
     }
 
 
