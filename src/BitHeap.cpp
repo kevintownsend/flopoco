@@ -265,7 +265,7 @@ namespace flopoco
 	op->setCycle(  b ->getCycle()  );
     	op->setCriticalPath(  b ->getCriticalPath(op->getCurrentCycle()));
         op->manageCriticalPath(op->getTarget()->lutDelay());
-
+													
 
     	for(unsigned j=0; j<bc->height.size(); j++)
     	{
@@ -583,13 +583,15 @@ namespace flopoco
 			for(int i=w-1; i>=0; i--) {
 				if(currentHeight(i)==1) 
 				{
-					op->vhdl << (bits[i].front())->getName()   << " & ";
+					op->vhdl << (bits[i].front())->getName();
 					bits[i].pop_front();
 				}
 				else
 				{
-					op->vhdl << "'0' & ";
-				}	
+					op->vhdl << "'0'";
+				}
+				if (i!=0)
+					op->vhdl << " & ";	
 			}
 			op->vhdl << "; -- already compressed" << endl; 
 			chunkDoneIndex++;			
