@@ -46,18 +46,33 @@ namespace flopoco {
 		// useDSP or not? 
 		useDSP = (ratio>0) & target->hasHardMultipliers();
 
+
+		{
+			ostringstream name;
+			name <<"IntMultiplier";
+			if(useDSP) 
+				name << "UsingDSP_";
+			else
+				name << "LogicOnly_";
+			name << wXdecl << "_" << wYdecl <<"_" << wOut << "_" << (signedIO?"signed":"unsigned") << "_uid"<<Operator::getNewUId();
+			setName ( name.str() );
+		}
+
+
 		// interface redundancy
 		if(wOut_<0 || wX_<0 || wY_<0) {
 			THROWERROR("negative input/output size");
 		}
-		if(wOut_>wX_+wY_){
-			THROWERROR("wOut>wX+wY ("<< wOut << ">" << wX_ <<"+"<<wY_<<")" );
-		}
+
 
 		if (signedIO)
 			wFull = wX_+wY_-1;
 			else
 			wFull = wX_+wY_;
+
+		if(wOut_ > wFull){
+			THROWERROR("wOut=" << wOut << " too large for " << (signedIO?"signed":"unsigned") << " " << wXdecl << "x" << wYdecl <<  " multiplier." );
+		}
 
 		if(wOut==0){ 
 			wOut=wFull;
@@ -76,16 +91,6 @@ namespace flopoco {
 			}
 			g=wFull-i-wOut;
 			REPORT(DEBUG, "ulp truncation error=" << ulperror << "    g=" << g);
-		}
-		{
-			ostringstream name;
-			name <<"IntMultiplier";
-			if(useDSP) 
-				name << "UsingDSP_";
-			else
-				name << "LogicOnly_";
-			name << wXdecl << "_" << wYdecl <<"_" << wOut << "_" << (signedIO?"signed":"unsigned") << "_uid"<<Operator::getNewUId();
-			setName ( name.str() );
 		}
 		// Set up the IO signals
 		addInput ( "X"  , wXdecl, true );
