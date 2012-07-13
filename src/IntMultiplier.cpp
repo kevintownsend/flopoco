@@ -382,140 +382,6 @@ namespace flopoco {
 			int weightShift = wFull - maxWeight;  
 			REPORT(DEBUG, "maxWeight=" << maxWeight <<  "    weightShift=" << weightShift);
 
-#if 0 // using NewIntCompressorTree
-
-			vector<unsigned int> currentHeight;
-			for(int i=0; i<wX+wY; i++)
-				currentHeight.push_back(0);
-					
-			// manageCriticalPath(target->localWireDelay(chunksX) + target->lutDelay());
-					
-			SmallMultTable *t = new SmallMultTable( target, dx, dy, dx+dy, false ); // unsigned
-			useSoftRAM(t);
-			oplist.push_back(t);
-
-			for (int iy=0; iy<chunksY; iy++){
-				vhdl << tab << "-- Partial product row number " << iy << endl;
-				for (int ix=0; ix<chunksX; ix++) { 
-					vhdl << tab << declare(XY(ix,iy), dx+dy) << " <= y" << iy << " & x" << ix << ";"<<endl;
-					inPortMap(t, "X", XY(ix,iy));
-					outPortMap(t, "Y", PP(ix,iy));
-					vhdl << instance(t, PPTbl(ix,iy));
-					vhdl << tab << "-- Adding these bits to the heap of bits" << endl << tab;
-					// ignore the bits that are actually from the padding. 
-					// In case of truncation, we still put the full lozange: truncation is handled when copying these bits to vectors
-					// This makes everything simpler, in particular signed case handling
-					// but the VHDL is longer than it could be
-					int maxK=dx+dy; 
-					if(ix == chunksX-1)
-						maxK-=padX;
-					if(iy == chunksY-1)
-						maxK-=padY;
-					for (int k=0; k<maxK; k++) {
-						int weight=ix*dx+iy*dy+k;
-						int height=currentHeight[weight];
-						vhdl << declare(heap(weight,height)) << " <= " << PP(ix,iy) << of(k) << ";   ";
-						currentHeight[weight] ++ ;
-					}
-					vhdl << endl;
-				}
-			}
-
-				
-			if(signedIO) {
-				int weight, height;
-				// reminder: wX and wY have been decremented
-				vhdl << tab << "-- Baugh-Wooley tinkering" << endl;
-				vhdl << tab << declare("sX") << " <= XX" << of(wX) << ";" << endl;
-				vhdl << tab << declare("sY") << " <= YY" << of(wY) << ";" << endl;
-				vhdl << tab << declare("rX", wX) << " <= XX" << range(wX-1, 0) << ";" << endl;
-				vhdl << tab << declare("rY", wY) << " <= YY" << range(wY-1, 0) << ";" << endl;
-				vhdl << tab << declare("sXrYb", wY) << " <= not rY when sX='1' else " << zg(wY) << ";" << endl;
-				vhdl << tab << declare("sYrXb", wX) << " <= not rX when sY='1' else " << zg(wX) << ";" << endl;
-				vhdl << tab << "-- Adding these bits to the heap of bits" << endl << tab;
-				for (int k=0; k<wX; k++) {
-					weight=wY+k;
-					height=currentHeight[weight];
-					vhdl << declare(heap(weight,height)) << " <= sYrXb" << of(k) << ";  ";
-					currentHeight[weight] ++ ;
-				}
-				vhdl << endl << tab;
-				for (int k=0; k<wY; k++) {
-					weight=wX+k;
-					height=currentHeight[weight];
-					vhdl << declare(heap(weight,height)) << " <= sXrYb" << of(k) << ";  ";
-					currentHeight[weight] ++ ;
-				}
-				vhdl << endl;
-				// adding sX and sY at positions wX and wY
-				weight=wX;
-				height=currentHeight[weight];
-				vhdl << declare(heap(weight,height)) << " <= sX;  ";
-				currentHeight[weight] ++ ;
-				weight=wY;
-				height=currentHeight[weight];
-				vhdl << declare(heap(weight,height)) << " <= sY;  ";
-				currentHeight[weight] ++ ;
-				// adding sXb and sYb at position wX+wY
-				weight=wX+wY;
-				height=currentHeight[weight];
-				vhdl << tab << declare(heap(weight,height)) << " <= not sX;  ";
-				vhdl << declare(heap(weight,height+1)) << " <= not sY;  " << endl;
-				currentHeight[weight] +=2 ;
-				// adding sXsY at position wX+wY
-				weight=wX+wY;
-				height=currentHeight[weight];
-				vhdl << tab << declare(heap(weight,height)) << " <= sX and sY;" << endl;
-				currentHeight[weight] ++ ;		 
-
-#if 0
-				// adding 1 at position wX+wY+1
-				weight=wX+wY+1;
-				height=currentHeight[weight];
-				vhdl << tab << declare(heap(weight,height)) << " <= '1';" << endl;
-				currentHeight[weight] ++ ;		 
-#endif
-
-				// restore wX and wY
-				wX++;
-				wY++;
-			
-			}
-
-			if(g>0) {
-				int weight=wFull-wOut-1;
-				int height=currentHeight[weight];
-				vhdl << tab << declare(heap(weight,height)) << " <= '1';   -- The round bit"  << endl;
-				currentHeight[weight] ++ ;
-			}
-			vhdl << tab << "-- Now building the heap vectors" << endl;
-			
-			vector<unsigned> finalHeapSizes;
-			for(int weight=0;	weight<maxWeight; weight++) {
-				int bitWeight = weight + weightShift; // Here is where we manage truncation
-				finalHeapSizes.push_back(currentHeight[bitWeight]);
-				vhdl << tab << declare(join("HeapVector", weight), currentHeight[bitWeight]) << " <= " ;
-				for (unsigned h=0; h<currentHeight[bitWeight]; h++) 
-					vhdl << heap(bitWeight,h) <<  " & ";
-				vhdl <<  "\"\";" << endl;
-				// first copy the height vector, 
-			}
-
-			// Now instantiate a compressor tree
-			NewCompressorTree *ct  = new NewCompressorTree(target, finalHeapSizes);
-			oplist.push_back(ct);
-
-			for(int weight=0;	weight<maxWeight; weight++) {
-				inPortMap(ct, join("X",weight),  join("HeapVector", weight));
-			}
-			outPortMap(ct, "R", "RR");
-			vhdl << instance(ct, "Compressor");
-			//		int ctOutSize=ct->wOut;
-			// ctOutSize = wOut+1 but we know that the result always fits on wOut bits
-			vhdl << tab << "R <= " << "RR" << range(wOut+g-1, g) << ";" << endl; 
-
-#else  // using BitHeap
-
 			SmallMultTable *t = new SmallMultTable( target, dx, dy, dx+dy, false ); // unsigned
 			useSoftRAM(t);
 			oplist.push_back(t);
@@ -581,7 +447,7 @@ namespace flopoco {
 				bitHeap->addBit(weight, "sY");
 				// adding sXb and sYb at position wX+wY
 				weight=wX+wY - weightShift;
-				bitHeap->addBit(weight, "not sY");
+				bitHeap->addBit(weight, "not sX");
 				bitHeap->addBit(weight, "not sY");
 				// adding sXsY at position wX+wY
 				weight=wX+wY - weightShift;
@@ -600,8 +466,6 @@ namespace flopoco {
 			// And that's it, now go compress
 			bitHeap -> generateCompressorVHDL();			
 			vhdl << tab << "R <= CompressionResult(" << wOut+g-1 << " downto "<< g << ");" << endl;
-
-#endif
 		
 		}
 		
