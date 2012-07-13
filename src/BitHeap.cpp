@@ -205,16 +205,19 @@ namespace flopoco
 		op->vhdl <<  " -- " << "cycle= "<< bit->getCycle() <<" cp= "<<bit->getCriticalPath(bit->getCycle());		
 		op->vhdl <<  endl;		
 		
-		REPORT(DEBUG, "added bit on column " << w);	
+		REPORT(DEBUG, "added bit on column " << w <<" cycle= "<< bit->getCycle() <<" cp= "<<bit->getCriticalPath(bit->getCycle()));
+		
+		printColumnInfo(w);	
 	};
 
 
-	void BitHeap::removeBit(unsigned weight, int dir){
+	void BitHeap::removeBit(unsigned weight, int dir)
+	{
 		
 		list<WeightedBit*>& l=bits[weight];
     
 
-    //if dir=0 the bit will be removed from the begining of the list, else from the end of the list of weighted bits
+		//if dir=0 the bit will be removed from the begining of the list, else from the end of the list of weighted bits
 		if(dir==0)
 			l.pop_front();
 		else if(dir==1)
@@ -260,11 +263,11 @@ namespace flopoco
     	op->vhdl << endl;
 
 	WeightedBit* b =  computeLatest(i, bc->getColumnSize(0), bc->getColumnSize(1)) ; 
-	REPORT(DEBUG, "name " << b->getName() << " cycle " <<b->getCycle());
+	REPORT(DEBUG, "name " << b->getName() << " cycle " <<b->getCycle() << " cp " << b->getCriticalPath(b->getCycle()));
 	op->vhdl << "-- name " << b->getName() << " cycle " <<b->getCycle() << endl;
 	op->setCycle(  b ->getCycle()  );
     	op->setCriticalPath(  b ->getCriticalPath(op->getCurrentCycle()));
-        op->manageCriticalPath(op->getTarget()->lutDelay());
+        op->manageCriticalPath(b->getCriticalPath(op->getCurrentCycle()) + op->getTarget()->lutDelay());
 													
 
     	for(unsigned j=0; j<bc->height.size(); j++)
@@ -283,21 +286,12 @@ namespace flopoco
     	op->outPortMap(bc, "R", join("out_concat_", compressorIndex,"_", outConcatIndex));
     
 
-	
-	//op->manageCriticalPath(op->getCriticalPath()+op->getTarget()->lutDelay());
-    	//op->addToCriticalPath(op->getTarget()->lutDelay());
-	//op->manageCriticalPath();
+
 
 	op->vhdl << tab << op->instance(bc, join("Compressor_",compressorIndex))<<endl;
 
     	
-	//PIPELINE STUFF
-	//op->setCycle(  computeLatest(i, bc->getColumnSize(0), bc->getColumnSize(1))  ->getCycle()  );
-    	//op->setCriticalPath(  computeLatest(i, bc->getColumnSize(0), bc->getColumnSize(1))  ->getCriticalPath(op->getCurrentCycle()));
-	//op->manageCriticalPath(op->getCriticalPath()+op->getTarget()->lutDelay());
-	
-        //op->addToCriticalPath(op->getTarget()->lutDelay());
-    	//PIPELINE STUFF END
+
 
 
 	reduce(i,bc->getColumnSize(0));
@@ -313,10 +307,6 @@ namespace flopoco
     	++compressorIndex;
     	++outConcatIndex;
 
-    	/*reduce(i,bc->getColumnSize(0));
-    	if(bc->getColumnSize(1)!=0)
-    		reduce(i+1,bc->getColumnSize(1));
-	*/
     }
 
 
@@ -350,23 +340,60 @@ namespace flopoco
 		if(&wb == NULL )
 			return 0;
 		int bitsToCompress=0;
-		for (list<WeightedBit*>::iterator iter = wb.begin(), end = wb.end(); iter != end; ++iter)
+		list<WeightedBit*>::iterator it = wb.begin();
+		
+		if(op->getTarget()->isPipelined())
 		{
-			if (((*iter)->todo()==true)&&((*iter)->getCycle()<=cycle)){
-    				bitsToCompress++;
-    			}
+			for (list<WeightedBit*>::iterator iter = wb.begin(), end = wb.end(); iter != end; ++iter)
+			{
+				if ((*iter)->getCycle()<=cycle)
+				{
+    					bitsToCompress++;
+    				}
+			}
 		}
+		else
+		{
+			for (list<WeightedBit*>::iterator iter = wb.begin(), end = wb.end(); iter != end; ++iter)
+			{
+				if (  ((*iter)->getCycle()<cycle) ||  
+					(((*iter)->getCycle()==cycle)  &&  ((*iter)->getCriticalPath(cycle) <= (*it)->getCriticalPath(cycle))) )
+				{
+    					bitsToCompress++;
+    				}
+			}
+			
+			if(wb.size()>2)
+			{
+				double delta = op->getTarget()->lutDelay();
+				while(bitsToCompress<=2)
+				{
+					bitsToCompress=0;
+					it = wb.begin();
+					for (list<WeightedBit*>::iterator iter = wb.begin(), end = wb.end(); iter != end; ++iter)
+					{
+						if (  ((*iter)->getCycle()<cycle) ||  
+							(((*iter)->getCycle()==cycle)  &&  ((*iter)->getCriticalPath(cycle) <= (*it)->getCriticalPath(cycle) + delta)) )
+						{
+    							bitsToCompress++;
+    						}
+					}
+					delta += op->getTarget()->lutDelay();
+				}
+			}
+		}
+		
 		return bitsToCompress;
 	}
 
 	void BitHeap::reduce(int c, int red)
 	{
 
-       while(red>0)
-       {
-       	removeBit(c,0);
-       	red--;
-       }
+		while(red>0)
+		{
+		       	removeBit(c,0);
+		       	red--;
+		}
 
 	}
 
@@ -375,26 +402,26 @@ namespace flopoco
 
  	{
 		int max=0; 
-			for(int i=0; i<bits.size();i++)
-			{
-              if(bits[i].size()>max)
-              	max=bits[i].size();
-			}
-     return max;
+		for(int i=0; i<bits.size();i++)
+		{
+			if(bits[i].size()>max)
+	              		max=bits[i].size();
+		}
+		return max;
 
 	}
-	// There are two distinct notions: compression stages, and compression cycles. Several stages can fit in one cycle.
+
 
 
 	
      vector<BasicCompressor *> possibleCompressors (0, (BasicCompressor*) 0);
      
 
-     void BitHeap::generatePossibleCompressors()
-    {
+	void BitHeap::generatePossibleCompressors()
+	{
     	//Build a vector of basic compressors that are fit for this target
-		//Size 10 should cover all possible compressors at this time
-		//Not very elegant, but should work
+	//Size 10 should cover all possible compressors at this time
+	//Not very elegant, but should work
 		vector<BasicCompressor *>& pC=possibleCompressors;
 		int maxCompressibleBits, col0, col1;
 
@@ -413,52 +440,91 @@ namespace flopoco
 					pC.push_back(new BasicCompressor(op->getTarget(), newVect));
 				}
         
-    }
+	}
 
+	
+	void BitHeap::printColumnInfo(int w)
+	{
+		int i=0;
+		
+		for(list<WeightedBit*>::iterator it = bits[w].begin(); it!=bits[w].end(); ++it)
+		{
+			REPORT(DEBUG, "element "<<i<<" cycle = "<<(*it)->getCycle() << " and cp = "<<(*it)->getCriticalPath((*it)->getCycle()));
+			i++; 
+		}
+	}
 
 	void BitHeap::generateCompressorVHDL()
 	{
 	
-		// Should be while (maxheight>2) compress();
-		// then a second loop which does the final addition, pipelined
 
 		generatePossibleCompressors();
 
 		op->vhdl << tab << "-- Beginning of code generated by BitHeap::generateCompressorVHDL" << endl;
+		minWeight=0;
 
-        while (getMaxHeight()>2)
+        	while (getMaxHeight()>2)
         	{
          		compress();
         	}
          
          
 
-        REPORT(DEBUG, "Column height after all compressions");
+        	REPORT(DEBUG, "Column height after all compressions");
 		for (int w=0; w<bits.size(); w++) 
 		{
-			REPORT(DEBUG, "   w=" << w << ":\t height=" << bits[w].size()); 
+			REPORT(DEBUG, "   w=" << w << ":\t height=" << bits[w].size());
+			printColumnInfo(w);  
 		}	
 
        
 	
-	 REPORT(DEBUG, "PUSHBACK USED COMPRESSORS");
-        for(int i=0;i<10;i++)
-        {
-         	if (usedCompressors[i]==true)
-         	{	 REPORT(DEBUG, "PUSHBACK USED COMPRESSORS33 "<<i );
 
-			//???????????????????????????????????????????????????????????????????????????????
-         		 op->getOpListR().push_back(possibleCompressors[i]);
-			//csak 2szer irja ki a reportot mikor 3x kene kiirja
-         	}
-        }
+        	for(int i=0;i<10;i++)
+       		{
+         		if (usedCompressors[i]==true)
+         		{	
+         			 op->getOpListR().push_back(possibleCompressors[i]);
+         		}
+       	 	}
 	        
-	REPORT(DEBUG, "ADDER VHDL");
+        	adderVHDL();
+
+
+
+	}
 	
-        adderVHDL();
-	REPORT(DEBUG, "ADDER VHDL DONE");
-
-
+	BitHeap::WeightedBit* BitHeap::getFinalLatestBit()
+	{
+	
+		double maxCycle=0;
+		double maxCP = 0;
+		WeightedBit **b;
+		for(int w=minWeight; w<maxWeight; w++)
+		{
+			
+			
+			if (bits[w].size() >= 1)
+			{
+    				for(list<WeightedBit*>::iterator it = bits[w].begin(); it!=bits[w].end(); ++it)
+    				{
+    					if (maxCycle < (*it)->getCycle())
+    					{
+    						maxCycle = (*it)->getCycle();
+    						maxCP = (*it)->getCriticalPath(maxCycle);
+    						b = &*it;
+    					}
+    					else
+      						if ((maxCycle == (*it)->getCycle())  &&  (maxCP < (*it)->getCriticalPath(maxCycle)))
+      						{
+      							maxCP = (*it)->getCriticalPath(maxCycle);
+          						b = &*it;
+          					}
+    				}
+			}
+		}	
+		
+		return *b;
 	}
 
 	void BitHeap::adderVHDL()
@@ -468,21 +534,21 @@ namespace flopoco
 		stringstream inAdder0, inAdder1, outAdder;
 
 		unsigned i=maxWeight-1;
-		REPORT(DEBUG, "BEFORE WHILE");
+	
 		while((i>=minWeight)&&(i<maxWeight))
 		{
 
 			if(i>=0)
-			{    REPORT(DEBUG, "if(i>=0)");
+			{  
 				list<WeightedBit*>::iterator it = bits[i].begin();
 				if(bits[i].size()==2)
-				{ REPORT(DEBUG, "if(bits[i].size()==2))");
+				{ 
 					inAdder0 << (*it)->getName();
 					it++;
 					inAdder1 << (*it)->getName();
 				}
 				else
-				{   REPORT(DEBUG, "ELSE");
+				{
 					inAdder0 << (*it)->getName();
 					inAdder1 << "\'0\'";
 				}
@@ -490,22 +556,26 @@ namespace flopoco
 		
 
 				if (i!=minWeight)
-				{     REPORT(DEBUG, "if (i!=minWeight))");
+				{
 					inAdder0<<" & "; 
 					inAdder1<<" & ";
 				}
 			}
-		         REPORT(DEBUG, "I--");
+
 			--i;
 		}
 
-		REPORT(DEBUG, "AFTER WHILE");
+		
 
 		inAdder0 << ";";
 		inAdder1 << ";";
+		
+		WeightedBit* b = getFinalLatestBit();
+		
+		op->setCycle(  b ->getCycle()  );
+    		op->setCriticalPath(  b->getCriticalPath(op->getCurrentCycle()));
+        	op->manageCriticalPath(b->getCriticalPath(op->getCurrentCycle()) + op->getTarget()->adderDelay(maxWeight-minWeight));
 
-		op->manageCriticalPath(op->getTarget()->adderDelay(maxWeight-minWeight));
-		REPORT(DEBUG, "SOME DECLARES1");
 		op->vhdl << tab << op->declare("inAdder0", maxWeight-minWeight) << "<= " << inAdder0.str() << endl;
 		op->vhdl << tab << op->declare("inAdder1", maxWeight-minWeight) << " <= " << inAdder1.str() << endl;
 
@@ -514,18 +584,17 @@ namespace flopoco
 
 
 
-		REPORT(DEBUG, "SOME DECLARES2");
+
    		op->vhdl << tab << "-- concatenate all the compressed chunks" << endl;
-		REPORT(DEBUG, "MAXWEIGHT= "<<maxWeight);
-		REPORT(DEBUG, "WHY CRASHES HERE? ");
+
 
 		op->vhdl << tab << op->declare("CompressionResult", (maxWeight+1)) << " <= outAdder ";
 
 
-		REPORT(DEBUG, "BEFORE FOR, CHUNK INDEX= "<<chunkDoneIndex);
+
 		for(int i=chunkDoneIndex-1; i>=0; i--)
 			op->vhdl <<  " & " << join("tempR", i);
-		REPORT(DEBUG, "AFTER FOR");
+
 		op->vhdl << ";" << endl;
 		op->vhdl << tab << "-- End of code generated by BitHeap::generateCompressorVHDL" << endl;
 
@@ -547,20 +616,19 @@ namespace flopoco
 		
 		vector<BasicCompressor*> compressors (n+1, (BasicCompressor*) 0);
 		
-		
-		//unsigned stage=0;
-		//bool isPipelined=target->isPipelined();
+
 
 		REPORT(DEBUG, "maxWeight="<< maxWeight);
 		REPORT(DEBUG, "Column height before compression");
 		for (w=0; w<bits.size(); w++) {
-			REPORT(DEBUG, "   w=" << w << ":\t height=" << bits[w].size()); 
+			REPORT(DEBUG, "   w=" << w << ":\t height=" << bits[w].size());
+			printColumnInfo(w); 
 		}		
 
 		
 		REPORT(DEBUG, "Checking whether rightmost columns need compressing");
 		bool alreadyCompressed=true;
-		w=0;
+		w=minWeight;
 		while(w<bits.size() && alreadyCompressed) 
 		{
 			
@@ -575,12 +643,20 @@ namespace flopoco
 				w++;
 			}
 		}
+		
+		
 
-		//FIXME Two poorly done concatenations here, must be checked after the compression is fully done
-		if(w!=0)
+
+		if(w!=minWeight)
 		{
-			op->vhdl << tab << op->declare(join("tempR", chunkDoneIndex), w, true) << " <= " ;
-			for(int i=w-1; i>=0; i--) {
+			if (w-minWeight>1)
+				op->vhdl << tab << op->declare(join("tempR", chunkDoneIndex), w-minWeight, true) << " <= " ;
+			else
+				op->vhdl << tab << op->declare(join("tempR", chunkDoneIndex), 1, false) << " <= " ;
+			unsigned i=w-1;
+			while((i>=minWeight)&&(i<w)) 
+			{
+				REPORT(DEBUG,"crash "<<i);
 				if(currentHeight(i)==1) 
 				{
 					op->vhdl << (bits[i].front())->getName();
@@ -590,8 +666,9 @@ namespace flopoco
 				{
 					op->vhdl << "'0'";
 				}
-				if (i!=0)
+				if (i!=minWeight)
 					op->vhdl << " & ";	
+				i--;
 			}
 			op->vhdl << "; -- already compressed" << endl; 
 			chunkDoneIndex++;			
@@ -603,7 +680,12 @@ namespace flopoco
 
 		REPORT(DEBUG, "minWeight="<< minWeight);
 		
-
+		int cnt[maxWeight-minWeight];
+		
+		for(int i=minWeight; i<maxWeight; i++)
+		{
+			cnt[i] = bits[i].size();
+		}
 		
 		
 		REPORT(DEBUG,"start compressing");
@@ -618,13 +700,14 @@ namespace flopoco
 			
 
 			// map the best compressor as many times as possible 
-			while(count(bits[i], op->getCurrentCycle()) >= possibleCompressors[j]->getColumnSize(0))
+			while(cnt[i] >= possibleCompressors[j]->getColumnSize(0))
 			{
 				
 				
 				//compressors.push_back(possibleCompressors[j]) ;
+				REPORT(DEBUG,endl);
 				REPORT(DEBUG,"Using Compressor " << j <<", reduce column "<<i);
-				
+				cnt[i]-=possibleCompressors[j]->getColumnSize(0);
 				elemReduce(i,possibleCompressors[j]);
 				usedCompressors[j]=true;
 
@@ -634,19 +717,22 @@ namespace flopoco
 
 			++j;
 
-			while(   (j < possibleCompressors.size())   &&   ( count(bits[i],op->getCurrentCycle()) > 2 )   )
+			while(   (j < possibleCompressors.size())   &&   ( cnt[i] > 2 )   )
 			{
 
-				if(   count(bits[i],op->getCurrentCycle())  >=  possibleCompressors[j]->getColumnSize(0)   )
+				if(   cnt[i]  >=  possibleCompressors[j]->getColumnSize(0)   )
 				{
 					if(possibleCompressors[j]->getColumnSize(1)!=0)
 					{
 
-						if((count(bits[i+1], op->getCurrentCycle())>=possibleCompressors[j]->getColumnSize(1))&&(i<bits.size()-1))
+						if((cnt[i+1]>=possibleCompressors[j]->getColumnSize(1))&&(i<bits.size()-1))
 						{
-							
-							elemReduce(i,possibleCompressors[j]);
+							REPORT(DEBUG,endl);
 							REPORT(DEBUG,"Using Compressor " << j <<", reduce columns "<<i<<" and "<<i+1);
+							cnt[i]-=possibleCompressors[j]->getColumnSize(0);
+							cnt[i+1]-=possibleCompressors[j]->getColumnSize(1);
+							elemReduce(i,possibleCompressors[j]);
+							
 							usedCompressors[j]=true;
 						}
 						else 
@@ -654,9 +740,10 @@ namespace flopoco
 					}
 					else
 					{
-						
-						elemReduce(i,possibleCompressors[j]);
+						REPORT(DEBUG,endl);
 						REPORT(DEBUG,"Using Compressor " << j <<", reduce column "<<i);
+						elemReduce(i,possibleCompressors[j]);
+						cnt[i]-=possibleCompressors[j]->getColumnSize(0);
 						usedCompressors[j]=true;
 						++j;
 					}

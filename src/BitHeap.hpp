@@ -122,6 +122,8 @@ namespace flopoco{
         void elemReduce(int i, BasicCompressor* bc);
 
         BitHeap::WeightedBit* computeLatest(int w, int c0, int c1);
+        
+        BitHeap::WeightedBit* getFinalLatestBit();
 
         
         /** remove a bit from the bitheap.
@@ -151,7 +153,9 @@ namespace flopoco{
 
 		/** counts the bits not processed yet in wb */
 		int count(list<WeightedBit*> wb, int cycle);
-
+		
+		void printColumnInfo(int w);
+		
 		void generatePossibleCompressors();
 
 		/** marks the compressed bits as done*/
