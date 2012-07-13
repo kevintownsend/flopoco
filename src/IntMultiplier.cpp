@@ -374,8 +374,8 @@ namespace flopoco {
 				vhdl<<tab<<declare(join("y",k),dy)<<" <= Yp"<<range((k+1)*dy-1, k*dy)<<";"<<endl;
 					
 			int maxWeight = wOut+g;
-			int weightShift = wFull -(wOut+g);
-			REPORT(DEBUG, "maxWeight=" << maxWeight);
+			int weightShift = wFull - maxWeight;  
+			REPORT(DEBUG, "maxWeight=" << maxWeight <<  "    weightShift=" << weightShift);
 
 #if 0 // using NewIntCompressorTree
 
@@ -545,7 +545,7 @@ namespace flopoco {
 
 				
 			if(signedIO) {
-				int weight, height;
+				int weight;
 				// reminder: wX and wY have been decremented
 				vhdl << tab << "-- Baugh-Wooley tinkering" << endl;
 				vhdl << tab << declare("sX") << " <= XX" << of(wX) << ";" << endl;
@@ -594,7 +594,7 @@ namespace flopoco {
 
 			// And that's it, now go compress
 			bitHeap -> generateCompressorVHDL();			
-			vhdl << tab << "R <= CompressionResult(" << wOut-1 << " downto 0);" << endl;
+			vhdl << tab << "R <= CompressionResult(" << wOut+g-1 << " downto "<< g << ");" << endl;
 
 #endif
 		
