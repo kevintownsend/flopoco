@@ -2295,7 +2295,7 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 			int wF = checkStrictlyPositive(argv[i++], argv[0]);
 			int j = checkStrictlyPositive(argv[i++], argv[0]);
 			int wECotran = atoi(argv[i++]);
-			int o = atoi(argv[i++]);
+			// int o = atoi(argv[i++]); commented by F2D to suppress one warning
 			op = new Cotran(target, wE, wF, j, wECotran);
 			addOperator(oplist, op);
 		}
@@ -2308,7 +2308,7 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 			int wF = checkStrictlyPositive(argv[i++], argv[0]);
 			int j = checkStrictlyPositive(argv[i++], argv[0]);
 			int wECotran = atoi(argv[i++]);
-			int o = atoi(argv[i++]);
+			// int o = atoi(argv[i++]); commented by F2D to suppress one warning
 			op = new CotranHybrid(target, wE, wF, j, wECotran);
 			addOperator(oplist, op);
 		}
