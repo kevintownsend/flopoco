@@ -158,8 +158,8 @@ namespace flopoco{
 		
 		void generatePossibleCompressors();
 
-		/** marks the compressed bits as done*/
-		void reduce(int c, int red);
+		/** remove the compressed bits */
+		void removeCompressedBits(int c, int red);
 
         /** returns the maximum height list from the bitheap vector*/
 		int getMaxHeight();
