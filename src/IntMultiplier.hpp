@@ -72,11 +72,11 @@ protected:
 	int wY;                         /**< the width for Y after possible swap such that wX>wY */
 	int wOut;
 	int wFull;                      /**< size of the full product: wX+wY-1 if signed, wX+wY if unsigned */
-	int wTruncated;
+	int wTruncated;                 /*%< The number of truncated bits, wFull - wOut*/
 	int signedIO;
 	double ratio;
-	double maxError; /**< the max absolute value error of this multiplier, in ulps of the result. Should be 0 for untruncated, 1 or a bit less for truncated.*/  
-	int g ; /**< the number of guard bits*/
+	double maxError;     /**< the max absolute value error of this multiplier, in ulps of the result. Should be 0 for untruncated, 1 or a bit less for truncated.*/  
+	int g ;              /**< the number of guard bits*/
 	
 private:
 	bool useDSP;
