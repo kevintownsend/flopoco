@@ -179,7 +179,8 @@ namespace flopoco
 		if(bits.size()==w)
 			{
 				bits.push_back(t);
-				maxWeight++;
+				//maxWeight++;
+				
 			}
 
 		WeightedBit* bit= new WeightedBit(this, w) ;
@@ -315,59 +316,6 @@ namespace flopoco
 	}
 	
 
-
-	int BitHeap::count(list<WeightedBit*> wb, int cycle)
-	{
-		if(&wb == NULL )
-			return 0;
-		int bitsToCompress=0;
-		list<WeightedBit*>::iterator it = wb.begin();
-		
-		if(op->getTarget()->isPipelined())
-			{
-				for (list<WeightedBit*>::iterator iter = wb.begin(), end = wb.end(); iter != end; ++iter)
-					{
-						if ((*iter)->getCycle()<=cycle)
-							{
-								bitsToCompress++;
-							}
-					}
-			}
-		else
-			{
-				for (list<WeightedBit*>::iterator iter = wb.begin(), end = wb.end(); iter != end; ++iter)
-					{
-						if (  ((*iter)->getCycle()<cycle) ||  
-						      (((*iter)->getCycle()==cycle)  &&  ((*iter)->getCriticalPath(cycle) <= (*it)->getCriticalPath(cycle))) )
-							{
-								bitsToCompress++;
-							}
-					}
-			
-				if(wb.size()>2)
-					{
-						double delta = op->getTarget()->lutDelay();
-						while(bitsToCompress<=2)
-							{
-								bitsToCompress=0;
-								it = wb.begin();
-								for (list<WeightedBit*>::iterator iter = wb.begin(), end = wb.end(); iter != end; ++iter)
-									{
-										if (  ((*iter)->getCycle()<cycle) ||  
-										      (((*iter)->getCycle()==cycle)  &&  ((*iter)->getCriticalPath(cycle) <= (*it)->getCriticalPath(cycle) + delta)) )
-											{
-												bitsToCompress++;
-											}
-									}
-								delta += op->getTarget()->lutDelay();
-							}
-					}
-			}
-		
-		return bitsToCompress;
-	}
-
-	
 	void BitHeap::removeCompressedBits(int c, int red)
 	{
 		while(red>0)
@@ -446,6 +394,7 @@ namespace flopoco
 
 		while (getMaxHeight()>2)
 			{
+				maxWeight=bits.size();
 				compress();
 			}
          
