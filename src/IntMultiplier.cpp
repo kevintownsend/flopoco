@@ -279,22 +279,17 @@ namespace flopoco {
 		for(int i=0;i<horDSP;i++)
 			for(int j=0;j<verDSP;j++)
 			{
+
 				vhdl << tab << declare (join("XXYY",k),wxDSP+wyDSP)<<" <= "<<join("XX",i)<<" * "<<join("YY",j)<<";"<<endl; 
-				vhdl << tab << declare (join("XXYY_",k),horDSP*wxDSP+verDSP*wyDSP)<< " <= "
-				<<zg(horDSP*wxDSP+verDSP*wyDSP-(wxDSP+wyDSP+(i*wxDSP)+(j*wyDSP)))<<" & " <<(join("XXYY",k)) 
-				<<" & "<< zg((i*wxDSP)+(j*wyDSP))<<";"<<endl; 
+				for(int l=wxDSP+wyDSP-1;l>=0;l--)
+				{
+					vhdl << tab << declare (join("PP_DSP_X",i,"Y",j,"_",l))<<"<=XXYY"<<k<<"("<<l<<");"<<endl;
+					bitHeap->addBit(l+(i*wxDSP)+(j*wyDSP),join("PP_DSP_X",i,"Y",j,"_",l));
+				}
 				k++;		
 			}	
-		
-		vhdl<< tab <<declare("Rez",horDSP*wxDSP+verDSP*wyDSP) <<" <= ";
-		for(int i=0;i<k;i++)
-		{
-			vhdl<<tab << join("XXYY_",i);
-			if(i!=k-1)
-				vhdl<< tab << " + ";
-		}
-		vhdl <<" ; "<<endl; 
-		vhdl << tab << "R <= Rez;"<<endl;
+		bitHeap->generateCompressorVHDL();
+		vhdl << tab << "R <= CompressionResult(" << wOut+g-1 << " downto "<< g << ");" << endl;
 	
 	if(( wxDSP*horDSP<wX)||(wyDSP*verDSP<wY))
 	
