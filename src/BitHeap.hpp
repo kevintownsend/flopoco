@@ -169,11 +169,14 @@ namespace flopoco{
  		string getResultVHDLName();
 	private:
 		Operator* op;
+		unsigned maxWeight;     /**< The compressor tree will produce a result for weights < maxWeight (work modulo 2^maxWeight)*/
+		unsigned minWeight; /**< bits smaller than this one are already compressed */    
 		bool usedCompressors[10];
 		unsigned chunkDoneIndex;
 		unsigned inConcatIndex;
 		unsigned outConcatIndex;
 		unsigned compressorIndex;
+        int cnt[100];
 		vector<int> uid;   /**< unique id, per weight */
 #if 0
 		const static int consumed=-1;
@@ -183,8 +186,7 @@ namespace flopoco{
 #else
 		vector<list<WeightedBit*> > bits; /**<  The list is ordered by arrival time of the bits, i.e. lexicographic order on (cycle, cp)*/
 #endif
-		unsigned maxWeight;     /**< The compressor tree will produce a result for weights < maxWeight (work modulo 2^maxWeight)*/
-		unsigned minWeight; /**< bits smaller than this one are already compressed */         
+     
 		string srcFileName;	};
 
 

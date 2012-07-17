@@ -189,14 +189,25 @@ namespace flopoco
 		//insert so that the list is sorted by bit cycle/delay
 		list<WeightedBit*>::iterator it=l.begin(); 
 		bool proceed=true;
-		while(proceed) {
-			if (it==l.end() || (*bit <= **it)){ // test in this order to avoid segfault!
+		int count=0;
+		while(proceed) 
+		{
+			if (it==l.end() || (*bit <= **it))
+			{ // test in this order to avoid segfault!
+
 				l.insert(it, bit);
 				proceed=false;
 			}
 			else 
+			{
+				count++;
 				it++;
+			}
 		}
+
+		if(count<cnt[w])
+			cnt[w]++;
+
 		// now generate VHDL
 		op->vhdl << tab << op->declare(bit->getName()) << " <= " << rhs << ";";
 		if(comment.size())
@@ -608,7 +619,7 @@ namespace flopoco
 
 		REPORT(DEBUG, "minWeight="<< minWeight);
 		
-		int cnt[maxWeight-minWeight];
+		
 		
 		for(int i=minWeight; i<maxWeight; i++)
 			{
