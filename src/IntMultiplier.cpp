@@ -85,10 +85,10 @@ namespace flopoco {
 		else {
 			unsigned i=0;
 			mpz_class ulperror=1;
-			while(wOut<wFull-intlog2(ulperror)) {
-				REPORT(DEBUG,"i = "<<i<<"  ulperror "<<ulperror<<"  wOut= "<<wOut<< "  wFull= "<<wFull);
+			while( wFull -wOut  > intlog2(ulperror)) {
+				REPORT(DEBUG,"i = "<<i<<"  ulperror "<<ulperror<<"  log:"<< intlog2(ulperror) << "  wOut= "<<wOut<< "  wFull= "<<wFull);
 				i++;
-				ulperror += (i+1)*(1<<i);
+				ulperror += (i+1)*(mpz_class(1)<<i);
 			}
 			g=wFull-i-wOut;
 			REPORT(DEBUG, "ulp truncation error=" << ulperror << "    g=" << g);
