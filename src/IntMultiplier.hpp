@@ -61,11 +61,11 @@ protected:
 	string XY(int i, int j);
 	string heap( int i, int j);
 
-	void buildLogicOnly();
+	void buildLogicOnly(int wX, int wY);
 
 
 	void buildTiling();
-	
+	int wxDSP, wyDSP;               /**< the width for X/Y in DSP*/
 	int wXdecl;                     /**< the width for X as declared*/
 	int wYdecl;                     /**< the width for Y  as declared*/
 	int wX;                         /**< the width for X after possible swap such that wX>wY */
