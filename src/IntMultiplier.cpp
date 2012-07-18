@@ -265,7 +265,7 @@ namespace flopoco {
 		int verDSP=wY/wyDSP;
 
 	
-		REPORT(DEBUG," wX= "<< wX << "wxDSP= "<< wxDSP <<" wY= "<< wY <<"wyDSP= "<<wyDSP <<" horDSP= "<<horDSP);
+		REPORT(DEBUG," wX="<< wX << " wxDSP="<< wxDSP <<" wY="<< wY <<" wyDSP="<<wyDSP <<" horDSP= "<<horDSP);
 		for(int i=0;i<horDSP;i++)
 			{
 			vhdl << tab << declare(join("XX",i), wxDSP) << " <= XX("<<((i+1)*wxDSP-1)<<" downto "<< (i*wxDSP) <<");"<<endl; 
@@ -279,15 +279,28 @@ namespace flopoco {
 		for(int i=0;i<horDSP;i++)
 			for(int j=0;j<verDSP;j++)
 			{
+				REPORT(DEBUG, "i="<<i<<" j="<<j);
+				REPORT(DEBUG,  "horDSP="<<horDSP<<" verDSP="<<verDSP);
 
 				vhdl << tab << declare (join("XXYY",k),wxDSP+wyDSP)<<" <= "<<join("XX",i)<<" * "<<join("YY",j)<<";"<<endl; 
 				for(int l=wxDSP+wyDSP-1;l>=0;l--)
 				{
-					vhdl << tab << declare (join("PP_DSP_X",i,"Y",j,"_",l))<<"<=XXYY"<<k<<"("<<l<<");"<<endl;
-					bitHeap->addBit(l+(i*wxDSP)+(j*wyDSP),join("PP_DSP_X",i,"Y",j,"_",l));
+					REPORT(DEBUG, wFull-wOut-g);
+					if (l+i*wxDSP+j*wyDSP>=wFull-wOut-g)
+					{
+						vhdl << tab << declare (join("PP_DSP_X",i,"Y",j,"_",l))<<"<=XXYY"<<k<<"("<<l<<");"<<endl;
+						REPORT(DEBUG, "insert here "<<l+(i*wxDSP)+(j*wyDSP)-(wFull-wOut-g));
+						bitHeap->addBit(l+(i*wxDSP)+(j*wyDSP)-(wFull-wOut-g),join("PP_DSP_X",i,"Y",j,"_",l));
+					}
 				}
 				k++;		
 			}	
+
+		if(g>0) {
+				int weight=g-1;
+				bitHeap->addBit(weight, "\'1\'", "The round bit");
+			}
+
 		bitHeap->generateCompressorVHDL();
 		vhdl << tab << "R <= CompressionResult(" << wOut+g-1 << " downto "<< g << ");" << endl;
 	
@@ -304,8 +317,6 @@ namespace flopoco {
 
 	
 	/******************************************************************************/
-
-
 
 
 
