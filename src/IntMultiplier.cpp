@@ -1,7 +1,7 @@
 /*
 An integer multiplier mess for FloPoCo
 
-Authors:  Bogdan Pasca, being cleaned by F de Dinechin
+Authors:  Bogdan Pasca, being cleaned by F de Dinechin, Kinga Illyes and Bogdan Popa
 
 This file is part of the FloPoCo project
 developed by the Arenaire team at Ecole Normale Superieure de Lyon
@@ -11,6 +11,26 @@ Copyright © ENS-Lyon, INRIA, CNRS, UCBL,
 2008-2010.
   All rights reserved.
 */
+
+
+
+
+/* A big TODO
+   For two's complement arithmetic on n bits, the representable interval is [ -2^{n-1}, 2^{n-1}-1 ]
+   so the product lives in the interval [-2^{n-1}*2^{n-1}-1,  2^n]
+   The value 2^n can only be obtained as the product of the two minimal negative input values
+   (the weird ones, which have no symmetric)
+   Example on 3 bits: input interval [-4, 3], output interval [-12, 16] and 16 can only be obtained by -4*-4.
+   So the output would be representable on 2n-1 bits in two's complement, if it werent for this weird*weird case.
+
+   So for full signed multipliers, we just keep the 2n bits, including one bit used for only for this weird*weird case.
+   But for truncated signed multipliers, we should hackingly round down this output to 2^n-1 to avoid carrying around a useless bit.
+   This would be a kind of saturated arithmetic I guess.
+
+   Beware, the last bit of Baugh-Wooley tinkering does not need to be added in this case. See the TODO there.
+  
+ */
+	
 
 #include <cstdlib>
 #include <iostream>
@@ -37,11 +57,10 @@ using namespace std;
 namespace flopoco {
 
 	
-	
 	IntMultiplier::IntMultiplier (Target* target, int wX_, int wY_, int wOut_, bool signedIO_, float ratio_,  map<string, double> inputDelays_):
 		Operator ( target, inputDelays_ ), wXdecl(wX_), wYdecl(wY_), wOut(wOut_), signedIO(signedIO_), ratio(ratio_), maxError(0.0) {
 		srcFileName="IntMultiplier";
-		setCopyrightString ( "Florent de Dinechin, Bogdan Pasca 2012" );
+		setCopyrightString ( "Florent de Dinechin, Kinga Illyes, Bogdan Popa, Bogdan Pasca, 2012" );
 		
 		// useDSP or not? 
 		useDSP = (ratio>0) & target->hasHardMultipliers();
@@ -60,15 +79,12 @@ namespace flopoco {
 
 
 		// interface redundancy
-		if(wOut_<0 || wX_<0 || wY_<0) {
+		if(wOut<0 || wXdecl<0 || wYdecl<0) {
 			THROWERROR("negative input/output size");
 		}
 
 
-		if (signedIO)
-			wFull = wX_+wY_-1;
-			else
-			wFull = wX_+wY_;
+			wFull = wXdecl+wYdecl;
 
 		if(wOut_ > wFull){
 			THROWERROR("wOut=" << wOut << " too large for " << (signedIO?"signed":"unsigned") << " " << wXdecl << "x" << wYdecl <<  " multiplier." );
@@ -77,6 +93,9 @@ namespace flopoco {
 		if(wOut==0){ 
 			wOut=wFull;
 		}
+
+		if(wOut<min(wXdecl, wYdecl))
+			REPORT(0, "wOut<min(wX, wY): it would probably be more economical to truncate the inputs first, instead of building this multiplier.");
 
 		wTruncated = wFull - wOut;
 
@@ -521,6 +540,11 @@ namespace flopoco {
 				// adding sXsY at position wX+wY
 				weight=wX+wY - weightShift;
 				bitHeap->addBit(weight, "sX and sY");
+				// adding the one at position wX+wY+1
+				// TODO: do not add this bit if we saturate a truncated mult, as it doesn't belong to the output range...
+				weight=wX+wY+1 - weightShift;
+				bitHeap->addBit(weight, "'1'");
+
 				// restore wX and wY
 				wX++;
 				wY++;
@@ -601,6 +625,15 @@ namespace flopoco {
 		// -1 * -1
 		x = (mpz_class(1) << wXdecl) -1; 
 		y = (mpz_class(1) << wYdecl) -1; 
+		tc = new TestCase(this); 
+		tc->addInput("X", x);
+		tc->addInput("Y", y);
+		emulate(tc);
+		tcl->add(tc);
+
+		// The product of the two max negative values overflows the signed multiplier
+		x = mpz_class(1) << (wXdecl -1); 
+		y = mpz_class(1) << (wYdecl -1); 
 		tc = new TestCase(this); 
 		tc->addInput("X", x);
 		tc->addInput("Y", y);
