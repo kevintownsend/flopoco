@@ -418,7 +418,7 @@ namespace flopoco
 
        
 	
-
+		REPORT(DEBUG, "before getOpList");
 		for(int i=0;i<10;i++)
 			{
 				if (usedCompressors[i]==true)
@@ -427,6 +427,7 @@ namespace flopoco
 					}
 			}
 	        
+		REPORT(DEBUG, "Before Adder");
 		adderVHDL();
 	}
 	
@@ -454,7 +455,7 @@ namespace flopoco
 										b = &*it;
 									}
 								else
-									if ((maxCycle == (*it)->getCycle())  &&  (maxCP < (*it)->getCriticalPath(maxCycle)))
+									if ((maxCycle == (*it)->getCycle())  &&  (maxCP <= (*it)->getCriticalPath(maxCycle)))
 										{
 											maxCP = (*it)->getCriticalPath(maxCycle);
 											b = &*it;
@@ -488,8 +489,16 @@ namespace flopoco
 							}
 						else
 							{
-								inAdder0 << (*it)->getName();
-								inAdder1 << "\'0\'";
+								if(bits[i].size()==1)
+								{
+									inAdder0 << (*it)->getName();
+									inAdder1 << "\'0\'";
+								}
+								else
+								{
+									inAdder0 << "\'0\'";
+									inAdder1 << "\'0\'";
+								}
 							}
 
 		
