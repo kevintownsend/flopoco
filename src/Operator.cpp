@@ -499,6 +499,7 @@ namespace flopoco{
 		if(isSequential()) {
 			currentCycle_=cycle;
 			vhdl.setCycle(currentCycle_);
+			criticalPath_ = 0;
 			if(report){
 				vhdl << tab << "----------------Synchro barrier, entering cycle " << currentCycle_ << "----------------" << endl ;
 			}

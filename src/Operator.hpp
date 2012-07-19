@@ -254,10 +254,10 @@ public:
  /*****************************************************************************/
 
 
-
 	/* Functions related to pipeline management */
+	// TODO We should introduce a notion of pipetime, which is (cycle, critical path) in lexicographic order.
 
-	/** Define the current cycle 
+	/** Define the current cycle, and resets the critical path 
 	 * @param the new value of the current cycle */
 	void setCycle(int cycle, bool report=true) ;
 
@@ -265,11 +265,11 @@ public:
 	 * @return the current cycle */
 	int getCurrentCycle(); 
 
-	/** Define the current cycle 
+	/** advance the current cycle by 1, and resets the critical path 
 	 * @param the new value of the current cycle */
 	void nextCycle(bool report=true) ;
 
-	/** Define the current cycle 
+	/** Define the current cycle, and reset the critical path
 	 * @param the new value of the current cycle */
 	void previousCycle(bool report=true) ;
 
@@ -306,6 +306,8 @@ public:
 	// param criticalPath is the critical path delay associated to this signal: typically getDelay(name)
 	// Shouldn't this be the default behaviour?
 	// Check current use and fix.
+
+
 
 	int getCycleFromSignal(string name, bool report = false);
 		
