@@ -61,10 +61,14 @@ protected:
 	string XY(int i, int j);
 	string heap( int i, int j);
 
-	void buildLogicOnly(int wX, int wY);
-
-
+	void buildLogicOnly();
 	void buildTiling();
+
+	void manageSignBeforeMult();            /*< to be called before either buildHeapLogicOnly or buildHeapTiling **/
+	void buildHeapLogicOnly();
+	void buildHeapTiling();
+	void manageSignAfterMult();            /*< to be called after either buildHeapLogicOnly or buildHeapTiling **/
+
 	int wxDSP, wyDSP;               /**< the width for X/Y in DSP*/
 	int wXdecl;                     /**< the width for X as declared*/
 	int wYdecl;                     /**< the width for Y  as declared*/
@@ -72,11 +76,14 @@ protected:
 	int wY;                         /**< the width for Y after possible swap such that wX>wY */
 	int wOut;
 	int wFull;                      /**< size of the full product: wX+wY-1 if signed, wX+wY if unsigned */
-	int wTruncated;                 /*%< The number of truncated bits, wFull - wOut*/
+	int wTruncated;                 /**< The number of truncated bits, wFull - wOut*/
+	int g ;                         /**< the number of guard bits*/
+	int maxWeight;                  /**< The max weight for the bit heap of this multiplier, wOut + g*/
+	int weightShift;                /**< the shift in weight for a truncated multiplier compared to a full one,  wFull - maxWeight*/
 	int signedIO;
 	double ratio;
 	double maxError;     /**< the max absolute value error of this multiplier, in ulps of the result. Should be 0 for untruncated, 1 or a bit less for truncated.*/  
-	int g ;              /**< the number of guard bits*/
+	double initialCP;     /**< the initial delay, getMaxInputDelays ( inputDelays_ ).*/  
 	
 private:
 	bool useDSP;
