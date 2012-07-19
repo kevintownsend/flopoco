@@ -20,6 +20,9 @@ Multipliers
 * uniform interface for IntMultiplier (signed/unsigned, truncated)
 * IntCompressorTree for bit heaps of arbitrary shape
 * Remove tiling exploration, replace it with cached/classical tilings
+* add interface without bitheap compression
+
+* Use the new multipliers for constmults, hotbm etc
 
 Collision
 * manage infinities etc
@@ -77,15 +80,16 @@ Version 0.11: FPDiv, IntSquarer, new pipeline framework
 Version 1.15: FPSqrt FPSquarer InputIEEE Fix2FP 
 Version 2.0 : FunctionEvaluator
 Version 2.2 : FPExp, FPPowr (experimental)
+Version 2.3 : IntConstDiv, FPConstDiv and FPConstDivExpert, FPConstMultRational, TaMaDi architecture
 -- we're here (faster than expected)
-Version ???   FPAddSub (for FFT butterfly structure)
+Version 2.4   RNGs, BitHeap, revamped multipliers, FPSinCos, CORDIC
+              FPAddSub (for FFT butterfly structure)
+Version ???   Complex operators (in particular division)
 Version ???   FixToFPUniformDist (2008 ASAP paper by Thomas)
 Version ???   FPNorm2D
 Version ???   FPNorm3D -- Almost there, see Collision
-Version ???   FPSinCos, CORDIC
 Version ??    FPBoxMuller
 Version ???   Interval operators
-Version ???   Complex operators (in particular division)
 (insert your wishlist here)
 
 
