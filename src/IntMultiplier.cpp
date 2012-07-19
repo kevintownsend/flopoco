@@ -285,14 +285,15 @@ namespace flopoco {
 
 	
 		REPORT(DEBUG," wX="<< wX << " wxDSP="<< wxDSP <<" wY="<< wY <<" wyDSP="<<wyDSP <<" horDSP= "<<horDSP);
+		
 		for(int i=0;i<horDSP;i++)
 			{
-			vhdl << tab << declare(join("XX",i), wxDSP) << " <= XX("<<((i+1)*wxDSP-1)<<" downto "<< (i*wxDSP) <<");"<<endl; 
+			vhdl << tab << declare(join("XX",i), wxDSP) << " <= XX("<<wFull-(wFull-((i+1)*wxDSP))-1<<" downto "<< wFull-(wFull-(i*wxDSP))<<");"<<endl; 
 			}
 	
 		for(int i=0;i<verDSP;i++)
 			{
-			vhdl << tab << declare(join("YY",i), wyDSP) << " <= YY("<<((i+1)*wyDSP-1)<<" downto "<< (i*wyDSP) <<");"<<endl; 
+			vhdl << tab << declare(join("YY",i), wyDSP) << " <= YY("<<wFull-(wFull-((i+1)*wyDSP))-1<<" downto "<< wFull-(wFull-(i*wyDSP)) <<");"<<endl; 
 			}
 		int k=0;
 		for(int i=0;i<horDSP;i++)
@@ -320,15 +321,82 @@ namespace flopoco {
 				bitHeap->addBit(weight, "\'1\'", "The round bit");
 			}
 
-		bitHeap->generateCompressorVHDL();
-		vhdl << tab << "R <= CompressionResult(" << wOut+g-1 << " downto "<< g << ");" << endl;
+		
 	
-	if(( wxDSP*horDSP<wX)||(wyDSP*verDSP<wY))
+	int restX=wX-horDSP*wxDSP;
+	int restY=wY-verDSP*wyDSP;
+	REPORT(DEBUG,"restX= "<< restX);
+
+	if((restX!=0 ) || (restY!=0))
 	
 		{
-		  vhdl << "-- You must add logic to! TODO"<< endl;
-		  //buildLogicOnly(wX-wxDSP*horDSP,wY-wyDSP*verDSP);
+			vhdl << "-- You must add logic too! TODO"<< endl;
+			REPORT(DEBUG, "logic needed");
+			int dx, dy;				// Here we need to split in small sub-multiplications
+			int li=getTarget()->lutInputs();
+ 			dx = li>>1;
+			dy = li - dx; 
+			REPORT(DEBUG, "dx="<< dx << "  dy=" << dy );
+			//dx,dy=3 for the SmallMultiTable
+			/*------------------------------
+			 |				|
+			 |	first splitting		|
+			 |		type		|
+			 -----------------------********|
+						|second	|
+						|split.	|
+						|type	|
+						|	|
+						|	|
+						---------
+			*/
+			
+			//FIRST TYPE OF SPLITTING 
+			int chunkY1=restY/dy;
+			int chunkX1=wX/dx;
+			REPORT(DEBUG,"chunkX1= "<<chunkX1);
+			
+			for (int k=0; k<chunkX1 ; k++)
+				{
+					vhdl<<tab<<declare(join("x1",k),dx)<<" <= XX"<<range(wX-k*dx-1, wX-(k+1)*dx)<<";"<<endl;
+					REPORT(DEBUG,"x1"<<k<<" <= XX"<<wX-k*dx-1<< " downto " <<wX-(k+1)*dx);
+				}
+			for (int k=0; k<chunkY1 ; k++)
+				{
+					vhdl<<tab<<declare(join("y1",k),dy)<<" <= YY"<<range(restY-k*dy-1, restY-(k+1)*dy)<<";"<<endl;
+					REPORT(DEBUG,"y1"<<k<<" <= YY"<<restY-k*dy-1<< " downto "<< restY-(k+1)*dy);
+				}
+
+			//send to SmallMultTable
+
+
+			//SECOND TYPE OF SPLITTING
+			int chunkY2=wY/dy;
+			int chunkX2=restX/dx;
+
+			for (int k=0; k<chunkX2 ; k++)
+				{
+					vhdl<<tab<<declare(join("x2",k),dx)<<" <= XX"<<range(restX-k*dx-1, restX-(k+1)*dx)<<";"<<endl;
+					REPORT(DEBUG,"x2"<<k<<" <= XX"<<restX-k*dx-1<< " downto "<< restX-(k+1)*dx);
+				}
+
+			for (int k=0; k<chunkY2 ; k++)
+				{
+					vhdl<<tab<<declare(join("y2",k),dy)<<" <= YY"<<range(wY-k*dy-1, wY-(k+1)*dy)<<";"<<endl;
+					REPORT(DEBUG,"y2"<<k<<" <= YY"<<wY-k*dy-1<< " downto "<< wY-(k+1)*dy);
+				}
+			
+			//send to SmallMultTable
+
+			
+			
+		
+		
 		}
+
+		//bitHeap->generateCompressorVHDL();
+		//vhdl << tab << "R <= CompressionResult(" << wOut+g-1 << " downto "<< g << ");" << endl;
+
 
 
 	}
