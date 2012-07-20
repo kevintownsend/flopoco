@@ -393,7 +393,7 @@ namespace flopoco
 		
 		for(list<WeightedBit*>::iterator it = bits[w].begin(); it!=bits[w].end(); ++it)
 			{
-				REPORT(DEBUG, "element "<<i<<" cycle = "<<(*it)->getCycle() << " and cp = "<<(*it)->getCriticalPath((*it)->getCycle()));
+				//REPORT(DEBUG, "element "<<i<<" cycle = "<<(*it)->getCycle() << " and cp = "<<(*it)->getCriticalPath((*it)->getCycle()));
 				i++; 
 			}
 	}
@@ -422,7 +422,7 @@ namespace flopoco
 			}	
 
        
-	
+		REPORT(DEBUG, "usedcompr");
 		REPORT(DEBUG, "before getOpList");
 		for(int i=0;i<10;i++)
 			{
@@ -431,9 +431,11 @@ namespace flopoco
 						op->getOpListR().push_back(possibleCompressors[i]);
 					}
 			}
-	        
+	    
+		REPORT(DEBUG, "before adder");
 		REPORT(DEBUG, "Before Adder");
 		adderVHDL();
+		REPORT(DEBUG, "after adder");
 	}
 	
 
@@ -447,8 +449,11 @@ namespace flopoco
 		WeightedBit *b=0;
 		for(int w=minWeight; w<maxWeight; w++)
 			{
-			
-			
+			if(bits[w].size()==0)
+			{
+
+			}
+			else{			
 				if (bits[w].size() >= 1)
 					{
 						for(list<WeightedBit*>::iterator it = bits[w].begin(); it!=bits[w].end(); ++it)
@@ -467,6 +472,7 @@ namespace flopoco
 										}
 							}
 					}
+				}
 			}	
 		
 		return b;
@@ -482,7 +488,7 @@ namespace flopoco
 	
 		while((i>=minWeight)&&(i<maxWeight))
 			{
-
+				REPORT(DEBUG,"i=   "<<i);
 				if(i>=0)
 					{  
 						list<WeightedBit*>::iterator it = bits[i].begin();
@@ -492,9 +498,9 @@ namespace flopoco
 								it++;
 								inAdder1 << (*it)->getName();
 							}
-						else
+						else 
 							{
-								if(bits[i].size()==1)
+								if (bits[i].size()==1)
 								{
 									inAdder0 << (*it)->getName();
 									inAdder1 << "\'0\'";
@@ -505,8 +511,6 @@ namespace flopoco
 									inAdder1 << "\'0\'";
 								}
 							}
-
-		
 
 						if (i!=minWeight)
 							{

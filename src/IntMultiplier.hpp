@@ -55,10 +55,10 @@ public:
 
 
 protected:
-
-	string PP(int i, int j);
-	string PPTbl(int i, int j);
-	string XY(int i, int j);
+	
+	string PP(int i, int j, int nr=-1);
+	string PPTbl( int i, int j, int nr=-1);
+	string XY(int i, int j, int nr=-1);
 	string heap( int i, int j);
 
 	void buildLogicOnly();
@@ -68,7 +68,7 @@ protected:
 	void buildHeapLogicOnly();
 	void buildHeapTiling();
 	void manageSignAfterMult();            /*< to be called after either buildHeapLogicOnly or buildHeapTiling **/
-
+	void smallTiling(int nr, int topX, int topY, int botX, int botY, SmallMultTable *t);
 	int wxDSP, wyDSP;               /**< the width for X/Y in DSP*/
 	int wXdecl;                     /**< the width for X as declared*/
 	int wYdecl;                     /**< the width for Y  as declared*/

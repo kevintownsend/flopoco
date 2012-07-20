@@ -111,7 +111,9 @@ namespace flopoco {
 		
 		// useDSP or not? 
 		useDSP = (ratio>0) & target->hasHardMultipliers();
-
+		
+	     	
+	
 
 		{
 			ostringstream name;
@@ -159,10 +161,6 @@ namespace flopoco {
 			g=wFull-i-wOut;
 			REPORT(DEBUG, "ulp truncation error=" << ulperror << "    g=" << g);
 		}
-
-		maxWeight = wOut+g;
-		weightShift = wFull - maxWeight;  
-
 		// Set up the IO signals
 		addInput ( "X"  , wXdecl, true );
 		addInput ( "Y"  , wYdecl, true );
@@ -175,9 +173,9 @@ namespace flopoco {
 			useStdLogicUnsigned();
 
 		// The bit heap
-		REPORT(DEBUG,"before bitheap");
+		
 		bitHeap = new BitHeap(this, wOut+g);
-		REPORT(DEBUG,"after bitheap");
+	
 		// Halve number of cases by making sure wY<=wX:
 		// interchange x and y in case wY>wX
 
@@ -195,8 +193,7 @@ namespace flopoco {
 		}
 
 		// initialize the critical path
-		initialCP=getMaxInputDelays ( inputDelays_ );
-		setCriticalPath(initialCP);
+		setCriticalPath(getMaxInputDelays ( inputDelays_ ));
 
 		///////////////////////////////////////
 		//  architectures for corner cases   //
@@ -283,7 +280,7 @@ namespace flopoco {
 		vhdl << tab << "R <= rfull"<<range(wFull-1, wFull-wOut)<<";"<<endl;	
 		return;
 #endif
-
+	
 		
 		// Now getting more and more generic
 		if(useDSP) {
@@ -294,6 +291,7 @@ namespace flopoco {
 			testForward     = (wX<=wxDSP)&&(wY<=wyDSP);
 			testReverse = (wY<=wxDSP)&&(wX<=wyDSP);
 			testFit = testForward || testReverse;
+		
 			
 			REPORT(DEBUG,"useDSP");
 			if (testFit){
@@ -312,7 +310,11 @@ namespace flopoco {
 				else {
 					// For this target and this size, better do a logic-only implementation
 					
-					buildLogicOnly();
+					//buildLogicOnly(wX, wY);
+					SmallMultTable *t = new SmallMultTable( getTarget(), 3, 3, 6, false ); // unsigned
+					//useSoftRAM(t);
+		    		oplist.push_back(t);
+					smallTiling(0,0,0,wX,wY,t);
 				}
 			}
 			else {
@@ -324,11 +326,15 @@ namespace flopoco {
 		} 
 
 		else {// This target has no DSP, going for a logic-only implementation
-			buildLogicOnly();
-					
+			//buildLogicOnly(wX, wY);
+			SmallMultTable *t = new SmallMultTable( getTarget(), 3, 3, 6, false ); // unsigned
+			//useSoftRAM(t);
+		    oplist.push_back(t);
+			smallTiling(0,0,0,wX,wY,t);
 		}
+		
+		
 	}
-
 
 
 
@@ -480,6 +486,7 @@ namespace flopoco {
 		}
 	}
 
+
 	/**************************************************************************/
 	void IntMultiplier::buildHeapLogicOnly() {
 		Target *target=getTarget();
@@ -564,125 +571,183 @@ namespace flopoco {
 	
 	/**************************************************************************/
 	void IntMultiplier::buildHeapTiling() {
-		vhdl << "-- buildTiling TODO"<< endl;
+		
 		int horDSP=wX/wxDSP;
 		int verDSP=wY/wyDSP;
-
-	
+		int restX=wX-horDSP*wxDSP;
+	    int restY=wY-verDSP*wyDSP;
+		REPORT(DEBUG,"restX= "<< restX);
+		REPORT(DEBUG,"restY= "<< restY);
+		REPORT(DEBUG,"horDSP= "<< horDSP);
+		REPORT(DEBUG,"verDSP= "<< verDSP);
 		REPORT(DEBUG," wX="<< wX << " wxDSP="<< wxDSP <<" wY="<< wY <<" wyDSP="<<wyDSP <<" horDSP= "<<horDSP);
 		
 		for(int i=0;i<horDSP;i++)
 			{
-			vhdl << tab << declare(join("XX",i), wxDSP) << " <= pX("<<wFull-(wFull-((i+1)*wxDSP))-1<<" downto "<< wFull-(wFull-(i*wxDSP))<<");"<<endl; 
+			vhdl << tab << declare(join("XX",horDSP-i-1), wxDSP) << " <= XX("<<wX-(i*wxDSP)-1<<" downto "<< wX-((i+1)*wxDSP)<<");"<<endl; 
+			REPORT(DEBUG,join("XX",horDSP-i-1)<< " <= XX("<<wX-(i*wxDSP)-1<<" downto "<< wX-((i+1)*wxDSP)<<");");
 			}
 	
 		for(int i=0;i<verDSP;i++)
 			{
-			vhdl << tab << declare(join("YY",i), wyDSP) << " <= pY("<<wFull-(wFull-((i+1)*wyDSP))-1<<" downto "<< wFull-(wFull-(i*wyDSP)) <<");"<<endl; 
+			REPORT(DEBUG,join("YY",verDSP-i-1)<< " <= YY("<<wY-((i)*wyDSP)-1<<" downto "<< wY-(((i+1)*wyDSP)) <<");");
+			vhdl << tab << declare(join("YY",verDSP-i-1), wyDSP) << " <= YY("<<(wY-(i*wyDSP))-1<<" downto "<< wY-((i+1)*wyDSP) <<");"<<endl; 
 			}
+
+
 		int k=0;
 		for(int i=0;i<horDSP;i++)
 			for(int j=0;j<verDSP;j++)
 			{
 				REPORT(DEBUG, "i="<<i<<" j="<<j);
-				REPORT(DEBUG,  "horDSP="<<horDSP<<" verDSP="<<verDSP);
+				REPORT(DEBUG, "XX"<<i<<"YY"<<j<<" <= "<<join("XX",i)<<" * "<<join("YY",j)<<";");
 
-				vhdl << tab << declare (join("XXYY",k),wxDSP+wyDSP)<<" <= "<<join("XX",i)<<" * "<<join("YY",j)<<";"<<endl; 
+				vhdl << tab << declare (join("XX",i,"YY",j),wxDSP+wyDSP)<<" <= "<<join("XX",i)<<" * "<<join("YY",j)<<";"<<endl; 
 				for(int l=wxDSP+wyDSP-1;l>=0;l--)
 				{
-					REPORT(DEBUG, wFull-wOut-g);
-					if (l+i*wxDSP+j*wyDSP>=wFull-wOut-g)
+				//	REPORT(DEBUG, wFull-wOut-g);
+					if (l+i*wxDSP+j*wyDSP+restX+restY>=wFull-wOut-g)
 					{
-						vhdl << tab << declare (join("PP_DSP_X",i,"Y",j,"_",l))<<"<=XXYY"<<k<<"("<<l<<");"<<endl;
-						REPORT(DEBUG, "insert here "<<l+(i*wxDSP)+(j*wyDSP)-(wFull-wOut-g));
-						bitHeap->addBit(l+(i*wxDSP)+(j*wyDSP)-(wFull-wOut-g),join("PP_DSP_X",i,"Y",j,"_",l));
+						vhdl << tab << declare (join("PP_DSP_X",i,"Y",j,"_",l))<<"<=XX"<<i<<"YY"<<j<<"("<<l<<");"<<endl;
+						REPORT(DEBUG, "insert here XX"<<i<<"YY"<<j<<"("<<l<<") in column "<<l+(i*wxDSP)+(j*wyDSP)+restX+restY-(wFull-wOut-g));
+						bitHeap->addBit(l+(i*wxDSP)+(j*wyDSP)+restX+restY-(wFull-wOut-g),join("PP_DSP_X",i,"Y",j,"_",l));
 					}
 				}
 				k++;		
 			}	
 
+		
+			
+	
+	
+	
+	if((restX!=0 ) || (restY!=0))
+		{
+
+		SmallMultTable *t = new SmallMultTable( getTarget(), 3, 3, 6, false ); // unsigned
+		//useSoftRAM(t);
+		oplist.push_back(t);
+		REPORT(DEBUG,"restX= "<<restX<<"restY= "<<restY);
+		if(restY>0)
+			{
+			REPORT(DEBUG,"first small tiling");
+			smallTiling(0,0,0,wX,restY,t);
+			}
+		if(restX>0)
+			{
+			REPORT(DEBUG, "second small tiling");
+			smallTiling(1,0,restY,restX,wY,t);
+			}	
+
+		
 		if(g>0) {
 				int weight=g-1;
 				bitHeap->addBit(weight, "\'1\'", "The round bit");
+			}	
+		
+		}
+	}
+
+	/******************************************************************************/
+	void IntMultiplier::smallTiling(int nr, int topX, int topY, int botX, int botY, SmallMultTable *t)
+	{
+		int dx, dy;				// Here we need to split in small sub-multiplications
+		int li=getTarget()->lutInputs();
+ 			dx = li>>1;
+			dy = li - dx; 
+		REPORT(DEBUG, "dx="<< dx << "  dy=" << dy );
+			//dx,dy=3 for the SmallMultiTable
+		
+		int chunkX=(botX-topX)/dx;
+		int moreX=(botX-topX)-chunkX*dx;
+
+		int chunkY=(botY-topY)/dy;
+		int moreY=(botY-topY)-chunkY*dy;	
+
+		//int lsbX[chunkX][chunkY];
+		//int lsbY[chunkX][chunkY];
+		int lsbX[chunkX];
+		int lsbY[chunkY];
+		
+		REPORT(DEBUG,"chunkX= "<<chunkX<<" moreX= "<<moreX<<"chunkY= "<<chunkY<<"moreY= "<<moreY);
+
+		for (int k=0; k<chunkX ; k++)
+			{
+				vhdl<<tab<<declare(join("X",nr,"_",chunkX-k-1),dx)<<" <= XX"<<range(botX-k*dx-1, botX-(k+1)*dx)<<";"<<endl;
+				REPORT(DEBUG,"X"<<nr<<"_"<<chunkX-k-1<<" <= XX"<<botX-k*dx-1<< " downto " <<botX-(k+1)*dx);\
+				lsbX[chunkX-k-1]=botX-(k+1)*dx;
+				
+			}
+		for (int k=0; k<chunkY ; k++)
+			{
+				vhdl<<tab<<declare(join("Y",nr,"_",chunkY-k-1),dy)<<" <= YY"<<range(botY-k*dy-1, botY-(k+1)*dy)<<";"<<endl;
+				REPORT(DEBUG,"Y"<<nr<<"_"<<chunkY-k-1<<" <= YY"<<botY-k*dy-1<< " downto "<< botY-(k+1)*dy);
+				lsbY[chunkY-k-1]=botY-(k+1)*dy;
 			}
 
 		
-	
-	int restX=wX-horDSP*wxDSP;
-	int restY=wY-verDSP*wyDSP;
-	REPORT(DEBUG,"restX= "<< restX);
 
-	if((restX!=0 ) || (restY!=0))
-	
-		{
-			vhdl << "-- You must add logic too! TODO"<< endl;
-			REPORT(DEBUG, "logic needed");
-			int dx, dy;				// Here we need to split in small sub-multiplications
-			int li=getTarget()->lutInputs();
- 			dx = li>>1;
-			dy = li - dx; 
-			REPORT(DEBUG, "dx="<< dx << "  dy=" << dy );
-			//dx,dy=3 for the SmallMultiTable
-			/*------------------------------
-			 |				|
-			 |	first splitting		|
-			 |		type		|
-			 -----------------------********|
-						|second	|
-						|split.	|
-						|type	|
-						|	|
-						|	|
-						---------
-			*/
-			
-			//FIRST TYPE OF SPLITTING 
-			int chunkY1=restY/dy;
-			int chunkX1=wX/dx;
-			REPORT(DEBUG,"chunkX1= "<<chunkX1);
-			
-			for (int k=0; k<chunkX1 ; k++)
+		for (int i=0; i<chunkX;i++)
+			for(int j=0;j<chunkY;j++)
+				{		REPORT(DEBUG,PP(i,j,nr)<<" <= "<<XY(i,j,nr)<<" <=Y"<<nr<<"_" << j<< " & X"<<nr<<"_" << i << ";");
+						vhdl << tab << declare(XY(i,j,nr), dx+dy) << " <= Y"<<nr<<"_" << j<< " & X"<<nr<<"_" << i << ";"<<endl;
+						inPortMap(t, "X", XY(i,j,nr));
+						outPortMap(t, "Y", PP(i,j,nr));
+						vhdl << instance(t, PPTbl(i,j,nr));
+						int maxK=dx+dy; 
+					 //   lsbX[i][j]=(i+1)*dx+moreX;
+					//	lsbY[i][j]=(j+1)*dy+moreY;
+						REPORT(DETAILED, "lsbX" << i << "," << j << "  " <<lsbX[i]);
+						REPORT(DETAILED, "lsbY" << i << "," << j << "  " <<lsbY[j]);
+						for (int k=maxK-1;k>=0 ; k--) 
+						{
+							ostringstream s;
+							s << PP(i,j,nr) << of(k);
+							int weight = lsbX[i]+lsbY[j]+k;
+							REPORT(DEBUG,"weight= "<<weight);
+							if(weight>=wFull-wOut-g) 
+							{// otherwise these bits deserve to be truncated
+								REPORT(DEBUG, "adding bit " << s.str() << " at weight " << weight-(wFull-wOut-g)); 
+								bitHeap->addBit(weight-(wFull-wOut-g), s.str());
+							}
+						}
+				} 
+
+        //what not fits in the SmallMultTables
+		REPORT(DEBUG,"first for");
+		for(int i=botX-chunkX*dx-1;i>=topX;i--)
+			for(int j=botY-1;j>=topY;j--)
 				{
-					vhdl<<tab<<declare(join("x1",k),dx)<<" <= pX"<<range(wX-k*dx-1, wX-(k+1)*dx)<<";"<<endl;
-					REPORT(DEBUG,"x1"<<k<<" <= pX"<<wX-k*dx-1<< " downto " <<wX-(k+1)*dx);
-				}
-			for (int k=0; k<chunkY1 ; k++)
-				{
-					vhdl<<tab<<declare(join("y1",k),dy)<<" <= pY"<<range(restY-k*dy-1, restY-(k+1)*dy)<<";"<<endl;
-					REPORT(DEBUG,"y1"<<k<<" <= pY"<<restY-k*dy-1<< " downto "<< restY-(k+1)*dy);
+				//and on bits
+				vhdl<< tab << declare(join("a",nr,"Y",j,"_and_X",i)) << " <= YY("<<j<< ") and XX("<<i<<");"<<endl;
+				REPORT(DEBUG, join("a",nr,"Y",j,"_and_X",i) << " <= YY"<<j<< " and XX("<<i<<");");
+		        int weight=i+j;
+				if(weight>=wFull-wOut-g)
+					{
+					REPORT(DEBUG, "adding bit " << join("a",nr,"Y",j,"_and_X",i)<< " at weight " << weight-(wFull-wOut-g)); 
+					bitHeap->addBit(weight-(wFull-wOut-g), join("a",nr,"Y",j,"_and_X",i));
+					}					
 				}
 
-			//send to SmallMultTable
-
-
-			//SECOND TYPE OF SPLITTING
-			int chunkY2=wY/dy;
-			int chunkX2=restX/dx;
-
-			for (int k=0; k<chunkX2 ; k++)
+		REPORT(DEBUG,"second for");
+		for(int i=botY-chunkY*dy-1;i>=topY;i--)
+			for(int j=botX-1;j>=topX;j--)
 				{
-					vhdl<<tab<<declare(join("x2",k),dx)<<" <= pX"<<range(restX-k*dx-1, restX-(k+1)*dx)<<";"<<endl;
-					REPORT(DEBUG,"x2"<<k<<" <= pX"<<restX-k*dx-1<< " downto "<< restX-(k+1)*dx);
+				//and on bits
+				REPORT(DEBUG,"i=" <<i<<" j= "<<j);
+				vhdl<< tab << declare(join("b",nr,"X",j,"_and_Y",i)) << " <= XX("<<j<< ") and YY("<<i<<");"<<endl;
+				REPORT(DEBUG, join("b",nr,"X",j,"_and_Y",i) << " <= XX"<<j<< " and YY"<<i<<";");
+		        int weight=i+j;
+				if(weight>=wFull-wOut-g)
+					{
+					REPORT(DEBUG, "adding bit " << join("b",nr,"X",j,"_and_Y",i)<< " at weight " << weight-(wFull-wOut-g)); 
+					bitHeap->addBit(weight-(wFull-wOut-g), join("b",nr,"X",j,"_and_Y",i));
+					}					
 				}
 
-			for (int k=0; k<chunkY2 ; k++)
-				{
-					vhdl<<tab<<declare(join("y2",k),dy)<<" <= pY"<<range(wY-k*dy-1, wY-(k+1)*dy)<<";"<<endl;
-					REPORT(DEBUG,"y2"<<k<<" <= pY"<<wY-k*dy-1<< " downto "<< wY-(k+1)*dy);
-				}
-			
-			//send to SmallMultTable
 
-			
-			
+
 		
-		
-		}
-
-		//bitHeap->generateCompressorVHDL();
-		//vhdl << tab << "R <= CompressionResult(" << wOut+g-1 << " downto "<< g << ");" << endl;
-
-
 
 	}
 
@@ -747,30 +812,41 @@ namespace flopoco {
 	
 
 
-	string IntMultiplier::PP(int i, int j) {
-		std::ostringstream p;
-		p << "PPX" << i << "Y" << j;
+	string IntMultiplier::PP(int i, int j, int nr ) {
+		std::ostringstream p;		
+		if(nr==-1) 
+			p << "PP_X" << i << "Y" << j;
+		else
+			p << "PP_"<<nr<<"X" << i << "Y" << j;
 		return p.str();
 	};
 
-	string IntMultiplier::PPTbl( int i, int j) {
-		std::ostringstream p;
-		p << "PPX" << i << "Y" << j << "_Tbl";
+	string IntMultiplier::PPTbl(  int i, int j,int nr) {
+		std::ostringstream p;		
+		if(nr==-1) 
+			p << "PP_X" << i << "Y" << j << "_Tbl";
+		else
+			p << "PP_"<<nr<<"X" << i << "Y" << j << "_Tbl";
 		return p.str();
 	};
 
-	string IntMultiplier::XY( int i, int j) {
-		std::ostringstream p;
+	string IntMultiplier::XY( int i, int j,int nr) {
+		std::ostringstream p;		
+		if(nr==-1) 
 		p  << "Y" << j<< "X" << i;
-		return p.str();
+		else
+			p  << "Y" << j<< "X" << i<<"_"<<nr;
+		return p.str();	
 	};
+
+
+
 
 	string IntMultiplier::heap( int i, int j) {
 		std::ostringstream p;
 		p  << "heap_" << i << "_" << j;
 		return p.str();
 	};
-
 
 
 
