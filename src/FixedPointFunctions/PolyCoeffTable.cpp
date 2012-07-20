@@ -42,12 +42,21 @@ namespace flopoco{
 		setCopyrightString("Mioara Joldes (2010)");
 		srcFileName = "PolyCoeffTable";
 
-		ostringstream  cacheFileName;
+		ostringstream cacheFileName;
 		cacheFileName << "Poly_"<<vhdlize(pf->getName()) << "_" << n << "_" << wOutX << ".cache";
 
 		// Test existence of cache file
 		fstream file;
 		file.open(cacheFileName.str().c_str(), ios::in);
+		
+		// check for bogus .cache file
+		if(file.is_open() && file.peek() == std::ifstream::traits_type::eof())
+		{
+		  file.close();
+		  std::remove(cacheFileName.str().c_str());
+		  file.open(cacheFileName.str().c_str(), ios::in);
+		}
+
 		if(!file.is_open()){
 			//********************** Do the work, then write the cache ********************* 
 			REPORT(INFO, "No polynomial data cache found, creating " << cacheFileName.str());
