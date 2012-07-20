@@ -91,6 +91,8 @@ namespace flopoco
 		inConcatIndex=0;
 		outConcatIndex=0;
 		compressorIndex=0;
+		for(int i=0; i<10;++i)
+			usedCompressors[i]=false;
 		for (int i=0; i< maxWeight; i++) {
 			uid.push_back(0);
 			list<WeightedBit*> t;
@@ -439,7 +441,7 @@ namespace flopoco
 	
 		double maxCycle=0;
 		double maxCP = 0;
-		WeightedBit **b;
+		WeightedBit **b=0;
 		for(int w=minWeight; w<maxWeight; w++)
 			{
 			

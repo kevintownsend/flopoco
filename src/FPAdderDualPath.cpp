@@ -282,7 +282,8 @@ namespace flopoco{
 		// the result will be: a + (b xor operation) + operation, where operation=0=addition and operation=1=substraction
 		// the operation selector is the xor between the signs of the operands
 		// perform xor 
-		vhdl<<tab<<declare("fracYfarXorOp", wF+4) << " <= fracYfar xor ("<<wF+3<<" downto 0 => EffSub);"<<endl;
+		vhdl<<tab<< declare("EffSubVector", wF+4) << " <= ("<<wF+3<<" downto 0 => EffSub);"<<endl;
+		vhdl<<tab<<declare("fracYfarXorOp", wF+4) << " <= fracYfar xor EffSubVector;"<<endl;
 		//pad fraction of X [sign][inplicit 1][fracX][guard bits]				
 		vhdl<<tab<< declare("fracXfar", wF+4) << " <= \"01\" & (newX("<<wF-1<<" downto 0)) & \"00\";"<<endl;
 		vhdl<<tab<< declare("cInAddFar") << " <= EffSub and not sticky;"<< endl;
