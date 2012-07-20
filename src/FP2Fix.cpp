@@ -90,8 +90,9 @@ namespace flopoco{
       inPortMapCst(Exponent_difference, "Cin", "'1'");
       outPortMap (Exponent_difference, "R","eA1");
       vhdl << instance(Exponent_difference, "Exponent_difference");
-
-      setCycleFromSignal("Exponent_differenceS");
+      
+      setCycleFromSignal("eA1");
+      setCriticalPath(Exponent_difference->getOutputDelay("R"));
 
       if (wF+1 < wFX0+2)
       {
@@ -100,8 +101,10 @@ namespace flopoco{
       else
       {
          vhdl << tab << declare("fA0",wFX0+2) << range(wFX0+1,1) << " <= \"1\" & I" << range(wF-1, wF-wFX0) << ";" << endl;
+         manageCriticalPath(target->localWireDelay() + target->lutDelay());
          vhdl << tab << "fA0" << of(0) << " <= '0' when I" << range(wF-wFX0-1, 0) << " = " << rangeAssign(wF-wFX0-1,0,"'0'") << " else '1';"<<endl;
       }
+
       //FXP shifter mappings
       FXP_shifter = new FXP_Shift(target, wE, wFX0);
       oplist.push_back(FXP_shifter);
@@ -111,7 +114,8 @@ namespace flopoco{
       outPortMap (FXP_shifter, "fR", "fA1");
       vhdl << instance(FXP_shifter, "FXP_shifter");
 
-      syncCycleFromSignal("FXP_shifter");
+      syncCycleFromSignal("fA1");
+      setCriticalPath(FXP_shifter->getOutputDelay("R"));
 
       if(trunc_p)
       {
@@ -119,6 +123,7 @@ namespace flopoco{
       }
       else
       {
+         manageCriticalPath(target->localWireDelay() + target->lutDelay());
          vhdl << tab << declare("round") << " <= fA1(1) and (fA1(2) or fA1(0));"<<endl;
 
          vhdl << tab << declare("fA2a",wFX+1) <<  "<= " << rangeAssign(wFX-wFX0,0,"'0'") << " & fA1" << range(wFX0+1, 2)<< ";"<<endl;
@@ -132,16 +137,20 @@ namespace flopoco{
          outPortMap (MantSum, "R","fA2");
          vhdl << instance(MantSum, "MantSum");
 
-         setCycleFromSignal("MantSumS");
+         setCycleFromSignal("fA2");
+         setCriticalPath(MantSum->getOutputDelay("R"));
       }
       if (eMax+1 > MSB+1)
       {
+         manageCriticalPath(target->localWireDelay() + target->lutDelay());
          vhdl << tab << declare("overFl0") << "<= '1' when I" << range(wE+wF-1,wF) << " > conv_std_logic_vector("<< eMax+MSB << "," << wE << ") else I" << of(wE+wF+2)<<";"<<endl;
       }
       else
       {
          vhdl << tab << declare("overFl0") << "<= I" << of(wE+wF+2)<<";"<<endl;
       }
+      
+      manageCriticalPath(target->localWireDelay() + target->lutDelay());
       vhdl << tab << declare("overFl1") << " <= fA2" << of(wFX) << " or fA2" << of(wFX-1)<<";"<<endl;
       if (minExpWE < LSB)
          vhdl << tab << declare("undrFl0") << " <= '1' when I" << range(wE+wF-1,wF) << " < conv_std_logic_vector(" << eMax+LSB-1 << "," << wE <<
@@ -162,10 +171,12 @@ namespace flopoco{
       outPortMap (MantSum2, "R","fA4");
       vhdl << instance(MantSum2, "MantSum2");
 
-      setCycleFromSignal("MantSum2S");
+      setCycleFromSignal("fA4");
+      setCriticalPath(MantSum2->getOutputDelay("R"));
 
       vhdl << tab << declare("eTest",2) << " <= (overFl0 or overFl1) & undrFl0;" << endl;
 
+      manageCriticalPath(target->localWireDelay() + target->lutDelay());
       vhdl << tab << "with eTest select" << endl;
       vhdl << tab << tab << "O <= " << rangeAssign(wFX-1,0,"'0'") << " when \"01\"," << endl;
       vhdl << tab << tab << "I" << of(wE+wF) << " & (" << wFX-2 << " downto 0 => not I" << of(wE+wF) << ") when \"10\","<<endl;

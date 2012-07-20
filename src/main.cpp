@@ -1751,6 +1751,21 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				addOperator(oplist, op);
 			}
 		}
+		else if(opname=="FP2Fix"){
+			int nargs = 5;
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			else {
+				int LSB = atoi(argv[i++]);//checkStrictlyPositive(argv[i++], argv[0]);
+				int MSB = atoi(argv[i++]);//checkStrictlyPositive(argv[i++], argv[0]);
+				int sign = atoi(argv[i++]);
+				int wE = checkStrictlyPositive(argv[i++], argv[0]);
+				int wF = checkStrictlyPositive(argv[i++], argv[0]);
+				
+				op = new FP2Fix(target, LSB, MSB, sign,wE, wF, true);
+				addOperator(oplist, op);
+			}
+		}
 		// else if(opname=="CoilInductance"){
 		// 	int nargs = 7;
 		// 	if (i+nargs > argc)

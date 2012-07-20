@@ -145,6 +145,7 @@
 #include "FPPipeline.hpp"
 
 #include "Fix2FP.hpp"
+#include "FP2Fix.hpp"
 #include "InputIEEE.hpp"
 #include "OutputIEEE.hpp"
 
