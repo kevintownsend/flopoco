@@ -1105,6 +1105,7 @@ namespace flopoco {
 	{
 	//	int offsetY = 120; 
 	//	int offsetX = 180 + wX*10 + 200;
+	///modifyyyyyy
 	//	int turnaroundX = 100 + wX*5 + offsetX;
 	
 		fig << "<polygon points=\"" << turnaroundX - 5*xB + offsetX << "," << 5*yT + offsetY << " " 
