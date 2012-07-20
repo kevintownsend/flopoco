@@ -87,6 +87,11 @@ protected:
 	void buildHeapTiling();
 	void manageSignAfterMult();            /*< to be called after either buildHeapLogicOnly or buildHeapTiling **/
 	void smallTiling(int nr, int topX, int topY, int botX, int botY, SmallMultTable *t);
+
+	void printConfiguration();
+	void drawDSP(int i, int xT, int yT, int xB, int yB, int offsetX, int offsetY, int turnaroundX);
+	void drawDSPinclined(int i, int xT, int yT, int xB, int yB,  int offsetX, int offsetY, int turnaroundX, double inclinedCoeff);
+
 	int wxDSP, wyDSP;               /**< the width for X/Y in DSP*/
 	int wXdecl;                     /**< the width for X as declared*/
 	int wYdecl;                     /**< the width for Y  as declared*/
@@ -102,7 +107,7 @@ protected:
 	double ratio;
 	double maxError;     /**< the max absolute value error of this multiplier, in ulps of the result. Should be 0 for untruncated, 1 or a bit less for truncated.*/  
 	double initialCP;     /**< the initial delay, getMaxInputDelays ( inputDelays_ ).*/  
-	
+	ofstream fig;	
 private:
 	bool useDSP;
 	Operator* parentOp;  /**<  For a virtual multiplier, adding bits to some BitHeap, this is a pointer to the Operator that will provide the actual vhdl stream etc. */
@@ -113,6 +118,7 @@ private:
 	string yname;
 
 	void initialize();   /**< initialization stuff common to both constructors*/
+	vector<DSP*> dsps;
 };
 
 }
