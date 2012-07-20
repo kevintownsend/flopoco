@@ -250,9 +250,12 @@ namespace flopoco
 		WeightedBit* b =  computeLatest(i, bc->getColumnSize(0), bc->getColumnSize(1)) ; 
 		// REPORT(DEBUG, "name " << b->getName() << " cycle " <<b->getCycle() << " cp " << b->getCriticalPath(b->getCycle()));
 		// op->vhdl << "-- name " << b->getName() << " cycle " <<b->getCycle() << endl;
-		op->setCycle(  b ->getCycle()  );
-		op->setCriticalPath(  b ->getCriticalPath(op->getCurrentCycle()));
-		op->manageCriticalPath( op->getTarget()->lutDelay() + op->getTarget()->localWireDelay() );
+		if(b)
+		{
+			op->setCycle(  b ->getCycle()  );
+			op->setCriticalPath(  b ->getCriticalPath(op->getCurrentCycle()));
+			op->manageCriticalPath( op->getTarget()->lutDelay() + op->getTarget()->localWireDelay() );
+		}
 
 		// build the first input of the compressor
 		for(unsigned j=0; j<bc->getColumnSize(0); j++)
@@ -441,7 +444,7 @@ namespace flopoco
 	
 		double maxCycle=0;
 		double maxCP = 0;
-		WeightedBit **b=0;
+		WeightedBit *b=0;
 		for(int w=minWeight; w<maxWeight; w++)
 			{
 			
@@ -454,19 +457,19 @@ namespace flopoco
 									{
 										maxCycle = (*it)->getCycle();
 										maxCP = (*it)->getCriticalPath(maxCycle);
-										b = &*it;
+										b = *it;
 									}
 								else
 									if ((maxCycle == (*it)->getCycle())  &&  (maxCP <= (*it)->getCriticalPath(maxCycle)))
 										{
 											maxCP = (*it)->getCriticalPath(maxCycle);
-											b = &*it;
+											b = *it;
 										}
 							}
 					}
 			}	
 		
-		return *b;
+		return b;
 	}
 
 	void BitHeap::adderVHDL()
@@ -522,9 +525,12 @@ namespace flopoco
 		
 		WeightedBit* b = getFinalLatestBit();
 		
-		op->setCycle(  b ->getCycle()  );
-		op->setCriticalPath(  b->getCriticalPath(op->getCurrentCycle()));
-		op->manageCriticalPath(b->getCriticalPath(op->getCurrentCycle()) + op->getTarget()->adderDelay(maxWeight-minWeight));
+		if(b)
+		{
+			op->setCycle(  b ->getCycle()  );
+			op->setCriticalPath(  b->getCriticalPath(op->getCurrentCycle()));
+			op->manageCriticalPath(b->getCriticalPath(op->getCurrentCycle()) + op->getTarget()->adderDelay(maxWeight-minWeight));
+		}
 
 		op->vhdl << tab << op->declare("inAdder0", maxWeight-minWeight) << "<= " << inAdder0.str() << endl;
 		op->vhdl << tab << op->declare("inAdder1", maxWeight-minWeight) << " <= " << inAdder1.str() << endl;
