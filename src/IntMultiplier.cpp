@@ -12,8 +12,25 @@ Copyright © ENS-Lyon, INRIA, CNRS, UCBL,
   All rights reserved.
 */
 
+/*
+Interface TODO
+support shared bitheap! In this case,
+- do not compress at the end
+- do not add the round bit
+- import the heap LSB
+- export the truncation error
+- ...
+*/
 
 
+/* VHDL variable names:
+ X, Y: inputs
+ XX,YY: after swap
+
+ if(signedIO):
+   sX, sY: signs 
+   pX, pY: remaining bits, sent to the positive multiplication
+*/
 
 /* A big TODO
    For two's complement arithmetic on n bits, the representable interval is [ -2^{n-1}, 2^{n-1}-1 ]
@@ -28,7 +45,30 @@ Copyright © ENS-Lyon, INRIA, CNRS, UCBL,
    This would be a kind of saturated arithmetic I guess.
 
    Beware, the last bit of Baugh-Wooley tinkering does not need to be added in this case. See the TODO there.
-  
+
+   So the interface must provide a bit that selects this behaviour.
+
+A possible alternative to Baugh-Wooley that solves it:
+   initially complement (xor) one negative input. This cost nothing, as this xor will be merged in the tables. Big fanout, though.
+   then -x=xb+1 so -xy=xb.y+y    
+   in case y pos, xy = - ((xb+1)y)  = -(xb.y +y)
+   in case x and y neg, xy=(xb+1)(yb+1) = xb.yb +xb +yb +1
+   It is enough not to add this lsb 1 to round down the result in this case.
+   As this is relevant only to the truncated case, this lsb 1 will indeed be truncated.
+   let sx and sy be the signs
+
+   unified equation:
+
+   px = sx xor rx  (on one bit less than x)
+   py = sy xor ry
+
+   xy = -1^(sx xor sy)( px.py + px.syb + py.sxb  )   
+   (there should be a +sxsy but it is truncated. However, if we add the round bit it will do the same, so the round bit should be sx.sy)
+   The final negation is done by complementing again.  
+   
+
+   Note that this only applies to truncated multipliers.
+   
  */
 	
 
@@ -284,9 +324,37 @@ namespace flopoco {
 
 
 
+
+
+
+	/**************************************************************************/
+	void IntMultiplier::buildLogicOnly() {
+
+		manageSignBeforeMult();
+		buildHeapLogicOnly();
+		manageSignAfterMult();
+		bitHeap -> generateCompressorVHDL();			
+		vhdl << tab << "R <= CompressionResult(" << wOut+g-1 << " downto "<< g << ");" << endl;
+	}
+
+
+	/**************************************************************************/
+	void IntMultiplier::buildTiling() {
+		manageSignBeforeMult();
+		buildHeapTiling();
+		manageSignAfterMult();
+		bitHeap -> generateCompressorVHDL();			
+		vhdl << tab << "R <= CompressionResult(" << wOut+g-1 << " downto "<< g << ");" << endl;
+	}
+
+
+
+
+
 #define BAUGHWOOLEY 1
 
 	void IntMultiplier::manageSignBeforeMult() {
+		int weight;
 		if (signedIO){
 			// split X as sx and Xr, Y as sy and Xr
 			// then XY =  Xr*Yr (unsigned)      + bits and pieces
@@ -296,64 +364,119 @@ namespace flopoco {
 			wY--;
 			vhdl << tab << declare("sX") << " <= XX" << of(wX) << ";" << endl;
 			vhdl << tab << declare("sY") << " <= YY" << of(wY) << ";" << endl;
+#if BAUGHWOOLEY
+			vhdl << tab << declare("pX", wX) << " <= XX" << range(wX-1, 0) << ";" << endl;
+			vhdl << tab << declare("pY", wY) << " <= YY" << range(wY-1, 0) << ";" << endl;
+			// reminder: wX and wY have been decremented
+			vhdl << tab << "-- Baugh-Wooley tinkering" << endl;
+			setCycle(0);
+			setCriticalPath(initialCP);
+
+			// first add all the bits that need no computation
+			// adding sX and sY at positions wX and wY
+			weight=wX - weightShift;
+			bitHeap->addBit(weight, "sX");
+			weight=wY - weightShift;
+			bitHeap->addBit(weight, "sY");
+			// adding the one at position wX+wY+1
+			// TODO: do not add this bit if we saturate a truncated mult, as it doesn't belong to the output range...
+			weight=wX+wY+1 - weightShift;
+			bitHeap->addBit(weight, "'1'");
+			// now we have all sort of bits that need some a LUT delay to be computed
+			setCriticalPath(initialCP);
+			manageCriticalPath( getTarget()->localWireDelay(wY) + getTarget()->lutDelay() ) ;  
+			vhdl << tab << declare("sXpYb", wY) << " <= not pY when sX='1' else " << zg(wY) << ";" << endl;
+			vhdl << tab << "-- Adding these bits to the heap of bits" << endl;
+			for (int k=0; k<wX; k++) {
+				weight=wY+k - weightShift;
+				ostringstream v;
+				v << "sYpXb(" << k << ")";
+				bitHeap->addBit(weight, v.str());
+			}
+			vhdl << endl;
+
+			setCriticalPath(initialCP);
+			manageCriticalPath( getTarget()->localWireDelay(wX) + getTarget()->lutDelay() ) ;  
+			vhdl << tab << declare("sYpXb", wX) << " <= not pX when sY='1' else " << zg(wX) << ";" << endl;
+			for (int k=0; k<wY; k++) {
+				weight = wX+k - weightShift;
+				ostringstream v;
+				v << "sXpYb(" << k << ")";
+				bitHeap->addBit(weight, v.str());
+			}
+			vhdl << endl;
+
+			setCriticalPath(initialCP);
+			manageCriticalPath( getTarget()->localWireDelay() + getTarget()->lutDelay() ) ;  
+			// adding sXb and sYb at position wX+wY
+			weight=wX+wY - weightShift;
+			bitHeap->addBit(weight, "not sX");
+			bitHeap->addBit(weight, "not sY");
+			// adding sXsY at position wX+wY
+			weight=wX+wY - weightShift;
+			bitHeap->addBit(weight, "sX and sY");
+
+#else // SATURATED VERSION
+			// reminder: wX and wY have been decremented
+			vhdl << tab << "-- Managing two's complement with saturated arithmetic" << endl;
 			vhdl << tab << declare("rX", wX) << " <= XX" << range(wX-1, 0) << ";" << endl;
 			vhdl << tab << declare("rY", wY) << " <= YY" << range(wY-1, 0) << ";" << endl;
-#if BAUGHWOOLEY
-				int weight;
-				// reminder: wX and wY have been decremented
-				vhdl << tab << "-- Baugh-Wooley tinkering" << endl;
-				setCycle(0);
-				setCriticalPath(initialCP);
+			// complement X and Y and send them to the positive product
+			vhdl << tab << declare("pX", wX) << " <= not rX when sX='1' else " << zg(wX) << ";" << endl;
+			vhdl << tab << declare("pY", wX) << " <= not rY when sY='1' else " << zg(wY) << ";" << endl;
 
-				// first add all the bits that need no computation
-				// adding sX and sY at positions wX and wY
-				weight=wX - weightShift;
-				bitHeap->addBit(weight, "sX");
-				weight=wY - weightShift;
-				bitHeap->addBit(weight, "sY");
-				// adding the one at position wX+wY+1
-				// TODO: do not add this bit if we saturate a truncated mult, as it doesn't belong to the output range...
-				weight=wX+wY+1 - weightShift;
-				bitHeap->addBit(weight, "'1'");
-				// now we have all sort of bits that need some a LUT delay to be computed
-				setCriticalPath(initialCP);
-				manageCriticalPath( getTarget()->localWireDelay(wY) + getTarget()->lutDelay() ) ;  
-				vhdl << tab << declare("sXrYb", wY) << " <= not rY when sX='1' else " << zg(wY) << ";" << endl;
-				vhdl << tab << "-- Adding these bits to the heap of bits" << endl;
-				for (int k=0; k<wX; k++) {
-					weight=wY+k - weightShift;
-					ostringstream v;
-					v << "sYrXb(" << k << ")";
-					bitHeap->addBit(weight, v.str());
-				}
-				vhdl << endl;
+			// adding X and Y, possibly complemented
+			vhdl << tab << declare("sYpX", wX) << " <= pX when sY='1' else " << zg(wX) << ";" << endl;
+			vhdl << tab << declare("sXpY", wY) << " <= pY when sX='1' else " << zg(wY) << ";" << endl;
 
-				setCriticalPath(initialCP);
-				manageCriticalPath( getTarget()->localWireDelay(wX) + getTarget()->lutDelay() ) ;  
-				vhdl << tab << declare("sYrXb", wX) << " <= not rX when sY='1' else " << zg(wX) << ";" << endl;
-				for (int k=0; k<wY; k++) {
-					weight = wX+k - weightShift;
-					ostringstream v;
-					v << "sXrYb(" << k << ")";
-					bitHeap->addBit(weight, v.str());
-				}
-				vhdl << endl;
+			// adding only the relevant bits to the bit heap
+			for (weight=0; weight<g; weight++) {
+				ostringstream v;
+				v << "sXrYb(" << wX-g+weight << ")";
+				bitHeap->addBit(weight, v.str());
+			}
+			vhdl << endl;
 
-				setCriticalPath(initialCP);
-				manageCriticalPath( getTarget()->localWireDelay() + getTarget()->lutDelay() ) ;  
-				// adding sXb and sYb at position wX+wY
-				weight=wX+wY - weightShift;
-				bitHeap->addBit(weight, "not sX");
-				bitHeap->addBit(weight, "not sY");
-				// adding sXsY at position wX+wY
-				weight=wX+wY - weightShift;
-				bitHeap->addBit(weight, "sX and sY");
+			vhdl << tab << declare("sXrYb", wY) << " <= not rY when sX='1' else " << zg(wY) << ";" << endl;
+			vhdl << tab << "-- Adding these bits to the heap of bits" << endl;
+			for (int k=0; k<wX; k++) {
+				weight=wY+k - weightShift;
+				ostringstream v;
+				v << "sYrXb(" << k << ")";
+				bitHeap->addBit(weight, v.str());
+			}
+			vhdl << endl;
 
-#else
+			weight=wX+wY - weightShift;
+			bitHeap->addBit(weight, "not sX");
+			bitHeap->addBit(weight, "not sY");
+			// adding sXsY at position wX+wY
+			weight=wX+wY - weightShift;
+			bitHeap->addBit(weight, "sX and sY");
+
+
+			// adding sX and sY at positions wX and wY
+			weight=wX - weightShift;
+			bitHeap->addBit(weight, "sX");
+			weight=wY - weightShift;
+			bitHeap->addBit(weight, "sY");
+			// adding the one at position wX+wY+1
+			// TODO: do not add this bit if we saturate a truncated mult, as it doesn't belong to the output range...
+			weight=wX+wY+1 - weightShift;
+			bitHeap->addBit(weight, "'1'");
+			// now we have all sort of bits that need some a LUT delay to be computed
+			setCriticalPath(initialCP);
+			manageCriticalPath( getTarget()->localWireDelay(wY) + getTarget()->lutDelay() ) ;  
 
 #endif
-		}	
+		}	// if(signedIO)
+		else	{
+			vhdl << tab << declare("pX", wX) << " <= XX;" << endl;
+			vhdl << tab << declare("pY", wY) << " <= YY;" << endl;
+		}
 	}
+
+
 
 	void IntMultiplier::manageSignAfterMult() {
 		if (signedIO){
@@ -363,6 +486,85 @@ namespace flopoco {
 		}
 	}
 
+	/**************************************************************************/
+	void IntMultiplier::buildHeapLogicOnly() {
+		Target *target=getTarget();
+		vhdl << tab << "-- code generated by IntMultiplier::buildLogicOnly()"<< endl;
+
+		int dx, dy;				// Here we need to split in small sub-multiplications
+		int li=target->lutInputs();
+ 				
+		dx = li>>1;
+		dy = li - dx; 
+		REPORT(DEBUG, "dx="<< dx << "  dy=" << dy );
+
+		int chunksX =  int(ceil( ( double(wX) / (double) dx) ));
+		int chunksY =  int(ceil( ( 1+ double(wY-dy) / (double) dy) ));
+		int sizeXPadded=dx*chunksX; 
+		int sizeYPadded=dy*chunksY;
+		int padX=sizeXPadded-wX;
+		int padY=sizeYPadded-wY;
+				
+		REPORT(DEBUG, "X split in "<< chunksX << " chunks and Y in " << chunksY << " chunks; ");
+		REPORT(DEBUG, " sizeXPadded="<< sizeXPadded << "  sizeYPadded="<< sizeYPadded);
+		if (chunksX + chunksY > 2) { //we do more than 1 subproduct
+			vhdl << tab << "-- padding to the left" << endl;
+			vhdl<<tab<<declare("Xp",sizeXPadded)<<" <= "<< zg(padX) << " & pX" << range(wX-1, 0) << ";"<<endl;
+			vhdl<<tab<<declare("Yp",sizeYPadded)<<" <= "<< zg(padY) << " & pY" << range(wY-1, 0) << ";"<<endl;	
+			//SPLITTINGS
+			for (int k=0; k<chunksX ; k++)
+				vhdl<<tab<<declare(join("x",k),dx)<<" <= Xp"<<range((k+1)*dx-1,k*dx)<<";"<<endl;
+			for (int k=0; k<chunksY ; k++)
+				vhdl<<tab<<declare(join("y",k),dy)<<" <= Yp"<<range((k+1)*dy-1, k*dy)<<";"<<endl;
+					
+			REPORT(DEBUG, "maxWeight=" << maxWeight <<  "    weightShift=" << weightShift);
+
+			SmallMultTable *t = new SmallMultTable( target, dx, dy, dx+dy, false ); // unsigned
+			useSoftRAM(t);
+			oplist.push_back(t);
+
+
+			setCycle(0);
+			setCriticalPath(initialCP);
+			// SmallMultTable is built to cost this:
+			manageCriticalPath( getTarget()->localWireDelay(chunksX) + getTarget()->lutDelay() ) ;  
+			for (int iy=0; iy<chunksY; iy++){
+				vhdl << tab << "-- Partial product row number " << iy << endl;
+				for (int ix=0; ix<chunksX; ix++) { 
+					vhdl << tab << declare(XY(ix,iy), dx+dy) << " <= y" << iy << " & x" << ix << ";"<<endl;
+					inPortMap(t, "X", XY(ix,iy));
+					outPortMap(t, "Y", PP(ix,iy));
+					vhdl << instance(t, PPTbl(ix,iy));
+					vhdl << tab << "-- Adding the relevant bits to the heap of bits" << endl;
+					int maxK=dx+dy; 
+					if(ix == chunksX-1)
+		 				maxK-=padX;
+					if(iy == chunksY-1)
+						maxK-=padY;
+					for (int k=0; k<maxK; k++) {
+						ostringstream s;
+						s << PP(ix,iy) << of(k); // right hand side
+						int weight = ix*dx+iy*dy+k - weightShift;
+						if(weight>=0) {// otherwise these bits deserve to be truncated
+							REPORT(DEBUG, "adding bit " << s.str() << " at weight " << weight); 
+							bitHeap->addBit(weight, s.str());
+						}
+					}
+					vhdl << endl;
+				}
+			}				
+
+			if(g>0) {
+				int weight=wFull-wOut-1- weightShift;
+				bitHeap->addBit(weight, "\'1\'", "The round bit");
+			}
+
+			// And that's it, now go compress
+		
+		}
+		
+
+	}
 	
 	/**************************************************************************/
 	void IntMultiplier::buildHeapTiling() {
@@ -375,12 +577,12 @@ namespace flopoco {
 		
 		for(int i=0;i<horDSP;i++)
 			{
-			vhdl << tab << declare(join("XX",i), wxDSP) << " <= XX("<<wFull-(wFull-((i+1)*wxDSP))-1<<" downto "<< wFull-(wFull-(i*wxDSP))<<");"<<endl; 
+			vhdl << tab << declare(join("XX",i), wxDSP) << " <= pX("<<wFull-(wFull-((i+1)*wxDSP))-1<<" downto "<< wFull-(wFull-(i*wxDSP))<<");"<<endl; 
 			}
 	
 		for(int i=0;i<verDSP;i++)
 			{
-			vhdl << tab << declare(join("YY",i), wyDSP) << " <= YY("<<wFull-(wFull-((i+1)*wyDSP))-1<<" downto "<< wFull-(wFull-(i*wyDSP)) <<");"<<endl; 
+			vhdl << tab << declare(join("YY",i), wyDSP) << " <= pY("<<wFull-(wFull-((i+1)*wyDSP))-1<<" downto "<< wFull-(wFull-(i*wyDSP)) <<");"<<endl; 
 			}
 		int k=0;
 		for(int i=0;i<horDSP;i++)
@@ -445,13 +647,13 @@ namespace flopoco {
 			
 			for (int k=0; k<chunkX1 ; k++)
 				{
-					vhdl<<tab<<declare(join("x1",k),dx)<<" <= XX"<<range(wX-k*dx-1, wX-(k+1)*dx)<<";"<<endl;
-					REPORT(DEBUG,"x1"<<k<<" <= XX"<<wX-k*dx-1<< " downto " <<wX-(k+1)*dx);
+					vhdl<<tab<<declare(join("x1",k),dx)<<" <= pX"<<range(wX-k*dx-1, wX-(k+1)*dx)<<";"<<endl;
+					REPORT(DEBUG,"x1"<<k<<" <= pX"<<wX-k*dx-1<< " downto " <<wX-(k+1)*dx);
 				}
 			for (int k=0; k<chunkY1 ; k++)
 				{
-					vhdl<<tab<<declare(join("y1",k),dy)<<" <= YY"<<range(restY-k*dy-1, restY-(k+1)*dy)<<";"<<endl;
-					REPORT(DEBUG,"y1"<<k<<" <= YY"<<restY-k*dy-1<< " downto "<< restY-(k+1)*dy);
+					vhdl<<tab<<declare(join("y1",k),dy)<<" <= pY"<<range(restY-k*dy-1, restY-(k+1)*dy)<<";"<<endl;
+					REPORT(DEBUG,"y1"<<k<<" <= pY"<<restY-k*dy-1<< " downto "<< restY-(k+1)*dy);
 				}
 
 			//send to SmallMultTable
@@ -463,14 +665,14 @@ namespace flopoco {
 
 			for (int k=0; k<chunkX2 ; k++)
 				{
-					vhdl<<tab<<declare(join("x2",k),dx)<<" <= XX"<<range(restX-k*dx-1, restX-(k+1)*dx)<<";"<<endl;
-					REPORT(DEBUG,"x2"<<k<<" <= XX"<<restX-k*dx-1<< " downto "<< restX-(k+1)*dx);
+					vhdl<<tab<<declare(join("x2",k),dx)<<" <= pX"<<range(restX-k*dx-1, restX-(k+1)*dx)<<";"<<endl;
+					REPORT(DEBUG,"x2"<<k<<" <= pX"<<restX-k*dx-1<< " downto "<< restX-(k+1)*dx);
 				}
 
 			for (int k=0; k<chunkY2 ; k++)
 				{
-					vhdl<<tab<<declare(join("y2",k),dy)<<" <= YY"<<range(wY-k*dy-1, wY-(k+1)*dy)<<";"<<endl;
-					REPORT(DEBUG,"y2"<<k<<" <= YY"<<wY-k*dy-1<< " downto "<< wY-(k+1)*dy);
+					vhdl<<tab<<declare(join("y2",k),dy)<<" <= pY"<<range(wY-k*dy-1, wY-(k+1)*dy)<<";"<<endl;
+					REPORT(DEBUG,"y2"<<k<<" <= pY"<<wY-k*dy-1<< " downto "<< wY-(k+1)*dy);
 				}
 			
 			//send to SmallMultTable
@@ -581,107 +783,7 @@ namespace flopoco {
 
 
 
-	/**************************************************************************/
-	void IntMultiplier::buildLogicOnly() {
 
-		manageSignBeforeMult();
-		buildHeapLogicOnly();
-		manageSignAfterMult();
-		bitHeap -> generateCompressorVHDL();			
-		vhdl << tab << "R <= CompressionResult(" << wOut+g-1 << " downto "<< g << ");" << endl;
-	}
-
-
-	/**************************************************************************/
-	void IntMultiplier::buildTiling() {
-		manageSignBeforeMult();
-		buildHeapTiling();
-		manageSignAfterMult();
-		bitHeap -> generateCompressorVHDL();			
-		vhdl << tab << "R <= CompressionResult(" << wOut+g-1 << " downto "<< g << ");" << endl;
-	}
-
-
-
-	/**************************************************************************/
-	void IntMultiplier::buildHeapLogicOnly() {
-		Target *target=getTarget();
-		vhdl << tab << "-- code generated by IntMultiplier::buildLogicOnly()"<< endl;
-
-		int dx, dy;				// Here we need to split in small sub-multiplications
-		int li=target->lutInputs();
- 				
-		dx = li>>1;
-		dy = li - dx; 
-		REPORT(DEBUG, "dx="<< dx << "  dy=" << dy );
-
-		int chunksX =  int(ceil( ( double(wX) / (double) dx) ));
-		int chunksY =  int(ceil( ( 1+ double(wY-dy) / (double) dy) ));
-		int sizeXPadded=dx*chunksX; 
-		int sizeYPadded=dy*chunksY;
-		int padX=sizeXPadded-wX;
-		int padY=sizeYPadded-wY;
-				
-		REPORT(DEBUG, "X split in "<< chunksX << " chunks and Y in " << chunksY << " chunks; ");
-		REPORT(DEBUG, " sizeXPadded="<< sizeXPadded << "  sizeYPadded="<< sizeYPadded);
-		if (chunksX + chunksY > 2) { //we do more than 1 subproduct
-			vhdl << tab << "-- padding to the left" << endl;
-			vhdl<<tab<<declare("Xp",sizeXPadded)<<" <= "<< zg(padX) << " & XX" << range(wX-1, 0) << ";"<<endl;
-			vhdl<<tab<<declare("Yp",sizeYPadded)<<" <= "<< zg(padY) << " & YY" << range(wY-1, 0) << ";"<<endl;	
-			//SPLITTINGS
-			for (int k=0; k<chunksX ; k++)
-				vhdl<<tab<<declare(join("x",k),dx)<<" <= Xp"<<range((k+1)*dx-1,k*dx)<<";"<<endl;
-			for (int k=0; k<chunksY ; k++)
-				vhdl<<tab<<declare(join("y",k),dy)<<" <= Yp"<<range((k+1)*dy-1, k*dy)<<";"<<endl;
-					
-			REPORT(DEBUG, "maxWeight=" << maxWeight <<  "    weightShift=" << weightShift);
-
-			SmallMultTable *t = new SmallMultTable( target, dx, dy, dx+dy, false ); // unsigned
-			useSoftRAM(t);
-			oplist.push_back(t);
-
-
-			setCycle(0);
-			setCriticalPath(initialCP);
-			// SmallMultTable is built to cost this:
-			manageCriticalPath( getTarget()->localWireDelay(chunksX) + getTarget()->lutDelay() ) ;  
-			for (int iy=0; iy<chunksY; iy++){
-				vhdl << tab << "-- Partial product row number " << iy << endl;
-				for (int ix=0; ix<chunksX; ix++) { 
-					vhdl << tab << declare(XY(ix,iy), dx+dy) << " <= y" << iy << " & x" << ix << ";"<<endl;
-					inPortMap(t, "X", XY(ix,iy));
-					outPortMap(t, "Y", PP(ix,iy));
-					vhdl << instance(t, PPTbl(ix,iy));
-					vhdl << tab << "-- Adding the relevant bits to the heap of bits" << endl;
-					int maxK=dx+dy; 
-					if(ix == chunksX-1)
-		 				maxK-=padX;
-					if(iy == chunksY-1)
-						maxK-=padY;
-					for (int k=0; k<maxK; k++) {
-						ostringstream s;
-						s << PP(ix,iy) << of(k); // right hand side
-						int weight = ix*dx+iy*dy+k - weightShift;
-						if(weight>=0) {// otherwise these bits deserve to be truncated
-							REPORT(DEBUG, "adding bit " << s.str() << " at weight " << weight); 
-							bitHeap->addBit(weight, s.str());
-						}
-					}
-					vhdl << endl;
-				}
-			}				
-
-			if(g>0) {
-				int weight=wFull-wOut-1- weightShift;
-				bitHeap->addBit(weight, "\'1\'", "The round bit");
-			}
-
-			// And that's it, now go compress
-		
-		}
-		
-
-	}
 
 
 	void IntMultiplier::emulate ( TestCase* tc ) {
