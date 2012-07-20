@@ -32,8 +32,7 @@ support shared bitheap! In this case,
    pX, pY: remaining bits, sent to the positive multiplication
 */
 
-/* A big TODO
-   For two's complement arithmetic on n bits, the representable interval is [ -2^{n-1}, 2^{n-1}-1 ]
+/* For two's complement arithmetic on n bits, the representable interval is [ -2^{n-1}, 2^{n-1}-1 ]
    so the product lives in the interval [-2^{n-1}*2^{n-1}-1,  2^n]
    The value 2^n can only be obtained as the product of the two minimal negative input values
    (the weird ones, which have no symmetric)
@@ -41,6 +40,14 @@ support shared bitheap! In this case,
    So the output would be representable on 2n-1 bits in two's complement, if it werent for this weird*weird case.
 
    So for full signed multipliers, we just keep the 2n bits, including one bit used for only for this weird*weird case.
+   Current situation is: this must be managed from outside. 
+   An application that knows that it will not use the full range (e.g. signal processing, poly evaluation) can ignore the MSB bit, 
+   but we produce it.
+
+
+
+ A big TODO
+  
    But for truncated signed multipliers, we should hackingly round down this output to 2^n-1 to avoid carrying around a useless bit.
    This would be a kind of saturated arithmetic I guess.
 
@@ -48,7 +55,7 @@ support shared bitheap! In this case,
 
    So the interface must provide a bit that selects this behaviour.
 
-A possible alternative to Baugh-Wooley that solves it:
+A possible alternative to Baugh-Wooley that solves it (tried below but it doesn't work, zut alors)
    initially complement (xor) one negative input. This cost nothing, as this xor will be merged in the tables. Big fanout, though.
    then -x=xb+1 so -xy=xb.y+y    
    in case y pos, xy = - ((xb+1)y)  = -(xb.y +y)
@@ -325,6 +332,9 @@ namespace flopoco {
 
 
 
+#define BAUGHWOOLEY 1 // the other one doesn't work any better
+
+
 
 
 	/**************************************************************************/
@@ -334,7 +344,16 @@ namespace flopoco {
 		buildHeapLogicOnly();
 		manageSignAfterMult();
 		bitHeap -> generateCompressorVHDL();			
+#if BAUGHWOOLEY
 		vhdl << tab << "R <= CompressionResult(" << wOut+g-1 << " downto "<< g << ");" << endl;
+#else
+		// negate the result if needed
+		vhdl << tab << declare("RR", wOut) << " <= CompressionResult(" << wOut+g-1 << " downto "<< g << ");" << endl;
+		vhdl << tab << declare("sR") << " <= sX xor sY;" << endl;
+
+		vhdl << tab << "R <= RR when sR = '0'    else ("<< zg(wOut) << " + (not RR) + '1');" << endl;
+#endif
+
 	}
 
 
@@ -349,9 +368,6 @@ namespace flopoco {
 
 
 
-
-
-#define BAUGHWOOLEY 1
 
 	void IntMultiplier::manageSignBeforeMult() {
 		int weight;
@@ -417,56 +433,34 @@ namespace flopoco {
 			bitHeap->addBit(weight, "sX and sY");
 
 #else // SATURATED VERSION
+			// TODO manage pipeline
 			// reminder: wX and wY have been decremented
 			vhdl << tab << "-- Managing two's complement with saturated arithmetic" << endl;
 			vhdl << tab << declare("rX", wX) << " <= XX" << range(wX-1, 0) << ";" << endl;
 			vhdl << tab << declare("rY", wY) << " <= YY" << range(wY-1, 0) << ";" << endl;
 			// complement X and Y and send them to the positive product
-			vhdl << tab << declare("pX", wX) << " <= not rX when sX='1' else " << zg(wX) << ";" << endl;
-			vhdl << tab << declare("pY", wX) << " <= not rY when sY='1' else " << zg(wY) << ";" << endl;
+			vhdl << tab << declare("pX", wX) << " <= not rX when sX='1' else rX;" << endl;
+			vhdl << tab << declare("pY", wY) << " <= not rY when sY='1' else rY;" << endl;
 
 			// adding X and Y, possibly complemented
 			vhdl << tab << declare("sYpX", wX) << " <= pX when sY='1' else " << zg(wX) << ";" << endl;
 			vhdl << tab << declare("sXpY", wY) << " <= pY when sX='1' else " << zg(wY) << ";" << endl;
 
 			// adding only the relevant bits to the bit heap
-			for (weight=0; weight<g; weight++) {
+			for (weight=0; weight<wX-weightShift; weight++) {
 				ostringstream v;
-				v << "sXrYb(" << wX-g+weight << ")";
+				v << "sYpX(" << weight+weightShift << ")";
 				bitHeap->addBit(weight, v.str());
 			}
 			vhdl << endl;
 
-			vhdl << tab << declare("sXrYb", wY) << " <= not rY when sX='1' else " << zg(wY) << ";" << endl;
-			vhdl << tab << "-- Adding these bits to the heap of bits" << endl;
-			for (int k=0; k<wX; k++) {
-				weight=wY+k - weightShift;
+			for (weight=0; weight<wY-weightShift; weight++) {
 				ostringstream v;
-				v << "sYrXb(" << k << ")";
+				v << "sXpY(" << weight+weightShift << ")";
 				bitHeap->addBit(weight, v.str());
 			}
 			vhdl << endl;
 
-			weight=wX+wY - weightShift;
-			bitHeap->addBit(weight, "not sX");
-			bitHeap->addBit(weight, "not sY");
-			// adding sXsY at position wX+wY
-			weight=wX+wY - weightShift;
-			bitHeap->addBit(weight, "sX and sY");
-
-
-			// adding sX and sY at positions wX and wY
-			weight=wX - weightShift;
-			bitHeap->addBit(weight, "sX");
-			weight=wY - weightShift;
-			bitHeap->addBit(weight, "sY");
-			// adding the one at position wX+wY+1
-			// TODO: do not add this bit if we saturate a truncated mult, as it doesn't belong to the output range...
-			weight=wX+wY+1 - weightShift;
-			bitHeap->addBit(weight, "'1'");
-			// now we have all sort of bits that need some a LUT delay to be computed
-			setCriticalPath(initialCP);
-			manageCriticalPath( getTarget()->localWireDelay(wY) + getTarget()->lutDelay() ) ;  
 
 #endif
 		}	// if(signedIO)
@@ -489,7 +483,7 @@ namespace flopoco {
 	/**************************************************************************/
 	void IntMultiplier::buildHeapLogicOnly() {
 		Target *target=getTarget();
-		vhdl << tab << "-- code generated by IntMultiplier::buildLogicOnly()"<< endl;
+		vhdl << tab << "-- code generated by IntMultiplier::buildHeapLogicOnly()"<< endl;
 
 		int dx, dy;				// Here we need to split in small sub-multiplications
 		int li=target->lutInputs();
@@ -556,6 +550,8 @@ namespace flopoco {
 
 			if(g>0) {
 				int weight=wFull-wOut-1- weightShift;
+
+
 				bitHeap->addBit(weight, "\'1\'", "The round bit");
 			}
 
@@ -819,10 +815,16 @@ namespace flopoco {
 			// there is truncation, so this mult should be faithful
 			svR = svR >> wTruncated;
 			tc->addExpectedOutput("R", svR);
+#if BAUGHWOOLEY
 			svR++;
 			svR &= (mpz_class(1) << (wOut)) -1;
 			tc->addExpectedOutput("R", svR);
-			
+#else // saturate
+			if(svR<(mpz_class(1) << wOut)-1) {
+				svR++;
+				tc->addExpectedOutput("R", svR);
+			}
+#endif			
 		}
 	}
 	
