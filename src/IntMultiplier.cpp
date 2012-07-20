@@ -1,33 +1,33 @@
 /*
-An integer multiplier mess for FloPoCo
+  An integer multiplier mess for FloPoCo
 
-Authors:  Bogdan Pasca, being cleaned by F de Dinechin, Kinga Illyes and Bogdan Popa
+  Authors:  Bogdan Pasca, being cleaned by F de Dinechin, Kinga Illyes and Bogdan Popa
 
-This file is part of the FloPoCo project
-developed by the Arenaire team at Ecole Normale Superieure de Lyon
+  This file is part of the FloPoCo project
+  developed by the Arenaire team at Ecole Normale Superieure de Lyon
 
-Initial software.
-Copyright © ENS-Lyon, INRIA, CNRS, UCBL,
-2008-2010.
+  Initial software.
+  Copyright © ENS-Lyon, INRIA, CNRS, UCBL,
+  2008-2010.
   All rights reserved.
 */
 
 /*
-Interface TODO
-support shared bitheap! In this case,
-- do not compress at the end
-- do not add the round bit
-- import the heap LSB
-- export the truncation error
-- ...
+  Interface TODO
+  support shared bitheap! In this case,
+  - do not compress at the end
+  - do not add the round bit
+  - import the heap LSB
+  - export the truncation error
+  - ...
 */
 
 
 /* VHDL variable names:
- X, Y: inputs
- XX,YY: after swap
+   X, Y: inputs
+   XX,YY: after swap
 
- if(signedIO):
+   if(signedIO):
    sX, sY: signs 
    pX, pY: remaining bits, sent to the positive multiplication
 */
@@ -46,7 +46,7 @@ support shared bitheap! In this case,
 
 
 
- A big TODO
+   A big TODO
   
    But for truncated signed multipliers, we should hackingly round down this output to 2^n-1 to avoid carrying around a useless bit.
    This would be a kind of saturated arithmetic I guess.
@@ -55,7 +55,7 @@ support shared bitheap! In this case,
 
    So the interface must provide a bit that selects this behaviour.
 
-A possible alternative to Baugh-Wooley that solves it (tried below but it doesn't work, zut alors)
+   A possible alternative to Baugh-Wooley that solves it (tried below but it doesn't work, zut alors)
    initially complement (xor) one negative input. This cost nothing, as this xor will be merged in the tables. Big fanout, though.
    then -x=xb+1 so -xy=xb.y+y    
    in case y pos, xy = - ((xb+1)y)  = -(xb.y +y)
@@ -76,7 +76,7 @@ A possible alternative to Baugh-Wooley that solves it (tried below but it doesn'
 
    Note that this only applies to truncated multipliers.
    
- */
+*/
 	
 
 #include <cstdlib>
@@ -103,39 +103,16 @@ using namespace std;
 
 namespace flopoco {
 
-	
-	IntMultiplier::IntMultiplier (Target* target, int wX_, int wY_, int wOut_, bool signedIO_, float ratio_,  map<string, double> inputDelays_):
-		Operator ( target, inputDelays_ ), wXdecl(wX_), wYdecl(wY_), wOut(wOut_), signedIO(signedIO_), ratio(ratio_), maxError(0.0) {
-		srcFileName="IntMultiplier";
-		setCopyrightString ( "Florent de Dinechin, Kinga Illyes, Bogdan Popa, Bogdan Pasca, 2012" );
-		
-		// useDSP or not? 
-		useDSP = (ratio>0) & target->hasHardMultipliers();
-		
-	     	
-	
 
-		{
-			ostringstream name;
-			name <<"IntMultiplier";
-			if(useDSP) 
-				name << "UsingDSP_";
-			else
-				name << "LogicOnly_";
-			name << wXdecl << "_" << wYdecl <<"_" << wOut << "_" << (signedIO?"signed":"unsigned") << "_uid"<<Operator::getNewUId();
-			setName ( name.str() );
-		}
-
-
+	void IntMultiplier::initialize() {
 		// interface redundancy
 		if(wOut<0 || wXdecl<0 || wYdecl<0) {
 			THROWERROR("negative input/output size");
 		}
 
+		wFull = wXdecl+wYdecl;
 
-			wFull = wXdecl+wYdecl;
-
-		if(wOut_ > wFull){
+		if(wOut > wFull){
 			THROWERROR("wOut=" << wOut << " too large for " << (signedIO?"signed":"unsigned") << " " << wXdecl << "x" << wYdecl <<  " multiplier." );
 		}
 
@@ -161,9 +138,93 @@ namespace flopoco {
 			g=wFull-i-wOut;
 			REPORT(DEBUG, "ulp truncation error=" << ulperror << "    g=" << g);
 		}
+
+		maxWeight = wOut+g;
+		weightShift = wFull - maxWeight;  
+
+
+
+		// Halve number of cases by making sure wY<=wX:
+		// interchange x and y in case wY>wX
+
+		if(wYdecl> wXdecl){
+			wX=wYdecl;
+			wY=wXdecl;
+			vhdl << tab << declare("XX", wX, true) << " <= " << yname << ";" << endl; 
+			vhdl << tab << declare("YY", wY, true) << " <= " << xname << ";" << endl; 
+		}
+		else{
+			wX=wXdecl;
+			wY=wYdecl;
+			vhdl << tab << declare("XX", wX, true) << " <= " << xname << ";" << endl; 
+			vhdl << tab << declare("YY", wY, true) << " <= " << yname << ";" << endl; 
+		}
+
+	}
+
+
+
+
+	
+	// The virtual constructor
+	IntMultiplier::IntMultiplier (Operator* parentOp_, BitHeap* bitHeap_, Signal* x_, Signal* y_, int wX_, int wY_, int wOut_, int lsbWeight_, bool signedIO_, float ratio_):
+		Operator ( parentOp_->getTarget()), 
+		wXdecl(wX_), wYdecl(wY_), wOut(wOut_), signedIO(signedIO_), ratio(ratio_),  maxError(0.0), parentOp(parentOp_), bitHeap(bitHeap_), x(x_), y(y_) {
+
+		srcFileName="IntMultiplier";
+		useDSP = (ratio>0) & getTarget()->hasHardMultipliers();
+		
+		ostringstream name;
+		name <<"VirtualIntMultiplier";
+		if(useDSP) 
+			name << "UsingDSP_";
+		else
+			name << "LogicOnly_";
+		name << wXdecl << "_" << wYdecl <<"_" << wOut << "_" << (signedIO?"signed":"unsigned") << "_uid"<<Operator::getNewUId();
+		setName ( name.str() );
+		
+		xname = x->getName();
+		yname = y->getName();
+		
+		initialize();
+
+	}
+
+
+
+
+
+
+	IntMultiplier::IntMultiplier (Target* target, int wX_, int wY_, int wOut_, bool signedIO_, float ratio_,  map<string, double> inputDelays_):
+		Operator ( target, inputDelays_ ), wXdecl(wX_), wYdecl(wY_), wOut(wOut_), signedIO(signedIO_), ratio(ratio_), maxError(0.0) {
+		srcFileName="IntMultiplier";
+		setCopyrightString ( "Florent de Dinechin, Kinga Illyes, Bogdan Popa, Bogdan Pasca, 2012" );
+		
+		// useDSP or not? 
+		useDSP = (ratio>0) & target->hasHardMultipliers();
+
+
+		{
+			ostringstream name;
+			name <<"IntMultiplier";
+			if(useDSP) 
+				name << "UsingDSP_";
+			else
+				name << "LogicOnly_";
+			name << wXdecl << "_" << wYdecl <<"_" << wOut << "_" << (signedIO?"signed":"unsigned") << "_uid"<<Operator::getNewUId();
+			setName ( name.str() );
+		}
+
+		parentOp=this;
+
+		xname="X";
+		yname="Y";
+
+		initialize();
+
 		// Set up the IO signals
-		addInput ( "X"  , wXdecl, true );
-		addInput ( "Y"  , wYdecl, true );
+		addInput ( xname  , wXdecl, true );
+		addInput ( yname  , wYdecl, true );
 		addOutput ( "R"  , wOut, 1 , true );
 
 		// Set up the VHDL library style
@@ -173,24 +234,8 @@ namespace flopoco {
 			useStdLogicUnsigned();
 
 		// The bit heap
-		
 		bitHeap = new BitHeap(this, wOut+g);
 	
-		// Halve number of cases by making sure wY<=wX:
-		// interchange x and y in case wY>wX
-
-		if(wY_> wX_){
-			wX=wY_;
-			wY=wX_;
-			vhdl << tab << declare("XX", wX, true) << " <= Y;" << endl; 
-			vhdl << tab << declare("YY", wY, true) << " <= X;" << endl; 
-		}
-		else{
-			wX=wX_;
-			wY=wY_;
-			vhdl << tab << declare("XX", wX, true) << " <= X;" << endl; 
-			vhdl << tab << declare("YY", wY, true) << " <= Y;" << endl; 
-		}
 
 		// initialize the critical path
 		setCriticalPath(getMaxInputDelays ( inputDelays_ ));
@@ -243,13 +288,13 @@ namespace flopoco {
 			vhdl <<  " & XX) when YY(0)='1' else "<<zg(wX+2,0)<<";"<<endl;	
 			vhdl << tab << declare("R1i",wX+2) << " <= ";
 			if (signedIO) 
-					vhdl << "(XX" << of(wX-1) << "  & XX & \"0\")";
+				vhdl << "(XX" << of(wX-1) << "  & XX & \"0\")";
 			else  
 				vhdl << "(\"0\" & XX & \"0\")";
 			vhdl << " when YY(1)='1' else " << zg(wX+2,0) << ";"<<endl;	
 			vhdl << tab << declare("R1",wX+2) << " <= ";
 			if (signedIO) 
-					vhdl << "not R1i;" <<endl;
+				vhdl << "not R1i;" <<endl;
 			else  
 				vhdl <<  "R1i;" <<endl;
 			
@@ -313,12 +358,13 @@ namespace flopoco {
 					//buildLogicOnly(wX, wY);
 					SmallMultTable *t = new SmallMultTable( getTarget(), 3, 3, 6, false ); // unsigned
 					//useSoftRAM(t);
-		    		oplist.push_back(t);
-					smallTiling(0,0,0,wX,wY,t);
+					oplist.push_back(t);
+					//smallTiling(0,0,0,wX,wY,t);
+					buildLogicOnly();
 				}
 			}
 			else {
-			//wx>wxDSP && wy>wyDSP
+				//wx>wxDSP && wy>wyDSP
 				
 				buildTiling();
 
@@ -329,8 +375,9 @@ namespace flopoco {
 			//buildLogicOnly(wX, wY);
 			SmallMultTable *t = new SmallMultTable( getTarget(), 3, 3, 6, false ); // unsigned
 			//useSoftRAM(t);
-		    oplist.push_back(t);
-			smallTiling(0,0,0,wX,wY,t);
+			oplist.push_back(t);
+			//smallTiling(0,0,0,wX,wY,t);
+			buildLogicOnly();
 		}
 		
 		
@@ -374,7 +421,7 @@ namespace flopoco {
 
 
 
-
+	/**************************************************************************/
 	void IntMultiplier::manageSignBeforeMult() {
 		int weight;
 		if (signedIO){
@@ -539,7 +586,7 @@ namespace flopoco {
 					vhdl << tab << "-- Adding the relevant bits to the heap of bits" << endl;
 					int maxK=dx+dy; 
 					if(ix == chunksX-1)
-		 				maxK-=padX;
+						maxK-=padX;
 					if(iy == chunksY-1)
 						maxK-=padY;
 					for (int k=0; k<maxK; k++) {
@@ -557,25 +604,23 @@ namespace flopoco {
 
 			if(g>0) {
 				int weight=wFull-wOut-1- weightShift;
-
-
 				bitHeap->addBit(weight, "\'1\'", "The round bit");
 			}
 
 			// And that's it, now go compress
 		
 		}
-		
-
+	 
 	}
 	
+
 	/**************************************************************************/
 	void IntMultiplier::buildHeapTiling() {
 		
 		int horDSP=wX/wxDSP;
 		int verDSP=wY/wyDSP;
 		int restX=wX-horDSP*wxDSP;
-	    int restY=wY-verDSP*wyDSP;
+		int restY=wY-verDSP*wyDSP;
 		REPORT(DEBUG,"restX= "<< restX);
 		REPORT(DEBUG,"restY= "<< restY);
 		REPORT(DEBUG,"horDSP= "<< horDSP);
@@ -584,68 +629,68 @@ namespace flopoco {
 		
 		for(int i=0;i<horDSP;i++)
 			{
-			vhdl << tab << declare(join("XX",horDSP-i-1), wxDSP) << " <= XX("<<wX-(i*wxDSP)-1<<" downto "<< wX-((i+1)*wxDSP)<<");"<<endl; 
-			REPORT(DEBUG,join("XX",horDSP-i-1)<< " <= XX("<<wX-(i*wxDSP)-1<<" downto "<< wX-((i+1)*wxDSP)<<");");
+				vhdl << tab << declare(join("XX",horDSP-i-1), wxDSP) << " <= XX("<<wX-(i*wxDSP)-1<<" downto "<< wX-((i+1)*wxDSP)<<");"<<endl; 
+				REPORT(DEBUG,join("XX",horDSP-i-1)<< " <= XX("<<wX-(i*wxDSP)-1<<" downto "<< wX-((i+1)*wxDSP)<<");");
 			}
 	
 		for(int i=0;i<verDSP;i++)
 			{
-			REPORT(DEBUG,join("YY",verDSP-i-1)<< " <= YY("<<wY-((i)*wyDSP)-1<<" downto "<< wY-(((i+1)*wyDSP)) <<");");
-			vhdl << tab << declare(join("YY",verDSP-i-1), wyDSP) << " <= YY("<<(wY-(i*wyDSP))-1<<" downto "<< wY-((i+1)*wyDSP) <<");"<<endl; 
+				REPORT(DEBUG,join("YY",verDSP-i-1)<< " <= YY("<<wY-((i)*wyDSP)-1<<" downto "<< wY-(((i+1)*wyDSP)) <<");");
+				vhdl << tab << declare(join("YY",verDSP-i-1), wyDSP) << " <= YY("<<(wY-(i*wyDSP))-1<<" downto "<< wY-((i+1)*wyDSP) <<");"<<endl; 
 			}
 
 
 		int k=0;
 		for(int i=0;i<horDSP;i++)
 			for(int j=0;j<verDSP;j++)
-			{
-				REPORT(DEBUG, "i="<<i<<" j="<<j);
-				REPORT(DEBUG, "XX"<<i<<"YY"<<j<<" <= "<<join("XX",i)<<" * "<<join("YY",j)<<";");
-
-				vhdl << tab << declare (join("XX",i,"YY",j),wxDSP+wyDSP)<<" <= "<<join("XX",i)<<" * "<<join("YY",j)<<";"<<endl; 
-				for(int l=wxDSP+wyDSP-1;l>=0;l--)
 				{
-				//	REPORT(DEBUG, wFull-wOut-g);
-					if (l+i*wxDSP+j*wyDSP+restX+restY>=wFull-wOut-g)
-					{
-						vhdl << tab << declare (join("PP_DSP_X",i,"Y",j,"_",l))<<"<=XX"<<i<<"YY"<<j<<"("<<l<<");"<<endl;
-						REPORT(DEBUG, "insert here XX"<<i<<"YY"<<j<<"("<<l<<") in column "<<l+(i*wxDSP)+(j*wyDSP)+restX+restY-(wFull-wOut-g));
-						bitHeap->addBit(l+(i*wxDSP)+(j*wyDSP)+restX+restY-(wFull-wOut-g),join("PP_DSP_X",i,"Y",j,"_",l));
-					}
-				}
-				k++;		
-			}	
+					REPORT(DEBUG, "i="<<i<<" j="<<j);
+					REPORT(DEBUG, "XX"<<i<<"YY"<<j<<" <= "<<join("XX",i)<<" * "<<join("YY",j)<<";");
+
+					vhdl << tab << declare (join("XX",i,"YY",j),wxDSP+wyDSP)<<" <= "<<join("XX",i)<<" * "<<join("YY",j)<<";"<<endl; 
+					for(int l=wxDSP+wyDSP-1;l>=0;l--)
+						{
+							//	REPORT(DEBUG, wFull-wOut-g);
+							if (l+i*wxDSP+j*wyDSP+restX+restY>=wFull-wOut-g)
+								{
+									vhdl << tab << declare (join("PP_DSP_X",i,"Y",j,"_",l))<<"<=XX"<<i<<"YY"<<j<<"("<<l<<");"<<endl;
+									REPORT(DEBUG, "insert here XX"<<i<<"YY"<<j<<"("<<l<<") in column "<<l+(i*wxDSP)+(j*wyDSP)+restX+restY-(wFull-wOut-g));
+									bitHeap->addBit(l+(i*wxDSP)+(j*wyDSP)+restX+restY-(wFull-wOut-g),join("PP_DSP_X",i,"Y",j,"_",l));
+								}
+						}
+					k++;		
+				}	
 
 		
 			
 	
 	
 	
-	if((restX!=0 ) || (restY!=0))
-		{
-
-		SmallMultTable *t = new SmallMultTable( getTarget(), 3, 3, 6, false ); // unsigned
-		//useSoftRAM(t);
-		oplist.push_back(t);
-		REPORT(DEBUG,"restX= "<<restX<<"restY= "<<restY);
-		if(restY>0)
+		if((restX!=0 ) || (restY!=0))
 			{
-			REPORT(DEBUG,"first small tiling");
-			smallTiling(0,0,0,wX,restY,t);
+
+				SmallMultTable *t = new SmallMultTable( getTarget(), 3, 3, 6, false ); // unsigned
+				//useSoftRAM(t);
+				oplist.push_back(t);
+				REPORT(DEBUG,"restX= "<<restX<<"restY= "<<restY);
+				if(restY>0)
+					{
+						REPORT(DEBUG,"first small tiling");
+						smallTiling(0,0,0,wX,restY,t);
+					}
+				if(restX>0)
+					{
+						REPORT(DEBUG, "second small tiling");
+						smallTiling(1,0,restY,restX,wY,t);
+					}	
+
+		
+				if(g>0) {
+					int weight=g-1;
+					bitHeap->addBit(weight, "\'1\'", "The round bit");
+				}	
+		
 			}
-		if(restX>0)
-			{
-			REPORT(DEBUG, "second small tiling");
-			smallTiling(1,0,restY,restX,wY,t);
-			}	
-
-		
-		if(g>0) {
-				int weight=g-1;
-				bitHeap->addBit(weight, "\'1\'", "The round bit");
-			}	
-		
-		}
 	}
 
 	/******************************************************************************/
@@ -653,10 +698,10 @@ namespace flopoco {
 	{
 		int dx, dy;				// Here we need to split in small sub-multiplications
 		int li=getTarget()->lutInputs();
- 			dx = li>>1;
-			dy = li - dx; 
+		dx = li>>1;
+		dy = li - dx; 
 		REPORT(DEBUG, "dx="<< dx << "  dy=" << dy );
-			//dx,dy=3 for the SmallMultiTable
+		//dx,dy=3 for the SmallMultiTable
 		
 		int chunkX=(botX-topX)/dx;
 		int moreX=(botX-topX)-chunkX*dx;
@@ -690,59 +735,59 @@ namespace flopoco {
 		for (int i=0; i<chunkX;i++)
 			for(int j=0;j<chunkY;j++)
 				{		REPORT(DEBUG,PP(i,j,nr)<<" <= "<<XY(i,j,nr)<<" <=Y"<<nr<<"_" << j<< " & X"<<nr<<"_" << i << ";");
-						vhdl << tab << declare(XY(i,j,nr), dx+dy) << " <= Y"<<nr<<"_" << j<< " & X"<<nr<<"_" << i << ";"<<endl;
-						inPortMap(t, "X", XY(i,j,nr));
-						outPortMap(t, "Y", PP(i,j,nr));
-						vhdl << instance(t, PPTbl(i,j,nr));
-						int maxK=dx+dy; 
-					 //   lsbX[i][j]=(i+1)*dx+moreX;
+					vhdl << tab << declare(XY(i,j,nr), dx+dy) << " <= Y"<<nr<<"_" << j<< " & X"<<nr<<"_" << i << ";"<<endl;
+					inPortMap(t, "X", XY(i,j,nr));
+					outPortMap(t, "Y", PP(i,j,nr));
+					vhdl << instance(t, PPTbl(i,j,nr));
+					int maxK=dx+dy; 
+					//   lsbX[i][j]=(i+1)*dx+moreX;
 					//	lsbY[i][j]=(j+1)*dy+moreY;
-						REPORT(DETAILED, "lsbX" << i << "," << j << "  " <<lsbX[i]);
-						REPORT(DETAILED, "lsbY" << i << "," << j << "  " <<lsbY[j]);
-						for (int k=maxK-1;k>=0 ; k--) 
+					REPORT(DETAILED, "lsbX" << i << "," << j << "  " <<lsbX[i]);
+					REPORT(DETAILED, "lsbY" << i << "," << j << "  " <<lsbY[j]);
+					for (int k=maxK-1;k>=0 ; k--) 
 						{
 							ostringstream s;
 							s << PP(i,j,nr) << of(k);
 							int weight = lsbX[i]+lsbY[j]+k;
 							REPORT(DEBUG,"weight= "<<weight);
 							if(weight>=wFull-wOut-g) 
-							{// otherwise these bits deserve to be truncated
-								REPORT(DEBUG, "adding bit " << s.str() << " at weight " << weight-(wFull-wOut-g)); 
-								bitHeap->addBit(weight-(wFull-wOut-g), s.str());
-							}
+								{// otherwise these bits deserve to be truncated
+									REPORT(DEBUG, "adding bit " << s.str() << " at weight " << weight-(wFull-wOut-g)); 
+									bitHeap->addBit(weight-(wFull-wOut-g), s.str());
+								}
 						}
 				} 
 
-        //what not fits in the SmallMultTables
+		//what not fits in the SmallMultTables
 		REPORT(DEBUG,"first for");
 		for(int i=botX-chunkX*dx-1;i>=topX;i--)
 			for(int j=botY-1;j>=topY;j--)
 				{
-				//and on bits
-				vhdl<< tab << declare(join("a",nr,"Y",j,"_and_X",i)) << " <= YY("<<j<< ") and XX("<<i<<");"<<endl;
-				REPORT(DEBUG, join("a",nr,"Y",j,"_and_X",i) << " <= YY"<<j<< " and XX("<<i<<");");
-		        int weight=i+j;
-				if(weight>=wFull-wOut-g)
-					{
-					REPORT(DEBUG, "adding bit " << join("a",nr,"Y",j,"_and_X",i)<< " at weight " << weight-(wFull-wOut-g)); 
-					bitHeap->addBit(weight-(wFull-wOut-g), join("a",nr,"Y",j,"_and_X",i));
-					}					
+					//and on bits
+					vhdl<< tab << declare(join("a",nr,"Y",j,"_and_X",i)) << " <= YY("<<j<< ") and XX("<<i<<");"<<endl;
+					REPORT(DEBUG, join("a",nr,"Y",j,"_and_X",i) << " <= YY"<<j<< " and XX("<<i<<");");
+					int weight=i+j;
+					if(weight>=wFull-wOut-g)
+						{
+							REPORT(DEBUG, "adding bit " << join("a",nr,"Y",j,"_and_X",i)<< " at weight " << weight-(wFull-wOut-g)); 
+							bitHeap->addBit(weight-(wFull-wOut-g), join("a",nr,"Y",j,"_and_X",i));
+						}					
 				}
 
 		REPORT(DEBUG,"second for");
 		for(int i=botY-chunkY*dy-1;i>=topY;i--)
 			for(int j=botX-1;j>=topX;j--)
 				{
-				//and on bits
-				REPORT(DEBUG,"i=" <<i<<" j= "<<j);
-				vhdl<< tab << declare(join("b",nr,"X",j,"_and_Y",i)) << " <= XX("<<j<< ") and YY("<<i<<");"<<endl;
-				REPORT(DEBUG, join("b",nr,"X",j,"_and_Y",i) << " <= XX"<<j<< " and YY"<<i<<";");
-		        int weight=i+j;
-				if(weight>=wFull-wOut-g)
-					{
-					REPORT(DEBUG, "adding bit " << join("b",nr,"X",j,"_and_Y",i)<< " at weight " << weight-(wFull-wOut-g)); 
-					bitHeap->addBit(weight-(wFull-wOut-g), join("b",nr,"X",j,"_and_Y",i));
-					}					
+					//and on bits
+					REPORT(DEBUG,"i=" <<i<<" j= "<<j);
+					vhdl<< tab << declare(join("b",nr,"X",j,"_and_Y",i)) << " <= XX("<<j<< ") and YY("<<i<<");"<<endl;
+					REPORT(DEBUG, join("b",nr,"X",j,"_and_Y",i) << " <= XX"<<j<< " and YY"<<i<<";");
+					int weight=i+j;
+					if(weight>=wFull-wOut-g)
+						{
+							REPORT(DEBUG, "adding bit " << join("b",nr,"X",j,"_and_Y",i)<< " at weight " << weight-(wFull-wOut-g)); 
+							bitHeap->addBit(weight-(wFull-wOut-g), join("b",nr,"X",j,"_and_Y",i));
+						}					
 				}
 
 
@@ -833,7 +878,7 @@ namespace flopoco {
 	string IntMultiplier::XY( int i, int j,int nr) {
 		std::ostringstream p;		
 		if(nr==-1) 
-		p  << "Y" << j<< "X" << i;
+			p  << "Y" << j<< "X" << i;
 		else
 			p  << "Y" << j<< "X" << i<<"_"<<nr;
 		return p.str();	

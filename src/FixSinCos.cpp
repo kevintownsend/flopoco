@@ -6,41 +6,23 @@
 #include <iostream>
 #include <sstream>
 
-/* header of libraries to manipulate multiprecision numbers
-  There will be used in the emulate function to manipulate arbitraly large
-  entries */
+/* header of libraries to manipulate multiprecision numbers */
 #include "gmp.h"
 #include "mpfr.h"
 #include <assert.h>
 // for debug
 #include <signal.h>
-
-// include the header of the Operator
 #include "FixSinCos.hpp"
 
 using namespace std;
 using namespace flopoco;
 
 
-// personalized parameter
-//string FixSinCos::operatorInfo = "FixSinCos w <options>";
-
 #define SUBCYCLEPIPELINING 0
 
 FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 {
-/* constructor of the FixSinCos
-  Target is the targeted FPGA : Stratix, Virtex ... (see Target.hpp for more informations)
-  w and param1 are some parameters declared by this Operator developpers, 
-  any number can be declared, you will have to modify 
-      -> this function,  
-      -> the prototype of this function (available in FixSinCos.hpp)
-      -> the lines in main.cpp where the command line arguments are parsed in order to generate this FixSinCos
-*/
-	/* In this constructor we are going to generate an operator that takes as input three bit vectors X,Y,Z of lenght w, treats them as unsigned integers, sums them and then output the last param1 bit of the sum adding the first bit of the sum (most significant) in front of this output, all the vhdl code needed by this operator has to be generated in this function */
-
 	srcFileName="FixSinCos";
-
 	
 	// definition of the name of the operator
 	ostringstream name;
@@ -49,21 +31,12 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 
 	setCopyrightString("Florent de Dinechin, Guillaume Sergent (2012)");
 
-	/* SET UP THE IO SIGNALS
-	   Each IO signal is declared by addInput(name,n) or addOutput(name,n) 
-	   where name is a string that stands for the name of the variable and 
-	   n is an integer (int)   that stands for the length of the corresponding 
-	   input/output */
-
 	// declaring inputs
 	addInput("X", w+1);
-	//addFullComment(" addFullComment for a large comment ");
-	//addComment("addComment for small left-aligned comment");
 
 	// declaring outputs
 	addOutput("S", w+1);
 	addOutput("C", w+1);
-
 
 	// the argument is reduced into (0,1/4) because one sin/cos
 	// computation in this range can always compute the right sin/cos
@@ -237,15 +210,13 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	vhdl << declare ("Z2o2",wZ2o2) << " <= Z2o2_ext"
 	     << range (wZ-1,wZ-wZ2o2) << ";" << endl;*/
 	// so we use a truncated multiplier instead
-	IntTruncMultiplier *sqr_z;
+	IntMultiplier *sqr_z;
 	int wZ2o2 = 2*wZ - (w+g)-1;
 	if (wZ2o2 < 2)
 		wZ2o2 = 2; //for sanity
 	vhdl << tab << "-- First truncate the inputs of the multiplier to the precision of the output" << endl;
 	vhdl << tab << declare("Z_truncToZ2", wZ2o2) << " <= Z" << range(wZ-1, wZ-wZ2o2) << ";" << endl;
-	sqr_z = new IntTruncMultiplier (target, wZ2o2, wZ2o2, wZ2o2,
-	                                1.f, 0.95, 0, false, false, true, 
-	                                sqr_z_inputDelays);
+	sqr_z = new IntMultiplier (target, wZ2o2, wZ2o2, wZ2o2, false, 1.0, sqr_z_inputDelays);
 	oplist.push_back (sqr_z);
 	inPortMap (sqr_z, "Y", "Z_truncToZ2");
 	inPortMap (sqr_z, "X", "Z_truncToZ2");
@@ -374,9 +345,8 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	// vhdl:mul (Z2o2, CosPiA -> Z2o2CosPiA)
 	vhdl << tab << "-- First truncate the larger input of the multiplier to the precision of the output" << endl;
 	vhdl << tab << declare("CosPiA_truncToZ2o2", wZ2o2) << " <= CosPiA" << range(w+g-1, w+g-wZ2o2) << ";" << endl;
-	IntTruncMultiplier *c_out_2;
-	c_out_2 = new IntTruncMultiplier (target, wZ2o2, wZ2o2, wZ2o2,
-	                                  1.f, 0.95, 0, false, false, true);
+	IntMultiplier *c_out_2;
+	c_out_2 = new IntMultiplier (target, wZ2o2, wZ2o2, wZ2o2, false, 1.0);
 	oplist.push_back (c_out_2);
 	inPortMap (c_out_2, "X", "Z2o2");
 	inPortMap (c_out_2, "Y", "CosPiA_truncToZ2o2");
@@ -400,12 +370,11 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 #endif
 
 	// vhdl:mul (SinZ, SinPiA -> SinZSinPiA)
-	IntTruncMultiplier *c_out_3;
+	IntMultiplier *c_out_3;
 
 	vhdl << tab << "-- First truncate the larger input of the multiplier to the precision of the output" << endl;
 	vhdl << tab << declare("SinPiA_truncToZ", wZ) << " <= SinPiA" << range(w+g-1, w+g-wZ) << ";" << endl;
-	c_out_3 = new IntTruncMultiplier (target, wZ, wZ, wZ,
-	                                  1.f, 0.95, 0, false, false, true);
+	c_out_3 = new IntMultiplier (target, wZ, wZ, wZ, false);
 	oplist.push_back (c_out_3);
 	inPortMap (c_out_3, "Y", "SinPiA_truncToZ");
 	inPortMap (c_out_3, "X", "SinZ");
@@ -442,9 +411,8 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	// vhdl:mul (Z2o2, SinPiA -> Z2o2SinPiA)
 	vhdl << tab << "-- First truncate the larger input of the multiplier to the precision of the output" << endl;
 	vhdl << tab << declare("SinPiA_truncToZ2o2", wZ2o2) << " <= SinPiA" << range(w+g-1, w+g-wZ2o2) << ";" << endl;
-	IntTruncMultiplier *s_out_2;
-	s_out_2 = new IntTruncMultiplier (target, wZ2o2, wZ2o2, wZ2o2,
-	                                  1.f, 0.95, 0, false, false, true);
+	IntMultiplier *s_out_2;
+	s_out_2 = new IntMultiplier (target, wZ2o2, wZ2o2, wZ2o2, false);
 	oplist.push_back (s_out_2);
 	inPortMap (s_out_2, "X", "Z2o2");
 	inPortMap (s_out_2, "Y", "SinPiA_truncToZ2o2");
@@ -462,9 +430,8 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	vhdl << tab << "-- First truncate the larger input of the multiplier to the precision of the output" << endl;
 	vhdl << tab << declare("CosPiA_truncToSinZ", wZ) << " <= CosPiA" << range(w+g-1, w+g-wZ) << ";" << endl;
 
-	IntTruncMultiplier *s_out_3;
-	s_out_3 = new IntTruncMultiplier (target, wZ, wZ, wZ,
-	                                  1.f, 0.95, 0, false, false, true);
+	IntMultiplier *s_out_3;
+	s_out_3 = new IntMultiplier (target, wZ, wZ, wZ, false);
 	oplist.push_back (s_out_3);
 	inPortMap (s_out_3, "X", "SinZ");
 	inPortMap (s_out_3, "Y", "CosPiA_truncToSinZ");

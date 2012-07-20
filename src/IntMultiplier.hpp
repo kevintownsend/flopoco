@@ -33,11 +33,28 @@ public:
     * @param[in] target           the target device
     * @param[in] wX             X multiplier size (including sign bit if any)
     * @param[in] wY             Y multiplier size (including sign bit if any)
-    * @param[in] wTruncated       return result faithful to wX+wY-wTruncated bits (0 means full multiplier)
+    * @param[in] wOut         wOut size for a truncated multiplier (0 means full multiplier)
     * @param[in] signedIO     false=unsigned, true=signed
     * @param[in] ratio            DSP block use ratio
     **/
 	IntMultiplier(Target* target, int wX, int wY, int wOut=0, bool signedIO = false, float ratio = 1.0, map<string, double> inputDelays = emptyDelayMap);
+
+
+    /**
+    * The virtual IntMultiplier constructor adds all the multiplier bits to some bitHeap, but no more.
+    * @param[in] parentOp      the Operator to which VHDL code will be added
+    * @param[in] bitHeap       the BitHeap to which bits will be added
+    * @param[in] x            a Signal from which the x input should be taken
+    * @param[in] y            a Signal from which the y input should be taken
+    * @param[in] wX             X multiplier size (including sign bit if any)
+    * @param[in] wY             Y multiplier size (including sign bit if any)
+    * @param[in] wOut         wOut size for a truncated multiplier (0 means full multiplier)
+    * @param[in] lsbWeight     the weight, within this BitHeap, corresponding to the LSB of the multiplier output. Note that there should be enough bits below for guard bits in case of truncation.
+    * @param[in] signedIO     false=unsigned, true=signed
+    * @param[in] ratio            DSP block use ratio
+    **/
+	IntMultiplier (Operator* parentOp, BitHeap* bitHeap,  Signal* x, Signal* y, int wX, int wY, int wOut, int lsbWeight, bool signedIO, float ratio);
+
 
     /**
     *  Destructor
@@ -64,7 +81,8 @@ protected:
 	void buildLogicOnly();
 	void buildTiling();
 
-	void manageSignBeforeMult();            /*< to be called before either buildHeapLogicOnly or buildHeapTiling **/
+	void manageSignBeforeMult();            /*< to be called before buildHeap* **/
+	//void buildHeap();                      /*< Checks special size cases, then calls either buildHeapLogicOnly or buildHeapTiling **/
 	void buildHeapLogicOnly();
 	void buildHeapTiling();
 	void manageSignAfterMult();            /*< to be called after either buildHeapLogicOnly or buildHeapTiling **/
@@ -87,7 +105,14 @@ protected:
 	
 private:
 	bool useDSP;
-	BitHeap* bitHeap;  /**<  The heap of weighted bits that will be used to do the additions */
+	Operator* parentOp;  /**<  For a virtual multiplier, adding bits to some BitHeap, this is a pointer to the Operator that will provide the actual vhdl stream etc. */
+	BitHeap* bitHeap;    /**<  The heap of weighted bits that will be used to do the additions */
+	Signal* x;
+	Signal* y; 
+	string xname;
+	string yname;
+
+	void initialize();   /**< initialization stuff common to both constructors*/
 };
 
 }
