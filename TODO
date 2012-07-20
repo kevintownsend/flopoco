@@ -1,5 +1,6 @@
 TODO file for FloPoCo
 
+Here and there, fix VHDL style issues needed for whimsical simulators or synthesizers. See doc/VHDLStyle.txt
 
 Testbench
 * Bug on outputs that are bits with isBus false and  multiple-valued  
