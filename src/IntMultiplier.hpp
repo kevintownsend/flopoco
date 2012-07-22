@@ -78,12 +78,12 @@ protected:
 	string XY(int i, int j, int nr=-1);
 	string heap( int i, int j);
 
-	void buildLogicOnly();
+	void buildLogicOnly(int topX, int topY, int botX, int botY);
 	void buildTiling();
 
 	void manageSignBeforeMult();            /*< to be called before buildHeap* **/
 	//void buildHeap();                      /*< Checks special size cases, then calls either buildHeapLogicOnly or buildHeapTiling **/
-	void buildHeapLogicOnly();
+	void buildHeapLogicOnly(int topX, int topY, int botX, int botY,int nr=-1);
 	void buildHeapTiling();
 	void manageSignAfterMult();            /*< to be called after either buildHeapLogicOnly or buildHeapTiling **/
 	void smallTiling(int nr, int topX, int topY, int botX, int botY, SmallMultTable *t);
