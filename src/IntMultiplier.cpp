@@ -23,6 +23,22 @@
 */
 
 
+/*
+TODO tiling
+
+- define intermediate data struct (list of multiplier blocks)  
+multiplier block:
+   - a bit saying if it should go into a DSP 
+   - x and y size
+   - x and y position
+   - cycle ?
+   - pointer to the previous tile if this tile belongs to a supertile
+- a function that explores and builds this structure
+   recycle Bogdan's, with optim for large mults
+   at least 4 versions: (full, truncated)x(altera, xilinx), please share as much code as possible
+- a function that generates VHDL (adding bits to the bit heap)
+ */
+
 /* VHDL variable names:
    X, Y: inputs
    XX,YY: after swap
@@ -31,6 +47,11 @@
    sX, sY: signs 
    pX, pY: remaining bits, sent to the positive multiplication
 */
+
+
+
+
+
 
 /* For two's complement arithmetic on n bits, the representable interval is [ -2^{n-1}, 2^{n-1}-1 ]
    so the product lives in the interval [-2^{n-1}*2^{n-1}-1,  2^n]
@@ -1136,8 +1157,8 @@ namespace flopoco {
 		if(wFull-wOut > 0)
 		{
 			//draw truncation line
-			fig << "<line x1=\"" << offsetX + (wX - wXcoeff)*5<< "\" y1=\"" << offsetY << "\" x2=\"" << offsetX + wX*5 - wXincline*(wYcoeff/(double)(wY))
-				  << "\" y2=\"" << offsetY + 5*wYcoeff <<"\" style=\"stroke:rgb(255,0,0);stroke-width:2\"/>" << endl ;	
+			fig << "<line x1=\"" << offsetX + (wOut- wX)*5<< "\" y1=\"" << offsetY << "\" x2=\"" << offsetX+ (wOut- wX)*5
+				  << "\" y2=\"" << offsetY + 5*wY <<"\" style=\"stroke:rgb(255,0,0);stroke-width:2\"/>" << endl ;	
 		}
      
         
@@ -1148,8 +1169,8 @@ namespace flopoco {
 		if(g>0)
 		{
 			//draw guard line
-			fig << "<line x1=\"" << offsetX + (wX - wXcoeff)*5  << "\" y1=\"" << offsetY << "\" x2=\"" << offsetX + wX*5 - wXincline*(wYcoeff/(double)(wY))
-		        << "\" y2=\"" << offsetY + 5*wYcoeff <<"\" style=\"stroke:rgb(200,100,100);stroke-width:2\"/>" << endl ;	
+			fig << "<line x1=\"" << offsetX+ (wOut- wX+g)*5  << "\" y1=\"" << offsetY << "\" x2=\"" << offsetX+ (wOut- wX+g)*5
+		        << "\" y2=\"" << offsetY + 5*wY <<"\" style=\"stroke:rgb(200,100,100);stroke-width:2\"/>" << endl ;	
 		}
 
 
