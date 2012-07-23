@@ -91,7 +91,7 @@ protected:
 
 	void printConfiguration();
 	void drawDSP(int i, int xT, int yT, int xB, int yB, int offsetX, int offsetY, int turnaroundX);
-	void drawDSPinclined(int i, int xT, int yT, int xB, int yB,  int offsetX, int offsetY, int turnaroundX, double inclinedCoeff);
+	void drawDSPinclined(int i, int xT, int yT, int xB, int yB,  int offsetX, int offsetY, int turnaroundX, double inclinedCoeffB, double inclinedCoeffT);
 
 	int wxDSP, wyDSP;               /**< the width for X/Y in DSP*/
 	int wXdecl;                     /**< the width for X as declared*/
