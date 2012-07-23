@@ -119,9 +119,9 @@ namespace flopoco{
 		 @param comment  a VHDL comment for this bit*/
 		void addBit(unsigned weight, string rhs, string comment="");
 
-        void elemReduce(int i, BasicCompressor* bc);
+        void elemReduce(unsigned i, BasicCompressor* bc);
 
-        BitHeap::WeightedBit* computeLatest(int w, int c0, int c1);
+        BitHeap::WeightedBit* computeLatest(unsigned w, int c0, int c1);
         
         BitHeap::WeightedBit* getFinalLatestBit();
 
@@ -162,7 +162,7 @@ namespace flopoco{
 		void removeCompressedBits(int c, int red);
 
         /** returns the maximum height list from the bitheap vector*/
-		int getMaxHeight();
+		unsigned getMaxHeight();
 
 		void getMaxWeight();
 
@@ -176,7 +176,7 @@ namespace flopoco{
 		unsigned inConcatIndex;
 		unsigned outConcatIndex;
 		unsigned compressorIndex;
-        int cnt[100];
+        unsigned cnt[100000];
 		vector<int> uid;   /**< unique id, per weight */
 #if 0
 		const static int consumed=-1;

@@ -615,19 +615,8 @@ namespace flopoco {
 	}
 	
 
-	/**************************************************************************/
-	void IntMultiplier::buildHeapTiling() {
-		
-		int horDSP=wX/wxDSP;
-		int verDSP=wY/wyDSP;
-		int restX=wX-horDSP*wxDSP;
-		int restY=wY-verDSP*wyDSP;
-		REPORT(DEBUG,"restX= "<< restX);
-		REPORT(DEBUG,"restY= "<< restY);
-		REPORT(DEBUG,"horDSP= "<< horDSP);
-		REPORT(DEBUG,"verDSP= "<< verDSP);
-		REPORT(DEBUG," wX="<< wX << " wxDSP="<< wxDSP <<" wY="<< wY <<" wyDSP="<<wyDSP <<" horDSP= "<<horDSP);
-		
+	void IntMultiplier::splitting(int horDSP, int verDSP, int wxDSP, int wyDSP,int restX, int restY)
+	{
 		for(int i=0;i<horDSP;i++)
 			{
 				vhdl << tab << declare(join("XX",horDSP-i-1), wxDSP) << " <= XX("<<wX-(i*wxDSP)-1<<" downto "<< wX-((i+1)*wxDSP)<<");"<<endl; 
@@ -640,8 +629,7 @@ namespace flopoco {
 				vhdl << tab << declare(join("YY",verDSP-i-1), wyDSP) << " <= YY("<<(wY-(i*wyDSP))-1<<" downto "<< wY-((i+1)*wyDSP) <<");"<<endl; 
 			}
 
-
-		int k=0;
+				int k=0;
 		for(int i=0;i<horDSP;i++)
 			for(int j=0;j<verDSP;j++)
 				{
@@ -669,11 +657,52 @@ namespace flopoco {
 					k++;		
 				}	
 
+
+
+	}
+
+
+
+	/**************************************************************************/
+	void IntMultiplier::buildHeapTiling() {
 		
-			
+		//horizontal or vertical DSP?
+		int horDSP1=wX/wxDSP;
+		int verDSP1=wY/wyDSP;
+	    int horDSP2=wX/wyDSP;
+		int verDSP2=wY/wxDSP;
+		int hor=horDSP1*verDSP1;
+		int ver=horDSP2*verDSP2;
+
+		int horDSP;
+		int verDSP;
+        int restX;
+		int restY;
+
+		if (hor>=ver)
+			{	REPORT(DEBUG, "horizontal");
+				horDSP=horDSP1;
+				verDSP=verDSP1;
+				restX=wX-horDSP*wxDSP;
+				restY=wY-verDSP*wyDSP;
+				splitting(horDSP,verDSP,wxDSP,wyDSP,restX,restY);
+			}
+		else
+			{	REPORT(DEBUG, "vertical");
+				horDSP=horDSP2;
+				verDSP=verDSP2;
+				restX=wX-horDSP*wyDSP;
+				restY=wY-verDSP*wxDSP;
+				splitting(horDSP,verDSP,wyDSP,wxDSP,restX,restY);
+			}
+
 	
-	
-	
+		REPORT(DEBUG,"restX= "<< restX);
+		REPORT(DEBUG,"restY= "<< restY);
+		REPORT(DEBUG,"horDSP= "<< horDSP);
+		REPORT(DEBUG,"verDSP= "<< verDSP);
+		REPORT(DEBUG," wX="<< wX << " wxDSP="<< wxDSP <<" wY="<< wY <<" wyDSP="<<wyDSP <<" horDSP= "<<horDSP);
+		
 		if((restX!=0 ) || (restY!=0))
 			{
 

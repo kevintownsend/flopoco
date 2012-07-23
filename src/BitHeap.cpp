@@ -119,7 +119,7 @@ namespace flopoco
 
 
 
-	BitHeap::WeightedBit* BitHeap::computeLatest(int w, int c0, int c1)
+	BitHeap::WeightedBit* BitHeap::computeLatest(unsigned w, int c0, int c1)
 	{
 
 		if(w>=bits.size())
@@ -191,7 +191,7 @@ namespace flopoco
 		//insert so that the list is sorted by bit cycle/delay
 		list<WeightedBit*>::iterator it=l.begin(); 
 		bool proceed=true;
-		int count=0;
+		unsigned count=0;
 		while(proceed) 
 		{
 			if (it==l.end() || (*bit <= **it))
@@ -238,7 +238,7 @@ namespace flopoco
 	}
 
   
-	void BitHeap::elemReduce(int i, BasicCompressor* bc)
+	void BitHeap::elemReduce(unsigned i, BasicCompressor* bc)
 	{
 
 		list<WeightedBit*>::iterator it = bits[i].begin();
@@ -342,11 +342,11 @@ namespace flopoco
 	}
 
 
-	int BitHeap::getMaxHeight()
+	unsigned BitHeap::getMaxHeight()
 
 	{
-		int max=0; 
-		for(int i=0; i<bits.size();i++)
+		unsigned max=0; 
+		for(unsigned i=0; i<bits.size();i++)
 			{
 				if(bits[i].size()>max)
 					max=bits[i].size();
@@ -415,7 +415,7 @@ namespace flopoco
 			}
          
 		REPORT(DEBUG, "Column height after all compressions");
-		for (int w=0; w<bits.size(); w++) 
+		for (unsigned w=0; w<bits.size(); w++) 
 			{
 				REPORT(DEBUG, "   w=" << w << ":\t height=" << bits[w].size());
 				printColumnInfo(w);  
@@ -447,7 +447,7 @@ namespace flopoco
 		double maxCycle=0;
 		double maxCP = 0;
 		WeightedBit *b=0;
-		for(int w=minWeight; w<maxWeight; w++)
+		for(unsigned w=minWeight; w<maxWeight; w++)
 			{
 			if(bits[w].size()==0)
 			{
@@ -642,7 +642,7 @@ namespace flopoco
 		
 		
 		
-		for(int i=minWeight; i<maxWeight; i++)
+		for(unsigned i=minWeight; i<maxWeight; i++)
 			{
 				cnt[i] = bits[i].size();
 			}

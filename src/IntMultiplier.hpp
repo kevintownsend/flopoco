@@ -87,6 +87,7 @@ protected:
 	void buildHeapTiling();
 	void manageSignAfterMult();            /*< to be called after either buildHeapLogicOnly or buildHeapTiling **/
 	void smallTiling(int nr, int topX, int topY, int botX, int botY, SmallMultTable *t);
+	void splitting(int horDSP, int verDSP, int wxDSP, int wyDSP,int restX,int restY);
 
 	void printConfiguration();
 	void drawDSP(int i, int xT, int yT, int xB, int yB, int offsetX, int offsetY, int turnaroundX);
