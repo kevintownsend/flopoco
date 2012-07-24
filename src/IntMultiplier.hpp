@@ -78,18 +78,19 @@ class IntMultiplier : public Operator {
 
 
     /**
-    * The virtual IntMultiplier constructor adds all the multiplier bits to some bitHeap, but no more.
-    * @param[in] parentOp      the Operator to which VHDL code will be added
-    * @param[in] bitHeap       the BitHeap to which bits will be added
-    * @param[in] x            a Signal from which the x input should be taken
-    * @param[in] y            a Signal from which the y input should be taken
-    * @param[in] wX             X multiplier size (including sign bit if any)
-    * @param[in] wY             Y multiplier size (including sign bit if any)
-    * @param[in] wOut         wOut size for a truncated multiplier (0 means full multiplier)
-    * @param[in] lsbWeight     the weight, within this BitHeap, corresponding to the LSB of the multiplier output. Note that there should be enough bits below for guard bits in case of truncation.
-    * @param[in] signedIO     false=unsigned, true=signed
-    * @param[in] ratio            DSP block use ratio
-    **/
+     * The virtual IntMultiplier constructor adds all the multiplier bits to some bitHeap, but no more.
+     * @param[in] parentOp      the Operator to which VHDL code will be added
+     * @param[in] bitHeap       the BitHeap to which bits will be added
+     * @param[in] x            a Signal from which the x input should be taken
+     * @param[in] y            a Signal from which the y input should be taken
+     * @param[in] wX             X multiplier size (including sign bit if any)
+     * @param[in] wY             Y multiplier size (including sign bit if any)
+     * @param[in] wOut         wOut size for a truncated multiplier (0 means full multiplier)
+     * @param[in] lsbWeight     the weight, within this BitHeap, corresponding to the LSB of the multiplier output. 
+     *                          Note that there should be enough bits below for guard bits in case of truncation.
+     * @param[in] signedIO     false=unsigned, true=signed
+     * @param[in] ratio            DSP block use ratio
+     **/
 	IntMultiplier (Operator* parentOp, BitHeap* bitHeap,  Signal* x, Signal* y, int wX, int wY, int wOut, int lsbWeight, bool signedIO, float ratio);
 
 
@@ -129,8 +130,13 @@ protected:
 	void splitting(int horDSP, int verDSP, int wxDSP, int wyDSP,int restX,int restY);
 
 	void printConfiguration();
-	void drawDSP(int i, int xT, int yT, int xB, int yB, int offsetX, int offsetY, int turnaroundX);
+    void printAreaView();
+    void printLozengeView();
+    void drawLine(int wX, int wY, int wRez, int offsetX, int offsetY, int scalingFactor, bool isRectangle);
+	void drawDSP(int i, int xT, int yT, int xB, int yB, int offsetX, int offsetY, int scalingFactor,  bool isRectangle);
 	void drawDSPinclined(int i, int xT, int yT, int xB, int yB,  int offsetX, int offsetY, int turnaroundX, double inclinedCoeffB, double inclinedCoeffT);
+    void drawTargetFigure(int wX, int wY, int offsetX, int offsetY, int scalingFactor, bool isRectangle);
+
 
 	int wxDSP, wyDSP;               /**< the width for X/Y in DSP*/
 	int wXdecl;                     /**< the width for X as declared*/
