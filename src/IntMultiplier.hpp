@@ -18,7 +18,44 @@ namespace flopoco {
 /** The IntMultiplier class, getting rid of Bogdan's mess.
 */
 class IntMultiplier : public Operator {
-public:
+	class MultiplierBlock 
+		{
+		public: MultiplierBlock(Operator* op,int wX, int wY, int topX, int topY, bool goToDSP=false,int cycle=-1, MultiplierBlock* previous=NULL);
+		
+			Operator* op;
+			int wX; //x size
+			int wY; //y size
+			int topX; //x position (top right corner)
+			int topY; //y position (top right corner
+			bool goToDSP; //a bit saying if it should go into a DSP 
+			int cycle;//cycle
+			MultiplierBlock* previous;//a bit saying if it should go into a DSP 
+
+
+			int getwX()
+             {return wX;}
+
+			int getwY()
+             {return wY;}
+
+			int gettopX()
+             {return topX;}
+
+			int gettopY()
+             {return topY;}
+
+			int getCycle()
+             {return cycle;}
+		
+			bool getgoToDSP()
+             {return goToDSP;}
+
+			
+		};
+
+	
+	
+	public:
 		/** An elementary LUT-based multiplier, written as a table so that synthesis tools don't infer DSP blocks for it*/
 		class SmallMultTable: public Table {
 		public:
@@ -79,14 +116,16 @@ protected:
 	string heap( int i, int j);
 
 	void buildLogicOnly(int topX, int topY, int botX, int botY);
+	void buildHeapLogicOnly(MultiplierBlock mul,int nr);
 	void buildTiling();
-
+	void exploration(MultiplierBlock mul);
+	void iterate();
+	void generateVHDL(MultiplierBlock m,int nr);
 	void manageSignBeforeMult();            /*< to be called before buildHeap* **/
 	//void buildHeap();                      /*< Checks special size cases, then calls either buildHeapLogicOnly or buildHeapTiling **/
 	void buildHeapLogicOnly(int topX, int topY, int botX, int botY,int nr=-1);
 	void buildHeapTiling();
 	void manageSignAfterMult();            /*< to be called after either buildHeapLogicOnly or buildHeapTiling **/
-	void smallTiling(int nr, int topX, int topY, int botX, int botY, SmallMultTable *t);
 	void splitting(int horDSP, int verDSP, int wxDSP, int wyDSP,int restX,int restY);
 
 	void printConfiguration();
@@ -120,7 +159,8 @@ private:
 
 	void initialize();   /**< initialization stuff common to both constructors*/
 	vector<DSP*> dsps;
-};
+	vector<MultiplierBlock> mulBlocks; //the vector of multiplier blocks
+ };
 
 }
 #endif
