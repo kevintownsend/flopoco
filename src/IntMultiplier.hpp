@@ -82,7 +82,7 @@ class IntMultiplier : public Operator {
 	
 	
 	public:
-		/** An elementary LUT-based multiplier, written as a table so that synthesis tools don't infer DSP blocks for it*/
+	/** An elementary LUT-based multiplier, written as a table so that synthesis tools don't infer DSP blocks for it*/
 		class SmallMultTable: public Table {
 		public:
 			int dx, dy, wO;

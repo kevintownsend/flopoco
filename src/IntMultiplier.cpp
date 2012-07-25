@@ -1291,84 +1291,6 @@ namespace flopoco {
         
     }
 	
-	/*void IntMultiplier::printConfiguration()
-	{
-
-	
-
-
-
-
-
-		//draw lozenge
-
-		offsetX += wX*10 + 200;
-
-		double inclinedCoeff = 1.0;
-		double wXincline = (double)(wX) * inclinedCoeff * 5;
-        double subtractionCoeffB, subtractionCoeffT;
-
-        coeff = 1 - (double)(wOut)/(double)(wFull);
-        wXcoeff = (double)wX * coeff;
-        wYcoeff = (double)wY * coeff;
-
-        REPORT(DETAILED, "turnaroundX " << turnaroundX );
-
-
-		fig << "<polygon points=\"" << offsetX << "," << offsetY << " " 
-				<< wX*5 + offsetX << "," << offsetY << " " 
-				<< wX*5 + offsetX - wXincline << "," << wY*5 + offsetY << " "
-			    << offsetX - wXincline << "," << wY*5 + offsetY 	
-				<< "\" style=\"fill:rgb(255, 255, 255);stroke-width:1;stroke:rgb(0,0,0)\"/>" << endl;
-		
-        //draw lozenge DSPs
-		for(unsigned i=0; i<dsps.size(); i++)
-		{
-			int xT, yT, xB, yB;
-			dsps[i]->getCoordinates(xT, yT, xB, yB);
-			REPORT(DETAILED, "i: " << i << "     xT: " << xT << "    yT: " << yT <<"    xB: " << xB << "    yB: " << yB);
-            subtractionCoeffT = ((double)yT/(double)wY) * inclinedCoeff * (double)wX * 5.0;
-            subtractionCoeffB = ((double)yB/(double)wY) * inclinedCoeff * (double)wX * 5.0;
-
-            REPORT(DETAILED, "B " << subtractionCoeffB << " T " << subtractionCoeffT);
-
-
-			drawDSPinclined(i, xT, yT, xB, yB, offsetX - 180, offsetY, turnaroundX , subtractionCoeffB, subtractionCoeffT);
-			
-		}
-
-
-        wXincline = (double)(wX) * inclinedCoeff * 5;
-
-        REPORT(DETAILED, offsetY << "  " << wYcoeff);
-
-
-		if(wFull-wOut > 0)
-		{
-			//draw truncation line
-			fig << "<line x1=\"" << offsetX + (wOut- wX)*5<< "\" y1=\"" << offsetY << "\" x2=\"" << offsetX+ (wOut- wX)*5
-				  << "\" y2=\"" << offsetY + 5*wY <<"\" style=\"stroke:rgb(255,0,0);stroke-width:2\"/>" << endl ;	
-		}
-     
-        
-		coeff = 1-(double)(wOut+g)/(double)(wFull);
-		wXcoeff = (double)(wX) * coeff ;
-		wYcoeff = (double)(wY) * coeff ;
-
-		if(g>0)
-		{
-			//draw guard line
-			fig << "<line x1=\"" << offsetX+ (wOut- wX+g)*5  << "\" y1=\"" << offsetY << "\" x2=\"" << offsetX+ (wOut- wX+g)*5
-		        << "\" y2=\"" << offsetY + 5*wY <<"\" style=\"stroke:rgb(200,100,100);stroke-width:2\"/>" << endl ;	
-		}
-
-
-		fig << "</svg>" << endl;
-
-		fig.close();
-
-		
-	}*/
 
 	
 	void IntMultiplier::drawDSP(int i, int xT, int yT, int xB, int yB, int offsetX, int offsetY, int scalingFactor, bool isRectangle)
@@ -1402,32 +1324,7 @@ namespace flopoco {
         }
 	}
 
-    /*void IntMultiplier::drawDSPinclined(int i, int xT, int yT, int xB, int yB, int offsetX, int offsetY, int turnaroundX, 
-            double inclinedCoeffB, double inclinedCoeffT)
-	{
-	//	int offsetY = 120; 
-	//	int offsetX = 180 + wX*10 + 200;
-	//	int turnaroundX = 100 + wX*5 + offsetX;
-    //
-        REPORT(DETAILED, "turnaroundX " << turnaroundX );
-
-	
-		fig << "<polygon points=\"" << turnaroundX - 5*xB + offsetX - (int)inclinedCoeffT << "," << 5*yT + offsetY << " " 
-				<< turnaroundX - 5*xT + offsetX - (int)inclinedCoeffT << "," << 5*yT + offsetY << " " 
-				<< turnaroundX - 5*xT + offsetX - (int)inclinedCoeffB << "," << 5*yB + offsetY << " "
-				<< turnaroundX - 5*xB + offsetX - (int)inclinedCoeffB << "," << 5*yB + offsetY	
-				<< "\" style=\"fill:rgb(200, 200, 200);stroke-width:1;stroke:rgb(0,0,0)\"/>" << endl;
-
-        fig << "<text x=\"" << (2*turnaroundX - xB*5 - xT*5 + 2*offsetX - (int)inclinedCoeffT - (int)inclinedCoeffB) /2 -14 
-            << "\" y=\"" << ( yT*5 + offsetY + yB*5 + offsetY )/2 + 7 
-				<< "\" fill=\"blue\">D" <<  xT / wxDSP <<  yT / wyDSP  << "</text>" << endl;	
-	
-        
-	}*/
-
-
-
-}
+ }
 
 
 

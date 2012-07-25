@@ -167,6 +167,15 @@ namespace flopoco{
 		void getMaxWeight();
 
  		string getResultVHDLName();
+
+        void initializeDrawing();
+
+        void closeDrawing();
+
+        void drawConfiguration(int offsetY);
+
+        void drawBit(int cnt, int w, int turnaroundX, int offsetY, int c);
+
 	private:
 		Operator* op;
 		unsigned maxWeight;     /**< The compressor tree will produce a result for weights < maxWeight (work modulo 2^maxWeight)*/
@@ -178,6 +187,7 @@ namespace flopoco{
 		unsigned compressorIndex;
         unsigned cnt[100000];
 		vector<int> uid;   /**< unique id, per weight */
+     	ofstream fig;	       
 #if 0
 		const static int consumed=-1;
 		vector<vector<int> > cycle;   /**< external index is the weight (column). The int is the cycle of each bit. Consumed bits have their cycle set to -1 */
