@@ -20,17 +20,25 @@ namespace flopoco {
 class IntMultiplier : public Operator {
 	class MultiplierBlock 
 		{
-		public: MultiplierBlock(Operator* op,int wX, int wY, int topX, int topY, bool goToDSP=false,int cycle=-1, MultiplierBlock* previous=NULL);
+		public: MultiplierBlock(Operator* op,int wX, int wY, int topX, int topY, bool goToDSP=false,int cycle=-1, MultiplierBlock* previous=NULL, MultiplierBlock* next=NULL);
 		
-			Operator* op;
-			int wX; //x size
-			int wY; //y size
-			int topX; //x position (top right corner)
-			int topY; //y position (top right corner
-			bool goToDSP; //a bit saying if it should go into a DSP 
-			int cycle;//cycle
-			MultiplierBlock* previous;//a bit saying if it should go into a DSP 
+	
 
+			void setSignalName(string name)
+			{
+				signalName=name;
+			}
+
+			void setSignalLength(int length)
+			{
+				signalLength=length;
+			}
+
+			string getSigName()
+			{return signalName;}
+
+			int getSigLength()
+			{return signalLength;}
 
 			int getwX()
              {return wX;}
@@ -50,7 +58,25 @@ class IntMultiplier : public Operator {
 			bool getgoToDSP()
              {return goToDSP;}
 
+			MultiplierBlock* getNext()
+			{return next;}
+
+			MultiplierBlock* getPrevious()
+			{return previous;}
+
 			
+			private:
+			Operator* op;
+			int wX; //x size
+			int wY; //y size
+			int topX; //x position (top right corner)
+			int topY; //y position (top right corner
+			bool goToDSP; //a bit saying if it should go into a DSP 
+			int cycle;//cycle
+			MultiplierBlock* previous;//
+			MultiplierBlock* next;
+			string signalName;
+			int signalLength;
 		};
 
 	
@@ -117,11 +143,12 @@ protected:
 	string heap( int i, int j);
 
 	void buildLogicOnly(int topX, int topY, int botX, int botY);
-	void buildHeapLogicOnly(MultiplierBlock mul,int nr);
+	void buildHeapLogicOnly(MultiplierBlock* mul,int nr);
 	void buildTiling();
-	void exploration(MultiplierBlock mul);
+	void exploration(MultiplierBlock *mul);
 	void iterate();
-	void generateVHDL(MultiplierBlock m,int nr);
+	void chaining(MultiplierBlock *root, int i);
+	void generateVHDL(MultiplierBlock *m,int nr, int i);
 	void manageSignBeforeMult();            /*< to be called before buildHeap* **/
 	//void buildHeap();                      /*< Checks special size cases, then calls either buildHeapLogicOnly or buildHeapTiling **/
 	void buildHeapLogicOnly(int topX, int topY, int botX, int botY,int nr=-1);
@@ -165,7 +192,7 @@ private:
 
 	void initialize();   /**< initialization stuff common to both constructors*/
 	vector<DSP*> dsps;
-	vector<MultiplierBlock> mulBlocks; //the vector of multiplier blocks
+	vector<MultiplierBlock*> mulBlocks; //the vector of multiplier blocks
  };
 
 }
