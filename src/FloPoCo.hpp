@@ -91,6 +91,8 @@
 #include "FPConstDiv.hpp"
 
 
+#include "IntMultipliers/MultiplierBlock.hpp"
+
 /* fixed-point function evaluation---------------------------- */
 #ifndef _WIN32
 

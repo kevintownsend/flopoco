@@ -32,7 +32,7 @@ multiplier block:
    - x and y size
    - x and y position
    - cycle ?
-   - pointer to the previous tile if this tile belongs to a supertile
+   - pointer to the previous (and the following?) tile if this tile belongs to a supertile
 
 - a function that explores and builds this structure
    recycle Bogdan's, with optim for large mults
@@ -58,7 +58,7 @@ multiplier block:
 /* For two's complement arithmetic on n bits, the representable interval is [ -2^{n-1}, 2^{n-1}-1 ]
    so the product lives in the interval [-2^{n-1}*2^{n-1}-1,  2^n]
    The value 2^n can only be obtained as the product of the two minimal negative input values
-   (the weird ones, which have no symmetric)
+   (the weird ones, which have no symmetry)
    Example on 3 bits: input interval [-4, 3], output interval [-12, 16] and 16 can only be obtained by -4*-4.
    So the output would be representable on 2n-1 bits in two's complement, if it werent for this weird*weird case.
 
@@ -125,17 +125,6 @@ multiplier block:
 using namespace std;
 
 namespace flopoco {
-
-
-	IntMultiplier::MultiplierBlock::MultiplierBlock(Operator* op, int wX, int wY, int topX, int topY, bool goToDSP,int cycle, MultiplierBlock* previous, MultiplierBlock* next)  :
-	op(op), wX(wX), wY(wY), topX(topX), topY(topY)
-		{
-			if(cycle==-1)
-			cycle = op->getCurrentCycle();
-		else
-			cycle=cycle;
-		}
-
 
 
 	void IntMultiplier::initialize() {
@@ -901,7 +890,10 @@ namespace flopoco {
 		
 	};
 	
-
+	
+	
+	//FIXME: use the "join" function in utils.cpp to create the variable names 
+	//			-> there's no need for the following 4 functions
 
 	string IntMultiplier::PP(int i, int j, int nr ) {
 		std::ostringstream p;		

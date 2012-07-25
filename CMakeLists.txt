@@ -231,6 +231,8 @@ ADD_LIBRARY(FloPoCoLib STATIC
  src/IntMultipliers/GenericBinaryPolynomial
  src/IntMultipliers/IntPower
 
+src/IntMultipliers/MultiplierBlock
+
 # Shifters/LZOC related ---------------------------------------------
 #--------------------------------------------------------------------
  src/LZOC 

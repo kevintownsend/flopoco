@@ -9,6 +9,8 @@
 #include "Table.hpp"
 #include "BitHeap.hpp"
 
+#include "IntMultipliers/MultiplierBlock.hpp"
+
 namespace flopoco {
 
 
@@ -18,68 +20,6 @@ namespace flopoco {
 /** The IntMultiplier class, getting rid of Bogdan's mess.
 */
 class IntMultiplier : public Operator {
-	class MultiplierBlock 
-		{
-		public: MultiplierBlock(Operator* op,int wX, int wY, int topX, int topY, bool goToDSP=false,int cycle=-1, MultiplierBlock* previous=NULL, MultiplierBlock* next=NULL);
-		
-	
-
-			void setSignalName(string name)
-			{
-				signalName=name;
-			}
-
-			void setSignalLength(int length)
-			{
-				signalLength=length;
-			}
-
-			string getSigName()
-			{return signalName;}
-
-			int getSigLength()
-			{return signalLength;}
-
-			int getwX()
-             {return wX;}
-
-			int getwY()
-             {return wY;}
-
-			int gettopX()
-             {return topX;}
-
-			int gettopY()
-             {return topY;}
-
-			int getCycle()
-             {return cycle;}
-		
-			bool getgoToDSP()
-             {return goToDSP;}
-
-			MultiplierBlock* getNext()
-			{return next;}
-
-			MultiplierBlock* getPrevious()
-			{return previous;}
-
-			
-			private:
-			Operator* op;
-			int wX; //x size
-			int wY; //y size
-			int topX; //x position (top right corner)
-			int topY; //y position (top right corner
-			bool goToDSP; //a bit saying if it should go into a DSP 
-			int cycle;//cycle
-			MultiplierBlock* previous;//
-			MultiplierBlock* next;
-			string signalName;
-			int signalLength;
-		};
-
-	
 	
 	public:
 	/** An elementary LUT-based multiplier, written as a table so that synthesis tools don't infer DSP blocks for it*/
