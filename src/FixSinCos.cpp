@@ -645,7 +645,7 @@ void FixSinCos::buildRandomTestCases(TestCaseList * tcl, int n)
 {
 }
 
-TestCase *FixSinCos::buildRandomTestCases(int i)
+TestCase *FixSinCos::buildRandomTestCase(int i)
 {
 	TestCase *tc = new TestCase(this);
 	return tc;

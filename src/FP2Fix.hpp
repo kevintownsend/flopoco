@@ -37,7 +37,9 @@ namespace flopoco{
 
       void emulate(TestCase * tc);
       void buildStandardTestCases(TestCaseList* tcl);
-
+      /* Overloading the Operator method to limit testing of negative numbers when Signed is 0*/
+      void buildRandomTestCases(TestCaseList* tcl, int n);
+      TestCase* buildRandomTestCase(int i);
 
 
    private:
@@ -48,8 +50,18 @@ namespace flopoco{
       IntAdder* MantSum2;
       FXP_Shift*FXP_shifter;
 
-      int MSB;
-      int LSB;
+      /** The width of the exponent for the input */
+      int wEI;
+      /** The width of the fraction for the input */
+      int wFI;
+      /** are all numbers positive or not */
+      int Signed;
+      /** The MSB for the output */
+      int MSBO; 
+      /** The LSB for the output */
+      int LSBO;
+      /** when true the output is not rounded */
+      bool trunc_p;
 
 
    };

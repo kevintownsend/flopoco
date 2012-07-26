@@ -45,5 +45,5 @@ class UserDefinedOperator : public Operator {
       the function , this function is DEPRECATED, use the new function below*/
     void buildRandomTestCases(TestCaseList* tcl, int n);
 
-    TestCase* buildRandomTestCases(int i);
+    TestCase* buildRandomTestCase(int i);
 };

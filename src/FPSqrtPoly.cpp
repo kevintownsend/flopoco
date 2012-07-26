@@ -531,7 +531,7 @@ namespace flopoco{
 			tcl->add(tc);
 		}
 	}
-	TestCase* FPSqrtPoly::buildRandomTestCases(int i){
+	TestCase* FPSqrtPoly::buildRandomTestCase(int i){
 
 		TestCase *tc;
 		mpz_class a;

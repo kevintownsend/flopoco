@@ -128,7 +128,7 @@ void UserDefinedOperator::buildStandardTestCases(TestCaseList * tcl) {
 void UserDefinedOperator::buildRandomTestCases(TestCaseList *  tcl, int n) {
 }
 
-TestCase* UserDefinedOperator::buildRandomTestCases(int i) {
+TestCase* UserDefinedOperator::buildRandomTestCase(int i) {
   TestCase* tc = new TestCase(this);
   return tc;
 }

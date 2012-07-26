@@ -29,7 +29,7 @@ class FixSinCos: public Operator {
 
 		void buildRandomTestCases(TestCaseList * tcl, int n);
 
-		TestCase *buildRandomTestCases(int i);
+		TestCase *buildRandomTestCase(int i);
 };
 
 #endif // HAVE_SOLLYA

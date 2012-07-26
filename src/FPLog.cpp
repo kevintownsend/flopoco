@@ -931,7 +931,7 @@ namespace flopoco{
 			tcl->add(tc);
 		}
 	}
-	TestCase* FPLog::buildRandomTestCases(int i){
+	TestCase* FPLog::buildRandomTestCase(int i){
 
 		TestCase *tc;
 		mpz_class a;

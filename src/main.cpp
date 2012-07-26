@@ -265,8 +265,14 @@ void usage(char *name, string opName = ""){
 
 	if ( full || opName == "Fix2FP"){					
 		OP("Fix2FP","LSB MSB Signed wE wF");
-		cerr << "      Convert a 2's compliment fixed-point number in the bit range MSB...LSB \n";
+		cerr << "      Convert a 2's complement fixed-point number in the bit range MSB...LSB \n";
 		cerr << "      into floating-point\n";
+	}	
+
+	if ( full || opName == "FP2Fix"){					
+		OP("FP2Fix","wE wF LSB MSB Signed trunc");
+		cerr << "      Convert a floating point number into a 2's complement fixed-point number in \n";
+		cerr << "      the bit range MSB...LSB, truncated or not\n";
 	}	
 
 	if ( full || opName == "FPAdder"){					
@@ -1741,8 +1747,8 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 			if (i+nargs > argc)
 				usage(argv[0],opname);
 			else {
-				int LSB = atoi(argv[i++]);//checkStrictlyPositive(argv[i++], argv[0]);
-				int MSB = atoi(argv[i++]);//checkStrictlyPositive(argv[i++], argv[0]);
+				int LSB = atoi(argv[i++]);
+				int MSB = atoi(argv[i++]);
 				int sign = atoi(argv[i++]);
 				int wE = checkStrictlyPositive(argv[i++], argv[0]);
 				int wF = checkStrictlyPositive(argv[i++], argv[0]);
@@ -1752,17 +1758,18 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 			}
 		}
 		else if(opname=="FP2Fix"){
-			int nargs = 5;
+			int nargs = 6;
 			if (i+nargs > argc)
 				usage(argv[0],opname);
 			else {
-				int LSB = atoi(argv[i++]);//checkStrictlyPositive(argv[i++], argv[0]);
-				int MSB = atoi(argv[i++]);//checkStrictlyPositive(argv[i++], argv[0]);
-				int sign = atoi(argv[i++]);
 				int wE = checkStrictlyPositive(argv[i++], argv[0]);
 				int wF = checkStrictlyPositive(argv[i++], argv[0]);
+				int LSB = atoi(argv[i++]);
+				int MSB = atoi(argv[i++]);
+				int sign = atoi(argv[i++]);
+				int trunc_p = checkBoolean(argv[i++], argv[0]);
 				
-				op = new FP2Fix(target, LSB, MSB, sign,wE, wF, true);
+				op = new FP2Fix(target, LSB, MSB, sign,wE, wF, trunc_p);
 				addOperator(oplist, op);
 			}
 		}

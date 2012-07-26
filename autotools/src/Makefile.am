@@ -80,6 +80,10 @@ noinst_HEADERS = \
           IntSquarer.hpp \
           IntMultipliers/IntTilingMult.hpp \
           IntMultipliers/IntTruncMultiplier.hpp \
+          IntMultipliers/FormalBinaryProduct.hpp \
+          IntMultipliers/GenericBinaryPolynomial.hpp \
+          IntMultipliers/IntPower.hpp \
+          IntMultipliers/MultiplierBlock.hpp \
           LongAcc2FP.hpp \
           LongAcc.hpp LZOC.hpp \
           LZOCShifterSticky.hpp \
@@ -166,6 +170,7 @@ libflopoco_la_SOURCES = \
                         IntMultipliers/FormalBinaryProduct.cpp \
                         IntMultipliers/GenericBinaryPolynomial.cpp \
                         IntMultipliers/IntPower.cpp \
+                        IntMultipliers/MultiplierBlock.cpp \
                         LZOC.cpp \
                         LZOCShifterSticky.cpp \
                         Shifters.cpp \
