@@ -855,7 +855,7 @@ namespace flopoco {
 		dx(dx), dy(dy), signedIO(signedIO) {
 		ostringstream name; 
 		srcFileName="LogicIntMultiplier::SmallMultTable";
-		name <<"SmallMultTable" << dy << "x" << dx << "r" << wO << (signedIO?"signed":"unsigned");
+		name <<"SmallMultTable" << dy << "x" << dx << "r" << wO << (signedIO?"signed":"unsigned")<<"_uid"<<getNewUId();;
 		setName(name.str());				
 	};
 	
