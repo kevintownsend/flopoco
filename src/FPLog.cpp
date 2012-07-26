@@ -900,37 +900,6 @@ namespace flopoco{
 	// with special treatment for exponents 0 and -1, 
 	// and for the range reduction worst case.
  
-	void FPLog::buildRandomTestCases(TestCaseList* tcl, int n){
-
-		TestCase *tc;
-		mpz_class a;
-		mpz_class normalExn = mpz_class(1)<<(wE+wF+1);
-
-		for (int i = 0; i < n; i++) {
-			tc = new TestCase(this); 
-			/* Fill inputs */
-			if ((i & 7) == 0)
-				a = getLargeRandom(wE+wF+3);
-			else if ((i & 7) == 1) // exponent of 1
-				a  = getLargeRandom(wF) + ((((mpz_class(1)<<(wE-1))-1)) << wF) + normalExn; 
-			else if ((i & 7) == 2) // exponent of 0.5
-				a  = getLargeRandom(wF) + ((((mpz_class(1)<<(wE-1))-2)) << wF) + normalExn; 
-			else if ((i & 7) == 3) { // worst case for range reduction
-				tc->addComment("The worst case of the error analysis: max cancellation, and full range reduction");
-				a = (mpz_class(1) << wF) - (mpz_class(1) << (wF-pfinal+2)) + getLargeRandom(wF-pfinal+2) // mantissa
-					+ (((mpz_class(1) << (wE-1)) -2) << wF)  // exponent
-					+ (mpz_class(1) << (wE+wF+1))	; // exn=010
-			}
-			else
-				a  = getLargeRandom(wE+wF)  + normalExn; // 010xxxxxx
-		
-			tc->addInput("X", a);
-			/* Get correct outputs */
-			emulate(tc);
-			// add to the test case list
-			tcl->add(tc);
-		}
-	}
 	TestCase* FPLog::buildRandomTestCase(int i){
 
 		TestCase *tc;

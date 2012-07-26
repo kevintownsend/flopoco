@@ -123,12 +123,5 @@ void UserDefinedOperator::emulate(TestCase * tc) {
 
 
 void UserDefinedOperator::buildStandardTestCases(TestCaseList * tcl) {
-}
-
-void UserDefinedOperator::buildRandomTestCases(TestCaseList *  tcl, int n) {
-}
-
-TestCase* UserDefinedOperator::buildRandomTestCase(int i) {
-  TestCase* tc = new TestCase(this);
-  return tc;
+	// please fill me with regression tests or corner case tests!
 }

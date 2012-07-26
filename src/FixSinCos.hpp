@@ -26,10 +26,6 @@ class FixSinCos: public Operator {
 		void emulate(TestCase * tc);
 
 		void buildStandardTestCases(TestCaseList * tcl);
-
-		void buildRandomTestCases(TestCaseList * tcl, int n);
-
-		TestCase *buildRandomTestCase(int i);
 };
 
 #endif // HAVE_SOLLYA

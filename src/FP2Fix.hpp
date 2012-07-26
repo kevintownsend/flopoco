@@ -38,7 +38,6 @@ namespace flopoco{
       void emulate(TestCase * tc);
       void buildStandardTestCases(TestCaseList* tcl);
       /* Overloading the Operator method to limit testing of negative numbers when Signed is 0*/
-      void buildRandomTestCases(TestCaseList* tcl, int n);
       TestCase* buildRandomTestCase(int i);
 
 

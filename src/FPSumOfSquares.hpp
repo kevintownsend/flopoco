@@ -26,7 +26,7 @@ namespace flopoco{
 
 		void emulate(TestCase * tc);
 
-		void buildRandomTestCases(TestCaseList* tcl, int n);
+		TestCase* buildRandomTestCase(int i);
 
 		int wE, wF;
 

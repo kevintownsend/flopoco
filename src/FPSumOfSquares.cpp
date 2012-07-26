@@ -444,12 +444,10 @@ namespace flopoco{
 
 	// This method is cloned from Operator, just resetting sign and exception bits
 	// (because we don't have any exception support in this toy example)
-	// (see ***************** below )
-	void FPSumOfSquares::buildRandomTestCases(TestCaseList* tcl, int n){
+	TestCase* FPSumOfSquares::buildRandomTestCase(int i){
 
 		TestCase *tc;
 		/* Generate test cases using random input numbers */
-		for (int i = 0; i < n; i++) {
 			tc = new TestCase(this); // TODO free all this memory when exiting TestBench
 			/* Fill inputs */
 			for (unsigned int j = 0; j < ioList_.size(); j++) {
@@ -470,9 +468,6 @@ namespace flopoco{
 			//		cout << tc->getInputVHDL();
 			//    cout << tc->getExpectedOutputVHDL();
 
-
-			// add to the test case list
-			tcl->add(tc);
-		}
+			return tc;
 	}
 }

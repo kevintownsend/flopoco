@@ -241,28 +241,9 @@ namespace flopoco{
      return tc;		
    }
    
-   void FP2Fix::buildRandomTestCases(TestCaseList* tcl, int n)
-   {
-      TestCase *tc;
-      mpz_class a;
-      for (int i = 0; i < n; i++)
-      {
-         tc = new TestCase(this); 
-         /* Fill inputs */
-	 mpz_class e = (getLargeRandom(wEI+wFI) % (MSBO-LSBO+1)); // Should be between 0 and MSBO-LSBO+1
-	 mpz_class normalExn = mpz_class(1)<<(wEI+wFI+1);
-	 mpz_class bias = ((1<<(wEI-1))-1);
-	 e = bias + e;
-	 a = getLargeRandom(wFI) + (e << wFI) + normalExn;
-         tc->addInput("I", a);
-         /* Get correct outputs */
-         emulate(tc);
-         tcl->add(tc);
-      }
-   }
-
 
    void FP2Fix::buildStandardTestCases(TestCaseList* tcl){
+	   // please fill me with regression tests or corner case tests!
 
    }
 

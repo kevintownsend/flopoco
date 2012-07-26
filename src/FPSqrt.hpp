@@ -36,7 +36,6 @@ namespace flopoco{
 		void emulate(TestCase * tc);
 
 		/* Overloading the Operator method to limit testing of NaNs and negative numbers*/
-		void buildRandomTestCases(TestCaseList* tcl, int n);
 		TestCase* buildRandomTestCase(int i);
 		//	void buildStandardTestCases(TestCaseList* tcl);
 

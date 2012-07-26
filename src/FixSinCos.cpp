@@ -641,15 +641,5 @@ void FixSinCos::buildStandardTestCases(TestCaseList * tcl)
 	tcl->add(tc);
 }
 
-void FixSinCos::buildRandomTestCases(TestCaseList * tcl, int n)
-{
-}
-
-TestCase *FixSinCos::buildRandomTestCase(int i)
-{
-	TestCase *tc = new TestCase(this);
-	return tc;
-}
-
 #endif // SOLLYA
 

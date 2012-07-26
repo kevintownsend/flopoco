@@ -475,18 +475,6 @@ public:
 
 
 	/**
-	 * Append random test cases to a test case list. There is a default
-	 * implementation using a uniform random generator, but most
-	 * operators are not exercised efficiently using such a
-	 * generator. For instance, in FPAdder, the random number generator
-	 * should be biased to favor exponents which are relatively close
-	 * so that an effective addition takes place.
-	 * @param tcl a TestCaseList
-	 * @param n the number of random test cases to add
-	 */
-	virtual void buildRandomTestCaseList(TestCaseList* tcl, int n);
-
-	/**
 	 * Generate Random Test case identified by an integer . There is a default
 	 * implementation using a uniform random generator, but most
 	 * operators are not exercised efficiently using such a
@@ -494,6 +482,7 @@ public:
 	 * should be biased to favor exponents which are relatively close
 	 * so that an effective addition takes place.
 	 * This function create a new TestCase (to be free after use)
+	 * See FPExp.cpp for an example of overloading this method.
 	 * @param i the identifier of the test case to be generated
 	 * @return TestCase*
 	 */
@@ -510,6 +499,24 @@ public:
  /*****************************************************************************/
  /*     From this point, we have methods that are not needed in normal use    */
  /*****************************************************************************/
+
+
+
+
+	/**
+	 * Append random test cases to a test case list. There is a default
+	 * implementation using a uniform random generator, but most
+	 * operators are not exercised efficiently using such a
+	 * generator. For instance, in FPAdder, the random number generator
+	 * should be biased to favor exponents which are relatively close
+	 * so that an effective addition takes place.
+	 * In most cases you do need to overload this method, 
+	 * but simply overload  buildRandomTestCase(int i) 
+	 * which is called by the default implementation of buildRandomTestCaseList
+	 * @param tcl a TestCaseList
+	 * @param n the number of random test cases to add
+	 */
+	virtual void buildRandomTestCaseList(TestCaseList* tcl, int n);
 
 
 
