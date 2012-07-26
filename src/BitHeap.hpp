@@ -188,7 +188,8 @@ namespace flopoco{
 		unsigned compressorIndex;
         unsigned cnt[100000];
 		vector<int> uid;   /**< unique id, per weight */
-     	ofstream fig;
+     	ofstream fileFig;
+        ostringstream fig;
         bool drawCycleLine;
         int drawCycleNumber;        
 #if 0

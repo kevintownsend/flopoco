@@ -787,12 +787,11 @@ namespace flopoco
 		pfile  = fopen(figureFileName.str().c_str(), "w");
 		fclose(pfile);
 		
-		fig.open (figureFileName.str().c_str(), ios::trunc);
+		fileFig.open (figureFileName.str().c_str(), ios::trunc);
 
- 		fig << "<?xml version=\"1.0\" standalone=\"no\"?>" << endl;
-		fig << "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\"" << endl;
-		fig << "\"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">" << endl;
-		fig << "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\">" << endl;  
+ 		fileFig << "<?xml version=\"1.0\" standalone=\"no\"?>" << endl;
+		fileFig << "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\"" << endl;
+		fileFig << "\"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">" << endl;
     }
 
     void BitHeap::drawConfiguration(int offsetY)
@@ -811,7 +810,7 @@ namespace flopoco
         if(drawCycleLine)
         {
             drawCycleNumber++;
-            fig << "<line x1=\"" << turnaroundX + 200 << "\" y1=\"" << offsetY +10 << "\" x2=\"" << turnaroundX - bits.size()*10 - 200
+            fig << "<line x1=\"" << turnaroundX + 200 << "\" y1=\"" << offsetY +10 << "\" x2=\"" << turnaroundX - bits.size()*10 - 50
                 << "\" y2=\"" << offsetY +10 << "\" style=\"stroke:midnightblue;stroke-width:2\" />" << endl;
 
 		    fig << "<text x=\"" << turnaroundX + 100 << "\" y=\"" << offsetY + 3
@@ -824,7 +823,7 @@ namespace flopoco
         }
         else
         {
-            fig << "<line x1=\"" << turnaroundX + 200 << "\" y1=\"" << offsetY +10 << "\" x2=\"" << turnaroundX - bits.size()*10 - 200
+            fig << "<line x1=\"" << turnaroundX + 200 << "\" y1=\"" << offsetY +10 << "\" x2=\"" << turnaroundX - bits.size()*10 - 50
                 << "\" y2=\"" << offsetY +10 << "\" style=\"stroke:lightsteelblue;stroke-width:1\" />" << endl;
             drawCycleLine = false;
         }
@@ -881,7 +880,16 @@ namespace flopoco
             << "\" y2=\"" << offsetY +30 << "\" style=\"stroke:midnightblue;stroke-width:1\" />" << endl;
 
         fig << "</svg>" << endl;
-        fig.close();
+
+ 		fileFig << "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" viewBox=\"" <<turnaroundX - bits.size()*10 - 80 
+            << " " << 0 << " " << turnaroundX + 50 << " " << offsetY + 20 <<  "\">" << endl; 
+    //    fileFig << "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" viewBox=\"0 0 500 500\">" << endl; 
+
+        fileFig << fig.str();
+       
+               
+
+        fileFig.close();
     }
 
 }
