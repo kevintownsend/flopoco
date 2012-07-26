@@ -3,6 +3,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "../Operator.hpp"
+#include <vector>
+#include <sstream>
+#include <gmp.h>
+#include <gmpxx.h>
+#include "utils.hpp"
+#include "Table.hpp"
+
 
 namespace flopoco {
 
@@ -11,11 +18,18 @@ namespace flopoco {
 	class MultiplierBlock 
 	{
 	public: 
+			class SmallMultTable: public Table {
+				public:
+				int dx, dy, wO;
+				bool signedIO;
+				SmallMultTable(Target* target, int dx, int dy, int wO, bool signedIO=false );
+				mpz_class function(int x);
+				};
 	
 		/**
 		 * The default constructor
 		 */
-		MultiplierBlock(Operator* op, int wX, int wY, int topX, int topY, bool goToDSP=false,int cycle=-1, MultiplierBlock* previous=NULL, MultiplierBlock* next=NULL);
+		MultiplierBlock(Operator* op, int wX, int wY, int topX, int topY, bool goToDSP,int weightShift, int cycle=-1, MultiplierBlock* previous=NULL, MultiplierBlock* next=NULL);
 	
 		
 		/**
@@ -25,6 +39,10 @@ namespace flopoco {
 		void setSignalName(string name);
 
 		void setSignalLength(int length);
+
+		int getWeight()
+		{return weight;
+		}
 
 		string getSigName();
 
@@ -46,6 +64,18 @@ namespace flopoco {
 
 		MultiplierBlock* getPrevious();
 
+		void setNext(MultiplierBlock* b);
+		
+		string PP(int i, int j, int nr=-1);
+		string PPTbl( int i, int j, int nr=-1);
+		string XY(int i, int j, int nr=-1);
+		string heap( int i, int j);
+
+		void generateVHDLforDSP(int nr,int i);
+		void generateVHDLforLOGIC(int nr);
+		void generateVHDL(int nr, int i);
+	
+
 		
 	private:
 	
@@ -60,6 +90,10 @@ namespace flopoco {
 		MultiplierBlock* next;
 		string signalName;
 		int signalLength;
+		int weight;
+		int weightShift;
+		string inputname1, inputname2;
+			string srcFileName;
 	};
 
 }

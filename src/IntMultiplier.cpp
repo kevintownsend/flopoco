@@ -173,14 +173,18 @@ namespace flopoco {
 		if(wYdecl> wXdecl){
 			wX=wYdecl;
 			wY=wXdecl;
+
 			parentOp->vhdl << tab << declare("XX", wX, true) << " <= " << yname << ";" << endl; 
 			parentOp->vhdl << tab << declare("YY", wY, true) << " <= " << xname << ";" << endl; 
+
 		}
 		else{
 			wX=wXdecl;
 			wY=wYdecl;
+
 			parentOp->vhdl << tab << declare("XX", wX, true) << " <= " << xname << ";" << endl; 
 			parentOp->vhdl << tab << declare("YY", wY, true) << " <= " << yname << ";" << endl; 
+
 		}
 
 	}
@@ -269,15 +273,22 @@ namespace flopoco {
 
 		// The really small ones fit in two LUTs and that's as small as it gets  
 		if(wX+wY <= target->lutInputs()+2) {
+
 			parentOp->vhdl << tab << "-- Ne pouvant me fier à mon raisonnement, j'ai appris par coeur le résultat de toutes les multiplications possibles" << endl;
+
 			SmallMultTable *t = new SmallMultTable( target, wX, wY, wOut, signedIO);
 			useSoftRAM(t);
 			oplist.push_back(t);
+
 			parentOp->vhdl << tab << declare("XY", wX+wY) << " <= YY & XX;"<<endl;
+
 			inPortMap(t, "X", "XY");
 			outPortMap(t, "Y", "RR");
+
+	
 			parentOp->vhdl << instance(t, "multTable");
 			parentOp->vhdl << tab << "R <= RR;" << endl;
+
 			setCriticalPath(t->getOutputDelay("Y"));
 
 			outDelayMap["R"] = getCriticalPath();
@@ -288,11 +299,15 @@ namespace flopoco {
 		if ((wY == 1)){
 			if (signedIO){
 				manageCriticalPath( target->localWireDelay(wX) + target->adderDelay(wX+1) );
+
 				parentOp->vhdl << tab << "R <= (" << zg(wX+1)  << " - (XX" << of(wX-1) << " & XX)) when YY(0)='1' else "<< zg(wX+1,0)<<";"<<endl;	
+
 			}
 			else {
 				manageCriticalPath( target->localWireDelay(wX) + target->lutDelay() );
+
 				parentOp->vhdl << tab << "R <= (\"0\" &  XX) when YY(0)='1' else "<<zg(wX+1,0)<<";"<<endl;	
+
 			}
 			outDelayMap["R"] = getCriticalPath();
 			return;
@@ -303,23 +318,37 @@ namespace flopoco {
 		if ((wY == 2)) {
 			// No need for the following, the mult should be absorbed in the addition
 			// manageCriticalPath( target->localWireDelay() + target->lutDelay() );
+
 			parentOp->vhdl << tab << declare("R0",wX+2) << " <= (";
+
 			if (signedIO) 
+
 				parentOp->vhdl << "XX" << of(wX-1) << " & XX" << of(wX-1);  
+
 			else  
+
 				parentOp->vhdl << "\"00\"";
 			parentOp->vhdl <<  " & XX) when YY(0)='1' else "<<zg(wX+2,0)<<";"<<endl;	
 			parentOp->vhdl << tab << declare("R1i",wX+2) << " <= ";
+
 			if (signedIO) 
+
 				parentOp->vhdl << "(XX" << of(wX-1) << "  & XX & \"0\")";
+
 			else  
+
 				parentOp->vhdl << "(\"0\" & XX & \"0\")";
 			parentOp->vhdl << " when YY(1)='1' else " << zg(wX+2,0) << ";"<<endl;	
 			parentOp->vhdl << tab << declare("R1",wX+2) << " <= ";
+
 			if (signedIO) 
+
 				parentOp->vhdl << "not R1i;" <<endl;
+
 			else  
+
 				parentOp->vhdl <<  "R1i;" <<endl;
+
 			
 			IntAdder *resultAdder = new IntAdder( target, wX+2, inDelayMap("X", target->localWireDelay() + getCriticalPath() ) );
 			oplist.push_back(resultAdder);
@@ -328,26 +357,19 @@ namespace flopoco {
 			inPortMap(resultAdder, "Y", "R1");
 			inPortMapCst(resultAdder, "Cin", (signedIO? "'1'" : "'0'"));
 			outPortMap( resultAdder, "R", "RAdder");
+
 			parentOp->vhdl << tab << instance(resultAdder, "ResultAdder") << endl;
+
 			syncCycleFromSignal("RAdder");
 			setCriticalPath( resultAdder->getOutputDelay("R"));
-			
+
 			parentOp->vhdl << tab << "R <= RAdder"<< range(wFull-1, wFull-wOut)<<";"<<endl;	
+
 			outDelayMap["R"] = getCriticalPath();
 			return;
 		} 
 
-#if 0 // needed to restore basic functionality while stuff is being fixed up
-		
-		if (signedIO)
-			parentOp->vhdl << tab << declare("rfull", wFull+1) << " <= XX * YY; -- that's one bit more than needed"<<endl; 
-		else //sign extension is necessary for using use ieee.std_logic_signed.all; 
-			// for correct inference of Xilinx DSP functions
-			parentOp->vhdl << tab << declare("rfull", wX + wY + 2) << " <= (\"0\" & XX) * (\"0\" & YY);"<<endl;
-						
-		parentOp->vhdl << tab << "R <= rfull"<<range(wFull-1, wFull-wOut)<<";"<<endl;	
-		return;
-#endif
+
 	
 		
 		// Now getting more and more generic
@@ -367,23 +389,27 @@ namespace flopoco {
 					{	REPORT(DEBUG,"worthUsingDSP");
 						manageCriticalPath(target->DSPMultiplierDelay());
 						if (signedIO)
+
 							parentOp->vhdl << tab << declare("rfull", wFull+1) << " <= XX * YY; -- that's one bit more than needed"<<endl; 
+
 						else //sign extension is necessary for using use ieee.std_logic_signed.all; 
 							// for correct inference of Xilinx DSP functions
+
 							parentOp->vhdl << tab << declare("rfull", wX + wY + 2) << " <= (\"0\" & XX) * (\"0\" & YY);"<<endl;
-						
+
+
 						parentOp->vhdl << tab << "R <= rfull"<<range(wFull-1, wFull-wOut)<<";"<<endl;	
+
 						outDelayMap["R"] = getCriticalPath();
 					}
 				else {
 					// For this target and this size, better do a logic-only implementation
 				
-					buildLogicOnly(0,0,wX-1,wY-1);
+					buildLogicOnly(0,0,wX,wY);
 				}
 			}
 			else {
-				//wx>wxDSP && wy>wyDSP
-				
+			
 				buildTiling();
 
 			}
@@ -391,7 +417,7 @@ namespace flopoco {
 
 		else {// This target has no DSP, going for a logic-only implementation
 	
-			buildLogicOnly(0,0,wX-1,wY-1);
+			buildLogicOnly(0,0,wX,wY);
 		}
 		
 		
@@ -409,6 +435,7 @@ namespace flopoco {
 
 		manageSignBeforeMult();
 		buildHeapLogicOnly(topX,topY,botX,botY);
+		//adding the round bit
 			if(g>0) {
 				int weight=wFull-wOut-1- weightShift;
 				bitHeap->addBit(weight, "\'1\'", "The round bit");
@@ -416,13 +443,18 @@ namespace flopoco {
 		manageSignAfterMult();
 		bitHeap -> generateCompressorVHDL();			
 #if BAUGHWOOLEY
+
 		parentOp->vhdl << tab << "R <= CompressionResult(" << wOut+g-1 << " downto "<< g << ");" << endl;
+
 #else
 		// negate the result if needed
+
 		parentOp->vhdl << tab << declare("RR", wOut) << " <= CompressionResult(" << wOut+g-1 << " downto "<< g << ");" << endl;
 		parentOp->vhdl << tab << declare("sR") << " <= sX xor sY;" << endl;
 
+
 		parentOp->vhdl << tab << "R <= RR when sR = '0'    else ("<< zg(wOut) << " + (not RR) + '1');" << endl;
+
 #endif
 
 	}
@@ -432,6 +464,7 @@ namespace flopoco {
 	void IntMultiplier::buildTiling() {
 		manageSignBeforeMult();
 		buildHeapTiling();
+		//adding the round bit
 			if(g>0) {
 				int weight=wFull-wOut-1- weightShift;
 				bitHeap->addBit(weight, "\'1\'", "The round bit");
@@ -439,7 +472,9 @@ namespace flopoco {
 		manageSignAfterMult();
 
 		bitHeap -> generateCompressorVHDL();			
+
 		parentOp->vhdl << tab << "R <= CompressionResult(" << wOut+g-1 << " downto "<< g << ");" << endl;
+
 		printConfiguration();
 	}
 
@@ -455,13 +490,19 @@ namespace flopoco {
 			// The remaining bits will be added to the heap later.
 			wX--;
 			wY--;
+
 			parentOp->vhdl << tab << declare("sX") << " <= XX" << of(wX) << ";" << endl;
 			parentOp->vhdl << tab << declare("sY") << " <= YY" << of(wY) << ";" << endl;
+
 #if BAUGHWOOLEY
+
 			parentOp->vhdl << tab << declare("pX", wX) << " <= XX" << range(wX-1, 0) << ";" << endl;
 			parentOp->vhdl << tab << declare("pY", wY) << " <= YY" << range(wY-1, 0) << ";" << endl;
+
 			// reminder: wX and wY have been decremented
+
 			parentOp->vhdl << tab << "-- Baugh-Wooley tinkering" << endl;
+
 			setCycle(0);
 			setCriticalPath(initialCP);
 
@@ -478,26 +519,34 @@ namespace flopoco {
 			// now we have all sort of bits that need some a LUT delay to be computed
 			setCriticalPath(initialCP);
 			manageCriticalPath( getTarget()->localWireDelay(wY) + getTarget()->lutDelay() ) ;  
+
 			parentOp->vhdl << tab << declare("sXpYb", wY) << " <= not pY when sX='1' else " << zg(wY) << ";" << endl;
 			parentOp->vhdl << tab << "-- Adding these bits to the heap of bits" << endl;
+
 			for (int k=0; k<wX; k++) {
 				weight=wY+k - weightShift;
 				ostringstream v;
 				v << "sYpXb(" << k << ")";
 				bitHeap->addBit(weight, v.str());
 			}
+
 			parentOp->vhdl << endl;
+
 
 			setCriticalPath(initialCP);
 			manageCriticalPath( getTarget()->localWireDelay(wX) + getTarget()->lutDelay() ) ;  
+
 			parentOp->vhdl << tab << declare("sYpXb", wX) << " <= not pX when sY='1' else " << zg(wX) << ";" << endl;
+
 			for (int k=0; k<wY; k++) {
 				weight = wX+k - weightShift;
 				ostringstream v;
 				v << "sXpYb(" << k << ")";
 				bitHeap->addBit(weight, v.str());
 			}
+
 			parentOp->vhdl << endl;
+
 
 			setCriticalPath(initialCP);
 			manageCriticalPath( getTarget()->localWireDelay() + getTarget()->lutDelay() ) ;  
@@ -512,38 +561,51 @@ namespace flopoco {
 #else // SATURATED VERSION
 			// TODO manage pipeline
 			// reminder: wX and wY have been decremented
+	  vhdl << tab << declare("rY", wY) << " <= YY" << range(wY-1, 0) << ";" << endl;
+
 			parentOp->vhdl << tab << "-- Managing two's complement with saturated arithmetic" << endl;
 			parentOp->vhdl << tab << declare("rX", wX) << " <= XX" << range(wX-1, 0) << ";" << endl;
 			parentOp->vhdl << tab << declare("rY", wY) << " <= YY" << range(wY-1, 0) << ";" << endl;
-			// complement X and Y and send them to the positive product
+
+			  vhdl << tab << declare("pX", wX) << " <= not rX when sX='1' else rX;" << endl;
+			  vhdl << tab << declare("pY", wY) << " <= not rY when sY='1' else rY;" << endl;
+
 			parentOp->vhdl << tab << declare("pX", wX) << " <= not rX when sX='1' else rX;" << endl;
 			parentOp->vhdl << tab << declare("pY", wY) << " <= not rY when sY='1' else rY;" << endl;
 
+
 			// adding X and Y, possibly complemented
+
 			parentOp->vhdl << tab << declare("sYpX", wX) << " <= pX when sY='1' else " << zg(wX) << ";" << endl;
 			parentOp->vhdl << tab << declare("sXpY", wY) << " <= pY when sX='1' else " << zg(wY) << ";" << endl;
+
 
 			// adding only the relevant bits to the bit heap
 			for (weight=0; weight<wX-weightShift; weight++) {
 				ostringstream v;
 				v << "sYpX(" << weight+weightShift << ")";
 				bitHeap->addBit(weight, v.str());
-			}
+
 			parentOp->vhdl << endl;
+
 
 			for (weight=0; weight<wY-weightShift; weight++) {
 				ostringstream v;
 				v << "sXpY(" << weight+weightShift << ")";
 				bitHeap->addBit(weight, v.str());
 			}
+
 			parentOp->vhdl << endl;
+
 
 
 #endif
 		}	// if(signedIO)
 		else	{
+
 			parentOp->vhdl << tab << declare("pX", wX) << " <= XX;" << endl;
 			parentOp->vhdl << tab << declare("pY", wY) << " <= YY;" << endl;
+
 		}
 	}
 
@@ -557,102 +619,13 @@ namespace flopoco {
 		}
 	}
 
-
-
-
-	void IntMultiplier::buildHeapLogicOnly(MultiplierBlock *mul,int nr) {
-		Target *target=getTarget();
-		parentOp->vhdl << tab << "-- code generated by IntMultiplier::buildHeapLogicOnly()"<< endl;
-
-		int dx, dy;				// Here we need to split in small sub-multiplications
-		int li=target->lutInputs();
- 				
-		dx = li>>1;
-		dy = li - dx; 
-		REPORT(DEBUG, "dx="<< dx << "  dy=" << dy );
-		int topX=mul->gettopX();
-		int topY=mul->gettopY();
-		int botX=topX+wX-1;
-		int botY=topY+wY-1;
-	
-		int wX=botX-topX;
-		int wY=botY-topY;
-		int chunksX =  int(ceil( ( double(wX) / (double) dx) ));
-		int chunksY =  int(ceil( ( 1+ double(wY-dy) / (double) dy) ));
-		int sizeXPadded=dx*chunksX; 
-		int sizeYPadded=dy*chunksY;
-		int padX=sizeXPadded-wX;
-		int padY=sizeYPadded-wY;
-				
-		REPORT(DEBUG, "X split in "<< chunksX << " chunks and Y in " << chunksY << " chunks; ");
-		REPORT(DEBUG, " sizeXPadded="<< sizeXPadded << "  sizeYPadded="<< sizeYPadded);
-		if (chunksX + chunksY > 2) { //we do more than 1 subproduct
-			parentOp->vhdl << tab << "-- padding to the left" << endl;
-			parentOp->vhdl<<tab<<declare(join("Xp",nr),sizeXPadded)<<" <= "<< zg(padX) << " & pX" << range(botX-1,topX) << ";"<<endl;
-			parentOp->vhdl<<tab<<declare(join("Yp",nr),sizeYPadded)<<" <= "<< zg(padY) << " & pY" << range(botY-1, topY) << ";"<<endl;	
-			//SPLITTINGS
-			for (int k=0; k<chunksX ; k++)
-				parentOp->vhdl<<tab<<declare(join("x",nr,"_",k),dx)<<" <= "<<join("Xp",nr)<<range((k+1)*dx-1,k*dx)<<";"<<endl;
-			for (int k=0; k<chunksY ; k++)
-				parentOp->vhdl<<tab<<declare(join("y",nr,"_",k),dy)<<" <= "<<join("Yp",nr)<<range((k+1)*dy-1, k*dy)<<";"<<endl;
-					
-			REPORT(DEBUG, "maxWeight=" << maxWeight <<  "    weightShift=" << weightShift);
-
-			SmallMultTable *t = new SmallMultTable( target, dx, dy, dx+dy, false ); // unsigned
-			useSoftRAM(t);
-			oplist.push_back(t);
-
-
-			setCycle(0);
-			setCriticalPath(initialCP);
-			// SmallMultTable is built to cost this:
-			manageCriticalPath( getTarget()->localWireDelay(chunksX) + getTarget()->lutDelay() ) ;  
-			for (int iy=0; iy<chunksY; iy++){
-				parentOp->vhdl << tab << "-- Partial product row number " << iy << endl;
-				for (int ix=0; ix<chunksX; ix++) { 
-					parentOp->vhdl << tab << declare(XY(ix,iy,nr), dx+dy) << " <= y"<< nr <<"_"<< iy << " & x" << nr <<"_"<< ix << ";"<<endl;
-					inPortMap(t, "X", XY(ix,iy,nr));
-					outPortMap(t, "Y", PP(ix,iy,nr));
-					parentOp->vhdl << instance(t, PPTbl(ix,iy,nr));
-					parentOp->vhdl << tab << "-- Adding the relevant bits to the heap of bits" << endl;
-					int maxK=dx+dy; 
-					if(ix == chunksX-1)
-						maxK-=padX;
-					if(iy == chunksY-1)
-						maxK-=padY;
-					for (int k=0; k<maxK; k++) {
-						ostringstream s;
-						s << PP(ix,iy,nr) << of(k); // right hand side
-						int weight = ix*dx+iy*dy+k - weightShift+topX+topY;
-						if(weight>=0) {// otherwise these bits deserve to be truncated
-							REPORT(DEBUG, "adding bit " << s.str() << " at weight " << weight); 
-							bitHeap->addBit(weight, s.str());
-						}
-					}
-					parentOp->vhdl << endl;
-				}
-			}				
-
-		
-
-			// And that's it, now go compress
-		
-		}
-	 
-	}
-	
-
-
-
-
-
-
-
-
 	/**************************************************************************/
-	void IntMultiplier::buildHeapLogicOnly(int topX, int topY, int botX, int botY,int nr) {
+	void IntMultiplier::buildHeapLogicOnly(int topX, int topY, int botX, int botY,int uid) {
 		Target *target=getTarget();
+        if(uid==-1)
+			uid++;
 		parentOp->vhdl << tab << "-- code generated by IntMultiplier::buildHeapLogicOnly()"<< endl;
+
 
 		int dx, dy;				// Here we need to split in small sub-multiplications
 		int li=target->lutInputs();
@@ -674,14 +647,16 @@ namespace flopoco {
 		REPORT(DEBUG, "X split in "<< chunksX << " chunks and Y in " << chunksY << " chunks; ");
 		REPORT(DEBUG, " sizeXPadded="<< sizeXPadded << "  sizeYPadded="<< sizeYPadded);
 		if (chunksX + chunksY > 2) { //we do more than 1 subproduct
+
 			parentOp->vhdl << tab << "-- padding to the left" << endl;
-			parentOp->vhdl<<tab<<declare(join("Xp",nr),sizeXPadded)<<" <= "<< zg(padX) << " & pX" << range(botX-1,topX) << ";"<<endl;
-			parentOp->vhdl<<tab<<declare(join("Yp",nr),sizeYPadded)<<" <= "<< zg(padY) << " & pY" << range(botY-1, topY) << ";"<<endl;	
+			parentOp->vhdl<<tab<<declare(join("Xp",uid),sizeXPadded)<<" <= "<< zg(padX) << " & pX" << range(botX-1,topX) << ";"<<endl;
+			parentOp->vhdl<<tab<<declare(join("Yp",uid),sizeYPadded)<<" <= "<< zg(padY) << " & pY" << range(botY-1, topY) << ";"<<endl;	
+
 			//SPLITTINGS
 			for (int k=0; k<chunksX ; k++)
-				parentOp->vhdl<<tab<<declare(join("x",nr,"_",k),dx)<<" <= "<<join("Xp",nr)<<range((k+1)*dx-1,k*dx)<<";"<<endl;
-			for (int k=0; k<chunksY ; k++)
-				parentOp->vhdl<<tab<<declare(join("y",nr,"_",k),dy)<<" <= "<<join("Yp",nr)<<range((k+1)*dy-1, k*dy)<<";"<<endl;
+				parentOp->vhdl<<tab<<declare(join("x",uid,"_",k),dx)<<" <= "<<join("Xp",uid)<<range((k+1)*dx-1,k*dx)<<";"<<endl;
+				for (int k=0; k<chunksY ; k++)
+					parentOp->vhdl<<tab<<declare(join("y",uid,"_",k),dy)<<" <= "<<join("Yp",uid)<<range((k+1)*dy-1, k*dy)<<";"<<endl;
 					
 			REPORT(DEBUG, "maxWeight=" << maxWeight <<  "    weightShift=" << weightShift);
 
@@ -695,13 +670,19 @@ namespace flopoco {
 			// SmallMultTable is built to cost this:
 			manageCriticalPath( getTarget()->localWireDelay(chunksX) + getTarget()->lutDelay() ) ;  
 			for (int iy=0; iy<chunksY; iy++){
+
 				parentOp->vhdl << tab << "-- Partial product row number " << iy << endl;
+
 				for (int ix=0; ix<chunksX; ix++) { 
-					parentOp->vhdl << tab << declare(XY(ix,iy,nr), dx+dy) << " <= y"<< nr <<"_"<< iy << " & x" << nr <<"_"<< ix << ";"<<endl;
-					inPortMap(t, "X", XY(ix,iy,nr));
-					outPortMap(t, "Y", PP(ix,iy,nr));
-					parentOp->vhdl << instance(t, PPTbl(ix,iy,nr));
+
+					parentOp->vhdl << tab << declare(XY(ix,iy,uid), dx+dy) << " <= y"<< uid <<"_"<< iy << " & x" << uid <<"_"<< ix << ";"<<endl;
+
+					inPortMap(t, "X", XY(ix,iy,uid));
+					outPortMap(t, "Y", PP(ix,iy,uid));
+
+					parentOp->vhdl << instance(t, PPTbl(ix,iy,uid));
 					parentOp->vhdl << tab << "-- Adding the relevant bits to the heap of bits" << endl;
+
 					int maxK=dx+dy; 
 					if(ix == chunksX-1)
 						maxK-=padX;
@@ -709,14 +690,16 @@ namespace flopoco {
 						maxK-=padY;
 					for (int k=0; k<maxK; k++) {
 						ostringstream s;
-						s << PP(ix,iy,nr) << of(k); // right hand side
+						s << PP(ix,iy,uid) << of(k); // right hand side
 						int weight = ix*dx+iy*dy+k - weightShift+topX+topY;
 						if(weight>=0) {// otherwise these bits deserve to be truncated
 							REPORT(DEBUG, "adding bit " << s.str() << " at weight " << weight); 
 							bitHeap->addBit(weight, s.str());
 						}
 					}
+
 					parentOp->vhdl << endl;
+
 				}
 			}				
 
@@ -729,49 +712,28 @@ namespace flopoco {
 	}
 	
 
+
+	
 	void IntMultiplier::splitting(int horDSP, int verDSP, int wxDSP, int wyDSP,int restX, int restY)
 	{
+		int k=0;
 		for(int i=0;i<horDSP;i++)
 			{
-				parentOp->vhdl << tab << declare(join("XX",horDSP-i-1), wxDSP) << " <= XX("<<wX-(i*wxDSP)-1<<" downto "<< wX-((i+1)*wxDSP)<<");"<<endl; 
-				REPORT(DEBUG,join("XX",horDSP-i-1)<< " <= XX("<<wX-(i*wxDSP)-1<<" downto "<< wX-((i+1)*wxDSP)<<");");
-			}
-	
-		for(int i=0;i<verDSP;i++)
-			{
-				REPORT(DEBUG,join("YY",verDSP-i-1)<< " <= YY("<<wY-((i)*wyDSP)-1<<" downto "<< wY-(((i+1)*wyDSP)) <<");");
-				parentOp->vhdl << tab << declare(join("YY",verDSP-i-1), wyDSP) << " <= YY("<<(wY-(i*wyDSP))-1<<" downto "<< wY-((i+1)*wyDSP) <<");"<<endl; 
-			}
-
-				int k=0;
-		for(int i=0;i<horDSP;i++)
 			for(int j=0;j<verDSP;j++)
 				{
-					REPORT(DEBUG, "i="<<i<<" j="<<j);
-					REPORT(DEBUG, "XX"<<i<<"YY"<<j<<" <= "<<join("XX",i)<<" * "<<join("YY",j)<<";");
+				
+				    bitHeap->addDSP(new MultiplierBlock(parentOp,wxDSP,wyDSP,wX-(i+1)*wxDSP, wY-((j+1)*wyDSP),true,weightShift));
 					
+					//***** this part is needed only for the plotting ********
 					DSP* dsp = new DSP();
-
 					dsp->setTopRightCorner(wX-((i+1)*wxDSP),wY-((j+1)*wyDSP));
 					dsp->setBottomLeftCorner(wX-(i*wxDSP),wY-(j*wyDSP));
-				
 					dsps.push_back(dsp);
-
-					parentOp->vhdl << tab << declare (join("XX",i,"YY",j),wxDSP+wyDSP)<<" <= "<<join("XX",i)<<" * "<<join("YY",j)<<";"<<endl; 
-					for(int l=wxDSP+wyDSP-1;l>=0;l--)
-						{
-							//	REPORT(DEBUG, wFull-wOut-g);
-							if (l+i*wxDSP+j*wyDSP+restX+restY>=wFull-wOut-g)
-								{
-									parentOp->vhdl << tab << declare (join("PP_DSP_X",i,"Y",j,"_",l))<<"<=XX"<<i<<"YY"<<j<<"("<<l<<");"<<endl;
-									REPORT(DEBUG, "insert here XX"<<i<<"YY"<<j<<"("<<l<<") in column "<<l+(i*wxDSP)+(j*wyDSP)+restX+restY-(wFull-wOut-g));
-									bitHeap->addBit(l+(i*wxDSP)+(j*wyDSP)+restX+restY-(wFull-wOut-g),join("PP_DSP_X",i,"Y",j,"_",l));
-								}
-						}
-					k++;		
+					//********************************************************
+			
 				}	
 
-
+			}
 
 	}
 
@@ -780,7 +742,7 @@ namespace flopoco {
 	/**************************************************************************/
 	void IntMultiplier::buildHeapTiling() {
 		
-		//horizontal or vertical DSP?
+		//the DSPs should be arranged horizontally or vertically?
 		int horDSP1=wX/wxDSP;
 		int verDSP1=wY/wyDSP;
 	    int horDSP2=wX/wyDSP;
@@ -790,7 +752,7 @@ namespace flopoco {
 
 		int horDSP;
 		int verDSP;
-        int restX;
+        int restX; //the number of lsbs of the first input which 
 		int restY;
 
 		if (hor>=ver)
@@ -798,7 +760,9 @@ namespace flopoco {
 				horDSP=horDSP1;
 				verDSP=verDSP1;
 				restX=wX-horDSP*wxDSP;
+
 				restY=wY-verDSP*wyDSP;
+				//splitting horizontal
 				splitting(horDSP,verDSP,wxDSP,wyDSP,restX,restY);
 			}
 		else
@@ -807,15 +771,10 @@ namespace flopoco {
 				verDSP=verDSP2;
 				restX=wX-horDSP*wyDSP;
 				restY=wY-verDSP*wxDSP;
+				//splitting vertical
 				splitting(horDSP,verDSP,wyDSP,wxDSP,restX,restY);
 			}
 
-	
-		REPORT(DEBUG,"restX= "<< restX);
-		REPORT(DEBUG,"restY= "<< restY);
-		REPORT(DEBUG,"horDSP= "<< horDSP);
-		REPORT(DEBUG,"verDSP= "<< verDSP);
-		REPORT(DEBUG," wX="<< wX << " wxDSP="<< wxDSP <<" wY="<< wY <<" wyDSP="<<wyDSP <<" horDSP= "<<horDSP);
 		
 		if((restX!=0 ) || (restY!=0))
 			{
@@ -826,12 +785,10 @@ namespace flopoco {
 				REPORT(DEBUG,"restX= "<<restX<<"restY= "<<restY);
 				if(restY>0)
 					{
-						REPORT(DEBUG,"first small tiling");
 						buildHeapLogicOnly(0,0,wX,restY,0);
 					}
 				if(restX>0)
 					{
-						REPORT(DEBUG, "second small tiling");
 						buildHeapLogicOnly(0,restY,restX,wY,1);
 					}	
 
@@ -839,6 +796,9 @@ namespace flopoco {
 				
 		
 			}
+
+		bitHeap->iterateDSP();
+
 	}
 
 	
@@ -849,16 +809,56 @@ namespace flopoco {
 
 
 
-	// Stuff for the small multiplier table 
-	IntMultiplier::SmallMultTable::SmallMultTable(Target* target, int dx, int dy, int wO, bool  signedIO) : 
+
+		string IntMultiplier::PP(int i, int j, int uid ) {
+		std::ostringstream p;		
+		if(uid==-1) 
+			p << "PP_X" << i << "Y" << j;
+		else
+			p << "PP_"<<uid<<"X" << i << "Y" << j;
+		return p.str();
+	};
+
+	string IntMultiplier::PPTbl(  int i, int j,int uid) {
+		std::ostringstream p;		
+		if(uid==-1) 
+			p << "PP_X" << i << "Y" << j << "_Tbl";
+		else
+			p << "PP_"<<uid<<"X" << i << "Y" << j << "_Tbl";
+		return p.str();
+	};
+
+	string IntMultiplier::XY( int i, int j,int uid) {
+		std::ostringstream p;		
+		if(uid==-1) 
+			p  << "Y" << j<< "X" << i;
+		else
+			p  << "Y" << j<< "X" << i<<"_"<<uid;
+		return p.str();	
+	};
+
+
+
+
+	string IntMultiplier::heap( int i, int j) {
+		std::ostringstream p;
+		p  << "heap_" << i << "_" << j;
+		return p.str();
+	};
+
+
+
+
+		IntMultiplier::SmallMultTable::SmallMultTable(Target* target, int dx, int dy, int wO, bool  signedIO) : 
 		Table(target, dx+dy, wO, 0, -1, true), // logic table
 		dx(dx), dy(dy), signedIO(signedIO) {
 		ostringstream name; 
 		srcFileName="LogicIntMultiplier::SmallMultTable";
-		name <<"SmallMultTable" << dy << "x" << dx << "r" << wO << (signedIO?"signed":"unsigned")<<"_uid"<<getNewUId();;
+		name <<"SmallMultTable" << dy << "x" << dx << "r" << wO << (signedIO?"signed":"unsigned");
 		setName(name.str());				
 	};
 	
+
 	mpz_class IntMultiplier::SmallMultTable::function(int yx){
 		mpz_class r;
 		int y = yx>>dx;
@@ -889,164 +889,6 @@ namespace flopoco {
 		return r;
 		
 	};
-	
-	
-	
-	//FIXME: use the "join" function in utils.cpp to create the variable names 
-	//			-> there's no need for the following 4 functions
-
-	string IntMultiplier::PP(int i, int j, int nr ) {
-		std::ostringstream p;		
-		if(nr==-1) 
-			p << "PP_X" << i << "Y" << j;
-		else
-			p << "PP_"<<nr<<"X" << i << "Y" << j;
-		return p.str();
-	};
-
-	string IntMultiplier::PPTbl(  int i, int j,int nr) {
-		std::ostringstream p;		
-		if(nr==-1) 
-			p << "PP_X" << i << "Y" << j << "_Tbl";
-		else
-			p << "PP_"<<nr<<"X" << i << "Y" << j << "_Tbl";
-		return p.str();
-	};
-
-	string IntMultiplier::XY( int i, int j,int nr) {
-		std::ostringstream p;		
-		if(nr==-1) 
-			p  << "Y" << j<< "X" << i;
-		else
-			p  << "Y" << j<< "X" << i<<"_"<<nr;
-		return p.str();	
-	};
-
-
-
-
-	string IntMultiplier::heap( int i, int j) {
-		std::ostringstream p;
-		p  << "heap_" << i << "_" << j;
-		return p.str();
-	};
-
-
-
-	void IntMultiplier::exploration(MultiplierBlock *mul)
-	{
-	 //splits the big block, and adds the roots of the supertilings to mulBlocks
-	}
-
-
-    void IntMultiplier::generateVHDL(MultiplierBlock *m, int nr,int i)
-	{
-	stringstream s;
-	int topX=m->gettopX();
-	int topY=m->gettopY();
-	int botX=topX+m->getwX()-1;
-	int botY=topY+m->getwY()-1;
-	
-
-	parentOp->vhdl << tab << declare(join("DSP",i,"_",nr), m->getwX()+m->getwY()) << " <= XX"<<range(botX,topX)<<" * YY"<<range(botY,topY)<<";"<<endl;
-	s<<join("DSP",i,"_",nr);
-	
-	m->setSignalName(s.str());
-	m->setSignalLength(m->getwX()+m->getwY());
-	}
-
-
-	void IntMultiplier::chaining(MultiplierBlock *root,int i)
-	{
-		int nr=0;
-		MultiplierBlock* mul=root;
-		string prevName="";
-		int prevLength=0;
-		int rootLength=root->getSigLength();
-		string rootName=root->getSigName();
-		int newLength=rootLength;
-		while(mul->getNext()!=NULL)
-		{
-		
-		generateVHDL(mul,nr,i);
-		string rootName=mul->getSigName();
-		int rootLength=mul->getSigLength();
-		int newLength=rootLength;
-        prevName="";
-		prevLength=0;
-
-		if(mul->getPrevious()!=NULL)
-		{
-			 prevName=mul->getPrevious()->getSigName();
-			int prevLength=mul->getPrevious()->getSigLength();
-
-			if(rootLength<prevLength)
-				newLength=prevLength;
-		}
-		
-		
-		newLength=newLength+1;
-		parentOp->vhdl<< tab << declare(join("DSP_ch",i,"_",nr),newLength) << prevName << " + " <<rootName<<";"<<endl;
-		mul->setSignalLength(newLength);
-		mul->setSignalName(join("DSP_ch_",i,"_",nr));
-		nr++;
-		mul=mul->getNext();
-		}
-		
-
-		
-		if(mul->getPrevious()!=NULL)
-		{
-			 prevName=mul->getPrevious()->getSigName();
-			int prevLength=mul->getPrevious()->getSigLength();
-
-			if(rootLength<prevLength)
-				newLength=prevLength;
-		}
-
-		parentOp->vhdl<< tab << declare(join("DSP_ch",i,"_",nr),newLength) << prevName << " + " <<rootName<<";"<<endl;
-		mul->setSignalLength(newLength);
-		mul->setSignalName(join("DSP_ch_",i,"_",nr));
-
-		for(int k=newLength;k>=0;k--)
-		{
-			int weight=mul->gettopX()+mul->gettopY()+k-weightShift;
-			if (weight>=0)
-			{
-				stringstream st;
-				st<<join("DSP_ch_",i,"_",nr)<<"("<<k<<")";
-				bitHeap->addBit(weight, st.str());
-			}
-		}
-
-
-
-			
-	}
-
-
-
-
-
-	void IntMultiplier::iterate()
-	{
-		for(int i=0; i<mulBlocks.size();i++)
-			{
-				if(!mulBlocks[i]->getgoToDSP())
-				{
-					if((wX>wxDSP && wY>wyDSP)||(wX>wyDSP && wY>wxDSP))
-						exploration(mulBlocks[i]);
-					else buildHeapLogicOnly(mulBlocks[i],i);
-				}
-				else
-				chaining(mulBlocks[i],i);
-			}
-		
-	}
-
-
-
-
 
 
 

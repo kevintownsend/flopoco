@@ -77,23 +77,22 @@ class IntMultiplier : public Operator {
 
 protected:
 	
-	string PP(int i, int j, int nr=-1);
-	string PPTbl( int i, int j, int nr=-1);
-	string XY(int i, int j, int nr=-1);
+	string PP(int i, int j, int uid=-1);
+	string PPTbl( int i, int j, int uid=-1);
+	string XY(int i, int j, int uid=-1);
 	string heap( int i, int j);
 
 	void buildLogicOnly(int topX, int topY, int botX, int botY);
-	void buildHeapLogicOnly(MultiplierBlock* mul,int nr);
+	void buildHeapLogicOnly(MultiplierBlock* mul,int uid);
 	void buildTiling();
-	void exploration(MultiplierBlock *mul);
-	void iterate();
-	void chaining(MultiplierBlock *root, int i);
-	void generateVHDL(MultiplierBlock *m,int nr, int i);
+
 	void manageSignBeforeMult();            /*< to be called before buildHeap* **/
-	//void buildHeap();                      /*< Checks special size cases, then calls either buildHeapLogicOnly or buildHeapTiling **/
-	void buildHeapLogicOnly(int topX, int topY, int botX, int botY,int nr=-1);
+	void buildHeapLogicOnly(int topX, int topY, int botX, int botY,int uid=-1);
 	void buildHeapTiling();
 	void manageSignAfterMult();            /*< to be called after either buildHeapLogicOnly or buildHeapTiling **/
+
+
+	/** splits the inputs in chunks which fits the DSP-s, and send them to the vector of MultiplierBlocks**/
 	void splitting(int horDSP, int verDSP, int wxDSP, int wyDSP,int restX,int restY);
 
 	void printConfiguration();
@@ -110,7 +109,7 @@ protected:
 	int wYdecl;                     /**< the width for Y  as declared*/
 	int wX;                         /**< the width for X after possible swap such that wX>wY */
 	int wY;                         /**< the width for Y after possible swap such that wX>wY */
-	int wOut;
+	int wOut;						/**<the size of the output*/
 	int wFull;                      /**< size of the full product: wX+wY-1 if signed, wX+wY if unsigned */
 	int wTruncated;                 /**< The number of truncated bits, wFull - wOut*/
 	int g ;                         /**< the number of guard bits*/
@@ -132,7 +131,7 @@ private:
 
 	void initialize();   /**< initialization stuff common to both constructors*/
 	vector<DSP*> dsps;
-	vector<MultiplierBlock*> mulBlocks; //the vector of multiplier blocks
+	
  };
 
 }

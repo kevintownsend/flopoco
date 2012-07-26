@@ -22,6 +22,7 @@
 #include "DualTable.hpp"
 #include "IntAddition/BasicCompressor.hpp"
 #include "IntMultipliers/IntTilingMult.hpp"
+#include "IntMultipliers/MultiplierBlock.hpp"
 
 
 
@@ -118,9 +119,9 @@ namespace flopoco{
 		 @param rhs      the right-hand VHDL side defining this bit.
 		 @param comment  a VHDL comment for this bit*/
 		void addBit(unsigned weight, string rhs, string comment="");
-
+		void  addDSP(MultiplierBlock* m);
         void elemReduce(unsigned i, BasicCompressor* bc);
-
+		void iterateDSP();
         BitHeap::WeightedBit* computeLatest(unsigned w, int c0, int c1);
         
         BitHeap::WeightedBit* getFinalLatestBit();
@@ -197,6 +198,7 @@ namespace flopoco{
 		string bit( int w, int h); /**< just provide the name of the bit of weight w and height h*/
 #else
 		vector<list<WeightedBit*> > bits; /**<  The list is ordered by arrival time of the bits, i.e. lexicographic order on (cycle, cp)*/
+		vector<MultiplierBlock*> mulBlocks; //the vector of multiplier blocks
 #endif
      
 		string srcFileName;	};

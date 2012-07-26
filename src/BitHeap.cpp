@@ -172,6 +172,47 @@ namespace flopoco
 	}
 
 	
+	void  BitHeap::addDSP(MultiplierBlock* m)
+	{
+	mulBlocks.push_back(m);
+	}
+
+
+
+	void BitHeap::iterateDSP()
+	{
+
+		REPORT(DETAILED,"mulblock size "<< mulBlocks.size() );
+		for(int i=0; i<mulBlocks.size();i++)
+			{
+				mulBlocks[i]->generateVHDLforDSP(i,i);
+				string outputSignalName=mulBlocks[i]->getSigName();
+				int outputSignalLength=mulBlocks[i]->getSigLength();
+				int w=mulBlocks[i]->getWeight();
+
+				REPORT(DETAILED,"outputsignal "<< outputSignalLength<<" w= "<<w);
+		
+				for(int j=outputSignalLength-1;j>=0;j--)
+					{
+						REPORT(DEBUG,"j= "<<j<<" i= "<<i); 
+						int weight=w+j;
+					//	REPORT(DEBUG,"j= "<<j<<" i= "<<i); 
+						if(weight>=0)
+						{
+							stringstream s;
+							s << outputSignalName <<"("<<j<<")";
+							addBit(weight,s.str());
+						}
+					}
+			}
+
+		////MODIFY this for the chaining!!!!
+
+
+	}
+
+
+
 
 
 	void  BitHeap::addBit(unsigned w, string rhs, string comment)
