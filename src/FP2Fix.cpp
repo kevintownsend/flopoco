@@ -203,7 +203,7 @@ namespace flopoco{
       mpfr_t i;
       mpfr_init2(i, 1+wFI);
       fpi.getMPFR(i);
-      std::cerr << "FP " << printMPFR(i, 100) << std::endl;
+      //std::cerr << "FP " << printMPFR(i, 100) << std::endl;
       mpz_class svO;
 
       if(trunc_p)
@@ -219,7 +219,7 @@ namespace flopoco{
 	 }
       }
       svO = svO & ((mpz_class(1) << (MSBO-LSBO+1))-1);
-      std::cerr << "FIX " << svO << std::endl;
+      //std::cerr << "FIX " << svO << std::endl;
       tc->addExpectedOutput("O", svO);
       // clean-up
       mpfr_clear(i);
