@@ -255,6 +255,10 @@ namespace flopoco
 			op->setCycle(  b ->getCycle()  );
 			op->setCriticalPath(  b ->getCriticalPath(op->getCurrentCycle()));
 			op->manageCriticalPath( op->getTarget()->lutDelay() + op->getTarget()->localWireDelay() );
+            if(b->getCycle() < op->getCurrentCycle())
+            {
+                drawCycleLine = true;
+            }
 		}
 
 		// build the first input of the compressor
@@ -441,7 +445,7 @@ namespace flopoco
 		REPORT(DEBUG, "Before Adder");
         offsetY += 20 + getMaxHeight() * 10;
         drawConfiguration(offsetY);
-        closeDrawing();
+        closeDrawing(offsetY);
 		adderVHDL();
 		REPORT(DEBUG, "after adder");
 	}
@@ -541,7 +545,11 @@ namespace flopoco
 		{
 			op->setCycle(  b ->getCycle()  );
 			op->setCriticalPath(  b->getCriticalPath(op->getCurrentCycle()));
-			op->manageCriticalPath(b->getCriticalPath(op->getCurrentCycle()) + op->getTarget()->adderDelay(maxWeight-minWeight));
+			op->manageCriticalPath(op->getTarget()->localWireDelay() + op->getTarget()->adderDelay(maxWeight-minWeight));
+            if(b->getCycle() < op->getCurrentCycle())
+            {
+                drawCycleLine = true;
+            }
 		}
 
 		op->vhdl << tab << op->declare("inAdder0", maxWeight-minWeight) << "<= " << inAdder0.str() << endl;
@@ -731,7 +739,9 @@ namespace flopoco
     {
        	ostringstream figureFileName;
 		figureFileName << "bit_heap.svg";
-		
+	
+        drawCycleNumber = 0;
+
 		FILE* pfile;
 		pfile  = fopen(figureFileName.str().c_str(), "w");
 		fclose(pfile);
@@ -741,7 +751,7 @@ namespace flopoco
  		fig << "<?xml version=\"1.0\" standalone=\"no\"?>" << endl;
 		fig << "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\"" << endl;
 		fig << "\"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">" << endl;
-		fig << "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\">" << endl;
+		fig << "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\">" << endl;  
     }
 
     void BitHeap::drawConfiguration(int offsetY)
@@ -751,6 +761,32 @@ namespace flopoco
         int tempCycle = 0;
         int cnt = 0;
         double tempCP = 0;
+        if((drawCycleLine) && (drawCycleNumber==0))
+        {
+            fig << "<text x=\"" << turnaroundX + 85 << "\" y=\"" << 40
+		    	<< "\" fill=\"midnightblue\">" << "Cycle"<< "</text>" << endl;
+        }
+
+        if(drawCycleLine)
+        {
+            drawCycleNumber++;
+            fig << "<line x1=\"" << turnaroundX + 200 << "\" y1=\"" << offsetY +10 << "\" x2=\"" << turnaroundX - bits.size()*10 - 200
+                << "\" y2=\"" << offsetY +10 << "\" style=\"stroke:midnightblue;stroke-width:2\" />" << endl;
+
+		    fig << "<text x=\"" << turnaroundX + 100 << "\" y=\"" << offsetY + 3
+				<< "\" fill=\"midnightblue\">" << drawCycleNumber - 1 << "</text>" << endl;
+
+		    fig << "<text x=\"" << turnaroundX + 100 << "\" y=\"" << offsetY + 27
+				<< "\" fill=\"midnightblue\">" << drawCycleNumber  << "</text>" << endl;
+
+            drawCycleLine = false;
+        }
+        else
+        {
+            fig << "<line x1=\"" << turnaroundX + 200 << "\" y1=\"" << offsetY +10 << "\" x2=\"" << turnaroundX - bits.size()*10 - 200
+                << "\" y2=\"" << offsetY +10 << "\" style=\"stroke:lightsteelblue;stroke-width:1\" />" << endl;
+            drawCycleLine = false;
+        }
 
         for(unsigned i=0; i<bits.size(); i++)
         {
@@ -797,8 +833,12 @@ namespace flopoco
         fig << "<circle cx=\"" << turnaroundX - w*10 - 5 << "\" cy=\"" << offsetY - cnt*10 - 5 << "\" r=\"3\" fill=\"" << colors[index] << "\"/>" << endl;
     }
 
-    void BitHeap::closeDrawing()
+    void BitHeap::closeDrawing(int offsetY)
     {
+        int turnaroundX = 1500;
+        fig << "<line x1=\"" << turnaroundX + 50 << "\" y1=\"" << 20 << "\" x2=\"" << turnaroundX + 50
+            << "\" y2=\"" << offsetY +30 << "\" style=\"stroke:midnightblue;stroke-width:1\" />" << endl;
+
         fig << "</svg>" << endl;
         fig.close();
     }

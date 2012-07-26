@@ -170,7 +170,7 @@ namespace flopoco{
 
         void initializeDrawing();
 
-        void closeDrawing();
+        void closeDrawing(int offsetY);
 
         void drawConfiguration(int offsetY);
 
@@ -187,7 +187,9 @@ namespace flopoco{
 		unsigned compressorIndex;
         unsigned cnt[100000];
 		vector<int> uid;   /**< unique id, per weight */
-     	ofstream fig;	       
+     	ofstream fig;
+        bool drawCycleLine;
+        int drawCycleNumber;        
 #if 0
 		const static int consumed=-1;
 		vector<vector<int> > cycle;   /**< external index is the weight (column). The int is the cycle of each bit. Consumed bits have their cycle set to -1 */
