@@ -32,7 +32,7 @@ namespace flopoco {
 		/**
 		 * The default constructor
 		 */
-		MultiplierBlock(Operator* op, int wX, int wY, int topX, int topY, bool goToDSP,int weightShift, int cycle=-1, MultiplierBlock* previous=NULL, MultiplierBlock* next=NULL);
+		MultiplierBlock(int wX, int wY, int topX, int topY, bool goToDSP,int weightShift, int cycle=-1, MultiplierBlock* previous=NULL, MultiplierBlock* next=NULL);
 	
 		
 		/**
