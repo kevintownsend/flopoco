@@ -18,13 +18,16 @@ namespace flopoco {
 	class MultiplierBlock 
 	{
 	public: 
-			class SmallMultTable: public Table {
-				public:
-				int dx, dy, wO;
-				bool signedIO;
-				SmallMultTable(Target* target, int dx, int dy, int wO, bool signedIO=false );
-				mpz_class function(int x);
-				};
+		
+		class SmallMultTable: public Table 
+		{
+			public:
+			
+			int dx, dy, wO;
+			bool signedIO;
+			SmallMultTable(Target* target, int dx, int dy, int wO, bool signedIO=false );
+			mpz_class function(int x);
+		};
 	
 		/**
 		 * The default constructor
@@ -41,7 +44,8 @@ namespace flopoco {
 		void setSignalLength(int length);
 
 		int getWeight()
-		{return weight;
+		{
+			return weight;
 		}
 
 		string getSigName();
@@ -93,7 +97,7 @@ namespace flopoco {
 		int weight;
 		int weightShift;
 		string inputname1, inputname2;
-			string srcFileName;
+		string srcFileName;
 	};
 
 }
