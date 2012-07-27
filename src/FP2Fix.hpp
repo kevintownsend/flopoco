@@ -8,7 +8,6 @@
 
 #include "Operator.hpp"
 #include "FPNumber.hpp"
-#include "FXP_Shift.hpp"
 #include "IntAdder.hpp"
 
 
@@ -40,14 +39,7 @@ namespace flopoco{
       /* Overloading the Operator method to limit testing of negative numbers when Signed is 0*/
       TestCase* buildRandomTestCase(int i);
 
-
    private:
-
-      /** The integer adder object to compute the correct value of the exponent*/
-      IntAdder* Exponent_difference;
-      IntAdder* MantSum;
-      IntAdder* MantSum2;
-      FXP_Shift*FXP_shifter;
 
       /** The width of the exponent for the input */
       int wEI;

@@ -319,7 +319,6 @@ src/IntMultipliers/MultiplierBlock
 
 # ---------- Conversion --------------------------------------------- 
  src/FP2Fix
- src/FXP_Shift
  src/Fix2FP
  src/InputIEEE
  src/OutputIEEE

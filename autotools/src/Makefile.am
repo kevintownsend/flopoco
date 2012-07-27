@@ -51,7 +51,6 @@ noinst_HEADERS = \
           DualTable2.hpp \
           Fix2FP.hpp \
           FP2Fix.hpp \
-          FXP_Shift.hpp \
           FlopocoStream.hpp \
           FPAdderDualPath.hpp \
           FPAdderSinglePath.hpp \
@@ -253,7 +252,6 @@ libflopoco_la_SOURCES = \
                         IEEENumber.cpp \
                         UtilSollya.cc \
                         FP2Fix.cpp \
-			FXP_Shift.cpp \
                         random/random_main.cpp \
                         random/urng/LutSrRng.cpp
 
