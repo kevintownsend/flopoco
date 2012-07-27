@@ -24,12 +24,12 @@ using namespace std;
 namespace flopoco{
 
 
-		MultiplierBlock::MultiplierBlock(Operator* op, int wX, int wY, int topX, int topY, bool goToDSP_, int weightShift, int cycle, MultiplierBlock* previous, MultiplierBlock* next) :
-			op(op), wX(wX), wY(wY), topX(topX), topY(topY), goToDSP(goToDSP_)
+		MultiplierBlock::MultiplierBlock(int wX, int wY, int topX, int topY, bool goToDSP_, int weightShift, int cycle, MultiplierBlock* previous, MultiplierBlock* next) :
+			wX(wX), wY(wY), topX(topX), topY(topY), goToDSP(goToDSP_)
 		{
-			if(cycle==-1)
-				cycle = op->getCurrentCycle();
-			else
+			//if(cycle==-1)
+			//	cycle = op->getCurrentCycle();
+			//else
 				cycle=cycle;
 			weight=topX+topY-weightShift;
 			srcFileName=op->getSrcFileName() + ":MultiplierBlock";
