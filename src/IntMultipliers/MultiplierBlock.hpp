@@ -83,7 +83,6 @@ namespace flopoco {
 		
 	private:
 	
-		Operator* op;
 		int wX; 							/**< x size */
 		int wY; 							/**< y size */
 		int topX; 							/**< x position (top right corner) */
@@ -97,7 +96,6 @@ namespace flopoco {
 		int weight;
 		int weightShift;
 		string inputname1, inputname2;
-		string srcFileName;
 	};
 
 }
