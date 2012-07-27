@@ -61,6 +61,12 @@ namespace flopoco {
 		int gettopY();
 
 		int getCycle();
+		
+		bool getChained()
+		{return chained;}
+
+		void setChained(bool c)
+		{chained=c;}
 	
 		bool getgoToDSP();
 
@@ -95,6 +101,7 @@ namespace flopoco {
 		int signalLength;
 		int weight;
 		int weightShift;
+		bool chained;
 		string inputname1, inputname2;
 	};
 

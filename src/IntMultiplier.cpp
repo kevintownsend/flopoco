@@ -722,7 +722,7 @@ namespace flopoco {
 			for(int j=0;j<verDSP;j++)
 				{
 				
-				    bitHeap->addDSP(new MultiplierBlock(parentOp,wxDSP,wyDSP,wX-(i+1)*wxDSP, wY-((j+1)*wyDSP),true,weightShift));
+				    bitHeap->addDSP(new MultiplierBlock(wxDSP,wyDSP,wX-(i+1)*wxDSP, wY-((j+1)*wyDSP),true,weightShift));
 					
 					//***** this part is needed only for the plotting ********
 					DSP* dsp = new DSP();
@@ -738,29 +738,34 @@ namespace flopoco {
 	}
 
 
-
+    /** builds the tiles and the logic too*/
 	/**************************************************************************/
 	void IntMultiplier::buildHeapTiling() {
 		
 		//the DSPs should be arranged horizontally or vertically?
+		
+		//number of horizontal/vertical DSPs used if the tiling is horrizontally
 		int horDSP1=wX/wxDSP;
 		int verDSP1=wY/wyDSP;
+
+		//number of horizontal/vertical DSPs used if the tiling is vertically
 	    int horDSP2=wX/wyDSP;
 		int verDSP2=wY/wxDSP;
+
+		//the size of the zone filled by DSPs
 		int hor=horDSP1*verDSP1;
 		int ver=horDSP2*verDSP2;
 
 		int horDSP;
 		int verDSP;
-        int restX; //the number of lsbs of the first input which 
-		int restY;
+        int restX; //the number of lsbs of the first input which remains after filling with DSP-s
+		int restY; //the number of lsbs of the second input which remains after filling with DSP-s
 
 		if (hor>=ver)
 			{	REPORT(DEBUG, "horizontal");
 				horDSP=horDSP1;
 				verDSP=verDSP1;
 				restX=wX-horDSP*wxDSP;
-
 				restY=wY-verDSP*wyDSP;
 				//splitting horizontal
 				splitting(horDSP,verDSP,wxDSP,wyDSP,restX,restY);
@@ -776,6 +781,7 @@ namespace flopoco {
 			}
 
 		
+		//if logic part is needed too
 		if((restX!=0 ) || (restY!=0))
 			{
 
@@ -808,7 +814,7 @@ namespace flopoco {
 	}
 
 
-
+	//signal name construction
 
 		string IntMultiplier::PP(int i, int j, int uid ) {
 		std::ostringstream p;		

@@ -101,10 +101,10 @@ namespace flopoco{
 
 
 
-
+        /** i don't think it will be used anymore here...
 		void MultiplierBlock::generateVHDLforDSP(int nr,int i)
 		{
-			REPORT(DETAILED,"dsp");
+		//	REPORT(DETAILED,"dsp");
 			
 			stringstream s;
 			int topX=gettopX();
@@ -112,16 +112,16 @@ namespace flopoco{
 			int botX=topX+getwX()-1;
 			int botY=topY+getwY()-1;
 		
-			op->vhdl << tab << op->declare(join("DSP",i,"_",nr), getwX()+getwY()) << " <= XX"<<range(botX,topX)<<" * YY"
-			<<range	(botY,topY)<<";"<<endl;
+			//op->vhdl << tab << op->declare(join("DSP",i,"_",nr), getwX()+getwY()) << " <= XX"<<range(botX,topX)<<" * YY"
+			//<<range	(botY,topY)<<";"<<endl;
 
 			s<<join("DSP",i,"_",nr);
 			
 			setSignalName(s.str());
 			setSignalLength(getwX()+getwY());
-			REPORT(DETAILED,"dspout");
+			//REPORT(DETAILED,"dspout");
 		}
-
+		*/
 
 	
 

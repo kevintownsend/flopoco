@@ -171,12 +171,26 @@ namespace flopoco
 			}	
 	}
 
-	
 	void  BitHeap::addDSP(MultiplierBlock* m)
 	{
 	mulBlocks.push_back(m);
 	}
 
+
+
+    void BitHeap::doChaining()
+	{
+		for(int i=0;i<mulBlocks.size();i++)
+			for(int j=i;j<mulBlocks.size();j++)
+			{
+				if(((mulBlocks[i]->getWeight()+17)==mulBlocks[j]->getWeight())&&(!mulBlocks[j]->getChained()))
+				{
+				mulBlocks[i]->setNext(mulBlocks[j]);
+				mulBlocks[j]->setChained(true);
+					
+				}	
+			}
+	}
 
 
 	void BitHeap::iterateDSP()
@@ -185,7 +199,7 @@ namespace flopoco
 		REPORT(DETAILED,"mulblock size "<< mulBlocks.size() );
 		for(int i=0; i<mulBlocks.size();i++)
 			{
-				mulBlocks[i]->generateVHDLforDSP(i,i);
+				generateVHDLforDSP(mulBlocks[i],i,i);
 				string outputSignalName=mulBlocks[i]->getSigName();
 				int outputSignalLength=mulBlocks[i]->getSigLength();
 				int w=mulBlocks[i]->getWeight();
@@ -248,6 +262,7 @@ namespace flopoco
 			}
 		}
 
+		//the cnt[w] should increase, because the bit introduced is smaller then the biggest bit which will be compressed in current iteration
 		if(count<cnt[w])
 			cnt[w]++;
 
@@ -359,16 +374,6 @@ namespace flopoco
 
 
 
-
-
-	string adderBitName(int c, int bit, int h) {
-		ostringstream p;
-		p  << "adderBit" << c << "_" << bit << "_" << h;
-		return p.str();
-	};
-
-
-
 	unsigned BitHeap::currentHeight(unsigned w) {
 		int h=0;
 		list<WeightedBit*>& l = bits[w];
@@ -377,6 +382,7 @@ namespace flopoco
 	}
 	
 
+    //c - the current column, red- number of bits to be reduced
 	void BitHeap::removeCompressedBits(int c, int red)
 	{
 		while(red>0)
@@ -456,6 +462,7 @@ namespace flopoco
 
         int offsetY=0;
 
+		//compressing until the maximum height of the columns is 2
 		while (getMaxHeight()>2)
 			{
                 offsetY += 20 + getMaxHeight()*10;
@@ -472,8 +479,7 @@ namespace flopoco
 			}	
 
        
-		REPORT(DEBUG, "usedcompr");
-		REPORT(DEBUG, "before getOpList");
+		//checking the used compressors 
 		for(int i=0;i<10;i++)
 			{
 				if (usedCompressors[i]==true)
@@ -482,18 +488,19 @@ namespace flopoco
 					}
 			}
 	    
-		REPORT(DEBUG, "before adder");
-		REPORT(DEBUG, "Before Adder");
+		
         offsetY += 20 + getMaxHeight() * 10;
         drawConfiguration(offsetY);
         closeDrawing(offsetY);
+		
+		//final addition
 		adderVHDL();
-		REPORT(DEBUG, "after adder");
+		
 	}
 	
 
 
-
+	//returns a pointer to the bit which has the biggest crithicalPath+cycle comibnation
 	BitHeap::WeightedBit* BitHeap::getFinalLatestBit()
 	{
 	
@@ -531,6 +538,9 @@ namespace flopoco
 		return b;
 	}
 
+
+
+	//the final additon
 	void BitHeap::adderVHDL()
 	{
 
@@ -539,6 +549,7 @@ namespace flopoco
 
 		unsigned i=maxWeight-1;
 	
+		//forming the input signals for the first and second line
 		while((i>=minWeight)&&(i<maxWeight))
 			{
 				REPORT(DEBUG,"i=   "<<i);
@@ -581,7 +592,7 @@ namespace flopoco
 		inAdder1 << ";";
 		
 		WeightedBit* b = getFinalLatestBit();
-		
+		//managing the pipeline
 		if(b)
 		{
 			op->setCycle(  b ->getCycle()  );
@@ -595,20 +606,13 @@ namespace flopoco
 
 		op->vhdl << tab << op->declare("inAdder0", maxWeight-minWeight) << "<= " << inAdder0.str() << endl;
 		op->vhdl << tab << op->declare("inAdder1", maxWeight-minWeight) << " <= " << inAdder1.str() << endl;
-
 		op->vhdl << tab << op->declare("outAdder", maxWeight-minWeight+1) << " <= ('0' & inAdder0) + ('0' & inAdder1);" << endl;
-
-
-
-
-
 		op->vhdl << tab << "-- concatenate all the compressed chunks" << endl;
-
-
+		//result		
 		op->vhdl << tab << op->declare("CompressionResult", (maxWeight+1)) << " <= outAdder ";
 
 
-
+		//adding the rightmost bits
 		for(int i=chunkDoneIndex-1; i>=0; i--)
 			op->vhdl <<  " & " << join("tempR", i);
 
@@ -621,7 +625,7 @@ namespace flopoco
 	}
 
 
-
+	//the compression
 	void BitHeap::compress()
 	{
 		Target* target=op->getTarget();
@@ -733,7 +737,7 @@ namespace flopoco
 					}
 
 				++j;
-
+				//search for the next best compressor which fits the remaining bits
 				while(   (j < possibleCompressors.size())   &&   ( cnt[i] > 2 )   )
 					{
 
@@ -891,6 +895,27 @@ namespace flopoco
 
         fileFig.close();
     }
+
+		void BitHeap::generateVHDLforDSP(MultiplierBlock* m, int uid,int i)
+		{
+			REPORT(DETAILED,"dsp");
+			
+			stringstream s;
+			int topX=m->gettopX();
+			int topY=m->gettopY();
+			int botX=topX+m->getwX()-1;
+			int botY=topY+m->getwY()-1;
+		
+			op->vhdl << tab << op->declare(join("DSP",i,"_",uid), m->getwX()+m->getwY()) << " <= XX"<<range(botX,topX)<<" * YY"
+			<<range	(botY,topY)<<";"<<endl;
+
+			s<<join("DSP",i,"_",uid);
+			
+			m->setSignalName(s.str());
+			m->setSignalLength(m->getwX()+m->getwY());
+			REPORT(DETAILED,"dspout");
+		}
+
 
 }
 

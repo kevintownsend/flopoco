@@ -77,22 +77,35 @@ class IntMultiplier : public Operator {
 
 protected:
 	
+	
 	string PP(int i, int j, int uid=-1);
 	string PPTbl( int i, int j, int uid=-1);
 	string XY(int i, int j, int uid=-1);
 	string heap( int i, int j);
 
 	void buildLogicOnly(int topX, int topY, int botX, int botY);
+
+	/**	builds the multiplier block with logic(smallMultTables) 
+		*@param uid is just a number which helps to form the signal names (for multiple calling of the method
+)	*/
 	void buildHeapLogicOnly(MultiplierBlock* mul,int uid);
+
 	void buildTiling();
 
 	void manageSignBeforeMult();            /*< to be called before buildHeap* **/
+
+	
+	/**	builds the logic block ( smallMultTables) 
+		*@param topX, topY -top right coordinates 
+		*@param botX, botY -bottom left coordinates 
+		*@param uid is just a number which helps to form the signal names (for multiple calling of the method
+)	*/
 	void buildHeapLogicOnly(int topX, int topY, int botX, int botY,int uid=-1);
 	void buildHeapTiling();
 	void manageSignAfterMult();            /*< to be called after either buildHeapLogicOnly or buildHeapTiling **/
 
 
-	/** splits the inputs in chunks which fits the DSP-s, and send them to the vector of MultiplierBlocks**/
+	/** splits the inputs in chunks which fits the DSP-s, and send them to the vector of MultiplierBlocks in Bitheap**/
 	void splitting(int horDSP, int verDSP, int wxDSP, int wyDSP,int restX,int restY);
 
 	void printConfiguration();

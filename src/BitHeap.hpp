@@ -119,11 +119,18 @@ namespace flopoco{
 		 @param rhs      the right-hand VHDL side defining this bit.
 		 @param comment  a VHDL comment for this bit*/
 		void addBit(unsigned weight, string rhs, string comment="");
+
+		//adds a new MultiplierBlock in the list he already has
 		void  addDSP(MultiplierBlock* m);
+
+		
         void elemReduce(unsigned i, BasicCompressor* bc);
 		void iterateDSP();
+
+		//** computes the latest bit from a column, in order to compress just the bits which are smaller than that one*/
         BitHeap::WeightedBit* computeLatest(unsigned w, int c0, int c1);
         
+		//** computes the latest bit from the bitheap, in order to manage the cycle before the final adding*/
         BitHeap::WeightedBit* getFinalLatestBit();
 
         
@@ -143,6 +150,8 @@ namespace flopoco{
         /** generate the final adder for the bit heap (when the columns height is maximum 2*/
         void adderVHDL();
 
+		/** search for the possible chainings and generates the VHDL code too*/
+		 void doChaining();
 
         /**is making the compression for the bitheap**/
 		void compress();
@@ -167,9 +176,10 @@ namespace flopoco{
 
 		void getMaxWeight();
 
- 		string getResultVHDLName();
+		//generate the VHDL code for 1 dsp, 
+		void generateVHDLforDSP(MultiplierBlock* m, int uid,int i);
 
-        void initializeDrawing();
+ 		void initializeDrawing();
 
         void closeDrawing(int offsetY);
 
@@ -181,12 +191,12 @@ namespace flopoco{
 		Operator* op;
 		unsigned maxWeight;     /**< The compressor tree will produce a result for weights < maxWeight (work modulo 2^maxWeight)*/
 		unsigned minWeight; /**< bits smaller than this one are already compressed */    
-		bool usedCompressors[10];
-		unsigned chunkDoneIndex;
-		unsigned inConcatIndex;
-		unsigned outConcatIndex;
-		unsigned compressorIndex;
-        unsigned cnt[100000];
+		bool usedCompressors[10]; /** the list of compressors which were used at least once*/
+		unsigned chunkDoneIndex; 
+		unsigned inConcatIndex; /** input index - to form the inputsignals of the compressor*/
+		unsigned outConcatIndex; /** output index - to form the outputsignals of the compressor*/
+		unsigned compressorIndex; /** the index of the instance of compressors*/
+        unsigned cnt[100000]; /** number of bits which will be compressed in the current iteration*/
 		vector<int> uid;   /**< unique id, per weight */
      	ofstream fileFig;
         ostringstream fig;
@@ -198,6 +208,7 @@ namespace flopoco{
 		vector<vector<double> > cpd;  /**< external index is the weight (column). The double is the critical path delay of each bit */
 		string bit( int w, int h); /**< just provide the name of the bit of weight w and height h*/
 #else
+		
 		vector<list<WeightedBit*> > bits; /**<  The list is ordered by arrival time of the bits, i.e. lexicographic order on (cycle, cp)*/
 		vector<MultiplierBlock*> mulBlocks; //the vector of multiplier blocks
 #endif
