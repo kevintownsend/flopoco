@@ -138,25 +138,33 @@ namespace flopoco{
       }
       else
       {
-#if 0
+         vhdl << tab << declare("fA2a",wFO+1) <<  "<= '0' & fA1" << range(wFO0+wFI+LSB, wFI+1+LSB)<< ";"<<endl;
          IntAdder* MantSum;
          manageCriticalPath(target->localWireDelay() + target->lutDelay());
-         vhdl << tab << declare("round") << " <= fA1(1) and (fA1(2) or fA1(0));"<<endl;
-
-         vhdl << tab << declare("fA2a",wFO+1) <<  "<= " << rangeAssign(wFO-wFO0,0,"'0'") << " & fA1" << range(wFO0+1, 2)<< ";"<<endl;
-         vhdl << tab << declare("fA2b",wFO+1) <<  "<= " << rangeAssign(wFO,1,"'0'") << " & round;"<<endl;
+         vhdl << tab << declare("allzero") << " <= '0' when fA1" << range(wFI+LSB-1, 0) << " = " << rangeAssign(wFI+LSB-1, 0,"'0'") << " else '1';"<<endl;
+         vhdl << tab << declare("round") << " <= fA1" << of(wFI+LSB) << " and allzero ;"<<endl;
+         vhdl << tab << declare("fA2b",wFO+1) <<  "<= '0' & " << rangeAssign(wFO-1,1,"'0'") << " & round;"<<endl;
          MantSum = new IntAdder(target, wFO+1);
          MantSum->changeName(getName()+"MantSum");
          oplist.push_back(MantSum);
          inPortMap  (MantSum, "X", "fA2a");
          inPortMap  (MantSum, "Y", "fA2b");
          inPortMapCst(MantSum, "Cin", "'0'");
-         outPortMap (MantSum, "R","fA4");
+         outPortMap (MantSum, "R","fA3");
          vhdl << instance(MantSum, "MantSum");
-
-         setCycleFromSignal("fA4");
+         setCycleFromSignal("fA3");
          setCriticalPath(MantSum->getOutputDelay("R"));
-#endif
+         if(Signed == 0)
+         {
+            vhdl << tab << declare("fA4",wFO) <<  "<= fA3" << range(wFO-1, 0)<< ";"<<endl;
+         }
+         else
+         {
+            manageCriticalPath(target->localWireDelay() + target->adderDelay(wFO+1));
+            vhdl << tab << declare("fA3b",wFO+1) <<  "<= -signed(fA3);" <<endl;
+            manageCriticalPath(target->localWireDelay() + target->lutDelay());
+            vhdl << tab << declare("fA4",wFO) <<  "<= fA3" << range(wFO-1, 0) << " when I" << of(wEI+wFI) <<" = '0' else fA3b" << range(wFO-1, 0) << ";" <<endl;
+         }
       }
       if (eMax > MSB)
       {
@@ -167,12 +175,19 @@ namespace flopoco{
          vhdl << tab << declare("overFl0") << "<= I" << of(wEI+wFI+2)<<";"<<endl;
       }
       
-      if(Signed == 0)
-         vhdl << tab << declare("overFl1") << " <= fA1" << of(wFO0+wFI+1+LSB) << ";"<<endl;
+      if(trunc_p)
+      {
+         if(Signed == 0)
+            vhdl << tab << declare("overFl1") << " <= fA1" << of(wFO0+wFI+1+LSB) << ";"<<endl;
+         else
+         {
+            manageCriticalPath(target->localWireDelay() + target->lutDelay());
+            vhdl << tab << declare("overFl1") << " <= fA4" << of(wFO-1) << " xor I" << of(wEI+wFI) << ";"<<endl;
+         }
+      }
       else
       {
-         manageCriticalPath(target->localWireDelay() + target->lutDelay());
-         vhdl << tab << declare("overFl1") << " <= fA4" << of(wFO-1) << " xor I" << of(wEI+wFI) << ";"<<endl;
+         vhdl << tab << declare("overFl1") << " <= fA3" << of(wFO) << ";"<<endl;
       }
 
       manageCriticalPath(target->localWireDelay() + target->lutDelay());
