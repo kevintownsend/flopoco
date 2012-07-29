@@ -28,7 +28,7 @@ Welcome to new developers!
 
 The purpose of this document is to help you use FloPoCo in your own
 project (section~\ref{sec:linking}), and to show you how to design your own pipelined operator
-using the FloPoCo framework (section~\ref{sec:pipeline-made-easy}). 
+using the FloPoCo framework (sections~\ref{sec:pipeline-made-easy} and \ref{sec:test-bench-gener}). 
 
  \section{Getting started with FloPoCo\label{sec:getting-started}}
 
@@ -460,45 +460,93 @@ For more information, check FPExp for example, and
 don't hesitate to contact us.
 
 
-\section{Test bench generation}
+\section{Test bench generation}\label{sec:test-bench-gener}
 
-\subsection{Operator emulation}
-
-\texttt{Operator} provides one more virtual method, \texttt{emulate},
+\subsection{Overview}
+\texttt{\small Operator} provides one more virtual method, \texttt{\small emulate},
 to be overloaded by each Operator. As the name indicates, this method
 provides a bit-accurate simulation of the operator.
  
 Once this method is available, the command\\
- \texttt{flopoco FPAdder 8 23 TestBench 500} \\
-produces a test bench of 500 test vectors to exercise \texttt{FPAdder}. 
+ \texttt{flopoco FPAdder 8 23 TestBenchFile 500} \\
+produces a test bench of 500 test vectors to exercise \texttt{\small FPAdder}. 
 
-It is useful to consider \texttt{emulate()} as the specification of
+This test bench is properly synchronized in case of a combinatorial
+operator. This is managed by the \texttt{\small TestBenchFile} operator:
+\texttt{\small emulate()} only has to specify the mathematical
+(combinatorial) functionality of the operator.
+
+The \texttt{\small emulate()} method should be considered  the specification of
 the behaviour of the operator. Therefore, as any instructor will tell
 you, it should be written \emph{before} the code generating the VHDL
 of the operator!
 
+\subsubsection{TestBench and TestBenchFile}
+The \texttt{\small TestBenchFile} operator stores the generated test vectors in the text file \texttt{\small test.input}.
+There is another test-bench operator, \texttt{\small TestBench}, which stores the test vectors directly in the VHDL. In early debugging this may be more helpful, as this VHDL may include comments (see below). However compiling the VHDL test bench will take much more time than the simulation itself, so \texttt{\small TestBench} doesn't scale beyond a few thousand vectors. Compiling a \texttt{\small TestBenchFile} is in constant time.
 
+
+
+
+\subsection{\texttt{emulate()}  internals}
+The simplest example of \texttt{\small emulate()} is that of \texttt{\small src/IntAdder.cpp}, copied below.
+\begin{verbatim}
+	void IntAdder::emulate ( TestCase* tc ) {
+		// get the inputs from the TestCase
+		mpz_class svX = tc->getInputValue ( "X" );
+		mpz_class svY = tc->getInputValue ( "Y" );
+		mpz_class svC = tc->getInputValue ( "Cin" );
+		
+		// compute the multiple-precision output
+		mpz_class svR = svX + svY + svC;
+		// Don't allow overflow: the output is modulo 2^wIn
+		svR = svR & ((mpz_class(1)<<wIn_)-1);
+		
+		// complete the TestCase with this expected output
+		tc->addExpectedOutput ( "R", svR );
+	}
+\end{verbatim}
+
+\texttt{\small emulate()} has a single argument which is a
+\texttt{\small TestCase}. This is a data-structure associating inputs to
+outputs. Upon entering \texttt{\small emulate()}, the input part is filled
+(probably by \texttt{\small TestBench} or \texttt{\small TestBenchFile}), and the
+purpose of \texttt{\small emulate()} is to fill the output part.
+
+An input/output is a map of the name (which should match those defined by \texttt{\small addInput} etc.) and a \texttt{\small mpz\_class}. This class is a very convenient C++ wrapper over the GMP multiple-precision library, which can almost be used as an \texttt{\small int}, without any overflow issue. When the input/outputs are integers, this is a perfect match.
+
+When the input/outputs are floating-point numbers, the most convenient multiple-precision library is MPFR. However the I/Os  are nevertheless encoded as \texttt{\small mpz\_class}. The \texttt{\small emulate()} method therefore typically must
+\begin{itemize}
+\item convert the \texttt{\small mpz\_class} inputs to arbitrary precision floating-point numbers in the MPFR format -- this is done with the help of the \texttt{\small FPNumber} class;
+\item compute the expected results, using functions from the MPFR library;
+\item convert the resulting MPFR number into its bit vector, encoded in an \texttt{\small mpz\_class}, before completing the \texttt{\small TestCase}. 
+\end{itemize}
+This double conversion is a bit cumbersome, but may be copy-pasted from one existing operator: Imitate \texttt{\small FPAdderSinglePath} or \texttt{\small FPExp}.
+
+
+\subsubsection{Fully and weakly specified operators}
  Most operators should be fully specified: for a given input
-  vector, they must output a uniquely defined vector. Imitate
-  \texttt{IntAdder} for an integer operator. For floating-point
+  vector, they must output a uniquely defined vector. This is the case of 
+  \texttt{\small IntAdder} above. For floating-point
   operators, this unique output is the combination of a mathematical
   function and a well-defined rounding mode. The bit-exact MPFR
-  library is used in this case. Imitate \texttt{FPAdderSinglePath} in this case.
+  library is used in this case. Imitate \texttt{\small FPAdderSinglePath} in this case.
 
  Other operators are not defined so strictly, and may have
-  several acceptable output values. The last parameter of \texttt{addOutput}
+  several acceptable output values. The last parameter of \texttt{\small addOutput}
   defines how many values this output may take. An acceptable
   requirement in floating-point is \emph{faithful rounding}: the
   operator should return one of the two FP values surrounding the
   exact result. These values may be obtained thanks to the
   \emph{rounding up} and \emph{rounding down} modes supported by
-  MPFR. See \texttt{FPLog} for a simple example, and
-  \texttt{Collision} for a more complex example (computing the two
+  MPFR. See \texttt{\small FPExp} or \texttt{\small FPLog} for a simple example, and
+  \texttt{\small Collision} for a more complex example (computing the two
   faithful values for $x^2+y^2+z^2$).
+
 
 \subsection{Operator-specific test  vector generation}
 Overloading \texttt{\small emulate()} is enough for FloPoCo to be able
-to create a generic test bench using random inputs. However, it is
+to create a generic test bench using random inputs. The default random generator is uniform over the input bit vectors. It is
 often possible to perform better, more operator-specific test-case
 generation. Let us just take two examples.
 
@@ -508,21 +556,31 @@ generation. Let us just take two examples.
   $-746$. In other terms, the most interesting test domain for this
   function is when the input exponent is between $-10$ and $10$, a
   fraction of the full double-precision exponent domain ($-1024$ to
-  $1023$). Generating random 64-bit integers and using them as
+  $1023$). Generating uniform random 64-bit integers and using them as
   floating-point inputs would mean testing mostly the
   overflow/underflow logic, which is a tiny part of the operator.
 
 
-\item In a floating-point adder, if the difference between the exponents
-  of the two operands is large, the adder will simply return the
-  biggest of the two, and again this is the most probable situation
-  when taking two random operands. Here it is better to generate
-  random cases where the two operands have close exponents.
+\item In a floating-point adder, if the difference between the
+  exponents of the two operands is large, the adder will simply return
+  the biggest of the two, and again this is the most probable
+  situation when taking two random operands. Here it is better to
+  generate random cases where the two operands have close
+  exponents. Besides, a big part of the adder architecture is
+  dedicated to the case when both exponents differ only by 1, and
+  random tests should be focused on this situation.
 \end{itemize}
   Such cases are managed by overloading the Operator method
-  \texttt{\small buildRandomTestCases()}. Finally,
-  \texttt{\small buildStandardTestCases()} allows to test corner cases which
-  random testing has little chance to find. See \texttt{FPAdder.cpp} for examples.
+  \texttt{\small buildRandomTestCases()}. 
+
+\subsection{Corner-cases and regression tests}
+Finally, \texttt{\small buildStandardTestCases()} allows to test
+corner cases which random testing has little chance to find. See
+\texttt{\small FPAdderSinglePath.cpp} for examples. 
+
+Here, it is often useful to add
+a comment to a test case using \texttt{\small addComment}: these comments
+will show up in the VHDL generated by \texttt{\small TestBench}.
 
 
 \end{document}
