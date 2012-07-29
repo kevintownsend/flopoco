@@ -67,7 +67,7 @@ class IntMultiplier : public Operator {
 
     /**
     * The emulate function.
-    * @param[in] tc               a list of test-cases
+    * @param[in] tc               a test-case
     */
     void emulate ( TestCase* tc );
 
@@ -83,16 +83,18 @@ protected:
 	string XY(int i, int j, int uid=-1);
 	string heap( int i, int j);
 
-	void buildLogicOnly(int topX, int topY, int botX, int botY);
+	void buildLogicOnly();
+	void buildTiling();
+
+	void manageSignBeforeMult();            /**< to be called before either buildHeapLogicOnly or buildHeapTiling **/
+	void manageSignAfterMult();            /**< to be called after either buildHeapLogicOnly or buildHeapTiling **/
+
 
 	/**	builds the multiplier block with logic(smallMultTables) 
 		*@param uid is just a number which helps to form the signal names (for multiple calling of the method
 )	*/
-	void buildHeapLogicOnly(MultiplierBlock* mul,int uid);
-
-	void buildTiling();
-
-	void manageSignBeforeMult();            /*< to be called before buildHeap* **/
+	// commented by F2D. Is it used?
+	//	void buildHeapLogicOnly(MultiplierBlock* mul,int uid);
 
 	
 	/**	builds the logic block ( smallMultTables) 
@@ -100,21 +102,24 @@ protected:
 		*@param botX, botY -bottom left coordinates 
 		*@param uid is just a number which helps to form the signal names (for multiple calling of the method
 )	*/
-	void buildHeapLogicOnly(int topX, int topY, int botX, int botY,int uid=-1);
+	void buildHeapLogicOnly(int topX, int topY, int botX, int botY, int uid=-1);
 	void buildHeapTiling();
-	void manageSignAfterMult();            /*< to be called after either buildHeapLogicOnly or buildHeapTiling **/
 
 
 	/** splits the inputs in chunks which fits the DSP-s, and send them to the vector of MultiplierBlocks in Bitheap**/
 	void splitting(int horDSP, int verDSP, int wxDSP, int wyDSP,int restX,int restY);
 
+
+	/* Stuff related to SVG output */
+
 	void printConfiguration();
-    void printAreaView();
-    void printLozengeView();
-    void drawLine(int wX, int wY, int wRez, int offsetX, int offsetY, int scalingFactor, bool isRectangle);
+	void printAreaView();
+	void printLozengeView();
+	void drawLine(int wX, int wY, int wRez, int offsetX, int offsetY, int scalingFactor, bool isRectangle);
 	void drawDSP(int i, int xT, int yT, int xB, int yB, int offsetX, int offsetY, int scalingFactor,  bool isRectangle);
-	void drawDSPinclined(int i, int xT, int yT, int xB, int yB,  int offsetX, int offsetY, int turnaroundX, double inclinedCoeffB, double inclinedCoeffT);
-    void drawTargetFigure(int wX, int wY, int offsetX, int offsetY, int scalingFactor, bool isRectangle);
+	// commented out by F2D. Is it used?
+	//	void drawDSPinclined(int i, int xT, int yT, int xB, int yB,  int offsetX, int offsetY, int turnaroundX, double inclinedCoeffB, double inclinedCoeffT);
+	void drawTargetFigure(int wX, int wY, int offsetX, int offsetY, int scalingFactor, bool isRectangle);
 
 
 	int wxDSP, wyDSP;               /**< the width for X/Y in DSP*/

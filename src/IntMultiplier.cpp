@@ -221,7 +221,7 @@ namespace flopoco {
 
 
 
-
+	// The classical constructor
 	IntMultiplier::IntMultiplier (Target* target, int wX_, int wY_, int wOut_, bool signedIO_, float ratio_,  map<string, double> inputDelays_):
 		Operator ( target, inputDelays_ ), wXdecl(wX_), wYdecl(wY_), wOut(wOut_), signedIO(signedIO_), ratio(ratio_), maxError(0.0) {
 		srcFileName="IntMultiplier";
@@ -405,7 +405,7 @@ namespace flopoco {
 				else {
 					// For this target and this size, better do a logic-only implementation
 				
-					buildLogicOnly(0,0,wX,wY);
+					buildLogicOnly();
 				}
 			}
 			else {
@@ -417,7 +417,7 @@ namespace flopoco {
 
 		else {// This target has no DSP, going for a logic-only implementation
 	
-			buildLogicOnly(0,0,wX,wY);
+			buildLogicOnly();
 		}
 		
 		
@@ -431,10 +431,10 @@ namespace flopoco {
 
 
 	/**************************************************************************/
-	void IntMultiplier::buildLogicOnly(int topX, int topY, int botX, int botY) {
+	void IntMultiplier::buildLogicOnly() {
 
 		manageSignBeforeMult();
-		buildHeapLogicOnly(topX,topY,botX,botY);
+		buildHeapLogicOnly(0,0,wX,wY);
 		//adding the round bit
 			if(g>0) {
 				int weight=wFull-wOut-1- weightShift;
