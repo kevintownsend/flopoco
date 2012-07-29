@@ -19,6 +19,7 @@ using namespace flopoco;
 
 
 #define SUBCYCLEPIPELINING 0
+#define USEBITHEAP 1
 
 FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 {
@@ -37,6 +38,8 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	// declaring outputs
 	addOutput("S", w+1);
 	addOutput("C", w+1);
+
+	/*********************************** RANGE REDUCTION **************************************/
 
 	// the argument is reduced into (0,1/4) because one sin/cos
 	// computation in this range can always compute the right sin/cos
@@ -103,6 +106,11 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	int wA = (int) ceil ((double) (w+g+2)/4.) - 2;
 	if (wA <= 3)
 		wA = 3;
+
+
+
+	/*********************************** THE TABLES **************************************/
+
 	// upper log2 of memory width needed for table
 	int wg_log2 = (int) ceil ((double) log2 (w+g));
 	int bram_words = target->sizeOfMemoryBlock() / (1u << wg_log2);
@@ -150,6 +158,10 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	vhdl << instance (cos_table, "cos_table");
 
 	// the results have precision w+g
+
+
+	/*********************************** THE MULTIPLIER BY PI **************************************/
+
 	// now, evaluate Sin Y_red and 1 - Cos Y_red
 	// vhdl:cmul[pi] (Y_red -> Z)
 	map<string, double> pi_mult_inputDelays;
@@ -189,6 +201,9 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 #endif
 
 
+	/*********************************** THE SQUARER **************************************/
+
+
 	map<string, double> sqr_z_inputDelays;
 #if SUBCYCLEPIPELINING
 	sqr_z_inputDelays["X"] = pi_mult->getOutputDelay("R");
@@ -222,6 +237,10 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	inPortMap (sqr_z, "X", "Z_truncToZ2");
 	outPortMap (sqr_z, "R", "Z2o2");
 	vhdl << instance (sqr_z, "sqr_z");
+
+
+	/*********************************** THE CUBING UNIT **************************************/
+
 
 	// remember the cycle and the critical path here, because we'll get back in time here
 	map<string, double> Z3_inputDelays;
@@ -316,6 +335,10 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	}
 #endif
 
+
+	/*********************************** Z-Z3o6 **************************************/
+
+
 #if SUBCYCLEPIPELINING
 #else
 		nextCycle();
@@ -333,6 +356,11 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	// and now, evaluate Sin Y_in and Cos Y_in
 	// Cos Y_in:
 	// vhdl:slr (Z2o2 -> Z2o2)
+
+
+
+	/*********************************** Reconstruction of Sine **************************************/
+
 	// First get back to the cycle of Z2
 #if SUBCYCLEPIPELINING
 	setCycleFromSignal("Z2o2", getSignalDelay("Z2o2"));
@@ -395,6 +423,10 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	manageCriticalPath(target->localWireDelay() + target->adderDelay(w+g));
 	vhdl << tab << declare ("C_out_rnd_aux", w+g)
 	     << " <= CosZCosPiA_plus_rnd - SinZSinPiA;" << endl;
+
+
+
+	/*********************************** Reconstruction of Sine **************************************/
 
 	// Sin Y_in:
 
