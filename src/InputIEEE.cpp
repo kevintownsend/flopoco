@@ -76,6 +76,7 @@ namespace flopoco{
 		// This is reasonably cheap.
 
 		// analyze the input exponent
+		manageCriticalPath(target->localWireDelay() + target->lutDelay());
 		vhdl << tab << declare("expZero") << "  <= '1' when expX = " << rangeAssign(wEI-1,0, "'0'") << " else '0';" << endl;
 		vhdl << tab << declare("expInfty") << "  <= '1' when expX = " << rangeAssign(wEI-1,0, "'1'") << " else '0';" << endl;
 		vhdl << tab << declare("fracZero") << " <= '1' when fracX = " << rangeAssign(wFI-1,0, "'0'") << " else '0';" << endl;
@@ -85,12 +86,11 @@ namespace flopoco{
 			vhdl << tab << declare("reprSubNormal") << " <= fracX(" << wFI-1 << ");" << endl;
 			vhdl << tab << "-- since we have one more exponent value than IEEE (field 0...0, value emin-1)," << endl 
 				  << tab << "-- we can represent subnormal numbers whose mantissa field begins with a 1" << endl;
+		        manageCriticalPath(target->localWireDelay() + target->lutDelay());
 			vhdl << tab << declare("sfracX",wFI) << " <= fracX" << range(wFI-2,0) << " & '0' when (expZero='1' and reprSubNormal='1')    else fracX;" << endl;
 
-			nextCycle();
-
 			if(wFO>=wFI){
-				vhdl << tab << declare("fracR",wFO) << " <= " << use("sfracX");
+				vhdl << tab << declare("fracR",wFO) << " <= " << "sfracX";
 				if(wFO>wFI) // need to pad with 0s
 					vhdl << " & CONV_STD_LOGIC_VECTOR(0," << wFO-wFI <<");" << endl;
 				else 
@@ -105,16 +105,17 @@ namespace flopoco{
 				// need to define a sticky bit
 				vhdl << tab << declare("sticky") << " <= ";
 				if(wFI-wFO>1){
+				        manageCriticalPath(target->localWireDelay() + target->lutDelay());
 					vhdl<< " '0' when sfracX" << range(wFI-wFO-2, 0) <<" = CONV_STD_LOGIC_VECTOR(0," << wFI-wFO-2 <<")   else '1';"<<endl;
 				}
 				else {
 					vhdl << "'0';" << endl; 
 				} // end of sticky computation
+				manageCriticalPath(target->localWireDelay() + target->lutDelay());
 				vhdl << tab << declare("round") << " <= roundBit and (sticky or resultLSB);"<<endl;
 
-				nextCycle();
-
 				vhdl << tab << "-- The following addition will not overflow since FloPoCo format has one more exponent value" <<endl; 
+				manageCriticalPath(target->localWireDelay() + target->adderDelay(wEO+wFO));
 				vhdl << tab << declare("expfracR0", wEO+wFO) << " <= (expX & sfracX" << range(wFI-1, wFI-wFO) << ")  +  (CONV_STD_LOGIC_VECTOR(0," << wEO+wFO-1 <<") & round);"<<endl;
 				vhdl << tab << declare("fracR",wFO) << " <= expfracR0" << range(wFO-1, 0) << ";" << endl;
 				vhdl << tab << declare("expR",wEO) << " <= expfracR0" << range(wFO+wEO-1, wFO) << ";" << endl;
@@ -142,12 +143,13 @@ namespace flopoco{
 			// We have to compute ER = E_X - bias(wE_in) + bias(wE_R)
 			// Let us pack all the constants together
 			mpz_class expAddend = -biasI + eMaxO-1;
+			manageCriticalPath(target->localWireDelay() + target->adderDelay(wEO));
 			vhdl << tab << declare("expR",    wEO) << " <= "
 					 << "(" << rangeAssign(wEO-1, wEI, "'0'") << "  & expX) + "
 					 << "\"" << unsignedBinary(expAddend, wEO) << "\""
 					 << ";"<<endl;
 			if(wFO>=wFI){ // no rounding needed
-				vhdl << tab << declare("fracR",wFO) << " <= " << use("fracX");
+				vhdl << tab << declare("fracR",wFO) << " <= " << "fracX";
 				if(wFO>wFI) // need to pad with 0s
 					vhdl << " & CONV_STD_LOGIC_VECTOR(0," << wFO-wFI <<");" << endl;
 				else 
@@ -177,9 +179,11 @@ namespace flopoco{
 			int32_t eMaxO = (1<<(wEO-1)); // that's our maximal exponent, one more than IEEE's
 			overflowThreshold = eMaxO+biasI;
 			vhdl << tab << "-- min exponent value without underflow, biased with input bias: " << underflowThreshold << endl ;
+			manageCriticalPath(target->localWireDelay() + target->adderDelay(wEI+1));
 			vhdl << tab << declare("unSub",wEI+1) << " <= ('0' & expX) - CONV_STD_LOGIC_VECTOR(" << underflowThreshold << "," << wEI+1 <<");" << endl;
 			vhdl << tab << declare("underflow") << " <= unSub(" << wEI << ");" << endl;
 
+			manageCriticalPath(target->localWireDelay() + target->adderDelay(wEI+1));
 			vhdl << tab << "-- max exponent value without overflow, biased with input bias: " << overflowThreshold << endl ;
 			vhdl << tab << declare("ovSub",wEI+1) << " <= CONV_STD_LOGIC_VECTOR(" << overflowThreshold << "," << wEI+1 <<")  -  ('0' & expX);" << endl;
 			vhdl << tab << declare("overflow") << " <= ovSub(" << wEI << ");" << endl;
@@ -188,10 +192,11 @@ namespace flopoco{
 			// have to compute expR = ((expX-biasI) + biasO) (wEO-1 downto 0)
 			// but the wEO-1 LSB bits of both biases are identical, therefore simply copy 
 			// and the remaining MSB are 1 for input and 0 for output, therefore subtract the leading 1 by inverting it
+			manageCriticalPath(target->localWireDelay() + target->lutDelay());
 			vhdl << tab << declare("expXO", wEO) << " <= (not expX(" << wEO-1 << ")) & expX" << range(wEO-2, 0) << ";" << endl;
 
 			if(wFO>=wFI){ // no rounding needed
-				vhdl << tab << declare("fracR",wFO) << " <= " << use("fracX");
+				vhdl << tab << declare("fracR",wFO) << " <= " << "fracX";
 				if(wFO>wFI) // need to pad with 0s
 					vhdl << " & CONV_STD_LOGIC_VECTOR(0," << wFO-wFI <<");" << endl;
 				else 
@@ -201,21 +206,23 @@ namespace flopoco{
 			}
 			else { // wFI > wFO, wEI>wEO
 
-				nextCycle();
 				vhdl << tab << "-- wFO < wFI, need to round fraction" << endl;
 				vhdl << tab << declare("resultLSB") << " <= fracX("<< wFI-wFO <<");" << endl;
 				vhdl << tab << declare("roundBit") << " <= fracX("<< wFI-wFO-1 <<");" << endl;
 				// need to define a sticky bit
 				vhdl << tab << declare("sticky") << " <= ";
 				if(wFI-wFO>1)
+				{
+					manageCriticalPath(target->localWireDelay() + target->lutDelay());
 					vhdl<< " '0' when fracX" << range(wFI-wFO-2, 0) <<" = CONV_STD_LOGIC_VECTOR(0," << wFI-wFO-2 <<")   else '1';"<<endl;
+				}
 				else 
-					vhdl << "'0';" << endl; 
+					vhdl << "'0';" << endl;
+				manageCriticalPath(target->localWireDelay() + target->lutDelay());
 				vhdl << tab << declare("round") << " <= roundBit and (sticky or resultLSB);"<<endl;
 
-				nextCycle();
-
-				vhdl << tab << "-- The following addition may overflow" <<endl; 
+				vhdl << tab << "-- The following addition may overflow" <<endl;
+				manageCriticalPath(target->localWireDelay() + target->adderDelay(wEO+wFO+1));
 				vhdl << tab << declare("expfracR0", wEO+wFO+1) << " <= ('0' & expXO & fracX" << range(wFI-1, wFI-wFO) << ")  +  (CONV_STD_LOGIC_VECTOR(0," << wEO+wFO <<") & round);"<<endl;
 				vhdl << tab << declare("roundOverflow") << " <= expfracR0(" << wEO+wFO << ");" << endl;
 

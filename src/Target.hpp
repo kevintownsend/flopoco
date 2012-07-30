@@ -116,7 +116,7 @@ namespace flopoco{
 		virtual double ffDelay() =0;
 	
 		/** Function which returns the carry propagate delay
-		 * @return the carry propagate dealy
+		 * @return the carry propagate delay
 		 */
 		virtual double carryPropagateDelay() =0;
 
