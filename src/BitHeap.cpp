@@ -178,30 +178,101 @@ namespace flopoco
 
 	void  BitHeap::addDSP(MultiplierBlock* m)
 	{
-	mulBlocks.push_back(m);
-	}
+		//insert into good position, the vector of multiplierBlocks should be descending by weigth
+		REPORT(DETAILED,"new block added to vector. its' weight is" <<m->getWeight());
+		REPORT(DETAILED,"previous" <<m->getPrevious());
+		REPORT(DETAILED,"next" <<m->getNext());
+
+		unsigned i=0;
+		unsigned size=mulBlocks.size();
+		REPORT(DETAILED,"size "<<size<<" i "<<i);
+		while((i<size)&&(mulBlocks[i]>=m))
+		{	
+
+			REPORT(DETAILED,"size "<<size<<" i "<<i);
+			i++;
+		}
+		
+		mulBlocks.insert(mulBlocks.begin()+i,m);
+	
+     }
 
 
 
     void BitHeap::doChaining()
 	{
 		for(int i=0;i<mulBlocks.size();i++)
-			for(int j=i;j<mulBlocks.size();j++)
+			for(int j=0;j<mulBlocks.size();j++)
 			{
-				if(((mulBlocks[i]->getWeight()+17)==mulBlocks[j]->getWeight())&&(!mulBlocks[j]->getChained()))
+				if((mulBlocks[i]->getNext()==NULL) && (mulBlocks[j]->getPrevious()==NULL)&& (mulBlocks[i]->canBeChained(mulBlocks[j])))
 				{
-				mulBlocks[i]->setNext(mulBlocks[j]);
-				mulBlocks[j]->setChained(true);
-					
-				}	
+					mulBlocks[i]->setNext(mulBlocks[j]);
+					mulBlocks[j]->setPrevious(mulBlocks[i]);
+					REPORT(DETAILED, "BLOCK "<<i<< "chained with "<<j);	
+				}
 			}
 	}
 
 
 	void BitHeap::iterateDSP()
 	{
+	for(int i=0;i<mulBlocks.size();i++)
+		{	
+			REPORT(DETAILED,"mulblocksi->getprev=="<<mulBlocks[i]->getPrevious());
+			if(mulBlocks[i]->getPrevious()==NULL)
+			{
+			int uid=0;
+			MultiplierBlock* next;
+			MultiplierBlock* current=mulBlocks[i];
+			int newLength=0;
+			//the first element from the chain(the biggest weight
+			generateVHDLforDSP(current,uid,i);
+			//iterate on the chain
+				while(current->getNext()!=NULL)
+				{	uid++;
+					current=mulBlocks[i];
+					next=mulBlocks[i]->getNext();
+					//addition=previous<<17 +this in the next block's dsp
+					generateVHDLforDSP(next,uid,i);
 
-		REPORT(DETAILED,"mulblock size "<< mulBlocks.size() );
+					newLength=current->getSigLength()+17;
+
+					op->vhdl << tab <<	op->declare(join("DSPch",i,"_",uid),newLength)<< "<= ("<<current->getSigName()<<" & "<<
+										zg(17) << ") + "<< next->getSigName()<<";"<<endl;
+			
+					stringstream s;
+					s<<join("DSPch",i,"_",uid);
+					next->setSignalName(s.str());		
+					next->setSignalLength(newLength+1);
+					current=next;
+				}
+		
+				//WE NEED JUST TO ADD BITS TO THE HEAP
+			
+				string name=current->getSigName();
+				int length=current->getSigLength()-1;
+				REPORT(DETAILED,"curwe= "<<current->getWeight());
+				for(int k=length-1;k>=0;k--)
+				{
+				int weight=current->getWeight()+k;	
+				REPORT(DETAILED,"k= "<<k <<" weight= "<<weight);				
+				
+				if(weight>=0)
+					{	
+					stringstream s;
+					s<<name<<"("<<k<<")";
+					addBit(weight,s.str());
+					}
+
+				}
+
+
+				
+				}
+			}
+		}
+		/*
+		REPORT(DETAILED,"mulblock size "<< mulBlocks.size());
 		for(int i=0; i<mulBlocks.size();i++)
 			{
 				generateVHDLforDSP(mulBlocks[i],i,i);
@@ -225,11 +296,13 @@ namespace flopoco
 					}
 			}
 
+	}
+
 		////MODIFY this for the chaining!!!!
 
 
-	}
-
+	
+*/
 
 
 
@@ -978,15 +1051,23 @@ namespace flopoco
 		int botX=topX+m->getwX()-1;
 		int botY=topY+m->getwY()-1;
 		
-		op->vhdl << tab << op->declare(join("DSP",i,"_",uid), m->getwX()+m->getwY()) << " <= XX"<<range(botX,topX)<<" * YY"
-		<<range	(botY,topY)<<";"<<endl;
-		s<<join("DSP",i,"_",uid);
-		
-		m->setSignalName(s.str());
-		m->setSignalLength(m->getwX()+m->getwY());
-		REPORT(DETAILED,"dspout");
-	}
 
+			if(uid==0)	
+			op->vhdl << tab << op->declare(join("DSPch",i,"_",uid), m->getwX()+m->getwY()) << " <= XX"<<range(botX,topX)<<" * YY"
+			<<range	(botY,topY)<<";"<<endl;
+			else
+			op->vhdl << tab << op->declare(join("DSP",i,"_",uid), m->getwX()+m->getwY()) << " <= XX"<<range(botX,topX)<<" * YY"
+			<<range	(botY,topY)<<";"<<endl;
+
+			if(uid==0)
+				s<<join("DSPch",i,"_",uid);
+			else
+				s<<join("DSP",i,"_",uid);
+
+			m->setSignalName(s.str());
+			m->setSignalLength(m->getwX()+m->getwY());
+			REPORT(DETAILED,"dspout");
+		}
 
 }
 

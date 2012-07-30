@@ -24,13 +24,24 @@ using namespace std;
 namespace flopoco{
 
 
-		MultiplierBlock::MultiplierBlock(int wX, int wY, int topX, int topY, bool goToDSP_, int weightShift, int cycle, MultiplierBlock* previous, MultiplierBlock* next) :
-			wX(wX), wY(wY), topX(topX), topY(topY), goToDSP(goToDSP_)
+		MultiplierBlock::MultiplierBlock(int wX, int wY, int topX, int topY, bool goToDSP_, int weightShift_, int cycle, MultiplierBlock* previous, MultiplierBlock* next) :
+			wX(wX), wY(wY), topX(topX), topY(topY), goToDSP(goToDSP_), weightShift(weightShift_)
 		{
 			cycle=cycle;
 			weight=topX+topY-weightShift;
+			previous=NULL;
+			next=NULL;
+			
 			
 		}
+
+
+		bool MultiplierBlock::operator>= (MultiplierBlock* b){
+		if ((weight>=b->getWeight())) 
+			return true;
+		else
+			return false;
+	} 
 
 		void MultiplierBlock::setSignalName(string name)
 		{
@@ -72,6 +83,18 @@ namespace flopoco{
 			return topY;
 		}
 
+
+		int MultiplierBlock::getbotX()
+		{
+			return topX+wX;
+		}
+
+		int MultiplierBlock::getbotY()
+		{
+			return topY+wY;
+		}
+
+
 		int MultiplierBlock::getCycle()
 		{
 			return cycle;
@@ -86,7 +109,7 @@ namespace flopoco{
 		void MultiplierBlock::setNext(MultiplierBlock* b)
 		{
 			next=b;
-			b->previous=this;
+			//b->previous=this;
 		}
 
 		MultiplierBlock* MultiplierBlock::getNext()
@@ -94,11 +117,33 @@ namespace flopoco{
 			return next;
 		}
 
+		
+
 		MultiplierBlock* MultiplierBlock::getPrevious()
 		{
 			return previous;
 		}
 
+		void MultiplierBlock::setPrevious(MultiplierBlock* b)
+		{
+			previous=b;
+			//b->previous=this;
+		}
+
+
+
+		bool MultiplierBlock::canBeChained(MultiplierBlock* next)
+		{
+			//for now just the stupid chaining
+			if(	((this->topX==next->gettopX()) &&
+					(this->topY==next->gettopY()+17)) ||
+				((this->topY==next->gettopY()) &&
+					(this->topX==next->gettopX()+17)) )
+
+				return true;
+			else return false;
+
+		}
 
 
         /** i don't think it will be used anymore here...

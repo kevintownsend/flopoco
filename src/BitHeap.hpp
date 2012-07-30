@@ -154,6 +154,8 @@ namespace flopoco{
         /** generate the final adder for the bit heap (when the columns height is maximum 2*/
         void adderVHDL();
 
+		
+
 		/** search for the possible chainings and generates the VHDL code too*/
 		 void doChaining();
 

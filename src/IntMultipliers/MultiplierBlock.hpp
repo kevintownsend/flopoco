@@ -32,7 +32,7 @@ namespace flopoco {
 		/**
 		 * The default constructor
 		 */
-		MultiplierBlock(int wX, int wY, int topX, int topY, bool goToDSP = true, int weightShift = 0, int cycle = -1, MultiplierBlock* previous=NULL, MultiplierBlock* next=NULL);
+		MultiplierBlock(int wX, int wY, int topX, int topY, bool goToDSP = true, int weightShift = 0, int cycle = -1, MultiplierBlock* previous=0, MultiplierBlock* next=0);
 	
 		
 		/**
@@ -60,14 +60,14 @@ namespace flopoco {
 
 		int gettopY();
 
-		int getCycle();
+		int getbotX();
 		
-		bool getChained()
-		{return chained;}
+		int getbotY();
 
-		void setChained(bool c)
-		{chained=c;}
-	
+		int getCycle();
+
+		bool canBeChained(MultiplierBlock* next);
+
 		bool getgoToDSP();
 
 		MultiplierBlock* getNext();
@@ -75,6 +75,8 @@ namespace flopoco {
 		MultiplierBlock* getPrevious();
 
 		void setNext(MultiplierBlock* b);
+
+		void setPrevious(MultiplierBlock* b);
 		
 		string PP(int i, int j, int nr=-1);
 		string PPTbl( int i, int j, int nr=-1);
@@ -85,6 +87,8 @@ namespace flopoco {
 		void generateVHDLforLOGIC(int nr);
 		void generateVHDL(int nr, int i);
 	
+
+		bool operator>= (MultiplierBlock* b); 
 
 		
 	private:
@@ -101,7 +105,6 @@ namespace flopoco {
 		int signalLength;
 		int weight;
 		int weightShift;
-		bool chained;
 		string inputname1, inputname2;
 	};
 
