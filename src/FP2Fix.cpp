@@ -140,9 +140,18 @@ namespace flopoco{
       {
          vhdl << tab << declare("fA2a",wFO+1) <<  "<= '0' & fA1" << range(wFO0+wFI+LSB, wFI+1+LSB)<< ";"<<endl;
          IntAdder* MantSum;
-         manageCriticalPath(target->localWireDelay() + target->lutDelay());
-         vhdl << tab << declare("allzero") << " <= '0' when fA1" << range(wFI+LSB-1, 0) << " = " << rangeAssign(wFI+LSB-1, 0,"'0'") << " else '1';"<<endl;
-         vhdl << tab << declare("round") << " <= fA1" << of(wFI+LSB) << " and allzero ;"<<endl;
+         if(Signed == 0)
+         {
+            manageCriticalPath(target->localWireDelay() + target->lutDelay());
+            vhdl << tab << declare("notallzero") << " <= '0' when fA1" << range(wFI+LSB-1, 0) << " = " << rangeAssign(wFI+LSB-1, 0,"'0'") << " else '1';"<<endl;
+            vhdl << tab << declare("round") << " <= fA1" << of(wFI+LSB) << " and notallzero ;"<<endl;
+         }
+         else
+         {
+            manageCriticalPath(target->localWireDelay() + target->lutDelay());
+            vhdl << tab << declare("notallzero") << " <= '0' when fA1" << range(wFI+LSB-1, 0) << " = " << rangeAssign(wFI+LSB-1, 0,"'0'") << " else '1';"<<endl;
+            vhdl << tab << declare("round") << " <= (fA1" << of(wFI+LSB) << " and I" << of(wEI+wFI) << ") or (fA1" << of(wFI+LSB) << " and notallzero and not I" << of(wEI+wFI) << ");"<<endl;
+         }   
          vhdl << tab << declare("fA2b",wFO+1) <<  "<= '0' & " << rangeAssign(wFO-1,1,"'0'") << " & round;"<<endl;
          MantSum = new IntAdder(target, wFO+1);
          MantSum->changeName(getName()+"MantSum");
