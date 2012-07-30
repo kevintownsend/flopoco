@@ -74,6 +74,9 @@ namespace flopoco{
 			/** return the critical path of this bit */
 			double getCriticalPath(int atCycle);
 
+            /** returns the stage when this bit should be compressed */ 
+            int computeStage(int stagesPerCycle, double elementaryTime);
+
 
 			
 
@@ -133,7 +136,8 @@ namespace flopoco{
 		//** computes the latest bit from the bitheap, in order to manage the cycle before the final adding*/
         BitHeap::WeightedBit* getFinalLatestBit();
 
-        
+        BitHeap::WeightedBit* getFirstSoonestBit();
+
         /** remove a bit from the bitheap.
          @param weight  the weight of the bit to be removed
          @param dir if dir==0 the bit will be removed from the begining of the list 
@@ -154,7 +158,7 @@ namespace flopoco{
 		 void doChaining();
 
         /**is making the compression for the bitheap**/
-		void compress();
+		void compress(int stage);
 		
 		/** return the current height a column (bits not yet compressed) */
 		unsigned currentHeight(unsigned w);
@@ -201,7 +205,10 @@ namespace flopoco{
      	ofstream fileFig;
         ostringstream fig;
         bool drawCycleLine;
-        int drawCycleNumber;        
+        int drawCycleNumber;    
+        int stagesPerCycle;  
+        double elementaryTime; 
+        bool didCompress; 
 #if 0
 		const static int consumed=-1;
 		vector<vector<int> > cycle;   /**< external index is the weight (column). The int is the cycle of each bit. Consumed bits have their cycle set to -1 */
