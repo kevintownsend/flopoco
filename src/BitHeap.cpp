@@ -214,12 +214,12 @@ namespace flopoco
 			}
 	}
 
-
-	void BitHeap::iterateDSP()
+    void BitHeap::iterateDSP()
 	{
-	for(int i=0;i<mulBlocks.size();i++)
+	    for(int i=0;i<mulBlocks.size();i++)
 		{	
-			REPORT(DETAILED,"mulblocksi->getprev=="<<mulBlocks[i]->getPrevious());
+		
+        	REPORT(DETAILED,"mulblocksi->getprev=="<<mulBlocks[i]->getPrevious());
 			if(mulBlocks[i]->getPrevious()==NULL)
 			{
 			int uid=0;
@@ -269,9 +269,41 @@ namespace flopoco
 
 
 				
+				}
 			}
 		}
+		/*
+		REPORT(DETAILED,"mulblock size "<< mulBlocks.size());
+		for(int i=0; i<mulBlocks.size();i++)
+			{
+				generateVHDLforDSP(mulBlocks[i],i,i);
+				string outputSignalName=mulBlocks[i]->getSigName();
+				int outputSignalLength=mulBlocks[i]->getSigLength();
+				int w=mulBlocks[i]->getWeight();
+
+				REPORT(DETAILED,"outputsignal "<< outputSignalLength<<" w= "<<w);
+		
+				for(int j=outputSignalLength-1;j>=0;j--)
+					{
+						REPORT(DEBUG,"j= "<<j<<" i= "<<i); 
+						int weight=w+j;
+					//	REPORT(DEBUG,"j= "<<j<<" i= "<<i); 
+						if(weight>=0)
+						{
+							stringstream s;
+							s << outputSignalName <<"("<<j<<")";
+							addBit(weight,s.str());
+						}
+					}
+			}
+
 	}
+
+		////MODIFY this for the chaining!!!!
+
+
+	
+*/
 
 	void  BitHeap::addBit(unsigned w, string rhs, string comment)
 	{
@@ -520,7 +552,7 @@ namespace flopoco
 
 		//compressing until the maximum height of the columns is 3
         //FIXME change 2 to 3 in order to use extra additions 
-		while (getMaxHeight()>3)
+		while (getMaxHeight()>2)
 		{
                 
 			maxWeight=bits.size();
@@ -1142,7 +1174,7 @@ namespace flopoco
         fileFig.close();
     }
 
-	void BitHeap::generateVHDLforDSP(MultiplierBlock* m, int uid,int i)
+    void BitHeap::generateVHDLforDSP(MultiplierBlock* m, int uid,int i)
 	{
 		REPORT(DETAILED,"dsp");
 			
@@ -1151,24 +1183,30 @@ namespace flopoco
 		int topY=m->gettopY();
 		int botX=topX+m->getwX()-1;
 		int botY=topY+m->getwY()-1;
+		string input1=m->getInputName1();
+		string input2=m->getInputName2();
 		
-
+		//PIPELINE!!!!
+		op->manageCriticalPath( op->getTarget()->localWireDelay(m->getwY()+m->getwY()) + op->getTarget()->DSPMultiplierDelay() ) ;  
+		
 			if(uid==0)	
-			op->vhdl << tab << op->declare(join("DSPch",i,"_",uid), m->getwX()+m->getwY()) << " <= XX"<<range(botX,topX)<<" * YY"
-			<<range	(botY,topY)<<";"<<endl;
+			op->vhdl << tab << op->declare(join("DSPch",i,"_",uid), m->getwX()+m->getwY()) << " <="<< input1<<range(botX,topX)<<" *"\
+			<< input2 <<range	(botY,topY)<<";"<<endl;
 			else
-			op->vhdl << tab << op->declare(join("DSP",i,"_",uid), m->getwX()+m->getwY()) << " <= XX"<<range(botX,topX)<<" * YY"
-			<<range	(botY,topY)<<";"<<endl;
+			op->vhdl << tab << op->declare(join("DSP",i,"_",uid), m->getwX()+m->getwY()) << " <="<< input1<<range(botX,topX)<<" *"\
+			<< input2 <<range	(botY,topY)<<";"<<endl;
 
 			if(uid==0)
 				s<<join("DSPch",i,"_",uid);
 			else
-				s<<join("DSP",i,"_",uid);
+			
+	        s<<join("DSP",i,"_",uid);
 
 			m->setSignalName(s.str());
 			m->setSignalLength(m->getwX()+m->getwY());
 			REPORT(DETAILED,"dspout");
-		}
+	}
+
 
 }
 
