@@ -234,11 +234,11 @@ namespace flopoco
 					next=mulBlocks[i]->getNext();
 					//addition=previous<<17 +this in the next block's dsp
 					generateVHDLforDSP(next,uid,i);
-
+					REPORT(DETAILED,"lungime dsp cur"<<current->getSigLength());
 					newLength=current->getSigLength()+17;
 
-					op->vhdl << tab <<	op->declare(join("DSPch",i,"_",uid),newLength)<< "<= ("<<current->getSigName()<<" & "<<
-										zg(17) << ") + "<< next->getSigName()<<";"<<endl;
+					op->vhdl << tab <<	op->declare(join("DSPch",i,"_",uid),newLength+1)<< "<= ( '0' & "<<current->getSigName()<<" & "<<
+										zg(17) << ") + ("<< zg(18) <<" & "<< next->getSigName()<<" ) ;"<<endl;
 			
 					stringstream s;
 					s<<join("DSPch",i,"_",uid);
@@ -250,8 +250,8 @@ namespace flopoco
 				//WE NEED JUST TO ADD BITS TO THE HEAP
 			
 				string name=current->getSigName();
-				int length=current->getSigLength()-1;
-				REPORT(DETAILED,"curwe= "<<current->getWeight());
+				int length=current->getSigLength();
+				
 				for(int k=length-1;k>=0;k--)
 				{
 				int weight=current->getWeight()+k;	
