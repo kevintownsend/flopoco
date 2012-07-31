@@ -130,6 +130,12 @@ namespace flopoco{
         void elemReduce(unsigned i, BasicCompressor* bc);
 		void iterateDSP();
 
+        //applies a 3_2 compressor to the column sent as parameter
+        void applyCompressor3_2(int col);
+
+        //applies an adder with wIn = col1-col0+1; col0 always has size=3 and the other columns (includind col1) have size=2
+        void applyAdder(int col0, int col1);
+
 		//** computes the latest bit from a column, in order to compress just the bits which are smaller than that one*/
         BitHeap::WeightedBit* computeLatest(unsigned w, int c0, int c1);
         

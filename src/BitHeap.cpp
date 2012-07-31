@@ -555,19 +555,56 @@ namespace flopoco
         didCompress = true;
 
 		//compressing until the maximum height of the columns is 3
+        //FIXME change 2 to 3 in order to use extra additions 
 		while (getMaxHeight()>2)
-			{
+		{
                 
-				maxWeight=bits.size();
-                REPORT(DETAILED, "didCompress " << didCompress);
-                if(didCompress)
+			maxWeight=bits.size();
+            REPORT(DETAILED, "didCompress " << didCompress);
+            if(didCompress)
+            {
+                offsetY += 20 + getMaxHeight()*10;
+                drawConfiguration(offsetY);
+            }
+		    compress(stage);
+            stage++;
+	    }
+
+        //do additional compressions or additions
+        if (getMaxHeight()>2)
+        {
+            unsigned i = 0;
+            unsigned heapSize = bits.size();
+
+            //find the first column with 3 bits; the rest go to the final adder
+            while(bits[i].size()<3)
+            {
+                i++;
+            }
+
+            while(i<heapSize-1)
+            {
+
+                if ((bits[i].size()==3) && (bits[i+1].size()==3))
                 {
-                    offsetY += 20 + getMaxHeight()*10;
-                    drawConfiguration(offsetY);
+                    applyCompressor3_2(i);
+                    i++;
                 }
-				compress(stage);
-                stage++;
-			}
+                else
+                {
+                    int j = i+1;
+
+                    while(bits[j].size()<3)
+                    {
+                        j++;
+                    }
+
+                    j--;
+                    applyAdder(i,j);
+                    i = j++;
+                }
+            }
+        }
          
 		REPORT(DEBUG, "Column height after all compressions");
 		for (unsigned w=0; w<bits.size(); w++) 
@@ -595,6 +632,7 @@ namespace flopoco
 		adderVHDL();
 		
 	}
+
 
     //returns a pointer to the first bit which has the smallest cycle & CP combination
     BitHeap::WeightedBit* BitHeap::getFirstSoonestBit()
@@ -634,7 +672,26 @@ namespace flopoco
       
     }
 
-	//returns a pointer to the bit which has the biggest criticalPath+cycle combination
+    void BitHeap::applyCompressor3_2(int col)
+    {
+        for(int i=0; i<possibleCompressors.size(); i++)
+        {
+            if((possibleCompressors[i]->getColumnSize(0)==3) && (possibleCompressors[i]->getColumnSize(1)==0))
+            {
+                elemReduce(col, possibleCompressors[i]);
+                usedCompressors[i]=true;
+            }
+        }
+    }
+
+    //TODO
+    void BitHeap::applyAdder(int col0, int col1)
+    {
+
+    }
+
+
+//returns a pointer to the bit which has the biggest criticalPath+cycle combination
 	BitHeap::WeightedBit* BitHeap::getFinalLatestBit()
 	{
 	
@@ -671,7 +728,7 @@ namespace flopoco
 		
 		return b;
 	}
-
+	
 
 
 	//the final additon
