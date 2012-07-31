@@ -32,7 +32,7 @@ namespace flopoco {
 		/**
 		 * The default constructor
 		 */
-		MultiplierBlock(int wX, int wY, int topX, int topY, bool goToDSP = true, int weightShift = 0, int cycle = -1, MultiplierBlock* previous=0, MultiplierBlock* next=0);
+		MultiplierBlock(int wX, int wY, int topX, int topY, string input1, string input2, int weightShift = 0, int cycle = -1);
 	
 		
 		/**
@@ -66,9 +66,14 @@ namespace flopoco {
 
 		int getCycle();
 
-		bool canBeChained(MultiplierBlock* next);
+		string getInputName1()
+		{return inputName1;}
 
-		bool getgoToDSP();
+		
+		string getInputName2()
+		{return inputName2;}
+		
+		bool canBeChained(MultiplierBlock* next);
 
 		MultiplierBlock* getNext();
 
@@ -97,7 +102,6 @@ namespace flopoco {
 		int wY; 							/**< y size */
 		int topX; 							/**< x position (top right corner) */
 		int topY; 							/**< y position (top right corner */
-		bool goToDSP; 						/**< a bit saying if it should go into a DSP */
 		int cycle;							/**< cycle */
 		MultiplierBlock* previous;
 		MultiplierBlock* next;
@@ -105,7 +109,7 @@ namespace flopoco {
 		int signalLength;
 		int weight;
 		int weightShift;
-		string inputname1, inputname2;
+		string inputName1, inputName2;
 	};
 
 }

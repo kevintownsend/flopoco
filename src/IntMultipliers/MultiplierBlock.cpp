@@ -24,8 +24,8 @@ using namespace std;
 namespace flopoco{
 
 
-		MultiplierBlock::MultiplierBlock(int wX, int wY, int topX, int topY, bool goToDSP_, int weightShift_, int cycle, MultiplierBlock* previous, MultiplierBlock* next) :
-			wX(wX), wY(wY), topX(topX), topY(topY), goToDSP(goToDSP_), weightShift(weightShift_)
+		MultiplierBlock::MultiplierBlock(int wX, int wY, int topX, int topY, string input1, string input2, int weightShift_, int cycle) :
+			wX(wX), wY(wY), topX(topX), topY(topY), weightShift(weightShift_), inputName1(input1), inputName2(input2)
 		{
 			cycle=cycle;
 			weight=topX+topY-weightShift;
@@ -100,11 +100,6 @@ namespace flopoco{
 			return cycle;
 		}
 	
-		bool MultiplierBlock::getgoToDSP()
-		{
-			return goToDSP;
-		}
-
 
 		void MultiplierBlock::setNext(MultiplierBlock* b)
 		{

@@ -146,7 +146,9 @@ private:
 	Signal* y; 
 	string xname;
 	string yname;
-
+	string inputName1;
+	string inputName2;
+	int multiplierUid;
 	void initialize();   /**< initialization stuff common to both constructors*/
 	vector<DSP*> dsps;
 	

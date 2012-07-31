@@ -1107,14 +1107,16 @@ namespace flopoco
 		int topY=m->gettopY();
 		int botX=topX+m->getwX()-1;
 		int botY=topY+m->getwY()-1;
+		string input1=m->getInputName1();
+		string input2=m->getInputName2();
 		
 
 			if(uid==0)	
-			op->vhdl << tab << op->declare(join("DSPch",i,"_",uid), m->getwX()+m->getwY()) << " <= XX"<<range(botX,topX)<<" * YY"
-			<<range	(botY,topY)<<";"<<endl;
+			op->vhdl << tab << op->declare(join("DSPch",i,"_",uid), m->getwX()+m->getwY()) << " <="<< input1<<range(botX,topX)<<" *"\
+			<< input2 <<range	(botY,topY)<<";"<<endl;
 			else
-			op->vhdl << tab << op->declare(join("DSP",i,"_",uid), m->getwX()+m->getwY()) << " <= XX"<<range(botX,topX)<<" * YY"
-			<<range	(botY,topY)<<";"<<endl;
+			op->vhdl << tab << op->declare(join("DSP",i,"_",uid), m->getwX()+m->getwY()) << " <="<< input1<<range(botX,topX)<<" *"\
+			<< input2 <<range	(botY,topY)<<";"<<endl;
 
 			if(uid==0)
 				s<<join("DSPch",i,"_",uid);
