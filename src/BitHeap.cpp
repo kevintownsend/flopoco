@@ -741,11 +741,11 @@ namespace flopoco
         inAdder1 << ";";
 
 
-		op->vhdl << tab << op->declare(join("inAdder0_",adderIndex), col1-col0+1) << " <= " << inAdder0.str() << endl;
-		op->vhdl << tab << op->declare(join("inAdder1_",adderIndex), col1-col0+1) << " <= " << inAdder1.str() << endl;
+		op->vhdl << tab << op->declare(join("inAdder0_",adderIndex), col1-col0+2) << " <= \'0\' & " << inAdder0.str() << endl;
+		op->vhdl << tab << op->declare(join("inAdder1_",adderIndex), col1-col0+2) << " <= \'0\' & " << inAdder1.str() << endl;
         op->vhdl << tab << op->declare(join("cin_",adderIndex)) << " <= " << cin.str() << endl;
 
-        IntAdder* adder = new IntAdder(op->getTarget(), col1-col0+1);
+        IntAdder* adder = new IntAdder(op->getTarget(), col1-col0+2);
         op->getOpListR().push_back(adder);
 
         op->inPortMap(adder, "X", join("inAdder0_",adderIndex));
@@ -756,8 +756,7 @@ namespace flopoco
 
         op->vhdl << tab << op->instance(adder, join("Adder_",adderIndex));
 
-        //????????? why not col1 + 1 ?????
-        for(int i=col0; i<=col1 ; i++)
+        for(int i=col0; i<=col1 + 1 ; i++)
         {
             addBit(i, join("outAdder_", adderIndex,"(",i-col0,")"),"");
         }
