@@ -208,6 +208,7 @@ namespace flopoco{
 		unsigned inConcatIndex; /** input index - to form the inputsignals of the compressor*/
 		unsigned outConcatIndex; /** output index - to form the outputsignals of the compressor*/
 		unsigned compressorIndex; /** the index of the instance of compressors*/
+        unsigned adderIndex; /** the index of the instance of IntAdder*/
         unsigned cnt[100000]; /** number of bits which will be compressed in the current iteration*/
 		vector<int> uid;   /**< unique id, per weight */
      	ofstream fileFig;
