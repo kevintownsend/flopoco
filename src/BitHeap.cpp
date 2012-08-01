@@ -247,7 +247,7 @@ namespace flopoco
 
 
 
-	void BitHeap::doChaining()
+	void BitHeap::buildSupertiles()
 	{
 		for(unsigned i=0;i<mulBlocks.size();i++)
 			for(unsigned j=0;j<mulBlocks.size();j++)
@@ -261,7 +261,9 @@ namespace flopoco
 				}
 	}
 
-	void BitHeap::iterateDSP()
+
+
+	void BitHeap::generateSupertileVHDL()
 	{
 		for(unsigned i=0;i<mulBlocks.size();i++)
 			{	
@@ -312,10 +314,7 @@ namespace flopoco
 										addBit(weight,s.str());
 									}
 
-							}
-
-
-				
+							}				
 					}
 			}
 	}
@@ -725,7 +724,7 @@ namespace flopoco
 		closeDrawing(offsetY);
 		
 		//final addition
-		adderVHDL();
+		generateFinalAddVHDL();
 		
 	}
 
@@ -770,7 +769,7 @@ namespace flopoco
 
 	void BitHeap::applyCompressor3_2(int col)
 	{
-		for(int i=0; i<possibleCompressors.size(); i++)
+		for(unsigned i=0; i<possibleCompressors.size(); i++)
 			{
 				if((possibleCompressors[i]->getColumnSize(0)==3) && (possibleCompressors[i]->getColumnSize(1)==0))
 					{
@@ -909,10 +908,8 @@ namespace flopoco
 
 
 	//the final addition
-	void BitHeap::adderVHDL()
+	void BitHeap::generateFinalAddVHDL()
 	{
-
-
 		stringstream inAdder0, inAdder1, outAdder;
 
 		unsigned i=maxWeight-1;
@@ -989,8 +986,12 @@ namespace flopoco
 
 		REPORT(DEBUG,"FinalAdder");
 
-		
 	}
+
+
+
+
+
 
 
 	//the compression

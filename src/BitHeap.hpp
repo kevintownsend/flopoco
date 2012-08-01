@@ -30,6 +30,12 @@
    Each bit in the bit heap is flagged with the cycle at which it is produced.
    Compression works as follows:
 
+   First check if there are DSP blocks, chain them into supertiles, generate the corresponding VHDL, and add the result to the bit heap
+   Then, compress the bit heap
+
+
+
+
    setCycle(0)
    while needed
    manageCriticalPath() to advance the cycle  
@@ -140,14 +146,16 @@ namespace flopoco{
 		void generateCompressorVHDL();
 
 
-		//adds a new MultiplierBlock in the list he already has
+		/** adds a new MultiplierBlock */
 		void  addDSP(MultiplierBlock* m);
 
 
-		/** search for the possible chainings and generates the VHDL code too*/
-		void doChaining();
 
-		void iterateDSP();
+		/** search for the possible chainings and build supertiles*/
+		void buildSupertiles();
+
+		/**  generates the VHDL code for the supertiles*/
+		void generateSupertileVHDL();
 		
 
 	protected:
@@ -180,7 +188,7 @@ namespace flopoco{
 
 
 		/** generate the final adder for the bit heap (when the columns height is maximum 2*/
-		void adderVHDL();
+		void generateFinalAddVHDL();
 
 		
 

@@ -825,8 +825,8 @@ namespace flopoco {
 				
 		
 				}
-			bitHeap->doChaining();
-			bitHeap->iterateDSP();
+			bitHeap->buildSupertiles();
+			bitHeap->generateSupertileVHDL();
 
 		}
 
