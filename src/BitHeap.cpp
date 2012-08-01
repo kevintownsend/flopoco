@@ -565,9 +565,12 @@ namespace flopoco
 		    compress(stage);
             stage++;
 	    }
+        offsetY += 20 + getMaxHeight()*10;
+        drawConfiguration(offsetY);
+
 
         //do additional compressions or additions
-        if (getMaxHeight()>2)
+        if (getMaxHeight()>3)
         {
             unsigned i = 0;
 
@@ -682,6 +685,8 @@ namespace flopoco
         {
             if((possibleCompressors[i]->getColumnSize(0)==3) && (possibleCompressors[i]->getColumnSize(1)==0))
             {
+                REPORT(DEBUG, endl);
+                REPORT(DEBUG, "Using Compressor3_2, reduce column " << col);
                 elemReduce(col, possibleCompressors[i]);
                 usedCompressors[i]=true;
             }
@@ -698,7 +703,8 @@ namespace flopoco
             if(i>=0)
             {
                 list<WeightedBit*>::iterator it = bits[i].begin();
-                if(bits[i].size()==2)
+                //if(bits[i].size()==2)
+                if(cnt[i]==2)
                 {
                     inAdder0 << (*it)->getName();
                     it++;
@@ -706,7 +712,8 @@ namespace flopoco
                 }
                 else
                 {
-                    if(bits[i].size()==1)
+                    //if(bits[i].size()==1)
+                    if(cnt[i]==1)
                     {
                         inAdder0 << (*it)->getName();
                         inAdder1 << "\'0\'";
@@ -730,7 +737,8 @@ namespace flopoco
                     cin << (*it)->getName() << ";";
                 }
 
-                removeCompressedBits(i,bits[i].size());
+                removeCompressedBits(i, cnt[i]);
+                //removeCompressedBits(i,bits[i].size());
 
             }
 
@@ -740,24 +748,52 @@ namespace flopoco
         inAdder1 << ";";
 
 
-		op->vhdl << tab << op->declare(join("inAdder0_",adderIndex), col1-col0+2) << " <= \'0\' & " << inAdder0.str() << endl;
-		op->vhdl << tab << op->declare(join("inAdder1_",adderIndex), col1-col0+2) << " <= \'0\' & " << inAdder1.str() << endl;
-        op->vhdl << tab << op->declare(join("cin_",adderIndex)) << " <= " << cin.str() << endl;
 
-        IntAdder* adder = new IntAdder(op->getTarget(), col1-col0+2);
-        op->getOpListR().push_back(adder);
 
-        op->inPortMap(adder, "X", join("inAdder0_",adderIndex));
-        op->inPortMap(adder, "Y", join("inAdder1_",adderIndex));
-        op->inPortMap(adder, "Cin", join("cin_",adderIndex));
-
-        op->outPortMap(adder, "R", join("outAdder_",adderIndex));
-
-        op->vhdl << tab << op->instance(adder, join("Adder_",adderIndex));
-
-        for(int i=col0; i<=col1 + 1 ; i++)
+        if(col1!=maxWeight-1)
         {
-            addBit(i, join("outAdder_", adderIndex,"(",i-col0,")"),"");
+    		op->vhdl << tab << op->declare(join("inAdder0_",adderIndex), col1-col0+2) << " <= \'0\' & " << inAdder0.str() << endl;
+	    	op->vhdl << tab << op->declare(join("inAdder1_",adderIndex), col1-col0+2) << " <= \'0\' & " << inAdder1.str() << endl;
+            op->vhdl << tab << op->declare(join("cin_",adderIndex)) << " <= " << cin.str() << endl;
+
+            IntAdder* adder = new IntAdder(op->getTarget(), col1-col0+2);
+            op->getOpListR().push_back(adder);
+
+            op->inPortMap(adder, "X", join("inAdder0_",adderIndex));
+            op->inPortMap(adder, "Y", join("inAdder1_",adderIndex));
+            op->inPortMap(adder, "Cin", join("cin_",adderIndex));
+
+            op->outPortMap(adder, "R", join("outAdder_",adderIndex));
+
+            op->vhdl << tab << op->instance(adder, join("Adder_",adderIndex));
+
+            for(int i=col0; i<=col1 + 2 ; i++)
+            {
+                addBit(i, join("outAdder_", adderIndex,"(",i-col0,")"),"");
+            }
+        }
+        else
+        {
+    		op->vhdl << tab << op->declare(join("inAdder0_",adderIndex), col1-col0+1) << " <= " << inAdder0.str() << endl;
+	    	op->vhdl << tab << op->declare(join("inAdder1_",adderIndex), col1-col0+1) << " <= " << inAdder1.str() << endl;
+            op->vhdl << tab << op->declare(join("cin_",adderIndex)) << " <= " << cin.str() << endl;
+
+            IntAdder* adder = new IntAdder(op->getTarget(), col1-col0+1);
+            op->getOpListR().push_back(adder);
+
+            op->inPortMap(adder, "X", join("inAdder0_",adderIndex));
+            op->inPortMap(adder, "Y", join("inAdder1_",adderIndex));
+            op->inPortMap(adder, "Cin", join("cin_",adderIndex));
+
+            op->outPortMap(adder, "R", join("outAdder_",adderIndex));
+
+            op->vhdl << tab << op->instance(adder, join("Adder_",adderIndex));
+
+            for(int i=col0; i<=col1 + 1 ; i++)
+            {
+                addBit(i, join("outAdder_", adderIndex,"(",i-col0,")"),"");
+            }
+
         }
 
         adderIndex++;
