@@ -178,11 +178,13 @@ namespace flopoco
 
 
 	void BitHeap::addUnsignedBitVector(unsigned weight, string x, unsigned size){
+#if 0 // Should be a warning
 		if(weight+size>maxWeight)
 			THROWERROR("in addUnsignedBitVector: Size of signal " << x << " is " << size << 
 			           ", adding it at weight " << weight << " overflows the bit heap (maxWeight=" << maxWeight << ")");
-
+#endif
 		
+		op->setCycleFromSignal(x);
 		for (unsigned i=0; i<size; i++) {
 			ostringstream s;
 			s << x << of(i);
@@ -191,22 +193,35 @@ namespace flopoco
 	}
 
 	void BitHeap::subtractUnsignedBitVector(unsigned weight, string x, unsigned size){
+#if 0 // Should be a warning
 		if(weight+size>maxWeight)
 			THROWERROR("in subtractUnsignedBitVector: Size of signal " << x << " is " << size << 
 			           ", adding it at weight " << weight << " overflows the bit heap (maxWeight=" << maxWeight << ")");
+#endif
 
 		for (unsigned i=0; i<size; i++) {
 			ostringstream s;
 			s << "not " << x << of(i);
 			addBit(weight+i, s.str());
 		}
-}
+		addConstantOneBit(weight);
+		if (size+weight < maxWeight) {
+			// complement all the way to maxWeight
+			for (unsigned i=size+weight; i<maxWeight; i++) {
+				addConstantOneBit(i);
+			}
+		}
+	}
 
 
-	void BitHeap::addSignedBitVector(unsigned weight, string x, unsigned size){}
+	void BitHeap::addSignedBitVector(unsigned weight, string x, unsigned size){
+		//TODO
+	}
 
 
-	void BitHeap::subtractSignedBitVector(unsigned weight, string x, unsigned size){}
+	void BitHeap::subtractSignedBitVector(unsigned weight, string x, unsigned size){
+		// TODO
+	}
 
 
 	void  BitHeap::addDSP(MultiplierBlock* m)
@@ -345,6 +360,8 @@ namespace flopoco
 			return; 
 
 		WeightedBit* bit= new WeightedBit(this, w) ;
+		// created at (op->getCycle(), opt-getCriticalPath())
+
 		list<WeightedBit*>& l=bits[w];
 
 		//insert so that the list is sorted by bit cycle/delay
