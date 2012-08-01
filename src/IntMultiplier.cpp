@@ -24,22 +24,22 @@
 
 
 /*
-TODO tiling
+  TODO tiling
 
-- define intermediate data struct (list of multiplier blocks)  
-multiplier block:
-   - a bit saying if it should go into a DSP 
-   - x and y size
-   - x and y position
-   - cycle ?
-   - pointer to the previous (and the following?) tile if this tile belongs to a supertile
+  - define intermediate data struct (list of multiplier blocks)  
+  multiplier block:
+  - a bit saying if it should go into a DSP 
+  - x and y size
+  - x and y position
+  - cycle ?
+  - pointer to the previous (and the following?) tile if this tile belongs to a supertile
 
-- a function that explores and builds this structure
-   recycle Bogdan's, with optim for large mults
-   at least 4 versions: (full, truncated)x(altera, xilinx), please share as much code as possible
+  - a function that explores and builds this structure
+  recycle Bogdan's, with optim for large mults
+  at least 4 versions: (full, truncated)x(altera, xilinx), please share as much code as possible
 
-- a function that generates VHDL (adding bits to the bit heap)
- */
+  - a function that generates VHDL (adding bits to the bit heap)
+*/
 
 /* VHDL variable names:
    X, Y: inputs
@@ -320,7 +320,7 @@ namespace flopoco {
 				parentOp->vhdl << tab << join("R",multiplierUid)<<" <= (\"0\" & "<<join("XX",multiplierUid)<<") when "<< join("YY",multiplierUid)<<"(0)='1' else "<<zg(wX+1,0)<<";"<<endl;	
 
 			}
-		outDelayMap[join("R",multiplierUid)] = getCriticalPath();
+			outDelayMap[join("R",multiplierUid)] = getCriticalPath();
 			return;
 		}
 
@@ -338,7 +338,7 @@ namespace flopoco {
 
 			else  
 
-			parentOp->vhdl << "\"00\"";
+				parentOp->vhdl << "\"00\"";
 			parentOp->vhdl <<  " & "<<join("XX",multiplierUid)<<") when "<<join("YY",multiplierUid)<<"(0)='1' else "<<zg(wX+2,0)<<";"<<endl;	
 			parentOp->vhdl << tab << declare(join("R1i",multiplierUid),wX+2) << " <= ";
 
@@ -447,10 +447,10 @@ namespace flopoco {
 		manageSignBeforeMult();
 		buildHeapLogicOnly(0,0,wX,wY);
 		//adding the round bit
-			if(g>0) {
-				int weight=wFull-wOut-1- weightShift;
-				bitHeap->addBit(weight, "\'1\'", "The round bit");
-			}
+		if(g>0) {
+			int weight=wFull-wOut-1- weightShift;
+			bitHeap->addBit(weight, "\'1\'", "The round bit");
+		}
 		manageSignAfterMult();
 		bitHeap -> generateCompressorVHDL();			
 #if BAUGHWOOLEY
@@ -476,10 +476,10 @@ namespace flopoco {
 		manageSignBeforeMult();
 		buildHeapTiling();
 		//adding the round bit
-			if(g>0) {
-				int weight=wFull-wOut-1- weightShift;
-				bitHeap->addBit(weight, "\'1\'", "The round bit");
-			}
+		if(g>0) {
+			int weight=wFull-wOut-1- weightShift;
+			bitHeap->addBit(weight, "\'1\'", "The round bit");
+		}
 		manageSignAfterMult();
 
 		bitHeap -> generateCompressorVHDL();			
@@ -578,17 +578,17 @@ namespace flopoco {
 #else // SATURATED VERSION
 			// TODO manage pipeline
 			// reminder: wX and wY have been decremented
-	  vhdl << tab << declare(join("rY",multiplierUid), wY) << " <= "join("YY",multiplierUid) << range(wY-1, 0) << ";" << endl;
+			vhdl << tab << declare(join("rY",multiplierUid), wY) << " <= "join("YY",multiplierUid) << range(wY-1, 0) << ";" << endl;
 
 			parentOp->vhdl << tab << "-- Managing two's complement with saturated arithmetic" << endl;
 			parentOp->vhdl << tab << declare(join("rX",multiplierUid), wX) << " <= "<< join("XX",multiplierUid)  << range(wX-1, 0) << ";" << endl;
 			parentOp->vhdl << tab << declare(join("rY",multiplierUid), wY) << " <= "<< join("YY",multiplierUid) << range(wY-1, 0) << ";" << endl;
 
-			  vhdl << tab << declare(join("pX",multiplierUid), wX) << " <= not "<<join("rX",multiplierUid) <<"when "<<join("sX",multiplierUid)<<"='1' else "<<join("rX",multiplierUid)<<";" << endl;
-			  vhdl << tab << declare(join("pY",multiplierUid), wY) << " <= not "<<join("rY",multiplierUid)<<" when "<<join("sY",multiplierUid)<<"='1' else "<<join("rY",multiplierUid)<<";" << endl;
+			vhdl << tab << declare(join("pX",multiplierUid), wX) << " <= not "<<join("rX",multiplierUid) <<"when "<<join("sX",multiplierUid)<<"='1' else "<<join("rX",multiplierUid)<<";" << endl;
+			vhdl << tab << declare(join("pY",multiplierUid), wY) << " <= not "<<join("rY",multiplierUid)<<" when "<<join("sY",multiplierUid)<<"='1' else "<<join("rY",multiplierUid)<<";" << endl;
 
-		parentOp->vhdl << tab << declare(join("pX",multiplierUid), wX) << " <= not "<<join("rX",multiplierUid) <<"when "<<join("sX",multiplierUid)<<"='1' else "<<join("rX",multiplierUid)<<";" << endl;
-		parentOp-> vhdl << tab << declare(join("pY",multiplierUid), wY) << " <= not "<<join("rY",multiplierUid)<<" when "<<join("sY",multiplierUid)<<"='1' else "<<join("rY",multiplierUid)<<";" << endl;
+			parentOp->vhdl << tab << declare(join("pX",multiplierUid), wX) << " <= not "<<join("rX",multiplierUid) <<"when "<<join("sX",multiplierUid)<<"='1' else "<<join("rX",multiplierUid)<<";" << endl;
+			parentOp-> vhdl << tab << declare(join("pY",multiplierUid), wY) << " <= not "<<join("rY",multiplierUid)<<" when "<<join("sY",multiplierUid)<<"='1' else "<<join("rY",multiplierUid)<<";" << endl;
 
 
 			// adding X and Y, possibly complemented
@@ -603,589 +603,589 @@ namespace flopoco {
 				v << join("sYpX",multiplierUid)<<"(" << weight+weightShift << ")";
 				bitHeap->addBit(weight, v.str());
 
-			parentOp->vhdl << endl;
+				parentOp->vhdl << endl;
 
 
-			for (weight=0; weight<wY-weightShift; weight++) {
-				ostringstream v;
-				v << join("sXpY",multiplierUid)<<"(" << weight+weightShift << ")";
-				bitHeap->addBit(weight, v.str());
-			}
+				for (weight=0; weight<wY-weightShift; weight++) {
+					ostringstream v;
+					v << join("sXpY",multiplierUid)<<"(" << weight+weightShift << ")";
+					bitHeap->addBit(weight, v.str());
+				}
 
-			parentOp->vhdl << endl;
+				parentOp->vhdl << endl;
 
 
 
 #endif
-		}	// if(signedIO)
-		else	{
+			}	// if(signedIO)
+			else	{
 
-			parentOp->vhdl << tab << declare(join("pX",multiplierUid), wX) << " <= "<<join("XX",multiplierUid)<<";" << endl;
-			parentOp->vhdl << tab << declare(join("pY",multiplierUid), wY) << " <= "<<join("YY",multiplierUid)<<";" << endl;
+				parentOp->vhdl << tab << declare(join("pX",multiplierUid), wX) << " <= "<<join("XX",multiplierUid)<<";" << endl;
+				parentOp->vhdl << tab << declare(join("pY",multiplierUid), wY) << " <= "<<join("YY",multiplierUid)<<";" << endl;
 
+			}
 		}
-	}
 
 
 
-	void IntMultiplier::manageSignAfterMult() {
-		if (signedIO){
-			// restore wX and wY
-			wX++;
-			wY++;
+		void IntMultiplier::manageSignAfterMult() {
+			if (signedIO){
+				// restore wX and wY
+				wX++;
+				wY++;
+			}
 		}
-	}
 
-	/**************************************************************************/
-	void IntMultiplier::buildHeapLogicOnly(int topX, int topY, int botX, int botY,int uid) {
-		Target *target=getTarget();
-        if(uid==-1)
-			uid++;
-		parentOp->vhdl << tab << "-- code generated by IntMultiplier::buildHeapLogicOnly()"<< endl;
+		/**************************************************************************/
+		void IntMultiplier::buildHeapLogicOnly(int topX, int topY, int botX, int botY,int uid) {
+			Target *target=getTarget();
+			if(uid==-1)
+				uid++;
+			parentOp->vhdl << tab << "-- code generated by IntMultiplier::buildHeapLogicOnly()"<< endl;
 
 
-		int dx, dy;				// Here we need to split in small sub-multiplications
-		int li=target->lutInputs();
+			int dx, dy;				// Here we need to split in small sub-multiplications
+			int li=target->lutInputs();
  				
-		dx = li>>1;
-		dy = li - dx; 
-		REPORT(DEBUG, "dx="<< dx << "  dy=" << dy );
+			dx = li>>1;
+			dy = li - dx; 
+			REPORT(DEBUG, "dx="<< dx << "  dy=" << dy );
 
 
-		int wX=botX-topX;
-		int wY=botY-topY;
-		int chunksX =  int(ceil( ( double(wX) / (double) dx) ));
-		int chunksY =  int(ceil( ( 1+ double(wY-dy) / (double) dy) ));
-		int sizeXPadded=dx*chunksX; 
-		int sizeYPadded=dy*chunksY;
-		int padX=sizeXPadded-wX;
-		int padY=sizeYPadded-wY;
+			int wX=botX-topX;
+			int wY=botY-topY;
+			int chunksX =  int(ceil( ( double(wX) / (double) dx) ));
+			int chunksY =  int(ceil( ( 1+ double(wY-dy) / (double) dy) ));
+			int sizeXPadded=dx*chunksX; 
+			int sizeYPadded=dy*chunksY;
+			int padX=sizeXPadded-wX;
+			int padY=sizeYPadded-wY;
 				
-		REPORT(DEBUG, "X split in "<< chunksX << " chunks and Y in " << chunksY << " chunks; ");
-		REPORT(DEBUG, " sizeXPadded="<< sizeXPadded << "  sizeYPadded="<< sizeYPadded);
-		if (chunksX + chunksY > 2) { //we do more than 1 subproduct
+			REPORT(DEBUG, "X split in "<< chunksX << " chunks and Y in " << chunksY << " chunks; ");
+			REPORT(DEBUG, " sizeXPadded="<< sizeXPadded << "  sizeYPadded="<< sizeYPadded);
+			if (chunksX + chunksY > 2) { //we do more than 1 subproduct
 
-			parentOp->vhdl << tab << "-- padding to the left" << endl;
-			parentOp->vhdl<<tab<<declare(join("Xp",multiplierUid,"_",uid),sizeXPadded)<<" <= "<< zg(padX) << " & "<<join("pX",multiplierUid) << range(botX-1,topX) << ";"<<endl;
-			parentOp->vhdl<<tab<<declare(join("Yp",multiplierUid,"_",uid),sizeYPadded)<<" <= "<< zg(padY)<< " & "<<join("pY",multiplierUid) <<range(botY-1, topY) << ";"<<endl;	
+				parentOp->vhdl << tab << "-- padding to the left" << endl;
+				parentOp->vhdl<<tab<<declare(join("Xp",multiplierUid,"_",uid),sizeXPadded)<<" <= "<< zg(padX) << " & "<<join("pX",multiplierUid) << range(botX-1,topX) << ";"<<endl;
+				parentOp->vhdl<<tab<<declare(join("Yp",multiplierUid,"_",uid),sizeYPadded)<<" <= "<< zg(padY)<< " & "<<join("pY",multiplierUid) <<range(botY-1, topY) << ";"<<endl;	
 
-			//SPLITTINGS
-			for (int k=0; k<chunksX ; k++)
-				parentOp->vhdl<<tab<<declare(join("x",multiplierUid,"_",uid,"_",k),dx)<<" <= "<<join("Xp",multiplierUid,"_",uid)<<range((k+1)*dx-1,k*dx)<<";"<<endl;
+				//SPLITTINGS
+				for (int k=0; k<chunksX ; k++)
+					parentOp->vhdl<<tab<<declare(join("x",multiplierUid,"_",uid,"_",k),dx)<<" <= "<<join("Xp",multiplierUid,"_",uid)<<range((k+1)*dx-1,k*dx)<<";"<<endl;
 				for (int k=0; k<chunksY ; k++)
 					parentOp->vhdl<<tab<<declare(join("y",multiplierUid,"_",uid,"_",k),dy)<<" <= "<<join("Yp",multiplierUid,"_",uid)<<range((k+1)*dy-1, k*dy)<<";"<<endl;
 					
-			REPORT(DEBUG, "maxWeight=" << maxWeight <<  "    weightShift=" << weightShift);
+				REPORT(DEBUG, "maxWeight=" << maxWeight <<  "    weightShift=" << weightShift);
 
-			SmallMultTable *t = new SmallMultTable( target, dx, dy, dx+dy, false ); // unsigned
-			useSoftRAM(t);
-			oplist.push_back(t);
+				SmallMultTable *t = new SmallMultTable( target, dx, dy, dx+dy, false ); // unsigned
+				useSoftRAM(t);
+				oplist.push_back(t);
 
 
-			setCycle(0);
-			setCriticalPath(initialCP);
-			// SmallMultTable is built to cost this:
-			manageCriticalPath( getTarget()->localWireDelay(chunksX) + getTarget()->lutDelay() ) ;  
-			for (int iy=0; iy<chunksY; iy++){
+				setCycle(0);
+				setCriticalPath(initialCP);
+				// SmallMultTable is built to cost this:
+				manageCriticalPath( getTarget()->localWireDelay(chunksX) + getTarget()->lutDelay() ) ;  
+				for (int iy=0; iy<chunksY; iy++){
 
-				parentOp->vhdl << tab << "-- Partial product row number " << iy << endl;
+					parentOp->vhdl << tab << "-- Partial product row number " << iy << endl;
 
-				for (int ix=0; ix<chunksX; ix++) { 
+					for (int ix=0; ix<chunksX; ix++) { 
 
-					parentOp->vhdl << tab << declare(join (XY(ix,iy,uid),multiplierUid), dx+dy) << " <= y"<< multiplierUid<<"_"<<uid <<"_"<< iy << " & x"<<multiplierUid<<"_" << uid <<"_"<< ix << ";"<<endl;
+						parentOp->vhdl << tab << declare(join (XY(ix,iy,uid),multiplierUid), dx+dy) << " <= y"<< multiplierUid<<"_"<<uid <<"_"<< iy << " & x"<<multiplierUid<<"_" << uid <<"_"<< ix << ";"<<endl;
 
-					inPortMap(t, "X", join(XY(ix,iy,uid),multiplierUid));
-					outPortMap(t, "Y", join(PP(ix,iy,uid),multiplierUid));
+						inPortMap(t, "X", join(XY(ix,iy,uid),multiplierUid));
+						outPortMap(t, "Y", join(PP(ix,iy,uid),multiplierUid));
 
-					parentOp->vhdl << instance(t, join(PPTbl(ix,iy,uid),multiplierUid));
-					parentOp->vhdl << tab << "-- Adding the relevant bits to the heap of bits" << endl;
+						parentOp->vhdl << instance(t, join(PPTbl(ix,iy,uid),multiplierUid));
+						parentOp->vhdl << tab << "-- Adding the relevant bits to the heap of bits" << endl;
 
-					int maxK=dx+dy; 
-					if(ix == chunksX-1)
-						maxK-=padX;
-					if(iy == chunksY-1)
-						maxK-=padY;
-					for (int k=0; k<maxK; k++) {
-						ostringstream s;
-						s << join(PP(ix,iy,uid),multiplierUid) << of(k); // right hand side
-						int weight = ix*dx+iy*dy+k - weightShift+topX+topY;
-						if(weight>=0) {// otherwise these bits deserve to be truncated
-							REPORT(DEBUG, "adding bit " << s.str() << " at weight " << weight); 
-							bitHeap->addBit(weight, s.str());
+						int maxK=dx+dy; 
+						if(ix == chunksX-1)
+							maxK-=padX;
+						if(iy == chunksY-1)
+							maxK-=padY;
+						for (int k=0; k<maxK; k++) {
+							ostringstream s;
+							s << join(PP(ix,iy,uid),multiplierUid) << of(k); // right hand side
+							int weight = ix*dx+iy*dy+k - weightShift+topX+topY;
+							if(weight>=0) {// otherwise these bits deserve to be truncated
+								REPORT(DEBUG, "adding bit " << s.str() << " at weight " << weight); 
+								bitHeap->addBit(weight, s.str());
+							}
 						}
-					}
 
-					parentOp->vhdl << endl;
+						parentOp->vhdl << endl;
+
+					}
+				}				
+
+		
+
+				// And that's it, now go compress
+		
+			}
+	 
+		}
+	
+
+
+	
+		void IntMultiplier::splitting(int horDSP, int verDSP, int wxDSP, int wyDSP,int restX, int restY)
+		{
+						
+			for(int i=0;i<horDSP;i++)
+				{
+					for(int j=0;j<verDSP;j++)
+						{
+				
+							MultiplierBlock* m = new MultiplierBlock(wxDSP,wyDSP,wX-(i+1)*wxDSP, wY-((j+1)*wyDSP),join("XX",multiplierUid),join("YY",multiplierUid),weightShift);
+							m->setNext(NULL);		
+							m->setPrevious(NULL);			
+							REPORT(DETAILED,"getPrev  " << m->getPrevious());
+							bitHeap->addDSP(m);
+					
+							//***** this part is needed only for the plotting ********
+							DSP* dsp = new DSP();
+							dsp->setTopRightCorner(wX-((i+1)*wxDSP),wY-((j+1)*wyDSP));
+							dsp->setBottomLeftCorner(wX-(i*wxDSP),wY-(j*wyDSP));
+							dsps.push_back(dsp);
+							//********************************************************
+			
+						}	
 
 				}
-			}				
 
-		
-
-			// And that's it, now go compress
-		
 		}
-	 
-	}
-	
 
 
-	
-	void IntMultiplier::splitting(int horDSP, int verDSP, int wxDSP, int wyDSP,int restX, int restY)
-	{
-						
-		for(int i=0;i<horDSP;i++)
-			{
-			for(int j=0;j<verDSP;j++)
-				{
-				
-					MultiplierBlock* m = new MultiplierBlock(wxDSP,wyDSP,wX-(i+1)*wxDSP, wY-((j+1)*wyDSP),join("XX",multiplierUid),join("YY",multiplierUid),weightShift);
-					m->setNext(NULL);		
-					m->setPrevious(NULL);			
-					REPORT(DETAILED,"getPrev  " << m->getPrevious());
-				    bitHeap->addDSP(m);
-					
-					//***** this part is needed only for the plotting ********
-					DSP* dsp = new DSP();
-					dsp->setTopRightCorner(wX-((i+1)*wxDSP),wY-((j+1)*wyDSP));
-					dsp->setBottomLeftCorner(wX-(i*wxDSP),wY-(j*wyDSP));
-					dsps.push_back(dsp);
-					//********************************************************
-			
-				}	
-
-			}
-
-	}
-
-
-    /** builds the tiles and the logic too*/
-	/**************************************************************************/
-	void IntMultiplier::buildHeapTiling() {
+		/** builds the tiles and the logic too*/
+		/**************************************************************************/
+		void IntMultiplier::buildHeapTiling() {
 		
-		//the DSPs should be arranged horizontally or vertically?
+			//the DSPs should be arranged horizontally or vertically?
 		
-		//number of horizontal/vertical DSPs used if the tiling is horrizontally
-		int horDSP1=wX/wxDSP;
-		int verDSP1=wY/wyDSP;
+			//number of horizontal/vertical DSPs used if the tiling is horrizontally
+			int horDSP1=wX/wxDSP;
+			int verDSP1=wY/wyDSP;
 
-		//number of horizontal/vertical DSPs used if the tiling is vertically
-	    int horDSP2=wX/wyDSP;
-		int verDSP2=wY/wxDSP;
+			//number of horizontal/vertical DSPs used if the tiling is vertically
+			int horDSP2=wX/wyDSP;
+			int verDSP2=wY/wxDSP;
 
-		//the size of the zone filled by DSPs
-		int hor=horDSP1*verDSP1;
-		int ver=horDSP2*verDSP2;
+			//the size of the zone filled by DSPs
+			int hor=horDSP1*verDSP1;
+			int ver=horDSP2*verDSP2;
  
-		int horDSP;
-		int verDSP;
-        int restX; //the number of lsbs of the first input which remains after filling with DSP-s
-		int restY; //the number of lsbs of the second input which remains after filling with DSP-s
+			int horDSP;
+			int verDSP;
+			int restX; //the number of lsbs of the first input which remains after filling with DSP-s
+			int restY; //the number of lsbs of the second input which remains after filling with DSP-s
 
-		if (hor>=ver)
-			{	REPORT(DEBUG, "horizontal");
-				horDSP=horDSP1;
-				verDSP=verDSP1;
-				restX=wX-horDSP*wxDSP;
-				restY=wY-verDSP*wyDSP;
-				//splitting horizontal
-				splitting(horDSP,verDSP,wxDSP,wyDSP,restX,restY);
-			}
-		else
-			{	REPORT(DEBUG, "vertical");
-				horDSP=horDSP2;
-				verDSP=verDSP2;
-				restX=wX-horDSP*wyDSP;
-				restY=wY-verDSP*wxDSP;
-				//splitting vertical
-				splitting(horDSP,verDSP,wyDSP,wxDSP,restX,restY);
-			}
+			if (hor>=ver)
+				{	REPORT(DEBUG, "horizontal");
+					horDSP=horDSP1;
+					verDSP=verDSP1;
+					restX=wX-horDSP*wxDSP;
+					restY=wY-verDSP*wyDSP;
+					//splitting horizontal
+					splitting(horDSP,verDSP,wxDSP,wyDSP,restX,restY);
+				}
+			else
+				{	REPORT(DEBUG, "vertical");
+					horDSP=horDSP2;
+					verDSP=verDSP2;
+					restX=wX-horDSP*wyDSP;
+					restY=wY-verDSP*wxDSP;
+					//splitting vertical
+					splitting(horDSP,verDSP,wyDSP,wxDSP,restX,restY);
+				}
 
 		
-		//if logic part is needed too
-		if((restX!=0 ) || (restY!=0))
-			{
+			//if logic part is needed too
+			if((restX!=0 ) || (restY!=0))
+				{
 
-				SmallMultTable *t = new SmallMultTable( getTarget(), 3, 3, 6, false ); // unsigned
-				//useSoftRAM(t);
-				oplist.push_back(t);
-				REPORT(DEBUG,"restX= "<<restX<<"restY= "<<restY);
-				if(restY>0)
-					{
-						buildHeapLogicOnly(0,0,wX,restY,0);
-					}
-				if(restX>0)
-					{
-						buildHeapLogicOnly(0,restY,restX,wY,1);
-					}	
+					SmallMultTable *t = new SmallMultTable( getTarget(), 3, 3, 6, false ); // unsigned
+					//useSoftRAM(t);
+					oplist.push_back(t);
+					REPORT(DEBUG,"restX= "<<restX<<"restY= "<<restY);
+					if(restY>0)
+						{
+							buildHeapLogicOnly(0,0,wX,restY,0);
+						}
+					if(restX>0)
+						{
+							buildHeapLogicOnly(0,restY,restX,wY,1);
+						}	
 
 		
 				
 		
-			}
-		bitHeap->doChaining();
-		bitHeap->iterateDSP();
+				}
+			bitHeap->doChaining();
+			bitHeap->iterateDSP();
 
-	}
-
-	
+		}
 
 	
-	IntMultiplier::~IntMultiplier() {
-	}
+
+	
+		IntMultiplier::~IntMultiplier() {
+		}
 
 
-	//signal name construction
+		//signal name construction
 
 		string IntMultiplier::PP(int i, int j, int uid ) {
-		std::ostringstream p;		
-		if(uid==-1) 
-			p << "PP_X" << i << "Y" << j;
-		else
-			p << "PP_"<<uid<<"X" << i << "Y" << j;
-		return p.str();
-	};
+			std::ostringstream p;		
+			if(uid==-1) 
+				p << "PP_X" << i << "Y" << j;
+			else
+				p << "PP_"<<uid<<"X" << i << "Y" << j;
+			return p.str();
+		};
 
-	string IntMultiplier::PPTbl(  int i, int j,int uid) {
-		std::ostringstream p;		
-		if(uid==-1) 
-			p << "PP_X" << i << "Y" << j << "_Tbl";
-		else
-			p << "PP_"<<uid<<"X" << i << "Y" << j << "_Tbl";
-		return p.str();
-	};
+		string IntMultiplier::PPTbl(  int i, int j,int uid) {
+			std::ostringstream p;		
+			if(uid==-1) 
+				p << "PP_X" << i << "Y" << j << "_Tbl";
+			else
+				p << "PP_"<<uid<<"X" << i << "Y" << j << "_Tbl";
+			return p.str();
+		};
 
-	string IntMultiplier::XY( int i, int j,int uid) {
-		std::ostringstream p;		
-		if(uid==-1) 
-			p  << "Y" << j<< "X" << i;
-		else
-			p  << "Y" << j<< "X" << i<<"_"<<uid;
-		return p.str();	
-	};
-
-
+		string IntMultiplier::XY( int i, int j,int uid) {
+			std::ostringstream p;		
+			if(uid==-1) 
+				p  << "Y" << j<< "X" << i;
+			else
+				p  << "Y" << j<< "X" << i<<"_"<<uid;
+			return p.str();	
+		};
 
 
-	string IntMultiplier::heap( int i, int j) {
-		std::ostringstream p;
-		p  << "heap_" << i << "_" << j;
-		return p.str();
-	};
+
+
+		string IntMultiplier::heap( int i, int j) {
+			std::ostringstream p;
+			p  << "heap_" << i << "_" << j;
+			return p.str();
+		};
 
 
 
 
 		IntMultiplier::SmallMultTable::SmallMultTable(Target* target, int dx, int dy, int wO, bool  signedIO) : 
-		Table(target, dx+dy, wO, 0, -1, true), // logic table
-		dx(dx), dy(dy), signedIO(signedIO) {
-		ostringstream name; 
-		srcFileName="LogicIntMultiplier::SmallMultTable";
-		name <<"SmallMultTable" << dy << "x" << dx << "r" << wO << (signedIO?"signed":"unsigned");
-		setName(name.str());				
-	};
+			Table(target, dx+dy, wO, 0, -1, true), // logic table
+			dx(dx), dy(dy), signedIO(signedIO) {
+			ostringstream name; 
+			srcFileName="LogicIntMultiplier::SmallMultTable";
+			name <<"SmallMultTable" << dy << "x" << dx << "r" << wO << (signedIO?"signed":"unsigned");
+			setName(name.str());				
+		};
 	
 
-	mpz_class IntMultiplier::SmallMultTable::function(int yx){
-		mpz_class r;
-		int y = yx>>dx;
-		int x = yx -(y<<dx);
-		int wF=dx+dy;
-		if(signedIO) wF--;
+		mpz_class IntMultiplier::SmallMultTable::function(int yx){
+			mpz_class r;
+			int y = yx>>dx;
+			int x = yx -(y<<dx);
+			int wF=dx+dy;
+			if(signedIO) wF--;
 
-		if(signedIO){
-			if ( x >= (1 << (dx-1)))
-				x -= (1 << dx);
-			if ( y >= (1 << (dy-1)))
-				y -= (1 << dy);
-			r = x * y;
-			if ( r < 0)
-				r += mpz_class(1) << wF; 
-		}
-		else 
-			r = x*y;
+			if(signedIO){
+				if ( x >= (1 << (dx-1)))
+					x -= (1 << dx);
+				if ( y >= (1 << (dy-1)))
+					y -= (1 << dy);
+				r = x * y;
+				if ( r < 0)
+					r += mpz_class(1) << wF; 
+			}
+			else 
+				r = x*y;
 
-		if(wOut<wF){ // wOut is that of Table
-			// round to nearest, but not to nearest even
-			int tr=wF-wOut; // number of truncated bits 
-			// adding the round bit at half-ulp position
-			r += (mpz_class(1) << (tr-1));
-			r = r >> tr;
-		}
-
-		return r;
-		
-	};
-
-
-
-	void IntMultiplier::emulate ( TestCase* tc ) {
-		mpz_class svX = tc->getInputValue(join("X",multiplierUid));
-		mpz_class svY = tc->getInputValue(join("Y",multiplierUid));
-		mpz_class svR;
-		
-		if (! signedIO){
-			svR = svX * svY;
-		}
-
-		else{ // Manage signed digits
-			mpz_class big1 = (mpz_class(1) << (wXdecl));
-			mpz_class big1P = (mpz_class(1) << (wXdecl-1));
-			mpz_class big2 = (mpz_class(1) << (wYdecl));
-			mpz_class big2P = (mpz_class(1) << (wYdecl-1));
-
-			if ( svX >= big1P)
-				svX -= big1;
-
-			if ( svY >= big2P)
-				svY -= big2;
-			
-			svR = svX * svY;
-			if ( svR < 0){
-				svR += (mpz_class(1) << wFull); 
+			if(wOut<wF){ // wOut is that of Table
+				// round to nearest, but not to nearest even
+				int tr=wF-wOut; // number of truncated bits 
+				// adding the round bit at half-ulp position
+				r += (mpz_class(1) << (tr-1));
+				r = r >> tr;
 			}
 
-		}
-		if(wTruncated==0) 
-			tc->addExpectedOutput(join("R",multiplierUid), svR);
-		else {
-			// there is truncation, so this mult should be faithful
-			svR = svR >> wTruncated;
-			tc->addExpectedOutput(join("R",multiplierUid), svR);
-#if BAUGHWOOLEY
-			svR++;
-			svR &= (mpz_class(1) << (wOut)) -1;
-			tc->addExpectedOutput(join("R",multiplierUid), svR);
-#else // saturate
-			if(svR<(mpz_class(1) << wOut)-1) {
-				svR++;
+			return r;
+		
+		};
+
+
+
+		void IntMultiplier::emulate ( TestCase* tc ) {
+			mpz_class svX = tc->getInputValue(join("X",multiplierUid));
+			mpz_class svY = tc->getInputValue(join("Y",multiplierUid));
+			mpz_class svR;
+		
+			if (! signedIO){
+				svR = svX * svY;
+			}
+
+			else{ // Manage signed digits
+				mpz_class big1 = (mpz_class(1) << (wXdecl));
+				mpz_class big1P = (mpz_class(1) << (wXdecl-1));
+				mpz_class big2 = (mpz_class(1) << (wYdecl));
+				mpz_class big2P = (mpz_class(1) << (wYdecl-1));
+
+				if ( svX >= big1P)
+					svX -= big1;
+
+				if ( svY >= big2P)
+					svY -= big2;
+			
+				svR = svX * svY;
+				if ( svR < 0){
+					svR += (mpz_class(1) << wFull); 
+				}
+
+			}
+			if(wTruncated==0) 
 				tc->addExpectedOutput(join("R",multiplierUid), svR);
-			}
+			else {
+				// there is truncation, so this mult should be faithful
+				svR = svR >> wTruncated;
+				tc->addExpectedOutput(join("R",multiplierUid), svR);
+#if BAUGHWOOLEY
+				svR++;
+				svR &= (mpz_class(1) << (wOut)) -1;
+				tc->addExpectedOutput(join("R",multiplierUid), svR);
+#else // saturate
+				if(svR<(mpz_class(1) << wOut)-1) {
+					svR++;
+					tc->addExpectedOutput(join("R",multiplierUid), svR);
+				}
 #endif			
+			}
 		}
-	}
 	
 
 
-	void IntMultiplier::buildStandardTestCases(TestCaseList* tcl)
-    {
-		TestCase *tc;
-
-		mpz_class x, y;
-
-		// 1*1
-		x = mpz_class(1); 
-		y = mpz_class(1); 
-		tc = new TestCase(this); 
-		tc->addInput(join("X",multiplierUid), x);
-		tc->addInput(join("Y",multiplierUid), y);
-		emulate(tc);
-		tcl->add(tc);
-		
-		// -1 * -1
-		x = (mpz_class(1) << wXdecl) -1; 
-		y = (mpz_class(1) << wYdecl) -1; 
-		tc = new TestCase(this); 
-		tc->addInput(join("X",multiplierUid), x);
-		tc->addInput(join("Y",multiplierUid), y);
-		emulate(tc);
-		tcl->add(tc);
-
-		// The product of the two max negative values overflows the signed multiplier
-		x = mpz_class(1) << (wXdecl -1); 
-		y = mpz_class(1) << (wYdecl -1); 
-		tc = new TestCase(this); 
-		tc->addInput(join("X",multiplierUid), x);
-		tc->addInput(join("Y",multiplierUid), y);
-		emulate(tc);
-		tcl->add(tc);
-	}
-
-    void IntMultiplier::printConfiguration()
-    {
-        printAreaView();
-        printLozengeView();
-    }
-
-    void IntMultiplier::printAreaView()
-    {
-       	ostringstream figureFileName;
-		figureFileName << "view_area_" << "DSP"<< ".svg";
-		
-		FILE* pfile;
-		pfile  = fopen(figureFileName.str().c_str(), "w");
-		fclose(pfile);
-		
-		fig.open (figureFileName.str().c_str(), ios::trunc);
-
-
-        //scaling factor for the whole drawing
-        int scalingFactor = 5;
-
-        //offsets for the X and Y axes
-		int offsetX = 180;
-		int offsetY = 120;
-
-		//file header
-		fig << "<?xml version=\"1.0\" standalone=\"no\"?>" << endl;
-		fig << "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\"" << endl;
-		fig << "\"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">" << endl;
-		fig << "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\">" << endl;
-
-	    //draw target rectangle	
-        drawTargetFigure(wX, wY, offsetX, offsetY, scalingFactor, true);
-
-        //draw DSPs
-		int xT, yT, xB, yB;
-
-		for(unsigned i=0; i<dsps.size(); i++)
+		void IntMultiplier::buildStandardTestCases(TestCaseList* tcl)
 		{
-			dsps[i]->getCoordinates(xT, yT, xB, yB);
-			drawDSP(i, xT, yT, xB, yB, offsetX, offsetY, scalingFactor, true);
+			TestCase *tc;
+
+			mpz_class x, y;
+
+			// 1*1
+			x = mpz_class(1); 
+			y = mpz_class(1); 
+			tc = new TestCase(this); 
+			tc->addInput(join("X",multiplierUid), x);
+			tc->addInput(join("Y",multiplierUid), y);
+			emulate(tc);
+			tcl->add(tc);
+		
+			// -1 * -1
+			x = (mpz_class(1) << wXdecl) -1; 
+			y = (mpz_class(1) << wYdecl) -1; 
+			tc = new TestCase(this); 
+			tc->addInput(join("X",multiplierUid), x);
+			tc->addInput(join("Y",multiplierUid), y);
+			emulate(tc);
+			tcl->add(tc);
+
+			// The product of the two max negative values overflows the signed multiplier
+			x = mpz_class(1) << (wXdecl -1); 
+			y = mpz_class(1) << (wYdecl -1); 
+			tc = new TestCase(this); 
+			tc->addInput(join("X",multiplierUid), x);
+			tc->addInput(join("Y",multiplierUid), y);
+			emulate(tc);
+			tcl->add(tc);
 		}
 
-
-        //draw truncation line
-		if(wFull-wOut > 0)
+		void IntMultiplier::printConfiguration()
 		{
-            drawLine(wX, wY, wOut, offsetX, offsetY, scalingFactor, true);    
+			printAreaView();
+			printLozengeView();
 		}
 
-        //draw guard line
-		if(g>0)
+		void IntMultiplier::printAreaView()
 		{
-			drawLine(wX, wY, wOut+g, offsetX, offsetY, scalingFactor, true);
-		}
+			ostringstream figureFileName;
+			figureFileName << "view_area_" << "DSP"<< ".svg";
+		
+			FILE* pfile;
+			pfile  = fopen(figureFileName.str().c_str(), "w");
+			fclose(pfile);
+		
+			fig.open (figureFileName.str().c_str(), ios::trunc);
 
 
-		fig << "</svg>" << endl;
+			//scaling factor for the whole drawing
+			int scalingFactor = 5;
 
-		fig.close();
+			//offsets for the X and Y axes
+			int offsetX = 180;
+			int offsetY = 120;
+
+			//file header
+			fig << "<?xml version=\"1.0\" standalone=\"no\"?>" << endl;
+			fig << "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\"" << endl;
+			fig << "\"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">" << endl;
+			fig << "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\">" << endl;
+
+			//draw target rectangle	
+			drawTargetFigure(wX, wY, offsetX, offsetY, scalingFactor, true);
+
+			//draw DSPs
+			int xT, yT, xB, yB;
+
+			for(unsigned i=0; i<dsps.size(); i++)
+				{
+					dsps[i]->getCoordinates(xT, yT, xB, yB);
+					drawDSP(i, xT, yT, xB, yB, offsetX, offsetY, scalingFactor, true);
+				}
+
+
+			//draw truncation line
+			if(wFull-wOut > 0)
+				{
+					drawLine(wX, wY, wOut, offsetX, offsetY, scalingFactor, true);    
+				}
+
+			//draw guard line
+			if(g>0)
+				{
+					drawLine(wX, wY, wOut+g, offsetX, offsetY, scalingFactor, true);
+				}
+
+
+			fig << "</svg>" << endl;
+
+			fig.close();
         
-    }
+		}
 
 
 
-    void IntMultiplier::drawTargetFigure(int wX, int wY, int offsetX, int offsetY, int scalingFactor, bool isRectangle)
-    {
-        if(isRectangle)
-       	    fig << "<rect x=\"" << offsetX << "\" y=\"" << offsetY << "\" height=\"" << wY * scalingFactor << "\" width=\"" << wX * scalingFactor 
-			    <<"\" style=\"fill:rgb(255, 255, 255);stroke-width:1;stroke:rgb(0,0,0)\"/>" << endl;
-        else
-    		fig << "<polygon points=\"" << offsetX << "," << offsetY << " " 
-				<< wX*scalingFactor + offsetX << "," << offsetY << " " 
-				<< wX*scalingFactor + offsetX - scalingFactor*wY << "," << wY*scalingFactor + offsetY << " "
-			    << offsetX - scalingFactor*wY << "," << wY*scalingFactor + offsetY 	
-				<< "\" style=\"fill:rgb(255, 255, 255);stroke-width:1;stroke:rgb(0,0,0)\"/>" << endl;
+		void IntMultiplier::drawTargetFigure(int wX, int wY, int offsetX, int offsetY, int scalingFactor, bool isRectangle)
+		{
+			if(isRectangle)
+				fig << "<rect x=\"" << offsetX << "\" y=\"" << offsetY << "\" height=\"" << wY * scalingFactor << "\" width=\"" << wX * scalingFactor 
+				    <<"\" style=\"fill:rgb(255, 255, 255);stroke-width:1;stroke:rgb(0,0,0)\"/>" << endl;
+			else
+				fig << "<polygon points=\"" << offsetX << "," << offsetY << " " 
+				    << wX*scalingFactor + offsetX << "," << offsetY << " " 
+				    << wX*scalingFactor + offsetX - scalingFactor*wY << "," << wY*scalingFactor + offsetY << " "
+				    << offsetX - scalingFactor*wY << "," << wY*scalingFactor + offsetY 	
+				    << "\" style=\"fill:rgb(255, 255, 255);stroke-width:1;stroke:rgb(0,0,0)\"/>" << endl;
 
-        REPORT(DETAILED, "wX " << wX << "   wY " << wY);
-    }
+			REPORT(DETAILED, "wX " << wX << "   wY " << wY);
+		}
 
-    void IntMultiplier::drawLine(int wX, int wY, int wRez, int offsetX, int offsetY, int scalingFactor, bool isRectangle)
-    {
-        if(isRectangle)
-	    	fig << "<line x1=\"" << offsetX + scalingFactor*(wRez - wX) << "\" y1=\"" << offsetY << "\" x2=\"" << offsetX + scalingFactor*wRez
-                << "\" y2=\"" << offsetY + scalingFactor*wY <<"\" style=\"stroke:rgb(255,0,0);stroke-width:2\"/>" << endl ;	
-        else
-	    	fig << "<line x1=\"" << offsetX + scalingFactor*(wRez - wY) << "\" y1=\"" << offsetY << "\" x2=\"" << offsetX + scalingFactor*(wRez - wY)
-                << "\" y2=\"" << offsetY + scalingFactor*wY <<"\" style=\"stroke:rgb(255,0,0);stroke-width:2\"/>" << endl ;	
+		void IntMultiplier::drawLine(int wX, int wY, int wRez, int offsetX, int offsetY, int scalingFactor, bool isRectangle)
+		{
+			if(isRectangle)
+				fig << "<line x1=\"" << offsetX + scalingFactor*(wRez - wX) << "\" y1=\"" << offsetY << "\" x2=\"" << offsetX + scalingFactor*wRez
+				    << "\" y2=\"" << offsetY + scalingFactor*wY <<"\" style=\"stroke:rgb(255,0,0);stroke-width:2\"/>" << endl ;	
+			else
+				fig << "<line x1=\"" << offsetX + scalingFactor*(wRez - wY) << "\" y1=\"" << offsetY << "\" x2=\"" << offsetX + scalingFactor*(wRez - wY)
+				    << "\" y2=\"" << offsetY + scalingFactor*wY <<"\" style=\"stroke:rgb(255,0,0);stroke-width:2\"/>" << endl ;	
     
-    }
+		}
 
     
 
 
-    void IntMultiplier::printLozengeView()
-    {
-       	ostringstream figureFileName;
-		figureFileName << "view_lozenge_" << "DSP"<< ".svg";
+		void IntMultiplier::printLozengeView()
+		{
+			ostringstream figureFileName;
+			figureFileName << "view_lozenge_" << "DSP"<< ".svg";
 		
-		FILE* pfile;
-		pfile  = fopen(figureFileName.str().c_str(), "w");
-		fclose(pfile);
+			FILE* pfile;
+			pfile  = fopen(figureFileName.str().c_str(), "w");
+			fclose(pfile);
 		
-		fig.open (figureFileName.str().c_str(), ios::trunc);
+			fig.open (figureFileName.str().c_str(), ios::trunc);
 
 
-        //scaling factor for the whole drawing
-        int scalingFactor = 5;
+			//scaling factor for the whole drawing
+			int scalingFactor = 5;
 
-        //offsets for the X and Y axes
-		int offsetX = 180 + wY*scalingFactor;
-		int offsetY = 120;
+			//offsets for the X and Y axes
+			int offsetX = 180 + wY*scalingFactor;
+			int offsetY = 120;
 
-		//file header
-		fig << "<?xml version=\"1.0\" standalone=\"no\"?>" << endl;
-		fig << "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\"" << endl;
-		fig << "\"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">" << endl;
-		fig << "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\">" << endl;
+			//file header
+			fig << "<?xml version=\"1.0\" standalone=\"no\"?>" << endl;
+			fig << "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\"" << endl;
+			fig << "\"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">" << endl;
+			fig << "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\">" << endl;
 
-	    //draw target lozenge	
-        drawTargetFigure(wX, wY, offsetX, offsetY, scalingFactor, false);
+			//draw target lozenge	
+			drawTargetFigure(wX, wY, offsetX, offsetY, scalingFactor, false);
 
-        //draw DSPs
-		int xT, yT, xB, yB;
+			//draw DSPs
+			int xT, yT, xB, yB;
 
-		for(unsigned i=0; i<dsps.size(); i++)
-		{
-			dsps[i]->getCoordinates(xT, yT, xB, yB);
-			drawDSP(i, xT, yT, xB, yB, offsetX, offsetY, scalingFactor, false);
-		}
-
-
-        //draw truncation line
-		if(wFull-wOut > 0)
-		{
-            drawLine(wX, wY, wOut, offsetX, offsetY, scalingFactor, false);    
-		}
-
-        //draw guard line
-		if(g>0)
-		{
-			drawLine(wX, wY, wOut+g, offsetX, offsetY, scalingFactor, false);
-		}
+			for(unsigned i=0; i<dsps.size(); i++)
+				{
+					dsps[i]->getCoordinates(xT, yT, xB, yB);
+					drawDSP(i, xT, yT, xB, yB, offsetX, offsetY, scalingFactor, false);
+				}
 
 
-		fig << "</svg>" << endl;
+			//draw truncation line
+			if(wFull-wOut > 0)
+				{
+					drawLine(wX, wY, wOut, offsetX, offsetY, scalingFactor, false);    
+				}
 
-		fig.close();
+			//draw guard line
+			if(g>0)
+				{
+					drawLine(wX, wY, wOut+g, offsetX, offsetY, scalingFactor, false);
+				}
+
+
+			fig << "</svg>" << endl;
+
+			fig.close();
         
-    }
+		}
 	
 
 	
-	void IntMultiplier::drawDSP(int i, int xT, int yT, int xB, int yB, int offsetX, int offsetY, int scalingFactor, bool isRectangle)
-	{
+		void IntMultiplier::drawDSP(int i, int xT, int yT, int xB, int yB, int offsetX, int offsetY, int scalingFactor, bool isRectangle)
+		{
 			
-        //because the X axis is opposing, all X coordinates have to be turned around
-	    int turnaroundX;
+			//because the X axis is opposing, all X coordinates have to be turned around
+			int turnaroundX;
 
-        if(isRectangle)
-        {
-            turnaroundX = offsetX + wX * scalingFactor;
-	    	fig << "<rect x=\"" << turnaroundX - xB*scalingFactor << "\" y=\"" << yT*scalingFactor + offsetY 
-                << "\" height=\"" << (yB-yT)*scalingFactor << "\" width=\"" << (xB-xT)*scalingFactor
-		       	<< "\" style=\"fill:rgb(200, 200, 200);stroke-width:1;stroke:rgb(0,0,0)\"/>" << endl;
-		    fig << "<text x=\"" << (2*turnaroundX - scalingFactor*(xT+xB))/2 -12 << "\" y=\"" << ((yT+yB)*scalingFactor)/2 + offsetY + 7
-				<< "\" fill=\"blue\">D" <<  xT / wxDSP <<  yT / wyDSP  << "</text>" << endl;
-        }   
-        else 
-        {
-            turnaroundX = wX * scalingFactor;
-      		fig << "<polygon points=\"" << turnaroundX - 5*xB + offsetX - 5*yT << "," << 5*yT + offsetY << " "
-				<< turnaroundX - 5*xT + offsetX - 5*yT << "," << 5*yT + offsetY << " " 
-				<< turnaroundX - 5*xT + offsetX - 5*yB << "," << 5*yB + offsetY << " "
-				<< turnaroundX - 5*xB + offsetX - 5*yB << "," << 5*yB + offsetY
-                << "\" style=\"fill:rgb(200, 200, 200);stroke-width:1;stroke:rgb(0,0,0)\"/>" << endl;
+			if(isRectangle)
+				{
+					turnaroundX = offsetX + wX * scalingFactor;
+					fig << "<rect x=\"" << turnaroundX - xB*scalingFactor << "\" y=\"" << yT*scalingFactor + offsetY 
+					    << "\" height=\"" << (yB-yT)*scalingFactor << "\" width=\"" << (xB-xT)*scalingFactor
+					    << "\" style=\"fill:rgb(200, 200, 200);stroke-width:1;stroke:rgb(0,0,0)\"/>" << endl;
+					fig << "<text x=\"" << (2*turnaroundX - scalingFactor*(xT+xB))/2 -12 << "\" y=\"" << ((yT+yB)*scalingFactor)/2 + offsetY + 7
+					    << "\" fill=\"blue\">D" <<  xT / wxDSP <<  yT / wyDSP  << "</text>" << endl;
+				}   
+			else 
+				{
+					turnaroundX = wX * scalingFactor;
+					fig << "<polygon points=\"" << turnaroundX - 5*xB + offsetX - 5*yT << "," << 5*yT + offsetY << " "
+					    << turnaroundX - 5*xT + offsetX - 5*yT << "," << 5*yT + offsetY << " " 
+					    << turnaroundX - 5*xT + offsetX - 5*yB << "," << 5*yB + offsetY << " "
+					    << turnaroundX - 5*xB + offsetX - 5*yB << "," << 5*yB + offsetY
+					    << "\" style=\"fill:rgb(200, 200, 200);stroke-width:1;stroke:rgb(0,0,0)\"/>" << endl;
 
-            fig << "<text x=\"" << (2*turnaroundX - xB*5 - xT*5 + 2*offsetX)/2 - 14 - (yT*5 + yB*5)/2 
-                << "\" y=\"" << ( yT*5 + offsetY + yB*5 + offsetY )/2 + 7 
-				<< "\" fill=\"blue\">D" <<  xT / wxDSP <<  yT / wyDSP  << "</text>" << endl;	
+					fig << "<text x=\"" << (2*turnaroundX - xB*5 - xT*5 + 2*offsetX)/2 - 14 - (yT*5 + yB*5)/2 
+					    << "\" y=\"" << ( yT*5 + offsetY + yB*5 + offsetY )/2 + 7 
+					    << "\" fill=\"blue\">D" <<  xT / wxDSP <<  yT / wyDSP  << "</text>" << endl;	
 	
-        }
-	}
+				}
+		}
 
- }
+	}
 
 
 
