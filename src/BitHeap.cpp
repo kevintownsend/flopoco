@@ -77,10 +77,10 @@ namespace flopoco
 		return 0.0;  //because it returned no value on this branch
 	}
 
-    int BitHeap::WeightedBit::computeStage(int stagesPerCycle, double elementaryTime)
-    {
-        return (getCycle()*stagesPerCycle + getCriticalPath(getCycle())/elementaryTime);        
-    }
+	int BitHeap::WeightedBit::computeStage(int stagesPerCycle, double elementaryTime)
+	{
+		return (getCycle()*stagesPerCycle + getCriticalPath(getCycle())/elementaryTime);        
+	}
 
 
 	BitHeap::BitHeap(Operator* op, int maxWeight) :
@@ -93,7 +93,7 @@ namespace flopoco
 		inConcatIndex=0;
 		outConcatIndex=0;
 		compressorIndex=0;
-        adderIndex=0;
+		adderIndex=0;
 		for(int i=0; i<10;++i)
 			usedCompressors[i]=false;
 		for (int i=0; i< maxWeight; i++) {
@@ -185,122 +185,122 @@ namespace flopoco
 		unsigned size=mulBlocks.size();
 		REPORT(DETAILED,"size "<<size<<" i "<<i);
 		while((i<size)&&(mulBlocks[i]>=m))
-		{	
+			{	
 
-			REPORT(DETAILED,"size "<<size<<" i "<<i);
-			i++;
-		}
+				REPORT(DETAILED,"size "<<size<<" i "<<i);
+				i++;
+			}
 		
 		mulBlocks.insert(mulBlocks.begin()+i,m);
 	
-     }
+	}
 
 
 
-    void BitHeap::doChaining()
+	void BitHeap::doChaining()
 	{
 		for(int i=0;i<mulBlocks.size();i++)
 			for(int j=0;j<mulBlocks.size();j++)
-			{
-				if((mulBlocks[i]->getNext()==NULL) && (mulBlocks[j]->getPrevious()==NULL)&& (mulBlocks[i]->canBeChained(mulBlocks[j])))
 				{
-					mulBlocks[i]->setNext(mulBlocks[j]);
-					mulBlocks[j]->setPrevious(mulBlocks[i]);
-					REPORT(DETAILED, "BLOCK "<<i<< "chained with "<<j);	
-				}
-			}
-	}
-
-    void BitHeap::iterateDSP()
-	{
-	    for(int i=0;i<mulBlocks.size();i++)
-		{	
-		
-        	REPORT(DETAILED,"mulblocksi->getprev=="<<mulBlocks[i]->getPrevious());
-			if(mulBlocks[i]->getPrevious()==NULL)
-			{
-			int uid=0;
-			MultiplierBlock* next;
-			MultiplierBlock* current=mulBlocks[i];
-			int newLength=0;
-			//the first element from the chain(the biggest weight
-			generateVHDLforDSP(current,uid,i);
-			//iterate on the chain
-				while(current->getNext()!=NULL)
-				{	uid++;
-					current=mulBlocks[i];
-					next=mulBlocks[i]->getNext();
-					//addition=previous<<17 +this in the next block's dsp
-					generateVHDLforDSP(next,uid,i);
-					REPORT(DETAILED,"lungime dsp cur"<<current->getSigLength());
-					newLength=current->getSigLength()+17;
-
-					op->vhdl << tab <<	op->declare(join("DSPch",i,"_",uid),newLength+1)<< "<= ( '0' & "<<current->getSigName()<<" & "<<
-										zg(17) << ") + ("<< zg(18) <<" & "<< next->getSigName()<<" ) ;"<<endl;
-			
-					stringstream s;
-					s<<join("DSPch",i,"_",uid);
-					next->setSignalName(s.str());		
-					next->setSignalLength(newLength+1);
-					current=next;
-				}
-		
-				//WE NEED JUST TO ADD BITS TO THE HEAP
-			
-				string name=current->getSigName();
-				int length=current->getSigLength();
-				
-				for(int k=length-1;k>=0;k--)
-				{
-				int weight=current->getWeight()+k;	
-				REPORT(DETAILED,"k= "<<k <<" weight= "<<weight);				
-				
-				if(weight>=0)
-					{	
-					stringstream s;
-					s<<name<<"("<<k<<")";
-					addBit(weight,s.str());
-					}
-
-				}
-
-
-				
-				}
-			}
-		}
-		/*
-		REPORT(DETAILED,"mulblock size "<< mulBlocks.size());
-		for(int i=0; i<mulBlocks.size();i++)
-			{
-				generateVHDLforDSP(mulBlocks[i],i,i);
-				string outputSignalName=mulBlocks[i]->getSigName();
-				int outputSignalLength=mulBlocks[i]->getSigLength();
-				int w=mulBlocks[i]->getWeight();
-
-				REPORT(DETAILED,"outputsignal "<< outputSignalLength<<" w= "<<w);
-		
-				for(int j=outputSignalLength-1;j>=0;j--)
-					{
-						REPORT(DEBUG,"j= "<<j<<" i= "<<i); 
-						int weight=w+j;
-					//	REPORT(DEBUG,"j= "<<j<<" i= "<<i); 
-						if(weight>=0)
+					if((mulBlocks[i]->getNext()==NULL) && (mulBlocks[j]->getPrevious()==NULL)&& (mulBlocks[i]->canBeChained(mulBlocks[j])))
 						{
-							stringstream s;
-							s << outputSignalName <<"("<<j<<")";
-							addBit(weight,s.str());
+							mulBlocks[i]->setNext(mulBlocks[j]);
+							mulBlocks[j]->setPrevious(mulBlocks[i]);
+							REPORT(DETAILED, "BLOCK "<<i<< "chained with "<<j);	
 						}
-					}
-			}
-
+				}
 	}
 
-		////MODIFY this for the chaining!!!!
+	void BitHeap::iterateDSP()
+	{
+		for(int i=0;i<mulBlocks.size();i++)
+			{	
+		
+				REPORT(DETAILED,"mulblocksi->getprev=="<<mulBlocks[i]->getPrevious());
+				if(mulBlocks[i]->getPrevious()==NULL)
+					{
+						int uid=0;
+						MultiplierBlock* next;
+						MultiplierBlock* current=mulBlocks[i];
+						int newLength=0;
+						//the first element from the chain(the biggest weight
+						generateVHDLforDSP(current,uid,i);
+						//iterate on the chain
+						while(current->getNext()!=NULL)
+							{	uid++;
+								current=mulBlocks[i];
+								next=mulBlocks[i]->getNext();
+								//addition=previous<<17 +this in the next block's dsp
+								generateVHDLforDSP(next,uid,i);
+								REPORT(DETAILED,"lungime dsp cur"<<current->getSigLength());
+								newLength=current->getSigLength()+17;
+
+								op->vhdl << tab <<	op->declare(join("DSPch",i,"_",uid),newLength+1)<< "<= ( '0' & "<<current->getSigName()<<" & "<<
+									zg(17) << ") + ("<< zg(18) <<" & "<< next->getSigName()<<" ) ;"<<endl;
+			
+								stringstream s;
+								s<<join("DSPch",i,"_",uid);
+								next->setSignalName(s.str());		
+								next->setSignalLength(newLength+1);
+								current=next;
+							}
+		
+						//WE NEED JUST TO ADD BITS TO THE HEAP
+			
+						string name=current->getSigName();
+						int length=current->getSigLength();
+				
+						for(int k=length-1;k>=0;k--)
+							{
+								int weight=current->getWeight()+k;	
+								REPORT(DETAILED,"k= "<<k <<" weight= "<<weight);				
+				
+								if(weight>=0)
+									{	
+										stringstream s;
+										s<<name<<"("<<k<<")";
+										addBit(weight,s.str());
+									}
+
+							}
+
+
+				
+					}
+			}
+	}
+	/*
+	  REPORT(DETAILED,"mulblock size "<< mulBlocks.size());
+	  for(int i=0; i<mulBlocks.size();i++)
+	  {
+	  generateVHDLforDSP(mulBlocks[i],i,i);
+	  string outputSignalName=mulBlocks[i]->getSigName();
+	  int outputSignalLength=mulBlocks[i]->getSigLength();
+	  int w=mulBlocks[i]->getWeight();
+
+	  REPORT(DETAILED,"outputsignal "<< outputSignalLength<<" w= "<<w);
+		
+	  for(int j=outputSignalLength-1;j>=0;j--)
+	  {
+	  REPORT(DEBUG,"j= "<<j<<" i= "<<i); 
+	  int weight=w+j;
+	  //	REPORT(DEBUG,"j= "<<j<<" i= "<<i); 
+	  if(weight>=0)
+	  {
+	  stringstream s;
+	  s << outputSignalName <<"("<<j<<")";
+	  addBit(weight,s.str());
+	  }
+	  }
+	  }
+
+	  }
+
+	  ////MODIFY this for the chaining!!!!
 
 
 	
-*/
+	  */
 
 	void  BitHeap::addBit(unsigned w, string rhs, string comment)
 	{
@@ -317,19 +317,19 @@ namespace flopoco
 		bool proceed=true;
 		unsigned count=0;
 		while(proceed) 
-		{
-			if (it==l.end() || (*bit <= **it))
-			{ // test in this order to avoid segfault!
-
-				l.insert(it, bit);
-				proceed=false;
-			}
-			else 
 			{
-				count++;
-				it++;
+				if (it==l.end() || (*bit <= **it))
+					{ // test in this order to avoid segfault!
+
+						l.insert(it, bit);
+						proceed=false;
+					}
+				else 
+					{
+						count++;
+						it++;
+					}
 			}
-		}
 
 		//the cnt[w] should increase, because the bit introduced is smaller then the biggest bit which will be compressed in current iteration
 		if(count<cnt[w])
@@ -374,15 +374,15 @@ namespace flopoco
 		
 		WeightedBit* b =  computeLatest(i, bc->getColumnSize(0), bc->getColumnSize(1)) ; 
 		if(b)
-		{
-			op->setCycle(  b ->getCycle()  );
-			op->setCriticalPath(  b ->getCriticalPath(op->getCurrentCycle()));
-			op->manageCriticalPath( op->getTarget()->lutDelay() + op->getTarget()->localWireDelay() );
-            if(b->getCycle() < op->getCurrentCycle())
-            {
-                drawCycleLine = true;
-            }
-		}
+			{
+				op->setCycle(  b ->getCycle()  );
+				op->setCriticalPath(  b ->getCriticalPath(op->getCurrentCycle()));
+				op->manageCriticalPath( op->getTarget()->lutDelay() + op->getTarget()->localWireDelay() );
+				if(b->getCycle() < op->getCurrentCycle())
+					{
+						drawCycleLine = true;
+					}
+			}
 
 		// build the first input of the compressor
 		for(unsigned j=0; j<bc->getColumnSize(0); j++)
@@ -449,7 +449,7 @@ namespace flopoco
 	}
 	
 
-    //c - the current column, red- number of bits to be reduced
+	//c - the current column, red- number of bits to be reduced
 	void BitHeap::removeCompressedBits(int c, int red)
 	{
 		while(red>0)
@@ -528,90 +528,90 @@ namespace flopoco
 				addBit(w, "'1'");
 
 
-	    initializeDrawing();
+		initializeDrawing();
 		generatePossibleCompressors();
         
-        WeightedBit* firstBit = getFirstSoonestBit();
+		WeightedBit* firstBit = getFirstSoonestBit();
         
-        int minCycle = firstBit->getCycle();
-        double minCP = firstBit->getCriticalPath(minCycle);
+		int minCycle = firstBit->getCycle();
+		double minCP = firstBit->getCriticalPath(minCycle);
 
-        elementaryTime = op->getTarget()->lutDelay();// + op->getTarget()->localWireDelay();
+		elementaryTime = op->getTarget()->lutDelay();// + op->getTarget()->localWireDelay();
 
-        stagesPerCycle = (1/op->getTarget()->frequency()) / elementaryTime;
+		stagesPerCycle = (1/op->getTarget()->frequency()) / elementaryTime;
 
-        int stage = minCycle*stagesPerCycle + minCP/elementaryTime ;
+		int stage = minCycle*stagesPerCycle + minCP/elementaryTime ;
 
-        REPORT(DETAILED, "minimum stage " << stage);
+		REPORT(DETAILED, "minimum stage " << stage);
 
 		op->vhdl << tab << endl << "-- Beginning of code generated by BitHeap::generateCompressorVHDL" << endl;
 		minWeight=0;
 
-        int offsetY=0;
+		int offsetY=0;
 
-        didCompress = true;
+		didCompress = true;
 
 		//compressing until the maximum height of the columns is 3
-        //FIXME change 2 to 3 in order to use extra additions 
+		//FIXME change 2 to 3 in order to use extra additions 
 		while (getMaxHeight()>2)
-		{
+			{
                 
-            REPORT(DETAILED, "didCompress " << didCompress);
-            if(didCompress)
-            {
-                offsetY += 20 + getMaxHeight()*10;
-                drawConfiguration(offsetY);
-            }
-		    compress(stage);
-            stage++;
-	    }
-        offsetY += 20 + getMaxHeight()*10;
-        drawConfiguration(offsetY);
+				REPORT(DETAILED, "didCompress " << didCompress);
+				if(didCompress)
+					{
+						offsetY += 20 + getMaxHeight()*10;
+						drawConfiguration(offsetY);
+					}
+				compress(stage);
+				stage++;
+			}
+		offsetY += 20 + getMaxHeight()*10;
+		drawConfiguration(offsetY);
 
 
-        //do additional compressions or additions
-        if (getMaxHeight()>3)
-        {
-            unsigned i = 0;
+		//do additional compressions or additions
+		if (getMaxHeight()>3)
+			{
+				unsigned i = 0;
 
-            for(unsigned i=0; i<maxWeight; i++)
-            {
-                cnt[i]=bits[i].size();
-		    }
+				for(unsigned i=0; i<maxWeight; i++)
+					{
+						cnt[i]=bits[i].size();
+					}
 
-            //find the first column with 3 bits; the rest go to the final adder
-            while(bits[i].size()<3)
-            {
-                i++;
-            }
+				//find the first column with 3 bits; the rest go to the final adder
+				while(bits[i].size()<3)
+					{
+						i++;
+					}
 
-            while(i<maxWeight-1)
-            {
+				while(i<maxWeight-1)
+					{
 
-                //REPORT(DEBUG,"print i "<<i);
-                if ((cnt[i]==3) && (cnt[i+1]==3))
-                {
-                    applyCompressor3_2(i);
-                    i++;
-                    //REPORT(DEBUG, "crash here");
-                }
-                else
-                {
-                    unsigned j = i+1; 
-                    while((j<maxWeight) && (cnt[j]<3))
-                    {
-                        j++;
+						//REPORT(DEBUG,"print i "<<i);
+						if ((cnt[i]==3) && (cnt[i+1]==3))
+							{
+								applyCompressor3_2(i);
+								i++;
+								//REPORT(DEBUG, "crash here");
+							}
+						else
+							{
+								unsigned j = i+1; 
+								while((j<maxWeight) && (cnt[j]<3))
+									{
+										j++;
 
-                        REPORT(DEBUG, j);
-                    }
+										REPORT(DEBUG, j);
+									}
 
-                    j--;
-                    applyAdder(i,j);
-                    j++;
-                    i=j;
-                }
-            }
-        }
+								j--;
+								applyAdder(i,j);
+								j++;
+								i=j;
+							}
+					}
+			}
          
 		REPORT(DEBUG, "Column height after all compressions");
 		for (unsigned w=0; w<bits.size(); w++) 
@@ -628,12 +628,12 @@ namespace flopoco
 					{	
 						op->getOpListR().push_back(possibleCompressors[i]);
 					}
-            }
+			}
 	    
 		
-        offsetY += 20 + getMaxHeight() * 10;
-        drawConfiguration(offsetY);
-        closeDrawing(offsetY);
+		offsetY += 20 + getMaxHeight() * 10;
+		drawConfiguration(offsetY);
+		closeDrawing(offsetY);
 		
 		//final addition
 		adderVHDL();
@@ -641,167 +641,167 @@ namespace flopoco
 	}
 
 
-    //returns a pointer to the first bit which has the smallest cycle & CP combination
-    BitHeap::WeightedBit* BitHeap::getFirstSoonestBit()
-    {
- 		int minCycle= 9999;
+	//returns a pointer to the first bit which has the smallest cycle & CP combination
+	BitHeap::WeightedBit* BitHeap::getFirstSoonestBit()
+	{
+		int minCycle= 9999;
 		double minCP = 100;
 		WeightedBit *b=0;
 		for(unsigned w=minWeight; w<maxWeight; w++)
 			{
-			if(bits[w].size()==0)
-			{
-
-			}
-			else{			
-				if (bits[w].size() >= 1)
+				if(bits[w].size()==0)
 					{
-						for(list<WeightedBit*>::iterator it = bits[w].begin(); it!=bits[w].end(); ++it)
-							{
-								if (minCycle > (*it)->getCycle())
-									{
-										minCycle = (*it)->getCycle();
-										minCP = (*it)->getCriticalPath(minCycle);
-										b = *it;
-									}
-								else
-									if ((minCycle == (*it)->getCycle())  &&  (minCP > (*it)->getCriticalPath(minCycle)))
+
+					}
+				else{			
+					if (bits[w].size() >= 1)
+						{
+							for(list<WeightedBit*>::iterator it = bits[w].begin(); it!=bits[w].end(); ++it)
+								{
+									if (minCycle > (*it)->getCycle())
 										{
+											minCycle = (*it)->getCycle();
 											minCP = (*it)->getCriticalPath(minCycle);
 											b = *it;
 										}
-							}
-					}
+									else
+										if ((minCycle == (*it)->getCycle())  &&  (minCP > (*it)->getCriticalPath(minCycle)))
+											{
+												minCP = (*it)->getCriticalPath(minCycle);
+												b = *it;
+											}
+								}
+						}
 				}
 			}	
 		
 		return b;
       
-    }
+	}
 
-    void BitHeap::applyCompressor3_2(int col)
-    {
-        for(int i=0; i<possibleCompressors.size(); i++)
-        {
-            if((possibleCompressors[i]->getColumnSize(0)==3) && (possibleCompressors[i]->getColumnSize(1)==0))
-            {
-                REPORT(DEBUG, endl);
-                REPORT(DEBUG, "Using Compressor3_2, reduce column " << col);
-                elemReduce(col, possibleCompressors[i]);
-                usedCompressors[i]=true;
-            }
-        }
-    }
+	void BitHeap::applyCompressor3_2(int col)
+	{
+		for(int i=0; i<possibleCompressors.size(); i++)
+			{
+				if((possibleCompressors[i]->getColumnSize(0)==3) && (possibleCompressors[i]->getColumnSize(1)==0))
+					{
+						REPORT(DEBUG, endl);
+						REPORT(DEBUG, "Using Compressor3_2, reduce column " << col);
+						elemReduce(col, possibleCompressors[i]);
+						usedCompressors[i]=true;
+					}
+			}
+	}
 
-    //TODO
-    void BitHeap::applyAdder(int col0, int col1)
-    {
-        stringstream inAdder0, inAdder1, cin, outAdder;
+	//TODO
+	void BitHeap::applyAdder(int col0, int col1)
+	{
+		stringstream inAdder0, inAdder1, cin, outAdder;
         
-        for(int i = col0; i<=col1; i++)
-        {
-            if(i>=0)
-            {
-                list<WeightedBit*>::iterator it = bits[i].begin();
-                //if(bits[i].size()==2)
-                if(cnt[i]==2)
-                {
-                    inAdder0 << (*it)->getName();
-                    it++;
-                    inAdder1 << (*it)->getName();
-                }
-                else
-                {
-                    //if(bits[i].size()==1)
-                    if(cnt[i]==1)
-                    {
-                        inAdder0 << (*it)->getName();
-                        inAdder1 << "\'0\'";
-                    }
-                    else
-                    {
-                        inAdder0 << "\'0\'";                       
-                        inAdder1 << "\'0\'";
-                    }
-                }
+		for(int i = col0; i<=col1; i++)
+			{
+				if(i>=0)
+					{
+						list<WeightedBit*>::iterator it = bits[i].begin();
+						//if(bits[i].size()==2)
+						if(cnt[i]==2)
+							{
+								inAdder0 << (*it)->getName();
+								it++;
+								inAdder1 << (*it)->getName();
+							}
+						else
+							{
+								//if(bits[i].size()==1)
+								if(cnt[i]==1)
+									{
+										inAdder0 << (*it)->getName();
+										inAdder1 << "\'0\'";
+									}
+								else
+									{
+										inAdder0 << "\'0\'";                       
+										inAdder1 << "\'0\'";
+									}
+							}
 
-                if(i!=col1)
-                {
-                    inAdder0 << " & ";
-                    inAdder1 << " & ";
-                }
+						if(i!=col1)
+							{
+								inAdder0 << " & ";
+								inAdder1 << " & ";
+							}
 
-                if(i==col0)
-                {
-                    it++;
-                    cin << (*it)->getName() << ";";
-                }
+						if(i==col0)
+							{
+								it++;
+								cin << (*it)->getName() << ";";
+							}
 
-                removeCompressedBits(i, cnt[i]);
-                //removeCompressedBits(i,bits[i].size());
+						removeCompressedBits(i, cnt[i]);
+						//removeCompressedBits(i,bits[i].size());
 
-            }
+					}
 
-        }
+			}
 
-        inAdder0 << ";";
-        inAdder1 << ";";
-
-
+		inAdder0 << ";";
+		inAdder1 << ";";
 
 
-        if(col1!=maxWeight-1)
-        {
-    		op->vhdl << tab << op->declare(join("inAdder0_",adderIndex), col1-col0+2) << " <= \'0\' & " << inAdder0.str() << endl;
-	    	op->vhdl << tab << op->declare(join("inAdder1_",adderIndex), col1-col0+2) << " <= \'0\' & " << inAdder1.str() << endl;
-            op->vhdl << tab << op->declare(join("cin_",adderIndex)) << " <= " << cin.str() << endl;
-
-            IntAdder* adder = new IntAdder(op->getTarget(), col1-col0+2);
-            op->getOpListR().push_back(adder);
-
-            op->inPortMap(adder, "X", join("inAdder0_",adderIndex));
-            op->inPortMap(adder, "Y", join("inAdder1_",adderIndex));
-            op->inPortMap(adder, "Cin", join("cin_",adderIndex));
-
-            op->outPortMap(adder, "R", join("outAdder_",adderIndex));
-
-            op->vhdl << tab << op->instance(adder, join("Adder_",adderIndex));
-
-            for(int i=col0; i<=col1 + 2 ; i++)
-            {
-                addBit(i, join("outAdder_", adderIndex,"(",i-col0,")"),"");
-            }
-        }
-        else
-        {
-    		op->vhdl << tab << op->declare(join("inAdder0_",adderIndex), col1-col0+1) << " <= " << inAdder0.str() << endl;
-	    	op->vhdl << tab << op->declare(join("inAdder1_",adderIndex), col1-col0+1) << " <= " << inAdder1.str() << endl;
-            op->vhdl << tab << op->declare(join("cin_",adderIndex)) << " <= " << cin.str() << endl;
-
-            IntAdder* adder = new IntAdder(op->getTarget(), col1-col0+1);
-            op->getOpListR().push_back(adder);
-
-            op->inPortMap(adder, "X", join("inAdder0_",adderIndex));
-            op->inPortMap(adder, "Y", join("inAdder1_",adderIndex));
-            op->inPortMap(adder, "Cin", join("cin_",adderIndex));
-
-            op->outPortMap(adder, "R", join("outAdder_",adderIndex));
-
-            op->vhdl << tab << op->instance(adder, join("Adder_",adderIndex));
-
-            for(int i=col0; i<=col1 + 1 ; i++)
-            {
-                addBit(i, join("outAdder_", adderIndex,"(",i-col0,")"),"");
-            }
-
-        }
-
-        adderIndex++;
-
-    }
 
 
-//returns a pointer to the bit which has the biggest criticalPath+cycle combination
+		if(col1!=maxWeight-1)
+			{
+				op->vhdl << tab << op->declare(join("inAdder0_",adderIndex), col1-col0+2) << " <= \'0\' & " << inAdder0.str() << endl;
+				op->vhdl << tab << op->declare(join("inAdder1_",adderIndex), col1-col0+2) << " <= \'0\' & " << inAdder1.str() << endl;
+				op->vhdl << tab << op->declare(join("cin_",adderIndex)) << " <= " << cin.str() << endl;
+
+				IntAdder* adder = new IntAdder(op->getTarget(), col1-col0+2);
+				op->getOpListR().push_back(adder);
+
+				op->inPortMap(adder, "X", join("inAdder0_",adderIndex));
+				op->inPortMap(adder, "Y", join("inAdder1_",adderIndex));
+				op->inPortMap(adder, "Cin", join("cin_",adderIndex));
+
+				op->outPortMap(adder, "R", join("outAdder_",adderIndex));
+
+				op->vhdl << tab << op->instance(adder, join("Adder_",adderIndex));
+
+				for(int i=col0; i<=col1 + 2 ; i++)
+					{
+						addBit(i, join("outAdder_", adderIndex,"(",i-col0,")"),"");
+					}
+			}
+		else
+			{
+				op->vhdl << tab << op->declare(join("inAdder0_",adderIndex), col1-col0+1) << " <= " << inAdder0.str() << endl;
+				op->vhdl << tab << op->declare(join("inAdder1_",adderIndex), col1-col0+1) << " <= " << inAdder1.str() << endl;
+				op->vhdl << tab << op->declare(join("cin_",adderIndex)) << " <= " << cin.str() << endl;
+
+				IntAdder* adder = new IntAdder(op->getTarget(), col1-col0+1);
+				op->getOpListR().push_back(adder);
+
+				op->inPortMap(adder, "X", join("inAdder0_",adderIndex));
+				op->inPortMap(adder, "Y", join("inAdder1_",adderIndex));
+				op->inPortMap(adder, "Cin", join("cin_",adderIndex));
+
+				op->outPortMap(adder, "R", join("outAdder_",adderIndex));
+
+				op->vhdl << tab << op->instance(adder, join("Adder_",adderIndex));
+
+				for(int i=col0; i<=col1 + 1 ; i++)
+					{
+						addBit(i, join("outAdder_", adderIndex,"(",i-col0,")"),"");
+					}
+
+			}
+
+		adderIndex++;
+
+	}
+
+
+	//returns a pointer to the bit which has the biggest criticalPath+cycle combination
 	BitHeap::WeightedBit* BitHeap::getFinalLatestBit()
 	{
 	
@@ -810,29 +810,29 @@ namespace flopoco
 		WeightedBit *b=0;
 		for(unsigned w=minWeight; w<maxWeight; w++)
 			{
-			if(bits[w].size()==0)
-			{
-
-			}
-			else{			
-				if (bits[w].size() >= 1)
+				if(bits[w].size()==0)
 					{
-						for(list<WeightedBit*>::iterator it = bits[w].begin(); it!=bits[w].end(); ++it)
-							{
-								if (maxCycle < (*it)->getCycle())
-									{
-										maxCycle = (*it)->getCycle();
-										maxCP = (*it)->getCriticalPath(maxCycle);
-										b = *it;
-									}
-								else
-									if ((maxCycle == (*it)->getCycle())  &&  (maxCP <= (*it)->getCriticalPath(maxCycle)))
+
+					}
+				else{			
+					if (bits[w].size() >= 1)
+						{
+							for(list<WeightedBit*>::iterator it = bits[w].begin(); it!=bits[w].end(); ++it)
+								{
+									if (maxCycle < (*it)->getCycle())
 										{
+											maxCycle = (*it)->getCycle();
 											maxCP = (*it)->getCriticalPath(maxCycle);
 											b = *it;
 										}
-							}
-					}
+									else
+										if ((maxCycle == (*it)->getCycle())  &&  (maxCP <= (*it)->getCriticalPath(maxCycle)))
+											{
+												maxCP = (*it)->getCriticalPath(maxCycle);
+												b = *it;
+											}
+								}
+						}
 				}
 			}	
 		
@@ -866,15 +866,15 @@ namespace flopoco
 						else 
 							{
 								if (bits[i].size()==1)
-								{
-									inAdder0 << (*it)->getName();
-									inAdder1 << "\'0\'";
-								}
+									{
+										inAdder0 << (*it)->getName();
+										inAdder1 << "\'0\'";
+									}
 								else
-								{
-									inAdder0 << "\'0\'";
-									inAdder1 << "\'0\'";
-								}
+									{
+										inAdder0 << "\'0\'";
+										inAdder1 << "\'0\'";
+									}
 							}
 
 						if (i!=minWeight)
@@ -895,15 +895,15 @@ namespace flopoco
 		WeightedBit* b = getFinalLatestBit();
 		//managing the pipeline
 		if(b)
-		{
-			op->setCycle(  b ->getCycle()  );
-			op->setCriticalPath(  b->getCriticalPath(op->getCurrentCycle()));
-			op->manageCriticalPath(op->getTarget()->localWireDelay() + op->getTarget()->adderDelay(maxWeight-minWeight));
-            if(b->getCycle() < op->getCurrentCycle())
-            {
-                drawCycleLine = true;
-            }
-		}
+			{
+				op->setCycle(  b ->getCycle()  );
+				op->setCriticalPath(  b->getCriticalPath(op->getCurrentCycle()));
+				op->manageCriticalPath(op->getTarget()->localWireDelay() + op->getTarget()->adderDelay(maxWeight-minWeight));
+				if(b->getCycle() < op->getCurrentCycle())
+					{
+						drawCycleLine = true;
+					}
+			}
 
 		op->vhdl << tab << op->declare("inAdder0", maxWeight-minWeight) << "<= " << inAdder0.str() << endl;
 		op->vhdl << tab << op->declare("inAdder1", maxWeight-minWeight) << " <= " << inAdder1.str() << endl;
@@ -935,7 +935,7 @@ namespace flopoco
 		
 		unsigned n = target->lutInputs();
 		unsigned w;
-        didCompress = false;
+		didCompress = false;
 		
 		vector<BasicCompressor*> compressors (n+1, (BasicCompressor*) 0);
 		
@@ -1006,17 +1006,17 @@ namespace flopoco
 		
 		
 		for(unsigned i=minWeight; i<maxWeight; i++)
-        {
-            cnt[i]=0;
-            for(list<WeightedBit*>::iterator it = bits[i].begin(); it!=bits[i].end(); it++)
-            {
-                if((*it)->computeStage(stagesPerCycle, elementaryTime)<=stage)
-                {
-                    cnt[i]++;
-                }
-            }
-            //cnt[i]=bits[i].size();
-		}
+			{
+				cnt[i]=0;
+				for(list<WeightedBit*>::iterator it = bits[i].begin(); it!=bits[i].end(); it++)
+					{
+						if((*it)->computeStage(stagesPerCycle, elementaryTime)<=stage)
+							{
+								cnt[i]++;
+							}
+					}
+				//cnt[i]=bits[i].size();
+			}
 		
 		
 		REPORT(DEBUG,"start compressing");
@@ -1041,7 +1041,7 @@ namespace flopoco
 						cnt[i]-=possibleCompressors[j]->getColumnSize(0);
 						elemReduce(i,possibleCompressors[j]);
 						usedCompressors[j]=true;
-                        didCompress = true;
+						didCompress = true;
 
 
 				
@@ -1064,7 +1064,7 @@ namespace flopoco
 												cnt[i]-=possibleCompressors[j]->getColumnSize(0);
 												cnt[i+1]-=possibleCompressors[j]->getColumnSize(1);
 												elemReduce(i,possibleCompressors[j]);
-							                    didCompress = true;
+												didCompress = true;
 												usedCompressors[j]=true;
 											}
 										else 
@@ -1075,7 +1075,7 @@ namespace flopoco
 										REPORT(DEBUG,endl);
 										REPORT(DEBUG,"Using Compressor " << j <<", reduce column "<<i);
 										elemReduce(i,possibleCompressors[j]);
-                                        didCompress = true;
+										didCompress = true;
 										cnt[i]-=possibleCompressors[j]->getColumnSize(0);
 										usedCompressors[j]=true;
 										++j;
@@ -1084,7 +1084,7 @@ namespace flopoco
 							}
 						else
 							++j;
-				}
+					}
 
 
 
@@ -1092,12 +1092,12 @@ namespace flopoco
 	}
 
 
-    void BitHeap::initializeDrawing()
-    {
-       	ostringstream figureFileName;
+	void BitHeap::initializeDrawing()
+	{
+		ostringstream figureFileName;
 		figureFileName << "bit_heap.svg";
 	
-        drawCycleNumber = 0;
+		drawCycleNumber = 0;
 
 		FILE* pfile;
 		pfile  = fopen(figureFileName.str().c_str(), "w");
@@ -1105,110 +1105,110 @@ namespace flopoco
 		
 		fileFig.open (figureFileName.str().c_str(), ios::trunc);
 
- 		fileFig << "<?xml version=\"1.0\" standalone=\"no\"?>" << endl;
+		fileFig << "<?xml version=\"1.0\" standalone=\"no\"?>" << endl;
 		fileFig << "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\"" << endl;
 		fileFig << "\"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">" << endl;
-    }
+	}
 
-    void BitHeap::drawConfiguration(int offsetY)
-    {
-        int turnaroundX = 1500;
-        int color = 0;
-        int tempCycle = 0;
-        int cnt = 0;
-        double tempCP = 0;
-        if((drawCycleLine) && (drawCycleNumber==0))
-        {
-            fig << "<text x=\"" << turnaroundX + 85 << "\" y=\"" << 40
-		    	<< "\" fill=\"midnightblue\">" << "Cycle"<< "</text>" << endl;
-        }
+	void BitHeap::drawConfiguration(int offsetY)
+	{
+		int turnaroundX = 1500;
+		int color = 0;
+		int tempCycle = 0;
+		int cnt = 0;
+		double tempCP = 0;
+		if((drawCycleLine) && (drawCycleNumber==0))
+			{
+				fig << "<text x=\"" << turnaroundX + 85 << "\" y=\"" << 40
+				    << "\" fill=\"midnightblue\">" << "Cycle"<< "</text>" << endl;
+			}
 
-        if(drawCycleLine)
-        {
-            drawCycleNumber++;
-            fig << "<line x1=\"" << turnaroundX + 200 << "\" y1=\"" << offsetY +10 << "\" x2=\"" << turnaroundX - bits.size()*10 - 50
-                << "\" y2=\"" << offsetY +10 << "\" style=\"stroke:midnightblue;stroke-width:2\" />" << endl;
+		if(drawCycleLine)
+			{
+				drawCycleNumber++;
+				fig << "<line x1=\"" << turnaroundX + 200 << "\" y1=\"" << offsetY +10 << "\" x2=\"" << turnaroundX - bits.size()*10 - 50
+				    << "\" y2=\"" << offsetY +10 << "\" style=\"stroke:midnightblue;stroke-width:2\" />" << endl;
 
-		    fig << "<text x=\"" << turnaroundX + 100 << "\" y=\"" << offsetY + 3
-				<< "\" fill=\"midnightblue\">" << drawCycleNumber - 1 << "</text>" << endl;
+				fig << "<text x=\"" << turnaroundX + 100 << "\" y=\"" << offsetY + 3
+				    << "\" fill=\"midnightblue\">" << drawCycleNumber - 1 << "</text>" << endl;
 
-		    fig << "<text x=\"" << turnaroundX + 100 << "\" y=\"" << offsetY + 27
-				<< "\" fill=\"midnightblue\">" << drawCycleNumber  << "</text>" << endl;
+				fig << "<text x=\"" << turnaroundX + 100 << "\" y=\"" << offsetY + 27
+				    << "\" fill=\"midnightblue\">" << drawCycleNumber  << "</text>" << endl;
 
-            drawCycleLine = false;
-        }
-        else
-        {
-            fig << "<line x1=\"" << turnaroundX + 200 << "\" y1=\"" << offsetY +10 << "\" x2=\"" << turnaroundX - bits.size()*10 - 50
-                << "\" y2=\"" << offsetY +10 << "\" style=\"stroke:lightsteelblue;stroke-width:1\" />" << endl;
-            drawCycleLine = false;
-        }
+				drawCycleLine = false;
+			}
+		else
+			{
+				fig << "<line x1=\"" << turnaroundX + 200 << "\" y1=\"" << offsetY +10 << "\" x2=\"" << turnaroundX - bits.size()*10 - 50
+				    << "\" y2=\"" << offsetY +10 << "\" style=\"stroke:lightsteelblue;stroke-width:1\" />" << endl;
+				drawCycleLine = false;
+			}
 
-        for(unsigned i=0; i<bits.size(); i++)
-        {
+		for(unsigned i=0; i<bits.size(); i++)
+			{
 
-            if(bits[i].size()>0)
-            {
-                color=0;
-                tempCycle = 0;
-                tempCP = 0;
-                cnt = 0;
-                for(list<WeightedBit*>::iterator it = bits[i].begin(); it!=bits[i].end(); ++it)
-                {
-                    if(it==bits[i].begin())
-                    {
-                        tempCycle = (*it)->getCycle();
-                        tempCP = (*it)->getCriticalPath(tempCycle);
-                    }
-                    else
-                    {
-                        if((tempCycle!=(*it)->getCycle()) || 
-                                ((tempCycle==(*it)->getCycle()) && (tempCP!=(*it)->getCriticalPath((*it)->getCycle()))))
-                        {
-                            tempCycle = (*it)->getCycle();
-                            tempCP = (*it)->getCriticalPath(tempCycle);
-                            color++;
-                        }
-                    }
+				if(bits[i].size()>0)
+					{
+						color=0;
+						tempCycle = 0;
+						tempCP = 0;
+						cnt = 0;
+						for(list<WeightedBit*>::iterator it = bits[i].begin(); it!=bits[i].end(); ++it)
+							{
+								if(it==bits[i].begin())
+									{
+										tempCycle = (*it)->getCycle();
+										tempCP = (*it)->getCriticalPath(tempCycle);
+									}
+								else
+									{
+										if((tempCycle!=(*it)->getCycle()) || 
+										   ((tempCycle==(*it)->getCycle()) && (tempCP!=(*it)->getCriticalPath((*it)->getCycle()))))
+											{
+												tempCycle = (*it)->getCycle();
+												tempCP = (*it)->getCriticalPath(tempCycle);
+												color++;
+											}
+									}
 
-                    drawBit(cnt, i, turnaroundX, offsetY, (*it)->computeStage(stagesPerCycle, elementaryTime));
-                    cnt++;
-                }
-            }
-        }
+								drawBit(cnt, i, turnaroundX, offsetY, (*it)->computeStage(stagesPerCycle, elementaryTime));
+								cnt++;
+							}
+					}
+			}
 
         
-    }
+	}
 
-    void BitHeap::drawBit(int cnt, int w, int turnaroundX, int offsetY, int c)
-    {
-        const std::string colors[] = { "#97bf04","#0f1af2", "#f5515c", "#3958ff","#f2eb8d", "indianred", "yellow", "lightgreen"};
+	void BitHeap::drawBit(int cnt, int w, int turnaroundX, int offsetY, int c)
+	{
+		const std::string colors[] = { "#97bf04","#0f1af2", "#f5515c", "#3958ff","#f2eb8d", "indianred", "yellow", "lightgreen"};
 
-        int index = c % 8;
+		int index = c % 8;
 
-        fig << "<circle cx=\"" << turnaroundX - w*10 - 5 << "\" cy=\"" << offsetY - cnt*10 - 5 << "\" r=\"3\" fill=\"" << colors[index] << "\"/>" << endl;
-    }
+		fig << "<circle cx=\"" << turnaroundX - w*10 - 5 << "\" cy=\"" << offsetY - cnt*10 - 5 << "\" r=\"3\" fill=\"" << colors[index] << "\"/>" << endl;
+	}
 
-    void BitHeap::closeDrawing(int offsetY)
-    {
-        int turnaroundX = 1500;
-        fig << "<line x1=\"" << turnaroundX + 50 << "\" y1=\"" << 20 << "\" x2=\"" << turnaroundX + 50
-            << "\" y2=\"" << offsetY +30 << "\" style=\"stroke:midnightblue;stroke-width:1\" />" << endl;
+	void BitHeap::closeDrawing(int offsetY)
+	{
+		int turnaroundX = 1500;
+		fig << "<line x1=\"" << turnaroundX + 50 << "\" y1=\"" << 20 << "\" x2=\"" << turnaroundX + 50
+		    << "\" y2=\"" << offsetY +30 << "\" style=\"stroke:midnightblue;stroke-width:1\" />" << endl;
 
-        fig << "</svg>" << endl;
+		fig << "</svg>" << endl;
 
- 		fileFig << "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" viewBox=\"" <<turnaroundX - bits.size()*10 - 80 
-            << " " << 0 << " " << turnaroundX + 50 << " " << offsetY + 20 <<  "\">" << endl; 
-    //    fileFig << "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" viewBox=\"0 0 500 500\">" << endl; 
+		fileFig << "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" viewBox=\"" <<turnaroundX - bits.size()*10 - 80 
+		        << " " << 0 << " " << turnaroundX + 50 << " " << offsetY + 20 <<  "\">" << endl; 
+		//    fileFig << "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" viewBox=\"0 0 500 500\">" << endl; 
 
-        fileFig << fig.str();
+		fileFig << fig.str();
        
                
 
-        fileFig.close();
-    }
+		fileFig.close();
+	}
 
-    void BitHeap::generateVHDLforDSP(MultiplierBlock* m, int uid,int i)
+	void BitHeap::generateVHDLforDSP(MultiplierBlock* m, int uid,int i)
 	{
 		REPORT(DETAILED,"dsp");
 			
@@ -1223,22 +1223,22 @@ namespace flopoco
 		//PIPELINE!!!!
 		op->manageCriticalPath( op->getTarget()->localWireDelay(m->getwY()+m->getwY()) + op->getTarget()->DSPMultiplierDelay() ) ;  
 		
-			if(uid==0)	
+		if(uid==0)	
 			op->vhdl << tab << op->declare(join("DSPch",i,"_",uid), m->getwX()+m->getwY()) << " <="<< input1<<range(botX,topX)<<" *"\
-			<< input2 <<range	(botY,topY)<<";"<<endl;
-			else
+			         << input2 <<range	(botY,topY)<<";"<<endl;
+		else
 			op->vhdl << tab << op->declare(join("DSP",i,"_",uid), m->getwX()+m->getwY()) << " <="<< input1<<range(botX,topX)<<" *"\
-			<< input2 <<range	(botY,topY)<<";"<<endl;
+			         << input2 <<range	(botY,topY)<<";"<<endl;
 
-			if(uid==0)
-				s<<join("DSPch",i,"_",uid);
-			else
+		if(uid==0)
+			s<<join("DSPch",i,"_",uid);
+		else
 			
-	        s<<join("DSP",i,"_",uid);
+			s<<join("DSP",i,"_",uid);
 
-			m->setSignalName(s.str());
-			m->setSignalLength(m->getwX()+m->getwY());
-			REPORT(DETAILED,"dspout");
+		m->setSignalName(s.str());
+		m->setSignalLength(m->getwX()+m->getwY());
+		REPORT(DETAILED,"dspout");
 	}
 
 

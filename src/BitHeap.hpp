@@ -27,18 +27,18 @@
 
 
 /* 
-Each bit in the bit heap is flagged with the cycle at which it is produced.
-Compression works as follows:
+   Each bit in the bit heap is flagged with the cycle at which it is produced.
+   Compression works as follows:
 
-setCycle(0)
-while needed
-  manageCriticalPath() to advance the cycle  
-  consider the subset of bits with cycles 0 to getCycle()
-  build the longest possible heap of size 2 or less from the right,
-     and feed them to an adder.
-  compress the others bits greedily, 
-    adding more bits, flagged with the current cycle, 
-    setting the cycle of the consumed bits to -1 so they won't be considered in subsequent iterations
+   setCycle(0)
+   while needed
+   manageCriticalPath() to advance the cycle  
+   consider the subset of bits with cycles 0 to getCycle()
+   build the longest possible heap of size 2 or less from the right,
+   and feed them to an adder.
+   compress the others bits greedily, 
+   adding more bits, flagged with the current cycle, 
+   setting the cycle of the consumed bits to -1 so they won't be considered in subsequent iterations
   
 */
 
@@ -70,8 +70,8 @@ namespace flopoco{
 			/** return the critical path of this bit */
 			double getCriticalPath(int atCycle);
 
-            /** returns the stage when this bit should be compressed */ 
-            int computeStage(int stagesPerCycle, double elementaryTime);
+			/** returns the stage when this bit should be compressed */ 
+			int computeStage(int stagesPerCycle, double elementaryTime);
 
 
 			
@@ -95,32 +95,32 @@ namespace flopoco{
 			int weight;
 			int uid;
 			string name;
- 			string srcFileName;
- 			string uniqueName_;
+			string srcFileName;
+			string uniqueName_;
 
 		};
 
 	public:
 
 		/** The constructor
-		 @param op         the operator in which this bit heap is beeing built
-		 @param maxWeight  the maximum weight of the heap (it should be known statically, shouldn't it?) */
+		    @param op         the operator in which this bit heap is beeing built
+		    @param maxWeight  the maximum weight of the heap (it should be known statically, shouldn't it?) */
 		BitHeap(Operator* op, int maxWeight);
 		~BitHeap();
 		
 		/** add a bit to the bit heap. The bit will be added at the cycle op->currentCycle() with critical path op->getCriticalPath().
-		 @param weight   the weight of the bit to be added
-		 @param rhs      the right-hand VHDL side defining this bit.
-		 @param comment  a VHDL comment for this bit*/
+		    @param weight   the weight of the bit to be added
+		    @param rhs      the right-hand VHDL side defining this bit.
+		    @param comment  a VHDL comment for this bit*/
 		void addBit(unsigned weight, string rhs, string comment="");
 
 		/** add a constant 1 to the bit heap. All the constant bits are added to the constantBits mpz, so we don't generate hardware to compress constants....
-		 @param weight   the weight of the 1 to be added */
+		    @param weight   the weight of the 1 to be added */
 		void addConstantOneBit(unsigned weight) {constantBits += (mpz_class(1) << weight);};
 
 		/** add a constant to the bit heap. It will be added to the constantBits mpz, so we don't generate hardware to compress constants....
-		 @param weight   the weight of the LSB of c (or, where c should be added)
-		 @param c        the value to be added */
+		    @param weight   the weight of the LSB of c (or, where c should be added)
+		    @param c        the value to be added */
 		void addConstant(unsigned weight, mpz_class c) {constantBits += (c << weight);};
 
 		/** generate the VHDL for the bit heap. To be called last by operators using BitHeap.*/
@@ -131,43 +131,43 @@ namespace flopoco{
 		void  addDSP(MultiplierBlock* m);
 
 		
-        void elemReduce(unsigned i, BasicCompressor* bc);
+		void elemReduce(unsigned i, BasicCompressor* bc);
 		void iterateDSP();
 
-        //applies a 3_2 compressor to the column sent as parameter
-        void applyCompressor3_2(int col);
+		//applies a 3_2 compressor to the column sent as parameter
+		void applyCompressor3_2(int col);
 
-        //applies an adder with wIn = col1-col0+1; col0 always has size=3 and the other columns (includind col1) have size=2
-        void applyAdder(int col0, int col1);
+		//applies an adder with wIn = col1-col0+1; col0 always has size=3 and the other columns (includind col1) have size=2
+		void applyAdder(int col0, int col1);
 
 		//** computes the latest bit from a column, in order to compress just the bits which are smaller than that one*/
-        BitHeap::WeightedBit* computeLatest(unsigned w, int c0, int c1);
+		BitHeap::WeightedBit* computeLatest(unsigned w, int c0, int c1);
         
 		//** computes the latest bit from the bitheap, in order to manage the cycle before the final adding*/
-        BitHeap::WeightedBit* getFinalLatestBit();
+		BitHeap::WeightedBit* getFinalLatestBit();
 
-        BitHeap::WeightedBit* getFirstSoonestBit();
+		BitHeap::WeightedBit* getFirstSoonestBit();
 
-        /** remove a bit from the bitheap.
-         @param weight  the weight of the bit to be removed
-         @param dir if dir==0 the bit will be removed from the begining of the list 
-         			if dir==1 the bit will be removed from the end of the list
-        */
-        void removeBit(unsigned weight, int dir);
+		/** remove a bit from the bitheap.
+		    @param weight  the weight of the bit to be removed
+		    @param dir if dir==0 the bit will be removed from the begining of the list 
+		    if dir==1 the bit will be removed from the end of the list
+		*/
+		void removeBit(unsigned weight, int dir);
 
 		/** get the parent operator */
 		Operator* getOp() {return op;};
 
 
-        /** generate the final adder for the bit heap (when the columns height is maximum 2*/
-        void adderVHDL();
+		/** generate the final adder for the bit heap (when the columns height is maximum 2*/
+		void adderVHDL();
 
 		
 
 		/** search for the possible chainings and generates the VHDL code too*/
-		 void doChaining();
+		void doChaining();
 
-        /**is making the compression for the bitheap**/
+		/**is making the compression for the bitheap**/
 		void compress(int stage);
 		
 		/** return the current height a column (bits not yet compressed) */
@@ -185,21 +185,21 @@ namespace flopoco{
 		/** remove the compressed bits */
 		void removeCompressedBits(int c, int red);
 
-        /** returns the maximum height list from the bitheap vector*/
+		/** returns the maximum height list from the bitheap vector*/
 		unsigned getMaxHeight();
 
 		void getMaxWeight();
 
-		//generate the VHDL code for 1 dsp, 
+		/** generate the VHDL code for 1 dsp */ 
 		void generateVHDLforDSP(MultiplierBlock* m, int uid,int i);
 
- 		void initializeDrawing();
+		void initializeDrawing();
 
-        void closeDrawing(int offsetY);
+		void closeDrawing(int offsetY);
 
-        void drawConfiguration(int offsetY);
+		void drawConfiguration(int offsetY);
 
-        void drawBit(int cnt, int w, int turnaroundX, int offsetY, int c);
+		void drawBit(int cnt, int w, int turnaroundX, int offsetY, int c);
 
 	private:
 		Operator* op;
@@ -211,16 +211,16 @@ namespace flopoco{
 		unsigned inConcatIndex; /** input index - to form the inputsignals of the compressor*/
 		unsigned outConcatIndex; /** output index - to form the outputsignals of the compressor*/
 		unsigned compressorIndex; /** the index of the instance of compressors*/
-        unsigned adderIndex; /** the index of the instance of IntAdder*/
-        unsigned cnt[100000]; /** number of bits which will be compressed in the current iteration*/
+		unsigned adderIndex; /** the index of the instance of IntAdder*/
+		unsigned cnt[100000]; /** number of bits which will be compressed in the current iteration*/
 		vector<int> uid;   /**< unique id, per weight */
-     	ofstream fileFig;
-        ostringstream fig;
-        bool drawCycleLine;
-        int drawCycleNumber;    
-        int stagesPerCycle;  
-        double elementaryTime; 
-        bool didCompress; 
+		ofstream fileFig;
+		ostringstream fig;
+		bool drawCycleLine;
+		int drawCycleNumber;    
+		int stagesPerCycle;  
+		double elementaryTime; 
+		bool didCompress; 
 		
 		vector<list<WeightedBit*> > bits; /**<  The list is ordered by arrival time of the bits, i.e. lexicographic order on (cycle, cp)*/
 		vector<MultiplierBlock*> mulBlocks; //the vector of multiplier blocks
