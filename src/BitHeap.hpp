@@ -123,6 +123,19 @@ namespace flopoco{
 		    @param c        the value to be added */
 		void addConstant(unsigned weight, mpz_class c) {constantBits += (c << weight);};
 
+		/** add to the bit heap the value held by a signal, considered as an unsigned integer */
+		void addUnsignedBitVector(unsigned weight, string x, unsigned size);
+
+		/** add to the bit heap the opposite of the value held by a signal, considered as an unsigned integer */
+		void subtractUnsignedBitVector(unsigned weight, string x, unsigned size);
+
+		/** add to the bit heap the value held by a signal, considered as a signed integer. size includes the sign bit */
+		void addSignedBitVector(unsigned weight, string x, unsigned size);
+
+		/** add to the bit heap the opposite of the value held by a signal, considered as a signed integer. size includes the sign bit */
+		void subtractSignedBitVector(unsigned weight, string x, unsigned size);
+
+
 		/** generate the VHDL for the bit heap. To be called last by operators using BitHeap.*/
 		void generateCompressorVHDL();
 
@@ -130,9 +143,16 @@ namespace flopoco{
 		//adds a new MultiplierBlock in the list he already has
 		void  addDSP(MultiplierBlock* m);
 
-		
-		void elemReduce(unsigned i, BasicCompressor* bc);
+
+		/** search for the possible chainings and generates the VHDL code too*/
+		void doChaining();
+
 		void iterateDSP();
+		
+
+	protected:
+
+		void elemReduce(unsigned i, BasicCompressor* bc);
 
 		//applies a 3_2 compressor to the column sent as parameter
 		void applyCompressor3_2(int col);
@@ -163,9 +183,6 @@ namespace flopoco{
 		void adderVHDL();
 
 		
-
-		/** search for the possible chainings and generates the VHDL code too*/
-		void doChaining();
 
 		/**is making the compression for the bitheap**/
 		void compress(int stage);
@@ -225,7 +242,10 @@ namespace flopoco{
 		vector<list<WeightedBit*> > bits; /**<  The list is ordered by arrival time of the bits, i.e. lexicographic order on (cycle, cp)*/
 		vector<MultiplierBlock*> mulBlocks; //the vector of multiplier blocks
      
-		string srcFileName;	};
+		// For error reporting to work
+		string srcFileName;
+		string uniqueName_;	
+	};
 
 
 }

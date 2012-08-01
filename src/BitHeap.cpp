@@ -88,6 +88,7 @@ namespace flopoco
 	{
 		// Set up the vector of lists of weighted bits, and the vector of uids
 		srcFileName=op->getSrcFileName() + ":BitHeap"; // for REPORT to work
+		uniqueName_=op->getName() + ":BitHeap"; // for REPORT to work
 		REPORT(DEBUG, "Creating BitHeap of size " << maxWeight);
 		chunkDoneIndex=0;
 		inConcatIndex=0;
@@ -174,6 +175,40 @@ namespace flopoco
 			}	
 	}
 
+
+
+	void BitHeap::addUnsignedBitVector(unsigned weight, string x, unsigned size){
+		if(weight+size>maxWeight)
+			THROWERROR("in addUnsignedBitVector: Size of signal " << x << " is " << size << 
+			           ", adding it at weight " << weight << " overflows the bit heap (maxWeight=" << maxWeight << ")");
+
+		
+		for (unsigned i=0; i<size; i++) {
+			ostringstream s;
+			s << x << of(i);
+			addBit(weight+i, s.str());
+		}
+	}
+
+	void BitHeap::subtractUnsignedBitVector(unsigned weight, string x, unsigned size){
+		if(weight+size>maxWeight)
+			THROWERROR("in subtractUnsignedBitVector: Size of signal " << x << " is " << size << 
+			           ", adding it at weight " << weight << " overflows the bit heap (maxWeight=" << maxWeight << ")");
+
+		for (unsigned i=0; i<size; i++) {
+			ostringstream s;
+			s << "not " << x << of(i);
+			addBit(weight+i, s.str());
+		}
+}
+
+
+	void BitHeap::addSignedBitVector(unsigned weight, string x, unsigned size){}
+
+
+	void BitHeap::subtractSignedBitVector(unsigned weight, string x, unsigned size){}
+
+
 	void  BitHeap::addDSP(MultiplierBlock* m)
 	{
 		//insert into good position, the vector of multiplierBlocks should be descending by weigth
@@ -199,8 +234,8 @@ namespace flopoco
 
 	void BitHeap::doChaining()
 	{
-		for(int i=0;i<mulBlocks.size();i++)
-			for(int j=0;j<mulBlocks.size();j++)
+		for(unsigned i=0;i<mulBlocks.size();i++)
+			for(unsigned j=0;j<mulBlocks.size();j++)
 				{
 					if((mulBlocks[i]->getNext()==NULL) && (mulBlocks[j]->getPrevious()==NULL)&& (mulBlocks[i]->canBeChained(mulBlocks[j])))
 						{
@@ -213,7 +248,7 @@ namespace flopoco
 
 	void BitHeap::iterateDSP()
 	{
-		for(int i=0;i<mulBlocks.size();i++)
+		for(unsigned i=0;i<mulBlocks.size();i++)
 			{	
 		
 				REPORT(DETAILED,"mulblocksi->getprev=="<<mulBlocks[i]->getPrevious());
@@ -536,7 +571,7 @@ namespace flopoco
 		int minCycle = firstBit->getCycle();
 		double minCP = firstBit->getCriticalPath(minCycle);
 
-		elementaryTime = op->getTarget()->lutDelay();// + op->getTarget()->localWireDelay();
+		elementaryTime = op->getTarget()->lutDelay() + op->getTarget()->localWireDelay();
 
 		stagesPerCycle = (1/op->getTarget()->frequency()) / elementaryTime;
 
@@ -553,7 +588,7 @@ namespace flopoco
 
 		//compressing until the maximum height of the columns is 3
 		//FIXME change 2 to 3 in order to use extra additions 
-		while (getMaxHeight()>2)
+		while (getMaxHeight()>3)
 			{
                 
 				REPORT(DETAILED, "didCompress " << didCompress);
@@ -570,24 +605,59 @@ namespace flopoco
 
 
 		//do additional compressions or additions
-		if (getMaxHeight()>3)
+		if (getMaxHeight()>2)
 			{
 				unsigned i = 0;
-
-				for(unsigned i=0; i<maxWeight; i++)
-					{
+				// remember the initial heights
+				for(unsigned i=0; i<maxWeight; i++)	{
 						cnt[i]=bits[i].size();
 					}
 
-				//find the first column with 3 bits; the rest go to the final adder
+				//find the first column with 3 bits (starting from LSB); the rest go to the final adder
 				while(bits[i].size()<3)
-					{
 						i++;
-					}
 
-				while(i<maxWeight-1)
+				int first2, first3;
+				first3=i;
+				bool doLoop=true;
+				while(doLoop)
 					{
+						// Now we are sure cnt[i] is 3;
+						//look for the first two
+						while (i<maxWeight && cnt[i]==3) 
+							i++;
 
+						if (i==maxWeight) {
+							applyCompressor3_2(maxWeight-1);
+							doLoop=false;
+						}
+						else {
+							// Now we are sure there is at least one 2
+							first2=i;
+						
+							if(first3<first2-1) {
+								for(int j=first3; j<first2-1; j++)
+									applyCompressor3_2(j);
+							}
+							
+							//look for the first three again
+							while (i<maxWeight &&  cnt[i]<3) 
+								i++;
+							
+							if (i==maxWeight) {	
+								//								cerr << "No final 3" << endl
+									applyAdder(first2-1,maxWeight-1);							
+								doLoop=false;
+							}
+							else {
+								first3=i;
+								//								cerr << "Case final 3" << endl
+								applyAdder(first2-1, first3-1);							
+							}
+						}
+						
+
+#if 0
 						//REPORT(DEBUG,"print i "<<i);
 						if ((cnt[i]==3) && (cnt[i+1]==3))
 							{
@@ -610,8 +680,10 @@ namespace flopoco
 								j++;
 								i=j;
 							}
+#endif
+
+						}
 					}
-			}
          
 		REPORT(DEBUG, "Column height after all compressions");
 		for (unsigned w=0; w<bits.size(); w++) 
@@ -693,108 +765,86 @@ namespace flopoco
 			}
 	}
 
-	//TODO
-	void BitHeap::applyAdder(int col0, int col1)
+
+
+
+	// addition stretching from weights col0(LSB) to msb included
+	// assumes cnt has been set up
+	void BitHeap::applyAdder(int lsb, int msb)
 	{
 		stringstream inAdder0, inAdder1, cin, outAdder;
-        
-		for(int i = col0; i<=col1; i++)
+
+						
+		for(int i = msb; i>=lsb+1; i--)
 			{
-				if(i>=0)
+				list<WeightedBit*>::iterator it = bits[i].begin();
+				
+				if(cnt[i]>=2)
 					{
-						list<WeightedBit*>::iterator it = bits[i].begin();
-						//if(bits[i].size()==2)
-						if(cnt[i]==2)
+						inAdder0 << (*it)->getName();
+						it++;
+						inAdder1 << (*it)->getName();
+					}
+				else
+					{
+						//if(bits[i].size()==1)
+						if(cnt[i]==1)
 							{
 								inAdder0 << (*it)->getName();
-								it++;
-								inAdder1 << (*it)->getName();
+								inAdder1 << "\'0\'";
 							}
 						else
 							{
-								//if(bits[i].size()==1)
-								if(cnt[i]==1)
-									{
-										inAdder0 << (*it)->getName();
-										inAdder1 << "\'0\'";
-									}
-								else
-									{
-										inAdder0 << "\'0\'";                       
-										inAdder1 << "\'0\'";
-									}
+								inAdder0 << "\'0\'";                       
+								inAdder1 << "\'0\'";
 							}
-
-						if(i!=col1)
-							{
-								inAdder0 << " & ";
-								inAdder1 << " & ";
-							}
-
-						if(i==col0)
-							{
-								it++;
-								cin << (*it)->getName() << ";";
-							}
-
-						removeCompressedBits(i, cnt[i]);
-						//removeCompressedBits(i,bits[i].size());
-
 					}
 
+				inAdder0 << " & ";
+				inAdder1 << " & ";
+
+				removeCompressedBits(i, cnt[i]);
 			}
+
+		// We know the LSB col is of size 3
+		list<WeightedBit*>::iterator it = bits[lsb].begin();
+		inAdder0 << (*it)->getName();
+		it++;
+		inAdder1 << (*it)->getName();
+		it++;
+		cin << (*it)->getName() << ";";
+		removeCompressedBits(lsb, cnt[lsb]);
+
 
 		inAdder0 << ";";
 		inAdder1 << ";";
 
+		op->vhdl << tab << op->declare(join("inAdder0_",adderIndex), msb-lsb+2) << " <= \'0\' & " << inAdder0.str() << endl;
+		op->vhdl << tab << op->declare(join("inAdder1_",adderIndex), msb-lsb+2) << " <= \'0\' & " << inAdder1.str() << endl;
+		op->vhdl << tab << op->declare(join("cin_",adderIndex)) << " <= " << cin.str() << endl;
 
+#if 0
 
+		IntAdder* adder = new IntAdder(op->getTarget(), msb-lsb+2);
+		op->getOpListR().push_back(adder);
+		
+		op->inPortMap(adder, "X", join("inAdder0_",adderIndex));
+		op->inPortMap(adder, "Y", join("inAdder1_",adderIndex));
+		op->inPortMap(adder, "Cin", join("cin_",adderIndex));
+		
+		op->outPortMap(adder, "R", join("outAdder_",adderIndex));
 
-		if(col1!=maxWeight-1)
-			{
-				op->vhdl << tab << op->declare(join("inAdder0_",adderIndex), col1-col0+2) << " <= \'0\' & " << inAdder0.str() << endl;
-				op->vhdl << tab << op->declare(join("inAdder1_",adderIndex), col1-col0+2) << " <= \'0\' & " << inAdder1.str() << endl;
-				op->vhdl << tab << op->declare(join("cin_",adderIndex)) << " <= " << cin.str() << endl;
+		op->vhdl << tab << op->instance(adder, join("Adder_",adderIndex));
+				
+#else
+		op->vhdl << tab << op->declare(join("outAdder_",adderIndex),msb-lsb+2) << " <= " <<  join("inAdder0_",adderIndex) << " + " << join("inAdder1_",adderIndex) << " + " << join("cin_",adderIndex) << ";" <<endl ;
 
-				IntAdder* adder = new IntAdder(op->getTarget(), col1-col0+2);
-				op->getOpListR().push_back(adder);
+#endif
 
-				op->inPortMap(adder, "X", join("inAdder0_",adderIndex));
-				op->inPortMap(adder, "Y", join("inAdder1_",adderIndex));
-				op->inPortMap(adder, "Cin", join("cin_",adderIndex));
-
-				op->outPortMap(adder, "R", join("outAdder_",adderIndex));
-
-				op->vhdl << tab << op->instance(adder, join("Adder_",adderIndex));
-
-				for(int i=col0; i<=col1 + 2 ; i++)
-					{
-						addBit(i, join("outAdder_", adderIndex,"(",i-col0,")"),"");
-					}
-			}
-		else
-			{
-				op->vhdl << tab << op->declare(join("inAdder0_",adderIndex), col1-col0+1) << " <= " << inAdder0.str() << endl;
-				op->vhdl << tab << op->declare(join("inAdder1_",adderIndex), col1-col0+1) << " <= " << inAdder1.str() << endl;
-				op->vhdl << tab << op->declare(join("cin_",adderIndex)) << " <= " << cin.str() << endl;
-
-				IntAdder* adder = new IntAdder(op->getTarget(), col1-col0+1);
-				op->getOpListR().push_back(adder);
-
-				op->inPortMap(adder, "X", join("inAdder0_",adderIndex));
-				op->inPortMap(adder, "Y", join("inAdder1_",adderIndex));
-				op->inPortMap(adder, "Cin", join("cin_",adderIndex));
-
-				op->outPortMap(adder, "R", join("outAdder_",adderIndex));
-
-				op->vhdl << tab << op->instance(adder, join("Adder_",adderIndex));
-
-				for(int i=col0; i<=col1 + 1 ; i++)
-					{
-						addBit(i, join("outAdder_", adderIndex,"(",i-col0,")"),"");
-					}
-
-			}
+		for(int i=lsb; i<msb + 2 ; i++)	{
+			addBit(i, join("outAdder_", adderIndex,"(",i-lsb,")"),"");
+		}
+ 
 
 		adderIndex++;
 

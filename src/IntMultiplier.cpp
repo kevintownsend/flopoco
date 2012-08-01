@@ -636,6 +636,10 @@ namespace flopoco {
 			}
 		}
 
+
+
+
+
 		/**************************************************************************/
 		void IntMultiplier::buildHeapLogicOnly(int topX, int topY, int botX, int botY,int uid) {
 			Target *target=getTarget();
@@ -682,7 +686,7 @@ namespace flopoco {
 				oplist.push_back(t);
 
 
-				setCycle(0);
+				setCycle(0); // TODO FIXME for the virtual multiplier case where inputs can arrive later
 				setCriticalPath(initialCP);
 				// SmallMultTable is built to cost this:
 				manageCriticalPath( getTarget()->localWireDelay(chunksX) + getTarget()->lutDelay() ) ;  
@@ -721,8 +725,6 @@ namespace flopoco {
 				}				
 
 		
-
-				// And that's it, now go compress
 		
 			}
 	 
