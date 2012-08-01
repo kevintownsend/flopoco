@@ -97,6 +97,8 @@ noinst_HEADERS = \
           FixedPointFunctions/PiecewiseFunction.hpp \
           FixedPointFunctions/FunctionTable.hpp \
           FixedPointFunctions/GenericEvaluator.hpp \
+					Complex/FixedComplexAdder.hpp \
+					Complex/FixedComplexMultiplier.hpp \
           Table.hpp \
           Target.hpp \
           TestBench.hpp \
@@ -243,6 +245,8 @@ libflopoco_la_SOURCES = \
                         LNS/LNSSqrt.cpp \
                         LNS/AtanPow \
                         FixedPointFunctions/GenericEvaluator.cpp \
+												Complex/FixedComplexAdder.cpp \
+												Complex/FixedComplexMultiplier.cpp \
                         LNS/LogSinCos.cpp \
                         apps/Collision.cpp \
                         apps/FPFMAcc.cpp \
