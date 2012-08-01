@@ -382,9 +382,11 @@ namespace flopoco
 					}
 			}
 
+        //not sure if we need this anymore; also, if used, will kill new version of bitheap
+        //
 		//the cnt[w] should increase, because the bit introduced is smaller then the biggest bit which will be compressed in current iteration
-		if(count<cnt[w])
-			cnt[w]++;
+		//if(count<cnt[w])
+		//	cnt[w]++;
 
 		// now generate VHDL
 		op->vhdl << tab << op->declare(bit->getName()) << " <= " << rhs << ";";
@@ -619,7 +621,9 @@ namespace flopoco
 		offsetY += 20 + getMaxHeight()*10;
 		drawConfiguration(offsetY);
 
-
+        REPORT(DEBUG, endl);
+        REPORT(DEBUG, "only three levels left");
+        
 		//do additional compressions or additions
 		if (getMaxHeight()>2)
 			{
@@ -630,8 +634,15 @@ namespace flopoco
 					}
 
 				//find the first column with 3 bits (starting from LSB); the rest go to the final adder
-				while(bits[i].size()<3)
+				while(cnt[i]<3)
 						i++;
+
+    	    	REPORT(DEBUG, "Column height after all compressions");
+	        	for (unsigned w=0; w<bits.size(); w++) 
+		    	{
+			    	REPORT(DEBUG, "   w=" << w << ":\t height=" << bits[w].size());
+			    	printColumnInfo(w);  
+		    	}
 
 				int first2, first3;
 				first3=i;
@@ -640,10 +651,13 @@ namespace flopoco
 					{
 						// Now we are sure cnt[i] is 3;
 						//look for the first two
+                        REPORT(DEBUG, i << "  " << cnt[i]);
 						while (i<maxWeight && cnt[i]==3) 
 							i++;
-
-						if (i==maxWeight) {
+                        
+                        REPORT(DEBUG, i << "  " << cnt[i]);
+						
+                        if (i==maxWeight) {
 							applyCompressor3_2(maxWeight-1);
 							doLoop=false;
 						}
@@ -668,7 +682,8 @@ namespace flopoco
 							else {
 								first3=i;
 								//								cerr << "Case final 3" << endl
-								applyAdder(first2-1, first3-1);							
+								applyAdder(first2-1, first3-1);	
+                                //i++;                        
 							}
 						}
 						
@@ -790,7 +805,7 @@ namespace flopoco
 	{
 		stringstream inAdder0, inAdder1, cin, outAdder;
 
-						
+	    REPORT(DEBUG, "Applying an adder from columns " << lsb << " to " << msb);					
 		for(int i = msb; i>=lsb+1; i--)
 			{
 				list<WeightedBit*>::iterator it = bits[i].begin();
