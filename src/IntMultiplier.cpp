@@ -232,7 +232,7 @@ namespace flopoco {
 		setCopyrightString ( "Florent de Dinechin, Kinga Illyes, Bogdan Popa, Bogdan Pasca, 2012" );
 		
 		// useDSP or not? 
-		useDSP = (ratio>0) & target->hasHardMultipliers();
+		useDSP = (ratio>0) && target->hasHardMultipliers();
 
 
 		{

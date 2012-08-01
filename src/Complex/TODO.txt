@@ -1,0 +1,8 @@
+- rename all the Int* into Fixed*
+- change all the interfaces to MSBweight, LSBweight instead of wI, wF
+- add them to the CMakeList and FloPoCo.hpp
+
+
+
+- prefix the FP complex operator with FP
+- add them too

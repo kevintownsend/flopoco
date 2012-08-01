@@ -317,7 +317,12 @@ src/IntMultipliers/MultiplierBlock
 
  src/FPSumOfSquares
 
+# ---------- Complex arithmetic --------------------------------------------- 
+src/Complex/FixedComplexAdder
+src/Complex/FixedComplexMultiplier
+
 # ---------- Conversion --------------------------------------------- 
+
  src/FP2Fix
  src/Fix2FP
  src/InputIEEE

@@ -152,6 +152,11 @@
 #include "OutputIEEE.hpp"
 
 
+/* Complex arithmetic */
+#include "Complex/FixedComplexAdder.hpp"
+#include "Complex/FixedComplexMultiplier.hpp"
+
+
 /* test-bench related ---------------------------------------- */
 #include "TestBench.hpp"
 
