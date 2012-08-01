@@ -127,6 +127,25 @@ using namespace std;
 namespace flopoco {
 
 
+	int IntMultiplier::neededGuardBits(int wX, int wY, int wOut){
+		int g;
+		if(wX+wY==wOut)
+			g=0;
+		else {
+			unsigned i=0;
+			mpz_class ulperror=1;
+			while(wX+wY - wOut  > intlog2(ulperror)) {
+				// REPORT(DEBUG,"i = "<<i<<"  ulperror "<<ulperror<<"  log:"<< intlog2(ulperror) << "  wOut= "<<wOut<< "  wFull= "<< wX+wY);
+				i++;
+				ulperror += (i+1)*(mpz_class(1)<<i);
+			}
+			g=wX+wY-i-wOut;
+			// REPORT(DEBUG, "ulp truncation error=" << ulperror << "    g=" << g);
+		}
+		return g;
+	}
+
+
 	void IntMultiplier::initialize() {
 		// interface redundancy
 		if(wOut<0 || wXdecl<0 || wYdecl<0) {
@@ -148,19 +167,7 @@ namespace flopoco {
 
 		wTruncated = wFull - wOut;
 
-		if(wTruncated==0)
-			g=0;
-		else {
-			unsigned i=0;
-			mpz_class ulperror=1;
-			while( wFull -wOut  > intlog2(ulperror)) {
-				REPORT(DEBUG,"i = "<<i<<"  ulperror "<<ulperror<<"  log:"<< intlog2(ulperror) << "  wOut= "<<wOut<< "  wFull= "<<wFull);
-				i++;
-				ulperror += (i+1)*(mpz_class(1)<<i);
-			}
-			g=wFull-i-wOut;
-			REPORT(DEBUG, "ulp truncation error=" << ulperror << "    g=" << g);
-		}
+		g = neededGuardBits(wXdecl, wYdecl, wOut);
 
 		maxWeight = wOut+g;
 		weightShift = wFull - maxWeight;  
@@ -197,9 +204,9 @@ namespace flopoco {
 
 	
 	// The virtual constructor
-	IntMultiplier::IntMultiplier (Operator* parentOp_, BitHeap* bitHeap_, Signal* x_, Signal* y_, int wX_, int wY_, int wOut_, int lsbWeight_, bool signedIO_, float ratio_):
+	IntMultiplier::IntMultiplier (Operator* parentOp_, BitHeap* bitHeap_, Signal* x_, Signal* y_, int wX_, int wY_, int wOut_, int lsbWeight_, bool negate_, bool signedIO_, float ratio_):
 		Operator ( parentOp_->getTarget()), 
-		wXdecl(wX_), wYdecl(wY_), wOut(wOut_), signedIO(signedIO_), ratio(ratio_),  maxError(0.0), parentOp(parentOp_), bitHeap(bitHeap_), x(x_), y(y_) {
+		wXdecl(wX_), wYdecl(wY_), wOut(wOut_), signedIO(signedIO_), ratio(ratio_),  maxError(0.0), parentOp(parentOp_), bitHeap(bitHeap_), x(x_), y(y_), negate(negate_) {
 		multiplierUid=parentOp->getNewUId();
 		srcFileName="IntMultiplier";
 		useDSP = (ratio>0) && getTarget()->hasHardMultipliers();
@@ -727,7 +734,6 @@ namespace flopoco {
 	void IntMultiplier::splitting(int horDSP, int verDSP, int wxDSP, int wyDSP,int restX, int restY)
 	{
 						
-		int k=0;
 		for(int i=0;i<horDSP;i++)
 			{
 			for(int j=0;j<verDSP;j++)

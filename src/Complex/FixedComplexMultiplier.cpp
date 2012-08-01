@@ -2,7 +2,6 @@
 #include <sstream>
 #include "FixedComplexMultiplier.hpp"
 
-
 using namespace std;
 
 namespace flopoco{
@@ -33,6 +32,31 @@ namespace flopoco{
 		addOutput("Zr",   2*w, 2);
 
 	
+
+#if 1
+
+		int g=IntMultiplier::neededGuardBits(w, w, w); 
+
+		BitHeap* bitHeapRe = new BitHeap(this, w+g);  // will add XrYr - XiYi
+		BitHeap* bitHeapIm = new BitHeap(this, w+g);  // will add XrYi + XiYr
+		// a virtual multiplier that will add its result to the bitHeap
+		IntMultiplier* multXrYr = new IntMultiplier(this, bitHeapRe, 
+		                                            getSignalByName("Xr"),
+		                                            getSignalByName("Xr"),
+		                                            w, w, w, 
+		                                            g, // lsbWeight
+		                                            false, // subtract
+		                                            signedOperator, 1.0);
+		IntMultiplier* multXiYi = new IntMultiplier(this, bitHeapRe, 
+		                                            getSignalByName("Xr"),
+		                                            getSignalByName("Xr"),
+		                                            w, w, w, 
+		                                            g, // lsbWeight
+		                                            true, // subtract
+		                                            signedOperator, 1.0);
+		
+#else // pre-BitHeap version
+
 		if(!hasLessMultiplications){
 			IntMultiplier* multiplyOperator = new IntMultiplier(target, w, w, w, signedOperator, 1.0, inDelayMap("X",getCriticalPath()));
 			oplist.push_back(multiplyOperator);
@@ -151,6 +175,7 @@ namespace flopoco{
 				exit(1);
 			}
 		}
+#endif
 	
 	}	
 

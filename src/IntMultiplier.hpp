@@ -54,10 +54,14 @@ class IntMultiplier : public Operator {
      * @param[in] wOut         wOut size for a truncated multiplier (0 means full multiplier)
      * @param[in] lsbWeight     the weight, within this BitHeap, corresponding to the LSB of the multiplier output. 
      *                          Note that there should be enough bits below for guard bits in case of truncation.
+     * @param[in] negate     if true, the multiplier result is subtracted from the bit heap 
      * @param[in] signedIO     false=unsigned, true=signed
      * @param[in] ratio            DSP block use ratio
      **/
-	IntMultiplier (Operator* parentOp, BitHeap* bitHeap,  Signal* x, Signal* y, int wX, int wY, int wOut, int lsbWeight, bool signedIO, float ratio);
+	IntMultiplier (Operator* parentOp, BitHeap* bitHeap,  Signal* x, Signal* y, int wX, int wY, int wOut, int lsbWeight, bool negate, bool signedIO, float ratio);
+
+	/** How many guard bits will a truncated multiplier need? Needed to set up the BitHeap of an operator using the virtual constructor */
+	static int neededGuardBits(int wX, int wY, int wOut);
 
 
     /**
@@ -142,12 +146,14 @@ private:
 	bool useDSP;
 	Operator* parentOp;  /**<  For a virtual multiplier, adding bits to some BitHeap, this is a pointer to the Operator that will provide the actual vhdl stream etc. */
 	BitHeap* bitHeap;    /**<  The heap of weighted bits that will be used to do the additions */
+	// TODO the three following variable pairs seem uglily redundant
 	Signal* x;
 	Signal* y; 
 	string xname;
 	string yname;
 	string inputName1;
 	string inputName2;
+	bool negate;  /**< if true this multiplier computes -xy */
 	int multiplierUid;
 	void initialize();   /**< initialization stuff common to both constructors*/
 	vector<DSP*> dsps;
