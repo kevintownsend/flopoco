@@ -202,7 +202,7 @@ namespace flopoco {
 		wXdecl(wX_), wYdecl(wY_), wOut(wOut_), signedIO(signedIO_), ratio(ratio_),  maxError(0.0), parentOp(parentOp_), bitHeap(bitHeap_), x(x_), y(y_) {
 		multiplierUid=parentOp->getNewUId();
 		srcFileName="IntMultiplier";
-		useDSP = (ratio>0) & getTarget()->hasHardMultipliers();
+		useDSP = (ratio>0) && getTarget()->hasHardMultipliers();
 		
 		ostringstream name;
 		name <<"VirtualIntMultiplier";
@@ -519,7 +519,7 @@ namespace flopoco {
 			// adding the one at position wX+wY+1
 			// TODO: do not add this bit if we saturate a truncated mult, as it doesn't belong to the output range...
 			weight=wX+wY+1 - weightShift;
-			bitHeap->addBit(weight, "'1'");
+			bitHeap->addConstantOneBit(weight);
 			// now we have all sort of bits that need some a LUT delay to be computed
 			setCriticalPath(initialCP);
 			manageCriticalPath( getTarget()->localWireDelay(wY) + getTarget()->lutDelay() ) ;  

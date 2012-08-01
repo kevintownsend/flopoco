@@ -25,9 +25,6 @@
 
 using namespace std;
 
-/*
-
- */
 
 namespace flopoco
 {
@@ -128,7 +125,7 @@ namespace flopoco
 	BitHeap::WeightedBit* BitHeap::computeLatest(unsigned w, int c0, int c1)
 	{
 
-		if(w>=bits.size())
+		if(w>=maxWeight)
 			{	
 				return NULL;
 			}
@@ -307,14 +304,10 @@ namespace flopoco
 
 	void  BitHeap::addBit(unsigned w, string rhs, string comment)
 	{
-		list<WeightedBit*> t;
 			
-		if(bits.size()==w)
-			{
-				bits.push_back(t);
-				//maxWeight++;
-				
-			}
+		// ignore bits beyond the declared maxWeight
+		if(w >= maxWeight)
+			return; 
 
 		WeightedBit* bit= new WeightedBit(this, w) ;
 		list<WeightedBit*>& l=bits[w];
@@ -471,7 +464,7 @@ namespace flopoco
 
 	{
 		unsigned max=0; 
-		for(unsigned i=0; i<bits.size();i++)
+		for(unsigned i=0; i<maxWeight; i++)
 			{
 				if(bits[i].size()>max)
 					max=bits[i].size();
@@ -527,6 +520,14 @@ namespace flopoco
 
 	void BitHeap::generateCompressorVHDL()
 	{
+		// add the constant bits to the actual bit heap 
+		op->setCycle(0); 
+		op->setCriticalPath(0.0);
+		for (unsigned w=0; w<maxWeight; w++)
+			if (1 == ((constantBits>>w) & 1) )
+				addBit(w, "'1'");
+
+
 	    initializeDrawing();
 		generatePossibleCompressors();
         
@@ -555,7 +556,6 @@ namespace flopoco
 		while (getMaxHeight()>2)
 		{
                 
-			maxWeight=bits.size();
             REPORT(DETAILED, "didCompress " << didCompress);
             if(didCompress)
             {
@@ -570,9 +570,8 @@ namespace flopoco
         if (getMaxHeight()>2)
         {
             unsigned i = 0;
-            unsigned heapSize = bits.size();
 
-            for(unsigned i=0; i<bits.size(); i++)
+            for(unsigned i=0; i<maxWeight; i++)
             {
                 cnt[i]=bits[i].size();
 		    }
@@ -583,7 +582,7 @@ namespace flopoco
                 i++;
             }
 
-            while(i<heapSize-1)
+            while(i<maxWeight-1)
             {
 
                 //REPORT(DEBUG,"print i "<<i);
@@ -596,7 +595,7 @@ namespace flopoco
                 else
                 {
                     unsigned j = i+1; 
-                    while((j<heapSize) && (cnt[j]<3))
+                    while((j<maxWeight) && (cnt[j]<3))
                     {
                         j++;
 

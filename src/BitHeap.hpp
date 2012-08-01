@@ -61,10 +61,6 @@ namespace flopoco{
 			/** destructor */ 
 			~WeightedBit(){};
 		
-			/** mark this bit as already compressed */
-			void done(){
-				processed=true;
-			};
 
 			/** return the cycle at which this bit is defined */
 			int getCycle(){
@@ -85,10 +81,6 @@ namespace flopoco{
 				return name;
 			};
 
-			/** returns true if this bit is still to compress, false if this bit was already compressed */
-			bool todo(){
-				return (!processed);
-			};
 		
 			/** ordering by availability time */
 			bool operator< (const WeightedBit& b); 
@@ -100,7 +92,6 @@ namespace flopoco{
 			int cycle;  /**< The cycle at which the bit was created */
 			double criticalPath; /**< The cycle at which the bit was created */
 			BitHeap* bh;
-			bool processed;
 			int weight;
 			int uid;
 			string name;
@@ -122,6 +113,19 @@ namespace flopoco{
 		 @param rhs      the right-hand VHDL side defining this bit.
 		 @param comment  a VHDL comment for this bit*/
 		void addBit(unsigned weight, string rhs, string comment="");
+
+		/** add a constant 1 to the bit heap. All the constant bits are added to the constantBits mpz, so we don't generate hardware to compress constants....
+		 @param weight   the weight of the 1 to be added */
+		void addConstantOneBit(unsigned weight) {constantBits += (mpz_class(1) << weight);};
+
+		/** add a constant to the bit heap. It will be added to the constantBits mpz, so we don't generate hardware to compress constants....
+		 @param weight   the weight of the LSB of c (or, where c should be added)
+		 @param c        the value to be added */
+		void addConstant(unsigned weight, mpz_class c) {constantBits += (c << weight);};
+
+		/** generate the VHDL for the bit heap. To be called last by operators using BitHeap.*/
+		void generateCompressorVHDL();
+
 
 		//adds a new MultiplierBlock in the list he already has
 		void  addDSP(MultiplierBlock* m);
@@ -154,8 +158,6 @@ namespace flopoco{
 		/** get the parent operator */
 		Operator* getOp() {return op;};
 
-		/** generate the VHDL for the bit heap. This will involve adding more bits for intermediate results.*/
-		void generateCompressorVHDL();
 
         /** generate the final adder for the bit heap (when the columns height is maximum 2*/
         void adderVHDL();
@@ -203,6 +205,7 @@ namespace flopoco{
 		Operator* op;
 		unsigned maxWeight;     /**< The compressor tree will produce a result for weights < maxWeight (work modulo 2^maxWeight)*/
 		unsigned minWeight; /**< bits smaller than this one are already compressed */    
+		mpz_class constantBits; /**< This int gather all the constant bits that need to be added to the bit heap (for rounding, two's complement etc) */
 		bool usedCompressors[10]; /** the list of compressors which were used at least once*/
 		unsigned chunkDoneIndex; 
 		unsigned inConcatIndex; /** input index - to form the inputsignals of the compressor*/
@@ -218,16 +221,9 @@ namespace flopoco{
         int stagesPerCycle;  
         double elementaryTime; 
         bool didCompress; 
-#if 0
-		const static int consumed=-1;
-		vector<vector<int> > cycle;   /**< external index is the weight (column). The int is the cycle of each bit. Consumed bits have their cycle set to -1 */
-		vector<vector<double> > cpd;  /**< external index is the weight (column). The double is the critical path delay of each bit */
-		string bit( int w, int h); /**< just provide the name of the bit of weight w and height h*/
-#else
 		
 		vector<list<WeightedBit*> > bits; /**<  The list is ordered by arrival time of the bits, i.e. lexicographic order on (cycle, cp)*/
 		vector<MultiplierBlock*> mulBlocks; //the vector of multiplier blocks
-#endif
      
 		string srcFileName;	};
 
