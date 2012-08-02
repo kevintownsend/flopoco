@@ -103,8 +103,7 @@ namespace flopoco{
 
 		void MultiplierBlock::setNext(MultiplierBlock* b)
 		{
-			next=b;
-			//b->previous=this;
+			this->next=b;
 		}
 
 		MultiplierBlock* MultiplierBlock::getNext()
@@ -121,8 +120,7 @@ namespace flopoco{
 
 		void MultiplierBlock::setPrevious(MultiplierBlock* b)
 		{
-			previous=b;
-			//b->previous=this;
+			this->previous=b;
 		}
 
 
@@ -146,27 +144,6 @@ namespace flopoco{
 		}
 
 
-        /** i don't think it will be used anymore here...
-		void MultiplierBlock::generateVHDLforDSP(int nr,int i)
-		{
-		//	REPORT(DETAILED,"dsp");
-			
-			stringstream s;
-			int topX=gettopX();
-			int topY=gettopY();
-			int botX=topX+getwX()-1;
-			int botY=topY+getwY()-1;
-		
-			//op->vhdl << tab << op->declare(join("DSP",i,"_",nr), getwX()+getwY()) << " <= XX"<<range(botX,topX)<<" * YY"
-			//<<range	(botY,topY)<<";"<<endl;
-
-			s<<join("DSP",i,"_",nr);
-			
-			setSignalName(s.str());
-			setSignalLength(getwX()+getwY());
-			//REPORT(DETAILED,"dspout");
-		}
-		*/
 
 	
 

@@ -227,10 +227,17 @@ namespace flopoco
 	void  BitHeap::addDSP(MultiplierBlock* m)
 	{
 		
-		//insert into good position, the vector of multiplierBlocks should be ascending by weigth
+		//now, I can insert in any position, because the supertile chaining will be done in an ascending way(hopefully)
+		mulBlocks.push_back(m);
+
+		
+		//this is the old code, inserting increasingly by weight - maybe not needed anymore
+		/*
+		//insert to proper position, the vector of multiplierBlocks should be ascending by weigth
 		unsigned i=0;
 		unsigned size=mulBlocks.size();
 		
+
 		while((i<size)&&(mulBlocks[i]<=m))
 		{	
 			REPORT(DETAILED,"size "<<size<<" i "<<i);
@@ -238,7 +245,8 @@ namespace flopoco
 		}
 		
 		mulBlocks.insert(mulBlocks.begin()+i,m);
-	
+		*/
+
 	}
 
 
@@ -248,16 +256,34 @@ namespace flopoco
 		for(unsigned i=0;i<mulBlocks.size();i++)
 			for(unsigned j=0;j<mulBlocks.size();j++)
 			{ 
-				//TODO
-				//improve the chaining		
-				if(mulBlocks[j]>=mulBlocks[i])			
-				if((mulBlocks[i]->getNext()==NULL) && (mulBlocks[j]->getPrevious()==NULL)&& (mulBlocks[i]->canBeChained(mulBlocks[j])))
+				//if 2 blocks can be chained, the the chaining is done ascending by weight.
+				//TODO improve the chaining		
+			
+
+				if(mulBlocks[i]->canBeChained(mulBlocks[j]))
 				{
-					mulBlocks[j]->setNext(mulBlocks[i]);
-					mulBlocks[i]->setPrevious(mulBlocks[j]);
+					
+					if(mulBlocks[j]->getWeight()<=mulBlocks[i]->getWeight())
+						if((mulBlocks[j]->getNext()==NULL)&&(mulBlocks[i]->getPrevious()==NULL))
+						{	REPORT(DETAILED,"mulblocks[j]= "<<mulBlocks[j]->getWeight()<<" mulBlock[i]= "<<mulBlocks[i]->getWeight());
+							REPORT(DETAILED,"j<=i");
+							mulBlocks[j]->setNext(mulBlocks[i]);
+							mulBlocks[i]->setPrevious(mulBlocks[j]);
+						}	
+											
+					else
+						if((mulBlocks[i]->getNext()==NULL)&&(mulBlocks[j]->getPrevious()==NULL))	
+						{	REPORT(DETAILED,"mulblocks[j]= "<<mulBlocks[j]->getWeight()<<" mulBlock[i]= "<<mulBlocks[i]->getWeight());
+							REPORT(DETAILED,"j>i");
+							mulBlocks[i]->setNext(mulBlocks[j]);
+							mulBlocks[j]->setPrevious(mulBlocks[i]);
+						}			
 				}
+
 			}
 
+
+		//just for debugging
 		for(int i=0;i<mulBlocks.size();i++)
 		{
 			if(mulBlocks[i]->getNext()!=NULL)
@@ -269,42 +295,44 @@ namespace flopoco
 
 	void BitHeap::generateSupertileVHDL()
 	{
+		//making all the possible supertiles
 		buildSupertiles();
 
+
+		//generate the VHDL code for each supertile
 		for(unsigned i=0;i<mulBlocks.size();i++)
 		{	
-			REPORT(DETAILED,"mulblocksi->getprev=="<<mulBlocks[i]->getPrevious());
+			//take just the blocks which are roots
 			if(mulBlocks[i]->getPrevious()==NULL)
 			{
 				int uid=0;
 				MultiplierBlock* next;
 				MultiplierBlock* current=mulBlocks[i];
 				int newLength=0;
-				//the first element from the chain(the biggest weight
 			
-				
-				
-			
+				//the first DSP from the supertile(it has the smallest weight in the supertile)
 				generateVHDLforDSP(current,uid,i);
-				//iterate on the chain
+
+				//iterate on the of the supertile
 				while(current->getNext()!=NULL)
 				{	
 					uid++;
 					next=current->getNext();
-						
-					//addition=previous<<17 +this in the next block's dsp
-				  
+					newLength=current->getSigLength();					
 					generateVHDLforDSP(next,uid,i);
-				
-					
-					newLength=current->getSigLength();
 					//TODO ! replace 17 with multiplierblock->getshift~ something like that
+					
+					//******pipeline*******//	
 					op->setCycleFromSignal(next->getSigName());
 					op->syncCycleFromSignal(current->getSigName());
 					op->manageCriticalPath(  op->getTarget()->DSPAdderDelay() ) ; 
+
+					//addition, the 17lsb-s from the first block will go directly to bitheap
 					op->vhdl << tab <<	op->declare(join("DSPch",i,"_",uid),newLength)<< "<= " <<next->getSigName() 
 						<< " +  ("<< zg(17)<<" & "<<current->getSigName()<<range(newLength-1,17)<<" );"<<endl ; 
 
+
+					//sending the 17 lsb to the bitheap
            			for(int k=16;k>=0;k--)
 					{
 						int weight=current->getWeight()+k;	
@@ -317,17 +345,17 @@ namespace flopoco
 					}
 
 
-
+					//setting the name and length of the current block, to be used properly in the next iteration
 					stringstream q;
 					q<<join("DSPch",i,"_",uid);
 					next->setSignalName(q.str());		
 					next->setSignalLength(newLength);
+					//next
 					current=next;
 				}
 		
-				//WE NEED JUST TO ADD BITS TO THE HEAP
-	
-				string name=current->getSigName();
+				// adding the result to the bitheap (in the last block from the supertile)
+					string name=current->getSigName();
 				int length=current->getSigLength();
 				for(int k=length-1;k>=0;k--)
 				{
