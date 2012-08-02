@@ -36,8 +36,8 @@ namespace flopoco{
 		}
 
 
-		bool MultiplierBlock::operator>= (MultiplierBlock* b){
-		if ((weight>=b->getWeight())) 
+		bool MultiplierBlock::operator <= (MultiplierBlock* b){
+		if ((weight<=b->getWeight())) 
 			return true;
 		else
 			return false;

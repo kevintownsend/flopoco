@@ -93,7 +93,7 @@ namespace flopoco {
 		void generateVHDL(int nr, int i);
 	
 
-		bool operator>= (MultiplierBlock* b); 
+	bool operator <= (MultiplierBlock* b); 
 
 		
 	private:

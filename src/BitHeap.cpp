@@ -226,20 +226,16 @@ namespace flopoco
 
 	void  BitHeap::addDSP(MultiplierBlock* m)
 	{
-		//insert into good position, the vector of multiplierBlocks should be descending by weigth
-		REPORT(DETAILED,"new block added to vector. its' weight is" <<m->getWeight());
-		REPORT(DETAILED,"previous" <<m->getPrevious());
-		REPORT(DETAILED,"next" <<m->getNext());
-
+		
+		//insert into good position, the vector of multiplierBlocks should be ascending by weigth
 		unsigned i=0;
 		unsigned size=mulBlocks.size();
-		REPORT(DETAILED,"size "<<size<<" i "<<i);
-		while((i<size)&&(mulBlocks[i]>=m))
-			{	
-
-				REPORT(DETAILED,"size "<<size<<" i "<<i);
-				i++;
-			}
+		
+		while((i<size)&&(mulBlocks[i]<=m))
+		{	
+			REPORT(DETAILED,"size "<<size<<" i "<<i);
+			++i;
+		}
 		
 		mulBlocks.insert(mulBlocks.begin()+i,m);
 	
@@ -251,14 +247,21 @@ namespace flopoco
 	{
 		for(unsigned i=0;i<mulBlocks.size();i++)
 			for(unsigned j=0;j<mulBlocks.size();j++)
+			{ 
+				//TODO
+				//improve the chaining					
+				if((mulBlocks[i]->getNext()==NULL) && (mulBlocks[j]->getPrevious()==NULL)&& (mulBlocks[i]->canBeChained(mulBlocks[j])))
 				{
-					if((mulBlocks[i]->getNext()==NULL) && (mulBlocks[j]->getPrevious()==NULL)&& (mulBlocks[i]->canBeChained(mulBlocks[j])))
-						{
-							mulBlocks[i]->setNext(mulBlocks[j]);
-							mulBlocks[j]->setPrevious(mulBlocks[i]);
-							REPORT(DETAILED, "BLOCK "<<i<< "chained with "<<j);	
-						}
+					mulBlocks[j]->setNext(mulBlocks[i]);
+					mulBlocks[i]->setPrevious(mulBlocks[j]);
 				}
+			}
+
+		for(int i=0;i<mulBlocks.size();i++)
+		{
+			if(mulBlocks[i]->getNext()!=NULL)
+			REPORT(DETAILED, mulBlocks[i]->getWeight()<<" chained with "<<mulBlocks[i]->getNext()->getWeight());
+		}
 	}
 
 
@@ -266,90 +269,70 @@ namespace flopoco
 	void BitHeap::generateSupertileVHDL()
 	{
 		for(unsigned i=0;i<mulBlocks.size();i++)
-			{	
-		
-				REPORT(DETAILED,"mulblocksi->getprev=="<<mulBlocks[i]->getPrevious());
-				if(mulBlocks[i]->getPrevious()==NULL)
+		{	
+			REPORT(DETAILED,"mulblocksi->getprev=="<<mulBlocks[i]->getPrevious());
+			if(mulBlocks[i]->getPrevious()==NULL)
+			{
+				int uid=0;
+				MultiplierBlock* next;
+				MultiplierBlock* current=mulBlocks[i];
+				int newLength=0;
+				//the first element from the chain(the biggest weight
+				generateVHDLforDSP(current,uid,i);
+				//iterate on the chain
+				while(current->getNext()!=NULL)
+				{	
+					uid++;
+					next=current->getNext();
+						
+					//addition=previous<<17 +this in the next block's dsp
+				//	op->setCycleFromSignal(current->getSigName());
+					generateVHDLforDSP(next,uid,i);
+				//	op->setCycleFromSignal(next->getSigName());
+					newLength=current->getSigLength();
+					//TODO ! replace 17 with multiplierblock->getshift~ something like that
+					//op->manageCriticalPath(  op->getTarget()->DSPAdderDelay() ) ;  
+					op->vhdl << tab <<	op->declare(join("DSPch",i,"_",uid),newLength)<< "<= " <<next->getSigName() << " +  ("<< zg(17)<<" & "<<current->getSigName()<<range(newLength-1,17)<<" );"<<endl ; 
+
+           			for(int k=16;k>=0;k--)
 					{
-						int uid=0;
-						MultiplierBlock* next;
-						MultiplierBlock* current=mulBlocks[i];
-						int newLength=0;
-						//the first element from the chain(the biggest weight
-						generateVHDLforDSP(current,uid,i);
-						//iterate on the chain
-						while(current->getNext()!=NULL)
-							{	uid++;
-								current=mulBlocks[i];
-								next=mulBlocks[i]->getNext();
-								//addition=previous<<17 +this in the next block's dsp
-								generateVHDLforDSP(next,uid,i);
-								REPORT(DETAILED,"lungime dsp cur"<<current->getSigLength());
-								newLength=current->getSigLength()+17;
-
-								op->vhdl << tab <<	op->declare(join("DSPch",i,"_",uid),newLength+1)<< "<= ( '0' & "<<current->getSigName()<<" & "<<
-									zg(17) << ") + ("<< zg(18) <<" & "<< next->getSigName()<<" ) ;"<<endl;
-			
-								stringstream s;
-								s<<join("DSPch",i,"_",uid);
-								next->setSignalName(s.str());		
-								next->setSignalLength(newLength+1);
-								current=next;
-							}
-		
-						//WE NEED JUST TO ADD BITS TO THE HEAP
-			
-						string name=current->getSigName();
-						int length=current->getSigLength();
-				
-						for(int k=length-1;k>=0;k--)
-							{
-								int weight=current->getWeight()+k;	
-								REPORT(DETAILED,"k= "<<k <<" weight= "<<weight);				
-				
-								if(weight>=0)
-									{	
-										stringstream s;
-										s<<name<<"("<<k<<")";
-										addBit(weight,s.str());
-									}
-
-							}				
+						int weight=current->getWeight()+k;	
+						if(weight>=0)
+						{	
+							stringstream s;
+							s<<current->getSigName()<<"("<<k<<")";
+							addBit(weight,s.str());
+						}
 					}
-			}
-	}
-	/*
-	  REPORT(DETAILED,"mulblock size "<< mulBlocks.size());
-	  for(int i=0; i<mulBlocks.size();i++)
-	  {
-	  generateVHDLforDSP(mulBlocks[i],i,i);
-	  string outputSignalName=mulBlocks[i]->getSigName();
-	  int outputSignalLength=mulBlocks[i]->getSigLength();
-	  int w=mulBlocks[i]->getWeight();
 
-	  REPORT(DETAILED,"outputsignal "<< outputSignalLength<<" w= "<<w);
+
+
+					stringstream q;
+					q<<join("DSPch",i,"_",uid);
+					next->setSignalName(q.str());		
+					next->setSignalLength(newLength+1);
+					current=next;
+				}
 		
-	  for(int j=outputSignalLength-1;j>=0;j--)
-	  {
-	  REPORT(DEBUG,"j= "<<j<<" i= "<<i); 
-	  int weight=w+j;
-	  //	REPORT(DEBUG,"j= "<<j<<" i= "<<i); 
-	  if(weight>=0)
-	  {
-	  stringstream s;
-	  s << outputSignalName <<"("<<j<<")";
-	  addBit(weight,s.str());
-	  }
-	  }
-	  }
-
-	  }
-
-	  ////MODIFY this for the chaining!!!!
-
-
+				//WE NEED JUST TO ADD BITS TO THE HEAP
 	
-	  */
+				string name=current->getSigName();
+				int length=current->getSigLength()-1;
+				for(int k=length-1;k>=0;k--)
+				{
+					int weight=current->getWeight()+k;	
+					REPORT(DETAILED,"k= "<<k <<" weight= "<<weight);				
+					if(weight>=0)
+					{	
+						stringstream s;
+						s<<name<<"("<<k<<")";
+						addBit(weight,s.str());
+					}
+				}
+			}
+		}
+	}
+
 
 	void  BitHeap::addBit(unsigned w, string rhs, string comment)
 	{
