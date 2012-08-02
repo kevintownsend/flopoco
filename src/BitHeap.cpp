@@ -269,6 +269,8 @@ namespace flopoco
 
 	void BitHeap::generateSupertileVHDL()
 	{
+		buildSupertiles();
+
 		for(unsigned i=0;i<mulBlocks.size();i++)
 		{	
 			REPORT(DETAILED,"mulblocksi->getprev=="<<mulBlocks[i]->getPrevious());
@@ -568,11 +570,15 @@ namespace flopoco
 		// add the constant bits to the actual bit heap 
 		op->setCycle(0); 
 		op->setCriticalPath(0.0);
+		
+		generateSupertileVHDL();
+	
+
 		for (unsigned w=0; w<maxWeight; w++)
 			if (1 == ((constantBits>>w) & 1) )
 				addBit(w, "'1'");
 
-
+		
 		initializeDrawing();
 		generatePossibleCompressors();
         

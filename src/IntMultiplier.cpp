@@ -825,8 +825,7 @@ namespace flopoco {
 				
 		
 				}
-			bitHeap->buildSupertiles();
-			bitHeap->generateSupertileVHDL();
+			
 
 		}
 
