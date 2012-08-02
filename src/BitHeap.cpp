@@ -632,6 +632,8 @@ namespace flopoco
 				int first2, first3;
 				first3=i;
 				bool doLoop=true;
+
+				WeightedBit* latestBit;
 				while(doLoop)
 					{
 						// Now we are sure cnt[i] is 3;
@@ -659,14 +661,40 @@ namespace flopoco
 							while (i<maxWeight &&  cnt[i]<3) 
 								i++;
 							
-							if (i==maxWeight) {	
-								//								cerr << "No final 3" << endl
-									applyAdder(first2-1,maxWeight-1);							
+							if (i==maxWeight) 
+							{	
+								latestBit = getLatestBit(first2-1, maxWeight-1); 
+								if(latestBit)
+								{
+									op->setCycle(  latestBit ->getCycle()  );
+									op->setCriticalPath(   latestBit ->getCriticalPath(op->getCurrentCycle()));
+									op->manageCriticalPath( op->getTarget()->localWireDelay() + op->getTarget()->adderDelay(maxWeight-first2+1) );
+									if( latestBit ->getCycle() < op->getCurrentCycle())
+									{
+										drawCycleLine = true;
+									}
+								}
+
+
+								applyAdder(first2-1,maxWeight-1);							
 								doLoop=false;
 							}
-							else {
+							else 
+							{
 								first3=i;
-								//								cerr << "Case final 3" << endl
+								latestBit = getLatestBit(first2-1, first3-1); 
+								if(latestBit)
+								{
+									op->setCycle(   latestBit  ->getCycle()  );
+									op->setCriticalPath( latestBit->getCriticalPath(op->getCurrentCycle()));
+									op->manageCriticalPath(op->getTarget()->localWireDelay() + op->getTarget()->adderDelay(first3 - first2 + 1));
+									if(latestBit->getCycle() < op->getCurrentCycle())
+									{
+										drawCycleLine = true;
+									}
+								}
+
+
 								applyAdder(first2-1, first3-1);	
                                 //i++;                        
 							}
@@ -869,7 +897,7 @@ namespace flopoco
 
 
 	//returns a pointer to the bit which has the biggest criticalPath+cycle combination, considering the given column limits (both included)
-	BitHeap::WeightedBit* BitHeap::getFinalLatestBit(int lsbColumn, int msbColumn)
+	BitHeap::WeightedBit* BitHeap::getLatestBit(int lsbColumn, int msbColumn)
 	{
 	
 		double maxCycle=0;
@@ -957,7 +985,7 @@ namespace flopoco
 		inAdder0 << ";";
 		inAdder1 << ";";
 		
-		WeightedBit* b = getFinalLatestBit(minWeight, maxWeight-1);
+		WeightedBit* b = getLatestBit(minWeight, maxWeight-1);
 		//managing the pipeline
 		if(b)
 			{

@@ -172,7 +172,7 @@ namespace flopoco{
 		BitHeap::WeightedBit* computeLatest(unsigned w, int c0, int c1);
         
 		//** computes the latest bit from the bitheap, in order to manage the cycle before the final adding*/
-		BitHeap::WeightedBit* getFinalLatestBit(int lsbColumn, int msbColumn);
+		BitHeap::WeightedBit* getLatestBit(int lsbColumn, int msbColumn);
 
 		BitHeap::WeightedBit* getFirstSoonestBit();
 
