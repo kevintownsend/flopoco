@@ -32,7 +32,7 @@ namespace flopoco
 	BitHeap::WeightedBit::WeightedBit(BitHeap* bh, int weight_, int cycle_, double criticalPath_) : 
 		bh(bh), weight(weight_)
 	{
-		srcFileName=bh->getOp()->getSrcFileName() + ":BitHeap:WeightedBit";
+       		srcFileName=bh->getOp()->getSrcFileName() + ":BitHeap:WeightedBit";
 		if(cycle_==-1)
 			cycle = bh->getOp()->getCurrentCycle();
 		else
@@ -853,7 +853,8 @@ namespace flopoco
 		op->vhdl << tab << op->instance(adder, join("Adder_",adderIndex));
 				
 #else
-		op->vhdl << tab << op->declare(join("outAdder_",adderIndex),msb-lsb+2) << " <= " <<  join("inAdder0_",adderIndex) << " + " << join("inAdder1_",adderIndex) << " + " << join("cin_",adderIndex) << ";" <<endl ;
+		op->vhdl << tab << op->declare(join("outAdder_",adderIndex),msb-lsb+2) << " <= " 
+                        <<  join("inAdder0_",adderIndex) << " + " << join("inAdder1_",adderIndex) << " + " << join("cin_",adderIndex) << ";" <<endl ;
 
 #endif
 
@@ -867,14 +868,14 @@ namespace flopoco
 	}
 
 
-	//returns a pointer to the bit which has the biggest criticalPath+cycle combination
-	BitHeap::WeightedBit* BitHeap::getFinalLatestBit()
+	//returns a pointer to the bit which has the biggest criticalPath+cycle combination, considering the given column limits (both included)
+	BitHeap::WeightedBit* BitHeap::getFinalLatestBit(int lsbColumn, int msbColumn)
 	{
 	
 		double maxCycle=0;
 		double maxCP = 0;
 		WeightedBit *b=0;
-		for(unsigned w=minWeight; w<maxWeight; w++)
+		for(unsigned w=lsbColumn; w<=msbColumn; w++)
 			{
 				if(bits[w].size()==0)
 					{
@@ -956,7 +957,7 @@ namespace flopoco
 		inAdder0 << ";";
 		inAdder1 << ";";
 		
-		WeightedBit* b = getFinalLatestBit();
+		WeightedBit* b = getFinalLatestBit(minWeight, maxWeight-1);
 		//managing the pipeline
 		if(b)
 			{
@@ -1265,8 +1266,8 @@ namespace flopoco
 
 		fig << "</svg>" << endl;
 
-		fileFig << "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" viewBox=\"" <<turnaroundX - bits.size()*10 - 80 
-		        << " " << 0 << " " << turnaroundX + 50 << " " << offsetY + 20 <<  "\">" << endl; 
+		fileFig << "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" width=\"100%\" height=\"100%\" viewBox=\"" <<turnaroundX - bits.size()*10 - 80 
+		        << " " << 100 << " " << turnaroundX + 50 << " " << offsetY + 20 <<  "\">" << endl; 
 		//    fileFig << "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" viewBox=\"0 0 500 500\">" << endl; 
 
 		fileFig << fig.str();
@@ -1296,11 +1297,13 @@ namespace flopoco
 		op->manageCriticalPath( op->getTarget()->localWireDelay(m->getwX()+m->getwY()) + op->getTarget()->DSPMultiplierDelay() ) ;  
 		
 		if(uid==0)	
-			op->vhdl << tab << op->declare(join("DSPch",i,"_",uid), m->getwX()+m->getwY()+zerosX+zerosY) << " <= (" <<zg(zerosX)<<" & " << input1<<range(botX,topX)<<") * (" <<zg(zerosY) <<" & "
-			         << input2 <<range	(botY,topY)<<") ;"<<endl;
+			op->vhdl << tab << op->declare(join("DSPch",i,"_",uid), m->getwX()+m->getwY()+zerosX+zerosY) 
+				<< " <= (" <<zg(zerosX)<<" & " << input1<<range(botX,topX)<<") * (" <<zg(zerosY) <<" & "
+			    << input2 <<range(botY,topY)<<");"<<endl;
 		else
-			op->vhdl << tab << op->declare(join("DSP",i,"_",uid), m->getwX()+m->getwY()+zerosX+zerosY) << " <= (" <<zg(zerosX)<<" & " << input1<<range(botX,topX)<<") * (" <<zg(zerosY) <<" & "
-			         << input2 <<range	(botY,topY)<<") ;"<<endl;
+			op->vhdl << tab << op->declare(join("DSP",i,"_",uid), m->getwX()+m->getwY()+zerosX+zerosY) 
+				<< " <= (" <<zg(zerosX)<<" & " << input1<<range(botX,topX)<<") * (" <<zg(zerosY) <<" & "
+			    << input2 <<range(botY,topY)<<");"<<endl;
 
 		if(uid==0)
 			s<<join("DSPch",i,"_",uid);
