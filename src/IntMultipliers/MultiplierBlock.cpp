@@ -130,10 +130,15 @@ namespace flopoco{
 		bool MultiplierBlock::canBeChained(MultiplierBlock* next)
 		{
 			//for now just the stupid chaining
-			if(	((this->topX==next->gettopX()) &&
+			if(((this->topX==next->gettopX()) &&
 					(this->topY==next->gettopY()+17)) ||
 				((this->topY==next->gettopY()) &&
-					(this->topX==next->gettopX()+17)) )
+					(this->topX==next->gettopX()+17)) ) /* ||
+				
+			(	((this->topX==next->gettopX()) &&
+					(this->topY==next->gettopY()-17)) ||
+				((this->topY==next->gettopY()) &&
+					(this->topX==next->gettopX()-17)) ))*/
 
 				return true;
 			else return false;

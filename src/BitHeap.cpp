@@ -249,7 +249,8 @@ namespace flopoco
 			for(unsigned j=0;j<mulBlocks.size();j++)
 			{ 
 				//TODO
-				//improve the chaining					
+				//improve the chaining		
+				if(mulBlocks[j]>=mulBlocks[i])			
 				if((mulBlocks[i]->getNext()==NULL) && (mulBlocks[j]->getPrevious()==NULL)&& (mulBlocks[i]->canBeChained(mulBlocks[j])))
 				{
 					mulBlocks[j]->setNext(mulBlocks[i]);
@@ -292,7 +293,8 @@ namespace flopoco
 					newLength=current->getSigLength();
 					//TODO ! replace 17 with multiplierblock->getshift~ something like that
 					//op->manageCriticalPath(  op->getTarget()->DSPAdderDelay() ) ;  
-					op->vhdl << tab <<	op->declare(join("DSPch",i,"_",uid),newLength)<< "<= " <<next->getSigName() << " +  ("<< zg(17)<<" & "<<current->getSigName()<<range(newLength-1,17)<<" );"<<endl ; 
+					op->vhdl << tab <<	op->declare(join("DSPch",i,"_",uid),newLength)<< "<= " <<next->getSigName() 
+						<< " +  ("<< zg(17)<<" & "<<current->getSigName()<<range(newLength-1,17)<<" );"<<endl ; 
 
            			for(int k=16;k>=0;k--)
 					{
@@ -310,14 +312,14 @@ namespace flopoco
 					stringstream q;
 					q<<join("DSPch",i,"_",uid);
 					next->setSignalName(q.str());		
-					next->setSignalLength(newLength+1);
+					next->setSignalLength(newLength);
 					current=next;
 				}
 		
 				//WE NEED JUST TO ADD BITS TO THE HEAP
 	
 				string name=current->getSigName();
-				int length=current->getSigLength()-1;
+				int length=current->getSigLength();
 				for(int k=length-1;k>=0;k--)
 				{
 					int weight=current->getWeight()+k;	
@@ -1285,16 +1287,20 @@ namespace flopoco
 		int botY=topY+m->getwY()-1;
 		string input1=m->getInputName1();
 		string input2=m->getInputName2();
+		int zerosX=25-m->getwX();
+		int zerosY=18-m->getwY();
 		
 		//PIPELINE!!!!
-		op->manageCriticalPath( op->getTarget()->localWireDelay(m->getwY()+m->getwY()) + op->getTarget()->DSPMultiplierDelay() ) ;  
+		op->setCycleFromSignal(input1);
+		op->syncCycleFromSignal(input2);
+		op->manageCriticalPath( op->getTarget()->localWireDelay(m->getwX()+m->getwY()) + op->getTarget()->DSPMultiplierDelay() ) ;  
 		
 		if(uid==0)	
-			op->vhdl << tab << op->declare(join("DSPch",i,"_",uid), m->getwX()+m->getwY()) << " <="<< input1<<range(botX,topX)<<" *"\
-			         << input2 <<range	(botY,topY)<<";"<<endl;
+			op->vhdl << tab << op->declare(join("DSPch",i,"_",uid), m->getwX()+m->getwY()+zerosX+zerosY) << " <= (" <<zg(zerosX)<<" & " << input1<<range(botX,topX)<<") * (" <<zg(zerosY) <<" & "
+			         << input2 <<range	(botY,topY)<<") ;"<<endl;
 		else
-			op->vhdl << tab << op->declare(join("DSP",i,"_",uid), m->getwX()+m->getwY()) << " <="<< input1<<range(botX,topX)<<" *"\
-			         << input2 <<range	(botY,topY)<<";"<<endl;
+			op->vhdl << tab << op->declare(join("DSP",i,"_",uid), m->getwX()+m->getwY()+zerosX+zerosY) << " <= (" <<zg(zerosX)<<" & " << input1<<range(botX,topX)<<") * (" <<zg(zerosY) <<" & "
+			         << input2 <<range	(botY,topY)<<") ;"<<endl;
 
 		if(uid==0)
 			s<<join("DSPch",i,"_",uid);
@@ -1303,7 +1309,7 @@ namespace flopoco
 			s<<join("DSP",i,"_",uid);
 
 		m->setSignalName(s.str());
-		m->setSignalLength(m->getwX()+m->getwY());
+		m->setSignalLength(m->getwX()+m->getwY()+zerosX+zerosY);
 		REPORT(DETAILED,"dspout");
 	}
 
