@@ -279,6 +279,10 @@ namespace flopoco
 				MultiplierBlock* current=mulBlocks[i];
 				int newLength=0;
 				//the first element from the chain(the biggest weight
+			
+				
+				
+			
 				generateVHDLforDSP(current,uid,i);
 				//iterate on the chain
 				while(current->getNext()!=NULL)
@@ -287,12 +291,15 @@ namespace flopoco
 					next=current->getNext();
 						
 					//addition=previous<<17 +this in the next block's dsp
-				//	op->setCycleFromSignal(current->getSigName());
+				  
 					generateVHDLforDSP(next,uid,i);
-				//	op->setCycleFromSignal(next->getSigName());
+				
+					
 					newLength=current->getSigLength();
 					//TODO ! replace 17 with multiplierblock->getshift~ something like that
-					//op->manageCriticalPath(  op->getTarget()->DSPAdderDelay() ) ;  
+					op->setCycleFromSignal(next->getSigName());
+					op->syncCycleFromSignal(current->getSigName());
+					op->manageCriticalPath(  op->getTarget()->DSPAdderDelay() ) ; 
 					op->vhdl << tab <<	op->declare(join("DSPch",i,"_",uid),newLength)<< "<= " <<next->getSigName() 
 						<< " +  ("<< zg(17)<<" & "<<current->getSigName()<<range(newLength-1,17)<<" );"<<endl ; 
 
@@ -1316,14 +1323,27 @@ namespace flopoco
 		int botY=topY+m->getwY()-1;
 		string input1=m->getInputName1();
 		string input2=m->getInputName2();
-		int zerosX=25-m->getwX();
-		int zerosY=18-m->getwY();
+		int zerosX;
+		int zerosY;
+		if(m->getwX()>m->getwY())
+		{
+			zerosX=25-m->getwX();
+			zerosY=18-m->getwY();
+		}		
+		else 
+		{		
+			zerosX=25-m->getwY();
+			zerosY=18-m->getwX();
+		}	
+
+
+		//int zerosY=18-m->getwY();
 		
 		//PIPELINE!!!!
-		op->setCycleFromSignal(input1);
-		op->syncCycleFromSignal(input2);
-		op->manageCriticalPath( op->getTarget()->localWireDelay(m->getwX()+m->getwY()) + op->getTarget()->DSPMultiplierDelay() ) ;  
-		
+		op->setCycleFromSignal(m->getInputName1());
+		op->syncCycleFromSignal(m->getInputName2());
+		op->manageCriticalPath(  op->getTarget()->DSPMultiplierDelay() ) ;
+	//	op->setCycle(uid);
 		if(uid==0)	
 			op->vhdl << tab << op->declare(join("DSPch",i,"_",uid), m->getwX()+m->getwY()+zerosX+zerosY) 
 				<< " <= (" <<zg(zerosX)<<" & " << input1<<range(botX,topX)<<") * (" <<zg(zerosY) <<" & "
@@ -1333,6 +1353,7 @@ namespace flopoco
 				<< " <= (" <<zg(zerosX)<<" & " << input1<<range(botX,topX)<<") * (" <<zg(zerosY) <<" & "
 			    << input2 <<range(botY,topY)<<");"<<endl;
 
+	
 		if(uid==0)
 			s<<join("DSPch",i,"_",uid);
 		else
