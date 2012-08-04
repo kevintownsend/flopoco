@@ -26,8 +26,8 @@ namespace flopoco {
 		class SmallMultTable: public Table {
 		public:
 			int dx, dy, wO;
-			bool signedIO;
-			SmallMultTable(Target* target, int dx, int dy, int wO, bool signedIO=false );
+			bool negate, signedX, signedY;
+			SmallMultTable(Target* target, int dx, int dy, int wO, bool negate=false, bool signedX=false, bool signedY=false );
 			mpz_class function(int x);
 		};
 
@@ -136,12 +136,10 @@ namespace flopoco {
 		int wTruncated;                 /**< The number of truncated bits, wFull - wOut*/
 		int g ;                         /**< the number of guard bits*/
 		int maxWeight;                  /**< The max weight for the bit heap of this multiplier, wOut + g*/
-		int weightShift;                /**< the shift in weight for a truncated multiplier compared to a full one,  wFull - maxWeight*/
-		int signedIO;
+ 		int weightShift;                /**< the shift in weight for a truncated multiplier compared to a full one,  wFull - maxWeight*/
 		double ratio;
 		double maxError;     /**< the max absolute value error of this multiplier, in ulps of the result. Should be 0 for untruncated, 1 or a bit less for truncated.*/  
 		double initialCP;     /**< the initial delay, getMaxInputDelays ( inputDelays_ ).*/  
-		ofstream fig;	
 	private:
 		bool useDSP;
 		Operator* parentOp;  /**<  For a virtual multiplier, adding bits to some BitHeap, this is a pointer to the Operator that will provide the actual vhdl stream etc. */
@@ -153,10 +151,13 @@ namespace flopoco {
 		string yname;
 		string inputName1;
 		string inputName2;
-		bool negate;  /**< if true this multiplier computes -xy */
+		bool isOperator;                /**< if true this multiplier is a stand-alone operator, if false it just contributes to some BitHeap of another Operator */
+		bool negate;                    /**< if true this multiplier computes -xy */
+		int signedIO;                   /**< true if the IOs are two's complement */
 		int multiplierUid;
 		void initialize();   /**< initialization stuff common to both constructors*/
 		vector<DSP*> dsps;
+		ofstream fig;	
 	
 	};
 

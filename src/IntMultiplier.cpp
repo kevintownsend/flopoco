@@ -23,6 +23,16 @@
 */
 
 
+/* 
+Who calls whom
+the constructor calls buildLogicOnly or buildTiling
+(maybe these should be unified some day)
+They call buildHeapTiling or buildHeapLogicOnly
+
+*/
+
+
+
 /*
   TODO tiling
 
@@ -45,9 +55,6 @@
    X, Y: inputs
    XX,YY: after swap
 
-   if(signedIO):
-   sX, sY: signs 
-   pX, pY: remaining bits, sent to the positive multiplication
 */
 
 
@@ -62,14 +69,14 @@
    Example on 3 bits: input interval [-4, 3], output interval [-12, 16] and 16 can only be obtained by -4*-4.
    So the output would be representable on 2n-1 bits in two's complement, if it werent for this weird*weird case.
 
-   So for full signed multipliers, we just keep the 2n bits, including one bit used for only for this weird*weird case.
-   Current situation is: this must be managed from outside. 
+   So for signed multipliers, we just keep the 2n bits, including one bit used for only for this weird*weird case.
+   Current situation is: this must be managed from outside:
    An application that knows that it will not use the full range (e.g. signal processing, poly evaluation) can ignore the MSB bit, 
    but we produce it.
 
 
 
-   A big TODO
+   A big TODO ?
   
    But for truncated signed multipliers, we should hackingly round down this output to 2^n-1 to avoid carrying around a useless bit.
    This would be a kind of saturated arithmetic I guess.
@@ -206,7 +213,10 @@ namespace flopoco {
 	// The virtual constructor
 	IntMultiplier::IntMultiplier (Operator* parentOp_, BitHeap* bitHeap_, Signal* x_, Signal* y_, int wX_, int wY_, int wOut_, int lsbWeight_, bool negate_, bool signedIO_, float ratio_):
 		Operator ( parentOp_->getTarget()), 
-		wXdecl(wX_), wYdecl(wY_), wOut(wOut_), signedIO(signedIO_), ratio(ratio_),  maxError(0.0), parentOp(parentOp_), bitHeap(bitHeap_), x(x_), y(y_), negate(negate_) {
+		wXdecl(wX_), wYdecl(wY_), wOut(wOut_), ratio(ratio_),  maxError(0.0), parentOp(parentOp_), bitHeap(bitHeap_), x(x_), y(y_), negate(negate_), signedIO(signedIO_) {
+
+		isOperator=false;
+
 		multiplierUid=parentOp->getNewUId();
 		srcFileName="IntMultiplier";
 		useDSP = (ratio>0) && getTarget()->hasHardMultipliers();
@@ -231,10 +241,11 @@ namespace flopoco {
 
 
 
-	// The classical constructor
+	// The constructor for a stand-alone operator
 	IntMultiplier::IntMultiplier (Target* target, int wX_, int wY_, int wOut_, bool signedIO_, float ratio_, map<string, double> inputDelays_):
-		Operator ( target, inputDelays_ ), wXdecl(wX_), wYdecl(wY_), wOut(wOut_), signedIO(signedIO_), ratio(ratio_), maxError(0.0) {
+		Operator ( target, inputDelays_ ), wXdecl(wX_), wYdecl(wY_), wOut(wOut_), ratio(ratio_), maxError(0.0), signedIO(signedIO_) {
 		
+		isOperator=true;
 		srcFileName="IntMultiplier";
 		setCopyrightString ( "Florent de Dinechin, Kinga Illyes, Bogdan Popa, Bogdan Pasca, 2012" );
 		
@@ -280,6 +291,7 @@ namespace flopoco {
 
 		///////////////////////////////////////
 		//  architectures for corner cases   //
+		// TODO manage non-standalone case here //
 		///////////////////////////////////////
 
 		// The really small ones fit in two LUTs and that's as small as it gets  
@@ -287,14 +299,14 @@ namespace flopoco {
 
 			parentOp->vhdl << tab << "-- Ne pouvant me fier à mon raisonnement, j'ai appris par coeur le résultat de toutes les multiplications possibles" << endl;
 
-			SmallMultTable *t = new SmallMultTable( target, wX, wY, wOut, signedIO);
+			SmallMultTable *t = new SmallMultTable( target, wX, wY, wOut, negate, signedIO, signedIO);
 			useSoftRAM(t);
 			oplist.push_back(t);
 
 			parentOp->vhdl << tab << declare(join("XY",multiplierUid), wX+wY) << " <= "<<join("YY",multiplierUid)<<" & "<<join("XX",multiplierUid)<<";"<<endl;
 
-			inPortMap(t, join("X",multiplierUid), join("XY",multiplierUid));
-			outPortMap(t, join("Y",multiplierUid), join("RR",multiplierUid));
+			inPortMap(t, "X", join("XY",multiplierUid));
+			outPortMap(t, "Y", join("RR",multiplierUid));
 
 	
 			parentOp->vhdl << instance(t, "multTable");
@@ -436,205 +448,43 @@ namespace flopoco {
 
 
 
-#define BAUGHWOOLEY 1 // the other one doesn't work any better
-
 
 
 
 	/**************************************************************************/
 	void IntMultiplier::buildLogicOnly() {
-
-		manageSignBeforeMult();
 		buildHeapLogicOnly(0,0,wX,wY);
 		//adding the round bit
 		if(g>0) {
 			int weight=wFull-wOut-1- weightShift;
-			bitHeap->addBit(weight, "\'1\'", "The round bit");
+			bitHeap->addConstantOneBit(weight);
 		}
-		manageSignAfterMult();
-		bitHeap -> generateCompressorVHDL();			
-#if BAUGHWOOLEY
-
-		parentOp->vhdl << tab << join("R",multiplierUid) <<" <= CompressionResult(" << wOut+g-1 << " downto "<< g << ");" << endl;
-
-#else
-		// negate the result if needed
-
-		parentOp->vhdl << tab << declare(join("RR",multiplierUid), wOut) << " <= CompressionResult (" << wOut+g-1 << " downto "<< g << ");" << endl;
-		parentOp->vhdl << tab << declare(join("sR",multiplierUid)) << " <= "<<join("sX",multiplierUid)<< " xor "<< join("sY",multiplierUid)<<";" << endl;
-
-
-		parentOp->vhdl << tab << join("R",multiplierUid) <<" <= "<< join("RR",multiplierUid) <<" when "<<join("sR",multiplierUid)<<" = '0'    else ("<< zg(wOut) << " + (not "<<join("RR",multiplierUid)<<") + '1');" << endl;
-
-#endif
-
+		if(isOperator) {
+			// compress the bit heap and assign the output signal
+			bitHeap -> generateCompressorVHDL();			
+			parentOp->vhdl << tab << join("R",multiplierUid) <<" <= CompressionResult(" << wOut+g-1 << " downto "<< g << ");" << endl;
+		}
 	}
+
 
 
 	/**************************************************************************/
 	void IntMultiplier::buildTiling() {
-		manageSignBeforeMult();
 		buildHeapTiling();
 		//adding the round bit
 		if(g>0) {
 			int weight=wFull-wOut-1- weightShift;
-			bitHeap->addBit(weight, "\'1\'", "The round bit");
+			bitHeap->addConstantOneBit(weight);
 		}
-		manageSignAfterMult();
 
-		bitHeap -> generateCompressorVHDL();			
-
-		parentOp->vhdl << tab << join("R",multiplierUid) <<" <=  CompressionResult(" << wOut+g-1 << " downto "<< g << ");" << endl;
+		if(isOperator) {
+			// compress the bit heap and assign the output signal
+			bitHeap -> generateCompressorVHDL();				
+			parentOp->vhdl << tab << join("R",multiplierUid) <<" <=  CompressionResult(" << wOut+g-1 << " downto "<< g << ");" << endl;
+		}
 
 		printConfiguration();
 	}
-
-
-
-	/**************************************************************************/
-	void IntMultiplier::manageSignBeforeMult() {
-		int weight;
-		if (signedIO){
-			// split X as sx and Xr, Y as sy and Xr
-			// then XY =  Xr*Yr (unsigned)      + bits and pieces
-			// The purpose of the two following lines is to build the heap of bits for Xr*Yr
-			// The remaining bits will be added to the heap later.
-			wX--;
-			wY--;
-
-			parentOp->vhdl << tab << declare(join("sX",multiplierUid)) << " <= "<<join("XX",multiplierUid) << of(wX) << ";" << endl;
-			parentOp->vhdl << tab << declare(join("sY",multiplierUid)) << " <= "<<join("YY",multiplierUid)  << of(wY) << ";" << endl;
-
-#if BAUGHWOOLEY
-
-			parentOp->vhdl << tab << declare(join("pX",multiplierUid), wX) << " <= "<<join("XX",multiplierUid)  << range(wX-1, 0) << ";" << endl;
-			parentOp->vhdl << tab << declare(join("pY",multiplierUid), wY) << " <= "<<join("YY",multiplierUid)  << range(wY-1, 0) << ";" << endl;
-
-			// reminder: wX and wY have been decremented
-
-			parentOp->vhdl << tab << "-- Baugh-Wooley tinkering" << endl;
-
-			setCycle(0);
-			setCriticalPath(initialCP);
-
-			// first add all the bits that need no computation
-			// adding sX and sY at positions wX and wY
-			weight=wX - weightShift;
-			bitHeap->addBit(weight, join("sX",multiplierUid));
-			weight=wY - weightShift;
-			bitHeap->addBit(weight, join("sY",multiplierUid));
-			// adding the one at position wX+wY+1
-			// TODO: do not add this bit if we saturate a truncated mult, as it doesn't belong to the output range...
-			weight=wX+wY+1 - weightShift;
-			bitHeap->addConstantOneBit(weight);
-			// now we have all sort of bits that need some a LUT delay to be computed
-			setCriticalPath(initialCP);
-			manageCriticalPath( getTarget()->localWireDelay(wY) + getTarget()->lutDelay() ) ;  
-
-			parentOp->vhdl << tab << declare(join("sXpYb",multiplierUid), wY) << " <= not "<<join("pY",multiplierUid) <<" when "<<join("sX",multiplierUid) <<"='1' else " << zg(wY) << ";" << endl;
-			parentOp->vhdl << tab << "-- Adding these bits to the heap of bits" << endl;
-
-			for (int k=0; k<wX; k++) {
-				weight=wY+k - weightShift;
-				ostringstream v;
-				v << join("sYpXb",multiplierUid)<<"(" << k << ")";
-				bitHeap->addBit(weight, v.str());
-			}
-
-			parentOp->vhdl << endl;
-
-
-			setCriticalPath(initialCP);
-			manageCriticalPath( getTarget()->localWireDelay(wX) + getTarget()->lutDelay() ) ;  
-
-			parentOp->vhdl << tab << declare(join("sYpXb",multiplierUid), wX) << " <=  not "<<join("pX",multiplierUid) <<" when "<<join("sY",multiplierUid) <<"='1' else " << zg(wX) << ";" << endl;
-
-			for (int k=0; k<wY; k++) {
-				weight = wX+k - weightShift;
-				ostringstream v;
-				v << join("sXpYb",multiplierUid)<<"(" << k << ")";
-				bitHeap->addBit(weight, v.str());
-			}
-
-			parentOp->vhdl << endl;
-
-
-			setCriticalPath(initialCP);
-			manageCriticalPath( getTarget()->localWireDelay() + getTarget()->lutDelay() ) ;  
-			// adding sXb and sYb at position wX+wY
-			weight=wX+wY - weightShift;
-			stringstream s;
-			stringstream p;
-			s<<"not "<<join("sX",multiplierUid);
-			p<<"not "<<join("sY",multiplierUid);
-			bitHeap->addBit(weight, s.str());
-			bitHeap->addBit(weight, p.str());
-			// adding sXsY at position wX+wY
-			weight=wX+wY - weightShift;
-			stringstream q;
-			q<<join("sX",multiplierUid)<<" and "<<join("sY",multiplierUid);
-			bitHeap->addBit(weight, q.str());
-
-#else // SATURATED VERSION
-			// TODO manage pipeline
-			// reminder: wX and wY have been decremented
-			vhdl << tab << declare(join("rY",multiplierUid), wY) << " <= "join("YY",multiplierUid) << range(wY-1, 0) << ";" << endl;
-
-			parentOp->vhdl << tab << "-- Managing two's complement with saturated arithmetic" << endl;
-			parentOp->vhdl << tab << declare(join("rX",multiplierUid), wX) << " <= "<< join("XX",multiplierUid)  << range(wX-1, 0) << ";" << endl;
-			parentOp->vhdl << tab << declare(join("rY",multiplierUid), wY) << " <= "<< join("YY",multiplierUid) << range(wY-1, 0) << ";" << endl;
-
-			vhdl << tab << declare(join("pX",multiplierUid), wX) << " <= not "<<join("rX",multiplierUid) <<"when "<<join("sX",multiplierUid)<<"='1' else "<<join("rX",multiplierUid)<<";" << endl;
-			vhdl << tab << declare(join("pY",multiplierUid), wY) << " <= not "<<join("rY",multiplierUid)<<" when "<<join("sY",multiplierUid)<<"='1' else "<<join("rY",multiplierUid)<<";" << endl;
-
-			parentOp->vhdl << tab << declare(join("pX",multiplierUid), wX) << " <= not "<<join("rX",multiplierUid) <<"when "<<join("sX",multiplierUid)<<"='1' else "<<join("rX",multiplierUid)<<";" << endl;
-			parentOp-> vhdl << tab << declare(join("pY",multiplierUid), wY) << " <= not "<<join("rY",multiplierUid)<<" when "<<join("sY",multiplierUid)<<"='1' else "<<join("rY",multiplierUid)<<";" << endl;
-
-
-			// adding X and Y, possibly complemented
-
-			parentOp->vhdl << tab << declare(join("sYpX",multiplierUid), wX) << " <= "<<join("pX",multiplierUid)<<" when "<<join("sY",multiplierUid)<<"='1' else " << zg(wX) << ";" << endl;
-			parentOp->vhdl << tab << declare(join("sXpY",multiplierUid), wY) << " <= "<<join("pY",multiplierUid)<<" when "<<join("sX",multiplierUid)<<"='1' else " << zg(wY) << ";" << endl;
-
-
-			// adding only the relevant bits to the bit heap
-			for (weight=0; weight<wX-weightShift; weight++) {
-				ostringstream v;
-				v << join("sYpX",multiplierUid)<<"(" << weight+weightShift << ")";
-				bitHeap->addBit(weight, v.str());
-
-				parentOp->vhdl << endl;
-
-
-				for (weight=0; weight<wY-weightShift; weight++) {
-					ostringstream v;
-					v << join("sXpY",multiplierUid)<<"(" << weight+weightShift << ")";
-					bitHeap->addBit(weight, v.str());
-				}
-
-				parentOp->vhdl << endl;
-
-
-
-#endif
-			}	// if(signedIO)
-			else	{
-
-				parentOp->vhdl << tab << declare(join("pX",multiplierUid), wX) << " <= "<<join("XX",multiplierUid)<<";" << endl;
-				parentOp->vhdl << tab << declare(join("pY",multiplierUid), wY) << " <= "<<join("YY",multiplierUid)<<";" << endl;
-
-			}
-		}
-
-
-
-		void IntMultiplier::manageSignAfterMult() {
-			if (signedIO){
-				// restore wX and wY
-				wX++;
-				wY++;
-			}
-		}
 
 
 
@@ -667,11 +517,35 @@ namespace flopoco {
 				
 			REPORT(DEBUG, "X split in "<< chunksX << " chunks and Y in " << chunksY << " chunks; ");
 			REPORT(DEBUG, " sizeXPadded="<< sizeXPadded << "  sizeYPadded="<< sizeYPadded);
-			if (chunksX + chunksY > 2) { //we do more than 1 subproduct
+			if (chunksX + chunksY > 2) { //we do more than 1 subproduct // FIXME where is the else?
+				
+				// Padding X to the left
+				parentOp->vhdl << tab << declare(join("Xp",multiplierUid,"_",uid),sizeXPadded)<<" <= ";
+				if(padX>0) {
+					if(signedIO)	{ // sign extension
+						ostringstream signbit;
+						signbit << join("XX",multiplierUid) << of(botX-1);
+						parentOp->vhdl  << rangeAssign(sizeXPadded-1, wX, signbit.str()) << " & ";
+					}
+					else {
+						parentOp->vhdl << zg(padX) << " & ";
+					}
+				}
+				parentOp->vhdl << join("XX",multiplierUid) << range(botX-1,topX) << ";"<<endl;
 
-				parentOp->vhdl << tab << "-- padding to the left" << endl;
-				parentOp->vhdl<<tab<<declare(join("Xp",multiplierUid,"_",uid),sizeXPadded)<<" <= "<< zg(padX) << " & "<<join("pX",multiplierUid) << range(botX-1,topX) << ";"<<endl;
-				parentOp->vhdl<<tab<<declare(join("Yp",multiplierUid,"_",uid),sizeYPadded)<<" <= "<< zg(padY)<< " & "<<join("pY",multiplierUid) <<range(botY-1, topY) << ";"<<endl;	
+				// Padding Y to the left
+				parentOp->vhdl << tab << declare(join("Yp",multiplierUid,"_",uid),sizeYPadded)<<" <= ";
+				if(padY>0) {
+					if(signedIO)	{ // sign extension		
+						ostringstream signbit;
+						signbit << join("YY",multiplierUid) << of(botY-1);
+						parentOp->vhdl  << rangeAssign(sizeYPadded-1, wY, signbit.str()) << " & ";
+					}
+					else {
+						parentOp->vhdl << zg(padY) << " & ";
+					}
+				}
+				parentOp->vhdl << join("YY",multiplierUid) << range(botY-1,topY) << ";"<<endl;
 
 				//SPLITTINGS
 				for (int k=0; k<chunksX ; k++)
@@ -680,11 +554,32 @@ namespace flopoco {
 					parentOp->vhdl<<tab<<declare(join("y",multiplierUid,"_",uid,"_",k),dy)<<" <= "<<join("Yp",multiplierUid,"_",uid)<<range((k+1)*dy-1, k*dy)<<";"<<endl;
 					
 				REPORT(DEBUG, "maxWeight=" << maxWeight <<  "    weightShift=" << weightShift);
+				SmallMultTable *tpp, *tmp, *tpm, *tmm;
 
-				SmallMultTable *t = new SmallMultTable( target, dx, dy, dx+dy, false ); // unsigned
-				useSoftRAM(t);
-				oplist.push_back(t);
-
+				if(signedIO) {
+					tpp = new SmallMultTable( target, dx, dy, dx+dy, negate, false, false); // unsigned
+					useSoftRAM(tpp);
+					oplist.push_back(tpp);
+					tmp = new SmallMultTable( target, dx, dy, dx+dy, negate, true, false );
+					useSoftRAM(tmp);
+					oplist.push_back(tmp);
+					tpm = new SmallMultTable( target, dx, dy, dx+dy, negate, false, true );
+					useSoftRAM(tpm);
+					oplist.push_back(tpm);
+					tmm = new SmallMultTable( target, dx, dy, dx+dy, negate, true, true );
+					useSoftRAM(tmm);
+					oplist.push_back(tmm);
+				}
+				else if (negate) {
+					tmm = new SmallMultTable( target, dx, dy, dx+dy, negate, true, true );
+					useSoftRAM(tmm);
+					oplist.push_back(tmm);
+				}
+				else {
+					tpp = new SmallMultTable( target, dx, dy, dx+dy, negate, false, false); // unsigned
+					useSoftRAM(tpp);
+					oplist.push_back(tpp);
+				}
 
 				setCycle(0); // TODO FIXME for the virtual multiplier case where inputs can arrive later
 				setCriticalPath(initialCP);
@@ -694,28 +589,58 @@ namespace flopoco {
 
 					parentOp->vhdl << tab << "-- Partial product row number " << iy << endl;
 
+					// TODO integrate negate in the following
 					for (int ix=0; ix<chunksX; ix++) { 
+						SmallMultTable *t;
+						t=tpp; // by default
+						if(signedIO) {
+							if((ix==chunksX-1) && (iy==chunksY-1))
+								t=tmm;
+							else if (ix==chunksX-1)
+								t=tmp;
+							else if (iy==chunksY-1)
+								t=tpm;
+						}
 
-						parentOp->vhdl << tab << declare(join (XY(ix,iy,uid),multiplierUid), dx+dy) << " <= y"<< multiplierUid<<"_"<<uid <<"_"<< iy << " & x"<<multiplierUid<<"_" << uid <<"_"<< ix << ";"<<endl;
+						parentOp->vhdl << tab << declare(join (XY(ix,iy,uid),multiplierUid), dx+dy) 
+						               << " <= y"<< multiplierUid<<"_"<<uid <<"_"<< iy << " & x"<<multiplierUid<<"_" << uid <<"_"<< ix << ";"<<endl;
 
 						inPortMap(t, "X", join(XY(ix,iy,uid),multiplierUid));
 						outPortMap(t, "Y", join(PP(ix,iy,uid),multiplierUid));
-
 						parentOp->vhdl << instance(t, join(PPTbl(ix,iy,uid),multiplierUid));
+
 						parentOp->vhdl << tab << "-- Adding the relevant bits to the heap of bits" << endl;
+						
+						// does this smallMultTable return a two's complement signed result, or a positive one?
+						bool resultSigned=negate; // two's complement if negate
+						if(signedIO && (ix == chunksX-1))  // or if signedIO and MSB
+							resultSigned = true ;
+						if(signedIO && (iy == chunksY-1))
+							resultSigned = true ;
 
 						int maxK=dx+dy; 
-						if(ix == chunksX-1)
+ 						if(ix == chunksX-1)
 							maxK-=padX;
 						if(iy == chunksY-1)
 							maxK-=padY;
+						// cerr << endl << "ix="<<ix << "   iy="<<iy << "  maxK=" << maxK << endl;
 						for (int k=0; k<maxK; k++) {
 							ostringstream s;
 							s << join(PP(ix,iy,uid),multiplierUid) << of(k); // right hand side
 							int weight = ix*dx+iy*dy+k - weightShift+topX+topY;
 							if(weight>=0) {// otherwise these bits deserve to be truncated
 								REPORT(DEBUG, "adding bit " << s.str() << " at weight " << weight); 
-								bitHeap->addBit(weight, s.str());
+								if(resultSigned && (k==maxK-1)) { // This is a sign bit, it should be sign extended
+										ostringstream nots;
+										nots << "not " << s.str(); 
+										bitHeap->addBit(weight, nots.str());
+										REPORT(DEBUG,  "adding constant ones from weight "<< weight << " to "<< bitHeap->getMaxWeight());
+										for (unsigned w=weight; w<bitHeap->getMaxWeight(); w++)
+											bitHeap->addConstantOneBit(w);
+									}
+									else { // just add the bit
+										bitHeap->addBit(weight, s.str());
+									}
 							}
 						}
 
@@ -877,12 +802,12 @@ namespace flopoco {
 
 
 
-		IntMultiplier::SmallMultTable::SmallMultTable(Target* target, int dx, int dy, int wO, bool  signedIO) : 
+		IntMultiplier::SmallMultTable::SmallMultTable(Target* target, int dx, int dy, int wO, bool negate, bool  signedX, bool  signedY ) : 
 			Table(target, dx+dy, wO, 0, -1, true), // logic table
-			dx(dx), dy(dy), signedIO(signedIO) {
+			dx(dx), dy(dy), negate(negate), signedX(signedX), signedY(signedY) {
 			ostringstream name; 
 			srcFileName="LogicIntMultiplier::SmallMultTable";
-			name <<"SmallMultTable" << dy << "x" << dx << "r" << wO << (signedIO?"signed":"unsigned");
+			name <<"SmallMultTable" << dy << "x" << dx << "r" << wO << (signedX?"Xs":"Xu") << (signedY?"Ys":"Yu") << getuid();
 			setName(name.str());				
 		};
 	
@@ -892,19 +817,20 @@ namespace flopoco {
 			int y = yx>>dx;
 			int x = yx -(y<<dx);
 			int wF=dx+dy;
-			if(signedIO) wF--;
 
-			if(signedIO){
+			if(signedX){
 				if ( x >= (1 << (dx-1)))
 					x -= (1 << dx);
+			}
+			if(signedY){
 				if ( y >= (1 << (dy-1)))
 					y -= (1 << dy);
-				r = x * y;
-				if ( r < 0)
-					r += mpz_class(1) << wF; 
 			}
-			else 
-				r = x*y;
+			r = x * y;
+			if(negate)
+				r=-r;
+			if ( r < 0)
+				r += mpz_class(1) << wF; 
 
 			if(wOut<wF){ // wOut is that of Table
 				// round to nearest, but not to nearest even
@@ -942,10 +868,13 @@ namespace flopoco {
 					svY -= big2;
 			
 				svR = svX * svY;
-				if ( svR < 0){
-					svR += (mpz_class(1) << wFull); 
 				}
+			if(negate)
+				svR = -svR;
 
+			// manage two's complement at output
+			if ( svR < 0){
+				svR += (mpz_class(1) << wFull); 
 			}
 			if(wTruncated==0) 
 				tc->addExpectedOutput(join("R",multiplierUid), svR);
@@ -953,16 +882,9 @@ namespace flopoco {
 				// there is truncation, so this mult should be faithful
 				svR = svR >> wTruncated;
 				tc->addExpectedOutput(join("R",multiplierUid), svR);
-#if BAUGHWOOLEY
 				svR++;
 				svR &= (mpz_class(1) << (wOut)) -1;
 				tc->addExpectedOutput(join("R",multiplierUid), svR);
-#else // saturate
-				if(svR<(mpz_class(1) << wOut)-1) {
-					svR++;
-					tc->addExpectedOutput(join("R",multiplierUid), svR);
-				}
-#endif			
 			}
 		}
 	

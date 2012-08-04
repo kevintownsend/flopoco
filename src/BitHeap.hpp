@@ -158,7 +158,14 @@ namespace flopoco{
 		void generateSupertileVHDL();
 		
 
+		/** returns the maximum weight of the bit heap */
+		unsigned getMaxWeight() {return maxWeight; };
+
+		/** returns the maximum height of the bit heap*/
+		unsigned getMaxHeight();
+
 	protected:
+
 
 		void elemReduce(unsigned i, BasicCompressor* bc);
 
@@ -210,10 +217,6 @@ namespace flopoco{
 		/** remove the compressed bits */
 		void removeCompressedBits(int c, int red);
 
-		/** returns the maximum height list from the bitheap vector*/
-		unsigned getMaxHeight();
-
-		void getMaxWeight();
 
 		/** generate the VHDL code for 1 dsp */ 
 		void generateVHDLforDSP(MultiplierBlock* m, int uid,int i);
