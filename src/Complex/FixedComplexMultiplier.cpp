@@ -28,34 +28,68 @@ namespace flopoco{
 		addInput("Xr", 		w, true);
 		addInput("Yi", 		w, true);
 		addInput("Yr", 		w, true);
-		addOutput("Zi",   2*w, 2);
-		addOutput("Zr",   2*w, 2);
 
 	
 
 #if 1
+		// TODO add an option to exclude -4*-4
+		addOutput("Zi",   w, 2);
+		addOutput("Zr",   w, 2);
 
-		int g=IntMultiplier::neededGuardBits(w, w, w); 
+		int g = IntMultiplier::neededGuardBits(w, w, w); 
+		g++; // sum of two rounding errors
 
 		BitHeap* bitHeapRe = new BitHeap(this, w+g);  // will add XrYr - XiYi
 		BitHeap* bitHeapIm = new BitHeap(this, w+g);  // will add XrYi + XiYr
-		// a virtual multiplier that will add its result to the bitHeap
-		IntMultiplier* multXrYr = new IntMultiplier(this, bitHeapRe, 
-		                                            getSignalByName("Xr"),
-		                                            getSignalByName("Xr"),
-		                                            w, w, w, 
-		                                            g, // lsbWeight
-		                                            false, // subtract
-		                                            signedOperator, 1.0);
-		IntMultiplier* multXiYi = new IntMultiplier(this, bitHeapRe, 
-		                                            getSignalByName("Xr"),
-		                                            getSignalByName("Xr"),
-		                                            w, w, w, 
-		                                            g, // lsbWeight
-		                                            true, // subtract
-		                                            signedOperator, 1.0);
+		// Use virtual multipliers that will add their result to the bitHeap
+		//IntMultiplier* multXrYr = 
+		new IntMultiplier(this, bitHeapRe,
+		                  getSignalByName("Xr"),
+		                  getSignalByName("Yr"),
+		                  w, w, w, 
+		                  g, // lsbWeight
+		                  false, // negate
+		                  signedOperator, 1.0);
+		//IntMultiplier* multXiYi = 
+		new IntMultiplier(this, bitHeapRe,
+		                  getSignalByName("Xi"),
+		                  getSignalByName("Yi"),
+		                  w, w, w, 
+		                  g, // lsbWeight
+		                  true, // negate
+		                  signedOperator, 1.0);
+		// The round bit
+		bitHeapRe -> addConstantOneBit(g-1);
+		bitHeapRe -> generateCompressorVHDL();	
+		
+
+
+		//IntMultiplier* multXrYi = 
+		new IntMultiplier(this, bitHeapIm,
+		                  getSignalByName("Xr"),
+		                  getSignalByName("Yi"),
+		                  w, w, w, 
+		                  g, // lsbWeight
+		                  false, // negate
+		                  signedOperator, 1.0);
+		//IntMultiplier* multXiYr = 
+		new IntMultiplier(this, bitHeapIm,
+		                  getSignalByName("Xi"),
+		                  getSignalByName("Yr"),
+		                  w, w, w, 
+		                  g, // lsbWeight
+		                  true, // negate
+		                  signedOperator, 1.0);
+		// The round bit
+		bitHeapIm -> addConstantOneBit(g-1);
+		bitHeapIm -> generateCompressorVHDL();			
+
+		vhdl << tab << "Zr <= " << bitHeapRe -> getSumName() << ";" << endl;
+		vhdl << tab << "Zi <= " << bitHeapIm -> getSumName() << ";" << endl;
 		
 #else // pre-BitHeap version
+		addOutput("Zi",   2*w, 2);
+		addOutput("Zr",   2*w, 2);
 
 		if(!hasLessMultiplications){
 			IntMultiplier* multiplyOperator = new IntMultiplier(target, w, w, w, signedOperator, 1.0, inDelayMap("X",getCriticalPath()));

@@ -145,6 +145,9 @@ namespace flopoco{
 		/** generate the VHDL for the bit heap. To be called last by operators using BitHeap.*/
 		void generateCompressorVHDL();
 
+		/** returns the name of the compressed sum */
+		string getSumName();
+
 
 		/** adds a new MultiplierBlock */
 		void  addDSP(MultiplierBlock* m);
@@ -205,7 +208,11 @@ namespace flopoco{
 		/** return the current height a column (bits not yet compressed) */
 		unsigned currentHeight(unsigned w);
 
-		int getUid(unsigned w);
+		/** return a fresh uid for a bit of weight w*/
+		int newUid(unsigned w);
+
+		/** return the UID of the bit heap*/
+		int getGUid();
 
 		/** counts the bits not processed yet in wb */
 		int count(list<WeightedBit*> wb, int cycle);
@@ -242,6 +249,7 @@ namespace flopoco{
 		unsigned adderIndex; /** the index of the instance of IntAdder*/
 		unsigned cnt[100000]; /** number of bits which will be compressed in the current iteration*/
 		vector<int> uid;   /**< unique id, per weight */
+		int guid;   /**< global uid  for this bit heap, useful in operators managing several bit heaps */
 		ofstream fileFig;
 		ostringstream fig;
 		bool drawCycleLine;
@@ -249,7 +257,6 @@ namespace flopoco{
 		int stagesPerCycle;  
 		double elementaryTime; 
 		bool didCompress; 
-		
 		vector<list<WeightedBit*> > bits; /**<  The list is ordered by arrival time of the bits, i.e. lexicographic order on (cycle, cp)*/
 		vector<MultiplierBlock*> mulBlocks; //the vector of multiplier blocks
      
