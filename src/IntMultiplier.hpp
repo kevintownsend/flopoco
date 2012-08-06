@@ -79,6 +79,8 @@ namespace flopoco {
 
 
 
+
+
 	protected:
 	
 	
@@ -116,14 +118,6 @@ namespace flopoco {
 
 		/* Stuff related to SVG output */
 
-		void printConfiguration();
-		void printAreaView();
-		void printLozengeView();
-		void drawLine(int wX, int wY, int wRez, int offsetX, int offsetY, int scalingFactor, bool isRectangle);
-		void drawDSP(int i, int xT, int yT, int xB, int yB, int offsetX, int offsetY, int scalingFactor,  bool isRectangle);
-		// commented out by F2D. Is it used?
-		//	void drawDSPinclined(int i, int xT, int yT, int xB, int yB,  int offsetX, int offsetY, int turnaroundX, double inclinedCoeffB, double inclinedCoeffT);
-		void drawTargetFigure(int wX, int wY, int offsetX, int offsetY, int scalingFactor, bool isRectangle);
 
 
 		int wxDSP, wyDSP;               /**< the width for X/Y in DSP*/
@@ -156,8 +150,9 @@ namespace flopoco {
 		int signedIO;                   /**< true if the IOs are two's complement */
 		int multiplierUid;
 		void initialize();   /**< initialization stuff common to both constructors*/
-		vector<DSP*> dsps;
-		ofstream fig;	
+		//vector<DSP*> dsps;
+		//ofstream fig;
+
 	
 	};
 

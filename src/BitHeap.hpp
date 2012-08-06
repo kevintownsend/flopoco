@@ -23,6 +23,7 @@
 #include "IntAddition/BasicCompressor.hpp"
 #include "IntMultipliers/IntTilingMult.hpp"
 #include "IntMultipliers/MultiplierBlock.hpp"
+#include "Plotter.hpp"
 
 
 
@@ -62,7 +63,7 @@ namespace flopoco{
 		public:
 			/** constructor 
 			    @param bh the parent bit heap */ 
-			WeightedBit(BitHeap* bh, int weight, int cycle=-1,  double criticalPath=-1.0);
+			WeightedBit(BitHeap* bh, int weight, int type=1, int cycle=-1,  double criticalPath=-1.0);
 
 			/** destructor */ 
 			~WeightedBit(){};
@@ -99,6 +100,7 @@ namespace flopoco{
 			double criticalPath; /**< The cycle at which the bit was created */
 			BitHeap* bh;
 			int weight;
+			int type;
 			int uid;
 			string name;
 			string srcFileName;
@@ -117,8 +119,12 @@ namespace flopoco{
 		/** add a bit to the bit heap. The bit will be added at the cycle op->currentCycle() with critical path op->getCriticalPath().
 		    @param weight   the weight of the bit to be added
 		    @param rhs      the right-hand VHDL side defining this bit.
-		    @param comment  a VHDL comment for this bit*/
-		void addBit(unsigned weight, string rhs, string comment="");
+		    @param comment  a VHDL comment for this bit
+			@param type     shows the origin(type) of the bit:
+								0 - compression
+								1 - external
+								2 - constant */		
+		void addBit(unsigned weight, string rhs, string comment="", int type=1);
 
 		/** add a constant 1 to the bit heap. All the constant bits are added to the constantBits mpz, so we don't generate hardware to compress constants....
 		    @param weight   the weight of the 1 to be added */
@@ -166,6 +172,8 @@ namespace flopoco{
 
 		/** returns the maximum height of the bit heap*/
 		unsigned getMaxHeight();
+
+		Plotter* getPlotter();
 
 	protected:
 
@@ -262,7 +270,8 @@ namespace flopoco{
      
 		// For error reporting to work
 		string srcFileName;
-		string uniqueName_;	
+		string uniqueName_;
+		Plotter* plotter;	
 	};
 
 

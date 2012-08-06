@@ -199,6 +199,7 @@ use withing matrix-multiplication scenarios ------------------ */
 /* misc ------------------------------------------------------ */
 #include "Wrapper.hpp"
 #include "UserDefinedOperator.hpp"
+#include "Plotter.hpp"
 
 
 #endif //FLOPOCO_HPP

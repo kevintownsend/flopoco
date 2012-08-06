@@ -29,10 +29,10 @@ using namespace std;
 namespace flopoco
 {
 
-	BitHeap::WeightedBit::WeightedBit(BitHeap* bh, int weight_, int cycle_, double criticalPath_) : 
-		bh(bh), weight(weight_)
+	BitHeap::WeightedBit::WeightedBit(BitHeap* bh, int weight_, int type_, int cycle_, double criticalPath_) : 
+		bh(bh), weight(weight_), type(type_)
 	{
-       		srcFileName=bh->getOp()->getSrcFileName() + ":BitHeap:WeightedBit";
+       	srcFileName=bh->getOp()->getSrcFileName() + ":BitHeap:WeightedBit";
 		if(cycle_==-1)
 			cycle = bh->getOp()->getCurrentCycle();
 		else
@@ -42,9 +42,17 @@ namespace flopoco
 		else
 			criticalPath=criticalPath_;
 		std::ostringstream p;
+
+
+
 		p  << "heap_bh" << bh->getGUid() << "_w" << weight << "_" << bh->newUid(weight);
 		name=p.str();
 
+	}
+
+	Plotter* BitHeap::getPlotter()
+	{
+		return plotter;
 	}
 
 	
@@ -96,6 +104,7 @@ namespace flopoco
 		outConcatIndex=0;
 		compressorIndex=0;
 		adderIndex=0;
+		plotter = new Plotter();
 		for(int i=0; i<10;++i)
 			usedCompressors[i]=false;
 		for (int i=0; i< maxWeight; i++) {
@@ -193,6 +202,7 @@ namespace flopoco
 		for (unsigned i=0; i<size; i++) {
 			ostringstream s;
 			s << x << of(i);
+			//TODO unconfigured addBit
 			addBit(weight+i, s.str());
 		}
 	}
@@ -207,6 +217,7 @@ namespace flopoco
 		for (unsigned i=0; i<size; i++) {
 			ostringstream s;
 			s << "not " << x << of(i);
+			//TODO unconfigured addBit
 			addBit(weight+i, s.str());
 		}
 		addConstantOneBit(weight);
@@ -345,6 +356,7 @@ namespace flopoco
 						{	
 							stringstream s;
 							s<<current->getSigName()<<"("<<k<<")";
+							//TODO unconfigured addBit	
 							addBit(weight,s.str());
 						}
 					}
@@ -370,6 +382,7 @@ namespace flopoco
 					{	
 						stringstream s;
 						s<<name<<"("<<k<<")";
+						//TODO unconfigured addBit
 						addBit(weight,s.str());
 					}
 				}
@@ -378,14 +391,14 @@ namespace flopoco
 	}
 
 
-	void  BitHeap::addBit(unsigned w, string rhs, string comment)
+	void  BitHeap::addBit(unsigned w, string rhs, string comment, int type)
 	{
 			
 		// ignore bits beyond the declared maxWeight
 		if(w >= maxWeight)
 			return; 
 
-		WeightedBit* bit= new WeightedBit(this, w) ;
+		WeightedBit* bit= new WeightedBit(this, w, type) ;
 		// created at (op->getCycle(), opt-getCriticalPath())
 
 		list<WeightedBit*>& l=bits[w];
@@ -512,10 +525,10 @@ namespace flopoco
 			removeCompressedBits(i+1,bc->getColumnSize(1));
 		
 		// add the bits, at the current (global) instant.
-		addBit(i, join(out_concat, compressorIndex,"_", outConcatIndex, "(0)"),"");
-		addBit(i+1,	join(out_concat, compressorIndex,"_", outConcatIndex, "(1)"),"");
+		addBit(i, join(out_concat, compressorIndex,"_", outConcatIndex, "(0)"),"",0);
+		addBit(i+1,	join(out_concat, compressorIndex,"_", outConcatIndex, "(1)"),"",0);
 		if(!((bc->getColumnSize(0)==3) && (bc->getColumnSize(1)==0)))
-			addBit(i+2, join(out_concat, compressorIndex,"_", outConcatIndex, "(2)"),"");
+			addBit(i+2, join(out_concat, compressorIndex,"_", outConcatIndex, "(2)"),"",0);
 
 		REPORT(DEBUG, "Exiting elemReduce() ");
 
@@ -596,7 +609,8 @@ namespace flopoco
 		
 		for(list<WeightedBit*>::iterator it = bits[w].begin(); it!=bits[w].end(); ++it)
 			{
-				//REPORT(DEBUG, "element "<<i<<" cycle = "<<(*it)->getCycle() << " and cp = "<<(*it)->getCriticalPath((*it)->getCycle()));
+				REPORT(DEBUG, "element "<<i<<" cycle = "<<(*it)->getCycle() 
+					<< " and cp = "<<(*it)->getCriticalPath((*it)->getCycle()));
 				i++; 
 			}
 	}
@@ -613,11 +627,13 @@ namespace flopoco
 		op->vhdl << endl << tab << "-- Adding the constant bits" << endl;
 		for (unsigned w=0; w<maxWeight; w++)
 			if (1 == ((constantBits>>w) & 1) )
+				//TODO unconfigured addBit
 				addBit(w, "'1'");
 
 		
 		generateSupertileVHDL();
-	
+		
+			
 
 		
 		initializeDrawing();
@@ -928,8 +944,9 @@ namespace flopoco
 #endif
 
 
-		for(int i=lsb; i<msb + 2 ; i++)	{
-			addBit(i, join(outAdder, adderIndex,"(",i-lsb,")"),"");
+		for(int i=lsb; i<msb + 2 ; i++)	
+		{
+			addBit(i, join(outAdder, adderIndex,"(",i-lsb,")"),"",0); //adder working as a compressor = type 0 for added bit
 		}
  
 
@@ -1338,10 +1355,11 @@ namespace flopoco
 		fig << "<line x1=\"" << turnaroundX + 50 << "\" y1=\"" << 20 << "\" x2=\"" << turnaroundX + 50
 		    << "\" y2=\"" << offsetY +30 << "\" style=\"stroke:midnightblue;stroke-width:1\" />" << endl;
 
-		fig << "</svg>" << endl;
+		fig << "</g></svg>" << endl;
 
 		fileFig << "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" width=\"100%\" height=\"100%\" viewBox=\"" <<turnaroundX - bits.size()*10 - 80 
 		        << " " << 100 << " " << turnaroundX + 50 << " " << offsetY + 20 <<  "\">" << endl; 
+		fileFig << "<g transform=\"rotate(45)\">" <<endl;
 		//    fileFig << "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" viewBox=\"0 0 500 500\">" << endl; 
 
 		fileFig << fig.str();

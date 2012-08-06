@@ -216,6 +216,11 @@ ADD_LIBRARY(FloPoCoLib STATIC
  src/BitHeap
  src/IntComparator
  src/IntDualSub
+
+#---------Plotting-related ---------------------------------------
+src/Plotter
+
+
  
 # Multiplication related --------------------------------------------
 #--------------------------------------------------------------------
