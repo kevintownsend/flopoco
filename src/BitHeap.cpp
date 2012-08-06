@@ -486,9 +486,10 @@ namespace flopoco
 					}
 			}
         
-		string in_concat=join("in_concat_bh", getGUid());
-		string out_concat=join("out_concat_bh", getGUid());
-		string compressor=join("Compressor_bh", getGUid());
+		string in_concat=join("in_concat_bh", getGUid(), "_");
+		string out_concat=join("out_concat_bh", getGUid(), "_");
+		string compressor=join("Compressor_bh", getGUid(), "_");
+
 
 		for(unsigned j=0; j<bc->height.size(); j++)
 			{
