@@ -588,7 +588,6 @@ namespace flopoco {
 					parentOp->getOpListR().push_back(tpp);
 				}
 
-				cerr << "XXXXX " << signedIO << " " << negate << endl; 
 				setCycle(0); // TODO FIXME for the virtual multiplier case where inputs can arrive later
 				setCriticalPath(initialCP);
 				// SmallMultTable is built to cost this:

@@ -445,8 +445,8 @@ namespace flopoco
   
 	void BitHeap::elemReduce(unsigned i, BasicCompressor* bc)
 	{
-
-		list<WeightedBit*>::iterator it = bits[i].begin();
+		REPORT(DEBUG, "Entering elemReduce() ");
+	list<WeightedBit*>::iterator it = bits[i].begin();
 		stringstream signal[2];
 
 		op->vhdl << endl;
@@ -504,7 +504,7 @@ namespace flopoco
 			}
 
 		op->outPortMap(bc, "R", join(out_concat, compressorIndex,"_", outConcatIndex));
-    
+
 		op->vhdl << tab << op->instance(bc, join(compressor, compressorIndex));
 
 		removeCompressedBits(i,bc->getColumnSize(0));
@@ -517,6 +517,7 @@ namespace flopoco
 		if(!((bc->getColumnSize(0)==3) && (bc->getColumnSize(1)==0)))
 			addBit(i+2, join(out_concat, compressorIndex,"_", outConcatIndex, "(2)"),"");
 
+		REPORT(DEBUG, "Exiting elemReduce() ");
 
 		++compressorIndex;
 		++outConcatIndex;
@@ -609,7 +610,7 @@ namespace flopoco
 		// add the constant bits to the actual bit heap 
 		op->setCycle(0); 
 		op->setCriticalPath(0.0);
-		op->vhdl << tab << endl << "-- Adding the constant bits" << endl;
+		op->vhdl << endl << tab << "-- Adding the constant bits" << endl;
 		for (unsigned w=0; w<maxWeight; w++)
 			if (1 == ((constantBits>>w) & 1) )
 				addBit(w, "'1'");
@@ -658,8 +659,8 @@ namespace flopoco
 		offsetY += 20 + getMaxHeight()*10;
 		drawConfiguration(offsetY);
 
-        REPORT(DEBUG, endl);
-        REPORT(DEBUG, "only three levels left");
+		REPORT(DEBUG, endl);
+		REPORT(DEBUG, "only three levels left");
         
 		//do additional compressions or additions
 		if (getMaxHeight()>2)
@@ -690,13 +691,13 @@ namespace flopoco
 					{
 						// Now we are sure cnt[i] is 3;
 						//look for the first two
-                        REPORT(DEBUG, i << "  " << cnt[i]);
+						REPORT(DEBUG, " looking for the first two: before, i=" << i << " cnt[i]= " << cnt[i]);
 						while (i<maxWeight && cnt[i]==3) 
 							i++;
+						REPORT(DEBUG, "                             after, i=" << i << " cnt[i]= " << cnt[i]);
                         
-                        REPORT(DEBUG, i << "  " << cnt[i]);
 						
-                        if (i==maxWeight) {
+						if (i==maxWeight) {
 							applyCompressor3_2(maxWeight-1);
 							doLoop=false;
 						}
@@ -704,14 +705,18 @@ namespace flopoco
 							// Now we are sure there is at least one 2
 							first2=i;
 						
+							REPORT(DEBUG, " first3=" << first3 <<" first2=" << first2);
 							if(first3<first2-1) {
-								for(int j=first3; j<first2-1; j++)
+								for(int j=first3; j<first2-1; j++){
 									applyCompressor3_2(j);
+								}
 							}
+							REPORT(DEBUG, "look for the first three again... ");
 							
 							//look for the first three again
 							while (i<maxWeight &&  cnt[i]<3) 
 								i++;
+							REPORT(DEBUG, " found i= " << i);
 							
 							if (i==maxWeight) 
 							{	
@@ -753,33 +758,8 @@ namespace flopoco
 						}
 						
 
-#if 0
-						//REPORT(DEBUG,"print i "<<i);
-						if ((cnt[i]==3) && (cnt[i+1]==3))
-							{
-								applyCompressor3_2(i);
-								i++;
-								//REPORT(DEBUG, "crash here");
-							}
-						else
-							{
-								unsigned j = i+1; 
-								while((j<maxWeight) && (cnt[j]<3))
-									{
-										j++;
-
-										REPORT(DEBUG, j);
-									}
-
-								j--;
-								applyAdder(i,j);
-								j++;
-								i=j;
-							}
-#endif
-
-						}
 					}
+			}
          
 		REPORT(DEBUG, "Column height after all compressions");
 		for (unsigned w=0; w<bits.size(); w++) 
@@ -847,18 +827,22 @@ namespace flopoco
       
 	}
 
+
+
+
 	void BitHeap::applyCompressor3_2(int col)
 	{
-		for(unsigned i=0; i<possibleCompressors.size(); i++)
+		REPORT(DEBUG, "Entering applyCompressor3_2(" << col << ") ");
+		unsigned i;
+		for(i=0; i<possibleCompressors.size(); i++)
 			{
 				if((possibleCompressors[i]->getColumnSize(0)==3) && (possibleCompressors[i]->getColumnSize(1)==0))
-					{
-						REPORT(DEBUG, endl);
-						REPORT(DEBUG, "Using Compressor3_2, reduce column " << col);
-						elemReduce(col, possibleCompressors[i]);
-						usedCompressors[i]=true;
-					}
+					break; // exit the loop
 			}
+		REPORT(DEBUG, "Using Compressor3_2, reduce column " << col);
+		elemReduce(col, possibleCompressors[i]);
+		usedCompressors[i]=true;
+		REPORT(DEBUG, "Exiting applyCompressor3_2(" << col << ") ");
 	}
 
 

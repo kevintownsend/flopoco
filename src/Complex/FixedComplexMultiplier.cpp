@@ -84,7 +84,7 @@ namespace flopoco{
 		// The round bit
 		bitHeapIm -> addConstantOneBit(g);
 
-		//bitHeapIm -> generateCompressorVHDL();			
+		bitHeapIm -> generateCompressorVHDL();			
 
 		vhdl << tab << "Zr <= " << bitHeapRe -> getSumName() << range(wO+g, wO+1) << ";" << endl;
 		vhdl << tab << "Zi <= " << bitHeapIm -> getSumName() << range(wO+g, wO+1) << ";" << endl;
