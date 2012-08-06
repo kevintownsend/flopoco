@@ -42,7 +42,7 @@ namespace flopoco
 		else
 			criticalPath=criticalPath_;
 		std::ostringstream p;
-		p  << "heap" << bh->getGUid() << "_w" << weight << "_" << bh->newUid(weight);
+		p  << "heap_bh" << bh->getGUid() << "_w" << weight << "_" << bh->newUid(weight);
 		name=p.str();
 
 	}
@@ -486,32 +486,35 @@ namespace flopoco
 					}
 			}
         
+		string in_concat=join("in_concat_bh", getGUid());
+		string out_concat=join("out_concat_bh", getGUid());
+		string compressor=join("Compressor_bh", getGUid());
 
 		for(unsigned j=0; j<bc->height.size(); j++)
 			{
 				if (bc->getColumnSize(j)==1)
-					op->vhdl << tab << op->declare(join("in_concat_", compressorIndex,"_", inConcatIndex), bc->getColumnSize(j)) 
+					op->vhdl << tab << op->declare(join(in_concat, compressorIndex,"_", inConcatIndex), bc->getColumnSize(j)) 
 					         << "(0) <= " << signal[j].str() << ";" << endl;
 				else
-					op->vhdl << tab << op->declare(join("in_concat_", compressorIndex,"_", inConcatIndex), bc->getColumnSize(j)) 
+					op->vhdl << tab << op->declare(join(in_concat, compressorIndex,"_", inConcatIndex), bc->getColumnSize(j)) 
 					         << " <= " << signal[j].str() << ";" << endl;
-				op->inPortMap(bc, join("X",j), join("in_concat_", compressorIndex,"_", inConcatIndex));
+				op->inPortMap(bc, join("X",j), join(in_concat, compressorIndex,"_", inConcatIndex));
 				++inConcatIndex;
 			}
 
-		op->outPortMap(bc, "R", join("out_concat_", compressorIndex,"_", outConcatIndex));
+		op->outPortMap(bc, "R", join(out_concat, compressorIndex,"_", outConcatIndex));
     
-		op->vhdl << tab << op->instance(bc, join("Compressor_",compressorIndex));
+		op->vhdl << tab << op->instance(bc, join(compressor, compressorIndex));
 
 		removeCompressedBits(i,bc->getColumnSize(0));
 		if(bc->getColumnSize(1)!=0)
 			removeCompressedBits(i+1,bc->getColumnSize(1));
 		
 		// add the bits, at the current (global) instant.
-		addBit(i, join("out_concat_", compressorIndex,"_", outConcatIndex, "(0)"),"");
-		addBit(i+1,	join("out_concat_", compressorIndex,"_", outConcatIndex, "(1)"),"");
+		addBit(i, join(out_concat, compressorIndex,"_", outConcatIndex, "(0)"),"");
+		addBit(i+1,	join(out_concat, compressorIndex,"_", outConcatIndex, "(1)"),"");
 		if(!((bc->getColumnSize(0)==3) && (bc->getColumnSize(1)==0)))
-			addBit(i+2, join("out_concat_", compressorIndex,"_", outConcatIndex, "(2)"),"");
+			addBit(i+2, join(out_concat, compressorIndex,"_", outConcatIndex, "(2)"),"");
 
 
 		++compressorIndex;
@@ -864,7 +867,8 @@ namespace flopoco
 	// assumes cnt has been set up
 	void BitHeap::applyAdder(int lsb, int msb)
 	{
-		stringstream inAdder0, inAdder1, cin, outAdder;
+
+		stringstream inAdder0, inAdder1, cin;
 
 	    REPORT(DEBUG, "Applying an adder from columns " << lsb << " to " << msb);					
 		for(int i = msb; i>=lsb+1; i--)
@@ -910,32 +914,37 @@ namespace flopoco
 
 		inAdder0 << ";";
 		inAdder1 << ";";
+		string inAdder0Name = join("inAdder0_bh", getGUid(), "_");
+		string inAdder1Name = join("inAdder1_bh", getGUid(), "_");
+		string cinName = join("cin_bh", getGUid(), "_");
+		string outAdder = join("outAdder_bh", getGUid(), "_");
 
-		op->vhdl << tab << op->declare(join("inAdder0_",adderIndex), msb-lsb+2) << " <= \'0\' & " << inAdder0.str() << endl;
-		op->vhdl << tab << op->declare(join("inAdder1_",adderIndex), msb-lsb+2) << " <= \'0\' & " << inAdder1.str() << endl;
-		op->vhdl << tab << op->declare(join("cin_",adderIndex)) << " <= " << cin.str() << endl;
+		op->vhdl << tab << op->declare(join(inAdder0Name, adderIndex), msb-lsb+2) << " <= \'0\' & " << inAdder0.str() << endl;
+		op->vhdl << tab << op->declare(join(inAdder1Name, adderIndex), msb-lsb+2) << " <= \'0\' & " << inAdder1.str() << endl;
+		op->vhdl << tab << op->declare(join(cinName, adderIndex)) << " <= " << cin.str() << endl;
 
 #if 0
 
 		IntAdder* adder = new IntAdder(op->getTarget(), msb-lsb+2);
 		op->getOpListR().push_back(adder);
 		
-		op->inPortMap(adder, "X", join("inAdder0_",adderIndex));
-		op->inPortMap(adder, "Y", join("inAdder1_",adderIndex));
-		op->inPortMap(adder, "Cin", join("cin_",adderIndex));
+		op->inPortMap(adder, "X", join(inAdder0Name,adderIndex));
+		op->inPortMap(adder, "Y", join(inAdder1Name,adderIndex));
+		op->inPortMap(adder, "Cin", join(cinName,adderIndex));
 		
-		op->outPortMap(adder, "R", join("outAdder_",adderIndex));
+		op->outPortMap(adder, "R", join(outAdder,adderIndex));
 
-		op->vhdl << tab << op->instance(adder, join("Adder_",adderIndex));
+		op->vhdl << tab << op->instance(adder, join("Adder_bh", getGUid(), "_", adderIndex));
 				
 #else
-		op->vhdl << tab << op->declare(join("outAdder_",adderIndex),msb-lsb+2) << " <= " 
-                        <<  join("inAdder0_",adderIndex) << " + " << join("inAdder1_",adderIndex) << " + " << join("cin_",adderIndex) << ";" <<endl ;
+		op->vhdl << tab << op->declare(join(outAdder, adderIndex), msb-lsb+2) << " <= " 
+                        <<  join(inAdder0Name, adderIndex) << " + " << join(inAdder1Name,adderIndex) << " + " << join(cinName, adderIndex) << ";" <<endl ;
 
 #endif
 
+
 		for(int i=lsb; i<msb + 2 ; i++)	{
-			addBit(i, join("outAdder_", adderIndex,"(",i-lsb,")"),"");
+			addBit(i, join(outAdder, adderIndex,"(",i-lsb,")"),"");
 		}
  
 

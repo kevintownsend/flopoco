@@ -87,18 +87,15 @@ namespace flopoco {
 		string XY(int i, int j, int uid=-1);
 		string heap( int i, int j);
 
+
+		/** Fill the bit heap with all the contributions from this multiplier */
+		void fillBitHeap();
+
+
 		void buildLogicOnly();
 		void buildTiling();
 
-		void manageSignBeforeMult();            /**< to be called before either buildHeapLogicOnly or buildHeapTiling **/
-		void manageSignAfterMult();            /**< to be called after either buildHeapLogicOnly or buildHeapTiling **/
 
-
-		/**	builds the multiplier block with logic(smallMultTables) 
-		 *@param uid is just a number which helps to form the signal names (for multiple calling of the method
-		 )	*/
-		// commented by F2D. Is it used?
-		//	void buildHeapLogicOnly(MultiplierBlock* mul,int uid);
 
 	
 		/**	builds the logic block ( smallMultTables) 
@@ -107,6 +104,9 @@ namespace flopoco {
 		 *@param uid is just a number which helps to form the signal names (for multiple calling of the method
 		 )	*/
 		void buildHeapLogicOnly(int topX, int topY, int botX, int botY, int uid=-1);
+
+		/**	builds the heap using DSP blocks) 
+		 */
 		void buildHeapTiling();
 
 

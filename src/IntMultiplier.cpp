@@ -234,7 +234,9 @@ namespace flopoco {
 		yname = y->getName();
 		
 		initialize();
+		fillBitHeap();
 
+		// leave the compression to the parent op
 	}
 
 
@@ -274,6 +276,8 @@ namespace flopoco {
 		// Set up the IO signals
 		addInput ( xname  , wXdecl, true );
 		addInput ( yname  , wYdecl, true );
+
+		// TODO FIXME This 1 should be 2. It breaks TestBench but not TestBenchFile. Fix TestBench first! (check in addExpectedOutput or something)
 		addOutput ( join("R",multiplierUid)  , wOut, 1 , true );
 
 		// Set up the VHDL library style
@@ -289,19 +293,33 @@ namespace flopoco {
 		// initialize the critical path
 		setCriticalPath(getMaxInputDelays ( inputDelays_ ));
 
+		fillBitHeap();
+
+		bitHeap -> generateCompressorVHDL();			
+		parentOp->vhdl << tab << join("R",multiplierUid) << " <= " << bitHeap-> getSumName() << range(wOut+g-1, g) << ";" << endl;
+	}
+
+
+
+
+
+
+	/// TODO FIXME all the special case in case of a shared bit heap
+	void  IntMultiplier::fillBitHeap(){
+
 		///////////////////////////////////////
 		//  architectures for corner cases   //
 		// TODO manage non-standalone case here //
 		///////////////////////////////////////
 
 		// The really small ones fit in two LUTs and that's as small as it gets  
-		if(wX+wY <= target->lutInputs()+2) {
+		if(wX+wY <= target()->lutInputs()+2) {
 
 			parentOp->vhdl << tab << "-- Ne pouvant me fier à mon raisonnement, j'ai appris par coeur le résultat de toutes les multiplications possibles" << endl;
 
-			SmallMultTable *t = new SmallMultTable( target, wX, wY, wOut, negate, signedIO, signedIO);
+			SmallMultTable *t = new SmallMultTable( target(), wX, wY, wOut, negate, signedIO, signedIO);
 			useSoftRAM(t);
-			oplist.push_back(t);
+			parentOp->getOpListR().push_back(t);
 
 			parentOp->vhdl << tab << declare(join("XY",multiplierUid), wX+wY) << " <= "<<join("YY",multiplierUid)<<" & "<<join("XX",multiplierUid)<<";"<<endl;
 
@@ -309,7 +327,7 @@ namespace flopoco {
 			outPortMap(t, "Y", join("RR",multiplierUid));
 
 	
-			parentOp->vhdl << instance(t, "multTable");
+			parentOp->vhdl << parentOp->instance(t, "multTable");
 			parentOp->vhdl << tab << join("R",multiplierUid)<<" <= "<<join("RR",multiplierUid)<<";" << endl;
 
 			setCriticalPath(t->getOutputDelay(join("Y",multiplierUid)));
@@ -321,13 +339,13 @@ namespace flopoco {
 		// Multiplication by 1-bit integer is simple
 		if ((wY == 1)){
 			if (signedIO){
-				manageCriticalPath( target->localWireDelay(wX) + target->adderDelay(wX+1) );
+				manageCriticalPath( target()->localWireDelay(wX) + target()->adderDelay(wX+1) );
 
 				parentOp->vhdl << tab << join("R",multiplierUid) <<" <= (" << zg(wX+1)  << " - ("<<join("XX",multiplierUid)<< of(wX-1) << " & "<<join("XX",multiplierUid)<<")) when "<<join("YY",multiplierUid)<<"(0)='1' else "<< zg(wX+1,0)<<";"<<endl;	
 
 			}
 			else {
-				manageCriticalPath( target->localWireDelay(wX) + target->lutDelay() );
+				manageCriticalPath( target()->localWireDelay(wX) + target()->lutDelay() );
 
 				parentOp->vhdl << tab << join("R",multiplierUid)<<" <= (\"0\" & "<<join("XX",multiplierUid)<<") when "<< join("YY",multiplierUid)<<"(0)='1' else "<<zg(wX+1,0)<<";"<<endl;	
 
@@ -373,15 +391,15 @@ namespace flopoco {
 				parentOp->vhdl << join("R1i",multiplierUid)<<";"<<endl;
 
 			
-			IntAdder *resultAdder = new IntAdder( target, wX+2, inDelayMap("X", target->localWireDelay() + getCriticalPath() ) );
-			oplist.push_back(resultAdder);
+			IntAdder *resultAdder = new IntAdder( target(), wX+2, inDelayMap("X", target()->localWireDelay() + getCriticalPath() ) );
+			parentOp->getOpListR().push_back(resultAdder);
 			
 			inPortMap(resultAdder, join("X",multiplierUid), join("R0",multiplierUid));
 			inPortMap(resultAdder, join("Y",multiplierUid), join("R1",multiplierUid));
 			inPortMapCst(resultAdder, join("Cin",multiplierUid), (signedIO? "'1'" : "'0'"));
 			outPortMap( resultAdder, join("R",multiplierUid), join("RAdder",multiplierUid));
 
-			parentOp->vhdl << tab << instance(resultAdder, join("ResultAdder",multiplierUid)) << endl;
+			parentOp->vhdl << tab << parentOp->instance(resultAdder, join("ResultAdder",multiplierUid)) << endl;
 
 			syncCycleFromSignal(join("RAdder",multiplierUid));
 			setCriticalPath( resultAdder->getOutputDelay(join("R",multiplierUid)));
@@ -399,7 +417,7 @@ namespace flopoco {
 		if(useDSP) {
 			//test if the multiplication fits into one DSP
 			//int wxDSP, wyDSP;
-			target->getDSPWidths(wxDSP, wyDSP, signedIO);
+			target()->getDSPWidths(wxDSP, wyDSP, signedIO);
 			bool testForward, testReverse, testFit;
 			testForward     = (wX<=wxDSP)&&(wY<=wyDSP);
 			testReverse = (wY<=wxDSP)&&(wX<=wyDSP);
@@ -408,9 +426,9 @@ namespace flopoco {
 			
 			REPORT(DEBUG,"useDSP");
 			if (testFit){
-				if( target->worthUsingDSP(wX, wY))
+				if( target()->worthUsingDSP(wX, wY))
 					{	REPORT(DEBUG,"worthUsingDSP");
-						manageCriticalPath(target->DSPMultiplierDelay());
+						manageCriticalPath(target()->DSPMultiplierDelay());
 						if (signedIO)
 
 							parentOp->vhdl << tab << declare(join("rfull",multiplierUid), wFull+1) << " <= "<<join("XX",multiplierUid)<<"  *  "<< join("YY",multiplierUid)<<"; -- that's one bit more than needed"<<endl; 
@@ -459,11 +477,6 @@ namespace flopoco {
 			int weight=wFull-wOut-1- weightShift;
 			bitHeap->addConstantOneBit(weight);
 		}
-		if(isOperator) {
-			// compress the bit heap and assign the output signal
-			bitHeap -> generateCompressorVHDL();			
-			parentOp->vhdl << tab << join("R",multiplierUid) <<" <= CompressionResult(" << wOut+g-1 << " downto "<< g << ");" << endl;
-		}
 	}
 
 
@@ -475,12 +488,6 @@ namespace flopoco {
 		if(g>0) {
 			int weight=wFull-wOut-1- weightShift;
 			bitHeap->addConstantOneBit(weight);
-		}
-
-		if(isOperator) {
-			// compress the bit heap and assign the output signal
-			bitHeap -> generateCompressorVHDL();				
-			parentOp->vhdl << tab << join("R",multiplierUid) <<" <=  CompressionResult(" << wOut+g-1 << " downto "<< g << ");" << endl;
 		}
 
 		printConfiguration();
@@ -559,28 +566,29 @@ namespace flopoco {
 				if(signedIO) {
 					tpp = new SmallMultTable( target, dx, dy, dx+dy, negate, false, false); // unsigned
 					useSoftRAM(tpp);
-					oplist.push_back(tpp);
+					parentOp->getOpListR().push_back(tpp);
 					tmp = new SmallMultTable( target, dx, dy, dx+dy, negate, true, false );
 					useSoftRAM(tmp);
-					oplist.push_back(tmp);
+					parentOp->getOpListR().push_back(tmp);
 					tpm = new SmallMultTable( target, dx, dy, dx+dy, negate, false, true );
 					useSoftRAM(tpm);
-					oplist.push_back(tpm);
+					parentOp->getOpListR().push_back(tpm);
 					tmm = new SmallMultTable( target, dx, dy, dx+dy, negate, true, true );
 					useSoftRAM(tmm);
-					oplist.push_back(tmm);
+					parentOp->getOpListR().push_back(tmm);
 				}
 				else if (negate) {
 					tmm = new SmallMultTable( target, dx, dy, dx+dy, negate, true, true );
 					useSoftRAM(tmm);
-					oplist.push_back(tmm);
+					parentOp->getOpListR().push_back(tmm);
 				}
 				else {
 					tpp = new SmallMultTable( target, dx, dy, dx+dy, negate, false, false); // unsigned
 					useSoftRAM(tpp);
-					oplist.push_back(tpp);
+					parentOp->getOpListR().push_back(tpp);
 				}
 
+				cerr << "XXXXX " << signedIO << " " << negate << endl; 
 				setCycle(0); // TODO FIXME for the virtual multiplier case where inputs can arrive later
 				setCriticalPath(initialCP);
 				// SmallMultTable is built to cost this:
@@ -589,17 +597,36 @@ namespace flopoco {
 
 					parentOp->vhdl << tab << "-- Partial product row number " << iy << endl;
 
-					// TODO integrate negate in the following
 					for (int ix=0; ix<chunksX; ix++) { 
 						SmallMultTable *t;
-						t=tpp; // by default
-						if(signedIO) {
+
+						// 4 bloody cases depending on signedIO and negate
+						if (!signedIO && !negate)
+							t=tpp;
+
+						if (!signedIO && negate)
+							t=tmm;
+
+						if(signedIO && ! negate) {
 							if((ix==chunksX-1) && (iy==chunksY-1))
 								t=tmm;
 							else if (ix==chunksX-1)
 								t=tmp;
 							else if (iy==chunksY-1)
 								t=tpm;
+							else
+								t=tpp; 
+						}
+
+						if (signedIO && negate) {
+							if((ix==chunksX-1) && (iy==chunksY-1))
+								t=tpp;
+							else if (ix==chunksX-1)
+								t=tpm;
+							else if (iy==chunksY-1)
+								t=tmp;
+							else
+								t=tmm; 
 						}
 
 						parentOp->vhdl << tab << declare(join (XY(ix,iy,uid),multiplierUid), dx+dy) 
@@ -607,7 +634,7 @@ namespace flopoco {
 
 						inPortMap(t, "X", join(XY(ix,iy,uid),multiplierUid));
 						outPortMap(t, "Y", join(PP(ix,iy,uid),multiplierUid));
-						parentOp->vhdl << instance(t, join(PPTbl(ix,iy,uid),multiplierUid));
+						parentOp->vhdl << parentOp->instance(t, join(PPTbl(ix,iy,uid),multiplierUid));
 
 						parentOp->vhdl << tab << "-- Adding the relevant bits to the heap of bits" << endl;
 						
@@ -735,7 +762,7 @@ namespace flopoco {
 
 					SmallMultTable *t = new SmallMultTable( getTarget(), 3, 3, 6, false ); // unsigned
 					//useSoftRAM(t);
-					oplist.push_back(t);
+					parentOp->getOpListR().push_back(t);
 					REPORT(DEBUG,"restX= "<<restX<<"restY= "<<restY);
 					if(restY>0)
 						{

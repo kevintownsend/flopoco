@@ -11,7 +11,7 @@ namespace flopoco{
 	
 	/**
 	 * Multiplier for complex numbers
-	 * Depending on the value of hasLessMultiplications, the multiplication
+	 * Depending on the value of threeMultiplications, the multiplication
 	 * (a+jb)*(c+jd) can be either
 	 * 		Re(z)=a*c+-b*d
 	 * 		Im(z)=a*d+b*c, with 4 multiplications and 3 additions
@@ -21,16 +21,18 @@ namespace flopoco{
 	 * 		m3=(d-c)*a
 	 * 		Re(z)=m1-m2
 	 * 		Im(z)=m1+m3, with 3 multiplications and 5 additions
-	 */
+	 * @param[int] wI input size
+	 * @param[int] wO output size
+ 	 */
 	class FixedComplexMultiplier : public Operator
 	{
 	public:
-		FixedComplexMultiplier(Target* target, int wI, int wF, bool signedOperator = true, bool hasLessMultiplications = false);
+		FixedComplexMultiplier(Target* target, int wI, int wO, bool signedOperator = true, bool threeMultiplications = false);
 		~FixedComplexMultiplier();
 		
 		void emulate(TestCase * tc);
 
-		int wI, wF, w;
+		int wI, wO;
 		bool signedOperator;
 
 	};
