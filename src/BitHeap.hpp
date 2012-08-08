@@ -16,7 +16,7 @@
 #define __BITHEAP_HPP
 #include <vector>
 #include <sstream>
-
+#include "WeightedBit.hpp"
 #include "Operator.hpp"
 #include "Table.hpp"
 #include "DualTable.hpp"
@@ -58,59 +58,7 @@ namespace flopoco{
 	class BitHeap 
 	{
 
-		class WeightedBit
-		{
-		public:
-			/** constructor 
-			    @param bh the parent bit heap */ 
-			WeightedBit(BitHeap* bh, int weight, int type=1, int cycle=-1,  double criticalPath=-1.0);
-
-			/** destructor */ 
-			~WeightedBit(){};
 		
-
-			/** return the cycle at which this bit is defined */
-			int getCycle(){
-				return cycle;
-			};
-
-			/** return the critical path of this bit */
-			double getCriticalPath(int atCycle);
-
-			/** returns the stage when this bit should be compressed */ 
-			int computeStage(int stagesPerCycle, double elementaryTime);
-
-
-			
-
-			/** return the VHDL signal name of this bit */
-			string getName(){
-				return name;
-			};
-
-		
-			/** ordering by availability time */
-			bool operator< (const WeightedBit& b); 
-			/** ordering by availability time */
-			bool operator<= (const WeightedBit& b); 
-
-			//void removePlottableBit();
-
-
-		private:
-			int cycle;  /**< The cycle at which the bit was created */
-			double criticalPath; /**< The cycle at which the bit was created */
-			BitHeap* bh;
-			int weight;
-			int type;
-			int uid;
-			string name;
-			string srcFileName;
-			string uniqueName_;
-			
-
-		};
-
 	public:
 
 		/** The constructor
@@ -195,12 +143,12 @@ namespace flopoco{
 		void applyAdder(int col0, int col1);
 
 		//** computes the latest bit from a column, in order to compress just the bits which are smaller than that one*/
-		BitHeap::WeightedBit* computeLatest(unsigned w, int c0, int c1);
+		WeightedBit* computeLatest(unsigned w, int c0, int c1);
         
 		//** computes the latest bit from the bitheap, in order to manage the cycle before the final adding*/
-		BitHeap::WeightedBit* getLatestBit(int lsbColumn, int msbColumn);
+		WeightedBit* getLatestBit(int lsbColumn, int msbColumn);
 
-		BitHeap::WeightedBit* getFirstSoonestBit();
+		WeightedBit* getFirstSoonestBit();
 
 		/** remove a bit from the bitheap.
 		    @param weight  the weight of the bit to be removed

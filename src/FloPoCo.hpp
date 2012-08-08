@@ -43,6 +43,7 @@
 
 /* General purpose heap of weighted bits  -------------------- */
 #include "BitHeap.hpp"
+#include "WeightedBit.hpp"
 
 
 /* multioperand adders --------------------------------------- */

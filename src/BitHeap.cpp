@@ -29,72 +29,6 @@ using namespace std;
 namespace flopoco
 {
 
-	BitHeap::WeightedBit::WeightedBit(BitHeap* bh, int weight_, int type_, int cycle_, double criticalPath_) : 
-		bh(bh), weight(weight_), type(type_)
-	{
-       	srcFileName=bh->getOp()->getSrcFileName() + ":BitHeap:WeightedBit";
-		if(cycle_==-1)
-			cycle = bh->getOp()->getCurrentCycle();
-		else
-			cycle=cycle_;
-		if(criticalPath_==-1)
-			criticalPath = bh->getOp()->getCriticalPath();
-		else
-			criticalPath=criticalPath_;
-		std::ostringstream p;
-
-
-
-		p  << "heap_bh" << bh->getGUid() << "_w" << weight << "_" << bh->newUid(weight);
-		name=p.str();
-
-		
-	}
-
-	void BitHeap::setPlotter(Plotter* plotter_)
-	{
-		plotter = plotter_;
-	}
-
-	Plotter* BitHeap::getPlotter()
-	{
-		return plotter;
-	}
-
-	
-	/* which bit was defined earlier */
-	bool BitHeap::WeightedBit::operator< (const WeightedBit& b){
-		if ((cycle<b.cycle) || (cycle==b.cycle && criticalPath<b.criticalPath)) 
-			return true;
-		else
-			return false;
-	} 
-
-	bool BitHeap::WeightedBit::operator<= (const WeightedBit& b){
-		if ((cycle<b.cycle) || (cycle==b.cycle && criticalPath<=b.criticalPath)) 
-			return true;
-		else
-			return false;
-	} 
-	
-	double BitHeap::WeightedBit::getCriticalPath(int atCycle)
-	{
-
-		if (cycle>atCycle){
-			THROWERROR("For bit " << name << ", getCriticalPath() called for cycle "<<atCycle<< " but this bit is defined only at cycle "<< cycle);
-		}
-		if (cycle==atCycle)
-			return criticalPath;
-		if (cycle<atCycle)
-			return 0.0;
-		
-		return 0.0;  //because it returned no value on this branch
-	}
-
-	int BitHeap::WeightedBit::computeStage(int stagesPerCycle, double elementaryTime)
-	{
-		return (getCycle()*stagesPerCycle + getCriticalPath(getCycle())/elementaryTime);        
-	}
 
 
 	BitHeap::BitHeap(Operator* op, int maxWeight) :
@@ -132,6 +66,18 @@ namespace flopoco
 		}
 	}
 
+	void BitHeap::setPlotter(Plotter* plotter_)
+	{
+		plotter = plotter_;
+	}
+
+	Plotter* BitHeap::getPlotter()
+	{
+		return plotter;
+	}
+
+
+
 
 	int BitHeap::newUid(unsigned w){
 		return uid[w]++;
@@ -143,7 +89,7 @@ namespace flopoco
 
 
 
-	BitHeap::WeightedBit* BitHeap::computeLatest(unsigned w, int c0, int c1)
+	WeightedBit* BitHeap::computeLatest(unsigned w, int c0, int c1)
 	{
 
 		if(w>=maxWeight)
@@ -413,7 +359,7 @@ namespace flopoco
 		if(w >= maxWeight)
 			return; 
 
-		WeightedBit* bit= new WeightedBit(this, w, type) ;
+		WeightedBit* bit= new WeightedBit(getGUid(), newUid(w), w, type, op->getCurrentCycle(), op->getCriticalPath()) ;
 		// created at (op->getCycle(), opt-getCriticalPath())
 
 		list<WeightedBit*>& l=bits[w];
@@ -838,7 +784,7 @@ namespace flopoco
 
 
 	//returns a pointer to the first bit which has the smallest cycle & CP combination
-	BitHeap::WeightedBit* BitHeap::getFirstSoonestBit()
+	WeightedBit* BitHeap::getFirstSoonestBit()
 	{
 		int minCycle= 9999;
 		double minCP = 100;
@@ -988,7 +934,7 @@ namespace flopoco
 
 
 	//returns a pointer to the bit which has the biggest criticalPath+cycle combination, considering the given column limits (both included)
-	BitHeap::WeightedBit* BitHeap::getLatestBit(int lsbColumn, int msbColumn)
+	WeightedBit* BitHeap::getLatestBit(int lsbColumn, int msbColumn)
 	{
 	
 		double maxCycle=0;

@@ -214,6 +214,7 @@ ADD_LIBRARY(FloPoCoLib STATIC
  src/IntAddition/PopCount src/IntAddition/NewCompressorTree
  src/IntAddition/BasicCompressor
  src/BitHeap
+src/WeightedBit
  src/IntComparator
  src/IntDualSub
 
