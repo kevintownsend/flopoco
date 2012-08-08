@@ -23,7 +23,7 @@
 #include "IntAddition/BasicCompressor.hpp"
 #include "IntMultipliers/IntTilingMult.hpp"
 #include "IntMultipliers/MultiplierBlock.hpp"
-#include "Plotter.hpp"
+//#include "Plotter.hpp"
 
 
 
@@ -53,7 +53,7 @@ namespace flopoco{
 
 
 
-
+	class Plotter;
 
 	class BitHeap 
 	{
@@ -94,6 +94,8 @@ namespace flopoco{
 			/** ordering by availability time */
 			bool operator<= (const WeightedBit& b); 
 
+			//void removePlottableBit();
+
 
 		private:
 			int cycle;  /**< The cycle at which the bit was created */
@@ -105,6 +107,7 @@ namespace flopoco{
 			string name;
 			string srcFileName;
 			string uniqueName_;
+			
 
 		};
 
@@ -115,7 +118,7 @@ namespace flopoco{
 		    @param maxWeight  the maximum weight of the heap (it should be known statically, shouldn't it?) */
 		BitHeap(Operator* op, int maxWeight);
 		~BitHeap();
-		
+
 		/** add a bit to the bit heap. The bit will be added at the cycle op->currentCycle() with critical path op->getCriticalPath().
 		    @param weight   the weight of the bit to be added
 		    @param rhs      the right-hand VHDL side defining this bit.
@@ -154,6 +157,9 @@ namespace flopoco{
 		/** returns the name of the compressed sum */
 		string getSumName();
 
+		/** returns the current stage of the bitheap, given the global cycle and CP */
+		int computeStage();
+
 
 		/** adds a new MultiplierBlock */
 		void  addDSP(MultiplierBlock* m);
@@ -172,6 +178,8 @@ namespace flopoco{
 
 		/** returns the maximum height of the bit heap*/
 		unsigned getMaxHeight();
+
+		void setPlotter(Plotter* plotter_);
 
 		Plotter* getPlotter();
 
@@ -267,11 +275,11 @@ namespace flopoco{
 		bool didCompress; 
 		vector<list<WeightedBit*> > bits; /**<  The list is ordered by arrival time of the bits, i.e. lexicographic order on (cycle, cp)*/
 		vector<MultiplierBlock*> mulBlocks; //the vector of multiplier blocks
-     
+		Plotter* plotter;	
 		// For error reporting to work
 		string srcFileName;
 		string uniqueName_;
-		Plotter* plotter;	
+		
 	};
 
 

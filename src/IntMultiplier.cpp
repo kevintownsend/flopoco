@@ -241,6 +241,11 @@ namespace flopoco {
 		
 		xname = x->getName();
 		yname = y->getName();
+
+		plotter = new Plotter();
+
+		bitHeap->setPlotter(plotter);
+		plotter->setBitHeap(bitHeap);
 		
 		initialize();
 		fillBitHeap();
@@ -300,6 +305,11 @@ namespace flopoco {
 
 		// The bit heap
 		bitHeap = new BitHeap(this, wOut+g);
+
+		plotter = new Plotter();
+
+		bitHeap->setPlotter(plotter);
+		plotter->setBitHeap(bitHeap);
 
 
 

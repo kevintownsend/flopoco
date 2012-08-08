@@ -13,7 +13,7 @@
 
 */
 #include "BitHeap.hpp"
-
+#include "Plotter.hpp"
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -48,6 +48,12 @@ namespace flopoco
 		p  << "heap_bh" << bh->getGUid() << "_w" << weight << "_" << bh->newUid(weight);
 		name=p.str();
 
+		
+	}
+
+	void BitHeap::setPlotter(Plotter* plotter_)
+	{
+		plotter = plotter_;
 	}
 
 	Plotter* BitHeap::getPlotter()
@@ -104,7 +110,7 @@ namespace flopoco
 		outConcatIndex=0;
 		compressorIndex=0;
 		adderIndex=0;
-		plotter = new Plotter();
+		//plotter = new Plotter(this);
 		for(int i=0; i<10;++i)
 			usedCompressors[i]=false;
 		for (int i=0; i< maxWeight; i++) {
@@ -124,7 +130,7 @@ namespace flopoco
 				delete (*it);
 			}
 		}
-	}	
+	}
 
 
 	int BitHeap::newUid(unsigned w){
@@ -280,20 +286,23 @@ namespace flopoco
 				{
 					
 					if(mulBlocks[j]->getWeight()<=mulBlocks[i]->getWeight())
+					{
 						if((mulBlocks[j]->getNext()==NULL)&&(mulBlocks[i]->getPrevious()==NULL))
 						{	REPORT(DETAILED,"mulblocks[j]= "<<mulBlocks[j]->getWeight()<<" mulBlock[i]= "<<mulBlocks[i]->getWeight());
 							REPORT(DETAILED,"j<=i");
 							mulBlocks[j]->setNext(mulBlocks[i]);
 							mulBlocks[i]->setPrevious(mulBlocks[j]);
 						}	
-											
+					}						
 					else
+					{
 						if((mulBlocks[i]->getNext()==NULL)&&(mulBlocks[j]->getPrevious()==NULL))	
 						{	REPORT(DETAILED,"mulblocks[j]= "<<mulBlocks[j]->getWeight()<<" mulBlock[i]= "<<mulBlocks[i]->getWeight());
 							REPORT(DETAILED,"j>i");
 							mulBlocks[i]->setNext(mulBlocks[j]);
 							mulBlocks[j]->setPrevious(mulBlocks[i]);
-						}			
+						}	
+					}		
 				}
 
 			}
@@ -390,6 +399,12 @@ namespace flopoco
 		}
 	}
 
+	int BitHeap::computeStage()
+	{
+		return (op->getCurrentCycle()*stagesPerCycle + op->getCriticalPath()/elementaryTime); 
+	
+	}
+
 
 	void  BitHeap::addBit(unsigned w, string rhs, string comment, int type)
 	{
@@ -445,12 +460,16 @@ namespace flopoco
 	void BitHeap::removeBit(unsigned weight, int dir)
 	{
 		list<WeightedBit*>& l=bits[weight];
+
+		WeightedBit* bit;
     
 		//if dir=0 the bit will be removed from the begining of the list, else from the end of the list of weighted bits
 		if(dir==0)
 			l.pop_front();
 		else if(dir==1)
 			l.pop_back();
+
+		
 
 		REPORT(DEBUG,"remove bit from column " << weight);
 	}
@@ -636,7 +655,7 @@ namespace flopoco
 			
 
 		
-		initializeDrawing();
+		//initializeDrawing();
 		generatePossibleCompressors();
         
 		WeightedBit* firstBit = getFirstSoonestBit();
@@ -664,17 +683,13 @@ namespace flopoco
 			{
                 
 				REPORT(DETAILED, "didCompress " << didCompress);
-				if(didCompress)
-					{
-						offsetY += 20 + getMaxHeight()*10;
-						drawConfiguration(offsetY);
-					}
+
+				plotter->heapSnapshot(didCompress, stage);
 				compress(stage);
 				stage++;
 			}
-		offsetY += 20 + getMaxHeight()*10;
-		drawConfiguration(offsetY);
 
+		plotter->heapSnapshot(true, stage);
 		REPORT(DEBUG, endl);
 		REPORT(DEBUG, "only three levels left");
         
@@ -742,15 +757,23 @@ namespace flopoco
 									op->setCycle(  latestBit ->getCycle()  );
 									op->setCriticalPath(   latestBit ->getCriticalPath(op->getCurrentCycle()));
 									op->manageCriticalPath( op->getTarget()->localWireDelay() + op->getTarget()->adderDelay(maxWeight-first2+1) );
+
+									stage = computeStage();
+									plotter->heapSnapshot(true, stage);
+
+									
+#if 0
 									if( latestBit ->getCycle() < op->getCurrentCycle())
 									{
 										drawCycleLine = true;
 									}
-								}
+#endif
 
+								}
 
 								applyAdder(first2-1,maxWeight-1);							
 								doLoop=false;
+
 							}
 							else 
 							{
@@ -761,10 +784,15 @@ namespace flopoco
 									op->setCycle(   latestBit  ->getCycle()  );
 									op->setCriticalPath( latestBit->getCriticalPath(op->getCurrentCycle()));
 									op->manageCriticalPath(op->getTarget()->localWireDelay() + op->getTarget()->adderDelay(first3 - first2 + 1));
+
+									stage = computeStage();
+									plotter->heapSnapshot(true, stage);
+#if 0
 									if(latestBit->getCycle() < op->getCurrentCycle())
 									{
 										drawCycleLine = true;
 									}
+#endif
 								}
 
 
@@ -793,11 +821,15 @@ namespace flopoco
 						op->getOpListR().push_back(possibleCompressors[i]);
 					}
 			}
-	    
-		
+	  
+	  	stage = computeStage();
+
+		plotter->heapSnapshot(true, stage);	
+#if 0
 		offsetY += 20 + getMaxHeight() * 10;
 		drawConfiguration(offsetY);
 		closeDrawing(offsetY);
+#endif
 		
 		//final addition
 		generateFinalAddVHDL();
@@ -1051,6 +1083,7 @@ namespace flopoco
 				op->setCycle(  b ->getCycle()  );
 				op->setCriticalPath(  b->getCriticalPath(op->getCurrentCycle()));
 				op->manageCriticalPath(op->getTarget()->localWireDelay() + op->getTarget()->adderDelay(maxWeight-minWeight));
+
 				if(b->getCycle() < op->getCurrentCycle())
 					{
 						drawCycleLine = true;
@@ -1252,123 +1285,7 @@ namespace flopoco
 	}
 
 
-	void BitHeap::initializeDrawing()
-	{
-		ostringstream figureFileName;
-		figureFileName << "bit_heap.svg";
 	
-		drawCycleNumber = 0;
-
-		FILE* pfile;
-		pfile  = fopen(figureFileName.str().c_str(), "w");
-		fclose(pfile);
-		
-		fileFig.open (figureFileName.str().c_str(), ios::trunc);
-
-		fileFig << "<?xml version=\"1.0\" standalone=\"no\"?>" << endl;
-		fileFig << "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\"" << endl;
-		fileFig << "\"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">" << endl;
-	}
-
-	void BitHeap::drawConfiguration(int offsetY)
-	{
-		int turnaroundX = 1500;
-		int color = 0;
-		int tempCycle = 0;
-		int cnt = 0;
-		double tempCP = 0;
-		if((drawCycleLine) && (drawCycleNumber==0))
-			{
-				fig << "<text x=\"" << turnaroundX + 85 << "\" y=\"" << 40
-				    << "\" fill=\"midnightblue\">" << "Cycle"<< "</text>" << endl;
-			}
-
-		if(drawCycleLine)
-			{
-				drawCycleNumber++;
-				fig << "<line x1=\"" << turnaroundX + 200 << "\" y1=\"" << offsetY +10 << "\" x2=\"" << turnaroundX - bits.size()*10 - 50
-				    << "\" y2=\"" << offsetY +10 << "\" style=\"stroke:midnightblue;stroke-width:2\" />" << endl;
-
-				fig << "<text x=\"" << turnaroundX + 100 << "\" y=\"" << offsetY + 3
-				    << "\" fill=\"midnightblue\">" << drawCycleNumber - 1 << "</text>" << endl;
-
-				fig << "<text x=\"" << turnaroundX + 100 << "\" y=\"" << offsetY + 27
-				    << "\" fill=\"midnightblue\">" << drawCycleNumber  << "</text>" << endl;
-
-				drawCycleLine = false;
-			}
-		else
-			{
-				fig << "<line x1=\"" << turnaroundX + 200 << "\" y1=\"" << offsetY +10 << "\" x2=\"" << turnaroundX - bits.size()*10 - 50
-				    << "\" y2=\"" << offsetY +10 << "\" style=\"stroke:lightsteelblue;stroke-width:1\" />" << endl;
-				drawCycleLine = false;
-			}
-
-		for(unsigned i=0; i<bits.size(); i++)
-			{
-
-				if(bits[i].size()>0)
-					{
-						color=0;
-						tempCycle = 0;
-						tempCP = 0;
-						cnt = 0;
-						for(list<WeightedBit*>::iterator it = bits[i].begin(); it!=bits[i].end(); ++it)
-							{
-								if(it==bits[i].begin())
-									{
-										tempCycle = (*it)->getCycle();
-										tempCP = (*it)->getCriticalPath(tempCycle);
-									}
-								else
-									{
-										if((tempCycle!=(*it)->getCycle()) || 
-										   ((tempCycle==(*it)->getCycle()) && (tempCP!=(*it)->getCriticalPath((*it)->getCycle()))))
-											{
-												tempCycle = (*it)->getCycle();
-												tempCP = (*it)->getCriticalPath(tempCycle);
-												color++;
-											}
-									}
-
-								drawBit(cnt, i, turnaroundX, offsetY, (*it)->computeStage(stagesPerCycle, elementaryTime));
-								cnt++;
-							}
-					}
-			}
-
-        
-	}
-
-	void BitHeap::drawBit(int cnt, int w, int turnaroundX, int offsetY, int c)
-	{
-		const std::string colors[] = { "#97bf04","#0f1af2", "#f5515c", "#3958ff","#f2eb8d", "indianred", "yellow", "lightgreen"};
-
-		int index = c % 8;
-
-		fig << "<circle cx=\"" << turnaroundX - w*10 - 5 << "\" cy=\"" << offsetY - cnt*10 - 5 << "\" r=\"3\" fill=\"" << colors[index] << "\"/>" << endl;
-	}
-
-	void BitHeap::closeDrawing(int offsetY)
-	{
-		int turnaroundX = 1500;
-		fig << "<line x1=\"" << turnaroundX + 50 << "\" y1=\"" << 20 << "\" x2=\"" << turnaroundX + 50
-		    << "\" y2=\"" << offsetY +30 << "\" style=\"stroke:midnightblue;stroke-width:1\" />" << endl;
-
-		fig << "</g></svg>" << endl;
-
-		fileFig << "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" width=\"100%\" height=\"100%\" viewBox=\"" <<turnaroundX - bits.size()*10 - 80 
-		        << " " << 100 << " " << turnaroundX + 50 << " " << offsetY + 20 <<  "\">" << endl; 
-		fileFig << "<g transform=\"rotate(45)\">" <<endl;
-		//    fileFig << "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" viewBox=\"0 0 500 500\">" << endl; 
-
-		fileFig << fig.str();
-       
-               
-
-		fileFig.close();
-	}
-
 	void BitHeap::generateVHDLforDSP(MultiplierBlock* m, int uid,int i)
 	{
 		REPORT(DETAILED,"dsp");

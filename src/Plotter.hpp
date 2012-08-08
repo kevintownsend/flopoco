@@ -20,13 +20,28 @@
 #include <sstream>
 
 #include "IntMultipliers/MultiplierBlock.hpp"
+//#include "BitHeap.hpp"
 
 
 namespace flopoco
 {
 
+	class BitHeap;
+
 	class Plotter
 	{
+
+#if 0
+		class SnapShot
+		{
+			public:
+
+				Snapshot();
+
+				~Snapshot();
+		}
+
+#endif
 		public:
 
 			/** constructor */
@@ -36,13 +51,15 @@ namespace flopoco
 			~Plotter();
 
 			/** takes a snapshot of the bitheap's current state */
-			void heapSnapshot(int stage);
+			void heapSnapshot(bool compress, int stage);
 
 			/** plots all the bitheap's stages */
 			void plotBitHeap();
 
 			/** plots multiplier area and lozenge views */
 			void plotMultiplierConfiguration(int uid, vector<MultiplierBlock*> mulBlocks, int wX, int wY, int wOut, int g);
+
+			void setBitHeap(BitHeap* bh_);
 
 		
 		private:
@@ -57,7 +74,7 @@ namespace flopoco
 			void drawLine(int wX, int wY, int wRez, int offsetX, int offsetY, int scalingFactor, bool isRectangle);
 
 			/** draws a DSP block */
-			void drawDSP(int wX,  int wY, int i, int xT, int yT, int xB, int yB, int offsetX, int offsetY, int scalingFactor,  bool isRectangle);
+			void drawDSP(int wXY,  int wY, int i, int xT, int yT, int xB, int yB, int offsetX, int offsetY, int scalingFactor,  bool isRectangle);
 
 			/** draws the target rectangle or lozenge */
 			void drawTargetFigure(int wX, int wY, int offsetX, int offsetY, int scalingFactor, bool isRectangle);
@@ -66,12 +83,21 @@ namespace flopoco
 			
 			string romanNumber(int i);
 
-			//int wX;
-			//int wY;
-			//int wOut;
-			//int g;
+			/** draws a single bit */
+			void drawBit(int cnt, int w, int turnaroundX, int offsetY, int c);
+			
+			void addECMAFunction();
+
 			ofstream fig;
 			ofstream fig2;
+//			vector<vector<list<WeightedBit*> > > snapshots;
+			vector<BitHeap*> snapshots;
+			vector<bool> didCompress;
+			vector<int> stages;
+			string srcFileName;
+
+			BitHeap* bh;
+
 
 	};
 }

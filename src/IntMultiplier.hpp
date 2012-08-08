@@ -8,6 +8,7 @@
 #include "Operator.hpp"
 #include "Table.hpp"
 #include "BitHeap.hpp"
+#include "Plotter.hpp"
 
 #include "IntMultipliers/MultiplierBlock.hpp"
 
@@ -138,6 +139,7 @@ namespace flopoco {
 		bool useDSP;
 		Operator* parentOp;  /**<  For a virtual multiplier, adding bits to some BitHeap, this is a pointer to the Operator that will provide the actual vhdl stream etc. */
 		BitHeap* bitHeap;    /**<  The heap of weighted bits that will be used to do the additions */
+		Plotter* plotter;
 		// TODO the three following variable pairs seem uglily redundant
 		Signal* x;
 		Signal* y; 
