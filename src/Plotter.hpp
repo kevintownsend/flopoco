@@ -61,12 +61,17 @@ namespace flopoco
 
 			/** draws the target rectangle or lozenge */
 			void drawTargetFigure(int wX, int wY, int offsetX, int offsetY, int scalingFactor, bool isRectangle);
+			
+			void drawFlopocoLogo(int x, int y, int cyclenumber, int currentcycle, int stageNumber, int currentStage);
+			
+			string romanNumber(int i);
 
 			//int wX;
 			//int wY;
 			//int wOut;
 			//int g;
 			ofstream fig;
+			ofstream fig2;
 
 	};
 }

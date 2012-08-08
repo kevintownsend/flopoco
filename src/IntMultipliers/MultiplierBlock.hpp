@@ -102,7 +102,7 @@ namespace flopoco {
 		/**
 		*returns the name of the first signal which enters in DSP. 
 		*for example if the DSP is doing a multiplication like Z <=X * Y
-		*then X is the first input signal and Y is the second output signal
+		*then X is the first input signal and Y is the second input signal
 		**/
 		string getInputName1()
 		{return inputName1;}
@@ -110,7 +110,7 @@ namespace flopoco {
 		/**
 		*returns the name of the second  signal which enters in DSP. 
 		*for example if the DSP is doing a multiplication like Z <=X * Y
-		*then X is the first input signal and Y is the second output signal
+		*then X is the first input signal and Y is the second input signal
 		**/
 		string getInputName2()
 		{return inputName2;}

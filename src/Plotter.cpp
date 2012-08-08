@@ -21,6 +21,7 @@
 #include <math.h>	
 #include <vector>
 #include <list>
+#include <math.h>
 
 using namespace std;
 
@@ -58,6 +59,7 @@ namespace flopoco
 	{
 		drawAreaView(uid, mulBlocks, wX, wY, wOut, g);
 		drawLozengeView(uid, mulBlocks, wX, wY, wOut, g);
+
 	}
 
 
@@ -148,7 +150,7 @@ namespace flopoco
 		fig << "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\"" << endl;
 		fig << "\"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">" << endl;
 		fig << "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\">" << endl;
-
+		
 		//draw target lozenge	
 		drawTargetFigure(wX, wY, offsetX, offsetY, scalingFactor, false);
 
@@ -176,7 +178,8 @@ namespace flopoco
 		{
 			drawLine(wX, wY, wOut+g, offsetX, offsetY, scalingFactor, false);
 		}
-
+      
+		drawFlopocoLogo(500,300,3,0,5,1);
 
 		fig << "</svg>" << endl;
 
@@ -227,8 +230,107 @@ namespace flopoco
 			fig << "<text x=\"" << (2*turnaroundX - xB*5 - xT*5 + 2*offsetX)/2 - 14 - (yT*5 + yB*5)/2 
 			    << "\" y=\"" << ( yT*5 + offsetY + yB*5 + offsetY )/2 + 7 
 			    << "\" fill=\"blue\">D" <<  xT / wxDSP <<  yT / wyDSP  << "</text>" << endl;	
+			    
 	
 		}	
+	}
+	
+	
+	void Plotter::drawFlopocoLogo(int x, int y, int cyclenumber, int currentcycle, int stageNumber, int currentStage)
+	{
+	   ostringstream figureFileName;
+		figureFileName << "littleclock"  << ".svg";
+		
+		FILE* pfile;
+		pfile  = fopen(figureFileName.str().c_str(), "w");
+		fclose(pfile);
+		
+		fig2.open (figureFileName.str().c_str(), ios::trunc);
+
+		double scalefactor=3.0;
+		
+
+		//file header
+		fig2 << "<?xml version=\"1.0\" standalone=\"no\"?>" << endl;
+		fig2 << "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\"" << endl;
+		fig2 << "\"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">" << endl;
+		fig2 << "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\">" << endl;
+      	fig2<<"<g transform=\"scale("<<scalefactor<<") translate(1000,100)\">"<<endl;
+		fig2<<" <circle cx=\""<<x<<"\" cy=\""<<y<<"\" r=\"100\" stroke=\"black\" stroke-width=\"2\" fill=\"darkcyan\" />"<<endl;
+        fig2<<" <circle cx=\""<<x<<"\" cy=\""<<y<<"\" r=\"80\" stroke=\"black\" stroke-width=\"2\" fill=\"burlywood\" />"<<endl;
+        
+      //   fig << "<rect x=\"" << x-25<< "\" y=\"" << y-60
+		//	    << "\" height=\"" << 10 <<"\" width=\"" << 60
+		//	    << "\" style= \"fill:rgb(139, 69, 19);stroke:purple;stroke-width:1\" /> "<<endl;
+		//fig<< "<polygon points= \" "<< x-22 <<","<< y-63 <<" "
+		//						<< x-16 <<","<< y-68 <<" "
+		///						<< x-10 <<","<< y-63 <<" "
+		//						<< x-10 <<","<< y-45 <<" "
+		//						<< x-22 <<","<< y-45 <<" \" "<< "style=\"fill:rgb(139, 134, 130);stroke-width:1;stroke:rgb(0,0,0)\"/>" << endl;
+        
+		fig2<< "<polygon points= \" "<< x-35 <<","<< y-30 <<" "
+								<< x+35 <<","<< y-30 <<" "
+								<< x+50 <<","<< y-23 <<" "
+								<< x+35 <<","<< y-15 <<" "
+								<< x+25 <<","<< y-15 <<" "
+								<< x+15 <<","<< y- 5 <<" "
+								<< x+15 <<","<< y +5 <<" "
+								<< x+25 <<","<< y+15 <<" "
+								<< x+35 <<","<< y+15 <<" "
+								<< x+35 <<","<< y+30 <<" "
+								<< x-35 <<","<< y+30 <<" "
+								<< x-35 <<","<< y+15 <<" "
+								<< x-25 <<","<< y+15 <<" "
+								<< x-15 <<","<< y+5 <<" "
+								<< x-15 <<","<< y-5 <<" "
+								<< x-25 <<","<< y-15 <<" "
+								<< x-35 <<","<< y-15 <<" "
+								<< x-35 <<","<< y-30 <<" \" "<< "style= \"fill:rgb(139, 134, 130);stroke:black;stroke-width:1\" /> "<<endl;
+		fig2<<"<text x=\""<<x-25<<"\" y=\""<<y-16<<"\" stroke=\"white\"  fill=\"white\" >FloPoCo</text> "<<endl;
+		
+		
+	
+		double adjust=3.1415+3.1415/2;
+		fig2<<" <circle cx=\""<<x<<"\" cy=\""<<y<<"\" r=\"4\" stroke=\"black\" stroke-width=\"2\" fill=\"black\" />"<<endl;
+		
+		for(int i=0;i<cyclenumber;i++)
+		{
+			double angle=360/cyclenumber*i *3.1415 / 180 + adjust;
+			
+			fig2<<" <circle cx=\""<<x+80*cos(angle)<<"\" cy=\""<<y+ 80*sin(angle)<<"\" r=\"4\" stroke=\"black\" stroke-width=\"2\" fill=\"red\" />"<<endl;
+			fig2<<"<text x=\""<<x+65*cos(angle)<<"\" y=\""<<y+65*sin(angle)<<"\" stroke=\"red\" fill=\"red\" >"<<romanNumber(i)<<"</text> "<<endl;
+			if(i==currentcycle)
+			{
+				fig2<<"<line x1=\""<<x<<"\" y1=\""<<y<<"\" x2=\""<<x+ 70*cos(angle)<<"\" y2=\""<<y+ 70*sin(angle)<<"\" style=\"stroke-width: 5px; stroke:rgb(139, 69, 19);\"  />"<<endl;
+				
+				fig2<< "<polygon points= \" "<< x+ 72*cos(angle) <<","<< y+ 72*sin(angle) <<" "
+								<< x+60*cos(angle-0.2)<<","<< y+60*sin(angle-0.2) <<" "
+								<< x+60*cos(angle+0.2) <<","<< y+60*sin(angle+0.2)<<" \" "<< "style= \"fill:rgb(139, 134, 130);stroke:black;stroke-width:1\" /> "<<endl;
+			}
+		}	
+		
+		
+		for(int i=0;i<stageNumber;i++)
+		{	double adjust=3.1415+3.1415/2;
+			double angle=360/stageNumber*i *3.1415 / 180 + adjust;
+			
+			fig2<<" <circle cx=\""<<x+100*cos(angle)<<"\" cy=\""<<y+ 100*sin(angle)<<"\" r=\"4\" stroke=\"black\" stroke-width=\"2\" fill=\"yellowgreen\" />"<<endl;
+			fig2<<"<text x=\""<<x+117*cos(angle)<<"\" y=\""<<y+117*sin(angle)<<"\" stroke=\"black\" fill=\"black\" >"<<i<<"</text> "<<endl;
+			if(i==currentStage)
+			{	fig2<<"<line x1=\""<<x<<"\" y1=\""<<y<<"\" x2=\""<<x+ 80*cos(angle)<<"\" y2=\""<<y+ 80*sin(angle)<<"\" style=\"stroke-width: 5px; stroke:rgb(139, 69, 19);\"  />"<<endl;
+				fig2<< "<polygon points= \" "<< x+ 100*cos(angle) <<","<< y+ 100*sin(angle) <<" "
+								<< x+82*cos(angle-0.2)<<","<< y+82*sin(angle-0.2) <<" "
+								<< x+82*cos(angle+0.2) <<","<< y+82*sin(angle+0.2)<<" \" "<< "style= \"fill:rgb(139, 134, 130);stroke:black;stroke-width:1\" /> "<<endl;
+			}
+		}
+		
+		fig2<<"<text x=\""<<x-12<<"\" y=\""<<y+70<<"\" stroke=\"midnightblue\"  fill=\"midnightblue\" >cycle</text> "<<endl;
+		fig2<<"<text x=\""<<x-12<<"\" y=\""<<y+95<<"\" stroke=\"ghostwhite\" fill=\"ghostwhite\" >stage</text> "<<endl;
+		fig2<<"</g>"<<endl;
+		fig2 << "</svg>" << endl;
+
+		fig2.close();
+		
 	}
 
 
@@ -245,6 +347,21 @@ namespace flopoco
 			    << offsetX - scalingFactor*wY << "," << wY*scalingFactor + offsetY 	
 			    << "\" style=\"fill:rgb(255, 255, 255);stroke-width:1;stroke:rgb(0,0,0)\"/>" << endl;
 
+	}
+	
+	string Plotter::romanNumber(int i)
+	{
+	if(i==0) return "0";
+	if(i==1) return  "I";
+	if(i==2) return "II";
+	if(i==3) return "III";
+	if(i==4) return"IV";
+	if(i==5) return "V";
+	if(i==6) return "VI";
+	if(i==7) return"VII";
+	if(i==8) return "VIII";
+	if(i==9) return "IX";
+	if(i==10) return"X";
 	}
 
 
