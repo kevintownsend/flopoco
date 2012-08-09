@@ -237,7 +237,6 @@ namespace flopoco
 			fig << "<rect x=\"" << turnaroundX - xB*scalingFactor << "\" y=\"" << yT*scalingFactor + offsetY 
 			    << "\" height=\"" << (yB-yT)*scalingFactor << "\" width=\"" << (xB-xT)*scalingFactor
 			    << "\" style=\"fill:rgb(200, 200, 200);stroke-width:1;stroke:rgb(0,0,0)\"" 
-				<< "\" style=\"fill:rgb(200, 200, 200);stroke-width:1;stroke:rgb(0,0,0)\" "
 				<< " onmousemove=\"ShowTooltip(evt)\" onmouseout=\"HideTooltip(evt)\" mouseovertext=\"X[" 
 				<< xB << ":" << xT << "] * Y[" << yB << ":" << yT << "]\"/> " << endl;
 
@@ -293,6 +292,7 @@ namespace flopoco
 	if(i==8) return "VIII";
 	if(i==9) return "IX";
 	if(i==10) return"X";
+	return "0";
 	}
 	
 	void Plotter::drawLittleClock(int x, int y, int cyclenumber, int currentcycle, int stageNumber, int currentStage)
