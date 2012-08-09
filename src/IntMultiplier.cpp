@@ -616,6 +616,8 @@ namespace flopoco {
 					vhdl << tab << "-- Partial product row number " << iy << endl;
 
 					for (int ix=0; ix<chunksX; ix++) { 
+					
+					
 						SmallMultTable *t;
 						if (!signedIO) {
 							t=tUU;
@@ -631,9 +633,9 @@ namespace flopoco {
 								t=tUU; 
 						}
 						
+				
 						if(dx*(ix+1)+dy*(iy+1)+topX+topY>wFull-wOut-g)
 					{
-
 						plotter->addSmallMult(dx*(ix)+topX, dy*(iy)+topY,dx,dy);
 
 						vhdl << tab << declare(join (XY(ix,iy,uid),multiplierUid), dx+dy) 
@@ -686,6 +688,7 @@ namespace flopoco {
 						}
 
 						vhdl << endl;
+						
 						}
 					}
 				}				
@@ -698,7 +701,7 @@ namespace flopoco {
 	
 
 
-	
+	/*
 		void IntMultiplier::splitting(int horDSP, int verDSP, int wxDSP, int wyDSP,int restX, int restY)
 		{
 	
@@ -751,6 +754,52 @@ namespace flopoco {
 
 
 		}
+		*/
+	//	/*
+		
+		void IntMultiplier::splitting(int horDSP, int verDSP, int wxDSP, int wyDSP,int restX, int restY)
+		{
+	
+			int i=0;
+			int j=0;
+			while(i<verDSP)
+			{
+				j=0;
+				int ok=0;
+				while((j<horDSP)&&(ok==0))
+				{	REPORT(DETAILED,"j= " << j);
+					if((wX-(j+1)*wxDSP)+(wY-(i+1)*wyDSP)>=wFull-wOut-g)
+					{ 
+						MultiplierBlock* m = new MultiplierBlock(wxDSP,wyDSP,wX-(j+1)*wxDSP, wY-((i+1)*wyDSP),
+									join("XX",multiplierUid),join("YY",multiplierUid),weightShift);
+						m->setNext(NULL);		
+						m->setPrevious(NULL);			
+						REPORT(DETAILED,"getPrev  " << m->getPrevious());
+						localSplitVector.push_back(m);
+						bitHeap->addDSP(m);
+					}
+					
+					else
+					{
+					ok=1;
+					j--;
+					}
+					
+					j++;
+					
+									
+				}
+				buildHeapLogicOnly(0,wY-(i+1)*wyDSP, wX-j*wxDSP, wY-(i)*wyDSP,parentOp->getNewUId());	
+				i++;		
+			}
+			
+			buildHeapLogicOnly(0,0,wX,restY,parentOp->getNewUId());
+	
+		}
+		
+		
+		
+	//	*/
 
 
 		/** builds the tiles and the logic too*/
@@ -806,11 +855,11 @@ namespace flopoco {
 					REPORT(DEBUG,"restX= "<<restX<<"restY= "<<restY);
 					if(restY>0)
 						{
-							buildHeapLogicOnly(0,0,wX,restY,0);
+						//	buildHeapLogicOnly(0,0,wX,restY,0);
 						}
 					if(restX>0)
 						{
-							buildHeapLogicOnly(0,restY,restX,wY,1);
+						//	buildHeapLogicOnly(0,restY,restX,wY,1);
 						}	
 
 		
