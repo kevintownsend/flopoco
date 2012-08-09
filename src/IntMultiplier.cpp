@@ -633,8 +633,9 @@ namespace flopoco {
 						
 						if(dx*ix+dy*iy+topX+topY>=wFull-wOut-g)
 						{
-						
-						//plotter->drawSmallMult(dx*ix+topX, dy*iy+topY,dx,dy);
+
+						plotter->addSmallMult(dx*(ix)+topX, dy*(iy)+topY,dx,dy);
+
 						vhdl << tab << declare(join (XY(ix,iy,uid),multiplierUid), dx+dy) 
 						               << " <= y"<< multiplierUid<<"_"<<uid <<"_"<< iy << " & x"<<multiplierUid<<"_" << uid <<"_"<< ix << ";"<<endl;
 
@@ -700,7 +701,7 @@ namespace flopoco {
 	
 		void IntMultiplier::splitting(int horDSP, int verDSP, int wxDSP, int wyDSP,int restX, int restY)
 		{
-			vector<MultiplierBlock*> localSplitVector;			
+	
 
 			for(int i=0;i<horDSP;i++)
 				{
@@ -743,8 +744,7 @@ namespace flopoco {
 				}
 
 			
-			bitHeap->getPlotter()->plotMultiplierConfiguration(multiplierUid, localSplitVector, wX, wY, wOut, g);
-
+			
 
 
 		}
@@ -815,6 +815,7 @@ namespace flopoco {
 		
 				}
 			
+			bitHeap->getPlotter()->plotMultiplierConfiguration(multiplierUid, localSplitVector, wX, wY, wOut, g);
 
 		}
 

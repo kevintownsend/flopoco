@@ -131,6 +131,9 @@ namespace flopoco{
 
 		Plotter* getPlotter();
 
+		vector<list<WeightedBit*> > bits; /**<  The list is ordered by arrival time of the bits, i.e. lexicographic order on (cycle, cp)*/
+
+
 	protected:
 
 
@@ -221,7 +224,6 @@ namespace flopoco{
 		int stagesPerCycle;  
 		double elementaryTime; 
 		bool didCompress; 
-		vector<list<WeightedBit*> > bits; /**<  The list is ordered by arrival time of the bits, i.e. lexicographic order on (cycle, cp)*/
 		vector<MultiplierBlock*> mulBlocks; //the vector of multiplier blocks
 		Plotter* plotter;	
 		// For error reporting to work

@@ -18,7 +18,7 @@
 
 #include <vector>
 #include <sstream>
-
+#include "WeightedBit.hpp"
 #include "IntMultipliers/MultiplierBlock.hpp"
 //#include "BitHeap.hpp"
 
@@ -31,17 +31,20 @@ namespace flopoco
 	class Plotter
 	{
 
-#if 0
-		class SnapShot
+		class Snapshot
 		{
 			public:
 
-				Snapshot();
+				Snapshot(vector<list<WeightedBit*> > bitheap, int maxWeight_, bool didCompress_, int stage_);
 
-				~Snapshot();
-		}
+				~Snapshot(){};
 
-#endif
+				vector<list<WeightedBit*> > bits;
+				int maxWeight;
+				bool didCompress; 
+				int stage;
+		};
+
 		public:
 
 			/** constructor */
@@ -61,6 +64,10 @@ namespace flopoco
 
 			void setBitHeap(BitHeap* bh_);
 
+			void addSmallMult(int topX, int topY, int dx, int dy);
+
+			stringstream ss;
+
 		
 		private:
 
@@ -78,6 +85,9 @@ namespace flopoco
 
 			/** draws the target rectangle or lozenge */
 			void drawTargetFigure(int wX, int wY, int offsetX, int offsetY, int scalingFactor, bool isRectangle);
+
+			/** draws a small multiplier table */
+			void drawSmallMult(int wX, int wY, int xT, int yT, int xB, int yB, int offsetX, int offsetY, int scalingFactor,  bool isRectangle);
 			
 			void drawLittleClock(int x, int y, int cyclenumber, int currentcycle, int stageNumber, int currentStage);
 			
@@ -91,9 +101,13 @@ namespace flopoco
 			ofstream fig;
 			ofstream fig2;
 //			vector<vector<list<WeightedBit*> > > snapshots;
-			vector<BitHeap*> snapshots;
-			vector<bool> didCompress;
-			vector<int> stages;
+			vector<Snapshot*> snapshots;
+
+			int topX[10000];
+			int topY[10000];
+			int dx, dy;
+			int smallMultIndex;
+
 			string srcFileName;
 
 			BitHeap* bh;

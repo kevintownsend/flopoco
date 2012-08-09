@@ -161,6 +161,7 @@ namespace flopoco {
 		int signedIO;                   /**< true if the IOs are two's complement */
 		int multiplierUid;
 		void initialize();   /**< initialization stuff common to both constructors*/
+		vector<MultiplierBlock*> localSplitVector;		
 		//vector<DSP*> dsps;
 		//ofstream fig;
 

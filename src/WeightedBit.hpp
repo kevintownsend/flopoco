@@ -23,7 +23,7 @@
 
 //#include "Plotter.hpp"
 
-
+using namespace std;
 
 namespace flopoco{
 
@@ -55,7 +55,7 @@ namespace flopoco{
 			
 
 			/** return the VHDL signal name of this bit */
-			std::string getName(){
+			string getName(){
 				return name;
 			};
 

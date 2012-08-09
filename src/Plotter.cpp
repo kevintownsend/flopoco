@@ -28,9 +28,23 @@ using namespace std;
 namespace flopoco
 {
 
+	Plotter::Snapshot::Snapshot(vector<list<WeightedBit*> > bitheap, int maxWeight_, bool didCompress_, int stage_):
+		didCompress(didCompress_), stage(stage_), maxWeight(maxWeight_)
+	{
+		for(unsigned w=0; w<maxWeight_; w++)
+		{
+			list<WeightedBit*> t;	
+			for(list<WeightedBit*>::iterator it = bits[w].begin(); it!=bits[w].end(); ++it)	
+			{
+				
+			}		
+		}
+	}
+
 	Plotter::Plotter()
 	{
 		//srcFileName=bh->getOp()->getSrcFileName() + ":Plotter";
+		smallMultIndex = 0;
 
 	}
 
@@ -45,14 +59,7 @@ namespace flopoco
 	void Plotter::heapSnapshot(bool compress, int stage)
 //	void Plotter::heapSnapshot(vector<list<WeightedBit*> > heap, bool compress, int stage)
 	{
-		snapshots.push_back(bh);
-		didCompress.push_back(compress);
-		stages.push_back(stage);
-
-		//srcFileName=bh->getOp()->getSrcFileName() + ":Plotter";
-		
-
-		//REPORT(DEBUG, "sdfsdfds");
+		snapshots.push_back(new Snapshot(bh->bits, bh->getMaxWeight(), compress, stage));
 	}
 
 
@@ -75,6 +82,21 @@ namespace flopoco
 	{
 		drawAreaView(uid, mulBlocks, wX, wY, wOut, g);
 		drawLozengeView(uid, mulBlocks, wX, wY, wOut, g);
+
+	}
+
+
+
+	void Plotter::addSmallMult(int topX_, int topY_, int dx_, int dy_)
+	{
+
+		topX[smallMultIndex]=topX_;
+		topY[smallMultIndex]=topY_;
+		dx=dx_;
+		dy=dy_;
+		smallMultIndex++;
+
+		//ss << topX.size() << "  " ;
 
 	}
 
@@ -107,8 +129,7 @@ namespace flopoco
 
 		addECMAFunction();
 		//draw target rectangle	
-		drawTargetFigure(wX, wY, offsetX, offsetY, scalingFactor, true);
-
+		
 		//draw DSPs
 		int xT, yT, xB, yB;
 
@@ -121,6 +142,13 @@ namespace flopoco
 			drawDSP(wX, wY, i, xT, yT, xB, yB, offsetX, offsetY, scalingFactor, true);
 		}
 
+
+		for(int i=0; i<smallMultIndex; i++)
+		{
+			drawSmallMult(wX, wY,  topX[i], topY[i], topX[i] + dx, topY[i] + dy, offsetX, offsetY, scalingFactor, true);
+		}
+
+		drawTargetFigure(wX, wY, offsetX, offsetY, scalingFactor, true);
 
 
 		//draw truncation line
@@ -171,7 +199,7 @@ namespace flopoco
 		addECMAFunction();
 
 		//draw target lozenge	
-		drawTargetFigure(wX, wY, offsetX, offsetY, scalingFactor, false);
+		
 
 		//draw DSPs
 		int xT, yT, xB, yB;
@@ -184,6 +212,15 @@ namespace flopoco
 			yB = mulBlocks[i]->getbotY();
 			drawDSP(wX, wY, i, xT, yT, xB, yB, offsetX, offsetY, scalingFactor, false);
 		}
+
+
+
+		for(int i=0; i<smallMultIndex; i++)
+		{
+			drawSmallMult(wX, wY,  topX[i], topY[i], topX[i] + dx, topY[i] + dy, offsetX, offsetY, scalingFactor, false);
+		}
+
+		drawTargetFigure(wX, wY, offsetX, offsetY, scalingFactor, false);
 
 
 		//draw truncation line
@@ -242,6 +279,7 @@ namespace flopoco
 
 			fig << "<text x=\"" << (2*turnaroundX - scalingFactor*(xT+xB))/2 -12 << "\" y=\"" << ((yT+yB)*scalingFactor)/2 + offsetY + 7
 			    << "\" fill=\"blue\">D" <<  xT / wxDSP <<  yT / wyDSP  << "</text>" << endl;
+
 		}   
 		else 
 		{
@@ -257,7 +295,7 @@ namespace flopoco
 			fig << "<text x=\"" << (2*turnaroundX - xB*5 - xT*5 + 2*offsetX)/2 - 14 - (yT*5 + yB*5)/2 
 			    << "\" y=\"" << ( yT*5 + offsetY + yB*5 + offsetY )/2 + 7 
 			    << "\" fill=\"blue\">D" <<  xT / wxDSP <<  yT / wyDSP  << "</text>" << endl;	
-			    
+    
 	
 		}	
 	}
@@ -269,15 +307,50 @@ namespace flopoco
 	{
 		if(isRectangle)
 			fig << "<rect x=\"" << offsetX << "\" y=\"" << offsetY << "\" height=\"" << wY * scalingFactor << "\" width=\"" << wX * scalingFactor 
-			    <<"\" style=\"fill:rgb(255, 255, 255);stroke-width:1;stroke:rgb(0,0,0)\"/>" << endl;
+			    <<"\" style=\"fill:rgb(255, 255, 255);stroke-width:1;fill-opacity:0.1;stroke:rgb(0,0,0)\"/>" << endl;
 		else
 			fig << "<polygon points=\"" << offsetX << "," << offsetY << " " 
 			    << wX*scalingFactor + offsetX << "," << offsetY << " " 
 			    << wX*scalingFactor + offsetX - scalingFactor*wY << "," << wY*scalingFactor + offsetY << " "
 			    << offsetX - scalingFactor*wY << "," << wY*scalingFactor + offsetY 	
-			    << "\" style=\"fill:rgb(255, 255, 255);stroke-width:1;stroke:rgb(0,0,0)\"/>" << endl;
+			    << "\" style=\"fill:rgb(255, 255, 255);stroke-width:1;fill-opacity:0.1;stroke:rgb(0,0,0)\"/>" << endl;
 
 	}
+
+
+
+	void Plotter::drawSmallMult(int wX, int wY, int xT, int yT, int xB, int yB, int offsetX, int offsetY, int scalingFactor,  bool isRectangle)
+	{
+
+		int turnaroundX;
+
+
+		if(isRectangle)
+		{
+			turnaroundX = offsetX + wX * scalingFactor;
+			fig << "<rect x=\"" << turnaroundX - xB*scalingFactor << "\" y=\"" << yT*scalingFactor + offsetY 
+			    << "\" height=\"" << (yB-yT)*scalingFactor << "\" width=\"" << (xB-xT)*scalingFactor
+			    << "\" style=\"fill:rgb(255, 228, 196);stroke-width:1;stroke:rgb(165,42,42)\"" 
+				<< " onmousemove=\"ShowTooltip(evt)\" onmouseout=\"HideTooltip(evt)\" mouseovertext=\"X[" 
+				<< xB << ":" << xT << "] * Y[" << yB << ":" << yT << "]\"/> " << endl;
+
+		}   
+		else 
+		{
+			turnaroundX = wX * scalingFactor;
+			fig << "<polygon points=\"" << turnaroundX - 5*xB + offsetX - 5*yT << "," << 5*yT + offsetY << " "
+			    << turnaroundX - 5*xT + offsetX - 5*yT << "," << 5*yT + offsetY << " " 
+			    << turnaroundX - 5*xT + offsetX - 5*yB << "," << 5*yB + offsetY << " "
+			    << turnaroundX - 5*xB + offsetX - 5*yB << "," << 5*yB + offsetY
+			    << "\" style=\"fill:rgb(255, 228, 196);stroke-width:1;stroke:rgb(165,42,42)\" "
+				<< " onmousemove=\"ShowTooltip(evt)\" onmouseout=\"HideTooltip(evt)\" mouseovertext=\"X[" 
+				<< xB << ":" << xT << "] * Y[" << yB << ":" << yT << "]\"/> " << endl;
+	    
+
+		}
+	}
+
+
 	
 	string Plotter::romanNumber(int i)
 	{

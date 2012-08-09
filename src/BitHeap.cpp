@@ -44,7 +44,6 @@ namespace flopoco
 		outConcatIndex=0;
 		compressorIndex=0;
 		adderIndex=0;
-		//plotter = new Plotter(this);
 		for(int i=0; i<10;++i)
 			usedCompressors[i]=false;
 		for (int i=0; i< maxWeight; i++) {
@@ -630,12 +629,12 @@ namespace flopoco
                 
 				REPORT(DETAILED, "didCompress " << didCompress);
 
-				plotter->heapSnapshot(didCompress, stage);
+				//plotter->heapSnapshot(didCompress, stage);
 				compress(stage);
 				stage++;
 			}
 
-		plotter->heapSnapshot(true, stage);
+		//plotter->heapSnapshot(true, stage);
 		REPORT(DEBUG, endl);
 		REPORT(DEBUG, "only three levels left");
         
@@ -705,7 +704,7 @@ namespace flopoco
 									op->manageCriticalPath( op->getTarget()->localWireDelay() + op->getTarget()->adderDelay(maxWeight-first2+1) );
 
 									stage = computeStage();
-									plotter->heapSnapshot(true, stage);
+									//plotter->heapSnapshot(true, stage);
 
 									
 #if 0
@@ -732,7 +731,7 @@ namespace flopoco
 									op->manageCriticalPath(op->getTarget()->localWireDelay() + op->getTarget()->adderDelay(first3 - first2 + 1));
 
 									stage = computeStage();
-									plotter->heapSnapshot(true, stage);
+									//plotter->heapSnapshot(true, stage);
 #if 0
 									if(latestBit->getCycle() < op->getCurrentCycle())
 									{
@@ -770,7 +769,7 @@ namespace flopoco
 	  
 	  	stage = computeStage();
 
-		plotter->heapSnapshot(true, stage);	
+		//plotter->heapSnapshot(true, stage);	
 #if 0
 		offsetY += 20 + getMaxHeight() * 10;
 		drawConfiguration(offsetY);
