@@ -23,10 +23,10 @@ namespace flopoco{
 			name << "FixedComplexMultiplier_" << wI << "_" << wO << "_uid" << getNewUId();
 		setName( name.str() );
 
-		addInput("Xi", 		wI, true);
 		addInput("Xr", 		wI, true);
-		addInput("Yi", 		wI, true);
+		addInput("Xi", 		wI, true);
 		addInput("Yr", 		wI, true);
+		addInput("Yi", 		wI, true);
 
 	
 
@@ -60,7 +60,8 @@ namespace flopoco{
 		                  true, // negate
 		                  signedOperator, 1.0);
 		// The round bit
-		bitHeapRe -> addConstantOneBit(g);
+		if(g)
+			bitHeapRe -> addConstantOneBit(g);
 		bitHeapRe -> generateCompressorVHDL();	
 		
 
@@ -79,15 +80,16 @@ namespace flopoco{
 		                  getSignalByName("Yr"),
 		                  wI, wI, wO, 
 		                  g, // lsbWeight
-		                  true, // negate
+		                  false, // negate
 		                  signedOperator, 1.0);
 		// The round bit
-		bitHeapIm -> addConstantOneBit(g);
+		if(g)
+			bitHeapIm -> addConstantOneBit(g);
 
 		bitHeapIm -> generateCompressorVHDL();			
 
-		vhdl << tab << "Zr <= " << bitHeapRe -> getSumName() << range(wO+g, wO+1) << ";" << endl;
-		vhdl << tab << "Zi <= " << bitHeapIm -> getSumName() << range(wO+g, wO+1) << ";" << endl;
+		vhdl << tab << "Zr <= " << bitHeapRe -> getSumName() << range(wO+g, g+1) << ";" << endl;
+		vhdl << tab << "Zi <= " << bitHeapIm -> getSumName() << range(wO+g, g+1) << ";" << endl;
 		
 #else // pre-BitHeap version
 		addOutput("Zi",   2*w, 2);
@@ -220,12 +222,61 @@ namespace flopoco{
 	{
 	}
 	
+
+
+	void FixedComplexMultiplier::buildStandardTestCases(TestCaseList* tcl){
+		TestCase *tc;
+
+		// first few cases to check emulate()
+		tc = new TestCase(this); 
+		tc->addInput("Xr", mpz_class(0) );
+		tc->addInput("Xi", mpz_class(0) );
+		tc->addInput("Yr", mpz_class(0) );
+		tc->addInput("Yi", mpz_class(0) );
+		emulate(tc);
+		tcl->add(tc);
+
+		tc = new TestCase(this); 
+		tc->addInput("Xr", mpz_class(1) );
+		tc->addInput("Xi", mpz_class(0) );
+		tc->addInput("Yr", mpz_class(1) );
+		tc->addInput("Yi", mpz_class(0) );
+		emulate(tc);
+		tcl->add(tc);
+
+		tc = new TestCase(this); 
+		tc->addInput("Xr", mpz_class(0) );
+		tc->addInput("Xi", mpz_class(1) );
+		tc->addInput("Yr", mpz_class(0) );
+		tc->addInput("Yi", mpz_class(1) );
+		emulate(tc);
+		tcl->add(tc);
+
+		tc = new TestCase(this); 
+		tc->addInput("Xr", mpz_class(3) );
+		tc->addInput("Xi", mpz_class(3));
+		tc->addInput("Yr", mpz_class(3) );
+		tc->addInput("Yi", mpz_class(3) );
+		emulate(tc);
+		tcl->add(tc);
+
+		mpz_class neg = (mpz_class(1)<<wI);
+		tc = new TestCase(this); 
+		tc->addInput("Xr", mpz_class(3) );
+		tc->addInput("Xi", neg -3);
+		tc->addInput("Yr", mpz_class(3) );
+		tc->addInput("Yi", mpz_class(3) );
+		emulate(tc);
+		tcl->add(tc);
+
+	}
+
 	
 	void FixedComplexMultiplier::emulate ( TestCase* tc ) {
-		mpz_class svXi = tc->getInputValue("Xi");
-		mpz_class svYi = tc->getInputValue("Yi");
 		mpz_class svXr = tc->getInputValue("Xr");
+		mpz_class svXi = tc->getInputValue("Xi");
 		mpz_class svYr = tc->getInputValue("Yr");
+		mpz_class svYi = tc->getInputValue("Yi");
 		
 		
 		if (! signedOperator){
@@ -248,15 +299,15 @@ namespace flopoco{
 			if ( svXi >= big1PI)
 				svXi = svXi - big1I;
 			if ( svXr >= big1PI)
-				svXr = svXi - big1I;
+				svXr = svXr - big1I;
 
 			if ( svYi >= big1PI)
 				svYi = svYi - big1I;
 			if ( svYr >= big1PI)
 				svYr = svYr - big1I;
 			
-			mpz_class svZr = svXr*svYi + svXi*svYr;
-			mpz_class svZi = svXr*svYr - svXi*svYi;
+			mpz_class svZr = svXr*svYr - svXi*svYi;
+			mpz_class svZi = svXr*svYi + svXi*svYr;
 			
 			if ( svZr < 0){
 				svZr += tmpSUB; 

@@ -14,6 +14,15 @@
 
 namespace flopoco {
 
+	/*
+	  Definition of the DSP use threshold r:
+	  Consider a submultiplier block, by definition smaller than (or equal to) a DSP in both dimensions
+	  So: r=1 means any multiplier that does not fills a DSP goes to logic
+	      r=0       any multiplier, even very small ones, go to DSP
+
+	   (submultiplier area)/(DSP area) is between 0 and 1
+	  if (submultiplier area)/(DSP area) is larger than r then use a DSP for it 
+	 */
 
 		
 

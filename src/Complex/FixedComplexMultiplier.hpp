@@ -31,6 +31,7 @@ namespace flopoco{
 		~FixedComplexMultiplier();
 		
 		void emulate(TestCase * tc);
+		void buildStandardTestCases(TestCaseList* tcl);
 
 		int wI, wO;
 		bool signedOperator;

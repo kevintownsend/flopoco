@@ -584,31 +584,26 @@ namespace flopoco {
 					vhdl<<tab<<declare(join("y",multiplierUid,"_",uid,"_",k),dy)<<" <= "<<join("Yp",multiplierUid,"_",uid)<<range((k+1)*dy-1, k*dy)<<";"<<endl;
 					
 				REPORT(DEBUG, "maxWeight=" << maxWeight <<  "    weightShift=" << weightShift);
-				SmallMultTable *tpp, *tmp, *tpm, *tmm;
+				SmallMultTable *tUU, *tSU, *tUS, *tSS;
 
-				if(signedIO) {
-					tpp = new SmallMultTable( target, dx, dy, dx+dy, negate, false, false); // unsigned
-					useSoftRAM(tpp);
-					oplist.push_back(tpp);
-					tmp = new SmallMultTable( target, dx, dy, dx+dy, negate, true, false );
-					useSoftRAM(tmp);
-					oplist.push_back(tmp);
-					tpm = new SmallMultTable( target, dx, dy, dx+dy, negate, false, true );
-					useSoftRAM(tpm);
-					oplist.push_back(tpm);
-					tmm = new SmallMultTable( target, dx, dy, dx+dy, negate, true, true );
-					useSoftRAM(tmm);
-					oplist.push_back(tmm);
-				}
-				else if (negate) {
-					tmm = new SmallMultTable( target, dx, dy, dx+dy, negate, true, true );
-					useSoftRAM(tmm);
-					oplist.push_back(tmm);
-				}
-				else {
-					tpp = new SmallMultTable( target, dx, dy, dx+dy, negate, false, false); // unsigned
-					useSoftRAM(tpp);
-					oplist.push_back(tpp);
+
+				tUU = new SmallMultTable( target, dx, dy, dx+dy, negate, false, false);
+				useSoftRAM(tUU);
+				oplist.push_back(tUU);
+
+				if(signedIO) { // need for 4 different tables
+					
+					tSU = new SmallMultTable( target, dx, dy, dx+dy, negate, true, false );
+					useSoftRAM(tSU);
+					oplist.push_back(tSU);
+					
+					tUS = new SmallMultTable( target, dx, dy, dx+dy, negate, false, true );
+					useSoftRAM(tUS);
+					oplist.push_back(tUS);
+					
+					tSS = new SmallMultTable( target, dx, dy, dx+dy, negate, true, true );
+					useSoftRAM(tSS);
+					oplist.push_back(tSS);
 				}
 
 				setCycle(0); // TODO FIXME for the virtual multiplier case where inputs can arrive later
@@ -621,34 +616,18 @@ namespace flopoco {
 
 					for (int ix=0; ix<chunksX; ix++) { 
 						SmallMultTable *t;
-
-						// 4 bloody cases depending on signedIO and negate
-						if (!signedIO && !negate)
-							t=tpp;
-
-						if (!signedIO && negate)
-							t=tmm;
-
-						if(signedIO && ! negate) {
-							if((ix==chunksX-1) && (iy==chunksY-1))
-								t=tmm;
-							else if (ix==chunksX-1)
-								t=tmp;
-							else if (iy==chunksY-1)
-								t=tpm;
-							else
-								t=tpp; 
+						if (!signedIO) {
+							t=tUU;
 						}
-
-						if (signedIO && negate) {
+						else { // 4  cases 
 							if((ix==chunksX-1) && (iy==chunksY-1))
-								t=tpp;
+								t=tSS;
 							else if (ix==chunksX-1)
-								t=tpm;
+								t=tSU;
 							else if (iy==chunksY-1)
-								t=tmp;
+								t=tUS;
 							else
-								t=tmm; 
+								t=tUU; 
 						}
 
 						vhdl << tab << declare(join (XY(ix,iy,uid),multiplierUid), dx+dy) 
@@ -660,11 +639,17 @@ namespace flopoco {
 
 						vhdl << tab << "-- Adding the relevant bits to the heap of bits" << endl;
 						
-						// does this smallMultTable return a two's complement signed result, or a positive one?
-						bool resultSigned=negate; // two's complement if negate
-						if(signedIO && (ix == chunksX-1))  // or if signedIO and MSB
-							resultSigned = true ;
-						if(signedIO && (iy == chunksY-1))
+						// Two's complement management
+						// There are really 2 cases:
+						// If the result is known positive, ie if tUU and !negate, nothing to do
+						// If the result is in two's complement  
+						//    sign extend by adding ones on weights >= the MSB of the table, so its sign is propagated.
+						//    Also need to complement the sign bit
+						// Note that even when negate and tUU, the result is known negative, but it may be zero, so its actual sign is not known statically
+						
+
+						bool resultSigned;  
+						if(negate || (t==tSS) || (t==tUS) || (t==tSU)) 
 							resultSigned = true ;
 
 						int maxK=dx+dy; 
@@ -672,24 +657,25 @@ namespace flopoco {
 							maxK-=padX;
 						if(iy == chunksY-1)
 							maxK-=padY;
-						// cerr << endl << "ix="<<ix << "   iy="<<iy << "  maxK=" << maxK << endl;
+						REPORT(DEBUG,  "ix=" << ix << " iy=" << iy << "  maxK=" << maxK  << "  negate=" << negate <<  "  resultSigned="  << resultSigned );
 						for (int k=0; k<maxK; k++) {
 							ostringstream s;
 							s << join(PP(ix,iy,uid),multiplierUid) << of(k); // right hand side
 							int weight = ix*dx+iy*dy+k - weightShift+topX+topY;
 							if(weight>=0) {// otherwise these bits deserve to be truncated
-								REPORT(DEBUG, "adding bit " << s.str() << " at weight " << weight); 
-								if(resultSigned && (k==maxK-1)) { // This is a sign bit, it should be sign extended
-										ostringstream nots;
-										nots << "not " << s.str(); 
-										bitHeap->addBit(weight, nots.str());
-										REPORT(DEBUG,  "adding constant ones from weight "<< weight << " to "<< bitHeap->getMaxWeight());
-										for (unsigned w=weight; w<bitHeap->getMaxWeight(); w++)
-											bitHeap->addConstantOneBit(w);
-									}
-									else { // just add the bit
-										bitHeap->addBit(weight, s.str());
-									}
+								if(resultSigned && (k==maxK-1)) { 
+									ostringstream nots;
+									nots << "not " << s.str(); 
+									bitHeap->addBit(weight, nots.str());
+									REPORT(DEBUG, "adding bit " << nots.str() << " at weight " << weight); 
+									REPORT(DEBUG,  "  adding constant ones from weight "<< weight << " to "<< bitHeap->getMaxWeight());
+									for (unsigned w=weight; w<bitHeap->getMaxWeight(); w++)
+										bitHeap->addConstantOneBit(w);
+								}
+								else { // just add the bit
+									REPORT(DEBUG, "adding bit " << s.str() << " at weight " << weight); 
+									bitHeap->addBit(weight, s.str());
+								}
 							}
 						}
 
@@ -869,7 +855,7 @@ namespace flopoco {
 			dx(dx), dy(dy), negate(negate), signedX(signedX), signedY(signedY) {
 			ostringstream name; 
 			srcFileName="LogicIntMultiplier::SmallMultTable";
-			name <<"SmallMultTable" << dy << "x" << dx << "r" << wO << (signedX?"Xs":"Xu") << (signedY?"Ys":"Yu") << getuid();
+			name <<"SmallMultTable"<< (negate?"M":"P") << dy << "x" << dx << "r" << wO << (signedX?"Xs":"Xu") << (signedY?"Ys":"Yu")  << getuid();
 			setName(name.str());				
 		};
 	
@@ -888,11 +874,15 @@ namespace flopoco {
 				if ( y >= (1 << (dy-1)))
 					y -= (1 << dy);
 			}
+			// if(negate && signedX && signedY) cerr << "  y=" << y << "  x=" << x;
 			r = x * y;
+			// if(negate && signedX && signedY) cerr << "  r=" << r;
 			if(negate)
 				r=-r;
+			// if(negate && signedX && signedY) cerr << "  -r=" << r;
 			if ( r < 0)
 				r += mpz_class(1) << wF; 
+			// if(negate && signedX && signedY) cerr << "  r2C=" << r;
 
 			if(wOut<wF){ // wOut is that of Table
 				// round to nearest, but not to nearest even
@@ -901,6 +891,8 @@ namespace flopoco {
 				r += (mpz_class(1) << (tr-1));
 				r = r >> tr;
 			}
+			
+			// if(negate && signedX && signedY) cerr << "  rfinal=" << r << endl;
 
 			return r;
 		
