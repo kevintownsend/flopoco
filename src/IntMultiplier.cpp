@@ -631,8 +631,8 @@ namespace flopoco {
 								t=tUU; 
 						}
 						
-						if(dx*ix+dy*iy+topX+topY>=wFull-wOut-g)
-						{
+						if(dx*(ix+1)+dy*(iy+1)+topX+topY>wFull-wOut-g)
+					{
 
 						plotter->addSmallMult(dx*(ix)+topX, dy*(iy)+topY,dx,dy);
 
@@ -722,12 +722,15 @@ namespace flopoco {
 							
 							else
 							{
-								//build with logic, a smaller rectangel than a DSP
+								//build with logic, a smaller rectangle than a DSP
 								int coordX=wX-(i)*wxDSP;
-								int coordY=wY-(j+1)*wyDSP;
+								int coordY=wY-(j)*wyDSP;
+								
 								while((coordX+coordY)<=(wFull-wOut-g))
 									coordX++;
-								buildHeapLogicOnly(coordX,coordY, wX-(i)*wxDSP, wY-(j)*wyDSP,parentOp->getNewUId());
+								REPORT(DETAILED,"coordX= "<<coordX<<" coordY= "<<coordY );
+								buildHeapLogicOnly(wX-(i+1)*wxDSP,wY-(j+1)*wyDSP, wX-(i)*wxDSP, wY-(j)*wyDSP,parentOp->getNewUId());
+								REPORT(DETAILED,"added smalls inspite of dsp");
 							}
 #if 0	
 							//***** this part i       s needed only for the plotting ********
