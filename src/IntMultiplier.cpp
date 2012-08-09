@@ -580,6 +580,7 @@ namespace flopoco {
 				//SPLITTINGS
 				for (int k=0; k<chunksX ; k++)
 					vhdl<<tab<<declare(join("x",multiplierUid,"_",uid,"_",k),dx)<<" <= "<<join("Xp",multiplierUid,"_",uid)<<range((k+1)*dx-1,k*dx)<<";"<<endl;
+					
 				for (int k=0; k<chunksY ; k++)
 					vhdl<<tab<<declare(join("y",multiplierUid,"_",uid,"_",k),dy)<<" <= "<<join("Yp",multiplierUid,"_",uid)<<range((k+1)*dy-1, k*dy)<<";"<<endl;
 					
@@ -629,14 +630,18 @@ namespace flopoco {
 							else
 								t=tUU; 
 						}
-
+						
+						if(dx*ix+dy*iy+topX+topY>=wFull-wOut-g)
+						{
+						
+						//plotter->drawSmallMult(dx*ix+topX, dy*iy+topY,dx,dy);
 						vhdl << tab << declare(join (XY(ix,iy,uid),multiplierUid), dx+dy) 
 						               << " <= y"<< multiplierUid<<"_"<<uid <<"_"<< iy << " & x"<<multiplierUid<<"_" << uid <<"_"<< ix << ";"<<endl;
 
 						inPortMap(t, "X", join(XY(ix,iy,uid),multiplierUid));
 						outPortMap(t, "Y", join(PP(ix,iy,uid),multiplierUid));
 						vhdl << instance(t, join(PPTbl(ix,iy,uid),multiplierUid));
-
+						
 						vhdl << tab << "-- Adding the relevant bits to the heap of bits" << endl;
 						
 						// Two's complement management
@@ -680,7 +685,7 @@ namespace flopoco {
 						}
 
 						vhdl << endl;
-
+						}
 					}
 				}				
 
@@ -701,7 +706,8 @@ namespace flopoco {
 				{
 					for(int j=0;j<verDSP;j++)
 						{
-				
+							if((wX-(i+1)*wxDSP) + (wY-((j+1)*wyDSP)) > wFull-wOut-g)
+							{
 							MultiplierBlock* m = new MultiplierBlock(wxDSP,wyDSP,wX-(i+1)*wxDSP, wY-((j+1)*wyDSP),
 									join("XX",multiplierUid),join("YY",multiplierUid),weightShift);
 							m->setNext(NULL);		
@@ -711,9 +717,19 @@ namespace flopoco {
 							localSplitVector.push_back(m);
 							bitHeap->addDSP(m);
 
-
+							}
+							
+							else
+							{
+								//build with logic, a smaller rectangel than a DSP
+								int coordX=wX-(i)*wxDSP;
+								int coordY=wY-(j+1)*wyDSP;
+								while((coordX+coordY)<=(wFull-wOut-g))
+									coordX++;
+								buildHeapLogicOnly(coordX,coordY, wX-(i)*wxDSP, wY-(j)*wyDSP,parentOp->getNewUId());
+							}
 #if 0	
-							//***** this part is needed only for the plotting ********
+							//***** this part i       s needed only for the plotting ********
 							DSP* dsp = new DSP();
 							dsp->setTopRightCorner(wX-((i+1)*wxDSP),wY-((j+1)*wyDSP));
 							dsp->setBottomLeftCorner(wX-(i*wxDSP),wY-(j*wyDSP));
