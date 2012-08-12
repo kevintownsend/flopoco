@@ -1,6 +1,7 @@
 # Makefile for flopoco
 
 SUBDIRS = src
+DIST_SUBDIRS = src
 ACLOCAL_AMFLAGS = -I m4
 
 bin_PROGRAMS = flopoco longacc2fp fp2bin bin2fp fpadder_example
