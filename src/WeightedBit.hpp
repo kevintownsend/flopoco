@@ -36,6 +36,9 @@ namespace flopoco{
 			    @param bh the parent bit heap */ 
 			WeightedBit(int guid, int uid, int weight, int type, int cycle,  double criticalPath);
 
+			WeightedBit(string name, int uid, int weight, int type, int cycle,  double criticalPath);
+
+
 			/** destructor */ 
 			~WeightedBit(){};
 		
@@ -59,21 +62,27 @@ namespace flopoco{
 				return name;
 			};
 
+			int getWeight(){return weight;};
+
+			int getType(){return type;};
+
+			int getUid(){return uid;};
+
 		
 			/** ordering by availability time */
 			bool operator< (const WeightedBit& b); 
 			/** ordering by availability time */
 			bool operator<= (const WeightedBit& b); 
 
-			//void removePlottableBit();
-
 
 		private:
 			int cycle;  /**< The cycle at which the bit was created */
 			double criticalPath; /**< The cycle at which the bit was created */
 
+
 			int weight;
 			int type;
+			int guid;
 			int uid;
 			std::string name;
 			std::string srcFileName;

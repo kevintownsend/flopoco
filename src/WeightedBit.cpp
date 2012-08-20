@@ -40,6 +40,17 @@ namespace flopoco
 		
 	}
 
+
+	WeightedBit::WeightedBit(string name_, int uid_, int weight_, int type_, 
+			int cycle_, double criticalPath_) :
+		weight(weight_), type(type_), cycle(cycle_), criticalPath(criticalPath_)
+	{
+		name=name_;
+		uid=uid_;
+		
+	}
+
+
 	
 	/* which bit was defined earlier */
 	bool WeightedBit::operator< (const WeightedBit& b){

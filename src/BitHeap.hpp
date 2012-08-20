@@ -124,14 +124,22 @@ namespace flopoco{
 		/** returns the maximum weight of the bit heap */
 		unsigned getMaxWeight() {return maxWeight; };
 
+		unsigned getMinWeight() {return minWeight; };
+
 		/** returns the maximum height of the bit heap*/
 		unsigned getMaxHeight();
 
 		void setPlotter(Plotter* plotter_);
 
+		int getStagesPerCycle() {return stagesPerCycle;};
+
+		double getElementaryTime() {return elementaryTime;};
+
 		Plotter* getPlotter();
 
 		vector<list<WeightedBit*> > bits; /**<  The list is ordered by arrival time of the bits, i.e. lexicographic order on (cycle, cp)*/
+
+		Operator* getOp() {return op;};
 
 
 	protected:
@@ -161,7 +169,7 @@ namespace flopoco{
 		void removeBit(unsigned weight, int dir);
 
 		/** get the parent operator */
-		Operator* getOp() {return op;};
+
 
 
 		/** generate the final adder for the bit heap (when the columns height is maximum 2*/

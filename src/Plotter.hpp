@@ -35,20 +35,26 @@ namespace flopoco
 		{
 			public:
 
-				Snapshot(vector<list<WeightedBit*> > bitheap, int maxWeight_, bool didCompress_, int stage_);
+				Snapshot(vector<list<WeightedBit*> > bitheap, int minWeight_, int maxWeight_, unsigned maxHeight,  bool didCompress_, int stage_);
 
 				~Snapshot(){};
 
+				//unsigned getMaxHeight();
+
 				vector<list<WeightedBit*> > bits;
 				int maxWeight;
+				int minWeight;
+				unsigned maxHeight;
 				bool didCompress; 
 				int stage;
+				string srcFileName;
+
 		};
 
 		public:
 
 			/** constructor */
-			Plotter();
+			Plotter(BitHeap* bh_);
 			
 			/** destructor */
 			~Plotter();
@@ -65,6 +71,9 @@ namespace flopoco
 			void setBitHeap(BitHeap* bh_);
 
 			void addSmallMult(int topX, int topY, int dx, int dy);
+
+
+
 
 			stringstream ss;
 
@@ -93,8 +102,13 @@ namespace flopoco
 			
 			string romanNumber(int i);
 
+			void initializeBitHeapPlotting();
+
+			void drawConfiguration(vector<list<WeightedBit*> > bits, int stage, int maxWeight, int offsetY, int turnaroundX);
+
+
 			/** draws a single bit */
-			void drawBit(int cnt, int w, int turnaroundX, int offsetY, int c);
+			void drawBit(int cnt, int w, int turnaroundX, int offsetY, int color, int cycle, int cp);
 			
 			void addECMAFunction();
 
@@ -109,6 +123,10 @@ namespace flopoco
 			int smallMultIndex;
 
 			string srcFileName;
+
+			int stagesPerCycle;
+
+			double elementaryTime;
 
 			BitHeap* bh;
 

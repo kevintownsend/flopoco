@@ -28,23 +28,55 @@ using namespace std;
 namespace flopoco
 {
 
-	Plotter::Snapshot::Snapshot(vector<list<WeightedBit*> > bitheap, int maxWeight_, bool didCompress_, int stage_):
-		didCompress(didCompress_), stage(stage_), maxWeight(maxWeight_)
+	Plotter::Snapshot::Snapshot(vector<list<WeightedBit*> > bitheap, int minWeight_, 
+			int maxWeight_, unsigned maxHeight_, bool didCompress_, int stage_):
+		didCompress(didCompress_), stage(stage_), maxWeight(maxWeight_), minWeight(minWeight_), maxHeight(maxHeight_)
 	{
-		for(unsigned w=0; w<maxWeight_; w++)
+		for(int w=minWeight; w<maxWeight_; w++)
 		{
-			list<WeightedBit*> t;	
-			for(list<WeightedBit*>::iterator it = bits[w].begin(); it!=bits[w].end(); ++it)	
-			{
-				
-			}		
+
+			list<WeightedBit*> t;
+
+			if(bitheap[w].size()>0)	
+			{	
+				for(list<WeightedBit*>::iterator it = bitheap[w].begin(); it!=bitheap[w].end(); ++it)	
+				{
+					int uid = (*it)->getUid();
+					string name = (*it)->getName();
+					int weight = (*it)->getWeight();
+					int type = (*it)->getType();
+					int cycle = (*it)->getCycle();
+					double cp = (*it)->getCriticalPath(cycle);
+					WeightedBit* b = new WeightedBit(name, uid, weight, type, cycle, cp);
+					t.push_back(b);
+				}		
+
+				bits.push_back(t);
+			}
 		}
 	}
+#if 0
+	unsigned Plotter::Snapshot::getMaxHeight()
 
-	Plotter::Plotter()
 	{
-		//srcFileName=bh->getOp()->getSrcFileName() + ":Plotter";
+		unsigned max=0; 
+		for(int i=minWeight; i<maxWeight; i++)
+			{
+				if(bits[i].size()>max)
+					max=bits[i].size();
+			}
+		return max;
+
+	}
+
+#endif
+
+	Plotter::Plotter(BitHeap* bh_):bh(bh_)
+	{
+		srcFileName=bh_->getOp()->getSrcFileName() + ":Plotter";
 		smallMultIndex = 0;
+		stagesPerCycle = bh_->getStagesPerCycle();
+		elementaryTime = bh_->getElementaryTime();
 
 	}
 
@@ -57,16 +89,41 @@ namespace flopoco
 
 
 	void Plotter::heapSnapshot(bool compress, int stage)
-//	void Plotter::heapSnapshot(vector<list<WeightedBit*> > heap, bool compress, int stage)
 	{
-		snapshots.push_back(new Snapshot(bh->bits, bh->getMaxWeight(), compress, stage));
+		snapshots.push_back(new Snapshot(bh->bits, bh->getMinWeight(), bh->getMaxWeight(), bh->getMaxHeight(),
+				   	compress, stage));
 	}
 
 
 
 	void Plotter::plotBitHeap()
 	{
-	
+		initializeBitHeapPlotting();
+
+		int offsetY = 0;
+		int turnaroundX = snapshots[snapshots.size()-1]->bits.size() * 10 + 80;
+
+
+
+		for(unsigned i=0; i< snapshots.size(); i++)
+		{
+
+			if(snapshots[i]->didCompress)
+			{
+				offsetY += 20 + snapshots[i]->maxHeight * 10;
+				drawConfiguration(snapshots[i]->bits, snapshots[i]->stage, snapshots[i]->minWeight, offsetY, turnaroundX);
+			}
+			
+		}
+
+		fig << "<line x1=\"" << turnaroundX + 30 << "\" y1=\"" << 20 << "\" x2=\"" << turnaroundX + 30 
+		    << "\" y2=\"" << offsetY +30 << "\" style=\"stroke:midnightblue;stroke-width:1\" />" << endl;
+
+		fig << "<text id=\"tooltip\" x=\"0\" y=\"0\" visibility=\"hidden\">Tooltip</text>" << endl;
+
+		fig << "</svg>" << endl;
+
+		fig.close();
 	}
 
 
@@ -78,7 +135,8 @@ namespace flopoco
 
 
 
-	void Plotter::plotMultiplierConfiguration(int uid, vector<MultiplierBlock*> mulBlocks, int wX, int wY, int wOut, int g)
+	void Plotter::plotMultiplierConfiguration(int uid, vector<MultiplierBlock*> mulBlocks, 
+			int wX, int wY, int wOut, int g)
 	{
 		drawAreaView(uid, mulBlocks, wX, wY, wOut, g);
 		drawLozengeView(uid, mulBlocks, wX, wY, wOut, g);
@@ -130,6 +188,17 @@ namespace flopoco
 		addECMAFunction();
 		//draw target rectangle	
 		
+		
+
+		for(int i=0; i<smallMultIndex; i++)
+		{
+			drawSmallMult(wX, wY,  topX[i], topY[i], topX[i] + dx, topY[i] + dy, offsetX, offsetY, scalingFactor, true);
+		}
+
+		drawTargetFigure(wX, wY, offsetX, offsetY, scalingFactor, true);
+
+
+
 		//draw DSPs
 		int xT, yT, xB, yB;
 
@@ -143,14 +212,6 @@ namespace flopoco
 		}
 
 
-		for(int i=0; i<smallMultIndex; i++)
-		{
-			drawSmallMult(wX, wY,  topX[i], topY[i], topX[i] + dx, topY[i] + dy, offsetX, offsetY, scalingFactor, true);
-		}
-
-		drawTargetFigure(wX, wY, offsetX, offsetY, scalingFactor, true);
-
-
 		//draw truncation line
 		if(wX+wY-wOut > 0)
 		{
@@ -162,6 +223,8 @@ namespace flopoco
 		{
 			drawLine(wX, wY, wOut+g, offsetX, offsetY, scalingFactor, true);
 		}
+
+		fig << "<text id=\"tooltip\" x=\"0\" y=\"0\" visibility=\"hidden\">Tooltip</text>" << endl;
 
 		fig << "</svg>" << endl;
 
@@ -201,6 +264,18 @@ namespace flopoco
 		//draw target lozenge	
 		
 
+
+
+
+		for(int i=0; i<smallMultIndex; i++)
+		{
+			drawSmallMult(wX, wY,  topX[i], topY[i], topX[i] + dx, topY[i] + dy, offsetX, offsetY, scalingFactor, false);
+		}
+
+		drawTargetFigure(wX, wY, offsetX, offsetY, scalingFactor, false);
+
+
+
 		//draw DSPs
 		int xT, yT, xB, yB;
 
@@ -214,15 +289,6 @@ namespace flopoco
 		}
 
 
-
-		for(int i=0; i<smallMultIndex; i++)
-		{
-			drawSmallMult(wX, wY,  topX[i], topY[i], topX[i] + dx, topY[i] + dy, offsetX, offsetY, scalingFactor, false);
-		}
-
-		drawTargetFigure(wX, wY, offsetX, offsetY, scalingFactor, false);
-
-
 		//draw truncation line
 		if(wX+wY-wOut > 0)
 		{
@@ -234,8 +300,10 @@ namespace flopoco
 		{
 			drawLine(wX, wY, wOut+g, offsetX, offsetY, scalingFactor, false);
 		}
+
+
       
-		drawLittleClock(500,300,3,0,5,1);
+		//drawLittleClock(500,300,3,0,5,1);
 
 
 		fig << "<text id=\"tooltip\" x=\"0\" y=\"0\" visibility=\"hidden\">Tooltip</text>" << endl;
@@ -251,16 +319,19 @@ namespace flopoco
 	void Plotter::drawLine(int wX, int wY, int wRez, int offsetX, int offsetY, int scalingFactor, bool isRectangle)
 	{
 		if(isRectangle)
-			fig << "<line x1=\"" << offsetX + scalingFactor*(wRez - wX) << "\" y1=\"" << offsetY << "\" x2=\"" << offsetX + scalingFactor*wRez
+			fig << "<line x1=\"" << offsetX + scalingFactor*(wRez - wX) 
+				<< "\" y1=\"" << offsetY << "\" x2=\"" << offsetX + scalingFactor*wRez
 			    << "\" y2=\"" << offsetY + scalingFactor*wY <<"\" style=\"stroke:rgb(255,0,0);stroke-width:2\"/>" << endl ;	
 		else
-			fig << "<line x1=\"" << offsetX + scalingFactor*(wRez - wY) << "\" y1=\"" << offsetY << "\" x2=\"" << offsetX + scalingFactor*(wRez - wY)
+			fig << "<line x1=\"" << offsetX + scalingFactor*(wRez - wY) 
+				<< "\" y1=\"" << offsetY << "\" x2=\"" << offsetX + scalingFactor*(wRez - wY)
 			    << "\" y2=\"" << offsetY + scalingFactor*wY <<"\" style=\"stroke:rgb(255,0,0);stroke-width:2\"/>" << endl ;	
 	}
 
 
 
-	void Plotter::drawDSP(int wX, int wY, int i, int xT, int yT, int xB, int yB, int offsetX, int offsetY, int scalingFactor,  bool isRectangle)
+	void Plotter::drawDSP(int wX, int wY, int i, int xT, int yT, int xB, int yB, 
+			int offsetX, int offsetY, int scalingFactor,  bool isRectangle)
 	{
 		//because the X axis is opposing, all X coordinates have to be turned around
 		int turnaroundX;
@@ -277,7 +348,8 @@ namespace flopoco
 				<< " onmousemove=\"ShowTooltip(evt)\" onmouseout=\"HideTooltip(evt)\" mouseovertext=\"X[" 
 				<< xB << ":" << xT << "] * Y[" << yB << ":" << yT << "]\"/> " << endl;
 
-			fig << "<text x=\"" << (2*turnaroundX - scalingFactor*(xT+xB))/2 -12 << "\" y=\"" << ((yT+yB)*scalingFactor)/2 + offsetY + 7
+			fig << "<text x=\"" << (2*turnaroundX - scalingFactor*(xT+xB))/2 -12 
+				<< "\" y=\"" << ((yT+yB)*scalingFactor)/2 + offsetY + 7
 			    << "\" fill=\"blue\">D" <<  xT / wxDSP <<  yT / wyDSP  << "</text>" << endl;
 
 		}   
@@ -306,7 +378,8 @@ namespace flopoco
 	void Plotter::drawTargetFigure(int wX, int wY, int offsetX, int offsetY, int scalingFactor, bool isRectangle)
 	{
 		if(isRectangle)
-			fig << "<rect x=\"" << offsetX << "\" y=\"" << offsetY << "\" height=\"" << wY * scalingFactor << "\" width=\"" << wX * scalingFactor 
+			fig << "<rect x=\"" << offsetX << "\" y=\"" << offsetY 
+				<< "\" height=\"" << wY * scalingFactor << "\" width=\"" << wX * scalingFactor 
 			    <<"\" style=\"fill:rgb(255, 255, 255);stroke-width:1;fill-opacity:0.1;stroke:rgb(0,0,0)\"/>" << endl;
 		else
 			fig << "<polygon points=\"" << offsetX << "," << offsetY << " " 
@@ -319,7 +392,8 @@ namespace flopoco
 
 
 
-	void Plotter::drawSmallMult(int wX, int wY, int xT, int yT, int xB, int yB, int offsetX, int offsetY, int scalingFactor,  bool isRectangle)
+	void Plotter::drawSmallMult(int wX, int wY, int xT, int yT, int xB, 
+			int yB, int offsetX, int offsetY, int scalingFactor,  bool isRectangle)
 	{
 
 		int turnaroundX;
@@ -369,8 +443,9 @@ namespace flopoco
 	}
 	
 	void Plotter::drawLittleClock(int x, int y, int cyclenumber, int currentcycle, int stageNumber, int currentStage)
-	{ //TODO correct fig2
-	   ostringstream figureFileName;
+	{ 
+#if 0
+		ostringstream figureFileName;
 		figureFileName << "littleclock"  << ".svg";
 		
 		FILE* pfile;
@@ -378,29 +453,34 @@ namespace flopoco
 		fclose(pfile);
 		
 		fig2.open (figureFileName.str().c_str(), ios::trunc);
-
-		double scalefactor=3.0;
+#endif
+		double scalefactor=0.2;
 		
 
 		//file header
+#if 0
 		fig2 << "<?xml version=\"1.0\" standalone=\"no\"?>" << endl;
 		fig2 << "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\"" << endl;
 		fig2 << "\"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">" << endl;
 		fig2 << "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\">" << endl;
-      	fig2<<"<g transform=\"scale("<<scalefactor<<") translate(1000,100)\">"<<endl;
-		fig2<<" <circle cx=\""<<x<<"\" cy=\""<<y<<"\" r=\"100\" stroke=\"black\" stroke-width=\"2\" fill=\"darkcyan\" />"<<endl;
-        fig2<<" <circle cx=\""<<x<<"\" cy=\""<<y<<"\" r=\"80\" stroke=\"black\" stroke-width=\"2\" fill=\"burlywood\" />"<<endl;
+#endif
+      	fig <<"<g transform=\"scale("<<scalefactor<<") translate(1000,100)\">"<<endl;
+		fig <<" <circle cx=\""<<x<<"\" cy=\""<<y
+			<<"\" r=\"100\" stroke=\"black\" stroke-width=\"2\" fill=\"darkcyan\" />"<<endl;
+        fig <<" <circle cx=\""<<x<<"\" cy=\""<<y
+			<<"\" r=\"80\" stroke=\"black\" stroke-width=\"2\" fill=\"burlywood\" />"<<endl;
         
-      //   fig << "<rect x=\"" << x-25<< "\" y=\"" << y-60
+		  //   fig << "<rect x=\"" << x-25<< "\" y=\"" << y-60
 		//	    << "\" height=\"" << 10 <<"\" width=\"" << 60
 		//	    << "\" style= \"fill:rgb(139, 69, 19);stroke:purple;stroke-width:1\" /> "<<endl;
 		//fig<< "<polygon points= \" "<< x-22 <<","<< y-63 <<" "
 		//						<< x-16 <<","<< y-68 <<" "
 		///						<< x-10 <<","<< y-63 <<" "
 		//						<< x-10 <<","<< y-45 <<" "
-		//						<< x-22 <<","<< y-45 <<" \" "<< "style=\"fill:rgb(139, 134, 130);stroke-width:1;stroke:rgb(0,0,0)\"/>" << endl;
+		//						<< x-22 <<","<< y-45 <<" \" "
+		//						<< "style=\"fill:rgb(139, 134, 130);stroke-width:1;stroke:rgb(0,0,0)\"/>" << endl;
         
-		fig2<< "<polygon points= \" "<< x-35 <<","<< y-30 <<" "
+		fig << "<polygon points= \" "<< x-35 <<","<< y-30 <<" "
 								<< x+35 <<","<< y-30 <<" "
 								<< x+50 <<","<< y-23 <<" "
 								<< x+35 <<","<< y-15 <<" "
@@ -417,26 +497,29 @@ namespace flopoco
 								<< x-15 <<","<< y-5 <<" "
 								<< x-25 <<","<< y-15 <<" "
 								<< x-35 <<","<< y-15 <<" "
-								<< x-35 <<","<< y-30 <<" \" "<< "style= \"fill:rgb(139, 134, 130);stroke:black;stroke-width:1\" /> "<<endl;
-		fig2<<"<text x=\""<<x-25<<"\" y=\""<<y-16<<"\" stroke=\"white\"  fill=\"white\" >FloPoCo</text> "<<endl;
+								<< x-35 <<","<< y-30 <<" \" "
+								<< "style= \"fill:rgb(139, 134, 130);stroke:black;stroke-width:1\" /> "<<endl;
+		fig <<"<text x=\""<<x-25<<"\" y=\""<<y-16<<"\" stroke=\"white\"  fill=\"white\" >FloPoCo</text> "<<endl;
 		
 		
 	
 		double adjust=3.1415+3.1415/2;
-		fig2<<" <circle cx=\""<<x<<"\" cy=\""<<y<<"\" r=\"4\" stroke=\"black\" stroke-width=\"2\" fill=\"black\" />"<<endl;
+		fig <<" <circle cx=\""<<x<<"\" cy=\""<<y<<"\" r=\"4\" stroke=\"black\" stroke-width=\"2\" fill=\"black\" />"<<endl;
 		
 		for(int i=0;i<cyclenumber;i++)
 		{
 			double angle=360/cyclenumber*i *3.1415 / 180 + adjust;
 			
-			fig2<<" <circle cx=\""<<x+80*cos(angle)<<"\" cy=\""<<y+ 80*sin(angle)<<"\" r=\"4\" stroke=\"black\" stroke-width=\"2\" fill=\"red\" />"<<endl;
-			fig2<<"<text x=\""<<x+65*cos(angle)<<"\" y=\""<<y+65*sin(angle)<<"\" stroke=\"red\" fill=\"red\" >"<<romanNumber(i)<<"</text> "<<endl;
+			fig <<" <circle cx=\""<<x+80*cos(angle)<<"\" cy=\""<<y+ 80*sin(angle)
+				<<"\" r=\"4\" stroke=\"black\" stroke-width=\"2\" fill=\"red\" />"<<endl;
+			fig <<"<text x=\""<<x+65*cos(angle)<<"\" y=\""<<y+65*sin(angle)
+				<<"\" stroke=\"red\" fill=\"red\" >"<<romanNumber(i)<<"</text> "<<endl;
 			if(i==currentcycle)
 			{
-				fig2<<"<line x1=\""<<x<<"\" y1=\""<<y<<"\" x2=\""<<x+ 70*cos(angle)
+				fig <<"<line x1=\""<<x<<"\" y1=\""<<y<<"\" x2=\""<<x+ 70*cos(angle)
 					<<"\" y2=\""<<y+ 70*sin(angle)<<"\" style=\"stroke-width: 5px; stroke:rgb(139, 69, 19);\"  />"<<endl;
 				
-				fig2<< "<polygon points= \" "<< x+ 72*cos(angle) <<","<< y+ 72*sin(angle) <<" "
+				fig << "<polygon points= \" "<< x+ 72*cos(angle) <<","<< y+ 72*sin(angle) <<" "
 								<< x+60*cos(angle-0.2)<<","<< y+60*sin(angle-0.2) <<" "
 								<< x+60*cos(angle+0.2) <<","<< y+60*sin(angle+0.2)<<" \" "
 								<< "style= \"fill:rgb(139, 134, 130);stroke:black;stroke-width:1\" /> "<<endl;
@@ -448,39 +531,48 @@ namespace flopoco
 		{	double adjust=3.1415+3.1415/2;
 			double angle=360/stageNumber*i *3.1415 / 180 + adjust;
 			
-			fig2<<" <circle cx=\""<<x+100*cos(angle)<<"\" cy=\""<<y+ 100*sin(angle)
+			fig <<" <circle cx=\""<<x+100*cos(angle)<<"\" cy=\""<<y+ 100*sin(angle)
 				<<"\" r=\"4\" stroke=\"black\" stroke-width=\"2\" fill=\"yellowgreen\" />"<<endl;
 			
-			fig2<<"<text x=\""<<x+117*cos(angle)<<"\" y=\""<<y+117*sin(angle)
+			fig <<"<text x=\""<<x+117*cos(angle)<<"\" y=\""<<y+117*sin(angle)
 				<<"\" stroke=\"black\" fill=\"black\" >"<<i<<"</text> "<<endl;
 		
 			if(i==currentStage)
 			{	
-				fig2<<"<line x1=\""<<x<<"\" y1=\""<<y<<"\" x2=\""<<x+ 80*cos(angle)
+				fig <<"<line x1=\""<<x<<"\" y1=\""<<y<<"\" x2=\""<<x+ 80*cos(angle)
 					<<"\" y2=\""<<y+ 80*sin(angle)<<"\" style=\"stroke-width: 5px; stroke:rgb(139, 69, 19);\"  />"<<endl;
-				fig2<< "<polygon points= \" "<< x+ 100*cos(angle) <<","<< y+ 100*sin(angle) <<" "
+				fig << "<polygon points= \" "<< x+ 100*cos(angle) <<","<< y+ 100*sin(angle) <<" "
 					<< x+82*cos(angle-0.2)<<","<< y+82*sin(angle-0.2) <<" "
 					<< x+82*cos(angle+0.2) <<","<< y+82*sin(angle+0.2)<<" \" "
 					<< "style= \"fill:rgb(139, 134, 130);stroke:black;stroke-width:1\" /> "<<endl;
 			}
 		}
 		
-		fig2<<"<text x=\""<<x-12<<"\" y=\""<<y+70<<"\" stroke=\"midnightblue\"  fill=\"midnightblue\" >cycle</text> "<<endl;
-		fig2<<"<text x=\""<<x-12<<"\" y=\""<<y+95<<"\" stroke=\"ghostwhite\" fill=\"ghostwhite\" >stage</text> "<<endl;
-		fig2<<"</g>"<<endl;
-		fig2 << "</svg>" << endl;
-		fig2.close();
+		fig <<"<text x=\""<<x-12<<"\" y=\""<<y+70<<"\" stroke=\"midnightblue\"  fill=\"midnightblue\" >cycle</text> "<<endl;
+		fig <<"<text x=\""<<x-12<<"\" y=\""<<y+95<<"\" stroke=\"ghostwhite\" fill=\"ghostwhite\" >stage</text> "<<endl;
+		fig <<"</g>"<<endl;
+		//fig2 << "</svg>" << endl;
+		//fig2.close();
+
+		//fig << fig2.str();
 		
 	}
 
-	void Plotter::drawBit(int cnt, int w, int turnaroundX, int offsetY, int c)
+	void Plotter::drawBit(int cnt, int w, int turnaroundX, int offsetY, int color, int cycle, int cp)
 	{
-		const std::string colors[] = { "#97bf04","#0f1af2", "#f5515c", "#3958ff","#f2eb8d", "indianred", "yellow", "lightgreen"};
+		const std::string colors[] = { "#97bf04","#0f1af2", 
+			"orange", "#f5515c",  "indianred", "yellow", "lightgreen"};
 
-		int index = c % 8;
+		int index = color % 7;
 
-		fig << "<circle cx=\"" << turnaroundX - w*10 - 5 << "\" cy=\"" << offsetY - cnt*10 - 5 << "\" r=\"3\" fill=\"" << colors[index] << "\"/>" << endl;
+		fig << "<circle cx=\"" << turnaroundX - w*10 - 5 << "\" cy=\"" 
+			<< offsetY - cnt*10 - 5 << "\" r=\"3\" fill=\"" << colors[index] << "\"" 
+			<< " onmousemove=\"ShowTooltip(evt)\" onmouseout=\"HideTooltip(evt)\" mouseovertext=\"" 
+			<< cycle << " : " << cp << "\"/> " << endl;
+
 	}
+
+
 
 	void Plotter::addECMAFunction()
 	{
@@ -500,35 +592,44 @@ namespace flopoco
 	}
 
 
-#if 0
+
 	void Plotter::initializeBitHeapPlotting()
 	{
 		ostringstream figureFileName;
 		figureFileName << "bit_heap.svg";
 	
-		drawCycleNumber = 0;
+
 
 		FILE* pfile;
 		pfile  = fopen(figureFileName.str().c_str(), "w");
 		fclose(pfile);
 		
-		fileFig.open (figureFileName.str().c_str(), ios::trunc);
+		fig.open (figureFileName.str().c_str(), ios::trunc);
 
-		fileFig << "<?xml version=\"1.0\" standalone=\"no\"?>" << endl;
-		fileFig << "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\"" << endl;
-		fileFig << "\"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">" << endl;
+		fig << "<?xml version=\"1.0\" standalone=\"no\"?>" << endl;
+		fig << "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\"" << endl;
+		fig << "\"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">" << endl;
+		fig << "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" onload=\"init(evt)\" >" << endl;
+		
+		addECMAFunction(); 
+
 	}
 
 
-
-
-	void BitHeap::drawConfiguration(int offsetY)
+	void Plotter::drawConfiguration(vector<list<WeightedBit*> > bits, int stage, int minWeight, int offsetY, int turnaroundX)
 	{
-		int turnaroundX = 1500;
 		int color = 0;
 		int tempCycle = 0;
 		int cnt = 0;
 		double tempCP = 0;
+
+		int stagesPerCycle = bh->getStagesPerCycle();
+		double elemTime = bh->getElementaryTime();
+
+		bool drawCycleLine=false;
+		int drawCycleNumber=1;
+
+		//REPORT(INFO, "in call ");
 		if((drawCycleLine) && (drawCycleNumber==0))
 			{
 				fig << "<text x=\"" << turnaroundX + 85 << "\" y=\"" << 40
@@ -538,7 +639,8 @@ namespace flopoco
 		if(drawCycleLine)
 			{
 				drawCycleNumber++;
-				fig << "<line x1=\"" << turnaroundX + 200 << "\" y1=\"" << offsetY +10 << "\" x2=\"" << turnaroundX - bits.size()*10 - 50
+				fig << "<line x1=\"" << turnaroundX + 200 
+					<< "\" y1=\"" << offsetY +10 << "\" x2=\"" << turnaroundX - bits.size()*10 - 50
 				    << "\" y2=\"" << offsetY +10 << "\" style=\"stroke:midnightblue;stroke-width:2\" />" << endl;
 
 				fig << "<text x=\"" << turnaroundX + 100 << "\" y=\"" << offsetY + 3
@@ -551,47 +653,78 @@ namespace flopoco
 			}
 		else
 			{
-				fig << "<line x1=\"" << turnaroundX + 200 << "\" y1=\"" << offsetY +10 << "\" x2=\"" << turnaroundX - bits.size()*10 - 50
+				fig << "<line x1=\"" << turnaroundX + 200 << "\" y1=\"" 
+					<< offsetY +10 << "\" x2=\"" << turnaroundX - bits.size()*10 - 50
 				    << "\" y2=\"" << offsetY +10 << "\" style=\"stroke:lightsteelblue;stroke-width:1\" />" << endl;
 				drawCycleLine = false;
 			}
 
-		for(unsigned i=0; i<bits.size(); i++)
+
+		turnaroundX -= minWeight*10;
+
+		for(int i=0; i<bits.size(); i++)
+		{
+
+			//REPORT(INFO, "wtf" << i);
+
+			if(bits[i].size()>0)
 			{
+				color=0;
+				tempCycle = 0;
+				tempCP = 0;
+				cnt = 0;
+				for(list<WeightedBit*>::iterator it = bits[i].begin(); it!=bits[i].end(); ++it)
+				{
 
-				if(bits[i].size()>0)
+					//REPORT(INFO, "in middle call " << (*it)->getName());
+
+					if(it==bits[i].begin())
+						{
+							tempCycle = (*it)->getCycle();
+							tempCP = (*it)->getCriticalPath(tempCycle);
+						}
+					else
+						{
+							if((tempCycle!=(*it)->getCycle()) || 
+							   ((tempCycle==(*it)->getCycle()) && 
+								(tempCP!=(*it)->getCriticalPath((*it)->getCycle()))))
+								{
+									tempCycle = (*it)->getCycle();
+									tempCP = (*it)->getCriticalPath(tempCycle);
+									color++;
+								}
+						}
+
+					//REPORT(INFO, "after middle call " << (*it)->getName());
+
+					int color;
+
+					//if ((*it)->getType()==)
+
+
+					int cy = (*it)->getCycle();
+					double cp = (*it)->getCriticalPath(cy)*100000000000;
+					if(stage>=(*it)->computeStage(stagesPerCycle, elemTime))
 					{
-						color=0;
-						tempCycle = 0;
-						tempCP = 0;
-						cnt = 0;
-						for(list<WeightedBit*>::iterator it = bits[i].begin(); it!=bits[i].end(); ++it)
-							{
-								if(it==bits[i].begin())
-									{
-										tempCycle = (*it)->getCycle();
-										tempCP = (*it)->getCriticalPath(tempCycle);
-									}
-								else
-									{
-										if((tempCycle!=(*it)->getCycle()) || 
-										   ((tempCycle==(*it)->getCycle()) && (tempCP!=(*it)->getCriticalPath((*it)->getCycle()))))
-											{
-												tempCycle = (*it)->getCycle();
-												tempCP = (*it)->getCriticalPath(tempCycle);
-												color++;
-											}
-									}
-
-								drawBit(cnt, i, turnaroundX, offsetY, (*it)->computeStage(stagesPerCycle, elementaryTime));
-								cnt++;
-							}
+						drawBit(cnt, i, turnaroundX, offsetY, (*it)->getType(), cy, cp);
+						cnt++;
 					}
+					//REPORT(INFO, cp);
+					//cnt++;
+
+					//REPORT(INFO, "after call to drawBit " << i);
+
+				}
 			}
+		}
+
+
+
+
 
         
 	}
-
+#if 0
 
 	
 	void Plotter::closeBitHeapPlotting(int offsetY)
@@ -602,7 +735,8 @@ namespace flopoco
 
 		fig << "</g></svg>" << endl;
 
-		fileFig << "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" width=\"100%\" height=\"100%\" viewBox=\"" <<turnaroundX - bits.size()*10 - 80 
+		fileFig << "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" width=\"100%\" 
+			height=\"100%\" viewBox=\"" <<turnaroundX - bits.size()*10 - 80 
 		        << " " << 100 << " " << turnaroundX + 50 << " " << offsetY + 20 <<  "\">" << endl; 
 		fileFig << "<g transform=\"rotate(45)\">" <<endl;
 		//    fileFig << "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" viewBox=\"0 0 500 500\">" << endl; 

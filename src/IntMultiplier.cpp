@@ -242,10 +242,10 @@ namespace flopoco {
 		xname = x->getName();
 		yname = y->getName();
 
-		plotter = new Plotter();
+		plotter = new Plotter(bitHeap);
 
 		bitHeap->setPlotter(plotter);
-		plotter->setBitHeap(bitHeap);
+		//plotter->setBitHeap(bitHeap);
 		
 		initialize();
 		fillBitHeap();
@@ -306,10 +306,10 @@ namespace flopoco {
 		// The bit heap
 		bitHeap = new BitHeap(this, wOut+g);
 
-		plotter = new Plotter();
+		plotter = new Plotter(bitHeap);
 
 		bitHeap->setPlotter(plotter);
-		plotter->setBitHeap(bitHeap);
+		//plotter->setBitHeap(bitHeap);
 
 
 
