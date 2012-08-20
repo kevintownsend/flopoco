@@ -701,67 +701,12 @@ namespace flopoco {
 	
 
 
-	/*
-		void IntMultiplier::splitting(int horDSP, int verDSP, int wxDSP, int wyDSP,int restX, int restY)
-		{
-	
-
-			for(int i=0;i<horDSP;i++)
-				{
-					for(int j=0;j<verDSP;j++)
-						{
-							if((wX-(i+1)*wxDSP) + (wY-((j+1)*wyDSP)) > wFull-wOut-g)
-							{
-							MultiplierBlock* m = new MultiplierBlock(wxDSP,wyDSP,wX-(i+1)*wxDSP, wY-((j+1)*wyDSP),
-									join("XX",multiplierUid),join("YY",multiplierUid),weightShift);
-							m->setNext(NULL);		
-							m->setPrevious(NULL);			
-							REPORT(DETAILED,"getPrev  " << m->getPrevious());
-
-							localSplitVector.push_back(m);
-							bitHeap->addDSP(m);
-
-							}
-							
-							else
-							{
-								//build with logic, a smaller rectangle than a DSP
-								int coordX=wX-(i)*wxDSP;
-								int coordY=wY-(j)*wyDSP;
-								
-								while((coordX+coordY)<=(wFull-wOut-g))
-									coordX++;
-								REPORT(DETAILED,"coordX= "<<coordX<<" coordY= "<<coordY );
-								buildHeapLogicOnly(wX-(i+1)*wxDSP,wY-(j+1)*wyDSP, wX-(i)*wxDSP, wY-(j)*wyDSP,parentOp->getNewUId());
-								REPORT(DETAILED,"added smalls inspite of dsp");
-							}
-#if 0	
-							//***** this part i       s needed only for the plotting ********
-							DSP* dsp = new DSP();
-							dsp->setTopRightCorner(wX-((i+1)*wxDSP),wY-((j+1)*wyDSP));
-							dsp->setBottomLeftCorner(wX-(i*wxDSP),wY-(j*wyDSP));
-							dsps.push_back(dsp);
-							//********************************************************
-							//
-#endif
-			
-						}	
-
-				}
-
-			
-			
-
-
-		}
-		*/
-	//	/*
-		
-		void IntMultiplier::splitting(int horDSP, int verDSP, int wxDSP, int wyDSP,int restX, int restY)
+	void IntMultiplier::splitting(int horDSP, int verDSP, int wxDSP, int wyDSP,int restX, int restY)
 		{
 	
 			int i=0;
 			int j=0;
+			int x=0;
 			while(i<verDSP)
 			{
 				j=0;
@@ -777,29 +722,37 @@ namespace flopoco {
 						REPORT(DETAILED,"getPrev  " << m->getPrevious());
 						localSplitVector.push_back(m);
 						bitHeap->addDSP(m);
+						x=wX-(j+1)*wxDSP;
 					}
 					
 					else
 					{
-					ok=1;
-					j--;
+						ok=1;
+						j--;
 					}
 					
 					j++;
 					
 									
 				}
-				buildHeapLogicOnly(0,wY-(i+1)*wyDSP, wX-j*wxDSP, wY-(i)*wyDSP,parentOp->getNewUId());	
+				
+				int y= wY-(i)*wyDSP;
+				while(((x+y)>wFull-wOut-g) && (x>0))
+				x--;
+				
+				if(wX-j*wxDSP>0!=x)
+					buildHeapLogicOnly(x,wY-(i+1)*wyDSP, wX-j*wxDSP, wY-(i)*wyDSP,parentOp->getNewUId());	
 				i++;		
 			}
 			
-			buildHeapLogicOnly(0,0,wX,restY,parentOp->getNewUId());
+				if(restY>0)
+					buildHeapLogicOnly(0,0,wX,restY,parentOp->getNewUId());
 	
 		}
 		
 		
 		
-	//	*/
+	
 
 
 		/** builds the tiles and the logic too*/

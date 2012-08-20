@@ -1253,7 +1253,17 @@ namespace flopoco
 		{		
 			zerosX=25-m->getwY();
 			zerosY=18-m->getwX();
-		}	
+		}
+		
+		int addx=0;
+		int addy=0;
+		
+		if(topX<0)
+		addx=0-topX;
+		
+		
+		if(topY<0)
+		addy=0-topY;	
 
 
 		//int zerosY=18-m->getwY();
@@ -1265,12 +1275,12 @@ namespace flopoco
 	//	op->setCycle(uid);
 		if(uid==0)	
 			op->vhdl << tab << op->declare(join("DSPch",i,"_",uid), m->getwX()+m->getwY()+zerosX+zerosY) 
-				<< " <= (" <<zg(zerosX)<<" & " << input1<<range(botX,topX)<<") * (" <<zg(zerosY) <<" & "
-			    << input2 <<range(botY,topY)<<");"<<endl;
+				<< " <= (" <<zg(zerosX)<<" & "<<zg(addx)<<" & " << input1<<range(botX,topX-addx)<<") * (" <<zg(zerosY) <<" & "<<zg(addy)<<" & "
+			    << input2 <<range(botY,topY-addy)<<");"<<endl;
 		else
 			op->vhdl << tab << op->declare(join("DSP",i,"_",uid), m->getwX()+m->getwY()+zerosX+zerosY) 
-				<< " <= (" <<zg(zerosX)<<" & " << input1<<range(botX,topX)<<") * (" <<zg(zerosY) <<" & "
-			    << input2 <<range(botY,topY)<<");"<<endl;
+					<< " <= (" <<zg(zerosX)<<" & "<<zg(addx)<<" & " << input1<<range(botX,topX-addx)<<") * (" <<zg(zerosY) <<" & "<<zg(addy)<<" & "
+			    << input2 <<range(botY,topY-addy)<<");"<<endl;
 
 	
 		if(uid==0)
