@@ -108,7 +108,7 @@ namespace flopoco {
 		void buildTiling();
 
 
-		void compute(int topX, int topY, int botX, int botY,int wxDSP,int wyDSP);
+		//void compute(int topX, int topY, int botX, int botY,int wxDSP,int wyDSP);
 
 	
 		/**	builds the logic block ( smallMultTables) 
@@ -125,6 +125,8 @@ namespace flopoco {
 
 		/** splits the inputs in chunks which fits the DSP-s, and send them to the vector of MultiplierBlocks in Bitheap**/
 		void splitting(int horDSP, int verDSP, int wxDSP, int wyDSP,int restX,int restY);
+
+		void compute(int topX, int topY, int botX, int botY, int wxDSP, int wyDSP);
 
 
 		/* Stuff related to SVG output */
