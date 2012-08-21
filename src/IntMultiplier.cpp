@@ -1051,6 +1051,12 @@ namespace flopoco {
 			
 			
 		float blockArea=width*height;
+		int tx=topx;
+		int ty=topy;
+		while(tx+ty<wFull-wOut-g)
+			tx++;
+		int triangleArea=((tx-topx)*(tx-topx))/2;
+		blockArea=blockArea-triangleArea;
 	
 			if(blockArea>=(1.0-ratio)*dspArea)
 				{
