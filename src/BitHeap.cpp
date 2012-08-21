@@ -590,8 +590,8 @@ namespace flopoco
 		//
 		WeightedBit* firstBit = getFirstSoonestBit();
         
-		int minCycle = firstBit->getCycle();
-		double minCP = firstBit->getCriticalPath(minCycle);
+		int minCycle = 0;//firstBit->getCycle();
+		double minCP = 0.0;//firstBit->getCriticalPath(minCycle);
 		op->setCycle(minCycle); 
 		op->setCriticalPath(minCP);
 		op->vhdl << endl << tab << "-- Adding the constant bits" << endl;
@@ -1312,7 +1312,7 @@ namespace flopoco
 		addy=0-topY;	
 
 
-		//int zerosY=18-m->getwY();
+		REPORT(DETAILED,"topx= "<<topX <<" addx= "<<addx<<" topx + addx= "<<topX+addx);
 		
 		//PIPELINE!!!!
 		op->setCycleFromSignal(m->getInputName1());
@@ -1321,14 +1321,14 @@ namespace flopoco
 	//	op->setCycle(uid);
 		if(uid==0)	
 			op->vhdl << tab << op->declare(join("DSPch",i,"_",uid), m->getwX()+m->getwY()+zerosX+zerosY) 
-				<< " <= (" <<zg(zerosX)<<" & "<<zg(addx)<<" & " << input1<<range(botX,topX-addx)<<") * (" <<zg(zerosY) <<" & "<<zg(addy)<<" & "
-			    << input2 <<range(botY,topY-addy)<<");"<<endl;
+				<< " <= (" <<zg(zerosX)<<" & " << input1<<range(botX,topX+addx)<<" & "<<zg(addx)<<") * (" <<zg(zerosY) <<" & "
+			    << input2 <<range(botY,topY+addy)<<" & "<<zg(addy)<<");"<<endl;
 		else
 			op->vhdl << tab << op->declare(join("DSP",i,"_",uid), m->getwX()+m->getwY()+zerosX+zerosY) 
-					<< " <= (" <<zg(zerosX)<<" & "<<zg(addx)<<" & " << input1<<range(botX,topX-addx)<<") * (" <<zg(zerosY) <<" & "<<zg(addy)<<" & "
-			    << input2 <<range(botY,topY-addy)<<");"<<endl;
+					<< " <= (" <<zg(zerosX)<<" & " << input1<<range(botX,topX+addx)<<" & "<<zg(addx)<<") * (" <<zg(zerosY) <<" & "
+			    << input2 <<range(botY,topY+addy)<<" & "<<zg(addy)<<");"<<endl;
 
-	
+		
 		if(uid==0)
 			s<<join("DSPch",i,"_",uid);
 		else

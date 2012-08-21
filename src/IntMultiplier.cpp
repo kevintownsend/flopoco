@@ -228,7 +228,7 @@ namespace flopoco {
 
 		multiplierUid=parentOp->getNewUId();
 		srcFileName="IntMultiplier";
-		useDSP = (ratio>0) && getTarget()->hasHardMultipliers();
+		useDSP = (ratio>=0) && getTarget()->hasHardMultipliers();
 		
 		ostringstream name;
 		name <<"VirtualIntMultiplier";
@@ -269,7 +269,8 @@ namespace flopoco {
 		setCopyrightString ( "Florent de Dinechin, Kinga Illyes, Bogdan Popa, Bogdan Pasca, 2012" );
 		
 		// useDSP or not? 
-		useDSP = (ratio>0) && target->hasHardMultipliers();
+		//useDSP = (ratio>0) && target->hasHardMultipliers();
+		useDSP = (ratio>=0)&&target->hasHardMultipliers();
 
 
 		{
@@ -589,21 +590,21 @@ namespace flopoco {
 
 
 				tUU = new SmallMultTable( target, dx, dy, dx+dy, negate, false, false);
-				useSoftRAM(tUU);
+				//useSoftRAM(tUU);
 				oplist.push_back(tUU);
 
 				if(signedIO) { // need for 4 different tables
 					
 					tSU = new SmallMultTable( target, dx, dy, dx+dy, negate, true, false );
-					useSoftRAM(tSU);
+					//useSoftRAM(tSU);
 					oplist.push_back(tSU);
 					
 					tUS = new SmallMultTable( target, dx, dy, dx+dy, negate, false, true );
-					useSoftRAM(tUS);
+					//useSoftRAM(tUS);
 					oplist.push_back(tUS);
 					
 					tSS = new SmallMultTable( target, dx, dy, dx+dy, negate, true, true );
-					useSoftRAM(tSS);
+					//useSoftRAM(tSS);
 					oplist.push_back(tSS);
 				}
 
@@ -635,7 +636,8 @@ namespace flopoco {
 						
 				
 						if(dx*(ix+1)+dy*(iy+1)+topX+topY>wFull-wOut-g)
-					{
+						{
+						
 						plotter->addSmallMult(dx*(ix)+topX, dy*(iy)+topY,dx,dy);
 
 						vhdl << tab << declare(join (XY(ix,iy,uid),multiplierUid), dx+dy) 
@@ -706,7 +708,7 @@ namespace flopoco {
 	
 			int i=0;
 			int j=0;
-			int x=0;
+			int x=wX;
 			while(i<verDSP)
 			{
 				j=0;
@@ -714,7 +716,7 @@ namespace flopoco {
 				while((j<horDSP)&&(ok==0))
 				{	REPORT(DETAILED,"j= " << j);
 					if((wX-(j+1)*wxDSP)+(wY-(i+1)*wyDSP)>=wFull-wOut-g)
-					{ 
+					{ REPORT(DETAILED,"jx="<<j<<" iy="<<i<<" righttopx="<<(wX-(j+1)*wxDSP)<<" righttopy= "<<wY-(i+1)*wyDSP);
 						MultiplierBlock* m = new MultiplierBlock(wxDSP,wyDSP,wX-(j+1)*wxDSP, wY-((i+1)*wyDSP),
 									join("XX",multiplierUid),join("YY",multiplierUid),weightShift);
 						m->setNext(NULL);		
@@ -722,7 +724,7 @@ namespace flopoco {
 						REPORT(DETAILED,"getPrev  " << m->getPrevious());
 						localSplitVector.push_back(m);
 						bitHeap->addDSP(m);
-						x=wX-(j+1)*wxDSP;
+						
 					}
 					
 					else
@@ -737,21 +739,123 @@ namespace flopoco {
 				}
 				
 				int y= wY-(i)*wyDSP;
-				while(((x+y)>wFull-wOut-g) && (x>0))
+				x=wX;
+				while((x+y>wFull-wOut-g) && (x>0))
 				x--;
 				
+				
 				if(wX-j*wxDSP>0!=x)
-					buildHeapLogicOnly(x,wY-(i+1)*wyDSP, wX-j*wxDSP, wY-(i)*wyDSP,parentOp->getNewUId());	
+					
+					compute(x,wY-(i+1)*wyDSP, wX-j*wxDSP, wY-(i)*wyDSP,wxDSP,wyDSP);
+					REPORT(DETAILED, "THE REMAINING BLOCK TO BE COMPUTED HAS TOPX:= "<<x<<" TOPY= "<<wY-(i+1)*wyDSP);
 				i++;		
 			}
 			
 				if(restY>0)
-					buildHeapLogicOnly(0,0,wX,restY,parentOp->getNewUId());
-	
+				{
+					//buildHeapLogicOnly(0,0,wX,restY,parentOp->getNewUId());
+					int y=restY;
+					int x=wX;
+					while(x+y>wFull-wOut-g)
+					x--;
+					compute(x,0,wX,restY,wxDSP,wyDSP);
+				}
 		}
 		
 		
 		
+		
+		void IntMultiplier::compute(int topX, int topY, int botX, int botY,int wxDSP,int wyDSP)
+		{
+			int height=botY-topY;
+			int width=botX-topX;
+			int dspArea=wxDSP*wyDSP;
+			bool was=false;
+			REPORT(DETAILED,"topx = "<<topX);
+			int botx=botX;
+			int topx=topX;
+			int topy=topY;
+			if (width>wxDSP)
+				topx=botx-wxDSP;
+		int dsp=0;
+			while (width>wxDSP)
+			{		was=true;
+				//we need to split the block
+				float blockArea=wxDSP*height;
+				int tx=topx;
+				int ty=topy;
+				while(tx+ty<wFull-wOut-g)
+				tx++;
+			    int triangleArea=((tx-topx)*(tx-topx))/2;
+			   blockArea=blockArea-triangleArea;
+					
+				if((blockArea>=(1-ratio)*dspArea))
+				{  
+				
+					if(height<wyDSP)
+						topy=topY-(wyDSP-height);
+					MultiplierBlock* m = new MultiplierBlock(wxDSP,wyDSP,topx,topy,
+								join("XX",multiplierUid),join("YY",multiplierUid),weightShift);
+					m->setNext(NULL);		
+					m->setPrevious(NULL);			
+					localSplitVector.push_back(m);
+					bitHeap->addDSP(m);
+					
+				}
+				
+				else
+				{
+					
+					if((topx<botX-dsp*wxDSP-1))
+					buildHeapLogicOnly(topx, topY,(botX-dsp*wxDSP),botY,parentOp->getNewUId());	
+				}
+				
+				dsp++;
+				botx=topx-1;
+				topx=topx-wxDSP;
+				width=width-wxDSP;
+				if(width<=wxDSP)
+					topx=topX;
+			}
+			
+			
+			
+		float blockArea=width*height;
+	
+			if(blockArea>=(1.0-ratio)*dspArea)
+				{
+				
+					if(was)
+						topx=topx-(wxDSP-(botx-topx+1));
+					else 
+						topx=topX-(wxDSP-(botX-topX+1))-1; 
+						
+					if(height<wyDSP)
+						topy=topY-(wyDSP-height);
+						
+					MultiplierBlock* m = new MultiplierBlock(wxDSP,wyDSP,topx,topy,
+								join("XX",multiplierUid),join("YY",multiplierUid),weightShift);
+					m->setNext(NULL);		
+					m->setPrevious(NULL);			
+					localSplitVector.push_back(m);
+					bitHeap->addDSP(m);
+				}
+				
+				else
+				{
+				
+					if((topx<botX-dsp*wxDSP))
+					buildHeapLogicOnly(topx,topY,botX-dsp*wxDSP,botY,parentOp->getNewUId());
+					//buildHeapLogicOnly(0,topY,4,botY,parentOp->getNewUId());	
+				}
+		
+		
+		
+		
+		
+		
+		
+		}
 	
 
 
@@ -798,32 +902,13 @@ namespace flopoco {
 				}
 
 		
-			//if logic part is needed too
-			if((restX!=0 ) || (restY!=0))
-				{
-
-					SmallMultTable *t = new SmallMultTable( getTarget(), 3, 3, 6, false ); // unsigned
-					//useSoftRAM(t);
-					oplist.push_back(t);
-					REPORT(DEBUG,"restX= "<<restX<<"restY= "<<restY);
-					if(restY>0)
-						{
-						//	buildHeapLogicOnly(0,0,wX,restY,0);
-						}
-					if(restX>0)
-						{
-						//	buildHeapLogicOnly(0,restY,restX,wY,1);
-						}	
-
-		
-				
-		
-				}
+	
 			
 			bitHeap->getPlotter()->plotMultiplierConfiguration(multiplierUid, localSplitVector, wX, wY, wOut, g);
 
 		}
-
+		
+		
 	
 
 	

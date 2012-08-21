@@ -108,6 +108,7 @@ namespace flopoco {
 		void buildTiling();
 
 
+		void compute(int topX, int topY, int botX, int botY,int wxDSP,int wyDSP);
 
 	
 		/**	builds the logic block ( smallMultTables) 

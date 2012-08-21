@@ -380,13 +380,13 @@ namespace flopoco
 		if(isRectangle)
 			fig << "<rect x=\"" << offsetX << "\" y=\"" << offsetY 
 				<< "\" height=\"" << wY * scalingFactor << "\" width=\"" << wX * scalingFactor 
-			    <<"\" style=\"fill:rgb(255, 255, 255);stroke-width:1;fill-opacity:0.1;stroke:rgb(0,0,0)\"/>" << endl;
+			    <<"\" style=\"fill:rgb(255, 0, 0);stroke-width:1;fill-opacity:0.1;stroke:rgb(0,0,0)\"/>" << endl;
 		else
 			fig << "<polygon points=\"" << offsetX << "," << offsetY << " " 
 			    << wX*scalingFactor + offsetX << "," << offsetY << " " 
 			    << wX*scalingFactor + offsetX - scalingFactor*wY << "," << wY*scalingFactor + offsetY << " "
 			    << offsetX - scalingFactor*wY << "," << wY*scalingFactor + offsetY 	
-			    << "\" style=\"fill:rgb(255, 255, 255);stroke-width:1;fill-opacity:0.1;stroke:rgb(0,0,0)\"/>" << endl;
+			    << "\" style=\"fill:rgb(255, 0, 0);stroke-width:1;fill-opacity:0.1;stroke:rgb(0,0,0)\"/>" << endl;
 
 	}
 
