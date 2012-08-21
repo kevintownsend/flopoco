@@ -269,7 +269,8 @@ namespace flopoco {
 		setCopyrightString ( "Florent de Dinechin, Kinga Illyes, Bogdan Popa, Bogdan Pasca, 2012" );
 		
 		// useDSP or not? 
-		useDSP = (ratio>=0) && target->hasHardMultipliers();
+		//useDSP = (ratio>0) && target->hasHardMultipliers();
+		useDSP = (ratio>=0)&&target->hasHardMultipliers();
 
 
 		{
@@ -318,13 +319,9 @@ namespace flopoco {
 		// initialize the critical path
 		setCriticalPath(getMaxInputDelays ( inputDelays_ ));
 
-		REPORT(DEBUG, "before fillHeap");
 		fillBitHeap();
-		REPORT(DEBUG, "after fillHeap");
 
-		bitHeap -> generateCompressorVHDL();
-
-		REPORT(DEBUG, "after compressor");		
+		bitHeap -> generateCompressorVHDL();			
 		vhdl << tab << join("R",multiplierUid) << " <= " << bitHeap-> getSumName() << range(wOut+g-1, g) << ";" << endl;
 	}
 
@@ -347,7 +344,7 @@ namespace flopoco {
 			vhdl << tab << "-- Ne pouvant me fier à mon raisonnement, j'ai appris par coeur le résultat de toutes les multiplications possibles" << endl;
 
 			SmallMultTable *t = new SmallMultTable( target(), wX, wY, wOut, negate, signedIO, signedIO);
-			//useSoftRAM(t);
+			useSoftRAM(t);
 			oplist.push_back(t);
 
 			vhdl << tab << declare(join("XY",multiplierUid), wX+wY) << " <= "<<join("YY",multiplierUid)<<" & "<<join("XX",multiplierUid)<<";"<<endl;
@@ -482,8 +479,6 @@ namespace flopoco {
 			
 				buildTiling();
 
-				REPORT(DEBUG, "out of buildTiling");
-
 			}
 		} 
 
@@ -528,9 +523,6 @@ namespace flopoco {
 
 		/**************************************************************************/
 		void IntMultiplier::buildHeapLogicOnly(int topX, int topY, int botX, int botY,int uid) {
-
-			REPORT(DEBUG, "buildHeapLogicOnly");
-
 			Target *target=getTarget();
 			if(uid==-1)
 				uid++;
@@ -677,7 +669,6 @@ namespace flopoco {
 							maxK-=padY;
 						REPORT(DEBUG,  "ix=" << ix << " iy=" << iy << "  maxK=" << maxK  << "  negate=" << negate <<  "  resultSigned="  << resultSigned );
 						for (int k=0; k<maxK; k++) {
-							REPORT(DEBUG, "FOR FOR");
 							ostringstream s;
 							s << join(PP(ix,iy,uid),multiplierUid) << of(k); // right hand side
 							int weight = ix*dx+iy*dy+k - weightShift+topX+topY;
@@ -709,230 +700,9 @@ namespace flopoco {
 			}
 	 
 		}
-
-
-		void IntMultiplier::splitting(int horDSP, int verDSP, int wxDSP, int wyDSP,int restX, int restY)
-		{
-	
-			int i=0;
-			int j=0;
-			int x=wX;
-			while(i<verDSP)
-			{
-				j=0;
-				int ok=0;
-			
-	while((j<horDSP)&&(ok==0))
-				{	REPORT(DETAILED,"j= " << j);
-					if((wX-(j+1)*wxDSP)+(wY-(i+1)*wyDSP)>=wFull-wOut-g)
-					{ REPORT(DETAILED,"jx="<<j<<" iy="<<i<<" righttopx="<<(wX-(j+1)*wxDSP)<<" righttopy= "<<wY-(i+1)*wyDSP);
-						MultiplierBlock* m = new MultiplierBlock(wxDSP,wyDSP,wX-(j+1)*wxDSP, wY-((i+1)*wyDSP),
-									join("XX",multiplierUid),join("YY",multiplierUid),weightShift);
-						m->setNext(NULL);		
-						m->setPrevious(NULL);			
-						REPORT(DETAILED,"getPrev  " << m->getPrevious());
-						localSplitVector.push_back(m);
-						bitHeap->addDSP(m);
-						
-					}
-					
-					else
-					{
-						ok=1;
-						j--;
-					}
-					
-					j++;
-					
-									
-				}
-				
-				int y= wY-(i)*wyDSP;
-				x=wX;
-				while((x+y>wFull-wOut-g) && (x>0))
-					x--;
-				
-				
-				if(wX-j*wxDSP>0!=x)	
-					compute(x,wY-(i+1)*wyDSP, wX-j*wxDSP, wY-(i)*wyDSP,wxDSP,wyDSP);
-				
-				REPORT(DETAILED, "THE REMAINING BLOCK TO BE COMPUTED HAS TOPX:= "<<x<<" TOPY= "<<wY-(i+1)*wyDSP);
-				i++;		
-			}
-			
-				if(restY>0)
-				{
-					//buildHeapLogicOnly(0,0,wX,restY,parentOp->getNewUId());
-					int y=restY;
-					int x=wX;
-
-					while(x+y>wFull-wOut-g)
-						x--;
-
-					compute(x,0,wX,restY,wxDSP,wyDSP);
-				}
-
-				REPORT(DEBUG, "out of splitting");
-		}
-		
-		
-		
-		
-		void IntMultiplier::compute(int topX, int topY, int botX, int botY,int wxDSP,int wyDSP)
-		{
-			int height=botY-topY;
-			int width=botX-topX;
-			float dspArea=wxDSP*wyDSP;
-			bool was=false;
-			REPORT(DETAILED,"topx = "<<topX);
-			int botx=botX;
-			int topx=topX;
-			int topy=topY;
-
-			if (width>wxDSP)
-				topx=botx-wxDSP;
-
-			int dsp=0;
-
-			while (width>wxDSP)
-			{		was=true;
-				//we need to split the block
-				float blockArea=wxDSP*height;
-				int tx=topx;
-				int ty=topy;
-				while(tx+ty<wFull-wOut-g)
-				tx++;
-			    int triangleArea=((tx-topx)*(tx-topx))/2;
-				blockArea=blockArea-triangleArea;
-					
-				if((blockArea>=(1.0-ratio)*dspArea))
-				{  
-				
-					if(height<wyDSP)
-						topy=topY-(wyDSP-height);
-
-					MultiplierBlock* m = new MultiplierBlock(wxDSP,wyDSP,topx,topy,
-						join("XX",multiplierUid),join("YY",multiplierUid),weightShift);
-
-					m->setNext(NULL);		
-					m->setPrevious(NULL);			
-					localSplitVector.push_back(m);
-				
-					bitHeap->addDSP(m);
-					
-				}
-				
-				else
-				{
-					
-					if((topx<botX-dsp*wxDSP-1))
-						buildHeapLogicOnly(topx, topY,(botX-dsp*wxDSP),botY,parentOp->getNewUId());	
-				}
-				
-				dsp++;
-				botx=topx-1;
-				topx=topx-wxDSP;
-				width=width-wxDSP;
-
-				if(width<=wxDSP)
-					topx=topX;
-			}
-			
-			
-			
-			float blockArea=width*height;
-	
-			if(blockArea>=(1.0-ratio)*dspArea)
-				{
-				
-					if(was)
-						topx=topx-(wxDSP-(botx-topx+1));
-					else 
-						topx=topX-(wxDSP-(botX-topX+1))-1; 
-						
-					if(height<wyDSP)
-						topy=topY-(wyDSP-height);
-						
-					MultiplierBlock* m = new MultiplierBlock(wxDSP,wyDSP,topx,topy,
-								join("XX",multiplierUid),join("YY",multiplierUid),weightShift);
-					m->setNext(NULL);		
-					m->setPrevious(NULL);			
-					localSplitVector.push_back(m);
-					bitHeap->addDSP(m);
-				}
-				
-				else
-				{
-				
-					if((topx<botX-dsp*wxDSP))
-						buildHeapLogicOnly(topx,topY,botX-dsp*wxDSP,botY,parentOp->getNewUId());
-					//buildHeapLogicOnly(0,topY,4,botY,parentOp->getNewUId());	
-				}
-		
-		
-		
-		
-		
-		
-		
-		}
 	
 
 
-		/** builds the tiles and the logic too*/
-		/**************************************************************************/
-		void IntMultiplier::buildHeapTiling() {
-		
-			//the DSPs should be arranged horizontally or vertically?
-		
-			//number of horizontal/vertical DSPs used if the tiling is horrizontally
-			int horDSP1=wX/wxDSP;
-			int verDSP1=wY/wyDSP;
-
-			//number of horizontal/vertical DSPs used if the tiling is vertically
-			int horDSP2=wX/wyDSP;
-			int verDSP2=wY/wxDSP;
-
-			//the size of the zone filled by DSPs
-			int hor=horDSP1*verDSP1;
-			int ver=horDSP2*verDSP2;
- 
-			int horDSP;
-			int verDSP;
-			int restX; //the number of lsbs of the first input which remains after filling with DSP-s
-			int restY; //the number of lsbs of the second input which remains after filling with DSP-s
-
-			if (hor>=ver)
-				{	REPORT(DEBUG, "horizontal");
-					horDSP=horDSP1;
-					verDSP=verDSP1;
-					restX=wX-horDSP*wxDSP;
-					restY=wY-verDSP*wyDSP;
-					//splitting horizontal
-					splitting(horDSP,verDSP,wxDSP,wyDSP,restX,restY);
-				}
-			else
-				{	REPORT(DEBUG, "vertical");
-					horDSP=horDSP2;
-					verDSP=verDSP2;
-					restX=wX-horDSP*wyDSP;
-					restY=wY-verDSP*wxDSP;
-					//splitting vertical
-					splitting(horDSP,verDSP,wyDSP,wxDSP,restX,restY);
-				}
-
-			REPORT(DEBUG, "out here");
-	
-			
-			bitHeap->getPlotter()->plotMultiplierConfiguration(multiplierUid, localSplitVector, wX, wY, wOut, g);
-
-			REPORT(DEBUG, "ou otusdf");
-
-		}
-		
-	
-
-#if 0
 	void IntMultiplier::splitting(int horDSP, int verDSP, int wxDSP, int wyDSP,int restX, int restY)
 		{
 	
@@ -1145,7 +915,7 @@ namespace flopoco {
 		}
 		
 		
-#endif
+	
 
 	
 		IntMultiplier::~IntMultiplier() {
