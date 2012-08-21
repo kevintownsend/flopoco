@@ -108,7 +108,7 @@ namespace flopoco
 
 
 			/** draws a single bit */
-			void drawBit(int cnt, int w, int turnaroundX, int offsetY, int color, int cycle, int cp);
+			void drawBit(int cnt, int w, int turnaroundX, int offsetY, int color, int cycle, int cp, string name);
 			
 			void addECMAFunction();
 

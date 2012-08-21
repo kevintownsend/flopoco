@@ -558,17 +558,20 @@ namespace flopoco
 		
 	}
 
-	void Plotter::drawBit(int cnt, int w, int turnaroundX, int offsetY, int color, int cycle, int cp)
+	void Plotter::drawBit(int cnt, int w, int turnaroundX, int offsetY, int color, int cycle, int cp, string name)
 	{
 		const std::string colors[] = { "#97bf04","#0f1af2", 
-			"orange", "#f5515c",  "indianred", "yellow", "lightgreen"};
+			"orange", "#f5515c",  "lightgreen", "yellow", "indianred"};
 
 		int index = color % 7;
 
+		//REPORT(INFO, "bit name " << name << "   color " << color ); 
+
 		fig << "<circle cx=\"" << turnaroundX - w*10 - 5 << "\" cy=\"" 
 			<< offsetY - cnt*10 - 5 << "\" r=\"3\" fill=\"" << colors[index] << "\"" 
-			<< " onmousemove=\"ShowTooltip(evt)\" onmouseout=\"HideTooltip(evt)\" mouseovertext=\"" 
-			<< cycle << " : " << cp << "\"/> " << endl;
+			<< " onmousemove=\"ShowTooltip(evt)\" onmouseout=\"HideTooltip(evt)\" mouseovertext=\""
+			<< name << "\"/> " << endl;
+			//<< cycle << " : " << cp << "\"/> " << endl;
 
 	}
 
@@ -630,6 +633,7 @@ namespace flopoco
 		int drawCycleNumber=1;
 
 		//REPORT(INFO, "in call ");
+#if 0
 		if((drawCycleLine) && (drawCycleNumber==0))
 			{
 				fig << "<text x=\"" << turnaroundX + 85 << "\" y=\"" << 40
@@ -658,7 +662,17 @@ namespace flopoco
 				    << "\" y2=\"" << offsetY +10 << "\" style=\"stroke:lightsteelblue;stroke-width:1\" />" << endl;
 				drawCycleLine = false;
 			}
+#endif
 
+
+
+		fig << "<text x=\"" << turnaroundX + 100 << "\" y=\"" << offsetY + 3
+			<< "\" fill=\"midnightblue\">" << stage << "</text>" << endl;
+
+
+		fig << "<line x1=\"" << turnaroundX + 150 << "\" y1=\"" 
+			<< offsetY +10 << "\" x2=\"" << turnaroundX - bits.size()*10 - 50
+			<< "\" y2=\"" << offsetY +10 << "\" style=\"stroke:lightsteelblue;stroke-width:1\" />" << endl;
 
 		turnaroundX -= minWeight*10;
 
@@ -704,9 +718,9 @@ namespace flopoco
 
 					int cy = (*it)->getCycle();
 					double cp = (*it)->getCriticalPath(cy)*100000000000;
-					if(stage>=(*it)->computeStage(stagesPerCycle, elemTime))
+				//	if(stage>=(*it)->computeStage(stagesPerCycle, elemTime))
 					{
-						drawBit(cnt, i, turnaroundX, offsetY, (*it)->getType(), cy, cp);
+						drawBit(cnt, i, turnaroundX, offsetY, (*it)->getType(), cy, cp, (*it)->getName());
 						cnt++;
 					}
 					//REPORT(INFO, cp);

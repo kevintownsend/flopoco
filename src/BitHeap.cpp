@@ -396,6 +396,7 @@ namespace flopoco
 		op->vhdl <<  endl;		
 		
 		REPORT(DEBUG, "added bit on column " << w <<" cycle= "<< bit->getCycle() <<" cp= "<<bit->getCriticalPath(bit->getCycle()));
+		REPORT(DEBUG, "name " << bit->getName());
 		
 		printColumnInfo(w);	
 	};
@@ -420,7 +421,7 @@ namespace flopoco
 	}
 
   
-	void BitHeap::elemReduce(unsigned i, BasicCompressor* bc)
+	void BitHeap::elemReduce(unsigned i, BasicCompressor* bc, int type)
 	{
 		REPORT(DEBUG, "Entering elemReduce() ");
 	list<WeightedBit*>::iterator it = bits[i].begin();
@@ -489,10 +490,10 @@ namespace flopoco
 			removeCompressedBits(i+1,bc->getColumnSize(1));
 		
 		// add the bits, at the current (global) instant.
-		addBit(i, join(out_concat, compressorIndex,"_", outConcatIndex, "(0)"),"",0);
-		addBit(i+1,	join(out_concat, compressorIndex,"_", outConcatIndex, "(1)"),"",0);
+		addBit(i, join(out_concat, compressorIndex,"_", outConcatIndex, "(0)"),"",type);
+		addBit(i+1,	join(out_concat, compressorIndex,"_", outConcatIndex, "(1)"),"",type);
 		if(!((bc->getColumnSize(0)==3) && (bc->getColumnSize(1)==0)))
-			addBit(i+2, join(out_concat, compressorIndex,"_", outConcatIndex, "(2)"),"",0);
+			addBit(i+2, join(out_concat, compressorIndex,"_", outConcatIndex, "(2)"),"",type);
 
 		REPORT(DEBUG, "Exiting elemReduce() ");
 
@@ -629,7 +630,7 @@ namespace flopoco
 		while (getMaxHeight()>3)
 			{
                 
-				REPORT(INFO, "didCompress " << didCompress);
+				REPORT(DEBUG, "didCompress " << didCompress);
 
 				plotter->heapSnapshot(didCompress, stage);
 				compress(stage);
@@ -665,6 +666,62 @@ namespace flopoco
 				bool doLoop=true;
 
 				WeightedBit* latestBit;
+
+
+				while(i<maxWeight)
+				{
+					//REPORT(INFO, "i= "<< i << " cnt= " << cnt[i]);
+					// Now we are sure cnt[i] is 3
+					if (i==maxWeight-1)
+					{
+						applyCompressor3_2(i);
+					}
+					else
+					{
+						if((cnt[i+1]==3) || (cnt[i+1]==1))
+						{
+							applyCompressor3_2(i);
+							do
+							{
+								i++;
+							}
+							while(cnt[i]!=3);
+
+						}
+						else
+						{
+							if(cnt[i+1]==2)
+							{
+								int j=i;
+								do
+								{
+									i++;
+								}
+								while(cnt[i]==2);
+								REPORT(INFO, "j= "<< j << " i-1= " << i-1);
+								latestBit = getLatestBit(j, i-1); 
+								if(latestBit)
+								{
+									op->setCycle(  latestBit ->getCycle()  );
+									op->setCriticalPath(   latestBit ->getCriticalPath(op->getCurrentCycle()));
+									op->manageCriticalPath( op->getTarget()->localWireDelay() + op->getTarget()->adderDelay(i-j) );
+
+									stage = computeStage();
+								}
+								applyAdder(j, i-1);
+								
+								while((i<=maxWeight) && (cnt[i]!=3))
+								{
+									i++;
+								}
+							}
+						}
+					}
+				}
+
+
+
+#if 0
 				while(doLoop)
 					{
 						// Now we are sure cnt[i] is 3;
@@ -674,7 +731,7 @@ namespace flopoco
 							i++;
 						REPORT(DEBUG, "                             after, i=" << i << " cnt[i]= " << cnt[i]);
                         
-						
+						)
 						if (i==maxWeight) {
 							applyCompressor3_2(maxWeight-1);
 							doLoop=false;
@@ -706,16 +763,6 @@ namespace flopoco
 									op->manageCriticalPath( op->getTarget()->localWireDelay() + op->getTarget()->adderDelay(maxWeight-first2+1) );
 
 									stage = computeStage();
-									//plotter->heapSnapshot(true, stage);
-
-									
-#if 0
-									if( latestBit ->getCycle() < op->getCurrentCycle())
-									{
-										drawCycleLine = true;
-									}
-#endif
-
 								}
 
 								applyAdder(first2-1,maxWeight-1);							
@@ -733,24 +780,19 @@ namespace flopoco
 									op->manageCriticalPath(op->getTarget()->localWireDelay() + op->getTarget()->adderDelay(first3 - first2 + 1));
 
 									stage = computeStage();
-									//plotter->heapSnapshot(true, stage);
-#if 0
-									if(latestBit->getCycle() < op->getCurrentCycle())
-									{
-										drawCycleLine = true;
-									}
-#endif
 								}
 
 
-								applyAdder(first2-1, first3-1);	
-                                //i++;                        
+								applyAdder(first2-1, first3-1);	                       
 							}
 						}
 						
 
 					}
+#endif
+
 			}
+
          
 		REPORT(DEBUG, "Column height after all compressions");
 		for (unsigned w=0; w<bits.size(); w++) 
@@ -837,7 +879,7 @@ namespace flopoco
 					break; // exit the loop
 			}
 		REPORT(DEBUG, "Using Compressor3_2, reduce column " << col);
-		elemReduce(col, possibleCompressors[i]);
+		elemReduce(col, possibleCompressors[i], 4);
 		usedCompressors[i]=true;
 		REPORT(DEBUG, "Exiting applyCompressor3_2(" << col << ") ");
 	}

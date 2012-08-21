@@ -145,7 +145,7 @@ namespace flopoco{
 	protected:
 
 
-		void elemReduce(unsigned i, BasicCompressor* bc);
+		void elemReduce(unsigned i, BasicCompressor* bc, int type=0);
 
 		//applies a 3_2 compressor to the column sent as parameter
 		void applyCompressor3_2(int col);
