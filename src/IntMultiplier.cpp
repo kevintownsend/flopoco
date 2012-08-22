@@ -340,7 +340,7 @@ namespace flopoco {
 
 		// The really small ones fit in two LUTs and that's as small as it gets  
 		if(wX+wY <= target()->lutInputs()+2) {
-
+			REPORT(DETAILED,"1");
 			vhdl << tab << "-- Ne pouvant me fier à mon raisonnement, j'ai appris par coeur le résultat de toutes les multiplications possibles" << endl;
 
 			SmallMultTable *t = new SmallMultTable( target(), wX, wY, wOut, negate, signedIO, signedIO);
@@ -351,19 +351,32 @@ namespace flopoco {
 
 			inPortMap(t, "X", join("XY",multiplierUid));
 			outPortMap(t, "Y", join("RR",multiplierUid));
-
-	
+			plotter->addSmallMult(0,0,wX,wY);
+			bitHeap->getPlotter()->plotMultiplierConfiguration(multiplierUid, localSplitVector, wX, wY, wOut, g);
 			vhdl << instance(t, "multTable");
-			vhdl << tab << join("R",multiplierUid)<<" <= "<<join("RR",multiplierUid)<<";" << endl;
+			
+			for(int k=wX+wY-1; k>=0; k--)
+			{
+				if(k>=wX+wY-wOut-g)
+				{
+					stringstream s;
+					s<<join("RR",multiplierUid)<<"("<<k<<")";
+					bitHeap->addBit(k,s.str());
+				}	
+			}		
+			
+			//vhdl << tab << join("R",multiplierUid)<<" <= "<<join("RR",multiplierUid)<<";" << endl;
 
-			setCriticalPath(t->getOutputDelay(join("Y",multiplierUid)));
+			//setCriticalPath(t->getOutputDelay(join("Y",multiplierUid)));
 
-			outDelayMap[join("R",multiplierUid)] = getCriticalPath();
+			//outDelayMap[join("R",multiplierUid)] = getCriticalPath();
 			return;
+			
 		}
 
 		// Multiplication by 1-bit integer is simple
 		if ((wY == 1)){
+			REPORT(DETAILED,"2");
 			if (signedIO){
 				manageCriticalPath( target()->localWireDelay(wX) + target()->adderDelay(wX+1) );
 
@@ -385,7 +398,7 @@ namespace flopoco {
 		if ((wY == 2)) {
 			// No need for the following, the mult should be absorbed in the addition
 			// manageCriticalPath( target->localWireDelay() + target->lutDelay() );
-
+			REPORT(DETAILED,"3");
 			vhdl << tab << declare(join("R0",multiplierUid),wX+2) << " <= (";
 
 			if (signedIO) 
@@ -450,7 +463,7 @@ namespace flopoco {
 			testFit = testForward || testReverse;
 		
 			
-			REPORT(DEBUG,"useDSP");
+			REPORT(DETAILED,"useDSP");
 			if (testFit){
 			REPORT(DETAILED,"testfit");
 			
