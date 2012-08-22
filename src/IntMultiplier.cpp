@@ -344,7 +344,7 @@ namespace flopoco {
 			vhdl << tab << "-- Ne pouvant me fier à mon raisonnement, j'ai appris par coeur le résultat de toutes les multiplications possibles" << endl;
 
 			SmallMultTable *t = new SmallMultTable( target(), wX, wY, wOut, negate, signedIO, signedIO);
-			useSoftRAM(t);
+			//useSoftRAM(t);
 			oplist.push_back(t);
 
 			vhdl << tab << declare(join("XY",multiplierUid), wX+wY) << " <= "<<join("YY",multiplierUid)<<" & "<<join("XX",multiplierUid)<<";"<<endl;
@@ -460,48 +460,30 @@ namespace flopoco {
 						if (signedIO)
 						{
 							vhdl << tab << declare(join("rfull",multiplierUid), wFull+1) << " <= "<<join("XX",multiplierUid)<<"  *  "<< join("YY",multiplierUid)<<"; -- that's one bit more than needed"<<endl; 
-							
+							vhdl << tab << join("R",multiplierUid)<<" <= "<< join("rfull",multiplierUid) <<range(wFull-1, wFull-wOut)<<";"<<endl;	
+							outDelayMap[join("R",multiplierUid)] = getCriticalPath();
 						}
 						else //sign extension is necessary for using use ieee.std_logic_signed.all; 
 						{	// for correct inference of Xilinx DSP functions
 
-						//	vhdl << tab << declare(join("rfull",multiplierUid), wX + wY + 2) << " <= (\"0\" & "<<join("XX",multiplierUid)<<") * (\"0\" &"<<join("YY",multiplierUid)<<");"<<endl;
+							//vhdl << tab << declare(join("rfull",multiplierUid), wX + wY + 2) << " <= (\"0\" & "<<join("XX",multiplierUid)<<
+							//") * (\"0\" &"<<join("YY",multiplierUid)<<");"<<endl;
 
 
-						int topx=wX-wxDSP;
-						int topy=wY-wyDSP;
+							int topx=wX-wxDSP;
+							int topy=wY-wyDSP;
 
-						MultiplierBlock* m = new MultiplierBlock(wxDSP,wyDSP,topx, topy,
+							MultiplierBlock* m = new MultiplierBlock(wxDSP,wyDSP,topx, topy,
 									join("XX",multiplierUid),join("YY",multiplierUid),weightShift);
-						m->setNext(NULL);		
-						m->setPrevious(NULL);			
-						
-						localSplitVector.push_back(m);
-						bitHeap->addDSP(m);
-							
-						}
-						
-					
-						/*int max=wOut-1;
-						for(int k=max;k>=0;k--)
-						{
-							stringstream s;
-							s<<"rfull"<<multiplierUid<<"("<<k<<")";
-							bitHeap->addBit(k,s.str());
-						
-						}
-						*/
-					
-						if(signedIO)
-						vhdl << tab << join("R",multiplierUid)<<" <= "<< join("rfull",multiplierUid) <<range(wFull-1, wFull-wOut)<<";"<<endl;	
-		
-						outDelayMap[join("R",multiplierUid)] = getCriticalPath();
-						
-						
-						
-			
+							m->setNext(NULL);		
+							m->setPrevious(NULL);			
+							localSplitVector.push_back(m);
+							bitHeap->addDSP(m);
+						}	
 						
 					}
+					
+					
 				else {
 					// For this target and this size, better do a logic-only implementation
 					REPORT(DETAILED,"before buildlogic only");
@@ -514,6 +496,8 @@ namespace flopoco {
 
 			}
 		} 
+		
+		
 
 		else {// This target has no DSP, going for a logic-only implementation
 	
@@ -542,12 +526,17 @@ namespace flopoco {
 
 	/**************************************************************************/
 	void IntMultiplier::buildTiling() {
-		buildHeapTiling();
-		//adding the round bit
-		if(g>0) {
-			int weight=wFull-wOut-1- weightShift;
-			bitHeap->addConstantOneBit(weight);
-		}
+		
+		
+			buildHeapTiling();
+			//adding the round bit
+			bitHeap->getPlotter()->plotMultiplierConfiguration(multiplierUid, localSplitVector, wX, wY, wOut, g);
+			if(g>0) {
+				int weight=wFull-wOut-1- weightShift;
+				bitHeap->addConstantOneBit(weight);
+			}
+			
+		
 	}
 
 
@@ -758,7 +747,7 @@ namespace flopoco {
 									join("XX",multiplierUid),join("YY",multiplierUid),weightShift);
 						m->setNext(NULL);		
 						m->setPrevious(NULL);			
-						REPORT(DETAILED,"getPrev  " << m->getPrevious());
+						REPORT(DETAILED,"new DSP sure fit");
 						localSplitVector.push_back(m);
 						bitHeap->addDSP(m);
 						
@@ -786,7 +775,7 @@ namespace flopoco {
 				
 				
 				//call the function only if at least 1 bit remaining
-				if(wX-j*wxDSP>0!=x)
+				if((wX-j*wxDSP>0))
 					compute(x,wY-(i+1)*wyDSP, wX-j*wxDSP, wY-(i)*wyDSP,wxDSP,wyDSP); 
 					
 				i++;		
@@ -823,9 +812,11 @@ namespace flopoco {
 			if (width>wxDSP)
 				topx=botx-wxDSP;
 		
+			REPORT(DETAILED,"compute called, width= "<<width);
 		
 			while (width>wxDSP)
 			{	
+				REPORT(DETAILED,"width greater than DSPwidth");
 				//we need to split the block
 				was=true;
 				float blockArea=wxDSP*height; //the area of the block that will be analyzed
@@ -842,7 +833,7 @@ namespace flopoco {
 				
 				
 				//checking the use according to the ratio
-				if((blockArea>=(1-ratio)*dspArea))
+				if((blockArea>=(1.0-ratio)*dspArea))
 				{  
 				
 					if(height<wyDSP)
@@ -870,17 +861,13 @@ namespace flopoco {
 					topx=topX;
 			}
 			
-			
+			REPORT(DETAILED,"width smaller than DSPwidth");
 			
 			//now the remaining block is smaller (for sure!) than the DSP width
 			//we do the same area / ratio checking again	
 			float blockArea=width*height;
-			int tx=topx;
-			int ty=topy;
-			while(tx+ty<wFull-wOut-g)
-				tx++;
-			int triangleArea=((tx-topx)*(tx-topx))/2;
-			blockArea=blockArea-triangleArea;
+			//int triangleArea=((width)*(width))/2;
+			//blockArea=blockArea-triangleArea;
 	
 			if(blockArea>=(1.0-ratio)*dspArea)
 			{
@@ -953,7 +940,7 @@ namespace flopoco {
 				}
 
 	
-			bitHeap->getPlotter()->plotMultiplierConfiguration(multiplierUid, localSplitVector, wX, wY, wOut, g);
+		//	bitHeap->getPlotter()->plotMultiplierConfiguration(multiplierUid, localSplitVector, wX, wY, wOut, g);
 
 		}
 		
