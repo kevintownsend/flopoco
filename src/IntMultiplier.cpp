@@ -452,26 +452,59 @@ namespace flopoco {
 			
 			REPORT(DEBUG,"useDSP");
 			if (testFit){
+			REPORT(DETAILED,"testfit");
+			
 				if( target()->worthUsingDSP(wX, wY))
 					{	REPORT(DEBUG,"worthUsingDSP");
 						manageCriticalPath(target()->DSPMultiplierDelay());
 						if (signedIO)
-
+						{
 							vhdl << tab << declare(join("rfull",multiplierUid), wFull+1) << " <= "<<join("XX",multiplierUid)<<"  *  "<< join("YY",multiplierUid)<<"; -- that's one bit more than needed"<<endl; 
-
+							
+						}
 						else //sign extension is necessary for using use ieee.std_logic_signed.all; 
-							// for correct inference of Xilinx DSP functions
+						{	// for correct inference of Xilinx DSP functions
 
-							vhdl << tab << declare(join("rfull",multiplierUid), wX + wY + 2) << " <= (\"0\" & "<<join("XX",multiplierUid)<<") * (\"0\" &"<<join("YY",multiplierUid)<<");"<<endl;
+						//	vhdl << tab << declare(join("rfull",multiplierUid), wX + wY + 2) << " <= (\"0\" & "<<join("XX",multiplierUid)<<") * (\"0\" &"<<join("YY",multiplierUid)<<");"<<endl;
 
 
+						int topx=wX-wxDSP;
+						int topy=wY-wyDSP;
+
+						MultiplierBlock* m = new MultiplierBlock(wxDSP,wyDSP,topx, topy,
+									join("XX",multiplierUid),join("YY",multiplierUid),weightShift);
+						m->setNext(NULL);		
+						m->setPrevious(NULL);			
+						
+						localSplitVector.push_back(m);
+						bitHeap->addDSP(m);
+							
+						}
+						
+					
+						/*int max=wOut-1;
+						for(int k=max;k>=0;k--)
+						{
+							stringstream s;
+							s<<"rfull"<<multiplierUid<<"("<<k<<")";
+							bitHeap->addBit(k,s.str());
+						
+						}
+						*/
+					
+						if(signedIO)
 						vhdl << tab << join("R",multiplierUid)<<" <= "<< join("rfull",multiplierUid) <<range(wFull-1, wFull-wOut)<<";"<<endl;	
-
+		
 						outDelayMap[join("R",multiplierUid)] = getCriticalPath();
+						
+						
+						
+			
+						
 					}
 				else {
 					// For this target and this size, better do a logic-only implementation
-				
+					REPORT(DETAILED,"before buildlogic only");
 					buildLogicOnly();
 				}
 			}
