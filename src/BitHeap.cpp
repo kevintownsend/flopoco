@@ -331,7 +331,7 @@ namespace flopoco
 				for(int k=length-1;k>=0;k--)
 				{
 					int weight=current->getWeight()+k;	
-					REPORT(DETAILED,"k= "<<k <<" weight= "<<weight);				
+					//REPORT(DETAILED,"k= "<<k <<" weight= "<<weight);				
 					if(weight>=0)
 					{	
 						stringstream s;
@@ -1341,7 +1341,7 @@ namespace flopoco
 
 		m->setSignalName(s.str());
 		m->setSignalLength(m->getwX()+m->getwY()+zerosX+zerosY);
-		REPORT(DETAILED,"dspout");
+	//	REPORT(DETAILED,"dspout");
 
 	}
 
