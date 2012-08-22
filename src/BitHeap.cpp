@@ -1280,7 +1280,7 @@ namespace flopoco
 
 	void BitHeap::generateVHDLforDSP(MultiplierBlock* m, int uid,int i)
 	{
-		REPORT(DETAILED,"dsp");
+		
 			
 		stringstream s;
 		int topX=m->gettopX();
@@ -1289,8 +1289,11 @@ namespace flopoco
 		int botY=topY+m->getwY()-1;
 		string input1=m->getInputName1();
 		string input2=m->getInputName2();
-		int zerosX;
+		int zerosX; 
 		int zerosY;
+		int addx=0;
+		int addy=0;
+		//number of 0-os to be added to the begining of signals
 		if(m->getwX()>m->getwY())
 		{
 			zerosX=25-m->getwX();
@@ -1302,26 +1305,24 @@ namespace flopoco
 			zerosY=18-m->getwX();
 		}
 		
-		int addx=0;
-		int addy=0;
 		
+		//if the coordinates are negative, then the signals should be completed with 0-s at the end, for the good result. 
+		//addx, addy represents the number of 0-s to be added
 		if(topX<0)
-		addx=0-topX;
+			addx=0-topX;
 	
-	
-		
 		if(topY<0)
-		addy=0-topY;	
+			addy=0-topY;	
 
 
-		REPORT(DETAILED,"topx= "<<topX <<" addx= "<<addx<<" topx + addx= "<<topX+addx);
+		
 		
 		//PIPELINE!!!!
 		op->setCycleFromSignal(m->getInputName1());
 		op->syncCycleFromSignal(m->getInputName2());
 		op->manageCriticalPath(  op->getTarget()->DSPMultiplierDelay() ) ;
 
-	//	op->setCycle(uid);
+	
 		if(uid==0)	
 			op->vhdl << tab << op->declare(join("DSPch",i,"_",uid), m->getwX()+m->getwY()+zerosX+zerosY) 
 				<< " <= (" <<zg(zerosX)<<" & " << input1<<range(botX,topX+addx)<<" & "<<zg(addx)<<") * (" <<zg(zerosY) <<" & "
@@ -1345,70 +1346,6 @@ namespace flopoco
 	}
 
 
-#if 0	
-	void BitHeap::generateVHDLforDSP(MultiplierBlock* m, int uid,int i)
-	{
-		REPORT(DETAILED,"dsp");
-			
-		stringstream s;
-		int topX=m->gettopX();
-		int topY=m->gettopY();
-		int botX=topX+m->getwX()-1;
-		int botY=topY+m->getwY()-1;
-		string input1=m->getInputName1();
-		string input2=m->getInputName2();
-		int zerosX;
-		int zerosY;
-		if(m->getwX()>m->getwY())
-		{
-			zerosX=25-m->getwX();
-			zerosY=18-m->getwY();
-		}		
-		else 
-		{		
-			zerosX=25-m->getwY();
-			zerosY=18-m->getwX();
-		}
-		
-		int addx=0;
-		int addy=0;
-		
-		if(topX<0)
-		addx=0-topX;
-		
-		
-		if(topY<0)
-		addy=0-topY;	
-
-
-		REPORT(DETAILED,"topx= "<<topX <<" addx= "<<addx<<" topx + addx= "<<topX+addx);
-		
-		//PIPELINE!!!!
-		op->setCycleFromSignal(m->getInputName1());
-		op->syncCycleFromSignal(m->getInputName2());
-		op->manageCriticalPath(  op->getTarget()->DSPMultiplierDelay() ) ;
-	//	op->setCycle(uid);
-		if(uid==0)	
-			op->vhdl << tab << op->declare(join("DSPch",i,"_",uid), m->getwX()+m->getwY()+zerosX+zerosY) 
-				<< " <= (" <<zg(zerosX)<<" & " << input1<<range(botX,topX+addx)<<" & "<<zg(addx)<<") * (" <<zg(zerosY) <<" & "
-			    << input2 <<range(botY,topY+addy)<<" & "<<zg(addy)<<");"<<endl;
-		else
-			op->vhdl << tab << op->declare(join("DSP",i,"_",uid), m->getwX()+m->getwY()+zerosX+zerosY) 
-					<< " <= (" <<zg(zerosX)<<" & " << input1<<range(botX,topX+addx)<<" & "<<zg(addx)<<") * (" <<zg(zerosY) <<" & "
-			    << input2 <<range(botY,topY+addy)<<" & "<<zg(addy)<<");"<<endl;
-
-		
-		if(uid==0)
-			s<<join("DSPch",i,"_",uid);
-		else
-			
-			s<<join("DSP",i,"_",uid);
-
-		m->setSignalName(s.str());
-		m->setSignalLength(m->getwX()+m->getwY()+zerosX+zerosY);
-		REPORT(DETAILED,"dspout");
-	}
-#endif
 
 }
 
