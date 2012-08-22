@@ -141,6 +141,10 @@ namespace flopoco{
 
 		Operator* getOp() {return op;};
 
+		/** return the UID of the bit heap*/
+		int getGUid();
+
+
 
 	protected:
 
@@ -186,8 +190,6 @@ namespace flopoco{
 		/** return a fresh uid for a bit of weight w*/
 		int newUid(unsigned w);
 
-		/** return the UID of the bit heap*/
-		int getGUid();
 
 		/** counts the bits not processed yet in wb */
 		int count(list<WeightedBit*> wb, int cycle);

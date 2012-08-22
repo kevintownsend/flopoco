@@ -593,8 +593,8 @@ namespace flopoco
 		WeightedBit* firstBit = getFirstSoonestBit();
         REPORT(DEBUG, "getFirstSoonestBit " << firstBit);
 
-		int minCycle = 0;//firstBit->getCycle();
-		double minCP = 0.0;//firstBit->getCriticalPath(minCycle);
+		int minCycle = firstBit->getCycle();
+		double minCP = firstBit->getCriticalPath(minCycle);
 		op->setCycle(minCycle); 
 		op->setCriticalPath(minCP);
 

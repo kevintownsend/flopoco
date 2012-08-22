@@ -716,7 +716,7 @@ namespace flopoco {
 				
 				while((j<horDSP)&&(ok==0))
 				{	REPORT(DETAILED,"j= " << j);
-					//if the top right corner is under the truncation line then will be use a DSP, else the use will be decided according to ratio
+					//if the top right corner is under the truncation line, then will use a DSP; otherwise, will be decided according to the ratio
 					//by calling the compute function
 					if((wX-(j+1)*wxDSP)+(wY-(i+1)*wyDSP)>=wFull-wOut-g)
 					{
@@ -733,7 +733,7 @@ namespace flopoco {
 					
 					else
 					{
-						//cannot be used DSP without ratio
+						//cannot use DSPs without checking the ratio
 						ok=1;
 						j--;
 					}
@@ -743,7 +743,7 @@ namespace flopoco {
 									
 				}
 				
-				//here we have a horizontal block, length= from the last use DSP top-right coordinates to the truncation line
+				//here we have a horizontal block, length=(from the last used DSP's top-right coordinates to the truncation line)
 				
 				//determination of the x coordinate
 				int y= wY-(i)*wyDSP;
@@ -752,7 +752,7 @@ namespace flopoco {
 					x--;
 				
 				
-				//call the function only if at least 1 bit is remaining
+				//call the function only if at least 1 bit remaining
 				if(wX-j*wxDSP>0!=x)
 					compute(x,wY-(i+1)*wyDSP, wX-j*wxDSP, wY-(i)*wyDSP,wxDSP,wyDSP); 
 					
@@ -760,14 +760,14 @@ namespace flopoco {
 			}
 			
 			
-				//if are some remaining bits on the Y 
+				//if there are some remaining bits on the Y 
 				if(restY>0)
 				{
 					//determination of x coordinate (top right)
 					int y=restY;
 					int x=wX;
 					while(x+y>wFull-wOut-g)
-					x--;
+						x--;
 					compute(x,0,wX,restY,wxDSP,wyDSP);
 				}
 		}
@@ -784,7 +784,7 @@ namespace flopoco {
 			int botx=botX;
 			int topx=topX;
 			int topy=topY;
-			int dsp=0;//number of used dsp-s
+			int dsp=0;//number of used DSPs
 			
 			//if the width is larger then a dsp width, than we have to compute the good coordinates for the dsp
 			if (width>wxDSP)
@@ -795,9 +795,9 @@ namespace flopoco {
 			{	
 				//we need to split the block
 				was=true;
-				float blockArea=wxDSP*height; //the area of the block which will be analyzed
+				float blockArea=wxDSP*height; //the area of the block that will be analyzed
 				
-				//computing the area of the triangle which will be lost 
+				//computing the area of the triangle that will be lost 
 				int tx=topx;
 				int ty=topy;
 				while(tx+ty<wFull-wOut-g)
@@ -808,7 +808,7 @@ namespace flopoco {
 				blockArea=blockArea-triangleArea;
 				
 				
-				//checking the use according to ratio
+				//checking the use according to the ratio
 				if((blockArea>=(1-ratio)*dspArea))
 				{  
 				
@@ -883,11 +883,11 @@ namespace flopoco {
 		
 			//the DSPs should be arranged horizontally or vertically?
 		
-			//number of horizontal/vertical DSPs used if the tiling is horrizontally
+			//number of horizontal/vertical DSPs used if the tiling is horizontal
 			int horDSP1=wX/wxDSP;
 			int verDSP1=wY/wyDSP;
 
-			//number of horizontal/vertical DSPs used if the tiling is vertically
+			//number of horizontal/vertical DSPs used if the tiling is vertical
 			int horDSP2=wX/wyDSP;
 			int verDSP2=wY/wxDSP;
 
@@ -897,11 +897,11 @@ namespace flopoco {
  
 			int horDSP;
 			int verDSP;
-			int restX; //the number of lsbs of the first input which remains after filling with DSP-s
-			int restY; //the number of lsbs of the second input which remains after filling with DSP-s
+			int restX; //the number of lsbs of the first input which remains after filling with DSPs
+			int restY; //the number of lsbs of the second input which remains after filling with DSPs
 
 			if (hor>=ver)
-				{	REPORT(DEBUG, "horizontal");
+				{
 					horDSP=horDSP1;
 					verDSP=verDSP1;
 					restX=wX-horDSP*wxDSP;
@@ -910,7 +910,7 @@ namespace flopoco {
 					splitting(horDSP,verDSP,wxDSP,wyDSP,restX,restY);
 				}
 			else
-				{	REPORT(DEBUG, "vertical");
+				{
 					horDSP=horDSP2;
 					verDSP=verDSP2;
 					restX=wX-horDSP*wyDSP;

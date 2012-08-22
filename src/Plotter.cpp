@@ -98,32 +98,8 @@ namespace flopoco
 
 	void Plotter::plotBitHeap()
 	{
-		initializeBitHeapPlotting();
-
-		int offsetY = 0;
-		int turnaroundX = snapshots[snapshots.size()-1]->bits.size() * 10 + 80;
-
-
-
-		for(unsigned i=0; i< snapshots.size(); i++)
-		{
-
-			if(snapshots[i]->didCompress)
-			{
-				offsetY += 20 + snapshots[i]->maxHeight * 10;
-				drawConfiguration(snapshots[i]->bits, snapshots[i]->stage, snapshots[i]->minWeight, offsetY, turnaroundX);
-			}
-			
-		}
-
-		fig << "<line x1=\"" << turnaroundX + 30 << "\" y1=\"" << 20 << "\" x2=\"" << turnaroundX + 30 
-		    << "\" y2=\"" << offsetY +30 << "\" style=\"stroke:midnightblue;stroke-width:1\" />" << endl;
-
-		fig << "<text id=\"tooltip\" x=\"0\" y=\"0\" visibility=\"hidden\">Tooltip</text>" << endl;
-
-		fig << "</svg>" << endl;
-
-		fig.close();
+		drawInitialHeap();
+		drawCompressionHeap();
 	}
 
 
@@ -155,6 +131,64 @@ namespace flopoco
 		smallMultIndex++;
 
 		//ss << topX.size() << "  " ;
+
+	}
+
+
+
+	void Plotter::drawInitialHeap()
+	{
+		initializeHeapPlotting(true);
+
+		int offsetY = 0;
+		int turnaroundX = snapshots[0]->bits.size() * 10 + 80;
+
+
+		offsetY += 20 + snapshots[0]->maxHeight * 10;
+		
+		drawInitialConfiguration(snapshots[0]->bits, snapshots[0]->minWeight, offsetY, turnaroundX);
+		
+		fig << "<line x1=\"" << turnaroundX + 30 << "\" y1=\"" << 20 << "\" x2=\"" << turnaroundX + 30 
+		    << "\" y2=\"" << offsetY +30 << "\" style=\"stroke:midnightblue;stroke-width:1\" />" << endl;
+
+		fig << "<text id=\"tooltip\" x=\"0\" y=\"0\" visibility=\"hidden\">Tooltip</text>" << endl;
+
+		fig << "</svg>" << endl;
+
+		fig.close();
+
+	}
+
+
+
+	void Plotter::drawCompressionHeap()
+	{
+		initializeHeapPlotting(false);
+
+		int offsetY = 0;
+		int turnaroundX = snapshots[snapshots.size()-1]->bits.size() * 10 + 80;
+
+
+
+		for(unsigned i=0; i< snapshots.size(); i++)
+		{
+
+			//if(snapshots[i]->didCompress)
+			{
+				offsetY += 20 + snapshots[i]->maxHeight * 10;
+				drawConfiguration(snapshots[i]->bits, snapshots[i]->stage, snapshots[i]->minWeight, offsetY, turnaroundX);
+			}
+			
+		}
+
+		fig << "<line x1=\"" << turnaroundX + 30 << "\" y1=\"" << 20 << "\" x2=\"" << turnaroundX + 30 
+		    << "\" y2=\"" << offsetY +30 << "\" style=\"stroke:midnightblue;stroke-width:1\" />" << endl;
+
+		fig << "<text id=\"tooltip\" x=\"0\" y=\"0\" visibility=\"hidden\">Tooltip</text>" << endl;
+
+		fig << "</svg>" << endl;
+
+		fig.close();
 
 	}
 
@@ -596,10 +630,13 @@ namespace flopoco
 
 
 
-	void Plotter::initializeBitHeapPlotting()
+	void Plotter::initializeHeapPlotting(bool isInitial)
 	{
 		ostringstream figureFileName;
-		figureFileName << "bit_heap.svg";
+		if(isInitial)
+			figureFileName << "bit_heap_initial_" << bh->getGUid()  << ".svg";
+		else 
+			figureFileName << "bit_heap_" << bh->getGUid()  << ".svg";
 	
 
 
@@ -617,6 +654,124 @@ namespace flopoco
 		addECMAFunction(); 
 
 	}
+
+
+
+	void Plotter::drawInitialConfiguration(vector<list<WeightedBit*> > bits, int minWeight, int offsetY, int turnaroundX)
+	{
+		int color = 0;
+		int tempCycle = 0;
+		int cnt = 0;
+		double tempCP = 0;
+
+		int stagesPerCycle = bh->getStagesPerCycle();
+		double elemTime = bh->getElementaryTime();
+
+		bool drawCycleLine=false;
+		int drawCycleNumber=1;
+
+		//REPORT(INFO, "in call ");
+#if 0
+		if((drawCycleLine) && (drawCycleNumber==0))
+			{
+				fig << "<text x=\"" << turnaroundX + 85 << "\" y=\"" << 40
+				    << "\" fill=\"midnightblue\">" << "Cycle"<< "</text>" << endl;
+			}
+
+		if(drawCycleLine)
+			{
+				drawCycleNumber++;
+				fig << "<line x1=\"" << turnaroundX + 200 
+					<< "\" y1=\"" << offsetY +10 << "\" x2=\"" << turnaroundX - bits.size()*10 - 50
+				    << "\" y2=\"" << offsetY +10 << "\" style=\"stroke:midnightblue;stroke-width:2\" />" << endl;
+
+				fig << "<text x=\"" << turnaroundX + 100 << "\" y=\"" << offsetY + 3
+				    << "\" fill=\"midnightblue\">" << drawCycleNumber - 1 << "</text>" << endl;
+
+				fig << "<text x=\"" << turnaroundX + 100 << "\" y=\"" << offsetY + 27
+				    << "\" fill=\"midnightblue\">" << drawCycleNumber  << "</text>" << endl;
+
+				drawCycleLine = false;
+			}
+		else
+			{
+				fig << "<line x1=\"" << turnaroundX + 200 << "\" y1=\"" 
+					<< offsetY +10 << "\" x2=\"" << turnaroundX - bits.size()*10 - 50
+				    << "\" y2=\"" << offsetY +10 << "\" style=\"stroke:lightsteelblue;stroke-width:1\" />" << endl;
+				drawCycleLine = false;
+			}
+#endif
+
+
+
+
+
+
+		fig << "<line x1=\"" << turnaroundX + 150 << "\" y1=\"" 
+			<< offsetY +10 << "\" x2=\"" << turnaroundX - bits.size()*10 - 50
+			<< "\" y2=\"" << offsetY +10 << "\" style=\"stroke:lightsteelblue;stroke-width:1\" />" << endl;
+
+		//turnaroundX -= minWeight*10;
+
+		for(int i=0; i<bits.size(); i++)
+		{
+
+			//REPORT(INFO, "wtf" << i);
+
+			if(bits[i].size()>0)
+			{
+				color=0;
+				tempCycle = 0;
+				tempCP = 0;
+				cnt = 0;
+				for(list<WeightedBit*>::iterator it = bits[i].begin(); it!=bits[i].end(); ++it)
+				{
+
+					//REPORT(INFO, "in middle call " << (*it)->getName());
+
+					if(it==bits[i].begin())
+						{
+							tempCycle = (*it)->getCycle();
+							tempCP = (*it)->getCriticalPath(tempCycle);
+						}
+					else
+						{
+							if((tempCycle!=(*it)->getCycle()) || 
+							   ((tempCycle==(*it)->getCycle()) && 
+								(tempCP!=(*it)->getCriticalPath((*it)->getCycle()))))
+								{
+									tempCycle = (*it)->getCycle();
+									tempCP = (*it)->getCriticalPath(tempCycle);
+									color++;
+								}
+						}
+
+					//REPORT(INFO, "after middle call " << (*it)->getName());
+
+					//int color;
+
+					//if ((*it)->getType()==)
+
+
+					int cy = (*it)->getCycle();
+					double cp = (*it)->getCriticalPath(cy)*100000000000;
+				//	if(stage>=(*it)->computeStage(stagesPerCycle, elemTime))
+					{
+						drawBit(cnt, i, turnaroundX, offsetY, color, cy, cp, (*it)->getName());
+						cnt++;
+					}
+					//REPORT(INFO, cp);
+					//cnt++;
+
+					//REPORT(INFO, "after call to drawBit " << i);
+
+				}
+			}
+		}
+
+
+	}
+
 
 
 	void Plotter::drawConfiguration(vector<list<WeightedBit*> > bits, int stage, int minWeight, int offsetY, int turnaroundX)
@@ -718,7 +873,7 @@ namespace flopoco
 
 					int cy = (*it)->getCycle();
 					double cp = (*it)->getCriticalPath(cy)*100000000000;
-				//	if(stage>=(*it)->computeStage(stagesPerCycle, elemTime))
+					if(stage>=(*it)->computeStage(stagesPerCycle, elemTime))
 					{
 						drawBit(cnt, i, turnaroundX, offsetY, (*it)->getType(), cy, cp, (*it)->getName());
 						cnt++;

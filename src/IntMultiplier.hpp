@@ -126,12 +126,11 @@ namespace flopoco {
 		/** splits the inputs in chunks which fits the DSP-s, and send them to the vector of MultiplierBlocks in Bitheap**/
 		void splitting(int horDSP, int verDSP, int wxDSP, int wyDSP,int restX,int restY);
 
-		/** is called, when no more dsp-s fits in a row, because of the truncation line
-		  *	checks with the ratio, if should be used only DSPs, only logic, or maybe both, and applies it **/
+		/** is called when no more dsp-s fit in a row, because of the truncation line
+		  *	checks the ratio, if only DSPs should be used, only logic, or maybe both, and applies it **/
 		void compute(int topX, int topY, int botX, int botY, int wxDSP, int wyDSP);
 
 
-		/* Stuff related to SVG output */
 
 
 

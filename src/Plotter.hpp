@@ -79,6 +79,11 @@ namespace flopoco
 
 		
 		private:
+			/** draws the initial bitheap */
+			void drawInitialHeap();
+
+			/** draws the stages of the heap compression */
+			void drawCompressionHeap();
 
 			/** draws an area view of the DSP configuration */
 			void drawAreaView(int uid, vector<MultiplierBlock*> mulBlocks, int wX, int wY, int wOut, int g);
@@ -102,7 +107,9 @@ namespace flopoco
 			
 			string romanNumber(int i);
 
-			void initializeBitHeapPlotting();
+			void initializeHeapPlotting(bool isInitial);
+
+			void drawInitialConfiguration( vector<list<WeightedBit*> > bits, int maxWeight, int offsetY, int turnaroundX);
 
 			void drawConfiguration(vector<list<WeightedBit*> > bits, int stage, int maxWeight, int offsetY, int turnaroundX);
 
