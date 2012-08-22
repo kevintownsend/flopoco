@@ -866,8 +866,8 @@ namespace flopoco {
 			//now the remaining block is smaller (for sure!) than the DSP width
 			//we do the same area / ratio checking again	
 			float blockArea=width*height;
-			//int triangleArea=((width)*(width))/2;
-			//blockArea=blockArea-triangleArea;
+			int triangleArea=((width)*(width))/2;
+			blockArea=blockArea-triangleArea;
 	
 			if(blockArea>=(1.0-ratio)*dspArea)
 			{
