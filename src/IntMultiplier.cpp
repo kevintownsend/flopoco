@@ -479,6 +479,7 @@ namespace flopoco {
 							m->setPrevious(NULL);			
 							localSplitVector.push_back(m);
 							bitHeap->addDSP(m);
+							bitHeap->getPlotter()->plotMultiplierConfiguration(multiplierUid, localSplitVector, wX, wY, wOut, g);
 						}	
 						
 					}
@@ -530,7 +531,7 @@ namespace flopoco {
 		
 			buildHeapTiling();
 			//adding the round bit
-			bitHeap->getPlotter()->plotMultiplierConfiguration(multiplierUid, localSplitVector, wX, wY, wOut, g);
+			//bitHeap->getPlotter()->plotMultiplierConfiguration(multiplierUid, localSplitVector, wX, wY, wOut, g);
 			if(g>0) {
 				int weight=wFull-wOut-1- weightShift;
 				bitHeap->addConstantOneBit(weight);
@@ -788,7 +789,7 @@ namespace flopoco {
 					//determination of x coordinate (top right)
 					int y=restY;
 					int x=wX;
-					while(x+y>wFull-wOut-g)
+					while((x+y>wFull-wOut-g)&&(x>0))
 						x--;
 					compute(x,0,wX,restY,wxDSP,wyDSP);
 				}
@@ -940,7 +941,7 @@ namespace flopoco {
 				}
 
 	
-		//	bitHeap->getPlotter()->plotMultiplierConfiguration(multiplierUid, localSplitVector, wX, wY, wOut, g);
+		bitHeap->getPlotter()->plotMultiplierConfiguration(multiplierUid, localSplitVector, wX, wY, wOut, g);
 
 		}
 		
