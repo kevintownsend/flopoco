@@ -197,6 +197,7 @@ namespace flopoco {
 		
 			if(signedIO)
 			{
+			/*
 			wX=wYdecl-1;
 			wY=wXdecl-1;
 			
@@ -206,6 +207,21 @@ namespace flopoco {
 			
 			sx<<yname<<"("<<wX<<")";
 			sy<<xname<<"("<<wY<<")";
+			*/
+			
+			wX=wYdecl;
+			wY=wXdecl;
+			
+
+			vhdl << tab << declare(join("XX",multiplierUid), wX, true) << " <= " << yname << "( "<<wX-1<<" downto 0 ) ;" << endl; 
+			vhdl << tab << declare(join("YY",multiplierUid), wY, true) << " <= " << xname << "( "<<wY-1<<" downto 0 ) ;" << endl; 
+			
+			
+			sx<<join("XX",multiplierUid)<<"("<<wX-1<<")";
+			sy<<join("YY",multiplierUid)<<"("<<wY-1<<")";
+			
+			wX--;
+			wY--;
 			
 			}
 			else
@@ -223,7 +239,7 @@ namespace flopoco {
 		{
 			if(signedIO)
 			{
-				wX=wXdecl-1;
+				/*wX=wXdecl-1;
 				wY=wYdecl-1;
 			
 
@@ -232,6 +248,22 @@ namespace flopoco {
 			
 				sx<<xname<<"("<<wX<<")";
 				sy<<yname<<"("<<wY<<")";
+				*/
+			wX=wXdecl;
+			wY=wYdecl;
+			
+
+			vhdl << tab << declare(join("XX",multiplierUid), wX, true) << " <= " << xname << "( "<<wX-1<<" downto 0 ) ;" << endl; 
+			vhdl << tab << declare(join("YY",multiplierUid), wY, true) << " <= " << yname << "( "<<wY-1<<" downto 0 ) ;" << endl; 
+			
+			
+			sx<<join("XX",multiplierUid)<<"("<<wX-1<<")";
+			sy<<join("YY",multiplierUid)<<"("<<wY-1<<")";
+			
+			wX--;
+			wY--;
+			
+			
 			}
 			else
 			{
@@ -342,8 +374,7 @@ namespace flopoco {
 		plotter = new Plotter(bitHeap);
 
 		bitHeap->setPlotter(plotter);
-		//plotter->setBitHeap(bitHeap);
-
+		
 
 
 	

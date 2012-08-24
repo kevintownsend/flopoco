@@ -1355,14 +1355,17 @@ namespace flopoco
 	//	op->syncCycleFromSignal(input2);
 	//	op->manageCriticalPath(  op->getTarget()->DSPMultiplierDelay() ) ;
 //
-	    REPORT(DETAILED,"comuted in this moment= "<< concx << " & "<< input1<<range(botX,topX+addx)<< " * "<<concy <<" & "
-			    << input2 <<range(botY,topY+addy));
+	    REPORT(DETAILED,"comuted in this moment= "<< join("DSPch",i,"_",uid)
+				<< " <= (" <<concx<<" & " << input1<<range(botX,topX+addx)<<" & "<<zg(addx)<<") * (" <<concy <<" & "
+			    << input2 <<range(botY,topY+addy)<<" & "<<zg(addy)<<");");
+		
 		if(uid==0)	
 			op->vhdl << tab << op->declare(join("DSPch",i,"_",uid), m->getwX()+m->getwY()+zerosX+zerosY) 
 				<< " <= (" <<concx<<" & " << input1<<range(botX,topX+addx)<<" & "<<zg(addx)<<") * (" <<concy <<" & "
 			    << input2 <<range(botY,topY+addy)<<" & "<<zg(addy)<<");"<<endl;
 		else
-			op->vhdl << tab << op->declare(join("DSP",i,"_",uid), m->getwX()+m->getwY()+zerosX+zerosY) 
+			op->vhdl << tab << op->declare(join("DSP",i,"_",uid), m->getwX()+m->getwY()+zerosX+zerosY)
+			 
 					<< " <= (" <<concx<<" & " << input1<<range(botX,topX+addx)<<" & "<<zg(addx)<<") * (" <<concy <<" & "
 			    << input2 <<range(botY,topY+addy)<<" & "<<zg(addy)<<");"<<endl;
 
