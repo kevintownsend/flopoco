@@ -193,7 +193,7 @@ namespace flopoco {
 		// Halve number of cases by making sure wY<=wX:
 		// interchange x and y in case wY>wX
 
-		if(wYdecl> wXdecl){
+			if(wYdecl> wXdecl){
 		
 			if(signedIO)
 			{
@@ -502,7 +502,7 @@ namespace flopoco {
 				if( target()->worthUsingDSP(wX, wY))
 					{	REPORT(DEBUG,"worthUsingDSP");
 						manageCriticalPath(target()->DSPMultiplierDelay());
-						if (signedIO)
+						/*if (signedIO)
 						{
 							vhdl << tab << declare(join("rfull",multiplierUid), wFull+1) << " <= "<<join("XX",multiplierUid)<<"  *  "<< join("YY",multiplierUid)<<"; -- that's one bit more than needed"<<endl; 
 							vhdl << tab << join("R",multiplierUid)<<" <= "<< join("rfull",multiplierUid) <<range(wFull-1, wFull-wOut)<<";"<<endl;	
@@ -513,19 +513,35 @@ namespace flopoco {
 
 							//vhdl << tab << declare(join("rfull",multiplierUid), wX + wY + 2) << " <= (\"0\" & "<<join("XX",multiplierUid)<<
 							//") * (\"0\" &"<<join("YY",multiplierUid)<<");"<<endl;
-
+*/
 
 							int topx=wX-wxDSP;
 							int topy=wY-wyDSP;
-
+							
+							REPORT(DETAILED,"wxDSSSSPPP=="<<wxDSP);
+							
+							stringstream inx,iny;
+							if(signedIO)
+							{
+							
+								inx<<sx.str()<<" & "<<join("XX",multiplierUid);
+								iny<<sy.str()<<" & "<<join("YY",multiplierUid);
+							}
+							
+							else
+							{
+							inx<<join("XX",multiplierUid);
+								iny<<join("YY",multiplierUid);
+							}
+	
 							MultiplierBlock* m = new MultiplierBlock(wxDSP,wyDSP,topx, topy,
-									join("XX",multiplierUid),join("YY",multiplierUid),weightShift);
+									inx.str(),iny.str(),weightShift);
 							m->setNext(NULL);		
 							m->setPrevious(NULL);			
 							localSplitVector.push_back(m);
 							bitHeap->addDSP(m);
 							bitHeap->getPlotter()->plotMultiplierConfiguration(multiplierUid, localSplitVector, wX, wY, wOut, g);
-						}	
+					//	}	
 						
 					}
 					
