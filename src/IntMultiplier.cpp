@@ -194,24 +194,56 @@ namespace flopoco {
 		// interchange x and y in case wY>wX
 
 		if(wYdecl> wXdecl){
+		
+			if(signedIO)
+			{
+			wX=wYdecl-1;
+			wY=wXdecl-1;
+			
+
+			vhdl << tab << declare(join("XX",multiplierUid), wX, true) << " <= " << yname << "( "<<wX-1<<" downto 0 ) ;" << endl; 
+			vhdl << tab << declare(join("YY",multiplierUid), wY, true) << " <= " << xname << "( "<<wY-1<<" downto 0 ) ;" << endl; 
+			
+			sx<<yname<<"("<<wX<<")";
+			sy<<xname<<"("<<wY<<")";
+			
+			}
+			else
+			{
 			wX=wYdecl;
 			wY=wXdecl;
 			
 
 			vhdl << tab << declare(join("XX",multiplierUid), wX, true) << " <= " << yname << ";" << endl; 
 			vhdl << tab << declare(join("YY",multiplierUid), wY, true) << " <= " << xname << ";" << endl; 
-
+			}
+			
 		}
-		else{
+		else
+		{
+			if(signedIO)
+			{
+				wX=wXdecl-1;
+				wY=wYdecl-1;
+			
+
+				vhdl << tab << declare(join("XX",multiplierUid), wX, true) << " <= " << xname << "( "<<wX-1<<" downto 0 ) ;" << endl; 
+				vhdl << tab << declare(join("YY",multiplierUid), wY, true) << " <= " << yname << "( "<<wY-1<<" downto 0 ) ;" << endl; 
+			
+				sx<<xname<<"("<<wX<<")";
+				sy<<yname<<"("<<wY<<")";
+			}
+			else
+			{
 			wX=wXdecl;
 			wY=wYdecl;
 
 			vhdl << tab << declare(join("XX",multiplierUid), wX, true) << " <= " << xname << ";" << endl; 
 			vhdl << tab << declare(join("YY",multiplierUid), wY, true) << " <= " << yname << ";" << endl; 
 
-		}
+			}
 
-			
+		}
 
 	}
 
@@ -740,7 +772,7 @@ namespace flopoco {
 
 
 	void IntMultiplier::splitting(int horDSP, int verDSP, int wxDSP, int wyDSP,int restX, int restY)
-		{
+		{REPORT(DETAILED,"WWWWXDSP=="<<wxDSP);
 	
 			int i=0;
 			int j=0;
@@ -757,8 +789,36 @@ namespace flopoco {
 					if((wX-(j+1)*wxDSP)+(wY-(i+1)*wyDSP)>=wFull-wOut-g)
 					{
 						//a DSP can be used
-						MultiplierBlock* m = new MultiplierBlock(wxDSP,wyDSP,wX-(j+1)*wxDSP, wY-((i+1)*wyDSP),
-									join("XX",multiplierUid),join("YY",multiplierUid),weightShift);
+						int topx=wX-(j+1)*wxDSP;
+						int topy=wY-((i+1)*wyDSP);
+						stringstream inx,iny;
+						int widthX=wxDSP;
+						int widthY=wyDSP;
+						
+						if((i==0)&&(j==0)&&(signedIO))
+						{
+						inx<<sx.str()<<" & "<<join("XX",multiplierUid);
+						iny<<sy.str()<<" & "<<join("YY",multiplierUid);
+						}
+						else if((i!=0)&&(j==0)&&(signedIO))
+						{
+						inx<<sx.str()<<" & "<<join("XX",multiplierUid);
+						iny<<join("YY",multiplierUid);
+						}
+						
+						else if((i==0)&&(j!=0)&&(signedIO))
+						{
+						inx<<join("XX",multiplierUid);
+						iny<<sy.str()<<" & "<<join("YY",multiplierUid);
+						}
+						else if((i!=0)&&(j!=0)||(!signedIO))
+						{
+						inx<<join("XX",multiplierUid);
+						iny<<join("YY",multiplierUid);
+						}
+						
+												
+						MultiplierBlock* m = new MultiplierBlock(widthX,widthY,topx,topy,inx.str(),iny.str(),weightShift);
 						m->setNext(NULL);		
 						m->setPrevious(NULL);			
 						REPORT(DETAILED,"new DSP sure fit");
@@ -852,8 +912,34 @@ namespace flopoco {
 				
 					if(height<wyDSP)
 						topy=topY-(wyDSP-height);
-					MultiplierBlock* m = new MultiplierBlock(wxDSP,wyDSP,topx,topy,
-								join("XX",multiplierUid),join("YY",multiplierUid),weightShift);
+						stringstream inx,iny;
+						int widthX=wxDSP;
+						int widthY=wyDSP;
+						
+						if((botx==wX)&&(botY==wY)&&(signedIO))
+						{
+						inx<<sx.str()<<" & "<<join("XX",multiplierUid);
+						iny<<sy.str()<<" & "<<join("YY",multiplierUid);
+						}
+						else if((botY!=wY)&&(botx==wX)&&(signedIO))
+						{
+						inx<<sx.str()<<" & "<<join("XX",multiplierUid);
+						iny<<join("YY",multiplierUid);
+						}
+						
+						else if((botY==wY)&&(botx!=wX)&&(signedIO))
+						{
+						inx<<join("XX",multiplierUid);
+						iny<<sy.str()<<" & "<<join("YY",multiplierUid);
+						}
+						else if((botY!=wY)&&(botx!=wX)||(!signedIO))
+						{
+						inx<<join("XX",multiplierUid);
+						iny<<join("YY",multiplierUid);
+						}
+						
+												
+						MultiplierBlock* m = new MultiplierBlock(widthX,widthY,topx,topy,inx.str(),iny.str(),weightShift);
 					m->setNext(NULL);		
 					m->setPrevious(NULL);			
 					localSplitVector.push_back(m);
@@ -894,8 +980,34 @@ namespace flopoco {
 				if(height<wyDSP)
 					topy=topY-(wyDSP-height);
 						
-				MultiplierBlock* m = new MultiplierBlock(wxDSP,wyDSP,topx,topy,
-							join("XX",multiplierUid),join("YY",multiplierUid),weightShift);
+				stringstream inx,iny;
+				int widthX=wxDSP;
+						int widthY=wyDSP;
+						
+			if((botx==wX)&&(botY==wY)&&(signedIO))
+						{
+						inx<<sx.str()<<" & "<<join("XX",multiplierUid);
+						iny<<sy.str()<<" & "<<join("YY",multiplierUid);
+						}
+						else if((botY!=wY)&&(botx==wX)&&(signedIO))
+						{
+						inx<<sx.str()<<" & "<<join("XX",multiplierUid);
+						iny<<join("YY",multiplierUid);
+						}
+						
+						else if((botY==wY)&&(botx!=wX)&&(signedIO))
+						{
+						inx<<join("XX",multiplierUid);
+						iny<<sy.str()<<" & "<<join("YY",multiplierUid);
+						}
+						else if((botY!=wY)&&(botx!=wX)||(!signedIO))
+						{
+						inx<<join("XX",multiplierUid);
+						iny<<join("YY",multiplierUid);
+						}
+						
+												
+				MultiplierBlock* m = new MultiplierBlock(widthX,widthY,topx,topy,inx.str(),iny.str(),weightShift);
 				m->setNext(NULL);		
 				m->setPrevious(NULL);			
 				localSplitVector.push_back(m);
@@ -918,6 +1030,12 @@ namespace flopoco {
 			//the DSPs should be arranged horizontally or vertically?
 		
 			//number of horizontal/vertical DSPs used if the tiling is horizontal
+			if(signedIO)
+			{
+				wxDSP--;
+				wyDSP--;
+			}
+			
 			int horDSP1=wX/wxDSP;
 			int verDSP1=wY/wyDSP;
 
@@ -941,6 +1059,7 @@ namespace flopoco {
 					restX=wX-horDSP*wxDSP;
 					restY=wY-verDSP*wyDSP;
 					//splitting horizontal
+					
 					splitting(horDSP,verDSP,wxDSP,wyDSP,restX,restY);
 				}
 			else

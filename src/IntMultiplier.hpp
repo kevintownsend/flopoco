@@ -156,6 +156,9 @@ namespace flopoco {
 		// TODO the three following variable pairs seem uglily redundant
 		Signal* x;
 		Signal* y; 
+		stringstream sx; /**x sign  bit**/
+		stringstream sy; /**y sign  bit**/
+
 		string xname;
 		string yname;
 		string inputName1;

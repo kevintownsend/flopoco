@@ -1285,14 +1285,16 @@ namespace flopoco
 		stringstream s;
 		int topX=m->gettopX();
 		int topY=m->gettopY();
-		int botX=topX+m->getwX()-1;
-		int botY=topY+m->getwY()-1;
+		
+	
+		
+		
 		string input1=m->getInputName1();
 		string input2=m->getInputName2();
+		string concx;
+		string concy;
 		int zerosX; 
 		int zerosY;
-		int addx=0;
-		int addy=0;
 		//number of 0-os to be added to the begining of signals
 		if(m->getwX()>m->getwY())
 		{
@@ -1304,6 +1306,37 @@ namespace flopoco
 			zerosX=25-m->getwY();
 			zerosY=18-m->getwX();
 		}
+		
+		int a=input1.find("&");
+		if(a>0)
+		{	concx=input1.substr(0,a);
+			input1=input1.substr(a+1);
+			REPORT(DETAILED,"concx= "<<concx<<" input1= "<<input1);
+			
+			
+		}
+		else
+			concx=zg(zerosX);
+		
+		int b=input2.find("&");
+		if(b>0)
+		{	concy=input2.substr(0,b);
+			input2=input2.substr(b+1);
+			
+			
+		}
+		else
+			concy=zg(zerosY);		
+		
+		REPORT(DETAILED,"a===="<<a);
+		
+			
+		int botX=topX+m->getwX()-1;
+		int botY=topY+m->getwY()-1;
+		
+		int addx=0;
+		int addy=0;
+		
 		
 		
 		//if the coordinates are negative, then the signals should be completed with 0-s at the end, for the good result. 
@@ -1318,18 +1351,19 @@ namespace flopoco
 		
 		
 		//PIPELINE!!!!
-		op->setCycleFromSignal(m->getInputName1());
-		op->syncCycleFromSignal(m->getInputName2());
-		op->manageCriticalPath(  op->getTarget()->DSPMultiplierDelay() ) ;
-
-	
+	//	op->setCycleFromSignal(input1);
+	//	op->syncCycleFromSignal(input2);
+	//	op->manageCriticalPath(  op->getTarget()->DSPMultiplierDelay() ) ;
+//
+	    REPORT(DETAILED,"comuted in this moment= "<< concx << " & "<< input1<<range(botX,topX+addx)<< " * "<<concy <<" & "
+			    << input2 <<range(botY,topY+addy));
 		if(uid==0)	
 			op->vhdl << tab << op->declare(join("DSPch",i,"_",uid), m->getwX()+m->getwY()+zerosX+zerosY) 
-				<< " <= (" <<zg(zerosX)<<" & " << input1<<range(botX,topX+addx)<<" & "<<zg(addx)<<") * (" <<zg(zerosY) <<" & "
+				<< " <= (" <<concx<<" & " << input1<<range(botX,topX+addx)<<" & "<<zg(addx)<<") * (" <<concy <<" & "
 			    << input2 <<range(botY,topY+addy)<<" & "<<zg(addy)<<");"<<endl;
 		else
 			op->vhdl << tab << op->declare(join("DSP",i,"_",uid), m->getwX()+m->getwY()+zerosX+zerosY) 
-					<< " <= (" <<zg(zerosX)<<" & " << input1<<range(botX,topX+addx)<<" & "<<zg(addx)<<") * (" <<zg(zerosY) <<" & "
+					<< " <= (" <<concx<<" & " << input1<<range(botX,topX+addx)<<" & "<<zg(addx)<<") * (" <<concy <<" & "
 			    << input2 <<range(botY,topY+addy)<<" & "<<zg(addy)<<");"<<endl;
 
 		
