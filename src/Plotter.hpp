@@ -132,6 +132,7 @@ namespace flopoco
 			string srcFileName;
 
 			int stagesPerCycle;
+			int lastStage;
 
 			double elementaryTime;
 
