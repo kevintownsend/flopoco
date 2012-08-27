@@ -92,12 +92,13 @@ namespace flopoco {
 
 
 	protected:
-	
-	
+		// add a unique identifier for the multiplier, and possibly for the block inside the multiplier
+		string addUID(string name, int blockUID=-1);
+
+
 		string PP(int i, int j, int uid=-1);
 		string PPTbl( int i, int j, int uid=-1);
 		string XY(int i, int j, int uid=-1);
-		string heap( int i, int j);
 
 
 		/** Fill the bit heap with all the contributions from this multiplier */
