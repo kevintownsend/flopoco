@@ -192,88 +192,23 @@ namespace flopoco {
 
 		// Halve number of cases by making sure wY<=wX:
 		// interchange x and y in case wY>wX
-
-			if(wYdecl> wXdecl){
 		
-			if(signedIO)
-			{
-			/*
-			wX=wYdecl-1;
-			wY=wXdecl-1;
-			
-
-			vhdl << tab << declare(join("XX",multiplierUid), wX, true) << " <= " << yname << "( "<<wX-1<<" downto 0 ) ;" << endl; 
-			vhdl << tab << declare(join("YY",multiplierUid), wY, true) << " <= " << xname << "( "<<wY-1<<" downto 0 ) ;" << endl; 
-			
-			sx<<yname<<"("<<wX<<")";
-			sy<<xname<<"("<<wY<<")";
-			*/
-			
+		if(wYdecl> wXdecl){
 			wX=wYdecl;
 			wY=wXdecl;
 			
-
-			vhdl << tab << declare(join("XX",multiplierUid), wX, true) << " <= " << yname << "( "<<wX-1<<" downto 0 ) ;" << endl; 
-			vhdl << tab << declare(join("YY",multiplierUid), wY, true) << " <= " << xname << "( "<<wY-1<<" downto 0 ) ;" << endl; 
 			
-			
-			sx<<join("XX",multiplierUid)<<"("<<wX-1<<")";
-			sy<<join("YY",multiplierUid)<<"("<<wY-1<<")";
-			
-			wX--;
-			wY--;
-			
-			}
-			else
-			{
-			wX=wYdecl;
-			wY=wXdecl;
-			
-
 			vhdl << tab << declare(join("XX",multiplierUid), wX, true) << " <= " << yname << ";" << endl; 
 			vhdl << tab << declare(join("YY",multiplierUid), wY, true) << " <= " << xname << ";" << endl; 
-			}
 			
 		}
 		else
 		{
-			if(signedIO)
-			{
-				/*wX=wXdecl-1;
-				wY=wYdecl-1;
-			
-
-				vhdl << tab << declare(join("XX",multiplierUid), wX, true) << " <= " << xname << "( "<<wX-1<<" downto 0 ) ;" << endl; 
-				vhdl << tab << declare(join("YY",multiplierUid), wY, true) << " <= " << yname << "( "<<wY-1<<" downto 0 ) ;" << endl; 
-			
-				sx<<xname<<"("<<wX<<")";
-				sy<<yname<<"("<<wY<<")";
-				*/
 			wX=wXdecl;
 			wY=wYdecl;
 			
-
-			vhdl << tab << declare(join("XX",multiplierUid), wX, true) << " <= " << xname << "( "<<wX-1<<" downto 0 ) ;" << endl; 
-			vhdl << tab << declare(join("YY",multiplierUid), wY, true) << " <= " << yname << "( "<<wY-1<<" downto 0 ) ;" << endl; 
-			
-			
-			sx<<join("XX",multiplierUid)<<"("<<wX-1<<")";
-			sy<<join("YY",multiplierUid)<<"("<<wY-1<<")";
-			
-			wX--;
-			wY--;
-			
-			
-			}
-			else
-			{
-			wX=wXdecl;
-			wY=wYdecl;
-
 			vhdl << tab << declare(join("XX",multiplierUid), wX, true) << " <= " << xname << ";" << endl; 
 			vhdl << tab << declare(join("YY",multiplierUid), wY, true) << " <= " << yname << ";" << endl; 
-
-			}
 
 		}
 
@@ -350,8 +285,8 @@ namespace flopoco {
 
 		parentOp=this;
 		multiplierUid=parentOp->getNewUId();
-		xname=join("X",multiplierUid);
-		yname=join("Y",multiplierUid);
+		xname="X";
+		yname="Y";
 
 		initialize();
 
@@ -360,7 +295,7 @@ namespace flopoco {
 		addInput ( yname  , wYdecl, true );
 
 		// TODO FIXME This 1 should be 2. It breaks TestBench but not TestBenchFile. Fix TestBench first! (check in addExpectedOutput or something)
-		addOutput ( join("R",multiplierUid)  , wOut, 1 , true );
+		addOutput ( "R"  , wOut, 1 , true );
 
 		// Set up the VHDL library style
 		if(signedIO)
@@ -385,7 +320,7 @@ namespace flopoco {
 		fillBitHeap();
 
 		bitHeap -> generateCompressorVHDL();			
-		vhdl << tab << join("R",multiplierUid) << " <= " << bitHeap-> getSumName() << range(wOut+g-1, g) << ";" << endl;
+		vhdl << tab << "R" << " <= " << bitHeap-> getSumName() << range(wOut+g-1, g) << ";" << endl;
 	}
 
 
@@ -773,7 +708,7 @@ namespace flopoco {
 						// Note that even when negate and tUU, the result is known negative, but it may be zero, so its actual sign is not known statically
 						
 
-						bool resultSigned;  
+						bool resultSigned =false;  
 						if(negate || (t==tSS) || (t==tUS) || (t==tSU)) 
 							resultSigned = true ;
 
@@ -1224,8 +1159,8 @@ namespace flopoco {
 
 
 		void IntMultiplier::emulate ( TestCase* tc ) {
-			mpz_class svX = tc->getInputValue(join("X",multiplierUid));
-			mpz_class svY = tc->getInputValue(join("Y",multiplierUid));
+			mpz_class svX = tc->getInputValue("X");
+			mpz_class svY = tc->getInputValue("Y");
 			mpz_class svR;
 		
 			if (! signedIO){
@@ -1254,14 +1189,14 @@ namespace flopoco {
 				svR += (mpz_class(1) << wFull); 
 			}
 			if(wTruncated==0) 
-				tc->addExpectedOutput(join("R",multiplierUid), svR);
+				tc->addExpectedOutput("R", svR);
 			else {
 				// there is truncation, so this mult should be faithful
 				svR = svR >> wTruncated;
-				tc->addExpectedOutput(join("R",multiplierUid), svR);
+				tc->addExpectedOutput("R", svR);
 				svR++;
 				svR &= (mpz_class(1) << (wOut)) -1;
-				tc->addExpectedOutput(join("R",multiplierUid), svR);
+				tc->addExpectedOutput("R", svR);
 			}
 		}
 	
@@ -1277,8 +1212,8 @@ namespace flopoco {
 			x = mpz_class(1); 
 			y = mpz_class(1); 
 			tc = new TestCase(this); 
-			tc->addInput(join("X",multiplierUid), x);
-			tc->addInput(join("Y",multiplierUid), y);
+			tc->addInput("X", x);
+			tc->addInput("Y", y);
 			emulate(tc);
 			tcl->add(tc);
 		
@@ -1286,8 +1221,8 @@ namespace flopoco {
 			x = (mpz_class(1) << wXdecl) -1; 
 			y = (mpz_class(1) << wYdecl) -1; 
 			tc = new TestCase(this); 
-			tc->addInput(join("X",multiplierUid), x);
-			tc->addInput(join("Y",multiplierUid), y);
+			tc->addInput("X", x);
+			tc->addInput("Y", y);
 			emulate(tc);
 			tcl->add(tc);
 
@@ -1295,8 +1230,8 @@ namespace flopoco {
 			x = mpz_class(1) << (wXdecl -1); 
 			y = mpz_class(1) << (wYdecl -1); 
 			tc = new TestCase(this); 
-			tc->addInput(join("X",multiplierUid), x);
-			tc->addInput(join("Y",multiplierUid), y);
+			tc->addInput("X", x);
+			tc->addInput("Y", y);
 			emulate(tc);
 			tcl->add(tc);
 		}
