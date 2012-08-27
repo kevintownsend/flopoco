@@ -372,6 +372,17 @@ namespace flopoco
 
 		int wxDSP = xB - xT;
 		int wyDSP = yB - yT;
+		int xTT=xT;
+		if(xTT<0)
+			xTT=-1;
+		else
+			xTT=xT/wxDSP;
+			
+		int yTT=yT;
+		if(yTT<0)
+			yTT=-1;
+		else
+			yTT=yT/wyDSP;	
 
 		if(isRectangle)
 		{
@@ -384,9 +395,8 @@ namespace flopoco
 
 			fig << "<text x=\"" << (2*turnaroundX - scalingFactor*(xT+xB))/2 -12 
 				<< "\" y=\"" << ((yT+yB)*scalingFactor)/2 + offsetY + 7
-			    << "\" fill=\"blue\">D" <<  xT / wxDSP <<  yT / wyDSP  << "</text>" << endl;
-
-		}   
+			    << "\" fill=\"blue\">D(" <<  xTT<<")("<<  yTT  << ")</text>" << endl;
+		}
 		else 
 		{
 			turnaroundX = wX * scalingFactor;
@@ -400,7 +410,7 @@ namespace flopoco
 
 			fig << "<text x=\"" << (2*turnaroundX - xB*5 - xT*5 + 2*offsetX)/2 - 14 - (yT*5 + yB*5)/2 
 			    << "\" y=\"" << ( yT*5 + offsetY + yB*5 + offsetY )/2 + 7 
-			    << "\" fill=\"blue\">D" <<  xT / wxDSP <<  yT / wyDSP  << "</text>" << endl;	
+			    << "\" fill=\"blue\">D(" <<  xTT<<")("<<  yTT  << ")</text>" << endl;
     
 	
 		}	

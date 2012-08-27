@@ -16,9 +16,9 @@
 #include "Plotter.hpp"
 #include <iostream>
 #include <fstream>
-#include <sstream>
-#include <math.h>	
 
+#include <math.h>	
+#include <string>
 #include "utils.hpp"
 #include <vector>
 #include <list>
@@ -266,9 +266,11 @@ namespace flopoco
 	void BitHeap::generateSupertileVHDL()
 	{
 		//making all the possible supertiles
+		
 		buildSupertiles();
 
 
+		
 		//generate the VHDL code for each supertile
 		for(unsigned i=0;i<mulBlocks.size();i++)
 		{	
@@ -296,10 +298,14 @@ namespace flopoco
 					op->setCycleFromSignal(next->getSigName());
 					op->syncCycleFromSignal(current->getSigName());
 					op->manageCriticalPath(  op->getTarget()->DSPAdderDelay() ) ; 
-
+					
+					
+			
+					
+			
 					//addition, the 17lsb-s from the first block will go directly to bitheap
 					op->vhdl << tab <<	op->declare(join("DSPch",i,"_",uid),newLength)<< "<= " <<next->getSigName() 
-						<< " +  ("<< zg(17)<<" & "<<current->getSigName()<<range(newLength-1,17)<<" );"<<endl ; 
+						<< " +  ( "<<zg(17)<<" & "<<"  "<<current->getSigName()<<range(newLength-1,17)<<" );"<<endl ; 
 
 
 					//sending the 17 lsb to the bitheap
