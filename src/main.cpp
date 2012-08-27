@@ -464,17 +464,17 @@ void usage(char *name, string opName = ""){
 
 	if ( full )
 	cerr << "    ____________ COMPLEX OPERATORS ______________________________________\n";
-	if ( full || opName == "Complex" || opName == "FixedComplexAdder"){					
-		OP( "FixedComplexAdder","wI wF signed");
+	if ( full || opName == "Complex" || opName == "FixComplexAdder"){					
+		OP( "FixComplexAdder","wI wF");
+		cerr << "   Complex adder for two's complement fixed-point numbers\n";
 		cerr << "      wI: number of integer bits\n";
 		cerr << "      wF: number of fractional bits.\n";
-		cerr << "  signed: if 1, inputs and outputs in two's complement arithmetic\n";
 	}
-	if ( full || opName == "Complex" || opName == "FixedComplexMultiplier"){					
-		OP( "FixedComplexMultiplier","wI wF signed");
+	if ( full || opName == "Complex" || opName == "FixComplexMultiplier"){					
+		OP( "FixComplexMultiplier","wI wF");
+		cerr << "   Complex multiplier for two's complement fixed-point numbers\n";
 		cerr << "      wI: number of input bits\n";
 		cerr << "      wO: number of output bits\n";
-		cerr << "      All the MSBs are kept in the output, chose wO accordingly.\n";
 	}
 
 
@@ -1555,28 +1555,26 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 	}	
 #endif // HAVE_SOLLYA
 
-		else if(opname=="FixedComplexAdder"){
-			int nargs = 3;
+		else if(opname=="FixComplexAdder"){
+			int nargs = 2;
 			if (i+nargs > argc)
 				usage(argv[0],opname);
 			else {
 				int wI = checkStrictlyPositive(argv[i++], argv[0]);
 				int wF = checkStrictlyPositive(argv[i++], argv[0]);
-				int signedOp = checkBoolean(argv[i++], argv[0]);
-				op = new FixedComplexAdder(target, wI, wF, signedOp);
+				op = new FixedComplexAdder(target, wI, wF, true); // signed
 				addOperator(oplist, op);
 			}
 		}
 
 
-		else if(opname=="FixedComplexMultiplier"){
+		else if(opname=="FixComplexMultiplier"){
 			int nargs = 2;
 			if (i+nargs > argc)
 				usage(argv[0],opname);
 			else {
 				int wI = checkStrictlyPositive(argv[i++], argv[0]);
 				int wO = checkStrictlyPositive(argv[i++], argv[0]);
-				// int signedOp = checkBoolean(argv[i++], argv[0]);
 				op = new FixedComplexMultiplier(target, wI, wO, true);
 				addOperator(oplist, op);
 			}
