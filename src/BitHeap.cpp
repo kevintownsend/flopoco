@@ -647,189 +647,210 @@ namespace flopoco
 		plotter->heapSnapshot(true, stage);
 		REPORT(DEBUG, endl);
 		REPORT(DEBUG, "only three levels left");
-        
-		//do additional compressions or additions
-		if (getMaxHeight()>2)
+
+		if(op->getTarget()->getVendor()=="Altera")
+		{
+			REPORT(INFO, "Altera");
+			for(int i=0;i<10;i++)
 			{
-				unsigned i = 0;
-				// remember the initial heights
-				for(unsigned i=0; i<maxWeight; i++)	{
-						cnt[i]=bits[i].size();
-					}
-
-				//find the first column with 3 bits (starting from LSB); the rest go to the final adder
-				while(cnt[i]<3)
-						i++;
-
-    	    	REPORT(DEBUG, "Column height after all compressions");
-	        	for (unsigned w=0; w<bits.size(); w++) 
-		    	{
-			    	REPORT(DEBUG, "   w=" << w << ":\t height=" << bits[w].size());
-			    	printColumnInfo(w);  
-		    	}
-
-				int first2, first3;
-				first3=i;
-				bool doLoop=true;
-
-				WeightedBit* latestBit;
+				if (usedCompressors[i]==true)
+				{	
+					op->getOpListR().push_back(possibleCompressors[i]);
+				}
+			}
+		  
 
 
-				while(i<maxWeight)
+			generateFinalAddVHDL(false);
+		}
+		else
+		{
+			REPORT(INFO, "Xilinx");
+        
+			//do additional compressions or additions
+			if (getMaxHeight()>2)
 				{
-					//REPORT(INFO, "i= "<< i << " cnt= " << cnt[i]);
-					// Now we are sure cnt[i] is 3
-					if (i==maxWeight-1)
+					unsigned i = 0;
+					// remember the initial heights
+					for(unsigned i=0; i<maxWeight; i++)	{
+							cnt[i]=bits[i].size();
+						}
+
+					//find the first column with 3 bits (starting from LSB); the rest go to the final adder
+					while(cnt[i]<3)
+							i++;
+
+					REPORT(DEBUG, "Column height after all compressions");
+					for (unsigned w=0; w<bits.size(); w++) 
 					{
-						applyCompressor3_2(i);
+						REPORT(DEBUG, "   w=" << w << ":\t height=" << bits[w].size());
+						printColumnInfo(w);  
 					}
-					else
+
+					int first2, first3;
+					first3=i;
+					bool doLoop=true;
+
+					WeightedBit* latestBit;
+
+
+					while(i<maxWeight)
 					{
-						if((cnt[i+1]==3) || (cnt[i+1]==1))
+						//REPORT(INFO, "i= "<< i << " cnt= " << cnt[i]);
+						// Now we are sure cnt[i] is 3
+						if (i==maxWeight-1)
 						{
 							applyCompressor3_2(i);
-							do
-							{
-								i++;
-							}
-							while(cnt[i]!=3);
-
 						}
 						else
 						{
-							if(cnt[i+1]==2)
+							if((cnt[i+1]==3) || (cnt[i+1]==1))
 							{
-								int j=i;
+								applyCompressor3_2(i);
 								do
 								{
 									i++;
 								}
-								while(cnt[i]==2);
-								REPORT(INFO, "j= "<< j << " i-1= " << i-1);
-								latestBit = getLatestBit(j, i-1); 
-								if(latestBit)
-								{
-									op->setCycle(  latestBit ->getCycle()  );
-									op->setCriticalPath(   latestBit ->getCriticalPath(op->getCurrentCycle()));
-									op->manageCriticalPath( op->getTarget()->localWireDelay() + op->getTarget()->adderDelay(i-j) );
+								while(cnt[i]!=3);
 
-									stage = computeStage();
-								}
-								applyAdder(j, i-1);
-								
-								while((i<=maxWeight) && (cnt[i]!=3))
+							}
+							else
+							{
+								if(cnt[i+1]==2)
 								{
-									i++;
+									int j=i;
+									do
+									{
+										i++;
+									}
+									while(cnt[i]==2);
+									REPORT(INFO, "j= "<< j << " i-1= " << i-1);
+									latestBit = getLatestBit(j, i-1); 
+									if(latestBit)
+									{
+										op->setCycle(  latestBit ->getCycle()  );
+										op->setCriticalPath(   latestBit ->getCriticalPath(op->getCurrentCycle()));
+										op->manageCriticalPath( op->getTarget()->localWireDelay() + op->getTarget()->adderDelay(i-j) );
+
+										stage = computeStage();
+									}
+									applyAdder(j, i-1);
+									
+									while((i<=maxWeight) && (cnt[i]!=3))
+									{
+										i++;
+									}
 								}
 							}
 						}
 					}
+
+
+#if 0
+					while(doLoop)
+						{
+							// Now we are sure cnt[i] is 3;
+							//look for the first two
+							REPORT(DEBUG, " looking for the first two: before, i=" << i << " cnt[i]= " << cnt[i]);
+							while (i<maxWeight && cnt[i]==3) 
+								i++;
+							REPORT(DEBUG, "                             after, i=" << i << " cnt[i]= " << cnt[i]);
+							
+							
+							if (i==maxWeight) {
+								applyCompressor3_2(maxWeight-1);
+								doLoop=false;
+							}
+							else {
+								// Now we are sure there is at least one 2
+								first2=i;
+							
+								REPORT(DEBUG, " first3=" << first3 <<" first2=" << first2);
+								if(first3<first2-1) {
+									for(int j=first3; j<first2-1; j++){
+										applyCompressor3_2(j);
+									}
+								}
+								REPORT(DEBUG, "look for the first three again... ");
+								
+								//look for the first three again
+								while (i<maxWeight &&  cnt[i]<3) 
+									i++;
+								REPORT(DEBUG, " found i= " << i);
+								
+								if (i==maxWeight) 
+								{	
+									latestBit = getLatestBit(first2-1, maxWeight-1); 
+									if(latestBit)
+									{
+										op->setCycle(  latestBit ->getCycle()  );
+										op->setCriticalPath(   latestBit ->getCriticalPath(op->getCurrentCycle()));
+										op->manageCriticalPath( op->getTarget()->localWireDelay() + op->getTarget()->adderDelay(maxWeight-first2+1) );
+
+										stage = computeStage();
+									}
+
+									applyAdder(first2-1,maxWeight-1);							
+									doLoop=false;
+
+								}
+								else 
+								{
+									first3=i;
+									latestBit = getLatestBit(first2-1, first3-1); 
+									if(latestBit)
+									{
+										op->setCycle(   latestBit  ->getCycle()  );
+										op->setCriticalPath( latestBit->getCriticalPath(op->getCurrentCycle()));
+										op->manageCriticalPath(op->getTarget()->localWireDelay() + op->getTarget()->adderDelay(first3 - first2 + 1));
+
+										stage = computeStage();
+									}
+
+
+									applyAdder(first2-1, first3-1);	                       
+								}
+							}
+							
+
+						}
+#endif
+
 				}
 
+			 
+			REPORT(DEBUG, "Column height after all compressions");
+			for (unsigned w=0; w<bits.size(); w++) 
+				{
+					REPORT(DEBUG, "   w=" << w << ":\t height=" << bits[w].size());
+					printColumnInfo(w);  
+				}	
 
-#if 0
-				while(doLoop)
-					{
-						// Now we are sure cnt[i] is 3;
-						//look for the first two
-						REPORT(DEBUG, " looking for the first two: before, i=" << i << " cnt[i]= " << cnt[i]);
-						while (i<maxWeight && cnt[i]==3) 
-							i++;
-						REPORT(DEBUG, "                             after, i=" << i << " cnt[i]= " << cnt[i]);
-                        
-						
-						if (i==maxWeight) {
-							applyCompressor3_2(maxWeight-1);
-							doLoop=false;
+		   
+			//checking the used compressors 
+			for(int i=0;i<10;i++)
+				{
+					if (usedCompressors[i]==true)
+						{	
+							op->getOpListR().push_back(possibleCompressors[i]);
 						}
-						else {
-							// Now we are sure there is at least one 2
-							first2=i;
-						
-							REPORT(DEBUG, " first3=" << first3 <<" first2=" << first2);
-							if(first3<first2-1) {
-								for(int j=first3; j<first2-1; j++){
-									applyCompressor3_2(j);
-								}
-							}
-							REPORT(DEBUG, "look for the first three again... ");
-							
-							//look for the first three again
-							while (i<maxWeight &&  cnt[i]<3) 
-								i++;
-							REPORT(DEBUG, " found i= " << i);
-							
-							if (i==maxWeight) 
-							{	
-								latestBit = getLatestBit(first2-1, maxWeight-1); 
-								if(latestBit)
-								{
-									op->setCycle(  latestBit ->getCycle()  );
-									op->setCriticalPath(   latestBit ->getCriticalPath(op->getCurrentCycle()));
-									op->manageCriticalPath( op->getTarget()->localWireDelay() + op->getTarget()->adderDelay(maxWeight-first2+1) );
+				}
+		  
+			stage = computeStage();
 
-									stage = computeStage();
-								}
-
-								applyAdder(first2-1,maxWeight-1);							
-								doLoop=false;
-
-							}
-							else 
-							{
-								first3=i;
-								latestBit = getLatestBit(first2-1, first3-1); 
-								if(latestBit)
-								{
-									op->setCycle(   latestBit  ->getCycle()  );
-									op->setCriticalPath( latestBit->getCriticalPath(op->getCurrentCycle()));
-									op->manageCriticalPath(op->getTarget()->localWireDelay() + op->getTarget()->adderDelay(first3 - first2 + 1));
-
-									stage = computeStage();
-								}
-
-
-								applyAdder(first2-1, first3-1);	                       
-							}
-						}
-						
-
-					}
-#endif
-
-			}
-
-         
-		REPORT(DEBUG, "Column height after all compressions");
-		for (unsigned w=0; w<bits.size(); w++) 
-			{
-				REPORT(DEBUG, "   w=" << w << ":\t height=" << bits[w].size());
-				printColumnInfo(w);  
-			}	
-
-       
-		//checking the used compressors 
-		for(int i=0;i<10;i++)
-			{
-				if (usedCompressors[i]==true)
-					{	
-						op->getOpListR().push_back(possibleCompressors[i]);
-					}
-			}
-	  
-	  	stage = computeStage();
-
-		plotter->heapSnapshot(true, stage);	
+			plotter->heapSnapshot(true, stage);	
 #if 0
-		offsetY += 20 + getMaxHeight() * 10;
-		drawConfiguration(offsetY);
-		closeDrawing(offsetY);
+			offsetY += 20 + getMaxHeight() * 10;
+			drawConfiguration(offsetY);
+			closeDrawing(offsetY);
 #endif
+			
+			//final addition
+			generateFinalAddVHDL(true);
+		}
 		
-		//final addition
-		generateFinalAddVHDL();
-
 		plotter->plotBitHeap();
+		
 		
 	}
 
@@ -1021,87 +1042,196 @@ namespace flopoco
 
 
 	//the final addition
-	void BitHeap::generateFinalAddVHDL()
+	void BitHeap::generateFinalAddVHDL(bool isXilinx)
 	{
-		stringstream inAdder0, inAdder1, outAdder;
+		if(isXilinx)
+		{
+			stringstream inAdder0, inAdder1, outAdder;
 
-		unsigned i=maxWeight-1;
-	
-		//forming the input signals for the first and second line
-		while((i>=minWeight)&&(i<maxWeight))
-			{
-				REPORT(DEBUG,"i=   "<<i);
-				if(i>=0)
-					{  
-						list<WeightedBit*>::iterator it = bits[i].begin();
-						if(bits[i].size()==2)
-							{ 
+			unsigned i=maxWeight-1;
+		
+			//forming the input signals for the first and second line
+			while((i>=minWeight)&&(i<maxWeight))
+				{
+					REPORT(DEBUG,"i=   "<<i);
+					if(i>=0)
+						{  
+							list<WeightedBit*>::iterator it = bits[i].begin();
+							if(bits[i].size()==2)
+								{ 
+									inAdder0 << (*it)->getName();
+									it++;
+									inAdder1 << (*it)->getName();
+								}
+							else 
+								{
+									if (bits[i].size()==1)
+										{
+											inAdder0 << (*it)->getName();
+											inAdder1 << "\'0\'";
+										}
+									else
+										{
+											inAdder0 << "\'0\'";
+											inAdder1 << "\'0\'";
+										}
+								}
+
+							if (i!=minWeight)
+								{
+									inAdder0<<" & "; 
+									inAdder1<<" & ";
+								}
+						}
+
+					--i;
+				}
+
+			
+
+			inAdder0 << ";";
+			inAdder1 << ";";
+			
+			WeightedBit* b = getLatestBit(minWeight, maxWeight-1);
+			//managing the pipeline
+			if(b)
+				{
+					op->setCycle(  b ->getCycle()  );
+					op->setCriticalPath(  b->getCriticalPath(op->getCurrentCycle()));
+					op->manageCriticalPath(op->getTarget()->localWireDelay() + op->getTarget()->adderDelay(maxWeight-minWeight));
+
+				}
+
+			string inAdder0Name = join("finalAdderIn0_bh", getGUid());
+			string inAdder1Name = join("finalAdderIn1_bh", getGUid());
+			string outAdderName = join("finalAdderOut_bh", getGUid());
+
+			op->vhdl << tab << op->declare(inAdder0Name, maxWeight-minWeight) << " <= " << inAdder0.str() << endl;
+			op->vhdl << tab << op->declare(inAdder1Name, maxWeight-minWeight) << " <= " << inAdder1.str() << endl;
+			op->vhdl << tab << op->declare(outAdderName, maxWeight-minWeight+1) 
+					 << " <= ('0' & "<< inAdder0Name << ") + ('0' & " << inAdder1Name << ");" << endl;
+			op->vhdl << tab << "-- concatenate all the compressed chunks" << endl;
+			//result		
+			op->vhdl << tab << op->declare(join("CompressionResult", guid), (maxWeight+1)) << " <= " << outAdderName;
+
+
+			//adding the rightmost bits
+			for(int i=chunkDoneIndex-1; i>=0; i--)
+				op->vhdl <<  " & " << join("tempR_bh", guid, "_", i);
+
+			op->vhdl << ";" << endl;
+			op->vhdl << tab << "-- End of code generated by BitHeap::generateCompressorVHDL" << endl;
+		}
+
+
+		else
+		{
+			stringstream inAdder0, inAdder1, inAdder2, outAdder;
+
+			unsigned i=maxWeight-1;
+		
+			//forming the input signals for the first, second and third line
+			while((i>=minWeight)&&(i<maxWeight))
+				{
+					REPORT(DEBUG,"i=   "<<i);
+					if(i>=0)
+						{  
+							list<WeightedBit*>::iterator it = bits[i].begin();
+							if(bits[i].size()==3)
+							{
+								REPORT(INFO,i << " size 3");
 								inAdder0 << (*it)->getName();
 								it++;
 								inAdder1 << (*it)->getName();
+								it++;
+								inAdder2 << (*it)->getName();
 							}
-						else 
+							else
 							{
-								if (bits[i].size()==1)
+								if(bits[i].size()==2)
+								{ 
+									REPORT(INFO,i << " size 2");
+									inAdder0 << (*it)->getName();
+									it++;
+									inAdder1 << (*it)->getName();
+									inAdder2 << "\'0\'";
+
+								}
+								else 
+								{
+									if (bits[i].size()==1)
 									{
+										REPORT(INFO,i <<  " size 1");
 										inAdder0 << (*it)->getName();
 										inAdder1 << "\'0\'";
+										inAdder2 << "\'0\'";
+
 									}
-								else
+									else
 									{
+										REPORT(INFO,i << " size 0");
 										inAdder0 << "\'0\'";
 										inAdder1 << "\'0\'";
+										inAdder2 << "\'0\'";
+
 									}
+								}
 							}
 
-						if (i!=minWeight)
-							{
-								inAdder0<<" & "; 
-								inAdder1<<" & ";
-							}
-					}
+							if (i!=minWeight)
+								{
+									inAdder0 <<" & "; 
+									inAdder1 <<" & ";
+									inAdder2 <<" & ";
 
-				--i;
-			}
+								}
+						}
 
-		
+					--i;
+				}
 
-		inAdder0 << ";";
-		inAdder1 << ";";
-		
-		WeightedBit* b = getLatestBit(minWeight, maxWeight-1);
-		//managing the pipeline
-		if(b)
-			{
-				op->setCycle(  b ->getCycle()  );
-				op->setCriticalPath(  b->getCriticalPath(op->getCurrentCycle()));
-				op->manageCriticalPath(op->getTarget()->localWireDelay() + op->getTarget()->adderDelay(maxWeight-minWeight));
+			
 
-				if(b->getCycle() < op->getCurrentCycle())
-					{
-						drawCycleLine = true;
-					}
-			}
+			inAdder0 << ";";
+			inAdder1 << ";";
+			inAdder2 << ";";
 
-		string inAdder0Name = join("finaldderIn0_bh", getGUid());
-		string inAdder1Name = join("finalAdderIn1_bh", getGUid());
-		string outAdderName = join("finalAdderOut_bh", getGUid());
+			WeightedBit* b = getLatestBit(minWeight, maxWeight-1);
+			//managing the pipeline
+			if(b)
+				{
+					REPORT(INFO, b->getName());
+					op->setCycle(  b ->getCycle()  );
+					op->setCriticalPath(  b->getCriticalPath(op->getCurrentCycle()));
+					op->manageCriticalPath(op->getTarget()->localWireDelay() + op->getTarget()->adderDelay(maxWeight-minWeight));
 
-		op->vhdl << tab << op->declare(inAdder0Name, maxWeight-minWeight) << "<= " << inAdder0.str() << endl;
-		op->vhdl << tab << op->declare(inAdder1Name, maxWeight-minWeight) << " <= " << inAdder1.str() << endl;
-		op->vhdl << tab << op->declare(outAdderName, maxWeight-minWeight+1) 
-		         << " <= ('0' & "<< inAdder0Name << ") + ('0' & " << inAdder1Name << ");" << endl;
-		op->vhdl << tab << "-- concatenate all the compressed chunks" << endl;
-		//result		
-		op->vhdl << tab << op->declare(join("CompressionResult", guid), (maxWeight+1)) << " <= " << outAdderName;
+				}
+
+			string inAdder0Name = join("finalAdderIn0_bh", getGUid());
+			string inAdder1Name = join("finalAdderIn1_bh", getGUid());
+			string inAdder2Name = join("finalAdderIn2_bh", getGUid());
+			string outAdderName = join("finalAdderOut_bh", getGUid());
+
+			op->vhdl << tab << op->declare(inAdder0Name, maxWeight-minWeight) << " <= " << inAdder0.str() << endl;
+			op->vhdl << tab << op->declare(inAdder1Name, maxWeight-minWeight) << " <= " << inAdder1.str() << endl;
+			op->vhdl << tab << op->declare(inAdder2Name, maxWeight-minWeight) << " <= " << inAdder2.str() << endl;
+
+			op->vhdl << tab << op->declare(outAdderName, maxWeight-minWeight+1) 
+					 << " <= ('0' & "<< inAdder0Name << ") + ('0' & " << inAdder1Name << ") + ('0' & " << inAdder2Name << ");" << endl;
+			op->vhdl << tab << "-- concatenate all the compressed chunks" << endl;
+			//result		
+			op->vhdl << tab << op->declare(join("CompressionResult", guid), (maxWeight+1)) << " <= " << outAdderName;
 
 
-		//adding the rightmost bits
-		for(int i=chunkDoneIndex-1; i>=0; i--)
-			op->vhdl <<  " & " << join("tempR_bh", guid, "_", i);
+			//adding the rightmost bits
+			for(int i=chunkDoneIndex-1; i>=0; i--)
+				op->vhdl <<  " & " << join("tempR_bh", guid, "_", i);
 
-		op->vhdl << ";" << endl;
-		op->vhdl << tab << "-- End of code generated by BitHeap::generateCompressorVHDL" << endl;
+			op->vhdl << ";" << endl;
+			op->vhdl << tab << "-- End of code generated by BitHeap::generateCompressorVHDL" << endl;
+
+
+		}
 
 	}
 

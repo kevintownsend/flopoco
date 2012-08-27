@@ -604,7 +604,7 @@ namespace flopoco
 		fig << "<circle cx=\"" << turnaroundX - w*10 - 5 << "\" cy=\"" 
 			<< offsetY - cnt*10 - 5 << "\" r=\"3\" fill=\"" << colors[index] << "\"" 
 			<< " onmousemove=\"ShowTooltip(evt)\" onmouseout=\"HideTooltip(evt)\" mouseovertext=\""
-			<< name << "\"/> " << endl;
+			<< name << ", " << cycle << ":" << cp << "\"/> " << endl;
 			//<< cycle << " : " << cp << "\"/> " << endl;
 
 	}

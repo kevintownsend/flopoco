@@ -177,7 +177,7 @@ namespace flopoco{
 
 
 		/** generate the final adder for the bit heap (when the columns height is maximum 2*/
-		void generateFinalAddVHDL();
+		void generateFinalAddVHDL(bool isXilinx);
 
 		
 
