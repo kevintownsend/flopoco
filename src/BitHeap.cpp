@@ -267,7 +267,8 @@ namespace flopoco
 	{
 		//making all the possible supertiles
 		
-		buildSupertiles();
+		if((op->getTarget()->getVendor()=="Xilinx"))
+			buildSupertiles();
 
 
 		
@@ -304,10 +305,30 @@ namespace flopoco
 					
 			
 					//addition, the 17lsb-s from the first block will go directly to bitheap
-					op->vhdl << tab <<	op->declare(join("DSPch",i,"_",uid),newLength)<< "<= " <<next->getSigName() 
-						<< " +  ( "<<zg(17)<<" & "<<"  "<<current->getSigName()<<range(newLength-1,17)<<" );"<<endl ; 
+					//if(!signedIO)
+					
+					{
+						stringstream s;
+						for(int i=0;i<16;i++)
+							s<<current->getSigName()<<"("<<newLength-1<<") & ";
+						s<<current->getSigName()<<"("<<newLength-1<<")";	
+						op->vhdl << tab <<	op->declare(join("DSPch",i,"_",uid),newLength)<< "<= " <<next->getSigName() 
+						<< " +  ( "<<s.str()<<" & "<<"  "<<current->getSigName()<<range(newLength-1,17)<<" );"<<endl ; 
+					}
+				
+					/*else
+					{
+					 REPORT(INFO,"signed");
+						op->vhdl << tab <<	op->declare(join("DSPch",i,"_",uid),newLength)<< "<= " <<next->getSigName() 
+							<< " +  ( "<<zg(17)<<" & not("<<current->getSigName()<<"("<<newLength-1<<") ) & "<<"  "<<current->getSigName()<<range(newLength-2,17)<<" );"<<endl ; 
 
-
+						for(int i=0;i<=17;i++)
+						{
+							int weight=current->getWeight()-i;	
+							addConstantOneBit(weight);
+						}
+					}	
+					*/
 					//sending the 17 lsb to the bitheap
            			for(int k=16;k>=0;k--)
 					{
@@ -319,6 +340,7 @@ namespace flopoco
 
 							addBit(weight,s.str(),"",1);
 						}
+						
 					}
 
 
@@ -341,9 +363,23 @@ namespace flopoco
 					if(weight>=0)
 					{	
 						stringstream s;
-						s<<name<<"("<<k<<")";
-
-						addBit(weight,s.str(),"",1);
+						
+						if((k==length-1)&&(signedIO))
+							{
+							s<<"not( "<<name<<"("<<k<<") )";
+							addBit(weight,s.str(),"",4);
+							for(int i=maxWeight;i>=weight;i--)
+								addConstantOneBit(i);
+								
+							REPORT(DETAILED,"added "<<s.str()<<" to the "<<k);	
+							REPORT(DETAILED,"added constant 1  to the "<<length-1);	
+							}
+						else
+							{
+							s<<name<<"("<<k<<")";
+							addBit(weight,s.str(),"",1);
+							REPORT(DETAILED,"added "<<s.str()<<" to the "<<k);	
+							}
 					}
 				}
 			}
@@ -1417,7 +1453,6 @@ namespace flopoco
 	void BitHeap::generateVHDLforDSP(MultiplierBlock* m, int uid,int i)
 	{
 		
-			
 		stringstream s;
 		int topX=m->gettopX();
 		int topY=m->gettopY();
@@ -1458,8 +1493,6 @@ namespace flopoco
 		if(b>0)
 		{	concy=input2.substr(0,b);
 			input2=input2.substr(b+1);
-			
-			
 		}
 		else
 			concy=zg(zerosY);		
@@ -1511,6 +1544,7 @@ namespace flopoco
 		else
 			
 			s<<join("DSP",i,"_",uid);
+
 
 		m->setSignalName(s.str());
 		m->setSignalLength(m->getwX()+m->getwY()+zerosX+zerosY);

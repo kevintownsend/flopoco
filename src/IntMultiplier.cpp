@@ -156,6 +156,8 @@ namespace flopoco {
 
 	void IntMultiplier::initialize() {
 		// interface redundancy
+		
+		//
 		if(wOut<0 || wXdecl<0 || wYdecl<0) {
 			THROWERROR("negative input/output size");
 		}
@@ -230,8 +232,9 @@ namespace flopoco {
 		yname = y->getName();
 
 		plotter = new Plotter(bitHeap);
-
+		
 		bitHeap->setPlotter(plotter);
+		bitHeap->setSignedIO(signedIO);
 		//plotter->setBitHeap(bitHeap);
 		
 		initialize();
@@ -297,7 +300,7 @@ namespace flopoco {
 		plotter = new Plotter(bitHeap);
 
 		bitHeap->setPlotter(plotter);
-		
+		bitHeap->setSignedIO(signedIO);
 
 
 	
@@ -743,11 +746,13 @@ namespace flopoco {
 
 
 	void IntMultiplier::splitting(int horDSP, int verDSP, int wxDSP, int wyDSP,int restX, int restY)
-		{REPORT(DETAILED,"WWWWXDSP=="<<wxDSP);
+		{
 	
 			int i=0;
 			int j=0;
 			int x=wX;
+			
+			
 			while(i<verDSP)
 			{
 				j=0;
@@ -993,6 +998,9 @@ namespace flopoco {
 		}
 	
 
+		
+
+
 
 		/** builds the tiles and the logic too*/
 		/**************************************************************************/
@@ -1001,6 +1009,12 @@ namespace flopoco {
 			//the DSPs should be arranged horizontally or vertically?
 		
 			//number of horizontal/vertical DSPs used if the tiling is horizontal
+		/*	if(parentOp->getTarget()->getVendor()=="Altera")
+			{
+				wxDSP=wyDSP=36;
+			}
+		*/	
+			
 			if(signedIO)
 			{
 				wxDSP--;

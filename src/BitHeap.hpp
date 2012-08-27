@@ -145,6 +145,10 @@ namespace flopoco{
 		int getGUid();
 
 
+		void setSignedIO(bool s){this->signedIO=s;};
+		
+		bool getSignedIO() {return signedIO;};
+		
 
 	protected:
 
@@ -239,6 +243,7 @@ namespace flopoco{
 		// For error reporting to work
 		string srcFileName;
 		string uniqueName_;
+		bool signedIO;
 		
 	};
 
