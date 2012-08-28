@@ -312,7 +312,7 @@ namespace flopoco
 						for(int i=0;i<16;i++)
 							s<<current->getSigName()<<"("<<newLength-1<<") & ";
 						s<<current->getSigName()<<"("<<newLength-1<<")";	
-						op->vhdl << tab <<	op->declare(join("DSPch",i,"_",uid),newLength)<< "<= " <<next->getSigName() 
+						op->vhdl << tab <<	op->declare(join("DSP_bh",guid,"_ch",i,"_",uid),newLength)<< "<= " <<next->getSigName() 
 						<< " +  ( "<<s.str()<<" & "<<"  "<<current->getSigName()<<range(newLength-1,17)<<" );"<<endl ; 
 					}
 				
@@ -346,7 +346,7 @@ namespace flopoco
 
 					//setting the name and length of the current block, to be used properly in the next iteration
 					stringstream q;
-					q<<join("DSPch",i,"_",uid);
+					q<<join("DSP_bh",guid,"_ch",i,"_",uid);
 					next->setSignalName(q.str());		
 					next->setSignalLength(newLength);
 					//next
@@ -1524,26 +1524,26 @@ namespace flopoco
 	//	op->syncCycleFromSignal(input2);
 	//	op->manageCriticalPath(  op->getTarget()->DSPMultiplierDelay() ) ;
 //
-	    REPORT(DETAILED,"comuted in this moment= "<< join("DSPch",i,"_",uid)
+	    REPORT(DETAILED,"comuted in this moment= "<< join("DSP_bh",guid,"_ch",i,"_",uid)
 				<< " <= (" <<concx<<" & " << input1<<range(botX,topX+addx)<<" & "<<zg(addx)<<") * (" <<concy <<" & "
 			    << input2 <<range(botY,topY+addy)<<" & "<<zg(addy)<<");");
 		
 		if(uid==0)	
-			op->vhdl << tab << op->declare(join("DSPch",i,"_",uid), m->getwX()+m->getwY()+zerosX+zerosY) 
+			op->vhdl << tab << op->declare(join("DSP_bh",guid,"_ch",i,"_",uid), m->getwX()+m->getwY()+zerosX+zerosY) 
 				<< " <= (" <<concx<<" & " << input1<<range(botX,topX+addx)<<" & "<<zg(addx)<<") * (" <<concy <<" & "
 			    << input2 <<range(botY,topY+addy)<<" & "<<zg(addy)<<");"<<endl;
 		else
-			op->vhdl << tab << op->declare(join("DSP",i,"_",uid), m->getwX()+m->getwY()+zerosX+zerosY)
+			op->vhdl << tab << op->declare(join("DSP_bh",guid,"_",i,"_",uid), m->getwX()+m->getwY()+zerosX+zerosY)
 			 
 					<< " <= (" <<concx<<" & " << input1<<range(botX,topX+addx)<<" & "<<zg(addx)<<") * (" <<concy <<" & "
 			    << input2 <<range(botY,topY+addy)<<" & "<<zg(addy)<<");"<<endl;
 
 		
 		if(uid==0)
-			s<<join("DSPch",i,"_",uid);
+			s<<join("DSP_bh",guid,"_ch",i,"_",uid);
 		else
 			
-			s<<join("DSP",i,"_",uid);
+			s<<join("DSP_bh",guid,"_",i,"_",uid);
 
 
 		m->setSignalName(s.str());

@@ -1015,11 +1015,14 @@ namespace flopoco {
 			}
 		*/	
 			
+			
 			if(signedIO)
 			{
 				wxDSP--;
 				wyDSP--;
 			}
+			
+			
 			
 			int horDSP1=wX/wxDSP;
 			int verDSP1=wY/wyDSP;
