@@ -217,7 +217,7 @@ namespace flopoco
 	}
 
 
-
+	
 	void BitHeap::buildSupertiles()
 	{
 		for(unsigned i=0;i<mulBlocks.size();i++)
@@ -267,39 +267,50 @@ namespace flopoco
 	{
 		//making all the possible supertiles
 		
+		// mulBlocks is a vector of DSPs without chaining: chain them
+
 		if((op->getTarget()->getVendor()=="Xilinx"))
 			buildSupertiles();
-
+		else THROWERROR("Altera supertiles not yet supported, contact Bogdan Pasca");
 
 		
 		//generate the VHDL code for each supertile
+
+		// This loop iterates on all the blocks, looking for the roots of supertiles
 		for(unsigned i=0;i<mulBlocks.size();i++)
 		{	
 			//take just the blocks which are roots
 			if(mulBlocks[i]->getPrevious()==NULL)
 			{
-				int uid=0;
+				int DSPuid=0;
 				MultiplierBlock* next;
 				MultiplierBlock* current=mulBlocks[i];
 				int newLength=0;
 			
-				//the first DSP from the supertile(it has the smallest weight in the supertile)
-				generateVHDLforDSP(current,uid,i);
+				//TODO reset cycle/CP to the beginning of mult 
+				op->setCycle(0);
+				
+				op->manageCriticalPath(  op->getTarget()->DSPMultiplierDelay() ) ; 					
 
-				//iterate on the of the supertile
+				//the first DSP from the supertile(it has the smallest weight in the supertile)
+				generateVHDLforDSP(current,DSPuid,i);
+
+				//iterate on the other blocks of the supertile
 				while(current->getNext()!=NULL)
 				{	
-					uid++;
+					DSPuid++;
 					next=current->getNext();
 					newLength=current->getSigLength();					
-					generateVHDLforDSP(next,uid,i);
+					op->manageCriticalPath(  op->getTarget()->DSPMultiplierDelay() ) ; 					
+					generateVHDLforDSP(next,DSPuid,i);
 					//TODO ! replace 17 with multiplierblock->getshift~ something like that
 					
 					//******pipeline*******//	
-					op->setCycleFromSignal(next->getSigName());
-					op->syncCycleFromSignal(current->getSigName());
-					op->manageCriticalPath(  op->getTarget()->DSPAdderDelay() ) ; 
-					
+					// op->setCycleFromSignal(next->getSigName());
+					// op->syncCycleFromSignal(current->getSigName());
+					// op->manageCriticalPath(  op->getTarget()->DSPAdderDelay() ) ; 
+					// FIXME
+					op->nextCycle();
 					
 			
 					
@@ -312,14 +323,14 @@ namespace flopoco
 						for(int i=0;i<16;i++)
 							s<<current->getSigName()<<"("<<newLength-1<<") & ";
 						s<<current->getSigName()<<"("<<newLength-1<<")";	
-						op->vhdl << tab <<	op->declare(join("DSP_bh",guid,"_ch",i,"_",uid),newLength)<< "<= " <<next->getSigName() 
-						<< " +  ( "<<s.str()<<" & "<<"  "<<current->getSigName()<<range(newLength-1,17)<<" );"<<endl ; 
+						op->vhdl << tab <<	op->declare(join("DSP_bh",guid,"_ch",i,"_",DSPuid),newLength)<< "<= " <<next->getSigName() 
+						         << " +  ( "<<  zg(17)  /* s.str()*/ <<" & "<<"  "<<current->getSigName()<<range(newLength-1,17)<<" );"<<endl ; 
 					}
 				
 					/*else
 					{
 					 REPORT(INFO,"signed");
-						op->vhdl << tab <<	op->declare(join("DSPch",i,"_",uid),newLength)<< "<= " <<next->getSigName() 
+						op->vhdl << tab <<	op->declare(join("DSPch",i,"_",DSPuid),newLength)<< "<= " <<next->getSigName() 
 							<< " +  ( "<<zg(17)<<" & not("<<current->getSigName()<<"("<<newLength-1<<") ) & "<<"  "<<current->getSigName()<<range(newLength-2,17)<<" );"<<endl ; 
 
 						for(int i=0;i<=17;i++)
@@ -346,7 +357,7 @@ namespace flopoco
 
 					//setting the name and length of the current block, to be used properly in the next iteration
 					stringstream q;
-					q<<join("DSP_bh",guid,"_ch",i,"_",uid);
+					q<<join("DSP_bh",guid,"_ch",i,"_",DSPuid);
 					next->setSignalName(q.str());		
 					next->setSignalLength(newLength);
 					//next
