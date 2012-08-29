@@ -187,24 +187,74 @@ namespace flopoco {
 		// Halve number of cases by making sure wY<=wX:
 		// interchange x and y in case wY>wX
 		
-		if(wYdecl> wXdecl){
-			wX=wYdecl;
-			wY=wXdecl;
-			vhdl << tab << declare(addUID("XX"), wX, true) << " <= " << yname << ";" << endl; 
-			vhdl << tab << declare(addUID("YY"), wY, true) << " <= " << xname << ";" << endl; 
+		if(wYdecl> wXdecl)
+		{
+			 if(signedIO)	 
+                         {	 
+                   	 
+                         wX=wYdecl;	 
+                         wY=wXdecl;	 
+ 	 
+ 	 
+                         vhdl << tab << declare(addUID("XX"), wX, true) << " <= " << yname << "( "<<wX-1<<" downto 0 ) ;" << endl;	 
+                         vhdl << tab << declare(addUID("YY"), wY, true) << " <= " << xname << "( "<<wY-1<<" downto 0 ) ;" << endl;	 
+ 	
+ 	 
+                         sx<<addUID("XX")<<"("<<wX-1<<")";	 
+                         sy<<addUID("YY")<<"("<<wY-1<<")";	 
+ 	 
+                          wX--;
+                          wY--;
+ 	 
+                         }	 
+                         else	 
+                         {	 
+                         wX=wYdecl;	                    
+	                         wY=wXdecl;	                        
+	 	 
+	 	 
+	                         vhdl << tab << declare(addUID("XX"), wX, true) << " <= " << yname << ";" << endl;	                       
+						
+	                         vhdl << tab << declare(addUID("YY"), wY, true) << " <= " << xname << ";" << endl;	                         
+                         }	 
+ 	 
+                 
 			
 		}
 		else
 		{
-			wX=wXdecl;
-			wY=wYdecl;
-			vhdl << tab << declare(addUID("XX"), wX, true) << " <= " << xname << ";" << endl; 
-			vhdl << tab << declare(addUID("YY"), wY, true) << " <= " << yname << ";" << endl;
-		}
+			  if(signedIO)	 
+              {	 
+                           
+                         wX=wXdecl;	 
+                         wY=wYdecl;	 
+ 	 
+ 	 
+                         vhdl << tab << declare(addUID("XX"), wX, true) << " <= " << xname << "( "<<wX-1<<" downto 0 ) ;" << endl;	 
+                         vhdl << tab << declare(addUID("YY"), wY, true) << " <= " << yname << "( "<<wY-1<<" downto 0 ) ;" << endl;	 
+ 	 
+ 	 
+                         sx<<addUID("XX")<<"("<<wX-1<<")";	 
+                         sy<<addUID("YY")<<"("<<wY-1<<")";	 
+ 	 
+ 	 					wX--;
+ 	 					wY--;
+                       
+				}
+				 else	 
+                         {	 
+	                         wX=wXdecl;	                    
+	                         wY=wYdecl;	                        
+	 	 
+	 	 
+	                         vhdl << tab << declare(addUID("XX"), wX, true) << " <= " << xname << ";" << endl;	                       
+						
+	                         vhdl << tab << declare(addUID("YY"), wY, true) << " <= " << yname << ";" << endl;	                         
+                         }	 
 
-	}
+		}		
 
-
+}
 
 
 	
@@ -761,7 +811,7 @@ namespace flopoco {
 				while((j<horDSP)&&(ok==0))
 				{	REPORT(DETAILED,"j= " << j);
 					//if the top right corner is under the truncation line, then will use a DSP; otherwise, will be decided according to the ratio
-					//by calling the compute function
+					//by calling the checkTreshHold function
 					if((wX-(j+1)*wxDSP)+(wY-(i+1)*wyDSP)>=wFull-wOut-g)
 					{
 						//a DSP can be used
@@ -826,7 +876,7 @@ namespace flopoco {
 				
 				//call the function only if at least 1 bit remaining
 				if((wX-j*wxDSP>0))
-					compute(x,wY-(i+1)*wyDSP, wX-j*wxDSP, wY-(i)*wyDSP,wxDSP,wyDSP); 
+					checkTreshHold(x,wY-(i+1)*wyDSP, wX-j*wxDSP, wY-(i)*wyDSP,wxDSP,wyDSP); 
 					
 				i++;		
 			}
@@ -840,15 +890,27 @@ namespace flopoco {
 					int x=wX;
 					while((x+y>wFull-wOut-g)&&(x>0))
 						x--;
-					compute(x,0,wX,restY,wxDSP,wyDSP);
+					checkTreshHold(x,0,wX,restY,wxDSP,wyDSP);
 				}
 		}
 		
 		
 		
 		
-		void IntMultiplier::compute(int topX, int topY, int botX, int botY,int wxDSP,int wyDSP)
+		void IntMultiplier::checkTreshHold(int topX, int topY, int botX, int botY,int wxDSP,int wyDSP)
 		{
+		
+		REPORT(DETAILED,"wxdsp= "<<wxDSP<<" wydsp= "<<wyDSP);
+			if(parentOp->getTarget()->getVendor()=="Altera")
+			{
+			
+			
+			
+			}
+			
+			else
+			{
+		
 			int height=botY-topY;
 			int width=botX-topX;
 			int dspArea=wxDSP*wyDSP;
@@ -858,11 +920,11 @@ namespace flopoco {
 			int topy=topY;
 			int dsp=0;//number of used DSPs
 			
-			//if the width is larger then a dsp width, than we have to compute the good coordinates for the dsp
+			//if the width is larger then a dsp width, than we have to checkTreshHold the good coordinates for the dsp
 			if (width>wxDSP)
 				topx=botx-wxDSP;
 		
-			REPORT(DETAILED,"compute called, width= "<<width);
+			REPORT(DETAILED,"checkTreshHold called, width= "<<width);
 		
 			while (width>wxDSP)
 			{	
@@ -994,7 +1056,7 @@ namespace flopoco {
 				if((topx<botX-dsp*wxDSP))
 					buildHeapLogicOnly(topx,topY,botX-dsp*wxDSP,botY,parentOp->getNewUId());
 			}
-		
+		}
 		}
 	
 
@@ -1020,6 +1082,7 @@ namespace flopoco {
 			{
 				wxDSP--;
 				wyDSP--;
+				REPORT(DEBUG,"wxdsp= "<<wxDSP<<" wydsp= "<<wyDSP);
 			}
 			
 			

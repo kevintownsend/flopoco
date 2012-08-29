@@ -316,7 +316,7 @@ namespace flopoco
 					
 			
 					//addition, the 17lsb-s from the first block will go directly to bitheap
-					//if(!signedIO)
+					if(signedIO)
 					
 					{
 						stringstream s;
@@ -324,6 +324,12 @@ namespace flopoco
 							s<<current->getSigName()<<"("<<newLength-1<<") & ";
 						s<<current->getSigName()<<"("<<newLength-1<<")";	
 						op->vhdl << tab <<	op->declare(join("DSP_bh",guid,"_ch",i,"_",DSPuid),newLength)<< "<= " <<next->getSigName() 
+						         << " +  ( "<<  s.str() <<" & "<<"  "<<current->getSigName()<<range(newLength-1,17)<<" );"<<endl ; 
+					}
+					
+					else
+					{
+					op->vhdl << tab <<	op->declare(join("DSP_bh",guid,"_ch",i,"_",DSPuid),newLength)<< "<= " <<next->getSigName() 
 						         << " +  ( "<<  zg(17)  /* s.str()*/ <<" & "<<"  "<<current->getSigName()<<range(newLength-1,17)<<" );"<<endl ; 
 					}
 				
@@ -1461,6 +1467,7 @@ namespace flopoco
 	}
 
 
+	///*
 	void BitHeap::generateVHDLforDSP(MultiplierBlock* m, int uid,int i)
 	{
 		
@@ -1473,21 +1480,35 @@ namespace flopoco
 		
 		string input1=m->getInputName1();
 		string input2=m->getInputName2();
-		string concx;
-		string concy;
-		int zerosX; 
-		int zerosY;
+		string concx="";
+		string concy="";
+		int zerosX=0; 
+		int zerosY=0;
 		//number of 0-os to be added to the begining of signals
-		if(m->getwX()>m->getwY())
+		
+		if(op->getTarget()->getVendor()=="Altera")
 		{
-			zerosX=25-m->getwX();
-			zerosY=18-m->getwY();
-		}		
-		else 
-		{		
-			zerosX=25-m->getwY();
-			zerosY=18-m->getwX();
+			int xx,yy;
+			bool ss;
+			op->getTarget()->getDSPWidths(xx, yy, ss);
+			zerosX=zerosY=xx-m->getwX();
 		}
+		else
+		{
+			if(m->getwX()>m->getwY())
+			{
+				zerosX=25-m->getwX();
+				zerosY=18-m->getwY();
+			}		
+			else 
+			{		
+				zerosX=25-m->getwY();
+				zerosY=18-m->getwX();
+			}
+		}
+		
+		REPORT(DETAILED,"input= "<<input1);
+		
 		
 		int a=input1.find("&");
 		if(a>0)
@@ -1535,6 +1556,9 @@ namespace flopoco
 	//	op->syncCycleFromSignal(input2);
 	//	op->manageCriticalPath(  op->getTarget()->DSPMultiplierDelay() ) ;
 //
+
+		REPORT(DETAILED,"xwidth block= "<<m->getwX()<<" yheightblock= " <<m->getwY());
+
 	    REPORT(DETAILED,"comuted in this moment= "<< join("DSP_bh",guid,"_ch",i,"_",uid)
 				<< " <= (" <<concx<<" & " << input1<<range(botX,topX+addx)<<" & "<<zg(addx)<<") * (" <<concy <<" & "
 			    << input2 <<range(botY,topY+addy)<<" & "<<zg(addy)<<");");
@@ -1562,7 +1586,57 @@ namespace flopoco
 	//	REPORT(DETAILED,"dspout");
 
 	}
+	//*/
+	/*
+	void BitHeap::generateVHDLforDSP(MultiplierBlock* m, int uid,int i)
+	{
+		
+		stringstream s;
+		string input1=m->getInputName1();
+		string input2=m->getInputName2();
+		int topX=m->gettopX();
+		int topY=m->gettopY();
+		int botX=topX+m->getwX()-1;
+		int botY=topY+m->getwY()-1;
+			
+		//if the coordinates are negative, then the signals should be completed with 0-s at the end, for the good result. 
+		//addx, addy represents the number of 0-s to be added
+		
+		int addx=0;
+		int addy=0;
+		
+		if(topX<0)
+			addx=0-topX;
+	
+		if(topY<0)
+			addy=0-topY;	
 
+
+		
+	
+	   	
+		if(uid==0)	
+		{
+			op->vhdl << tab << op->declare(join("DSP_bh",guid,"_ch",i,"_",uid), m->getwX()+m->getwY()) 
+				<< " <= (" <<input1<<range(botX,topX+addx)<<" & "<<zg(addx)<<") * (" << input2 <<range(botY,topY+addy)<<" & "<<zg(addy)<<");"<<endl;
+		
+			s<<join("DSP_bh",guid,"_ch",i,"_",uid);
+		}
+		else
+		{
+			op->vhdl << tab << op->declare(join("DSP_bh",guid,"_",i,"_",uid), m->getwX()+m->getwY())
+			 
+					<< " <= ("  << input1<<range(botX,topX+addx)<<" & "<<zg(addx)<<") * ("<< input2 <<range(botY,topY+addy)<<" & "<<zg(addy)<<");"<<endl;
+			s<<join("DSP_bh",guid,"_",i,"_",uid);
+		}
+		
+		
+		m->setSignalName(s.str());
+		m->setSignalLength(m->getwX()+m->getwY());
+	//	REPORT(DETAILED,"dspout");
+
+	}
+	*/
 
 
 }

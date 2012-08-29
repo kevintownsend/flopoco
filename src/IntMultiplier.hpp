@@ -109,7 +109,7 @@ namespace flopoco {
 		void buildTiling();
 
 
-		//void compute(int topX, int topY, int botX, int botY,int wxDSP,int wyDSP);
+		//void checkTreshHold(int topX, int topY, int botX, int botY,int wxDSP,int wyDSP);
 
 	
 		/**	builds the logic block ( smallMultTables) 
@@ -129,7 +129,7 @@ namespace flopoco {
 
 		/** is called when no more dsp-s fit in a row, because of the truncation line
 		  *	checks the ratio, if only DSPs should be used, only logic, or maybe both, and applies it **/
-		void compute(int topX, int topY, int botX, int botY, int wxDSP, int wyDSP);
+		void checkTreshHold(int topX, int topY, int botX, int botY, int wxDSP, int wyDSP);
 
 
 
@@ -165,7 +165,7 @@ namespace flopoco {
 		string inputName1;
 		string inputName2;
 		bool isOperator;                /**< if true this multiplier is a stand-alone operator, if false it just contributes to some BitHeap of another Operator */
-		bool negate;                    /**< if true this multiplier computes -xy */
+		bool negate;                    /**< if true this multiplier checkTreshHolds -xy */
 		int signedIO;                   /**< true if the IOs are two's complement */
 		int multiplierUid;
 		void initialize();   /**< initialization stuff common to both constructors*/
