@@ -300,7 +300,8 @@ namespace flopoco
 				{	
 					DSPuid++;
 					next=current->getNext();
-					newLength=current->getSigLength();					
+					
+										
 					op->manageCriticalPath(  op->getTarget()->DSPMultiplierDelay() ) ; 					
 					generateVHDLforDSP(next,DSPuid,i);
 					//TODO ! replace 17 with multiplierblock->getshift~ something like that
@@ -313,39 +314,43 @@ namespace flopoco
 					op->nextCycle();
 					
 			
-					
+					if(current->getSigLength()>next->getSigLength())
+						newLength=current->getSigLength();
+					else
+						newLength=next->getSigLength();
 			
 					//addition, the 17lsb-s from the first block will go directly to bitheap
 					if(signedIO)
 					
 					{
+						
 						stringstream s;
-						for(int i=0;i<16;i++)
-							s<<current->getSigName()<<"("<<newLength-1<<") & ";
-						s<<current->getSigName()<<"("<<newLength-1<<")";	
+						
+						int signExt=16+(newLength-current->getSigLength());
+						
+						for(int i=0;i<=signExt;i++)
+							s<<current->getSigName()<<"("<<current->getSigLength()-1<<") & ";
+							
+						s<<current->getSigName()<<"("<<current->getSigLength()-1<<")";	
+						
+						
+						newLength++;
 						op->vhdl << tab <<	op->declare(join("DSP_bh",guid,"_ch",i,"_",DSPuid),newLength)<< "<= " <<next->getSigName() 
-						         << " +  ( "<<  s.str() <<" & "<<"  "<<current->getSigName()<<range(newLength-1,17)<<" );"<<endl ; 
+						         << " +  ( "<<  s.str() <<" & "<<"  "<<current->getSigName()<<range(current->getSigLength()-1,17)<<" );"<<endl ; 
+						         
+						REPORT(DETAILED,"chainings = "<<join("DSP_bh",guid,"_ch",i,"_",DSPuid)<< "length= "<<newLength << "<= " <<next->getSigName() 
+						         << " +  ( "<<  s.str() <<" & "<<"  "<<current->getSigName()<<range(current->getSigLength()-1,17)<<" );");
 					}
 					
 					else
 					{
-					op->vhdl << tab <<	op->declare(join("DSP_bh",guid,"_ch",i,"_",DSPuid),newLength)<< "<= " <<next->getSigName() 
+						op->vhdl << tab <<	op->declare(join("DSP_bh",guid,"_ch",i,"_",DSPuid),newLength)<< "<= " <<next->getSigName() 
 						         << " +  ( "<<  zg(17)  /* s.str()*/ <<" & "<<"  "<<current->getSigName()<<range(newLength-1,17)<<" );"<<endl ; 
+						REPORT(DETAILED,"chainings = "<<join("DSP_bh",guid,"_ch",i,"_",DSPuid)<< "length= "<<newLength << "<= " <<next->getSigName() 
+						         << " +  ( "<<  zg(17) <<" & "<<"  "<<current->getSigName()<<range(current->getSigLength()-1,17)<<" );");
 					}
-				
-					/*else
-					{
-					 REPORT(INFO,"signed");
-						op->vhdl << tab <<	op->declare(join("DSPch",i,"_",DSPuid),newLength)<< "<= " <<next->getSigName() 
-							<< " +  ( "<<zg(17)<<" & not("<<current->getSigName()<<"("<<newLength-1<<") ) & "<<"  "<<current->getSigName()<<range(newLength-2,17)<<" );"<<endl ; 
-
-						for(int i=0;i<=17;i++)
-						{
-							int weight=current->getWeight()-i;	
-							addConstantOneBit(weight);
-						}
-					}	
-					*/
+					
+		
 					//sending the 17 lsb to the bitheap
            			for(int k=16;k>=0;k--)
 					{
@@ -1467,7 +1472,7 @@ namespace flopoco
 	}
 
 
-	///*
+	/*
 	void BitHeap::generateVHDLforDSP(MultiplierBlock* m, int uid,int i)
 	{
 		
@@ -1586,8 +1591,8 @@ namespace flopoco
 	//	REPORT(DETAILED,"dspout");
 
 	}
-	//*/
-	/*
+	*/
+	
 	void BitHeap::generateVHDLforDSP(MultiplierBlock* m, int uid,int i)
 	{
 		
@@ -1636,7 +1641,7 @@ namespace flopoco
 	//	REPORT(DETAILED,"dspout");
 
 	}
-	*/
+	
 
 
 }

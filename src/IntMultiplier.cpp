@@ -189,69 +189,18 @@ namespace flopoco {
 		
 		if(wYdecl> wXdecl)
 		{
-			 if(signedIO)	 
-                         {	 
-                   	 
-                         wX=wYdecl;	 
-                         wY=wXdecl;	 
- 	 
- 	 
-                         vhdl << tab << declare(addUID("XX"), wX, true) << " <= " << yname << "( "<<wX-1<<" downto 0 ) ;" << endl;	 
-                         vhdl << tab << declare(addUID("YY"), wY, true) << " <= " << xname << "( "<<wY-1<<" downto 0 ) ;" << endl;	 
- 	
- 	 
-                         sx<<addUID("XX")<<"("<<wX-1<<")";	 
-                         sy<<addUID("YY")<<"("<<wY-1<<")";	 
- 	 
-                          wX--;
-                          wY--;
- 	 
-                         }	 
-                         else	 
-                         {	 
-                         wX=wYdecl;	                    
-	                         wY=wXdecl;	                        
-	 	 
-	 	 
-	                         vhdl << tab << declare(addUID("XX"), wX, true) << " <= " << yname << ";" << endl;	                       
-						
-	                         vhdl << tab << declare(addUID("YY"), wY, true) << " <= " << xname << ";" << endl;	                         
-                         }	 
- 	 
-                 
-			
+			wX=wYdecl;	 
+			wY=wXdecl;	 
+			vhdl << tab << declare(addUID("XX"), wX, true) << " <= " << yname << " ;" << endl;	 
+			vhdl << tab << declare(addUID("YY"), wY, true) << " <= " << xname << " ;" << endl;	 
 		}
 		else
 		{
-			  if(signedIO)	 
-              {	 
-                           
-                         wX=wXdecl;	 
-                         wY=wYdecl;	 
+			wX=wXdecl;	 
+			wY=wYdecl;	 
  	 
- 	 
-                         vhdl << tab << declare(addUID("XX"), wX, true) << " <= " << xname << "( "<<wX-1<<" downto 0 ) ;" << endl;	 
-                         vhdl << tab << declare(addUID("YY"), wY, true) << " <= " << yname << "( "<<wY-1<<" downto 0 ) ;" << endl;	 
- 	 
- 	 
-                         sx<<addUID("XX")<<"("<<wX-1<<")";	 
-                         sy<<addUID("YY")<<"("<<wY-1<<")";	 
- 	 
- 	 					wX--;
- 	 					wY--;
-                       
-				}
-				 else	 
-                         {	 
-	                         wX=wXdecl;	                    
-	                         wY=wYdecl;	                        
-	 	 
-	 	 
-	                         vhdl << tab << declare(addUID("XX"), wX, true) << " <= " << xname << ";" << endl;	                       
-						
-	                         vhdl << tab << declare(addUID("YY"), wY, true) << " <= " << yname << ";" << endl;	                         
-                         }	 
-
+			vhdl << tab << declare(addUID("XX"), wX, true) << " <= " << xname << ";" << endl;	 
+			vhdl << tab << declare(addUID("YY"), wY, true) << " <= " << yname << ";" << endl;	 
 		}		
 
 }
@@ -794,7 +743,7 @@ namespace flopoco {
 		}
 	
 
-
+	/*
 	void IntMultiplier::splitting(int horDSP, int verDSP, int wxDSP, int wyDSP,int restX, int restY)
 		{
 	
@@ -894,13 +843,12 @@ namespace flopoco {
 				}
 		}
 		
-		
+		*/
 		
 		
 		void IntMultiplier::checkTreshHold(int topX, int topY, int botX, int botY,int wxDSP,int wyDSP)
 		{
 		
-		REPORT(DETAILED,"wxdsp= "<<wxDSP<<" wydsp= "<<wyDSP);
 			if(parentOp->getTarget()->getVendor()=="Altera")
 			{
 			
@@ -950,34 +898,14 @@ namespace flopoco {
 				
 					if(height<wyDSP)
 						topy=topY-(wyDSP-height);
-						stringstream inx,iny;
-						int widthX=wxDSP;
-						int widthY=wyDSP;
-						
-						if((botx==wX)&&(botY==wY)&&(signedIO))
-						{
-						inx<<sx.str()<<" & "<<addUID("XX");
-						iny<<sy.str()<<" & "<<addUID("YY");
-						}
-						else if((botY!=wY)&&(botx==wX)&&(signedIO))
-						{
-						inx<<sx.str()<<" & "<<addUID("XX");
-						iny<<addUID("YY");
-						}
-						
-						else if((botY==wY)&&(botx!=wX)&&(signedIO))
-						{
-						inx<<addUID("XX");
-						iny<<sy.str()<<" & "<<addUID("YY");
-						}
-						else if((botY!=wY)&&(botx!=wX)||(!signedIO))
-						{
-						inx<<addUID("XX");
-						iny<<addUID("YY");
-						}
-						
+					stringstream inx,iny;
+					int widthX=wxDSP;
+					int widthY=wyDSP;
+					inx<<addUID("XX");
+					iny<<addUID("YY");
+								
 												
-						MultiplierBlock* m = new MultiplierBlock(widthX,widthY,topx,topy,inx.str(),iny.str(),weightShift);
+					MultiplierBlock* m = new MultiplierBlock(widthX,widthY,topx,topy,inx.str(),iny.str(),weightShift);
 					m->setNext(NULL);		
 					m->setPrevious(NULL);			
 					localSplitVector.push_back(m);
@@ -1022,30 +950,9 @@ namespace flopoco {
 				int widthX=wxDSP;
 						int widthY=wyDSP;
 						
-			if((botx==wX)&&(botY==wY)&&(signedIO))
-						{
-						inx<<sx.str()<<" & "<<addUID("XX");
-						iny<<sy.str()<<" & "<<addUID("YY");
-						}
-						else if((botY!=wY)&&(botx==wX)&&(signedIO))
-						{
-						inx<<sx.str()<<" & "<<addUID("XX");
-						iny<<addUID("YY");
-						}
-						
-						else if((botY==wY)&&(botx!=wX)&&(signedIO))
-						{
-						inx<<addUID("XX");
-						iny<<sy.str()<<" & "<<addUID("YY");
-						}
-						else if((botY!=wY)&&(botx!=wX)||(!signedIO))
-						{
-						inx<<addUID("XX");
-						iny<<addUID("YY");
-						}
-						
+		
 												
-				MultiplierBlock* m = new MultiplierBlock(widthX,widthY,topx,topy,inx.str(),iny.str(),weightShift);
+				MultiplierBlock* m = new MultiplierBlock(widthX,widthY,topx,topy,addUID("XX"),addUID("YY"),weightShift);
 				m->setNext(NULL);		
 				m->setPrevious(NULL);			
 				localSplitVector.push_back(m);
@@ -1057,26 +964,22 @@ namespace flopoco {
 					buildHeapLogicOnly(topx,topY,botX-dsp*wxDSP,botY,parentOp->getNewUId());
 			}
 		}
+		
+		
 		}
 	
 
 		
 
+		/*
 
-
-		/** builds the tiles and the logic too*/
-		/**************************************************************************/
+		
 		void IntMultiplier::buildHeapTiling() {
 		
 			//the DSPs should be arranged horizontally or vertically?
 		
 			//number of horizontal/vertical DSPs used if the tiling is horizontal
-		/*	if(parentOp->getTarget()->getVendor()=="Altera")
-			{
-				wxDSP=wyDSP=36;
-			}
-		*/	
-			
+		
 			
 			if(signedIO)
 			{
@@ -1129,7 +1032,98 @@ namespace flopoco {
 		}
 		
 		
+	*/
 	
+	
+		void IntMultiplier::buildHeapTiling()
+		{
+			
+			int botx=wX;
+			int boty=wY;
+			int topx=botx-wxDSP;
+			int topy=boty-wyDSP;
+			int widthX=wxDSP;
+			int widthY=wyDSP;
+			int ok;
+			while(boty>0)
+			{	ok=0;
+				botx=wX;
+				while((botx>0)&&(ok==0))
+				{	
+					widthX=wxDSP;
+					widthY=wyDSP;
+					
+					if(signedIO)
+					{
+						if(boty!=wY)
+							widthY--;
+						if(botx!=wX)
+							widthX--;	
+					}
+				
+					topx=botx-widthX;
+					topy=boty-widthY;
+					
+					if(topx+topy>=wFull-wOut-g)
+					{
+						MultiplierBlock* m = new MultiplierBlock(widthX,widthY,topx,topy,addUID("XX"),addUID("YY"),weightShift);
+						m->setNext(NULL);		
+						m->setPrevious(NULL);			
+						localSplitVector.push_back(m);
+						bitHeap->addDSP(m);
+						ok=0;
+					}
+					
+					else
+					{
+					ok=1;
+					botx=botx+widthX;
+					}
+					
+					botx=botx-widthX;
+				
+				}
+				
+				
+				//compute
+				//determination of the x coordinate
+				
+				REPORT(DETAILED," topx ="<<topx <<" topy= "<<topy<<" botx= "<<botx<<" boty="<<boty);
+				if(topy<0)
+					topy=0;
+				int y=boty;
+				int x=wX;
+				while((x+y>wFull-wOut-g) && (x>0))
+					x--;
+				
+				
+				//call the function only if at least 1 bit remaining
+				REPORT(DETAILED," checktreshold topx=" << x <<" topy= "<<topy<<" botx= "<<botx<<" boty="<<boty);
+				if((botx>0))
+					checkTreshHold(x,topy, botx, boty, widthX, widthY); 
+					
+				boty=boty-widthY;
+			}
+			
+			
+			
+				//if there are some remaining bits on the Y 
+				/*if(restY>0)
+				{
+					//determination of x coordinate (top right)
+					int y=restY;
+					int x=wX;
+					while((x+y>wFull-wOut-g)&&(x>0))
+						x--;
+					checkTreshHold(x,0,wX,restY,wxDSP,wyDSP);
+				}
+				
+				*/
+				
+				
+			bitHeap->getPlotter()->plotMultiplierConfiguration(multiplierUid, localSplitVector, wX, wY, wOut, g);
+				
+		}
 
 	
 		IntMultiplier::~IntMultiplier() {
