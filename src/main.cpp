@@ -465,13 +465,13 @@ void usage(char *name, string opName = ""){
 	if ( full )
 	cerr << "    ____________ COMPLEX OPERATORS ______________________________________\n";
 	if ( full || opName == "Complex" || opName == "FixComplexAdder"){					
-		OP( "FixComplexAdder","wI wF");
+		OP( "FixComplexAdder","wI wO");
 		cerr << "   Complex adder for two's complement fixed-point numbers\n";
 		cerr << "      wI: number of integer bits\n";
-		cerr << "      wF: number of fractional bits.\n";
+		cerr << "      wO: number of output bits\n";
 	}
 	if ( full || opName == "Complex" || opName == "FixComplexMultiplier"){					
-		OP( "FixComplexMultiplier","wI wF");
+		OP( "FixComplexMultiplier","wI wO");
 		cerr << "   Complex multiplier for two's complement fixed-point numbers\n";
 		cerr << "      wI: number of input bits\n";
 		cerr << "      wO: number of output bits\n";
