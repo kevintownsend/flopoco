@@ -484,7 +484,7 @@ namespace flopoco{
 				ctabs << "|" << tab;
 			}
 			
-			cerr << tabs.str() << "Entity " << uniqueName_ <<":"<< endl;
+			cerr << tabs.str() << "Entity " << uniqueName_ << endl;
 			if(this->getPipelineDepth()!=0)
 				cerr << ctabs.str() << tab << "Pipeline depth = " << getPipelineDepth() << endl;
 			else
