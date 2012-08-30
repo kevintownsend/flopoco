@@ -124,8 +124,7 @@ namespace flopoco {
 		void buildHeapTiling();
 
 
-		/** splits the inputs in chunks which fits the DSP-s, and send them to the vector of MultiplierBlocks in Bitheap**/
-		void splitting(int horDSP, int verDSP, int wxDSP, int wyDSP,int restX,int restY);
+		
 
 		/** is called when no more dsp-s fit in a row, because of the truncation line
 		  *	checks the ratio, if only DSPs should be used, only logic, or maybe both, and applies it **/

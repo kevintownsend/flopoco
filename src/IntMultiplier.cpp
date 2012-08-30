@@ -495,7 +495,7 @@ namespace flopoco {
 							m->setNext(NULL);		
 							m->setPrevious(NULL);			
 							localSplitVector.push_back(m);
-							bitHeap->addDSP(m);
+							bitHeap->addMultiplierBlock(m);
 							bitHeap->getPlotter()->plotMultiplierConfiguration(multiplierUid, localSplitVector, wX, wY, wOut, g);
 					//	}	
 						
@@ -743,107 +743,7 @@ namespace flopoco {
 		}
 	
 
-	/*
-	void IntMultiplier::splitting(int horDSP, int verDSP, int wxDSP, int wyDSP,int restX, int restY)
-		{
-	
-			int i=0;
-			int j=0;
-			int x=wX;
-			
-			
-			while(i<verDSP)
-			{
-				j=0;
-				int ok=0;
-				
-				while((j<horDSP)&&(ok==0))
-				{	REPORT(DETAILED,"j= " << j);
-					//if the top right corner is under the truncation line, then will use a DSP; otherwise, will be decided according to the ratio
-					//by calling the checkTreshHold function
-					if((wX-(j+1)*wxDSP)+(wY-(i+1)*wyDSP)>=wFull-wOut-g)
-					{
-						//a DSP can be used
-						int topx=wX-(j+1)*wxDSP;
-						int topy=wY-((i+1)*wyDSP);
-						stringstream inx,iny;
-						int widthX=wxDSP;
-						int widthY=wyDSP;
-						
-						if((i==0)&&(j==0)&&(signedIO))
-						{
-						inx<<sx.str()<<" & "<<addUID("XX");
-						iny<<sy.str()<<" & "<<addUID("YY");
-						}
-						else if((i!=0)&&(j==0)&&(signedIO))
-						{
-						inx<<sx.str()<<" & "<<addUID("XX");
-						iny<<addUID("YY");
-						}
-						
-						else if((i==0)&&(j!=0)&&(signedIO))
-						{
-						inx<<addUID("XX");
-						iny<<sy.str()<<" & "<<addUID("YY");
-						}
-						else if((i!=0)&&(j!=0)||(!signedIO))
-						{
-						inx<<addUID("XX");
-						iny<<addUID("YY");
-						}
-						
-												
-						MultiplierBlock* m = new MultiplierBlock(widthX,widthY,topx,topy,inx.str(),iny.str(),weightShift);
-						m->setNext(NULL);		
-						m->setPrevious(NULL);			
-						REPORT(DETAILED,"new DSP sure fit");
-						localSplitVector.push_back(m);
-						bitHeap->addDSP(m);
-						
-					}
-					
-					else
-					{
-						//cannot use DSPs without checking the ratio
-						ok=1;
-						j--;
-					}
-					
-					j++;
-					
-									
-				}
-				
-				//here we have a horizontal block, length=(from the last used DSP's top-right coordinates to the truncation line)
-				
-				//determination of the x coordinate
-				int y= wY-(i)*wyDSP;
-				x=wX;
-				while((x+y>wFull-wOut-g) && (x>0))
-					x--;
-				
-				
-				//call the function only if at least 1 bit remaining
-				if((wX-j*wxDSP>0))
-					checkTreshHold(x,wY-(i+1)*wyDSP, wX-j*wxDSP, wY-(i)*wyDSP,wxDSP,wyDSP); 
-					
-				i++;		
-			}
-			
-			
-				//if there are some remaining bits on the Y 
-				if(restY>0)
-				{
-					//determination of x coordinate (top right)
-					int y=restY;
-					int x=wX;
-					while((x+y>wFull-wOut-g)&&(x>0))
-						x--;
-					checkTreshHold(x,0,wX,restY,wxDSP,wyDSP);
-				}
-		}
-		
-		*/
+
 		
 		
 			void IntMultiplier::checkTreshHold(int topX, int topY, int botX, int botY,int wxDSP,int wyDSP)
@@ -925,7 +825,7 @@ namespace flopoco {
 					m->setNext(NULL);		
 					m->setPrevious(NULL);			
 					localSplitVector.push_back(m);
-					bitHeap->addDSP(m);
+					bitHeap->addMultiplierBlock(m);
 					
 				}
 				else
@@ -986,7 +886,7 @@ namespace flopoco {
 				m->setNext(NULL);		
 				m->setPrevious(NULL);			
 				localSplitVector.push_back(m);
-				bitHeap->addDSP(m);
+				bitHeap->addMultiplierBlock(m);
 				
 			}
 			else
@@ -1002,73 +902,6 @@ namespace flopoco {
 		
 		}
 	
-	
-
-		
-
-		/*
-
-		
-		void IntMultiplier::buildHeapTiling() {
-		
-			//the DSPs should be arranged horizontally or vertically?
-		
-			//number of horizontal/vertical DSPs used if the tiling is horizontal
-		
-			
-			
-			if(signedIO)
-			{
-				//wxDSP--;
-				//wyDSP--;
-				REPORT(DEBUG,"wxdsp= "<<wxDSP<<" wydsp= "<<wyDSP);
-			}
-			
-			
-			
-			int horDSP1=wX/wxDSP;
-			int verDSP1=wY/wyDSP;
-
-			//number of horizontal/vertical DSPs used if the tiling is vertical
-			int horDSP2=wX/wyDSP;
-			int verDSP2=wY/wxDSP;
-
-			//the size of the zone filled by DSPs
-			int hor=horDSP1*verDSP1;
-			int ver=horDSP2*verDSP2;
- 
-			int horDSP;
-			int verDSP;
-			int restX; //the number of lsbs of the first input which remains after filling with DSPs
-			int restY; //the number of lsbs of the second input which remains after filling with DSPs
-
-			if (hor>=ver)
-				{
-					horDSP=horDSP1;
-					verDSP=verDSP1;
-					restX=wX-horDSP*wxDSP;
-					restY=wY-verDSP*wyDSP;
-					//splitting horizontal
-					
-					splitting(horDSP,verDSP,wxDSP,wyDSP,restX,restY);
-				}
-			else
-				{
-					horDSP=horDSP2;
-					verDSP=verDSP2;
-					restX=wX-horDSP*wyDSP;
-					restY=wY-verDSP*wxDSP;
-					//splitting vertical
-					splitting(horDSP,verDSP,wyDSP,wxDSP,restX,restY);
-				}
-
-	
-		bitHeap->getPlotter()->plotMultiplierConfiguration(multiplierUid, localSplitVector, wX, wY, wOut, g);
-
-		}
-		
-		
-	*/
 	
 	
 		void IntMultiplier::buildHeapTiling()
@@ -1108,7 +941,7 @@ namespace flopoco {
 						m->setNext(NULL);		
 						m->setPrevious(NULL);			
 						localSplitVector.push_back(m);
-						bitHeap->addDSP(m);
+						bitHeap->addMultiplierBlock(m);
 						ok=0;
 						REPORT(INFO,"DSP at "<<topx<<" "<<topy<<" width= "<<widthX<<" height= "<<widthY);
 					}

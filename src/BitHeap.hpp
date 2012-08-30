@@ -110,7 +110,7 @@ namespace flopoco{
 
 
 		/** adds a new MultiplierBlock */
-		void  addDSP(MultiplierBlock* m);
+		void  addMultiplierBlock(MultiplierBlock* m);
 
 
 
