@@ -272,7 +272,7 @@ namespace flopoco
 		if((op->getTarget()->getVendor()=="Xilinx"))
 			buildSupertiles();
 		else THROWERROR("Altera supertiles not yet supported, contact Bogdan Pasca");
-
+		
 		
 		//generate the VHDL code for each supertile
 
@@ -325,28 +325,30 @@ namespace flopoco
 					{
 						
 						stringstream s;
+						int signExt;
 						
-						int signExt=16+(newLength-current->getSigLength());
-						
-						for(int i=0;i<=signExt;i++)
+						for(int i=0;i<17;i++)
 							s<<current->getSigName()<<"("<<current->getSigLength()-1<<") & ";
 							
 						s<<current->getSigName()<<"("<<current->getSigLength()-1<<")";	
 						
 						
 						newLength++;
+						
 						op->vhdl << tab <<	op->declare(join("DSP_bh",guid,"_ch",i,"_",DSPuid),newLength)<< "<= " <<next->getSigName() 
 						         << " +  ( "<<  s.str() <<" & "<<"  "<<current->getSigName()<<range(current->getSigLength()-1,17)<<" );"<<endl ; 
 						         
-						REPORT(DETAILED,"chainings = "<<join("DSP_bh",guid,"_ch",i,"_",DSPuid)<< "length= "<<newLength << "<= " <<next->getSigName() 
-						         << " +  ( "<<  s.str() <<" & "<<"  "<<current->getSigName()<<range(current->getSigLength()-1,17)<<" );");
+						REPORT(DETAILED,"ADDING = "<<join("DSP_bh",guid,"_ch",i,"_",DSPuid)<< "length= "<<newLength << "<= " <<next->getSigName() 
+						         << " +  ( "<<  "se * "<<signExt <<" & "<<"  "<<current->getSigName()<<range(current->getSigLength()-1,17)<<" );");
+					
+					
 					}
 					
 					else
 					{
 						op->vhdl << tab <<	op->declare(join("DSP_bh",guid,"_ch",i,"_",DSPuid),newLength)<< "<= " <<next->getSigName() 
 						         << " +  ( "<<  zg(17)  /* s.str()*/ <<" & "<<"  "<<current->getSigName()<<range(newLength-1,17)<<" );"<<endl ; 
-						REPORT(DETAILED,"chainings = "<<join("DSP_bh",guid,"_ch",i,"_",DSPuid)<< "length= "<<newLength << "<= " <<next->getSigName() 
+						REPORT(DETAILED,"ADDING = "<<join("DSP_bh",guid,"_ch",i,"_",DSPuid)<< "length= "<<newLength << "<= " <<next->getSigName() 
 						         << " +  ( "<<  zg(17) <<" & "<<"  "<<current->getSigName()<<range(current->getSigLength()-1,17)<<" );");
 					}
 					
@@ -376,8 +378,9 @@ namespace flopoco
 				}
 		
 				// adding the result to the bitheap (in the last block from the supertile)
-					string name=current->getSigName();
+				string name=current->getSigName();
 				int length=current->getSigLength();
+				REPORT(DETAILED,"sending bits to bitheap after chain adding");
 				for(int k=length-1;k>=0;k--)
 				{
 					int weight=current->getWeight()+k;	
@@ -389,18 +392,15 @@ namespace flopoco
 						if((k==length-1)&&(signedIO))
 							{
 							s<<"not( "<<name<<"("<<k<<") )";
-							addBit(weight,s.str(),"",4);
+							addBit(weight,s.str(),"",5);
 							for(int i=maxWeight;i>=weight;i--)
 								addConstantOneBit(i);
-								
-							REPORT(DETAILED,"added "<<s.str()<<" to the "<<k);	
-							REPORT(DETAILED,"added constant 1  to the "<<length-1);	
 							}
-						else
+						
+						else 
 							{
 							s<<name<<"("<<k<<")";
 							addBit(weight,s.str(),"",1);
-							REPORT(DETAILED,"added "<<s.str()<<" to the "<<k);	
 							}
 					}
 				}
@@ -1603,6 +1603,14 @@ namespace flopoco
 		int topY=m->gettopY();
 		int botX=topX+m->getwX()-1;
 		int botY=topY+m->getwY()-1;
+		int zerosX=0;
+		int zerosY=0;
+		
+		if(signedIO)
+		{
+			zerosX=25-m->getwX();	
+			zerosY=18-m->getwY();
+		}
 			
 		//if the coordinates are negative, then the signals should be completed with 0-s at the end, for the good result. 
 		//addx, addy represents the number of 0-s to be added
@@ -1617,27 +1625,35 @@ namespace flopoco
 			addy=0-topY;	
 
 
-		
+		 
 	
 	   	
 		if(uid==0)	
 		{
-			op->vhdl << tab << op->declare(join("DSP_bh",guid,"_ch",i,"_",uid), m->getwX()+m->getwY()) 
-				<< " <= (" <<input1<<range(botX,topX+addx)<<" & "<<zg(addx)<<") * (" << input2 <<range(botY,topY+addy)<<" & "<<zg(addy)<<");"<<endl;
+			op->vhdl << tab << op->declare(join("DSP_bh",guid,"_ch",i,"_",uid), m->getwX()+m->getwY()+zerosX+zerosY) 
+				<< " <= ("<<zg(zerosX)<<" & " <<input1<<range(botX,topX+addx)<<" & "<<zg(addx)<<") * (" <<zg(zerosY)<<" & "<< input2 <<range(botY,topY+addy)<<" & "<<zg(addy)<<");"<<endl;
 		
 			s<<join("DSP_bh",guid,"_ch",i,"_",uid);
+			
+			REPORT(DETAILED,"comuted in this moment= "<< join("DSP_bh",guid,"_ch",i,"_",uid)
+				<< "length= "<< m->getwX()+m->getwY()<<" <= (" << input1<<range(botX,topX+addx)<<" & "<<zg(addx)<<") * (" 
+			    << input2 <<range(botY,topY+addy)<<" & "<<zg(addy)<<");");
 		}
 		else
 		{
-			op->vhdl << tab << op->declare(join("DSP_bh",guid,"_",i,"_",uid), m->getwX()+m->getwY())
+			op->vhdl << tab << op->declare(join("DSP_bh",guid,"_root",i,"_",uid), m->getwX()+m->getwY()+zerosX+zerosY)
 			 
-					<< " <= ("  << input1<<range(botX,topX+addx)<<" & "<<zg(addx)<<") * ("<< input2 <<range(botY,topY+addy)<<" & "<<zg(addy)<<");"<<endl;
-			s<<join("DSP_bh",guid,"_",i,"_",uid);
+					<< " <= ("<<zg(zerosX)<<" & "  << input1<<range(botX,topX+addx)<<" & "<<zg(addx)<<") * ("<<zg(zerosY)<<" & "<< input2 <<range(botY,topY+addy)<<" & "<<zg(addy)<<");"<<endl;
+			s<<join("DSP_bh",guid,"_root",i,"_",uid);
+			
+			REPORT(DETAILED,"comuted in this moment= "<< join("DSP_bh",guid,"_root",i,"_",uid)
+				<< "length= "<< m->getwX()+m->getwY()<<" <= (" << input1<<range(botX,topX+addx)<<" & "<<zg(addx)<<") * (" 
+			    << input2 <<range(botY,topY+addy)<<" & "<<zg(addy)<<");");
 		}
 		
 		
 		m->setSignalName(s.str());
-		m->setSignalLength(m->getwX()+m->getwY());
+		m->setSignalLength(m->getwX()+m->getwY()+zerosX+zerosY);
 	//	REPORT(DETAILED,"dspout");
 
 	}

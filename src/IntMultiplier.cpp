@@ -187,14 +187,14 @@ namespace flopoco {
 		// Halve number of cases by making sure wY<=wX:
 		// interchange x and y in case wY>wX
 		
-		if(wYdecl> wXdecl)
+	//	if(wYdecl> wXdecl)
 		{
 			wX=wYdecl;	 
 			wY=wXdecl;	 
 			vhdl << tab << declare(addUID("XX"), wX, true) << " <= " << yname << " ;" << endl;	 
 			vhdl << tab << declare(addUID("YY"), wY, true) << " <= " << xname << " ;" << endl;	 
 		}
-		else
+	/*	else
 		{
 			wX=wXdecl;	 
 			wY=wYdecl;	 
@@ -202,7 +202,7 @@ namespace flopoco {
 			vhdl << tab << declare(addUID("XX"), wX, true) << " <= " << xname << ";" << endl;	 
 			vhdl << tab << declare(addUID("YY"), wY, true) << " <= " << yname << ";" << endl;	 
 		}		
-
+		*/
 }
 
 
@@ -846,7 +846,7 @@ namespace flopoco {
 		*/
 		
 		
-		void IntMultiplier::checkTreshHold(int topX, int topY, int botX, int botY,int wxDSP,int wyDSP)
+			void IntMultiplier::checkTreshHold(int topX, int topY, int botX, int botY,int wxDSP,int wyDSP)
 		{
 		
 			if(parentOp->getTarget()->getVendor()=="Altera")
@@ -858,28 +858,45 @@ namespace flopoco {
 			
 			else
 			{
+			
+			int widthX=wxDSP;
+			int widthY=wyDSP;
+			int botx=botX;
+			
+			if(signedIO)
+			{
+				if(botx!=wX)
+					widthX--;
+				if(botY!=wY)	
+					widthY--;
+			}
+			
 		
 			int height=botY-topY;
 			int width=botX-topX;
-			int dspArea=wxDSP*wyDSP;
+			int dspArea=widthX*widthY;
 			bool was=false; // tells if the while loop was executed or not
-			int botx=botX;
+			
 			int topx=topX;
 			int topy=topY;
 			int dsp=0;//number of used DSPs
 			
+			
+			
+			
+			
 			//if the width is larger then a dsp width, than we have to checkTreshHold the good coordinates for the dsp
-			if (width>wxDSP)
-				topx=botx-wxDSP;
+			if (width>widthX)
+				topx=botx-widthX;
 		
-			REPORT(DETAILED,"checkTreshHold called, width= "<<width);
+			
 		
-			while (width>wxDSP)
+			while (width>widthX)
 			{	
 				REPORT(DETAILED,"width greater than DSPwidth");
 				//we need to split the block
 				was=true;
-				float blockArea=wxDSP*height; //the area of the block that will be analyzed
+				float blockArea=widthX*height; //the area of the block that will be analyzed
 				
 				//computing the area of the triangle that will be lost 
 				int tx=topx;
@@ -896,15 +913,14 @@ namespace flopoco {
 				if((blockArea>=(1.0-ratio)*dspArea))
 				{  
 				
-					if(height<wyDSP)
-						topy=topY-(wyDSP-height);
+					if(height<widthY)
+						topy=topY-(widthY-height);
 					stringstream inx,iny;
-					int widthX=wxDSP;
-					int widthY=wyDSP;
+					
 					inx<<addUID("XX");
 					iny<<addUID("YY");
 								
-												
+						REPORT(INFO,"chr DSP at "<<topx<<" "<<topy<<" width= "<<widthX<<" height= "<<widthY);							
 					MultiplierBlock* m = new MultiplierBlock(widthX,widthY,topx,topy,inx.str(),iny.str(),weightShift);
 					m->setNext(NULL);		
 					m->setPrevious(NULL);			
@@ -915,16 +931,31 @@ namespace flopoco {
 				else
 				{
 					
-					if((topx<botX-dsp*wxDSP-1))
-						buildHeapLogicOnly(topx, topY,(botX-dsp*wxDSP),botY,parentOp->getNewUId());	
+					if((topx<botX-dsp*widthX-1))
+						buildHeapLogicOnly(topx, topY,(botX-dsp*widthX),botY,parentOp->getNewUId());	
 				}
 				
 				dsp++;
 				botx=topx-1;
-				topx=topx-wxDSP;
-				width=width-wxDSP;
-				if(width<=wxDSP)
+				topx=topx-widthX;
+				width=width-widthX;
+			
+				
+			
+				widthX=wxDSP;
+				widthY=wyDSP;
+					
+				if(signedIO)
+				{
+					if(botx!=wX)
+						widthX--;
+					if(botY!=wY)	
+						widthY--;
+				}	
+				
+				if(width<=widthX)
 					topx=topX;
+					
 			}
 			
 			REPORT(DETAILED,"width smaller than DSPwidth");
@@ -939,34 +970,38 @@ namespace flopoco {
 			{
 			
 				if(was)
-					topx=topx-(wxDSP-(botx-topx+1));
+					topx=topx-(widthX-(botx-topx+1));
 				else 
-					topx=topX-(wxDSP-(botX-topX+1))-1; 
+					topx=topX-(widthX-(botX-topX+1))-1; 
 						
-				if(height<wyDSP)
-					topy=topY-(wyDSP-height);
+				if(height<widthY)
+					topy=topY-(widthY-height);
 						
 				stringstream inx,iny;
-				int widthX=wxDSP;
-						int widthY=wyDSP;
+			
 						
 		
-												
+				REPORT(INFO," chr DSP at "<<topx<<" "<<topy<<" width= "<<widthX<<" height= "<<widthY);							
 				MultiplierBlock* m = new MultiplierBlock(widthX,widthY,topx,topy,addUID("XX"),addUID("YY"),weightShift);
 				m->setNext(NULL);		
 				m->setPrevious(NULL);			
 				localSplitVector.push_back(m);
 				bitHeap->addDSP(m);
+				
 			}
 			else
 			{
-				if((topx<botX-dsp*wxDSP))
-					buildHeapLogicOnly(topx,topY,botX-dsp*wxDSP,botY,parentOp->getNewUId());
+				if((topx<botX-dsp*widthX))
+					buildHeapLogicOnly(topx,topY,botX-dsp*widthX,botY,parentOp->getNewUId());
+						
 			}
-		}
+				
+		
+			}
 		
 		
 		}
+	
 	
 
 		
@@ -1061,9 +1096,11 @@ namespace flopoco {
 							widthX--;	
 					}
 				
+					
+				
 					topx=botx-widthX;
 					topy=boty-widthY;
-					
+				
 					if(topx+topy>=wFull-wOut-g)
 					{
 						MultiplierBlock* m = new MultiplierBlock(widthX,widthY,topx,topy,addUID("XX"),addUID("YY"),weightShift);
@@ -1072,23 +1109,34 @@ namespace flopoco {
 						localSplitVector.push_back(m);
 						bitHeap->addDSP(m);
 						ok=0;
+						REPORT(INFO,"DSP at "<<topx<<" "<<topy<<" width= "<<widthX<<" height= "<<widthY);
 					}
 					
 					else
 					{
-					ok=1;
-					botx=botx+widthX;
+						ok=1;
+						botx=botx+widthX;
 					}
 					
 					botx=botx-widthX;
 				
 				}
 				
+				widthX=wxDSP;
+					widthY=wyDSP;
+					
+					if(signedIO)
+					{
+						if(boty!=wY)
+							widthY--;
+						if(botx!=wX)
+							widthX--;	
+					}
 				
 				//compute
 				//determination of the x coordinate
 				
-				REPORT(DETAILED," topx ="<<topx <<" topy= "<<topy<<" botx= "<<botx<<" boty="<<boty);
+				//REPORT(DETAILED," topx ="<<topx <<" topy= "<<topy<<" botx= "<<botx<<" boty="<<boty);
 				if(topy<0)
 					topy=0;
 				int y=boty;
@@ -1098,10 +1146,12 @@ namespace flopoco {
 				
 				
 				//call the function only if at least 1 bit remaining
-				REPORT(DETAILED," checktreshold topx=" << x <<" topy= "<<topy<<" botx= "<<botx<<" boty="<<boty);
+				//REPORT(DETAILED," checktreshold topx=" << x <<" topy= "<<topy<<" botx= "<<botx<<" boty="<<boty);
+				
 				if((botx>0))
-					checkTreshHold(x,topy, botx, boty, widthX, widthY); 
-					
+				//checkTreshHold(x,topy, botx, boty, widthX, widthY); 
+				checkTreshHold(x,topy, botx, boty, wxDSP, wyDSP); 
+				//buildHeapLogicOnly(x,topy, botx, boty,parentOp->getNewUId());	
 				boty=boty-widthY;
 			}
 			
