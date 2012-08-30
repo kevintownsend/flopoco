@@ -118,7 +118,12 @@ namespace flopoco {
 		/**
 		*verifies if two block can be chained in the same supertile or not
 		**/
-		bool canBeChained(MultiplierBlock* next);
+		bool canBeChained(MultiplierBlock* next, bool isXilinx);
+
+		/**
+		 * checks if two blocks are adjacent
+		**/
+		bool neighbors(MultiplierBlock* next); 
 
 		/**
 		*returns the next block which is chained with the current block in the supertile
@@ -131,8 +136,8 @@ namespace flopoco {
 		MultiplierBlock* getPrevious();
 
 		/**
-		*sets the next block which is chained with the current block in the supertile
-		**/
+		 *sets the next block which is chained with the current block in the supertile
+		 **/
 		void setNext(MultiplierBlock* b);
 
 		/**
@@ -159,6 +164,7 @@ namespace flopoco {
 		int weight;
 		int weightShift;					/**<wFull-wOut-g*/
 		string inputName1, inputName2;		/**<names of the inputs*/
+		string srcFileName;
 	};
 
 }

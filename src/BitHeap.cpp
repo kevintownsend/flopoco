@@ -220,21 +220,32 @@ namespace flopoco
 	
 	void BitHeap::buildSupertiles()
 	{
+//		if((op->getTarget()->getVendor()=="Xilinx"))
+//		{
+//
+		bool isXilinx;
+		if(op->getTarget()->getVendor()=="Xilinx")
+			isXilinx=true;
+		else
+			isXilinx=false;
+
 		for(unsigned i=0;i<mulBlocks.size();i++)
 			for(unsigned j=0;j<mulBlocks.size();j++)
 			{ 
-				//if 2 blocks can be chained, the the chaining is done ascending by weight.
+				//if 2 blocks can be chained, then the chaining is done ascending by weight.
 				//TODO improve the chaining		
-			
-
-				if(mulBlocks[i]->canBeChained(mulBlocks[j]))
+				bool chain=mulBlocks[i]->canBeChained(mulBlocks[j], isXilinx);
+				//REPORT(INFO, chain);
+				//REPORT(INFO, mulBlocks[i]->getWeight())
+				if(chain)
 				{
 					
 					if(mulBlocks[j]->getWeight()<=mulBlocks[i]->getWeight())
 					{
 						if((mulBlocks[j]->getNext()==NULL)&&(mulBlocks[i]->getPrevious()==NULL))
-						{	REPORT(DETAILED,"mulblocks[j]= "<<mulBlocks[j]->getWeight()<<" mulBlock[i]= "<<mulBlocks[i]->getWeight());
-							REPORT(DETAILED,"j<=i");
+						{
+							REPORT(INFO,"block : " << mulBlocks[j]->getbotX() << "  " << mulBlocks[j]->getbotY());
+							REPORT(INFO,"with block : " << mulBlocks[i]->getbotX() << "  " <<  mulBlocks[i]->getbotY());
 							mulBlocks[j]->setNext(mulBlocks[i]);
 							mulBlocks[i]->setPrevious(mulBlocks[j]);
 						}	
@@ -242,15 +253,54 @@ namespace flopoco
 					else
 					{
 						if((mulBlocks[i]->getNext()==NULL)&&(mulBlocks[j]->getPrevious()==NULL))	
-						{	REPORT(DETAILED,"mulblocks[j]= "<<mulBlocks[j]->getWeight()<<" mulBlock[i]= "<<mulBlocks[i]->getWeight());
-							REPORT(DETAILED,"j>i");
+						{
+							REPORT(INFO,"block : " << mulBlocks[i]->getbotX() << "  " << mulBlocks[i]->getbotY());
+							REPORT(INFO,"with block : " << mulBlocks[j]->getbotX() << "  " <<  mulBlocks[j]->getbotY());
 							mulBlocks[i]->setNext(mulBlocks[j]);
 							mulBlocks[j]->setPrevious(mulBlocks[i]);
 						}	
 					}		
 				}
+			
 
 			}
+	//	}
+
+		//Altera supertiles:
+		// - 36x36 multipliers
+		// - two 18x18 adjacent blocks
+		if(op->getTarget()->getVendor()=="Altera")
+		{
+			for(unsigned i=0;i<mulBlocks.size();i++)
+				for(unsigned j=0;j<mulBlocks.size();j++)
+				{
+					if((mulBlocks[i]->getNext()!=NULL) && (mulBlocks[j]->getNext()!=NULL) && 
+							(mulBlocks[i]->getPrevious()==NULL) && (mulBlocks[j]->getPrevious()==NULL))
+						if (mulBlocks[i]->neighbors(mulBlocks[j]))
+							if (mulBlocks[i]->getNext()->neighbors(mulBlocks[j]->getNext()))
+							{
+								REPORT(INFO, endl);
+								REPORT(INFO, "supertile " );
+								REPORT(INFO,"block : " << mulBlocks[i]->getbotX() << "  " << mulBlocks[i]->getbotY());
+								REPORT(INFO,"with block : " << mulBlocks[j]->getbotX() << "  " <<  mulBlocks[j]->getbotY());
+								REPORT(INFO,"  " << mulBlocks[i]->getNext()->getbotX() << "  " << mulBlocks[i]->getNext()->getbotY());
+								REPORT(INFO,"  " << mulBlocks[j]->getNext()->getbotX() << "  " <<  mulBlocks[j]->getNext()->getbotY());
+
+
+								mulBlocks[i]->setPrevious(mulBlocks[j]);
+								mulBlocks[j]->setPrevious(mulBlocks[i]);
+								mulBlocks[i]->getNext()->setNext(mulBlocks[i]);
+								mulBlocks[j]->getNext()->setNext(mulBlocks[i]);
+
+
+							}
+						
+
+					
+				}
+
+		}
+
 
 
 		//just for debugging
@@ -263,15 +313,17 @@ namespace flopoco
 
 
 
+
+
 	void BitHeap::generateSupertileVHDL()
 	{
 		//making all the possible supertiles
 		
 		// mulBlocks is a vector of DSPs without chaining: chain them
 
-		if((op->getTarget()->getVendor()=="Xilinx"))
-			buildSupertiles();
-		else THROWERROR("Altera supertiles not yet supported, contact Bogdan Pasca");
+		//if((op->getTarget()->getVendor()=="Xilinx"))
+		buildSupertiles();
+		//else THROWERROR("Altera supertiles not yet supported, contact Bogdan Pasca");
 		
 		
 		//generate the VHDL code for each supertile

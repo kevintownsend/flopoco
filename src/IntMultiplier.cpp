@@ -1016,10 +1016,11 @@ namespace flopoco {
 			//number of horizontal/vertical DSPs used if the tiling is horizontal
 		
 			
+			
 			if(signedIO)
 			{
-				wxDSP--;
-				wyDSP--;
+				//wxDSP--;
+				//wyDSP--;
 				REPORT(DEBUG,"wxdsp= "<<wxDSP<<" wydsp= "<<wyDSP);
 			}
 			
