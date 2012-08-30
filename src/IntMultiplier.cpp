@@ -187,14 +187,14 @@ namespace flopoco {
 		// Halve number of cases by making sure wY<=wX:
 		// interchange x and y in case wY>wX
 		
-	//	if(wYdecl> wXdecl)
+		if(wYdecl> wXdecl)
 		{
 			wX=wYdecl;	 
 			wY=wXdecl;	 
 			vhdl << tab << declare(addUID("XX"), wX, true) << " <= " << yname << " ;" << endl;	 
 			vhdl << tab << declare(addUID("YY"), wY, true) << " <= " << xname << " ;" << endl;	 
 		}
-	/*	else
+		else
 		{
 			wX=wXdecl;	 
 			wY=wYdecl;	 
@@ -202,7 +202,7 @@ namespace flopoco {
 			vhdl << tab << declare(addUID("XX"), wX, true) << " <= " << xname << ";" << endl;	 
 			vhdl << tab << declare(addUID("YY"), wY, true) << " <= " << yname << ";" << endl;	 
 		}		
-		*/
+		
 }
 
 
