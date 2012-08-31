@@ -4,7 +4,7 @@
   This file is part of the FloPoCo project
   developed by the Arenaire team at Ecole Normale Superieure de Lyon
   
-  Author : Florent de Dinechin, Florent.de.Dinechin@ens-lyon.fr
+  Author : Florent de Dinechin, Florent.de.Dinechin@ens-lyon.fr, Kinga Illyes, Bogdan Popa
 
   Initial software.
   Copyright © ENS-Lyon, INRIA, CNRS, UCBL,  

@@ -30,7 +30,7 @@ namespace flopoco
 
 	Plotter::Snapshot::Snapshot(vector<list<WeightedBit*> > bitheap, int minWeight_, 
 			int maxWeight_, unsigned maxHeight_, bool didCompress_, int stage_):
-		didCompress(didCompress_), stage(stage_), maxWeight(maxWeight_), minWeight(minWeight_), maxHeight(maxHeight_)
+		maxWeight(maxWeight_), minWeight(minWeight_), maxHeight(maxHeight_), didCompress(didCompress_) , stage(stage_)
 	{
 		for(int w=minWeight; w<maxWeight_; w++)
 		{
@@ -55,21 +55,7 @@ namespace flopoco
 			}
 		}
 	}
-#if 0
-	unsigned Plotter::Snapshot::getMaxHeight()
 
-	{
-		unsigned max=0; 
-		for(int i=minWeight; i<maxWeight; i++)
-			{
-				if(bits[i].size()>max)
-					max=bits[i].size();
-			}
-		return max;
-
-	}
-
-#endif
 
 	Plotter::Plotter(BitHeap* bh_):bh(bh_)
 	{
@@ -693,11 +679,9 @@ namespace flopoco
 		int cnt = 0;
 		double tempCP = 0;
 
-		int stagesPerCycle = bh->getStagesPerCycle();
-		double elemTime = bh->getElementaryTime();
 
-		bool drawCycleLine=false;
-		int drawCycleNumber=1;
+
+
 
 
 		fig << "<line x1=\"" << turnaroundX + 150 << "\" y1=\"" 
@@ -706,7 +690,7 @@ namespace flopoco
 
 		//turnaroundX -= minWeight*10;
 
-		for(int i=0; i<bits.size(); i++)
+		for(unsigned i=0; i<bits.size(); i++)
 		{
 
 			//REPORT(INFO, "wtf" << i);
@@ -794,7 +778,7 @@ namespace flopoco
 
 		turnaroundX -= minWeight*10;
 
-		for(int i=0; i<bits.size(); i++)
+		for(unsigned i=0; i<bits.size(); i++)
 		{
 
 			//REPORT(INFO, "wtf" << i);
@@ -827,13 +811,6 @@ namespace flopoco
 								}
 						}
 
-					//REPORT(INFO, "after middle call " << (*it)->getName());
-
-					int color;
-
-					//if ((*it)->getType()==)
-
-
 					int cy = (*it)->getCycle();
 					double cp = (*it)->getCriticalPath(cy)*1000000000000; //picoseconds
 					if (timeCondition)
@@ -864,32 +841,7 @@ namespace flopoco
 
         
 	}
-#if 0
 
-	
-	void Plotter::closeBitHeapPlotting(int offsetY)
-	{
-		int turnaroundX = 1500;
-		fig << "<line x1=\"" << turnaroundX + 50 << "\" y1=\"" << 20 << "\" x2=\"" << turnaroundX + 50
-		    << "\" y2=\"" << offsetY +30 << "\" style=\"stroke:midnightblue;stroke-width:1\" />" << endl;
-
-		fig << "</g></svg>" << endl;
-
-		fileFig << "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" width=\"100%\" 
-			height=\"100%\" viewBox=\"" <<turnaroundX - bits.size()*10 - 80 
-		        << " " << 100 << " " << turnaroundX + 50 << " " << offsetY + 20 <<  "\">" << endl; 
-		fileFig << "<g transform=\"rotate(45)\">" <<endl;
-		//    fileFig << "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" viewBox=\"0 0 500 500\">" << endl; 
-
-		fileFig << fig.str();
-       
-               
-
-		fileFig.close();
-	}
-
-
-#endif
 
 
 }

@@ -21,7 +21,6 @@
 #include <fstream>
 #include <math.h>	
 
-//#include "Plotter.hpp"
 
 using namespace std;
 
@@ -53,6 +52,8 @@ namespace flopoco{
 
 			/** returns the stage when this bit should be compressed */ 
 			int computeStage(int stagesPerCycle, double elementaryTime);
+
+
 
 
 			

@@ -30,7 +30,7 @@ namespace flopoco
 {
 
 	WeightedBit::WeightedBit(int guid, int uid, int weight_, int type_, int cycle_, double criticalPath_) : 
-		weight(weight_), type(type_), cycle(cycle_), criticalPath(criticalPath_)
+		cycle(cycle_),  criticalPath(criticalPath_), weight(weight_), type(type_) 
 	{
 		std::ostringstream p;
 
@@ -43,7 +43,7 @@ namespace flopoco
 
 	WeightedBit::WeightedBit(string name_, int uid_, int weight_, int type_, 
 			int cycle_, double criticalPath_) :
-		weight(weight_), type(type_), cycle(cycle_), criticalPath(criticalPath_)
+	cycle(cycle_), criticalPath(criticalPath_),	weight(weight_), type(type_) 
 	{
 		name=name_;
 		uid=uid_;
