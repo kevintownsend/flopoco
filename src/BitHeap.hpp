@@ -244,6 +244,7 @@ namespace flopoco{
 		string srcFileName;
 		string uniqueName_;
 		bool signedIO;
+		int plottingStage;
 		
 	};
 

@@ -208,9 +208,11 @@ namespace flopoco {
 
 	
 	// The virtual constructor
-	IntMultiplier::IntMultiplier (Operator* parentOp_, BitHeap* bitHeap_, Signal* x_, Signal* y_, int wX_, int wY_, int wOut_, int lsbWeight_, bool negate_, bool signedIO_, float ratio_):
+	IntMultiplier::IntMultiplier (Operator* parentOp_, BitHeap* bitHeap_, Signal* x_, Signal* y_, int wX_, 
+			int wY_, int wOut_, int lsbWeight_, bool negate_, bool signedIO_, float ratio_):
 		Operator ( parentOp_->getTarget()), 
-		wXdecl(wX_), wYdecl(wY_), wOut(wOut_), ratio(ratio_),  maxError(0.0), parentOp(parentOp_), bitHeap(bitHeap_), x(x_), y(y_), negate(negate_), signedIO(signedIO_) {
+		wXdecl(wX_), wYdecl(wY_), wOut(wOut_), ratio(ratio_),  maxError(0.0), parentOp(parentOp_), bitHeap(bitHeap_), 
+		x(x_), y(y_), negate(negate_), signedIO(signedIO_) {
 
 		isOperator=false;
 
@@ -368,7 +370,8 @@ namespace flopoco {
 			if (signedIO){
 				manageCriticalPath( target()->localWireDelay(wX) + target()->adderDelay(wX+1) );
 
-				vhdl << tab << addUID("R") <<" <= (" << zg(wX+1)  << " - ("<<addUID("XX")<< of(wX-1) << " & "<<addUID("XX")<<")) when "<<addUID("YY")<<"(0)='1' else "<< zg(wX+1,0)<<";"<<endl;	
+				vhdl << tab << addUID("R") <<" <= (" << zg(wX+1)  << " - ("<<addUID("XX")<< of(wX-1) 
+					<< " & "<<addUID("XX")<<")) when "<<addUID("YY")<<"(0)='1' else "<< zg(wX+1,0)<<";"<<endl;	
 
 			}
 			else {
@@ -460,7 +463,8 @@ namespace flopoco {
 						manageCriticalPath(target()->DSPMultiplierDelay());
 						/*if (signedIO)
 						{
-							vhdl << tab << declare(addUID("rfull"), wFull+1) << " <= "<<addUID("XX")<<"  *  "<< addUID("YY")<<"; -- that's one bit more than needed"<<endl; 
+							vhdl << tab << declare(addUID("rfull"), wFull+1) << " <= "<<addUID("XX")<<"  *  "
+								<< addUID("YY")<<"; -- that's one bit more than needed"<<endl; 
 							vhdl << tab << addUID("R")<<" <= "<< addUID("rfull") <<range(wFull-1, wFull-wOut)<<";"<<endl;	
 							outDelayMap[addUID("R")] = getCriticalPath();
 						}
@@ -562,7 +566,8 @@ namespace flopoco {
 
 
 		/**************************************************************************/
-		void IntMultiplier::buildHeapLogicOnly(int topX, int topY, int botX, int botY,int blockUid) {
+		void IntMultiplier::buildHeapLogicOnly(int topX, int topY, int botX, int botY,int blockUid)
+			{
 			Target *target=getTarget();
 			if(blockUid==-1)
 				blockUid++;    /// ???????????????
@@ -743,8 +748,6 @@ namespace flopoco {
 		}
 	
 
-
-		
 		
 			void IntMultiplier::checkTreshHold(int topX, int topY, int botX, int botY,int wxDSP,int wyDSP)
 		{

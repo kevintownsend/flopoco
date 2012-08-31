@@ -147,11 +147,17 @@ namespace flopoco {
 		
 			
 
-		bool operator <= (MultiplierBlock* b); 
+		bool operator <= (MultiplierBlock* b);
+
+
+		void invalidate();
+
+
+		bool getValid();	
 
 		
 	private:
-	
+			
 		int wX; 							/**< x size */
 		int wY; 							/**< y size */
 		int topX; 							/**< x position (top right corner) */
@@ -165,6 +171,7 @@ namespace flopoco {
 		int weightShift;					/**<wFull-wOut-g*/
 		string inputName1, inputName2;		/**<names of the inputs*/
 		string srcFileName;
+		bool validForVHDLGenerate;
 	};
 
 }

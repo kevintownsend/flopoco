@@ -32,6 +32,7 @@ namespace flopoco{
 			weight=topX+topY-weightShift;
 			previous=NULL;
 			next=NULL;
+			validForVHDLGenerate=true;
 			
 			
 		}
@@ -170,6 +171,16 @@ namespace flopoco{
 			else
 				return false;
 
+		}
+
+		void MultiplierBlock::invalidate()
+		{
+			validForVHDLGenerate=false;
+		}
+
+		bool MultiplierBlock::getValid()
+		{
+			return validForVHDLGenerate;
 		}
 
 
