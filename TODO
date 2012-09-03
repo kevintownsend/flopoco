@@ -95,3 +95,36 @@ Version ???   Interval operators
 
 
 
+If we were to redo the pipeline framework from scratch, here is the proper way to do it.
+
+The current situation has a history: we first added cycle management, then, as a refinement, critical-path based subcycle timing.
+So we have to manage explicitely the two components of a lexicographic time (cycle and delay within a cycle)
+But there is only one wallclock time, and the decomposition of this wallclock time into cycles and sub-cycles could be automatic. And should.
+ 
+The following version of declare() could remove the need for manageCriticalPath as well as all the explicit synchronization methods.
+declare(name, size, delay)
+declares a signal, and associates its computation delay to it.  This delay is what we currently pass to manageCriticalPath. Each signal now will have a delay associated to it (with a default of 0 for signals that do not add to the critical path).
+The semantics is: this signal will not be assigned its value before the instant delta + max(instants of the RHS signals) 
+This is all what the first pass, the one that populates the vhdl stream, needs to do. No explicit synchronization management needed. No need to setCycle to "come back in time", etc.
+
+Then we have a retiming procedure that must associate a cycle to each signal. 
+It will do both synchronization and cycle computation. According to Alain Darte there is an old retiming paper that shows that the retiming problem can be solved optimally in linear time for DAGs, which is not surprising.
+Example of simple procedure: 
+first build the DAG of signals (all it takes is the same RHS parsing, looking for signal names, as we do)
+Then sit on the existing scheduling literature...
+For instance  
+1/ build the operator's critical path
+2/ build the ASAP and ALAP instants for each signal
+3/ progress from output to input, allocating a cycle to each signal, with ALAP scheduling (should minimize register count for compressing operators)
+4/ possibly do a bit of Leiserson and Saxe retiming 
+
+We keep all the current advantages: 
+- still VHDL printing based
+- When developing an operator, we initially leave all the deltas to zero to debug the combinatorial version. Then we incrementally add deltas, just like we currently  add manageCriticalPath(). 
+- etc
+
+The difference is that the semantic is now much clearer. No more notion of a block following a manageCriticalPath(), etc
+
+The question is: don't we loose some control on the circuit with this approach, compared to what we currently do?
+
+Note that all this is so much closer to textbook literature, with simple DAGs labelled by delay...
