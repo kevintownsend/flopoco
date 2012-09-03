@@ -29,8 +29,8 @@ namespace flopoco
 {
 
 	Plotter::Snapshot::Snapshot(vector<list<WeightedBit*> > bitheap, int minWeight_, 
-			int maxWeight_, unsigned maxHeight_, bool didCompress_, int stage_):
-		maxWeight(maxWeight_), minWeight(minWeight_), maxHeight(maxHeight_), didCompress(didCompress_) , stage(stage_)
+			int maxWeight_, unsigned maxHeight_, bool didCompress_, int stage_, int cycle_, double cp_):
+		maxWeight(maxWeight_), minWeight(minWeight_), maxHeight(maxHeight_), didCompress(didCompress_) , stage(stage_), cycle(cycle_), cp(cp_)
 	{
 		for(int w=minWeight; w<maxWeight_; w++)
 		{
@@ -74,10 +74,10 @@ namespace flopoco
 	}
 
 
-	void Plotter::heapSnapshot(bool compress, int stage)
+	void Plotter::heapSnapshot(bool compress, int stage, int cycle, double cp)
 	{
 		snapshots.push_back(new Snapshot(bh->bits, bh->getMinWeight(), bh->getMaxWeight(), bh->getMaxHeight(),
-				   	compress, stage));
+				   	compress, stage, cycle, cp));
 	}
 
 
@@ -164,11 +164,41 @@ namespace flopoco
 
 			if(snapshots[i]->didCompress)
 			{
-				offsetY += 20 + snapshots[i]->maxHeight * 10;
+
 				timeCondition = true;
 				if (i > snapshots.size()-3)
 					timeCondition = false;
-				drawConfiguration(snapshots[i]->bits, snapshots[i]->stage, snapshots[i]->minWeight, offsetY, turnaroundX, timeCondition);
+				
+				offsetY += 15 + snapshots[i]->maxHeight * 10;
+				drawConfiguration(snapshots[i]->bits, i,snapshots[i]->cycle, snapshots[i]->cp, snapshots[i]->stage,
+					   snapshots[i]->minWeight, offsetY, turnaroundX, timeCondition);
+
+				if (i!=snapshots.size()-1)
+				{
+					int j=i+1;
+					
+					while(snapshots[j]->didCompress==false)
+						j++;
+
+					int c = snapshots[j]->cycle - snapshots[i]->cycle;
+
+					fig << "<line x1=\"" << turnaroundX + 150 << "\" y1=\"" 
+						<< offsetY + 10 << "\" x2=\"" << 50
+						<< "\" y2=\"" << offsetY + 10 << "\" style=\"stroke:lightsteelblue;stroke-width:1\" />" << endl;
+
+					while(c>0)
+					{
+						offsetY += 10;
+						fig << "<line x1=\"" << turnaroundX + 150 << "\" y1=\"" 
+							<< offsetY  << "\" x2=\"" << 50
+							<< "\" y2=\"" << offsetY  << "\" style=\"stroke:midnightblue;stroke-width:2\" />" << endl;
+
+						c--;
+
+					}
+				}
+
+
 			}
 			
 		}
@@ -751,7 +781,8 @@ namespace flopoco
 
 
 
-	void Plotter::drawConfiguration(vector<list<WeightedBit*> > bits, int stage, int minWeight, int offsetY, int turnaroundX, bool timeCondition)
+	void Plotter::drawConfiguration(vector<list<WeightedBit*> > bits,int nr, int cycle, double cp, int stage,
+			int minWeight, int offsetY, int turnaroundX, bool timeCondition)
 	{
 		int color = 0;
 		int tempCycle = 0;
@@ -761,9 +792,37 @@ namespace flopoco
 		int stagesPerCycle = bh->getStagesPerCycle();
 		double elemTime = bh->getElementaryTime();
 
-		fig << "<text x=\"" << turnaroundX + 100 << "\" y=\"" << offsetY + 3
-			<< "\" fill=\"midnightblue\">" << stage << "</text>" << endl;
+		int ci,c1,c2,c3;//print cp as a number as a rational number, in nanoseconds
 
+		int cpint = cp * 1000000000000;
+
+		c3 = cpint % 10;
+		cpint = cpint / 10;
+		c2 = cpint % 10;	
+		cpint = cpint / 10;
+		c1 = cpint % 10;
+		cpint = cpint / 10;
+		ci = cpint % 10;
+
+		REPORT(INFO, snapshots.size()<< " nr= "<<nr);
+
+		if (nr == snapshots.size()-1)
+			fig << "<text x=\"" << turnaroundX + 100 << "\" y=\"" << offsetY + 3
+				<< "\" fill=\"midnightblue\">" << "before final addition" << "</text>" << endl;
+		else
+			if (nr == snapshots.size()-2)
+				fig << "<text x=\"" << turnaroundX + 100 << "\" y=\"" << offsetY + 3
+					<< "\" fill=\"midnightblue\">" << "before 3-bit height additions" << "</text>" << endl;
+			else
+			{
+				fig << "<text x=\"" << turnaroundX + 100 << "\" y=\"" << offsetY + 3
+					<< "\" fill=\"midnightblue\">" << cycle << "</text>" << endl;
+
+				fig << "<text x=\"" << turnaroundX + 150 << "\" y=\"" << offsetY + 3
+					<< "\" fill=\"midnightblue\">" << ci << "." << c1 << c2 << c3 << " ns"  << "</text>" << endl;
+			}
+
+#if 0
 		if((lastStage/stagesPerCycle)<(stage/stagesPerCycle))
 			fig << "<line x1=\"" << turnaroundX + 150 << "\" y1=\"" 
 				<< offsetY +10 << "\" x2=\"" << turnaroundX - bits.size()*10 - 50
@@ -774,7 +833,7 @@ namespace flopoco
 				<< "\" y2=\"" << offsetY +10 << "\" style=\"stroke:lightsteelblue;stroke-width:1\" />" << endl;
 
 		lastStage=stage;
-
+#endif
 
 		turnaroundX -= minWeight*10;
 

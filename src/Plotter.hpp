@@ -35,7 +35,8 @@ namespace flopoco
 		{
 			public:
 
-				Snapshot(vector<list<WeightedBit*> > bitheap, int minWeight_, int maxWeight_, unsigned maxHeight,  bool didCompress_, int stage_);
+				Snapshot(vector<list<WeightedBit*> > bitheap, int minWeight_, int maxWeight_, unsigned maxHeight,  
+						bool didCompress_, int stage_, int cycle, double cp);
 
 				~Snapshot(){};
 
@@ -47,6 +48,8 @@ namespace flopoco
 				unsigned maxHeight;
 				bool didCompress; 
 				int stage;
+				int cycle;
+				double cp;
 				string srcFileName;
 
 		};
@@ -60,7 +63,7 @@ namespace flopoco
 			~Plotter();
 
 			/** takes a snapshot of the bitheap's current state */
-			void heapSnapshot(bool compress, int stage);
+			void heapSnapshot(bool compress, int stage, int cycle, double cp);
 
 			/** plots all the bitheap's stages */
 			void plotBitHeap();
@@ -111,7 +114,8 @@ namespace flopoco
 
 			void drawInitialConfiguration( vector<list<WeightedBit*> > bits, int maxWeight, int offsetY, int turnaroundX);
 
-			void drawConfiguration(vector<list<WeightedBit*> > bits, int stage, int maxWeight, int offsetY, int turnaroundX, bool timeCondition);
+			void drawConfiguration(vector<list<WeightedBit*> > bits, int nr, int cycle, double cp, int stage,
+					int maxWeight, int offsetY, int turnaroundX, bool timeCondition);
 
 
 			/** draws a single bit */

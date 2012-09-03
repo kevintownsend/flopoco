@@ -765,7 +765,7 @@ namespace flopoco
 
 		didCompress = true;
 
-		plotter->heapSnapshot(didCompress, stage);
+		plotter->heapSnapshot(didCompress, stage, op->getCurrentCycle(), op->getCriticalPath());
 
 		//compressing until the maximum height of the columns is 3 
 		while (getMaxHeight()>3)
@@ -775,11 +775,11 @@ namespace flopoco
 
 				compress(stage);
 				stage++;
-				plotter->heapSnapshot(didCompress, plottingStage);
+				plotter->heapSnapshot(didCompress, plottingStage, op->getCurrentCycle(), op->getCriticalPath());
 
 			}
 
-		plotter->heapSnapshot(true, stage+1);
+		plotter->heapSnapshot(true, stage+1,op->getCurrentCycle(), op->getCriticalPath() );
 		REPORT(DEBUG, endl);
 		REPORT(DEBUG, "only three levels left");
 
@@ -899,7 +899,7 @@ namespace flopoco
 		  
 			stage = computeStage();
 
-			plotter->heapSnapshot(true, stage);	
+			plotter->heapSnapshot(true, stage, op->getCurrentCycle(), op->getCriticalPath());	
 			
 			//final addition
 			generateFinalAddVHDL(true);
