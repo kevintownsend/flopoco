@@ -156,9 +156,6 @@ namespace flopoco {
 
 
 	void IntMultiplier::initialize() {
-		// interface redundancy
-		
-		//
 		if(wOut<0 || wXdecl<0 || wYdecl<0) {
 			THROWERROR("negative input/output size");
 		}
@@ -199,7 +196,6 @@ namespace flopoco {
 		{
 			wX=wXdecl;	 
 			wY=wYdecl;	 
- 	 
 			vhdl << tab << declare(addUID("XX"), wX, true) << " <= " << xname << ";" << endl;	 
 			vhdl << tab << declare(addUID("YY"), wY, true) << " <= " << yname << ";" << endl;	 
 		}		
@@ -320,14 +316,13 @@ namespace flopoco {
 
 
 
-
-	/// TODO FIXME all the special case in case of a shared bit heap
 	void  IntMultiplier::fillBitHeap(){
 
 		///////////////////////////////////////
 		//  architectures for corner cases   //
-		// TODO manage non-standalone case here //
 		///////////////////////////////////////
+
+		// To manage stand-alone cases, we just build a bit-heap of max height one, so the compression will do nothing
 
 		// The really small ones fit in two LUTs and that's as small as it gets  
 		if(wX+wY <= target()->lutInputs()+2) {
@@ -459,7 +454,7 @@ namespace flopoco {
 			if (testFit){
 			REPORT(DETAILED,"testfit");
 			
-				if( target()->worthUsingDSP(wX, wY))
+				if( false && target()->worthUsingDSP(wX, wY))
 					{	REPORT(DEBUG,"worthUsingDSP");
 						manageCriticalPath(target()->DSPMultiplierDelay());
 						/*if (signedIO)

@@ -137,8 +137,6 @@ namespace flopoco{
 
 		Plotter* getPlotter();
 
-		vector<list<WeightedBit*> > bits; /**<  The list is ordered by arrival time of the bits, i.e. lexicographic order on (cycle, cp)*/
-
 		Operator* getOp() {return op;};
 
 		/** return the UID of the bit heap*/
@@ -217,6 +215,8 @@ namespace flopoco{
 
 		void drawBit(int cnt, int w, int turnaroundX, int offsetY, int c);
 
+	public: // TODO privatize
+		vector<list<WeightedBit*> > bits; /**<  The list is ordered by arrival time of the bits, i.e. lexicographic order on (cycle, cp)*/
 	private:
 		Operator* op;
 		unsigned maxWeight;     /**< The compressor tree will produce a result for weights < maxWeight (work modulo 2^maxWeight)*/
