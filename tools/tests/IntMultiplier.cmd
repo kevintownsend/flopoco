@@ -1,6 +1,3 @@
-@
-@
-@
 #IntMultiplier
 flopoco -target=Virtex5  IntMultiplier 2 2 4 0   1
 flopoco -target=Virtex5  IntMultiplier 2 2 4 1   1
