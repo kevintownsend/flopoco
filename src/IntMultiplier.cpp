@@ -395,34 +395,17 @@ namespace flopoco {
 			else  
 				vhdl << addUID("R1i")<<";"<<endl;
 
-			for (int w=0; w<wX+2; w++){
+			for (int w=0; w<wOut+g; w++){
 				stringstream s0,s1;
-				s0<<addUID("R0")<<of(w);
-				bitHeap->addBit(lsbWeight + w+g, s0.str());
-				s1<<addUID("R1")<<of(w);
-				bitHeap->addBit(lsbWeight + w+g, s1.str());
+				s0<<addUID("R0")<<of(w+(wX+2-wOut-g));
+				bitHeap->addBit(lsbWeight + w, s0.str());
+				s1<<addUID("R1")<<of(w+(wX+2-wOut-g));
+				bitHeap->addBit(lsbWeight + w, s1.str());
 			}
+			// Rounding bit (or carry in bit for signed inputs)
+			if(g || signedIO)
+				bitHeap->addConstantOneBit(lsbWeight);
 			// and that's it
-
-#if 0
-			
-			IntAdder *resultAdder = new IntAdder( target(), wX+2, inDelayMap("X", target()->localWireDelay() + getCriticalPath() ) );
-			oplist.push_back(resultAdder);
-			
-			inPortMap(resultAdder, addUID("X"), addUID("R0"));
-			inPortMap(resultAdder, addUID("Y"), addUID("R1"));
-			inPortMapCst(resultAdder, addUID("Cin"), (signedIO? "'1'" : "'0'"));
-			outPortMap( resultAdder, addUID("R"), addUID("RAdder"));
-
-			vhdl << tab << instance(resultAdder, addUID("ResultAdder")) << endl;
-
-			syncCycleFromSignal(addUID("RAdder"));
-			setCriticalPath( resultAdder->getOutputDelay(addUID("R")));
-
-			vhdl << tab << addUID("R")<<"<= "<<  addUID("RAdder") << range(wFull-1, wFull-wOut)<<";"<<endl;	
-
-			outDelayMap[addUID("R")] = getCriticalPath();
-#endif
 			return;
 
 		} 
