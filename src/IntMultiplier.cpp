@@ -176,6 +176,7 @@ namespace flopoco {
 		wTruncated = wFull - wOut;
 
 		g = neededGuardBits(wXdecl, wYdecl, wOut);
+ 		REPORT(DEBUG, "    g=" << g);
 
 		maxWeight = wOut+g;
 		weightShift = wFull - maxWeight;  
@@ -208,7 +209,8 @@ namespace flopoco {
 	IntMultiplier::IntMultiplier (Operator* parentOp_, BitHeap* bitHeap_, Signal* x_, Signal* y_, int wX_, 
 			int wY_, int wOut_, int lsbWeight_, bool negate_, bool signedIO_, float ratio_):
 		Operator ( parentOp_->getTarget()), 
-		wXdecl(wX_), wYdecl(wY_), wOut(wOut_), ratio(ratio_),  maxError(0.0), parentOp(parentOp_), bitHeap(bitHeap_), 
+		wXdecl(wX_), wYdecl(wY_), wOut(wOut_), ratio(ratio_),  maxError(0.0), 
+		parentOp(parentOp_), bitHeap(bitHeap_), lsbWeight(lsbWeight_),
 		x(x_), y(y_), negate(negate_), signedIO(signedIO_) {
 
 		isOperator=false;
@@ -294,6 +296,7 @@ namespace flopoco {
 
 		// The bit heap
 		bitHeap = new BitHeap(this, wOut+g);
+		lsbWeight=0;
 
 		plotter = new Plotter(bitHeap);
 
@@ -337,38 +340,26 @@ namespace flopoco {
 
 			inPortMap(t, "X", addUID("XY"));
 			outPortMap(t, "Y", addUID("RR"));
+			vhdl << instance(t, "multTable");
+
 			plotter->addSmallMult(0,0,wX,wY);
 			bitHeap->getPlotter()->plotMultiplierConfiguration(multiplierUid, localSplitVector, wX, wY, wOut, g);
-			vhdl << instance(t, "multTable");
 			
-			for(int k=wX+wY-1; k>=0; k--)
-			{
-				if(k>=wX+wY-wOut-g)
-				{
+			for(int w=wOut-1; w>=0; w--)	{
 					stringstream s;
-					s<<addUID("RR")<<"("<<k<<")";
-					bitHeap->addBit(k,s.str());
-				}	
+					s<<addUID("RR")<<of(w);
+					bitHeap->addBit(lsbWeight + w + g, s.str()); // the guard bits remains 0 here
 			}		
-			
-			//vhdl << tab << addUID("R")<<" <= "<<addUID("RR")<<";" << endl;
-
-			//setCriticalPath(t->getOutputDelay(addUID("Y")));
-
-			//outDelayMap[addUID("R")] = getCriticalPath();
 			return;
-			
 		}
 
 		// Multiplication by 1-bit integer is simple
 		if ((wY == 1)){
-			REPORT(DETAILED,"2");
 			if (signedIO){
 				manageCriticalPath( target()->localWireDelay(wX) + target()->adderDelay(wX+1) );
 
 				vhdl << tab << addUID("R") <<" <= (" << zg(wX+1)  << " - ("<<addUID("XX")<< of(wX-1) 
 					<< " & "<<addUID("XX")<<")) when "<<addUID("YY")<<"(0)='1' else "<< zg(wX+1,0)<<";"<<endl;	
-
 			}
 			else {
 				manageCriticalPath( target()->localWireDelay(wX) + target()->lutDelay() );
@@ -381,41 +372,39 @@ namespace flopoco {
 		}
 
 
-		// Multiplication by 2-bit integer is one addition
 		if ((wY == 2)) {
-			// No need for the following, the mult should be absorbed in the addition
-			// manageCriticalPath( target->localWireDelay() + target->lutDelay() );
-			REPORT(DETAILED,"3");
+			// Multiplication by 2-bit integer is one addition, which is delegated to BitHeap compression anyway
+
 			vhdl << tab << declare(addUID("R0"),wX+2) << " <= (";
-
 			if (signedIO) 
-
 				vhdl << addUID("XX") << of(wX-1) << " & "<< addUID("XX") << of(wX-1);  
-
 			else  
-
 				vhdl << "\"00\"";
 			vhdl <<  " & "<<addUID("XX")<<") when "<<addUID("YY")<<"(0)='1' else "<<zg(wX+2,0)<<";"<<endl;	
+
 			vhdl << tab << declare(addUID("R1i"),wX+2) << " <= ";
-
 			if (signedIO) 
-
 				vhdl << "("<<addUID("XX")<< of(wX-1) << "  &  " <<addUID("XX")<<" & \"0\")";
-
 			else  
-
 				vhdl << "(\"0\" & "<< addUID("XX") <<" & \"0\")";
 			vhdl << " when "<<addUID("YY")<<"(1)='1' else " << zg(wX+2,0) << ";"<<endl;	
+
 			vhdl << tab << declare(addUID("R1"),wX+2) << " <= ";
-
 			if (signedIO) 
-
 				vhdl << "not "<<addUID("R1i")<<";" <<endl;
-
 			else  
-
 				vhdl << addUID("R1i")<<";"<<endl;
 
+			for (int w=0; w<wX+2; w++){
+				stringstream s0,s1;
+				s0<<addUID("R0")<<of(w);
+				bitHeap->addBit(lsbWeight + w+g, s0.str());
+				s1<<addUID("R1")<<of(w);
+				bitHeap->addBit(lsbWeight + w+g, s1.str());
+			}
+			// and that's it
+
+#if 0
 			
 			IntAdder *resultAdder = new IntAdder( target(), wX+2, inDelayMap("X", target()->localWireDelay() + getCriticalPath() ) );
 			oplist.push_back(resultAdder);
@@ -433,7 +422,9 @@ namespace flopoco {
 			vhdl << tab << addUID("R")<<"<= "<<  addUID("RAdder") << range(wFull-1, wFull-wOut)<<";"<<endl;	
 
 			outDelayMap[addUID("R")] = getCriticalPath();
+#endif
 			return;
+
 		} 
 
 
@@ -536,7 +527,7 @@ namespace flopoco {
 		//adding the round bit
 		if(g>0) {
 			int weight=wFull-wOut-1- weightShift;
-			bitHeap->addConstantOneBit(weight);
+			bitHeap->addConstantOneBit(lsbWeight + weight);
 		}
 	}
 
@@ -551,7 +542,7 @@ namespace flopoco {
 			//bitHeap->getPlotter()->plotMultiplierConfiguration(multiplierUid, localSplitVector, wX, wY, wOut, g);
 			if(g>0) {
 				int weight=wFull-wOut-1- weightShift;
-				bitHeap->addConstantOneBit(weight);
+				bitHeap->addConstantOneBit(lsbWeight + weight);
 			}
 			
 		
@@ -718,15 +709,15 @@ namespace flopoco {
 								if(resultSigned && (k==maxK-1)) { 
 									ostringstream nots;
 									nots << "not " << s.str(); 
-									bitHeap->addBit(weight, nots.str());
+									bitHeap->addBit(lsbWeight + weight, nots.str());
 									REPORT(DEBUG, "adding bit " << nots.str() << " at weight " << weight); 
 									REPORT(DEBUG,  "  adding constant ones from weight "<< weight << " to "<< bitHeap->getMaxWeight());
 									for (unsigned w=weight; w<bitHeap->getMaxWeight(); w++)
-										bitHeap->addConstantOneBit(w);
+										bitHeap->addConstantOneBit(lsbWeight + w);
 								}
 								else { // just add the bit
 									REPORT(DEBUG, "adding bit " << s.str() << " at weight " << weight); 
-									bitHeap->addBit(weight, s.str());
+									bitHeap->addBit(lsbWeight + weight, s.str());
 								}
 							}
 						}

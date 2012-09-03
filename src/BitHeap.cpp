@@ -749,7 +749,6 @@ namespace flopoco
 			// If the bit heap is of max size 1, compression is done, just copy these bits to the result vector.
 			op->vhdl << tab << op->declare(join("CompressionResult", guid), maxWeight) << " <= ";
 			for(int w= (signed)getMaxWeight()-1; w>=0; w--) {
-				cout << w << " " << endl;
 				if(bits[w].size()==0)
 					op->vhdl << "'0'" ;
 				else // size should be 1

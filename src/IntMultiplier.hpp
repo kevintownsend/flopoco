@@ -150,8 +150,9 @@ namespace flopoco {
 		double initialCP;     /**< the initial delay, getMaxInputDelays ( inputDelays_ ).*/  
 	private:
 		bool useDSP;
-		Operator* parentOp;  /**<  For a virtual multiplier, adding bits to some BitHeap, this is a pointer to the Operator that will provide the actual vhdl stream etc. */
-		BitHeap* bitHeap;    /**<  The heap of weighted bits that will be used to do the additions */
+		Operator* parentOp;  /**< For a virtual multiplier, adding bits to some external BitHeap, this is a pointer to the Operator that will provide the actual vhdl stream etc. */
+		BitHeap* bitHeap;    /**< The heap of weighted bits that will be used to do the additions */
+		int lsbWeight;       /**< For a virtual multiplier adding bits to some external BitHeap, this is the weight at which the LSB of the result should be added */
 		Plotter* plotter;
 		// TODO the three following variable pairs seem uglily redundant
 		Signal* x;
