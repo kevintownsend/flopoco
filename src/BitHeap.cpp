@@ -574,10 +574,7 @@ namespace flopoco
 				op->setCycle(  b ->getCycle()  );
 				op->setCriticalPath(  b ->getCriticalPath(op->getCurrentCycle()));
 				op->manageCriticalPath( op->getTarget()->lutDelay() + op->getTarget()->localWireDelay() );
-				if(b->getCycle() < op->getCurrentCycle())
-					{
-						drawCycleLine = true;
-					}
+
 			}
 
 		// build the first input of the compressor
@@ -817,6 +814,7 @@ namespace flopoco
 
 					generateFinalAddVHDL(false);
 				}
+
 			else
 				{
 					//REPORT(INFO, "Xilinx");
@@ -833,6 +831,12 @@ namespace flopoco
 							//find the first column with 3 bits (starting from LSB); the rest go to the final adder
 							while(cnt[i]<3)
 								i++;
+
+							WeightedBit *b = getLatestBit(minWeight, i-1);
+							op->setCycle( b->getCycle());
+							op->setCriticalPath(b->getCriticalPath(op->getCurrentCycle()));
+							op->manageCriticalPath(op->getTarget()->localWireDelay() + op->getTarget()->adderDelay(i-minWeight));
+							applyAdder(minWeight, i-1, false);
 
 							REPORT(DEBUG, "Column height after all compressions");
 							for (unsigned w=0; w<bits.size(); w++) 
