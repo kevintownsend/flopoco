@@ -157,7 +157,7 @@ namespace flopoco{
 		void applyCompressor3_2(int col);
 
 		//applies an adder with wIn = col1-col0+1; col0 always has size=3 and the other columns (includind col1) have size=2
-		void applyAdder(int col0, int col1);
+		void applyAdder(int col0, int col1, bool hasCin=true);
 
 		//** computes the latest bit from a column, in order to compress just the bits which are smaller than that one*/
 		WeightedBit* computeLatest(unsigned w, int c0, int c1);

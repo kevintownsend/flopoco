@@ -114,7 +114,7 @@ namespace flopoco
 
 			void drawInitialConfiguration( vector<list<WeightedBit*> > bits, int maxWeight, int offsetY, int turnaroundX);
 
-			void drawConfiguration(vector<list<WeightedBit*> > bits, int nr, int cycle, double cp, int stage,
+			void drawConfiguration(vector<list<WeightedBit*> > bits, unsigned nr, int cycle, double cp, int stage,
 					int maxWeight, int offsetY, int turnaroundX, bool timeCondition);
 
 

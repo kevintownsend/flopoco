@@ -793,7 +793,7 @@ namespace flopoco {
 					inx<<addUID("XX");
 					iny<<addUID("YY");
 								
-						REPORT(INFO,"chr DSP at "<<topx<<" "<<topy<<" width= "<<widthX<<" height= "<<widthY);							
+					//REPORT(INFO,"chr DSP at "<<topx<<" "<<topy<<" width= "<<widthX<<" height= "<<widthY);							
 					MultiplierBlock* m = new MultiplierBlock(widthX,widthY,topx,topy,inx.str(),iny.str(),weightShift);
 					m->setNext(NULL);		
 					m->setPrevious(NULL);			
@@ -854,7 +854,7 @@ namespace flopoco {
 			
 						
 		
-				REPORT(INFO," chr DSP at "<<topx<<" "<<topy<<" width= "<<widthX<<" height= "<<widthY);							
+				//REPORT(INFO," chr DSP at "<<topx<<" "<<topy<<" width= "<<widthX<<" height= "<<widthY);							
 				MultiplierBlock* m = new MultiplierBlock(widthX,widthY,topx,topy,addUID("XX"),addUID("YY"),weightShift);
 				m->setNext(NULL);		
 				m->setPrevious(NULL);			
@@ -916,7 +916,7 @@ namespace flopoco {
 						localSplitVector.push_back(m);
 						bitHeap->addMultiplierBlock(m);
 						ok=0;
-						REPORT(INFO,"DSP at "<<topx<<" "<<topy<<" width= "<<widthX<<" height= "<<widthY);
+						//REPORT(INFO,"DSP at "<<topx<<" "<<topy<<" width= "<<widthX<<" height= "<<widthY);
 					}
 					
 					else

@@ -769,7 +769,7 @@ namespace flopoco
         
 
 
-			elementaryTime = 2*op->getTarget()->lutDelay()	+ op->getTarget()->localWireDelay();
+			elementaryTime = op->getTarget()->lutDelay()	+ op->getTarget()->localWireDelay();
 
 			stagesPerCycle = (1/op->getTarget()->frequency()) / elementaryTime;
 
@@ -804,7 +804,7 @@ namespace flopoco
 
 			if(op->getTarget()->getVendor()=="Altera")
 				{
-					REPORT(INFO, "Altera");
+					//REPORT(INFO, "Altera");
 					for(int i=0;i<10;i++)
 						{
 							if (usedCompressors[i]==true)
@@ -819,7 +819,7 @@ namespace flopoco
 				}
 			else
 				{
-					REPORT(INFO, "Xilinx");
+					//REPORT(INFO, "Xilinx");
         
 					//do additional compressions or additions
 					if (getMaxHeight()>2)
@@ -875,13 +875,15 @@ namespace flopoco
 																	i++;
 																}
 															while(cnt[i]==2);
-															REPORT(INFO, "j= "<< j << " i-1= " << i-1);
+															//REPORT(INFO, "j= "<< j << " i-1= " << i-1);
 															latestBit = getLatestBit(j, i-1); 
 															if(latestBit)
 																{
 																	op->setCycle(  latestBit ->getCycle()  );
 																	op->setCriticalPath(   latestBit ->getCriticalPath(op->getCurrentCycle()));
 																	op->manageCriticalPath( op->getTarget()->localWireDelay() + op->getTarget()->adderDelay(i-j) );
+
+																	//REPORT(INFO, endl << op->getTarget()->adderDelay(i-j) << endl );
 
 																	stage = computeStage();
 																}
@@ -991,7 +993,7 @@ namespace flopoco
 
 	// addition stretching from weights col0(LSB) to msb included
 	// assumes cnt has been set up
-	void BitHeap::applyAdder(int lsb, int msb)
+	void BitHeap::applyAdder(int lsb, int msb, bool hasCin)
 	{
 
 		stringstream inAdder0, inAdder1, cin;
@@ -1033,9 +1035,17 @@ namespace flopoco
 		inAdder0 << (*it)->getName();
 		it++;
 		inAdder1 << (*it)->getName();
-		it++;
-		cin << (*it)->getName() << ";";
+		if(hasCin)
+		{
+			it++;
+			cin << (*it)->getName() << ";";
+		}
+		else
+		{
+			cin << "\'0\';";
+		}
 		removeCompressedBits(lsb, cnt[lsb]);
+
 
 
 		inAdder0 << ";";
@@ -1217,7 +1227,7 @@ namespace flopoco
 							list<WeightedBit*>::iterator it = bits[i].begin();
 							if(bits[i].size()==3)
 							{
-								REPORT(INFO,i << " size 3");
+								//REPORT(INFO,i << " size 3");
 								inAdder0 << (*it)->getName();
 								it++;
 								inAdder1 << (*it)->getName();
@@ -1228,7 +1238,7 @@ namespace flopoco
 							{
 								if(bits[i].size()==2)
 								{ 
-									REPORT(INFO,i << " size 2");
+									//REPORT(INFO,i << " size 2");
 									inAdder0 << (*it)->getName();
 									it++;
 									inAdder1 << (*it)->getName();
@@ -1239,7 +1249,7 @@ namespace flopoco
 								{
 									if (bits[i].size()==1)
 									{
-										REPORT(INFO,i <<  " size 1");
+										//REPORT(INFO,i <<  " size 1");
 										inAdder0 << (*it)->getName();
 										inAdder1 << "\'0\'";
 										inAdder2 << "\'0\'";
@@ -1247,7 +1257,7 @@ namespace flopoco
 									}
 									else
 									{
-										REPORT(INFO,i << " size 0");
+										//REPORT(INFO,i << " size 0");
 										inAdder0 << "\'0\'";
 										inAdder1 << "\'0\'";
 										inAdder2 << "\'0\'";
@@ -1278,7 +1288,7 @@ namespace flopoco
 			//managing the pipeline
 			if(b)
 				{
-					REPORT(INFO, b->getName());
+					//REPORT(INFO, b->getName());
 					op->setCycle(  b ->getCycle()  );
 					op->setCriticalPath(  b->getCriticalPath(op->getCurrentCycle()));
 					op->manageCriticalPath(op->getTarget()->localWireDelay() + op->getTarget()->adderDelay(maxWeight-minWeight));
@@ -1411,6 +1421,78 @@ namespace flopoco
 					}
 				//cnt[i]=bits[i].size();
 			}
+
+		//extra additions for lsb columns
+		
+		unsigned index = minWeight;
+		unsigned columnIndex;
+		double timeLatestBitAdded=0.0e-12, timeFirstBitNotAdded=1;
+		double adderDelay;
+		unsigned adderMaxWeight = minWeight;
+
+		WeightedBit *latestBitAdded, *firstBitNotAdded;
+
+		//search for lsb columns that won't be compressed at the current stage
+		REPORT(INFO, endl);
+		while((cnt[index]<=2)&&(cnt[index]>0))
+		{
+			//REPORT(INFO, "cnt[" << index <<"]="<< cnt[index]);
+			list<WeightedBit*>::iterator it = bits[index].begin();
+			columnIndex=0;
+			while(columnIndex<cnt[index]-1)
+			{
+				//REPORT(INFO,(*it)->getName() << " crap here")//;
+				columnIndex++;
+				it++;
+			}
+
+			if (timeLatestBitAdded < (*it)->getCycle()*(1/op->getTarget()->frequency()) + (*it)->getCriticalPath((*it)->getCycle()))
+			{
+				timeLatestBitAdded = (*it)->getCycle()*(1/op->getTarget()->frequency()) + (*it)->getCriticalPath((*it)->getCycle());
+				latestBitAdded = *it;
+			}
+
+			REPORT(INFO, timeLatestBitAdded);
+			REPORT(INFO, (*it)->getCycle()*(1/op->getTarget()->frequency()) + (*it)->getCriticalPath((*it)->getCycle()));	
+			
+			it++;
+
+			if (timeFirstBitNotAdded > (*it)->getCycle()*(1/op->getTarget()->frequency()) + (*it)->getCriticalPath((*it)->getCycle()))
+			{
+				timeFirstBitNotAdded = (*it)->getCycle()*(1/op->getTarget()->frequency()) + (*it)->getCriticalPath((*it)->getCycle());
+				firstBitNotAdded = *it;
+			}
+			adderDelay = op->getTarget()->adderDelay(index-minWeight+1) + op->getTarget()->localWireDelay();
+
+
+
+			//REPORT(INFO, op->getTarget()->adderDelay(index-minWeight+1) );
+
+
+			if ((timeLatestBitAdded + adderDelay) < timeFirstBitNotAdded)
+			{
+				adderMaxWeight = index;
+				REPORT(INFO, endl<<"YES"<<endl);
+			}
+
+
+
+			index++;
+		}
+
+		if(adderMaxWeight > minWeight)
+		{
+			op->setCycle(  latestBitAdded ->getCycle()  );
+			op->setCriticalPath(   latestBitAdded ->getCriticalPath(op->getCurrentCycle()));
+			op->manageCriticalPath( op->getTarget()->localWireDelay() + op->getTarget()->adderDelay(adderMaxWeight-minWeight+1) );
+			applyAdder(minWeight, adderMaxWeight, false);
+
+			for(unsigned i=minWeight; i<=adderMaxWeight; i++)
+				cnt[i]=0;
+
+			didCompress = true;
+		}
+		//=============================
 		
 		
 		REPORT(DEBUG,"start compressing");

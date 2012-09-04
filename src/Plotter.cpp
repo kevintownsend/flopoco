@@ -152,7 +152,7 @@ namespace flopoco
 		initializeHeapPlotting(false);
 
 		int offsetY = 0;
-		int turnaroundX = snapshots[snapshots.size()-1]->bits.size() * 10 + 80;
+		int turnaroundX = snapshots[snapshots.size()-1]->bits.size() * 10 + 230;
 		
 		lastStage=snapshots[0]->stage;
 
@@ -781,7 +781,7 @@ namespace flopoco
 
 
 
-	void Plotter::drawConfiguration(vector<list<WeightedBit*> > bits,int nr, int cycle, double cp, int stage,
+	void Plotter::drawConfiguration(vector<list<WeightedBit*> > bits,unsigned nr, int cycle, double cp, int stage,
 			int minWeight, int offsetY, int turnaroundX, bool timeCondition)
 	{
 		int color = 0;
@@ -804,21 +804,21 @@ namespace flopoco
 		cpint = cpint / 10;
 		ci = cpint % 10;
 
-		REPORT(INFO, snapshots.size()<< " nr= "<<nr);
+		//REPORT(INFO, snapshots.size()<< " nr= "<<nr);
 
 		if (nr == snapshots.size()-1)
-			fig << "<text x=\"" << turnaroundX + 100 << "\" y=\"" << offsetY + 3
+			fig << "<text x=\"" << turnaroundX + 50 << "\" y=\"" << offsetY + 3
 				<< "\" fill=\"midnightblue\">" << "before final addition" << "</text>" << endl;
 		else
 			if (nr == snapshots.size()-2)
-				fig << "<text x=\"" << turnaroundX + 100 << "\" y=\"" << offsetY + 3
+				fig << "<text x=\"" << turnaroundX + 50 << "\" y=\"" << offsetY + 3
 					<< "\" fill=\"midnightblue\">" << "before 3-bit height additions" << "</text>" << endl;
 			else
 			{
-				fig << "<text x=\"" << turnaroundX + 100 << "\" y=\"" << offsetY + 3
+				fig << "<text x=\"" << turnaroundX + 50 << "\" y=\"" << offsetY + 3
 					<< "\" fill=\"midnightblue\">" << cycle << "</text>" << endl;
 
-				fig << "<text x=\"" << turnaroundX + 150 << "\" y=\"" << offsetY + 3
+				fig << "<text x=\"" << turnaroundX + 80 << "\" y=\"" << offsetY + 3
 					<< "\" fill=\"midnightblue\">" << ci << "." << c1 << c2 << c3 << " ns"  << "</text>" << endl;
 			}
 
