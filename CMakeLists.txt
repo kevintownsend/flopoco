@@ -226,11 +226,6 @@ src/Plotter
 # Multiplication related --------------------------------------------
 #--------------------------------------------------------------------
  src/IntMultiplier
- src/IntMultipliers/SignedIntMultiplier
- src/IntMultipliers/UnsignedIntMultiplier
- src/IntMultipliers/IntTilingMult
- src/IntMultipliers/LogicIntMultiplier 
- src/IntMultipliers/IntTruncMultiplier
  src/IntMultipliers/IntKaratsuba
  src/IntSquarer
  src/IntMultipliers/FormalBinaryProduct

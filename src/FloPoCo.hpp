@@ -74,10 +74,6 @@
 
 /* multiplication-related ------------------------------------ */
 #include "IntMultiplier.hpp"
-#include "IntMultipliers/IntTilingMult.hpp"
-#include "IntMultipliers/SignedIntMultiplier.hpp"
-#include "IntMultipliers/UnsignedIntMultiplier.hpp"
-#include "IntMultipliers/IntTruncMultiplier.hpp"
 #include "IntMultipliers/IntKaratsuba.hpp"
 #include "IntSquarer.hpp"
 #include "IntMultipliers/GenericBinaryPolynomial.hpp"

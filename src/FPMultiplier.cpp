@@ -86,10 +86,10 @@ namespace flopoco{
 			// faithful rounding will be computed by IntTruncMultiplier
 			// but we still  have to re-round behind 
 			sigProdSize = wFR_+g; 
-		int useLimits=1; // TODO WTF is it? 
-#if 0
-		IntMultiplier* intmult_ = new IntMultiplier(target, wFX_+1, wFY_+1);
+#if 1
+		IntMultiplier* intmult_ = new IntMultiplier(target, wFX_+1, wFY_+1, sigProdSize, false /*signedIO*/);
 #else
+		int useLimits=1; // TODO WTF is it? 
 		IntTruncMultiplier* intmult_ = new IntTruncMultiplier(target, wFX_+1, wFY_+1, sigProdSize, ratio, useLimits, maxTimeInMinutes,
 		                                                     false, /* interactive */
 		                                                     false, /* signed */ 

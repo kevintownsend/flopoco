@@ -162,7 +162,8 @@ namespace flopoco{
 					int wIn2 = sigmakPSize[i-1]+1;
 					int k = 1+y_->getSize()+yGuard_[i] + sigmakPSize[i-1]+1 - (pikPTSize[i]+2);
 					
-					IntTruncMultiplier *sm = new IntTruncMultiplier ( target, wIn1, wIn2, wIn1+wIn2-k , 1.1 , 1, -1, false, true); //inDelayMap("X",getCriticalPath()));
+					//					IntTruncMultiplier *sm = new IntTruncMultiplier ( target, wIn1, wIn2, wIn1+wIn2-k , ratio=1.1 , uselimits=1, maxTime=-1, interactive= false, sign= true); //inDelayMap("X",getCriticalPath()));
+					IntMultiplier *sm = new IntMultiplier ( target, wIn1, wIn2, wIn1+wIn2-k, true /*signedIO*/, 0.5); //inDelayMap("X",getCriticalPath()));
 					oplist.push_back(sm);
 					
 					nextCycle(); //TODO fix it by feeding the input delay to IntTruncMultiplier
@@ -199,12 +200,20 @@ namespace flopoco{
 					vhdl << tab << declare( join("yT",i) , 1+y_->getSize()+yGuard_[i]) << " <= \"0\" & Y"<<range(y_->getSize()-1, -yGuard_[i]) << ";" << endl;
 					vhdl << tab << "-- weight of piP"<<i<<" is="<<pikPWeight[i]<<" size="<<pikPSize[i]+2<<endl;
 
-					IntTruncMultiplier* sm = new IntTruncMultiplier ( target, 
-																														1+y_->getSize()+yGuard_[i], 
-																														sigmakPSize[i-1]+1, 	
-					                                                  (1+y_->getSize()+yGuard_[i]) +  (sigmakPSize[i-1]+1) - (sigmakPSize[i] - (coef_[0]->getSize()+2)) , 
-					                                                  1.1, 
-																														1, -1, false, true, false); //inDelayMap("X",getCriticalPath()));
+					// IntTruncMultiplier* sm = new IntTruncMultiplier ( target, 
+					// 																									1+y_->getSize()+yGuard_[i], 
+					// 																									sigmakPSize[i-1]+1, 	
+					//                                                   (1+y_->getSize()+yGuard_[i]) +  (sigmakPSize[i-1]+1) - (sigmakPSize[i] - (coef_[0]->getSize()+2)) , 
+					//                                                   1.1, 
+					// 																									1, -1, false, true, false); //inDelayMap("X",getCriticalPath()));
+					
+					int wOut=(1+y_->getSize()+yGuard_[i]) +  (sigmakPSize[i-1]+1) - (sigmakPSize[i] - (coef_[0]->getSize()+2));
+					IntMultiplier* sm = new IntMultiplier ( target, 
+					                                        1+y_->getSize()+yGuard_[i], 
+					                                        sigmakPSize[i-1]+1, 	
+					                                        wOut , 
+					                                        0.5, 
+					                                        true); //inDelayMap("X",getCriticalPath()));
 					oplist.push_back(sm);
 				
 					inPortMap ( sm, "X", join("yT",i));
@@ -222,8 +231,8 @@ namespace flopoco{
 					oplist.push_back(sa);
 
 					vhdl << tab << declare( join("op1_",i), (coef_[0]->getSize()+2) ) << " <= " 
-							 << rangeAssign( (coef_[0]->getSize()+2)-(sm->wOut-1) -1,0, join("piP",i)+of(sm->wOut-1)) 
-							 << " & " << join("piP",i)<<range(sm->wOut-2,0) << ";" << endl;
+							 << rangeAssign( (coef_[0]->getSize()+2)-(wOut-1) -1,0, join("piP",i)+of(wOut-1)) 
+							 << " & " << join("piP",i)<<range(wOut-2,0) << ";" << endl;
 					
 					vhdl << tab << declare( join("op2_",i), (coef_[0]->getSize()+2) ) << " <= " 
 							 << rangeAssign(0,0, join("a",degree_-i)+of(coef_[degree_-i]->getSize()))

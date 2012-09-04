@@ -21,7 +21,6 @@
 #include "Table.hpp"
 #include "DualTable.hpp"
 #include "IntAddition/BasicCompressor.hpp"
-#include "IntMultipliers/IntTilingMult.hpp"
 #include "IntMultipliers/MultiplierBlock.hpp"
 //#include "Plotter.hpp"
 

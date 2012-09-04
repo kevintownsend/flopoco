@@ -282,10 +282,9 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 		vhdl << tab << "-- First truncate the inputs of the multiplier to the precision of the output" << endl;
 		vhdl << tab << declare("Z2o2_truncToZ3", wZ3) << " <= Z2o2" << range(wZ2o2-1, wZ2o2-wZ3) << ";" << endl;
 		vhdl << tab << declare("Z_truncToZ3", wZ3) << " <= Z" << range(wZ-1, wZ-wZ3) << ";" << endl;
-		IntTruncMultiplier *Z3;
-		Z3 = new IntTruncMultiplier (target, wZ3, wZ3, wZ3,  
-		                              1.f, 0.95, 0, false, false, true, 
-		                              Z3_inputDelays); //last params wtf?
+		IntMultiplier *Z3;
+		Z3 = new IntMultiplier (target, wZ3, wZ3, wZ3,  
+		                              0.5, false);
 		oplist.push_back (Z3);
 		outPortMap (Z3, "R", "Z3o2");
 		inPortMap (Z3, "Y", "Z2o2_truncToZ3");

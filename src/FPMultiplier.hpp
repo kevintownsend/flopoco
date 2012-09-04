@@ -7,7 +7,6 @@
 #include <gmpxx.h>
 
 #include "Operator.hpp"
-#include "IntMultipliers/IntTruncMultiplier.hpp"
 #include "IntMultiplier.hpp"
 #include "IntAdder.hpp"
 

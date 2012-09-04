@@ -174,33 +174,6 @@ void usage(char *name, string opName = ""){
 		cerr << "      0 <= ratio <= 1; larger ratio => DSP dominant architectures\n";
 	 }
 
-	// if ( full || opName == "IntMultiplier" || opName == "UnsignedIntMultiplier" ){
-	// 	OP("UnsignedIntMultiplier","wInX wInY");
-	// 	cerr << "      Unsigned integer multiplier.\n";	
-	// }
-
-	// if ( full || opName == "IntMultiplier" || opName == "SignedIntMultiplier"){
-	// 	OP("SignedIntMultiplier","wInX wInY");
-	// 	cerr << "      Signed integer multiplier. wInX and wInY include the sign\n";	
-	// }
-
-	if ( full || opName == "IntMultiplier"){		
-		OP("IntTilingMultiplier","wInX wInY sign ratio maxTimeInMinutes");
-		cerr << "      Integer multiplier of two integers X and Y of sizes wInX and wInY\n";
-		cerr << "      sign:  boolean (1:signed; 0:unsigned). If signed, wInX and wInY include the sign bit\n";
-		cerr << "      0 <= ratio <= 1; larger ratio => DSP dominant architectures\n";
-		cerr << "      maxTimeInMinutes 0..; 0=find optimal solution (no time limit)\n"; 	
-	}
-	
-	if ( full || opName == "IntMultiplier" || opName == "IntTruncMultiplier"){			
-		OP("IntTruncMultiplier","wInX wInY wOut sign ratio useLimits maxTimeInMinutes");
-		cerr << "      Integer multiplier of two integers X and Y of sizes wInX and wInY, \n"; 
-		cerr << "      returning the wOut most significant bits of the exact product (faithful rounding).\n";	
-		cerr << "      sign:  boolean (1:signed; 0:unsigned). If signed, wInX and wInY include the sign bit\n";
-		cerr << "      0 <= ratio <= 1; larger ratio => DSP dominant architectures\n";
-		cerr << "      useLimits. Soft-core multipliers are size-limited\n";
-		cerr << "      maxTimeInMinutes 0..; 0=find optimal solution (no time limit)\n";
-	}
 
 	if ( full || opName == "IntMultiplier" || opName == "IntKaratsuba"){			
 		OP ("IntKaratsuba","wIn");
@@ -1400,32 +1373,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				addOperator(oplist, op);
 			}
 		}
-		// Hidden, for testing purpose
-		else if(opname=="LogicIntMultiplier"){
-			int nargs = 3;
-			if (i+nargs > argc)
-				usage(argv[0],opname);
-			else {
-				int wInX = checkStrictlyPositive(argv[i++], argv[0]);
-				int wInY = checkStrictlyPositive(argv[i++], argv[0]);
-				int sign = checkBoolean(argv[i++], argv[0]);
-				op = new LogicIntMultiplier(target, wInX, wInY, sign);
-				addOperator(oplist, op);
-			}
-		}
-		// Hidden, for testing purpose
-		else if(opname=="NewLogicIntMultiplier"){
-			int nargs = 3;
-			if (i+nargs > argc)
-				usage(argv[0],opname);
-			else {
-				int wInX = checkStrictlyPositive(argv[i++], argv[0]);
-				int wInY = checkStrictlyPositive(argv[i++], argv[0]);
-				int sign = checkBoolean(argv[i++], argv[0]);
-				op = new IntMultiplier(target, wInX, wInY, wInX+wInY, sign, 0.0, emptyDelayMap);
-				addOperator(oplist, op);
-			}
-		}
 
 		else if(opname=="IntKaratsuba"){
 			int nargs = 1;
@@ -1437,45 +1384,6 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				addOperator(oplist, op);
 			}    
 		}   
-		else if(opname=="IntTilingMultiplier"){
-			int nargs = 5;
-			if (i+nargs > argc)
-				usage(argv[0],opname);
-			else {
-				int wInX = checkStrictlyPositive(argv[i++], argv[0]);
-				int wInY = checkStrictlyPositive(argv[i++], argv[0]);
-				int sign = checkBoolean(argv[i++], argv[0]);
-				float r = atof(argv[i++]);
-				int maxTimeInMinutes = atoi(argv[i++]);
-				if(sign){
-					throw(string("IntTilingMultiplier, signed: not implemented, please go pick Bogdan's eyes"));
-				}
-				op = new IntTilingMult(target, wInX, wInY, r, maxTimeInMinutes, true);
-				addOperator(oplist, op);
-			}
-		}
-		else if(opname=="IntTruncMultiplier"){
-			int nargs = 7;
-			if (i+nargs > argc)
-				usage(argv[0],opname);
-			else {
-				int wInX = checkStrictlyPositive(argv[i++], argv[0]);
-				int wInY = checkStrictlyPositive(argv[i++], argv[0]);
-				int wOut = checkStrictlyPositive(argv[i++], argv[0]);
-				int sign = checkBoolean(argv[i++], argv[0]);
-				float r = atof(argv[i++]);
-				// TODO I think it is more consistent to move this kind of tests insinde the operator
-				if (r<0)
-					throw "Ratio must be > 0";
-				int useLimits = atoi(argv[i++]);
-				if (!((useLimits==0)||(useLimits==1)))
-					throw "useLimits is 0 or 1";				
-				int maxTimeInMinutes = atoi(argv[i++]);
-
-				op = new IntTruncMultiplier(target, wInX, wInY, wOut, r,useLimits, maxTimeInMinutes, false, sign);
-				addOperator(oplist, op);
-			}
-		}		
 		// For the FPAdder the default is the single-path design
 		else if(opname=="FPAdder"){ 
 			int nargs = 2;

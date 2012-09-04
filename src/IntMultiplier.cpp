@@ -428,6 +428,7 @@ namespace flopoco {
 			if (testFit){
 			REPORT(DETAILED,"testfit");
 			
+			// TODO replace the false in the following line with something related to the threshold
 				if( false && target()->worthUsingDSP(wX, wY))
 					{	REPORT(DEBUG,"worthUsingDSP");
 						manageCriticalPath(target()->DSPMultiplierDelay());
