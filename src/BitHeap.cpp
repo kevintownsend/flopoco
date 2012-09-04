@@ -1005,6 +1005,7 @@ namespace flopoco
 				
 				if(cnt[i]>=2)
 					{
+						REPORT(INFO, i);
 						inAdder0 << (*it)->getName();
 						it++;
 						inAdder1 << (*it)->getName();
@@ -1033,8 +1034,16 @@ namespace flopoco
 		// We know the LSB col is of size 3
 		list<WeightedBit*>::iterator it = bits[lsb].begin();
 		inAdder0 << (*it)->getName();
-		it++;
-		inAdder1 << (*it)->getName();
+		if(cnt[lsb]>1)
+		{
+			it++;
+			inAdder1 << (*it)->getName();
+		}
+		else
+		{
+			inAdder1 << "\'0\'";
+		}
+
 		if(hasCin)
 		{
 			it++;
@@ -1376,6 +1385,12 @@ namespace flopoco
 
 		if(w!=minWeight)
 			{
+
+				WeightedBit *b = getLatestBit(minWeight, w-1);
+				op->setCycle(  b ->getCycle()  );
+				op->setCriticalPath(   b ->getCriticalPath(op->getCurrentCycle()));
+
+
 				if (w-minWeight>1)
 					op->vhdl << tab << op->declare(join("tempR_bh", guid, "_", chunkDoneIndex), w-minWeight, true) << " <= " ;
 				else
@@ -1420,10 +1435,14 @@ namespace flopoco
 							}
 					}
 				//cnt[i]=bits[i].size();
+				
 			}
 
+		REPORT(INFO, "cnt[5]=" << cnt[5] <<endl);
+
 		//extra additions for lsb columns
-		
+	
+		REPORT(INFO, "minweight= "<<minWeight);	
 		unsigned index = minWeight;
 		unsigned columnIndex;
 		double timeLatestBitAdded=0.0e-12, timeFirstBitNotAdded=1;
@@ -1433,7 +1452,7 @@ namespace flopoco
 		WeightedBit *latestBitAdded, *possiblyLatestBitAdded;
 
 		//search for lsb columns that won't be compressed at the current stage
-		REPORT(INFO, endl);
+		//REPORT(INFO, endl);
 		while((cnt[index]<=2)&&(cnt[index]>0))
 		{
 			//REPORT(INFO, "cnt[" << index <<"]="<< cnt[index]);
@@ -1441,7 +1460,8 @@ namespace flopoco
 			columnIndex=0;
 			while(columnIndex<cnt[index]-1)
 			{
-				//REPORT(INFO,(*it)->getName() << " crap here")//;
+				if(index==5)
+					REPORT(INFO,(*it)->getName() << " crap here")//;
 				columnIndex++;
 				it++;
 			}
@@ -1452,8 +1472,8 @@ namespace flopoco
 				possiblyLatestBitAdded = *it;
 			}
 
-			REPORT(INFO, timeLatestBitAdded);
-			REPORT(INFO, (*it)->getCycle()*(1/op->getTarget()->frequency()) + (*it)->getCriticalPath((*it)->getCycle()));	
+			//REPORT(INFO, timeLatestBitAdded);
+			//REPORT(INFO, (*it)->getCycle()*(1/op->getTarget()->frequency()) + (*it)->getCriticalPath((*it)->getCycle()));	
 			
 			it++;
 
@@ -1462,7 +1482,7 @@ namespace flopoco
 				timeFirstBitNotAdded = (*it)->getCycle()*(1/op->getTarget()->frequency()) + (*it)->getCriticalPath((*it)->getCycle());	
 			}
 
-			adderDelay = op->getTarget()->adderDelay(index-minWeight+1) + op->getTarget()->localWireDelay();
+			adderDelay = op->getTarget()->adderDelay(index-minWeight+1);// + op->getTarget()->localWireDelay();
 
 
 
@@ -1473,7 +1493,7 @@ namespace flopoco
 			{
 				adderMaxWeight = index;
 				latestBitAdded = possiblyLatestBitAdded;
-				REPORT(INFO, endl<<"YES"<<endl);
+				//REPORT(INFO, endl<<"YES"<<endl);
 			}
 
 
