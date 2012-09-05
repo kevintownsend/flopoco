@@ -18,6 +18,7 @@
 
 #include <vector>
 #include <sstream>
+#include <algorithm>
 #include "WeightedBit.hpp"
 #include "IntMultipliers/MultiplierBlock.hpp"
 //#include "BitHeap.hpp"
@@ -40,6 +41,9 @@ namespace flopoco
 
 				~Snapshot(){};
 
+				/** ordering by availability time */
+				bool operator< (const Snapshot& b); 
+
 				//unsigned getMaxHeight();
 
 				vector<list<WeightedBit*> > bits;
@@ -60,6 +64,8 @@ namespace flopoco
 			
 			/** destructor */
 			~Plotter();
+
+
 
 			/** takes a snapshot of the bitheap's current state */
 			void heapSnapshot(bool compress, int cycle, double cp);

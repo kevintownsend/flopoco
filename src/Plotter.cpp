@@ -30,7 +30,8 @@ namespace flopoco
 
 	Plotter::Snapshot::Snapshot(vector<list<WeightedBit*> > bitheap, int minWeight_, 
 			int maxWeight_, unsigned maxHeight_, bool didCompress_,  int cycle_, double cp_):
-		maxWeight(maxWeight_), minWeight(minWeight_), maxHeight(maxHeight_), didCompress(didCompress_) , cycle(cycle_), cp(cp_)
+			maxWeight(maxWeight_), minWeight(minWeight_), maxHeight(maxHeight_), didCompress(didCompress_) , 
+			cycle(cycle_), cp(cp_)
 	{
 		for(int w=minWeight; w<maxWeight_; w++)
 		{
@@ -45,9 +46,9 @@ namespace flopoco
 					string name = (*it)->getName();
 					int weight = (*it)->getWeight();
 					int type = (*it)->getType();
-					int cycle = (*it)->getCycle();
-					double cp = (*it)->getCriticalPath(cycle);
-					WeightedBit* b = new WeightedBit(name, uid, weight, type, cycle, cp);
+					int ccc = (*it)->getCycle();
+					double ccp = (*it)->getCriticalPath(ccc);
+					WeightedBit* b = new WeightedBit(name, uid, weight, type, ccc, ccp);
 					t.push_back(b);
 				}		
 
@@ -56,7 +57,18 @@ namespace flopoco
 		}
 	}
 
-
+	
+	
+	bool Plotter::Snapshot::operator< (const Snapshot& b)
+	{
+		if ((this->cycle<b.cycle) || ((this->cycle==b.cycle) && (this->cp<b.cp))) 
+			return true;
+		else
+			return false;
+	} 	
+	
+	
+	
 	Plotter::Plotter(BitHeap* bh_):bh(bh_)
 	{
 		srcFileName=bh_->getOp()->getSrcFileName() + ":Plotter";
@@ -73,8 +85,27 @@ namespace flopoco
 	}
 
 
+
 	void Plotter::heapSnapshot(bool compress, int cycle, double cp)
 	{
+#if 0
+		if(compress)
+		{
+			unsigned i=0;	 
+			unsigned size=snapshots.size();	 
+ 	
+			Snapshot* s = new Snapshot(bh->bits, bh->getMinWeight(), bh->getMaxWeight(), bh->getMaxHeight(),
+				   	compress, cycle, cp);
+
+ 
+			while((i < size) && (snapshots[i] < s))	 
+			{	 	 
+				++i;	 
+			}	 
+ 	 
+			snapshots.insert(snapshots.begin()+i, s);
+		}
+#endif
 		snapshots.push_back(new Snapshot(bh->bits, bh->getMinWeight(), bh->getMaxWeight(), bh->getMaxHeight(),
 				   	compress, cycle, cp));
 	}
@@ -84,6 +115,7 @@ namespace flopoco
 	void Plotter::plotBitHeap()
 	{
 		drawInitialHeap();
+		//sort(snapshots.begin(), snapshots.end());
 		drawCompressionHeap();
 	}
 
@@ -266,7 +298,6 @@ namespace flopoco
 			drawDSP(wX, wY, i, xT, yT, xB, yB, offsetX, offsetY, scalingFactor, true);
 		}
 
-
 		//draw truncation line
 		if(wX+wY-wOut > 0)
 		{
@@ -413,7 +444,7 @@ namespace flopoco
 			turnaroundX = offsetX + wX * scalingFactor;
 			fig << "<rect x=\"" << turnaroundX - xB*scalingFactor << "\" y=\"" << yT*scalingFactor + offsetY 
 			    << "\" height=\"" << (yB-yT)*scalingFactor << "\" width=\"" << (xB-xT)*scalingFactor
-			    << "\" style=\"fill:rgb(200, 200, 200);fill-opacity:0.5;stroke-width:1;stroke:rgb(0,0,0)\"" 
+			    << "\" style=\"fill:rgb(200, 200, 200);fill-opacity:1.0;stroke-width:1;stroke:rgb(0,0,0)\"" 
 				<< " onmousemove=\"ShowTooltip(evt)\" onmouseout=\"HideTooltip(evt)\" mouseovertext=\"X[" 
 				<< xB << ":" << xT << "] * Y[" << yB << ":" << yT << "]\"/> " << endl;
 
@@ -428,7 +459,7 @@ namespace flopoco
 			    << turnaroundX - 5*xT + offsetX - 5*yT << "," << 5*yT + offsetY << " " 
 			    << turnaroundX - 5*xT + offsetX - 5*yB << "," << 5*yB + offsetY << " "
 			    << turnaroundX - 5*xB + offsetX - 5*yB << "," << 5*yB + offsetY
-			    << "\" style=\"fill:rgb(200, 200, 200);stroke-width:1;fill-opacity:0.5;stroke:rgb(0,0,0)\" "
+			    << "\" style=\"fill:rgb(200, 200, 200);stroke-width:1;fill-opacity:1.0;stroke:rgb(0,0,0)\" "
 				<< " onmousemove=\"ShowTooltip(evt)\" onmouseout=\"HideTooltip(evt)\" mouseovertext=\"X[" 
 				<< xB << ":" << xT << "] * Y[" << yB << ":" << yT << "]\"/> " << endl;
 

@@ -572,8 +572,8 @@ namespace flopoco
 			op->setCycle(  b ->getCycle()  );
 			op->setCriticalPath(  b ->getCriticalPath(op->getCurrentCycle()));
 			op->manageCriticalPath( op->getTarget()->lutDelay() + op->getTarget()->localWireDelay() );
-			if((b->getCycle()>plottingCycle) || ((b->getCycle()==plottingCycle) && 
-					(b->getCriticalPath(plottingCycle)>plottingCP)))
+			if((op->getCurrentCycle()>plottingCycle) || ((op->getCurrentCycle()==plottingCycle) && 
+					(op->getCriticalPath()>plottingCP)))
 				plottingCycle = op->getCurrentCycle();
 				plottingCP = op->getCriticalPath();
 
@@ -785,7 +785,7 @@ namespace flopoco
 			didCompress = true;
 
 
-			plotter->heapSnapshot(true,  minCycle, 1);
+			plotter->heapSnapshot(didCompress,  minCycle, 1);
 
 			//compressing until the maximum height of the columns is 3 
 			while (getMaxHeight()>3)
@@ -808,7 +808,7 @@ namespace flopoco
 			WeightedBit *bb = getLatestBit(minWeight, maxWeight-1);
 			if (bb)
 			{	
-				plotter->heapSnapshot(didCompress, 5, bb->getCriticalPath(bb->getCycle()));
+				plotter->heapSnapshot(didCompress, bb->getCycle(), bb->getCriticalPath(bb->getCycle()));
 
 				if(op->getTarget()->getVendor()=="Altera")
 				{
@@ -1534,12 +1534,26 @@ namespace flopoco
 					op->getTarget()->adderDelay(adderMaxWeight-minWeight+1) );
 			applyAdder(minWeight, adderMaxWeight, false);
 
+			if(plottingCycle < op->getCurrentCycle())
+			{
+				plottingCycle = op->getCurrentCycle();
+				plottingCP = op->getCriticalPath();
+			}
+			else
+				if((plottingCycle ==  op->getCurrentCycle()) && 
+					(plottingCP < op->getCriticalPath()))
+				{
+					plottingCycle = op->getCurrentCycle();
+					plottingCP = op->getCriticalPath();
+				}
+
+
 			//plotter->heapSnapshot(true,  op->getCurrentCycle(), op->getCriticalPath());
 
 			for(unsigned i=minWeight; i<=adderMaxWeight; i++)
 				cnt[i]=0;
 
-			didCompress = true;
+			//didCompress = true;
 		}
 		//=============================
 
