@@ -16,13 +16,11 @@
 /*
   Interface TODO
   support shared bitheap! In this case,
-  - do not compress at the end DONE
-  - do not add the round bit DONE -- add it to the constant
-  - import the heap LSB      DONE only for special cases
-  - export the truncation error ???
+  - do not compress at the end
+  - do not add the round bit
+  - import the heap LSB
+  - export the truncation error
   - ...
-
-  support negate in special cases
 */
 
 
@@ -37,8 +35,7 @@ They call buildHeapTiling or buildHeapLogicOnly
 
 
 /*
-  TODO tiling   
-  Kinga: done ?
+  TODO tiling
 
   - define intermediate data struct (list of multiplier blocks)  
   multiplier block:
@@ -77,8 +74,39 @@ They call buildHeapTiling or buildHeapLogicOnly
    Current situation is: this must be managed from outside:
    An application that knows that it will not use the full range (e.g. signal processing, poly evaluation) can ignore the MSB bit, 
    but we produce it.
-   The useful workaround is "symmetric saturated arithmetic". To implement some day. Sure there are tricks about it.
 
+
+
+   A big TODO ?
+  
+   But for truncated signed multipliers, we should hackingly round down this output to 2^n-1 to avoid carrying around a useless bit.
+   This would be a kind of saturated arithmetic I guess.
+
+   Beware, the last bit of Baugh-Wooley tinkering does not need to be added in this case. See the TODO there.
+
+   So the interface must provide a bit that selects this behaviour.
+
+   A possible alternative to Baugh-Wooley that solves it (tried below but it doesn't work, zut alors)
+   initially complement (xor) one negative input. This cost nothing, as this xor will be merged in the tables. Big fanout, though.
+   then -x=xb+1 so -xy=xb.y+y    
+   in case y pos, xy = - ((xb+1)y)  = -(xb.y +y)
+   in case x and y neg, xy=(xb+1)(yb+1) = xb.yb +xb +yb +1
+   It is enough not to add this lsb 1 to round down the result in this case.
+   As this is relevant only to the truncated case, this lsb 1 will indeed be truncated.
+   let sx and sy be the signs
+
+   unified equation:
+
+   px = sx xor rx  (on one bit less than x)
+   py = sy xor ry
+
+   xy = -1^(sx xor sy)( px.py + px.syb + py.sxb  )   
+   (there should be a +sxsy but it is truncated. However, if we add the round bit it will do the same, so the round bit should be sx.sy)
+   The final negation is done by complementing again.  
+   
+
+   Note that this only applies to truncated multipliers.
+   
 */
 	
 
@@ -297,10 +325,6 @@ namespace flopoco {
 		//  architectures for corner cases   //
 		///////////////////////////////////////
 
-		/////// TODO: implement the negate case !
-
-
-
 		// To manage stand-alone cases, we just build a bit-heap of max height one, so the compression will do nothing
 
 		// The really small ones fit in two LUTs and that's as small as it gets  
@@ -321,45 +345,29 @@ namespace flopoco {
 			plotter->addSmallMult(0,0,wX,wY);
 			bitHeap->getPlotter()->plotMultiplierConfiguration(multiplierUid, localSplitVector, wX, wY, wOut, g);
 			
-			for(int w=0; w<wOut; w++)	{
+			for(int w=wOut-1; w>=0; w--)	{
 					stringstream s;
-					s << addUID("RR") << of(w);
+					s<<addUID("RR")<<of(w);
 					bitHeap->addBit(lsbWeight + w + g, s.str()); // the guard bits remains 0 here
 			}		
-			// Possible sign extension
-			if((signedIO ||negate) && (int)bitHeap->getMaxWeight() > lsbWeight + wOut-1 + g) {
-				stringstream s;
-				s << addUID("RR") << of(wOut-1);
-				bitHeap->addBit(lsbWeight + wOut + g, s.str());
-				for (unsigned w=lsbWeight + wOut + g; w<bitHeap->getMaxWeight(); w++)
-					bitHeap->addConstantOneBit(w);
-			}
 			return;
 		}
 
-		if ((wY == 1)){
 		// Multiplication by 1-bit integer is simple
-				// TODO manage negate from here
-			if(!signedIO && !negate) {
-				for(int w=0; w<wOut-1; w++)	{
-					stringstream s;
-					s <<  addUID("XX") << of(w + g+ weightShift) << " when "<<addUID("YY")<<"(0)='1' else '0'";
-					bitHeap->addBit(lsbWeight + w + g, s.str()); // the guard bits remains 0 here
-				}
+		if ((wY == 1)){
+			if (signedIO){
+				manageCriticalPath( target()->localWireDelay(wX) + target()->adderDelay(wX+1) );
+
+				vhdl << tab << addUID("R") <<" <= (" << zg(wX+1)  << " - ("<<addUID("XX")<< of(wX-1) 
+					<< " & "<<addUID("XX")<<")) when "<<addUID("YY")<<"(0)='1' else "<< zg(wX+1,0)<<";"<<endl;	
 			}
-			else { // add a signed number which either -X or zero.
-				for(int w=0; w< wOut-1; w++)	{
-					stringstream s;
-					s <<  (w<wOut-2?"not ":"")  // usually "not", but the MSB is negated again for sign extension 
-					  << addUID("XX") << of(w + g + weightShift) << " when "<<addUID("YY")<<"(0)='1' else "
-					  << (w<wOut-2?"'1'":"'0'");
-					bitHeap->addBit(lsbWeight + w + g, s.str()); // the guard bits remains 0 here
-				}
-				bitHeap->addConstantOneBit(lsbWeight+g); // the one at the carry-in position to complete the negation
-				// sign extension
-				for(unsigned w=lsbWeight + wOut-2 + g; w<bitHeap->getMaxWeight(); w++)
-					bitHeap->addConstantOneBit(w); 
-			}				
+			else {
+				manageCriticalPath( target()->localWireDelay(wX) + target()->lutDelay() );
+
+				vhdl << tab << addUID("R")<<" <= (\"0\" & "<<addUID("XX")<<") when "<< addUID("YY")<<"(0)='1' else "<<zg(wX+1,0)<<";"<<endl;	
+
+			}
+			outDelayMap[addUID("R")] = getCriticalPath();
 			return;
 		}
 
@@ -420,7 +428,6 @@ namespace flopoco {
 			if (testFit){
 			REPORT(DETAILED,"testfit");
 			
-			// TODO replace the false in the following line with something related to the threshold
 				if( false && target()->worthUsingDSP(wX, wY))
 					{	REPORT(DEBUG,"worthUsingDSP");
 						manageCriticalPath(target()->DSPMultiplierDelay());
@@ -515,7 +522,10 @@ namespace flopoco {
 	void IntMultiplier::buildTiling() {
 		
 		
-			buildHeapTiling();
+			if((!signedIO)&&((wX=41)&&(wY==41)&&(wFull-wOut-g==0)))
+				buildFancyTiling();
+			else
+				buildHeapTiling();
 			//adding the round bit
 			//bitHeap->getPlotter()->plotMultiplierConfiguration(multiplierUid, localSplitVector, wX, wY, wOut, g);
 			if(g>0) {
@@ -527,7 +537,68 @@ namespace flopoco {
 	}
 
 
-
+	/***********************************************************************/
+	void IntMultiplier::buildFancyTiling()
+	{
+		//THROWERROR("fancy tiling not implemented yet");
+		
+		stringstream inx,iny;
+		inx<<addUID("XX");
+		iny<<addUID("YY");
+								
+		//REPORT(INFO,"chr DSP at "<<topx<<" "<<topy<<" width= "<<widthX<<" height= "<<widthY);		
+		int widthX, widthY,topx,topy;
+		
+		//topright dsp;
+		widthX=wxDSP;
+		widthY=wyDSP;
+		topx=0;
+		topy=0;
+		MultiplierBlock* m = new MultiplierBlock(widthX,widthY,topx,topy,inx.str(),iny.str(),weightShift);
+		m->setNext(NULL);		
+		m->setPrevious(NULL);			
+		localSplitVector.push_back(m);
+		bitHeap->addMultiplierBlock(m);
+		
+		
+		//topleft dsp
+		widthX=wyDSP;
+		widthY=wxDSP;
+		topx=wxDSP;
+		topy=0;
+		m = new MultiplierBlock(widthX,widthY,topx,topy,inx.str(),iny.str(),weightShift);
+		m->setNext(NULL);		
+		m->setPrevious(NULL);			
+		localSplitVector.push_back(m);
+		bitHeap->addMultiplierBlock(m);
+		
+		//bottomleft dsp
+		widthX=wxDSP;
+		widthY=wyDSP;
+		topx=wyDSP;
+		topy=wxDSP;
+		m = new MultiplierBlock(widthX,widthY,topx,topy,inx.str(),iny.str(),weightShift);
+		m->setNext(NULL);		
+		m->setPrevious(NULL);			
+		localSplitVector.push_back(m);
+		bitHeap->addMultiplierBlock(m);
+		
+		//bottomright dsp
+		widthX=wyDSP;
+		widthY=wxDSP;
+		topx=0;
+		topy=wyDSP;
+		m = new MultiplierBlock(widthX,widthY,topx,topy,inx.str(),iny.str(),weightShift);
+		m->setNext(NULL);		
+		m->setPrevious(NULL);			
+		localSplitVector.push_back(m);
+		bitHeap->addMultiplierBlock(m);
+		
+		//logic
+		
+		buildHeapLogicOnly(wyDSP,wyDSP,wxDSP,wxDSP,parentOp->getNewUId());
+					
+	}
 
 
 		/**************************************************************************/

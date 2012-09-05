@@ -123,7 +123,7 @@ namespace flopoco {
 		 */
 		void buildHeapTiling();
 
-
+		void buildFancyTiling();
 		
 
 		/** is called when no more dsp-s fit in a row, because of the truncation line
