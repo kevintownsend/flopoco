@@ -478,7 +478,9 @@ namespace flopoco {
 			else {
 			
 				buildTiling();
-
+				//buildLogicOnly();
+				//buildHeapLogicOnly(0,0,50,25,2);
+			
 			}
 		} 
 		
@@ -489,7 +491,7 @@ namespace flopoco {
 			buildLogicOnly();
 		}
 		
-		
+			bitHeap->getPlotter()->plotMultiplierConfiguration(multiplierUid, localSplitVector, wX, wY, wOut, g);
 	}
 
 
@@ -531,6 +533,8 @@ namespace flopoco {
 		/**************************************************************************/
 		void IntMultiplier::buildHeapLogicOnly(int topX, int topY, int botX, int botY,int blockUid)
 			{
+			
+			REPORT(INFO,"topX"<<topX<<" topY"<<topY<<" botX"<<botX<<" botY"<<botY);
 			Target *target=getTarget();
 			if(blockUid==-1)
 				blockUid++;    /// ???????????????
@@ -545,7 +549,9 @@ namespace flopoco {
 			dy = li - dx; 
 			REPORT(DEBUG, "dx="<< dx << "  dy=" << dy );
 
-
+			int wXX=wX;
+			int wYY=wY;
+			
 			int wX=botX-topX;
 			int wY=botY-topY;
 			int chunksX =  int(ceil( ( double(wX) / (double) dx) ));
@@ -559,23 +565,16 @@ namespace flopoco {
 			REPORT(DEBUG, " sizeXPadded="<< sizeXPadded << "  sizeYPadded="<< sizeYPadded);
 			if (chunksX + chunksY > 2) { //we do more than 1 subproduct // FIXME where is the else?
 				
-				// Padding X to the left
+				// Padding X to the right
 				vhdl << tab << declare(addUID("Xp", blockUid), sizeXPadded) << " <= ";
-				if(padX>0) {
-					if(signedIO)	{ // sign extension
-						ostringstream signbit;
-						signbit << addUID("XX") << of(botX-1);
-						vhdl  << rangeAssign(sizeXPadded-1, wX, signbit.str()) << " & ";
-					}
-					else {
-						vhdl << zg(padX) << " & ";
-					}
-				}
-				vhdl << addUID("XX") << range(botX-1,topX) << ";"<<endl;
+				vhdl << addUID("XX") << range(botX-1,topX) << " & "<<zg(padX)<<";"<<endl;
+				REPORT(DETAILED,addUID("XX") << range(botX-1,topX) << " & "<<zg(padX)<<";");
 
-				// Padding Y to the left
+				// Padding Y to the right
 				vhdl << tab << declare(addUID("Yp",blockUid), sizeYPadded)<<" <= ";
-				if(padY>0) {
+				
+				/*if(padY>0) {
+				
 					if(signedIO)	{ // sign extension		
 						ostringstream signbit;
 						signbit << addUID("YY") << of(botY-1);
@@ -584,16 +583,24 @@ namespace flopoco {
 					else {
 						vhdl << zg(padY) << " & ";
 					}
-				}
-				vhdl << addUID("YY") << range(botY-1,topY) << ";"<<endl;
-
+					
+				}*/
+				vhdl << addUID("YY") << range(botY-1,topY) << " & "<<zg(padY)<<";"<<endl;
+				
+				REPORT(DETAILED,addUID("YY") << range(botY-1,topY) << " & "<<zg(padY)<<";");
 				//SPLITTINGS
 				for (int k=0; k<chunksX ; k++)
+				{
 					vhdl << tab << declare(join(addUID("x",blockUid),"_",k),dx) << " <= "<< addUID("Xp",blockUid) << range((k+1)*dx-1,k*dx)<<";"<<endl;
-					
+					REPORT(DETAILED,join(addUID("x",blockUid),"_",k)<<" <= "<< addUID("Xp",blockUid) << range((k+1)*dx-1,k*dx)<<";");
+				}	
 				for (int k=0; k<chunksY ; k++)
+				{
 					vhdl << tab << declare(join(addUID("y",blockUid),"_",k),dy) << " <= " << addUID("Yp",blockUid) << range((k+1)*dy-1, k*dy)<<";"<<endl;
-					
+					REPORT(DETAILED,join(addUID("y",blockUid),"_",k)<<" <= "<< addUID("Yp",blockUid) << range((k+1)*dy-1,k*dy)<<";");
+				}	
+				
+				
 				REPORT(DEBUG, "maxWeight=" << maxWeight <<  "    weightShift=" << weightShift);
 				SmallMultTable *tUU, *tSU, *tUS, *tSS;
 
@@ -629,26 +636,32 @@ namespace flopoco {
 					
 					
 						SmallMultTable *t;
-						if (!signedIO) {
+						if (!signedIO) 
+						{
 							t=tUU;
 						}
+
 						else { // 4  cases 
-							if((ix==chunksX-1) && (iy==chunksY-1))
+							if( ((ix==chunksX-1)&&(botX==wXX)) && ((iy==chunksY-1)&&(botY==wYY) ))
 								t=tSS;
-							else if (ix==chunksX-1)
+							else if ((ix==chunksX-1)&&(botX==wXX)) 
 								t=tSU;
-							else if (iy==chunksY-1)
+							else if ((iy==chunksY-1)&&(botY==wYY))
 								t=tUS;
 							else
 								t=tUU; 
 						}
-						
+
+
 				
-						if(dx*(ix+1)+dy*(iy+1)+topX+topY>wFull-wOut-g)
+						if(dx*(ix+1)+dy*(iy+1)+topX+topY-padX-padY>wFull-wOut-g)
 						{
 						
-						plotter->addSmallMult(dx*(ix)+topX, dy*(iy)+topY,dx,dy);
+						
+						
+						plotter->addSmallMult(dx*(ix)+topX-padX, dy*(iy)+topY-padY,dx,dy);
 
+						REPORT(DETAILED,XY(ix,iy,blockUid)<<" <= " << addUID("y",blockUid) <<"_"<< iy << " & " << addUID("x",blockUid) <<"_"<< ix << ";");
 						vhdl << tab << declare(XY(ix,iy,blockUid), dx+dy) 
 						     << " <= " << addUID("y",blockUid) <<"_"<< iy << " & " << addUID("x",blockUid) <<"_"<< ix << ";"<<endl;
 
@@ -668,31 +681,37 @@ namespace flopoco {
 						
 
 						bool resultSigned =false;  
-						if(negate || (t==tSS) || (t==tUS) || (t==tSU)) 
+						if(negate ||(t==tSS) || (t==tUS) || (t==tSU)) 
 							resultSigned = true ;
 
 						int maxK=dx+dy; 
- 						if(ix == chunksX-1)
-							maxK-=padX;
-						if(iy == chunksY-1)
-							maxK-=padY;
+						int minK=0;
+ 						//if(ix == chunksX-1)
+ 						if ((ix == 0))
+							minK+=padX;
+						if((iy == 0))
+							//maxK-=padY;
+							minK+=padY;
+						REPORT(INFO,"The bits will be added from: mink"<<minK<<"	 maxk"<<maxK);
 						REPORT(DEBUG,  "ix=" << ix << " iy=" << iy << "  maxK=" << maxK  << "  negate=" << negate <<  "  resultSigned="  << resultSigned );
-						for (int k=0; k<maxK; k++) {
+						for (int k=minK; k<maxK; k++) {
 							ostringstream s;
 							s << PP(ix,iy,blockUid) << of(k); // right hand side
-							int weight = ix*dx+iy*dy+k - weightShift+topX+topY;
+							
+							int weight = ix*dx+iy*dy+k-weightShift+topX+topY-padX-padY;
+							
 							if(weight>=0) {// otherwise these bits deserve to be truncated
 								if(resultSigned && (k==maxK-1)) { 
 									ostringstream nots;
 									nots << "not " << s.str(); 
 									bitHeap->addBit(lsbWeight + weight, nots.str());
-									REPORT(DEBUG, "adding bit " << nots.str() << " at weight " << weight); 
-									REPORT(DEBUG,  "  adding constant ones from weight "<< weight << " to "<< bitHeap->getMaxWeight());
+									REPORT(INFO, "adding neg bit " << nots.str() << " at weight " << weight); 
+									REPORT(INFO,  "  adding constant ones from weight "<< weight << " to "<< bitHeap->getMaxWeight());
 									for (unsigned w=weight; w<bitHeap->getMaxWeight(); w++)
 										bitHeap->addConstantOneBit(lsbWeight + w);
 								}
 								else { // just add the bit
-									REPORT(DEBUG, "adding bit " << s.str() << " at weight " << weight); 
+									REPORT(INFO, "adding bit " << s.str() << " at weight " << weight); 
 									bitHeap->addBit(lsbWeight + weight, s.str());
 								}
 							}
@@ -746,7 +765,7 @@ namespace flopoco {
 			int topx=topX;
 			int topy=topY;
 			int dsp=0;//number of used DSPs
-			
+			int usedWidth=0;
 			
 			
 			
@@ -793,19 +812,21 @@ namespace flopoco {
 					localSplitVector.push_back(m);
 					bitHeap->addMultiplierBlock(m);
 					
+					
 				}
 				else
 				{
 					
 					if((topx<botX-dsp*widthX-1))
 						buildHeapLogicOnly(topx, topY,(botX-dsp*widthX),botY,parentOp->getNewUId());	
+					REPORT(INFO,"Logic computed xt="<<topx<<" yt="<<topY<<"  xb="<<(botX-dsp*widthX)<<" yb="<<botY); 	
 				}
 				
 				dsp++;
 				botx=topx-1;
 				topx=topx-widthX;
 				width=width-widthX;
-			
+				usedWidth+=widthX;
 				
 			
 				widthX=wxDSP;
@@ -858,8 +879,8 @@ namespace flopoco {
 			else
 			{
 				if((topx<botX-dsp*widthX))
-					buildHeapLogicOnly(topx,topY,botX-dsp*widthX,botY,parentOp->getNewUId());
-						
+					buildHeapLogicOnly(topx,topY,botX-usedWidth,botY,parentOp->getNewUId());
+				REPORT(INFO,"Logic computed xt="<<topx<<" yt="<<topY<<"  xb="<<(botX-dsp*widthX)<<" yb="<<botY);		
 			}
 				
 		
@@ -971,7 +992,7 @@ namespace flopoco {
 				*/
 				
 				
-			bitHeap->getPlotter()->plotMultiplierConfiguration(multiplierUid, localSplitVector, wX, wY, wOut, g);
+		
 				
 		}
 
