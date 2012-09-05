@@ -128,7 +128,7 @@ namespace flopoco {
 
 		/** is called when no more dsp-s fit in a row, because of the truncation line
 		  *	checks the ratio, if only DSPs should be used, only logic, or maybe both, and applies it **/
-		bool checkTreshHold(int topX, int topY, int botX, int botY, int wxDSP, int wyDSP);
+		void checkTreshHold(int topX, int topY, int botX, int botY, int wxDSP, int wyDSP);
 		void addExtraDSPs(int topX, int topY, int botX, int botY, int wxDSP, int wyDSP);
 
 
@@ -143,7 +143,7 @@ namespace flopoco {
 		int wOut;						/**<the size of the output*/
 		int wFull;                      /**< size of the full product: wX+wY-1 if signed, wX+wY if unsigned */
 		int wTruncated;                 /**< The number of truncated bits, wFull - wOut*/
-		int g ;                         /**< the number of guard bits*/
+		int g ;                         /**< the number of guard bits */
 		int maxWeight;                  /**< The max weight for the bit heap of this multiplier, wOut + g*/
  		int weightShift;                /**< the shift in weight for a truncated multiplier compared to a full one,  wFull - maxWeight*/
 		double ratio;
@@ -153,7 +153,7 @@ namespace flopoco {
 		bool useDSP;
 		Operator* parentOp;  /**< For a virtual multiplier, adding bits to some external BitHeap, this is a pointer to the Operator that will provide the actual vhdl stream etc. */
 		BitHeap* bitHeap;    /**< The heap of weighted bits that will be used to do the additions */
-		int lsbWeight;       /**< For a virtual multiplier adding bits to some external BitHeap, this is the weight at which the LSB of the result should be added */
+		int lsbWeight;       /**< the weight in the bit heap of the lsb of the multiplier result ; equals g for standalone multipliers */
 		Plotter* plotter;
 		// TODO the three following variable pairs seem uglily redundant
 		Signal* x;
