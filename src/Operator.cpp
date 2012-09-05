@@ -1421,7 +1421,9 @@ namespace flopoco{
 		for (unsigned i = 2; i < (lineLength - 2- comment.size()) / 2; i++) align += "-";
 		vhdl << align << " " << comment << " " << align << endl; 
 	}
-	
+
+
+
 
 	void Operator::outputVHDLToFile(vector<Operator*> &oplist, ofstream& file){
 		string srcFileName = "Operator.cpp"; // for REPORT
@@ -1456,6 +1458,12 @@ namespace flopoco{
 
 	void Operator::outputVHDLToFile(ofstream& file){
 		vector<Operator*> oplist;
+		// First copy the global oplist
+		if(globalOpList) {
+			for(unsigned i=0; i<globalOpList->size(); i++)
+				oplist.push_back((*globalOpList)[i]);
+		}
+		// then add self
 		oplist.push_back(this);
 		Operator::outputVHDLToFile(oplist, file);
 	}
@@ -1463,6 +1471,7 @@ namespace flopoco{
 	
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////Functions used for resource estimations
+
 	
 	//--Logging functions
 	

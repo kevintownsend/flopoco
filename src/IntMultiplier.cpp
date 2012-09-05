@@ -238,6 +238,7 @@ namespace flopoco {
 		//plotter->setBitHeap(bitHeap);
 		
 		initialize();
+
 		fillBitHeap();
 
 
@@ -280,6 +281,7 @@ namespace flopoco {
 		yname="Y";
 
 		initialize();
+		lsbWeight=g; // g was computed in initialize()
 
 		// Set up the IO signals
 		addInput ( xname  , wXdecl, true );
@@ -296,7 +298,6 @@ namespace flopoco {
 
 		// The bit heap
 		bitHeap = new BitHeap(this, wOut+g);
-		lsbWeight=0;
 
 		plotter = new Plotter(bitHeap);
 
@@ -348,7 +349,7 @@ namespace flopoco {
 			for(int w=wOut-1; w>=0; w--)	{
 					stringstream s;
 					s<<addUID("RR")<<of(w);
-					bitHeap->addBit(lsbWeight + w + g, s.str()); // the guard bits remains 0 here
+					bitHeap->addBit(lsbWeight + w, s.str()); // the guard bits remains 0 here
 			}		
 			return;
 		}
@@ -398,13 +399,13 @@ namespace flopoco {
 			for (int w=0; w<wOut+g; w++){
 				stringstream s0,s1;
 				s0<<addUID("R0")<<of(w+(wX+2-wOut-g));
-				bitHeap->addBit(lsbWeight + w, s0.str());
+				bitHeap->addBit(lsbWeight-g + w, s0.str());
 				s1<<addUID("R1")<<of(w+(wX+2-wOut-g));
-				bitHeap->addBit(lsbWeight + w, s1.str());
+				bitHeap->addBit(lsbWeight-g + w, s1.str());
 			}
 			// Rounding bit (or carry in bit for signed inputs)
 			if(g || signedIO)
-				bitHeap->addConstantOneBit(lsbWeight);
+				bitHeap->addConstantOneBit(lsbWeight-g);
 			// and that's it
 			return;
 
@@ -512,7 +513,7 @@ namespace flopoco {
 		//adding the round bit
 		if(g>0) {
 			int weight=wFull-wOut-1- weightShift;
-			bitHeap->addConstantOneBit(lsbWeight + weight);
+			bitHeap->addConstantOneBit(lsbWeight-g + weight);
 		}
 	}
 
@@ -530,7 +531,7 @@ namespace flopoco {
 			//bitHeap->getPlotter()->plotMultiplierConfiguration(multiplierUid, localSplitVector, wX, wY, wOut, g);
 			if(g>0) {
 				int weight=wFull-wOut-1- weightShift;
-				bitHeap->addConstantOneBit(lsbWeight + weight);
+				bitHeap->addConstantOneBit(lsbWeight-g + weight);
 			}
 			
 		
@@ -763,15 +764,15 @@ namespace flopoco {
 								if(resultSigned && (k==maxK-1)) { 
 									ostringstream nots;
 									nots << "not " << s.str(); 
-									bitHeap->addBit(lsbWeight + weight, nots.str());
+									bitHeap->addBit(lsbWeight-g + weight, nots.str());
 									REPORT(INFO, "adding neg bit " << nots.str() << " at weight " << weight); 
 									REPORT(INFO,  "  adding constant ones from weight "<< weight << " to "<< bitHeap->getMaxWeight());
 									for (unsigned w=weight; w<bitHeap->getMaxWeight(); w++)
-										bitHeap->addConstantOneBit(lsbWeight + w);
+										bitHeap->addConstantOneBit(lsbWeight-g + w);
 								}
 								else { // just add the bit
 									REPORT(INFO, "adding bit " << s.str() << " at weight " << weight); 
-									bitHeap->addBit(lsbWeight + weight, s.str());
+									bitHeap->addBit(lsbWeight-g + weight, s.str());
 								}
 							}
 						}
@@ -790,7 +791,7 @@ namespace flopoco {
 	
 
 		
-			void IntMultiplier::checkThreshold(int topX, int topY, int botX, int botY,int wxDSP,int wyDSP)
+	void IntMultiplier::checkThreshold(int topX, int topY, int botX, int botY,int wxDSP,int wyDSP)
 		{
 		
 			if(parentOp->getTarget()->getVendor()=="Altera")
@@ -1236,7 +1237,3 @@ namespace flopoco {
 	
 
 }
-
-
-
-

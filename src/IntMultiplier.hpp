@@ -64,6 +64,7 @@ namespace flopoco {
 		 * @param[in] wOut         wOut size for a truncated multiplier (0 means full multiplier)
 		 * @param[in] lsbWeight     the weight, within this BitHeap, corresponding to the LSB of the multiplier output. 
 		 *                          Note that there should be enough bits below for guard bits in case of truncation.
+		                            The method neededGuardBits() provides this information.
 		 * @param[in] negate     if true, the multiplier result is subtracted from the bit heap 
 		 * @param[in] signedIO     false=unsigned, true=signed
 		 * @param[in] ratio            DSP block use ratio
@@ -109,7 +110,6 @@ namespace flopoco {
 		void buildTiling();
 
 
-		//void checkThreshold(int topX, int topY, int botX, int botY,int wxDSP,int wyDSP);
 
 	
 		/**	builds the logic block ( smallMultTables) 

@@ -1467,7 +1467,9 @@ protected:
 	map<string, int>    declareTable;     					/**< Table containing the name and declaration cycle of the signal */
 	int                 myuid;              				/**<unique id>*/
 	int                 cost;             					/**< the cost of the operator depending on different metrics */
-	vector<Operator*>   oplist;
+	vector<Operator*>   oplist;                     /**< A list of all the sub-operators */
+	vector<Operator*> * globalOpList;               /**< A list of sub-operators that should be shared with most operators, CURRENTLY UNUSED */
+	
 
 private:
 	int                    stdLibType_;                 	/**< 0 will use the Synopsys ieee.std_logic_unsigned, -1 uses std_logic_unsigned, 1 uses ieee numeric_std  (preferred) */

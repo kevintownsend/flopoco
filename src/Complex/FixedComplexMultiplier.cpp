@@ -44,6 +44,8 @@ namespace flopoco{
 		BitHeap* bitHeapIm = new BitHeap(this, 1+wO+g);  // will add XrYi + XiYr
 		// Use virtual multipliers that will add their result to the bitHeap
 		//IntMultiplier* multXrYr = 
+
+		setCycle(0);
 		new IntMultiplier(this, bitHeapRe,
 		                  getSignalByName("Xr"),
 		                  getSignalByName("Yr"),
@@ -52,6 +54,7 @@ namespace flopoco{
 		                  false, // negate
 		                  signedOperator, 1.0);
 		//IntMultiplier* multXiYi = 
+		setCycle(0);
 		new IntMultiplier(this, bitHeapRe,
 		                  getSignalByName("Xi"),
 		                  getSignalByName("Yi"),
@@ -67,6 +70,7 @@ namespace flopoco{
 
 
 		//IntMultiplier* multXrYi = 
+		setCycle(0);
 		new IntMultiplier(this, bitHeapIm,
 		                  getSignalByName("Xr"),
 		                  getSignalByName("Yi"),
@@ -75,6 +79,7 @@ namespace flopoco{
 		                  false, // negate
 		                  signedOperator, 1.0);
 		//IntMultiplier* multXiYr = 
+		setCycle(0);
 		new IntMultiplier(this, bitHeapIm,
 		                  getSignalByName("Xi"),
 		                  getSignalByName("Yr"),
@@ -91,7 +96,7 @@ namespace flopoco{
 		vhdl << tab << "Zr <= " << bitHeapRe -> getSumName() << range(wO+g, g+1) << ";" << endl;
 		vhdl << tab << "Zi <= " << bitHeapIm -> getSumName() << range(wO+g, g+1) << ";" << endl;
 		
-#else // pre-BitHeap version
+#else // pre-BitHeap version, use this to compare
 		addOutput("Zi",   2*w, 2);
 		addOutput("Zr",   2*w, 2);
 
