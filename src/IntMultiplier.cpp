@@ -522,7 +522,7 @@ namespace flopoco {
 	void IntMultiplier::buildTiling() {
 		
 		
-			if((!signedIO)&&((wX=41)&&(wY==41)&&(wFull-wOut-g==0)))
+			if((!signedIO)&&((wX==41)&&(wY==41)&&(wFull-wOut-g==0)))
 				buildFancyTiling();
 			else
 				buildHeapTiling();
@@ -537,6 +537,7 @@ namespace flopoco {
 	}
 
 
+	//the fancy tiling is used only for a hardwired case 41 41 82 
 	/***********************************************************************/
 	void IntMultiplier::buildFancyTiling()
 	{
@@ -643,19 +644,6 @@ namespace flopoco {
 
 				// Padding Y to the right
 				vhdl << tab << declare(addUID("Yp",blockUid), sizeYPadded)<<" <= ";
-				
-				/*if(padY>0) {
-				
-					if(signedIO)	{ // sign extension		
-						ostringstream signbit;
-						signbit << addUID("YY") << of(botY-1);
-						vhdl  << rangeAssign(sizeYPadded-1, wY, signbit.str()) << " & ";
-					}
-					else {
-						vhdl << zg(padY) << " & ";
-					}
-					
-				}*/
 				vhdl << addUID("YY") << range(botY-1,topY) << " & "<<zg(padY)<<";"<<endl;
 				
 				REPORT(DETAILED,addUID("YY") << range(botY-1,topY) << " & "<<zg(padY)<<";");
@@ -889,7 +877,7 @@ namespace flopoco {
 				{
 					
 					if((topx<botX-dsp*widthX-1))
-						buildHeapLogicOnly(topx, topY,(botX-dsp*widthX),botY,parentOp->getNewUId());	
+						buildHeapLogicOnly(topx, topY,(botX-usedWidth),botY,parentOp->getNewUId());	
 					REPORT(INFO,"Logic computed xt="<<topx<<" yt="<<topY<<"  xb="<<(botX-dsp*widthX)<<" yb="<<botY); 	
 				}
 				
