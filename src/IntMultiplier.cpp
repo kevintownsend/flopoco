@@ -519,7 +519,10 @@ namespace flopoco {
 		//adding the round bit
 		if(g>0) {
 			int weight=wFull-wOut-1- weightShift;
-			bitHeap->addConstantOneBit(lsbWeight-g + weight);
+			if(negate)
+				bitHeap->subConstantOneBit(lsbWeight-g + weight);
+			else
+				bitHeap->addConstantOneBit(lsbWeight-g + weight);
 		}
 	}
 
@@ -538,7 +541,10 @@ namespace flopoco {
 		//bitHeap->getPlotter()->plotMultiplierConfiguration(multiplierUid, localSplitVector, wX, wY, wOut, g);
 		if(g>0) {
 			int weight=wFull-wOut-1- weightShift;
-			bitHeap->addConstantOneBit(lsbWeight-g + weight);
+			if(negate)
+				bitHeap->subConstantOneBit(lsbWeight-g + weight);
+			else
+				bitHeap->addConstantOneBit(lsbWeight-g + weight);
 		}
 
 

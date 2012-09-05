@@ -79,6 +79,9 @@ namespace flopoco{
 			/** add a constant 1 to the bit heap. All the constant bits are added to the constantBits mpz, so we don't generate hardware to compress constants....
 			  @param weight   the weight of the 1 to be added */
 			void addConstantOneBit(unsigned weight) {constantBits += (mpz_class(1) << weight);};
+		/** "remove" a constant 1 from the bit heap. 
+		    @param weight   the weight of the 1 to be added */
+		void subConstantOneBit(unsigned weight) {constantBits -= (mpz_class(1) << weight);};
 
 			/** add a constant to the bit heap. It will be added to the constantBits mpz, so we don't generate hardware to compress constants....
 			  @param weight   the weight of the LSB of c (or, where c should be added)

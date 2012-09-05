@@ -65,7 +65,8 @@ namespace flopoco{
 		// The round bit
 		if(g)
 			bitHeapRe -> addConstantOneBit(g);
-		bitHeapRe -> generateCompressorVHDL();	
+	
+	bitHeapRe -> generateCompressorVHDL();	
 		
 
 
