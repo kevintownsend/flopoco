@@ -29,8 +29,8 @@ namespace flopoco
 {
 
 	Plotter::Snapshot::Snapshot(vector<list<WeightedBit*> > bitheap, int minWeight_, 
-			int maxWeight_, unsigned maxHeight_, bool didCompress_, int stage_, int cycle_, double cp_):
-		maxWeight(maxWeight_), minWeight(minWeight_), maxHeight(maxHeight_), didCompress(didCompress_) , stage(stage_), cycle(cycle_), cp(cp_)
+			int maxWeight_, unsigned maxHeight_, bool didCompress_,  int cycle_, double cp_):
+		maxWeight(maxWeight_), minWeight(minWeight_), maxHeight(maxHeight_), didCompress(didCompress_) , cycle(cycle_), cp(cp_)
 	{
 		for(int w=minWeight; w<maxWeight_; w++)
 		{
@@ -61,8 +61,7 @@ namespace flopoco
 	{
 		srcFileName=bh_->getOp()->getSrcFileName() + ":Plotter";
 		smallMultIndex = 0;
-		stagesPerCycle = bh_->getStagesPerCycle();
-		elementaryTime = bh_->getElementaryTime();
+
 
 	}
 
@@ -74,10 +73,10 @@ namespace flopoco
 	}
 
 
-	void Plotter::heapSnapshot(bool compress, int stage, int cycle, double cp)
+	void Plotter::heapSnapshot(bool compress, int cycle, double cp)
 	{
 		snapshots.push_back(new Snapshot(bh->bits, bh->getMinWeight(), bh->getMaxWeight(), bh->getMaxHeight(),
-				   	compress, stage, cycle, cp));
+				   	compress, cycle, cp));
 	}
 
 
@@ -154,7 +153,7 @@ namespace flopoco
 		int offsetY = 0;
 		int turnaroundX = snapshots[snapshots.size()-1]->bits.size() * 10 + 230;
 		
-		lastStage=snapshots[0]->stage;
+		//lastStage=snapshots[0]->stage;
 
 		bool timeCondition;
 
@@ -170,7 +169,7 @@ namespace flopoco
 					timeCondition = false;
 				
 				offsetY += 15 + snapshots[i]->maxHeight * 10;
-				drawConfiguration(snapshots[i]->bits, i,snapshots[i]->cycle, snapshots[i]->cp, snapshots[i]->stage,
+				drawConfiguration(snapshots[i]->bits, i,snapshots[i]->cycle, snapshots[i]->cp, 
 					   snapshots[i]->minWeight, offsetY, turnaroundX, timeCondition);
 
 				if (i!=snapshots.size()-1)
@@ -781,7 +780,7 @@ namespace flopoco
 
 
 
-	void Plotter::drawConfiguration(vector<list<WeightedBit*> > bits,unsigned nr, int cycle, double cp, int stage,
+	void Plotter::drawConfiguration(vector<list<WeightedBit*> > bits,unsigned nr, int cycle, double criticalPath,
 			int minWeight, int offsetY, int turnaroundX, bool timeCondition)
 	{
 		int color = 0;
@@ -789,12 +788,9 @@ namespace flopoco
 		int cnt = 0;
 		double tempCP = 0;
 
-		int stagesPerCycle = bh->getStagesPerCycle();
-		double elemTime = bh->getElementaryTime();
-
 		int ci,c1,c2,c3;//print cp as a number as a rational number, in nanoseconds
 
-		int cpint = cp * 1000000000000;
+		int cpint = criticalPath * 1000000000000;
 
 		c3 = cpint % 10;
 		cpint = cpint / 10;
@@ -806,21 +802,25 @@ namespace flopoco
 
 		//REPORT(INFO, snapshots.size()<< " nr= "<<nr);
 
-		if (nr == snapshots.size()-1)
+		if(nr ==0 )
 			fig << "<text x=\"" << turnaroundX + 50 << "\" y=\"" << offsetY + 3
-				<< "\" fill=\"midnightblue\">" << "before final addition" << "</text>" << endl;
+				<< "\" fill=\"midnightblue\">" << "before first compression" << "</text>" << endl;
 		else
-			if (nr == snapshots.size()-2)
+			if (nr == snapshots.size()-1)
 				fig << "<text x=\"" << turnaroundX + 50 << "\" y=\"" << offsetY + 3
-					<< "\" fill=\"midnightblue\">" << "before 3-bit height additions" << "</text>" << endl;
+					<< "\" fill=\"midnightblue\">" << "before final addition" << "</text>" << endl;
 			else
-			{
-				fig << "<text x=\"" << turnaroundX + 50 << "\" y=\"" << offsetY + 3
-					<< "\" fill=\"midnightblue\">" << cycle << "</text>" << endl;
+				if (nr == snapshots.size()-2)
+					fig << "<text x=\"" << turnaroundX + 50 << "\" y=\"" << offsetY + 3
+						<< "\" fill=\"midnightblue\">" << "before 3-bit height additions" << "</text>" << endl;
+				else
+				{
+					fig << "<text x=\"" << turnaroundX + 50 << "\" y=\"" << offsetY + 3
+						<< "\" fill=\"midnightblue\">" << cycle << "</text>" << endl;
 
-				fig << "<text x=\"" << turnaroundX + 80 << "\" y=\"" << offsetY + 3
-					<< "\" fill=\"midnightblue\">" << ci << "." << c1 << c2 << c3 << " ns"  << "</text>" << endl;
-			}
+					fig << "<text x=\"" << turnaroundX + 80 << "\" y=\"" << offsetY + 3
+						<< "\" fill=\"midnightblue\">" << ci << "." << c1 << c2 << c3 << " ns"  << "</text>" << endl;
+				}
 
 #if 0
 		if((lastStage/stagesPerCycle)<(stage/stagesPerCycle))
@@ -852,7 +852,7 @@ namespace flopoco
 				{
 
 					//REPORT(INFO, "in middle call " << (*it)->getName());
-
+#if 0
 					if(it==bits[i].begin())
 						{
 							tempCycle = (*it)->getCycle();
@@ -869,13 +869,18 @@ namespace flopoco
 									color++;
 								}
 						}
+#endif
 
 					int cy = (*it)->getCycle();
-					double cp = (*it)->getCriticalPath(cy)*1000000000000; //picoseconds
+					double cp = (*it)->getCriticalPath(cy);
 					if (timeCondition)
 					{
-						if(stage>=(*it)->computeStage(stagesPerCycle, elemTime))
+						//if(stage>=(*it)->computeStage(stagesPerCycle, elemTime))
+						REPORT(INFO, cy << "  " << cycle);
+						REPORT(INFO, cp << "  " << criticalPath);
+						if ((cy<cycle) || ((cy==cycle) && (cp<=criticalPath)))
 						{
+							cp = cp * 1000000000000;  //picoseconds
 							drawBit(cnt, i, turnaroundX, offsetY, (*it)->getType(), cy, cp, (*it)->getName());
 							cnt++;
 						}
