@@ -790,7 +790,7 @@ namespace flopoco {
 	
 
 		
-			void IntMultiplier::checkTreshHold(int topX, int topY, int botX, int botY,int wxDSP,int wyDSP)
+			void IntMultiplier::checkThreshold(int topX, int topY, int botX, int botY,int wxDSP,int wyDSP)
 		{
 		
 			if(parentOp->getTarget()->getVendor()=="Altera")
@@ -829,7 +829,7 @@ namespace flopoco {
 			
 			
 			
-			//if the width is larger then a dsp width, than we have to checkTreshHold the good coordinates for the dsp
+			//if the width is larger then a dsp width, than we have to checkThreshold the good coordinates for the dsp
 			if (width>widthX)
 				topx=botx-widthX;
 		
@@ -1029,8 +1029,8 @@ namespace flopoco {
 				//REPORT(DETAILED," checktreshold topx=" << x <<" topy= "<<topy<<" botx= "<<botx<<" boty="<<boty);
 				
 				if((botx>0))
-				//checkTreshHold(x,topy, botx, boty, widthX, widthY); 
-				checkTreshHold(x,topy, botx, boty, wxDSP, wyDSP); 
+				//checkThreshold(x,topy, botx, boty, widthX, widthY); 
+				checkThreshold(x,topy, botx, boty, wxDSP, wyDSP); 
 				//buildHeapLogicOnly(x,topy, botx, boty,parentOp->getNewUId());	
 				boty=boty-widthY;
 			}
@@ -1045,7 +1045,7 @@ namespace flopoco {
 					int x=wX;
 					while((x+y>wFull-wOut-g)&&(x>0))
 						x--;
-					checkTreshHold(x,0,wX,restY,wxDSP,wyDSP);
+					checkThreshold(x,0,wX,restY,wxDSP,wyDSP);
 				}
 				
 				*/
