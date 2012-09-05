@@ -497,7 +497,7 @@ namespace flopoco
 
 		WeightedBit* bit= new WeightedBit(getGUid(), newUid(w), w, type, op->getCurrentCycle(), op->getCriticalPath()) ;
 		// created at (op->getCycle(), opt-getCriticalPath())
-		
+
 
 		int bitStage = bit->computeStage(stagesPerCycle, elementaryTime);
 		if (bitStage > plottingStage)
@@ -573,9 +573,9 @@ namespace flopoco
 			op->setCriticalPath(  b ->getCriticalPath(op->getCurrentCycle()));
 			op->manageCriticalPath( op->getTarget()->lutDelay() + op->getTarget()->localWireDelay() );
 			if((op->getCurrentCycle()>plottingCycle) || ((op->getCurrentCycle()==plottingCycle) && 
-					(op->getCriticalPath()>plottingCP)))
+						(op->getCriticalPath()>plottingCP)))
 				plottingCycle = op->getCurrentCycle();
-				plottingCP = op->getCriticalPath();
+			plottingCP = op->getCriticalPath();
 
 		}
 
@@ -626,7 +626,7 @@ namespace flopoco
 		if(bc->getColumnSize(1)!=0)
 			removeCompressedBits(i+1,bc->getColumnSize(1));
 
-		
+
 
 		// add the bits, at the current (global) instant.
 		addBit(i, join(out_concat, compressorIndex,"_", outConcatIndex, "(0)"),"",type);
@@ -798,7 +798,7 @@ namespace flopoco
 				plottingCycle=0;
 				plottingCP=0;
 				stage++;
-				
+
 			}
 
 			//plotter->heapSnapshot(true, op->getCurrentCycle(), op->getCriticalPath() );
@@ -848,9 +848,12 @@ namespace flopoco
 						{
 							op->setCycle( b->getCycle());
 							op->setCriticalPath(b->getCriticalPath(op->getCurrentCycle()));
-							op->manageCriticalPath(op->getTarget()->localWireDelay() + op->getTarget()->adderDelay(i-minWeight));
+							op->manageCriticalPath(op->getTarget()->localWireDelay() + 
+									op->getTarget()->adderDelay(i-minWeight));
 							applyAdder(minWeight, i-1, false);
 						}
+						
+						concatenateLSBColumns();	
 
 						REPORT(DEBUG, "Column height when 3-bit height is maximum");
 						for (unsigned w=0; w<bits.size(); w++) 
@@ -899,7 +902,8 @@ namespace flopoco
 										{
 											op->setCycle(  latestBit ->getCycle()  );
 											op->setCriticalPath(   latestBit ->getCriticalPath(op->getCurrentCycle()));
-											op->manageCriticalPath( op->getTarget()->localWireDelay() + op->getTarget()->adderDelay(i-j) );
+											op->manageCriticalPath( op->getTarget()->localWireDelay() + 
+													op->getTarget()->adderDelay(i-j) );
 
 											//REPORT(INFO, endl << op->getTarget()->adderDelay(i-j) << endl );
 
@@ -918,8 +922,8 @@ namespace flopoco
 
 					}
 
-					
 
+					concatenateLSBColumns();
 
 					REPORT(DEBUG, "Column height after all compressions");
 					for (unsigned w=0; w<bits.size(); w++) 
@@ -1385,9 +1389,10 @@ namespace flopoco
 			printColumnInfo(w); 
 		}	
 
+		concatenateLSBColumns();
 
 
-
+#if 0
 		REPORT(DEBUG, "Checking whether rightmost columns need compressing");
 		bool alreadyCompressed=true;
 		w=minWeight;
@@ -1447,7 +1452,7 @@ namespace flopoco
 
 		REPORT(DEBUG, "minWeight="<< minWeight);
 
-
+#endif
 
 		for(unsigned i=minWeight; i<maxWeight; i++)
 		{
@@ -1498,7 +1503,7 @@ namespace flopoco
 				possiblyLatestBitAdded = *it;
 			}
 
-	
+
 
 			it++;
 
@@ -1541,7 +1546,7 @@ namespace flopoco
 			}
 			else
 				if((plottingCycle ==  op->getCurrentCycle()) && 
-					(plottingCP < op->getCriticalPath()))
+						(plottingCP < op->getCriticalPath()))
 				{
 					plottingCycle = op->getCurrentCycle();
 					plottingCP = op->getCriticalPath();
@@ -1697,6 +1702,73 @@ namespace flopoco
 		m->setSignalName(s.str());
 		m->setSignalLength(m->getwX()+m->getwY()+zerosX+zerosY);
 		//	REPORT(DETAILED,"dspout");
+
+	}
+
+
+
+
+	void BitHeap::concatenateLSBColumns()
+	{
+		unsigned w;
+		REPORT(DEBUG, "Checking whether rightmost columns need compressing");
+		bool alreadyCompressed=true;
+		w=minWeight;
+		while(w<bits.size() && alreadyCompressed) 
+		{
+
+
+			if(currentHeight(w)>1)
+			{
+				alreadyCompressed=false;
+			}
+			else
+			{
+				REPORT(DEBUG, "Level " << w << " is already compressed; will go directly to the final result");
+				w++;
+			}
+		}
+
+
+
+		if(w!=minWeight)
+		{
+
+			WeightedBit *b = getLatestBit(minWeight, w-1);
+			op->setCycle(  b ->getCycle()  );
+			op->setCriticalPath(   b ->getCriticalPath(op->getCurrentCycle()));
+
+
+			if (w-minWeight>1)
+				op->vhdl << tab << op->declare(join("tempR_bh", guid, "_", chunkDoneIndex), w-minWeight, true) << " <= " ;
+			else
+				op->vhdl << tab << op->declare(join("tempR_bh", guid, "_", chunkDoneIndex), 1, false) << " <= " ;
+			unsigned i=w-1;
+			while((i>=minWeight)&&(i<w)) 
+			{
+				REPORT(DEBUG,"crash "<<i);
+				if(currentHeight(i)==1) 
+				{
+					op->vhdl << (bits[i].front())->getName();
+					bits[i].pop_front();
+				}
+				else
+				{
+					op->vhdl << "'0'";
+				}
+				if (i!=minWeight)
+					op->vhdl << " & ";	
+				i--;
+			}
+			op->vhdl << "; -- already compressed" << endl; 
+			chunkDoneIndex++;			
+		}
+
+
+
+		minWeight=w;
+
+		REPORT(DEBUG, "minWeight="<< minWeight);
 
 	}
 

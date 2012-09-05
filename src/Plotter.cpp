@@ -183,7 +183,7 @@ namespace flopoco
 		initializeHeapPlotting(false);
 
 		int offsetY = 0;
-		int turnaroundX = snapshots[snapshots.size()-1]->bits.size() * 10 + 230;
+		int turnaroundX = snapshots[snapshots.size()-1]->maxWeight * 10 + 100;
 		
 		//lastStage=snapshots[0]->stage;
 
@@ -814,10 +814,10 @@ namespace flopoco
 	void Plotter::drawConfiguration(vector<list<WeightedBit*> > bits,unsigned nr, int cycle, double criticalPath,
 			int minWeight, int offsetY, int turnaroundX, bool timeCondition)
 	{
-		int color = 0;
-		int tempCycle = 0;
+
+
 		int cnt = 0;
-		double tempCP = 0;
+
 
 		int ci,c1,c2,c3;//print cp as a number as a rational number, in nanoseconds
 
@@ -853,18 +853,7 @@ namespace flopoco
 						<< "\" fill=\"midnightblue\">" << ci << "." << c1 << c2 << c3 << " ns"  << "</text>" << endl;
 				}
 
-#if 0
-		if((lastStage/stagesPerCycle)<(stage/stagesPerCycle))
-			fig << "<line x1=\"" << turnaroundX + 150 << "\" y1=\"" 
-				<< offsetY +10 << "\" x2=\"" << turnaroundX - bits.size()*10 - 50
-				<< "\" y2=\"" << offsetY +10 << "\" style=\"stroke:midnightblue;stroke-width:2\" />" << endl;
-		else
-			fig << "<line x1=\"" << turnaroundX + 150 << "\" y1=\"" 
-				<< offsetY +10 << "\" x2=\"" << turnaroundX - bits.size()*10 - 50
-				<< "\" y2=\"" << offsetY +10 << "\" style=\"stroke:lightsteelblue;stroke-width:1\" />" << endl;
 
-		lastStage=stage;
-#endif
 
 		turnaroundX -= minWeight*10;
 
@@ -875,32 +864,12 @@ namespace flopoco
 
 			if(bits[i].size()>0)
 			{
-				color=0;
-				tempCycle = 0;
-				tempCP = 0;
+
 				cnt = 0;
 				for(list<WeightedBit*>::iterator it = bits[i].begin(); it!=bits[i].end(); ++it)
 				{
 
-					//REPORT(INFO, "in middle call " << (*it)->getName());
-#if 0
-					if(it==bits[i].begin())
-						{
-							tempCycle = (*it)->getCycle();
-							tempCP = (*it)->getCriticalPath(tempCycle);
-						}
-					else
-						{
-							if((tempCycle!=(*it)->getCycle()) || 
-							   ((tempCycle==(*it)->getCycle()) && 
-								(tempCP!=(*it)->getCriticalPath((*it)->getCycle()))))
-								{
-									tempCycle = (*it)->getCycle();
-									tempCP = (*it)->getCriticalPath(tempCycle);
-									color++;
-								}
-						}
-#endif
+
 
 					int cy = (*it)->getCycle();
 					double cp = (*it)->getCriticalPath(cy);
@@ -921,10 +890,7 @@ namespace flopoco
 						drawBit(cnt, i, turnaroundX, offsetY, (*it)->getType(), cy, cp, (*it)->getName());
 						cnt++;
 					}
-					//REPORT(INFO, cp);
-					//cnt++;
 
-					//REPORT(INFO, "after call to drawBit " << i);
 
 				}
 			}
