@@ -128,7 +128,8 @@ namespace flopoco {
 
 		/** is called when no more dsp-s fit in a row, because of the truncation line
 		  *	checks the ratio, if only DSPs should be used, only logic, or maybe both, and applies it **/
-		void checkTreshHold(int topX, int topY, int botX, int botY, int wxDSP, int wyDSP);
+		bool checkTreshHold(int topX, int topY, int botX, int botY, int wxDSP, int wyDSP);
+		void addExtraDSPs(int topX, int topY, int botX, int botY, int wxDSP, int wyDSP);
 
 
 
