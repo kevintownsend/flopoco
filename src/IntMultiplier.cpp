@@ -1044,21 +1044,20 @@ namespace flopoco {
 				
 				}
 				
+				//updating the dsp's width and height
 				widthX=wxDSP;
-					widthY=wyDSP;
+				widthY=wyDSP;
 					
-					if(signedIO)
-					{
-						if(boty!=wY)
-							widthY--;
-						if(botx!=wX)
-							widthX--;	
-					}
+				if(signedIO)
+				{
+					if(boty!=wY)
+						widthY--;
+					if(botx!=wX)
+						widthX--;	
+				}
 				
-				//compute
+				
 				//determination of the x coordinate
-				
-				//REPORT(DETAILED," topx ="<<topx <<" topy= "<<topy<<" botx= "<<botx<<" boty="<<boty);
 				if(topy<0)
 					topy=0;
 				int y=boty;
@@ -1068,33 +1067,11 @@ namespace flopoco {
 				
 				
 				//call the function only if at least 1 bit remaining
-				//REPORT(DETAILED," checktreshold topx=" << x <<" topy= "<<topy<<" botx= "<<botx<<" boty="<<boty);
-				
 				if((botx>0))
-				//checkThreshold(x,topy, botx, boty, widthX, widthY); 
-				addExtraDSPs(x,topy, botx, boty, wxDSP, wyDSP); 
-				//buildHeapLogicOnly(x,topy, botx, boty,parentOp->getNewUId());	
+					addExtraDSPs(x,topy, botx, boty, wxDSP, wyDSP); 
+				
 				boty=boty-widthY;
 			}
-			
-			
-			
-				//if there are some remaining bits on the Y 
-				/*if(restY>0)
-				{
-					//determination of x coordinate (top right)
-					int y=restY;
-					int x=wX;
-					while((x+y>wFull-wOut-g)&&(x>0))
-						x--;
-					checkThreshold(x,0,wX,restY,wxDSP,wyDSP);
-				}
-				
-				*/
-				
-				
-		
-				
 		}
 
 
