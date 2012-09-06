@@ -434,7 +434,8 @@ namespace flopoco {
 			if (testFit){
 				REPORT(DETAILED,"testfit");
 
-				if( false && target()->worthUsingDSP(wX, wY))
+				//if( false && target()->worthUsingDSP(wX, wY))
+				if( checkThreshold(0,0,wX, wY,wxDSP,wyDSP))
 				{	REPORT(DEBUG,"worthUsingDSP");
 					manageCriticalPath(target()->DSPMultiplierDelay());
 					/*if (signedIO)
