@@ -491,6 +491,7 @@ namespace flopoco
 	void  BitHeap::addBit(unsigned w, string rhs, string comment, int type)
 	{
 
+		REPORT(DEBUG, "addBit at weigth " <<w <<"   for rhs=" << rhs );
 		// ignore bits beyond the declared maxWeight
 		if(w >= maxWeight)
 			return;	

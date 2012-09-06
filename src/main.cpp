@@ -1483,7 +1483,7 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*>  &   oplist ){
 				int wI = checkStrictlyPositive(argv[i++], argv[0]);
 				int wO = checkStrictlyPositive(argv[i++], argv[0]);
 				float ratio = atof(argv[i++]);
-				op = new FixedComplexMultiplier(target, wI, wO, ratio);
+				op = new FixedComplexMultiplier(target, wI, wO, ratio, true);
 				addOperator(oplist, op);
 			}
 		}

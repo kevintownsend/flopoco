@@ -335,7 +335,6 @@ namespace flopoco {
 
 		// The really small ones fit in two LUTs and that's as small as it gets  
 		if(wX+wY <= target()->lutInputs()+2) {
-			REPORT(DETAILED,"1");
 			vhdl << tab << "-- Ne pouvant me fier à mon raisonnement, j'ai appris par coeur le résultat de toutes les multiplications possibles" << endl;
 
 			SmallMultTable *t = new SmallMultTable( target(), wX, wY, wOut, negate, signedIO, signedIO);
@@ -352,10 +351,10 @@ namespace flopoco {
 			plotter->addSmallMult(0,0,wX,wY);
 			bitHeap->getPlotter()->plotMultiplierConfiguration(multiplierUid, localSplitVector, wX, wY, wOut, g);
 
-			for(int w=wOut-1; w>=0; w--)	{
+			for(int w=wOut-1; w>=0; w--)	{ // this is a weight in the multiplier output
 				stringstream s;
 				s<<addUID("RR")<<of(w);
-				bitHeap->addBit(lsbWeight + w, s.str()); // the guard bits remains 0 here
+				bitHeap->addBit(lsbWeight-g + w, s.str()); 
 			}		
 			return;
 		}
@@ -435,7 +434,6 @@ namespace flopoco {
 			if (testFit){
 				REPORT(DETAILED,"testfit");
 
-				//if( false && target()->worthUsingDSP(wX, wY))
 				if( checkThreshold(0,0,wX, wY,wxDSP,wyDSP))
 				{	REPORT(INFO,"worthUsingDSP");
 					manageCriticalPath(target()->DSPMultiplierDelay());
@@ -459,21 +457,11 @@ namespace flopoco {
 					REPORT(DETAILED,"wxDSSSSPPP=="<<wxDSP);
 
 					stringstream inx,iny;
-					if(signedIO)
-					{
-
-						inx<<sx.str()<<" & "<<addUID("XX");
-						iny<<sy.str()<<" & "<<addUID("YY");
-					}
-
-					else
-					{
-						inx<<addUID("XX");
-						iny<<addUID("YY");
-					}
+					inx<<addUID("XX");
+					iny<<addUID("YY");
 
 					MultiplierBlock* m = new MultiplierBlock(wxDSP,wyDSP,topx, topy,
-							inx.str(),iny.str(),weightShift);
+							inx.str(),iny.str(),weightShift + lsbWeight-g);
 					m->setNext(NULL);		
 					m->setPrevious(NULL);			
 					localSplitVector.push_back(m);
@@ -571,7 +559,7 @@ namespace flopoco {
 		widthY=wyDSP;
 		topx=0;
 		topy=0;
-		MultiplierBlock* m = new MultiplierBlock(widthX,widthY,topx,topy,inx.str(),iny.str(),weightShift);
+		MultiplierBlock* m = new MultiplierBlock(widthX,widthY,topx,topy,inx.str(),iny.str(),weightShift + lsbWeight-g);
 		m->setNext(NULL);		
 		m->setPrevious(NULL);			
 		localSplitVector.push_back(m);
@@ -583,7 +571,7 @@ namespace flopoco {
 		widthY=wxDSP;
 		topx=wxDSP;
 		topy=0;
-		m = new MultiplierBlock(widthX,widthY,topx,topy,inx.str(),iny.str(),weightShift);
+		m = new MultiplierBlock(widthX,widthY,topx,topy,inx.str(),iny.str(),weightShift + lsbWeight-g);
 		m->setNext(NULL);		
 		m->setPrevious(NULL);			
 		localSplitVector.push_back(m);
@@ -594,7 +582,7 @@ namespace flopoco {
 		widthY=wyDSP;
 		topx=wyDSP;
 		topy=wxDSP;
-		m = new MultiplierBlock(widthX,widthY,topx,topy,inx.str(),iny.str(),weightShift);
+		m = new MultiplierBlock(widthX,widthY,topx,topy,inx.str(),iny.str(),weightShift + lsbWeight-g);
 		m->setNext(NULL);		
 		m->setPrevious(NULL);			
 		localSplitVector.push_back(m);
@@ -605,7 +593,7 @@ namespace flopoco {
 		widthY=wxDSP;
 		topx=0;
 		topy=wyDSP;
-		m = new MultiplierBlock(widthX,widthY,topx,topy,inx.str(),iny.str(),weightShift);
+		m = new MultiplierBlock(widthX,widthY,topx,topy,inx.str(),iny.str(),weightShift + lsbWeight-g);
 		m->setNext(NULL);		
 		m->setPrevious(NULL);			
 		localSplitVector.push_back(m);
@@ -863,7 +851,7 @@ namespace flopoco {
 						iny<<addUID("YY");
 								
 						//REPORT(INFO,"chr DSP at "<<topx<<" "<<topy<<" width= "<<widthX<<" height= "<<widthY);							
-						MultiplierBlock* m = new MultiplierBlock(widthX,widthY,topx,topy,inx.str(),iny.str(),weightShift);
+						MultiplierBlock* m = new MultiplierBlock(widthX,widthY,topx,topy,inx.str(),iny.str(),weightShift + lsbWeight-g);
 						m->setNext(NULL);		
 						m->setPrevious(NULL);			
 						localSplitVector.push_back(m);
@@ -914,7 +902,7 @@ namespace flopoco {
 							
 					stringstream inx,iny;
 								
-					MultiplierBlock* m = new MultiplierBlock(widthX,widthY,topx,topy,addUID("XX"),addUID("YY"),weightShift);
+					MultiplierBlock* m = new MultiplierBlock(widthX,widthY,topx,topy,addUID("XX"),addUID("YY"),weightShift + lsbWeight-g);
 					m->setNext(NULL);		
 					m->setPrevious(NULL);			
 					localSplitVector.push_back(m);
@@ -1019,7 +1007,7 @@ namespace flopoco {
 				
 					if(topx+topy>=wFull-wOut-g)
 					{
-						MultiplierBlock* m = new MultiplierBlock(widthX,widthY,topx,topy,addUID("XX"),addUID("YY"),weightShift);
+						MultiplierBlock* m = new MultiplierBlock(widthX,widthY,topx,topy,addUID("XX"),addUID("YY"),weightShift + lsbWeight-g);
 						m->setNext(NULL);		
 						m->setPrevious(NULL);			
 						localSplitVector.push_back(m);

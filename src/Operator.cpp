@@ -1488,6 +1488,8 @@ namespace flopoco{
 	void Operator::outputVHDLToFile(ofstream& file){
 		vector<Operator*> oplist;
 
+		REPORT(DEBUG, "outputVHDLToFile");
+
 		//build a copy of the global oplist hidden in Target (if it exists):
 		vector<Operator*> *goplist = target_->getGlobalOpListRef();
 		for (unsigned i=0; i<goplist->size(); i++)

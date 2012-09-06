@@ -17,6 +17,12 @@ namespace flopoco{
 		ostringstream name;
 
 		setCopyrightString ( "Matei Istoan, Florent de Dinechin (2008-2012)" );
+
+			if(signedOperator)
+				useStdLogicSigned();
+			else
+				useStdLogicUnsigned();
+
 		if(target->isPipelined())
 			name << "FixedComplexMultiplier_" << wI << "_" << wO << "_f"<< target->frequencyMHz() << "_uid" << getNewUId();
 		else
@@ -66,6 +72,7 @@ namespace flopoco{
 		// The round bit
 		if(g)
 			bitHeapRe -> addConstantOneBit(g);
+
 	
 	bitHeapRe -> generateCompressorVHDL();	
 		
@@ -95,7 +102,9 @@ namespace flopoco{
 		if(g)
 			bitHeapIm -> addConstantOneBit(g);
 
+
 		bitHeapIm -> generateCompressorVHDL();			
+
 
 		vhdl << tab << "Zr <= " << bitHeapRe -> getSumName() << range(wO+g, g+1) << ";" << endl;
 		vhdl << tab << "Zi <= " << bitHeapIm -> getSumName() << range(wO+g, g+1) << ";" << endl;
