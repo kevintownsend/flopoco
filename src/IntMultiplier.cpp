@@ -436,7 +436,7 @@ namespace flopoco {
 
 				//if( false && target()->worthUsingDSP(wX, wY))
 				if( checkThreshold(0,0,wX, wY,wxDSP,wyDSP))
-				{	REPORT(DEBUG,"worthUsingDSP");
+				{	REPORT(INFO,"worthUsingDSP");
 					manageCriticalPath(target()->DSPMultiplierDelay());
 					/*if (signedIO)
 					  {
@@ -962,7 +962,7 @@ namespace flopoco {
 			
 			if(botX+topY<wFull-wOut-g)
 			{
-				REPORT(INFO,"SMALLER BLOCK SHOULD BE CHECKED");
+				//REPORT(INFO,"SMALLER BLOCK SHOULD BE CHECKED");
 				int x=botX;
 				int y=topY;
 				while(x+y<wFull-wOut-g)
@@ -993,21 +993,21 @@ namespace flopoco {
 				
 				
 				
-			REPORT(INFO,"dsparea="<<dspArea);
-			REPORT(INFO,"widthx*widthy= "<<widthX*widthY);
-			REPORT(INFO,"wasted triangle area= "<<triangle);
+		//	REPORT(INFO,"dsparea="<<dspArea);
+			//REPORT(INFO,"widthx*widthy= "<<widthX*widthY);
+			//REPORT(INFO,"wasted triangle area= "<<triangle);
 			blockArea=widthX*widthY-triangle;		
 		
-			REPORT(INFO,"final blockarea= "<<blockArea);
+		//	REPORT(INFO,"final blockarea= "<<blockArea);
 			
 			if(blockArea>=(1.0-ratio)*dspArea)
 			{
-				REPORT(INFO,"dsp should be used");
+		//		REPORT(INFO,"dsp should be used");
 				return true;
 			}
 			else
 			{
-				REPORT(INFO,"logic should be used");
+		//		REPORT(INFO,"logic should be used");
 				return false;
 			}
 		}
