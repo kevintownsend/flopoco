@@ -809,16 +809,7 @@ namespace flopoco {
 			void IntMultiplier::addExtraDSPs(int topX, int topY, int botX, int botY,int wxDSP,int wyDSP)
 		{
 		
-			if(parentOp->getTarget()->getVendor()=="Altera")
-			{
-			
-			
-			
-			}
-			
-			else
-			{
-			
+				
 				int widthX=wxDSP;
 				int widthY=wyDSP;
 				int botx=botX;
@@ -931,9 +922,6 @@ namespace flopoco {
 							
 				}
 				
-		
-			}
-		
 		
 		}	
 	
