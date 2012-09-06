@@ -444,10 +444,11 @@ void usage(char *name, string opName = ""){
 		cerr << "      wO: number of output bits\n";
 	}
 	if ( full || opName == "Complex" || opName == "FixComplexMultiplier"){					
-		OP( "FixComplexMultiplier","wI wO");
+		OP( "FixComplexMultiplier","wI wO threshold");
 		cerr << "   Complex multiplier for two's complement fixed-point numbers\n";
 		cerr << "      wI: number of input bits\n";
 		cerr << "      wO: number of output bits\n";
+		cerr << "      threshold: between 0 and 1.  the closer to 0, the less DSP-consuming\n";
 	}
 
 
@@ -648,21 +649,19 @@ int checkSign(char* s, char* cmd) {
 	return n;
 }
 
-
+// TODO oplist no longer used
 void addOperator(vector<Operator*> &oplist, Operator *op) {
 	if(cl_name!="")	{
 		cerr << "Updating entity name to: " << cl_name << endl;
 		op->changeName(cl_name);
 		cl_name="";
 	}
-	// TODO check name not already in list...
-	// TODO this procedure should be a static method of operator, so that other operators can call it
-	oplist.push_back(op);
+	op->addToGlobalOpList();
 }
 
 
 
-bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
+bool parseCommandLine(int argc, char* argv[], vector<Operator*>  &   oplist ){
 	if (argc<2) {
 		usage(argv[0]); 
 		return false;
@@ -1477,13 +1476,14 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 
 
 		else if(opname=="FixComplexMultiplier"){
-			int nargs = 2;
+			int nargs = 3;
 			if (i+nargs > argc)
 				usage(argv[0],opname);
 			else {
 				int wI = checkStrictlyPositive(argv[i++], argv[0]);
 				int wO = checkStrictlyPositive(argv[i++], argv[0]);
-				op = new FixedComplexMultiplier(target, wI, wO, true);
+				float ratio = atof(argv[i++]);
+				op = new FixedComplexMultiplier(target, wI, wO, ratio);
 				addOperator(oplist, op);
 			}
 		}
@@ -2479,12 +2479,13 @@ int main(int argc, char* argv[] )
 	uint32_t i;
 	
 
-	target = new Virtex5();
+	target = new Virtex5(); // this also creates a global operator list
 
-	vector<Operator*> oplist;
+	// for historical reasons, to get rid of some day
+	 vector<Operator*> *oplist=target->getGlobalOpListRef();
 
 	try {
-		parseCommandLine(argc, argv, oplist);
+		parseCommandLine(argc, argv, *oplist);
 	} catch (char const * s) {
 		cerr << "Exception while parsing command line: " << s << endl;
 		return 1;
@@ -2493,26 +2494,25 @@ int main(int argc, char* argv[] )
 		return 1;
 	}
 
-	if(oplist.empty()) {
-		cerr << "Nothing to generate, exiting\n";
-		exit(EXIT_FAILURE);
-	}
+
+
+
 
 	ofstream file;
 	file.open(filename.c_str(), ios::out);
-	Operator::outputVHDLToFile(oplist, file);
+	Operator::outputVHDLToFile(*oplist, file); 
 	file.close();
 	
-
 	cerr << endl<<"Final report:"<<endl;
-	for(i=0; i<oplist.size(); i++) {
-		oplist[i]->outputFinalReport(0);
+	for(i=0; i<oplist->size(); i++) {
+		(*oplist)[i]->outputFinalReport(0);
 	}
 	
 	cerr<< "Output file: " << filename <<endl;
 	
+
 	//------------------------ Resource Estimation ---------------------
-	for (vector<Operator*>::iterator it = oplist.begin(); it!=oplist.end(); ++it) {
+	for (vector<Operator*>::iterator it = oplist->begin(); it!=oplist->end(); ++it) {
 		Operator* op = *it;
 		
 		if(reLevel!=0){
@@ -2529,7 +2529,7 @@ int main(int argc, char* argv[] )
 	if(resourceEstimationDebug){
 		ofstream file;
 		file.open("flopoco.debug");
-		for (vector<Operator*>::iterator it = oplist.begin(); it!=oplist.end(); ++it) {
+		for (vector<Operator*>::iterator it = oplist->begin(); it!=oplist->end(); ++it) {
 			Operator* op = *it;
 			
 			if(op->reActive)
@@ -2545,7 +2545,7 @@ int main(int argc, char* argv[] )
 	
 	//------------------------ Floorplanning ---------------------------
 	if(floorplanning){
-		for (vector<Operator*>::iterator it = oplist.begin(); it!=oplist.end(); ++it) {
+		for (vector<Operator*>::iterator it = oplist->begin(); it!=oplist->end(); ++it) {
 			Operator* op = *it;
 			
 			if(op->reActive == false){
@@ -2568,7 +2568,7 @@ int main(int argc, char* argv[] )
 		}else{
 			ofstream file;
 			file.open("flopoco.floorplan.debug");
-			for (vector<Operator*>::iterator it = oplist.begin(); it!=oplist.end(); ++it) {
+			for (vector<Operator*>::iterator it = oplist->begin(); it!=oplist->end(); ++it) {
 				Operator* op = *it;
 				
 				file << op->floorplan.str();
@@ -2579,7 +2579,6 @@ int main(int argc, char* argv[] )
 		}
 	}
 	//------------------------------------------------------------------
-	
 	return 0;
 }
 

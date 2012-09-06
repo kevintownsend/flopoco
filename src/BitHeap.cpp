@@ -817,7 +817,7 @@ namespace flopoco
 					{
 						if (usedCompressors[i]==true)
 						{	
-							op->getOpListR().push_back(possibleCompressors[i]);
+							possibleCompressors[i]->addToGlobalOpList();
 						}
 					}
 
@@ -938,7 +938,7 @@ namespace flopoco
 					{
 						if (usedCompressors[i]==true)
 						{	
-							op->getOpListR().push_back(possibleCompressors[i]);
+							possibleCompressors[i]->addToGlobalOpList();
 						}
 					}
 

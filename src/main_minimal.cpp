@@ -39,6 +39,7 @@ using namespace flopoco;
 
 int main(int argc, char* argv[] )
 {
+
 	Target* target = new Virtex4();
 
 	int wE = 9;

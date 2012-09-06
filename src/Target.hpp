@@ -29,6 +29,8 @@ using namespace std;
 
 namespace flopoco{
 
+	class Operator;
+
 
 	/** Abstract target Class. All classes which model real chips inherit from this class */
 	class Target
@@ -47,6 +49,14 @@ namespace flopoco{
 	
 		/** The destructor */
 		virtual ~Target() {}
+
+
+		void setGlobalOpList(	vector<Operator*>  oplist){
+			globalOpList=oplist;
+		}
+		vector<Operator*> * getGlobalOpListRef(){
+			return & globalOpList;
+		}
 
 		/** Returns ID of instantiated target. This ID is represented by the name
 		 * @return the ID
@@ -556,7 +566,9 @@ namespace flopoco{
 		int    multYInputs_;        /**< The size for the Y dimension of the hardware multipliers  (the smallest, if they are not equal)*/
 		long   sizeOfBlock_;		    /**< The size of a primitive memory block */
 		double maxFrequencyMHz_ ;   /**< The maximum practical frequency attainable on this target. An indicator of relative performance of FPGAs. 400 is for Virtex4 */
-	
+
+		vector<Operator*>  globalOpList;  /**< A list of sub-operators that should be shared with most operators. Semantically it shouldn't be here but it makes code simpler */
+
 	};
 
 }

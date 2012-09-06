@@ -10,8 +10,8 @@ namespace flopoco{
 
 	//TODO: explore implementation using multiply-accumulate operators
 	//FIXME: correct timing of the circuit
-	FixedComplexMultiplier::FixedComplexMultiplier(Target* target, int wI_, int wO_, bool signedOperator_, bool threeMultiplications)
-		: Operator(target), wI(wI_), wO(wO_), signedOperator(signedOperator_)
+	FixedComplexMultiplier::FixedComplexMultiplier(Target* target, int wI_, int wO_, float threshold_, bool signedOperator_, bool threeMultiplications)
+		: Operator(target), wI(wI_), wO(wO_), signedOperator(signedOperator_), threshold(threshold_)
 	{
 		
 		ostringstream name;
@@ -31,7 +31,6 @@ namespace flopoco{
 	
 
 #if 1
-		// TODO add an option to exclude -4*-4
 		addOutput("Zi",   wO, 2);
 		addOutput("Zr",   wO, 2);
 
@@ -52,7 +51,8 @@ namespace flopoco{
 		                  wI, wI, wO, 
 		                  g, // lsbWeight
 		                  false, // negate
-		                  signedOperator, 1.0);
+		                  signedOperator, 
+		                  threshold);
 		//IntMultiplier* multXiYi = 
 		setCycle(0);
 		new IntMultiplier(this, bitHeapRe,
@@ -61,7 +61,8 @@ namespace flopoco{
 		                  wI, wI, wO, 
 		                  g, // lsbWeight
 		                  true, // negate
-		                  signedOperator, 1.0);
+		                  signedOperator, 
+		                  threshold);
 		// The round bit
 		if(g)
 			bitHeapRe -> addConstantOneBit(g);
@@ -78,7 +79,8 @@ namespace flopoco{
 		                  wI, wI, wO, 
 		                  g, // lsbWeight
 		                  false, // negate
-		                  signedOperator, 1.0);
+		                  signedOperator,
+		                  threshold);
 		//IntMultiplier* multXiYr = 
 		setCycle(0);
 		new IntMultiplier(this, bitHeapIm,
@@ -87,7 +89,8 @@ namespace flopoco{
 		                  wI, wI, wO, 
 		                  g, // lsbWeight
 		                  false, // negate
-		                  signedOperator, 1.0);
+		                  signedOperator, 
+		                  threshold);
 		// The round bit
 		if(g)
 			bitHeapIm -> addConstantOneBit(g);

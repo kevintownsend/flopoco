@@ -27,7 +27,7 @@ namespace flopoco{
 	class FixedComplexMultiplier : public Operator
 	{
 	public:
-		FixedComplexMultiplier(Target* target, int wI, int wO, bool signedOperator = true, bool threeMultiplications = false);
+		FixedComplexMultiplier(Target* target, int wI, int wO, float threshold, bool signedOperator = true, bool threeMultiplications = false);
 		~FixedComplexMultiplier();
 		
 		void emulate(TestCase * tc);
@@ -35,6 +35,7 @@ namespace flopoco{
 
 		int wI, wO;
 		bool signedOperator;
+		float threshold; 
 
 	};
 }

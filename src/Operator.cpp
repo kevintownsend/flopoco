@@ -73,6 +73,32 @@ namespace flopoco{
 	
 
 
+
+
+	void Operator::addSubComponent(Operator* op) {
+		oplist.push_back(op);
+	}
+
+
+
+
+	void Operator::addToGlobalOpList() {
+		bool alreadyPresent=false;
+
+		vector<Operator*> * globalOpListRef=target_->getGlobalOpListRef();
+			for (unsigned i=0; i<globalOpListRef->size(); i++){
+					if( getName() == (*globalOpListRef)[i]->getName() ){
+					alreadyPresent=true;
+					REPORT(DEBUG,"Operator::addToGlobalOpListRef(): " << uniqueName_ <<" already present in globalOpList");
+				}
+			}
+			if(!alreadyPresent)
+				globalOpListRef->push_back(this);
+
+	}
+	
+
+
 	
 	void Operator::addInput(const std::string name, const int width, const bool isBus) {
 		if (signalMap_.find(name) != signalMap_.end()) {
@@ -1454,20 +1480,25 @@ namespace flopoco{
 			}
 		}
 	}
-	
 
+
+
+
+#if 1
 	void Operator::outputVHDLToFile(ofstream& file){
 		vector<Operator*> oplist;
-		// First copy the global oplist
-		if(globalOpList) {
-			for(unsigned i=0; i<globalOpList->size(); i++)
-				oplist.push_back((*globalOpList)[i]);
-		}
-		// then add self
+
+		//build a copy of the global oplist hidden in Target (if it exists):
+		vector<Operator*> *goplist = target_->getGlobalOpListRef();
+		for (unsigned i=0; i<goplist->size(); i++)
+			oplist.push_back((*goplist)[i]);
+		// add self (and all its subcomponents) to this list
 		oplist.push_back(this);
+		// generate the code
 		Operator::outputVHDLToFile(oplist, file);
 	}
 	
+#endif
 	
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////Functions used for resource estimations

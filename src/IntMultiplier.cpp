@@ -340,7 +340,8 @@ namespace flopoco {
 
 			SmallMultTable *t = new SmallMultTable( target(), wX, wY, wOut, negate, signedIO, signedIO);
 			//useSoftRAM(t);
-			oplist.push_back(t);
+			//			oplist.push_back(t);
+			t->addToGlobalOpList();
 
 			vhdl << tab << declare(addUID("XY"), wX+wY) << " <= "<<addUID("YY")<<" & "<<addUID("XX")<<";"<<endl;
 
@@ -681,21 +682,27 @@ namespace flopoco {
 
 			tUU = new SmallMultTable( target, dx, dy, dx+dy, negate, false, false);
 			//useSoftRAM(tUU);
-			oplist.push_back(tUU);
+			//oplist.push_back(tUU);
+			tUU->addToGlobalOpList();
 
 			if(signedIO) { // need for 4 different tables
 
 				tSU = new SmallMultTable( target, dx, dy, dx+dy, negate, true, false );
 				//useSoftRAM(tSU);
-				oplist.push_back(tSU);
+				// oplist.push_back(tSU);
+				tSU->addToGlobalOpList();
 
 				tUS = new SmallMultTable( target, dx, dy, dx+dy, negate, false, true );
 				//useSoftRAM(tUS);
-				oplist.push_back(tUS);
+				// oplist.push_back(tUS);
+				tUS->addToGlobalOpList();
+
 
 				tSS = new SmallMultTable( target, dx, dy, dx+dy, negate, true, true );
 				//useSoftRAM(tSS);
-				oplist.push_back(tSS);
+				//oplist.push_back(tSS);
+				tSS->addToGlobalOpList();
+
 			}
 
 			setCycle(0); // TODO FIXME for the virtual multiplier case where inputs can arrive later
@@ -1117,7 +1124,8 @@ namespace flopoco {
 		dx(dx), dy(dy), negate(negate), signedX(signedX), signedY(signedY) {
 			ostringstream name; 
 			srcFileName="LogicIntMultiplier::SmallMultTable";
-			name <<"SmallMultTable"<< (negate?"M":"P") << dy << "x" << dx << "r" << wO << (signedX?"Xs":"Xu") << (signedY?"Ys":"Yu")  << getuid();
+			// No getUid() in the name: this kind of table should be added to the globalOpList 
+			name <<"SmallMultTable"<< (negate?"M":"P") << dy << "x" << dx << "r" << wO << (signedX?"Xs":"Xu") << (signedY?"Ys":"Yu");
 			setName(name.str());				
 		};
 

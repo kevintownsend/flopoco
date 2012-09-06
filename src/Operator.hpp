@@ -73,14 +73,28 @@ class Operator
 
 public:
 
+	/** add a sub-operator to this operator */
+	void addSubComponent(Operator* op);
+
+
+	/** add this operator to the global (first-level) list, which is stored in its Target (not really its place, sorry).
+	This method should be called by 
+	1/ the main / top-level, or  
+	2/ for sub-components that are really basic operators, 
+	expected to be used several times, *in a way that is independent of the context/timing*.
+	Typical example is a table designed to fit in a LUT or parallel row of LUTs
+ */
+	void addToGlobalOpList();
+
 
 	/** generates the code for a list of operators and all their subcomponents */
 	static void outputVHDLToFile(vector<Operator*> &oplist, ofstream& file);
 
 
+#if 1
 	/** generates the code for this operator and all its subcomponents */
 	void outputVHDLToFile(ofstream& file);
-
+#endif
 
 	/** Operator Constructor.
 	 * Creates an operator instance with an instantiated target for deployment.
@@ -873,6 +887,7 @@ public:
 		return oplist;
 	}
 
+
 	vector<Operator*>& getOpListR(){
 		return oplist;
 	}
@@ -1468,7 +1483,6 @@ protected:
 	int                 myuid;              				/**<unique id>*/
 	int                 cost;             					/**< the cost of the operator depending on different metrics */
 	vector<Operator*>   oplist;                     /**< A list of all the sub-operators */
-	vector<Operator*> * globalOpList;               /**< A list of sub-operators that should be shared with most operators, CURRENTLY UNUSED */
 	
 
 private:
