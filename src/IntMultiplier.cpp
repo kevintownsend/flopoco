@@ -879,13 +879,12 @@ namespace flopoco {
 						//REPORT(INFO,"Logic computed xt="<<topx<<" yt="<<topY<<"  xb="<<(botX-dsp*widthX)<<" yb="<<botY); 	
 					}
 				
+					//updating the coordinates for the next block
 					dsp++;
 					botx=topx-1;
 					topx=topx-widthX;
 					width=width-widthX;
 					usedWidth+=widthX;
-				
-			
 					widthX=wxDSP;
 					widthY=wyDSP;
 						
@@ -901,19 +900,12 @@ namespace flopoco {
 						topx=topX;
 					
 				}
-			
-		
-				REPORT(INFO,"width smaller than DSPwidth");
-			
 				//now the remaining block is smaller (for sure!) than the DSP width
 				//we do the same area / ratio checking again	
-				REPORT(INFO,"chechtreshold topx= "<<topx<<" topy= "<<topy<<" botx= "<<botx<<" boty= "<<botY<<" widthX="<<widthX<<" widthy= "<<widthY)
-					
-				
-						
 				if(checkThreshold(topx,topy,botx,botY,widthX,widthY))
 				{
 			
+					//computing the coordinates
 					if(was)
 						topx=topx-(widthX-(botx-topx+1));
 					else 
@@ -923,10 +915,7 @@ namespace flopoco {
 						topy=topY-(widthY-height);
 							
 					stringstream inx,iny;
-			
-						
-		
-					//REPORT(INFO," chr DSP at "<<topx<<" "<<topy<<" width= "<<widthX<<" height= "<<widthY);							
+								
 					MultiplierBlock* m = new MultiplierBlock(widthX,widthY,topx,topy,addUID("XX"),addUID("YY"),weightShift);
 					m->setNext(NULL);		
 					m->setPrevious(NULL);			
@@ -936,16 +925,17 @@ namespace flopoco {
 				}
 				else
 				{
+					//build logic only is at least 1 bit to compute
 					if((topx<botX-dsp*widthX))
 						buildHeapLogicOnly(topx,topY,botX-usedWidth,botY,parentOp->getNewUId());
-					//REPORT(INFO,"Logic computed xt="<<topx<<" yt="<<topY<<"  xb="<<(botX-dsp*widthX)<<" yb="<<botY);		
+							
 				}
 				
 		
-				}
+			}
 		
 		
-			}	
+		}	
 	
 	
 
@@ -958,11 +948,10 @@ namespace flopoco {
 			double blockArea;
 			double triangle=0.0;
 			double dspArea=wxDSP*wyDSP;
-			
-			
+		
+			//drop the unused area
 			if(botX+topY<wFull-wOut-g)
 			{
-				//REPORT(INFO,"SMALLER BLOCK SHOULD BE CHECKED");
 				int x=botX;
 				int y=topY;
 				while(x+y<wFull-wOut-g)
@@ -970,44 +959,33 @@ namespace flopoco {
 			
 				topY=y;
 			}
-					
-			
-			
-			
-			
-			
-			
+		
+			//***the triangle is the area which will be lost from the block area***//
+			//**computing the triangle's edge (45degree => area=(edge^2)/2) ***//		
 			int x=topX;
 			int y=topY;
-			
 			while(x+y<wFull-wOut-g)
 			x++;
+			//**************************************************//
 			
+			
+			//computing the triangle's area
 			if(topX+topY<=wFull-wOut-g)
 				triangle=((x-topX)*(x-topX))/2;
 			else
 				triangle=0.0;
-				
-				
-				
-				
-				
-				
-		//	REPORT(INFO,"dsparea="<<dspArea);
-			//REPORT(INFO,"widthx*widthy= "<<widthX*widthY);
-			//REPORT(INFO,"wasted triangle area= "<<triangle);
+			
+			
+			//the final area which is used
 			blockArea=widthX*widthY-triangle;		
 		
-		//	REPORT(INFO,"final blockarea= "<<blockArea);
-			
+			//checking according to ratio/area
 			if(blockArea>=(1.0-ratio)*dspArea)
 			{
-		//		REPORT(INFO,"dsp should be used");
 				return true;
 			}
 			else
 			{
-		//		REPORT(INFO,"logic should be used");
 				return false;
 			}
 		}
@@ -1051,6 +1029,7 @@ namespace flopoco {
 						m->setPrevious(NULL);			
 						localSplitVector.push_back(m);
 						bitHeap->addMultiplierBlock(m);
+						botx=botx-widthX;
 						ok=0;
 						//REPORT(INFO,"DSP at "<<topx<<" "<<topy<<" width= "<<widthX<<" height= "<<widthY);
 					}
@@ -1058,10 +1037,10 @@ namespace flopoco {
 					else
 					{
 						ok=1;
-						botx=botx+widthX;
+						
 					}
 					
-					botx=botx-widthX;
+					
 				
 				}
 				
