@@ -444,7 +444,7 @@ namespace flopoco
 			turnaroundX = offsetX + wX * scalingFactor;
 			fig << "<rect x=\"" << turnaroundX - xB*scalingFactor << "\" y=\"" << yT*scalingFactor + offsetY 
 			    << "\" height=\"" << (yB-yT)*scalingFactor << "\" width=\"" << (xB-xT)*scalingFactor
-			    << "\" style=\"fill:rgb(200, 200, 200);fill-opacity:1.0;stroke-width:1;stroke:rgb(0,0,0)\"" 
+			    << "\" style=\"fill:rgb(200, 200, 200);fill-opacity:0.7;stroke-width:1;stroke:rgb(0,0,0)\"" 
 				<< " onmousemove=\"ShowTooltip(evt)\" onmouseout=\"HideTooltip(evt)\" mouseovertext=\"X[" 
 				<< xB << ":" << xT << "] * Y[" << yB << ":" << yT << "]\"/> " << endl;
 
@@ -459,7 +459,7 @@ namespace flopoco
 			    << turnaroundX - 5*xT + offsetX - 5*yT << "," << 5*yT + offsetY << " " 
 			    << turnaroundX - 5*xT + offsetX - 5*yB << "," << 5*yB + offsetY << " "
 			    << turnaroundX - 5*xB + offsetX - 5*yB << "," << 5*yB + offsetY
-			    << "\" style=\"fill:rgb(200, 200, 200);stroke-width:1;fill-opacity:1.0;stroke:rgb(0,0,0)\" "
+			    << "\" style=\"fill:rgb(200, 200, 200);stroke-width:1;fill-opacity:0.7;stroke:rgb(0,0,0)\" "
 				<< " onmousemove=\"ShowTooltip(evt)\" onmouseout=\"HideTooltip(evt)\" mouseovertext=\"X[" 
 				<< xB << ":" << xT << "] * Y[" << yB << ":" << yT << "]\"/> " << endl;
 
@@ -876,8 +876,8 @@ namespace flopoco
 					if (timeCondition)
 					{
 						//if(stage>=(*it)->computeStage(stagesPerCycle, elemTime))
-						REPORT(INFO, cy << "  " << cycle);
-						REPORT(INFO, cp << "  " << criticalPath);
+			//			REPORT(INFO, cy << "  " << cycle);
+				//		REPORT(INFO, cp << "  " << criticalPath);
 						if ((cy<cycle) || ((cy==cycle) && (cp<=criticalPath)))
 						{
 							cp = cp * 1000000000000;  //picoseconds
