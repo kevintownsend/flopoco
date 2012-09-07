@@ -490,11 +490,12 @@ namespace flopoco
 
 	void  BitHeap::addBit(unsigned w, string rhs, string comment, int type)
 	{
-
 		REPORT(DEBUG, "addBit at weigth " <<w <<"   for rhs=" << rhs );
 		// ignore bits beyond the declared maxWeight
-		if(w >= maxWeight)
+		if(w >= maxWeight) {
+			REPORT(DEBUG, "   ??? w=" << w << " greater than mawWeight=" <<maxWeight << "... ignoring it"  );
 			return;	
+		}
 
 		WeightedBit* bit= new WeightedBit(getGUid(), newUid(w), w, type, op->getCurrentCycle(), op->getCriticalPath()) ;
 		// created at (op->getCycle(), opt-getCriticalPath())
@@ -532,8 +533,7 @@ namespace flopoco
 		op->vhdl <<  " -- " << "cycle= "<< bit->getCycle() <<" cp= "<<bit->getCriticalPath(bit->getCycle());		
 		op->vhdl <<  endl;		
 
-		REPORT(DEBUG, "added bit on column " << w <<" cycle= "<< bit->getCycle() <<" cp= "<<bit->getCriticalPath(bit->getCycle()));
-		REPORT(DEBUG, "name " << bit->getName());
+		REPORT(DEBUG, "added bit named "  << bit->getName() << " on column " << w <<" at cycle= "<< bit->getCycle() <<" cp= "<<bit->getCriticalPath(bit->getCycle()));
 
 		printColumnInfo(w);	
 	};
@@ -714,7 +714,7 @@ namespace flopoco
 
 		for(list<WeightedBit*>::iterator it = bits[w].begin(); it!=bits[w].end(); ++it)
 		{
-			REPORT(DEBUG, "element "<<i<<" cycle = "<<(*it)->getCycle() 
+			REPORT(FULL, "element "<<i<<" cycle = "<<(*it)->getCycle() 
 					<< " and cp = "<<(*it)->getCriticalPath((*it)->getCycle()));
 			i++; 
 		}

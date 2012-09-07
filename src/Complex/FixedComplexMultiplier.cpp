@@ -77,7 +77,7 @@ namespace flopoco{
 	bitHeapRe -> generateCompressorVHDL();	
 		
 
-
+#if 1 // unplug to debug negate
 		//IntMultiplier* multXrYi = 
 		setCycle(0);
 		new IntMultiplier(this, bitHeapIm,
@@ -104,7 +104,7 @@ namespace flopoco{
 
 
 		bitHeapIm -> generateCompressorVHDL();			
-
+#endif
 
 		vhdl << tab << "Zr <= " << bitHeapRe -> getSumName() << range(wO+g, g+1) << ";" << endl;
 		vhdl << tab << "Zi <= " << bitHeapIm -> getSumName() << range(wO+g, g+1) << ";" << endl;

@@ -303,10 +303,15 @@ namespace flopoco {
 			// The bit heap
 			bitHeap = new BitHeap(this, wOut+g);
 
-			plotter = new Plotter(bitHeap);
 
-			bitHeap->setPlotter(plotter);
+			// TODO CHECK ??? A bit heap is sign-agnostic.
 			bitHeap->setSignedIO(signedIO);
+
+
+			// stuff for the SVG output
+			plotter = new Plotter(bitHeap);
+			bitHeap->setPlotter(plotter);
+
 
 
 
@@ -331,6 +336,7 @@ namespace flopoco {
 		//  architectures for corner cases   //
 		///////////////////////////////////////
 
+		// TODO Support negate in all the corner cases
 		// To manage stand-alone cases, we just build a bit-heap of max height one, so the compression will do nothing
 
 		// The really small ones fit in two LUTs and that's as small as it gets  
@@ -422,7 +428,8 @@ namespace flopoco {
 		// Now getting more and more generic
 		if(useDSP) {
 			//test if the multiplication fits into one DSP
-			//int wxDSP, wyDSP;
+			// TODO Kinga: Do we really need this test? Isn't it covered by the general case?
+
 			target()->getDSPWidths(wxDSP, wyDSP, signedIO);
 			bool testForward, testReverse, testFit;
 			testForward     = (wX<=wxDSP)&&(wY<=wyDSP);
@@ -668,7 +675,10 @@ namespace flopoco {
 			SmallMultTable *tUU, *tSU, *tUS, *tSS;
 
 
-			tUU = new SmallMultTable( target, dx, dy, dx+dy, negate, false, false);
+			// The output size of tUU needs to be one bit larger in case of negate:
+			// example for dx=3, dy=3, -0*0 = 0 (positive), -7*7=-49 (negative but sign bit at weight 6)
+			tUU = new SmallMultTable( target, dx, dy, dx+dy+(negate?1:0), negate, false, false);
+ 
 			//useSoftRAM(tUU);
 			//oplist.push_back(tUU);
 			tUU->addToGlobalOpList();
@@ -701,17 +711,13 @@ namespace flopoco {
 
 				vhdl << tab << "-- Partial product row number " << iy << endl;
 
-				for (int ix=0; ix<chunksX; ix++) { 
-
+				for (int ix=0; ix<chunksX; ix++) {
 
 					SmallMultTable *t;
 					if (!signedIO) 
-					{
 						t=tUU;
-					}
-
-					else 
-					{ // 4  cases 
+	
+					else 		{ // 4  cases 
 						if( ((ix==chunksX-1)&&(botX==wXX)) && ((iy==chunksY-1)&&(botY==wYY) ))
 							t=tSS;
 						else if ((ix==chunksX-1)&&(botX==wXX)) 
@@ -723,12 +729,8 @@ namespace flopoco {
 					}
 
 
-
 					if(dx*(ix+1)+dy*(iy+1)+topX+topY-padX-padY>wFull-wOut-g)
 					{
-
-
-
 						plotter->addSmallMult(dx*(ix)+topX-padX, dy*(iy)+topY-padY,dx,dy);
 
 						REPORT(DETAILED,XY(ix,iy,blockUid)<<" <= " << addUID("y",blockUid) <<"_"<< iy << " & " << addUID("x",blockUid) <<"_"<< ix << ";");
@@ -748,13 +750,15 @@ namespace flopoco {
 						//    sign extend by adding ones on weights >= the MSB of the table, so its sign is propagated.
 						//    Also need to complement the sign bit
 						// Note that even when negate and tUU, the result is known negative, but it may be zero, so its actual sign is not known statically
+						// Note also that in this case (negate and tUU), the result overflows the dx+dy two's complement format.
+						// This is why tUU is never negated above, and we negate it below. A bit messy, but probably the most resource-efficient
 
 
 						bool resultSigned =false;  
 						if(negate ||(t==tSS) || (t==tUS) || (t==tSU)) 
 							resultSigned = true ;
-
-						int maxK=dx+dy; 
+						
+						int maxK=t->wOut; // or, dx+dy + (t==tUU && negate?1:0); 
 						int minK=0;
 						//if(ix == chunksX-1)
 						if ((ix == 0))
@@ -762,31 +766,30 @@ namespace flopoco {
 						if((iy == 0))
 							//maxK-=padY;
 							minK+=padY;
-						REPORT(INFO,"The bits will be added from: mink"<<minK<<"	 maxk"<<maxK);
+						REPORT(DEBUG,"The bits will be added from mink="<<minK<<"	to maxk="<<maxK);
 						REPORT(DEBUG,  "ix=" << ix << " iy=" << iy << "  maxK=" << maxK  << "  negate=" << negate <<  "  resultSigned="  << resultSigned );
 						for (int k=minK; k<maxK; k++) {
-							ostringstream s;
+							ostringstream s, nots;
 							s << PP(ix,iy,blockUid) << of(k); // right hand side
+							nots << "not " << s.str(); 
+							
+							int weight = lsbWeight-g + ix*dx+iy*dy+k-weightShift+topX+topY-padX-padY;
 
-							int weight = ix*dx+iy*dy+k-weightShift+topX+topY-padX-padY;
-
-							if(weight>=0) {// otherwise these bits deserve to be truncated
+							if(weight>=0) {// otherwise these bits are just truncated
 								if(resultSigned && (k==maxK-1)) { 
-									ostringstream nots;
-									nots << "not " << s.str(); 
-									bitHeap->addBit(lsbWeight-g + weight, nots.str());
-									REPORT(INFO, "adding neg bit " << nots.str() << " at weight " << weight); 
-									REPORT(INFO,  "  adding constant ones from weight "<< weight << " to "<< bitHeap->getMaxWeight());
+									// This is a sign bit: sign-extend it by 1/ complementing and 2/ adding constant 1s all the way up to maxweight
+									REPORT(DEBUG, "adding neg bit " << nots.str() << " at weight " << weight); 
+									bitHeap->addBit(weight, nots.str());
+									REPORT(DEBUG,  "  adding constant ones from weight "<< weight << " to "<< bitHeap->getMaxWeight());
 									for (unsigned w=weight; w<bitHeap->getMaxWeight(); w++)
-										bitHeap->addConstantOneBit(lsbWeight-g + w);
+										bitHeap->addConstantOneBit(w);
 								}
 								else { // just add the bit
-									REPORT(INFO, "adding bit " << s.str() << " at weight " << weight); 
-									bitHeap->addBit(lsbWeight-g + weight, s.str());
+									bitHeap->addBit(weight, s.str());
 								}
 							}
 						}
-
+						
 						vhdl << endl;
 
 					}
@@ -1132,14 +1135,14 @@ namespace flopoco {
 			if ( y >= (1 << (dy-1)))
 				y -= (1 << dy);
 		}
-		// if(negate && signedX && signedY) cerr << "  y=" << y << "  x=" << x;
+		// if(negate && !signedX && !signedY) cerr << "  y=" << y << "  x=" << x;
 		r = x * y;
-		// if(negate && signedX && signedY) cerr << "  r=" << r;
+		//  if(negate && !signedX && !signedY) cerr << "  r=" << r;
 		if(negate)
 			r=-r;
 		// if(negate && signedX && signedY) cerr << "  -r=" << r;
 		if ( r < 0)
-			r += mpz_class(1) << wF; 
+			r += mpz_class(1) << wOut; 
 		// if(negate && signedX && signedY) cerr << "  r2C=" << r;
 
 		if(wOut<wF){ // wOut is that of Table
@@ -1150,7 +1153,7 @@ namespace flopoco {
 			r = r >> tr;
 		}
 
-		// if(negate && signedX && signedY) cerr << "  rfinal=" << r << endl;
+		// if(negate && !signedX && !signedY) cerr << "  rfinal=" << r << endl;
 
 		return r;
 
