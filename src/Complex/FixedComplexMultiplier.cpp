@@ -45,8 +45,8 @@ namespace flopoco{
 		// so after truncating the sum to wO bits the result is faithful
 		int g = IntMultiplier::neededGuardBits(wI, wI, wO); 
 
-		BitHeap* bitHeapRe = new BitHeap(this, 1+wO+g);  // will add XrYr - XiYi
-		BitHeap* bitHeapIm = new BitHeap(this, 1+wO+g);  // will add XrYi + XiYr
+		BitHeap* bitHeapRe = new BitHeap(this, 1+wO+g, "Re");  // will add XrYr - XiYi
+		BitHeap* bitHeapIm = new BitHeap(this, 1+wO+g, "Im");  // will add XrYi + XiYr
 		// Use virtual multipliers that will add their result to the bitHeap
 		//IntMultiplier* multXrYr = 
 

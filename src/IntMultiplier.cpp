@@ -355,7 +355,7 @@ namespace flopoco {
 			vhdl << instance(t, "multTable");
 
 			plotter->addSmallMult(0,0,wX,wY);
-			bitHeap->getPlotter()->plotMultiplierConfiguration(multiplierUid, localSplitVector, wX, wY, wOut, g);
+			bitHeap->getPlotter()->plotMultiplierConfiguration(getName(), localSplitVector, wX, wY, wOut, g);
 
 			for(int w=wOut-1; w>=0; w--)	{ // this is a weight in the multiplier output
 				stringstream s;
@@ -473,7 +473,7 @@ namespace flopoco {
 					m->setPrevious(NULL);			
 					localSplitVector.push_back(m);
 					bitHeap->addMultiplierBlock(m);
-					bitHeap->getPlotter()->plotMultiplierConfiguration(multiplierUid, localSplitVector, wX, wY, wOut, g);
+					bitHeap->getPlotter()->plotMultiplierConfiguration(getName(), localSplitVector, wX, wY, wOut, g);
 					//	}	
 
 				}
@@ -501,7 +501,7 @@ namespace flopoco {
 			buildLogicOnly();
 		}
 
-		bitHeap->getPlotter()->plotMultiplierConfiguration(multiplierUid, localSplitVector, wX, wY, wOut, g);
+		bitHeap->getPlotter()->plotMultiplierConfiguration(getName(), localSplitVector, wX, wY, wOut, g);
 	}
 
 
@@ -535,7 +535,7 @@ namespace flopoco {
 		else
 			buildHeapTiling();
 		//adding the round bit
-		//bitHeap->getPlotter()->plotMultiplierConfiguration(multiplierUid, localSplitVector, wX, wY, wOut, g);
+		//bitHeap->getPlotter()->plotMultiplierConfiguration(getName(), localSplitVector, wX, wY, wOut, g);
 		if(g>0) {
 			int weight=wFull-wOut-1- weightShift;
 			if(negate)

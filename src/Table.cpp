@@ -126,7 +126,7 @@ namespace flopoco{
 			mpz_class y;
 			beginArchitecture(o);		
 			o	<< "  with X select  Y <= " << endl;
-			REPORT(DETAILED,"FUNCTION in table.cpp");
+			REPORT(FULL,"Table.cpp: Filling the table");
 			for (x = minIn; x <= maxIn; x++) {
 				y=function(x);
 				//if( y>=(1<<wOut) || y<0)

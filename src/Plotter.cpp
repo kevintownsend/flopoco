@@ -128,11 +128,11 @@ namespace flopoco
 
 
 
-	void Plotter::plotMultiplierConfiguration(int uid, vector<MultiplierBlock*> mulBlocks, 
+	void Plotter::plotMultiplierConfiguration(string name, vector<MultiplierBlock*> mulBlocks, 
 			int wX, int wY, int wOut, int g)
 	{
-		drawAreaView(uid, mulBlocks, wX, wY, wOut, g);
-		drawLozengeView(uid, mulBlocks, wX, wY, wOut, g);
+		drawAreaView(name, mulBlocks, wX, wY, wOut, g);
+		drawLozengeView(name, mulBlocks, wX, wY, wOut, g);
 
 	}
 
@@ -247,10 +247,10 @@ namespace flopoco
 
 
 
-	void Plotter::drawAreaView(int uid, vector<MultiplierBlock*> mulBlocks, int wX, int wY, int wOut, int g)
+	void Plotter::drawAreaView(string name, vector<MultiplierBlock*> mulBlocks, int wX, int wY, int wOut, int g)
 	{
 		ostringstream figureFileName;
-		figureFileName << "view_area_" << uid << ".svg";
+		figureFileName << "tiling_square_" << name << ".svg";
 		
 		FILE* pfile;
 		pfile  = fopen(figureFileName.str().c_str(), "w");
@@ -320,10 +320,10 @@ namespace flopoco
 
 
 
-	void Plotter::drawLozengeView(int uid, vector<MultiplierBlock*> mulBlocks, int wX, int wY, int wOut, int g)
+	void Plotter::drawLozengeView(string name, vector<MultiplierBlock*> mulBlocks, int wX, int wY, int wOut, int g)
 	{
 		ostringstream figureFileName;
-		figureFileName << "view_lozenge_" << uid << ".svg";
+		figureFileName << "tiling_sheared_" << name << ".svg";
 		
 		FILE* pfile;
 		pfile  = fopen(figureFileName.str().c_str(), "w");
@@ -709,9 +709,9 @@ namespace flopoco
 	{
 		ostringstream figureFileName;
 		if(isInitial)
-			figureFileName << "bit_heap_initial_" << bh->getGUid()  << ".svg";
+			figureFileName << "BitHeap_initial_" << bh->getName()  << ".svg";
 		else 
-			figureFileName << "bit_heap_" << bh->getGUid()  << ".svg";
+			figureFileName << "BitHeap_compression_" << bh->getName()  << ".svg";
 	
 
 
@@ -738,11 +738,6 @@ namespace flopoco
 		int tempCycle = 0;
 		int cnt = 0;
 		double tempCP = 0;
-
-
-
-
-
 
 		fig << "<line x1=\"" << turnaroundX + 150 << "\" y1=\"" 
 			<< offsetY +10 << "\" x2=\"" << turnaroundX - bits.size()*10 - 50

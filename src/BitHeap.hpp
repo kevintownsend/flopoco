@@ -62,8 +62,9 @@ namespace flopoco{
 
 			/** The constructor
 			  @param op         the operator in which this bit heap is beeing built
-			  @param maxWeight  the maximum weight of the heap (it should be known statically, shouldn't it?) */
-			BitHeap(Operator* op, int maxWeight);
+			  @param maxWeight  the maximum weight of the heap (it should be known statically, shouldn't it?)
+		    @param name       a description of the heap that will be integrated into its unique name */
+		BitHeap(Operator* op, int maxWeight, string name="");
 			~BitHeap();
 
 			/** add a bit to the bit heap. The bit will be added at the cycle op->currentCycle() with critical path op->getCriticalPath().
@@ -143,6 +144,9 @@ namespace flopoco{
 
 			/** return the UID of the bit heap*/
 			int getGUid();
+
+			/** return the UID of the bit heap*/
+		string getName() {return uniqueName_;};
 
 
 			void setSignedIO(bool s){this->signedIO=s;};

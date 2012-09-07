@@ -31,13 +31,16 @@ namespace flopoco
 
 
 
-	BitHeap::BitHeap(Operator* op, int maxWeight) :
+	BitHeap::BitHeap(Operator* op, int maxWeight, string name) :
 		op(op), maxWeight(maxWeight)
 	{
 		// Set up the vector of lists of weighted bits, and the vector of uids
 		srcFileName=op->getSrcFileName() + ":BitHeap"; // for REPORT to work
-		uniqueName_=op->getName() + ":BitHeap"; // for REPORT to work
 		guid = Operator::getNewUId();
+		stringstream s;
+		s << op->getName() << "_BitHeap"<< name << "_" <<guid; // for REPORT to work
+
+		uniqueName_=s.str();
 		REPORT(DEBUG, "Creating BitHeap of size " << maxWeight);
 		chunkDoneIndex=0;
 		inConcatIndex=0;

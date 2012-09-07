@@ -74,7 +74,7 @@ namespace flopoco
 			void plotBitHeap();
 
 			/** plots multiplier area and lozenge views */
-			void plotMultiplierConfiguration(int uid, vector<MultiplierBlock*> mulBlocks, int wX, int wY, int wOut, int g);
+		void plotMultiplierConfiguration(string name, vector<MultiplierBlock*> mulBlocks, int wX, int wY, int wOut, int g);
 
 			void setBitHeap(BitHeap* bh_);
 
@@ -94,10 +94,10 @@ namespace flopoco
 			void drawCompressionHeap();
 
 			/** draws an area view of the DSP configuration */
-			void drawAreaView(int uid, vector<MultiplierBlock*> mulBlocks, int wX, int wY, int wOut, int g);
+			void drawAreaView(string name, vector<MultiplierBlock*> mulBlocks, int wX, int wY, int wOut, int g);
 
 			/** draws a lozenge view of the DSP configuration */
-			void drawLozengeView(int uid, vector<MultiplierBlock*> mulBlocks, int wX, int wY, int wOut, int g);
+		void drawLozengeView(string name, vector<MultiplierBlock*> mulBlocks, int wX, int wY, int wOut, int g);
 
 			/** draws a line between the specified coordinates */
 			void drawLine(int wX, int wY, int wRez, int offsetX, int offsetY, int scalingFactor, bool isRectangle);
