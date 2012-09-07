@@ -27,11 +27,11 @@ BasicCompressor::BasicCompressor(Target * target, vector<int> h)
 	int w=0;
 	int param=0;
 
-	for (unsigned i=0; i<h.size(); i++)
-		if(h[i]==0)
-			h.erase(h.begin()+i);
+	while(h[h.size()-1]==0)
+	{
+		h.erase(h.end()-1);
+	}
 
-	
 	for(int i=h.size()-1; i>=0;i--)
 		height.push_back(h[i]);
 	
