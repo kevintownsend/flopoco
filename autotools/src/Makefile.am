@@ -110,11 +110,6 @@ noinst_HEADERS = \
           IntDualSub.hpp \
           Plotter.hpp \
           IntMultiplier.hpp \
-          IntMultipliers/SignedIntMultiplier.hpp \
-          IntMultipliers/UnsignedIntMultiplier.hpp \
-          IntMultipliers/IntTilingMult.hpp \
-          IntMultipliers/LogicIntMultiplier.hpp \
-          IntMultipliers/IntTruncMultiplier.hpp \
           IntMultipliers/IntKaratsuba.hpp \
           IntSquarer.hpp \
           IntMultipliers/FormalBinaryProduct.hpp \
@@ -217,11 +212,6 @@ libflopoco_la_SOURCES = \
                         IntDualSub.cpp \
                         Plotter.cpp \
                         IntMultiplier.cpp \
-                        IntMultipliers/SignedIntMultiplier.cpp \
-                        IntMultipliers/UnsignedIntMultiplier.cpp \
-                        IntMultipliers/IntTilingMult.cpp \
-                        IntMultipliers/LogicIntMultiplier.cpp \
-                        IntMultipliers/IntTruncMultiplier.cpp \
                         IntMultipliers/IntKaratsuba.cpp \
                         IntSquarer.cpp \
                         IntMultipliers/FormalBinaryProduct.cpp \
