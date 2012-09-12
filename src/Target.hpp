@@ -51,9 +51,7 @@ namespace flopoco{
 		virtual ~Target() {}
 
 
-		void setGlobalOpList(	vector<Operator*>  oplist){
-			globalOpList=oplist;
-		}
+
 		vector<Operator*> * getGlobalOpListRef(){
 			return & globalOpList;
 		}

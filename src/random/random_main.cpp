@@ -35,7 +35,7 @@ extern int checkStrictlyPositive(char* s, char* cmd);
 extern int checkPositiveOrNull(char* s, char* cmd);
 extern bool checkBoolean(char* s, char* cmd);
 extern int checkSign(char* s, char* cmd);
-extern void addOperator(vector<Operator*> &oplist, Operator *op);
+extern void addOperator(Operator *op);
 	
 void random_usage(char *name, string opName = ""){
 	bool full = (opName=="");
@@ -60,9 +60,7 @@ void random_usage(char *name, string opName = ""){
 
 bool random_parseCommandLine(
 	int argc, char* argv[], Target *target,
-	std::string opname, int &i,
-	vector<Operator*> &oplist
-){
+	std::string opname, int &i){
 	/*
 	if (opname == "bitwise")
 	{
@@ -91,7 +89,7 @@ bool random_parseCommandLine(
 
 
 		cerr << "> lut_sr_rng: r=" << tr << "	t= " << t << "	k= " << k <<endl;
-		addOperator(oplist, new flopoco::random::LutSrRng(target, tr, t, k));
+		addOperator(new flopoco::random::LutSrRng(target, tr, t, k));
 		return true;
 	}
 	else
