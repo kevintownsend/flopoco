@@ -181,7 +181,10 @@ namespace flopoco {
 		REPORT(DEBUG, "    g=" << g);
 
 		maxWeight = wOut+g;
-		weightShift = wFull - maxWeight;  
+	//	if (lsbWeight<=g)
+	//		weightShift = wFull - maxWeight;
+	//	else
+			weightShift = wFull - wOut +lsbWeight-g;	
 
 
 

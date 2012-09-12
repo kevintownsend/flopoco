@@ -136,23 +136,21 @@ namespace flopoco{
 		bool MultiplierBlock::canBeChained(MultiplierBlock* next, bool isXilinx)
 		{
 			//for now just the stupid chaining
-			if(neighbors(next))
+			if (isXilinx)
 			{
-				if(isXilinx)
+				if(neighbors(next))
 					return true;
-				//Altera chaining
 				else
-				{
-					if((getPrevious()==NULL) && (getNext()==NULL) && (next->getPrevious()==NULL) && (next->getNext()==NULL))
-						return true;
-					else
-						return false;
-				}
-
+					return false;
 			}
-
-			else 
-				return false;
+			//Altera chaining
+			else
+			{
+				if((getWeight() == next->getWeight()) && (this!=next))
+					return true;
+				else
+					return false;
+			}
 
 		}
 

@@ -323,7 +323,7 @@ namespace flopoco
 	void Plotter::drawLozengeView(string name, vector<MultiplierBlock*> mulBlocks, int wX, int wY, int wOut, int g)
 	{
 		ostringstream figureFileName;
-		figureFileName << "tiling_sheared_" << name << ".svg";
+		figureFileName << "tiling_sheared_" /*<< name */<< ".svg";
 		
 		FILE* pfile;
 		pfile  = fopen(figureFileName.str().c_str(), "w");
@@ -709,9 +709,9 @@ namespace flopoco
 	{
 		ostringstream figureFileName;
 		if(isInitial)
-			figureFileName << "BitHeap_initial_" << bh->getName()  << ".svg";
+			figureFileName << "BitHeap_initial_" /*<< bh->getName()*/  << ".svg";
 		else 
-			figureFileName << "BitHeap_compression_" << bh->getName()  << ".svg";
+			figureFileName << "BitHeap_compression_" /*<< bh->getName()*/  << ".svg";
 	
 
 

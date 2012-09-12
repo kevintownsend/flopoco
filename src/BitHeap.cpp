@@ -208,24 +208,24 @@ namespace flopoco
 
 
 
-	void BitHeap::buildSupertiles()
+void BitHeap::buildSupertiles()
 	{
-		//		if((op->getTarget()->getVendor()=="Xilinx"))
-		//		{
-		//
+
 		bool isXilinx;
 		if(op->getTarget()->getVendor()=="Xilinx")
 			isXilinx=true;
 		else
 			isXilinx=false;
 
-		for(unsigned i=0;i<mulBlocks.size();i++)
-			for(unsigned j=0;j<mulBlocks.size();j++)
+		REPORT(INFO, mulBlocks.size());
+
+		for(unsigned i=0;i<mulBlocks.size()-1;i++)
+			for(unsigned j=i+1;j<mulBlocks.size();j++)
 			{ 
 				//if 2 blocks can be chained, then the chaining is done ascending by weight.
 				//TODO improve the chaining		
 				bool chain=mulBlocks[i]->canBeChained(mulBlocks[j], isXilinx);
-				//REPORT(INFO, chain);
+				REPORT(INFO, chain);
 				//REPORT(INFO, mulBlocks[i]->getWeight())
 				if(chain)
 				{
@@ -251,41 +251,59 @@ namespace flopoco
 						}	
 					}		
 				}
+			}	
 
 
-			}
-		//	}
-
+#if 0
 		//Altera supertiles:
 		// - 36x36 multipliers
 		// - two 18x18 adjacent blocks
 		if(op->getTarget()->getVendor()=="Altera")
 		{
+			REPORT(DEBUG,"Altera");
 			for(unsigned i=0;i<mulBlocks.size();i++)
 				for(unsigned j=0;j<mulBlocks.size();j++)
 				{
-					if((mulBlocks[i]->getNext()!=NULL) && (mulBlocks[j]->getNext()!=NULL) && 
-							(mulBlocks[i]->getPrevious()==NULL) && (mulBlocks[j]->getPrevious()==NULL))
-						if (mulBlocks[i]->neighbors(mulBlocks[j]))
-							if (mulBlocks[i]->getNext()->neighbors(mulBlocks[j]->getNext()))
+					if((mulBlocks[i]->getPrevious()==NULL) && (mulBlocks[j]->getPrevious()==NULL))
+					{
+						REPORT(DEBUG, "getPrev " << i << "  " << j);
+						if((mulBlocks[i]->getNext()==NULL) || (mulBlocks[j]->getNext()==NULL))
+						{
+							REPORT(DEBUG, "getNext " << i << "  " << j);
+						}
+						else
+							if (mulBlocks[i]->neighbors(mulBlocks[j]))
+								REPORT(DEBUG, "neighbors");
+							if((mulBlocks[i]->getNext()==NULL) || (mulBlocks[j]->getNext()==NULL))
 							{
-								REPORT(INFO, endl);
-								REPORT(INFO, "supertile " );
-								REPORT(INFO,"block : " << mulBlocks[i]->getbotX() << "  " << mulBlocks[i]->getbotY());
-								REPORT(INFO,"with block : " << mulBlocks[j]->getbotX() << "  " <<  mulBlocks[j]->getbotY());
-								REPORT(INFO,"  " << mulBlocks[i]->getNext()->getbotX() << "  " << mulBlocks[i]->getNext()->getbotY());
-								REPORT(INFO,"  " << mulBlocks[j]->getNext()->getbotX() << "  " <<  mulBlocks[j]->getNext()->getbotY());
+							}
+							else
+							{
+								REPORT(DEBUG, "crap");
+								if (mulBlocks[i]->getNext()->neighbors(mulBlocks[j]->getNext()))
+								{
+									REPORT(INFO, endl);
+									REPORT(INFO, "supertile " );
+									REPORT(INFO,"block : " << mulBlocks[i]->getbotX() << "  " 
+											<< mulBlocks[i]->getbotY());
+									REPORT(INFO,"with block : " << mulBlocks[j]->getbotX() << "  " 
+											<<  mulBlocks[j]->getbotY());
+									REPORT(INFO,"  " << mulBlocks[i]->getNext()->getbotX() << "  " 
+											<< mulBlocks[i]->getNext()->getbotY());
+									REPORT(INFO,"  " << mulBlocks[j]->getNext()->getbotX() << "  " 
+											<<  mulBlocks[j]->getNext()->getbotY());
 
 
-								mulBlocks[i]->setPrevious(mulBlocks[j]);
-								mulBlocks[j]->setPrevious(mulBlocks[i]);
-								mulBlocks[i]->getNext()->setNext(mulBlocks[i]);
-								mulBlocks[j]->getNext()->setNext(mulBlocks[i]);
+									mulBlocks[i]->setPrevious(mulBlocks[j]);
+									mulBlocks[j]->setPrevious(mulBlocks[i]);
+									mulBlocks[i]->getNext()->setNext(mulBlocks[i]);
+									mulBlocks[j]->getNext()->setNext(mulBlocks[i]);
 
 
+								}
 							}
 
-
+					}
 
 				}
 
@@ -300,9 +318,32 @@ namespace flopoco
 					mulBlocks[i]->getNext()->invalidate();
 					mulBlocks[i]->getPrevious()->getNext()->invalidate();
 
-					//int minTopX, minTopY;
+					int minTopX, minTopY;
 
-					//MultiplierBlock* m = new MultiplierBlock(36, 36, minTopX, minTopY, addUID("XX"),addUID("YY"),weightShift);
+					minTopX = mulBlocks[i]->gettopX();
+					minTopY = mulBlocks[i]->gettopY();
+
+					if (minTopX > mulBlocks[i]->getPrevious()->gettopX())
+						minTopX = mulBlocks[i]->getPrevious()->gettopX();
+					else 
+						if (minTopX > mulBlocks[i]->getNext()->gettopX())
+							minTopX = mulBlocks[i]->getNext()->gettopX();
+						else
+							if (minTopX > mulBlocks[i]->getPrevious()->getNext()->gettopX())
+								minTopX = mulBlocks[i]->getPrevious()->getNext()->gettopX();
+
+					if (minTopY > mulBlocks[i]->getPrevious()->gettopY())
+						minTopY = mulBlocks[i]->getPrevious()->gettopY();
+					else 
+						if (minTopY > mulBlocks[i]->getNext()->gettopY())
+							minTopY = mulBlocks[i]->getNext()->gettopY();
+						else
+							if (minTopY > mulBlocks[i]->getPrevious()->getNext()->gettopY())
+								minTopY = mulBlocks[i]->getPrevious()->getNext()->gettopY();
+
+					REPORT(DEBUG, "new 36x36");
+					MultiplierBlock* m = new MultiplierBlock(36, 36, minTopX, minTopY, mulBlocks[i]->getInputName1(),
+							mulBlocks[i]->getInputName2(), mulBlocks[i]->getWeightShift());
 
 
 				}
@@ -312,13 +353,14 @@ namespace flopoco
 		}
 
 
-
 		//just for debugging
 		for(unsigned i=0;i<mulBlocks.size();i++)
 		{
 			if(mulBlocks[i]->getNext()!=NULL)
 				REPORT(DETAILED, mulBlocks[i]->getWeight()<<" chained with "<<mulBlocks[i]->getNext()->getWeight());
 		}
+#endif
+
 	}
 
 
@@ -329,56 +371,60 @@ namespace flopoco
 	{
 		//making all the possible supertiles	
 		buildSupertiles();
-
+		REPORT(INFO, "supertiles built");
 		//generate the VHDL code for each supertile
 		op->vhdl << tab << "-- code generated by BitHeap::generateSupertileVHDL()"<< endl;
 
 		// This loop iterates on all the blocks, looking for the roots of supertiles
-		if(op->getTarget()->getVendor()=="Xilinx")
+		//if(op->getTarget()->getVendor()=="Xilinx")
+		
+		for(unsigned i=0;i<mulBlocks.size();i++)
 		{
-			for(unsigned i=0;i<mulBlocks.size();i++)
-			{	
-				//take just the blocks which are roots
-				if(mulBlocks[i]->getPrevious()==NULL)
-				{
-					int DSPuid=0;
-					MultiplierBlock* next;
-					MultiplierBlock* current=mulBlocks[i];
-					int newLength=0;
+			
+			//take just the blocks which are roots
+			if(mulBlocks[i]->getPrevious()==NULL)
+			{
+				REPORT(INFO, "found a root");
+				int DSPuid=0;
+				MultiplierBlock* next;
+				MultiplierBlock* current=mulBlocks[i];
+				int newLength=0;
 
-					//TODO reset cycle/CP to the beginning of mult 
-					op->setCycle(0);
+				//TODO reset cycle/CP to the beginning of mult 
+				op->setCycle(0);
+
+				op->manageCriticalPath(  op->getTarget()->DSPMultiplierDelay() ) ; 					
+
+				//the first DSP from the supertile(it has the smallest weight in the supertile)
+				generateVHDLforDSP(current,DSPuid,i);
+
+				//iterate on the other blocks of the supertile
+				while(current->getNext()!=NULL)
+				{	
+					DSPuid++;
+					next=current->getNext();
+
 
 					op->manageCriticalPath(  op->getTarget()->DSPMultiplierDelay() ) ; 					
+					generateVHDLforDSP(next,DSPuid,i);
+					//TODO ! replace 17 with multiplierblock->getshift~ something like that
 
-					//the first DSP from the supertile(it has the smallest weight in the supertile)
-					generateVHDLforDSP(current,DSPuid,i);
+					//******pipeline*******//	
+					// op->setCycleFromSignal(next->getSigName());
+					// op->syncCycleFromSignal(current->getSigName());
+					// op->manageCriticalPath(  op->getTarget()->DSPAdderDelay() ) ; 
+					// FIXME
+					op->nextCycle();
 
-					//iterate on the other blocks of the supertile
-					while(current->getNext()!=NULL)
+
+					if(current->getSigLength()>next->getSigLength())
+						newLength=current->getSigLength();
+					else
+						newLength=next->getSigLength();
+
+					//addition, the 17lsb-s from the first block will go directly to bitheap
+					if(op->getTarget()->getVendor()=="Xilinx")
 					{	
-						DSPuid++;
-						next=current->getNext();
-
-
-						op->manageCriticalPath(  op->getTarget()->DSPMultiplierDelay() ) ; 					
-						generateVHDLforDSP(next,DSPuid,i);
-						//TODO ! replace 17 with multiplierblock->getshift~ something like that
-
-						//******pipeline*******//	
-						// op->setCycleFromSignal(next->getSigName());
-						// op->syncCycleFromSignal(current->getSigName());
-						// op->manageCriticalPath(  op->getTarget()->DSPAdderDelay() ) ; 
-						// FIXME
-						op->nextCycle();
-
-
-						if(current->getSigLength()>next->getSigLength())
-							newLength=current->getSigLength();
-						else
-							newLength=next->getSigLength();
-
-						//addition, the 17lsb-s from the first block will go directly to bitheap
 						if(signedIO)
 
 						{
@@ -436,53 +482,75 @@ namespace flopoco
 
 						}
 
-
-						//setting the name and length of the current block, to be used properly in the next iteration
-						stringstream q;
-						q<<join("DSP_bh",guid,"_ch",i,"_",DSPuid);
-						next->setSignalName(q.str());		
-						next->setSignalLength(newLength);
-						//next
-						current=next;
 					}
 
-					// adding the result to the bitheap (in the last block from the supertile)
-					string name=current->getSigName();
-					int length=current->getSigLength();
-					REPORT(DETAILED,"sending bits to bitheap after chain adding");
-					for(int k=length-1;k>=0;k--)
+					//Altera
+					else
 					{
-						int weight=current->getWeight()+k;	
-						//REPORT(DETAILED,"k= "<<k <<" weight= "<<weight);				
-						if(weight>=0)
-						{	
-							stringstream s;
+						if(signedIO)
+						{
+							//TODO
+						}
+						else
+						{
+							newLength++;
 
-							if((k==length-1)&&(signedIO))
-							{
-								s<<"not( "<<name<<"("<<k<<") )";
-								addBit(weight,s.str(),"",5);
-								for(int i=maxWeight;i>=weight;i--)
-									addConstantOneBit(i);
-							}
+							op->vhdl << tab <<	op->declare(join("DSP_bh",guid,"_ch",i,"_",DSPuid),newLength)
+								<< "<= ('0'&" <<current->getSigName() 
+								<< ") +  ( "<<  zg(current->getSigLength()-next->getSigLength()+1)  /* s.str()*/ <<" & "<<"  "
+								<<next->getSigName() << " );" <<endl ;
 
-							else 
-							{
-								s<<name<<"("<<k<<")";
-								addBit(weight,s.str(),"",1);
-							}
+							REPORT(INFO,"ADDING = "<<join("DSP_bh",guid,"_ch",i,"_",DSPuid)
+									<< "length= "<<newLength << "<= " <<next->getSigName() 
+									<< " +  ( "<<  zg(17) <<" & "<<"  "<<current->getSigName()
+									<<range(current->getSigLength()-1,17)<<" );");
+						}
+
+						
+					}
+
+
+					//setting the name and length of the current block, to be used properly in the next iteration
+					stringstream q;
+					q<<join("DSP_bh",guid,"_ch",i,"_",DSPuid);
+					next->setSignalName(q.str());		
+					next->setSignalLength(newLength);
+					//next
+					current=next;
+				}
+
+				// adding the result to the bitheap (in the last block from the supertile)
+				string name=current->getSigName();
+				int length=current->getSigLength();
+				REPORT(DETAILED,"sending bits to bitheap after chain adding");
+				for(int k=length-1;k>=0;k--)
+				{
+					int weight=current->getWeight()+k;	
+					//REPORT(DETAILED,"k= "<<k <<" weight= "<<weight);				
+					if(weight>=0)
+					{	
+						stringstream s;
+
+						if((k==length-1)&&(signedIO))
+						{
+							s<<"not( "<<name<<"("<<k<<") )";
+							addBit(weight,s.str(),"",5);
+							for(int i=maxWeight;i>=weight;i--)
+								addConstantOneBit(i);
+						}
+
+						else 
+						{
+							s<<name<<"("<<k<<")";
+							addBit(weight,s.str(),"",1);
 						}
 					}
 				}
 			}
 		}
-
-		//Altera chaining
-		else
-		{
-
-		}
+		
 	}
+
 
 	int BitHeap::computeStage()
 	{
