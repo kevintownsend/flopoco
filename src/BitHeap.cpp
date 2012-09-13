@@ -217,7 +217,7 @@ void BitHeap::buildSupertiles()
 		else
 			isXilinx=false;
 
-		REPORT(INFO, mulBlocks.size());
+		//REPORT(INFO, mulBlocks.size());
 
 		for(unsigned i=0;i<mulBlocks.size()-1;i++)
 			for(unsigned j=i+1;j<mulBlocks.size();j++)
@@ -225,7 +225,7 @@ void BitHeap::buildSupertiles()
 				//if 2 blocks can be chained, then the chaining is done ascending by weight.
 				//TODO improve the chaining		
 				bool chain=mulBlocks[i]->canBeChained(mulBlocks[j], isXilinx);
-				REPORT(INFO, chain);
+				//REPORT(INFO, chain);
 				//REPORT(INFO, mulBlocks[i]->getWeight())
 				if(chain)
 				{
@@ -234,8 +234,8 @@ void BitHeap::buildSupertiles()
 					{
 						if((mulBlocks[j]->getNext()==NULL)&&(mulBlocks[i]->getPrevious()==NULL))
 						{
-							REPORT(INFO,"block : " << mulBlocks[j]->getbotX() << "  " << mulBlocks[j]->getbotY());
-							REPORT(INFO,"with block : " << mulBlocks[i]->getbotX() << "  " <<  mulBlocks[i]->getbotY());
+							//REPORT(INFO,"block : " << mulBlocks[j]->getbotX() << "  " << mulBlocks[j]->getbotY());
+							//REPORT(INFO,"with block : " << mulBlocks[i]->getbotX() << "  " <<  mulBlocks[i]->getbotY());
 							mulBlocks[j]->setNext(mulBlocks[i]);
 							mulBlocks[i]->setPrevious(mulBlocks[j]);
 						}	
@@ -244,122 +244,14 @@ void BitHeap::buildSupertiles()
 					{
 						if((mulBlocks[i]->getNext()==NULL)&&(mulBlocks[j]->getPrevious()==NULL))	
 						{
-							REPORT(INFO,"block : " << mulBlocks[i]->getbotX() << "  " << mulBlocks[i]->getbotY());
-							REPORT(INFO,"with block : " << mulBlocks[j]->getbotX() << "  " <<  mulBlocks[j]->getbotY());
+							//REPORT(INFO,"block : " << mulBlocks[i]->getbotX() << "  " << mulBlocks[i]->getbotY());
+							//REPORT(INFO,"with block : " << mulBlocks[j]->getbotX() << "  " <<  mulBlocks[j]->getbotY());
 							mulBlocks[i]->setNext(mulBlocks[j]);
 							mulBlocks[j]->setPrevious(mulBlocks[i]);
 						}	
 					}		
 				}
 			}	
-
-
-#if 0
-		//Altera supertiles:
-		// - 36x36 multipliers
-		// - two 18x18 adjacent blocks
-		if(op->getTarget()->getVendor()=="Altera")
-		{
-			REPORT(DEBUG,"Altera");
-			for(unsigned i=0;i<mulBlocks.size();i++)
-				for(unsigned j=0;j<mulBlocks.size();j++)
-				{
-					if((mulBlocks[i]->getPrevious()==NULL) && (mulBlocks[j]->getPrevious()==NULL))
-					{
-						REPORT(DEBUG, "getPrev " << i << "  " << j);
-						if((mulBlocks[i]->getNext()==NULL) || (mulBlocks[j]->getNext()==NULL))
-						{
-							REPORT(DEBUG, "getNext " << i << "  " << j);
-						}
-						else
-							if (mulBlocks[i]->neighbors(mulBlocks[j]))
-								REPORT(DEBUG, "neighbors");
-							if((mulBlocks[i]->getNext()==NULL) || (mulBlocks[j]->getNext()==NULL))
-							{
-							}
-							else
-							{
-								REPORT(DEBUG, "crap");
-								if (mulBlocks[i]->getNext()->neighbors(mulBlocks[j]->getNext()))
-								{
-									REPORT(INFO, endl);
-									REPORT(INFO, "supertile " );
-									REPORT(INFO,"block : " << mulBlocks[i]->getbotX() << "  " 
-											<< mulBlocks[i]->getbotY());
-									REPORT(INFO,"with block : " << mulBlocks[j]->getbotX() << "  " 
-											<<  mulBlocks[j]->getbotY());
-									REPORT(INFO,"  " << mulBlocks[i]->getNext()->getbotX() << "  " 
-											<< mulBlocks[i]->getNext()->getbotY());
-									REPORT(INFO,"  " << mulBlocks[j]->getNext()->getbotX() << "  " 
-											<<  mulBlocks[j]->getNext()->getbotY());
-
-
-									mulBlocks[i]->setPrevious(mulBlocks[j]);
-									mulBlocks[j]->setPrevious(mulBlocks[i]);
-									mulBlocks[i]->getNext()->setNext(mulBlocks[i]);
-									mulBlocks[j]->getNext()->setNext(mulBlocks[i]);
-
-
-								}
-							}
-
-					}
-
-				}
-
-			for(unsigned i=0;i<mulBlocks.size();i++)
-			{
-				//found one of the two roots of a 36x36 tile
-				//invalidate it and create one 36x36 multiplier block
-				if(mulBlocks[i]->getPrevious()->getPrevious()==mulBlocks[i])
-				{
-					mulBlocks[i]->invalidate();
-					mulBlocks[i]->getPrevious()->invalidate();
-					mulBlocks[i]->getNext()->invalidate();
-					mulBlocks[i]->getPrevious()->getNext()->invalidate();
-
-					int minTopX, minTopY;
-
-					minTopX = mulBlocks[i]->gettopX();
-					minTopY = mulBlocks[i]->gettopY();
-
-					if (minTopX > mulBlocks[i]->getPrevious()->gettopX())
-						minTopX = mulBlocks[i]->getPrevious()->gettopX();
-					else 
-						if (minTopX > mulBlocks[i]->getNext()->gettopX())
-							minTopX = mulBlocks[i]->getNext()->gettopX();
-						else
-							if (minTopX > mulBlocks[i]->getPrevious()->getNext()->gettopX())
-								minTopX = mulBlocks[i]->getPrevious()->getNext()->gettopX();
-
-					if (minTopY > mulBlocks[i]->getPrevious()->gettopY())
-						minTopY = mulBlocks[i]->getPrevious()->gettopY();
-					else 
-						if (minTopY > mulBlocks[i]->getNext()->gettopY())
-							minTopY = mulBlocks[i]->getNext()->gettopY();
-						else
-							if (minTopY > mulBlocks[i]->getPrevious()->getNext()->gettopY())
-								minTopY = mulBlocks[i]->getPrevious()->getNext()->gettopY();
-
-					REPORT(DEBUG, "new 36x36");
-					MultiplierBlock* m = new MultiplierBlock(36, 36, minTopX, minTopY, mulBlocks[i]->getInputName1(),
-							mulBlocks[i]->getInputName2(), mulBlocks[i]->getWeightShift());
-
-
-				}
-			}
-
-
-		}
-
-
-		//just for debugging
-		for(unsigned i=0;i<mulBlocks.size();i++)
-		{
-			if(mulBlocks[i]->getNext()!=NULL)
-				REPORT(DETAILED, mulBlocks[i]->getWeight()<<" chained with "<<mulBlocks[i]->getNext()->getWeight());
-		}
-#endif
 
 	}
 
@@ -384,7 +276,7 @@ void BitHeap::buildSupertiles()
 			//take just the blocks which are roots
 			if(mulBlocks[i]->getPrevious()==NULL)
 			{
-				REPORT(INFO, "found a root");
+				//REPORT(INFO, "found a root");
 				int DSPuid=0;
 				MultiplierBlock* next;
 				MultiplierBlock* current=mulBlocks[i];
@@ -500,10 +392,7 @@ void BitHeap::buildSupertiles()
 								<< ") +  ( "<<  zg(current->getSigLength()-next->getSigLength()+1)  /* s.str()*/ <<" & "<<"  "
 								<<next->getSigName() << " );" <<endl ;
 
-							REPORT(INFO,"ADDING = "<<join("DSP_bh",guid,"_ch",i,"_",DSPuid)
-									<< "length= "<<newLength << "<= " <<next->getSigName() 
-									<< " +  ( "<<  zg(17) <<" & "<<"  "<<current->getSigName()
-									<<range(current->getSigLength()-1,17)<<" );");
+
 						}
 
 						
@@ -1103,7 +992,7 @@ void BitHeap::buildSupertiles()
 
 			if(cnt[i]>=2)
 			{
-				REPORT(INFO, i);
+
 				inAdder0 << (*it)->getName();
 				it++;
 				inAdder1 << (*it)->getName();

@@ -88,26 +88,44 @@ namespace flopoco
 
 	void Plotter::heapSnapshot(bool compress, int cycle, double cp)
 	{
-#if 0
-		if(compress)
-		{
-			unsigned i=0;	 
-			unsigned size=snapshots.size();	 
- 	
-			Snapshot* s = new Snapshot(bh->bits, bh->getMinWeight(), bh->getMaxWeight(), bh->getMaxHeight(),
-				   	compress, cycle, cp);
+		if(!(cp==0.0 && cycle==0))
+			if(compress)
+			{
+				unsigned i=0;	 
+				unsigned size=snapshots.size();	 
+		
+				Snapshot* s = new Snapshot(bh->bits, bh->getMinWeight(), bh->getMaxWeight(), bh->getMaxHeight(),
+						compress, cycle, cp);
+				bool proceed=true;
 
- 
-			while((i < size) && (snapshots[i] < s))	 
-			{	 	 
-				++i;	 
-			}	 
- 	 
-			snapshots.insert(snapshots.begin()+i, s);
-		}
-#endif
-		snapshots.push_back(new Snapshot(bh->bits, bh->getMinWeight(), bh->getMaxWeight(), bh->getMaxHeight(),
-				   	compress, cycle, cp));
+				if (size==0)
+				{
+					snapshots.push_back(s);
+
+				}
+				else
+				{
+					vector<Snapshot*>::iterator it = snapshots.begin();
+
+					it++;	
+
+					while(proceed) 
+					{
+						if (it==snapshots.end() || (*s < **it))
+						{ // test in this order to avoid segfault!
+
+							snapshots.insert(it, s);
+							proceed=false;
+							REPORT(INFO, "inserted at " << i << " when size is " << size);	
+						}
+						else 
+						{
+							it++;
+						}
+					}
+				}
+
+			}
 	}
 
 
