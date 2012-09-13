@@ -146,10 +146,15 @@ namespace flopoco{
 			//Altera chaining
 			else
 			{
-				if((getWeight() == next->getWeight()) && (this!=next))
-					return true;
-				else
+				if((wX>18) || (wY>18))
 					return false;
+				else
+				{
+					if((getWeight() == next->getWeight()) && (this!=next))
+						return true;
+					else
+						return false;
+				}
 			}
 
 		}
