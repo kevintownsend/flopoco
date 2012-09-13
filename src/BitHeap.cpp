@@ -646,8 +646,10 @@ void BitHeap::buildSupertiles()
 			op->manageCriticalPath( op->getTarget()->lutDelay() + op->getTarget()->localWireDelay() );
 			if((op->getCurrentCycle()>plottingCycle) || ((op->getCurrentCycle()==plottingCycle) && 
 						(op->getCriticalPath()>plottingCP)))
+			{
 				plottingCycle = op->getCurrentCycle();
-			plottingCP = op->getCriticalPath();
+				plottingCP = op->getCriticalPath();
+			}
 
 		}
 
@@ -1464,68 +1466,6 @@ void BitHeap::buildSupertiles()
 		concatenateLSBColumns();
 
 
-#if 0
-		REPORT(DEBUG, "Checking whether rightmost columns need compressing");
-		bool alreadyCompressed=true;
-		w=minWeight;
-		while(w<bits.size() && alreadyCompressed) 
-		{
-
-
-			if(currentHeight(w)>1)
-			{
-				alreadyCompressed=false;
-			}
-			else
-			{
-				REPORT(DEBUG, "Level " << w << " is already compressed; will go directly to the final result");
-				w++;
-			}
-		}
-
-
-
-		if(w!=minWeight)
-		{
-
-			WeightedBit *b = getLatestBit(minWeight, w-1);
-			op->setCycle(  b ->getCycle()  );
-			op->setCriticalPath(   b ->getCriticalPath(op->getCurrentCycle()));
-
-
-			if (w-minWeight>1)
-				op->vhdl << tab << op->declare(join("tempR_bh", guid, "_", chunkDoneIndex), w-minWeight, true) << " <= " ;
-			else
-				op->vhdl << tab << op->declare(join("tempR_bh", guid, "_", chunkDoneIndex), 1, false) << " <= " ;
-			unsigned i=w-1;
-			while((i>=minWeight)&&(i<w)) 
-			{
-				REPORT(DEBUG,"crash "<<i);
-				if(currentHeight(i)==1) 
-				{
-					op->vhdl << (bits[i].front())->getName();
-					bits[i].pop_front();
-				}
-				else
-				{
-					op->vhdl << "'0'";
-				}
-				if (i!=minWeight)
-					op->vhdl << " & ";	
-				i--;
-			}
-			op->vhdl << "; -- already compressed" << endl; 
-			chunkDoneIndex++;			
-		}
-
-
-
-		minWeight=w;
-
-		REPORT(DEBUG, "minWeight="<< minWeight);
-
-#endif
-
 		for(unsigned i=minWeight; i<maxWeight; i++)
 		{
 			cnt[i]=0;
@@ -1536,7 +1476,6 @@ void BitHeap::buildSupertiles()
 					cnt[i]++;
 				}
 			}
-			//cnt[i]=bits[i].size();
 
 		}
 
@@ -1554,15 +1493,15 @@ void BitHeap::buildSupertiles()
 
 		//search for lsb columns that won't be compressed at the current stage
 		//REPORT(INFO, endl);
-		while((cnt[index]<=2)&&(cnt[index]>0))
+
+		while((index<maxWeight-1) && ((cnt[index]<=2)&&(cnt[index]>0)))
+
 		{
 			//REPORT(INFO, "cnt[" << index <<"]="<< cnt[index]);
 			list<WeightedBit*>::iterator it = bits[index].begin();
 			columnIndex=0;
 			while(columnIndex<cnt[index]-1)
 			{
-				if(index==5)
-					REPORT(INFO,(*it)->getName() << " crap here")//;
 				columnIndex++;
 				it++;
 			}

@@ -255,6 +255,7 @@ namespace flopoco{
 			int plottingStage;
 			int plottingCycle;
 			double plottingCP;
+			unsigned adder3Index, minAdd3Length, maxAdd3Length;
 
 	};
 
