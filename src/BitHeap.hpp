@@ -255,7 +255,9 @@ namespace flopoco{
 			int plottingStage;
 			int plottingCycle;
 			double plottingCP;
-			unsigned adder3Index, minAdd3Length, maxAdd3Length;
+			unsigned int adder3Index;		/**< The index of the ternary adders */
+			unsigned int minAdd3Length;	/**< The minimum length of a 3-input adder */
+			unsigned int maxAdd3Length;	/**< The maximum length of a 3-input adder */
 
 	};
 
