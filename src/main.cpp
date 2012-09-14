@@ -166,11 +166,12 @@ void usage(char *name, string opName = ""){
 
   // // Killing Bogdan's mess
 	 if ( full || opName == "IntMultiplier"){
-	 	OP("IntMultiplier","wInX wInY wOut signed ratio");
+	 	OP("IntMultiplier","wInX wInY wOut signed ratio enableSupertiles");
 	 	cerr << "      Integer multiplier of two integers X and Y of sizes wInX and wInY \n";
 	 	cerr << "      Result is faithfully truncated to wOut bits  (wOut=0 means: full multiplier)\n";
 	 	cerr << "      signed=0: unsigned multiplier;     signed=1: signed inputs, signed outputs \n";
 		cerr << "      0 <= ratio <= 1; larger ratio => DSP dominant architectures\n";
+		cerr << "      enableSuperTiles=0 =>without supertiles ; enableSuperTiles=1=>with supertiles  \n";
 	 }
 
 
@@ -1374,7 +1375,9 @@ bool parseCommandLine(int argc, char* argv[]){
 				int wOut    = atoi(argv[i++]);
 				int sign    =  checkBoolean(argv[i++], argv[0]);
 				float ratio = atof(argv[i++]);
-				op = new IntMultiplier(target, wInX, wInY, wOut, sign, ratio,  emptyDelayMap);
+				int buildSuperTiles =  checkBoolean(argv[i++], argv[0]);
+				IntMultiplier* mul=new IntMultiplier(target, wInX, wInY, wOut, sign, ratio, emptyDelayMap,buildSuperTiles);
+				op = mul;
 				addOperator(op);
 			}
 		}

@@ -153,7 +153,7 @@ namespace flopoco{
 
 			bool getSignedIO() {return signedIO;};
 
-
+			void setEnableSuperTiles(bool st);
 		protected:
 
 
@@ -197,6 +197,8 @@ namespace flopoco{
 
 			/** return a fresh uid for a bit of weight w*/
 			int newUid(unsigned w);
+
+			
 
 
 			/** counts the bits not processed yet in wb */
@@ -258,7 +260,7 @@ namespace flopoco{
 			unsigned int adder3Index;		/**< The index of the ternary adders */
 			unsigned int minAdd3Length;	/**< The minimum length of a 3-input adder */
 			unsigned int maxAdd3Length;	/**< The maximum length of a 3-input adder */
-
+			bool needSuperTiles;
 	};
 
 

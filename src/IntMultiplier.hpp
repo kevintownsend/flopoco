@@ -50,7 +50,7 @@ namespace flopoco {
 		 * @param[in] signedIO     false=unsigned, true=signed
 		 * @param[in] ratio            DSP block use ratio
 		 **/
-		IntMultiplier(Target* target, int wX, int wY, int wOut=0, bool signedIO = false, float ratio = 1.0, map<string, double> inputDelays = emptyDelayMap);
+		IntMultiplier(Target* target, int wX, int wY, int wOut=0, bool signedIO = false, float ratio = 1.0, map<string, double> inputDelays = emptyDelayMap,bool enableSuperTiles=true);
 
 
 		/**
@@ -88,7 +88,7 @@ namespace flopoco {
 
 		void buildStandardTestCases(TestCaseList* tcl);
 
-
+		
 
 
 
@@ -109,7 +109,9 @@ namespace flopoco {
 		void buildLogicOnly();
 		void buildTiling();
 
-
+	
+		
+		
 
 	
 		/**	builds the logic block ( smallMultTables) 
@@ -158,7 +160,7 @@ namespace flopoco {
 		// TODO the three following variable pairs seem uglily redundant
 		Signal* x;
 		Signal* y; 
-
+		bool enableSuperTiles;//if supertiles are needed
 		string xname;
 		string yname;
 		string inputName1;

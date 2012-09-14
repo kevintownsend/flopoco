@@ -258,8 +258,8 @@ namespace flopoco {
 
 
 	// The constructor for a stand-alone operator
-	IntMultiplier::IntMultiplier (Target* target, int wX_, int wY_, int wOut_, bool signedIO_, float ratio_, map<string, double> inputDelays_):
-		Operator ( target, inputDelays_ ), wXdecl(wX_), wYdecl(wY_), wOut(wOut_), ratio(ratio_), maxError(0.0), signedIO(signedIO_) 
+	IntMultiplier::IntMultiplier (Target* target, int wX_, int wY_, int wOut_, bool signedIO_, float ratio_, map<string, double> inputDelays_, bool enableSuperTiles_):
+		Operator ( target, inputDelays_ ), wXdecl(wX_), wYdecl(wY_), wOut(wOut_), ratio(ratio_),  maxError(0.0), signedIO(signedIO_),enableSuperTiles(enableSuperTiles_) 
 	{
 
 			isOperator=true;
@@ -305,7 +305,7 @@ namespace flopoco {
 
 			// The bit heap
 			bitHeap = new BitHeap(this, wOut+g);
-
+			bitHeap->setEnableSuperTiles(enableSuperTiles);
 
 			// TODO CHECK ??? A bit heap is sign-agnostic.
 			bitHeap->setSignedIO(signedIO);
@@ -330,11 +330,12 @@ namespace flopoco {
 
 
 
+	
 
 
 	void  IntMultiplier::fillBitHeap()
 	{
-
+		
 		///////////////////////////////////////
 		//  architectures for corner cases   //
 		///////////////////////////////////////
@@ -731,7 +732,7 @@ namespace flopoco {
 							t=tUU; 
 					}
 
-
+					//smallMultTable needed only if is on the left size of the truncation 	
 					if(dx*(ix+1)+dy*(iy+1)+topX+topY-padX-padY>wFull-wOut-g)
 					{
 						plotter->addSmallMult(dx*(ix)+topX-padX, dy*(iy)+topY-padY,dx,dy);
