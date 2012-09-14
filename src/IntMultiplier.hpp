@@ -130,7 +130,7 @@ namespace flopoco {
 		  *	checks the ratio, if only DSPs should be used, only logic, or maybe both, and applies it **/
 		bool checkThreshold(int topX, int topY, int botX, int botY,int wxDSP,int wyDSP);
 		void addExtraDSPs(int topX, int topY, int botX, int botY, int wxDSP, int wyDSP);
-
+		int checkTiling(int wxDSP, int wyDSP, int& horDSP, int& verDSP);
 
 
 

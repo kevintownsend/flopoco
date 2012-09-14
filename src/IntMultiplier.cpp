@@ -805,166 +805,143 @@ namespace flopoco {
 
 	}
 
-
-
-			void IntMultiplier::addExtraDSPs(int topX, int topY, int botX, int botY,int wxDSP,int wyDSP)
+		/** checks how many DSPs will be used in case of a tiling **/
+		int IntMultiplier::checkTiling(int wxDSP, int wyDSP, int& horDSP, int& verDSP)
 		{
+			int widthOnX=wX;
+			int widthOnY=wY;
+			int horDS=0;
+			int verDS=0;
 		
+			//**** how many dsps will be verically*******************************/
+			int hor=0;
+		
+			//if the multiplication is signed, the first DSP will have different size, will be bigger
+			if( widthOnX>=wxDSP)
+			{
+				hor++;
+				widthOnX-=wxDSP;
+			}
 				
-				int widthX=wxDSP;
-				int widthY=wyDSP;
-				int botx=botX;
+			if(signedIO)	
+				wxDSP--;
 			
-				if(signedIO)
+			//how many DSPs fits on the remaining part, without the first one
+			horDS=int(ceil ( (double(widthOnX) / (double) wxDSP)))+hor;
+			/***********************************************************************/
+			
+		
+			//*** how many dsps will be horizontally***********************************/
+			int ver=0;
+		
+			if( widthOnY>=wyDSP)
+			{
+				ver++;
+				widthOnY-=wyDSP;
+			}
+		
+			
+			if(signedIO)	
+				wyDSP--;
+		
+			verDS=int(ceil ( (double(widthOnY) / (double) wyDSP)))+ver;
+			//***********************************************************************/
+		
+			horDSP=horDS;
+			verDSP=verDS;
+		
+			return verDS*horDS;
+		}
+
+
+			//** checks against the ratio the given block and adds a DSP or logic**/
+		void IntMultiplier::addExtraDSPs(int topX, int topY, int botx, int boty,int wxDSP,int wyDSP)
+		{
+			int topx=topX,topy=topY;
+			//if the block is on the margins of the multipliers, then the coordinates have to be reduced.
+			if(topX<0)
+				topx=0;
+			else
+				topx=topX;	
+			
+			if(topY<0)
+				topy=0;	
+			else
+				topy=topY;
+				
+			//if the truncation line splits the block, than the used block is smaller, the coordinates needs to be updated
+			if((botx+boty>wFull-wOut-g)&&(topx+topy<wFull-wOut-g))
+			{
+				int x=topx;
+				int y=boty;
+				while((x+y<wFull-wOut-g)&&(x<botx))
 				{
-					if(botx!=wX)
-						widthX--;
-					if(botY!=wY)	
-						widthY--;
+					x++;
+				    topx=x;
 				}
-			
-		
-				int height=botY-topY;
-				int width=botX-topX;
-				int dspArea=widthX*widthY;
-				bool was=false; // tells if the while loop was executed or not
-				int topx=topX;
-				int topy=topY;
-				int dsp=0;//number of used DSPs
-				int usedWidth=0;//the length of the used width on x
-			
-			
-			
-			
-				//if the width is larger then a dsp width, than we have to checkTreshHold the good coordinates for the dsp
-				if (width>widthX)
-					topx=botx-widthX;
-		
-				while (width>widthX)
-				{	
-					REPORT(DETAILED,"width greater than DSPwidth");
-					//we need to split the block
-					was=true;
-					float blockArea=widthX*height; //the area of the block that will be analyzed
 				
-					if(checkThreshold(topx,topy,botx,botY,widthX,widthY))
-					{  
-				
-						if(height<widthY)
-							topy=topY-(widthY-height);
-						stringstream inx,iny;
-						inx<<addUID("XX");
-						iny<<addUID("YY");
-								
-						//REPORT(INFO,"chr DSP at "<<topx<<" "<<topy<<" width= "<<widthX<<" height= "<<widthY);							
-						MultiplierBlock* m = new MultiplierBlock(widthX,widthY,topx,topy,inx.str(),iny.str(),weightShift + lsbWeight-g);
-						m->setNext(NULL);		
-						m->setPrevious(NULL);			
-						localSplitVector.push_back(m);
-						bitHeap->addMultiplierBlock(m);
-					}
-					else
-					{
-					
-						if((topx<botX-dsp*widthX-1))
-							buildHeapLogicOnly(topx, topY,(botX-usedWidth),botY,parentOp->getNewUId());	
-						//REPORT(INFO,"Logic computed xt="<<topx<<" yt="<<topY<<"  xb="<<(botX-dsp*widthX)<<" yb="<<botY); 	
-					}
-				
-					//updating the coordinates for the next block
-					dsp++;
-					botx=topx-1;
-					topx=topx-widthX;
-					width=width-widthX;
-					usedWidth+=widthX;
-					widthX=wxDSP;
-					widthY=wyDSP;
-						
-					if(signedIO)
-					{
-						if(botx!=wX)
-							widthX--;
-						if(botY!=wY)	
-							widthY--;
-					}	
-					
-					if(width<=widthX)
-						topx=topX;
-					
-				}
-				//now the remaining block is smaller (for sure!) than the DSP width
-				//we do the same area / ratio checking again	
-				if(checkThreshold(topx,topy,botx,botY,widthX,widthY))
+				x=botx;
+				y=topy;
+				while((x+y<wFull-wOut-g)&&(y<boty))
 				{
+					y++;
+					topy=y;	
+				}	
+			}	
 			
-					//computing the coordinates
-					if(was)
-						topx=topx-(widthX-(botx-topx+1));
-					else 
-						topx=topX-(widthX-(botX-topX+1))-1; 
+			//now is the checking against the ratio
+			if(checkThreshold(topx,topy,botx,boty,wxDSP,wyDSP))
+			{  
+				//worth using DSP
+				stringstream inx,iny;
+				inx<<addUID("XX");
+				iny<<addUID("YY");
+					
+				topx=botx-wxDSP;
+				topy=boty-wyDSP;
 							
-					if(height<widthY)
-						topy=topY-(widthY-height);
-							
-					stringstream inx,iny;
-								
-					MultiplierBlock* m = new MultiplierBlock(widthX,widthY,topx,topy,addUID("XX"),addUID("YY"),weightShift + lsbWeight-g);
-					m->setNext(NULL);		
-					m->setPrevious(NULL);			
-					localSplitVector.push_back(m);
-					bitHeap->addMultiplierBlock(m);
-				
-				}
-				else
-				{
-					//build logic only is at least 1 bit to compute
-					if((topx<botX-dsp*widthX))
-						buildHeapLogicOnly(topx,topY,botX-usedWidth,botY,parentOp->getNewUId());
-							
-				}
-				
-		
+				MultiplierBlock* m;
+				m = new MultiplierBlock(wxDSP,wyDSP,topx,topy,inx.str(),iny.str(),weightShift);
+				m->setNext(NULL);		
+				m->setPrevious(NULL);			
+				localSplitVector.push_back(m);
+				bitHeap->addMultiplierBlock(m);
+			}
+			else
+			{		
+				//build logic	
+				buildHeapLogicOnly(topx,topy,botx,boty,parentOp->getNewUId());	
+			}
 		}	
 	
 	
 
-
-
+		/** checks the area usage of 1 dsp according to a given block and ratio(threshold)**/
+		/** ratio(threshold) = says what percentage of 1 DSP area is allowed to be lost**/
 		bool IntMultiplier::checkThreshold(int topX, int topY, int botX, int botY,int wxDSP,int wyDSP)
 		{
-			int widthX=botX-topX;
-			int widthY=botY-topY;
+
+			int widthX=(botX-topX);
+			int widthY=(botY-topY);
 			double blockArea;
 			double triangle=0.0;
 			double dspArea=wxDSP*wyDSP;
-		
-			//drop the unused area
-			if(botX+topY<wFull-wOut-g)
-			{
-				int x=botX;
-				int y=topY;
-				while(x+y<wFull-wOut-g)
-					y++;
 			
-				topY=y;
-			}
-		
+			//** if the truncation line splits the block, we need to substract the area of the lost corner**/		
 			//***the triangle is the area which will be lost from the block area***//
 			//**computing the triangle's edge (45degree => area=(edge^2)/2) ***//		
 			int x=topX;
 			int y=topY;
+			
 			while(x+y<wFull-wOut-g)
 			x++;
-			//**************************************************//
-			
-			
+						
 			//computing the triangle's area
 			if(topX+topY<=wFull-wOut-g)
 				triangle=((x-topX)*(x-topX))/2;
 			else
 				triangle=0.0;
-			
-			
+					
 			//the final area which is used
 			blockArea=widthX*widthY-triangle;		
 		
@@ -982,88 +959,69 @@ namespace flopoco {
 					
 		void IntMultiplier::buildHeapTiling()
 		{
-			
+		
+			int widthXX,widthX;//local wxDSP
+			int widthYY,widthY;//local wyDSP
+			int hor1,hor2,ver1,ver2;	
+			int horizontalDSP,verticalDSP;
+			int nrDSPvertical=checkTiling(wyDSP,wxDSP,hor1,ver1); //number of DSPs used in the case of vertical tiling
+			int nrDSPhorizontal=checkTiling(wxDSP,wyDSP,hor2,ver2);//number of DSPs used in case of horizontal tiling
 			int botx=wX;
 			int boty=wY;
-			int topx=botx-wxDSP;
-			int topy=boty-wyDSP;
-			int widthX=wxDSP;
-			int widthY=wyDSP;
-			int ok;
-			while(boty>0)
-			{	ok=0;
+			int topx,topy;
+			
+			//decides if a horizontally tiling will be used or a vertically one
+			if(nrDSPvertical<nrDSPhorizontal)
+			{
+				widthXX=wyDSP;
+				widthYY=wxDSP;
+				horizontalDSP=hor1;
+				verticalDSP=ver1;
+				
+				
+			}
+			else
+			{
+				widthXX=wxDSP;
+				widthYY=wyDSP;
+				horizontalDSP=hor2;
+				verticalDSP=ver2;
+			}
+		
+			
+			//applying the tiles
+			for(int i=0;i<verticalDSP;i++)
+			{	
+				//managing the size of a DSP according to its position if signed
+				if((signedIO)&&(i!=0))
+					widthY=widthYY-1;
+				else
+					widthY=widthYY;	
+					
+				topy=boty-widthY;
 				botx=wX;
-				while((botx>0)&&(ok==0))
-				{	
-					widthX=wxDSP;
-					widthY=wyDSP;
-					
-					if(signedIO)
-					{
-						if(boty!=wY)
-							widthY--;
-						if(botx!=wX)
-							widthX--;	
-					}
 				
-					
-				
-					topx=botx-widthX;
-					topy=boty-widthY;
-				
-					if(topx+topy>=wFull-wOut-g)
-					{
-						MultiplierBlock* m = new MultiplierBlock(widthX,widthY,topx,topy,addUID("XX"),addUID("YY"),weightShift + lsbWeight-g);
-						m->setNext(NULL);		
-						m->setPrevious(NULL);			
-						localSplitVector.push_back(m);
-						bitHeap->addMultiplierBlock(m);
-						botx=botx-widthX;
-						ok=0;
-						//REPORT(INFO,"DSP at "<<topx<<" "<<topy<<" width= "<<widthX<<" height= "<<widthY);
-					}
-					
-					else
-					{
-						ok=1;
-						
-					}
-					
-					
-				
-				}
-				
-				//updating the dsp's width and height
-				widthX=wxDSP;
-				widthY=wyDSP;
-					
-				if(signedIO)
+				for(int j=0;j<horizontalDSP;j++)
 				{
-					if(boty!=wY)
-						widthY--;
-					if(botx!=wX)
-						widthX--;	
+					//managing the size of a DSP according to its position if signed
+					if((signedIO)&&(j!=0))
+						widthX=widthXX-1;
+					else
+						widthX=widthXX;
+					
+					topx=botx-widthX;
+				
+					if(botx+boty>wFull-wOut-g)
+						addExtraDSPs(topx,topy,botx,boty,widthX,widthY);
+					botx=botx-widthX;			
 				}
-				
-				
-				//determination of the x coordinate
-				if(topy<0)
-					topy=0;
-				int y=boty;
-				int x=wX;
-				while((x+y>wFull-wOut-g) && (x>0))
-					x--;
-				
-				
-				//call the function only if at least 1 bit remaining
-				if((botx>0))
-					addExtraDSPs(x,topy, botx, boty, wxDSP, wyDSP); 
+			
 				
 				boty=boty-widthY;
 			}
-		}
 
-
+	}
+		
 
 	IntMultiplier::~IntMultiplier() {
 	}

@@ -1551,8 +1551,16 @@ void BitHeap::buildSupertiles()
 
 		if(signedIO)
 		{
-			zerosX=25-m->getwX();	
-			zerosY=18-m->getwY();
+			if(m->getwX()>m->getwY())
+			{
+				zerosX=25-m->getwX();	
+				zerosY=18-m->getwY();
+			}
+			else
+			{
+				zerosX=18-m->getwX();	
+				zerosY=25-m->getwY();
+			}
 		}
 
 		//if the coordinates are negative, then the signals should be completed with 0-s at the end, for the good result. 
