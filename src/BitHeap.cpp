@@ -1489,204 +1489,201 @@ namespace flopoco
 
 
 		//--------------- Compress with ADD3s ----------------------------------
-		if(op->getTarget()->getVendor()=="Altera")
+		REPORT(DEBUG,"starting compression with ternary adders");
+
+		//search for the starting column
+		bool bitheapCompressible = (op->getTarget()->getVendor()=="Altera") ? true : false;
+		unsigned int lastCompressed = (adderMaxWeight > minWeight) ? adderMaxWeight+1 : minWeight;
+		bool performedCompression;
+
+		//go through the bitheap and form adders
+		while(bitheapCompressible)
 		{
-			REPORT(DEBUG,"starting compression with ternary adders");
-	
-			//search for the starting column
-			bool bitheapCompressible = true;
-			unsigned int lastCompressed = (adderMaxWeight > minWeight) ? adderMaxWeight+1 : minWeight;
-			bool performedCompression;
-	
-			//go through the bitheap and form adders
-			while(bitheapCompressible)
-			{
-				index = lastCompressed;
-				performedCompression = false;
-	
-				while(index<maxWeight){
-					//see if an addition can be started from this index
-					//    rule: at least 2 bits in a column; no gap (column where
-					//        there is only 1 bit in the column) bigger than 2 columns
-					unsigned int endAddChain = index;
-					bool continueAddChain = true;
-	
-					while((continueAddChain) && (endAddChain <= maxWeight))
+			index = lastCompressed;
+			performedCompression = false;
+
+			while(index<maxWeight){
+				//see if an addition can be started from this index
+				//    rule: at least 2 bits in a column; no gap (column where
+				//        there is only 1 bit in the column) bigger than 2 columns
+				unsigned int endAddChain = index;
+				bool continueAddChain = true;
+
+				while((continueAddChain) && (endAddChain <= maxWeight))
+				{
+					if(cnt[endAddChain] >= 2)
 					{
-						if(cnt[endAddChain] >= 2)
+						//at least 2 bit in the column -> add no matter what
+						if(endAddChain == maxWeight)
 						{
-							//at least 2 bit in the column -> add no matter what
-							if(endAddChain == maxWeight)
-							{
-								continueAddChain = false;
-							}else
-							{
-								endAddChain++;
-							}
-	
-						}else if(cnt[endAddChain] == 1)
-						{
-							//one bit in the column -> add only if the last column
-							//    had at least 2 bits or the one before had 3
-							if(!(((endAddChain>=1) && (cnt[endAddChain-1]>=2)) || ((endAddChain>=2) && (cnt[endAddChain-2]>=3))))
-							{
-								if(endAddChain>0)
-									endAddChain--;
-								continueAddChain = false;
-							}else if(endAddChain == maxWeight)
-								continueAddChain = false;
-							else
-								endAddChain++;
-	
+							continueAddChain = false;
 						}else
 						{
-							//empty column -> add only if the last (or the one before)
-							//    column had at least 3 bits
-							if(!(((endAddChain>=1) && (cnt[endAddChain-1]>=3)) || ((endAddChain>=2) && (cnt[endAddChain-1]<=2) && (cnt[endAddChain-2]>=3))))
-							{
-								if(endAddChain>0)
-									endAddChain--;
-								continueAddChain = false;
-							}else if(endAddChain == maxWeight)
-								continueAddChain = false;
-							else
-								endAddChain++;
+							endAddChain++;
 						}
-					}
-	
-					if((endAddChain > index) && (endAddChain-index >= minAdd3Length))
+
+					}else if(cnt[endAddChain] == 1)
 					{
-	
-						//found possible addition
-						stringstream addInput0, addInput1, addInput2;
-						string addInput0Name, addInput1Name, addInput2Name, addOutputName;
-	
-						performedCompression = true;
-						didCompress = true;
-	
-						//for timing purposes
-						WeightedBit *lastBit = bits[index].front();
-						WeightedBit *currentBit = bits[index].front();
-						int lastBitCycle;
-						double lastBitCriticalPath;
-	
-						//compute the critical path
-						for(unsigned int i=index; i<=endAddChain; i++)
+						//one bit in the column -> add only if the last column
+						//    had at least 2 bits or the one before had 3
+						if(!(((endAddChain>=1) && (cnt[endAddChain-1]>=2)) || ((endAddChain>=2) && (cnt[endAddChain-2]>=3))))
 						{
-							currentBit = computeLatest(i, ((cnt[i]>3) ? 3 : cnt[i]), 0);
-							if(lastBit < currentBit)
-								lastBit = currentBit;
-						}
-	
-						lastBitCycle = lastBit->getCycle();
-						lastBitCriticalPath = lastBit->getCriticalPath(op->getCurrentCycle());
-	
-						//create the right side of the terms for the 3-input addition
-						for(unsigned int i=endAddChain; i>=index; i--){
-							list<WeightedBit*>::iterator it = bits[i].begin();
-	
-							if(cnt[i]>=3)
-							{
-								addInput0 << (*it)->getName();
-								it++;
-								addInput1 << (*it)->getName();
-								it++;
-								addInput2 << (*it)->getName();
-								removeCompressedBits(i, 3);
-								cnt[i] -= 3;
-							}else if(cnt[i]==2)
-							{
-								addInput0 << (*it)->getName();
-								it++;
-								addInput1 << (*it)->getName();
-								addInput2 << "\'0\'";
-								removeCompressedBits(i, 2);
-								cnt[i] -= 2;
-							}else if(cnt[i]==1)
-							{
-								addInput0 << (*it)->getName();
-								addInput1 << "\'0\'";
-								addInput2 << "\'0\'";
-								removeCompressedBits(i, 1);
-								cnt[i] -= 1;
-							}else
-							{
-								addInput0 << "\'0\'";
-								addInput1 << "\'0\'";
-								addInput2 << "\'0\'";
-							}
-	
-							if(i != index)
-							{
-								addInput0 << " & ";
-								addInput1 << " & ";
-								addInput2 << " & ";
-							}else
-							{
-								addInput0 << ";";
-								addInput1 << ";";
-								addInput2 << ";";
-							}
-	
-							if(i == 0)
-								break;
-						}
-	
-						//handle timing
-						op->setCycle(lastBitCycle);
-						op->setCriticalPath(lastBitCriticalPath);
-						op->manageCriticalPath( op->getTarget()->localWireDelay() + op->getTarget()->adderDelay(endAddChain-index+1+2) );
-	
-						//handle plotting timing
-						if(plottingCycle < op->getCurrentCycle())
-						{
-							plottingCycle = op->getCurrentCycle();
-							plottingCP = op->getCriticalPath();
-						}
-						else if((plottingCycle == op->getCurrentCycle()) && (plottingCP < op->getCriticalPath()))
-						{
-							plottingCycle = op->getCurrentCycle();
-							plottingCP = op->getCriticalPath();
-						}
-	
-						//create the terms of the addition
-						addInput0Name = join("addInput0_bh", getGUid(), "_");
-						addInput1Name = join("addInput1_bh", getGUid(), "_");
-						addInput2Name = join("addInput2_bh", getGUid(), "_");
-						addOutputName = join("addOutput_bh", getGUid(), "_");
-	
-						op->vhdl << tab << op->declare(join(addInput0Name, adder3Index), endAddChain-index+1+2) << " <= \"00\" & " << addInput0.str() << endl;
-						op->vhdl << tab << op->declare(join(addInput1Name, adder3Index), endAddChain-index+1+2) << " <= \"00\" & " << addInput1.str() << endl;
-						op->vhdl << tab << op->declare(join(addInput2Name, adder3Index), endAddChain-index+1+2) << " <= \"00\" & " << addInput2.str() << endl;
-	
-						op->vhdl << tab << op->declare(join(addOutputName, adder3Index), endAddChain-index+1+2) << " <= "
-							<<  join(addInput0Name, adder3Index) << " + " << join(addInput1Name,adder3Index) << " + " << join(addInput2Name, adder3Index) << ";" <<endl ;
-	
-						//add the bits of the addition to the bitheap
-						for(unsigned int i=index; i<=endAddChain + 2 ; i++)
-						{
-							addBit(i, join(addOutputName, adder3Index,"(",i-index,")"),"",3); //adder working as a compressor = type 3 for added bit
-						}
-	
-	
-						adder3Index++;
-	
-						index = endAddChain + 1;
+							if(endAddChain>0)
+								endAddChain--;
+							continueAddChain = false;
+						}else if(endAddChain == maxWeight)
+							continueAddChain = false;
+						else
+							endAddChain++;
+
 					}else
 					{
-						//a new addition cannot start from this index, so go to the next
-						index++;
+						//empty column -> add only if the last (or the one before)
+						//    column had at least 3 bits
+						if(!(((endAddChain>=1) && (cnt[endAddChain-1]>=3)) || ((endAddChain>=2) && (cnt[endAddChain-1]<=2) && (cnt[endAddChain-2]>=3))))
+						{
+							if(endAddChain>0)
+								endAddChain--;
+							continueAddChain = false;
+						}else if(endAddChain == maxWeight)
+							continueAddChain = false;
+						else
+							endAddChain++;
 					}
-	
-					//update exit condition on bitheapCompressible
-					if((index == maxWeight) && (performedCompression == false))
+				}
+
+				if((endAddChain > index) && (endAddChain-index >= minAdd3Length))
+				{
+
+					//found possible addition
+					stringstream addInput0, addInput1, addInput2;
+					string addInput0Name, addInput1Name, addInput2Name, addOutputName;
+
+					performedCompression = true;
+					didCompress = true;
+
+					//for timing purposes
+					WeightedBit *lastBit = bits[index].front();
+					WeightedBit *currentBit = bits[index].front();
+					int lastBitCycle;
+					double lastBitCriticalPath;
+
+					//compute the critical path
+					for(unsigned int i=index; i<=endAddChain; i++)
 					{
-						bitheapCompressible = false;
+						currentBit = computeLatest(i, ((cnt[i]>3) ? 3 : cnt[i]), 0);
+						if(lastBit < currentBit)
+							lastBit = currentBit;
 					}
+
+					lastBitCycle = lastBit->getCycle();
+					lastBitCriticalPath = lastBit->getCriticalPath(op->getCurrentCycle());
+
+					//create the right side of the terms for the 3-input addition
+					for(unsigned int i=endAddChain; i>=index; i--){
+						list<WeightedBit*>::iterator it = bits[i].begin();
+
+						if(cnt[i]>=3)
+						{
+							addInput0 << (*it)->getName();
+							it++;
+							addInput1 << (*it)->getName();
+							it++;
+							addInput2 << (*it)->getName();
+							removeCompressedBits(i, 3);
+							cnt[i] -= 3;
+						}else if(cnt[i]==2)
+						{
+							addInput0 << (*it)->getName();
+							it++;
+							addInput1 << (*it)->getName();
+							addInput2 << "\'0\'";
+							removeCompressedBits(i, 2);
+							cnt[i] -= 2;
+						}else if(cnt[i]==1)
+						{
+							addInput0 << (*it)->getName();
+							addInput1 << "\'0\'";
+							addInput2 << "\'0\'";
+							removeCompressedBits(i, 1);
+							cnt[i] -= 1;
+						}else
+						{
+							addInput0 << "\'0\'";
+							addInput1 << "\'0\'";
+							addInput2 << "\'0\'";
+						}
+
+						if(i != index)
+						{
+							addInput0 << " & ";
+							addInput1 << " & ";
+							addInput2 << " & ";
+						}else
+						{
+							addInput0 << ";";
+							addInput1 << ";";
+							addInput2 << ";";
+						}
+
+						if(i == 0)
+							break;
+					}
+
+					//handle timing
+					op->setCycle(lastBitCycle);
+					op->setCriticalPath(lastBitCriticalPath);
+					op->manageCriticalPath( op->getTarget()->localWireDelay() + op->getTarget()->adderDelay(endAddChain-index+1+2) );
+
+					//handle plotting timing
+					if(plottingCycle < op->getCurrentCycle())
+					{
+						plottingCycle = op->getCurrentCycle();
+						plottingCP = op->getCriticalPath();
+					}
+					else if((plottingCycle == op->getCurrentCycle()) && (plottingCP < op->getCriticalPath()))
+					{
+						plottingCycle = op->getCurrentCycle();
+						plottingCP = op->getCriticalPath();
+					}
+
+					//create the terms of the addition
+					addInput0Name = join("addInput0_bh", getGUid(), "_");
+					addInput1Name = join("addInput1_bh", getGUid(), "_");
+					addInput2Name = join("addInput2_bh", getGUid(), "_");
+					addOutputName = join("addOutput_bh", getGUid(), "_");
+
+					op->vhdl << tab << op->declare(join(addInput0Name, adder3Index), endAddChain-index+1+2) << " <= \"00\" & " << addInput0.str() << endl;
+					op->vhdl << tab << op->declare(join(addInput1Name, adder3Index), endAddChain-index+1+2) << " <= \"00\" & " << addInput1.str() << endl;
+					op->vhdl << tab << op->declare(join(addInput2Name, adder3Index), endAddChain-index+1+2) << " <= \"00\" & " << addInput2.str() << endl;
+
+					op->vhdl << tab << op->declare(join(addOutputName, adder3Index), endAddChain-index+1+2) << " <= "
+						<<  join(addInput0Name, adder3Index) << " + " << join(addInput1Name,adder3Index) << " + " << join(addInput2Name, adder3Index) << ";" <<endl ;
+
+					//add the bits of the addition to the bitheap
+					for(unsigned int i=index; i<=endAddChain + 2 ; i++)
+					{
+						addBit(i, join(addOutputName, adder3Index,"(",i-index,")"),"",3); //adder working as a compressor = type 3 for added bit
+					}
+
+
+					adder3Index++;
+
+					index = endAddChain + 1;
+				}else
+				{
+					//a new addition cannot start from this index, so go to the next
+					index++;
+				}
+
+				//update exit condition on bitheapCompressible
+				if((index == maxWeight) && (performedCompression == false))
+				{
+					bitheapCompressible = false;
 				}
 			}
 		}
-		
+				
 		//----------------------------------------------------------------------
 
 
