@@ -63,8 +63,8 @@ namespace flopoco{
 			/** The constructor
 			  @param op         the operator in which this bit heap is beeing built
 			  @param maxWeight  the maximum weight of the heap (it should be known statically, shouldn't it?)
-		    @param name       a description of the heap that will be integrated into its unique name */
-		BitHeap(Operator* op, int maxWeight, string name="");
+			  @param name       a description of the heap that will be integrated into its unique name */
+			BitHeap(Operator* op, int maxWeight, string name="");
 			~BitHeap();
 
 			/** add a bit to the bit heap. The bit will be added at the cycle op->currentCycle() with critical path op->getCriticalPath().
@@ -80,9 +80,9 @@ namespace flopoco{
 			/** add a constant 1 to the bit heap. All the constant bits are added to the constantBits mpz, so we don't generate hardware to compress constants....
 			  @param weight   the weight of the 1 to be added */
 			void addConstantOneBit(unsigned weight) {constantBits += (mpz_class(1) << weight);};
-		/** "remove" a constant 1 from the bit heap. 
-		    @param weight   the weight of the 1 to be added */
-		void subConstantOneBit(unsigned weight) {constantBits -= (mpz_class(1) << weight);};
+			/** "remove" a constant 1 from the bit heap. 
+			  @param weight   the weight of the 1 to be added */
+			void subConstantOneBit(unsigned weight) {constantBits -= (mpz_class(1) << weight);};
 
 			/** add a constant to the bit heap. It will be added to the constantBits mpz, so we don't generate hardware to compress constants....
 			  @param weight   the weight of the LSB of c (or, where c should be added)
@@ -146,7 +146,7 @@ namespace flopoco{
 			int getGUid();
 
 			/** return the UID of the bit heap*/
-		string getName() {return uniqueName_;};
+			string getName() {return uniqueName_;};
 
 
 			void setSignedIO(bool s){this->signedIO=s;};

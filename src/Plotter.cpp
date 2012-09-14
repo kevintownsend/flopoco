@@ -1,15 +1,15 @@
 /*
-  A class used for plotting various drawings in SVG format
-  
-  This file is part of the FloPoCo project
-  developed by the Arenaire team at Ecole Normale Superieure de Lyon
-  
-  Author : Florent de Dinechin, Kinga Illyes, Bogdan Popa
+   A class used for plotting various drawings in SVG format
 
-  Initial software.
-  Copyright © ENS-Lyon, INRIA, CNRS, UCBL,  
-  2012.
-  All rights reserved.
+   This file is part of the FloPoCo project
+   developed by the Arenaire team at Ecole Normale Superieure de Lyon
+
+Author : Florent de Dinechin, Kinga Illyes, Bogdan Popa
+
+Initial software.
+Copyright © ENS-Lyon, INRIA, CNRS, UCBL,  
+2012.
+All rights reserved.
 
 */
 #include "BitHeap.hpp"
@@ -30,8 +30,8 @@ namespace flopoco
 
 	Plotter::Snapshot::Snapshot(vector<list<WeightedBit*> > bitheap, int minWeight_, 
 			int maxWeight_, unsigned maxHeight_, bool didCompress_,  int cycle_, double cp_):
-			maxWeight(maxWeight_), minWeight(minWeight_), maxHeight(maxHeight_), didCompress(didCompress_) , 
-			cycle(cycle_), cp(cp_)
+		maxWeight(maxWeight_), minWeight(minWeight_), maxHeight(maxHeight_), didCompress(didCompress_) , 
+		cycle(cycle_), cp(cp_)
 	{
 		for(int w=minWeight; w<maxWeight_; w++)
 		{
@@ -57,8 +57,8 @@ namespace flopoco
 		}
 	}
 
-	
-	
+
+
 	bool Plotter::Snapshot::operator< (const Snapshot& b)
 	{
 		if ((this->cycle<b.cycle) || ((this->cycle==b.cycle) && (this->cp<b.cp))) 
@@ -66,9 +66,9 @@ namespace flopoco
 		else
 			return false;
 	} 	
-	
-	
-	
+
+
+
 	Plotter::Plotter(BitHeap* bh_):bh(bh_)
 	{
 		srcFileName=bh_->getOp()->getSrcFileName() + ":Plotter";
@@ -93,11 +93,11 @@ namespace flopoco
 			{
 				unsigned i=0;	 
 				unsigned size=snapshots.size();	 
-		
+
 				Snapshot* s = new Snapshot(bh->bits, bh->getMinWeight(), bh->getMaxWeight(), bh->getMaxHeight(),
 						compress, cycle, cp);
 				bool proceed=true;
-
+				//snapshots.push_back(s);
 				if (size==0)
 				{
 					snapshots.push_back(s);
@@ -125,6 +125,8 @@ namespace flopoco
 					}
 				}
 
+
+
 			}
 	}
 
@@ -133,7 +135,6 @@ namespace flopoco
 	void Plotter::plotBitHeap()
 	{
 		drawInitialHeap();
-		//sort(snapshots.begin(), snapshots.end());
 		drawCompressionHeap();
 	}
 
@@ -180,11 +181,11 @@ namespace flopoco
 
 
 		offsetY += 20 + snapshots[0]->maxHeight * 10;
-		
+
 		drawInitialConfiguration(snapshots[0]->bits, snapshots[0]->minWeight, offsetY, turnaroundX);
-		
+
 		fig << "<line x1=\"" << turnaroundX + 30 << "\" y1=\"" << 20 << "\" x2=\"" << turnaroundX + 30 
-		    << "\" y2=\"" << offsetY +30 << "\" style=\"stroke:midnightblue;stroke-width:1\" />" << endl;
+			<< "\" y2=\"" << offsetY +30 << "\" style=\"stroke:midnightblue;stroke-width:1\" />" << endl;
 
 		fig << "<text id=\"tooltip\" x=\"0\" y=\"0\" visibility=\"hidden\">Tooltip</text>" << endl;
 
@@ -202,7 +203,7 @@ namespace flopoco
 
 		int offsetY = 0;
 		int turnaroundX = snapshots[snapshots.size()-1]->maxWeight * 10 + 100;
-		
+
 		//lastStage=snapshots[0]->stage;
 
 		bool timeCondition;
@@ -217,15 +218,15 @@ namespace flopoco
 				timeCondition = true;
 				if (i > snapshots.size()-3)
 					timeCondition = false;
-				
+
 				offsetY += 15 + snapshots[i]->maxHeight * 10;
 				drawConfiguration(snapshots[i]->bits, i,snapshots[i]->cycle, snapshots[i]->cp, 
-					   snapshots[i]->minWeight, offsetY, turnaroundX, timeCondition);
+						snapshots[i]->minWeight, offsetY, turnaroundX, timeCondition);
 
 				if (i!=snapshots.size()-1)
 				{
 					int j=i+1;
-					
+
 					while(snapshots[j]->didCompress==false)
 						j++;
 
@@ -249,11 +250,11 @@ namespace flopoco
 
 
 			}
-			
+
 		}
 
 		fig << "<line x1=\"" << turnaroundX + 30 << "\" y1=\"" << 20 << "\" x2=\"" << turnaroundX + 30 
-		    << "\" y2=\"" << offsetY +30 << "\" style=\"stroke:midnightblue;stroke-width:1\" />" << endl;
+			<< "\" y2=\"" << offsetY +30 << "\" style=\"stroke:midnightblue;stroke-width:1\" />" << endl;
 
 		fig << "<text id=\"tooltip\" x=\"0\" y=\"0\" visibility=\"hidden\">Tooltip</text>" << endl;
 
@@ -269,11 +270,11 @@ namespace flopoco
 	{
 		ostringstream figureFileName;
 		figureFileName << "tiling_square_" << name << ".svg";
-		
+
 		FILE* pfile;
 		pfile  = fopen(figureFileName.str().c_str(), "w");
 		fclose(pfile);
-		
+
 		fig.open (figureFileName.str().c_str(), ios::trunc);
 
 
@@ -292,8 +293,8 @@ namespace flopoco
 
 		addECMAFunction();
 		//draw target rectangle	
-		
-		
+
+
 
 		for(int i=0; i<smallMultIndex; i++)
 		{
@@ -342,11 +343,11 @@ namespace flopoco
 	{
 		ostringstream figureFileName;
 		figureFileName << "tiling_sheared_" /*<< name */<< ".svg";
-		
+
 		FILE* pfile;
 		pfile  = fopen(figureFileName.str().c_str(), "w");
 		fclose(pfile);
-		
+
 		fig.open (figureFileName.str().c_str(), ios::trunc);
 
 
@@ -362,11 +363,11 @@ namespace flopoco
 		fig << "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\"" << endl;
 		fig << "\"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">" << endl;
 		fig << "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" onload=\"init(evt)\" >" << endl;
-		
+
 		addECMAFunction();
 
 		//draw target lozenge	
-		
+
 
 
 
@@ -406,7 +407,7 @@ namespace flopoco
 		}
 
 
-      
+
 		//drawLittleClock(500,300,3,0,5,1);
 
 
@@ -425,11 +426,11 @@ namespace flopoco
 		if(isRectangle)
 			fig << "<line x1=\"" << offsetX + scalingFactor*(wRez - wX) 
 				<< "\" y1=\"" << offsetY << "\" x2=\"" << offsetX + scalingFactor*wRez
-			    << "\" y2=\"" << offsetY + scalingFactor*wY <<"\" style=\"stroke:rgb(255,0,0);stroke-width:2\"/>" << endl ;	
+				<< "\" y2=\"" << offsetY + scalingFactor*wY <<"\" style=\"stroke:rgb(255,0,0);stroke-width:2\"/>" << endl ;	
 		else
 			fig << "<line x1=\"" << offsetX + scalingFactor*(wRez - wY) 
 				<< "\" y1=\"" << offsetY << "\" x2=\"" << offsetX + scalingFactor*(wRez - wY)
-			    << "\" y2=\"" << offsetY + scalingFactor*wY <<"\" style=\"stroke:rgb(255,0,0);stroke-width:2\"/>" << endl ;	
+				<< "\" y2=\"" << offsetY + scalingFactor*wY <<"\" style=\"stroke:rgb(255,0,0);stroke-width:2\"/>" << endl ;	
 	}
 
 
@@ -444,12 +445,12 @@ namespace flopoco
 		int wyDSP = yB - yT;
 
 		int xTT=xT;
-		
+
 		if(xTT<0)
 			xTT=-1;
 		else
 			xTT=xT/wxDSP;
-			
+
 		int yTT=yT;
 
 		if(yTT<0)
@@ -461,35 +462,35 @@ namespace flopoco
 		{
 			turnaroundX = offsetX + wX * scalingFactor;
 			fig << "<rect x=\"" << turnaroundX - xB*scalingFactor << "\" y=\"" << yT*scalingFactor + offsetY 
-			    << "\" height=\"" << (yB-yT)*scalingFactor << "\" width=\"" << (xB-xT)*scalingFactor
-			    << "\" style=\"fill:rgb(200, 200, 200);fill-opacity:0.7;stroke-width:1;stroke:rgb(0,0,0)\"" 
+				<< "\" height=\"" << (yB-yT)*scalingFactor << "\" width=\"" << (xB-xT)*scalingFactor
+				<< "\" style=\"fill:rgb(200, 200, 200);fill-opacity:0.7;stroke-width:1;stroke:rgb(0,0,0)\"" 
 				<< " onmousemove=\"ShowTooltip(evt)\" onmouseout=\"HideTooltip(evt)\" mouseovertext=\"X[" 
 				<< xB << ":" << xT << "] * Y[" << yB << ":" << yT << "]\"/> " << endl;
 
 			fig << "<text x=\"" << (2*turnaroundX - scalingFactor*(xT+xB))/2 -12 
 				<< "\" y=\"" << ((yT+yB)*scalingFactor)/2 + offsetY + 7
-			    << "\" fill=\"blue\">D(" <<  xTT<<")("<<  yTT  << ")</text>" << endl;
+				<< "\" fill=\"blue\">D(" <<  xTT<<")("<<  yTT  << ")</text>" << endl;
 		}
 		else 
 		{
 			turnaroundX = wX * scalingFactor;
 			fig << "<polygon points=\"" << turnaroundX - 5*xB + offsetX - 5*yT << "," << 5*yT + offsetY << " "
-			    << turnaroundX - 5*xT + offsetX - 5*yT << "," << 5*yT + offsetY << " " 
-			    << turnaroundX - 5*xT + offsetX - 5*yB << "," << 5*yB + offsetY << " "
-			    << turnaroundX - 5*xB + offsetX - 5*yB << "," << 5*yB + offsetY
-			    << "\" style=\"fill:rgb(200, 200, 200);stroke-width:1;fill-opacity:0.7;stroke:rgb(0,0,0)\" "
+				<< turnaroundX - 5*xT + offsetX - 5*yT << "," << 5*yT + offsetY << " " 
+				<< turnaroundX - 5*xT + offsetX - 5*yB << "," << 5*yB + offsetY << " "
+				<< turnaroundX - 5*xB + offsetX - 5*yB << "," << 5*yB + offsetY
+				<< "\" style=\"fill:rgb(200, 200, 200);stroke-width:1;fill-opacity:0.7;stroke:rgb(0,0,0)\" "
 				<< " onmousemove=\"ShowTooltip(evt)\" onmouseout=\"HideTooltip(evt)\" mouseovertext=\"X[" 
 				<< xB << ":" << xT << "] * Y[" << yB << ":" << yT << "]\"/> " << endl;
 
 			fig << "<text x=\"" << (2*turnaroundX - xB*5 - xT*5 + 2*offsetX)/2 - 14 - (yT*5 + yB*5)/2 
-			    << "\" y=\"" << ( yT*5 + offsetY + yB*5 + offsetY )/2 + 7 
-			    << "\" fill=\"blue\">D(" <<  xTT<<")("<<  yTT  << ")</text>" << endl;
-    
-	
+				<< "\" y=\"" << ( yT*5 + offsetY + yB*5 + offsetY )/2 + 7 
+				<< "\" fill=\"blue\">D(" <<  xTT<<")("<<  yTT  << ")</text>" << endl;
+
+
 		}	
 	}
-	
-	
+
+
 
 
 	void Plotter::drawTargetFigure(int wX, int wY, int offsetX, int offsetY, int scalingFactor, bool isRectangle)
@@ -497,13 +498,13 @@ namespace flopoco
 		if(isRectangle)
 			fig << "<rect x=\"" << offsetX << "\" y=\"" << offsetY 
 				<< "\" height=\"" << wY * scalingFactor << "\" width=\"" << wX * scalingFactor 
-			    <<"\" style=\"fill:rgb(255, 0, 0);stroke-width:1;fill-opacity:0.1;stroke:rgb(0,0,0)\"/>" << endl;
+				<<"\" style=\"fill:rgb(255, 0, 0);stroke-width:1;fill-opacity:0.1;stroke:rgb(0,0,0)\"/>" << endl;
 		else
 			fig << "<polygon points=\"" << offsetX << "," << offsetY << " " 
-			    << wX*scalingFactor + offsetX << "," << offsetY << " " 
-			    << wX*scalingFactor + offsetX - scalingFactor*wY << "," << wY*scalingFactor + offsetY << " "
-			    << offsetX - scalingFactor*wY << "," << wY*scalingFactor + offsetY 	
-			    << "\" style=\"fill:rgb(255, 0, 0);stroke-width:1;fill-opacity:0.1;stroke:rgb(0,0,0)\"/>" << endl;
+				<< wX*scalingFactor + offsetX << "," << offsetY << " " 
+				<< wX*scalingFactor + offsetX - scalingFactor*wY << "," << wY*scalingFactor + offsetY << " "
+				<< offsetX - scalingFactor*wY << "," << wY*scalingFactor + offsetY 	
+				<< "\" style=\"fill:rgb(255, 0, 0);stroke-width:1;fill-opacity:0.1;stroke:rgb(0,0,0)\"/>" << endl;
 
 	}
 
@@ -520,8 +521,8 @@ namespace flopoco
 		{
 			turnaroundX = offsetX + wX * scalingFactor;
 			fig << "<rect x=\"" << turnaroundX - xB*scalingFactor << "\" y=\"" << yT*scalingFactor + offsetY 
-			    << "\" height=\"" << (yB-yT)*scalingFactor << "\" width=\"" << (xB-xT)*scalingFactor
-			    << "\" style=\"fill:rgb(255, 228, 196);stroke-width:1;stroke:rgb(165,42,42)\"" 
+				<< "\" height=\"" << (yB-yT)*scalingFactor << "\" width=\"" << (xB-xT)*scalingFactor
+				<< "\" style=\"fill:rgb(255, 228, 196);stroke-width:1;stroke:rgb(165,42,42)\"" 
 				<< " onmousemove=\"ShowTooltip(evt)\" onmouseout=\"HideTooltip(evt)\" mouseovertext=\"X[" 
 				<< xB << ":" << xT << "] * Y[" << yB << ":" << yT << "]\"/> " << endl;
 
@@ -530,19 +531,19 @@ namespace flopoco
 		{
 			turnaroundX = wX * scalingFactor;
 			fig << "<polygon points=\"" << turnaroundX - 5*xB + offsetX - 5*yT << "," << 5*yT + offsetY << " "
-			    << turnaroundX - 5*xT + offsetX - 5*yT << "," << 5*yT + offsetY << " " 
-			    << turnaroundX - 5*xT + offsetX - 5*yB << "," << 5*yB + offsetY << " "
-			    << turnaroundX - 5*xB + offsetX - 5*yB << "," << 5*yB + offsetY
-			    << "\" style=\"fill:rgb(255, 228, 196);stroke-width:1;stroke:rgb(165,42,42)\" "
+				<< turnaroundX - 5*xT + offsetX - 5*yT << "," << 5*yT + offsetY << " " 
+				<< turnaroundX - 5*xT + offsetX - 5*yB << "," << 5*yB + offsetY << " "
+				<< turnaroundX - 5*xB + offsetX - 5*yB << "," << 5*yB + offsetY
+				<< "\" style=\"fill:rgb(255, 228, 196);stroke-width:1;stroke:rgb(165,42,42)\" "
 				<< " onmousemove=\"ShowTooltip(evt)\" onmouseout=\"HideTooltip(evt)\" mouseovertext=\"X[" 
 				<< xB << ":" << xT << "] * Y[" << yB << ":" << yT << "]\"/> " << endl;
-	    
+
 
 		}
 	}
 
 
-	
+
 	string Plotter::romanNumber(int i)
 	{
 		if(i==0) return "0";
@@ -558,21 +559,21 @@ namespace flopoco
 		if(i==10) return"X";
 		return "0";
 	}
-	
+
 	void Plotter::drawLittleClock(int x, int y, int cyclenumber, int currentcycle, int stageNumber, int currentStage)
 	{ 
 #if 0
 		ostringstream figureFileName;
 		figureFileName << "littleclock"  << ".svg";
-		
+
 		FILE* pfile;
 		pfile  = fopen(figureFileName.str().c_str(), "w");
 		fclose(pfile);
-		
+
 		fig2.open (figureFileName.str().c_str(), ios::trunc);
 #endif
 		double scalefactor=0.2;
-		
+
 
 		//file header
 #if 0
@@ -581,13 +582,13 @@ namespace flopoco
 		fig2 << "\"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">" << endl;
 		fig2 << "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\">" << endl;
 #endif
-      	fig <<"<g transform=\"scale("<<scalefactor<<") translate(1000,100)\">"<<endl;
+		fig <<"<g transform=\"scale("<<scalefactor<<") translate(1000,100)\">"<<endl;
 		fig <<" <circle cx=\""<<x<<"\" cy=\""<<y
 			<<"\" r=\"100\" stroke=\"black\" stroke-width=\"2\" fill=\"darkcyan\" />"<<endl;
-        fig <<" <circle cx=\""<<x<<"\" cy=\""<<y
+		fig <<" <circle cx=\""<<x<<"\" cy=\""<<y
 			<<"\" r=\"80\" stroke=\"black\" stroke-width=\"2\" fill=\"burlywood\" />"<<endl;
-        
-		  //   fig << "<rect x=\"" << x-25<< "\" y=\"" << y-60
+
+		//   fig << "<rect x=\"" << x-25<< "\" y=\"" << y-60
 		//	    << "\" height=\"" << 10 <<"\" width=\"" << 60
 		//	    << "\" style= \"fill:rgb(139, 69, 19);stroke:purple;stroke-width:1\" /> "<<endl;
 		//fig<< "<polygon points= \" "<< x-22 <<","<< y-63 <<" "
@@ -596,37 +597,37 @@ namespace flopoco
 		//						<< x-10 <<","<< y-45 <<" "
 		//						<< x-22 <<","<< y-45 <<" \" "
 		//						<< "style=\"fill:rgb(139, 134, 130);stroke-width:1;stroke:rgb(0,0,0)\"/>" << endl;
-        
+
 		fig << "<polygon points= \" "<< x-35 <<","<< y-30 <<" "
-								<< x+35 <<","<< y-30 <<" "
-								<< x+50 <<","<< y-23 <<" "
-								<< x+35 <<","<< y-15 <<" "
-								<< x+25 <<","<< y-15 <<" "
-								<< x+15 <<","<< y- 5 <<" "
-								<< x+15 <<","<< y +5 <<" "
-								<< x+25 <<","<< y+15 <<" "
-								<< x+35 <<","<< y+15 <<" "
-								<< x+35 <<","<< y+30 <<" "
-								<< x-35 <<","<< y+30 <<" "
-								<< x-35 <<","<< y+15 <<" "
-								<< x-25 <<","<< y+15 <<" "
-								<< x-15 <<","<< y+5 <<" "
-								<< x-15 <<","<< y-5 <<" "
-								<< x-25 <<","<< y-15 <<" "
-								<< x-35 <<","<< y-15 <<" "
-								<< x-35 <<","<< y-30 <<" \" "
-								<< "style= \"fill:rgb(139, 134, 130);stroke:black;stroke-width:1\" /> "<<endl;
+			<< x+35 <<","<< y-30 <<" "
+			<< x+50 <<","<< y-23 <<" "
+			<< x+35 <<","<< y-15 <<" "
+			<< x+25 <<","<< y-15 <<" "
+			<< x+15 <<","<< y- 5 <<" "
+			<< x+15 <<","<< y +5 <<" "
+			<< x+25 <<","<< y+15 <<" "
+			<< x+35 <<","<< y+15 <<" "
+			<< x+35 <<","<< y+30 <<" "
+			<< x-35 <<","<< y+30 <<" "
+			<< x-35 <<","<< y+15 <<" "
+			<< x-25 <<","<< y+15 <<" "
+			<< x-15 <<","<< y+5 <<" "
+			<< x-15 <<","<< y-5 <<" "
+			<< x-25 <<","<< y-15 <<" "
+			<< x-35 <<","<< y-15 <<" "
+			<< x-35 <<","<< y-30 <<" \" "
+			<< "style= \"fill:rgb(139, 134, 130);stroke:black;stroke-width:1\" /> "<<endl;
 		fig <<"<text x=\""<<x-25<<"\" y=\""<<y-16<<"\" stroke=\"white\"  fill=\"white\" >FloPoCo</text> "<<endl;
-		
-		
-	
+
+
+
 		double adjust=3.1415+3.1415/2;
 		fig <<" <circle cx=\""<<x<<"\" cy=\""<<y<<"\" r=\"4\" stroke=\"black\" stroke-width=\"2\" fill=\"black\" />"<<endl;
-		
+
 		for(int i=0;i<cyclenumber;i++)
 		{
 			double angle=360/cyclenumber*i *3.1415 / 180 + adjust;
-			
+
 			fig <<" <circle cx=\""<<x+80*cos(angle)<<"\" cy=\""<<y+ 80*sin(angle)
 				<<"\" r=\"4\" stroke=\"black\" stroke-width=\"2\" fill=\"red\" />"<<endl;
 			fig <<"<text x=\""<<x+65*cos(angle)<<"\" y=\""<<y+65*sin(angle)
@@ -635,25 +636,25 @@ namespace flopoco
 			{
 				fig <<"<line x1=\""<<x<<"\" y1=\""<<y<<"\" x2=\""<<x+ 70*cos(angle)
 					<<"\" y2=\""<<y+ 70*sin(angle)<<"\" style=\"stroke-width: 5px; stroke:rgb(139, 69, 19);\"  />"<<endl;
-				
+
 				fig << "<polygon points= \" "<< x+ 72*cos(angle) <<","<< y+ 72*sin(angle) <<" "
-								<< x+60*cos(angle-0.2)<<","<< y+60*sin(angle-0.2) <<" "
-								<< x+60*cos(angle+0.2) <<","<< y+60*sin(angle+0.2)<<" \" "
-								<< "style= \"fill:rgb(139, 134, 130);stroke:black;stroke-width:1\" /> "<<endl;
+					<< x+60*cos(angle-0.2)<<","<< y+60*sin(angle-0.2) <<" "
+					<< x+60*cos(angle+0.2) <<","<< y+60*sin(angle+0.2)<<" \" "
+					<< "style= \"fill:rgb(139, 134, 130);stroke:black;stroke-width:1\" /> "<<endl;
 			}
 		}	
-		
-		
+
+
 		for(int i=0;i<stageNumber;i++)
 		{	double adjust=3.1415+3.1415/2;
 			double angle=360/stageNumber*i *3.1415 / 180 + adjust;
-			
+
 			fig <<" <circle cx=\""<<x+100*cos(angle)<<"\" cy=\""<<y+ 100*sin(angle)
 				<<"\" r=\"4\" stroke=\"black\" stroke-width=\"2\" fill=\"yellowgreen\" />"<<endl;
-			
+
 			fig <<"<text x=\""<<x+117*cos(angle)<<"\" y=\""<<y+117*sin(angle)
 				<<"\" stroke=\"black\" fill=\"black\" >"<<i<<"</text> "<<endl;
-		
+
 			if(i==currentStage)
 			{	
 				fig <<"<line x1=\""<<x<<"\" y1=\""<<y<<"\" x2=\""<<x+ 80*cos(angle)
@@ -664,7 +665,7 @@ namespace flopoco
 					<< "style= \"fill:rgb(139, 134, 130);stroke:black;stroke-width:1\" /> "<<endl;
 			}
 		}
-		
+
 		fig <<"<text x=\""<<x-12<<"\" y=\""<<y+70<<"\" stroke=\"midnightblue\"  fill=\"midnightblue\" >cycle</text> "<<endl;
 		fig <<"<text x=\""<<x-12<<"\" y=\""<<y+95<<"\" stroke=\"ghostwhite\" fill=\"ghostwhite\" >stage</text> "<<endl;
 		fig <<"</g>"<<endl;
@@ -672,7 +673,7 @@ namespace flopoco
 		//fig2.close();
 
 		//fig << fig2.str();
-		
+
 	}
 
 	void Plotter::drawBit(int cnt, int w, int turnaroundX, int offsetY, int color, int cycle, int cp, string name)
@@ -683,7 +684,7 @@ namespace flopoco
 		int index = color % 7;
 
 		//REPORT(INFO, "bit name " << name << "   color " << color );
-		
+
 		int ci,c1,c2,c3;//print cp as a number as a rational number, in nanoseconds
 
 		c3 = cp % 10;
@@ -698,7 +699,7 @@ namespace flopoco
 			<< offsetY - cnt*10 - 5 << "\" r=\"3\" fill=\"" << colors[index] << "\"" 
 			<< " onmousemove=\"ShowTooltip(evt)\" onmouseout=\"HideTooltip(evt)\" mouseovertext=\""
 			<< name << ", " << cycle << " : " << ci << "." << c1 << c2 << c3 << " ns\"/> " << endl;
-			//<< cycle << " : " << cp << "\"/> " << endl;
+		//<< cycle << " : " << cp << "\"/> " << endl;
 
 	}
 
@@ -730,20 +731,20 @@ namespace flopoco
 			figureFileName << "BitHeap_initial_" /*<< bh->getName()*/  << ".svg";
 		else 
 			figureFileName << "BitHeap_compression_" /*<< bh->getName()*/  << ".svg";
-	
+
 
 
 		FILE* pfile;
 		pfile  = fopen(figureFileName.str().c_str(), "w");
 		fclose(pfile);
-		
+
 		fig.open (figureFileName.str().c_str(), ios::trunc);
 
 		fig << "<?xml version=\"1.0\" standalone=\"no\"?>" << endl;
 		fig << "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\"" << endl;
 		fig << "\"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">" << endl;
 		fig << "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" onload=\"init(evt)\" >" << endl;
-		
+
 		addECMAFunction(); 
 
 	}
@@ -780,21 +781,21 @@ namespace flopoco
 					//REPORT(INFO, "in middle call " << (*it)->getName());
 
 					if(it==bits[i].begin())
+					{
+						tempCycle = (*it)->getCycle();
+						tempCP = (*it)->getCriticalPath(tempCycle);
+					}
+					else
+					{
+						if((tempCycle!=(*it)->getCycle()) || 
+								((tempCycle==(*it)->getCycle()) && 
+								 (tempCP!=(*it)->getCriticalPath((*it)->getCycle()))))
 						{
 							tempCycle = (*it)->getCycle();
 							tempCP = (*it)->getCriticalPath(tempCycle);
+							color++;
 						}
-					else
-						{
-							if((tempCycle!=(*it)->getCycle()) || 
-							   ((tempCycle==(*it)->getCycle()) && 
-								(tempCP!=(*it)->getCriticalPath((*it)->getCycle()))))
-								{
-									tempCycle = (*it)->getCycle();
-									tempCP = (*it)->getCriticalPath(tempCycle);
-									color++;
-								}
-						}
+					}
 
 					//REPORT(INFO, "after middle call " << (*it)->getName());
 
@@ -805,7 +806,7 @@ namespace flopoco
 
 					int cy = (*it)->getCycle();
 					double cp = (*it)->getCriticalPath(cy)*100000000000;
-				//	if(stage>=(*it)->computeStage(stagesPerCycle, elemTime))
+					//	if(stage>=(*it)->computeStage(stagesPerCycle, elemTime))
 					{
 						drawBit(cnt, i, turnaroundX, offsetY, color, cy, cp, (*it)->getName());
 						cnt++;
@@ -889,8 +890,8 @@ namespace flopoco
 					if (timeCondition)
 					{
 						//if(stage>=(*it)->computeStage(stagesPerCycle, elemTime))
-			//			REPORT(INFO, cy << "  " << cycle);
-				//		REPORT(INFO, cp << "  " << criticalPath);
+						//			REPORT(INFO, cy << "  " << cycle);
+						//		REPORT(INFO, cp << "  " << criticalPath);
 						if ((cy<cycle) || ((cy==cycle) && (cp<=criticalPath)))
 						{
 							cp = cp * 1000000000000;  //picoseconds
@@ -913,7 +914,7 @@ namespace flopoco
 
 
 
-        
+
 	}
 
 
