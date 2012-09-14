@@ -1552,7 +1552,7 @@ namespace flopoco
 					}
 				}
 
-				if((endAddChain > index) && (endAddChain-index >= minAdd3Length))
+				if((endAddChain > index) && (endAddChain-index >= minAdd3Length) && (endAddChain-index <= maxAdd3Length))
 				{
 
 					//found possible addition
@@ -1585,47 +1585,35 @@ namespace flopoco
 
 						if(cnt[i]>=3)
 						{
-							addInput0 << (*it)->getName();
+							addInput0 << (*it)->getName() << ((i != index) ? " & " : ";");
 							it++;
-							addInput1 << (*it)->getName();
+							addInput1 << (*it)->getName() << ((i != index) ? " & " : ";");
 							it++;
-							addInput2 << (*it)->getName();
+							addInput2 << (*it)->getName() << ((i != index) ? " & " : ";");
 							removeCompressedBits(i, 3);
 							cnt[i] -= 3;
 						}else if(cnt[i]==2)
 						{
-							addInput0 << (*it)->getName();
+							addInput0 << (*it)->getName() << ((i != index) ? " & " : ";");
 							it++;
-							addInput1 << (*it)->getName();
-							addInput2 << "\'0\'";
+							addInput1 << (*it)->getName() << ((i != index) ? " & " : ";");
+							addInput2 << "\'0\'" << ((i != index) ? " & " : ";");
 							removeCompressedBits(i, 2);
 							cnt[i] -= 2;
 						}else if(cnt[i]==1)
 						{
-							addInput0 << (*it)->getName();
-							addInput1 << "\'0\'";
-							addInput2 << "\'0\'";
+							addInput0 << (*it)->getName() << ((i != index) ? " & " : ";");
+							addInput1 << "\'0\'" << ((i != index) ? " & " : ";");
+							addInput2 << "\'0\'" << ((i != index) ? " & " : ";");
 							removeCompressedBits(i, 1);
 							cnt[i] -= 1;
 						}else
 						{
-							addInput0 << "\'0\'";
-							addInput1 << "\'0\'";
-							addInput2 << "\'0\'";
+							addInput0 << "\'0\'" << ((i != index) ? " & " : ";");
+							addInput1 << "\'0\'" << ((i != index) ? " & " : ";");
+							addInput2 << "\'0\'" << ((i != index) ? " & " : ";");
 						}
-
-						if(i != index)
-						{
-							addInput0 << " & ";
-							addInput1 << " & ";
-							addInput2 << " & ";
-						}else
-						{
-							addInput0 << ";";
-							addInput1 << ";";
-							addInput2 << ";";
-						}
-
+						
 						if(i == 0)
 							break;
 					}
