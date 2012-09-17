@@ -99,7 +99,7 @@ namespace flopoco{
 		    vhdl << ";" << endl; 
 		  vhdl << tab << declare(si, step) << " <= ";
 		  if(step==1)
-		    vhdl << "not " << di << " ;"<< endl; 
+		    vhdl << "\"\" & (not " << di << ") ;"<< endl; 
 		  else
 		    vhdl << sip /*<< range(step-1,1)*/ << " & not " << di << ";"<< endl; 
 				
