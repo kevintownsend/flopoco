@@ -110,6 +110,8 @@ namespace flopoco{
 		int    getNumberOfDSPs();
 		void   getDSPWidths(int &x, int &y, bool sign = false);
 		int    getIntNAdderCost(int wIn, int n);
+		int*   getDSPMultiplierWidths(){return multiplierWidth_;};
+		int    getNrDSPMultiplier(){return nrConfigs_;};	
 	
 	private:
 

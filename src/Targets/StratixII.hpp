@@ -96,8 +96,9 @@ namespace flopoco{
 		int    getEquivalenceSliceDSP();
 		int    getNumberOfDSPs();
 		void   getDSPWidths(int &x, int &y, bool sign = false);
-		int    getIntNAdderCost(int wIn, int n);	
-
+		int    getIntNAdderCost(int wIn, int n);
+		int*   getDSPMultiplierWidths(){return multiplierWidth_;};	
+		int    getNrDSPMultiplier(){return nrConfigs_;};	
 	private:
 
 		double fastcarryDelay_; 	/**< The delay of the fast carry chain */

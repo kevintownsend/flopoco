@@ -125,7 +125,7 @@ namespace flopoco {
 		 */
 		void buildHeapTiling();
 		
-		void buildAlteraTiling(int topX, int topY, int botX, int botY, int dspIndex);
+		void buildAlteraTiling(int blockTopX, int blockTopY, int blockBottomX, int blockBottomY, int dspIndex);
 
 		void buildFancyTiling();
 		
@@ -155,7 +155,8 @@ namespace flopoco {
 		double initialCP;     /**< the initial delay, getMaxInputDelays ( inputDelays_ ).*/  
 	private:
 		bool useDSP;
-		Operator* parentOp;  /**< For a virtual multiplier, adding bits to some external BitHeap, this is a pointer to the Operator that will provide the actual vhdl stream etc. */
+		Operator* parentOp;  /**< For a virtual multiplier, adding bits to some external BitHeap, 
+							   this is a pointer to the Operator that will provide the actual vhdl stream etc. */
 		BitHeap* bitHeap;    /**< The heap of weighted bits that will be used to do the additions */
 		int lsbWeight;       /**< the weight in the bit heap of the lsb of the multiplier result ; equals g for standalone multipliers */
 		Plotter* plotter;
