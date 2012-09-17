@@ -124,6 +124,8 @@ namespace flopoco {
 		/**	builds the heap using DSP blocks) 
 		 */
 		void buildHeapTiling();
+		
+		void buildAlteraTiling(int topX, int topY, int botX, int botY, int dspIndex);
 
 		void buildFancyTiling();
 		

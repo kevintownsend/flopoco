@@ -533,11 +533,17 @@ namespace flopoco {
 	void IntMultiplier::buildTiling() 
 	{
 
-
-		if((!signedIO)&&((wX==41)&&(wY==41)&&(wFull-wOut-g==0)))
-			buildFancyTiling();
+		if(parentOp->getTarget()->getVendor()=="Altera")
+		{	
+			buildAlteraTiling(0,0,wX,wY,0);
+		}
 		else
-			buildHeapTiling();
+		{
+			if((!signedIO)&&((wX==41)&&(wY==41)&&(wFull-wOut-g==0)))
+				buildFancyTiling();
+			else
+				buildHeapTiling();
+		}
 		//adding the round bit
 		//bitHeap->getPlotter()->plotMultiplierConfiguration(getName(), localSplitVector, wX, wY, wOut, g);
 		if(g>0) {
@@ -955,6 +961,17 @@ namespace flopoco {
 			{
 				return false;
 			}
+		}
+		
+		
+		
+		void IntMultiplier::buildAlteraTiling(int topX, int topY, int botX, int botY, int dspIndex)
+		{
+			int dspSize;
+			int dspSize2;
+		//	parentOp->getTarget()->getDSPWidths(dspSize, dspSize2, signedIO);
+		//	REPORT(INFO,"DSP SIZE IS "<<dspSize<<" "<<dspSize2);
+		
 		}
 		
 					
