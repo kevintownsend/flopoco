@@ -1783,7 +1783,7 @@ namespace flopoco
 		
 		REPORT(INFO,"LENGHTS"<<m->getwX()<<" "<<m->getwY());
 
-		if(signedIO)
+		if((signedIO) && (op->getTarget()->getVendor()=="Xilinx"))
 		{
 			if(m->getwX()>m->getwY())
 			{
