@@ -533,17 +533,17 @@ namespace flopoco {
 	void IntMultiplier::buildTiling() 
 	{
 
-		if(parentOp->getTarget()->getVendor()=="Altera")
+		/*if(parentOp->getTarget()->getVendor()=="Altera")
 		{	
 			buildAlteraTiling(0,0,wX,wY,0);
 		}
 		else
-		{
+		{*/
 			if((!signedIO)&&((wX==41)&&(wY==41)&&(wFull-wOut-g==0)))
 				buildFancyTiling();
 			else
 				buildHeapTiling();
-		}
+		//}
 		//adding the round bit
 		//bitHeap->getPlotter()->plotMultiplierConfiguration(getName(), localSplitVector, wX, wY, wOut, g);
 		if(g>0) {

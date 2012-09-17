@@ -1780,6 +1780,8 @@ namespace flopoco
 		int botY=topY+m->getwY()-1;
 		int zerosX=0;
 		int zerosY=0;
+		
+		REPORT(INFO,"LENGHTS"<<m->getwX()<<" "<<m->getwY());
 
 		if(signedIO)
 		{
@@ -1793,6 +1795,11 @@ namespace flopoco
 				zerosX=18-m->getwX();	
 				zerosY=25-m->getwY();
 			}
+			
+			if(zerosX<0)
+				zerosX=0;
+			if(zerosY<0)
+				zerosY=0;	
 		}
 
 		//if the coordinates are negative, then the signals should be completed with 0-s at the end, for the good result.
@@ -1841,7 +1848,7 @@ namespace flopoco
 
 		m->setSignalName(s.str());
 		m->setSignalLength(m->getwX()+m->getwY()+zerosX+zerosY);
-		//    REPORT(DETAILED,"dspout");
+		REPORT(INFO,"OUTSIGNAL LENGTH"<<m->getwX()+m->getwY()+zerosX+zerosY);
 
 	}
 
