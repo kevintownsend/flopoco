@@ -660,7 +660,7 @@ namespace flopoco {
 
 		REPORT(DEBUG, "X split in "<< chunksX << " chunks and Y in " << chunksY << " chunks; ");
 		REPORT(DEBUG, " sizeXPadded="<< sizeXPadded << "  sizeYPadded="<< sizeYPadded);
-		if (chunksX + chunksY > 2) { //we do more than 1 subproduct // FIXME where is the else?
+		if (chunksX + chunksY >= 2) { //we do more than 1 subproduct // FIXME where is the else? 
 
 			// Padding X to the right
 			vhdl << tab << declare(addUID("Xp", blockUid), sizeXPadded) << " <= ";
@@ -741,6 +741,9 @@ namespace flopoco {
 						else
 							t=tUU; 
 					}
+
+
+					REPORT(INFO, wFull-wOut-g);
 
 					//smallMultTable needed only if is on the left size of the truncation 	
 					if(dx*(ix+1)+dy*(iy+1)+topX+topY-padX-padY>wFull-wOut-g)
@@ -824,7 +827,7 @@ namespace flopoco {
 			int horDS=0;
 			int verDS=0;
 		
-			//**** how many dsps will be verically*******************************/
+			//**** how many dsps will be vertical*******************************/
 			int hor=0;
 		
 			//if the multiplication is signed, the first DSP will have different size, will be bigger
@@ -842,7 +845,7 @@ namespace flopoco {
 			/***********************************************************************/
 			
 		
-			//*** how many dsps will be horizontally***********************************/
+			//*** how many dsps will be horizontal**********************************/
 			int ver=0;
 		
 			if( widthOnY>=wyDSP)
@@ -880,7 +883,7 @@ namespace flopoco {
 			else
 				topy=topY;
 				
-			//if the truncation line splits the block, than the used block is smaller, the coordinates needs to be updated
+			//if the truncation line splits the block, than the used block is smaller, the coordinates need to be updated
 			if((botx+boty>wFull-wOut-g)&&(topx+topy<wFull-wOut-g))
 			{
 				int x=topx;
@@ -919,7 +922,18 @@ namespace flopoco {
 				bitHeap->addMultiplierBlock(m);
 			}
 			else
-			{		
+			{
+#if 0	
+				topx=botx-wxDSP;
+				topy=boty-wyDSP;
+			
+				if(topx<0)
+					topx=0;
+
+				if(topy<0)
+					topy=0;
+#endif
+				REPORT(INFO,"**** " << topx << " " << topy << " " << botx << " " << boty);
 				//build logic	
 				buildHeapLogicOnly(topx,topy,botx,boty,parentOp->getNewUId());	
 			}
@@ -1033,7 +1047,10 @@ namespace flopoco {
 					if(dspSize > 9)
 					{
 						if(checkThreshold(topX, topY, botX, botY, dspSize, dspSize))
+						{
+							REPORT(INFO, topX << " " << topY << " " << botX << " " << botY);
 							addExtraDSPs(topX, topY, botX, botY, dspSize, dspSize);
+						}
 						else
 						{
 							buildAlteraTiling(topX, topY, botX, botY, dspIndex+1);
@@ -1041,6 +1058,7 @@ namespace flopoco {
 					}
 					else
 					{
+						REPORT(INFO,"** " << topX << " " << topY << " " << botX << " " << botY);
 						addExtraDSPs(topX, topY, botX, botY, dspSize, dspSize);
 					}
 

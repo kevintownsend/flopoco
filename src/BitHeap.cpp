@@ -1127,30 +1127,25 @@ namespace flopoco
 		WeightedBit *b=0;
 		for(int w=lsbColumn; w<=msbColumn; w++)
 		{
-			if(bits[w].size()==0)
+			if(bits[w].size() > 0)
 			{
 
-			}
-			else
-			{
-				if (bits[w].size() >= 1)
+				for(list<WeightedBit*>::iterator it = bits[w].begin(); it!=bits[w].end(); ++it)
 				{
-					for(list<WeightedBit*>::iterator it = bits[w].begin(); it!=bits[w].end(); ++it)
+					if (maxCycle < (*it)->getCycle())
 					{
-						if (maxCycle < (*it)->getCycle())
+						maxCycle = (*it)->getCycle();
+						maxCP = (*it)->getCriticalPath(maxCycle);
+						b = *it;
+					}
+					else
+						if ((maxCycle == (*it)->getCycle()) &&  (maxCP <= (*it)->getCriticalPath(maxCycle)))
 						{
-							maxCycle = (*it)->getCycle();
 							maxCP = (*it)->getCriticalPath(maxCycle);
 							b = *it;
 						}
-						else
-							if ((maxCycle == (*it)->getCycle()) &&  (maxCP <= (*it)->getCriticalPath(maxCycle)))
-							{
-								maxCP = (*it)->getCriticalPath(maxCycle);
-								b = *it;
-							}
-					}
 				}
+				
 			}
 		}
 
@@ -1826,7 +1821,7 @@ namespace flopoco
 
 			s<<join("DSP_bh",guid,"_ch",i,"_",uid);
 
-			REPORT(DETAILED,"comuted in this moment= "<< join("DSP_bh",guid,"_ch",i,"_",uid)
+			REPORT(DETAILED,"commuted in this moment= "<< join("DSP_bh",guid,"_ch",i,"_",uid)
 					<< "length= "<< m->getwX()+m->getwY()<<" <= ("
 					<< input1<<range(botX,topX+addx)<<" & "<<zg(addx)<<") * ("
 					<< input2 <<range(botY,topY+addy)<<" & "<<zg(addy)<<");");
@@ -1839,7 +1834,7 @@ namespace flopoco
 				<<" & "<< input2 <<range(botY,topY+addy)<<" & "<<zg(addy)<<");"<<endl;
 			s<<join("DSP_bh",guid,"_root",i,"_",uid);
 
-			REPORT(DETAILED,"comuted in this moment= "<< join("DSP_bh",guid,"_root",i,"_",uid)
+			REPORT(DETAILED,"commuted in this moment= "<< join("DSP_bh",guid,"_root",i,"_",uid)
 					<< "length= "<< m->getwX()+m->getwY()<<" <= (" << input1<<range(botX,topX+addx)
 					<<" & "<<zg(addx)<<") * ("
 					<< input2 <<range(botY,topY+addy)<<" & "<<zg(addy)<<");");
@@ -1876,8 +1871,16 @@ namespace flopoco
 			}
 			else
 			{
-				REPORT(DEBUG, "Level " << w << " is already compressed; will go directly to the final result");
-				w++;
+				if(currentHeight(w) == 0)
+				{
+					THROWERROR("LSB columns cannot be void!");
+					w++;
+				}
+				else
+				{
+					REPORT(DEBUG, "Level " << w << " is already compressed; will go directly to the final result");
+					w++;
+				}
 			}
 		}
 
