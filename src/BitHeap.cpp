@@ -1780,15 +1780,23 @@ namespace flopoco
 
 		if((signedIO) && (op->getTarget()->getVendor()=="Xilinx"))
 		{
-			if(m->getwX()>m->getwY())
+			if (op->getTarget()->getID()=="Virtex4")
 			{
-				zerosX=25-m->getwX();	
-				zerosY=18-m->getwY();
+				zerosX = 18 - m->getwX();
+				zerosY = 18 - m->getwY();
 			}
 			else
 			{
-				zerosX=18-m->getwX();	
-				zerosY=25-m->getwY();
+				if(m->getwX()>m->getwY())
+				{
+					zerosX=25-m->getwX();	
+					zerosY=18-m->getwY();
+				}
+				else
+				{
+					zerosX=18-m->getwX();	
+					zerosY=25-m->getwY();
+				}
 			}
 			
 		}
