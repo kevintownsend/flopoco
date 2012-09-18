@@ -272,7 +272,7 @@ namespace flopoco
 
 		if((needSuperTiles) && (mulBlocks.size()>1))
 		{	
-			buildSupertiles();
+		//	buildSupertiles();
 			REPORT(DEBUG, "supertiles built");
 		}
 		//generate the VHDL code for each supertile
@@ -1791,11 +1791,21 @@ namespace flopoco
 				zerosY=25-m->getwY();
 			}
 			
-			if(zerosX<0)
-				zerosX=0;
-			if(zerosY<0)
-				zerosY=0;	
 		}
+		
+		if((signedIO) && (op->getTarget()->getVendor()=="Altera"))
+		{
+			if((m->getwX()!=9)&&(m->getwX()!=12)&&(m->getwX()!=18)&&(m->getwX()!=36))
+				zerosX=1;
+			if((m->getwY()!=9)&&(m->getwY()!=12)&&(m->getwY()!=18)&&(m->getwY()!=36))
+				zerosY=1;
+		
+		}
+		
+		if(zerosX<0)
+			zerosX=0;
+		if(zerosY<0)
+			zerosY=0;
 
 		//if the coordinates are negative, then the signals should be completed with 0-s at the end, for the good result.
 		//addx, addy represents the number of 0-s to be added
@@ -1821,7 +1831,7 @@ namespace flopoco
 
 			s<<join("DSP_bh",guid,"_ch",i,"_",uid);
 
-			REPORT(DETAILED,"commuted in this moment= "<< join("DSP_bh",guid,"_ch",i,"_",uid)
+			REPORT(DETAILED,"comuted in this moment= "<< join("DSP_bh",guid,"_ch",i,"_",uid)
 					<< "length= "<< m->getwX()+m->getwY()<<" <= ("
 					<< input1<<range(botX,topX+addx)<<" & "<<zg(addx)<<") * ("
 					<< input2 <<range(botY,topY+addy)<<" & "<<zg(addy)<<");");
@@ -1834,7 +1844,7 @@ namespace flopoco
 				<<" & "<< input2 <<range(botY,topY+addy)<<" & "<<zg(addy)<<");"<<endl;
 			s<<join("DSP_bh",guid,"_root",i,"_",uid);
 
-			REPORT(DETAILED,"commuted in this moment= "<< join("DSP_bh",guid,"_root",i,"_",uid)
+			REPORT(DETAILED,"comuted in this moment= "<< join("DSP_bh",guid,"_root",i,"_",uid)
 					<< "length= "<< m->getwX()+m->getwY()<<" <= (" << input1<<range(botX,topX+addx)
 					<<" & "<<zg(addx)<<") * ("
 					<< input2 <<range(botY,topY+addy)<<" & "<<zg(addy)<<");");
@@ -1846,6 +1856,7 @@ namespace flopoco
 		REPORT(INFO,"OUTSIGNAL LENGTH"<<m->getwX()+m->getwY()+zerosX+zerosY);
 
 	}
+
 
 
 
@@ -1884,7 +1895,7 @@ namespace flopoco
 			}
 		}
 
-
+			REPORT(DEBUG, "before getLatest");
 
 		if(w!=minWeight)
 		{
@@ -1892,7 +1903,8 @@ namespace flopoco
 			WeightedBit *b = getLatestBit(minWeight, w-1);
 			op->setCycle(  b ->getCycle()  );
 			op->setCriticalPath(   b ->getCriticalPath(op->getCurrentCycle()));
-
+			
+			REPORT(DEBUG, "after getLatest");
 
 			if (w-minWeight>1)
 				op->vhdl << tab << op->declare(join("tempR_bh", guid, "_", chunkDoneIndex), w-minWeight, true) << " <= " ;

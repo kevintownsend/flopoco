@@ -985,7 +985,7 @@ namespace flopoco {
 		
 		void IntMultiplier::buildAlteraTiling(int blockTopX, int blockTopY, int blockBottomX, int blockBottomY, int dspIndex)
 		{
-			int dspSize;
+			int dspSizeX,dspSizeY;
 			int* multiplierWidth;
 			int size;
 			//Target* t;// = parentOp->getTarget();			
@@ -1020,18 +1020,21 @@ namespace flopoco {
 						size = t->getNrDSPMultiplier();	
 					}
 
-			dspSize = multiplierWidth[size-dspIndex-1];
-
+			dspSizeX = multiplierWidth[size-dspIndex-1];
+			dspSizeY=dspSizeX;
+			int dsX=dspSizeX;
+			int dsY=dspSizeY;
+			
 			int width=blockBottomX-blockTopX-1;
 			int height=blockBottomY-blockTopY-1;
 			REPORT(INFO,"width= "<<width<<" height= "<<height);
-			int verticalDSP=height/dspSize + 1;
-			int horizontalDSP=width/dspSize + 1;
-			int restY=height-verticalDSP*dspSize;
+			int verticalDSP=height/dspSizeY + 1;
+			int horizontalDSP=width/dspSizeX + 1;
+			int restY=height-verticalDSP*dspSizeY;
 			int botX=blockBottomX;
 			int botY=blockBottomY;
-			int topX=botX-dspSize;
-			int topY=botY-dspSize;
+			int topX=botX-dspSizeX;
+			int topY=botY-dspSizeY;
 
 			for(int i=0;i<verticalDSP;i++)
 			{
@@ -1043,13 +1046,25 @@ namespace flopoco {
 
 					if (topY<0)
 						topY=0;
-
-					if(dspSize > 9)
+									
+					if((signedIO)&&(botX!=wX))
+						dspSizeX=dsX-1;
+					else
+						dspSizeX=dsX;	
+					
+					if((signedIO)&&(botY!=wY))
+						dspSizeY=dsY-1;
+					else
+						dspSizeY=dsY;		
+					
+					REPORT(INFO,"DSP sizes"<<dspSizeX<<"   "<<dspSizeY);
+					
+					if((dspSizeX > 9)&&(dspSizeY>0))
 					{
-						if(checkThreshold(topX, topY, botX, botY, dspSize, dspSize))
+						if(checkThreshold(topX, topY, botX, botY, dspSizeX, dspSizeY))
 						{
 							REPORT(INFO, topX << " " << topY << " " << botX << " " << botY);
-							addExtraDSPs(topX, topY, botX, botY, dspSize, dspSize);
+							addExtraDSPs(topX, topY, botX, botY, dspSizeX, dspSizeY);
 						}
 						else
 						{
@@ -1059,18 +1074,51 @@ namespace flopoco {
 					else
 					{
 						REPORT(INFO,"** " << topX << " " << topY << " " << botX << " " << botY);
-						addExtraDSPs(topX, topY, botX, botY, dspSize, dspSize);
+						addExtraDSPs(topX, topY, botX, botY, dspSizeX, dspSizeY);
 					}
 
 					botX = topX;
-					topX = topX-dspSize;
+					
+					if((signedIO)&&(botX!=wX))
+						dspSizeX=dsX-1;
+					else
+						dspSizeX=dsX;	
+					
+					if((signedIO)&&(botY!=wY))
+						dspSizeY=dsY-1;
+					else
+						dspSizeY=dsY;
+					
+					topX = topX-dspSizeX;
 										
 				}
 
 				botY = topY;
-				topY = topY-dspSize;
+				
+				if((signedIO)&&(botX!=wX))
+						dspSizeX=dsX-1;
+					else
+						dspSizeX=dsX;	
+					
+					if((signedIO)&&(botY!=wY))
+						dspSizeY=dsY-1;
+					else
+						dspSizeY=dsY;
+				
+				topY = topY-dspSizeY;
 				botX = blockBottomX;
-				topX = botX-dspSize;
+				
+				if((signedIO)&&(botX!=wX))
+						dspSizeX=dsX-1;
+					else
+						dspSizeX=dsX;	
+					
+					if((signedIO)&&(botY!=wY))
+						dspSizeY=dsY-1;
+					else
+						dspSizeY=dsY;
+				
+				topX = botX-dspSizeX;
 
 
 			}
