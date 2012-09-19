@@ -171,7 +171,7 @@ void usage(char *name, string opName = ""){
 	 	cerr << "      Result is faithfully truncated to wOut bits  (wOut=0 means: full multiplier)\n";
 	 	cerr << "      signed=0: unsigned multiplier;     signed=1: signed inputs, signed outputs \n";
 		cerr << "      0 <= ratio <= 1; larger ratio => DSP dominant architectures\n";
-		cerr << "      enableSuperTiles=0 =>without supertiles ; enableSuperTiles=1=>with supertiles  \n";
+		cerr << "      enableSuperTiles=0 =>  lower latency, higher logic cost; enableSuperTiles=1=> lower logic cost, longer latency \n";
 	 }
 
 
@@ -1366,7 +1366,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			}    
 		}
 		else if(opname=="IntMultiplier"){
-			int nargs = 5;
+			int nargs = 6;
 			if (i+nargs > argc)
 				usage(argv[0],opname);
 			else {

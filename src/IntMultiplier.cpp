@@ -238,6 +238,8 @@ namespace flopoco {
 			name << wXdecl << "_" << wYdecl <<"_" << wOut << "_" << (signedIO?"signed":"unsigned") << "_uid"<<Operator::getNewUId();
 			setName ( name.str() );
 
+			REPORT(DEBUG, "Building " << name.str() )
+
 			xname = x->getName();
 			yname = y->getName();
 
@@ -284,7 +286,9 @@ namespace flopoco {
 					name << "LogicOnly_";
 				name << wXdecl << "_" << wYdecl <<"_" << wOut << "_" << (signedIO?"signed":"unsigned") << "_uid"<<Operator::getNewUId();
 				setName ( name.str() );
+				REPORT(DEBUG, "Building " << name.str() )
 			}
+
 
 			parentOp=this;
 			multiplierUid=parentOp->getNewUId();
