@@ -186,9 +186,9 @@ namespace flopoco {
 
 		maxWeight = wOut+g;
 	//	if (lsbWeight<=g)
-	//		weightShift = wFull - maxWeight;
+			weightShift = wFull - maxWeight;
 	//	else
-			weightShift = wFull - wOut +lsbWeight-g;	
+		//	weightShift = wFull - wOut +lsbWeight-g;	
 
 
 
@@ -1025,6 +1025,9 @@ namespace flopoco {
 					}
 
 			dspSizeX = multiplierWidth[size-dspIndex-1];
+			//FIXME
+			if(dspSizeX==12)
+				dspSizeX=9;
 			dspSizeY=dspSizeX;
 			int dsX=dspSizeX;
 			int dsY=dspSizeY;
