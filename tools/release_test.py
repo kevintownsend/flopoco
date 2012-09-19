@@ -151,8 +151,8 @@ if __name__ == '__main__':
 														
 							while ((not finished) and (did_compile) and (not timeUp)):
 								currentTime = time.clock()	
-								print "the start time was:" + str(startTime)
-								print "the currentTime time was" + str(currentTime)
+								#print "the start time was:" + str(startTime)
+								#print "the currentTime time was" + str(currentTime)
 								if (currentTime - startTime > float(timeUntilDiscardTest)):
 									timeUp = True
 									
@@ -221,7 +221,7 @@ if __name__ == '__main__':
 							logfile.write(cmd+"\n")
 							print(cmd)
 							try:
-								status=subprocess.check_output(cmd,shell=True)
+								status=subprocess.check_output(cmd,stderr=subprocess.STDOUT,shell=True)
 							except subprocess.CalledProcessError, e:
 								errorstring=e.output
 								if string.find(errorstring, "Incorrect") !=-1:
