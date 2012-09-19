@@ -792,9 +792,9 @@ namespace flopoco
 			{
 				plotter->heapSnapshot(didCompress, bb->getCycle(), bb->getCriticalPath(bb->getCycle()));
 
-				if(op->getTarget()->getVendor()=="Altera")
+				if(op->getTarget()->hasFastLogicTernaryAdders())
 				{
-					REPORT(INFO, "Altera");
+
 					for(int i=0;i<10;i++)
 					{
 						if (usedCompressors[i]==true)
@@ -810,7 +810,7 @@ namespace flopoco
 
 				else
 				{
-					REPORT(INFO, "Xilinx");
+
 
 					//do additional compressions or additions
 					if (getMaxHeight()>2)
@@ -1494,7 +1494,7 @@ namespace flopoco
 		REPORT(DEBUG,"starting compression with ternary adders");
 
 		//search for the starting column
-		bool bitheapCompressible = (op->getTarget()->getVendor()=="Altera") ? true : false;
+		bool bitheapCompressible = op->getTarget()->hasFastLogicTernaryAdders();//(op->getTarget()->getVendor()=="Altera") ? true : false;
 		unsigned int lastCompressed = (adderMaxWeight > minWeight) ? adderMaxWeight+1 : minWeight;
 		bool performedCompression;
 
