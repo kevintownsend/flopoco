@@ -49,6 +49,9 @@ namespace flopoco{
 
 			RAMDelay_ = 2.970e-9; //TODO
 			RAMToLogicWireDelay_ = 0.436e-9; //TODO
+
+
+			hasFastLogicTernaryAdders_ = false;
 			
 			//---------------Floorplanning related----------------------
 			multiplierPosition.push_back(3);

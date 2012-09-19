@@ -44,6 +44,7 @@ namespace flopoco{
 			lutInputs_         = 4;
 			frequency_         = 400000000.;
 			hasHardMultipliers_= true;
+			hasFastLogicTernaryAdders_ = true;
 			id_                = "generic";
 		}
 	
@@ -275,7 +276,12 @@ namespace flopoco{
 		/** Returns true if the operator for this target is allowed to use hardware multipliers
 		 * @return the status of hardware multipliers usage
 		 */
-		bool hasHardMultipliers(); 
+		bool hasHardMultipliers();
+
+		/** Returns true if the target has fast ternary adders in the logic blocks
+		 * @return the status of the hasFastLogicTernaryAdder_ parameter
+		 */ 
+		bool hasFastLogicTernaryAdders();	
 		
 		/** Returns true if it is worth using hard multipliers for implementing a multiplier of size wX times wY */
 		bool worthUsingDSP(int wX, int wY);
@@ -560,6 +566,7 @@ namespace flopoco{
 		bool   pipeline_;           /**< True if the target is pipelined/ false otherwise */
 		double frequency_;          /**< The desired frequency for the operator in Hz */
 		bool   hasHardMultipliers_; /**< If true, this target offers hardware multipliers */
+		bool   hasFastLogicTernaryAdders_; /**< If true, this target offers hardware multipliers */
 		int    multXInputs_;        /**< The size for the X dimension of the hardware multipliers (the largest, if they are not equal) */
 		int    multYInputs_;        /**< The size for the Y dimension of the hardware multipliers  (the smallest, if they are not equal)*/
 		long   sizeOfBlock_;		    /**< The size of a primitive memory block */

@@ -70,7 +70,11 @@ namespace flopoco{
 	
 	bool Target::hasHardMultipliers(){
 		return hasHardMultipliers_ ;
-	} 
+	}
+
+	bool Target::hasFastLogicTernaryAdders(){
+		return hasFastLogicTernaryAdders_ ;
+	}	
 
 	bool Target::worthUsingDSP(int wX, int wY){
 		// Default random setting, should be overloaded after a bit of experimenting
