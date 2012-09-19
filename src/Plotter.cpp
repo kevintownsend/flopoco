@@ -728,9 +728,9 @@ namespace flopoco
 	{
 		ostringstream figureFileName;
 		if(isInitial)
-			figureFileName << "BitHeap_initial_" /*<< bh->getName()*/  << ".svg";
+			figureFileName << "BitHeap_initial_" << bh->getName()  << ".svg";
 		else 
-			figureFileName << "BitHeap_compression_" /*<< bh->getName()*/  << ".svg";
+			figureFileName << "BitHeap_compression_" << bh->getName()  << ".svg";
 
 
 
