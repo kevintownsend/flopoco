@@ -1215,12 +1215,15 @@ namespace flopoco
 
 			}
 
+
 			string inAdder0Name = join("finalAdderIn0_bh", getGUid());
 			string inAdder1Name = join("finalAdderIn1_bh", getGUid());
 			string outAdderName = join("finalAdderOut_bh", getGUid());
 
-			op->vhdl << tab << op->declare(inAdder0Name, maxWeight-minWeight) << " <= " << inAdder0.str() << endl;
-			op->vhdl << tab << op->declare(inAdder1Name, maxWeight-minWeight) << " <= " << inAdder1.str() << endl;
+			op->vhdl << tab << op->declare(inAdder0Name, maxWeight-minWeight) 
+				<< (((maxWeight-minWeight)==1)?"(0)":"") << " <= " << inAdder0.str() << endl;
+			op->vhdl << tab << op->declare(inAdder1Name, maxWeight-minWeight) 
+				<< (((maxWeight-minWeight)==1)?"(0)":"") << " <= " << inAdder1.str() << endl;
 			op->vhdl << tab << op->declare(outAdderName, maxWeight-minWeight+1)
 				<< " <= ('0' & "<< inAdder0Name << ") + ('0' & " << inAdder1Name << ");" << endl;
 			op->vhdl << tab << "-- concatenate all the compressed chunks" << endl;
