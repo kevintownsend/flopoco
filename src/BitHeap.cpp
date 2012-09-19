@@ -1230,7 +1230,6 @@ namespace flopoco
 			//result
 			op->vhdl << tab << op->declare(join("CompressionResult", guid), (maxWeight+1)) << " <= " << outAdderName;
 
-
 			//adding the rightmost bits
 			for(int i=chunkDoneIndex-1; i>=0; i--)
 				op->vhdl <<  " & " << join("tempR_bh", guid, "_", i);

@@ -451,7 +451,7 @@ namespace flopoco {
 
 			REPORT(DETAILED,"useDSP");
 			if (testFit){
-				REPORT(DETAILED,"testfit");
+				REPORT(INFO,"TESTFIT");
 
 				if( checkThreshold(0,0,wX, wY,wxDSP,wyDSP))
 				{	REPORT(INFO,"worthUsingDSP");
