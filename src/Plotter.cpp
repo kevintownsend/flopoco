@@ -282,8 +282,8 @@ namespace flopoco
 		int scalingFactor = 5;
 
 		//offsets for the X and Y axes
-		int offsetX = 200;
-		int offsetY = 120;
+		int offsetX = 100;
+		int offsetY = 180;
 
 		//file header
 		fig << "<?xml version=\"1.0\" standalone=\"no\"?>" << endl;
@@ -356,13 +356,13 @@ namespace flopoco
 
 		//offsets for the X and Y axes
 		int offsetX = 180 + wY*scalingFactor;
-		int offsetY = 120;
+		int offsetY = 180;
 
 		//file header
 		fig << "<?xml version=\"1.0\" standalone=\"no\"?>" << endl;
 		fig << "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\"" << endl;
 		fig << "\"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">" << endl;
-		fig << "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" onload=\"init(evt)\" >" << endl;
+		fig << "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" onload=\"init(evt)\">" << endl;
 
 		addECMAFunction();
 
@@ -424,7 +424,7 @@ namespace flopoco
 	void Plotter::drawLine(int wX, int wY, int wRez, int offsetX, int offsetY, int scalingFactor, bool isRectangle)
 	{
 		if(isRectangle)
-			fig << "<line x1=\"" << offsetX + scalingFactor*(wRez - wX) 
+			fig << "<line x1=\"" << offsetX + scalingFactor * (wRez - wY)
 				<< "\" y1=\"" << offsetY << "\" x2=\"" << offsetX + scalingFactor*wRez
 				<< "\" y2=\"" << offsetY + scalingFactor*wY <<"\" style=\"stroke:rgb(255,0,0);stroke-width:2\"/>" << endl ;	
 		else
@@ -582,135 +582,135 @@ namespace flopoco
 		fig2 << "\"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">" << endl;
 		fig2 << "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\">" << endl;
 #endif
-		fig <<"<g transform=\"scale("<<scalefactor<<") translate(1000,100)\">"<<endl;
-		fig <<" <circle cx=\""<<x<<"\" cy=\""<<y
-			<<"\" r=\"100\" stroke=\"black\" stroke-width=\"2\" fill=\"darkcyan\" />"<<endl;
-		fig <<" <circle cx=\""<<x<<"\" cy=\""<<y
-			<<"\" r=\"80\" stroke=\"black\" stroke-width=\"2\" fill=\"burlywood\" />"<<endl;
+	fig <<"<g transform=\"scale("<<scalefactor<<") translate(1000,100)\">"<<endl;
+	fig <<" <circle cx=\""<<x<<"\" cy=\""<<y
+		<<"\" r=\"100\" stroke=\"black\" stroke-width=\"2\" fill=\"darkcyan\" />"<<endl;
+	fig <<" <circle cx=\""<<x<<"\" cy=\""<<y
+		<<"\" r=\"80\" stroke=\"black\" stroke-width=\"2\" fill=\"burlywood\" />"<<endl;
 
-		//   fig << "<rect x=\"" << x-25<< "\" y=\"" << y-60
-		//	    << "\" height=\"" << 10 <<"\" width=\"" << 60
-		//	    << "\" style= \"fill:rgb(139, 69, 19);stroke:purple;stroke-width:1\" /> "<<endl;
-		//fig<< "<polygon points= \" "<< x-22 <<","<< y-63 <<" "
-		//						<< x-16 <<","<< y-68 <<" "
-		///						<< x-10 <<","<< y-63 <<" "
-		//						<< x-10 <<","<< y-45 <<" "
-		//						<< x-22 <<","<< y-45 <<" \" "
-		//						<< "style=\"fill:rgb(139, 134, 130);stroke-width:1;stroke:rgb(0,0,0)\"/>" << endl;
+	//   fig << "<rect x=\"" << x-25<< "\" y=\"" << y-60
+	//	    << "\" height=\"" << 10 <<"\" width=\"" << 60
+	//	    << "\" style= \"fill:rgb(139, 69, 19);stroke:purple;stroke-width:1\" /> "<<endl;
+	//fig<< "<polygon points= \" "<< x-22 <<","<< y-63 <<" "
+	//						<< x-16 <<","<< y-68 <<" "
+	///						<< x-10 <<","<< y-63 <<" "
+	//						<< x-10 <<","<< y-45 <<" "
+	//						<< x-22 <<","<< y-45 <<" \" "
+	//						<< "style=\"fill:rgb(139, 134, 130);stroke-width:1;stroke:rgb(0,0,0)\"/>" << endl;
 
-		fig << "<polygon points= \" "<< x-35 <<","<< y-30 <<" "
-			<< x+35 <<","<< y-30 <<" "
-			<< x+50 <<","<< y-23 <<" "
-			<< x+35 <<","<< y-15 <<" "
-			<< x+25 <<","<< y-15 <<" "
-			<< x+15 <<","<< y- 5 <<" "
-			<< x+15 <<","<< y +5 <<" "
-			<< x+25 <<","<< y+15 <<" "
-			<< x+35 <<","<< y+15 <<" "
-			<< x+35 <<","<< y+30 <<" "
-			<< x-35 <<","<< y+30 <<" "
-			<< x-35 <<","<< y+15 <<" "
-			<< x-25 <<","<< y+15 <<" "
-			<< x-15 <<","<< y+5 <<" "
-			<< x-15 <<","<< y-5 <<" "
-			<< x-25 <<","<< y-15 <<" "
-			<< x-35 <<","<< y-15 <<" "
-			<< x-35 <<","<< y-30 <<" \" "
-			<< "style= \"fill:rgb(139, 134, 130);stroke:black;stroke-width:1\" /> "<<endl;
-		fig <<"<text x=\""<<x-25<<"\" y=\""<<y-16<<"\" stroke=\"white\"  fill=\"white\" >FloPoCo</text> "<<endl;
+	fig << "<polygon points= \" "<< x-35 <<","<< y-30 <<" "
+		<< x+35 <<","<< y-30 <<" "
+		<< x+50 <<","<< y-23 <<" "
+		<< x+35 <<","<< y-15 <<" "
+		<< x+25 <<","<< y-15 <<" "
+		<< x+15 <<","<< y- 5 <<" "
+		<< x+15 <<","<< y +5 <<" "
+		<< x+25 <<","<< y+15 <<" "
+		<< x+35 <<","<< y+15 <<" "
+		<< x+35 <<","<< y+30 <<" "
+		<< x-35 <<","<< y+30 <<" "
+		<< x-35 <<","<< y+15 <<" "
+		<< x-25 <<","<< y+15 <<" "
+		<< x-15 <<","<< y+5 <<" "
+		<< x-15 <<","<< y-5 <<" "
+		<< x-25 <<","<< y-15 <<" "
+		<< x-35 <<","<< y-15 <<" "
+		<< x-35 <<","<< y-30 <<" \" "
+		<< "style= \"fill:rgb(139, 134, 130);stroke:black;stroke-width:1\" /> "<<endl;
+	fig <<"<text x=\""<<x-25<<"\" y=\""<<y-16<<"\" stroke=\"white\"  fill=\"white\" >FloPoCo</text> "<<endl;
 
 
 
-		double adjust=3.1415+3.1415/2;
-		fig <<" <circle cx=\""<<x<<"\" cy=\""<<y<<"\" r=\"4\" stroke=\"black\" stroke-width=\"2\" fill=\"black\" />"<<endl;
+	double adjust=3.1415+3.1415/2;
+	fig <<" <circle cx=\""<<x<<"\" cy=\""<<y<<"\" r=\"4\" stroke=\"black\" stroke-width=\"2\" fill=\"black\" />"<<endl;
 
-		for(int i=0;i<cyclenumber;i++)
+	for(int i=0;i<cyclenumber;i++)
+	{
+		double angle=360/cyclenumber*i *3.1415 / 180 + adjust;
+
+		fig <<" <circle cx=\""<<x+80*cos(angle)<<"\" cy=\""<<y+ 80*sin(angle)
+			<<"\" r=\"4\" stroke=\"black\" stroke-width=\"2\" fill=\"red\" />"<<endl;
+		fig <<"<text x=\""<<x+65*cos(angle)<<"\" y=\""<<y+65*sin(angle)
+			<<"\" stroke=\"red\" fill=\"red\" >"<<romanNumber(i)<<"</text> "<<endl;
+		if(i==currentcycle)
 		{
-			double angle=360/cyclenumber*i *3.1415 / 180 + adjust;
+			fig <<"<line x1=\""<<x<<"\" y1=\""<<y<<"\" x2=\""<<x+ 70*cos(angle)
+				<<"\" y2=\""<<y+ 70*sin(angle)<<"\" style=\"stroke-width: 5px; stroke:rgb(139, 69, 19);\"  />"<<endl;
 
-			fig <<" <circle cx=\""<<x+80*cos(angle)<<"\" cy=\""<<y+ 80*sin(angle)
-				<<"\" r=\"4\" stroke=\"black\" stroke-width=\"2\" fill=\"red\" />"<<endl;
-			fig <<"<text x=\""<<x+65*cos(angle)<<"\" y=\""<<y+65*sin(angle)
-				<<"\" stroke=\"red\" fill=\"red\" >"<<romanNumber(i)<<"</text> "<<endl;
-			if(i==currentcycle)
-			{
-				fig <<"<line x1=\""<<x<<"\" y1=\""<<y<<"\" x2=\""<<x+ 70*cos(angle)
-					<<"\" y2=\""<<y+ 70*sin(angle)<<"\" style=\"stroke-width: 5px; stroke:rgb(139, 69, 19);\"  />"<<endl;
-
-				fig << "<polygon points= \" "<< x+ 72*cos(angle) <<","<< y+ 72*sin(angle) <<" "
-					<< x+60*cos(angle-0.2)<<","<< y+60*sin(angle-0.2) <<" "
-					<< x+60*cos(angle+0.2) <<","<< y+60*sin(angle+0.2)<<" \" "
-					<< "style= \"fill:rgb(139, 134, 130);stroke:black;stroke-width:1\" /> "<<endl;
-			}
-		}	
-
-
-		for(int i=0;i<stageNumber;i++)
-		{	double adjust=3.1415+3.1415/2;
-			double angle=360/stageNumber*i *3.1415 / 180 + adjust;
-
-			fig <<" <circle cx=\""<<x+100*cos(angle)<<"\" cy=\""<<y+ 100*sin(angle)
-				<<"\" r=\"4\" stroke=\"black\" stroke-width=\"2\" fill=\"yellowgreen\" />"<<endl;
-
-			fig <<"<text x=\""<<x+117*cos(angle)<<"\" y=\""<<y+117*sin(angle)
-				<<"\" stroke=\"black\" fill=\"black\" >"<<i<<"</text> "<<endl;
-
-			if(i==currentStage)
-			{	
-				fig <<"<line x1=\""<<x<<"\" y1=\""<<y<<"\" x2=\""<<x+ 80*cos(angle)
-					<<"\" y2=\""<<y+ 80*sin(angle)<<"\" style=\"stroke-width: 5px; stroke:rgb(139, 69, 19);\"  />"<<endl;
-				fig << "<polygon points= \" "<< x+ 100*cos(angle) <<","<< y+ 100*sin(angle) <<" "
-					<< x+82*cos(angle-0.2)<<","<< y+82*sin(angle-0.2) <<" "
-					<< x+82*cos(angle+0.2) <<","<< y+82*sin(angle+0.2)<<" \" "
-					<< "style= \"fill:rgb(139, 134, 130);stroke:black;stroke-width:1\" /> "<<endl;
-			}
+			fig << "<polygon points= \" "<< x+ 72*cos(angle) <<","<< y+ 72*sin(angle) <<" "
+				<< x+60*cos(angle-0.2)<<","<< y+60*sin(angle-0.2) <<" "
+				<< x+60*cos(angle+0.2) <<","<< y+60*sin(angle+0.2)<<" \" "
+				<< "style= \"fill:rgb(139, 134, 130);stroke:black;stroke-width:1\" /> "<<endl;
 		}
+	}	
 
-		fig <<"<text x=\""<<x-12<<"\" y=\""<<y+70<<"\" stroke=\"midnightblue\"  fill=\"midnightblue\" >cycle</text> "<<endl;
-		fig <<"<text x=\""<<x-12<<"\" y=\""<<y+95<<"\" stroke=\"ghostwhite\" fill=\"ghostwhite\" >stage</text> "<<endl;
-		fig <<"</g>"<<endl;
-		//fig2 << "</svg>" << endl;
-		//fig2.close();
 
-		//fig << fig2.str();
+	for(int i=0;i<stageNumber;i++)
+	{	double adjust=3.1415+3.1415/2;
+		double angle=360/stageNumber*i *3.1415 / 180 + adjust;
 
+		fig <<" <circle cx=\""<<x+100*cos(angle)<<"\" cy=\""<<y+ 100*sin(angle)
+			<<"\" r=\"4\" stroke=\"black\" stroke-width=\"2\" fill=\"yellowgreen\" />"<<endl;
+
+		fig <<"<text x=\""<<x+117*cos(angle)<<"\" y=\""<<y+117*sin(angle)
+			<<"\" stroke=\"black\" fill=\"black\" >"<<i<<"</text> "<<endl;
+
+		if(i==currentStage)
+		{	
+			fig <<"<line x1=\""<<x<<"\" y1=\""<<y<<"\" x2=\""<<x+ 80*cos(angle)
+				<<"\" y2=\""<<y+ 80*sin(angle)<<"\" style=\"stroke-width: 5px; stroke:rgb(139, 69, 19);\"  />"<<endl;
+			fig << "<polygon points= \" "<< x+ 100*cos(angle) <<","<< y+ 100*sin(angle) <<" "
+				<< x+82*cos(angle-0.2)<<","<< y+82*sin(angle-0.2) <<" "
+				<< x+82*cos(angle+0.2) <<","<< y+82*sin(angle+0.2)<<" \" "
+				<< "style= \"fill:rgb(139, 134, 130);stroke:black;stroke-width:1\" /> "<<endl;
+		}
 	}
 
-	void Plotter::drawBit(int cnt, int w, int turnaroundX, int offsetY, int color, int cycle, int cp, string name)
-	{
-		const std::string colors[] = { "#97bf04","#0f1af2", 
-			"orange", "#f5515c",  "lightgreen", "fuchsia", "indianred"};
+	fig <<"<text x=\""<<x-12<<"\" y=\""<<y+70<<"\" stroke=\"midnightblue\"  fill=\"midnightblue\" >cycle</text> "<<endl;
+	fig <<"<text x=\""<<x-12<<"\" y=\""<<y+95<<"\" stroke=\"ghostwhite\" fill=\"ghostwhite\" >stage</text> "<<endl;
+	fig <<"</g>"<<endl;
+	//fig2 << "</svg>" << endl;
+	//fig2.close();
 
-		int index = color % 7;
+	//fig << fig2.str();
 
-		//REPORT(INFO, "bit name " << name << "   color " << color );
+}
 
-		int ci,c1,c2,c3;//print cp as a number as a rational number, in nanoseconds
+void Plotter::drawBit(int cnt, int w, int turnaroundX, int offsetY, int color, int cycle, int cp, string name)
+{
+	const std::string colors[] = { "#97bf04","#0f1af2", 
+		"orange", "#f5515c",  "lightgreen", "fuchsia", "indianred"};
 
-		c3 = cp % 10;
-		cp = cp / 10;
-		c2 = cp % 10;	
-		cp = cp / 10;
-		c1 = cp % 10;
-		cp = cp / 10;
-		ci = cp % 10;
+	int index = color % 7;
 
-		fig << "<circle cx=\"" << turnaroundX - w*10 - 5 << "\" cy=\"" 
-			<< offsetY - cnt*10 - 5 << "\" r=\"3\" fill=\"" << colors[index] << "\"" 
-			<< " onmousemove=\"ShowTooltip(evt)\" onmouseout=\"HideTooltip(evt)\" mouseovertext=\""
-			<< name << ", " << cycle << " : " << ci << "." << c1 << c2 << c3 << " ns\"/> " << endl;
-		//<< cycle << " : " << cp << "\"/> " << endl;
+	//REPORT(INFO, "bit name " << name << "   color " << color );
 
-	}
+	int ci,c1,c2,c3;//print cp as a number as a rational number, in nanoseconds
+
+	c3 = cp % 10;
+	cp = cp / 10;
+	c2 = cp % 10;	
+	cp = cp / 10;
+	c1 = cp % 10;
+	cp = cp / 10;
+	ci = cp % 10;
+
+	fig << "<circle cx=\"" << turnaroundX - w*10 - 5 << "\" cy=\"" 
+		<< offsetY - cnt*10 - 5 << "\" r=\"3\" fill=\"" << colors[index] << "\"" 
+		<< " onmousemove=\"ShowTooltip(evt)\" onmouseout=\"HideTooltip(evt)\" mouseovertext=\""
+		<< name << ", " << cycle << " : " << ci << "." << c1 << c2 << c3 << " ns\"/> " << endl;
+	//<< cycle << " : " << cp << "\"/> " << endl;
+
+}
 
 
 
-	void Plotter::addECMAFunction()
-	{
-		fig << "<script> <![CDATA[  " << endl;
-		fig << "function init(evt) {" << endl;
-		fig << "if ( window.svgDocument == null ) {" << endl;
-		fig << "svgDocument = evt.target.ownerDocument;}" << endl;
+void Plotter::addECMAFunction()
+{
+	fig << "<script> <![CDATA[  " << endl;
+	fig << "function init(evt) {" << endl;
+	fig << "if ( window.svgDocument == null ) {" << endl;
+	fig << "svgDocument = evt.target.ownerDocument;}" << endl;
 		fig << "tooltip = svgDocument.getElementById('tooltip');}" << endl;
 		fig << "function ShowTooltip(evt) {" << endl;
 		fig << "tooltip.setAttributeNS(null,\"x\",evt.clientX+10);" << endl;
@@ -767,7 +767,7 @@ namespace flopoco
 		for(unsigned i=0; i<bits.size(); i++)
 		{
 
-			//REPORT(INFO, "wtf" << i);
+
 
 			if(bits[i].size()>0)
 			{
@@ -778,7 +778,6 @@ namespace flopoco
 				for(list<WeightedBit*>::iterator it = bits[i].begin(); it!=bits[i].end(); ++it)
 				{
 
-					//REPORT(INFO, "in middle call " << (*it)->getName());
 
 					if(it==bits[i].begin())
 					{
@@ -797,11 +796,7 @@ namespace flopoco
 						}
 					}
 
-					//REPORT(INFO, "after middle call " << (*it)->getName());
 
-					//int color;
-
-					//if ((*it)->getType()==)
 
 
 					int cy = (*it)->getCycle();
@@ -811,10 +806,7 @@ namespace flopoco
 						drawBit(cnt, i, turnaroundX, offsetY, color, cy, cp, (*it)->getName());
 						cnt++;
 					}
-					//REPORT(INFO, cp);
-					//cnt++;
 
-					//REPORT(INFO, "after call to drawBit " << i);
 
 				}
 			}
