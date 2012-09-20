@@ -107,7 +107,7 @@ namespace flopoco
 		if(c1==0)
 		{
 			int k=1;
-			WeightedBit **bb;
+			WeightedBit **bb=0;
 			for(list<WeightedBit*>::iterator it = bits[w].begin(); it!=bits[w].end(); ++it)
 			{
 				if (k==c0)
@@ -116,6 +116,7 @@ namespace flopoco
 				}
 				k++;
 			}
+			if(bb==0) THROWERROR("unexpected condition");
 			REPORT(DEBUG, "in computeLatest");
 			return *bb;
 		}

@@ -218,7 +218,7 @@ namespace flopoco {
 	IntMultiplier::IntMultiplier (Operator* parentOp_, BitHeap* bitHeap_, Signal* x_, Signal* y_, int wX_, 
 			int wY_, int wOut_, int lsbWeight_, bool negate_, bool signedIO_, float ratio_):
 		Operator ( parentOp_->getTarget()), 
-		wXdecl(wX_), wYdecl(wY_), wOut(wOut_), ratio(ratio_),  maxError(0.0), 
+		wxDSP(0), wyDSP(0), wXdecl(wX_), wYdecl(wY_), wX(0), wY(0), wOut(wOut_), ratio(ratio_),  maxError(0.0), 
 		parentOp(parentOp_), bitHeap(bitHeap_), lsbWeight(lsbWeight_),
 		x(x_), y(y_), negate(negate_), signedIO(signedIO_) 
 	{
@@ -265,7 +265,7 @@ namespace flopoco {
 
 	// The constructor for a stand-alone operator
 	IntMultiplier::IntMultiplier (Target* target, int wX_, int wY_, int wOut_, bool signedIO_, float ratio_, map<string, double> inputDelays_, bool enableSuperTiles_):
-		Operator ( target, inputDelays_ ), wXdecl(wX_), wYdecl(wY_), wOut(wOut_), ratio(ratio_),  maxError(0.0), signedIO(signedIO_),enableSuperTiles(enableSuperTiles_) 
+		Operator ( target, inputDelays_ ), wxDSP(0), wyDSP(0), wXdecl(wX_), wYdecl(wY_), wX(0), wY(0), wOut(wOut_), wFull(0), ratio(ratio_),  maxError(0.0), signedIO(signedIO_),enableSuperTiles(enableSuperTiles_) 
 	{
 
 			isOperator=true;
@@ -1251,7 +1251,7 @@ namespace flopoco {
 
 	IntMultiplier::SmallMultTable::SmallMultTable(Target* target, int dx, int dy, int wO, bool negate, bool  signedX, bool  signedY ) : 
 		Table(target, dx+dy, wO, 0, -1, true), // logic table
-		dx(dx), dy(dy), negate(negate), signedX(signedX), signedY(signedY) {
+		dx(dx), dy(dy), wO(wO), negate(negate), signedX(signedX), signedY(signedY) {
 			ostringstream name; 
 			srcFileName="LogicIntMultiplier::SmallMultTable";
 			// No getUid() in the name: this kind of table should be added to the globalOpList 
