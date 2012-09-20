@@ -41,6 +41,13 @@ int main () {
  istringstream (maxx ) >> maxInput;
  
  
+ cout<<"\n Increment(only for second number)):  ";
+ string incr;
+ getline(cin, incr);
+ 
+ int increment;
+ 
+ istringstream (incr ) >> increment;
 
   ofstream myfile;
   cout<<"\n\nThis will take a time... be patient \n";
@@ -51,7 +58,7 @@ int main () {
 
    cout<<"Generating file for Virtex5... \n";
    for(wX=minInput;wX<=maxInput;wX++)
-    for(wY=wX;wY<=maxInput;wY=wY++)
+    for(wY=wX;wY<=maxInput;wY=wY+increment)
     {
       
       if(trunc=="1")
@@ -109,7 +116,7 @@ int main () {
   target="Virtex4";
   cout<<"Generating file for Virtex4... \n";
    for(wX=minInput;wX<=maxInput;wX++)
-    for(wY=wX;wY<=maxInput;wY=wY++)
+   for(wY=wX;wY<=maxInput;wY=wY+increment)
     {
       
       if(trunc=="1")
@@ -166,7 +173,7 @@ int main () {
   target="Spartan3";
   cout<<"Generating file for Spartan3... \n";
   for(wX=minInput;wX<=maxInput;wX++)
-    for(wY=wX;wY<=maxInput;wY=wY++)
+  for(wY=wX;wY<=maxInput;wY=wY+increment)
     {
       
       if(trunc=="1")
@@ -225,36 +232,54 @@ int main () {
   myfile << "#IntMultiplier\n";
   target="StratixII";
  cout<<"Generating file for Stratix2... \n";
- for(wX=1;wX<=60;wX=wX+3)
-    for(wY=1;wY<=60;wY=wY+5)
-        for(wOut=min(wX,wY);wOut<=wX+wY;wOut=wOut+10)
-          {
-            if(smth1==1)
-            {  smth1=0;
-               signedIO=1;
-            }
-            else
-            {   smth1=1;
-                signedIO=0;
-            }
+ for(wX=minInput;wX<=maxInput;wX++)
+  for(wY=wX;wY<=maxInput;wY=wY+increment)
+    {
+      
+      if(trunc=="1")
+      	wOut=wX+wY;
+      else
+      	wOut=min(wX,wY);	
+          
+        //signed/Unsigned variations  
+       if(smth1==1)
+       {  
+       		smth1=0;
+        	signedIO=1;
+       }
+       else
+       {
+       		smth1=1;
+       		signedIO=0;
+       }
 
-             for(ratio=0.0;ratio<=1.0;ratio=ratio+0.5)
-
-                {
-                    if(smth==1)
-                    {
-                        enableSuperTiles=1;
-                        smth=0;
-                    }
-                    else
-                    {
-                        enableSuperTiles=0;
-                        smth=1;
-                    }
-                    myfile<<"flopoco -target="<<target<<" IntMultiplier "<<wX<<" "<<wY<<" "<<wOut<<" "<<signedIO<<" "<<ratio<<" "<<enableSuperTiles<<"\n";
-                }
-          }
-
+		//ratio
+        if((wX>1)&&(wX<10))
+          	ratio=0.2;
+        else 
+          	if((wX>20)&&(wX<35))
+          		ratio=0.5;
+          	else
+           		if((wX>35)&&(wX<40))
+	           		ratio=0.7;		
+				else
+					ratio=1.0;
+             
+         //supertilesEnabling       
+         if(smth==1)
+         {
+            enableSuperTiles=1;
+            smth=0;
+         }
+         else
+         {
+         enableSuperTiles=0;
+         smth=1;
+         }
+         
+         myfile<<"flopoco -target="<<target<<" IntMultiplier "<<wX<<" "<<wY<<" "<<wOut<<" "<<signedIO<<" "<<ratio<<" "<<enableSuperTiles<<"\n";
+                
+      }
   myfile.close();
   /*******************************************************************************************************************************************/
 
@@ -265,7 +290,7 @@ int main () {
   cout<<"Generating file for Stratix3... \n";
   target="StratixIII";
    for(wX=minInput;wX<=maxInput;wX++)
-    for(wY=wX;wY<=maxInput;wY=wY++)
+    for(wY=wX;wY<=maxInput;wY=wY+increment)
     {
       
       if(trunc=="1")
@@ -320,7 +345,7 @@ int main () {
   cout<<"Generating file for Stratix4...\n";
   target="StratixIV";
  for(wX=minInput;wX<=maxInput;wX++)
-    for(wY=wX;wY<=maxInput;wY=wY++)
+   for(wY=wX;wY<=maxInput;wY=wY+increment)
     {
       
       if(trunc=="1")
