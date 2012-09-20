@@ -73,7 +73,9 @@ namespace flopoco{
 			/** ordering by availability time */
 			bool operator< (const WeightedBit& b); 
 			/** ordering by availability time */
-			bool operator<= (const WeightedBit& b); 
+			bool operator<= (const WeightedBit& b);
+			/** equality for availability time */
+			bool operator== (const WeightedBit& b);
 
 
 		private:

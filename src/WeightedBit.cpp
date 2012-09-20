@@ -67,6 +67,13 @@ namespace flopoco
 			return false;
 	} 
 	
+	bool WeightedBit::operator== (const WeightedBit& b){
+		if ((cycle==b.cycle) && (criticalPath==b.criticalPath)) 
+			return true;
+		else
+			return false;
+	} 
+	
 	double WeightedBit::getCriticalPath(int atCycle)
 	{
 #if 0
