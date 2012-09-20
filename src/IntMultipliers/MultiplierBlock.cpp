@@ -146,7 +146,8 @@ namespace flopoco{
 			//Altera chaining
 			else
 			{
-				if((next==NULL) && (previous==NULL) && (next->next==NULL) && (next->previous==NULL))
+				if((next==NULL) && (previous==NULL) && (next->next==NULL) && (next->previous==NULL) 
+						&& (wX==next->wX) && (wY==next->wY))
 				{
 					if((wX>18) || (wY>18))
 						return false;

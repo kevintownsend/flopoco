@@ -225,6 +225,8 @@ namespace flopoco{
 
 			void concatenateLSBColumns();
 
+			void printBitHeapStatus();
+
 		public: // TODO privatize
 			vector<list<WeightedBit*> > bits; /**<  The list is ordered by arrival time of the bits, i.e. lexicographic order on (cycle, cp)*/
 		private:
