@@ -1068,7 +1068,8 @@ namespace flopoco {
 					
 					if((dspSizeX > 9)&&(dspSizeY>0))
 					{
-						if(checkThreshold(topX, topY, botX, botY, dspSizeX, dspSizeY))
+						if(checkThreshold(topX, topY, botX, botY, dspSizeX, dspSizeY) &&
+								(min(botX-topX, botY-topY) >= max(dspSizeX, dspSizeY) ))
 						{
 							REPORT(INFO, topX << " " << topY << " " << botX << " " << botY);
 							addExtraDSPs(topX, topY, botX, botY, dspSizeX, dspSizeY);
@@ -1131,6 +1132,7 @@ namespace flopoco {
 			}
 
 		}
+
 		
 					
 		void IntMultiplier::buildHeapTiling()

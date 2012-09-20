@@ -282,7 +282,7 @@ namespace flopoco
 		int scalingFactor = 5;
 
 		//offsets for the X and Y axes
-		int offsetX = 100;
+		int offsetX = 150;
 		int offsetY = 180;
 
 		//file header
