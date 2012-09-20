@@ -723,8 +723,9 @@ namespace flopoco {
 
 			setCycle(0); // TODO FIXME for the virtual multiplier case where inputs can arrive later
 			setCriticalPath(initialCP);
-			// SmallMultTable is built to cost this:
-			manageCriticalPath( getTarget()->localWireDelay(chunksX) + getTarget()->lutDelay() ) ;  
+
+			// SmallMultTable is built to cost this (the fanout is neglected because it was underestimated anyway in the case of several multiplier blocks implemented as logic)
+			manageCriticalPath( /* getTarget()->localWireDelay(chunksX)*/getTarget()->localWireDelay() + getTarget()->lutDelay() ) ;  
 			for (int iy=0; iy<chunksY; iy++){
 
 				vhdl << tab << "-- Partial product row number " << iy << endl;

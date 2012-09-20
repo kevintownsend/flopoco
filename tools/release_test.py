@@ -21,7 +21,7 @@ import fileinput
 
 
 test_cases_per_combination = 1000
-useModelSim=False # if True, use modelsim; if False, use ghdl
+useModelSim=True #False # if True, use modelsim; if False, use ghdl
 testBench = "TestBenchFile"   #one of TestBench or TestBenchFile
 timeUntilDiscardTest = 5
 
