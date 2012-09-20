@@ -721,7 +721,9 @@ namespace flopoco {
 
 			}
 
-			setCycle(0); // TODO FIXME for the virtual multiplier case where inputs can arrive later
+			// TODO FIXME for the virtual multiplier case where inputs can arrive later
+			//	(also fix	void BitHeap::generateCompressorVHDL() for the constant bits, and for the supertile results)
+			setCycle(0);
 			setCriticalPath(initialCP);
 
 			// SmallMultTable is built to cost this (the fanout is neglected because it was underestimated anyway in the case of several multiplier blocks implemented as logic)

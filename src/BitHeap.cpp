@@ -710,21 +710,22 @@ namespace flopoco
 		generateSupertileVHDL();
 		// add the constant bits to the actual bit heap
 		//
+		op->setCycle(0); // TODO FIXME for the virtual multiplier case where inputs can arrive later
+
+		REPORT(DEBUG, "setCycle");
+		op->vhdl << endl << tab << "-- Adding the constant bits" << endl;
+
+		for (unsigned w=0; w<maxWeight; w++)
+			if (1 == ((constantBits>>w) & 1) )
+				addBit(w, "'1'","",2);
+
+
 		WeightedBit* firstBit = getFirstSoonestBit();
 		REPORT(DEBUG, "getFirstSoonestBit " << firstBit);
 		int minCycle = firstBit->getCycle();
 		double minCP = firstBit->getCriticalPath(minCycle);
 		op->setCycle(minCycle);
 		op->setCriticalPath(minCP);
-
-		REPORT(DEBUG, "setCycle");
-		op->vhdl << endl << tab << "-- Adding the constant bits" << endl;
-
-
-		for (unsigned w=0; w<maxWeight; w++)
-			if (1 == ((constantBits>>w) & 1) )
-				addBit(w, "'1'","",2);
-
 
 		if (getMaxHeight()<=1)        {
 			// If the bit heap is of max size 1, compression is done, just copy these bits to the result vector.
