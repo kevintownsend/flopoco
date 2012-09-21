@@ -139,6 +139,8 @@ namespace flopoco {
 #define outPortMap parentOp->outPortMap
 #define instance parentOp->instance
 #define manageCriticalPath parentOp->manageCriticalPath
+#define getCriticalPath parentOp->getCriticalPath
+#define setCycle parentOp->setCycle
 #define oplist parentOp->getOpListR()
 
 	int IntMultiplier::neededGuardBits(int wX, int wY, int wOut)
@@ -766,6 +768,7 @@ namespace flopoco {
 			setCriticalPath(initialCP);
 			// SmallMultTable is built to cost this:
 			manageCriticalPath( getTarget()->localWireDelay(chunksX) + getTarget()->lutDelay() ) ;  
+			cout << "???" << getCriticalPath() << endl;
 			for (int iy=0; iy<chunksY; iy++){
 
 				vhdl << tab << "-- Partial product row number " << iy << endl;

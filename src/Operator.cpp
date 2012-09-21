@@ -520,12 +520,12 @@ namespace flopoco{
 
 
 	void Operator::setCycle(int cycle, bool report) {
+		criticalPath_ = 0;
 		// lexing part
 		vhdl.flush(currentCycle_);
 		if(isSequential()) {
 			currentCycle_=cycle;
 			vhdl.setCycle(currentCycle_);
-			criticalPath_ = 0;
 			if(report){
 				vhdl << tab << "----------------Synchro barrier, entering cycle " << currentCycle_ << "----------------" << endl ;
 			}
@@ -752,15 +752,21 @@ namespace flopoco{
 
 	bool Operator::manageCriticalPath(double delay, bool report){
 		//		criticalPath_ += delay;
-		if ( target_->ffDelay() + (criticalPath_ + delay) > (1.0/target_->frequency())){
-			nextCycle(report); //TODO Warning
-			criticalPath_ = min(delay, 1.0/target_->frequency());
-			return true;
-		}
-		else{
-			criticalPath_ += delay;
-			return false;
-		}
+				if(isSequential()) {
+					if ( target_->ffDelay() + (criticalPath_ + delay) > (1.0/target_->frequency())){
+						nextCycle(report); //TODO Warning
+						criticalPath_ = min(delay, 1.0/target_->frequency());
+						return true;
+					}
+					else{
+						criticalPath_ += delay;
+						return false;
+					}
+				}
+				else {
+					criticalPath_ += delay;
+					return false;
+				}
 	}
 
 	
