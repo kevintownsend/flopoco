@@ -1478,7 +1478,7 @@ namespace flopoco
 		}
 		//=============================
 
-
+#if 0 // COMPRESS WITH ADD3
 		//--------------- Compress with ADD3s ----------------------------------
 		REPORT(DEBUG,"starting compression with ternary adders");
 
@@ -1665,8 +1665,7 @@ namespace flopoco
 
 		//----------------------------------------------------------------------
 
-
-#if 0
+#else // COMPRESS WITH ADD3
 		for(unsigned i=minWeight; i<maxWeight; i++)
 		{
 			cnt[i]=0;
@@ -1679,7 +1678,7 @@ namespace flopoco
 			}
 
 		}
-#endif
+#endif// COMPRESS WITH ADD3
 
 		REPORT(DEBUG,"start compressing "<< maxWeight);
 		//Remaining structure must be compressed

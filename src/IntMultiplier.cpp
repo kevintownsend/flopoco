@@ -197,6 +197,7 @@ namespace flopoco {
 
 		// Halve number of cases by making sure wY<=wX:
 		// interchange x and y in case wY>wX
+	// TODO 1/ negate always the smaller, and 2/ complement Y then add Y to the bit heap
 
 		if(wYdecl> wXdecl)
 		{
@@ -857,6 +858,9 @@ namespace flopoco {
 						// If the result is in two's complement  
 						//    sign extend by adding ones on weights >= the MSB of the table, so its sign is propagated.
 						//    Also need to complement the sign bit
+
+
+						// The following comments are obsolete since we negate X at the beginning of the operator:
 						// Note that even when negate and tUU, the result is known negative, but it may be zero, so its actual sign is not known statically
 						// Note also that in this case (negate and tUU), the result overflows the dx+dy two's complement format.
 						// This is why tUU is never negated above, and we negate it below. A bit messy, but probably the most resource-efficient
