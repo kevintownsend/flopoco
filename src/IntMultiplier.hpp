@@ -127,7 +127,7 @@ if (submultiplier area)/(DSP area) is larger than r then use a DSP for it
 			*/
 			void buildHeapTiling();
 
-			void buildAlteraTiling(int blockTopX, int blockTopY, int blockBottomX, int blockBottomY, int dspIndex);
+			void buildAlteraTiling( int blockTopX, int blockTopY, int blockBottomX, int blockBottomY, int dspIndex);
 
 			void buildFancyTiling();
 
@@ -175,7 +175,8 @@ if (submultiplier area)/(DSP area) is larger than r then use a DSP for it
 			int signedIO;                   /**< true if the IOs are two's complement */
 			int multiplierUid;
 			void initialize(bool negate);     /**< initialization stuff common to both constructors*/
-			vector<MultiplierBlock*> localSplitVector;		
+			vector<MultiplierBlock*> localSplitVector;	
+			vector<int> multWidths;	
 			//vector<DSP*> dsps;
 			//ofstream fig;
 

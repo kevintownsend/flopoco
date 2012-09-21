@@ -198,7 +198,7 @@ namespace flopoco {
 		// Halve number of cases by making sure wY<=wX:
 		// interchange x and y in case wY>wX
 
-	if(wYdecl> wXdecl)
+		if(wYdecl> wXdecl)
 		{
 			wX=wYdecl;	 
 			wY=wXdecl;	 
@@ -216,14 +216,14 @@ namespace flopoco {
 				vhdl << tab <<" not(" << yname << "("<<0<<")) ;" << endl;
 
 
-					
+
 				vhdl << tab << declare(addUID("XX"), wX, true) << " <= " << xneg<<" + '1'  ;" << endl;
 
-				}
-			
+			}
+
 			vhdl << tab << declare(addUID("YY"), wY, true) << " <= " << xname << " ;" << endl;	 
-		
-		
+
+
 		}
 		else
 		{
@@ -243,8 +243,8 @@ namespace flopoco {
 
 				vhdl << tab <<" not(" << xname << "("<<0<<")) ;" << endl;
 				vhdl << tab << declare(addUID("XX"), wX, true) << " <= " << xneg<<" + '1'  ;" << endl;
-						}	
-			
+			}	
+
 			vhdl << tab << declare(addUID("YY"), wY, true) << " <= " << yname << ";" << endl;	 
 		}		
 	}
@@ -541,7 +541,7 @@ namespace flopoco {
 			else
 			{
 #endif
-			buildTiling();
+				buildTiling();
 				//buildLogicOnly();
 				//buildHeapLogicOnly(0,0,50,25,2);
 
@@ -583,11 +583,52 @@ namespace flopoco {
 	/**************************************************************************/
 	void IntMultiplier::buildTiling() 
 	{
-
+		int* multiplierWidth;
+		int size;	
 		if(parentOp->getTarget()->getVendor()=="Altera")
 		{	
-			buildAlteraTiling(0,0,wX,wY,0);
+			if (parentOp->getTarget()->getID()=="StratixII")
+			{
+				StratixII* t = (StratixII*)parentOp->getTarget();
+				multiplierWidth = t->getDSPMultiplierWidths();
+				size = t->getNrDSPMultiplier();	
+
+			}
+			else
+				if(parentOp->getTarget()->getID()=="StratixIII")
+				{
+					StratixIII* t = (StratixIII*)parentOp->getTarget();
+					multiplierWidth = t->getDSPMultiplierWidths();
+					size = t->getNrDSPMultiplier();	
+
+				}
+				else
+					if(parentOp->getTarget()->getID()=="StratixIV")
+					{
+						StratixIV* t = (StratixIV*)parentOp->getTarget();
+						multiplierWidth = t->getDSPMultiplierWidths();
+						size = t->getNrDSPMultiplier();	
+
+					}
+			//add Altera boards here
+					else
+					{
+						StratixII* t = (StratixII*)parentOp->getTarget();
+						multiplierWidth = t->getDSPMultiplierWidths();
+						size = t->getNrDSPMultiplier();	
+					}
+
+
+			for(int i=0; i<size; i++)
+				multWidths.push_back(multiplierWidth[i]);
+
+			buildAlteraTiling(0, 0 ,wX ,wY ,0 );
+
+
+
+
 		}
+
 		else
 		{
 			if((!signedIO)&&((wX==41)&&(wY==41)&&(wFull-wOut-g==0)))
@@ -597,10 +638,13 @@ namespace flopoco {
 		}
 		//adding the round bit
 		//bitHeap->getPlotter()->plotMultiplierConfiguration(getName(), localSplitVector, wX, wY, wOut, g);
-		if(g>0) {
+		REPORT(DEBUG, "before guard bit");
+		if(g>0) 
+		{
 			int weight=wFull-wOut-1- weightShift;
 			if(negate)
 				bitHeap->subConstantOneBit(lsbWeight-g + weight);
+			
 			else
 				bitHeap->addConstantOneBit(lsbWeight-g + weight);
 		}
@@ -933,7 +977,7 @@ namespace flopoco {
 		else
 			topy=topY;
 
-		//if the truncation line splits the block, than the used block is smaller, the coordinates need to be updated
+		//if the truncation line splits the block, then the used block is smaller, the coordinates need to be updated
 		if((botx+boty>wFull-wOut-g)&&(topx+topy<wFull-wOut-g))
 		{
 			int x=topx;
@@ -1033,47 +1077,29 @@ namespace flopoco {
 
 
 
-	void IntMultiplier::buildAlteraTiling(int blockTopX, int blockTopY, int blockBottomX, int blockBottomY, int dspIndex)
+	void IntMultiplier::buildAlteraTiling(int blockTopX, int blockTopY, int blockBottomX, 
+			int blockBottomY, int multIndex)
 	{
+		REPORT(DEBUG, "in Altera tiling");
 		int dspSizeX,dspSizeY;
-		int* multiplierWidth;
-		int size;
-		//Target* t;// = parentOp->getTarget();			
-		if (parentOp->getTarget()->getID()=="StratixII")
-		{
-			StratixII* t = (StratixII*)parentOp->getTarget();
-			multiplierWidth = t->getDSPMultiplierWidths();
-			size = t->getNrDSPMultiplier();	
 
-		}
-		else
-			if(parentOp->getTarget()->getID()=="StratixIII")
-			{
-				StratixIII* t = (StratixIII*)parentOp->getTarget();
-				multiplierWidth = t->getDSPMultiplierWidths();
-				size = t->getNrDSPMultiplier();	
+		int size = multWidths.size();
 
-			}
-			else
-				if(parentOp->getTarget()->getID()=="StratixIV")
-				{
-					StratixIV* t = (StratixIV*)parentOp->getTarget();
-					multiplierWidth = t->getDSPMultiplierWidths();
-					size = t->getNrDSPMultiplier();	
+		dspSizeX = multWidths[size-multIndex-1];
 
-				}
-		//add Altera boards here
-				else
-				{
-					StratixII* t = (StratixII*)parentOp->getTarget();
-					multiplierWidth = t->getDSPMultiplierWidths();
-					size = t->getNrDSPMultiplier();	
-				}
-
-		dspSizeX = multiplierWidth[size-dspIndex-1];
 		//FIXME
 		if(dspSizeX==12)
 			dspSizeX=9;
+		int sizeLimit;
+		if(signedIO)
+		{
+			sizeLimit=18;
+			dspSizeX=18;
+		}
+		else
+			sizeLimit=9;
+
+		REPORT(DEBUG, "dspSizeX=" << dspSizeX);
 		dspSizeY=dspSizeX;
 		int dsX=dspSizeX;
 		int dsY=dspSizeY;
@@ -1110,9 +1136,9 @@ namespace flopoco {
 				else
 					dspSizeY=dsY;		
 
+				REPORT(DEBUG, "in for    dspSizeX=" << dspSizeX);
 
-
-				if((dspSizeX > 9)&&(dspSizeY>0))
+				if(dspSizeX > sizeLimit)
 				{
 					if(checkThreshold(topX, topY, botX, botY, dspSizeX, dspSizeY) &&
 							(min(botX-topX, botY-topY) >= max(dspSizeX, dspSizeY) ))
@@ -1122,7 +1148,7 @@ namespace flopoco {
 					}
 					else
 					{
-						buildAlteraTiling(topX, topY, botX, botY, dspIndex+1);
+						buildAlteraTiling(topX, topY, botX, botY, multIndex+1);
 					}
 				}
 				else
