@@ -963,8 +963,8 @@ namespace flopoco {
 	void IntMultiplier::addExtraDSPs(int topX, int topY, int botx, int boty,int wxDSP,int wyDSP)
 	{
 
-		REPORT(INFO, "in addExtraDSPs");
-		REPORT(INFO, "topX=" << topX << " topY=" << topY << " botX=" << botx << " botY=" << boty);
+		//REPORT(INFO, "in addExtraDSPs");
+		//REPORT(INFO, "topX=" << topX << " topY=" << topY << " botX=" << botx << " botY=" << boty);
 		int topx=topX,topy=topY;
 		//if the block is on the margins of the multipliers, then the coordinates have to be reduced.
 		if(topX<0)
@@ -1039,6 +1039,7 @@ namespace flopoco {
 	/** ratio(threshold) = says what percentage of 1 DSP area is allowed to be lost**/
 	bool IntMultiplier::checkThreshold(int topX, int topY, int botX, int botY,int wxDSP,int wyDSP)
 	{
+	
 
 		int widthX=(botX-topX);
 		int widthY=(botY-topY);
@@ -1062,7 +1063,10 @@ namespace flopoco {
 			triangle=0.0;
 
 		//the final area which is used
-		blockArea=widthX*widthY-triangle;		
+		blockArea=widthX*widthY-triangle;
+		
+		if(parentOp->getTarget()->getVendor()=="Altera")
+			blockArea -= (wxDSP*wyDSP) - (widthX*widthY);		
 
 		//checking according to ratio/area
 		if(blockArea>=(1.0-ratio)*dspArea)
@@ -1099,7 +1103,7 @@ namespace flopoco {
 		else
 			sizeLimit=9;
 
-		REPORT(DEBUG, "dspSizeX=" << dspSizeX);
+
 		dspSizeY=dspSizeX;
 		int dsX=dspSizeX;
 		int dsY=dspSizeY;
@@ -1136,12 +1140,15 @@ namespace flopoco {
 				else
 					dspSizeY=dsY;		
 
-				REPORT(DEBUG, "in for    dspSizeX=" << dspSizeX);
+				//REPORT(INFO, "in for    dspSizeX=" << dspSizeX);
 
 				if(dspSizeX > sizeLimit)
 				{
-					if(checkThreshold(topX, topY, botX, botY, dspSizeX, dspSizeY) &&
-							(min(botX-topX, botY-topY) >= max(dspSizeX, dspSizeY) ))
+					if(dspSizeX==18)
+						REPORT(INFO, "at 18 =>  " << topX << " " << topY << " " << botX << " " << botY << " " << botX-topX << " " << botY - topY 
+								<< " " << (min(botX-topX, botY-topY) >= max(dspSizeX, dspSizeY) ));
+
+					if(checkThreshold(topX, topY, botX, botY, dspSizeX, dspSizeY) )
 					{
 
 						addExtraDSPs(topX, topY, botX, botY, dspSizeX, dspSizeY);
