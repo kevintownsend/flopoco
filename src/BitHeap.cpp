@@ -810,6 +810,8 @@ namespace flopoco
 							applyAdder(minWeight, i-1, false);
 
 							concatenateLSBColumns();
+
+							//REPORT(DEBUG, "here" << maxWeight << " " << i);
 						}
 
 
@@ -819,7 +821,7 @@ namespace flopoco
 
 						while(i<maxWeight)
 						{
-							//REPORT(INFO, "i= "<< i << " cnt= " << cnt[i]);
+							REPORT(DEBUG, "i= "<< i << " cnt= " << cnt[i]);
 							// Now we are sure cnt[i] is 3
 							if (i==maxWeight-1)
 							{
@@ -830,7 +832,7 @@ namespace flopoco
 							}
 							else
 							{
-								if((cnt[i+1]==3) || (cnt[i+1]==1))
+								if((cnt[i+1]==3) || (cnt[i+1]==1) || (cnt[i+1]==0))
 								{
 
 
@@ -1680,6 +1682,7 @@ namespace flopoco
 		}
 #endif// COMPRESS WITH ADD3
 
+
 		REPORT(DEBUG,"start compressing "<< maxWeight);
 		//Remaining structure must be compressed
 		unsigned j;
@@ -1766,7 +1769,7 @@ namespace flopoco
 		int zerosX=0;
 		int zerosY=0;
 
-		REPORT(INFO,"LENGHTS"<<m->getwX()<<" "<<m->getwY());
+		//REPORT(INFO,"LENGHTS"<<m->getwX()<<" "<<m->getwY());
 
 		if((signedIO) && (op->getTarget()->getVendor()=="Xilinx"))
 		{
