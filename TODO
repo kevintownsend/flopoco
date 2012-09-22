@@ -2,6 +2,13 @@ TODO file for FloPoCo
 
 Here and there, fix VHDL style issues needed for whimsical simulators or synthesizers. See doc/VHDLStyle.txt
 
+BitHeapization (which means providing a bitheap-only constructor:
+* all the KCMs
+* PolyEval
+* FixSinCos
+* FPExp
+* HOTBM
+
 Testbench
 * Bug on outputs that are bits with isBus false and  multiple-valued  
 	(see the P output of Collision in release 2.1.0)

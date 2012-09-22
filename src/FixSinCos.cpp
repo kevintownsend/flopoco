@@ -1,4 +1,7 @@
-#include "FloPoCo.hpp"
+#include "ConstMult/FixRealKCM.hpp"
+#include "IntMultiplier.hpp"
+#include "FixedPointFunctions/FunctionTable.hpp"
+#include "IntConstDiv.hpp"
 
 // works only with sollya
 #ifdef HAVE_SOLLYA

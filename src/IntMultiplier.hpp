@@ -165,7 +165,6 @@ if (submultiplier area)/(DSP area) is larger than r then use a DSP for it
 			// TODO the three following variable pairs seem uglily redundant
 			Signal* x;
 			Signal* y; 
-			bool enableSuperTiles;//if supertiles are needed
 			string xname;
 			string yname;
 			string inputName1;
@@ -173,8 +172,9 @@ if (submultiplier area)/(DSP area) is larger than r then use a DSP for it
 			bool isOperator;                /**< if true this multiplier is a stand-alone operator, if false it just contributes to some BitHeap of another Operator */
 			bool negate;                    /**< if true this multiplier checkThresholds -xy */
 			int signedIO;                   /**< true if the IOs are two's complement */
+			bool enableSuperTiles;//if supertiles are needed
 			int multiplierUid;
-			void initialize(bool negate);     /**< initialization stuff common to both constructors*/
+			void initialize();     /**< initialization stuff common to both constructors*/
 			vector<MultiplierBlock*> localSplitVector;	
 			vector<int> multWidths;	
 			//vector<DSP*> dsps;

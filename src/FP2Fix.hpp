@@ -47,10 +47,10 @@ namespace flopoco{
       int wFI;
       /** are all numbers positive or not */
       int Signed;
-      /** The MSB for the output */
-      int MSBO; 
       /** The LSB for the output */
       int LSBO;
+      /** The MSB for the output */
+      int MSBO; 
       /** when true the output is not rounded */
       bool trunc_p;
 

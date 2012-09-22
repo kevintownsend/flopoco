@@ -2,6 +2,29 @@
 /*
    An integer multiplier mess for FloPoCo
 
+TODO in the virtual multiplier case, manage properly the case when the initial instant is not  0
+
+111101 100000 111110 010101 
+2 000000 000001 2 000101 000110 
+                         111011
+
+001001 100000 000010 100000 
+2 111101 111110 2 111000 111001 
+                         001000
+
+011000 100000 101001 101001 
+2 000001 000010 2 110101 110110 
+                         000001
+
+
+Zr = xr*yr - xi*yi
+Le bug c'est quand xi=100000
+dont l'opposé sur n bits n'existe pas.
+
+Ce bug est soluble dans la version à base de complémentation:
+not 00..001000000
+ =  11..110111111
++1= 11..111000000
 Authors:  Bogdan Pasca, being cleaned by F de Dinechin, Kinga Illyes and Bogdan Popa
 
 This file is part of the FloPoCo project
@@ -163,7 +186,7 @@ namespace flopoco {
 	}
 
 
-	void IntMultiplier::initialize(bool negate) 
+	void IntMultiplier::initialize() 
 	{
 		if(wOut<0 || wXdecl<0 || wYdecl<0) {
 			THROWERROR("negative input/output size");
@@ -188,66 +211,37 @@ namespace flopoco {
 		REPORT(DEBUG, "    g=" << g);
 
 		maxWeight = wOut+g;
-		//	if (lsbWeight<=g)
 		weightShift = wFull - maxWeight;
-		//	else
-		//	weightShift = wFull - wOut +lsbWeight-g;	
-
 
 
 		// Halve number of cases by making sure wY<=wX:
 		// interchange x and y in case wY>wX
-	// TODO 1/ negate always the smaller, and 2/ complement Y then add Y to the bit heap
+		// After which we negate y (the smaller) by 1/ complementing it and 2/  adding it back to the bit heap
 
-		if(wYdecl> wXdecl)
-		{
-			wX=wYdecl;	 
-			wY=wXdecl;	 
-			if(!negate)
-				vhdl << tab << declare(addUID("XX"), wX, true) << " <= " << yname << " ;" << endl;	 
-			else
-			{	//negate one input
-				string xneg=addUID("Xneg");
-				vhdl << tab << declare(xneg, wX, true)<<" <= ";
-				for(int i=wX-1;i>=1;i--)
-				{
-					vhdl << tab <<" not(" << yname << "("<<i<<")) & " << endl;
-				}
-
-				vhdl << tab <<" not(" << yname << "("<<0<<")) ;" << endl;
-
-
-
-				vhdl << tab << declare(addUID("XX"), wX, true) << " <= " << xneg<<" + '1'  ;" << endl;
-
-			}
-
-			vhdl << tab << declare(addUID("YY"), wY, true) << " <= " << xname << " ;" << endl;	 
-
-
+		string newxname, newyname;
+		if(wYdecl> wXdecl) {
+				wX=wYdecl;	 
+				wY=wXdecl;	 
+				newxname=yname;
+				newyname=xname;
 		}
-		else
-		{
+		else {
 			wX=wXdecl;	 
 			wY=wYdecl;
-			if(!negate)	 
-				vhdl << tab << declare(addUID("XX"), wX, true) << " <= " << xname << ";" << endl;	 
-			else
-			{
-				//negate one input
-				string xneg=addUID("Xneg");
-				vhdl << tab << declare(xneg, wX, true)<<" <= ";
-				for(int i=wX-1;i>=1;i--)
-				{
-					vhdl << tab <<" not(" << xname << "("<<i<<")) & " << endl;
-				}
+			newxname=xname;
+			newyname=yname;
+		}
 
-				vhdl << tab <<" not(" << xname << "("<<0<<")) ;" << endl;
-				vhdl << tab << declare(addUID("XX"), wX, true) << " <= " << xneg<<" + '1'  ;" << endl;
-			}	
+		// The larger of the two 
+		vhdl << tab << declare(addUID("XX"), wX, true) << " <= " << newxname << " ;" << endl;	 
 
-			vhdl << tab << declare(addUID("YY"), wY, true) << " <= " << yname << ";" << endl;	 
-		}		
+		// possibly negate the smaller
+		if(!negate)
+ 			vhdl << tab << declare(addUID("YY"), wY, true) << " <= " << newyname << " ;" << endl;	 
+		else {	
+			vhdl << tab << "-- we compute -xy as x(not(y)+1)" << endl;
+			vhdl << tab << declare(addUID("YY"), wY, true) << " <= not " << newyname << " ;" << endl;	 
+		}
 	}
 
 
@@ -287,7 +281,7 @@ namespace flopoco {
 		bitHeap->setSignedIO(signedIO);
 		//plotter->setBitHeap(bitHeap);
 
-		initialize(negate);
+		initialize();
 
 		fillBitHeap();
 
@@ -333,7 +327,7 @@ namespace flopoco {
 		xname="X";
 		yname="Y";
 
-		initialize(false);
+		initialize();
 		lsbWeight=g; // g was computed in initialize()
 
 		// Set up the IO signals
@@ -421,7 +415,7 @@ namespace flopoco {
 				manageCriticalPath( target()->localWireDelay(wX) + target()->adderDelay(wX+1) );
 
 				vhdl << tab << addUID("R") <<" <= (" << zg(wX+1)  << " - ("<<addUID("XX")<< of(wX-1) 
-					<< " & "<<addUID("XX")<<")) when "<<addUID("YY")<<"(0)='1' else "<< zg(wX+1,0)<<";"<<endl;	
+				     << " & "<<addUID("XX")<<")) when "<<addUID("YY")<<"(0)='1' else "<< zg(wX+1,0)<<";"<<endl;	
 			}
 			else {
 				manageCriticalPath( target()->localWireDelay(wX) + target()->lutDelay() );
@@ -473,103 +467,42 @@ namespace flopoco {
 		} 
 
 
-
-
 		// Now getting more and more generic
-		if(useDSP) 
-		{
-			//test if the multiplication fits into one DSP
-			// TODO Kinga: Do we really need this test? Isn't it covered by the general case?
-
-			target()->getDSPWidths(wxDSP, wyDSP, signedIO);
-			bool testForward, testReverse, testFit;
-			testForward     = (wX<=wxDSP)&&(wY<=wyDSP);
-			testReverse = (wY<=wxDSP)&&(wX<=wyDSP);
-			testFit = testForward || testReverse;
 
 
-			REPORT(DETAILED,"useDSP");
+
 #if 0
-			if (testFit)
-			{
+		// Finish the negation of the smaller input by adding X (since -yx=not(y)x +x)
+		setCycle(0); // TODO FIXME for the virtual multiplier case where inputs can arrive later
+		setCriticalPath(initialCP);
 
-
-				if( checkThreshold(0,0,wX, wY,wxDSP,wyDSP))
-				{	
-					manageCriticalPath(target()->DSPMultiplierDelay());
-					/*if (signedIO)
-					  {
-					  vhdl << tab << declare(addUID("rfull"), wFull+1) << " <= "<<addUID("XX")<<"  *  "
-					  << addUID("YY")<<"; -- that's one bit more than needed"<<endl; 
-					  vhdl << tab << addUID("R")<<" <= "<< addUID("rfull") <<range(wFull-1, wFull-wOut)<<";"<<endl;	
-					  outDelayMap[addUID("R")] = getCriticalPath();
-					  }
-					  else //sign extension is necessary for using use ieee.std_logic_signed.all; 
-					  {	// for correct inference of Xilinx DSP functions
-
-					//vhdl << tab << declare(addUID("rfull"), wX + wY + 2) << " <= (\"0\" & "<<addUID("XX")<<
-					//") * (\"0\" &"<<addUID("YY")<<");"<<endl;
-					*/
-
-					int topx=wX-wxDSP;
-					int topy=wY-wyDSP;
-
-
-
-					stringstream inx,iny;
-					inx<<addUID("XX");
-					iny<<addUID("YY");
-
-					MultiplierBlock* m = new MultiplierBlock(wxDSP,wyDSP,topx, topy,
-							inx.str(),iny.str(),weightShift + lsbWeight-g);
-					m->setNext(NULL);		
-					m->setPrevious(NULL);			
-					localSplitVector.push_back(m);
-					bitHeap->addMultiplierBlock(m);
-					bitHeap->getPlotter()->plotMultiplierConfiguration(getName(), localSplitVector, wX, wY, wOut, g);
-					//	}	
-
-				}
-
-
-				else
-				{
-					// For this target and this size, better do a logic-only implementation
-					REPORT(DETAILED,"before buildlogic only");
-					buildLogicOnly();
+		// TODO FIXME need to sign extend
+		if(negate) {
+			for(int i=0; i<wX; i++) {
+				int w = lsbWeight + i-weightShift;
+				if(w>=0) {
+					ostringstream rhs;
+					rhs << addUID("XX") << of(i);
+					bitHeap->addBit(w, rhs.str());
 				}
 			}
-			else
-			{
+		}
 #endif
+
+		if(useDSP) 
+			{
+				REPORT(DETAILED,"useDSP");
+				target()->getDSPWidths(wxDSP, wyDSP, signedIO);
 				buildTiling();
-				//buildLogicOnly();
-				//buildHeapLogicOnly(0,0,50,25,2);
+			}
 
-				//		}
-		} 
-
-
-
-		else 
-		{// This target has no DSP, going for a logic-only implementation
-
+		else {// This target has no DSP, going for a logic-only implementation	
 			buildLogicOnly();
 		}
 
-		bitHeap->getPlotter()->plotMultiplierConfiguration(getName(), localSplitVector, wX, wY, wOut, g);
-	}
 
 
-
-
-
-
-	/**************************************************************************/
-	void IntMultiplier::buildLogicOnly() 
-	{
-		buildHeapLogicOnly(0,0,wX,wY);
-		//adding the round bit
+		//add the round bit
 		if(g>0) {
 			int weight=wFull-wOut-1- weightShift;
 			if(negate)
@@ -577,6 +510,18 @@ namespace flopoco {
 			else
 				bitHeap->addConstantOneBit(lsbWeight-g + weight);
 		}
+
+		
+		bitHeap->getPlotter()->plotMultiplierConfiguration(getName(), localSplitVector, wX, wY, wOut, g);
+	}
+	
+
+
+
+	/**************************************************************************/
+	void IntMultiplier::buildLogicOnly() 
+	{
+		buildHeapLogicOnly(0,0,wX,wY);
 	}
 
 
@@ -637,20 +582,6 @@ namespace flopoco {
 			else
 				buildHeapTiling();
 		}
-		//adding the round bit
-		//bitHeap->getPlotter()->plotMultiplierConfiguration(getName(), localSplitVector, wX, wY, wOut, g);
-		REPORT(DEBUG, "before guard bit");
-		if(g>0) 
-		{
-			int weight=wFull-wOut-1- weightShift;
-			if(negate)
-				bitHeap->subConstantOneBit(lsbWeight-g + weight);
-			
-			else
-				bitHeap->addConstantOneBit(lsbWeight-g + weight);
-		}
-
-
 	}
 
 
@@ -1117,7 +1048,7 @@ namespace flopoco {
 
 		int verticalDSP=height/dspSizeY + 1;
 		int horizontalDSP=width/dspSizeX + 1;
-		int restY=height-verticalDSP*dspSizeY;
+		//int restY=height-verticalDSP*dspSizeY;
 		int botX=blockBottomX;
 		int botY=blockBottomY;
 		int topX=botX-dspSizeX;
