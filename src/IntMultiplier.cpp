@@ -654,7 +654,7 @@ namespace flopoco {
 	void IntMultiplier::buildHeapLogicOnly(int topX, int topY, int botX, int botY,int blockUid)
 	{
 
-
+		REPORT(INFO,"buildheaplogiconly called for "<<topX<<" "<<topY<<" "<<botX<<" "<<botY);
 		Target *target=getTarget();
 		if(blockUid==-1)
 			blockUid++;    /// ???????????????
@@ -678,6 +678,8 @@ namespace flopoco {
 		int chunksY =  int(ceil( ( 1+ double(wY-dy) / (double) dy) ));
 		int sizeXPadded=dx*chunksX; 
 		int sizeYPadded=dy*chunksY;
+		REPORT(INFO, "sizeXpadded"<<sizeXPadded);	
+
 		int padX=sizeXPadded-wX;
 		int padY=sizeYPadded-wY;
 
@@ -898,8 +900,8 @@ namespace flopoco {
 	void IntMultiplier::addExtraDSPs(int topX, int topY, int botx, int boty,int wxDSP,int wyDSP)
 	{
 
-		//REPORT(INFO, "in addExtraDSPs");
-		//REPORT(INFO, "topX=" << topX << " topY=" << topY << " botX=" << botx << " botY=" << boty);
+		REPORT(INFO, "in addExtraDSPs");
+		REPORT(INFO, "topX=" << topX << " topY=" << topY << " botX=" << botx << " botY=" << boty);
 		int topx=topX,topy=topY;
 		//if the block is on the margins of the multipliers, then the coordinates have to be reduced.
 		if(topX<0)
@@ -932,6 +934,8 @@ namespace flopoco {
 			}	
 		}	
 
+		REPORT(INFO,"in addextradsps after truncation line sets "<< topx <<" "<<topy<<" "<<botx<<" "<<boty);
+
 		//now is the checking against the ratio
 		if(checkThreshold(topx,topy,botx,boty,wxDSP,wyDSP))
 		{  
@@ -952,18 +956,8 @@ namespace flopoco {
 		}
 		else
 		{
-#if 0	
-			topx=botx-wxDSP;
-			topy=boty-wyDSP;
-
-			if(topx<0)
-				topx=0;
-
-			if(topy<0)
-				topy=0;
-#endif
-
 			//build logic	
+			if((topx<botx)&&(topy<boty))
 			buildHeapLogicOnly(topx,topy,botx,boty,parentOp->getNewUId());	
 		}
 	}	
@@ -975,35 +969,38 @@ namespace flopoco {
 	bool IntMultiplier::checkThreshold(int topX, int topY, int botX, int botY,int wxDSP,int wyDSP)
 	{
 	
-
+		REPORT(INFO, "in checktreshhold "<<topX<<" "<<topY<<" "<<botX<<" "<<botY);
 		int widthX=(botX-topX);
 		int widthY=(botY-topY);
 		double blockArea;
 		double triangle=0.0;
 		double dspArea=wxDSP*wyDSP;
 
-		//** if the truncation line splits the block, we need to substract the area of the lost corner**/		
+		//** if the truncation line splits the block, we need to subtract the area of the lost corner**/		
 		//***the triangle is the area which will be lost from the block area***//
 		//**computing the triangle's edge (45degree => area=(edge^2)/2) ***//		
 		int x=topX;
 		int y=topY;
-
+		
 		while(x+y<wFull-wOut-g)
 			x++;
-
+		REPORT(INFO,"blocArea full "<<widthX*widthY);
+		REPORT(INFO,"x= "<<x<<" topX= "<<topX);
 		//computing the triangle's area
 		if(topX+topY<=wFull-wOut-g)
 			triangle=((x-topX)*(x-topX))/2;
 		else
 			triangle=0.0;
-
+		//REPORT(INFO, "triangle=" << triangle);
 		//the final area which is used
 		blockArea=widthX*widthY-triangle;
-		
-		if(parentOp->getTarget()->getVendor()=="Altera")
-			blockArea -= (wxDSP*wyDSP) - (widthX*widthY);		
-
+		REPORT(INFO, "* blockArea=" << blockArea);
+		//if((parentOp->getTarget()->getVendor()=="Altera") && 
+		//	((wxDSP >=widthX) || (wyDSP >= widthY)))
+		//	blockArea -= (wxDSP*wyDSP)  (widthX*widthY);		
+		//REPORT(INFO, "**blockArea=" << blockArea);
 		//checking according to ratio/area
+
 		if(blockArea>=(1.0-ratio)*dspArea)
 		{
 			return true;
@@ -1043,8 +1040,8 @@ namespace flopoco {
 		int dsX=dspSizeX;
 		int dsY=dspSizeY;
 
-		int width=blockBottomX-blockTopX-1;
-		int height=blockBottomY-blockTopY-1;
+		int width=blockBottomX-blockTopX+1;
+		int height=blockBottomY-blockTopY+1;
 
 		int verticalDSP=height/dspSizeY + 1;
 		int horizontalDSP=width/dspSizeX + 1;
@@ -1053,6 +1050,8 @@ namespace flopoco {
 		int botY=blockBottomY;
 		int topX=botX-dspSizeX;
 		int topY=botY-dspSizeY;
+
+		REPORT(INFO,"verticaldsps= "<<verticalDSP<<" hordsps= "<<horizontalDSP);
 
 		for(int i=0;i<verticalDSP;i++)
 		{
@@ -1079,14 +1078,13 @@ namespace flopoco {
 
 				if(dspSizeX > sizeLimit)
 				{
-					if(dspSizeX==18)
-						REPORT(INFO, "at 18 =>  " << topX << " " << topY << " " << botX << " " << botY << " " << botX-topX << " " << botY - topY 
-								<< " " << (min(botX-topX, botY-topY) >= max(dspSizeX, dspSizeY) ));
+					REPORT(INFO, "MAXIMUM CHECKS " << dspSizeX <<" "<< dspSizeY << " " << botX-botY<<" "<<topX-topY);		
 
-					if(checkThreshold(topX, topY, botX, botY, dspSizeX, dspSizeY) )
-					{
-
-						addExtraDSPs(topX, topY, botX, botY, dspSizeX, dspSizeY);
+					 if(checkThreshold(topX, topY, botX, botY, dspSizeX, dspSizeY)
+						&& (min(botY-topY+1,botX-topX+1)>=max(dspSizeX,dspSizeY)))
+					{	REPORT(INFO,"22222222222222222222222222222222222222");
+						if((topX<botX)&&(topX<botX))		
+							addExtraDSPs(topX, topY, botX, botY, dspSizeX, dspSizeY);
 					}
 					else
 					{
@@ -1095,8 +1093,14 @@ namespace flopoco {
 				}
 				else
 				{
-
-					addExtraDSPs(topX, topY, botX, botY, dspSizeX, dspSizeY);
+					
+					if((topX<botX)&&(topY<botY))
+					{
+						REPORT(INFO, "at " << dspSizeX << " =>  " << topX << " " << topY 
+							<< " " << botX << " " << botY << " " 
+							<< botX-topX << " " << botY - topY );						
+						addExtraDSPs(topX, topY, botX, botY, dspSizeX, dspSizeY);
+					}
 				}
 
 				botX = topX;
