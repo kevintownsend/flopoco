@@ -125,11 +125,11 @@ if (submultiplier area)/(DSP area) is larger than r then use a DSP for it
 
 			/**	builds the heap using DSP blocks) 
 			*/
-			void buildHeapTiling();
+			void buildXilinxTiling();
 
 			void buildAlteraTiling( int blockTopX, int blockTopY, int blockBottomX, int blockBottomY, int dspIndex);
 
-			void buildFancyTiling();
+			void buildFancy41x41Tiling();
 
 
 			/** is called when no more dsp-s fit in a row, because of the truncation line

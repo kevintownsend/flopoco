@@ -52,7 +52,7 @@ All rights reserved.
    Who calls whom
    the constructor calls buildLogicOnly or buildTiling
    (maybe these should be unified some day)
-   They call buildHeapTiling or buildHeapLogicOnly
+   They call buildXilinxTiling or buildAlteraTiling or buildHeapLogicOnly
 
 */
 
@@ -575,19 +575,19 @@ namespace flopoco {
 
 		}
 
-		else
+		else  // Xilinx here
 		{
 			if((!signedIO)&&((wX==41)&&(wY==41)&&(wFull-wOut-g==0)))
-				buildFancyTiling();
+				buildFancy41x41Tiling();
 			else
-				buildHeapTiling();
+				buildXilinxTiling();
 		}
 	}
 
 
 	//the fancy tiling is used only for a hardwired case 41 41 82 
 	/***********************************************************************/
-	void IntMultiplier::buildFancyTiling()
+	void IntMultiplier::buildFancy41x41Tiling()
 	{
 		//THROWERROR("fancy tiling not implemented yet");
 
@@ -1153,7 +1153,7 @@ namespace flopoco {
 
 
 
-	void IntMultiplier::buildHeapTiling()
+	void IntMultiplier::buildXilinxTiling()
 	{
 
 		int widthXX,widthX;//local wxDSP

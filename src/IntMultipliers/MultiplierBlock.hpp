@@ -19,16 +19,6 @@ namespace flopoco {
 	{
 	public: 
 		
-		class SmallMultTable: public Table 
-		{
-			public:
-			
-			int dx, dy, wO;
-			bool signedIO;
-			SmallMultTable(Target* target, int dx, int dy, int wO, bool signedIO=false );
-			mpz_class function(int x);
-		};
-	
 		/**
 		 * The default constructor
 		 */
@@ -150,17 +140,13 @@ namespace flopoco {
 		bool operator <= (MultiplierBlock* b);
 
 
-		void invalidate();
-
-
-		bool getValid();	
 
 		
 	private:
 			
 		int wX; 							/**< x size */
 		int wY; 							/**< y size */
-		int topX; 							/**< x position (top right corner) */
+		int topX; 							/**< x position in a larger multiplier (top right corner) */
 		int topY; 							/**< y position (top right corner */
 		int cycle;							/**< cycle */
 		MultiplierBlock* previous;
@@ -171,7 +157,6 @@ namespace flopoco {
 		int weightShift;					/**<wFull-wOut-g*/
 		string inputName1, inputName2;		/**<names of the inputs*/
 		string srcFileName;
-		bool validForVHDLGenerate;
 	};
 
 }

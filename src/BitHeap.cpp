@@ -215,6 +215,11 @@ namespace flopoco
 
 
 
+
+
+
+	// TODO This code is a bit too rigid, it assumes supertiles are chains, whereas some Altera supertiles are not.
+
 	void BitHeap::buildSupertiles()
 	{
 
@@ -231,6 +236,9 @@ namespace flopoco
 			{
 				//if 2 blocks can be chained, then the chaining is done ascending by weight.
 				//TODO improve the chaining
+				// - pass the full target
+				// - use the "double multiplier mode" on Altera
+				// ...
 				bool chain=mulBlocks[i]->canBeChained(mulBlocks[j], isXilinx);
 				//REPORT(INFO, chain);
 				//REPORT(INFO, mulBlocks[i]->getWeight())
