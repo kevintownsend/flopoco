@@ -1488,12 +1488,11 @@ namespace flopoco
 		}
 		//=============================
 
-#if 0 // COMPRESS WITH ADD3
 		//--------------- Compress with ADD3s ----------------------------------
 		REPORT(DEBUG,"starting compression with ternary adders");
 
 		//search for the starting column
-		bool bitheapCompressible = op->getTarget()->hasFastLogicTernaryAdders();//(op->getTarget()->getVendor()=="Altera") ? true : false;
+		bool bitheapCompressible = (op->getTarget()->getVendor()=="Altera") ? false : false;
 		unsigned int lastCompressed = (adderMaxWeight > minWeight) ? adderMaxWeight+1 : minWeight;
 		bool performedCompression;
 
@@ -1512,7 +1511,7 @@ namespace flopoco
 
 				while((continueAddChain) && (endAddChain <= maxWeight))
 				{
-					if(cnt[endAddChain] >= 2)
+					if(cnt[endAddChain] >= 2) //if(cnt[endAddChain] >= 3)
 					{
 						//at least 2 bit in the column -> add no matter what
 						if(endAddChain == maxWeight)
@@ -1523,11 +1522,11 @@ namespace flopoco
 							endAddChain++;
 						}
 
-					}else if(cnt[endAddChain] == 1)
+					}/*else if(cnt[endAddChain] == 2)
 					{
-						//one bit in the column -> add only if the last column
-						//    had at least 2 bits or the one before had 3
-						if(!(((endAddChain>=1) && (cnt[endAddChain-1]>=2)) || ((endAddChain>=2) && (cnt[endAddChain-2]>=3))))
+						//two bits in the column -> no more than two consecutive 
+						//    columns like this
+						if(!(((endAddChain>=1) && (cnt[endAddChain-1]>=3)) || ((endAddChain>=2) && (cnt[endAddChain-1]>=2) && (cnt[endAddChain-2]>=3))))
 						{
 							if(endAddChain>0)
 								endAddChain--;
@@ -1536,26 +1535,62 @@ namespace flopoco
 							continueAddChain = false;
 						else
 							endAddChain++;
+
+					}*/else if(cnt[endAddChain] == 1)
+					{
+						//one bit in the column -> add only if the last column
+						//    had at least 2 bits or the one before had 3
+						//    and the next column has at least 2 bits
+						if(((endAddChain>=1) && (cnt[endAddChain-1]>=2)) || ((endAddChain>=2) && (cnt[endAddChain-2]>=3)))
+						{
+							if((endAddChain<maxWeight) && (cnt[endAddChain+1]>=2))
+							{
+								endAddChain++;
+							}else
+							{
+								if(endAddChain>0)
+									endAddChain--;
+								continueAddChain = false;
+							}
+						}else
+						{
+							if(endAddChain>0)
+								endAddChain--;
+							continueAddChain = false;
+						} 
 
 					}else
 					{
 						//empty column -> add only if the last (or the one before)
 						//    column had at least 3 bits
-						if(!(((endAddChain>=1) && (cnt[endAddChain-1]>=3)) || ((endAddChain>=2) && (cnt[endAddChain-1]<=2) && (cnt[endAddChain-2]>=3))))
+						//    and the next column has at least 2 bits
+						if(((endAddChain>=1) && (cnt[endAddChain-1]>=3)) || ((endAddChain>=2) && (cnt[endAddChain-1]<=2) && (cnt[endAddChain-2]>=3)))
+						{
+							if((endAddChain<maxWeight) && (cnt[endAddChain+1]>=2))
+							{
+								endAddChain++;
+							}else
+							{
+								if(endAddChain>0)
+									endAddChain--;
+								continueAddChain = false;
+							}
+						}else
 						{
 							if(endAddChain>0)
 								endAddChain--;
 							continueAddChain = false;
-						}else if(endAddChain == maxWeight)
-							continueAddChain = false;
-						else
-							endAddChain++;
+						}
+					}
+					
+					if(endAddChain-index == maxAdd3Length)
+					{
+						continueAddChain = false;
 					}
 				}
-
+				
 				if((endAddChain > index) && (endAddChain-index >= minAdd3Length) && (endAddChain-index <= maxAdd3Length))
 				{
-
 					//found possible addition
 					stringstream addInput0, addInput1, addInput2;
 					string addInput0Name, addInput1Name, addInput2Name, addOutputName;
@@ -1568,13 +1603,24 @@ namespace flopoco
 					WeightedBit *currentBit = bits[index].front();
 					int lastBitCycle;
 					double lastBitCriticalPath;
+					
+					REPORT(DEBUG,"checking columns for critical path for found adder");
+					for(unsigned int i=index; i<=endAddChain; i++)
+					{
+						REPORT(DEBUG,"columns for the for found adder: index=" << i << " should have bits=" << cnt[i] << " actually has bits=" << bits[i].size());
+					}
+
+					REPORT(DEBUG,"computing critical path for found adder");
 
 					//compute the critical path
 					for(unsigned int i=index; i<=endAddChain; i++)
 					{
-						currentBit = computeLatest(i, ((cnt[i]>3) ? 3 : cnt[i]), 0);
-						if(lastBit < currentBit)
-							lastBit = currentBit;
+						if(cnt[i]>0)
+						{
+							currentBit = computeLatest(i, ((cnt[i]>3) ? 3 : cnt[i]), 0);
+							if(lastBit < currentBit)
+								lastBit = currentBit;		
+						}
 					}
 
 					lastBitCycle = lastBit->getCycle();
@@ -1614,7 +1660,7 @@ namespace flopoco
 							addInput1 << "\'0\'" << ((i != index) ? " & " : ";");
 							addInput2 << "\'0\'" << ((i != index) ? " & " : ";");
 						}
-
+						
 						if(i == 0)
 							break;
 					}
@@ -1671,24 +1717,9 @@ namespace flopoco
 					bitheapCompressible = false;
 				}
 			}
-		}
-
+		}		
+				
 		//----------------------------------------------------------------------
-
-#else // COMPRESS WITH ADD3
-		for(unsigned i=minWeight; i<maxWeight; i++)
-		{
-			cnt[i]=0;
-			for(list<WeightedBit*>::iterator it = bits[i].begin(); it!=bits[i].end(); it++)
-			{
-				if((*it)->computeStage(stagesPerCycle, elementaryTime)<=stage)
-				{
-					cnt[i]++;
-				}
-			}
-
-		}
-#endif// COMPRESS WITH ADD3
 
 
 		REPORT(DEBUG,"start compressing "<< maxWeight);
