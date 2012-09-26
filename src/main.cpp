@@ -2485,6 +2485,20 @@ bool parseCommandLine(int argc, char* argv[]){
 
 int main(int argc, char* argv[] )
 {
+#ifdef HAVE_SOLLYA
+	/// sollya initialization
+	jmp_buf recover;
+
+	initTool();
+	if (setjmp(recover)) {
+	/* If we are here, we have come back from an error in the library */
+		std::cerr << "An error occurred somewhere.\n";
+		exit(1);
+	}
+	setRecoverEnvironment(&recover);
+	extern int recoverEnvironmentReady;
+	recoverEnvironmentReady=1;
+#endif
 	uint32_t i;
 	
 
