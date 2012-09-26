@@ -297,7 +297,7 @@ namespace flopoco {
 
 	// The constructor for a stand-alone operator
 	IntMultiplier::IntMultiplier (Target* target, int wX_, int wY_, int wOut_, bool signedIO_, float ratio_, map<string, double> inputDelays_, bool enableSuperTiles_):
-		Operator ( target, inputDelays_ ), wxDSP(0), wyDSP(0), wXdecl(wX_), wYdecl(wY_), wX(0), wY(0), wOut(wOut_), wFull(0), ratio(ratio_),  maxError(0.0), signedIO(signedIO_),enableSuperTiles(enableSuperTiles_) 
+		Operator ( target, inputDelays_ ), wxDSP(0), wyDSP(0), wXdecl(wX_), wYdecl(wY_), wX(0), wY(0), wOut(wOut_), wFull(0), ratio(ratio_),  maxError(0.0), negate(false), signedIO(signedIO_),enableSuperTiles(enableSuperTiles_) 
 	{
 
 		isOperator=true;

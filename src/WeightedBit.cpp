@@ -29,12 +29,12 @@ using namespace std;
 namespace flopoco
 {
 
-	WeightedBit::WeightedBit(int guid, int uid, int weight_, int type_, int cycle_, double criticalPath_) : 
-		cycle(cycle_),  criticalPath(criticalPath_), weight(weight_), type(type_) 
+	WeightedBit::WeightedBit(int guid, int _uid, int weight_, int type_, int cycle_, double criticalPath_) : 
+		cycle(cycle_),  criticalPath(criticalPath_), weight(weight_), type(type_), uid(_uid)
 	{
 		std::ostringstream p;
 
-		p  << "heap_bh" << guid << "_w" << weight << "_" << uid;
+		p  << "heap_bh" << guid << "_w" << weight << "_" << _uid;
 		name=p.str();
 
 		

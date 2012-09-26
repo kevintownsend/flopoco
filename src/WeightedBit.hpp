@@ -85,7 +85,6 @@ namespace flopoco{
 
 			int weight;
 			int type;
-			int guid;
 			int uid;
 			std::string name;
 			std::string srcFileName;

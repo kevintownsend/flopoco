@@ -59,6 +59,13 @@ namespace flopoco
 		minAdd3Length = 4;
 		maxAdd3Length = 32;
 		minWeight=0;
+		plottingStage=0;
+		plottingCycle=op->getCurrentCycle();
+		plottingCP=op->getCriticalPath();
+		elementaryTime = op->getTarget()->lutDelay()    + op->getTarget()->localWireDelay();
+		stagesPerCycle = (1/op->getTarget()->frequency()) / elementaryTime;
+		for(int i=0; i<100000;++i)
+			cnt[i]=0;
 	}
 
 
