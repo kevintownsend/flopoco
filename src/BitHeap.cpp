@@ -58,6 +58,7 @@ namespace flopoco
 		adder3Index = 0;
 		minAdd3Length = 4;
 		maxAdd3Length = 32;
+		minWeight=0;
 	}
 
 
