@@ -91,7 +91,6 @@ namespace flopoco
 		if(!(cp==0.0 && cycle==0))
 			if(compress)
 			{
-				unsigned i=0;	 
 				unsigned size=snapshots.size();	 
 
 				Snapshot* s = new Snapshot(bh->bits, bh->getMinWeight(), bh->getMaxWeight(), bh->getMaxHeight(),
@@ -754,9 +753,9 @@ namespace flopoco
 	void Plotter::drawInitialConfiguration(vector<list<WeightedBit*> > bits, int minWeight, int offsetY, int turnaroundX)
 	{
 		int color = 0;
-		int tempCycle = 0;
 		int cnt = 0;
-		double tempCP = 0;
+		//int tempCycle = 0;
+		//double tempCP = 0;
 
 		fig << "<line x1=\"" << turnaroundX + 150 << "\" y1=\"" 
 			<< offsetY +10 << "\" x2=\"" << turnaroundX - bits.size()*10 - 50
@@ -887,8 +886,8 @@ namespace flopoco
 			if(bits[i].size()>0)
 			{
 
-				tempCycle = 0;
-				tempCP = 0;
+				//				tempCycle = 0;
+				//        tempCP = 0;
 				cnt = 0;
 				for(list<WeightedBit*>::iterator it = bits[i].begin(); it!=bits[i].end(); ++it)
 				{

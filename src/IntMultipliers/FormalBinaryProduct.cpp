@@ -249,7 +249,7 @@ ProductIR ProductIR::toPow (size_t n) const
 	if (n <= 0)
 		throw "wrong argument (ProductIR::toPow)";
 	ProductIR res = *this;;
-	for (int i = 0; i < n-1; i++) {
+	for (unsigned i = 0; i < n-1; i++) {
 		res = res * *this;
 	}
 	return res;

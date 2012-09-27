@@ -154,23 +154,22 @@ namespace flopoco{
 				
 				int ll,l0;
 				double xordelay;
-				double dcarry;
-				double muxcystoo;
+				// double dcarry, muxcystoo;
 				if (target->getID()=="Virtex5"){
 					xordelay = 0.300e-9;
-					dcarry = 0.023e-9;
-					muxcystoo = 0.305e-9;
+					// dcarry = 0.023e-9;
+					// muxcystoo = 0.305e-9;
 					
 				}else{ 
 					if (target->getID()=="Virtex6"){
 						xordelay = 0.180e-9;
-						dcarry = 0.015e-9;
-						muxcystoo =	0.219e-9;
+						// dcarry = 0.015e-9;
+						// muxcystoo =	0.219e-9;
 					}else{ 
 						if (target->getID()=="Virtex4"){
 							xordelay = 0.273e-9;
-							dcarry = 0.034e-9;
-							muxcystoo = 0.278e-9;
+							// dcarry = 0.034e-9;
+							// muxcystoo = 0.278e-9;
 						}
 					}
 				}

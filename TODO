@@ -1,3 +1,9 @@
+TODO before release:
+
+look for "Virtex4" in IntAddition and replace all these tests with Target stuff
+
+
+
 TODO file for FloPoCo
 
 Here and there, fix VHDL style issues needed for whimsical simulators or synthesizers. See doc/VHDLStyle.txt
@@ -8,6 +14,17 @@ BitHeapization (which means providing a bitheap-only constructor:
 * FixSinCos
 * FPExp
 * HOTBM
+* IntAddition/*
+* Rework Guillaume Sergent's operators around the bit heap
+* Get rid of
+    IntAddition/IntCompressorTree
+    IntAddition/NewIntCompressorTree
+    IntAddition/PopCount
+  after checking the new bit heap compression is at least as good...
+
+
+
+
 
 Testbench
 * Bug on outputs that are bits with isBus false and  multiple-valued  

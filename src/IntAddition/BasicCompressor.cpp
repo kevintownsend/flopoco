@@ -113,7 +113,7 @@ BasicCompressor::BasicCompressor(Target * target, vector<int> h)
 
 	unsigned BasicCompressor::getColumnSize(int column)
 	{
-		if (column>=height.size())
+		if (column>=(signed)height.size())
 			return 0;
 		else
 			return height[height.size()-column-1];
