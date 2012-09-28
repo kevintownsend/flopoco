@@ -1,51 +1,19 @@
 
 /*
-   An integer multiplier mess for FloPoCo
+  An integer multiplier mess for FloPoCo
 
-TODO in the virtual multiplier case, manage properly the case when the initial instant is not  0
+  TODO in the virtual multiplier case, manage properly the case when the initial instant is not  0
 
-111101 100000 111110 010101 
-2 000000 000001 2 000101 000110 
-                         111011
+  Authors:  Bogdan Pasca, but we (F de Dinechin, Kinga Illyes and Bogdan Popa) spent two months getting rid of the last bits of his code
 
-001001 100000 000010 100000 
-2 111101 111110 2 111000 111001 
-                         001000
+  This file is part of the FloPoCo project
+  developed by the Arenaire team at Ecole Normale Superieure de Lyon
 
-011000 100000 101001 101001 
-2 000001 000010 2 110101 110110 
-                         000001
-
-
-Zr = xr*yr - xi*yi
-Le bug c'est quand xi=100000
-dont l'opposé sur n bits n'existe pas.
-
-Ce bug est soluble dans la version à base de complémentation:
-not 00..001000000
- =  11..110111111
-+1= 11..111000000
-Authors:  Bogdan Pasca, being cleaned by F de Dinechin, Kinga Illyes and Bogdan Popa
-
-This file is part of the FloPoCo project
-developed by the Arenaire team at Ecole Normale Superieure de Lyon
-
-Initial software.
-Copyright © ENS-Lyon, INRIA, CNRS, UCBL,
-2008-2010.
-All rights reserved.
+  Initial software.
+  Copyright © ENS-Lyon, INRIA, CNRS, UCBL,
+  2008-2012.
+  All rights reserved.
 */
-
-
-/*
-   Interface TODO
-   support shared bitheap! In this case,
-   - do not compress at the end
-   - do not add the round bit
-   - import the heap LSB
-   - export the truncation error
-   - ...
-   */
 
 
 /* 
@@ -57,24 +25,6 @@ All rights reserved.
 */
 
 
-
-/*
-   TODO tiling
-
-   - define intermediate data struct (list of multiplier blocks)  
-   multiplier block:
-   - a bit saying if it should go into a DSP 
-   - x and y size
-   - x and y position
-   - cycle ?
-   - pointer to the previous (and the following?) tile if this tile belongs to a supertile
-
-   - a function that explores and builds this structure
-   recycle Bogdan's, with optim for large mults
-   at least 4 versions: (full, truncated)x(altera, xilinx), please share as much code as possible
-
-   - a function that generates VHDL (adding bits to the bit heap)
-   */
 
 /* VHDL variable names:
    X, Y: inputs
@@ -90,12 +40,12 @@ All rights reserved.
 /* For two's complement arithmetic on n bits, the representable interval is [ -2^{n-1}, 2^{n-1}-1 ]
    so the product lives in the interval [-2^{n-1}*2^{n-1}-1,  2^n]
    The value 2^n can only be obtained as the product of the two minimal negative input values
-   (the weird ones, which have no symmetry)
+   (the weird ones, which have no opposite)
    Example on 3 bits: input interval [-4, 3], output interval [-12, 16] and 16 can only be obtained by -4*-4.
    So the output would be representable on 2n-1 bits in two's complement, if it werent for this weird*weird case.
 
-   So for signed multipliers, we just keep the 2n bits, including one bit used for only for this weird*weird case.
-   Current situation is: this must be managed from outside:
+   So even for signed multipliers, we just keep the 2n bits, including one bit used for only for this weird*weird case.
+   Current situation is: if you don't like this you manage it from outside:
    An application that knows that it will not use the full range (e.g. signal processing, poly evaluation) can ignore the MSB bit, 
    but we produce it.
 
@@ -103,33 +53,9 @@ All rights reserved.
 
    A big TODO ?
 
-   But for truncated signed multipliers, we should hackingly round down this output to 2^n-1 to avoid carrying around a useless bit.
+   But for truncated signed multipliers, maybe we could hackingly round down this output to 2^n-1 to avoid carrying around a useless bit.
    This would be a kind of saturated arithmetic I guess.
 
-   Beware, the last bit of Baugh-Wooley tinkering does not need to be added in this case. See the TODO there.
-
-   So the interface must provide a bit that selects this behaviour.
-
-   A possible alternative to Baugh-Wooley that solves it (tried below but it doesn't work, zut alors)
-   initially complement (xor) one negative input. This cost nothing, as this xor will be merged in the tables. Big fanout, though.
-   then -x=xb+1 so -xy=xb.y+y    
-   in case y pos, xy = - ((xb+1)y)  = -(xb.y +y)
-   in case x and y neg, xy=(xb+1)(yb+1) = xb.yb +xb +yb +1
-   It is enough not to add this lsb 1 to round down the result in this case.
-   As this is relevant only to the truncated case, this lsb 1 will indeed be truncated.
-   let sx and sy be the signs
-
-   unified equation:
-
-   px = sx xor rx  (on one bit less than x)
-   py = sy xor ry
-
-   xy = -1^(sx xor sy)( px.py + px.syb + py.sxb  )   
-   (there should be a +sxsy but it is truncated. However, if we add the round bit it will do the same, so the round bit should be sx.sy)
-   The final negation is done by complementing again.  
-
-
-   Note that this only applies to truncated multipliers.
 
 */
 
@@ -220,10 +146,10 @@ namespace flopoco {
 
 		string newxname, newyname;
 		if(wYdecl> wXdecl) {
-				wX=wYdecl;	 
-				wY=wXdecl;	 
-				newxname=yname;
-				newyname=xname;
+			wX=wYdecl;	 
+			wY=wXdecl;	 
+			newxname=yname;
+			newyname=xname;
 		}
 		else {
 			wX=wXdecl;	 
@@ -237,7 +163,7 @@ namespace flopoco {
 
 		// possibly negate the smaller
 		if(!negate)
- 			vhdl << tab << declare(addUID("YY"), wY, true) << " <= " << newyname << " ;" << endl;	 
+			vhdl << tab << declare(addUID("YY"), wY, true) << " <= " << newyname << " ;" << endl;	 
 		else {	
 			vhdl << tab << "-- we compute -xy as x(not(y)+1)" << endl;
 			vhdl << tab << declare(addUID("YY"), wY, true) << " <= not " << newyname << " ;" << endl;	 
@@ -248,7 +174,7 @@ namespace flopoco {
 
 	// The virtual constructor
 	IntMultiplier::IntMultiplier (Operator* parentOp_, BitHeap* bitHeap_, Signal* x_, Signal* y_, int wX_, 
-			int wY_, int wOut_, int lsbWeight_, bool negate_, bool signedIO_, float ratio_):
+	                              int wY_, int wOut_, int lsbWeight_, bool negate_, bool signedIO_, float ratio_):
 		Operator ( parentOp_->getTarget()), 
 		wxDSP(0), wyDSP(0), wXdecl(wX_), wYdecl(wY_), wX(0), wY(0), wOut(wOut_), ratio(ratio_),  maxError(0.0), 
 		parentOp(parentOp_), bitHeap(bitHeap_), lsbWeight(lsbWeight_),
@@ -319,7 +245,7 @@ namespace flopoco {
 			name << wXdecl << "_" << wYdecl <<"_" << wOut << "_" << (signedIO?"signed":"unsigned") << "_uid"<<Operator::getNewUId();
 			setName ( name.str() );
 			REPORT(DEBUG, "Building " << name.str() )
-		}
+				}
 
 
 		parentOp=this;
@@ -532,56 +458,56 @@ namespace flopoco {
 		int* multiplierWidth;
 		int size;	
 		if(parentOp->getTarget()->getVendor()=="Altera")
-		{	
-			if (parentOp->getTarget()->getID()=="StratixII")
-			{
-				StratixII* t = (StratixII*)parentOp->getTarget();
-				multiplierWidth = t->getDSPMultiplierWidths();
-				size = t->getNrDSPMultiplier();	
-
-			}
-			else
-				if(parentOp->getTarget()->getID()=="StratixIII")
-				{
-					StratixIII* t = (StratixIII*)parentOp->getTarget();
-					multiplierWidth = t->getDSPMultiplierWidths();
-					size = t->getNrDSPMultiplier();	
-
-				}
-				else
-					if(parentOp->getTarget()->getID()=="StratixIV")
-					{
-						StratixIV* t = (StratixIV*)parentOp->getTarget();
-						multiplierWidth = t->getDSPMultiplierWidths();
-						size = t->getNrDSPMultiplier();	
-
-					}
-			//add Altera boards here
-					else
+			{	
+				if (parentOp->getTarget()->getID()=="StratixII")
 					{
 						StratixII* t = (StratixII*)parentOp->getTarget();
 						multiplierWidth = t->getDSPMultiplierWidths();
 						size = t->getNrDSPMultiplier();	
+
 					}
+				else
+					if(parentOp->getTarget()->getID()=="StratixIII")
+						{
+							StratixIII* t = (StratixIII*)parentOp->getTarget();
+							multiplierWidth = t->getDSPMultiplierWidths();
+							size = t->getNrDSPMultiplier();	
+
+						}
+					else
+						if(parentOp->getTarget()->getID()=="StratixIV")
+							{
+								StratixIV* t = (StratixIV*)parentOp->getTarget();
+								multiplierWidth = t->getDSPMultiplierWidths();
+								size = t->getNrDSPMultiplier();	
+
+							}
+				//add Altera boards here
+						else
+							{
+								StratixII* t = (StratixII*)parentOp->getTarget();
+								multiplierWidth = t->getDSPMultiplierWidths();
+								size = t->getNrDSPMultiplier();	
+							}
 
 
-			for(int i=0; i<size; i++)
-				multWidths.push_back(multiplierWidth[i]);
+				for(int i=0; i<size; i++)
+					multWidths.push_back(multiplierWidth[i]);
 
-			buildAlteraTiling(0, 0 ,wX ,wY ,0 );
-
-
+				buildAlteraTiling(0, 0 ,wX ,wY ,0 );
 
 
-		}
+
+
+			}
 
 		else  // Xilinx here
-		{
-			if((!signedIO)&&((wX==41)&&(wY==41)&&(wFull-wOut-g==0)))
-				buildFancy41x41Tiling();
-			else
-				buildXilinxTiling();
-		}
+			{
+				if((!signedIO)&&((wX==41)&&(wY==41)&&(wFull-wOut-g==0)))
+					buildFancy41x41Tiling();
+				else
+					buildXilinxTiling();
+			}
 	}
 
 
@@ -699,15 +625,15 @@ namespace flopoco {
 			REPORT(DETAILED,addUID("YY") << range(botY-1,topY) << " & "<<zg(padY)<<";");
 			//SPLITTINGS
 			for (int k=0; k<chunksX ; k++)
-			{
-				vhdl << tab << declare(join(addUID("x",blockUid),"_",k),dx) << " <= "<< addUID("Xp",blockUid) << range((k+1)*dx-1,k*dx)<<";"<<endl;
-				REPORT(DETAILED,join(addUID("x",blockUid),"_",k)<<" <= "<< addUID("Xp",blockUid) << range((k+1)*dx-1,k*dx)<<";");
-			}	
+				{
+					vhdl << tab << declare(join(addUID("x",blockUid),"_",k),dx) << " <= "<< addUID("Xp",blockUid) << range((k+1)*dx-1,k*dx)<<";"<<endl;
+					REPORT(DETAILED,join(addUID("x",blockUid),"_",k)<<" <= "<< addUID("Xp",blockUid) << range((k+1)*dx-1,k*dx)<<";");
+				}	
 			for (int k=0; k<chunksY ; k++)
-			{
-				vhdl << tab << declare(join(addUID("y",blockUid),"_",k),dy) << " <= " << addUID("Yp",blockUid) << range((k+1)*dy-1, k*dy)<<";"<<endl;
-				REPORT(DETAILED,join(addUID("y",blockUid),"_",k)<<" <= "<< addUID("Yp",blockUid) << range((k+1)*dy-1,k*dy)<<";");
-			}	
+				{
+					vhdl << tab << declare(join(addUID("y",blockUid),"_",k),dy) << " <= " << addUID("Yp",blockUid) << range((k+1)*dy-1, k*dy)<<";"<<endl;
+					REPORT(DETAILED,join(addUID("y",blockUid),"_",k)<<" <= "<< addUID("Yp",blockUid) << range((k+1)*dy-1,k*dy)<<";");
+				}	
 
 
 			REPORT(DEBUG, "maxWeight=" << maxWeight <<  "    weightShift=" << weightShift);
@@ -772,72 +698,72 @@ namespace flopoco {
 
 					//smallMultTable needed only if is on the left size of the truncation 	
 					if(dx*(ix+1)+dy*(iy+1)+topX+topY-padX-padY>wFull-wOut-g)
-					{
-						plotter->addSmallMult(dx*(ix)+topX-padX, dy*(iy)+topY-padY,dx,dy);
+						{
+							plotter->addSmallMult(dx*(ix)+topX-padX, dy*(iy)+topY-padY,dx,dy);
 
-						REPORT(DETAILED,XY(ix,iy,blockUid)<<" <= " << addUID("y",blockUid) <<"_"<< iy << " & " << addUID("x",blockUid) <<"_"<< ix << ";");
-						vhdl << tab << declare(XY(ix,iy,blockUid), dx+dy) 
-							<< " <= " << addUID("y",blockUid) <<"_"<< iy << " & " << addUID("x",blockUid) <<"_"<< ix << ";"<<endl;
+							REPORT(DETAILED,XY(ix,iy,blockUid)<<" <= " << addUID("y",blockUid) <<"_"<< iy << " & " << addUID("x",blockUid) <<"_"<< ix << ";");
+							vhdl << tab << declare(XY(ix,iy,blockUid), dx+dy) 
+							     << " <= " << addUID("y",blockUid) <<"_"<< iy << " & " << addUID("x",blockUid) <<"_"<< ix << ";"<<endl;
 
-						inPortMap(t, "X", XY(ix,iy,blockUid));
-						outPortMap(t, "Y", PP(ix,iy,blockUid));
-						vhdl << instance(t, PPTbl(ix,iy,blockUid));
+							inPortMap(t, "X", XY(ix,iy,blockUid));
+							outPortMap(t, "Y", PP(ix,iy,blockUid));
+							vhdl << instance(t, PPTbl(ix,iy,blockUid));
 
-						vhdl << tab << "-- Adding the relevant bits to the heap of bits" << endl;
+							vhdl << tab << "-- Adding the relevant bits to the heap of bits" << endl;
 
-						// Two's complement management
-						// There are really 2 cases:
-						// If the result is known positive, ie if tUU and !negate, nothing to do
-						// If the result is in two's complement  
-						//    sign extend by adding ones on weights >= the MSB of the table, so its sign is propagated.
-						//    Also need to complement the sign bit
-
-
-						// The following comments are obsolete since we negate X at the beginning of the operator:
-						// Note that even when negate and tUU, the result is known negative, but it may be zero, so its actual sign is not known statically
-						// Note also that in this case (negate and tUU), the result overflows the dx+dy two's complement format.
-						// This is why tUU is never negated above, and we negate it below. A bit messy, but probably the most resource-efficient
+							// Two's complement management
+							// There are really 2 cases:
+							// If the result is known positive, ie if tUU and !negate, nothing to do
+							// If the result is in two's complement  
+							//    sign extend by adding ones on weights >= the MSB of the table, so its sign is propagated.
+							//    Also need to complement the sign bit
 
 
-						bool resultSigned =false;  
-						if((t==tSS) || (t==tUS) || (t==tSU)) 
-							resultSigned = true ;
+							// The following comments are obsolete since we negate X at the beginning of the operator:
+							// Note that even when negate and tUU, the result is known negative, but it may be zero, so its actual sign is not known statically
+							// Note also that in this case (negate and tUU), the result overflows the dx+dy two's complement format.
+							// This is why tUU is never negated above, and we negate it below. A bit messy, but probably the most resource-efficient
 
-						int maxK=t->wOut; // or, dx+dy + (t==tUU && negate?1:0); 
-						int minK=0;
-						//if(ix == chunksX-1)
-						if ((ix == 0))
-							minK+=padX;
-						if((iy == 0))
-							//maxK-=padY;
-							minK+=padY;
-						REPORT(DEBUG,"The bits will be added from mink="<<minK<<"	to maxk="<<maxK);
-						REPORT(DEBUG,  "ix=" << ix << " iy=" << iy << "  maxK=" << maxK  << "  negate=" << negate <<  "  resultSigned="  << resultSigned );
-						for (int k=minK; k<maxK; k++) {
-							ostringstream s, nots;
-							s << PP(ix,iy,blockUid) << of(k); // right hand side
-							nots << "not " << s.str(); 
 
-							int weight = lsbWeight-g + ix*dx+iy*dy+k-weightShift+topX+topY-padX-padY;
+							bool resultSigned =false;  
+							if((t==tSS) || (t==tUS) || (t==tSU)) 
+								resultSigned = true ;
 
-							if(weight>=0) {// otherwise these bits are just truncated
-								if(resultSigned && (k==maxK-1)) { 
-									// This is a sign bit: sign-extend it by 1/ complementing and 2/ adding constant 1s all the way up to maxweight
-									REPORT(DEBUG, "adding neg bit " << nots.str() << " at weight " << weight); 
-									bitHeap->addBit(weight, nots.str());
-									REPORT(DEBUG,  "  adding constant ones from weight "<< weight << " to "<< bitHeap->getMaxWeight());
-									for (unsigned w=weight; w<bitHeap->getMaxWeight(); w++)
-										bitHeap->addConstantOneBit(w);
-								}
-								else { // just add the bit
-									bitHeap->addBit(weight, s.str());
+							int maxK=t->wOut; // or, dx+dy + (t==tUU && negate?1:0); 
+							int minK=0;
+							//if(ix == chunksX-1)
+							if ((ix == 0))
+								minK+=padX;
+							if((iy == 0))
+								//maxK-=padY;
+								minK+=padY;
+							REPORT(DEBUG,"The bits will be added from mink="<<minK<<"	to maxk="<<maxK);
+							REPORT(DEBUG,  "ix=" << ix << " iy=" << iy << "  maxK=" << maxK  << "  negate=" << negate <<  "  resultSigned="  << resultSigned );
+							for (int k=minK; k<maxK; k++) {
+								ostringstream s, nots;
+								s << PP(ix,iy,blockUid) << of(k); // right hand side
+								nots << "not " << s.str(); 
+
+								int weight = lsbWeight-g + ix*dx+iy*dy+k-weightShift+topX+topY-padX-padY;
+
+								if(weight>=0) {// otherwise these bits are just truncated
+									if(resultSigned && (k==maxK-1)) { 
+										// This is a sign bit: sign-extend it by 1/ complementing and 2/ adding constant 1s all the way up to maxweight
+										REPORT(DEBUG, "adding neg bit " << nots.str() << " at weight " << weight); 
+										bitHeap->addBit(weight, nots.str());
+										REPORT(DEBUG,  "  adding constant ones from weight "<< weight << " to "<< bitHeap->getMaxWeight());
+										for (unsigned w=weight; w<bitHeap->getMaxWeight(); w++)
+											bitHeap->addConstantOneBit(w);
+									}
+									else { // just add the bit
+										bitHeap->addBit(weight, s.str());
+									}
 								}
 							}
+
+							vhdl << endl;
+
 						}
-
-						vhdl << endl;
-
-					}
 				}
 			}				
 
@@ -860,10 +786,10 @@ namespace flopoco {
 
 		//if the multiplication is signed, the first DSP will have different size, will be bigger
 		if( widthOnX>=wxDSP)
-		{
-			hor++;
-			widthOnX-=wxDSP;
-		}
+			{
+				hor++;
+				widthOnX-=wxDSP;
+			}
 
 		if(signedIO)	
 			wxDSP--;
@@ -877,10 +803,10 @@ namespace flopoco {
 		int ver=0;
 
 		if( widthOnY>=wyDSP)
-		{
-			ver++;
-			widthOnY-=wyDSP;
-		}
+			{
+				ver++;
+				widthOnY-=wyDSP;
+			}
 
 
 		if(signedIO)	
@@ -916,50 +842,50 @@ namespace flopoco {
 
 		//if the truncation line splits the block, then the used block is smaller, the coordinates need to be updated
 		if((botx+boty>wFull-wOut-g)&&(topx+topy<wFull-wOut-g))
-		{
-			int x=topx;
-			int y=boty;
-			while((x+y<wFull-wOut-g)&&(x<botx))
 			{
-				x++;
-				topx=x;
-			}
+				int x=topx;
+				int y=boty;
+				while((x+y<wFull-wOut-g)&&(x<botx))
+					{
+						x++;
+						topx=x;
+					}
 
-			x=botx;
-			y=topy;
-			while((x+y<wFull-wOut-g)&&(y<boty))
-			{
-				y++;
-				topy=y;	
+				x=botx;
+				y=topy;
+				while((x+y<wFull-wOut-g)&&(y<boty))
+					{
+						y++;
+						topy=y;	
+					}	
 			}	
-		}	
 
 		REPORT(INFO,"in addextradsps after truncation line sets "<< topx <<" "<<topy<<" "<<botx<<" "<<boty);
 
 		//now is the checking against the ratio
 		if(checkThreshold(topx,topy,botx,boty,wxDSP,wyDSP))
-		{  
-			//worth using DSP
-			stringstream inx,iny;
-			inx<<addUID("XX");
-			iny<<addUID("YY");
+			{  
+				//worth using DSP
+				stringstream inx,iny;
+				inx<<addUID("XX");
+				iny<<addUID("YY");
 
-			topx=botx-wxDSP;
-			topy=boty-wyDSP;
+				topx=botx-wxDSP;
+				topy=boty-wyDSP;
 
-			MultiplierBlock* m;
-			m = new MultiplierBlock(wxDSP,wyDSP,topx,topy,inx.str(),iny.str(),weightShift);
-			m->setNext(NULL);		
-			m->setPrevious(NULL);			
-			localSplitVector.push_back(m);
-			bitHeap->addMultiplierBlock(m);
-		}
+				MultiplierBlock* m;
+				m = new MultiplierBlock(wxDSP,wyDSP,topx,topy,inx.str(),iny.str(),weightShift);
+				m->setNext(NULL);		
+				m->setPrevious(NULL);			
+				localSplitVector.push_back(m);
+				bitHeap->addMultiplierBlock(m);
+			}
 		else
-		{
-			//build logic	
-			if((topx<botx)&&(topy<boty))
-			buildHeapLogicOnly(topx,topy,botx,boty,parentOp->getNewUId());	
-		}
+			{
+				//build logic	
+				if((topx<botx)&&(topy<boty))
+					buildHeapLogicOnly(topx,topy,botx,boty,parentOp->getNewUId());	
+			}
 	}	
 
 
@@ -1002,19 +928,15 @@ namespace flopoco {
 		//checking according to ratio/area
 
 		if(blockArea>=(1.0-ratio)*dspArea)
-		{
-			return true;
-		}
+				return true;
 		else
-		{
-			return false;
-		}
+				return false;
 	}
 
 
 
 	void IntMultiplier::buildAlteraTiling(int blockTopX, int blockTopY, int blockBottomX, 
-			int blockBottomY, int multIndex)
+	                                      int blockBottomY, int multIndex)
 	{
 		REPORT(DEBUG, "in Altera tiling");
 		int dspSizeX,dspSizeY;
@@ -1028,10 +950,10 @@ namespace flopoco {
 			dspSizeX=9;
 		int sizeLimit;
 		if(signedIO)
-		{
-			sizeLimit=18;
-			dspSizeX=18;
-		}
+			{
+				sizeLimit=18;
+				dspSizeX=18;
+			}
 		else
 			sizeLimit=9;
 
@@ -1054,56 +976,72 @@ namespace flopoco {
 		REPORT(INFO,"verticaldsps= "<<verticalDSP<<" hordsps= "<<horizontalDSP);
 
 		for(int i=0;i<verticalDSP;i++)
-		{
-
-			for(int j=0;j<horizontalDSP;j++)
 			{
-				if (topX<0)
-					topX=0;
 
-				if (topY<0)
-					topY=0;
-
-				if((signedIO)&&(botX!=wX))
-					dspSizeX=dsX-1;
-				else
-					dspSizeX=dsX;	
-
-				if((signedIO)&&(botY!=wY))
-					dspSizeY=dsY-1;
-				else
-					dspSizeY=dsY;		
-
-				//REPORT(INFO, "in for    dspSizeX=" << dspSizeX);
-
-				if(dspSizeX > sizeLimit)
-				{
-					REPORT(INFO, "MAXIMUM CHECKS " << dspSizeX <<" "<< dspSizeY << " " << botX-botY<<" "<<topX-topY);		
-
-					 if(checkThreshold(topX, topY, botX, botY, dspSizeX, dspSizeY)
-						&& (min(botY-topY+1,botX-topX+1)>=max(dspSizeX,dspSizeY)))
-					{	REPORT(INFO,"22222222222222222222222222222222222222");
-						if((topX<botX)&&(topX<botX))		
-							addExtraDSPs(topX, topY, botX, botY, dspSizeX, dspSizeY);
-					}
-					else
+				for(int j=0;j<horizontalDSP;j++)
 					{
-						buildAlteraTiling(topX, topY, botX, botY, multIndex+1);
-					}
-				}
-				else
-				{
+						if (topX<0)
+							topX=0;
+
+						if (topY<0)
+							topY=0;
+
+						if((signedIO)&&(botX!=wX))
+							dspSizeX=dsX-1;
+						else
+							dspSizeX=dsX;	
+
+						if((signedIO)&&(botY!=wY))
+							dspSizeY=dsY-1;
+						else
+							dspSizeY=dsY;		
+
+						//REPORT(INFO, "in for    dspSizeX=" << dspSizeX);
+
+						if(dspSizeX > sizeLimit)
+							{
+								REPORT(INFO, "MAXIMUM CHECKS " << dspSizeX <<" "<< dspSizeY << " " << botX-botY<<" "<<topX-topY);		
+
+								if(checkThreshold(topX, topY, botX, botY, dspSizeX, dspSizeY)
+								   && (min(botY-topY+1,botX-topX+1)>=max(dspSizeX,dspSizeY)))
+									{	REPORT(INFO,"22222222222222222222222222222222222222");
+										if((topX<botX)&&(topX<botX))		
+											addExtraDSPs(topX, topY, botX, botY, dspSizeX, dspSizeY);
+									}
+								else
+									{
+										buildAlteraTiling(topX, topY, botX, botY, multIndex+1);
+									}
+							}
+						else
+							{
 					
-					if((topX<botX)&&(topY<botY))
-					{
-						REPORT(INFO, "at " << dspSizeX << " =>  " << topX << " " << topY 
-							<< " " << botX << " " << botY << " " 
-							<< botX-topX << " " << botY - topY );						
-						addExtraDSPs(topX, topY, botX, botY, dspSizeX, dspSizeY);
-					}
-				}
+								if((topX<botX)&&(topY<botY))
+									{
+										REPORT(INFO, "at " << dspSizeX << " =>  " << topX << " " << topY 
+										       << " " << botX << " " << botY << " " 
+										       << botX-topX << " " << botY - topY );						
+										addExtraDSPs(topX, topY, botX, botY, dspSizeX, dspSizeY);
+									}
+							}
 
-				botX = topX;
+						botX = topX;
+
+						if((signedIO)&&(botX!=wX))
+							dspSizeX=dsX-1;
+						else
+							dspSizeX=dsX;	
+
+						if((signedIO)&&(botY!=wY))
+							dspSizeY=dsY-1;
+						else
+							dspSizeY=dsY;
+
+						topX = topX-dspSizeX;
+
+					}
+
+				botY = topY;
 
 				if((signedIO)&&(botX!=wX))
 					dspSizeX=dsX-1;
@@ -1115,39 +1053,23 @@ namespace flopoco {
 				else
 					dspSizeY=dsY;
 
-				topX = topX-dspSizeX;
+				topY = topY-dspSizeY;
+				botX = blockBottomX;
+
+				if((signedIO)&&(botX!=wX))
+					dspSizeX=dsX-1;
+				else
+					dspSizeX=dsX;	
+
+				if((signedIO)&&(botY!=wY))
+					dspSizeY=dsY-1;
+				else
+					dspSizeY=dsY;
+
+				topX = botX-dspSizeX;
+
 
 			}
-
-			botY = topY;
-
-			if((signedIO)&&(botX!=wX))
-				dspSizeX=dsX-1;
-			else
-				dspSizeX=dsX;	
-
-			if((signedIO)&&(botY!=wY))
-				dspSizeY=dsY-1;
-			else
-				dspSizeY=dsY;
-
-			topY = topY-dspSizeY;
-			botX = blockBottomX;
-
-			if((signedIO)&&(botX!=wX))
-				dspSizeX=dsX-1;
-			else
-				dspSizeX=dsX;	
-
-			if((signedIO)&&(botY!=wY))
-				dspSizeY=dsY-1;
-			else
-				dspSizeY=dsY;
-
-			topX = botX-dspSizeX;
-
-
-		}
 
 	}
 
@@ -1168,53 +1090,53 @@ namespace flopoco {
 
 		//decides if a horizontal tiling will be used or a vertical one
 		if(nrDSPvertical<nrDSPhorizontal)
-		{
-			widthXX=wyDSP;
-			widthYY=wxDSP;
-			horizontalDSP=hor1;
-			verticalDSP=ver1;
+			{
+				widthXX=wyDSP;
+				widthYY=wxDSP;
+				horizontalDSP=hor1;
+				verticalDSP=ver1;
 
 
-		}
+			}
 		else
-		{
-			widthXX=wxDSP;
-			widthYY=wyDSP;
-			horizontalDSP=hor2;
-			verticalDSP=ver2;
-		}
+			{
+				widthXX=wxDSP;
+				widthYY=wyDSP;
+				horizontalDSP=hor2;
+				verticalDSP=ver2;
+			}
 
 
 		//applying the tiles
 		for(int i=0;i<verticalDSP;i++)
-		{	
-			//managing the size of a DSP according to its position if signed
-			if((signedIO)&&(i!=0))
-				widthY=widthYY-1;
-			else
-				widthY=widthYY;	
-
-			topy=boty-widthY;
-			botx=wX;
-
-			for(int j=0;j<horizontalDSP;j++)
-			{
+			{	
 				//managing the size of a DSP according to its position if signed
-				if((signedIO)&&(j!=0))
-					widthX=widthXX-1;
+				if((signedIO)&&(i!=0))
+					widthY=widthYY-1;
 				else
-					widthX=widthXX;
+					widthY=widthYY;	
 
-				topx=botx-widthX;
+				topy=boty-widthY;
+				botx=wX;
 
-				if(botx+boty>wFull-wOut-g)
-					addExtraDSPs(topx,topy,botx,boty,widthX,widthY);
-				botx=botx-widthX;			
+				for(int j=0;j<horizontalDSP;j++)
+					{
+						//managing the size of a DSP according to its position if signed
+						if((signedIO)&&(j!=0))
+							widthX=widthXX-1;
+						else
+							widthX=widthXX;
+
+						topx=botx-widthX;
+
+						if(botx+boty>wFull-wOut-g)
+							addExtraDSPs(topx,topy,botx,boty,widthX,widthY);
+						botx=botx-widthX;			
+					}
+
+
+				boty=boty-widthY;
 			}
-
-
-			boty=boty-widthY;
-		}
 
 	}
 
@@ -1270,12 +1192,12 @@ namespace flopoco {
 	IntMultiplier::SmallMultTable::SmallMultTable(Target* target, int dx, int dy, int wO, bool negate, bool  signedX, bool  signedY ) : 
 		Table(target, dx+dy, wO, 0, -1, true), // logic table
 		dx(dx), dy(dy), wO(wO), negate(negate), signedX(signedX), signedY(signedY) {
-			ostringstream name; 
-			srcFileName="LogicIntMultiplier::SmallMultTable";
-			// No getUid() in the name: this kind of table should be added to the globalOpList 
-			name <<"SmallMultTable"<< (negate?"M":"P") << dy << "x" << dx << "r" << wO << (signedX?"Xs":"Xu") << (signedY?"Ys":"Yu");
-			setName(name.str());				
-		};
+		ostringstream name; 
+		srcFileName="LogicIntMultiplier::SmallMultTable";
+		// No getUid() in the name: this kind of table should be added to the globalOpList 
+		name <<"SmallMultTable"<< (negate?"M":"P") << dy << "x" << dx << "r" << wO << (signedX?"Xs":"Xu") << (signedY?"Ys":"Yu");
+		setName(name.str());				
+	};
 
 
 	mpz_class IntMultiplier::SmallMultTable::function(int yx){

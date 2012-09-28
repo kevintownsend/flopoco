@@ -204,18 +204,19 @@ namespace flopoco
 	void BitHeap::addSignedBitVector(unsigned weight, string x, unsigned size)
 	{
 		//TODO
+		THROWERROR("BitHeap::addSignedBitVector not yet implemented");
 	}
 
 
 	void BitHeap::subtractSignedBitVector(unsigned weight, string x, unsigned size)
 	{
 		// TODO
+		THROWERROR("BitHeap::addSignedBitVector not yet implemented");
 	}
 
 
 	void  BitHeap::addMultiplierBlock(MultiplierBlock* m)
 	{
-
 		//now, I can insert in any position, because the supertile chaining will be done in an ascending way(hopefully)
 		mulBlocks.push_back(m);
 
@@ -287,9 +288,9 @@ namespace flopoco
 		//making all the possible supertiles
 
 
-		if((needSuperTiles) && (mulBlocks.size()>1))
+		if((enableSuperTiles) && (mulBlocks.size()>1))
 		{	
-			//	buildSupertiles();
+			buildSupertiles();
 			REPORT(DEBUG, "supertiles built");
 		}
 		//generate the VHDL code for each supertile
@@ -345,18 +346,11 @@ namespace flopoco
 					//addition, the 17lsb-s from the first block will go directly to bitheap
 					if(op->getTarget()->getVendor()=="Xilinx")
 					{
-						if(signedIO)
-
-						{
-
+						if(signedIO)	{
 							stringstream s;
-
-
 							for(int j=0;j<17;j++)
 								s<<current->getSigName()<<"("<<current->getSigLength()-1<<") & ";
-
 							s<<current->getSigName()<<"("<<current->getSigLength()-1<<")";
-
 
 							newLength++;
 
@@ -1936,7 +1930,7 @@ namespace flopoco
 
 	void BitHeap::setEnableSuperTiles(bool st)
 	{
-		this->needSuperTiles=st;
+		this->enableSuperTiles=st;
 	}
 
 
