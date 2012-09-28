@@ -2,6 +2,12 @@ TODO before release:
 
 look for "Virtex4" in IntAddition and replace all these tests with Target stuff
 
+Performance in multipliers/bit heap compression.
+
+Set enableSuperTile to zero by default? Push this option to FPMult etc.
+
+
+
 
 
 TODO file for FloPoCo
