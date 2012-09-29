@@ -181,8 +181,6 @@ namespace flopoco {
 		x(x_), y(y_), negate(negate_), signedIO(signedIO_) 
 	{
 
-		isOperator=false;
-
 		multiplierUid=parentOp->getNewUId();
 		srcFileName="IntMultiplier";
 		useDSP = (ratio>=0) && getTarget()->hasHardMultipliers();
@@ -225,8 +223,6 @@ namespace flopoco {
 	IntMultiplier::IntMultiplier (Target* target, int wX_, int wY_, int wOut_, bool signedIO_, float ratio_, map<string, double> inputDelays_, bool enableSuperTiles_):
 		Operator ( target, inputDelays_ ), wxDSP(0), wyDSP(0), wXdecl(wX_), wYdecl(wY_), wX(0), wY(0), wOut(wOut_), wFull(0), ratio(ratio_),  maxError(0.0), negate(false), signedIO(signedIO_),enableSuperTiles(enableSuperTiles_) 
 	{
-
-		isOperator=true;
 		srcFileName="IntMultiplier";
 		setCopyrightString ( "Florent de Dinechin, Kinga Illyes, Bogdan Popa, Bogdan Pasca, 2012" );
 

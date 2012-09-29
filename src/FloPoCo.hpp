@@ -74,6 +74,7 @@
 
 /* multiplication-related ------------------------------------ */
 #include "IntMultiplier.hpp"
+#include "FixMultAdd.hpp"
 #include "IntMultipliers/IntKaratsuba.hpp"
 #include "IntSquarer.hpp"
 #include "IntMultipliers/GenericBinaryPolynomial.hpp"

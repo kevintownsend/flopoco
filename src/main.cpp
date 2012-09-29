@@ -164,7 +164,6 @@ void usage(char *name, string opName = ""){
 	if ( full )	
 		cerr << "    ____________ INTEGER MULTIPLIERS/SQUARER/KARATSUBA _________________________\n";
 
-  // // Killing Bogdan's mess
 	 if ( full || opName == "IntMultiplier"){
 	 	OP("IntMultiplier","wInX wInY wOut signed ratio enableSupertiles");
 	 	cerr << "      Integer multiplier of two integers X and Y of sizes wInX and wInY \n";
@@ -172,6 +171,13 @@ void usage(char *name, string opName = ""){
 	 	cerr << "      signed=0: unsigned multiplier;     signed=1: signed inputs, signed outputs \n";
 		cerr << "      0 <= ratio <= 1; larger ratio => DSP dominant architectures\n";
 		cerr << "      enableSuperTiles=0 =>  lower latency, higher logic cost; enableSuperTiles=1=> lower logic cost, longer latency \n";
+	 }
+
+	 if ( full  || opName == "IntMultiplier" || opName == "IntMultAdd"){
+	 	OP("IntMultAdd","w signedIO ratio");
+	 	cerr << "      integer  R=A+X*Y where X and Y are of size w, A and R are of size 2w \n";
+	 	cerr << "      signedIO: if 0, unsigned IO; if 1, signedIO \n";
+		cerr << "      0 <= ratio <= 1; larger ratio => DSP dominant architectures\n";
 	 }
 
 
@@ -1373,11 +1379,33 @@ bool parseCommandLine(int argc, char* argv[]){
 				int wInX    = checkStrictlyPositive(argv[i++], argv[0]);
 				int wInY    = checkStrictlyPositive(argv[i++], argv[0]);
 				int wOut    = atoi(argv[i++]);
-				int sign    =  checkBoolean(argv[i++], argv[0]);
+				int signedIO    =  checkBoolean(argv[i++], argv[0]);
 				float ratio = atof(argv[i++]);
 				int buildSuperTiles =  checkBoolean(argv[i++], argv[0]);
-				IntMultiplier* mul=new IntMultiplier(target, wInX, wInY, wOut, sign, ratio, emptyDelayMap,buildSuperTiles);
+				IntMultiplier* mul=new IntMultiplier(target, wInX, wInY, wOut, signedIO, ratio, emptyDelayMap,buildSuperTiles);
 				op = mul;
+				addOperator(op);
+			}
+		}
+
+		else if(opname=="IntMultAdd"){
+			int nargs = 3;
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			else {
+				int wIn    = checkStrictlyPositive(argv[i++], argv[0]);
+				int signedIO    = checkBoolean(argv[i++], argv[0]);
+				float ratio = atof(argv[i++]);
+				int wInY=wIn;
+				int wInX=wIn;
+				int wA=2*wIn;
+#if 0
+				int wInY    = checkStrictlyPositive(argv[i++], argv[0]);
+				int wInA    = checkStrictlyPositive(argv[i++], argv[0]);
+				int wOut    = atoi(argv[i++]);
+				int buildSuperTiles = false ;// checkBoolean(argv[i++], argv[0]);
+#endif
+				FixMultAdd* op=new FixMultAdd(target, wInX, wInY, wA, wA, wA-1, 0, signedIO, ratio);
 				addOperator(op);
 			}
 		}

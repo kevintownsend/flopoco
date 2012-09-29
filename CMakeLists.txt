@@ -228,6 +228,7 @@ src/Plotter
  src/IntMultiplier
  src/IntMultipliers/IntKaratsuba
  src/IntSquarer
+ src/FixMultAdd
  src/IntMultipliers/FormalBinaryProduct
  src/IntMultipliers/GenericBinaryPolynomial
  src/IntMultipliers/IntPower
