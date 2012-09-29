@@ -110,6 +110,7 @@ noinst_HEADERS = \
           IntDualSub.hpp \
           Plotter.hpp \
           IntMultiplier.hpp \
+          FixMultAdd.hpp \
           IntMultipliers/IntKaratsuba.hpp \
           IntSquarer.hpp \
           IntMultipliers/FormalBinaryProduct.hpp \
@@ -118,7 +119,7 @@ noinst_HEADERS = \
           IntMultipliers/MultiplierBlock.hpp \
           LongAcc2FP.hpp \
           LongAcc.hpp LZOC.hpp \
-          LZOCShifterSticky.hpp \
+          LZCShifterSticky.hpp \
           OutputIEEE.hpp \
           Shifters.hpp \
           FixedPointFunctions/Function.hpp \
@@ -212,6 +213,7 @@ libflopoco_la_SOURCES = \
                         IntDualSub.cpp \
                         Plotter.cpp \
                         IntMultiplier.cpp \
+												FixMultAdd.cpp \
                         IntMultipliers/IntKaratsuba.cpp \
                         IntSquarer.cpp \
                         IntMultipliers/FormalBinaryProduct.cpp \
