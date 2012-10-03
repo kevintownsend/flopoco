@@ -14,6 +14,8 @@
   All rights reserved.
 */
 
+//TODO choice of ratio/threshold for the multiplier
+
 #include <iostream>
 #include <iomanip>
 #include <sstream>
@@ -46,7 +48,7 @@ namespace flopoco{
  		mpfr_set_si( targetError, 2, GMP_RNDN);
 		mpfr_pow_si( targetError, targetError, -targetPrec-1, GMP_RNDN); /* 1/2 ulp target error */
 
-
+		// TODO fix comments: MSB weight below, LSB weight in most of the code
 
 		/* both y and a[i], i in 0 ... d are described by two values: size and MSB weight 
 
@@ -161,10 +163,13 @@ namespace flopoco{
 					//TODO => input Delay
 					int wIn1 = 1+y_->getSize()+yGuard_[i];
 					int wIn2 = sigmakPSize[i-1]+1;
-					int k = 1+y_->getSize()+yGuard_[i] + sigmakPSize[i-1]+1 - (pikPTSize[i]+2);
+					// orig					int k = 1 + y_->getSize() + yGuard_[i] + sigmakPSize[i-1] + 1 - (pikPTSize[i]+2);
+					int k =  y_->getSize() + yGuard_[i] + sigmakPSize[i-1] - pikPTSize[i]; // looks like the number of truncated bits
 
 					
-#if 1
+#define USE_BITHEAP 0
+#if !USE_BITHEAP //
+
 					IntMultiplier *sm = new IntMultiplier ( target, wIn1, wIn2, wIn1+wIn2-k, true /*signedIO*/, 0.5); //inDelayMap("X",getCriticalPath()));
 					oplist.push_back(sm);
 					
@@ -199,20 +204,21 @@ namespace flopoco{
 					syncCycleFromSignal( join("sigmaP",i) );
 					setCriticalPath( sa->getOutputDelay("R") );
 
-#else //bitheap-based
+#else //bitheap-based 347sl 15ns
 					int wA=coef_[degree_-i]->getSize()+1;
 					int wR=sigmakPSize[i]+1;
 					int wOutP=wIn1+wIn2-k;
 					int lsbPTruncated= - (pikPTSize[i] - pikPTWeight[i] - (coef_[degree_-i]->getSize()-coef_[degree_-i]->getWeight() + aGuard_[degree_ -i])) ;
 					int msbP=lsbPTruncated + wOutP;
 					int lsbA=aGuard_[degree_-i];
-					REPORT(INFO, "lsbPTruncated=" << lsbPTruncated << " msbP=" <<msbP << " lsbA=" << lsbA << " wOutO=" <<wOutP);
+					// cout << "k=" << k << " lsbPTruncated=" << lsbPTruncated << " msbP=" <<msbP << " lsbA=" << lsbA << " wOutO=" <<wOutP<< endl; 
+					//cout << "wIn1=" << wIn1<< " wIn2=" << wIn2 << " wA=" << wA << " wR=" << wR << " msbP=" <<msbP << " lsbA=" << lsbA << endl; 
 					FixMultAdd * ma = new  FixMultAdd(target, wIn1, wIn2, wA,
 					                                  wR , 
 					                                  msbP, /* msbP */
 					                                  lsbA,
 					                                  true /*signedIO*/, 0.9);
-					cout << " Fin du constr" << endl;
+					//cout << " Fin du constr" << endl;
 					oplist.push_back(ma);
 
 					inPortMap ( ma, "X", join("yT",i));
@@ -225,7 +231,7 @@ namespace flopoco{
 
 #endif
 				                                                                   
-				}else{
+				}else{ // i=degree
 					vhdl << tab << "-- weight of yT"<<i<<" is="<<y_->getWeight()<<" size="<<1+y_->getSize()+yGuard_[i]<<endl;
 					vhdl << tab << declare( join("yT",i) , 1+y_->getSize()+yGuard_[i]) << " <= \"0\" & Y"<<range(y_->getSize()-1, -yGuard_[i]) << ";" << endl;
 					vhdl << tab << "-- weight of piP"<<i<<" is="<<pikPWeight[i]<<" size="<<pikPSize[i]+2<<endl;
@@ -238,6 +244,7 @@ namespace flopoco{
 					// 																									1, -1, false, true, false); //inDelayMap("X",getCriticalPath()));
 					
 					int wOut=(1+y_->getSize()+yGuard_[i]) +  (sigmakPSize[i-1]+1) - (sigmakPSize[i] - (coef_[0]->getSize()+2));
+#if !USE_BITHEAP //
 					IntMultiplier* sm = new IntMultiplier ( target, 
 					                                        1+y_->getSize()+yGuard_[i], 
 					                                        sigmakPSize[i-1]+1, 	
@@ -249,21 +256,21 @@ namespace flopoco{
 					inPortMap ( sm, "X", join("yT",i));
 					inPortMap ( sm, "Y", join("sigmaP",i-1));
 					outPortMap (sm, "R", join("piP",i));
-				
 					vhdl << instance ( sm, join("Product_",i) );
 					syncCycleFromSignal(join("piP",i)); 
 				
 					setCriticalPath( sm->getOutputDelay("R") );
 					vhdl << tab << "-- the delay at the output of the multiplier is : " << sm->getOutputDelay("R") << endl;
 
-
 					IntAdder* sa = new IntAdder (target, (coef_[0]->getSize()+2), inDelayMap("X",target->localWireDelay() +  getCriticalPath()));
 					oplist.push_back(sa);
 
+					// the product
 					vhdl << tab << declare( join("op1_",i), (coef_[0]->getSize()+2) ) << " <= " 
 							 << rangeAssign( (coef_[0]->getSize()+2)-(wOut-1) -1,0, join("piP",i)+of(wOut-1)) 
 							 << " & " << join("piP",i)<<range(wOut-2,0) << ";" << endl;
 					
+					// a0
 					vhdl << tab << declare( join("op2_",i), (coef_[0]->getSize()+2) ) << " <= " 
 							 << rangeAssign(0,0, join("a",degree_-i)+of(coef_[degree_-i]->getSize()))
 							 << " & " << join("a",degree_-i) << ";"<<endl;
@@ -275,12 +282,43 @@ namespace flopoco{
 		
 					vhdl << instance ( sa, join("Sum",i));
 					syncCycleFromSignal( join("sigmaP",i) );
+					setCriticalPath(sa->getOutputDelay("R"));
+#else
+					int wIn1 = 1+y_->getSize()+yGuard_[i]; 
+					int wIn2 = sigmakPSize[i-1]+1; 	
+					int wOutP = wOut; 
+					int msbP=wOutP;
+					int wA = coef_[0]->getSize()+2;
+					int lsbA=0;
+
+					FixMultAdd * ma = new  FixMultAdd(target, wIn1, wIn2, wA,
+					                                  wOutP , 
+					                                  msbP, /* msbP */
+					                                  lsbA,
+					                                  true /*signedIO*/, 0.9);
+					//cout << " Fin du constr" << endl;
+					oplist.push_back(ma);
+
+
+					// a0
+					vhdl << tab << declare( join("op2_",i), (coef_[0]->getSize()+2) ) << " <= " 
+							 << rangeAssign(0,0, join("a",degree_-i)+of(coef_[degree_-i]->getSize()))
+							 << " & " << join("a",degree_-i) << ";"<<endl;
+
+					inPortMap ( ma, "X", join("yT",i));
+					inPortMap ( ma, "Y", join("sigmaP",i-1));
+					inPortMap ( ma, "A", join("op2_",i));
+					outPortMap( ma, "R", join("sigmaP",i));
+					vhdl << instance (ma, join("MultAdd_",i) );
+					syncCycleFromSignal( join("sigmaP",i) );
+					setCriticalPath( ma->getOutputDelay("R") );
+
+#endif
 
 					wR = coef_[0]->getSize()+2; //sigmakPSize[i]+1;
 					weightR = sigmakPWeight[i];
-					addOutput("R", coef_[0]->getSize()+2 );//sigmakPSize[i]+1);
-					setCriticalPath(sa->getOutputDelay("R"));
-					vhdl << tab << "R <= " << join("sigmaP",i)<< range(coef_[0]->getSize()+1,0)<<";"<<endl; //<< << ";" << endl;
+					addOutput("R", wR );//sigmakPSize[i]+1);
+					vhdl << tab << "R <= " << join("sigmaP",i)<< range(wR-1,0)<<";"<<endl; //<< << ";" << endl;
 				}
 
 				outDelayMap["R"]=getCriticalPath();			

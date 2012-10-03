@@ -150,8 +150,7 @@ namespace flopoco {
 		int wFull;                      /**< size of the full product: wX+wY  */
 		int wTruncated;                 /**< The number of truncated bits, wFull - wOut*/
 		int g ;                         /**< the number of guard bits */
-		int maxWeight;                  /**< The max weight for the bit heap of this multiplier, wOut + g*/
-		int weightShift;                /**< the shift in weight for a truncated multiplier compared to a full one,  wFull - maxWeight*/
+		int weightShift;                /**< the shift in weight for the LSB of a truncated multiplier compared to a full one,  wFull - (wOut+g)*/
 		double ratio;
 		double maxError;     /**< the max absolute value error of this multiplier, in ulps of the result. Should be 0 for untruncated, 1 or a bit less for truncated.*/  
 		double initialCP;     /**< the initial delay, getMaxInputDelays ( inputDelays_ ).*/  

@@ -160,10 +160,37 @@ namespace flopoco
 
 
 
+		void BitHeap::addConstantOneBit(int weight) {
+			if (weight<0)
+				THROWERROR("Negative weight (" << weight << ") in addConstantOneBit");
+
+			constantBits += (mpz_class(1) << weight);
+		}
+
+		/** "remove" a constant 1 from the bit heap. 
+		    @param weight   the weight of the 1 to be added */
+		void BitHeap::subConstantOneBit(int weight) {
+			if (weight<0)
+				THROWERROR("Negative weight (" << weight << ") in subConstantOneBit");
+
+			constantBits -= (mpz_class(1) << weight);
+		}
+
+		/** add a constant to the bit heap. It will be added to the constantBits mpz, so we don't generate hardware to compress constants....
+		    @param weight   the weight of the LSB of c (or, where c should be added)
+		    @param c        the value to be added */
+		void BitHeap::addConstant(int weight, mpz_class c) {
+			if (weight<0)
+				THROWERROR("Negative weight (" << weight << ") in addConstant");
+
+			constantBits += (c << weight);
+		};
 
 
-	void BitHeap::addUnsignedBitVector(unsigned weight, string x, unsigned size)
-	{
+
+	void BitHeap::addUnsignedBitVector(int weight, string x, unsigned size)	{
+		if (weight<0)
+			THROWERROR("Negative weight (" << weight << ") in addUnsignedBitVector");
 		if(weight+size>maxWeight) {
 			REPORT(INFO, "in subtractUnsignedBitVector: Size of signal " << x << " is " << size <<
 			       ", adding it at weight " << weight << " overflows the bit heap (maxWeight=" << maxWeight << ")");
@@ -176,8 +203,10 @@ namespace flopoco
 		}
 	}
 
-	void BitHeap::subtractUnsignedBitVector(unsigned weight, string x, unsigned size)
+	void BitHeap::subtractUnsignedBitVector(int weight, string x, unsigned size)
 	{
+		if (weight<0)
+			THROWERROR("Negative weight (" << weight << ") in subtractUnsignedBitVector");
 		if(weight+size>maxWeight) {
 			REPORT(INFO, "in subtractUnsignedBitVector: Size of signal " << x << " is " << size <<
 			       ", adding it at weight " << weight << " overflows the bit heap (maxWeight=" << maxWeight << ")");
@@ -196,12 +225,16 @@ namespace flopoco
 				addConstantOneBit(i);
 			}
 		}
+
 	}
 
 
-	void BitHeap::addSignedBitVector(unsigned weight, string x, unsigned size)
+	void BitHeap::addSignedBitVector(int weight, string x, unsigned size)
 	{
-		if(weight+size>maxWeight) {
+		if (weight<0)
+			THROWERROR("Negative weight (" << weight << ") in addSignedBitVector");
+
+ 		if(weight+size>maxWeight) {
 			REPORT(INFO, "in subtractUnsignedBitVector: Size of signal " << x << " is " << size <<
 			       ", adding it at weight " << weight << " overflows the bit heap (maxWeight=" << maxWeight << ")");
 		}
@@ -217,12 +250,13 @@ namespace flopoco
 		for (unsigned i=size+weight-1; i<maxWeight; i++) {
 			addConstantOneBit(i);
 		}
-		THROWERROR("BitHeap::addSignedBitVector not yet implemented");
 	}
 
 
-	void BitHeap::subtractSignedBitVector(unsigned weight, string x, unsigned size)
+	void BitHeap::subtractSignedBitVector(int weight, string x, unsigned size)
 	{
+		if (weight<0)
+			THROWERROR("Negative weight (" << weight << ") in subtractSignedBitVector");
 		// TODO
 		THROWERROR("BitHeap::addSignedBitVector not yet implemented");
 	}
@@ -469,12 +503,14 @@ namespace flopoco
 	}
 
 
-	void  BitHeap::addBit(unsigned w, string rhs, string comment, int type)
+	void  BitHeap::addBit(int w, string rhs, string comment, int type)
 	{
+		if (w<0)
+			THROWERROR("Negative weight (" << w << ") in addConstantOneBit");
 		REPORT(DEBUG, "addBit at weigth " <<w <<"   for rhs=" << rhs );
 		// ignore bits beyond the declared maxWeight
-		if(w >= maxWeight) {
-			REPORT(DEBUG, "   ??? w=" << w << " greater than mawWeight=" <<maxWeight << "... ignoring it"  );
+		if((unsigned)w >= maxWeight) {
+			REPORT(INFO, "WARNING in addBit, w=" << w << " greater than mawWeight=" <<maxWeight << "... ignoring it"  );
 			return;
 		}
 
@@ -725,12 +761,13 @@ namespace flopoco
 
 		op->setCycle(0); // TODO FIXME for the virtual multiplier case where inputs can arrive later
 
-		REPORT(DEBUG, "setCycle");
+		REPORT(DEBUG, "Adding the constant bits");
 		op->vhdl << endl << tab << "-- Adding the constant bits" << endl;
 
-		for (unsigned w=0; w<maxWeight; w++)
+		for (unsigned w=0; w<maxWeight; w++){
 			if (1 == ((constantBits>>w) & 1) )
 				addBit(w, "'1'","",2);
+		}
 
 		printBitHeapStatus();
 

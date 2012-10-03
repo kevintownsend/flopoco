@@ -68,38 +68,39 @@ namespace flopoco{
 		~BitHeap();
 
 		/** add a bit to the bit heap. The bit will be added at the cycle op->currentCycle() with critical path op->getCriticalPath().
-		    @param weight   the weight of the bit to be added
+		    @param weight   the weight of the bit to be added. It should be positive.
 		    @param rhs      the right-hand VHDL side defining this bit.
 		    @param comment  a VHDL comment for this bit
 		    @param type     shows the origin(type) of the bit:
 		    0 - compression
 		    1 - external
 		    2 - constant */		
-		void addBit(unsigned weight, string rhs, string comment="", int type=1);
+		void addBit(int weight, string rhs, string comment="", int type=1);
 
 		/** add a constant 1 to the bit heap. All the constant bits are added to the constantBits mpz, so we don't generate hardware to compress constants....
 		    @param weight   the weight of the 1 to be added */
-		void addConstantOneBit(unsigned weight) {constantBits += (mpz_class(1) << weight);};
+		void addConstantOneBit(int weight); 
+
 		/** "remove" a constant 1 from the bit heap. 
 		    @param weight   the weight of the 1 to be added */
-		void subConstantOneBit(unsigned weight) {constantBits -= (mpz_class(1) << weight);};
-
+		void subConstantOneBit(int weight); 
+		
 		/** add a constant to the bit heap. It will be added to the constantBits mpz, so we don't generate hardware to compress constants....
 		    @param weight   the weight of the LSB of c (or, where c should be added)
 		    @param c        the value to be added */
-		void addConstant(unsigned weight, mpz_class c) {constantBits += (c << weight);};
+		void addConstant(int weight, mpz_class c); 
 
 		/** add to the bit heap the value held by a signal, considered as an unsigned integer */
-		void addUnsignedBitVector(unsigned weight, string x, unsigned size);
-
+		void addUnsignedBitVector(int weight, string x, unsigned size);
+		
 		/** add to the bit heap the opposite of the value held by a signal, considered as an unsigned integer */
-		void subtractUnsignedBitVector(unsigned weight, string x, unsigned size);
+		void subtractUnsignedBitVector(int weight, string x, unsigned size);
 
 		/** add to the bit heap the value held by a signal, considered as a signed integer. size includes the sign bit */
-		void addSignedBitVector(unsigned weight, string x, unsigned size);
+		void addSignedBitVector(int weight, string x, unsigned size);
 
 		/** add to the bit heap the opposite of the value held by a signal, considered as a signed integer. size includes the sign bit */
-		void subtractSignedBitVector(unsigned weight, string x, unsigned size);
+		void subtractSignedBitVector(int weight, string x, unsigned size);
 
 
 		/** generate the VHDL for the bit heap. To be called last by operators using BitHeap.*/

@@ -95,8 +95,8 @@ namespace flopoco {
 
 		// All the weights below are anchored on LSB of the result,  which has weight 0
 		// In the bit heap it will have weight g. 
-		int msbP;                    /**< weight of the MSB product */
-		int lsbPfull;   /** equal to msbP -1 - wX -wY */
+		int msbP;                    /**< weight +1 of the MSB product */
+		int lsbPfull;               /** equal to msbP - wX -wY */
 		int lsbA;                  /**< weight of the LSB of A */
 		bool signedIO;               /** inputs and outputs are signed. */
 		double ratio;

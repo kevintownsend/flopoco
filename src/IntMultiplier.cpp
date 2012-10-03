@@ -136,8 +136,8 @@ namespace flopoco {
 		g = neededGuardBits(wXdecl, wYdecl, wOut);
 		REPORT(DEBUG, "    g=" << g);
 
-		maxWeight = wOut+g;
-		weightShift = wFull - maxWeight;
+		weightShift = wFull - (wOut+g); 
+		REPORT(DEBUG,   "weightShift=" << weightShift);
 
 
 		// Halve number of cases by making sure wY<=wX:
@@ -172,10 +172,14 @@ namespace flopoco {
 
 
 
+
+
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 	// The virtual constructor
 	IntMultiplier::IntMultiplier (Operator* parentOp_, BitHeap* bitHeap_, Signal* x_, Signal* y_, int wX_, 
 	                              int wY_, int wOut_, int lsbWeight_, bool negate_, bool signedIO_, float ratio_):
-		Operator ( parentOp_->getTarget()), 
+		Operator (  parentOp_->getTarget()), 
 		wxDSP(0), wyDSP(0), wXdecl(wX_), wYdecl(wY_), wX(0), wY(0), wOut(wOut_), ratio(ratio_),  maxError(0.0), 
 		parentOp(parentOp_), bitHeap(bitHeap_), lsbWeight(lsbWeight_),
 		x(x_), y(y_), negate(negate_), signedIO(signedIO_) 
@@ -183,7 +187,7 @@ namespace flopoco {
 
 		multiplierUid=parentOp->getNewUId();
 		srcFileName="IntMultiplier";
-		useDSP = (ratio>=0) && getTarget()->hasHardMultipliers();
+		useDSP = (ratio>=0) &&  parentOp->getTarget()->hasHardMultipliers();
 
 		ostringstream name;
 		name <<"VirtualIntMultiplier";
@@ -192,7 +196,7 @@ namespace flopoco {
 		else
 			name << "LogicOnly_";
 		name << wXdecl << "_" << wYdecl <<"_" << wOut << "_" << (signedIO?"signed":"unsigned") << "_uid"<<Operator::getNewUId();
-		setName ( name.str() );
+		parentOp->setName ( name.str() );
 
 		REPORT(DEBUG, "Building " << name.str() )
 
@@ -204,6 +208,7 @@ namespace flopoco {
 		bitHeap->setPlotter(plotter);
 		bitHeap->setSignedIO(signedIO);
 		//plotter->setBitHeap(bitHeap);
+		
 
 		initialize();
 
@@ -306,10 +311,10 @@ namespace flopoco {
 		// To manage stand-alone cases, we just build a bit-heap of max height one, so the compression will do nothing
 
 		// The really small ones fit in two LUTs and that's as small as it gets  
-		if(wX+wY <= target()->lutInputs()+2) {
+		if(wX+wY <=  parentOp->getTarget()->lutInputs()+2) {
 			vhdl << tab << "-- Ne pouvant me fier à mon raisonnement, j'ai appris par coeur le résultat de toutes les multiplications possibles" << endl;
 
-			SmallMultTable *t = new SmallMultTable( target(), wX, wY, wOut, negate, signedIO, signedIO);
+			SmallMultTable *t = new SmallMultTable(  parentOp->getTarget(), wX, wY, wOut, negate, signedIO, signedIO);
 			//useSoftRAM(t);
 			//			oplist.push_back(t);
 			t->addToGlobalOpList();
@@ -334,13 +339,13 @@ namespace flopoco {
 		// Multiplication by 1-bit integer is simple
 		if ((wY == 1)){
 			if (signedIO){
-				manageCriticalPath( target()->localWireDelay(wX) + target()->adderDelay(wX+1) );
+				manageCriticalPath(  parentOp->getTarget()->localWireDelay(wX) +  parentOp->getTarget()->adderDelay(wX+1) );
 
 				vhdl << tab << addUID("R") <<" <= (" << zg(wX+1)  << " - ("<<addUID("XX")<< of(wX-1) 
 				     << " & "<<addUID("XX")<<")) when "<<addUID("YY")<<"(0)='1' else "<< zg(wX+1,0)<<";"<<endl;	
 			}
 			else {
-				manageCriticalPath( target()->localWireDelay(wX) + target()->lutDelay() );
+				manageCriticalPath(  parentOp->getTarget()->localWireDelay(wX) +  parentOp->getTarget()->lutDelay() );
 
 				vhdl << tab << addUID("R")<<" <= (\"0\" & "<<addUID("XX")<<") when "<< addUID("YY")<<"(0)='1' else "<<zg(wX+1,0)<<";"<<endl;	
 
@@ -391,7 +396,7 @@ namespace flopoco {
 
 		// Now getting more and more generic
 
-
+		// TODO HERE
 
 #if 0
 		// Finish the negation of the smaller input by adding X (since -yx=not(y)x +x)
@@ -414,7 +419,7 @@ namespace flopoco {
 		if(useDSP) 
 			{
 				REPORT(DETAILED,"useDSP");
-				target()->getDSPWidths(wxDSP, wyDSP, signedIO);
+				 parentOp->getTarget()->getDSPWidths(wxDSP, wyDSP, signedIO);
 				buildTiling();
 			}
 
@@ -423,14 +428,14 @@ namespace flopoco {
 		}
 
 
-
+		// TODO weight=-1 here
 		//add the round bit
 		if(g>0) {
-			int weight=wFull-wOut-1- weightShift;
+			int weight = lsbWeight-1;
 			if(negate)
-				bitHeap->subConstantOneBit(lsbWeight-g + weight);
+				bitHeap->subConstantOneBit(weight);
 			else
-				bitHeap->addConstantOneBit(lsbWeight-g + weight);
+				bitHeap->addConstantOneBit(weight);
 		}
 
 		
@@ -453,27 +458,27 @@ namespace flopoco {
 	{
 		int* multiplierWidth;
 		int size;	
-		if(parentOp->getTarget()->getVendor()=="Altera")
+		if( parentOp->getTarget()->getVendor()=="Altera")
 			{	
-				if (parentOp->getTarget()->getID()=="StratixII")
+				if ( parentOp->getTarget()->getID()=="StratixII")
 					{
-						StratixII* t = (StratixII*)parentOp->getTarget();
+						StratixII* t = (StratixII*) parentOp->getTarget();
 						multiplierWidth = t->getDSPMultiplierWidths();
 						size = t->getNrDSPMultiplier();	
 
 					}
 				else
-					if(parentOp->getTarget()->getID()=="StratixIII")
+					if( parentOp->getTarget()->getID()=="StratixIII")
 						{
-							StratixIII* t = (StratixIII*)parentOp->getTarget();
+							StratixIII* t = (StratixIII*) parentOp->getTarget();
 							multiplierWidth = t->getDSPMultiplierWidths();
 							size = t->getNrDSPMultiplier();	
 
 						}
 					else
-						if(parentOp->getTarget()->getID()=="StratixIV")
+						if( parentOp->getTarget()->getID()=="StratixIV")
 							{
-								StratixIV* t = (StratixIV*)parentOp->getTarget();
+								StratixIV* t = (StratixIV*) parentOp->getTarget();
 								multiplierWidth = t->getDSPMultiplierWidths();
 								size = t->getNrDSPMultiplier();	
 
@@ -481,7 +486,7 @@ namespace flopoco {
 				//add Altera boards here
 						else
 							{
-								StratixII* t = (StratixII*)parentOp->getTarget();
+								StratixII* t = (StratixII*) parentOp->getTarget();
 								multiplierWidth = t->getDSPMultiplierWidths();
 								size = t->getNrDSPMultiplier();	
 							}
@@ -525,7 +530,7 @@ namespace flopoco {
 		widthY=wyDSP;
 		topx=0;
 		topy=0;
-		MultiplierBlock* m = new MultiplierBlock(widthX,widthY,topx,topy,inx.str(),iny.str(),weightShift + lsbWeight-g);
+		MultiplierBlock* m = new MultiplierBlock(widthX,widthY,topx,topy,inx.str(),iny.str(), lsbWeight);
 		m->setNext(NULL);		
 		m->setPrevious(NULL);			
 		localSplitVector.push_back(m);
@@ -537,7 +542,7 @@ namespace flopoco {
 		widthY=wxDSP;
 		topx=wxDSP;
 		topy=0;
-		m = new MultiplierBlock(widthX,widthY,topx,topy,inx.str(),iny.str(),weightShift + lsbWeight-g);
+		m = new MultiplierBlock(widthX,widthY,topx,topy,inx.str(),iny.str(), lsbWeight);
 		m->setNext(NULL);		
 		m->setPrevious(NULL);			
 		localSplitVector.push_back(m);
@@ -548,7 +553,7 @@ namespace flopoco {
 		widthY=wyDSP;
 		topx=wyDSP;
 		topy=wxDSP;
-		m = new MultiplierBlock(widthX,widthY,topx,topy,inx.str(),iny.str(),weightShift + lsbWeight-g);
+		m = new MultiplierBlock(widthX,widthY,topx,topy,inx.str(),iny.str(), lsbWeight);
 		m->setNext(NULL);		
 		m->setPrevious(NULL);			
 		localSplitVector.push_back(m);
@@ -559,7 +564,7 @@ namespace flopoco {
 		widthY=wxDSP;
 		topx=0;
 		topy=wyDSP;
-		m = new MultiplierBlock(widthX,widthY,topx,topy,inx.str(),iny.str(),weightShift + lsbWeight-g);
+		m = new MultiplierBlock(widthX,widthY,topx,topy,inx.str(),iny.str(), lsbWeight);
 		m->setNext(NULL);		
 		m->setPrevious(NULL);			
 		localSplitVector.push_back(m);
@@ -576,8 +581,8 @@ namespace flopoco {
 	void IntMultiplier::buildHeapLogicOnly(int topX, int topY, int botX, int botY,int blockUid)
 	{
 
-		REPORT(INFO,"buildheaplogiconly called for "<<topX<<" "<<topY<<" "<<botX<<" "<<botY);
-		Target *target=getTarget();
+		REPORT(DETAILED,"buildheaplogiconly called for "<<topX<<" "<<topY<<" "<<botX<<" "<<botY);
+		Target *target= parentOp->getTarget();
 		if(blockUid==-1)
 			blockUid++;    /// ???????????????
 
@@ -600,7 +605,7 @@ namespace flopoco {
 		int chunksY =  int(ceil( ( 1+ double(wY-dy) / (double) dy) ));
 		int sizeXPadded=dx*chunksX; 
 		int sizeYPadded=dy*chunksY;
-		REPORT(INFO, "sizeXpadded"<<sizeXPadded);	
+		REPORT(DEBUG, "sizeXpadded"<<sizeXPadded);	
 
 		int padX=sizeXPadded-wX;
 		int padY=sizeYPadded-wY;
@@ -631,8 +636,6 @@ namespace flopoco {
 					REPORT(DETAILED,join(addUID("y",blockUid),"_",k)<<" <= "<< addUID("Yp",blockUid) << range((k+1)*dy-1,k*dy)<<";");
 				}	
 
-
-			REPORT(DEBUG, "maxWeight=" << maxWeight <<  "    weightShift=" << weightShift);
 			SmallMultTable *tUU, *tSU, *tUS, *tSS;
 
 
@@ -667,7 +670,7 @@ namespace flopoco {
 			setCycle(0); // TODO FIXME for the virtual multiplier case where inputs can arrive later
 			setCriticalPath(initialCP);
 			// SmallMultTable is built to cost this:
-			manageCriticalPath( getTarget()->localWireDelay(chunksX) + getTarget()->lutDelay() ) ;  
+			manageCriticalPath(  parentOp->getTarget()->localWireDelay(chunksX) +  parentOp->getTarget()->lutDelay() ) ;  
 			for (int iy=0; iy<chunksY; iy++){
 
 				vhdl << tab << "-- Partial product row number " << iy << endl;
@@ -740,7 +743,7 @@ namespace flopoco {
 								s << PP(ix,iy,blockUid) << of(k); // right hand side
 								nots << "not " << s.str(); 
 
-								int weight = lsbWeight-g + ix*dx+iy*dy+k-weightShift+topX+topY-padX-padY;
+								int weight =  ix*dx+iy*dy+k  +topX+topY-padX-padY  - (wFull-wOut) + lsbWeight;
 
 								if(weight>=0) {// otherwise these bits are just truncated
 									if(resultSigned && (k==maxK-1)) { 
@@ -758,7 +761,6 @@ namespace flopoco {
 							}
 
 							vhdl << endl;
-
 						}
 				}
 			}				
@@ -822,8 +824,7 @@ namespace flopoco {
 	void IntMultiplier::addExtraDSPs(int topX, int topY, int botx, int boty,int wxDSP,int wyDSP)
 	{
 
-		REPORT(INFO, "in addExtraDSPs");
-		REPORT(INFO, "topX=" << topX << " topY=" << topY << " botX=" << botx << " botY=" << boty);
+		REPORT(DEBUG, "in addExtraDSPs: topX=" << topX << " topY=" << topY << " botX=" << botx << " botY=" << boty);
 		int topx=topX,topy=topY;
 		//if the block is on the margins of the multipliers, then the coordinates have to be reduced.
 		if(topX<0)
@@ -856,7 +857,7 @@ namespace flopoco {
 					}	
 			}	
 
-		REPORT(INFO,"in addextradsps after truncation line sets "<< topx <<" "<<topy<<" "<<botx<<" "<<boty);
+		//REPORT(INFO,"in addextradsps after truncation line sets "<< topx <<" "<<topy<<" "<<botx<<" "<<boty);
 
 		//now is the checking against the ratio
 		if(checkThreshold(topx,topy,botx,boty,wxDSP,wyDSP))
@@ -891,7 +892,7 @@ namespace flopoco {
 	bool IntMultiplier::checkThreshold(int topX, int topY, int botX, int botY,int wxDSP,int wyDSP)
 	{
 	
-		REPORT(INFO, "in checktreshhold "<<topX<<" "<<topY<<" "<<botX<<" "<<botY);
+		REPORT(DEBUG, "in checktreshhold "<<topX<<" "<<topY<<" "<<botX<<" "<<botY);
 		int widthX=(botX-topX);
 		int widthY=(botY-topY);
 		double blockArea;
@@ -906,8 +907,7 @@ namespace flopoco {
 		
 		while(x+y<wFull-wOut-g)
 			x++;
-		REPORT(INFO,"blocArea full "<<widthX*widthY);
-		REPORT(INFO,"x= "<<x<<" topX= "<<topX);
+		REPORT(DEBUG, "in checkThreshold: blocArea full "<<widthX*widthY << " x= "<<x<<" topX= "<<topX);
 		//computing the triangle's area
 		if(topX+topY<=wFull-wOut-g)
 			triangle=((x-topX)*(x-topX))/2;
@@ -916,8 +916,8 @@ namespace flopoco {
 		//REPORT(INFO, "triangle=" << triangle);
 		//the final area which is used
 		blockArea=widthX*widthY-triangle;
-		REPORT(INFO, "* blockArea=" << blockArea);
-		//if((parentOp->getTarget()->getVendor()=="Altera") && 
+		REPORT(DEBUG, "* blockArea=" << blockArea);
+		//if(( parentOp->getTarget()->getVendor()=="Altera") && 
 		//	((wxDSP >=widthX) || (wyDSP >= widthY)))
 		//	blockArea -= (wxDSP*wyDSP)  (widthX*widthY);		
 		//REPORT(INFO, "**blockArea=" << blockArea);
@@ -969,7 +969,7 @@ namespace flopoco {
 		int topX=botX-dspSizeX;
 		int topY=botY-dspSizeY;
 
-		REPORT(INFO,"verticaldsps= "<<verticalDSP<<" hordsps= "<<horizontalDSP);
+		REPORT(DEBUG,"verticaldsps= "<<verticalDSP<<" hordsps= "<<horizontalDSP);
 
 		for(int i=0;i<verticalDSP;i++)
 			{
@@ -996,11 +996,11 @@ namespace flopoco {
 
 						if(dspSizeX > sizeLimit)
 							{
-								REPORT(INFO, "MAXIMUM CHECKS " << dspSizeX <<" "<< dspSizeY << " " << botX-botY<<" "<<topX-topY);		
+								//REPORT(INFO, "MAXIMUM CHECKS " << dspSizeX <<" "<< dspSizeY << " " << botX-botY<<" "<<topX-topY);		
 
 								if(checkThreshold(topX, topY, botX, botY, dspSizeX, dspSizeY)
 								   && (min(botY-topY+1,botX-topX+1)>=max(dspSizeX,dspSizeY)))
-									{	REPORT(INFO,"22222222222222222222222222222222222222");
+									{	//REPORT(INFO,"22222222222222222222222222222222222222");
 										if((topX<botX)&&(topX<botX))		
 											addExtraDSPs(topX, topY, botX, botY, dspSizeX, dspSizeY);
 									}
@@ -1014,9 +1014,7 @@ namespace flopoco {
 					
 								if((topX<botX)&&(topY<botY))
 									{
-										REPORT(INFO, "at " << dspSizeX << " =>  " << topX << " " << topY 
-										       << " " << botX << " " << botY << " " 
-										       << botX-topX << " " << botY - topY );						
+										REPORT(DEBUG, " in BuildAlteraTiling, at " << dspSizeX << " =>  " << topX << " " << topY  << " " << botX << " " << botY << " "  << botX-topX << " " << botY - topY );						
 										addExtraDSPs(topX, topY, botX, botY, dspSizeX, dspSizeY);
 									}
 							}

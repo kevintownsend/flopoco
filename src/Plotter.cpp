@@ -867,25 +867,14 @@ namespace flopoco
 				it++;
 			}
 #endif
-
-
-
-
-
 		}
 
-		for(unsigned k=0; k<orderedBits.size(); k++)
-			REPORT(INFO, orderedBits[k]->getCycle() << "  " << orderedBits[k]->getCriticalPath(orderedBits[k]->getCycle()));
+		// for(unsigned k=0; k<orderedBits.size(); k++)
+		// 	REPORT(INFO, orderedBits[k]->getCycle() << "  " << orderedBits[k]->getCriticalPath(orderedBits[k]->getCycle()));
 
 
-		for(unsigned i=0; i<bits.size(); i++)
-		{
-
-
-
-			if(bits[i].size()>0)
-			{
-
+		for(unsigned i=0; i<bits.size(); i++)		{
+			if(bits[i].size()>0)			{
 				//				tempCycle = 0;
 				//        tempCP = 0;
 				cnt = 0;

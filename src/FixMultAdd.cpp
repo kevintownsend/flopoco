@@ -77,7 +77,7 @@ namespace flopoco {
 		Operator ( target, inputDelays_ ),
 		wX(wX_), wY(wY_), wA(wA_), wOut(wOut_),
 		msbP(msbP_),
-		lsbPfull(msbP+1 - wX -wY),
+		lsbPfull(msbP - wX -wY),
  		lsbA(lsbA_),
 		signedIO(signedIO_),
 		ratio(ratio_), 
@@ -90,7 +90,7 @@ namespace flopoco {
 		{
 			ostringstream name;
 			name <<"FixMultAdd";
-			name << wX << "_" << wY << "_" << wA << "_" << wOut << "_" << (signedIO?"s":"u") << "_uid"<<Operator::getNewUId();
+			name << wX << "x" << wY << "p" << wA << "r" << wOut << "" << (signedIO?"s":"u") << "uid"<<Operator::getNewUId();
 			setName ( name.str() );
 			REPORT(INFO, "Building " << name.str() )
 		}
@@ -110,7 +110,7 @@ namespace flopoco {
 		}
 		else { // there is a truncation of the product
 			// we will add g guard bits to the bit heap
-			wOutP=msbP+1;
+			wOutP=msbP;
 			g = IntMultiplier::neededGuardBits(wX, wY, wOutP); 
 			possibleOutputs=2; // No faithful rounding
 			REPORT(DETAILED, " Faithfully rounded architecture" )
@@ -136,21 +136,22 @@ namespace flopoco {
 		// The bit heap
 		bitHeap = new BitHeap(this, wOut+g);
 
+
 		// TODO should be a parameter to the bit heap constructor
 		bitHeap->setEnableSuperTiles(enableSuperTiles);
 		bitHeap->setSignedIO(signedIO);
-
 
 		// stuff for the SVG output
 		// TODO should be moved in the bitheap constructor
 		plotter = new Plotter(bitHeap);
 		bitHeap->setPlotter(plotter);
 
-
 		// initialize the critical path
 		setCriticalPath(getMaxInputDelays ( inputDelays_ ));
 
 
+
+		// TODO if it fits in a DSP block just write A*B+C
 		
 		
 
@@ -171,7 +172,7 @@ namespace flopoco {
 	void FixMultAdd::fillBitHeap() {
 		//  throw the addend to the bit heap
 		bitHeap -> addSignedBitVector(lsbA+g, aname, wA);
-
+		
 		//  throw the product to the bit heap
 		int lsbWeight = msbP+1 - wOutP;
 		// TODO we could read wX and wY from the signal.

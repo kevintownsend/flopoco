@@ -603,7 +603,7 @@ namespace flopoco{
 
 			ostringstream buf;
 			buf << getName() << "_t" << i;
-			Operator* op = tList[i]->toComponent (target(), buf.str());
+			Operator* op = tList[i]->toComponent (getTarget(), buf.str());
 
 			outPortMap (op, "r", join("r_",i));
 			if (p.t[i]->beta)
