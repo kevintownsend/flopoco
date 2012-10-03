@@ -92,7 +92,7 @@ namespace flopoco {
 			name <<"FixMultAdd";
 			name << wX << "x" << wY << "p" << wA << "r" << wOut << "" << (signedIO?"s":"u") << "uid"<<Operator::getNewUId();
 			setName ( name.str() );
-			REPORT(INFO, "Building " << name.str() )
+			REPORT(INFO, "Building " << name.str() );
 		}
 
 		parentOp=this;

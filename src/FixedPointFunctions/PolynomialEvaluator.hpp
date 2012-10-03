@@ -417,6 +417,7 @@ namespace flopoco{
 		int currentPrec;
 		bool sol;
 			
+		float thresholdForDSP; 
 			
 		vector<signed> sigmakPSize,  pikPSize, pikPTSize;
 		vector<signed> sigmakPWeight, pikPWeight, pikPTWeight;

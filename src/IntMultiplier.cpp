@@ -196,7 +196,7 @@ namespace flopoco {
 		else
 			name << "LogicOnly_";
 		name << wXdecl << "_" << wYdecl <<"_" << wOut << "_" << (signedIO?"signed":"unsigned") << "_uid"<<Operator::getNewUId();
-		parentOp->setName ( name.str() );
+		setName ( name.str() );
 
 		REPORT(DEBUG, "Building " << name.str() )
 

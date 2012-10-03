@@ -33,35 +33,37 @@ using namespace std;
 
 namespace flopoco{
 	
-		PolynomialEvaluator::PolynomialEvaluator(Target* target, vector<FixedPointCoefficient*> coef, YVar* y, int targetPrec, mpfr_t* approxError,map<string, double> inputDelays):
+	PolynomialEvaluator::PolynomialEvaluator(Target* target, vector<FixedPointCoefficient*> coef, YVar* y, int targetPrec, mpfr_t* approxError,map<string, double> inputDelays):
 		Operator(target, inputDelays), y_(y), targetPrec_(targetPrec), sol(false) {
-		
+
+		thresholdForDSP = 0.9; // Should be a param of the constructor
+
 		setPolynomialDegree(coef.size()-1);
 		
-		setCopyrightString("Bogdan Pasca (2010)");
+		setCopyrightString("Bogdan Pasca, Florent de Dinechin (2010-2012)");
 		srcFileName = "PolynomialEvaluator";
 		setName(join("PolynomialEvaluator_degree",degree_,"_uid",getNewUId()));
 
 		setApproximationError(approxError); /* set the approximation error budget we are allowed */
 
 		mpfr_init2 ( targetError, 150);
- 		mpfr_set_si( targetError, 2, GMP_RNDN);
+		mpfr_set_si( targetError, 2, GMP_RNDN);
 		mpfr_pow_si( targetError, targetError, -targetPrec-1, GMP_RNDN); /* 1/2 ulp target error */
 
 		// TODO fix comments: MSB weight below, LSB weight in most of the code
 
 		/* both y and a[i], i in 0 ... d are described by two values: size and MSB weight 
 
-		for y, which is always positive, the two parameters are
+		   for y, which is always positive, the two parameters are
 		
-		|<-- y_->getWeight() --->|
-		.---------------------[0][y_{size-1} downto 0    ]
-		                         |<--- y_getSize() ----->|
+		   |<-- y_->getWeight() --->|
+		   .---------------------[0][y_{size-1} downto 0    ]
+		   |<--- y_getSize() ----->|
 		
-		for the coefficients
-		|<-- coef[i]->getWeight() --->|
-		.--------------------------[s][coef[i]->getSize()-1 downto 0 ]
-		                              |<--- coef[i]_->getSize() ---->|        */
+		   for the coefficients
+		   |<-- coef[i]->getWeight() --->|
+		   .--------------------------[s][coef[i]->getSize()-1 downto 0 ]
+		   |<--- coef[i]_->getSize() ---->|        */
 		
 		updateCoefficients(coef);
 		REPORT(DETAILED, "Polynomial to evaluate: " << printPolynomial(coef, y, 0));
@@ -79,7 +81,7 @@ namespace flopoco{
 		allocateAndInitializeExplorationVectors();
 		
 		/* needed in the approximation error computation. We do it once as 
-		this doesn't change during the iterations */
+		   this doesn't change during the iterations */
 		setMaxYValue(y); 
 
 		hornerGuardBitProfiler(); // sets the min values for pi truncations
@@ -94,14 +96,14 @@ namespace flopoco{
 		/* design space exploration */				
 
 		/* try to truncate as much as possible from y using the maximum
-		useful number of guard bits */			
+		   useful number of guard bits */			
 		while ((!sol) && (nextStateY())){
 			reinitCoefficientGuardBits();
 			/* run once the error estimation algo with these parameters */
 			e = errorEstimator(yGuard_, aGuard_);
 			/* test if by chance we met the error budget */
 			/* epsilon_approx + epsilon_eval <= 1/2 ulp. the other half ulp
-			comes from the final rounding (which we incorporate in a0*/
+			   comes from the final rounding (which we incorporate in a0*/
 			mpfr_add( u, *approximationError, *e, GMP_RNDN);
 
 			if (  mpfr_cmp( u, targetError) <= 0 ){
@@ -113,15 +115,15 @@ namespace flopoco{
 			}
 		}
 		/* at this point we have found a rough solution. We now try to find 
-		smaller values for coefficient guard bits */
+		   smaller values for coefficient guard bits */
 
 		if (degree_ > 1 ){
 			/* the second part of the exploration is performed only when the 
-			polynomial degree is larger than 1 */			
+			   polynomial degree is larger than 1 */			
 			sol = false; //reinit sol;
 			reinitCoefficientGuardBits(); /* sets all guard bits to maximum -1 */
 			nextStateA(); /* this state brings them back to maximum so that the
-				             next nextStateA() gets them to 0,0,0,0 ...0 */
+			                 next nextStateA() gets them to 0,0,0,0 ...0 */
 			while (((!sol) && nextStateA())){
 				e = errorEstimator(yGuard_, aGuard_);
 				mpfr_add( u, *approximationError, *e, GMP_RNDN);
@@ -170,7 +172,7 @@ namespace flopoco{
 #define USE_BITHEAP 0
 #if !USE_BITHEAP //
 
-					IntMultiplier *sm = new IntMultiplier ( target, wIn1, wIn2, wIn1+wIn2-k, true /*signedIO*/, 0.5); //inDelayMap("X",getCriticalPath()));
+					IntMultiplier *sm = new IntMultiplier ( target, wIn1, wIn2, wIn1+wIn2-k, true /*signedIO*/, thresholdForDSP); //inDelayMap("X",getCriticalPath()));
 					oplist.push_back(sm);
 					
 					nextCycle(); //TODO fix it by feeding the input delay to IntTruncMultiplier
@@ -217,7 +219,8 @@ namespace flopoco{
 					                                  wR , 
 					                                  msbP, /* msbP */
 					                                  lsbA,
-					                                  true /*signedIO*/, 0.9);
+					                                  true /*signedIO*/, 
+					                                  thresholdForDSP);
 					//cout << " Fin du constr" << endl;
 					oplist.push_back(ma);
 
@@ -249,7 +252,7 @@ namespace flopoco{
 					                                        1+y_->getSize()+yGuard_[i], 
 					                                        sigmakPSize[i-1]+1, 	
 					                                        wOut , 
-					                                        0.5, 
+					                                        thresholdForDSP, 
 					                                        true); //inDelayMap("X",getCriticalPath()));
 					oplist.push_back(sm);
 				
@@ -267,13 +270,13 @@ namespace flopoco{
 
 					// the product
 					vhdl << tab << declare( join("op1_",i), (coef_[0]->getSize()+2) ) << " <= " 
-							 << rangeAssign( (coef_[0]->getSize()+2)-(wOut-1) -1,0, join("piP",i)+of(wOut-1)) 
-							 << " & " << join("piP",i)<<range(wOut-2,0) << ";" << endl;
+					     << rangeAssign( (coef_[0]->getSize()+2)-(wOut-1) -1,0, join("piP",i)+of(wOut-1)) 
+					     << " & " << join("piP",i)<<range(wOut-2,0) << ";" << endl;
 					
 					// a0
 					vhdl << tab << declare( join("op2_",i), (coef_[0]->getSize()+2) ) << " <= " 
-							 << rangeAssign(0,0, join("a",degree_-i)+of(coef_[degree_-i]->getSize()))
-							 << " & " << join("a",degree_-i) << ";"<<endl;
+					     << rangeAssign(0,0, join("a",degree_-i)+of(coef_[degree_-i]->getSize()))
+					     << " & " << join("a",degree_-i) << ";"<<endl;
 
 					inPortMapCst ( sa, "X", join("op1_",i));
 					inPortMapCst ( sa, "Y", join("op2_",i));
@@ -292,18 +295,19 @@ namespace flopoco{
 					int lsbA=0;
 
 					FixMultAdd * ma = new  FixMultAdd(target, wIn1, wIn2, wA,
-					                                  wOutP , 
+					                                  wA , 
 					                                  msbP, /* msbP */
 					                                  lsbA,
-					                                  true /*signedIO*/, 0.9);
+					                                  true /*signedIO*/, 
+					                                  thresholdForDSP);
 					//cout << " Fin du constr" << endl;
 					oplist.push_back(ma);
 
 
 					// a0
 					vhdl << tab << declare( join("op2_",i), (coef_[0]->getSize()+2) ) << " <= " 
-							 << rangeAssign(0,0, join("a",degree_-i)+of(coef_[degree_-i]->getSize()))
-							 << " & " << join("a",degree_-i) << ";"<<endl;
+					     << rangeAssign(0,0, join("a",degree_-i)+of(coef_[degree_-i]->getSize()))
+					     << " & " << join("a",degree_-i) << ";"<<endl;
 
 					inPortMap ( ma, "X", join("yT",i));
 					inPortMap ( ma, "Y", join("sigmaP",i-1));
@@ -523,14 +527,14 @@ namespace flopoco{
 			if (i < unsigned(degree_)){
 				if (sigmakP_sigmak[i] != NULL){
 					if (*sigmakP_sigmak[i] != ((mpfr_ptr)0))
-					mpfr_clear(*sigmakP_sigmak[i]);
+						mpfr_clear(*sigmakP_sigmak[i]);
 					free(sigmakP_sigmak[i]);
 				}
 			}
 			if (sigmakP[i] != NULL){
 				if ( *sigmakP[i] != ((mpfr_ptr)0))
 					mpfr_clear(*sigmakP[i]);
-					free(sigmakP[i]);
+				free(sigmakP[i]);
 			}
 			if ( i < unsigned(degree_)){
 				if (a[i] != NULL){
@@ -634,7 +638,7 @@ namespace flopoco{
 
 	void PolynomialEvaluator::reinitCoefficientGuardBitsLastIteration(){
 		/* a solution was found with max values for guard bits. now we try to
-		reduce */
+		   reduce */
 		for (uint32_t i=1; i<unsigned(degree_)+1; i++)
 			aGuard_[i] = maxBoundA[i];
 	}
@@ -659,18 +663,18 @@ namespace flopoco{
 			if (( y_->getSize()> unsigned(Xd) ) && (y_->getSize() % unsigned(Xd) != 0)){
 				int k=1;
 				while (k*Xd < int(y_->getSize())){
-						objectiveStatesY.insert(pair<int,int>(i+1, y_->getSize() - k*Xd));
+					objectiveStatesY.insert(pair<int,int>(i+1, y_->getSize() - k*Xd));
 					k++;					
 				}
 			}
 			if (Yd!=Xd)
 				if (( y_->getSize()> unsigned(Yd) ) && (y_->getSize() % unsigned(Yd) != 0)){
-				int k=1;
-				while (k*Yd < int(y_->getSize())){
-					objectiveStatesY.insert(pair<int,int>(i+1, y_->getSize() - k*Yd));
-					k++;					
+					int k=1;
+					while (k*Yd < int(y_->getSize())){
+						objectiveStatesY.insert(pair<int,int>(i+1, y_->getSize() - k*Yd));
+						k++;					
+					}
 				}
-			}
 			/* insert the "do no truncation" pair */
 			objectiveStatesY.insert(pair<int,int>(i+1, 0)); 
 		}
