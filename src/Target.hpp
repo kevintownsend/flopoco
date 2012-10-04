@@ -230,7 +230,9 @@ namespace flopoco{
 		 * @return widths with x>y
 		 */
 		virtual void getDSPWidths(int &x, int &y, bool sign = false) = 0;
-	
+
+
+		/** adder delay is modeled as d = k1 + (size-1)k2 */
 		virtual void getAdderParameters(double &k1, double &k2, int size) = 0;
 
 		// Methods related to target behaviour and performance

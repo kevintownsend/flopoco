@@ -438,7 +438,7 @@ namespace flopoco {
 		double tSelect = target->lutDelay() + target->localWireDelay();
 		
 		double k1,k2;
-		target->getAdderParameters ( k1,k2,wIn );
+		target->getAdderParameters ( k1,k2,wIn );  /* adder delay is modeled as d = k1 + (w-1)k2 */
 		target->suggestSlackSubaddSize ( alpha0, wIn, tSelect );
 		int alpha;
 		target->suggestSubaddSize ( alpha,wIn );
