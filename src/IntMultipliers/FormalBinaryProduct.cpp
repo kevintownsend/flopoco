@@ -254,6 +254,8 @@ ProductIR ProductIR::toPow (size_t n) const
 	}
 	return res;
 }
+
+
 ProductIR& ProductIR::simplifyInPlace (void)
 {
 	// we begin by lsb: non-rev iterator
@@ -292,6 +294,8 @@ ProductIR& ProductIR::simplifyInPlace (void)
 	}
 	return *this;
 }
+
+
 ProductIR& ProductIR::setMSB (int newMSB)
 {
 	if (newMSB <= msb) {

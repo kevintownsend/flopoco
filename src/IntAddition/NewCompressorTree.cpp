@@ -40,7 +40,7 @@ NewCompressorTree::NewCompressorTree(Target * target, vector<unsigned> vops_)
 	setCopyrightString("Guillaume Sergent 2012");
 
 	// Computing the size of the output
-	int maxResult=0;
+	mpz_class maxResult=0;
 	for (unsigned i=0; i<inSize; i++)	
 		maxResult += vops[i]<<i;
 		
@@ -87,7 +87,7 @@ NewCompressorTree::NewCompressorTree(Target * target, vector<unsigned> vops_)
 			// enumerate in reverse since IR is litte-endian and
 			// flopoco's vhdl is big-endian
 			for (int i = wOut-1; i >= 0; i--) {
-				if (i < wOut-1)
+				if ((unsigned)i < wOut-1)
 					vhdl << " & ";
 				if (vops[i]) {
 					vhdl << "X_" << i << "_level" << level
@@ -105,7 +105,7 @@ NewCompressorTree::NewCompressorTree(Target * target, vector<unsigned> vops_)
 			// enumerate in reverse since IR is litte-endian and
 			// flopoco's vhdl is big-endian
 			for (int i = wOut-1; i >= 0; i--) {
-				if (i < wOut-1)
+				if ((unsigned)i < wOut-1)
 					vhdl << " & ";
 				if (vops[i]) {
 					vhdl << "X_" << i << "_level" << level
@@ -117,7 +117,7 @@ NewCompressorTree::NewCompressorTree(Target * target, vector<unsigned> vops_)
 			vhdl <<";" << endl;
 			vhdl << tab << declare ("R_2", wOut) << " <= ";
 			for (int i = wOut-1; i >= 0; i--) {
-				if (i < wOut-1)
+				if ((unsigned)i < wOut-1)
 					vhdl << " & ";
 				if (vops[i] > 1) {
 					vhdl << "X_" << i << "_level" << level
