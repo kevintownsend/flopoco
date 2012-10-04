@@ -20,12 +20,30 @@
 
 namespace flopoco{
 	
+	//Old
+	/*
 	double StratixIV::adderDelay(int size) {
+		
 		return (distantWireDelay(10) + fdCtoQ_ + lutDelay() + 
 		((size-3) * fastcarryDelay_) + 
 		((size/almsPerLab_) * (innerLABcarryDelay_- fastcarryDelay_)) + 
 		((size/(almsPerLab_*2)) * (interLABcarryDelay_ - innerLABcarryDelay_)) + 
-		carryInToSumOut_ + ffDelay_); 
+		carryInToSumOut_ + ffDelay_);
+	};
+	*/
+	double StratixIV::adderDelay(int size) {
+		int subAdd = 0;
+		
+		suggestSubaddSize(subAdd, size);
+		
+		return (
+			lutDelay_ + 
+			((size-1-(2*size/almsPerLab_)) * fastcarryDelay_) + 
+			((size/almsPerLab_) * innerLABcarryDelay_) + 
+			((size/almsPerLab_) * interLABcarryDelay_) + 
+			carryInToSumOut_ + 
+			(size/subAdd)  * ffDelay_
+		);
 	};
 	
 	void StratixIV::getAdderParameters(double &k1, double &k2, int size){
@@ -184,13 +202,17 @@ namespace flopoco{
 		suggestSlackSubaddSize(x, wIn, 0);
 		
 		//x = chunkSize;		
-		if (x>0) return true;
-		else {
+		if (x>0) 
+			return true;
+		else 
+		{
 			x=1;		
 			return false;
 		} 
 	}
 	
+	//Old
+	/*
 	bool  StratixIV::suggestSlackSubaddSize(int &x, int wIn, double slack){
 		
 		float time = 1./frequency() - slack - (distantWireDelay(10) + fdCtoQ_ + lutDelay() + carryInToSumOut_ + ffDelay_);
@@ -226,6 +248,39 @@ namespace flopoco{
 		x = chunkSize;		
 		if (x>0) return true;
 		else {
+			x=1;		
+			return false;
+		} 
+	}
+	*/
+	bool  StratixIV::suggestSlackSubaddSize(int &x, int wIn, double slack){
+		
+		float time = 1./frequency() - slack - (lutDelay() + carryInToSumOut_);
+		int chunkSize = 0;
+		
+		while (time > 0)
+		{
+			chunkSize++;
+			
+			time -= fastcarryDelay_;
+			if ((chunkSize % (almsPerLab_*2) == 0) && (chunkSize % almsPerLab_ != 0))
+			{
+				time -= interLABcarryDelay_;
+			}else if (chunkSize % almsPerLab_ == 0)
+			{
+				time -= interLABcarryDelay_;
+			}
+		}
+		
+		if(time<0)
+			chunkSize--; // decremented because of the loop condition (time > 0). When exiting the loop the time is negative
+		
+		x = chunkSize;		
+		if (x>0)
+		{ 
+			return true;
+		}else 
+		{
 			x=1;		
 			return false;
 		} 
