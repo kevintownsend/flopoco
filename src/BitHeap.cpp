@@ -577,44 +577,42 @@ namespace flopoco
 
 	void BitHeap::elemReduce(unsigned i, BasicCompressor* bc, int type)
 	{
-		REPORT(DEBUG, "Entering elemReduce() ");
+		REPORT(DEBUG, "Entering elemReduce for column "<< i << " using compressor " << bc->getName() );
 		list<WeightedBit*>::iterator it = bits[i].begin();
 		stringstream signal[2];
 
 		op->vhdl << endl;
 
-		REPORT(DEBUG, cnt[i] << "  " << bits[i].size());
-		REPORT(DEBUG, cnt[i+1] << "  " << bc->getColumnSize(1));
+		//		REPORT(DEBUG, cnt[i] << "  " << bits[i].size());
+		//    REPORT(DEBUG, cnt[i+1] << "  " << bc->getColumnSize(1));
 
 
 		WeightedBit* b =  computeLatest(i, bc->getColumnSize(0), bc->getColumnSize(1)) ;
 
-		REPORT(DEBUG, b->getName());
 
-		if(b)
-			{
+		if(b)	{
+			REPORT(DEBUG, "latest bit for this reduction" << b->getName());
 				op->setCycle(  b ->getCycle()  );
 				op->setCriticalPath(  b ->getCriticalPath(op->getCurrentCycle()));
 				op->manageCriticalPath( op->getTarget()->lutDelay() + op->getTarget()->localWireDelay() );
+
 				if((op->getCurrentCycle()>plottingCycle) || ((op->getCurrentCycle()==plottingCycle) &&
-				                                             (op->getCriticalPath()>plottingCP)))
-					{
+				                                             (op->getCriticalPath()>plottingCP)))	{
 						plottingCycle = op->getCurrentCycle();
 						plottingCP = op->getCriticalPath();
 					}
-
 			}
+		else THROWERROR("elemReduce: No latest bit?");
 
 		// build the first input of the compressor
-		for(unsigned j=0; j<bc->getColumnSize(0); j++)
-			{
+		for(unsigned j=0; j<bc->getColumnSize(0); j++)	{
 				signal[0] << (*it)->getName();
 				if(j!=bc->getColumnSize(0)-1)
 					signal[0] << " & ";
 				it++;
 			}
 
-		// build the second input of the compressor, if any
+ 		// build the second input of the compressor, if any
 		if(bc->getColumnSize(1)!=0)
 			{
 				it = bits[i+1].begin();
@@ -627,10 +625,9 @@ namespace flopoco
 					}
 			}
 
-		string in_concat=join("in_concat_bh", getGUid(), "_");
-		string out_concat=join("out_concat_bh", getGUid(), "_");
+		string in_concat=join("CompressorIn_bh", getGUid(), "_");
+		string out_concat=join("CompressorOut_bh", getGUid(), "_");
 		string compressor=join("Compressor_bh", getGUid(), "_");
-
 
 		for(unsigned j=0; j<bc->height.size(); j++)
 			{
@@ -653,13 +650,16 @@ namespace flopoco
 			removeCompressedBits(i+1,bc->getColumnSize(1));
 
 
-
 		// add the bits, at the current (global) instant.
+		for (int j=0; j<bc->getOutputSize(); j++) {
+			addBit(i+j, join(out_concat, compressorIndex,"_", outConcatIndex, of(j)),"",type);
+		}
+#if 0
 		addBit(i, join(out_concat, compressorIndex,"_", outConcatIndex, "(0)"),"",type);
 		addBit(i+1,    join(out_concat, compressorIndex,"_", outConcatIndex, "(1)"),"",type);
 		if(!((bc->getColumnSize(0)==3) && (bc->getColumnSize(1)==0)))
 			addBit(i+2, join(out_concat, compressorIndex,"_", outConcatIndex, "(2)"),"",type);
-
+#endif
 		REPORT(DEBUG, "Exiting elemReduce() ");
 
 		++compressorIndex;
@@ -704,15 +704,11 @@ namespace flopoco
 
 
 
-	vector<BasicCompressor *> possibleCompressors (0, (BasicCompressor*) 0);
 
 
 	void BitHeap::generatePossibleCompressors()
 	{
 		//Build a vector of basic compressors that are fit for this target
-		//Size 10 should cover all possible compressors at this time
-		//Not very elegant, but should work
-		vector<BasicCompressor *>& pC=possibleCompressors;
 		int maxCompressibleBits, col0, col1;
 
 		maxCompressibleBits = op->getTarget()->lutInputs();
@@ -723,13 +719,26 @@ namespace flopoco
 			for(col1=col0; col1>=0; col1--)
 				if((col0 + col1<=maxCompressibleBits) && (intlog2(col0 + 2*col1)<=3))
 					{
-						REPORT(DEBUG, "col0 " << col0 <<", col1 " << col1);
+						REPORT(DEBUG, "Generating compressor for col1=" << col1 <<", col0=" << col0);
 						vector<int> newVect;
 						newVect.push_back(col0);
 						newVect.push_back(col1);
-						pC.push_back(new BasicCompressor(op->getTarget(), newVect));
+						BasicCompressor* bc = new BasicCompressor(op->getTarget(), newVect);
+						if(col0==3 && col1==0)
+							fullAdder = bc;
+						possibleCompressors.push_back(bc);
 					}
-
+		
+		if(!fullAdder)
+			THROWERROR("What, generatePossibleCompressors() didn't build a full adder !?!");
+		
+		// Building the half-adder
+		{
+			vector<int> newVect;
+			newVect.push_back(2);
+			newVect.push_back(0);
+			halfAdder = new BasicCompressor(op->getTarget(), newVect);
+		}
 	}
 
 
@@ -832,52 +841,46 @@ namespace flopoco
 						plotter->heapSnapshot(didCompress, bb->getCycle(), bb->getCriticalPath(bb->getCycle()));
 
 						//Altera
-						if(op->getTarget()->hasFastLogicTernaryAdders())
-							{
-								REPORT(DEBUG, "before Altera finalAdd");
+						if(op->getTarget()->hasFastLogicTernaryAdders())	{
 								generateFinalAddVHDL(false);
 							}
 
-						//Xilinx
-						else
-							{
+						else	{
+							//Xilinx
+							//                 8 8 16 1         12 12 24 1
+							// #if 0 (new):   101 4.865ns   202 5.371ns
+							// #if 1:         97 5.176ns		192  6.840		
+#if 1
+							//do additional compressions or additions
+							if (getMaxHeight()>2)	{
+								unsigned i = minWeight;
+								// remember the initial heights
+								for(unsigned i=minWeight; i<maxWeight; i++)   
+									cnt[i]=bits[i].size();
+
+								//printBitHeapStatus();
+
+								//find the first column with 3 bits (starting from LSB); the rest go to the final adder
+								while(cnt[i]<3)
+									i++;
+
+										REPORT(DEBUG, "minWeight=" << minWeight << "    first weight with 3 bits:" << i);
+										if(i>minWeight)	{
+											WeightedBit *b = getLatestBit(minWeight, i-1);
+											op->setCycle( b->getCycle());
+											op->setCriticalPath(b->getCriticalPath(op->getCurrentCycle()));
+											op->manageCriticalPath(op->getTarget()->localWireDelay() +
+											                       op->getTarget()->adderDelay(i-minWeight));
+											
+											applyAdder(minWeight, i-1, false);
+											
+											concatenateLSBColumns();
+
+											//REPORT(DEBUG, "here" << maxWeight << " " << i);
+										}
 
 
-								//do additional compressions or additions
-								if (getMaxHeight()>2)
-									{
-										unsigned i = minWeight;
-										// remember the initial heights
-										for(unsigned i=minWeight; i<maxWeight; i++)   
-											{
-												cnt[i]=bits[i].size();
-											}
-
-										//printBitHeapStatus();
-
-										//find the first column with 3 bits (starting from LSB); the rest go to the final adder
-										while(cnt[i]<3)
-											i++;
-
-										REPORT(DEBUG, i);
-										REPORT(DEBUG, minWeight);
-										if(i>minWeight)
-											{
-												WeightedBit *b = getLatestBit(minWeight, i-1);
-												op->setCycle( b->getCycle());
-												op->setCriticalPath(b->getCriticalPath(op->getCurrentCycle()));
-												op->manageCriticalPath(op->getTarget()->localWireDelay() +
-												                       op->getTarget()->adderDelay(i-minWeight));
-
-												applyAdder(minWeight, i-1, false);
-
-												concatenateLSBColumns();
-
-												//REPORT(DEBUG, "here" << maxWeight << " " << i);
-											}
-
-
-
+										
 										WeightedBit* latestBit;
 
 
@@ -945,6 +948,29 @@ namespace flopoco
 											}
 
 									}
+#else
+							if (getMaxHeight()>2)	{
+								// Just use a row of 3:2 compressors
+								for(unsigned i=minWeight; i<maxWeight; i++)   
+									cnt[i]=bits[i].size();
+
+								// TODO ne pas generer de HA si pas besoin
+								unsigned i=minWeight;
+								while(i<maxWeight){
+									unsigned size = cnt[i];
+									if(size==3) {
+										elemReduce(i, fullAdder);
+									}
+									else if(size==2) {
+										elemReduce(i, halfAdder);
+									}
+									else { // size of this column is 1 or 0, nothing to do
+									}
+									i++;
+								}
+							} // else getMaxHeight==2, nothing to do			
+#endif
+
 
 
 								concatenateLSBColumns();
@@ -974,13 +1000,14 @@ namespace flopoco
 
 			}
 
-		for(int i=0;i<10;i++)
-			{
+		for(int i=0;i<10;i++)	{
 				if (usedCompressors[i]==true)
-					{
 						possibleCompressors[i]->addToGlobalOpList();
-					}
+
 			}
+		// Let's assume the half-adder and full adder are always used
+		halfAdder->addToGlobalOpList();
+		fullAdder->addToGlobalOpList();
 
 
 		op->vhdl << tab << "-- End of code generated by BitHeap::generateCompressorVHDL" << endl;
@@ -1497,7 +1524,7 @@ namespace flopoco
 				}
 				
 				//splitting wasn't/was necessary
-				if(subAddSize >= maxWeight-minWeight+2)
+				if(subAddSize >= (int)( maxWeight-minWeight+2))
 				{
 					//handle timing
 					op->setCycleFromSignal(inAdder0Name);
@@ -1571,17 +1598,10 @@ namespace flopoco
 	//the compression
 	void BitHeap::compress(int stage)
 	{
-		Target* target=op->getTarget();
-
 		plottingStage=stage;
 
-		unsigned n = target->lutInputs();
 		unsigned w;
 		didCompress = false;
-
-		vector<BasicCompressor*> compressors (n+1, (BasicCompressor*) 0);
-
-
 
 		REPORT(DEBUG, "maxWeight="<< maxWeight);
 		REPORT(DEBUG, "Column height before compression");
@@ -2151,34 +2171,26 @@ namespace flopoco
 		REPORT(DEBUG, "Checking whether rightmost columns need compressing");
 		bool alreadyCompressed=true;
 		w=minWeight;
-		while(w<bits.size() && alreadyCompressed)
-			{
-
-
-				if(currentHeight(w)>1)
-					{
-						alreadyCompressed=false;
-					}
-				else
-					{
-						if(currentHeight(w) == 0)
-							{
-								THROWERROR("LSB columns cannot be void!");
-								w++;
-							}
-						else
-							{
-								REPORT(DEBUG, "Level " << w << " is already compressed; will go directly to the final result");
-								w++;
-							}
-					}
+		while(w<bits.size() && alreadyCompressed) {
+			if(currentHeight(w)>1)
+				alreadyCompressed=false;
+			else	{// currentHeight(w) <= 1
+				if(currentHeight(w) == 0)	{
+					THROWERROR("LSB columns cannot be void!");
+					w++;
+				}
+				else { // currentHeight(w) == 1
+					REPORT(DEBUG, "Level " << w << " is already compressed; will go directly to the final result");
+					w++;
+				}
 			}
+		}
 
 
 
 		if(w!=minWeight)
 			{
-
+				
 				WeightedBit *b = getLatestBit(minWeight, w-1);
 				op->setCycle(  b ->getCycle()  );
 				op->setCriticalPath(   b ->getCriticalPath(op->getCurrentCycle()));

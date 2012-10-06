@@ -20,6 +20,7 @@
 #include "Operator.hpp"
 #include "Table.hpp"
 #include "DualTable.hpp"
+#include "IntAdder.hpp"
 #include "IntAddition/BasicCompressor.hpp"
 #include "IntMultipliers/MultiplierBlock.hpp"
 //#include "Plotter.hpp"
@@ -235,7 +236,10 @@ namespace flopoco{
 		unsigned maxWeight;     /**< The compressor tree will produce a result for weights < maxWeight (work modulo 2^maxWeight)*/
 		unsigned minWeight; /**< bits smaller than this one are already compressed */    
 		mpz_class constantBits; /**< This int gather all the constant bits that need to be added to the bit heap (for rounding, two's complement etc) */
-		bool usedCompressors[10]; /** the list of compressors which were used at least once*/
+		vector<BasicCompressor *> possibleCompressors;
+		bool usedCompressors[100]; /** the list of compressors which were used at least once*/ // 100 should be more than enough for everybody
+		BasicCompressor * halfAdder;
+		BasicCompressor * fullAdder;
 		unsigned chunkDoneIndex; 
 		unsigned inConcatIndex; /** input index - to form the inputsignals of the compressor*/
 		unsigned outConcatIndex; /** output index - to form the outputsignals of the compressor*/
