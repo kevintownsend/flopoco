@@ -27,7 +27,7 @@ class UserDefinedOperator : public Operator {
     // definition of some function for the operator    
 
     // constructor, defined there with two parameters (default value 0 for each)
-    UserDefinedOperator(Target* target,int param0 = 0, int param1 = 0, int param2 = 0);
+    UserDefinedOperator(Target* target,int param0 = 0, int param1 = 0);
 
     // destructor
     ~UserDefinedOperator() {};

@@ -7,8 +7,7 @@
   entries */
 #include "gmp.h"
 #include "mpfr.h"
-#include "BitHeap.hpp"
-#include "Plotter.hpp"
+
 // include the header of the Operator
 #include "UserDefinedOperator.hpp"
 
@@ -19,14 +18,8 @@ using namespace std;
 string UserDefinedOperator::operatorInfo = "UserDefinedInfo param0 param1 <options>";
 
 
-static string x(int i) {
-	ostringstream s;
-	s << "X" << of(i);
-	return s.str();
-} 
 
-
-UserDefinedOperator::UserDefinedOperator(Target* target, int w_, int s_, int g_) : Operator(target) {
+UserDefinedOperator::UserDefinedOperator(Target* target, int param0_, int param1_) : Operator(target), param0(param0_), param1(param1_) {
 /* constructor of the UserDefinedOperator
   Target is the targeted FPGA : Stratix, Virtex ... (see Target.hpp for more informations)
   param0 and param1 are some parameters declared by this Operator developpers, 
@@ -37,12 +30,9 @@ UserDefinedOperator::UserDefinedOperator(Target* target, int w_, int s_, int g_)
 */
   /* In this constructor we are going to generate an operator that takes as input three bit vectors X,Y,Z of lenght param0, treats them as unsigned integers, sums them and then output the last param1 bit of the sum adding the first bit of the sum (most significant) in front of this output, all the vhdl code needed by this operator has to be generated in this function */
 
-  int w=w_;  // size of x
-  int shift=s_;  // x<1b-s
-  int g=g_;  // guard bits, to be computed some day
   // definition of the name of the operator
   ostringstream name;
-  name << "PolySin_" << w_ << "_"<< shift <<  "_" << g ;
+  name << "UserDefinedOperator_" << param0 << "_" << param1;
   setName(name.str());
   // Copyright 
   setCopyrightString("ACME and Co 2010");
@@ -53,67 +43,61 @@ UserDefinedOperator::UserDefinedOperator(Target* target, int w_, int s_, int g_)
     n is an integer (int)   that stands for the length of the corresponding 
     input/output */
 
-
   // declaring inputs
-  addInput ("X" , w);
+  addInput ("X" , param0);
+  addInput ("Y" , param0);
+  addInput ("Z" , param0);
+  addFullComment(" addFullComment for a large comment ");
+  addComment("addComment for small left-aligned comment");
 
-  BitHeap* bh = new BitHeap(this, w+g);
-  Plotter* plotter = new Plotter(bh);
-  bh->setPlotter(plotter);
-
-  double err = 0;
-
-  // Tout est aligné sur X
-  for(int i=0; i<w; i++) {
-	  bh-> addBit(i+g, x(i));
-  }
-
-  manageCriticalPath(target->lutDelay());
-  // div by 3
-  for(int i=0; i<w-3*shift +g-1; i++) {
-		  int weight = i;
-		  if(weight>=0)
-			  bh-> addBit(i, "resOfDivBy3");
-		  else
-			  err += 1.0/(double)(1 << (-weight));
-  }
-
-  manageCriticalPath(target->lutDelay());
-
-  for(int i=0; i<w; i++) {
-	  for(int j=0; j<i; j++) {
-		  ostringstream s;
-		  s << "X" << of(i) << " and " << "X" << of(j);
-		  int weight = i+2*j - 3*w -3*shift + w+g;
-		  if(weight>=0)
-			  bh-> addBit(weight,  s.str());
-		  else
-			  err += 1.0/(double)(1 << (-weight));
-	  }
-  }
-  manageCriticalPath(target->lutDelay());
-
-  for(int i=0; i<w; i++) {
-	  for(int j=0; j<i; j++) {
-		  for(int k=0; k<j; k++) {
-			  ostringstream s;
-			  s << "X" << of(i) << " and " << "X" << of(j) << " and " << "X" << of(k);
-			  int weight = i+j+k  - 3*w -3*shift + w+g;
-		  if(weight>=0)
-			  bh-> addBit(weight,  s.str());
-		  else
-			  err += 1.0/(double)(1 << (-weight));
-		  }
-			  
-	  }
-  }
-
-  cout << "err=" << err << "   in ulps" << err / (double)(1<<g);
+  // declaring output
+  addOutput("S" , param1);
 
 
-  bh -> generateCompressorVHDL();			
+  /* Some piece of information can be delivered to the flopoco user if  the -verbose option is set
+      [eg: flopoco -verbose=0 UserDefinedOperator 10 5 ]
+    , by using the REPORT function.
+   There is three level of details
+    -> INFO for basic information ( -verbose=1 )
+    -> DETAILED for complete information, includes the INFO level ( -verbose=2 )
+    -> DEBUG for complete and debug information, to be used for getting information 
+       during the debug step of operator development, includes the INFO and DETAILED levels ( -verbose=3 )
+  */
+  // basic message
+  REPORT(INFO,"Declaration of UserDefinedOperator \n");
 
-  vhdl << "R" << " <= " << bh-> getSumName() << range(w+g - 1,g) << ";" << endl;
+  // more detailed message
+  ostringstream detailedMsg;
+  detailedMsg  << "this operator has received two parameters " << param0 << " and " << param1;
+  REPORT(DETAILED,detailedMsg.str());
+  
+  // debug message for developper
+  REPORT(DEBUG,"debug of UserDefinedOperator");
+
+
+
+  /* vhdl is the stream which receives all the vhdl code, some special functions are
+    available to smooth variable declaration and use ... 
+    -> when first using a variable (Eg: T), declare("T",64) will create a vhdl
+      definition of the variable : signal T and includes it it the header of the architecture definition of the operator
+
+    Each code transmited to vhdl will be parsed and the variables previously declared in a previous cycle will be delayed automatically by a pipelined register.
+  */
+  vhdl << declare("T", param0+1) << " <= ('0' & X) + ('O' & Y);" << endl;
+
+
+  /* declaring a new cycle, each variable used after this line will be delayed 
+    with respect to his state in the precedent cycle
+  */
+  nextCycle();
+  vhdl << declare("R",param0+2) << " <=  ('0' & T) + (\"00\" & Z);" << endl;
+
+  /* the use(variable) is a deprecated function, that can still be encoutered 
+  in old Flopoco's operators, simply use vhdl << "S" (flopoco will generate the correct delayed value as soon as a previous declare("S") exists */
+  // we first put the most significant bit of the result into R
+  vhdl << "S <= (R" << of(param0 +1) << " & ";
+  // and then we place the last param1 bits
+  vhdl << "R" << range(param1 - 1,0) << ");" << endl;
 };
 
 	
