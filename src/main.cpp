@@ -75,7 +75,7 @@ void usage(char *name, string opName = ""){
 		cerr << "Each operator specification is one of: \n";
 	}
 	if ( full || opName == "UserDefinedOperator")
-	    OP( "UserDefinedOperator","param0 param1");
+	    OP( "UserDefinedOperator","w s g");
 	if ( full )
 		cerr << "    ____________ SHIFTERS/LZOC _________________________________________________\n";
 
@@ -1102,15 +1102,16 @@ bool parseCommandLine(int argc, char* argv[]){
 		}
 		else if(opname=="UserDefinedOperator"){
                         // the UserDefinedOperator expects 2 parameters
-			int nargs = 2;
+			int nargs = 3;
 			if (i+nargs > argc)
                             /* if there is less than 2 parameters, we output 
                               the help information for Flopoco */
 				usage(argv[0],opname);
 			else {
 				int param0 = checkStrictlyPositive(argv[i++], argv[0]);
-				int param1 = checkStrictlyPositive(argv[i++], argv[0]);
-				op = new UserDefinedOperator(target,param0,param1);
+				int param1 =  atoi(argv[i++]);
+				int param2 =  atoi(argv[i++]);
+				op = new UserDefinedOperator(target,param0,param1,param2);
 				addOperator(op);
 			}    
 		}
