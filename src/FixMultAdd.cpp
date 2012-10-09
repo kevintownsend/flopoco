@@ -134,17 +134,12 @@ namespace flopoco {
 			useStdLogicUnsigned();
 
 		// The bit heap
-		bitHeap = new BitHeap(this, wOut+g);
+		bitHeap = new BitHeap(this, wOut+g, enableSuperTiles);
 
 
 		// TODO should be a parameter to the bit heap constructor
-		bitHeap->setEnableSuperTiles(enableSuperTiles);
 		bitHeap->setSignedIO(signedIO);
 
-		// stuff for the SVG output
-		// TODO should be moved in the bitheap constructor
-		plotter = new Plotter(bitHeap);
-		bitHeap->setPlotter(plotter);
 
 		// initialize the critical path
 		setCriticalPath(getMaxInputDelays ( inputDelays_ ));

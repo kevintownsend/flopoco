@@ -77,6 +77,7 @@
 #include "Targets/StratixII.hpp"
 #include "Targets/StratixIII.hpp"
 #include "Targets/StratixIV.hpp"
+#include "Plotter.hpp"
 
 using namespace std;
 
@@ -176,7 +177,7 @@ namespace flopoco {
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	// The virtual constructor
+	// The virtual constructor 
 	IntMultiplier::IntMultiplier (Operator* parentOp_, BitHeap* bitHeap_, Signal* x_, Signal* y_, int wX_, 
 	                              int wY_, int wOut_, int lsbWeight_, bool negate_, bool signedIO_, float ratio_):
 		Operator (  parentOp_->getTarget()), 
@@ -203,11 +204,11 @@ namespace flopoco {
 			xname = x->getName();
 		yname = y->getName();
 
-		plotter = new Plotter(bitHeap);
-
-		bitHeap->setPlotter(plotter);
-		bitHeap->setSignedIO(signedIO);
+		// // we create a separate Plotter for this mult. Is it useful?
+		// plotter = new Plotter(bitHeap);
 		//plotter->setBitHeap(bitHeap);
+
+		bitHeap->setSignedIO(signedIO);
 		
 
 		initialize();
@@ -271,18 +272,10 @@ namespace flopoco {
 			useStdLogicUnsigned();
 
 		// The bit heap
-		bitHeap = new BitHeap(this, wOut+g);
-		bitHeap->setEnableSuperTiles(enableSuperTiles);
+		bitHeap = new BitHeap(this, wOut+g, enableSuperTiles);
 
 		// TODO CHECK ??? A bit heap is sign-agnostic.
 		bitHeap->setSignedIO(signedIO);
-
-
-		// stuff for the SVG output
-		plotter = new Plotter(bitHeap);
-		bitHeap->setPlotter(plotter);
-
-
 
 
 
@@ -303,13 +296,13 @@ namespace flopoco {
 	void  IntMultiplier::fillBitHeap()
 	{
 
+		Plotter* plotter= bitHeap->getPlotter();
 		///////////////////////////////////////
 		//  architectures for corner cases   //
 		///////////////////////////////////////
 
 		// TODO Support negate in all the corner cases
 		// To manage stand-alone cases, we just build a bit-heap of max height one, so the compression will do nothing
-
 		// The really small ones fit in two LUTs and that's as small as it gets  
 		if(wX+wY <=  parentOp->getTarget()->lutInputs()+2) {
 			vhdl << tab << "-- Ne pouvant me fier à mon raisonnement, j'ai appris par coeur le résultat de toutes les multiplications possibles" << endl;
@@ -326,7 +319,7 @@ namespace flopoco {
 			vhdl << instance(t, "multTable");
 
 			plotter->addSmallMult(0,0,wX,wY);
-			bitHeap->getPlotter()->plotMultiplierConfiguration(getName(), localSplitVector, wX, wY, wOut, g);
+			plotter->plotMultiplierConfiguration(getName(), localSplitVector, wX, wY, wOut, g);
 
 			for(int w=wOut-1; w>=0; w--)	{ // this is a weight in the multiplier output
 				stringstream s;
@@ -439,7 +432,7 @@ namespace flopoco {
 		}
 
 		
-		bitHeap->getPlotter()->plotMultiplierConfiguration(getName(), localSplitVector, wX, wY, wOut, g);
+		plotter->plotMultiplierConfiguration(getName(), localSplitVector, wX, wY, wOut, g);
 	}
 	
 
@@ -698,7 +691,7 @@ namespace flopoco {
 					//smallMultTable needed only if is on the left size of the truncation 	
 					if(dx*(ix+1)+dy*(iy+1)+topX+topY-padX-padY>wFull-wOut-g)
 						{
-							plotter->addSmallMult(dx*(ix)+topX-padX, dy*(iy)+topY-padY,dx,dy);
+							bitHeap->getPlotter()->addSmallMult(dx*(ix)+topX-padX, dy*(iy)+topY-padY,dx,dy);
 
 							REPORT(DETAILED,XY(ix,iy,blockUid)<<" <= " << addUID("y",blockUid) <<"_"<< iy << " & " << addUID("x",blockUid) <<"_"<< ix << ";");
 							vhdl << tab << declare(XY(ix,iy,blockUid), dx+dy) 

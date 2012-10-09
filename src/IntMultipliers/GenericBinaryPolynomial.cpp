@@ -8,7 +8,6 @@
 #include "mpfr.h"
 
 #include "../BitHeap.hpp"
-#include "../Plotter.hpp"
 #include "GenericBinaryPolynomial.hpp"
 #include "IntMultiAdder.hpp"
 #include "IntAddition/NewCompressorTree.hpp"
@@ -65,14 +64,8 @@ GenericBinaryPolynomial::GenericBinaryPolynomial(Target* target,
 	//	shared_ptr<BitHeap> bh(new BitHeap(this, ));
 	// The bit heap
 	BitHeap * bitHeap = new BitHeap(this, p.data.size());
-	bitHeap->setEnableSuperTiles(false);
 	
-	
-	
-	// stuff for the SVG output
-	Plotter*	plotter = new Plotter(bitHeap);
-	bitHeap->setPlotter(plotter);
-		
+ 		
 	for (unsigned i = 0; i < p.data.size(); i++) { // i is a weight
 		list<MonomialOfBits>::const_iterator it = p.data[i].data.begin();
 		for (; it != p.data[i].data.end(); it++) {

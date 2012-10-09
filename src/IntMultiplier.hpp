@@ -8,7 +8,6 @@
 #include "Operator.hpp"
 #include "Table.hpp"
 #include "BitHeap.hpp"
-#include "Plotter.hpp"
 
 #include "IntMultipliers/MultiplierBlock.hpp"
 
@@ -160,7 +159,7 @@ namespace flopoco {
 		                        this is a pointer to the Operator that will provide the actual vhdl stream etc. */
 		BitHeap* bitHeap;    /**< The heap of weighted bits that will be used to do the additions */
 		int lsbWeight;       /**< the weight in the bit heap of the lsb of the multiplier result ; equals g for standalone multipliers */
-		Plotter* plotter;
+		//Plotter* plotter;
 		// TODO the three following variable pairs seem uglily redundant
 		Signal* x;
 		Signal* y; 

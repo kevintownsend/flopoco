@@ -31,8 +31,8 @@ namespace flopoco
 
 
 
-	BitHeap::BitHeap(Operator* op, int maxWeight, string name) :
-		op(op), maxWeight(maxWeight)
+	BitHeap::BitHeap(Operator* op, int maxWeight, bool enableSuperTiles, string name) :
+		op(op), maxWeight(maxWeight),enableSuperTiles(enableSuperTiles)
 	{
 		// Set up the vector of lists of weighted bits, and the vector of uids
 		srcFileName=op->getSrcFileName() + ":BitHeap"; // for REPORT to work
@@ -66,6 +66,9 @@ namespace flopoco
 		stagesPerCycle = (1/op->getTarget()->frequency()) / elementaryTime;
 		for(int i=0; i<100000;++i)
 			cnt[i]=0;
+
+		// create a Plotter object for the SVG output
+		plotter = new Plotter(this);
 	}
 
 
@@ -80,10 +83,6 @@ namespace flopoco
 		}
 	}
 
-	void BitHeap::setPlotter(Plotter* plotter_)
-	{
-		plotter = plotter_;
-	}
 
 	Plotter* BitHeap::getPlotter()
 	{
@@ -2201,11 +2200,6 @@ namespace flopoco
 
 
 
-
-	void BitHeap::setEnableSuperTiles(bool st)
-	{
-		this->enableSuperTiles=st;
-	}
 
 
 	void BitHeap::concatenateLSBColumns()

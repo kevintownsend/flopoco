@@ -62,10 +62,11 @@ namespace flopoco{
 	public:
 
 		/** The constructor
-		    @param op         the operator in which this bit heap is beeing built
-		    @param maxWeight  the maximum weight of the heap (it should be known statically, shouldn't it?)
-		    @param name       a description of the heap that will be integrated into its unique name */
-		BitHeap(Operator* op, int maxWeight, string name="");
+		    @param op                the operator in which this bit heap is beeing built
+		    @param maxWeight         the maximum weight of the heap (it should be known statically, shouldn't it?)
+		    @param enableSuperTiles  if true, the bit heap compression will try and supertile DSP blocks   
+		    @param name              a description of the heap that will be integrated into its unique name */
+		BitHeap(Operator* op, int maxWeight,  bool enableSuperTiles=true, string name="");
 		~BitHeap();
 
 		/** add a bit to the bit heap. The bit will be added at the cycle op->currentCycle() with critical path op->getCriticalPath().
@@ -134,8 +135,6 @@ namespace flopoco{
 		/** returns the maximum height of the bit heap*/
 		unsigned getMaxHeight();
 
-		void setPlotter(Plotter* plotter_);
-
 		int getStagesPerCycle() {return stagesPerCycle;};
 
 		double getElementaryTime() {return elementaryTime;};
@@ -154,8 +153,6 @@ namespace flopoco{
 		void setSignedIO(bool s){this->signedIO=s;};
 
 		bool getSignedIO() {return signedIO;};
-
-		void setEnableSuperTiles(bool st);
 	protected:
 
 
