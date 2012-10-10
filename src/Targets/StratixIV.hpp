@@ -19,59 +19,54 @@ namespace flopoco{
 
 		/** The default constructor. */  
 		StratixIV() : Target()	{
-			id_                 = "StratixIV";
-			vendor_           = "Altera";
-			maxFrequencyMHz_= 500;
-			sizeOfBlock_ 		= 4608; 	// the size of a primitive block is 2^9 * 9
+			id_							= "StratixIV";
+			vendor_						= "Altera";
+			maxFrequencyMHz_			= 600;
+			sizeOfBlock_				= 9216;			// the size of a (the largest) primitive block is 2^10 * 9
 			
-			fastcarryDelay_ 	= 0.011e-9; 	// *obtained from Quartus 2 Chip Planner 11.1
-			elemWireDelay_  	= 0.105e-11;	// *obtained from Quartus 2 Chip Planner
-			lut2lutDelay_   	= 1.5e-10;	// ???
-			lutDelay_       	= 0.460e-9; 	// *obtained from Quartus 2 Chip Planner 11.1
-			ffDelay_        	= 0.0785e-9; 	// *obtained from Quartus 2 Chip Planner 11.1
+			fastcarryDelay_				= 0.011e-9; 	// *obtained from Quartus 2 Chip Planner 11.1
+			elemWireDelay_				= 0.105e-11;	// *obtained from Quartus 2 Chip Planner
+			lut2lutDelay_				= 1.5e-10;		// ???
+			lutDelay_					= 0.460e-9; 	// *obtained from Quartus 2 Chip Planner 11.1
+			ffDelay_					= 0.0785e-9; 	// *obtained from Quartus 2 Chip Planner 11.1
 			
-			multXInputs_    	= 36;
-			multYInputs_    	= 36;
-			lutInputs_		= 6;
-			almsPerLab_		= 10;		// there are 10 ALMs per LAB
+			multXInputs_				= 36;
+			multYInputs_				= 36;
+			lutInputs_					= 6;
+			almsPerLab_					= 10;			// there are 10 ALMs per LAB
 			// all these values are set precisely to match the Stratix 4
-			lut2_ 			= 0.184e-9; 	// *obtained from Quartus 2 Chip Planner
-			lut3_			= 0.228e-9; 	// *obtained from Quartus 2 Chip Planner
-			lut4_			= 0.235e-9; 	// *obtained from Handbook
+			lut2_						= 0.184e-9; 	// *obtained from Quartus 2 Chip Planner
+			lut3_						= 0.228e-9; 	// *obtained from Quartus 2 Chip Planner
+			lut4_						= 0.235e-9; 	// *obtained from Handbook
 			
-			innerLABcarryDelay_	= 0.056e-9; 	// *obtained from Quartus 2 Chip Planner 11.1
-			interLABcarryDelay_	= 0.148e-9; 	// *obtained from Quartus 2 Chip Planner 11.1
-			shareOutToCarryOut_	= 0.275e-9; 	// obtained from Quartus 2 Chip Planner 11.1
-			muxStoO_		= 0.189e-9; 	// TODO
-			fdCtoQ_			= 0.214e-9; 	// TODO
-			carryInToSumOut_	= 0.297e-9;	// *obtained from Quartus 2 Chip Planner 11.1
+			innerLABcarryDelay_			= 0.056e-9; 	// *obtained from Quartus 2 Chip Planner 11.1
+			interLABcarryDelay_			= 0.148e-9; 	// *obtained from Quartus 2 Chip Planner 11.1
+			shareOutToCarryOut_			= 0.275e-9; 	// obtained from Quartus 2 Chip Planner 11.1
+			muxStoO_					= 0.189e-9; 	// TODO
+			fdCtoQ_						= 0.214e-9; 	// TODO
+			carryInToSumOut_			= 0.297e-9;		// *obtained from Quartus 2 Chip Planner 11.1
 			
 			// DSP parameters
-			totalDSPs_ 		= 161;		
-			nrConfigs_ 		= 4;		// StratixIV has 9, 12, 18, 36 bit multipliers by default
+			totalDSPs_					= 161;		
+			nrConfigs_					= 4;			// StratixIV has 9, 12, 18, 36 bit multipliers by default
 		
-			multiplierWidth_[0] 	= 9;
-			multiplierWidth_[1] 	= 12;
-			multiplierWidth_[2] 	= 18;
-			multiplierWidth_[3] 	= 36;
-		
-//			multiplierDelay_[0] 	= 3.156e-9; 	// *obtained experimentaly from Quartus 2
-//			multiplierDelay_[1] 	= 3.069e-9; 	// *obtained experimentaly from Quartus 2
-//			multiplierDelay_[2] 	= 2.744e-9; 	// *obtained experimentaly from Quartus 2
-//			multiplierDelay_[3] 	= 3.604e-9; 	// *obtained experimentaly from Quartus 2
-
-			multiplierDelay_[0] 	= 2.0e-9; 	// *obtained experimentaly from Quartus 2
-			multiplierDelay_[1] 	= 2.0e-9; 	// *obtained experimentaly from Quartus 2
-			multiplierDelay_[2] 	= 2.0e-9; 	// *obtained experimentaly from Quartus 2
-			multiplierDelay_[3] 	= 2.0e-9; 	// *obtained experimentaly from Quartus 2
-
-			DSPMultiplierDelay_       = 2.744e-9;
-			DSPAdderDelay_            = 1.420e-9;
-			DSPCascadingWireDelay_    = 0.266e-9;//?
-			DSPToLogicWireDelay_      = 0.266e-9;//1.619e-9;
+			multiplierWidth_[0]			= 9;
+			multiplierWidth_[1]			= 12;
+			multiplierWidth_[2]			= 18;
+			multiplierWidth_[3]			= 36;
 			
-			RAMDelay_ = 2.439e-9; //TODO
-			RAMToLogicWireDelay_ = 0.439e-9; //TODO
+			multiplierDelay_[0]			= 2.173e-9; 	// *obtained experimentaly from Quartus 2
+			multiplierDelay_[1]			= 2.132e-9; 	// *obtained experimentaly from Quartus 2
+			multiplierDelay_[2]			= 1.823e-9; 	// *obtained experimentaly from Quartus 2
+			multiplierDelay_[3]			= 1.800e-9; 	// *obtained experimentaly from Quartus 2
+			
+			DSPMultiplierDelay_			= 1.823e-9;
+			DSPAdderDelay_				= 1.420e-9;
+			DSPCascadingWireDelay_		= 0.266e-9;		//?
+			DSPToLogicWireDelay_		= 0.266e-9;		//1.619e-9;
+			
+			RAMDelay_					= 1.590e-9; 	// *obtained experimentaly from Quartus 2
+			RAMToLogicWireDelay_		= 0.439e-9; 	//TODO
 			
 		}
 	
@@ -125,7 +120,6 @@ namespace flopoco{
 		double elemWireDelay_;  		/**< The elementary wire dealy (for computing the distant wire delay) */
 		double lutDelay_;      	 	/**< The LUT delay (in seconds)*/
 	
-		// Added by Sebi
 		double lut2_;           		/**< The LUT delay for 2 inputs */
 		double lut3_;           		/**< The LUT delay for 3 inputs */
 		double lut4_;           		/**< The LUT delay for 4 inputs */

@@ -26,8 +26,19 @@ namespace flopoco{
 			fastcarryDelay_ 	= 3.5e-11; 	// aproximately right    
 			elemWireDelay_  	= 0.222e-11; 	// an average value over R4, R24, C4, C16 interconnects delays
 			lut2lutDelay_   	= 1.5e-10; 	// ???
-			lutDelay_       	= 0.378e-9; 	// 378 ps  
+			
+			//Old
+			/*
+			lutDelay_       	= 0.378e-9; 	// 378 ps
+			*/
+			lutDelay_       	= 0.350e-9; 	// obtained from Quartus 11.1
+			
+			//Old
+			/*  
 			ffDelay_        	= 0.127e-9; 	// 127 ps LE register clock-to-output max delay for -3 speed grade
+			*/
+			ffDelay_        	= 0.0955e-9; 	// obtained from Quartus 11.1
+			
 			multXInputs_    	= 36;
 			multYInputs_    	= 36;
 			lutInputs_		= 6;
@@ -36,12 +47,23 @@ namespace flopoco{
 			lut2_ 			= 0.162e-9; 	// obtained from Handbook
 			lut3_			= 0.280e-9; 	// obtained from Handbook
 			lut4_			= 0.378e-9; 	// obtained from Handbook
+			
+			//Old
+			/*
 			innerLABcarryDelay_	= 0.136e-9; 	// obtained from Quartus 2 Chip Planner
 			interLABcarryDelay_	= 0.235e-9; 	// obtained from Quartus 2 Chip Planner
 			shareOutToCarryOut_	= 0.172e-9; 	// obtained from Quartus 2 Chip Planner
 			muxStoO_		= 0.189e-9; 	// obtained from Quartus 2 Chip Planner by subtraction
 			fdCtoQ_			= 0.352e-9; 	// obtained from Quartus 2 Chip Planner by subtraction
 			carryInToSumOut_	= 0.125e-9;	// obtained from Quartus 2 Chip Planner
+			*/
+			innerLABcarryDelay_	= 0.124e-9; 	// obtained from Quartus 2 Chip Planner 11.1
+			interLABcarryDelay_	= 0.168e-9; 	// obtained from Quartus 2 Chip Planner 11.1
+			shareOutToCarryOut_	= 0.172e-9; 	// obtained from Quartus 2 Chip Planner
+			muxStoO_		= 0.189e-9; 	// obtained from Quartus 2 Chip Planner by subtraction
+			fdCtoQ_			= 0.352e-9; 	// obtained from Quartus 2 Chip Planner by subtraction
+			carryInToSumOut_	= 0.125e-9;	// obtained from Quartus 2 Chip Planner
+			
 			// DSP parameters
 			totalDSPs_ 		= 12;		
 			nrConfigs_ 		= 3;		// StratixII has 9, 18, 36 bit multipliers by default
@@ -49,10 +71,16 @@ namespace flopoco{
 			multiplierWidth_[0] 	= 9;
 			multiplierWidth_[1] 	= 18;
 			multiplierWidth_[2] 	= 36;
-		
+			
+			//Old
+			/*
 			multiplierDelay_[0] 	= 2.439e-9; 	// obtained experimentaly from Quartus 2. Value in handbook is: 2.880e-9
 			multiplierDelay_[1] 	= 2.724e-9; 	// obtained experimentaly from Quartus 2. Value in handbook is: 2.990e-9
 			multiplierDelay_[2] 	= 4.000e-9; 	// obtained experimentaly from Quartus 2. Value in handbook is: 4.450e-9
+			*/
+			multiplierDelay_[0] 	= 2.610e-9; 	// obtained experimentaly from Quartus 2 11.1
+			multiplierDelay_[1] 	= 2.670e-9; 	// obtained experimentaly from Quartus 2 11.1
+			multiplierDelay_[2] 	= 3.950e-9; 	// obtained experimentaly from Quartus 2 11.1
 			
 			RAMDelay_ = 2.439e-9; //TODO
 			RAMToLogicWireDelay_ = 0.439e-9; //TODO
