@@ -474,7 +474,7 @@ namespace flopoco{
 
 
 	void TestBench::outputVHDL(ostream& o, string name) {
-		licence(o,"Florent de Dinechin, Cristian Klein (2007)");
+		licence(o,"Florent de Dinechin, Cristian Klein, Nicolas Brunie (2007-2010)");
 		Operator::stdLibs(o);
 
 		outputVHDLEntity(o);
