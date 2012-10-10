@@ -31,11 +31,16 @@ namespace flopoco{
 	class WeightedBit
 		{
 		public:
-			/** constructor 
-			    @param bh the parent bit heap */ 
-			WeightedBit(int guid, int uid, int weight, int type, int cycle,  double criticalPath);
+			/** standard constructor   */ 
+			WeightedBit(int bitHeapId, int uid, int weight, int type, int cycle,  double criticalPath);
 
-			WeightedBit(string name, int uid, int weight, int type, int cycle,  double criticalPath);
+
+			/** This clone constructor is used by the copies in snapshots made by Plotter*/
+			WeightedBit(WeightedBit* bit);
+
+
+			/** Constructor for bits that go to history */
+			WeightedBit(WeightedBit* bit, int deathCycle,  double DeathCP, string killerCompressor);
 
 
 			/** destructor */ 
@@ -81,8 +86,6 @@ namespace flopoco{
 		private:
 			int cycle;  /**< The cycle at which the bit was created */
 			double criticalPath; /**< The cycle at which the bit was created */
-
-
 			int weight;
 			int type;
 			int uid;
@@ -90,7 +93,10 @@ namespace flopoco{
 			std::string srcFileName;
 			std::string uniqueName_;
 			
-
+			// Stuff for post-mortem plotting
+			int deathCycle; /**< The cycle at which the bit is removed from the bit heap */ 
+			int deathCP; /**< The critical path at which the bit is removed from the bit heap */ 
+			string killerCompressor; /**< the instance name of the compressor that input this bit*/
 		};
 
 }

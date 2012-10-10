@@ -32,25 +32,36 @@ namespace flopoco
 	WeightedBit::WeightedBit(int guid, int _uid, int weight_, int type_, int cycle_, double criticalPath_) : 
 		cycle(cycle_),  criticalPath(criticalPath_), weight(weight_), type(type_), uid(_uid)
 	{
+		srcFileName="WeightedBit";
 		std::ostringstream p;
-
 		p  << "heap_bh" << guid << "_w" << weight << "_" << _uid;
-		name=p.str();
-
-		
+		name=p.str();		
 	}
 
 
-	WeightedBit::WeightedBit(string name_, int uid_, int weight_, int type_, 
-			int cycle_, double criticalPath_) :
-	cycle(cycle_), criticalPath(criticalPath_),	weight(weight_), type(type_) 
-	{
-		name=name_;
-		uid=uid_;
-		
+
+	WeightedBit::WeightedBit(WeightedBit* bit) {
+		srcFileName="WeightedBit";
+		cycle = bit->cycle;
+		criticalPath = bit->criticalPath;
+		weight = bit-> weight;
+		type = bit->type;
+		uid = bit->uid;
+		name = bit->name;
 	}
 
-
+	WeightedBit::WeightedBit(WeightedBit* bit, int deathCycle,  double deathCP, string killerCompressor) {
+		srcFileName="WeightedBit";
+		cycle = bit->cycle;
+		criticalPath = bit->criticalPath;
+		weight = bit-> weight;
+		type = bit->type;
+		uid = bit->uid;
+		name = bit->name;
+		deathCycle =deathCycle;
+		deathCP = deathCP; 
+		killerCompressor = killerCompressor;
+	}
 	
 	/* which bit was defined earlier */
 	bool WeightedBit::operator< (const WeightedBit& b){

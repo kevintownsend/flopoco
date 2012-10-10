@@ -227,7 +227,9 @@ namespace flopoco{
 		void printBitHeapStatus();
 
 	public: // TODO privatize
-		vector<list<WeightedBit*> > bits; /**<  The list is ordered by arrival time of the bits, i.e. lexicographic order on (cycle, cp)*/
+		vector<list<WeightedBit*> > bits; /**<  Each list is ordered by arrival time of the bits, i.e. lexicographic order on (cycle, cp). 
+		                                     During the generation of the compressor, bits are added and removed to these lists */
+		vector<list<WeightedBit*> > history; /**<  remembers all the changes to bits */
 	private:
 		Operator* op;
 		unsigned maxWeight;     /**< The compressor tree will produce a result for weights < maxWeight (work modulo 2^maxWeight)*/

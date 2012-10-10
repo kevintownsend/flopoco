@@ -42,13 +42,7 @@ namespace flopoco
 			{	
 				for(list<WeightedBit*>::iterator it = bitheap[w].begin(); it!=bitheap[w].end(); ++it)	
 				{
-					int uid = (*it)->getUid();
-					string name = (*it)->getName();
-					int weight = (*it)->getWeight();
-					int type = (*it)->getType();
-					int ccc = (*it)->getCycle();
-					double ccp = (*it)->getCriticalPath(ccc);
-					WeightedBit* b = new WeightedBit(name, uid, weight, type, ccc, ccp);
+					WeightedBit* b = new WeightedBit(*it);
 					t.push_back(b);
 				}		
 
@@ -73,8 +67,6 @@ namespace flopoco
 	{
 		srcFileName=bh_->getOp()->getSrcFileName() + ":Plotter";
 		smallMultIndex = 0;
-
-
 	}
 
 
