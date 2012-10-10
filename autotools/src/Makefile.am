@@ -119,7 +119,6 @@ noinst_HEADERS = \
           IntMultipliers/MultiplierBlock.hpp \
           LongAcc2FP.hpp \
           LongAcc.hpp LZOC.hpp \
-          LZCShifterSticky.hpp \
           OutputIEEE.hpp \
           Shifters.hpp \
           FixedPointFunctions/Function.hpp \
