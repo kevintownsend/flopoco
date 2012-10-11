@@ -59,6 +59,9 @@ noinst_HEADERS = \
           squareroot/PolynomialTable.hpp \
           Targets/DSP.hpp \
           Targets/Spartan3.hpp \
+          Targets/CycloneII.hpp \
+          Targets/CycloneIII.hpp \
+          Targets/StratixII.hpp \
           Targets/StratixII.hpp \
           Targets/StratixIII.hpp \
           Targets/StratixIV.hpp \
@@ -172,6 +175,8 @@ libflopoco_la_SOURCES = \
                         Targets/Virtex4.cpp \
                         Targets/Spartan3.cpp \
                         Targets/Virtex6.cpp \
+                        Targets/CycloneII.cpp \
+                        Targets/CycloneIII.cpp \
                         Targets/StratixII.cpp \
                         Targets/StratixIII.cpp \
                         Targets/Virtex5.cpp \
