@@ -51,7 +51,7 @@ namespace flopoco{
 	};
 	
 	double StratixII::eqComparatorDelay(int size){
-		return adderDelay(size); //FIXME
+		return adderDelay(size) + elemWireDelay_ + lutDelay_; //FIXME
 	}
 	
 	double StratixII::eqConstComparatorDelay(int size){
@@ -303,17 +303,22 @@ namespace flopoco{
 	void StratixII::getDSPWidths(int &x, int &y, bool sign){ //TODO: give the meaning for sign
 	
 		if (sign == false)
-			x = y = 18;
-		else
-			x = y = 18;
+		{
+			x = 18;
+			y = 18;
+		}else
+		{
+			x = 18;
+			y = 18;
+		}
 		
-		//FIXME
-		return;
-	
-	// set the multiplier width acording to the desired frequency
-	for (int i=0; i<3; i++)
-		if (this->frequency() < 1/multiplierDelay_[i])
-			x = y = multiplierWidth_[i];
+		// set the multiplier width acording to the desired frequency
+		for (int i=0; i<nrConfigs_; i++)
+			if (frequency_ < 1.0/multiplierDelay_[i])
+			{
+				x = multiplierWidth_[i];
+				y = multiplierWidth_[i];
+			}
 	}
 	
 	int StratixII::getEquivalenceSliceDSP(){
