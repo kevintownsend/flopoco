@@ -58,13 +58,15 @@ noinst_HEADERS = \
           squareroot/PolynomialTableCorrectRounded.hpp \
           squareroot/PolynomialTable.hpp \
           Targets/DSP.hpp \
-          Targets/Spartan3.hpp \
           Targets/CycloneII.hpp \
           Targets/CycloneIII.hpp \
-          Targets/StratixII.hpp \
+          Targets/CycloneIV.hpp \
+          Targets/CycloneV.hpp \
           Targets/StratixII.hpp \
           Targets/StratixIII.hpp \
           Targets/StratixIV.hpp \
+          Targets/StratixV.hpp \
+          Targets/Spartan3.hpp \
           Targets/Virtex4.hpp \
           Targets/Virtex5.hpp \
           Targets/Virtex6.hpp \
@@ -172,15 +174,18 @@ libflopoco_la_SOURCES = \
                         Tools/FloorplanningHelper.cpp \
                         Targets/DSP.cpp \
                         Target.cpp \
-                        Targets/Virtex4.cpp \
-                        Targets/Spartan3.cpp \
-                        Targets/Virtex6.cpp \
                         Targets/CycloneII.cpp \
                         Targets/CycloneIII.cpp \
+                        Targets/CycloneIV.cpp \
+                        Targets/CycloneV.cpp \
                         Targets/StratixII.cpp \
                         Targets/StratixIII.cpp \
-                        Targets/Virtex5.cpp \
                         Targets/StratixIV.cpp \
+                        Targets/StratixV.cpp \
+                        Targets/Spartan3.cpp \
+                        Targets/Virtex4.cpp \
+                        Targets/Virtex5.cpp \
+                        Targets/Virtex6.cpp \
                         Table.cpp \
                         DualTable.cpp \
                         DualTable2.cpp \
