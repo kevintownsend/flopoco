@@ -170,7 +170,22 @@ ADD_LIBRARY(FloPoCoLib STATIC
  #--------------------------------------------------------------------
 
  src/Targets/DSP
- src/Target src/Targets/Virtex4 src/Targets/Spartan3 src/Targets/Virtex6 src/Targets/StratixII src/Targets/StratixIII src/Targets/Virtex5 src/Targets/StratixIV
+ src/Target 
+ 
+ src/Targets/Spartan3 
+ src/Targets/Virtex4 
+ src/Targets/Virtex5 
+ src/Targets/Virtex6 
+ 
+ src/Targets/StratixII 
+ src/Targets/StratixIII 
+ src/Targets/StratixIV
+ src/Targets/StratixV
+ 
+ src/Targets/CycloneII 
+ src/Targets/CycloneIII 
+ src/Targets/CycloneIV 
+ src/Targets/CycloneV 
 
 
  src/Table 

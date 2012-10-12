@@ -600,7 +600,7 @@ void usage(char *name, string opName = ""){
 		cerr << "________________ OPTIONS________________________________________________________\n";
 		cerr << "General options that should only appear before any operator specification:\n";
 		cerr << "   -outputfile=<output file name>           (default=flopoco.vhdl)\n";
-		cerr << "   -target=<Spartan3|Virtex4|Virtex5|StratixII|StratixIII|StratixIV>      (default=Virtex5)\n";
+		cerr << "   -target=<Spartan3|Virtex4|Virtex5|Virtex6|StratixII|StratixIII|StratixIV|StratixV|CycloneII|CycloneIII|CycloneIV|CycloneV>      (default=Virtex5)\n";
 		cerr << "Options affecting the operators that follow them:\n";
 		cerr << "   -pipeline=<yes|no>                       (default=yes)\n";
 		cerr << "   -frequency=<target frequency in MHz>     (default=400)\n";
@@ -712,6 +712,11 @@ bool parseCommandLine(int argc, char* argv[]){
 					else if (v=="StratixII") target=new StratixII();
 					else if (v=="StratixIII") target=new StratixIII();
 					else if (v=="StratixIV") target=new StratixIV();
+					else if (v=="StratixV") target=new StratixV();
+					else if (v=="CycloneII") target=new CycloneII();
+					else if (v=="CycloneIII") target=new CycloneIII();
+					else if (v=="CycloneIV") target=new CycloneIV();
+					else if (v=="CycloneV") target=new CycloneV();
 					else {
 						cerr<<"ERROR: unknown target: "<<v<<endl;
 						usage(argv[0],"options");

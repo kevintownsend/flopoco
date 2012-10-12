@@ -21,16 +21,24 @@
 #include "Tools/ResourceEstimationHelper.hpp"
 /* floorplanning ---------------------------------------------- */
 
-
+/* targets ---------------------------------------------------- */
 #include "Target.hpp"
 #include "Targets/DSP.hpp"
+
 #include "Targets/Spartan3.hpp"
 #include "Targets/Virtex4.hpp"
 #include "Targets/Virtex5.hpp"
 #include "Targets/Virtex6.hpp"
+
 #include "Targets/StratixII.hpp"
 #include "Targets/StratixIII.hpp"
 #include "Targets/StratixIV.hpp"
+#include "Targets/StratixV.hpp"
+
+#include "Targets/CycloneII.hpp"
+#include "Targets/CycloneIII.hpp"
+#include "Targets/CycloneIV.hpp"
+#include "Targets/CycloneV.hpp"
 
 /* shifters + lzoc ------------------------------------------- */
 #include "Shifters.hpp"
