@@ -26,7 +26,7 @@ namespace flopoco{
 			
 			fastcarryDelay_				= 0.009e-9; 	// *obtained from Quartus 2 Chip Planner 11.1
 			elemWireDelay_				= 0.206e-11;	// *obtained from Quartus 2 Chip Planner 11.1
-			lut2lutDelay_				= 1.5e-10;		// ???
+			lut2lutDelay_				= 0.450e-9;		// ???
 			lutDelay_					= 0.460e-9; 	// *obtained from Quartus 2 Chip Planner 11.1
 			ffDelay_					= 0.079e-9; 	// *obtained from Quartus 2 Chip Planner 11.1
 			
@@ -39,7 +39,7 @@ namespace flopoco{
 			lut3_						= 0.228e-9; 	// *obtained from Quartus 2 Chip Planner
 			lut4_						= 0.235e-9; 	// *obtained from Handbook
 			
-			innerLABcarryDelay_			= 0.056e-9; 	// *obtained from Quartus 2 Chip Planner 11.1
+			innerLABcarryDelay_			= 0.065e-9; 	// *obtained from Quartus 2 Chip Planner 11.1
 			interLABcarryDelay_			= 0.148e-9; 	// *obtained from Quartus 2 Chip Planner 11.1
 			shareOutToCarryOut_			= 0.275e-9; 	// obtained from Quartus 2 Chip Planner 11.1
 			muxStoO_					= 0.189e-9; 	// TODO
