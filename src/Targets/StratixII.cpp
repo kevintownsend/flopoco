@@ -20,18 +20,35 @@
 
 namespace flopoco{
 	
-	double StratixII::adderDelay(int size) {
+	double StratixII::adderDelay(int size) 
+	{
 		int subAdd = 0;
 		
 		suggestSubaddSize(subAdd, size);
 		
 		return (
 			lutDelay_ + 
-			((size-1-(2*size/almsPerLab_)) * fastcarryDelay_) + 
-			((size/almsPerLab_) * innerLABcarryDelay_) + 
+			((size/2-ceil((size/almsPerLab_)/2.0)-(size/(2*almsPerLab_))) * fastcarryDelay_) + 
+			(ceil((size/almsPerLab_)/2.0) * innerLABcarryDelay_) + 
+			((size/(2*almsPerLab_)) * interLABcarryDelay_) + 
+			carryInToSumOut_ + 
+			(size/subAdd)  * (ffDelay_ + fdCtoQ_ + elemWireDelay_)
+		);
+	};
+	
+	double StratixII::adder3Delay(int size) 
+	{
+		int subAdd = 0;
+		
+		suggestSubadd3Size(subAdd, size);
+		
+		return (
+			lutDelay_ +
+			shareOutToCarryOut_ +  
+			((size/2 - 1 - (size/almsPerLab_)) * fastcarryDelay_) + 
 			((size/almsPerLab_) * interLABcarryDelay_) + 
 			carryInToSumOut_ + 
-			(size/subAdd)  * (ffDelay_ + fdCtoQ_)
+			(size/subAdd)  * (ffDelay_ + fdCtoQ_ + elemWireDelay_)
 		);
 	};
 	
@@ -205,25 +222,38 @@ namespace flopoco{
 		} 
 	}
 	
+	bool StratixII::suggestSubadd3Size(int &x, int wIn)
+	{
+		suggestSlackSubadd3Size(x, wIn, 0);
+		
+		if (x>0) 
+			return true;
+		else 
+		{
+			x=1;		
+			return false;
+		}
+	};
+	
 	
 	bool  StratixII::suggestSlackSubaddSize(int &x, int wIn, double slack)
-	{
-		float time = 1.0/frequency() - slack - (lutDelay_ + carryInToSumOut_);
+	{		
+		float time = 1./frequency() - slack - (lutDelay_ + carryInToSumOut_);
 		int chunkSize = 0;
 		
 		while (time > 0)
 		{
 			chunkSize++;
 			
-			if ((chunkSize % (almsPerLab_*2) == 0) && (chunkSize % almsPerLab_ != 0))
+			if ((chunkSize % almsPerLab_ == 0) && (chunkSize % (almsPerLab_*2) != 0))
 			{
 				time -= innerLABcarryDelay_;
-			}else if (chunkSize % almsPerLab_ == 0)
+			}else if (chunkSize % (almsPerLab_*2) == 0)
 			{
 				time -= interLABcarryDelay_;
 			}else
 			{
-				if(chunkSize != 0)
+				if(chunkSize % 2 == 1)
 					time -= fastcarryDelay_;
 			}
 		}
@@ -240,7 +270,40 @@ namespace flopoco{
 			x=1;		
 			return false;
 		} 
-	}
+	};
+	
+	bool  StratixII::suggestSlackSubadd3Size(int &x, int wIn, double slack)
+	{
+		float time = 1./frequency() - slack - (lutDelay_ + shareOutToCarryOut_ + carryInToSumOut_);
+		int chunkSize = 1;
+		
+		while (time > 0)
+		{
+			chunkSize++;
+			
+			if (chunkSize % almsPerLab_ == 0)
+			{
+				time -= interLABcarryDelay_;
+			}else
+			{
+				if((chunkSize % 2 == 1) && (chunkSize != 1))
+					time -= fastcarryDelay_;
+			}
+		}
+		
+		if(time<0)
+			chunkSize--; // decremented because of the loop condition (time > 0). When exiting the loop the time is negative
+		
+		x = chunkSize;		
+		if (x>0)
+		{ 
+			return true;
+		}else 
+		{
+			x=1;		
+			return false;
+		}
+	};
 	
 	bool StratixII::suggestSlackSubcomparatorSize(int& x, int wIn, double slack, bool constant)
 	{

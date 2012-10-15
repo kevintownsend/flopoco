@@ -23,6 +23,10 @@ namespace flopoco{
 		return lut2_ + muxcyStoO_ + double(size-1)*muxcyCINtoO_ + xorcyCintoO_ ; 
 	};
 	
+	double Spartan3::adder3Delay(int size) {
+		return 0 ; // currently irrelevant for Xilinx
+	};
+	
 	void Spartan3::getAdderParameters(double &k1, double &k2, int size){
 		k1 = lut2_ + muxcyStoO_ + xorcyCintoO_;
 		k2 = muxcyCINtoO_;
@@ -191,6 +195,11 @@ namespace flopoco{
 		} 
 	};
 	
+	bool Spartan3::suggestSubadd3Size(int &x, int wIn)
+	{
+		return 0; // currently irrelevant for Xilinx
+	};
+	
 	bool Spartan3::suggestSlackSubaddSize(int &x, int wIn, double slack){
 		
 		//	int chunkSize = (int)floor( (1./frequency() - lutDelay()) / carryPropagateDelay()); // 1 if no need for pipeline
@@ -204,6 +213,11 @@ namespace flopoco{
 			x = 2;		
 			return false;
 		} 
+	};
+	
+	bool Spartan3::suggestSlackSubadd3Size(int &x, int wIn, double slack)
+	{
+		return 0; // currently irrelevant for Xilinx
 	};
 	
 	bool Spartan3::suggestSlackSubcomparatorSize(int& x, int wIn, double slack, bool constant)

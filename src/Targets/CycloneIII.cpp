@@ -245,7 +245,6 @@ namespace flopoco{
 	
 	bool CycloneIII::suggestSlackSubcomparatorSize(int& x, int wIn, double slack, bool constant)
 	{
-		bool succes = true;
 		float time = 1.0/frequency();
 		unsigned int count;
 		

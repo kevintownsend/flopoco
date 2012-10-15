@@ -59,7 +59,7 @@ namespace flopoco{
 			multiplierDelay_[1]		= 2.860e-9;		// obtained experimentaly from Quartus 2 11.1
 			
 			RAMDelay_				= 2.792e-9;		// obtained experimentaly from Quartus 2 11.1
-			RAMToLogicWireDelay_	= 0.402e-9;		// obtained experimentaly from Quartus 2 11.1
+			RAMToLogicWireDelay_	= 0.302e-9;		// obtained experimentaly from Quartus 2 11.1
 		}
 	
 		/** The destructor */
@@ -70,6 +70,7 @@ namespace flopoco{
 		 */
 		double carryPropagateDelay();
 		double adderDelay(int size);
+		double adder3Delay(int size){return 0;}; // currently irrelevant for this architecture
 		double eqComparatorDelay(int size);
 		double eqConstComparatorDelay(int size);
 
@@ -91,7 +92,9 @@ namespace flopoco{
 		double distantWireDelay(int n);
 		bool   suggestSubmultSize(int &x, int &y, int wInX, int wInY);
 		bool   suggestSubaddSize(int &x, int wIn);
+		bool   suggestSubadd3Size(int &x, int wIn){return 0;}; // currently irrelevant for this architecture
 		bool   suggestSlackSubaddSize(int &x, int wIn, double slack);
+		bool   suggestSlackSubadd3Size(int &x, int wIn, double slack){return 0;}; // currently irrelevant for this architecture
 		bool   suggestSlackSubcomparatorSize(int &x, int wIn, double slack, bool constant);
 		
 		int    getIntMultiplierCost(int wInX, int wInY);

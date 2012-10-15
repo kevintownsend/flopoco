@@ -1458,9 +1458,9 @@ namespace flopoco
 
 				//Old
 				/*
-				op->vhdl << tab << op->declare(outAdderName, maxWeight-minWeight+1)
-				         << " <= ('0' & "<< inAdder0Name << ") + ('0' & " << inAdder1Name
-				         << ") + ('0' & " << inAdder2Name << ");" << endl;
+				op->vhdl << tab << op->declare(outAdderName, maxWeight-minWeight+2)
+				         << " <= (\"00\" & "<< inAdder0Name << ") + (\"0\" & " << inAdder1Name
+				         << ") + (\"00\" & " << inAdder2Name << ");" << endl;
 				*/
 				
 				// EXPERIMENTAL ----------------------------------------------------

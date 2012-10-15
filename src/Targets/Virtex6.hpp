@@ -95,6 +95,7 @@ namespace flopoco{
 		 */
 		double carryPropagateDelay();
 		double adderDelay(int size);
+		double adder3Delay(int size){return 0;}; // currently irrelevant for Xilinx
 		double eqComparatorDelay(int size);
 		double eqConstComparatorDelay(int size);
 		
@@ -115,7 +116,9 @@ namespace flopoco{
 		double distantWireDelay(int n);
 		bool   suggestSubmultSize(int &x, int &y, int wInX, int wInY);
 		bool   suggestSubaddSize(int &x, int wIn);
+		bool   suggestSubadd3Size(int &x, int wIn){return 0;}; // currently irrelevant for Xilinx
 		bool   suggestSlackSubaddSize(int &x, int wIn, double slack);
+		bool   suggestSlackSubadd3Size(int &x, int wIn, double slack){return 0;}; // currently irrelevant for Xilinx
 		bool   suggestSlackSubcomparatorSize(int &x, int wIn, double slack, bool constant);
 		
 		int    getIntMultiplierCost(int wInX, int wInY);

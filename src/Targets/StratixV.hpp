@@ -25,8 +25,8 @@ namespace flopoco{
 			sizeOfBlock_				= 20480; 		// the size of a primitive block is 2^11 * 10
 			
 			fastcarryDelay_				= 0.026e-9; 	// *obtained from Quartus 2 Chip Planner 11.1
-			elemWireDelay_				= 0.092e-11;	// *obtained from Quartus 2 Chip Planner 11.1
-			lut2lutDelay_ 				= 1.5e-10;		// ???
+			elemWireDelay_				= 0.110e-9;		// *obtained from Quartus 2 Chip Planner 11.1
+			lut2lutDelay_ 				= 0.410e-9;		// *obtained from Quartus 2 Chip Planner 11.1 - emulates R4+C3+Lab_Line
 			lutDelay_					= 0.433e-9; 	// *obtained from Quartus 2 Chip Planner 11.1
 			ffDelay_					= 0.156e-9; 	// *obtained from Quartus 2 Chip Planner 11.1
 			
@@ -39,10 +39,10 @@ namespace flopoco{
 			lut3_						= 0.298e-9; 	// *obtained from Quartus 2 Chip Planner 11.1
 			lut4_						= 0.298e-9; 	// *obtained from Quartus 2 Chip Planner 11.1
 			
-			innerLABcarryDelay_			= 0.098e-9; 	// *obtained from Quartus 2 Chip Planner 11.1
-			interLABcarryDelay_			= 0.233e-9; 	// *obtained from Quartus 2 Chip Planner 11.1
-			shareOutToCarryOut_			= 0.275e-9; 	// obtained from Quartus 2 Chip Planner 11.1
-			muxStoO_					= 0.189e-9; 	// TODO
+			innerLABcarryDelay_			= 0.109e-9; 	// *obtained from Quartus 2 Chip Planner 11.1
+			interLABcarryDelay_			= 0.231e-9; 	// *obtained from Quartus 2 Chip Planner 11.1
+			shareOutToCarryOut_			= 0.287e-9; 	// *obtained from Quartus 2 Chip Planner 11.1
+			muxStoO_					= 0.193e-9; 	// *obtained from Quartus 2 Chip Planner 11.1
 			fdCtoQ_						= 0.110e-9; 	// TODO : check validity
 			carryInToSumOut_			= 0.116e-9;		// *obtained from Quartus 2 Chip Planner 11.1
 			
@@ -64,7 +64,7 @@ namespace flopoco{
 			multiplierDelay_[4]			= 2.905e-9; 	// *obtained experimentaly from Quartus 2 11.1
 			
 			DSPMultiplierDelay_			= 1.875e-9;
-			DSPAdderDelay_				= 1.420e-9;		// TODO: update
+			DSPAdderDelay_				= 1.030e-9;
 			DSPCascadingWireDelay_		= 0.266e-9;		// TODO: update
 			DSPToLogicWireDelay_		= 0.266e-9;		// TODO: update
 			
@@ -81,6 +81,7 @@ namespace flopoco{
 		 */
 		double carryPropagateDelay();
 		double adderDelay(int size);
+		double adder3Delay(int size);
 		double eqComparatorDelay(int size);
 		double eqConstComparatorDelay(int size);
 		
@@ -102,7 +103,9 @@ namespace flopoco{
 		double distantWireDelay(int n);
 		bool   suggestSubmultSize(int &x, int &y, int wInX, int wInY);
 		bool   suggestSubaddSize(int &x, int wIn);
+		bool   suggestSubadd3Size(int &x, int wIn);
 		bool   suggestSlackSubaddSize(int &x, int wIn, double slack);
+		bool   suggestSlackSubadd3Size(int &x, int wIn, double slack);
 		bool   suggestSlackSubcomparatorSize(int &x, int wIn, double slack, bool constant);
 		
 		int    getIntMultiplierCost(int wInX, int wInY);

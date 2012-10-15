@@ -90,6 +90,13 @@ namespace flopoco{
 		 * @param[in] wIn the widths of X and Y
 		 */
 		virtual bool suggestSubaddSize(int &x, int wIn)=0; 	
+		
+		/** Function for determining the ternary subadition sizes so that the design is able 
+		 * to function at a desired frequency ( addition is considerd X + Y +Z )
+		 * @param[in,out] x the size of the subaddition for x and y and z
+		 * @param[in] wIn the widths of X and Y and Z
+		 */
+		virtual bool suggestSubadd3Size(int &x, int wIn)=0; 	
 
 		/** Function for determining the subadition sizes so that the design is able 
 		 * to function at a desired frequency ( addition is considerd X + Y )
@@ -98,6 +105,14 @@ namespace flopoco{
 		 * @param[in] slack the time delay consumed out of the input period 
 		 */
 		virtual bool   suggestSlackSubaddSize(int &x, int wIn, double slack)=0;
+		
+		/** Function for determining the ternary subadition sizes so that the design is able 
+		 * to function at a desired frequency ( addition is considerd X + Y + Z )
+		 * @param[in,out] x the size of the subaddition for x and y and z
+		 * @param[in] wIn the widths of X and Y and Z
+		 * @param[in] slack the time delay consumed out of the input period 
+		 */
+		virtual bool   suggestSlackSubadd3Size(int &x, int wIn, double slack)=0;
 
 		/** Function for determining the subcomparator sizes so that the design is able 
 		* to function at a desired frequency 
@@ -134,6 +149,13 @@ namespace flopoco{
 		 * @return the addition delay for an n bit addition
 		 */
 		virtual double adderDelay(int n) =0;
+		
+		/** Function which returns addition delay for an n bit ternary addition
+		 * NOTE: only relevant for architectures supporting native ternary addition
+		 * @param n the number of bits of the addition (n-bit + n-bit + n-bit )
+		 * @return the addition delay for an n bit ternary addition
+		 */
+		virtual double adder3Delay(int n) =0;
 
 		/** Function which returns the delay for an n bit equality comparison 
 		* @param n the number of bits of the comparisson
