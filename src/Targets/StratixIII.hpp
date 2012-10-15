@@ -25,7 +25,7 @@ namespace flopoco{
 			sizeOfBlock_			= 9216;				// the size of a (the largest) primitive block is 2^10 * 9
 
 			elemWireDelay_			= 0.0119e-9; 
-			lut2lutDelay_			= 1.5e-10;			// ???
+			lut2lutDelay_			= 0.440e-9;			// *obtained from Quartus 2 Chip Planner 11.1 - emulates H4+V4+Local_Line
 
 			fastcarryDelay_			= 0.019e-9;			// *obtained from Quartus 2 Chip Planner 11.1
 			lutDelay_				= 0.355e-9;			// *obtained from Quartus 2 Chip Planner 11.1
@@ -44,7 +44,7 @@ namespace flopoco{
 
 			innerLABcarryDelay_		= 0.161e-9;			// *obtained from Quartus 2 Chip Planner 11.1
 			interLABcarryDelay_		= 0.196e-9;			// *obtained from Quartus 2 Chip Planner 11.1
-			shareOutToCarryOut_		= 0.172e-9;			// obtained from Quartus 2 Chip Planner
+			shareOutToCarryOut_		= 0.304e-9;			// *obtained from Quartus 2 Chip Planner 11.1
 			carryInToSumOut_		= 0.336e-9;			// *obtained from Quartus 2 Chip Planner 11.1
 
 			muxStoO_				= 0.189e-9;			// obtained from Quartus 2 Chip Planner by subtraction
@@ -59,14 +59,14 @@ namespace flopoco{
 			multiplierWidth_[2] 	= 18;
 			multiplierWidth_[3] 	= 36;
 		
-			//New - includes the output register delay = 1.193
-			multiplierDelay_[0] 	= 3.170e-9;			// *obtained experimentaly from Quartus 2 11.1
-			multiplierDelay_[1] 	= 3.179e-9;			// *obtained experimentaly from Quartus 2 11.1 
-			multiplierDelay_[2] 	= 2.513e-9;			// *obtained experimentaly from Quartus 2 11.1
-			multiplierDelay_[3] 	= 3.139e-9;			// *obtained experimentaly from Quartus 2 11.1
-
-			DSPMultiplierDelay_		= 2.513e-9;
-			DSPAdderDelay_			= 1.420e-9;
+			//New -does not include the output register delay = 1.193
+			multiplierDelay_[0] 	= 1.977e-9;			// *obtained experimentaly from Quartus 2 11.1
+			multiplierDelay_[1] 	= 1.986e-9;			// *obtained experimentaly from Quartus 2 11.1 
+			multiplierDelay_[2] 	= 1.320e-9;			// *obtained experimentaly from Quartus 2 11.1
+			multiplierDelay_[3] 	= 1.320e-9;			// *obtained experimentaly from Quartus 2 11.1
+			
+			DSPMultiplierDelay_		= 1.320e-9;
+			DSPAdderDelay_			= 1.193e-9;
 			DSPCascadingWireDelay_	= 0.266e-9;			//?
 			DSPToLogicWireDelay_	= 0.266e-9;			//1.619e-9;
 			
