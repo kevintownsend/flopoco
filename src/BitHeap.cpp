@@ -1464,15 +1464,17 @@ namespace flopoco
 				*/
 				
 				// EXPERIMENTAL ----------------------------------------------------
-				int subAddSize;
+				int subAddSize, subAdd3Size;
 				
-				op->getTarget()->suggestSubaddSize(subAddSize, maxWeight-minWeight+2);
+				op->getTarget()->suggestSubaddSize(subAddSize, maxWeight-minWeight);
+				op->getTarget()->suggestSubadd3Size(subAdd3Size, maxWeight-minWeight);
 				
-				cout << "preparing for addition on " << maxWeight-minWeight+2 << " bits; will be split into chunks of size " << subAddSize << endl;
+				cout << "preparing for addition on " << maxWeight-minWeight << " bits; will be split into chunks of size " << subAddSize << endl;
+				cout << "preparing for addition3 on " << maxWeight-minWeight << " bits; will be split into chunks of size " << subAdd3Size << endl;
 				cout << tab << "maxWeight=" << maxWeight << " and minWeight=" << minWeight << endl;
 				
 				//perform addition on the pieces
-				for(unsigned int i=0; i<(maxWeight-minWeight+2)/subAddSize; i++)
+				for(unsigned int i=0; i<(maxWeight-minWeight)/subAddSize; i++)
 				{
 					if(i == 0)
 					{
@@ -1480,7 +1482,7 @@ namespace flopoco
 						op->setCycleFromSignal(inAdder0Name);
 						op->syncCycleFromSignal(inAdder1Name);
 						op->syncCycleFromSignal(inAdder2Name);
-						op->manageCriticalPath(op->getTarget()->localWireDelay() + op->getTarget()->adderDelay(subAddSize+2));
+						op->manageCriticalPath(op->getTarget()->localWireDelay() + op->getTarget()->adder3Delay(subAddSize+2));
 						
 						op->vhdl << tab << op->declare(join(outAdderName, "_int_", i), subAddSize+2) << " <= "
 							<< "(\"00\" & " << inAdder0Name << range (subAddSize-1, 0) << ")"
@@ -1510,11 +1512,12 @@ namespace flopoco
 						op->vhdl << tab << tab << tab << "\"00\" when \"00\"," << endl;
 						op->vhdl << tab << tab << tab << "\"11\" when \"10\"," << endl;
 						op->vhdl << tab << tab << tab << "\"01\" when \"01\"," << endl;
-						op->vhdl << tab << tab << tab << "\"00\" when \"11\";" << tab << tab << "-- should never occur" << endl;
+						op->vhdl << tab << tab << tab << "\"00\" when \"11\"," << tab << tab << "-- should never occur" << endl;
+						op->vhdl << tab << tab << tab << "\"--\" when others;" << endl;
 						
 						//handle timing		-- TODO: redo timing
 						op->syncCycleFromSignal(join(outAdderName, "_int_", i, "_a0b0prime"));
-						op->manageCriticalPath(op->getTarget()->localWireDelay() + op->getTarget()->adderDelay(subAddSize+4));
+						op->manageCriticalPath(op->getTarget()->localWireDelay() + op->getTarget()->adder3Delay(subAddSize+4));
 						
 						//perform the actual ternary addition
 						op->vhdl << tab << op->declare(join(outAdderName, "_int_", i), subAddSize+4) << " <= "
@@ -1527,9 +1530,9 @@ namespace flopoco
 				}
 				
 				//the leftover bits
-				unsigned int currentLevel = (maxWeight-minWeight+2) / subAddSize;
+				unsigned int currentLevel = (maxWeight-minWeight) / subAddSize;
 				
-				if(((maxWeight-minWeight+2)%subAddSize > 0) && ((maxWeight-minWeight+2)>subAddSize))
+				if(((maxWeight-minWeight)%subAddSize > 0) && ((maxWeight-minWeight)>subAddSize))
 				{
 					//handle timing
 					op->setCycleFromSignal(join(outAdderName, "_int_", currentLevel-1));
@@ -1550,11 +1553,12 @@ namespace flopoco
 					op->vhdl << tab << tab << tab << "\"00\" when \"00\"," << endl;
 					op->vhdl << tab << tab << tab << "\"11\" when \"10\"," << endl;
 					op->vhdl << tab << tab << tab << "\"01\" when \"01\"," << endl;
-					op->vhdl << tab << tab << tab << "\"00\" when \"11\";" << tab << tab << "-- should never occur" << endl;
+					op->vhdl << tab << tab << tab << "\"00\" when \"11\"," << tab << tab << "-- should never occur" << endl;
+					op->vhdl << tab << tab << tab << "\"--\" when others;" << endl;
 					
 					//handle timing
 					op->syncCycleFromSignal(join(outAdderName, "_int_", currentLevel, "_lsb_select"));
-					op->manageCriticalPath(op->getTarget()->localWireDelay() + op->getTarget()->adderDelay(maxWeight-minWeight-subAddSize*currentLevel+4));
+					op->manageCriticalPath(op->getTarget()->localWireDelay() + op->getTarget()->adder3Delay(maxWeight-minWeight-subAddSize*currentLevel+4));
 						
 					//perform the actual ternary addition
 					op->vhdl << tab << op->declare(join(outAdderName, "_int_", currentLevel), maxWeight-minWeight-subAddSize*currentLevel+4) << " <= "
@@ -1566,14 +1570,14 @@ namespace flopoco
 				}
 				
 				//splitting wasn't/was necessary
-				if(subAddSize >= (int)( maxWeight-minWeight+2))
+				if(subAddSize >= (int)( maxWeight-minWeight))
 				{
 					//handle timing
 					op->setCycleFromSignal(inAdder0Name);
 					op->syncCycleFromSignal(inAdder1Name);
 					op->syncCycleFromSignal(inAdder2Name);
 					op->manageCriticalPath(op->getTarget()->localWireDelay() +
-							op->getTarget()->adderDelay(maxWeight-minWeight+2));
+							op->getTarget()->adder3Delay(maxWeight-minWeight+2));
 					
 					op->vhdl << tab << op->declare(outAdderName, maxWeight-minWeight+2)
 						<< " <= (\"00\" & "<< inAdder0Name << ") + (\"00\" & " << inAdder1Name
@@ -1583,13 +1587,13 @@ namespace flopoco
 					//join all the intermediary results together
 					op->vhdl << tab << op->declare(outAdderName, maxWeight-minWeight+2) << " <= ";
 					
-					if(((maxWeight-minWeight+2)%subAddSize > 0) && ((maxWeight-minWeight+2)>subAddSize))
+					if(((maxWeight-minWeight)%subAddSize > 0) && ((maxWeight-minWeight)>subAddSize))
 					{
 						//handle timing
 						op->syncCycleFromSignal(join(outAdderName, "_int_", currentLevel));
 						op->manageCriticalPath(op->getTarget()->localWireDelay());
 						
-						op->vhdl << join(outAdderName, "_int_", (maxWeight-minWeight+2)/subAddSize) << range(maxWeight-minWeight-subAddSize*currentLevel+3, 2) << " & ";
+						op->vhdl << join(outAdderName, "_int_", (maxWeight-minWeight)/subAddSize) << range(maxWeight-minWeight-subAddSize*currentLevel+3, 2) << " & ";
 					}else
 					{
 						//handle timing
@@ -1597,9 +1601,9 @@ namespace flopoco
 						op->manageCriticalPath(op->getTarget()->localWireDelay());
 					}
 					
-					for(unsigned int i=0; i<(maxWeight-minWeight+2)/subAddSize; i++)
+					for(unsigned int i=0; i<(maxWeight-minWeight)/subAddSize; i++)
 					{
-						unsigned int index = (maxWeight-minWeight+2)/subAddSize - i - 1;
+						unsigned int index = (maxWeight-minWeight)/subAddSize - i - 1;
 						
 						if(index == 0)
 						{
