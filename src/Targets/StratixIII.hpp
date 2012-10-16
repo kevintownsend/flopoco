@@ -24,7 +24,7 @@ namespace flopoco{
 			maxFrequencyMHz_		= 500;
 			sizeOfBlock_			= 9216;				// the size of a (the largest) primitive block is 2^10 * 9
 
-			elemWireDelay_			= 0.0119e-9; 
+			elemWireDelay_			= 0.0149e-9;		// *obtained from Quartus 2 Chip Planner 11.1
 			lut2lutDelay_			= 0.440e-9;			// *obtained from Quartus 2 Chip Planner 11.1 - emulates H4+V4+Local_Line
 
 			fastcarryDelay_			= 0.019e-9;			// *obtained from Quartus 2 Chip Planner 11.1
@@ -47,7 +47,7 @@ namespace flopoco{
 			shareOutToCarryOut_		= 0.304e-9;			// *obtained from Quartus 2 Chip Planner 11.1
 			carryInToSumOut_		= 0.336e-9;			// *obtained from Quartus 2 Chip Planner 11.1
 
-			muxStoO_				= 0.189e-9;			// obtained from Quartus 2 Chip Planner by subtraction
+			muxStoO_				= 0.190e-9;			// *obtained from Quartus 2 Chip Planner 11.1
 			fdCtoQ_					= 0.218e-9;			// *obtained from Quartus 2 Chip Planner by subtraction
 			
 			// DSP parameters

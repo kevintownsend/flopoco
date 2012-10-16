@@ -1561,12 +1561,23 @@ namespace flopoco
 					op->manageCriticalPath(op->getTarget()->localWireDelay() + op->getTarget()->adder3Delay(maxWeight-minWeight-subAddSize*currentLevel+4));
 						
 					//perform the actual ternary addition
-					op->vhdl << tab << op->declare(join(outAdderName, "_int_", currentLevel), maxWeight-minWeight-subAddSize*currentLevel+4) << " <= "
-						<< "(\"00\" & " << inAdder0Name << range(maxWeight-minWeight-1, subAddSize*currentLevel+1) << " & " << join(outAdderName, "_int_", currentLevel, "_a0b0prime") << of(1) << " & " << inAdder0Name << of(subAddSize*currentLevel) << " & \"0\")"
-						<< " + "
-						<< "(\"00\" & " << inAdder1Name << range(maxWeight-minWeight-1, subAddSize*currentLevel+1) << " & " << join(outAdderName, "_int_", currentLevel, "_a0b0prime") << of(0) << " & " << inAdder0Name << of(subAddSize*currentLevel) << " & " << inAdder1Name << of(subAddSize*currentLevel) << ")"
-						<< " + "
-						<< "(\"00\" & " << inAdder2Name << range(maxWeight-minWeight-1, subAddSize*currentLevel) << " & " << inAdder1Name << of(subAddSize*currentLevel) << " & " << inAdder1Name << of(subAddSize*currentLevel) << ");" << endl;
+					if(maxWeight-minWeight-subAddSize*currentLevel == 1)
+					{
+						op->vhdl << tab << op->declare(join(outAdderName, "_int_", currentLevel), maxWeight-minWeight-subAddSize*currentLevel+4) << " <= "
+							<< "(\"00\" & " << join(outAdderName, "_int_", currentLevel, "_a0b0prime") << "(1 downto 1) " << " & " << inAdder0Name << "(" << maxWeight-minWeight-1 << " downto " << maxWeight-minWeight-1 << ")" << " & \"0\")"
+							<< " + "
+							<< "(\"00\" & " << join(outAdderName, "_int_", currentLevel, "_a0b0prime") << "(0 downto 0) " << " & " << inAdder0Name << "(" << maxWeight-minWeight-1 << " downto " << maxWeight-minWeight-1 << ")" << " & " << inAdder1Name << "(" << maxWeight-minWeight-1 << " downto " << maxWeight-minWeight-1 << ")" << ")"
+							<< " + "
+							<< "(\"00\" & " << inAdder2Name << "(" << maxWeight-minWeight-1 << " downto " << maxWeight-minWeight-1 << ")" << " & " << inAdder1Name << "(" << maxWeight-minWeight-1 << " downto " << maxWeight-minWeight-1 << ")" << " & " << inAdder1Name << "(" << maxWeight-minWeight-1 << " downto " << maxWeight-minWeight-1 << ")" << ");" << endl;
+					}else
+					{
+						op->vhdl << tab << op->declare(join(outAdderName, "_int_", currentLevel), maxWeight-minWeight-subAddSize*currentLevel+4) << " <= "
+							<< "(\"00\" & " << inAdder0Name << range(maxWeight-minWeight-1, subAddSize*currentLevel+1) << " & " << join(outAdderName, "_int_", currentLevel, "_a0b0prime") << of(1) << " & " << inAdder0Name << of(subAddSize*currentLevel) << " & \"0\")"
+							<< " + "
+							<< "(\"00\" & " << inAdder1Name << range(maxWeight-minWeight-1, subAddSize*currentLevel+1) << " & " << join(outAdderName, "_int_", currentLevel, "_a0b0prime") << of(0) << " & " << inAdder0Name << of(subAddSize*currentLevel) << " & " << inAdder1Name << of(subAddSize*currentLevel) << ")"
+							<< " + "
+							<< "(\"00\" & " << inAdder2Name << range(maxWeight-minWeight-1, subAddSize*currentLevel) << " & " << inAdder1Name << of(subAddSize*currentLevel) << " & " << inAdder1Name << of(subAddSize*currentLevel) << ");" << endl;
+					}					
 				}
 				
 				//splitting wasn't/was necessary
@@ -1585,20 +1596,23 @@ namespace flopoco
 				}else
 				{
 					//join all the intermediary results together
-					op->vhdl << tab << op->declare(outAdderName, maxWeight-minWeight+2) << " <= ";
-					
 					if(((maxWeight-minWeight)%subAddSize > 0) && ((maxWeight-minWeight)>subAddSize))
 					{
 						//handle timing
 						op->syncCycleFromSignal(join(outAdderName, "_int_", currentLevel));
 						op->manageCriticalPath(op->getTarget()->localWireDelay());
-						
-						op->vhdl << join(outAdderName, "_int_", (maxWeight-minWeight)/subAddSize) << range(maxWeight-minWeight-subAddSize*currentLevel+3, 2) << " & ";
 					}else
 					{
 						//handle timing
 						op->syncCycleFromSignal(join(outAdderName, "_int_", currentLevel-1));
 						op->manageCriticalPath(op->getTarget()->localWireDelay());
+					}
+					
+					op->vhdl << tab << op->declare(outAdderName, maxWeight-minWeight+2) << " <= ";
+					
+					if(((maxWeight-minWeight)%subAddSize > 0) && ((maxWeight-minWeight)>subAddSize))
+					{
+						op->vhdl << join(outAdderName, "_int_", (maxWeight-minWeight)/subAddSize) << range(maxWeight-minWeight-subAddSize*currentLevel+3, 2) << " & ";
 					}
 					
 					for(unsigned int i=0; i<(maxWeight-minWeight)/subAddSize; i++)

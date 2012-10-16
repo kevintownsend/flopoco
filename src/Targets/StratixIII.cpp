@@ -213,12 +213,12 @@ namespace flopoco{
 	
 	bool StratixIII::suggestSubaddSize(int &x, int wIn){
 		
-		//int chunkSize = (int)floor( (1./frequency() - (fdCtoQ_ + lutDelay() + carryInToSumOut_ + ffDelay_ + interLABcarryDelay_)) / carryPropagateDelay()); // 1 if no need for pipeline
 		suggestSlackSubaddSize(x, wIn, 0);
 		
-		//x = chunkSize;		
-		if (x>0) return true;
-		else {
+		if (x>0) 
+			return true;
+		else 
+		{
 			x=1;		
 			return false;
 		} 
