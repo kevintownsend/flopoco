@@ -28,7 +28,7 @@ namespace flopoco{
 		
 		return (
 			lutDelay_ + 
-			((size/2-ceil((size/almsPerLab_)/2.0)-(size/(2*almsPerLab_))) * fastcarryDelay_) + 
+			((size-ceil((size/almsPerLab_)/2.0)-(size/(2*almsPerLab_))) * fastcarryDelay_) + 
 			(ceil((size/almsPerLab_)/2.0) * innerLABcarryDelay_) + 
 			((size/(2*almsPerLab_)) * interLABcarryDelay_) + 
 			carryInToSumOut_ + 
@@ -45,7 +45,7 @@ namespace flopoco{
 		return (
 			lutDelay_ +
 			shareOutToCarryOut_ +  
-			((size/2 - 1 - (size/almsPerLab_)) * fastcarryDelay_) + 
+			((size - 1 - (size/almsPerLab_)) * fastcarryDelay_) + 
 			((size/almsPerLab_) * interLABcarryDelay_) + 
 			carryInToSumOut_ + 
 			(size/subAdd)  * (ffDelay_ + fdCtoQ_ + elemWireDelay_)
@@ -253,8 +253,7 @@ namespace flopoco{
 				time -= interLABcarryDelay_;
 			}else
 			{
-				if(chunkSize % 2 == 1)
-					time -= fastcarryDelay_;
+				time -= fastcarryDelay_;
 			}
 		}
 		
@@ -286,8 +285,7 @@ namespace flopoco{
 				time -= interLABcarryDelay_;
 			}else
 			{
-				if((chunkSize % 2 == 1) && (chunkSize != 1))
-					time -= fastcarryDelay_;
+				time -= fastcarryDelay_;
 			}
 		}
 		

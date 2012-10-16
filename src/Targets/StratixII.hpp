@@ -23,12 +23,12 @@ namespace flopoco{
 			vendor_					= "Altera";
 			maxFrequencyMHz_		= 400;
 			sizeOfBlock_			= 4608; 		// the size of a primitive block is 2^9 * 9
-			fastcarryDelay_			= 3.5e-11; 		// aproximately right    
-			elemWireDelay_			= 0.222e-11; 	// an average value over R4, R24, C4, C16 interconnects delays
-			lut2lutDelay_			= 1.5e-10; 		// ???
+			fastcarryDelay_			= 0.035e-9; 	// aproximately right    
+			elemWireDelay_			= 0.222e-9; 	// an average value over R4, R24, C4, C16 interconnects delays
+			lut2lutDelay_			= 0.720e-9;		// ???
 			
 			lutDelay_				= 0.350e-9; 	// obtained from Quartus 11.1
-			ffDelay_				= 0.0955e-9; 	// obtained from Quartus 11.1
+			ffDelay_				= 0.097e-9; 	// obtained from Quartus 11.1
 			
 			multXInputs_			= 36;
 			multYInputs_			= 36;
@@ -74,11 +74,11 @@ namespace flopoco{
 		double eqComparatorDelay(int size);
 		double eqConstComparatorDelay(int size);
 
-		double DSPMultiplierDelay(){ return multiplierDelay_[2];}
-		double DSPAdderDelay(){ return 2.439e-9;} //TODO
+		double DSPMultiplierDelay(){ return multiplierDelay_[1];}
+		double DSPAdderDelay(){ return 1.280e-9;} //TODO
 		double DSPCascadingWireDelay(){ return 0.378e-9;}//TODO
-		double DSPToLogicWireDelay(){ return 0.724e-9;}	
-		double LogicToDSPWireDelay(){ return 0.724e-9;}
+		double DSPToLogicWireDelay(){ return 0.580e-9;}	
+		double LogicToDSPWireDelay(){ return 0.580e-9;}
 		
 		double RAMDelay() { return RAMDelay_; }
 		double RAMToLogicWireDelay() { return RAMToLogicWireDelay_; }
