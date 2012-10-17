@@ -25,10 +25,11 @@ namespace flopoco{
 			sizeOfBlock_			= 4608;			// the size of a primitive block is 2^9 * 9
 			
 			fastcarryDelay_			= 0.071e-9;		// obtained from Quartus 2 Chip Planner 11.1
-			elemWireDelay_			= 0.378e-9;		// obtained from Quartus 2 Chip Planner 11.1 - local line delay
-			lut2lutDelay_			= 1.5e-10;		// ???
+			elemWireDelay_			= 0.278e-9;		// obtained from Quartus 2 Chip Planner 11.1 - local line delay
+			//lut2lutDelay_			= 1.5e-10;		// ???
+			lut2lutDelay_			= 0.450e-9;		// ???
 			
-			lutDelay_				= 0.414e-9;		// obtained from Quartus 11.1
+			lutDelay_				= 0.419e-9;		// obtained from Quartus 11.1
 			ffDelay_				= 0.084e-9;		// obtained from Quartus 11.1
 			
 			multXInputs_			= 18;
@@ -43,7 +44,7 @@ namespace flopoco{
 			innerLABcarryDelay_		= 0.159e-9;		// obtained from Quartus 2 Chip Planner 11.1
 			interLABcarryDelay_		= 0.146e-9;		// obtained from Quartus 2 Chip Planner 11.1
 			shareOutToCarryOut_		= 0.000e-9;		// the Cyclone architecture does not have a share out chain
-			muxStoO_				= 0.189e-9;		// TODO
+			muxStoO_				= 0.275e-9;		// obtained from Quartus 2 Chip Planner 11.1
 			fdCtoQ_					= 0.352e-9;		// TODO
 			carryInToSumOut_		= 0.410e-9;		// obtained from Quartus 2 Chip Planner 11.1
 			
@@ -56,7 +57,7 @@ namespace flopoco{
 			
 			// contains the DSP output register = 0.104ns
 			multiplierDelay_[0]		= 2.181e-9;		// obtained experimentaly from Quartus 2 11.1
-			multiplierDelay_[1]		= 2.504e-9;		// obtained experimentaly from Quartus 2 11.1
+			multiplierDelay_[1]		= 2.499e-9;		// obtained experimentaly from Quartus 2 11.1
 			
 			RAMDelay_				= 3.245e-9;		// obtained experimentaly from Quartus 2 11.1
 			RAMToLogicWireDelay_	= 0.351e-9;		// obtained experimentaly from Quartus 2 11.1
@@ -77,8 +78,8 @@ namespace flopoco{
 		double DSPMultiplierDelay(){ return multiplierDelay_[1];}
 		double DSPAdderDelay(){ return 0.000e-9;} // Feature not available for this FPGA family
 		double DSPCascadingWireDelay(){ return 0.378e-9;}	// TODO
-		double DSPToLogicWireDelay(){ return 0.724e-9;}	// TODO
-		double LogicToDSPWireDelay(){ return 0.724e-9;}	// TODO
+		double DSPToLogicWireDelay(){ return 0.765e-9;}	// TODO
+		double LogicToDSPWireDelay(){ return 0.765e-9;}	// TODO
 		
 		double RAMDelay() { return RAMDelay_; }
 		double RAMToLogicWireDelay() { return RAMToLogicWireDelay_; }
@@ -130,8 +131,8 @@ namespace flopoco{
 		// DSP parameters
 		int 	totalDSPs_;					/**< The total number of DSP blocks available on this target */
 		int	    nrConfigs_;					/**< The number of distinct predefinded multiplier widths */
-		int 	multiplierWidth_[3];		/**< The multiplier width available */
-		double multiplierDelay_[3];		/**< The corresponding delay for each multiplier width available */
+		int 	multiplierWidth_[2];		/**< The multiplier width available */
+		double multiplierDelay_[2];		/**< The corresponding delay for each multiplier width available */
 		
 		double RAMDelay_;
 		double RAMToLogicWireDelay_;

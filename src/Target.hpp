@@ -44,7 +44,7 @@ namespace flopoco{
 			lutInputs_         = 4;
 			frequency_         = 400000000.;
 			hasHardMultipliers_= true;
-			hasFastLogicTernaryAdders_ = true;
+			hasFastLogicTernaryAdders_ = false;
 			id_                = "generic";
 		}
 	
@@ -590,7 +590,7 @@ namespace flopoco{
 		bool   pipeline_;           /**< True if the target is pipelined/ false otherwise */
 		double frequency_;          /**< The desired frequency for the operator in Hz */
 		bool   hasHardMultipliers_; /**< If true, this target offers hardware multipliers */
-		bool   hasFastLogicTernaryAdders_; /**< If true, this target offers hardware multipliers */
+		bool   hasFastLogicTernaryAdders_; /**< If true, this target offers support for ternary addition at the cost of binary addition */
 		int    multXInputs_;        /**< The size for the X dimension of the hardware multipliers (the largest, if they are not equal) */
 		int    multYInputs_;        /**< The size for the Y dimension of the hardware multipliers  (the smallest, if they are not equal)*/
 		long   sizeOfBlock_;		    /**< The size of a primitive memory block */

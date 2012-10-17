@@ -21,6 +21,7 @@ namespace flopoco{
 		StratixV() : Target()	{
 			id_							= "StratixV";
 			vendor_						= "Altera";
+			hasFastLogicTernaryAdders_	= true;
 			maxFrequencyMHz_			= 717;
 			sizeOfBlock_				= 20480; 		// the size of a primitive block is 2^11 * 10
 			

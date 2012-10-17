@@ -1203,8 +1203,10 @@ namespace flopoco
 		op->inPortMap(adder, "Cin", join(cinName,adderIndex));
 
 		op->outPortMap(adder, "R", join(outAdder,adderIndex));
-
+		
 		op->vhdl << tab << op->instance(adder, join("Adder_bh", getGUid(), "_", adderIndex));
+		op->syncCycleFromSignal(join(outAdder,adderIndex));
+		op->setCriticalPath( adder->getOutputDelay("R") );
 
 #else
 		op->vhdl << tab << op->declare(join(outAdder, adderIndex), msb-lsb+2) << " <= "
@@ -1285,365 +1287,376 @@ namespace flopoco
 
 			}
 		if(isXilinx)
-			{
-				stringstream inAdder0, inAdder1, outAdder;
+		{
+			stringstream inAdder0, inAdder1, outAdder;
 
-				unsigned i=maxWeight-1;
+			unsigned i=maxWeight-1;
 
-				//forming the input signals for the first and second line
-				while((i>=minWeight)&&(i<maxWeight))
-					{
-						REPORT(DEBUG,"i=   "<<i);
-						if(i>=0)
-							{
-								list<WeightedBit*>::iterator it = bits[i].begin();
-								if(bits[i].size()==2)
-									{
-										inAdder0 << (*it)->getName();
-										it++;
-										inAdder1 << (*it)->getName();
-									}
-								else
-									{
-										if (bits[i].size()==1)
-											{
-												inAdder0 << (*it)->getName();
-												inAdder1 << "\'0\'";
-											}
-										else
-											{
-												inAdder0 << "\'0\'";
-												inAdder1 << "\'0\'";
-											}
-									}
-
-								if (i!=minWeight)
-									{
-										inAdder0<<" & ";
-										inAdder1<<" & ";
-									}
-							}
-
-						--i;
-					}
-
-
-
-				inAdder0 << ";";
-				inAdder1 << ";";
-
-				WeightedBit* b = getLatestBit(minWeight, maxWeight-1);
-				//managing the pipeline
-
-				op->setCycle(  b ->getCycle()  );
-				op->setCriticalPath( b->getCriticalPath(op->getCurrentCycle()));
-				op->manageCriticalPath(op->getTarget()->localWireDelay() + op->getTarget()->adderDelay(maxWeight-minWeight));
-
-
-
-				string inAdder0Name = join("finalAdderIn0_bh", getGUid());
-				string inAdder1Name = join("finalAdderIn1_bh", getGUid());
-				string outAdderName = join("finalAdderOut_bh", getGUid());
-
-				op->vhdl << tab << op->declare(inAdder0Name, maxWeight-minWeight) 
-				         << (((maxWeight-minWeight)==1)?"(0)":"") << " <= " << inAdder0.str() << endl;
-				op->vhdl << tab << op->declare(inAdder1Name, maxWeight-minWeight) 
-				         << (((maxWeight-minWeight)==1)?"(0)":"") << " <= " << inAdder1.str() << endl;
-				op->vhdl << tab << op->declare(outAdderName, maxWeight-minWeight+1)
-				         << " <= ('0' & "<< inAdder0Name << ") + ('0' & " << inAdder1Name << ");" << endl;
-				op->vhdl << tab << "-- concatenate all the compressed chunks" << endl;
-				//result
-				op->vhdl << tab << op->declare(join("CompressionResult", guid), (maxWeight+1)) << " <= " << outAdderName;
-
-				//adding the rightmost bits
-				for(int i=chunkDoneIndex-1; i>=0; i--)
-					op->vhdl <<  " & " << join("tempR_bh", guid, "_", i);
-
-				op->vhdl << ";" << endl;
-			}
-
-
-		else
-			{
-				stringstream inAdder0, inAdder1, inAdder2, outAdder;
-
-				unsigned i=maxWeight-1;
-
-				//forming the input signals for the first, second and third line
-				while((i>=minWeight)&&(i<maxWeight))
-					{
-						REPORT(DEBUG,"i=   "<<i);
-						if(i>=0)
-							{
-								list<WeightedBit*>::iterator it = bits[i].begin();
-								if(bits[i].size()==3)
-									{
-										//REPORT(INFO,i << " size 3");
-										inAdder0 << (*it)->getName();
-										it++;
-										inAdder1 << (*it)->getName();
-										it++;
-										inAdder2 << (*it)->getName();
-									}
-								else
-									{
-										if(bits[i].size()==2)
-											{
-												//REPORT(INFO,i << " size 2");
-												inAdder0 << (*it)->getName();
-												it++;
-												inAdder1 << (*it)->getName();
-												inAdder2 << "\'0\'";
-
-											}
-										else
-											{
-												if (bits[i].size()==1)
-													{
-														//REPORT(INFO,i <<  " size 1");
-														inAdder0 << (*it)->getName();
-														inAdder1 << "\'0\'";
-														inAdder2 << "\'0\'";
-
-													}
-												else
-													{
-														//REPORT(INFO,i << " size 0");
-														inAdder0 << "\'0\'";
-														inAdder1 << "\'0\'";
-														inAdder2 << "\'0\'";
-
-													}
-											}
-									}
-
-								if (i!=minWeight)
-									{
-										inAdder0 <<" & ";
-										inAdder1 <<" & ";
-										inAdder2 <<" & ";
-
-									}
-							}
-
-						--i;
-					}
-
-
-
-				inAdder0 << ";";
-				inAdder1 << ";";
-				inAdder2 << ";";
-
-				WeightedBit* b = getLatestBit(minWeight, maxWeight-1);
-				//managing the pipeline
-				if(b)
-					{
-						//REPORT(INFO, b->getName());
-						op->setCycle(  b ->getCycle()  );
-						op->setCriticalPath( b->getCriticalPath(op->getCurrentCycle()));
-						op->manageCriticalPath(op->getTarget()->localWireDelay() +
-						                       op->getTarget()->adderDelay(maxWeight-minWeight));
-
-					}
-
-				string inAdder0Name = join("finalAdderIn0_bh", getGUid());
-				string inAdder1Name = join("finalAdderIn1_bh", getGUid());
-				string inAdder2Name = join("finalAdderIn2_bh", getGUid());
-				string outAdderName = join("finalAdderOut_bh", getGUid());
-
-				op->vhdl << tab << op->declare(inAdder0Name, maxWeight-minWeight) << " <= " << inAdder0.str() << endl;
-				op->vhdl << tab << op->declare(inAdder1Name, maxWeight-minWeight) << " <= " << inAdder1.str() << endl;
-				op->vhdl << tab << op->declare(inAdder2Name, maxWeight-minWeight) << " <= " << inAdder2.str() << endl;
-
-				//Old
-				/*
-				op->vhdl << tab << op->declare(outAdderName, maxWeight-minWeight+2)
-				         << " <= (\"00\" & "<< inAdder0Name << ") + (\"0\" & " << inAdder1Name
-				         << ") + (\"00\" & " << inAdder2Name << ");" << endl;
-				*/
-				
-				// EXPERIMENTAL ----------------------------------------------------
-				int subAddSize, subAdd3Size;
-				
-				op->getTarget()->suggestSubaddSize(subAddSize, maxWeight-minWeight);
-				op->getTarget()->suggestSubadd3Size(subAdd3Size, maxWeight-minWeight);
-				
-				cout << "preparing for addition on " << maxWeight-minWeight << " bits; will be split into chunks of size " << subAddSize << endl;
-				cout << "preparing for addition3 on " << maxWeight-minWeight << " bits; will be split into chunks of size " << subAdd3Size << endl;
-				cout << tab << "maxWeight=" << maxWeight << " and minWeight=" << minWeight << endl;
-				
-				//perform addition on the pieces
-				for(unsigned int i=0; i<(maxWeight-minWeight)/subAddSize; i++)
+			//forming the input signals for the first and second line
+			while((i>=minWeight)&&(i<maxWeight))
 				{
-					if(i == 0)
-					{
-						//handle timing		-- TODO: redo timing
-						op->setCycleFromSignal(inAdder0Name);
-						op->syncCycleFromSignal(inAdder1Name);
-						op->syncCycleFromSignal(inAdder2Name);
-						op->manageCriticalPath(op->getTarget()->localWireDelay() + op->getTarget()->adder3Delay(subAddSize+2));
-						
-						op->vhdl << tab << op->declare(join(outAdderName, "_int_", i), subAddSize+2) << " <= "
-							<< "(\"00\" & " << inAdder0Name << range (subAddSize-1, 0) << ")"
-							<< " + "
-							<< "(\"00\" & " << inAdder1Name << range (subAddSize-1, 0) << ")"
-							<< " + "
-							<< "(\"00\" & " << inAdder2Name << range (subAddSize-1, 0) << ");" << endl;
-					}else
-					{
-						//handle timing		-- TODO: redo timing
-						op->setCycleFromSignal(join(outAdderName, "_int_", i-1));
-						op->manageCriticalPath(op->getTarget()->localWireDelay() + op->getTarget()->lutDelay());
-						
-						//concatenate the carrys from the previous addition
-						if(i == 1)
+					REPORT(DEBUG,"i=   "<<i);
+					if(i>=0)
 						{
-							op->vhdl << tab << op->declare(join(outAdderName, "_int_", i, "_lsb_select"), 2) 
-								<< " <= " << join(outAdderName, "_int_", i-1) << range(subAddSize+1, subAddSize) << ";" << endl;
-						}else
-						{
-							op->vhdl << tab << op->declare(join(outAdderName, "_int_", i, "_lsb_select"), 2) 
-								<< " <= " << join(outAdderName, "_int_", i-1) << range(subAddSize+3, subAddSize+2) << ";" << endl;
+							list<WeightedBit*>::iterator it = bits[i].begin();
+							if(bits[i].size()==2)
+								{
+									inAdder0 << (*it)->getName();
+									it++;
+									inAdder1 << (*it)->getName();
+								}
+							else
+								{
+									if (bits[i].size()==1)
+										{
+											inAdder0 << (*it)->getName();
+											inAdder1 << "\'0\'";
+										}
+									else
+										{
+											inAdder0 << "\'0\'";
+											inAdder1 << "\'0\'";
+										}
+								}
+
+							if (i!=minWeight)
+								{
+									inAdder0<<" & ";
+									inAdder1<<" & ";
+								}
 						}
-						
-						op->vhdl << tab << "with " << join(outAdderName, "_int_", i, "_lsb_select") << " select " << endl;
-						op->vhdl << tab << tab << op->declare(join(outAdderName, "_int_", i, "_a0b0prime"), 2) << " <= " << endl;
-						op->vhdl << tab << tab << tab << "\"00\" when \"00\"," << endl;
-						op->vhdl << tab << tab << tab << "\"11\" when \"10\"," << endl;
-						op->vhdl << tab << tab << tab << "\"01\" when \"01\"," << endl;
-						op->vhdl << tab << tab << tab << "\"00\" when \"11\"," << tab << tab << "-- should never occur" << endl;
-						op->vhdl << tab << tab << tab << "\"--\" when others;" << endl;
-						
-						//handle timing		-- TODO: redo timing
-						op->syncCycleFromSignal(join(outAdderName, "_int_", i, "_a0b0prime"));
-						op->manageCriticalPath(op->getTarget()->localWireDelay() + op->getTarget()->adder3Delay(subAddSize+4));
-						
-						//perform the actual ternary addition
-						op->vhdl << tab << op->declare(join(outAdderName, "_int_", i), subAddSize+4) << " <= "
-							<< "(\"00\" & " << inAdder0Name << range(subAddSize*(i+1)-1, subAddSize*i+1) << " & " << join(outAdderName, "_int_", i, "_a0b0prime") << of(1) << " & " << inAdder0Name << of(subAddSize*i) << " & \"0\")"
-							<< " + "
-							<< "(\"00\" & " << inAdder1Name << range(subAddSize*(i+1)-1, subAddSize*i+1) << " & " << join(outAdderName, "_int_", i, "_a0b0prime") << of(0) << " & " << inAdder0Name << of(subAddSize*i) << " & " << inAdder1Name << of(subAddSize*i) << ")"
-							<< " + "
-							<< "(\"00\" & " << inAdder2Name << range(subAddSize*(i+1)-1, subAddSize*i) << " & " << inAdder1Name << of(subAddSize*i) << " & " << inAdder1Name << of(subAddSize*i) << ");" << endl;
-					}
+
+					--i;
 				}
-				
-				//the leftover bits
-				unsigned int currentLevel = (maxWeight-minWeight) / subAddSize;
-				
-				if(((maxWeight-minWeight)%subAddSize > 0) && ((maxWeight-minWeight)>subAddSize))
+
+			inAdder0 << ";";
+			inAdder1 << ";";
+
+			WeightedBit* b = getLatestBit(minWeight, maxWeight-1);
+			//managing the pipeline
+
+			op->setCycle(  b ->getCycle()  );
+			op->setCriticalPath( b->getCriticalPath(op->getCurrentCycle()));
+			op->manageCriticalPath(op->getTarget()->localWireDelay() + op->getTarget()->adderDelay(maxWeight-minWeight+1));
+
+			string inAdder0Name = join("finalAdderIn0_bh", getGUid());
+			string inAdder1Name = join("finalAdderIn1_bh", getGUid());
+			string cinName = join("finalAdderCin_bh", getGUid());
+			string outAdderName = join("finalAdderOut_bh", getGUid());
+
+			op->vhdl << tab << op->declare(inAdder0Name, maxWeight-minWeight+1) 
+			         << (((maxWeight-minWeight)==1)?"(0)":"") << " <= \"0\" & " << inAdder0.str() << endl;
+			op->vhdl << tab << op->declare(inAdder1Name, maxWeight-minWeight+1) 
+			         << (((maxWeight-minWeight)==1)?"(0)":"") << " <= \"0\" & " << inAdder1.str() << endl;
+			op->vhdl << tab << op->declare(cinName) << " <= \'0\';" << endl;
+			
+			//Old
+			/*
+			op->vhdl << tab << op->declare(outAdderName, maxWeight-minWeight+1)
+			         << " <= ('0' & "<< inAdder0Name << ") + ('0' & " << inAdder1Name << ");" << endl;
+			*/
+			IntAdder* adder = new IntAdder(op->getTarget(), maxWeight-minWeight+1);
+			op->addSubComponent(adder);
+	
+			op->inPortMap(adder, "X", inAdder0Name);
+			op->inPortMap(adder, "Y", inAdder1Name);
+			op->inPortMap(adder, "Cin", cinName);
+			op->outPortMap(adder, "R", outAdderName);
+	
+			op->vhdl << tab << op->instance(adder, join("Adder_final", getGUid(), "_", adderIndex));
+			op->syncCycleFromSignal(outAdderName);
+			op->setCriticalPath( adder->getOutputDelay("R") );
+			
+			op->vhdl << tab << "-- concatenate all the compressed chunks" << endl;
+			//result
+			op->vhdl << tab << op->declare(join("CompressionResult", guid), (maxWeight+1)) << " <= " << outAdderName;
+
+			//adding the rightmost bits
+			for(int i=chunkDoneIndex-1; i>=0; i--)
+				op->vhdl <<  " & " << join("tempR_bh", guid, "_", i);
+
+			op->vhdl << ";" << endl;
+		}else
+		{
+			stringstream inAdder0, inAdder1, inAdder2, outAdder;
+
+			unsigned i=maxWeight-1;
+
+			//forming the input signals for the first, second and third line
+			while((i>=minWeight)&&(i<maxWeight))
 				{
-					//handle timing
-					op->setCycleFromSignal(join(outAdderName, "_int_", currentLevel-1));
+					REPORT(DEBUG,"i=   "<<i);
+					if(i>=0)
+						{
+							list<WeightedBit*>::iterator it = bits[i].begin();
+							if(bits[i].size()==3)
+								{
+									//REPORT(INFO,i << " size 3");
+									inAdder0 << (*it)->getName();
+									it++;
+									inAdder1 << (*it)->getName();
+									it++;
+									inAdder2 << (*it)->getName();
+								}
+							else
+								{
+									if(bits[i].size()==2)
+										{
+											//REPORT(INFO,i << " size 2");
+											inAdder0 << (*it)->getName();
+											it++;
+											inAdder1 << (*it)->getName();
+											inAdder2 << "\'0\'";
+
+										}
+									else
+										{
+											if (bits[i].size()==1)
+												{
+													//REPORT(INFO,i <<  " size 1");
+													inAdder0 << (*it)->getName();
+													inAdder1 << "\'0\'";
+													inAdder2 << "\'0\'";
+
+												}
+											else
+												{
+													//REPORT(INFO,i << " size 0");
+													inAdder0 << "\'0\'";
+													inAdder1 << "\'0\'";
+													inAdder2 << "\'0\'";
+
+												}
+										}
+								}
+
+							if (i!=minWeight)
+								{
+									inAdder0 <<" & ";
+									inAdder1 <<" & ";
+									inAdder2 <<" & ";
+
+								}
+						}
+
+					--i;
+				}
+
+
+
+			inAdder0 << ";";
+			inAdder1 << ";";
+			inAdder2 << ";";
+
+			WeightedBit* b = getLatestBit(minWeight, maxWeight-1);
+			//managing the pipeline
+			if(b)
+				{
+					//REPORT(INFO, b->getName());
+					op->setCycle(  b ->getCycle()  );
+					op->setCriticalPath( b->getCriticalPath(op->getCurrentCycle()));
+					op->manageCriticalPath(op->getTarget()->localWireDelay() +
+					                       op->getTarget()->adderDelay(maxWeight-minWeight));
+
+				}
+
+			string inAdder0Name = join("finalAdderIn0_bh", getGUid());
+			string inAdder1Name = join("finalAdderIn1_bh", getGUid());
+			string inAdder2Name = join("finalAdderIn2_bh", getGUid());
+			string outAdderName = join("finalAdderOut_bh", getGUid());
+
+			op->vhdl << tab << op->declare(inAdder0Name, maxWeight-minWeight) << " <= " << inAdder0.str() << endl;
+			op->vhdl << tab << op->declare(inAdder1Name, maxWeight-minWeight) << " <= " << inAdder1.str() << endl;
+			op->vhdl << tab << op->declare(inAdder2Name, maxWeight-minWeight) << " <= " << inAdder2.str() << endl;
+
+			//Old
+			/*
+			op->vhdl << tab << op->declare(outAdderName, maxWeight-minWeight+2)
+			         << " <= (\"00\" & "<< inAdder0Name << ") + (\"0\" & " << inAdder1Name
+			         << ") + (\"00\" & " << inAdder2Name << ");" << endl;
+			*/
+			
+			// EXPERIMENTAL ----------------------------------------------------
+			int subAddSize, subAdd3Size;
+			
+			op->getTarget()->suggestSubaddSize(subAddSize, maxWeight-minWeight);
+			op->getTarget()->suggestSubadd3Size(subAdd3Size, maxWeight-minWeight);
+			
+			cout << "preparing for addition on " << maxWeight-minWeight << " bits; will be split into chunks of size " << subAddSize << endl;
+			cout << "preparing for addition3 on " << maxWeight-minWeight << " bits; will be split into chunks of size " << subAdd3Size << endl;
+			cout << tab << "maxWeight=" << maxWeight << " and minWeight=" << minWeight << endl;
+			
+			//perform addition on the pieces
+			for(unsigned int i=0; i<(maxWeight-minWeight)/subAddSize; i++)
+			{
+				if(i == 0)
+				{
+					//handle timing		-- TODO: redo timing
+					op->setCycleFromSignal(inAdder0Name);
+					op->syncCycleFromSignal(inAdder1Name);
+					op->syncCycleFromSignal(inAdder2Name);
+					op->manageCriticalPath(op->getTarget()->localWireDelay() + op->getTarget()->adder3Delay(subAddSize+2));
+					
+					op->vhdl << tab << op->declare(join(outAdderName, "_int_", i), subAddSize+2) << " <= "
+						<< "(\"00\" & " << inAdder0Name << range (subAddSize-1, 0) << ")"
+						<< " + "
+						<< "(\"00\" & " << inAdder1Name << range (subAddSize-1, 0) << ")"
+						<< " + "
+						<< "(\"00\" & " << inAdder2Name << range (subAddSize-1, 0) << ");" << endl;
+				}else
+				{
+					//handle timing		-- TODO: redo timing
+					op->setCycleFromSignal(join(outAdderName, "_int_", i-1));
 					op->manageCriticalPath(op->getTarget()->localWireDelay() + op->getTarget()->lutDelay());
 					
-					if(currentLevel == 1)
+					//concatenate the carrys from the previous addition
+					if(i == 1)
 					{
-						op->vhdl << tab << op->declare(join(outAdderName, "_int_", currentLevel, "_lsb_select"), 2) 
-							<< " <= " << join(outAdderName, "_int_", currentLevel-1) << range(subAddSize+1, subAddSize) << ";" << endl;
+						op->vhdl << tab << op->declare(join(outAdderName, "_int_", i, "_lsb_select"), 2) 
+							<< " <= " << join(outAdderName, "_int_", i-1) << range(subAddSize+1, subAddSize) << ";" << endl;
 					}else
 					{
-						op->vhdl << tab << op->declare(join(outAdderName, "_int_", currentLevel, "_lsb_select"), 2) 
-							<< " <= " << join(outAdderName, "_int_", currentLevel-1) << range(subAddSize+3, subAddSize+2) << ";" << endl;
+						op->vhdl << tab << op->declare(join(outAdderName, "_int_", i, "_lsb_select"), 2) 
+							<< " <= " << join(outAdderName, "_int_", i-1) << range(subAddSize+3, subAddSize+2) << ";" << endl;
 					}
 					
-					op->vhdl << tab << "with " << join(outAdderName, "_int_", currentLevel, "_lsb_select") << " select " << endl;
-					op->vhdl << tab << tab << op->declare(join(outAdderName, "_int_", currentLevel, "_a0b0prime"), 2) << " <= " << endl;
+					op->vhdl << tab << "with " << join(outAdderName, "_int_", i, "_lsb_select") << " select " << endl;
+					op->vhdl << tab << tab << op->declare(join(outAdderName, "_int_", i, "_a0b0prime"), 2) << " <= " << endl;
 					op->vhdl << tab << tab << tab << "\"00\" when \"00\"," << endl;
 					op->vhdl << tab << tab << tab << "\"11\" when \"10\"," << endl;
 					op->vhdl << tab << tab << tab << "\"01\" when \"01\"," << endl;
 					op->vhdl << tab << tab << tab << "\"00\" when \"11\"," << tab << tab << "-- should never occur" << endl;
 					op->vhdl << tab << tab << tab << "\"--\" when others;" << endl;
 					
-					//handle timing
-					op->syncCycleFromSignal(join(outAdderName, "_int_", currentLevel, "_lsb_select"));
-					op->manageCriticalPath(op->getTarget()->localWireDelay() + op->getTarget()->adder3Delay(maxWeight-minWeight-subAddSize*currentLevel+4));
-						
-					//perform the actual ternary addition
-					if(maxWeight-minWeight-subAddSize*currentLevel == 1)
-					{
-						op->vhdl << tab << op->declare(join(outAdderName, "_int_", currentLevel), maxWeight-minWeight-subAddSize*currentLevel+4) << " <= "
-							<< "(\"00\" & " << join(outAdderName, "_int_", currentLevel, "_a0b0prime") << "(1 downto 1) " << " & " << inAdder0Name << "(" << maxWeight-minWeight-1 << " downto " << maxWeight-minWeight-1 << ")" << " & \"0\")"
-							<< " + "
-							<< "(\"00\" & " << join(outAdderName, "_int_", currentLevel, "_a0b0prime") << "(0 downto 0) " << " & " << inAdder0Name << "(" << maxWeight-minWeight-1 << " downto " << maxWeight-minWeight-1 << ")" << " & " << inAdder1Name << "(" << maxWeight-minWeight-1 << " downto " << maxWeight-minWeight-1 << ")" << ")"
-							<< " + "
-							<< "(\"00\" & " << inAdder2Name << "(" << maxWeight-minWeight-1 << " downto " << maxWeight-minWeight-1 << ")" << " & " << inAdder1Name << "(" << maxWeight-minWeight-1 << " downto " << maxWeight-minWeight-1 << ")" << " & " << inAdder1Name << "(" << maxWeight-minWeight-1 << " downto " << maxWeight-minWeight-1 << ")" << ");" << endl;
-					}else
-					{
-						op->vhdl << tab << op->declare(join(outAdderName, "_int_", currentLevel), maxWeight-minWeight-subAddSize*currentLevel+4) << " <= "
-							<< "(\"00\" & " << inAdder0Name << range(maxWeight-minWeight-1, subAddSize*currentLevel+1) << " & " << join(outAdderName, "_int_", currentLevel, "_a0b0prime") << of(1) << " & " << inAdder0Name << of(subAddSize*currentLevel) << " & \"0\")"
-							<< " + "
-							<< "(\"00\" & " << inAdder1Name << range(maxWeight-minWeight-1, subAddSize*currentLevel+1) << " & " << join(outAdderName, "_int_", currentLevel, "_a0b0prime") << of(0) << " & " << inAdder0Name << of(subAddSize*currentLevel) << " & " << inAdder1Name << of(subAddSize*currentLevel) << ")"
-							<< " + "
-							<< "(\"00\" & " << inAdder2Name << range(maxWeight-minWeight-1, subAddSize*currentLevel) << " & " << inAdder1Name << of(subAddSize*currentLevel) << " & " << inAdder1Name << of(subAddSize*currentLevel) << ");" << endl;
-					}					
-				}
-				
-				//splitting wasn't/was necessary
-				if(subAddSize >= (int)( maxWeight-minWeight))
-				{
-					//handle timing
-					op->setCycleFromSignal(inAdder0Name);
-					op->syncCycleFromSignal(inAdder1Name);
-					op->syncCycleFromSignal(inAdder2Name);
-					op->manageCriticalPath(op->getTarget()->localWireDelay() +
-							op->getTarget()->adder3Delay(maxWeight-minWeight+2));
+					//handle timing		-- TODO: redo timing
+					op->syncCycleFromSignal(join(outAdderName, "_int_", i, "_a0b0prime"));
+					op->manageCriticalPath(op->getTarget()->localWireDelay() + op->getTarget()->adder3Delay(subAddSize+4));
 					
-					op->vhdl << tab << op->declare(outAdderName, maxWeight-minWeight+2)
-						<< " <= (\"00\" & "<< inAdder0Name << ") + (\"00\" & " << inAdder1Name
-						<< ") + (\"00\" & " << inAdder2Name << ");" << endl;
+					//perform the actual ternary addition
+					op->vhdl << tab << op->declare(join(outAdderName, "_int_", i), subAddSize+4) << " <= "
+						<< "(\"00\" & " << inAdder0Name << range(subAddSize*(i+1)-1, subAddSize*i+1) << " & " << join(outAdderName, "_int_", i, "_a0b0prime") << of(1) << " & " << inAdder0Name << of(subAddSize*i) << " & \"0\")"
+						<< " + "
+						<< "(\"00\" & " << inAdder1Name << range(subAddSize*(i+1)-1, subAddSize*i+1) << " & " << join(outAdderName, "_int_", i, "_a0b0prime") << of(0) << " & " << inAdder0Name << of(subAddSize*i) << " & " << inAdder1Name << of(subAddSize*i) << ")"
+						<< " + "
+						<< "(\"00\" & " << inAdder2Name << range(subAddSize*(i+1)-1, subAddSize*i) << " & " << inAdder1Name << of(subAddSize*i) << " & " << inAdder1Name << of(subAddSize*i) << ");" << endl;
+				}
+			}
+			
+			//the leftover bits
+			unsigned int currentLevel = (maxWeight-minWeight) / subAddSize;
+			
+			if(((maxWeight-minWeight)%subAddSize > 0) && ((maxWeight-minWeight)>subAddSize))
+			{
+				//handle timing
+				op->setCycleFromSignal(join(outAdderName, "_int_", currentLevel-1));
+				op->manageCriticalPath(op->getTarget()->localWireDelay() + op->getTarget()->lutDelay());
+				
+				if(currentLevel == 1)
+				{
+					op->vhdl << tab << op->declare(join(outAdderName, "_int_", currentLevel, "_lsb_select"), 2) 
+						<< " <= " << join(outAdderName, "_int_", currentLevel-1) << range(subAddSize+1, subAddSize) << ";" << endl;
 				}else
 				{
-					//join all the intermediary results together
-					if(((maxWeight-minWeight)%subAddSize > 0) && ((maxWeight-minWeight)>subAddSize))
+					op->vhdl << tab << op->declare(join(outAdderName, "_int_", currentLevel, "_lsb_select"), 2) 
+						<< " <= " << join(outAdderName, "_int_", currentLevel-1) << range(subAddSize+3, subAddSize+2) << ";" << endl;
+				}
+				
+				op->vhdl << tab << "with " << join(outAdderName, "_int_", currentLevel, "_lsb_select") << " select " << endl;
+				op->vhdl << tab << tab << op->declare(join(outAdderName, "_int_", currentLevel, "_a0b0prime"), 2) << " <= " << endl;
+				op->vhdl << tab << tab << tab << "\"00\" when \"00\"," << endl;
+				op->vhdl << tab << tab << tab << "\"11\" when \"10\"," << endl;
+				op->vhdl << tab << tab << tab << "\"01\" when \"01\"," << endl;
+				op->vhdl << tab << tab << tab << "\"00\" when \"11\"," << tab << tab << "-- should never occur" << endl;
+				op->vhdl << tab << tab << tab << "\"--\" when others;" << endl;
+				
+				//handle timing
+				op->syncCycleFromSignal(join(outAdderName, "_int_", currentLevel, "_lsb_select"));
+				op->manageCriticalPath(op->getTarget()->localWireDelay() + op->getTarget()->adder3Delay(maxWeight-minWeight-subAddSize*currentLevel+4));
+					
+				//perform the actual ternary addition
+				if(maxWeight-minWeight-subAddSize*currentLevel == 1)
+				{
+					op->vhdl << tab << op->declare(join(outAdderName, "_int_", currentLevel), maxWeight-minWeight-subAddSize*currentLevel+4) << " <= "
+						<< "(\"00\" & " << join(outAdderName, "_int_", currentLevel, "_a0b0prime") << "(1 downto 1) " << " & " << inAdder0Name << "(" << maxWeight-minWeight-1 << " downto " << maxWeight-minWeight-1 << ")" << " & \"0\")"
+						<< " + "
+						<< "(\"00\" & " << join(outAdderName, "_int_", currentLevel, "_a0b0prime") << "(0 downto 0) " << " & " << inAdder0Name << "(" << maxWeight-minWeight-1 << " downto " << maxWeight-minWeight-1 << ")" << " & " << inAdder1Name << "(" << maxWeight-minWeight-1 << " downto " << maxWeight-minWeight-1 << ")" << ")"
+						<< " + "
+						<< "(\"00\" & " << inAdder2Name << "(" << maxWeight-minWeight-1 << " downto " << maxWeight-minWeight-1 << ")" << " & " << inAdder1Name << "(" << maxWeight-minWeight-1 << " downto " << maxWeight-minWeight-1 << ")" << " & " << inAdder1Name << "(" << maxWeight-minWeight-1 << " downto " << maxWeight-minWeight-1 << ")" << ");" << endl;
+				}else
+				{
+					op->vhdl << tab << op->declare(join(outAdderName, "_int_", currentLevel), maxWeight-minWeight-subAddSize*currentLevel+4) << " <= "
+						<< "(\"00\" & " << inAdder0Name << range(maxWeight-minWeight-1, subAddSize*currentLevel+1) << " & " << join(outAdderName, "_int_", currentLevel, "_a0b0prime") << of(1) << " & " << inAdder0Name << of(subAddSize*currentLevel) << " & \"0\")"
+						<< " + "
+						<< "(\"00\" & " << inAdder1Name << range(maxWeight-minWeight-1, subAddSize*currentLevel+1) << " & " << join(outAdderName, "_int_", currentLevel, "_a0b0prime") << of(0) << " & " << inAdder0Name << of(subAddSize*currentLevel) << " & " << inAdder1Name << of(subAddSize*currentLevel) << ")"
+						<< " + "
+						<< "(\"00\" & " << inAdder2Name << range(maxWeight-minWeight-1, subAddSize*currentLevel) << " & " << inAdder1Name << of(subAddSize*currentLevel) << " & " << inAdder1Name << of(subAddSize*currentLevel) << ");" << endl;
+				}					
+			}
+			
+			//splitting wasn't/was necessary
+			if(subAddSize >= (int)( maxWeight-minWeight))
+			{
+				//handle timing
+				op->setCycleFromSignal(inAdder0Name);
+				op->syncCycleFromSignal(inAdder1Name);
+				op->syncCycleFromSignal(inAdder2Name);
+				op->manageCriticalPath(op->getTarget()->localWireDelay() +
+						op->getTarget()->adder3Delay(maxWeight-minWeight+2));
+				
+				op->vhdl << tab << op->declare(outAdderName, maxWeight-minWeight+2)
+					<< " <= (\"00\" & "<< inAdder0Name << ") + (\"00\" & " << inAdder1Name
+					<< ") + (\"00\" & " << inAdder2Name << ");" << endl;
+			}else
+			{
+				//join all the intermediary results together
+				if(((maxWeight-minWeight)%subAddSize > 0) && ((maxWeight-minWeight)>subAddSize))
+				{
+					//handle timing
+					op->syncCycleFromSignal(join(outAdderName, "_int_", currentLevel));
+					op->manageCriticalPath(op->getTarget()->localWireDelay());
+				}else
+				{
+					//handle timing
+					op->syncCycleFromSignal(join(outAdderName, "_int_", currentLevel-1));
+					op->manageCriticalPath(op->getTarget()->localWireDelay());
+				}
+				
+				op->vhdl << tab << op->declare(outAdderName, maxWeight-minWeight+2) << " <= ";
+				
+				if(((maxWeight-minWeight)%subAddSize > 0) && ((maxWeight-minWeight)>subAddSize))
+				{
+					op->vhdl << join(outAdderName, "_int_", (maxWeight-minWeight)/subAddSize) << range(maxWeight-minWeight-subAddSize*currentLevel+3, 2) << " & ";
+				}
+				
+				for(unsigned int i=0; i<(maxWeight-minWeight)/subAddSize; i++)
+				{
+					unsigned int index = (maxWeight-minWeight)/subAddSize - i - 1;
+					
+					if(index == 0)
 					{
-						//handle timing
-						op->syncCycleFromSignal(join(outAdderName, "_int_", currentLevel));
-						op->manageCriticalPath(op->getTarget()->localWireDelay());
+						op->vhdl << join(outAdderName, "_int_", index) << range(subAddSize-1, 0) << ";" << endl;
+					}else if((index == (maxWeight-minWeight+2)/subAddSize - 1) && !(((maxWeight-minWeight+2)%subAddSize > 0) && ((maxWeight-minWeight+2)>subAddSize)))
+					{
+						op->vhdl << join(outAdderName, "_int_", index) << range(subAddSize+3, 2) << " & ";
 					}else
 					{
-						//handle timing
-						op->syncCycleFromSignal(join(outAdderName, "_int_", currentLevel-1));
-						op->manageCriticalPath(op->getTarget()->localWireDelay());
-					}
-					
-					op->vhdl << tab << op->declare(outAdderName, maxWeight-minWeight+2) << " <= ";
-					
-					if(((maxWeight-minWeight)%subAddSize > 0) && ((maxWeight-minWeight)>subAddSize))
-					{
-						op->vhdl << join(outAdderName, "_int_", (maxWeight-minWeight)/subAddSize) << range(maxWeight-minWeight-subAddSize*currentLevel+3, 2) << " & ";
-					}
-					
-					for(unsigned int i=0; i<(maxWeight-minWeight)/subAddSize; i++)
-					{
-						unsigned int index = (maxWeight-minWeight)/subAddSize - i - 1;
-						
-						if(index == 0)
-						{
-							op->vhdl << join(outAdderName, "_int_", index) << range(subAddSize-1, 0) << ";" << endl;
-						}else if((index == (maxWeight-minWeight+2)/subAddSize - 1) && !(((maxWeight-minWeight+2)%subAddSize > 0) && ((maxWeight-minWeight+2)>subAddSize)))
-						{
-							op->vhdl << join(outAdderName, "_int_", index) << range(subAddSize+3, 2) << " & ";
-						}else
-						{
-							op->vhdl << join(outAdderName, "_int_", index) << range(subAddSize+1, 2) << " & ";
-						}
+						op->vhdl << join(outAdderName, "_int_", index) << range(subAddSize+1, 2) << " & ";
 					}
 				}
-				// -----------------------------------------------------------------
-				
-				op->vhdl << tab << "-- concatenate all the compressed chunks" << endl;
-				//result
-				op->vhdl << tab << op->declare(join("CompressionResult", guid), maxWeight+2) << " <= " << outAdderName;
-
-				//adding the rightmost bits
-				for(int i=chunkDoneIndex-1; i>=0; i--)
-					op->vhdl <<  " & " << join("tempR_bh", guid, "_", i);
-
-				op->vhdl << ";" << endl;
-
 			}
+			// -----------------------------------------------------------------
+			
+			op->vhdl << tab << "-- concatenate all the compressed chunks" << endl;
+			//result
+			op->vhdl << tab << op->declare(join("CompressionResult", guid), maxWeight+2) << " <= " << outAdderName;
+
+			//adding the rightmost bits
+			for(int i=chunkDoneIndex-1; i>=0; i--)
+				op->vhdl <<  " & " << join("tempR_bh", guid, "_", i);
+
+			op->vhdl << ";" << endl;
+
+		}
 
 	}
 
@@ -1785,7 +1798,7 @@ namespace flopoco
 		REPORT(DEBUG,"starting compression with ternary adders");
 
 		//search for the starting column
-		bool bitheapCompressible = (op->getTarget()->getVendor()=="Altera") ? true : false;
+		bool bitheapCompressible = op->getTarget()->hasFastLogicTernaryAdders();
 		unsigned int lastCompressed = (adderMaxWeight > minWeight) ? adderMaxWeight+1 : minWeight;
 		bool performedCompression;
 

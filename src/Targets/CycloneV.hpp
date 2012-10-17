@@ -21,6 +21,7 @@ namespace flopoco{
 		CycloneV() : Target()	{
 			id_						= "CycloneV";
 			vendor_					= "Altera";
+			hasFastLogicTernaryAdders_ = true;
 			maxFrequencyMHz_		= 550;
 			sizeOfBlock_			= 10240;		// the size of a primitive block is 2^10 * 10
 			
