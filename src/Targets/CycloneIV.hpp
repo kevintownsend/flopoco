@@ -26,7 +26,8 @@ namespace flopoco{
 			
 			fastcarryDelay_			= 0.058e-9;		// obtained from Quartus 2 Chip Planner 11.1
 			elemWireDelay_			= 0.325e-9;		// obtained from Quartus 2 Chip Planner 11.1 - local line delay
-			lut2lutDelay_			= 1.5e-10;		// ???
+			//lut2lutDelay_			= 1.5e-10;		// ???
+			lut2lutDelay_			= 0.650e-9;		// ???
 			
 			lutDelay_				= 0.436e-9;		// obtained from Quartus 11.1
 			ffDelay_				= 0.088e-9;		// obtained from Quartus 11.1
