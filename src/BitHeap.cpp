@@ -69,6 +69,8 @@ namespace flopoco
 
 		// create a Plotter object for the SVG output
 		plotter = new Plotter(this);
+		halfAdder = NULL;
+		fullAdder = NULL;
 	}
 
 
