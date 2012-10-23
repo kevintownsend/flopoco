@@ -23,6 +23,8 @@ BasicCompressor::BasicCompressor(Target * target, vector<int> h)
 {
 	ostringstream name;
 	stringstream nm;
+	/// compressors are always combinational independently by the target technology
+	setCombinatorial();
 	
 	int w=0;
 	int param=0;
