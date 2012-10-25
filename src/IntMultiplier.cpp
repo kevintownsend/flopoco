@@ -309,7 +309,6 @@ namespace flopoco {
 
 			SmallMultTable *t = new SmallMultTable(  parentOp->getTarget(), wX, wY, wOut, negate, signedIO, signedIO);
 			//useSoftRAM(t);
-			//			oplist.push_back(t);
 			t->addToGlobalOpList();
 
 			vhdl << tab << declare(addUID("XY"), wX+wY) << " <= "<<addUID("YY")<<" & "<<addUID("XX")<<";"<<endl;
@@ -331,18 +330,25 @@ namespace flopoco {
 
 		// Multiplication by 1-bit integer is simple
 		if ((wY == 1)){
+			vhdl << tab << "-- How to obfuscate multiplication by 1 bit: first generate a trivial bit vector" << endl;
 			if (signedIO){
 				manageCriticalPath(  parentOp->getTarget()->localWireDelay(wX) +  parentOp->getTarget()->adderDelay(wX+1) );
-
-				vhdl << tab << addUID("R") <<" <= (" << zg(wX+1)  << " - ("<<addUID("XX")<< of(wX-1) 
+				
+				vhdl << tab << declare(addUID("RR"), wX+wY)  << " <= (" << zg(wX+1)  << " - ("<<addUID("XX")<< of(wX-1) 
 				     << " & "<<addUID("XX")<<")) when "<<addUID("YY")<<"(0)='1' else "<< zg(wX+1,0)<<";"<<endl;	
 			}
 			else {
 				manageCriticalPath(  parentOp->getTarget()->localWireDelay(wX) +  parentOp->getTarget()->lutDelay() );
-
-				vhdl << tab << addUID("R")<<" <= (\"0\" & "<<addUID("XX")<<") when "<< addUID("YY")<<"(0)='1' else "<<zg(wX+1,0)<<";"<<endl;	
-
+				vhdl << tab  << declare(addUID("RR"), wX+wY) << " <= (\"0\" & "<<addUID("XX")<<") when "<< addUID("YY")<<"(0)='1' else "<<zg(wX+1,0)<<";"<<endl;	
 			}
+			vhdl << tab << "-- then send its relevant bits to a useless bit heap " << endl;
+			for(int w=wOut-1; w>=0; w--)	{ // this is a weight in the multiplier output
+				stringstream s;
+				s<<addUID("RR")<<of(w);
+				bitHeap->addBit(lsbWeight-g + w, s.str()); 
+			}
+
+			vhdl << tab << "-- then compress this height-1 bit heap by doing nothing" << endl;
 			outDelayMap[addUID("R")] = getCriticalPath();
 			return;
 		}
@@ -370,7 +376,7 @@ namespace flopoco {
 				vhdl << "not "<<addUID("R1i")<<";" <<endl;
 			else  
 				vhdl << addUID("R1i")<<";"<<endl;
-
+			
 			for (int w=0; w<wOut+g; w++){
 				stringstream s0,s1;
 				s0<<addUID("R0")<<of(w+(wX+2-wOut-g));
@@ -1061,7 +1067,7 @@ namespace flopoco {
 		}
 		
 		//handle the leftover bits
-		int newMultIndex = (multIndex < multWidths.size()-1) ? multIndex+1 : multIndex;
+		int newMultIndex = (multIndex < (int)multWidths.size()-1) ? multIndex+1 : multIndex;
 		
 		if((topY != 0) && (topY != blockTopY))
 		{
