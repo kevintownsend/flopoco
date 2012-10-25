@@ -460,13 +460,13 @@ namespace flopoco{
 #if 0 // Not that it is bad, but it poorly handles special cases such as mult by 2
 				op1 = new FPRealKCM(target_, wE, wF, constant_expr.str());
 #else
-				cout << "JLTBB" << endl;
+				//				cout << "JLTBB" << endl;
 				op1 = new FPConstMult(target_, 
 				                      wE, wF, // in 
 				                      wE, wF, // out
 				                      wF+2 ,  // constant precision 
 				                      constant_expr.str()  );
-				cout << "JLTBB" << endl;
+				//				cout << "JLTBB" << endl;
 #endif
 				oplist.push_back(op1);
 							
