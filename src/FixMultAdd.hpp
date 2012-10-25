@@ -98,15 +98,15 @@ namespace flopoco {
 		int msbP;                    /**< weight +1 of the MSB product */
 		int lsbPfull;               /** equal to msbP - wX -wY */
 		int lsbA;                  /**< weight of the LSB of A */
-		bool signedIO;               /** inputs and outputs are signed. */
-		double ratio;
-		bool enableSuperTiles;     /** if true, supertiles are built (fewer resources, longer latency */
-		string xname;
-		string yname;
-		string aname;
-		int g ;                         /**< the number of guard bits if the product is truncated */
-		int maxWeight;                  /**< The max weight for the bit heap of this multiplier, wOut + g*/
-		int wOutP;                      /**< size of the product (not counting the guard bits) */
+		bool signedIO;               /**< if true, inputs and outputs are signed. */
+		double ratio;               /**< between 0 and 1, the area threshhold for using DSP blocks versus logic*/
+		bool enableSuperTiles;     /**< if true, supertiles are built (fewer resources, longer latency */
+		string xname;              /**< VHDL name */
+		string yname;              /**< VHDL name */
+		string aname;              /**< VHDL name */
+		int g ;                    /**< the number of guard bits if the product is truncated */
+		int maxWeight;             /**< The max weight for the bit heap of this multiplier, wOut + g*/
+		int wOutP;                 /**< size of the product (not counting the guard bits) */
 		double maxError;     /**< the max absolute value error of this multiplier, in ulps of the result. Should be 0 for untruncated, 1 or a bit less for truncated.*/  
 		double initialCP;     /**< the initial delay, getMaxInputDelays ( inputDelays_ ).*/  
 		int possibleOutputs;  /**< 1 if the operator is exact, 2 if it is faithfully rounded */
