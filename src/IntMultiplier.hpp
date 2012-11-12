@@ -65,6 +65,7 @@ namespace flopoco {
 		 * @param[in] lsbWeight     the weight, within this BitHeap, corresponding to the LSB of the multiplier output. 
 		 *                          Note that there should be enough bits below for guard bits in case of truncation.
 		 *                          The method neededGuardBits() provides this information.
+		 *                          For a stand-alone multiplier lsbWeight=g, otherwise lsbWeight>=g
 		 * @param[in] negate     if true, the multiplier result is subtracted from the bit heap 
 		 * @param[in] signedIO     false=unsigned, true=signed
 		 * @param[in] ratio            DSP block use ratio

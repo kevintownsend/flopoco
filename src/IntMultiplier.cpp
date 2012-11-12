@@ -303,9 +303,10 @@ namespace flopoco {
 
 		// TODO Support negate in all the corner cases
 		// To manage stand-alone cases, we just build a bit-heap of max height one, so the compression will do nothing
+
 		// The really small ones fit in two LUTs and that's as small as it gets  
 		if(wX+wY <=  parentOp->getTarget()->lutInputs()+2) {
-			vhdl << tab << "-- Ne pouvant me fier à mon raisonnement, j'ai appris par coeur le résultat de toutes les multiplications possibles" << endl;
+			vhdl << tab << "-- Ne pouvant me fier a mon raisonnement, j'ai appris par coeur le résultat de toutes les multiplications possibles" << endl;
 
 			SmallMultTable *t = new SmallMultTable(  parentOp->getTarget(), wX, wY, wOut, negate, signedIO, signedIO);
 			//useSoftRAM(t);
@@ -323,7 +324,7 @@ namespace flopoco {
 			for(int w=wOut-1; w>=0; w--)	{ // this is a weight in the multiplier output
 				stringstream s;
 				s<<addUID("RR")<<of(w);
-				bitHeap->addBit(lsbWeight-g + w, s.str()); 
+				bitHeap->addBit(lsbWeight + w, s.str()); 
 			}		
 			return;
 		}
@@ -353,8 +354,9 @@ namespace flopoco {
 			return;
 		}
 
-
 		if ((wY == 2)) {
+
+			cout << "HELLO" << endl;
 			// Multiplication by 2-bit integer is one addition, which is delegated to BitHeap compression anyway
 
 			vhdl << tab << declare(addUID("R0"),wX+2) << " <= (";
@@ -1223,15 +1225,15 @@ namespace flopoco {
 			if ( y >= (1 << (dy-1)))
 				y -= (1 << dy);
 		}
-		// if(negate && !signedX && !signedY) cerr << "  y=" << y << "  x=" << x;
+		if(!negate && signedX && signedY) cerr << "  y=" << y << "  x=" << x;
 		r = x * y;
-		//  if(negate && !signedX && !signedY) cerr << "  r=" << r;
+		  if(!negate && signedX && signedY) cerr << "  r=" << r;
 		if(negate)
 			r=-r;
-		// if(negate && signedX && signedY) cerr << "  -r=" << r;
+	  if(negate && signedX && signedY) cerr << "  -r=" << r;
 		if ( r < 0)
-			r += mpz_class(1) << wOut; 
-		// if(negate && signedX && signedY) cerr << "  r2C=" << r;
+			r += mpz_class(1) << wF; 
+	  if(!negate && signedX && signedY) cerr << "  r2C=" << r;
 
 		if(wOut<wF){ // wOut is that of Table
 			// round to nearest, but not to nearest even
@@ -1241,7 +1243,7 @@ namespace flopoco {
 			r = r >> tr;
 		}
 
-		// if(negate && !signedX && !signedY) cerr << "  rfinal=" << r << endl;
+		 if(!negate && signedX && signedY) cerr << "  rfinal=" << r << endl;
 
 		return r;
 
