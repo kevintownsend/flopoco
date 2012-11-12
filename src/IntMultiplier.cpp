@@ -356,7 +356,6 @@ namespace flopoco {
 
 		if ((wY == 2)) {
 
-			cout << "HELLO" << endl;
 			// Multiplication by 2-bit integer is one addition, which is delegated to BitHeap compression anyway
 
 			vhdl << tab << declare(addUID("R0"),wX+2) << " <= (";
@@ -975,7 +974,7 @@ namespace flopoco {
 
 		REPORT(DEBUG,"verticaldsps= "<<verticalDSP<<" hordsps= "<<horizontalDSP);
 		
-		cout << endl << "-----------call to buildAlteraTiling with parameters  - blockTopX=" << blockTopX << " blockTopY=" << blockTopY << " blockBottomX=" << blockBottomX << " blockBottomY=" << blockBottomY << endl;
+		//		cout << endl << "-----------call to buildAlteraTiling with parameters  - blockTopX=" << blockTopX << " blockTopY=" << blockTopY << " blockBottomX=" << blockBottomX << " blockBottomY=" << blockBottomY << endl;
 
 		//handle the whole blocks
 		for(int i=0;i<verticalDSP;i++)
@@ -1004,11 +1003,11 @@ namespace flopoco {
 					{	
 						if((topX<botX)&&(topY<botY))		
 							addExtraDSPs(topX, topY, botX, botY, dspSizeX, dspSizeY);
-							cout << " in BuildAlteraTiling, at " << dspSizeX << " =>  topX=" << topX << " topY=" << topY  << " botX=" << botX << " botY=" << botY << " sizeX="  << botX-topX << " sizeY=" << botY - topY << endl;
+						//cout << " in BuildAlteraTiling, at " << dspSizeX << " =>  topX=" << topX << " topY=" << topY  << " botX=" << botX << " botY=" << botY << " sizeX="  << botX-topX << " sizeY=" << botY - topY << endl;
 					}
 					else
 					{
-						cout << "decreased the size of the dsp block from " << multWidths[size-multIndex-1] << " to " << multWidths[size-multIndex-2] << endl;
+						//cout << "decreased the size of the dsp block from " << multWidths[size-multIndex-1] << " to " << multWidths[size-multIndex-2] << endl;
 						buildAlteraTiling(topX, topY, botX, botY, multIndex+1);
 					}
 				}
@@ -1019,7 +1018,7 @@ namespace flopoco {
 					{
 						REPORT(DEBUG, " in BuildAlteraTiling, at " << dspSizeX << " =>  " << topX << " " << topY  << " " << botX << " " << botY << " "  << botX-topX << " " << botY - topY );						
 						addExtraDSPs(topX, topY, botX, botY, dspSizeX, dspSizeY);
-						cout << " in BuildAlteraTiling, at " << dspSizeX << " =>  topX=" << topX << " topY=" << topY  << " botX=" << botX << " botY=" << botY << " sizeX="  << botX-topX << " sizeY=" << botY - topY << endl;
+						//cout << " in BuildAlteraTiling, at " << dspSizeX << " =>  topX=" << topX << " topY=" << topY  << " botX=" << botX << " botY=" << botY << " sizeX="  << botX-topX << " sizeY=" << botY - topY << endl;
 					}
 				}
 
@@ -1073,13 +1072,13 @@ namespace flopoco {
 		
 		if((topY != 0) && (topY != blockTopY))
 		{
-			cout << " topX=" << topX << " topY=" << topY << " botX=" << botX << " botX=" << botX << endl;
-			cout << " calling buildAlteraTiling for bottom leftover bits - topX=" << topX+dspSizeX << " topY=" << blockTopY << " botX=" << blockBottomX << " botY=" << topY << " dspSize=" << multWidths[multWidths.size()-1-newMultIndex] << endl;
+			//cout << " topX=" << topX << " topY=" << topY << " botX=" << botX << " botX=" << botX << endl;
+			//cout << " calling buildAlteraTiling for bottom leftover bits - topX=" << topX+dspSizeX << " topY=" << blockTopY << " botX=" << blockBottomX << " botY=" << topY << " dspSize=" << multWidths[multWidths.size()-1-newMultIndex] << endl;
 			buildAlteraTiling(topX+dspSizeX, blockTopY, blockBottomX, topY, newMultIndex);
 		}
 		if(topX+dspSizeX != blockTopX)
 		{
-			cout << " calling buildAlteraTiling for left side leftover bits - topX=" << blockTopX << " topY=" << blockTopY<< " botX=" << topX+dspSizeX << " botY=" << blockBottomY << endl;
+			//cout << " calling buildAlteraTiling for left side leftover bits - topX=" << blockTopX << " topY=" << blockTopY<< " botX=" << topX+dspSizeX << " botY=" << blockBottomY << endl;
 			buildAlteraTiling(blockTopX, blockTopY, topX+dspSizeX, blockBottomY, newMultIndex);
 		}
 	}
@@ -1225,15 +1224,15 @@ namespace flopoco {
 			if ( y >= (1 << (dy-1)))
 				y -= (1 << dy);
 		}
-		if(!negate && signedX && signedY) cerr << "  y=" << y << "  x=" << x;
+		//if(!negate && signedX && signedY) cerr << "  y=" << y << "  x=" << x;
 		r = x * y;
-		  if(!negate && signedX && signedY) cerr << "  r=" << r;
+		//if(!negate && signedX && signedY) cerr << "  r=" << r;
 		if(negate)
 			r=-r;
-	  if(negate && signedX && signedY) cerr << "  -r=" << r;
+		//if(negate && signedX && signedY) cerr << "  -r=" << r;
 		if ( r < 0)
 			r += mpz_class(1) << wF; 
-	  if(!negate && signedX && signedY) cerr << "  r2C=" << r;
+		//if(!negate && signedX && signedY) cerr << "  r2C=" << r;
 
 		if(wOut<wF){ // wOut is that of Table
 			// round to nearest, but not to nearest even
@@ -1243,7 +1242,7 @@ namespace flopoco {
 			r = r >> tr;
 		}
 
-		 if(!negate && signedX && signedY) cerr << "  rfinal=" << r << endl;
+		//if(!negate && signedX && signedY) cerr << "  rfinal=" << r << endl;
 
 		return r;
 
