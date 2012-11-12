@@ -1118,68 +1118,86 @@ namespace flopoco
 	// assumes cnt has been set up
 	void BitHeap::applyAdder(int lsb, int msb, bool hasCin)
 	{
-
-		stringstream inAdder0, inAdder1, cin;
-
 		REPORT(DEBUG, "Applying an adder from columns " << lsb << " to " << msb);
-		for(int i = msb; i>=lsb+1; i--)
+		stringstream inAdder0, inAdder1, cin;
+		
+		WeightedBit *lastBit = bits[lsb].front();
+		WeightedBit *currentBit = bits[lsb].front();
+		
+		//compute the critical path
+		REPORT(DEBUG, "Computing critical path between columns " << lsb << " and " << msb);
+		for(unsigned int i=lsb; i<=msb; i++)
+		{
+			if(cnt[i]>0)
 			{
-				list<WeightedBit*>::iterator it = bits[i].begin();
-
-				if(cnt[i]>=2)
-					{
-
-						inAdder0 << (*it)->getName();
-						it++;
-						inAdder1 << (*it)->getName();
-					}
-				else
-					{
-						//if(bits[i].size()==1)
-						if(cnt[i]==1)
-							{
-								inAdder0 << (*it)->getName();
-								inAdder1 << "\'0\'";
-							}
-						else
-							{
-								inAdder0 << "\'0\'";
-								inAdder1 << "\'0\'";
-							}
-					}
-
-				inAdder0 << " & ";
-				inAdder1 << " & ";
-
-				removeCompressedBits(i, cnt[i]);
+				currentBit = computeLatest(i, ((cnt[i]>3) ? 3 : cnt[i]), 0);
+				if(lastBit < currentBit)
+					lastBit = currentBit;		
 			}
+		}
+
+		for(int i = msb; i>=lsb+1; i--)
+		{
+			list<WeightedBit*>::iterator it = bits[i].begin();
+
+			if(cnt[i]>=2)
+			{
+
+				inAdder0 << (*it)->getName();
+				it++;
+				inAdder1 << (*it)->getName();
+			}
+			else
+			{
+				//if(bits[i].size()==1)
+				if(cnt[i]==1)
+				{
+					inAdder0 << (*it)->getName();
+					inAdder1 << "\'0\'";
+				}
+				else
+				{
+					inAdder0 << "\'0\'";
+					inAdder1 << "\'0\'";
+				}
+			}
+
+			inAdder0 << " & ";
+			inAdder1 << " & ";
+
+			removeCompressedBits(i, cnt[i]);
+		}
 
 		// We know the LSB col is of size 3
 		list<WeightedBit*>::iterator it = bits[lsb].begin();
 		if(cnt[lsb]>0)
 			inAdder0 << (*it)->getName();
 		if(cnt[lsb]>1)
-			{
-				it++;
-				inAdder1 << (*it)->getName();
-			}
+		{
+			it++;
+			inAdder1 << (*it)->getName();
+		}
 		else
-			{
-				inAdder1 << "\'0\'";
-			}
+		{
+			inAdder1 << "\'0\'";
+		}
 
 		if(hasCin)
-			{
-				it++;
-				cin << (*it)->getName() << ";";
-			}
+		{
+			it++;
+			cin << (*it)->getName() << ";";
+		}
 		else
-			{
-				cin << "\'0\';";
-			}
+		{
+			cin << "\'0\';";
+		}
 		removeCompressedBits(lsb, cnt[lsb]);
-
-
+		
+		REPORT(DEBUG, "removed bits that are being compressed through an addition");
+		
+		//for timing purposes
+		op->setCycle(lastBit->getCycle());
+		op->setCriticalPath(lastBit->getCriticalPath(op->getCurrentCycle()));
 
 		inAdder0 << ";";
 		inAdder1 << ";";
@@ -1191,8 +1209,14 @@ namespace flopoco
 		op->vhdl << tab << op->declare(join(inAdder0Name, adderIndex), msb-lsb+2) << " <= \'0\' & " << inAdder0.str() << endl;
 		op->vhdl << tab << op->declare(join(inAdder1Name, adderIndex), msb-lsb+2) << " <= \'0\' & " << inAdder1.str() << endl;
 		op->vhdl << tab << op->declare(join(cinName, adderIndex)) << " <= " << cin.str() << endl;
+		
+		op->syncCycleFromSignal(join(inAdder0Name,adderIndex));
+		op->syncCycleFromSignal(join(inAdder1Name,adderIndex));
+		op->syncCycleFromSignal(join(cinName,adderIndex));
+		
+		op->manageCriticalPath( op->getTarget()->localWireDelay() + op->getTarget()->adderDelay(msb-lsb+2) );
 
-#if 1
+#if 0
 		
 		//experimental
 		
@@ -1208,7 +1232,7 @@ namespace flopoco
 		
 		op->vhdl << tab << op->instance(adder, join("Adder_bh", getGUid(), "_", adderIndex));
 		op->syncCycleFromSignal(join(outAdder,adderIndex));
-		op->setCriticalPath( adder->getOutputDelay("R") );
+		//op->setCriticalPath( adder->getOutputDelay("R") );
 
 #else
 		op->vhdl << tab << op->declare(join(outAdder, adderIndex), msb-lsb+2) << " <= "
@@ -1218,9 +1242,9 @@ namespace flopoco
 
 
 		for(int i=lsb; i<msb + 2 ; i++)
-			{
-				addBit(i, join(outAdder, adderIndex,"(",i-lsb,")"),"",3); //adder working as a compressor = type 3 for added bit
-			}
+		{
+			addBit(i, join(outAdder, adderIndex,"(",i-lsb,")"),"",3); //adder working as a compressor = type 3 for added bit
+		}
 
 
 		adderIndex++;
@@ -1689,17 +1713,17 @@ namespace flopoco
 
 
 		for(unsigned i=minWeight; i<maxWeight; i++)
+		{
+			cnt[i]=0;
+			for(list<WeightedBit*>::iterator it = bits[i].begin(); it!=bits[i].end(); it++)
 			{
-				cnt[i]=0;
-				for(list<WeightedBit*>::iterator it = bits[i].begin(); it!=bits[i].end(); it++)
+				if((*it)->computeStage(stagesPerCycle, elementaryTime)<=stage)
 					{
-						if((*it)->computeStage(stagesPerCycle, elementaryTime)<=stage)
-							{
-								cnt[i]++;
-							}
+						cnt[i]++;
 					}
-
 			}
+
+		}
 
 
 
@@ -1717,82 +1741,76 @@ namespace flopoco
 		//REPORT(INFO, endl);
 
 		while((index<maxWeight-1) && ((cnt[index]<=2)&&(cnt[index]>0)))
-
+		{
+			//REPORT(INFO, "cnt[" << index <<"]="<< cnt[index]);
+			list<WeightedBit*>::iterator it = bits[index].begin();
+			columnIndex=0;
+			while(columnIndex<cnt[index]-1)
 			{
-				//REPORT(INFO, "cnt[" << index <<"]="<< cnt[index]);
-				list<WeightedBit*>::iterator it = bits[index].begin();
-				columnIndex=0;
-				while(columnIndex<cnt[index]-1)
-					{
-						columnIndex++;
-						it++;
-					}
-
-				if (timeLatestBitAdded < (*it)->getCycle()*(1/op->getTarget()->frequency()) +
-				    (*it)->getCriticalPath((*it)->getCycle()))
-					{
-						timeLatestBitAdded = (*it)->getCycle()*(1/op->getTarget()->frequency()) +
-							(*it)->getCriticalPath((*it)->getCycle());
-						possiblyLatestBitAdded = *it;
-					}
-
-
-
+				columnIndex++;
 				it++;
-
-				if (timeFirstBitNotAdded > (*it)->getCycle()*(1/op->getTarget()->frequency()) +
-				    (*it)->getCriticalPath((*it)->getCycle()))
-					{
-						timeFirstBitNotAdded = (*it)->getCycle()*(1/op->getTarget()->frequency()) +
-							(*it)->getCriticalPath((*it)->getCycle());
-					}
-
-				adderDelay = op->getTarget()->adderDelay(index-minWeight+1);// + op->getTarget()->localWireDelay();
-
-
-
-
-
-				if ((timeLatestBitAdded + adderDelay) < timeFirstBitNotAdded)
-					{
-						adderMaxWeight = index;
-						latestBitAdded = possiblyLatestBitAdded;
-					}
-
-
-
-				index++;
 			}
+
+			if (timeLatestBitAdded < (*it)->getCycle()*(1/op->getTarget()->frequency()) +
+			    (*it)->getCriticalPath((*it)->getCycle()))
+			{
+				timeLatestBitAdded = (*it)->getCycle()*(1/op->getTarget()->frequency()) +
+					(*it)->getCriticalPath((*it)->getCycle());
+				possiblyLatestBitAdded = *it;
+			}
+
+
+
+			it++;
+
+			if (timeFirstBitNotAdded > (*it)->getCycle()*(1/op->getTarget()->frequency()) +
+			    (*it)->getCriticalPath((*it)->getCycle()))
+			{
+				timeFirstBitNotAdded = (*it)->getCycle()*(1/op->getTarget()->frequency()) +
+					(*it)->getCriticalPath((*it)->getCycle());
+			}
+
+			adderDelay = op->getTarget()->adderDelay(index-minWeight+1);// + op->getTarget()->localWireDelay();
+
+			if ((timeLatestBitAdded + adderDelay) < timeFirstBitNotAdded)
+			{
+				adderMaxWeight = index;
+				latestBitAdded = possiblyLatestBitAdded;
+			}
+
+
+			index++;
+		}
 
 		if(adderMaxWeight > minWeight)
+		{
+			//op->setCycle(  latestBitAdded ->getCycle()  );
+			//op->setCriticalPath(   latestBitAdded ->getCriticalPath(op->getCurrentCycle()) );
+			//op->manageCriticalPath( op->getTarget()->localWireDelay() +
+			//                        op->getTarget()->adderDelay(adderMaxWeight-minWeight+1) );
+			applyAdder(minWeight, adderMaxWeight, false);
+
+			if(plottingCycle < op->getCurrentCycle())
 			{
-				op->setCycle(  latestBitAdded ->getCycle()  );
-				op->setCriticalPath(   latestBitAdded ->getCriticalPath(op->getCurrentCycle()));
-				op->manageCriticalPath( op->getTarget()->localWireDelay() +
-				                        op->getTarget()->adderDelay(adderMaxWeight-minWeight+1) );
-				applyAdder(minWeight, adderMaxWeight, false);
-
-				if(plottingCycle < op->getCurrentCycle())
-					{
-						plottingCycle = op->getCurrentCycle();
-						plottingCP = op->getCriticalPath();
-					}
-				else
-					if((plottingCycle ==  op->getCurrentCycle()) &&
-					   (plottingCP < op->getCriticalPath()))
-						{
-							plottingCycle = op->getCurrentCycle();
-							plottingCP = op->getCriticalPath();
-						}
-
-
-				//plotter->heapSnapshot(true, op->getCurrentCycle(), op->getCriticalPath());
-
-				for(unsigned i=minWeight; i<=adderMaxWeight; i++)
-					cnt[i]=0;
-
-				//didCompress = true;
+				plottingCycle = op->getCurrentCycle();
+				plottingCP = op->getCriticalPath();
 			}
+			else
+				if((plottingCycle ==  op->getCurrentCycle()) &&
+				   (plottingCP < op->getCriticalPath()))
+				{
+					plottingCycle = op->getCurrentCycle();
+					plottingCP = op->getCriticalPath();
+				}
+
+
+			//plotter->heapSnapshot(true, op->getCurrentCycle(), op->getCriticalPath());
+
+			for(unsigned i=minWeight; i<=adderMaxWeight; i++)
+				cnt[i]=0;
+
+			//didCompress = true;
+		}
 		//=============================
 		
 
