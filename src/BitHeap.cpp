@@ -1122,20 +1122,31 @@ namespace flopoco
 		stringstream inAdder0, inAdder1, cin;
 		
 		WeightedBit *lastBit = bits[lsb].front();
-		WeightedBit *currentBit = bits[lsb].front();
 		
 		//compute the critical path
 		REPORT(DEBUG, "Computing critical path between columns " << lsb << " and " << msb);
+		
 		for(unsigned int i=lsb; i<=msb; i++)
 		{
 			if(cnt[i]>0)
 			{
-				currentBit = computeLatest(i, ((cnt[i]>3) ? 3 : cnt[i]), 0);
-				if(lastBit < currentBit)
-					lastBit = currentBit;		
+				int count = 0;
+				
+				for(list<WeightedBit*>::iterator it = bits[i].begin(); (it!=bits[i].end() && count<(i==lsb ? 3 : 2)); ++it)
+				{
+					if(
+						(lastBit->getCycle() < (*it)->getCycle()) || 
+						(lastBit->getCycle()==(*it)->getCycle() && lastBit->getCriticalPath(lastBit->getCycle())<(*it)->getCriticalPath((*it)->getCycle()))
+					   )
+					{
+						lastBit = *it;
+					}
+					
+					count++;
+				}
 			}
 		}
-
+		
 		for(int i = msb; i>=lsb+1; i--)
 		{
 			list<WeightedBit*>::iterator it = bits[i].begin();
@@ -1197,6 +1208,7 @@ namespace flopoco
 		
 		//for timing purposes
 		op->setCycle(lastBit->getCycle());
+		//op->syncCycleFromSignal(lastBit->getName());		//working
 		op->setCriticalPath(lastBit->getCriticalPath(op->getCurrentCycle()));
 
 		inAdder0 << ";";
