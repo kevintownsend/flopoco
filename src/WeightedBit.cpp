@@ -62,29 +62,8 @@ namespace flopoco
 		deathCP = deathCP; 
 		killerCompressor = killerCompressor;
 	}
-	
-	/* which bit was defined earlier */
-	bool WeightedBit::operator< (const WeightedBit& b){
-		if ((cycle<b.cycle) || (cycle==b.cycle && criticalPath<b.criticalPath)) 
-			return true;
-		else
-			return false;
-	} 
 
-	bool WeightedBit::operator<= (const WeightedBit& b){
-		if ((cycle<b.cycle) || (cycle==b.cycle && criticalPath<=b.criticalPath)) 
-			return true;
-		else
-			return false;
-	} 
-	
-	bool WeightedBit::operator== (const WeightedBit& b){
-		if ((cycle==b.cycle) && (criticalPath==b.criticalPath)) 
-			return true;
-		else
-			return false;
-	} 
-	
+
 	double WeightedBit::getCriticalPath(int atCycle)
 	{
 #if 0
@@ -104,6 +83,40 @@ namespace flopoco
 	{
 		return (getCycle()*stagesPerCycle + getCriticalPath(getCycle())/elementaryTime);        
 	}
+
+
+	
+	/* which bit was defined earlier */
+	bool operator< (WeightedBit& b1, WeightedBit& b2){
+		//cout <<"**** <" << endl;
+		return ((b1.cycle<b2.cycle) || (b1.cycle==b2.cycle && b1.criticalPath<b2.criticalPath));
+	} 
+
+	bool operator<= (WeightedBit& b1, WeightedBit& b2){
+		//cout <<"**** <=" << endl;
+		return ((b1.cycle<b2.cycle) || (b1.cycle==b2.cycle && b1.criticalPath<=b2.criticalPath));
+	} 
+	
+	bool operator> (WeightedBit& b1, WeightedBit& b2){
+		//cout <<"**** >" << endl;
+		return ((b1.cycle>b2.cycle) || (b1.cycle==b2.cycle && b1.criticalPath>b2.criticalPath));
+	} 
+
+	bool operator>= (WeightedBit& b1, WeightedBit& b2){
+		//cout <<"**** >=" << endl;
+		return ((b1.cycle>b2.cycle) || (b1.cycle==b2.cycle && b1.criticalPath>=b2.criticalPath));
+	} 
+	
+	bool operator== (WeightedBit& b1, WeightedBit& b2){
+		//cout <<"**** ==" << endl;
+		return ((b1.cycle==b2.cycle) && (b1.criticalPath==b2.criticalPath));
+	} 
+	
+	bool operator!= (WeightedBit& b1, WeightedBit& b2){
+		return  ((b1.cycle!=b2.cycle) || (b1.criticalPath!=b2.criticalPath));
+	} 
+	
+	
 
 	
 }

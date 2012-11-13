@@ -31,6 +31,22 @@ namespace flopoco{
 	class WeightedBit
 		{
 		public:
+		
+			/** ordering by availability time */
+			friend bool operator< (WeightedBit& b1, WeightedBit& b2); 
+			/** ordering by availability time */
+			friend bool operator<= (WeightedBit& b1, WeightedBit& b2);
+			friend bool operator> (WeightedBit& b1, WeightedBit& b2); 
+			/** ordering by availability time */
+			friend bool operator>= (WeightedBit& b1, WeightedBit& b2);
+			/** equality for availability time */
+			friend bool operator== (WeightedBit& b1, WeightedBit& b2);
+			/** difference for availability time */
+			friend bool operator!= (WeightedBit& b1, WeightedBit& b2);
+
+
+
+
 			/** standard constructor   */ 
 			WeightedBit(int bitHeapId, int uid, int weight, int type, int cycle,  double criticalPath);
 
@@ -74,13 +90,6 @@ namespace flopoco{
 
 			int getUid(){return uid;};
 
-		
-			/** ordering by availability time */
-			bool operator< (const WeightedBit& b); 
-			/** ordering by availability time */
-			bool operator<= (const WeightedBit& b);
-			/** equality for availability time */
-			bool operator== (const WeightedBit& b);
 
 
 		private:

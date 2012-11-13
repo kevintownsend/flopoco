@@ -104,62 +104,6 @@ namespace flopoco
 
 
 
-	WeightedBit* BitHeap::computeLatest(unsigned w, int c0, int c1)
-	{
-
-		if(w>=maxWeight)
-			{
-				REPORT(DEBUG, "return null");
-				return NULL;
-			}
-
-		if(c1==0)
-			{
-				int k=1;
-				WeightedBit **bb=0;
-				for(list<WeightedBit*>::iterator it = bits[w].begin(); it!=bits[w].end(); ++it)
-					{
-						if (k==c0)
-							{
-								bb = &*it;
-							}
-						k++;
-					}
-				if(bb==0) THROWERROR("unexpected condition");
-				REPORT(DEBUG, "in computeLatest");
-				return *bb;
-			}
-		else
-			{
-				int i=1, j=1;
-				WeightedBit **b0;
-				for(list<WeightedBit*>::iterator it = bits[w].begin(); it!=bits[w].end(); ++it)
-					{
-						if (i==c0)
-							{
-								b0 = &*it;
-							}
-						i++;
-					}
-				WeightedBit **b1;
-				for(list<WeightedBit*>::iterator it = bits[w+1].begin(); it!=bits[w+1].end(); ++it)
-					{
-						if (j==c1)
-							{
-								b1 = &*it;
-							}
-						j++;
-					}
-
-
-				if((**b0) <= (**b1))
-					return *b1;
-				else
-					return *b0;
-			}
-	}
-
-
 
 		void BitHeap::addConstantOneBit(int weight) {
 			if (weight<0)
@@ -542,6 +486,7 @@ namespace flopoco
 						count++;
 						it++;
 					}
+
 			}
 
 		// now generate VHDL
@@ -576,6 +521,53 @@ namespace flopoco
 	}
 
 
+
+
+	// The following code assumes that a column is sorted by increasing time
+
+	WeightedBit* BitHeap::latestInputBitToCompressor(unsigned w, int c0, int c1)
+	{
+		list<WeightedBit*>::iterator it;
+
+		if(w>=maxWeight)	{
+			REPORT(DEBUG, "latestInputBitToCompressor returns null because w>=maxWeight");
+			return NULL;
+		}
+
+		if(c1==0) { // compressor of one column only
+			int k=1;
+			for(it = bits[w].begin(); it!=bits[w].end(); ++it)	{
+				if (k==c0)
+					return *it;
+				k++;
+			}
+			THROWERROR("latestInputBitToCompressor: shouldn't get there");
+			//REPORT(DEBUG, "in latestInputBitToCompressor");
+		}
+		else { // compressor for two columns
+			int i=1, j=1;
+			WeightedBit *b0, *b1;
+				for(it = bits[w].begin(); it!=bits[w].end(); ++it){
+					if (i==c0)
+						b0 = *it;
+					i++;
+				}
+				for(it = bits[w+1].begin(); it!=bits[w+1].end(); ++it)	{
+					if (j==c1)
+						b1 = *it;
+					j++;
+				}
+
+				if((*b0) <= (*b1))
+					return b1;
+				else
+					return b0;
+			}
+	}
+
+
+
+
 	void BitHeap::elemReduce(unsigned i, BasicCompressor* bc, int type)
 	{
 		REPORT(DEBUG, "Entering elemReduce for column "<< i << " using compressor " << bc->getName() );
@@ -588,7 +580,7 @@ namespace flopoco
 		//    REPORT(DEBUG, cnt[i+1] << "  " << bc->getColumnSize(1));
 
 
-		WeightedBit* b =  computeLatest(i, bc->getColumnSize(0), bc->getColumnSize(1)) ;
+		WeightedBit* b =  latestInputBitToCompressor(i, bc->getColumnSize(0), bc->getColumnSize(1)) ;
 
 
 		if(b)	{
@@ -787,8 +779,18 @@ namespace flopoco
 
 		for(list<WeightedBit*>::iterator it = bits[w].begin(); it!=bits[w].end(); ++it)
 			{
-				REPORT(FULL, "element "<<i<<" cycle = "<<(*it)->getCycle()
-				       << " and cp = "<<(*it)->getCriticalPath((*it)->getCycle()));
+				REPORT(FULL, "i="<<i<<"  name=" << (*it)->getName() <<" cycle="<<(*it)->getCycle()
+				       << " cp="<<(*it)->getCriticalPath((*it)->getCycle()));
+				// check the ordering -- this should be useless, was inserted for debug purpose
+				if(i>0) {
+					list<WeightedBit*>::iterator itm1 = it;
+					itm1--;
+					if(**it < **itm1)
+						THROWERROR("Wrong ordering of weighted bits: *it=" << *it << " ("<< 
+						           (*it)->getCycle()<< ", " <<  (*it)->getCriticalPath((*it)->getCycle()) 
+						           << ") <    *itm1=" << *itm1 << "(" << 
+						           (*itm1)->getCycle()<< ", " <<  (*itm1)->getCriticalPath((*itm1)->getCycle()) << ")" );
+				}
 				i++;
 			}
 	}
@@ -1134,10 +1136,14 @@ namespace flopoco
 				
 				for(list<WeightedBit*>::iterator it = bits[i].begin(); (it!=bits[i].end() && count<(i==lsb ? 3 : 2)); ++it)
 				{
+#if 0
 					if(
 						(lastBit->getCycle() < (*it)->getCycle()) || 
 						(lastBit->getCycle()==(*it)->getCycle() && lastBit->getCriticalPath(lastBit->getCycle())<(*it)->getCriticalPath((*it)->getCycle()))
 					   )
+#else
+						if(*lastBit<**it)
+#endif
 					{
 						lastBit = *it;
 					}
@@ -1979,7 +1985,7 @@ namespace flopoco
 					{
 						if(cnt[i]>0)
 						{
-							currentBit = computeLatest(i, ((cnt[i]>3) ? 3 : cnt[i]), 0);
+							currentBit = latestInputBitToCompressor(i, ((cnt[i]>3) ? 3 : cnt[i]), 0);
 							if(lastBit < currentBit)
 								lastBit = currentBit;		
 						}
