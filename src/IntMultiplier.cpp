@@ -967,6 +967,11 @@ namespace flopoco {
 		int topX = botX-dspSizeX;
 		int topY = botY-dspSizeY;
 		
+		if((signedIO) && (botX!=wX))
+			topX++;
+		if((signedIO) && (botY!=wY))
+			topY++;
+		
 		if((verticalDSP == 0) && (height > 0))
 			verticalDSP++;
 		if((horizontalDSP == 0) && (width > 0))
@@ -974,7 +979,7 @@ namespace flopoco {
 
 		REPORT(DEBUG,"verticaldsps= "<<verticalDSP<<" hordsps= "<<horizontalDSP);
 		
-		//		cout << endl << "-----------call to buildAlteraTiling with parameters  - blockTopX=" << blockTopX << " blockTopY=" << blockTopY << " blockBottomX=" << blockBottomX << " blockBottomY=" << blockBottomY << endl;
+		REPORT(DEBUG,"-----------call to buildAlteraTiling with parameters  - blockTopX=" << blockTopX << " blockTopY=" << blockTopY << " blockBottomX=" << blockBottomX << " blockBottomY=" << blockBottomY);
 
 		//handle the whole blocks
 		for(int i=0;i<verticalDSP;i++)
@@ -1003,11 +1008,11 @@ namespace flopoco {
 					{	
 						if((topX<botX)&&(topY<botY))		
 							addExtraDSPs(topX, topY, botX, botY, dspSizeX, dspSizeY);
-						//cout << " in BuildAlteraTiling, at " << dspSizeX << " =>  topX=" << topX << " topY=" << topY  << " botX=" << botX << " botY=" << botY << " sizeX="  << botX-topX << " sizeY=" << botY - topY << endl;
+						REPORT(DEBUG," in BuildAlteraTiling, after a call to addExtraDSPs, at " << dspSizeX << " =>  topX=" << topX << " topY=" << topY  << " botX=" << botX << " botY=" << botY << " sizeX="  << botX-topX << " sizeY=" << botY - topY);
 					}
 					else
 					{
-						//cout << "decreased the size of the dsp block from " << multWidths[size-multIndex-1] << " to " << multWidths[size-multIndex-2] << endl;
+						REPORT(DEBUG,"decreased the size of the dsp block from " << multWidths[size-multIndex-1] << " to " << multWidths[size-multIndex-2]);
 						buildAlteraTiling(topX, topY, botX, botY, multIndex+1);
 					}
 				}
@@ -1016,9 +1021,9 @@ namespace flopoco {
 		
 					if((topX<botX)&&(topY<botY))
 					{
-						REPORT(DEBUG, " in BuildAlteraTiling, at " << dspSizeX << " =>  " << topX << " " << topY  << " " << botX << " " << botY << " "  << botX-topX << " " << botY - topY );						
+						REPORT(DEBUG, " in BuildAlteraTiling, at " << dspSizeX << " =>  topX=" << topX << " topY=" << topY  << " botX=" << botX << " botY=" << botY << " horizontalSize="  << botX-topX << " verticalSize=" << botY - topY );						
 						addExtraDSPs(topX, topY, botX, botY, dspSizeX, dspSizeY);
-						//cout << " in BuildAlteraTiling, at " << dspSizeX << " =>  topX=" << topX << " topY=" << topY  << " botX=" << botX << " botY=" << botY << " sizeX="  << botX-topX << " sizeY=" << botY - topY << endl;
+						REPORT(DEBUG, " in BuildAlteraTiling, after a call to addExtraDSPs, at " << dspSizeX << " =>  topX=" << topX << " topY=" << topY  << " botX=" << botX << " botY=" << botY << " sizeX="  << botX-topX << " sizeY=" << botY - topY);
 					}
 				}
 
@@ -1072,13 +1077,14 @@ namespace flopoco {
 		
 		if((topY != 0) && (topY != blockTopY))
 		{
-			//cout << " topX=" << topX << " topY=" << topY << " botX=" << botX << " botX=" << botX << endl;
-			//cout << " calling buildAlteraTiling for bottom leftover bits - topX=" << topX+dspSizeX << " topY=" << blockTopY << " botX=" << blockBottomX << " botY=" << topY << " dspSize=" << multWidths[multWidths.size()-1-newMultIndex] << endl;
+			REPORT(DEBUG,"handling bottom leftover bits topX=" << topX << " topY=" << topY << " botX=" << botX << " botX=" << botX);
+			REPORT(DEBUG,"	calling buildAlteraTiling for bottom leftover bits - topX=" << topX+dspSizeX << " topY=" << blockTopY << " botX=" << blockBottomX << " botY=" << topY << " dspSize=" << multWidths[multWidths.size()-1-newMultIndex]);
 			buildAlteraTiling(topX+dspSizeX, blockTopY, blockBottomX, topY, newMultIndex);
 		}
 		if(topX+dspSizeX != blockTopX)
 		{
-			//cout << " calling buildAlteraTiling for left side leftover bits - topX=" << blockTopX << " topY=" << blockTopY<< " botX=" << topX+dspSizeX << " botY=" << blockBottomY << endl;
+			REPORT(DEBUG,"handling left leftover bits topX=" << topX << " topY=" << topY << " botX=" << botX << " botX=" << botX);
+			REPORT(DEBUG," calling buildAlteraTiling for left side leftover bits - topX=" << blockTopX << " topY=" << blockTopY<< " botX=" << topX+dspSizeX << " botY=" << blockBottomY);
 			buildAlteraTiling(blockTopX, blockTopY, topX+dspSizeX, blockBottomY, newMultIndex);
 		}
 	}
