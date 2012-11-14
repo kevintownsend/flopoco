@@ -137,14 +137,12 @@ namespace flopoco
 	{
 		drawAreaView(name, mulBlocks, wX, wY, wOut, g);
 		drawLozengeView(name, mulBlocks, wX, wY, wOut, g);
-
 	}
 
 
 
 	void Plotter::addSmallMult(int topX_, int topY_, int dx_, int dy_)
 	{
-
 		topX[smallMultIndex]=topX_;
 		topY[smallMultIndex]=topY_;
 		dx=dx_;
@@ -152,7 +150,6 @@ namespace flopoco
 		smallMultIndex++;
 
 		//ss << topX.size() << "  " ;
-
 	}
 
 
@@ -177,7 +174,6 @@ namespace flopoco
 		fig << "</svg>" << endl;
 
 		fig.close();
-
 	}
 
 
@@ -196,10 +192,8 @@ namespace flopoco
 
 		for(unsigned i=0; i< snapshots.size(); i++)
 		{
-
 			if(snapshots[i]->didCompress)
 			{
-
 				timeCondition = true;
 				if (i > snapshots.size()-3)
 					timeCondition = false;
@@ -229,13 +223,9 @@ namespace flopoco
 							<< "\" y2=\"" << offsetY  << "\" style=\"stroke:midnightblue;stroke-width:2\" />" << endl;
 
 						c--;
-
 					}
 				}
-
-
 			}
-
 		}
 
 		fig << "<line x1=\"" << turnaroundX + 30 << "\" y1=\"" << 20 << "\" x2=\"" << turnaroundX + 30 
@@ -246,7 +236,6 @@ namespace flopoco
 		fig << "</svg>" << endl;
 
 		fig.close();
-
 	}
 
 
@@ -277,9 +266,7 @@ namespace flopoco
 			<< "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" onload=\"init(evt)\" >" << endl;
 
 		addECMAFunction();
-		//draw target rectangle	
-
-
+		//draw target rectangle
 
 		for(int i=0; i<smallMultIndex; i++)
 		{
@@ -287,8 +274,6 @@ namespace flopoco
 		}
 
 		drawTargetFigure(wX, wY, offsetX, offsetY, scalingFactor, true);
-
-
 
 		//draw DSPs
 		int xT, yT, xB, yB;
@@ -319,7 +304,6 @@ namespace flopoco
 		fig << "</svg>" << endl;
 
 		fig.close();
-
 	}
 
 
@@ -335,7 +319,6 @@ namespace flopoco
 
 		fig.open (figureFileName.str().c_str(), ios::trunc);
 
-
 		//scaling factor for the whole drawing
 		int scalingFactor = 5;
 
@@ -344,18 +327,14 @@ namespace flopoco
 		int offsetY = 180;
 
 		//file header
-		fig << "<?xml version=\"1.0\" standalone=\"no\"?>" << endl;
-		fig << "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\"" << endl;
-		fig << "\"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">" << endl;
-		fig << "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" onload=\"init(evt)\">" << endl;
+		fig << "<?xml version=\"1.0\" standalone=\"no\"?>" << endl
+			<< "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\"" << endl
+			<< "\"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">" << endl
+			<< "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" onload=\"init(evt)\">" << endl;
 
 		addECMAFunction();
 
-		//draw target lozenge	
-
-
-
-
+		//draw target lozenge
 
 		for(int i=0; i<smallMultIndex; i++)
 		{
@@ -363,8 +342,6 @@ namespace flopoco
 		}
 
 		drawTargetFigure(wX, wY, offsetX, offsetY, scalingFactor, false);
-
-
 
 		//draw DSPs
 		int xT, yT, xB, yB;
@@ -391,17 +368,13 @@ namespace flopoco
 			drawLine(wX, wY, wOut+g, offsetX, offsetY, scalingFactor, false);
 		}
 
-
-
 		//drawLittleClock(500,300,3,0,5,1);
-
 
 		fig << "<text id=\"tooltip\" x=\"0\" y=\"0\" visibility=\"hidden\">Tooltip</text>" << endl;
 
 		fig << "</svg>" << endl;
 
 		fig.close();
-
 	}
 
 
@@ -488,7 +461,6 @@ namespace flopoco
 				<< wX*scalingFactor + offsetX - scalingFactor*wY << "," << wY*scalingFactor + offsetY << " "
 				<< offsetX - scalingFactor*wY << "," << wY*scalingFactor + offsetY 	
 				<< "\" style=\"fill:rgb(255, 0, 0);stroke-width:1;fill-opacity:0.1;stroke:rgb(0,0,0)\"/>" << endl;
-
 	}
 
 
@@ -527,22 +499,22 @@ namespace flopoco
 
 	string Plotter::romanNumber(int i)
 	{
-		if(i==0) return "0";
-		if(i==1) return  "I";
-		if(i==2) return "II";
-		if(i==3) return "III";
-		if(i==4) return"IV";
-		if(i==5) return "V";
-		if(i==6) return "VI";
-		if(i==7) return"VII";
-		if(i==8) return "VIII";
-		if(i==9) return "IX";
-		if(i==10) return"X";
+		if(i==0) 	return	"0";
+		if(i==1) 	return	"I";
+		if(i==2) 	return "II";
+		if(i==3) 	return "III";
+		if(i==4) 	return	"IV";
+		if(i==5) 	return "V";
+		if(i==6) 	return "VI";
+		if(i==7) 	return	"VII";
+		if(i==8) 	return "VIII";
+		if(i==9) 	return "IX";
+		if(i==10) 	return	"X";
 		return "0";
 	}
 
 	void Plotter::drawLittleClock(int x, int y, int cyclenumber, int currentcycle, int stageNumber, int currentStage)
-	{ 
+	{
 #if 0
 		ostringstream figureFileName;
 		figureFileName << "littleclock"  << ".svg";
@@ -654,7 +626,6 @@ namespace flopoco
 		//fig2.close();
 
 		//fig << fig2.str();
-
 	}
 
 	void Plotter::drawBit(int cnt, int w, int turnaroundX, int offsetY, int color, int cycle, int cp, string name)
@@ -681,7 +652,6 @@ namespace flopoco
 			<< " onmousemove=\"ShowTooltip(evt)\" onmouseout=\"HideTooltip(evt)\" mouseovertext=\""
 			<< name << ", " << cycle << " : " << ci << "." << c1 << c2 << c3 << " ns\"/> " << endl;
 		//<< cycle << " : " << cp << "\"/> " << endl;
-
 	}
 
 
@@ -700,7 +670,6 @@ namespace flopoco
 				"tooltip.setAttributeNS(null,\"visibility\",\"visible\");}" << endl <<
 				"function HideTooltip(evt) {" << endl <<
 				"tooltip.setAttributeNS(null,\"visibility\",\"hidden\");}]]></script>" << endl;
-
 	}
 
 
@@ -708,12 +677,11 @@ namespace flopoco
 	void Plotter::initializeHeapPlotting(bool isInitial)
 	{
 		ostringstream figureFileName;
+		
 		if(isInitial)
 			figureFileName << "BitHeap_initial_" << bh->getName()  << ".svg";
 		else 
 			figureFileName << "BitHeap_compression_" << bh->getName()  << ".svg";
-
-
 
 		FILE* pfile;
 		pfile  = fopen(figureFileName.str().c_str(), "w");
@@ -721,13 +689,12 @@ namespace flopoco
 
 		fig.open (figureFileName.str().c_str(), ios::trunc);
 
-		fig << "<?xml version=\"1.0\" standalone=\"no\"?>" << endl;
-		fig << "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\"" << endl;
-		fig << "\"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">" << endl;
-		fig << "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" onload=\"init(evt)\" >" << endl;
+		fig << "<?xml version=\"1.0\" standalone=\"no\"?>" << endl
+			<< "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\"" << endl
+			<< "\"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">" << endl
+			<< "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" onload=\"init(evt)\" >" << endl;
 
-		addECMAFunction(); 
-
+		addECMAFunction();
 	}
 
 
@@ -749,29 +716,21 @@ namespace flopoco
 		//REPORT(DEBUG, "printing final config");	
 		vector<WeightedBit*> orderedBits;
 
-
-
-
 		for(unsigned i=minWeight; i<bits.size(); i++)
 		{
 			if(bits[i].size()>0)
 			{
-				//REPORT(DEBUG, "in if " << i);
 				for(list<WeightedBit*>::iterator bit = bits[i].begin(); bit!=bits[i].end(); ++bit)
 				{
 					if(orderedBits.size()==0)
 					{
 						orderedBits.push_back((*bit));
-						//REPORT(DEBUG, "first element");
 					}
-					//REPORT(DEBUG, "in sec for");
 					bool proceed=true;
 					vector<WeightedBit*>::iterator iterBit = orderedBits.begin();
 
-
 					while(proceed)
 					{
-						//REPORT(DEBUG, "in while");
 						if (iterBit==orderedBits.end())
 						{
 							orderedBits.push_back((*bit));
@@ -787,7 +746,6 @@ namespace flopoco
 							{
 								if( (**bit) < (**iterBit))
 								{
-									//REPORT(DEBUG, "here *");
 									orderedBits.insert(iterBit, *bit);
 									proceed=false;
 								}
@@ -839,13 +797,11 @@ namespace flopoco
 #if 0
 			if (it==l.end() || (*bit <= **it))
 			{ // test in this order to avoid segfault!
-
 				l.insert(it, bit);
 				proceed=false;
 			}
 			else
 			{
-
 				it++;
 			}
 #endif
@@ -855,8 +811,10 @@ namespace flopoco
 		// 	REPORT(INFO, orderedBits[k]->getCycle() << "  " << orderedBits[k]->getCriticalPath(orderedBits[k]->getCycle()));
 
 
-		for(unsigned i=0; i<bits.size(); i++)		{
-			if(bits[i].size()>0)			{
+		for(unsigned i=0; i<bits.size(); i++)
+		{
+			if(bits[i].size()>0)
+			{
 				//				tempCycle = 0;
 				//        tempCP = 0;
 				cnt = 0;
@@ -915,8 +873,6 @@ namespace flopoco
 	void Plotter::drawConfiguration(vector<list<WeightedBit*> > bits,unsigned nr, int cycle, double criticalPath,
 			int minWeight, int offsetY, int turnaroundX, bool timeCondition)
 	{
-
-
 		int cnt = 0;
 
 
@@ -960,18 +916,13 @@ namespace flopoco
 
 		for(unsigned i=0; i<bits.size(); i++)
 		{
-
 			//REPORT(INFO, "wtf" << i);
 
 			if(bits[i].size()>0)
 			{
-
 				cnt = 0;
 				for(list<WeightedBit*>::iterator it = bits[i].begin(); it!=bits[i].end(); ++it)
 				{
-
-
-
 					int cy = (*it)->getCycle();
 					double cp = (*it)->getCriticalPath(cy);
 					if (timeCondition)
@@ -991,17 +942,9 @@ namespace flopoco
 						drawBit(cnt, i, turnaroundX, offsetY, (*it)->getType(), cy, cp, (*it)->getName());
 						cnt++;
 					}
-
-
 				}
 			}
 		}
-
-
-
-
-
-
 	}
 
 
