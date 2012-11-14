@@ -52,7 +52,6 @@ namespace flopoco
 	}
 
 
-
 	bool Plotter::Snapshot::operator< (const Snapshot& b)
 	{
 		if ((this->cycle<b.cycle) || ((this->cycle==b.cycle) && (this->cp<b.cp))) 
@@ -92,7 +91,6 @@ namespace flopoco
 				if (size==0)
 				{
 					snapshots.push_back(s);
-
 				}
 				else
 				{
@@ -104,7 +102,6 @@ namespace flopoco
 					{
 						if (it==snapshots.end() || (*s < **it))
 						{ // test in this order to avoid segfault!
-
 							snapshots.insert(it, s);
 							proceed=false;
 
@@ -115,9 +112,6 @@ namespace flopoco
 						}
 					}
 				}
-
-
-
 			}
 	}
 
@@ -277,10 +271,10 @@ namespace flopoco
 		int offsetY = 180;
 
 		//file header
-		fig << "<?xml version=\"1.0\" standalone=\"no\"?>" << endl;
-		fig << "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\"" << endl;
-		fig << "\"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">" << endl;
-		fig << "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" onload=\"init(evt)\" >" << endl;
+		fig << "<?xml version=\"1.0\" standalone=\"no\"?>" << endl
+			<< "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\"" << endl
+			<< "\"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">" << endl
+			<< "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" onload=\"init(evt)\" >" << endl;
 
 		addECMAFunction();
 		//draw target rectangle	
@@ -456,7 +450,7 @@ namespace flopoco
 				<< "\" height=\"" << (yB-yT)*scalingFactor << "\" width=\"" << (xB-xT)*scalingFactor
 				<< "\" style=\"fill:rgb(200, 200, 200);fill-opacity:0.7;stroke-width:1;stroke:rgb(0,0,0)\"" 
 				<< " onmousemove=\"ShowTooltip(evt)\" onmouseout=\"HideTooltip(evt)\" mouseovertext=\"X[" 
-				<< xB << ":" << xT << "] * Y[" << yB << ":" << yT << "]\"/> " << endl;
+				<< xB-1 << ":" << xT << "] * Y[" << yB-1 << ":" << yT << "]\"/> " << endl;
 
 			fig << "<text x=\"" << (2*turnaroundX - scalingFactor*(xT+xB))/2 -12 
 				<< "\" y=\"" << ((yT+yB)*scalingFactor)/2 + offsetY + 7
@@ -471,13 +465,11 @@ namespace flopoco
 				<< turnaroundX - 5*xB + offsetX - 5*yB << "," << 5*yB + offsetY
 				<< "\" style=\"fill:rgb(200, 200, 200);stroke-width:1;fill-opacity:0.7;stroke:rgb(0,0,0)\" "
 				<< " onmousemove=\"ShowTooltip(evt)\" onmouseout=\"HideTooltip(evt)\" mouseovertext=\"X[" 
-				<< xB << ":" << xT << "] * Y[" << yB << ":" << yT << "]\"/> " << endl;
+				<< xB-1 << ":" << xT << "] * Y[" << yB-1 << ":" << yT << "]\"/> " << endl;
 
 			fig << "<text x=\"" << (2*turnaroundX - xB*5 - xT*5 + 2*offsetX)/2 - 14 - (yT*5 + yB*5)/2 
 				<< "\" y=\"" << ( yT*5 + offsetY + yB*5 + offsetY )/2 + 7 
 				<< "\" fill=\"blue\">D(" <<  xTT+1<<")("<<  yTT+1  << ")</text>" << endl;
-
-
 		}	
 	}
 
@@ -504,9 +496,7 @@ namespace flopoco
 	void Plotter::drawSmallMult(int wX, int wY, int xT, int yT, int xB, 
 			int yB, int offsetX, int offsetY, int scalingFactor,  bool isRectangle)
 	{
-
 		int turnaroundX;
-
 
 		if(isRectangle)
 		{
@@ -515,7 +505,7 @@ namespace flopoco
 				<< "\" height=\"" << (yB-yT)*scalingFactor << "\" width=\"" << (xB-xT)*scalingFactor
 				<< "\" style=\"fill:rgb(255, 228, 196);stroke-width:1;stroke:rgb(165,42,42)\"" 
 				<< " onmousemove=\"ShowTooltip(evt)\" onmouseout=\"HideTooltip(evt)\" mouseovertext=\"X[" 
-				<< xB << ":" << xT << "] * Y[" << yB << ":" << yT << "]\"/> " << endl;
+				<< xB-1 << ":" << xT << "] * Y[" << yB-1 << ":" << yT << "]\"/> " << endl;
 
 		}   
 		else 
@@ -527,7 +517,7 @@ namespace flopoco
 				<< turnaroundX - 5*xB + offsetX - 5*yB << "," << 5*yB + offsetY
 				<< "\" style=\"fill:rgb(255, 228, 196);stroke-width:1;stroke:rgb(165,42,42)\" "
 				<< " onmousemove=\"ShowTooltip(evt)\" onmouseout=\"HideTooltip(evt)\" mouseovertext=\"X[" 
-				<< xB << ":" << xT << "] * Y[" << yB << ":" << yT << "]\"/> " << endl;
+				<< xB-1 << ":" << xT << "] * Y[" << yB-1 << ":" << yT << "]\"/> " << endl;
 
 
 		}
@@ -698,18 +688,18 @@ namespace flopoco
 
 	void Plotter::addECMAFunction()
 	{
-		fig << "<script> <![CDATA[  " << endl;
-		fig << "function init(evt) {" << endl;
-		fig << "if ( window.svgDocument == null ) {" << endl;
-		fig << "svgDocument = evt.target.ownerDocument;}" << endl;
-		fig << "tooltip = svgDocument.getElementById('tooltip');}" << endl;
-		fig << "function ShowTooltip(evt) {" << endl;
-		fig << "tooltip.setAttributeNS(null,\"x\",evt.clientX+10);" << endl;
-		fig << "tooltip.setAttributeNS(null,\"y\",evt.clientY+30);" << endl;
-		fig << "tooltip.firstChild.data = evt.target.getAttributeNS(null,\"mouseovertext\");" << endl;
-		fig << "tooltip.setAttributeNS(null,\"visibility\",\"visible\");}" << endl;
-		fig << "function HideTooltip(evt) {" << endl;
-		fig << "tooltip.setAttributeNS(null,\"visibility\",\"hidden\");}]]></script>" << endl;
+		fig << "<script> <![CDATA[  " << endl <<
+				"function init(evt) {" << endl <<
+				"if ( window.svgDocument == null ) {" << endl <<
+				"svgDocument = evt.target.ownerDocument;}" << endl <<
+				"tooltip = svgDocument.getElementById('tooltip');}" << endl <<
+				"function ShowTooltip(evt) {" << endl <<
+				"tooltip.setAttributeNS(null,\"x\",evt.clientX+10);" << endl <<
+				"tooltip.setAttributeNS(null,\"y\",evt.clientY+30);" << endl <<
+				"tooltip.firstChild.data = evt.target.getAttributeNS(null,\"mouseovertext\");" << endl <<
+				"tooltip.setAttributeNS(null,\"visibility\",\"visible\");}" << endl <<
+				"function HideTooltip(evt) {" << endl <<
+				"tooltip.setAttributeNS(null,\"visibility\",\"hidden\");}]]></script>" << endl;
 
 	}
 
