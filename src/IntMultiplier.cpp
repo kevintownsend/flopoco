@@ -483,7 +483,7 @@ namespace flopoco {
 			{
 				StratixII* t = (StratixII*) parentOp->getTarget();
 				multiplierWidth = t->getDSPMultiplierWidths();
-				size = t->getNrDSPMultiplier();	
+				size = t->getNrDSPMultiplier();
 			}
 
 			for(int i=0; i<size; i++)
@@ -821,10 +821,12 @@ namespace flopoco {
 	}
 
 
-	//** checks against the ratio the given block and adds a DSP or logic**/
+	/** 
+	 * checks against the ratio the given block and adds a DSP or logic
+	*/
 	void IntMultiplier::addExtraDSPs(int topX, int topY, int botx, int boty,int wxDSP,int wyDSP)
 	{
-		REPORT(DEBUG, "in addExtraDSPs: topX=" << topX << " topY=" << topY << " botX=" << botx << " botY=" << boty);
+		REPORT(DEBUG, "in addExtraDSPs at sizeX=" << wxDSP << " and sizeY=" << wyDSP << ": topX=" << topX << " topY=" << topY << " botX=" << botx << " botY=" << boty);
 		int topx=topX,topy=topY;
 		
 		//if the block is on the margins of the multipliers, then the coordinates have to be reduced.
@@ -875,6 +877,8 @@ namespace flopoco {
 			m->setPrevious(NULL);			
 			localSplitVector.push_back(m);
 			bitHeap->addMultiplierBlock(m);
+			
+			REPORT(DEBUG, "in addExtraDSPs, adding a multiplier block of size wxDSP=" << wxDSP << " and wyDSP=" << wyDSP << ": topX=" << topx << " topY=" << topy << " weightShift=" << weightShift);
 		}
 		else
 		{
@@ -979,7 +983,7 @@ namespace flopoco {
 
 		REPORT(DEBUG,"verticaldsps= "<<verticalDSP<<" hordsps= "<<horizontalDSP);
 		
-		REPORT(DEBUG,"-----------call to buildAlteraTiling with parameters  - blockTopX=" << blockTopX << " blockTopY=" << blockTopY << " blockBottomX=" << blockBottomX << " blockBottomY=" << blockBottomY);
+		REPORT(DEBUG,"-----------call to buildAlteraTiling, at " << dspSizeX << " with parameters  - blockTopX=" << blockTopX << " blockTopY=" << blockTopY << " blockBottomX=" << blockBottomX << " blockBottomY=" << blockBottomY);
 
 		//handle the whole blocks
 		for(int i=0;i<verticalDSP;i++)
@@ -1006,9 +1010,11 @@ namespace flopoco {
 					if(checkThreshold(topX, topY, botX, botY, dspSizeX, dspSizeY)
 					   && (min(botY-topY+1,botX-topX+1) >= max(dspSizeX,dspSizeY)))
 					{	
-						if((topX<botX)&&(topY<botY))		
+						if((topX<botX)&&(topY<botY))
+						{
 							addExtraDSPs(topX, topY, botX, botY, dspSizeX, dspSizeY);
-						REPORT(DEBUG," in BuildAlteraTiling, after a call to addExtraDSPs, at " << dspSizeX << " =>  topX=" << topX << " topY=" << topY  << " botX=" << botX << " botY=" << botY << " sizeX="  << botX-topX << " sizeY=" << botY - topY);
+							REPORT(DEBUG," in BuildAlteraTiling, after a call to addExtraDSPs, at " << dspSizeX << " =>  topX=" << topX << " topY=" << topY  << " botX=" << botX << " botY=" << botY << " sizeX="  << botX-topX << " sizeY=" << botY - topY);
+						}
 					}
 					else
 					{
@@ -1023,12 +1029,12 @@ namespace flopoco {
 					{
 						REPORT(DEBUG, " in BuildAlteraTiling, at " << dspSizeX << " =>  topX=" << topX << " topY=" << topY  << " botX=" << botX << " botY=" << botY << " horizontalSize="  << botX-topX << " verticalSize=" << botY - topY );						
 						addExtraDSPs(topX, topY, botX, botY, dspSizeX, dspSizeY);
-						REPORT(DEBUG, " in BuildAlteraTiling, after a call to addExtraDSPs, at " << dspSizeX << " =>  topX=" << topX << " topY=" << topY  << " botX=" << botX << " botY=" << botY << " sizeX="  << botX-topX << " sizeY=" << botY - topY);
 					}
 				}
 
 				botX = topX;
 
+				
 				if((signedIO) && (botX!=wX))
 					dspSizeX=dsX-1;
 				else
@@ -1038,37 +1044,8 @@ namespace flopoco {
 					dspSizeY=dsY-1;
 				else
 					dspSizeY=dsY;
-
+				
 				topX = topX-dspSizeX;
-			}
-
-			if(i+1 < verticalDSP)
-			{
-				if((signedIO)&&(botX!=wX))
-					dspSizeX=dsX-1;
-				else
-					dspSizeX=dsX;	
-
-				if((signedIO)&&(botY!=wY))
-					dspSizeY=dsY-1;
-				else
-					dspSizeY=dsY;
-
-				botY = topY;
-				topY = topY-dspSizeY;
-				botX = blockBottomX;
-
-				if((signedIO)&&(botX!=wX))
-					dspSizeX=dsX-1;
-				else
-					dspSizeX=dsX;	
-
-				if((signedIO)&&(botY!=wY))
-					dspSizeY=dsY-1;
-				else
-					dspSizeY=dsY;
-
-				topX = botX-dspSizeX;
 			}
 		}
 		
@@ -1093,7 +1070,6 @@ namespace flopoco {
 
 	void IntMultiplier::buildXilinxTiling()
 	{
-
 		int widthXX,widthX;//local wxDSP
 		int widthYY,widthY;//local wyDSP
 		int hor1,hor2,ver1,ver2;	
@@ -1106,53 +1082,50 @@ namespace flopoco {
 
 		//decides if a horizontal tiling will be used or a vertical one
 		if(nrDSPvertical<nrDSPhorizontal)
-			{
-				widthXX=wyDSP;
-				widthYY=wxDSP;
-				horizontalDSP=hor1;
-				verticalDSP=ver1;
-
-
-			}
+		{
+			widthXX=wyDSP;
+			widthYY=wxDSP;
+			horizontalDSP=hor1;
+			verticalDSP=ver1;
+		}
 		else
-			{
-				widthXX=wxDSP;
-				widthYY=wyDSP;
-				horizontalDSP=hor2;
-				verticalDSP=ver2;
-			}
+		{
+			widthXX=wxDSP;
+			widthYY=wyDSP;
+			horizontalDSP=hor2;
+			verticalDSP=ver2;
+		}
 
 
 		//applying the tiles
 		for(int i=0;i<verticalDSP;i++)
-			{	
+		{
+			//managing the size of a DSP according to its position if signed
+			if((signedIO)&&(i!=0))
+				widthY=widthYY-1;
+			else
+				widthY=widthYY;	
+
+			topy=boty-widthY;
+			botx=wX;
+
+			for(int j=0;j<horizontalDSP;j++)
+			{
 				//managing the size of a DSP according to its position if signed
-				if((signedIO)&&(i!=0))
-					widthY=widthYY-1;
+				if((signedIO)&&(j!=0))
+					widthX=widthXX-1;
 				else
-					widthY=widthYY;	
+					widthX=widthXX;
 
-				topy=boty-widthY;
-				botx=wX;
+				topx=botx-widthX;
 
-				for(int j=0;j<horizontalDSP;j++)
-					{
-						//managing the size of a DSP according to its position if signed
-						if((signedIO)&&(j!=0))
-							widthX=widthXX-1;
-						else
-							widthX=widthXX;
-
-						topx=botx-widthX;
-
-						if(botx+boty>wFull-wOut-g)
-							addExtraDSPs(topx,topy,botx,boty,widthX,widthY);
-						botx=botx-widthX;			
-					}
-
-
-				boty=boty-widthY;
+				if(botx+boty>wFull-wOut-g)
+					addExtraDSPs(topx,topy,botx,boty,widthX,widthY);
+				botx=botx-widthX;			
 			}
+
+			boty=boty-widthY;
+		}
 
 	}
 

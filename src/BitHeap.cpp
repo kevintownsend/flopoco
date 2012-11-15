@@ -1142,7 +1142,7 @@ namespace flopoco
 						(lastBit->getCycle()==(*it)->getCycle() && lastBit->getCriticalPath(lastBit->getCycle())<(*it)->getCriticalPath((*it)->getCycle()))
 					   )
 #else
-						if(*lastBit<**it)
+					if(*lastBit<**it)
 #endif
 					{
 						lastBit = *it;
@@ -1495,14 +1495,14 @@ namespace flopoco
 			WeightedBit* b = getLatestBit(minWeight, maxWeight-1);
 			//managing the pipeline
 			if(b)
-				{
-					//REPORT(INFO, b->getName());
-					op->setCycle(  b ->getCycle()  );
-					op->setCriticalPath( b->getCriticalPath(op->getCurrentCycle()));
-					op->manageCriticalPath(op->getTarget()->localWireDelay() +
-					                       op->getTarget()->adderDelay(maxWeight-minWeight));
+			{
+				//REPORT(INFO, b->getName());
+				op->setCycle(  b ->getCycle()  );
+				op->setCriticalPath( b->getCriticalPath(op->getCurrentCycle()));
+				op->manageCriticalPath(op->getTarget()->localWireDelay() +
+				                       op->getTarget()->adderDelay(maxWeight-minWeight));
 
-				}
+			}
 
 			string inAdder0Name = join("finalAdderIn0_bh", getGUid());
 			string inAdder1Name = join("finalAdderIn1_bh", getGUid());
