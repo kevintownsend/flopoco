@@ -241,13 +241,13 @@ namespace flopoco {
 			ostringstream name;
 			name <<"IntMultiplier";
 			if(useDSP) 
-				name << "UsingDSP_";
+				name << "_UsingDSP_";
 			else
-				name << "LogicOnly_";
+				name << "_LogicOnly_";
 			name << wXdecl << "_" << wYdecl <<"_" << wOut << "_" << (signedIO?"signed":"unsigned") << "_uid"<<Operator::getNewUId();
 			setName ( name.str() );
 			REPORT(DEBUG, "Building " << name.str() )
-				}
+		}
 
 
 		parentOp=this;
@@ -489,7 +489,7 @@ namespace flopoco {
 			for(int i=0; i<size; i++)
 				multWidths.push_back(multiplierWidth[i]);
 
-			buildAlteraTiling(0, 0 ,wX ,wY ,0 );
+			buildAlteraTiling(0, 0, wX, wY, 0, signedIO, signedIO);
 		}else
 		{
 			// Xilinx here
@@ -824,6 +824,7 @@ namespace flopoco {
 	/** 
 	 * checks against the ratio the given block and adds a DSP or logic
 	*/
+	//FIXME: the use of the ratio is ambiguous 
 	void IntMultiplier::addExtraDSPs(int topX, int topY, int botx, int boty,int wxDSP,int wyDSP)
 	{
 		REPORT(DEBUG, "in addExtraDSPs at sizeX=" << wxDSP << " and sizeY=" << wyDSP << ": topX=" << topX << " topY=" << topY << " botX=" << botx << " botY=" << boty);
@@ -890,50 +891,77 @@ namespace flopoco {
 
 
 
-	/** checks the area usage of 1 dsp according to a given block and ratio(threshold)**/
-	/** ratio(threshold) = says what percentage of 1 DSP area is allowed to be lost**/
+	/** 
+	 * checks the area usage of 1 dsp according to a given block and ratio(threshold)
+	 * 	ratio(threshold) = says what percentage of 1 DSP area is allowed to be lost
+	 **/
+	//FIXME: the unused area of the DSP is not necessarly an isosceles triangle
+	//			in fact, it's not necessarly a triangle
 	bool IntMultiplier::checkThreshold(int topX, int topY, int botX, int botY,int wxDSP,int wyDSP)
 	{
 	
-		REPORT(DEBUG, "in checktreshhold "<<topX<<" "<<topY<<" "<<botX<<" "<<botY);
+		REPORT(DEBUG, "in checktreshhold at coordinates: topX="<<topX<<" topY="<<topY<<" botX="<<botX<<" botY"<<botY);
 		int widthX=(botX-topX);
 		int widthY=(botY-topY);
 		double blockArea;
 		double triangle=0.0;
 		double dspArea=wxDSP*wyDSP;
 
-		//** if the truncation line splits the block, we need to subtract the area of the lost corner**/		
-		//***the triangle is the area which will be lost from the block area***//
-		//**computing the triangle's edge (45degree => area=(edge^2)/2) ***//		
-		int x=topX;
-		int y=topY;
-		
-		while(x+y<wFull-wOut-g)
-			x++;
-		REPORT(DEBUG, "in checkThreshold: blocArea full "<<widthX*widthY << " x= "<<x<<" topX= "<<topX);
-		//computing the triangle's area
-		if(topX+topY<=wFull-wOut-g)
-			triangle=((x-topX)*(x-topX))/2;
-		else
-			triangle=0.0;
-		//REPORT(INFO, "triangle=" << triangle);
-		//the final area which is used
-		blockArea=widthX*widthY-triangle;
-		REPORT(DEBUG, "* blockArea=" << blockArea);
-		//if(( parentOp->getTarget()->getVendor()=="Altera") && 
-		//	((wxDSP >=widthX) || (wyDSP >= widthY)))
-		//	blockArea -= (wxDSP*wyDSP)  (widthX*widthY);		
-		//REPORT(INFO, "**blockArea=" << blockArea);
-		//checking according to ratio/area
-
-		if(blockArea>=(1.0-ratio)*dspArea)
-				return true;
-		else
-				return false;
+		if((wFull == wOut) || (topX+topY > wFull-wOut-g))
+		{
+			int x = widthX>wxDSP ? wxDSP : widthX;
+			int y = widthY>wyDSP ? wyDSP : widthY;
+			
+			blockArea = x*y;
+			//checking according to ratio/area
+			if(blockArea>=(1.0-ratio)*dspArea)
+					return true;
+			else
+					return false;
+		}else
+		{
+			/** 
+			 * if the truncation line splits the block, we need to subtract the area of the lost corner
+			 * the triangle is the area which will be lost from the block area
+			*/
+			//computing the triangle's edge (45degree => area=(edge^2)/2)		
+			int x1, x2;
+			int y1, y2;
+			
+			x1 = (topX < botX-wxDSP) ? topX : botX-wxDSP;
+			y1 = (topY < botY-wyDSP) ? topY : botY-wyDSP;
+			while(x1+y1<wFull-wOut-g)
+				x1++;
+			
+			x2 = (topX < botX-wxDSP) ? topX : botX-wxDSP;
+			y2 = (topY < botY-wyDSP) ? topY : botY-wyDSP;
+			while(x2+y2<wFull-wOut-g)
+				y2++;	
+			
+			blockArea = (widthX>wxDSP ? wxDSP : widthX) * (widthY>wyDSP ? wyDSP : widthY);
+			REPORT(DEBUG, "in checkThreshold: full blocArea=" << blockArea << " x="<<x1<<" topCornerX="<<((topX < botX-wxDSP) ? topX : botX-wxDSP) << " y="<<y2<<" topCornerY="<<((topY < botY-wyDSP) ? topY : botY-wyDSP));
+			
+			//computing the triangle's area
+			if(topX+topY<=wFull-wOut-g)
+				triangle=((x1-((topX < botX-wxDSP) ? topX : botX-wxDSP))*(y2-((topY < botY-wyDSP) ? topY : botY-wyDSP)))/2;
+			else
+				triangle=0.0;
+			
+			//the final area which is used
+			blockArea = blockArea-triangle;
+			REPORT(DEBUG, "in checkThreshold: usable blockArea=" << blockArea);
+			REPORT(DEBUG, "in checkThreshold: dspArea=" << dspArea);
+			
+			//checking according to ratio/area
+			if(blockArea>=(1.0-ratio)*dspArea)
+					return true;
+			else
+					return false;
+		}
 	}
 
 
-
+	/*
 	void IntMultiplier::buildAlteraTiling(int blockTopX, int blockTopY, int blockBottomX, int blockBottomY, int multIndex)
 	{
 		REPORT(DEBUG, "in buildAlteraTiling");
@@ -1065,7 +1093,235 @@ namespace flopoco {
 			buildAlteraTiling(blockTopX, blockTopY, topX+dspSizeX, blockBottomY, newMultIndex);
 		}
 	}
-
+	*/
+	
+	void IntMultiplier::buildAlteraTiling(int blockTopX, int blockTopY, int blockBottomX, int blockBottomY, int multIndex, bool signedX, bool signedY)
+	{
+		int dspSizeX,dspSizeY;
+		int widthX, widthY;
+		int topX, topY, botX, botY;
+		int multWidthsSize = multWidths.size();
+		int newMultIndex = multIndex;
+		bool dspSizeNotFound = true;
+		
+		//set the size of the DSP widths, preliminary
+		dspSizeX = multWidths[multWidthsSize-newMultIndex-1];
+		if(signedX == false)
+			dspSizeX--;
+		dspSizeY = multWidths[multWidthsSize-newMultIndex-1];
+		if(signedY == false)
+			dspSizeY--;
+			
+		//normalize block coordinates
+		if(blockTopX<0)
+			blockTopX = 0;
+		if(blockTopY<0)
+			blockTopY = 0;
+		if(blockBottomX<0)
+			blockBottomX = 0;
+		if(blockBottomY<0)
+			blockBottomY = 0;
+		
+		cout << "-----------Call to buildAlteraTiling, at dspSizeX=" << dspSizeX << " and dspSizeY=" << dspSizeY << " with parameters  - blockTopX=" << blockTopX << " blockTopY=" << blockTopY << " blockBottomX=" << blockBottomX << " blockBottomY=" << blockBottomY << (signedX ? " signed" : " unsigned") << " by " << (signedY ? "signed" : "unsigned") << endl;
+		
+		//search for the largest DSP size that corresponds to the ratio
+		while(dspSizeNotFound)
+		{
+			widthX = (blockBottomX-blockTopX+1)/dspSizeX;
+			widthY = (blockBottomY-blockTopY+1)/dspSizeY;
+			
+			if((widthX==0) && (widthY==0))
+			{
+				//if both DSP dimensions are larger, the DSP block might still fit the ratio
+				if(checkThreshold(blockTopX, blockTopY, blockBottomX, blockBottomY, dspSizeX, dspSizeY))
+				{
+					//ratio fulfilled; search is over
+					dspSizeNotFound = false;
+				}else
+				{
+					//ratio not fulfilled; pass on to the next smaller DSP size
+					if(newMultIndex == multWidthsSize-1)
+					{
+						dspSizeNotFound = false;
+					}else
+					{
+						newMultIndex++;
+					}
+					dspSizeX = multWidths[multWidthsSize-newMultIndex-1];
+					if(signedX == false)
+						dspSizeX--;
+					dspSizeY = multWidths[multWidthsSize-newMultIndex-1];
+					if(signedY == false)
+						dspSizeY--;
+				}
+			}
+			else
+			{
+				//there is one dimension on which the DSP can fit
+				if((widthX<=1) || (widthY<=1))
+				{
+					if(checkThreshold(blockTopX, blockTopY, blockBottomX, blockBottomY, dspSizeX, dspSizeY))
+					{
+						//ratio fulfilled; search is over
+						dspSizeNotFound = false;
+					}else
+					{
+						//ratio not fulfilled; pass on to the next smaller DSP size
+						if(newMultIndex == multWidthsSize-1)
+						{
+							dspSizeNotFound = false;
+						}else
+						{
+							newMultIndex++;
+						}
+						dspSizeX = multWidths[multWidthsSize-newMultIndex-1];
+						if(signedX == false)
+							dspSizeX--;
+						dspSizeY = multWidths[multWidthsSize-newMultIndex-1];
+						if(signedY == false)
+							dspSizeY--;
+					}
+				}else
+				{
+					dspSizeNotFound = false;
+				}
+			}
+		}
+		
+		cout << tab << "DSP sizes set to dspSizeX=" << dspSizeX << " and dspSizeY=" << dspSizeY << endl;
+		
+		if(signedX && signedY)
+		{
+			cout << tab << "Initial call to buildAlteraTiling, with both parameters signed" << endl;
+			
+			//SxS multiplication
+			//	just for the top-index (for both x and y)
+			//the starting point
+			//	what remains to be done: one SxS multiplication in the top corner
+			//							 recursive call on the top line (UxS)
+			//							 recursive call on the right line (SxU)
+			//							 recursive call for the rest of the multiplication (UxU)
+			
+			//top corner, SxS multiplication
+			cout << tab << "adding DSP (signed by signed) at coordinates topX=" << blockBottomX-dspSizeX << " topY=" << blockBottomY-dspSizeY << " botX=" << blockBottomX << " botY=" << blockBottomY << " dspSizeX=" << dspSizeX << " dspSizeY=" << dspSizeY << endl;
+			addExtraDSPs(blockBottomX-dspSizeX, blockBottomY-dspSizeY, blockBottomX, blockBottomY, dspSizeX, dspSizeY);
+			
+			//top line, UxS multiplications where needed, UxU for the rest
+			buildAlteraTiling(blockTopX, blockTopY, blockBottomX-dspSizeX, blockBottomY, newMultIndex, false, true);
+			
+			//right column, SxU multiplication where needed, UxU for the rest
+			buildAlteraTiling(blockBottomX-dspSizeX, blockTopY, blockBottomX, blockBottomY-dspSizeY, newMultIndex, true, false);
+			
+			//rest of the multiplications
+			/* - not needed anymore
+			buildAlteraTiling(blockTopX, blockTopY, blockBottomX-dspSizeX, blockBottomY-dspSizeY, newMultIndex, false, false);
+			*/
+		}else
+		{
+			//SxU, UxS, UxU multiplications - they all share the same structure,
+			//	the only thing that changes being the size of the operands
+			
+			//start tiling
+			topX = (blockBottomX-blockTopX < dspSizeX) ? blockTopX : blockBottomX-dspSizeX;
+			topY = (blockBottomY-blockTopY < dspSizeY) ? blockTopY : blockBottomY-dspSizeY;
+			botX = blockBottomX;
+			botY = blockBottomY;
+			
+			cout << tab << "Original block separated in widthX=" << widthX << " by widthY=" << widthY << " blocks" << endl;
+			
+			//handle the bits that can be processed at the current DSP size
+			for(int i=0; i<(widthY>0 ? widthY : 1); i++)
+			{
+				for(int j=0; j<(widthX>0 ? widthX : 1); j++)
+				{
+					//readjust the sign-ness and the DSP sizes
+					//	only the blocks on the border need to have signed components
+					if((j!=0) && (signedX))
+					{
+						signedX = false;
+						dspSizeX--;
+						
+						topX++;
+					}
+					if((i!=0) && (signedY))
+					{
+						signedY = false;
+						dspSizeY--;
+						
+						topY++;
+					}
+					
+					if(((widthX<=1) && (widthY<=1)) && ((blockBottomX-blockTopX <= dspSizeX) && (blockBottomY-blockTopY <= dspSizeY)))
+					{
+						//special case; the remaining block is less than or equal to a DSP
+						topX = blockTopX;
+						topY = blockTopY;
+						botX = blockBottomX;
+						botY = blockBottomY;
+						
+						cout << tab << "adding DSP (to cover the whole block) at coordinates topX=" << blockTopX << " topY=" << blockTopY << " botX=" << blockBottomX << " botY=" << blockBottomY << " dspSizeX=" << dspSizeX << " dspSizeY=" << dspSizeY << endl;
+						addExtraDSPs(blockTopX, blockTopY, blockBottomX, blockBottomY, dspSizeX, dspSizeY);
+					}else
+					{
+						//the regular case; just add a new DSP
+						if(checkThreshold((topX<0 ? blockTopX : topX), (topY<0 ? blockTopY : topY), (botX<0 ? blockTopX : botX), (botY<0 ? blockTopY : botY), dspSizeX, dspSizeY))
+						{
+							cout << tab << "ratio satisfied - adding DSP at coordinates topX=" << topX << " topY=" << topY << " botX=" << botX << " botY=" << botY << " dspSizeX=" << dspSizeX << " dspSizeY=" << dspSizeY << endl;
+							addExtraDSPs(topX, topY, botX, botY, dspSizeX, dspSizeY);
+						}
+						else
+						{
+							cout << tab << "ratio not satisfied - recursive call at coordinates topX=" << topX << " topY=" << topY << " botX=" << botX << " botY=" << botY << " dspSizeX=" << dspSizeX << " dspSizeY=" << dspSizeY << (signedX ? " signed" : " unsigned") << " by " << (signedY ? "signed" : "unsigned") << endl;
+							if(newMultIndex == multWidthsSize-1)
+							{
+								cout << tab << "size cannot be decreased anymore; will add DSP at this size" << endl;
+								addExtraDSPs(topX, topY, botX, botY, dspSizeX, dspSizeY);
+							}else
+							{
+								newMultIndex++;
+								buildAlteraTiling(topX, topY, botX, botY, newMultIndex, signedX, signedY);
+							}
+						}
+						
+						if((widthX!=0) && (j!=widthX-1))
+						{
+							botX = topX;
+							topX = topX-dspSizeX;
+						}
+					}
+				}
+				
+				//pass on to the next column
+				if((widthY!=0) && (i!=widthY-1))
+				{
+					botX = blockBottomX;
+					botY = topY;
+					topX = (blockBottomX-dspSizeX < blockTopX) ? blockTopX : blockBottomX-dspSizeX;
+					topY = (topY-dspSizeY < blockTopY) ? blockTopY : topY-dspSizeY;
+				}
+			}
+			
+			cout << tab << tab << "last DSP added at topX=" << topX << " topY=" << topY << " botX=" << botX << " botY=" << botY << endl;
+			
+			//handle the bottom leftover bits, if necessary
+			if((topY>0) && (topY != blockTopY))
+			{
+				cout << tab << "handling the bottom leftover bits at coordinates topX=" << topX << " topY=" << blockTopY << " botX=" << blockBottomX << " botY=" << topY << (signedX ? " signed" : " unsigned") << " by " << (signedY ? "signed" : "unsigned") << endl;
+				if(signedY)
+					signedY = false;
+				buildAlteraTiling(topX, blockTopY, blockBottomX, topY, newMultIndex, signedX, signedY);
+			}
+				
+			//handle the left-side leftover bits, if necessary
+			if((topX>0) && (topX != blockTopX))
+			{
+				if(signedX)
+					signedX = false;
+				cout << tab << "handling the left-side leftover bits at coordinates topX=" << blockTopX << " topY=" << blockTopY << " botX=" << topX << " botY=" << blockBottomY << (signedX ? " signed" : " unsigned") << " by " << (signedY ? "signed" : "unsigned")  << endl;
+				buildAlteraTiling(blockTopX, blockTopY, topX, blockBottomY, newMultIndex, signedX, signedY);
+			}
+		}
+	}
 
 
 	void IntMultiplier::buildXilinxTiling()

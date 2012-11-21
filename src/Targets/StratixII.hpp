@@ -21,6 +21,7 @@ namespace flopoco{
 		StratixII() : Target()	{
 			id_						= "StratixII";
 			vendor_					= "Altera";
+			hasFastLogicTernaryAdders_ = true;
 			maxFrequencyMHz_		= 400;
 			sizeOfBlock_			= 4608; 		// the size of a primitive block is 2^9 * 9
 			fastcarryDelay_			= 0.035e-9; 	// aproximately right    
@@ -99,37 +100,37 @@ namespace flopoco{
 		
 		int    getIntMultiplierCost(int wInX, int wInY);
 		long   sizeOfMemoryBlock();
-		DSP*   createDSP(); 
+		DSP*   createDSP();
 		int    getEquivalenceSliceDSP();
 		int    getNumberOfDSPs();
 		void   getDSPWidths(int &x, int &y, bool sign = false);
 		int    getIntNAdderCost(int wIn, int n);
-		int*   getDSPMultiplierWidths(){return multiplierWidth_;};	
-		int    getNrDSPMultiplier(){return nrConfigs_;};	
+		int*   getDSPMultiplierWidths(){return multiplierWidth_;};
+		int    getNrDSPMultiplier(){return nrConfigs_;};
 	private:
 
-		double fastcarryDelay_; 	/**< The delay of the fast carry chain */
-		double lut2lutDelay_;   	/**< The delay between two LUTs */
-		double ffDelay_;   		/**< The delay between two flipflops (not including elemWireDelay_) */
-		double elemWireDelay_;  	/**< The elementary wire dealy (for computing the distant wire delay) */
-		double lutDelay_;       	/**< The LUT delay (in seconds)*/
+		double fastcarryDelay_; 		/**< The delay of the fast carry chain */
+		double lut2lutDelay_;   		/**< The delay between two LUTs */
+		double ffDelay_;   			/**< The delay between two flipflops (not including elemWireDelay_) */
+		double elemWireDelay_;  		/**< The elementary wire dealy (for computing the distant wire delay) */
+		double lutDelay_;       		/**< The LUT delay (in seconds)*/
 	
-		double lut2_;           	/**< The LUT delay for 2 inputs */
-		double lut3_;           	/**< The LUT delay for 3 inputs */
-		double lut4_;           	/**< The LUT delay for 4 inputs */
+		double lut2_;           		/**< The LUT delay for 2 inputs */
+		double lut3_;           		/**< The LUT delay for 3 inputs */
+		double lut4_;           		/**< The LUT delay for 4 inputs */
 		double innerLABcarryDelay_;	/**< The wire delay between the upper and lower parts of a LAB --> R4 & C4 interconnects */	
 		double interLABcarryDelay_;	/**< The approximate wire between two LABs --> R24 & C16 interconnects */	
 		double shareOutToCarryOut_;	/**< The delay between the shared arithmetic out of one LAB and the carry out of the following LAB */	
-		double muxStoO_;		/**< The delay of the MUX right after the 3-LUT of a LAB */	
-		double fdCtoQ_;			/**< The delay of the FlipFlop. Also contains an approximate Net Delay experimentally determined */	
-		double carryInToSumOut_;	/**< The delay between the carry in and the adder outup of one LAB */
-		int    almsPerLab_;		/**< The number of ALMs contained by a LAB */
+		double muxStoO_;				/**< The delay of the MUX right after the 3-LUT of a LAB */	
+		double fdCtoQ_;				/**< The delay of the FlipFlop. Also contains an approximate Net Delay experimentally determined */	
+		double carryInToSumOut_;		/**< The delay between the carry in and the adder outup of one LAB */
+		int    almsPerLab_;				/**< The number of ALMs contained by a LAB */
 	
 		// DSP parameters
-		int 	totalDSPs_;		/**< The total number of DSP blocks available on this target */
-		int	    nrConfigs_;		/**< The number of distinct predefinded multiplier widths */
+		int 	totalDSPs_;				/**< The total number of DSP blocks available on this target */
+		int	    nrConfigs_;				/**< The number of distinct predefinded multiplier widths */
 		int 	multiplierWidth_[3];	/**< The multiplier width available */
-		double 	multiplierDelay_[3];	/**< The corresponding delay for each multiplier width available */
+		double multiplierDelay_[3];	/**< The corresponding delay for each multiplier width available */
 		
 		double RAMDelay_;
 		double RAMToLogicWireDelay_;

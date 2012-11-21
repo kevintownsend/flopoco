@@ -127,7 +127,7 @@ namespace flopoco {
 		 */
 		void buildXilinxTiling();
 
-		void buildAlteraTiling( int blockTopX, int blockTopY, int blockBottomX, int blockBottomY, int dspIndex);
+		void buildAlteraTiling( int blockTopX, int blockTopY, int blockBottomX, int blockBottomY, int dspIndex, bool signedX, bool signedY);
 
 		void buildFancy41x41Tiling();
 
