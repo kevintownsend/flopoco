@@ -960,140 +960,6 @@ namespace flopoco {
 		}
 	}
 
-
-	/*
-	void IntMultiplier::buildAlteraTiling(int blockTopX, int blockTopY, int blockBottomX, int blockBottomY, int multIndex)
-	{
-		REPORT(DEBUG, "in buildAlteraTiling");
-		int dspSizeX,dspSizeY;
-		int size = multWidths.size();
-
-		dspSizeX = multWidths[size-multIndex-1];
-
-		//FIXME-----------
-		if(dspSizeX==12)
-			dspSizeX=9;
-			
-		int sizeLimit;
-		
-		if(signedIO)
-		{
-			sizeLimit=18;
-			dspSizeX=18;
-		}else
-			sizeLimit=9;
-		//---------------
-
-		dspSizeY=dspSizeX;
-		int dsX=dspSizeX;
-		int dsY=dspSizeY;
-
-		int width = blockBottomX-blockTopX+1;
-		int height = blockBottomY-blockTopY+1;
-
-		int verticalDSP = height/dspSizeY;
-		int horizontalDSP = width/dspSizeX;
-		
-		int botX = blockBottomX;
-		int botY = blockBottomY;
-		int topX = botX-dspSizeX;
-		int topY = botY-dspSizeY;
-		
-		if((signedIO) && (botX!=wX))
-			topX++;
-		if((signedIO) && (botY!=wY))
-			topY++;
-		
-		if((verticalDSP == 0) && (height > 0))
-			verticalDSP++;
-		if((horizontalDSP == 0) && (width > 0))
-			horizontalDSP++;
-
-		REPORT(DEBUG,"verticaldsps= "<<verticalDSP<<" hordsps= "<<horizontalDSP);
-		
-		REPORT(DEBUG,"-----------call to buildAlteraTiling, at " << dspSizeX << " with parameters  - blockTopX=" << blockTopX << " blockTopY=" << blockTopY << " blockBottomX=" << blockBottomX << " blockBottomY=" << blockBottomY);
-
-		//handle the whole blocks
-		for(int i=0;i<verticalDSP;i++)
-		{
-			for(int j=0;j<horizontalDSP;j++)
-			{
-				if (topX<0)
-					topX=0;
-				if (topY<0)
-					topY=0;
-
-				if((signedIO) && (botX!=wX))
-					dspSizeX=dsX-1;
-				else
-					dspSizeX=dsX;
-
-				if((signedIO) && (botY!=wY))
-					dspSizeY=dsY-1;
-				else
-					dspSizeY=dsY;
-
-				if(dspSizeX > sizeLimit)
-				{
-					if(checkThreshold(topX, topY, botX, botY, dspSizeX, dspSizeY)
-					   && (min(botY-topY+1,botX-topX+1) >= max(dspSizeX,dspSizeY)))
-					{	
-						if((topX<botX)&&(topY<botY))
-						{
-							addExtraDSPs(topX, topY, botX, botY, dspSizeX, dspSizeY);
-							REPORT(DEBUG," in BuildAlteraTiling, after a call to addExtraDSPs, at " << dspSizeX << " =>  topX=" << topX << " topY=" << topY  << " botX=" << botX << " botY=" << botY << " sizeX="  << botX-topX << " sizeY=" << botY - topY);
-						}
-					}
-					else
-					{
-						REPORT(DEBUG,"decreased the size of the dsp block from " << multWidths[size-multIndex-1] << " to " << multWidths[size-multIndex-2]);
-						buildAlteraTiling(topX, topY, botX, botY, multIndex+1);
-					}
-				}
-				else
-				{
-		
-					if((topX<botX)&&(topY<botY))
-					{
-						REPORT(DEBUG, " in BuildAlteraTiling, at " << dspSizeX << " =>  topX=" << topX << " topY=" << topY  << " botX=" << botX << " botY=" << botY << " horizontalSize="  << botX-topX << " verticalSize=" << botY - topY );						
-						addExtraDSPs(topX, topY, botX, botY, dspSizeX, dspSizeY);
-					}
-				}
-
-				botX = topX;
-
-				
-				if((signedIO) && (botX!=wX))
-					dspSizeX=dsX-1;
-				else
-					dspSizeX=dsX;	
-
-				if((signedIO) && (botY!=wY))
-					dspSizeY=dsY-1;
-				else
-					dspSizeY=dsY;
-				
-				topX = topX-dspSizeX;
-			}
-		}
-		
-		//handle the leftover bits
-		int newMultIndex = (multIndex < (int)multWidths.size()-1) ? multIndex+1 : multIndex;
-		
-		if((topY != 0) && (topY != blockTopY))
-		{
-			REPORT(DEBUG,"handling bottom leftover bits topX=" << topX << " topY=" << topY << " botX=" << botX << " botX=" << botX);
-			REPORT(DEBUG,"	calling buildAlteraTiling for bottom leftover bits - topX=" << topX+dspSizeX << " topY=" << blockTopY << " botX=" << blockBottomX << " botY=" << topY << " dspSize=" << multWidths[multWidths.size()-1-newMultIndex]);
-			buildAlteraTiling(topX+dspSizeX, blockTopY, blockBottomX, topY, newMultIndex);
-		}
-		if(topX+dspSizeX != blockTopX)
-		{
-			REPORT(DEBUG,"handling left leftover bits topX=" << topX << " topY=" << topY << " botX=" << botX << " botX=" << botX);
-			REPORT(DEBUG," calling buildAlteraTiling for left side leftover bits - topX=" << blockTopX << " topY=" << blockTopY<< " botX=" << topX+dspSizeX << " botY=" << blockBottomY);
-			buildAlteraTiling(blockTopX, blockTopY, topX+dspSizeX, blockBottomY, newMultIndex);
-		}
-	}
-	*/
 	
 	void IntMultiplier::buildAlteraTiling(int blockTopX, int blockTopY, int blockBottomX, int blockBottomY, int multIndex, bool signedX, bool signedY)
 	{
@@ -1103,6 +969,8 @@ namespace flopoco {
 		int multWidthsSize = multWidths.size();
 		int newMultIndex = multIndex;
 		bool dspSizeNotFound = true;
+		bool originalSignedX = signedX;
+		bool originalSignedY = signedY;
 		
 		//set the size of the DSP widths, preliminary
 		dspSizeX = multWidths[multWidthsSize-newMultIndex-1];
@@ -1124,11 +992,14 @@ namespace flopoco {
 		
 		cout << "-----------Call to buildAlteraTiling, at dspSizeX=" << dspSizeX << " and dspSizeY=" << dspSizeY << " with parameters  - blockTopX=" << blockTopX << " blockTopY=" << blockTopY << " blockBottomX=" << blockBottomX << " blockBottomY=" << blockBottomY << (signedX ? " signed" : " unsigned") << " by " << (signedY ? "signed" : "unsigned") << endl;
 		
+		cout << tab << "Testing the best DSP size" << endl;
 		//search for the largest DSP size that corresponds to the ratio
 		while(dspSizeNotFound)
 		{
 			widthX = (blockBottomX-blockTopX+1)/dspSizeX;
 			widthY = (blockBottomY-blockTopY+1)/dspSizeY;
+			
+			cout << tab << tab << "at dspSizeX=" << dspSizeX << " dspSizeY=" << dspSizeY << " and widthX=" << widthX << " widthY=" << widthY << endl;
 			
 			if((widthX==0) && (widthY==0))
 			{
@@ -1160,7 +1031,10 @@ namespace flopoco {
 				//there is one dimension on which the DSP can fit
 				if((widthX<=1) || (widthY<=1))
 				{
-					if(checkThreshold(blockTopX, blockTopY, blockBottomX, blockBottomY, dspSizeX, dspSizeY))
+					int tx = ((widthX==0 && widthY==0) ? blockTopX : blockBottomX-dspSizeX), ty = ((widthX==0 && widthY==0) ? blockTopY : blockBottomY-dspSizeY);
+					int bx = blockBottomX, by = blockBottomY;
+					
+					if(checkThreshold(tx, ty, bx, by, dspSizeX, dspSizeY))
 					{
 						//ratio fulfilled; search is over
 						dspSizeNotFound = false;
@@ -1210,12 +1084,8 @@ namespace flopoco {
 			buildAlteraTiling(blockTopX, blockTopY, blockBottomX-dspSizeX, blockBottomY, newMultIndex, false, true);
 			
 			//right column, SxU multiplication where needed, UxU for the rest
+			//FIXME: conditions for sign are not true -> needs to be signed on the bottom part
 			buildAlteraTiling(blockBottomX-dspSizeX, blockTopY, blockBottomX, blockBottomY-dspSizeY, newMultIndex, true, false);
-			
-			//rest of the multiplications
-			/* - not needed anymore
-			buildAlteraTiling(blockTopX, blockTopY, blockBottomX-dspSizeX, blockBottomY-dspSizeY, newMultIndex, false, false);
-			*/
 		}else
 		{
 			//SxU, UxS, UxU multiplications - they all share the same structure,
@@ -1243,12 +1113,32 @@ namespace flopoco {
 						
 						topX++;
 					}
+					if((j==0) && (originalSignedX) && (i!=0))
+					{
+						signedX = originalSignedX;
+						dspSizeX++;
+						
+						topX--;
+					}
+					
 					if((i!=0) && (signedY))
 					{
 						signedY = false;
 						dspSizeY--;
 						
 						topY++;
+					}
+					
+					//if the whole DSP is outside the range of interest
+					if((topX+topY<wFull-wOut-g) && (botX+botY<wFull-wOut-g))
+					{
+						if((widthX!=0) && (j!=widthX-1))
+						{
+							botX = topX;
+							topX = topX-dspSizeX;
+						}
+						cout << tab << tab << "adding DSP skipped (out of range of interest) at coordinates topX=" << blockTopX << " topY=" << blockTopY << " botX=" << blockBottomX << " botY=" << blockBottomY << " dspSizeX=" << dspSizeX << " dspSizeY=" << dspSizeY << endl;
+						continue;						
 					}
 					
 					if(((widthX<=1) && (widthY<=1)) && ((blockBottomX-blockTopX <= dspSizeX) && (blockBottomY-blockTopY <= dspSizeY)))
@@ -1259,27 +1149,27 @@ namespace flopoco {
 						botX = blockBottomX;
 						botY = blockBottomY;
 						
-						cout << tab << "adding DSP (to cover the whole block) at coordinates topX=" << blockTopX << " topY=" << blockTopY << " botX=" << blockBottomX << " botY=" << blockBottomY << " dspSizeX=" << dspSizeX << " dspSizeY=" << dspSizeY << endl;
+						cout << tab << tab << "adding DSP (to cover the whole block) at coordinates topX=" << blockTopX << " topY=" << blockTopY << " botX=" << blockBottomX << " botY=" << blockBottomY << " dspSizeX=" << dspSizeX << " dspSizeY=" << dspSizeY << endl;
 						addExtraDSPs(blockTopX, blockTopY, blockBottomX, blockBottomY, dspSizeX, dspSizeY);
 					}else
 					{
 						//the regular case; just add a new DSP
 						if(checkThreshold((topX<0 ? blockTopX : topX), (topY<0 ? blockTopY : topY), (botX<0 ? blockTopX : botX), (botY<0 ? blockTopY : botY), dspSizeX, dspSizeY))
 						{
-							cout << tab << "ratio satisfied - adding DSP at coordinates topX=" << topX << " topY=" << topY << " botX=" << botX << " botY=" << botY << " dspSizeX=" << dspSizeX << " dspSizeY=" << dspSizeY << endl;
+							cout << tab << tab << "ratio satisfied - adding DSP at coordinates topX=" << topX << " topY=" << topY << " botX=" << botX << " botY=" << botY << " dspSizeX=" << dspSizeX << " dspSizeY=" << dspSizeY << endl;
 							addExtraDSPs(topX, topY, botX, botY, dspSizeX, dspSizeY);
 						}
 						else
 						{
-							cout << tab << "ratio not satisfied - recursive call at coordinates topX=" << topX << " topY=" << topY << " botX=" << botX << " botY=" << botY << " dspSizeX=" << dspSizeX << " dspSizeY=" << dspSizeY << (signedX ? " signed" : " unsigned") << " by " << (signedY ? "signed" : "unsigned") << endl;
+							cout << tab << tab << "ratio not satisfied - recursive call at coordinates topX=" << topX << " topY=" << topY << " botX=" << botX << " botY=" << botY << " dspSizeX=" << dspSizeX << " dspSizeY=" << dspSizeY << (signedX ? " signed" : " unsigned") << " by " << (signedY ? "signed" : "unsigned") << endl;
 							if(newMultIndex == multWidthsSize-1)
 							{
-								cout << tab << "size cannot be decreased anymore; will add DSP at this size" << endl;
+								cout << tab << tab << tab << "size cannot be decreased anymore; will add DSP at this size" << endl;
 								addExtraDSPs(topX, topY, botX, botY, dspSizeX, dspSizeY);
 							}else
 							{
-								newMultIndex++;
-								buildAlteraTiling(topX, topY, botX, botY, newMultIndex, signedX, signedY);
+								cout << tab << tab << tab << "size can be decreased still" << endl;
+								buildAlteraTiling(topX, topY, botX, botY, newMultIndex+1, signedX, signedY);
 							}
 						}
 						
@@ -1301,25 +1191,23 @@ namespace flopoco {
 				}
 			}
 			
-			cout << tab << tab << "last DSP added at topX=" << topX << " topY=" << topY << " botX=" << botX << " botY=" << botY << endl;
+			cout << tab << tab << tab << "last DSP added at topX=" << topX << " topY=" << topY << " botX=" << botX << " botY=" << botY << endl;
 			
 			//handle the bottom leftover bits, if necessary
 			if((topY>0) && (topY != blockTopY))
 			{
-				cout << tab << "handling the bottom leftover bits at coordinates topX=" << topX << " topY=" << blockTopY << " botX=" << blockBottomX << " botY=" << topY << (signedX ? " signed" : " unsigned") << " by " << (signedY ? "signed" : "unsigned") << endl;
-				if(signedY)
-					signedY = false;
-				buildAlteraTiling(topX, blockTopY, blockBottomX, topY, newMultIndex, signedX, signedY);
+				cout << tab << tab << "handling the bottom leftover bits at coordinates topX=" << topX << " topY=" << blockTopY << " botX=" << blockBottomX << " botY=" << topY << (signedX ? " signed" : " unsigned") << " by " << (signedY ? "signed" : "unsigned") << endl;
+				buildAlteraTiling(topX, blockTopY, blockBottomX, topY, newMultIndex, originalSignedX, false);
 			}
 				
 			//handle the left-side leftover bits, if necessary
 			if((topX>0) && (topX != blockTopX))
 			{
-				if(signedX)
-					signedX = false;
-				cout << tab << "handling the left-side leftover bits at coordinates topX=" << blockTopX << " topY=" << blockTopY << " botX=" << topX << " botY=" << blockBottomY << (signedX ? " signed" : " unsigned") << " by " << (signedY ? "signed" : "unsigned")  << endl;
-				buildAlteraTiling(blockTopX, blockTopY, topX, blockBottomY, newMultIndex, signedX, signedY);
+				cout << tab << tab << "handling the left-side leftover bits at coordinates topX=" << blockTopX << " topY=" << blockTopY << " botX=" << topX << " botY=" << blockBottomY << (signedX ? " signed" : " unsigned") << " by " << (signedY ? "signed" : "unsigned")  << endl;
+				buildAlteraTiling(blockTopX, blockTopY, topX, blockBottomY, newMultIndex, false, originalSignedY);
 			}
+			
+			cout << "-----------End of call to buildAlteraTiling, at dspSizeX=" << dspSizeX << " and dspSizeY=" << dspSizeY << " with parameters  - blockTopX=" << blockTopX << " blockTopY=" << blockTopY << " blockBottomX=" << blockBottomX << " blockBottomY=" << blockBottomY << (originalSignedX ? " signed" : " unsigned") << " by " << (originalSignedY ? "signed" : "unsigned") << endl;
 		}
 	}
 
