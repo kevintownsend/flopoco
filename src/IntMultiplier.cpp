@@ -897,6 +897,7 @@ namespace flopoco {
 	 **/
 	//FIXME: the unused area of the DSP is not necessarly an isosceles triangle
 	//			in fact, it's not necessarly a triangle
+	/*
 	bool IntMultiplier::checkThreshold(int topX, int topY, int botX, int botY,int wxDSP,int wyDSP)
 	{
 	
@@ -920,10 +921,9 @@ namespace flopoco {
 					return false;
 		}else
 		{
-			/** 
-			 * if the truncation line splits the block, we need to subtract the area of the lost corner
-			 * the triangle is the area which will be lost from the block area
-			*/
+			// if the truncation line splits the block, we need to subtract the area of the lost corner
+			// the triangle is the area which will be lost from the block area
+			
 			//computing the triangle's edge (45degree => area=(edge^2)/2)		
 			int x1, x2;
 			int y1, y2;
@@ -958,6 +958,136 @@ namespace flopoco {
 			else
 					return false;
 		}
+	}
+	*/
+	
+	/** 
+	 * Checks the area usage of a DSP, according to a given block and ratio(threshold)
+	 * 		- ratio(threshold) = says what percentage of 1 DSP area is allowed to be lost
+	 * Algorithm: compute the area which is used out of a DSP, and compute 
+	 * the unused ratio from this. The used area can be a triangle, a trapeze or 
+	 * a pentagon, in the truncated case, or a rectangle in the case of a full 
+	 * multiplier.
+	 **/
+	bool IntMultiplier::checkThreshold(int topX, int topY, int botX, int botY,int wxDSP,int wyDSP)
+	{
+		REPORT(DEBUG, "in checktreshhold at coordinates: topX="<<topX<<" topY="<<topY<<" botX="<<botX<<" botY"<<botY);
+		
+		double intersectRightX, intersectRightY, intersectTopX, intersectTopY, intersectBottomX, intersectBottomY, intersectLeftX, intersectLeftY;
+		double intersectX1, intersectY1, intersectX2, intersectY2;
+		int aTopEdge, bTopEdge, cTopEdge, aBottomEdge, bBottomEdge, cBottomEdge, aRightEdge, bRightEdge, cRightEdge, aLeftEdge, bLeftEdge, cLeftEdge;
+		int aTruncLine, bTruncLine, cTruncLine;
+		double usefulDSPArea, totalDSPArea;
+		
+		//if the truncation line passes above the top on the DSP
+		if((wFull == wOut) || (topX+topY > wFull-wOut-g))
+		{
+			int x = topX>botX-wxDSP ? topX : botX-wxDSP;
+			int y = topY>botY-wyDSP ? topY : botY-wyDSP;
+			
+			usefulDSPArea = 1.0 * x*y;
+			totalDSPArea = wxDSP*wyDSP;
+			
+			REPORT(DEBUG, "in checkThreshold: full multiplication case");
+			REPORT(DEBUG, "in checkThreshold: usable blockArea=" << usefulDSPArea);
+			REPORT(DEBUG, "in checkThreshold: dspArea=" << totalDSPArea);
+			
+			//checking according to ratio/area
+			if(usefulDSPArea >= (1.0-ratio)*totalDSPArea)
+					return true;
+			else
+					return false;
+		}
+		
+		// equations of the lines which bound the area to be paved
+		// line equation: Ax + By + C = 0
+		// A=y1-y2, B=x2-x1, C=x1y2-y1x2
+		aTopEdge = 0;		//top edge
+		bTopEdge = 1;
+		cTopEdge = -(topY>botY-wyDSP ? topY : botY-wyDSP);
+		
+		aBottomEdge = 0;		//bottom edge
+		bBottomEdge = 1;
+		cBottomEdge = -botY;
+		
+		aLeftEdge = 1;		//left edge
+		bLeftEdge = 0;
+		cLeftEdge = -botX;
+		
+		aRightEdge = 1;		//right edge
+		bRightEdge = 0;
+		cRightEdge = -(topX>botX-wxDSP ? topX : botX-wxDSP);
+		
+		//equation of truncation line - given by the 2 points (wX-g, 0) and (0, wY-g)
+		aTruncLine = g-wY;
+		bTruncLine = g-wX;
+		cTruncLine = (wX-g)*(wY-g);
+		
+		//first, assume that the truncated part is a triangle
+		//	then, the two intersections are with the left and bottom edge
+		
+		//the left edge intersected with the truncation line
+		intersectLeftX = 1.0 * (bLeftEdge*cTruncLine - bTruncLine*cLeftEdge) / (aLeftEdge*bTruncLine - aTruncLine*bLeftEdge);
+		intersectLeftY = 1.0 * (aTruncLine*cLeftEdge - aLeftEdge*cTruncLine) / (aLeftEdge*bTruncLine - aTruncLine*bLeftEdge);
+		
+		//the bottom edge intersected with the truncation line
+		intersectBottomX = 1.0 * (bBottomEdge*cTruncLine - bTruncLine*cBottomEdge) / (aBottomEdge*bTruncLine - aTruncLine*bBottomEdge);
+		intersectBottomY = 1.0 * (aTruncLine*cBottomEdge - aBottomEdge*cTruncLine) / (aBottomEdge*bTruncLine - aTruncLine*bBottomEdge);
+		
+		//check to see if the intersection points are inside the target square
+		//	intersectLeft should be above the top edge
+		//	intersectBottom should be to the right of right edge
+		
+		//check intersectLeft
+		if(intersectLeftX*aTopEdge + intersectLeftY*bTopEdge + cTopEdge < 0)
+		{
+			//then the intersection is the one between the truncation line and 
+			//	the top edge
+			intersectTopX = 1.0 * (bTopEdge*cTruncLine - bTruncLine*cTopEdge) / (aTopEdge*bTruncLine - aTruncLine*bTopEdge);
+			intersectTopY = 1.0 * (aTruncLine*cTopEdge - aTopEdge*cTruncLine) / (aTopEdge*bTruncLine - aTruncLine*bTopEdge);
+			
+			intersectX1 = intersectTopX;
+			intersectY1 = intersectTopY;
+		}else
+		{
+			intersectX1 = intersectLeftX;
+			intersectY1 = intersectLeftY;
+		}
+		
+		//check intersectBottom
+		if(intersectBottomX*aRightEdge + intersectBottomY*bRightEdge + cRightEdge < 0)
+		{
+			//then the intersection is the one between the truncation line and 
+			//	the right edge
+			intersectRightX = 1.0 * (bRightEdge*cTruncLine - bTruncLine*cRightEdge) / (aRightEdge*bTruncLine - aTruncLine*bRightEdge);
+			intersectRightY = 1.0 * (aTruncLine*cRightEdge - aRightEdge*cTruncLine) / (aRightEdge*bTruncLine - aTruncLine*bRightEdge);
+			
+			intersectX2 = intersectRightX;
+			intersectY2 = intersectRightY;
+		}else
+		{
+			intersectX2 = intersectBottomX;
+			intersectY2 = intersectBottomY;
+		}
+		
+		//renormalize the intersection points' coordinates
+		intersectX1 = intersectX1<topX ? topX : intersectX1;
+		intersectY2 = intersectY2<topY ? topY : intersectY2;
+		
+		//compute the useful DSP area
+		usefulDSPArea = ((1.0*botX-intersectX1 + 1.0*botX-intersectX2)*(intersectY2-intersectY1)/2.0) + (1.0*botY-intersectY2)*(botX-intersectX2);
+		totalDSPArea = wxDSP*wyDSP;
+		
+		REPORT(DEBUG, "in checkThreshold: truncated multiplication case");
+		REPORT(DEBUG, "in checkThreshold: usable blockArea=" << usefulDSPArea);
+		REPORT(DEBUG, "in checkThreshold: dspArea=" << totalDSPArea);
+		REPORT(DEBUG, "in checkThreshold: intersectX1=" << intersectX1 << " intersectY1=" << intersectY1 << " intersectX2=" << intersectX2 << " intersectY2=" << intersectY2);
+		
+		//test if the DSP ratio is satisfied
+		if(usefulDSPArea >= (1.0-ratio)*totalDSPArea)
+				return true;
+		else
+				return false;
 	}
 
 	
@@ -1031,10 +1161,11 @@ namespace flopoco {
 				//there is one dimension on which the DSP can fit
 				if((widthX<=1) || (widthY<=1))
 				{
-					int tx = ((widthX==0 && widthY==0) ? blockTopX : blockBottomX-dspSizeX), ty = ((widthX==0 && widthY==0) ? blockTopY : blockBottomY-dspSizeY);
+					int tx = ((widthX==0 || widthY==0) ? blockBottomX-dspSizeX : blockTopX), ty = ((widthX==0 || widthY==0) ? blockBottomY-dspSizeY : blockTopY);
 					int bx = blockBottomX, by = blockBottomY;
 					
-					if(checkThreshold(tx, ty, bx, by, dspSizeX, dspSizeY))
+					//if(checkThreshold(tx, ty, bx, by, dspSizeX, dspSizeY))
+					if(checkThreshold((tx<blockTopX ? blockTopX : tx), (ty<blockTopY ? blockTopY : ty), bx, by, dspSizeX, dspSizeY))
 					{
 						//ratio fulfilled; search is over
 						dspSizeNotFound = false;
@@ -1113,7 +1244,7 @@ namespace flopoco {
 						
 						topX++;
 					}
-					if((j==0) && (originalSignedX) && (i!=0))
+					if((widthX>1) && (j==0) && (originalSignedX) && (i!=0))
 					{
 						signedX = originalSignedX;
 						dspSizeX++;
@@ -1165,7 +1296,19 @@ namespace flopoco {
 							if(newMultIndex == multWidthsSize-1)
 							{
 								cout << tab << tab << tab << "size cannot be decreased anymore; will add DSP at this size" << endl;
-								addExtraDSPs(topX, topY, botX, botY, dspSizeX, dspSizeY);
+								if((topX+topY<wFull-wOut-g) && (botX+botY<wFull-wOut-g))
+								{
+									if((widthX!=0) && (j!=widthX-1))
+									{
+										botX = topX;
+										topX = topX-dspSizeX;
+									}
+									cout << tab << tab << "adding DSP skipped (out of range of interest) at coordinates topX=" << blockTopX << " topY=" << blockTopY << " botX=" << blockBottomX << " botY=" << blockBottomY << " dspSizeX=" << dspSizeX << " dspSizeY=" << dspSizeY << endl;
+									continue;						
+								}else
+								{
+									addExtraDSPs(topX, topY, botX, botY, dspSizeX, dspSizeY);
+								}
 							}else
 							{
 								cout << tab << tab << tab << "size can be decreased still" << endl;
@@ -1197,14 +1340,26 @@ namespace flopoco {
 			if((topY>0) && (topY != blockTopY))
 			{
 				cout << tab << tab << "handling the bottom leftover bits at coordinates topX=" << topX << " topY=" << blockTopY << " botX=" << blockBottomX << " botY=" << topY << (signedX ? " signed" : " unsigned") << " by " << (signedY ? "signed" : "unsigned") << endl;
-				buildAlteraTiling(topX, blockTopY, blockBottomX, topY, newMultIndex, originalSignedX, false);
+				if((topX+topY<wFull-wOut-g) && (botX+botY<wFull-wOut-g))
+				{
+					cout << tab << tab << tab << "adding DSP skipped (out of range of interest) at coordinates topX=" << blockTopX << " topY=" << blockTopY << " botX=" << blockBottomX << " botY=" << blockBottomY << " dspSizeX=" << dspSizeX << " dspSizeY=" << dspSizeY << endl;
+				}else
+				{
+					buildAlteraTiling(topX, blockTopY, blockBottomX, topY, newMultIndex, originalSignedX, false);
+				}
 			}
 				
 			//handle the left-side leftover bits, if necessary
 			if((topX>0) && (topX != blockTopX))
 			{
 				cout << tab << tab << "handling the left-side leftover bits at coordinates topX=" << blockTopX << " topY=" << blockTopY << " botX=" << topX << " botY=" << blockBottomY << (signedX ? " signed" : " unsigned") << " by " << (signedY ? "signed" : "unsigned")  << endl;
-				buildAlteraTiling(blockTopX, blockTopY, topX, blockBottomY, newMultIndex, false, originalSignedY);
+				if((topX+topY<wFull-wOut-g) && (botX+botY<wFull-wOut-g))
+				{
+					cout << tab << tab << tab << "adding DSP skipped (out of range of interest) at coordinates topX=" << blockTopX << " topY=" << blockTopY << " botX=" << blockBottomX << " botY=" << blockBottomY << " dspSizeX=" << dspSizeX << " dspSizeY=" << dspSizeY << endl;
+				}else
+				{
+					buildAlteraTiling(blockTopX, blockTopY, topX, blockBottomY, newMultIndex, false, originalSignedY);
+				}
 			}
 			
 			cout << "-----------End of call to buildAlteraTiling, at dspSizeX=" << dspSizeX << " and dspSizeY=" << dspSizeY << " with parameters  - blockTopX=" << blockTopX << " blockTopY=" << blockTopY << " blockBottomX=" << blockBottomX << " blockBottomY=" << blockBottomY << (originalSignedX ? " signed" : " unsigned") << " by " << (originalSignedY ? "signed" : "unsigned") << endl;
