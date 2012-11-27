@@ -17,21 +17,23 @@ All rights reserved.
 #define __PLOTTER_HPP
 
 #include <vector>
-#include <sstream>
-#include <algorithm>
+#include <list>
+#include <iostream>
+#include <fstream>
+
+#include "BitHeap.hpp"
 #include "WeightedBit.hpp"
 #include "IntMultipliers/MultiplierBlock.hpp"
-//#include "BitHeap.hpp"
 
 
 namespace flopoco
 {
 
-	class BitHeap;
-
 	class Plotter
 	{
 
+	public:
+	
 		class Snapshot
 		{
 			public:
@@ -42,7 +44,17 @@ namespace flopoco
 				~Snapshot(){};
 
 				/** ordering by availability time */
-				bool operator< (const Snapshot& b); 
+				friend bool operator< (Snapshot& b1, Snapshot& b2);
+				/** ordering by availability time */
+				friend bool operator<= (Snapshot& b1, Snapshot& b2);
+				/** ordering by availability time */
+				friend bool operator== (Snapshot& b1, Snapshot& b2);
+				/** ordering by availability time */
+				friend bool operator!= (Snapshot& b1, Snapshot& b2);
+				/** ordering by availability time */
+				friend bool operator> (Snapshot& b1, Snapshot& b2);
+				/** ordering by availability time */
+				friend bool operator>= (Snapshot& b1, Snapshot& b2);
 
 				//unsigned getMaxHeight();
 
@@ -54,26 +66,31 @@ namespace flopoco
 				int cycle;
 				double cp;
 				string srcFileName;
-
 		};
-
-		public:
-
-		/** constructor */
+		
+		/** 
+		 * constructor 
+		 */
 		Plotter(BitHeap* bh_);
 
-		/** destructor */
+		/** 
+		 * destructor 
+		 */
 		~Plotter();
 
-
-
-		/** takes a snapshot of the bitheap's current state */
+		/** 
+		 * takes a snapshot of the bitheap's current state 
+		 */
 		void heapSnapshot(bool compress, int cycle, double cp);
 
-		/** plots all the bitheap's stages */
+		/** 
+		 * plots all the bitheap's stages 
+		 */
 		void plotBitHeap();
 
-		/** plots multiplier area and lozenge views */
+		/** 
+		 * plots multiplier area and sheared views 
+		 */
 		void plotMultiplierConfiguration(string name, vector<MultiplierBlock*> mulBlocks, int wX, int wY, int wOut, int g);
 
 		void setBitHeap(BitHeap* bh_);
@@ -81,39 +98,50 @@ namespace flopoco
 		void addSmallMult(int topX, int topY, int dx, int dy);
 
 
-
-
 		stringstream ss;
 
 
-		private:
-		/** draws the initial bitheap */
+	private:
+	
+		/** 
+		 * draws the initial bitheap 
+		 */
 		void drawInitialHeap();
 
-		/** draws the stages of the heap compression */
+		/** 
+		 * draws the stages of the heap compression 
+		 */
 		void drawCompressionHeap();
 
-		/** draws an area view of the DSP configuration */
+		/** 
+		 * draws the area view of the DSP configuration 
+		 */
 		void drawAreaView(string name, vector<MultiplierBlock*> mulBlocks, int wX, int wY, int wOut, int g);
 
-		/** draws a lozenge view of the DSP configuration */
+		/** 
+		 * draws the sheared view of the DSP configuration 
+		 */
 		void drawLozengeView(string name, vector<MultiplierBlock*> mulBlocks, int wX, int wY, int wOut, int g);
 
-		/** draws a line between the specified coordinates */
+		/** 
+		 * draws a line between the specified coordinates 
+		 */
 		void drawLine(int wX, int wY, int wRez, int offsetX, int offsetY, int scalingFactor, bool isRectangle);
 
-		/** draws a DSP block */
+		/** 
+		 * draws a DSP block 
+		 */
 		void drawDSP(int wXY,  int wY, int i, int xT, int yT, int xB, int yB, int offsetX, int offsetY, int scalingFactor,  bool isRectangle);
 
-		/** draws the target rectangle or lozenge */
+		/** 
+		 * draws the target rectangle or lozenge 
+		 */
 		void drawTargetFigure(int wX, int wY, int offsetX, int offsetY, int scalingFactor, bool isRectangle);
 
-		/** draws a small multiplier table */
+		/** 
+		 * draws a small multiplier table 
+		 */
 		void drawSmallMult(int wX, int wY, int xT, int yT, int xB, int yB, int offsetX, int offsetY, int scalingFactor,  bool isRectangle);
-
-		void drawLittleClock(int x, int y, int cyclenumber, int currentcycle, int stageNumber, int currentStage);
-
-		string romanNumber(int i);
 
 		void initializeHeapPlotting(bool isInitial);
 
@@ -122,8 +150,9 @@ namespace flopoco
 		void drawConfiguration(vector<list<WeightedBit*> > bits, unsigned nr, int cycle, double cp, 
 				int maxWeight, int offsetY, int turnaroundX, bool timeCondition);
 
-
-		/** draws a single bit */
+		/** 
+		 * draws a single bit 
+		 */
 		void drawBit(int cnt, int w, int turnaroundX, int offsetY, int color, int cycle, int cp, string name);
 
 		void addECMAFunction();
@@ -146,8 +175,6 @@ namespace flopoco
 		double elementaryTime;
 
 		BitHeap* bh;
-
-
 	};
 }
 
