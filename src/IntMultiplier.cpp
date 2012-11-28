@@ -1214,6 +1214,11 @@ namespace flopoco {
 			//							 recursive call on the right line (SxU)
 			//							 recursive call for the rest of the multiplication (UxU)
 			
+			
+			/*
+			 * First version: sign is handled in the DSPs
+			 */
+			
 			//top corner, SxS multiplication
 			cout << tab << "adding DSP (signed by signed) at coordinates topX=" << blockBottomX-dspSizeX << " topY=" << blockBottomY-dspSizeY << " botX=" << blockBottomX << " botY=" << blockBottomY << " dspSizeX=" << dspSizeX << " dspSizeY=" << dspSizeY << endl;
 			addExtraDSPs(blockBottomX-dspSizeX, blockBottomY-dspSizeY, blockBottomX, blockBottomY, dspSizeX, dspSizeY);
@@ -1224,6 +1229,25 @@ namespace flopoco {
 			//right column, SxU multiplication where needed, UxU for the rest
 			//FIXME: conditions for sign are not true -> needs to be signed on the bottom part
 			buildAlteraTiling(blockBottomX-dspSizeX, blockTopY, blockBottomX, blockBottomY-dspSizeY, newMultIndex, true, false);
+			
+			
+			
+			/*
+			 * Second version: sign is handled separately
+			 */
+			/*
+			//handle top line
+			//		for now just call the buildHeapLogicOnly function which should handle the rest of the work
+			buildHeapLogicOnly(blockTopX, blockBottomY-1, blockBottomX, blockBottomY, parentOp->getNewUId());
+			 
+			//handle right column
+			//		for now just call the buildHeapLogicOnly function which should handle the rest of the work
+			buildHeapLogicOnly(blockBottomX-1, blockTopY, blockBottomX, blockBottomY-1, parentOp->getNewUId());
+			 
+			//handle the rest of the multiplication
+			//	the remaining part is UxU
+			buildAlteraTiling(blockTopX, blockTopY, blockBottomX-1, blockBottomY-1, newMultIndex, false, false);
+			*/
 		}else
 		{
 			//SxU, UxS, UxU multiplications - they all share the same structure,
