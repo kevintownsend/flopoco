@@ -502,6 +502,12 @@ namespace flopoco{
 		tcl->add(tc);
 
 		tc = new TestCase(this); 
+		tc->addFPInput("X", 2.0);
+		tc->addFPInput("Y", -2.0);
+		emulate(tc);
+		tcl->add(tc);
+
+		tc = new TestCase(this); 
 		tc->addFPInput("X", 1.0);
 		tc->addFPInput("Y", FPNumber::plusDirtyZero);
 		emulate(tc);

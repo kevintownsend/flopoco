@@ -17,6 +17,7 @@
 #include "FPExp.hpp"
 #include "FPLog.hpp"
 #include "FPSqrtPoly.hpp"
+#include "FPDiv.hpp"
 #include "FPSqrt.hpp"
 #include "ConstMult/FPRealKCM.hpp"
 #include "ConstMult/FPConstMult.hpp"
