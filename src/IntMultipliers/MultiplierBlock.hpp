@@ -1,5 +1,6 @@
 #ifndef MultiplierBlock_HPP
 #define MultiplierBlock_HPP
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "../Operator.hpp"

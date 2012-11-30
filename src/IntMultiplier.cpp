@@ -879,7 +879,7 @@ namespace flopoco {
 			localSplitVector.push_back(m);
 			bitHeap->addMultiplierBlock(m);
 			
-			REPORT(DEBUG, "in addExtraDSPs, adding a multiplier block of size wxDSP=" << wxDSP << " and wyDSP=" << wyDSP << ": topX=" << topx << " topY=" << topy << " weightShift=" << weightShift);
+			REPORT(DEBUG, "in addExtraDSPs, adding a multiplier block of size wxDSP=" << wxDSP << " and wyDSP=" << wyDSP << ": topX=" << topx << " topY=" << topy << " weightShift=" << weightShift << " weight=" << m->getWeight());
 		}
 		else
 		{
