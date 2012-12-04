@@ -18,39 +18,39 @@ namespace flopoco{
 	public:
 		/** The default constructor. */  
 		Virtex6() : Target()	{
-			id_             = "Virtex6";
-			vendor_         = "Xilinx";
-			sizeOfBlock_ 	= 18432;	// the size of a primitive block is 2^11 * 9
-			maxFrequencyMHz_= 500;
+			id_             		= "Virtex6";
+			vendor_         		= "Xilinx";
+			sizeOfBlock_ 			= 18432;	// the size of a primitive block is 2^11 * 9
+			maxFrequencyMHz_		= 500;
 			// all these values are set more or less randomly, to match  virtex 6 more or less
-			fastcarryDelay_ = 0.015e-9; //s   
-			elemWireDelay_  = 0.313e-9;
-			lutDelay_       = 0.053e-9; 
-			multXInputs_    = 25;
-			multYInputs_    = 18;
+			fastcarryDelay_ 		= 0.015e-9; //s   
+			elemWireDelay_  		= 0.313e-9;
+			lutDelay_       		= 0.053e-9; 
+			multXInputs_    		= 25;
+			multYInputs_    		= 18;
 			// all these values are set precisely to match the Virtex6
-			fdCtoQ_         = 0.280e-9; //the deterministic delay + an approximate NET delay
-			lut2_           = 0.053e-9;
-			lut3_           = 0.053e-9; 
-			lut4_           = 0.053e-9; 
-			muxcyStoO_      = 0.219e-9;
-			muxcyCINtoO_    = 0.015e-9;
-			ffd_            = -0.012e-9;
-			muxf5_          = 0.291e-9;
-			slice2sliceDelay_   = 0.393e-9;
-			xorcyCintoO_    = 0.180e-9;
+			fdCtoQ_         		= 0.280e-9; //the deterministic delay + an approximate NET delay
+			lut2_           		= 0.053e-9;
+			lut3_           		= 0.053e-9; 
+			lut4_           		= 0.053e-9; 
+			muxcyStoO_      		= 0.219e-9;
+			muxcyCINtoO_    		= 0.015e-9;
+			ffd_            		= -0.012e-9;
+			muxf5_          		= 0.291e-9;
+			slice2sliceDelay_   	= 0.393e-9;
+			xorcyCintoO_    		= 0.180e-9;
 
-			lutInputs_ 		= 6;
-			nrDSPs_ 		= 160; // XC5VLX30 has 1 column of 32 DSPs
-			dspFixedShift_ 	= 17; 
+			lutInputs_ 				= 6;
+			nrDSPs_ 				= 160; // XC5VLX30 has 1 column of 32 DSPs
+			dspFixedShift_ 			= 17; 
 			
-			DSPMultiplierDelay_       = 1.638e-9;
-			DSPAdderDelay_            = 1.769e-9;
-			DSPCascadingWireDelay_        = 0.365e-9;
-			DSPToLogicWireDelay_ = 0.436e-9;
+			DSPMultiplierDelay_		= 1.638e-9;
+			DSPAdderDelay_			= 1.769e-9;
+			DSPCascadingWireDelay_	= 0.365e-9;
+			DSPToLogicWireDelay_	= 0.436e-9;
 
-			RAMDelay_ = 1.591e-9; //TODO
-			RAMToLogicWireDelay_ = 0.235e-9; //TODO
+			RAMDelay_				= 1.591e-9; //TODO
+			RAMToLogicWireDelay_	= 0.235e-9; //TODO
 			
 			//---------------Floorplanning related----------------------
 			multiplierPosition.push_back(15);
@@ -104,6 +104,7 @@ namespace flopoco{
 		double DSPCascadingWireDelay(){ return DSPCascadingWireDelay_;}
 		double DSPToLogicWireDelay(){ return DSPToLogicWireDelay_;}
 		double LogicToDSPWireDelay(){ return DSPToLogicWireDelay_;}
+		void   delayForDSP(MultiplierBlock* multBlock, double currentCp, int& cycleDelay, double& cpDelay);
 		
 		double RAMDelay() { return RAMDelay_; }
 		double RAMToLogicWireDelay() { return RAMToLogicWireDelay_; }

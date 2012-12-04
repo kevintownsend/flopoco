@@ -81,6 +81,7 @@ namespace flopoco{
 		double DSPCascadingWireDelay(){ return 0.378e-9;}	// TODO
 		double DSPToLogicWireDelay(){ return 0.724e-9;}	// TODO
 		double LogicToDSPWireDelay(){ return 0.724e-9;}	// TODO
+		void delayForDSP(MultiplierBlock* multBlock, double currentCp, int& cycleDelay, double& cpDelay);
 		
 		double RAMDelay() { return RAMDelay_; }
 		double RAMToLogicWireDelay() { return RAMToLogicWireDelay_; }

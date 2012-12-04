@@ -93,7 +93,8 @@ namespace flopoco{
 		double DSPAdderDelay(){ return DSPAdderDelay_;} //TODO
 		double DSPCascadingWireDelay(){ return DSPCascadingWireDelay_;}//TODO
 		double DSPToLogicWireDelay (){ return DSPToLogicWireDelay_;}	
-		double LogicToDSPWireDelay (){ return DSPToLogicWireDelay_;}	
+		double LogicToDSPWireDelay (){ return DSPToLogicWireDelay_;}
+		void delayForDSP(MultiplierBlock* multBlock, double currentCp, int& cycleDelay, double& cpDelay);
 		
 		
 		double RAMDelay() { return RAMDelay_; }
@@ -123,7 +124,7 @@ namespace flopoco{
 		int    getNrDSPMultiplier(){return nrConfigs_;};	
 	private:
 
-		double fastcarryDelay_;				/**< The delay of the fast carry chain */
+		double fastcarryDelay_;					/**< The delay of the fast carry chain */
 		double lut2lutDelay_;					/**< The delay between two LUTs */
 		double ffDelay_;						/**< The delay between two flipflops (not including elemWireDelay_) */
 		double elemWireDelay_;					/**< The elementary wire dealy (for computing the distant wire delay) */
@@ -132,11 +133,11 @@ namespace flopoco{
 		double lut2_;							/**< The LUT delay for 2 inputs */
 		double lut3_;							/**< The LUT delay for 3 inputs */
 		double lut4_;							/**< The LUT delay for 4 inputs */
-		double innerLABcarryDelay_;			/**< The wire delay between the upper and lower parts of a LAB --> R4 & C4 interconnects */	
-		double interLABcarryDelay_;			/**< The approximate wire between two LABs --> R24 & C16 interconnects */	
-		double shareOutToCarryOut_;			/**< The delay between the shared arithmetic out of one LAB and the carry out of the following LAB */	
+		double innerLABcarryDelay_;				/**< The wire delay between the upper and lower parts of a LAB --> R4 & C4 interconnects */	
+		double interLABcarryDelay_;				/**< The approximate wire between two LABs --> R24 & C16 interconnects */	
+		double shareOutToCarryOut_;				/**< The delay between the shared arithmetic out of one LAB and the carry out of the following LAB */	
 		double muxStoO_;						/**< The delay of the MUX right after the 3-LUT of a LAB */	
-		double fdCtoQ_;						/**< The delay of the FlipFlop. Also contains an approximate Net Delay experimentally determined */	
+		double fdCtoQ_;							/**< The delay of the FlipFlop. Also contains an approximate Net Delay experimentally determined */	
 		double carryInToSumOut_;				/**< The delay between the carry in and the adder outup of one LAB */
 		int    almsPerLab_;						/**< The number of ALMs contained by a LAB */
 	
@@ -144,7 +145,7 @@ namespace flopoco{
 		int		totalDSPs_;						/**< The total number of DSP blocks available on this target */	
 		int		nrConfigs_;						/**< The number of distinct predefinded multiplier widths */
 		int		multiplierWidth_[4];			/**< The multiplier width available */
-		double multiplierDelay_[4];			/**< The corresponding delay for each multiplier width available */
+		double  multiplierDelay_[4];			/**< The corresponding delay for each multiplier width available */
 		double	inputRegDelay_[4];				/**< The input register delay to DSP block for each multiplier width available */
 		double	pipe2OutReg2Add;				/**< The DPS block pipeline register to output register delay in two-multipliers adder mode */
 		double	pipe2OutReg4Add;				/**< The DPS block pipeline register to output register delay in four-multipliers adder mode */

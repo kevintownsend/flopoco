@@ -387,5 +387,23 @@ namespace flopoco{
 		return cost;
 	}
 	
+	void CycloneIII::delayForDSP(MultiplierBlock* multBlock, double currentCp, int& cycleDelay, double& cpDelay)
+	{
+		double targetPeriod, totalPeriod;
+		int multIndex = nrConfigs_-1;
+		
+		while((abs(multBlock->getwX()-multiplierWidth_[multIndex]) > 1) || (abs(multBlock->getwY()-multiplierWidth_[multIndex]) > 1))
+			if(multIndex == 0)
+				break;
+			else
+				multIndex--;
+				
+		targetPeriod = 1.0/frequency();
+		totalPeriod = currentCp + multiplierDelay_[multIndex];
+		
+		cycleDelay = floor(totalPeriod/targetPeriod);
+		cpDelay = totalPeriod-targetPeriod*cycleDelay;
+	}
+	
 	
 }

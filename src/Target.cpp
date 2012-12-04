@@ -14,11 +14,7 @@
 
  */
 
-#include <iostream>
-#include <sstream>
-#include <string>
 #include "Target.hpp"
-#include <math.h>
 
 
 using namespace std;
@@ -85,7 +81,6 @@ namespace flopoco{
 			return true;
 
 	}
-	
 	
 	/*-------- Resource Estimation - target specific functions -------*/
 	/*----------------------------------------------------------------*/

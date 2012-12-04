@@ -302,5 +302,16 @@ namespace flopoco{
 		return cost;
 	}
 	
+	void Virtex4::delayForDSP(MultiplierBlock* multBlock, double currentCp, int& cycleDelay, double& cpDelay)
+	{
+		double targetPeriod, totalPeriod;
+		
+		targetPeriod = 1.0/frequency();
+		totalPeriod = currentCp + DSPMultiplierDelay_;
+		
+		cycleDelay = floor(totalPeriod/targetPeriod);
+		cpDelay = totalPeriod-targetPeriod*cycleDelay;
+	}
+	
 	
 }

@@ -21,9 +21,13 @@
 #include "config.h"
 #endif
 
-#include "Targets/DSP.hpp"
-#include <string>
 #include <vector>
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <math.h>
+#include "Targets/DSP.hpp"
+#include "IntMultipliers/MultiplierBlock.hpp"
 
 using namespace std;
 
@@ -210,6 +214,17 @@ namespace flopoco{
 		 * @return delay slice -> DSP
 		 */
 		virtual double LogicToDSPWireDelay()=0;
+		
+		/**
+		 * Function which returns how many cycles should be added to the pipeline after 
+		 * adding a DSP block and, if needed, how much should the critical path
+		 * also be advanced.
+		 * @param multBlock the multiplier block representing the DSP to be added
+		 * @param cycleDelay the number of cycles that need to be added
+		 * @param cpDelay the delay in the critical path (needed on top of the 
+		 * 	@cycleDelay cycles added)
+		 */
+		virtual void delayForDSP(MultiplierBlock* multBlock, double currentCp, int& cycleDelay, double& cpDelay)=0;
 
 		/* -------------------  BRAM related  --------------------------------*/
 
