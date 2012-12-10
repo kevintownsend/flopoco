@@ -169,7 +169,7 @@ void usage(char *name, string opName = ""){
 	 	cerr << "      Integer multiplier of two integers X and Y of sizes wInX and wInY \n";
 	 	cerr << "      Result is faithfully truncated to wOut bits  (wOut=0 means: full multiplier)\n";
 	 	cerr << "      signed=0: unsigned multiplier;     signed=1: signed inputs, signed outputs \n";
-		cerr << "      0 <= ratio <= 1; larger ratio => DSP dominant architectures\n";
+		cerr << "      0 <= ratio <= 1; shows how much of a DSP block's area is acceptable to be left unused\n";
 		cerr << "      enableSuperTiles=0 =>  lower latency, higher logic cost; enableSuperTiles=1=> lower logic cost, longer latency \n";
 	 }
 
@@ -177,7 +177,7 @@ void usage(char *name, string opName = ""){
 	 	OP("IntMultAdd","w signedIO ratio");
 	 	cerr << "      integer  R=A+X*Y where X and Y are of size w, A and R are of size 2w \n";
 	 	cerr << "      signedIO: if 0, unsigned IO; if 1, signedIO \n";
-		cerr << "      0 <= ratio <= 1; larger ratio => DSP dominant architectures\n";
+		cerr << "      0 <= ratio <= 1; shows how much of a DSP block's area is acceptable to be left unused\n";
 	 }
 
 
@@ -231,7 +231,6 @@ void usage(char *name, string opName = ""){
 
 	if ( full || opName == "FPPipeline"){					
 	NEWOP("FPPipeline", "filename wE wF");
-		cerr << "      Early Alpha Release. \n";
 		cerr << "      Assembles the computational datapath described by the input file.\n";
 		cerr << "      The precision for all operators is given wE wF\n";
 		cerr << "      The datapath is described in an untyped and untimed Python-like syntax\n";
@@ -349,8 +348,8 @@ void usage(char *name, string opName = ""){
 	}
 	if ( full || opName == "DotProduct"){					
 		OP( "DotProduct","wE wFX wFY MaxMSB_in LSB_acc MSB_acc ratio");
-		cerr << "      Floating-point dot product unit. Ratio parameter controls  \n";
-		cerr << "      DSP/Logic tradeoff\n";
+		cerr << "      Floating-point dot product unit.\n";
+		cerr << "      0 <= ratio <= 1; shows how much of a DSP block's area is acceptable to be left unused\n";
 	}
 #ifdef HAVE_SOLLYA
 	if ( full || opName == "FPExp"){					
@@ -2389,6 +2388,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			string filename = argv[i++];
 			int wE = checkStrictlyPositive(argv[i++], argv[0]);
 			int wF = checkStrictlyPositive(argv[i++], argv[0]);
+			
 			Operator* tg = new FPPipeline(target, filename, wE, wF);
 			addOperator(tg);
 		}
